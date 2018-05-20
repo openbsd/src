@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.223 2017/07/06 21:41:59 bluhm Exp $
+.\"	$OpenBSD: port-modules.5,v 1.230 2018/04/23 09:32:15 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2017 $
+.Dd $Mdocdate: April 23 2018 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -558,7 +558,7 @@ to `Yes' because modern CMake requires out-of-source build anyway.
 Changes
 .Ev TEST_TARGET
 to `test' as this is standard for CMake projects.
-Also this module have following knobs:
+Also this module has the following knobs:
 .Bl -tag -width Ds
 .It MODCMAKE_WANTCOLOR
 If set to `Yes', CMake will colorize its output.
@@ -569,6 +569,12 @@ If set to `Yes', CMake will print details during configure and build
 stages about exact command being run, etc.
 Should not be used in ports Makefiles.
 Default value is `Yes'.
+.It MODCMAKE_DEBUG
+If set to `Yes', CMake will produce a debug build instead of a release
+build.
+The exact effects on the build process depend on settings specified in
+the CMake config files.
+Default value is `No'.
 .El
 Also,
 .Sq nojunk
@@ -606,6 +612,10 @@ instead of the standard crates-io network source.
 Finally, any crates listed in
 .Ev MODCARGO_CRATES_UPDATE
 are updated.
+.Ev MODCARGO_RUSTFLAGS
+can be used to pass custom flags to all
+.Xr rustc 1
+invocations.
 .Pp
 .Pa lang/rust ,
 .Pa devel/cargo
@@ -686,7 +696,6 @@ User settings: set
 to the directory name under
 .Pa ${LOCALBASE}/share/schemas/
 where schemas files will be installed.
-.It devel/gettext
 .It devel/meson
 Adds
 .Pa devel/meson
@@ -703,7 +712,7 @@ was not set before, sets its value to `meson'.
 Changes default value of
 .Ev SEPARATE_BUILD
 to `Yes' because meson requires out-of-source build.
-Also this module have following knob:
+Also this module has the following knob:
 .Bl -tag -width Ds
 .It MODMESON_WANTCOLOR
 If set to `Yes', meson will colorize its output.
@@ -972,7 +981,7 @@ and
 macros.)
 .Pp
 During execution of
-.Cm post-patch
+.Cm pre-configure
 target module moves source code from
 .Pa ${MODGO_SUBDIR}
 to
@@ -1049,7 +1058,7 @@ Defaults to
 .It Ev MODGO_SETUP_WORKSPACE
 Commands setting up Go workspace for building ports.
 By default, happens during execution of
-.Cm post-patch
+.Cm pre-configure
 target.
 .It Ev MODGO_BUILDDEP
 Controls whether contents of
@@ -1429,9 +1438,6 @@ and
 by appending
 .Ev MODINTLTOOL_OVERRIDE
 to them.
-.It www/drupal6
-This module is legacy.
-drupal6 is still supported, but new work should mostly happen in drupal7 land.
 .It www/drupal7
 Can be used to install plugins (default), themes if
 .Ev MODDRUPAL_THEME
@@ -1439,12 +1445,14 @@ is yes, or languages packs if
 .Ev DRUPAL_LANG
 is set to the desired language.
 .Pp
-The module will set or add to default values for
+The module may set or add to default values for
 .Ev HOMEPAGE ,
 .Ev MASTER_SITES ,
 .Ev PREFIX ,
+.Ev DISTNAME ,
 .Ev DIST_SUBDIR ,
 .Ev CATEGORIES ,
+.Ev PKGNAME ,
 .Ev PKG_ARCH ,
 .Ev WRKDIST ,
 .Ev RUN_DEPENDS .
@@ -1473,6 +1481,26 @@ are set to root, daemon, since drupal doesn't need to write
 to any file except the files/ directory and the site settings (those
 belong to www instead).
 .Pp
+Most modules are actually separate projects on the drupal site.
+If
+.Ev MODDRUPAL_PROJECT
+is set,
+.Ev HOMEPAGE
+will lead to the corresponding project.
+If
+.Ev MODDRUPAL_VERSION
+is also set,
+.Ev DISTNAME
+will default to
+.Pa ${MODDRUPAL_PROJECT}-7.x-${MODDRUPAL_VERSION} ,
+MODDRUPAL_PKGNAME
+will default to
+.Pa ${MODDRUPAL_PROJECT}
+and
+.Ev PKGNAME
+will default to
+.Pa drupal7-${MODDRUPAL_PKGNAME}-${MODDRUPAL_VERSION} .
+.Pp
 Translations are handled by setting
 .Ev DRUPAL_LANG
 to the language letter code, and by setting
@@ -1483,7 +1511,6 @@ With drupal7, all translations have been put in separate .po files.
 It has been deemed simplest to pack all translations for a given language
 into a single package, since translations for non installed modules won't
 affect anything.
-.It www/horde
 .It www/mozilla
 Sets
 .Ev PKGNAME ,
@@ -1585,7 +1612,6 @@ to
 and also sets
 .Ev NO_TEST
 to Yes.
-.It www/zope
 .It x11/gnome
 This module has full support for the
 .Ar gnu ,
@@ -2100,10 +2126,8 @@ to
 Unless
 .Ev XFCE_NO_SRC
 is set,
-.Pa devel/gettext
-and
 .Pa textproc/intltool
-are added to
+is added to
 .Ev MODULES .
 Also affects
 .Ev CATEGORIES .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.89 2017/06/05 22:27:58 tb Exp $
+.\"	$OpenBSD: release.8,v 1.93 2018/02/15 19:01:39 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 5 2017 $
+.Dd $Mdocdate: February 15 2018 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -130,15 +130,6 @@ The build process will place the object files in a tree under
 .Pa /usr/obj .
 This directory must be owned by build:wobj with mode 770.
 .Pp
-The first time, the
-.Pa /usr/obj
-directory
-.Em must be
-cleaned out completely before proceeding to avoid permission issues.
-After a successful
-.Nm
-build, this is no longer needed.
-.Pp
 Create the tree of obj directories and begin the build:
 .Bd -literal -offset indent
 # cd /usr/src
@@ -176,6 +167,9 @@ To build a release, it is necessary to prepare a filesystem mounted with the
 .Em noperm
 .Xr mount 8
 option.
+Either standard FFS or
+.Xr mount_mfs 8
+may be used.
 The root of this filesystem must have owner
 .Sy build
 and mode 700.
@@ -202,7 +196,7 @@ is also used and must not be configured.
 .Pp
 Make the release and check the contents of the release tarballs:
 .Bd -literal -offset indent
-# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
+# export DESTDIR=your-destdir RELEASEDIR=your-releasedir
 # cd /usr/src/etc && make release
 # cd /usr/src/distrib/sets && sh checkflist
 # unset RELEASEDIR DESTDIR
@@ -240,7 +234,7 @@ will be removed.
 .Pp
 The steps to build and validate the Xenocara release are:
 .Bd -literal -offset indent
-# export DESTDIR=your-destdir; export RELEASEDIR=your-releasedir
+# export DESTDIR=your-destdir RELEASEDIR=your-releasedir
 # make release
 # make checkdist
 # unset RELEASEDIR DESTDIR
@@ -263,8 +257,7 @@ and
 are suitable for installs without network connectivity.
 They contain the tarballs and ports built in the previous steps.
 .Bd -literal -offset indent
-# export RELDIR=your-releasedir
-# export RELXDIR=your-xenocara-releasedir
+# export RELDIR=your-releasedir RELXDIR=your-xenocara-releasedir
 # cd /usr/src/distrib/$(machine)/iso && make
 # make install
 .Ed

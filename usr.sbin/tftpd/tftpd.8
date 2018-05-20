@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.5 2015/07/18 05:32:56 mcbride Exp $
+.\"   $OpenBSD: tftpd.8,v 1.6 2017/11/07 14:15:38 jca Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
 .\"
-.Dd $Mdocdate: July 18 2015 $
+.Dd $Mdocdate: November 7 2017 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd DARPA Trivial File Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm tftpd
-.Op Fl 46cdv
+.Op Fl 46cdiv
 .Op Fl l Ar address
 .Op Fl p Ar port
 .Op Fl r Ar socket
@@ -100,6 +100,15 @@ If this option is specified,
 .Nm
 will run in the foreground and log
 the client IP, type of request, and filename to stderr.
+.It Fl i
+Look up the requested path in the subdirectory named after the
+client's IP address.
+For read requests, if the file is not found,
+.Nm
+falls back on the requested path.
+Note that no attempt is made to limit the client to its subdirectory.
+This option cannot be combined with
+.Fl r .
 .It Fl l Ar address
 Listen on the specified address.
 By default
@@ -126,6 +135,8 @@ before the TFTP request will continue.
 By default
 .Nm
 does not use filename rewriting.
+This option cannot be combined with
+.Fl i .
 .It Fl v
 Log the client IP, type of request, and filename.
 .It Ar directory

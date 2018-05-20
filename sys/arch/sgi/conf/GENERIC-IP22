@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP22,v 1.17 2015/11/02 20:14:35 miod Exp $
+#	$OpenBSD: GENERIC-IP22,v 1.18 2018/02/14 23:51:49 jsg Exp $
 #
 # THIS KERNEL IS FOR INDIGO (IP20), INDY (IP22) AND INDIGO2 (IP24) SYSTEMS ONLY.
 #
@@ -60,7 +60,6 @@ dpclock0	at hpc0		# IP20
 dsclock0	at hpc0		# IP22/24
 sq*		at hpc?		# On-board Ethernet or E++ adapter
 wdsc*		at hpc?		# On-board SCSI or GIO32 SCSI adapter
-#haltwo*		at hpc0		# Indy/Indigo2 Audio
 panel*		at hpc0		# Indy front panel buttons
 pckbc*		at hpc0		# Indy/Indigo2 keyboard and mouse
 
@@ -92,8 +91,6 @@ pci*		at giopci?
 #dc*		at pci?		# Phobos G100/G130/G160 Fast Ethernet
 #lxtphy*		at mii?		# Level1 LXT970 PHYs
 #ukphy*		at mii?		# "unknown" PHYs
-
-#audio*		at haltwo?
 
 scsibus*	at scsi?
 sd*		at scsibus?

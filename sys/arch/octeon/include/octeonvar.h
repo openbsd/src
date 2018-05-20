@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.37 2017/07/31 14:53:56 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.45 2018/04/09 13:46:15 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -156,22 +156,7 @@ struct octeon_fau_map {
 #define	OCTEON_POW_QOS_XXX_6		6
 #define	OCTEON_POW_QOS_XXX_7		7
 
-#define	OCTEON_POW_GROUP_PIP		0
-#define	OCTEON_POW_GROUP_XXX_1		1
-#define	OCTEON_POW_GROUP_XXX_2		2
-#define	OCTEON_POW_GROUP_XXX_3		3
-#define	OCTEON_POW_GROUP_XXX_4		4
-#define	OCTEON_POW_GROUP_XXX_5		5
-#define	OCTEON_POW_GROUP_XXX_6		6
-#define	OCTEON_POW_GROUP_CORE1_SEND	7
-#define	OCTEON_POW_GROUP_CORE1_TASK_0	8
-#define	OCTEON_POW_GROUP_CORE1_TASK_1	9
-#define	OCTEON_POW_GROUP_CORE1_TASK_2	10
-#define	OCTEON_POW_GROUP_CORE1_TASK_3	11
-#define	OCTEON_POW_GROUP_CORE1_TASK_4	12
-#define	OCTEON_POW_GROUP_CORE1_TASK_5	13
-#define	OCTEON_POW_GROUP_CORE1_TASK_6	14
-#define	OCTEON_POW_GROUP_CORE1_TASK_7	15
+#define	OCTEON_POW_GROUP_MAX		16
 
 /*
  * Octeon board types known to work with OpenBSD/octeon.
@@ -181,6 +166,8 @@ struct octeon_fau_map {
 #define	BOARD_TYPE_CN3010_EVB_HS5	11
 #define	BOARD_TYPE_UBIQUITI_E100	20002
 #define	BOARD_TYPE_UBIQUITI_E200	20003
+#define	BOARD_TYPE_UBIQUITI_E120	20004
+#define	BOARD_TYPE_UBIQUITI_E220	20005
 #define	BOARD_TYPE_UBIQUITI_E1000	20010
 #define	BOARD_TYPE_RHINOLABS_SHASTA	20012
 #define	BOARD_TYPE_DSR_500		20015
@@ -360,16 +347,35 @@ octeon_iobdma_write_8(uint64_t value)
 	*(volatile uint64_t *)addr = value;
 }
 
+static inline void
+octeon_lmtdma_write_8(off_t offset, uint64_t value)
+{
+	*(volatile uint64_t *)(0xffffffffffffa400ULL + offset) = value;
+}
+
 static inline uint64_t
 octeon_cvmseg_read_8(size_t offset)
 {
-	return octeon_xkphys_read_8(0xffffffffffff8000ULL + offset);
+	return *(volatile uint64_t *)(0xffffffffffff8000ULL + offset);
 }
 
 static inline void
 octeon_cvmseg_write_8(size_t offset, uint64_t value)
 {
-	octeon_xkphys_write_8(0xffffffffffff8000ULL + offset, value);
+	*(volatile uint64_t *)(0xffffffffffff8000ULL + offset) = value;
+}
+
+static inline uint32_t
+octeon_get_coreid(void)
+{
+	uint32_t coreid;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	rdhwr	%0, $0\n"
+		_ASM_EPILOGUE
+		: "=r" (coreid));
+	return coreid;
 }
 
 static inline uint64_t
@@ -383,6 +389,42 @@ octeon_get_cycles(void)
 		_ASM_EPILOGUE
 		: [tmp]"=&r"(tmp));
 	return tmp;
+}
+
+static inline uint64_t
+octeon_get_cvmctl(void)
+{
+	uint64_t tmp;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmfc0	%[tmp], $9, 7		\n"
+		_ASM_EPILOGUE
+		: [tmp]"=r"(tmp));
+	return tmp;
+}
+
+static inline uint64_t
+octeon_get_cvmmemctl(void)
+{
+	uint64_t tmp;
+
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmfc0	%[tmp], $11, 7		\n"
+		_ASM_EPILOGUE
+		: [tmp]"=r"(tmp));
+	return tmp;
+}
+
+static inline void
+octeon_set_cvmmemctl(uint64_t val)
+{
+	__asm volatile (
+		_ASM_PROLOGUE_OCTEON
+		"	dmtc0	%[tmp], $11, 7		\n"
+		_ASM_EPILOGUE
+		: : [tmp]"r"(val) : "memory");
 }
 
 static inline void

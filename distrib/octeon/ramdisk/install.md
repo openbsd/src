@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2017/02/20 16:13:35 visa Exp $
+#	$OpenBSD: install.md,v 1.19 2018/01/18 14:04:04 visa Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,12 +32,18 @@
 #
 
 MDDKDEVS='/^[sw]d[0-9] /s/ .*//p;/^octcf[0-9] /s/ .*//p'
+NCPU=$(sysctl -n hw.ncpufound)
 
 md_installboot() {
 	local _disk=$1
+	local _kernel=/mnt/bsd
+
+	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
+		_kernel=/mnt/bsd.mp
+	fi
 
 	if mount -t msdos /dev/${_disk}i /mnt2 && \
-	   cp /mnt/bsd /mnt2/bsd && cp /mnt/bsd.rd /mnt2/bsd.rd; then
+	   cp $_kernel /mnt2/bsd && cp /mnt/bsd.rd /mnt2/bsd.rd; then
 		umount /mnt2
 		return
 	fi

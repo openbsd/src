@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.12 2015/02/10 22:04:00 miod Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.17 2018/03/22 11:24:27 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -169,6 +169,7 @@ vldcp_attach(struct device *parent, struct device *self, void *aux)
 		printf(", can't allocate rx queue\n");
 		goto free_txqueue;
 	}
+	lc->lc_rx_state = LDC_CHANNEL_INIT;
 
 	for (svc = vldc_svc; svc->vs_name != NULL; svc++) {
 		if (strcmp(ca->ca_name, svc->vs_name) == 0) {
@@ -212,13 +213,13 @@ vldcp_tx_intr(void *arg)
 	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Tx link down\n"));
+			DPRINTF(("%s: Tx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Tx link up\n"));
+			DPRINTF(("%s: Tx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Tx link reset\n"));
+			DPRINTF(("%s: Tx link reset\n", __func__));
 			break;
 		}
 		lc->lc_tx_state = tx_state;
@@ -247,13 +248,29 @@ vldcp_rx_intr(void *arg)
 	if (rx_state != lc->lc_rx_state) {
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Rx link down\n"));
+			DPRINTF(("%s: Rx link down\n", __func__));
+			if (rx_head == rx_tail)
+				break;
+			/* Discard and ack pending I/O. */
+			DPRINTF(("setting rx qhead to %llx\n", rx_tail));
+			err = hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
+			if (err == H_EOK)
+				break;
+			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Rx link up\n"));
+			DPRINTF(("%s: Rx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Rx link reset\n"));
+			DPRINTF(("%s: Rx link reset\n", __func__));
+			if (rx_head == rx_tail)
+				break;
+			/* Discard and ack pending I/O. */
+			DPRINTF(("setting rx qhead to %llx\n", rx_tail));
+			err = hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
+			if (err == H_EOK)
+				break;
+			printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 			break;
 		}
 		lc->lc_rx_state = rx_state;
@@ -370,13 +387,13 @@ retry:
 		return (EIO);
 	}
 
+	DPRINTF(("rx head %llx, rx tail %llx, state %lld\n", rx_head, rx_tail, rx_state));
+
 	if (rx_state != LDC_CHANNEL_UP) {
 		splx(s);
 		device_unref(&sc->sc_dv);
 		return (EIO);
 	}
-
-	DPRINTF(("rx head %llx, rx tail %llx\n", rx_head, rx_tail));
 
 	if (rx_head == rx_tail) {
 		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
@@ -389,7 +406,6 @@ retry:
 		}
 		goto retry;
 	}
-	splx(s);
 
 	ret = uiomove(lc->lc_rxq->lq_va + rx_head, 64, uio);
 
@@ -399,6 +415,7 @@ retry:
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 
+	splx(s);
 	device_unref(&sc->sc_dv);
 	return (ret);
 }

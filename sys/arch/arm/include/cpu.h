@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2017/08/12 13:18:48 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2018/01/26 16:22:20 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -185,6 +185,7 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	struct proc *ci_curproc;
+	struct proc *ci_fpuproc;
 	u_int32_t ci_cpuid;
 	u_int32_t ci_randseed;
 
@@ -206,6 +207,8 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+
+	void (*ci_flush_bp)(void);
 };
 
 extern struct cpu_info cpu_info_primary;

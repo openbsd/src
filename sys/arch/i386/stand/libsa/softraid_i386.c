@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_i386.c,v 1.2 2016/09/11 17:52:47 jsing Exp $	*/
+/*	$OpenBSD: softraid_i386.c,v 1.3 2017/12/18 12:53:33 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -300,7 +300,7 @@ srprobe(void)
 	}
 
 	explicit_bzero(md, SR_META_SIZE * DEV_BSIZE);
-	free(md, 0);
+	free(md, SR_META_SIZE * DEV_BSIZE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.184 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.188 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -83,7 +83,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -217,7 +216,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s", version);
 	/*identifycpu();*/
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
@@ -433,8 +432,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size);
+		fp = (struct sigframe *)
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 	/* Allocate an aligned sigframe */
@@ -626,7 +625,7 @@ boot(int howto)
 		extern int sparc_clock_time_is_ok;
 
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		/*
 		 * XXX

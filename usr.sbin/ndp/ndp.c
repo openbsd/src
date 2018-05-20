@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.86 2017/08/09 17:35:38 jmc Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.88 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
  */
 
 
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -98,7 +97,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <paths.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -135,7 +133,6 @@ void usage(void);
 int rtmsg(int);
 int rtget(struct sockaddr_in6 **, struct sockaddr_dl **);
 void ifinfo(char *);
-void harmonize_rtr(void);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
 static int rdomain;
@@ -904,21 +901,6 @@ ifinfo(char *ifname)
 	printf(", reachable=%ds", nd.ndi.reachable);
 	printf(", retrans=%ds%dms\n", nd.ndi.retrans / 1000,
 	    nd.ndi.retrans % 1000);
-
-	close(s);
-}
-
-void
-harmonize_rtr(void)
-{
-	char dummyif[IFNAMSIZ+8];
-	int s;
-
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-		err(1, "socket");
-	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
-	if (ioctl(s, SIOCSNDFLUSH_IN6, (caddr_t)&dummyif) < 0)
-		err(1, "ioctl(SIOCSNDFLUSH_IN6)");
 
 	close(s);
 }

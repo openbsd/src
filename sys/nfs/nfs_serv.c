@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.111 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.114 2018/05/02 02:24:56 visa Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -58,7 +58,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
@@ -2106,7 +2105,7 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2120,7 +2119,7 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (off_t)io.uio_offset;
@@ -2130,7 +2129,7 @@ again:
 			error = getret;
 	}
 
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 	if (error) {
 		vrele(vp);
 		free(rbuf, M_TEMP, fullsiz);
@@ -2305,7 +2304,7 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 
 	rbuf = malloc(fullsiz, M_TEMP, M_WAITOK);
 again:
@@ -2320,13 +2319,13 @@ again:
 	io.uio_procp = NULL;
 	eofflag = 0;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, procp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READDIR(vp, &io, cred, &eofflag);
 
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
-	VOP_UNLOCK(vp, procp);
+	VOP_UNLOCK(vp);
 
 	if (!error)
 		error = getret;

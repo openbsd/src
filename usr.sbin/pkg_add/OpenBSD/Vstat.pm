@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.68 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.69 2017/10/22 08:55:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -244,10 +244,10 @@ sub giveup
 
 sub new
 {
-	my ($class, $dev, $opts) = @_;
+	my ($class, $dev, $mp, $opts) = @_;
 
 	if (!defined $devinfo->{$dev}) {
-		$devinfo->{$dev} = OpenBSD::MountPoint->new($dev, $opts);
+		$devinfo->{$dev} = OpenBSD::MountPoint->new($dev, $mp, $opts);
 	}
 	return $devinfo->{$dev};
 }
@@ -279,9 +279,9 @@ sub ask_mount
 	run($state, OpenBSD::Paths->mount, sub {
 		my $l = shift;
 		chomp $l;
-		if ($l =~ m/^(.*?)\s+on\s+\/.*?\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
-			my ($dev, $opts) = ($1, $2);
-			$class->new($dev, $opts);
+		if ($l =~ m/^(.*?)\s+on\s+(\/.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/o) {
+			my ($dev, $mp, $opts) = ($1, $2, $3);
+			$class->new($dev, $mp, $opts);
 		} else {
 			$state->errsay("Can't parse mount line: #1", $l);
 		}
@@ -390,9 +390,9 @@ sub noexec
 
 sub new
 {
-	my ($class, $dev, $opts) = @_;
+	my ($class, $dev, $mp, $opts) = @_;
 	my $n = bless { commited_use => 0, used => 0, delayed => 0,
-	    hw => 0, dev => $dev }, $class;
+	    hw => 0, dev => $dev, mp => $mp }, $class;
 	if (defined $opts) {
 		$n->parse_opts($opts);
 	}
@@ -409,7 +409,7 @@ sub avail
 sub name
 {
 	my $self = shift;
-	return $self->{dev};
+	return "$self->{dev} on $self->{mp}";
 }
 
 sub report_ro
@@ -420,7 +420,7 @@ sub report_ro
 		$state->errsay("Error: #1 is read-only (#2)",
 		    $s->name, $fname);
 	} elsif ($s->{problems} == 4) {
-		$state->errsay("Error: ... more files on #1", $s->name);
+		$state->errsay("Error: ... more files for #1", $s->name);
 	}
 	$state->{problems}++;
 }
@@ -493,7 +493,7 @@ sub avail
 sub new
 {
 	my $class = shift;
-	my $n = $class->SUPER::new('???');
+	my $n = $class->SUPER::new('???', '???');
 	$n->{avail} = 0;
 	return $n;
 }

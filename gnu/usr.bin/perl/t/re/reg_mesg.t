@@ -220,8 +220,8 @@ my @death =
  '/(?[ \x{} ])/' => 'Number with no digits {#} m/(?[ \x{}{#} ])/',
  '/(?[ \cK + ) ])/' => 'Unexpected \')\' {#} m/(?[ \cK + ){#} ])/',
  '/(?[ \cK + ])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[ \cK + {#}])/',
- '/(?[ ( ) ])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[ ( ) {#}])/',
- '/(?[[0]+()+])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[[0]+()+{#}])/',
+ '/(?[ ( ) ])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[ ( ){#} ])/',
+ '/(?[[0]+()+])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[[0]+(){#}+])/',
  '/(?[ \p{foo} ])/' => 'Can\'t find Unicode property definition "foo" {#} m/(?[ \p{foo}{#} ])/',
  '/(?[ \p{ foo = bar } ])/' => 'Can\'t find Unicode property definition "foo = bar" {#} m/(?[ \p{ foo = bar }{#} ])/',
  '/(?[ \8 ])/' => 'Unrecognized escape \8 in character class {#} m/(?[ \8{#} ])/',
@@ -266,8 +266,9 @@ my @death =
  '/(?[\ -!])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[\ -!{#}])/',    # [perl #126180]
  '/(?[\ ^!])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[\ ^!{#}])/',    # [perl #126180]
  '/(?[\ |!])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[\ |!{#}])/',    # [perl #126180]
- '/(?[()-!])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[()-!{#}])/',    # [perl #126204]
+ '/(?[()-!])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[(){#}-!])/',    # [perl #126204]
  '/(?[!()])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[!(){#}])/',      # [perl #126404]
+ '/(?<=/' => 'Sequence (?... not terminated {#} m/(?<={#}/',                        # [perl #128170]
 );
 
 # These are messages that are warnings when not strict; death under 'use re

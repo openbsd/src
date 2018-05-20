@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.51 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: d1_both.c,v 1.52 2017/10/08 16:24:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -162,9 +162,6 @@ static unsigned int dtls1_guess_mtu(unsigned int curr_mtu);
 static void dtls1_fix_message_header(SSL *s, unsigned long frag_off,
     unsigned long frag_len);
 static unsigned char *dtls1_write_message_header(SSL *s, unsigned char *p);
-static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
-    unsigned long len, unsigned short seq_num, unsigned long frag_off,
-    unsigned long frag_len);
 static long dtls1_get_message_fragment(SSL *s, int st1, int stn, long max,
     int *ok);
 
@@ -895,40 +892,6 @@ f_err:
 	return (-1);
 }
 
-/*
- * for these 2 messages, we need to
- * ssl->enc_read_ctx			re-init
- * ssl->s3->internal->read_sequence		zero
- * ssl->s3->internal->read_mac_secret		re-init
- * ssl->session->read_sym_enc		assign
- * ssl->session->read_hash		assign
- */
-int
-dtls1_send_change_cipher_spec(SSL *s, int a, int b)
-{
-	unsigned char *p;
-
-	if (S3I(s)->hs.state == a) {
-		p = (unsigned char *)s->internal->init_buf->data;
-		*p++=SSL3_MT_CCS;
-		D1I(s)->handshake_write_seq = D1I(s)->next_handshake_write_seq;
-		s->internal->init_num = DTLS1_CCS_HEADER_LENGTH;
-
-		s->internal->init_off = 0;
-
-		dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
-		    D1I(s)->handshake_write_seq, 0, 0);
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 1);
-
-		S3I(s)->hs.state = b;
-	}
-
-	/* SSL3_ST_CW_CHANGE_B */
-	return (dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
-}
-
 int
 dtls1_read_failed(SSL *s, int code)
 {
@@ -1182,7 +1145,7 @@ dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
 }
 
 /* don't actually do the writing, wait till the MTU has been retrieved */
-static void
+void
 dtls1_set_message_header_int(SSL *s, unsigned char mt, unsigned long len,
     unsigned short seq_num, unsigned long frag_off, unsigned long frag_len)
 {

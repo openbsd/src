@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.36 2017/05/05 12:54:47 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.38 2018/01/11 15:49:34 visa Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/vnode.h>
@@ -159,12 +158,15 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 void
 _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
+	size_t mapsize;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_destroy: t=%p map=%p\n", t, map);
 #endif	/* DEBUG_DMA */
 
-	free(map, M_DEVBUF, 0);
+	mapsize = sizeof(struct arm32_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
+	free(map, M_DEVBUF, mapsize);
 }
 
 /*

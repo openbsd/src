@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.98 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: athn.c,v 1.99 2018/04/26 12:50:07 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2917,8 +2917,6 @@ athn_stop(struct ifnet *ifp, int disable)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	timeout_del(&sc->scan_to);
-	/* In case we were scanning, release the scan "lock". */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

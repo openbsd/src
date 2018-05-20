@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.41 2017/04/29 21:48:43 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.46 2018/05/13 13:48:08 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -299,6 +299,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * via CRYPTO_ex_data_new_class). */
 #define CRYPTO_EX_INDEX_USER		100
 
+#ifndef LIBRESSL_INTERNAL
 #define CRYPTO_malloc_init()		(0)
 #define CRYPTO_malloc_debug_init()	(0)
 
@@ -329,7 +330,16 @@ int CRYPTO_is_mem_check_on(void);
 #define OPENSSL_malloc_locked(num) \
 	CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
 #define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
+#endif
 
+const char *OpenSSL_version(int type);
+#define OPENSSL_VERSION		0
+#define OPENSSL_CFLAGS		1
+#define OPENSSL_BUILT_ON	2
+#define OPENSSL_PLATFORM	3
+#define OPENSSL_DIR		4
+#define OPENSSL_ENGINES_DIR	5
+unsigned long OpenSSL_version_num(void);
 
 const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
@@ -533,6 +543,40 @@ void ERR_load_CRYPTO_strings(void);
 /* Reason codes. */
 #define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED		 101
 #define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
+
+/*
+ * OpenSSL compatible OPENSSL_INIT options.
+ */
+
+#define OPENSSL_INIT_NO_LOAD_CONFIG		0x00000001L
+#define OPENSSL_INIT_LOAD_CONFIG		0x00000002L
+
+/* LibreSSL specific */
+#define _OPENSSL_INIT_FLAG_NOOP			0x80000000L
+
+/*
+ * These are provided for compatibiliy, but have no effect
+ * on how LibreSSL is initialized.
+ */
+#define OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS	_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_LOAD_CRYPTO_STRINGS	_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ADD_ALL_CIPHERS		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ADD_ALL_DIGESTS		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_NO_ADD_ALL_CIPHERS		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_NO_ADD_ALL_DIGESTS		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ASYNC			_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_RDRAND		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_DYNAMIC		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_OPENSSL		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_CRYPTODEV		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_CAPI		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_PADLOCK		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_AFALG		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_reserved_internal		_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ATFORK			_OPENSSL_INIT_FLAG_NOOP
+#define OPENSSL_INIT_ENGINE_ALL_BUILTIN		_OPENSSL_INIT_FLAG_NOOP
+
+int OPENSSL_init_crypto(uint64_t opts, const void *settings);
 
 #ifdef  __cplusplus
 }

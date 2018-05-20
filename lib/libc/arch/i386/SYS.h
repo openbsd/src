@@ -29,36 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.26 2017/06/01 12:14:48 naddy Exp $
+ *	$OpenBSD: SYS.h,v 1.27 2017/11/29 05:13:57 guenther Exp $
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 #include <sys/syscall.h>
 
 #define TCB_OFFSET_ERRNO	16
-
-/*
- * We define a hidden alias with the prefix "_libc_" for each global symbol
- * that may be used internally.  By referencing _libc_x instead of x, other
- * parts of libc prevent overriding by the application and avoid unnecessary
- * relocations.
- */
-#define _HIDDEN(x)		_libc_##x
-#define _HIDDEN_ALIAS(x,y)			\
-	STRONG_ALIAS(_HIDDEN(x),y);		\
-	.hidden _HIDDEN(x)
-#define _HIDDEN_FALIAS(x,y)			\
-	_HIDDEN_ALIAS(x,y);			\
-	.type _HIDDEN(x),@function
-
-/*
- * For functions implemented in ASM that aren't syscalls.
- *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
- *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
- */
-#define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
-#define	END_WEAK(x)	END_STRONG(x); .weak x
-
 
 /*
  * Design note:

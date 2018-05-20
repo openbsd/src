@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.9 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -584,7 +584,7 @@ export_end:
 		goto end;
 	}
 	ret = 0;
-end:
+ end:
 	if (p12)
 		PKCS12_free(p12);
 	BIO_free(in);
@@ -637,7 +637,7 @@ dump_certs_keys_p12(BIO * out, PKCS12 * p12, char *pass,
 	}
 	ret = 1;
 
-err:
+ err:
 
 	if (asafes)
 		sk_PKCS7_pop_free(asafes, PKCS7_free);
@@ -768,7 +768,7 @@ get_cert_chain(X509 * cert, X509_STORE * store, STACK_OF(X509) ** chain)
 		goto err;
 	} else
 		chn = X509_STORE_CTX_get1_chain(&store_ctx);
-err:
+ err:
 	X509_STORE_CTX_cleanup(&store_ctx);
 	*chain = chn;
 

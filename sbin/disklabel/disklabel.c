@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.226 2017/09/29 18:32:09 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.227 2018/02/25 17:24:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			usage();
-	}
+		}
 	argc -= optind;
 	argv += optind;
 
@@ -196,7 +196,7 @@ main(int argc, char *argv[])
 		op = READ;
 
 	if (argc < 1 || (fstabfile && !(op == EDITOR || op == RESTORE ||
-		    aflag)))
+	    aflag)))
 		usage();
 
 	if (argv[0] == NULL)
@@ -753,7 +753,7 @@ editit(const char *pathname)
 	else
 		ret = WEXITSTATUS(st);
 
- fail:
+fail:
 	saved_errno = errno;
 	(void)signal(SIGHUP, sighup);
 	(void)signal(SIGINT, sigint);
@@ -932,7 +932,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				v = GETNUM(lp->d_drivedata[i], cp, 0, &errstr);
 				if (errstr)
 					warnx("line %d: bad drivedata %s",
-					   lineno, cp);
+					    lineno, cp);
 				lp->d_drivedata[i++] = v;
 				tp = word(cp);
 			}
@@ -1039,12 +1039,12 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				}
 			}
 			pp = &lp->d_partitions[part];
-#define NXTNUM(n, field, errstr) { \
-	if (tp == NULL) {					\
-		warnx("line %d: too few fields", lineno);	\
-		errors++;					\
-		break;						\
-	} else							\
+#define NXTNUM(n, field, errstr) {					\
+	if (tp == NULL) {						\
+		warnx("line %d: too few fields", lineno);		\
+		errors++;						\
+		break;							\
+	} else								\
 		cp = tp, tp = word(cp), (n) = GETNUM(field, cp, 0, errstr); \
 }
 			NXTNUM(lv, lv, &errstr);
@@ -1084,7 +1084,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				v = FS_UNUSED;
 			}
 			pp->p_fstype = v;
-	gottype:
+gottype:
 			switch (pp->p_fstype) {
 
 			case FS_UNUSED:				/* XXX */
@@ -1117,7 +1117,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		}
 		warnx("line %d: unknown field: %s", lineno, cp);
 		errors++;
-	next:
+next:
 		;
 	}
 	errors += checklabel(lp);

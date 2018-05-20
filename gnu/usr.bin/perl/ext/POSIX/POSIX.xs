@@ -1153,7 +1153,7 @@ static NV my_trunc(NV x)
 #  define NV_PAYLOAD_TYPE NV
 #endif
 
-#ifdef LONGDOUBLE_DOUBLEDOUBLE
+#if defined(USE_LONG_DOUBLE) && defined(LONGDOUBLE_DOUBLEDOUBLE)
 #  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE / 2)
 #else
 #  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE)

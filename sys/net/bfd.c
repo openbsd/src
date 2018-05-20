@@ -1,7 +1,7 @@
-/*	$OpenBSD: bfd.c,v 1.65 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.70 2018/04/28 08:14:09 phessler Exp $	*/
 
 /*
- * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
+ * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -149,7 +149,7 @@ void		 bfddestroy(void);
 struct socket	*bfd_listener(struct bfd_config *, unsigned int);
 struct socket	*bfd_sender(struct bfd_config *, unsigned int);
 void		 bfd_input(struct bfd_config *, struct mbuf *);
-void		 bfd_set_state(struct bfd_config *, int);
+void		 bfd_set_state(struct bfd_config *, unsigned int);
 
 int	 bfd_send(struct bfd_config *, struct mbuf *);
 void	 bfd_send_control(void *);
@@ -226,17 +226,14 @@ bfdclear(struct rtentry *rt)
 	if ((bfd = bfd_lookup(rt)) == NULL)
 		return;
 
-	task_add(systqmp, &bfd->bc_clear_task);
+	task_add(bfdtq, &bfd->bc_clear_task);
 }
 
 void
 bfd_clear_task(void *arg)
 {
-	struct rtentry *rt = (struct rtentry *)arg;
-	struct bfd_config *bfd;
-
-	if ((bfd = bfd_lookup(rt)) == NULL)
-		return;
+	struct bfd_config	*bfd = (struct bfd_config *)arg;
+	struct rtentry		*rt = bfd->bc_rt;
 
 	timeout_del(&bfd->bc_timo_rx);
 	timeout_del(&bfd->bc_timo_tx);
@@ -305,6 +302,7 @@ bfddestroy(void)
 		bfdclear(bfd->bc_rt);
 	}
 
+	taskq_barrier(bfdtq);
 	taskq_destroy(bfdtq);
 	pool_destroy(&bfd_pool_time);
 	pool_destroy(&bfd_pool_neigh);
@@ -436,6 +434,7 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 	struct socket		*so;
 	struct mbuf		*m = NULL, *mopt = NULL;
 	int			*ip, error;
+	int			 s;
 
 	/* sa_family and sa_len must be equal */
 	if (src->sa_family != dst->sa_family || src->sa_len != dst->sa_len)
@@ -452,7 +451,9 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = MAXTTL;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_MINTTL, mopt);
+	sounlock(s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -477,7 +478,9 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 		break;
 	}
 
+	s = solock(so);
 	error = sobind(so, m, p);
+	sounlock(s);
 	if (error) {
 		printf("%s: sobind error %d\n",
 		    __func__, error);
@@ -513,6 +516,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	struct sockaddr_in6	*sin6;
 	struct sockaddr_in	*sin;
 	int		 error, *ip;
+	int		 s;
 
 	/* sa_family and sa_len must be equal */
 	if (src->sa_family != dst->sa_family || src->sa_len != dst->sa_len)
@@ -527,7 +531,9 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IP_PORTRANGE_HIGH;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
+	sounlock(s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -539,7 +545,9 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = MAXTTL;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_TTL, mopt);
+	sounlock(s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -551,7 +559,9 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IPTOS_PREC_INTERNETCONTROL;
+	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_TOS, mopt);
+	sounlock(s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -576,7 +586,9 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 		break;
 	}
 
+	s = solock(so);
 	error = sobind(so, m, p);
+	sounlock(s);
 	if (error) {
 		printf("%s: sobind error %d\n",
 		    __func__, error);
@@ -597,7 +609,9 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 		break;
 	}
 
+	s = solock(so);
 	error = soconnect(so, m);
+	sounlock(s);
 	if (error && error != ECONNREFUSED) {
 		printf("%s: soconnect error %d\n",
 		    __func__, error);
@@ -888,7 +902,7 @@ bfd_input(struct bfd_config *bfd, struct mbuf *m)
 }
 
 void
-bfd_set_state(struct bfd_config *bfd, int state)
+bfd_set_state(struct bfd_config *bfd, unsigned int state)
 {
 	struct ifnet	*ifp;
 	struct rtentry	*rt = bfd->bc_rt;
@@ -992,7 +1006,7 @@ bfd_send(struct bfd_config *bfd, struct mbuf *m)
 {
 	struct rtentry *rt = bfd->bc_rt;
 
-	if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_BFD)) {
+	if (!rtisvalid(rt)) {
 		m_freem(m);
 		return (EHOSTDOWN);
 	}

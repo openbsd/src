@@ -1,4 +1,4 @@
-/*	$OpenBSD: const.c,v 1.8 2015/10/26 16:27:04 naddy Exp $	*/
+/*	$OpenBSD: const.c,v 1.9 2017/12/12 00:18:58 tb Exp $	*/
 /*	$NetBSD: const.c,v 1.6 1995/03/21 09:02:31 cgd Exp $	*/
 
 /*-
@@ -114,6 +114,8 @@ Char STRprintexitvalue[] = { 'p', 'r', 'i', 'n', 't', 'e', 'x', 'i', 't', 'v',
 			    'a', 'l', 'u', 'e', '\0' };
 Char STRprompt[]	= { 'p', 'r', 'o', 'm', 'p', 't', '\0' };
 Char STRprompt2[]	= { 'p', 'r', 'o', 'm', 'p', 't', '2', '\0' };
+Char STRpromptroot[]	= { '%', 'm', '#', ' ', '\0' };
+Char STRpromptuser[]	= { '%', 'm', '%', ' ', '\0' };
 Char STRpushdsilent[]	= { 'p', 'u', 's', 'h', 'd', 's', 'i', 'l', 'e', 'n',
 			    't', '\0' };
 Char STRret[]		= { '\n', '\0' };
@@ -138,8 +140,6 @@ Char STRspor2sp[]	= { ' ', '|', '|', ' ', '\0' };
 Char STRsporsp[]	= { ' ', '|', ' ', '\0' };
 Char STRstar[]		= { '*', '\0' };
 Char STRstatus[]	= { 's', 't', 'a', 't', 'u', 's', '\0' };
-Char STRsymcent[]	= { '%', ' ', '\0' };
-Char STRsymhash[]	= { '#', ' ', '\0' };
 Char STRterm[]		= { 't', 'e', 'r', 'm', '\0' };
 Char STRthen[]		= { 't', 'h', 'e', 'n', '\0' };
 Char STRtilde[]		= { '~', '\0' };

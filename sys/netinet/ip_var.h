@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.82 2017/09/05 00:58:16 visa Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.85 2017/11/15 11:48:59 mpi Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -202,7 +202,6 @@ extern int ipport_firstauto;		/* min port for port allocation */
 extern int ipport_lastauto;		/* max port for port allocation */
 extern int ipport_hifirstauto;		/* min dynamic/private port number */
 extern int ipport_hilastauto;		/* max dynamic/private port number */
-extern int encdebug;			/* enable message reporting */
 extern int ipforwarding;		/* enable IP forwarding */
 #ifdef MROUTING
 extern int ipmforwarding;		/* enable multicast forwarding */
@@ -216,7 +215,6 @@ struct route;
 struct inpcb;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf *);
-void	 ip_drain(void);
 void	 ip_flush(void);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 void	 ip_freef(struct ipq *);
@@ -253,7 +251,7 @@ int	 rip_output(struct mbuf *, struct socket *, struct sockaddr *,
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	 rip_attach(struct socket *, int);
-
+int	 rip_detach(struct socket *);
 #ifdef MROUTING
 extern struct socket *ip_mrouter[];	/* multicast routing daemon */
 #endif

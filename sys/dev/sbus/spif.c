@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.19 2010/07/02 17:27:01 nicm Exp $	*/
+/*	$OpenBSD: spif.c,v 1.21 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -41,7 +41,7 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
@@ -390,7 +390,7 @@ sttyopen(dev, flags, mode, p)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 	}
-	else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
+	else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -505,7 +505,7 @@ sttyioctl(dev, cmd, data, flags, p)
 		*((int *)data) = sp->sp_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (suser(p, 0))
+		if (suser(p))
 			error = EPERM;
 		else
 			sp->sp_openflags = *((int *)data) &

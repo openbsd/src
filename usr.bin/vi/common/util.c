@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2017/11/10 18:31:36 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -174,6 +174,7 @@ TRACE(SCR *sp, const char *fmt, ...)
 		return;
 	va_start(ap, fmt);
 	(void)vfprintf(tfp, fmt, ap);
+	fflush(tfp);
 	va_end(ap);
 
 	(void)fflush(tfp);

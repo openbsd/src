@@ -1,6 +1,7 @@
-.\"	$OpenBSD: BN_new.3,v 1.9 2017/01/30 07:51:27 jmc Exp $
-.\"	OpenSSL doc/man3/BN_new.pod 2457c19d Mar 6 08:43:36 2004 +0000
-.\"	OpenSSL doc/man7/bn.pod 05ea606a May 20 20:52:46 2016 -0400
+.\" $OpenBSD: BN_new.3,v 1.14 2018/04/29 15:58:21 schwarze Exp $
+.\" full merge up to: OpenSSL man3/BN_new 2457c19d Mar 6 08:43:36 2004 +0000
+.\" selective merge up to: man3/BN_new 681acb31 Sep 29 13:10:34 2017 +0200
+.\" full merge up to: OpenSSL man7/bn 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2004 The OpenSSL Project.  All rights reserved.
@@ -49,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2017 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt BN_NEW 3
 .Os
 .Sh NAME
@@ -101,7 +102,11 @@ or accessed directly.
 .Fn BN_new
 allocates and initializes a
 .Vt BIGNUM
-structure.
+structure, in particular setting the value to zero and the flags to
+.Dv BN_FLG_MALLOCED .
+The security-relevant flag
+.Dv BN_FLG_CONSTTIME
+is not set by default.
 .Pp
 .Fn BN_init
 initializes an existing uninitialized
@@ -165,9 +170,12 @@ and sets an error code that can be obtained by
 .Fn BN_free ,
 and
 .Fn BN_clear_free
-are available in all versions of SSLeay and OpenSSL.
+first appeared in SSLeay 0.5.1 and have been available since
+.Ox 2.4 .
+.Pp
 .Fn BN_init
-was added in SSLeay 0.9.1b.
+first appeared in SSLeay 0.9.1 and has been available since
+.Ox 2.6 .
 .Sh CAVEATS
 .Fn BN_init
 must not be called on a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.164 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.169 2018/03/02 16:57:41 bluhm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ struct bpf_if	*bpf_iflist;
 LIST_HEAD(, bpf_d) bpf_d_list;
 
 int	bpf_allocbufs(struct bpf_d *);
-void	bpf_ifname(struct ifnet *, struct ifreq *);
+void	bpf_ifname(struct bpf_if*, struct ifreq *);
 int	_bpf_mtap(caddr_t, const struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
@@ -320,11 +320,15 @@ bpf_detachd(struct bpf_d *d)
 	if (d->bd_promisc) {
 		int error;
 
+		KASSERT(bp->bif_ifp != NULL);
+
 		d->bd_promisc = 0;
 
 		bpf_get(d);
 		mtx_leave(&d->bd_mtx);
+		NET_LOCK();
 		error = ifpromisc(bp->bif_ifp, 0);
+		NET_UNLOCK();
 		mtx_enter(&d->bd_mtx);
 		bpf_put(d);
 
@@ -593,7 +597,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	bpf_get(d);
 	ifp = d->bd_bif->bif_ifp;
 
-	if ((ifp->if_flags & IFF_UP) == 0) {
+	if (ifp == NULL || (ifp->if_flags & IFF_UP) == 0) {
 		error = ENETDOWN;
 		goto out;
 	}
@@ -682,7 +686,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	int error = 0;
 
 	d = bpfilter_lookup(minor(dev));
-	if (d->bd_locked && suser(p, 0) != 0) {
+	if (d->bd_locked && suser(p) != 0) {
 		/* list of allowed ioctls when locked and not root */
 		switch (cmd) {
 		case BIOCGBLEN:
@@ -789,10 +793,12 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			 * No interface attached yet.
 			 */
 			error = EINVAL;
-		} else {
+		} else if (d->bd_bif->bif_ifp != NULL) { 
 			if (d->bd_promisc == 0) {
 				MUTEX_ASSERT_UNLOCKED(&d->bd_mtx);
+				NET_LOCK();
 				error = ifpromisc(d->bd_bif->bif_ifp, 1);
+				NET_UNLOCK();
 				if (error == 0)
 					d->bd_promisc = 1;
 			}
@@ -839,7 +845,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (d->bd_bif == NULL)
 			error = EINVAL;
 		else
-			bpf_ifname(d->bd_bif->bif_ifp, (struct ifreq *)addr);
+			bpf_ifname(d->bd_bif, (struct ifreq *)addr);
 		break;
 
 	/*
@@ -1049,10 +1055,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	 * Look through attached interfaces for the named one.
 	 */
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		struct ifnet *ifp = bp->bif_ifp;
-
-		if (ifp == NULL ||
-		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
+		if (strcmp(bp->bif_name, ifr->ifr_name) != 0)
 			continue;
 
 		if (candidate == NULL || candidate->bif_dlt > bp->bif_dlt)
@@ -1090,9 +1093,9 @@ out:
  * Copy the interface name to the ifreq.
  */
 void
-bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
+bpf_ifname(struct bpf_if *bif, struct ifreq *ifr)
 {
-	bcopy(ifp->if_xname, ifr->ifr_name, IFNAMSIZ);
+	bcopy(bif->bif_name, ifr->ifr_name, sizeof(ifr->ifr_name));
 }
 
 /*
@@ -1289,6 +1292,45 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 	SRPL_LEAVE(&sr);
 
 	return (drop);
+}
+
+/*
+ * Incoming linkage from device drivers, where a data buffer should be
+ * prepended by an arbitrary header. In this situation we already have a
+ * way of representing a chain of memory buffers, ie, mbufs, so reuse
+ * the existing functionality by attaching the buffers to mbufs.
+ *
+ * Con up a minimal mbuf chain to pacify bpf by allocating (only) a
+ * struct m_hdr each for the header and data on the stack.
+ */
+int
+bpf_tap_hdr(caddr_t arg, const void *hdr, unsigned int hdrlen,
+    const void *buf, unsigned int buflen, u_int direction)
+{
+	struct m_hdr mh, md;
+	struct mbuf *m0 = NULL;
+	struct mbuf **mp = &m0;
+
+	if (hdr != NULL) {
+		mh.mh_flags = 0;
+		mh.mh_next = NULL;
+		mh.mh_len = hdrlen;
+		mh.mh_data = (void *)hdr;
+
+		*mp = (struct mbuf *)&mh;
+		mp = &mh.mh_next;
+	}
+
+	if (buf != NULL) {
+		md.mh_flags = 0;
+		md.mh_next = NULL;
+		md.mh_len = buflen;
+		md.mh_data = (void *)buf;
+
+		*mp = (struct mbuf *)&md;
+	}
+
+	return _bpf_mtap(arg, m0, direction, bpf_mcopy);
 }
 
 /*
@@ -1538,21 +1580,17 @@ bpf_put(struct bpf_d *bd)
 	free(bd, M_DEVBUF, sizeof(*bd));
 }
 
-/*
- * Attach an interface to bpf.  driverp is a pointer to a (struct bpf_if *)
- * in the driver's softc; dlt is the link layer type; hdrlen is the fixed
- * size of the link header (variable length headers not yet supported).
- */
-void
-bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
+void *
+bpfsattach(caddr_t *bpfp, const char *name, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
 	if ((bp = malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT)) == NULL)
 		panic("bpfattach");
 	SRPL_INIT(&bp->bif_dlist);
-	bp->bif_driverp = (struct bpf_if **)driverp;
-	bp->bif_ifp = ifp;
+	bp->bif_driverp = (struct bpf_if **)bpfp;
+	bp->bif_name = name;
+	bp->bif_ifp = NULL;
 	bp->bif_dlt = dlt;
 
 	bp->bif_next = bpf_iflist;
@@ -1567,6 +1605,17 @@ bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
 	 * performance reasons and to alleviate alignment restrictions).
 	 */
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
+
+	return (bp);
+}
+
+void
+bpfattach(caddr_t *driverp, struct ifnet *ifp, u_int dlt, u_int hdrlen)
+{
+	struct bpf_if *bp;
+
+	bp = bpfsattach(driverp, ifp->if_xname, dlt, hdrlen);
+	bp->bif_ifp = ifp;
 }
 
 /* Detach an interface from its attached bpf device.  */
@@ -1574,29 +1623,37 @@ void
 bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, *nbp, **pbp = &bpf_iflist;
-	struct bpf_d *bd;
-	int maj;
 
 	KERNEL_ASSERT_LOCKED();
 
 	for (bp = bpf_iflist; bp; bp = nbp) {
-		nbp= bp->bif_next;
+		nbp = bp->bif_next;
 		if (bp->bif_ifp == ifp) {
 			*pbp = nbp;
 
-			/* Locate the major number. */
-			for (maj = 0; maj < nchrdev; maj++)
-				if (cdevsw[maj].d_open == bpfopen)
-					break;
-
-			while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist)))
-				vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
-
-			free(bp, M_DEVBUF, sizeof *bp);
+			bpfsdetach(bp);
 		} else
 			pbp = &bp->bif_next;
 	}
 	ifp->if_bpf = NULL;
+}
+
+void
+bpfsdetach(void *p)
+{
+	struct bpf_if *bp = p;
+	struct bpf_d *bd;
+	int maj;
+
+	/* Locate the major number. */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == bpfopen)
+			break;
+
+	while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist)))
+		vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
+
+	free(bp, M_DEVBUF, sizeof *bp);
 }
 
 int
@@ -1674,14 +1731,14 @@ int
 bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 {
 	int n, error;
-	struct ifnet *ifp;
 	struct bpf_if *bp;
+	const char *name;
 
-	ifp = d->bd_bif->bif_ifp;
+	name = d->bd_bif->bif_name;
 	n = 0;
 	error = 0;
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if (bp->bif_ifp != ifp)
+		if (strcmp(name, bp->bif_name) != 0)
 			continue;
 		if (bfl->bfl_list != NULL) {
 			if (n >= bfl->bfl_len)
@@ -1704,15 +1761,17 @@ bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 int
 bpf_setdlt(struct bpf_d *d, u_int dlt)
 {
-	struct ifnet *ifp;
+	const char *name;
 	struct bpf_if *bp;
 
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 	if (d->bd_bif->bif_dlt == dlt)
 		return (0);
-	ifp = d->bd_bif->bif_ifp;
+	name = d->bd_bif->bif_name;
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
+		if (strcmp(name, bp->bif_name) != 0)
+			continue;
+		if (bp->bif_dlt == dlt)
 			break;
 	}
 	if (bp == NULL)

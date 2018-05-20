@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.9 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.10 2017/11/21 19:08:36 kettenis Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 	.globl	_C_LABEL(_end)
 
 	.data
-	.align	0
+	.align	2
 	.globl	__curbrk
 	.type	__curbrk,#object
 	.hidden	__curbrk
@@ -77,7 +77,7 @@ ENTRY(sbrk)
 	/* Return old curbrk value */
 	mov	r15, r14
 
-	.align	0
+	.align	2
 #ifdef __PIC__
 .Lgot:
 	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)

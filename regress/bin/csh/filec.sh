@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: filec.sh,v 1.5 2017/07/22 13:50:54 anton Exp $
+# $OpenBSD: filec.sh,v 1.6 2017/11/16 19:05:44 anton Exp $
 #
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
 #
@@ -19,7 +19,7 @@
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
-	act=$(echo -n "$stdin" | ./edit -p "$PS1" csh)
+	act=$(echo -n "$stdin" | ./edit -p "$PS1" $CSH)
 	[ $? = 0 ] && [ "$exp" = "$act" ] && return 0
 
 	echo input:
@@ -35,6 +35,7 @@ testseq() {
 	exit 1
 }
 
+CSH=${1:-/bin/csh}
 PS1='? '
 
 # Create a fake HOME with a minimal .cshrc and a few files used for completion.

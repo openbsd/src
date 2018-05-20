@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.10 2017/05/05 15:10:07 kettenis Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.11 2018/03/19 21:40:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -28,6 +28,7 @@ struct sdhc_softc {
 	struct sdhc_host **sc_host;
 	int sc_nhosts;
 	u_int sc_flags;
+	u_int sc_clkbase;
 
 	bus_dma_tag_t sc_dmat;
 

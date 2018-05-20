@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.84 2017/05/29 14:07:16 sf Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.89 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #include <sys/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -80,7 +80,7 @@ int msdosfs_start(struct mount *, int, struct proc *);
 int msdosfs_unmount(struct mount *, int, struct proc *);
 int msdosfs_root(struct mount *, struct vnode **);
 int msdosfs_statfs(struct mount *, struct statfs *, struct proc *);
-int msdosfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int msdosfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int msdosfs_vptofh(struct vnode *, struct fid *);
 int msdosfs_check_export(struct mount *mp, struct mbuf *nam,
@@ -101,16 +101,12 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;	  /* vnode for blk device to mount */
-	struct msdosfs_args args; /* will hold data from mount request */
+	struct msdosfs_args *args = data; /* will hold data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-
-	error = copyin(data, &args, sizeof(struct msdosfs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -122,7 +118,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		if (!(pmp->pm_flags & MSDOSFSMNT_RONLY) &&
 		    (mp->mnt_flag & MNT_RDONLY)) {
 			mp->mnt_flag &= ~MNT_RDONLY;
-			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
+			VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p);
 			mp->mnt_flag |= MNT_RDONLY;
 
 			flags = WRITECLOSE;
@@ -147,11 +143,11 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		    (mp->mnt_flag & MNT_WANTRDWR))
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 
-		if (args.fspec == NULL) {
+		if (args && args->fspec == NULL) {
 #ifdef	__notyet__		/* doesn't work correctly with current mountd	XXX */
-			if (args.flags & MSDOSFSMNT_MNTOPT) {
+			if (args->flags & MSDOSFSMNT_MNTOPT) {
 				pmp->pm_flags &= ~MSDOSFSMNT_MNTOPT;
-				pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
+				pmp->pm_flags |= args->flags & MSDOSFSMNT_MNTOPT;
 				if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 					pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 			}
@@ -160,15 +156,17 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			 * Process export requests.
 			 */
 			return (vfs_export(mp, &pmp->pm_export,
-			    &args.export_info));
+			    &args->export_info));
 		}
+		if (args == NULL)
+			return (0);
 	}
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
 
@@ -191,7 +189,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	}
 
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = msdosfs_mountfs(devvp, mp, p, &args);
+		error = msdosfs_mountfs(devvp, mp, p, args);
 	else {
 		if (devvp != pmp->pm_devvp)
 			error = EINVAL;	/* XXX needs translation */
@@ -202,10 +200,10 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 		goto error_devvp;
 
 	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_gid = args.gid;
-	pmp->pm_uid = args.uid;
-	pmp->pm_mask = args.mask;
-	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
+	pmp->pm_gid = args->gid;
+	pmp->pm_uid = args->uid;
+	pmp->pm_mask = args->mask;
+	pmp->pm_flags |= args->flags & MSDOSFSMNT_MNTOPT;
 
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
@@ -241,7 +239,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	bcopy(&args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(args));
+	bcopy(args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(*args));
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp,
@@ -283,9 +281,9 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -566,9 +564,9 @@ error_exit:
 	if (bp)
 		brelse(bp);
 
-	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	if (pmp) {
 		if (pmp->pm_inusemap)
@@ -607,7 +605,7 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 #ifdef MSDOSFS_DEBUG
 	vprint("msdosfs_umount(): just before calling VOP_CLOSE()\n", vp);
 #endif
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(vp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
 	vput(vp);
@@ -683,7 +681,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)
 		msa->allerror = error;
-	VOP_UNLOCK(vp, msa->p);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 
 	return (0);
@@ -691,7 +689,8 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 
 int
-msdosfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+msdosfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
+    struct proc *p)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct msdosfs_sync_arg msa;
@@ -722,10 +721,10 @@ msdosfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	 * Force stale file system control information to be flushed.
 	 */
 	if (waitfor != MNT_LAZY) {
-		vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p)) != 0)
 			msa.allerror = error;
-		VOP_UNLOCK(pmp->pm_devvp, p);
+		VOP_UNLOCK(pmp->pm_devvp);
 	}
 
 	return (msa.allerror);

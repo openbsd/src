@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.92 2017/08/12 00:03:10 tedu Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.96 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
@@ -441,7 +441,7 @@ doktrace(struct vnode *vp, int ops, int facs, pid_t pid, struct proc *p)
 		goto done;
 	}
 	if (ops == KTROP_SET) {
-		if (suser(p, 0) == 0)
+		if (suser(p) == 0)
 			facs |= KTRFAC_ROOT;
 		ktrstart(p, vp, cred);
 	}
@@ -511,7 +511,7 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 			return error;
 		vp = nd.ni_vp;
 
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 	}
 
 	error = doktrace(vp, SCARG(uap, ops), SCARG(uap, facs),
@@ -519,36 +519,6 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 	if (vp != NULL)
 		(void)vn_close(vp, FWRITE, cred, p);
 
-	return error;
-}
-
-int
-sys_fktrace(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_fktrace_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) ops;
-		syscallarg(int) facs;
-		syscallarg(pid_t) pid;
-	} */ *uap = v;
-	struct vnode *vp = NULL;
-	int fd = SCARG(uap, fd);
-	struct file *fp;
-	int error;
-
-	if (fd != -1) {
-		if ((error = getvnode(p, fd, &fp)) != 0)
-			return error;
-		vp = fp->f_data;
-		vref(vp);
-		FRELE(fp, p);
-	}
-
-	error = doktrace(vp, SCARG(uap, ops), SCARG(uap, facs),
-	    SCARG(uap, pid), p);
-	if (vp != NULL)
-		vrele(vp);
-	
 	return error;
 }
 

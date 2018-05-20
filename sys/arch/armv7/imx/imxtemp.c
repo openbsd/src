@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxtemp.c,v 1.3 2016/12/31 15:29:14 kettenis Exp $	*/
+/*	$OpenBSD: imxtemp.c,v 1.5 2018/03/30 20:31:01 patrick Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -30,12 +30,9 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxocotpvar.h>
-#include <armv7/imx/imxccmvar.h>
-
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_misc.h>
 
 /* registers */
 #define TEMPMON_TEMPSENSE0			0x180
@@ -56,7 +53,10 @@
 #define TEMPMON_TEMPSENSE0_ALARM_VALUE_MASK	0xfff
 #define TEMPMON_TEMPSENSE0_ALARM_VALUE_SHIFT	20
 
-/* calibration */
+/* calibration registers */
+#define OCOTP_ANA1				0x4e0
+
+/* calibration bits and bytes */
 #define OCOTP_ANA1_HOT_TEMP_MASK		0xff
 #define OCOTP_ANA1_HOT_TEMP_SHIFT		0
 #define OCOTP_ANA1_HOT_COUNT_MASK		0xfff
@@ -65,9 +65,9 @@
 #define OCOTP_ANA1_ROOM_COUNT_SHIFT		20
 
 #define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+	regmap_read_4((sc)->sc_rm, (reg))
 #define HWRITE4(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+	regmap_write_4((sc)->sc_rm, (reg), (val))
 #define HSET4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
 #define HCLR4(sc, reg, bits)						\
@@ -75,8 +75,8 @@
 
 struct imxtemp_softc {
 	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
+	int			sc_node;
+	struct regmap		*sc_rm;
 
 	uint32_t		sc_hot_count;
 	uint32_t		sc_hot_temp;
@@ -108,10 +108,7 @@ imxtemp_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_is_compatible(faa->fa_node, "fsl,imx6q-anatop"))
-		return 10;	/* Must beat simplebus(4). */
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "fsl,imx6q-tempmon");
 }
 
 void
@@ -119,14 +116,13 @@ imxtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct imxtemp_softc *sc = (struct imxtemp_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t phandle;
 
-	if (faa->fa_nreg < 1)
+	sc->sc_node = faa->fa_node;
+	phandle = OF_getpropint(sc->sc_node, "fsl,tempmon", 0);
+	sc->sc_rm = regmap_byphandle(phandle);
+	if (sc->sc_rm == NULL)
 		return;
-
-	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
-		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
@@ -138,8 +134,15 @@ imxtemp_calibration(struct device *self)
 {
 	struct imxtemp_softc *sc = (struct imxtemp_softc *)self;
 	uint32_t calibration;
+	uint32_t phandle;
+	struct regmap *rm;
 
-	calibration = imxocotp_get_temperature_calibration();
+	phandle = OF_getpropint(sc->sc_node, "fsl,tempmon-data", 0);
+	rm = regmap_byphandle(phandle);
+	if (rm == NULL)
+		return;
+
+	calibration = regmap_read_4(rm, OCOTP_ANA1);
 	sc->sc_hot_count = (calibration >> OCOTP_ANA1_HOT_COUNT_SHIFT) &
 	    OCOTP_ANA1_HOT_COUNT_MASK;
 	sc->sc_hot_temp = (calibration >> OCOTP_ANA1_HOT_TEMP_SHIFT) &

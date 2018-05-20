@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: xargs-L.sh,v 1.2 2017/01/19 17:08:42 millert Exp $
+# $OpenBSD: xargs-L.sh,v 1.3 2017/10/16 13:48:22 anton Exp $
 #
 # written by Ingo Schwarze <schwarze@openbsd.org> 2010
 # and placed in the public domain
@@ -9,12 +9,14 @@ test_xargs()
 {
 	printf 'Testing %13.13s with options "%s"\n' "\"$1\"" "$2"
         expect=`printf "$3"`
-	result=`printf "$1" | xargs $2 ./showargs`
+	result=`printf "$1" | $XARGS $2 ./showargs`
 	if [ "$result" != "$expect" ]; then
 		printf 'Expected "%s", but got "%s"\n' "$expect" "$result"
 		exit 1
 	fi
 }
+
+XARGS=${1:-/usr/bin/xargs}
 
 test_xargs 'a b'         ''        'a|b|'
 test_xargs 'a  b'        ''        'a|b|'

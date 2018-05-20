@@ -1,4 +1,4 @@
-/*	$OpenBSD: tempnam.c,v 1.19 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: tempnam.c,v 1.20 2017/11/28 06:55:49 tb Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <unistd.h>
 
 __warn_references(tempnam,
-    "warning: tempnam() possibly used unsafely; consider using mkstemp()");
+    "tempnam() possibly used unsafely; consider using mkstemp()");
 
 char *
 tempnam(const char *dir, const char *pfx)

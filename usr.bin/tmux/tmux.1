@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.580 2017/10/06 18:02:30 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.597 2018/05/09 16:20:50 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 6 2017 $
+.Dd $Mdocdate: May 9 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1122,9 +1122,10 @@ The following commands are supported in copy mode:
 .It Li "end-of-line" Ta "$" Ta "C-e"
 .It Li "goto-line <line>" Ta ":" Ta "g"
 .It Li "halfpage-down" Ta "C-d" Ta "M-Down"
+.It Li "halfpage-down-and-cancel" Ta "" Ta ""
 .It Li "halfpage-up" Ta "C-u" Ta "M-Up"
-.It Li "history-bottom" Ta "G" Ta "M-<"
-.It Li "history-top" Ta "g" Ta "M->"
+.It Li "history-bottom" Ta "G" Ta "M->"
+.It Li "history-top" Ta "g" Ta "M-<"
 .It Li "jump-again" Ta ";" Ta ";"
 .It Li "jump-backward <to>" Ta "F" Ta "F"
 .It Li "jump-forward <to>" Ta "f" Ta "f"
@@ -1139,12 +1140,14 @@ The following commands are supported in copy mode:
 .It Li "next-word-end" Ta "e" Ta "M-f"
 .It Li "other-end" Ta "o" Ta ""
 .It Li "page-down" Ta "C-f" Ta "PageDown"
+.It Li "page-down-and-cancel" Ta "" Ta ""
 .It Li "page-up" Ta "C-b" Ta "PageUp"
 .It Li "previous-paragraph" Ta "{" Ta "M-{"
 .It Li "previous-space" Ta "B" Ta ""
 .It Li "previous-word" Ta "b" Ta "M-b"
 .It Li "rectangle-toggle" Ta "v" Ta "R"
 .It Li "scroll-down" Ta "C-e" Ta "C-Down"
+.It Li "scroll-down-and-cancel" Ta "" Ta ""
 .It Li "scroll-up" Ta "C-y" Ta "C-Up"
 .It Li "search-again" Ta "n" Ta "n"
 .It Li "search-backward <for>" Ta "?" Ta ""
@@ -1157,6 +1160,11 @@ The following commands are supported in copy mode:
 .It Li "stop-selection" Ta "" Ta ""
 .It Li "top-line" Ta "H" Ta "M-R"
 .El
+.Pp
+The
+.Ql -and-cancel
+variants of some commands exit copy mode after they have completed (for copy
+commands) or when the cursor reaches the bottom (for scrolling commands).
 .Pp
 The next and previous word keys use space and the
 .Ql - ,
@@ -1369,7 +1377,7 @@ the end of the visible pane.
 The default is to capture only the visible contents of the pane.
 .It Xo
 .Ic choose-client
-.Op Fl N
+.Op Fl NZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl O Ar sort-order
@@ -1378,6 +1386,8 @@ The default is to capture only the visible contents of the pane.
 .Xc
 Put a pane into client mode, allowing a client to be selected interactively from
 a list.
+.Fl Z
+zooms the pane.
 The following keys may be used in client mode:
 .Bl -column "Key" "Function" -offset indent
 .It Sy "Key" Ta Sy "Function"
@@ -1428,7 +1438,7 @@ starts without the preview.
 This command works only if at least one client is attached.
 .It Xo
 .Ic choose-tree
-.Op Fl Nsw
+.Op Fl GNswZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl O Ar sort-order
@@ -1441,12 +1451,16 @@ interactively from a list.
 starts with sessions collapsed and
 .Fl w
 with windows collapsed.
+.Fl Z
+zooms the pane.
 The following keys may be used in tree mode:
 .Bl -column "Key" "Function" -offset indent
 .It Sy "Key" Ta Sy "Function"
 .It Li "Enter" Ta "Choose selected item"
 .It Li "Up" Ta "Select previous item"
 .It Li "Down" Ta "Select next item"
+.It Li "x" Ta "Kill selected item"
+.It Li "X" Ta "Kill tagged items"
 .It Li "<" Ta "Scroll list of previews left"
 .It Li ">" Ta "Scroll list of previews right"
 .It Li "C-s" Ta "Search by name"
@@ -1484,6 +1498,9 @@ If a filter would lead to an empty list, it is ignored.
 specifies the format for each item in the tree.
 .Fl N
 starts without the preview.
+.Fl G
+includes all sessions in any session groups in the tree rather than only the
+first.
 This command works only if at least one client is attached.
 .It Xo
 .Ic display-panes
@@ -1789,15 +1806,15 @@ If
 .Fl a
 is used, move to the next window with an alert.
 .It Xo Ic pipe-pane
-.Op Fl o
+.Op Fl IOo
 .Op Fl t Ar target-pane
 .Op Ar shell-command
 .Xc
 .D1 (alias: Ic pipep )
-Pipe any output sent by the program in
+Pipe output sent by the program in
 .Ar target-pane
-to a shell command.
-A pane may only be piped to one command at a time, any existing pipe is
+to a shell command or vice versa.
+A pane may only be connected to one command at a time, any existing pipe is
 closed before
 .Ar shell-command
 is executed.
@@ -1809,6 +1826,25 @@ option.
 If no
 .Ar shell-command
 is given, the current pipe (if any) is closed.
+.Pp
+.Fl I
+and
+.Fl O
+specify which of the
+.Ar shell-command
+output streams are connected to the pane:
+with
+.Fl I
+stdout is connected (so anything
+.Ar shell-command
+prints is written to the pane as if it were typed);
+with
+.Fl O
+stdin is connected (so any output in the pane is piped to
+.Ar shell-command ) .
+Both may be used together and if neither are specified,
+.Fl O
+is used.
 .Pp
 The
 .Fl o
@@ -1920,8 +1956,8 @@ lower) with
 .Fl U
 or downward (numerically higher).
 .It Xo Ic select-layout
-.Op Fl nop
-.Op Fl t Ar target-window
+.Op Fl Enop
+.Op Fl t Ar target-pane
 .Op Ar layout-name
 .Xc
 .D1 (alias: Ic selectl )
@@ -1939,6 +1975,8 @@ and
 commands.
 .Fl o
 applies the last set layout if possible (undoes the most recent layout change).
+.Fl E
+spreads the current pane and any panes next to it out evenly.
 .It Xo Ic select-pane
 .Op Fl DdegLlMmRU
 .Op Fl P Ar style
@@ -2471,6 +2509,11 @@ Set the time in milliseconds for which
 waits after an escape is input to determine if it is part of a function or meta
 key sequences.
 The default is 500 milliseconds.
+.It Xo Ic exit-empty
+.Op Ic on | off
+.Xc
+If enabled (the default), the server will exit when there are no active
+sessions.
 .It Xo Ic exit-unattached
 .Op Ic on | off
 .Xc
@@ -2708,8 +2751,7 @@ to
 from the 256-colour set,
 .Ic default ,
 or a hexadecimal RGB string such as
-.Ql #ffffff ,
-which chooses the closest match from the default 256-colour set.
+.Ql #ffffff .
 .Pp
 The attributes is either
 .Ic none
@@ -3019,7 +3061,7 @@ and poor for interactive programs such as shells.
 .Xc
 Allow programs to change the window name using a terminal escape
 sequence (\eek...\ee\e\e).
-The default is on.
+The default is off.
 .Pp
 .It Xo Ic alternate-screen
 .Op Ic on | off
@@ -3347,7 +3389,11 @@ layout after every
 set-hook after-split-window "selectl even-vertical"
 .Ed
 .Pp
-In addition, the following hooks are available:
+All the notifications listed in the
+.Sx CONTROL MODE
+section are hooks (without any arguments), except
+.Ic %exit .
+The following additional hooks are available:
 .Bl -tag -width "XXXXXXXXXXXXXXXXXXXXXX"
 .It alert-activity
 Run when a window has activity.
@@ -3446,8 +3492,8 @@ The following mouse events are available:
 .It Li "MouseDown1" Ta "MouseUp1" Ta "MouseDrag1" Ta "MouseDragEnd1"
 .It Li "MouseDown2" Ta "MouseUp2" Ta "MouseDrag2" Ta "MouseDragEnd2"
 .It Li "MouseDown3" Ta "MouseUp3" Ta "MouseDrag3" Ta "MouseDragEnd3"
-.It Li "DoubleClick1" Ta "DoubleClick2" Ta "DoubleClick3" Ta "WheelUp"
-.It Li "TripleClick1" Ta "TripleClick2" Ta "TripleClick3" Ta "WheelDown"
+.It Li "DoubleClick1" Ta "DoubleClick2" Ta "DoubleClick3"
+.It Li "TripleClick1" Ta "TripleClick2" Ta "TripleClick3"
 .El
 .Pp
 Each should be suffixed with a location, for example
@@ -3549,7 +3595,7 @@ and
 .Ql &&
 evaluate to true if either or both of two comma-separated alternatives are
 true, for example
-.Ql #{||,#{pane_in_mode},#{alternate_on}} .
+.Ql #{||:#{pane_in_mode},#{alternate_on}} .
 A
 .Ql C
 performs a search for an
@@ -3649,7 +3695,7 @@ The following variables are available, where appropriate:
 .It Li "cursor_y" Ta "" Ta "Cursor Y position in pane"
 .It Li "history_bytes" Ta "" Ta "Number of bytes in window history"
 .It Li "history_limit" Ta "" Ta "Maximum window history lines"
-.It Li "history_size" Ta "" Ta "Size of history in bytes"
+.It Li "history_size" Ta "" Ta "Size of history in lines"
 .It Li "hook" Ta "" Ta "Name of running hook, if any"
 .It Li "hook_pane" Ta "" Ta "ID of pane where hook was run, if any"
 .It Li "hook_session" Ta "" Ta "ID of session where hook was run, if any"
@@ -3706,6 +3752,8 @@ The following variables are available, where appropriate:
 .It Li "session_format" Ta "" Ta "1 if format is for a session (not assuming the current)"
 .It Li "session_last_attached" Ta "" Ta "Time session last attached"
 .It Li "session_group" Ta "" Ta "Name of session group"
+.It Li "session_group_size" Ta "" Ta "Size of session group"
+.It Li "session_group_list" Ta "" Ta "List of sessions in group"
 .It Li "session_grouped" Ta "" Ta "1 if session in a group"
 .It Li "session_height" Ta "" Ta "Height of session"
 .It Li "session_id" Ta "" Ta "Unique session ID"
@@ -3773,7 +3821,9 @@ for
 or
 .Ic new-session ) .
 .It
-An escape sequence:
+An escape sequence (if the
+.Ic allow-rename
+option is turned on):
 .Bd -literal -offset indent
 $ printf '\e033kWINDOW_NAME\e033\e\e'
 .Ed
@@ -4086,7 +4136,7 @@ The buffer commands are as follows:
 .Bl -tag -width Ds
 .It Xo
 .Ic choose-buffer
-.Op Fl N
+.Op Fl NZ
 .Op Fl F Ar format
 .Op Fl f Ar filter
 .Op Fl O Ar sort-order
@@ -4095,10 +4145,12 @@ The buffer commands are as follows:
 .Xc
 Put a pane into buffer mode, where a buffer may be chosen interactively from
 a list.
+.Fl Z
+zooms the pane.
 The following keys may be used in buffer mode:
 .Bl -column "Key" "Function" -offset indent
 .It Sy "Key" Ta Sy "Function"
-.It Li "Enter" Ta "Choose selected buffer"
+.It Li "Enter" Ta "Paste selected buffer"
 .It Li "Up" Ta "Select previous buffer"
 .It Li "Down" Ta "Select next buffer"
 .It Li "C-s" Ta "Search by name or content"
@@ -4106,6 +4158,8 @@ The following keys may be used in buffer mode:
 .It Li "t" Ta "Toggle if buffer is tagged"
 .It Li "T" Ta "Tag no buffers"
 .It Li "C-t" Ta "Tag all buffers"
+.It Li "p" Ta "Paste selected buffer"
+.It Li "P" Ta "Paste tagged buffers"
 .It Li "d" Ta "Delete selected buffer"
 .It Li "D" Ta "Delete tagged buffers"
 .It Li "f" Ta "Enter a format to filter items"

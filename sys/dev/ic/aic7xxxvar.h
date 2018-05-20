@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.30 2016/08/17 01:17:54 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.31 2017/12/12 12:33:36 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.30 2016/08/17 01:17:54 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.31 2017/12/12 12:33:36 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -56,8 +56,6 @@
 
 #include <dev/ic/aic7xxx_cam.h>
 /************************* Forward Declarations *******************************/
-struct ahc_platform_data;
-struct scb_platform_data;
 struct seeprom_descriptor;
 
 /****************************** Useful Macros *********************************/
@@ -598,7 +596,6 @@ struct scb {
 	struct ahc_softc	 *ahc_softc;
 	scb_flag		  flags;
 	bus_dmamap_t		  dmamap;
-	struct scb_platform_data *platform_data;
 	struct sg_map_node	 *sg_map;
 	struct ahc_dma_seg	 *sg_list;
 	bus_addr_t		  sg_list_phys;
@@ -981,11 +978,6 @@ struct ahc_softc {
 	 * Bus attachment specific data.
 	 */
 	union ahc_bus_softc	  bus_softc;
-
-	/*
-	 * Platform specific data.
-	 */
-	struct ahc_platform_data *platform_data;
 
 	/*
 	 * Platform specific device information.

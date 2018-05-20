@@ -1,5 +1,6 @@
-.\"	$OpenBSD: OCSP_response_status.3,v 1.4 2016/12/25 22:15:10 schwarze Exp $
-.\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: OCSP_response_status.3,v 1.6 2018/03/22 21:08:22 schwarze Exp $
+.\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" selective merge up to: OpenSSL e23ac625 Jan 24 12:27:19 2018 -0500
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -19,7 +20,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2014, 2016, 2018 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -65,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt OCSP_RESPONSE_STATUS 3
 .Os
 .Sh NAME
@@ -81,7 +82,8 @@
 .Nm OCSP_RESPID_free ,
 .Nm OCSP_response_create ,
 .Nm OCSP_response_status ,
-.Nm OCSP_response_get1_basic
+.Nm OCSP_response_get1_basic ,
+.Nm OCSP_basic_sign
 .Nd OCSP response functions
 .Sh SYNOPSIS
 .In openssl/ocsp.h
@@ -117,6 +119,15 @@
 .Ft OCSP_BASICRESP *
 .Fo OCSP_response_get1_basic
 .Fa "OCSP_RESPONSE *resp"
+.Fc
+.Ft int
+.Fo OCSP_basic_sign
+.Fa "OCSP_BASICRESP *bs"
+.Fa "X509 *signer"
+.Fa "EVP_PKEY *key"
+.Fa "const EVP_MD *dgst"
+.Fa "STACK_OF(X509) *certs"
+.Fa "unsigned long flags"
 .Fc
 .Sh DESCRIPTION
 .Fn OCSP_RESPONSE_new
@@ -206,6 +217,29 @@ object contained in
 .Fa resp .
 It is only called if the status of a response is
 .Dv OCSP_RESPONSE_STATUS_SUCCESSFUL .
+.Pp
+.Fn OCSP_basic_sign
+signs the OCSP response
+.Fa bs
+using the certificate
+.Fa signer ,
+the private key
+.Fa key ,
+the digest
+.Fa dgst ,
+and the additional certificates
+.Fa certs .
+If the
+.Fa flags
+option
+.Dv OCSP_NOCERTS
+is set, then no certificates will be included in the request.
+If the
+.Fa flags
+option
+.Dv OCSP_RESPID_KEY
+is set, then the responder is identified by key ID
+rather than by name.
 .Sh RETURN VALUES
 .Fn OCSP_RESPONSE_new
 and
@@ -240,6 +274,9 @@ if an error occurred.
 .Pp
 .Fn OCSP_response_status
 returns a status value.
+.Pp
+.Fn OCSP_basic_sign
+return 1 on success or 0 on failure.
 .Sh SEE ALSO
 .Xr OCSP_cert_to_id 3 ,
 .Xr OCSP_request_add1_nonce 3 ,
@@ -249,3 +286,7 @@ returns a status value.
 .Sh STANDARDS
 RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
 Status Protocol, section 4.2: Response Syntax
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.7
+and have been available since
+.Ox 3.2 .

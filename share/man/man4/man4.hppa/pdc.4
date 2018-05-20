@@ -1,4 +1,4 @@
-.\" $OpenBSD: pdc.4,v 1.9 2013/01/17 21:54:18 jmc Exp $
+.\" $OpenBSD: pdc.4,v 1.10 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2013 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt PDC 4 hppa
 .Os
 .Sh NAME
@@ -158,7 +158,8 @@ The cache configuration word is formatted as follows:
 .It Sy "bit" Ta Sy "len" Ta Sy "contents"
 .It "0" Ta "12" Ta "reserved"
 .It "13" Ta "3" Ta "set 1 if coherent operation supported"
-.It "16" Ta "2" Ta "flush mode: 0 -- fdc & fic; 1 -- fdc; 2 -- fic; 3 -- either"
+.It "16" Ta "2" Ta "flush mode: 0 \(em fdc & fic; 1 \(em fdc;\
+ 2 \(em fic; 3 \(em either"
 .It "18" Ta "1" Ta "write-thru D-cache if set"
 .It "19" Ta "2" Ta "reserved"
 .It "21" Ta "3" Ta "cache line size"

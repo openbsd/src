@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: wsmoused,v 1.1 2011/07/07 22:23:56 robert Exp $
+# $OpenBSD: wsmoused,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/wsmoused"
 

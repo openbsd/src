@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.74 2017/05/29 11:13:09 jmc Exp $
+.\"	$OpenBSD: sigaction.2,v 1.75 2018/02/27 03:29:50 schwarze Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: February 27 2018 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ struct sigaction {
 };
 .Ed
 .Pp
-.Fd #define sa_handler		__sigaction_u.__sa_handler
+.Fd #define sa_handler	__sigaction_u.__sa_handler
 .Fd #define sa_sigaction	__sigaction_u.__sa_sigaction
 .Ft int
 .Fn sigaction "int sig" "const struct sigaction *act" "struct sigaction *oact"

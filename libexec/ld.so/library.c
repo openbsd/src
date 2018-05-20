@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.81 2017/02/08 04:34:29 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.82 2017/12/08 05:25:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -198,7 +198,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
 	    MAP_PRIVATE|MAP_FILE, libfile, 0);
 	if (_dl_mmap_error(libaddr)) {
-		_dl_printf("%s: rtld mmap failed mapping %s.\n",
+		_dl_printf("%s: ld.so mmap failed mapping %s.\n",
 		    __progname, libname);
 		_dl_close(libfile);
 		_dl_errno = DL_CANT_MMAP;
@@ -243,7 +243,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 			next_load->size = size;
 			next_load->prot = PFLAGS(phdp->p_flags);
 			if (size != 0 && _dl_mmap_error(res)) {
-				_dl_printf("%s: rtld mmap failed mapping %s.\n",
+				_dl_printf("%s: ld.so mmap failed mapping %s.\n",
 				    __progname, libname);
 				_dl_close(libfile);
 				_dl_errno = DL_CANT_MMAP;
@@ -265,7 +265,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 				res = _dl_mmap(start, size, flags,
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
 				if (_dl_mmap_error(res)) {
-					_dl_printf("%s: rtld mmap failed mapping %s.\n",
+					_dl_printf("%s: ld.so mmap failed mapping %s.\n",
 					    __progname, libname);
 					_dl_close(libfile);
 					_dl_errno = DL_CANT_MMAP;

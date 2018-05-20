@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.48 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.49 2018/01/17 15:52:34 stsp Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -384,13 +384,13 @@ vdsk_tx_intr(void *arg)
 	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Tx link down\n"));
+			DPRINTF(("%s: Tx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Tx link up\n"));
+			DPRINTF(("%s: Tx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Tx link reset\n"));
+			DPRINTF(("%s: Tx link reset\n", __func__));
 			break;
 		}
 		lc->lc_tx_state = tx_state;
@@ -422,14 +422,14 @@ vdsk_rx_intr(void *arg)
 		lc->lc_state = 0;
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Rx link down\n"));
+			DPRINTF(("%s: Rx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Rx link up\n"));
+			DPRINTF(("%s: Rx link up\n", __func__));
 			ldc_send_vers(lc);
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Rx link reset\n"));
+			DPRINTF(("%s: Rx link reset\n", __func__));
 			break;
 		}
 		lc->lc_rx_state = rx_state;

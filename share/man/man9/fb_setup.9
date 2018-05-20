@@ -1,4 +1,4 @@
-.\" $OpenBSD: fb_setup.9,v 1.6 2016/08/30 16:45:54 natano Exp $
+.\" $OpenBSD: fb_setup.9,v 1.7 2017/11/30 11:29:03 helg Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2016 $
+.Dd $Mdocdate: November 30 2017 $
 .Dt FB_SETUP 9
 .Os
 .Sh NAME
@@ -184,8 +184,6 @@ The fusebuf is a close dir operation.
 The fusebuf is a dir sync operation.
 .It Dv FBT_ACCESS
 The fusebuf is an access operation.
-.It Dv FBT_CREATE
-The fusebuf is a create file operation.
 .It Dv FBT_DESTROY
 The fusebuf closes the FUSE connection.
 .El
@@ -210,7 +208,7 @@ Used by the getattr and setattr calls.
 .It Fa FD_io
 Contains all fields commonly used by FUSE client callbacks to
 provide information to FUSE vnops.
-It is used by access, readdir, release, releasedir, read, write, create,
+It is used by access, readdir, release, releasedir, read, write,
 mkdir, and setattr.
 .El
 .Pp

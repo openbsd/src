@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.22 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.24 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -241,7 +240,7 @@ pconsopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0))
+	} else if ((tp->t_state & TS_XCLUDE) && suser(p))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	

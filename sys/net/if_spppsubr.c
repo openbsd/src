@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.172 2017/08/15 06:08:52 florian Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.174 2018/02/19 08:59:52 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -863,12 +863,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			return (EINVAL);
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
-		break;
-	case SIOCGIFHARDMTU:
-		ifr->ifr_hardmtu = ifp->if_hardmtu;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -4500,7 +4494,7 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		spa->flags = auth->flags;
 
 		/* do not copy the secret, and only let root know the name */
-		if (auth->name != NULL && suser(curproc, 0) == 0)
+		if (auth->name != NULL && suser(curproc) == 0)
 			strlcpy(spa->name, auth->name, sizeof(spa->name));
 
 		if (copyout(spa, (caddr_t)ifr->ifr_data, sizeof(*spa)) != 0) {

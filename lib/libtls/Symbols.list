@@ -42,6 +42,7 @@ tls_config_set_ocsp_staple_file
 tls_config_set_protocols
 tls_config_set_session_id
 tls_config_set_session_lifetime
+tls_config_set_session_fd
 tls_config_set_verify_depth
 tls_config_skip_private_key_check
 tls_config_verify
@@ -51,6 +52,7 @@ tls_configure
 tls_conn_alpn_selected
 tls_conn_cipher
 tls_conn_servername
+tls_conn_session_resumed
 tls_conn_version
 tls_connect
 tls_connect_cbs

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.52 2017/05/18 18:50:32 kettenis Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.55 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -276,42 +276,50 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	return (uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
-	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW)));
+	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW |
+	    (cmd->ev_flags & VMCMD_STACK ? UVM_FLAG_STACK : 0))));
 }
 
 /*
  * vmcmd_randomize():
  *	handle vmcmd which specifies a randomized address space region.
  */
-
+#define RANDOMIZE_CTX_THRESHOLD 512
 int
 vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 {
-	char *buf;
 	int error;
-	size_t off = 0, len;
+	struct arc4random_ctx *ctx;
+	char *buf;
+	size_t sublen, off = 0;
+	size_t len = cmd->ev_len;
 
-	if (cmd->ev_len == 0)
+	if (len == 0)
 		return (0);
-	if (cmd->ev_len > ELF_RANDOMIZE_LIMIT)
+	if (len > ELF_RANDOMIZE_LIMIT)
 		return (EINVAL);
 
 	buf = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-	len = cmd->ev_len;
-	do {
-		size_t sublen = MIN(len, PAGE_SIZE);
-
-		arc4random_buf(buf, sublen);
-		error = copyout(buf, (void *)cmd->ev_addr + off, sublen);
-		if (error)
-			break;
-		off += sublen;
-		len -= sublen;
-		if (len)
-			yield();
-	} while (len);
+	if (len < RANDOMIZE_CTX_THRESHOLD) {
+		arc4random_buf(buf, len);
+		error = copyout(buf, (void *)cmd->ev_addr, len);
+		explicit_bzero(buf, len);
+	} else {
+		ctx = arc4random_ctx_new();
+		do {
+			sublen = MIN(len, PAGE_SIZE);
+			arc4random_ctx_buf(ctx, buf, sublen);
+			error = copyout(buf, (void *)cmd->ev_addr + off, sublen);
+			if (error)
+				break;
+			off += sublen;
+			len -= sublen;
+			sched_pause(yield);
+		} while (len);
+		arc4random_ctx_free(ctx);
+		explicit_bzero(buf, PAGE_SIZE);
+	}
 	free(buf, M_TEMP, PAGE_SIZE);
-
 	return (error);
 }
 
@@ -372,17 +380,19 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 #ifdef MACHINE_STACK_GROWS_UP
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0, PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0,
+	    PROT_NONE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    epp->ep_maxsaddr, NULLVP, 0,
-	    PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE, VMCMD_STACK);
 #else
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr, NULLVP, 0,
+	    PROT_NONE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE, VMCMD_STACK);
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.33 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.36 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
@@ -104,7 +104,7 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 	int error;
 
 	/* Make sure that the caller is root. */
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 
 	/*
@@ -116,7 +116,7 @@ sys_acct(struct proc *p, void *v, register_t *retval)
 		    p);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
-		VOP_UNLOCK(nd.ni_vp, p);
+		VOP_UNLOCK(nd.ni_vp);
 		if (nd.ni_vp->v_type != VREG) {
 			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 			return (EACCES);

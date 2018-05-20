@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.347 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.355 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -176,14 +176,17 @@ do { \
 	struct ifnet *ifp = NULL; \
 	if (m && (m->m_flags & M_PKTHDR)) \
 		ifp = if_get(m->m_pkthdr.ph_ifidx); \
-	if ((tp)->t_flags & TF_DELACK || \
+	if (TCP_TIMER_ISARMED(tp, TCPT_DELACK) || \
 	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
 	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
-		TCP_SET_DELACK(tp); \
+		TCP_TIMER_ARM_MSEC(tp, TCPT_DELACK, tcp_delack_msecs); \
 	if_put(ifp); \
 } while (0)
+
+void	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
+void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
 void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
@@ -545,22 +548,17 @@ findpcb:
 		}
 	}
 	if (inp == NULL) {
-		int	inpl_reverse = 0;
-		if (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST)
-			inpl_reverse = 1;
 		tcpstat_inc(tcps_pcbhashmiss);
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in6_pcblookup_listen(&tcbtable,
-			    &ip6->ip6_dst, th->th_dport, inpl_reverse, m,
-			    m->m_pkthdr.ph_rtableid);
+			inp = in6_pcblookup_listen(&tcbtable, &ip6->ip6_dst,
+			    th->th_dport, m, m->m_pkthdr.ph_rtableid);
 			break;
 #endif /* INET6 */
 		case AF_INET:
-			inp = in_pcblookup_listen(&tcbtable,
-			    ip->ip_dst, th->th_dport, inpl_reverse, m,
-			    m->m_pkthdr.ph_rtableid);
+			inp = in_pcblookup_listen(&tcbtable, ip->ip_dst,
+			    th->th_dport, m, m->m_pkthdr.ph_rtableid);
 			break;
 		}
 		/*
@@ -576,6 +574,7 @@ findpcb:
 	}
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 	KASSERT(intotcpcb(inp) == NULL || intotcpcb(inp)->t_inpcb == inp);
+	soassertlocked(inp->inp_socket);
 
 	/* Check the minimum TTL for socket. */
 	switch (af) {
@@ -854,10 +853,8 @@ findpcb:
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
-#ifdef TCP_SACK
 	if (tp->sack_enable)
 		tcp_del_sackholes(tp, th); /* Delete stale SACK holes */
-#endif /* TCP_SACK */
 
 	/*
 	 * Process options.
@@ -964,7 +961,6 @@ findpcb:
 					tp->t_pmtud_mss_acked = acked;
 
 				tp->snd_una = th->th_ack;
-#if defined(TCP_SACK) || defined(TCP_ECN)
 				/*
 				 * We want snd_last to track snd_una so
 				 * as to avoid sequence wraparound problems
@@ -974,11 +970,6 @@ findpcb:
 				if (SEQ_GT(tp->snd_una, tp->snd_last))
 #endif
 				tp->snd_last = tp->snd_una;
-#endif /* TCP_SACK */
-#if defined(TCP_SACK) && defined(TCP_FACK)
-				tp->snd_fack = tp->snd_una;
-				tp->retran_data = 0;
-#endif /* TCP_FACK */
 				m_freem(m);
 
 				/*
@@ -1014,11 +1005,9 @@ findpcb:
 			 * with nothing on the reassembly queue and
 			 * we have enough buffer space to take it.
 			 */
-#ifdef TCP_SACK
 			/* Clean receiver SACK report if present */
 			if (tp->sack_enable && tp->rcv_numsacks)
 				tcp_clean_sackreport(tp);
-#endif /* TCP_SACK */
 			tcpstat_inc(tcps_preddat);
 			tp->rcv_nxt += tlen;
 			tcpstat_pkt(tcps_rcvpack, tcps_rcvbyte, tlen);
@@ -1139,7 +1128,6 @@ findpcb:
 			tp->snd_cwnd = tp->t_maxseg;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
-#ifdef TCP_SACK
                 /*
                  * If we've sent a SACK_PERMITTED option, and the peer
                  * also replied with one, then TF_SACK_PERMIT should have
@@ -1147,7 +1135,6 @@ findpcb:
                  */
 		if (tp->sack_enable)
 			tp->sack_enable = tp->t_flags & TF_SACK_PERMIT;
-#endif
 #ifdef TCP_ECN
 		/*
 		 * if ECE is set but CWR is not set for SYN-ACK, or
@@ -1167,7 +1154,9 @@ findpcb:
 
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
 			tcpstat_inc(tcps_connects);
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			soisconnected(so);
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			tp->t_state = TCPS_ESTABLISHED;
 			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 			/* Do window scaling on this connection? */
@@ -1448,7 +1437,9 @@ trimthenstep6:
 	 */
 	case TCPS_SYN_RECEIVED:
 		tcpstat_inc(tcps_connects);
+		tp->t_flags |= TF_BLOCKOUTPUT;
 		soisconnected(so);
+		tp->t_flags &= ~TF_BLOCKOUTPUT;
 		tp->t_state = TCPS_ESTABLISHED;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 		/* Do window scaling? */
@@ -1571,24 +1562,12 @@ trimthenstep6:
 				 */
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0)
 					tp->t_dupacks = 0;
-#if defined(TCP_SACK) && defined(TCP_FACK)
-				/*
-				 * In FACK, can enter fast rec. if the receiver
-				 * reports a reass. queue longer than 3 segs.
-				 */
-				else if (++tp->t_dupacks == tcprexmtthresh ||
-				    ((SEQ_GT(tp->snd_fack, tcprexmtthresh *
-				    tp->t_maxseg + tp->snd_una)) &&
-				    SEQ_GT(tp->snd_una, tp->snd_last))) {
-#else
 				else if (++tp->t_dupacks == tcprexmtthresh) {
-#endif /* TCP_FACK */
 					tcp_seq onxt = tp->snd_nxt;
 					u_long win =
 					    ulmin(tp->snd_wnd, tp->snd_cwnd) /
 						2 / tp->t_maxseg;
 
-#if defined(TCP_SACK) || defined(TCP_ECN)
 					if (SEQ_LT(th->th_ack, tp->snd_last)){
 						/*
 						 * False fast retx after
@@ -1597,11 +1576,9 @@ trimthenstep6:
 						tp->t_dupacks = 0;
 						goto drop;
 					}
-#endif
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_maxseg;
-#ifdef TCP_SACK
 					tp->snd_last = tp->snd_max;
 					if (tp->sack_enable) {
 						TCP_TIMER_DISARM(tp, TCPT_REXMT);
@@ -1611,15 +1588,6 @@ trimthenstep6:
 #endif
 						tcpstat_inc(tcps_cwr_frecovery);
 						tcpstat_inc(tcps_sack_recovery_episode);
-#if defined(TCP_SACK) && defined(TCP_FACK)
-						tp->t_dupacks = tcprexmtthresh;
-						(void) tcp_output(tp);
-						/*
-						 * During FR, snd_cwnd is held
-						 * constant for FACK.
-						 */
-						tp->snd_cwnd = tp->snd_ssthresh;
-#else
 						/*
 						 * tcp_output() will send
 						 * oldest SACK-eligible rtx.
@@ -1627,10 +1595,8 @@ trimthenstep6:
 						(void) tcp_output(tp);
 						tp->snd_cwnd = tp->snd_ssthresh+
 					           tp->t_maxseg * tp->t_dupacks;
-#endif /* TCP_FACK */
 						goto drop;
 					}
-#endif /* TCP_SACK */
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtttime = 0;
 					tp->snd_nxt = th->th_ack;
@@ -1648,17 +1614,6 @@ trimthenstep6:
 						tp->snd_nxt = onxt;
 					goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
-#if defined(TCP_SACK) && defined(TCP_FACK)
-					/*
-					 * while (awnd < cwnd)
-					 *         sendsomething();
-					 */
-					if (tp->sack_enable) {
-						if (tp->snd_awnd < tp->snd_cwnd)
-							tcp_output(tp);
-						goto drop;
-					}
-#endif /* TCP_FACK */
 					tp->snd_cwnd += tp->t_maxseg;
 					(void) tcp_output(tp);
 					goto drop;
@@ -1678,37 +1633,14 @@ trimthenstep6:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-#if defined(TCP_SACK)
-		if (tp->sack_enable) {
-			if (tp->t_dupacks >= tcprexmtthresh) {
-				/* Check for a partial ACK */
-				if (tcp_sack_partialack(tp, th)) {
-#if defined(TCP_SACK) && defined(TCP_FACK)
-					/* Force call to tcp_output */
-					if (tp->snd_awnd < tp->snd_cwnd)
-						tp->t_flags |= TF_NEEDOUTPUT;
-#else
-					tp->snd_cwnd += tp->t_maxseg;
-					tp->t_flags |= TF_NEEDOUTPUT;
-#endif /* TCP_FACK */
-				} else {
-					/* Out of fast recovery */
-					tp->snd_cwnd = tp->snd_ssthresh;
-					if (tcp_seq_subtract(tp->snd_max,
-					    th->th_ack) < tp->snd_ssthresh)
-						tp->snd_cwnd =
-						   tcp_seq_subtract(tp->snd_max,
-					           th->th_ack);
-					tp->t_dupacks = 0;
-#if defined(TCP_SACK) && defined(TCP_FACK)
-					if (SEQ_GT(th->th_ack, tp->snd_fack))
-						tp->snd_fack = th->th_ack;
-#endif /* TCP_FACK */
-				}
-			}
-		} else {
-			if (tp->t_dupacks >= tcprexmtthresh &&
-			    !tcp_newreno(tp, th)) {
+		if (tp->t_dupacks >= tcprexmtthresh) {
+			/* Check for a partial ACK */
+			if (SEQ_LT(th->th_ack, tp->snd_last)) {
+				if (tp->sack_enable)
+					tcp_sack_partialack(tp, th);
+				else
+					tcp_newreno_partialack(tp, th);
+			} else {
 				/* Out of fast recovery */
 				tp->snd_cwnd = tp->snd_ssthresh;
 				if (tcp_seq_subtract(tp->snd_max, th->th_ack) <
@@ -1718,15 +1650,13 @@ trimthenstep6:
 					    th->th_ack);
 				tp->t_dupacks = 0;
 			}
-		}
-		if (tp->t_dupacks < tcprexmtthresh)
+		} else {
+			/*
+			 * Reset the duplicate ACK counter if we
+			 * were not in fast recovery.
+			 */
 			tp->t_dupacks = 0;
-#else /* else no TCP_SACK */
-		if (tp->t_dupacks >= tcprexmtthresh &&
-		    tp->snd_cwnd > tp->snd_ssthresh)
-			tp->snd_cwnd = tp->snd_ssthresh;
-		tp->t_dupacks = 0;
-#endif
+		}
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat_inc(tcps_rcvacktoomuch);
 			goto dropafterack_ratelim;
@@ -1772,10 +1702,9 @@ trimthenstep6:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
-#if defined (TCP_SACK)
 		if (tp->t_dupacks < tcprexmtthresh)
-#endif
-		tp->snd_cwnd = ulmin(cw + incr, TCP_MAXWIN<<tp->snd_scale);
+			tp->snd_cwnd = ulmin(cw + incr,
+			    TCP_MAXWIN << tp->snd_scale);
 		}
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
@@ -1819,16 +1748,6 @@ trimthenstep6:
 #endif
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
-#if defined (TCP_SACK) && defined (TCP_FACK)
-		if (SEQ_GT(tp->snd_una, tp->snd_fack)) {
-			tp->snd_fack = tp->snd_una;
-			/* Update snd_awnd for partial ACK
-			 * without any SACK blocks.
-			 */
-			tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt,
-				tp->snd_fack) + tp->retran_data;
-		}
-#endif
 
 		switch (tp->t_state) {
 
@@ -1847,7 +1766,9 @@ trimthenstep6:
 				 * we'll hang forever.
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
+					tp->t_flags |= TF_BLOCKOUTPUT;
 					soisdisconnected(so);
+					tp->t_flags &= ~TF_BLOCKOUTPUT;
 					TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
@@ -1865,7 +1786,9 @@ trimthenstep6:
 				tp->t_state = TCPS_TIME_WAIT;
 				tcp_canceltimers(tp);
 				TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+				tp->t_flags |= TF_BLOCKOUTPUT;
 				soisdisconnected(so);
+				tp->t_flags &= ~TF_BLOCKOUTPUT;
 			}
 			break;
 
@@ -1982,10 +1905,9 @@ dodata:							/* XXX */
 	 */
 	if ((tlen || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
-#ifdef TCP_SACK
 		tcp_seq laststart = th->th_seq;
 		tcp_seq lastend = th->th_seq + tlen;
-#endif
+
 		if (th->th_seq == tp->rcv_nxt && TAILQ_EMPTY(&tp->t_segq) &&
 		    tp->t_state == TCPS_ESTABLISHED) {
 			TCP_SETUP_ACK(tp, tiflags, m);
@@ -2007,10 +1929,8 @@ dodata:							/* XXX */
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
 		}
-#ifdef TCP_SACK
 		if (tp->sack_enable)
 			tcp_update_sack_list(tp, laststart, lastend);
-#endif
 
 		/*
 		 * variable len never referenced again in modern BSD,
@@ -2036,7 +1956,9 @@ dodata:							/* XXX */
 	 */
 	if ((tiflags & TH_FIN) && TCPS_HAVEESTABLISHED(tp->t_state)) {
 		if (TCPS_HAVERCVDFIN(tp->t_state) == 0) {
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			socantrcvmore(so);
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			tp->t_flags |= TF_ACKNOW;
 			tp->rcv_nxt++;
 		}
@@ -2066,7 +1988,9 @@ dodata:							/* XXX */
 			tp->t_state = TCPS_TIME_WAIT;
 			tcp_canceltimers(tp);
 			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
+			tp->t_flags |= TF_BLOCKOUTPUT;
 			soisdisconnected(so);
+			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			break;
 
 		/*
@@ -2259,7 +2183,6 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			tp->ts_recent_age = tcp_now;
 			break;
 
-#ifdef TCP_SACK
 		case TCPOPT_SACK_PERMITTED:
 			if (!tp->sack_enable || optlen!=TCPOLEN_SACK_PERMITTED)
 				continue;
@@ -2273,7 +2196,6 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 		case TCPOPT_SACK:
 			tcp_sack_option(tp, th, cp, optlen);
 			break;
-#endif
 #ifdef TCP_SIGNATURE
 		case TCPOPT_SIGNATURE:
 			if (optlen != TCPOLEN_SIGNATURE)
@@ -2357,16 +2279,12 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 	return (0);
 }
 
-#if defined(TCP_SACK)
 u_long
 tcp_seq_subtract(u_long a, u_long b)
 {
 	return ((long)(a - b));
 }
-#endif
 
-
-#ifdef TCP_SACK
 /*
  * This function is called upon receipt of new valid data (while not in header
  * prediction mode), and it updates the ordered list of sacks.
@@ -2506,11 +2424,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			continue; /* bad SACK fields */
 		if (SEQ_LEQ(sack.end, tp->snd_una))
 			continue; /* old block */
-#if defined(TCP_SACK) && defined(TCP_FACK)
-		/* Updates snd_fack.  */
-		if (SEQ_GT(sack.end, tp->snd_fack))
-			tp->snd_fack = sack.end;
-#endif /* TCP_FACK */
 		if (SEQ_GT(th->th_ack, tp->snd_una)) {
 			if (SEQ_LT(sack.start, th->th_ack))
 				continue;
@@ -2559,16 +2472,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			}
 			if (SEQ_LEQ(sack.start, cur->start)) {
 				/* Data acks at least the beginning of hole */
-#if defined(TCP_SACK) && defined(TCP_FACK)
-				if (SEQ_GT(sack.end, cur->rxmit))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    cur->start);
-				else
-					tp->retran_data -=
-					    tcp_seq_subtract(sack.end,
-					    cur->start);
-#endif /* TCP_FACK */
 				if (SEQ_GEQ(sack.end, cur->end)) {
 					/* Acks entire hole, so delete hole */
 					if (p != cur) {
@@ -2593,12 +2496,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			}
 			/* move end of hole backward */
 			if (SEQ_GEQ(sack.end, cur->end)) {
-#if defined(TCP_SACK) && defined(TCP_FACK)
-				if (SEQ_GT(cur->rxmit, sack.start))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    sack.start);
-#endif /* TCP_FACK */
 				cur->end = sack.start;
 				cur->rxmit = SEQ_MIN(cur->rxmit, cur->end);
 				cur->dups++;
@@ -2619,16 +2516,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL)
 					goto done; /* ENOBUFS */
-#if defined(TCP_SACK) && defined(TCP_FACK)
-				if (SEQ_GT(cur->rxmit, sack.end))
-					tp->retran_data -=
-					    tcp_seq_subtract(sack.end,
-					    sack.start);
-				else if (SEQ_GT(cur->rxmit, sack.start))
-					tp->retran_data -=
-					    tcp_seq_subtract(cur->rxmit,
-					    sack.start);
-#endif /* TCP_FACK */
 				temp->next = cur->next;
 				temp->start = sack.end;
 				temp->end = cur->end;
@@ -2670,21 +2557,6 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		}
 	}
 done:
-#if defined(TCP_SACK) && defined(TCP_FACK)
-	/*
-	 * Update retran_data and snd_awnd.  Go through the list of
-	 * holes.   Increment retran_data by (hole->rxmit - hole->start).
-	 */
-	tp->retran_data = 0;
-	cur = tp->snd_holes;
-	while (cur) {
-		tp->retran_data += cur->rxmit - cur->start;
-		cur = cur->next;
-	}
-	tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt, tp->snd_fack) +
-	    tp->retran_data;
-#endif /* TCP_FACK */
-
 	return;
 }
 
@@ -2734,34 +2606,28 @@ tcp_clean_sackreport(struct tcpcb *tp)
 }
 
 /*
- * Checks for partial ack.  If partial ack arrives, turn off retransmission
- * timer, deflate the window, do not clear tp->t_dupacks, and return 1.
- * If the ack advances at least to tp->snd_last, return 0.
+ * Partial ack handling within a sack recovery episode.  When a partial ack
+ * arrives, turn off retransmission timer, deflate the window, do not clear
+ * tp->t_dupacks.
  */
-int
+void
 tcp_sack_partialack(struct tcpcb *tp, struct tcphdr *th)
 {
-	if (SEQ_LT(th->th_ack, tp->snd_last)) {
-		/* Turn off retx. timer (will start again next segment) */
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
-#ifndef TCP_FACK
-		/*
-		 * Partial window deflation.  This statement relies on the
-		 * fact that tp->snd_una has not been updated yet.  In FACK
-		 * hold snd_cwnd constant during fast recovery.
-		 */
-		if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
-			tp->snd_cwnd -= th->th_ack - tp->snd_una;
-			tp->snd_cwnd += tp->t_maxseg;
-		} else
-			tp->snd_cwnd = tp->t_maxseg;
-#endif
-		return (1);
-	}
-	return (0);
+	/* Turn off retx. timer (will start again next segment) */
+	TCP_TIMER_DISARM(tp, TCPT_REXMT);
+	tp->t_rtttime = 0;
+	/*
+	 * Partial window deflation.  This statement relies on the
+	 * fact that tp->snd_una has not been updated yet.
+	 */
+	if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
+		tp->snd_cwnd -= th->th_ack - tp->snd_una;
+		tp->snd_cwnd += tp->t_maxseg;
+	} else
+		tp->snd_cwnd = tp->t_maxseg;
+	tp->snd_cwnd += tp->t_maxseg;
+	tp->t_flags |= TF_NEEDOUTPUT;
 }
-#endif /* TCP_SACK */
 
 /*
  * Pull out of band byte out of a segment so
@@ -3120,52 +2986,46 @@ tcp_mss_update(struct tcpcb *tp)
 
 }
 
-#if defined (TCP_SACK)
 /*
- * Checks for partial ack.  If partial ack arrives, force the retransmission
- * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
- * 1.  By setting snd_nxt to ti_ack, this forces retransmission timer to
- * be started again.  If the ack advances at least to tp->snd_last, return 0.
+ * When a partial ack arrives, force the retransmission of the
+ * next unacknowledged segment.  Do not clear tp->t_dupacks.
+ * By setting snd_nxt to ti_ack, this forces retransmission timer
+ * to be started again.
  */
-int
-tcp_newreno(struct tcpcb *tp, struct tcphdr *th)
+void
+tcp_newreno_partialack(struct tcpcb *tp, struct tcphdr *th)
 {
-	if (SEQ_LT(th->th_ack, tp->snd_last)) {
-		/*
-		 * snd_una has not been updated and the socket send buffer
-		 * not yet drained of the acked data, so we have to leave
-		 * snd_una as it was to get the correct data offset in
-		 * tcp_output().
-		 */
-		tcp_seq onxt = tp->snd_nxt;
-		u_long  ocwnd = tp->snd_cwnd;
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
-		tp->snd_nxt = th->th_ack;
-		/*
-		 * Set snd_cwnd to one segment beyond acknowledged offset
-		 * (tp->snd_una not yet updated when this function is called)
-		 */
-		tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
-		(void) tcp_output(tp);
-		tp->snd_cwnd = ocwnd;
-		if (SEQ_GT(onxt, tp->snd_nxt))
-			tp->snd_nxt = onxt;
-		/*
-		 * Partial window deflation.  Relies on fact that tp->snd_una
-		 * not updated yet.
-		 */
-		if (tp->snd_cwnd > th->th_ack - tp->snd_una)
-			tp->snd_cwnd -= th->th_ack - tp->snd_una;
-		else
-			tp->snd_cwnd = 0;
-		tp->snd_cwnd += tp->t_maxseg;
+	/*
+	 * snd_una has not been updated and the socket send buffer
+	 * not yet drained of the acked data, so we have to leave
+	 * snd_una as it was to get the correct data offset in
+	 * tcp_output().
+	 */
+	tcp_seq onxt = tp->snd_nxt;
+	u_long  ocwnd = tp->snd_cwnd;
 
-		return 1;
-	}
-	return 0;
+	TCP_TIMER_DISARM(tp, TCPT_REXMT);
+	tp->t_rtttime = 0;
+	tp->snd_nxt = th->th_ack;
+	/*
+	 * Set snd_cwnd to one segment beyond acknowledged offset
+	 * (tp->snd_una not yet updated when this function is called)
+	 */
+	tp->snd_cwnd = tp->t_maxseg + (th->th_ack - tp->snd_una);
+	(void)tcp_output(tp);
+	tp->snd_cwnd = ocwnd;
+	if (SEQ_GT(onxt, tp->snd_nxt))
+		tp->snd_nxt = onxt;
+	/*
+	 * Partial window deflation.  Relies on fact that tp->snd_una
+	 * not updated yet.
+	 */
+	if (tp->snd_cwnd > th->th_ack - tp->snd_una)
+		tp->snd_cwnd -= th->th_ack - tp->snd_una;
+	else
+		tp->snd_cwnd = 0;
+	tp->snd_cwnd += tp->t_maxseg;
 }
-#endif /* TCP_SACK */
 
 int
 tcp_mss_adv(struct mbuf *m, int af)
@@ -3594,9 +3454,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct tcpcb *tp = NULL;
 	struct mbuf *am;
 	struct socket *oso;
-#if NPF > 0
-	struct pf_divert *divert = NULL;
-#endif
 
 	NET_ASSERT_LOCKED();
 
@@ -3657,10 +3514,13 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 
 #if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED &&
-	    (divert = pf_find_divert(m)) != NULL)
+	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
 		inp->inp_rtableid = divert->rdomain;
-	else
+	} else
 #endif
 	/* inherit rtable from listening socket */
 	inp->inp_rtableid = sc->sc_rtableid;
@@ -3740,33 +3600,21 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		m_freem(m);
 		goto abort;
 	}
-#ifdef TCP_SACK
 	tp->sack_enable = sc->sc_flags & SCF_SACK_PERMIT;
-#endif
-
 	tp->ts_modulate = sc->sc_modulate;
 	tp->ts_recent = sc->sc_timestamp;
 	tp->iss = sc->sc_iss;
 	tp->irs = sc->sc_irs;
 	tcp_sendseqinit(tp);
-#if defined (TCP_SACK) || defined(TCP_ECN)
 	tp->snd_last = tp->snd_una;
-#endif /* TCP_SACK */
-#if defined(TCP_SACK) && defined(TCP_FACK)
-	tp->snd_fack = tp->snd_una;
-	tp->retran_data = 0;
-	tp->snd_awnd = 0;
-#endif /* TCP_FACK */
 #ifdef TCP_ECN
 	if (sc->sc_flags & SCF_ECN_PERMIT) {
 		tp->t_flags |= TF_ECN_PERMIT;
 		tcpstat_inc(tcps_ecn_accepts);
 	}
 #endif
-#ifdef TCP_SACK
 	if (sc->sc_flags & SCF_SACK_PERMIT)
 		tp->t_flags |= TF_SACK_PERMIT;
-#endif
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE)
 		tp->t_flags |= TF_SIGNATURE;
@@ -3919,9 +3767,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (optp) {
 #endif
 		tb.pf = tp->pf;
-#ifdef TCP_SACK
 		tb.sack_enable = tp->sack_enable;
-#endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
 		if (tp->t_flags & TF_SIGNATURE)
@@ -4034,14 +3880,12 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    (th->th_flags & (TH_ECE|TH_CWR)) == (TH_ECE|TH_CWR))
 		sc->sc_flags |= SCF_ECN_PERMIT;
 #endif
-#ifdef TCP_SACK
 	/*
 	 * Set SCF_SACK_PERMIT if peer did send a SACK_PERMITTED option
 	 * (i.e., if tcp_dooptions() did set TF_SACK_PERMIT).
 	 */
 	if (tb.sack_enable && (tb.t_flags & TF_SACK_PERMIT))
 		sc->sc_flags |= SCF_SACK_PERMIT;
-#endif
 #ifdef TCP_SIGNATURE
 	if (tb.t_flags & TF_SIGNATURE)
 		sc->sc_flags |= SCF_SIGNATURE;
@@ -4089,9 +3933,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
-#ifdef TCP_SACK
 	    ((sc->sc_flags & SCF_SACK_PERMIT) ? 4 : 0) +
-#endif
 #ifdef TCP_SIGNATURE
 	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGLEN : 0) +
 #endif
@@ -4171,13 +4013,11 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	*optp++ = (sc->sc_ourmaxseg >> 8) & 0xff;
 	*optp++ = sc->sc_ourmaxseg & 0xff;
 
-#ifdef TCP_SACK
 	/* Include SACK_PERMIT_HDR option if peer has already done so. */
 	if (sc->sc_flags & SCF_SACK_PERMIT) {
 		*((u_int32_t *)optp) = htonl(TCPOPT_SACK_PERMIT_HDR);
 		optp += 4;
 	}
-#endif
 
 	if (sc->sc_request_r_scale != 15) {
 		*((u_int32_t *)optp) = htonl(TCPOPT_NOP << 24 |

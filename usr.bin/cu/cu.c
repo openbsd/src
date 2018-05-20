@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.25 2017/08/22 16:32:37 mestre Exp $ */
+/* $OpenBSD: cu.c,v 1.26 2017/12/10 01:03:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -42,6 +42,7 @@ struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
 int			 is_direct = -1;
+int			 restricted = 0;
 const char		*line_path = NULL;
 int			 line_speed = -1;
 int			 line_fd;
@@ -66,7 +67,7 @@ void		try_remote(const char *, const char *, const char *);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-d] [-l line] [-s speed | -speed]\n",
+	fprintf(stderr, "usage: %s [-dr] [-l line] [-s speed | -speed]\n",
 	    __progname);
 	fprintf(stderr, "       %s [host]\n", __progname);
 	exit(1);
@@ -100,10 +101,15 @@ main(int argc, char **argv)
 			errx(1, "speed asprintf");
 	}
 
-	while ((opt = getopt(argc, argv, "dl:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "drl:s:")) != -1) {
 		switch (opt) {
 		case 'd':
 			is_direct = 1;
+			break;
+		case 'r':
+			if (pledge("stdio rpath wpath tty", NULL) == -1)
+				err(1, "pledge");
+			restricted = 1;
 			break;
 		case 'l':
 			line_path = optarg;
@@ -162,6 +168,8 @@ main(int argc, char **argv)
 	line_fd = open(line_path, flags);
 	if (line_fd < 0)
 		err(1, "open(\"%s\")", line_path);
+	if (restricted && pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
 	if (!isatty(line_fd))
 		err(1, "%s", line_path);
 	if (ioctl(line_fd, TIOCEXCL) != 0)

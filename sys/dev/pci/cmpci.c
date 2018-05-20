@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.42 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.43 2018/04/11 04:48:31 ratchov Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -528,12 +528,7 @@ cmpci_activate(struct device *self, int act)
 int
 cmpci_resume(struct cmpci_softc *sc)
 {
-	int i;
-
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_RESET, 0);
-	for (i = 0; i < CMPCI_NDEVS; i++)
-		cmpci_set_mixer_gain(sc, i);
-
 	return 0;
 }
 

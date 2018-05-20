@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.124 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.125 2018/03/10 10:51:46 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4035,7 +4035,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 		rxbd->rx_bd_haddr_lo = addr;
 	}
 
-	if_rxr_init(&sc->rx_ring, 2, sc->max_rx_bd);
+	if_rxr_init(&sc->rx_ring, 16, sc->max_rx_bd);
 
 	/* Fill up the RX chain. */
 	bnx_fill_rx_chain(sc);

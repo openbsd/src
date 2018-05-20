@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.25 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: openssl.c,v 1.26 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -385,7 +385,7 @@ lock_dbg_cb(int mode, int type, const char *file, int line)
 		goto err;
 	}
 
-err:
+ err:
 	if (errstr) {
 		/* we cannot use bio_err here */
 		fprintf(stderr, "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
@@ -560,7 +560,7 @@ main(int argc, char **argv)
 	BIO_printf(bio_err, "bad exit\n");
 	ret = 1;
 
-end:
+ end:
 	free(to_free);
 
 	if (config != NULL) {
@@ -707,7 +707,7 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 		BIO_printf(bio_err, "\n\n");
 		ret = 0;
 	}
-end:
+ end:
 	return (ret);
 }
 

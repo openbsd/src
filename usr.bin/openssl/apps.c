@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.44 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: apps.c,v 1.47 2018/02/07 08:57:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -583,9 +583,8 @@ load_pkcs12(BIO *err, BIO *in, const char *desc, pem_password_cb *pem_cb,
 	}
 	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
 
-die:
-	if (p12)
-		PKCS12_free(p12);
+ die:
+	PKCS12_free(p12);
 	return ret;
 }
 
@@ -643,7 +642,7 @@ load_cert(BIO *err, const char *file, int format, const char *pass,
 		goto end;
 	}
 
-end:
+ end:
 	if (x == NULL) {
 		BIO_printf(err, "unable to load certificate\n");
 		ERR_print_errors(err);
@@ -706,7 +705,7 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		BIO_printf(err, "bad input format specified for key file\n");
 		goto end;
 	}
-end:
+ end:
 	BIO_free(key);
 	if (pkey == NULL) {
 		BIO_printf(err, "unable to load %s\n", key_descrip);
@@ -783,7 +782,7 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		goto end;
 	}
 
-end:
+ end:
 	BIO_free(key);
 	if (pkey == NULL)
 		BIO_printf(err, "unable to load %s\n", key_descrip);
@@ -828,7 +827,7 @@ load_netscape_key(BIO *err, BIO *key, const char *file,
 	EVP_PKEY_set1_RSA(pkey, rsa);
 	return pkey;
 
-error:
+ error:
 	BUF_MEM_free(buf);
 	EVP_PKEY_free(pkey);
 	return NULL;
@@ -899,9 +898,8 @@ load_certs_crls(BIO *err, const char *file, int format, const char *pass,
 	if (pcrls && sk_X509_CRL_num(*pcrls) > 0)
 		rv = 1;
 
-end:
-	if (xis)
-		sk_X509_INFO_pop_free(xis, X509_INFO_free);
+ end:
+	sk_X509_INFO_pop_free(xis, X509_INFO_free);
 
 	if (rv == 0) {
 		if (pcerts) {
@@ -1066,7 +1064,7 @@ copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 
 	ret = 1;
 
-end:
+ end:
 	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 
 	return ret;
@@ -1181,7 +1179,7 @@ setup_verify(BIO *bp, char *CAfile, char *CApath)
 	ERR_clear_error();
 	return store;
 
-end:
+ end:
 	X509_STORE_free(store);
 	return NULL;
 }
@@ -1310,11 +1308,9 @@ load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 		ai = NULL;
 	}
 
-err:
-	if (in != NULL)
-		BIO_free(in);
-	if (ai != NULL)
-		ASN1_INTEGER_free(ai);
+ err:
+	BIO_free(in);
+	ASN1_INTEGER_free(ai);
 	return (ret);
 }
 
@@ -1358,11 +1354,9 @@ save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 		ai = NULL;
 	}
 
-err:
-	if (out != NULL)
-		BIO_free_all(out);
-	if (ai != NULL)
-		ASN1_INTEGER_free(ai);
+ err:
+	BIO_free_all(out);
+	ASN1_INTEGER_free(ai);
 	return (ret);
 }
 
@@ -1405,7 +1399,7 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	}
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1430,8 +1424,8 @@ rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
 
 	ret = 1;
 
-error:
-	if (!b)
+ error:
+	if (b != btmp)
 		BN_free(btmp);
 
 	return ret;
@@ -1496,13 +1490,10 @@ load_index(char *dbfile, DB_ATTR *db_attr)
 		}
 	}
 
-err:
-	if (dbattr_conf)
-		NCONF_free(dbattr_conf);
-	if (tmpdb)
-		TXT_DB_free(tmpdb);
-	if (in)
-		BIO_free_all(in);
+ err:
+	NCONF_free(dbattr_conf);
+	TXT_DB_free(tmpdb);
+	BIO_free_all(in);
 	return retdb;
 }
 
@@ -1572,7 +1563,7 @@ save_index(const char *file, const char *suffix, CA_DB *db)
 
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1667,7 +1658,7 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 	}
 	return 1;
 
-err:
+ err:
 	return 0;
 }
 
@@ -1675,8 +1666,7 @@ void
 free_index(CA_DB *db)
 {
 	if (db) {
-		if (db->db)
-			TXT_DB_free(db->db);
+		TXT_DB_free(db->db);
 		free(db);
 	}
 }
@@ -1831,11 +1821,11 @@ parse_name(char *subject, long chtype, int multirdn)
 	}
 	goto done;
 
-error:
+ error:
 	X509_NAME_free(name);
 	name = NULL;
 
-done:
+ done:
 	free(ne_values);
 	free(ne_types);
 	free(mval);
@@ -1945,8 +1935,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		return 0;
 
 	if (*badarg) {
-		if (*pm)
-			X509_VERIFY_PARAM_free(*pm);
+		X509_VERIFY_PARAM_free(*pm);
 		*pm = NULL;
 		goto end;
 	}
@@ -1970,7 +1959,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 	if (at_time)
 		X509_VERIFY_PARAM_set_time(*pm, at_time);
 
-end:
+ end:
 	(*pargs)++;
 
 	if (pargc)
@@ -2075,8 +2064,8 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 
 	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
-	if (free_out)
-		BIO_free(out);
+
+	BIO_free(out);
 }
 
 /*
@@ -2316,17 +2305,17 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 		}
 	}
 
-done:
+ done:
 	if (argsused != NULL)
 		*argsused = i;
 
 	return (0);
 
-toomany:
+ toomany:
 	fprintf(stderr, "too many arguments\n");
 	return (1);
 
-unknown:
+ unknown:
 	fprintf(stderr, "unknown option '%s'\n", arg);
 	return (1);
 }

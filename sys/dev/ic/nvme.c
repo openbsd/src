@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.60 2017/08/18 09:26:43 jsg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.61 2018/01/10 15:45:46 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1058,6 +1058,18 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	}
 
 	sc->sc_nn = lemtoh32(&identify->nn);
+
+	/*
+	 * At least one Apple NVMe device presents a second, bogus disk that is
+	 * inaccessible, so cap targets at 1.
+	 *
+	 * sd1 at scsibus1 targ 1 lun 0: <NVMe, APPLE SSD AP0512, 16.1> [..]
+	 * sd1: 0MB, 4096 bytes/sector, 2 sectors
+	 */
+	if (sc->sc_nn > 1 &&
+	    mn[0] == 'A' && mn[1] == 'P' && mn[2] == 'P' && mn[3] == 'L' &&
+	    mn[4] == 'E')
+		sc->sc_nn = 1;
 
 	memcpy(&sc->sc_identify, identify, sizeof(sc->sc_identify));
 

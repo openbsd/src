@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: format-pem.pl,v 1.1 2016/12/15 10:23:21 sthen Exp $
+# $OpenBSD: format-pem.pl,v 1.2 2018/03/21 15:23:53 sthen Exp $
 #
 # Copyright (c) 2016 Stuart Henderson <sthen@openbsd.org>
 #
@@ -50,7 +50,11 @@ while(<>) {
 			if ($issuer ne $subj);
 
 		my $o = `openssl x509 -in $t -noout -nameopt sep_multiline,use_quote,esc_msb -subject`;
-		$o =~ s/.*O=([^\n]*).*/$1/sm;
+		if ($o =~ /O=/) {
+			$o =~ s/.*O=([^\n]*).*/$1/sm;
+		} else {
+			$o = $subj;
+		}
 
 		if (eval {require Date::Parse;1;}) {
 			my $startdate = `openssl x509 -in $t -startdate -noout`;

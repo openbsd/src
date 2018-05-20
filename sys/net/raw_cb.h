@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.12 2017/07/03 19:23:47 claudio Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.16 2017/11/04 16:48:09 mpi Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -55,10 +55,6 @@ struct rawcb {
 #ifdef _KERNEL
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
-int	 raw_attach(struct socket *, int);
-void	 raw_detach(struct rawcb *);
-void	 raw_disconnect(struct rawcb *);
-void	 raw_init(void);
 int	 raw_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif /* _KERNEL */

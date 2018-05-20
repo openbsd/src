@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.16 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.17 2017/12/03 10:55:50 mpi Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -164,7 +164,7 @@ sun4u_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 	struct cpu_info *ci;
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci->ci_number == cpu_number())
+		if (ci->ci_cpuid == cpu_number())
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
@@ -180,7 +180,7 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 	int err, i, ncpus = 0;
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci->ci_number == cpu_number())
+		if (ci->ci_cpuid == cpu_number())
 			continue;
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;

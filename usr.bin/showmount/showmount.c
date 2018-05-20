@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.21 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.23 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -33,10 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <netdb.h>
 #include <rpc/rpc.h>

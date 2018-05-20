@@ -73,15 +73,11 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 	result->nsec3->nsec3_ds_parent_cover = NULL;
 	result->nsec3->nsec3_is_exact = 0;
 	result->nsec3->nsec3_ds_parent_is_exact = 0;
-	result->nsec3->have_nsec3_hash = 0;
-	result->nsec3->have_nsec3_wc_hash = 0;
-	result->nsec3->have_nsec3_ds_parent_hash = 0;
+	result->nsec3->hash_wc = NULL;
+	result->nsec3->ds_parent_hash = NULL;
 	result->nsec3->prehash_prev = NULL;
 	result->nsec3->prehash_next = NULL;
 	result->nsec3->nsec3_node.key = NULL;
-	result->nsec3->hash_node.key = NULL;
-	result->nsec3->wchash_node.key = NULL;
-	result->nsec3->dshash_node.key = NULL;
 }
 #endif /* NSEC3 */
 
@@ -89,7 +85,7 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 static void
 numlist_make_last(domain_table_type* table, domain_type* domain)
 {
-	size_t sw;
+	uint32_t sw;
 	domain_type* last = table->numlist_last;
 	if(domain == last)
 		return;
@@ -235,15 +231,27 @@ do_deldomain(namedb_type* db, domain_type* domain)
 		if(domain->nsec3->nsec3_node.key)
 			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
 				->nsec3tree, &domain->nsec3->nsec3_node);
-		if(domain->nsec3->hash_node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-				->hashtree, &domain->nsec3->hash_node);
-		if(domain->nsec3->wchash_node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-				->wchashtree, &domain->nsec3->wchash_node);
-		if(domain->nsec3->dshash_node.key)
+		if(domain->nsec3->hash_wc) {
+			if(domain->nsec3->hash_wc->hash.node.key)
+				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+					->hashtree, &domain->nsec3->hash_wc->hash.node);
+			if(domain->nsec3->hash_wc->wc.node.key)
+				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+					->wchashtree, &domain->nsec3->hash_wc->wc.node);
+		}
+		if(domain->nsec3->ds_parent_hash && domain->nsec3->ds_parent_hash->node.key)
 			zone_del_domain_in_hash_tree(nsec3_tree_dszone(db, domain)
-				->dshashtree, &domain->nsec3->dshash_node);
+				->dshashtree, &domain->nsec3->ds_parent_hash->node);
+		if(domain->nsec3->hash_wc) {
+			region_recycle(db->domains->region,
+				domain->nsec3->hash_wc,
+				sizeof(nsec3_hash_wc_node_type));
+		}
+		if(domain->nsec3->ds_parent_hash) {
+			region_recycle(db->domains->region,
+				domain->nsec3->ds_parent_hash,
+				sizeof(nsec3_hash_node_type));
+		}
 		region_recycle(db->domains->region, domain->nsec3,
 			sizeof(struct nsec3_domain_data));
 	}

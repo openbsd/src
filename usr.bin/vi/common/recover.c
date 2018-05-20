@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.26 2017/06/12 18:38:57 millert Exp $	*/
+/*	$OpenBSD: recover.c,v 1.29 2017/11/10 18:25:48 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -14,6 +14,7 @@
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 /*
  * We include <sys/file.h>, because the open #defines were found there
@@ -107,10 +108,11 @@
 #define	VI_PHEADER	"X-vi-recover-path: "
 
 static int	 rcv_copy(SCR *, int, char *);
-static void	 rcv_email(SCR *, char *);
+static void	 rcv_email(SCR *, int);
 static char	*rcv_gets(char *, size_t, int);
 static int	 rcv_mailfile(SCR *, int, char *);
 static int	 rcv_mktemp(SCR *, char *, char *, int);
+static int	 rcv_openat(SCR *, int, const char *, int *);
 
 /*
  * rcv_tmp --
@@ -263,7 +265,7 @@ rcv_sync(SCR *sp, u_int flags)
 
 		/* REQUEST: send email. */
 		if (LF_ISSET(RCV_EMAIL))
-			rcv_email(sp, ep->rcv_mpath);
+			rcv_email(sp, ep->rcv_fd);
 	}
 
 	/*
@@ -299,8 +301,8 @@ err:		rval = 1;
 	}
 
 	/* REQUEST: end the file session. */
-	if (LF_ISSET(RCV_ENDSESSION) && file_end(sp, NULL, 1))
-		rval = 1;
+	if (LF_ISSET(RCV_ENDSESSION))
+		F_SET(sp, SC_EXIT_FORCE);
 
 	return (rval);
 }
@@ -434,7 +436,7 @@ wout:		*t2++ = '\n';
 	}
 
 	if (issync) {
-		rcv_email(sp, mpath);
+		rcv_email(sp, fd);
 		if (close(fd)) {
 werr:			msgq(sp, M_SYSERR, "Recovery file");
 			goto err;
@@ -447,6 +449,59 @@ err:	if (!issync)
 	if (fd != -1)
 		(void)close(fd);
 	return (1);
+}
+
+/*
+ * rcv_openat --
+ *	Open a recovery file in the specified dir and lock it.
+ *
+ * PUBLIC: int rcv_openat(SCR *, int, const char *, int *)
+ */
+static int
+rcv_openat(SCR *sp, int dfd, const char *name, int *locked)
+{
+	struct stat sb;
+	int fd, dummy;
+
+	/*
+	 * If it's readable, it's recoverable.
+	 * Note: file_lock() sets the close on exec flag for us.
+	 */
+	fd = openat(dfd, name, O_RDONLY|O_NOFOLLOW|O_NONBLOCK);
+	if (fd == -1)
+		goto bad;
+
+	/*
+	 * Real vi recovery files are created with mode 0600.
+	 * If not a regular file or the mode has changed, skip it.
+	 */
+	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode) ||
+	    (sb.st_mode & ALLPERMS) != (S_IRUSR | S_IWUSR))
+		goto bad;
+
+	if (locked == NULL)
+		locked = &dummy;
+	switch ((*locked = file_lock(sp, NULL, NULL, fd, 0))) {
+	case LOCK_FAILED:
+		/*
+		 * XXX
+		 * Assume that a lock can't be acquired, but that we
+		 * should permit recovery anyway.  If this is wrong,
+		 * and someone else is using the file, we're going to
+		 * die horribly.
+		 */
+		break;
+	case LOCK_SUCCESS:
+		break;
+	case LOCK_UNAVAIL:
+		/* If it's locked, it's live. */
+		goto bad;
+	}
+	return fd;
+bad:
+	if (fd != -1)
+		close(fd);
+	return -1;
 }
 
 /*
@@ -484,29 +539,8 @@ rcv_list(SCR *sp)
 		if (strncmp(dp->d_name, "recover.", 8))
 			continue;
 
-		/*
-		 * If it's readable, it's recoverable.
-		 */
-		if ((fd = openat(dirfd(dirp), dp->d_name, O_RDONLY)) == -1)
+		if ((fd = rcv_openat(sp, dirfd(dirp), dp->d_name, NULL)) == -1)
 			continue;
-
-		switch (file_lock(sp, NULL, NULL, fd, 1)) {
-		case LOCK_FAILED:
-			/*
-			 * XXX
-			 * Assume that a lock can't be acquired, but that we
-			 * should permit recovery anyway.  If this is wrong,
-			 * and someone else is using the file, we're going to
-			 * die horribly.
-			 */
-			break;
-		case LOCK_SUCCESS:
-			break;
-		case LOCK_UNAVAIL:
-			/* If it's locked, it's live. */
-			close(fd);
-			continue;
-		}
 
 		/* Check the headers. */
 		if ((fp = fdopen(fd, "r")) == NULL) {
@@ -569,7 +603,7 @@ rcv_read(SCR *sp, FREF *frp)
 	DIR *dirp;
 	EXF *ep;
 	struct timespec rec_mtim;
-	int fd, found, locked, requested, sv_fd;
+	int fd, found, lck, requested, sv_fd;
 	char *name, *p, *t, *rp, *recp, *pathp;
 	char file[PATH_MAX], path[PATH_MAX], recpath[PATH_MAX];
 
@@ -588,43 +622,12 @@ rcv_read(SCR *sp, FREF *frp)
 	for (found = requested = 0; (dp = readdir(dirp)) != NULL;) {
 		if (strncmp(dp->d_name, "recover.", 8))
 			continue;
-		(void)snprintf(recpath,
-		    sizeof(recpath), "%s/%s", rp, dp->d_name);
-
-		/*
-		 * If it's readable, it's recoverable.  It would be very
-		 * nice to use stdio(3), but, we can't because that would
-		 * require closing and then reopening the file so that we
-		 * could have a lock and still close the FP.  Another tip
-		 * of the hat to fcntl(2).
-		 *
-		 * XXX
-		 * Should be O_RDONLY, we don't want to write it.  However,
-		 * if we're using fcntl(2), there's no way to lock a file
-		 * descriptor that's not open for writing.
-		 */
-		if ((fd = open(recpath, O_RDWR, 0)) == -1)
+		if ((size_t)snprintf(recpath, sizeof(recpath), "%s/%s",
+		    rp, dp->d_name) >= sizeof(recpath))
 			continue;
 
-		switch (file_lock(sp, NULL, NULL, fd, 1)) {
-		case LOCK_FAILED:
-			/*
-			 * XXX
-			 * Assume that a lock can't be acquired, but that we
-			 * should permit recovery anyway.  If this is wrong,
-			 * and someone else is using the file, we're going to
-			 * die horribly.
-			 */
-			locked = 0;
-			break;
-		case LOCK_SUCCESS:
-			locked = 1;
-			break;
-		case LOCK_UNAVAIL:
-			/* If it's locked, it's live. */
-			(void)close(fd);
+		if ((fd = rcv_openat(sp, dirfd(dirp), dp->d_name, &lck)) == -1)
 			continue;
-		}
 
 		/* Check the headers. */
 		if (rcv_gets(file, sizeof(file), fd) == NULL ||
@@ -729,7 +732,7 @@ next:			(void)close(fd);
 	ep = sp->ep;
 	ep->rcv_mpath = recp;
 	ep->rcv_fd = sv_fd;
-	if (!locked)
+	if (lck != LOCK_SUCCESS)
 		F_SET(frp, FR_UNLOCKED);
 
 	/* We believe the file is recoverable. */
@@ -813,12 +816,12 @@ rcv_mktemp(SCR *sp, char *path, char *dname, int perms)
  *	Send email.
  */
 static void
-rcv_email(SCR *sp, char *fname)
+rcv_email(SCR *sp, int fd)
 {
 	struct stat sb;
-	char buf[PATH_MAX * 2 + 20];
+	pid_t pid;
 
-	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb))
+	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1)
 		msgq_str(sp, M_SYSERR,
 		    _PATH_SENDMAIL, "not sending email: %s");
 	else {
@@ -829,8 +832,30 @@ rcv_email(SCR *sp, char *fname)
 		 * for the recipients instead of specifying them some other
 		 * way.
 		 */
-		(void)snprintf(buf, sizeof(buf),
-		    "%s -t < %s", _PATH_SENDMAIL, fname);
-		(void)system(buf);
+		switch (pid = fork()) {
+		case -1:		/* Error. */
+			msgq(sp, M_SYSERR, "fork");
+			break;
+		case 0:			/* Sendmail. */
+			if (lseek(fd, 0, SEEK_SET) == -1) {
+				msgq(sp, M_SYSERR, "lseek");
+				_exit(127);
+			}
+			if (fd != STDIN_FILENO) {
+				if (dup2(fd, STDIN_FILENO) == -1) {
+					msgq(sp, M_SYSERR, "dup2");
+					_exit(127);
+				}
+				close(fd);
+			}
+			execl(_PATH_SENDMAIL, "sendmail", "-t", (char *)NULL);
+			msgq(sp, M_SYSERR, _PATH_SENDMAIL);
+			_exit(127);
+		default:		/* Parent. */
+			while (waitpid(pid, NULL, 0) == -1 && errno == EINTR)
+				continue;
+			break;
+		}
+
 	}
 }

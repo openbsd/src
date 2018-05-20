@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.38 2016/06/24 17:22:56 tedu Exp $	*/
+/*	$OpenBSD: auth.c,v 1.39 2017/11/17 20:48:30 jca Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -399,7 +399,7 @@ auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
     if (passwd_from_file)
-	BZERO(passwd, MAXSECRETLEN);
+	EXPLICIT_BZERO(passwd, MAXSECRETLEN);
     /*
      * We've failed to authenticate ourselves to our peer.
      * He'll probably take the link down, and there's not much
@@ -422,7 +422,7 @@ auth_withpeer_success(unit, protocol)
 	break;
     case PPP_PAP:
 	if (passwd_from_file)
-	    BZERO(passwd, MAXSECRETLEN);
+	    EXPLICIT_BZERO(passwd, MAXSECRETLEN);
 	bit = PAP_WITHPEER;
 	break;
     default:
@@ -718,8 +718,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
 	set_allowed_addrs(unit, addrs);
     }
 
-    BZERO(passwd, sizeof(passwd));
-    BZERO(secret, sizeof(secret));
+    EXPLICIT_BZERO(passwd, sizeof(passwd));
+    EXPLICIT_BZERO(secret, sizeof(secret));
 
     return ret;
 }
@@ -825,7 +825,7 @@ null_login(unit)
 
     i = scan_authfile(f, "", our_name, (u_int32_t)0, secret, &addrs, filename);
     ret = i >= 0 && (i & NONWILD_CLIENT) != 0 && secret[0] == 0;
-    BZERO(secret, sizeof(secret));
+    EXPLICIT_BZERO(secret, sizeof(secret));
 
     if (ret)
 	set_allowed_addrs(unit, addrs);
@@ -864,7 +864,7 @@ get_pap_passwd(passwd)
 	return 0;
     if (passwd != NULL)
 	strlcpy(passwd, secret, MAXSECRETLEN);
-    BZERO(secret, sizeof(secret));
+    EXPLICIT_BZERO(secret, sizeof(secret));
     return 1;
 }
 
@@ -978,7 +978,7 @@ get_secret(unit, client, server, secret, secret_len, save_addrs)
 	len = MAXSECRETLEN;
     }
     BCOPY(secbuf, secret, len);
-    BZERO(secbuf, sizeof(secbuf));
+    EXPLICIT_BZERO(secbuf, sizeof(secbuf));
     *secret_len = len;
 
     return 1;

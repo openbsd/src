@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.122 2017/05/29 14:05:31 sf Exp $ */
+/*	$OpenBSD: wd.c,v 1.125 2017/12/30 23:08:29 guenther Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -62,7 +62,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mutex.h>
@@ -697,7 +697,7 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	disk_closepart(&wd->sc_dk, part, fmt);
 
 	if (wd->sc_dk.dk_openmask == 0) {
-		wd_flushcache(wd, 0);
+		wd_flushcache(wd, AT_WAIT);
 		/* XXXX Must wait for I/O to complete! */
 	}
 
@@ -820,33 +820,6 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 
 		disk_unlock(&wd->sc_dk);
 		goto exit;
-
-#ifdef notyet
-	case DIOCWFORMAT:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		{
-		struct format_op *fop;
-		struct iovec aiov;
-		struct uio auio;
-
-		fop = (struct format_op *)addr;
-		aiov.iov_base = fop->df_buf;
-		aiov.iov_len = fop->df_count;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_offset =
-			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_procp = p;
-		error = physio(wdformat, dev, B_WRITE, minphys, &auio);
-		fop->df_count -= auio.uio_resid;
-		fop->df_reg[0] = wdc->sc_status;
-		fop->df_reg[1] = wdc->sc_error;
-		goto exit;
-		}
-#endif
 
 	case DIOCCACHESYNC:
 		if ((flag & FWRITE) == 0) {
@@ -1087,11 +1060,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    WDCC_FLUSHCACHE);
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	if (flags != 0) {
-		wdc_c.flags = AT_POLL;
-	} else {
-		wdc_c.flags = AT_WAIT;
-	}
+	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
@@ -1129,11 +1098,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	wdc_c.r_command = WDCC_STANDBY_IMMED;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	if (flags != 0) {
-		wdc_c.flags = AT_POLL;
-	} else {
-		wdc_c.flags = AT_WAIT;
-	}
+	wdc_c.flags = flags;
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: standby command didn't complete\n",

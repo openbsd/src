@@ -4,8 +4,10 @@
  * RK3288 clocks.
  */
 
+#define RK3288_PLL_APLL			1
 #define RK3288_PLL_CPLL			3
 #define RK3288_PLL_GPLL			4
+#define RK3288_ARMCLK			6
 
 #define RK3288_CLK_SDMMC		68
 #define RK3288_CLK_UART0		77
@@ -31,6 +33,28 @@
 
 #define RK3288_HCLK_HOST0		450
 #define RK3288_HCLK_SDMMC		456
+
+/*
+ * RK3328 clocks.
+ */
+
+#define RK3328_PLL_APLL			1
+#define RK3328_PLL_DPLL			2
+#define RK3328_PLL_CPLL			3
+#define RK3328_PLL_GPLL			4
+#define RK3328_PLL_NPLL			5
+#define RK3328_ARMCLK			6
+
+#define RK3328_CLK_SDMMC		33
+#define RK3328_CLK_SDIO			34
+#define RK3328_CLK_EMMC			35
+#define RK3328_CLK_UART0		38
+#define RK3328_CLK_UART1		39
+#define RK3328_CLK_UART2		40
+#define RK3328_CLK_I2C0			55
+#define RK3328_CLK_I2C1			56
+#define RK3328_CLK_I2C2			57
+#define RK3328_CLK_I2C3			58
 
 /*
  * RK3399 clocks.

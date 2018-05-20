@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.260 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.261 2017/11/02 14:04:24 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -157,8 +157,8 @@ ioasic*	at	tc?
 mcclock* at	ioasic?
 le*	at	ioasic?
 bba0	at	ioasic?
-scc0	at	ioasic?
-scc1	at	ioasic?
+zs*	at	ioasic?
+zstty*	at	zs? channel 1
 tcds*	at	tc?
 asc*	at	tcds?
 asc*	at	tc?

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxahci.c,v 1.7 2016/08/04 15:52:52 kettenis Exp $ */
+/* $OpenBSD: imxahci.c,v 1.11 2018/04/02 17:43:08 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,11 +29,9 @@
 #include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxccmvar.h>
-#include <armv7/imx/imxiomuxcvar.h>
-
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -76,6 +74,20 @@
 #define SATA_GHC_HR		(1 << 0)
 #define SATA_P0PHYCR_TEST_PDDQ	(1 << 20)
 
+/* iomuxc */
+#define IOMUXC_GPR13				0x034
+#define  IOMUXC_GPR13_SATA_PHY_1_TX_EDGE_RATE		(1 << 0)
+#define  IOMUXC_GPR13_SATA_PHY_1_MPLL_CLK_EN		(1 << 1)
+#define  IOMUXC_GPR13_SATA_PHY_2_1104V			(0x11 << 2)
+#define  IOMUXC_GPR13_SATA_PHY_3_333DB			(0x00 << 7)
+#define  IOMUXC_GPR13_SATA_PHY_4_9_16			(0x04 << 11)
+#define  IOMUXC_GPR13_SATA_PHY_5_SS			(0x01 << 14)
+#define  IOMUXC_GPR13_SATA_SPEED_3G			(0x01 << 15)
+#define  IOMUXC_GPR13_SATA_PHY_6				(0x03 << 16)
+#define  IOMUXC_GPR13_SATA_PHY_7_SATA2M			(0x12 << 19)
+#define  IOMUXC_GPR13_SATA_PHY_8_30DB			(0x05 << 24)
+#define  IOMUXC_GPR13_SATA_MASK				0x07FFFFFF
+
 int	imxahci_match(struct device *, void *, void *);
 void	imxahci_attach(struct device *, struct device *, void *);
 int	imxahci_detach(struct device *, int);
@@ -114,6 +126,8 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	struct ahci_softc *sc = &imxsc->sc;
 	struct fdt_attach_args *faa = aux;
 	uint32_t timeout = 0x100000;
+	struct regmap *rm;
+	uint32_t reg;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -134,11 +148,27 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* power it up */
-	imxccm_enable_sata();
+	clock_enable(faa->fa_node, "sata_ref");
+	clock_enable(faa->fa_node, "sata");
 	delay(100);
 
 	/* power phy up */
-	imxiomuxc_enable_sata();
+	rm = regmap_bycompatible("fsl,imx6q-iomuxc-gpr");
+	if (rm != NULL) {
+		reg = regmap_read_4(rm, IOMUXC_GPR13);
+		reg &= ~IOMUXC_GPR13_SATA_MASK;
+		reg |= IOMUXC_GPR13_SATA_PHY_2_1104V |
+		    IOMUXC_GPR13_SATA_PHY_3_333DB |
+		    IOMUXC_GPR13_SATA_PHY_4_9_16 |
+		    IOMUXC_GPR13_SATA_SPEED_3G |
+		    IOMUXC_GPR13_SATA_PHY_6 |
+		    IOMUXC_GPR13_SATA_PHY_7_SATA2M |
+		    IOMUXC_GPR13_SATA_PHY_8_30DB;
+		regmap_write_4(rm, IOMUXC_GPR13, reg);
+		reg = regmap_read_4(rm, IOMUXC_GPR13);
+		reg |= IOMUXC_GPR13_SATA_PHY_1_MPLL_CLK_EN;
+		regmap_write_4(rm, IOMUXC_GPR13, reg);
+	}
 
 	/* setup */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_P0PHYCR,
@@ -153,7 +183,8 @@ imxahci_attach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_PI, 1);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS, imxccm_get_ahbclk());
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SATA_TIMER1MS,
+	    clock_get_frequency(faa->fa_node, "ahb"));
 
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SATA_P0SSTS) & 0xF) && timeout--);
 

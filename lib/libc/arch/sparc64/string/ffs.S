@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.5 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.8 2018/01/18 23:42:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,8 @@ ENTRY(ffs)
 	ldsb	[%o2 + %o0], %o0
 	retl
 	 add	%o0, 24, %o0
-END_WEAK(ffs)
+END(ffs)
+.protected ffs
 
 _C_LABEL(__ffstab):
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */

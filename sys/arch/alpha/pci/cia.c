@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.25 2009/03/30 21:43:13 kettenis Exp $ */
+/* $OpenBSD: cia.c,v 1.26 2017/10/20 12:05:01 mpi Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -194,39 +194,48 @@ cia_init(ccp, mallocsafe)
 	else
 		ccp->cc_cnfg = 0;
 
-	/*
-	 * Use BWX iff:
-	 *
-	 *	- It hasn't been disabled by the user,
-	 *	- it's enabled in CNFG,
-	 *	- we're implementation version ev5,
-	 *	- BWX is enabled in the CPU's capabilities mask (yes,
-	 *	  the bit is really cleared if the capability exists...)
-	 */
-	if ((pci_use_bwx || bus_use_bwx) &&
-	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
-	    (cpu_amask & ALPHA_AMASK_BWX) != 0) {
-		u_int32_t ctrl;
-
-		if (pci_use_bwx)
-			ccp->cc_flags |= CCF_PCI_USE_BWX;
-		if (bus_use_bwx)
-			ccp->cc_flags |= CCF_BUS_USE_BWX;
+	if (!ccp->cc_initted) {
+		/*
+		 * cpu_amask is not initialized if we are invoked during
+		 * console initialization.
+		 */
+		u_long amask = 0;
+		if (alpha_implver() >= ALPHA_IMPLVER_EV5)
+			amask =
+			    (~alpha_amask(ALPHA_AMASK_ALL)) & ALPHA_AMASK_ALL;
 
 		/*
-		 * For whatever reason, the firmware seems to enable PCI
-		 * loopback mode if it also enables BWX.  Make sure it's
-		 * enabled if we have an old, buggy firmware rev.
+		 * Use BWX iff:
+		 *
+		 *	- It hasn't been disabled by the user,
+		 *	- it's enabled in CNFG,
+		 *	- we're implementation version ev5,
+		 *	- BWX is enabled in the CPU's capabilities mask (yes,
+		 *	  the bit is really cleared if the capability exists...)
 		 */
-		alpha_mb();
-		ctrl = REGVAL(CIA_CSR_CTRL);
-		if ((ctrl & CTRL_PCI_LOOP_EN) == 0) {
-			REGVAL(CIA_CSR_CTRL) = ctrl | CTRL_PCI_LOOP_EN;
-			alpha_mb();
-		}
-	}
+		if ((pci_use_bwx || bus_use_bwx) &&
+		    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
+		    (amask & ALPHA_AMASK_BWX) != 0) {
+			u_int32_t ctrl;
 
-	if (!ccp->cc_initted) {
+			if (pci_use_bwx)
+				ccp->cc_flags |= CCF_PCI_USE_BWX;
+			if (bus_use_bwx)
+				ccp->cc_flags |= CCF_BUS_USE_BWX;
+
+			/*
+			 * For whatever reason, the firmware seems to enable PCI
+			 * loopback mode if it also enables BWX.  Make sure it's
+			 * enabled if we have an old, buggy firmware rev.
+			 */
+			alpha_mb();
+			ctrl = REGVAL(CIA_CSR_CTRL);
+			if ((ctrl & CTRL_PCI_LOOP_EN) == 0) {
+				REGVAL(CIA_CSR_CTRL) = ctrl | CTRL_PCI_LOOP_EN;
+				alpha_mb();
+			}
+		}
+
 		/* don't do these twice since they set up extents */
 		if (ccp->cc_flags & CCF_BUS_USE_BWX) {
 			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.88 2017/10/06 13:33:53 mikeb Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.95 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/timetc.h>
 
 #include "vmm.h"
 
@@ -48,7 +47,7 @@
 
 void	replacesmap(void);
 uint64_t cpu_freq(struct cpu_info *);
-void	tsc_timecounter_init(struct cpu_info *);
+void	tsc_timecounter_init(struct cpu_info *, uint64_t);
 #if NVMM > 0
 void	cpu_check_vmm_cap(struct cpu_info *);
 #endif /* NVMM > 0 */
@@ -161,9 +160,15 @@ const struct {
 	{ CPUIDECX_SKINIT,	"SKINIT" },
 	{ CPUIDECX_LWP,		"WDT" },
 	{ CPUIDECX_FMA4,	"FMA4" },
+	{ CPUIDECX_TCE,		"TCE" },
 	{ CPUIDECX_NODEID,	"NODEID" },
 	{ CPUIDECX_TBM,		"TBM" },
 	{ CPUIDECX_TOPEXT,	"TOPEXT" },
+	{ CPUIDECX_CPCTR,	"CPCTR" },
+	{ CPUIDECX_DBKP,	"DBKP" },
+	{ CPUIDECX_PERFTSC,	"PERFTSC" },
+	{ CPUIDECX_PCTRL3,	"PCTRL3" },
+	{ CPUIDECX_MWAITX,	"MWAITX" },
 }, cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
 	{ SEFF0EBX_SGX,		"SGX" },
@@ -198,6 +203,12 @@ const struct {
 	{ SEFF0ECX_AVX512VBMI,	"AVX512VBMI" },
 	{ SEFF0ECX_UMIP,	"UMIP" },
 	{ SEFF0ECX_PKU,		"PKU" },
+}, cpu_seff0_edxfeatures[] = {
+	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
+	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
+	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
+	{ SEFF0EDX_STIBP,	"STIBP" },
+	 /* SEFF0EDX_ARCH_CAP (not printed) */
 }, cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },
@@ -205,6 +216,8 @@ const struct {
 	{ CPUIDEAX_VERID,	"PERF" },
 }, cpu_cpuid_apmi_edx[] = {
 	{ CPUIDEDX_ITSC,	"ITSC" },
+}, cpu_amdspec_ebxfeatures[] = {
+	{ CPUIDEBX_IBPB,	"IBPB" },
 };
 
 int
@@ -443,6 +456,7 @@ identifycpu(struct cpu_info *ci)
 	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
+	extern uint32_t cpu_meltdown;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, ci->ci_pnfeatset, dummy, dummy, dummy);
@@ -561,7 +575,7 @@ identifycpu(struct cpu_info *ci)
 	if (cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
 		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
-		    ci->ci_feature_sefflags_ecx, dummy);
+		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
 		for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
 			if (ci->ci_feature_sefflags_ebx &
 			    cpu_seff0_ebxfeatures[i].bit)
@@ -570,6 +584,10 @@ identifycpu(struct cpu_info *ci)
 			if (ci->ci_feature_sefflags_ecx &
 			    cpu_seff0_ecxfeatures[i].bit)
 				printf(",%s", cpu_seff0_ecxfeatures[i].str);
+		for (i = 0; i < nitems(cpu_seff0_edxfeatures); i++)
+			if (ci->ci_feature_sefflags_edx &
+			    cpu_seff0_edxfeatures[i].bit)
+				printf(",%s", cpu_seff0_edxfeatures[i].str);
 	}
 
 	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06) {
@@ -582,6 +600,22 @@ identifycpu(struct cpu_info *ci)
 		if (ci->ci_family >= 0x12)
 			ci->ci_feature_tpmflags |= TPM_ARAT;
 	}
+
+	/* AMD speculation control features */
+	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		if (ci->ci_pnfeatset >= 0x80000008) {
+			CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
+			    dummy, dummy);
+			for (i = 0; i < nitems(cpu_amdspec_ebxfeatures); i++)
+				if (ci->ci_feature_amdspec_ebx &
+				    cpu_amdspec_ebxfeatures[i].bit)
+					printf(",%s",
+					    cpu_amdspec_ebxfeatures[i].str);
+		}
+	}
+
+	if (cpu_meltdown)
+		printf(",MELTDOWN");
 
 	printf("\n");
 
@@ -677,7 +711,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-	tsc_timecounter_init(ci);
+	tsc_timecounter_init(ci, freq);
 
 	cpu_topology(ci);
 #if NVMM > 0

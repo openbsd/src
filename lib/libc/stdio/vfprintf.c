@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.77 2016/08/29 12:20:57 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.78 2017/11/21 17:48:19 tb Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -279,8 +279,6 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format; <0 for N/A */
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
-	wchar_t wc;
-	mbstate_t ps;
 #ifdef FLOATING_POINT
 	/*
 	 * We can decompose the printed representation of floating
@@ -481,25 +479,13 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	convbuf = NULL;
 #endif
 
-	memset(&ps, 0, sizeof(ps));
 	/*
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
-		size_t len;
+		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
+			continue;
 
-		cp = fmt;
-		while ((len = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) != 0) {
-			if (len == (size_t)-1 || len == (size_t)-2) {
-				ret = -1;
-				goto error;
-			}
-			fmt += len;
-			if (wc == '%') {
-				fmt--;
-				break;
-			}
-		}
 		if (fmt != cp) {
 			ptrdiff_t m = fmt - cp;
 			if (m < 0 || m > INT_MAX - ret)
@@ -507,7 +493,7 @@ __vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 			PRINT(cp, m);
 			ret += m;
 		}
-		if (len == 0)
+		if (ch == '\0')
 			goto done;
 		fmt++;		/* skip over '%' */
 
@@ -852,7 +838,9 @@ fp_common:
 			xdigs = xdigs_lower;
 			ox[1] = 'x';
 			goto nosign;
-		case 's':
+		case 's': {
+			size_t len;
+
 #ifdef PRINTF_WIDE_CHAR
 			if (flags & LONGINT) {
 				wchar_t *wcp;
@@ -878,6 +866,7 @@ fp_common:
 				}
 			} else
 #endif /* PRINTF_WIDE_CHAR */
+
 			if ((cp = GETARG(char *)) == NULL) {
 				struct syslog_data sdata = SYSLOG_DATA_INIT;
 				int save_errno = errno;
@@ -893,6 +882,7 @@ fp_common:
 				goto overflow;
 			size = (int)len;
 			sign = '\0';
+			}
 			break;
 		case 'U':
 			flags |= LONGINT;
@@ -1156,8 +1146,6 @@ __find_arguments(const char *fmt0, va_list ap, union arg **argtable,
 	int tablemax;		/* largest used index in table */
 	int nextarg;		/* 1-based argument index */
 	int ret = 0;		/* return value */
-	wchar_t wc;
-	mbstate_t ps;
 
 	/*
 	 * Add an argument type to the table, expanding if necessary.
@@ -1211,25 +1199,14 @@ __find_arguments(const char *fmt0, va_list ap, union arg **argtable,
 	tablemax = 0;
 	nextarg = 1;
 	memset(typetable, T_UNUSED, STATIC_ARG_TBL_SIZE);
-	memset(&ps, 0, sizeof(ps));
 
 	/*
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
-		size_t len;
-
-		cp = fmt;
-		while ((len = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) != 0) {
-			if (len == (size_t)-1 || len == (size_t)-2)
-				return (-1);
-			fmt += len;
-			if (wc == '%') {
-				fmt--;
-				break;
-			}
-		}
-		if (len == 0)
+		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
+			continue;
+		if (ch == '\0')
 			goto done;
 		fmt++;		/* skip over '%' */
 

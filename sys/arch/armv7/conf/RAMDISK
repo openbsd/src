@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.89 2017/09/21 12:11:29 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.97 2018/05/16 13:42:35 patrick Exp $
 
 machine		armv7 arm
 
@@ -42,7 +42,7 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
-imxocotp*	at fdt?			# on-chip otp controller
+imxanatop*	at fdt? early 1		# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxgpio*	at fdt?			# user-visible GPIO pins?
@@ -88,6 +88,9 @@ sxipio*		at fdt? early 1		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1		# Clock Control Module/Unit
 sxitimer*	at fdt? early 1
+sxirsb*		at fdt? early 1		# Reduced Serial Bus
+acrtc*		at rsb?
+axppmic*	at rsb?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
@@ -112,15 +115,14 @@ virtio*		at fdt?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
 
-psci*		at fdt?
-syscon*		at fdt?
+psci*		at fdt? early 1
+syscon*		at fdt? early 1
 
 # Exynos
 #exdisplay*	at exynos?
 #wsdisplay*	at exdisplay? console ?
 exclock*	at fdt? early 1
 expower*	at fdt? early 1
-exsysreg*	at fdt? early 1
 exmct*		at fdt? early 1
 exdog*		at fdt?
 exgpio*		at fdt? early 1
@@ -162,6 +164,8 @@ rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
+rkiic*		at fdt?
+iic*		at rkiic?
 dwdog*		at fdt?
 
 axppmic*	at iic?			# axp209 pmic
@@ -169,6 +173,7 @@ crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
 pcxrtc*		at iic?
+rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
 
 # virtio devices

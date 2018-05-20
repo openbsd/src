@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.47 2017/04/06 07:07:28 jsg Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.50 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -115,11 +115,12 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sct = saa->sct;
 	sc->sch = saa->sch;
 	sc->sc_dmat = saa->dmat;
+	sc->sc_dmap = saa->dmap;
 	sc->sc_flags = saa->flags;
 	sc->sc_caps = saa->caps;
 	sc->sc_max_xfer = saa->max_xfer;
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) && sc->sc_dmap == NULL) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
 		if (error) {
@@ -502,6 +503,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.manufacturer = SDMMC_VENDOR_INVALID;
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
+	sf->cur_blklen = sdmmc_chip_host_maxblklen(sc->sct, sc->sch);
 	return sf;
 }
 
@@ -628,7 +630,8 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 #endif
 
 	error = cmd->c_error;
-	wakeup(cmd);
+	if (!cold)
+		wakeup(cmd);
 
 	return error;
 }

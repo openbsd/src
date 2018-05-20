@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.169 2017/05/31 04:14:34 jsg Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.171 2017/11/29 15:24:50 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -199,9 +199,6 @@ main(int argc, char *argv[])
 	if ((ps->ps_pw =  getpwnam(RELAYD_USER)) == NULL)
 		errx(1, "unknown user %s", RELAYD_USER);
 
-	/* Configure the control socket */
-	ps->ps_csock.cs_name = RELAYD_SOCKET;
-
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
@@ -294,9 +291,7 @@ parent_configure(struct relayd *env)
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		/* Check for TLS Inspection */
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) ==
-		    (F_TLS|F_TLSCLIENT) &&
-		    rlay->rl_conf.tls_cacert_len &&
-		    rlay->rl_conf.tls_cakey_len)
+		    (F_TLS|F_TLSCLIENT) && rlay->rl_tls_cacert_fd != -1)
 			rlay->rl_conf.flags |= F_TLSINSPECT;
 
 		config_setrelay(env, rlay);
@@ -571,9 +566,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	if (rlay->rl_dstbev != NULL)
 		bufferevent_free(rlay->rl_dstbev);
 
-	purge_key(&rlay->rl_tls_cert, rlay->rl_conf.tls_cert_len);
 	purge_key(&rlay->rl_tls_key, rlay->rl_conf.tls_key_len);
-	purge_key(&rlay->rl_tls_ca, rlay->rl_conf.tls_ca_len);
 	purge_key(&rlay->rl_tls_cakey, rlay->rl_conf.tls_cakey_len);
 
 	if (rlay->rl_tls_pkey != NULL) {

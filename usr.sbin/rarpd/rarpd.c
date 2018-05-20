@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.72 2017/04/19 05:36:13 natano Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.73 2018/04/26 12:42:51 guenther Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -26,8 +26,6 @@
  * rarpd - Reverse ARP Daemon
  */
 
-#include <sys/time.h>
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/bpf.h>
@@ -45,12 +43,12 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <poll.h>
 #include <ifaddrs.h>
-#include <paths.h>
 
 /*
  * The structures for each interface.

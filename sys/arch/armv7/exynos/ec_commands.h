@@ -667,15 +667,15 @@ struct ec_params_lightbar {
 			/* no args */
 		} dump, off, on, init, get_seq, get_params;
 
-		struct num {
+		struct {
 			uint8_t num;
 		} brightness, seq, demo;
 
-		struct reg {
+		struct {
 			uint8_t ctrl, reg, value;
 		} reg;
 
-		struct rgb {
+		struct {
 			uint8_t led, red, green, blue;
 		} rgb;
 

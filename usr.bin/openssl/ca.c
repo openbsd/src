@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.25 2017/05/08 21:12:36 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.26 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,7 +497,7 @@ ca_main(int argc, char **argv)
 			rev_type = REV_CA_COMPROMISE;
 		}
 		else {
-bad:
+ bad:
 			if (errstr)
 				BIO_printf(bio_err, "invalid argument %s: %s\n",
 				    *argv, errstr);
@@ -1310,7 +1310,7 @@ bad:
 	/*****************************************************************/
 	ret = 0;
 
-err:
+ err:
 	free(tofree);
 
 	BIO_free_all(Cout);
@@ -1407,7 +1407,7 @@ certify(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 	    verbose, req, ext_sect, lconf, certopt, nameopt, default_op,
 	    ext_copy, selfsign);
 
-err:
+ err:
 	if (req != NULL)
 		X509_REQ_free(req);
 	if (in != NULL)
@@ -1464,7 +1464,7 @@ certify_cert(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 	    verbose, rreq, ext_sect, lconf, certopt, nameopt, default_op,
 	    ext_copy, 0);
 
-err:
+ err:
 	if (rreq != NULL)
 		X509_REQ_free(rreq);
 	if (req != NULL)
@@ -1969,7 +1969,7 @@ again2:
 		goto err;
 	}
 	ok = 1;
-err:
+ err:
 	for (i = 0; i < DB_NUMBER; i++)
 		free(row[i]);
 
@@ -2126,7 +2126,7 @@ certify_spkac(X509 ** xret, char *infile, EVP_PKEY * pkey, X509 * x509,
 	    verbose, req, ext_sect, lconf, certopt, nameopt, default_op,
 	    ext_copy, 0);
 
-err:
+ err:
 	if (req != NULL)
 		X509_REQ_free(req);
 	if (parms != NULL)
@@ -2248,7 +2248,7 @@ do_revoke(X509 * x509, CA_DB * db, int type, char *value)
 	}
 	ok = 1;
 
-err:
+ err:
 	for (i = 0; i < DB_NUMBER; i++)
 		free(row[i]);
 
@@ -2320,7 +2320,7 @@ get_certificate_status(const char *serial, CA_DB * db)
 		ok = -1;
 	}
 
-err:
+ err:
 	for (i = 0; i < DB_NUMBER; i++)
 		free(row[i]);
 
@@ -2383,7 +2383,7 @@ do_updatedb(CA_DB * db)
 		}
 	}
 
-err:
+ err:
 	ASN1_UTCTIME_free(a_tm);
 	free(a_tm_s);
 
@@ -2534,7 +2534,7 @@ make_revoked(X509_REVOKED * rev, const char *str)
 	else
 		ret = 1;
 
-err:
+ err:
 	free(tmp);
 
 	ASN1_OBJECT_free(hold);
@@ -2681,7 +2681,7 @@ unpack_revinfo(ASN1_TIME ** prevtm, int *preason, ASN1_OBJECT ** phold,
 
 	ret = 1;
 
-err:
+ err:
 	free(tmp);
 
 	if (!phold)

@@ -31,7 +31,7 @@ type ProtocolVersion uint32
 func (pv ProtocolVersion) String() string {
 	name, ok := protocolNames[pv]
 	if !ok {
-		return fmt.Sprintf("unknown protocol version %x", pv)
+		return fmt.Sprintf("unknown protocol version %x", uint32(pv))
 	}
 	return name
 }

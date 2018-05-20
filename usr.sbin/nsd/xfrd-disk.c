@@ -559,7 +559,7 @@ tempxfrname(char* buf, size_t sz, struct nsd* nsd, uint64_t number)
 FILE*
 xfrd_open_xfrfile(struct nsd* nsd, uint64_t number, char* mode)
 {
-	char fname[1024];
+	char fname[1200];
 	FILE* xfr;
 	tempxfrname(fname, sizeof(fname), nsd, number);
 	xfr = fopen(fname, mode);
@@ -579,7 +579,7 @@ xfrd_open_xfrfile(struct nsd* nsd, uint64_t number, char* mode)
 void
 xfrd_unlink_xfrfile(struct nsd* nsd, uint64_t number)
 {
-	char fname[1024];
+	char fname[1200];
 	tempxfrname(fname, sizeof(fname), nsd, number);
 	if(unlink(fname) == -1) {
 		log_msg(LOG_WARNING, "could not unlink %s: %s", fname,
@@ -590,7 +590,7 @@ xfrd_unlink_xfrfile(struct nsd* nsd, uint64_t number)
 uint64_t
 xfrd_get_xfrfile_size(struct nsd* nsd, uint64_t number )
 {
-	char fname[1024];
+	char fname[1200];
 	struct stat tempxfr_stat;
 	tempxfrname(fname, sizeof(fname), nsd, number);
 	if( stat( fname, &tempxfr_stat ) < 0 ) {

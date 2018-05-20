@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.35 2017/09/23 13:57:41 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.36 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1434,7 +1434,6 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rtwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -1462,15 +1461,6 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				rtwn_stop(ifp);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		error = ieee80211_ioctl(ifp, cmd, data);

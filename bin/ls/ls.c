@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.48 2016/08/16 16:13:32 krw Exp $	*/
+/*	$OpenBSD: ls.c,v 1.50 2018/02/04 22:09:33 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -493,8 +493,8 @@ display(FTSENT *p, FTSENT *list)
 			btotal += sp->st_blocks;
 			if (f_longform) {
 				if (f_numericonly) {
-					snprintf(nuser, 12, "%u", sp->st_uid);
-					snprintf(ngroup, 12, "%u", sp->st_gid);
+					snprintf(nuser, sizeof nuser, "%u", sp->st_uid);
+					snprintf(ngroup, sizeof nuser, "%u", sp->st_gid);
 					user = nuser;
 					group = ngroup;
 				} else {
@@ -549,7 +549,7 @@ display(FTSENT *p, FTSENT *list)
 		d.bcfile = bcfile;
 		d.btotal = btotal;
 		(void)snprintf(buf, sizeof(buf), "%llu",
-		   (unsigned long long)maxblock);
+		    (unsigned long long)maxblock);
 		d.s_block = strlen(buf);
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
@@ -561,7 +561,7 @@ display(FTSENT *p, FTSENT *list)
 		d.s_nlink = strlen(buf);
 		if (!f_humanval) {
 			(void)snprintf(buf, sizeof(buf), "%lld",
-				(long long) maxsize);
+			    (long long)maxsize);
 			d.s_size = strlen(buf);
 		} else
 			d.s_size = FMT_SCALED_STRSIZE-2; /* no - or '\0' */

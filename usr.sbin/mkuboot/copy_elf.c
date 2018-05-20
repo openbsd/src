@@ -1,4 +1,4 @@
-/*      $OpenBSD: copy_elf.c,v 1.5 2014/01/01 09:24:54 mcbride Exp $       */
+/*      $OpenBSD: copy_elf.c,v 1.6 2017/10/29 08:45:53 mpi Exp $       */
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/exec_elf.h>
+#include <elf.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define elfoff2h(x) letoh32(x)

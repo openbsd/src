@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.18 2017/04/20 15:21:51 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.19 2018/04/12 17:13:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,9 @@
  *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
  */
 
+#include <sys/param.h>
 #include <sys/pledge.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -48,6 +50,7 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	uint64_t tval;
 	int lock = !(callp->sy_flags & SY_NOLOCK);
 	int error, pledged;
+	vaddr_t sp = PROC_STACK(p);
 
 	/* refresh the thread's cache of the process's creds */
 	refreshcreds(p);
@@ -65,6 +68,24 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	}
 #endif
 
+	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+	    p->p_spstart == 0 || sp < p->p_spstart || sp >= p->p_spend) {
+		KERNEL_LOCK();
+
+		if (!uvm_map_check_stack_range(p, sp)) {
+			printf("syscall [%s]%d/%d sp %lx not inside %lx-%lx\n",
+			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			    sp, p->p_spstart, p->p_spend);
+	
+			p->p_sitrapno = 0;
+			p->p_sicode = SEGV_ACCERR;
+			p->p_sigval.sival_ptr = (void *)PROC_PC(p);
+			psignal(p, SIGSEGV);
+			KERNEL_UNLOCK();
+			return (EPERM);
+		}
+		KERNEL_UNLOCK();
+	}
 	if (lock)
 		KERNEL_LOCK();
 	pledged = (p->p_p->ps_flags & PS_PLEDGE);

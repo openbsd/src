@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.39 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.43 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -499,7 +499,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EACCES);
@@ -838,7 +838,6 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
 	SIPHASH_CTX ctx;
-	struct proc *p = curproc;
 	struct dquot *dq;
 	struct dqhash *dqh;
 	struct vnode *dqvp;
@@ -899,7 +898,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	 * Initialize the contents of the dquot structure.
 	 */
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
 	dqref(dq);
 	dq->dq_flags = DQ_LOCK;
@@ -921,7 +920,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset(&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, p);
+		VOP_UNLOCK(dqvp);
 	if (dq->dq_flags & DQ_WANT)
 		wakeup(dq);
 	dq->dq_flags = 0;
@@ -978,7 +977,6 @@ dqrele(struct vnode *vp, struct dquot *dq)
 int
 dqsync(struct vnode *vp, struct dquot *dq)
 {
-	struct proc *p = curproc;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
@@ -992,13 +990,13 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		panic("dqsync: file");
 
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
 		(void) tsleep(dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
-				VOP_UNLOCK(dqvp, p);
+				VOP_UNLOCK(dqvp);
 			return (0);
 		}
 	}
@@ -1019,7 +1017,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		wakeup(dq);
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, p);
+		VOP_UNLOCK(dqvp);
 	return (error);
 }
 
@@ -1059,7 +1057,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 			break;
 		/* FALLTHROUGH */
 	default:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 	}
 

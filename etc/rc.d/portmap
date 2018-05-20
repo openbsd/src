@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: portmap,v 1.2 2011/07/07 05:20:38 ajacoutot Exp $
+# $OpenBSD: portmap,v 1.3 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/portmap"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.8 2017/03/12 11:44:42 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.9 2018/05/03 10:56:14 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -87,6 +87,27 @@ clock_set_frequency_cells(uint32_t *cells, uint32_t freq)
 
 	if (cd && cd->cd_set_frequency)
 		return cd->cd_set_frequency(cd->cd_cookie, &cells[1], freq);
+
+	return -1;
+}
+
+int
+clock_set_parent_cells(uint32_t *cells, uint32_t *pcells)
+{
+	struct clock_device *cd;
+	uint32_t phandle = cells[0];
+
+	/* We expect that clocks are on the same handle. */
+	if (phandle != pcells[0])
+		return -1;
+
+	LIST_FOREACH(cd, &clock_devices, cd_list) {
+		if (cd->cd_phandle == phandle)
+			break;
+	}
+
+	if (cd && cd->cd_set_parent)
+		return cd->cd_set_parent(cd->cd_cookie, &cells[1], &pcells[1]);
 
 	return -1;
 }
@@ -263,6 +284,55 @@ void
 clock_disable(int node, const char *name)
 {
 	clock_do_enable(node, name, 0);
+}
+
+void
+clock_set_assigned(int node)
+{
+	uint32_t *clocks, *parents, *rates;
+	uint32_t *clock, *parent, *rate;
+	int clen, plen, rlen;
+
+	clen = OF_getproplen(node, "assigned-clocks");
+	plen = OF_getproplen(node, "assigned-clock-parents");
+	rlen = OF_getproplen(node, "assigned-clock-rates");
+
+	if (clen <= 0 || (plen <= 0 && rlen <= 0))
+		return;
+
+	clock = clocks = malloc(clen, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "assigned-clocks", clocks, clen);
+
+	parent = parents = NULL;
+	if (plen > 0) {
+		parent = parents = malloc(plen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "assigned-clock-parents", parents, plen);
+	}
+	rate = rates = NULL;
+	if (rlen > 0) {
+		rate = rates = malloc(rlen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "assigned-clock-rates", rates, rlen);
+	}
+
+	while (clock && clock < clocks + (clen / sizeof(uint32_t))) {
+		if (parent && parent < parent + (plen / sizeof(uint32_t)))
+			if (*parent != 0)
+				clock_set_parent_cells(clock, parent);
+
+		if (rate && rate < rates + (rlen / sizeof(uint32_t)))
+			if (*rate != 0)
+				clock_set_frequency_cells(clock, *rate);
+
+		clock = clock_next_clock(clock);
+		if (parent)
+			parent = clock_next_clock(parent);
+		if (rate)
+			rate++;
+	}
+
+	free(clocks, M_TEMP, clen);
+	free(parents, M_TEMP, plen);
+	free(rates, M_TEMP, rlen);
 }
 
 /*

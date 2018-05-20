@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.21 2017/05/08 20:15:34 beck Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.24 2017/12/01 14:42:23 visa Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -40,6 +40,7 @@
 
 #define MAXAGE_SEC (14*24*60*60)
 #define JITTER_SEC (60)
+#define OCSP_MAX_RESPONSE_SIZE (20480)
 
 typedef struct ocsp_request {
 	STACK_OF(X509) *fullchain;
@@ -497,7 +498,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ocspcheck [-Nv] [-C CAfile] [-o staplefile] file\n");
+	    "usage: ocspcheck [-Nv] [-C CAfile] [-i staplefile] "
+	    "[-o staplefile] file\n");
 	exit(1);
 }
 
@@ -505,19 +507,19 @@ int
 main(int argc, char **argv)
 {
 	char *host = NULL, *path = "/", *certfile = NULL, *outfile = NULL,
-	    *cafile = NULL;
+	    *cafile = NULL, *instaple = NULL, *infile = NULL;
 	struct addr addrs[MAX_SERVERS_DNS] = {{0}};
 	struct source sources[MAX_SERVERS_DNS];
-	int i, ch, staplefd = -1, nonce = 1;
+	int i, ch, staplefd = -1, infd = -1, nonce = 1;
 	ocsp_request *request = NULL;
-	size_t rescount, httphsz;
-	struct httphead	*httph;
+	size_t rescount, httphsz = 0, instaplesz = 0;
+	struct httphead	*httph = NULL;
 	struct httpget *hget;
 	X509_STORE *castore;
 	ssize_t written, w;
 	short port;
 
-	while ((ch = getopt(argc, argv, "C:No:v")) != -1) {
+	while ((ch = getopt(argc, argv, "C:i:No:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			cafile = optarg;
@@ -527,6 +529,9 @@ main(int argc, char **argv)
 			break;
 		case 'o':
 			outfile = optarg;
+			break;
+		case 'i':
+			infile = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -551,6 +556,16 @@ main(int argc, char **argv)
 			err(1, "Unable to open output file %s", outfile);
 	}
 
+	if (infile != NULL) {
+		if (strcmp(infile, "-") == 0)
+			infd = STDIN_FILENO;
+		else
+			infd = open(infile, O_RDONLY);
+		if (infd < 0)
+			err(1, "Unable to open input file %s", infile);
+		nonce = 0; /* Can't validate a nonce on a saved reply */
+	}
+
 	if (pledge("stdio inet rpath dns", NULL) == -1)
 		err(1, "pledge");
 
@@ -571,50 +586,84 @@ main(int argc, char **argv)
 		    certfile);
 	if (*path == '\0')
 		path = "/";
-	vspew("Using %s to host %s, port %d, path %s\n",
-	    port == 443 ? "https" : "http", host, port, path);
 
-	rescount = host_dns(host, addrs);
-	for (i = 0; i < rescount; i++) {
-		sources[i].ip = addrs[i].ip;
-		sources[i].family = addrs[i].family;
+	if (infd == -1) {
+		/* Get a new OCSP response from the indicated server */
+
+		vspew("Using %s to host %s, port %d, path %s\n",
+		    port == 443 ? "https" : "http", host, port, path);
+
+		rescount = host_dns(host, addrs);
+		for (i = 0; i < rescount; i++) {
+			sources[i].ip = addrs[i].ip;
+			sources[i].family = addrs[i].family;
+		}
+
+		/*
+		 * Do an HTTP post to send our request to the OCSP
+		 * server, and hopefully get an answer back
+		 */
+		hget = http_get(sources, rescount, host, port, path,
+		    request->data, request->size);
+		if (hget == NULL)
+			errx(1, "http_get");
+		/*
+		 * Pledge minimally before fiddling with libcrypto init
+		 * routines and parsing untrusted input from someone's OCSP
+		 * server.
+		 */
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
+		dspew("Server at %s returns:\n", host);
+		for (i = 0; i < httphsz; i++)
+			dspew("	  [%s]=[%s]\n", httph[i].key, httph[i].val);
+		dspew("	  [Body]=[%zu bytes]\n", hget->bodypartsz);
+		if (hget->bodypartsz <= 0)
+			errx(1, "No body in reply from %s", host);
+
+		if (hget->code != 200)
+			errx(1, "http reply code %d from %s", hget->code, host);
+
+		/*
+		 * Validate the OCSP response we got back
+		 */
+		OPENSSL_add_all_algorithms_noconf();
+		if (!validate_response(hget->bodypart, hget->bodypartsz,
+			request, castore, host, certfile))
+			exit(1);
+		instaple = hget->bodypart;
+		instaplesz = hget->bodypartsz;
+	} else {
+		size_t nr = 0;
+		instaplesz = 0;
+
+		/*
+		 * Pledge minimally before fiddling with libcrypto init
+		 */
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
+		dspew("Using ocsp response saved in %s:\n", infile);
+
+		/* Use the existing OCSP response saved in infd */
+		instaple = calloc(OCSP_MAX_RESPONSE_SIZE, 1);
+		if (instaple) {
+			while ((nr = read(infd, instaple + instaplesz,
+			    OCSP_MAX_RESPONSE_SIZE - instaplesz)) != -1 &&
+			    nr != 0)
+				instaplesz += nr;
+		}
+		if (instaplesz == 0)
+			exit(1);
+		/*
+		 * Validate the OCSP staple we read in.
+		 */
+		OPENSSL_add_all_algorithms_noconf();
+		if (!validate_response(instaple, instaplesz,
+			request, castore, host, certfile))
+			exit(1);
 	}
-
-	/*
-	 * Do an HTTP post to send our request to the OCSP
-	 * server, and hopefully get an answer back
-	 */
-	hget = http_get(sources, rescount, host, port, path,
-	    request->data, request->size);
-	if (hget == NULL)
-		errx(1, "http_get");
-
-	/*
-	 * Pledge minimally before fiddling with libcrypto init
-	 * routines and parsing untrusted input from someone's OCSP
-	 * server.
-	 */
-	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
-
-	httph = http_head_parse(hget->http, hget->xfer, &httphsz);
-	dspew("Server at %s returns:\n", host);
-	for (i = 0; i < httphsz; i++)
-		dspew("	  [%s]=[%s]\n", httph[i].key, httph[i].val);
-	dspew("	  [Body]=[%zu bytes]\n", hget->bodypartsz);
-	if (hget->bodypartsz <= 0)
-		errx(1, "No body in reply from %s", host);
-
-	if (hget->code != 200)
-		errx(1, "http reply code %d from %s", hget->code, host);
-
-	/*
-	 * Validate the OCSP response we got back
-	 */
-	OPENSSL_add_all_algorithms_noconf();
-	if (!validate_response(hget->bodypart, hget->bodypartsz,
-	    request, castore, host, certfile))
-		exit(1);
 
 	/*
 	 * If we have been given a place to save a staple,
@@ -624,9 +673,9 @@ main(int argc, char **argv)
 		(void) ftruncate(staplefd, 0);
 		w = 0;
 		written = 0;
-		while (written < hget->bodypartsz) {
-			w = write(staplefd, hget->bodypart + written,
-			    hget->bodypartsz - written);
+		while (written < instaplesz) {
+			w = write(staplefd, instaple + written,
+			    instaplesz - written);
 			if (w == -1) {
 				if (errno != EINTR && errno != EAGAIN)
 					err(1, "Write of OCSP response failed");

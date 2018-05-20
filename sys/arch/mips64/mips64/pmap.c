@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2017/08/25 13:28:31 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.110 2018/05/09 14:42:11 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -502,37 +502,13 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	int i;
-
-extern struct vmspace vmspace0;
-extern struct user *proc0paddr;
 
 	DPRINTF(PDB_FOLLOW|PDB_CREATE, ("pmap_create()\n"));
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
-
-	mtx_init(&pmap->pm_mtx, IPL_VM);
-	pmap->pm_count = 1;
-
 	pmap->pm_segtab = pool_get(&pmap_pg_pool, PR_WAITOK | PR_ZERO);
-
-	if (pmap == vmspace0.vm_map.pmap) {
-		/*
-		 * The initial process has already been allocated a TLBPID
-		 * in mips_init().
-		 */
-		for (i = 0; i < ncpusfound; i++) {
-			pmap->pm_asid[i].pma_asid = MIN_USER_ASID;
-			pmap->pm_asid[i].pma_asidgen =
-				pmap_asid_info[i].pma_asidgen;
-		}
-		proc0paddr->u_pcb.pcb_segtab = pmap->pm_segtab;
-	} else {
-		for (i = 0; i < ncpusfound; i++) {
-			pmap->pm_asid[i].pma_asid = 0;
-			pmap->pm_asid[i].pma_asidgen = 0;
-		}
-	}
+	pmap->pm_count = 1;
+	mtx_init(&pmap->pm_mtx, IPL_VM);
 
 	return (pmap);
 }
@@ -1054,22 +1030,68 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		("pmap_enter(%p, %p, %p, 0x%x, 0x%x)\n",
 		    pmap, (void *)va, (void *)pa, prot, flags));
 
+	pg = PHYS_TO_VM_PAGE(pa);
+
 	pmap_lock(pmap);
 
-#ifdef DIAGNOSTIC
+	/*
+	 * Get the PTE. Allocate page directory and page table pages
+	 * if necessary.
+	 */
 	if (pmap == pmap_kernel()) {
-		stat_count(enter_stats.kernel);
+#ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS ||
 		    va >= VM_MAX_KERNEL_ADDRESS)
-			panic("pmap_enter: kva %p", (void *)va);
-	} else {
-		stat_count(enter_stats.user);
-		if (va >= VM_MAXUSER_ADDRESS)
-			panic("pmap_enter: uva %p", (void *)va);
-	}
+			panic("%s: kva %p", __func__, (void *)va);
 #endif
+		stat_count(enter_stats.kernel);
+		pte = kvtopte(va);
+	} else {
+#ifdef DIAGNOSTIC
+		if (va >= VM_MAXUSER_ADDRESS)
+			panic("%s: uva %p", __func__, (void *)va);
+#endif
+		stat_count(enter_stats.user);
+		if ((pde = pmap_segmap(pmap, va)) == NULL) {
+			pde = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
+			if (pde == NULL) {
+				if (flags & PMAP_CANFAIL) {
+					pmap_unlock(pmap);
+					return ENOMEM;
+				}
+				panic("%s: out of memory", __func__);
+			}
+			pmap_segmap(pmap, va) = pde;
+		}
+		if ((pte = pde[uvtopde(va)]) == NULL) {
+			pte = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
+			if (pte == NULL) {
+				if (flags & PMAP_CANFAIL) {
+					pmap_unlock(pmap);
+					return ENOMEM;
+				}
+				panic("%s: out of memory", __func__);
+			}
+			pde[uvtopde(va)] = pte;
+		}
+		pte += uvtopte(va);
+	}
 
-	pg = PHYS_TO_VM_PAGE(pa);
+	if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
+		pmap_do_remove(pmap, va, va + PAGE_SIZE);
+		stat_count(enter_stats.mchange);
+	}
+
+	if ((*pte & PG_V) == 0) {
+		atomic_inc_long(&pmap->pm_stats.resident_count);
+		if (wired)
+			atomic_inc_long(&pmap->pm_stats.wired_count);
+	} else {
+		if ((*pte & PG_WIRED) != 0 && wired == 0)
+			atomic_dec_long(&pmap->pm_stats.wired_count);
+		else if ((*pte & PG_WIRED) == 0 && wired != 0)
+			atomic_inc_long(&pmap->pm_stats.wired_count);
+	}
 
 	if (pg != NULL) {
 		mtx_enter(&pg->mdpage.pv_mtx);
@@ -1121,6 +1143,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		npte |= pg_xi;
 
 	if (pmap == pmap_kernel()) {
+		/*
+		 * Enter kernel space mapping.
+		 */
+
 		if (pg != NULL) {
 			if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
 				if (flags & PMAP_CANFAIL) {
@@ -1132,21 +1158,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 		}
 
-		pte = kvtopte(va);
-		if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-			pmap_do_remove(pmap, va, va + PAGE_SIZE);
-			stat_count(enter_stats.mchange);
-		}
-		if ((*pte & PG_V) == 0) {
-			atomic_inc_long(&pmap->pm_stats.resident_count);
-			if (wired)
-				atomic_inc_long(&pmap->pm_stats.wired_count);
-		} else {
-			if ((*pte & PG_WIRED) != 0 && wired == 0)
-				atomic_dec_long(&pmap->pm_stats.wired_count);
-			else if ((*pte & PG_WIRED) == 0 && wired != 0)
-				atomic_inc_long(&pmap->pm_stats.wired_count);
-		}
 		npte |= vad_to_pfn(pa) | PG_G;
 		if (wired)
 			npte |= PG_WIRED;
@@ -1166,34 +1177,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	/*
-	 *  User space mapping. Do table build.
+	 * Enter user space mapping.
 	 */
-	if ((pde = pmap_segmap(pmap, va)) == NULL) {
-		pde = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
-		if (pde == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				if (pg != NULL)
-					mtx_leave(&pg->mdpage.pv_mtx);
-				pmap_unlock(pmap);
-				return ENOMEM;
-			}
-			panic("%s: out of memory", __func__);
-		}
-		pmap_segmap(pmap, va) = pde;
-	}
-	if ((pte = pde[uvtopde(va)]) == NULL) {
-		pte = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
-		if (pte == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				if (pg != NULL)
-					mtx_leave(&pg->mdpage.pv_mtx);
-				pmap_unlock(pmap);
-				return ENOMEM;
-			}
-			panic("%s: out of memory", __func__);
-		}
-		pde[uvtopde(va)] = pte;
-	}
 
 	if (pg != NULL) {
 		if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
@@ -1204,28 +1189,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 			panic("pmap_enter: pmap_enter_pv() failed");
 		}
-	}
-
-	pte += uvtopte(va);
-
-	/*
-	 * Now validate mapping with desired protection/wiring.
-	 * Assume uniform modified and referenced status for all
-	 * MIPS pages in a OpenBSD page.
-	 */
-	if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-		pmap_do_remove(pmap, va, va + PAGE_SIZE);
-		stat_count(enter_stats.mchange);
-	}
-	if ((*pte & PG_V) == 0) {
-		atomic_inc_long(&pmap->pm_stats.resident_count);
-		if (wired)
-			atomic_inc_long(&pmap->pm_stats.wired_count);
-	} else {
-		if ((*pte & PG_WIRED) != 0 && wired == 0)
-			atomic_dec_long(&pmap->pm_stats.wired_count);
-		else if ((*pte & PG_WIRED) == 0 && wired != 0)
-			atomic_inc_long(&pmap->pm_stats.wired_count);
 	}
 
 	npte |= vad_to_pfn(pa);

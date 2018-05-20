@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GROUP_new.3,v 1.6 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: EC_GROUP_new.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
 .\"	OpenSSL 9b86974e Mon Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EC_GROUP_NEW 3
 .Os
 .Sh NAME
@@ -306,3 +306,22 @@ return 1 on success or 0 on error.
 .Xr EC_POINT_add 3 ,
 .Xr EC_POINT_new 3 ,
 .Xr ECDSA_SIG_new 3
+.Sh HISTORY
+.Fn EC_GROUP_new ,
+.Fn EC_GROUP_free ,
+.Fn EC_GROUP_clear_free ,
+.Fn EC_GROUP_new_curve_GFp ,
+.Fn EC_GROUP_set_curve_GFp ,
+and
+.Fn EC_GROUP_get_curve_GFp
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn EC_GROUP_new_curve_GF2m ,
+.Fn EC_GROUP_new_by_curve_name ,
+.Fn EC_GROUP_set_curve_GF2m ,
+.Fn EC_GROUP_get_curve_GF2m ,
+and
+.Fn EC_get_builtin_curves
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

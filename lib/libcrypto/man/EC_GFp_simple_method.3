@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.6 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.9 2018/03/23 05:48:56 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EC_GFP_SIMPLE_METHOD 3
 .Os
 .Sh NAME
@@ -159,3 +159,23 @@ structure supports.
 .Xr EC_KEY_new 3 ,
 .Xr EC_POINT_add 3 ,
 .Xr EC_POINT_new 3
+.Sh HISTORY
+.Fn EC_GFp_simple_method
+and
+.Fn EC_GFp_mont_method
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn EC_GFp_nist_method ,
+.Fn EC_GF2m_simple_method ,
+and
+.Fn EC_METHOD_get_field_type
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Pp
+.Fn EC_GFp_nistp224_method ,
+.Fn EC_GFp_nistp256_method ,
+and
+.Fn EC_GFp_nistp521_method
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .

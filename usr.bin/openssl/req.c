@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.14 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: req.c,v 1.15 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -340,7 +340,7 @@ req_main(int argc, char **argv)
 	}
 
 	if (badops) {
-bad:
+ bad:
 		BIO_printf(bio_err, "%s [options] <infile >outfile\n", prog);
 		BIO_printf(bio_err, "where options  are\n");
 		BIO_printf(bio_err, " -inform arg    input format - DER or PEM\n");
@@ -591,7 +591,7 @@ bad:
 			cipher = NULL;
 
 		i = 0;
-loop:
+ loop:
 		if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
 			NULL, 0, NULL, passout)) {
 			if ((ERR_GET_REASON(ERR_peek_error()) ==
@@ -858,7 +858,7 @@ loop:
 		}
 	}
 	ex = 0;
-end:
+ end:
 	if (ex) {
 		ERR_print_errors(bio_err);
 	}
@@ -943,7 +943,7 @@ make_REQ(X509_REQ * req, EVP_PKEY * pkey, char *subj, int multirdn,
 		goto err;
 
 	ret = 1;
-err:
+ err:
 	return (ret);
 }
 
@@ -996,7 +996,7 @@ prompt_info(X509_REQ * req,
 	}
 	if (sk_CONF_VALUE_num(dn_sk)) {
 		i = -1;
-start:		for (;;) {
+ start:		for (;;) {
 			int ret;
 			i++;
 			if (sk_CONF_VALUE_num(dn_sk) <= i)
@@ -1214,7 +1214,7 @@ add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
 {
 	int i, ret = 0;
 	char buf[1024];
-start:
+ start:
 	if (!batch)
 		BIO_printf(bio_err, "%s [%s]:", text, def);
 	(void) BIO_flush(bio_err);
@@ -1255,7 +1255,7 @@ start:
 		(unsigned char *) buf, -1, -1, mval))
 		goto err;
 	ret = 1;
-err:
+ err:
 	return (ret);
 }
 
@@ -1267,7 +1267,7 @@ add_attribute_object(X509_REQ * req, char *text, const char *def,
 	int i;
 	static char buf[1024];
 
-start:
+ start:
 	if (!batch)
 		BIO_printf(bio_err, "%s [%s]:", text, def);
 	(void) BIO_flush(bio_err);
@@ -1312,7 +1312,7 @@ start:
 		goto err;
 	}
 	return (1);
-err:
+ err:
 	return (0);
 }
 

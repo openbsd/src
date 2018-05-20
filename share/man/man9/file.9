@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.18 2017/02/11 23:12:22 jmc Exp $
+.\"     $OpenBSD: file.9,v 1.19 2018/05/17 15:21:06 visa Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 11 2017 $
+.Dd $Mdocdate: May 17 2018 $
 .Dt FALLOC 9
 .Os
 .Sh NAME
@@ -94,12 +94,14 @@ if that's the last reference then the file will be freed.
 .\" .Xr closef 9 .
 .Pp
 The files are extracted from the file descriptor table using the
-functions
-.Fn fd_getfile
+function
+.Fn fd_getfile .
 .Fn fd_getfile
 performs all necessary checks to see if the file descriptor number is
 within the range of file descriptor table, and if the descriptor is
 valid.
+It also increases the descriptor's use count with
+.Fn FREF .
 .Pp
 The files are extracted from the process context using the
 function
@@ -109,8 +111,7 @@ and
 These functions are special cases that besides doing
 .Fn fd_getfile
 also check if the descriptor is a socket or a vnode respectively,
-return the proper errno on error and increase the use count with
-.Fn FREF .
+and return the proper errno on error.
 .Sh CONCURRENT ACCESS
 Since multiple processes can share the same file descriptor table,
 it's important that the file is not freed in one process while some
@@ -119,18 +120,13 @@ To solve that problem a special use count is kept with the functions
 .Fn FREF
 and
 .Fn FRELE .
-In most cases
+The function
 .Fn FREF
-should be used on a file after it has been extracted
-from the file descriptor table and
+increases the use count of a file descriptor.
+The function
 .Fn FRELE
-should be called when the file won't be used anymore.
-There are cases when this isn't necessary, but since
-.Fn FREF
-and
-.Fn FRELE
-are cheap to use, there is no reason to risk introducing bugs by
-not using them.
+decreases the use count, and releases the file descriptor if the use count
+becomes zero.
 .Sh CODE REFERENCES
 The majority of those functions are implemented in
 .Pa sys/kern/kern_descrip.c .

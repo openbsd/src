@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.254 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.257 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -300,8 +300,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 
 	pfsync_sync_ok = 1;
 
-	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK | M_ZERO);
-
+	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK|M_ZERO);
 	for (q = 0; q < PFSYNC_S_COUNT; q++)
 		TAILQ_INIT(&sc->sc_qs[q]);
 
@@ -658,6 +657,8 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct pfsync_subheader subh;
 	int offset, noff, len, count, mlen, flags = 0;
 	int e;
+
+	NET_ASSERT_LOCKED();
 
 	pfsyncstat_inc(pfsyncs_ipackets);
 
@@ -1300,7 +1301,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return (copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr)));
 
 	case SIOCSETPFSYNC:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			return (error);
 		if ((error = copyin(ifr->ifr_data, &pfsyncr, sizeof(pfsyncr))))
 			return (error);

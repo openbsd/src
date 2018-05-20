@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.27 2017/09/21 12:01:52 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.60 2018/05/16 13:21:50 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -15,6 +15,11 @@ device	sxipio {}: gpiobus
 attach	sxipio at fdt
 file	dev/fdt/sxipio.c		sxipio
 
+define	rsb {}
+device	sxirsb: rsb
+attach	sxirsb at fdt
+file	dev/fdt/sxirsb.c		sxirsb
+
 device	sxirtc
 attach	sxirtc at fdt
 file	dev/fdt/sxirtc.c		sxirtc
@@ -23,13 +28,26 @@ device	sximmc: sdmmcbus
 attach	sximmc at fdt
 file	dev/fdt/sximmc.c		sximmc
 
+device	sxitemp
+attach	sxitemp at fdt
+file	dev/fdt/sxitemp.c		sxitemp
+
+device	sxits
+attach	sxits at fdt
+file	dev/fdt/sxits.c			sxits
+
 device	sxitwi: i2cbus
 attach	sxitwi at fdt
 file	dev/fdt/sxitwi.c		sxitwi
 
 device	axppmic
 attach	axppmic at i2c
-file	dev/fdt/axp20x.c		axppmic
+attach	axppmic at rsb with axppmic_rsb
+file	dev/fdt/axppmic.c		axppmic
+
+device	sypwr
+attach	sypwr at i2c
+file	dev/fdt/sypwr.c			sypwr
 
 device	bcmaux
 attach	bcmaux at fdt
@@ -38,6 +56,14 @@ file	dev/fdt/bcm2835_aux.c		bcmaux
 device	bcmdog
 attach	bcmdog at fdt
 file	dev/fdt/bcm2835_dog.c		bcmdog
+
+device	bcmrng
+attach	bcmrng at fdt
+file	dev/fdt/bcm2835_rng.c		bcmrng
+
+device	bcmtemp
+attach	bcmtemp at fdt
+file	dev/fdt/bcm2835_temp.c		bcmtemp
 
 device	exrtc
 attach	exrtc at fdt
@@ -51,7 +77,7 @@ file	dev/fdt/plrtc.c			plrtc
 # ARM Power State Coordination Interface
 device	psci
 attach	psci at fdt
-file	dev/fdt/psci.c			psci
+file	dev/fdt/psci.c			psci needs-flag
 
 attach	virtio at fdt with virtio_mmio
 file	dev/fdt/virtio_mmio.c		virtio_mmio
@@ -72,7 +98,7 @@ file	dev/fdt/sdhc_fdt.c		sdhc_fdt
 attach	xhci at fdt with xhci_fdt
 file	dev/fdt/xhci_fdt.c		xhci_fdt
 
-device	syscon
+device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c		syscon
 
@@ -104,6 +130,10 @@ device	rkpinctrl: fdt
 attach	rkpinctrl at fdt
 file	dev/fdt/rkpinctrl.c		rkpinctrl
 
+device	rkpcie: pcibus
+attach	rkpcie at fdt
+file	dev/fdt/rkpcie.c		rkpcie
+
 device	rktemp
 attach	rktemp at fdt
 file	dev/fdt/rktemp.c		rktemp
@@ -115,6 +145,22 @@ file	dev/fdt/dwmmc.c			dwmmc
 device	dwdog
 attach	dwdog at fdt
 file	dev/fdt/dwdog.c			dwdog
+
+device	dwpcie: pcibus
+attach	dwpcie at fdt
+file	dev/fdt/dwpcie.c		dwpcie
+
+device	mvclock
+attach	mvclock at fdt
+file	dev/fdt/mvclock.c		mvclock
+
+device	mvgpio
+attach	mvgpio at fdt
+file	dev/fdt/mvgpio.c		mvgpio
+
+device	mvicu
+attach	mvicu at fdt
+file	dev/fdt/mvicu.c			mvicu
 
 device	mvpinctrl
 attach	mvpinctrl at fdt
@@ -128,6 +174,69 @@ device	mvneta: ether, ifnet, mii, ifmedia
 attach	mvneta at fdt
 file	dev/fdt/if_mvneta.c		mvneta
 
+device	mvrng
+attach	mvrng at fdt
+file	dev/fdt/mvrng.c			mvrng
+
+device	mvrtc
+attach	mvrtc at fdt
+file	dev/fdt/mvrtc.c			mvrtc
+
+device	mvtemp
+attach	mvtemp at fdt
+file	dev/fdt/mvtemp.c		mvtemp
+
 device	dwxe: ether, ifnet, mii, ifmedia
 attach	dwxe at fdt
 file	dev/fdt/if_dwxe.c		dwxe
+
+device	acrtc
+attach	acrtc at rsb
+file	dev/fdt/acrtc.c			acrtc
+
+device	imxanatop
+attach	imxanatop at fdt
+file	dev/fdt/imxanatop.c		imxanatop
+
+device	imxccm
+attach	imxccm at fdt
+file	dev/fdt/imxccm.c		imxccm
+
+device	imxdwusb: fdt
+attach	imxdwusb at fdt
+file	dev/fdt/imxdwusb.c		imxdwusb
+
+device	imxesdhc: sdmmcbus
+attach	imxesdhc at fdt
+file	dev/fdt/imxesdhc.c		imxesdhc
+
+device	imxgpc
+attach	imxgpc at fdt
+file	dev/fdt/imxgpc.c		imxgpc
+
+device	imxgpio
+attach	imxgpio at fdt
+file	dev/fdt/imxgpio.c		imxgpio
+
+device	imxiic: i2cbus
+attach	imxiic at fdt
+file	dev/fdt/imxiic.c		imxiic
+
+device	imxiomuxc
+attach	imxiomuxc at fdt
+file	dev/fdt/imxiomuxc.c		imxiomuxc
+
+device	imxpd: fdt
+attach	imxpd at fdt
+file	dev/fdt/imxpd.c			imxpd
+
+device	imxuart
+attach	imxuart at fdt
+file	dev/fdt/imxuart.c		imxuart
+
+device	fec: ether, ifnet, mii, ifmedia
+attach	fec at fdt
+file	dev/fdt/if_fec.c		fec
+
+attach	ccp at fdt with ccp_fdt
+file	dev/fdt/ccp_fdt.c		ccp_fdt

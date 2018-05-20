@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.23 2016/03/21 22:41:28 bluhm Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.24 2017/11/29 05:13:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -80,4 +80,4 @@ __stack_smash_handler(const char func[], int damaged)
 
 	_exit(127);
 }
-DEF_STRONG(__stack_smash_handler);
+DEF_BUILTIN(__stack_smash_handler);

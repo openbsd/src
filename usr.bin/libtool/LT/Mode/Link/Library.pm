@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.5 2014/04/16 14:39:06 zhuk Exp $
+# $OpenBSD: Library.pm,v 1.6 2018/04/07 17:54:54 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -96,7 +96,19 @@ sub link
 		}
 		push @cmd, @libflags if @libflags;
 		push @cmd, @$objs if @$objs;
+		my ($fh, $file);
+
+		if (@cmd > 512) {
+			use OpenBSD::MkTemp qw(mkstemp);
+			my @extra = splice(@cmd, 512);
+			($fh, $file) = mkstemp("/tmp/arargs.XXXXXXXXXXXX");
+			print $fh map {"$_\n"} @extra;
+			close $fh;
+			push @cmd, "\@$file";
+		}
 		LT::Exec->link(@cmd);
+		unlink($file) if defined $file;
+
 		LT::Exec->link('ranlib', $dst);
 		return;
 	}

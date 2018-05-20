@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.21 2016/08/28 04:08:59 guenther Exp $ */
+/*	$OpenBSD: realpath.c,v 1.22 2017/12/24 01:50:50 millert Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -45,11 +45,18 @@
 char *
 realpath(const char *path, char *resolved)
 {
-	char *p, *q, *s;
-	size_t left_len, resolved_len;
+	const char *p;
+	char *q;
+	size_t left_len, resolved_len, next_token_len;
 	unsigned symlinks;
-	int serrno, slen, mem_allocated;
+	int serrno, mem_allocated;
+	ssize_t slen;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
+
+	if (path == NULL) {
+		errno = EINVAL;
+		return (NULL);
+	}
 
 	if (path[0] == '\0') {
 		errno = ENOENT;
@@ -85,7 +92,7 @@ realpath(const char *path, char *resolved)
 		resolved_len = strlen(resolved);
 		left_len = strlcpy(left, path, sizeof(left));
 	}
-	if (left_len >= sizeof(left) || resolved_len >= PATH_MAX) {
+	if (left_len >= sizeof(left)) {
 		errno = ENAMETOOLONG;
 		goto err;
 	}
@@ -99,16 +106,19 @@ realpath(const char *path, char *resolved)
 		 * and its length.
 		 */
 		p = strchr(left, '/');
-		s = p ? p : left + left_len;
-		if (s - left >= sizeof(next_token)) {
-			errno = ENAMETOOLONG;
-			goto err;
+
+		next_token_len = p ? (size_t) (p - left) : left_len;
+		memcpy(next_token, left, next_token_len);
+		next_token[next_token_len] = '\0';
+
+		if (p != NULL) {
+			left_len -= next_token_len + 1;
+			memmove(left, p + 1, left_len + 1);
+		} else {
+			left[0] = '\0';
+			left_len = 0;
 		}
-		memcpy(next_token, left, s - left);
-		next_token[s - left] = '\0';
-		left_len -= s - left;
-		if (p != NULL)
-			memmove(left, s + 1, left_len + 1);
+
 		if (resolved[resolved_len - 1] != '/') {
 			if (resolved_len + 1 >= PATH_MAX) {
 				errno = ENAMETOOLONG;
@@ -136,16 +146,17 @@ realpath(const char *path, char *resolved)
 		}
 
 		/*
-		 * Append the next path component and lstat() it. If
-		 * lstat() fails we still can return successfully if
-		 * there are no more path components left.
+		 * Append the next path component and readlink() it. If
+		 * readlink() fails we still can return successfully if
+		 * it exists but isn't a symlink, or if there are no more
+		 * path components left.
 		 */
 		resolved_len = strlcat(resolved, next_token, PATH_MAX);
 		if (resolved_len >= PATH_MAX) {
 			errno = ENAMETOOLONG;
 			goto err;
 		}
-		slen = readlink(resolved, symlink, sizeof(symlink) - 1);
+		slen = readlink(resolved, symlink, sizeof(symlink));
 		if (slen < 0) {
 			switch (errno) {
 			case EINVAL:
@@ -160,6 +171,12 @@ realpath(const char *path, char *resolved)
 			default:
 				goto err;
 			}
+		} else if (slen == 0) {
+			errno = EINVAL;
+			goto err;
+		} else if (slen == sizeof(symlink)) {
+			errno = ENAMETOOLONG;
+			goto err;
 		} else {
 			if (symlinks++ > SYMLOOP_MAX) {
 				errno = ELOOP;
@@ -170,9 +187,8 @@ realpath(const char *path, char *resolved)
 			if (symlink[0] == '/') {
 				resolved[1] = 0;
 				resolved_len = 1;
-			} else if (resolved_len > 1) {
+			} else {
 				/* Strip the last path component. */
-				resolved[resolved_len - 1] = '\0';
 				q = strrchr(resolved, '/') + 1;
 				*q = '\0';
 				resolved_len = q - resolved;

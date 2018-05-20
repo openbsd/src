@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.2 2016/09/18 16:34:59 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.3 2017/11/10 16:50:59 sunil Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -151,6 +151,9 @@ sr_crypto_decrypt_keys(struct sr_boot_volume *bv)
 	}
 	if (kd) {
 		bcopy(&kd->kd_key, &kdfinfo.maskkey, sizeof(kdfinfo.maskkey));
+	} else if (kdfhint->generic.type == SR_CRYPTOKDFT_KEYDISK) {
+		printf("keydisk not found\n");
+		goto done;
 	} else {
 		if (kdfhint->generic.type != SR_CRYPTOKDFT_PKCS5_PBKDF2 &&
 		    kdfhint->generic.type != SR_CRYPTOKDFT_BCRYPT_PBKDF) {

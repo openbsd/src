@@ -1,4 +1,4 @@
-/*	$OpenBSD: softdep.h,v 1.17 2013/06/11 16:42:18 deraadt Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.18 2018/04/01 12:02:00 dhill Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -256,6 +256,7 @@ struct inodedep {
 		struct ufs1_dinode *idu_savedino1;
 		struct ufs2_dinode *idu_savedino2;
 	} id_un;
+	size_t	id_unsize;		/* size of dinode contents union */
 	LIST_ENTRY(inodedep) id_deps;	/* bmsafemap's list of inodedep's */
 	struct	buf *id_buf;		/* related bmsafemap (if pending) */
 	off_t	id_savedsize;		/* file size saved during rollback */

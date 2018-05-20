@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2017/09/12 02:58:08 dlg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -45,20 +45,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/ptrace.h>
-#include <sys/signalvar.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/reg.h>
 #include <machine/fpu.h>
-#include <machine/tcb.h>
 
 void setguardpage(struct proc *);
 

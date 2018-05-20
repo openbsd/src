@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.57 2017/04/03 16:18:35 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.58 2017/12/09 18:38:37 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -97,6 +97,8 @@ procfile(char *fn)
 	file_t *f;
 	int c, t, z, nottext;
 
+	mcount = mlimit;
+
 	if (fn == NULL) {
 		fn = "(standard input)";
 		f = grep_fdopen(STDIN_FILENO, "r");
@@ -126,6 +128,8 @@ procfile(char *fn)
 	if (Bflag > 0)
 		initqueue();
 	for (c = 0;  c == 0 || !(lflag || qflag); ) {
+		if (mflag && mlimit == 0)
+			break;
 		ln.off += ln.len + 1;
 		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL)
 			break;
@@ -140,6 +144,8 @@ procfile(char *fn)
 			linesqueued++;
 		}
 		c += t;
+		if (mflag && mcount <= 0)
+			break;
 	}
 	if (Bflag > 0)
 		clearqueue();
@@ -223,6 +229,10 @@ redo:
 print:
 	if (vflag)
 		c = !c;
+
+	/* Count the matches if we have a match limit */
+	if (mflag)
+		mcount -= c;
 
 	if (c && binbehave == BIN_FILE_BIN && nottext)
 		return c; /* Binary file */

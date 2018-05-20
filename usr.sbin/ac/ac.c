@@ -25,9 +25,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
 #include <sys/time.h>
+
 #include <err.h>
 #include <errno.h>
 #include <pwd.h>

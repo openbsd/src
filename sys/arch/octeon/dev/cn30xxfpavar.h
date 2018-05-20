@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.4 2016/05/24 14:06:39 visa Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.7 2017/11/05 04:57:28 visa Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -49,12 +49,6 @@ uint64_t	cn30xxfpa_int_summary(void);
 int		cn30xxfpa_buf_init(int, size_t, size_t, struct cn30xxfpa_buf **);
 void		*cn30xxfpa_buf_get(struct cn30xxfpa_buf *);
 uint64_t	cn30xxfpa_query(int);
-
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxfpa_dump(void);
-#endif
-
-#define CACHE_LINE_SIZE (128)
 
 /*
  * operations
@@ -108,7 +102,7 @@ cn30xxfpa_buf_put_paddr(struct cn30xxfpa_buf *fb, paddr_t paddr)
 {
 	KASSERT(paddr >= fb->fb_paddr);
 	KASSERT(paddr < fb->fb_paddr + fb->fb_len);
-	cn30xxfpa_store(paddr, fb->fb_poolno, fb->fb_size / 128);
+	cn30xxfpa_store(paddr, fb->fb_poolno, fb->fb_size / CACHELINESIZE);
 }
 
 static inline void

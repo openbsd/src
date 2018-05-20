@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.68 2017/06/11 10:01:23 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.69 2018/02/24 11:42:31 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,10 +140,7 @@ interrupt(struct trapframe *trapframe)
 	if (ci->ci_ipl < IPL_SOFTINT && ci->ci_softpending != 0) {
 		s = splsoft();
 		dosoftint();
-		__asm__ (".set noreorder\n");
 		ci->ci_ipl = s;	/* no-overhead splx */
-		mips_sync();
-		__asm__ (".set reorder\n");
 	}
 
 	ci->ci_intrdepth--;
@@ -233,15 +230,9 @@ splraise(int newipl)
 	struct cpu_info *ci = curcpu();
         int oldipl;
 
-	__asm__ (".set noreorder\n");
 	oldipl = ci->ci_ipl;
-	if (oldipl < newipl) {
-		/* XXX to kill warning about dla being used in a delay slot */
-		__asm__("nop");
+	if (oldipl < newipl)
 		ci->ci_ipl = newipl;
-	}
-	mips_sync();
-	__asm__ (".set reorder\n");
 	return oldipl;
 }
 

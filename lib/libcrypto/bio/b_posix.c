@@ -1,4 +1,4 @@
-/* $OpenBSD: b_posix.c,v 1.1 2014/12/03 22:14:38 bcook Exp $ */
+/* $OpenBSD: b_posix.c,v 1.2 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 int
 BIO_sock_init(void)
 {
+	if (!OPENSSL_init_crypto(0, NULL)) /* XXX do we need this? */
+		return (0);
 	return (1);
 }
 

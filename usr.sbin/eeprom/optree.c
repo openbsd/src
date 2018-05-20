@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.8 2016/05/21 19:08:29 kettenis Exp $	*/
+/*	$OpenBSD: optree.c,v 1.9 2017/10/20 10:32:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -36,22 +36,19 @@ static void
 op_print(struct opiocdesc *opio, int depth)
 {
 	char *p;
-	int i, special;
+	int i, multi, special;
 	uint32_t cell;
 
 	opio->op_name[opio->op_namelen] = '\0';
 	printf("%*s%s: ", depth * 4, " ", opio->op_name);
 	if (opio->op_buflen > 0) {
 		opio->op_buf[opio->op_buflen] = '\0';
-		special = 0;
+		multi = special = 0;
 
 		/*
-		 * XXX This allows multiple NUL characters within
-		 * string-valued properties, which may not be what we
-		 * want.  But on macppc we have string-values
-		 * properties that end with multiple NUL characters,
-		 * and the serial number has them embedded within the
-		 * string.
+		 * On macppc we have string-values properties that end
+		 * with multiple NUL characters, and the serial number
+		 * has them embedded within the string.
 		 */
 		if (opio->op_buf[0] != '\0') {
 			for (i = 0; i < opio->op_buflen; i++) {
@@ -61,10 +58,14 @@ op_print(struct opiocdesc *opio, int depth)
 				if (*p == '\0') {
 					if (i + 1 < opio->op_buflen)
 						p++;
-					if (*p >= ' ' && *p <= '~')
+					if (*p >= ' ' && *p <= '~') {
+						special = multi;
 						continue;
-					if (*p == '\0')
+					}
+					if (*p == '\0') {
+						multi = 1;
 						continue;
+					}
 				}
 
 				special = 1;
@@ -75,7 +76,7 @@ op_print(struct opiocdesc *opio, int depth)
 				special = 1;
 		}
 
-		if (special) {
+		if (special && strcmp(opio->op_name, "serial-number") != 0) {
 			for (i = 0; opio->op_buflen - i >= sizeof(int);
 			    i += sizeof(int)) {
 				if (i)

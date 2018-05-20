@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.19 2017/08/21 20:05:32 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.21 2018/03/31 18:19:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -31,6 +31,7 @@
 #include <stand/boot/cmd.h>
 
 #include "disk.h"
+#include "efiboot.h"
 #include "eficall.h"
 #include "fdt.h"
 #include "libsa.h"
@@ -52,8 +53,8 @@ static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 
-static int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
-static int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 static void efi_heap_init(void);
 static void efi_memprobe_internal(void);
 static void efi_timer_init(void);
@@ -70,6 +71,9 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	ST = systab;
 	BS = ST->BootServices;
 	IH = image;
+
+	/* disable reset by watchdog after 5 minutes */
+	EFI_CALL(BS->SetWatchdogTimer, 0, 0, 0, NULL);
 
 	status = EFI_CALL(BS->HandleProtocol, image, &imgp_guid,
 	    (void **)&imgp);
@@ -186,7 +190,7 @@ efi_diskprobe(void)
 		    0, &sz, handles);
 	}
 	if (handles == NULL || EFI_ERROR(status))
-		panic("BS->LocateHandle() returns %d", status);
+		return;
 
 	if (efi_bootdp != NULL)
 		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
@@ -229,7 +233,7 @@ efi_diskprobe(void)
  * Determine the number of nodes up to, but not including, the first
  * node of the specified type.
  */
-static int
+int
 efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 {
 	int	i;
@@ -242,7 +246,7 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 	return (-1);
 }
 
-static int
+int
 efi_device_path_ncmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int deptn)
 {
 	int	 i, cmp;
@@ -280,6 +284,7 @@ struct board_id board_id_table[] = {
 	{ "ti,omap4-panda",			2791 },
 };
 
+char *bootmac = NULL;
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
@@ -317,6 +322,10 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
 		    sizeof(bootduid));
 	}
+
+	/* Pass netboot interface address. */
+	if (bootmac)
+		fdt_node_add_property(node, "openbsd,bootmac", bootmac, 6);
 
 	/* Pass EFI system table. */
 	fdt_node_add_property(node, "openbsd,uefi-system-table",
@@ -397,6 +406,7 @@ machdep(void)
 	efi_heap_init();
 	efi_timer_init();
 	efi_diskprobe();
+	efi_pxeprobe();
 }
 
 void
@@ -489,7 +499,10 @@ getsecs(void)
 void
 devboot(dev_t dev, char *p)
 {
-	strlcpy(p, "sd0a", 5);
+	if (disk)
+		strlcpy(p, "sd0a", 5);
+	else
+		strlcpy(p, "tftp0a", 7);
 }
 
 int
@@ -590,7 +603,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	if (error)
 		return (error);
 
-	dp = &devsw[0];
+	dp = &devsw[dev];
 	f->f_dev = dp;
 
 	return (*dp->dv_open)(f, unit, part);

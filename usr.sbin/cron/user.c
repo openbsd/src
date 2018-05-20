@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.20 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: user.c,v 1.21 2018/02/05 03:52:37 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -58,19 +58,14 @@ parse_error(const char *msg)
 }
 
 user *
-load_user(int crontab_fd, struct passwd	*pw, const char *name)
+load_user(FILE *file, struct passwd *pw, const char *name)
 {
 	char envstr[MAX_ENVSTR];
-	FILE *file;
 	user *u;
 	entry *e;
 	int status, save_errno;
 	char **envp = NULL, **tenvp;
 
-	if (!(file = fdopen(crontab_fd, "r"))) {
-		syslog(LOG_ERR, "(%s) FDOPEN (%m)", name);
-		return (NULL);
-	}
 	CrontabFilename = name;
 	LineNumber = 0;
 
@@ -134,6 +129,5 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name)
  done:
 	if (envp != NULL)
 		env_free(envp);
-	fclose(file);
 	return (u);
 }

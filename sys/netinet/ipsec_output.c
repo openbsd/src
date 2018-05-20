@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.68 2017/05/18 10:56:45 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.71 2018/05/14 15:04:05 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -95,7 +95,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Sanity check. */
 	if (!tdb->tdb_xform) {
-		DPRINTF(("ipsp_process_packet(): uninitialized TDB\n"));
+		DPRINTF(("%s: uninitialized TDB\n", __func__));
 		m_freem(m);
 		return EHOSTUNREACH;
 	}
@@ -321,7 +321,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					 */
 					dstopt = 2;
 				}
-
+				if (m->m_pkthdr.len < hlen + sizeof(ip6e)) {
+					m_freem(m);
+					return EINVAL;
+				}
 				/* skip this header */
 				m_copydata(m, hlen, sizeof(ip6e),
 				    (caddr_t)&ip6e);
@@ -342,11 +345,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 #endif /* INET6 */
 	}
 
+	if (m->m_pkthdr.len < hlen) {
+		m_freem(m);
+		return EINVAL;
+	}
+
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
 		if ((m->m_pkthdr.len - hlen) < tdb->tdb_compalgxform->minlen) {
 			/* No need to compress, leave the packet untouched */
-			ipcompstat.ipcomps_minlen++;
+			ipcompstat_inc(ipcomps_minlen);
 			return ipsp_process_done(m, tdb);
 		}
 	}
@@ -414,7 +422,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		if (tdb->tdb_dst.sa.sa_family == AF_INET6)
 			m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 #endif /* INET6 */
-		espstat.esps_udpencout++;
+		espstat_inc(esps_udpencout);
 	}
 
 	switch (tdb->tdb_dst.sa.sa_family) {

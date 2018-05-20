@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
+/* $OpenBSD: ihidev.h,v 1.5 2017/11/29 02:48:16 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/timeout.h>
 
 /* from usbdi.h: Match codes. */
 /* First five codes is for a whole device. */
@@ -85,6 +87,10 @@ struct ihidev_softc {
 	u_char		*sc_ibuf;
 
 	int		sc_refcnt;
+
+	int		sc_poll;
+	int		sc_fastpoll;
+	struct timeout	sc_timer;
 };
 
 struct ihidev {

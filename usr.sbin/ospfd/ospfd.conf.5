@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.48 2015/03/11 08:05:11 sthen Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.51 2018/02/05 12:43:29 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 11 2015 $
+.Dd $Mdocdate: February 5 2018 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -111,18 +111,24 @@ Table 0 is the default table.
 .Op Ic no
 .Ic redistribute
 .Sm off
-.Po Ic static Ns | Ns Ic connected Ns | Ns
-.Ic default Pc
+.Pq Ic static | connected | default
 .Sm on
 .Op Ic set ...
+.Bk -words
+.Op Ic depend on Ar interface
+.Ek
 .Xc
 .It Xo
 .Op Ic no
-.Ic redistribute Ar prefix Op Ic set ...
+.Ic redistribute Ar prefix
+.Op Ic set ...
+.Op Ic depend on Ar interface
 .Xc
 .It Xo
 .Op Ic no
-.Ic redistribute rtlabel Ar label Op Ic set ...
+.Ic redistribute rtlabel Ar label
+.Op Ic set ...
+.Op Ic depend on Ar interface
 .Xc
 If set to
 .Ic connected ,
@@ -153,6 +159,14 @@ The only exception is
 which will be set no matter what, and additionally
 .Ic no
 cannot be used together with it.
+.Pp
+With the
+.Ic depend on
+option, redistributed routes will have a metric of 65535 if the specified
+.Ar interface
+is down or in state backup.
+This is especially useful on a carp cluster to ensure all traffic goes to
+the carp master.
 .Pp
 It is possible to set the route
 .Ic metric
@@ -344,7 +358,10 @@ demotion counter by 1 on the given interface group, usually
 when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
-.It Ic fast-hello-interval Ic msec Ar milliseconds
+.It Ic depend on Ar interface
+A metric of 65535 is used if the specified interface is down or in status
+backup.
+.It Ic fast-hello-interval msec Ar milliseconds
 If the interface is configured to use
 .Ic router-dead-time minimal ,
 hello packets will be sent using this timer.
@@ -355,15 +372,21 @@ The default value is 10; valid range is 1\-65535 seconds.
 .It Ic metric Ar cost
 Set the interface metric a.k.a. cost.
 The default value is 10; valid range is 1\-65535.
+A metric of 65535 is used for
+.Xr carp 4
+interfaces with status backup.
 .It Ic passive
 Prevent transmission and reception of OSPF packets on this interface.
 The specified interface will be announced as a stub network.
+Passive mode is enforced for
+.Xr carp 4
+interfaces.
 .It Ic retransmit-interval Ar seconds
 Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
 .It Xo
 .Ic router-dead-time
-.Po Ar seconds Ns | Ns Ic minimal Pc
+.Pq Ar seconds Ns | Ns Ic minimal
 .Xc
 Set the router dead time, a.k.a. neighbor inactivity timer.
 The default value is 40 seconds; valid range is 2\-2147483647 seconds.

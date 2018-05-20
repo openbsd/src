@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2016/02/09 06:46:02 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2018/05/14 09:33:20 kettenis Exp $	*/
 
 /* Public Domain */
 
@@ -242,6 +242,8 @@ atomic_clearbits_long(volatile unsigned long *uip, unsigned long v)
 	atomic_leave(eiem);
 }
 
+#endif /* defined(_KERNEL) */
+
 /*
  * Although the PA-RISC 2.0 architecture allows an implementation to
  * be weakly ordered, all PA-RISC processers to date implement a
@@ -261,5 +263,4 @@ __insn_barrier(void)
 #define membar_consumer()	__insn_barrier()
 #define membar_sync()		__insn_barrier()
 
-#endif /* defined(_KERNEL) */
 #endif /* _MACHINE_ATOMIC_H_ */

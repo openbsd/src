@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 2017/08/26 13:53:46 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.83 2018/04/20 14:08:12 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -47,7 +47,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/msgbuf.h>
 #include <sys/tty.h>
 #include <sys/user.h>
@@ -911,7 +910,8 @@ dobootopts(int argc)
 			continue;
 
 		/* device path */
-		if (*arg == '/' || strncmp(arg, "tftp://", 7) == 0) {
+		if (*arg == '/' || strncmp(arg, "bootduid=", 9) == 0 ||
+		    strncmp(arg, "tftp://", 7) == 0) {
 			if (*pmon_bootp == '\0') {
 				strlcpy(pmon_bootp, arg, sizeof pmon_bootp);
 				parsepmonbp();
@@ -1061,7 +1061,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();

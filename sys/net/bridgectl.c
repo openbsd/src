@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.6 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.8 2018/02/05 05:06:51 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -406,7 +406,7 @@ bridge_rtdaddr(struct bridge_softc *sc, struct ether_addr *ea)
 
 	h = bridge_hash(sc, ea);
 	LIST_FOREACH(p, &sc->sc_rts[h], brt_next) {
-		if (bcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
+		if (memcmp(ea, &p->brt_addr, sizeof(p->brt_addr)) == 0) {
 			LIST_REMOVE(p, brt_next);
 			sc->sc_brtcnt--;
 			free(p, M_DEVBUF, sizeof *p);
@@ -573,6 +573,7 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
 		req.ifbr_dst = n->brl_dst;
+		req.ifbr_arpf = n->brl_arpf;
 #if NPF > 0
 		req.ifbr_tagname[0] = '\0';
 		if (n->brl_tag)
@@ -596,6 +597,7 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
 		req.ifbr_dst = n->brl_dst;
+		req.ifbr_arpf = n->brl_arpf;
 #if NPF > 0
 		req.ifbr_tagname[0] = '\0';
 		if (n->brl_tag)
@@ -615,29 +617,80 @@ done:
 }
 
 u_int8_t
+bridge_arpfilter(struct brl_node *n, struct ether_header *eh, struct mbuf *m)
+{
+	struct ether_arp	 ea;
+
+	if (!(n->brl_arpf.brla_flags & (BRLA_ARP|BRLA_RARP)))
+		return (1);
+
+	if (ntohs(eh->ether_type) != ETHERTYPE_ARP)
+		return (0);
+	if (m->m_pkthdr.len <= ETHER_HDR_LEN + sizeof(ea))
+		return (0);	/* log error? */
+	m_copydata(m, ETHER_HDR_LEN, sizeof(ea), (caddr_t)&ea);
+
+	if (ntohs(ea.arp_hrd) != ARPHRD_ETHER ||
+	    ntohs(ea.arp_pro) != ETHERTYPE_IP ||
+	    ea.arp_hln != ETHER_ADDR_LEN ||
+	    ea.arp_pln != sizeof(struct in_addr))
+		return (0);
+	if ((n->brl_arpf.brla_flags & BRLA_ARP) &&
+	    ntohs(ea.arp_op) != ARPOP_REQUEST &&
+	    ntohs(ea.arp_op) != ARPOP_REPLY)
+		return (0);
+	if ((n->brl_arpf.brla_flags & BRLA_RARP) &&
+	    ntohs(ea.arp_op) != ARPOP_REVREQUEST &&
+	    ntohs(ea.arp_op) != ARPOP_REVREPLY)
+		return (0);
+	if (n->brl_arpf.brla_op && ntohs(ea.arp_op) != n->brl_arpf.brla_op)
+		return (0);
+	if (n->brl_arpf.brla_flags & BRLA_SHA &&
+	    memcmp(ea.arp_sha, &n->brl_arpf.brla_sha, ETHER_ADDR_LEN))
+		return (0);
+	if (n->brl_arpf.brla_flags & BRLA_THA &&
+	    memcmp(ea.arp_tha, &n->brl_arpf.brla_tha, ETHER_ADDR_LEN))
+		return (0);
+	if (n->brl_arpf.brla_flags & BRLA_SPA &&
+	    memcmp(ea.arp_spa, &n->brl_arpf.brla_spa, sizeof(struct in_addr)))
+		return (0);
+	if (n->brl_arpf.brla_flags & BRLA_TPA &&
+	    memcmp(ea.arp_tpa, &n->brl_arpf.brla_tpa, sizeof(struct in_addr)))
+		return (0);
+
+	return (1);
+}
+
+u_int8_t
 bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 {
 	struct brl_node *n;
 	u_int8_t flags;
 
 	SIMPLEQ_FOREACH(n, h, brl_next) {
+		if (!bridge_arpfilter(n, eh, m))
+			continue;
 		flags = n->brl_flags & (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID);
 		if (flags == 0)
 			goto return_action;
 		if (flags == (BRL_FLAG_SRCVALID|BRL_FLAG_DSTVALID)) {
-			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_shost, &n->brl_src,
+			    ETHER_ADDR_LEN))
 				continue;
-			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_dhost, &n->brl_dst,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
 		if (flags == BRL_FLAG_SRCVALID) {
-			if (bcmp(eh->ether_shost, &n->brl_src, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_shost, &n->brl_src,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
 		if (flags == BRL_FLAG_DSTVALID) {
-			if (bcmp(eh->ether_dhost, &n->brl_dst, ETHER_ADDR_LEN))
+			if (memcmp(eh->ether_dhost, &n->brl_dst,
+			    ETHER_ADDR_LEN))
 				continue;
 			goto return_action;
 		}
@@ -663,6 +716,7 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 	bcopy(&req->ifbr_dst, &n->brl_dst, sizeof(struct ether_addr));
 	n->brl_action = req->ifbr_action;
 	n->brl_flags = req->ifbr_flags;
+	n->brl_arpf = req->ifbr_arpf;
 #if NPF > 0
 	if (req->ifbr_tagname[0])
 		n->brl_tag = pf_tagname2tag(req->ifbr_tagname, 1);

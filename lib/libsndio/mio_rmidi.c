@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.24 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.25 2017/11/04 09:35:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -81,8 +81,12 @@ mio_rmidi_getfd(const char *str, unsigned int mode, int nbio)
 		return -1;
 	}
 	p = _sndio_parsenum(p, &devnum, 255);
-	if (p == NULL || *p != '\0') {
+	if (p == NULL) {
 		DPRINTF("mio_rmidi_getfd: %s: number expected after '/'\n", str);
+		return -1;
+	}
+	if (*p != '\0') {
+		DPRINTF("mio_rmidi_getfd: junk at end of string: %s\n", p);
 		return -1;
 	}
 	snprintf(path, sizeof(path), DEVPATH_PREFIX "%u", devnum);

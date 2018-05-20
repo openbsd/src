@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.234 2016/12/30 22:36:07 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.238 2018/05/01 14:12:11 phessler Exp $
 
 machine		i386
 maxusers	4
@@ -29,6 +29,8 @@ config		bsd root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0	at root
 
+pvbus0		at mainbus0	# Paravirtual device bus
+
 acpi0		at bios?
 #acpitimer*	at acpi?
 #acpihpet*	at acpi?
@@ -36,6 +38,7 @@ acpi0		at bios?
 #acpibat*	at acpi?
 #acpibtn*	at acpi?
 #acpicpu*	at acpi?
+acpicmos*	at acpi?
 acpiec*		at acpi?
 acpimadt0	at acpi?
 acpiprt*	at acpi?
@@ -326,6 +329,7 @@ vioblk*		at virtio?			# Virtio block device
 vio*		at virtio?			# Virtio network device
 viornd*		at virtio?			# Virtio entropy device
 vioscsi*	at virtio?			# Virtio SCSI device
+vmmci*		at virtio?			# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.76 2017/06/12 18:37:12 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.78 2018/01/02 08:05:03 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 12 2017 $
+.Dd $Mdocdate: January 2 2018 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -321,7 +321,7 @@ The following length modifiers are valid for the
 .Cm o , u , x ,
 or
 .Cm X
-conversion:
+conversions:
 .Bl -column "(deprecated)" "signed char" "unsigned long long" "long long *"
 .It Sy Modifier Ta Sy "d, i" Ta Sy "o, u, x, X" Ta Sy n
 .It hh Ta "signed char" Ta "unsigned char" Ta "signed char *"
@@ -359,7 +359,7 @@ conversion, it indicates that the argument is a pointer to a signed type
 equivalent in size to a
 .Vt size_t .
 .Pp
-The following length modifier is valid for the
+The following length modifiers are valid for the
 .Cm a ,
 .Cm A ,
 .Cm e ,
@@ -369,7 +369,7 @@ The following length modifier is valid for the
 .Cm g ,
 or
 .Cm G
-conversion:
+conversions:
 .Bl -column "Modifier" "e, E, f, F, g, G"
 .It Sy Modifier Ta Sy "e, E, f, F, g, G"
 .It "l (ell)" Ta double (ignored: same behavior as without it)
@@ -380,7 +380,7 @@ The following length modifier is valid for the
 .Cm c
 or
 .Cm s
-conversion:
+conversions:
 .Bl -column "Modifier" "wint_t" "wchar_t *"
 .It Sy Modifier Ta Sy c Ta Sy s
 .It "l (ell)" Ta wint_t Ta "wchar_t *"
@@ -758,7 +758,8 @@ The return value would be too large to be represented by an
 .El
 .Sh SEE ALSO
 .Xr printf 1 ,
-.Xr scanf 3
+.Xr scanf 3 ,
+.Xr wprintf 3
 .Sh STANDARDS
 The
 .Fn fprintf ,

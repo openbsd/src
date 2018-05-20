@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.45 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.47 2018/05/13 10:47:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,8 +227,7 @@ check_pem(const char *nm, const char *name)
 				else
 					r = 0;
 #ifndef OPENSSL_NO_ENGINE
-				if (e)
-					ENGINE_finish(e);
+				ENGINE_finish(e);
 #endif
 				return r;
 			}
@@ -565,7 +564,8 @@ load_iv(char **fromp, unsigned char *to, int num)
 }
 
 int
-PEM_write(FILE *fp, char *name, char *header, unsigned char *data, long len)
+PEM_write(FILE *fp, const char *name, const char *header,
+    const unsigned char *data, long len)
 {
 	BIO *b;
 	int ret;
@@ -581,8 +581,8 @@ PEM_write(FILE *fp, char *name, char *header, unsigned char *data, long len)
 }
 
 int
-PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
-    long len)
+PEM_write_bio(BIO *bp, const char *name, const char *header,
+    const unsigned char *data, long len)
 {
 	int nlen, n, i, j, outl;
 	unsigned char *buf = NULL;

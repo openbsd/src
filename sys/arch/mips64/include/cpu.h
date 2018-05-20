@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.121 2017/09/02 15:56:29 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.124 2018/02/24 11:42:31 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -188,7 +188,7 @@ struct cpu_info {
 	int		ci_want_resched;	/* need_resched() invoked */
 	cpuid_t		ci_cpuid;		/* our CPU ID */
 	uint32_t	ci_randseed;		/* per cpu random seed */
-	int		ci_ipl;			/* software IPL */
+	volatile int	ci_ipl;			/* software IPL */
 	uint32_t	ci_softpending;		/* pending soft interrupts */
 	int		ci_clock_started;
 	u_int32_t	ci_cpu_counter_last;	/* last compare value loaded */
@@ -205,7 +205,6 @@ struct cpu_info {
 	uint		ci_intrdepth;		/* interrupt depth */
 #ifdef MULTIPROCESSOR
 	u_long		ci_flags;		/* flags; see below */
-	struct intrhand	ci_ipiih;
 #endif
 	volatile int    ci_ddb;
 #define	CI_DDB_RUNNING		0
@@ -528,6 +527,18 @@ cp0_set_userlocal(void *value)
 	"	dmtc0	%0, $4, 2\n"
 	"	.set	pop\n"
 	: : "r" (value));
+}
+
+static inline u_long
+intr_disable(void)
+{
+	return disableintr();
+}
+
+static inline void
+intr_restore(u_long sr)
+{
+	setsr(sr);
 }
 
 /*

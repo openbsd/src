@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2017/07/27 19:44:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.61 2017/10/29 12:42:11 aoyama Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -29,12 +29,10 @@ SUBDIR+=	binutils-2.17
 # Do these last; texinfo builds the info 'dir' file, perl must be after binutils
 SUBDIR+=	perl texinfo
 
-.if ${COMPILER_VERSION:L} != "gcc3"
 maninstall:
 	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
 		gcc/protoize.1 ${DESTDIR}${MANDIR}1/protoize.1
 	@rm -f ${DESTDIR}${MANDIR}1/unprotoize.1
 	ln ${DESTDIR}${MANDIR}1/protoize.1 ${DESTDIR}${MANDIR}1/unprotoize.1
-.endif
 
 .include <bsd.subdir.mk>

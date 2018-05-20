@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.1 2017/07/21 20:38:20 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.4 2018/05/07 22:15:36 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -38,8 +38,10 @@
 #define TP_FEATURES_LAST	WSMOUSECFG_TAPPING
 #define TP_SETUP_FIRST		WSMOUSECFG_LEFT_EDGE
 #define TP_SETUP_LAST		WSMOUSECFG_TAP_LOCKTIME
+#define LOG_FIRST		WSMOUSECFG_LOG_INPUT
+#define LOG_LAST		WSMOUSECFG_LOG_EVENTS
 
-#define BASESIZE (BASE_LAST - BASE_FIRST + 1)
+#define BASESIZE ((BASE_LAST - BASE_FIRST + 1) + (LOG_LAST - LOG_FIRST + 1))
 
 #define BUFSIZE (BASESIZE \
     + (TP_FILTER_LAST - TP_FILTER_FIRST + 1) \
@@ -48,6 +50,7 @@
 
 static const int range[][2] = {
 	{ BASE_FIRST, BASE_LAST },
+	{ LOG_FIRST, LOG_LAST },
 	{ TP_FILTER_FIRST, TP_FILTER_LAST },
 	{ TP_FEATURES_FIRST, TP_FEATURES_LAST },
 	{ TP_SETUP_FIRST, TP_SETUP_LAST },
@@ -73,6 +76,15 @@ struct wsmouse_parameters cfg_scaling = {
 	2
 };
 
+struct wsmouse_parameters cfg_edges = {
+	(struct wsmouse_param[]) {
+	    { WSMOUSECFG_TOP_EDGE, 0 },
+	    { WSMOUSECFG_RIGHT_EDGE, 0 },
+	    { WSMOUSECFG_BOTTOM_EDGE, 0 },
+	    { WSMOUSECFG_LEFT_EDGE, 0 } },
+	4
+};
+
 struct wsmouse_parameters cfg_swapsides = {
 	(struct wsmouse_param[]) {
 	    { WSMOUSECFG_SWAPSIDES, 0 }, },
@@ -94,6 +106,8 @@ struct wsmouse_parameters cfg_param = {
 	4
 };
 
+int cfg_touchpad;
+
 static int cfg_horiz_res;
 static int cfg_vert_res;
 static struct wsmouse_param cfg_buffer[BUFSIZE];
@@ -114,23 +128,19 @@ mousecfg_init(int dev_fd, const char **errstr)
 		*errstr = "WSMOUSEIO_GTYPE";
 		return err;
 	}
-	for (i = 0; i < nitems(touchpad_types)
-	    && type != touchpad_types[i]; i++) {}
+	cfg_touchpad = 0;
+	for (i = 0; !cfg_touchpad && i < nitems(touchpad_types); i++)
+		cfg_touchpad = (type == touchpad_types[i]);
 
-	/*
-	 * If the device is not a touchpad, return an error without
-	 * setting the error string.  The caller shouldn't print a
-	 * warning in this case.
-	 */
-	if (i == nitems(touchpad_types))
-		return (-1);
-
-	if ((err = ioctl(dev_fd, WSMOUSEIO_GCALIBCOORDS, &coords))) {
-		*errstr = "WSMOUSEIO_GCALIBCOORDS";
-		return err;
+	cfg_horiz_res = cfg_vert_res = 0;
+	if (cfg_touchpad) {
+		if ((err = ioctl(dev_fd, WSMOUSEIO_GCALIBCOORDS, &coords))) {
+			*errstr = "WSMOUSEIO_GCALIBCOORDS";
+			return err;
+		}
+		cfg_horiz_res = coords.resx;
+		cfg_vert_res = coords.resy;
 	}
-	cfg_horiz_res = coords.resx;
-	cfg_vert_res = coords.resy;
 
 	param = cfg_buffer;
 	for (i = 0; i < nitems(range); i++)
@@ -139,22 +149,10 @@ mousecfg_init(int dev_fd, const char **errstr)
 			param->value = 0;
 		}
 
-	/*
-	 * Not all touchpad drivers configure wsmouse for compat mode yet.
-	 * In those cases the first ioctl call may be successful but the
-	 * second one will fail because it includes wstpad parameters:
-	 */
 	parameters.params = cfg_buffer;
-	parameters.nparams = BASESIZE;
+	parameters.nparams = (cfg_touchpad ? BUFSIZE : BASESIZE);
 	if ((err = ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))) {
 		*errstr = "WSMOUSEIO_GETPARAMS";
-		return (err);
-	}
-	parameters.params = cfg_buffer + BASESIZE;
-	parameters.nparams = BUFSIZE - BASESIZE;
-	if ((err = ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))) {
-		if (err != EINVAL)
-			*errstr = "WSMOUSEIO_GETPARAMS";
 		return (err);
 	}
 
@@ -167,11 +165,14 @@ index_of(enum wsmousecfg key)
 {
 	int i, n;
 
-	for (i = 0, n = 0; i < nitems(range); i++)
-		if (key <= range[i][1] && key >= range[i][0])
+	for (i = 0, n = 0; i < nitems(range); i++) {
+		if (key <= range[i][1] && key >= range[i][0]) {
 			return (key - range[i][0] + n);
-		else
-			n += range[i][1] - range[i][0] + 1;
+		}
+		n += range[i][1] - range[i][0] + 1;
+		if (!cfg_touchpad && n >= BASESIZE)
+			break;
+	}
 
 	return (-1);
 }
@@ -236,6 +237,33 @@ set_value(struct wsmouse_parameters *field, enum wsmousecfg key, int value)
 	field->params[i].value = (i < field->nparams ? value : 0);
 }
 
+static float
+get_percent(struct wsmouse_parameters *field, enum wsmousecfg key)
+{
+	return ((float) get_value(field, key) * 100 / 4096);
+}
+
+static void
+set_percent(struct wsmouse_parameters *field, enum wsmousecfg key, float f)
+{
+	set_value(field, key, (int) ((f * 4096 + 50) / 100));
+}
+
+static int
+set_edges(struct wsmouse_parameters *field, char *edges)
+{
+	float f1, f2, f3, f4;
+
+	if (sscanf(edges, "%f,%f,%f,%f", &f1, &f2, &f3, &f4) == 4) {
+		set_percent(field, WSMOUSECFG_TOP_EDGE, f1);
+		set_percent(field, WSMOUSECFG_RIGHT_EDGE,f2);
+		set_percent(field, WSMOUSECFG_BOTTOM_EDGE, f3);
+		set_percent(field, WSMOUSECFG_LEFT_EDGE, f4);
+		return (0);
+	}
+	return (-1);
+}
+
 /*
  * Read or write up to four raw parameter values.  In this case
  * reading is a 'put' operation that writes back a value from the
@@ -296,6 +324,15 @@ mousecfg_pr_field(struct wsmouse_parameters *field)
 		return;
 	}
 
+	if (field == &cfg_edges) {
+		printf("%.1f,%.1f,%.1f,%.1f",
+		    get_percent(field, WSMOUSECFG_TOP_EDGE),
+		    get_percent(field, WSMOUSECFG_RIGHT_EDGE),
+		    get_percent(field, WSMOUSECFG_BOTTOM_EDGE),
+		    get_percent(field, WSMOUSECFG_LEFT_EDGE));
+		return;
+	}
+
 	for (i = 0; i < field->nparams; i++)
 		printf(i > 0 ? ",%d" : "%d", field->params[i].value);
 }
@@ -303,7 +340,6 @@ mousecfg_pr_field(struct wsmouse_parameters *field)
 void
 mousecfg_rd_field(struct wsmouse_parameters *field, char *val)
 {
-	enum wsmousecfg first = field->params[0].key;
 	int i, n;
 	const char *s;
 	float f;
@@ -324,6 +360,12 @@ mousecfg_rd_field(struct wsmouse_parameters *field, char *val)
 		} else {
 			errx(1, "invalid input (scaling)");
 		}
+		return;
+	}
+
+	if (field == &cfg_edges) {
+		if (set_edges(field, val))
+			errx(1, "invalid input (edges)");
 		return;
 	}
 

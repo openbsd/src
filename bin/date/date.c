@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.50 2016/10/19 18:20:25 schwarze Exp $	*/
+/*	$OpenBSD: date.c,v 1.53 2018/04/25 19:37:09 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,7 +79,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':		/* user specified seconds */
 			rflag = 1;
-			tval = atoll(optarg);
+			tval = strtonum(optarg, LLONG_MIN, LLONG_MAX, &errstr);
+			if (errstr)
+				errx(1, "seconds is %s: %s", errstr, optarg);
 			break;
 		case 'u':		/* do everything in UTC */
 			if (setenv("TZ", "UTC", 1) == -1)
@@ -124,7 +127,7 @@ main(int argc, char *argv[])
 		argc--;
 	}
 
-	if (pledge("stdio rpath wpath", NULL) == -1)
+	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
 	if (*argv && **argv == '+') {
@@ -153,7 +156,11 @@ setthetime(char *p)
 	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
+	time_t now;
 	int yearset = 0;
+
+	if (pledge("stdio settime rpath wpath", NULL) == -1)
+		err(1, "pledge");
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit((unsigned char)*t))
@@ -225,15 +232,12 @@ setthetime(char *p)
 
 	/* set the time */
 	if (slidetime) {
-		struct timeval tv_current;
-
-		if (gettimeofday(&tv_current, NULL) == -1)
-			err(1, "Could not get local time of day");
-
-		tv.tv_sec = tval - tv_current.tv_sec;
+		if ((now = time(NULL)) == -1)
+			err(1, "time");
+		tv.tv_sec = tval - now;
 		tv.tv_usec = 0;
 		if (adjtime(&tv, NULL) == -1)
-			errx(1, "adjtime");
+			err(1, "adjtime");
 	} else {
 #ifndef SMALL
 		logwtmp("|", "date", "");

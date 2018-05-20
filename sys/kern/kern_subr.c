@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.49 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.50 2018/04/29 17:26:31 anton Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -163,8 +163,11 @@ hashinit(int elements, int type, int flags, u_long *hashmask)
 
 	if (elements <= 0)
 		panic("hashinit: bad cnt");
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
+	if ((elements & (elements - 1)) == 0)
+		hashsize = elements;
+	else
+		for (hashsize = 1; hashsize < elements; hashsize <<= 1)
+			continue;
 	hashtbl = mallocarray(hashsize, sizeof(*hashtbl), type, flags);
 	if (hashtbl == NULL)
 		return NULL;
@@ -182,8 +185,11 @@ hashfree(void *hash, int elements, int type)
 
 	if (elements <= 0)
 		panic("hashfree: bad cnt");
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
+	if ((elements & (elements - 1)) == 0)
+		hashsize = elements;
+	else
+		for (hashsize = 1; hashsize < elements; hashsize <<= 1)
+			continue;
 
 	free(hashtbl, type, sizeof(*hashtbl) * hashsize);
 }

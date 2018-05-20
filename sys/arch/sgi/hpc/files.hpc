@@ -1,4 +1,4 @@
-# $OpenBSD: files.hpc,v 1.6 2015/05/11 06:46:21 ratchov Exp $
+# $OpenBSD: files.hpc,v 1.7 2018/02/14 23:51:49 jsg Exp $
 # $NetBSD: files.hpc,v 1.14 2009/05/14 01:10:19 macallan Exp $
 
 # IP20 RTC
@@ -22,10 +22,6 @@ device	wdsc: wd33c93ctrl, scsi, hpcdma
 attach	wdsc at hpc
 file	arch/sgi/hpc/wdsc.c			wdsc
 
-device	haltwo: audio
-attach	haltwo at hpc
-file	arch/sgi/hpc/haltwo.c			haltwo
-
 device	zs {[channel = -1]}
 attach	zs at hpc with zs_hpc
 file 	arch/sgi/hpc/zs.c			zs needs-flag
@@ -46,10 +42,6 @@ file	arch/sgi/hpc/z8530ms.c			zsms
 
 attach	pckbc at hpc with pckbc_hpc
 file	arch/sgi/hpc/pckbc_hpc.c		pckbc_hpc
-
-#device	pione
-#attach	pione at hpc
-#file	arch/sgi/hpc/pione.c			pione
 
 device	panel
 attach	panel at hpc

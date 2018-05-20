@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.131 2017/10/05 08:12:24 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.136 2018/01/12 16:43:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -351,11 +351,10 @@ screen_write_cnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 	free(msg);
 }
 
-/* Copy from another screen. */
+/* Copy from another screen. Assumes target region is big enough. */
 void
 screen_write_copy(struct screen_write_ctx *ctx, struct screen *src, u_int px,
-    u_int py, u_int nx, u_int ny, bitstr_t *markbs,
-    const struct grid_cell *markgc)
+    u_int py, u_int nx, u_int ny, bitstr_t *mbs, const struct grid_cell *mgc)
 {
 	struct screen		*s = ctx->s;
 	struct grid		*gd = src->grid;
@@ -371,19 +370,54 @@ screen_write_copy(struct screen_write_ctx *ctx, struct screen *src, u_int px,
 	for (yy = py; yy < py + ny; yy++) {
 		for (xx = px; xx < px + nx; xx++) {
 			grid_get_cell(gd, xx, yy, &gc);
-			if (markbs != NULL) {
+			if (mbs != NULL) {
 				b = (yy * screen_size_x(src)) + xx;
-				if (bit_test(markbs, b)) {
-					gc.attr = markgc->attr;
-					gc.fg = markgc->fg;
-					gc.bg = markgc->bg;
+				if (bit_test(mbs, b)) {
+					gc.attr = mgc->attr;
+					gc.fg = mgc->fg;
+					gc.bg = mgc->bg;
 				}
 			}
-			screen_write_cell(ctx, &gc);
+			if (xx + gc.data.width <= px + nx)
+				screen_write_cell(ctx, &gc);
 		}
-
 		cy++;
 		screen_write_cursormove(ctx, cx, cy);
+	}
+}
+
+/*
+ * Copy from another screen but without the selection stuff. Also assumes the
+ * target region is already big enough and already cleared.
+ */
+void
+screen_write_fast_copy(struct screen_write_ctx *ctx, struct screen *src,
+    u_int px, u_int py, u_int nx, u_int ny)
+{
+	struct screen		*s = ctx->s;
+	struct grid		*gd = src->grid;
+	struct grid_cell	 gc;
+	u_int		 	 xx, yy, cx, cy;
+
+	if (nx == 0 || ny == 0)
+		return;
+
+	cy = s->cy;
+	for (yy = py; yy < py + ny; yy++) {
+		if (yy >= gd->hsize + gd->sy)
+			break;
+		cx = s->cx;
+		for (xx = px; xx < px + nx; xx++) {
+			if (xx >= gd->linedata[yy].cellsize)
+				break;
+			grid_get_cell(gd, xx, yy, &gc);
+			if (xx + gc.data.width > px + nx)
+				break;
+			if (!grid_cells_equal(&gc, &grid_default_cell))
+				grid_view_set_cell(ctx->s->grid, cx, cy, &gc);
+			cx++;
+		}
+		cy++;
 	}
 }
 
@@ -428,7 +462,7 @@ screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom)
 		screen_write_cursormove(ctx, cx, cy + i);
 		screen_write_putc(ctx, &gc, 'x');
 	}
-	screen_write_cursormove(ctx, cx, cy + ny);
+	screen_write_cursormove(ctx, cx, cy + ny - 1);
 	screen_write_putc(ctx, &gc, bottom ? 'v' : 'x');
 
 	screen_write_cursormove(ctx, cx, cy);
@@ -471,7 +505,10 @@ screen_write_box(struct screen_write_ctx *ctx, u_int nx, u_int ny)
 	screen_write_cursormove(ctx, cx, cy);
 }
 
-/* Write a preview version of a window. */
+/*
+ * Write a preview version of a window. Assumes target area is big enough and
+ * already cleared.
+ */
 void
 screen_write_preview(struct screen_write_ctx *ctx, struct screen *src, u_int nx,
     u_int ny)
@@ -515,8 +552,7 @@ screen_write_preview(struct screen_write_ctx *ctx, struct screen *src, u_int nx,
 		py = 0;
 	}
 
-	screen_write_copy(ctx, src, px, src->grid->hsize + py, nx, ny, NULL,
-	    NULL);
+	screen_write_fast_copy(ctx, src, px, src->grid->hsize + py, nx, ny);
 
 	if (src->mode & MODE_CURSOR) {
 		grid_view_get_cell(src->grid, src->cx, src->cy, &gc);
@@ -1261,10 +1297,12 @@ screen_write_collect_end(struct screen_write_ctx *ctx)
 			grid_view_get_cell(s->grid, xx, s->cy, &gc);
 			if (~gc.flags & GRID_FLAG_PADDING)
 				break;
-			grid_view_set_cell(s->grid, xx, s->cy, &grid_default_cell);
+			grid_view_set_cell(s->grid, xx, s->cy,
+			    &grid_default_cell);
 		}
 		if (gc.data.width > 1)
-			grid_view_set_cell(s->grid, xx, s->cy, &grid_default_cell);
+			grid_view_set_cell(s->grid, xx, s->cy,
+			    &grid_default_cell);
 	}
 
 	memcpy(&gc, &ci->gc, sizeof gc);
@@ -1297,7 +1335,7 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 	 */
 
 	collect = 1;
-	if (gc->data.width != 1 || gc->data.size != 1)
+	if (gc->data.width != 1 || gc->data.size != 1 || *gc->data.data >= 0x7f)
 		collect = 0;
 	else if (gc->attr & GRID_ATTR_CHARSET)
 		collect = 0;

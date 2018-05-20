@@ -1,4 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/22 13:50:54 anton Exp $
+# $OpenBSD: Makefile,v 1.5 2017/12/18 19:19:08 anton Exp $
+
+CSH=	/bin/csh
 
 REGRESS_TARGETS=	filec
 
@@ -11,6 +13,16 @@ edit.c: ${.CURDIR}/../ksh/edit/edit.c
 	@cp ${.CURDIR}/../ksh/edit/edit.c .
 
 filec: edit
-	sh ${.CURDIR}/filec.sh
+	@echo '\n======== filec ========'
+	sh ${.CURDIR}/filec.sh ${CSH}
+
+REGRESS_TARGETS+=	env
+
+.SUFFIXES: .in
+
+.in:
+	@echo '\n======== ${@} ========'
+	env -i MALLOC_OPTIONS=S ${CSH} <${.CURDIR}/${@}.in 2>&1 | \
+		diff -u ${.CURDIR}/${@}.ok -
 
 .include <bsd.regress.mk>

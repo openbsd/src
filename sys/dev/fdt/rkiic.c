@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkiic.c,v 1.1 2017/08/27 22:09:21 kettenis Exp $	*/
+/*	$OpenBSD: rkiic.c,v 1.3 2018/02/25 20:42:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -108,7 +108,9 @@ rkiic_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "rockchip,rk3399-i2c");
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-i2c") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-i2c") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-i2c"));
 }
 
 void

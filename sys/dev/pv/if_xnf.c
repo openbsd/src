@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.60 2017/07/17 16:01:24 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.63 2018/01/20 20:03:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -140,8 +140,7 @@ struct xnf_tx_ring {
 } __packed;
 
 struct xnf_tx_buf {
-	uint16_t		 txb_used;
-	uint16_t		 txb_ndesc;
+	uint32_t		 txb_ndesc;
 	bus_dmamap_t		 txb_dmap;
 	struct mbuf		*txb_mbuf;
 };
@@ -595,7 +594,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		do {
 			id = sc->sc_tx_next++ & (XNF_TX_DESC - 1);
 			txb = &sc->sc_tx_buf[id];
-		} while (txb->txb_used);
+		} while (txb->txb_mbuf);
 
 		if (bus_dmamap_load(sc->sc_dmat, txb->txb_dmap, m->m_data,
 		    m->m_len, NULL, flags)) {
@@ -634,7 +633,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		}
 
 		txb->txb_mbuf = m;
-		txb->txb_used = 1;
 		used++;
 	}
 
@@ -666,7 +664,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 
 			txb->txb_mbuf = NULL;
 			txb->txb_ndesc = 0;
-			txb->txb_used = 0;
 		}
 	}
 	return (ENOBUFS);
@@ -724,7 +721,6 @@ xnf_txeof(struct xnf_softc *sc)
 
 			m_free(txb->txb_mbuf);
 			txb->txb_mbuf = NULL;
-			txb->txb_used = 0;
 			done++;
 		}
 
@@ -1082,7 +1078,6 @@ xnf_tx_ring_destroy(struct xnf_softc *sc)
 			continue;
 		m_free(sc->sc_tx_buf[i].txb_mbuf);
 		sc->sc_tx_buf[i].txb_mbuf = NULL;
-		sc->sc_tx_buf[i].txb_used = 0;
 		sc->sc_tx_buf[i].txb_ndesc = 0;
 	}
 	if (sc->sc_tx_rmap) {
@@ -1107,7 +1102,6 @@ xnf_capabilities(struct xnf_softc *sc)
 {
 	unsigned long long res;
 	const char *prop;
-	char val[32];
 	int error;
 
 	/* Query scatter-gather capability */
@@ -1118,6 +1112,7 @@ xnf_capabilities(struct xnf_softc *sc)
 	if (error == 0 && res == 1)
 		sc->sc_caps |= XNF_CAP_SG;
 
+#if 0
 	/* Query IPv4 checksum offloading capability, enabled by default */
 	sc->sc_caps |= XNF_CAP_CSUM4;
 	prop = "feature-no-csum-offload";
@@ -1134,6 +1129,7 @@ xnf_capabilities(struct xnf_softc *sc)
 		goto errout;
 	if (error == 0 && res == 1)
 		sc->sc_caps |= XNF_CAP_CSUM6;
+#endif
 
 	/* Query multicast traffic contol capability */
 	prop = "feature-multicast-control";
@@ -1153,8 +1149,6 @@ xnf_capabilities(struct xnf_softc *sc)
 
 	/* Query multiqueue capability */
 	prop = "multi-queue-max-queues";
-	if ((error = xs_getprop(sc->sc_parent, sc->sc_backend, prop, val,
-	    sizeof(val))) == 0)
 	if ((error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res)) != 0
 	    && error != ENOENT)
 		goto errout;
@@ -1196,6 +1190,13 @@ xnf_init_backend(struct xnf_softc *sc)
 	/* Enable scatter-gather mode */
 	if (sc->sc_tx_frags > 1) {
 		prop = "feature-sg";
+		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
+			goto errout;
+	}
+
+	/* Disable IPv4 checksum offloading */
+	if (!(sc->sc_caps & XNF_CAP_CSUM4)) {
+		prop = "feature-no-csum-offload";
 		if (xs_setnum(sc->sc_parent, sc->sc_node, prop, 1))
 			goto errout;
 	}

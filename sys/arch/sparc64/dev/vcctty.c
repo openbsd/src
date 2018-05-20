@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.12 2015/01/25 21:42:13 kettenis Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.14 2018/02/19 08:59:52 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -179,13 +179,13 @@ vcctty_tx_intr(void *arg)
 	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Tx link down\n"));
+			DPRINTF(("%s: Tx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Tx link up\n"));
+			DPRINTF(("%s: Tx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Tx link reset\n"));
+			DPRINTF(("%s: Tx link reset\n", __func__));
 			break;
 		}
 		lc->lc_tx_state = tx_state;
@@ -214,13 +214,13 @@ vcctty_rx_intr(void *arg)
 	if (rx_state != lc->lc_rx_state) {
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Rx link down\n"));
+			DPRINTF(("%s: Rx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Rx link up\n"));
+			DPRINTF(("%s: Rx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Rx link reset\n"));
+			DPRINTF(("%s: Rx link reset\n", __func__));
 			break;
 		}
 		lc->lc_rx_state = rx_state;
@@ -333,7 +333,7 @@ vccttyopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0))
+	} else if ((tp->t_state & TS_XCLUDE) && suser(p))
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 

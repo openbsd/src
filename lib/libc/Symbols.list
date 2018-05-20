@@ -6,11 +6,18 @@
  * static, or renamed it to have a leading underbar.
  */
 
-/* symbols that no one should be using currently */
+/* brk/sbrk need this so it can be overriden by the executable's value */
+_end
+
+/*
+ * XXX binutils can create corrupt symbol table entries (uninitialized?)
+ * in shared libs in at least the samba port if at least the __data_start
+ * symbol is missing.  For now, put them all back until the bug can be
+ * stomped on
+ */
 __data_start
 __bss_start
 _edata
-_end
 __end
 
 /* sys */
@@ -1459,6 +1466,8 @@ random
 /* stdlib */
 _Exit
 __cxa_atexit
+__cxa_thread_atexit
+__cxa_thread_atexit_impl
 __cxa_finalize
 __isthreaded
 a64l

@@ -319,7 +319,7 @@ sub Dhi()   { shift=~m|q([1]?[0-9])|?"d".($1*2+1):"";   }
 sub Q()     { shift=~m|d([1-3]?[02468])|?"q".($1/2):""; }
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 .fpu	neon
 
 .global	gcm_gmult_neon

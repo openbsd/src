@@ -2216,7 +2216,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 
 	offset -= drm_vma_node_offset_addr(&obj->base.vma_node);
 
-	if (rw_enter(&dev->struct_mutex, RW_NOSLEEP | RW_WRITE) != 0) {
+	if (!mutex_trylock(&dev->struct_mutex)) {
 		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
 		mutex_lock(&dev->struct_mutex);
 		locked = uvmfault_relock(ufi);

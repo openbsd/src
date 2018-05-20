@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.32 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: vmm.c,v 1.38 2018/04/27 15:45:52 jasper Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -745,7 +745,7 @@ vmm_start(void)
 			delay(10);
 		if (!(ci->ci_flags & CPUF_VMM)) {
 			printf("%s: failed to enter VMM mode\n",
-				ci->ci_dev.dv_xname);
+				ci->ci_dev->dv_xname);
 			ret = EIO;
 		}
 	}
@@ -755,7 +755,7 @@ vmm_start(void)
 	start_vmm_on_cpu(self);
 	if (!(self->ci_flags & CPUF_VMM)) {
 		printf("%s: failed to enter VMM mode\n",
-			self->ci_dev.dv_xname);
+			self->ci_dev->dv_xname);
 		ret = EIO;
 	}
 
@@ -793,7 +793,7 @@ vmm_stop(void)
 			delay(10);
 		if (ci->ci_flags & CPUF_VMM) {
 			printf("%s: failed to exit VMM mode\n",
-				ci->ci_dev.dv_xname);
+				ci->ci_dev->dv_xname);
 			ret = EIO;
 		}
 	}
@@ -803,7 +803,7 @@ vmm_stop(void)
 	stop_vmm_on_cpu(self);
 	if (self->ci_flags & CPUF_VMM) {
 		printf("%s: failed to exit VMM mode\n",
-			self->ci_dev.dv_xname);
+			self->ci_dev->dv_xname);
 		ret = EIO;
 	}
 
@@ -2519,7 +2519,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_HOST_IA32_TR_SEL, proc0.p_md.md_tss_sel)) {
+	if (vmwrite(VMCS_HOST_IA32_TR_SEL, GSEL(GTSS_SEL, SEL_KPL))) {
 		ret = EINVAL;
 		goto exit;
 	}
@@ -3446,7 +3446,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			/* Host TR base */
 			if (vmwrite(VMCS_HOST_IA32_TR_BASE,
-			    proc0.p_md.md_tss_sel)) {
+			    GSEL(GTSS_SEL, SEL_KPL))) {
 				ret = EINVAL;
 				break;
 			}
@@ -3718,8 +3718,11 @@ vmx_handle_hlt(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All HLT insns are 1 byte */
-	KASSERT(insn_length == 1);
+	if (insn_length != 1) {
+		DPRINTF("%s: HLT with instruction length %d not supported\n",
+		    __func__, insn_length);
+		return (EINVAL);
+	}
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
 	return (EAGAIN);
@@ -4156,8 +4159,11 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All RDMSR instructions are 0x0F 0x32 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: RDMSR with instruction length %d not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ecx = &vcpu->vc_gueststate.vg_ecx;
@@ -4201,8 +4207,11 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		return (EINVAL);
 	}
 
-	/* All WRMSR instructions are 0x0F 0x30 */
-	KASSERT(insn_length == 2);
+	if (insn_length != 2) {
+		DPRINTF("%s: WRMSR with instruction length %d not "
+		    "supported\n", __func__, insn_length);
+		return (EINVAL);
+	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ecx = &vcpu->vc_gueststate.vg_ecx;
@@ -4243,8 +4252,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		/* All CPUID instructions are 0x0F 0xA2 */
-		KASSERT(insn_length == 2);
+		if (insn_length != 2) {
+			DPRINTF("%s: CPUID with instruction length %d not "
+			    "supported\n", __func__, insn_length);
+			return (EINVAL);
+		}
 	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
@@ -5721,11 +5733,11 @@ vmm_decode_cr0(uint32_t cr0)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 11; i++)
+	for (i = 0; i < nitems(cr0_info); i++)
 		if (cr0 & cr0_info[i].vrdi_bit)
-			DPRINTF(cr0_info[i].vrdi_present);
+			DPRINTF("%s", cr0_info[i].vrdi_present);
 		else
-			DPRINTF(cr0_info[i].vrdi_absent);
+			DPRINTF("%s", cr0_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5741,11 +5753,11 @@ vmm_decode_cr3(uint32_t cr3)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0 ; i < 2 ; i++)
+	for (i = 0 ; i < nitems(cr3_info) ; i++)
 		if (cr3 & cr3_info[i].vrdi_bit)
-			DPRINTF(cr3_info[i].vrdi_present);
+			DPRINTF("%s", cr3_info[i].vrdi_present);
 		else
-			DPRINTF(cr3_info[i].vrdi_absent);
+			DPRINTF("%s", cr3_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
 }
@@ -5778,11 +5790,11 @@ vmm_decode_cr4(uint32_t cr4)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 19; i++)
+	for (i = 0; i < nitems(cr4_info); i++)
 		if (cr4 & cr4_info[i].vrdi_bit)
-			DPRINTF(cr4_info[i].vrdi_present);
+			DPRINTF("%s", cr4_info[i].vrdi_present);
 		else
-			DPRINTF(cr4_info[i].vrdi_absent);
+			DPRINTF("%s", cr4_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5799,11 +5811,11 @@ vmm_decode_apicbase_msr_value(uint64_t apicbase)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(acpibase_info); i++)
 		if (apicbase & apicbase_info[i].vrdi_bit)
-			DPRINTF(apicbase_info[i].vrdi_present);
+			DPRINTF("%s", apicbase_info[i].vrdi_present);
 		else
-			DPRINTF(apicbase_info[i].vrdi_absent);
+			DPRINTF("%s", apicbase_info[i].vrdi_absent);
 	
 	DPRINTF(")\n");
 }
@@ -5821,11 +5833,11 @@ vmm_decode_ia32_fc_value(uint64_t fcr)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(fcr_info); i++)
 		if (fcr & fcr_info[i].vrdi_bit)
-			DPRINTF(fcr_info[i].vrdi_present);
+			DPRINTF("%s", fcr_info[i].vrdi_present);
 		else
-			DPRINTF(fcr_info[i].vrdi_absent);
+			DPRINTF("%s", fcr_info[i].vrdi_absent);
 
 	if (fcr & IA32_FEATURE_CONTROL_SENTER_EN)
 		DPRINTF(" [SENTER param = 0x%llx]",
@@ -5846,11 +5858,11 @@ vmm_decode_mtrrcap_value(uint64_t val)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nitems(mtrrcap_info); i++)
 		if (val & mtrrcap_info[i].vrdi_bit)
-			DPRINTF(mtrrcap_info[i].vrdi_present);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_present);
 		else
-			DPRINTF(mtrrcap_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrcap_info[i].vrdi_absent);
 
 	if (val & MTRRcap_FIXED)
 		DPRINTF(" [nr fixed ranges = 0x%llx]",
@@ -5883,11 +5895,11 @@ vmm_decode_mtrrdeftype_value(uint64_t mtrrdeftype)
 	int type;
 
 	DPRINTF("(");
-	for (i = 0; i < 2; i++)
+	for (i = 0; i < nitems(mtrrdeftype_info); i++)
 		if (mtrrdeftype & mtrrdeftype_info[i].vrdi_bit)
-			DPRINTF(mtrrdeftype_info[i].vrdi_present);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_present);
 		else
-			DPRINTF(mtrrdeftype_info[i].vrdi_absent);
+			DPRINTF("%s", mtrrdeftype_info[i].vrdi_absent);
 
 	DPRINTF("type = ");
 	type = mtrr2mrt(mtrrdeftype & 0xff);
@@ -5919,11 +5931,11 @@ vmm_decode_efer_value(uint64_t efer)
 	uint8_t i;
 
 	DPRINTF("(");
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < nitems(efer_info); i++)
 		if (efer & efer_info[i].vrdi_bit)
-			DPRINTF(efer_info[i].vrdi_present);
+			DPRINTF("%s", efer_info[i].vrdi_present);
 		else
-			DPRINTF(efer_info[i].vrdi_absent);
+			DPRINTF("%s", efer_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.10 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.11 2017/10/08 16:24:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -311,19 +311,44 @@ f_err:
 int
 ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 {
-	unsigned char *p;
+	size_t outlen;
+	CBB cbb;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == a) {
-		p = (unsigned char *)s->internal->init_buf->data;
-		*p = SSL3_MT_CCS;
-		s->internal->init_num = 1;
+		if (!CBB_init_fixed(&cbb, s->internal->init_buf->data,
+		    s->internal->init_buf->length))
+			goto err;
+		if (!CBB_add_u8(&cbb, SSL3_MT_CCS))
+			goto err;
+		if (!CBB_finish(&cbb, NULL, &outlen))
+			goto err;
+
+		if (outlen > INT_MAX)
+			goto err;
+
+		s->internal->init_num = (int)outlen;
 		s->internal->init_off = 0;
+
+		if (SSL_IS_DTLS(s)) {
+			D1I(s)->handshake_write_seq =
+			    D1I(s)->next_handshake_write_seq;
+			dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
+			    D1I(s)->handshake_write_seq, 0, 0);
+			dtls1_buffer_message(s, 1);
+		}
 
 		S3I(s)->hs.state = b;
 	}
 
 	/* SSL3_ST_CW_CHANGE_B */
-	return (ssl3_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
+	return ssl3_record_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return -1;
 }
 
 static int

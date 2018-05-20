@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.55 2015/11/28 01:17:12 gsoares Exp $	*/
+/*	$OpenBSD: grep.c,v 1.57 2017/12/10 09:17:24 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -71,6 +71,9 @@ int	 cflag;		/* -c: only show a count of matching lines */
 int	 hflag;		/* -h: don't print filename headers */
 int	 iflag;		/* -i: ignore case */
 int	 lflag;		/* -l: only show names of files with matches */
+int	 mflag;		/* -m x: stop reading the files after x matches */
+long long mcount;	/* count for -m */
+long long mlimit;	/* requested value for -m */
 int	 nflag;		/* -n: show line numbers in front of matching lines */
 int	 oflag;		/* -o: print each match */
 int	 qflag;		/* -q: quiet mode (don't output anything) */
@@ -107,19 +110,21 @@ usage(void)
 {
 	fprintf(stderr,
 #ifdef NOZ
-	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwx] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwx] [-A num] [-B num] [-C[num]]"
 #else
-	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwxZ] [-A num] [-B num] [-C[num]]\n"
+	    "usage: %s [-abcEFGHhIiLlnoqRsUVvwxZ] [-A num] [-B num] [-C[num]]"
 #endif
-	    "\t[-e pattern] [-f file] [--binary-files=value] [--context[=num]]\n"
-	    "\t[--line-buffered] [pattern] [file ...]\n", __progname);
+	    " [-e pattern]\n"
+	    "\t[-f file] [-m num] [--binary-files=value] [--context[=num]]\n"
+	    "\t[--line-buffered] [--max-count=num] [pattern] [file ...]\n",
+	    __progname);
 	exit(2);
 }
 
 #ifdef NOZ
-static const char optstr[] = "0123456789A:B:CEFGHILRUVabce:f:hilnoqrsuvwxy";
+static const char optstr[] = "0123456789A:B:CEFGHILRUVabce:f:hilm:noqrsuvwxy";
 #else
-static const char optstr[] = "0123456789A:B:CEFGHILRUVZabce:f:hilnoqrsuvwxy";
+static const char optstr[] = "0123456789A:B:CEFGHILRUVZabce:f:hilm:noqrsuvwxy";
 #endif
 
 static const struct option long_options[] =
@@ -147,6 +152,7 @@ static const struct option long_options[] =
 	{"ignore-case",		no_argument,		NULL, 'i'},
 	{"files-without-match",	no_argument,		NULL, 'L'},
 	{"files-with-matches",	no_argument,		NULL, 'l'},
+	{"max-count",		required_argument,	NULL, 'm'},
 	{"line-number",		no_argument,		NULL, 'n'},
 	{"quiet",		no_argument,		NULL, 'q'},
 	{"silent",		no_argument,		NULL, 'q'},
@@ -375,6 +381,14 @@ main(int argc, char *argv[])
 		case 'l':
 			Lflag = 0;
 			lflag = qflag = 1;
+			break;
+		case 'm':
+			mflag = 1;
+			mlimit = mcount = strtonum(optarg, 0, LLONG_MAX,
+			   &errstr);
+			if (errstr != NULL)
+				errx(2, "invalid max-count %s: %s",
+				    optarg, errstr);
 			break;
 		case 'n':
 			nflag = 1;

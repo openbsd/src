@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.20 2017/08/08 15:53:55 visa Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.25 2018/04/24 20:33:28 mlarkin Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 
 #include <machine/specialreg.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined (_STANDALONE)
 
 extern int cpu_feature;
 
@@ -306,6 +306,18 @@ xgetbv(uint32_t reg)
 	return (((uint64_t)hi << 32) | (uint64_t)lo);
 }
 
+static __inline void
+stgi(void)
+{
+	__asm volatile("stgi");
+}
+
+static __inline void
+clgi(void)
+{
+	__asm volatile("clgi");
+}
+
 /* Break into DDB. */
 static __inline void
 breakpoint(void)
@@ -314,6 +326,11 @@ breakpoint(void)
 }
 
 void amd64_errata(struct cpu_info *);
+void cpu_ucode_setup(void);
+void cpu_ucode_apply(struct cpu_info *);
+
+struct cpu_info_full;
+void cpu_enter_pages(struct cpu_info_full *);
 
 #endif /* _KERNEL */
 

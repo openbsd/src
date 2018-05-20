@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.48 2017/07/24 15:31:14 robert Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.51 2018/04/20 07:27:54 mlarkin Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -42,13 +42,10 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
-#include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
@@ -61,6 +58,14 @@
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
+
+/* #define LAPIC_DEBUG */
+
+#ifdef LAPIC_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* LAPIC_DEBUG */
 
 struct evcount clk_count;
 #ifdef MULTIPROCESSOR
@@ -204,11 +209,12 @@ lapic_map(paddr_t lapic_base)
 		codepatch_call(CPTAG_EOI, &x2apic_eoi);
 
 		lapic_writereg(LAPIC_TPRI, s);
+		va = (vaddr_t)&local_apic;
 	} else {
 		/*
 		 * Map local apic.  If we have a local apic, it's safe to
 		 * assume we're on a 486 or better and can use invlpg and
-		 * non-cacheable PTE's
+		 * non-cacheable PTEs
 		 *
 		 * Whap the PTE "by hand" rather than calling pmap_kenter_pa
 		 * because the latter will attempt to invoke TLB shootdown
@@ -222,6 +228,17 @@ lapic_map(paddr_t lapic_base)
 
 		lapic_tpr = s;
 	}
+
+	/*
+	 * Enter the LAPIC MMIO page in the U-K page table for handling
+	 * Meltdown (needed in the interrupt stub to acknowledge the
+	 * incoming interrupt). On CPUs unaffected by Meltdown,
+	 * pmap_enter_special is a no-op.
+	 * XXX - need to map this PG_N
+	 */
+	pmap_enter_special(va, lapic_base, PROT_READ | PROT_WRITE);
+	DPRINTF("%s: entered lapic page va 0x%llx pa 0x%llx\n", __func__,
+	    (uint64_t)va, (uint64_t)lapic_base);
 
 	enable_intr();
 }

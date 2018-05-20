@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.68 2016/12/11 17:49:19 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.73 2018/03/15 16:51:29 anton Exp $	*/
 
 /*
  * execute command tree
@@ -409,7 +409,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 	volatile int rv = 0;
 	char *cp;
 	char **lastp;
-	static struct op texec; /* Must be static (XXX but why?) */
+	struct op texec;
 	int type_flags;
 	int keepasn_ok;
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
@@ -644,7 +644,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 			/* NOTREACHED */
 		default:
 			quitenv(NULL);
-			internal_errorf(1, "CFUNC %d", i);
+			internal_errorf("CFUNC %d", i);
 		}
 		break;
 	    }
@@ -684,6 +684,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags,
 		}
 
 		/* to fork we set up a TEXEC node and call execute */
+		memset(&texec, 0, sizeof(texec));
 		texec.type = TEXEC;
 		texec.left = t;	/* for tprint */
 		texec.str = tp->val.s;
@@ -706,7 +707,7 @@ scriptexec(struct op *tp, char **ap)
 
 	shell = str_val(global("EXECSHELL"));
 	if (shell && *shell)
-		shell = search(shell, path, X_OK, NULL);
+		shell = search(shell, search_path, X_OK, NULL);
 	if (!shell || !*shell)
 		shell = _PATH_BSHELL;
 
@@ -726,7 +727,7 @@ shcomexec(char **wp)
 
 	tp = ktsearch(&builtins, *wp, hash(*wp));
 	if (tp == NULL)
-		internal_errorf(1, "shcomexec: %s", *wp);
+		internal_errorf("%s: %s", __func__, *wp);
 	return call_builtin(tp, wp);
 }
 
@@ -899,8 +900,8 @@ findcom(const char *name, int flags)
 			}
 			tp->flag = DEFINED;	/* make ~ISSET */
 		}
-		npath = search(name, flags & FC_DEFPATH ? def_path : path,
-		    X_OK, &tp->u2.errno_);
+		npath = search(name, flags & FC_DEFPATH ? def_path :
+		    search_path, X_OK, &tp->u2.errno_);
 		if (npath) {
 			if (tp == &temp) {
 				tp->val.s = npath;
@@ -1220,7 +1221,7 @@ herein(const char *content, int sub)
 		s->start = s->str = content;
 		source = s;
 		if (yylex(ONEWORD|HEREDOC) != LWORD)
-			internal_errorf(1, "herein: yylex");
+			internal_errorf("%s: yylex", __func__);
 		source = osource;
 		shf_puts(evalstr(yylval.cp, 0), shf);
 	} else
@@ -1238,7 +1239,6 @@ herein(const char *content, int sub)
 	return fd;
 }
 
-#ifdef EDIT
 /*
  *	ksh special - the select command processing section
  *	print the args in column form - assuming that we can
@@ -1364,7 +1364,6 @@ pr_list(char *const *ap)
 
 	return n;
 }
-#endif /* EDIT */
 
 /*
  *	[[ ... ]] evaluation routines
@@ -1447,5 +1446,5 @@ static void
 dbteste_error(Test_env *te, int offset, const char *msg)
 {
 	te->flags |= TEF_ERROR;
-	internal_errorf(0, "dbteste_error: %s (offset %d)", msg, offset);
+	internal_warningf("%s: %s (offset %d)", __func__, msg, offset);
 }

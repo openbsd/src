@@ -3842,7 +3842,7 @@ STATIC void	S_dump_trie_interim_table(pTHX_ const struct _reg_trie_data *trie, H
 STATIC const regnode*	S_dumpuntil(pTHX_ const regexp *r, const regnode *start, const regnode *node, const regnode *last, const regnode *plast, SV* sv, I32 indent, U32 depth);
 #define PERL_ARGS_ASSERT_DUMPUNTIL	\
 	assert(r); assert(start); assert(node); assert(sv)
-STATIC bool	S_put_charclass_bitmap_innards(pTHX_ SV* sv, char* bitmap, SV* nonbitmap_invlist, SV* only_utf8_locale_invlist, const regnode * const node);
+STATIC bool	S_put_charclass_bitmap_innards(pTHX_ SV* sv, char* bitmap, SV* nonbitmap_invlist, SV* only_utf8_locale_invlist, const regnode * const node, const bool force_as_is_display);
 #define PERL_ARGS_ASSERT_PUT_CHARCLASS_BITMAP_INNARDS	\
 	assert(sv); assert(bitmap)
 STATIC SV*	S_put_charclass_bitmap_innards_common(pTHX_ SV* invlist, SV* posixes, SV* only_utf8, SV* not_utf8, SV* only_utf8_locale, const bool invert);
@@ -4693,8 +4693,6 @@ STATIC OP*	S_doform(pTHX_ CV *cv, GV *gv, OP *retop);
 #define PERL_ARGS_ASSERT_DOFORM	\
 	assert(cv); assert(gv)
 STATIC SV *	S_space_join_names_mortal(pTHX_ char *const *array);
-#define PERL_ARGS_ASSERT_SPACE_JOIN_NAMES_MORTAL	\
-	assert(array)
 #endif
 #if defined(PERL_IN_REGCOMP_C)
 STATIC void	S__append_range_to_invlist(pTHX_ SV* const invlist, const UV start, const UV end);

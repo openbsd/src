@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_negative.3,v 1.3 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: BN_set_negative.3,v 1.4 2018/03/23 00:09:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt BN_SET_NEGATIVE 3
 .Os
 .Sh NAME
@@ -55,3 +55,9 @@ is negative or 0 otherwise.
 .Xr BN_new 3 ,
 .Xr BN_set_bit 3 ,
 .Xr BN_zero 3
+.Sh HISTORY
+.Fn BN_set_negative
+and
+.Fn BN_is_negative
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

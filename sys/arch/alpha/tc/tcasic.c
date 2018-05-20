@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.16 2010/11/11 17:54:52 miod Exp $ */
+/* $OpenBSD: tcasic.c,v 1.17 2017/10/29 08:50:43 mpi Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -42,9 +42,13 @@
 /* Definition of the driver for autoconfig. */
 int	tcasicmatch(struct device *, void *, void *);
 void	tcasicattach(struct device *, struct device *, void *);
+int	tcasicactivate(struct device *, int);
 
 struct cfattach tcasic_ca = {
-	sizeof (struct device), tcasicmatch, tcasicattach,
+	.ca_devsize = sizeof (struct device),
+	.ca_match = tcasicmatch,
+	.ca_attach = tcasicattach,
+	.ca_activate = tcasicactivate
 };
 
 struct cfdriver tcasic_cd = {
@@ -148,6 +152,19 @@ tcasicattach(parent, self, aux)
 	scb_set(0x800, iointr, NULL);
 
 	config_found(self, &tba, tcasicprint);
+}
+
+int
+tcasicactivate(struct device *self, int act)
+{
+	switch (cputype) {
+#ifdef DEC_3000_500
+	case ST_DEC_3000_500:
+		return tc_3000_500_activate(self, act);
+#endif
+	default:
+		return config_activate_children(self, act);
+	}
 }
 
 int

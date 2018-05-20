@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.44 2017/06/19 22:50:50 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.45 2018/04/08 13:24:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -102,6 +102,9 @@ boot(dev_t bootdev)
 		loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
 #ifdef MDRANDOM
 		mdrandom(rnddata, sizeof(rnddata));
+#endif
+#ifdef FWRANDOM
+		fwrandom(rnddata, sizeof(rnddata));
 #endif
 
 		st = 0;

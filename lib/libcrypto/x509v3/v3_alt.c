@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.28 2018/05/18 19:34:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,8 +69,8 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
 const X509V3_EXT_METHOD v3_alt[] = {
 	{
@@ -481,7 +481,7 @@ v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 GENERAL_NAME *
 a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
-    X509V3_CTX *ctx, int gen_type, char *value, int is_nc)
+    X509V3_CTX *ctx, int gen_type, const char *value, int is_nc)
 {
 	char is_string = 0;
 	GENERAL_NAME *gen = NULL;
@@ -553,8 +553,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 
 	if (is_string) {
 		if (!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
-		    !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
-			strlen(value))) {
+		    !ASN1_STRING_set(gen->d.ia5, value, strlen(value))) {
 			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -609,7 +608,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 }
 
 static int
-do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
 	char *objtmp = NULL, *p;
 	int objlen;
@@ -638,7 +637,7 @@ do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 }
 
 static int
-do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
 	int ret;
 	STACK_OF(CONF_VALUE) *sk;

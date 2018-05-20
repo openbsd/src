@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.43 2015/08/20 22:02:20 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.44 2017/12/08 17:04:15 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -258,7 +258,6 @@ void
 statussig(int signo)
 {
 	time_t	tnow, deltat;
-	char	msgbuf[128];
 	int save_errno = errno;
 
 	if (blockswritten < 500)
@@ -266,12 +265,12 @@ statussig(int signo)
 	(void) time(&tnow);
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
-	(void)snprintf(msgbuf, sizeof(msgbuf),
+	/* XXX not safe due to floating point printf */
+	dprintf(STDERR_FILENO,
 	    "dump: %s %3.2f%% done at %lld KB/s, finished in %d:%02d\n",
 	    tape, (blockswritten * 100.0) / tapesize,
 	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
-	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 	errno = save_errno;
 }
 

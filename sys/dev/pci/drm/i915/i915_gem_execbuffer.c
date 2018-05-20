@@ -963,7 +963,6 @@ i915_gem_check_execbuffer(struct drm_i915_gem_execbuffer2 *exec)
 	if (exec->flags & __I915_EXEC_UNKNOWN_FLAGS)
 		return false;
 
-#ifdef __linux__
 	/* Kernel clipping was a DRI1 misfeature */
 	if (exec->num_cliprects || exec->cliprects_ptr)
 		return false;
@@ -974,7 +973,6 @@ i915_gem_check_execbuffer(struct drm_i915_gem_execbuffer2 *exec)
 	}
 	if (exec->DR1 || exec->DR4)
 		return false;
-#endif
 
 	if ((exec->batch_start_offset | exec->batch_len) & 0x7)
 		return false;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.38 2015/11/03 17:45:32 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.40 2018/01/12 04:36:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 3 2015 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt CARP 4
 .Os
 .Sh NAME
@@ -162,9 +162,7 @@ The filtering function uses a hash over the source and destination
 address of the IPv4 or IPv6 packet and compares the result against the
 state of the carpnode.
 .Pp
-IP balancing is activated by setting the
-.Cm balancing
-mode to
+IP balancing is activated by setting the balancing mode to
 .Cm ip .
 This is the recommended default setting.
 In this mode, carp uses a multicast MAC address, so that a switch
@@ -175,13 +173,13 @@ MAC address being mapped to a unicast IP.
 This can be resolved by using one of the following unicast options.
 For scenarios where a hub is used it is not necessary to use a multicast MAC
 and it is safe to use the
-.Ar ip-unicast
+.Cm ip-unicast
 mode.
 Manageable switches can usually be tricked into forwarding unicast
 traffic to all cluster nodes ports by configuring them into some
 sort of monitoring mode.
 If this is not possible, using the
-.Ar ip-stealth
+.Cm ip-stealth
 mode is another option, which should work on most switches.
 In this mode
 .Nm
@@ -262,7 +260,7 @@ If a different mode of load balancing is desired the
 .Cm balancing
 mode can be adjusted accordingly.
 .Sh SEE ALSO
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr inet 4 ,
 .Xr pfsync 4 ,
 .Xr hostname.if 5 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.92 2017/08/28 06:00:05 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.98 2018/05/19 13:56:56 jsing Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -106,9 +106,9 @@ int		 host_if(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
-void		 host_free(struct addresslist *);
 struct server	*server_inherit(struct server *, struct server_config *,
 		    struct server_config *);
+int		 listen_on(const char *, int, struct portrange *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 
@@ -135,6 +135,7 @@ typedef struct {
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
+%token	CA CLIENT CRL OPTIONAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -176,6 +177,8 @@ varset		: STRING '=' STRING	{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -344,6 +347,22 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
+			if (server_tls_load_ca(srv) == -1) {
+				yyerror("server \"%s\": failed to load "
+				    "ca cert(s)", srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYERROR;
+			}
+
+			if (server_tls_load_crl(srv) == -1) {
+				yyerror("server \"%s\": failed to load crl(s)",
+				    srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				free(srv);
+				YYERROR;
+			}
+
 			if (server_tls_load_ocsp(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
 				    "ocsp staple", srv->srv_conf.name);
@@ -404,51 +423,12 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING opttls port {
-			struct addresslist	 al;
-			struct address		*h;
-			struct server_config	*s_conf, *alias = NULL;
-
-			if (parentsrv != NULL) {
-				yyerror("listen %s inside location", $3);
-				free($3);
-				YYERROR;
-			}
-
-			if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
-				if ((alias = calloc(1,
-				    sizeof(*alias))) == NULL)
-					fatal("out of memory");
-
-				/* Add as an IP-based alias. */
-				s_conf = alias;
-			} else
-				s_conf = &srv->srv_conf;
-
-			TAILQ_INIT(&al);
-			if (host($3, &al, 1, &$5, NULL, -1) <= 0) {
-				yyerror("invalid listen ip: %s", $3);
+serveroptsl	: LISTEN ON STRING opttls port 		{
+			if (listen_on($3, $4, &$5) == -1) {
 				free($3);
 				YYERROR;
 			}
 			free($3);
-			h = TAILQ_FIRST(&al);
-			memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
-			s_conf->port = h->port.val[0];
-			s_conf->prefixlen = h->prefixlen;
-			host_free(&al);
-
-			if ($4)
-				s_conf->flags |= SRVFLAG_TLS;
-
-			if (alias != NULL) {
-				/* IP-based; use name match flags from parent */
-				alias->flags &= ~SRVFLAG_SERVER_MATCH;
-				alias->flags |= srv->srv_conf.flags &
-				    SRVFLAG_SERVER_MATCH;
-				TAILQ_INSERT_TAIL(&srv->srv_hosts,
-				    alias, entry);
-			}
 		}
 		| ALIAS optmatch STRING		{
 			struct server_config	*alias;
@@ -564,6 +544,7 @@ serveroptsl	: LISTEN ON STRING opttls port {
 			    sizeof(s->srv_conf.ss));
 			s->srv_conf.port = srv->srv_conf.port;
 			s->srv_conf.prefixlen = srv->srv_conf.prefixlen;
+			s->srv_conf.tls_flags = srv->srv_conf.tls_flags;
 
 			if (last_server_id == INT_MAX) {
 				yyerror("too many servers/locations defined");
@@ -737,6 +718,13 @@ tlsopts		: CERTIFICATE STRING		{
 			}
 			free($2);
 		}
+		| CLIENT CA STRING tlsclientopt {
+			srv_conf->tls_flags |= TLSFLAG_CA;
+			free(srv_conf->tls_ca_file);
+			if ((srv_conf->tls_ca_file = strdup($3)) == NULL)
+				fatal("out of memory");
+			free($3);
+		}
 		| DHE STRING			{
 			if (strlcpy(srv_conf->tls_dhe_params, $2,
 			    sizeof(srv_conf->tls_dhe_params)) >=
@@ -785,6 +773,18 @@ tlsopts		: CERTIFICATE STRING		{
 		}
 		;
 
+tlsclientopt	: /* empty */
+		| tlsclientopt CRL STRING	{
+			srv_conf->tls_flags = TLSFLAG_CRL;
+			free(srv_conf->tls_crl_file);
+			if ((srv_conf->tls_crl_file = strdup($3)) == NULL)
+				fatal("out of memory");
+			free($3);
+		}
+		| tlsclientopt OPTIONAL		{
+			srv_conf->tls_flags |= TLSFLAG_OPTIONAL;
+		}
+		;
 root		: ROOT rootflags
 		| ROOT '{' optnl rootflags_l '}'
 		;
@@ -1217,12 +1217,15 @@ lookup(char *s)
 		{ "block",		BLOCK },
 		{ "body",		BODY },
 		{ "buffer",		BUFFER },
+		{ "ca",			CA },
 		{ "certificate",	CERTIFICATE },
 		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
+		{ "client",		CLIENT },
 		{ "combined",		COMBINED },
 		{ "common",		COMMON },
 		{ "connection",		CONNECTION },
+		{ "crl",		CRL },
 		{ "default",		DEFAULT },
 		{ "dhe",		DHE },
 		{ "directory",		DIRECTORY },
@@ -1247,6 +1250,7 @@ lookup(char *s)
 		{ "nodelay",		NODELAY },
 		{ "ocsp",		OCSP },
 		{ "on",			ON },
+		{ "optional",		OPTIONAL },
 		{ "pass",		PASS },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
@@ -1990,9 +1994,6 @@ host(const char *s, struct addresslist *al, int max,
 {
 	struct address *h;
 
-	if (strcmp("*", s) == 0)
-		s = "0.0.0.0";
-
 	h = host_v4(s);
 
 	/* IPv6 address? */
@@ -2019,17 +2020,6 @@ host(const char *s, struct addresslist *al, int max,
 	}
 
 	return (host_dns(s, al, max, port, ifname, ipproto));
-}
-
-void
-host_free(struct addresslist *al)
-{
-	struct address	 *h;
-
-	while ((h = TAILQ_FIRST(al)) != NULL) {
-		TAILQ_REMOVE(al, h, entry);
-		free(h);
-	}
 }
 
 struct server *
@@ -2093,6 +2083,21 @@ server_inherit(struct server *src, struct server_config *alias,
 		return (NULL);
 	}
 
+	if (server_tls_load_ca(dst) == -1) {
+		yyerror("falied to load ca cert(s) for server %s",
+		    dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		return NULL;
+	}
+
+	if (server_tls_load_crl(dst) == -1) {
+		yyerror("failed to load crl(s) for server %s",
+		    dst->srv_conf.name);
+		serverconfig_free(&dst->srv_conf);
+		free(dst);
+		return NULL;
+	}
+
 	if (server_tls_load_ocsp(dst) == -1) {
 		yyerror("failed to load ocsp staple "
 		    "for server %s", dst->srv_conf.name);
@@ -2140,6 +2145,76 @@ server_inherit(struct server *src, struct server_config *alias,
 	}
 
 	return (dst);
+}
+
+int
+listen_on(const char *addr, int tls, struct portrange *port)
+{
+	struct addresslist	 al;
+	struct address		*h;
+	struct server_config	*s_conf, *alias = NULL;
+
+	if (parentsrv != NULL) {
+		yyerror("listen %s inside location", addr);
+		return (-1);
+	}
+
+	TAILQ_INIT(&al);
+	if (strcmp("*", addr) == 0) {
+		if (host("0.0.0.0", &al, 1, port, NULL, -1) <= 0) {
+			yyerror("invalid listen ip: %s",
+			    "0.0.0.0");
+			return (-1);
+		}
+		if (host("::", &al, 1, port, NULL, -1) <= 0) {
+			yyerror("invalid listen ip: %s", "::");
+			return (-1);
+		}
+	} else {
+		if (host(addr, &al, HTTPD_MAX_ALIAS_IP, port, NULL,
+		    -1) <= 0) {
+			yyerror("invalid listen ip: %s", addr);
+			return (-1);
+		}
+	}
+
+	while ((h = TAILQ_FIRST(&al)) != NULL) {
+		if (srv->srv_conf.ss.ss_family != AF_UNSPEC) {
+			if ((alias = calloc(1,
+			    sizeof(*alias))) == NULL)
+				fatal("out of memory");
+				/* Add as an IP-based alias. */
+			s_conf = alias;
+		} else
+			s_conf = &srv->srv_conf;
+		memcpy(&s_conf->ss, &h->ss, sizeof(s_conf->ss));
+		s_conf->prefixlen = h->prefixlen;
+		/* Set the default port to 80 or 443 */
+		if (!h->port.op)
+			s_conf->port = htons(tls ?
+			    HTTPS_PORT : HTTP_PORT);
+		else
+			s_conf->port = h->port.val[0];
+
+		if (tls)
+			s_conf->flags |= SRVFLAG_TLS;
+
+		if (alias != NULL) {
+			/*
+			 * IP-based; use name match flags from
+			 * parent
+			 */
+			alias->flags &= ~SRVFLAG_SERVER_MATCH;
+			alias->flags |= srv->srv_conf.flags &
+			    SRVFLAG_SERVER_MATCH;
+			TAILQ_INSERT_TAIL(&srv->srv_hosts,
+			    alias, entry);
+		}
+		TAILQ_REMOVE(&al, h, entry);
+		free(h);
+	}
+
+	return (0);
 }
 
 int

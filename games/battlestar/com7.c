@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.13 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: com7.c,v 1.14 2018/02/07 20:22:23 tedu Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ fighton:
 	if (snooze > ourtime)
 		exhaustion = CYCLE / (snooze - ourtime);
 	else {
-		puts("You collapse exhausted, and he pulverizes your skull.");
+		puts("You collapse exhausted and he pulverizes your skull.");
 		die(0);
 	}
 	if (snooze - ourtime < 20)

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2017/08/28 17:41:59 jsing Exp $
+# $OpenBSD: Makefile,v 1.27 2018/03/17 16:20:01 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -37,7 +37,7 @@ SYMBOL_LIST=	${.CURDIR}/Symbols.list
 # crypto/
 SRCS+= cryptlib.c malloc-wrapper.c mem_dbg.c cversion.c ex_data.c cpt_err.c
 SRCS+= o_time.c o_str.c o_init.c
-SRCS+= mem_clr.c
+SRCS+= mem_clr.c crypto_init.c
 
 # aes/
 SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
@@ -64,7 +64,7 @@ SRCS+= a_time_tm.c
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c
 
 # bio/
-SRCS+= bio_lib.c bio_cb.c bio_err.c
+SRCS+= bio_lib.c bio_cb.c bio_err.c bio_meth.c
 SRCS+= bss_mem.c bss_null.c bss_fd.c
 SRCS+= bss_file.c bss_sock.c bss_conn.c
 SRCS+= bf_null.c bf_buff.c b_print.c b_dump.c
@@ -117,6 +117,7 @@ SRCS+= dh_ameth.c dh_pmeth.c dh_prn.c
 # dsa/
 SRCS+= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c
 SRCS+= dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
+SRCS+= dsa_meth.c
 
 # dso/
 SRCS+= dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
@@ -227,7 +228,7 @@ SRCS+= rmd_dgst.c rmd_one.c
 SRCS+= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c
 SRCS+= rsa_pk1.c rsa_none.c rsa_oaep.c rsa_chk.c
 SRCS+= rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c
-SRCS+= rsa_pmeth.c rsa_crpt.c
+SRCS+= rsa_pmeth.c rsa_crpt.c rsa_meth.c
 
 # sha/
 SRCS+= sha1dgst.c sha1_one.c sha256.c sha512.c

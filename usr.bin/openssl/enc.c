@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.12 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: enc.c,v 1.14 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -717,13 +717,12 @@ enc_main(int argc, char **argv)
 		BIO_printf(bio_err, "bytes read   :%8ld\n", BIO_number_read(in));
 		BIO_printf(bio_err, "bytes written:%8ld\n", BIO_number_written(out));
 	}
-end:
+ end:
 	ERR_print_errors(bio_err);
 	free(strbuf);
 	free(buff);
 	BIO_free(in);
-	if (out != NULL)
-		BIO_free_all(out);
+	BIO_free_all(out);
 	BIO_free(benc);
 	BIO_free(b64);
 #ifdef ZLIB

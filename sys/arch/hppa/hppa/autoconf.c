@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.61 2014/09/15 19:08:21 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.62 2018/01/27 22:55:23 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -512,12 +512,11 @@ diskconf(void)
 }
 
 struct nam2blk nam2blk[] = {
+	{ "vnd",	2 },
 	{ "rd",		3 },
 	{ "sd",		4 },
-	{ "st",		5 },
 	{ "cd",		6 },
 	{ "fd",		7 },
 	{ "wd",		8 },
-	{ "vnd",	2 },
 	{ NULL,		-1 }
 };

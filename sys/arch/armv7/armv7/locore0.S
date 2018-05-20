@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.3 2017/07/25 19:37:27 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.4 2018/01/20 23:57:44 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -38,8 +38,14 @@
 #undef	DOMAIN_CLIENT	/* XXX */
 #include "assym.h"
 
+#ifdef __clang__
+.arch_extension virt
+#define ELR	msr	ELR_hyp, lr
+#define ERET	eret
+#else
 #define ELR	.long	0xe12ef30e		@ msr	ELR_hyp, lr
 #define ERET	.long	0xe160006e		@ eret
+#endif
 
 /*
  * Kernel start routine for OMAP

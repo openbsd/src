@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.41 2017/07/16 22:48:38 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.44 2018/05/04 02:54:23 visa Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -122,7 +122,6 @@ struct db_variable db_regs[] = {
 	{ "cr30",  (long *)&ddb_regs.tf_cr30,  FCN_NULL },
 };
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
-int db_active = 0;
 
 void
 db_enter(void)
@@ -256,7 +255,10 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
 		db_symbol_values (sym, &name, NULL);
 
-		(*pr)("%s(", name);
+		if (name == NULL)
+			(*pr)("%lx(", pc);
+		else
+			(*pr)("%s(", name);
 
 		/* args */
 		nargs = 4;
@@ -322,6 +324,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	pc = 0;
 	rp = fp[-5];
 
+	st->st_count = 0;
 	for (i = 0; i < DB_STACK_TRACE_MAX; i++) {
 		st->st_pc[st->st_count++] = rp;
 

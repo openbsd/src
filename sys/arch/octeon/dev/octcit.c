@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.2 2017/08/09 15:10:38 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.6 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -244,7 +244,8 @@ void *
 octcit_intr_establish(int irq, int level, int (*func)(void *), void *arg,
     const char *name)
 {
-	return octcit_intr_establish_intsn(irq, level, 0, func, arg, name);
+	return octcit_intr_establish_intsn(irq, level, CIH_EDGE, func, arg,
+	    name);
 }
 
 void *
@@ -286,6 +287,7 @@ octcit_intr_establish_intsn(int intsn, int level, int flags,
 
 	val = CIU3_ISC_CTL_EN | (CIU3_IDT(ci->ci_cpuid, 0) <<
 	    CIU3_ISC_CTL_IDT_SHIFT);
+	CIU3_WR_8(sc, CIU3_ISC_W1C(intsn), CIU3_ISC_W1C_EN);
 	CIU3_WR_8(sc, CIU3_ISC_CTL(intsn), val);
 	(void)CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 
@@ -402,10 +404,7 @@ octcit_intr(uint32_t hwpend, struct trapframe *frame)
 	if (!ISSET(destpp, CIU3_DEST_PP_INT_INTR))
 		goto spurious;
 
-	__asm__ (".set noreorder\n");
 	ipl = ci->ci_ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	intsn = (destpp & CIU3_DEST_PP_INT_INTSN) >>
 	    CIU3_DEST_PP_INT_INTSN_SHIFT;
@@ -429,7 +428,7 @@ octcit_intr(uint32_t hwpend, struct trapframe *frame)
 		if (ISSET(ih->ih_flags, IH_MPSAFE))
 			need_lock = 0;
 		else
-			need_lock = ih->ih_level < IPL_CLOCK;
+			need_lock = 1;
 		if (need_lock)
 			__mp_lock(&kernel_lock);
 #endif
@@ -456,10 +455,7 @@ octcit_intr(uint32_t hwpend, struct trapframe *frame)
 			break;
 	}
 
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 spurious:
 	if (handled == 0)
@@ -476,11 +472,7 @@ octcit_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 	unsigned int core = ci->ci_cpuid;
 
-	/* Update IPL. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	if (newipl < sc->sc_minipl[ci->ci_cpuid])
 		CIU3_WR_8(sc, CIU3_IDT_PP(CIU3_IDT(core, 0)), 1ul << core);
@@ -515,6 +507,7 @@ octcit_ipi_establish(int (*func)(void *), cpuid_t cpuid)
 
 	intsn = MBOX_INTSN(cpuid);
 	val = CIU3_ISC_CTL_EN | (CIU3_IDT(cpuid, 1) << CIU3_ISC_CTL_IDT_SHIFT);
+	CIU3_WR_8(sc, CIU3_ISC_W1C(intsn), CIU3_ISC_W1C_EN);
 	CIU3_WR_8(sc, CIU3_ISC_CTL(intsn), val);
 	(void)CIU3_RD_8(sc, CIU3_ISC_CTL(intsn));
 

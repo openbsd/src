@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.33 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.35 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -314,7 +314,7 @@ glxsb_rnd(void *v)
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM_STATUS);
 	if (status & SB_RNS_TRNG_VALID) {
 		value = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM);
-		add_true_randomness(value);
+		enqueue_randomness(value);
 	}
 
 	timeout_add_msec(&sc->sc_to, 10);
@@ -525,22 +525,22 @@ glxsb_crypto_freesession(uint64_t tid)
 
 		if (swd->sw_kschedule) {
 			explicit_bzero(swd->sw_kschedule, txf->ctxsize);
-			free(swd->sw_kschedule, M_CRYPTO_DATA, 0);
+			free(swd->sw_kschedule, M_CRYPTO_DATA, txf->ctxsize);
 		}
-		free(swd, M_CRYPTO_DATA, 0);
+		free(swd, M_CRYPTO_DATA, sizeof(*swd));
 	}
 	if ((swd = sc->sc_sessions[sesn].ses_swd_auth)) {
 		axf = swd->sw_axf;
 
 		if (swd->sw_ictx) {
 			explicit_bzero(swd->sw_ictx, axf->ctxsize);
-			free(swd->sw_ictx, M_CRYPTO_DATA, 0);
+			free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
 		}
 		if (swd->sw_octx) {
 			explicit_bzero(swd->sw_octx, axf->ctxsize);
-			free(swd->sw_octx, M_CRYPTO_DATA, 0);
+			free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
 		}
-		free(swd, M_CRYPTO_DATA, sizeof *swd);
+		free(swd, M_CRYPTO_DATA, sizeof(*swd));
 	}
 	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
 	return (0);

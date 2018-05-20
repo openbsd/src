@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.17 2017/08/15 15:51:54 jasper Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.18 2018/01/03 05:39:56 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -45,6 +45,7 @@ struct parse_result {
 	uint32_t		 id;
 	char			*name;
 	char			*path;
+	char			*isopath;
 	long long		 size;
 	int			 nifs;
 	char			**nets;
@@ -82,7 +83,7 @@ __dead void
 /* vmctl.c */
 int	 create_imagefile(const char *, long);
 int	 vm_start(uint32_t, const char *, int, int, char **, int,
-	    char **, char *);
+	    char **, char *, char *);
 int	 vm_start_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *);
 int	 terminate_vm_complete(struct imsg *, int *);

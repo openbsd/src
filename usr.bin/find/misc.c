@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.15 2015/07/14 17:18:48 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.16 2017/12/08 17:04:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -148,16 +148,10 @@ show_path(int signo)
 {
 	int save_errno = errno;
 	extern FTSENT *entry;
-	struct iovec iov[3];
 
 	if (entry != NULL) {
-		iov[0].iov_base = "find path: ";
-		iov[0].iov_len = strlen(iov[0].iov_base);
-		iov[1].iov_base = entry->fts_path;
-		iov[1].iov_len = entry->fts_pathlen;
-		iov[2].iov_base = "\n";
-		iov[2].iov_len = strlen(iov[2].iov_base);
-		writev(STDERR_FILENO, iov, 3);
+		dprintf(STDERR_FILENO, "find path: %*s\n",
+		    entry->fts_pathlen, entry->fts_path);
 		errno = save_errno;
 	}
 }

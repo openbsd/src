@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.51 2017/06/12 03:00:26 kevlo Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.52 2018/04/11 08:02:18 patrick Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -141,12 +141,18 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map control/status registers.
 	 */
-	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->sc_iosize, 0)) {
-		if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->sc_iosize, 0)) {
-			printf(": can't map mem or i/o space\n");
-			return;
+	if (pci_mapreg_map(pa, RL_PCI_LOMEM64, PCI_MAPREG_TYPE_MEM |
+	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
+	    NULL, &psc->sc_iosize, 0)) {
+		if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM |
+		    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
+		    NULL, &psc->sc_iosize, 0)) {
+			if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO,
+			    0, &sc->rl_btag, &sc->rl_bhandle, NULL,
+			    &psc->sc_iosize, 0)) {
+				printf(": can't map mem or i/o space\n");
+				return;
+			}
 		}
 	}
 

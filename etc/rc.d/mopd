@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: mopd,v 1.3 2011/09/19 20:42:24 ajacoutot Exp $
+# $OpenBSD: mopd,v 1.5 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/mopd"
 daemon_flags="-a"
@@ -10,7 +10,7 @@ daemon_flags="-a"
 rc_reload=NO
 
 rc_pre() {
-	[ -d /tftpboot/mop ]
+	[[ -d /tftpboot/mop ]]
 }
 
 rc_cmd $1

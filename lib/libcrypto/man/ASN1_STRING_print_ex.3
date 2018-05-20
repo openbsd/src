@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ASN1_STRING_print_ex.3,v 1.8 2017/08/20 15:44:22 schwarze Exp $
-.\"	OpenSSL ASN1_STRING_print_ex.pod a95d7574 Jul 2 12:16:38 2017 -0400
-.\"	OpenSSL ASN1_STRING_print_ex.pod bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: ASN1_STRING_print_ex.3,v 1.14 2018/04/25 15:17:52 schwarze Exp $
+.\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Dr. Stephen Henson.
 .\" Copyright (c) 2002, 2004, 2007, 2013, 2016, 2017 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt ASN1_STRING_PRINT_EX 3
 .Os
 .Sh NAME
@@ -64,19 +64,19 @@
 .Ft int
 .Fo ASN1_STRING_print_ex
 .Fa "BIO *out"
-.Fa "ASN1_STRING *str"
+.Fa "const ASN1_STRING *str"
 .Fa "unsigned long flags"
 .Fc
 .Ft int
 .Fo ASN1_STRING_print_ex_fp
 .Fa "FILE *fp"
-.Fa "ASN1_STRING *str"
+.Fa "const ASN1_STRING *str"
 .Fa "unsigned long flags"
 .Fc
 .Ft int
 .Fo ASN1_STRING_print
 .Fa "BIO *out"
-.Fa "ASN1_STRING *str"
+.Fa "const ASN1_STRING *str"
 .Fc
 .Ft const char *
 .Fo ASN1_tag2str
@@ -208,5 +208,30 @@ It is equivalent to
 .Dv ASN1_STRFLGS_UTF8_CONVERT |
 .Dv ASN1_STRFLGS_DUMP_UNKNOWN |
 .Dv ASN1_STRFLGS_DUMP_DER .
+.Sh RETURN VALUES
+.Fn ASN1_STRING_print_ex
+and
+.Fn ASN1_STRING_print_ex_fp
+return the number of characters written or \-1 if an error occurred.
+.Pp
+.Fn ASN1_STRING_print
+returns 1 on success or 0 on error.
+.Pp
+.Fn ASN1_tag2str
+returns a static string.
 .Sh SEE ALSO
 .Xr X509_NAME_print_ex 3
+.Sh HISTORY
+.Fn ASN1_STRING_print
+first appeared in SSLeay 0.6.5 and has been available since
+.Ox 2.4 .
+.Pp
+.Fn ASN1_tag2str
+first appeared in OpenSSL 0.9.5 and has been available since
+.Ox 2.7 .
+.Pp
+.Fn ASN1_STRING_print_ex
+and
+.Fn ASN1_STRING_print_ex_fp
+first appeared in OpenSSL 0.9.6 and have been available since
+.Ox 2.9 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.10 2016/10/10 08:33:32 bluhm Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.14 2018/02/02 10:52:44 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,20 +14,38 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2016 $
+.Dd $Mdocdate: February 2 2018 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
+.Nm bpfattach ,
+.Nm bpfdetach ,
+.Nm bpfsattach ,
+.Nm bpfsdetach ,
 .Nm bpf_filter ,
 .Nm bpf_mfilter ,
 .Nm bpf_validate ,
 .Nm bpf_mtap ,
 .Nm bpf_mtap_hdr ,
 .Nm bpf_mtap_af ,
-.Nm bpf_mtap_ether
+.Nm bpf_mtap_ether ,
+.Nm bpf_tap_hdr
 .Nd BPF kernel API
 .Sh SYNOPSIS
 .In net/bpf.h
+.Ft void
+.Fo bpfattach
+.Fa "caddr_t *bpfp"
+.Fa "struct ifnet *ifp"
+.Fa "u_int dlt"
+.Fa "u_int hdrlen"
+.Fc
+.Ft void
+.Fn bpfdetach "struct ifnet *ifp"
+.Ft void *
+.Fn bpfsattach "caddr_t *bpfp" "const char *name" "u_int dlt" "u_int hdrlen"
+.Ft void
+.Fn bpfsdetach "void *bpfif"
 .Ft u_int
 .Fo bpf_filter
 .Fa "const struct bpf_insn *pc"
@@ -63,11 +81,58 @@
 .Fc
 .Ft int
 .Fn bpf_mtap_ether "caddr_t bpf" "const struct mbuf *m" "u_int direction"
+.Ft int
+.Fo bpf_tap_hdr
+.Fa "caddr_t bpf"
+.Fa "const void *hdr"
+.Fa "u_int hdrlen"
+.Fa "const void *buf"
+.Fa "u_int buflen"
+.Fa "u_int direction"
+.Fc
 .Sh DESCRIPTION
 The BPF kernel API provides functions for evaluating BPF instructions
 against packets, and incoming linkage from device drivers.
 A packet is parsed by the filters associated with each interface
 and, if accepted, stashed into the corresponding buffer.
+.Pp
+.Fn bpfattach
+allocates and configures a BPF interface for use with the network interface
+.Fa ifp .
+.Fa bpfp
+is the location of BPF interface pointer that the network interface passes to
+the filter functions.
+The BPF interface pointer will be clear until a filter is registered and
+packets can be filtered on it.
+The
+.Fa dlt
+argument identifies the data link-layer type that the network
+interface provides for this BPF interface.
+.Fn bpfattach
+may be called multiple times against the same network interface to
+provide different data link-layer types for filtering.
+.Fa hdrlen
+indicates the length of the link header for the data link-layer type.
+.Pp
+.Fn bpfdetach
+removes and frees all the BPF interfaces that were configured for
+the network interface
+.Fa ifp .
+.Pp
+.Fn bpfsattach
+allocates and configures a BPF interface for use by the subsystem
+identified by
+.Fa name .
+The
+.Fa bpfp ,
+.Fa dlt ,
+.Fa hdrlen
+arguments work like those in
+.Fn bpfattach .
+.Pp
+.Fn bpfsdetach
+removes and frees the BPF interface referenced by
+.Fa bpfif .
 .Pp
 .Fn bpf_filter
 executes the BPF program referenced by
@@ -156,7 +221,29 @@ m->m_pkthdr.ether_vtag
 and
 m->m_pkthdr.pf.prio
 before matching occurs.
+.Pp
+.Fn bpf_tap_hdr
+runs the filters on the BPF interface referenced by
+.Fa bpf
+in the direction
+.Fa direction
+against the buffer
+.Fa buf
+of length
+.Fa buflen .
+The header
+.Fa hdr
+of length
+.Fa hdrlen
+will be prefixed to the buffer for filter evaluation.
 .Sh CONTEXT
+.Fn bpfattach ,
+.Fn bpfdetach ,
+.Fn bpfsattach ,
+and
+.Fn bpfsdetach
+can be called from process context.
+.Pp
 .Fn bpf_filter ,
 .Fn bpf_mfilter ,
 and
@@ -167,12 +254,16 @@ can be called from process context, or from an interrupt context.
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
+.Fn bpf_mtap_ether ,
 and
-.Fn bpf_mtap_ether
+.Fn bpf_tap_hdr
 can be called from process context, or from an interrupt context at or below
 .Dv IPL_NET .
 .Sh RETURN VALUES
-.Fn bpf_filter ,
+.Fn bpfsattach
+returns a reference to the BPF interface it allocates.
+.Pp
+.Fn bpf_filter
 and
 .Fn bpf_mfilter
 return -1 (cast to an unsigned integer) if the filter program is
@@ -189,9 +280,10 @@ otherwise 0.
 .Fn bpf_mtap ,
 .Fn bpf_mtap_hdr ,
 .Fn bpf_mtap_af ,
+.Fn bpf_mtap_ether ,
 and
-.Fn bpf_mtap_ether
-return 1 if the packet matched a filter that indicates the packet
+.Fn bpf_tap_hdr
+return 1 if the packet or buffer matched a filter that indicates it
 should be dropped, otherwise 0.
 .Sh SEE ALSO
 .Xr mbuf 9 ,

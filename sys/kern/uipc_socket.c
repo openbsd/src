@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.205 2017/09/15 19:29:28 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.221 2018/05/08 15:03:27 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -60,6 +60,8 @@ int	sosplice(struct socket *, int, off_t, struct timeval *);
 void	sounsplice(struct socket *, struct socket *, int);
 void	soidle(void *);
 void	sotask(void *);
+void	soreaper(void *);
+void	soput(void *);
 int	somove(struct socket *, int);
 
 void	filt_sordetach(struct knote *kn);
@@ -111,7 +113,7 @@ int
 socreate(int dom, struct socket **aso, int type, int proto)
 {
 	struct proc *p = curproc;		/* XXX */
-	struct protosw *prp;
+	const struct protosw *prp;
 	struct socket *so;
 	int error, s;
 
@@ -127,7 +129,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
-	if (suser(p, 0) == 0)
+	if (suser(p) == 0)
 		so->so_state = SS_PRIV;
 	so->so_ruid = p->p_ucred->cr_ruid;
 	so->so_euid = p->p_ucred->cr_uid;
@@ -212,13 +214,20 @@ sofree(struct socket *so)
 			    so->so_sp->ssp_soback != so);
 		if (isspliced(so))
 			sounsplice(so, so->so_sp->ssp_socket, 0);
-		pool_put(&sosplice_pool, so->so_sp);
-		so->so_sp = NULL;
 	}
 #endif /* SOCKET_SPLICE */
 	sbrelease(so, &so->so_snd);
 	sorflush(so);
-	pool_put(&socket_pool, so);
+#ifdef SOCKET_SPLICE
+	if (so->so_sp) {
+		/* Reuse splice idle, sounsplice() has been called before. */
+		timeout_set_proc(&so->so_sp->ssp_idleto, soreaper, so);
+		timeout_add(&so->so_sp->ssp_idleto, 0);
+	} else 
+#endif /* SOCKET_SPLICE */
+	{
+		pool_put(&socket_pool, so);
+	}
 }
 
 /*
@@ -266,8 +275,9 @@ soclose(struct socket *so)
 	}
 drop:
 	if (so->so_pcb) {
-		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH, NULL,
-		    NULL, NULL, curproc);
+		int error2;
+		KASSERT(so->so_proto->pr_detach);
+		error2 = (*so->so_proto->pr_detach)(so);
 		if (error == 0)
 			error = error2;
 	}
@@ -336,11 +346,12 @@ soconnect(struct socket *so, struct mbuf *nam)
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int error;
+	int s, error;
 
-	soassertlocked(so1);
+	s = solock(so1);
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
+	sounlock(s);
 	return (error);
 }
 
@@ -409,8 +420,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 		 * of space and clen.
 		 */
 		clen = control->m_len;
-		/* reserve extra space for AF_LOCAL's internalize */
-		if (so->so_proto->pr_domain->dom_family == AF_LOCAL &&
+		/* reserve extra space for AF_UNIX's internalize */
+		if (so->so_proto->pr_domain->dom_family == AF_UNIX &&
 		    clen >= CMSG_ALIGN(sizeof(struct cmsghdr)) &&
 		    mtod(control, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
 			clen = CMSG_SPACE(
@@ -444,7 +455,7 @@ restart:
 		if (flags & MSG_OOB)
 			space += 1024;
 		if ((atomic && resid > so->so_snd.sb_hiwat) ||
-		    (so->so_proto->pr_domain->dom_family != AF_LOCAL &&
+		    (so->so_proto->pr_domain->dom_family != AF_UNIX &&
 		    clen > so->so_snd.sb_hiwat))
 			snderr(EMSGSIZE);
 		if (space < clen ||
@@ -452,7 +463,7 @@ restart:
 		    (atomic || space < so->so_snd.sb_lowat))) {
 			if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT))
 				snderr(EWOULDBLOCK);
-			sbunlock(&so->so_snd);
+			sbunlock(so, &so->so_snd);
 			error = sbwait(so, &so->so_snd);
 			so->so_state &= ~SS_ISSENDING;
 			if (error)
@@ -496,7 +507,7 @@ restart:
 
 release:
 	so->so_state &= ~SS_ISSENDING;
-	sbunlock(&so->so_snd);
+	sbunlock(so, &so->so_snd);
 out:
 	sounlock(s);
 	m_freem(top);
@@ -632,7 +643,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf *cm;
 	u_long len, offset, moff;
 	int flags, error, s, type, uio_error = 0;
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	size_t resid, orig_resid = uio->uio_resid;
 
@@ -667,8 +678,8 @@ bad:
 	if (mp)
 		*mp = NULL;
 
-restart:
 	s = solock(so);
+restart:
 	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
 		sounlock(s);
 		return (error);
@@ -735,11 +746,12 @@ restart:
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
-		sounlock(s);
-		if (error)
+		if (error) {
+			sounlock(s);
 			return (error);
+		}
 		goto restart;
 	}
 dontblock:
@@ -956,7 +968,7 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
-				sbunlock(&so->so_rcv);
+				sbunlock(so, &so->so_rcv);
 				sounlock(s);
 				return (0);
 			}
@@ -992,8 +1004,7 @@ dontblock:
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
-		sbunlock(&so->so_rcv);
-		sounlock(s);
+		sbunlock(so, &so->so_rcv);
 		goto restart;
 	}
 
@@ -1003,7 +1014,7 @@ dontblock:
 	if (flagsp)
 		*flagsp |= flags;
 release:
-	sbunlock(&so->so_rcv);
+	sbunlock(so, &so->so_rcv);
 	sounlock(s);
 	return (error);
 }
@@ -1011,7 +1022,7 @@ release:
 int
 soshutdown(struct socket *so, int how)
 {
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	int s, error = 0;
 
 	s = solock(so);
@@ -1039,7 +1050,7 @@ void
 sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
-	struct protosw *pr = so->so_proto;
+	const struct protosw *pr = so->so_proto;
 	struct socket aso;
 	int error;
 
@@ -1048,15 +1059,11 @@ sorflush(struct socket *so)
 	/* with SB_NOINTR and M_WAITOK sblock() must not fail */
 	KASSERT(error == 0);
 	socantrcvmore(so);
-	sbunlock(sb);
+	sbunlock(so, sb);
 	aso.so_proto = pr;
 	aso.so_rcv = *sb;
-	memset(sb, 0, sizeof (*sb));
-	/* XXX - the memset stomps all over so_rcv */
-	if (aso.so_rcv.sb_flags & SB_KNOTE) {
-		sb->sb_sel.si_note = aso.so_rcv.sb_sel.si_note;
-		sb->sb_flags = SB_KNOTE;
-	}
+	memset(&sb->sb_startzero, 0,
+	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(aso.so_rcv.sb_mb);
 	sbrelease(&aso, &aso.so_rcv);
@@ -1081,7 +1088,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	soassertlocked(so);
 
 	if (sosplice_taskq == NULL)
-		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 0);
+		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 
+		    TASKQ_MPSAFE);
 	if (sosplice_taskq == NULL)
 		return (ENOMEM);
 
@@ -1109,7 +1117,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		}
 		if (so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 1);
-		sbunlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		return (0);
 	}
 
@@ -1134,13 +1142,11 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	/* Lock both receive and send buffer. */
 	if ((error = sblock(so, &so->so_rcv,
 	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
-		FRELE(fp, curproc);
-		return (error);
+		goto frele;
 	}
 	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
-		sbunlock(&so->so_rcv);
-		FRELE(fp, curproc);
-		return (error);
+		sbunlock(so, &so->so_rcv);
+		goto frele;
 	}
 
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
@@ -1177,13 +1183,14 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	 * we sleep, the socket buffers are not marked as spliced yet.
 	 */
 	if (somove(so, M_WAIT)) {
-		so->so_rcv.sb_flagsintr |= SB_SPLICE;
-		sosp->so_snd.sb_flagsintr |= SB_SPLICE;
+		so->so_rcv.sb_flags |= SB_SPLICE;
+		sosp->so_snd.sb_flags |= SB_SPLICE;
 	}
 
  release:
-	sbunlock(&sosp->so_snd);
-	sbunlock(&so->so_rcv);
+	sbunlock(sosp, &sosp->so_snd);
+	sbunlock(so, &so->so_rcv);
+ frele:
 	FRELE(fp, curproc);
 	return (error);
 }
@@ -1195,8 +1202,8 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 
 	task_del(sosplice_taskq, &so->so_splicetask);
 	timeout_del(&so->so_idleto);
-	sosp->so_snd.sb_flagsintr &= ~SB_SPLICE;
-	so->so_rcv.sb_flagsintr &= ~SB_SPLICE;
+	sosp->so_snd.sb_flags &= ~SB_SPLICE;
+	so->so_rcv.sb_flags &= ~SB_SPLICE;
 	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
 	if (wakeup && soreadable(so))
 		sorwakeup(so);
@@ -1209,7 +1216,7 @@ soidle(void *arg)
 	int s;
 
 	s = solock(so);
-	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
+	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		so->so_error = ETIMEDOUT;
 		sounsplice(so, so->so_sp->ssp_socket, 1);
 	}
@@ -1223,7 +1230,7 @@ sotask(void *arg)
 	int s;
 
 	s = solock(so);
-	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
+	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		/*
 		 * We may not sleep here as sofree() and unsplice() may be
 		 * called from softnet interrupt context.  This would remove
@@ -1235,6 +1242,32 @@ sotask(void *arg)
 
 	/* Avoid user land starvation. */
 	yield();
+}
+
+/*
+ * The socket splicing task or idle timeout may sleep while grabbing the net
+ * lock.  As sofree() can be called anytime, sotask() or soidle() could access
+ * the socket memory of a freed socket after wakeup.  So delay the pool_put()
+ * after all pending socket splicing tasks or timeouts have finished.  Do this
+ * by scheduling it on the same threads.
+ */
+void
+soreaper(void *arg)
+{
+	struct socket *so = arg;
+
+	/* Reuse splice task, sounsplice() has been called before. */
+	task_set(&so->so_sp->ssp_task, soput, so);
+	task_add(sosplice_taskq, &so->so_sp->ssp_task);
+}
+
+void
+soput(void *arg)
+{
+	struct socket *so = arg;
+
+	pool_put(&sosplice_pool, so->so_sp);
+	pool_put(&socket_pool, so);
 }
 
 /*
@@ -1251,7 +1284,7 @@ somove(struct socket *so, int wait)
 	u_long		 len, off, oobmark;
 	long		 space;
 	int		 error = 0, maxreached = 0;
-	short		 state;
+	unsigned int	 state;
 
 	soassertlocked(so);
 
@@ -1526,7 +1559,7 @@ sorwakeup(struct socket *so)
 	soassertlocked(so);
 
 #ifdef SOCKET_SPLICE
-	if (so->so_rcv.sb_flagsintr & SB_SPLICE) {
+	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		/*
 		 * TCP has a sendbuffer that can handle multiple packets
 		 * at once.  So queue the stream a bit to accumulate data.
@@ -1554,7 +1587,7 @@ sowwakeup(struct socket *so)
 	soassertlocked(so);
 
 #ifdef SOCKET_SPLICE
-	if (so->so_snd.sb_flagsintr & SB_SPLICE)
+	if (so->so_snd.sb_flags & SB_SPLICE)
 		task_add(sosplice_taskq, &so->so_sp->ssp_soback->so_splicetask);
 #endif
 	sowakeup(so, &so->so_snd);
@@ -1577,7 +1610,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 	} else {
 		switch (optname) {
 		case SO_BINDANY:
-			if ((error = suser(curproc, 0)) != 0)	/* XXX */
+			if ((error = suser(curproc)) != 0)	/* XXX */
 				return (error);
 			break;
 		}
@@ -1870,9 +1903,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 void
 sohasoutofband(struct socket *so)
 {
-	KERNEL_ASSERT_LOCKED();
+	KERNEL_LOCK();
 	csignal(so->so_pgid, SIGURG, so->so_siguid, so->so_sigeuid);
 	selwakeup(&so->so_rcv.sb_sel);
+	KERNEL_UNLOCK();
 }
 
 int
@@ -1900,7 +1934,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	}
 
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_note, kn, kn_selnext);
-	sb->sb_flags |= SB_KNOTE;
+	sb->sb_flagsintr |= SB_KNOTE;
 
 	return (0);
 }
@@ -1914,7 +1948,7 @@ filt_sordetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_rcv.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_note))
-		so->so_rcv.sb_flags &= ~SB_KNOTE;
+		so->so_rcv.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int
@@ -1953,7 +1987,7 @@ filt_sowdetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_snd.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_note))
-		so->so_snd.sb_flags &= ~SB_KNOTE;
+		so->so_snd.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.29 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.32 2018/01/06 15:37:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -114,7 +114,6 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
-	struct timeval now;
 	struct rpc_msg call_msg;
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
@@ -174,7 +173,6 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 	/*
 	 * Initialize call message
 	 */
-	(void)gettimeofday(&now, NULL);
 	call_msg.rm_xid = arc4random();
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -385,25 +383,25 @@ static int
 readtcp(struct ct_data *ct, caddr_t buf, int len)
 {
 	struct pollfd pfd[1];
-	struct timeval start, after, duration, tmp;
-	int delta, r, save_errno;
+	struct timespec start, after, duration, delta, wait;
+	int r, save_errno;
 
 	if (len == 0)
 		return (0);
 
 	pfd[0].fd = ct->ct_sock;
 	pfd[0].events = POLLIN;
-	delta = ct->ct_wait.tv_sec * 1000 + ct->ct_wait.tv_usec / 1000;
-	gettimeofday(&start, NULL);
+	TIMEVAL_TO_TIMESPEC(&ct->ct_wait, &wait);
+	delta = wait;
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	for (;;) {
-		r = poll(pfd, 1, delta);
+		r = ppoll(pfd, 1, &delta, NULL);
 		save_errno = errno;
 
-		gettimeofday(&after, NULL);
-		timersub(&start, &after, &duration);
-		timersub(&ct->ct_wait, &duration, &tmp);
-		delta = tmp.tv_sec * 1000 + tmp.tv_usec / 1000;
-		if (delta <= 0)
+		clock_gettime(CLOCK_MONOTONIC, &after);
+		timespecsub(&start, &after, &duration);
+		timespecsub(&wait, &duration, &delta);
+		if (delta.tv_sec < 0 || !timespecisset(&delta))
 			r = 0;
 
 		switch (r) {

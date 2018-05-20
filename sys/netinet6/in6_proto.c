@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.95 2017/07/13 17:17:27 florian Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.102 2018/02/10 08:12:01 dlg Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -97,7 +97,6 @@
 
 #include "gif.h"
 #if NGIF > 0
-#include <netinet/ip_ether.h>
 #include <net/if_gif.h>
 #endif
 
@@ -116,18 +115,22 @@
 #include <net/if_etherip.h>
 #endif
 
+#include "gre.h"
+#if NGRE > 0
+#include <net/if_gre.h>
+#endif
+
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
  */
 u_char ip6_protox[IPPROTO_MAX];
 
-struct protosw inet6sw[] = {
+const struct protosw inet6sw[] = {
 {
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_IPV6,
   .pr_init	= ip6_init,
   .pr_slowtimo	= frag6_slowtimo,
-  .pr_drain	= frag6_drain,
   .pr_sysctl	= ip6_sysctl
 },
 {
@@ -140,6 +143,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= ip6_ctloutput,
   .pr_usrreq	= udp_usrreq,
   .pr_attach	= udp_attach,
+  .pr_detach	= udp_detach,
   .pr_sysctl	= udp_sysctl
 },
 {
@@ -152,6 +156,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= tcp_ctloutput,
   .pr_usrreq	= tcp_usrreq,
   .pr_attach	= tcp_attach,
+  .pr_detach	= tcp_detach,
   .pr_sysctl	= tcp_sysctl
 },
 {
@@ -164,6 +169,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_sysctl	= rip6_sysctl
 },
 {
@@ -176,6 +182,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_init	= icmp6_init,
   .pr_fasttimo	= icmp6_fasttimo,
   .pr_sysctl	= icmp6_sysctl
@@ -211,6 +218,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_sysctl	= ah_sysctl
 },
 {
@@ -222,6 +230,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_sysctl	= esp_sysctl
 },
 {
@@ -233,6 +242,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_sysctl	= ipcomp_sysctl
 },
 #endif /* IPSEC */
@@ -248,7 +258,8 @@ struct protosw inet6sw[] = {
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach
+  .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
 },
 {
   .pr_type	= SOCK_RAW,
@@ -263,20 +274,25 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
 },
-#if NGIF > 0
+#if defined(MPLS) && NGIF > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
-  .pr_protocol	= IPPROTO_ETHERIP,
+  .pr_protocol	= IPPROTO_MPLS,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= etherip_input,
+#if NGIF > 0
+  .pr_input	= in6_gif_input,
+#else
+  .pr_input	= ipip_input,
+#endif
   .pr_ctloutput	= rip6_ctloutput,
-  .pr_usrreq	= rip6_usrreq,
+  .pr_usrreq	= rip6_usrreq,	/* XXX */
   .pr_attach	= rip6_attach,
-  .pr_sysctl	= etherip_sysctl
+  .pr_detach	= rip6_detach,
 },
-#endif /* NGIF */
+#endif /* MPLS */
 #if NCARP > 0
 {
   .pr_type	= SOCK_RAW,
@@ -287,6 +303,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput = rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_sysctl	= carp_sysctl
 },
 #endif /* NCARP */
@@ -299,6 +316,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= divert6_usrreq,
   .pr_attach	= divert6_attach,
+  .pr_detach	= divert6_detach,
   .pr_init	= divert6_init,
   .pr_sysctl	= divert6_sysctl
 },
@@ -313,9 +331,22 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
-  .pr_sysctl	= ip_etherip_sysctl
+  .pr_detach	= rip6_detach,
 },
 #endif /* NETHERIP */
+#if NGRE > 0
+{
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &inet6domain,
+  .pr_protocol	= IPPROTO_GRE,
+  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_input	= gre_input6,
+  .pr_ctloutput	= rip6_ctloutput,
+  .pr_usrreq	= rip6_usrreq,
+  .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
+},
+#endif /* NGRE */
 {
   /* raw wildcard */
   .pr_type	= SOCK_RAW,
@@ -325,6 +356,7 @@ struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
   .pr_attach	= rip6_attach,
+  .pr_detach	= rip6_detach,
   .pr_init	= rip6_init
 }
 };

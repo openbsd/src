@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.46 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.48 2018/02/06 02:55:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -707,6 +707,11 @@ init_linktype(type)
 		off_nl = 4;
 		return;
 
+	case DLT_PPP_SERIAL:
+		off_linktype = -1;
+		off_nl = 2;
+		return;
+
 	case DLT_PPP_ETHER:
 		/*
 		 * This does not include the Ethernet header, and
@@ -787,6 +792,8 @@ init_linktype(type)
 		off_nl = 12;
 		return;
 
+	case DLT_USBPCAP:
+		/* FALLTHROUGH */
 	case DLT_RAW:
 		off_linktype = -1;
 		off_nl = 0;

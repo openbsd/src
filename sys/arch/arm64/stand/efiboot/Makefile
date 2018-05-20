@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/07/17 13:46:53 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.5 2018/04/08 13:27:22 kettenis Exp $
 
 NOMAN=		#
 
@@ -8,7 +8,8 @@ PROG=		BOOTAA64.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c
+SRCS+=		efipxe.c efirng.c fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -29,6 +30,7 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
+SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/arm64 ${S}/lib/libkern
 SRCS+=	divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
@@ -41,7 +43,7 @@ CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm64
 CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
-CPPFLAGS+=	-DNEEDS_HEAP_H
+CPPFLAGS+=	-DNEEDS_HEAP_H -DFWRANDOM
 COPTS+=		-Wno-attributes -Wno-format
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin

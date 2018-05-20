@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.20 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.22 2018/05/13 10:42:03 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -99,8 +99,8 @@ OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 }
 
 OCSP_CERTID *
-OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
-    ASN1_BIT_STRING* issuerKey, ASN1_INTEGER *serialNumber)
+OCSP_cert_id_new(const EVP_MD *dgst, const X509_NAME *issuerName,
+    const ASN1_BIT_STRING *issuerKey, const ASN1_INTEGER *serialNumber)
 {
 	int nid;
 	unsigned int i;
@@ -180,7 +180,8 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
  * it is SSL.
  */
 int
-OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
+OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
+    int *pssl)
 {
 	char *host, *path, *port, *tmp;
 

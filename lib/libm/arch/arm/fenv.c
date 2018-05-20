@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.4 2016/09/12 19:47:01 guenther Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.5 2018/02/28 11:16:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -22,7 +22,6 @@
 extern	fp_except	_softfloat_float_exception_flags;
 extern	fp_except	_softfloat_float_exception_mask;
 extern	fp_rnd		_softfloat_float_rounding_mode;
-extern	void		_softfloat_float_raise(fp_except);
 
 /*
  * The following constant represents the default floating-point environment
@@ -46,12 +45,18 @@ fenv_t __fe_dfl_env = {
 int
 feclearexcept(int excepts)
 {
+	unsigned int fpscr;
+
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Clear the requested floating-point exceptions */
 	_softfloat_float_exception_flags &= ~excepts;
 
-	return (0);
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr &= ~excepts;
+	__asm volatile("vmsr fpscr, %0" :: "r" (fpscr));
+
+	return 0;
 }
 DEF_STD(feclearexcept);
 
@@ -63,12 +68,16 @@ DEF_STD(feclearexcept);
 int
 fegetexceptflag(fexcept_t *flagp, int excepts)
 {
+	unsigned int fpscr;
+
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Store the results in flagp */
-	*flagp = _softfloat_float_exception_flags & excepts;
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr |= _softfloat_float_exception_flags;
+	*flagp = fpscr & excepts;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -81,9 +90,8 @@ feraiseexcept(int excepts)
 	excepts &= FE_ALL_EXCEPT;
 
 	fesetexceptflag((fexcept_t *)&excepts, excepts);
-	_softfloat_float_raise(excepts);
 
-	return (0);
+	return 0;
 }
 DEF_STD(feraiseexcept);
 
@@ -95,13 +103,20 @@ DEF_STD(feraiseexcept);
 int
 fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
+	unsigned int fpscr;
+
 	excepts &= FE_ALL_EXCEPT;
 
 	/* Set the requested status flags */
 	_softfloat_float_exception_flags &= ~excepts;
 	_softfloat_float_exception_flags |= *flagp & excepts;
 
-	return (0);
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr &= ~excepts;
+	fpscr |= *flagp & excepts;
+	__asm volatile("vmsr fpscr, %0" :: "r" (fpscr));
+
+	return 0;
 }
 DEF_STD(fesetexceptflag);
 
@@ -113,9 +128,14 @@ DEF_STD(fesetexceptflag);
 int
 fetestexcept(int excepts)
 {
+	unsigned int fpscr;
+
 	excepts &= FE_ALL_EXCEPT;
 
-	return (_softfloat_float_exception_flags & excepts);
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr |= _softfloat_float_exception_flags;
+
+	return fpscr & excepts;
 }
 DEF_STD(fetestexcept);
 
@@ -125,7 +145,11 @@ DEF_STD(fetestexcept);
 int
 fegetround(void)
 {
-	return (_softfloat_float_rounding_mode & _ROUND_MASK);
+	unsigned int fpscr;
+
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+
+	return (fpscr >> 22) & _ROUND_MASK;
 }
 DEF_STD(fegetround);
 
@@ -137,15 +161,22 @@ DEF_STD(fegetround);
 int
 fesetround(int round)
 {
+	unsigned int fpscr;
+
 	/* Check whether requested rounding direction is supported */
 	if (round & ~_ROUND_MASK)
-		return (-1);
+		return -1;
 
 	/* Set the rounding direction */
 	_softfloat_float_rounding_mode &= ~_ROUND_MASK;
 	_softfloat_float_rounding_mode |= round;
 
-	return (0);
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr &= ~(_ROUND_MASK << 22);
+	fpscr |= round << 22;
+	__asm volatile("vmsr fpscr, %0" :: "r" (fpscr));
+
+	return 0;
 }
 DEF_STD(fesetround);
 
@@ -156,16 +187,21 @@ DEF_STD(fesetround);
 int
 fegetenv(fenv_t *envp)
 {
+	unsigned int fpscr;
+
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr |= _softfloat_float_exception_flags;
+
 	/* Store the current floating-point sticky flags */
-	envp->__sticky = _softfloat_float_exception_flags;
+	envp->__sticky = fpscr & FE_ALL_EXCEPT;
 
 	/* Store the current floating-point masks */
-	envp->__mask = _softfloat_float_exception_mask;
+	envp->__mask = 0;
 
 	/* Store the current floating-point control register */
-	envp->__round = _softfloat_float_rounding_mode;
+	envp->__round = (fpscr >> 22) & _ROUND_MASK;
 
-	return (0);
+	return 0;
 }
 DEF_STD(fegetenv);
 
@@ -178,6 +214,8 @@ DEF_STD(fegetenv);
 int
 feholdexcept(fenv_t *envp)
 {
+	unsigned int fpscr;
+
 	/* Store the current floating-point environment */
 	fegetenv(envp);
 
@@ -187,7 +225,11 @@ feholdexcept(fenv_t *envp)
 	/* Mask all exceptions */
 	_softfloat_float_exception_mask &= ~FE_ALL_EXCEPT;
 
-	return (0);
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr &= ~(FE_ALL_EXCEPT << 8 | FE_ALL_EXCEPT);
+	__asm volatile("vmsr fpscr, %0" :: "r" (fpscr));
+
+	return 0;
 }
 DEF_STD(feholdexcept);
 
@@ -202,16 +244,26 @@ DEF_STD(feholdexcept);
 int
 fesetenv(const fenv_t *envp)
 {
+	unsigned int fpscr;
+
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr &= ~(_ROUND_MASK << 22 | FE_ALL_EXCEPT << 8 | FE_ALL_EXCEPT);
+
 	/* Load the floating-point sticky flags */
+	fpscr |= envp->__sticky & FE_ALL_EXCEPT;
 	_softfloat_float_exception_flags = envp->__sticky & FE_ALL_EXCEPT;
 
 	/* Load the floating-point masks */
+	fpscr |= (envp->__mask & FE_ALL_EXCEPT) << 8;
 	_softfloat_float_exception_mask = envp->__mask & FE_ALL_EXCEPT;
 
 	/* Load the floating-point rounding mode */
+	fpscr |= (envp->__round & _ROUND_MASK) << 22;
 	_softfloat_float_rounding_mode = envp->__round & _ROUND_MASK;
 
-	return (0);
+	__asm volatile("vmsr fpscr, %0" :: "r" (fpscr));
+
+	return 0;
 }
 DEF_STD(fesetenv);
 
@@ -226,15 +278,18 @@ DEF_STD(fesetenv);
 int
 feupdateenv(const fenv_t *envp)
 {
-	int excepts = _softfloat_float_exception_flags;
+	unsigned int fpscr;
+
+	__asm volatile("vmrs %0, fpscr" : "=r" (fpscr));
+	fpscr |= _softfloat_float_exception_flags;
 
 	/* Install new floating-point environment */
 	fesetenv(envp);
 
 	/* Raise any previously accumulated exceptions */
-	feraiseexcept(excepts);
+	feraiseexcept(fpscr & FE_ALL_EXCEPT);
 
-	return (0);
+	return 0;
 }
 DEF_STD(feupdateenv);
 
@@ -244,32 +299,17 @@ DEF_STD(feupdateenv);
 int
 feenableexcept(int mask)
 {
-	int omask;
-
-	mask &= FE_ALL_EXCEPT;
-
-	omask = _softfloat_float_exception_mask & FE_ALL_EXCEPT;
-	_softfloat_float_exception_mask |= mask;
-
-	return (omask);
-
+	return -1;
 }
 
 int
 fedisableexcept(int mask)
 {
-	unsigned int omask;
-
-	mask &= FE_ALL_EXCEPT;
-
-	omask = _softfloat_float_exception_mask & FE_ALL_EXCEPT;
-	_softfloat_float_exception_mask &= ~mask;
-
-	return (omask);
+	return 0;
 }
 
 int
 fegetexcept(void)
 {
-	return (_softfloat_float_exception_mask & FE_ALL_EXCEPT);
+	return 0;
 }

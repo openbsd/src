@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.85 2015/12/23 21:32:52 tim Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.86 2018/04/28 09:56:21 guenther Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -295,6 +295,7 @@ main(int argc, char *argv[])
 
 	signal(SIGCHLD, (void (*)(int)) check_child);
 	signal(SIGHUP, (void (*)(int)) new_exportlist);
+	signal(SIGPIPE, SIG_IGN);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, socks) == -1) {
 		syslog(LOG_ERR, "socketpair: %m");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.3 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.4 2017/11/20 17:26:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -357,6 +357,7 @@ fdpass_new(int sock, struct fileops *ops)
 	f->file = file_new(ops, f, ops->name, 1);
 	if (f->file == NULL) {
 		close(sock);
+		xfree(f);
 		return NULL;
 	}
 	f->fd = sock;

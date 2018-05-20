@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.29 2017/08/11 20:50:15 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.33 2018/05/04 02:54:23 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, Elf_Sym *);
+int db_i386_numargs(struct callframe *);
 void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
@@ -82,15 +82,12 @@ void db_nextframe(struct callframe **, db_addr_t *, int *, int,
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(struct callframe *fp, Elf_Sym *sym)
+db_i386_numargs(struct callframe *fp)
 {
 	int	*argp;
 	int	inst;
 	int	args;
 	extern char	etext[];
-
-	if ((args = db_ctf_func_numargs(sym)) != -1)
-		return args;
 
 	argp = (int *)db_get_value((int)&fp->f_retaddr, 4, FALSE);
 	if (argp < (int *)VM_MIN_KERNEL_ADDRESS || argp > (int *)etext) {
@@ -187,18 +184,17 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	struct callframe *frame, *lastframe;
 	int		*argp, *arg0;
 	db_addr_t	callpc;
+	unsigned int	cr4save = CR4_SMEP|CR4_SMAP;
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
 	boolean_t	trace_proc = FALSE;
+	struct proc	*p;
 
 	{
 		char *cp = modif;
 		char c;
 
 		while ((c = *cp++) != 0) {
-			if (c == 't')
-				trace_thread = TRUE;
 			if (c == 'p')
 				trace_proc = TRUE;
 			if (c == 'u')
@@ -209,24 +205,33 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	if (count == -1)
 		count = 65535;
 
-	if (!have_addr) {
-		frame = (struct callframe *)ddb_regs.tf_ebp;
-		callpc = (db_addr_t)ddb_regs.tf_eip;
-	} else if (trace_thread) {
-		(*pr) ("%s: can't trace thread\n", __func__);
-	} else if (trace_proc) {
-		struct proc *p = tfind((pid_t)addr);
+	if (trace_proc) {
+		p = tfind((pid_t)addr);
 		if (p == NULL) {
 			(*pr) ("not found\n");
 			return;
 		}
+	}
+
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
+		cr4save = rcr4();
+		if (cr4save & CR4_SMAP)
+			lcr4(cr4save & ~CR4_SMAP);
+	} else {
+		cr4save = 0;
+	}
+
+	if (!have_addr) {
+		frame = (struct callframe *)ddb_regs.tf_ebp;
+		callpc = (db_addr_t)ddb_regs.tf_eip;
+	} else if (trace_proc) {
 		frame = (struct callframe *)p->p_addr->u_pcb.pcb_ebp;
 		callpc = (db_addr_t)
 		    db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	} else {
 		frame = (struct callframe *)addr;
 		callpc = (db_addr_t)
-			 db_get_value((int)&frame->f_retaddr, 4, FALSE);
+		    db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	}
 
 	lastframe = 0;
@@ -236,8 +241,13 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_expr_t	offset;
 		Elf_Sym		*sym;
 
-		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-		db_symbol_values(sym, &name, NULL);
+		if (INKERNEL(frame)) {
+			sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+			db_symbol_values(sym, &name, NULL);
+		} else {
+			sym = NULL;
+			name = NULL;
+		}
 
 		if (lastframe == 0 && sym == NULL) {
 			/* Symbol not found, peek at code */
@@ -255,10 +265,15 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			narg = 0;
 		else {
 			is_trap = NONE;
-			narg = db_numargs(frame, sym);
+			narg = db_ctf_func_numargs(sym);
+			if (narg < 0)
+				narg = db_i386_numargs(frame);
 		}
 
-		(*pr)("%s(", name);
+		if (name == NULL)
+			(*pr)("%lx(", callpc);
+		else
+			(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/*
@@ -304,8 +319,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			}
 		} else if (INKERNEL(lastframe)) {
 			/* switch from user to kernel */
-			if (kernel_only)
+			if (kernel_only) {
+				(*pr)("end of kernel\n");
 				break;	/* kernel stack only */
+			}
 		} else {
 			/* in user */
 			if (frame <= lastframe) {
@@ -321,6 +338,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_XTRN, pr);
 		(*pr)(":\n");
 	}
+
+	if (cr4save & CR4_SMAP)
+		lcr4(cr4save);
 }
 
 void
@@ -334,6 +354,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	callpc = db_get_value((int)&frame->f_retaddr, 4, FALSE);
 
 	lastframe = NULL;
+	st->st_count = 0;
 	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
 		char		*name;
 		db_expr_t	offset;

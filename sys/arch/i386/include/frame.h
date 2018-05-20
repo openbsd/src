@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.11 2016/02/26 09:29:20 mpi Exp $	*/
+/*	$OpenBSD: frame.h,v 1.12 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: frame.h,v 1.12 1995/10/11 04:20:08 mycroft Exp $	*/
 
 /*-
@@ -100,6 +100,47 @@ struct intrframe {
 	/* below only when transitting rings (e.g. user to kernel) */
 	int	if_esp;
 	int	if_ss;
+};
+
+/*
+ * iret stack frame
+ */
+struct iretframe {
+	int	irf_trapno;
+	int	irf_err;
+	int	irf_eip;
+	int	irf_cs;
+	int	irf_eflags;
+	int	irf_esp;
+	int	irf_ss;
+	/* below used when switching back to VM86 mode */
+	int	irf_vm86_es;
+	int	irf_vm86_ds;
+	int	irf_vm86_fs;
+	int	irf_vm86_gs;
+};
+
+/*
+ * Trampoline stack frame
+ */
+struct trampframe {
+	int	trf__deadbeef;
+	int	trf__kern_esp;
+	int	trf_fs;
+	int	trf_eax;
+	int	trf_ebp;
+	int	trf_trapno;
+	int	trf_err;
+	int	trf_eip;
+	int	trf_cs;
+	int	trf_eflags;
+	int	trf_esp;
+	int	trf_ss;
+	/* below used when switching out of VM86 mode */
+	int	trf_vm86_es;
+	int	trf_vm86_ds;
+	int	trf_vm86_fs;
+	int	trf_vm86_gs;
 };
 
 /*

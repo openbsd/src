@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.63 2017/03/24 16:15:31 otto Exp $
+#	$OpenBSD: Makefile.inc,v 1.64 2017/12/16 20:06:55 guenther Exp $
 
 # stdlib sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/stdlib ${LIBCSRCDIR}/stdlib
@@ -10,7 +10,9 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	merge.c posix_pty.c qsort.c radixsort.c rand.c random.c \
 	realpath.c remque.c setenv.c strtoimax.c \
 	strtol.c strtoll.c strtonum.c strtoul.c strtoull.c strtoumax.c \
-	system.c tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c \
+	system.c \
+	tfind.c thread_atexit.c tsearch.c \
+	_rand48.c drand48.c erand48.c jrand48.c \
 	lcong48.c lrand48.c mrand48.c nrand48.c seed48.c srand48.c \
 	_Exit.c icdb.c
 

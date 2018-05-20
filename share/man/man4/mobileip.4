@@ -1,0 +1,139 @@
+.\"	$OpenBSD: mobileip.4,v 1.3 2018/02/07 08:45:17 dlg Exp $
+.\"
+.\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 7 2018 $
+.Dt MOBILEIP 4
+.Os
+.Sh NAME
+.Nm mobileip
+.Nd MobileIP encapsulating network device
+.Sh SYNOPSIS
+.Cd "pseudo-device mobileip"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides IP tunnel construction using
+the Mobile IP (RFC 2004) encapsulation protocol
+.Pp
+.Nm
+datagrams (IP protocol number 55)
+are encapsulated into IP using a small encapsulation header.
+This protocol, in line with the RFC, only supports encapsulating
+IPv4.
+.Pp
+A
+.Nm
+interface can be created at runtime using the
+.Ic ifconfig Nm Ns Ar N Ic create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Pp
+The MTU is set to 1488 by default.
+This may not be an optimal value
+depending on the link between the two tunnel endpoints,
+but it can be adjusted via
+.Xr ifconfig 8 .
+.Pp
+For correct operation, the route to the tunnel destination must not
+go over the interface itself.
+This can be implemented by adding a distinct or a more specific
+route to the tunnel destination than the hosts or networks routed
+via the tunnel interface.
+Alternatively, the tunnel traffic may be configured in a separate
+routing table to the encapsulated traffic.
+.Pp
+.Nm
+interfaces support the following
+.Xr ioctl 2 Ns s
+for configuring tunnel options:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSLIFPHYADDR Fa "struct if_laddrreq *"
+Set the addresses of the outer IP header.
+The addresses may only be configured while the interface is down.
+.It Dv SIOCGLIFPHYADDR Fa "struct if_laddrreq *"
+Get the addresses of the outer IP header.
+.It Dv SIOCDIFPHYADDR
+Clear the outer IP header addresses.
+The addresses may only be cleared while the interface is down.
+.It Dv SIOCSLIFPHYRTABLE Fa "struct ifreq *"
+Set the routing table the encapsulated IP packets operate within.
+The routing table may only be configured while the interface is down.
+.It Dv SIOCGLIFPHYRTABLE Fa "struct ifreq *"
+Get the routing table the encapsulated IP packets operate within.
+.El
+.Sh EXAMPLES
+Configuration example:
+.Bd -literal
+Host X --- Host A ----------- MobileIP ------------ Host D --- Host E
+              \e                                      /
+               \e                                    /
+                +------ Host B ------ Host C ------+
+.Ed
+.Pp
+On Host A
+.Pq Ox :
+.Bd -literal -offset indent
+# route add default B
+# ifconfig mobileipN create
+# ifconfig mobileipN tunnel A D
+# ifconfig mobileipN A D netmask 255.255.255.255
+# route add E D
+.Ed
+.Pp
+On Host D
+.Pq Ox :
+.Bd -literal -offset indent
+# route add default C
+# ifconfig mobileipN create
+# ifconfig mobileipN tunnel D A
+# ifconfig mobileipN D A netmask 255.255.255.255
+# route add D E
+.Ed
+.Pp
+The route domain used for the encapsulated traffic may be set using
+.Xr ifconfig 8
+and the tunneldomain argument:
+.Bd -literal -offset indent
+# ifconfig mobileipN tunneldomain 1
+.Ed
+.Sh SEE ALSO
+.Xr inet 4 ,
+.Xr ip 4 ,
+.Xr netintro 4 ,
+.Xr options 4 ,
+.Xr hostname.if 5 ,
+.Xr protocols 5 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8
+.Sh STANDARDS
+.Rs
+.%A C. Perkins
+.%D October 1996
+.%R RFC 2004
+.%T Minimal Encapsulation within IP
+.Re
+.Sh HISTORY
+Support for the MobileIP protocol was originally implemented as part of the
+.Xr gre 4
+driver.
+The
+.Nm
+driver was split off from
+.Xr gre 4
+in
+.Ox 6.3 .

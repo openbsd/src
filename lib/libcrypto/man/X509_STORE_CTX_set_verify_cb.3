@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.3 2016/12/05 13:39:33 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.4 2018/03/22 17:38:08 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt X509_STORE_CTX_SET_VERIFY_CB 3
 .Os
 .Sh NAME
@@ -224,7 +224,8 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 .Xr X509_STORE_set_verify_cb_func 3
 .Sh HISTORY
 .Fn X509_STORE_CTX_set_verify_cb
-is available in all versions of SSLeay and OpenSSL.
+first appeared in OpenSSL 0.9.6c and has been available since
+.Ox 3.2 .
 .Sh CAVEATS
 In general a verification callback should
 .Sy NOT

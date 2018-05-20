@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.90 2017/10/06 13:33:53 mikeb Exp $
+#	$OpenBSD: files.amd64,v 1.95 2018/01/25 15:06:29 mpi Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -16,6 +16,7 @@ file	arch/amd64/amd64/locore.S
 file	arch/amd64/amd64/aes_intel.S		crypto
 file	arch/amd64/amd64/aesni.c		crypto
 file	arch/amd64/amd64/amd64errata.c
+file	arch/amd64/amd64/ucode.c		!small_kernel
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/amd64_mem.c		mtrr
 file	arch/amd64/amd64/mtrr.c			mtrr
@@ -28,11 +29,9 @@ file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/softintr.c
 file	arch/amd64/amd64/i8259.c
 file	arch/amd64/amd64/cacheinfo.c
-file	arch/amd64/amd64/mutex.S
 file	arch/amd64/amd64/vector.S
 file	arch/amd64/amd64/copy.S
 file	arch/amd64/amd64/spl.S
-file	arch/amd64/amd64/lock_machdep.c		multiprocessor
 
 file	arch/amd64/amd64/intr.c
 file	arch/amd64/amd64/bus_space.c

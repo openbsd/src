@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.13 2008/01/09 17:39:41 miod Exp $
+#	$OpenBSD: ttys,v 1.14 2017/11/02 14:04:24 mpi Exp $
 #
 # name	getty				type	status		comments
 
@@ -19,8 +19,8 @@ ttyC5	"/usr/libexec/getty std.9600"	vt220 off secure
 
 # DEC 3000 Z8530 ("scc") serial ports
 ttyB0	"/usr/libexec/getty std.9600"	unknown off secure
-ttyB1	"/usr/libexec/getty std.9600"	unknown off
+ttyB1	"/usr/libexec/getty std.9600"	unknown off secure
 
 # AlphaStation NS16550 ("com") serial ports
 tty00	"/usr/libexec/getty std.9600"	unknown off secure
-tty01	"/usr/libexec/getty std.9600"	unknown off
+tty01	"/usr/libexec/getty std.9600"	unknown off secure

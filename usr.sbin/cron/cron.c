@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.76 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.77 2017/10/23 15:15:22 jca Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,6 @@ static	int	open_socket(void);
 
 static	volatile sig_atomic_t	got_sigchld;
 static	time_t			timeRunning, virtualTime, clockTime;
-static	int			cronSock;
 static	long			GMToff;
 static	cron_db			*database;
 static	at_db			*at_database;
@@ -68,6 +67,7 @@ static	double			batch_maxload = BATCH_MAXLOAD;
 static	int			NoFork;
 static	time_t			StartTime;
 	gid_t			cron_gid;
+	int			cronSock;
 
 static void
 usage(void)

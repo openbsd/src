@@ -1,9 +1,11 @@
-/*	$OpenBSD: grep.c,v 1.44 2015/03/19 21:48:05 bcallah Exp $	*/
+/*	$OpenBSD: grep.c,v 1.46 2018/01/09 17:59:29 cheloha Exp $	*/
 
 /* This file is in the public domain */
 
 #include <sys/queue.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+
 #include <ctype.h>
 #include <libgen.h>
 #include <limits.h>
@@ -178,11 +180,15 @@ compile_mode(const char *name, const char *command)
 	struct buffer	*bp;
 	FILE	*fpipe;
 	char	*buf;
-	size_t	 len;
-	int	 ret, n;
+	size_t	 sz;
+	ssize_t	 len;
+	int	 ret, n, status;
 	char	 cwd[NFILEN], qcmd[NFILEN];
 	char	 timestr[NTIME];
 	time_t	 t;
+
+	buf = NULL;
+	sz = 0;
 
 	n = snprintf(qcmd, sizeof(qcmd), "%s 2>&1", command);
 	if (n < 0 || n >= sizeof(qcmd))
@@ -210,24 +216,28 @@ compile_mode(const char *name, const char *command)
 		ewprintf("Problem opening pipe");
 		return (NULL);
 	}
-	/*
-	 * We know that our commands are nice and the last line will end with
-	 * a \n, so we don't need to try to deal with the last line problem
-	 * in fgetln.
-	 */
-	while ((buf = fgetln(fpipe, &len)) != NULL) {
-		buf[len - 1] = '\0';
+	while ((len = getline(&buf, &sz, fpipe)) != -1) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
 		addline(bp, buf);
 	}
+	free(buf);
+	if (ferror(fpipe))
+		ewprintf("Problem reading pipe");
 	ret = pclose(fpipe);
 	t = time(NULL);
 	strftime(timestr, sizeof(timestr), "%a %b %e %T %Y", localtime(&t));
 	addline(bp, "");
-	if (ret != 0)
-		addlinef(bp, "Command exited abnormally with code %d"
-		    " at %s", ret, timestr);
-	else
-		addlinef(bp, "Command finished at %s", timestr);
+	if (WIFEXITED(ret)) {
+		status = WEXITSTATUS(ret);
+		if (status == 0)
+			addlinef(bp, "Command finished at %s", timestr);
+		else
+			addlinef(bp, "Command exited abnormally with code %d "
+			    "at %s", status, timestr);
+	} else
+		addlinef(bp, "Subshell killed by signal %d at %s",
+		    WTERMSIG(ret), timestr);
 
 	bp->b_dotp = bfirstlp(bp);
 	bp->b_modes[0] = name_mode("fundamental");

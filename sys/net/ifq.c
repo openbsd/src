@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.12 2017/06/02 00:07:12 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.22 2018/01/25 14:04:36 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -24,6 +26,10 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 /*
  * priq glue
@@ -133,31 +139,23 @@ ifq_restart_task(void *p)
 void
 ifq_barrier(struct ifqueue *ifq)
 {
-	struct sleep_state sls;
-	unsigned int notdone = 1;
-	struct task t = TASK_INITIALIZER(ifq_barrier_task, &notdone);
-
-	/* this should only be called from converted drivers */
-	KASSERT(ISSET(ifq->ifq_if->if_xflags, IFXF_MPSAFE));
+	struct cond c = COND_INITIALIZER();
+	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
 
 	if (ifq->ifq_serializer == NULL)
 		return;
 
 	ifq_serialize(ifq, &t);
 
-	while (notdone) {
-		sleep_setup(&sls, &notdone, PWAIT, "ifqbar");
-		sleep_finish(&sls, notdone);
-	}
+	cond_wait(&c, "ifqbar");
 }
 
 void
 ifq_barrier_task(void *p)
 {
-	unsigned int *notdone = p;
+	struct cond *c = p;
 
-	*notdone = 0;
-	wakeup_one(notdone);
+	cond_signal(c);
 }
 
 /*
@@ -246,6 +244,18 @@ ifq_destroy(struct ifqueue *ifq)
 	ifq->ifq_ops->ifqop_free(ifq->ifq_idx, ifq->ifq_q);
 
 	ml_purge(&ml);
+}
+
+void
+ifq_add_data(struct ifqueue *ifq, struct if_data *data)
+{
+	mtx_enter(&ifq->ifq_mtx);
+	data->ifi_opackets += ifq->ifq_packets;
+	data->ifi_obytes += ifq->ifq_bytes;
+	data->ifi_oqdrops += ifq->ifq_qdrops;
+	data->ifi_omcasts += ifq->ifq_mcasts;
+	/* ifp->if_data.ifi_oerrors */
+	mtx_leave(&ifq->ifq_mtx);
 }
 
 int
@@ -404,6 +414,157 @@ ifq_mfreeml(struct ifqueue *ifq, struct mbuf_list *ml)
 	ifq->ifq_len -= ml_len(ml);
 	ifq->ifq_qdrops += ml_len(ml);
 	ml_enlist(&ifq->ifq_free, ml);
+}
+
+/*
+ * ifiq
+ */
+
+static void	ifiq_process(void *);
+
+void
+ifiq_init(struct ifiqueue *ifiq, struct ifnet *ifp, unsigned int idx)
+{
+	ifiq->ifiq_if = ifp;
+	ifiq->ifiq_softnet = net_tq(ifp->if_index); /* + idx */
+	ifiq->ifiq_softc = NULL;
+
+	mtx_init(&ifiq->ifiq_mtx, IPL_NET);
+	ml_init(&ifiq->ifiq_ml);
+	task_set(&ifiq->ifiq_task, ifiq_process, ifiq);
+
+	ifiq->ifiq_qdrops = 0;
+	ifiq->ifiq_packets = 0;
+	ifiq->ifiq_bytes = 0;
+	ifiq->ifiq_qdrops = 0;
+	ifiq->ifiq_errors = 0;
+
+	ifiq->ifiq_idx = idx;
+}
+
+void
+ifiq_destroy(struct ifiqueue *ifiq)
+{
+	if (!task_del(ifiq->ifiq_softnet, &ifiq->ifiq_task)) {
+		NET_ASSERT_UNLOCKED();
+		taskq_barrier(ifiq->ifiq_softnet);
+	}
+
+	/* don't need to lock because this is the last use of the ifiq */
+	ml_purge(&ifiq->ifiq_ml);
+}
+
+int
+ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml, unsigned int cwm)
+{
+	struct ifnet *ifp = ifiq->ifiq_if;
+	struct mbuf *m;
+	uint64_t packets;
+	uint64_t bytes = 0;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+	int rv = 1;
+
+	if (ml_empty(ml))
+		return (0);
+
+	MBUF_LIST_FOREACH(ml, m) {
+		m->m_pkthdr.ph_ifidx = ifp->if_index;
+		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+		bytes += m->m_pkthdr.len;
+	}
+	packets = ml_len(ml);
+
+#if NBPFILTER > 0
+	if_bpf = ifp->if_bpf;
+	if (if_bpf) {
+		struct mbuf_list ml0 = *ml;
+
+		ml_init(ml);
+
+		while ((m = ml_dequeue(&ml0)) != NULL) {
+			if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN))
+				m_freem(m);
+			else
+				ml_enqueue(ml, m);
+		}
+
+		if (ml_empty(ml)) {
+			mtx_enter(&ifiq->ifiq_mtx);
+			ifiq->ifiq_packets += packets;
+			ifiq->ifiq_bytes += bytes;
+			mtx_leave(&ifiq->ifiq_mtx);
+
+			return (0);
+		}
+	}
+#endif
+
+	mtx_enter(&ifiq->ifiq_mtx);
+	ifiq->ifiq_packets += packets;
+	ifiq->ifiq_bytes += bytes;
+
+	if (ifiq_len(ifiq) >= cwm * 5)
+		ifiq->ifiq_qdrops += ml_len(ml);
+	else {
+		rv = (ifiq_len(ifiq) >= cwm * 3);
+		ml_enlist(&ifiq->ifiq_ml, ml);
+	}
+	mtx_leave(&ifiq->ifiq_mtx);
+
+	if (ml_empty(ml))
+		task_add(ifiq->ifiq_softnet, &ifiq->ifiq_task);
+	else
+		ml_purge(ml);
+
+	return (rv);
+}
+
+void
+ifiq_add_data(struct ifiqueue *ifiq, struct if_data *data)
+{
+	mtx_enter(&ifiq->ifiq_mtx);
+	data->ifi_ipackets += ifiq->ifiq_packets;
+	data->ifi_ibytes += ifiq->ifiq_bytes;
+	data->ifi_iqdrops += ifiq->ifiq_qdrops;
+	mtx_leave(&ifiq->ifiq_mtx);
+}
+
+void
+ifiq_barrier(struct ifiqueue *ifiq)
+{
+	if (!task_del(ifiq->ifiq_softnet, &ifiq->ifiq_task))
+		taskq_barrier(ifiq->ifiq_softnet);
+}
+
+int
+ifiq_enqueue(struct ifiqueue *ifiq, struct mbuf *m)
+{
+	mtx_enter(&ifiq->ifiq_mtx);
+	ml_enqueue(&ifiq->ifiq_ml, m);
+	mtx_leave(&ifiq->ifiq_mtx);
+
+	task_add(ifiq->ifiq_softnet, &ifiq->ifiq_task);
+
+	return (0);
+}
+
+static void
+ifiq_process(void *arg)
+{
+	struct ifiqueue *ifiq = arg;
+	struct mbuf_list ml;
+
+	if (ifiq_empty(ifiq))
+		return;
+
+	mtx_enter(&ifiq->ifiq_mtx);
+	ml = ifiq->ifiq_ml;
+	ml_init(&ifiq->ifiq_ml);
+	mtx_leave(&ifiq->ifiq_mtx);
+
+	if_input_process(ifiq->ifiq_if, &ml);
 }
 
 /*

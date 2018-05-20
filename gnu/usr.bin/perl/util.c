@@ -5323,7 +5323,8 @@ Perl_my_vsnprintf(char *buffer, const Size_t len, const char *format, va_list ap
     PERL_UNUSED_ARG(buffer);
     PERL_UNUSED_ARG(len);
     PERL_UNUSED_ARG(format);
-    PERL_UNUSED_ARG(ap);
+    /* the cast is to avoid gcc -Wsizeof-array-argument complaining */
+    PERL_UNUSED_ARG((void*)ap);
     Perl_croak_nocontext("panic: my_vsnprintf not available with quadmath");
     return 0;
 #else

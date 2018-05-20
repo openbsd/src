@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.62 2016/02/08 18:23:04 stefan Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.67 2018/04/20 07:27:54 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -71,7 +71,6 @@
 #ifndef _LOCORE
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
-#include <machine/segments.h>
 #endif /* _KERNEL */
 #include <sys/mutex.h>
 #include <uvm/uvm_object.h>
@@ -229,9 +228,6 @@
  *   a PTP's index is the PD index of the PDE that points to it
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
- *
- * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
- *           NBPD == number of bytes a PTP can map (4MB)
  */
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
@@ -247,7 +243,7 @@
 /* PG_AVAIL3 not used */
 
 /*
- * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
+ * Number of PTEs per cache line.  8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL		8
@@ -283,8 +279,19 @@ struct pmap {
 	struct mutex pm_mtx;
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
-	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
+	/*
+	 * pm_pdir         : VA of page table to be used when executing in
+	 *                   privileged mode
+	 * pm_pdirpa       : PA of page table to be used when executing in
+	 *                   privileged mode
+	 * pm_pdir_intel   : VA of special page table to be used when executing
+	 *                   on an Intel CPU in usermode (no kernel mappings)
+	 * pm_pdirpa_intel : PA of special page table to be used when executing
+	 *                   on an Intel CPU in usermode (no kernel mappings)
+	 */
+	pd_entry_t *pm_pdir, *pm_pdir_intel;
+	paddr_t pm_pdirpa, pm_pdirpa_intel;
+
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -327,9 +334,11 @@ extern u_long PTDpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 
-extern paddr_t ptp_masks[];
-extern int ptp_shifts[];
-extern long nkptp[], nbpd[], nkptpmax[];
+extern long nkptp[];
+
+extern const paddr_t ptp_masks[];
+extern const int ptp_shifts[];
+extern const long nbpd[], nkptpmax[];
 
 /*
  * macros
@@ -342,10 +351,10 @@ extern long nkptp[], nbpd[], nkptpmax[];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		
+#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		
+#define pmap_move(DP,SP,D,L,S)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
@@ -366,7 +375,6 @@ static void	pmap_protect(struct pmap *, vaddr_t,
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 boolean_t	pmap_test_attrs(struct vm_page *, unsigned);
 static void	pmap_update_pg(vaddr_t);
-static void	pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 void		pmap_fix_ept(struct pmap *, vaddr_t);
@@ -378,8 +386,9 @@ paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 void	pagezero(vaddr_t);
 
 int	pmap_convert(struct pmap *, int);
+void	pmap_enter_special(vaddr_t, paddr_t, vm_prot_t);
 
-/* 
+/*
  * functions for flushing the cache for vaddrs and pages.
  * these functions are not part of the MI pmap interface and thus
  * should not be used as such.
@@ -397,7 +406,7 @@ void	pmap_flush_cache(vaddr_t, vsize_t);
  * inline functions
  */
 
-static __inline void
+static inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -408,21 +417,10 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void
+inline static void
 pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
-}
-
-/*
- * pmap_update_2pg: flush two pages from the TLB
- */
-
-__inline static void
-pmap_update_2pg(vaddr_t va, vaddr_t vb)
-{
-	invlpg(va);
-	invlpg(vb);
 }
 
 /*
@@ -434,7 +432,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+inline static void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {
@@ -454,7 +452,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+inline static void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {
@@ -475,13 +473,13 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *  kvtopte: return a pointer to the PTE mapping a kernel VA
  */
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 vtopte(vaddr_t va)
 {
 	return (PTE_BASE + pl1_i(va));
 }
 
-static __inline pt_entry_t *
+static inline pt_entry_t *
 kvtopte(vaddr_t va)
 {
 #ifdef LARGEPAGES

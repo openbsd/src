@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.5 2017/08/29 13:33:03 jsg Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.7 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -165,7 +165,6 @@ struct pluart_softc {
 int  pluartprobe(struct device *parent, void *self, void *aux);
 void pluartattach(struct device *parent, struct device *self, void *aux);
 
-void pluartcnprobe(struct consdev *cp);
 void pluartcnprobe(struct consdev *cp);
 void pluartcninit(struct consdev *cp);
 int pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
@@ -795,7 +794,7 @@ pluartioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCGFLAGS:
 		break;
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error != 0)
 			return(EPERM);
 		break;

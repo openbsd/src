@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.76 2014/11/25 14:16:15 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.77 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -407,7 +407,8 @@ sub validate_plists
 		# okay, let's retry the other way around if we haven't yet
 		if (!defined $state->{delete_first}) {
 			if ($state->defines('deletefirst') ||
-			    $state->confirm("Delete older packages first", 0)) {
+			    $state->confirm_defaults_to_no(
+			    "Delete older packages first")) {
 				$state->{delete_first} = 1;
 				$state->vstat->drop_changes;
 				return $self->validate_plists($state);

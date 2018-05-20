@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihve.c,v 1.1 2017/01/10 08:54:14 jsg Exp $	*/
+/*	$OpenBSD: acpihve.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan Gray <jsg@openbsd.org>
@@ -83,7 +83,7 @@ acpihve_attach(struct device *parent, struct device *self, void *aux)
 
 	/* 64 bytes of entropy from OEM0 table */
 	for (i = 0; i < nitems(oem0->entropy); i++)
-		add_true_randomness(oem0->entropy[i]);
+		enqueue_randomness(oem0->entropy[i]);
 
 	printf("\n");
 }

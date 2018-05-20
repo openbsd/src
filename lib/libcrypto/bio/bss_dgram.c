@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_dgram.c,v 1.41 2015/07/20 23:15:28 doug Exp $ */
+/* $OpenBSD: bss_dgram.c,v 1.42 2018/05/12 17:47:53 tb Exp $ */
 /* 
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
@@ -86,7 +86,7 @@ static int dgram_clear(BIO *bio);
 
 static int BIO_dgram_should_retry(int s);
 
-static BIO_METHOD methods_dgramp = {
+static const BIO_METHOD methods_dgramp = {
 	.type = BIO_TYPE_DGRAM,
 	.name = "datagram socket",
 	.bwrite = dgram_write,
@@ -112,7 +112,7 @@ typedef struct bio_dgram_data_st {
 } bio_dgram_data;
 
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_datagram(void)
 {
 	return (&methods_dgramp);

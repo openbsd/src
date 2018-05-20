@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.69 2017/09/23 06:12:14 mpi Exp $ */
+/*	$OpenBSD: uhid.c,v 1.71 2018/05/01 18:14:46 landry Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -365,7 +364,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 
 	case USB_GET_DEVICEINFO:
 		usbd_fill_deviceinfo(sc->sc_hdev.sc_udev,
-				     (struct usb_device_info *)addr, 1);
+				     (struct usb_device_info *)addr);
 		break;
 
 	case USB_GET_REPORT_DESC:

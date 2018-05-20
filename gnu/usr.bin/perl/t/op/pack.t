@@ -12,7 +12,7 @@ my $no_endianness = $] > 5.009 ? '' :
 my $no_signedness = $] > 5.009 ? '' :
   "Signed/unsigned pack modifiers not available on this perl";
 
-plan tests => 14712;
+plan tests => 14716;
 
 use strict;
 use warnings qw(FATAL all);
@@ -2043,4 +2043,26 @@ ok(1, "argument underflow did not crash");
        "check pack H zero fills (utf8 none)");
     is(pack("H40", $up_nul), $twenty_nuls,
        "check pack H zero fills (utf8 source)");
+}
+
+SKIP:
+{
+  # [perl #131844] pointer addition overflow
+    $Config{ptrsize} == 4
+      or skip "[perl #131844] need 32-bit build for this test", 4;
+    # prevent ASAN just crashing on the allocation failure
+    local $ENV{ASAN_OPTIONS} = $ENV{ASAN_OPTIONS};
+    $ENV{ASAN_OPTIONS} .= ",allocator_may_return_null=1";
+    fresh_perl_like('pack "f999999999"', qr/Out of memory during pack/, { stderr => 1 },
+		    "pointer addition overflow");
+
+    # integer (STRLEN) overflow from addition of glen to current length
+    fresh_perl_like('pack "c10f1073741823"', qr/Out of memory during pack/, { stderr => 1 },
+		    "integer overflow calculating allocation (addition)");
+
+    fresh_perl_like('pack "W10f536870913", 256', qr/Out of memory during pack/, { stderr => 1 },
+		    "integer overflow calculating allocation (utf8)");
+
+    fresh_perl_like('pack "c10f1073741824"', qr/Out of memory during pack/, { stderr => 1 },
+		    "integer overflow calculating allocation (multiply)");
 }

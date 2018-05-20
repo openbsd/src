@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2017/06/01 11:18:53 naddy Exp $
+#	$OpenBSD: Makefile,v 1.28 2017/10/17 19:31:56 naddy Exp $
 
 MAN=	pxeboot.8
 
@@ -48,7 +48,7 @@ SRCS+=	strlcpy.c
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 
-.depend srt0.o gidt.o pxe_call.o: assym.h
+srt0.o gidt.o pxe_call.o: assym.h
 
 ${PROG}: $(OBJS)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS)

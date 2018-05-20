@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.79 2017/05/18 10:56:45 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.90 2018/02/10 08:12:01 dlg Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -172,14 +172,18 @@
 #include <net/if_etherip.h>
 #endif
 
+#include "mobileip.h"
+#if NMOBILEIP > 0
+#include <net/if_mobileip.h>
+#endif
+
 u_char ip_protox[IPPROTO_MAX];
 
-struct protosw inetsw[] = {
+const struct protosw inetsw[] = {
 {
   .pr_domain	= &inetdomain,
   .pr_init	= ip_init,
   .pr_slowtimo	= ip_slowtimo,
-  .pr_drain	= ip_drain,
   .pr_sysctl	= ip_sysctl
 },
 {
@@ -192,6 +196,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= ip_ctloutput,
   .pr_usrreq	= udp_usrreq,
   .pr_attach	= udp_attach,
+  .pr_detach	= udp_detach,
   .pr_init	= udp_init,
   .pr_sysctl	= udp_sysctl
 },
@@ -205,6 +210,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= tcp_ctloutput,
   .pr_usrreq	= tcp_usrreq,
   .pr_attach	= tcp_attach,
+  .pr_detach	= tcp_detach,
   .pr_init	= tcp_init,
   .pr_slowtimo	= tcp_slowtimo,
   .pr_sysctl	= tcp_sysctl
@@ -217,7 +223,8 @@ struct protosw inetsw[] = {
   .pr_input	= rip_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach
+  .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
 },
 {
   .pr_type	= SOCK_RAW,
@@ -228,6 +235,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_init	= icmp_init,
   .pr_sysctl	= icmp_sysctl
 },
@@ -244,6 +252,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= ipip_sysctl,
   .pr_init	= ipip_init
 },
@@ -260,31 +269,20 @@ struct protosw inetsw[] = {
 #endif
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq, /* XXX */
-  .pr_attach	= rip_attach
+  .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
 },
 #endif
-#if NGIF > 0
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_ETHERIP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= etherip_input,
-  .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_sysctl	= etherip_sysctl
-},
-#endif /* NGIF */
 #if defined(MPLS) && NGIF > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_MPLS,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= etherip_input,
+  .pr_input	= in_gif_input,
   .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach
+  .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
 },
 #endif /* MPLS && GIF */
 {
@@ -296,6 +294,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_init	= igmp_init,
   .pr_fasttimo	= igmp_fasttimo,
   .pr_slowtimo	= igmp_slowtimo,
@@ -312,6 +311,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= ah_sysctl
 },
 {
@@ -324,6 +324,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= esp_sysctl
 },
 {
@@ -335,6 +336,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= ipcomp_sysctl
 },
 #endif /* IPSEC */
@@ -348,20 +350,24 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= gre_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= gre_sysctl
 },
+#endif /* NGRE > 0 */
+#if NMOBILEIP > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_MOBILE,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= gre_mobile_input,
+  .pr_input	= mobileip_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
-  .pr_sysctl	= ipmobile_sysctl
+  .pr_detach	= rip_detach,
+  .pr_sysctl	= mobileip_sysctl
 },
-#endif /* NGRE > 0 */
+#endif /* NMOBILEIP > 0 */
 #if NCARP > 0
 {
   .pr_type	= SOCK_RAW,
@@ -372,6 +378,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= carp_sysctl
 },
 #endif /* NCARP > 0 */
@@ -385,6 +392,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_sysctl	= pfsync_sysctl
 },
 #endif /* NPFSYNC > 0 */
@@ -397,6 +405,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= divert_usrreq,
   .pr_attach	= divert_attach,
+  .pr_detach	= divert_detach,
   .pr_init	= divert_init,
   .pr_sysctl	= divert_sysctl
 },
@@ -411,7 +420,8 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
-  .pr_sysctl	= ip_etherip_sysctl
+  .pr_detach	= rip_detach,
+  .pr_sysctl	= etherip_sysctl
 },
 #endif /* NETHERIP */
 {
@@ -423,6 +433,7 @@ struct protosw inetsw[] = {
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
+  .pr_detach	= rip_detach,
   .pr_init	= rip_init
 }
 };

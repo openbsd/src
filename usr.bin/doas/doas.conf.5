@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.33 2017/07/13 19:16:33 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.35 2018/02/07 05:13:57 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: February 7 2018 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ If the first character of
 is a
 .Ql $
 then the value to be set is taken from the existing environment
-variable of the same name.
+variable of the indicated name.
 .El
 .It Ar identity
 The username to match.
@@ -121,7 +121,7 @@ it is not considered a keyword.
 .Sh FILES
 .Bl -tag -width "/etc/doas.conf"
 .It Pa /etc/doas.conf
-Doas configuration file.
+doas configuration file.
 .El
 .Sh EXAMPLES
 The following example permits user aja to install packages

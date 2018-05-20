@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.5 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.7 2017/11/29 05:13:57 guenther Exp $	*/
 /*	$NetBSD: memmove.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*-
@@ -34,6 +34,6 @@
 
 ENTRY(memmove)
 	stmfd	sp!, {r0, lr}
-	bl	_HIDDEN(_memcpy)
+	bl	_memcpy
 	ldmfd	sp!, {r0, pc}
-END_STRONG(memmove)
+END_BUILTIN(memmove)

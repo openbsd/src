@@ -86,7 +86,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	long timeout = msecs_to_jiffies_timeout(1);
 	int scanline, min, max, vblank_start;
 	wait_queue_head_t *wq = drm_crtc_vblank_waitqueue(&crtc->base);
-	struct sleep_state sls;
+	DEFINE_WAIT(wait);
 
 	vblank_start = adjusted_mode->crtc_vblank_start;
 	if (adjusted_mode->flags & DRM_MODE_FLAG_INTERLACE)
@@ -108,14 +108,13 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	crtc->debug.max_vbl = max;
 	trace_i915_pipe_update_start(crtc);
 
-	KASSERT(!cold);
 	for (;;) {
 		/*
 		 * prepare_to_wait() has a memory barrier, which guarantees
 		 * other CPUs can see the task state update by the time we
 		 * read the scanline.
 		 */
-		sleep_setup(&sls, wq, PZERO, "ipus");
+		prepare_to_wait(wq, &wait, TASK_UNINTERRUPTIBLE);
 
 		scanline = intel_get_crtc_scanline(crtc);
 		if (scanline < min || scanline > max)
@@ -129,15 +128,12 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 
 		local_irq_enable();
 
-		sleep_setup_timeout(&sls, timeout);
-		sleep_finish(&sls, 1);
-		if (sleep_finish_timeout(&sls))
-			timeout = -EWOULDBLOCK;
+		timeout = schedule_timeout(timeout);
 
 		local_irq_disable();
 	}
 
-	sleep_finish(&sls, 0);
+	finish_wait(wq, &wait);
 
 	drm_crtc_vblank_put(&crtc->base);
 

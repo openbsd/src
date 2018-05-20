@@ -1,4 +1,7 @@
 # test divert-to with icmp
+# create a divert-to in rule on the remote machine
+# client sends a ICMP echo packet from the local machine
+# server receives the ICMP echo packet at the remote machine
 
 use strict;
 use warnings;

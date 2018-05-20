@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.96 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.99 2017/11/04 22:53:57 jca Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -22,7 +22,7 @@
 
 #include <sys/types.h>
 #ifndef NO_PIC
-#include <sys/exec_elf.h>
+#include <elf.h>
 #pragma weak _DYNAMIC
 #endif
 

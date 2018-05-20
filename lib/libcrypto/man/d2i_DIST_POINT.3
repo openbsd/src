@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_DIST_POINT.3,v 1.1 2016/12/28 20:36:33 schwarze Exp $
+.\"	$OpenBSD: d2i_DIST_POINT.3,v 1.4 2018/03/23 04:34:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt D2I_DIST_POINT 3
 .Os
 .Sh NAME
@@ -175,3 +175,27 @@ if an error occurs.
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile
+.Sh HISTORY
+.Fn d2i_DIST_POINT ,
+.Fn i2d_DIST_POINT ,
+.Fn d2i_CRL_DIST_POINTS ,
+.Fn i2d_CRL_DIST_POINTS ,
+.Fn d2i_DIST_POINT_NAME ,
+and
+.Fn i2d_DIST_POINT_NAME
+first appeared in OpenSSL 0.9.3 and have been available since
+.Ox 2.6 .
+.Pp
+.Fn d2i_ACCESS_DESCRIPTION ,
+.Fn i2d_ACCESS_DESCRIPTION ,
+.Fn d2i_AUTHORITY_INFO_ACCESS ,
+and
+.Fn i2d_AUTHORITY_INFO_ACCESS
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
+.Pp
+.Fn d2i_ISSUING_DIST_POINT
+and
+.Fn i2d_ISSUING_DIST_POINT
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .

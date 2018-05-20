@@ -35,7 +35,7 @@ if os.fork() == 0:
 	os._exit(0)
 
 ans=sniff(iface=LOCAL_IF, timeout=3, filter=
-    "ip6 and src "+lla(REMOTE_MAC)+" and dst ff02::1 and icmp6")
+    "ip6 and src net fe80::/64 and dst ff02::1 and icmp6")
 for a in ans:
 	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \

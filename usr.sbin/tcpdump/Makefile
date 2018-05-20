@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2016/11/18 17:37:03 reyk Exp $
+#	$OpenBSD: Makefile,v 1.63 2018/02/03 13:39:48 mpi Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@ CFLAGS+=-Wall -I${.CURDIR}/../../sbin/pfctl -I${.CURDIR}/../hostapd
 # for pcap-int.h
 CFLAGS+=-I${.CURDIR}/../../lib/libpcap
 
-CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DHAVE_NET_SLIP_H -DHAVE_ETHER_NTOHOST -DINET6
+CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DHAVE_ETHER_NTOHOST -DINET6
 
 LDADD+=	-lpcap -ll -lcrypto
 DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
@@ -49,7 +49,7 @@ SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-etherip.c print-lwres.c print-lldp.c print-cdp.c print-pflog.c \
 	print-pfsync.c pf_print_state.c print-ofp.c ofp_map.c \
 	print-udpencap.c print-carp.c \
-	print-802_11.c print-iapp.c print-mpls.c print-slow.c \
+	print-802_11.c print-iapp.c print-mpls.c print-slow.c print-usbpcap.c \
 	gmt2local.c savestr.c setsignal.c in_cksum.c
 
 # TCP OS Fingerprinting

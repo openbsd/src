@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.111 2017/08/29 09:18:48 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.114 2018/04/10 10:48:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/wait.h>
 #include <sys/uio.h>
 
 #include <imsg.h>
@@ -177,6 +178,22 @@ server_lock_client(struct client *c)
 }
 
 void
+server_kill_pane(struct window_pane *wp)
+{
+	struct window	*w = wp->window;
+
+	if (window_count_panes(w) == 1) {
+		server_kill_window(w);
+		recalculate_sizes();
+	} else {
+		server_unzoom_window(w);
+		layout_close_pane(wp);
+		window_remove_pane(w, wp);
+		server_redraw_window(w);
+	}
+}
+
+void
 server_kill_window(struct window *w)
 {
 	struct session		*s, *next_s, *target_s;
@@ -278,11 +295,11 @@ void
 server_destroy_pane(struct window_pane *wp, int notify)
 {
 	struct window		*w = wp->window;
-	int			 old_fd;
 	struct screen_write_ctx	 ctx;
 	struct grid_cell	 gc;
+	time_t			 t;
+	char			 tim[26];
 
-	old_fd = wp->fd;
 	if (wp->fd != -1) {
 		bufferevent_free(wp->event);
 		close(wp->fd);
@@ -290,8 +307,12 @@ server_destroy_pane(struct window_pane *wp, int notify)
 	}
 
 	if (options_get_number(w->options, "remain-on-exit")) {
-		if (old_fd == -1)
+		if (~wp->flags & PANE_STATUSREADY)
 			return;
+
+		if (wp->flags & PANE_STATUSDRAWN)
+			return;
+		wp->flags |= PANE_STATUSDRAWN;
 
 		if (notify)
 			notify_pane("pane-died", wp);
@@ -301,11 +322,24 @@ server_destroy_pane(struct window_pane *wp, int notify)
 		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
 		screen_write_linefeed(&ctx, 1, 8);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
-		gc.attr |= GRID_ATTR_BRIGHT;
-		screen_write_puts(&ctx, &gc, "Pane is dead");
+
+		time(&t);
+		ctime_r(&t, tim);
+
+		if (WIFEXITED(wp->status)) {
+			screen_write_nputs(&ctx, -1, &gc,
+			    "Pane is dead (status %d, %s)",
+			    WEXITSTATUS(wp->status),
+			    tim);
+		} else if (WIFSIGNALED(wp->status)) {
+			screen_write_nputs(&ctx, -1, &gc,
+			    "Pane is dead (signal %d, %s)",
+			    WTERMSIG(wp->status),
+			    tim);
+		}
+
 		screen_write_stop(&ctx);
 		wp->flags |= PANE_REDRAW;
-
 		return;
 	}
 
@@ -437,8 +471,6 @@ server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
 void
 server_unzoom_window(struct window *w)
 {
-	if (window_unzoom(w) == 0) {
+	if (window_unzoom(w) == 0)
 		server_redraw_window(w);
-		server_status_window(w);
-	}
 }

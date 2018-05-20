@@ -2022,6 +2022,12 @@ extern long double Perl_my_frexpl(long double x, int *e);
 #   define Perl_isinf(x) isinfq(x)
 #   define Perl_isnan(x) isnanq(x)
 #   define Perl_isfinite(x) !(isnanq(x) || isinfq(x))
+#   define Perl_fp_class(x) ((x) == 0.0Q ? 0 : isinfq(x) ? 3 : isnanq(x) ? 4 : PERL_ABS(x) < FLT128_MIN ? 2 : 1)
+#   define Perl_fp_class_inf(x)    (Perl_fp_class(x) == 3)
+#   define Perl_fp_class_nan(x)    (Perl_fp_class(x) == 4)
+#   define Perl_fp_class_norm(x)   (Perl_fp_class(x) == 1)
+#   define Perl_fp_class_denorm(x) (Perl_fp_class(x) == 2)
+#   define Perl_fp_class_zero(x)   (Perl_fp_class(x) == 0)
 #else
 #   define NV_DIG DBL_DIG
 #   ifdef DBL_MANT_DIG
@@ -3064,6 +3070,8 @@ freeing any remaining Perl interpreters.
  */
 #if defined(USE_ITHREADS) && defined(I_PTHREAD) && \
     defined(__clang__) && \
+    !defined(PERL_GLOBAL_STRUCT) && \
+    !defined(PERL_GLOBAL_STRUCT_PRIVATE) && \
     !defined(SWIG) && \
   ((!defined(__apple_build_version__) &&               \
     ((__clang_major__ == 3 && __clang_minor__ >= 6) || \
@@ -6304,7 +6312,7 @@ expression, but with an empty argument list, like this:
 #    ifdef __hpux
 #        define strtoll __strtoll	/* secret handshake */
 #    endif
-#    ifdef WIN64
+#    if defined(WIN64) && defined(_MSC_VER)
 #        define strtoll _strtoi64	/* secret handshake */
 #    endif
 #   if !defined(Strtol) && defined(HAS_STRTOLL)
@@ -6338,7 +6346,7 @@ expression, but with an empty argument list, like this:
 #    ifdef __hpux
 #        define strtoull __strtoull	/* secret handshake */
 #    endif
-#    ifdef WIN64
+#    if defined(WIN64) && defined(_MSC_VER)
 #        define strtoull _strtoui64	/* secret handshake */
 #    endif
 #    if !defined(Strtoul) && defined(HAS_STRTOULL)
@@ -6756,7 +6764,9 @@ extern void moncontrol(int);
 #endif
 
 /* All the basic IEEE formats have the implicit bit,
- * except for the 80-bit extended formats, which will undef this. */
+ * except for the x86 80-bit extended formats, which will undef this.
+ * Also note that the IEEE 754 subnormals (formerly known as denormals)
+ * do not have the implicit bit of one. */
 #define NV_IMPLICIT_BIT
 
 #ifdef LONG_DOUBLEKIND
@@ -6783,6 +6793,7 @@ extern void moncontrol(int);
 #    define LONGDOUBLE_X86_80_BIT
 #    ifdef USE_LONG_DOUBLE
 #      undef NV_IMPLICIT_BIT
+#      define NV_X86_80_BIT
 #    endif
 #  endif
 

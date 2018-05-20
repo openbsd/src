@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.22 2017/06/29 07:51:59 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.25 2018/03/31 13:45:03 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ nopae:
 
 # %ecx points at our cpu_info structure..
 
-	movw	$(MAXGDTSIZ-1), 6(%esp)		# prepare segment descriptor
+	movw	$(GDT_SIZE-1), 6(%esp)		# prepare segment descriptor
 	movl	CPU_INFO_GDT(%ecx), %eax	# for real gdt
 	movl	%eax, 8(%esp)
 	lgdt	6(%esp)

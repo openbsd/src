@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.11 2017/07/29 08:50:42 zhuk Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.12 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -43,13 +43,6 @@
 #define DIOCSDINFO	_IOW('d', 102, struct disklabel)/* set */
 #define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
 #define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
-
-/* do format operation, read or write */
-#define DIOCRFORMAT	_IOWR('d', 105, struct format_op)
-#define DIOCWFORMAT	_IOWR('d', 106, struct format_op)
-
-#define DIOCSSTEP	_IOW('d', 107, int)	/* set step rate */
-#define DIOCSRETRIES	_IOW('d', 108, int)	/* set # of retries */
 
 #define DIOCEJECT	_IO('d', 112)		/* eject removable disk */
 #define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */

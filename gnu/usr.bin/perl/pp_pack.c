@@ -358,11 +358,28 @@ STMT_START {							\
     }								\
 } STMT_END
 
+#define SAFE_UTF8_EXPAND(var)	\
+STMT_START {				\
+    if ((var) > SSize_t_MAX / UTF8_EXPAND) \
+        Perl_croak(aTHX_ "%s", "Out of memory during pack()"); \
+    (var) = (var) * UTF8_EXPAND; \
+} STMT_END
+
+#define GROWING2(utf8, cat, start, cur, item_size, item_count)	\
+STMT_START {							\
+    if (SSize_t_MAX / (item_size) < (item_count))		\
+        Perl_croak(aTHX_ "%s", "Out of memory during pack()");	\
+    GROWING((utf8), (cat), (start), (cur), (item_size) * (item_count)); \
+} STMT_END
+
 #define GROWING(utf8, cat, start, cur, in_len)	\
 STMT_START {					\
     STRLEN glen = (in_len);			\
-    if (utf8) glen *= UTF8_EXPAND;		\
-    if ((cur) + glen >= (start) + SvLEN(cat)) {	\
+    STRLEN catcur = (STRLEN)((cur) - (start));	\
+    if (utf8) SAFE_UTF8_EXPAND(glen);		\
+    if (SSize_t_MAX - glen < catcur)		\
+        Perl_croak(aTHX_ "%s", "Out of memory during pack()"); \
+    if (catcur + glen >= SvLEN(cat)) {	\
 	(start) = sv_exp_grow(cat, glen);	\
 	(cur) = (start) + SvCUR(cat);		\
     }						\
@@ -372,7 +389,7 @@ STMT_START {					\
 STMT_START {					\
     const STRLEN glen = (in_len);		\
     STRLEN gl = glen;				\
-    if (utf8) gl *= UTF8_EXPAND;		\
+    if (utf8) SAFE_UTF8_EXPAND(gl);		\
     if ((cur) + gl >= (start) + SvLEN(cat)) {	\
         *cur = '\0';				\
         SvCUR_set((cat), (cur) - (start));	\
@@ -2126,7 +2143,7 @@ S_pack_rec(pTHX_ SV *cat, tempsym_t* symptr, SV **beglist, SV **endlist )
 	    if (props && !(props & PACK_SIZE_UNPREDICTABLE)) {
 		/* We can process this letter. */
 		STRLEN size = props & PACK_SIZE_MASK;
-		GROWING(utf8, cat, start, cur, (STRLEN) len * size);
+		GROWING2(utf8, cat, start, cur, size, (STRLEN)len);
 	    }
         }
 

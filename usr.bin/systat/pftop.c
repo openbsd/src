@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.40 2017/07/19 12:58:31 mikeb Exp $	 */
+/* $OpenBSD: pftop.c,v 1.41 2018/02/08 07:00:33 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -269,7 +269,7 @@ order_type order_list[] = {
 /* Define view managers */
 struct view_manager state_mgr = {
 	"States", select_states, read_states, sort_states, print_header,
-	print_states, keyboard_callback, order_list, NULL
+	print_states, keyboard_callback, order_list, order_list
 };
 
 struct view_manager rule_mgr = {

@@ -1,14 +1,11 @@
-/*	$OpenBSD: kqueue-random.c,v 1.10 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: kqueue-random.c,v 1.11 2018/04/26 15:55:14 guenther Exp $	*/
 /*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
-#include <sys/param.h>
+#include <sys/param.h>		/* MIN() */
 #include <sys/event.h>
-#include <sys/wait.h>
-#include <sys/fcntl.h>
-
-#include <dev/rndvar.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

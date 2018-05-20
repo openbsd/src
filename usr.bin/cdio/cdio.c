@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.74 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.75 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -53,7 +53,6 @@
  */
 
 #include <sys/param.h>	/* isset */
-#include <sys/file.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -63,6 +62,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

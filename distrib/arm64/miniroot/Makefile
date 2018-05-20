@@ -35,6 +35,7 @@ PIFILES=\
 	start.elf \
 	fixup.dat \
 	bcm2710-rpi-3-b.dtb \
+	bcm2710-rpi-3-b-plus.dtb \
 	bcm2710-rpi-cm3.dtb
 
 cleandir: clean

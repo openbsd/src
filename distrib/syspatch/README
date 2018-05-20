@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.2 2017/09/03 09:42:03 ajacoutot Exp $
+$OpenBSD: README,v 1.3 2017/11/05 10:29:24 rpe Exp $
 
 Notes about the syspatch(8) build process
 =========================================
@@ -35,9 +35,9 @@ install -m 0700 ${RELEASEDIR}/bsd{,.mp} ${FAKE}
 for set in base comp game man xbase xshare xfont xserv; do
 	tar xzphf ${RELEASEDIR}/${set}$(uname -r | tr -d '.').tgz -C ${FAKE}
 done
-mkdir -m 700 -p ${FAKE}/usr/share/compile/GENERIC{,.MP}
-tar -C ${FAKE}/usr/share/compile -xzf ${FAKE}/usr/share/compile.tgz
-rm ${FAKE}/usr/share/compile.tgz
+mkdir -m 700 -p ${FAKE}/usr/share/relink/kernel/GENERIC{,.MP}
+tar -C ${FAKE}/usr/share/relink/kernel -xzf ${FAKE}/usr/share/relink/kernel.tgz
+rm ${FAKE}/usr/share/relink/kernel.tgz
 
 Building a syspatch
 -------------------

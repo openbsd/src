@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.24 2017/06/20 12:39:20 tom Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.25 2018/02/06 01:09:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -206,6 +206,12 @@ typedef struct _bios_efiinfo {
 	uint32_t	fb_reserved_mask;
 } __packed bios_efiinfo_t;
 
+#define	BOOTARG_UCODE 12
+typedef struct _bios_ucode {
+	uint64_t	uc_addr;
+	uint64_t	uc_size;
+} __packed bios_ucode_t;
+
 #if defined(_KERNEL) || defined (_STANDALONE)
 
 #ifdef _LOCORE
@@ -254,6 +260,7 @@ bios_diskinfo_t *bios_getdiskinfo(dev_t);
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
 extern bios_efiinfo_t *bios_efiinfo;
+extern bios_ucode_t *bios_ucode;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */

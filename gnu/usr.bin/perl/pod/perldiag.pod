@@ -2479,7 +2479,9 @@ than the floating point supports.
 =item Hexadecimal float: exponent underflow
 
 (W overflow) The hexadecimal floating point has a smaller exponent
-than the floating point supports.
+than the floating point supports.  With the IEEE 754 floating point,
+this may also mean that the subnormals (formerly known as denormals)
+are being used, which may or may not be an error.
 
 =item Hexadecimal float: internal error (%s)
 

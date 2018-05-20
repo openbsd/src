@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Sylvestre Gallon <ccna.syl@gmail.com>
+ * Copyright (c) 2017 Helg Bredow <xx404@msn.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,55 +14,62 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
+#include <assert.h>
+#include <stddef.h>
 #include <fuse_opt.h>
 
-const struct fuse_opt nullopts[] = {
+static const struct fuse_opt emptyopts[] = {
 	FUSE_OPT_END
 };
 
-const int nullresults[] = {
-	0, 0, 0, 0, 0, 0
-};
-
-const struct fuse_opt badopts[] = {
-	FUSE_OPT_KEY("-p ", 0),
-	FUSE_OPT_KEY("-C", 1),
-	FUSE_OPT_KEY("-V", 3),
-	FUSE_OPT_KEY("--version", 3),
-	FUSE_OPT_KEY("-h", 2),
+static const struct fuse_opt opts[] = {
+	FUSE_OPT_KEY("-p ",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-C",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-V",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("--version",	FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-h",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("const=false",	FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("cache=no",	FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("cache=yes",	FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("debug",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("ro",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("--foo=",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("bars=%s",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("--fool=%lu",	FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-x ",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-n %u",		FUSE_OPT_KEY_DISCARD),
+	FUSE_OPT_KEY("-P",		FUSE_OPT_KEY_DISCARD),
 	FUSE_OPT_END
 };
-
-static int
-match_opts(const struct fuse_opt *opts, const int *results)
-{
-	if (fuse_opt_match(opts, NULL) != 0)
-		return (1);
-
-	if (fuse_opt_match(opts, "bar=") != results[0])
-		return (3);
-	if (fuse_opt_match(opts, "--foo=") != results[1])
-		return (4);
-	if (fuse_opt_match(opts, "bar=%s") != results[2])
-		return (5);
-	if (fuse_opt_match(opts, "--foo=%lu") != results[3])
-		return (6);
-	if (fuse_opt_match(opts, "-x ") != results[4])
-		return (7);
-	if (fuse_opt_match(opts, "-x %s") != results[5])
-		return (8);
-
-	return (0);
-}
 
 int
-main(int ac, char **av)
+main(void)
 {
-	if (match_opts(nullopts, nullresults) != 0)
-		return (1);
-	if (match_opts(badopts, nullresults) != 0)
-		return (1);
+	assert(fuse_opt_match(emptyopts, "debug")	==	0);
+
+	assert(fuse_opt_match(opts, NULL)		==	0);
+	assert(fuse_opt_match(opts, "-p ")		==	1);
+	assert(fuse_opt_match(opts, "-C")		==	1);
+	assert(fuse_opt_match(opts, "-c")		==	0);
+	assert(fuse_opt_match(opts, "-V")		==	1);
+	assert(fuse_opt_match(opts, "--version")	==	1);
+	assert(fuse_opt_match(opts, "-h")		==	1);
+	assert(fuse_opt_match(opts, "const=false")	==	1);
+	assert(fuse_opt_match(opts, "const=falsefalse")	==	0);
+	assert(fuse_opt_match(opts, "cache=no")		==	1);
+	assert(fuse_opt_match(opts, "cache=yes")	==	1);
+	assert(fuse_opt_match(opts, "debug")		==	1);
+	assert(fuse_opt_match(opts, "ro")		==	1);
+	assert(fuse_opt_match(opts, "ro_fallback")	==	0);
+	assert(fuse_opt_match(opts, "--foo=bar")	==	1);
+	assert(fuse_opt_match(opts, "bars=foo")		==	1);
+	assert(fuse_opt_match(opts, "--fool=bool")	==	1);
+	assert(fuse_opt_match(opts, "--fool=1")		==	1);
+	assert(fuse_opt_match(opts, "-x bar")		==	1);
+	assert(fuse_opt_match(opts, "-xbar")		==	1);
+	assert(fuse_opt_match(opts, "-n 100")		==	1);
+	assert(fuse_opt_match(opts, "-n100")		==	1);
+	assert(fuse_opt_match(opts, "-P")		==	1);
+
 	return (0);
 }
-

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_asn1.c,v 1.8 2015/10/16 15:15:39 jsing Exp $ */
+/* $OpenBSD: ecs_asn1.c,v 1.9 2018/03/17 15:24:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -112,4 +112,26 @@ void
 ECDSA_SIG_free(ECDSA_SIG *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECDSA_SIG_it);
+}
+
+void
+ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+{
+	if (pr != NULL)
+		*pr = sig->r;
+	if (ps != NULL)
+		*ps = sig->s;
+}
+
+int
+ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	if (r == NULL || s == NULL)
+		return 0;
+
+	BN_clear_free(sig->r);
+	BN_clear_free(sig->s);
+	sig->r = r;
+	sig->s = s;
+	return 1;
 }

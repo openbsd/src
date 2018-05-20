@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.31 2017/04/20 12:41:43 visa Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.32 2018/05/07 15:52:47 visa Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -245,13 +245,15 @@ db_stack_dump(void)
 }
 
 void
-db_print_stack_trace(struct db_stack_trace *st)
+db_print_stack_trace(struct db_stack_trace *st, int (*pr)(const char *, ...))
 {
 	unsigned int i;
 
 	for (i = 0; i < st->st_count; i++) {
-		printf("#%-2u ", i);
-		db_printsym(st->st_pc[i], DB_STGY_PROC, printf);
-		printf("\n");
+		(*pr)("#%-2u ", i);
+		db_printsym(st->st_pc[i], DB_STGY_PROC, pr);
+		(*pr)("\n");
 	}
+	if (st->st_count == 0)
+		(*pr)("<empty stack trace>\n");
 }

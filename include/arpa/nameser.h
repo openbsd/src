@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.13 2015/01/16 00:01:28 deraadt Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.14 2018/03/16 12:31:09 mpi Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -223,7 +223,7 @@
 #define	KEYFLAG_USERACCOUNT	0x0400	/* key is assoc. with a user acct */
 #define	KEYFLAG_ENTITY		0x0200	/* key is assoc. with entity eg host */
 #define	KEYFLAG_ZONEKEY		0x0100	/* key is zone key for the zone named */
-#define	KEYFLAG_IPSEC		0x0080  /* key is for IPSEC use (host or user)*/
+#define	KEYFLAG_IPSEC		0x0080  /* key is for IPsec use (host or user)*/
 #define	KEYFLAG_EMAIL		0x0040  /* key is for email (MIME security) */
 #define	KEYFLAG_RESERVED10	0x0020  /* reserved - must be zero */
 #define	KEYFLAG_RESERVED11	0x0010  /* reserved - must be zero */

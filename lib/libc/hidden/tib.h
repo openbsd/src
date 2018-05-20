@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.1 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.2 2017/12/01 23:30:05 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -23,10 +23,20 @@
 __BEGIN_HIDDEN_DECLS
 
 #ifndef PIC
-void	_static_tls_init(char *_base);
+/*
+ * Handling for static TLS allocation in staticly linked programs
+ */
+/* Given the base of a TIB allocation, initialize the static TLS for a thread */
+struct tib *_static_tls_init(char *_base, void *_thread);
 
-/* size of static TLS allocation in staticly linked programs */
+/* size of static TLS allocation */
 extern size_t	_static_tls_size;
+
+/* alignment of static TLS allocation */
+extern int	_static_tls_align;
+
+/* base-offset alignment of static TLS allocation */
+extern int	_static_tls_align_offset;
 #endif
 
 #if ! TCB_HAVE_MD_GET

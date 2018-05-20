@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.24 2017/05/26 16:32:14 jsing Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.27 2018/05/19 10:37:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -86,6 +86,7 @@ EC_GROUP_get_basis_type(const EC_GROUP * group)
 		/* everything else is currently not supported */
 		return 0;
 }
+
 #ifndef OPENSSL_NO_EC2M
 int 
 EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
@@ -104,6 +105,7 @@ EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 
 	return 1;
 }
+
 int 
 EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
     unsigned int *k2, unsigned int *k3)
@@ -127,7 +129,6 @@ EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
 	return 1;
 }
 #endif
-
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
@@ -334,6 +335,7 @@ const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
 	.size = sizeof(X9_62_CHARACTERISTIC_TWO),
 	.sname = "X9_62_CHARACTERISTIC_TWO",
 };
+
 X9_62_CHARACTERISTIC_TWO *X9_62_CHARACTERISTIC_TWO_new(void);
 void X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a);
 
@@ -348,6 +350,7 @@ X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X9_62_CHARACTERISTIC_TWO_it);
 }
+
 static const ASN1_TEMPLATE fieldID_def_tt = {
 	.flags = 0,
 	.tag = 0,
@@ -506,6 +509,7 @@ const ASN1_ITEM ECPARAMETERS_it = {
 	.size = sizeof(ECPARAMETERS),
 	.sname = "ECPARAMETERS",
 };
+
 ECPARAMETERS *ECPARAMETERS_new(void);
 void ECPARAMETERS_free(ECPARAMETERS *a);
 
@@ -655,6 +659,7 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
 }
+
 /* some declarations of internal function */
 
 /* ec_asn1_group2field() sets the values in a X9_62_FIELDID object */
@@ -674,7 +679,6 @@ static EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *);
  * EC_GROUP object */
 static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *,
     ECPKPARAMETERS *);
-
 
 /* the function definitions */
 
@@ -1380,16 +1384,17 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		goto err;
 	}
 
+	if (ret->pub_key)
+		EC_POINT_clear_free(ret->pub_key);
+	ret->pub_key = EC_POINT_new(ret->group);
+	if (ret->pub_key == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
 	if (priv_key->publicKey) {
 		const unsigned char *pub_oct;
 		size_t pub_oct_len;
-
-		EC_POINT_clear_free(ret->pub_key);
-		ret->pub_key = EC_POINT_new(ret->group);
-		if (ret->pub_key == NULL) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
 
 		pub_oct = ASN1_STRING_data(priv_key->publicKey);
 		pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
@@ -1405,6 +1410,14 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
+	} else {
+		if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key,
+			NULL, NULL, NULL)) {
+			ECerror(ERR_R_EC_LIB);
+			goto err;
+		}
+		/* Remember the original private-key-only encoding. */
+		ret->enc_flag |= EC_PKEY_NO_PUBKEY;
 	}
 
 	EC_PRIVATEKEY_free(priv_key);
@@ -1429,7 +1442,8 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 	size_t buf_len = 0, tmp_len;
 	EC_PRIVATEKEY *priv_key = NULL;
 
-	if (a == NULL || a->group == NULL || a->priv_key == NULL) {
+	if (a == NULL || a->group == NULL || a->priv_key == NULL ||
+	    (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
@@ -1572,7 +1586,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 int 
-i2o_ECPublicKey(EC_KEY * a, unsigned char **out)
+i2o_ECPublicKey(const EC_KEY * a, unsigned char **out)
 {
 	size_t buf_len = 0;
 	int new_buffer = 0;

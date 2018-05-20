@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.70 2017/03/28 05:23:15 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.72 2018/03/17 13:35:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,6 +56,7 @@ int envydebug = 1;
 int  envymatch(struct device *, void *, void *);
 void envyattach(struct device *, struct device *, void *);
 int  envydetach(struct device *, int);
+int  envyactivate(struct device *, int);
 
 int  envy_ccs_read(struct envy_softc *, int);
 void envy_ccs_write(struct envy_softc *, int, int);
@@ -168,7 +169,8 @@ void ak5365_adc_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak5365_adc_set(struct envy_softc *, struct mixer_ctrl *, int);
 
 struct cfattach envy_ca = {
-	sizeof(struct envy_softc), envymatch, envyattach, envydetach
+	sizeof(struct envy_softc), envymatch, envyattach, envydetach,
+	envyactivate
 };
 
 struct cfdriver envy_cd = {
@@ -1728,6 +1730,22 @@ envydetach(struct device *self, int flags)
 }
 
 int
+envyactivate(struct device *self, int act)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+
+ 	if (act == DVACT_RESUME) {
+		/*
+		 * The audio(4) layer will restore parameters and, if
+		 * needed, start DMA. So we only need to reach the
+		 * same device state as after the audio_attach() call.
+		 */
+		envy_reset(sc);
+	}
+	return config_activate_children(self, act);
+}
+
+int
 envy_open(void *self, int flags)
 {
 	return 0;
@@ -1742,17 +1760,11 @@ void *
 envy_allocm(void *self, int dir, size_t size, int type, int flags)
 {
 	struct envy_softc *sc = (struct envy_softc *)self;
-	int err, basereg, wait;
+	int err, wait;
 	struct envy_buf *buf;
 	bus_addr_t dma_addr;
 
-	if (dir == AUMODE_RECORD) {
-		buf = &sc->ibuf;
-		basereg = ENVY_MT_RADDR;
-	} else {
-		buf = &sc->obuf;
-		basereg = ENVY_MT_PADDR;
-	}
+	buf = (dir == AUMODE_RECORD) ? &sc->ibuf : &sc->obuf;
 	if (buf->addr != NULL) {
 		DPRINTF("%s: multiple alloc, dir = %d\n", DEVNAME(sc), dir);
 		return NULL;
@@ -1789,7 +1801,6 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 		printf("%s: DMA address beyond 0x10000000\n", DEVNAME(sc));
 		goto err_unload;
 	}
-	envy_mt_write_4(sc, basereg, dma_addr);
 	return buf->addr;
  err_unload:
 	bus_dmamap_unload(sc->pci_dmat, buf->map);
@@ -2051,6 +2062,7 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 	}
 #endif
 	mtx_enter(&audio_lock);
+	envy_mt_write_4(sc, ENVY_MT_PADDR, sc->obuf.map->dm_segs[0].ds_addr);
 	envy_mt_write_2(sc, ENVY_MT_PBUFSZ, bufsz / 4 - 1);
 	envy_mt_write_2(sc, ENVY_MT_PBLKSZ(sc), blksz / 4 - 1);
 
@@ -2097,6 +2109,7 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 	}
 #endif
 	mtx_enter(&audio_lock);
+	envy_mt_write_4(sc, ENVY_MT_RADDR, sc->ibuf.map->dm_segs[0].ds_addr);
 	envy_mt_write_2(sc, ENVY_MT_RBUFSZ, bufsz / 4 - 1);
 	envy_mt_write_2(sc, ENVY_MT_RBLKSZ, blksz / 4 - 1);
 

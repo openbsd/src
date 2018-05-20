@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.10 2017/07/30 16:08:09 visa Exp $ */
+/* $OpenBSD: cpu.h,v 1.12 2018/02/18 14:50:08 visa Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,17 +45,33 @@
 #define _MACHINE_CPU_H_
 
 #ifdef _KERNEL
+
+#define OCTEON_MAXCPUS	16
+
 #if defined(MULTIPROCESSOR) && !defined(_LOCORE)
-#define MAXCPUS 16
+#define MAXCPUS OCTEON_MAXCPUS
 struct cpu_info;
-struct cpu_info *hw_getcurcpu(void);
-void hw_setcurcpu(struct cpu_info *);
 void hw_cpu_boot_secondary(struct cpu_info *);
 void hw_cpu_hatch(struct cpu_info *);
 void hw_cpu_spinup_trampoline(struct cpu_info *);
 int  hw_ipi_intr_establish(int (*)(void *), u_long);
 void hw_ipi_intr_set(u_long);
 void hw_ipi_intr_clear(u_long);
+
+/* Keep in sync with HW_GET_CPU_INFO(). */
+static inline struct cpu_info *
+hw_getcurcpu(void)
+{
+	struct cpu_info *ci;
+	__asm__ volatile ("dmfc0 %0, $30" /* ErrorEPC */ : "=r" (ci));
+	return ci;
+}
+
+static inline void
+hw_setcurcpu(struct cpu_info *ci)
+{
+	__asm__ volatile ("dmtc0 %0, $30" /* ErrorEPC */ : : "r" (ci));
+}
 #endif	/* MULTIPROCESSOR && !_LOCORE */
 
 #define CACHELINESIZE 128

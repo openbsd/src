@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.21 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.22 2017/12/30 23:08:29 guenther Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <sys/uio.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 
 #include <dev/isa/pcppivar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.96 2017/09/21 07:44:06 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.98 2018/04/29 08:57:48 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -319,6 +319,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 	} else
 		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
 		    BUS_DMASYNC_PREREAD);
+
+	usb_tap(bus, xfer, USBTAP_DIR_OUT);
 
 	err = pipe->methods->transfer(xfer);
 
@@ -715,7 +717,8 @@ void
 usb_transfer_complete(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->pipe;
-	int polling = pipe->device->bus->use_polling;
+	struct usbd_bus *bus = pipe->device->bus;
+	int polling = bus->use_polling;
 	int status, flags;
 
 #if 0
@@ -759,26 +762,24 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	/* if we allocated the buffer in usbd_transfer() we free it here. */
 	if (xfer->rqflags & URQ_AUTO_DMABUF) {
 		if (!pipe->repeat) {
-			usb_freemem(pipe->device->bus, &xfer->dmabuf);
+			usb_freemem(bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}
 
 	if (!pipe->repeat) {
 		/* Remove request from queue. */
+		KASSERT(xfer == SIMPLEQ_FIRST(&pipe->queue));
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 #ifdef DIAGNOSTIC
-		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
-			printf("usb_transfer_complete: bad dequeue %p != %p\n",
-			    xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_FREE;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
 	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n",
 	    pipe->repeat, SIMPLEQ_FIRST(&pipe->queue)));
 
 	/* Count completed transfers. */
-	++pipe->device->bus->stats.uds_requests
+	++bus->stats.uds_requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	xfer->done = 1;
@@ -788,6 +789,8 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 		    xfer->actlen, xfer->length));
 		xfer->status = USBD_SHORT_XFER;
 	}
+
+	usb_tap(bus, xfer, USBTAP_DIR_IN);
 
 	/*
 	 * We cannot dereference ``xfer'' after calling the callback as

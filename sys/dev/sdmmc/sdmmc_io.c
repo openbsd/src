@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.29 2017/08/28 23:45:10 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.32 2018/02/11 20:58:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -46,6 +46,7 @@ int	sdmmc_io_xchg(struct sdmmc_softc *, struct sdmmc_function *,
 	    int, u_char *);
 void	sdmmc_io_reset(struct sdmmc_softc *);
 int	sdmmc_io_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
+void	sdmmc_io_set_blocklen(struct sdmmc_function *, unsigned int);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -220,14 +221,14 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	u_int8_t rv;
 	int retry = 5;
 
+	rw_assert_wrlock(&sc->sc_lock);
+
 	if (sf->number == 0)
 		return 0;	/* FN0 is always enabled */
 
-	rw_enter_write(&sc->sc_lock);
 	rv = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_ENABLE);
 	rv |= (1<<sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, rv);
-	rw_exit(&sc->sc_lock);
 
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
 		tsleep(&lbolt, PPAUSE, "pause", 0);
@@ -415,7 +416,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
 	cmd.c_data = datap;
 	cmd.c_datalen = datalen;
-	cmd.c_blklen = MIN(datalen, sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	cmd.c_blklen = MIN(datalen, sf->cur_blklen);
 
 	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
 		cmd.c_flags |= SCF_CMD_READ;
@@ -531,6 +532,52 @@ sdmmc_io_write_multi_1(struct sdmmc_function *sf, int reg, u_char *data,
 }
 
 int
+sdmmc_io_read_region_1(struct sdmmc_function *sf, int reg, u_char *data,
+    int datalen)
+{
+	int error;
+
+	rw_assert_wrlock(&sf->sc->sc_lock);
+
+	while (datalen > SD_ARG_CMD53_LENGTH_MAX) {
+		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
+		    SD_ARG_CMD53_LENGTH_MAX, SD_ARG_CMD53_READ |
+		    SD_ARG_CMD53_INCREMENT);
+		if (error)
+			return error;
+		reg += SD_ARG_CMD53_LENGTH_MAX;
+		data += SD_ARG_CMD53_LENGTH_MAX;
+		datalen -= SD_ARG_CMD53_LENGTH_MAX;
+	}
+
+	return sdmmc_io_rw_extended(sf->sc, sf, reg, data, datalen,
+	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
+}
+
+int
+sdmmc_io_write_region_1(struct sdmmc_function *sf, int reg, u_char *data,
+    int datalen)
+{
+	int error;
+
+	rw_assert_wrlock(&sf->sc->sc_lock);
+
+	while (datalen > SD_ARG_CMD53_LENGTH_MAX) {
+		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
+		    SD_ARG_CMD53_LENGTH_MAX, SD_ARG_CMD53_WRITE |
+		    SD_ARG_CMD53_INCREMENT);
+		if (error)
+			return error;
+		reg += SD_ARG_CMD53_LENGTH_MAX;
+		data += SD_ARG_CMD53_LENGTH_MAX;
+		datalen -= SD_ARG_CMD53_LENGTH_MAX;
+	}
+
+	return sdmmc_io_rw_extended(sf->sc, sf, reg, data, datalen,
+	    SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
+}
+
+int
 sdmmc_io_xchg(struct sdmmc_softc *sc, struct sdmmc_function *sf,
     int reg, u_char *datap)
 {
@@ -605,11 +652,11 @@ sdmmc_intr_enable(struct sdmmc_function *sf)
 	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t imask;
 
-	rw_enter_write(&sc->sc_lock);
+	rw_assert_wrlock(&sc->sc_lock);
+
 	imask = sdmmc_io_read_1(sf0, SD_IO_CCCR_INT_ENABLE);
 	imask |= 1 << sf->number;
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_INT_ENABLE, imask);
-	rw_exit(&sc->sc_lock);
 }
 
 void
@@ -619,11 +666,11 @@ sdmmc_intr_disable(struct sdmmc_function *sf)
 	struct sdmmc_function *sf0 = sc->sc_fn0;
 	u_int8_t imask;
 
-	rw_enter_write(&sc->sc_lock);
+	rw_assert_wrlock(&sc->sc_lock);
+
 	imask = sdmmc_io_read_1(sf0, SD_IO_CCCR_INT_ENABLE);
 	imask &= ~(1 << sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_INT_ENABLE, imask);
-	rw_exit(&sc->sc_lock);
 }
 
 /*
@@ -720,4 +767,26 @@ sdmmc_intr_task(void *arg)
 	}
 	sdmmc_chip_card_intr_ack(sc->sct, sc->sch);
 	splx(s);
+}
+
+void
+sdmmc_io_set_blocklen(struct sdmmc_function *sf, unsigned int blklen)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	struct sdmmc_function *sf0 = sc->sc_fn0;
+
+	rw_assert_wrlock(&sc->sc_lock);
+
+	if (blklen > sdmmc_chip_host_maxblklen(sc->sct, sc->sch))
+		return;
+
+	if (blklen == 0) {
+		blklen = min(512, sdmmc_chip_host_maxblklen(sc->sct, sc->sch));
+	}
+
+	sdmmc_io_write_1(sf0, SD_IO_FBR_BASE(sf->number) +
+	    SD_IO_FBR_BLOCKLEN, blklen & 0xff);
+	sdmmc_io_write_1(sf0, SD_IO_FBR_BASE(sf->number) +
+	    SD_IO_FBR_BLOCKLEN+ 1, (blklen >> 8) & 0xff);
+	sf->cur_blklen = blklen;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.5 2017/02/19 19:59:12 tb Exp $ */
+/*	$OpenBSD: manager.c,v 1.7 2017/12/15 14:45:51 bluhm Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -16,18 +16,22 @@
  */
 
 #include <sys/syslimits.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "manager.h"
 
 extern char *__progname;
 
@@ -87,21 +91,39 @@ clear_coredump(int *ret, const char *test_name)
 static int
 grab_syscall(pid_t pid)
 {
-	int	 ret = -1;
-	char	*search = NULL;
-	int	 searchlen;
-	FILE	*fd;
-	char	 line[1024];
-	char	*end;
+	int		 ret = -1;
+	char		*pattern;
+	regex_t		 regex;
+	regmatch_t	 matches[2];
+	FILE		*fd;
+	char		 line[1024];
+	int		 error;
+	const char	*errstr;
 
 	/* build searched string */
-	if ((searchlen = asprintf(&search, "%s(%d): syscall ", __progname, pid))
-	    <= 0)
+	error = asprintf(&pattern,
+	    "^%s\\[%d\\]: pledge \"[a-z]+\", syscall ([0-9]+)\n?$",
+	    __progname, pid);
+	if (error <= 0) {
+		warn("asprintf pattern");
+		return (-1);
+	}
+	error = regcomp(&regex, pattern, REG_EXTENDED);
+	if (error) {
+		warnx("regcomp pattern=%s error=%d", pattern, error);
+		free(pattern);
+		return (-1);
+	}
+	if (regex.re_nsub != 1) {
+		warnx("regcomp pattern=%s nsub=%zu", pattern, regex.re_nsub);
 		goto out;
+	}
 
 	/* call dmesg */
-	if ((fd = popen("/sbin/dmesg", "r")) == NULL)
+	if ((fd = popen("/sbin/dmesg", "r")) == NULL) {
+		warn("popen /sbin/dmesg");
 		goto out;
+	}
 
 	/* search the string */
 	while (1) {
@@ -118,27 +140,25 @@ grab_syscall(pid_t pid)
 		if (feof(fd))
 			break;
 
-		/* strip trailing '\n' */
-		end = strchr(line, '\n');
-		if (*end == '\n')
-			*end = '\0';
-
 		/* check if found */
-		if (strncmp(search, line, searchlen) == 0) {
-			const char *errstr = NULL;
-			char *c;
-			/* truncate at first no-number */
-			for (c = line + searchlen;
-			    (*c != '\0') && isdigit((unsigned char)*c); c++)
-				;
-			*c = '\0';
+		error = regexec(&regex, line, 2, matches, 0);
+		if (error == REG_NOMATCH)
+			continue;
+		if (error) {
+			warnx("regexec pattern=%s line=%s error=%d",
+			    pattern, line, error);
+			ret = -1;
+			goto out;
+		}
 
-			/* convert it */
-			ret = strtonum(line + searchlen, 0, 255, &errstr);
-			if (errstr) {
-				warn("strtonum: line=%s err=%s", line, errstr);
-				return (-1);
-			}
+		/* convert it */
+		line[matches[1].rm_eo] = '\0';
+		ret = strtonum(&line[matches[1].rm_so], 0, 255, &errstr);
+		if (errstr) {
+			warnx("strtonum: number=%s error=%s",
+			    &line[matches[1].rm_so], errstr);
+			ret = -1;
+			goto out;
 		}
 	}
 
@@ -151,7 +171,8 @@ grab_syscall(pid_t pid)
 		ret = 0;
 
 out:
-	free(search);
+	free(pattern);
+	regfree(&regex);
 	return (ret);
 }
 
@@ -175,24 +196,17 @@ drainfd(int rfd, int wfd)
 
 void
 _start_test(int *ret, const char *test_name, const char *request,
-    const char *paths[], void (*test_func)(void))
+    void (*test_func)(void))
 {
 	int fildes[2];
 	pid_t pid;
 	int status;
-	int i;
 
 	/* early print testname */
 	printf("test(%s): pledge=", test_name);
 	if (request) {
 		printf("(\"%s\",", request);
-		if (paths) {
-			printf("{");
-			for (i = 0; paths[i] != NULL; i++)
-				printf("\"%s\",", paths[i]);
-			printf("NULL})");
-		} else
-			printf("NULL)");
+		printf("NULL)");
 	} else
 		printf("skip");
 
@@ -235,7 +249,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 		setsid();
 
 		/* set pledge policy */
-		if (request && pledge(request, paths) != 0)
+		if (request && pledge(request, NULL) != 0)
 			err(errno, "pledge");
 
 		/* reset errno and launch test */

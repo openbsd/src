@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.9 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.11 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,18 +40,6 @@
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/cn30xxipdvar.h>
 
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxipd_intr_rml(void *);
-int	cn30xxipd_intr_drop(void *);
-
-void	cn30xxipd_dump(void);
-
-void	*cn30xxipd_intr_drop_ih;
-
-struct cn30xxipd_softc	*__cn30xxipd_softc[GMX_PORT_NUNITS];
-#endif
-
-/* XXX */
 void
 cn30xxipd_init(struct cn30xxipd_attach_args *aa,
     struct cn30xxipd_softc **rsc)
@@ -74,15 +62,6 @@ cn30xxipd_init(struct cn30xxipd_attach_args *aa,
 		panic("can't map %s space", "ipd register");
 
 	*rsc = sc;
-
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxipd_int_enable(sc, 1);
-	if (cn30xxipd_intr_drop_ih == NULL)
-		cn30xxipd_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_IPD_DRP) - 1, IPL_NET,
-		   cn30xxipd_intr_drop, NULL, "cn30xxipd");
-	__cn30xxipd_softc[sc->sc_port] = sc;
-#endif /* OCTEON_ETH_DEBUG */
 }
 
 #define	_IPD_RD8(sc, off) \
@@ -132,12 +111,13 @@ cn30xxipd_config(struct cn30xxipd_softc *sc)
 	_IPD_WR8(sc, IPD_PACKET_MBUFF_SIZE_OFFSET, packet_mbuff_size);
 
 	first_next_ptr_back = 0;
-	SET(first_next_ptr_back, (sc->sc_first_mbuff_skip / 128) & IPD_1ST_NEXT_PTR_BACK_BACK);
+	SET(first_next_ptr_back, (sc->sc_first_mbuff_skip / CACHELINESIZE)
+	    & IPD_1ST_NEXT_PTR_BACK_BACK);
 	_IPD_WR8(sc, IPD_1ST_NEXT_PTR_BACK_OFFSET, first_next_ptr_back);
 
 	second_next_ptr_back = 0;
-	SET(second_next_ptr_back, (sc->sc_not_first_mbuff_skip / 128) &
-	    IPD_2ND_NEXT_PTR_BACK_BACK);
+	SET(second_next_ptr_back, (sc->sc_not_first_mbuff_skip / CACHELINESIZE)
+	    & IPD_2ND_NEXT_PTR_BACK_BACK);
 	_IPD_WR8(sc, IPD_2ND_NEXT_PTR_BACK_OFFSET, second_next_ptr_back);
 
 	sqe_fpa_queue = 0;
@@ -195,128 +175,3 @@ cn30xxipd_sub_port_fcs(struct cn30xxipd_softc *sc, int enable)
 		SET(sub_port_fcs, 1 << sc->sc_port);
 	_IPD_WR8(sc, IPD_SUB_PORT_FCS_OFFSET, sub_port_fcs);
 }
-
-#ifdef OCTEON_ETH_DEBUG
-int	cn30xxipd_intr_rml_verbose;
-
-void
-cn30xxipd_intr_rml(void *arg)
-{
-	int i;
-
-	for (i = 0; i < 3/* XXX */; i++) {
-		struct cn30xxipd_softc *sc;
-		uint64_t reg;
-
-		sc = __cn30xxipd_softc[i];
-		KASSERT(sc != NULL);
-		reg = cn30xxipd_int_summary(sc);
-		if (cn30xxipd_intr_rml_verbose)
-			printf("%s: IPD_INT_SUM=0x%016llx\n", __func__, reg);
-	}
-}
-
-void
-cn30xxipd_int_enable(struct cn30xxipd_softc *sc, int enable)
-{
-	uint64_t ipd_int_xxx = 0;
-
-	SET(ipd_int_xxx,
-	    IPD_INT_SUM_BP_SUB |
-	    IPD_INT_SUM_PRC_PAR3 |
-	    IPD_INT_SUM_PRC_PAR2 |
-	    IPD_INT_SUM_PRC_PAR1 |
-	    IPD_INT_SUM_PRC_PAR0);
-	_IPD_WR8(sc, IPD_INT_SUM_OFFSET, ipd_int_xxx);
-	_IPD_WR8(sc, IPD_INT_ENB_OFFSET, enable ? ipd_int_xxx : 0);
-}
-
-uint64_t
-cn30xxipd_int_summary(struct cn30xxipd_softc *sc)
-{
-	uint64_t summary;
-
-	summary = _IPD_RD8(sc, IPD_INT_SUM_OFFSET);
-	_IPD_WR8(sc, IPD_INT_SUM_OFFSET, summary);
-	return summary;
-}
-
-int
-cn30xxipd_intr_drop(void *arg)
-{
-	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_IPD_DRP);
-	return (1);
-}
-
-#define	_ENTRY(x)	{ #x, x##_OFFSET }
-
-struct cn30xxipd_dump_reg {
-	const char *name;
-	size_t	offset;
-};
-
-const struct cn30xxipd_dump_reg cn30xxipd_dump_regs[] = {
-	_ENTRY(IPD_1ST_MBUFF_SKIP),
-	_ENTRY(IPD_NOT_1ST_MBUFF_SKIP),
-	_ENTRY(IPD_PACKET_MBUFF_SIZE),
-	_ENTRY(IPD_CTL_STATUS),
-	_ENTRY(IPD_WQE_FPA_QUEUE),
-	_ENTRY(IPD_PORT0_BP_PAGE_CNT),
-	_ENTRY(IPD_PORT1_BP_PAGE_CNT),
-	_ENTRY(IPD_PORT2_BP_PAGE_CNT),
-	_ENTRY(IPD_PORT32_BP_PAGE_CNT),
-	_ENTRY(IPD_SUB_PORT_BP_PAGE_CNT),
-	_ENTRY(IPD_1ST_NEXT_PTR_BACK),
-	_ENTRY(IPD_2ND_NEXT_PTR_BACK),
-	_ENTRY(IPD_INT_ENB),
-	_ENTRY(IPD_INT_SUM),
-	_ENTRY(IPD_SUB_PORT_FCS),
-	_ENTRY(IPD_QOS0_RED_MARKS),
-	_ENTRY(IPD_QOS1_RED_MARKS),
-	_ENTRY(IPD_QOS2_RED_MARKS),
-	_ENTRY(IPD_QOS3_RED_MARKS),
-	_ENTRY(IPD_QOS4_RED_MARKS),
-	_ENTRY(IPD_QOS5_RED_MARKS),
-	_ENTRY(IPD_QOS6_RED_MARKS),
-	_ENTRY(IPD_QOS7_RED_MARKS),
-	_ENTRY(IPD_PORT_BP_COUNTERS_PAIR0),
-	_ENTRY(IPD_PORT_BP_COUNTERS_PAIR1),
-	_ENTRY(IPD_PORT_BP_COUNTERS_PAIR2),
-	_ENTRY(IPD_PORT_BP_COUNTERS_PAIR32),
-	_ENTRY(IPD_RED_PORT_ENABLE),
-	_ENTRY(IPD_RED_QUE0_PARAM),
-	_ENTRY(IPD_RED_QUE1_PARAM),
-	_ENTRY(IPD_RED_QUE2_PARAM),
-	_ENTRY(IPD_RED_QUE3_PARAM),
-	_ENTRY(IPD_RED_QUE4_PARAM),
-	_ENTRY(IPD_RED_QUE5_PARAM),
-	_ENTRY(IPD_RED_QUE6_PARAM),
-	_ENTRY(IPD_RED_QUE7_PARAM),
-	_ENTRY(IPD_PTR_COUNT),
-	_ENTRY(IPD_BP_PRT_RED_END),
-	_ENTRY(IPD_QUE0_FREE_PAGE_CNT),
-	_ENTRY(IPD_CLK_COUNT),
-	_ENTRY(IPD_PWP_PTR_FIFO_CTL),
-	_ENTRY(IPD_PRC_HOLD_PTR_FIFO_CTL),
-	_ENTRY(IPD_PRC_PORT_PTR_FIFO_CTL),
-	_ENTRY(IPD_PKT_PTR_VALID),
-	_ENTRY(IPD_WQE_PTR_VALID),
-	_ENTRY(IPD_BIST_STATUS),
-};
-
-void
-cn30xxipd_dump(void)
-{
-	struct cn30xxipd_softc *sc;
-	const struct cn30xxipd_dump_reg *reg;
-	uint64_t tmp;
-	int i;
-
-	sc = __cn30xxipd_softc[0];
-	for (i = 0; i < (int)nitems(cn30xxipd_dump_regs); i++) {
-		reg = &cn30xxipd_dump_regs[i];
-		tmp = _IPD_RD8(sc, reg->offset);
-		printf("%-32s: %16llx\n", reg->name, tmp);
-	}
-}
-#endif /* OCTEON_ETH_DEBUG */

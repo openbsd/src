@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/27 13:35:14 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2017/11/15 14:43:13 bluhm Exp $
 
 TESTS=		chflags chmod chown link mkdir mkfifo open rename rmdir \
 		symlink truncate unlink
@@ -19,7 +19,6 @@ unconfig:
 	-umount -f /dev/vnd0c 2>/dev/null || true
 	-rmdir /mnt/regress-ffs 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
-	-vnconfig -u vnd1 2>/dev/null || true
 	-rm -f stamp-setup
 
 stamp-setup:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.79 2017/04/19 05:36:12 natano Exp $ */
+/*	$OpenBSD: arp.c,v 1.81 2018/04/26 12:42:51 guenther Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -37,10 +37,8 @@
  * arp - display, set, delete arp table entries and wake up hosts.
  */
 
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <net/bpf.h>
 #include <net/if.h>
@@ -54,10 +52,11 @@
 #include <netdb.h>
 #include <errno.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <time.h>
 #include <unistd.h>
 #include <limits.h>
 #include <ifaddrs.h>
@@ -297,10 +296,7 @@ set(int argc, char *argv[])
 	doing_proxy = flags = export_only = 0;
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
-			struct timeval now;
-
-			gettimeofday(&now, 0);
-			expire_time = now.tv_sec + 20 * 60;
+			expire_time = time(NULL) + 20 * 60;
 			if (flags & RTF_PERMANENT_ARP) {
 				/* temp or permanent, not both */
 				usage();
@@ -526,9 +522,9 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 	char ifix_buf[IFNAMSIZ], *ifname, *host;
 	struct hostent *hp = NULL;
 	int addrwidth, llwidth, ifwidth ;
-	struct timeval now;
+	time_t now;
 
-	gettimeofday(&now, 0);
+	now = time(NULL);
 
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
@@ -558,9 +554,9 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 		printf(" %-9.9s", "permanent");
 	else if (rtm->rtm_rmx.rmx_expire == 0)
 		printf(" %-9.9s", "static");
-	else if (rtm->rtm_rmx.rmx_expire > now.tv_sec)
+	else if (rtm->rtm_rmx.rmx_expire > now)
 		printf(" %-9.9s",
-		    sec2str(rtm->rtm_rmx.rmx_expire - now.tv_sec));
+		    sec2str(rtm->rtm_rmx.rmx_expire - now));
 	else
 		printf(" %-9.9s", "expired");
 

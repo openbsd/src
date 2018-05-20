@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.16 2016/04/05 21:57:58 sthen Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.19 2018/03/05 10:53:37 denis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -160,7 +160,7 @@ lg_arg2argv(char *arg, int *argc)
 	len = strlen(arg);
 
 	/* Count elements */
-	for (i = 0; i < (len - 1); i++) {
+	for (i = 0; i < len; i++) {
 		if (isspace((unsigned char)arg[i])) {
 			/* filter out additional options */
 			if (arg[i + 1] == '-') {
@@ -182,7 +182,7 @@ lg_arg2argv(char *arg, int *argc)
 	*argc = c;
 
 	/* Fill array */
-	for (i = c = 0; i < (len - 1); i++) {
+	for (i = c = 0; i < len; i++) {
 		if (arg[i] == '\0' || i == 0) {
 			if (i != 0)
 				ptr = &arg[i + 1];
@@ -265,8 +265,8 @@ main(void)
 	    "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
 	    "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	    "<head>\n"
-	    "<title>%s: %s</title>\n",
-	    CONTENT_TYPE, NAME, myname);
+	    "<title>%s</title>\n",
+	    CONTENT_TYPE, myname);
 	if (stat(INC_STYLE, &st) == 0) {
 		printf("<style type='text/css'><!--\n");
 		lg_incl(INC_STYLE);
@@ -276,9 +276,6 @@ main(void)
 		printf("</head>\n"
 		    "<body>\n");
 	}
-
-	printf("<h1>%s: %s</h1>\n", NAME, myname);
-	printf("<h2>%s</h2>\n", BRIEF);
 
 	/* print a form with possible options */
 	if ((self = lg_getenv("SCRIPT_NAME", NULL)) == NULL) {
@@ -304,12 +301,18 @@ main(void)
 			printf("<option value='%s'>%s</option>\n",
 			    cmds[i].name, cmds[i].name);
 	}
+
+	if ((req = lg_getarg("req=", query, query_length)) != NULL) {
+		/* Could be NULL */
+		argv = lg_arg2argv(req, &argc);
+	}
+
 	printf("</select>\n"
-	    "<input type='text' name='req'/>\n"
+	    "<input type='text' value='%s' name='req'/>\n"
 	    "<input type='submit' value='submit'/>\n"
 	    "</div>\n"
 	    "</form>\n"
-	    "<pre>\n");
+	    "<pre>\n", req ? req : "");
 	fflush(stdout);
 
 #ifdef DEBUG
@@ -327,10 +330,6 @@ main(void)
 	if (cmd == NULL) {
 		printf("unspecified command\n");
 		goto err;
-	}
-	if ((req = lg_getarg("req=", query, query_length)) != NULL) {
-		/* Could be NULL */
-		argv = lg_arg2argv(req, &argc);
 	}
 
 	for (i = 0; cmds[i].name != NULL; i++) {
@@ -377,10 +376,9 @@ main(void)
 		printf("<hr/>\n");
 
 	printf("<div class='footer'>\n"
-	    "<small>%s - %s<br/>Copyright (c) %s</small>\n"
 	    "</div>\n"
 	    "</body>\n"
-	    "</html>\n", NAME, BRIEF, COPYRIGHT);
+	    "</html>\n");
 
 	return (ret);
 }

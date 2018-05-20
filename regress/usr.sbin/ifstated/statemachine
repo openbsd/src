@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: statemachine,v 1.5 2017/08/28 22:05:44 rob Exp $
+# $OpenBSD: statemachine,v 1.6 2018/02/05 18:28:15 anton Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -23,9 +23,12 @@
 # NOTE: Increase LSLEEP as required when adding additional test states.
 #
 
+# Ensure OBJDIR is defined
+: ${OBJDIR?} || exit 1
+
 export OBJDIR
 
-# Golbal variables
+# Global variables
 FILE1="truth1.test"
 FILE2="truth2.test"
 EVERY=2

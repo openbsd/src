@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.134 2017/08/14 08:31:00 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.136 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -157,9 +157,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int i, error = 0;
 
-	if ((tr = malloc(sizeof *tr, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	tr = malloc(sizeof(*tr), M_DEVBUF, M_WAITOK|M_ZERO);
 	tr->tr_unit = unit;
 	tr->tr_proto = TRUNK_PROTO_NONE;
 	for (i = 0; trunk_protos[i].ti_proto != TRUNK_PROTO_NONE; i++) {
@@ -633,7 +631,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSTRUNK:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}
@@ -690,7 +688,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		trunk_port2req(tp, rp);
 		break;
 	case SIOCSTRUNKPORT:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}
@@ -702,7 +700,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = trunk_port_create(tr, tpif);
 		break;
 	case SIOCSTRUNKDELPORT:
-		if ((error = suser(curproc, 0)) != 0) {
+		if ((error = suser(curproc)) != 0) {
 			error = EPERM;
 			break;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.17 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.23 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,6 @@
 
 #define SECONDS	30
 extern int verify_depth;
-extern int verify_error;
 
 static void s_time_usage(void);
 static SSL *doConnection(SSL * scon);
@@ -233,9 +232,9 @@ s_time_usage(void)
 #define STOP	1
 
 static double
-tm_Time_F(int s)
+tm_Time_F(int op)
 {
-	return app_tminterval(s, 1);
+	return app_timer_user(op);
 }
 
 /***********************************************************************
@@ -254,7 +253,7 @@ s_time_main(int argc, char **argv)
 	int ver;
 
 	if (single_execution) {
-		if (pledge("stdio rpath inet", NULL) == -1) {
+		if (pledge("stdio rpath inet dns", NULL) == -1) {
 			perror("pledge");
 			exit(1);
 		}
@@ -354,8 +353,6 @@ s_time_main(int argc, char **argv)
 			    SSL_RECEIVED_SHUTDOWN);
 		else
 			SSL_shutdown(scon);
-		shutdown(SSL_get_fd(scon), SHUT_RDWR);
-		close(SSL_get_fd(scon));
 
 		nConn += 1;
 		if (SSL_session_reused(scon))
@@ -391,7 +388,7 @@ s_time_main(int argc, char **argv)
 	 * over
 	 */
 
-next:
+ next:
 	if (!(s_time_config.perform & 2))
 		goto end;
 	printf("\n\nNow timing with session id reuse.\n");
@@ -416,8 +413,6 @@ next:
 		    SSL_RECEIVED_SHUTDOWN);
 	else
 		SSL_shutdown(scon);
-	shutdown(SSL_get_fd(scon), SHUT_RDWR);
-	close(SSL_get_fd(scon));
 
 	nConn = 0;
 	totalTime = 0.0;
@@ -450,8 +445,6 @@ next:
 			    SSL_RECEIVED_SHUTDOWN);
 		else
 			SSL_shutdown(scon);
-		shutdown(SSL_get_fd(scon), SHUT_RDWR);
-		close(SSL_get_fd(scon));
 
 		nConn += 1;
 		if (SSL_session_reused(scon))
@@ -479,9 +472,8 @@ next:
 	    bytes_read / nConn);
 
 	ret = 0;
-end:
-	if (scon != NULL)
-		SSL_free(scon);
+ end:
+	SSL_free(scon);
 
 	if (tm_ctx != NULL) {
 		SSL_CTX_free(tm_ctx);

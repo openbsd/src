@@ -1,13 +1,13 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: ypserv,v 1.4 2011/10/06 06:47:50 ajacoutot Exp $
+# $OpenBSD: ypserv,v 1.6 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/usr/sbin/ypserv"
 
 . /etc/rc.d/rc.subr
 
 rc_pre() {
-	[ X"`domainname`" != X"" -a -d /var/yp/`domainname` ]
+	[[ -n $(domainname) && -d /var/yp/$(domainname) ]]
 }
 
 rc_cmd $1

@@ -135,6 +135,9 @@ server:
 	# minimal-responses only emits extra data for referrals.
 	# minimal-responses: no
 
+	# refuse queries of type ANY.  For stopping floods.
+	# refuse-any: no
+
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
 	

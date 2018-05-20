@@ -172,7 +172,7 @@ AES_encrypt:
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
 	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
 	ldrb	$t2,[$rounds,#1]
@@ -216,7 +216,7 @@ AES_encrypt:
 	bl	_armv4_AES_encrypt
 
 	ldr	$rounds,[sp],#4		@ pop out
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 #ifdef __ARMEL__
 	rev	$s0,$s0
 	rev	$s1,$s1
@@ -432,7 +432,7 @@ _armv4_AES_set_encrypt_key:
 	mov	lr,r1			@ bits
 	mov	$key,r2			@ key
 
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
 	ldrb	$t2,[$rounds,#1]
@@ -517,7 +517,7 @@ _armv4_AES_set_encrypt_key:
 	b	.Ldone
 
 .Lnot128:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$i2,[$rounds,#19]
 	ldrb	$t1,[$rounds,#18]
 	ldrb	$t2,[$rounds,#17]
@@ -588,7 +588,7 @@ _armv4_AES_set_encrypt_key:
 	b	.L192_loop
 
 .Lnot192:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$i2,[$rounds,#27]
 	ldrb	$t1,[$rounds,#26]
 	ldrb	$t2,[$rounds,#25]
@@ -888,7 +888,7 @@ AES_decrypt:
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
 	sub	$tbl,r3,#AES_decrypt-AES_Td		@ Td
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
 	ldrb	$t2,[$rounds,#1]
@@ -932,7 +932,7 @@ AES_decrypt:
 	bl	_armv4_AES_decrypt
 
 	ldr	$rounds,[sp],#4		@ pop out
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 #ifdef __ARMEL__
 	rev	$s0,$s0
 	rev	$s1,$s1

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PEM_read.3,v 1.3 2017/08/20 20:15:13 schwarze Exp $
+.\"	$OpenBSD: PEM_read.3,v 1.6 2018/05/13 14:44:14 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Viktor Dukhovni
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2017 $
+.Dd $Mdocdate: May 13 2018 $
 .Dt PEM_READ 3
 .Os
 .Sh NAME
@@ -65,17 +65,17 @@
 .Ft int
 .Fo PEM_write
 .Fa "FILE *fp"
-.Fa "char *name"
-.Fa "char *header"
-.Fa "unsigned char *data"
+.Fa "const char *name"
+.Fa "const char *header"
+.Fa "const unsigned char *data"
 .Fa "long len"
 .Fc
 .Ft int
 .Fo PEM_write_bio
 .Fa "BIO *bp"
 .Fa "const char *name"
-.Fa "char *header"
-.Fa "unsigned char *data"
+.Fa "const char *header"
+.Fa "ocnst unsigned char *data"
 .Fa "long len"
 .Fc
 .Ft int
@@ -282,3 +282,17 @@ is likely meaningless if these functions fail.
 .Xr ERR_peek_last_error 3 ,
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read_bio_PrivateKey 3
+.Sh HISTORY
+.Fn PEM_write ,
+.Fn PEM_read ,
+and
+.Fn PEM_do_header
+appeared in SSLeay 0.4 or earlier.
+.Fn PEM_get_EVP_CIPHER_INFO
+first appeared in SSLeay 0.5.1.
+.Fn PEM_write_bio
+and
+.Fn PEM_read_bio
+first appeared in SSLeay 0.6.0.
+These functions have been available since
+.Ox 2.4 .

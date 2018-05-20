@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.7 2017/05/02 13:26:49 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.8 2017/11/03 16:46:17 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -98,15 +98,6 @@ struct cn30xxgmx_attach_args {
 				*ga_gmx_port;
 };
 
-#define	CN30XXGMX_FILTER_NADDRS_MAX	8	/* XXX elsewhere */
-
-enum CN30XXGMX_FILTER_POLICY {
-	CN30XXGMX_FILTER_POLICY_ACCEPT_ALL,
-	CN30XXGMX_FILTER_POLICY_ACCEPT,
-	CN30XXGMX_FILTER_POLICY_REJECT,
-	CN30XXGMX_FILTER_POLICY_REJECT_ALL
-};
-
 int		cn30xxgmx_link_enable(struct cn30xxgmx_port_softc *, int);
 int		cn30xxgmx_tx_stats_rd_clr(struct cn30xxgmx_port_softc *, int);
 int		cn30xxgmx_rx_stats_rd_clr(struct cn30xxgmx_port_softc *, int);
@@ -114,8 +105,6 @@ void		cn30xxgmx_rx_stats_dec_bad(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_stats_init(struct cn30xxgmx_port_softc *);
 void		cn30xxgmx_tx_int_enable(struct cn30xxgmx_port_softc *, int);
 void		cn30xxgmx_rx_int_enable(struct cn30xxgmx_port_softc *, int);
-int		cn30xxgmx_setfilt(struct cn30xxgmx_port_softc *,
-		    enum CN30XXGMX_FILTER_POLICY, size_t, uint8_t **);
 int		cn30xxgmx_rx_frm_ctl_enable(struct cn30xxgmx_port_softc *,
 		    uint64_t rx_frm_ctl);
 int		cn30xxgmx_rx_frm_ctl_disable(struct cn30xxgmx_port_softc *,

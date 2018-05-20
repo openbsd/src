@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.43 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: eso.c,v 1.44 2018/04/11 04:37:19 ratchov Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -591,7 +591,7 @@ eso_intr(void *hdl)
 		sc->sc_gain[ESO_MASTER_VOL][ESO_LEFT] = (uint8_t)~0;
 	}
 
-#if NMPU > 0
+#if NMIDI > 0
 	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc->sc_mpudev != NULL)
 		mpu_intr(sc->sc_mpudev);
 #endif

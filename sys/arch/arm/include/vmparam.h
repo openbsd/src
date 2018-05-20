@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.18 2017/10/01 17:05:50 naddy Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.19 2018/03/05 01:39:13 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -71,14 +71,6 @@
 #ifndef SHMMAXPGS
 #define	SHMMAXPGS	1024
 #endif
-
-/*
- * While the ARM architecture defines Section mappings, large pages,
- * and small pages, the standard page size is (and will always be) 4K.
- */
-#define	PAGE_SHIFT	12
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)	/* bytes/page */
-#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * Mach derived constants

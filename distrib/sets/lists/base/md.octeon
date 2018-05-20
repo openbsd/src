@@ -37,11 +37,11 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.2
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.2/4.2.1
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.2/4.2.1/collect2
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.2/4.2.1/libgcc.a
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.2/4.2.1/specs
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.3
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.3/4.2.1
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.3/4.2.1/collect2
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.3/4.2.1/libgcc.a
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.3/4.2.1/specs
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/mips64-openbsd
 ./usr/libdata/perl5/mips64-openbsd/.packlist

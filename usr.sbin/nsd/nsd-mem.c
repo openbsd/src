@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 		}
 	}
 	argc -= optind;
-	argv += optind;
+	/* argv += optind; move along argv for positional arguments */
 
 	/* Commandline parse error */
 	if (argc != 0) {

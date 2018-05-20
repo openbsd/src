@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.11 2016/12/21 13:59:57 visa Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.12 2017/10/11 14:24:12 visa Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -63,24 +63,10 @@ Octeon_ConfigCache(struct cpu_info *ci)
 	uint32_t cfg;
 	uint32_t s, l, a;
 
-	/* minimalist default values */
-	ci->ci_l1inst.size = 16 * 1024;
-	ci->ci_l1inst.linesize = 128;
-	ci->ci_l1inst.sets = 2;
-	ci->ci_l1inst.setsize = ci->ci_l1inst.size / ci->ci_l1inst.sets;
+	switch (ci->ci_hw.type) {
+	default:
+		/* OCTEON and OCTEON Plus */
 
-	ci->ci_l1data.size = 8 * 1024;
-	ci->ci_l1data.linesize = 128;
-	ci->ci_l1data.sets = 64;
-	ci->ci_l1data.setsize = ci->ci_l1data.size / ci->ci_l1data.sets;
-
-	ci->ci_l2.size = 128 * 1024;
-	ci->ci_l2.linesize = 128;
-	ci->ci_l2.sets = 4;
-	ci->ci_l2.setsize = ci->ci_l2.size / ci->ci_l2.sets;
-
-	cfg = cp0_get_config();
-	if ((cfg & 0x80000000) != 0) {
 		cfg = cp0_get_config_1();
 
 		/*
@@ -99,20 +85,55 @@ Octeon_ConfigCache(struct cpu_info *ci)
 			ci->ci_l1inst.sets = 1;
 		ci->ci_l1inst.size = ci->ci_l1inst.sets * ci->ci_l1inst.setsize;
 
-		if ((cfg & 0x80000000) != 0) {
-			cfg = cp0_get_config_2();
-			
-			a = 1 + ((cfg >> 0) & 0x0f);
-			l = (cfg >> 4) & 0x0f;
-			s = (cfg >> 8) & 0x0f;
+		ci->ci_l1data.linesize = 128;
+		ci->ci_l1data.setsize = 2 * 128;
+		ci->ci_l1data.sets = 64;
+		ci->ci_l1data.size = ci->ci_l1data.sets * ci->ci_l1data.setsize;
 
-			ci->ci_l2.linesize = 2 << l;
-			ci->ci_l2.sets = a;
-			ci->ci_l2.setsize = (64 << s) * ci->ci_l2.linesize;
-			ci->ci_l2.size = ci->ci_l2.sets * ci->ci_l2.setsize;
+		break;
 
-		}
+	case MIPS_CN61XX:
+		/* OCTEON II */
+
+		ci->ci_l1inst.linesize = 128;
+		ci->ci_l1inst.setsize = 8 * 128;
+		ci->ci_l1inst.sets = 37;
+		ci->ci_l1inst.size = ci->ci_l1inst.sets * ci->ci_l1inst.setsize;
+
+		ci->ci_l1data.linesize = 128;
+		ci->ci_l1data.setsize = 8 * 128;
+		ci->ci_l1data.sets = 32;
+		ci->ci_l1data.size = ci->ci_l1data.sets * ci->ci_l1data.setsize;
+
+		break;
+
+	case MIPS_CN71XX:
+	case MIPS_CN73XX:
+		/* OCTEON III */
+
+		ci->ci_l1inst.linesize = 128;
+		ci->ci_l1inst.setsize = 16 * 128;
+		ci->ci_l1inst.sets = 39;
+		ci->ci_l1inst.size = ci->ci_l1inst.sets * ci->ci_l1inst.setsize;
+
+		ci->ci_l1data.linesize = 128;
+		ci->ci_l1data.setsize = 8 * 128;
+		ci->ci_l1data.sets = 32;
+		ci->ci_l1data.size = ci->ci_l1data.sets * ci->ci_l1data.setsize;
+
+		break;
 	}
+
+	cfg = cp0_get_config_2();
+
+	a = 1 + ((cfg >> 0) & 0x0f);
+	l = (cfg >> 4) & 0x0f;
+	s = (cfg >> 8) & 0x0f;
+
+	ci->ci_l2.linesize = 2 << l;
+	ci->ci_l2.sets = a;
+	ci->ci_l2.setsize = (64 << s) * ci->ci_l2.linesize;
+	ci->ci_l2.size = ci->ci_l2.sets * ci->ci_l2.setsize;
 
 	memset(&ci->ci_l3, 0, sizeof(struct cache_info));
 

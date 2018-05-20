@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2017/06/08 12:11:46 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.17 2018/02/18 14:50:08 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,16 +156,4 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	jal	hw_cpu_hatch
 	nop
 END(hw_cpu_spinup_trampoline)
-
-LEAF(hw_getcurcpu, 0)
-	GET_CPU_INFO(v0, v1)
-	jr	ra
-	nop
-END(hw_getcurcpu)
-
-LEAF(hw_setcurcpu, 0)
-	dmtc0	a0, COP_0_ERROR_PC
-	j	ra
-	nop
-END(hw_setcurcpu)
 #endif /* MULTIPROCESSOR */

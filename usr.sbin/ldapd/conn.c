@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.14 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: conn.c,v 1.16 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -132,7 +132,7 @@ request_dispatch(struct request *req)
 	}
 
 	if (requests[i].fn == NULL) {
-		log_warnx("unhandled request %d (not implemented)", req->type);
+		log_warnx("unhandled request %lu (not implemented)", req->type);
 		ldap_respond(req, LDAP_PROTOCOL_ERROR);
 	}
 }
@@ -166,7 +166,7 @@ conn_dispatch(struct conn *conn)
 		request_free(req);
 		return -1;
 	}
-	log_debug("consumed %d bytes", conn->ber.br_rptr - rptr);
+	log_debug("consumed %ld bytes", conn->ber.br_rptr - rptr);
 
 	/* Read message id and request type.
 	 */
@@ -183,7 +183,7 @@ conn_dispatch(struct conn *conn)
 	ldap_debug_elements(req->root, req->type,
 	    "received request on fd %d", conn->fd);
 
-	log_debug("got request type %d, id %lld", req->type, req->msgid);
+	log_debug("got request type %lu, id %lld", req->type, req->msgid);
 	request_dispatch(req);
 	return 0;
 }
@@ -296,7 +296,6 @@ conn_accept(int fd, short event, void *data)
 		log_warn("malloc");
 		goto giveup;
 	}
-	conn->ber.fd = -1;
 	ber_set_application(&conn->ber, ldap_application);
 	conn->fd = afd;
 	conn->listener = l;

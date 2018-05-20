@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.15 2017/08/11 21:24:19 mpi Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.19 2018/04/30 19:07:44 tb Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -698,7 +698,7 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    sizeof (sc->sc_info));
 		break;
 	case SIOCSUMBPARAM:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		if ((error = copyin(ifr->ifr_data, &mp, sizeof (mp))) != 0)
 			break;
@@ -733,12 +733,6 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
-		break;
-	case SIOCGIFHARDMTU:
-		ifr->ifr_hardmtu = ifp->if_hardmtu;
 		break;
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:
@@ -902,7 +896,7 @@ umb_watchdog(struct ifnet *ifp)
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", DEVNAM(sc));
-	/* XXX FIXME: re-initialize device */
+	usbd_abort_pipe(sc->sc_tx_pipe);
 	return;
 }
 
@@ -971,7 +965,6 @@ umb_state_task(void *arg)
 			 */
 			memset(sc->sc_info.ipv4dns, 0,
 			    sizeof (sc->sc_info.ipv4dns));
-			NET_LOCK();
 			if (in_ioctl(SIOCGIFADDR, (caddr_t)&ifr, ifp, 1) == 0 &&
 			    satosin(&ifr.ifr_addr)->sin_addr.s_addr !=
 			    INADDR_ANY) {
@@ -980,7 +973,6 @@ umb_state_task(void *arg)
 				    sizeof (ifra.ifra_addr));
 				in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp, 1);
 			}
-			NET_UNLOCK();
 		}
 		if_link_state_change(ifp);
 	}
@@ -1667,9 +1659,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin->sin_len = sizeof (ifra.ifra_mask);
 		in_len2mask(&sin->sin_addr, ipv4elem.prefixlen);
 
-		NET_LOCK();
 		rv = in_ioctl(SIOCAIFADDR, (caddr_t)&ifra, ifp, 1);
-		NET_UNLOCK();
 		if (rv == 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				log(LOG_INFO, "%s: IPv4 addr %s, mask %s, "
@@ -1851,10 +1841,9 @@ umb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			if (status == USBD_STALLED)
 				usbd_clear_endpoint_stall_async(sc->sc_tx_pipe);
 		}
-	} else {
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-			umb_start(ifp);
 	}
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		umb_start(ifp);
 
 	splx(s);
 }

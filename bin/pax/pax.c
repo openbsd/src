@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.50 2017/03/11 12:55:47 tb Exp $	*/
+/*	$OpenBSD: pax.c,v 1.51 2017/12/08 17:04:14 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -311,8 +311,6 @@ main(int argc, char **argv)
 void
 sig_cleanup(int which_sig)
 {
-	char errbuf[80];
-
 	/*
 	 * restore modes and times for any dirs we may have created
 	 * or any dirs we may have read.
@@ -320,12 +318,9 @@ sig_cleanup(int which_sig)
 
 	/* paxwarn() uses stdio; fake it as well as we can */
 	if (which_sig == SIGXCPU)
-		strlcpy(errbuf, "\nCPU time limit reached, cleaning up.\n",
-		    sizeof errbuf);
+		dprintf(STDERR_FILENO, "\nCPU time limit reached, cleaning up.\n");
 	else
-		strlcpy(errbuf, "\nSignal caught, cleaning up.\n",
-		    sizeof errbuf);
-	(void) write(STDERR_FILENO, errbuf, strlen(errbuf));
+		dprintf(STDERR_FILENO, "\nSignal caught, cleaning up.\n");
 
 	ar_close(1);
 	sltab_process(1);

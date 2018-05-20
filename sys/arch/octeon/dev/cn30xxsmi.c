@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.4 2017/05/02 13:26:49 visa Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.6 2017/11/20 15:13:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -181,6 +181,7 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 
 		switch (octeon_boot_info->board_type) {
 		case BOARD_TYPE_UBIQUITI_E100:
+		case BOARD_TYPE_UBIQUITI_E120:
 			if (port > 2)
 				return ENOENT;
 			reg = 7 - port;

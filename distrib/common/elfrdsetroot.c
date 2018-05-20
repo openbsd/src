@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.23 2017/07/31 01:18:09 mortimer Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.26 2018/04/26 12:42:50 guenther Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -35,16 +35,15 @@
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <elf.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <nlist.h>
 
-#include <sys/exec_elf.h>
 #include "elfrdsetroot.h"
 
 struct elfhdr head;
@@ -118,6 +117,11 @@ main(int argc, char *argv[])
 	}
 	if (fsd < 0) {
 		perror(fs);
+		exit(1);
+	}
+
+	if (pledge("stdio", NULL) == -1) {
+		perror("pledge");
 		exit(1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.52 2016/09/19 18:58:39 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.55 2018/05/10 14:29:17 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -63,7 +63,7 @@
 
 /* Our tcpbench globals */
 struct {
-	int	  Sflag;	/* Socket buffer size (tcp mode) */
+	int	  Sflag;	/* Socket buffer size */
 	u_int	  rflag;	/* Report rate (ms) */
 	int	  sflag;	/* True if server */
 	int	  Tflag;	/* ToS if != -1 */
@@ -457,9 +457,9 @@ check_prepare_kvars(char *list)
 	while ((item = strsep(&list, ", \t\n")) != NULL) {
 		check_kvar(item);
 		if ((ret = reallocarray(ret, (++n + 1), sizeof(*ret))) == NULL)
-			errx(1, "reallocarray(kvars)");
+			err(1, "reallocarray(kvars)");
 		if ((ret[n - 1] = strdup(item)) == NULL)
-			errx(1, "strdup");
+			err(1, "strdup");
 		ret[n] = NULL;
 	}
 	return (ret);
@@ -783,7 +783,7 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 		if (ptb->Sflag) {
 			if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 			    &ptb->Sflag, sizeof(ptb->Sflag)) == -1)
-				warn("set receive buffer size");
+				warn("set receive socket buffer size");
 		}
 		if (TCP_MODE) {
 			if (listen(sock, 64) == -1) {
@@ -895,7 +895,7 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 			if (ptb->Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &ptb->Sflag, sizeof(ptb->Sflag)) == -1)
-					warn("set TCP send buffer size");
+					warn("set send socket buffer size");
 			}
 			if (connect(sock, ai->ai_addr, ai->ai_addrlen) != 0) {
 				if (ai->ai_next == NULL)
@@ -1041,7 +1041,7 @@ main(int argc, char **argv)
 			exit(0);
 		case 'k':
 			if ((tmp = strdup(optarg)) == NULL)
-				errx(1, "strdup");
+				err(1, "strdup");
 			ptb->kvars = check_prepare_kvars(tmp);
 			free(tmp);
 			break;
@@ -1065,7 +1065,7 @@ main(int argc, char **argv)
 			ptb->Sflag = strtonum(optarg, 0, 1024*1024*1024,
 			    &errstr);
 			if (errstr != NULL)
-				errx(1, "receive space interval is %s: %s",
+				errx(1, "socket buffer size is %s: %s",
 				    errstr, optarg);
 			break;
 		case 'B':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.63 2017/07/05 11:11:56 reyk Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.64 2018/03/16 12:31:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 				fatalx("don't mix interfaces with hosts");
 
 			if (sp->intf->hw_address.htype == HTYPE_IPSEC_TUNNEL)
-				fatalx("can't use IPSec with layer 2");
+				fatalx("can't use IPsec with layer 2");
 
 			sp->next = servers;
 			servers = sp;

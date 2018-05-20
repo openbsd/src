@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.6 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.7 2017/10/09 14:51:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -251,7 +251,7 @@ void defn(Cell *v, Node *vl, Node *st)	/* turn on FCN bit in definition, */
 	for (p = vl; p; p = p->nnext)
 		n++;
 	v->fval = n;
-	dprintf( ("defining func %s (%d args)\n", v->nval, n) );
+	DPRINTF( ("defining func %s (%d args)\n", v->nval, n) );
 }
 
 int isarg(const char *s)		/* is s in argument list for current function? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.74 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -487,8 +487,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->fixreg[1]) &&
 	    (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp
-					 + p->p_sigstk.ss_size);
+		fp = (struct sigframe *)
+		    trunc_page(vaddr_t)p->p_sigstk.ss_sp + pp->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 
@@ -658,7 +658,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && !syncing) {
 		syncing = 1;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();

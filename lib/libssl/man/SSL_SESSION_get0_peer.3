@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_SESSION_get0_peer.3,v 1.1 2017/04/10 15:37:55 schwarze Exp $
+.\"	$OpenBSD: SSL_SESSION_get0_peer.3,v 1.2 2018/03/23 05:50:30 schwarze Exp $
 .\"	OpenSSL SSL_SESSION_get0_peer.pod b31db505 Mar 24 16:01:50 2017 +0000
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt SSL_SESSION_GET0_PEER 3
 .Os
 .Sh NAME
@@ -74,3 +74,7 @@ has also been called.
 .Xr ssl 3 ,
 .Xr SSL_get_session 3 ,
 .Xr SSL_SESSION_new 3
+.Sh HISTORY
+.Fn SSL_SESSION_get0_peer
+first appeared in OpenSSL 1.0.1 and has been available since
+.Ox 5.3 .

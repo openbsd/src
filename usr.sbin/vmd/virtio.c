@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.54 2017/09/17 23:07:56 pd Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.60 2018/04/30 08:27:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -24,6 +24,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pv/virtioreg.h>
 #include <dev/pv/vioblkreg.h>
+#include <dev/pv/vioscsireg.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -41,6 +42,7 @@
 #include "vmd.h"
 #include "vmm.h"
 #include "virtio.h"
+#include "vioscsi.h"
 #include "loadfile.h"
 #include "atomicio.h"
 
@@ -49,6 +51,7 @@ extern char *__progname;
 struct viornd_dev viornd;
 struct vioblk_dev *vioblk;
 struct vionet_dev *vionet;
+struct vioscsi_dev *vioscsi;
 struct vmmci_dev vmmci;
 
 int nr_vionet;
@@ -62,13 +65,8 @@ int nr_vioblk;
 #define VMMCI_F_ACK		(1<<1)
 #define VMMCI_F_SYNCRTC		(1<<2)
 
-struct ioinfo {
-	uint8_t *buf;
-	ssize_t len;
-	off_t offset;
-	int fd;
-	int error;
-};
+#define RXQ	0
+#define TXQ	1
 
 const char *
 vioblk_cmd_name(uint32_t type)
@@ -368,7 +366,7 @@ vioblk_start_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 
 nomem:
 	free(info);
-	log_warn("malloc errror vioblk read");
+	log_warn("malloc error vioblk read");
 	return (NULL);
 }
 
@@ -409,7 +407,7 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector, paddr_t addr, size_t le
 
 nomem:
 	free(info);
-	log_warn("malloc errror vioblk write");
+	log_warn("malloc error vioblk write");
 	return (NULL);
 }
 
@@ -971,10 +969,10 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 				dev->cfg.queue_select = 0;
 				dev->cfg.queue_notify = 0;
 				dev->cfg.isr_status = 0;
-				dev->vq[0].last_avail = 0;
-				dev->vq[0].notified_avail = 0;
-				dev->vq[1].last_avail = 0;
-				dev->vq[1].notified_avail = 0;
+				dev->vq[RXQ].last_avail = 0;
+				dev->vq[RXQ].notified_avail = 0;
+				dev->vq[TXQ].last_avail = 0;
+				dev->vq[TXQ].notified_avail = 0;
 			}
 			break;
 		default:
@@ -1065,10 +1063,12 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	ptrdiff_t off;
 	int ret;
 	char *vr;
+	ssize_t rem;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct vring_used_elem *ue;
+	struct virtio_net_hdr hdr;
 
 	ret = 0;
 
@@ -1076,7 +1076,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 		return ret;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[0].qa;
+	q_gpa = dev->vq[RXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = calloc(1, vr_sz);
@@ -1092,12 +1092,12 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + dev->vq[0].vq_availoffset);
-	used = (struct vring_used *)(vr + dev->vq[0].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
+	used = (struct vring_used *)(vr + dev->vq[RXQ].vq_usedoffset);
 
-	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
+	idx = dev->vq[RXQ].last_avail & VIONET_QUEUE_MASK;
 
-	if ((dev->vq[0].notified_avail & VIONET_QUEUE_MASK) == idx) {
+	if ((dev->vq[RXQ].notified_avail & VIONET_QUEUE_MASK) == idx) {
 		log_debug("vionet queue notify - no space, dropping packet");
 		goto out;
 	}
@@ -1108,28 +1108,69 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	pkt_desc_idx = hdr_desc->next & VIONET_QUEUE_MASK;
 	pkt_desc = &desc[pkt_desc_idx];
 
-	/* must be not readable */
-	if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
-		log_warnx("unexpected readable rx descriptor %d",
-		    pkt_desc_idx);
+	/* Set up the virtio header (written first, before the packet data) */
+	memset(&hdr, 0, sizeof(struct virtio_net_hdr));
+	hdr.hdr_len = sizeof(struct virtio_net_hdr);
+
+	/* Check size of header descriptor */
+	if (hdr_desc->len < sizeof(struct virtio_net_hdr)) {
+		log_warnx("%s: invalid header descriptor (too small)",
+		    __func__);
 		goto out;
 	}
 
-	/* Write packet to descriptor ring */
-	if (write_mem(pkt_desc->addr, pkt, sz)) {
-		log_warnx("vionet: rx enq packet write_mem error @ "
-		    "0x%llx", pkt_desc->addr);
+	/* Write out virtio header */
+	if (write_mem(hdr_desc->addr, &hdr, sizeof(struct virtio_net_hdr))) {
+		log_warnx("vionet: rx enq header write_mem error @ "
+		    "0x%llx", hdr_desc->addr);
 		goto out;
+	}
+
+	/*
+	 * Compute remaining space in the first (header) descriptor, and
+	 * copy the packet data after if space is available. Otherwise,
+	 * copy to the pkt_desc descriptor.
+	 */
+	rem = hdr_desc->len - sizeof(struct virtio_net_hdr);
+
+	if (rem >= sz) {
+		if (write_mem(hdr_desc->addr + sizeof(struct virtio_net_hdr),
+		    pkt, sz)) {
+			log_warnx("vionet: rx enq packet write_mem error @ "
+			    "0x%llx", pkt_desc->addr);
+			goto out;
+		}
+	} else {
+		/* Fallback to pkt_desc descriptor */
+		if ((uint64_t)pkt_desc->len >= (uint64_t)sz) {
+			/* Must be not readable */
+			if ((pkt_desc->flags & VRING_DESC_F_WRITE) == 0) {
+				log_warnx("unexpected readable rx desc %d",
+				    pkt_desc_idx);
+				goto out;
+			}
+
+			/* Write packet to descriptor ring */
+			if (write_mem(pkt_desc->addr, pkt, sz)) {
+				log_warnx("vionet: rx enq packet write_mem "
+				    "error @ 0x%llx", pkt_desc->addr);
+				goto out;
+			}
+		} else {
+			log_warnx("%s: descriptor too small for packet data",
+			    __func__);
+			goto out;
+		}
 	}
 
 	ret = 1;
 	dev->cfg.isr_status = 1;
 	ue = &used->ring[used->idx & VIONET_QUEUE_MASK];
 	ue->id = hdr_desc_idx;
-	ue->len = hdr_desc->len + sz;
+	ue->len = sz + sizeof(struct virtio_net_hdr);
 	used->idx++;
-	dev->vq[0].last_avail = (dev->vq[0].last_avail + 1);
-	*spc = dev->vq[0].notified_avail - dev->vq[0].last_avail;
+	dev->vq[RXQ].last_avail++;
+	*spc = dev->vq[RXQ].notified_avail - dev->vq[RXQ].last_avail;
 
 	off = (char *)ue - vr;
 	if (write_mem(q_gpa + off, ue, sizeof *ue))
@@ -1267,7 +1308,7 @@ vionet_notify_rx(struct vionet_dev *dev)
 	struct vring_avail *avail;
 
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
+	q_gpa = dev->vq[RXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = malloc(vr_sz);
@@ -1283,23 +1324,51 @@ vionet_notify_rx(struct vionet_dev *dev)
 	}
 
 	/* Compute offset into avail ring */
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
 
 	dev->rx_added = 1;
-	dev->vq[0].notified_avail = avail->idx;
+	dev->vq[RXQ].notified_avail = avail->idx - 1;
 
 	free(vr);
 }
 
 /*
  * Must be called with dev->mutex acquired.
- *
- * XXX cant trust ring data from VM, be extra cautious.
- * XXX advertise link status to guest
  */
 int
 vionet_notifyq(struct vionet_dev *dev)
+{
+	int ret;
+
+	switch (dev->cfg.queue_notify) {
+	case RXQ:
+		vionet_notify_rx(dev);
+		ret = 0;
+		break;
+	case TXQ:
+		ret = vionet_notify_tx(dev);
+		break;
+	default:
+		/*
+		 * Catch the unimplemented queue ID 2 (control queue) as
+		 * well as any bogus queue IDs.
+		 */
+		log_debug("%s: notify for unimplemented queue ID %d",
+		    __func__, dev->cfg.queue_notify);
+		ret = 0;
+		break;
+	}
+
+	return (ret);
+}
+
+/*
+ * Must be called with dev->mutex acquired.
+ *
+ * XXX cant trust ring data from VM, be extra cautious.
+ */
+int
+vionet_notify_tx(struct vionet_dev *dev)
 {
 	uint64_t q_gpa;
 	uint32_t vr_sz;
@@ -1317,14 +1386,8 @@ vionet_notifyq(struct vionet_dev *dev)
 	ret = spc = 0;
 	dhcpsz = 0;
 
-	/* Invalid queue? */
-	if (dev->cfg.queue_notify != 1) {
-		vionet_notify_rx(dev);
-		goto out;
-	}
-
 	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
+	q_gpa = dev->vq[TXQ].qa;
 	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
 
 	vr = calloc(1, vr_sz);
@@ -1340,14 +1403,12 @@ vionet_notifyq(struct vionet_dev *dev)
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + dev->vq[TXQ].vq_availoffset);
+	used = (struct vring_used *)(vr + dev->vq[TXQ].vq_usedoffset);
 
 	num_enq = 0;
 
-	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIONET_QUEUE_MASK;
+	idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
 
 	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
 		log_warnx("vionet tx queue notify - nothing to do?");
@@ -1447,12 +1508,10 @@ vionet_notifyq(struct vionet_dev *dev)
 		used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len;
 		used->idx++;
 
-		dev->vq[dev->cfg.queue_notify].last_avail =
-		    (dev->vq[dev->cfg.queue_notify].last_avail + 1);
+		dev->vq[TXQ].last_avail++;
 		num_enq++;
 
-		idx = dev->vq[dev->cfg.queue_notify].last_avail &
-		    VIONET_QUEUE_MASK;
+		idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
 	}
 
 	if (write_mem(q_gpa, vr, vr_sz)) {
@@ -1666,7 +1725,8 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 }
 
 void
-virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
+virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
+    int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
@@ -1782,21 +1842,21 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 				return;
 			}
 
-			vionet[i].vq[0].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[0].vq_availoffset =
+			vionet[i].vq[RXQ].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[RXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			vionet[i].vq[RXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[0].last_avail = 0;
-			vionet[i].vq[1].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[1].vq_availoffset =
+			vionet[i].vq[RXQ].last_avail = 0;
+			vionet[i].vq[TXQ].qs = VIONET_QUEUE_SIZE;
+			vionet[i].vq[TXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[1].vq_usedoffset = VIRTQUEUE_ALIGN(
+			vionet[i].vq[TXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[1].last_avail = 0;
-			vionet[i].vq[1].notified_avail = 0;
+			vionet[i].vq[TXQ].last_avail = 0;
+			vionet[i].vq[TXQ].notified_avail = 0;
 			vionet[i].fd = child_taps[i];
 			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
@@ -1828,6 +1888,51 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 			    vionet[i].lockedmac ? ", locked" : "",
 			    vionet[i].local ? ", local" : "");
 		}
+	}
+
+	/* vioscsi cdrom */
+	if (strlen(vcp->vcp_cdrom)) {
+		vioscsi = calloc(1, sizeof(struct vioscsi_dev));
+		if (vioscsi == NULL) {
+			log_warn("%s: calloc failure allocating vioscsi",
+			    __progname);
+			return;
+		}
+
+		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+		    PCI_PRODUCT_QUMRANET_VIO_SCSI,
+		    PCI_CLASS_MASS_STORAGE,
+		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
+		    PCI_VENDOR_OPENBSD,
+		    PCI_PRODUCT_VIRTIO_SCSI, 1, NULL)) {
+			log_warnx("%s: can't add PCI vioscsi device",
+			    __progname);
+			return;
+		}
+
+		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vioscsi_io, vioscsi)) {
+			log_warnx("%s: can't add bar for vioscsi device",
+			    __progname);
+			return;
+		}
+
+		for ( i = 0; i < VIRTIO_MAX_QUEUES; i++) {
+			vioscsi->vq[i].qs = VIOSCSI_QUEUE_SIZE;
+			vioscsi->vq[i].vq_availoffset =
+			    sizeof(struct vring_desc) * VIOSCSI_QUEUE_SIZE;
+			vioscsi->vq[i].vq_usedoffset = VIRTQUEUE_ALIGN(
+			    sizeof(struct vring_desc) * VIOSCSI_QUEUE_SIZE
+			    + sizeof(uint16_t) * (2 + VIOSCSI_QUEUE_SIZE));
+			vioscsi->vq[i].last_avail = 0;
+		}
+		sz = lseek(child_cdrom, 0, SEEK_END);
+		vioscsi->fd = child_cdrom;
+		vioscsi->locked = 0;
+		vioscsi->lba = 0;
+		vioscsi->sz = sz;
+		vioscsi->n_blocks = sz >> 11; /* num of 2048 blocks in file */
+		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
+		vioscsi->pci_id = id;
 	}
 
 	/* virtio control device */
@@ -1990,7 +2095,43 @@ vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 }
 
 int
-virtio_restore(int fd, struct vmd_vm *vm, int *child_disks, int *child_taps)
+vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
+{
+	off_t sz;
+
+	if (!strlen(vcp->vcp_cdrom))
+		return (0);
+
+	vioscsi = calloc(1, sizeof(struct vioscsi_dev));
+	if (vioscsi == NULL) {
+		log_warn("%s: calloc failure allocating vioscsi", __progname);
+		return (-1);
+	}
+
+	log_debug("%s: receiving vioscsi", __func__);
+
+	if (atomicio(read, fd, vioscsi, sizeof(struct vioscsi_dev)) !=
+	    sizeof(struct vioscsi_dev)) {
+		log_warnx("%s: error reading vioscsi from fd", __func__);
+		return (-1);
+	}
+
+	sz = lseek(child_cdrom, 0, SEEK_END);
+
+	if (pci_set_bar_fn(vioscsi->pci_id, 0, vioscsi_io, vioscsi)) {
+		log_warnx("%s: can't set bar fn for vmm control device",
+		    __progname);
+		return (-1);
+	}
+
+	vioscsi->fd = child_cdrom;
+
+	return (0);
+}
+
+int
+virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom, int *child_disks,
+    int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
@@ -2000,6 +2141,9 @@ virtio_restore(int fd, struct vmd_vm *vm, int *child_disks, int *child_taps)
 		return ret;
 
 	if ((ret = vioblk_restore(fd, vcp, child_disks)) == -1)
+		return ret;
+
+	if ((ret = vioscsi_restore(fd, vcp, child_cdrom)) == -1)
 		return ret;
 
 	if ((ret = vionet_restore(fd, vm, child_taps)) == -1)
@@ -2060,6 +2204,21 @@ vioblk_dump(int fd)
 }
 
 int
+vioscsi_dump(int fd)
+{
+	if (vioscsi == NULL)
+		return (0);
+
+	log_debug("%s: sending vioscsi", __func__);
+	if (atomicio(vwrite, fd, vioscsi, sizeof(struct vioscsi_dev)) !=
+	    sizeof(struct vioscsi_dev)) {
+		log_warnx("%s: error writing vioscsi to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
 virtio_dump(int fd)
 {
 	int ret;
@@ -2068,6 +2227,9 @@ virtio_dump(int fd)
 		return ret;
 
 	if ((ret = vioblk_dump(fd)) == -1)
+		return ret;
+
+	if ((ret = vioscsi_dump(fd)) == -1)
 		return ret;
 
 	if ((ret = vionet_dump(fd)) == -1)

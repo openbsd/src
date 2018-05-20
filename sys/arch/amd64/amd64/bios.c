@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.34 2015/09/12 23:03:30 uebayasi Exp $	*/
+/*	$OpenBSD: bios.c,v 1.36 2018/04/28 15:44:59 jasper Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -17,24 +17,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/errno.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
-#include <machine/conf.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <amd64/include/isa_machdep.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/acpi/acpivar.h>
 
 #include <dev/rndvar.h>
 
@@ -444,7 +437,7 @@ smbios_info(char * str)
 	if (sminfop) {
 		infolen = strlen(sminfop) + 1;
 		for (i = 0; i < infolen - 1; i++)
-			add_timer_randomness(sminfop[i]);
+			enqueue_randomness(sminfop[i]);
 		hw_serial = malloc(infolen, M_DEVBUF, M_NOWAIT);
 		if (hw_serial)
 			strlcpy(hw_serial, sminfop, infolen);
@@ -469,7 +462,7 @@ smbios_info(char * str)
 			hw_uuid = "Not Set";
 		else {
 			for (i = 0; i < sizeof(sys->uuid); i++)
-				add_timer_randomness(sys->uuid[i]);
+				enqueue_randomness(sys->uuid[i]);
 			hw_uuid = malloc(SMBIOS_UUID_REPLEN, M_DEVBUF,
 			    M_NOWAIT);
 			if (hw_uuid) {

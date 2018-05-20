@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.205 2017/08/21 15:41:26 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.209 2018/05/14 14:09:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/param.h>	/* MACHINE */
+#include <sys/termios.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -114,6 +116,7 @@ main(int argc, char *argv[])
 	struct manconf	 conf;
 	struct mansearch search;
 	struct curparse	 curp;
+	struct winsize	 ws;
 	struct tag_files *tag_files;
 	struct manpage	*res, *resp;
 	const char	*progname, *sec, *thisarg;
@@ -123,7 +126,7 @@ main(int argc, char *argv[])
 	size_t		 i, sz;
 	int		 prio, best_prio;
 	enum outmode	 outmode;
-	int		 fd;
+	int		 fd, startdir;
 	int		 show_usage;
 	int		 options;
 	int		 use_pager;
@@ -292,6 +295,16 @@ main(int argc, char *argv[])
 	    !isatty(STDOUT_FILENO))
 		use_pager = 0;
 
+	if (use_pager &&
+	    (conf.output.width == 0 || conf.output.indent == 0) &&
+	    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) != -1 &&
+	    ws.ws_col > 1) {
+		if (conf.output.width == 0 && ws.ws_col < 79)
+			conf.output.width = ws.ws_col - 1;
+		if (conf.output.indent == 0 && ws.ws_col < 66)
+			conf.output.indent = 3;
+	}
+
 	if (!use_pager)
 		if (pledge("stdio rpath", NULL) == -1)
 			err((int)MANDOCLEVEL_SYSERR, "pledge");
@@ -346,15 +359,34 @@ main(int argc, char *argv[])
 		    argc, argv, &res, &sz))
 			usage(search.argmode);
 
-		if (sz == 0) {
-			if (search.argmode == ARG_NAME)
-				fs_search(&search, &conf.manpath,
-				    argc, argv, &res, &sz);
-			else
-				warnx("nothing appropriate");
+		if (sz == 0 && search.argmode == ARG_NAME)
+			fs_search(&search, &conf.manpath,
+			    argc, argv, &res, &sz);
+
+		if (search.argmode == ARG_NAME) {
+			for (c = 0; c < argc; c++) {
+				if (strchr(argv[c], '/') == NULL)
+					continue;
+				if (access(argv[c], R_OK) == -1) {
+					warn("%s", argv[c]);
+					continue;
+				}
+				res = mandoc_reallocarray(res,
+				    sz + 1, sizeof(*res));
+				res[sz].file = mandoc_strdup(argv[c]);
+				res[sz].names = NULL;
+				res[sz].output = NULL;
+				res[sz].ipath = SIZE_MAX;
+				res[sz].bits = 0;
+				res[sz].sec = 10;
+				res[sz].form = FORM_SRC;
+				sz++;
+			}
 		}
 
 		if (sz == 0) {
+			if (search.argmode != ARG_NAME)
+				warnx("nothing appropriate");
 			rc = MANDOCLEVEL_BADARG;
 			goto out;
 		}
@@ -436,7 +468,29 @@ main(int argc, char *argv[])
 		parse(&curp, STDIN_FILENO, "<stdin>");
 	}
 
+	/*
+	 * Remember the original working directory, if possible.
+	 * This will be needed if some names on the command line
+	 * are page names and some are relative file names.
+	 * Do not error out if the current directory is not
+	 * readable: Maybe it won't be needed after all.
+	 */
+	startdir = open(".", O_RDONLY | O_DIRECTORY);
+
 	while (argc > 0) {
+
+		/*
+		 * Changing directories is not needed in ARG_FILE mode.
+		 * Do it on a best-effort basis.  Even in case of
+		 * failure, some functionality may still work.
+		 */
+		if (resp != NULL) {
+			if (resp->ipath != SIZE_MAX)
+				(void)chdir(conf.manpath.paths[resp->ipath]);
+			else if (startdir != -1)
+				(void)fchdir(startdir);
+		}
+
 		fd = mparse_open(curp.mp, resp != NULL ? resp->file : *argv);
 		if (fd != -1) {
 			if (use_pager) {
@@ -446,11 +500,9 @@ main(int argc, char *argv[])
 
 			if (resp == NULL)
 				parse(&curp, fd, *argv);
-			else if (resp->form == FORM_SRC) {
-				/* For .so only; ignore failure. */
-				(void)chdir(conf.manpath.paths[resp->ipath]);
+			else if (resp->form == FORM_SRC)
 				parse(&curp, fd, resp->file);
-			} else
+			else
 				passthrough(resp->file, fd,
 				    conf.output.synopsisonly);
 
@@ -482,6 +534,10 @@ main(int argc, char *argv[])
 			argv++;
 		if (--argc)
 			mparse_reset(curp.mp);
+	}
+	if (startdir != -1) {
+		(void)fchdir(startdir);
+		close(startdir);
 	}
 
 	if (curp.outdata != NULL) {
@@ -703,7 +759,8 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 				    cfg->firstmatch)
 					return 1;
 		}
-		if (res != NULL && *ressz == lastsz)
+		if (res != NULL && *ressz == lastsz &&
+		    strchr(*argv, '/') == NULL)
 			warnx("No entry for %s in the manual.", *argv);
 		lastsz = *ressz;
 		argv++;
@@ -1152,7 +1209,7 @@ spawn_pager(struct tag_files *tag_files)
 	if (dup2(tag_files->ofd, STDOUT_FILENO) == -1)
 		err((int)MANDOCLEVEL_SYSERR, "pager stdout");
 	close(tag_files->ofd);
-	close(tag_files->tfd);
+	assert(tag_files->tfd == -1);
 
 	/* Do not start the pager before controlling the terminal. */
 

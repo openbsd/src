@@ -1,7 +1,12 @@
-#	$OpenBSD: Makefile,v 1.67 2017/04/30 23:17:37 djm Exp $
+#	$OpenBSD: Makefile,v 1.72 2018/01/08 15:37:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
-.include "${.CURDIR}/../Makefile.inc"
+
+SRCS=	ssh.c readconf.c clientloop.c sshtty.c sshconnect.c sshconnect2.c mux.c
+SRCS+=	atomicio.c authfd.c bufaux.c buffer.c compat.c dns.c fatal.c \
+	hostfile.c key.c msg.c readpass.c utf8.c
+SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXC} ${SRCS_KEY} ${SRCS_KEYP} \
+	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
 PROG=	ssh
 BINOWN=	root
@@ -10,9 +15,6 @@ BINOWN=	root
 
 BINDIR=	/usr/bin
 MAN=	ssh.1 ssh_config.5
-
-SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect2.c mux.c
 
 .include <bsd.own.mk>
 
@@ -31,9 +33,9 @@ LDADD+=  -lwind -lroken -lcom_err -lpthread -lheimbase
 .endif # KERBEROS5
 
 .if (${OPENSSL:L} == "yes")
-LDADD+=	-lcrypto -lutil
-DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
 .endif
 
-LDADD+=	-lz
-DPADD+=	${LIBZ}
+LDADD+=	-lutil -lz
+DPADD+=	${LIBUTIL} ${LIBZ}

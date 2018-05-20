@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.37 2017/08/12 04:29:57 rob Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.38 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -313,7 +313,7 @@ snmpd_dispatch_snmpe(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 int
-snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
+snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port, int ipproto)
 {
 	int	 s;
 
@@ -332,7 +332,13 @@ snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
 		return (-1);
 	}
 
-	s = socket(ss->ss_family, SOCK_DGRAM, IPPROTO_UDP);
+	if (ipproto == IPPROTO_TCP)
+		s = socket(ss->ss_family,
+		    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+	else
+		s = socket(ss->ss_family,
+		    SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+
 	return (s);
 }
 

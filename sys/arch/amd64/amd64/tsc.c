@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.1 2017/10/06 13:33:53 mikeb Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.9 2018/04/08 18:26:29 mikeb Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -19,7 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sysctl.h>
 #include <sys/timetc.h>
 
 #include <machine/cpu.h>
@@ -27,7 +26,7 @@
 
 #define RECALIBRATE_MAX_RETRIES		5
 #define RECALIBRATE_SMI_THRESHOLD	50000
-#define RECALIBRATE_DELAY_THRESHOLD	20
+#define RECALIBRATE_DELAY_THRESHOLD	50
 
 int		tsc_recalibrate;
 
@@ -57,14 +56,13 @@ tsc_freq_cpuid(struct cpu_info *ci)
 			case 0x5e: /* Skylake desktop */
 			case 0x8e: /* Kabylake mobile */
 			case 0x9e: /* Kabylake desktop */
-				khz = 24000; /* 24.0 Mhz */
+				khz = 24000; /* 24.0 MHz */
 				break;
-			case 0x55: /* Skylake X */
 			case 0x5f: /* Atom Denverton */
-				khz = 25000; /* 25.0 Mhz */
+				khz = 25000; /* 25.0 MHz */
 				break;
 			case 0x5c: /* Atom Goldmont */
-				khz = 19200; /* 19.2 Mhz */
+				khz = 19200; /* 19.2 MHz */
 				break;
 			}
 		}
@@ -123,7 +121,7 @@ measure_tsc_freq(struct timecounter *tc)
 {
 	uint64_t count1, count2, frequency, min_freq, tsc1, tsc2;
 	u_long ef;
-	int delay_usec, i, err1, err2, usec;
+	int delay_usec, i, err1, err2, usec, success = 0;
 
 	/* warmup the timers */
 	for (i = 0; i < 3; i++) {
@@ -156,9 +154,10 @@ measure_tsc_freq(struct timecounter *tc)
 		frequency = calculate_tsc_freq(tsc1, tsc2, usec);
 
 		min_freq = MIN(min_freq, frequency);
+		success++;
 	}
 
-	return (min_freq);
+	return (success > 1 ? min_freq : 0);
 }
 
 void
@@ -176,9 +175,6 @@ calibrate_tsc_freq(void)
 	tsc_timecounter.tc_frequency = freq;
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
-
-	printf("%s: recalibrated TSC frequency %lld Hz\n",
-	    reference->tc_name, tsc_timecounter.tc_frequency);
 }
 
 void
@@ -201,7 +197,7 @@ tsc_get_timecount(struct timecounter *tc)
 }
 
 void
-tsc_timecounter_init(struct cpu_info *ci)
+tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 {
 	if (!(ci->ci_flags & CPUF_PRIMARY) ||
 	    !(ci->ci_flags & CPUF_CONST_TSC) ||
@@ -217,6 +213,8 @@ tsc_timecounter_init(struct cpu_info *ci)
 		tsc_timecounter.tc_quality = 2000;
 	} else {
 		tsc_recalibrate = 1;
+		tsc_frequency = cpufreq;
+		tsc_timecounter.tc_frequency = cpufreq;
 		calibrate_tsc_freq();
 	}
 

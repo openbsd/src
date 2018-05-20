@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.32 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.33 2018/03/15 00:42:41 kevlo Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -119,8 +119,6 @@ struct	uticom_softc {
 	struct device		 sc_dev;	/* base device */
 	struct usbd_device	*sc_udev;	/* device */
 	struct usbd_interface	*sc_iface;	/* interface */
-
-	int			sc_iface_number; /* interface number */
 
 	struct usbd_interface	*sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
@@ -271,7 +269,6 @@ uticom_attach_hook(struct device *self)
 
 	/* Find the bulk out interface used to upload firmware. */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	sc->sc_iface_number = id->bInterfaceNumber;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
@@ -351,7 +348,6 @@ fwload_done:
 
 	/* Find the interrupt endpoints. */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	sc->sc_iface_number = id->bInterfaceNumber;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
@@ -382,7 +378,6 @@ fwload_done:
 
 	/* Find the bulk{in,out} endpoints. */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	sc->sc_iface_number = id->bInterfaceNumber;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);

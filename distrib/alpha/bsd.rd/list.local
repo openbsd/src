@@ -1,3 +1,4 @@
+LINK	instbin					sbin/growfs
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/dhclient
 LINK	instbin					bin/mt bin/eject

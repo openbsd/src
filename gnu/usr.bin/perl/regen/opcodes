@@ -165,12 +165,12 @@ scmp		string comparison (cmp)	ck_null		ifst2	S S
 bit_and		bitwise and (&)		ck_bitop	fst2	S S|
 bit_xor		bitwise xor (^)		ck_bitop	fst2	S S|
 bit_or		bitwise or (|)		ck_bitop	fst2	S S|
-nbit_and	numeric bitiwse and (&)	ck_bitop	fsT2	S S|
+nbit_and	numeric bitwise and (&)	ck_bitop	fsT2	S S|
 nbit_xor	numeric bitwise xor (^)	ck_bitop	fsT2	S S|
 nbit_or		numeric bitwise or (|)	ck_bitop	fsT2	S S|
-sbit_and	string bitiwse and (&)	ck_bitop	fst2	S S|
-sbit_xor	string bitwise xor (^)	ck_bitop	fst2	S S|
-sbit_or		string bitwise or (|)	ck_bitop	fst2	S S|
+sbit_and	string bitwise and (&.)	ck_bitop	fst2	S S|
+sbit_xor	string bitwise xor (^.)	ck_bitop	fst2	S S|
+sbit_or		string bitwise or (|.)	ck_bitop	fst2	S S|
 
 negate		negation (-)		ck_null		Ifst1	S
 i_negate	integer negation (-)	ck_null		ifst1	S

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.34 2015/12/09 19:28:34 mmcc Exp $	*/
+/*	$OpenBSD: elf.c,v 1.36 2017/12/09 06:39:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -29,7 +29,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <a.out.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <errno.h>
 #include <err.h>
 #include <stdint.h>
@@ -319,6 +319,8 @@ elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 		else if (!strcmp(sn, ELF_TEXT))
 			return (N_TEXT);
 		else if (!strcmp(sn, ELF_RODATA))
+			return (N_SIZE);
+		else if (!strcmp(sn, ELF_OPENBSDRANDOMDATA))
 			return (N_SIZE);
 		else if (!strcmp(sn, ELF_DATA))
 			return (N_DATA);

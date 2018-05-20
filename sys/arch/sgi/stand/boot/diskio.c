@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.11 2016/10/05 11:55:45 visa Exp $ */
+/*	$OpenBSD: diskio.c,v 1.12 2018/03/02 15:36:39 visa Exp $ */
 
 /*
  * Copyright (c) 2016 Miodrag Vallat.
@@ -73,7 +73,8 @@ diostrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addr,
 	arc_quad_t offset;
 	long result;
 
-	blkoffset = (DL_GETPOFFSET(pp) + bn) * DEV_BSIZE;
+	blkoffset =
+	    (DL_SECTOBLK(&sc->sc_label, DL_GETPOFFSET(pp)) + bn) * DEV_BSIZE;
 	offset.hi = blkoffset >> 32;
 	offset.lo = blkoffset;
 
@@ -222,14 +223,16 @@ dioopen(struct open_file *f, ...)
 		/*
 		 * Assume the OpenBSD partition spans the whole device.
 		 */
-#ifdef DEBUG
-		printf("No native disklabel found\n");
-#endif
 		lp->d_secsize = DEV_BSIZE;
 		lp->d_secpercyl = 1;
 		lp->d_npartitions = MAXPARTITIONS;
 		DL_SETPOFFSET(&lp->d_partitions[partition], native_offset);
 		DL_SETPSIZE(&lp->d_partitions[partition], -1ULL);
+#ifdef DEBUG
+		printf("No native disklabel found, "
+		    "assuming partition %c starts at %lld\n",
+		    'a' + partition, native_offset);
+#endif
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_realpath.c,v 1.5 2017/08/27 21:59:49 deraadt Exp $ */
+/*	$OpenBSD: dl_realpath.c,v 1.6 2017/12/24 01:50:50 millert Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -47,12 +47,17 @@
 char *
 _dl_realpath(const char *path, char *resolved)
 {
-	const char *p, *s;
+	const char *p;
 	char *q;
-	size_t left_len, resolved_len;
+	size_t left_len, resolved_len, next_token_len;
 	unsigned symlinks;
-	int slen, mem_allocated;
+	int mem_allocated;
+	ssize_t slen;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
+
+	if (path == NULL) {
+		return (NULL);
+	}
 
 	if (path[0] == '\0') {
 		return (NULL);
@@ -85,7 +90,7 @@ _dl_realpath(const char *path, char *resolved)
 		resolved_len = _dl_strlen(resolved);
 		left_len = _dl_strlcpy(left, path, sizeof(left));
 	}
-	if (left_len >= sizeof(left) || resolved_len >= PATH_MAX) {
+	if (left_len >= sizeof(left)) {
 		goto err;
 	}
 
@@ -98,15 +103,19 @@ _dl_realpath(const char *path, char *resolved)
 		 * and its length.
 		 */
 		p = _dl_strchr(left, '/');
-		s = p ? p : left + left_len;
-		if (s - left >= sizeof(next_token)) {
-			goto err;
+
+		next_token_len = p ? (size_t) (p - left) : left_len;
+		_dl_bcopy(left, next_token, next_token_len);
+		next_token[next_token_len] = '\0';
+
+		if (p != NULL) {
+			left_len -= next_token_len + 1;
+			_dl_bcopy(p + 1, left, left_len + 1);
+		} else {
+			left[0] = '\0';
+			left_len = 0;
 		}
-		_dl_bcopy(left, next_token, s - left);
-		next_token[s - left] = '\0';
-		left_len -= s - left;
-		if (p != NULL)
-			_dl_bcopy(s + 1, left, left_len + 1);
+
 		if (resolved[resolved_len - 1] != '/') {
 			if (resolved_len + 1 >= PATH_MAX) {
 				goto err;
@@ -135,14 +144,14 @@ _dl_realpath(const char *path, char *resolved)
 		/*
 		 * Append the next path component and readlink() it. If
 		 * readlink() fails we still can return successfully if
-		 * it wasn't a exists but isn't a symlink, or if there
-		 * are no more path components left.
+		 * it exists but isn't a symlink, or if there are no more
+		 * path components left.
 		 */
 		resolved_len = _dl_strlcat(resolved, next_token, PATH_MAX);
 		if (resolved_len >= PATH_MAX) {
 			goto err;
 		}
-		slen = _dl_readlink(resolved, symlink, sizeof(symlink) - 1);
+		slen = _dl_readlink(resolved, symlink, sizeof(symlink));
 		if (slen < 0) {
 			switch (slen) {
 			case -EINVAL:
@@ -155,6 +164,10 @@ _dl_realpath(const char *path, char *resolved)
 			default:
 				goto err;
 			}
+		} else if (slen == 0) {
+			goto err;
+		} else if (slen == sizeof(symlink)) {
+			goto err;
 		} else {
 			if (symlinks++ > SYMLOOP_MAX) {
 				goto err;
@@ -166,7 +179,6 @@ _dl_realpath(const char *path, char *resolved)
 				resolved_len = 1;
 			} else if (resolved_len > 1) {
 				/* Strip the last path component. */
-				resolved[resolved_len - 1] = '\0';
 				q = _dl_strrchr(resolved, '/') + 1;
 				*q = '\0';
 				resolved_len = q - resolved;

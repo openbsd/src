@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.4 2017/08/05 17:30:51 drahn Exp $ */
+/* $OpenBSD: exception.S,v 1.5 2018/01/10 23:27:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -155,6 +155,15 @@ handle_el1h_irq:
 handle_el1h_error:
 	brk	0xf13
 
+.macro	return
+	msr	tpidrro_el0, x18
+	ldr	x18, =trampoline_vectors
+	msr	vbar_el1, x18
+	isb
+	b	tramp_return
+.endm
+
+	.globl handle_el0_sync
 handle_el0_sync:
 	save_registers 0
 	mov	x0, sp
@@ -162,8 +171,9 @@ handle_el0_sync:
 	do_ast
 	bl	_C_LABEL(vfp_enable)
 	restore_registers 0
-	eret
+	return
 
+	.globl handle_el0_irq
 handle_el0_irq:
 	save_registers 0
 	bl	_C_LABEL(vfp_save)
@@ -172,8 +182,9 @@ handle_el0_irq:
 	do_ast
 	bl	_C_LABEL(vfp_enable)
 	restore_registers 0
-	eret
+	return
 
+	.globl handle_el0_error
 handle_el0_error:
 	save_registers 0
 	mov	x0, sp
@@ -184,7 +195,7 @@ handle_el0_error:
 ENTRY(syscall_return)
 	do_ast
 	restore_registers 0
-	eret
+	return
 
 .macro	vempty
 	.align 7
@@ -210,13 +221,12 @@ exception_vectors:
 	vempty			/* FIQ EL1h */
 	vector el1h_error	/* Error EL1h */
 
-	vector el0_sync		/* Synchronous 64-bit EL0 */
-	vector el0_irq		/* IRQ 64-bit EL0 */
+	vempty			/* Synchronous 64-bit EL0 */
+	vempty			/* IRQ 64-bit EL0 */
 	vempty			/* FIQ 64-bit EL0 */
-	vector el0_error	/* Error 64-bit EL0 */
+	vempty			/* Error 64-bit EL0 */
 
 	vempty			/* Synchronous 32-bit EL0 */
 	vempty			/* IRQ 32-bit EL0 */
 	vempty			/* FIQ 32-bit EL0 */
 	vempty			/* Error 32-bit EL0 */
-

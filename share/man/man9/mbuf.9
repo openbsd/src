@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.109 2017/06/19 18:36:13 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.111 2018/02/11 00:27:10 dlg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 19 2017 $
+.Dd $Mdocdate: February 11 2018 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -298,7 +298,7 @@ protocol-specific.
 .Fa m_pkthdr.ether_vtag
 variable is valid.
 .It Dv M_LOOP
-for mbuf statistics.
+packet has been sent from local machine.
 .It Dv M_ACAST
 received as IPv6 anycast.
 .It Dv M_BCAST
@@ -378,6 +378,8 @@ UDP checksum bad.
 ICMP/ICMPv6 checksum verified.
 .It Dv M_ICMP_CSUM_IN_BAD
 ICMP/ICMPv6 checksum bad.
+.It Dv M_IPV6_DF_OUT
+Do not fragment IPv6 on output.
 .El
 .Pp
 The

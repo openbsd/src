@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.171 2017/08/10 02:26:26 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.174 2017/12/14 14:26:50 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -378,6 +378,12 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 #if NPF > 0
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		switch (icp->icmp_type) {
+		 /*
+		  * As pf_icmp_mapping() considers redirects belonging to a
+		  * diverted connection, we must include it here.
+		  */
+		case ICMP_REDIRECT:
+			/* FALLTHROUGH */
 		/*
 		 * These ICMP types map to other connections.  They must be
 		 * delivered to pr_ctlinput() also for diverted connections.
@@ -386,12 +392,11 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 		case ICMP_TIMXCEED:
 		case ICMP_PARAMPROB:
 		case ICMP_SOURCEQUENCH:
-			break;
-		 /*
-		  * Although pf_icmp_mapping() considers redirects belonging
-		  * to a diverted connection, we must process it here anyway.
-		  */
-		case ICMP_REDIRECT:
+			/*
+			 * Do not use the divert-to property of the TCP or UDP
+			 * rule when doing the PCB lookup for the raw socket.
+			 */
+			m->m_pkthdr.pf.flags &=~ PF_TAG_DIVERTED;
 			break;
 		default:
 			goto raw;
@@ -454,10 +459,6 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 			goto badcode;
 		code = PRC_QUENCH;
 	deliver:
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
-
 		/*
 		 * Problem with datagram; advise higher level routines.
 		 */
@@ -585,10 +586,6 @@ reflect:
 		    &ip->ip_dst.s_addr, 1))
 			goto freeit;
 #endif
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
-
 		icmpstat_inc(icps_reflect);
 		icmpstat_inc(icps_outhist + icp->icmp_type);
 		if (!icmp_reflect(m, &opts, NULL)) {
@@ -604,9 +601,6 @@ reflect:
 		struct sockaddr_in ssrc;
 		struct rtentry *newrt = NULL;
 
-		/* Free packet atttributes */
-		if (m->m_flags & M_PKTHDR)
-			m_tag_delete_chain(m);
 		if (icmp_rediraccept == 0 || ipforwarding == 1)
 			goto freeit;
 		if (code > 3)
@@ -714,10 +708,13 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		return (EHOSTUNREACH);
 	}
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
+	if (m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP) {
+		m_freem(m);
+		return (ELOOP);
+	}
 	rtableid = m->m_pkthdr.ph_rtableid;
+	m_resethdr(m);
+	m->m_pkthdr.ph_rtableid = rtableid;
 
 	/*
 	 * If the incoming packet was addressed directly to us,
@@ -881,8 +878,6 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	int error;
 
-	NET_ASSERT_LOCKED();
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -890,6 +885,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case ICMPCTL_REDIRTIMEOUT:
 
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &icmp_redirtimeout);
 		if (icmp_redirect_timeout_q != NULL) {
@@ -903,6 +899,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			icmp_redirect_timeout_q =
 			    rt_timer_queue_create(icmp_redirtimeout);
 		}
+		NET_UNLOCK();
 		break;
 
 	case ICMPCTL_STATS:
@@ -911,8 +908,10 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	default:
 		if (name[0] < ICMPCTL_MAXID) {
+			NET_LOCK();
 			error = sysctl_int_arr(icmpctl_vars, name, namelen,
 			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
 			break;
 		}
 		error = ENOPROTOOPT;

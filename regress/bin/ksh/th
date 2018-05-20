@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.1 2013/12/02 20:39:44 millert Exp $
+#	$OpenBSD: th,v 1.2 2017/10/23 17:11:07 anton Exp $
 
 
 #
@@ -56,9 +56,10 @@
 #					missing, NAME is removed from the
 #					environment.  Programs are run with
 #					the following minimal environment:
-#					    USER, LOGNAME, HOME, PATH, SHELL
-#					(values taken from the environment of
-#					the test harness).
+#					    USER, LOGNAME, HOME, PATH, SHELL,
+#					    MALLOC_OPTIONS=S
+#					(values from the current environment
+#					takes higher precedence).
 #	file-setup		    mps Used to create files, directories
 #					and symlinks.  First word is either
 #					file, dir or symlink; second word is
@@ -232,8 +233,10 @@ grep($do_test{$_} = 1, @ARGV);
 $all_tests = @ARGV == 0;
 
 # Set up a very minimal environment
-%new_env = ();
-foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL')) {
+%new_env = (
+    MALLOC_OPTIONS => 'S',
+);
+foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL', 'MALLOC_OPTIONS')) {
     $new_env{$env} = $ENV{$env} if defined $ENV{$env};
 }
 if (defined $opt_e) {

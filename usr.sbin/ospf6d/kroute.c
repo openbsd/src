@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.52 2017/06/19 19:55:57 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.54 2018/02/08 21:37:36 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -102,7 +102,7 @@ kr_init(int fs)
 	kr_state.fib_sync = fs;
 
 	if ((kr_state.fd = socket(AF_ROUTE,
-	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
+	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, AF_INET6)) == -1) {
 		log_warn("kr_init: socket");
 		return (-1);
 	}
@@ -369,7 +369,6 @@ kr_show_route(struct imsg *imsg)
 			return;
 		}
 		memcpy(&addr, imsg->data, sizeof(addr));
-		kr = NULL;
 		kr = kroute_match(&addr);
 		if (kr != NULL)
 			main_imsg_compose_ospfe(IMSG_CTL_KROUTE, imsg->hdr.pid,

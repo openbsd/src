@@ -1,0 +1,253 @@
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.7 2018/04/02 01:22:03 schwarze Exp $
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 2 2018 $
+.Dt X509_OBJECT_GET0_X509 3
+.Os
+.Sh NAME
+.Nm X509_OBJECT_get_type ,
+.Nm X509_OBJECT_up_ref_count ,
+.Nm X509_OBJECT_free_contents ,
+.Nm X509_OBJECT_get0_X509 ,
+.Nm X509_OBJECT_get0_X509_CRL ,
+.Nm X509_OBJECT_idx_by_subject ,
+.Nm X509_OBJECT_retrieve_by_subject ,
+.Nm X509_OBJECT_retrieve_match
+.Nd certificate, CRL, private key, and string wrapper for certificate stores
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.Ft int
+.Fo X509_OBJECT_get_type
+.Fa "const X509_OBJECT *obj"
+.Fc
+.Ft void
+.Fo X509_OBJECT_up_ref_count
+.Fa "X509_OBJECT *obj"
+.Fc
+.Ft void
+.Fo X509_OBJECT_free_contents
+.Fa "X509_OBJECT *obj"
+.Fc
+.Ft X509 *
+.Fo X509_OBJECT_get0_X509
+.Fa "const X509_OBJECT *obj"
+.Fc
+.Ft X509_CRL *
+.Fo X509_OBJECT_get0_X509_CRL
+.Fa "X509_OBJECT *obj"
+.Fc
+.Ft int
+.Fo X509_OBJECT_idx_by_subject
+.Fa "STACK_OF(X509_OBJECT) *stack"
+.Fa "int type"
+.Fa "X509_NAME *name"
+.Fc
+.Ft X509_OBJECT *
+.Fo X509_OBJECT_retrieve_by_subject
+.Fa "STACK_OF(X509_OBJECT) *stack"
+.Fa "int type"
+.Fa "X509_NAME *name"
+.Fc
+.Ft X509_OBJECT *
+.Fo X509_OBJECT_retrieve_match
+.Fa "STACK_OF(X509_OBJECT) *stack"
+.Fa "X509_OBJECT *obj"
+.Fc
+.Sh DESCRIPTION
+The
+.Vt X509_OBJECT
+structure is a shallow wrapper around one
+.Vt X509
+certificate object, one
+.Vt X509_CRL
+certificate revocation list object, one
+.Vt EVP_PKEY
+private key object, or one
+.Vt char *
+string.
+The type of object stored at any given time can be inspected with
+.Fn X509_OBJECT_get_type .
+.Pp
+Each
+.Vt X509_STORE
+object uses one stack of
+.Vt X509_OBJECT
+structures as its main storage area.
+.Pp
+If
+.Fa obj
+contains an
+.Vt X509
+certificate or an
+.Vt X509_CRL
+certificate revocation list,
+.Fn X509_OBJECT_up_ref_count
+increments the reference count of that inner object by 1.
+Otherwise, no action occurs.
+.Pp
+If
+.Fa obj
+contains an
+.Vt X509
+certificate,
+.Fn X509_OBJECT_free_contents
+calls
+.Xr X509_free 3
+on that inner object.
+If
+.Fa obj
+contains an
+.Vt X509_CRL
+certificate revocation list, it calls
+.Xr X509_CRL_free 3
+on that inner list.
+Otherwise, no action occurs.
+.Fn X509_OBJECT_free_contents
+does not free
+.Fa obj
+itself.
+.Pp
+If
+.Fa type
+is
+.Dv X509_LU_X509 ,
+.Fn X509_OBJECT_idx_by_subject
+and
+.Fn X509_OBJECT_retrieve_by_subject
+search the given
+.Fa stack
+for a certificate with the subject
+.Fa name .
+If
+.Fa type
+is
+.Dv X509_LU_CRL ,
+they search for a certificate revocation list with the issuer
+.Fa name
+instead.
+.Pp
+If
+.Fa obj
+contains a certificate,
+.Fn X509_OBJECT_retrieve_match
+searches the given
+.Fa stack
+for a certificate with a matching subject name;
+if it contains a certificate revocation list, it searches for a
+certificate revocation list with a matching issuer name instead;
+otherwise, it searches for an
+.Vt X509_OBJECT
+with a matching type.
+.Sh RETURN VALUES
+.Fn X509_OBJECT_get_type
+returns
+.Dv X509_LU_X509
+if
+.Fa obj
+contains a certificate,
+.Dv X509_LU_CRL
+if it contains a certificate revocation list,
+or 0 if an error occurs.
+.Pp
+.Fn X509_OBJECT_get0_X509
+returns an internal pointer to the certificate contained in
+.Fa obj
+or
+.Dv NULL
+if
+.Fa obj
+is
+.Dv NULL
+or contains no certificate.
+.Pp
+.Fn X509_OBJECT_get0_X509_CRL
+returns an internal pointer to the certificate revocation list contained in
+.Fa obj
+or
+.Dv NULL
+if
+.Fa obj
+is
+.Dv NULL
+or contains no certificate revocation list.
+.Pp
+.Fn X509_OBJECT_idx_by_subject
+returns the zero-based index of the first matching certificate
+or revocation list in the
+.Fa stack
+or \-1 if
+.Fa type
+is neither
+.Dv X509_LU_X509
+nor
+.Dv X509_LU_CRL
+or if no match is found.
+.Pp
+.Fn X509_OBJECT_retrieve_by_subject
+returns the first matching certificate or revocation list in the
+.Fa stack
+or
+.Dv NULL
+if
+.Fa type
+is neither
+.Dv X509_LU_X509
+nor
+.Dv X509_LU_CRL
+or if no match is found.
+.Pp
+.Fn X509_OBJECT_retrieve_match
+returns the first mathching
+.Vt X509_OBJECT
+or
+.Dv NULL
+if
+.Fa stack
+or
+.Fa obj
+is
+.Dv NULL
+or no match is found.
+.Sh SEE ALSO
+.Xr X509_STORE_get0_objects 3 ,
+.Xr X509_STORE_load_locations 3 ,
+.Xr X509_STORE_new 3
+.\" The type X509_OBJECT is also used
+.\" by the following undocumented public functions:
+.\" X509_STORE_get_by_subject
+.\" X509_LOOKUP_by_subject
+.\" X509_LOOKUP_by_issuer_serial
+.\" X509_LOOKUP_by_fingerprint
+.\" X509_LOOKUP_by_alias
+.Sh HISTORY
+.Fn X509_OBJECT_up_ref_count
+and
+.Fn X509_OBJECT_free_contents
+first appeared in SSLeay 0.8.0 and have been available since
+.Ox 2.4 .
+.Pp
+.Fn X509_OBJECT_idx_by_subject ,
+.Fn X509_OBJECT_retrieve_by_subject ,
+and
+.Fn X509_OBJECT_retrieve_match
+first appeared in OpenSSL 0.9.6 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn X509_OBJECT_get_type ,
+.Fn X509_OBJECT_get0_X509 ,
+and
+.Fn X509_OBJECT_get0_X509_CRL
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.108 2017/01/24 04:24:25 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.109 2018/02/05 12:11:28 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -98,7 +98,6 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	struct area		*area;
 	struct iface		*iface;
 	struct passwd		*pw;
-	struct redistribute	*r;
 	pid_t			 pid;
 
 	switch (pid = fork()) {
@@ -188,10 +187,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			md_list_clr(&iface->auth_md_list);
 
-	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
-		free(r);
-	}
+	conf_clear_redist_list(&rdeconf->redist_list);
 
 	gettimeofday(&now, NULL);
 	rdeconf->uptime = now.tv_sec;

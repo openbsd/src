@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_300.c,v 1.13 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_3000_300.c,v 1.14 2017/11/02 14:04:24 mpi Exp $ */
 /* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -46,12 +46,10 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsvar.h>
 #include <alpha/tc/tc_3000_300.h>
-#ifndef NEW_SCC_DRIVER
-#include <alpha/tc/sccvar.h>
-#endif
 
-#if 0
 #include <machine/z8530var.h>
+#include <dev/tc/zs_ioasicvar.h>
+#if 0
 #include <dev/dec/zskbdvar.h>
 #endif
 
@@ -98,22 +96,10 @@ dec_3000_300_cons_init()
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-#ifndef NEW_SCC_DRIVER
-	switch (ctb->ctb_term_type) {
-	case CTB_GRAPHICS:
-#if 0
-		alpha_donot_kludge_scc = 1;
-#endif
-		return;
-	case CTB_PRINTERPORT:
-		return;
-	default:
-		goto badconsole;
-	}
-#else
 	switch (ctb->ctb_term_type) {
 	case CTB_GRAPHICS:
 #if NWSDISPLAY > 0
+#ifdef notyet
 		/* display console ... */
 		if (zs_ioasic_lk201_cnattach(0x1a0000000, 0x00180000, 0) == 0 &&
 		    tc_3000_300_fb_cnattach(
@@ -121,8 +107,10 @@ dec_3000_300_cons_init()
 			break;
 		}
 #endif
+#endif
 		printf("consinit: Unable to init console on keyboard and ");
-		printf("TURBOchannel slot 0x%lx.\n", ctb->ctb_turboslot);
+		printf("TURBOchannel slot 0x%lx.\n",
+		    (unsigned long)ctb->ctb_turboslot);
 		printf("Using serial console.\n");
 		/* FALLTHROUGH */
 
@@ -144,25 +132,19 @@ dec_3000_300_cons_init()
 			 * XXX Should use ctb_line_off to get the
 			 * XXX line parameters.
 			 */
-			if (zs_ioasic_cnattach(0x1a0000000, 0x00100000, 1,
-			    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-				panic("can't init serial console");
+			zs_ioasic_cnattach(0x1a0000000, 0x00100000, 1);
 			break;
 		}
 
 	default:
-		goto badconsole;
+		printf("ctb->ctb_term_type = 0x%lx\n",
+		    (unsigned long)ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n",
+		    (unsigned long)ctb->ctb_turboslot);
+		panic("consinit: unknown console type %lu",
+		    (unsigned long)ctb->ctb_term_type);
+		/* NOTREACHED */
 	}
-#endif
-	return;
-badconsole:
-	printf("ctb->ctb_term_type = 0x%lx\n",
-	    (unsigned long)ctb->ctb_term_type);
-	printf("ctb->ctb_turboslot = 0x%lx\n",
-	    (unsigned long)ctb->ctb_turboslot);
-
-	panic("consinit: unknown console type %lu",
-	    (unsigned long)ctb->ctb_term_type);
 }
 
 static void

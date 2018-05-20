@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.12 2018/05/01 19:01:28 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -201,7 +201,7 @@ pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
 	    == 0)
 		return 0;
 	(void)EVP_PKEY_assign_GOST(pk, NULL);
-	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
+	X509_ALGOR_get0(NULL, &ptype, (const void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
@@ -410,7 +410,7 @@ priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 	if (PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf) == 0)
 		return 0;
 	(void)EVP_PKEY_assign_GOST(pk, NULL);
-	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
+	X509_ALGOR_get0(NULL, &ptype, (const void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;

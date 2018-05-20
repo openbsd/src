@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.54 2017/01/10 19:48:32 bluhm Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.55 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -85,16 +85,12 @@ mfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
-	struct mfs_args args;
+	struct mfs_args *args = data;
 	struct ufsmount *ump;
 	struct fs *fs;
 	struct mfsnode *mfsp;
 	char fspec[MNAMELEN];
 	int flags, error;
-
-	error = copyin(data, &args, sizeof(struct mfs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -114,13 +110,13 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR))
 			fs->fs_ronly = 0;
 #ifdef EXPORTMFS
-		if (args.fspec == NULL)
+		if (args && args->fspec == NULL)
 			return (vfs_export(mp, &ump->um_export, 
-			    &args.export_info));
+			    &args->export_info));
 #endif
 		return (0);
 	}
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		return (error);
 	error = getnewvnode(VT_MFS, NULL, &mfs_vops, &devvp);
@@ -132,8 +128,8 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mfs_minor++;
 	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK | M_ZERO);
 	devvp->v_data = mfsp;
-	mfsp->mfs_baseoff = args.base;
-	mfsp->mfs_size = args.size;
+	mfsp->mfs_baseoff = args->base;
+	mfsp->mfs_size = args->size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_tid = p->p_tid;
 	bufq_init(&mfsp->mfs_bufq, BUFQ_FIFO);
@@ -152,7 +148,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
 	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	memcpy(&mp->mnt_stat.mount_info.mfs_args, &args, sizeof(args));
+	memcpy(&mp->mnt_stat.mount_info.mfs_args, args, sizeof(*args));
 
 	return (0);
 }

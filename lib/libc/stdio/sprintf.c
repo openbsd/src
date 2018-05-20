@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprintf.c,v 1.18 2015/10/01 02:32:07 guenther Exp $ */
+/*	$OpenBSD: sprintf.c,v 1.19 2017/11/28 06:55:49 tb Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 
 #if defined(APIWARN)
 __warn_references(sprintf,
-    "warning: sprintf() is often misused, please use snprintf()");
+    "sprintf() is often misused, please use snprintf()");
 #endif
 
 int

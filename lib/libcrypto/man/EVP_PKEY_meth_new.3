@@ -1,0 +1,551 @@
+.\" $OpenBSD: EVP_PKEY_meth_new.3,v 1.3 2018/03/23 05:48:56 schwarze Exp $
+.\" selective merge up to: OpenSSL 43f985fd Aug 21 11:47:17 2017 -0400
+.\"
+.\" This file was written by Paul Yang <yang.yang@baishancloud.com>
+.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: March 23 2018 $
+.Dt EVP_PKEY_METH_NEW 3
+.Os
+.Sh NAME
+.Nm EVP_PKEY_meth_new ,
+.Nm EVP_PKEY_meth_free ,
+.Nm EVP_PKEY_meth_copy ,
+.Nm EVP_PKEY_meth_find ,
+.Nm EVP_PKEY_meth_add0 ,
+.Nm EVP_PKEY_meth_set_init ,
+.Nm EVP_PKEY_meth_set_copy ,
+.Nm EVP_PKEY_meth_set_cleanup ,
+.Nm EVP_PKEY_meth_set_paramgen ,
+.Nm EVP_PKEY_meth_set_keygen ,
+.Nm EVP_PKEY_meth_set_sign ,
+.Nm EVP_PKEY_meth_set_verify ,
+.Nm EVP_PKEY_meth_set_verify_recover ,
+.Nm EVP_PKEY_meth_set_signctx ,
+.Nm EVP_PKEY_meth_set_verifyctx ,
+.Nm EVP_PKEY_meth_set_encrypt ,
+.Nm EVP_PKEY_meth_set_decrypt ,
+.Nm EVP_PKEY_meth_set_derive ,
+.Nm EVP_PKEY_meth_set_ctrl
+.Nd manipulate an EVP_PKEY_METHOD structure
+.Sh SYNOPSIS
+.In openssl/evp.h
+.Ft EVP_PKEY_METHOD *
+.Fo EVP_PKEY_meth_new
+.Fa "int id"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_free
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_copy
+.Fa "EVP_PKEY_METHOD *dst"
+.Fa "const EVP_PKEY_METHOD *src"
+.Fc
+.Ft const EVP_PKEY_METHOD *
+.Fo EVP_PKEY_meth_find
+.Fa "int type"
+.Fc
+.Ft int
+.Fo EVP_PKEY_meth_add0
+.Fa "const EVP_PKEY_METHOD *pmeth"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_init
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*init)(EVP_PKEY_CTX *ctx)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_copy
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*copy)(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_cleanup
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "void (*cleanup)(EVP_PKEY_CTX *ctx)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_paramgen
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*paramgen_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_keygen
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*keygen_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*keygen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_sign
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*sign_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,\
+ const unsigned char *tbs, size_t tbslen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_verify
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*verify_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig,\
+ size_t siglen, const unsigned char *tbs, size_t tbslen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_verify_recover
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*verify_recover_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*verify_recover)(EVP_PKEY_CTX *ctx, unsigned char *sig,\
+ size_t *siglen, const unsigned char *tbs, size_t tbslen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_signctx
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)"
+.Fa "int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig,\
+ size_t *siglen, EVP_MD_CTX *mctx)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_verifyctx
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)"
+.Fa "int (*verifyctx)(EVP_PKEY_CTX *ctx, const unsigned char *sig,\
+ int siglen, EVP_MD_CTX *mctx)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_encrypt
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*encrypt_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*encryptfn)(EVP_PKEY_CTX *ctx, unsigned char *out,\
+ size_t *outlen, const unsigned char *in, size_t inlen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_decrypt
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*decrypt_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out,\
+ size_t *outlen, const unsigned char *in, size_t inlen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_derive
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*derive_init)(EVP_PKEY_CTX *ctx)"
+.Fa "int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_ctrl
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)"
+.Fa "int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value)"
+.Fc
+.Sh DESCRIPTION
+The
+.Vt EVP_PKEY_METHOD
+structure holds a set of methods
+for a specific public key cryptographic algorithm.
+Those methods perform tasks such as generating keys, signing, verifying,
+encrypting, decrypting, and so on.
+.Pp
+There are two places where the
+.Vt EVP_PKEY_METHOD
+objects are stored: one is a built-in static array representing the
+standard methods for different algorithms, and the other one is a stack
+of user-defined application-specific methods, which can be manipulated
+with
+.Fn EVP_PKEY_meth_add0 .
+.Pp
+The
+.Vt EVP_PKEY_METHOD
+objects are usually referenced by
+.Vt EVP_PKEY_CTX
+objects.
+.Ss Methods
+The methods implement the particular public key algorithm represented by the
+.Vt EVP_PKEY_CTX
+object.
+.Bd -unfilled
+.Ft int Fn (*init) "EVP_PKEY_CTX *ctx"
+.Ft int Fn (*copy) "EVP_PKEY_CTX *dst" "EVP_PKEY_CTX *src"
+.Ft void Fn (*cleanup) "EVP_PKEY_CTX *ctx"
+.Ed
+.Pp
+The
+.Fn init
+method is called by
+.Xr EVP_PKEY_CTX_new 3
+and
+.Xr EVP_PKEY_CTX_new_id 3
+to initialize the algorithm-specific data when a new
+.Vt EVP_PKEY_CTX
+is created.
+The
+.Fn cleanup
+method is called by
+.Xr EVP_PKEY_CTX_free 3
+when an
+.Vt EVP_PKEY_CTX
+is freed.
+The
+.Fn copy
+method is called by
+.Xr EVP_PKEY_CTX_dup 3
+when an
+.Vt EVP_PKEY_CTX
+is duplicated.
+.Bd -unfilled
+.Ft int Fn (*paramgen_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fn (*paramgen) "EVP_PKEY_CTX *ctx" "EVP_PKEY *pkey"
+.Ed
+.Pp
+The
+.Fn paramgen_init
+and
+.Fn paramgen
+methods deal with key parameter generation.
+They are called by
+.Xr EVP_PKEY_paramgen_init 3
+and
+.Xr EVP_PKEY_paramgen 3
+to handle the parameter generation process.
+.Bd -unfilled
+.Ft int Fn (*keygen_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fn (*keygen) "EVP_PKEY_CTX *ctx" "EVP_PKEY *pkey"
+.Ed
+.Pp
+The
+.Fn keygen_init
+and
+.Fn keygen
+methods are used to generate a key for the specified algorithm.
+They are called by
+.Xr EVP_PKEY_keygen_init 3
+and
+.Xr EVP_PKEY_keygen 3 .
+.Bd -unfilled
+.Ft int Fn (*sign_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*sign)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *sig"
+.Fa "size_t *siglen"
+.Fa "const unsigned char *tbs"
+.Fa "size_t tbslen"
+.Fc
+.Ed
+.Pp
+The
+.Fn sign_init
+and
+.Fn sign
+methods are used to generate the signature of a piece of data using a
+private key.
+They are called by
+.Xr EVP_PKEY_sign_init 3
+and
+.Xr EVP_PKEY_sign 3 .
+.Bd -unfilled
+.Ft int Fn (*verify_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*verify)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const unsigned char *sig"
+.Fa "size_t siglen"
+.Fa "const unsigned char *tbs"
+.Fa "size_t tbslen"
+.Fc
+.Ed
+.Pp
+The
+.Fn verify_init
+and
+.Fn verify
+methods are used to verify whether a signature is valid.
+They are called by
+.Xr EVP_PKEY_verify_init 3
+and
+.Xr EVP_PKEY_verify 3 .
+.Bd -unfilled
+.Ft int Fn (*verify_recover_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*verify_recover)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *rout"
+.Fa "size_t *routlen"
+.Fa "const unsigned char *sig"
+.Fa "size_t siglen"
+.Fc
+.Ed
+.Pp
+The
+.Fn verify_recover_init
+and
+.Fn verify_recover
+methods are used to verify a signature and then recover the digest from
+the signature (for instance, a signature that was generated by the RSA
+signing algorithm).
+They are called by
+.Xr EVP_PKEY_verify_recover_init 3
+and
+.Xr EVP_PKEY_verify_recover 3 .
+.Bd -unfilled
+.Ft int Fn (*signctx_init) "EVP_PKEY_CTX *ctx" "EVP_MD_CTX *mctx"
+.Ft int Fo (*signctx)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *sig"
+.Fa "size_t *siglen"
+.Fa "EVP_MD_CTX *mctx"
+.Fc
+.Ed
+.Pp
+The
+.Fn signctx_init
+and
+.Fn signctx
+methods are used to sign a digest represented by an
+.Vt EVP_MD_CTX
+object.
+They are called by the
+.Xr EVP_DigestSignInit 3
+functions.
+.Bd -unfilled
+.Ft int Fn (*verifyctx_init) "EVP_PKEY_CTX *ctx" "EVP_MD_CTX *mctx"
+.Ft int Fo (*verifyctx)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const unsigned char *sig"
+.Fa "int siglen"
+.Fa "EVP_MD_CTX *mctx"
+.Fc
+.Ed
+.Pp
+The
+.Fn verifyctx_init
+and
+.Fn verifyctx
+methods are used to verify a signature against the data in an
+.Vt EVP_MD_CTX
+object.
+They are called by the
+.Xr EVP_DigestVerifyInit 3
+functions.
+.Bd -unfilled
+.Ft int Fn (*encrypt_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*encrypt)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *out"
+.Fa "size_t *outlen"
+.Fa "const unsigned char *in"
+.Fa "size_t inlen"
+.Fc
+.Ed
+.Pp
+The
+.Fn encrypt_init
+and
+.Fn encrypt
+methods are used to encrypt a piece of data.
+They are called by
+.Xr EVP_PKEY_encrypt_init 3
+and
+.Xr EVP_PKEY_encrypt 3 .
+.Bd -unfilled
+.Ft int Fn (*decrypt_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*decrypt)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *out"
+.Fa "size_t *outlen"
+.Fa "const unsigned char *in"
+.Fa "size_t inlen"
+.Fc
+.Ed
+.Pp
+The
+.Fn decrypt_init
+and
+.Fn decrypt
+methods are used to decrypt a piece of data.
+They are called by
+.Xr EVP_PKEY_decrypt_init 3
+and
+.Xr EVP_PKEY_decrypt 3 .
+.Bd -unfilled
+.Ft int Fn (*derive_init) "EVP_PKEY_CTX *ctx"
+.Ft int Fo (*derive)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "unsigned char *key"
+.Fa "size_t *keylen"
+.Fc
+.Ed
+.Pp
+The
+.Fn derive_init
+and
+.Fn derive
+methods are used to derive the shared secret from a public key algorithm
+(for instance, the DH algorithm).
+They are called by
+.Xr EVP_PKEY_derive_init 3
+and
+.Xr EVP_PKEY_derive 3 .
+.Bd -unfilled
+.Ft int Fo (*ctrl)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "int type"
+.Fa "int p1"
+.Fa "void *p2"
+.Fc
+.Ft int Fo (*ctrl_str)
+.Fa "EVP_PKEY_CTX *ctx"
+.Fa "const char *type"
+.Fa "const char *value"
+.Fc
+.Ed
+.Pp
+The
+.Fn ctrl
+and
+.Fn ctrl_str
+methods are used to adjust algorithm-specific settings.
+See
+.Xr EVP_PKEY_CTX_ctrl 3
+for details.
+.Ss Functions
+.Fn EVP_PKEY_meth_new
+creates a new
+.Vt EVP_PKEY_METHOD
+object with the given
+.Fa id
+and
+.Fa flags .
+The following flags are supported:
+.Bl -tag -width Ds
+.It Dv EVP_PKEY_FLAG_AUTOARGLEN
+Automatically calculate the maximum size of the output buffer
+in corresponding EVP methods by the EVP framework.
+Thus the implementations of these methods don't need to care about
+handling the case of returning output buffer size by themselves.
+For details on the output buffer size, refer to
+.Xr EVP_PKEY_sign 3 .
+.It Dv EVP_PKEY_FLAG_SIGCTX_CUSTOM
+Indicate that the
+.Fn signctx
+method of an
+.Vt EVP_PKEY_METHOD
+is always called by the EVP framework while doing a digest signing
+operation by calling
+.Xr EVP_DigestSignFinal 3 .
+.El
+.Pp
+.Fn EVP_PKEY_meth_free
+frees
+.Fa pmeth .
+.Pp
+.Fn EVP_PKEY_meth_copy
+copies
+.Fa src
+to
+.Fa dst .
+.Pp
+.Fn EVP_PKEY_meth_find
+finds an
+.Vt EVP_PKEY_METHOD
+object with the given
+.Fa id .
+This function first searches through the user-defined method objects and
+then through the built-in objects.
+.Pp
+.Fn EVP_PKEY_meth_add0
+adds
+.Fa pmeth
+to the stack of user defined methods.
+.Pp
+The
+.Fn EVP_PKEY_meth_set_*
+functions set the corresponding fields of
+.Fa pmeth
+to the arguments passed.
+.Sh RETURN VALUES
+.Fn EVP_PKEY_meth_new
+returns a pointer to a new
+.Vt EVP_PKEY_METHOD
+object or
+.Dv NULL
+on error.
+.Pp
+.Fn EVP_PKEY_meth_find
+returns a pointer to the found
+.Vt EVP_PKEY_METHOD
+object or
+.Dv NULL
+if no matching object is found.
+.Pp
+.Fn EVP_PKEY_meth_add0
+returns 1 if the method is added successfully or 0 if an error occurred.
+.Sh HISTORY
+.Fn EVP_PKEY_meth_new ,
+.Fn EVP_PKEY_meth_free ,
+.Fn EVP_PKEY_meth_find ,
+.Fn EVP_PKEY_meth_add0 ,
+.Fn EVP_PKEY_meth_set_init ,
+.Fn EVP_PKEY_meth_set_copy ,
+.Fn EVP_PKEY_meth_set_cleanup ,
+.Fn EVP_PKEY_meth_set_paramgen ,
+.Fn EVP_PKEY_meth_set_keygen ,
+.Fn EVP_PKEY_meth_set_sign ,
+.Fn EVP_PKEY_meth_set_verify ,
+.Fn EVP_PKEY_meth_set_verify_recover ,
+.Fn EVP_PKEY_meth_set_signctx ,
+.Fn EVP_PKEY_meth_set_verifyctx ,
+.Fn EVP_PKEY_meth_set_encrypt ,
+.Fn EVP_PKEY_meth_set_decrypt ,
+.Fn EVP_PKEY_meth_set_derive ,
+and
+.Fn EVP_PKEY_meth_set_ctrl
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .
+.Pp
+.Fn EVP_PKEY_meth_copy
+first appeared in OpenSSL 1.0.1 and has been available since
+.Ox 5.3 .

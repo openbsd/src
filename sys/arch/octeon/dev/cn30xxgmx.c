@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.36 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.40 2017/11/20 15:13:08 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -106,9 +106,6 @@ int	cn30xxgmx_tx_ovr_bp_enable(struct cn30xxgmx_port_softc *, int);
 int	cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *, int);
 
 #ifdef OCTEON_ETH_DEBUG
-void	cn30xxgmx_dump(void);
-void	cn30xxgmx_debug_reset(void);
-int	cn30xxgmx_intr_drop(void *);
 int	cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *,
 	    uint64_t);
 #endif
@@ -151,12 +148,6 @@ struct cn30xxgmx_port_ops *cn30xxgmx_port_ops[] = {
 	[GMX_SGMII_PORT] = &cn30xxgmx_port_ops_sgmii,
 	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42
 };
-
-#ifdef OCTEON_ETH_DEBUG
-void	*cn30xxgmx_intr_drop_ih;
-
-struct cn30xxgmx_port_softc *__cn30xxgmx_port_softc[GMX_PORT_NUNITS];
-#endif
 
 struct cfattach cn30xxgmx_ca = {sizeof(struct cn30xxgmx_softc),
     cn30xxgmx_match, cn30xxgmx_attach, NULL, NULL};
@@ -276,18 +267,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		gmx_aa.ga_smi = smi;
 
 		config_found(self, &gmx_aa, cn30xxgmx_print);
-
-#ifdef OCTEON_ETH_DEBUG
-		__cn30xxgmx_port_softc[port_sc->sc_port_no] = port_sc;
-#endif
 	}
-
-#ifdef OCTEON_ETH_DEBUG
-	if (cn30xxgmx_intr_drop_ih == NULL)
-		cn30xxgmx_intr_drop_ih = octeon_intr_establish(
-		   ffs64(CIU_INTX_SUM0_GMX_DRP) - 1, IPL_NET,
-		   cn30xxgmx_intr_drop, NULL, "cn30xxgmx");
-#endif
 }
 
 int
@@ -634,17 +614,13 @@ cn30xxgmx_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr)
 	return 0;
 }
 
-#define	OCTEON_ETH_USE_GMX_CAM
-
 int
 cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
 	struct arpcom *ac = sc->sc_port_ac;
-#ifdef OCTEON_ETH_USE_GMX_CAM
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 	uint64_t cam_en = 0x01ULL;
 	uint64_t ctl = 0;
 	int multi = 0;
@@ -670,7 +646,6 @@ cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
 	} else {
-#ifdef OCTEON_ETH_USE_GMX_CAM
 		/*
 		 * Note first entry is self MAC address; other 7 entires are
 		 * available for multicast addresses.
@@ -715,15 +690,6 @@ cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
 
 		OCTEON_ETH_KASSERT(enm == NULL);
-#else
-		/*
-		 * XXX
-		 * Never use DMAC filter for multicast addresses, but register
-		 * only single entry for self address.  FreeBSD code do so.
-		 */
-		SET(ifp->if_flags, IFF_ALLMULTI);
-		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-#endif
 	}
 
 	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
@@ -1148,6 +1114,7 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 		clk_rx_setting = 24;
 		break;
 	case BOARD_TYPE_UBIQUITI_E100:
+	case BOARD_TYPE_UBIQUITI_E120:
 		clk_tx_setting = 16;
 		clk_rx_setting = 0;
 		break;
@@ -1320,457 +1287,3 @@ cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
 	ifp->if_oerrors += (uint32_t)(tmp >> 32);
 }
-
-/* ---- DMAC filter */
-
-#ifdef notyet
-/*
- * DMAC filter configuration
- *	accept all
- *	reject 0 addrs (virtually accept all?)
- *	reject N addrs
- *	accept N addrs
- *	accept 0 addrs (virtually reject all?)
- *	reject all
- */
-
-/* XXX local namespace */
-#define	_POLICY			CN30XXGMX_FILTER_POLICY
-#define	_POLICY_ACCEPT_ALL	CN30XXGMX_FILTER_POLICY_ACCEPT_ALL
-#define	_POLICY_ACCEPT		CN30XXGMX_FILTER_POLICY_ACCEPT
-#define	_POLICY_REJECT		CN30XXGMX_FILTER_POLICY_REJECT
-#define	_POLICY_REJECT_ALL	CN30XXGMX_FILTER_POLICY_REJECT_ALL
-
-int	cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *,
-	    size_t, uint8_t **);
-
-int
-cn30xxgmx_setfilt(struct cn30xxgmx_port_softc *sc, enum _POLICY policy,
-    size_t naddrs, uint8_t **addrs)
-{
-	uint64_t rx_adr_ctl;
-
-	KASSERT(policy >= _POLICY_ACCEPT_ALL);
-	KASSERT(policy <= _POLICY_REJECT_ALL);
-
-	rx_adr_ctl = _GMX_PORT_RD8(sc, GMX0_RX0_ADR_CTL);
-	CLR(rx_adr_ctl, RXN_ADR_CTL_CAM_MODE | RXN_ADR_CTL_MCST);
-
-	switch (policy) {
-	case _POLICY_ACCEPT_ALL:
-	case _POLICY_REJECT_ALL:
-		KASSERT(naddrs == 0);
-		KASSERT(addrs == NULL);
-
-		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT_ALL) ?
-		    RXN_ADR_CTL_MCST_ACCEPT : RXN_ADR_CTL_MCST_REJECT);
-		break;
-	case _POLICY_ACCEPT:
-	case _POLICY_REJECT:
-		if (naddrs > CN30XXGMX_FILTER_NADDRS_MAX)
-			return E2BIG;
-		SET(rx_adr_ctl, (policy == _POLICY_ACCEPT) ?
-		    RXN_ADR_CTL_CAM_MODE : 0);
-		SET(rx_adr_ctl, RXN_ADR_CTL_MCST_AFCAM);
-		/* set GMX0_RXN_ADR_CAM_EN, GMX0_RXN_ADR_CAM[0-5] */
-		cn30xxgmx_setfilt_addrs(sc, naddrs, addrs);
-		break;
-	}
-
-	/* set GMX0_RXN_ADR_CTL[MCST] */
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, rx_adr_ctl);
-
-	return 0;
-}
-
-int
-cn30xxgmx_setfilt_addrs(struct cn30xxgmx_port_softc *sc, size_t naddrs,
-    uint8_t **addrs)
-{
-	uint64_t rx_adr_cam_en;
-	uint64_t rx_adr_cam_addrs[CN30XXGMX_FILTER_NADDRS_MAX];
-	int i, j;
-
-	KASSERT(naddrs <= CN30XXGMX_FILTER_NADDRS_MAX);
-
-	rx_adr_cam_en = 0;
-	(void)memset(rx_adr_cam_addrs, 0, sizeof(rx_adr_cam_addrs));
-
-	for (i = 0; i < naddrs; i++) {
-		SET(rx_adr_cam_en, 1ULL << i);
-		for (j = 0; j < 6; j++)
-			SET(rx_adr_cam_addrs[j],
-			    (uint64_t)addrs[i][j] << (8 * i));
-	}
-
-	/* set GMX0_RXN_ADR_CAM_EN, GMX0_RXN_ADR_CAM[0-5] */
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, rx_adr_cam_en);
-	for (j = 0; j < 6; j++)
-		_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[j],
-		    rx_adr_cam_addrs[j]);
-
-	return 0;
-}
-#endif
-
-/* ---- interrupt */
-
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxgmx_intr_rml_gmx0(void);
-
-int	cn30xxgmx_intr_rml_verbose;
-
-void
-cn30xxgmx_intr_rml_gmx0(void)
-{
-	struct cn30xxgmx_port_softc *sc;
-	int i;
-	uint64_t reg;
-
-	sc = __cn30xxgmx_port_softc[0];
-	if (sc == NULL)
-		return;
-
-	/* GMX0_RXn_INT_REG or GMX0_TXn_INT_REG */
-	reg = cn30xxgmx_get_tx_int_reg(sc);
-	if (cn30xxgmx_intr_rml_verbose && reg != 0)
-		printf("%s: GMX_TX_INT_REG=0x%016llx\n", __func__, reg);
-
-	for (i = 0; i < GMX_PORT_NUNITS; i++) {
-		sc = __cn30xxgmx_port_softc[i];
-		if (sc == NULL)
-			continue;
-		reg = cn30xxgmx_get_rx_int_reg(sc);
-		if (cn30xxgmx_intr_rml_verbose)
-			printf("%s: GMX_RX_INT_REG=0x%016llx\n", __func__, reg);
-	}
-}
-
-int
-cn30xxgmx_intr_drop(void *arg)
-{
-	octeon_xkphys_write_8(CIU_INT0_SUM0, CIU_INTX_SUM0_GMX_DRP);
-	return (1);
-}
-
-uint64_t
-cn30xxgmx_get_rx_int_reg(struct cn30xxgmx_port_softc *sc)
-{
-	uint64_t reg;
-	uint64_t rx_int_reg = 0;
-
-	reg = _GMX_PORT_RD8(sc, GMX0_RX0_INT_REG);
-	/* clear */
-	SET(rx_int_reg, 0 |
-	    RXN_INT_REG_PHY_DUPX |
-	    RXN_INT_REG_PHY_SPD |
-	    RXN_INT_REG_PHY_LINK |
-	    RXN_INT_REG_IFGERR |
-	    RXN_INT_REG_COLDET |
-	    RXN_INT_REG_FALERR |
-	    RXN_INT_REG_RSVERR |
-	    RXN_INT_REG_PCTERR |
-	    RXN_INT_REG_OVRERR |
-	    RXN_INT_REG_NIBERR |
-	    RXN_INT_REG_SKPERR |
-	    RXN_INT_REG_RCVERR |
-	    RXN_INT_REG_LENERR |
-	    RXN_INT_REG_ALNERR |
-	    RXN_INT_REG_FCSERR |
-	    RXN_INT_REG_JABBER |
-	    RXN_INT_REG_MAXERR |
-	    RXN_INT_REG_CAREXT |
-	    RXN_INT_REG_MINERR);
-	_GMX_PORT_WR8(sc, GMX0_RX0_INT_REG, rx_int_reg);
-
-	return reg;
-}
-
-uint64_t
-cn30xxgmx_get_tx_int_reg(struct cn30xxgmx_port_softc *sc)
-{
-	uint64_t reg;
-	uint64_t tx_int_reg = 0;
-
-	reg = _GMX_PORT_RD8(sc, GMX0_TX_INT_REG);
-	/* clear */
-	SET(tx_int_reg, 0 |
-	    TX_INT_REG_LATE_COL |
-	    TX_INT_REG_XSDEF |
-	    TX_INT_REG_XSCOL |
-	    TX_INT_REG_UNDFLW |
-	    TX_INT_REG_PKO_NXA);
-	_GMX_PORT_WR8(sc, GMX0_TX_INT_REG, tx_int_reg);
-
-	return reg;
-}
-#endif	/* OCTEON_ETH_DEBUG */
-
-/* ---- debug */
-
-#ifdef OCTEON_ETH_DEBUG
-#define	_ENTRY(x)	{ #x, x }
-
-struct cn30xxgmx_dump_reg_ {
-	const char *name;
-	size_t	offset;
-};
-
-const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_regs_[] = {
-	_ENTRY(GMX0_SMAC0),
-	_ENTRY(GMX0_BIST0),
-	_ENTRY(GMX0_RX_PRTS),
-	_ENTRY(GMX0_RX_BP_DROP0),
-	_ENTRY(GMX0_RX_BP_DROP1),
-	_ENTRY(GMX0_RX_BP_DROP2),
-	_ENTRY(GMX0_RX_BP_ON0),
-	_ENTRY(GMX0_RX_BP_ON1),
-	_ENTRY(GMX0_RX_BP_ON2),
-	_ENTRY(GMX0_RX_BP_OFF0),
-	_ENTRY(GMX0_RX_BP_OFF1),
-	_ENTRY(GMX0_RX_BP_OFF2),
-	_ENTRY(GMX0_TX_PRTS),
-	_ENTRY(GMX0_TX_IFG),
-	_ENTRY(GMX0_TX_JAM),
-	_ENTRY(GMX0_TX_COL_ATTEMPT),
-	_ENTRY(GMX0_TX_PAUSE_PKT_DMAC),
-	_ENTRY(GMX0_TX_PAUSE_PKT_TYPE),
-	_ENTRY(GMX0_TX_OVR_BP),
-	_ENTRY(GMX0_TX_BP),
-	_ENTRY(GMX0_TX_CORRUPT),
-	_ENTRY(GMX0_RX_PRT_INFO),
-	_ENTRY(GMX0_TX_LFSR),
-	_ENTRY(GMX0_TX_INT_REG),
-	_ENTRY(GMX0_TX_INT_EN),
-	_ENTRY(GMX0_NXA_ADR),
-	_ENTRY(GMX0_BAD_REG),
-	_ENTRY(GMX0_STAT_BP),
-	_ENTRY(GMX0_TX_CLK_MSK0),
-	_ENTRY(GMX0_TX_CLK_MSK1),
-	_ENTRY(GMX0_RX_TX_STATUS),
-	_ENTRY(GMX0_INF_MODE),
-};
-
-const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_regs_[] = {
-	_ENTRY(GMX0_RX0_INT_REG),
-	_ENTRY(GMX0_RX0_INT_EN),
-	_ENTRY(GMX0_PRT0_CFG),
-	_ENTRY(GMX0_RX0_FRM_CTL),
-	_ENTRY(GMX0_RX0_FRM_CHK),
-	_ENTRY(GMX0_RX0_FRM_MIN),
-	_ENTRY(GMX0_RX0_FRM_MAX),
-	_ENTRY(GMX0_RX0_JABBER),
-	_ENTRY(GMX0_RX0_DECISION),
-	_ENTRY(GMX0_RX0_UDD_SKP),
-	_ENTRY(GMX0_RX0_STATS_CTL),
-	_ENTRY(GMX0_RX0_IFG),
-	_ENTRY(GMX0_RX0_RX_INBND),
-	_ENTRY(GMX0_RX0_ADR_CTL),
-	_ENTRY(GMX0_RX0_ADR_CAM_EN),
-	_ENTRY(GMX0_RX0_ADR_CAM0),
-	_ENTRY(GMX0_RX0_ADR_CAM1),
-	_ENTRY(GMX0_RX0_ADR_CAM2),
-	_ENTRY(GMX0_RX0_ADR_CAM3),
-	_ENTRY(GMX0_RX0_ADR_CAM4),
-	_ENTRY(GMX0_RX0_ADR_CAM5),
-	_ENTRY(GMX0_TX0_CLK),
-	_ENTRY(GMX0_TX0_THRESH),
-	_ENTRY(GMX0_TX0_APPEND),
-	_ENTRY(GMX0_TX0_SLOT),
-	_ENTRY(GMX0_TX0_BURST),
-	_ENTRY(GMX0_TX0_PAUSE_PKT_TIME),
-	_ENTRY(GMX0_TX0_MIN_PKT),
-	_ENTRY(GMX0_TX0_PAUSE_PKT_INTERVAL),
-	_ENTRY(GMX0_TX0_SOFT_PAUSE),
-	_ENTRY(GMX0_TX0_PAUSE_TOGO),
-	_ENTRY(GMX0_TX0_PAUSE_ZERO),
-	_ENTRY(GMX0_TX0_STATS_CTL),
-	_ENTRY(GMX0_TX0_CTL),
-};
-
-const struct cn30xxgmx_dump_reg_ cn30xxgmx_dump_port_stats_[] = {
-	_ENTRY(GMX0_RX0_STATS_PKTS),
-	_ENTRY(GMX0_RX0_STATS_OCTS),
-	_ENTRY(GMX0_RX0_STATS_PKTS_CTL),
-	_ENTRY(GMX0_RX0_STATS_OCTS_CTL),
-	_ENTRY(GMX0_RX0_STATS_PKTS_DMAC),
-	_ENTRY(GMX0_RX0_STATS_OCTS_DMAC),
-	_ENTRY(GMX0_RX0_STATS_PKTS_DRP),
-	_ENTRY(GMX0_RX0_STATS_OCTS_DRP),
-	_ENTRY(GMX0_RX0_STATS_PKTS_BAD),
-	_ENTRY(GMX0_TX0_STAT0),
-	_ENTRY(GMX0_TX0_STAT1),
-	_ENTRY(GMX0_TX0_STAT2),
-	_ENTRY(GMX0_TX0_STAT3),
-	_ENTRY(GMX0_TX0_STAT4),
-	_ENTRY(GMX0_TX0_STAT5),
-	_ENTRY(GMX0_TX0_STAT6),
-	_ENTRY(GMX0_TX0_STAT7),
-	_ENTRY(GMX0_TX0_STAT8),
-	_ENTRY(GMX0_TX0_STAT9),
-};
-
-void	cn30xxgmx_dump_common(void);
-void	cn30xxgmx_dump_port0(void);
-void	cn30xxgmx_dump_port1(void);
-void	cn30xxgmx_dump_port2(void);
-void	cn30xxgmx_dump_port0_regs(void);
-void	cn30xxgmx_dump_port1_regs(void);
-void	cn30xxgmx_dump_port2_regs(void);
-void	cn30xxgmx_dump_port0_stats(void);
-void	cn30xxgmx_dump_port1_stats(void);
-void	cn30xxgmx_dump_port2_stats(void);
-void	cn30xxgmx_dump_port_regs(int);
-void	cn30xxgmx_dump_port_stats(int);
-void	cn30xxgmx_dump_common_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
-void	cn30xxgmx_dump_port_x(int, const struct cn30xxgmx_dump_reg_ *, size_t);
-void	cn30xxgmx_dump_x(int, const struct cn30xxgmx_dump_reg_ *, size_t, size_t, int);
-void	cn30xxgmx_dump_x_index(char *, size_t, int);
-
-void
-cn30xxgmx_dump(void)
-{
-	cn30xxgmx_dump_common();
-	cn30xxgmx_dump_port0();
-	cn30xxgmx_dump_port1();
-	cn30xxgmx_dump_port2();
-}
-
-void
-cn30xxgmx_dump_common(void)
-{
-	cn30xxgmx_dump_common_x(0, cn30xxgmx_dump_regs_,
-	    nitems(cn30xxgmx_dump_regs_));
-}
-
-void
-cn30xxgmx_dump_port0(void)
-{
-	cn30xxgmx_dump_port_regs(0);
-	cn30xxgmx_dump_port_stats(0);
-}
-
-void
-cn30xxgmx_dump_port1(void)
-{
-	cn30xxgmx_dump_port_regs(1);
-	cn30xxgmx_dump_port_stats(1);
-}
-
-void
-cn30xxgmx_dump_port2(void)
-{
-	cn30xxgmx_dump_port_regs(2);
-	cn30xxgmx_dump_port_stats(2);
-}
-
-void
-cn30xxgmx_dump_port_regs(int portno)
-{
-	cn30xxgmx_dump_port_x(portno, cn30xxgmx_dump_port_regs_,
-	    nitems(cn30xxgmx_dump_port_regs_));
-}
-
-void
-cn30xxgmx_dump_port_stats(int portno)
-{
-	struct cn30xxgmx_port_softc *sc = __cn30xxgmx_port_softc[0];
-	uint64_t rx_stats_ctl;
-	uint64_t tx_stats_ctl;
-
-	rx_stats_ctl = _GMX_RD8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_RX0_STATS_CTL);
-	_GMX_WR8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_RX0_STATS_CTL,
-	    rx_stats_ctl & ~RXN_STATS_CTL_RD_CLR);
-	tx_stats_ctl = _GMX_RD8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_TX0_STATS_CTL);
-	_GMX_WR8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_TX0_STATS_CTL,
-	    tx_stats_ctl & ~TXN_STATS_CTL_RD_CLR);
-	cn30xxgmx_dump_port_x(portno, cn30xxgmx_dump_port_stats_,
-	    nitems(cn30xxgmx_dump_port_stats_));
-	_GMX_WR8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_RX0_STATS_CTL, rx_stats_ctl);
-	_GMX_WR8(sc, GMX0_BASE_PORT_SIZE * portno + GMX0_TX0_STATS_CTL, tx_stats_ctl);
-}
-
-void
-cn30xxgmx_dump_common_x(int portno, const struct cn30xxgmx_dump_reg_ *regs, size_t size)
-{
-	cn30xxgmx_dump_x(portno, regs, size, 0, 0);
-}
-
-void
-cn30xxgmx_dump_port_x(int portno, const struct cn30xxgmx_dump_reg_ *regs, size_t size)
-{
-	cn30xxgmx_dump_x(portno, regs, size, GMX0_BASE_PORT_SIZE * portno, 1);
-}
-
-void
-cn30xxgmx_dump_x(int portno, const struct cn30xxgmx_dump_reg_ *regs, size_t size, size_t base, int index)
-{
-	struct cn30xxgmx_port_softc *sc = __cn30xxgmx_port_softc[0];
-	const struct cn30xxgmx_dump_reg_ *reg;
-	uint64_t tmp;
-	char name[64];
-	int i;
-
-	for (i = 0; i < (int)size; i++) {
-		reg = &regs[i];
-		tmp = _GMX_RD8(sc, base + reg->offset);
-
-		snprintf(name, sizeof(name), "%s", reg->name);
-		if (index > 0)
-			cn30xxgmx_dump_x_index(name, sizeof(name), portno);
-
-		printf("\t%-24s: %016llx\n", name, tmp);
-	}
-}
-
-/* not in libkern */
-static char *strstr(const char *, const char *);
-static char *
-strstr(const char *s, const char *find)
-{
-        char c, sc;
-        size_t len;
-
-        if ((c = *find++) != 0) {
-                len = strlen(find);
-                do {
-                        do {
-                                if ((sc = *s++) == 0)
-                                        return (NULL);
-                        } while (sc != c);
-                } while (strncmp(s, find, len) != 0);
-                s--;
-        }
-        return (char *)s;
-}
-
-void
-cn30xxgmx_dump_x_index(char *buf, size_t len, int index)
-{
-	static const char *patterns[] = { "_TX0_", "_RX0_", "_PRT0_" };
-	int i;
-
-	for (i = 0; i < (int)nitems(patterns); i++) {
-		char *p;
-
-		p = strstr(buf, patterns[i]);
-		if (p == NULL)
-			continue;
-		p = strchr(p, '0');
-		KASSERT(p != NULL);
-		*p = '0' + index;
-		return;
-	}
-}
-
-void
-cn30xxgmx_debug_reset(void)
-{
-	int i;
-
-	for (i = 0; i < 3; i++)
-		cn30xxgmx_link_enable(__cn30xxgmx_port_softc[i], 0);
-	for (i = 0; i < 3; i++)
-		cn30xxgmx_link_enable(__cn30xxgmx_port_softc[i], 1);
-}
-#endif

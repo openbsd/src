@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.26 2013/04/29 17:06:20 matthew Exp $	*/
+/*	$OpenBSD: signal.h,v 1.29 2018/04/18 16:05:20 deraadt Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -180,8 +180,12 @@ typedef struct sigaltstack {
 } stack_t;
 #define SS_ONSTACK	0x0001	/* take signals on alternate stack */
 #define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
-#define	MINSIGSTKSZ	8192			/* minimum allowable stack */
-#define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
+#define	MINSIGSTKSZ	(3U << _MAX_PAGE_SHIFT) /* minimum allowable stack */
+#if _MAX_PAGE_SHIFT < 14			/* recommended stack size */
+#define	SIGSTKSZ	(MINSIGSTKSZ + (1U << _MAX_PAGE_SHIFT) * 4)
+#else
+#define	SIGSTKSZ	(MINSIGSTKSZ + (1U << _MAX_PAGE_SHIFT) * 2)
+#endif
 
 typedef struct sigcontext ucontext_t;
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */

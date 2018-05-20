@@ -1825,6 +1825,7 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
     case SHT_FINI_ARRAY:	/* .fini_array section.  */
     case SHT_PREINIT_ARRAY:	/* .preinit_array section.  */
     case SHT_GNU_LIBLIST:	/* .gnu.liblist section.  */
+    case SHT_GNU_HASH:		/* .gnu.hash section.  */
       return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
 
     case SHT_DYNAMIC:	/* Dynamic linking information.  */
@@ -2264,6 +2265,7 @@ static const struct bfd_elf_special_section special_sections_g[] =
   { ".gnu.version_r", 14,  0, SHT_GNU_verneed, 0 },
   { ".gnu.liblist",   12,  0, SHT_GNU_LIBLIST, SHF_ALLOC },
   { ".gnu.conflict",  13,  0, SHT_RELA,     SHF_ALLOC },
+  { ".gnu.hash",       9,  0, SHT_GNU_HASH, SHF_ALLOC },
   { NULL,              0,  0, 0,            0 }
 };
 
@@ -2785,6 +2787,10 @@ elf_fake_sections (bfd *abfd, asection *asect, void *failedptrarg)
     case SHT_GROUP:
       this_hdr->sh_entsize = 4;
       break;
+
+    case SHT_GNU_HASH:
+      this_hdr->sh_entsize = bed->s->arch_size == 64 ? 0 : 4;
+      break;
     }
 
   if ((asect->flags & SEC_ALLOC) != 0)
@@ -3230,6 +3236,7 @@ assign_section_numbers (bfd *abfd, struct bfd_link_info *link_info)
 	  break;
 
 	case SHT_HASH:
+	case SHT_GNU_HASH:
 	case SHT_GNU_versym:
 	  /* sh_link is the section header index of the symbol table
 	     this hash table or version table is for.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.38 2016/08/23 23:28:02 tedu Exp $	*/
+/*	$OpenBSD: file.h,v 1.45 2018/05/09 08:42:02 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -32,10 +32,12 @@
  *	@(#)file.h	8.2 (Berkeley) 8/20/94
  */
 
+#ifndef _KERNEL
 #include <sys/fcntl.h>
 
-#ifdef _KERNEL
+#else /* _KERNEL */
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 struct proc;
 struct uio;
@@ -60,26 +62,32 @@ struct	fileops {
 /*
  * Kernel descriptor table.
  * One entry for each open kernel vnode and socket.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	f	per file `f_mtx'
+ *	k	kernel lock
  */
 struct file {
-	LIST_ENTRY(file) f_list;/* list of active files */
-	short	f_flag;		/* see fcntl.h */
+	LIST_ENTRY(file) f_list;/* [k] list of active files */
+	struct mutex f_mtx;
+	short	f_flag;		/* [k] see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
-	short	f_type;		/* descriptor type */
-	long	f_count;	/* reference count */
-	struct	ucred *f_cred;	/* credentials associated with descriptor */
-	struct	fileops *f_ops;
-	off_t	f_offset;
-	void 	*f_data;	/* private data */
-	int	f_iflags;	/* internal flags */
-	u_int64_t f_rxfer;	/* total number of read transfers */
-	u_int64_t f_wxfer;	/* total number of write transfers */
-	u_int64_t f_seek;	/* total independent seek operations */
-	u_int64_t f_rbytes;	/* total bytes read */
-	u_int64_t f_wbytes;	/* total bytes written */
+	short	f_type;		/* [I] descriptor type */
+	long	f_count;	/* [k] reference count */
+	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
+	struct	fileops *f_ops; /* [I] file operation pointers */
+	off_t	f_offset;	/* [k] */
+	void 	*f_data;	/* [k] private data */
+	int	f_iflags;	/* [k] internal flags */
+	uint64_t f_rxfer;	/* [f] total number of read transfers */
+	uint64_t f_wxfer;	/* [f] total number of write transfers */
+	uint64_t f_seek;	/* [f] total independent seek operations */
+	uint64_t f_rbytes;	/* [f] total bytes read */
+	uint64_t f_wbytes;	/* [f] total bytes written */
 };
 
 #define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */
@@ -88,7 +96,12 @@ struct file {
 #define FILE_IS_USABLE(fp) \
 	(((fp)->f_iflags & FIF_LARVAL) == 0)
 
-#define FREF(fp)	do { (fp)->f_count++; } while (0)
+#define FREF(fp) \
+	do { \
+		extern void vfs_stall_barrier(void); \
+		vfs_stall_barrier(); \
+		(fp)->f_count++; \
+	} while (0)
 #define FRELE(fp,p)	(--(fp)->f_count == 0 ? fdrop(fp, p) : 0)
 
 #define FILE_SET_MATURE(fp,p) do {				\
@@ -99,7 +112,6 @@ struct file {
 int	fdrop(struct file *, struct proc *);
 
 LIST_HEAD(filelist, file);
-extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int numfiles;			/* actual number of open files */
 extern struct fileops vnops;		/* vnode operations for files */

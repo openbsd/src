@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.2 1996/06/23 14:20:06 deraadt Exp $
+$OpenBSD: README,v 1.3 2018/01/09 00:43:10 bluhm Exp $
 $NetBSD: README,v 1.8 1995/03/21 09:05:18 cgd Exp $
 
 The files in this directory with suffixes `.t', `.d', `.r' and `.err' are
@@ -26,8 +26,8 @@ The POSIX requirement that an address range not be used where at most
 a single address is expected has been relaxed in this version of ed.
 Therefore, the  following scripts  which test for compliance with this
 POSIX rule exit abnormally:
-=-err.ed
 a1-err.ed
+eq-err.ed
 i1-err.ed
 k1-err.ed
 r1-err.ed

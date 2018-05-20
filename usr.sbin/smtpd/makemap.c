@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.67 2017/07/27 18:48:30 sunil Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.68 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <limits.h>
 #include <util.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.h,v 1.11 2016/09/02 10:01:36 goda Exp $	*/
+/*	$OpenBSD: brconfig.h,v 1.14 2018/02/10 05:55:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,8 @@ void bridge_addrs(const char *, int);
 void bridge_hellotime(const char *, int);
 void bridge_fwddelay(const char *, int);
 void bridge_maxage(const char *, int);
+void bridge_protect(const char *, const char *);
+void bridge_unprotect(const char *, int);
 void bridge_proto(const char *, int);
 void bridge_ifprio(const char *, const char *);
 void bridge_ifcost(const char *, const char *);
@@ -70,10 +72,10 @@ void switch_datapathid(const char *, int);
 void switch_portno(const char *, const char *);
 
 #define	IFFBITS								\
-	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
+	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6STATICARP" \
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"	\
-	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6"
+	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"
 
 void printb(char *, unsigned int, unsigned char *);
 

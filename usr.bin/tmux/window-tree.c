@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.17 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.30 2018/04/10 10:48:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,8 +44,10 @@ static void		 window_tree_key(struct window_pane *,
 			"#{?#{==:#{window_panes},1}, \"#{pane_title}\",}" \
 		"," \
 			"#{session_windows} windows" \
-			"#{?session_grouped, (group ,}" \
-	    		"#{session_group}#{?session_grouped,),}" \
+			"#{?session_grouped, " \
+				"(group #{session_group}: " \
+				"#{session_group_list})," \
+			"}" \
 			"#{?session_attached, (attached),}" \
 		"}" \
 	"}"
@@ -91,17 +94,23 @@ struct window_tree_modedata {
 	struct mode_tree_data		 *data;
 	char				 *format;
 	char				 *command;
+	int				  squash_groups;
 
 	struct window_tree_itemdata	**item_list;
 	u_int				  item_size;
 
-	struct client			 *client;
 	const char			 *entered;
 
 	struct cmd_find_state		  fs;
 	enum window_tree_type		  type;
 
 	int				  offset;
+
+	int				  left;
+	int				  right;
+	u_int				  start;
+	u_int				  end;
+	u_int				  each;
 };
 
 static void
@@ -288,7 +297,8 @@ window_tree_build_window(struct session *s, struct winlink *wl, void* modedata,
 	free(text);
 	free(name);
 
-	wp = TAILQ_FIRST(&wl->window->panes);
+	if ((wp = TAILQ_FIRST(&wl->window->panes)) == NULL)
+		goto empty;
 	if (TAILQ_NEXT(wp, entry) == NULL) {
 		if (!window_tree_filter_pane(s, wl, wp, filter))
 			goto empty;
@@ -395,7 +405,10 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 {
 	struct window_tree_modedata	*data = modedata;
 	struct session			*s, **l;
+	struct session_group		*sg, *current;
 	u_int				 n, i;
+
+	current = session_group_contains(data->fs.s);
 
 	for (i = 0; i < data->item_size; i++)
 		window_tree_free_item(data->item_list[i]);
@@ -406,6 +419,12 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 	l = NULL;
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {
+		if (data->squash_groups &&
+		    (sg = session_group_contains(s)) != NULL) {
+			if ((sg == current && s != data->fs.s) ||
+			    (sg != current && s != TAILQ_FIRST(&sg->sessions)))
+				continue;
+		}
 		l = xreallocarray(l, n + 1, sizeof *l);
 		l[n++] = s;
 	}
@@ -434,9 +453,34 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 		*tag = (uint64_t)data->fs.wl;
 		break;
 	case WINDOW_TREE_PANE:
-		*tag = (uint64_t)data->fs.wp;
+		if (window_count_panes(data->fs.wl->window) == 1)
+			*tag = (uint64_t)data->fs.wl;
+		else
+			*tag = (uint64_t)data->fs.wp;
 		break;
 	}
+}
+
+
+static void
+window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,
+    u_int sx, u_int sy, const struct grid_cell *gc, const char *label)
+{
+	size_t	 len;
+	u_int	 ox, oy;
+
+	len = strlen(label);
+	if (sx == 0 || sy == 1 || len > sx)
+		return;
+	ox = (sx - len + 1) / 2;
+	oy = (sy + 1) / 2;
+
+	if (ox > 1 && ox + len < sx - 1 && sy >= 3) {
+		screen_write_cursormove(ctx, px + ox - 1, py + oy - 1);
+		screen_write_box(ctx, len + 2, 3);
+	}
+	screen_write_cursormove(ctx, px + ox, py + oy);
+	screen_write_puts(ctx, gc, "%s", label);
 }
 
 static void
@@ -446,12 +490,12 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 	struct options		*oo = s->options;
 	struct winlink		*wl;
 	struct window		*w;
+	u_int			 cx = ctx->s->cx, cy = ctx->s->cy;
 	u_int			 loop, total, visible, each, width, offset;
 	u_int			 current, start, end, remaining, i;
 	struct grid_cell	 gc;
 	int			 colour, active_colour, left, right;
 	char			*label;
-	size_t			 len;
 
 	total = winlink_count(&s->windows);
 
@@ -509,17 +553,25 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		return;
 
 	if (left) {
-		screen_write_cursormove(ctx, 2, 0);
+		data->left = cx + 2;
+		screen_write_cursormove(ctx, cx + 2, cy);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, 0, sy / 2);
+		screen_write_cursormove(ctx, cx, cy + sy / 2);
 		screen_write_puts(ctx, &grid_default_cell, "<");
-	}
+	} else
+		data->left = -1;
 	if (right) {
-		screen_write_cursormove(ctx, sx - 3, 0);
+		data->right = cx + sx - 3;
+		screen_write_cursormove(ctx, cx + sx - 3, cy);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, sx - 1, sy / 2);
+		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2);
 		screen_write_puts(ctx, &grid_default_cell, ">");
-	}
+	} else
+		data->right = -1;
+
+	data->start = start;
+	data->end = end;
+	data->each = each;
 
 	i = loop = 0;
 	RB_FOREACH(wl, winlinks, &s->windows) {
@@ -545,20 +597,18 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		else
 			width = each - 1;
 
-		screen_write_cursormove(ctx, offset, 0);
+		screen_write_cursormove(ctx, cx + offset, cy);
 		screen_write_preview(ctx, &w->active->base, width, sy);
 
 		xasprintf(&label, " %u:%s ", wl->idx, w->name);
 		if (strlen(label) > width)
 			xasprintf(&label, " %u ", wl->idx);
-		len = strlen(label) / 2;
-		screen_write_cursormove(ctx, offset + (each / 2) - len, sy / 2);
-		if (len < width)
-			screen_write_puts(ctx, &gc, "%s", label);
+		window_tree_draw_label(ctx, cx + offset, cy, width, sy, &gc,
+		    label);
 		free(label);
 
 		if (loop != end - 1) {
-			screen_write_cursormove(ctx, offset + width, 0);
+			screen_write_cursormove(ctx, cx + offset + width, cy);
 			screen_write_vline(ctx, sy, 0, 0);
 		}
 		loop++;
@@ -573,12 +623,12 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 {
 	struct options		*oo = s->options;
 	struct window_pane	*wp;
+	u_int			 cx = ctx->s->cx, cy = ctx->s->cy;
 	u_int			 loop, total, visible, each, width, offset;
 	u_int			 current, start, end, remaining, i;
 	struct grid_cell	 gc;
-	int			 colour, active_colour, left, right;
+	int			 colour, active_colour, left, right, pane_idx;
 	char			*label;
-	size_t			 len;
 
 	total = window_count_panes(w);
 
@@ -636,17 +686,25 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 		return;
 
 	if (left) {
-		screen_write_cursormove(ctx, 2, 0);
+		data->left = cx + 2;
+		screen_write_cursormove(ctx, cx + 2, cy);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, 0, sy / 2);
+		screen_write_cursormove(ctx, cx, cy + sy / 2);
 		screen_write_puts(ctx, &grid_default_cell, "<");
-	}
+	} else
+		data->left = -1;
 	if (right) {
-		screen_write_cursormove(ctx, sx - 3, 0);
+		data->right = cx + sx - 3;
+		screen_write_cursormove(ctx, cx + sx - 3, cy);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, sx - 1, sy / 2);
+		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2);
 		screen_write_puts(ctx, &grid_default_cell, ">");
-	}
+	} else
+		data->right = -1;
+
+	data->start = start;
+	data->end = end;
+	data->each = each;
 
 	i = loop = 0;
 	TAILQ_FOREACH(wp, &w->panes, entry) {
@@ -671,18 +729,18 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 		else
 			width = each - 1;
 
-		screen_write_cursormove(ctx, offset, 0);
+		screen_write_cursormove(ctx, cx + offset, cy);
 		screen_write_preview(ctx, &wp->base, width, sy);
 
-		xasprintf(&label, " %u ", loop);
-		len = strlen(label) / 2;
-		screen_write_cursormove(ctx, offset + (each / 2) - len, sy / 2);
-		if (len < width)
-			screen_write_puts(ctx, &gc, "%s", label);
+		if (window_pane_index(wp, &pane_idx) != 0)
+			pane_idx = loop;
+		xasprintf(&label, " %u ", pane_idx);
+		window_tree_draw_label(ctx, cx + offset, cy, each, sy, &gc,
+		    label);
 		free(label);
 
 		if (loop != end - 1) {
-			screen_write_cursormove(ctx, offset + width, 0);
+			screen_write_cursormove(ctx, cx + offset + width, cy);
 			screen_write_vline(ctx, sy, 0, 0);
 		}
 		loop++;
@@ -691,39 +749,32 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 	}
 }
 
-static struct screen *
-window_tree_draw(void *modedata, void *itemdata, u_int sx, u_int sy)
+static void
+window_tree_draw(void *modedata, void *itemdata, struct screen_write_ctx *ctx,
+    u_int sx, u_int sy)
 {
 	struct window_tree_itemdata	*item = itemdata;
 	struct session			*sp;
 	struct winlink			*wlp;
 	struct window_pane		*wp;
-	static struct screen		 s;
-	struct screen_write_ctx		 ctx;
 
 	window_tree_pull_item(item, &sp, &wlp, &wp);
 	if (wp == NULL)
-		return (NULL);
-
-	screen_init(&s, sx, sy, 0);
-	screen_write_start(&ctx, NULL, &s);
+		return;
 
 	switch (item->type) {
 	case WINDOW_TREE_NONE:
-		return (0);
+		break;
 	case WINDOW_TREE_SESSION:
-		window_tree_draw_session(modedata, sp, &ctx, sx, sy);
+		window_tree_draw_session(modedata, sp, ctx, sx, sy);
 		break;
 	case WINDOW_TREE_WINDOW:
-		window_tree_draw_window(modedata, sp, wlp->window, &ctx, sx, sy);
+		window_tree_draw_window(modedata, sp, wlp->window, ctx, sx, sy);
 		break;
 	case WINDOW_TREE_PANE:
-		screen_write_preview(&ctx, &wp->base, sx, sy);
+		screen_write_preview(ctx, &wp->base, sx, sy);
 		break;
 	}
-
-	screen_write_stop(&ctx);
-	return (&s);
 }
 
 static int
@@ -787,10 +838,12 @@ window_tree_init(struct window_pane *wp, struct cmd_find_state *fs,
 		data->command = xstrdup(WINDOW_TREE_DEFAULT_COMMAND);
 	else
 		data->command = xstrdup(args->argv[0]);
+	data->squash_groups = !args_has(args, 'G');
 
 	data->data = mode_tree_start(wp, args, window_tree_build,
 	    window_tree_draw, window_tree_search, data, window_tree_sort_list,
 	    nitems(window_tree_sort_list), &s);
+	mode_tree_zoom(data->data, args);
 
 	mode_tree_build(data->data);
 	mode_tree_draw(data->data);
@@ -807,8 +860,6 @@ window_tree_destroy(struct window_tree_modedata *data)
 
 	if (--data->references != 0)
 		return;
-
-	mode_tree_free(data->data);
 
 	for (i = 0; i < data->item_size; i++)
 		window_tree_free_item(data->item_list[i]);
@@ -829,6 +880,7 @@ window_tree_free(struct window_pane *wp)
 		return;
 
 	data->dead = 1;
+	mode_tree_free(data->data);
 	window_tree_destroy(data);
 }
 
@@ -879,7 +931,8 @@ window_tree_get_target(struct window_tree_itemdata *item,
 }
 
 static void
-window_tree_command_each(void* modedata, void* itemdata, __unused key_code key)
+window_tree_command_each(void* modedata, void* itemdata, struct client *c,
+    __unused key_code key)
 {
 	struct window_tree_modedata	*data = modedata;
 	struct window_tree_itemdata	*item = itemdata;
@@ -888,7 +941,7 @@ window_tree_command_each(void* modedata, void* itemdata, __unused key_code key)
 
 	name = window_tree_get_target(item, &fs);
 	if (name != NULL)
-		mode_tree_run_command(data->client, &fs, data->entered, name);
+		mode_tree_run_command(c, &fs, data->entered, name);
 	free(name);
 }
 
@@ -912,16 +965,12 @@ window_tree_command_callback(struct client *c, void *modedata, const char *s,
 {
 	struct window_tree_modedata	*data = modedata;
 
-	if (data->dead)
+	if (s == NULL || *s == '\0' || data->dead)
 		return (0);
 
-	data->client = c;
 	data->entered = s;
-
-	mode_tree_each_tagged(data->data, window_tree_command_each, KEYC_NONE,
-	    1);
-
-	data->client = NULL;
+	mode_tree_each_tagged(data->data, window_tree_command_each, c,
+	    KEYC_NONE, 1);
 	data->entered = NULL;
 
 	data->references++;
@@ -939,26 +988,205 @@ window_tree_command_free(void *modedata)
 }
 
 static void
+window_tree_kill_each(__unused void* modedata, void* itemdata,
+    __unused struct client *c, __unused key_code key)
+{
+	struct window_tree_itemdata	*item = itemdata;
+	struct session			*s;
+	struct winlink			*wl;
+	struct window_pane		*wp;
+
+	window_tree_pull_item(item, &s, &wl, &wp);
+
+	switch (item->type) {
+	case WINDOW_TREE_NONE:
+		break;
+	case WINDOW_TREE_SESSION:
+		if (s != NULL) {
+			server_destroy_session(s);
+			session_destroy(s, __func__);
+		}
+		break;
+	case WINDOW_TREE_WINDOW:
+		if (wl != NULL)
+			server_kill_window(wl->window);
+		break;
+	case WINDOW_TREE_PANE:
+		if (wp != NULL)
+			server_kill_pane(wp);
+		break;
+	}
+}
+
+static int
+window_tree_kill_current_callback(struct client *c, void *modedata,
+    const char *s, __unused int done)
+{
+	struct window_tree_modedata	*data = modedata;
+	struct mode_tree_data		*mtd = data->data;
+
+	if (s == NULL || *s == '\0' || data->dead)
+		return (0);
+	if (tolower((u_char) s[0]) != 'y' || s[1] != '\0')
+		return (0);
+
+	window_tree_kill_each(data, mode_tree_get_current(mtd), c, KEYC_NONE);
+
+	data->references++;
+	cmdq_append(c, cmdq_get_callback(window_tree_command_done, data));
+
+	return (0);
+}
+
+static int
+window_tree_kill_tagged_callback(struct client *c, void *modedata,
+    const char *s, __unused int done)
+{
+	struct window_tree_modedata	*data = modedata;
+	struct mode_tree_data		*mtd = data->data;
+
+	if (s == NULL || *s == '\0' || data->dead)
+		return (0);
+	if (tolower((u_char) s[0]) != 'y' || s[1] != '\0')
+		return (0);
+
+	mode_tree_each_tagged(mtd, window_tree_kill_each, c, KEYC_NONE, 1);
+
+	data->references++;
+	cmdq_append(c, cmdq_get_callback(window_tree_command_done, data));
+
+	return (0);
+}
+
+static key_code
+window_tree_mouse(struct window_tree_modedata *data, key_code key, u_int x,
+    struct window_tree_itemdata *item)
+{
+	struct session		*s;
+	struct winlink		*wl;
+	struct window_pane	*wp;
+	u_int			 loop;
+
+	if (key != KEYC_MOUSEDOWN1_PANE)
+		return (KEYC_NONE);
+
+	if (data->left != -1 && x <= (u_int)data->left)
+		return ('<');
+	if (data->right != -1 && x >= (u_int)data->right)
+		return ('>');
+
+	if (data->left != -1)
+		x -= data->left;
+	else if (x != 0)
+		x--;
+	if (x == 0 || data->end == 0)
+		x = 0;
+	else {
+		x = x / data->each;
+		if (data->start + x >= data->end)
+			x = data->end - 1;
+	}
+
+	window_tree_pull_item(item, &s, &wl, &wp);
+	if (item->type == WINDOW_TREE_SESSION) {
+		if (s == NULL)
+			return (KEYC_NONE);
+		mode_tree_expand_current(data->data);
+		loop = 0;
+		RB_FOREACH(wl, winlinks, &s->windows) {
+			if (loop == data->start + x)
+				break;
+			loop++;
+		}
+		if (wl != NULL)
+			mode_tree_set_current(data->data, (uint64_t)wl);
+		return ('\r');
+	}
+	if (item->type == WINDOW_TREE_WINDOW) {
+		if (wl == NULL)
+			return (KEYC_NONE);
+		mode_tree_expand_current(data->data);
+		loop = 0;
+		TAILQ_FOREACH(wp, &wl->window->panes, entry) {
+			if (loop == data->start + x)
+				break;
+			loop++;
+		}
+		if (wp != NULL)
+			mode_tree_set_current(data->data, (uint64_t)wp);
+		return ('\r');
+	}
+	return (KEYC_NONE);
+}
+
+static void
 window_tree_key(struct window_pane *wp, struct client *c,
     __unused struct session *s, key_code key, struct mouse_event *m)
 {
 	struct window_tree_modedata	*data = wp->modedata;
-	struct window_tree_itemdata	*item;
-	char				*command, *name, *prompt;
+	struct window_tree_itemdata	*item, *new_item;
+	char				*name, *prompt = NULL;
 	struct cmd_find_state		 fs;
 	int				 finished;
-	u_int				 tagged;
+	u_int				 tagged, x, y, idx;
+	struct session			*ns;
+	struct winlink			*nwl;
+	struct window_pane		*nwp;
 
 	item = mode_tree_get_current(data->data);
-	finished = mode_tree_key(data->data, c, &key, m);
-	if (item != mode_tree_get_current(data->data))
+	finished = mode_tree_key(data->data, c, &key, m, &x, &y);
+	if (item != (new_item = mode_tree_get_current(data->data))) {
+		item = new_item;
 		data->offset = 0;
+	}
+	if (KEYC_IS_MOUSE(key))
+		key = window_tree_mouse(data, key, x, item);
 	switch (key) {
 	case '<':
 		data->offset--;
 		break;
 	case '>':
 		data->offset++;
+		break;
+	case 'x':
+		window_tree_pull_item(item, &ns, &nwl, &nwp);
+		switch (item->type) {
+		case WINDOW_TREE_NONE:
+			break;
+		case WINDOW_TREE_SESSION:
+			if (ns == NULL)
+				break;
+			xasprintf(&prompt, "Kill session %s? ", ns->name);
+			break;
+		case WINDOW_TREE_WINDOW:
+			if (nwl == NULL)
+				break;
+			xasprintf(&prompt, "Kill window %u? ", nwl->idx);
+			break;
+		case WINDOW_TREE_PANE:
+			if (nwp == NULL || window_pane_index(nwp, &idx) != 0)
+				break;
+			xasprintf(&prompt, "Kill pane %u? ", idx);
+			break;
+		}
+		if (prompt == NULL)
+			break;
+		data->references++;
+		status_prompt_set(c, prompt, "",
+		    window_tree_kill_current_callback, window_tree_command_free,
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		free(prompt);
+		break;
+	case 'X':
+		tagged = mode_tree_count_tagged(data->data);
+		if (tagged == 0)
+			break;
+		xasprintf(&prompt, "Kill %u tagged? ", tagged);
+		data->references++;
+		status_prompt_set(c, prompt, "",
+		    window_tree_kill_tagged_callback, window_tree_command_free,
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		free(prompt);
 		break;
 	case ':':
 		tagged = mode_tree_count_tagged(data->data);
@@ -973,14 +1201,12 @@ window_tree_key(struct window_pane *wp, struct client *c,
 		break;
 	case '\r':
 		item = mode_tree_get_current(data->data);
-		command = xstrdup(data->command);
 		name = window_tree_get_target(item, &fs);
-		window_pane_reset_mode(wp);
 		if (name != NULL)
-			mode_tree_run_command(c, NULL, command, name);
+			mode_tree_run_command(c, NULL, data->command, name);
+		finished = 1;
 		free(name);
-		free(command);
-		return;
+		break;
 	}
 	if (finished)
 		window_pane_reset_mode(wp);

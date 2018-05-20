@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.44 2017/07/18 16:43:27 tb Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.45 2017/11/05 10:29:24 rpe Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -524,11 +524,11 @@ emitload(FILE *fp)
 		if (fprintf(fp, "update-link:\n") < 0)
 			return (1);
 		if (fprintf(fp,
-		    "\tmkdir -p -m 700 /usr/share/compile\n"
-		    "\trm -rf /usr/share/compile/%s /usr/share/compile.tgz\n"
-		    "\tmkdir /usr/share/compile/%s\n"
+		    "\tmkdir -p -m 700 /usr/share/relink/kernel\n"
+		    "\trm -rf /usr/share/relink/kernel/%s /usr/share/relink/kernel.tgz\n"
+		    "\tmkdir /usr/share/relink/kernel/%s\n"
 		    "\ttar -chf - Makefile makegap.sh ld.script *.o | \\\n"
-		    "\t    tar -C /usr/share/compile/%s -xf -\n\n",
+		    "\t    tar -C /usr/share/relink/kernel/%s -xf -\n\n",
 		    last_component, last_component, last_component) < 0)
 			return (1);
 	}

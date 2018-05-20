@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile,v 1.13 2017/07/10 14:09:59 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2018/01/08 15:37:24 markus Exp $
 
 .PATH:		${.CURDIR}/..
+
+SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
+SRCS+=	atomicio.c cleanup.c fatal.c progressmeter.c utf8.c
+SRCS+=	${SRCS_BASE}
 
 PROG=	sftp
 BINOWN=	root
@@ -8,8 +12,6 @@ BINOWN=	root
 BINMODE?=555
 
 BINDIR=	/usr/bin
-
-SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
 
 .include <bsd.prog.mk>
 

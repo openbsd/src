@@ -1,23 +1,22 @@
-#	$OpenBSD: Makefile,v 1.90 2016/09/28 16:33:07 djm Exp $
+#	$OpenBSD: Makefile,v 1.95 2018/01/08 15:37:38 markus Exp $
 
 .PATH:		${.CURDIR}/..
-.include "${.CURDIR}/../Makefile.inc"
+
+SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
+	serverloop.c auth.c auth2.c auth-options.c session.c auth2-chall.c \
+	groupaccess.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
+	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
+	sftp-server.c sftp-common.c sandbox-pledge.c
+SRCS+=	atomicio.c authfd.c bufaux.c buffer.c compat.c dns.c fatal.c \
+	hostfile.c key.c msg.c readpass.c utf8.c
+SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
+	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
 PROG=	sshd
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
-
-SRCS=	sshd.c auth-rhosts.c auth-passwd.c \
-	sshpty.c sshlogin.c servconf.c serverloop.c \
-	auth.c auth2.c auth-options.c session.c \
-	auth2-chall.c groupaccess.c \
-	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
-	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor.c monitor_wrap.c \
-	sftp-server.c sftp-common.c \
-	sandbox-pledge.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
 
@@ -37,9 +36,9 @@ DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
 .if (${OPENSSL:L} == "yes")
-LDADD+=	-lcrypto -lutil
-DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
 .endif
 
-LDADD+=	-lz
-DPADD+=	${LIBZ}
+LDADD+=	-lutil -lz
+DPADD+=	${LIBUTIL} ${LIBZ}

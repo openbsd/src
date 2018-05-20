@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.34 2017/03/23 05:29:48 jsg Exp $	*/
+/*	$OpenBSD: iked.c,v 1.36 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -109,6 +109,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
@@ -245,6 +250,7 @@ parent_configure(struct iked *env)
 	if (pledge("stdio rpath proc dns inet route sendfd", NULL) == -1)
 		fatal("pledge");
 
+	config_setmobike(env);
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setmode(env, env->sc_passive ? 1 : 0);
 	config_setocsp(env);
@@ -275,6 +281,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		/* Re-compile policies and skip steps */
 		config_setcompile(env, PROC_IKEV2);
 
+		config_setmobike(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setmode(env, env->sc_passive ? 1 : 0);
 		config_setocsp(env);

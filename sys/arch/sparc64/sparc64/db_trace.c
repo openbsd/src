@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2017/11/03 11:29:47 jasper Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -127,10 +127,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 #endif
 
 		db_find_sym_and_offset(pc, &name, &offset);
-		if (name == NULL)
-			name = "?";
 
-		(*pr)("%s(", name);
+		if (name == NULL)
+			(*pr)("%lx(", pc);
+		else
+			(*pr)("%s(", name);
 
 		if ((frame & 1) == 0) {
 			db_printf(")\nWARNING: corrupt frame at %lx\n", frame);

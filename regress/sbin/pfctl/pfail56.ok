@@ -1,1 +1,1 @@
-stdin:1: address family mismatch for divert
+stdin:1: divert-to address family mismatch

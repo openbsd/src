@@ -339,6 +339,7 @@ update_cache(struct module_qstate *qstate, int id)
 			return;
 		}
 		lru_entry = &mrep_entry->entry;
+		lock_rw_wrlock(&lru_entry->lock);
 		lru_entry->data = calloc(1,
 			sizeof(struct subnet_msg_cache_data));
 		if (!lru_entry->data) {
@@ -352,7 +353,9 @@ update_cache(struct module_qstate *qstate, int id)
 		log_err("Subnet cache insertion failed");
 		return;
 	}
+	lock_quick_lock(&sne->alloc.lock);
 	rep = reply_info_copy(qstate->return_msg->rep, &sne->alloc, NULL);
+	lock_quick_unlock(&sne->alloc.lock);
 	if (!rep) {
 		if (acquired_lock) lock_rw_unlock(&lru_entry->lock);
 		log_err("Subnet cache insertion failed");
@@ -374,6 +377,7 @@ update_cache(struct module_qstate *qstate, int id)
 	if (acquired_lock) {
 		lock_rw_unlock(&lru_entry->lock);
 	} else {
+		lock_rw_unlock(&lru_entry->lock);
 		slabhash_insert(subnet_msg_cache, h, lru_entry, lru_entry->data,
 			NULL);
 	}
@@ -532,7 +536,7 @@ parse_subnet_option(struct edns_option* ecs_option, struct ecs_data* ecs)
 	ecs->subnet_addr_fam = sldns_read_uint16(ecs_option->opt_data);
 	ecs->subnet_source_mask = ecs_option->opt_data[2];
 	ecs->subnet_scope_mask = ecs_option->opt_data[3];
-	/* remaing bytes indicate address */
+	/* remaining bytes indicate address */
 	
 	/* validate input*/
 	/* option length matches calculated length? */
@@ -602,7 +606,7 @@ ecs_query_response(struct module_qstate* qstate, struct dns_msg* response,
 
 	if(sq->subnet_sent &&
 		FLAGS_GET_RCODE(response->rep->flags) == LDNS_RCODE_REFUSED) {
-		/* REFUSED reponse to ECS query, remove ECS option. */
+		/* REFUSED response to ECS query, remove ECS option. */
 		edns_opt_list_remove(&qstate->edns_opts_back_out,
 			qstate->env->cfg->client_subnet_opcode);
 		sq->subnet_sent = 0;
@@ -628,7 +632,7 @@ ecs_edns_back_parsed(struct module_qstate* qstate, int id,
 			sq->ecs_server_in.subnet_validdata)
 			/* Only skip global cache store if we sent an ECS option
 			 * and received one back. Answers from non-whitelisted
-			 * servers will end up in global cache. Ansers for
+			 * servers will end up in global cache. Answers for
 			 * queries with 0 source will not (unless nameserver
 			 * does not support ECS). */
 			qstate->no_cache_store = 1;
@@ -722,6 +726,7 @@ subnetmod_operate(struct module_qstate *qstate, enum module_ev event,
 		sq->ecs_server_out.subnet_scope_mask = 0;
 		sq->ecs_server_out.subnet_validdata = 1;
 		if(sq->ecs_server_out.subnet_source_mask != 0 &&
+			qstate->env->cfg->client_subnet_always_forward &&
 			sq->subnet_downstream)
 			/* ECS specific data required, do not look at the global
 			 * cache in other modules. */

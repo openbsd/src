@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.90 2017/01/21 12:21:57 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.93 2018/04/10 11:09:14 sthen Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -318,10 +318,10 @@ fstat_header(void)
 {
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV      INUM       MODE   R/W    SZ|DV");
+"USER     CMD          PID   FD  DEV      INUM        MODE   R/W    SZ|DV");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT        INUM MODE         R/W    SZ|DV");
+"USER     CMD          PID   FD MOUNT        INUM  MODE         R/W    SZ|DV");
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
@@ -452,6 +452,8 @@ vtrans(struct kinfo_file *kf)
 		strlcat(rwep, "w", sizeof rwep);
 	if (kf->fd_ofileflags & UF_EXCLOSE)
 		strlcat(rwep, "e", sizeof rwep);
+	if (kf->fd_ofileflags & UF_PLEDGED)
+		strlcat(rwep, "p", sizeof rwep);
 	printf(" %4s", rwep);
 	switch (kf->v_type) {
 	case VBLK:
@@ -738,11 +740,15 @@ socktrans(struct kinfo_file *kf)
 		printf("* internet %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet_details(kf);
+		if (kf->inp_rtableid)
+			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_INET6:
 		printf("* internet6 %s", stype);
 		getinetproto(kf->so_protocol);
 		print_inet6_details(kf);
+		if (kf->inp_rtableid)
+			printf(" rtable %u", kf->inp_rtableid);
 		break;
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */

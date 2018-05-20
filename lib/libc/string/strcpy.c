@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcpy.c,v 1.9 2014/06/10 04:17:37 deraadt Exp $	*/
+/*	$OpenBSD: strcpy.c,v 1.10 2017/11/28 06:55:49 tb Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -33,7 +33,7 @@
 
 #if defined(APIWARN)
 __warn_references(strcpy,
-    "warning: strcpy() is almost always misused, please use strlcpy()");
+    "strcpy() is almost always misused, please use strlcpy()");
 #endif
 
 char *

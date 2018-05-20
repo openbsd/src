@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.94 2017/07/03 09:21:09 kevlo Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.95 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1778,7 +1778,6 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rt2860_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -1795,17 +1794,6 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				rt2860_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211CHANNEL:

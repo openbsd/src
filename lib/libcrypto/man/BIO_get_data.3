@@ -1,0 +1,176 @@
+.\" $OpenBSD: BIO_get_data.3,v 1.3 2018/03/23 23:18:17 schwarze Exp $
+.\" selective merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
+.\"
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Matt Caswell <matt@openssl.org>.
+.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+.\"
+.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+.\"    endorse or promote products derived from this software without
+.\"    prior written permission. For written permission, please contact
+.\"    openssl-core@openssl.org.
+.\"
+.\" 5. Products derived from this software may not be called "OpenSSL"
+.\"    nor may "OpenSSL" appear in their names without prior written
+.\"    permission of the OpenSSL Project.
+.\"
+.\" 6. Redistributions of any form whatsoever must retain the following
+.\"    acknowledgment:
+.\"    "This product includes software developed by the OpenSSL Project
+.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+.\" OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: March 23 2018 $
+.Dt BIO_GET_DATA 3
+.Os
+.Sh NAME
+.Nm BIO_set_data ,
+.Nm BIO_get_data ,
+.Nm BIO_set_init ,
+.Nm BIO_set_shutdown ,
+.Nm BIO_get_shutdown
+.Nd manage BIO state information
+.Sh SYNOPSIS
+.In openssl/bio.h
+.Ft void
+.Fo BIO_set_data
+.Fa "BIO *a"
+.Fa "void *ptr"
+.Fc
+.Ft void *
+.Fo BIO_get_data
+.Fa "BIO *a"
+.Fc
+.Ft void
+.Fo BIO_set_init
+.Fa "BIO *a"
+.Fa "int init"
+.Fc
+.Ft void
+.Fo BIO_set_shutdown
+.Fa "BIO *a"
+.Fa "int shutdown"
+.Fc
+.Ft int
+.Fo BIO_get_shutdown
+.Fa "BIO *a"
+.Fc
+.Sh DESCRIPTION
+These functions are mainly useful when implementing a custom BIO.
+.Pp
+The
+.Fn BIO_set_data
+function associates the custom data pointed to by
+.Fa ptr
+with the
+.Fa "BIO a" .
+This data can subsequently be retrieved via a call to
+.Fn BIO_get_data .
+This can be used by custom BIOs for storing implementation specific
+information.
+.Pp
+The
+.Fn BIO_set_init
+function sets the
+.Fa init
+flag in
+.Fa a
+to the specified value.
+A non-zero value indicates that initialisation is complete,
+whilst zero indicates that it is not.
+Often initialisation will complete
+during initial construction of the BIO.
+For some BIOs however, initialisation may not be complete until
+additional steps have been taken, for example through calling custom
+ctrls.
+.Pp
+The
+.Fn BIO_set_shutdown
+and
+.Fn BIO_get_shutdown
+functions are low-level interfaces to forcefully set and get the
+.Fa shutdown
+flag of
+.Fa a ,
+circumventing type-dependent sanity checks,
+exclusively intended for implementing a new BIO type.
+The
+.Fa shutdown
+argument must be either
+.Dv BIO_CLOSE
+or
+.Dv BIO_NOCLOSE .
+When merely using a
+.Vt BIO
+object, call
+.Xr BIO_set_close 3
+and
+.Xr BIO_get_close 3
+instead.
+.Sh RETURN VALUES
+.Fn BIO_get_data
+returns a pointer to the implementation specific custom data associated
+with
+.Fa a ,
+or
+.Dv NULL
+if none is set.
+.Pp
+.Fn BIO_get_shutdown
+returns the value previously set with
+.Fn BIO_set_shutdown
+or with
+.Xr BIO_set_close 3 .
+.Sh SEE ALSO
+.Xr BIO_meth_new 3 ,
+.Xr BIO_new 3 ,
+.Xr BIO_set_close 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.1.0
+and have been available since
+.Ox 6.3 .

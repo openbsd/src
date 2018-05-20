@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.79 2017/05/31 14:52:05 mikeb Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.88 2018/04/27 10:13:37 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -71,13 +71,13 @@ int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
 
 struct fileops kqueueops = {
-	kqueue_read,
-	kqueue_write,
-	kqueue_ioctl,
-	kqueue_poll,
-	kqueue_kqfilter,
-	kqueue_stat,
-	kqueue_close
+	.fo_read	= kqueue_read,
+	.fo_write	= kqueue_write,
+	.fo_ioctl	= kqueue_ioctl,
+	.fo_poll	= kqueue_poll,
+	.fo_kqfilter	= kqueue_kqfilter,
+	.fo_stat	= kqueue_stat,
+	.fo_close	= kqueue_close
 };
 
 void	knote_attach(struct knote *kn, struct filedesc *fdp);
@@ -137,6 +137,7 @@ struct filterops *sysfilt_ops[] = {
 	&proc_filtops,			/* EVFILT_PROC */
 	&sig_filtops,			/* EVFILT_SIGNAL */
 	&timer_filtops,			/* EVFILT_TIMER */
+	&file_filtops,			/* EVFILT_DEVICE */
 };
 
 void KQREF(struct kqueue *);
@@ -476,12 +477,15 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct timespec ts;
 	int i, n, nerrors, error;
+	struct kevent kev[KQ_NEVENTS];
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL ||
-	    (fp->f_type != DTYPE_KQUEUE))
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
-	FREF(fp);
+	if (fp->f_type != DTYPE_KQUEUE) {
+		error = EBADF;
+		goto done;
+	}
 
 	if (SCARG(uap, timeout) != NULL) {
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
@@ -500,16 +504,16 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	while (SCARG(uap, nchanges) > 0) {
 		n = SCARG(uap, nchanges) > KQ_NEVENTS ?
 		    KQ_NEVENTS : SCARG(uap, nchanges);
-		error = copyin(SCARG(uap, changelist), kq->kq_kev,
+		error = copyin(SCARG(uap, changelist), kev,
 		    n * sizeof(struct kevent));
 		if (error)
 			goto done;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrevent(p, kq->kq_kev, n);
+			ktrevent(p, kev, n);
 #endif
 		for (i = 0; i < n; i++) {
-			kevp = &kq->kq_kev[i];
+			kevp = &kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
 			error = kqueue_register(kq, kevp, p);
 			if (error || (kevp->flags & EV_RECEIPT)) {
@@ -578,7 +582,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			return (EBADF);
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
-		FREF(fp);
 
 		if (kev->ident < fdp->fd_knlistsize) {
 			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link) {
@@ -671,6 +674,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	if ((kev->flags & EV_ENABLE) && (kn->kn_status & KN_DISABLED)) {
 		s = splhigh();
 		kn->kn_status &= ~KN_DISABLED;
+		if (kn->kn_fop->f_event(kn, 0))
+			kn->kn_status |= KN_ACTIVE;
 		if ((kn->kn_status & KN_ACTIVE) &&
 		    ((kn->kn_status & KN_QUEUED) == 0))
 			knote_enqueue(kn);
@@ -691,6 +696,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	struct timeval atv, rtv, ttv;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
+	struct kevent kev[KQ_NEVENTS];
 
 	count = maxevents;
 	if (count == 0)
@@ -737,7 +743,7 @@ start:
 		goto done;
 	}
 
-	kevp = kq->kq_kev;
+	kevp = &kev[0];
 	s = splhigh();
 	if (kq->kq_count == 0) {
 		if (timeout < 0) {
@@ -760,22 +766,24 @@ start:
 	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe);
 	while (count) {
 		kn = TAILQ_FIRST(&kq->kq_head);
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		if (kn == &marker) {
+			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			splx(s);
 			if (count == maxevents)
 				goto retry;
 			goto done;
 		}
+
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kq->kq_count--;
+
 		if (kn->kn_status & KN_DISABLED) {
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
 		    kn->kn_fop->f_event(kn, 0) == 0) {
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 			continue;
 		}
 		*kevp = kn->kn_kevent;
@@ -783,7 +791,6 @@ start:
 		nkev++;
 		if (kn->kn_flags & EV_ONESHOT) {
 			kn->kn_status &= ~KN_QUEUED;
-			kq->kq_count--;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p, p->p_fd);
@@ -796,22 +803,22 @@ start:
 			if (kn->kn_flags & EV_DISPATCH)
 				kn->kn_status |= KN_DISABLED;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
-			kq->kq_count--;
 		} else {
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+			kq->kq_count++;
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
 			splx(s);
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_STRUCT))
-				ktrevent(p, kq->kq_kev, nkev);
+				ktrevent(p, kev, nkev);
 #endif
-			error = copyout(kq->kq_kev, ulistp,
+			error = copyout(kev, ulistp,
 			    sizeof(struct kevent) * nkev);
 			ulistp += nkev;
 			nkev = 0;
-			kevp = kq->kq_kev;
+			kevp = &kev[0];
 			s = splhigh();
 			if (error)
 				break;
@@ -823,9 +830,9 @@ done:
 	if (nkev != 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrevent(p, kq->kq_kev, nkev);
+			ktrevent(p, kev, nkev);
 #endif
-		error = copyout(kq->kq_kev, ulistp,
+		error = copyout(kev, ulistp,
 		    sizeof(struct kevent) * nkev);
 	}
 	*retval = maxevents - count;

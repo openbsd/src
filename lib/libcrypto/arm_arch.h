@@ -1,4 +1,4 @@
-/* $OpenBSD: arm_arch.h,v 1.7 2015/06/29 06:40:06 jsg Exp $ */
+/* $OpenBSD: arm_arch.h,v 1.8 2018/01/07 12:35:52 kettenis Exp $ */
 #ifndef __ARM_ARCH_H__
 #define __ARM_ARCH_H__
 
@@ -42,6 +42,10 @@
 extern unsigned int OPENSSL_armcap_P;
 
 #define ARMV7_NEON      (1<<0)
+#endif
+
+#if defined(__OpenBSD__)
+#define __STRICT_ALIGNMENT
 #endif
 
 #endif

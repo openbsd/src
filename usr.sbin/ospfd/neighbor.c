@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.47 2015/11/22 13:09:10 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.48 2018/02/09 02:14:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -597,18 +597,16 @@ nbr_act_delete(struct nbr *nbr)
 {
 	struct timeval	tv;
 
-	if (nbr == nbr->iface->self) {
-		nbr->dr.s_addr = 0;
-		nbr->bdr.s_addr = 0;
+	/* clear dr and bdr */
+	nbr->dr.s_addr = 0;
+	nbr->bdr.s_addr = 0;
+
+	if (nbr == nbr->iface->self)
 		return (0);
-	}
 
 	/* stop timers */
 	nbr_stop_itimer(nbr);
 
-	/* clear dr and bdr */
-	nbr->dr.s_addr = 0;
-	nbr->bdr.s_addr = 0;
 	/* XXX reset crypt_seq_num will allow replay attacks. */
 	nbr->crypt_seq_num = 0;
 

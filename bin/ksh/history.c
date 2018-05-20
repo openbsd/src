@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.71 2017/09/07 19:08:32 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.80 2018/01/15 22:30:38 jca Exp $	*/
 
 /*
  * command history
@@ -25,11 +25,9 @@
 
 #include "sh.h"
 
-#ifdef HISTORY
-
 static void	history_write(void);
 static FILE	*history_open(void);
-static int	history_load(Source *);
+static void	history_load(Source *);
 static void	history_close(void);
 
 static int	hist_execute(char *);
@@ -545,7 +543,7 @@ sethistcontrol(const char *str)
 void
 sethistsize(int n)
 {
-	if (n > 0 && n != histsize) {
+	if (n > 0 && (uint32_t)n != histsize) {
 		int offset = histptr - history;
 
 		/* save most recent history */
@@ -607,6 +605,7 @@ init_histvec(void)
 		 */
 		histbase = areallocarray(NULL, histsize + 1, sizeof(char *),
 		    APERM);
+		*histbase = NULL;
 		history = histbase + 1;
 		histptr = history - 1;
 	}
@@ -736,32 +735,45 @@ history_close(void)
 	}
 }
 
-static int
+static void
 history_load(Source *s)
 {
 	char		*p, encoded[LINE + 1], line[LINE + 1];
+	int		 toolongseen = 0;
 
 	rewind(histfh);
+	line_co = 1;
 
 	/* just read it all; will auto resize history upon next command */
-	for (line_co = 1; ; line_co++) {
-		p = fgets(encoded, sizeof(encoded), histfh);
-		if (p == NULL || feof(histfh) || ferror(histfh))
-			break;
+	while (fgets(encoded, sizeof(encoded), histfh)) {
 		if ((p = strchr(encoded, '\n')) == NULL) {
-			bi_errorf("history file is corrupt");
-			return 1;
+			/* discard overlong line */
+			do {
+				/* maybe a missing trailing newline? */
+				if (strlen(encoded) != sizeof(encoded) - 1) {
+					bi_errorf("history file is corrupt");
+					return;
+				}
+			} while (fgets(encoded, sizeof(encoded), histfh)
+			    && strchr(encoded, '\n') == NULL);
+
+			if (!toolongseen) {
+				toolongseen = 1;
+				bi_errorf("ignored history line(s) longer than"
+				    " %d bytes", LINE);
+			}
+
+			continue;
 		}
 		*p = '\0';
 		s->line = line_co;
 		s->cmd_offset = line_co;
 		strunvis(line, encoded);
 		histsave(line_co, line, 0);
+		line_co++;
 	}
 
 	history_write();
-
-	return 0;
 }
 
 #define HMAGIC1 0xab
@@ -779,10 +791,9 @@ hist_init(Source *s)
 
 	hist_source = s;
 
-	hname = str_val(global("HISTFILE"));
-	if (hname == NULL)
+	if (str_val(global("HISTFILE")) == null)
 		return;
-	hname = str_save(hname, APERM);
+	hname = str_save(str_val(global("HISTFILE")), APERM);
 	histfh = history_open();
 	if (histfh == NULL)
 		return;
@@ -800,8 +811,6 @@ hist_init(Source *s)
 		history_close();
 		return;
 	}
-
-	rewind(histfh);
 
 	history_load(s);
 
@@ -844,25 +853,3 @@ hist_finish(void)
 {
 	history_close();
 }
-
-#else /* HISTORY */
-
-/* No history to be compiled in: dummy routines to avoid lots more ifdefs */
-void
-init_histvec(void)
-{
-}
-void
-hist_init(Source *s)
-{
-}
-void
-hist_finish(void)
-{
-}
-void
-histsave(int lno, const char *cmd, int dowrite)
-{
-	errorf("history not enabled");
-}
-#endif /* HISTORY */

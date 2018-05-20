@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.h,v 1.10 2015/10/25 18:01:24 guenther Exp $ */
+/*	$OpenBSD: atexit.h,v 1.12 2017/12/16 20:06:56 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -41,12 +41,21 @@ struct atexit {
 	} fns[1];			/* the table itself */
 };
 
+/* a chain of these are hung off each thread's TIB's tib_atexit member */
+struct thread_atexit_fn {
+	void (*func)(void *);
+	void *arg;
+	struct thread_atexit_fn *next;
+};
+
 __BEGIN_HIDDEN_DECLS
 extern struct atexit *__atexit;		/* points to head of LIFO stack */
 __END_HIDDEN_DECLS
 
 int	__cxa_atexit(void (*)(void *), void *, void *);
+int	__cxa_thread_atexit(void (*)(void *), void *, void *);
 void	__cxa_finalize(void *);
 
 PROTO_NORMAL(__cxa_atexit);
+PROTO_STD_DEPRECATED(__cxa_thread_atexit);
 PROTO_NORMAL(__cxa_finalize);

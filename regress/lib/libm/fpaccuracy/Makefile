@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2009/04/09 01:24:43 martynas Exp $
+#	$OpenBSD: Makefile,v 1.2 2018/03/10 20:52:58 kettenis Exp $
 
 PROG = fpaccuracy
 SRCS = Gamma.c INV.c Pix.c acos.c acosh.c asin.c asinh.c atan.c \
        atanh.c cos.c cosh.c erf.c erfc.c exp.c fpaccuracy.c j0.c \
        j1.c lgamma.c log.c log10.c pow2_x.c powx_275.c sin.c \
-       sinh.c sqrt.c tan.c tanh.c y0.c y1.c
+       sincos.c sincos2.c sinh.c sqrt.c tan.c tanh.c y0.c y1.c
 LDADD = -lm
 DPADD = ${LIBM}
 CLEANFILES += fpaccuracy.out

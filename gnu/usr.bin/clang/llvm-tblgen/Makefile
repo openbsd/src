@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2017/10/04 20:57:10 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2018/04/06 14:44:04 patrick Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -11,6 +11,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
+	CodeGenHwModes.cpp \
 	CodeGenInstruction.cpp \
 	CodeGenMapTable.cpp \
 	CodeGenRegisters.cpp \
@@ -26,12 +27,15 @@ SRCS=	AsmMatcherEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
 	GlobalISelEmitter.cpp \
+	InfoByHwMode.cpp \
+	InstrDocsEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	OptParserEmitter.cpp \
 	PseudoLoweringEmitter.cpp \
 	RegisterBankEmitter.cpp \
 	RegisterInfoEmitter.cpp \
+	SDNodeProperties.cpp \
 	SearchableTableEmitter.cpp \
 	SubtargetEmitter.cpp \
 	SubtargetFeatureInfo.cpp \
@@ -39,6 +43,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	Types.cpp \
 	X86DisassemblerTables.cpp \
 	X86EVEX2VEXTablesEmitter.cpp \
+	X86FoldTablesEmitter.cpp \
 	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp \
 	CTagsEmitter.cpp

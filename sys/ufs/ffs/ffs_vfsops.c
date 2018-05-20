@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.166 2017/05/29 14:07:16 sf Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.176 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -206,17 +206,13 @@ ffs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error = 0, flags;
 	int ronly;
-
-	error = copyin(data, &args, sizeof(struct ufs_args));
-	if (error)
-		return (error);
 
 #ifndef FFS_SOFTUPDATES
 	if (mp->mnt_flag & MNT_SOFTDEP) {
@@ -247,14 +243,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/* Flush any dirty data */
-			mp->mnt_flag &= ~MNT_RDONLY;
-			VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
-			mp->mnt_flag |= MNT_RDONLY;
+			VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p);
 
 			/*
 			 * Get rid of files open for writing.
 			 */
 			flags = WRITECLOSE;
+			if (args == NULL)
+				flags |= IGNORECLEAN;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			if (fs->fs_flags & FS_DOSOFTDEP) {
@@ -262,6 +258,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 				mp->mnt_flag &= ~MNT_SOFTDEP;
 			} else
 				error = ffs_flushfiles(mp, flags, p);
+			mp->mnt_flag |= MNT_RDONLY;
 			ronly = 1;
 		}
 
@@ -342,12 +339,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 
 			ronly = 0;
 		}
-		if (args.fspec == NULL) {
+		if (args == NULL)
+			goto success;
+		if (args->fspec == NULL) {
 			/*
 			 * Process export requests.
 			 */
 			error = vfs_export(mp, &ump->um_export, 
-			    &args.export_info);
+			    &args->export_info);
 			if (error)
 				goto error_1;
 			else
@@ -359,7 +358,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error_1;
 
@@ -435,7 +434,8 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	memcpy(&mp->mnt_stat.mount_info.ufs_args, &args, sizeof(args));
+	if (args)
+		memcpy(&mp->mnt_stat.mount_info.ufs_args, args, sizeof(*args));
 	VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
@@ -447,7 +447,7 @@ success:
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
-				free(fs->fs_contigdirs, M_UFSMNT, 0);
+				free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
@@ -456,6 +456,7 @@ success:
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 		}
 		ffs_sbupdate(ump, MNT_WAIT);
+#if 0
 		if (ronly) {
 			int force = 0;
 
@@ -466,6 +467,7 @@ success:
 			VOP_IOCTL(ump->um_devvp, DIOCCACHESYNC, &force,
 			    FWRITE, FSCRED, p);
                }
+#endif
 	}
 	return (0);
 
@@ -560,9 +562,9 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
 
@@ -706,9 +708,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -909,7 +911,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
 			free(fs->fs_csp, M_UFSMNT, 0);
-			free(fs->fs_contigdirs, M_UFSMNT, 0);
+			free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 			goto out;
 		}
 		fs->fs_fmod = 1;
@@ -929,9 +931,9 @@ out:
 	if (bp)
 		brelse(bp);
 
-	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT, ump->um_fs->fs_sbsize);
@@ -1044,11 +1046,11 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 			fs->fs_clean = 0;
 			return (error);
 		}
-		free(fs->fs_contigdirs, M_UFSMNT, 0);
+		free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 	}
 	ump->um_devvp->v_specmountpoint = NULL;
 
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	vinvalbuf(ump->um_devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
@@ -1094,9 +1096,9 @@ ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	/*
 	 * Flush filesystem metadata.
 	 */
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, p);
+	VOP_UNLOCK(ump->um_devvp);
 	return (error);
 }
 
@@ -1139,31 +1141,56 @@ struct ffs_sync_args {
 	int allerror;
 	struct proc *p;
 	int waitfor;
+	int nlink0;
+	int inflight;
 	struct ucred *cred;
 };
 
 int
-ffs_sync_vnode(struct vnode *vp, void *arg) {
+ffs_sync_vnode(struct vnode *vp, void *arg)
+{
 	struct ffs_sync_args *fsa = arg;
 	struct inode *ip;
-	int error;
+	int error, nlink0 = 0;
+
+	if (vp->v_type == VNON)
+		return (0);
 
 	ip = VTOI(vp);
-	if (vp->v_type == VNON || 
-	    ((ip->i_flag &
-		(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0	&&
-		LIST_EMPTY(&vp->v_dirtyblkhd)) ) {
-		return (0);
+
+	if (vp->v_inflight && !(vp->v_type == VCHR || vp->v_type == VBLK))
+		fsa->inflight = MIN(fsa->inflight+1, 65536);
+
+	/*
+	 * If unmounting or converting rw to ro, then stop deferring
+	 * timestamp writes.
+	 */
+	if (fsa->waitfor == MNT_WAIT && (ip->i_flag & IN_LAZYMOD)) {
+		ip->i_flag |= IN_MODIFIED;
+		UFS_UPDATE(ip, 1);
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p))
-		return (0);
+	if (ip->i_effnlink == 0)
+		nlink0 = 1;
+
+	if ((ip->i_flag &
+	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
+	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		goto end;
+	}
+
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p)) {
+		nlink0 = 1;		/* potentially.. */
+		goto end;
+	}
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
 		fsa->allerror = error;
-	VOP_UNLOCK(vp, fsa->p);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 
+end:
+	fsa->nlink0 = MIN(fsa->nlink0 + nlink0, 65536);
 	return (0);
 }
 
@@ -1175,11 +1202,11 @@ ffs_sync_vnode(struct vnode *vp, void *arg) {
  * Should always be called with the mount point locked.
  */
 int
-ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct proc *p)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int error, allerror = 0, count;
+	int error, allerror = 0, count, clean, fmod;
 	struct ffs_sync_args fsa;
 
 	fs = ump->um_fs;
@@ -1200,6 +1227,8 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	fsa.p = p;
 	fsa.cred = cred;
 	fsa.waitfor = waitfor;
+	fsa.nlink0 = 0;
+	fsa.inflight = 0;
 
 	/*
 	 * Don't traverse the vnode list if we want to skip all of them.
@@ -1220,18 +1249,37 @@ ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 			goto loop;
 	}
 	if (waitfor != MNT_LAZY) {
-		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, p);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	qsync(mp);
 	/*
 	 * Write back modified superblock.
 	 */
-
+	clean = fs->fs_clean;
+	fmod = fs->fs_fmod;
+	if (stall && fs->fs_ronly == 0) {
+		fs->fs_fmod = 1;
+		if (allerror == 0 && fsa.nlink0 == 0 && fsa.inflight == 0) {
+			fs->fs_clean = (fs->fs_flags & FS_UNCLEAN) ? 0 : 1;
+#if 0
+			printf("%s force clean (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, fsa.nlink0, fsa.inflight);
+#endif
+		} else {
+			fs->fs_clean = 0;
+#if 0
+			printf("%s force dirty (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, fsa.nlink0, fsa.inflight);
+#endif
+		}
+	}
 	if (fs->fs_fmod != 0 && (error = ffs_sbupdate(ump, waitfor)) != 0)
 		allerror = error;
+	fs->fs_clean = clean;
+	fs->fs_fmod = fmod;
 
 	return (allerror);
 }

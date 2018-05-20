@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2016/11/06 16:04:20 tb Exp $
+#	$OpenBSD: Makefile,v 1.14 2017/10/17 19:31:56 naddy Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -38,9 +38,6 @@ bootblk.text: bootblk.fth assym.fth.h
 
 bootblk: bootblk.fth assym.fth.h
 	fgen -o bootblk ${.CURDIR}/bootblk.fth
-
-beforedepend:
-	@touch .depend
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \

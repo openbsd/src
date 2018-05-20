@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.132 2017/10/07 19:46:22 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.133 2017/11/28 15:35:02 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -698,7 +698,6 @@ static const formatter scargs[][8] = {
     [SYS_fstatat]	= { Atfd, Ppath, Pptr, Atflagsname },
     [SYS_profil]	= { Pptr, Pbigsize, Pbigsize, Pdecuint },
     [SYS_ktrace]	= { Ppath, Ktraceopname, Ktracefacname, Ppgid },
-    [SYS_fktrace]	= { Pfd, Ktraceopname, Ktracefacname, Ppgid },
     [SYS_sigaction]	= { Signame, Pptr, Pptr },
     [SYS_sigprocmask]	= { Sigprocmaskhowname, Sigset },
     [SYS_getlogin_r]	= { Pptr, Psize },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.120 2017/01/22 10:17:37 dlg Exp $ */
+/*	$OpenBSD: acx.c,v 1.121 2017/10/26 15:00:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -837,7 +837,6 @@ acx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct acx_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 	uint8_t chan;
 
@@ -855,16 +854,6 @@ acx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				error = acx_stop(sc);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		/* allow fast channel switching in monitor mode */

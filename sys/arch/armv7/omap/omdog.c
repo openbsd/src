@@ -1,4 +1,4 @@
-/*	$OpenBSD: omdog.c,v 1.7 2016/07/27 11:45:02 patrick Exp $	*/
+/*	$OpenBSD: omdog.c,v 1.8 2017/11/27 06:29:41 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
@@ -106,9 +106,14 @@ omdog_attach(struct device *parent, struct device *self, void *aux)
 	rev = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);
 
 	printf(" rev %d.%d\n", rev >> 4 & 0xf, rev & 0xf);
-	omdog_sc = sc;
 
 	omdog_stop(sc);
+
+	/* only register one watchdog, OMAP4 has two */
+	if (omdog_sc != NULL)
+		return;
+
+	omdog_sc = sc;
 
 #ifndef SMALL_KERNEL
 	wdog_register(omdog_cb, sc);

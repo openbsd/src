@@ -1,4 +1,4 @@
-/*	$OpenBSD: _endian.h,v 1.2 2017/04/21 19:04:22 millert Exp $	*/
+/*	$OpenBSD: _endian.h,v 1.8 2018/01/11 23:13:37 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -43,40 +43,8 @@
 #define _BIG_ENDIAN	4321
 #define _PDP_ENDIAN	3412
 
-#ifdef __GNUC__
-
-#define __swap16gen(x) __statement({					\
-	__uint16_t __swap16gen_x = (x);					\
-									\
-	(__uint16_t)((__swap16gen_x & 0xff) << 8 |			\
-	    (__swap16gen_x & 0xff00) >> 8);				\
-})
-
-#define __swap32gen(x) __statement({					\
-	__uint32_t __swap32gen_x = (x);					\
-									\
-	(__uint32_t)((__swap32gen_x & 0xff) << 24 |			\
-	    (__swap32gen_x & 0xff00) << 8 |				\
-	    (__swap32gen_x & 0xff0000) >> 8 |				\
-	    (__swap32gen_x & 0xff000000) >> 24);			\
-})
-
-#define __swap64gen(x) __statement({					\
-	__uint64_t __swap64gen_x = (x);					\
-									\
-	(__uint64_t)((__swap64gen_x & 0xff) << 56 |			\
-	    (__swap64gen_x & 0xff00ULL) << 40 |				\
-	    (__swap64gen_x & 0xff0000ULL) << 24 |			\
-	    (__swap64gen_x & 0xff000000ULL) << 8 |			\
-	    (__swap64gen_x & 0xff00000000ULL) >> 8 |			\
-	    (__swap64gen_x & 0xff0000000000ULL) >> 24 |			\
-	    (__swap64gen_x & 0xff000000000000ULL) >> 40 |		\
-	    (__swap64gen_x & 0xff00000000000000ULL) >> 56);		\
-})
-
-#else /* __GNUC__ */
-
 /* Note that these macros evaluate their arguments several times.  */
+
 #define __swap16gen(x)							\
     (__uint16_t)(((__uint16_t)(x) & 0xffU) << 8 | ((__uint16_t)(x) & 0xff00U) >> 8)
 
@@ -95,65 +63,32 @@
 	    ((__uint64_t)(x) & 0xff000000000000ULL) >> 40 |		\
 	    ((__uint64_t)(x) & 0xff00000000000000ULL) >> 56)
 
-#endif /* __GNUC__ */
+#ifndef __HAVE_MD_SWAP
+static __inline __uint16_t
+__swap16md(__uint16_t x)
+{
+	return (__swap16gen(x));
+}
 
-/*
- * Define __HAVE_MD_SWAP if you provide __swap{16,32}md functions/macros
- * that are optimized for your architecture,  These will be used for
- * __swap{16,32} unless the argument is a constant and we are using GCC,
- * where we can take advantage of the CSE phase much better by using the
- * generic version.
- */
-#ifdef __HAVE_MD_SWAP
-#if __GNUC__
+static __inline __uint32_t
+__swap32md(__uint32_t x)
+{
+	return (__swap32gen(x));
+}
 
-#define __swap16(x) __statement({					\
-	__uint16_t __swap16_x = (x);					\
-									\
-	(__uint16_t)(__builtin_constant_p(x) ? __swap16gen(__swap16_x) :\
-	    __swap16md(__swap16_x));					\
-})
+static __inline __uint64_t
+__swap64md(__uint64_t x)
+{
+	return (__swap64gen(x));
+}
+#endif
 
-#define __swap32(x) __statement({					\
-	__uint32_t __swap32_x = (x);					\
-									\
-	(__uint32_t)(__builtin_constant_p(x) ? __swap32gen(__swap32_x) :\
-	    __swap32md(__swap32_x));					\
-})
-
-#define __swap64(x) __statement({					\
-	__uint64_t __swap64_x = (x);					\
-									\
-	(__uint64_t)(__builtin_constant_p(x) ? __swap64gen(__swap64_x) :\
-	    __swap64md(__swap64_x));					\
-})
-
-#else
-
-/* have MD macros, but not gcc */
-#define __swap16 __swap16md
-#define __swap32 __swap32md
-#define __swap64 __swap64md
-
-#endif /* __GNUC__  */
-
-#else /* __HAVE_MD_SWAP */
-#define __swap16 __swap16gen
-#define __swap32 __swap32gen
-#define __swap64 __swap64gen
-#endif /* __HAVE_MD_SWAP */
-
-#define __swap16_multi(v, n) do {						\
-	__size_t __swap16_multi_n = (n);				\
-	__uint16_t *__swap16_multi_v = (v);				\
-									\
-	while (__swap16_multi_n) {					\
-		*__swap16_multi_v = swap16(*__swap16_multi_v);		\
-		__swap16_multi_v++;					\
-		__swap16_multi_n--;					\
-	}								\
-} while (0)
-
+#define __swap16(x)							\
+	(__uint16_t)(__builtin_constant_p(x) ? __swap16gen(x) : __swap16md(x))
+#define __swap32(x)							\
+	(__uint32_t)(__builtin_constant_p(x) ? __swap32gen(x) : __swap32md(x))
+#define __swap64(x)							\
+	(__uint64_t)(__builtin_constant_p(x) ? __swap64gen(x) : __swap64md(x))
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 

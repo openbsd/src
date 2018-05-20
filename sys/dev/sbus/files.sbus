@@ -1,11 +1,10 @@
-#	$OpenBSD: files.sbus,v 1.43 2015/06/19 11:12:24 jmatthew Exp $
+#	$OpenBSD: files.sbus,v 1.44 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
 
 device	sbus {[slot = -1], [offset = -1]}
-#notyet:file	dev/sbus/sbus.c		sbus
 
 # SBus NCR539x SCSI & Lance Ethernet
 device	dma {}: lsi64854

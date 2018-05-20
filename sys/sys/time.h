@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.36 2016/09/12 19:41:20 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.37 2017/12/11 23:31:16 jca Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -60,14 +60,14 @@ struct timespec {
 };
 #endif
 
-#define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
+#define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
 	(ts)->tv_sec = (tv)->tv_sec;					\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\
-}
-#define	TIMESPEC_TO_TIMEVAL(tv, ts) {					\
+} while (0)
+#define	TIMESPEC_TO_TIMEVAL(tv, ts) do {				\
 	(tv)->tv_sec = (ts)->tv_sec;					\
 	(tv)->tv_usec = (ts)->tv_nsec / 1000;				\
-}
+} while (0)
 
 struct timezone {
 	int	tz_minuteswest;	/* minutes west of Greenwich */

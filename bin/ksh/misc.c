@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.59 2017/08/30 17:15:36 jca Exp $	*/
+/*	$OpenBSD: misc.c,v 1.70 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -56,10 +56,10 @@ initctypes(void)
 	setctypes(" \n\t\"#$&'()*;<>?[\\`|", C_QUOTE);
 }
 
-/* convert unsigned long to base N string */
+/* convert uint64_t to base N string */
 
 char *
-ulton(long unsigned int n, int base)
+u64ton(uint64_t n, int base)
 {
 	char *p;
 	static char buf [20];
@@ -105,7 +105,7 @@ str_nsave(const char *s, int n, Area *ap)
 
 /* called from expand.h:XcheckN() to grow buffer */
 char *
-Xcheck_grow_(XString *xsp, char *xp, int more)
+Xcheck_grow_(XString *xsp, char *xp, size_t more)
 {
 	char *old_beg = xsp->beg;
 
@@ -115,21 +115,18 @@ Xcheck_grow_(XString *xsp, char *xp, int more)
 	return xsp->beg + (xp - old_beg);
 }
 
-const struct option options[] = {
+const struct option sh_options[] = {
 	/* Special cases (see parse_args()): -A, -o, -s.
 	 * Options are sorted by their longnames - the order of these
 	 * entries MUST match the order of sh_flag F* enumerations in sh.h.
 	 */
 	{ "allexport",	'a',		OF_ANY },
-#ifdef BRACE_EXPAND
 	{ "braceexpand",  0,		OF_ANY }, /* non-standard */
-#endif
 	{ "bgnice",	  0,		OF_ANY },
 	{ NULL,	'c',	    OF_CMDLINE },
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
-	{ "emacs-usemeta",  0,		OF_ANY }, /* XXX delete after 6.2 */
 #endif
 	{ "errexit",	'e',		OF_ANY },
 #ifdef EMACS
@@ -140,19 +137,13 @@ const struct option options[] = {
 	{ "keyword",	'k',		OF_ANY },
 	{ "login",	'l',	    OF_CMDLINE },
 	{ "markdirs",	'X',		OF_ANY },
-#ifdef JOBS
 	{ "monitor",	'm',		OF_ANY },
-#else /* JOBS */
-	{ NULL,	'm',		     0 }, /* so FMONITOR not ifdef'd */
-#endif /* JOBS */
 	{ "noclobber",	'C',		OF_ANY },
 	{ "noexec",	'n',		OF_ANY },
 	{ "noglob",	'f',		OF_ANY },
 	{ "nohup",	  0,		OF_ANY },
 	{ "nolog",	  0,		OF_ANY }, /* no effect */
-#ifdef	JOBS
 	{ "notify",	'b',		OF_ANY },
-#endif	/* JOBS */
 	{ "nounset",	'u',		OF_ANY },
 	{ "physical",	  0,		OF_ANY }, /* non-standard */
 	{ "posix",	  0,		OF_ANY }, /* non-standard */
@@ -182,16 +173,11 @@ const struct option options[] = {
 int
 option(const char *n)
 {
-	int i;
+	unsigned int ele;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].name && strcmp(options[i].name, n) == 0) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				warningf(true, "%s: deprecated option", n);
-#endif
-			return i;
-		}
+	for (ele = 0; ele < NELEM(sh_options); ele++)
+		if (sh_options[ele].name && strcmp(sh_options[ele].name, n) == 0)
+			return ele;
 
 	return -1;
 }
@@ -201,7 +187,7 @@ struct options_info {
 	struct {
 		const char *name;
 		int	flag;
-	} opts[NELEM(options)];
+	} opts[NELEM(sh_options)];
 };
 
 static char *options_fmt_entry(void *arg, int i, char *buf, int buflen);
@@ -222,24 +208,21 @@ options_fmt_entry(void *arg, int i, char *buf, int buflen)
 static void
 printoptions(int verbose)
 {
-	int i;
+	unsigned int ele;
 
 	if (verbose) {
 		struct options_info oi;
-		int n, len;
+		unsigned int n;
+		int len;
 
 		/* verbose version */
 		shprintf("Current option settings\n");
 
-		for (i = n = oi.opt_width = 0; i < NELEM(options); i++) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				continue;
-#endif
-			if (options[i].name) {
-				len = strlen(options[i].name);
-				oi.opts[n].name = options[i].name;
-				oi.opts[n++].flag = i;
+		for (ele = n = oi.opt_width = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].name) {
+				len = strlen(sh_options[ele].name);
+				oi.opts[n].name = sh_options[ele].name;
+				oi.opts[n++].flag = ele;
 				if (len > oi.opt_width)
 					oi.opt_width = len;
 			}
@@ -249,15 +232,11 @@ printoptions(int verbose)
 	} else {
 		/* short version ala ksh93 */
 		shprintf("set");
-		for (i = 0; i < NELEM(options); i++) {
-#ifdef EMACS
-			if (i == FEMACSUSEMETA)
-				continue;
-#endif
-			if (options[i].name)
+		for (ele = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].name)
 				shprintf(" %co %s",
-					 Flag(i) ? '-' : '+',
-					 options[i].name);
+					 Flag(ele) ? '-' : '+',
+					 sh_options[ele].name);
 		}
 		shprintf("\n");
 	}
@@ -266,13 +245,13 @@ printoptions(int verbose)
 char *
 getoptions(void)
 {
-	int i;
+	unsigned int ele;
 	char m[(int) FNFLAGS + 1];
 	char *cp = m;
 
-	for (i = 0; i < NELEM(options); i++)
-		if (options[i].c && Flag(i))
-			*cp++ = options[i].c;
+	for (ele = 0; ele < NELEM(sh_options); ele++)
+		if (sh_options[ele].c && Flag(ele))
+			*cp++ = sh_options[ele].c;
 	*cp = 0;
 	return str_save(m, ATEMP);
 }
@@ -287,33 +266,29 @@ change_flag(enum sh_flag f,
 
 	oldval = Flag(f);
 	Flag(f) = newval;
-#ifdef JOBS
 	if (f == FMONITOR) {
 		if (what != OF_CMDLINE && newval != oldval)
 			j_change();
 	} else
-#endif /* JOBS */
-#ifdef EDIT
 	if (0
-# ifdef VI
+#ifdef VI
 	    || f == FVI
-# endif /* VI */
-# ifdef EMACS
+#endif /* VI */
+#ifdef EMACS
 	    || f == FEMACS || f == FGMACS
-# endif /* EMACS */
+#endif /* EMACS */
 	   )
 	{
 		if (newval) {
-# ifdef VI
+#ifdef VI
 			Flag(FVI) = 0;
-# endif /* VI */
-# ifdef EMACS
+#endif /* VI */
+#ifdef EMACS
 			Flag(FEMACS) = Flag(FGMACS) = 0;
-# endif /* EMACS */
+#endif /* EMACS */
 			Flag(f) = newval;
 		}
 	} else
-#endif /* EDIT */
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
 		gid_t gid = getgid();
@@ -322,10 +297,7 @@ change_flag(enum sh_flag f,
 		setgroups(1, &gid);
 		setresuid(ksheuid, ksheuid, ksheuid);
 	} else if (f == FPOSIX && newval) {
-#ifdef BRACE_EXPAND
-		Flag(FBRACEEXPAND) = 0
-#endif /* BRACE_EXPAND */
-		;
+		Flag(FBRACEEXPAND) = 0;
 	}
 	/* Changing interactive flag? */
 	if (f == FTALKING) {
@@ -342,12 +314,13 @@ parse_args(char **argv,
     int what,			/* OF_CMDLINE or OF_SET */
     int *setargsp)
 {
-	static char cmd_opts[NELEM(options) + 3]; /* o:\0 */
-	static char set_opts[NELEM(options) + 5]; /* Ao;s\0 */
+	static char cmd_opts[NELEM(sh_options) + 3]; /* o:\0 */
+	static char set_opts[NELEM(sh_options) + 5]; /* Ao;s\0 */
 	char *opts;
 	char *array = NULL;
 	Getopt go;
-	int i, optc, set, sortargs = 0, arrayset = 0;
+	int i, optc, sortargs = 0, arrayset = 0;
+	unsigned int ele;
 
 	/* First call?  Build option strings... */
 	if (cmd_opts[0] == '\0') {
@@ -359,12 +332,12 @@ parse_args(char **argv,
 		/* see set_opts[] declaration */
 		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
-		for (i = 0; i < NELEM(options); i++) {
-			if (options[i].c) {
-				if (options[i].flags & OF_CMDLINE)
-					*p++ = options[i].c;
-				if (options[i].flags & OF_SET)
-					*q++ = options[i].c;
+		for (ele = 0; ele < NELEM(sh_options); ele++) {
+			if (sh_options[ele].c) {
+				if (sh_options[ele].flags & OF_CMDLINE)
+					*p++ = sh_options[ele].c;
+				if (sh_options[ele].flags & OF_SET)
+					*q++ = sh_options[ele].c;
 			}
 		}
 		*p = '\0';
@@ -383,7 +356,7 @@ parse_args(char **argv,
 		opts = set_opts;
 	ksh_getopt_reset(&go, GF_ERROR|GF_PLUSOPT);
 	while ((optc = ksh_getopt(argv, &go, opts)) != -1) {
-		set = (go.info & GI_PLUS) ? 0 : 1;
+		int set = (go.info & GI_PLUS) ? 0 : 1;
 		switch (optc) {
 		case 'A':
 			arrayset = set ? 1 : -1;
@@ -402,14 +375,14 @@ parse_args(char **argv,
 				break;
 			}
 			i = option(go.optarg);
-			if (i >= 0 && set == Flag(i))
+			if (i != -1 && set == Flag(i))
 				/* Don't check the context if the flag
 				 * isn't changing - makes "set -o interactive"
 				 * work if you're already interactive.  Needed
 				 * if the output of "set +o" is to be used.
 				 */
 				;
-			else if (i >= 0 && (options[i].flags & what))
+			else if (i != -1 && (sh_options[i].flags & what))
 				change_flag((enum sh_flag) i, what, set);
 			else {
 				bi_errorf("%s: bad option", go.optarg);
@@ -426,15 +399,15 @@ parse_args(char **argv,
 				sortargs = 1;
 				break;
 			}
-			for (i = 0; i < NELEM(options); i++)
-				if (optc == options[i].c &&
-				    (what & options[i].flags)) {
-					change_flag((enum sh_flag) i, what,
+			for (ele = 0; ele < NELEM(sh_options); ele++)
+				if (optc == sh_options[ele].c &&
+				    (what & sh_options[ele].flags)) {
+					change_flag((enum sh_flag) ele, what,
 					    set);
 					break;
 				}
-			if (i == NELEM(options)) {
-				internal_errorf(1, "parse_args: `%c'", optc);
+			if (ele == NELEM(sh_options)) {
+				internal_errorf("%s: `%c'", __func__, optc);
 				return -1; /* not reached */
 			}
 		}
@@ -522,7 +495,7 @@ gmatch(const char *s, const char *p, int isfile)
 	 * the pattern.  If check fails, just to a strcmp().
 	 */
 	if (!isfile && !has_globbing(p, pe)) {
-		int len = pe - p + 1;
+		size_t len = pe - p + 1;
 		char tbuf[64];
 		char *t = len <= sizeof(tbuf) ? tbuf :
 		    alloc(len, ATEMP);

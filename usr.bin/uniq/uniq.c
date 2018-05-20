@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.24 2015/12/19 10:21:01 schwarze Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.26 2017/12/24 00:11:43 tb Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #define	MAXLINELEN	(8 * 1024)
 
-int cflag, dflag, uflag;
+int cflag, dflag, iflag, uflag;
 int numchars, numfields, repeats;
 
 FILE	*file(char *, char *);
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	obsolete(argv);
-	while ((ch = getopt(argc, argv, "cdf:s:u")) != -1) {
+	while ((ch = getopt(argc, argv, "cdf:is:u")) != -1) {
 		const char *errstr;
 
 		switch (ch) {
@@ -86,6 +86,9 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "field skip value is %s: %s",
 				    errstr, optarg);
+			break;
+		case 'i':
+			iflag = 1;
 			break;
 		case 's':
 			numchars = (int)strtonum(optarg, 0, INT_MAX,
@@ -149,7 +152,7 @@ main(int argc, char *argv[])
 		}
 
 		/* If different, print; set previous to new value. */
-		if (strcmp(t1, t2)) {
+		if ((iflag ? strcasecmp : strcmp)(t1, t2)) {
 			show(ofp, prevline);
 			t1 = prevline;
 			prevline = thisline;
@@ -257,7 +260,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-c] [-d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
+	    "usage: %s [-ci] [-d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
 	    __progname);
 	exit(1);
 }

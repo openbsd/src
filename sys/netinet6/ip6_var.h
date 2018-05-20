@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.78 2017/07/13 17:17:27 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.83 2018/02/10 05:52:08 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ struct	ip6asfrag {
 	u_int32_t	ip6af_flow;	/* ip header flow id */
 	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
 };
-
-#define IP6_REASS_MBUF(ip6af) ((ip6af)->ip6af_m)
 
 struct	ip6_moptions {
 	LIST_HEAD(, in6_multi_mship) im6o_memberships;
@@ -294,6 +292,9 @@ extern int	ip6_dad_pending;	/* number of currently running DADs */
 extern int ip6_auto_flowlabel;
 extern int ip6_auto_linklocal;
 
+#define	IP6_SOIIKEY_LEN 16
+extern uint8_t	ip6_soiikey[IP6_SOIIKEY_LEN];
+
 struct in6pcb;
 struct inpcb;
 
@@ -305,7 +306,7 @@ int	ip6_input_if(struct mbuf **, int *, int, int, struct ifnet *);
 void	ip6_freepcbopts(struct ip6_pktopts *);
 void	ip6_freemoptions(struct ip6_moptions *);
 int	ip6_unknown_opt(u_int8_t *, struct mbuf *, int);
-u_int8_t *ip6_get_prevhdr(struct mbuf *, int);
+int	ip6_get_prevhdr(struct mbuf *, int);
 int	ip6_nexthdr(struct mbuf *, int, int, int *);
 int	ip6_lasthdr(struct mbuf *, int, int, int *);
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
@@ -336,7 +337,6 @@ void	frag6_init(void);
 int	frag6_input(struct mbuf **, int *, int, int);
 int	frag6_deletefraghdr(struct mbuf *, int);
 void	frag6_slowtimo(void);
-void	frag6_drain(void);
 
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int, int);
@@ -347,6 +347,7 @@ int	rip6_output(struct mbuf *, struct socket *, struct sockaddr *,
 int	rip6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	rip6_attach(struct socket *, int);
+int	rip6_detach(struct socket *);
 int	rip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 int	dest6_input(struct mbuf **, int *, int, int);

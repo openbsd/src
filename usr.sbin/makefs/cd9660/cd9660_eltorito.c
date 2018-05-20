@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.9 2016/12/17 16:22:04 krw Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.13 2017/11/07 00:22:40 yasuoka Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -104,9 +104,11 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 		new_image->system = ET_SYS_PPC;
 	else if (strcmp(sysname, "macppc") == 0)
 		new_image->system = ET_SYS_MAC;
+	else if (strcmp(sysname, "efi") == 0)
+		new_image->system = ET_SYS_EFI;
 	else {
 		warnx("boot disk system must be "
-		      "i386, macppc, or powerpc");
+		      "i386, macppc, powerpc, or efi");
 		free(temp);
 		free(new_image);
 		return 0;
@@ -155,11 +157,12 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 			break;
 	}
 
-	if (tmp_image == NULL) {
+	if (tmp_image == NULL)
 		TAILQ_INSERT_HEAD(&diskStructure->boot_images, new_image,
 		    image_list);
-	} else
-		TAILQ_INSERT_BEFORE(tmp_image, new_image, image_list);
+	else
+		TAILQ_INSERT_AFTER(&diskStructure->boot_images, tmp_image,
+		    new_image, image_list);
 
 	new_image->serialno = diskStructure->image_serialno++;
 
@@ -221,6 +224,7 @@ cd9660_boot_setup_validation_entry(char sys)
 	size_t i;
 	entry = cd9660_init_boot_catalog_entry();
 
+	entry->entry_type = ET_ENTRY_VE;
 	ve = &entry->entry_data.VE;
 
 	ve->header_id[0] = 1;
@@ -255,6 +259,7 @@ cd9660_boot_setup_default_entry(struct cd9660_boot_image *disk)
 	if (default_entry == NULL)
 		return NULL;
 
+	default_entry->entry_type = ET_ENTRY_IE;
 	ie = &default_entry->entry_data.IE;
 
 	ie->boot_indicator[0] = disk->bootable;
@@ -282,6 +287,7 @@ cd9660_boot_setup_section_head(char platform)
 	if (entry == NULL)
 		return NULL;
 
+	entry->entry_type = ET_ENTRY_SH;
 	sh = &entry->entry_data.SH;
 	/* More by default. The last one will manually be set to 0x91 */
 	sh->header_indicator[0] = ET_SECTION_HEADER_MORE;
@@ -298,6 +304,7 @@ cd9660_boot_setup_section_entry(struct cd9660_boot_image *disk)
 	if ((entry = cd9660_init_boot_catalog_entry()) == NULL)
 		return NULL;
 
+	entry->entry_type = ET_ENTRY_SE;
 	se = &entry->entry_data.SE;
 
 	se->boot_indicator[0] = ET_BOOTABLE;
@@ -330,12 +337,12 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	int used_sectors;
 	int num_entries = 0;
 	int catalog_sectors;
-	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head,
+	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head, *efi_head,
 		*valid_entry, *default_entry, *temp, *head, **headp, *next;
 	struct cd9660_boot_image *tmp_disk;
 
 	headp = NULL;
-	x86_head = mac_head = ppc_head = NULL;
+	x86_head = mac_head = ppc_head = efi_head = NULL;
 
 	/* If there are no boot disks, don't bother building boot information */
 	if (TAILQ_EMPTY(&diskStructure->boot_images))
@@ -407,6 +414,9 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 			break;
 		case ET_SYS_MAC:
 			headp = &mac_head;
+			break;
+		case ET_SYS_EFI:
+			headp = &efi_head;
 			break;
 		default:
 			warnx("%s: internal error: unknown system type",

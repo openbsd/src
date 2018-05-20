@@ -1,4 +1,4 @@
-/* $OpenBSD: edit.c,v 1.6 2017/07/22 13:50:54 anton Exp $ */
+/* $OpenBSD: edit.c,v 1.7 2017/11/21 19:22:45 anton Exp $ */
 /*
  * Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -46,7 +48,7 @@ main(int argc, char *argv[])
 	pid_t		 pid;
 	ssize_t		 n;
 	size_t		 nin, nprompt, nread, nwrite;
-	int		 c, nready, ptyfd, readprompt, ret, timeout;
+	int		 c, nready, ptyfd, readprompt, ret, status, timeout;
 
 	while ((c = getopt(argc, argv, "p:")) != -1) {
 		switch (c) {
@@ -142,6 +144,13 @@ main(int argc, char *argv[])
 		}
 	}
 	close(ptyfd);
+	while (waitpid(pid, &status, 0) == -1)
+		if (errno != EINTR)
+			err(1, "waitpid");
+	if (WIFSIGNALED(status) && WTERMSIG(status) != SIGHUP) {
+		warnx("%s: terminated by signal %d", *argv, WTERMSIG(status));
+		ret = 128 + WTERMSIG(status);
+	}
 
 	printf("%.*s", (int)nread, out);
 

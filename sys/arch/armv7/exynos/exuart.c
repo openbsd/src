@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.12 2017/08/29 13:33:03 jsg Exp $ */
+/* $OpenBSD: exuart.c,v 1.14 2018/02/19 08:59:52 mpi Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -91,7 +91,6 @@ struct exuart_softc {
 int     exuartprobe(struct device *parent, void *self, void *aux);
 void    exuartattach(struct device *parent, struct device *self, void *aux);
 
-void exuartcnprobe(struct consdev *cp);
 void exuartcnprobe(struct consdev *cp);
 void exuartcninit(struct consdev *cp);
 int exuartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
@@ -646,7 +645,7 @@ exuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		SET(tp->t_state, TS_CARR_ON); /* XXX */
 
 
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return EBUSY;
 	else
 		s = spltty();
@@ -826,7 +825,7 @@ exuartioctl( dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error != 0)
 			return(EPERM);
 

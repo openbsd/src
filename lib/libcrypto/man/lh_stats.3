@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lh_stats.3,v 1.5 2016/12/06 12:24:33 schwarze Exp $
+.\"	$OpenBSD: lh_stats.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL e2f92610 May 18 11:44:05 2016 -0400
 .\"
 .\" --------------------------------------------------------------------------
@@ -113,7 +113,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt LH_STATS 3
 .Os
 .Sh NAME
@@ -193,6 +193,16 @@ These functions do not return values.
 .Xr BIO_new 3 ,
 .Xr lh_new 3
 .Sh HISTORY
-These functions are available in all versions of SSLeay and OpenSSL.
+.Fn lh_stats ,
+.Fn lh_node_stats ,
+.Fn lh_node_usage_stats
+appeared in SSLeay 0.4.
+.Fn lh_stats_bio ,
+.Fn lh_node_stats_bio ,
+and
+.Fn lh_node_usage_stats_bio
+first appeared in SSLeay 0.6.0.
+These functions have been available since
+.Ox 2.4 .
 .Sh AUTHORS
 .An Eric Young

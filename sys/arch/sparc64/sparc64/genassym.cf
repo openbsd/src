@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.36 2016/10/08 05:42:38 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.37 2017/12/03 10:55:50 mpi Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -137,7 +137,7 @@ member	ci_curproc
 member	ci_cpcb
 member	ci_next
 member	ci_fpproc
-member	ci_number
+member	ci_cpuid
 member	ci_upaid
 member	ci_want_resched
 member	ci_handled_intr_level

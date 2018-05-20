@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_certificate.3,v 1.1 2016/12/10 13:54:32 schwarze Exp $
+.\"	$OpenBSD: SSL_get_certificate.3,v 1.4 2018/04/25 13:51:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt SSL_GET_CERTIFICATE 3
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@
 .Fc
 .Ft EVP_PKEY *
 .Fo SSL_get_privatekey
-.Fa "SSL *ssl"
+.Fa "const SSL *ssl"
 .Fc
 .Sh DESCRIPTION
 These functions retrieve certificate and key data from an
@@ -56,6 +56,8 @@ if none is active.
 .Xr SSL_use_certificate 3
 .Sh HISTORY
 .Fn SSL_get_certificate
-and
+first appeared in SSLeay 0.5.2a.
 .Fn SSL_get_privatekey
-are available in all versions of OpenSSL.
+first appeared in SSLeay 0.8.0.
+Both functions have been available since
+.Ox 2.4 .

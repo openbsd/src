@@ -1,4 +1,5 @@
-.\"	$OpenBSD: get_rfc3526_prime_8192.3,v 1.1 2017/01/31 05:40:26 schwarze Exp $
+.\" $OpenBSD: get_rfc3526_prime_8192.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
+.\" checked up to: OpenSSL DH_get_1024_160 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt GET_RFC3526_PRIME_8192 3
 .Os
 .Sh NAME
@@ -25,7 +26,14 @@
 .Nm get_rfc3526_prime_3072 ,
 .Nm get_rfc3526_prime_4096 ,
 .Nm get_rfc3526_prime_6144 ,
-.Nm get_rfc3526_prime_8192
+.Nm get_rfc3526_prime_8192 ,
+.Nm BN_get_rfc2409_prime_768 ,
+.Nm BN_get_rfc2409_prime_1024 ,
+.Nm BN_get_rfc3526_prime_2048 ,
+.Nm BN_get_rfc3526_prime_3072 ,
+.Nm BN_get_rfc3526_prime_4096 ,
+.Nm BN_get_rfc3526_prime_6144 ,
+.Nm BN_get_rfc3526_prime_8192
 .Nd standard moduli for Diffie-Hellmann key exchange
 .Sh SYNOPSIS
 .In openssl/bn.h
@@ -45,10 +53,29 @@
 .Fn get_rfc3526_prime_6144 "BIGNUM *bn"
 .Ft BIGNUM *
 .Fn get_rfc3526_prime_8192 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc2409_prime_768 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc2409_prime_1024 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_1536 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_2048 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_3072 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_4096 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_6144 "BIGNUM *bn"
+.Ft BIGNUM *
+.Fn BN_get_rfc3526_prime_8192 "BIGNUM *bn"
 .Sh DESCRIPTION
 Each of these functions returns one specific constant Sophie Germain
 prime number
 .Fa p .
+The names with the prefix
+.Sq BN_
+are aliases for the names without that prefix.
 .Pp
 If
 .Fa bn
@@ -124,6 +151,23 @@ information about these numbers.
 .Pp
 RFC 3526, "More Modular Exponential (MODP) Diffie-Hellman groups
 for Internet Key Exchange (IKE)", defines the other six numbers.
+.Sh HISTORY
+.Fn get_rfc2409_prime_768 ,
+.Fn get_rfc2409_prime_1024 ,
+.Fn get_rfc3526_prime_1536 ,
+.Fn get_rfc3526_prime_2048 ,
+.Fn get_rfc3526_prime_3072 ,
+.Fn get_rfc3526_prime_4096 ,
+.Fn get_rfc3526_prime_6144 ,
+and
+.Fn get_rfc3526_prime_8192
+first appeared in OpenSSL 0.9.8a and have been available since
+.Ox 4.5 .
+.Pp
+The
+.Sy BN_
+aliases first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
 .Sh CAVEATS
 As all the memory needed for storing the numbers is dynamically
 allocated, the

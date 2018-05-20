@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.184 2017/09/13 07:31:07 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.188 2018/04/23 13:46:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,7 @@ static void	window_copy_command(struct window_pane *, struct client *,
 static struct screen *window_copy_init(struct window_pane *,
 		    struct cmd_find_state *, struct args *);
 static void	window_copy_free(struct window_pane *);
-static int	window_copy_pagedown(struct window_pane *, int);
+static int	window_copy_pagedown(struct window_pane *, int, int);
 static void	window_copy_next_paragraph(struct window_pane *);
 static void	window_copy_previous_paragraph(struct window_pane *);
 static void	window_copy_resize(struct window_pane *, u_int, u_int);
@@ -392,7 +392,7 @@ window_copy_pageup(struct window_pane *wp, int half_page)
 }
 
 static int
-window_copy_pagedown(struct window_pane *wp, int half_page)
+window_copy_pagedown(struct window_pane *wp, int half_page, int scroll_exit)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
@@ -431,7 +431,7 @@ window_copy_pagedown(struct window_pane *wp, int half_page)
 			window_copy_cursor_end_of_line(wp);
 	}
 
-	if (data->scroll_exit && data->oy == 0)
+	if (scroll_exit && data->oy == 0)
 		return (1);
 	window_copy_update_selection(wp, 1);
 	window_copy_redraw_screen(wp);
@@ -524,7 +524,7 @@ window_copy_command(struct window_pane *wp, struct client *c, struct session *s,
 	struct screen			*sn = &data->screen;
 	const char			*command, *argument, *ws;
 	u_int				 np = wp->modeprefix;
-	int				 cancel = 0, redraw = 0;
+	int				 cancel = 0, redraw = 0, scroll_exit;
 	char				 prefix;
 
 	if (args->argc == 0)
@@ -629,9 +629,14 @@ window_copy_command(struct window_pane *wp, struct client *c, struct session *s,
 		}
 		if (strcmp(command, "end-of-line") == 0)
 			window_copy_cursor_end_of_line(wp);
-		if (strcmp(command, "halfpage-down") == 0) {
+		if (strcmp(command, "halfpage-down") == 0 ||
+		    strcmp(command, "halfpage-down-and-cancel") == 0) {
+			if (strcmp(command, "halfpage-down-and-cancel") == 0)
+				scroll_exit = 1;
+			else
+				scroll_exit = data->scroll_exit;
 			for (; np != 0; np--) {
-				if (window_copy_pagedown(wp, 1)) {
+				if (window_copy_pagedown(wp, 1, scroll_exit)) {
 					cancel = 1;
 					break;
 				}
@@ -727,9 +732,14 @@ window_copy_command(struct window_pane *wp, struct client *c, struct session *s,
 			if ((np % 2) != 0)
 				window_copy_other_end(wp);
 		}
-		if (strcmp(command, "page-down") == 0) {
+		if (strcmp(command, "page-down") == 0 ||
+		    strcmp(command, "page-down-and-cancel") == 0) {
+			if (strcmp(command, "page-down-and-cancel") == 0)
+				scroll_exit = 1;
+			else
+				scroll_exit = data->scroll_exit;
 			for (; np != 0; np--) {
-				if (window_copy_pagedown(wp, 0)) {
+				if (window_copy_pagedown(wp, 0, scroll_exit)) {
 					cancel = 1;
 					break;
 				}
@@ -756,10 +766,15 @@ window_copy_command(struct window_pane *wp, struct client *c, struct session *s,
 			sn->sel.lineflag = LINE_SEL_NONE;
 			window_copy_rectangle_toggle(wp);
 		}
-		if (strcmp(command, "scroll-down") == 0) {
+		if (strcmp(command, "scroll-down") == 0 ||
+		    strcmp(command, "scroll-down-and-cancel") == 0) {
+			if (strcmp(command, "scroll-down-and-cancel") == 0)
+				scroll_exit = 1;
+			else
+				scroll_exit = data->scroll_exit;
 			for (; np != 0; np--)
 				window_copy_cursor_down(wp, 1);
-			if (data->scroll_exit && data->oy == 0)
+			if (scroll_exit && data->oy == 0)
 				cancel = 1;
 		}
 		if (strcmp(command, "scroll-up") == 0) {
@@ -955,18 +970,22 @@ window_copy_scroll_to(struct window_pane *wp, u_int px, u_int py)
 
 	data->cx = px;
 
-	gap = gd->sy / 4;
-	if (py < gd->sy) {
-		offset = 0;
-		data->cy = py;
-	} else if (py > gd->hsize + gd->sy - gap) {
-		offset = gd->hsize;
-		data->cy = py - gd->hsize;
-	} else {
-		offset = py + gap - gd->sy;
-		data->cy = py - offset;
+	if (py >= gd->hsize - data->oy && py < gd->hsize - data->oy + gd->sy)
+		data->cy = py - (gd->hsize - data->oy);
+	else {
+		gap = gd->sy / 4;
+		if (py < gd->sy) {
+			offset = 0;
+			data->cy = py;
+		} else if (py > gd->hsize + gd->sy - gap) {
+			offset = gd->hsize;
+			data->cy = py - gd->hsize;
+		} else {
+			offset = py + gap - gd->sy;
+			data->cy = py - offset;
+		}
+		data->oy = gd->hsize - offset;
 	}
-	data->oy = gd->hsize - offset;
 
 	window_copy_update_selection(wp, 1);
 	window_copy_redraw_screen(wp);
@@ -1529,7 +1548,7 @@ window_copy_get_selection(struct window_pane *wp, size_t *len)
 	char				*buf;
 	size_t				 off;
 	u_int				 i, xx, yy, sx, sy, ex, ey, ey_last;
-	u_int				 firstsx, lastex, restex, restsx;
+	u_int				 firstsx, lastex, restex, restsx, selx;
 	int				 keys;
 
 	if (!s->sel.flag && s->sel.lineflag == LINE_SEL_NONE)
@@ -1580,7 +1599,11 @@ window_copy_get_selection(struct window_pane *wp, size_t *len)
 		 * Need to ignore the column with the cursor in it, which for
 		 * rectangular copy means knowing which side the cursor is on.
 		 */
-		if (data->selx < data->cx) {
+		if (data->cursordrag == CURSORDRAG_ENDSEL)
+			selx = data->selx;
+		else
+			selx = data->endselx;
+		if (selx < data->cx) {
 			/* Selection start is on the left. */
 			if (keys == MODEKEY_EMACS) {
 				lastex = data->cx;
@@ -1590,12 +1613,12 @@ window_copy_get_selection(struct window_pane *wp, size_t *len)
 				lastex = data->cx + 1;
 				restex = data->cx + 1;
 			}
-			firstsx = data->selx;
-			restsx = data->selx;
+			firstsx = selx;
+			restsx = selx;
 		} else {
 			/* Cursor is on the left. */
-			lastex = data->selx + 1;
-			restex = data->selx + 1;
+			lastex = selx + 1;
+			restex = selx + 1;
 			firstsx = data->cx;
 			restsx = data->cx;
 		}
@@ -1658,7 +1681,7 @@ window_copy_copy_pipe(struct window_pane *wp, struct session *s,
 		return;
 	expanded = format_single(NULL, arg, NULL, s, NULL, wp);
 
-	job = job_run(expanded, s, NULL, NULL, NULL, NULL, NULL);
+	job = job_run(expanded, s, NULL, NULL, NULL, NULL, NULL, JOB_NOWAIT);
 	bufferevent_write(job->event, buf, len);
 
 	free(expanded);

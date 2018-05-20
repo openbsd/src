@@ -16,6 +16,7 @@
 ./usr/include/amd64/codepatch.h
 ./usr/include/amd64/conf.h
 ./usr/include/amd64/cpu.h
+./usr/include/amd64/cpu_full.h
 ./usr/include/amd64/cpufunc.h
 ./usr/include/amd64/cpuvar.h
 ./usr/include/amd64/db_machdep.h

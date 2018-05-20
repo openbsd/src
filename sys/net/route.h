@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.167 2017/08/02 08:38:28 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.169 2018/04/24 06:19:47 florian Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -297,6 +297,9 @@ struct rt_msghdr {
 				   sent to the client. */
 #define ROUTE_TABLEFILTER 2	/* change routing table the socket is listening
 				   on, RTABLE_ANY listens on all tables. */
+#define ROUTE_PRIOFILTER 3	/* only pass updates with a priority higher or
+				   equal (actual value lower) to the specified
+				   priority. */
 
 #define ROUTE_FILTER(m)	(1 << (m))
 #define RTABLE_ANY	0xffffffff
@@ -424,7 +427,7 @@ void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
 struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 void	 rtm_send(struct rtentry *, int, int, unsigned int);
-void	 rtm_addr(struct rtentry *, int, struct ifaddr *);
+void	 rtm_addr(int, struct ifaddr *);
 void	 rtm_miss(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);

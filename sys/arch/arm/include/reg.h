@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 2018/01/23 12:38:14 kettenis Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2001/02/11 14:51:55 bjh21 Exp $	*/
 
 /*
@@ -37,8 +37,6 @@
 #ifndef _ARM_REG_H_
 #define _ARM_REG_H_
 
-#include <machine/fp.h>
-
 struct reg {
 	unsigned int r[13];
 	unsigned int r_sp;
@@ -48,8 +46,8 @@ struct reg {
 };
 
 struct fpreg {
-	unsigned int fpr_fpsr;
-	fp_reg_t fpr[8];
+	uint64_t	fp_reg[32];
+	uint32_t	fp_scr;
 };
 
 #endif /* !_ARM_REG_H_ */

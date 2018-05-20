@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.36 2016/09/02 14:23:09 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.45 2018/01/13 15:43:39 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -59,8 +59,8 @@ static double	begin	= 1;
 static double	ender	= 100;
 static double	step	= 1;
 
-static char	format[BUFSIZ];
-static char	sepstring[BUFSIZ] = "\n";
+static char	*format = "";
+static char	*sepstring = "\n";
 static int	prec = -1;
 static bool	boring;
 static bool	chardata;
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	unsigned int	mask = 0;
 	int		n = 0;
 	int		ch;
-	const	char	*errstr;
+	const char	*errstr;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -94,9 +94,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			boring = true;
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-b word too long");
+			format = optarg;
 			break;
 		case 'c':
 			chardata = true;
@@ -114,14 +112,10 @@ main(int argc, char *argv[])
 			randomize = true;
 			break;
 		case 's':
-			if (strlcpy(sepstring, optarg, sizeof(sepstring)) >=
-			    sizeof(sepstring))
-				errx(1, "-s string too long");
+			sepstring = optarg;
 			break;
 		case 'w':
-			if (strlcpy(format, optarg, sizeof(format)) >=
-			    sizeof(format))
-				errx(1, "-w word too long");
+			format = optarg;
 			break;
 		default:
 			usage();
@@ -176,7 +170,8 @@ main(int argc, char *argv[])
 		    argv[4]);
 	}
 
-	getformat();
+	if (!boring)
+		getformat();
 
 	if (!randomize) {
 		/*
@@ -355,41 +350,32 @@ getprec(char *s)
 static void
 getformat(void)
 {
-	char	*p, *p2;
-	int dot, hash, space, sign, numbers = 0;
-	size_t sz;
+	char	*p;
 
-	if (boring)				/* no need to bother */
-		return;
-	for (p = format; *p != '\0'; p++)	/* look for '%' */
-		if (*p == '%') {
-			if (*(p+1) != '%')
-				break;
-			p++;			/* leave %% alone */
-		}
-	sz = sizeof(format) - strlen(format) - 1;
-	if (*p == '\0' && !chardata) {
-		int n;
+	p = format;
+	while ((p = strchr(p, '%')) != NULL && p[1] == '%')
+		p += 2;
 
-		n = snprintf(p, sz, "%%.%df", prec);
-		if (n == -1 || n >= (int)sz)
-			errx(1, "-w word too long");
-	} else if (*p == '\0' && chardata) {
-		if (strlcpy(p, "%c", sz) >= sz)
-			errx(1, "-w word too long");
-		intdata = true;
-	} else if (*(p+1) == '\0') {
-		if (sz <= 0)
-			errx(1, "-w word too long");
+	if (p == NULL && !chardata) {
+		if (asprintf(&format, "%s%%.%df", format, prec) < 0)
+			err(1, NULL);
+	} else if (p == NULL && chardata) {
+		if (asprintf(&format, "%s%%c", format) < 0)
+			err(1, NULL);
+	} else if (p[1] == '\0') {
 		/* cannot end in single '%' */
-		strlcat(format, "%", sizeof format);
+		if (asprintf(&format, "%s%%", format) < 0)
+			err(1, NULL);
 	} else {
 		/*
 		 * Allow conversion format specifiers of the form
 		 * %[#][ ][{+,-}][0-9]*[.[0-9]*]? where ? must be one of
-		 * [l]{d,i,o,u,x} or {f,e,g,E,G,d,o,x,D,O,U,X,c,u}
+		 * [l]{d,i,o,u,x} or {f,e,g,F,E,G,d,o,x,D,O,U,X,c,u}
 		 */
-		p2 = p++;
+		char	*fmt;
+		int	dot, hash, space, sign, numbers;
+
+		fmt = p++;
 		dot = hash = space = sign = numbers = 0;
 		while (!isalpha((unsigned char)*p)) {
 			if (isdigit((unsigned char)*p)) {
@@ -407,53 +393,62 @@ getformat(void)
 		if (*p == 'l') {
 			longdata = true;
 			if (*++p == 'l') {
-				if (p[1] != '\0')
-					p++;
+				p++;
 				goto fmt_broken;
 			}
 		}
 		switch (*p) {
-		case 'o': case 'u': case 'x': case 'X':
-			intdata = nosign = true;
-			break;
-		case 'd': case 'i':
+		case 'd':
+		case 'i':
 			intdata = true;
 			break;
+		case 'o':
+		case 'u':
+		case 'x':
+		case 'X':
+			intdata = nosign = true;
+			break;
 		case 'D':
-			if (!longdata) {
-				intdata = true;
-				break;
-			}
-		case 'O': case 'U':
-			if (!longdata) {
-				intdata = nosign = true;
-				break;
-			}
+			if (longdata)
+				goto fmt_broken;
+			longdata = intdata = true; /* same as %ld */
+			break;
+		case 'O':
+		case 'U':
+			if (longdata)
+				goto fmt_broken;
+			longdata = intdata = nosign = true; /* same as %l[ou] */
+			break;
 		case 'c':
-			if (!(intdata | longdata)) {
-				chardata = true;
-				break;
-			}
-		case 'h': case 'n': case 'p': case 'q': case 's': case 'L':
-		case '$': case '*':
-			goto fmt_broken;
-		case 'f': case 'e': case 'g': case 'E': case 'G':
-			if (!longdata)
-				break;
-			/* FALLTHROUGH */
+			if (longdata)
+				goto fmt_broken;
+			chardata = true;
+			break;
+		case 'e':
+		case 'E':
+		case 'f':
+		case 'F':
+		case 'g':
+		case 'G':
+			if (longdata)
+				goto fmt_broken;
+			/* No cast needed for printing in putdata() */
+			break;
 		default:
 fmt_broken:
-			*++p = '\0';
-			errx(1, "illegal or unsupported format '%s'", p2);
+			errx(1, "illegal or unsupported format '%.*s'",
+			    (int)(p + 1 - fmt), fmt);
 		}
-		while (*++p != '\0')
-			if (*p == '%' && *(p+1) != '\0' && *(p+1) != '%')
+
+		while ((p = strchr(p, '%')) != NULL && p[1] == '%')
+			p += 2;
+		
+		if (p != NULL) {
+			if (p[1] != '\0')
 				errx(1, "too many conversions");
-			else if (*p == '%' && *(p+1) == '%')
-				p++;
-			else if (*p == '%' && *(p+1) == '\0') {
-				strlcat(format, "%", sizeof format);
-				break;
-			}
+			/* cannot end in single '%' */
+			if (asprintf(&format, "%s%%", format) < 0)
+				err(1, NULL);
+		}
 	}
 }

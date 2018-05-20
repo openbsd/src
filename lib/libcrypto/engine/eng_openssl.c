@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.12 2015/12/07 03:30:09 bcook Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.13 2018/04/14 07:18:37 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -177,7 +177,7 @@ engine_openssl(void)
 {
 	ENGINE *ret = ENGINE_new();
 
-	if (!ret)
+	if (ret == NULL)
 		return NULL;
 	if (!bind_helper(ret)) {
 		ENGINE_free(ret);
@@ -191,7 +191,7 @@ ENGINE_load_openssl(void)
 {
 	ENGINE *toadd = engine_openssl();
 
-	if (!toadd)
+	if (toadd == NULL)
 		return;
 	(void) ENGINE_add(toadd);
 	/* If the "add" worked, it gets a structural reference. So either way,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.22 2017/08/31 06:11:45 jasper Exp $
+.\" $OpenBSD: vm.conf.5,v 1.28 2018/05/13 22:48:11 pd Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2017 $
+.Dd $Mdocdate: May 13 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -119,6 +119,8 @@ Followed by a block of parameters that is enclosed in curly brackets:
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+.It Cm cdrom Ar path
+ISO image file.
 .It Cm enable
 Automatically start the VM.
 This is the default if neither
@@ -166,6 +168,11 @@ will drop packets from the VM with altered source addresses.
 .It Cm rdomain Ar rdomainid
 Attach the interface to the routing domain with the specified
 .Ar rdomainid .
+If attaching to a switch that also has an
+.Ar rdomainid
+set, the
+.Ar rdomainid
+configured for the interface takes precedence.
 .It Cm switch Ar name
 Set the virtual switch
 by
@@ -185,7 +192,7 @@ A
 .Cm local
 interface will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
-and run a simple DHCP (BOOTP) server for the VM.
+and run a simple DHCP/BOOTP server for the VM.
 This option can be used for layer 3 mode without configuring a switch.
 .It Cm interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.
@@ -199,7 +206,8 @@ Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
 .It Cm owner Ar user Ns Op : Ns Ar group
 Set the owner of the VM to the specified user or group.
-The owner will be allowed to start or stop the VM and open the VM's console.
+The owner will be allowed to start or stop the VM, pause or unpause the VM,
+and open the VM's console.
 .It Cm owner Pf : Ar group
 Set the owner to the specified group.
 .El
@@ -211,9 +219,7 @@ or
 .Xr switch 4 .
 The network interface for each virtual switch defined in
 .Nm
-is automatically created by
-.Xr vmd 8 ,
-but it is also possible to pre-configure switch interfaces using
+is pre-configured using
 .Xr hostname.if 5
 or
 .Xr ifconfig 8
@@ -244,12 +250,6 @@ This name can be any string, and is typically a network name.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm add Ar interface
-Add
-.Ar interface
-as a member of the switch.
-Any network interface can be added, typically as an uplink interface,
-but it can be a member of at most one switch.
 .It Cm enable
 Automatically configure the switch.
 This is the default if neither
@@ -279,20 +279,12 @@ Set the
 or
 .Xr bridge 4
 network interface of this switch.
-If not specified,
-.Ar bridge0
-will be used where the interface unit will be incremented for each switch,
-e.g.\&
-.Ar bridge0 , bridge1 , ...
 If the type is changed to
 .Ar switch0 ,
 it will be used for each following switch.
 .It Cm rdomain Ar rdomainid
 Set the routing domain of the switch and all of its VM interfaces to
 .Ar rdomainid .
-This overwrites the
-.Cm rdomain
-option of VM interfaces.
 .It Cm up
 Start the switch forwarding packets.
 This is the default.
@@ -318,7 +310,7 @@ vm "vm2.example.com" {
 Create the switch "uplink" with an additional physical network interface:
 .Bd -literal -offset indent
 switch "uplink" {
-	add em0
+	interface bridge0
 }
 .Ed
 .Sh SEE ALSO

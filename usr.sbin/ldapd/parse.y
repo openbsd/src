@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2017/08/28 06:00:05 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2018/05/18 12:36:30 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -96,7 +96,7 @@ struct ldapd_config	*conf;
 SPLAY_GENERATE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 static struct aci	*mk_aci(int type, int rights, enum scope scope,
-				char *target, char *subject);
+				char *target, char *subject, char *attr);
 
 typedef struct {
 	union {
@@ -120,7 +120,7 @@ static struct namespace *current_ns = NULL;
 %token  <v.number>	NUMBER
 %type	<v.number>	port ssl boolean comp_level
 %type	<v.number>	aci_type aci_access aci_rights aci_right aci_scope
-%type	<v.string>	aci_target aci_subject certname
+%type	<v.string>	aci_target aci_attr aci_subject certname
 %type	<v.aci>		aci
 
 %%
@@ -294,8 +294,8 @@ comp_level	: /* empty */			{ $$ = 6; }
 		| LEVEL NUMBER			{ $$ = $2; }
 		;
 
-aci		: aci_type aci_access TO aci_scope aci_target aci_subject {
-			if (($$ = mk_aci($1, $2, $4, $5, $6)) == NULL) {
+aci		: aci_type aci_access TO aci_scope aci_target aci_attr aci_subject {
+			if (($$ = mk_aci($1, $2, $4, $5, $6, $7)) == NULL) {
 				free($5);
 				free($6);
 				YYERROR;
@@ -303,7 +303,7 @@ aci		: aci_type aci_access TO aci_scope aci_target aci_subject {
 		}
 		| aci_type aci_access {
 			if (($$ = mk_aci($1, $2, LDAP_SCOPE_SUBTREE, NULL,
-			    NULL)) == NULL) {
+			    NULL, NULL)) == NULL) {
 				YYERROR;
 			}
 		}
@@ -338,6 +338,10 @@ aci_target	: ANY				{ $$ = NULL; }
 		| STRING			{ $$ = $1; normalize_dn($$); }
 		;
 
+aci_attr	: /* empty */			{ $$ = NULL; }
+		| ATTRIBUTE STRING		{ $$ = $2; }
+		;
+
 aci_subject	: /* empty */			{ $$ = NULL; }
 		| BY ANY			{ $$ = NULL; }
 		| BY STRING			{ $$ = $2; normalize_dn($$); }
@@ -365,6 +369,8 @@ varset		: STRING '=' STRING		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -423,6 +429,7 @@ lookup(char *s)
 		{ "access",		ACCESS },
 		{ "allow",		ALLOW },
 		{ "any",		ANY },
+		{ "attribute",		ATTRIBUTE },
 		{ "bind",		BIND },
 		{ "by",			BY },
 		{ "cache-size",		CACHE_SIZE },
@@ -1132,7 +1139,8 @@ interface(const char *s, const char *cert,
 }
 
 static struct aci *
-mk_aci(int type, int rights, enum scope scope, char *target, char *subject)
+mk_aci(int type, int rights, enum scope scope, char *target, char *attr,
+    char *subject)
 {
 	struct aci	*aci;
 
@@ -1144,12 +1152,15 @@ mk_aci(int type, int rights, enum scope scope, char *target, char *subject)
 	aci->rights = rights;
 	aci->scope = scope;
 	aci->target = target;
+	aci->attribute = attr;
 	aci->subject = subject;
 
-	log_debug("%s %02X access to %s scope %d by %s",
+	log_debug("%s %02X access to %s%s%s scope %d by %s",
 	    aci->type == ACI_DENY ? "deny" : "allow",
 	    aci->rights,
 	    aci->target ? aci->target : "any",
+	    aci->attribute ? " attribute " : "",
+	    aci->attribute ? aci->attribute : "",
 	    aci->scope,
 	    aci->subject ? aci->subject : "any");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.49 2017/05/02 21:39:45 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.53 2018/05/15 11:11:35 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -149,6 +149,7 @@
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = "";
+uint8_t *bootmac = NULL;
 u_int cpu_reset_address = 0;
 
 vaddr_t physical_start;
@@ -216,7 +217,8 @@ bs_protos(bs_notimpl);
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
-int stdout_node = 0;
+int stdout_node;
+int stdout_speed;
 
 void (*cpuresetfn)(void);
 void (*powerdownfn)(void);
@@ -409,14 +411,10 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	/*
 	 * Temporarily replace bus_space_map() functions so that
 	 * console devices can get mapped.
-	 *
-	 * Note that this relies upon the fact that both regular
-	 * and a4x bus_space tags use the same map function.
 	 */
 	tmp_bs_tag = armv7_bs_tag;
 	map_func_save = armv7_bs_tag.bs_map;
 	armv7_bs_tag.bs_map = bootstrap_bs_map;
-	armv7_a4x_bs_tag.bs_map = bootstrap_bs_map;
 	tmp_bs_tag.bs_map = bootstrap_bs_map;
 
 	/*
@@ -437,16 +435,23 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
-		char *args, *duid;
+		char *prop;
 		int len;
+		static uint8_t lladdr[6];
 
-		len = fdt_node_property(node, "bootargs", &args);
+		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
-			process_kernel_args(args);
+			process_kernel_args(prop);
 
-		len = fdt_node_property(node, "openbsd,bootduid", &duid);
+		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
-			memcpy(bootduid, duid, sizeof(bootduid));
+			memcpy(bootduid, prop, sizeof(bootduid));
+
+		len = fdt_node_property(node, "openbsd,bootmac", &prop);
+		if (len == sizeof(lladdr)) {
+			memcpy(lladdr, prop, sizeof(lladdr));
+			bootmac = lladdr;
+		}
 	}
 
 	node = fdt_find_node("/memory");
@@ -621,21 +626,27 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 	{
-		extern char etext[];
-		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (u_int32_t) esym - KERNEL_TEXT_BASE;
+		extern char __text_start[], _etext[];
+		extern char __rodata_start[], _erodata[];
+		size_t textsize = (u_int32_t) (_etext - __text_start);
+		size_t rodatasize = (u_int32_t) (_erodata - __rodata_start);
+		size_t totalsize = esym - (u_int32_t)__text_start;
 		u_int logical;
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
+		rodatasize = (rodatasize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
 
-		logical = 0x00000000;	/* offset of kernel in RAM */
+		logical = 0x00300000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    loadaddr + logical, textsize,
 		    PROT_READ | PROT_EXEC, PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    loadaddr + logical, totalsize - textsize,
+		    loadaddr + logical, rodatasize,
+		    PROT_READ, PTE_CACHE);
+		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
+		    loadaddr + logical, totalsize - (textsize + rodatasize),
 		    PROT_READ | PROT_WRITE, PTE_CACHE);
 	}
 
@@ -776,7 +787,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	 * Restore proper bus_space operation, now that pmap is initialized.
 	 */
 	armv7_bs_tag.bs_map = map_func_save;
-	armv7_a4x_bs_tag.bs_map = map_func_save;
 
 #ifdef DDB
 	db_machine_init();
@@ -859,6 +869,30 @@ process_kernel_args(char *args)
 	}
 }
 
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
 void *
 fdt_find_cons(const char *name)
 {
@@ -874,8 +908,10 @@ fdt_find_cons(const char *name)
 		if (fdt_node_property(node, "stdout-path", &stdout) > 0) {
 			if (strchr(stdout, ':') != NULL) {
 				strlcpy(buf, stdout, sizeof(buf));
-				if ((p = strchr(buf, ':')) != NULL)
-					*p = '\0';
+				if ((p = strchr(buf, ':')) != NULL) {
+					*p++ = '\0';
+					stdout_speed = atoi(p);
+				}
 				stdout = buf;
 			}
 			if (stdout[0] != '/') {

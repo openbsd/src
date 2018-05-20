@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.66 2017/08/27 01:39:26 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.70 2018/04/08 16:57:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -182,10 +182,10 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int
 check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 {
-	size_t i;
-	size_t n = sk_OPENSSL_STRING_num(id->hosts);
+	size_t i, n;
 	char *name;
 
+	n = sk_OPENSSL_STRING_num(id->hosts);
 	free(id->peername);
 	id->peername = NULL;
 
@@ -241,6 +241,15 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		/*
 		 * This X509_STORE_CTX has already been used to verify
 		 * a cert. We cannot do another one.
+		 */
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	if (ctx->param->id->poisoned) {
+		/*
+		 * This X509_STORE_CTX had failures setting
+		 * up verify parameters. We can not use it.
 		 */
 		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		ctx->error = X509_V_ERR_INVALID_CALL;
@@ -2023,12 +2032,20 @@ X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 	return ctx->current_cert;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *
+X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 {
 	return ctx->chain;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *
+X509_STORE_CTX_get0_chain(X509_STORE_CTX *xs)
+{
+	return xs->chain;
+}
+
+STACK_OF(X509) *
+X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 {
 	int i;
 	X509 *x;
@@ -2059,6 +2076,12 @@ X509_STORE_CTX *
 X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
 {
 	return ctx->parent;
+}
+
+X509_STORE *
+X509_STORE_CTX_get0_store(X509_STORE_CTX *xs)
+{
+	return xs->ctx;
 }
 
 void
@@ -2302,6 +2325,12 @@ X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 }
 
 void
+X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	X509_STORE_CTX_trusted_stack(ctx, sk);
+}
+
+void
 X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 {
 	if (ctx->cleanup)
@@ -2347,6 +2376,24 @@ X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
     int (*verify_cb)(int, X509_STORE_CTX *))
 {
 	ctx->verify_cb = verify_cb;
+}
+
+X509 *
+X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+{
+	return ctx->cert;
+}
+
+STACK_OF(X509) *
+X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
+{
+	return ctx->untrusted;
+}
+
+void
+X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+	ctx->untrusted = sk;
 }
 
 X509_POLICY_TREE *

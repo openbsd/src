@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.6 2017/08/12 16:57:07 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.11 2018/05/08 13:41:52 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -24,7 +24,10 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/usb.h>
@@ -92,7 +95,8 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	printf("\n");
+	/* Set up power domain */
+	power_domain_enable(sc->sc_node);
 
 	/* 
 	 * Synopsys Designware USB3 controller needs some extra
@@ -133,9 +137,12 @@ unmap:
 #define  USB3_GCTL_PRTCAPDIR_MASK	(0x3 << 12)
 #define  USB3_GCTL_PRTCAPDIR_HOST	(0x1 << 12)
 #define  USB3_GCTL_PRTCAPDIR_DEVICE	(0x2 << 12)
+#define USB3_GUCTL1		0xc11c
+#define  USB3_GUCTL1_TX_IPGAP_LINECHECK_DIS	(1 << 28)
 #define USB3_GUSB2PHYCFG0	0xc200
 #define  USB3_GUSB2PHYCFG0_U2_FREECLK_EXISTS	(1 << 30)
 #define  USB3_GUSB2PHYCFG0_USBTRDTIM(n)	((n) << 10)
+#define  USB3_GUSB2PHYCFG0_ENBLSLPM	(1 << 8)
 #define  USB3_GUSB2PHYCFG0_SUSPENDUSB20	(1 << 6)
 #define  USB3_GUSB2PHYCFG0_PHYIF	(1 << 3)
 
@@ -146,7 +153,7 @@ xhci_dwc3_init(struct xhci_fdt_softc *sc)
 	int node = sc->sc_node;
 	uint32_t reg;
 
-	/* We don't support device mode, so alway force host mode. */
+	/* We don't support device mode, so always force host mode. */
 	reg = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB3_GCTL);
 	reg &= ~USB3_GCTL_PRTCAPDIR_MASK;
 	reg |= USB3_GCTL_PRTCAPDIR_HOST;
@@ -165,9 +172,17 @@ xhci_dwc3_init(struct xhci_fdt_softc *sc)
 	}
 	if (OF_getproplen(node, "snps,dis-u2-freeclk-exists-quirk") == 0)
 		reg &= ~USB3_GUSB2PHYCFG0_U2_FREECLK_EXISTS;
+	if (OF_getproplen(node, "snps,dis_enblslpm_quirk") == 0)
+		reg &= ~USB3_GUSB2PHYCFG0_ENBLSLPM;
 	if (OF_getproplen(node, "snps,dis_u2_susphy_quirk") == 0)
 		reg &= ~USB3_GUSB2PHYCFG0_SUSPENDUSB20;
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USB3_GUSB2PHYCFG0, reg);
+
+	/* Configure USB3 quirks. */
+	reg = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB3_GUCTL1);
+	if (OF_getproplen(node, "snps,dis-tx-ipgap-linecheck-quirk") == 0)
+		reg |= USB3_GUCTL1_TX_IPGAP_LINECHECK_DIS;
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USB3_GUCTL1, reg);
 }
 
 /*
@@ -180,10 +195,14 @@ struct xhci_phy {
 };
 
 void exynos5_usbdrd_init(struct xhci_fdt_softc *, uint32_t *);
+void imx8mq_usb_init(struct xhci_fdt_softc *, uint32_t *);
+void nop_xceiv_init(struct xhci_fdt_softc *, uint32_t *);
 
 struct xhci_phy xhci_phys[] = {
+	{ "fsl,imx8mq-usb-phy", imx8mq_usb_init },
 	{ "samsung,exynos5250-usbdrd-phy", exynos5_usbdrd_init },
-	{ "samsung,exynos5420-usbdrd-phy", exynos5_usbdrd_init }
+	{ "samsung,exynos5420-usbdrd-phy", exynos5_usbdrd_init },
+	{ "usb-nop-xceiv", nop_xceiv_init },
 };
 
 uint32_t *
@@ -223,9 +242,21 @@ xhci_init_phys(struct xhci_fdt_softc *sc)
 {
 	uint32_t *phys;
 	uint32_t *phy;
+	uint32_t usb_phy;
 	int len, idx;
 
-	/* XXX Only initialize the USB 3 PHY for now. */
+	/*
+	 * Legacy binding; assume there only is a single USB PHY.
+	 */
+	usb_phy = OF_getpropint(sc->sc_node, "usb-phy", 0);
+	if (usb_phy) {
+		xhci_init_phy(sc, &usb_phy);
+		return;
+	}
+
+	/*
+	 * Generic PHY binding; only initialize USB 3 PHY for now.
+	 */
 	idx = OF_getindex(sc->sc_node, "usb3-phy", "phy-names");
 	if (idx < 0)
 		return;
@@ -329,4 +360,75 @@ exynos5_usbdrd_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 	delay(10);
 	CLR(val, EXYNOS5_PHYCLKRST_PORTRESET);
 	bus_space_write_4(sc->sc.iot, sc->ph_ioh, EXYNOS5_PHYCLKRST, val);
+}
+
+/*
+ * i.MX8MQ PHYs.
+ */
+
+/* Registers */
+#define IMX8MQ_PHY_CTRL0			0x0000
+#define  IMX8MQ_PHY_CTRL0_REF_SSP_EN			(1 << 2)
+#define IMX8MQ_PHY_CTRL1			0x0004
+#define  IMX8MQ_PHY_CTRL1_RESET				(1 << 0)
+#define  IMX8MQ_PHY_CTRL1_ATERESET			(1 << 3)
+#define  IMX8MQ_PHY_CTRL1_VDATSRCENB0			(1 << 19)
+#define  IMX8MQ_PHY_CTRL1_VDATDETENB0			(1 << 20)
+#define IMX8MQ_PHY_CTRL2			0x0008
+#define  IMX8MQ_PHY_CTRL2_TXENABLEN0			(1 << 8)
+#define IMX8MQ_PHY_CTRL3			0x000c
+
+void
+imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
+{
+	uint32_t phy_reg[4], reg;
+	int node;
+
+	node = OF_getnodebyphandle(cells[0]);
+	KASSERT(node != 0);
+
+	if (OF_getpropintarray(node, "reg", phy_reg,
+	    sizeof(phy_reg)) != sizeof(phy_reg))
+		return;
+
+	if (bus_space_map(sc->sc.iot, phy_reg[1],
+	    phy_reg[3], 0, &sc->ph_ioh)) {
+		printf("%s: can't map PHY registers\n",
+		    sc->sc.sc_bus.bdev.dv_xname);
+		return;
+	}
+
+	clock_set_assigned(node);
+	clock_enable_all(node);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1);
+	reg &= ~(IMX8MQ_PHY_CTRL1_VDATSRCENB0 | IMX8MQ_PHY_CTRL1_VDATDETENB0);
+	reg |= IMX8MQ_PHY_CTRL1_RESET | IMX8MQ_PHY_CTRL1_ATERESET;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL0);
+	reg |= IMX8MQ_PHY_CTRL0_REF_SSP_EN;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL0, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL2);
+	reg |= IMX8MQ_PHY_CTRL2_TXENABLEN0;
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL2, reg);
+
+	reg = bus_space_read_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1);
+	reg &= ~(IMX8MQ_PHY_CTRL1_RESET | IMX8MQ_PHY_CTRL1_ATERESET);
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, IMX8MQ_PHY_CTRL1, reg);
+}
+
+void
+nop_xceiv_init(struct xhci_fdt_softc *sc, uint32_t *cells)
+{
+	uint32_t vcc_supply;
+	int node;
+
+	node = OF_getnodebyphandle(cells[0]);
+	KASSERT(node != 0);
+
+	vcc_supply = OF_getpropint(node, "vcc-supply", 0);
+	if (vcc_supply)
+		regulator_enable(vcc_supply);
 }

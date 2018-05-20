@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.23 2017/03/01 00:50:12 gsoares Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.24 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "ldapd.h"
 #include "log.h"
@@ -123,7 +124,7 @@ main(int argc, char *argv[])
 	struct event		 ev_sighup;
 	struct stat		 sb;
 
-	log_init(1);		/* log to stderr until daemonized */
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 
 	saved_argv0 = argv[0];
 	if (saved_argv0 == NULL)
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	if (getpwnam(LDAPD_USER) == NULL)
 		errx(1, "unknown user %s", LDAPD_USER);
 
-	log_verbose(verbose);
+	log_setverbose(verbose);
 	stats.started_at = time(0);
 	tls_init();
 
@@ -191,6 +192,8 @@ main(int argc, char *argv[])
 		fprintf(stderr, "configuration ok\n");
 		exit(0);
 	}
+
+	log_init(debug, LOG_DAEMON);
 
 	if (eflag)
 		ldape(debug, verbose, csockpath);
@@ -205,7 +208,6 @@ main(int argc, char *argv[])
 			err(1, "failed to daemonize");
 	}
 
-	log_init(debug);
 	log_info("startup");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
@@ -215,6 +217,7 @@ main(int argc, char *argv[])
 	ldape_pid = start_child(PROC_LDAP_SERVER, saved_argv0,
 	    pipe_parent2ldap[1], debug, verbose, csockpath, conffile);
 
+	ldap_loginit("auth", debug, verbose);
 	setproctitle("auth");
 	event_init();
 
@@ -374,7 +377,7 @@ ldapd_log_verbose(struct imsg *imsg)
 		fatal("invalid size of log verbose request");
 
 	bcopy(imsg->data, &verbose, sizeof(verbose));
-	log_verbose(verbose);
+	log_setverbose(verbose);
 }
 
 static void
@@ -439,7 +442,11 @@ start_child(enum ldapd_process p, char *argv0, int fd, int debug,
 	}
 	if (debug)
 		argv[argc++] = "-d";
-	if (verbose)
+	if (verbose >= 3)
+		argv[argc++] = "-vvv";
+	else if (verbose == 2)
+		argv[argc++] = "-vv";
+	else if (verbose == 1)
 		argv[argc++] = "-v";
 	if (csockpath) {
 		argv[argc++] = "-s";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.248 2017/05/18 15:41:59 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.251 2018/04/12 17:13:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -35,7 +35,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -902,7 +901,7 @@ boot(int howto)
 
 	if ((howto & RB_NOSYNC) == 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
@@ -1225,7 +1224,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
-		scp = (register_t)p->p_sigstk.ss_sp;
+		scp = round_page((vaddr_t)p->p_sigstk.ss_sp);
 	else
 		scp = (tf->tf_sp + 63) & ~63;
 

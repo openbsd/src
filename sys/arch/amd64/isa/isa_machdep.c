@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.28 2015/09/27 10:12:09 semarie Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.29 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -72,7 +72,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
@@ -85,18 +84,10 @@
 #include <machine/mpbiosvar.h>
 #endif
 
-#include <machine/bus.h>
-
 #include <machine/intr.h>
-#include <machine/pio.h>
-#include <machine/cpufunc.h>
 #include <machine/i8259.h>
 
 #include <dev/isa/isavar.h>
-#if 0
-#include <dev/isa/isadmavar.h>
-#endif
-#include <i386/isa/isa_machdep.h>
 
 #include "isadma.h"
 

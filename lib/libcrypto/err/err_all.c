@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.23 2016/10/19 16:49:11 jsing Exp $ */
+/* $OpenBSD: err_all.c,v 1.24 2018/03/17 16:20:01 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <pthread.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -103,11 +104,13 @@
 #include <openssl/gost.h>
 #endif
 
-void
-ERR_load_crypto_strings(void)
+void ERR_load_ERR_strings_internal(void);
+
+static void
+ERR_load_crypto_strings_internal(void)
 {
 #ifndef OPENSSL_NO_ERR
-	ERR_load_ERR_strings(); /* include error strings for SYSerr */
+	ERR_load_ERR_strings_internal(); /* include error strings for SYSerr */
 	ERR_load_BN_strings();
 #ifndef OPENSSL_NO_RSA
 	ERR_load_RSA_strings();
@@ -152,4 +155,11 @@ ERR_load_crypto_strings(void)
 	ERR_load_GOST_strings();
 #endif
 #endif
+}
+
+void
+ERR_load_crypto_strings(void)
+{
+	static pthread_once_t loaded = PTHREAD_ONCE_INIT;
+	(void) pthread_once(&loaded, ERR_load_crypto_strings_internal);
 }

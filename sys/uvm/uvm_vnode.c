@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.98 2017/08/12 20:27:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.102 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -74,6 +74,8 @@ struct uvn_list_struct uvn_wlist;	/* writeable uvns */
 SIMPLEQ_HEAD(uvn_sq_struct, uvm_vnode);
 struct uvn_sq_struct uvn_sync_q;		/* sync'ing uvns */
 struct rwlock uvn_sync_lock;			/* locks sync operation */
+
+extern int rebooting;
 
 /*
  * functions
@@ -1103,6 +1105,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	off_t file_offset;
 	int waitf, result, mapinflags;
 	size_t got, wanted;
+	int netunlocked = 0;
 
 	/* init values */
 	waitf = (flags & PGO_SYNCIO) ? M_WAITOK : M_NOWAIT;
@@ -1161,6 +1164,15 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	uio.uio_resid = wanted;
 	uio.uio_procp = curproc;
 
+	/*
+	 * This process may already have the NET_LOCK(), if we
+	 * faulted in copyin() or copyout() in the network stack.
+	 */
+	if (rw_status(&netlock) == RW_WRITE) {
+		NET_UNLOCK();
+		netunlocked = 1;
+	}
+
 	/* do the I/O!  (XXX: curproc?) */
 	/*
 	 * This process may already have this vnode locked, if we faulted in
@@ -1173,18 +1185,9 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	 */
 	result = 0;
 	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL, curproc);
+		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL);
 
 	if (result == 0) {
-		int netlocked = (rw_status(&netlock) == RW_WRITE);
-
-		/*
-		 * This process may already have the NET_LOCK(), if we
-		 * faulted in copyin() or copyout() in the network stack.
-		 */
-		if (netlocked)
-			NET_UNLOCK();
-
 		/* NOTE: vnode now locked! */
 		if (rw == UIO_READ)
 			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
@@ -1193,12 +1196,14 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			    (flags & PGO_PDFREECLUST) ? IO_NOCACHE : 0,
 			    curproc->p_ucred);
 
-		if (netlocked)
-			NET_LOCK();
-
 		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-			VOP_UNLOCK(vn, curproc);
+			VOP_UNLOCK(vn);
+
 	}
+
+	if (netunlocked)
+		NET_LOCK();
+
 
 	/* NOTE: vnode now unlocked (unless vnislocked) */
 	/*
@@ -1226,10 +1231,13 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		wakeup(&uvn->u_nio);
 	}
 
-	if (result == 0)
+	if (result == 0) {
 		return(VM_PAGER_OK);
-	else
+	} else {
+		while (rebooting)
+			tsleep(&rebooting, PVM, "uvndead", 0);
 		return(VM_PAGER_ERROR);
+	}
 }
 
 /*
@@ -1315,9 +1323,9 @@ uvm_vnp_uncache(struct vnode *vp)
 	 * unlocked causing us to return TRUE when we should not.   we ignore
 	 * this as a false-positive return value doesn't hurt us.
 	 */
-	VOP_UNLOCK(vp, curproc);
+	VOP_UNLOCK(vp);
 	uvn_detach(&uvn->u_obj);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	return(TRUE);
 }

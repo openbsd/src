@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2017/09/21 12:11:29 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.107 2018/05/16 13:42:35 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -41,7 +41,7 @@ armliicc*	at cortex?
 # iMX
 imxccm*		at fdt? early 1		# clock control module
 imxiomuxc*	at fdt? early 1		# iomux controller
-imxocotp*	at fdt?			# on-chip otp controller
+imxanatop*	at fdt? early 1		# anatop controller
 imxgpc*		at fdt?			# power controller
 imxdog*		at fdt?			# watchdog timer
 imxtemp*	at fdt?			# temperature monitor
@@ -91,6 +91,9 @@ sxipio*		at fdt? early 1		# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1		# Clock Control Module/Unit
 sxitimer*	at fdt? early 1
+sxirsb*		at fdt? early 1		# Reduced Serial Bus
+acrtc*		at rsb?
+axppmic*	at rsb?
 sxidog*		at fdt?			# watchdog timer
 sxirtc*		at fdt?			# Real Time Clock
 sxie*		at fdt?
@@ -103,6 +106,8 @@ ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
 #ohci*		at sunxi?
 #usb*		at ohci?
+sxitemp*	at fdt?			# Temperature sensor
+sxits*		at fdt?			# Touchpad controller
 sxitwi*		at fdt?			# Two-Wire Serial Interface
 iic*		at sxitwi?		# I2C bus
 
@@ -114,9 +119,10 @@ virtio*		at fdt?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+#bwfm*		at sdmmc?		# Broadcom FullMAC
 
-psci*		at fdt?
-syscon*		at fdt?
+psci*		at fdt? early 1
+syscon*		at fdt? early 1
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
@@ -126,7 +132,6 @@ wsdisplay*	at simplefb?
 #wsdisplay*	at exdisplay? console ?
 exclock*	at fdt? early 1
 expower*	at fdt? early 1
-exsysreg*	at fdt? early 1
 exmct*		at fdt? early 1
 exdog*		at fdt?
 exgpio*		at fdt? early 1
@@ -168,6 +173,9 @@ rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
+rkiic*		at fdt?
+iic*		at rkiic?
+rktemp*		at fdt?
 dwdog*		at fdt?
 
 axppmic*	at iic?			# axp209 pmic
@@ -175,6 +183,7 @@ crosec*		at iic?
 wskbd*		at crosec? mux 1
 pcfrtc*		at iic?
 pcxrtc*		at iic?
+rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
 
 # virtio devices
@@ -291,6 +300,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
+#bwfm*	at uhub?		# Broadcom FullMAC
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY

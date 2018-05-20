@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.677 2017/08/26 12:45:16 abieber Exp $
+$OpenBSD: usbdevs,v 1.684 2018/04/11 04:15:26 bket Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -606,6 +606,7 @@ vendor PEGATRON		0x1d4d	Pegatron
 vendor OPENMOKO2	0x1d50	OpenMoko
 vendor SELUXIT		0x1d6f	Seluxit
 vendor METAGEEK		0x1dd5	MetaGeek
+vendor SIMCOM		0x1e0e	SIMCom Wireless Solutions Co., Ltd.
 vendor FESTO		0x1e29	Festo
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
@@ -1239,8 +1240,13 @@ product BILLIONTON USBE100	0x8511	USBE100
 product BILLIONTON USB2AR	0x90ff	USB2AR Ethernet
 
 /* Broadcom products */
+product BROADCOM BCMFW		0x0bdc	BCMFW
 product BROADCOM BCM2033	0x2000	BCM2033
 product BROADCOM BCM2033NF	0x2033	BCM2033 (no fw)
+product BROADCOM BCM43236	0xbd17	BCM43236
+product BROADCOM BCM43143	0xbd1e	BCM43143
+product BROADCOM BCM43242	0xbd1f	BCM43242
+product BROADCOM BCM43569	0xbd27	BCM43569
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
@@ -1527,6 +1533,7 @@ product DLINK DWA125D1		0x330f	DWA-125 rev D1
 product DLINK DWA123D1		0x3310	DWA-123 rev D1
 product DLINK DWA137A1		0x3317	DWA-137 rev A1
 product DLINK DWA131E1		0x3319	DWA-131 rev E1
+product DLINK DWA182D1		0x331c	DWA-182 rev D1
 product DLINK DWL122		0x3700	DWL-122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
@@ -1544,6 +1551,7 @@ product DLINK RT3072		0x3c0a	RT3072
 product DLINK DWA140B3		0x3c15	DWA-140 rev B3
 product DLINK DWA160B2		0x3c1a	DWA-160 rev B2
 product DLINK DWA127		0x3c1b	DWA-127
+product DLINK DWA125B2		0x3c1e	DWA-125 rev B2
 product DLINK DWA162		0x3c1f	DWA-162 Wireless Adapter
 product DLINK DWA140D1		0x3c20	DWA-140 rev D1
 product DLINK DWA130F1		0x3c25	DWA-130 rev F1
@@ -1645,6 +1653,8 @@ product EDIMAX EW7718		0x7718	EW-7718
 product EDIMAX EW7722UTN	0x7722	EW-7722UTn
 product EDIMAX EW7811UN		0x7811	EW-7811Un
 product EDIMAX RTL8192CU	0x7822	RTL8192CU
+product EDIMAX EW7611ULB	0xa611	EW-7611ULB
+product EDIMAX EW7822ULC	0xb822	EW-7822ULC
 
 /* eGalax Products */
 product EGALAX TPANEL		0x0001	Touch Panel
@@ -2204,14 +2214,17 @@ product HUAWEI E510		0x1411	HUAWEI Mobile E510
 product HUAWEI E181		0x1414	HUAWEI Mobile E181
 product HUAWEI E1752		0x1417	HUAWEI Mobile Modem
 product HUAWEI E182		0x1429	HUAWEI Mobile Modem
+product HUAWEI E3372		0x1442	HUAWEI Mobile Modem
 product HUAWEI E161		0x1446	HUAWEI Mobile Modem
 product HUAWEI K3765		0x1465	HUAWEI Mobile K3765
+product HUAWEI K3772		0x14cf	HUAWEI Mobile K3772
 product HUAWEI E1820		0x14ac	HUAWEI Mobile Modem
 product HUAWEI K4510		0x14c5	HUAWEI Mobile Modem
 product HUAWEI K4511		0x14b7	HUAWEI Mobile Modem K4511
 product HUAWEI E353_INIT	0x14fe	HUAWEI Mobile E353 Initial
 product HUAWEI E392_INIT	0x1505	HUAWEI Mobile E392 Initial
 product HUAWEI K3765_INIT	0x1520	HUAWEI Mobile K3765 Initial
+product HUAWEI K3772_INIT	0x1526	HUAWEI Mobile K3772 Initial
 product HUAWEI MU609		0x1573	HUAWEI Mobile ME906 
 product HUAWEI E173S		0x1c05	HUAWEI Mobile E173s
 product HUAWEI E173S_INIT	0x1c0b	HUAWEI Mobile E173s Initial
@@ -3595,6 +3608,7 @@ product REALTEK RTL8188CU_5	0x819a	RTL8188CU
 product REALTEK RTL8712		0x8712	RTL8712
 product REALTEK RTL8713		0x8712	RTL8713
 product REALTEK RTL8188CU_COMBO	0x8754	RTL8188CU
+product REALTEK RTL8723BU	0xb720	RTL8723BU
 product REALTEK RTL8192SU	0xc512	RTL8192SU
 
 /* Renesas products */
@@ -3945,6 +3959,9 @@ product SILABS USBCOUNT50	0xf004	USBcount50
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 
+/* Simcom products */
+product SIMCOM SIM7600E		0x9001	SIM7600E modem
+
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56
 
@@ -4242,6 +4259,7 @@ product TOSHIBA HSDPA		0x1302	HSDPA
 /* TP-Link products */
 product TPLINK RTL8192CU	0x0100	RTL8192CU
 product TPLINK RTL8812AU	0x0101	RTL8812AU
+product TPLINK RTL8188EUS	0x010C	RTL8188EUS
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive

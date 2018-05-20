@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.20 2017/05/31 05:59:09 mpi Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.23 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -151,7 +151,6 @@ switch_clone_create(struct if_clone *ifc, int unit)
 
 	sc = malloc(sizeof(struct switch_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_if;
-
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "switch%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -159,7 +158,6 @@ switch_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = NULL;
 	ifp->if_start = NULL;
 	ifp->if_type = IFT_BRIDGE;
-	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	TAILQ_INIT(&sc->sc_swpo_list);
 
@@ -392,12 +390,12 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCBRDGADD:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_add(sc, (struct ifbreq *)data);
 		break;
 	case SIOCBRDGDEL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_del(sc, (struct ifbreq *)data);
 		break;
@@ -405,7 +403,7 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		error = switch_port_list(sc, (struct ifbifconf *)data);
 		break;
 	case SIOCBRDGADDL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = switch_port_add(sc, (struct ifbreq *)data);
 		if (error && error != EEXIST)
@@ -488,7 +486,6 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 {
 	struct ifnet		*ifs;
 	struct switch_port	*swpo;
-	struct ifreq		 ifreq;
 	int			 error;
 
 	if ((ifs = ifunit(req->ifbr_ifsname)) == NULL)
@@ -506,32 +503,8 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	}
 
 	if (ifs->if_type == IFT_ETHER) {
-		if ((ifs->if_flags & IFF_UP) == 0) {
-			/*
-			 * Bring interface up long enough to set
-			 * promiscuous flag, then shut it down again.
-			 */
-			strlcpy(ifreq.ifr_name, req->ifbr_ifsname, IFNAMSIZ);
-			ifs->if_flags |= IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			if ((error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq)) != 0)
-				return (error);
-
-			if ((error = ifpromisc(ifs, 1)) != 0)
-				return (error);
-			strlcpy(ifreq.ifr_name, req->ifbr_ifsname, IFNAMSIZ);
-			ifs->if_flags &= ~IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			if ((error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq)) != 0) {
-				ifpromisc(ifs, 0);
-				return (error);
-			}
-		} else {
-			if ((error = ifpromisc(ifs, 1)) != 0)
-				return (error);
-		}
+		if ((error = ifpromisc(ifs, 1)) != 0)
+			return (error);
 	}
 
 	swpo = malloc(sizeof(*swpo), M_DEVBUF, M_NOWAIT|M_ZERO);

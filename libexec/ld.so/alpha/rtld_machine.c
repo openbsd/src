@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.61 2017/02/16 13:31:10 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.62 2017/10/10 04:49:10 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -305,11 +305,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		seg_start = (Elf_Addr)pltgot;
 	_dl_protect_segment(object, seg_start, "__got_start", "__got_end",
 	    PROT_READ);
-
-	/* mprotect the PLT, if it isn't already read-only */
-	if (pltro == 0)
-		_dl_protect_segment(object, (Elf_Addr)pltgot, "__plt_start",
-		    "__plt_end", PROT_READ|PROT_EXEC);
 
 	return (fails);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.25 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.27 2017/12/10 04:21:55 jsg Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -51,6 +51,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 /* configuration registers */
@@ -212,6 +213,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct mii_data *mii;
 	struct ifnet *ifp;
+	int node, phy_supply, phy = MII_PHY_ANY;
 	int s;
 
 	if (faa->fa_nreg < 1)
@@ -229,6 +231,18 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 		panic("sxie_attach: bus_space_map sid_ioh failed!");
 
 	clock_enable_all(faa->fa_node);
+
+	/* Lookup PHY. */
+	node = OF_getnodebyphandle(OF_getpropint(faa->fa_node, "phy", 0));
+	if (node) {
+		phy = OF_getpropint(node, "reg", MII_PHY_ANY);
+
+		/* Power up PHY. */
+		phy_supply = OF_getpropint(OF_parent(node), "phy-supply", 0);
+		if (phy_supply)
+			regulator_enable(phy_supply);
+	}
+	sc->sc_phyno = phy == MII_PHY_ANY ? 1 : phy;
 
 	sxie_socware_init(sc);
 	sc->txf_inuse = 0;
@@ -250,7 +264,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = sxie_watchdog;
 	ifp->if_capabilities = IFCAP_VLAN_MTU; /* XXX status check in recv? */
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
+	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;
@@ -260,7 +274,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_statchg = sxie_miibus_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, sxie_ifm_change, sxie_ifm_status);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, phy, MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -320,8 +334,6 @@ sxie_socware_init(struct sxie_softc *sc)
 
 	if (!have_mac)
 		ether_fakeaddr(&sc->sc_ac.ac_if);
-
-	sc->sc_phyno = 1;
 }
 
 void
@@ -439,16 +451,15 @@ sxie_intr(void *arg)
 	}
 
 	if (pending & (SXIE_TX_FIFO0 | SXIE_TX_FIFO1)) {
-		ifq_clr_oactive(&ifp->if_snd);
 		sc->txf_inuse &= ~pending;
 		if (sc->txf_inuse == 0)
 			ifp->if_timer = 0;
 		else
 			ifp->if_timer = 5;
-	}
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		sxie_start(ifp);
+		if (ifq_is_oactive(&ifp->if_snd))
+			ifq_restart(&ifp->if_snd);
+	}
 
 	SXISET4(sc, SXIE_INTCR, SXIE_INTR_ENABLE);
 
@@ -468,65 +479,59 @@ sxie_start(struct ifnet *ifp)
 	uint32_t fifo;
 	uint32_t txbuf[SXIE_MAX_PKT_SIZE / sizeof(uint32_t)]; /* XXX !!! */
 
-	if (sc->txf_inuse == (SXIE_TX_FIFO0 | SXIE_TX_FIFO1))
-		ifq_set_oactive(&ifp->if_snd);
-
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
+
 
 	td = (uint8_t *)&txbuf[0];
 	m = NULL;
 	head = NULL;
-trynext:
-	m = ifq_deq_begin(&ifp->if_snd);
-	if (m == NULL)
-		return;
 
-	if (m->m_pkthdr.len > SXIE_MAX_PKT_SIZE) {
-		ifq_deq_commit(&ifp->if_snd, m);
-		printf("sxie_start: packet too big\n");
-		m_freem(m);
-		return;
-	}
+	for (;;) {
+		if (sc->txf_inuse == (SXIE_TX_FIFO0 | SXIE_TX_FIFO1)) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
 
-	if (sc->txf_inuse == (SXIE_TX_FIFO0 | SXIE_TX_FIFO1)) {
-		ifq_deq_rollback(&ifp->if_snd, m);
-		printf("sxie_start: tx fifos in use.\n");
-		ifq_set_oactive(&ifp->if_snd);
-		return;
-	}
+		m = ifq_dequeue(&ifp->if_snd);
+		if (m == NULL)
+			break;
 
-	/* select fifo */
-	if (sc->txf_inuse & SXIE_TX_FIFO0) {
-		sc->txf_inuse |= SXIE_TX_FIFO1;
-		fifo = 1;
-	} else {
-		sc->txf_inuse |= SXIE_TX_FIFO0;
-		fifo = 0;
-	}
-	SXIWRITE4(sc, SXIE_TXINS, fifo);
-
-	/* set packet length */
-	SXIWRITE4(sc, SXIE_TXPKTLEN0 + (fifo * 4), m->m_pkthdr.len);
-
-	/* copy the actual packet to fifo XXX through 'align buffer'.. */
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)td);
-	bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
-	    SXIE_TXIO0 + (fifo * 4),
-	    (uint32_t *)td, SXIE_ROUNDUP(m->m_pkthdr.len, 4) >> 2);
-
-	/* transmit to PHY from fifo */
-	SXISET4(sc, SXIE_TXCR0 + (fifo * 4), 1);
-	ifp->if_timer = 5;
-	ifq_deq_commit(&ifp->if_snd, m);
+		if (m->m_pkthdr.len > SXIE_MAX_PKT_SIZE) {
+			m_freem(m);
+			continue;
+		}
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-	m_freem(m);
 
-	goto trynext;
+		/* select fifo */
+		if (sc->txf_inuse & SXIE_TX_FIFO0) {
+			sc->txf_inuse |= SXIE_TX_FIFO1;
+			fifo = 1;
+		} else {
+			sc->txf_inuse |= SXIE_TX_FIFO0;
+			fifo = 0;
+		}
+		SXIWRITE4(sc, SXIE_TXINS, fifo);
+
+		/* set packet length */
+		SXIWRITE4(sc, SXIE_TXPKTLEN0 + (fifo * 4), m->m_pkthdr.len);
+
+		/* copy the actual packet to fifo XXX through 'align buffer' */
+		m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)td);
+		bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
+		    SXIE_TXIO0,
+		    (uint32_t *)td, SXIE_ROUNDUP(m->m_pkthdr.len, 4) >> 2);
+
+		/* transmit to PHY from fifo */
+		SXISET4(sc, SXIE_TXCR0 + (fifo * 4), 1);
+		ifp->if_timer = 5;
+
+		m_freem(m);
+	}
 }
 
 void

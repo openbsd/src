@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.53 2017/07/25 03:46:59 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.55 2018/01/22 09:31:35 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -50,6 +50,7 @@
 #define	IPL_HIGH	12
 #define	IPL_NUM		13
 
+#define	IPL_MPFLOOR	IPL_TTY
 #define	IPL_MPSAFE	0x100
 
 #define	IST_NONE	0
@@ -130,7 +131,7 @@ void splassert_check(int, const char *);
 
 #define	SI_NQUEUES		3
 
-#include <machine/mutex.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 struct soft_intrhand {

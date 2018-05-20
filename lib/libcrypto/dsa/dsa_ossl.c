@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.30 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.31 2018/04/28 14:22:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,8 +184,8 @@ static int
 dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
 	BN_CTX *ctx;
-	BIGNUM k, *kinv = NULL, *r = NULL;
-	int ret = 0;
+	BIGNUM k, l, m, *kinv = NULL, *r = NULL;
+	int q_bits, ret = 0;
 
 	if (!dsa->p || !dsa->q || !dsa->g) {
 		DSAerror(DSA_R_MISSING_PARAMETERS);
@@ -193,6 +193,8 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	}
 
 	BN_init(&k);
+	BN_init(&l);
+	BN_init(&m);
 
 	if (ctx_in == NULL) {
 		if ((ctx = BN_CTX_new()) == NULL)
@@ -201,6 +203,13 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		ctx = ctx_in;
 
 	if ((r = BN_new()) == NULL)
+		goto err;
+
+	/* Preallocate space */
+	q_bits = BN_num_bits(dsa->q);
+	if (!BN_set_bit(&k, q_bits) ||
+	    !BN_set_bit(&l, q_bits) ||
+	    !BN_set_bit(&m, q_bits))
 		goto err;
 
 	/* Get random k */
@@ -221,19 +230,21 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 
 	/*
 	 * We do not want timing information to leak the length of k,
-	 * so we compute g^k using an equivalent exponent of fixed
-	 * length.
+	 * so we compute G^k using an equivalent exponent of fixed
+	 * bit-length.
 	 *
-	 * (This is a kludge that we need because the BN_mod_exp_mont()
-	 * does not let us specify the desired timing behaviour.)
+	 * We unconditionally perform both of these additions to prevent a
+	 * small timing information leakage.  We then choose the sum that is
+	 * one bit longer than the modulus.
+	 *
+	 * TODO: revisit the BN_copy aiming for a memory access agnostic
+	 * conditional copy.
 	 */
 
-	if (!BN_add(&k, &k, dsa->q))
+	if (!BN_add(&l, &k, dsa->q) ||
+	    !BN_add(&m, &l, dsa->q) ||
+	    !BN_copy(&k, BN_num_bits(&l) > q_bits ? &l : &m))
 		goto err;
-	if (BN_num_bits(&k) <= BN_num_bits(dsa->q)) {
-		if (!BN_add(&k, &k, dsa->q))
-			goto err;
-	}
 
 	if (dsa->meth->bn_mod_exp != NULL) {
 		if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, &k, dsa->p, ctx,
@@ -265,6 +276,8 @@ err:
 	if (ctx_in == NULL)
 		BN_CTX_free(ctx);
 	BN_clear_free(&k);
+	BN_clear_free(&l);
+	BN_clear_free(&m);
 	return ret;
 }
 

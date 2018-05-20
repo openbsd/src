@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.8 2017/08/01 08:41:36 jmc Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.9 2017/10/08 06:56:36 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: October 8 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -255,11 +255,11 @@ sets the files from which the public certificate, and private key will be read.
 directly sets the public certificate, and private key from memory.
 .Pp
 .Fn tls_config_set_keypair_ocsp_file
-sets the files from which the public certificate, private key, and DER encoded
+sets the files from which the public certificate, private key, and DER-encoded
 OCSP staple will be read.
 .Pp
 .Fn tls_config_set_keypair_ocsp_mem
-directly sets the public certificate, private key, and DER encoded OCSP staple
+directly sets the public certificate, private key, and DER-encoded OCSP staple
 from memory.
 .Pp
 .Fn tls_config_add_keypair_file
@@ -271,12 +271,12 @@ adds an additional public certificate, and private key from memory, used as an
 alternative certificate for Server Name Indication (server only).
 .Pp
 .Fn tls_config_add_keypair_ocsp_file
-adds an additional public certificate, private key, and DER encoded OCSP staple
+adds an additional public certificate, private key, and DER-encoded OCSP staple
 from the specified files, used as an alternative certificate for Server Name
 Indication (server only).
 .Pp
 .Fn tls_config_add_keypair_ocsp_mem
-adds an additional public certificate, private key, and DER encoded OCSP staple
+adds an additional public certificate, private key, and DER-encoded OCSP staple
 from memory, used as an alternative certificate for Server Name Indication
 (server only).
 .Pp

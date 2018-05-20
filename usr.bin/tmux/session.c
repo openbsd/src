@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.77 2017/07/09 22:33:09 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.79 2018/05/04 08:21:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,10 +39,6 @@ static struct winlink *session_next_alert(struct winlink *);
 static struct winlink *session_previous_alert(struct winlink *);
 
 static void	session_group_remove(struct session *);
-static u_int	session_group_count(struct session_group *);
-static void	session_group_synchronize1(struct session *, struct session *);
-
-static u_int	session_group_count(struct session_group *);
 static void	session_group_synchronize1(struct session *, struct session *);
 
 RB_GENERATE(sessions, session, entry, session_cmp);
@@ -295,9 +291,10 @@ session_update_activity(struct session *s, struct timeval *from)
 	else
 		memcpy(&s->activity_time, from, sizeof s->activity_time);
 
-	log_debug("session %s activity %lld.%06d (last %lld.%06d)", s->name,
-	    (long long)s->activity_time.tv_sec, (int)s->activity_time.tv_usec,
-	    (long long)last->tv_sec, (int)last->tv_usec);
+	log_debug("session $%u %s activity %lld.%06d (last %lld.%06d)", s->id,
+	    s->name, (long long)s->activity_time.tv_sec,
+	    (int)s->activity_time.tv_usec, (long long)last->tv_sec,
+	    (int)last->tv_usec);
 
 	if (evtimer_initialized(&s->lock_timer))
 		evtimer_del(&s->lock_timer);
@@ -624,7 +621,7 @@ session_group_remove(struct session *s)
 }
 
 /* Count number of sessions in session group. */
-static u_int
+u_int
 session_group_count(struct session_group *sg)
 {
 	struct session	*s;

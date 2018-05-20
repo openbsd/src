@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2017/07/28 14:51:46 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.16 2018/01/22 09:40:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,7 +89,7 @@
 
 #ifndef _LOCORE
 
-#include <machine/mutex.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 struct soft_intrhand {
@@ -156,6 +156,7 @@ struct intrhand {
 	int			 ih_flags;
 #define	IH_ALLOCATED		0x01
 #define	IH_MPSAFE		0x02
+	cpuid_t			 ih_cpuid;
 };
 
 void	intr_barrier(void *);

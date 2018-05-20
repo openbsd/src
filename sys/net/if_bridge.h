@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.55 2017/01/20 05:03:48 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.57 2018/02/08 13:15:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -46,6 +46,7 @@ struct ifbreq {
 	char		ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
 	u_int32_t	ifbr_ifsflags;		/* member ifs flags */
 	u_int32_t	ifbr_portno;		/* member port number */
+	u_int32_t	ifbr_protected;		/* protected domains */
 
 	u_int8_t	ifbr_state;		/* member stp state */
 	u_int8_t	ifbr_priority;		/* member stp priority */
@@ -196,6 +197,21 @@ struct ifbropreq {
 /*
  * Bridge mac rules
  */
+struct ifbrarpf {
+	u_int16_t		brla_flags;
+	u_int16_t		brla_op;
+	struct ether_addr	brla_sha;
+	struct in_addr		brla_spa;
+	struct ether_addr	brla_tha;
+	struct in_addr		brla_tpa;
+};
+#define	BRLA_ARP	0x01
+#define	BRLA_RARP	0x02
+#define	BRLA_SHA	0x10
+#define	BRLA_SPA	0x20
+#define	BRLA_THA	0x40
+#define	BRLA_TPA	0x80
+
 struct ifbrlreq {
 	char			ifbr_name[IFNAMSIZ];	/* bridge ifs name */
 	char			ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
@@ -204,6 +220,7 @@ struct ifbrlreq {
 	struct ether_addr	ifbr_src;		/* source mac */
 	struct ether_addr	ifbr_dst;		/* destination mac */
 	char			ifbr_tagname[PF_TAG_NAME_SIZE];	/* pf tagname */
+	struct ifbrarpf		ifbr_arpf;		/* arp filter */
 };
 #define	BRL_ACTION_BLOCK	0x01			/* block frame */
 #define	BRL_ACTION_PASS		0x02			/* pass frame */
@@ -269,6 +286,7 @@ struct brl_node {
 	u_int16_t		brl_tag;	/* pf tag ID */
 	u_int8_t		brl_action;	/* what to do with match */
 	u_int8_t		brl_flags;	/* comparision flags */
+	struct ifbrarpf		brl_arpf;	/* arp filter */
 };
 
 struct bstp_timer {
@@ -398,6 +416,7 @@ struct bridge_iflist {
 	struct brl_head			bif_brlout;	/* output rules */
 	struct				ifnet *ifp;	/* member interface */
 	u_int32_t			bif_flags;	/* member flags */
+	u_int32_t			bif_protected;	/* protected domains */
 	void				*bif_dhcookie;
 };
 #define bif_state			bif_stp->bp_state

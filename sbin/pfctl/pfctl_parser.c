@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.316 2017/08/14 15:53:04 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.319 2018/02/08 02:26:39 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -515,7 +515,7 @@ const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
-print_status(struct pf_status *s, int opts)
+print_status(struct pf_status *s, struct pfctl_watermarks *synflwats, int opts)
 {
 	char			statline[80], *running, *debug;
 	time_t			runtime = 0;
@@ -631,6 +631,11 @@ print_status(struct pf_status *s, int opts)
 			else
 				printf("%14s\n", "");
 		}
+	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Adaptive Syncookies Watermarks\n");
+		printf("  %-25s %14d states\n", "start", synflwats->hi);
+		printf("  %-25s %14d states\n", "end", synflwats->lo);
 	}
 }
 
@@ -862,6 +867,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		printf(" tos 0x%2.2x", r->tos);
 	if (r->prio)
 		printf(" prio %u", r->prio == PF_PRIO_ZERO ? 0 : r->prio);
+	if (r->pktrate.limit)
+		printf(" max-pkt-rate %u/%u", r->pktrate.limit,
+		    r->pktrate.seconds);
 
 	if (r->scrub_flags & PFSTATE_SETMASK || r->qname[0]) {
 		char *comma = "";
@@ -1074,24 +1082,31 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	}
 	if (r->rtableid != -1)
 		printf(" rtable %u", r->rtableid);
-	if (r->divert.port) {
-		if (PF_AZERO(&r->divert.addr, AF_INET6)) {
-			printf(" divert-reply");
-		} else {
-			/* XXX cut&paste from print_addr */
-			char buf[48];
+	switch (r->divert.type) {
+	case PF_DIVERT_NONE:
+		break;
+	case PF_DIVERT_TO: {
+		/* XXX cut&paste from print_addr */
+		char buf[48];
 
-			printf(" divert-to ");
-			if (inet_ntop(r->af, &r->divert.addr, buf,
-			    sizeof(buf)) == NULL)
-				printf("?");
-			else
-				printf("%s", buf);
-			printf(" port %u", ntohs(r->divert.port));
-		}
+		printf(" divert-to ");
+		if (inet_ntop(r->af, &r->divert.addr, buf, sizeof(buf)) == NULL)
+			printf("?");
+		else
+			printf("%s", buf);
+		printf(" port %u", ntohs(r->divert.port));
+		break;
 	}
-	if (r->divert_packet.port)
-		printf(" divert-packet port %u", ntohs(r->divert_packet.port));
+	case PF_DIVERT_REPLY:
+		printf(" divert-reply");
+		break;
+	case PF_DIVERT_PACKET:
+		printf(" divert-packet port %u", ntohs(r->divert.port));
+		break;
+	default:
+		printf(" divert ???");
+		break;
+	}
 
 	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE &&
 	    r->rule_flag & PFRULE_AFTO) {

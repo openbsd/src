@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.71 2017/04/19 15:59:38 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.73 2017/11/20 10:51:24 mpi Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #define IPSECCTL_OPT_DELETE		0x0200
 #define IPSECCTL_OPT_MONITOR		0x0400
 #define IPSECCTL_OPT_SHOWKEY		0x0800
+#define IPSECCTL_OPT_COLLAPSE		0x1000
 
 enum {
 	ACTION_ADD, ACTION_DELETE
@@ -73,8 +74,10 @@ enum {
 	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
 };
 enum {
-	GROUPXF_UNKNOWN, GROUPXF_NONE, GROUPXF_768, GROUPXF_1024, GROUPXF_1536,
-	GROUPXF_2048, GROUPXF_3072, GROUPXF_4096, GROUPXF_6144, GROUPXF_8192,
+	GROUPXF_UNKNOWN, GROUPXF_NONE, GROUPXF_1, GROUPXF_2, GROUPXF_5,
+	GROUPXF_14, GROUPXF_15, GROUPXF_16, GROUPXF_17, GROUPXF_18,
+	GROUPXF_19, GROUPXF_20, GROUPXF_21, GROUPXF_25, GROUPXF_26,
+	GROUPXF_27, GROUPXF_28, GROUPXF_29, GROUPXF_30
 };
 enum {
 	IKE_ACTIVE, IKE_PASSIVE, IKE_DYNAMIC
@@ -214,6 +217,8 @@ struct ipsec_rule {
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
 	TAILQ_ENTRY(ipsec_rule) bundle_entry;
 	TAILQ_ENTRY(ipsec_rule) dst_bundle_entry;
+
+	TAILQ_HEAD(, ipsec_rule) collapsed_rules;
 
 	struct dst_bundle_queue	dst_bundle_queue;
 	char			*bundle;

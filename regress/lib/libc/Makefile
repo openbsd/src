@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2017/07/27 17:56:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.51 2017/10/15 12:15:30 visa Exp $
 
 SUBDIR+= _setjmp
 SUBDIR+= alloca arc4random-fork atexit
@@ -10,7 +10,7 @@ SUBDIR+= fmemopen fnmatch fpclassify
 SUBDIR+= getaddrinfo getcap getopt_long glob
 SUBDIR+= hsearch
 SUBDIR+= ieeefp ifnameindex
-SUBDIR+= longjmp locale
+SUBDIR+= ldexp longjmp locale
 SUBDIR+= malloc mkstemp modf
 SUBDIR+= netdb
 SUBDIR+= open_memstream orientation

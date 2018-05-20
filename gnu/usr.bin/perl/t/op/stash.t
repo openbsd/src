@@ -7,7 +7,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan( tests => 51 );
+plan( tests => 52 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
@@ -334,3 +334,10 @@ is runperl(
    ),
    "ok\n",
    '[perl #123847] no crash from *foo::=*bar::=*glob_with_hash';
+
+is runperl(
+    prog => '%h; *::::::=*h; delete $::{q|::|}; print qq|ok\n|',
+    stderr => 1,
+   ),
+   "ok\n",
+   '[perl #128086] no crash from assigning hash to *:::::: & deleting it';

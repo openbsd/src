@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.11 2017/09/16 02:03:40 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.19 2018/04/12 17:13:43 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -26,7 +26,6 @@
  *
  */
 
-#include <sys/cdefs.h>
 #if 0
 __FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andrew $");
 #endif
@@ -40,6 +39,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andr
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
+#include <sys/user.h>
 
 #ifdef KDB
 #include <sys/kdb.h>
@@ -68,65 +68,11 @@ void do_el1h_sync(struct trapframe *);
 void do_el0_sync(struct trapframe *);
 void do_el0_error(struct trapframe *);
 
-
-#if 0
-int
-cpu_fetch_syscall_args(struct thread *td, struct syscall_args *sa)
-{
-	struct proc *p;
-	register_t *ap;
-	int nap;
-
-	nap = 8;
-	p = td->td_proc;
-	ap = td->td_frame->tf_x;
-
-	sa->code = td->td_frame->tf_x[8];
-
-	if (sa->code == SYS_syscall || sa->code == SYS___syscall) {
-		sa->code = *ap++;
-		nap--;
-	}
-
-	if (p->p_sysent->sv_mask)
-		sa->code &= p->p_sysent->sv_mask;
-	if (sa->code >= p->p_sysent->sv_size)
-		sa->callp = &p->p_sysent->sv_table[0];
-	else
-		sa->callp = &p->p_sysent->sv_table[sa->code];
-
-	sa->narg = sa->callp->sy_narg;
-	memcpy(sa->args, ap, nap * sizeof(register_t));
-	if (sa->narg > nap)
-		panic("TODO: Could we have more than 8 args?");
-
-	td->td_retval[0] = 0;
-	td->td_retval[1] = 0;
-
-	return (0);
-}
-
-#include "../../kern/subr_syscall.c"
-
-static void
-svc_handler(struct trapframe *frame)
-{
-	struct syscall_args sa;
-	struct thread *td;
-	int error;
-
-	td = curthread;
-	td->td_frame = frame;
-
-	error = syscallenter(td, &sa);
-	syscallret(td, error, &sa);
-}
-#endif
-
 void dumpregs(struct trapframe*);
 
 static void
-data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
+data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
+    int lower, int exe)
 {
 	struct vm_map *map;
 	struct proc *p;
@@ -135,13 +81,14 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 	vm_prot_t access_type;
 	vaddr_t va;
 	union sigval sv;
-	uint64_t far;
 	int error = 0, sig, code;
 
 	pcb = curcpu()->ci_curpcb;
 	p = curcpu()->ci_curproc;
 
-	far = READ_SPECIALREG(far_el1);
+	va = trunc_page(far);
+	if (va >= VM_MAXUSER_ADDRESS)
+		curcpu()->ci_flush_bp();
 
 	if (lower)
 		map = &p->p_vmspace->vm_map;
@@ -153,7 +100,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			map = &p->p_vmspace->vm_map;
 	}
 
-	va = trunc_page(far);
 	if (exe)
 		access_type = PROT_EXEC;
 	else
@@ -162,30 +108,21 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 	ftype = VM_FAULT_INVALID; // should check for failed permissions.
 
 	if (map != kernel_map) {
-		/*
-		 * Keep swapout from messing with us during this
-		 *	critical time.
-		 */
-		// XXX SMP
-		//PROC_LOCK(p);
-		//++p->p_lock;
-		//PROC_UNLOCK(p);
-
 		/* Fault in the user page: */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
+			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
+			KERNEL_UNLOCK();
 		}
-
-		//PROC_LOCK(p);
-		//--p->p_lock;
-		//PROC_UNLOCK(p);
 	} else {
 		/*
 		 * Don't have to worry about process locking or stacks in the
 		 * kernel.
 		 */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 0)) {
+			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
+			KERNEL_UNLOCK();
 		}
 	}
 
@@ -206,7 +143,9 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			}
 			sv.sival_ptr = (u_int64_t *)far;
 
+			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
+			KERNEL_UNLOCK();
 		} else {
 			if (curcpu()->ci_idepth == 0 &&
 			    pcb->pcb_onfault != 0) {
@@ -222,11 +161,14 @@ void
 do_el1h_sync(struct trapframe *frame)
 {
 	uint32_t exception;
-	uint64_t esr;
+	uint64_t esr, far;
 
 	/* Read the esr register to get the exception details */
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
+	far = READ_SPECIALREG(far_el1);
+
+	enable_interrupts();
 
 	/*
 	 * Sanity check we are in an exception er can handle. The IL bit
@@ -247,7 +189,7 @@ do_el1h_sync(struct trapframe *frame)
 	case EXCP_TRAP_FP:
 		panic("VFP exception in the kernel");
 	case EXCP_DATA_ABORT:
-		data_abort(frame, esr, 0, 0);
+		data_abort(frame, esr, far, 0, 0);
 		break;
 	case EXCP_BRK:
 	case EXCP_WATCHPT_EL1:
@@ -282,18 +224,41 @@ do_el0_sync(struct trapframe *frame)
 	struct proc *p = curproc;
 	union sigval sv;
 	uint32_t exception;
-	uint64_t esr;
+	uint64_t esr, far;
+	vaddr_t sp;
 
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
+	far = READ_SPECIALREG(far_el1);
 
+	enable_interrupts();
+
+	p->p_addr->u_pcb.pcb_tf = frame;
 	refreshcreds(p);
+
+	sp = PROC_STACK(p);
+	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+	    p->p_spstart == 0 || sp < p->p_spstart ||
+	    sp >= p->p_spend) {
+		KERNEL_LOCK();
+		if (!uvm_map_check_stack_range(p, sp)) {
+			printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			    exception, sp, p->p_spstart, p->p_spend);
+			sv.sival_ptr = (void *)PROC_PC(p);
+			trapsignal(p, SIGSEGV, exception, SEGV_ACCERR, sv);
+		}
+		KERNEL_UNLOCK();
+	}
 
 	switch(exception) {
 	case EXCP_UNKNOWN:
 		vfp_save();
+		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
@@ -305,16 +270,34 @@ do_el0_sync(struct trapframe *frame)
 		break;
 	case EXCP_INSN_ABORT_L:
 		vfp_save();
-		data_abort(frame, esr, 1, 1);
+		data_abort(frame, esr, far, 1, 1);
+		break;
+	case EXCP_PC_ALIGN:
+		vfp_save();
+		curcpu()->ci_flush_bp();
+		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
+		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_UNLOCK();
+		break;
+	case EXCP_SP_ALIGN:
+		vfp_save();
+		curcpu()->ci_flush_bp();
+		sv.sival_ptr = (void *)frame->tf_sp;
+		KERNEL_LOCK();
+		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_UNLOCK();
 		break;
 	case EXCP_DATA_ABORT_L:
 		vfp_save();
-		data_abort(frame, esr, 1, 0);
+		data_abort(frame, esr, far, 1, 0);
 		break;
 	case EXCP_BRK:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
+		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+		KERNEL_UNLOCK();
 		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,
@@ -325,7 +308,10 @@ do_el0_sync(struct trapframe *frame)
 			printf("exception %x esr_el1 %llx\n", exception, esr);
 			dumpregs(frame);
 		}
+		curcpu()->ci_flush_bp();
+		KERNEL_LOCK();
 		sigexit(p, SIGILL);
+		KERNEL_UNLOCK();
 	}
 
 	userret(p);
@@ -334,7 +320,5 @@ do_el0_sync(struct trapframe *frame)
 void
 do_el0_error(struct trapframe *frame)
 {
-
 	panic("do_el0_error");
 }
-

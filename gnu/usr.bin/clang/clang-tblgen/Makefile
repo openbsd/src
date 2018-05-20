@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 PROG=	clang-tblgen
 NOMAN=
@@ -9,6 +9,7 @@ SRCS=	ClangASTNodesEmitter.cpp \
 	ClangCommentCommandInfoEmitter.cpp \
 	ClangCommentHTMLNamedCharacterReferenceEmitter.cpp \
 	ClangCommentHTMLTagsEmitter.cpp \
+	ClangDataCollectorsEmitter.cpp \
 	ClangDiagnosticsEmitter.cpp \
 	ClangOptionDocEmitter.cpp \
 	ClangSACheckersEmitter.cpp \

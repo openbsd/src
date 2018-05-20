@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.9 2017/01/26 12:26:20 stsp Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.10 2018/04/09 10:15:15 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2017 $
+.Dd $Mdocdate: April 9 2018 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -206,8 +206,8 @@ Configure the
 interfaces for the guest domains.
 This example bridges guest domains into the physical network:
 .Bd -literal -offset indent
-# ifconfig vnet0 -inet6 up
-# ifconfig vnet1 -inet6 up
+# ifconfig vnet0 up
+# ifconfig vnet1 up
 # ifconfig bridge0 create
 # ifconfig bridge0 add em0 add vnet0 add vnet1 up
 .Ed

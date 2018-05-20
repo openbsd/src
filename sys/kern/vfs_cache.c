@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.53 2017/02/09 19:02:34 bluhm Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.55 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		vref(dvp);
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, p);
+		VOP_UNLOCK(dvp);
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = vget(vp, LK_EXCLUSIVE, p);
 		/*
@@ -217,7 +217,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 * ISLASTCN is set, lock the directory vnode as well.
 		 */
 		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0) {
 				vput(vp);
 				return (error);
 			}
@@ -230,7 +230,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 * ISLASTCN is set, unlock the directory vnode.
 		 */
 		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			VOP_UNLOCK(dvp, p);
+			VOP_UNLOCK(dvp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}
@@ -252,7 +252,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 */
 		if (vp == dvp || error ||
 		    (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0)
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}

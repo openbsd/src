@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.39 2017/05/30 09:33:31 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.41 2017/12/07 05:09:27 zhuk Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -54,7 +54,7 @@ int	client_build_req(struct idm *, struct idm_req *, struct aldap_message *,
 int	client_search_idm(struct env *, struct idm *, struct aldap *,
 	    char **, char *, int, int, enum imsg_type);
 int	client_try_idm(struct env *, struct idm *);
-int	client_addr_init(struct idm *);
+void	client_addr_init(struct idm *);
 int	client_addr_free(struct idm *);
 
 struct aldap	*client_aldap_open(struct ypldap_addr_list *);
@@ -66,7 +66,8 @@ struct aldap *
 client_aldap_open(struct ypldap_addr_list *addr)
 {
 	int			 fd = -1;
-	struct ypldap_addr	 *p;
+	struct ypldap_addr	*p;
+	struct aldap		*al;
 
 	TAILQ_FOREACH(p, addr, next) {
 		char			 hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
@@ -90,10 +91,13 @@ client_aldap_open(struct ypldap_addr_list *addr)
 	if (fd == -1)
 		return NULL;
 
-	return aldap_init(fd);
+	al = aldap_init(fd);
+	if (al == NULL)
+		close(fd);
+	return al;
 }
 
-int
+void
 client_addr_init(struct idm *idm)
 {
         struct sockaddr_in      *sa_in;
@@ -127,8 +131,6 @@ client_addr_init(struct idm *idm)
                         /* not reached */
                 }
         }
-
-        return (0);
 }
 
 int

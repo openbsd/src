@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.28 2017/02/24 14:28:31 gsoares Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.30 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -461,7 +461,7 @@ extern struct imsgev	*iev_ldapd;
 int			 ldap_bind(struct request *req);
 void			 ldap_bind_continue(struct conn *conn, int ok);
 int			 authorized(struct conn *conn, struct namespace *ns,
-				int rights, char *dn, int scope);
+				int rights, char *dn, char *attr, int scope);
 
 /* parse.y */
 int			 parse_config(char *filename);
@@ -471,6 +471,7 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 
 /* logmsg.c */
+void			 ldap_loginit(const char *, int, int);
 const char		*print_host(struct sockaddr_storage *ss, char *buf,
 				size_t len);
 void			 hexdump(void *data, size_t len, const char *fmt, ...);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2017/12/21 00:32:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -54,7 +54,7 @@ Elf_Addr _dl_bind(elf_object_t *object, int index);
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
 static int reloc_target_flags[] = {
-	0,						/*  0 NONE */
+	[ R_AARCH64_NONE ] = 0,
 	[ R_AARCH64_ABS64 ] =
 	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* ABS64 */
 	[ R_AARCH64_GLOB_DAT ] =
@@ -81,7 +81,7 @@ static int reloc_target_flags[] = {
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 static Elf_Addr reloc_target_bitmask[] = {
 #define _BM(x)  (~(Elf_Addr)0 >> ((8*sizeof(reloc_target_bitmask[0])) - (x)))
-	0,		/*  0 NONE */
+	[ R_AARCH64_NONE ] = 0,
 	[ R_AARCH64_ABS64 ] = _BM(64),
 	[ R_AARCH64_GLOB_DAT ] = _BM(64),
 	[ R_AARCH64_JUMP_SLOT ] = _BM(64),
@@ -293,8 +293,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (object->traced)
 		lazy = 1;
-
-	lazy = 0; // until support is written.
 
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);

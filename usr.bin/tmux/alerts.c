@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.28 2017/09/22 09:04:46 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.29 2017/12/28 12:10:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -200,8 +200,10 @@ alerts_check_bell(struct window *w)
 		 * not check WINLINK_BELL).
 		 */
 		s = wl->session;
-		if (s->curw != wl)
+		if (s->curw != wl) {
 			wl->flags |= WINLINK_BELL;
+			server_status_session(s);
+		}
 		if (!alerts_action_applies(wl, "bell-action"))
 			continue;
 		notify_winlink("alert-bell", wl);
@@ -234,8 +236,10 @@ alerts_check_activity(struct window *w)
 		if (wl->flags & WINLINK_ACTIVITY)
 			continue;
 		s = wl->session;
-		if (s->curw != wl)
+		if (s->curw != wl) {
 			wl->flags |= WINLINK_ACTIVITY;
+			server_status_session(s);
+		}
 		if (!alerts_action_applies(wl, "activity-action"))
 			continue;
 		notify_winlink("alert-activity", wl);
@@ -268,8 +272,10 @@ alerts_check_silence(struct window *w)
 		if (wl->flags & WINLINK_SILENCE)
 			continue;
 		s = wl->session;
-		if (s->curw != wl)
+		if (s->curw != wl) {
 			wl->flags |= WINLINK_SILENCE;
+			server_status_session(s);
+		}
 		if (!alerts_action_applies(wl, "silence-action"))
 			continue;
 		notify_winlink("alert-silence", wl);

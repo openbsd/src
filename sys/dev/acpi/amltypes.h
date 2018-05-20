@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.45 2016/05/08 11:08:01 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.46 2018/05/17 20:21:15 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -371,6 +371,8 @@ struct acpi_gpio {
 	void	(*intr_establish)(void *, int, int, int (*)(void *), void *);
 };
 
+struct i2c_controller;
+
 struct aml_node {
 	struct aml_node *parent;
 
@@ -385,8 +387,9 @@ struct aml_node {
 	u_int8_t	*end;
 
 	struct aml_value *value;
-	struct acpi_pci  *pci;
+	struct acpi_pci *pci;
 	struct acpi_gpio *gpio;
+	struct i2c_controller *i2c;
 };
 
 #define aml_bitmask(n)		(1L << ((n) & 0x7))

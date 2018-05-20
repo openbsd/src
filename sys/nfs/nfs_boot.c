@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.43 2017/08/11 21:24:20 mpi Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.44 2017/11/14 16:01:55 tb Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -159,15 +159,11 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	 */
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0)) != 0)
 		panic("nfs_boot: socreate, error=%d", error);
-	NET_LOCK();
 	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
-	NET_UNLOCK();
 	if (error)
 		panic("nfs_boot: GIFFLAGS, error=%d", error);
 	ireq.ifr_flags |= IFF_UP;
-	NET_LOCK();
 	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
-	NET_UNLOCK();
 	if (error)
 		panic("nfs_boot: SIFFLAGS, error=%d", error);
 
@@ -190,9 +186,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
-	NET_LOCK();
 	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&ifra, procp);
-	NET_UNLOCK();
 	if (error)
 		panic("nfs_boot: set if addr, error=%d", error);
 

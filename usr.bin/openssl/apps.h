@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.19 2016/08/30 14:34:59 deraadt Exp $ */
+/* $OpenBSD: apps.h,v 1.20 2017/12/05 15:02:06 jca Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -279,7 +279,8 @@ int app_isdir(const char *);
 
 #define TM_START	0
 #define TM_STOP		1
-double app_tminterval (int stop, int usertime);
+double app_timer_real(int stop);
+double app_timer_user(int stop);
 
 #define OPENSSL_NO_SSL_INTERN
 

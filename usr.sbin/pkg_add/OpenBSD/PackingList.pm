@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.143 2017/09/16 11:36:25 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.145 2018/04/28 16:33:55 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -208,6 +208,15 @@ sub SharedItemsOnly
 	}
 }
 
+sub UpdatePlistOnly
+{
+	my ($fh, $cont) = @_;
+	while (<$fh>) {
+		next unless m/^\@(?:cwd|dir|fontdir|ghost|mandir|depend)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
+		&$cont($_);
+	}
+}
+
 sub DirrmOnly
 {
 	&OpenBSD::PackingList::SharedItemsOnly;
@@ -235,7 +244,7 @@ sub PrelinkStuffOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|bin|lib|name|depend|wantlib|comment\s+ubdir\=)\b/o;
+		next unless m/^\@(?:cwd|bin|lib|name|libset|depend|wantlib|comment\s+ubdir\=)\b/o;
 		&$cont($_);
 	}
 }
@@ -244,7 +253,7 @@ sub DependOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		if (m/^\@(?:depend|wantlib|define-tag)\b/o) {
+		if (m/^\@(?:libset|depend|wantlib|define-tag)\b/o) {
 			&$cont($_);
 		# XXX optimization
 		} elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
@@ -260,7 +269,7 @@ sub ExtraInfoOnly
 		if (m/^\@(?:name|pkgpath|comment\s+(?:subdir|pkgpath)\=|option)\b/o) {
 			&$cont($_);
 		# XXX optimization
-		} elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
+		} elsif (m/^\@(?:libset|depend|wantlib|newgroup|newuser|cwd)\b/o) {
 			last;
 		}
 	}
@@ -278,7 +287,7 @@ sub UpdateInfoOnly
 		    }
 		    return;
 		}
-		if (m/^\@(?:name|depend|wantlib|conflict|option|pkgpath|url|version|arch|comment\s+(?:subdir|pkgpath)\=)\b/o) {
+		if (m/^\@(?:name|libset|depend|wantlib|conflict|option|pkgpath|url|version|arch|comment\s+(?:subdir|pkgpath)\=)\b/o) {
 			&$cont($_);
 		# XXX optimization
 		} elsif (m/^\@(?:newgroup|newuser|cwd)\b/o) {
@@ -294,7 +303,7 @@ sub ConflictOnly
 		if (m/^\@(?:name|conflict|option)\b/o) {
 			&$cont($_);
 		# XXX optimization
-		} elsif (m/^\@(?:depend|wantlib|newgroup|newuser|cwd)\b/o) {
+		} elsif (m/^\@(?:libset|depend|wantlib|newgroup|newuser|cwd)\b/o) {
 			last;
 		}
 	}
@@ -449,11 +458,11 @@ our @unique_categories =
     (qw(name url version signer digital-signature no-default-conflict manual-installation firmware always-update is-branch extrainfo localbase arch));
 
 our @list_categories =
-    (qw(conflict pkgpath ask-update depend
+    (qw(conflict pkgpath ask-update libset depend
     	wantlib define-tag groups users items));
 
 our @cache_categories =
-    (qw(depend wantlib));
+    (qw(libset depend wantlib));
 
 sub visit
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.19 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.20 2017/10/30 10:07:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifdef HAVE_NET_SLIP_H
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -37,7 +36,6 @@ struct rtentry;
 #include <netinet/tcp.h>
 
 #include <net/slcompress.h>
-#include <net/slip.h>
 
 #include <ctype.h>
 #include <netdb.h>
@@ -55,13 +53,19 @@ static u_int lastconn = 255;
 static void sliplink_print(const u_char *, const struct ip *, u_int);
 static void compressed_sl_print(const u_char *, const struct ip *, u_int, int);
 
-/* XXX BSD/OS 2.1 compatibility */
-#if !defined(SLIP_HDRLEN) && defined(SLC_BPFHDR)
-#define SLIP_HDRLEN SLC_BPFHDR
-#define SLX_DIR 0
-#define SLX_CHDR (SLC_BPFHDRLEN - 1)
-#define CHDR_LEN (SLC_BPFHDR - SLC_BPFHDRLEN)
-#endif
+/*
+ * Definitions of the pseudo-link-level header attached to slip
+ * packets grabbed by the packet filter (bpf) traffic monitor.
+ */
+#define SLIP_HDRLEN	16		/* BPF SLIP header length */
+
+/* Offsets into BPF SLIP header. */
+#define SLX_DIR		0		/* direction; see below */
+#define SLX_CHDR	1		/* compressed header data */
+#define CHDR_LEN	15		/* length of compressed header data */
+
+#define SLIPDIR_IN	0		/* incoming */
+#define SLIPDIR_OUT	1		/* outgoing */
 
 /* XXX needs more hacking to work right */
 
@@ -278,28 +282,3 @@ compressed_sl_print(const u_char *chdr, const struct ip *ip,
 	lastlen[dir][lastconn] = length - (hlen << 2);
 	printf(" %d (%d)", lastlen[dir][lastconn], (int)(cp - chdr));
 }
-#else
-#include <sys/types.h>
-#include <sys/time.h>
-
-#include <pcap.h>
-#include <stdio.h>
-
-#include "interface.h"
-
-void
-sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
-{
-
-	error("not configured for slip");
-	/* NOTREACHED */
-}
-
-void
-sl_bsdos_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
-{
-
-	error("not configured for slip");
-	/* NOTREACHED */
-}
-#endif

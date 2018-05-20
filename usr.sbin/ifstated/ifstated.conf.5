@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.9 2012/04/24 14:56:09 jmc Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.12 2018/03/06 15:18:27 rob Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: March 6 2018 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -55,7 +55,9 @@ instead of using the first state defined.
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
-Macro names may not be reserved words like, for example
+Macros are not expanded inside quotes.
+.Pp
+Macro names may not be reserved words like, for example,
 .Ar state
 or
 .Ar run .
@@ -94,7 +96,7 @@ keyword.
 .Pp
 For example:
 .Bd -literal -offset indent
-carp_up = "carp0.link.up && carp1.link.up"
+links_up = "em0.link.up && em1.link.up"
 net = '( "ping -q -c 1 -w 1 192.168.0.1 > /dev/null" every 10 && \e
          "ping -q -c 1 -w 1 192.168.0.2 > /dev/null" every 10 )'
 .Ed
@@ -138,17 +140,18 @@ For example:
 .Bd -literal -offset indent
 state one {
 	init {
-		run "ifconfig carp0 advskew 10"
-		run "ifconfig carp1 advskew 10"
+		run "logger -t ifstated entering state one"
+		run "ifconfig -g carp -carpdemote"
 	}
 
-	if ! $net
+	if ! $net || urndis0.link.up
 		set-state two
 
-	if ! $carp_up {
-		run "ifconfig carp0 advskew 254"
-		run "ifconfig carp1 advskew 254"
-		set-state three
+	if ! $links_up {
+		run "ifconfig -g carp carpdemote"
+
+		if urndis0.link.down
+			set-state three
 	}
 }
 .Ed

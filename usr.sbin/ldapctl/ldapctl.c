@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.10 2017/01/20 11:55:08 benno Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.11 2018/05/15 11:19:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	struct imsgbuf		 ibuf;
 
-	log_init(1);
+	log_init(1, 0);
 
 	while ((ch = getopt(argc, argv, "f:r:s:v")) != -1) {
 		switch (ch) {
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 	if (!S_ISDIR(sb.st_mode))
 		errx(1, "%s is not a directory", datadir);
 
-	log_verbose(verbose);
+	ldap_loginit(NULL, 1, verbose);
 
 	if (strcmp(argv[0], "stats") == 0)
 		action = SHOW_STATS;

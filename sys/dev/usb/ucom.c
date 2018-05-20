@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.65 2015/03/14 03:38:49 jsg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.67 2018/02/19 08:59:52 mpi Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
@@ -469,7 +469,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p) != 0)
 		return (EBUSY);
 	else
 		s = spltty();
@@ -713,7 +713,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p, 0);
+		error = suser(p);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

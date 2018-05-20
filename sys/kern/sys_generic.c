@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.115 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.119 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -93,8 +94,6 @@ sys_read(struct proc *p, void *v, register_t *retval)
 	iov.iov_base = SCARG(uap, buf);
 	iov.iov_len = SCARG(uap, nbyte);
 
-	FREF(fp);
-
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, &iov, 1, 0, &fp->f_offset, retval));
 }
@@ -116,7 +115,6 @@ sys_readv(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -205,8 +203,10 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 			error = 0;
 	cnt -= auio.uio_resid;
 
+	mtx_enter(&fp->f_mtx);
 	fp->f_rxfer++;
 	fp->f_rbytes += cnt;
+	mtx_leave(&fp->f_mtx);
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
@@ -245,8 +245,6 @@ sys_write(struct proc *p, void *v, register_t *retval)
 	iov.iov_base = (void *)SCARG(uap, buf);
 	iov.iov_len = SCARG(uap, nbyte);
 
-	FREF(fp);
-
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, &iov, 1, 0, &fp->f_offset, retval));
 }
@@ -268,7 +266,6 @@ sys_writev(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -360,8 +357,10 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	}
 	cnt -= auio.uio_resid;
 
+	mtx_enter(&fp->f_mtx);
 	fp->f_wxfer++;
 	fp->f_wbytes += cnt;
+	mtx_leave(&fp->f_mtx);
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
@@ -392,29 +391,29 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com = SCARG(uap, com);
-	int error;
+	int error = 0;
 	u_int size;
-	caddr_t data, memp;
+	caddr_t data, memp = NULL;
 	int tmp;
 #define STK_PARAMS	128
 	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
 	fdp = p->p_fd;
-	fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE);
-
-	if (fp == NULL)
+	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
 
 	if (fp->f_type == DTYPE_SOCKET) {
 		struct socket *so = fp->f_data;
 
-		if (so->so_state & SS_DNS)
-			return (EINVAL);
+		if (so->so_state & SS_DNS) {
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	error = pledge_ioctl(p, com, fp);
 	if (error)
-		return (error);
+		goto out;
 
 	switch (com) {
 	case FIONCLEX:
@@ -425,7 +424,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		else
 			fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
 		fdpunlock(fdp);
-		return (0);
+		goto out;
 	}
 
 	/*
@@ -433,10 +432,10 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	 * copied to/from the user's address space.
 	 */
 	size = IOCPARM_LEN(com);
-	if (size > IOCPARM_MAX)
-		return (ENOTTY);
-	FREF(fp);
-	memp = NULL;
+	if (size > IOCPARM_MAX) {
+		error = ENOTTY;
+		goto out;
+	}
 	if (size > sizeof (stkbuf)) {
 		memp = malloc(size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
@@ -524,8 +523,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		error = copyout(data, SCARG(uap, data), size);
 out:
 	FRELE(fp, p);
-	if (memp)
-		free(memp, M_IOCTLOPS, size);
+	free(memp, M_IOCTLOPS, size);
 	return (error);
 }
 
@@ -744,7 +742,6 @@ selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
 				bits &= ~(1 << j);
 				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
-				FREF(fp);
 				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
 					FD_SET(fd, pobits);
 					n++;
@@ -841,7 +838,6 @@ pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 			n++;
 			continue;
 		}
-		FREF(fp);
 		pl->revents = (*fp->f_ops->fo_poll)(fp, pl->events, p);
 		FRELE(fp, p);
 		if (pl->revents != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2012/03/04 04:05:15 fgsch Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 2017/10/11 07:26:40 anton Exp $	*/
 /*	$NetBSD: print.c,v 1.4 1995/09/27 01:06:58 jtc Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ put_entries(NODE *node)
 		printf("%s %s %d\n",
 		    node->entry, node->file, (node->lno + 63) / 64);
 	else if (xflag)
-		printf("%-16s%4d %-16s %s\n",
+		printf("%-16s %4d %-16s %s\n",
 		    node->entry, node->lno, node->file, node->pat);
 	else
 		fprintf(outf, "%s\t%s\t%c^%s%c\n",

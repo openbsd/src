@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.12 2016/11/04 17:33:19 miod Exp $ */
+/* $OpenBSD: ec.h,v 1.13 2018/05/19 10:37:02 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -911,7 +911,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred
  */
-int i2o_ECPublicKey(EC_KEY *key, unsigned char **out);
+int i2o_ECPublicKey(const EC_KEY *key, unsigned char **out);
 
 #ifndef OPENSSL_NO_BIO
 /** Prints out the ec parameters on human readable form.

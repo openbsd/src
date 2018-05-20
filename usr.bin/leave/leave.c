@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.17 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: leave.c,v 1.19 2018/02/10 00:00:47 tb Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		(void)fputs("When do you have to leave? ", stdout);
 		cp = fgets(buf, sizeof(buf), stdin);
 		if (cp == NULL || *cp == '\n')
-			exit(0);
+			return 0;
 	} else if (argc > 2)
 		usage();
 	else
@@ -113,9 +113,10 @@ main(int argc, char *argv[])
 
 		secs = (hours - t->tm_hour) * HOUR;
 		secs += (minutes - t->tm_min) * MINUTE;
+		secs -= t->tm_sec;	/* aim for beginning of minute */
 	}
 	doalarm(secs);
-	exit(0);
+	return 0;
 }
 
 static void
@@ -155,12 +156,16 @@ doalarm(u_int secs)
 		sleep(secs - MINUTE);
 		if (puts("\a\aJust one more minute!") == EOF)
 			exit(0);
+		secs = MINUTE;
 	}
 
+	sleep(secs);
+
 	for (bother = 10; bother--;) {
-		sleep(MINUTE);
 		if (puts("\a\aTime to leave!") == EOF)
 			exit(0);
+		if (bother)
+			sleep(MINUTE);
 	}
 
 	puts("\a\aThat was the last time I'll tell you.  Bye.");

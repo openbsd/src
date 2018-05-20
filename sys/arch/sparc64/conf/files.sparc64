@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.148 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.sparc64,v 1.151 2018/02/19 09:18:50 mpi Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -323,14 +323,11 @@ file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
-file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # sparc64/sparc64/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
-file	arch/sparc64/sparc64/lock_machdep.c	multiprocessor
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/mdesc.c		sun4v
 file	arch/sparc64/sparc64/mem.c
-file	arch/sparc64/sparc64/mutex.S
 file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c

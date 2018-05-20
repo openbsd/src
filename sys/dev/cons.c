@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.26 2016/05/17 23:43:47 bluhm Exp $	*/
+/*	$OpenBSD: cons.c,v 1.28 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
@@ -158,7 +157,7 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 	 * output from the "virtual" console.
 	 */
 	if (cmd == TIOCCONS && constty != NULL) {
-		error = suser(p, SUSER_NOACCT);
+		error = suser(p);
 		if (error)
 			return (error);
 		constty = NULL;

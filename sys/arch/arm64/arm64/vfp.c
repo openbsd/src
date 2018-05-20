@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.c,v 1.2 2017/03/28 23:47:17 jsg Exp $ */
+/* $OpenBSD: vfp.c,v 1.3 2018/01/26 16:15:26 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,9 +22,8 @@
 
 #include <arm64/include/vfp.h>
 
-void vfp_store(struct fpreg *vfpsave);
-
-static inline void set_vfp_enable(int val)
+static inline void
+set_vfp_enable(int val)
 {
 	uint64_t v;
 	__asm __volatile("mrs %x0, cpacr_el1" : "=r" (v));
@@ -37,7 +36,8 @@ static inline void set_vfp_enable(int val)
 	__asm __volatile("isb");
 }
 
-static inline int get_vfp_enable()
+static inline int
+get_vfp_enable(void)
 {
 	uint64_t v;
 	int enabled = 0;
@@ -47,28 +47,14 @@ static inline int get_vfp_enable()
 	return enabled;
 }
 
-int
-vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code);
+int vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code);
 void vfp_load(struct proc *p);
-
-void
-vfp_init(void)
-{
-	static int inited = 0;
-
-	if (inited == 1)
-		return;
-	inited = 1;
-
-	/* Read Coprocessor Access Control Register */
-
-	/* other stuff?? */
-}
+void vfp_store(struct fpreg *vfpsave);
 
 void
 vfp_store(struct fpreg *vfpsave)
 {
-	uint32_t		 scratch;
+	uint32_t scratch;
 
 	if (get_vfp_enable()) {
 		__asm __volatile(
@@ -118,10 +104,9 @@ vfp_store(struct fpreg *vfpsave)
 void
 vfp_save(void)
 {
-	struct cpu_info		*ci = curcpu();
-	struct pcb 		*pcb;
-	struct proc		*p;
-
+	struct cpu_info	*ci = curcpu();
+	struct pcb *pcb = curpcb;
+	struct proc *p = curproc;
 	uint32_t vfp_enabled;
 
 	if (ci->ci_fpuproc == 0)
@@ -131,15 +116,6 @@ vfp_save(void)
 
 	if (!vfp_enabled)
 		return;	/* not enabled, nothing to do */
-
-#if 0
-	// arm32 had failures flags, verify this on aarch64
-	if (vfp_enabled)
-		panic("vfp exceptional data fault, time to write more code");
-#endif
-
-	p = curproc;
-	pcb = curpcb;
 
 	if (pcb->pcb_fpcpu == NULL || ci->ci_fpuproc == NULL ||
 	    !(pcb->pcb_fpcpu == ci && ci->ci_fpuproc == p)) {
@@ -151,7 +127,8 @@ vfp_save(void)
 
 	vfp_store(&p->p_addr->u_pcb.pcb_fpstate);
 
-	/* NOTE: fpu state is saved but remains 'valid', as long as
+	/*
+	 * NOTE: fpu state is saved but remains 'valid', as long as
 	 * curpcb()->pcb_fpucpu == ci && ci->ci_fpuproc == curproc()
 	 * is true FPU state is valid and can just be enabled without reload.
 	 */
@@ -159,9 +136,9 @@ vfp_save(void)
 }
 
 void
-vfp_enable()
+vfp_enable(void)
 {
-	struct cpu_info		*ci = curcpu();
+	struct cpu_info	*ci = curcpu();
 
 	if (curproc->p_addr->u_pcb.pcb_fpcpu == ci &&
 	    ci->ci_fpuproc == curproc) {
@@ -175,10 +152,10 @@ vfp_enable()
 void
 vfp_load(struct proc *p)
 {
-	struct cpu_info		*ci = curcpu();
-	struct pcb		*pcb = &p->p_addr->u_pcb;
-	uint32_t		 scratch = 0;
-	int			 psw;
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	uint32_t scratch = 0;
+	int psw;
 
 	/* do not allow a partially synced state here */
 	psw = disable_interrupts();
@@ -245,13 +222,8 @@ vfp_load(struct proc *p)
 int
 vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code)
 {
-	struct proc		*p;
-	struct pcb 		*pcb;
-	struct cpu_info		*ci;
-
-	p = curproc;
-	pcb = &p->p_addr->u_pcb;
-	ci = curcpu();
+	struct proc *p = curproc;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	if (get_vfp_enable()) {
 		/*
@@ -264,10 +236,7 @@ vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code)
 	/* we should be able to ignore old state of pcb_fpcpu ci_fpuproc */
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
 		pcb->pcb_flags |= PCB_FPU;
-
-		bzero (&pcb->pcb_fpstate, sizeof (pcb->pcb_fpstate));
-
-		/* XXX - setround()? */
+		memset(&pcb->pcb_fpstate, 0, sizeof (pcb->pcb_fpstate));
 	}
 	vfp_load(p);
 
@@ -277,7 +246,8 @@ vfp_fault(vaddr_t pc, uint32_t insn, trapframe_t *tf, int fault_code)
 void
 vfp_discard(struct proc *p)
 {
-	struct cpu_info		*ci = curcpu();
+	struct cpu_info	*ci = curcpu();
+
 	if (curpcb->pcb_fpcpu == ci && ci->ci_fpuproc == p) {
 		ci->ci_fpuproc = NULL;
 		curpcb->pcb_fpcpu  = NULL;

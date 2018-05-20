@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.62 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.67 2018/02/20 01:20:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,10 @@ struct vxlan_softc {
 	in_port_t		 sc_dstport;
 	u_int			 sc_rdomain;
 	int64_t			 sc_vnetid;
+	uint16_t		 sc_df;
 	u_int8_t		 sc_ttl;
+
+	struct task		 sc_sendtask;
 
 	LIST_ENTRY(vxlan_softc)	 sc_entry;
 };
@@ -91,6 +94,7 @@ int	 vxlan_output(struct ifnet *, struct mbuf *);
 void	 vxlan_addr_change(void *);
 void	 vxlan_if_change(void *);
 void	 vxlan_link_change(void *);
+void	 vxlan_send_dispatch(void *);
 
 int	 vxlan_sockaddr_cmp(struct sockaddr *, struct sockaddr *);
 uint16_t vxlan_sockaddr_port(struct sockaddr *);
@@ -125,16 +129,15 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet		*ifp;
 	struct vxlan_softc	*sc;
 
-	if ((sc = malloc(sizeof(*sc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_membership = malloc(
 	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 	    M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
+	sc->sc_df = htons(0);
+	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vxlan%d", unit);
@@ -189,6 +192,10 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	if (!task_del(net_tq(ifp->if_index), &sc->sc_sendtask))
+		taskq_barrier(net_tq(ifp->if_index));
+
 	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
 	free(sc, M_DEVBUF, sizeof(*sc));
 
@@ -302,21 +309,43 @@ vxlan_multicast_join(struct ifnet *ifp, struct sockaddr *src,
 void
 vxlanstart(struct ifnet *ifp)
 {
-	struct mbuf		*m;
+	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 
+	task_add(net_tq(ifp->if_index), &sc->sc_sendtask);
+}
+
+void
+vxlan_send_dispatch(void *xsc)
+{
+	struct vxlan_softc	*sc = xsc;
+	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	struct mbuf		*m;
+	struct mbuf_list	 ml;
+
+	ml_init(&ml);
 	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
-			return;
+			break;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
+		ml_enqueue(&ml, m);
+	}
+
+	if (ml_empty(&ml))
+		return;
+
+	NET_RLOCK();
+	while ((m = ml_dequeue(&ml)) != NULL) {
 		vxlan_output(ifp, m);
 	}
+	NET_RUNLOCK();
 }
+
 
 int
 vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
@@ -469,6 +498,14 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_ttl = (int)sc->sc_ttl;
 		break;
 
+	case SIOCSLIFPHYDF:
+		/* commit */
+		sc->sc_df = ifr->ifr_df ? htons(IP_DF) : htons(0);
+		break;
+	case SIOCGLIFPHYDF:
+		ifr->ifr_df = sc->sc_df ? 1 : 0;
+		break;
+
 	case SIOCSVNETID:
 		if (sc->sc_vnetid == ifr->ifr_vnetid)
 			break;
@@ -611,6 +648,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		vni = VXLAN_VNI_UNSET;
 	}
 
+	NET_ASSERT_LOCKED();
 	/* First search for a vxlan(4) interface with the packet's VNI */
 	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
 		if ((uh->uh_dport == sc->sc_dstport) &&
@@ -665,7 +703,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	}
 #endif
 
-	m->m_flags &= ~(M_MCAST|M_BCAST);
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
@@ -702,6 +740,12 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip		*ip;
 
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
+	m->m_flags &= ~(M_BCAST|M_MCAST);
+
 	M_PREPEND(m, sizeof(*ip), M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
@@ -710,7 +754,7 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(struct ip) >> 2;
 	ip->ip_id = htons(ip_randomid());
-	ip->ip_off = 0; /* htons(IP_DF); XXX should we disallow IP fragments? */
+	ip->ip_off = sc->sc_df;
 	ip->ip_p = IPPROTO_UDP;
 	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_len = htons(m->m_pkthdr.len);
@@ -734,6 +778,12 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip6_hdr		*ip6;
 	struct in6_addr		*in6a;
+
+	/*
+	 * Remove multicast and broadcast flags or encapsulated packet
+	 * ends up as multicast or broadcast packet.
+	 */
+	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m == NULL)
@@ -762,6 +812,9 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 
 		ip6->ip6_src = *in6a;
 	}
+
+	if (sc->sc_df)
+		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	/*
 	 * The UDP checksum of VXLAN packets should be set to zero,

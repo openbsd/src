@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.99 2017/05/30 10:32:53 sf Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.106 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/mbuf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
@@ -162,16 +162,12 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
 	char fname[MNAMELEN];
 	char fspec[MNAMELEN];
 	int error, flags;
-
-	error = copyin(data, &args, sizeof(struct ufs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -208,19 +204,21 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 				fs->e2fs.e2fs_state = E2FS_ERRORS;
 			fs->e2fs_fmod = 1;
 		}
-		if (args.fspec == NULL) {
+		if (args && args->fspec == NULL) {
 			/*
 			 * Process export requests.
 			 */
 			return (vfs_export(mp, &ump->um_export,
-			    &args.export_info));
+			    &args->export_info));
 		}
+		if (args == NULL)
+			goto success;
 	}
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		goto error;
 
@@ -265,7 +263,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	strlcpy(mp->mnt_stat.f_mntfromname, fname, MNAMELEN);
 	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	memcpy(&mp->mnt_stat.mount_info.ufs_args, &args, sizeof(args));
+	memcpy(&mp->mnt_stat.mount_info.ufs_args, args, sizeof(*args));
 
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
@@ -572,9 +570,9 @@ out:
 		devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT, sizeof *ump->um_e2fs);
 		free(ump, M_UFSMNT, sizeof *ump);
@@ -611,7 +609,7 @@ ext2fs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(ump->um_devvp, fs->e2fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vput(ump->um_devvp);
@@ -641,9 +639,9 @@ ext2fs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	/*
 	 * Flush filesystem metadata.
 	 */
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, p);
+	VOP_UNLOCK(ump->um_devvp);
 	return (error);
 }
 
@@ -698,6 +696,8 @@ int ext2fs_sync_vnode(struct vnode *vp, void *);
 struct ext2fs_sync_args {
 	int allerror;
 	int waitfor;
+	int nlink0;
+	int inflight;
 	struct proc *p;
 	struct ucred *cred;
 };
@@ -707,22 +707,34 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 {
 	struct ext2fs_sync_args *esa = args;
 	struct inode *ip;
-	int error;
+	int error, nlink0 = 0;
+
+	if (vp->v_type == VNON)
+		return (0);
+
+	if (vp->v_inflight)
+		esa->inflight = MIN(esa->inflight+1, 65536);
 
 	ip = VTOI(vp);
-	if (vp->v_type == VNON ||
-	    ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-	    LIST_EMPTY(&vp->v_dirtyblkhd)) ||
-	    esa->waitfor == MNT_LAZY) {
-		return (0);
+	
+	if (ip->i_e2fs_nlink == 0)
+		nlink0 = 1;
+
+	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
+	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		goto end;
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, esa->p))
-		return (0);
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, esa->p)) {
+		nlink0 = 1;	/* potentially */
+		goto end;
+	}
 
 	if ((error = VOP_FSYNC(vp, esa->cred, esa->waitfor, esa->p)) != 0)
 		esa->allerror = error;
 	vput(vp);
+end:
+	esa->nlink0 = MIN(esa->nlink0 + nlink0, 65536);
 	return (0);
 }
 /*
@@ -733,11 +745,12 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
  * Should always be called with the mount point locked.
  */
 int
-ext2fs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+ext2fs_sync(struct mount *mp, int waitfor, int stall,
+    struct ucred *cred, struct proc *p)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs;
-	int error, allerror = 0;
+	int error, allerror = 0, state, fmod;
 	struct ext2fs_sync_args esa;
 
 	fs = ump->um_e2fs;
@@ -753,6 +766,8 @@ ext2fs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	esa.cred = cred;
 	esa.allerror = 0;
 	esa.waitfor = waitfor;
+	esa.nlink0 = 0;
+	esa.inflight = 0;
 
 	vfs_mount_foreach_vnode(mp, ext2fs_sync_vnode, &esa);
 	if (esa.allerror != 0)
@@ -762,20 +777,41 @@ ext2fs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	 * Force stale file system control information to be flushed.
 	 */
 	if (waitfor != MNT_LAZY) {
-		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, p);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	/*
 	 * Write back modified superblock.
 	 */
+	state = fs->e2fs.e2fs_state;
+	fmod = fs->e2fs_fmod;
+	if (stall && fs->e2fs_ronly == 0) {
+		fs->e2fs_fmod = 1;
+		if (allerror == 0 && esa.nlink0 == 0 && esa.inflight == 0) {
+			if ((fs->e2fs.e2fs_state & E2FS_ERRORS) == 0)
+				fs->e2fs.e2fs_state = E2FS_ISCLEAN;
+#if 0
+			printf("%s force clean (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, esa.nlink0, esa.inflight);
+#endif
+		} else {
+			fs->e2fs.e2fs_state = 0;
+#if 0
+			printf("%s force dirty (dangling %d inflight %d)\n",
+			    mp->mnt_stat.f_mntonname, esa.nlink0, esa.inflight);
+#endif
+		}
+	}		
 	if (fs->e2fs_fmod != 0) {
 		fs->e2fs_fmod = 0;
 		fs->e2fs.e2fs_wtime = time_second;
 		if ((error = ext2fs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}
+	fs->e2fs.e2fs_state = state;
+	fs->e2fs_fmod = fmod;
 	return (allerror);
 }
 
@@ -815,7 +851,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK|PR_ZERO);
-	rrw_init_flags(&ip->i_lock, "inode", RWL_DUPOK);
+	rrw_init_flags(&ip->i_lock, "inode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_ump = ump;

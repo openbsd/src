@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.12 2017/02/11 20:40:03 guenther Exp $ */
+/*	$OpenBSD: ber.c,v 1.13 2018/02/08 18:02:06 jca Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -783,10 +783,6 @@ ber_write_elements(struct ber *ber, struct ber_element *root)
 	if (ber_dump_element(ber, root) == -1)
 		return -1;
 
-	/* XXX this should be moved to a different function */
-	if (ber->fd != -1)
-		return write(ber->fd, ber->br_wbuf, len);
-
 	return (len);
 }
 
@@ -1095,9 +1091,9 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	DPRINTF("ber read element size %zd\n", len);
 	totlen += r + len;
 
-	/* If using an external buffer and the total size of the element
-	 * is larger then the external buffer don't bother to continue. */
-	if (ber->fd == -1 && len > ber->br_rend - ber->br_rptr) {
+	/* If the total size of the element is larger than the buffer
+	 * don't bother to continue. */
+	if (len > ber->br_rend - ber->br_rptr) {
 		errno = ECANCELED;
 		return -1;
 	}
@@ -1243,17 +1239,7 @@ ber_free(struct ber *b)
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
-	ssize_t r;
-	/*
-	 * XXX calling read here is wrong in many ways. The most obvious one
-	 * being that we will block till data arrives.
-	 * But for now it is _good enough_ *gulp*
-	 */
-	if (b->fd == -1)
-		r = ber_readbuf(b, c, 1);
-	else
-		r = read(b->fd, c, 1);
-	return r;
+	return ber_readbuf(b, c, 1);
 }
 
 static ssize_t
@@ -1262,22 +1248,10 @@ ber_read(struct ber *ber, void *buf, size_t len)
 	u_char *b = buf;
 	ssize_t	r, remain = len;
 
-	/*
-	 * XXX calling read here is wrong in many ways. The most obvious one
-	 * being that we will block till data arrives.
-	 * But for now it is _good enough_ *gulp*
-	 */
-
 	while (remain > 0) {
-		if (ber->fd == -1)
-			r = ber_readbuf(ber, b, remain);
-		else
-			r = read(ber->fd, b, remain);
-		if (r == -1) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
+		r = ber_readbuf(ber, b, remain);
+		if (r == -1)
 			return -1;
-		}
 		if (r == 0)
 			return (b - (u_char *)buf);
 		b += r;

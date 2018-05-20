@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2018/04/06 14:44:04 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,8 @@ HDRS=	ARMGenAsmMatcher.inc ARMGenAsmWriter.inc \
 	ARMGenFastISel.inc ARMGenInstrInfo.inc ARMGenRegisterInfo.inc \
 	ARMGenSubtargetInfo.inc \
 	ARMGenMCCodeEmitter.inc ARMGenMCPseudoLowering.inc \
-	ARMGenDisassemblerTables.inc
+	ARMGenDisassemblerTables.inc ARMGenSystemRegister.inc \
+	ARMGenRegisterBank.inc ARMGenGlobalISel.inc
 
 all: ${HDRS}
 
@@ -76,6 +77,21 @@ ARMGenMCPseudoLowering.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
 
 ARMGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-disassembler \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
+		-o ${.TARGET} ${.ALLSRC}
+
+ARMGenSystemRegister.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
+		-o ${.TARGET} ${.ALLSRC}
+
+ARMGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-bank \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
+		-o ${.TARGET} ${.ALLSRC}
+
+ARMGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/ARM/ARM.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/ARM \
 		-o ${.TARGET} ${.ALLSRC}
 

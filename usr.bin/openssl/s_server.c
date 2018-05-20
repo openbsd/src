@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.27 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.30 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -404,7 +404,7 @@ cert_status_cb(SSL * s, void *arg)
 {
 	tlsextstatusctx *srctx = arg;
 	BIO *err = srctx->err;
-	char *host, *port, *path;
+	char *host = NULL, *port = NULL, *path = NULL;
 	int use_ssl;
 	unsigned char *rspder = NULL;
 	int rspderlen;
@@ -487,7 +487,7 @@ cert_status_cb(SSL * s, void *arg)
 		OCSP_RESPONSE_print(err, resp, 2);
 	}
 	ret = SSL_TLSEXT_ERR_OK;
-done:
+ done:
 	if (ret != SSL_TLSEXT_ERR_OK)
 		ERR_print_errors(err);
 	if (aia) {
@@ -503,7 +503,7 @@ done:
 	if (resp)
 		OCSP_RESPONSE_free(resp);
 	return ret;
-err:
+ err:
 	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 	goto done;
 }
@@ -858,7 +858,7 @@ s_server_main(int argc, char *argv[])
 		argv++;
 	}
 	if (badop) {
-bad:
+ bad:
 		if (errstr)
 			BIO_printf(bio_err, "invalid argument %s: %s\n",
 			    *argv, errstr);
@@ -1198,30 +1198,21 @@ bad:
 		do_server(port, socket_type, &accept_socket, sv_body, context);
 	print_stats(bio_s_out, ctx);
 	ret = 0;
-end:
-	if (ctx != NULL)
-		SSL_CTX_free(ctx);
-	if (s_cert)
-		X509_free(s_cert);
-	if (s_dcert)
-		X509_free(s_dcert);
-	if (s_key)
-		EVP_PKEY_free(s_key);
-	if (s_dkey)
-		EVP_PKEY_free(s_dkey);
+ end:
+	SSL_CTX_free(ctx);
+	X509_free(s_cert);
+	X509_free(s_dcert);
+	EVP_PKEY_free(s_key);
+	EVP_PKEY_free(s_dkey);
 	free(pass);
 	free(dpass);
-	if (vpm)
-		X509_VERIFY_PARAM_free(vpm);
+	X509_VERIFY_PARAM_free(vpm);
 	free(tlscstatp.host);
 	free(tlscstatp.port);
 	free(tlscstatp.path);
-	if (ctx2 != NULL)
-		SSL_CTX_free(ctx2);
-	if (s_cert2)
-		X509_free(s_cert2);
-	if (s_key2)
-		EVP_PKEY_free(s_key2);
+	SSL_CTX_free(ctx2);
+	X509_free(s_cert2);
+	EVP_PKEY_free(s_key2);
 	free(alpn_ctx.data);
 	if (bio_s_out != NULL) {
 		BIO_free(bio_s_out);
@@ -1549,7 +1540,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 			}
 		}
 	}
-err:
+ err:
 	if (con != NULL) {
 		BIO_printf(bio_s_out, "shutting down SSL\n");
 		SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
@@ -1664,7 +1655,7 @@ load_dh_param(const char *dhfile)
 	if ((bio = BIO_new_file(dhfile, "r")) == NULL)
 		goto err;
 	ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
-err:
+ err:
 	BIO_free(bio);
 	return (ret);
 }
@@ -1949,18 +1940,17 @@ www_body(char *hostname, int s, unsigned char *context)
 		} else
 			break;
 	}
-end:
+ end:
 	/* make sure we re-use sessions */
 	SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
-err:
+ err:
 
 	if (ret >= 0)
 		BIO_printf(bio_s_out, "ACCEPT\n");
 
 	free(buf);
-	if (io != NULL)
-		BIO_free_all(io);
+	BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.28 2017/08/09 21:31:16 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.33 2018/01/24 13:51:36 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -109,30 +109,34 @@ void
 ca_launch(void)
 {
 	char		 hash[TLS_CERT_HASH_SIZE];
+	char		*buf;
 	BIO		*in = NULL;
 	EVP_PKEY	*pkey = NULL;
 	struct relay	*rlay;
 	X509		*cert = NULL;
+	off_t		 len;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) == 0)
 			continue;
 
-		if (rlay->rl_conf.tls_cert_len) {
-			if ((in = BIO_new_mem_buf(rlay->rl_tls_cert,
-			    rlay->rl_conf.tls_cert_len)) == NULL)
-				fatalx("ca_launch: cert");
+		if (rlay->rl_tls_cert_fd != -1) {
+			if ((buf = relay_load_fd(rlay->rl_tls_cert_fd,
+			    &len)) == NULL)
+				fatal("ca_launch: cert relay_load_fd");
+
+			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
+				fatalx("ca_launch: cert BIO_new_mem_buf");
 
 			if ((cert = PEM_read_bio_X509(in, NULL,
 			    NULL, NULL)) == NULL)
-				fatalx("ca_launch: cert");
+				fatalx("ca_launch: cert PEM_read_bio_X509");
 
 			hash_x509(cert, hash, sizeof(hash));
 
 			BIO_free(in);
 			X509_free(cert);
-			purge_key(&rlay->rl_tls_cert,
-			    rlay->rl_conf.tls_cert_len);
+			purge_key(&buf, len);
 		}
 		if (rlay->rl_conf.tls_key_len) {
 			if ((in = BIO_new_mem_buf(rlay->rl_tls_key,
@@ -153,21 +157,23 @@ ca_launch(void)
 			    rlay->rl_conf.tls_key_len);
 		}
 
-		if (rlay->rl_conf.tls_cacert_len) {
-			if ((in = BIO_new_mem_buf(rlay->rl_tls_cacert,
-			    rlay->rl_conf.tls_cacert_len)) == NULL)
-				fatalx("ca_launch: cacert");
+		if (rlay->rl_tls_cacert_fd != -1) {
+			if ((buf = relay_load_fd(rlay->rl_tls_cacert_fd,
+			    &len)) == NULL)
+				fatal("ca_launch: cacert relay_load_fd");
+
+			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
+				fatalx("ca_launch: cacert BIO_new_mem_buf");
 
 			if ((cert = PEM_read_bio_X509(in, NULL,
 			    NULL, NULL)) == NULL)
-				fatalx("ca_launch: cacert");
+				fatalx("ca_launch: cacert PEM_read_bio_X509");
 
 			hash_x509(cert, hash, sizeof(hash));
 
 			BIO_free(in);
 			X509_free(cert);
-			purge_key(&rlay->rl_tls_cacert,
-			    rlay->rl_conf.tls_cacert_len);
+			purge_key(&buf, len);
 		}
 		if (rlay->rl_conf.tls_cakey_len) {
 			if ((in = BIO_new_mem_buf(rlay->rl_tls_cakey,
@@ -187,6 +193,7 @@ ca_launch(void)
 			purge_key(&rlay->rl_tls_cakey,
 			    rlay->rl_conf.tls_cakey_len);
 		}
+		close(rlay->rl_tls_ca_fd);
 	}
 }
 
@@ -196,6 +203,9 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CFG_RELAY:
 		config_getrelay(env, imsg);
+		break;
+	case IMSG_CFG_RELAY_FD:
+		config_getrelayfd(env, imsg);
 		break;
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
@@ -256,15 +266,22 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
+		if (cko.cko_tlen == -1) {
+			char buf[256];
+			log_warnx("%s: %s", __func__,
+			    ERR_error_string(ERR_get_error(), buf));
+		}
+
 		iov[c].iov_base = &cko;
 		iov[c++].iov_len = sizeof(cko);
-		if (cko.cko_tlen) {
+		if (cko.cko_tlen > 0) {
 			iov[c].iov_base = to;
 			iov[c++].iov_len = cko.cko_tlen;
 		}
 
-		proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
-		    imsg->hdr.type, -1, -1, iov, c);
+		if (proc_composev_imsg(env->sc_ps, PROC_RELAY, cko.cko_proc,
+		    imsg->hdr.type, -1, -1, iov, c) == -1)
+			log_warn("%s: proc_composev_imsg", __func__);
 
 		free(to);
 		RSA_free(rsa);
@@ -340,7 +357,8 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * Send a synchronous imsg because we cannot defer the RSA
 	 * operation in OpenSSL's engine layer.
 	 */
-	imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt);
+	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1)
+		log_warn("%s: imsg_composev", __func__);
 	if (imsg_flush(ibuf) == -1)
 		log_warn("%s: imsg_flush", __func__);
 
@@ -352,7 +370,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 			fatal("%s: poll", __func__);
 		case 0:
 			log_warnx("%s: poll timeout", __func__);
-			break;
+			return -1;
 		default:
 			break;
 		}
@@ -371,12 +389,12 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 
 			IMSG_SIZE_CHECK(&imsg, (&cko));
 			memcpy(&cko, imsg.data, sizeof(cko));
-			if (IMSG_DATA_SIZE(&imsg) !=
-			    (sizeof(cko) + cko.cko_tlen))
-				fatalx("data size");
 
 			ret = cko.cko_tlen;
-			if (ret) {
+			if (ret > 0) {
+				if (IMSG_DATA_SIZE(&imsg) !=
+				    (sizeof(cko) + ret))
+					fatalx("data size");
 				toptr = (u_char *)imsg.data + sizeof(cko);
 				memcpy(to, toptr, ret);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.35 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.37 2018/04/27 08:08:06 guenther Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -42,7 +42,6 @@
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/poll.h>
@@ -130,7 +129,6 @@ struct	uvscom_softc {
 	struct device		sc_dev;		/* base device */
 	struct usbd_device	*sc_udev;	/* USB device */
 	struct usbd_interface	*sc_iface;	/* interface */
-	int			sc_iface_number;/* interface number */
 
 	struct usbd_interface	*sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
@@ -269,7 +267,6 @@ uvscom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	sc->sc_iface_number = id->bInterfaceNumber;
 
 	/* Find endpoints */
 	for (i = 0; i < id->bNumEndpoints; i++) {

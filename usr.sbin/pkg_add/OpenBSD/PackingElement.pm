@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.247 2017/09/16 11:36:25 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.250 2018/02/06 15:17:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -352,9 +352,13 @@ sub category
 	return ref(shift);
 }
 
+# all the stuff that ends up in signatures
+package OpenBSD::PackingElement::VersionElement;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
 # all dependency information
 package OpenBSD::PackingElement::Depend;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
+our @ISA=qw(OpenBSD::PackingElement::VersionElement);
 
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
@@ -1022,7 +1026,7 @@ sub write_no_sig()
 }
 
 package OpenBSD::PackingElement::Version;
-our @ISA=qw(OpenBSD::PackingElement::Unique);
+our @ISA=qw(OpenBSD::PackingElement::Unique OpenBSD::PackingElement::VersionElement);
 
 sub keyword() { "version" }
 __PACKAGE__->register_with_factory;
@@ -1089,6 +1093,30 @@ OpenBSD::Auto::cache(spec,
     	require OpenBSD::LibSpec;
 	return OpenBSD::LibSpec->from_string($self->name);
     });
+
+package OpeNBSD::PackingElement::Libset;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub category() { "libset" }
+sub keyword() { "libset" }
+__PACKAGE__->register_with_factory;
+
+sub new
+{
+	my ($class, $args) = @_;
+	if ($args =~ m/(.*)\:(.*)/) {
+		return bless {name => $1, libs => [split(/\,/, $2)]}, $class;
+	} else {
+		die "Bad args for libset: $args";
+	}
+}
+
+sub stringize
+{
+	my $self = shift;
+	return $self->{name}.':'.join(',', @{$self->{libs}});
+}
+
 package OpenBSD::PackingElement::PkgPath;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 

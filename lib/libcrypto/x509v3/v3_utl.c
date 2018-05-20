@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.31 2018/05/19 10:50:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -140,7 +140,7 @@ X509V3_add_value_bool(const char *name, int asn1_bool,
 }
 
 int
-X509V3_add_value_bool_nf(char *name, int asn1_bool,
+X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	if (asn1_bool)
@@ -150,7 +150,7 @@ X509V3_add_value_bool_nf(char *name, int asn1_bool,
 
 
 char *
-i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
+i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
 	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;
@@ -165,7 +165,7 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
 }
 
 char *
-i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
+i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 {
 	BIGNUM *bntmp = NULL;
 	char *strtmp = NULL;
@@ -180,7 +180,7 @@ i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
 }
 
 ASN1_INTEGER *
-s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
+s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 {
 	BIGNUM *bn = NULL;
 	ASN1_INTEGER *aint;
@@ -230,7 +230,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
 }
 
 int
-X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	char *strtmp;
@@ -246,7 +246,7 @@ X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
 }
 
 int
-X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
+X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 {
 	char *btmp;
 
@@ -271,7 +271,7 @@ err:
 }
 
 int
-X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
+X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 {
 	ASN1_INTEGER *itmp;
 
@@ -1015,7 +1015,9 @@ int X509_check_host(X509 *x, const char *chk, size_t chklen,
 {
 	if (chk == NULL)
 		return -2;
-	if (memchr(chk, '\0', chklen))
+	if (chklen == 0)
+		chklen = strlen(chk);
+	else if (memchr(chk, '\0', chklen))
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 }
@@ -1025,7 +1027,9 @@ int X509_check_email(X509 *x, const char *chk, size_t chklen,
 {
 	if (chk == NULL)
 		return -2;
-	if (memchr(chk, '\0', chklen))
+	if (chklen == 0)
+		chklen = strlen(chk);
+	else if (memchr(chk, '\0', chklen))
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 }

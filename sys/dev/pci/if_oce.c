@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.99 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.100 2017/11/27 16:53:04 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -2853,7 +2853,7 @@ oce_cmd(struct oce_softc *sc, int subsys, int opcode, int version,
 			memcpy(payload, &mbx->pld.data, length);
 	} else
 		printf("%s: mailbox timeout, subsys %d op %d ver %d "
-		    "%spayload lenght %d\n", sc->sc_dev.dv_xname, subsys,
+		    "%spayload length %d\n", sc->sc_dev.dv_xname, subsys,
 		    opcode, version, epayload ? "ext " : "",
 		    length);
 	return (err);

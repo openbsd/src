@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.71 2017/07/28 18:15:44 rpe Exp $
+#	$OpenBSD: install.md,v 1.72 2017/12/01 18:13:48 stsp Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -144,7 +144,7 @@ md_prep_disklabel() {
 	PARTTABLE=
 	while [[ -z $PARTTABLE ]]; do
 		resp=MBR
-		disk_has $_disk hfs && ask "Use HFS or MBR partition table?" HFS
+		disk_has $_disk hfs && ask "Use HFS or MBR partition table?" MBR
 		case $resp in
 		[mM]*)	md_prep_MBR $_disk && PARTTABLE=MBR ;;
 		[hH]*)	md_prep_HFS $_disk && PARTTABLE=HFS ;;

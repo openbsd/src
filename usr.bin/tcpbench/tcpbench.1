@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.23 2016/09/25 23:31:50 deraadt Exp $
+.\" $OpenBSD: tcpbench.1,v 1.24 2018/05/09 11:17:51 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2016 $
+.Dd $Mdocdate: May 9 2018 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -77,11 +77,11 @@ option.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
-Forces
+Force
 .Nm
 to use IPv4 addresses only.
 .It Fl 6
-Forces
+Force
 .Nm
 to use IPv6 addresses only.
 .It Fl B Ar buf
@@ -91,7 +91,7 @@ The default is 262144 bytes for TCP client/server and UDP server.
 In UDP client mode this may be used to specify the packet size on the test
 stream.
 .It Fl b Ar addr
-Specifies the IP address of the interface which is used to send the packets.
+Specify the IP address of the interface which is used to send the packets.
 .It Fl k Ar kvars
 Specify one or more kernel variables to monitor; multiple variables must be
 separated with commas.

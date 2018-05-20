@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.71 2017/09/20 17:05:17 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.80 2018/04/07 16:30:59 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -35,28 +36,33 @@
 
 static struct tls_config *tls_config_default;
 
-int
-tls_init(void)
+static int tls_init_rv = -1;
+
+static void
+tls_do_init(void)
 {
-	static int tls_initialised = 0;
-
-	if (tls_initialised)
-		return (0);
-
-	SSL_load_error_strings();
-	SSL_library_init();
+	OPENSSL_init_ssl(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
 
 	if (BIO_sock_init() != 1)
-		return (-1);
+		return;
 
-	if ((tls_config_default = tls_config_new()) == NULL)
-		return (-1);
+	if ((tls_config_default = tls_config_new_internal()) == NULL)
+		return;
 
 	tls_config_default->refcount++;
 
-	tls_initialised = 1;
+	tls_init_rv = 0;
+}
 
-	return (0);
+int
+tls_init(void)
+{
+	static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+	if (pthread_once(&once, tls_do_init) != 0)
+		return -1;
+
+	return tls_init_rv;
 }
 
 const char *
@@ -269,7 +275,9 @@ tls_cert_hash(X509 *cert, char **hash)
 	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
 	int dlen, rv = -1;
 
+	free(*hash);
 	*hash = NULL;
+
 	if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
 		goto err;
 
@@ -288,22 +296,14 @@ tls_cert_hash(X509 *cert, char **hash)
 	return (rv);
 }
 
-static int
-tls_keypair_pubkey_hash(struct tls_keypair *keypair, char **hash)
+int
+tls_cert_pubkey_hash(X509 *cert, char **hash)
 {
-	BIO *membio = NULL;
-	X509 *cert = NULL;
 	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
 	int dlen, rv = -1;
 
+	free(*hash);
 	*hash = NULL;
-
-	if ((membio = BIO_new_mem_buf(keypair->cert_mem,
-	    keypair->cert_len)) == NULL)
-		goto err;
-	if ((cert = PEM_read_bio_X509_AUX(membio, NULL, tls_password_cb,
-	    NULL)) == NULL)
-		goto err;
 
 	if (X509_pubkey_digest(cert, EVP_sha256(), d, &dlen) != 1)
 		goto err;
@@ -320,12 +320,9 @@ tls_keypair_pubkey_hash(struct tls_keypair *keypair, char **hash)
 
  err:
 	free(dhex);
-	X509_free(cert);
-	BIO_free(membio);
 
 	return (rv);
 }
-
 
 int
 tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
@@ -350,8 +347,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 			tls_set_errorx(ctx, "failed to load certificate");
 			goto err;
 		}
-		if (tls_keypair_pubkey_hash(keypair, &keypair->pubkey_hash) == -1)
-			goto err;
 	}
 
 	if (keypair->key_mem != NULL) {

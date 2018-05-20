@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_join.c,v 1.4 2004/02/28 08:06:47 deraadt Exp $	*/
+/*	$OpenBSD: pthread_join.c,v 1.5 2018/04/27 06:47:34 guenther Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -41,11 +41,18 @@
  *      -Started coding this file.
  */
 
+#include <err.h>
 #include <pthread.h>
-#include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "test.h"
+
+static void
+handler(int sig)
+{
+}
 
 /* This thread yields so the creator has a live thread to wait on */
 static void *
@@ -55,7 +62,7 @@ new_thread_1(void * new_buf)
 
 	snprintf((char *)new_buf, 512, "New thread %%d stack at %p\n", &i);
 	pthread_yield();	/* (ensure parent can wait on live thread) */
-	sleep(1);
+	sleep(2);
 	return(new_buf);
 	PANIC("return");
 }
@@ -74,15 +81,30 @@ new_thread_2(void * new_buf)
 int
 main(int argc, char *argv[])
 {
+	struct sigaction sa;
+	sigset_t mask;
 	char buf[256], *status;
 	pthread_t thread;
 	int debug = 1;
 	int i = 0;
 
+	sa.sa_handler = &handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	if (sigaction(SIGALRM, &sa, NULL))
+		err(1, "sigaction");
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGALRM);
+
 	if (debug)
 		printf("Original thread stack at %p\n", &i);
 
+	if (sigprocmask(SIG_BLOCK, &mask, NULL))
+		err(1, "sigprocmask");
 	CHECKr(pthread_create(&thread, NULL, new_thread_1, (void *)buf));
+	if (sigprocmask(SIG_UNBLOCK, &mask, NULL))
+		err(1, "sigprocmask");
+	alarm(1);
 	CHECKr(pthread_join(thread, (void **)(&status)));
 	if (debug) 
 		printf(status, ++i);

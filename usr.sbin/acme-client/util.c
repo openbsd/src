@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: util.c,v 1.11 2018/03/15 18:26:47 otto Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,7 +113,7 @@ readstr(int fd, enum comm comm)
 
 /*
  * Read a buffer from the sender.
- * This consists of two parts: the lenght of the buffer, and the buffer
+ * This consists of two parts: the length of the buffer, and the buffer
  * itself.
  * We allow the buffer to be binary, but NUL-terminate it anyway.
  */
@@ -223,9 +223,12 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 
 	if ((size_t)ssz != sizeof(size_t))
 		warnx("short write: %s length", comms[comm]);
-	else if ((ssz = write(fd, v, sz)) < 0)
-		warn("write: %s", comms[comm]);
-	else if (sz != (size_t)ssz)
+	else if ((ssz = write(fd, v, sz)) < 0) {
+		if (errno == EPIPE)
+			rc = 0;
+		else
+			warn("write: %s", comms[comm]);
+	} else if (sz != (size_t)ssz)
 		warnx("short write: %s", comms[comm]);
 	else
 		rc = 1;

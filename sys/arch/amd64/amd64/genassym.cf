@@ -1,8 +1,9 @@
-#	$OpenBSD: genassym.cf,v 1.31 2015/05/18 19:59:27 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.34 2018/02/21 19:24:15 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
 include <sys/proc.h>
+include <sys/mutex.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
@@ -17,7 +18,6 @@ include <machine/intr.h>
 include <machine/pic.h>
 include <machine/tss.h>
 include <machine/i82093var.h>
-include <machine/mutex.h>
 
 export	SRUN
 export	SONPROC
@@ -78,6 +78,15 @@ member	tf_ss
 
 define  FRAMESIZE               sizeof(struct trapframe)
 
+struct iretq_frame
+member	IRETQ_CS	iretq_cs
+member	IRETQ_RIP	iretq_rip
+member	IRETQ_RFLAGS	iretq_rflags
+member	IRETQ_RSP	iretq_rsp
+member	IRETQ_SS	iretq_ss
+
+define	IRETQ_SIZE		sizeof(struct iretq_frame)
+
 struct pcb
 member	pcb_cr3
 member	pcb_rsp
@@ -91,6 +100,8 @@ member	pcb_cr0
 
 struct pmap
 member	pm_cpus
+member	pm_pdirpa
+member	pm_pdirpa_intel
 
 struct x86_64_tss
 member	tss_rsp0
@@ -115,6 +126,10 @@ endif
 member	CPU_INFO_GDT		ci_gdt
 member	CPU_INFO_TSS		ci_tss
 member	CPU_INFO_FLAGS		ci_flags
+member	CPU_INFO_KERN_CR3	ci_kern_cr3
+member	CPU_INFO_USER_CR3	ci_user_cr3
+member	CPU_INFO_KERN_RSP	ci_kern_rsp
+member	CPU_INFO_INTR_RSP	ci_intr_rsp
 
 export	CPUF_USERSEGS_BIT
 
@@ -138,11 +153,6 @@ member	IH_COUNT	ih_count.ec_count
 struct	ioapic_softc
 member	IOAPIC_SC_REG	sc_reg
 member	IOAPIC_SC_DATA	sc_data
-
-struct	mutex
-member	mtx_wantipl
-member	mtx_oldipl
-member	mtx_owner
 
 # pte fields
 export	PG_V

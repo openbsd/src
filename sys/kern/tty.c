@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.134 2017/06/29 04:10:07 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.140 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #define	TTYDEFCHARS
 #include <sys/tty.h>
 #undef	TTYDEFCHARS
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -237,7 +237,7 @@ ttyinput(int c, struct tty *tp)
 	int i, error;
 	int s;
 
-	add_tty_randomness(tp->t_dev << 8 | c);
+	enqueue_randomness(tp->t_dev << 8 | c);
 	/*
 	 * If receiver is not enabled, drop it.
 	 */
@@ -795,9 +795,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = namei(&nid);
 			if (error)
 				return (error);
-			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(nid.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 			error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
-			VOP_UNLOCK(nid.ni_vp, p);
+			VOP_UNLOCK(nid.ni_vp);
 			vrele(nid.ni_vp);
 			if (error)
 				return (error);
@@ -829,7 +829,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
-		if (!isctty(pr, tp) && suser(p, 0))
+		if (!isctty(pr, tp) && suser(p))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		break;
@@ -1703,7 +1703,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	int cc, ce, obufcc = 0;
 	struct proc *p;
 	struct process *pr;
-	int i, hiwat, error, s;
+	int hiwat, error, s;
 	size_t cnt;
 	u_char obuf[OBUFSIZ];
 
@@ -1801,6 +1801,7 @@ loop:
 		 * immediately.
 		 */
 		while (cc > 0) {
+			int i;
 			if (!ISSET(tp->t_oflag, OPOST))
 				ce = cc;
 			else {

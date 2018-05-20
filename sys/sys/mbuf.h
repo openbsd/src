@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.231 2017/06/23 11:18:12 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.235 2018/02/11 00:24:13 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct pkthdr_pf {
 
 /* pkthdr_pf.flags */
 #define	PF_TAG_GENERATED		0x01
+#define	PF_TAG_SYNCOOKIE_RECREATED	0x02
 #define	PF_TAG_TRANSLATE_LOCALHOST	0x04
 #define	PF_TAG_DIVERTED			0x08
 #define	PF_TAG_DIVERTED_PACKET		0x10
@@ -134,6 +135,7 @@ struct	pkthdr {
 	u_int			 ph_rtableid;	/* routing table id */
 	u_int			 ph_ifidx;	/* rcv interface index */
 	u_int8_t		 ph_loopcnt;	/* mbuf is looping in kernel */
+	u_int8_t		 ph_family;	/* af, used when queueing */
 	struct pkthdr_pf	 pf;
 };
 
@@ -222,12 +224,14 @@ struct mbuf {
 #define	M_ICMP_CSUM_OUT		0x0200	/* ICMP/ICMPv6 checksum needed */
 #define	M_ICMP_CSUM_IN_OK	0x0400	/* ICMP/ICMPv6 checksum verified */
 #define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP/ICMPv6 checksum bad */
+#define	M_IPV6_DF_OUT		0x1000	/* don't fragment outgoing IPv6 */
 
 #ifdef _KERNEL
 #define MCS_BITS \
     ("\20\1IPV4_CSUM_OUT\2TCP_CSUM_OUT\3UDP_CSUM_OUT\4IPV4_CSUM_IN_OK" \
     "\5IPV4_CSUM_IN_BAD\6TCP_CSUM_IN_OK\7TCP_CSUM_IN_BAD\10UDP_CSUM_IN_OK" \
-    "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD")
+    "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD" \
+    "\15IPV6_NODF_OUT")
 #endif
 
 /* mbuf types */
@@ -553,6 +557,7 @@ unsigned int		mq_purge(struct mbuf_queue *);
 
 #define	mq_len(_mq)		ml_len(&(_mq)->mq_list)
 #define	mq_empty(_mq)		ml_empty(&(_mq)->mq_list)
+#define	mq_full(_mq)		(mq_len((_mq)) >= (_mq)->mq_maxlen)
 #define	mq_drops(_mq)		((_mq)->mq_drops)
 #define	mq_set_maxlen(_mq, _l)	((_mq)->mq_maxlen = (_l))
 

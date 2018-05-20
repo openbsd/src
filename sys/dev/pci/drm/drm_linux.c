@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.15 2017/07/12 20:12:19 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.23 2018/04/25 01:27:46 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,11 @@
 
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/ppbreg.h>
+#include <sys/event.h>
+
+struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
+void *sch_ident;
+int sch_priority;
 
 void
 flush_barrier(void *arg)
@@ -78,7 +83,7 @@ flush_delayed_work(struct delayed_work *dwork)
 		tsleep(&barrier, PWAIT, "fldwto", 1);
 
 	task_set(&task, flush_barrier, &barrier);
-	task_add(dwork->tq, &task);
+	task_add(dwork->tq ? dwork->tq : systq, &task);
 	while (!barrier) {
 		sleep_setup(&sls, &barrier, PWAIT, "fldwbar");
 		sleep_finish(&sls, !barrier);
@@ -142,7 +147,37 @@ timeval_to_us(const struct timeval *tv)
 	return ((int64_t)tv->tv_sec * 1000000) + tv->tv_usec;
 }
 
-extern char *hw_vendor, *hw_prod;
+extern char *hw_vendor, *hw_prod, *hw_ver;
+
+bool
+dmi_match(int slot, const char *str)
+{
+	switch (slot) {
+	case DMI_SYS_VENDOR:
+	case DMI_BOARD_VENDOR:
+		if (hw_vendor != NULL &&
+		    !strcmp(hw_vendor, str))
+			return true;
+		break;
+	case DMI_PRODUCT_NAME:
+	case DMI_BOARD_NAME:
+		if (hw_prod != NULL &&
+		    !strcmp(hw_prod, str))
+			return true;
+		break;
+	case DMI_PRODUCT_VERSION:
+	case DMI_BOARD_VERSION:
+		if (hw_ver != NULL &&
+		    !strcmp(hw_ver, str))
+			return true;
+		break;
+	case DMI_NONE:
+	default:
+		return false;
+	}
+
+	return false;
+}
 
 static bool
 dmi_found(const struct dmi_system_id *dsi)
@@ -151,26 +186,10 @@ dmi_found(const struct dmi_system_id *dsi)
 
 	for (i = 0; i < nitems(dsi->matches); i++) {
 		slot = dsi->matches[i].slot;
-		switch (slot) {
-		case DMI_NONE:
+		if (slot == DMI_NONE)
 			break;
-		case DMI_SYS_VENDOR:
-		case DMI_BOARD_VENDOR:
-			if (hw_vendor != NULL &&
-			    !strcmp(hw_vendor, dsi->matches[i].substr))
-				break;
-			else
-				return false;
-		case DMI_PRODUCT_NAME:
-		case DMI_BOARD_NAME:
-			if (hw_prod != NULL &&
-			    !strcmp(hw_prod, dsi->matches[i].substr))
-				break;
-			else
-				return false;
-		default:
+		if (!dmi_match(slot, dsi->matches[i].substr))
 			return false;
-		}
 	}
 
 	return true;
@@ -204,8 +223,8 @@ alloc_pages(unsigned int gfp_mask, unsigned int order)
 		flags |= UVM_PLA_ZERO;
 
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(PAGE_SIZE << order, 0, -1, PAGE_SIZE, 0,
-	    &mlist, 1, flags))
+	if (uvm_pglistalloc(PAGE_SIZE << order, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
 		return NULL;
 	return TAILQ_FIRST(&mlist);
 }
@@ -551,15 +570,12 @@ sg_copy_from_buffer(struct scatterlist *sgl, unsigned int nents,
 }
 
 int
-i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+i2c_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 {
 	void *cmd = NULL;
 	int cmdlen = 0;
 	int err, ret = 0;
 	int op;
-
-	if (adap->algo)
-		return adap->algo->master_xfer(adap, msgs, num);
 
 	iic_acquire_bus(&adap->ic, 0);
 
@@ -584,8 +600,10 @@ i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 		ret++;
 	}
 
-	op = (msgs->flags & I2C_M_RD) ? I2C_OP_READ_WITH_STOP : I2C_OP_WRITE_WITH_STOP;
-	err = iic_exec(&adap->ic, op, msgs->addr, cmd, cmdlen, msgs->buf, msgs->len, 0);
+	op = (msgs->flags & I2C_M_RD) ?
+	    I2C_OP_READ_WITH_STOP : I2C_OP_WRITE_WITH_STOP;
+	err = iic_exec(&adap->ic, op, msgs->addr, cmd, cmdlen,
+	    msgs->buf, msgs->len, 0);
 	if (err) {
 		ret = -err;
 		goto fail;
@@ -597,6 +615,47 @@ fail:
 	iic_release_bus(&adap->ic, 0);
 
 	return ret;
+}
+
+int
+i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+	if (adap->algo)
+		return adap->algo->master_xfer(adap, msgs, num);
+
+	return i2c_master_xfer(adap, msgs, num);
+}
+
+int
+i2c_bb_master_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+	struct i2c_algo_bit_data *algo = adap->algo_data;
+	struct i2c_adapter bb;
+
+	memset(&bb, 0, sizeof(bb));
+	bb.ic = algo->ic;
+	bb.retries = adap->retries;
+	return i2c_master_xfer(&bb, msgs, num);
+}
+
+uint32_t
+i2c_bb_functionality(struct i2c_adapter *adap)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+}
+
+struct i2c_algorithm i2c_bit_algo = {
+	.master_xfer = i2c_bb_master_xfer,
+	.functionality = i2c_bb_functionality
+};
+
+int
+i2c_bit_add_bus(struct i2c_adapter *adap)
+{
+	adap->algo = &i2c_bit_algo;
+	adap->retries = 3;
+
+	return 0;
 }
 
 #if defined(__amd64__) || defined(__i386__)
@@ -729,4 +788,18 @@ void
 backlight_schedule_update_status(struct backlight_device *bd)
 {
 	task_add(systq, &bd->task);
+}
+
+void
+drm_sysfs_hotplug_event(struct drm_device *dev)
+{
+	KNOTE(&dev->note, NOTE_CHANGE);
+}
+
+unsigned int drm_fence_count;
+
+unsigned int
+fence_context_alloc(unsigned int num)
+{
+	return __sync_add_and_fetch(&drm_fence_count, num) - num;
 }

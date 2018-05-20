@@ -19,11 +19,11 @@ deny host jodie
 #############################################################################
 # This is the commands that will match a network
 #
-#	allow net <netname|netnumber> [netmask <netname|netnumber>]
-#	deny net <netname|netnumber> [netmask <netname|netnumber>]
+#	allow net <netnumber> [netmask <netnumber>]
+#	deny net <netnumber> [netmask <netnumber>]
 #
-# To process netname getnetbyname is called, and inet_aton is used for
-# netnumber. inet_aton both access numbers as 255.255.255.0 and 0xffffff00.
+# inet_aton is used for netnumber.
+# inet_aton both access numbers as 255.255.255.0 and 0xffffff00.
 #
 # If netmask isn't given the parser will assume netmask from the first bits
 # of the network number. So if the network is subneted the you have to add

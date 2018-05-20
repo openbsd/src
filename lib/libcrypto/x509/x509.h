@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.26 2016/12/27 16:05:57 jsing Exp $ */
+/* $OpenBSD: x509.h,v 1.67 2018/05/19 10:58:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -606,6 +606,20 @@ extern "C" {
 #define		X509_CRL_get_issuer(x) ((x)->crl->issuer)
 #define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
 
+int X509_CRL_up_ref(X509_CRL *x);
+int X509_CRL_get_signature_nid(const X509_CRL *crl);
+
+const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
+const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
+const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
+void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
+    const X509_ALGOR **palg);
+
+int X509_REQ_get_signature_nid(const X509_REQ *req);
+
+void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
+    const X509_ALGOR **palg);
+
 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
 X509_CRL_METHOD *X509_CRL_METHOD_new(
 	int (*crl_init)(X509_CRL *crl),
@@ -639,8 +653,9 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
-int X509_signature_dump(BIO *bp,const ASN1_STRING *sig, int indent);
-int X509_signature_print(BIO *bp,X509_ALGOR *alg, ASN1_STRING *sig);
+int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
+int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
+    const ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
@@ -744,12 +759,13 @@ X509_CRL *X509_CRL_dup(X509_CRL *crl);
 X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
-void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-						X509_ALGOR *algor);
+void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
+    const X509_ALGOR *algor);
 void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
+int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder, size_t *pderlen);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
 
 int		X509_cmp_time(const ASN1_TIME *s, time_t *t);
@@ -791,6 +807,7 @@ extern const ASN1_ITEM X509_PUBKEY_it;
 
 int		X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_PUBKEY_get(X509_PUBKEY *key);
+EVP_PKEY *	X509_PUBKEY_get0(X509_PUBKEY *key);
 int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 					   STACK_OF(X509) *chain);
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
@@ -887,28 +904,34 @@ int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
+void X509_get0_signature(const ASN1_BIT_STRING **psig,
+    const X509_ALGOR **palg, const X509 *x);
+int X509_get_signature_nid(const X509 *x);
 
-int X509_alias_set1(X509 *x, unsigned char *name, int len);
-int X509_keyid_set1(X509 *x, unsigned char *id, int len);
-unsigned char * X509_alias_get0(X509 *x, int *len);
-unsigned char * X509_keyid_get0(X509 *x, int *len);
+int X509_alias_set1(X509 *x, const unsigned char *name, int len);
+int X509_keyid_set1(X509 *x, const unsigned char *id, int len);
+unsigned char *X509_alias_get0(X509 *x, int *len);
+unsigned char *X509_keyid_get0(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int);
 int X509_TRUST_set(int *t, int trust);
-int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
-int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj);
+int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
+int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
 
 X509_REVOKED *X509_REVOKED_new(void);
 void X509_REVOKED_free(X509_REVOKED *a);
+X509_REVOKED *X509_REVOKED_dup(X509_REVOKED *a);
 X509_REVOKED *d2i_X509_REVOKED(X509_REVOKED **a, const unsigned char **in, long len);
 int i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **out);
 extern const ASN1_ITEM X509_REVOKED_it;
+
 X509_CRL_INFO *X509_CRL_INFO_new(void);
 void X509_CRL_INFO_free(X509_CRL_INFO *a);
 X509_CRL_INFO *d2i_X509_CRL_INFO(X509_CRL_INFO **a, const unsigned char **in, long len);
 int i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **out);
 extern const ASN1_ITEM X509_CRL_INFO_it;
+
 X509_CRL *X509_CRL_new(void);
 void X509_CRL_free(X509_CRL *a);
 X509_CRL *d2i_X509_CRL(X509_CRL **a, const unsigned char **in, long len);
@@ -942,7 +965,7 @@ extern const ASN1_ITEM NETSCAPE_CERT_SEQUENCE_it;
 #ifndef OPENSSL_NO_EVP
 X509_INFO *	X509_INFO_new(void);
 void		X509_INFO_free(X509_INFO *a);
-char *		X509_NAME_oneline(X509_NAME *a,char *buf,int size);
+char *		X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
 
 int ASN1_item_digest(const ASN1_ITEM *it,const EVP_MD *type,void *data,
 	unsigned char *md,unsigned int *len);
@@ -958,18 +981,27 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 	     	ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx);
 #endif
 
-int 		X509_set_version(X509 *x,long version);
+const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
+const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
+int 		X509_set_version(X509 *x, long version);
 int 		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *	X509_get_serialNumber(X509 *x);
 int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
-X509_NAME *	X509_get_issuer_name(X509 *a);
+X509_NAME *	X509_get_issuer_name(const X509 *a);
 int 		X509_set_subject_name(X509 *x, X509_NAME *name);
-X509_NAME *	X509_get_subject_name(X509 *a);
+X509_NAME *	X509_get_subject_name(const X509 *a);
 int 		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
+int 		X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 int 		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
+int 		X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
+const ASN1_TIME *X509_get0_notBefore(const X509 *x);
+ASN1_TIME *X509_getm_notBefore(const X509 *x);
+const ASN1_TIME *X509_get0_notAfter(const X509 *x);
+ASN1_TIME *X509_getm_notAfter(const X509 *x);
 int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
-ASN1_BIT_STRING * X509_get0_pubkey_bitstr(const X509 *x);
+EVP_PKEY *	X509_get0_pubkey(const X509 *x);
+ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int		X509_certificate_type(X509 *x,EVP_PKEY *pubkey /* optional */);
 
 int		X509_REQ_set_version(X509_REQ *x,long version);
@@ -986,7 +1018,7 @@ int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts);
 int X509_REQ_get_attr_count(const X509_REQ *req);
 int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid,
 			  int lastpos);
-int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj,
+int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *X509_REQ_get_attr(const X509_REQ *req, int loc);
 X509_ATTRIBUTE *X509_REQ_delete_attr(X509_REQ *req, int loc);
@@ -1004,15 +1036,20 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 int X509_CRL_set_version(X509_CRL *x, long version);
 int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
 int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 
-int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
+const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *x);
+const ASN1_TIME *X509_REVOKED_get0_revocationDate(const X509_REVOKED *x);
+const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *x);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
+int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 
 int		X509_REQ_check_private_key(X509_REQ *x509,EVP_PKEY *pkey);
 
-int		X509_check_private_key(X509 *x509,EVP_PKEY *pkey);
+int		X509_check_private_key(const X509 *x509, const EVP_PKEY *pkey);
 
 int		X509_issuer_and_serial_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_issuer_and_serial_hash(X509 *a);
@@ -1039,11 +1076,13 @@ int		X509_print_ex_fp(FILE *bp,X509 *x, unsigned long nmflag, unsigned long cfla
 int		X509_print_fp(FILE *bp,X509 *x);
 int		X509_CRL_print_fp(FILE *bp,X509_CRL *x);
 int		X509_REQ_print_fp(FILE *bp,X509_REQ *req);
-int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent, unsigned long flags);
+int		X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
+		    unsigned long flags);
 
 #ifndef OPENSSL_NO_BIO
-int		X509_NAME_print(BIO *bp, X509_NAME *name, int obase);
-int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent, unsigned long flags);
+int		X509_NAME_print(BIO *bp, const X509_NAME *name, int obase);
+int		X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
+		    unsigned long flags);
 int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print(BIO *bp,X509 *x);
 int		X509_ocspid_print(BIO *bp,X509 *x);
@@ -1053,46 +1092,47 @@ int		X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag, unsigned long
 int		X509_REQ_print(BIO *bp,X509_REQ *req);
 #endif
 
-int 		X509_NAME_entry_count(X509_NAME *name);
+int 		X509_NAME_entry_count(const X509_NAME *name);
 int 		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
 			char *buf,int len);
-int		X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
-			char *buf,int len);
+int		X509_NAME_get_text_by_OBJ(X509_NAME *name,
+			const ASN1_OBJECT *obj, char *buf,int len);
 
 /* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on. */
 int 		X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
-int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj,
-			int lastpos);
-X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
+int 		X509_NAME_get_index_by_OBJ(X509_NAME *name,
+			const ASN1_OBJECT *obj, int lastpos);
+X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
-int 		X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne,
+int 		X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
 			int loc, int set);
-int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type,
-			unsigned char *bytes, int len, int loc, int set);
+int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
+    int type, const unsigned char *bytes, int len, int loc, int set);
 int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
-			unsigned char *bytes, int len, int loc, int set);
+			const unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
 		const char *field, int type, const unsigned char *bytes, int len);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
-			int type,unsigned char *bytes, int len);
+			int type, const unsigned char *bytes, int len);
 int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
 			const unsigned char *bytes, int len, int loc, int set);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
-			ASN1_OBJECT *obj, int type,const unsigned char *bytes,
-			int len);
+			const ASN1_OBJECT *obj, int type,
+			const unsigned char *bytes, int len);
 int 		X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne,
-			ASN1_OBJECT *obj);
+			const ASN1_OBJECT *obj);
 int 		X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 			const unsigned char *bytes, int len);
-ASN1_OBJECT *	X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
-ASN1_STRING *	X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
+ASN1_OBJECT *	X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
+ASN1_STRING *	X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne);
+int		X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
 
 int		X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
 int		X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,
 				      int nid, int lastpos);
 int		X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *x,
-				      ASN1_OBJECT *obj,int lastpos);
+				      const ASN1_OBJECT *obj, int lastpos);
 int		X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *x,
 					   int crit, int lastpos);
 X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc);
@@ -1100,56 +1140,67 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
 					 X509_EXTENSION *ex, int loc);
 
-int		X509_get_ext_count(X509 *x);
-int		X509_get_ext_by_NID(X509 *x, int nid, int lastpos);
-int		X509_get_ext_by_OBJ(X509 *x,ASN1_OBJECT *obj,int lastpos);
-int		X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
-X509_EXTENSION *X509_get_ext(X509 *x, int loc);
+int		X509_get_ext_count(const X509 *x);
+int		X509_get_ext_by_NID(const X509 *x, int nid, int lastpos);
+int		X509_get_ext_by_OBJ(const X509 *x, const ASN1_OBJECT *obj,
+		    int lastpos);
+int		X509_get_ext_by_critical(const X509 *x, int crit, int lastpos);
+X509_EXTENSION *X509_get_ext(const X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int		X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
-void	*	X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
+void	*	X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
 int		X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
 							unsigned long flags);
 
-int		X509_CRL_get_ext_count(X509_CRL *x);
-int		X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos);
-int		X509_CRL_get_ext_by_OBJ(X509_CRL *x,ASN1_OBJECT *obj,int lastpos);
-int		X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
-X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
+int		X509_CRL_get_ext_count(const X509_CRL *x);
+int		X509_CRL_get_ext_by_NID(const X509_CRL *x, int nid,
+		    int lastpos);
+int		X509_CRL_get_ext_by_OBJ(const X509_CRL *x,
+		    const ASN1_OBJECT *obj, int lastpos);
+int		X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit,
+		    int lastpos);
+X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int		X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
-void	*	X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx);
-int		X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
-							unsigned long flags);
+void	*	X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit,
+		    int *idx);
+int		X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value,
+		    int crit, unsigned long flags);
 
-int		X509_REVOKED_get_ext_count(X509_REVOKED *x);
-int		X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
-int		X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x,ASN1_OBJECT *obj,int lastpos);
-int		X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
-X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
+int		X509_REVOKED_get_ext_count(const X509_REVOKED *x);
+int		X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid,
+		    int lastpos);
+int		X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x,
+		    const ASN1_OBJECT *obj, int lastpos);
+int		X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x,
+		    int crit, int lastpos);
+X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
-int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
-void	*	X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx);
-int		X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
-							unsigned long flags);
+int		X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex,
+		    int loc);
+void	*	X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid,
+		    int *crit, int *idx);
+int		X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value,
+		    int crit, unsigned long flags);
 
 X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex,
 			int nid, int crit, ASN1_OCTET_STRING *data);
 X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
-			ASN1_OBJECT *obj,int crit,ASN1_OCTET_STRING *data);
-int		X509_EXTENSION_set_object(X509_EXTENSION *ex,ASN1_OBJECT *obj);
+    const ASN1_OBJECT *obj, int crit, ASN1_OCTET_STRING *data);
+int		X509_EXTENSION_set_object(X509_EXTENSION *ex,
+		    const ASN1_OBJECT *obj);
 int		X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit);
 int		X509_EXTENSION_set_data(X509_EXTENSION *ex,
 			ASN1_OCTET_STRING *data);
 ASN1_OBJECT *	X509_EXTENSION_get_object(X509_EXTENSION *ex);
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
-int		X509_EXTENSION_get_critical(X509_EXTENSION *ex);
+int		X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
 			  int lastpos);
-int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk, ASN1_OBJECT *obj,
-			  int lastpos);
+int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
+    const ASN1_OBJECT *obj, int lastpos);
 X509_ATTRIBUTE *X509at_get_attr(const STACK_OF(X509_ATTRIBUTE) *x, int loc);
 X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc);
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
@@ -1164,7 +1215,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
 			const char *attrname, int type,
 			const unsigned char *bytes, int len);
 void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
-				ASN1_OBJECT *obj, int lastpos, int type);
+    const ASN1_OBJECT *obj, int lastpos, int type);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 	     int atrtype, const void *data, int len);
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
@@ -1175,14 +1226,14 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj);
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data, int len);
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
 					int atrtype, void *data);
-int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr);
+int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr);
 ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr);
 ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);
 
 int EVP_PKEY_get_attr_count(const EVP_PKEY *key);
 int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid,
 			  int lastpos);
-int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, ASN1_OBJECT *obj,
+int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
 			  int lastpos);
 X509_ATTRIBUTE *EVP_PKEY_get_attr(const EVP_PKEY *key, int loc);
 X509_ATTRIBUTE *EVP_PKEY_delete_attr(EVP_PKEY *key, int loc);
@@ -1268,13 +1319,14 @@ int X509_TRUST_get_count(void);
 X509_TRUST * X509_TRUST_get0(int idx);
 int X509_TRUST_get_by_id(int id);
 int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
-					char *name, int arg1, void *arg2);
+    const char *name, int arg1, void *arg2);
 void X509_TRUST_cleanup(void);
-int X509_TRUST_get_flags(X509_TRUST *xp);
-char *X509_TRUST_get0_name(X509_TRUST *xp);
-int X509_TRUST_get_trust(X509_TRUST *xp);
+int X509_TRUST_get_flags(const X509_TRUST *xp);
+char *X509_TRUST_get0_name(const X509_TRUST *xp);
+int X509_TRUST_get_trust(const X509_TRUST *xp);
 
 int X509_up_ref(X509 *x);
+STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain);
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS7_verify.3,v 1.5 2016/12/13 15:00:22 schwarze Exp $
+.\"	$OpenBSD: PKCS7_verify.3,v 1.7 2018/03/22 16:06:33 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt PKCS7_VERIFY 3
 .Os
 .Sh NAME
@@ -226,10 +226,14 @@ The error can be obtained from
 .Sh SEE ALSO
 .Xr ERR_get_error 3 ,
 .Xr PKCS7_new 3 ,
-.Xr PKCS7_sign 3
+.Xr PKCS7_sign 3 ,
+.Xr X509_STORE_new 3
 .Sh HISTORY
 .Fn PKCS7_verify
-was added to OpenSSL 0.9.5 .
+and
+.Fn PKCS7_get0_signers
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
 .Sh BUGS
 The trusted certificate store is not searched for the signer's
 certificate.

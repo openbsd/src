@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.48 2017/02/07 07:07:29 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.49 2018/05/18 05:17:40 jmatthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -139,6 +139,9 @@
 #define MR_DCMD_CONF_GET			0x04010000
 #define MR_DCMD_CFG_ADD				0x04020000
 #define MR_DCMD_CFG_CLEAR			0x04030000
+#define MR_DCMD_CFG_MAKE_SPARE			0x04040000
+#define MR_DCMD_CFG_FOREIGN_SCAN		0x04060100
+#define MR_DCMD_CFG_FOREIGN_CLEAR		0x04060500
 #define MR_DCMD_BBU_GET_STATUS			0x05010000
 #define MR_DCMD_BBU_GET_CAPACITY_INFO		0x05020000
 #define MR_DCMD_BBU_GET_DESIGN_INFO		0x05030000
@@ -1228,3 +1231,13 @@ struct mfi_pr_properties {
 	uint32_t		exec_freq;
 	uint32_t		clear_freq;
 } __packed;
+
+/* We currently don't know the full details of the following struct */
+struct mfii_foreign_scan_cfg {
+	char data[24];
+};
+
+struct mfii_foreign_scan_info {
+	uint32_t count; /* Number of foreign configs found */
+	struct mfii_foreign_scan_cfg cfgs[8];
+};

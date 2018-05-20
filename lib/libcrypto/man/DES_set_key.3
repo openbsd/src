@@ -1,12 +1,13 @@
-.\"	$OpenBSD: DES_set_key.3,v 1.7 2017/02/09 03:43:05 dtucker Exp $
-.\"	OpenSSL c7497f34 Aug 14 10:50:26 2014 -0400
+.\" $OpenBSD: DES_set_key.3,v 1.12 2018/03/27 17:35:50 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL man3/DES_random_key 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" --------------------------------------------------------------------------
 .\" Major patches to this file were contributed by
 .\" Ulf Moeller <ulf@openssl.org>, Ben Laurie <ben@openssl.org>,
 .\" and Richard Levitte <levitte@openssl.org>.
 .\" --------------------------------------------------------------------------
-.\" Copyright (c) 2000, 2001 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2000, 2001, 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -114,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 9 2017 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -456,9 +457,6 @@ sets the parity of the passed
 .Fa key
 to odd.
 .Pp
-.Fn DES_is_weak_key
-returns 1 if the passed key is a weak key or 0 if it is ok.
-.Pp
 The following routines mostly operate on an input and output stream of
 .Vt DES_cblock Ns s .
 .Pp
@@ -666,12 +664,16 @@ The following are DES-based transformations:
 is a fast version of the Unix
 .Xr crypt 3
 function.
+The
+.Fa salt
+must be two ASCII characters.
+This version is different from the normal crypt in that the third
+parameter is the buffer that the return value is written into.
+It needs to be at least 14 bytes long.
+The fourteenth byte is set to NUL.
 This version takes only a small amount of space relative to other
 fast crypt implementations.
-This is different to the normal crypt in that the third parameter is the
-buffer that the return value is written into.
-It needs to be at least 14 bytes long.
-This function is thread safe, unlike the normal crypt.
+It is thread safe, unlike the normal crypt.
 .Pp
 .Fn DES_crypt
 is a faster replacement for the normal system
@@ -746,6 +748,31 @@ If set to
 If set to
 .Dv DES_CBC_MODE
 DES_cbc_encrypt is used.
+.Sh RETURN VALUES
+.Fn DES_set_key ,
+.Fn DES_key_sched ,
+and
+.Fn DES_set_key_checked
+return 0 on success or a negative value on error.
+.Pp
+.Fn DES_is_weak_key
+returns 1 if the passed key is a weak key or 0 if it is ok.
+.Pp
+.Fn DES_cbc_cksum
+and
+.Fn DES_quad_cksum
+return a 4-byte integer representing the last 4 bytes of the checksum
+of the input.
+.Pp
+.Fn DES_fcrypt
+returns a pointer to the caller-provided buffer
+.Fa ret ,
+and
+.Fn DES_crypt
+returns a pointer to a static buffer.
+Both are allowed to return
+.Dv NULL
+to indicate failure, but currently, they cannot fail.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr RAND_bytes 3
@@ -759,26 +786,59 @@ ANSI X3.106
 The DES library was initially written to be source code compatible
 with the MIT Kerberos library.
 .Sh HISTORY
-In OpenSSL 0.9.7, all des_ functions were renamed to DES_ to avoid
-clashes with older versions of libdes.
+.Fn DES_random_key ,
+.Fn DES_set_key ,
+.Fn DES_key_sched ,
+.Fn DES_set_odd_parity ,
+.Fn DES_is_weak_key ,
+.Fn DES_ecb_encrypt ,
+.Fn DES_cfb_encrypt ,
+.Fn DES_ofb_encrypt ,
+.Fn DES_pcbc_encrypt ,
+.Fn DES_cfb64_encrypt ,
+.Fn DES_ofb64_encrypt ,
+.Fn DES_ede3_cbc_encrypt ,
+.Fn DES_cbc_cksum ,
+.Fn DES_quad_cksum ,
+.Fn DES_string_to_key ,
+.Fn DES_string_to_2keys ,
+.Fn DES_crypt ,
+.Fn DES_enc_read ,
+and
+.Fn DES_enc_write
+appeared in SSLeay 0.4 or earlier.
+.Fn DES_ncbc_encrypt
+first appeared in SSLeay 0.4.2.
+.Fn DES_ede2_cbc_encrypt
+first appeared in SSLeay 0.4.4.
+.Fn DES_ecb2_encrypt ,
+.Fn DES_ecb3_encrypt ,
+.Fn DES_ede2_cfb64_encrypt ,
+.Fn DES_ede2_ofb64_encrypt ,
+.Fn DES_ede3_cfb64_encrypt ,
+and
+.Fn DES_ede3_ofb64_encrypt
+first appeared in SSLeay 0.5.1.
+.Fn DES_xcbc_encrypt
+first appeared in SSLeay 0.6.2.
+.Fn DES_fcrypt
+first appeared in SSLeay 0.6.5.
+These functions have been available since
+.Ox 2.4 .
 .Pp
 .Fn DES_set_key_checked
 and
 .Fn DES_set_key_unchecked
-were added in OpenSSL 0.9.5.
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
 .Pp
-.Fn des_generate_random_block ,
-.Fn des_init_random_number_generator ,
-.Fn des_new_random_key ,
-.Fn des_set_random_generator_seed ,
-.Fn des_set_sequence_number ,
-and
-.Fn des_rand_data 3
-are used in newer versions of Kerberos but are not implemented here.
-.Pp
-.Fn DES_random_key
-generated cryptographically weak random data in SSLeay and in OpenSSL
-prior version 0.9.5, as well as in the original MIT library.
+In OpenSSL 0.9.7 and
+.Ox 3.2 ,
+all
+.Sy des_
+functions were renamed to
+.Sy DES_
+to avoid clashes with older versions of libdes.
 .Sh AUTHORS
 .An Eric Young Aq Mt eay@cryptsoft.com
 .Sh CAVEATS

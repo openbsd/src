@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1037 2017/10/05 19:42:52 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1067 2018/05/07 10:44:01 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -251,7 +251,9 @@ __EOT
 lease_value() {
 	local _lf=$1 _o
 
+	[[ -s $_lf ]] || return
 	shift
+
 	for _o; do
 		sed -E \
 			-e '/^ *(option )?'"$_o"' (.*);$/!d;s//\2/' \
@@ -329,8 +331,7 @@ get_dkdevs_uninitialized() {
 get_ifs() {
 	local _if _iflist=$(rmel vlan $(ifconfig -C))
 
-	for _if in $(ifconfig "$@" 2>/dev/null |
-		sed -n 's/^\([^[:space:]]*\):.*/\1/p'); do
+	for _if in $(ifconfig "$@" 2>/dev/null | sed '/^[a-z]/!d;s/:.*//'); do
 		isin "${_if%%+([0-9])}" $_iflist || echo $_if
 	done
 }
@@ -870,13 +871,11 @@ ask_password() {
 # Support functions for donetconfig()
 # ------------------------------------------------------------------------------
 
-# Issue a DHCP request to configure interface $1 and add the host-name option to
-# /etc/dhclient.conf using $2.
+# Issue a DHCP request to configure interface $1.
 dhcp_request() {
-	local _if=$1 _hn=$2
+	local _if=$1
 
 	echo "lookup file bind" >/etc/resolv.conf.tail
-	echo "send host-name \"$_hn\";" >/etc/dhclient.conf
 
 	ifconfig $_if group dhcp >/dev/null 2>&1
 
@@ -885,13 +884,9 @@ initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
 timeout 10;
-send host-name "$_hn";
 __EOT
 
-	# Move configuration files to where they will be copied to the
-	# installed system. Overwrites configuration information from
-	# last successful dhcp attempt.
-	mv /etc/dhclient.conf /tmp/i/dhclient.conf
+	# Move resolv.conf to where it will be copied to the installed system.
 	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
 }
 
@@ -1011,7 +1006,7 @@ vlan_config() {
 # Parameters:
 #
 # $1 = name of the network device
-# $2 = hostname to use for dhcp request
+# $2 = hostname to add to hosts file
 # $3 = /path/to/hostname.if
 #
 v4_config() {
@@ -1034,25 +1029,43 @@ v4_config() {
 	fi
 	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
 
-	ask_until "$_prompt" "$_addr"
-	case $resp in
-	none)	;;
-	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
-			echo "DHCP not possible - no /sbin/dhclient."
+	while :; do
+		ask_until "$_prompt" "$_addr"
+		case $resp in
+		none)	return
+			;;
+		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
+				echo "DHCP not possible - no /sbin/dhclient."
+				$AUTO && exit 1 || continue
+			else
+				dhcp_request $_if
+				echo "dhcp" >>$_hn
+				return
+			fi
+			;;
+		*)	_addr=$resp
+			ifconfig $_if -group dhcp >/dev/null 2>&1
+			;;
+		esac
+
+		# Ask for the netmask if the user did not use CIDR notation.
+		if [[ $_addr == */* ]]; then
+			_mask=
 		else
-			dhcp_request $_if "$_name"
-			echo "dhcp" >>$_hn
+			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
+			_mask=$resp
 		fi
-		;;
-	*)	_addr=$resp
-		ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
-		ifconfig $_if -group dhcp >/dev/null 2>&1
-		if ifconfig $_if inet $_addr netmask $resp up; then
-			add_hostent "$_addr" "$_name"
-			echo "inet $_addr $resp" >>$_hn
+
+		if ifconfig $_if inet $_addr ${_mask:+netmask $_mask} up; then
+			echo "inet $_addr $_mask" >>$_hn
+			add_hostent "${_addr%%/*}" "$_name"
+			break
+		else
+			_addr=
+			_mask=
+			$AUTO && exit 1
 		fi
-		;;
-	esac
+	done
 }
 
 # Obtain and output the inet6 information related to interface $1.
@@ -1099,7 +1112,7 @@ v6_defroute() {
 # Parameters:
 #
 # $1 = name of the network device
-# $2 = hostname to use for dhcp request
+# $2 = hostname to add to hosts file
 # $3 = /path/to/hostname.if
 #
 v6_config() {
@@ -1112,24 +1125,47 @@ v6_config() {
 
 	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'autoconf' "
 	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
-	ask_until "$_prompt" "${_addr:-none}"
 
-	case $resp in
-	none)	return
-		;;
-	autoconf)
-		ifconfig $_if inet6 >/dev/null 2>&1 ||
-			{ echo "No INET6 support."; return; }
-		ifconfig $_if inet6 autoconf && echo "inet6 autoconf" >>$_hn
-		return
-		;;
-	esac
+	while :; do
+		ask_until "$_prompt" "${_addr:-none}"
+		case $resp in
+		none)	return
+			;;
+		autoconf)
+			if ! ifconfig $_if inet6 >/dev/null 2>&1; then
+				echo "No INET6 support."
+				$AUTO && exit 1 || return
+			fi
+			if ifconfig $_if inet6 autoconf; then
+				echo "inet6 autoconf" >>$_hn
+				return
+			else
+				echo "inet6 autoconf failed."
+				$AUTO && exit 1 || return
+			fi
+			;;
+		*)	_addr=$resp
+			;;
+		esac
+	
+		# Ask for prefix lenght if the user did not use CIDR notation.
+		if [[ $_addr == */* ]]; then
+			_prefixlen=
+		else
+			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
+			_prefixlen=$resp
+		fi
 
-	_addr=$resp
-	ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
-	ifconfig $_if inet6 $_addr prefixlen $resp up || return
-	echo "inet6 $_addr $resp" >>$_hn
-	add_hostent "$_addr" "$_name"
+		if ifconfig $_if inet6 $_addr ${_prefixlen:+prefixlen $_prefixlen} up; then
+			echo "inet6 $_addr $_prefixlen" >>$_hn
+			add_hostent "${_addr%%/*}" "$_name"
+			break
+		else
+			_addr=
+			_prefixlen=
+			$AUTO && exit 1
+		fi
+	done
 
 	v6_defroute $_if
 }
@@ -1263,19 +1299,19 @@ configure_ifs() {
 
 # Set up IPv4 default route.
 v4_defroute() {
-	local _dr
+	local _dr _dr_if
 
 	# Only configure a default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -n '/[ 	]inet .* broadcast /p') ]] || return
 
 	# Check routing table to see if a default route ($1) already exists
-	# and if it is handled by dhclient ($2).
-	set -- $(route -nv show -inet |
-		{ set -- $(grep '^default '); print $2 $9; })
-	[[ -n $1 ]] && _dr=$1
+	# and what interface it is connected to ($2).
+	set -- $(route -n show -inet |
+		sed -En 's/^default +([0-9.]+) .* ([a-z0-9]+) *$/\1 \2/p')
+	[[ -n $1 ]] && _dr=$1 _dr_if=$2
 
 	# Don't ask if a default route exits and is handled by dhclient.
-	[[ -n $_dr && $2 == \"DHCLIENT && -f /tmp/i/dhclient.conf ]] && return
+	[[ -n $_dr ]] && isin "$_dr_if" $(get_ifs dhcp) && return
 
 	while :; do
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
@@ -1330,6 +1366,15 @@ sane_install() {
 #
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
+	local _bsd_rd _no_sets=true
+
+	if [[ $MODE == upgrade ]]; then
+		for _f in $_avail; do
+			[[ $_f != bsd* ]] && _no_sets=false
+			[[ $_f == bsd.rd* ]] && _bsd_rd=$_f
+		done
+		$_no_sets && UPGRADE_BSDRD=true _avail=$_bsd_rd _selected=$_bsd_rd
+	fi
 
 	# account for 4 spaces added to the sets list
 	let COLUMNS=_col-8
@@ -1414,12 +1459,41 @@ unpriv2() {
 	do_as _file "$@"
 }
 
+# Find filesystems to store prefetched sets.
+# Prefer filesystems which are not used during extraction with 512M free space.
+# Otherwise use any other filesystem with 2 GB free space to prevent overflow
+# during extraction.
+prefetcharea_fs_list() {
+	local _fs_list
+
+	_fs_list=$( (
+		for fs in /mnt/{tmp,home,usr{/local,}}; do
+			df -k $fs 2>/dev/null | grep " $fs\$"
+		done
+		df -k
+	) | (
+		while read a a a a m m; do
+			[[ $m == /mnt/@(tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
+				((a > 524288)) && echo $m && continue
+			[[ $m == /mnt@(|/*) ]] &&
+				((a > 524288 * 4)) && echo $m
+		done
+	) | (
+		while read fs; do
+			isin "$fs" $list || list="$list${list:+ }$fs"
+		done
+		echo $list
+	) )
+
+	[[ -n $_fs_list ]] && echo $_fs_list || return 1
+}
+
 # Install a user-selected subset of the files in $2 from the source
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS \
-		_tmpfs _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
+	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS _tmpfs \
+		_tmpfs_list _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
 	local _srclocal=false _unpriv=unpriv
 
 	# Fetch sets from local sources (disk, cdrom, nfs) as root.
@@ -1472,38 +1546,32 @@ install_files() {
 		! isin SHA256.sig $_files &&
 			_issue="Directory does not contain SHA256.sig" && break
 
-		# For non-local sources find a filesystem to store the prefetched
-		# sets. Prefer filesystems which are not used during extraction.
-		# They need to have 512 MB free space. Otherwise use any other
-		# filesystem having 2 GB free space to prevent overflow during
-		# extraction.
-		$_srclocal || _tmpfs=$( (
-			for fs in /mnt/{{,var/}tmp,home,usr{/local,}}; do
-				df -k $fs 2>/dev/null | grep " $fs\$"
-			done
-			df -k
-		) | (
-			while read a a a a m m; do
-				[[ $m == /mnt/@(@(|var/)tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
-					((a > 524288)) && echo $m && exit
-				[[ $m == /mnt@(|/*) ]] &&
-					((a > 524288 * 4)) && echo $m && exit
-			done
-		) )
-
 		if ! $_srclocal; then
-			if [[ -d $_tmpfs ]]; then
+			! _tmpfs_list=$(prefetcharea_fs_list) &&
+				_issue="Cannot determine prefetch area" && break
+
+			for _tmpfs in $_tmpfs_list; do
 				# Try to clean up from previous runs, assuming
 				# the _tmpfs selection yields the same mount
 				# point.
 				for _tmpsrc in $_tmpfs/sets.+([0-9]).+([0-9]); do
 					[[ -d $_tmpsrc ]] && rm -r $_tmpsrc
 				done
-				! _tmpsrc=$(tmpdir "$_tmpfs/sets") &&
+	
+				# Create a download directory for the sets and
+				# check that the _sndio user can read files from
+				# it. Otherwise cleanup and skip the filesystem.
+				if _tmpsrc=$(tmpdir "$_tmpfs/sets"); then
+					(
+					>$_tmpsrc/t &&
+					$_unpriv cat $_tmpsrc/t
+					) >/dev/null 2>&1 && break ||
+						rm -r $_tmpsrc
+				fi
+			done
+
+			[[ ! -d $_tmpsrc ]] &&
 				_issue="Cannot create prefetch area" && break
-			else
-				_issue="Cannot determine prefetch area" && break
-			fi
 		fi
 
 		# Cleanup from previous runs.
@@ -1515,6 +1583,9 @@ install_files() {
 		# Fetch signature file.
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
+
+		$UPGRADE_BSDRD &&
+			PUB_KEY=/mnt/etc/signify/openbsd-$((VERSION + 1))-base.pub
 
 		# Verify signature file with public keys.
 		! unpriv -f "$_cfile" \
@@ -1540,6 +1611,8 @@ install_files() {
 					$AUTO && exit 1
 					return
 				fi
+				_unver=$(rmel $_f $_unver)
+				_get_sets=$(rmel $_f $_get_sets)
 				continue
 			fi
 
@@ -1576,7 +1649,9 @@ install_files() {
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
+		*)	$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
+				cp /mnt/$_f /mnt/$_f.old.$VERSION
+			$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
 		esac
 		if (($?)); then
@@ -1587,6 +1662,7 @@ install_files() {
 			fi
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			$UPGRADE_BSDRD && DEFAULTSETS=
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
@@ -1598,6 +1674,7 @@ install_http() {
 	local _d _f _flist _file_list _prompt _tls _http_proto _url_base
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
 	local _iu_url _iu_srv _iu_dir _mirror_url _mirror_srv _mirror_dir
+	local _ftp_stdout=/tmp/i/ftpstdout _rurl_base
 
 	# N.B.: Don't make INSTALL_MIRROR a local variable! It preserves the
 	# mirror information if install_http() is called multiple times with
@@ -1628,11 +1705,12 @@ install_http() {
 		_iu_srv=${_iu_url#*://}
 		_iu_srv=${_iu_srv%%/*}
 		_iu_dir=${_iu_url##*$_iu_srv*(/)}
+		[[ -n $_iu_srv ]] && HTTP_SERVER=$_iu_srv
 	fi
 
 	# Get server IP address or hostname and optionally the http protocol.
 	while :; do
-		ask_until "$_prompt" "${_iu_srv:-$HTTP_SERVER}"
+		ask_until "$_prompt" "$HTTP_SERVER"
 		case $resp in
 		done)	return
 			;;
@@ -1704,9 +1782,10 @@ install_http() {
 	_url_base="$_http_proto://$HTTP_SERVER/$HTTP_DIR"
 
 	# Fetch SHA256.sig to create the list of files to select from.
-	rm -f $_idx $_sha $_sig
+	rm -f $_idx $_sha $_sig $_ftp_stdout
 	if ! unpriv -f $_sig \
-		ftp -w 15 -VMo $_sig "$_url_base/SHA256.sig" 2>/dev/null; then
+		ftp -w 15 -vMo $_sig "$_url_base/SHA256.sig" \
+			>$_ftp_stdout 2>/dev/null; then
 		case $_tls in
 		force)	$AUTO && exit 1 || return
 			;;
@@ -1714,11 +1793,16 @@ install_http() {
 				return
 			_http_proto=http
 			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
-			unpriv -f $_sig ftp -VMo $_sig "$_url_base/SHA256.sig" \
-				2>/dev/null
+			unpriv -f $_sig ftp -vMo $_sig "$_url_base/SHA256.sig" \
+				>$_ftp_stdout 2>/dev/null
 			;;
 		esac
 	fi
+
+	# In case of URL redirection, use the final location to retrieve the
+	# rest of the files from. Redirection does not change INSTALL_MIRROR.
+	_rurl_base=$(sed -n 's/^Requesting //p' $_ftp_stdout | sed '$!d')
+	_rurl_base=${_rurl_base%/SHA256.sig*}
 
 	# Verify SHA256.sig, write SHA256 and extract the list of files.
 	if unpriv -f $_sha \
@@ -1728,7 +1812,7 @@ install_http() {
 	else
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
-		if [[ ${_url_base%/$HTTP_SETDIR} == "$INSTALL_MIRROR" ]]; then
+		if [[ ${_rurl_base%/$HTTP_SETDIR} == "$_http_proto://$INSTALL_MIRROR" ]]; then
 			$AUTO && exit 1 || return
 		fi
 	fi
@@ -1738,15 +1822,15 @@ install_http() {
 	# sets from SHA256.sig, siteXX sets or the whole set list from index.txt
 	# if SHA256.sig was not found (e.g. self compiled sets).
 	if unpriv -f $_idx \
-		ftp -VMo $_idx "$_url_base/index.txt" 2>/dev/null; then
+		ftp -VMo $_idx "$_rurl_base/index.txt" 2>/dev/null; then
 		_flist=$(sed -En 's/^.* ([a-zA-Z][a-zA-Z0-9._-]+)$/\1/p' $_idx)
 		for _f in $_flist; do
 			! isin "$_f" $_file_list && _file_list="$_file_list $_f"
 		done
 	fi
-	rm -f $_idx $_sha $_sig
+	rm -f $_idx $_sha $_sig $_ftp_stdout
 
-	install_files "$_url_base" "$_file_list"
+	install_files "$_rurl_base" "$_file_list"
 
 	# Remember the sets location which is used later for creating the
 	# installurl(5) file and to tell the cgi server.
@@ -1917,6 +2001,12 @@ donetconfig() {
 	# configured via dhclient too.
 	resp="${_dn:-$(get_fqdn)}"
 	if ifconfig dhcp >/dev/null 2>&1 && [[ $NIFS == 1 && -n $_dn ]]; then
+		# If we have a 'domain-name' option in the lease file use that.
+		# It might *NOT* not be the same as the first domain in any
+		# 'domain-search' option.
+		set -- $(get_ifs dhcp)
+		set -- $(lease_value /var/db/dhclient.leases.$1 domain-name)
+		[[ -n $1 ]] && resp=$1
 		echo "Using DNS domainname $resp"
 	else
 		ask "DNS domain name? (e.g. 'example.com')" "$resp"
@@ -1995,7 +2085,7 @@ user_setup() {
 			;;
 		root|daemon|operator|bin|build|sshd|www|nobody|ftp)
 			;;
-		[a-z]*([a-z0-9_]))
+		[a-z]*([-a-z0-9_]))
 			((${#resp} <= 31)) && break
 			;;
 		esac
@@ -2229,6 +2319,9 @@ ifstart() {
 	local _if=$1 _hn=/mnt/etc/hostname.$1 _cmds _i=0 _line
 	set -A _cmds
 
+	# Create interface if it does not yet exist.
+	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1 || return
+
 	((NIFS++))
 
 	# Parse the hostname.if(5) file and fill _cmds array with interface
@@ -2251,8 +2344,8 @@ ifstart() {
 enable_network() {
 	local _f _gw _hn _if _trunks _svlans _vlans
 
-	# Copy any network configuration files.
-	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
+	# Use installed network configuration files during upgrade.
+	for _f in resolv.conf resolv.conf.tail; do
 		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
@@ -2585,8 +2678,8 @@ store_random() {
 # Final steps common for installs and upgrades.
 finish_up() {
 	local _dev _mp _fstype _rest _d
-	local _compile=/mnt/usr/share/compile _kernel=${MDKERNEL:-GENERIC}
-	local _syspatch_archs="amd64 i386"
+	local _kernel_dir=/mnt/usr/share/relink/kernel
+	local _kernel=${MDKERNEL:-GENERIC} _syspatch_archs="amd64 arm64 i386"
 
 	# Mount all known swap partitions.  This gives systems with little
 	# memory a better chance at running 'MAKEDEV all'.
@@ -2650,22 +2743,26 @@ finish_up() {
 	# ensure it references the kernel as /bsd.
 	sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
 
-	if [[ -f $_compile.tgz ]]; then
+	if [[ -f $_kernel_dir.tgz ]]; then
 		echo -n "Relinking to create unique kernel..."
 		(
 		set -e
-		rm -rf $_compile
-		mkdir -m 700 -p $_compile
-		tar -C $_compile -xzf $_compile.tgz $_kernel
-		chroot /mnt /bin/ksh -e -c "cd ${_compile#/mnt}/$_kernel; \
+		rm -rf $_kernel_dir
+		mkdir -m 700 -p $_kernel_dir
+		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
+		rm -f $_kernel_dir.tgz
+		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
 			make newbsd; make newinstall"
-		rm -f $_compile.tgz
 		) >/dev/null 2>&1 && echo "done." || echo "failed."
 	fi
 
 	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
 		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
+
+	# If a proxy was needed to fetch the sets, use it for fw_update and syspatch
+	[[ -n $http_proxy ]] &&
+		quote export "http_proxy=$http_proxy" >>/mnt/etc/rc.firsttime
 
 	# Ensure that fw_update is run on reboot.
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
@@ -2679,7 +2776,8 @@ set -A _KERNV -- \$(sysctl -n kern.version |
 if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	_CKPATCH=\$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
 	echo -n "Checking for available binary patches... "
-	syspatch -c > \$_CKPATCH && echo "done."
+	syspatch -c > \$_CKPATCH && echo -n "done."
+	echo
 	if [[ -s \$_CKPATCH ]]; then
 		echo "Run syspatch(8) to install:"
 		cat \$_CKPATCH
@@ -2691,7 +2789,12 @@ __EOT
 	# Email installer questions and their answers to root on next boot.
 	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
 
-	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
+	if [[ -x /mnt/$MODE.site ]]; then
+		if ! chroot /mnt /$MODE.site; then
+			store_random
+			err_exit "$MODE.site failed"
+		fi
+	fi
 
 	# Store entropy for the next boot.
 	store_random
@@ -2700,11 +2803,12 @@ __EOT
 	cat <<__EOT
 
 CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
-To boot the new system, enter 'reboot' at the command prompt.
+
 __EOT
 	[[ $MODE == install ]] && cat <<__EOT
 When you login to your new system the first time, please read your mail
 using the 'mail' command.
+
 __EOT
 
 	md_congrats
@@ -2740,6 +2844,7 @@ do_install() {
 	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	export PS1='\h# '
 
 	echo
 
@@ -2942,10 +3047,6 @@ do_install() {
 		rm /tmp/i/hosts
 	fi
 
-	# Append dhclient.conf to installed dhclient.conf.
-	_f=dhclient.conf
-	[[ -f /tmp/i/$_f ]] && { cat /tmp/i/$_f >>/mnt/etc/$_f; rm /tmp/i/$_f; }
-
 	# Possible files to copy from /tmp/i/: fstab hostname.* kbdtype mygate
 	#     myname ttys boot.conf resolv.conf sysctl.conf resolv.conf.tail
 	# Save only non-empty (-s) regular (-f) files.
@@ -3000,6 +3101,8 @@ do_install() {
 }
 
 do_upgrade() {
+	local _f
+
 	# Get $ROOTDISK and $ROOTDEV
 	get_rootinfo
 
@@ -3020,6 +3123,10 @@ do_upgrade() {
 	# Set system hostname and register hostname specific site set.
 	hostname $(stripcom /tmp/i/myname)
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	export PS1='\h# '
+
+	_f=/mnt/etc/soii.key
+	[[ ! -f $_f ]] || sysctl net.inet6.ip6.soiikey=$(<$_f)
 
 	# Configure the network.
 	enable_network
@@ -3120,6 +3227,7 @@ done
 #	MDXDM       - ask if xdm should be started if set to 'y'
 #	NCPU	    - the number of cpus for mp capable arches
 #	MDKERNEL    - the name of the boot kernel
+#	MDHALT      - default to 'halt' at the end of installs if set to 'y'
 . install.md
 
 # Start listener process looking for dmesg changes.
@@ -3135,10 +3243,12 @@ HTTP_LIST=/tmp/i/httplist
 HTTP_SEC=/tmp/i/httpsec
 INSTALL_METHOD=
 NIFS=0
+export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
+UPGRADE_BSDRD=false
 V4_DHCPCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
@@ -3216,3 +3326,23 @@ case $MODE in
 install)	do_install;;
 upgrade)	do_upgrade;;
 esac
+
+# In case of autoinstall, this is a second process of install.sub.
+# Exiting here returns to the original process, which handles the
+# automatic reboot in do_autoinstall().
+$AUTO && exit
+
+_d=reboot
+[[ $MODE == install && $MDHALT == y ]] && _d=halt
+
+while :; do
+	ask "Exit to (S)hell, (H)alt or (R)eboot?" "$_d"
+	case $resp in
+	[hH]*)	exec halt;;
+	[rR]*)	exec reboot;;
+	[sS]*)	break;;
+	esac
+done
+
+# Fall through to .profile which leaves us at the command prompt.
+echo "To boot the new system, enter 'reboot' at the command prompt."

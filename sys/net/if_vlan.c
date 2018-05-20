@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.174 2017/06/22 11:34:51 tom Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.177 2018/04/03 02:52:50 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -157,10 +157,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifvlan	*ifv;
 	struct ifnet	*ifp;
 
-	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (ifv == NULL)
-		return (ENOMEM);
-
+	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&ifv->vlan_mc_listhead);
 	ifp = &ifv->ifv_if;
 	ifp->if_softc = ifv;
@@ -264,9 +261,10 @@ vlan_start(struct ifqueue *ifq)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
+		prio = ISSET(ifp->if_flags, IFF_LINK0) ?
+		    ifp->if_llprio : m->m_pkthdr.pf.prio;
 
 		/* IEEE 802.1p has prio 0 and 1 swapped */
-		prio = m->m_pkthdr.pf.prio;
 		if (prio <= 1)
 			prio = !prio;
 
@@ -893,7 +891,7 @@ vlan_set_compat(struct ifnet *ifp, struct ifreq *ifr)
 
 	int error;
 
-	error = suser(curproc, 0);
+	error = suser(curproc);
 	if (error != 0)
 		return (error);
 

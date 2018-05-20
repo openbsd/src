@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2017/01/20 11:55:08 benno Exp $	*/
+/*	$OpenBSD: control.c,v 1.16 2018/05/15 11:19:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -261,7 +261,7 @@ control_imsgev(struct imsgev *iev, int code, struct imsg *imsg)
 		imsgev_compose(iev_ldapd, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
 		    &verbose, sizeof(verbose));
 
-		log_verbose(verbose);
+		log_setverbose(verbose);
 		break;
 	default:
 		log_warnx("%s: unexpected imsg %d", __func__, imsg->hdr.type);

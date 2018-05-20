@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.24 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.25 2018/02/26 13:43:51 mpi Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -106,9 +106,12 @@ lf_alloc(uid_t uid, int allowfail)
 
 	uip = uid_find(uid);
 	if (uid && allowfail && uip->ui_lockcnt >
-	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2)))
+	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2))) {
+		uid_release(uip);
 		return (NULL);
+	}
 	uip->ui_lockcnt++;
+	uid_release(uip);
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
 	return (lock);
@@ -121,6 +124,7 @@ lf_free(struct lockf *lock)
 
 	uip = uid_find(lock->lf_uid);
 	uip->ui_lockcnt--;
+	uid_release(uip);
 	pool_put(&lockfpool, lock);
 }
 

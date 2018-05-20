@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.22 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.23 2017/11/03 06:54:06 aoyama Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -858,7 +858,7 @@ nextbyte:
 
 		/* If parity error, just dump everything on the floor. */
 		if ((bus_space_read_1(iot, ioh, SERR) &
-		     (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
+		    (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
 			sc->sc_flags |= SPC_DROP_MSGIN;
 			spc_sched_msgout(sc, SEND_PARITY_ERROR);
 		}
@@ -2037,7 +2037,7 @@ spc_print_acb(spc_acb *acb)
 
 	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
 	printf(" dp=%p dleft=%d target_stat=%x\n",
-	       acb->data_addr, acb->data_length, acb->target_stat);
+	    acb->data_addr, acb->data_length, acb->target_stat);
 	spc_show_scsi_cmd(acb);
 }
 

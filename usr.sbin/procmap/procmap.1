@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.22 2016/09/25 15:23:37 deraadt Exp $
+.\"	$OpenBSD: procmap.1,v 1.23 2018/03/31 17:26:13 otto Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 25 2016 $
+.Dd $Mdocdate: March 31 2018 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -171,7 +171,9 @@ or
 .Fl m ,
 more information is printed, possibly including device and inode
 numbers, file path names, or other identifying information.
-If specified more than once, a
+If used with
+.Fl a ,
+a line marked with
 .Sq *
 will be printed in between two
 entries that are not adjacent, making the visual identification of

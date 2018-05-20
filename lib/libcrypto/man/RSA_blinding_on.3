@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_blinding_on.3,v 1.4 2016/12/11 12:21:48 schwarze Exp $
+.\"	$OpenBSD: RSA_blinding_on.3,v 1.5 2018/03/21 07:25:59 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt RSA_BLINDING_ON 3
 .Os
 .Sh NAME
@@ -93,4 +93,5 @@ returns 1 on success, and 0 if an error occurred.
 .Fn RSA_blinding_on
 and
 .Fn RSA_blinding_off
-appeared in SSLeay 0.9.0.
+first appeared in SSLeay 0.9.0 and have been available since
+.Ox 2.4 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.88 2017/08/13 22:08:44 beck Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.92 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
@@ -64,9 +65,15 @@ int vn_poll(struct file *, int, struct proc *);
 int vn_kqfilter(struct file *, struct knote *);
 int vn_closefile(struct file *, struct proc *);
 
-struct 	fileops vnops =
-	{ vn_read, vn_write, vn_ioctl, vn_poll, vn_kqfilter, vn_statfile,
-	  vn_closefile };
+struct 	fileops vnops = {
+	.fo_read	= vn_read,
+	.fo_write	= vn_write,
+	.fo_ioctl	= vn_ioctl,
+	.fo_poll	= vn_poll,
+	.fo_kqfilter	= vn_kqfilter,
+	.fo_stat	= vn_statfile,
+	.fo_close	= vn_closefile
+};
 
 /*
  * Common code for vnode open operations.
@@ -171,7 +178,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 		ndp->ni_vp = cip->ci_vp;	/* return cloned vnode */
 		vp->v_data = cip->ci_data;	/* restore v_data */
-		VOP_UNLOCK(vp, p);		/* keep a reference */
+		VOP_UNLOCK(vp);			/* keep a reference */
 		vp = ndp->ni_vp;		/* for the increment below */
 
 		free(cip, M_TEMP, sizeof(*cip));
@@ -275,7 +282,7 @@ vn_close(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 
 	if (flags & FWRITE)
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred, p);
 	vput(vp);
 	return (error);
@@ -304,14 +311,14 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	auio.uio_procp = p;
 
 	if ((ioflg & IO_NODELOCKED) == 0)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (rw == UIO_READ) {
 		error = VOP_READ(vp, &auio, ioflg, cred);
 	} else {
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
 	}
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 
 	if (aresid)
 		*aresid = auio.uio_resid;
@@ -330,7 +337,6 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	struct vnode *vp = fp->f_data;
 	int error;
 	size_t count = uio->uio_resid;
-	struct proc *p = uio->uio_procp;
 
 	/* no wrap around of offsets except on character devices */
 	if (vp->v_type != VCHR && count > LLONG_MAX - *poff)
@@ -339,12 +345,12 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if (vp->v_type == VDIR)
 		return (EISDIR);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *poff;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
 	*poff += count - uio->uio_resid;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -355,7 +361,6 @@ int
 vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct vnode *vp = fp->f_data;
-	struct proc *p = uio->uio_procp;
 	int error, ioflag = IO_UNIT;
 	size_t count;
 
@@ -368,7 +373,7 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	if ((fp->f_flag & FFSYNC) ||
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *poff;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
@@ -376,7 +381,7 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 		*poff = uio->uio_offset;
 	else
 		*poff += count - uio->uio_resid;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -511,7 +516,7 @@ vn_poll(struct file *fp, int events, struct proc *p)
  * acquire requested lock.
  */
 int
-vn_lock(struct vnode *vp, int flags, struct proc *p)
+vn_lock(struct vnode *vp, int flags)
 {
 	int error;
 
@@ -521,7 +526,7 @@ vn_lock(struct vnode *vp, int flags, struct proc *p)
 			tsleep(vp, PINOD, "vn_lock", 0);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp, flags, p);
+			error = VOP_LOCK(vp, flags);
 			if (error == 0)
 				return (error);
 		}

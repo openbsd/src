@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.13 2017/05/03 20:55:29 mikeb Exp $ */
+/*	$OpenBSD: ifq.h,v 1.20 2018/01/04 11:02:57 tb Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,32 @@ struct ifqueue {
 	/* properties */
 	unsigned int		 ifq_maxlen;
 	unsigned int		 ifq_idx;
+};
+
+struct ifiqueue {
+	struct ifnet		*ifiq_if;
+	struct taskq		*ifiq_softnet;
+	union {
+		void			*_ifiq_softc;
+		struct ifiqueue		*_ifiq_ifiqs[1];
+	} _ifiq_ptr;
+#define ifiq_softc		 _ifiq_ptr._ifiq_softc
+#define ifiq_ifiqs		 _ifiq_ptr._ifiq_ifiqs
+
+	struct mutex		 ifiq_mtx;
+	struct mbuf_list	 ifiq_ml;
+	struct task		 ifiq_task;
+
+	/* counters */
+	uint64_t		 ifiq_packets;
+	uint64_t		 ifiq_bytes;
+	uint64_t		 ifiq_qdrops;
+	uint64_t		 ifiq_errors;
+	uint64_t		 ifiq_mcasts;
+	uint64_t		 ifiq_noproto;
+
+	/* properties */
+	unsigned int		 ifiq_idx;
 };
 
 #ifdef _KERNEL
@@ -377,6 +403,7 @@ struct ifq_ops {
 void		 ifq_init(struct ifqueue *, struct ifnet *, unsigned int);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
+void		 ifq_add_data(struct ifqueue *, struct if_data *);
 int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
@@ -434,6 +461,19 @@ ifq_idx(struct ifqueue *ifq, unsigned int nifqs, const struct mbuf *m)
 #define IFQ_ASSERT_SERIALIZED(_ifq)	KASSERT(ifq_is_serialized(_ifq))
 
 extern const struct ifq_ops * const ifq_priq_ops;
+
+/* ifiq */
+
+void		 ifiq_init(struct ifiqueue *, struct ifnet *, unsigned int);
+void		 ifiq_destroy(struct ifiqueue *);
+int		 ifiq_input(struct ifiqueue *, struct mbuf_list *,
+		     unsigned int);
+int		 ifiq_enqueue(struct ifiqueue *, struct mbuf *);
+void		 ifiq_add_data(struct ifiqueue *, struct if_data *);
+void		 ifiq_barrier(struct ifiqueue *);
+
+#define	ifiq_len(_ifiq)			ml_len(&(_ifiq)->ifiq_ml)
+#define	ifiq_empty(_ifiq)		ml_empty(&(_ifiq)->ifiq_ml)
 
 #endif /* _KERNEL */
 

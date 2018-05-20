@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.104 2017/03/09 10:13:03 fcambus Exp $ */
+/*	$OpenBSD: unistd.h,v 1.105 2017/12/12 01:12:34 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -522,7 +522,7 @@ int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 int	 swapctl(int cmd, const void *arg, int misc);
 int	 syscall(int, ...);
 int	 getentropy(void *, size_t);
-int	 pledge(const char *, const char **);
+int	 pledge(const char *, const char *);
 pid_t	 __tfork_thread(const struct __tfork *, size_t, void (*)(void *),
 	    void *);
 #endif /* __BSD_VISIBLE */

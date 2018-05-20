@@ -25,6 +25,10 @@ struct region;
 #  define LOG_WARNING 4
 #  define LOG_NOTICE 5
 #  define LOG_INFO 6
+
+/* Unused, but passed to log_open. */
+#  define LOG_PID 0x01
+#  define LOG_DAEMON (3<<3)
 #endif
 
 #define ALIGN_UP(n, alignment)  \

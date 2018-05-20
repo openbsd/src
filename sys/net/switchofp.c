@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.69 2017/08/11 13:56:06 reyk Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.70 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1141,7 +1141,7 @@ swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		    sizeof(uint64_t));
 		break;
 	case SIOCSWSDPID:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		memcpy(&swofs->swofs_datapath_id, &bparam->ifbrp_datapath,
 		    sizeof(uint64_t));
@@ -1153,7 +1153,7 @@ swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		bparam->ifbrp_maxgroup = swofs->swofs_group_max_table;
 		break;
 	case SIOCSWSPORTNO:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 
 		if (breq->ifbr_portno >= OFP_PORT_MAX)

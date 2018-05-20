@@ -1,4 +1,4 @@
-#	$OpenBSD: history.t,v 1.3 2017/08/31 06:55:01 anton Exp $
+#	$OpenBSD: history.t,v 1.4 2017/10/23 17:16:10 anton Exp $
 
 # Not tested yet:
 #	- commands in history file are not numbered negatively
@@ -616,4 +616,42 @@ expected-stdout:
 	3	echo a
 expected-stderr-pattern:
 	/^X*$/m
+---
+
+name: history-corrupt-1
+description:
+	Every valid history line prior to a corrupted line is loaded.
+arguments: !-i!
+env-setup: !ENV=./Env!HISTFILE=hist.file!
+file-setup: !file 644 "hist.file"
+	ls
+	cd
+file-setup: file 644 "Env"
+	PS1=X
+stdin:
+	fc -l
+expected-stdout:
+	1	ls
+expected-stderr-pattern:
+	/^[^:]+: history file is corrupt\nX*$/m
+---
+
+name: history-long-lines-1
+description:
+	Long lines are ignored.
+arguments: !-i!
+env-setup: !ENV=./Env!HISTFILE=hist.file!
+file-setup: file 644 "hist.file"
+file-setup: file 644 "Env"
+	PS1=X
+perl-setup:
+	system('(echo ls; jot -b c -s "" 4096; jot -b d -s "" 4096; echo w) ' .
+		'>>hist.file');
+stdin:
+	fc -l
+expected-stdout:
+	1	ls
+	2	w
+expected-stderr-pattern:
+	/^[^:]+: ignored history line\(s\) longer than \d+ bytes\nX*$/m
 ---

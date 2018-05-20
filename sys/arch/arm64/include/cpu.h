@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: cpu.h,v 1.7 2018/01/30 15:46:12 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
@@ -35,13 +36,8 @@
  */
 
 #include <machine/intr.h>
-#ifndef _LOCORE
 #include <machine/frame.h>
-#endif	/* !_LOCORE */
-
 #include <machine/armreg.h>
-
-#ifndef _LOCORE
 
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
@@ -79,15 +75,20 @@ void	arm32_vector_init(vaddr_t, int);
 
 #include <sys/device.h>
 #include <sys/sched.h>
+
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
 	struct cpu_info		*ci_next;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
+	u_int32_t		ci_cpuid;
+	uint64_t		ci_mpidr;
+	int			ci_node;
+	struct cpu_info		*ci_self;
+
 	struct proc		*ci_curproc;
 	struct pmap		*ci_curpm;
 	struct proc		*ci_fpuproc;
-	u_int32_t		 ci_cpuid;
 	u_int32_t		ci_randseed;
 
 	struct pcb		*ci_curpcb;
@@ -103,10 +104,35 @@ struct cpu_info {
 #endif
 	int			ci_want_resched;
 
+	void			(*ci_flush_bp)(void);
+
+#ifdef MULTIPROCESSOR
+	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+	volatile int		ci_flags;
+	uint64_t		ci_ttbr1;
+	vaddr_t			ci_el1_stkend;
+
+	volatile int		ci_ddb_paused;
+#define CI_DDB_RUNNING		0
+#define CI_DDB_SHOULDSTOP	1
+#define CI_DDB_STOPPED		2
+#define CI_DDB_ENTERDDB		3
+#define CI_DDB_INDDB		4
+
+#endif
+
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
 };
+
+#define CPUF_PRIMARY 		(1<<0)
+#define CPUF_AP	 		(1<<1)
+#define CPUF_IDENTIFY		(1<<2)
+#define CPUF_IDENTIFIED		(1<<3)
+#define CPUF_PRESENT		(1<<4)
+#define CPUF_GO			(1<<5)
+#define CPUF_RUNNING		(1<<6)
 
 static inline struct cpu_info *
 curcpu(void)
@@ -134,16 +160,15 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
-
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 #define MAXCPUS	8
-#define cpu_unidle(ci)
 
 extern struct cpu_info *cpu_info[MAXCPUS];
 
 void cpu_boot_secondary_processors(void);
 #endif /* !MULTIPROCESSOR */
 
+#define CPU_BUSY_CYCLE()	__asm volatile("yield" : : : "memory")
 
 #define curpcb		curcpu()->ci_curpcb
 
@@ -158,7 +183,15 @@ void cpu_boot_secondary_processors(void);
  * process as soon as possible.
  */
 
+#ifdef MULTIPROCESSOR
+void cpu_unidle(struct cpu_info *ci);
+#define signotify(p)            (aston(p), cpu_unidle((p)->p_cpu))
+void cpu_kick(struct cpu_info *);
+#else
+#define cpu_kick(ci)
+#define cpu_unidle(ci)
 #define signotify(p)            setsoftast()
+#endif
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -248,10 +281,22 @@ disable_irq_daif_ret()
 #define restore_interrupts(old_daif)					\
 	restore_daif(old_daif)
 
+static inline u_long
+intr_disable(void)
+{
+	return disable_irq_daif_ret();
+}
+
+static inline void
+intr_restore(u_long daif)
+{
+	restore_daif(daif);
+}
+
+void	cpu_startclock(void);
+
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
-
-#endif	/* !_LOCORE */
 
 #endif /* _KERNEL */
 
@@ -260,5 +305,3 @@ void	delay (unsigned);
 #endif /* MULTIPROCESSOR */
 
 #endif /* !_MACHINE_CPU_H_ */
-
-/* End of cpu.h */

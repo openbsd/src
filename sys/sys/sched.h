@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.42 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: sched.h,v 1.45 2018/05/14 12:31:21 mpi Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -83,17 +83,20 @@
 #define CP_USER		0
 #define CP_NICE		1
 #define CP_SYS		2
-#define CP_INTR		3
-#define CP_IDLE		4
-#define CPUSTATES	5
+#define CP_SPIN		3
+#define CP_INTR		4
+#define CP_IDLE		5
+#define CPUSTATES	6
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
 /*
  * Per-CPU scheduler state.
- * XXX - expose to userland for now.
  */
 struct schedstate_percpu {
+	struct proc *spc_idleproc;	/* idle proc for this cpu */
+	TAILQ_HEAD(prochead, proc) spc_qs[SCHED_NQS];
+	LIST_HEAD(,proc) spc_deadproc;
 	struct timespec spc_runtime;	/* time curproc started running */
 	volatile int spc_schedflags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
@@ -102,20 +105,12 @@ struct schedstate_percpu {
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */	
-	struct proc *spc_idleproc;	/* idle proc for this cpu */
 
 	u_int spc_nrun;			/* procs on the run queues */
 	fixpt_t spc_ldavg;		/* shortest load avg. for this cpu */
 
-	TAILQ_HEAD(prochead, proc) spc_qs[SCHED_NQS];
 	volatile uint32_t spc_whichqs;
-
-#ifdef notyet
-	struct proc *spc_reaper;	/* dead proc reaper */
-#endif
-	LIST_HEAD(,proc) spc_deadproc;
-
-	volatile int spc_barrier;	/* for sched_barrier() */
+	volatile u_int spc_spinning;	/* this cpu is currently spinning */
 };
 
 #ifdef	_KERNEL
@@ -199,9 +194,12 @@ extern struct __mp_lock sched_lock;
 #define	SCHED_ASSERT_LOCKED()						\
 do {									\
 	splassert(IPL_SCHED);						\
-	KASSERT(__mp_lock_held(&sched_lock));				\
+	KASSERT(__mp_lock_held(&sched_lock, curcpu()));			\
 } while (0)
-#define	SCHED_ASSERT_UNLOCKED()	KASSERT(__mp_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_UNLOCKED()						\
+do {									\
+	KASSERT(__mp_lock_held(&sched_lock, curcpu()) == 0);		\
+} while (0)
 
 #define	SCHED_LOCK_INIT()	__mp_lock_init(&sched_lock)
 

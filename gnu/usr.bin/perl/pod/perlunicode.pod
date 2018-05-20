@@ -1827,7 +1827,7 @@ the XS level, and L<perlapi/Unicode Support> for the API details.
 Perl by default comes with the latest supported Unicode version built-in, but
 the goal is to allow you to change to use any earlier one.  In Perls
 v5.20 and v5.22, however, the earliest usable version is Unicode 5.1.
-Perl v5.18 is able to handle all earlier versions.
+Perl v5.18 and v5.24 are able to handle all earlier versions.
 
 Download the files in the desired version of Unicode from the Unicode web
 site L<http://www.unicode.org>).  These should replace the existing files in

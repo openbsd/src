@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.64 2017/08/12 19:53:37 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.65 2018/02/10 09:46:58 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -265,12 +265,17 @@
 /* Reserved			0x00004000 */
 #define	CPUIDECX_LWP		0x00008000 /* Lightweight profiling support */
 #define	CPUIDECX_FMA4		0x00010000 /* 4-operand FMA instructions */
-/* Reserved			0x00020000 */
+#define	CPUIDECX_TCE		0x00020000 /* Translation Cache Extension */
 /* Reserved			0x00040000 */
 #define	CPUIDECX_NODEID		0x00080000 /* Support for MSRC001C */
 /* Reserved			0x00100000 */
 #define	CPUIDECX_TBM		0x00200000 /* Trailing bit manipulation instruction */
 #define	CPUIDECX_TOPEXT		0x00400000 /* Topology extensions support */
+#define	CPUIDECX_CPCTR		0x00800000 /* core performance counter ext */
+#define	CPUIDECX_DBKP		0x04000000 /* DataBreakpointExtension */
+#define	CPUIDECX_PERFTSC	0x08000000 /* performance time-stamp counter */
+#define	CPUIDECX_PCTRL3		0x10000000 /* L3 performance counter ext */
+#define	CPUIDECX_MWAITX		0x20000000 /* MWAITX/MONITORX */
 
 /*
  * "Advanced Power Management Information" bits (CPUID function 0x80000007):

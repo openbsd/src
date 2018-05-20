@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.37 2017/02/28 07:07:07 claudio Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.38 2018/01/09 06:24:15 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -185,6 +185,6 @@ struct mbuf	*mpls_shim_push(struct mbuf *, struct rt_mpls *);
 
 int		 mpls_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
-void		 mpls_input(struct mbuf *);
+void		 mpls_input(struct ifnet *, struct mbuf *);
 
 #endif /* _KERNEL */

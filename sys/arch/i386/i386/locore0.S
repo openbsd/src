@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2017/06/29 06:15:30 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2017/12/10 21:44:07 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@
  */
 	.data
 
-	.space 512
+	.space 512,0xcc
 tmpstk:
 
 

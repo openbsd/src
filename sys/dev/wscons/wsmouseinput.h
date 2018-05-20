@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.8 2017/06/06 21:53:07 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.11 2018/05/07 21:58:42 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -25,23 +25,27 @@
 
 #ifdef _KERNEL
 
+struct position {
+	int x;
+	int y;
+	int dx;			/* unfiltered coordinate deltas */
+	int dy;
+	int acc_dx;		/* delta sums used for filtering */
+	int acc_dy;
+};
+
 struct btn_state {
 	u_int buttons;
 	u_int sync;
 };
 
 struct motion_state {
-	int dx;
+	int dx;			/* mouse input, or filtered deltas */
 	int dy;
 	int dz;
 	int dw;
-	int x;
-	int y;
+	struct position pos;
 	u_int sync;
-
-	/* deltas of absolute coordinates */
-	int x_delta;
-	int y_delta;
 };
 #define SYNC_DELTAS		(1 << 0)
 #define SYNC_X			(1 << 1)
@@ -62,8 +66,7 @@ struct touch_state {
 #define SYNC_TOUCH_WIDTH	(1 << 2)
 
 struct mt_slot {
-	int x;
-	int y;
+	struct position pos;
 	int pressure;
 	int id;		/* tracking ID */
 };
@@ -91,6 +94,7 @@ struct mt_state {
 	u_int ptr;
 	u_int ptr_cycle;
 	u_int prev_ptr;
+	u_int ptr_mask;
 
 	/* a buffer for the MT tracking function */
 	int *matrix;
@@ -103,9 +107,8 @@ struct axis_filter {
 	int rmdr;
 	/* Invert coordinates. */
 	int inv;
-	/* Hysteresis limit, accumulated deltas, and weighted delta average. */
+	/* Hysteresis limit, and weighted delta average. */
 	int hysteresis;
-	int acc;
 	int avg;
 	int avg_rmdr;
 	/* A [*.12] coefficient for "magnitudes", used for deceleration. */
@@ -161,6 +164,8 @@ struct wsmouseinput {
 #define RESYNC			(1 << 16)
 #define TRACK_INTERVAL		(1 << 17)
 #define CONFIGURED		(1 << 18)
+#define LOG_INPUT		(1 << 19)
+#define LOG_EVENTS		(1 << 20)
 
 /* filter.mode (bit 0-2: smoothing factor, bit 3: hysteresis type) */
 #define WEAK_HYSTERESIS		0
@@ -180,6 +185,8 @@ struct evq_access {
 
 
 void wsmouse_evq_put(struct evq_access *, int, int);
+void wsmouse_log_events(struct wsmouseinput *, struct evq_access *);
+int wsmouse_hysteresis(struct wsmouseinput *, struct position *);
 void wsmouse_input_reset(struct wsmouseinput *);
 void wsmouse_input_cleanup(struct wsmouseinput *);
 
@@ -217,6 +224,14 @@ int wstpad_set_param(struct wsmouseinput *, int, int);
 #define IS_TOUCHPAD(input)			\
     ((input)->hw.hw_type == WSMOUSEHW_TOUCHPAD	\
     || (input)->hw.hw_type == WSMOUSEHW_CLICKPAD)
+
+/* Extract a four-digit millisecond value from a timespec. */
+#define LOGTIME(tsp) \
+    ((int) (((tsp)->tv_sec % 10) * 1000 + ((tsp)->tv_nsec / 1000000)))
+
+#define DEVNAME(input) ((char *) (input)	\
+    - offsetof(struct wsmouse_softc, sc_input)	\
+    + offsetof(struct device, dv_xname))
 
 #endif /* _KERNEL */
 

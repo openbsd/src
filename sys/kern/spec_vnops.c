@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.89 2016/04/05 19:26:15 natano Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.92 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/stat.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
 #include <sys/poll.h>
@@ -154,9 +154,9 @@ spec_open(void *v)
 			vp->v_flag |= VISTTY;
 		if (cdevsw[maj].d_flags & D_CLONE)
 			return (spec_open_clone(ap));
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -219,10 +219,10 @@ spec_read(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		error = (*cdevsw[major(vp->v_rdev)].d_read)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -273,7 +273,7 @@ spec_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -306,10 +306,10 @@ spec_write(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		error = (*cdevsw[major(vp->v_rdev)].d_write)
 			(vp->v_rdev, uio, ap->a_ioflag);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
@@ -522,10 +522,10 @@ spec_close(void *v)
 		 * vclean(), the vnode is already locked.
 		 */
 		if (!(vp->v_flag & VXLOCK))
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, 0);
 		if (!(vp->v_flag & VXLOCK))
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 		if (error)
 			return (error);
 		/*
@@ -550,10 +550,10 @@ spec_close(void *v)
 	/* release lock if held and this isn't coming from vclean() */
 	relock = VOP_ISLOCKED(vp) && !(vp->v_flag & VXLOCK);
 	if (relock)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 	error = (*devclose)(dev, ap->a_fflag, mode, p);
 	if (relock)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	return (error);
 }
 
@@ -580,9 +580,9 @@ spec_setattr(void *v)
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
 	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, p);
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	return (error);
 }
@@ -723,12 +723,12 @@ spec_open_clone(struct vop_open_args *ap)
 		return (error); /* out of vnodes */
 	}
 
-	VOP_UNLOCK(vp, ap->a_p);
+	VOP_UNLOCK(vp);
 
 	error = cdevsw[major(vp->v_rdev)].d_open(cvp->v_rdev, ap->a_mode,
 	    S_IFCHR, ap->a_p);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	if (error) {
 		vput(cvp);

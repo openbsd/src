@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.13 2017/08/28 15:35:48 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.14 2018/04/27 10:02:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -85,6 +85,9 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (pledge("stdio unix", NULL) == -1)
+		err(1, "pledge");
 
 	/* Parse command line. */
 	if ((res = parse(argc, argv)) == NULL)

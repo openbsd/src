@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.82 2016/12/18 23:36:32 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.85 2018/05/19 13:24:10 bluhm Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -180,6 +180,8 @@ initvmstat(void)
 
 	intrloc = calloc(nintr, sizeof(long));
 	intrname = calloc(nintr, sizeof(char *));
+	if (intrloc == NULL || intrname == NULL)
+		err(2, NULL);
 
 	for (i = 0; i < nintr; i++) {
 		char name[128];
@@ -266,7 +268,7 @@ labelkre(void)
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-	    "    . %%Int    . %%Sys    . %%Usr    . %%Nic    . %%Idle");
+	    "    . %%Int    . %%Spn    . %%Sys    . %%Usr    . %%Idle");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 	    "|    |    |    |    |    |    |    |    |    |    |");
@@ -304,8 +306,8 @@ labelkre(void)
 	} while (0)
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '|', '=', '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_INTR, CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[] = { '|', '@', '=', '>', ' ' };
+static	char cpuorder[] = { CP_INTR, CP_SPIN, CP_SYS, CP_USER, CP_IDLE };
 
 void
 showkre(void)
@@ -365,9 +367,11 @@ showkre(void)
 	psiz = 0;
 	f2 = 0.0;
 
-	for (c = 0; c < CPUSTATES; c++) {
+	for (c = 0; c < nitems(cpuorder); c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
+		if (i == CP_USER)
+			f1 += cputime(CP_NICE);
 		f2 += f1;
 		l = (int) ((f2 + 1.0) / 2.0) - psiz;
 		putfloat(f1, GRAPHROW, GRAPHCOL + 1 + (10 * c), 5, 1, 0);
@@ -634,7 +638,7 @@ allocinfo(struct Info *si)
 	memset(si, 0, sizeof(*si));
 	si->intrcnt = calloc(nintr, sizeof(*si->intrcnt));
 	if (si->intrcnt == NULL)
-		errx(2, "out of memory");
+		err(2, NULL);
 }
 
 static void

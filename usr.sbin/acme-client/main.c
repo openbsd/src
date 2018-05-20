@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.35 2017/05/27 08:31:08 florian Exp $ */
+/*	$Id: main.c,v 1.36 2017/11/27 01:58:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	char		 *certdir = NULL, *certfile = NULL;
 	char		 *chainfile = NULL, *fullchainfile = NULL;
 	char		 *acctkey = NULL;
-	char		 *chngdir = NULL, *auth = NULL, *agreement = NULL;
+	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
@@ -154,7 +154,6 @@ main(int argc, char *argv[])
 			errx(EXIT_FAILURE, "authority %s not found", auth);
 	}
 
-	agreement = authority->agreement;
 	acctkey = authority->account;
 
 	if (acctkey == NULL) {
@@ -259,8 +258,7 @@ main(int argc, char *argv[])
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
 		    (popts & ACME_OPT_NEWACCT), revocate, authority,
-		    (const char *const *)alts, altsz,
-		    agreement);
+		    (const char *const *)alts, altsz);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}

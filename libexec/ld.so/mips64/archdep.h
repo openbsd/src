@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2017/08/13 14:57:19 visa Exp $ */
+/*	$OpenBSD: archdep.h,v 1.14 2017/10/27 16:47:08 mpi Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -29,7 +29,7 @@
 #ifndef _MIPS_ARCHDEP_H_
 #define _MIPS_ARCHDEP_H_
 
-#include <elf_abi.h>
+#include <elf.h>
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"

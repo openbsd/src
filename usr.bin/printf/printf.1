@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.30 2016/11/18 15:59:10 schwarze Exp $
+.\"	$OpenBSD: printf.1,v 1.31 2018/03/13 14:53:05 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	5.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: November 18 2016 $
+.Dd $Mdocdate: March 13 2018 $
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -66,9 +66,8 @@ otherwise it is evaluated as a C constant, with the following extensions:
 .It
 A leading plus or minus sign is allowed.
 .It
-If the leading character is a single or double quote, the value is the
-.Tn ASCII
-code of the next character.
+If the leading character is a single or double quote,
+the value is the ASCII code of the next character.
 .El
 .Pp
 The format string is reused as often as necessary to satisfy the arguments.
@@ -101,10 +100,8 @@ Write a <single quote> character.
 .It Cm \e\e
 Write a backslash character.
 .It Cm \e Ns Ar num
-Write an 8-bit character whose
-.Tn ASCII
-value is the 1-, 2-, or 3-digit
-octal number
+Write an 8-bit character whose ASCII value is
+the 1-, 2-, or 3-digit octal number
 .Ar num .
 .El
 .Pp
@@ -355,12 +352,12 @@ the actual width.
 .Sh EXAMPLES
 Convert a hexadecimal value to decimal and print it out:
 .Pp
-.D1 Ic $ printf \&"%d\en\&" 0x20
+.Dl $ printf \&"%d\en\&" 0x20
 .Pp
 Print the decimal representation of the character 'a' (see
 .Xr ascii 7 ) :
 .Pp
-.D1 Ic $ printf \&"%d\en\&" \e'a
+.Dl $ printf \&"%d\en\&" \e'a
 .Sh SEE ALSO
 .Xr echo 1 ,
 .Xr printf 3
@@ -394,7 +391,5 @@ Always be sure to use the proper secure idiom:
 printf "%s" "$STRING"
 .Ed
 .Sh BUGS
-Since arguments are translated from
-.Tn ASCII
-to floating-point, and
-then back again, floating-point precision may be lost.
+Since arguments are translated from ASCII to floating-point,
+and then back again, floating-point precision may be lost.

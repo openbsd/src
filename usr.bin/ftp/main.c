@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.119 2017/01/24 23:47:34 beck Exp $	*/
+/*	$OpenBSD: main.c,v 1.120 2018/02/10 06:25:16 jsing Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -84,26 +85,29 @@ int connect_timeout;
 
 #ifndef NOSSL
 char * const ssl_verify_opts[] = {
-#define SSL_CAFILE	0
+#define SSL_CAFILE		0
 	"cafile",
-#define SSL_CAPATH	1
+#define SSL_CAPATH		1
 	"capath",
-#define SSL_CIPHERS	2
+#define SSL_CIPHERS		2
 	"ciphers",
-#define SSL_DONTVERIFY	3
+#define SSL_DONTVERIFY		3
 	"dont",
-#define SSL_DOVERIFY	4
+#define SSL_DOVERIFY		4
 	"do",
-#define SSL_VERIFYDEPTH	5
+#define SSL_VERIFYDEPTH		5
 	"depth",
-#define SSL_MUSTSTAPLE	6
+#define SSL_MUSTSTAPLE		6
 	"muststaple",
 #define SSL_NOVERIFYTIME	7
 	"noverifytime",
+#define SSL_SESSION		8
+	"session",
 	NULL
 };
 
 struct tls_config *tls_config;
+int tls_session_fd = -1;
 
 static void
 process_ssl_options(char *cp)
@@ -156,6 +160,18 @@ process_ssl_options(char *cp)
 			break;
 		case SSL_NOVERIFYTIME:
 			tls_config_insecure_noverifytime(tls_config);
+			break;
+		case SSL_SESSION:
+			if (str == NULL)
+				errx(1, "missing session file");
+			if ((tls_session_fd = open(str, O_RDWR|O_CREAT,
+			    0600)) == -1)
+				err(1, "failed to open or create session file "
+				    "'%s'", str);
+			if (tls_config_set_session_fd(tls_config,
+			    tls_session_fd) == -1)
+				errx(1, "failed to set session: %s",
+				    tls_config_error(tls_config));
 			break;
 		default:
 			errx(1, "unknown -S suboption `%s'",
@@ -276,7 +292,7 @@ main(volatile int argc, char *argv[])
 			errx(1, "tls set ciphers failed: %s",
 			    tls_config_error(tls_config));
 	}
-#endif /* !SMALL */
+#endif /* !NOSSL */
 
 	httpuseragent = NULL;
 

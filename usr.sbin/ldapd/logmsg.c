@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.1 2017/01/20 11:55:08 benno Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.2 2018/05/15 11:19:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,8 +35,16 @@
 #include "ldapd.h"
 #include "log.h"
 
-extern int	debug;
-extern int	verbose;
+static int	debug;
+
+void
+ldap_loginit(const char *name, int d, int v)
+{
+	log_setverbose(v);
+	if (name != NULL)
+		log_procinit(name);
+	debug = d;
+}
 
 const char *
 print_host(struct sockaddr_storage *ss, char *buf, size_t len)
@@ -55,7 +63,7 @@ hexdump(void *data, size_t len, const char *fmt, ...)
 	uint8_t *p = data;
 	va_list ap;
 
-	if (verbose < 2 || !debug)
+	if (log_getverbose() <= 2 || !debug)
 		return;
 
 	va_start(ap, fmt);
@@ -90,7 +98,7 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 	int		 constructed;
 	struct ber_oid	 o;
 
-	if (verbose < 2 || !debug)
+	if (log_getverbose() <= 2 || !debug)
 		return;
 
 	if (fmt != NULL) {

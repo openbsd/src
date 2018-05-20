@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.61 2016/08/11 01:17:33 dlg Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.62 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ struct uvm {
 #define UVM_ET_NEEDSCOPY	0x08	/* needs_copy */
 #define UVM_ET_HOLE		0x10	/* no backend */
 #define UVM_ET_NOFAULT		0x20	/* don't fault */
+#define UVM_ET_STACK		0x40	/* this is a stack */
 #define UVM_ET_FREEMAPPED	0x80	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
@@ -96,6 +97,7 @@ struct uvm {
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
 #define UVM_ET_ISHOLE(E)	(((E)->etype & UVM_ET_HOLE) != 0)
 #define UVM_ET_ISNOFAULT(E)	(((E)->etype & UVM_ET_NOFAULT) != 0)
+#define UVM_ET_ISSTACK(E)	(((E)->etype & UVM_ET_STACK) != 0)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.57 2016/09/08 12:12:40 nicm Exp $	*/
+/*	$OpenBSD: edit.c,v 1.65 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * Command line editing - common code
@@ -6,7 +6,6 @@
  */
 
 #include "config.h"
-#ifdef EDIT
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -81,10 +80,10 @@ check_sigwinch(void)
 				    ws.ws_col;
 
 				if ((vp = typeset("COLUMNS", 0, 0, 0, 0)))
-					setint(vp, (long) ws.ws_col);
+					setint(vp, (int64_t) ws.ws_col);
 			}
 			if (ws.ws_row && (vp = typeset("LINES", 0, 0, 0, 0)))
-				setint(vp, (long) ws.ws_row);
+				setint(vp, (int64_t) ws.ws_row);
 		}
 	}
 }
@@ -224,13 +223,13 @@ set_editmode(const char *ed)
 #endif
 	};
 	char *rcp;
-	int i;
+	unsigned int ele;
 
 	if ((rcp = strrchr(ed, '/')))
 		ed = ++rcp;
-	for (i = 0; i < NELEM(edit_flags); i++)
-		if (strstr(ed, options[(int) edit_flags[i]].name)) {
-			change_flag(edit_flags[i], OF_SPECIAL, 1);
+	for (ele = 0; ele < NELEM(edit_flags); ele++)
+		if (strstr(ed, sh_options[(int) edit_flags[ele]].name)) {
+			change_flag(edit_flags[ele], OF_SPECIAL, 1);
 			return;
 		}
 }
@@ -373,7 +372,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 	source = s;
 	if (yylex(ONEWORD|UNESCAPE) != LWORD) {
 		source = sold;
-		internal_errorf(0, "fileglob: substitute error");
+		internal_warningf("%s: substitute error", __func__);
 		return 0;
 	}
 	source = sold;
@@ -459,7 +458,7 @@ x_command_glob(int flags, const char *str, int slen, char ***wordsp)
 	for (l = genv->loc; l; l = l->next)
 		glob_table(pat, &w, &l->funs);
 
-	glob_path(flags, pat, &w, path);
+	glob_path(flags, pat, &w, search_path);
 	if ((fpath = str_val(global("FPATH"))) != null)
 		glob_path(flags, pat, &w, fpath);
 
@@ -617,12 +616,12 @@ x_try_array(const char *buf, int buflen, const char *want, int wantlen,
 
 	/* Try to find the array. */
 	if (asprintf(&name, "complete_%.*s_%d", cmdlen, cmd, n) < 0)
-		internal_errorf(1, "unable to allocate memory");
+		internal_errorf("unable to allocate memory");
 	v = global(name);
 	free(name);
 	if (~v->flag & (ISSET|ARRAY)) {
 		if (asprintf(&name, "complete_%.*s", cmdlen, cmd) < 0)
-			internal_errorf(1, "unable to allocate memory");
+			internal_errorf("unable to allocate memory");
 		v = global(name);
 		free(name);
 		if (~v->flag & (ISSET|ARRAY))
@@ -910,4 +909,3 @@ x_escape(const char *s, size_t len, int (*putbuf_func) (const char *, size_t))
 
 	return (rval);
 }
-#endif /* EDIT */

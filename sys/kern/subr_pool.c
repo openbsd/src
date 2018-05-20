@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.220 2017/08/13 20:26:33 guenther Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.222 2018/02/06 22:35:32 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/task.h>
@@ -596,6 +597,11 @@ pool_get(struct pool *pp, int flags)
 		struct pool_get_memory mem = { .v = NULL };
 		struct pool_request pr;
 
+#ifdef DIAGNOSTIC
+		if (ISSET(flags, PR_WAITOK) && curproc == &proc0)
+			panic("%s: cannot sleep for memory during boot",
+			    __func__);
+#endif
 		pl_init(pp, &mem.lock);
 		pool_request_init(&pr, pool_get_done, &mem);
 		pool_request(pp, &pr);
@@ -911,6 +917,8 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 	struct pool_page_header *ph;
 	struct pool_item *pi;
 	caddr_t addr;
+	unsigned int order;
+	int o;
 	int n;
 
 	pl_assert_unlocked(pp, &pp->pr_lock);
@@ -945,10 +953,19 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 #endif /* DIAGNOSTIC */
 
 	n = pp->pr_itemsperpage;
+	o = 32;
 	while (n--) {
 		pi = (struct pool_item *)addr;
 		pi->pi_magic = POOL_IMAGIC(ph, pi);
-		XSIMPLEQ_INSERT_TAIL(&ph->ph_items, pi, pi_list);
+
+		if (o == 32) {
+			order = arc4random();
+			o = 0;
+		}
+		if (ISSET(order, 1 << o++))
+			XSIMPLEQ_INSERT_TAIL(&ph->ph_items, pi, pi_list);
+		else
+			XSIMPLEQ_INSERT_HEAD(&ph->ph_items, pi, pi_list);
 
 #ifdef DIAGNOSTIC
 		if (POOL_PHPOISON(ph))

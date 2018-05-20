@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pr.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: d2i_pr.c,v 1.16 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,10 +86,8 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 	} else {
 		ret = *a;
 #ifndef OPENSSL_NO_ENGINE
-		if (ret->engine) {
-			ENGINE_finish(ret->engine);
-			ret->engine = NULL;
-		}
+		ENGINE_finish(ret->engine);
+		ret->engine = NULL;
 #endif
 	}
 

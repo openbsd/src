@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMDebugInfoCodeView
 NOPIC=
@@ -10,15 +10,20 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/DebugInfo/CodeView
 SRCS=	CVTypeVisitor.cpp \
 	CodeViewError.cpp \
 	CodeViewRecordIO.cpp \
+	ContinuationRecordBuilder.cpp \
 	Formatters.cpp \
+	GlobalTypeTableBuilder.cpp \
 	Line.cpp \
+	RecordName.cpp \
 	RecordSerialization.cpp \
+	SimpleTypeSerializer.cpp \
 	SymbolDumper.cpp \
+	SymbolRecordMapping.cpp \
 	TypeDumpVisitor.cpp \
+	TypeHashing.cpp \
 	TypeIndex.cpp \
-	TypeName.cpp \
+	TypeIndexDiscovery.cpp \
 	TypeRecordMapping.cpp \
-	TypeSerializer.cpp \
 	TypeStreamMerger.cpp \
 	TypeTableCollection.cpp
 

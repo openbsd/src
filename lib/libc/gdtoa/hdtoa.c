@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdtoa.c,v 1.3 2015/09/14 12:49:33 guenther Exp $	*/
+/*	$OpenBSD: hdtoa.c,v 1.4 2018/04/27 13:46:01 guenther Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -112,7 +112,7 @@ dorounding(char *s0, int ndigits, int sign, int *decpt)
  *
  * Note that the C99 standard does not specify what the leading digit
  * should be for non-zero numbers.  For instance, 0x1.3p3 is the same
- * as 0x2.6p2 is the same as 0x4.cp3.  This implementation chooses the
+ * as 0x2.6p2 is the same as 0x4.cp1.  This implementation chooses the
  * first digit so that subsequent digits are aligned on nibble
  * boundaries (before rounding).
  *

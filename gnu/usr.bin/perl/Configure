@@ -5239,6 +5239,20 @@ case "$usequadmath" in
 *)                    usequadmath="$undef"  ;;
 esac
 
+: Fail if both uselongdouble and usequadmath are requested
+case "$usequadmath:$uselongdouble" in
+define:define)
+	$cat <<EOM >&4
+
+*** You requested the use of the quadmath library and use
+*** of long doubles.
+***
+*** Please select one or the other.
+EOM
+	exit 1
+        ;;
+esac
+
 : Looking for optional libraries
 echo " "
 echo "Checking for optional libraries..." >&4
@@ -6817,13 +6831,13 @@ yes)
 		if $contains $tlook $tf >/dev/null 2>&1; then
 			tval=true;
 		elif $test "$mistrustnm" = compile -o "$mistrustnm" = run; then
-			echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main() { if(p() && p() != (void *)main) return(0); else return(1); }"> try.c;
+			echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main(int argc, char **argv) { if(p() && p() != (void *)argv[0]) return(0); else return(1); }"> try.c;
 			$cc -o try $optimize $ccflags $ldflags try.c >/dev/null 2>&1 $libs && tval=true;
 			$test "$mistrustnm" = run -a -x try && { $run ./try$_exe >/dev/null 2>&1 || tval=false; };
 			$rm_try;
 		fi;
 	else
-		echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main() { if(p() && p() != (void *)main) return(0); else return(1); }"> try.c;
+		echo "$extern_C void *$1$tdc; void *(*(p()))$tdc { return &$1; } int main(int argc, char **argv) { if(p() && p() != (void *)argv[0]) return(0); else return(1); }"> try.c;
 		$cc -o try $optimize $ccflags $ldflags try.c $libs >/dev/null 2>&1 && tval=true;
 		$rm_try;
 	fi;
@@ -7204,7 +7218,7 @@ case "$usequadmath" in
 $define)
 	echo "quadmath selected." >&4
 	case "$archname" in
-	*-ld*) echo "...and architecture name already has -quadmath." >&4
+	*-quadmath*) echo "...and architecture name already has -quadmath." >&4
 		;;
 	*)      archname="$archname-quadmath"
 		echo "...setting architecture name to $archname." >&4
@@ -23383,7 +23397,7 @@ fi
 
 : add -D_FORTIFY_SOURCE if feasible and not already there
 case "$gccversion" in
-[45].*)	case "$optimize$ccflags" in
+[4567].*)	case "$optimize$ccflags" in
 	*-O*)	case "$ccflags$cppsymbols" in
 		*_FORTIFY_SOURCE=*) # Don't add it again.
 			echo "You seem to have -D_FORTIFY_SOURCE already, not adding it." >&4

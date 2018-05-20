@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.6 2016/09/21 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: exception.S,v 1.7 2018/01/26 16:22:19 kettenis Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -53,6 +53,14 @@
 
 	.text	
 	.align	2
+
+#define RESTOREVFP							 \
+	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
+	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
+	cmp	r0, #(PSR_USR32_MODE)					;\
+	bne	1f							;\
+	bl	_C_LABEL(vfp_enable)                                    ;\
+1:
 
 AST_LOCALS
 
@@ -194,6 +202,7 @@ Laddress_exception_msg:
 
 exception_exit:
 	DO_AST
+	RESTOREVFP
 	PULLFRAMEFROMSVCANDEXIT
 
 /*

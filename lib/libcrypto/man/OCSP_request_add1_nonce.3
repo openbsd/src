@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_request_add1_nonce.3,v 1.3 2016/12/06 14:54:55 schwarze Exp $
+.\"	$OpenBSD: OCSP_request_add1_nonce.3,v 1.4 2018/03/22 21:08:22 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt OCSP_REQUEST_ADD1_NONCE 3
 .Os
 .Sh NAME
@@ -157,3 +157,7 @@ only: this will happen if the responder doesn't support nonces.
 .Xr OCSP_resp_find_status 3 ,
 .Xr OCSP_response_status 3 ,
 .Xr OCSP_sendreq_new 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.7
+and have been available since
+.Ox 3.2 .

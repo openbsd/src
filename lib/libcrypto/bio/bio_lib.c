@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.28 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,22 @@
 #include <openssl/err.h>
 #include <openssl/stack.h>
 
+int
+BIO_get_new_index(void)
+{
+	static int bio_type_index = BIO_TYPE_START;
+	int index;
+
+	/* The index will collide with the BIO flag bits if it exceeds 255. */
+	index = CRYPTO_add(&bio_type_index, 1, CRYPTO_LOCK_BIO);
+	if (index > 255)
+		return -1;
+
+	return index;
+}
+
 BIO *
-BIO_new(BIO_METHOD *method)
+BIO_new(const BIO_METHOD *method)
 {
 	BIO *ret = NULL;
 
@@ -82,7 +96,7 @@ BIO_new(BIO_METHOD *method)
 }
 
 int
-BIO_set(BIO *bio, BIO_METHOD *method)
+BIO_set(BIO *bio, const BIO_METHOD *method)
 {
 	bio->method = method;
 	bio->callback = NULL;
@@ -135,6 +149,43 @@ void
 BIO_vfree(BIO *a)
 {
 	BIO_free(a);
+}
+
+int
+BIO_up_ref(BIO *bio)
+{
+	int refs = CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO);
+	return (refs > 1) ? 1 : 0;
+}
+
+void *
+BIO_get_data(BIO *a)
+{
+	return (a->ptr);
+}
+
+void
+BIO_set_data(BIO *a, void *ptr)
+{
+	a->ptr = ptr;
+}
+
+void
+BIO_set_init(BIO *a, int init)
+{
+	a->init = init;
+}
+
+int
+BIO_get_shutdown(BIO *a)
+{
+	return (a->shutdown);
+}
+
+void
+BIO_set_shutdown(BIO *a, int shut)
+{
+	a->shutdown = shut;
 }
 
 void

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.70 2017/08/12 16:40:54 sf Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.76 2018/04/29 08:45:01 sf Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -81,6 +81,7 @@ typedef enum {
     em_pch2lan,
     em_pch_lpt,
     em_pch_spt,
+    em_pch_cnp,
     em_num_macs
 } em_mac_type;
 
@@ -541,6 +542,7 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_ICH10_R_BM_V        0x10CE
 #define E1000_DEV_ID_ICH10_D_BM_LM       0x10DE
 #define E1000_DEV_ID_ICH10_D_BM_LF       0x10DF
+#define E1000_DEV_ID_ICH10_D_BM_V        0x1525
 #define E1000_DEV_ID_PCH_M_HV_LM         0x10EA
 #define E1000_DEV_ID_PCH_M_HV_LC         0x10EB
 #define E1000_DEV_ID_PCH_D_HV_DM         0x10EF
@@ -564,6 +566,14 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_SPT_I219_V4     0x15D8
 #define E1000_DEV_ID_PCH_SPT_I219_LM5    0x15E3
 #define E1000_DEV_ID_PCH_SPT_I219_V5     0x15D6
+#define E1000_DEV_ID_PCH_CNP_I219_LM6    0x15BD
+#define E1000_DEV_ID_PCH_CNP_I219_V6     0x15BE
+#define E1000_DEV_ID_PCH_CNP_I219_LM7    0x15BB
+#define E1000_DEV_ID_PCH_CNP_I219_V7     0x15BC
+#define E1000_DEV_ID_PCH_ICP_I219_LM8    0x15DF
+#define E1000_DEV_ID_PCH_ICP_I219_V8     0x15E0
+#define E1000_DEV_ID_PCH_ICP_I219_LM9    0x15E1
+#define E1000_DEV_ID_PCH_ICP_I219_V9     0x15E2
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
@@ -594,6 +604,8 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_I350_SGMII          0x1524
 #define E1000_DEV_ID_82576_QUAD_CU_ET2   0x1526
 #define E1000_DEV_ID_I210_COPPER	 0x1533
+#define E1000_DEV_ID_I210_COPPER_OEM1	 0x1534
+#define E1000_DEV_ID_I210_COPPER_IT	 0x1535
 #define E1000_DEV_ID_I210_FIBER		 0x1536
 #define E1000_DEV_ID_I210_SERDES	 0x1537
 #define E1000_DEV_ID_I210_SGMII		 0x1538
@@ -1622,6 +1634,7 @@ struct em_hw {
     uint8_t bus_func;
     uint16_t swfw;
     boolean_t eee_enable;
+    int sw_flag;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */
@@ -2283,6 +2296,7 @@ struct em_hw {
 #define E1000_WUS_FLX_FILTERS 0x000F0000 /* Mask for the 4 flexible filters */
 
 /* TRAC0 bits */
+#define E1000_TARC0_CB_MULTIQ_2_REQ     (1 << 29)
 #define E1000_TARC0_CB_MULTIQ_3_REQ     (1 << 28 | 1 << 29)
 
 /* Management Control */
@@ -2743,6 +2757,8 @@ struct em_host_command_info {
 #define AUTO_READ_DONE_TIMEOUT      10
 /* Number of milliseconds we wait for PHY configuration done after MAC reset */
 #define PHY_CFG_TIMEOUT             100
+/* SW Semaphore flag timeout in ms */
+#define SW_FLAG_TIMEOUT		1000
 
 #define E1000_TX_BUFFER_SIZE ((uint32_t)1514)
 

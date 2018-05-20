@@ -1,10 +1,9 @@
-#	$OpenBSD: files.mips64,v 1.27 2017/05/21 13:00:53 visa Exp $
+#	$OpenBSD: files.mips64,v 1.29 2018/01/25 15:06:29 mpi Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c		clock
 file	arch/mips64/mips64/cpu.c
 file	arch/mips64/mips64/interrupt.c
-file	arch/mips64/mips64/lock_machdep.c	multiprocessor
 file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/mips64_machdep.c
 file	arch/mips64/mips64/pmap.c
@@ -14,7 +13,6 @@ file	arch/mips64/mips64/softintr.c
 file	arch/mips64/mips64/sys_machdep.c
 file	arch/mips64/mips64/trap.c
 file	arch/mips64/mips64/vm_machdep.c
-file	arch/mips64/mips64/mutex.c
 
 file	arch/mips64/mips64/cache_loongson2.c	cpu_loongson2
 file	arch/mips64/mips64/cache_loongson3.c	cpu_loongson3

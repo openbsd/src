@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.11 2017/04/18 02:15:50 deraadt Exp $ */
+/* $OpenBSD: dgst.c,v 1.12 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,7 +447,7 @@ mac_end:
 		}
 	}
 
-end:
+ end:
 	freezero(buf, BUFSIZE);
 	if (in != NULL)
 		BIO_free(in);

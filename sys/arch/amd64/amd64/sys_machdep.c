@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.17 2017/09/27 05:43:55 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.20 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -32,30 +32,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
-#include <sys/signal.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/sysarch.h>
-#include <machine/tcb.h>
-
-#if defined(PERFCTRS) && 0
-#include <machine/pmc.h>
-#endif
 
 extern struct vm_map *kernel_map;
 
@@ -72,7 +55,7 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct amd64_iopl_args ua;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return error;
 
 #ifdef APERTURE
@@ -95,29 +78,6 @@ amd64_iopl(struct proc *p, void *args, register_t *retval)
 }
 
 int
-amd64_get_fsbase(struct proc *p, void *args)
-{
-	void *base = tcb_get(p);
-
-	return (copyout(&base, args, sizeof(base)));
-}
-
-int
-amd64_set_fsbase(struct proc *p, void *args)
-{
-	int error;
-	void *base;
-
-	if ((error = copyin(args, &base, sizeof(base))) != 0)
-		return (error);
-
-	if (TCB_INVALID(base))
-		return EINVAL;
-	tcb_set(p, base);
-	return 0;
-}
-
-int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
@@ -129,28 +89,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	switch(SCARG(uap, op)) {
 	case AMD64_IOPL: 
 		error = amd64_iopl(p, SCARG(uap, parms), retval);
-		break;
-
-#if defined(PERFCTRS) && 0
-	case AMD64_PMC_INFO:
-		error = pmc_info(p, SCARG(uap, parms), retval);
-		break;
-
-	case AMD64_PMC_STARTSTOP:
-		error = pmc_startstop(p, SCARG(uap, parms), retval);
-		break;
-
-	case AMD64_PMC_READ:
-		error = pmc_read(p, SCARG(uap, parms), retval);
-		break;
-#endif
-
-	case AMD64_GET_FSBASE: 
-		error = amd64_get_fsbase(p, SCARG(uap, parms));
-		break;
-
-	case AMD64_SET_FSBASE: 
-		error = amd64_set_fsbase(p, SCARG(uap, parms));
 		break;
 
 	default:

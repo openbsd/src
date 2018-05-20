@@ -1,9 +1,9 @@
-.TH "NSD" "8" "Jun 14, 2016" "NLnet Labs" "NSD 4.1.10"
+.TH "NSD" "8" "May 14, 2018" "NLnet Labs" "NSD 4.1.21"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd
-\- Name Server Daemon (NSD) version 4.1.10.
+\- Name Server Daemon (NSD) version 4.1.21.
 .SH "SYNOPSIS"
 .B nsd
 .RB [ \-4 ] 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.193 2017/09/28 16:17:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.203 2018/04/28 16:05:56 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -222,7 +222,9 @@ int		iwn_config(struct iwn_softc *);
 uint16_t	iwn_get_active_dwell_time(struct iwn_softc *, uint16_t, uint8_t);
 uint16_t	iwn_limit_dwell(struct iwn_softc *, uint16_t);
 uint16_t	iwn_get_passive_dwell_time(struct iwn_softc *, uint16_t);
-int		iwn_scan(struct iwn_softc *, uint16_t);
+int		iwn_scan(struct iwn_softc *, uint16_t, int);
+void		iwn_scan_abort(struct iwn_softc *);
+int		iwn_bgscan(struct ieee80211com *);
 int		iwn_auth(struct iwn_softc *, int);
 int		iwn_run(struct iwn_softc *);
 int		iwn_set_key(struct ieee80211com *, struct ieee80211_node *,
@@ -516,6 +518,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 	ic->ic_node_alloc = iwn_node_alloc;
+	ic->ic_bgscan_start = iwn_bgscan;
 	ic->ic_newassoc = iwn_newassoc;
 	ic->ic_updateedca = iwn_updateedca;
 	ic->ic_set_key = iwn_set_key;
@@ -1761,21 +1764,53 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct iwn_node *wn = (void *)ni;
 	int error;
 
-	timeout_del(&sc->calib_to);
-
-	if (ic->ic_state == IEEE80211_S_RUN &&
-	    (ni->ni_flags & IEEE80211_NODE_HT))
+	if (ic->ic_state == IEEE80211_S_RUN) {
 		ieee80211_mira_cancel_timeouts(&wn->mn);
+		timeout_del(&sc->calib_to);
+		sc->calib.state = IWN_CALIB_STATE_INIT;
+		if (sc->sc_flags & IWN_FLAG_BGSCAN)
+			iwn_scan_abort(sc);
+	}
+
+	if (ic->ic_state == IEEE80211_S_SCAN) {
+		if (nstate == IEEE80211_S_SCAN) {
+			if (sc->sc_flags & IWN_FLAG_SCANNING)
+				return 0;
+		} else
+			sc->sc_flags &= ~IWN_FLAG_SCANNING;
+		/* Turn LED off when leaving scan state. */
+		iwn_set_led(sc, IWN_LED_LINK, 1, 0);
+	}
+
+	if (ic->ic_state >= IEEE80211_S_ASSOC &&
+	    nstate <= IEEE80211_S_ASSOC) {
+		/* Reset state to handle re- and disassociations. */
+		sc->rxon.associd = 0;
+		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
+		sc->calib.state = IWN_CALIB_STATE_INIT;
+		error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
+		if (error != 0)
+			printf("%s: RXON command failed\n",
+			    sc->sc_dev.dv_xname);
+	}		 
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
 		/* Make the link LED blink while we're scanning. */
 		iwn_set_led(sc, IWN_LED_LINK, 10, 10);
 
-		if ((error = iwn_scan(sc, IEEE80211_CHAN_2GHZ)) != 0) {
+		if ((error = iwn_scan(sc, IEEE80211_CHAN_2GHZ, 0)) != 0) {
 			printf("%s: could not initiate scan\n",
 			    sc->sc_dev.dv_xname);
 			return error;
+		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[nstate]);
+		if ((sc->sc_flags & IWN_FLAG_BGSCAN) == 0) {
+			ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+			ieee80211_free_allnodes(ic, 1);
 		}
 		ic->ic_state = nstate;
 		return 0;
@@ -1785,11 +1820,6 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
-		/* Reset state to handle reassociations correctly. */
-		sc->rxon.associd = 0;
-		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
-		sc->calib.state = IWN_CALIB_STATE_INIT;
-
 		if ((error = iwn_auth(sc, arg)) != 0) {
 			printf("%s: could not move to auth state\n",
 			    sc->sc_dev.dv_xname);
@@ -1971,11 +2001,13 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_node *ni;
+	struct ieee80211_channel *bss_chan = NULL;
 	struct mbuf *m, *m1;
 	struct iwn_rx_stat *stat;
 	caddr_t head;
 	uint32_t flags;
 	int error, len, rssi;
+	uint16_t chan;
 
 	if (desc->type == IWN_MPDU_RX_DONE) {
 		/* Check for prior RX_PHY notification. */
@@ -2131,6 +2163,16 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	rssi = ops->get_rssi(stat);
 
+	chan = stat->chan;
+	if (chan > IEEE80211_CHAN_MAX)
+		chan = IEEE80211_CHAN_MAX;
+
+	if (ni == ic->ic_bss) {
+		bss_chan = ni->ni_chan;
+		/* Fix current channel. */
+		ni->ni_chan = &ic->ic_channels[chan];
+	}
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -2140,9 +2182,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		tap->wr_flags = 0;
 		if (stat->flags & htole16(IWN_STAT_FLAG_SHPREAMBLE))
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		tap->wr_chan_freq =
-		    htole16(ic->ic_channels[stat->chan].ic_freq);
-		chan_flags = ic->ic_channels[stat->chan].ic_flags;
+		tap->wr_chan_freq = htole16(ic->ic_channels[chan].ic_freq);
+		chan_flags = ic->ic_channels[chan].ic_flags;
 		if (ic->ic_curmode != IEEE80211_MODE_11N)
 			chan_flags &= ~IEEE80211_CHAN_HT;
 		tap->wr_chan_flags = htole16(chan_flags);
@@ -2186,6 +2227,10 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_input(ifp, m, ni, &rxi);
+
+	/* Restore BSS channel. */
+	if (ni == ic->ic_bss)
+		ni->ni_chan = bss_chan;
 
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -2586,6 +2631,9 @@ iwn_notif_intr(struct iwn_softc *sc)
 			DPRINTFN(2, ("scanning channel %d status %x\n",
 			    scan->chan, letoh32(scan->status)));
 
+			if (sc->sc_flags & IWN_FLAG_BGSCAN)
+				break;
+
 			/* Fix current channel. */
 			ic->ic_bss->ni_chan = &ic->ic_channels[scan->chan];
 			break;
@@ -2602,13 +2650,18 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 			if (scan->status == 1 && scan->chan <= 14 &&
 			    (sc->sc_flags & IWN_FLAG_HAS_5GHZ)) {
+			    	int error;
 				/*
 				 * We just finished scanning 2GHz channels,
 				 * start scanning 5GHz ones.
 				 */
-				if (iwn_scan(sc, IEEE80211_CHAN_5GHZ) == 0)
+				error = iwn_scan(sc, IEEE80211_CHAN_5GHZ,
+				    (sc->sc_flags & IWN_FLAG_BGSCAN) ? 1 : 0);
+				if (error == 0)
 					break;
 			}
+			sc->sc_flags &= ~IWN_FLAG_SCANNING;
+			sc->sc_flags &= ~IWN_FLAG_BGSCAN;
 			ieee80211_end_scan(ifp);
 			break;
 		}
@@ -3227,7 +3280,8 @@ iwn_start(struct ifnet *ifp)
 			ni = m->m_pkthdr.ph_cookie;
 			goto sendit;
 		}
-		if (ic->ic_state != IEEE80211_S_RUN)
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
 			break;
 
 		/* Encapsulate and send data frames. */
@@ -3281,7 +3335,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
@@ -3301,17 +3354,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				iwn_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211POWER:
@@ -4654,9 +4696,8 @@ iwn_limit_dwell(struct iwn_softc *sc, uint16_t dwell_time)
 	 * XXX Yes, the math should take into account that bintval
 	 * is 1.024mS, not 1mS..
 	 */
-	if (bintval > 0) {
+	if (ic->ic_state == IEEE80211_S_RUN && bintval > 0)
 		return (MIN(IWN_PASSIVE_DWELL_BASE, ((bintval * 85) / 100)));
-	}
 
 	/* No association context? Default */
 	return (IWN_PASSIVE_DWELL_BASE);
@@ -4677,7 +4718,7 @@ iwn_get_passive_dwell_time(struct iwn_softc *sc, uint16_t flags)
 }
 
 int
-iwn_scan(struct iwn_softc *sc, uint16_t flags)
+iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwn_scan_hdr *hdr;
@@ -4707,6 +4748,18 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	hdr->quiet_time = htole16(10);		/* timeout in milliseconds */
 	hdr->quiet_threshold = htole16(1);	/* min # of packets */
 
+	if (bgscan) {
+		int bintval;
+
+		/* Set maximum off-channel time. */
+		hdr->max_out = htole32(200 * 1024);
+
+		/* Configure scan pauses which service on-channel traffic. */
+		bintval = ic->ic_bss->ni_intval ? ic->ic_bss->ni_intval : 100;
+		hdr->pause_scan = htole32(((100 / bintval) << 22) |
+		    ((100 % bintval) * 1024));
+	}
+
 	/* Select antennas for scanning. */
 	rxchain =
 	    IWN_RXCHAIN_VALID(sc->rxchainmask) |
@@ -4714,8 +4767,11 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	    IWN_RXCHAIN_DRIVER_FORCE;
 	if ((flags & IEEE80211_CHAN_5GHZ) &&
 	    sc->hw_type == IWN_HW_REV_TYPE_4965) {
-		/* Ant A must be avoided in 5GHz because of an HW bug. */
-		rxchain |= IWN_RXCHAIN_FORCE_SEL(IWN_ANT_BC);
+		/* 
+		 * On 4965 ant A and C must be avoided in 5GHz because of a
+		 * HW bug which causes very weak RSSI values being reported.
+		 */
+		rxchain |= IWN_RXCHAIN_FORCE_SEL(IWN_ANT_B);
 	} else	/* Use all available RX antennas. */
 		rxchain |= IWN_RXCHAIN_FORCE_SEL(sc->rxchainmask);
 	hdr->rxchain = htole16(rxchain);
@@ -4732,9 +4788,19 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11A];
 	} else {
 		hdr->flags = htole32(IWN_RXON_24GHZ | IWN_RXON_AUTO);
-		/* Send probe requests at 1Mbps. */
-		tx->plcp = iwn_rates[IWN_RIDX_CCK1].plcp;
-		tx->rflags = IWN_RFLAG_CCK;
+		if (bgscan && sc->hw_type == IWN_HW_REV_TYPE_4965 &&
+		    sc->rxon.chan > 14) {
+			/* 
+			 * 4965 firmware can crash when sending probe requests
+			 * with CCK rates while associated to a 5GHz AP.
+			 * Send probe requests at 6Mbps OFDM as a workaround.
+			 */
+			tx->plcp = iwn_rates[IWN_RIDX_OFDM6].plcp;
+		} else {
+			/* Send probe requests at 1Mbps. */
+			tx->plcp = iwn_rates[IWN_RIDX_CCK1].plcp;
+			tx->rflags = IWN_RFLAG_CCK;
+		}
 		rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
 	}
 	/* Use the first valid TX antenna. */
@@ -4865,7 +4931,40 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 
 	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
 	error = iwn_cmd(sc, IWN_CMD_SCAN, buf, buflen, 1);
+	if (error == 0) {
+		sc->sc_flags |= IWN_FLAG_SCANNING;
+		if (bgscan)
+			sc->sc_flags |= IWN_FLAG_BGSCAN;
+	}
 	free(buf, M_DEVBUF, IWN_SCAN_MAXSZ);
+	return error;
+}
+
+void
+iwn_scan_abort(struct iwn_softc *sc)
+{
+	iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);
+
+	/* XXX Cannot wait for status response in interrupt context. */
+	DELAY(100);
+
+	sc->sc_flags &= ~IWN_FLAG_SCANNING;
+	sc->sc_flags &= ~IWN_FLAG_BGSCAN;
+}
+
+int
+iwn_bgscan(struct ieee80211com *ic) 
+{
+	struct iwn_softc *sc = ic->ic_softc;
+	int error; 
+
+	if (sc->sc_flags & IWN_FLAG_SCANNING)
+		return 0;
+
+	error = iwn_scan(sc, IEEE80211_CHAN_2GHZ, 1);
+	if (error)
+		printf("%s: could not initiate background scan\n",
+		    sc->sc_dev.dv_xname);
 	return error;
 }
 
@@ -4876,6 +4975,9 @@ iwn_auth(struct iwn_softc *sc, int arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	int error, ridx;
+	int bss_switch = 
+	    (!IEEE80211_ADDR_EQ(sc->bss_node_addr, etheranyaddr) &&
+	    !IEEE80211_ADDR_EQ(sc->bss_node_addr, ni->ni_macaddr));
 
 	/* Update adapter configuration. */
 	IEEE80211_ADDR_COPY(sc->rxon.bssid, ni->ni_bssid);
@@ -4890,8 +4992,12 @@ iwn_auth(struct iwn_softc *sc, int arg)
 	}
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
 		sc->rxon.flags |= htole32(IWN_RXON_SHSLOT);
+	else
+		sc->rxon.flags &= ~htole32(IWN_RXON_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
 		sc->rxon.flags |= htole32(IWN_RXON_SHPREAMBLE);
+	else
+		sc->rxon.flags &= ~htole32(IWN_RXON_SHPREAMBLE);
 	switch (ic->ic_curmode) {
 	case IEEE80211_MODE_11A:
 		sc->rxon.cck_mask  = 0;
@@ -4935,11 +5041,18 @@ iwn_auth(struct iwn_softc *sc, int arg)
 	 * Make sure the firmware gets to see a beacon before we send
 	 * the auth request. Otherwise the Tx attempt can fail due to
 	 * the firmware's built-in regulatory domain enforcement.
+	 * Delaying here for every incoming deauth frame can result in a DoS.
 	 * Don't delay if we're here because of an incoming frame (arg != -1)
 	 * or if we're already waiting for a response (ic_mgt_timer != 0).
+	 * If we are switching APs after a background scan then net80211 has
+	 * just faked the reception of a deauth frame from our old AP, so it
+	 * is safe to delay in that case.
 	 */
-	if (arg == -1 && ic->ic_mgt_timer == 0)
+	if ((arg == -1 || bss_switch) && ic->ic_mgt_timer == 0)
 		DELAY(ni->ni_intval * 3 * IEEE80211_DUR_TU);
+
+	/* We can now clear the cached address of our previous AP. */
+	memset(sc->bss_node_addr, 0, sizeof(sc->bss_node_addr));
 
 	return 0;
 }
@@ -4950,6 +5063,7 @@ iwn_run(struct iwn_softc *sc)
 	struct iwn_ops *ops = &sc->ops;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwn_node *wn = (void *)ni;
 	struct iwn_node_info node;
 	int error;
 
@@ -5040,6 +5154,10 @@ iwn_run(struct iwn_softc *sc)
 		printf("%s: could not add BSS node\n", sc->sc_dev.dv_xname);
 		return error;
 	}
+
+	/* Cache address of AP in case it changes after a background scan. */
+	IEEE80211_ADDR_COPY(sc->bss_node_addr, ni->ni_macaddr);
+
 	DPRINTF(("setting link quality for node %d\n", node.id));
 	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
 		printf("%s: could not setup link quality for node %d\n",
@@ -5057,10 +5175,7 @@ iwn_run(struct iwn_softc *sc)
 	sc->calib_cnt = 0;
 	timeout_add_msec(&sc->calib_to, 500);
 
-	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		struct iwn_node *wn = (void *)ni;
-		ieee80211_mira_node_init(&wn->mn);
-	}
+	ieee80211_mira_node_init(&wn->mn);
 
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1);
@@ -6456,6 +6571,8 @@ iwn_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
+	memset(sc->bss_node_addr, 0, sizeof(sc->bss_node_addr));
+
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		printf("%s: hardware not ready\n", sc->sc_dev.dv_xname);
 		goto fail;
@@ -6519,11 +6636,6 @@ iwn_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
-		wakeup(&ic->ic_scan_lock);
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

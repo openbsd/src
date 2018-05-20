@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.196 2017/09/04 09:11:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.201 2018/05/05 06:58:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -263,10 +263,21 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 		*orxseq = nrxseq;
 	}
-	if (ic->ic_state != IEEE80211_S_SCAN) {
+	if (ic->ic_state > IEEE80211_S_SCAN) {
 		ni->ni_rssi = rxi->rxi_rssi;
 		ni->ni_rstamp = rxi->rxi_tstamp;
 		ni->ni_inact = 0;
+
+		if (ic->ic_state == IEEE80211_S_RUN && ic->ic_bgscan_start) {
+			/* Cancel or start background scan based on RSSI. */
+			if ((*ic->ic_node_checkrssi)(ic, ni))
+				timeout_del(&ic->ic_bgscan_timeout);
+			else if (!timeout_pending(&ic->ic_bgscan_timeout) &&
+			    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 &&
+			    (ic->ic_flags & IEEE80211_F_DESBSSID) == 0)
+				timeout_add_msec(&ic->ic_bgscan_timeout,
+				    500 * (ic->ic_bgscan_fail + 1));
+		}
 	}
 
 #ifndef IEEE80211_STA_ONLY
@@ -1504,7 +1515,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_debug > 1 &&
-	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
+	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN))) {
 		printf("%s: %s%s on chan %u (bss chan %u) ",
 		    __func__, (ni == NULL ? "new " : ""),
 		    isprobe ? "probe response" : "beacon",
@@ -1589,7 +1601,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		 * This probe response indicates the AP is still serving us
 		 * so don't allow ieee80211_watchdog() to move us into SCAN.
 		 */
-		 ic->ic_mgt_timer = 0;
+		 if ((ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
+		 	ic->ic_mgt_timer = 0;
 	}
 	/*
 	 * We do not try to update EDCA parameters if QoS was not negotiated
@@ -1606,7 +1619,8 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
 
-	if (ic->ic_state == IEEE80211_S_SCAN) {
+	if (ic->ic_state == IEEE80211_S_SCAN ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN)) {
 		struct ieee80211_rsnparams rsn, wpa;
 
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
@@ -1675,13 +1689,26 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	ni->ni_rssi = rxi->rxi_rssi;
+	/* XXX validate channel # */
+	ni->ni_chan = &ic->ic_channels[chan];
+	if (ic->ic_state == IEEE80211_S_SCAN &&
+	    IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
+		/*
+		 * During a scan on 5Ghz, prefer RSSI measured for probe
+		 * response frames. i.e. don't allow beacons to lower the
+		 * measured RSSI. Some 5GHz APs send beacons with much
+		 * less Tx power than they use for probe responses.
+		 */
+		 if (isprobe)
+			ni->ni_rssi = rxi->rxi_rssi;
+		else if (ni->ni_rssi < rxi->rxi_rssi)
+			ni->ni_rssi = rxi->rxi_rssi;
+	} else
+		ni->ni_rssi = rxi->rxi_rssi;
 	ni->ni_rstamp = rxi->rxi_tstamp;
 	memcpy(ni->ni_tstamp, tstamp, sizeof(ni->ni_tstamp));
 	ni->ni_intval = bintval;
 	ni->ni_capinfo = capinfo;
-	/* XXX validate channel # */
-	ni->ni_chan = &ic->ic_channels[chan];
 	ni->ni_erp = erp;
 	/* NB: must be after ni_chan is setup */
 	ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
@@ -2361,9 +2388,13 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m,
 
 	ic->ic_stats.is_rx_deauth++;
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_STA:
-		ieee80211_new_state(ic, IEEE80211_S_AUTH,
-		    IEEE80211_FC0_SUBTYPE_DEAUTH);
+	case IEEE80211_M_STA: {
+		int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
+		    ic->ic_state == IEEE80211_S_RUN);
+		if (!bgscan) /* ignore deauth during bgscan */
+			ieee80211_new_state(ic, IEEE80211_S_AUTH,
+			    IEEE80211_FC0_SUBTYPE_DEAUTH);
+		}
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
@@ -2407,9 +2438,13 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m,
 
 	ic->ic_stats.is_rx_disassoc++;
 	switch (ic->ic_opmode) {
-	case IEEE80211_M_STA:
-		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-		    IEEE80211_FC0_SUBTYPE_DISASSOC);
+	case IEEE80211_M_STA: {
+		int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
+		    ic->ic_state == IEEE80211_S_RUN);
+		if (!bgscan) /* ignore disassoc during bgscan */
+			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+			    IEEE80211_FC0_SUBTYPE_DISASSOC);
+		}
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:

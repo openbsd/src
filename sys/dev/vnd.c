@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.165 2017/07/19 14:54:29 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.168 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
@@ -404,7 +404,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	DNPRINTF(VDB_FOLLOW, "vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 	    dev, cmd, addr, flag, p, unit);
 
-	error = suser(p, 0);
+	error = suser(p);
 	if (error)
 		return (error);
 	if (unit >= numvnd)
@@ -461,14 +461,14 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		else {
 			error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 			if (error) {
-				VOP_UNLOCK(nd.ni_vp, p);
+				VOP_UNLOCK(nd.ni_vp);
 				vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);
 				disk_unlock(&sc->sc_dk);
 				return (error);
 			}
 			sc->sc_size = vattr.va_size / sc->sc_secsize;
 		}
-		VOP_UNLOCK(nd.ni_vp, p);
+		VOP_UNLOCK(nd.ni_vp);
 		sc->sc_vp = nd.ni_vp;
 		if ((error = vndsetcred(sc, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, VNDRW(sc), p->p_ucred, p);

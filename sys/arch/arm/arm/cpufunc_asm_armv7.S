@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.14 2016/08/15 21:08:56 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.15 2018/01/15 14:11:16 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -207,6 +207,17 @@ ENTRY(armv7_dcache_inv_range)
 	isb	sy
 	mov	pc, lr
 
+
+/*
+ * BTB functions.
+ */
+ENTRY(armv7_flush_bp)
+	mcr	CP15_BPIALL
+	mov	pc, lr
+
+ENTRY(cortex_a15_flush_bp)
+	mcr	CP15_ICIALLU		/* Heavy hammer; BPIALL is a no-op */
+	mov	pc, lr
 
 /*
  * Context switch.

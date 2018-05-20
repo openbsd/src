@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.24 2015/05/24 01:01:49 guenther Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.26 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -30,11 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Modified to deal with variable-length entries for amd64 by
- * fvdl@wasabisystems.com, may 2001
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
@@ -45,35 +40,7 @@
 #include <machine/pcb.h>
 
 /*
- * Allocate shadow GDT for a slave cpu.
- */
-void
-gdt_alloc_cpu(struct cpu_info *ci)
-{
-	struct vm_page *pg;
-	vaddr_t va;
-
-	ci->ci_gdt = (char *)uvm_km_valloc(kernel_map,
-	    GDT_SIZE + sizeof(*ci->ci_tss));
-	ci->ci_tss = (void *)(ci->ci_gdt + GDT_SIZE);
-	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-            (vaddr_t)ci->ci_gdt + GDT_SIZE, FALSE, FALSE);
-	for (va = (vaddr_t)ci->ci_gdt;
-	    va < (vaddr_t)ci->ci_gdt + GDT_SIZE + sizeof(*ci->ci_tss);
-	    va += PAGE_SIZE) {
-		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-		if (pg == NULL)
-			panic("gdt_init: no pages");
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), PROT_READ | PROT_WRITE);
-	}
-	memcpy(ci->ci_gdt, cpu_info_primary.ci_gdt, GDT_SIZE);
-	bzero(ci->ci_tss, sizeof(*ci->ci_tss));
-}
-
-
-/*
  * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a cpu knows who it is).
  */
 void
 gdt_init_cpu(struct cpu_info *ci)

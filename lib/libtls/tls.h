@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.51 2017/08/10 18:18:30 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.53 2018/02/10 04:58:08 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -27,7 +27,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define TLS_API	20170126
+#define TLS_API	20180210
 
 #define TLS_PROTOCOL_TLSv1_0	(1 << 1)
 #define TLS_PROTOCOL_TLSv1_1	(1 << 2)
@@ -128,6 +128,7 @@ int tls_config_set_ocsp_staple_mem(struct tls_config *_config,
 int tls_config_set_ocsp_staple_file(struct tls_config *_config,
     const char *_staple_file);
 int tls_config_set_protocols(struct tls_config *_config, uint32_t _protocols);
+int tls_config_set_session_fd(struct tls_config *_config, int _session_fd);
 int tls_config_set_verify_depth(struct tls_config *_config, int _verify_depth);
 
 void tls_config_prefer_ciphers_client(struct tls_config *_config);
@@ -188,6 +189,7 @@ const uint8_t *tls_peer_cert_chain_pem(struct tls *_ctx, size_t *_len);
 const char *tls_conn_alpn_selected(struct tls *_ctx);
 const char *tls_conn_cipher(struct tls *_ctx);
 const char *tls_conn_servername(struct tls *_ctx);
+int tls_conn_session_resumed(struct tls *_ctx);
 const char *tls_conn_version(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);

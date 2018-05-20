@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.51 2017/09/03 11:52:01 jca Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.61 2018/05/18 13:25:20 benno Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -410,9 +410,26 @@ c_whence(char **wp)
 	int pflag = 0, vflag = 0, Vflag = 0;
 	int ret = 0;
 	int optc;
-	int iam_whence = wp[0][0] == 'w';
+	int iam_whence;
 	int fcflags;
-	const char *options = iam_whence ? "pv" : "pvV";
+	const char *options;
+
+	switch (wp[0][0]) {
+	case 'c': /* command */
+		iam_whence = 0;
+		options = "pvV";
+		break;
+	case 't': /* type */
+		vflag = 1;
+		/* FALLTHROUGH */
+	case 'w': /* whence */
+		iam_whence = 1;
+		options = "pv";
+		break;
+	default:
+		bi_errorf("builtin not handled by %s", __func__);
+		return 1;
+	}
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != -1)
 		switch (optc) {
@@ -429,7 +446,6 @@ c_whence(char **wp)
 			return 1;
 		}
 	wp += builtin_opt.optind;
-
 
 	fcflags = FC_BI | FC_PATH | FC_FUNC;
 	if (!iam_whence) {
@@ -527,6 +543,13 @@ c_command(char **wp)
 	/* Let c_whence do the work.  Note that c_command() must be
 	 * a distinct function from c_whence() (tested in comexec()).
 	 */
+	return c_whence(wp);
+}
+
+int
+c_type(char **wp)
+{
+	/* Let c_whence do the work. type = command -V = whence -v */
 	return c_whence(wp);
 }
 
@@ -941,8 +964,8 @@ c_alias(char **wp)
 				afree(ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
-			newval = tflag ? search(alias, path, X_OK, NULL) :
-			    val;
+			newval = tflag ? search(alias, search_path, X_OK, NULL)
+			    : val;
 			if (newval) {
 				ap->val.s = str_save(newval, APERM);
 				ap->flag |= ALLOC|ISSET;
@@ -1017,7 +1040,7 @@ int
 c_let(char **wp)
 {
 	int rv = 1;
-	long val;
+	int64_t val;
 
 	if (wp[1] == NULL) /* at&t ksh does this */
 		bi_errorf("no arguments");
@@ -1068,7 +1091,6 @@ c_jobs(char **wp)
 	return rv;
 }
 
-#ifdef JOBS
 int
 c_fgbg(char **wp)
 {
@@ -1092,7 +1114,6 @@ c_fgbg(char **wp)
 	 */
 	return (bg || Flag(FPOSIX)) ? 0 : rv;
 }
-#endif
 
 struct kill_info {
 	int num_width;
@@ -1184,7 +1205,7 @@ c_kill(char **wp)
 					shprintf("%s%s", p, sigtraps[i].name);
 			shprintf("\n");
 		} else {
-			int mess_width = 0, w, i;
+			int mess_width = 0, w;
 			struct kill_info ki = {
 				.num_width = 1,
 				.name_width = 0,
@@ -1194,7 +1215,8 @@ c_kill(char **wp)
 				ki.num_width++;
 
 			for (i = 0; i < NSIG; i++) {
-				w = sigtraps[i].name ? strlen(sigtraps[i].name) :
+				w = sigtraps[i].name ?
+				    (int)strlen(sigtraps[i].name) :
 				    ki.num_width;
 				if (w > ki.name_width)
 					ki.name_width = w;
@@ -1274,7 +1296,7 @@ c_getopts(char **wp)
 	}
 
 	if (genv->loc->next == NULL) {
-		internal_errorf(0, "c_getopts: no argv");
+		internal_warningf("%s: no argv", __func__);
 		return 1;
 	}
 	/* Which arguments are we parsing... */
@@ -1385,9 +1407,7 @@ const struct builtin kshbuiltins [] = {
 	{"+command", c_command},
 	{"echo", c_print},
 	{"*=export", c_typeset},
-#ifdef HISTORY
 	{"+fc", c_fc},
-#endif /* HISTORY */
 	{"+getopts", c_getopts},
 	{"+jobs", c_jobs},
 	{"+kill", c_kill},
@@ -1395,13 +1415,12 @@ const struct builtin kshbuiltins [] = {
 	{"print", c_print},
 	{"pwd", c_pwd},
 	{"*=readonly", c_typeset},
+	{"type", c_type},
 	{"=typeset", c_typeset},
 	{"+unalias", c_unalias},
 	{"whence", c_whence},
-#ifdef JOBS
 	{"+bg", c_fgbg},
 	{"+fg", c_fgbg},
-#endif
 #ifdef EMACS
 	{"bind", c_bind},
 #endif

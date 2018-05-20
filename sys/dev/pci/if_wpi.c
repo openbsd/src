@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.140 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.144 2018/04/28 16:05:56 phessler Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1053,6 +1053,12 @@ wpi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			    sc->sc_dev.dv_xname);
 			return error;
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[nstate]);
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+		ieee80211_free_allnodes(ic, 1);
 		ic->ic_state = nstate;
 		return 0;
 
@@ -1968,7 +1974,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wpi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
@@ -1988,17 +1993,6 @@ wpi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				wpi_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCS80211POWER:
@@ -3326,9 +3320,6 @@ wpi_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

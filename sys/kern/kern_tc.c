@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.31 2017/03/07 20:22:37 dhill Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.32 2018/04/28 15:44:59 jasper Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -278,7 +278,7 @@ tc_init(struct timecounter *tc)
 	    tc->tc_frequency < timecounter->tc_frequency)
 		return;
 	(void)tc->tc_get_timecount(tc);
-	add_timer_randomness(tc->tc_get_timecount(tc));
+	enqueue_randomness(tc->tc_get_timecount(tc));
 
 	timecounter = tc;
 }
@@ -308,7 +308,7 @@ tc_setrealtimeclock(struct timespec *ts)
 	bintime_add(&bt2, &boottimebin);
 	boottimebin = bt;
 	bintime2timespec(&bt, &boottime);
-	add_timer_randomness(ts->tv_sec);
+	enqueue_randomness(ts->tv_sec);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
@@ -343,7 +343,7 @@ tc_setclock(struct timespec *ts)
 		return;
 	}
 
-	add_timer_randomness(ts->tv_sec);
+	enqueue_randomness(ts->tv_sec);
 
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &boottimebin);

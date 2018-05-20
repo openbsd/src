@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.24 2015/09/04 02:55:09 dlg Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.26 2018/05/03 15:47:41 zhuk Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -53,10 +53,16 @@ struct __kvm {
 	struct kinfo_file *filebase;
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
+
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */
 	int	arglen;		/* length of the above */
 	char	**argv;		/* (dynamic) storage for argv pointers */
 	int	argc;		/* length of above (not actual # present) */
+
+	char	*envspc, *envbuf; /* (dynamic) storage for environ strings */
+	int	envlen;		/* length of the above */
+	char	**envp;		/* (dynamic) storage for environ pointers */
+	int	envc;		/* length of above (not actual # present) */
 
 	/*
 	 * Header structures for kernel dumps. Only gets filled in for
@@ -106,3 +112,11 @@ void	 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 ssize_t	 _kvm_pread(kvm_t *, int, void *, size_t, off_t);
 ssize_t	 _kvm_pwrite(kvm_t *, int, const void *, size_t, off_t);
 __END_HIDDEN_DECLS
+
+
+#define	PROTO(x)	__dso_hidden typeof(x) x asm("__"#x)
+#define	DEF(x)		__strong_alias(x, __##x)
+
+PROTO(kvm_close);
+PROTO(kvm_nlist);
+PROTO(kvm_read);

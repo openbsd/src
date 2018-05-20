@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.152 2017/06/01 09:47:55 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.153 2018/03/05 11:32:05 jmatthew Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1276,13 +1276,15 @@ ohci_softintr(void *v)
 
 		cc = OHCI_TD_GET_CC(letoh32(std->td.td_flags));
 		if (cc == OHCI_CC_NO_ERROR) {
-			if (std->flags & OHCI_CALL_DONE) {
+			int done = (std->flags & OHCI_CALL_DONE);
+
+			ohci_free_std(sc, std);
+			if (done) {
 				xfer->status = USBD_NORMAL_COMPLETION;
 				s = splusb();
 				usb_transfer_complete(xfer);
 				splx(s);
 			}
-			ohci_free_std(sc, std);
 		} else {
 			/*
 			 * Endpoint is halted.  First unlink all the TDs
@@ -1429,7 +1431,7 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 
 	if (xfer->pipe->repeat) {
 		data = opipe->tail.td;
-		tail = ohci_alloc_std(sc); /* XXX should reuse TD */
+		tail = ohci_alloc_std(sc);
 		if (tail == NULL) {
 			xfer->status = USBD_NOMEM;
 			return;

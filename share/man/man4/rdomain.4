@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.10 2016/11/14 16:17:50 jmc Exp $
+.\"	$OpenBSD: rdomain.4,v 1.11 2018/03/10 15:50:31 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: March 10 2018 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -48,8 +48,7 @@ Each
 is a completely separate address space in the kernel.
 An IP address (e.g. 10.0.0.1/16) can be assigned in more than one
 .Nm rdomain ,
-but
-cannot be assigned more than once per
+but cannot be assigned more than once per
 .Nm rdomain .
 An interface belongs to one and only one
 .Nm rdomain .
@@ -87,7 +86,7 @@ The highest ID that can be used for an
 .Nm rdomain
 is 255.
 .Sh EXAMPLES
-Set up em0 and lo4 onto rdomain 4:
+Put em0 and lo4 in rdomain 4:
 .Bd -literal -offset indent
 # ifconfig em0 rdomain 4
 # ifconfig lo4 inet 127.0.0.1/8
@@ -100,7 +99,9 @@ Set a default route and localhost reject route within rdomain 4:
 # route -T4 -n add default 192.0.2.1
 .Ed
 .Pp
-Start an sshd in rdomain 4:
+Start
+.Xr sshd 8
+in rdomain 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
@@ -108,8 +109,10 @@ Display to which rdomain processes are assigned:
 .Pp
 .Dl # ps aux -o rtable
 .Pp
-pf.conf snippet to block incoming port 80, and nat-to and move to rtable 0
-on interface em1:
+A
+.Xr pf.conf 5
+snippet to block incoming port 80,
+and nat-to and move to rtable 0 on interface em1:
 .Bd -literal -offset indent
 block in on rdomain 4 proto tcp to any port 80
 match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
@@ -124,16 +127,14 @@ match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Sh HISTORY
 .Ox
 support for
-.\" XXX - rdomains, not 'rtable'
-.\" .Nm
-rdomains
+.Nm rdomain
 first appeared in
 .Ox 4.9
 and IPv6 support first appeared in
 .Ox 5.5 .
 .Sh CAVEATS
-When an rtable already exists a new domain with the same ID cannot be created.
-Since there is no command to destroy an rtable
+When an rtable already exists, a new domain with the same ID cannot be created.
+Since there is no command to destroy an rtable,
 a reboot is necessary.
 .Pp
 No tool is available to assign more than one rtable to an rdomain

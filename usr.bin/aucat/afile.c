@@ -686,17 +686,14 @@ afile_au_readhdr(struct afile *f)
 	case AU_FMT_ULAW:
 		f->fmt = AFILE_FMT_ULAW;
 		f->par.bits = 8;
-		f->par.bps = 1;
 		break;
 	case AU_FMT_ALAW:
 		f->fmt = AFILE_FMT_ALAW;
 		f->par.bits = 8;
-		f->par.bps = 1;
 		break;
 	case AU_FMT_FLOAT:
 		f->fmt = AFILE_FMT_FLOAT;
 		f->par.bits = 32;
-		f->par.bps = 4;
 		break;
 	default:
 		log_puts(f->path);

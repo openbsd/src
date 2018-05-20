@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.59 2017/07/20 22:29:26 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.60 2017/10/26 15:00:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1469,7 +1469,6 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct otus_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -1496,15 +1495,6 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			otus_stop(ifp);
 
 		sc->sc_if_flags = ifp->if_flags;
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		error = ieee80211_ioctl(ifp, cmd, data);

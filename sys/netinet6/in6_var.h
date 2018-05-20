@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.69 2017/08/15 06:08:52 florian Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.72 2018/05/06 15:21:25 florian Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -107,9 +107,6 @@ struct	in6_ifaddr {
 	int	ia6_flags;
 
 	struct in6_addrlifetime ia6_lifetime;
-	time_t	ia6_createtime; /* the creation time of this address, which is
-				 * currently used for temporary addresses only.
-				 */
 	time_t	ia6_updatetime;
 
 	/* multicast addresses joined from the kernel */
@@ -278,44 +275,21 @@ struct	in6_aliasreq {
 #define IFA_IN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_addr))->sin6_addr)
 #define IFA_DSTIN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_dstaddr))->sin6_addr)
 
-#ifdef _KERNEL
-#define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
-	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
-	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
-	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
-	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
-#endif /* _KERNEL */
-
-#define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
+#define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
+#define SIOCAIFADDR_IN6		 _IOW('i', 26, struct in6_aliasreq)
 
 #define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
 
-#define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
-#define SIOCAIFADDR_IN6		 _IOW('i', 26, struct in6_aliasreq)
-
-#define SIOCSIFPHYADDR_IN6       _IOW('i', 70, struct in6_aliasreq)
-#define	SIOCGIFPSRCADDR_IN6	_IOWR('i', 71, struct in6_ifreq)
-#define	SIOCGIFPDSTADDR_IN6	_IOWR('i', 72, struct in6_ifreq)
-
 #define SIOCGIFAFLAG_IN6	_IOWR('i', 73, struct in6_ifreq)
 
 #define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
-#define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
-#define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
-#define SIOCSRTRFLUSH_IN6	_IOWR('i', 80, struct in6_ifreq)
 
 #define SIOCGIFALIFETIME_IN6	_IOWR('i', 81, struct in6_ifreq)
-#define SIOCGIFSTAT_IN6		_IOWR('i', 83, struct in6_ifreq)
-#define SIOCGIFSTAT_ICMP6	_IOWR('i', 84, struct in6_ifreq)
 
-#define SIOCSIFINFO_FLAGS	_IOWR('i', 87, struct in6_ndireq) /* XXX */
-
-#define SIOCGETSGCNT_IN6	_IOWR('u', 106, \
-				      struct sioc_sg_req6) /* get s,g pkt cnt */
-#define SIOCGETMIFCNT_IN6	_IOWR('u', 107, \
-				      struct sioc_mif_req6) /* get pkt cnt per if */
+#define SIOCGETSGCNT_IN6	_IOWR('u', 106, struct sioc_sg_req6)
+#define SIOCGETMIFCNT_IN6	_IOWR('u', 107, struct sioc_mif_req6)
 
 #define IN6_IFF_ANYCAST		0x01	/* anycast address */
 #define IN6_IFF_TENTATIVE	0x02	/* tentative address */
@@ -326,6 +300,12 @@ struct	in6_aliasreq {
 #define IN6_IFF_PRIVACY		0x80	/* RFC 4941 temporary address */
 
 #ifdef _KERNEL
+#define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
+	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
+	(((d)->s6_addr32[1] ^ (a)->s6_addr32[1]) & (m)->s6_addr32[1]) == 0 && \
+	(((d)->s6_addr32[2] ^ (a)->s6_addr32[2]) & (m)->s6_addr32[2]) == 0 && \
+	(((d)->s6_addr32[3] ^ (a)->s6_addr32[3]) & (m)->s6_addr32[3]) == 0 )
+
 #define IN6_ARE_SCOPE_CMP(a,b) ((a)-(b))
 #define IN6_ARE_SCOPE_EQUAL(a,b) ((a)==(b))
 

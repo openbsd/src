@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.15 2017/07/31 04:23:30 dlg Exp $	*/
+/*	$OpenBSD: pool.c,v 1.17 2018/02/11 09:47:33 martijn Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -74,6 +74,7 @@ int num_pools = 0;
 struct pool_info *pools = NULL;
 int num_pool_caches = 0;
 struct pool_cache_info *pool_caches = NULL;
+size_t pool_caches_size = 0;
 
 int ncpusfound = 0;
 
@@ -137,6 +138,14 @@ void	pool_cache_print(void);
 int	pool_cache_read(void);
 void	pool_cache_sort(void);
 void	pool_cache_show(const struct pool_cache_info *);
+int	pool_cache_sort_name_callback(const void *, const void *);
+int	pool_cache_sort_len_callback(const void *, const void *);
+int	pool_cache_sort_idle_callback(const void *, const void *);
+int	pool_cache_sort_ngc_callback(const void *, const void *);
+int	pool_cache_sort_req_callback(const void *, const void *);
+int	pool_cache_sort_put_callback(const void *, const void *);
+int	pool_cache_sort_lreq_callback(const void *, const void *);
+int	pool_cache_sort_lput_callback(const void *, const void *);
 int	pool_cache_kbd_cb(int);
 
 field_def pool_cache_fields[] = {
@@ -175,16 +184,21 @@ field_def *view_pool_cache_0[] = {
 };
 
 order_type pool_cache_order_list[] = {
-	{"name", "name", 'N', sort_name_callback},
-	{"requests", "requests", 'G', sort_req_callback},
-	{"releases", "releases", 'P', sort_req_callback},
+	{"name", "name", 'N', pool_cache_sort_name_callback},
+	{"len", "len", 'L', pool_cache_sort_len_callback},
+	{"idle", "idle", 'I', pool_cache_sort_idle_callback},
+	{"ngc", "ngc", 'G', pool_cache_sort_ngc_callback},
+	{"requests", "requests", 'Q', pool_cache_sort_req_callback},
+	{"releases", "releases", 'P', pool_cache_sort_put_callback},
+	{"listrequests", "listrequests", 'E', pool_cache_sort_req_callback},
+	{"listreleases", "listreleases", 'U', pool_cache_sort_put_callback},
 	{NULL, NULL, 0, NULL}
 };
 
 /* Define view managers */
 struct view_manager pool_cache_mgr = {
 	"PoolCache",
-	select_pool,
+	NULL,
 	pool_cache_read,
 	pool_cache_sort,
 	print_header,
@@ -245,19 +259,13 @@ int
 sort_psize_callback(const void *s1, const void *s2)
 {
 	struct pool_info *p1, *p2;
-	size_t ps1, ps2;
 
 	p1 = (struct pool_info *)s1;
 	p2 = (struct pool_info *)s2;
 
-	ps1  = (size_t)(p1->pool.pr_nget - p1->pool.pr_nput) *
-	    (size_t)p1->pool.pr_size;
-	ps2  = (size_t)(p2->pool.pr_nget - p2->pool.pr_nput) *
-	    (size_t)p2->pool.pr_size;
-
-	if (ps1 <  ps2)
+	if (p1->pool.pr_size <  p2->pool.pr_size)
 		return sortdir;
-	if (ps1 >  ps2)
+	if (p1->pool.pr_size >  p2->pool.pr_size)
 		return -sortdir;
 
 	return sort_npage_callback(s1, s2);
@@ -450,7 +458,7 @@ pool_cache_read(void)
 		return (-1);
 	}
 
-	if (np > num_pool_caches) {
+	if (np > pool_caches_size) {
 		pc = reallocarray(pool_caches, np, sizeof(*pc));
 		if (pc == NULL) {
 			error("realloc: %s", strerror(errno));
@@ -459,7 +467,7 @@ pool_cache_read(void)
 		/* commit to using the new memory */
 		pool_caches = pc;
 
-		for (i = num_pool_caches; i < np; i++) {
+		for (i = pool_caches_size; i < np; i++) {
 			pc = &pool_caches[i];
 			pc->name[0] = '\0';
 
@@ -472,11 +480,12 @@ pool_cache_read(void)
 		}
 
 		/* commit to using the new cache_infos */
-		num_pool_caches = np;
+		pool_caches_size = np;
 	}
 
-	for (i = 0; i < num_pool_caches; i++) {
-		pc = &pool_caches[i];
+	num_pool_caches = 0;
+	for (i = 0; i < pool_caches_size; i++) {
+		pc = &pool_caches[num_pool_caches];
 		np = i + 1;
 
 		if (pool_get_cache(np, &pc->cache) < 0 ||
@@ -487,12 +496,13 @@ pool_cache_read(void)
 
 		if (pool_get_name(np, pc->name, sizeof(pc->name)) < 0)
 			snprintf(pc->name, sizeof(pc->name), "#%d#", i + 1);
+		num_pool_caches++;
 	}
 
 	return 0;
 
 unalloc:
-	while (i > num_pool_caches) {
+	while (i > pool_caches_size) {
 		pc = &pool_caches[--i];
 		free(pc->cache_cpus);
 	}
@@ -502,7 +512,6 @@ unalloc:
 void
 pool_cache_sort(void)
 {
-	/* XXX */
 	order_type *ordering;
 
 	if (curr_mgr == NULL)
@@ -514,12 +523,12 @@ pool_cache_sort(void)
 		return;
 	if (ordering->func == NULL)
 		return;
-	if (pools == NULL)
+	if (pool_caches == NULL)
 		return;
-	if (num_pools <= 0)
+	if (num_pool_caches <= 0)
 		return;
 
-	mergesort(pools, num_pools, sizeof(struct pool_info), ordering->func);
+	mergesort(pool_caches, num_pool_caches, sizeof(*pool_caches), ordering->func);
 }
 
 void
@@ -571,10 +580,192 @@ pool_cache_show(const struct pool_cache_info *pc)
 		print_fld_size(FLD_POOL_CACHE_LPUT, kpcc->pr_nlput);
 		end_line();
 	}
-
 }
 
-static int
+int
+pool_cache_sort_name_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	return strcmp(pc1->name, pc2->name) * sortdir;
+}
+
+int
+pool_cache_sort_len_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	if (pc1->cache.pr_len <  pc2->cache.pr_len)
+		return sortdir;
+	if (pc1->cache.pr_len >  pc2->cache.pr_len)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_idle_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	if (pc1->cache.pr_nitems <  pc2->cache.pr_nitems)
+		return sortdir;
+	if (pc1->cache.pr_nitems >  pc2->cache.pr_nitems)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_ngc_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	if (pc1->cache.pr_ngc <  pc2->cache.pr_ngc)
+		return sortdir;
+	if (pc1->cache.pr_ngc >  pc2->cache.pr_ngc)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_req_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	uint64_t nget1 = 0, nget2 = 0;
+	int oflow1 = 0, oflow2 = 0;
+	int cpu;
+
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		if (nget1 + pc1->cache_cpus->pr_nget < nget1)
+			oflow1++;
+		nget1 += pc1->cache_cpus->pr_nget;
+		if (nget2 + pc2->cache_cpus->pr_nget < nget2)
+			oflow2++;
+		nget2 += pc2->cache_cpus->pr_nget;
+	}
+
+	if (oflow1 < oflow2)
+		return sortdir;
+	if (oflow1 > oflow2)
+		return -sortdir;
+	if (nget1 < nget2)
+		return sortdir;
+	if (nget1 > nget2)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_put_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	uint64_t nput1 = 0, nput2 = 0;
+	int oflow1 = 0, oflow2 = 0;
+	int cpu;
+
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		if (nput1 + pc1->cache_cpus->pr_nput < nput1)
+			oflow1++;
+		nput1 += pc1->cache_cpus->pr_nput;
+		if (nput2 + pc2->cache_cpus->pr_nput < nput2)
+			oflow2++;
+		nput2 += pc2->cache_cpus->pr_nput;
+	}
+
+	if (oflow1 < oflow2)
+		return sortdir;
+	if (oflow1 > oflow2)
+		return -sortdir;
+	if (nput1 < nput2)
+		return sortdir;
+	if (nput1 > nput2)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_lreq_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	uint64_t nlget1 = 0, nlget2 = 0;
+	int oflow1 = 0, oflow2 = 0;
+	int cpu;
+
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		if (nlget1 + pc1->cache_cpus->pr_nlget < nlget1)
+			oflow1++;
+		nlget1 += pc1->cache_cpus->pr_nlget;
+		if (nlget2 + pc2->cache_cpus->pr_nlget < nlget2)
+			oflow2++;
+		nlget2 += pc2->cache_cpus->pr_nlget;
+	}
+
+	if (oflow1 < oflow2)
+		return sortdir;
+	if (oflow1 > oflow2)
+		return -sortdir;
+	if (nlget1 < nlget2)
+		return sortdir;
+	if (nlget1 > nlget2)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
+pool_cache_sort_lput_callback(const void *s1, const void *s2)
+{
+	struct pool_cache_info *pc1, *pc2;
+	uint64_t nlput1 = 0, nlput2 = 0;
+	int oflow1 = 0, oflow2 = 0;
+	int cpu;
+
+	pc1 = (struct pool_cache_info *)s1;
+	pc2 = (struct pool_cache_info *)s2;
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		if (nlput1 + pc1->cache_cpus->pr_nlput < nlput1)
+			oflow1++;
+		nlput1 += pc1->cache_cpus->pr_nlput;
+		if (nlput2 + pc2->cache_cpus->pr_nlput < nlput2)
+			oflow2++;
+		nlput2 += pc2->cache_cpus->pr_nlput;
+	}
+
+	if (oflow1 < oflow2)
+		return sortdir;
+	if (oflow1 > oflow2)
+		return -sortdir;
+	if (nlput1 < nlput2)
+		return sortdir;
+	if (nlput1 > nlput2)
+		return -sortdir;
+
+	return pool_cache_sort_name_callback(s1, s2);
+}
+
+int
 pool_get_npools(void)
 {
 	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_NPOOLS };

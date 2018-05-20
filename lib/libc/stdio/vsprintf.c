@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsprintf.c,v 1.16 2009/11/09 00:18:28 kurt Exp $ */
+/*	$OpenBSD: vsprintf.c,v 1.17 2017/11/28 06:55:49 tb Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 
 #if defined(APIWARN)
 __warn_references(vsprintf,
-    "warning: vsprintf() is often misused, please use vsnprintf()");
+    "vsprintf() is often misused, please use vsnprintf()");
 #endif
 
 int

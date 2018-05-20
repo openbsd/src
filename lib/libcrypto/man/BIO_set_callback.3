@@ -1,8 +1,26 @@
-.\"	$OpenBSD: BIO_set_callback.3,v 1.5 2016/12/06 14:45:08 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: BIO_set_callback.3,v 1.9 2018/03/29 20:42:17 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2000, 2016 The OpenSSL Project.  All rights reserved.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2000, 2016, 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2016 $
+.Dd $Mdocdate: March 29 2018 $
 .Dt BIO_SET_CALLBACK 3
 .Os
 .Sh NAME
@@ -141,20 +159,37 @@ depends on the value of
 .Fa oper
 (i.e. the operation being performed).
 .Pp
+When
+.Fa oper
+does not include
+.Dv BIO_CB_RETURN ,
+i.e. when the callback is invoked before an operation,
+the value passed into the callback via
 .Fa ret
-is the return value that would be returned to the application
+is always 1.
+In this case, if the callback returns a negative value, the library
+aborts the requested operation and instead returns the negative
+return value from the callback to the application.
+If the callback returns a non-negative value, that return value is
+ignored by the library, and the operation is performed normally.
+.Pp
+When
+.Fa oper
+includes
+.Dv BIO_CB_RETURN ,
+i.e. when the callback is invoked after an operation,
+the value passed into the callback via
+.Fa ret
+is the return value that the operation would return to the application
 if no callback were present.
-The actual value returned is the return value of the callback itself.
-In the case of callbacks called before the actual BIO operation,
-1 is placed in
-.Fa ret .
-If the return value is not positive, it will be immediately returned to
-the application and the BIO operation will not be performed.
+When a callback is present, the operation only passes this value
+to the callback and instead of it returns the return value of the
+callback to the application.
 .Pp
 The callback should normally simply return
 .Fa ret
-when it has finished processing, unless it specifically wishes
-to modify the value returned to the application.
+when it has finished processing, unless it specifically wishes to
+abort the operation or to modify the value returned to the application.
 .Ss Callback operations
 .Bl -tag -width Ds
 .It Fn BIO_free b
@@ -176,9 +211,9 @@ is called before the operation and
 .Fn callback b BIO_CB_GETS|BIO_CB_RETURN out outl 0L ret
 after.
 .It Fn BIO_puts b in
-.Fn callback b BIO_CB_WRITE in 0 0L 1L
+.Fn callback b BIO_CB_PUTS in 0 0L 1L
 is called before the operation and
-.Fn callback b BIO_CB_WRITE|BIO_CB_RETURN in 0 0L ret
+.Fn callback b BIO_CB_PUTS|BIO_CB_RETURN in 0 0L ret
 after.
 .It Fn BIO_ctrl b oper larg parg
 .Fn callback b BIO_CB_CTRL parg oper larg 1L
@@ -186,6 +221,33 @@ is called before the call and
 .Fn callback b BIO_CB_CTRL|BIO_CB_RETURN parg oper larg ret
 after.
 .El
+.Sh RETURN VALUES
+.Fn BIO_get_callback
+returns a pointer to the function
+.Fa cb
+previously installed with
+.Fn BIO_set_callback ,
+or
+.Dv NULL
+if no callback was installed.
+.Pp
+.Fn BIO_get_callback_arg
+returns a pointer to the
+.Fa arg
+previously set with
+.Fn BIO_set_callback_arg ,
+or
+.Dv NULL
+if no such argument was set.
+.Pp
+.Fn BIO_debug_callback
+returns
+.Fa ret
+if the bit
+.Dv BIO_CB_RETURN
+is set in
+.Fa cmd ,
+or 1 otherwise.
 .Sh EXAMPLES
 The
 .Fn BIO_debug_callback
@@ -194,3 +256,14 @@ Its source is in the file
 .Pa crypto/bio/bio_cb.c .
 .Sh SEE ALSO
 .Xr BIO_new 3
+.Sh HISTORY
+.Fn BIO_set_callback ,
+.Fn BIO_get_callback ,
+.Fn BIO_set_callback_arg ,
+and
+.Fn BIO_debug_callback
+first appeared in SSLeay 0.6.0.
+.Fn BIO_get_callback_arg
+first appeared in SSLeay 0.8.0.
+All these functions have been available since
+.Ox 2.4 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-for-gcc.h,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: softfloat-for-gcc.h,v 1.2 2017/12/26 15:11:17 kettenis Exp $	*/
 /* $NetBSD: softfloat-for-gcc.h,v 1.6 2003/07/26 19:24:51 salo Exp $ */
 
 /*
@@ -42,3 +42,25 @@
 #define float32_to_float64		__extendsfdf2
 #define float64_to_float32		__truncdfsf2
 
+#ifdef __ARM_EABI__
+__strong_alias(__aeabi_fadd, __addsf3);
+__strong_alias(__aeabi_dadd, __adddf3);
+__strong_alias(__aeabi_fsub, __subsf3);
+__strong_alias(__aeabi_dsub, __subdf3);
+__strong_alias(__aeabi_fmul, __mulsf3);
+__strong_alias(__aeabi_dmul, __muldf3);
+__strong_alias(__aeabi_fdiv, __divsf3);
+__strong_alias(__aeabi_ddiv, __divdf3);
+__strong_alias(__aeabi_i2f, __floatsisf);
+__strong_alias(__aeabi_i2d, __floatsidf);
+__strong_alias(__aeabi_l2f, __floatdisf);
+__strong_alias(__aeabi_l2d, __floatdidf);
+__strong_alias(__aeabi_f2iz, __fixsfsi);
+__strong_alias(__aeabi_d2iz, __fixdfsi);
+__strong_alias(__aeabi_f2lz, __fixsfdi);
+__strong_alias(__aeabi_d2lz, __fixdfdi);
+__strong_alias(__aeabi_f2uiz, __fixunssfsi);
+__strong_alias(__aeabi_d2uiz, __fixunsdfsi);
+__strong_alias(__aeabi_f2d, __extendsfdf2);
+__strong_alias(__aeabi_d2f, __truncdfsf2);
+#endif

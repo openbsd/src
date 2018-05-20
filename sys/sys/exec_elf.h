@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.75 2017/09/05 06:35:19 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.80 2018/01/22 09:01:39 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -187,12 +187,14 @@ typedef struct {
 #define EM_PARISC	15		/* HPPA */
 #define EM_SPARC32PLUS	18		/* Enhanced instruction set SPARC */
 #define EM_PPC		20		/* PowerPC */
+#define EM_PPC64	21		/* PowerPC 64 */
 #define EM_ARM		40		/* Advanced RISC Machines ARM */
 #define EM_ALPHA	41		/* DEC ALPHA */
-#define	EM_SH		42		/* Hitachi/Renesas Super-H */
+#define EM_SH		42		/* Hitachi/Renesas Super-H */
 #define EM_SPARCV9	43		/* SPARC version 9 */
 #define EM_IA_64	50		/* Intel IA-64 Processor */
 #define EM_AMD64	62		/* AMD64 architecture */
+#define EM_X86_64	EM_AMD64
 #define EM_VAX		75		/* DEC VAX */
 #define EM_AARCH64	183		/* ARM 64-bit architecture (AArch64) */
 
@@ -241,22 +243,24 @@ typedef struct {
 #define SHN_HIPROC	0xff1f		/*   specific section indexes */
 #define SHN_ABS		0xfff1		/* absolute value */
 #define SHN_COMMON	0xfff2		/* common symbol */
+#define SHN_XINDEX	0xffff		/* Escape -- index stored elsewhere. */
 #define SHN_HIRESERVE	0xffff		/* upper bounds of reserved indexes */
 
 /* sh_type */
-#define SHT_NULL	0		/* inactive */
-#define SHT_PROGBITS	1		/* program defined information */
-#define SHT_SYMTAB	2		/* symbol table section */
-#define SHT_STRTAB	3		/* string table section */
-#define SHT_RELA	4		/* relocation section with addends*/
-#define SHT_HASH	5		/* symbol hash table section */
-#define SHT_DYNAMIC	6		/* dynamic section */
-#define SHT_NOTE	7		/* note section */
-#define SHT_NOBITS	8		/* no space section */
-#define SHT_REL		9		/* relation section without addends */
-#define SHT_SHLIB	10		/* reserved - purpose unknown */
-#define SHT_DYNSYM	11		/* dynamic symbol table section */
-#define SHT_NUM		12		/* number of section types */
+#define SHT_NULL		0	/* inactive */
+#define SHT_PROGBITS		1	/* program defined information */
+#define SHT_SYMTAB		2	/* symbol table section */
+#define SHT_STRTAB		3	/* string table section */
+#define SHT_RELA		4	/* relocation section with addends*/
+#define SHT_HASH		5	/* symbol hash table section */
+#define SHT_DYNAMIC		6	/* dynamic section */
+#define SHT_NOTE		7	/* note section */
+#define SHT_NOBITS		8	/* no space section */
+#define SHT_REL			9	/* relation section without addends */
+#define SHT_SHLIB		10	/* reserved - purpose unknown */
+#define SHT_DYNSYM		11	/* dynamic symbol table section */
+#define SHT_NUM			12	/* number of section types */
+#define SHT_SYMTAB_SHNDX	18	/* Section indexes (see SHN_XINDEX). */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
@@ -285,13 +289,22 @@ typedef struct {
 #define ELF_STRTAB      ".strtab"	/* string table */
 #define ELF_SYMTAB      ".symtab"	/* symbol table */
 #define ELF_TEXT        ".text"		/* code */
+#define ELF_OPENBSDRANDOMDATA ".openbsd.randomdata" /* constant randomdata */
 
 
 /* Section Attribute Flags - sh_flags */
-#define SHF_WRITE	0x1		/* Writable */
-#define SHF_ALLOC	0x2		/* occupies memory */
-#define SHF_EXECINSTR	0x4		/* executable */
-#define SHF_TLS		0x400		/* thread local storage */
+#define SHF_WRITE		0x1	/* Writable */
+#define SHF_ALLOC		0x2	/* occupies memory */
+#define SHF_EXECINSTR		0x4	/* executable */
+#define SHF_MERGE		0x10	/* may be merged */
+#define SHF_STRINGS		0x20	/* contains strings */
+#define SHF_INFO_LINK		0x40	/* sh_info holds section index */
+#define SHF_LINK_ORDER		0x80	/* ordering requirements */
+#define SHF_OS_NONCONFORMING	0x100	/* OS-specific processing required */
+#define SHF_GROUP		0x200	/* member of section group */
+#define SHF_TLS			0x400	/* thread local storage */
+#define SHF_COMPRESSED		0x800	/* contains compressed data */
+#define SHF_MASKOS	0x0ff00000	/* OS-specific semantics */
 #define SHF_MASKPROC	0xf0000000	/* reserved bits for processor */
 					/*  specific section attributes */
 
@@ -343,6 +356,16 @@ typedef struct {
 #define STT_TLS		6		/* thread local storage */
 #define STT_LOPROC	13		/* reserved range for processor */
 #define STT_HIPROC	15		/*  specific symbol types */
+
+/* Extract symbol visibility - st_other */
+#define ELF_ST_VISIBILITY(v)		((v) & 0x3)
+#define ELF32_ST_VISIBILITY		ELF_ST_VISIBILITY
+#define ELF64_ST_VISIBILITY		ELF_ST_VISIBILITY
+
+#define STV_DEFAULT	0		/* Visibility set by binding type */
+#define STV_INTERNAL	1		/* OS specific version of STV_HIDDEN */
+#define STV_HIDDEN	2		/* can only be seen inside own .so */
+#define STV_PROTECTED	3		/* HIDDEN inside, DEFAULT outside */
 
 /* Relocation entry with implicit addend */
 typedef struct {
@@ -557,6 +580,11 @@ typedef struct {
 	Elf64_Half descsz;
 	Elf64_Half type;
 } Elf64_Note;
+
+/* Values for n_type. */
+#define NT_PRSTATUS		1	/* Process status. */
+#define NT_FPREGSET		2	/* Floating point registers. */
+#define NT_PRPSINFO		3	/* Process state info. */
 
 /*
  * OpenBSD-specific core file information.

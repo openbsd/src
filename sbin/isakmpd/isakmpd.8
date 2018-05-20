@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.118 2016/03/05 08:38:36 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.120 2018/04/17 12:13:29 stsp Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 5 2016 $
+.Dd $Mdocdate: April 17 2018 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon establishes security associations for encrypted
+daemon establishes Security Associations (SAs) for encrypted
 and/or authenticated network traffic.
 At this moment, and probably forever, this means
 .Xr ipsec 4
@@ -212,8 +212,7 @@ option is used to make the daemon run in the foreground, logging to stderr.
 .It Fl f Ar fifo
 The
 .Fl f
-option specifies the
-.Tn FIFO
+option specifies the FIFO
 (a.k.a. named pipe) where the daemon listens for
 user requests.
 If the path given is a dash
@@ -807,8 +806,17 @@ It is not possible to change the interfaces
 .Nm
 listens on without a restart.
 .Pp
-For redundant setups,
+For redundant setups with
+.Xr carp 4
+and
+.Xr sasyncd 8 ,
 .Xr sasyncd 8
 must be manually restarted every time
 .Nm
-is restarted.
+is restarted, and
+.Xr isakmpd.conf 5
+must explicitly configure
+.Nm
+to listen on the virtual IP address of each
+.Xr carp 4
+interface.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DIST_POINT_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: DIST_POINT_new.3,v 1.4 2018/03/23 04:34:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt DIST_POINT_NEW 3
 .Os
 .Sh NAME
@@ -135,3 +135,19 @@ section 4.2.1.13: CRL Distribution Points
 .It
 section 5.2.5: Issuing Distribution Point
 .El
+.Sh HISTORY
+.Fn DIST_POINT_new ,
+.Fn DIST_POINT_free ,
+.Fn CRL_DIST_POINTS_new ,
+.Fn CRL_DIST_POINTS_free ,
+.Fn DIST_POINT_NAME_new ,
+and
+.Fn DIST_POINT_NAME_free
+first appeared in OpenSSL 0.9.3 and have been available since
+.Ox 2.6 .
+.Pp
+.Fn ISSUING_DIST_POINT_new
+and
+.Fn ISSUING_DIST_POINT_free
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .

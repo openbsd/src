@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: fp.h,v 1.2 2018/01/26 16:22:20 kettenis Exp $	*/
 /*	$NetBSD: fp.h,v 1.1 2001/01/10 19:02:06 bjh21 Exp $	*/
 
 /*
@@ -58,19 +58,6 @@ typedef struct fp_extended_precision {
 } fp_extended_precision_t;
 
 typedef struct fp_extended_precision fp_reg_t;
-
-/*
- * Information about the FPE-SP state that is stored in the pcb
- *
- * This needs to move and be hidden from userland.
- */
-
-struct fpe_sp_state {
-	unsigned int fp_flags;
-	unsigned int fp_sr;
-	unsigned int fp_cr;
-	fp_reg_t fp_registers[16];
-};
 
 /*
  * Type for a saved FP context, if we want to translate the context to a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2017/08/15 06:13:24 guenther Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2018/05/17 20:28:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Dale Rahn. All rights reserved.
@@ -41,7 +41,6 @@ _atomic_lock(volatile _atomic_lock_t *lock)
 		"   strex %2, %3, [%1]  \n"
 		"   cmp %2, #0          \n"
 		"   bne 1b              \n"
-		"   dmb sy              \n"
 		: "+r" (old), "+r" (lock), "+r" (scratch)
 		: "r" (_ATOMIC_LOCK_LOCKED));
 

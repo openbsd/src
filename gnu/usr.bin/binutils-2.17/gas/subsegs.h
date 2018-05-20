@@ -40,6 +40,8 @@
 
 #include "obstack.h"
 
+struct frch_cfi_data;
+
 struct frchain			/* control building of a frag chain */
 {				/* FRCH = FRagment CHain control */
   struct frag *frch_root;	/* 1st struct frag in chain, or NULL */
@@ -51,6 +53,7 @@ struct frchain			/* control building of a frag chain */
   fixS *fix_tail;		/* Last fixup for this subsegment.  */
   struct obstack frch_obstack;	/* for objects in this frag chain */
   fragS *frch_frag_now;		/* frag_now for this subsegment */
+  struct frch_cfi_data *frch_cfi_data;
 };
 
 typedef struct frchain frchainS;

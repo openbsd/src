@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.76 2015/12/10 17:27:00 mmcc Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.77 2017/11/08 13:33:49 patrick Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -606,11 +606,12 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 	enum cryptoerr  err;
 
 	/* Compute Diffie-Hellman shared value.  */
-	ie->g_xy = malloc(ie->g_x_len);
+	ie->g_xy_len = dh_secretlen(ie->group);
+	ie->g_xy = malloc(ie->g_xy_len);
 	if (!ie->g_xy) {
 		/* XXX How to notify peer?  */
 		log_error("ike_phase_1_post_exchange_KE_NONCE: "
-		    "malloc (%lu) failed", (unsigned long)ie->g_x_len);
+		    "malloc (%lu) failed", (unsigned long)ie->g_xy_len);
 		return -1;
 	}
 	if (dh_create_shared(ie->group, ie->g_xy,
@@ -621,7 +622,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 	}
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80,
 	    "ike_phase_1_post_exchange_KE_NONCE: g^xy", ie->g_xy,
-	    ie->g_x_len));
+	    ie->g_xy_len));
 
 	/* Compute the SKEYID depending on the authentication method.  */
 	ie->skeyid = ie->ike_auth->gen_skeyid(exchange, &ie->skeyid_len);
@@ -647,7 +648,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 		return -1;
 	}
 	prf->Init(prf->prfctx);
-	prf->Update(prf->prfctx, ie->g_xy, ie->g_x_len);
+	prf->Update(prf->prfctx, ie->g_xy, ie->g_xy_len);
 	prf->Update(prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
 	prf->Update(prf->prfctx, (unsigned char *)"\0", 1);
 	prf->Final(ie->skeyid_d, prf->prfctx);
@@ -665,7 +666,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 	}
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, ie->skeyid_d, ie->skeyid_len);
-	prf->Update(prf->prfctx, ie->g_xy, ie->g_x_len);
+	prf->Update(prf->prfctx, ie->g_xy, ie->g_xy_len);
 	prf->Update(prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
 	prf->Update(prf->prfctx, (unsigned char *)"\1", 1);
 	prf->Final(ie->skeyid_a, prf->prfctx);
@@ -684,7 +685,7 @@ ike_phase_1_post_exchange_KE_NONCE(struct message *msg)
 	}
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, ie->skeyid_a, ie->skeyid_len);
-	prf->Update(prf->prfctx, ie->g_xy, ie->g_x_len);
+	prf->Update(prf->prfctx, ie->g_xy, ie->g_xy_len);
 	prf->Update(prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
 	prf->Update(prf->prfctx, (unsigned char *)"\2", 1);
 	prf->Final(ie->skeyid_e, prf->prfctx);

@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.35 2017/09/18 07:42:52 mpi Exp $	 */
+/* $OpenBSD: exchange.h,v 1.37 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -72,7 +72,7 @@ struct exchange {
 	 * has been run to its end, successfully.  The 2nd argument is true
 	 * if the finalization hook is called due to the exchange not running
 	 * to its end normally.
-         */
+	 */
 	void            (*finalize)(struct exchange *, void *, int);
 	void           *finalize_arg;
 
@@ -82,13 +82,13 @@ struct exchange {
 	/*
 	 * The event that will occur when it has taken too long time to try to
 	 * run the exchange and which will trigger auto-destruction.
-         */
+	 */
 	struct event   *death;
 
 	/*
 	 * Both initiator and responder cookies.
 	 * XXX For code clarity we might split this into two fields.
-         */
+	 */
 	u_int8_t        cookies[ISAKMP_HDR_COOKIES_LEN];
 
 	/* The message ID signifying phase 2 exchanges.  */
@@ -115,7 +115,7 @@ struct exchange {
 	/*
 	 * A "program counter" into the script that validate message contents
 	 * for this exchange.
-         */
+	 */
 	int16_t        *exch_pc;
 
 	/* The last message received, used for checking for duplicates.  */
@@ -127,13 +127,13 @@ struct exchange {
 	/*
 	 * If some message is queued up for sending, we want to be able to
 	 * remove it from the queue, when the exchange is deleted.
-         */
+	 */
 	struct message *in_transit;
 
 	/*
 	 * Initiator's & responder's nonces respectively, with lengths.
 	 * XXX Should this be in the DOI-specific parts instead?
-         */
+	 */
 	u_int8_t       *nonce_i;
 	size_t          nonce_i_len;
 	u_int8_t       *nonce_r;
@@ -165,7 +165,7 @@ struct exchange {
 	/*
 	 * Received certificate - used to verify signatures on packet,
 	 * stored here for later policy processing.
-         *
+	 *
 	 * The rules for the recv_* and sent_* fields are:
 	 * - recv_cert stores the credential (if any) received from the peer;
 	 *   the kernel may pass us one, but we ignore it. We pass it to the
@@ -187,7 +187,7 @@ struct exchange {
 	 *   we don't pass it to the kernel, to avoid revealing such information
 	 *   to processes (processes either already know it, or have no business
 	 *   knowing it).
-         */
+	 */
 	int             recv_certtype, recv_keytype;
 	void           *recv_cert;	/* Certificate received from peer,
 					 * native format */

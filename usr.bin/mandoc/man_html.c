@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_html.c,v 1.98 2017/06/25 07:23:53 bentley Exp $ */
+/*	$OpenBSD: man_html.c,v 1.102 2018/05/08 21:42:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,8 @@ struct	htmlman {
 
 static	void		  print_bvspace(struct html *,
 				const struct roff_node *);
-static	void		  print_man_head(MAN_ARGS);
+static	void		  print_man_head(const struct roff_meta *,
+				struct html *);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
 static	int		  fillmode(struct html *, int);
@@ -66,8 +67,10 @@ static	int		  man_UR_pre(MAN_ARGS);
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
 static	int		  man_in_pre(MAN_ARGS);
-static	void		  man_root_post(MAN_ARGS);
-static	void		  man_root_pre(MAN_ARGS);
+static	void		  man_root_post(const struct roff_meta *,
+				struct html *);
+static	void		  man_root_pre(const struct roff_meta *,
+				struct html *);
 
 static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
@@ -136,30 +139,34 @@ print_bvspace(struct html *h, const struct roff_node *n)
 void
 html_man(void *arg, const struct roff_man *man)
 {
-	struct html	*h;
-	struct tag	*t;
+	struct html		*h;
+	struct roff_node	*n;
+	struct tag		*t;
 
 	h = (struct html *)arg;
+	n = man->first->child;
 
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
+		if (n->type == ROFFT_COMMENT)
+			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
-		print_man_head(&man->meta, man->first, h);
+		print_man_head(&man->meta, h);
 		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
 	}
 
-	man_root_pre(&man->meta, man->first, h);
+	man_root_pre(&man->meta, h);
 	t = print_otag(h, TAG_DIV, "c", "manual-text");
-	print_man_nodelist(&man->meta, man->first->child, h);
+	print_man_nodelist(&man->meta, n, h);
 	print_tagq(h, t);
-	man_root_post(&man->meta, man->first, h);
+	man_root_post(&man->meta, h);
 	print_tagq(h, NULL);
 }
 
 static void
-print_man_head(MAN_ARGS)
+print_man_head(const struct roff_meta *man, struct html *h)
 {
 	char	*cp;
 
@@ -259,6 +266,8 @@ print_man_node(MAN_ARGS)
 		if (*n->string != '\0')
 			break;
 		print_paragraph(h);
+		return;
+	case ROFFT_COMMENT:
 		return;
 	default:
 		break;
@@ -366,7 +375,7 @@ a2width(const struct roff_node *n, struct roffsu *su)
 }
 
 static void
-man_root_pre(MAN_ARGS)
+man_root_pre(const struct roff_meta *man, struct html *h)
 {
 	struct tag	*t, *tt;
 	char		*title;
@@ -394,7 +403,7 @@ man_root_pre(MAN_ARGS)
 }
 
 static void
-man_root_post(MAN_ARGS)
+man_root_post(const struct roff_meta *man, struct html *h)
 {
 	struct tag	*t, *tt;
 
@@ -420,7 +429,7 @@ man_SH_pre(MAN_ARGS)
 		id = html_make_id(n);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
 		if (id != NULL)
-			print_otag(h, TAG_A, "chR", "selflink", id);
+			print_otag(h, TAG_A, "chR", "permalink", id);
 		free(id);
 	}
 	return 1;
@@ -490,7 +499,7 @@ man_SS_pre(MAN_ARGS)
 		id = html_make_id(n);
 		print_otag(h, TAG_H2, "cTi", "Ss", id);
 		if (id != NULL)
-			print_otag(h, TAG_A, "chR", "selflink", id);
+			print_otag(h, TAG_A, "chR", "permalink", id);
 		free(id);
 	}
 	return 1;
@@ -514,7 +523,7 @@ man_IP_pre(MAN_ARGS)
 	const struct roff_node	*nn;
 
 	if (n->type == ROFFT_BODY) {
-		print_otag(h, TAG_DD, "c", "It-tag");
+		print_otag(h, TAG_DD, "");
 		return 1;
 	} else if (n->type != ROFFT_HEAD) {
 		print_otag(h, TAG_DL, "c", "Bl-tag");
@@ -523,7 +532,7 @@ man_IP_pre(MAN_ARGS)
 
 	/* FIXME: width specification. */
 
-	print_otag(h, TAG_DT, "c", "It-tag");
+	print_otag(h, TAG_DT, "");
 
 	/* For IP, only print the first header element. */
 

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.24 2016/03/30 06:38:46 jmc Exp $
+#	$OpenBSD: Makefile,v 1.25 2017/12/14 10:02:53 martijn Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 PROG=	vi
 
 # Modern curses (ncurses)
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -I.
 LDADD+=-lcurses
 DPADD+= ${LIBCURSES}
 
@@ -37,6 +37,17 @@ SRCS=	cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 
 LINKS=	${BINDIR}/vi ${BINDIR}/ex
 LINKS+=	${BINDIR}/vi ${BINDIR}/view
+
+options_def.h: common/options.awk common/options.c
+	awk -f ${.CURDIR}/../common/options.awk ${.CURDIR}/../common/options.c \
+		> $@.tmp && mv $@.tmp $@ || rm $@.tmp
+
+ex_def.h: ex/ex.awk ex/ex_cmd.c
+	awk -f ${.CURDIR}/../ex/ex.awk ${.CURDIR}/../ex/ex_cmd.c > $@.tmp \
+		&& mv $@.tmp $@ || rm $@.tmp
+
+BUILDFIRST = options_def.h ex_def.h
+CLEANFILES += options_def.h ex_def.h
 
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 

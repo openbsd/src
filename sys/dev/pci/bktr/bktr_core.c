@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.38 2016/03/14 23:08:06 krw Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.39 2018/04/28 15:44:59 jasper Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -608,7 +608,7 @@ common_bktr_intr( void *arg )
 
 		OUTB(bktr, BKTR_CAP_CTL, bktr->bktr_cap_ctl);
 
-		add_video_randomness(tdec_save);
+		enqueue_randomness(tdec_save);
 
 		return 1;
 	}
@@ -622,7 +622,7 @@ common_bktr_intr( void *arg )
 		bktr_status, dstatus, INL(bktr, BKTR_RISC_COUNT) );
  */
 
-	add_video_randomness(INL(bktr, BKTR_RISC_COUNT));
+	enqueue_randomness(INL(bktr, BKTR_RISC_COUNT));
 
 	/*
 	 * Disable future interrupts if a capture mode is not selected.

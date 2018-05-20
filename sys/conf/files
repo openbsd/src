@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.652 2017/09/12 08:23:42 mpi Exp $
+#	$OpenBSD: files,v 1.661 2018/04/20 04:37:21 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -65,7 +65,6 @@ define	wlan
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
-define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# Realtek 8019/8029 NE2000-compatible
 define	dl10019		# DL10019/10022-family Ethernet controllers
@@ -387,6 +386,10 @@ file	dev/ic/ar9287.c			athn
 file	dev/ic/ar9003.c			athn
 file	dev/ic/ar9380.c			athn
 
+# Broadcom FullMAC 802.11 driver
+device	bwfm: ether, ifnet, ifmedia, wlan
+file	dev/ic/bwfm.c			bwfm
+
 # ADMtek ADM8211 802.11
 device	atw: ether, ifnet, ifmedia, smc93cx6, wlan
 file	dev/ic/atw.c			atw
@@ -461,6 +464,10 @@ file	dev/usb/ehci.c			ehci	needs-flag
 device	xhci: usbus
 file	dev/usb/xhci.c			xhci	needs-flag
 
+# AMD Cryptographic Co-processor
+device	ccp
+file	dev/ic/ccp.c			ccp
+
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc
@@ -520,6 +527,10 @@ file	dev/spdmem.c			spdmem
 device	oaic: scsi
 file	dev/ic/aic6250.c		oaic
 
+# Synopsys DesignWare I2C controller
+device	dwiic: i2cbus
+file	dev/ic/dwiic.c			dwiic
+
 # legitimate pseudo-devices
 pseudo-device vnd: disk
 pseudo-device rd: disk
@@ -543,6 +554,7 @@ pseudo-device carp: ifnet, ether
 pseudo-device sppp: ifnet
 pseudo-device gif: ifnet
 pseudo-device gre: ifnet
+pseudo-device mobileip: ifnet
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, ether
@@ -572,6 +584,7 @@ file	net/pf_table.c			pf
 file	net/pf_osfp.c			pf
 file	net/pf_if.c			pf
 file	net/pf_lb.c			pf
+file	net/pf_syncookies.c		pf
 file	net/hfsc.c			pf
 file	net/fq_codel.c			pf
 
@@ -620,7 +633,6 @@ file dev/diskmap.c
 file dev/firmload.c			firmload
 file dev/flash.c			flash			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
-file dev/ic/ncr53c7xx.c			ncr53c7xx
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
 file dev/ic/tea5757.c			tea5757
@@ -661,8 +673,6 @@ file kern/kern_kthread.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lock.c
 file kern/kern_malloc.c
-file kern/kern_malloc_debug.c		malloc_debug
-file kern/kern_mutex.c			witness
 file kern/kern_rwlock.c
 file kern/kern_physio.c
 file kern/kern_proc.c
@@ -784,7 +794,6 @@ file net/switchctl.c			switch
 file net/switchofp.c			switch
 file net/pipex.c			pipex
 file net/radix.c			pf | ipsec | pipex | nfsserver
-file net/raw_cb.c
 file net/raw_usrreq.c
 file net/rtable.c
 file net/route.c
@@ -792,6 +801,7 @@ file net/rtsock.c
 file net/slcompress.c			ppp
 file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
+file net/if_mobileip.c			mobileip		needs-count
 file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count

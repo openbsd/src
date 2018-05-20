@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.108 2017/07/24 11:00:01 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.109 2018/02/11 02:27:33 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -127,10 +127,11 @@ kif_init(void)
 }
 
 int
-kr_init(int fs, u_int rdomain)
+kr_init(int fs, u_int rdomain, int redis_label_or_prefix)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
+	int		filter_prio = RTP_OSPF;
 
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
@@ -145,6 +146,18 @@ kr_init(int fs, u_int rdomain)
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
 		log_warn("kr_init: setsockopt");	/* not fatal */
+
+	if (redis_label_or_prefix) {
+		filter_prio = 0;
+		log_info("%s: priority filter disabled", __func__);
+	} else
+		log_debug("%s: priority filter enabled", __func__);
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_PRIOFILTER, &filter_prio,
+	    sizeof(filter_prio)) == -1) {
+		log_warn("%s: setsockopt AF_ROUTE ROUTE_PRIOFILTER", __func__);
+		/* not fatal */
+	}
 
 	/* grow receive buffer, don't wanna miss messages */
 	optlen = sizeof(default_rcvbuf);
@@ -600,12 +613,27 @@ kr_redistribute(struct kroute_node *kh)
 }
 
 void
-kr_reload(void)
+kr_reload(int redis_label_or_prefix)
 {
 	struct kroute_node	*kr, *kn;
 	u_int32_t		 dummy;
 	int			 r;
+	int			 filter_prio = RTP_OSPF;
 
+	/* update the priority filter */
+	if (redis_label_or_prefix) {
+		filter_prio = 0;
+		log_info("%s: priority filter disabled", __func__);
+	} else
+		log_debug("%s: priority filter enabled", __func__);
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_PRIOFILTER, &filter_prio,
+	    sizeof(filter_prio)) == -1) {
+		log_warn("%s: setsockopt AF_ROUTE ROUTE_PRIOFILTER", __func__);
+		/* not fatal */
+	}
+
+	/* update redistribute lists */
 	RB_FOREACH(kr, kroute_tree, &krt) {
 		for (kn = kr; kn; kn = kn->next) {
 			r = ospf_redistribute(&kn->r, &dummy);

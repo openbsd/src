@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.35 2017/08/30 06:57:48 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.37 2017/11/16 19:22:33 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -673,8 +673,7 @@ again:				/* search for matches */
 	return (numitems);
     }
     else {			/* LIST */
-	qsort(items, numitems, sizeof(*items),
-		(int (*)(const void *, const void *)) sortscmp);
+	qsort(items, numitems, sizeof(*items), sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);
 	if (items != NULL)
@@ -810,7 +809,7 @@ tenex(Char *inputline, int inputline_size)
 	 * buffer is full since more characters must be read in order to form a
 	 * complete command.
 	 */
-	if (i < sizeof(buf))
+	if (i < cl.size)
 		inputline[i] = '\0';
 
 	return cl.len;

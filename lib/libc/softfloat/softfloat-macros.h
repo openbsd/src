@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-macros.h,v 1.1 2006/11/06 15:11:37 drahn Exp $	*/
+/*	$OpenBSD: softfloat-macros.h,v 1.2 2018/01/19 16:16:09 kettenis Exp $	*/
 /*
 ===============================================================================
 
@@ -39,7 +39,7 @@ result will be either 0 or 1, depending on whether `a' is zero or nonzero.
 The result is stored in the location pointed to by `zPtr'.
 -------------------------------------------------------------------------------
 */
-__inline void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
+static __inline void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr )
 {
     bits32 z;
 
@@ -65,7 +65,7 @@ than 64, the result will be 0.  The result is broken into two 32-bit pieces
 which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  shift64Right(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -101,7 +101,7 @@ nonzero.  The result is broken into two 32-bit pieces which are stored at
 the locations pointed to by `z0Ptr' and `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  shift64RightJamming(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -153,7 +153,7 @@ corrupted as described above, and is returned at the location pointed to by
 `z2Ptr'.)
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  shift64ExtraRightJamming(
      bits32 a0,
      bits32 a1,
@@ -212,7 +212,7 @@ of `count' must be less than 32.  The result is broken into two 32-bit
 pieces which are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  shortShift64Left(
      bits32 a0, bits32 a1, int16 count, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -232,7 +232,7 @@ The value of `count' must be less than 32.  The result is broken into three
 `z1Ptr', and `z2Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  shortShift96Left(
      bits32 a0,
      bits32 a1,
@@ -268,7 +268,7 @@ any carry out is lost.  The result is broken into two 32-bit pieces which
 are stored at the locations pointed to by `z0Ptr' and `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  add64(
      bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -289,7 +289,7 @@ modulo 2^96, so any carry out is lost.  The result is broken into three
 `z1Ptr', and `z2Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  add96(
      bits32 a0,
      bits32 a1,
@@ -328,7 +328,7 @@ Subtracts the 64-bit value formed by concatenating `b0' and `b1' from the
 `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  sub64(
      bits32 a0, bits32 a1, bits32 b0, bits32 b1, bits32 *z0Ptr, bits32 *z1Ptr )
 {
@@ -347,7 +347,7 @@ into three 32-bit pieces which are stored at the locations pointed to by
 `z0Ptr', `z1Ptr', and `z2Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  sub96(
      bits32 a0,
      bits32 a1,
@@ -384,7 +384,8 @@ into two 32-bit pieces which are stored at the locations pointed to by
 `z0Ptr' and `z1Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
+static __inline void
+ mul32To64( bits32 a, bits32 b, bits32 *z0Ptr, bits32 *z1Ptr )
 {
     bits16 aHigh, aLow, bHigh, bLow;
     bits32 z0, zMiddleA, zMiddleB, z1;
@@ -415,7 +416,7 @@ which are stored at the locations pointed to by `z0Ptr', `z1Ptr', and
 `z2Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  mul64By32To96(
      bits32 a0,
      bits32 a1,
@@ -444,7 +445,7 @@ product.  The product is broken into four 32-bit pieces which are stored at
 the locations pointed to by `z0Ptr', `z1Ptr', `z2Ptr', and `z3Ptr'.
 -------------------------------------------------------------------------------
 */
-__inline void
+static __inline void
  mul64To128(
      bits32 a0,
      bits32 a1,
@@ -597,7 +598,7 @@ equal to the 64-bit value formed by concatenating `b0' and `b1'.  Otherwise,
 returns 0.
 -------------------------------------------------------------------------------
 */
-__inline flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static __inline flag eq64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 == b0 ) && ( a1 == b1 );
@@ -611,7 +612,7 @@ than or equal to the 64-bit value formed by concatenating `b0' and `b1'.
 Otherwise, returns 0.
 -------------------------------------------------------------------------------
 */
-__inline flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static __inline flag le64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 <= b1 ) );
@@ -625,7 +626,7 @@ than the 64-bit value formed by concatenating `b0' and `b1'.  Otherwise,
 returns 0.
 -------------------------------------------------------------------------------
 */
-__inline flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static __inline flag lt64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 < b0 ) || ( ( a0 == b0 ) && ( a1 < b1 ) );
@@ -639,7 +640,7 @@ equal to the 64-bit value formed by concatenating `b0' and `b1'.  Otherwise,
 returns 0.
 -------------------------------------------------------------------------------
 */
-__inline flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
+static __inline flag ne64( bits32 a0, bits32 a1, bits32 b0, bits32 b1 )
 {
 
     return ( a0 != b0 ) || ( a1 != b1 );

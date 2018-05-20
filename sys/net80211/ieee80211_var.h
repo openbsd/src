@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.79 2017/05/31 09:17:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.85 2018/04/26 12:50:07 pirofti Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -52,10 +52,17 @@
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
 #define	IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+	((struct ieee80211_channel *) NULL)
 
 #define	IEEE80211_TXPOWER_MAX	100	/* max power */
 #define	IEEE80211_TXPOWER_MIN	-50	/* kill radio (if possible) */
+
+#define IEEE80211_RSSI_THRES_2GHZ		(-60)	/* in dBm */
+#define IEEE80211_RSSI_THRES_5GHZ		(-70)	/* in dBm */
+#define IEEE80211_RSSI_THRES_RATIO_2GHZ		60	/* in percent */
+#define IEEE80211_RSSI_THRES_RATIO_5GHZ		50	/* in percent */
+
+#define IEEE80211_BGSCAN_FAIL_MAX		360	/* units of 500 msec */
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
@@ -197,6 +204,8 @@ struct ieee80211com {
 				    struct ieee80211_node *, int, int, int);
 	int			(*ic_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+	int			(*ic_newauth)(struct ieee80211com *,
+				    struct ieee80211_node *, int, uint16_t);
 	void			(*ic_newassoc)(struct ieee80211com *,
 				    struct ieee80211_node *, int);
 	void			(*ic_node_leave)(struct ieee80211com *,
@@ -220,6 +229,9 @@ struct ieee80211com {
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_update_htprot)(struct ieee80211com *,
 					struct ieee80211_node *);
+	int			(*ic_bgscan_start)(struct ieee80211com *);
+	struct timeout		ic_bgscan_timeout;
+	uint32_t		ic_bgscan_fail;
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];
 	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX+1];
@@ -228,9 +240,9 @@ struct ieee80211com {
 	u_char			ic_chan_scan[howmany(IEEE80211_CHAN_MAX,NBBY)];
 	struct mbuf_queue	ic_mgtq;
 	struct mbuf_queue	ic_pwrsaveq;
-	u_int			ic_scan_lock;	/* user-initiated scan */
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
+	u_int32_t		ic_xflags;	/* more flags */
 	u_int32_t		ic_caps;	/* capabilities */
 	u_int16_t		ic_modecaps;	/* set of mode capabilities */
 	u_int16_t		ic_curmode;	/* current mode */
@@ -255,6 +267,8 @@ struct ieee80211com {
 					struct ieee80211_node *,
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
+					const struct ieee80211_node *);
+	int			(*ic_node_checkrssi)(struct ieee80211com *,
 					const struct ieee80211_node *);
 	u_int8_t		ic_max_rssi;
 	struct ieee80211_tree	ic_tree;
@@ -320,8 +334,6 @@ struct ieee80211com {
 	u_int8_t		ic_aselcaps;
 	u_int8_t		ic_dialog_token;
 	int			ic_fixed_mcs;
-
-	LIST_HEAD(, ieee80211_vap) ic_vaps;
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
@@ -354,7 +366,11 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_F_MFPR	0x01000000	/* CONF: MFP required */
 #define	IEEE80211_F_HTON	0x02000000	/* CONF: HT enabled */
 #define	IEEE80211_F_PBAR	0x04000000	/* CONF: PBAC required */
+#define	IEEE80211_F_BGSCAN	0x08000000	/* STATUS: background scan */
 #define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
+
+/* ic_xflags */
+#define	IEEE80211_F_TX_MGMT_ONLY 0x00000001	/* leave data frames on ifq */
 
 /* ic_caps */
 #define	IEEE80211_C_WEP		0x00000001	/* CAPABILITY: WEP available */
@@ -408,6 +424,8 @@ int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
+void	ieee80211_disable_wep(struct ieee80211com *); 
+void	ieee80211_disable_rsn(struct ieee80211com *); 
 
 extern	int ieee80211_cache_size;
 

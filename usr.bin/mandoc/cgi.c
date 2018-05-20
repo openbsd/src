@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.94 2017/06/24 14:38:27 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.95 2018/05/18 14:22:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -352,6 +352,8 @@ resp_begin_html(int code, const char *msg, const char *file)
 	       "<html>\n"
 	       "<head>\n"
 	       "  <meta charset=\"UTF-8\"/>\n"
+	       "  <meta name=\"viewport\""
+		      " content=\"width=device-width, initial-scale=1.0\">\n"
 	       "  <link rel=\"stylesheet\" href=\"%s/mandoc.css\""
 	       " type=\"text/css\" media=\"all\">\n"
 	       "  <title>",

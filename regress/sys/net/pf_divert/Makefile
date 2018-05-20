@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2017/09/04 22:40:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.20 2017/12/26 17:03:46 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -54,47 +54,44 @@ regress:
 PERLS =			Client.pm Packet.pm Proc.pm Remote.pm Server.pm \
 			funcs.pl remote.pl
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
-TARGETS ?=		inet-args-tcp-to inet6-args-tcp-to \
-			inet-args-tcp-reply inet6-args-tcp-reply \
-			inet-args-udp-to inet6-args-udp-to \
-			inet-args-udp-reply inet6-args-udp-reply \
-			inet-args-udp-reply-to inet6-args-udp-reply-to \
-			inet-args-rip-to inet6-args-rip-to \
-			inet-args-rip-reply inet6-args-rip-reply \
-			inet-args-rip-reply-to inet6-args-rip-reply-to \
-			inet-args-icmp-to inet6-args-icmp-to \
-			inet-args-icmp-reply-to inet6-args-icmp-reply-to \
-			inet-args-icmp-reply-reuse inet6-args-icmp-reply-reuse \
-			inet-reuse-tcp-to-to inet6-reuse-tcp-to-to \
-			inet-reuse-tcp-to-reply inet6-reuse-tcp-to-reply \
-			inet-reuse-tcp-reply-to inet6-reuse-tcp-reply-to \
-			inet-reuse-tcp-reply-reply inet6-reuse-tcp-reply-reply \
-			inet-reuse-udp-to-to inet6-reuse-udp-to-to \
-			inet-reuse-udp-to-reply inet6-reuse-udp-to-reply \
-			inet-reuse-udp-to-reply-to inet6-reuse-udp-to-reply-to \
-			inet-reuse-udp-reply-to inet6-reuse-udp-reply-to \
-			inet-reuse-udp-reply-reply inet6-reuse-udp-reply-reply \
-			inet-reuse-udp-reply-reply-to inet6-reuse-udp-reply-reply-to \
-			inet-reuse-udp-reply-to-to inet6-reuse-udp-reply-to-to \
-			inet-reuse-udp-reply-to-reply inet6-reuse-udp-reply-to-reply \
-			inet-reuse-udp-reply-to-reply-to inet6-reuse-udp-reply-to-reply-to \
-			inet-reuse-rip-to-to inet6-reuse-rip-to-to \
-			inet-reuse-rip-to-reply inet6-reuse-rip-to-reply \
-			inet-reuse-rip-to-reply-to inet6-reuse-rip-to-reply-to \
-			inet-reuse-rip-reply-to inet6-reuse-rip-reply-to \
-			inet-reuse-rip-reply-reply inet6-reuse-rip-reply-reply \
-			inet-reuse-rip-reply-reply-to inet6-reuse-rip-reply-reply-to \
-			inet-reuse-rip-reply-to-to inet6-reuse-rip-reply-to-to \
-			inet-reuse-rip-reply-to-reply inet6-reuse-rip-reply-to-reply \
-			inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to \
-			inet-args-udp-packet-in inet6-args-udp-packet-in \
-			inet-args-udp-packet-out inet6-args-udp-packet-out \
-			inet-args-udp-packet-in-init inet6-args-udp-packet-in-init \
-			inet-args-udp-packet-in-resp inet6-args-udp-packet-in-resp \
-			inet-args-udp-packet-out-init inet6-args-udp-packet-out-init \
-			inet-args-udp-packet-out-resp inet6-args-udp-packet-out-resp
+TARGETS ?=		\
+	inet-args-tcp-to inet6-args-tcp-to \
+	inet-args-tcp-reply inet6-args-tcp-reply \
+	inet-args-udp-to inet6-args-udp-to \
+	inet-args-udp-reply inet6-args-udp-reply \
+	inet-args-udp-reply-to inet6-args-udp-reply-to \
+	inet-args-rip-to inet6-args-rip-to \
+	inet-args-rip-reply inet6-args-rip-reply \
+	inet-args-rip-reply-to inet6-args-rip-reply-to \
+	inet-args-icmp-to inet6-args-icmp-to \
+	inet-args-icmp-reply-to inet6-args-icmp-reply-to \
+	inet-args-icmp-reply-reuse inet6-args-icmp-reply-reuse \
+	inet-reuse-tcp-to-to inet6-reuse-tcp-to-to \
+	inet-reuse-tcp-to-reply inet6-reuse-tcp-to-reply \
+	inet-reuse-tcp-reply-to inet6-reuse-tcp-reply-to \
+	inet-reuse-tcp-reply-reply inet6-reuse-tcp-reply-reply \
+	inet-reuse-udp-to-to inet6-reuse-udp-to-to \
+	inet-reuse-udp-to-reply inet6-reuse-udp-to-reply \
+	inet-reuse-udp-to-reply-to inet6-reuse-udp-to-reply-to \
+	inet-reuse-udp-reply-to inet6-reuse-udp-reply-to \
+	inet-reuse-udp-reply-reply inet6-reuse-udp-reply-reply \
+	inet-reuse-udp-reply-reply-to inet6-reuse-udp-reply-reply-to \
+	inet-reuse-udp-reply-to-to inet6-reuse-udp-reply-to-to \
+	inet-reuse-udp-reply-to-reply inet6-reuse-udp-reply-to-reply \
+	inet-reuse-udp-reply-to-reply-to inet6-reuse-udp-reply-to-reply-to \
+	inet-reuse-rip-to-to inet6-reuse-rip-to-to \
+	inet-reuse-rip-to-reply inet6-reuse-rip-to-reply \
+	inet-reuse-rip-to-reply-to inet6-reuse-rip-to-reply-to \
+	inet-reuse-rip-reply-to inet6-reuse-rip-reply-to \
+	inet-reuse-rip-reply-reply inet6-reuse-rip-reply-reply \
+	inet-reuse-rip-reply-reply-to inet6-reuse-rip-reply-reply-to \
+	inet-reuse-rip-reply-to-to inet6-reuse-rip-reply-to-to \
+	inet-reuse-rip-reply-to-reply inet6-reuse-rip-reply-to-reply \
+	inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to \
+	inet-args-udp-packet-in inet6-args-udp-packet-in \
+	inet-args-udp-packet-out inet6-args-udp-packet-out
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log *.port ktrace.out stamp-*
+CLEANFILES +=		*.log *.port *.ktrace ktrace.out stamp-*
 
 .MAIN: all
 
@@ -142,11 +139,27 @@ run-regress-${inet}-reuse-rip-to-reply-to:
 run-regress-${inet}-${a:R}: ${a}
 	@echo '\n======== $@ ========'
 .if ${@:M*-packet-*}
-	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} ${LOCAL_${addr}} ${REMOTE_${addr}} ${REMOTE_SSH} ${PERLPATH}${a}
+	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} \
+	    ${LOCAL_${addr}} ${REMOTE_${addr}} ${REMOTE_SSH} \
+	    ${PERLPATH}${a}
 .else
-	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} ${PERLPATH}${a}
+	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} \
+	    ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} \
+	    ${PERLPATH}${a}
 .endif
 .endfor
+
+STATE_EXIST_tcp_to =		!
+STATE_EXIST_udp_to =
+STATE_EXIST_rip_to =
+STATE_EXIST_tcp_reply =		!
+STATE_EXIST_udp_reply =		!
+STATE_EXIST_rip_reply =		!
+STATE_EXIST_tcp_reply-to =	!
+STATE_EXIST_udp_reply-to =	!
+STATE_EXIST_rip_reply-to =	!
 
 .for proto in tcp udp rip
 
@@ -154,30 +167,68 @@ run-regress-${inet}-${a:R}: ${a}
 
 run-regress-${inet}-reuse-${proto}-${first}-${second}:
 	@echo '\n======== $@ ========'
-	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} ${PERLPATH}args-${proto}-${first}.pl
+	# create state with ${first} divert rule
+	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl -f ${inet} \
+	    ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} \
+	    ${PERLPATH}args-${proto}-${first}.pl
 	sed -n '/^connect peer:/s/.* //p' client.log >client.port
 	sed -n '/^connect sock:/s/.* //p' client.log >server.port
 .if "tcp" == ${proto}
-.if "reply" == ${first}
-	${SUDO} tcpdrop ${LOCAL_${addr}} `cat client.port` ${FAKE_${addr}} `cat server.port`
+	# drop client tcp socket still in time wait to allow reuse
+.if "reply" == ${first} || "reply-to" == ${first}
+	${SUDO} tcpdrop \
+	    ${LOCAL_${addr}} `cat client.port` \
+	    ${FAKE_${addr}} `cat server.port`
+.else # "to" == ${first}
+	# tcp socket is in time wait so state must still exist
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
+	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
+	    ${FAKE_${addr}} `cat client.port` \
+	    ${LOCAL_${addr}} `cat server.port`
+	# divert-to state disappeared when the tcp socket was dropped
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
+.endif
 .endif
 .if "to" == ${first}
-	ssh ${REMOTE_SSH} ${SUDO} tcpdrop ${FAKE_${addr}} `cat client.port` ${LOCAL_${addr}} `cat server.port`
-.endif
-.endif
-	time ${SUDO} SUDO=${SUDO} perl ${PERLINC} ${PERLPATH}remote.pl ${inet} ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} `cat client.port` `cat server.port` ${PERLPATH}args-${proto}-${second}.pl
 .if "tcp" == ${proto}
-.if "reply" == ${second}
-	${SUDO} tcpdrop ${LOCAL_${addr}} `cat server.port` ${FAKE_${addr}} `cat client.port`
+	# divert-to state has disappeared as tcp socket is always connected
+.else
+	# divert-to state still exists as the socket is unconnected
 .endif
-.if "to" == ${second}
+.else
+	# divert-reply state has disappeared when the connected socket closed
+.endif
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ${STATE_EXIST_${proto}_${first}} \
+	    egrep ' (tcp|udp|254) ${FAKE_${addr}}[][0-9:]* .. ${LOCAL_${addr}}[][0-9:]* '
+	# create state again with ${second} divert rule
+	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
+	    perl ${PERLINC} ${PERLPATH}remote.pl ${inet} \
+	    ${LOCAL_${addr}} ${FAKE_${addr}} ${REMOTE_SSH} \
+	    `cat client.port` `cat server.port` \
+	    ${PERLPATH}args-${proto}-${second}.pl
+.if "tcp" == ${proto}
+.if "reply" == ${second} || "reply-to" == ${second}
+	# drop client tcp socket still in time wait to clean up
+	${SUDO} tcpdrop \
+	    ${LOCAL_${addr}} `cat server.port` \
+	    ${FAKE_${addr}} `cat client.port`
+.else # "to" == ${second}
+	# dropping the server tcp socket in time wait must remove the state
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
 	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
-	ssh ${REMOTE_SSH} ${SUDO} tcpdrop ${FAKE_${addr}} `cat server.port` ${LOCAL_${addr}} `cat client.port`
-	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
-	    ! egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
+	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
+	    ${FAKE_${addr}} `cat server.port` \
+	    ${LOCAL_${addr}} `cat client.port`
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
 .endif
 .endif
+	# states must disappear after connected socket has been closed
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ${STATE_EXIST_${proto}_${second}} \
+	    egrep ' (tcp|udp|254) ${FAKE_${addr}}[][0-9:]* .. ${LOCAL_${addr}}[][0-9:]* '
 
 .endfor
 .endfor

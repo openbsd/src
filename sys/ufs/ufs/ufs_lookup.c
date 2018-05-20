@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.50 2016/09/10 16:53:30 natano Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.52 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ ufs_lookup(void *v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
-	struct proc *p = cnp->cn_proc;
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
@@ -422,7 +421,7 @@ notfound:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (EJUSTRETURN);
@@ -504,7 +503,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -533,7 +532,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		return (0);
@@ -560,16 +559,16 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, p);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
 		if (error) {
-			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}
@@ -584,7 +583,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, p);
+			VOP_UNLOCK(pdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 		*vpp = tdp;
@@ -779,10 +778,10 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			if ((error = VOP_BWRITE(bp)))
 				return (error);
 			if (tvp != NULL)
-				VOP_UNLOCK(tvp, p);
+				VOP_UNLOCK(tvp);
 			error = VOP_FSYNC(dvp, p->p_ucred, MNT_WAIT, p);
 			if (tvp != NULL)
-				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		error = VOP_BWRITE(bp);
@@ -919,14 +918,14 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 
 	if (error == 0 && dp->i_endoff && dp->i_endoff < DIP(dp, size)) {
 		if (tvp != NULL)
-			VOP_UNLOCK(tvp, p);
+			VOP_UNLOCK(tvp);
 		error = UFS_TRUNCATE(dp, (off_t)dp->i_endoff, IO_SYNC, cr);
 #ifdef UFS_DIRHASH
 		if (error == 0 && dp->i_dirhash != NULL)
 			ufsdirhash_dirtrunc(dp, dp->i_endoff);
 #endif
 		if (tvp != NULL)
-			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 	return (error);
 }

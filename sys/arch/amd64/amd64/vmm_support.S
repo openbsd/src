@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.9 2017/05/30 17:49:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.10 2018/04/24 20:33:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -585,6 +585,5 @@ restore_host_svm:
 	popfq
 
 	movq	%rdi, %rax
-	stgi
 
 	ret	

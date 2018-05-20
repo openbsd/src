@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switch.4,v 1.7 2016/11/28 11:46:26 jmc Exp $
+.\"	$OpenBSD: switch.4,v 1.8 2017/10/24 09:36:13 jsg Exp $
 .\"
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2016 $
+.Dd $Mdocdate: October 24 2017 $
 .Dt SWITCH 4
 .Os
 .Sh NAME
@@ -130,25 +130,12 @@ of the switch named in
 into the
 .Va ifbrp_maxflow
 field.
-.It Dv SIOCSWSMAXFLOW Fa "struct ifbrparam"
-Set the maximum number of flows in the OpenFlow protocol of the switch named in
-.Va ifbrp_name
-to the value in the
-.Va ifbrpu_maxflow
-field.
 .It Dv SIOCSWGMAXGROUP Fa "struct ifbrparam"
 Retrieve the maximum number of groups in the OpenFlow protocol
 of the switch named
 in
 .Va ifbrp_name
 into the
-.Va ifbrpu_maxgroup
-field.
-.It Dv SIOCSWSMAXGROUP Fa "struct ifbrparam"
-Set the maximum number of groups in the OpenFlow protocol
-of the switch named in
-.Va ifbrp_name
-to the value in the
 .Va ifbrpu_maxgroup
 field.
 .It Dv SIOCSWSPORTNO Fa "struct ifbreq"

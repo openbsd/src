@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.27 2015/06/14 10:55:50 miod Exp $	*/
+/*	$OpenBSD: printf.c,v 1.28 2018/01/17 08:46:15 patrick Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -60,9 +60,16 @@
 
 #include "stand.h"
 
-void kprintn(void (*)(int), u_long, int);
+/*
+ * macros for converting digits to letters and vice versa
+ */
+#define	to_digit(c)	((c) - '0')
+#define	is_digit(c)	((unsigned)to_digit(c) <= 9)
+#define	to_char(n)	((n) + '0')
+
+void kprintn(void (*)(int), u_long, int, int, char);
 #ifdef LIBSA_LONGLONG_PRINTF
-void kprintn64(void (*)(int), u_int64_t, int);
+void kprintn64(void (*)(int), u_int64_t, int, int, char);
 #endif
 void kdoprnt(void (*)(int), const char *, va_list);
 
@@ -91,8 +98,8 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 	u_int64_t ull;
 #endif
 	unsigned long ul;
-	int ch, lflag;
-	char *p;
+	int ch, lflag, width, n;
+	char *p, padchar;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
@@ -101,10 +108,30 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 			put(ch);
 		}
 		lflag = 0;
-reswitch:	switch (ch = *fmt++) {
+		padchar = ' ';
+		width = 0;
+rflag:		ch = *fmt++;
+reswitch:	switch (ch) {
+		case '0':
+			/*
+			 * ``Note that 0 is taken as a flag, not as the
+			 * beginning of a field width.''
+			 *	-- ANSI X3J11
+			 */
+			padchar = '0';
+			goto rflag;
+		case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			n = 0;
+			do {
+				n = 10 * n + to_digit(ch);
+				ch = *fmt++;
+			} while (is_digit(ch));
+			width = n;
+			goto reswitch;
 		case 'l':
 			lflag++;
-			goto reswitch;
+			goto rflag;
 #ifndef	STRIPPED
 		case 'b':
 		{
@@ -112,7 +139,7 @@ reswitch:	switch (ch = *fmt++) {
 
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			kprintn(put, ul, *p++);
+			kprintn(put, ul, *p++, width, padchar);
 
 			if (!ul)
 				break;
@@ -149,7 +176,7 @@ reswitch:	switch (ch = *fmt++) {
 					put('-');
 					ull = -(int64_t)ull;
 				}
-				kprintn64(put, ull, 10);
+				kprintn64(put, ull, 10, width, padchar);
 				break;
 			} 
 #endif
@@ -159,31 +186,31 @@ reswitch:	switch (ch = *fmt++) {
 				put('-');
 				ul = -(long)ul;
 			}
-			kprintn(put, ul, 10);
+			kprintn(put, ul, 10, width, padchar);
 			break;
 		case 'o':
 #ifdef LIBSA_LONGLONG_PRINTF
 			if (lflag > 1) {
 				ull = va_arg(ap, u_int64_t);
-				kprintn64(put, ull, 8);
+				kprintn64(put, ull, 8, width, padchar);
 				break;
 			} 
 #endif
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(put, ul, 8);
+			kprintn(put, ul, 8, width, padchar);
 			break;
 		case 'u':
 #ifdef LIBSA_LONGLONG_PRINTF
 			if (lflag > 1) {
 				ull = va_arg(ap, u_int64_t);
-				kprintn64(put, ull, 10);
+				kprintn64(put, ull, 10, width, padchar);
 				break;
 			} 
 #endif
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(put, ul, 10);
+			kprintn(put, ul, 10, width, padchar);
 			break;
 		case 'p':
 			put('0');
@@ -193,7 +220,7 @@ reswitch:	switch (ch = *fmt++) {
 #ifdef LIBSA_LONGLONG_PRINTF
 			if (lflag > 1) {
 				ull = va_arg(ap, u_int64_t);
-				kprintn64(put, ull, 16);
+				kprintn64(put, ull, 16, width, padchar);
 				break;
 			}
 #else
@@ -207,6 +234,10 @@ reswitch:	switch (ch = *fmt++) {
 				do {
 					*p++ = hexdig[ull & 15];
 				} while (ull >>= 4);
+				while ((p - buf) < width &&
+				    (p - buf) < sizeof(buf)) {
+					*p++ = padchar;
+				}
 				do {
 					put(*--p);
 				} while (p > buf);
@@ -215,7 +246,7 @@ reswitch:	switch (ch = *fmt++) {
 #endif
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(put, ul, 16);
+			kprintn(put, ul, 16, width, padchar);
 			break;
 		default:
 			put('%');
@@ -231,7 +262,7 @@ reswitch:	switch (ch = *fmt++) {
 }
 
 void
-kprintn(void (*put)(int), unsigned long ul, int base)
+kprintn(void (*put)(int), unsigned long ul, int base, int width, char padchar)
 {
 	/* hold a long in base 8 */
 	char *p, buf[(sizeof(long) * NBBY / 3) + 1];
@@ -240,6 +271,9 @@ kprintn(void (*put)(int), unsigned long ul, int base)
 	do {
 		*p++ = hexdig[ul % base];
 	} while (ul /= base);
+	while ((p - buf) < width && (p - buf) < sizeof(buf)) {
+		*p++ = padchar;
+	}
 	do {
 		put(*--p);
 	} while (p > buf);
@@ -247,7 +281,7 @@ kprintn(void (*put)(int), unsigned long ul, int base)
 
 #ifdef LIBSA_LONGLONG_PRINTF
 void
-kprintn64(void (*put)(int), u_int64_t ull, int base)
+kprintn64(void (*put)(int), u_int64_t ull, int base, int width, char padchar)
 {
 	/* hold an int64_t in base 8 */
 	char *p, buf[(sizeof(u_int64_t) * NBBY / 3) + 1];
@@ -256,6 +290,9 @@ kprintn64(void (*put)(int), u_int64_t ull, int base)
 	do {
 		*p++ = hexdig[ull % base];
 	} while (ull /= base);
+	while ((p - buf) < width && (p - buf) < sizeof(buf)) {
+		*p++ = padchar;
+	}
 	do {
 		put(*--p);
 	} while (p > buf);

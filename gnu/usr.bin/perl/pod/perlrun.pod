@@ -345,7 +345,7 @@ You can also use binmode() to set the encoding of an I/O stream.
 X<-c>
 
 causes Perl to check the syntax of the program and then exit without
-executing it.  Actually, it I<will> execute and C<BEGIN>, C<UNITCHECK>,
+executing it.  Actually, it I<will> execute any C<BEGIN>, C<UNITCHECK>,
 or C<CHECK> blocks and any C<use> statements: these are considered as
 occurring outside the execution of your program.  C<INIT> and C<END>
 blocks, however, will be skipped.

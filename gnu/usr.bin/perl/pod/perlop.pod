@@ -2423,7 +2423,7 @@ controls and characters which have no ASCII equivalents.
 But, even for portable ranges, it is not generally obvious what is
 included without having to look things up.  A sound principle is to use
 only ranges that begin from and end at either ASCII alphabetics of equal
-case (C<b-e>, C<b-E>), or digits (C<1-4>).  Anything else is unclear
+case (C<b-e>, C<B-E>), or digits (C<1-4>).  Anything else is unclear
 (and unportable unless C<\N{...}> is used).  If in doubt, spell out the
 character sets in full.
 

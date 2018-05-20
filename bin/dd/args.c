@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.28 2016/08/16 16:44:55 krw Exp $	*/
+/*	$OpenBSD: args.c,v 1.29 2018/01/03 19:12:20 schwarze Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -406,8 +406,9 @@ get_off(char *val)
 	off_t num, t;
 	char *expr;
 
+	errno = 0;
 	num = strtoll(val, &expr, 0);
-	if (num == LLONG_MAX)			/* Overflow. */
+	if (num == LLONG_MAX && errno == ERANGE)	/* Overflow. */
 		err(1, "%s", oper);
 	if (expr == val)			/* No digits. */
 		errx(1, "%s: illegal numeric value", oper);

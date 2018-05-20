@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.16 2017/08/27 01:39:26 beck Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.20 2018/02/10 04:48:44 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -185,8 +185,6 @@ tls_conninfo_cert_pem(struct tls *ctx)
 	BIO *membio = NULL;
 	BUF_MEM *bptr = NULL;
 
-	if (ctx->conninfo == NULL)
-		goto err;
 	if (ctx->ssl_peer_cert == NULL)
 		return 0;
 	if ((membio = BIO_new(BIO_s_mem()))== NULL)
@@ -221,6 +219,14 @@ tls_conninfo_cert_pem(struct tls *ctx)
 	return rv;
 }
 
+static int
+tls_conninfo_session(struct tls *ctx)
+{
+	ctx->conninfo->session_resumed = SSL_session_reused(ctx->ssl_conn);
+
+	return 0;
+}
+
 int
 tls_conninfo_populate(struct tls *ctx)
 {
@@ -238,8 +244,7 @@ tls_conninfo_populate(struct tls *ctx)
 
 	if ((tmp = SSL_get_cipher(ctx->ssl_conn)) == NULL)
 		goto err;
-	ctx->conninfo->cipher = strdup(tmp);
-	if (ctx->conninfo->cipher == NULL)
+	if ((ctx->conninfo->cipher = strdup(tmp)) == NULL)
 		goto err;
 
 	if (ctx->servername != NULL) {
@@ -250,14 +255,16 @@ tls_conninfo_populate(struct tls *ctx)
 
 	if ((tmp = SSL_get_version(ctx->ssl_conn)) == NULL)
 		goto err;
-	ctx->conninfo->version = strdup(tmp);
-	if (ctx->conninfo->version == NULL)
+	if ((ctx->conninfo->version = strdup(tmp)) == NULL)
 		goto err;
 
 	if (tls_get_peer_cert_info(ctx) == -1)
 		goto err;
 
 	if (tls_conninfo_cert_pem(ctx) == -1)
+		goto err;
+
+	if (tls_conninfo_session(ctx) == -1)
 		goto err;
 
 	return (0);
@@ -276,24 +283,15 @@ tls_conninfo_free(struct tls_conninfo *conninfo)
 		return;
 
 	free(conninfo->alpn);
-	conninfo->alpn = NULL;
 	free(conninfo->cipher);
-	conninfo->cipher = NULL;
 	free(conninfo->servername);
-	conninfo->servername = NULL;
 	free(conninfo->version);
-	conninfo->version = NULL;
 
 	free(conninfo->hash);
-	conninfo->hash = NULL;
 	free(conninfo->issuer);
-	conninfo->issuer = NULL;
 	free(conninfo->subject);
-	conninfo->subject = NULL;
 
 	free(conninfo->peer_cert);
-	conninfo->peer_cert = NULL;
-	conninfo->peer_cert_len = 0;
 
 	free(conninfo);
 }
@@ -322,6 +320,14 @@ tls_conn_servername(struct tls *ctx)
 	return (ctx->conninfo->servername);
 }
 
+int
+tls_conn_session_resumed(struct tls *ctx)
+{
+	if (ctx->conninfo == NULL)
+		return (0);
+	return (ctx->conninfo->session_resumed);
+}
+
 const char *
 tls_conn_version(struct tls *ctx)
 {
@@ -329,4 +335,3 @@ tls_conn_version(struct tls *ctx)
 		return (NULL);
 	return (ctx->conninfo->version);
 }
-

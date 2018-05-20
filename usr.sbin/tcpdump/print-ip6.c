@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.24 2016/12/13 06:40:21 dlg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.26 2018/02/10 10:00:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -190,14 +190,17 @@ ip6_print(const u_char *bp, u_int length)
 #endif
 		case IPPROTO_GRE:
 			gre_print(cp, len);
-			if (! vflag) {
-				printf(" (gre encap)");
-				goto out;
-			}
 			goto end;
 
 		case IPPROTO_NONE:
 			(void)printf("no next header");
+			goto end;
+
+#ifndef IPPROTO_ETHERIP
+#define IPPROTO_ETHERIP 97
+#endif
+		case IPPROTO_ETHERIP:
+			etherip_print(cp, snapend - cp, len);
 			goto end;
 
 #ifndef IPPROTO_CARP  

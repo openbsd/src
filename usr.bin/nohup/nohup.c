@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.16 2015/11/09 16:52:32 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.17 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>

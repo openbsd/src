@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.160 2017/08/12 03:21:02 benno Exp $	*/
+/*	$OpenBSD: inet.c,v 1.162 2017/11/07 16:51:23 visa Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -952,23 +952,23 @@ ah_stats(char *name)
 #define p1(f, m) if (ahstat.f || sflag <= 1) \
 	printf(m, ahstat.f)
 
-	p1(ahs_input, "\t%u input AH packets\n");
-	p1(ahs_output, "\t%u output AH packets\n");
-	p(ahs_nopf, "\t%u packet%s from unsupported protocol families\n");
-	p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
-	p(ahs_pdrops, "\t%u packet%s dropped due to policy\n");
-	p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
-	p(ahs_badkcr, "\t%u input packet%s that failed to be processed\n");
-	p(ahs_badauth, "\t%u packet%s that failed verification received\n");
-	p(ahs_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
-	p(ahs_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(ahs_wrap, "\t%u packet%s where counter wrapping was detected\n");
-	p(ahs_replay, "\t%u possibly replayed packet%s received\n");
-	p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
-	p(ahs_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
-	p(ahs_toobig, "\t%u packet%s got larger than max IP packet size\n");
-	p(ahs_crypto, "\t%u packet%s that failed crypto processing\n");
-	p(ahs_outfail, "\t%u output packet%s could not be sent\n");
+	p1(ahs_input, "\t%llu input AH packets\n");
+	p1(ahs_output, "\t%llu output AH packets\n");
+	p(ahs_nopf, "\t%llu packet%s from unsupported protocol families\n");
+	p(ahs_hdrops, "\t%llu packet%s shorter than header shows\n");
+	p(ahs_pdrops, "\t%llu packet%s dropped due to policy\n");
+	p(ahs_notdb, "\t%llu packet%s for which no TDB was found\n");
+	p(ahs_badkcr, "\t%llu input packet%s that failed to be processed\n");
+	p(ahs_badauth, "\t%llu packet%s that failed verification received\n");
+	p(ahs_noxform, "\t%llu packet%s for which no XFORM was set in TDB received\n");
+	p(ahs_qfull, "\t%llu packet%s were dropped due to full output queue\n");
+	p(ahs_wrap, "\t%llu packet%s where counter wrapping was detected\n");
+	p(ahs_replay, "\t%llu possibly replayed packet%s received\n");
+	p(ahs_badauthl, "\t%llu packet%s with bad authenticator length received\n");
+	p(ahs_invalid, "\t%llu packet%s attempted to use an invalid TDB\n");
+	p(ahs_toobig, "\t%llu packet%s got larger than max IP packet size\n");
+	p(ahs_crypto, "\t%llu packet%s that failed crypto processing\n");
+	p(ahs_outfail, "\t%llu output packet%s could not be sent\n");
 	p(ahs_ibytes, "\t%llu input byte%s\n");
 	p(ahs_obytes, "\t%llu output byte%s\n");
 
@@ -1030,28 +1030,28 @@ esp_stats(char *name)
 #define p(f, m) if (espstat.f || sflag <= 1) \
 	printf(m, espstat.f, plural(espstat.f))
 
-	p(esps_input, "\t%u input ESP packet%s\n");
-	p(esps_output, "\t%u output ESP packet%s\n");
-	p(esps_nopf, "\t%u packet%s from unsupported protocol families\n");
-	p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
-	p(esps_pdrops, "\t%u packet%s dropped due to policy\n");
-	p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
-	p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
-	p(esps_badenc, "\t%u packet%s with bad encryption received\n");
-	p(esps_badauth, "\t%u packet%s that failed verification received\n");
-	p(esps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
-	p(esps_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
-	p(esps_replay, "\t%u possibly replayed packet%s received\n");
-	p(esps_badilen, "\t%u packet%s with bad payload size or padding received\n");
-	p(esps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
-	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
-	p(esps_crypto, "\t%u packet%s that failed crypto processing\n");
-	p(esps_outfail, "\t%u output packet%s could not be sent\n");
-	p(esps_udpencin, "\t%u input UDP encapsulated ESP packet%s\n");
-	p(esps_udpencout, "\t%u output UDP encapsulated ESP packet%s\n");
-	p(esps_udpinval, "\t%u UDP packet%s for non-encapsulating TDB received\n");
-	p(esps_udpneeded, "\t%u raw ESP packet%s for encapsulating TDB received\n");
+	p(esps_input, "\t%llu input ESP packet%s\n");
+	p(esps_output, "\t%llu output ESP packet%s\n");
+	p(esps_nopf, "\t%llu packet%s from unsupported protocol families\n");
+	p(esps_hdrops, "\t%llu packet%s shorter than header shows\n");
+	p(esps_pdrops, "\t%llu packet%s dropped due to policy\n");
+	p(esps_notdb, "\t%llu packet%s for which no TDB was found\n");
+	p(esps_badkcr, "\t%llu input packet%s that failed to be processed\n");
+	p(esps_badenc, "\t%llu packet%s with bad encryption received\n");
+	p(esps_badauth, "\t%llu packet%s that failed verification received\n");
+	p(esps_noxform, "\t%llu packet%s for which no XFORM was set in TDB received\n");
+	p(esps_qfull, "\t%llu packet%s were dropped due to full output queue\n");
+	p(esps_wrap, "\t%llu packet%s where counter wrapping was detected\n");
+	p(esps_replay, "\t%llu possibly replayed packet%s received\n");
+	p(esps_badilen, "\t%llu packet%s with bad payload size or padding received\n");
+	p(esps_invalid, "\t%llu packet%s attempted to use an invalid TDB\n");
+	p(esps_toobig, "\t%llu packet%s got larger than max IP packet size\n");
+	p(esps_crypto, "\t%llu packet%s that failed crypto processing\n");
+	p(esps_outfail, "\t%llu output packet%s could not be sent\n");
+	p(esps_udpencin, "\t%llu input UDP encapsulated ESP packet%s\n");
+	p(esps_udpencout, "\t%llu output UDP encapsulated ESP packet%s\n");
+	p(esps_udpinval, "\t%llu UDP packet%s for non-encapsulating TDB received\n");
+	p(esps_udpneeded, "\t%llu raw ESP packet%s for encapsulating TDB received\n");
 	p(esps_ibytes, "\t%llu input byte%s\n");
 	p(esps_obytes, "\t%llu output byte%s\n");
 
@@ -1229,21 +1229,21 @@ ipcomp_stats(char *name)
 #define p(f, m) if (ipcompstat.f || sflag <= 1) \
 	printf(m, ipcompstat.f, plural(ipcompstat.f))
 
-	p(ipcomps_input, "\t%u input IPCOMP packet%s\n");
-	p(ipcomps_output, "\t%u output IPCOMP packet%s\n");
-	p(ipcomps_nopf, "\t%u packet%s from unsupported protocol families\n");
-	p(ipcomps_hdrops, "\t%u packet%s shorter than header shows\n");
-	p(ipcomps_pdrops, "\t%u packet%s dropped due to policy\n");
-	p(ipcomps_notdb, "\t%u packet%s for which no TDB was found\n");
-	p(ipcomps_badkcr, "\t%u input packet%s that failed to be processed\n");
-	p(ipcomps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
-	p(ipcomps_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(ipcomps_wrap, "\t%u packet%s where counter wrapping was detected\n");
-	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
-	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
-	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
-	p(ipcomps_outfail, "\t%u output packet%s could not be sent\n");
-	p(ipcomps_minlen, "\t%u packet%s less than minimum compression length\n");
+	p(ipcomps_input, "\t%llu input IPCOMP packet%s\n");
+	p(ipcomps_output, "\t%llu output IPCOMP packet%s\n");
+	p(ipcomps_nopf, "\t%llu packet%s from unsupported protocol families\n");
+	p(ipcomps_hdrops, "\t%llu packet%s shorter than header shows\n");
+	p(ipcomps_pdrops, "\t%llu packet%s dropped due to policy\n");
+	p(ipcomps_notdb, "\t%llu packet%s for which no TDB was found\n");
+	p(ipcomps_badkcr, "\t%llu input packet%s that failed to be processed\n");
+	p(ipcomps_noxform, "\t%llu packet%s for which no XFORM was set in TDB received\n");
+	p(ipcomps_qfull, "\t%llu packet%s were dropped due to full output queue\n");
+	p(ipcomps_wrap, "\t%llu packet%s where counter wrapping was detected\n");
+	p(ipcomps_invalid, "\t%llu packet%s attempted to use an invalid TDB\n");
+	p(ipcomps_toobig, "\t%llu packet%s got larger than max IP packet size\n");
+	p(ipcomps_crypto, "\t%llu packet%s that failed (de)compression processing\n");
+	p(ipcomps_outfail, "\t%llu output packet%s could not be sent\n");
+	p(ipcomps_minlen, "\t%llu packet%s less than minimum compression length\n");
 	p(ipcomps_ibytes, "\t%llu input byte%s\n");
 	p(ipcomps_obytes, "\t%llu output byte%s\n");
 
@@ -1496,9 +1496,6 @@ tcpcb_dump(u_long off)
 	p("%lu", snd_wnd, "\n ");
 	p("%d", sack_enable, ", ");
 	p("%d", snd_numholes, ", ");
-	p("%u", snd_fack, ", ");
-	p("%lu",snd_awnd, "\n ");
-	p("%u", retran_data, ", ");
 	p("%u", snd_last, "\n ");
 	p("%u", irs, "\n ");
 	p("%u", rcv_nxt, ", ");

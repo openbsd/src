@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.41 2017/09/02 17:51:54 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.42 2017/11/17 09:52:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+
+#include <stdlib.h>
 
 #include "tmux.h"
 
@@ -57,10 +59,12 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
 	struct cmd_find_state	*current = &item->shared->current;
+	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct winlink		*wl = item->target.wl;
 	struct window		*w = wl->window;
 	struct session		*s = item->target.s;
 	struct window_pane	*wp = item->target.wp, *lastwp, *markedwp;
+	char			*pane_title;
 	const char		*style;
 
 	if (self->entry == &cmd_last_pane_entry || args_has(args, 'l')) {
@@ -148,8 +152,11 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(self->args, 'T')) {
-	    screen_set_title(&wp->base, args_get(self->args, 'T'));
-	    server_status_window(wp->window);
+		pane_title = format_single(item, args_get(self->args, 'T'),
+		    c, s, wl, wp);
+		screen_set_title(&wp->base, pane_title);
+		server_status_window(wp->window);
+		free(pane_title);
 	}
 
 	if (wp == w->active)

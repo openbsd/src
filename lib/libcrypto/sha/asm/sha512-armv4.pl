@@ -229,7 +229,7 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 sha512_block_data_order:
 	sub	r3,pc,#8		@ sha512_block_data_order
 	add	$len,$inp,$len,lsl#7	@ len to point at the end of inp
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 	ldr	r12,.LOPENSSL_armcap
 	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
 	tst	r12,#1
@@ -270,7 +270,7 @@ sha512_block_data_order:
 	str	$Thi,[sp,#$Foff+4]
 
 .L00_15:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$Tlo,[$inp,#7]
 	ldrb	$t0, [$inp,#6]
 	ldrb	$t1, [$inp,#5]
@@ -533,7 +533,7 @@ ___
 }
 
 $code.=<<___;
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 .fpu	neon
 
 .align	4

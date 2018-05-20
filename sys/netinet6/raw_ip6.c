@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.120 2017/10/06 21:14:55 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.127 2018/04/24 15:40:55 pirofti Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct inpcb *in6p;
 	struct inpcb *last = NULL;
+	struct in6_addr *key;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
 
@@ -136,6 +137,27 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	/* KAME hack: recover scopeid */
 	in6_recoverscope(&rip6src, &ip6->ip6_src);
 
+	key = &ip6->ip6_dst;
+#if NPF > 0
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		/* XXX rdomain support */
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key = &divert->addr.v6;
+			break;
+		case PF_DIVERT_REPLY:
+			break;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	}
+#endif
+	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -144,23 +166,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if ((in6p->inp_ipv6.ip6_nxt || proto == IPPROTO_ICMPV6) &&
 		    in6p->inp_ipv6.ip6_nxt != proto)
 			continue;
-#if NPF > 0
-		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-			struct pf_divert *divert;
-
-			/* XXX rdomain support */
-			if ((divert = pf_find_divert(m)) == NULL)
-				continue;
-			if (IN6_IS_ADDR_UNSPECIFIED(&divert->addr.v6))
-				goto divert_reply;
-			if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6,
-			    &divert->addr.v6))
-				continue;
-		} else
- divert_reply:
-#endif
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, &ip6->ip6_dst))
+		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, key))
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6) &&
 		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))
@@ -229,10 +236,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if (proto == IPPROTO_NONE || proto == IPPROTO_ICMPV6) {
 			m_freem(m);
 		} else {
-			u_int8_t *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
+			int prvnxt = ip6_get_prevhdr(m, *offp);
+
 			icmp6_error(m, ICMP6_PARAM_PROB,
-			    ICMP6_PARAMPROB_NEXTHEADER,
-			    prvnxtp - mtod(m, u_int8_t *));
+			    ICMP6_PARAMPROB_NEXTHEADER, prvnxt);
 		}
 		counters = counters_enter(&ref, ip6counters);
 		counters[ip6s_delivered]--;
@@ -490,7 +497,9 @@ int
 rip6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf *m)
 {
+#ifdef MROUTING
 	int error;
+#endif
 
 	switch (level) {
 	case IPPROTO_IPV6:
@@ -538,11 +547,11 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *in6p = sotoinpcb(so);
 	int error = 0;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
+
+	soassertlocked(so);
 
 	switch (req) {
 	case PRU_DISCONNECT:
@@ -556,8 +565,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		/* FALLTHROUGH */
-	case PRU_DETACH:
 		if (in6p == NULL)
 			panic("rip6_detach");
 #ifdef MROUTING
@@ -695,8 +702,10 @@ rip6_attach(struct socket *so, int proto)
 	if (proto < 0 || proto >= IPPROTO_MAX)
 		return EPROTONOSUPPORT;
 
-	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
-	    (error = in_pcballoc(so, &rawin6pcbtable)))
+	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)))
+		return error;
+	NET_ASSERT_LOCKED();
+	if ((error = in_pcballoc(so, &rawin6pcbtable)))
 		return error;
 
 	in6p = sotoinpcb(so);
@@ -711,6 +720,27 @@ rip6_attach(struct socket *so, int proto)
 	}
 	ICMP6_FILTER_SETPASSALL(in6p->inp_icmp6filt);
 	return 0;
+}
+
+int
+rip6_detach(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (in6p == NULL)
+		panic("rip6_detach");
+#ifdef MROUTING
+	if (so == ip6_mrouter[in6p->inp_rtableid])
+		ip6_mrouter_done(so);
+#endif
+	free(in6p->inp_icmp6filt, M_PCB, sizeof(struct icmp6_filter));
+	in6p->inp_icmp6filt = NULL;
+
+	in_pcbdetach(in6p);
+
+	return (0);
 }
 
 int

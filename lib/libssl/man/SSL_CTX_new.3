@@ -1,5 +1,6 @@
-.\"	$OpenBSD: SSL_CTX_new.3,v 1.3 2017/08/19 23:45:10 schwarze Exp $
-.\"	OpenSSL 21cd6e00 Aug 17 15:21:33 2015 -0400
+.\" $OpenBSD: SSL_CTX_new.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
+.\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
+.\" selective merge up to: OpenSSL eb43101f Dec 9 18:07:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
 .\" Copyright (c) 2000, 2005, 2012, 2013, 2015, 2016 The OpenSSL Project.
@@ -49,11 +50,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 19 2017 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt SSL_CTX_NEW 3
 .Os
 .Sh NAME
 .Nm SSL_CTX_new ,
+.Nm SSL_CTX_up_ref ,
 .Nm TLS_method ,
 .Nm TLS_server_method ,
 .Nm TLS_client_method ,
@@ -77,6 +79,8 @@
 .In openssl/ssl.h
 .Ft SSL_CTX *
 .Fn SSL_CTX_new "const SSL_METHOD *method"
+.Ft int
+.Fn SSL_CTX_up_ref "SSL_CTX *ctx"
 .Ft const SSL_METHOD *
 .Fn TLS_method void
 .Ft const SSL_METHOD *
@@ -121,6 +125,23 @@ object as framework to establish TLS/SSL or DTLS enabled connections.
 It initializes the list of ciphers, the session cache setting, the
 callbacks, the keys and certificates, and the options to its default
 values.
+.Pp
+An
+.Vt SSL_CTX
+object is reference counted.
+Creating a new
+.Vt SSL_CTX
+object sets its reference count to 1.
+Calling
+.Fn SSL_CTX_up_ref
+on it increments the reference count by 1.
+Calling
+.Xr SSL_CTX_free 3
+on it decrements the reference count by 1.
+When the reference count drops to zero,
+any memory or resources allocated to the
+.Vt SSL_CTX
+object are freed.
 .Pp
 The
 .Vt SSL_CTX
@@ -202,18 +223,14 @@ In clients, when a protocol version is disabled without disabling
 all previous protocol versions, the effect is to also disable all
 subsequent protocol versions.
 .Sh RETURN VALUES
-The following return values can occur:
-.Bl -tag -width Ds
-.It Dv NULL
-The creation of a new
-.Vt SSL_CTX
-object failed.
-Check the error stack to find out the reason.
-.It Pointer to an SSL_CTX object
-The return value points to an allocated
-.Vt SSL_CTX
-object.
-.El
+.Fn SSL_CTX_new
+returns a pointer to the newly allocated object or
+.Dv NULL
+on failure.
+Check the error stack to find out the reason for failure.
+.Pp
+.Fn SSL_CTX_up_ref
+returns 1 for success or 0 for failure.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_accept 3 ,
@@ -221,3 +238,46 @@ object.
 .Xr SSL_CTX_set_min_proto_version 3 ,
 .Xr SSL_CTX_set_options 3 ,
 .Xr SSL_set_connect_state 3
+.Sh HISTORY
+.Fn SSL_CTX_new
+first appeared in SSLeay 0.5.1.
+.Fn SSLv23_method ,
+.Fn SSLv23_server_method ,
+and
+.Fn SSLv23_client_method
+first appeared in SSLeay 0.8.0.
+.Fn TLSv1_method ,
+.Fn TLSv1_server_method ,
+and
+.Fn TLSv1_client_method
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
+.Ox 2.4 .
+.Pp
+.Fn DTLSv1_method ,
+.Fn DTLSv1_server_method ,
+and
+.Fn DTLSv1_client_method
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Pp
+.Fn TLSv1_1_method ,
+.Fn TLSv1_1_server_method ,
+.Fn TLSv1_1_client_method ,
+.Fn TLSv1_2_method ,
+.Fn TLSv1_2_server_method ,
+and
+.Fn TLSv1_2_client_method
+first appeared in OpenSSL 1.0.1 and have been available since
+.Ox 5.3 .
+.Pp
+.Fn TLS_method ,
+.Fn TLS_server_method ,
+and
+.Fn TLS_client_method
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 5.8 .
+.Pp
+.Fn SSL_CTX_up_ref
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.3 .

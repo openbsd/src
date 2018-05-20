@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.19 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.20 2017/12/05 20:31:45 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -216,23 +216,23 @@ dpd_timer_interval(u_int32_t offset)
 static void
 dpd_timer_reset(struct sa *sa, u_int32_t time_passed, enum dpd_tstate mode)
 {
-	struct timeval	tv;
+	struct timespec	ts;
 
 	if (sa->dpd_event)
 		timer_remove_event(sa->dpd_event);
 
-	gettimeofday(&tv, 0);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 	switch (mode) {
 	case DPD_TIMER_NORMAL:
 		sa->dpd_failcount = 0;
-		tv.tv_sec += dpd_timer_interval(time_passed);
+		ts.tv_sec += dpd_timer_interval(time_passed);
 		sa->dpd_event = timer_add_event("dpd_event", dpd_event, sa,
-		    &tv);
+		    &ts);
 		break;
 	case DPD_TIMER_CHECK:
-		tv.tv_sec += DPD_RETRANS_WAIT;
+		ts.tv_sec += DPD_RETRANS_WAIT;
 		sa->dpd_event = timer_add_event("dpd_check_event",
-		    dpd_check_event, sa, &tv);
+		    dpd_check_event, sa, &ts);
 		break;
 	default:
 		break;
@@ -267,7 +267,7 @@ dpd_check_time(struct sa *sa, void *v_arg)
 	struct sockaddr *dst;
 	struct proto *proto;
 	struct sa_kinfo *ksa;
-	struct timeval tv;
+	struct timespec ts;
 
 	if (sa->phase == 1 || (args->isakmp_sa->flags & SA_FLAG_DPD) == 0 ||
 	    dpd_find_sa(sa, args->isakmp_sa) == 0)
@@ -278,7 +278,7 @@ dpd_check_time(struct sa *sa, void *v_arg)
 		return 0;
 	sa->transport->vtbl->get_src(sa->transport, &dst);
 
-	gettimeofday(&tv, 0);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 	ksa = pf_key_v2_get_kernel_sa(proto->spi[1], proto->spi_sz[1],
 	    proto->proto, dst);
 
@@ -287,10 +287,10 @@ dpd_check_time(struct sa *sa, void *v_arg)
 
 	LOG_DBG((LOG_MESSAGE, 80, "dpd_check_time: "
 	    "SA %p last use %u second(s) ago", sa,
-	    (u_int32_t)(tv.tv_sec - ksa->last_used)));
+	    (u_int32_t)(ts.tv_sec - ksa->last_used)));
 
-	if ((u_int32_t)(tv.tv_sec - ksa->last_used) < args->interval) {
-		args->interval = (u_int32_t)(tv.tv_sec - ksa->last_used);
+	if ((u_int32_t)(ts.tv_sec - ksa->last_used) < args->interval) {
+		args->interval = (u_int32_t)(ts.tv_sec - ksa->last_used);
 		return 1;
 	}
 	return 0;

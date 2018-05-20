@@ -1,2 +1,1 @@
 mandoc: empty.in:12:18: STYLE: no blank before trailing delimiter: Qq user@host)
-mandoc: empty.in:15:13: STYLE: no blank before trailing delimiter: Qo full)

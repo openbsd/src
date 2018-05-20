@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.27 2017/05/17 14:00:06 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.28 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -226,79 +226,70 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 	if (imsg == NULL)
 		ca_shutdown();
 
-	if (p->proc == PROC_PARENT) {
-		switch (imsg->hdr.type) {
-		case IMSG_CONF_START:
-			return;
-		case IMSG_CONF_END:
-			ca_init();
+	switch (imsg->hdr.type) {
+	case IMSG_CONF_START:
+		return;
+	case IMSG_CONF_END:
+		ca_init();
 
-			/* Start fulfilling requests */
-			mproc_enable(p_pony);
-			return;
-		}
-	}
+		/* Start fulfilling requests */
+		mproc_enable(p_pony);
+		return;
 
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
-		case IMSG_CTL_VERBOSE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			log_trace_verbose(v);
-			return;
-		case IMSG_CTL_PROFILE:
-			m_msg(&m, imsg);
-			m_get_int(&m, &v);
-			m_end(&m);
-			profiling = v;
-			return;
-		}
-	}
+	case IMSG_CTL_VERBOSE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		log_trace_verbose(v);
+		return;
 
-	if (p->proc == PROC_PONY) {
+	case IMSG_CTL_PROFILE:
+		m_msg(&m, imsg);
+		m_get_int(&m, &v);
+		m_end(&m);
+		profiling = v;
+		return;
+
+	case IMSG_CA_PRIVENC:
+	case IMSG_CA_PRIVDEC:
+		m_msg(&m, imsg);
+		m_get_id(&m, &id);
+		m_get_string(&m, &pkiname);
+		m_get_data(&m, &from, &flen);
+		m_get_size(&m, &tlen);
+		m_get_size(&m, &padding);
+		m_end(&m);
+
+		pki = dict_get(env->sc_pki_dict, pkiname);
+		if (pki == NULL || pki->pki_pkey == NULL ||
+		    (rsa = EVP_PKEY_get1_RSA(pki->pki_pkey)) == NULL)
+			fatalx("ca_imsg: invalid pki");
+
+		if ((to = calloc(1, tlen)) == NULL)
+			fatalx("ca_imsg: calloc");
+
 		switch (imsg->hdr.type) {
 		case IMSG_CA_PRIVENC:
+			ret = RSA_private_encrypt(flen, from, to, rsa,
+			    padding);
+			break;
 		case IMSG_CA_PRIVDEC:
-			m_msg(&m, imsg);
-			m_get_id(&m, &id);
-			m_get_string(&m, &pkiname);
-			m_get_data(&m, &from, &flen);
-			m_get_size(&m, &tlen);
-			m_get_size(&m, &padding);
-			m_end(&m);
-
-			pki = dict_get(env->sc_pki_dict, pkiname);
-			if (pki == NULL || pki->pki_pkey == NULL ||
-			    (rsa = EVP_PKEY_get1_RSA(pki->pki_pkey)) == NULL)
-				fatalx("ca_imsg: invalid pki");
-
-			if ((to = calloc(1, tlen)) == NULL)
-				fatalx("ca_imsg: calloc");
-
-			switch (imsg->hdr.type) {
-			case IMSG_CA_PRIVENC:
-				ret = RSA_private_encrypt(flen, from, to, rsa,
-				    padding);
-				break;
-			case IMSG_CA_PRIVDEC:
-				ret = RSA_private_decrypt(flen, from, to, rsa,
-				    padding);
-				break;
-			}
-
-			m_create(p, imsg->hdr.type, 0, 0, -1);
-			m_add_id(p, id);
-			m_add_int(p, ret);
-			if (ret > 0)
-				m_add_data(p, to, (size_t)ret);
-			m_close(p);
-
-			free(to);
-			RSA_free(rsa);
-
-			return;
+			ret = RSA_private_decrypt(flen, from, to, rsa,
+			    padding);
+			break;
 		}
+
+		m_create(p, imsg->hdr.type, 0, 0, -1);
+		m_add_id(p, id);
+		m_add_int(p, ret);
+		if (ret > 0)
+			m_add_data(p, to, (size_t)ret);
+		m_close(p);
+
+		free(to);
+		RSA_free(rsa);
+
+		return;
 	}
 
 	errx(1, "ca_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.350 2017/09/26 20:23:32 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.354 2018/02/08 09:15:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,6 +81,8 @@ int	 pfctl_load_debug(struct pfctl *, unsigned int);
 int	 pfctl_load_logif(struct pfctl *, char *);
 int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_load_reassembly(struct pfctl *, u_int32_t);
+int	 pfctl_load_syncookies(struct pfctl *, u_int8_t);
+int	 pfctl_set_synflwats(struct pfctl *, u_int32_t, u_int32_t);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
 	    long);
@@ -1104,14 +1106,22 @@ int
 pfctl_show_status(int dev, int opts)
 {
 	struct pf_status status;
+	struct pfctl_watermarks wats;
+	struct pfioc_synflwats iocwats;
 
 	if (ioctl(dev, DIOCGETSTATUS, &status)) {
 		warn("DIOCGETSTATUS");
 		return (-1);
 	}
+	if (ioctl(dev, DIOCGETSYNFLWATS, &iocwats)) {
+		warn("DIOCGETSYNFLWATS");
+		return (-1);
+	}
+	wats.hi = iocwats.hiwat;
+	wats.lo = iocwats.lowat;
 	if (opts & PF_OPT_SHOWALL)
 		pfctl_print_title("INFO:");
-	print_status(&status, opts);
+	print_status(&status, &wats, opts);
 	return (0);
 }
 
@@ -1658,20 +1668,21 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	free(path);
 	path = NULL;
 
-	/* process "load anchor" directives that might have used queues */
-	if (!anchorname[0]) {
+	if (trans == NULL) {
+		/*
+		 * process "load anchor" directives that might have used queues
+		 */
 		if (pfctl_load_anchors(dev, &pf, t) == -1)
 			ERRX("load anchors");
 		pfctl_clear_queues(&qspecs);
 		pfctl_clear_queues(&rootqs);
-	}
 
-	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0) {
-		if (!anchorname[0])
-			if (pfctl_load_options(&pf))
+		if ((opts & PF_OPT_NOACTION) == 0) {
+			if (!anchorname[0] && pfctl_load_options(&pf))
 				goto _error;
-		if (pfctl_trans(dev, t, DIOCXCOMMIT, osize))
-			ERR("DIOCXCOMMIT");
+			if (pfctl_trans(dev, t, DIOCXCOMMIT, osize))
+				ERR("DIOCXCOMMIT");
+		}
 	}
 	return (0);
 
@@ -1740,6 +1751,9 @@ pfctl_init_options(struct pfctl *pf)
 	pf->timeout[PFTM_ADAPTIVE_END] = PFSTATE_ADAPT_END;
 
 	pf->limit[PF_LIMIT_STATES] = PFSTATE_HIWAT;
+
+	pf->syncookieswat[0] = PF_SYNCOOKIES_LOWATPCT;
+	pf->syncookieswat[1] = PF_SYNCOOKIES_HIWATPCT;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXCLUSTERS;
@@ -1810,6 +1824,27 @@ pfctl_load_options(struct pfctl *pf)
 	/* load reassembly settings */
 	if (pf->reass_set && pfctl_load_reassembly(pf, pf->reassemble))
 		error = 1;
+
+	/* load syncookies settings */
+	if (pf->syncookies_set && pfctl_load_syncookies(pf, pf->syncookies))
+		error = 1;
+	if (pf->syncookieswat_set) {
+		struct pfioc_limit pl;
+		unsigned curlim;
+
+		if (pf->limit_set[PF_LIMIT_STATES])
+			curlim = pf->limit[PF_LIMIT_STATES];
+		else {
+			memset(&pl, 0, sizeof(pl));
+			pl.index = pf_limits[PF_LIMIT_STATES].index;
+			if (ioctl(dev, DIOCGETLIMIT, &pl))
+				err(1, "DIOCGETLIMIT");
+			curlim = pl.limit;
+		}
+		if (pfctl_set_synflwats(pf, curlim * pf->syncookieswat[0]/100,
+		    curlim * pf->syncookieswat[1]/100))
+			error = 1;
+	}
 
 	return (error);
 }
@@ -1899,6 +1934,22 @@ pfctl_load_timeout(struct pfctl *pf, unsigned int timeout, unsigned int seconds)
 }
 
 int
+pfctl_set_synflwats(struct pfctl *pf, u_int32_t lowat, u_int32_t hiwat)
+{
+	struct pfioc_synflwats ps;
+
+	memset(&ps, 0, sizeof(ps));
+	ps.hiwat = hiwat;
+	ps.lowat = lowat;
+
+	if (ioctl(pf->dev, DIOCSETSYNFLWATS, &ps)) {
+		warnx("Cannot set synflood detection watermarks");
+		return (1);
+	}
+	return (0);
+}
+
+int
 pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 {
 	pf->reass_set = 1;
@@ -1914,6 +1965,50 @@ pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 		printf("set reassemble %s %s\n", on ? "yes" : "no",
 		    nodf ? "no-df" : "");
 
+	return (0);
+}
+
+int
+pfctl_set_syncookies(struct pfctl *pf, u_int8_t val, struct pfctl_watermarks *w)
+{
+	if (val != PF_SYNCOOKIES_ADAPTIVE && w != NULL) {
+		warnx("syncookies start/end only apply to adaptive");
+		return (1);
+	}
+	if (val == PF_SYNCOOKIES_ADAPTIVE && w != NULL) {
+		if (!w->hi)
+			w->hi = PF_SYNCOOKIES_HIWATPCT;
+		if (!w->lo)
+			w->lo = w->hi / 2;
+		if (w->lo >= w->hi) {
+			warnx("start must be higher than end");
+			return (1);
+		}
+		pf->syncookieswat[0] = w->lo;
+		pf->syncookieswat[1] = w->hi;
+		pf->syncookieswat_set = 1;
+	}
+
+	if (pf->opts & PF_OPT_VERBOSE) {
+		if (val == PF_SYNCOOKIES_NEVER)
+			printf("set syncookies never\n");
+		else if (val == PF_SYNCOOKIES_ALWAYS)
+			printf("set syncookies always\n");
+		else if (val == PF_SYNCOOKIES_ADAPTIVE) {
+			if (pf->syncookieswat_set)
+				printf("set syncookies adaptive (start %u%%, "
+				    "end %u%%)\n", pf->syncookieswat[1],
+				    pf->syncookieswat[0]);
+			else
+				printf("set syncookies adaptive\n");
+		} else {	/* cannot happen */
+			warnx("king bula ate all syncookies");
+			return (1);
+		}
+	}
+
+	pf->syncookies_set = 1;
+	pf->syncookies = val;
 	return (0);
 }
 
@@ -2008,6 +2103,16 @@ pfctl_load_reassembly(struct pfctl *pf, u_int32_t reassembly)
 {
 	if (ioctl(dev, DIOCSETREASS, &reassembly)) {
 		warnx("DIOCSETREASS");
+		return (1);
+	}
+	return (0);
+}
+
+int
+pfctl_load_syncookies(struct pfctl *pf, u_int8_t val)
+{
+	if (ioctl(dev, DIOCSETSYNCOOKIES, &val)) {
+		warnx("DIOCSETSYNCOOKIES");
 		return (1);
 	}
 	return (0);

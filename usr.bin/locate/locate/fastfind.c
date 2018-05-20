@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.13 2015/10/23 07:57:03 tedu Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.14 2017/12/08 17:26:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.13 2015/10/23 07:57:03 tedu Exp $
+ * $Id: fastfind.c,v 1.14 2017/12/08 17:26:42 millert Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -173,6 +173,8 @@ fastfind_mmap
 
 		/* go forward or backward */
 		if (c == SWITCH) { /* big step, an integer */
+			if (len < INTSIZE)
+				break;
 			count += getwm(paddr) - OFFSET;
 			len -= INTSIZE; paddr += INTSIZE;
 		} else {	   /* slow step, =< 14 chars */
@@ -184,7 +186,7 @@ fastfind_mmap
 		p = path + count;
 		foundchar = p - 1;
 
-		for (;;) {
+		for (; len > 0; ) {
 			c = (u_char)*paddr++;
 			len--;
 			/*
@@ -197,7 +199,7 @@ fastfind_mmap
 			 */
 			if (c < PARITY) {
 				if (c <= UMLAUT) {
-					if (c == UMLAUT) {
+					if (c == UMLAUT && len > 0) {
 						c = (u_char)*paddr++;
 						len--;
 

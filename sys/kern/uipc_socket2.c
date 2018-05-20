@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.86 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.93 2018/05/07 15:51:53 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -278,12 +277,14 @@ solock(struct socket *so)
 {
 	int s = 0;
 
-	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY))
 		NET_LOCK();
-	else
+	else {
+		KERNEL_LOCK();
 		s = -42;
+	}
 
 	return (s);
 }
@@ -293,6 +294,9 @@ sounlock(int s)
 {
 	if (s != -42)
 		NET_UNLOCK();
+	else {
+		KERNEL_UNLOCK();
+	}
 }
 
 void
@@ -303,7 +307,7 @@ soassertlocked(struct socket *so)
 	case PF_INET6:
 		NET_ASSERT_LOCKED();
 		break;
-	case PF_LOCAL:
+	case PF_UNIX:
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -315,7 +319,7 @@ soassertlocked(struct socket *so)
 int
 sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 {
-	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
 	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
 	    (so->so_proto->pr_domain->dom_family != PF_KEY)) {
 		return rwsleep(ident, &netlock, prio, wmesg, timo);
@@ -329,12 +333,12 @@ sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 int
 sbwait(struct socket *so, struct sockbuf *sb)
 {
+	int prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
+
 	soassertlocked(so);
 
-	sb->sb_flagsintr |= SB_WAIT;
-	return (sosleep(so, &sb->sb_cc,
-	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, "netio",
-	    sb->sb_timeo));
+	sb->sb_flags |= SB_WAIT;
+	return (sosleep(so, &sb->sb_cc, prio, "netio", sb->sb_timeo));
 }
 
 int
@@ -342,7 +346,6 @@ sblock(struct socket *so, struct sockbuf *sb, int wait)
 {
 	int error, prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
 
-	KERNEL_ASSERT_LOCKED();
 	soassertlocked(so);
 
 	if ((sb->sb_flags & SB_LOCK) == 0) {
@@ -363,9 +366,9 @@ sblock(struct socket *so, struct sockbuf *sb, int wait)
 }
 
 void
-sbunlock(struct sockbuf *sb)
+sbunlock(struct socket *so, struct sockbuf *sb)
 {
-	KERNEL_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	sb->sb_flags &= ~SB_LOCK;
 	if (sb->sb_flags & SB_WANT) {
@@ -382,17 +385,18 @@ sbunlock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	KERNEL_ASSERT_LOCKED();
 	soassertlocked(so);
 
-	selwakeup(&sb->sb_sel);
-	sb->sb_flagsintr &= ~SB_SEL;
-	if (sb->sb_flagsintr & SB_WAIT) {
-		sb->sb_flagsintr &= ~SB_WAIT;
+	sb->sb_flags &= ~SB_SEL;
+	if (sb->sb_flags & SB_WAIT) {
+		sb->sb_flags &= ~SB_WAIT;
 		wakeup(&sb->sb_cc);
 	}
+	KERNEL_LOCK();
 	if (so->so_state & SS_ASYNC)
 		csignal(so->so_pgid, SIGIO, so->so_siguid, so->so_sigeuid);
+	selwakeup(&sb->sb_sel);
+	KERNEL_UNLOCK();
 }
 
 /*

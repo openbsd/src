@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.14 2017/03/02 15:31:15 stsp Exp $
+dnl	$OpenBSD: install,v 1.16 2017/11/30 15:25:37 visa Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -75,14 +75,15 @@ If you have installed onto USB use the following bootcmd instead:
 
   fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0
 
-On dual-core systems, the coremask parameter enables the secondary CPU:
+On multi-core systems, the numcores parameter enables the secondary CPUs.
+Use the total number of cores on your system as the value of the parameter.
 
-  fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0 coremask=0x3
+  fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0 numcores=2
 
 On the EdgeRouter Lite, bootcmd may also reset the USB controller for
 more reliable USB device detection:
 
-  usb reset; fatload usb 0 $loadaddr bsd; bootoctlinux rootdev=sd0 coremask=0x3
+  usb reset; fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0 numcores=2
 
 OpenBSDCongratulations
 

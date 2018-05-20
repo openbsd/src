@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.12 2017/03/19 10:57:29 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.13 2017/11/03 09:07:54 aoyama Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -187,7 +187,7 @@ inittodr(time_t base)
 			return;
 		printf("WARNING: clock %s %d days",
 		    ts.tv_sec < base ? "lost" : "gained",
-		       (int) (deltat / SECDAY));
+		    (int) (deltat / SECDAY));
 	}
 bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");

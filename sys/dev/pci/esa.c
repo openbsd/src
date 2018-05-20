@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.33 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.34 2018/04/11 04:48:31 ratchov Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1514,7 +1514,6 @@ esa_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		esa_resume(sc);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 		break;
 	}
 	return 0;

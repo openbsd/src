@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.20 2018/05/13 06:48:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -181,7 +181,8 @@ EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos)
 }
 
 int
-EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, ASN1_OBJECT *obj, int lastpos)
+EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
+    int lastpos)
 {
 	return X509at_get_attr_by_OBJ(key->attributes, obj, lastpos);
 }

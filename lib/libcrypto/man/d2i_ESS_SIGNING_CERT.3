@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ESS_SIGNING_CERT.3,v 1.1 2016/12/27 20:56:18 schwarze Exp $
+.\"	$OpenBSD: d2i_ESS_SIGNING_CERT.3,v 1.2 2018/03/23 04:34:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt D2I_ESS_SIGNING_CERT 3
 .Os
 .Sh NAME
@@ -112,3 +112,7 @@ if an error occurs.
 .Sh STANDARDS
 RFC 2634: Enhanced Security Services for S/MIME,
 section 5: Signing Certificate Attribute
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.0.0
+and have been available since
+.Ox 4.9 .

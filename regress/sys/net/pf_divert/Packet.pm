@@ -1,4 +1,4 @@
-#	$OpenBSD: Packet.pm,v 1.2 2017/09/04 22:40:01 bluhm Exp $
+#	$OpenBSD: Packet.pm,v 1.4 2017/12/18 17:01:27 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,19 +26,25 @@ use IO::Socket;
 use IO::Socket::INET6;
 
 use constant IPPROTO_DIVERT => 258;
-use constant IP_DIVERTFL => 0x1022;
-use constant IPPROTO_DIVERT_RESP => 0x1;
-use constant IPPROTO_DIVERT_INIT => 0x2;
 
 sub new {
 	my $class = shift;
 	my %args = @_;
+	$args{ktracefile} ||= "packet.ktrace";
 	$args{logfile} ||= "packet.log";
 	$args{up} ||= "Bound";
 	$args{down} ||= "Shutdown $class";
 	my $self = Proc::new($class, %args);
 	$self->{domain}
 	    or croak "$class domain not given";
+
+	if ($self->{ktrace}) {
+		unlink $self->{ktracefile};
+		my @cmd = ("ktrace", "-f", $self->{ktracefile}, "-p", $$);
+		do { local $> = 0; system(@cmd) }
+		    and die ref($self), " system '@cmd' failed: $?";
+	}
+
 	my $ds = do { local $> = 0; IO::Socket::INET6->new(
 	    Type	=> Socket::SOCK_RAW,
 	    Proto	=> IPPROTO_DIVERT,
@@ -55,16 +61,14 @@ sub new {
 	print $log "divert sock: ",$ds->sockhost()," ",$ds->sockport(),"\n";
 	$self->{divertaddr} = $ds->sockhost();
 	$self->{divertport} = $ds->sockport();
-	my $divertdir = 0;
-	$divertdir |= IPPROTO_DIVERT_INIT if $self->{divertinit};
-	$divertdir |= IPPROTO_DIVERT_RESP if $self->{divertresp};
-	my $level = $self->{af} eq "inet" ? IPPROTO_IP :
-	    $self->{af} eq "inet6" ? IPPROTO_IPV6 : undef;
-	if ($divertdir) {
-		setsockopt($ds, $level, IP_DIVERTFL, pack('i', $divertdir))
-		    or die ref($self), " set divert flag failed: $!";
-	}
 	$self->{ds} = $ds;
+
+	if ($self->{ktrace}) {
+		my @cmd = ("ktrace", "-c", "-f", $self->{ktracefile}, "-p", $$);
+		do { local $> = 0; system(@cmd) }
+		    and die ref($self), " system '@cmd' failed: $?";
+	}
+
 	return $self;
 }
 

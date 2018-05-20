@@ -12,7 +12,7 @@ BEGIN {
 
 use warnings;
 
-plan(tests => 276 );
+plan(tests => 277 );
 
 # type coercion on assignment
 $foo = 'foo';
@@ -1153,6 +1153,22 @@ pass "No crash due to CvGV pointing to glob copy in the stash";
     is($c_125840, 1, 'RT #125840: $c=$d');
 }
 
+# [perl #128597] Crash when gp_free calls ckWARN_d
+# I am not sure this test even belongs in this file, as the crash was the
+# result of various features interacting.  But a call to ckWARN_d from
+# gv.c:gp_free triggered the crash, so this seems as good a place as any.
+# ‘die’ (or any abnormal scope exit) can cause the current cop to be freed,
+# if the subroutine containing the ‘die’ gets freed as a result.  That
+# causes PL_curcop to be set to NULL.  If a writable handle gets freed
+# while PL_curcop is NULL, then gp_free will call ckWARN_d while that con-
+# dition still holds, so ckWARN_d needs to know about PL_curcop possibly
+# being NULL.
+SKIP: {
+    skip_if_miniperl("No PerlIO::scalar on miniperl", 1);
+    runperl(prog => 'open my $fh, q|>|, \$buf;'
+                   .'my $sub = eval q|sub {exit 0}|; $sub->()');
+    is ($? & 127, 0,"[perl #128597] No crash when gp_free calls ckWARN_d");
+}
 
 __END__
 Perl

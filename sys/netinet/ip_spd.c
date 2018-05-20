@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.92 2017/04/06 14:25:18 dhill Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.97 2018/05/16 13:19:00 reyk Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -45,26 +45,26 @@ int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
 struct	ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
 	    union sockaddr_union *);
-void	ipsp_delete_acquire(void *);
-
-#ifdef ENCDEBUG
-#define	DPRINTF(x)	if (encdebug) printf x
-#else
-#define	DPRINTF(x)
-#endif
+void	ipsp_delete_acquire_timo(void *);
+void	ipsp_delete_acquire(struct ipsec_acquire *);
 
 struct pool ipsec_policy_pool;
 struct pool ipsec_acquire_pool;
 int ipsec_policy_pool_initialized = 0;
-int ipsec_acquire_pool_initialized = 0;
 
+/* Protected by the NET_LOCK(). */
+int ipsec_acquire_pool_initialized = 0;
 struct radix_node_head **spd_tables;
 unsigned int spd_table_max;
+TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head =
+    TAILQ_HEAD_INITIALIZER(ipsec_acquire_head);
 
 struct radix_node_head *
 spd_table_get(unsigned int rtableid)
 {
 	unsigned int rdomain;
+
+	NET_ASSERT_LOCKED();
 
 	if (spd_tables == NULL)
 		return (NULL);
@@ -82,6 +82,8 @@ spd_table_add(unsigned int rtableid)
 	struct radix_node_head *rnh = NULL;
 	unsigned int rdomain;
 	void *p;
+
+	NET_ASSERT_LOCKED();
 
 	rdomain = rtable_l2(rtableid);
 	if (spd_tables == NULL || rdomain > spd_table_max) {
@@ -105,6 +107,25 @@ spd_table_add(unsigned int rtableid)
 	}
 
 	return (spd_tables[rdomain]);
+}
+
+int
+spd_table_walk(unsigned int rtableid,
+    int (*func)(struct ipsec_policy *, void *, unsigned int), void *arg)
+{
+	struct radix_node_head *rnh;
+	int (*walker)(struct radix_node *, void *, u_int) = (void *)func;
+	int error;
+
+	rnh = spd_table_get(rtableid);
+	if (rnh == NULL)
+		return (0);
+
+	/* EGAIN means the tree changed. */
+	while ((error = rn_walktree(rnh, walker, arg)) == EAGAIN)
+		continue;
+
+	return (error);
 }
 
 /*
@@ -134,6 +155,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	struct ipsec_ids *ids = NULL;
 	int signore = 0, dignore = 0;
 	u_int rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
+
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * If there are no flows in place, there's no point
@@ -587,6 +610,8 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	struct radix_node *rn = (struct radix_node *)ipo;
 	int err = 0;
 
+	NET_ASSERT_LOCKED();
+
 	if (--ipo->ipo_ref_count > 0)
 		return 0;
 
@@ -614,13 +639,23 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	return err;
 }
 
+void
+ipsp_delete_acquire_timo(void *v)
+{
+	struct ipsec_acquire *ipa = v;
+
+	NET_LOCK();
+	ipsp_delete_acquire(ipa);
+	NET_UNLOCK();
+}
+
 /*
  * Delete a pending IPsec acquire record.
  */
 void
-ipsp_delete_acquire(void *v)
+ipsp_delete_acquire(struct ipsec_acquire *ipa)
 {
-	struct ipsec_acquire *ipa = v;
+	NET_ASSERT_LOCKED();
 
 	timeout_del(&ipa->ipa_timeout);
 	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
@@ -638,6 +673,8 @@ struct ipsec_acquire *
 ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 {
 	struct ipsec_acquire *ipa;
+
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH (ipa, &ipo->ipo_acquires, ipa_ipo_next) {
 		if (!memcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
@@ -657,6 +694,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 {
 	struct ipsec_acquire *ipa;
 
+	NET_ASSERT_LOCKED();
+
 	/* Check whether request has been made already. */
 	if ((ipa = ipsp_pending_acquire(ipo, gw)) != NULL)
 		return 0;
@@ -674,7 +713,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	ipa->ipa_addr = *gw;
 
-	timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
+	timeout_set_proc(&ipa->ipa_timeout, ipsp_delete_acquire_timo, ipa);
 
 	ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
 	ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
@@ -755,7 +794,9 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 	}
 
+#ifdef IPSEC
 	timeout_add_sec(&ipa->ipa_timeout, ipsec_expire_acquire);
+#endif
 
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 	TAILQ_INSERT_TAIL(&ipo->ipo_acquires, ipa, ipa_ipo_next);

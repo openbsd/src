@@ -1,4 +1,4 @@
-/* $OpenBSD: genpkey.c,v 1.9 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: genpkey.c,v 1.12 2018/02/08 11:17:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -65,26 +65,164 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
-static int
-init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx, const char *file);
+static int init_keygen_file(BIO * err, EVP_PKEY_CTX **pctx, const char *file);
 static int genpkey_cb(EVP_PKEY_CTX * ctx);
+
+struct {
+	const EVP_CIPHER *cipher;
+	EVP_PKEY_CTX **ctx;
+	int do_param;
+	char *outfile;
+	int outformat;
+	char *passarg;
+	int text;
+} genpkey_config;
+
+static int
+genpkey_opt_algorithm(char *arg)
+{
+	if (!init_gen_str(bio_err, genpkey_config.ctx, arg,
+	    genpkey_config.do_param))
+		return (1);
+
+	return (0);
+}
+
+static int
+genpkey_opt_cipher(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if (genpkey_config.do_param == 1)
+		return (1);
+
+	if (strcmp(name, "none") == 0) {
+		genpkey_config.cipher = NULL;
+		*argsused = 1;
+		return (0);
+	}
+
+	if ((genpkey_config.cipher = EVP_get_cipherbyname(name)) != NULL) {
+		*argsused = 1;
+		return (0);
+	}
+
+	return (1);
+}
+
+static int
+genpkey_opt_paramfile(char *arg)
+{
+	if (genpkey_config.do_param == 1)
+		return (1);
+	if (!init_keygen_file(bio_err, genpkey_config.ctx, arg))
+		return (1);
+
+	return (0);
+}
+
+static int
+genpkey_opt_pkeyopt(char *arg)
+{
+	if (*genpkey_config.ctx == NULL) {
+		BIO_puts(bio_err, "No keytype specified\n");
+		return (1);
+	}
+
+	if (pkey_ctrl_string(*genpkey_config.ctx, arg) <= 0) {
+		BIO_puts(bio_err, "parameter setting error\n");
+		ERR_print_errors(bio_err);
+		return (1);
+	}
+
+	return (0);
+}
+
+struct option genpkey_options[] = {
+	{
+		.name = "algorithm",
+		.argname = "name",
+		.desc = "Public key algorithm to use (must precede -pkeyopt)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = genpkey_opt_algorithm,
+	},
+	{
+		.name = "genparam",
+		.desc = "Generate a set of parameters instead of a private key",
+		.type = OPTION_FLAG,
+		.opt.flag = &genpkey_config.do_param,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file to write to (default stdout)",
+		.type = OPTION_ARG,
+		.opt.arg = &genpkey_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "format",
+		.desc = "Output format (DER or PEM)",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &genpkey_config.outformat,
+	},
+	{
+		.name = "paramfile",
+		.argname = "file",
+		.desc = "File to load public key algorithm parameters from\n"
+		    "(must precede -pkeyopt)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = genpkey_opt_paramfile,
+	},
+	{
+		.name = "pass",
+		.argname = "arg",
+		.desc = "Output file password source",
+		.type = OPTION_ARG,
+		.opt.arg = &genpkey_config.passarg,
+	},
+	{
+		.name = "pkeyopt",
+		.argname = "opt:value",
+		.desc = "Set public key algorithm option to the given value",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = genpkey_opt_pkeyopt,
+	},
+	{
+		.name = "text",
+		.desc = "Print the private/public key in human readable form",
+		.type = OPTION_FLAG,
+		.opt.flag = &genpkey_config.text,
+	},
+	{
+		.name = NULL,
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = genpkey_opt_cipher,
+	},
+	{NULL},
+};
+
+static void
+genpkey_usage()
+{
+	fprintf(stderr,
+	    "usage: genpkey [-algorithm alg] [cipher] [-genparam] [-out file]\n"
+	    "    [-outform der | pem] [-paramfile file] [-pass arg]\n"
+	    "    [-pkeyopt opt:value] [-text]\n\n");
+	options_usage(genpkey_options);
+}
 
 int
 genpkey_main(int argc, char **argv)
 {
-	char **args, *outfile = NULL;
-	char *passarg = NULL;
 	BIO *in = NULL, *out = NULL;
-	const EVP_CIPHER *cipher = NULL;
-	int outformat;
-	int text = 0;
-	EVP_PKEY *pkey = NULL;
 	EVP_PKEY_CTX *ctx = NULL;
+	EVP_PKEY *pkey = NULL;
 	char *pass = NULL;
-	int badarg = 0;
 	int ret = 1, rv;
-
-	int do_param = 0;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
@@ -93,98 +231,29 @@ genpkey_main(int argc, char **argv)
 		}
 	}
 
-	outformat = FORMAT_PEM;
+	memset(&genpkey_config, 0, sizeof(genpkey_config));
+	genpkey_config.ctx = &ctx;
+	genpkey_config.outformat = FORMAT_PEM;
 
-	args = argv + 1;
-	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args, "-outform")) {
-			if (args[1]) {
-				args++;
-				outformat = str2fmt(*args);
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-pass")) {
-			if (!args[1])
-				goto bad;
-			passarg = *(++args);
-		}
-		else if (!strcmp(*args, "-paramfile")) {
-			if (!args[1])
-				goto bad;
-			args++;
-			if (do_param == 1)
-				goto bad;
-			if (!init_keygen_file(bio_err, &ctx, *args))
-				goto end;
-		} else if (!strcmp(*args, "-out")) {
-			if (args[1]) {
-				args++;
-				outfile = *args;
-			} else
-				badarg = 1;
-		} else if (strcmp(*args, "-algorithm") == 0) {
-			if (!args[1])
-				goto bad;
-			if (!init_gen_str(bio_err, &ctx, *(++args), do_param))
-				goto end;
-		} else if (strcmp(*args, "-pkeyopt") == 0) {
-			if (!args[1])
-				goto bad;
-			if (!ctx) {
-				BIO_puts(bio_err, "No keytype specified\n");
-				goto bad;
-			} else if (pkey_ctrl_string(ctx, *(++args)) <= 0) {
-				BIO_puts(bio_err, "parameter setting error\n");
-				ERR_print_errors(bio_err);
-				goto end;
-			}
-		} else if (strcmp(*args, "-genparam") == 0) {
-			if (ctx)
-				goto bad;
-			do_param = 1;
-		} else if (strcmp(*args, "-text") == 0)
-			text = 1;
-		else {
-			cipher = EVP_get_cipherbyname(*args + 1);
-			if (!cipher) {
-				BIO_printf(bio_err, "Unknown cipher %s\n",
-				    *args + 1);
-				badarg = 1;
-			}
-			if (do_param == 1)
-				badarg = 1;
-		}
-		args++;
-	}
-
-	if (!ctx)
-		badarg = 1;
-
-	if (badarg) {
-bad:
-		BIO_printf(bio_err, "Usage: genpkey [options]\n");
-		BIO_printf(bio_err, "where options may be\n");
-		BIO_printf(bio_err, "-out file          output file\n");
-		BIO_printf(bio_err, "-outform X         output format (DER or PEM)\n");
-		BIO_printf(bio_err, "-pass arg          output file pass phrase source\n");
-		BIO_printf(bio_err, "-<cipher>          use cipher <cipher> to encrypt the key\n");
-		BIO_printf(bio_err, "-paramfile file    parameters file\n");
-		BIO_printf(bio_err, "-algorithm alg     the public key algorithm\n");
-		BIO_printf(bio_err, "-pkeyopt opt:value set the public key algorithm option <opt>\n"
-		    "                   to value <value>\n");
-		BIO_printf(bio_err, "-genparam          generate parameters, not key\n");
-		BIO_printf(bio_err, "-text              print the in text\n");
-		BIO_printf(bio_err, "NB: options order may be important!  See the manual page.\n");
+	if (options_parse(argc, argv, genpkey_options, NULL, NULL) != 0) {
+		genpkey_usage();
 		goto end;
 	}
-	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL)) {
+
+	if (ctx == NULL) {
+		genpkey_usage();
+		goto end;
+	}
+
+	if (!app_passwd(bio_err, genpkey_config.passarg, NULL, &pass, NULL)) {
 		BIO_puts(bio_err, "Error getting password\n");
 		goto end;
 	}
-	if (outfile) {
-		if (!(out = BIO_new_file(outfile, "wb"))) {
-			BIO_printf(bio_err,
-			    "Can't open output file %s\n", outfile);
+	if (genpkey_config.outfile != NULL) {
+		if ((out = BIO_new_file(genpkey_config.outfile, "wb")) ==
+		    NULL) {
+			BIO_printf(bio_err, "Can't open output file %s\n",
+			    genpkey_config.outfile);
 			goto end;
 		}
 	} else {
@@ -194,7 +263,7 @@ bad:
 	EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
 	EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
-	if (do_param) {
+	if (genpkey_config.do_param) {
 		if (EVP_PKEY_paramgen(ctx, &pkey) <= 0) {
 			BIO_puts(bio_err, "Error generating parameters\n");
 			ERR_print_errors(bio_err);
@@ -208,12 +277,12 @@ bad:
 		}
 	}
 
-	if (do_param)
+	if (genpkey_config.do_param)
 		rv = PEM_write_bio_Parameters(out, pkey);
-	else if (outformat == FORMAT_PEM)
-		rv = PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0,
-		    NULL, pass);
-	else if (outformat == FORMAT_ASN1)
+	else if (genpkey_config.outformat == FORMAT_PEM)
+		rv = PEM_write_bio_PrivateKey(out, pkey, genpkey_config.cipher,
+		    NULL, 0, NULL, pass);
+	else if (genpkey_config.outformat == FORMAT_ASN1)
 		rv = i2d_PrivateKey_bio(out, pkey);
 	else {
 		BIO_printf(bio_err, "Bad format specified for key\n");
@@ -224,8 +293,8 @@ bad:
 		BIO_puts(bio_err, "Error writing key\n");
 		ERR_print_errors(bio_err);
 	}
-	if (text) {
-		if (do_param)
+	if (genpkey_config.text) {
+		if (genpkey_config.do_param)
 			rv = EVP_PKEY_print_params(out, pkey, 0, NULL);
 		else
 			rv = EVP_PKEY_print_private(out, pkey, 0, NULL);
@@ -237,13 +306,10 @@ bad:
 	}
 	ret = 0;
 
-end:
-	if (pkey)
-		EVP_PKEY_free(pkey);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
-	if (out)
-		BIO_free_all(out);
+ end:
+	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
+	BIO_free_all(out);
 	BIO_free(in);
 	free(pass);
 
@@ -251,8 +317,7 @@ end:
 }
 
 static int
-init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
-    const char *file)
+init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx, const char *file)
 {
 	BIO *pbio;
 	EVP_PKEY *pkey = NULL;
@@ -282,23 +347,20 @@ init_keygen_file(BIO * err, EVP_PKEY_CTX ** pctx,
 	*pctx = ctx;
 	return 1;
 
-err:
+ err:
 	BIO_puts(err, "Error initializing context\n");
 	ERR_print_errors(err);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
-	if (pkey)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_free(pkey);
 	return 0;
 
 }
 
 int
-init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
-    const char *algname, int do_param)
+init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx, const char *algname, int do_param)
 {
-	EVP_PKEY_CTX *ctx = NULL;
 	const EVP_PKEY_ASN1_METHOD *ameth;
+	EVP_PKEY_CTX *ctx = NULL;
 	int pkey_id;
 
 	if (*pctx) {
@@ -329,11 +391,10 @@ init_gen_str(BIO * err, EVP_PKEY_CTX ** pctx,
 	*pctx = ctx;
 	return 1;
 
-err:
+ err:
 	BIO_printf(err, "Error initializing %s context\n", algname);
 	ERR_print_errors(err);
-	if (ctx)
-		EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_CTX_free(ctx);
 	return 0;
 
 }

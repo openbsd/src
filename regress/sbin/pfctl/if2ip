@@ -2,8 +2,10 @@
 # simple script that compare and display interface to address translation
 # done by the userland pfctl tool and by the kernel PF dynamic code.
 
+PFCTL="${PFCTL:=/sbin/pfctl}"
+
 if2ip_user() {
-    echo "pass in from $1" | pfctl -o none -nvf- 2>/dev/null \
+    echo "pass in from $1" | $PFCTL -o none -nvf- 2>/dev/null \
 	| awk '{print  "   "(($3=="on")?$7:$5)}' | sort -u
 }
 
@@ -17,10 +19,10 @@ kernel_spec() {
 }
 
 if2ip_kernel() {
-    T=`echo "pass in on tun100 from $1" | pfctl -a regress/if2ip -f- \
-	-vf- | awk '{ print $6}' | tr -d "()"` 
-    pfctl -a _pf -t "$T" -Ts | sort
-    pfctl -a regress/if2ip -qFr
+    T=`echo "pass in on tun100 from $1" | $PFCTL -a regress/if2ip -f- \
+	-vf- | awk '{ print $6}' | tr -d "()"`
+    $PFCTL -a _pf -t "$T" -Ts | sort
+    $PFCTL -a regress/if2ip -qFr
 }
 
 while [ "X$1" != "X" ]; do

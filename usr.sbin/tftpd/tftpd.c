@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.39 2017/05/26 17:38:46 florian Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.41 2018/01/26 16:40:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -282,7 +282,7 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46cdv] [-l address] [-p port] [-r socket]"
+	fprintf(stderr, "usage: %s [-46cdiv] [-l address] [-p port] [-r socket]"
 	    " directory\n", __progname);
 	exit(1);
 }
@@ -290,6 +290,7 @@ usage(void)
 int		  cancreate = 0;
 int		  verbose = 0;
 int		  debug = 0;
+int		  iflag = 0;
 
 int
 main(int argc, char *argv[])
@@ -307,7 +308,7 @@ main(int argc, char *argv[])
 	int family = AF_UNSPEC;
 	int devnull = -1;
 
-	while ((c = getopt(argc, argv, "46cdl:p:r:v")) != -1) {
+	while ((c = getopt(argc, argv, "46cdil:p:r:v")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -321,6 +322,11 @@ main(int argc, char *argv[])
 		case 'd':
 			verbose = debug = 1;
 			break;
+		case 'i':
+			if (rewrite != NULL)
+				errx(1, "options -i and -r are incompatible");
+			iflag = 1;
+			break;
 		case 'l':
 			addr = optarg;
 			break;
@@ -328,6 +334,8 @@ main(int argc, char *argv[])
 			port = optarg;
 			break;
 		case 'r':
+			if (iflag == 1)
+				errx(1, "options -i and -r are incompatible");
 			rewrite = optarg;
 			break;
 		case 'v':
@@ -949,26 +957,46 @@ error:
  * given as we have no login directory.
  */
 int
-validate_access(struct tftp_client *client, const char *filename)
+validate_access(struct tftp_client *client, const char *requested)
 {
 	int		 mode = client->opcode;
 	struct opt_client *options = client->options;
 	struct stat	 stbuf;
 	int		 fd, wmode;
-	const char	*errstr;
+	const char	*errstr, *filename;
+	char		 rewritten[PATH_MAX];
 
-	if (strcmp(filename, SEEDPATH) == 0) {
+	if (strcmp(requested, SEEDPATH) == 0) {
 		char *buf;
 		if (mode != RRQ)
 			return (EACCESS);
 
 		buf = client->buf + sizeof(client->buf) - 512;
 		arc4random_buf(buf, 512);
+		if (options != NULL && options[OPT_TSIZE].o_request)
+			options[OPT_TSIZE].o_reply = 512;
 		client->file = fmemopen(buf, 512, "r");
 		if (client->file == NULL)
 			return (errno + 100);
 
 		return (0);
+	}
+
+	if (iflag) {
+		int ret;
+
+		/*
+		 * In -i mode, look in the directory named after the
+		 * client address.
+		 */
+		ret = snprintf(rewritten, sizeof(rewritten), "%s/%s",
+		    getip(&client->ss), requested);
+		if (ret == -1 || ret >= sizeof(rewritten))
+			return (ENAMETOOLONG + 100);
+		filename = rewritten;
+	} else {
+retryread:
+		filename = requested;
 	}
 
 	/*
@@ -977,9 +1005,16 @@ validate_access(struct tftp_client *client, const char *filename)
 	 */
 	wmode = O_TRUNC;
 	if (stat(filename, &stbuf) < 0) {
-		if (!cancreate)
+		if (!cancreate) {
+			/*
+			 * In -i mode, retry failed read requests from
+			 * the root directory.
+			 */
+			if (mode == RRQ && errno == ENOENT &&
+			    filename == rewritten)
+				goto retryread;
 			return (errno == ENOENT ? ENOTFOUND : EACCESS);
-		else {
+		} else {
 			if ((errno == ENOENT) && (mode != RRQ))
 				wmode |= O_CREAT;
 			else

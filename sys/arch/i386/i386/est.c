@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.48 2016/03/07 05:32:46 naddy Exp $ */
+/*	$OpenBSD: est.c,v 1.52 2018/03/31 13:45:03 bluhm Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1036,7 +1036,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 			needtran = 0;
 	}
 
-	free(est_fqlist->table, M_DEVBUF, 0);
+	free(est_fqlist->table, M_DEVBUF, npss * sizeof(struct est_op));
 	free(est_fqlist, M_DEVBUF, sizeof *est_fqlist);
 	est_fqlist = acpilist;
 
@@ -1049,7 +1049,7 @@ est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
 void
 est_init(struct cpu_info *ci, int vendor)
 {
-	const char *cpu_device = ci->ci_dev.dv_xname;
+	const char *cpu_device = ci->ci_dev->dv_xname;
 	int i, low, high;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;
@@ -1141,7 +1141,7 @@ est_init(struct cpu_info *ci, int vendor)
 
 		if ((fake_table = mallocarray(3, sizeof(struct est_op),
 		    M_DEVBUF, M_NOWAIT)) == NULL) {
-			free(fake_fqlist, M_DEVBUF, 0);
+			free(fake_fqlist, M_DEVBUF, sizeof(struct fqlist));
 			printf("%s: EST: cannot allocate memory for fake "
 			    "table\n", cpu_device);
 			return;
@@ -1206,7 +1206,7 @@ nospeedstep:
 	 * it can't fail in that case and therefore can't reach here.
 	 */
 	free(est_fqlist->table, M_DEVBUF, 0);
-	free(est_fqlist, M_DEVBUF, 0);
+	free(est_fqlist, M_DEVBUF, sizeof(*est_fqlist));
 }
 
 void

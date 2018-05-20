@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ECDSA_SIG_new.3,v 1.8 2017/01/06 20:35:23 schwarze Exp $
-.\"	OpenSSL e6390aca Jul 21 10:06:03 2015 -0400
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.11 2018/03/23 23:18:17 schwarze Exp $
+.\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
-.\" Copyright (c) 2004, 2005, 2012, 2013 The OpenSSL Project.
+.\" Copyright (c) 2004, 2005, 2013, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,12 +49,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
 .Nm ECDSA_SIG_new ,
 .Nm ECDSA_SIG_free ,
+.Nm ECDSA_SIG_get0 ,
+.Nm ECDSA_SIG_set0 ,
 .Nm i2d_ECDSA_SIG ,
 .Nm d2i_ECDSA_SIG ,
 .Nm ECDSA_size ,
@@ -79,6 +81,18 @@
 .Ft void
 .Fo ECDSA_SIG_free
 .Fa "ECDSA_SIG *sig"
+.Fc
+.Ft void
+.Fo ECDSA_SIG_get0
+.Fa "const ECDSA_SIG *sig"
+.Fa "const BIGNUM **r"
+.Fa "const BIGNUM **s"
+.Fc
+.Ft int
+.Fo ECDSA_SIG_set0
+.Fa "ECDSA_SIG *sig"
+.Fa "BIGNUM *r"
+.Fa "BIGNUM *s"
 .Fc
 .Ft int
 .Fo i2d_ECDSA_SIG
@@ -209,6 +223,26 @@ frees the
 .Vt ECDSA_SIG
 structure
 .Fa sig .
+.Pp
+.Fn ECDSA_SIG_get0
+retrieves internal pointers the
+.Fa r
+and
+.Fa s
+values contained in
+.Fa sig .
+.Pp
+.Fn ECDSA_SIG_set0
+sets the
+.Fa r
+and
+.Fa s
+values in
+.Fa sig .
+Calling this function transfers the memory management of the values to
+.Fa sig .
+Therefore, the values that have been passed in
+should not be freed by the caller.
 .Pp
 .Fn i2d_ECDSA_SIG
 creates the DER encoding of the ECDSA signature
@@ -345,6 +379,7 @@ using the public key
 .Fn ECDSA_size
 returns the maximum length signature or 0 on error.
 .Pp
+.Fn ECDSA_SIG_set0 ,
 .Fn ECDSA_sign ,
 .Fn ECDSA_sign_ex ,
 and
@@ -448,7 +483,31 @@ if (ret == -1) {
 ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 (Digital Signature Standard, DSS)
 .Sh HISTORY
-The ECDSA implementation was first introduced in OpenSSL 0.9.8.
+.Fn ECDSA_SIG_new ,
+.Fn ECDSA_SIG_free ,
+.Fn i2d_ECDSA_SIG ,
+.Fn d2i_ECDSA_SIG ,
+.Fn ECDSA_size ,
+.Fn ECDSA_sign_setup ,
+.Fn ECDSA_sign ,
+.Fn ECDSA_sign_ex ,
+.Fn ECDSA_verify ,
+.Fn ECDSA_do_sign ,
+.Fn ECDSA_do_sign_ex ,
+.Fn ECDSA_do_verify ,
+.Fn ECDSA_OpenSSL ,
+.Fn ECDSA_get_default_method ,
+.Fn ECDSA_set_default_method ,
+and
+.Fn ECDSA_set_method
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Pp
+.Fn ECDSA_SIG_get0
+and
+.Fn ECDSA_SIG_set0
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .
 .Sh AUTHORS
 .An Nils Larsch
 for the OpenSSL project.

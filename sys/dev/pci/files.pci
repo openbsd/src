@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.329 2017/01/21 10:58:15 reyk Exp $
+#	$OpenBSD: files.pci,v 1.334 2018/04/20 04:37:21 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -360,6 +360,11 @@ file	dev/pci/ixgbe_82599.c		ix
 file	dev/pci/ixgbe_x540.c		ix
 file	dev/pci/ixgbe_x550.c		ix
 file	dev/pci/ixgbe_phy.c		ix
+
+# Intel Ethernet 700 Series
+device	ixl: ether, ifnet, ifmedia
+attach	ixl at pci
+file	dev/pci/if_ixl.c		ixl
 
 # Neterion Xframe 10 Gigabit ethernet 
 device	xge: ether, ifnet, ifmedia
@@ -806,6 +811,17 @@ file	dev/pci/xspd.c			xspd
 # VirtIO
 attach	virtio at pci with virtio_pci
 file	dev/pci/virtio_pci.c		virtio_pci
+
+# Synopsys DesignWare I2C Controller
+attach	dwiic at pci with dwiic_pci
+file	dev/pci/dwiic_pci.c		dwiic_pci
+
+attach	bwfm at pci with bwfm_pci: firmload
+file	dev/pci/if_bwfm_pci.c		bwfm_pci
+
+# AMD Cryptographic Co-processor 
+attach	ccp at pci with ccp_pci
+file	dev/pci/ccp_pci.c		ccp_pci
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"

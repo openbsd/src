@@ -1,4 +1,4 @@
-/*	$OpenBSD: DEFS.h,v 1.1 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: DEFS.h,v 1.3 2017/12/16 09:25:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -35,6 +35,20 @@
  * For functions implemented in ASM that aren't syscalls.
  *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
  *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
+ *   END_BUILTIN(x)	If compiling with clang, then just END() and
+ *			mark it .protected, else be like END_STRONG();
+ *			for clang builtins like memcpy
+ * If a 'BUILTIN' function needs be referenced by other ASM code, then use
+ *   _BUILTIN(x)	If compiled with clang, then just x, otherwise
+ *			_HIDDEN(x)
  */
 #define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
+ 
+#ifdef __clang__
+#define	END_BUILTIN(x)	END(x); .protected x
+#define	_BUILTIN(x)	x
+#else
+#define	END_BUILTIN(x)	END_STRONG(x)
+#define	_BUILTIN(x)	_HIDDEN(x)
+#endif

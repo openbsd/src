@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.36 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.39 2018/04/14 07:09:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,18 +74,6 @@
 #include "evp_locl.h"
 
 #define M_do_cipher(ctx, out, in, inl) ctx->cipher->do_cipher(ctx, out, in, inl)
-
-void
-EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
-{
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
-}
-
-EVP_CIPHER_CTX *
-EVP_CIPHER_CTX_new(void)
-{
-	return calloc(1, sizeof(EVP_CIPHER_CTX));
-}
 
 int
 EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -258,7 +246,7 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 }
 
 __warn_references(EVP_CipherFinal,
-    "warning: EVP_CipherFinal is often misused, please use EVP_CipherFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_CipherFinal is often misused, please use EVP_CipherFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -368,7 +356,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 }
 
 __warn_references(EVP_EncryptFinal,
-    "warning: EVP_EncryptFinal is often misused, please use EVP_EncryptFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_EncryptFinal is often misused, please use EVP_EncryptFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -483,7 +471,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 }
 
 __warn_references(EVP_DecryptFinal,
-    "warning: EVP_DecryptFinal is often misused, please use EVP_DecryptFinal_ex and EVP_CIPHER_CTX_cleanup");
+    "EVP_DecryptFinal is often misused, please use EVP_DecryptFinal_ex and EVP_CIPHER_CTX_cleanup");
 
 int
 EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -548,13 +536,33 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	return (1);
 }
 
+EVP_CIPHER_CTX *
+EVP_CIPHER_CTX_new(void)
+{
+	return calloc(1, sizeof(EVP_CIPHER_CTX));
+}
+
 void
 EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 {
-	if (ctx) {
-		EVP_CIPHER_CTX_cleanup(ctx);
-		free(ctx);
-	}
+	if (ctx == NULL)
+		return;
+
+	EVP_CIPHER_CTX_cleanup(ctx);
+
+	free(ctx);
+}
+
+void
+EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
+}
+
+int
+EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *a)
+{
+	return EVP_CIPHER_CTX_cleanup(a);
 }
 
 int
@@ -569,10 +577,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	}
 	free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-	if (c->engine)
-		/* The EVP_CIPHER we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(c->engine);
+	ENGINE_finish(c->engine);
 #endif
 	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
 	return 1;

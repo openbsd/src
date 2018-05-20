@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.445 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.453 2018/04/20 04:39:37 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,6 +44,7 @@ acpiac*		at acpi?
 acpibat*	at acpi?
 acpibtn*	at acpi?
 acpicpu*	at acpi?
+acpicmos*	at acpi?
 acpidock*	at acpi?
 acpiec*		at acpi?
 acpiprt*	at acpi?
@@ -66,6 +67,7 @@ acpicbkbd*	at acpi?
 acpials*	at acpi?
 tpm*		at acpi?
 acpihve*	at acpi?
+ipmi0		at acpi? disable
 
 mpbios0		at bios0
 
@@ -96,6 +98,7 @@ kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
 amas*	at pci? disable		# AMD memory configuration
 pchtemp* at pci?		# Intel C610 termperature sensor
+ccp*	at pci?			# AMD Cryptographic Co-processor
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
@@ -135,6 +138,7 @@ iic*	at nviic?
 amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
 dwiic*	at acpi?		# DesignWare Synopsys i2c controller
+dwiic*	at pci?
 iic*	at dwiic?
 
 itherm*	at pci?			# Intel 3400 Thermal Sensor
@@ -148,6 +152,7 @@ admtmp*	at iic?			# Analog Devices ADM1030
 admtt*	at iic?			# Analog Devices ADM1031
 adt*	at iic?			# Analog Devices ADT7460
 andl*	at iic?			# Andigilog aSC7611
+bgw*	at iic?			# Bosch BMC150 6-axis eCompass
 lisa*	at iic?			# STMicroelectronics LIS331DL motion sensor
 lm*	at iic?			# National Semiconductor LM78/79
 lmenv*	at iic?			# National Semiconductor LM87
@@ -308,6 +313,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
+#bwfm*	at uhub?		# Broadcom FullMAC
 
 puc*	at pci?			# PCI "universal" communication device
 com*	at cardbus?
@@ -316,6 +322,7 @@ sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 rtsx*	at pci?			# Realtek SD Card Reader
 sdmmc*	at rtsx?		# SD/MMC bus
+#bwfm*	at sdmmc?		# Broadcom FullMAC
 
 isadma0	at isa?
 
@@ -369,7 +376,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt*	at puc?
 
 efifb0		at mainbus?		# EFI Framebuffer
-wsdisplay0	at efifb? console 1
+wsdisplay0	at efifb? console ?
 
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 jmb*	at pci?				# JMicron JMB36x controllers
@@ -404,6 +411,7 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
 vmwpvs*	at pci?				# VMware ParaVirtual SCSI
 nvme*	at pci?				# NVMe controllers
+#bwfm*	at pci?				# Broadcom FullMAC
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives

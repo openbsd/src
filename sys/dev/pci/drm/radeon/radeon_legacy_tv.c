@@ -1,5 +1,3 @@
-/*	$OpenBSD: radeon_legacy_tv.c,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
-
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/drm_crtc_helper.h>
 #include "radeon.h"

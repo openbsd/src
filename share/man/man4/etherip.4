@@ -1,4 +1,4 @@
-.\"	$OpenBSD: etherip.4,v 1.4 2015/12/03 18:44:41 jmc Exp $
+.\"	$OpenBSD: etherip.4,v 1.6 2018/01/12 04:36:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: December 3 2015 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt ETHERIP 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ This can be done using
 .Xr ifconfig 8 Ns 's
 .Ic tunnel
 command (which uses the
-.Dv SIOCSIFPHYADDR
+.Dv SIOCSLIFPHYADDR
 ioctl).
 .Pp
 The
@@ -51,7 +51,7 @@ The
 interface must be made a member of a
 .Xr bridge 4 .
 The
-.Xr sysctl 3
+.Xr sysctl 2
 variable
 .Dv net.inet.etherip.allow
 must be set to 1, unless
@@ -160,7 +160,7 @@ files, using the
 .Sq !\&
 operator.
 .Sh SEE ALSO
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr bridge 4 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,

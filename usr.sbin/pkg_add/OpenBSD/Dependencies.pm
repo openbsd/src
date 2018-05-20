@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.157 2015/11/05 13:26:39 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.158 2018/02/13 15:04:54 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -393,7 +393,7 @@ sub solve_depends
 		}
 	}
 
-	return values %{$self->{deplist}};
+	return sort values %{$self->{deplist}};
 }
 
 sub solve_wantlibs

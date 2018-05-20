@@ -1,28 +1,19 @@
-/*	$OpenBSD: mutex.h,v 1.10 2017/08/12 16:28:01 guenther Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.14 2018/03/27 08:32:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
- * All rights reserved. 
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #ifndef _SYS_MUTEX_H_
@@ -44,13 +35,72 @@
 
 #include <machine/mutex.h>
 
+#ifdef __USE_MI_MUTEX
+
+#include <sys/_lock.h>
+
+struct mutex {
+	volatile void *mtx_owner;
+	int mtx_wantipl;
+	int mtx_oldipl;
+#ifdef WITNESS
+	struct lock_object mtx_lock_obj;
+#endif
+};
+
+/*
+ * To prevent lock ordering problems with the kernel lock, we need to
+ * make sure we block all interrupts that can grab the kernel lock.
+ * The simplest way to achieve this is to make sure mutexes always
+ * raise the interrupt priority level to the highest level that has
+ * interrupts that grab the kernel lock.
+ */
+#ifdef MULTIPROCESSOR
+#define __MUTEX_IPL(ipl) \
+    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
+#else
+#define __MUTEX_IPL(ipl) (ipl)
+#endif
+
+#ifdef WITNESS
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
+#else
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE }
+#endif
+
+void __mtx_init(struct mutex *, int);
+#define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+
+#ifdef DIAGNOSTIC
+#define MUTEX_ASSERT_LOCKED(mtx) do {					\
+	if (((mtx)->mtx_owner != curcpu()) && !(panicstr || db_active))	\
+		panic("mutex %p not held in %s", (mtx), __func__);	\
+} while (0)
+
+#define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
+	if (((mtx)->mtx_owner == curcpu()) && !(panicstr || db_active))	\
+		panic("mutex %p held in %s", (mtx), __func__);		\
+} while (0)
+#else
+#define MUTEX_ASSERT_LOCKED(mtx) do { } while (0)
+#define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
+#endif
+
+#define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
+#define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
+
+#endif	/* __USE_MI_MUTEX */
+
+
 #define MTX_LO_FLAGS(flags) \
 	((!((flags) & MTX_NOWITNESS) ? LO_WITNESS : 0) | \
 	 ((flags) & MTX_DUPOK ? LO_DUPOK : 0) | \
 	 LO_INITIALIZED | (LO_CLASS_MUTEX << LO_CLASSSHIFT))
 
-#define __MTX_S(x) #x
-#define __MTX_LINE __MTX_S(__LINE__)
+#define __MTX_STRING(x) #x
+#define __MTX_S(x) __MTX_STRING(x)
 #define __MTX_NAME __FILE__ ":" __MTX_S(__LINE__)
 
 #define MTX_LO_INITIALIZER(name, flags) \

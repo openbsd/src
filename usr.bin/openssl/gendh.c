@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.8 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: gendh.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,13 +186,11 @@ gendh_main(int argc, char **argv)
 	if (!PEM_write_bio_DHparams(out, dh))
 		goto end;
 	ret = 0;
-end:
+ end:
 	if (ret != 0)
 		ERR_print_errors(bio_err);
-	if (out != NULL)
-		BIO_free_all(out);
-	if (dh != NULL)
-		DH_free(dh);
+	BIO_free_all(out);
+	DH_free(dh);
 
 	return (ret);
 }

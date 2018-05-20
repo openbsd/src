@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.7 2017/08/01 14:57:03 schwarze Exp $
+.\"	$OpenBSD: BIO_ctrl.3,v 1.14 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL b055fceb Thu Oct 20 09:56:18 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -308,7 +308,43 @@ Source/sink BIOs return an 0 if they do not recognize the
 .Fn BIO_ctrl
 operation.
 .Sh SEE ALSO
+.Xr BIO_meth_new 3 ,
 .Xr BIO_new 3
+.Sh HISTORY
+.Fn BIO_ctrl ,
+.Fn BIO_reset ,
+.Fn BIO_flush ,
+.Fn BIO_eof ,
+.Fn BIO_set_close ,
+.Fn BIO_get_close ,
+and
+.Fn BIO_pending
+first appeared in SSLeay 0.6.0.
+.Fn BIO_wpending
+first appeared in SSLeay 0.8.1.
+.Fn BIO_ptr_ctrl ,
+.Fn BIO_int_ctrl ,
+.Fn BIO_get_info_callback
+and
+.Fn BIO_set_info_callback
+first appeared in SSLeay 0.9.0.
+All these functions have been available since
+.Ox 2.4 .
+.Pp
+.Fn BIO_seek
+and
+.Fn BIO_tell
+first appeared in SSLeay 0.9.1.
+.Fn BIO_ctrl_pending
+and
+.Fn BIO_ctrl_wpending
+first appeared in OpenSSL 0.9.4.
+These functions have been available since
+.Ox 2.6 .
+.Pp
+.Fn BIO_callback_ctrl
+first appeared in OpenSSL 0.9.5 and has been available since
+.Ox 2.7 .
 .Sh BUGS
 Some of the return values are ambiguous and care should be taken.
 In particular a return value of 0 can be returned if an operation

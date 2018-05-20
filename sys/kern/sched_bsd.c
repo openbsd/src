@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.46 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.47 2017/12/04 09:38:20 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -354,7 +354,7 @@ mi_switch(void)
 	 * Release the kernel_lock, as we are about to yield the CPU.
 	 */
 	sched_count = __mp_release_all_but_one(&sched_lock);
-	if (__mp_lock_held(&kernel_lock))
+	if (_kernel_lock_held())
 		hold_count = __mp_release_all(&kernel_lock);
 	else
 		hold_count = 0;

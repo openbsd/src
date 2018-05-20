@@ -290,6 +290,7 @@ sub has_clock_xxx_syscall {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <time.h>
 #include <$SYSCALL_H>
 int main(int argc, char** argv)
 {
@@ -309,6 +310,7 @@ sub has_clock_xxx {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <time.h>
 int main(int argc, char** argv)
 {
     struct timespec ts;
@@ -325,6 +327,7 @@ sub has_clock {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include <time.h>
 int main(int argc, char** argv)
 {
     clock_t tictoc;
@@ -348,7 +351,8 @@ int main(int argc, char** argv)
     struct timespec ts2;
     ts1.tv_sec  = 0;
     ts1.tv_nsec = 750000000;;
-    ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts1, &ts2);
+    /* All implementations are supposed to support CLOCK_REALTIME. */
+    ret = clock_nanosleep(CLOCK_REALTIME, 0, &ts1, &ts2);
     ret == 0 ? exit(0) : exit(errno ? errno : -1);
 }
 EOM
@@ -360,7 +364,7 @@ sub has_futimens {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include <sys/time.h>
+#include <sys/stat.h>
 int main(int argc, char** argv)
 {
     int ret;
@@ -377,7 +381,7 @@ sub has_utimensat{
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include <sys/time.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 int main(int argc, char** argv)
 {
@@ -385,6 +389,21 @@ int main(int argc, char** argv)
     struct timespec ts[2];
     ret = utimensat(AT_FDCWD, 0, ts, 0);
     ret == 0 ? exit(0) : exit(errno ? errno : -1);
+}
+EOM
+}
+
+sub has_clockid_t{
+    return 1 if
+    try_compile_and_link(<<EOM);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include <time.h>
+int main(int argc, char** argv)
+{
+    clockid_t id = CLOCK_REALTIME;
+    exit(id == CLOCK_REALTIME ? 1 : 0);
 }
 EOM
 }
@@ -567,6 +586,16 @@ EOD
 	my $nt = ($^O eq 'os2' ? '' : 'not');
         print "You can$nt mix subsecond sleeps with signals.\n";
         print "(It would not be portable anyway.)\n";
+    }
+
+    print "Looking for clockid_t... ";
+    my $has_clockid_t;
+    if (has_clockid_t()) {
+	print "found.\n";
+        $has_clockid_t++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCKID_T';
+    } else {
+	print "NOT found, will use int.\n";
     }
 
     print "Looking for clock_gettime()... ";

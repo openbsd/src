@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: syscall.c,v 1.3 2018/04/09 22:21:05 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -49,8 +49,6 @@ svc_handler(trapframe_t *frame)
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((frame->tf_spsr & I_bit) == 0))
 		enable_interrupts();
-
-	p->p_addr->u_pcb.pcb_tf = frame;
 
 	code = frame->tf_x[8];
 
@@ -129,6 +127,8 @@ child_return(arg)
 	frame->tf_x[0] = 0;
 	frame->tf_x[1] = 1;
 	frame->tf_spsr &= ~PSR_C;	/* carry bit */
+
+	KERNEL_UNLOCK();
 
 	mi_child_return(p);
 }

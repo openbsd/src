@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.167 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.168 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1599,7 +1599,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 		case WI_RID_DEFLT_CRYPT_KEYS:
 			/* For non-root user, return all-zeroes keys */
-			if (suser(p, 0))
+			if (suser(p))
 				bzero(wreq, sizeof(struct wi_ltv_keys));
 			else
 				bcopy(&sc->wi_keys, wreq,
@@ -1637,7 +1637,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = copyout(wreq, ifr->ifr_data, sizeof(*wreq));
 		break;
 	case SIOCSWAVELAN:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
@@ -1720,7 +1720,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = copyout(wreq, ifr->ifr_data, sizeof(*wreq));
 		break;
 	case SIOCSPRISM2DEBUG:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		wreq = malloc(sizeof *wreq, M_DEVBUF, M_WAITOK | M_ZERO);
 		error = copyin(ifr->ifr_data, wreq, sizeof(*wreq));
@@ -1751,7 +1751,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCS80211NWID:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		nwidp = malloc(sizeof *nwidp, M_DEVBUF, M_WAITOK);
 		error = copyin(ifr->ifr_data, nwidp, sizeof(*nwidp));
@@ -1771,7 +1771,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			wi_init(sc);
 		break;
 	case SIOCS80211NWKEY:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
@@ -1779,7 +1779,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	case SIOCS80211POWER:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = wi_set_pm(sc, (struct ieee80211_power *)data);
 		break;
@@ -1787,7 +1787,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = wi_get_pm(sc, (struct ieee80211_power *)data);
 		break;
 	case SIOCS80211TXPOWER:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		error = wi_set_txpower(sc, (struct ieee80211_txpower *)data);
 		break;
@@ -1795,7 +1795,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		error = wi_get_txpower(sc, (struct ieee80211_txpower *)data);
 		break;
 	case SIOCS80211CHANNEL:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		if (((struct ieee80211chanreq *)data)->i_channel > 14) {
 			error = EINVAL;
@@ -1832,7 +1832,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		IEEE80211_ADDR_COPY(bssid->i_bssid, wreq->wi_val);
 		break;
 	case SIOCS80211SCAN:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP)
 			break;
@@ -1872,7 +1872,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	    {
 		struct ieee80211_nodereq	*nr = NULL;
 
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		na = (struct ieee80211_nodereq_all *)data;
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
@@ -1968,7 +1968,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCS80211FLAGS:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc)) != 0)
 			break;
 		if (sc->wi_ptype != WI_PORTTYPE_HOSTAP) {
 			error = EINVAL;
@@ -2916,7 +2916,7 @@ wi_get_nwkey(struct wi_softc *sc, struct ieee80211_nwkey *nwkey)
 	nwkey->i_defkid = sc->wi_tx_key + 1;
 
 	/* do not show any keys to non-root user */
-	error = suser(curproc, 0);
+	error = suser(curproc);
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;

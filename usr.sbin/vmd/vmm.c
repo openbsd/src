@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.77 2017/09/15 02:36:29 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.81 2018/04/13 17:12:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -55,7 +55,6 @@
 
 void vmm_sighdlr(int, short, void *);
 int vmm_start_vm(struct imsg *, uint32_t *);
-int vmm_receive_vm(struct vmd_vm * , int);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 void vmm_dispatch_vm(int, short, void *);
@@ -121,6 +120,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		break;
+	case IMSG_VMDOP_START_VM_CDROM:
+		res = config_getcdrom(ps, imsg);
+		if (res == -1) {
+			res = errno;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		}
+		break;
 	case IMSG_VMDOP_START_VM_DISK:
 		res = config_getdisk(ps, imsg);
 		if (res == -1) {
@@ -170,15 +176,13 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				else
 					res = 0;
 			} else {
-				/* in the process of shutting down... */
-				log_debug("%s: performing a forced shutdown",
-				    __func__);
+				/*
+				 * VM is currently being shutdown.
+				 * Check to see if the VM process is still
+				 * active.  If not, return VMD_VM_STOP_INVALID.
+				 */
 				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
-				/* ensure vm_id isn't 0 */
-				if (vtp.vtp_vm_id != 0) {
-					res = terminate_vm(&vtp);
-					vm_remove(vm);
-				} else {
+				if (vtp.vtp_vm_id == 0) {
 					log_debug("%s: no vm running anymore",
 					    __func__);
 					res = VMD_VM_STOP_INVALID;
@@ -637,6 +641,9 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
 
+		close(vm->vm_cdrom);
+		vm->vm_cdrom = -1;
+
 		close(vm->vm_tty);
 		vm->vm_tty = -1;
 
@@ -657,6 +664,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 	} else {
 		/* Child */
 		close(fds[0]);
+		close(PROC_PARENT_SOCK_FILENO);
 
 		ret = start_vm(vm, fds[1]);
 

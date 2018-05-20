@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.106 2016/03/16 15:41:10 krw Exp $	 */
+/* $OpenBSD: conf.c,v 1.107 2017/10/27 08:29:32 mpi Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -289,14 +289,14 @@ conf_parse(int trans, char *buf, size_t sz)
  * Resulting section names can be:
  *  For main mode:
  *     {BLF,3DES,CAST,AES,AES-{128,192,256}-{MD5,SHA,SHA2-{256,384,512}} \
- *         [-GRP{1,2,5,14,15}][-{DSS,RSA_SIG}]
+ *         [-GRP{1,2,5,14-21,25-30}][-{DSS,RSA_SIG}]
  *  For quick mode:
  *     QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
  *     where
  *       {proto}  = ESP, AH
  *       {cipher} = 3DES, CAST, BLF, AES, AES-{128,192,256}, AESCTR
  *       {hash}   = MD5, SHA, RIPEMD, SHA2-{256,384,512}
- *       {group}  = GRP1, GRP2, GRP5, GRP14, GRP15
+ *       {group}  = GRP{1,2,5,14-21,25-30}
  *
  * DH group defaults to MODP_1024.
  *
@@ -483,9 +483,13 @@ conf_load_defaults(int tr)
 		    "AES-192", "AES-256", 0};
 	char	*dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
 		    "MODP_1536", "MODP_2048", "MODP_3072", "MODP_4096",
-		    "MODP_6144", "MODP_8192", 0};
+		    "MODP_6144", "MODP_8192",
+		    "ECP_256", "ECP_384", "ECP_521", "ECP_192", "ECP_224",
+		    "BP_224", "BP_256", "BP_384", "BP_512", 0};
 	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
-		    "-GRP15", "-GRP16", "-GRP17", "-GRP18", 0};
+		    "-GRP15", "-GRP16", "-GRP17", "-GRP18", "-GRP19", "-GRP20",
+		    "-GRP21", "-GRP25", "-GRP26", "-GRP27", "-GRP28", "-GRP29",
+		    "-GRP30", 0};
 	char	*qm_enc[] = {"3DES", "CAST", "BLOWFISH", "AES",
 		    "AES", "AES", "AES", "AES_CTR", "AES_CTR", "AES_CTR",
 		    "AES_CTR", "AES_GCM_16",

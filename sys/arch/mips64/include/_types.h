@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.22 2017/01/21 14:45:29 visa Exp $	*/
+/*	$OpenBSD: _types.h,v 1.23 2018/03/05 01:15:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,6 +49,7 @@
 #define	_STACKALIGNBYTES	15
 #define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	((((unsigned long)(p)) & (sizeof(t) - 1)) == 0)
+#define	_MAX_PAGE_SHIFT		14	/* maximum possible PAGE_SHIFT */
 
 /*
  *  We need to handle the various ISA levels for sizes.

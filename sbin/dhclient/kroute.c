@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.153 2017/09/20 19:21:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.155 2018/02/06 00:25:09 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -75,7 +75,7 @@ get_routes(int rdomain, size_t *len)
 
 	buf = NULL;
 	errmsg = NULL;
-	while (1) {
+	for (;;) {
 		if (sysctl(mib, 7, NULL, &needed, NULL, 0) == -1) {
 			errmsg = "sysctl size of routes:";
 			break;
@@ -655,7 +655,11 @@ default_route_index(int rdomain, int routefd)
 		fatal("start time");
 
 	if (writev(routefd, iov, 3) == -1) {
-		log_warn("%s: writev(RTM_GET)", log_procname);
+		if (errno == ESRCH)
+			log_debug("%s: writev(RTM_GET) - no default route",
+			    log_procname);
+		else
+			log_warn("%s: writev(RTM_GET)", log_procname); 
 		return 0;
 	}
 

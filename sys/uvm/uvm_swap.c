@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.141 2017/04/09 18:14:39 dhill Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.143 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
@@ -668,7 +668,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* all other requests require superuser privs.   verify. */
-	if ((error = suser(p, 0)) || (error = pledge_swapctl(p)))
+	if ((error = suser(p)) || (error = pledge_swapctl(p)))
 		goto out;
 
 	/*

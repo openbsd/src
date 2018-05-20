@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.22 2017/04/14 20:46:31 bluhm Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.28 2017/11/17 18:21:33 jca Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
@@ -69,13 +69,50 @@ struct etherip_header {
 }
 
 #ifdef _KERNEL
-struct tdb;
 
-int	etherip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
-int	etherip_input(struct mbuf **, int *, int, int);
-int	etherip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+#include <sys/percpu.h>
 
-extern int etherip_allow;
-extern struct etheripstat etheripstat;
+enum etheripstat_counters {
+	etherips_hdrops,		/* packet shorter than header shows */
+	etherips_qfull,			/* bridge queue full, packet dropped */
+	etherips_noifdrops,		/* no interface/bridge information */
+	etherips_pdrops,		/* packet dropped due to policy */
+	etherips_adrops,		/* all other drops */
+	etherips_ipackets,		/* total input packets */
+	etherips_opackets,		/* total output packets */
+	etherips_ibytes,		/* input bytes */
+	etherips_obytes,		/* output bytes */
+
+	etherips_ncounters
+};
+
+extern struct cpumem *etheripcounters;
+
+static inline void
+etheripstat_inc(enum etheripstat_counters c)
+{
+	counters_inc(etheripcounters, c);
+}
+
+static inline void
+etheripstat_add(enum etheripstat_counters c, uint64_t v)
+{
+	counters_add(etheripcounters, c, v);
+}
+
+static inline void
+etheripstat_pkt(enum etheripstat_counters pcounter,
+    enum etheripstat_counters bcounter, uint64_t v)
+{
+	counters_pkt(etheripcounters, pcounter, bcounter, v);
+}
+
+struct tdb;	/* XXX within #ifdef MPLS? */
+
+#ifdef MPLS
+int	mplsip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
+int	mplsip_input(struct mbuf **, int *, int, int);
+#endif /* MPLS */
+
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ETHER_H_ */

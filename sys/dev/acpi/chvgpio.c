@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.6 2016/10/25 06:48:58 pirofti Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.8 2017/11/29 22:51:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -42,6 +42,9 @@
 #define CHVGPIO_PAD_CFG1_INTWAKECFG_LEVEL	0x00000004
 #define CHVGPIO_PAD_CFG1_INVRXTX_MASK		0x000000f0
 #define CHVGPIO_PAD_CFG1_INVRXTX_RXDATA		0x00000040
+
+/* OEM defined RegionSpace. */
+#define CHVGPIO_REGIONSPACE_BASE	0x90
 
 struct chvgpio_intrhand {
 	int (*ih_func)(void *);
@@ -149,6 +152,7 @@ int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
 void	chvgpio_intr_establish(void *, int, int, int (*)(), void *);
 int	chvgpio_intr(void *);
+int	chvgpio_opreg_handler(void *, int, uint64_t, int, uint64_t *);
 
 int
 chvgpio_match(struct device *parent, void *match, void *aux)
@@ -165,8 +169,6 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct chvgpio_softc *sc = (struct chvgpio_softc *)self;
 	struct aml_value res;
-	struct aml_value arg[2];
-	struct aml_node *node;
 	int64_t uid;
 	int i;
 
@@ -247,16 +249,11 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d pins\n", sc->sc_npins);
 
-	/* Register address space. */
-	memset(&arg, 0, sizeof(arg));
-	arg[0].type = AML_OBJTYPE_INTEGER;
-	arg[0].v_integer = ACPI_OPREG_GPIO;
-	arg[1].type = AML_OBJTYPE_INTEGER;
-	arg[1].v_integer = 1;
-	node = aml_searchname(sc->sc_node, "_REG");
-	if (node && aml_evalnode(sc->sc_acpi, node, 2, arg, NULL))
-		printf("%s: _REG failed\n", sc->sc_dev.dv_xname);
+	/* Register OEM defined address space. */
+	aml_register_regionspace(sc->sc_node, CHVGPIO_REGIONSPACE_BASE + uid,
+	    sc, chvgpio_opreg_handler);
 
+	acpi_register_gpio(sc->sc_acpi, sc->sc_node);
 	return;
 
 unmap:
@@ -398,4 +395,22 @@ chvgpio_intr(void *arg)
 	}
 
 	return rc;
+}
+
+int
+chvgpio_opreg_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	struct chvgpio_softc *sc = cookie;
+
+	/* Only allow 32-bit access. */
+	if (size != 4 || address > sc->sc_size - size)
+		return -1;
+
+	if (iodir == ACPI_IOREAD)
+		*value = bus_space_read_4(sc->sc_memt, sc->sc_memh, address);
+	else
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, address, *value);
+
+	return 0;
 }

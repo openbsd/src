@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.152 2017/08/13 19:34:12 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.154 2018/01/12 04:36:12 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -47,7 +47,7 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	dup.o dup2.o dup3.o \
 	execve.o \
 	faccessat.o fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
-	fchownat.o fhopen.o fhstat.o fhstatfs.o fktrace.o \
+	fchownat.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
 	futimens.o futimes.o \
 	getentropy.o getdents.o getfh.o getfsstat.o \
@@ -194,5 +194,5 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	shmctl.2 shmget.2 shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
 	sigprocmask.2 sigreturn.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 \
-	sync.2 sysarch.2 syscall.2 thrkill.2 truncate.2 umask.2 unlink.2 \
-	utimes.2 utrace.2 vfork.2 wait.2 write.2
+	sync.2 sysarch.2 syscall.2 sysctl.2 thrkill.2 truncate.2 \
+	umask.2 unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2

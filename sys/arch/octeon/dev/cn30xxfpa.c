@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.7 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.9 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -26,8 +26,6 @@
  * SUCH DAMAGE.
  */
 
-#undef	FPADEBUG
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -38,12 +36,6 @@
 
 #include <octeon/dev/cn30xxfpavar.h>
 #include <octeon/dev/cn30xxfpareg.h>
-
-#ifdef FPADEBUG
-#define	DPRINTF(x)	printf x
-#else
-#define	DPRINTF(x)
-#endif
 
 struct cn30xxfpa_softc {
 	int			sc_initialized;
@@ -62,10 +54,6 @@ void		cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *);
 void		cn30xxfpa_init(struct cn30xxfpa_softc *);
 #ifdef notyet
 uint64_t	cn30xxfpa_iobdma(struct cn30xxfpa_softc *, int, int);
-#endif
-
-#ifdef OCTEON_ETH_DEBUG
-void		cn30xxfpa_intr_rml(void *);
 #endif
 
 static struct cn30xxfpa_softc	cn30xxfpa_softc;
@@ -88,56 +76,6 @@ cn30xxfpa_reset(void)
 {
 	/* XXX */
 }
-
-#ifdef OCTEON_ETH_DEBUG
-int	cn30xxfpa_intr_rml_verbose;
-
-void
-cn30xxfpa_intr_rml(void *arg)
-{
-	struct cn30xxfpa_softc *sc;
-	uint64_t reg;
-
-	sc = &cn30xxfpa_softc;
-	KASSERT(sc != NULL);
-	reg = cn30xxfpa_int_summary();
-	if (cn30xxfpa_intr_rml_verbose)
-		printf("%s: FPA_INT_SUM=0x%016llx\n", __func__, reg);
-}
-
-void
-cn30xxfpa_int_enable(struct cn30xxfpa_softc *sc, int enable)
-{
-	const uint64_t int_xxx =
-	    FPA_INT_ENB_Q7_PERR | FPA_INT_ENB_Q7_COFF | FPA_INT_ENB_Q7_UND |
-	    FPA_INT_ENB_Q6_PERR | FPA_INT_ENB_Q6_COFF | FPA_INT_ENB_Q6_UND |
-	    FPA_INT_ENB_Q5_PERR | FPA_INT_ENB_Q5_COFF | FPA_INT_ENB_Q5_UND |
-	    FPA_INT_ENB_Q4_PERR | FPA_INT_ENB_Q4_COFF | FPA_INT_ENB_Q4_UND |
-	    FPA_INT_ENB_Q3_PERR | FPA_INT_ENB_Q3_COFF | FPA_INT_ENB_Q3_UND |
-	    FPA_INT_ENB_Q2_PERR | FPA_INT_ENB_Q2_COFF | FPA_INT_ENB_Q2_UND |
-	    FPA_INT_ENB_Q1_PERR | FPA_INT_ENB_Q1_COFF | FPA_INT_ENB_Q1_UND |
-	    FPA_INT_ENB_Q0_PERR | FPA_INT_ENB_Q0_COFF | FPA_INT_ENB_Q0_UND |
-	    FPA_INT_ENB_FED1_DBE | FPA_INT_ENB_FED1_SBE |
-	    FPA_INT_ENB_FED0_DBE | FPA_INT_ENB_FED0_SBE;
-
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET,
-	    int_xxx);
-	if (enable)
-		bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_ENB_OFFSET,
-		    int_xxx);
-}
-
-uint64_t
-cn30xxfpa_int_summary(void)
-{
-	struct cn30xxfpa_softc *sc = &cn30xxfpa_softc;
-	uint64_t summary;
-
-	summary = bus_space_read_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET);
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_SUM_OFFSET, summary);
-	return summary;
-}
-#endif
 
 int
 cn30xxfpa_buf_init(int poolno, size_t size, size_t nelems,
@@ -201,7 +139,7 @@ cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *fb)
 	if (status != 0)
 		panic("%s failed", "bus_dmamap_create");
 
-	status = bus_dmamem_alloc(fb->fb_dmat, fb->fb_len, 128, 0,
+	status = bus_dmamem_alloc(fb->fb_dmat, fb->fb_len, CACHELINESIZE, 0,
 	    fb->fb_dma_segs, fb->fb_dma_nsegs, &nsegs, 0);
 	if (status != 0 || fb->fb_dma_nsegs != nsegs)
 		panic("%s failed", "bus_dmamem_alloc");
@@ -242,9 +180,6 @@ cn30xxfpa_init(struct cn30xxfpa_softc *sc)
 	sc->sc_initialized = 1;
 
 	cn30xxfpa_init_regs(sc);
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxfpa_int_enable(sc, 1);
-#endif
 }
 
 void
@@ -259,122 +194,4 @@ cn30xxfpa_init_regs(struct cn30xxfpa_softc *sc)
 
 	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_CTL_STATUS_OFFSET,
 	    FPA_CTL_STATUS_ENB);
-
-/* XXX */
-#ifdef OCTEON_ETH_DEBUG
-	bus_space_write_8(sc->sc_regt, sc->sc_regh, FPA_INT_ENB_OFFSET,
-	    FPA_INT_ENB_Q7_PERR | FPA_INT_ENB_Q7_COFF | FPA_INT_ENB_Q7_UND |
-	    FPA_INT_ENB_Q6_PERR | FPA_INT_ENB_Q6_COFF | FPA_INT_ENB_Q6_UND |
-	    FPA_INT_ENB_Q5_PERR | FPA_INT_ENB_Q5_COFF | FPA_INT_ENB_Q5_UND |
-	    FPA_INT_ENB_Q4_PERR | FPA_INT_ENB_Q4_COFF | FPA_INT_ENB_Q4_UND |
-	    FPA_INT_ENB_Q3_PERR | FPA_INT_ENB_Q3_COFF | FPA_INT_ENB_Q3_UND |
-	    FPA_INT_ENB_Q2_PERR | FPA_INT_ENB_Q2_COFF | FPA_INT_ENB_Q2_UND |
-	    FPA_INT_ENB_Q1_PERR | FPA_INT_ENB_Q1_COFF | FPA_INT_ENB_Q1_UND |
-	    FPA_INT_ENB_Q0_PERR | FPA_INT_ENB_Q0_COFF | FPA_INT_ENB_Q0_UND |
-	    FPA_INT_ENB_FED1_DBE | FPA_INT_ENB_FED1_SBE |
-	    FPA_INT_ENB_FED0_DBE | FPA_INT_ENB_FED0_SBE);
-#endif
 }
-
-#ifdef OCTEON_ETH_DEBUG
-void	cn30xxfpa_dump_regs(void);
-void	cn30xxfpa_dump_bufs(void);
-void	cn30xxfpa_dump_buf(int);
-
-#define	_ENTRY(x)	{ #x, x##_OFFSET }
-
-struct cn30xxfpa_dump_reg_ {
-	const char *name;
-	size_t	offset;
-};
-
-const struct cn30xxfpa_dump_reg_ cn30xxfpa_dump_regs_[] = {
-	_ENTRY(FPA_INT_SUM),
-	_ENTRY(FPA_INT_ENB),
-	_ENTRY(FPA_CTL_STATUS),
-	_ENTRY(FPA_QUE0_AVAILABLE),
-	_ENTRY(FPA_QUE1_AVAILABLE),
-	_ENTRY(FPA_QUE2_AVAILABLE),
-	_ENTRY(FPA_QUE3_AVAILABLE),
-	_ENTRY(FPA_QUE4_AVAILABLE),
-	_ENTRY(FPA_QUE5_AVAILABLE),
-	_ENTRY(FPA_QUE6_AVAILABLE),
-	_ENTRY(FPA_QUE7_AVAILABLE),
-	_ENTRY(FPA_WART_CTL),
-	_ENTRY(FPA_WART_STATUS),
-	_ENTRY(FPA_BIST_STATUS),
-	_ENTRY(FPA_QUE0_PAGE_INDEX),
-	_ENTRY(FPA_QUE1_PAGE_INDEX),
-	_ENTRY(FPA_QUE2_PAGE_INDEX),
-	_ENTRY(FPA_QUE3_PAGE_INDEX),
-	_ENTRY(FPA_QUE4_PAGE_INDEX),
-	_ENTRY(FPA_QUE5_PAGE_INDEX),
-	_ENTRY(FPA_QUE6_PAGE_INDEX),
-	_ENTRY(FPA_QUE7_PAGE_INDEX),
-	_ENTRY(FPA_QUE_EXP),
-	_ENTRY(FPA_QUE_ACT),
-};
-
-const char *cn30xxfpa_dump_bufs_[8] = {
-	[0] = "recv",
-	[1] = "wq",
-	[2] = "cmdbuf",
-	[3] = "gbuf",
-};
-
-void
-cn30xxfpa_dump(void)
-{
-	cn30xxfpa_dump_regs();
-	cn30xxfpa_dump_bufs();
-}
-
-void
-cn30xxfpa_dump_regs(void)
-{
-	struct cn30xxfpa_softc *sc = &cn30xxfpa_softc;
-	const struct cn30xxfpa_dump_reg_ *reg;
-	uint64_t tmp;
-	int i;
-
-	for (i = 0; i < nitems(cn30xxfpa_dump_regs_); i++) {
-		reg = &cn30xxfpa_dump_regs_[i];
-		tmp = bus_space_read_8(sc->sc_regt, sc->sc_regh, reg->offset);
-		printf("\t%-24s: %16llx\n", reg->name, tmp);
-	}
-}
-
-/*
- * XXX assume pool 7 is unused!
- */
-void
-cn30xxfpa_dump_bufs(void)
-{
-	int i;
-
-	for (i = 0; i < 8; i++)
-		cn30xxfpa_dump_buf(i);
-}
-
-void
-cn30xxfpa_dump_buf(int pool)
-{
-	int i;
-	uint64_t ptr;
-	const char *name;
-
-	name = cn30xxfpa_dump_bufs_[pool];
-	if (name == NULL)
-		return;
-	printf("%s pool:\n", name);
-	for (i = 0; (ptr = cn30xxfpa_load(pool)) != 0; i++) {
-		printf("\t%016llx%s", ptr, ((i % 4) == 3) ? "\n" : "");
-		cn30xxfpa_store(ptr, OCTEON_POOL_NO_DUMP, 0);
-	}
-	if (i % 4 != 3)
-		printf("\n");
-	printf("total = %d buffers\n", i);
-	while ((ptr = cn30xxfpa_load(OCTEON_POOL_NO_DUMP)) != 0)
-		cn30xxfpa_store(ptr, pool, 0);
-}
-#endif

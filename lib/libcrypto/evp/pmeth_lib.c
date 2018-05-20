@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.14 2018/04/14 07:09:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -188,10 +188,9 @@ int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 	}
 
 	ret = malloc(sizeof(EVP_PKEY_CTX));
-	if (!ret) {
+	if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
-		if (e)
-			ENGINE_finish(e);
+		ENGINE_finish(e);
 #endif
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
@@ -394,10 +393,7 @@ EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 	EVP_PKEY_free(ctx->pkey);
 	EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
-	if (ctx->engine)
-		/* The EVP_PKEY_CTX we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(ctx->engine);
+	ENGINE_finish(ctx->engine);
 #endif
 	free(ctx);
 }

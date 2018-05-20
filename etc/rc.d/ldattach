@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: ldattach,v 1.2 2011/07/08 02:15:34 robert Exp $
+# $OpenBSD: ldattach,v 1.4 2018/01/11 21:09:26 rpe Exp $
 
 daemon="/sbin/ldattach"
 
@@ -9,7 +9,7 @@ daemon="/sbin/ldattach"
 rc_reload=NO
 
 rc_pre() {
-	[ -n "${ldattach_flags}" ]
+	[[ -n ${ldattach_flags} ]]
 }
 
 rc_cmd $1

@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.59 2017/08/21 10:10:25 schwarze Exp $
+# $OpenBSD: Makefile,v 1.65 2018/03/17 18:52:42 schwarze Exp $
 
 .include <bsd.own.mk>
 
 MAN =	BIO_f_ssl.3 \
 	DTLSv1_listen.3 \
+	OPENSSL_init_ssl.3 \
 	PEM_read_SSL_SESSION.3 \
 	SSL_CIPHER_get_name.3 \
 	SSL_COMP_add_compression_method.3 \
@@ -14,6 +15,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_free.3 \
 	SSL_CTX_get_ex_new_index.3 \
 	SSL_CTX_get_verify_mode.3 \
+	SSL_CTX_get0_certificate.3 \
 	SSL_CTX_load_verify_locations.3 \
 	SSL_CTX_new.3 \
 	SSL_CTX_sess_number.3 \
@@ -43,6 +45,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_set_tlsext_servername_callback.3 \
 	SSL_CTX_set_tlsext_status_cb.3 \
 	SSL_CTX_set_tlsext_ticket_key_cb.3 \
+	SSL_CTX_set_tlsext_use_srtp.3 \
 	SSL_CTX_set_tmp_dh_callback.3 \
 	SSL_CTX_set_tmp_rsa_callback.3 \
 	SSL_CTX_set_verify.3 \
@@ -52,8 +55,10 @@ MAN =	BIO_f_ssl.3 \
 	SSL_SESSION_get_compress_id.3 \
 	SSL_SESSION_get_ex_new_index.3 \
 	SSL_SESSION_get_id.3 \
+	SSL_SESSION_get_protocol_version.3 \
 	SSL_SESSION_get_time.3 \
 	SSL_SESSION_get0_peer.3 \
+	SSL_SESSION_has_ticket.3 \
 	SSL_SESSION_new.3 \
 	SSL_SESSION_print.3 \
 	SSL_SESSION_set1_id_context.3 \
@@ -71,6 +76,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_get_certificate.3 \
 	SSL_get_ciphers.3 \
 	SSL_get_client_CA_list.3 \
+	SSL_get_client_random.3 \
 	SSL_get_current_cipher.3 \
 	SSL_get_default_timeout.3 \
 	SSL_get_error.3 \

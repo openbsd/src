@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.46 2017/06/08 11:45:44 jsg Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.47 2017/11/08 09:33:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -85,7 +85,7 @@ struct {
 };
 
 /* explicitly list allowed variables */
-const char *ca_env[][2] = {
+char *ca_env[][2] = {
 	{ "$ENV::CADB", NULL },
 	{ "$ENV::CASERIAL", NULL },
 	{ "$ENV::CERTFQDN", NULL },
@@ -899,20 +899,26 @@ void
 ca_clrenv(void)
 {
 	int	 i;
-	for (i = 0; ca_env[i][0] != NULL; i++)
+	for (i = 0; ca_env[i][0] != NULL; i++) {
+		free(ca_env[i][1]);
 		ca_env[i][1] = NULL;
+	}
 }
 
 void
 ca_setenv(const char *key, const char *value)
 {
 	int	 i;
+	char	*p = NULL;
 
 	for (i = 0; ca_env[i][0] != NULL; i++) {
 		if (strcmp(ca_env[i][0], key) == 0) {
 			if (ca_env[i][1] != NULL)
 				errx(1, "env %s already set: %s", key, value);
-			ca_env[i][1] = value;
+			p = strdup(value);
+			if (p == NULL)
+				err(1, NULL);
+			ca_env[i][1] = p;
 			return;
 		}
 	}

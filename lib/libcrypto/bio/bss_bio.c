@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.24 2018/05/01 13:29:09 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -94,7 +94,7 @@ static int bio_puts(BIO *bio, const char *str);
 static int bio_make_pair(BIO *bio1, BIO *bio2);
 static void bio_destroy_pair(BIO *bio);
 
-static BIO_METHOD methods_biop = {
+static const BIO_METHOD methods_biop = {
 	.type = BIO_TYPE_BIO,
 	.name = "BIO pair",
 	.bwrite = bio_write,
@@ -105,7 +105,7 @@ static BIO_METHOD methods_biop = {
 	.destroy = bio_free
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_bio(void)
 {
 	return &methods_biop;

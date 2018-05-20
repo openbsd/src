@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2017/03/23 12:59:32 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.21 2018/04/26 14:12:19 krw Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -92,7 +92,7 @@ typedef struct {
 
 %}
 
-%token	AUTHORITY AGREEMENT URL API ACCOUNT
+%token	AUTHORITY URL API ACCOUNT
 %token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
@@ -148,6 +148,8 @@ varset		: STRING '=' string		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -188,17 +190,7 @@ authorityopts_l	: authorityopts_l authorityoptsl nl
 		| authorityoptsl optnl
 		;
 
-authorityoptsl	: AGREEMENT URL STRING {
-			char *s;
-			if (auth->agreement != NULL) {
-				yyerror("duplicate agreement");
-				YYERROR;
-			}
-			if ((s = strdup($3)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-			auth->agreement = s;
-		}
-		| API URL STRING {
+authorityoptsl	: API URL STRING {
 			char *s;
 			if (auth->api != NULL) {
 				yyerror("duplicate api");
@@ -225,8 +217,8 @@ domain		: DOMAIN STRING {
 			if ((s = strdup($2)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			if (!domain_valid(s)) {
-				free(s);
 				yyerror("%s: bad domain syntax", s);
+				free(s);
 				YYERROR;
 			}
 			if ((domain = conf_new_domain(conf, s)) == NULL) {
@@ -336,6 +328,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 				err(EXIT_FAILURE, "strdup");
 			if (authority_find(conf, s) == NULL) {
 				yyerror("use: unknown authority");
+				free(s);
 				YYERROR;
 			}
 			domain->auth = s;
@@ -413,7 +406,6 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{"account",		ACCOUNT},
-		{"agreement",		AGREEMENT},
 		{"alternative",		ALTERNATIVE},
 		{"api",			API},
 		{"authority",		AUTHORITY},
@@ -964,8 +956,6 @@ print_config(struct acme_conf *xconf)
 
 	TAILQ_FOREACH(a, &xconf->authority_list, entry) {
 		printf("authority %s {\n", a->name);
-		if (a->agreement != NULL)
-			printf("\tagreement url \"%s\"\n", a->agreement);
 		if (a->api != NULL)
 			printf("\tapi url \"%s\"\n", a->api);
 		if (a->account != NULL)

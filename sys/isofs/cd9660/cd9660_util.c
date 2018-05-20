@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_util.c,v 1.9 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.10 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 #include <sys/namei.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/conf.h>

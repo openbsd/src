@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.21 2017/04/05 15:57:11 deraadt Exp $	 */
+/* $Id: engine.c,v 1.22 2018/02/08 07:00:33 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -889,6 +889,21 @@ print_fld_float(field_def *fld, double f, int prec)
 
 
 /* ordering */
+
+int
+foreach_order(void (*callback)(order_type *))
+{
+	order_type *o;
+
+	if (curr_view == NULL || curr_view->mgr == NULL ||
+	    curr_view->mgr->order_list == NULL)
+		return -1;
+	o = curr_view->mgr->order_list;
+	do {
+		callback(o++);
+	} while (o->name != NULL);
+	return 0;
+}
 
 void
 set_order(const char *opt)

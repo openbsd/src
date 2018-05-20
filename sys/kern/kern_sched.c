@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.45 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.47 2017/12/14 23:21:04 dlg Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -227,12 +227,6 @@ sched_exit(struct proc *p)
 void
 sched_init_runqueues(void)
 {
-#ifdef MULTIPROCESSOR
-	sbartq = taskq_create("sbar", 1, IPL_NONE,
-	    TASKQ_MPSAFE | TASKQ_CANTSLEEP);
-	if (sbartq == NULL)
-		panic("unable to create sbar taskq");
-#endif
 }
 
 void
@@ -658,24 +652,28 @@ sched_stop_secondary_cpus(void)
 	}
 }
 
+struct sched_barrier_state {
+	struct cpu_info *ci;
+	struct cond cond;
+};
+
 void
 sched_barrier_task(void *arg)
 {
-	struct cpu_info *ci = arg;
+	struct sched_barrier_state *sb = arg;
+	struct cpu_info *ci = sb->ci;
 
 	sched_peg_curproc(ci);
-	ci->ci_schedstate.spc_barrier = 1;
-	wakeup(&ci->ci_schedstate.spc_barrier);
+	cond_signal(&sb->cond);
 	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
 }
 
 void
 sched_barrier(struct cpu_info *ci)
 {
-	struct sleep_state sls;
+	struct sched_barrier_state sb;
 	struct task task;
 	CPU_INFO_ITERATOR cii;
-	struct schedstate_percpu *spc;
 
 	if (ci == NULL) {
 		CPU_INFO_FOREACH(cii, ci) {
@@ -688,14 +686,12 @@ sched_barrier(struct cpu_info *ci)
 	if (ci == curcpu())
 		return;
 
-	task_set(&task, sched_barrier_task, ci);
-	spc = &ci->ci_schedstate;
-	spc->spc_barrier = 0;
-	task_add(sbartq, &task);
-	while (!spc->spc_barrier) {
-		sleep_setup(&sls, &spc->spc_barrier, PWAIT, "sbar");
-		sleep_finish(&sls, !spc->spc_barrier);
-	}
+	sb.ci = ci;
+	cond_init(&sb.cond);
+	task_set(&task, sched_barrier_task, &sb);
+
+	task_add(systqmp, &task);
+	cond_wait(&sb.cond, "sbar");
 }
 
 #else

@@ -29,6 +29,7 @@
 #include "difffile.h"
 #include "ipc.h"
 #include "remote.h"
+#include "rrl.h"
 
 #define XFRD_UDP_TIMEOUT 10 /* seconds, before a udp request times out */
 #define XFRD_NO_IXFR_CACHE 172800 /* 48h before retrying ixfr's after notimpl */
@@ -98,11 +99,15 @@ xfrd_signal_callback(int sig, short event, void* ATTR_UNUSED(arg))
 	sig_handler(sig);
 }
 
+static struct event* xfrd_sig_evs[10];
+static int xfrd_sig_num = 0;
+
 static void
 xfrd_sigsetup(int sig)
 {
-	/* no need to remember the event ; dealloc on process exit */
 	struct event *ev = xalloc_zero(sizeof(*ev));
+	assert(xfrd_sig_num <= (int)(sizeof(xfrd_sig_evs)/sizeof(ev)));
+	xfrd_sig_evs[xfrd_sig_num++] = ev;
 	signal_set(ev, sig, xfrd_signal_callback, NULL);
 	if(event_base_set(xfrd->event_base, ev) != 0) {
 		log_msg(LOG_ERR, "xfrd sig handler: event_base_set failed");
@@ -321,6 +326,7 @@ xfrd_shutdown()
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown"));
 	event_del(&xfrd->ipc_handler);
 	close(xfrd->ipc_handler.ev_fd); /* notifies parent we stop */
+	zone_list_close(nsd.options);
 	if(xfrd->nsd->options->xfrdfile != NULL && xfrd->nsd->options->xfrdfile[0]!=0)
 		xfrd_write_state(xfrd);
 	if(xfrd->reload_added) {
@@ -379,9 +385,49 @@ xfrd_shutdown()
 	/* unlink xfr files in not-yet-done task file */
 	xfrd_clean_pending_tasks(xfrd->nsd, xfrd->nsd->task[xfrd->nsd->mytask]);
 	xfrd_del_tempdir(xfrd->nsd);
+#ifdef HAVE_SSL
+	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
+#endif
 
 	/* process-exit cleans up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
+#ifdef MEMCLEAN /* OS collects memory pages */
+	if(xfrd->zones) {
+		xfrd_zone_type* z;
+		RBTREE_FOR(z, xfrd_zone_type*, xfrd->zones) {
+			tsig_delete_record(&z->tsig, NULL);
+		}
+	}
+	if(xfrd->notify_zones) {
+		struct notify_zone* n;
+		RBTREE_FOR(n, struct notify_zone*, xfrd->notify_zones) {
+			tsig_delete_record(&n->notify_tsig, NULL);
+		}
+	}
+	if(xfrd_sig_num > 0) {
+		int i;
+		for(i=0; i<xfrd_sig_num; i++) {
+			signal_del(xfrd_sig_evs[i]);
+			free(xfrd_sig_evs[i]);
+		}
+		for(i=0; i<(int)nsd.ifs; i++) {
+			if(nsd.udp[i].s != -1 && nsd.udp[i].addr)
+				freeaddrinfo(nsd.udp[i].addr);
+			if(nsd.tcp[i].s != -1 && nsd.tcp[i].addr)
+				freeaddrinfo(nsd.tcp[i].addr);
+		}
+	}
+#ifdef RATELIMIT
+	rrl_mmap_deinit();
+#endif
+	udb_base_free(nsd.task[0]);
+	udb_base_free(nsd.task[1]);
+	event_base_free(xfrd->event_base);
+	region_destroy(xfrd->region);
+	nsd_options_destroy(nsd.options);
+	region_destroy(nsd.region);
+	log_finalize();
+#endif
 
 	exit(0);
 }
@@ -521,7 +567,7 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 		memmove(&soa.expire, p, sizeof(uint32_t));
 		p += sizeof(uint32_t);
 		memmove(&soa.minimum, p, sizeof(uint32_t));
-		p += sizeof(uint32_t);
+		/* p += sizeof(uint32_t); if we wanted to read further */
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "SOAINFO for %s %u",
 			dname_to_string(task->zname,0),
 			(unsigned)ntohl(soa.serial)));
@@ -767,7 +813,7 @@ xfrd_set_timer_retry(xfrd_zone_type* zone)
 		else if(set_retry < (time_t)zone->zone_options->pattern->min_retry_time)
 			set_retry = zone->zone_options->pattern->min_retry_time;
 		if(set_retry < XFRD_LOWERBOUND_RETRY)
-			set_retry =  XFRD_LOWERBOUND_RETRY;
+			set_retry = XFRD_LOWERBOUND_RETRY;
 		xfrd_set_timer(zone, set_retry);
 	} else {
 		set_retry = ntohl(zone->soa_disk.expire);
@@ -1210,14 +1256,15 @@ xfrd_send_expire_notification(xfrd_zone_type* zone)
 }
 
 int
-xfrd_udp_read_packet(buffer_type* packet, int fd)
+xfrd_udp_read_packet(buffer_type* packet, int fd, struct sockaddr* src,
+	socklen_t* srclen)
 {
 	ssize_t received;
 
 	/* read the data */
 	buffer_clear(packet);
 	received = recvfrom(fd, buffer_begin(packet), buffer_remaining(packet),
-		0, NULL, NULL);
+		0, src, srclen);
 	if(received == -1) {
 		log_msg(LOG_ERR, "xfrd: recvfrom failed: %s",
 			strerror(errno));
@@ -1299,7 +1346,8 @@ static void
 xfrd_udp_read(xfrd_zone_type* zone)
 {
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s read udp data", zone->apex_str));
-	if(!xfrd_udp_read_packet(xfrd->packet, zone->zone_handler.ev_fd)) {
+	if(!xfrd_udp_read_packet(xfrd->packet, zone->zone_handler.ev_fd,
+		NULL, NULL)) {
 		zone->master->bad_xfr_count++;
 		if (zone->master->bad_xfr_count > 2) {
 			xfrd_disable_ixfr(zone);
@@ -1323,6 +1371,7 @@ xfrd_udp_read(xfrd_zone_type* zone)
 				xfrd_make_request(zone);
 				break;
 			}
+			/* fallthrough */
 		case xfrd_packet_newlease:
 			/* nothing more to do */
 			assert(zone->round_num == -1);

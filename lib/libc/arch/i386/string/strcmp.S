@@ -1,10 +1,10 @@
-/*	$OpenBSD: strcmp.S,v 1.4 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: strcmp.S,v 1.5 2017/11/29 05:13:57 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 /*
  * NOTE: I've unrolled the loop eight times: large enough to make a

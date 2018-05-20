@@ -33,14 +33,13 @@ our %args = (
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tcp", addr => "localhost" },
 	rcvbuf => 2**12,
-	redo => 0,
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
 		or die ref($self), " syslogd did not receive third log";
 	    ${$self->{syslogd}}->kill_syslogd('TERM');
 	    ${$self->{syslogd}}->loggrep("syslogd: exited", 5)
-		or die ref($self), " no 'syslogd: exited' between logs";
+		or die ref($self), " no 'syslogd: exited' in syslogd log";
 	    # syslogd has shut down, read from kernel socket buffer
 	    read_log($self);
 	},

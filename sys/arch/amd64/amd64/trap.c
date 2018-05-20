@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2017/10/04 02:10:33 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2018/05/13 22:01:13 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
@@ -97,7 +95,7 @@ void trap(struct trapframe *);
 void ast(struct trapframe *);
 void syscall(struct trapframe *);
 
-const char *trap_type[] = {
+const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -119,17 +117,19 @@ const char *trap_type[] = {
 	"machine check",			/* 18 T_MCA */
 	"SSE FP exception",			/* 19 T_XMM */
 };
-int	trap_types = nitems(trap_type);
+const int	trap_types = nitems(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;
 #endif
 
-#define	IDTVEC(name)	__CONCAT(X, name)
+static inline void frame_dump(struct trapframe *_tf, struct proc *_p,
+    const char *_sig, uint64_t _cr2);
+static inline void verify_smap(const char *_func);
+static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
+    long _type);
+static inline void check_stack(struct proc *_p, long _type);
 
-#ifdef TRAP_SIGDEBUG
-static void frame_dump(struct trapframe *);
-#endif
 
 /*
  * trap(frame):
@@ -144,42 +144,22 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
-	extern char doreti_iret[], resume_iret[];
-	extern char xrstor_fault[], xrstor_resume[];
 	caddr_t onfault;
 	int error;
 	uint64_t cr2;
 	union sigval sv;
 
+	verify_smap(__func__);
 	uvmexp.traps++;
+	debug_trap(frame, p, type);
 
 	pcb = (p != NULL && p->p_addr != NULL) ? &p->p_addr->u_pcb : NULL;
-
-#ifdef DEBUG
-	if (trapdebug) {
-		printf("trap %d code %llx rip %llx cs %llx rflags %llx "
-		       "cr2 %llx cpl %x\n",
-		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curproc %p\n", (void *)p);
-		if (p != NULL)
-			printf("pid %d\n", p->p_p->ps_pid);
-	}
-#endif
-#ifdef DIAGNOSTIC
-	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
-		u_long rf = read_rflags();
-		if (rf & PSL_AC) {
-			write_rflags(rf & ~PSL_AC);
-			panic("%s: AC set on entry", "trap");
-		}
-	}
-#endif
 
 	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		p->p_md.md_regs = frame;
 		refreshcreds(p);
+		check_stack(p, type);
 	}
 
 	switch (type) {
@@ -205,15 +185,6 @@ trap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
-		/*
-		 * Check for xrstor faulting because of invalid xstate
-		 * We do this by looking at the address of the
-		 * instruction that faulted.
-		 */
-		if (frame->tf_rip == (u_int64_t)xrstor_fault && p != NULL) {
-			frame->tf_rip = (u_int64_t)xrstor_resume;
-			return;
-		}
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
@@ -225,28 +196,13 @@ copyfault:
 			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
 			return;
 		}
-
-		/*
-		 * Check for failure during return to user mode.
-		 * We do this by looking at the address of the
-		 * instruction that faulted.
-		 */
-		if (frame->tf_rip == (u_int64_t)doreti_iret) {
-			frame->tf_rip = (u_int64_t)resume_iret;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_p->ps_comm, "BUS",
-		    frame->tf_rip, rcr2());
-		frame_dump(frame);
-#endif
+		frame_dump(frame, p, "BUS", 0);
 		sv.sival_ptr = (void *)frame->tf_rip;
 		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type & ~T_USER, BUS_OBJERR, sv);
@@ -265,30 +221,10 @@ copyfault:
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
 		KERNEL_UNLOCK();
 		goto out;
-	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d (%s): %s at rip %llx addr %llx\n",
-		    p->p_p->ps_pid, p->p_p->ps_comm, "ILL",
-		    frame->tf_rip, rcr2());
-		frame_dump(frame);
-#endif
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
-		KERNEL_UNLOCK();
-		goto out;
+	case T_FPOPFLT|T_USER:		/* impossible without 32bit compat */
 	case T_BOUND|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
-		KERNEL_UNLOCK();
-		goto out;
 	case T_OFLOW|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
-		goto out;
+		panic("impossible trap");
 	case T_DIVIDE|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;
 		KERNEL_LOCK();
@@ -382,12 +318,16 @@ faultcommon:
 		}
 
 		if (type == T_PAGEFLT) {
+			static char faultbuf[512];
 			if (pcb->pcb_onfault != 0) {
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			snprintf(faultbuf, sizeof faultbuf,
+			    "uvm_fault(%p, 0x%lx, 0, %d) -> %x",
 			    map, fa, ftype, error);
+			printf("%s\n", faultbuf);
+			faultstr = faultbuf;
 			goto we_re_toast;
 		}
 
@@ -399,18 +339,13 @@ faultcommon:
 			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 			signal = SIGKILL;
 		} else {
-#ifdef TRAP_SIGDEBUG
-			printf("pid %d (%s): %s at rip %llx addr %llx\n",
-			    p->p_p->ps_pid, p->p_p->ps_comm, "SEGV",
-			    frame->tf_rip, rcr2());
-			frame_dump(frame);
-#endif
-		}
-		if (error == EACCES)
-			sicode = SEGV_ACCERR;
-		if (error == EIO) {
-			signal = SIGBUS;
-			sicode = BUS_OBJERR;
+			frame_dump(frame, p, "SEGV", cr2);
+			if (error == EACCES)
+				sicode = SEGV_ACCERR;
+			else if (error == EIO) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+			}
 		}
 		sv.sival_ptr = (void *)fa;
 		trapsignal(p, signal, T_PAGEFLT, sicode, sv);
@@ -453,12 +388,18 @@ out:
 	userret(p);
 }
 
-#ifdef TRAP_SIGDEBUG
-static void
-frame_dump(struct trapframe *tf)
+static inline void
+frame_dump(struct trapframe *tf, struct proc *p, const char *sig, uint64_t cr2)
 {
-	printf("rip %p  rsp %p  rfl %p\n",
-	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
+#ifdef TRAP_SIGDEBUG
+	printf("pid %d (%s): %s at rip %llx addr %llx\n",
+	    p->p_p->ps_pid, p->p_p->ps_comm, sig, tf->tf_rip, cr2);
+	printf("rip %p  cs 0x%x  rfl %p  rsp %p  ss 0x%x\n",
+	    (void *)tf->tf_rip, (unsigned)tf->tf_cs & 0xffff,
+	    (void *)tf->tf_rflags,
+	    (void *)tf->tf_rsp, (unsigned)tf->tf_ss & 0xffff);
+	printf("err 0x%llx  trapno 0x%llx\n",
+	    tf->tf_err, tf->tf_trapno);
 	printf("rdi %p  rsi %p  rdx %p\n",
 	    (void *)tf->tf_rdi, (void *)tf->tf_rsi, (void *)tf->tf_rdx);
 	printf("rcx %p  r8  %p  r9  %p\n",
@@ -469,8 +410,59 @@ frame_dump(struct trapframe *tf)
 	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
 	printf("rbp %p  rbx %p  rax %p\n",
 	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
-}
 #endif
+}
+
+static inline void
+verify_smap(const char *func)
+{
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
+		u_long rf = read_rflags();
+		if (rf & PSL_AC) {
+			write_rflags(rf & ~PSL_AC);
+			panic("%s: AC set on entry", func);
+		}
+	}
+#endif
+}
+
+static inline void
+debug_trap(struct trapframe *frame, struct proc *p, long type)
+{
+#ifdef DEBUG
+	if (trapdebug) {
+		printf("trap %ld code %llx rip %llx cs %llx rflags %llx "
+		       "cr2 %llx cpl %x\n",
+		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
+		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
+		printf("curproc %p\n", (void *)p);
+		if (p != NULL)
+			printf("pid %d\n", p->p_p->ps_pid);
+	}
+#endif
+}
+
+static inline void
+check_stack(struct proc *p, long type)
+{
+	vaddr_t sp = PROC_STACK(p);
+
+	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+	    p->p_spstart == 0 || sp < p->p_spstart || sp >= p->p_spend) {
+		KERNEL_LOCK();
+		if (!uvm_map_check_stack_range(p, sp)) {
+			union sigval sv;
+
+			printf("trap [%s]%d/%d type %ld: sp %lx not inside"
+			    " %lx-%lx\n", p->p_p->ps_comm, p->p_p->ps_pid,
+			    p->p_tid, type, sp, p->p_spstart, p->p_spend);
+			sv.sival_ptr = (void *)PROC_PC(p);
+			trapsignal(p, SIGSEGV, type, SEGV_ACCERR, sv);
+		}
+		KERNEL_UNLOCK();
+	}
+}
 
 
 /*
@@ -508,16 +500,7 @@ syscall(struct trapframe *frame)
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
-#ifdef DIAGNOSTIC
-	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_SMAP) {
-		u_long rf = read_rflags();
-		if (rf & PSL_AC) {
-			write_rflags(rf & ~PSL_AC);
-			panic("%s: AC set on entry", "syscall");
-		}
-	}
-#endif
-
+	verify_smap(__func__);
 	uvmexp.syscalls++;
 	p = curproc;
 

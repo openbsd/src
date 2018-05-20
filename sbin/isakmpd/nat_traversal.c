@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.24 2015/08/20 22:05:51 deraadt Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.25 2017/12/05 20:31:45 jca Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -387,7 +387,7 @@ nat_t_send_keepalive(void *v_arg)
 {
 	struct sa *sa = (struct sa *)v_arg;
 	struct transport *t;
-	struct timeval now;
+	struct timespec now;
 	int interval;
 
 	/* Send the keepalive message.  */
@@ -398,7 +398,7 @@ nat_t_send_keepalive(void *v_arg)
 	interval = conf_get_num("General", "NAT-T-Keepalive", 0);
 	if (interval < 1)
 		interval = NAT_T_KEEPALIVE_INTERVAL;
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	now.tv_sec += interval;
 
 	sa->nat_t_keepalive = timer_add_event("nat_t_send_keepalive",
@@ -412,7 +412,7 @@ void
 nat_t_setup_keepalive(struct sa *sa)
 {
 	struct sockaddr *src;
-	struct timeval now;
+	struct timespec now;
 
 	if (sa->initiator)
 		sa->transport->vtbl->get_src(sa->transport, &src);
@@ -422,7 +422,7 @@ nat_t_setup_keepalive(struct sa *sa)
 	if (!virtual_listen_lookup(src))
 		return;
 
-	gettimeofday(&now, 0);
+	clock_gettime(CLOCK_MONOTONIC, &now);
 	now.tv_sec += NAT_T_KEEPALIVE_INTERVAL;
 
 	sa->nat_t_keepalive = timer_add_event("nat_t_send_keepalive",

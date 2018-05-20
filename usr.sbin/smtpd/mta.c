@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.205 2017/09/15 11:50:39 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.206 2017/11/21 12:20:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -198,270 +198,257 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	void			*iter;
 	uint64_t		 u64;
 
-	if (p->proc == PROC_QUEUE) {
-		switch (imsg->hdr.type) {
+	switch (imsg->hdr.type) {
+	case IMSG_QUEUE_TRANSFER:
+		m_msg(&m, imsg);
+		m_get_envelope(&m, &evp);
+		m_end(&m);
+		mta_handle_envelope(&evp);
+		return;
 
-		case IMSG_QUEUE_TRANSFER:
-			m_msg(&m, imsg);
-			m_get_envelope(&m, &evp);
-			m_end(&m);
-			mta_handle_envelope(&evp);
-			return;
+	case IMSG_MTA_OPEN_MESSAGE:
+		mta_session_imsg(p, imsg);
+		return;
 
-		case IMSG_MTA_OPEN_MESSAGE:
-			mta_session_imsg(p, imsg);
-			return;
-		}
-	}
+	case IMSG_MTA_LOOKUP_CREDENTIALS:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &secret);
+		m_end(&m);
+		relay = tree_xpop(&wait_secret, reqid);
+		mta_on_secret(relay, secret[0] ? secret : NULL);
+		return;
 
-	if (p->proc == PROC_LKA) {
-		switch (imsg->hdr.type) {
-
-		case IMSG_MTA_LOOKUP_CREDENTIALS:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_string(&m, &secret);
-			m_end(&m);
-			relay = tree_xpop(&wait_secret, reqid);
-			mta_on_secret(relay, secret[0] ? secret : NULL);
-			return;
-
-		case IMSG_MTA_LOOKUP_SOURCE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_int(&m, &status);
-			if (status == LKA_OK)
-				m_get_sockaddr(&m, (struct sockaddr*)&ss);
-			m_end(&m);
-
-			relay = tree_xpop(&wait_source, reqid);
-			mta_on_source(relay, (status == LKA_OK) ?
-			    mta_source((struct sockaddr *)&ss) : NULL);
-			return;
-
-		case IMSG_MTA_LOOKUP_HELO:
-			mta_session_imsg(p, imsg);
-			return;
-
-		case IMSG_MTA_DNS_HOST:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
+	case IMSG_MTA_LOOKUP_SOURCE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &status);
+		if (status == LKA_OK)
 			m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_end(&m);
+
+		relay = tree_xpop(&wait_source, reqid);
+		mta_on_source(relay, (status == LKA_OK) ?
+		    mta_source((struct sockaddr *)&ss) : NULL);
+		return;
+
+	case IMSG_MTA_LOOKUP_HELO:
+		mta_session_imsg(p, imsg);
+		return;
+
+	case IMSG_MTA_DNS_HOST:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_int(&m, &preference);
+		m_end(&m);
+		domain = tree_xget(&wait_mx, reqid);
+		mx = xcalloc(1, sizeof *mx, "mta: mx");
+		mx->host = mta_host((struct sockaddr*)&ss);
+		mx->preference = preference;
+		TAILQ_FOREACH(imx, &domain->mxs, entry) {
+			if (imx->preference > mx->preference) {
+				TAILQ_INSERT_BEFORE(imx, mx, entry);
+				return;
+			}
+		}
+		TAILQ_INSERT_TAIL(&domain->mxs, mx, entry);
+		return;
+
+	case IMSG_MTA_DNS_HOST_END:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &dnserror);
+		m_end(&m);
+		domain = tree_xpop(&wait_mx, reqid);
+		domain->mxstatus = dnserror;
+		if (domain->mxstatus == DNS_OK) {
+			log_debug("debug: MXs for domain %s:",
+			    domain->name);
+			TAILQ_FOREACH(mx, &domain->mxs, entry)
+				log_debug("	%s preference %d",
+				    sa_to_text(mx->host->sa),
+				    mx->preference);
+		}
+		else {
+			log_debug("debug: Failed MX query for %s:",
+			    domain->name);
+		}
+		domain->lastmxquery = time(NULL);
+		waitq_run(&domain->mxs, domain);
+		return;
+
+	case IMSG_MTA_DNS_MX_PREFERENCE:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &dnserror);
+		if (dnserror == 0)
 			m_get_int(&m, &preference);
-			m_end(&m);
-			domain = tree_xget(&wait_mx, reqid);
-			mx = xcalloc(1, sizeof *mx, "mta: mx");
-			mx->host = mta_host((struct sockaddr*)&ss);
-			mx->preference = preference;
-			TAILQ_FOREACH(imx, &domain->mxs, entry) {
-				if (imx->preference > mx->preference) {
-					TAILQ_INSERT_BEFORE(imx, mx, entry);
-					return;
-				}
-			}
-			TAILQ_INSERT_TAIL(&domain->mxs, mx, entry);
-			return;
+		m_end(&m);
 
-		case IMSG_MTA_DNS_HOST_END:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_int(&m, &dnserror);
-			m_end(&m);
-			domain = tree_xpop(&wait_mx, reqid);
-			domain->mxstatus = dnserror;
-			if (domain->mxstatus == DNS_OK) {
-				log_debug("debug: MXs for domain %s:",
-				    domain->name);
-				TAILQ_FOREACH(mx, &domain->mxs, entry)
-					log_debug("	%s preference %d",
-					    sa_to_text(mx->host->sa),
-					    mx->preference);
-			}
-			else {
-				log_debug("debug: Failed MX query for %s:",
-				    domain->name);
-			}
-			domain->lastmxquery = time(NULL);
-			waitq_run(&domain->mxs, domain);
-			return;
-
-		case IMSG_MTA_DNS_MX_PREFERENCE:
-			m_msg(&m, imsg);
-			m_get_id(&m, &reqid);
-			m_get_int(&m, &dnserror);
-			if (dnserror == 0)
-				m_get_int(&m, &preference);
-			m_end(&m);
-
-			relay = tree_xpop(&wait_preference, reqid);
-			if (dnserror) {
-				log_warnx("warn: Couldn't find backup "
-				    "preference for %s: error %d",
-				    mta_relay_to_text(relay), dnserror);
-				preference = INT_MAX;
-			}
-			mta_on_preference(relay, preference);
-			return;
-
-		case IMSG_MTA_DNS_PTR:
-			mta_session_imsg(p, imsg);
-			return;
-
-		case IMSG_MTA_TLS_INIT:
-			mta_session_imsg(p, imsg);
-			return;
-
-		case IMSG_MTA_TLS_VERIFY:
-			mta_session_imsg(p, imsg);
-			return;
+		relay = tree_xpop(&wait_preference, reqid);
+		if (dnserror) {
+			log_warnx("warn: Couldn't find backup "
+			    "preference for %s: error %d",
+			    mta_relay_to_text(relay), dnserror);
+			preference = INT_MAX;
 		}
-	}
+		mta_on_preference(relay, preference);
+		return;
 
-	if (p->proc == PROC_CONTROL) {
-		switch (imsg->hdr.type) {
+	case IMSG_MTA_DNS_PTR:
+		mta_session_imsg(p, imsg);
+		return;
 
-		case IMSG_CTL_RESUME_ROUTE:
-			u64 = *((uint64_t *)imsg->data);
+	case IMSG_MTA_TLS_INIT:
+		mta_session_imsg(p, imsg);
+		return;
+
+	case IMSG_MTA_TLS_VERIFY:
+		mta_session_imsg(p, imsg);
+		return;
+
+	case IMSG_CTL_RESUME_ROUTE:
+		u64 = *((uint64_t *)imsg->data);
+		if (u64)
+			log_debug("resuming route: %llu",
+			    (unsigned long long)u64);
+		else
+			log_debug("resuming all routes");
+		SPLAY_FOREACH(route, mta_route_tree, &routes) {
+			if (u64 && route->id != u64)
+				continue;
+
+			if (route->flags & ROUTE_DISABLED) {
+				log_info("smtp-out: Enabling route %s per admin request",
+				    mta_route_to_text(route));
+				if (!runq_cancel(runq_route, NULL, route)) {
+					log_warnx("warn: route not on runq");
+					fatalx("exiting");
+				}
+				route->flags &= ~ROUTE_DISABLED;
+				route->flags |= ROUTE_NEW;
+				route->nerror = 0;
+				route->penalty = 0;
+				mta_route_unref(route); /* from mta_route_disable */
+			}
+
 			if (u64)
-				log_debug("resuming route: %llu",
-				    (unsigned long long)u64);
-			else
-				log_debug("resuming all routes");
-			SPLAY_FOREACH(route, mta_route_tree, &routes) {
-				if (u64 && route->id != u64)
-					continue;
-
-				if (route->flags & ROUTE_DISABLED) {
-					log_info("smtp-out: Enabling route %s per admin request",
-					    mta_route_to_text(route));
-					if (!runq_cancel(runq_route, NULL, route)) {
-						log_warnx("warn: route not on runq");
-						fatalx("exiting");
-					}
-					route->flags &= ~ROUTE_DISABLED;
-					route->flags |= ROUTE_NEW;
-					route->nerror = 0;
-					route->penalty = 0;
-					mta_route_unref(route); /* from mta_route_disable */
-				}
-
-				if (u64)
-					break;
-			}
-			return;
-
-		case IMSG_CTL_MTA_SHOW_HOSTS:
-			t = time(NULL);
-			SPLAY_FOREACH(host, mta_host_tree, &hosts) {
-				(void)snprintf(buf, sizeof(buf),
-				    "%s %s refcount=%d nconn=%zu lastconn=%s",
-				    sockaddr_to_text(host->sa),
-				    host->ptrname,
-				    host->refcount,
-				    host->nconn,
-				    host->lastconn ? duration_to_text(t - host->lastconn) : "-");
-				m_compose(p, IMSG_CTL_MTA_SHOW_HOSTS,
-				    imsg->hdr.peerid, 0, -1,
-				    buf, strlen(buf) + 1);
-			}
-			m_compose(p, IMSG_CTL_MTA_SHOW_HOSTS, imsg->hdr.peerid,
-			    0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_SHOW_RELAYS:
-			t = time(NULL);
-			SPLAY_FOREACH(relay, mta_relay_tree, &relays)
-				mta_relay_show(relay, p, imsg->hdr.peerid, t);
-			m_compose(p, IMSG_CTL_MTA_SHOW_RELAYS, imsg->hdr.peerid,
-			    0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_SHOW_ROUTES:
-			SPLAY_FOREACH(route, mta_route_tree, &routes) {
-				v = runq_pending(runq_route, NULL, route, &t);
-				(void)snprintf(buf, sizeof(buf),
-				    "%llu. %s %c%c%c%c nconn=%zu nerror=%d penalty=%d timeout=%s",
-				    (unsigned long long)route->id,
-				    mta_route_to_text(route),
-				    route->flags & ROUTE_NEW ? 'N' : '-',
-				    route->flags & ROUTE_DISABLED ? 'D' : '-',
-				    route->flags & ROUTE_RUNQ ? 'Q' : '-',
-				    route->flags & ROUTE_KEEPALIVE ? 'K' : '-',
-				    route->nconn,
-				    route->nerror,
-				    route->penalty,
-				    v ? duration_to_text(t - time(NULL)) : "-");
-				m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES,
-				    imsg->hdr.peerid, 0, -1,
-				    buf, strlen(buf) + 1);
-			}
-			m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES, imsg->hdr.peerid,
-			    0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_SHOW_HOSTSTATS:
-			iter = NULL;
-			while (dict_iter(&hoststat, &iter, &hostname,
-				(void **)&hs)) {
-				(void)snprintf(buf, sizeof(buf),
-				    "%s|%llu|%s",
-				    hostname, (unsigned long long) hs->tm,
-				    hs->error);
-				m_compose(p, IMSG_CTL_MTA_SHOW_HOSTSTATS,
-				    imsg->hdr.peerid, 0, -1,
-				    buf, strlen(buf) + 1);
-			}
-			m_compose(p, IMSG_CTL_MTA_SHOW_HOSTSTATS,
-			    imsg->hdr.peerid,
-			    0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_BLOCK:
-			m_msg(&m, imsg);
-			m_get_sockaddr(&m, (struct sockaddr*)&ss);
-			m_get_string(&m, &dom);
-			m_end(&m);
-			source = mta_source((struct sockaddr*)&ss);
-			if (*dom != '\0') {
-				if (!(strlcpy(buf, dom, sizeof(buf))
-					>= sizeof(buf)))
-					mta_block(source, buf);
-			}
-			else
-				mta_block(source, NULL);
-			mta_source_unref(source);
-			m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_UNBLOCK:
-			m_msg(&m, imsg);
-			m_get_sockaddr(&m, (struct sockaddr*)&ss);
-			m_get_string(&m, &dom);
-			m_end(&m);
-			source = mta_source((struct sockaddr*)&ss);
-			if (*dom != '\0') {
-				if (!(strlcpy(buf, dom, sizeof(buf))
-					>= sizeof(buf)))
-					mta_unblock(source, buf);
-			}
-			else
-				mta_unblock(source, NULL);
-			mta_source_unref(source);
-			m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
-			return;
-
-		case IMSG_CTL_MTA_SHOW_BLOCK:
-			SPLAY_FOREACH(block, mta_block_tree, &blocks) {
-				(void)snprintf(buf, sizeof(buf), "%s -> %s",
-				    mta_source_to_text(block->source),
-				    block->domain ? block->domain : "*");
-				m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK,
-				    imsg->hdr.peerid, 0, -1, buf, strlen(buf) + 1);
-			}
-			m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK, imsg->hdr.peerid,
-			    0, -1, NULL, 0);
-			return;
+				break;
 		}
+		return;
+
+	case IMSG_CTL_MTA_SHOW_HOSTS:
+		t = time(NULL);
+		SPLAY_FOREACH(host, mta_host_tree, &hosts) {
+			(void)snprintf(buf, sizeof(buf),
+			    "%s %s refcount=%d nconn=%zu lastconn=%s",
+			    sockaddr_to_text(host->sa),
+			    host->ptrname,
+			    host->refcount,
+			    host->nconn,
+			    host->lastconn ? duration_to_text(t - host->lastconn) : "-");
+			m_compose(p, IMSG_CTL_MTA_SHOW_HOSTS,
+			    imsg->hdr.peerid, 0, -1,
+			    buf, strlen(buf) + 1);
+		}
+		m_compose(p, IMSG_CTL_MTA_SHOW_HOSTS, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_SHOW_RELAYS:
+		t = time(NULL);
+		SPLAY_FOREACH(relay, mta_relay_tree, &relays)
+			mta_relay_show(relay, p, imsg->hdr.peerid, t);
+		m_compose(p, IMSG_CTL_MTA_SHOW_RELAYS, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_SHOW_ROUTES:
+		SPLAY_FOREACH(route, mta_route_tree, &routes) {
+			v = runq_pending(runq_route, NULL, route, &t);
+			(void)snprintf(buf, sizeof(buf),
+			    "%llu. %s %c%c%c%c nconn=%zu nerror=%d penalty=%d timeout=%s",
+			    (unsigned long long)route->id,
+			    mta_route_to_text(route),
+			    route->flags & ROUTE_NEW ? 'N' : '-',
+			    route->flags & ROUTE_DISABLED ? 'D' : '-',
+			    route->flags & ROUTE_RUNQ ? 'Q' : '-',
+			    route->flags & ROUTE_KEEPALIVE ? 'K' : '-',
+			    route->nconn,
+			    route->nerror,
+			    route->penalty,
+			    v ? duration_to_text(t - time(NULL)) : "-");
+			m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES,
+			    imsg->hdr.peerid, 0, -1,
+			    buf, strlen(buf) + 1);
+		}
+		m_compose(p, IMSG_CTL_MTA_SHOW_ROUTES, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_SHOW_HOSTSTATS:
+		iter = NULL;
+		while (dict_iter(&hoststat, &iter, &hostname,
+			(void **)&hs)) {
+			(void)snprintf(buf, sizeof(buf),
+			    "%s|%llu|%s",
+			    hostname, (unsigned long long) hs->tm,
+			    hs->error);
+			m_compose(p, IMSG_CTL_MTA_SHOW_HOSTSTATS,
+			    imsg->hdr.peerid, 0, -1,
+			    buf, strlen(buf) + 1);
+		}
+		m_compose(p, IMSG_CTL_MTA_SHOW_HOSTSTATS,
+		    imsg->hdr.peerid,
+		    0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_BLOCK:
+		m_msg(&m, imsg);
+		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_string(&m, &dom);
+		m_end(&m);
+		source = mta_source((struct sockaddr*)&ss);
+		if (*dom != '\0') {
+			if (!(strlcpy(buf, dom, sizeof(buf))
+				>= sizeof(buf)))
+				mta_block(source, buf);
+		}
+		else
+			mta_block(source, NULL);
+		mta_source_unref(source);
+		m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_UNBLOCK:
+		m_msg(&m, imsg);
+		m_get_sockaddr(&m, (struct sockaddr*)&ss);
+		m_get_string(&m, &dom);
+		m_end(&m);
+		source = mta_source((struct sockaddr*)&ss);
+		if (*dom != '\0') {
+			if (!(strlcpy(buf, dom, sizeof(buf))
+				>= sizeof(buf)))
+				mta_unblock(source, buf);
+		}
+		else
+			mta_unblock(source, NULL);
+		mta_source_unref(source);
+		m_compose(p, IMSG_CTL_OK, imsg->hdr.peerid, 0, -1, NULL, 0);
+		return;
+
+	case IMSG_CTL_MTA_SHOW_BLOCK:
+		SPLAY_FOREACH(block, mta_block_tree, &blocks) {
+			(void)snprintf(buf, sizeof(buf), "%s -> %s",
+			    mta_source_to_text(block->source),
+			    block->domain ? block->domain : "*");
+			m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK,
+			    imsg->hdr.peerid, 0, -1, buf, strlen(buf) + 1);
+		}
+		m_compose(p, IMSG_CTL_MTA_SHOW_BLOCK, imsg->hdr.peerid,
+		    0, -1, NULL, 0);
+		return;
 	}
 
 	errx(1, "mta_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.6 2011/03/23 16:54:35 pirofti Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.7 2017/11/03 06:55:08 aoyama Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,9 +42,9 @@ extern void	*bootaddr;	/* PA of boot device */
 extern int	bootpart;	/* boot partition (disk) */
 
 struct mainbus_attach_args {
-        const char *ma_name;
-        paddr_t    ma_addr;
-        int        ma_ilvl;
+	const char *ma_name;
+	paddr_t	   ma_addr;
+	int	   ma_ilvl;
 	int	   ma_machine;
 };
 #endif

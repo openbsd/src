@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.3 2015/09/01 08:44:34 mpi Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.5 2018/01/11 15:49:34 visa Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -99,8 +98,11 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 void
 _dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
+	size_t mapsize;
 
-	free(map, M_DEVBUF, 0);
+	mapsize = sizeof(struct powerpc_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (map->_dm_segcnt - 1));
+	free(map, M_DEVBUF, mapsize);
 }
 
 

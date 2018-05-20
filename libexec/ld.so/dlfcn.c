@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.98 2017/08/29 15:25:51 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.101 2018/02/04 20:41:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -219,6 +219,23 @@ dlctl(void *handle, int command, void *data)
 		/* made superfluous by kbind */
 		retval = 0;
 		break;
+	case DL_REFERENCE:
+	{
+		elf_object_t *obj;
+
+		obj = obj_from_addr(data);
+		if (obj == NULL) {
+			_dl_errno = DL_CANT_FIND_OBJ;
+			retval = -1;
+			break;
+		}
+		if ((obj->status & STAT_NODELETE) == 0) {
+			obj->opencount++;
+			obj->status |= STAT_NODELETE;
+		}
+		retval = 0;
+		break;
+	}
 	case 0x20:
 		_dl_show_objects();
 		retval = 0;
@@ -478,7 +495,7 @@ _dl_show_objects(void)
 	    "\t%x %e %t %O    %r   %g      %p\n";
 
 	if (_dl_tracefmt1 == NULL && _dl_tracefmt2 == NULL)
-		_dl_dprintf(outputfd, "\tStart   %s End     %s Type Open Ref GrpRef Name\n",
+		_dl_dprintf(outputfd, "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
 		    pad, pad);
 
 	if (_dl_tracelib) {
@@ -492,19 +509,19 @@ _dl_show_objects(void)
 	for (; object != NULL; object = object->next) {
 		switch (object->obj_type) {
 		case OBJTYPE_LDR:
-			objtypename = "rtld";
+			objtypename = "ld.so";
 			break;
 		case OBJTYPE_EXE:
-			objtypename = "exe ";
+			objtypename = "exe  ";
 			break;
 		case OBJTYPE_LIB:
-			objtypename = "rlib";
+			objtypename = "rlib ";
 			break;
 		case OBJTYPE_DLO:
-			objtypename = "dlib";
+			objtypename = "dlib ";
 			break;
 		default:
-			objtypename = "????";
+			objtypename = "?????";
 			break;
 		}
 		_dl_tracefmt(outputfd, object, fmt1, fmt2, objtypename);

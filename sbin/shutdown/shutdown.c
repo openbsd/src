@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.46 2017/04/03 20:59:19 fcambus Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.51 2018/04/07 19:08:13 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <fcntl.h>
 #include <sys/termios.h>
 #include <pwd.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,13 +59,16 @@
 #define	_PATH_FASTBOOT	"./fastboot"
 #endif
 
-#define	H		*60*60
-#define	M		*60
-#define	S		*1
-#define	NOLOG_TIME	5*60
+#define	H		*60*60LL
+#define	M		*60LL
+#define	S		*1LL
+#define	TEN_HOURS	(10*60*60)
+#define	NOLOG_TIME	(5*60)
 struct interval {
-	int timeleft, timetowait;
+	time_t timeleft;
+	time_t timetowait;
 } tlist[] = {
+	{    0,    0 },
 	{ 10 H,  5 H },
 	{  5 H,  3 H },
 	{  2 H,  1 H },
@@ -80,13 +82,14 @@ struct interval {
 	{ 30 S, 30 S },
 	{    0,    0 }
 };
+const int tlistlen = sizeof(tlist) / sizeof(tlist[0]);
 #undef H
 #undef M
 #undef S
 
 static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, dopower, dodump, mbuflen, nosync;
-static sig_atomic_t killflg;
+static sig_atomic_t killflg, timed_out;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime(void);
@@ -95,17 +98,19 @@ void doitfast(void);
 void __dead finish(int);
 void getoffset(char *);
 void __dead loop(void);
-void nolog(void);
+void nolog(time_t);
 void timeout(int);
-void timewarn(int);
+void timewarn(time_t);
 void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	int arglen, ch, len, readstdin = 0;
-	struct passwd *pw;
+	char when[64];
 	char *p, *endp;
+	struct passwd *pw;
+	struct tm *lt;
+	int arglen, ch, len, readstdin = 0;
 	pid_t forkpid;
 
 	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
@@ -151,18 +156,15 @@ main(int argc, char *argv[])
 		usage();
 
 	if (dofast && nosync) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -f and -n.\n");
+		warnx("incompatible switches -f and -n.");
 		usage();
 	}
 	if (doreboot && dohalt) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -h and -r.\n");
+		warnx("incompatible switches -h and -r.");
 		usage();
 	}
 	if (doreboot && dopower) {
-		(void)fprintf(stderr,
-		    "shutdown: incompatible switches -p and -r.\n");
+		warnx("incompatible switches -p and -r.");
 		usage();
 	}
 	getoffset(*argv++);
@@ -198,15 +200,16 @@ main(int argc, char *argv[])
 	}
 	mbuflen = strlen(mbuf);
 
-	if (offset) {
-		char *ct = ctime(&shuttime);
-
-		if (ct)
-			printf("Shutdown at %.24s.\n", ct);
-		else
+	if (offset > 0) {
+		shuttime = time(NULL) + offset;
+		lt = localtime(&shuttime);
+		if (lt != NULL) {
+			strftime(when, sizeof(when), "%a %b %e %T %Z %Y", lt);
+			printf("Shutdown at %s.\n", when);
+		} else
 			printf("Shutdown soon.\n");
 	} else
-		(void)printf("Shutdown NOW!\n");
+		printf("Shutdown NOW!\n");
 
 	if (!(whom = getlogin()))
 		whom = (pw = getpwuid(getuid())) ? pw->pw_name : "???";
@@ -233,45 +236,42 @@ main(int argc, char *argv[])
 void
 loop(void)
 {
-	struct interval *tp;
-	u_int sltime;
-	int logged;
+	struct timespec timeout;
+	int broadcast, i, logged;
 
-	if (offset <= NOLOG_TIME) {
-		logged = 1;
-		nolog();
-	} else
-		logged = 0;
-	tp = tlist;
-	if (tp->timeleft < offset)
-		(void)sleep((u_int)(offset - tp->timeleft));
-	else {
-		while (offset < tp->timeleft)
-			++tp;
-		/*
-		 * Warn now, if going to sleep more than a fifth of
-		 * the next wait time.
-		 */
-		if ((sltime = offset - tp->timeleft)) {
-			if (sltime > tp->timetowait / 5)
-				timewarn(offset);
-			(void)sleep(sltime);
+	broadcast = 1;
+
+	for (i = 0; i < tlistlen - 1; i++) {
+		if (offset > tlist[i + 1].timeleft) {
+			tlist[i].timeleft = offset;
+			tlist[i].timetowait = offset - tlist[i + 1].timeleft;
+			break;
 		}
 	}
-	for (;; ++tp) {
-		timewarn(tp->timeleft);
-		if (!logged && tp->timeleft <= NOLOG_TIME) {
+
+	/*
+	 * Don't spam the users: skip our offset's warning broadcast if
+	 * there's a broadcast scheduled after ours and it's relatively
+	 * imminent.
+	 */
+	if (offset > TEN_HOURS ||
+	    (offset > 0 && tlist[i].timetowait < tlist[i+1].timetowait / 5))
+		broadcast = 0;
+
+	for (logged = 0; i < tlistlen; i++) {
+		if (broadcast)
+			timewarn(tlist[i].timeleft);
+		broadcast = 1;
+		if (!logged && tlist[i].timeleft <= NOLOG_TIME) {
 			logged = 1;
-			nolog();
+			nolog(tlist[i].timeleft);
 		}
-		(void)sleep((u_int)tp->timetowait);
-		if (!tp->timeleft)
-			break;
+		timeout.tv_sec = tlist[i].timetowait;
+		timeout.tv_nsec = 0;
+		nanosleep(&timeout, NULL);
 	}
 	die_you_gravy_sucking_pig_dog();
 }
-
-static jmp_buf alarmbuf;
 
 static char *restricted_environ[] = {
 	"PATH=" _PATH_STDPATH,
@@ -279,62 +279,89 @@ static char *restricted_environ[] = {
 };
 
 void
-timewarn(int timeleft)
+timewarn(time_t timeleft)
 {
 	static char hostname[HOST_NAME_MAX+1];
-	char wcmd[PATH_MAX + 4];
-	extern char **environ;
+	char when[64];
+	struct tm *lt;
 	static int first;
-	FILE *pf;
+	int fd[2];
+	pid_t pid, wpid;
 
 	if (!first++)
 		(void)gethostname(hostname, sizeof(hostname));
 
-	/* undoc -n option to wall suppresses normal wall banner */
-	(void)snprintf(wcmd, sizeof(wcmd), "%s -n", _PATH_WALL);
-	environ = restricted_environ;
-	if (!(pf = popen(wcmd, "w"))) {
-		syslog(LOG_ERR, "shutdown: can't find %s: %m", _PATH_WALL);
+	if (pipe(fd) == -1) {
+		syslog(LOG_ERR, "pipe: %m");
 		return;
 	}
+	switch (pid = fork()) {
+	case -1:
+		syslog(LOG_ERR, "fork: %m");
+		close(fd[0]);
+		close(fd[1]);
+		return;
+	case 0:
+		if (dup2(fd[0], STDIN_FILENO) == -1) {
+			syslog(LOG_ERR, "dup2: %m");
+			_exit(1);
+		}
+		if (fd[0] != STDIN_FILENO)
+			close(fd[0]);
+		close(fd[1]);
+		/* wall(1)'s undocumented '-n' flag suppresses its banner. */
+		execle(_PATH_WALL, _PATH_WALL, "-n", (char *)NULL,
+		    restricted_environ);
+		syslog(LOG_ERR, "%s: %m", _PATH_WALL);
+		_exit(1);
+	default:
+		close(fd[0]);
+	}
 
-	(void)fprintf(pf,
+	dprintf(fd[1],
 	    "\007*** %sSystem shutdown message from %s@%s ***\007\n",
 	    timeleft ? "": "FINAL ", whom, hostname);
 
-	if (timeleft > 10*60) {
-		struct tm *tm = localtime(&shuttime);
-
-		fprintf(pf, "System going down at %d:%02d\n\n",
-		    tm->tm_hour, tm->tm_min);
-	} else if (timeleft > 59)
-		(void)fprintf(pf, "System going down in %d minute%s\n\n",
-		    timeleft / 60, (timeleft > 60) ? "s" : "");
-	else if (timeleft)
-		(void)fprintf(pf, "System going down in 30 seconds\n\n");
+	if (timeleft > 10 * 60) {
+		shuttime = time(NULL) + timeleft;
+		lt = localtime(&shuttime);
+		strftime(when, sizeof(when), "%H:%M %Z", lt);
+		dprintf(fd[1], "System going down at %s\n\n", when);
+	} else if (timeleft > 59) {
+		dprintf(fd[1], "System going down in %lld minute%s\n\n",
+		    (long long)(timeleft / 60), (timeleft > 60) ? "s" : "");
+	} else if (timeleft)
+		dprintf(fd[1], "System going down in 30 seconds\n\n");
 	else
-		(void)fprintf(pf, "System going down IMMEDIATELY\n\n");
+		dprintf(fd[1], "System going down IMMEDIATELY\n\n");
 
 	if (mbuflen)
-		(void)fwrite(mbuf, sizeof(*mbuf), mbuflen, pf);
+		(void)write(fd[1], mbuf, mbuflen);
+	close(fd[1]);
 
 	/*
-	 * play some games, just in case wall doesn't come back
-	 * probably unnecessary, given that wall is careful.
+	 * If we wait longer than 30 seconds for wall(1) to exit we'll
+	 * throw off our schedule.
 	 */
-	if (!setjmp(alarmbuf)) {
-		(void)signal(SIGALRM, timeout);
-		(void)alarm((u_int)30);
-		(void)pclose(pf);
-		(void)alarm((u_int)0);
-		(void)signal(SIGALRM, SIG_DFL);
+	signal(SIGALRM, timeout);
+	siginterrupt(SIGALRM, 1);
+	alarm(30);
+	while ((wpid = wait(NULL)) != pid && !timed_out)
+		continue;
+	alarm(0);
+	signal(SIGALRM, SIG_DFL);
+	if (timed_out) {
+		syslog(LOG_NOTICE,
+		    "wall[%ld] is taking too long to exit; continuing",
+		    (long)pid);
+		timed_out = 0;
 	}
 }
 
 void
 timeout(int signo)
 {
-	longjmp(alarmbuf, 1);		/* XXX signal/longjmp resource leaks */
+	timed_out = 1;
 }
 
 void
@@ -442,9 +469,11 @@ die_you_gravy_sucking_pig_dog(void)
 void
 getoffset(char *timearg)
 {
+	char when[64];
+	const char *errstr;
 	struct tm *lt;
 	int this_year;
-	time_t now;
+	time_t minutes, now;
 	char *p;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
@@ -452,15 +481,11 @@ getoffset(char *timearg)
 		return;
 	}
 
-	(void)time(&now);
-	if (*timearg == '+') {				/* +minutes */
-		const char *errstr;
-
-		offset = strtonum(++timearg, 0, INT_MAX, &errstr);
+	if (timearg[0] == '+') {			/* +minutes */
+		minutes = strtonum(timearg, 0, INT_MAX, &errstr);
 		if (errstr)
-			badtime();
-		offset *= 60;
-		shuttime = now + offset;
+			errx(1, "relative offset is %s: %s", errstr, timearg);
+		offset = minutes * 60;
 		return;
 	}
 
@@ -477,6 +502,7 @@ getoffset(char *timearg)
 	}
 
 	unsetenv("TZ");					/* OUR timezone */
+	time(&now);
 	lt = localtime(&now);				/* current time val */
 
 	switch (strlen(timearg)) {
@@ -513,8 +539,10 @@ getoffset(char *timearg)
 		lt->tm_sec = 0;
 		if ((shuttime = mktime(lt)) == -1)
 			badtime();
-		if ((offset = shuttime - now) < 0)
-			errx(1, "that time is already past.");
+		if ((offset = shuttime - now) < 0) {
+			strftime(when, sizeof(when), "%a %b %e %T %Z %Y", lt);
+			errx(1, "time is already past: %s", when);
+		}
 		break;
 	default:
 		badtime();
@@ -534,22 +562,23 @@ doitfast(void)
 }
 
 void
-nolog(void)
+nolog(time_t timeleft)
 {
-	int logfd;
+	char when[64];
 	struct tm *tm;
+	int logfd;
 
 	(void)unlink(_PATH_NOLOGIN);	/* in case linked to another file */
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGHUP, finish);
 	(void)signal(SIGQUIT, finish);
 	(void)signal(SIGTERM, finish);
+	shuttime = time(NULL) + timeleft;
 	tm = localtime(&shuttime);
 	if (tm && (logfd = open(_PATH_NOLOGIN, O_WRONLY|O_CREAT|O_TRUNC,
 	    0664)) >= 0) {
-		dprintf(logfd,
-		    "\n\nNO LOGINS: System going down at %d:%02d\n\n",
-		    tm->tm_hour, tm->tm_min);
+		strftime(when, sizeof(when), "at %H:%M %Z", tm);
+		dprintf(logfd, "\n\nNO LOGINS: System going down %s\n\n", when);
 		close(logfd);
 	}
 }

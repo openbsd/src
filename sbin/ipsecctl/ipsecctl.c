@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.82 2017/04/19 15:59:38 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.83 2017/11/20 10:51:24 mpi Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -42,6 +43,12 @@ FILE		*ipsecctl_fopen(const char *, const char *);
 int		 ipsecctl_commit(int, struct ipsecctl *);
 int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
 void		 ipsecctl_free_rule(struct ipsec_rule *);
+int		 ipsecctl_merge_rules(struct ipsec_rule *, struct ipsec_rule *);
+int		 ipsecctl_cmp_ident(struct ipsec_rule *, struct ipsec_rule *);
+int		 ipsecctl_rule_matchsrc(struct ipsec_rule *,
+		     struct ipsec_addr_wrap *);
+int		 ipsecctl_rule_matchdst(struct ipsec_rule *,
+		     struct ipsec_addr_wrap *);
 void		 ipsecctl_print_addr(struct ipsec_addr_wrap *);
 void		 ipsecctl_print_proto(u_int8_t);
 void		 ipsecctl_print_port(u_int16_t, const char *);
@@ -246,6 +253,138 @@ ipsecctl_free_rule(struct ipsec_rule *rp)
 	free(rp);
 }
 
+/*
+ * Merge two flow rules if they match.
+ *
+ * Return 0 if ``from'' has been merged into ``to'', -1 otherwise.
+ */
+int
+ipsecctl_merge_rules(struct ipsec_rule *to, struct ipsec_rule *from)
+{
+	int match = 0;
+
+	assert((to->type & RULE_FLOW) && (from->type & RULE_FLOW));
+
+	if ((to->satype != from->satype) ||
+	    (to->direction != from->direction) ||
+	    (to->sport != from->sport) ||
+	    (to->dport != from->dport) ||
+	    (to->proto != from->proto))
+		return (-1);
+
+	if (to->local != NULL || from->local != NULL) {
+		if ((to->local == NULL) || (from->local == NULL) ||
+		    memcmp(to->local, from->local, sizeof(*to->local)))
+			return (-1);
+	}
+
+	if (to->peer != NULL || from->peer != NULL) {
+		if ((to->peer == NULL) || (from->peer == NULL) ||
+		    memcmp(to->peer, from->peer, sizeof(*to->peer)))
+			return (-1);
+	}
+
+	if (ipsecctl_cmp_ident(to, from))
+		return (-1);
+
+	if (ipsecctl_rule_matchsrc(to, from->src)) {
+		free(from->src->name);
+		free(from->src);
+		from->src = NULL;
+		match = 1;
+	}
+	if (ipsecctl_rule_matchdst(to, from->dst)) {
+		free(from->dst->name);
+		free(from->dst);
+		from->dst = NULL;
+		match = 1;
+	}
+
+	if (!match)
+		return (-1);
+
+	TAILQ_INSERT_TAIL(&to->collapsed_rules, from, bundle_entry);
+
+	return (0);
+}
+
+/*
+ * Return 0 if ``r1'' and ``r2'' IDENTITY match, -1 otherwise.
+ */
+int
+ipsecctl_cmp_ident(struct ipsec_rule *r1, struct ipsec_rule *r2)
+{
+	if ((r1->auth == NULL) && (r2->auth == NULL))
+		return (0) ;
+
+	if ((r1->auth == NULL) || (r2->auth == NULL))
+		return (-1);
+
+	if (r1->auth->type != r2->auth->type)
+		return (-1);
+
+	if (r1->auth->srcid != NULL) {
+		if (r2->auth->srcid == NULL)
+			return (-1);
+
+		if (strcmp(r1->auth->srcid, r2->auth->srcid))
+			return (-1);
+	}
+
+	if (r1->auth->dstid) {
+		if (r2->auth->dstid == NULL)
+			return (-1);
+
+		if (strcmp(r1->auth->dstid, r2->auth->dstid))
+			return (-1);
+	}
+
+	return (0);
+}
+
+
+/*
+ * Return 0 if ``r'' or its merged entries contain ``src'', -1 otherwise.
+ */
+int
+ipsecctl_rule_matchsrc(struct ipsec_rule *r, struct ipsec_addr_wrap *src)
+{
+	struct ipsec_rule *r2;
+
+	if (memcmp(r->src, src, sizeof(*r->src)) == 0)
+		return (-1);
+
+	TAILQ_FOREACH(r2, &r->collapsed_rules, bundle_entry) {
+		if (r2->src == NULL)
+			continue;
+		if (memcmp(r2->src, src, sizeof(*r->src)) == 0)
+			return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * Return 0 if ``r'' or its merged entries contain ``dst'', -1 otherwise.
+ */
+int
+ipsecctl_rule_matchdst(struct ipsec_rule *r, struct ipsec_addr_wrap *dst)
+{
+	struct ipsec_rule *r2;
+
+	if (memcmp(r->dst, dst, sizeof(*r->dst)) == 0)
+		return (-1);
+
+	TAILQ_FOREACH(r2, &r->collapsed_rules, bundle_entry) {
+		if (r2->dst == NULL)
+			continue;
+		if (memcmp(r2->dst, dst, sizeof(*r->dst)) == 0)
+			return (-1);
+	}
+
+	return (0);
+}
+
 void
 ipsecctl_print_addr(struct ipsec_addr_wrap *ipa)
 {
@@ -300,6 +439,8 @@ ipsecctl_print_key(struct ipsec_key *key)
 void
 ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 {
+	struct ipsec_rule *r2;
+
 	printf("flow %s %s", satype[r->satype], direction[r->direction]);
 
 	if (r->proto) {
@@ -307,14 +448,36 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 		ipsecctl_print_proto(r->proto);
 	}
 	printf(" from ");
-	ipsecctl_print_addr(r->src);
+	if (opts & IPSECCTL_OPT_COLLAPSE) {
+		printf("{ ");
+		ipsecctl_print_addr(r->src);
+		TAILQ_FOREACH(r2, &r->collapsed_rules, bundle_entry) {
+			if (r2->src == NULL)
+				continue;
+			printf(", ");
+			ipsecctl_print_addr(r2->src);
+		}
+		printf(" }");
+	} else
+		ipsecctl_print_addr(r->src);
 	if (r->sport) {
 		printf(" port ");
 		ipsecctl_print_port(r->sport,
 		    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 	}
 	printf(" to ");
-	ipsecctl_print_addr(r->dst);
+	if (opts & IPSECCTL_OPT_COLLAPSE) {
+		printf("{ ");
+		ipsecctl_print_addr(r->dst);
+		TAILQ_FOREACH(r2, &r->collapsed_rules, bundle_entry) {
+			if (r2->dst == NULL)
+				continue;
+			printf(", ");
+			ipsecctl_print_addr(r2->dst);
+		}
+		printf(" }");
+	} else
+		ipsecctl_print_addr(r->dst);
 	if (r->dport) {
 		printf(" port ");
 		ipsecctl_print_port(r->dport,
@@ -396,8 +559,17 @@ ipsecctl_print_sabundle(struct ipsec_rule *r, int opts)
 void
 ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 {
-	if (opts & IPSECCTL_OPT_VERBOSE2)
-		printf("@%d ", r->nr);
+	struct ipsec_rule *r2;
+
+	if (opts & IPSECCTL_OPT_VERBOSE2) {
+		printf("@%d", r->nr);
+		if (opts & IPSECCTL_OPT_COLLAPSE) {
+			TAILQ_FOREACH(r2, &r->collapsed_rules, bundle_entry) {
+				printf(",%d", r2->nr);
+			}
+		}
+		printf(" ");
+	}
 
 	if (r->type & RULE_FLOW)
 		ipsecctl_print_flow(r, opts);
@@ -428,7 +600,7 @@ void
 ipsecctl_get_rules(struct ipsecctl *ipsec)
 {
 	struct sadb_msg *msg;
-	struct ipsec_rule *rule;
+	struct ipsec_rule *rule, *last = NULL;
 	int		 mib[4];
 	size_t		 need;
 	char		*buf, *lim, *next;
@@ -459,12 +631,24 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 			err(1, "ipsecctl_get_rules: calloc");
 		rule->nr = ipsec->rule_nr++;
 		rule->type |= RULE_FLOW;
+		TAILQ_INIT(&rule->collapsed_rules);
 
 		if (pfkey_parse(msg, rule))
 			errx(1, "ipsecctl_get_rules: "
 			    "failed to parse PF_KEY message");
 
+		/*
+		 * Try to collapse ``rule'' with the last enqueued rule.
+		 *
+		 * Note that comparing only the last entry works only if
+		 * the dump is sorted.
+		 */
+		if ((ipsec->opts & IPSECCTL_OPT_COLLAPSE) && (last != NULL) &&
+		    (ipsecctl_merge_rules(last, rule) == 0))
+			continue;
+
 		ipsecctl_add_rule(ipsec, rule);
+		last = rule;
 	}
 
 	free(buf);
@@ -595,7 +779,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dFkmnv] [-D macro=value] [-f file]"
+	fprintf(stderr, "usage: %s [-cdFkmnv] [-D macro=value] [-f file]"
 	    " [-i fifo] [-s modifier]\n", __progname);
 	exit(1);
 }
@@ -621,8 +805,12 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "D:df:Fi:kmnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "cD:df:Fi:kmnvs:")) != -1) {
 		switch (ch) {
+		case 'c':
+			opts |= IPSECCTL_OPT_COLLAPSE;
+			break;
+
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
 				warnx("could not parse macro definition %s",

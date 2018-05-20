@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.77 2017/07/19 14:17:49 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.80 2018/02/19 09:25:13 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -67,10 +67,20 @@
 
 #include <machine/reg.h>
 
+#ifdef PTRACE
+
+static inline int	process_checktracestate(struct process *_curpr,
+			    struct process *_tr, struct proc *_t);
+static inline struct process *process_tprfind(pid_t _tpid, struct proc **_tp);
+
+int	ptrace_ctrl(struct proc *, int, pid_t, caddr_t, int);
+int	ptrace_ustate(struct proc *, int, pid_t, void *, int, register_t *);
+int	ptrace_kstate(struct proc *, int, pid_t, void *);
 int	process_auxv_offset(struct proc *, struct process *, struct uio *);
 
-#ifdef PTRACE
 int	global_ptrace;	/* permit tracing of not children */
+
+
 /*
  * Process debugging system call.
  */
@@ -83,57 +93,213 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
-	struct proc *t;				/* target thread */
-	struct process *tr;			/* target process */
-	struct uio uio;
-	struct iovec iov;
-	struct ptrace_io_desc piod;
-	struct ptrace_event pe;
-	struct ptrace_thread_state pts;
-	struct reg *regs;
-#if defined (PT_SETFPREGS) || defined (PT_GETFPREGS)
-	struct fpreg *fpregs;
-#endif
-#if defined (PT_SETXMMREGS) || defined (PT_GETXMMREGS)
-	struct xmmregs *xmmregs;
-#endif
-#ifdef PT_WCOOKIE
-	register_t wcookie;
-#endif
-	int error, write;
-	int temp = 0;
 	int req = SCARG(uap, req);
 	pid_t pid = SCARG(uap, pid);
-	caddr_t addr = SCARG(uap, addr);
+	caddr_t uaddr = SCARG(uap, addr);	/* userspace */
+	void *kaddr = NULL;			/* kernelspace */
 	int data = SCARG(uap, data);
-	int s;
+	union {
+		struct ptrace_thread_state u_pts;
+		struct ptrace_io_desc u_piod;
+		struct ptrace_event u_pe;
+		struct ptrace_state u_ps;
+		register_t u_wcookie;
+	} u;
+	int size = 0;
+	enum { NONE, IN, IN_ALLOC, OUT, OUT_ALLOC, IN_OUT } mode;
+	int kstate = 0;
+	int error;
 
-	/* "A foolish consistency..." XXX */
+	*retval = 0;
+
+	/* Figure out what sort of copyin/out operations we'll do */
 	switch (req) {
 	case PT_TRACE_ME:
-		t = p;
-		tr = t->p_p;
-		break;
+	case PT_CONTINUE:
+	case PT_KILL:
+	case PT_ATTACH:
+	case PT_DETACH:
+#ifdef PT_STEP
+	case PT_STEP:
+#endif
+		/* control operations do no copyin/out; dispatch directly */
+		return ptrace_ctrl(p, req, pid, uaddr, data);
 
-	/* calls that only operate on the PID */
 	case PT_READ_I:
 	case PT_READ_D:
 	case PT_WRITE_I:
 	case PT_WRITE_D:
+		mode = NONE;
+		break;
+	case PT_IO:
+		mode = IN_OUT;
+		size = sizeof u.u_piod;
+		data = size;	/* suppress the data == size check */
+		break;
+	case PT_GET_THREAD_FIRST:
+		mode = OUT;
+		size = sizeof u.u_pts;
+		kstate = 1;
+		break;
+	case PT_GET_THREAD_NEXT:
+		mode = IN_OUT;
+		size = sizeof u.u_pts;
+		kstate = 1;
+		break;
+	case PT_GET_EVENT_MASK:
+		mode = OUT;
+		size = sizeof u.u_pe;
+		kstate = 1;
+		break;
+	case PT_SET_EVENT_MASK:
+		mode = IN;
+		size = sizeof u.u_pe;
+		kstate = 1;
+		break;
+	case PT_GET_PROCESS_STATE:
+		mode = OUT;
+		size = sizeof u.u_ps;
+		kstate = 1;
+		break;
+	case PT_GETREGS:
+		mode = OUT_ALLOC;
+		size = sizeof(struct reg);
+		break;
+	case PT_SETREGS:
+		mode = IN_ALLOC;
+		size = sizeof(struct reg);
+		break;
+#ifdef PT_GETFPREGS
+	case PT_GETFPREGS:
+		mode = OUT_ALLOC;
+		size = sizeof(struct fpreg);
+		break;
+#endif
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+		mode = IN_ALLOC;
+		size = sizeof(struct fpreg);
+		break;
+#endif
+#ifdef PT_GETXMMREGS
+	case PT_GETXMMREGS:
+		mode = OUT_ALLOC;
+		size = sizeof(struct xmmregs);
+		break;
+#endif
+#ifdef PT_SETXMMREGS
+	case PT_SETXMMREGS:
+		mode = IN_ALLOC;
+		size = sizeof(struct xmmregs);
+		break;
+#endif
+#ifdef PT_WCOOKIE
+	case PT_WCOOKIE:
+		mode = OUT;
+		size = sizeof u.u_wcookie;
+		data = size;	/* suppress the data == size check */
+		break;
+#endif
+	default:
+		return EINVAL;
+	}
+
+
+	/* Now do any copyin()s and allocations in a consistent manner */
+	switch (mode) {
+	case NONE:
+		kaddr = uaddr;
+		break;
+	case IN:
+	case IN_OUT:
+	case OUT:
+		KASSERT(size <= sizeof u);
+		if (data != size)
+			return EINVAL;
+		if (mode == OUT)
+			memset(&u, 0, size);
+		else { /* IN or IN_OUT */
+			if ((error = copyin(uaddr, &u, size)))
+				return error;
+		}
+		kaddr = &u;
+		break;
+	case IN_ALLOC:
+		kaddr = malloc(size, M_TEMP, M_WAITOK);
+		if ((error = copyin(uaddr, kaddr, size))) {
+			free(kaddr, M_TEMP, size);
+			return error;
+		}
+		break;
+	case OUT_ALLOC:
+		kaddr = malloc(size, M_TEMP, M_WAITOK | M_ZERO);
+		break;
+	}
+
+	if (kstate)
+		error = ptrace_kstate(p, req, pid, kaddr);
+	else
+		error = ptrace_ustate(p, req, pid, kaddr, data, retval);
+
+	/* Do any copyout()s and frees */
+	if (error == 0) {
+		switch (mode) {
+		case NONE:
+		case IN:
+		case IN_ALLOC:
+			break;
+		case IN_OUT:
+		case OUT:
+			error = copyout(&u, uaddr, size);
+			if (req == PT_IO) {
+				/* historically, errors here are ignored */
+				error = 0;
+			}
+			break;
+		case OUT_ALLOC:
+			error = copyout(kaddr, uaddr, size);
+			break;
+		}
+	}
+
+	if (mode == IN_ALLOC || mode == OUT_ALLOC)
+		free(kaddr, M_TEMP, size);
+	return error;
+}
+
+/*
+ * ptrace control requests: attach, detach, continue, kill, single-step, etc
+ */
+int
+ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
+{
+	struct proc *t;				/* target thread */
+	struct process *tr;			/* target process */
+	int error = 0;
+	int s;
+
+	switch (req) {
+	case PT_TRACE_ME:
+		/* Just set the trace flag. */
+		tr = p->p_p;
+		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
+		tr->ps_oppid = tr->ps_pptr->ps_pid;
+		if (tr->ps_ptstat == NULL)
+			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
+			    M_SUBPROC, M_WAITOK);
+		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
+		return 0;
+
+	/* calls that only operate on the PID */
 	case PT_KILL:
 	case PT_ATTACH:
-	case PT_IO:
-	case PT_SET_EVENT_MASK:
-	case PT_GET_EVENT_MASK:
-	case PT_GET_PROCESS_STATE:
-	case PT_GET_THREAD_FIRST:
-	case PT_GET_THREAD_NEXT:
 	case PT_DETACH:
-	default:
 		/* Find the process we're supposed to be operating on. */
-		if ((tr = prfind(pid)) == NULL)
-			return (ESRCH);
-		t = tr->ps_mainproc;	/* XXX */
+		if ((tr = prfind(pid)) == NULL) {
+			error = ESRCH;
+			goto fail;
+		}
+		t = TAILQ_FIRST(&tr->ps_threads);
 		break;
 
 	/* calls that accept a PID or a thread ID */
@@ -141,67 +307,63 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 #ifdef PT_STEP
 	case PT_STEP:
 #endif
-#ifdef PT_WCOOKIE
-	case PT_WCOOKIE:
-#endif
-	case PT_GETREGS:
-	case PT_SETREGS:
-#ifdef PT_GETFPREGS
-	case PT_GETFPREGS:
-#endif
-#ifdef PT_SETFPREGS
-	case PT_SETFPREGS:
-#endif
-#ifdef PT_GETXMMREGS
-	case PT_GETXMMREGS:
-#endif
-#ifdef PT_SETXMMREGS
-	case PT_SETXMMREGS:
-#endif
-		if (pid > THREAD_PID_OFFSET) {
-			t = tfind(pid - THREAD_PID_OFFSET);
-			if (t == NULL)
-				return (ESRCH);
-			tr = t->p_p;
-		} else {
-			if ((tr = prfind(pid)) == NULL)
-				return (ESRCH);
-			t = tr->ps_mainproc;	/* XXX */
+		if ((tr = process_tprfind(pid, &t)) == NULL) {
+			error = ESRCH;
+			goto fail;
 		}
 		break;
 	}
 
-	if ((tr->ps_flags & PS_INEXEC) != 0)
-		return (EAGAIN);
+	/* Check permissions/state */
+	if (req != PT_ATTACH) {
+		/* Check that the data is a valid signal number or zero. */
+		if (req != PT_KILL && (data < 0 || data >= NSIG)) {
+			error = EINVAL;
+			goto fail;
+		}
 
-	/* Make sure we can operate on it. */
-	switch (req) {
-	case  PT_TRACE_ME:
-		/* Saying that you're being traced is always legal. */
-		break;
+		/* Most operations require the target to already be traced */
+		if ((error = process_checktracestate(p->p_p, tr, t)))
+			goto fail;
 
-	case  PT_ATTACH:
+		/* Do single-step fixup if needed. */
+		FIX_SSTEP(t);
+	} else {
 		/*
-		 * You can't attach to a process if:
+		 * PT_ATTACH is the opposite; you can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
 		 */
-		if (tr == p->p_p)
-			return (EINVAL);
+		if (tr == p->p_p) {
+			error = EINVAL;
+			goto fail;
+		}
 
 		/*
 		 *	(2) it's a system process
 		 */
-		if (ISSET(tr->ps_flags, PS_SYSTEM))
-			return (EPERM);
+		if (ISSET(tr->ps_flags, PS_SYSTEM)) {
+			error = EPERM;
+			goto fail;
+		}
 
 		/*
 		 *	(3) it's already being traced, or
 		 */
-		if (ISSET(tr->ps_flags, PS_TRACED))
-			return (EBUSY);
+		if (ISSET(tr->ps_flags, PS_TRACED)) {
+			error = EBUSY;
+			goto fail;
+		}
 
 		/*
-		 *	(4) it's not owned by you, or the last exec
+		 *	(4) it's in the middle of execve(2)
+		 */
+		if (ISSET(tr->ps_flags, PS_INEXEC)) {
+			error = EAGAIN;
+			goto fail;
+		}
+
+		/*
+		 *	(5) it's not owned by you, or the last exec
 		 *	    gave us setuid/setgid privs (unless
 		 *	    you're root), or...
 		 * 
@@ -213,222 +375,42 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
-		    (error = suser(p, 0)) != 0)
-			return (error);
+		    (error = suser(p)) != 0)
+			goto fail;
 
 		/*
-		 * 	(4.5) it's not a child of the tracing process.
+		 * 	(5.5) it's not a child of the tracing process.
 		 */
 		if (global_ptrace == 0 && !inferior(tr, p->p_p) &&
-		    (error = suser(p, 0)) != 0)
-			return (error);
+		    (error = suser(p)) != 0)
+			goto fail;
 
 		/*
-		 *	(5) ...it's init, which controls the security level
+		 *	(6) ...it's init, which controls the security level
 		 *	    of the entire system, and the system was not
 		 *          compiled with permanently insecure mode turned
 		 *	    on.
 		 */
-		if ((tr->ps_pid == 1) && (securelevel > -1))
-			return (EPERM);
+		if ((tr->ps_pid == 1) && (securelevel > -1)) {
+			error = EPERM;
+			goto fail;
+		}
 
 		/*
-		 *	(6) it's an ancestor of the current process and
+		 *	(7) it's an ancestor of the current process and
 		 *	    not init (because that would create a loop in
 		 *	    the process graph).
 		 */
-		if (tr->ps_pid != 1 && inferior(p->p_p, tr))
-			return (EINVAL);
-		break;
-
-	case  PT_READ_I:
-	case  PT_READ_D:
-	case  PT_WRITE_I:
-	case  PT_WRITE_D:
-	case  PT_IO:
-	case  PT_CONTINUE:
-	case  PT_KILL:
-	case  PT_DETACH:
-#ifdef PT_STEP
-	case  PT_STEP:
-#endif
-	case  PT_SET_EVENT_MASK:
-	case  PT_GET_EVENT_MASK:
-	case  PT_GET_PROCESS_STATE:
-	case  PT_GETREGS:
-	case  PT_SETREGS:
-#ifdef PT_GETFPREGS
-	case  PT_GETFPREGS:
-#endif
-#ifdef PT_SETFPREGS
-	case  PT_SETFPREGS:
-#endif
-#ifdef PT_GETXMMREGS
-	case  PT_GETXMMREGS:
-#endif
-#ifdef PT_SETXMMREGS
-	case  PT_SETXMMREGS:
-#endif
-#ifdef PT_WCOOKIE
-	case  PT_WCOOKIE:
-#endif
-		/*
-		 * You can't do what you want to the process if:
-		 *	(1) It's not being traced at all,
-		 */
-		if (!ISSET(tr->ps_flags, PS_TRACED))
-			return (EPERM);
-
-		/*
-		 *	(2) it's not being traced by _you_, or
-		 */
-		if (tr->ps_pptr != p->p_p)
-			return (EBUSY);
-
-		/*
-		 *	(3) it's not currently stopped.
-		 */
-		if (t->p_stat != SSTOP || !ISSET(tr->ps_flags, PS_WAITED))
-			return (EBUSY);
-		break;
-
-	case  PT_GET_THREAD_FIRST:
-	case  PT_GET_THREAD_NEXT:
-		/*
-		 * You can't do what you want to the process if:
-		 *	(1) It's not being traced at all,
-		 */
-		if (!ISSET(tr->ps_flags, PS_TRACED))
-			return (EPERM);
-
-		/*
-		 *	(2) it's not being traced by _you_, or
-		 */
-		if (tr->ps_pptr != p->p_p)
-			return (EBUSY);
-
-		/*
-		 * Do the work here because the request isn't actually
-		 * associated with 't'
-		 */
-		if (data != sizeof(pts))
-			return (EINVAL);
-
-		if (req == PT_GET_THREAD_NEXT) {
-			error = copyin(addr, &pts, sizeof(pts));
-			if (error)
-				return (error);
-
-			t = tfind(pts.pts_tid - THREAD_PID_OFFSET);
-			if (t == NULL || ISSET(t->p_flag, P_WEXIT))
-				return (ESRCH);
-			if (t->p_p != tr)
-				return (EINVAL);
-			t = TAILQ_NEXT(t, p_thr_link);
-		} else {
-			t = TAILQ_FIRST(&tr->ps_threads);
+		if (tr->ps_pid != 1 && inferior(p->p_p, tr)) {
+			error = EINVAL;
+			goto fail;
 		}
-
-		if (t == NULL)
-			pts.pts_tid = -1;
-		else
-			pts.pts_tid = t->p_tid + THREAD_PID_OFFSET;
-		return (copyout(&pts, addr, sizeof(pts)));
-
-	default:			/* It was not a legal request. */
-		return (EINVAL);
 	}
 
-	/* Do single-step fixup if needed. */
-	FIX_SSTEP(t);
-
-	/* Now do the operation. */
-	write = 0;
-	*retval = 0;
-
 	switch (req) {
-	case  PT_TRACE_ME:
-		/* Just set the trace flag. */
-		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
-		tr->ps_oppid = tr->ps_pptr->ps_pid;
-		if (tr->ps_ptstat == NULL)
-			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
-			    M_SUBPROC, M_WAITOK);
-		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
-		return (0);
 
-	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
-	case  PT_WRITE_D:
-		write = 1;
-		temp = data;
-	case  PT_READ_I:		/* XXX no separate I and D spaces */
-	case  PT_READ_D:
-		/* write = 0 done above. */
-		iov.iov_base = (caddr_t)&temp;
-		iov.iov_len = sizeof(int);
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(vaddr_t)addr;
-		uio.uio_resid = sizeof(int);
-		uio.uio_segflg = UIO_SYSSPACE;
-		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_procp = p;
-		error = process_domem(p, tr, &uio, write ? PT_WRITE_I :
-				PT_READ_I);
-		if (write == 0)
-			*retval = temp;
-		return (error);
-	case  PT_IO:
-		error = copyin(addr, &piod, sizeof(piod));
-		if (error)
-			return (error);
-		iov.iov_base = piod.piod_addr;
-		iov.iov_len = piod.piod_len;
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(vaddr_t)piod.piod_offs;
-		uio.uio_resid = piod.piod_len;
-		uio.uio_segflg = UIO_USERSPACE;
-		uio.uio_procp = p;
-		switch (piod.piod_op) {
-		case PIOD_READ_I:
-			req = PT_READ_I;
-			uio.uio_rw = UIO_READ;
-			break;
-		case PIOD_READ_D:
-			req = PT_READ_D;
-			uio.uio_rw = UIO_READ;
-			break;
-		case PIOD_WRITE_I:
-			req = PT_WRITE_I;
-			uio.uio_rw = UIO_WRITE;
-			break;
-		case PIOD_WRITE_D:
-			req = PT_WRITE_D;
-			uio.uio_rw = UIO_WRITE;
-			break;
-		case PIOD_READ_AUXV:
-			req = PT_READ_D;
-			uio.uio_rw = UIO_READ;
-			temp = tr->ps_emul->e_arglen * sizeof(char *);
-			if (uio.uio_offset > temp)
-				return (EIO);
-			if (uio.uio_resid > temp - uio.uio_offset)
-				uio.uio_resid = temp - uio.uio_offset;
-			piod.piod_len = iov.iov_len = uio.uio_resid;
-			error = process_auxv_offset(p, tr, &uio);
-			if (error)
-				return (error);
-			break;
-		default:
-			return (EINVAL);
-		}
-		error = process_domem(p, tr, &uio, req);
-		piod.piod_len -= uio.uio_resid;
-		(void) copyout(&piod, addr, sizeof(piod));
-		return (error);
 #ifdef PT_STEP
-	case  PT_STEP:
+	case PT_STEP:
 		/*
 		 * From the 4.4BSD PRM:
 		 * "Execution continues as in request PT_CONTINUE; however
@@ -436,7 +418,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 * instruction, execution stops again. [ ... ]"
 		 */
 #endif
-	case  PT_CONTINUE:
+	case PT_CONTINUE:
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -452,14 +434,10 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
-		/* Check that the data is a valid signal number or zero. */
-		if (data < 0 || data >= NSIG)
-			return (EINVAL);
-
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1)
 			if ((error = process_set_pc(t, addr)) != 0)
-				return error;
+				goto fail;
 
 #ifdef PT_STEP
 		/*
@@ -467,11 +445,11 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		 */
 		error = process_sstep(t, req == PT_STEP);
 		if (error)
-			return error;
+			goto fail;
 #endif
 		goto sendsig;
 
-	case  PT_DETACH:
+	case PT_DETACH:
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -487,17 +465,13 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
-		/* Check that the data is a valid signal number or zero. */
-		if (data < 0 || data >= NSIG)
-			return (EINVAL);
-
 #ifdef PT_STEP
 		/*
 		 * Stop single stepping.
 		 */
 		error = process_sstep(t, 0);
 		if (error)
-			return error;
+			goto fail;
 #endif
 
 		/* give process back to original parent or init */
@@ -525,10 +499,9 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			if (data != 0)
 				psignal(t, data);
 		}
+		break;
 
-		return (0);
-
-	case  PT_KILL:
+	case PT_KILL:
 		if (pid < THREAD_PID_OFFSET && tr->ps_single)
 			t = tr->ps_single;
 
@@ -536,7 +509,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		data = SIGKILL;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
-	case  PT_ATTACH:
+	case PT_ATTACH:
 		/*
 		 * As was done in procfs:
 		 * Go ahead and set the trace flag.
@@ -555,120 +528,284 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 			    M_SUBPROC, M_WAITOK);
 		data = SIGSTOP;
 		goto sendsig;
+	default:
+		KASSERTMSG(0, "%s: unhandled request %d", __func__, req);
+		break;
+	}
 
-	case  PT_GET_EVENT_MASK:
-		if (data != sizeof(pe))
-			return (EINVAL);
-		memset(&pe, 0, sizeof(pe));
-		pe.pe_set_event = tr->ps_ptmask;
-		return (copyout(&pe, addr, sizeof(pe)));
-	case  PT_SET_EVENT_MASK:
-		if (data != sizeof(pe))
-			return (EINVAL);
-		if ((error = copyin(addr, &pe, sizeof(pe))))
-			return (error);
-		tr->ps_ptmask = pe.pe_set_event;
-		return (0);
+fail:
+	return error;
+}
 
-	case  PT_GET_PROCESS_STATE:
-		if (data != sizeof(*tr->ps_ptstat))
-			return (EINVAL);
+/*
+ * ptrace kernel-state requests: thread list, event mask, process state
+ */
+int
+ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
+{
+	struct process *tr;			/* target process */
+	struct ptrace_event *pe = addr;
+	int error;
 
+	KASSERT((p->p_flag & P_SYSTEM) == 0);
+
+	/* Find the process we're supposed to be operating on. */
+	if ((tr = prfind(pid)) == NULL)
+		return ESRCH;
+
+	if ((error = process_checktracestate(p->p_p, tr, NULL)))
+		return error;
+
+	switch (req) {
+	case PT_GET_THREAD_FIRST:
+	case PT_GET_THREAD_NEXT:
+	      {
+		struct ptrace_thread_state *pts = addr;
+		struct proc *t;
+
+		if (req == PT_GET_THREAD_NEXT) {
+			t = tfind(pts->pts_tid - THREAD_PID_OFFSET);
+			if (t == NULL || ISSET(t->p_flag, P_WEXIT))
+				return ESRCH;
+			if (t->p_p != tr)
+				return EINVAL;
+			t = TAILQ_NEXT(t, p_thr_link);
+		} else {
+			t = TAILQ_FIRST(&tr->ps_threads);
+		}
+
+		if (t == NULL)
+			pts->pts_tid = -1;
+		else
+			pts->pts_tid = t->p_tid + THREAD_PID_OFFSET;
+		return 0;
+	      }
+	}
+
+	switch (req) {
+	case PT_GET_EVENT_MASK:
+		pe->pe_set_event = tr->ps_ptmask;
+		break;
+	case PT_SET_EVENT_MASK:
+		tr->ps_ptmask = pe->pe_set_event;
+		break;
+	case PT_GET_PROCESS_STATE:
 		if (tr->ps_single)
 			tr->ps_ptstat->pe_tid =
 			    tr->ps_single->p_tid + THREAD_PID_OFFSET;
-
-		return (copyout(tr->ps_ptstat, addr, sizeof(*tr->ps_ptstat)));
-
-	case  PT_SETREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
-		error = copyin(addr, regs, sizeof(*regs));
-		if (error == 0) {
-			error = process_write_regs(t, regs);
-		}
-		free(regs, M_TEMP, sizeof(*regs));
-		return (error);
-	case  PT_GETREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
-		error = process_read_regs(t, regs);
-		if (error == 0)
-			error = copyout(regs, addr, sizeof (*regs));
-		free(regs, M_TEMP, sizeof(*regs));
-		return (error);
-#ifdef PT_SETFPREGS
-	case  PT_SETFPREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
-		error = copyin(addr, fpregs, sizeof(*fpregs));
-		if (error == 0) {
-			error = process_write_fpregs(t, fpregs);
-		}
-		free(fpregs, M_TEMP, sizeof(*fpregs));
-		return (error);
-#endif
-#ifdef PT_GETFPREGS
-	case  PT_GETFPREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
-		error = process_read_fpregs(t, fpregs);
-		if (error == 0)
-			error = copyout(fpregs, addr, sizeof(*fpregs));
-		free(fpregs, M_TEMP, sizeof(*fpregs));
-		return (error);
-#endif
-#ifdef PT_SETXMMREGS
-	case  PT_SETXMMREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
-		error = copyin(addr, xmmregs, sizeof(*xmmregs));
-		if (error == 0) {
-			error = process_write_xmmregs(t, xmmregs);
-		}
-		free(xmmregs, M_TEMP, sizeof(*xmmregs));
-		return (error);
-#endif
-#ifdef PT_GETXMMREGS
-	case  PT_GETXMMREGS:
-		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = process_checkioperm(p, tr)) != 0)
-			return (error);
-
-		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
-		error = process_read_xmmregs(t, xmmregs);
-		if (error == 0)
-			error = copyout(xmmregs, addr, sizeof(*xmmregs));
-		free(xmmregs, M_TEMP, sizeof(*xmmregs));
-		return (error);
-#endif
-#ifdef PT_WCOOKIE
-	case  PT_WCOOKIE:
-		wcookie = process_get_wcookie (t);
-		return (copyout(&wcookie, addr, sizeof (register_t)));
-#endif
+		memcpy(addr, tr->ps_ptstat, sizeof *tr->ps_ptstat);
+		break;
+	default:
+		KASSERTMSG(0, "%s: unhandled request %d", __func__, req);
+		break;
 	}
 
-#ifdef DIAGNOSTIC
-	panic("ptrace: impossible");
-#endif
 	return 0;
 }
+
+/*
+ * ptrace user-state requests: memory access, registers, stack cookie
+ */
+int
+ptrace_ustate(struct proc *p, int req, pid_t pid, void *addr, int data,
+    register_t *retval)
+{
+	struct proc *t;				/* target thread */
+	struct process *tr;			/* target process */
+	struct uio uio;
+	struct iovec iov;
+	int error, write;
+	int temp = 0;
+
+	KASSERT((p->p_flag & P_SYSTEM) == 0);
+
+	/* Accept either PID or TID */
+	if ((tr = process_tprfind(pid, &t)) == NULL)
+		return ESRCH;
+
+	if ((error = process_checktracestate(p->p_p, tr, t)))
+		return error;
+
+	FIX_SSTEP(t);
+
+	/* Now do the operation. */
+	write = 0;
+
+	if ((error = process_checkioperm(p, tr)) != 0)
+		return error;
+
+	switch (req) {
+	case PT_WRITE_I:		/* XXX no separate I and D spaces */
+	case PT_WRITE_D:
+		write = 1;
+		temp = data;
+	case PT_READ_I:		/* XXX no separate I and D spaces */
+	case PT_READ_D:
+		/* write = 0 done above. */
+		iov.iov_base = (caddr_t)&temp;
+		iov.iov_len = sizeof(int);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(vaddr_t)addr;
+		uio.uio_resid = sizeof(int);
+		uio.uio_segflg = UIO_SYSSPACE;
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_procp = p;
+		error = process_domem(p, tr, &uio, write ? PT_WRITE_I :
+				PT_READ_I);
+		if (write == 0)
+			*retval = temp;
+		return error;
+
+	case PT_IO:
+	      {
+		struct ptrace_io_desc *piod = addr;
+
+		iov.iov_base = piod->piod_addr;
+		iov.iov_len = piod->piod_len;
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(vaddr_t)piod->piod_offs;
+		uio.uio_resid = piod->piod_len;
+		uio.uio_segflg = UIO_USERSPACE;
+		uio.uio_procp = p;
+		switch (piod->piod_op) {
+		case PIOD_READ_I:
+			req = PT_READ_I;
+			uio.uio_rw = UIO_READ;
+			break;
+		case PIOD_READ_D:
+			req = PT_READ_D;
+			uio.uio_rw = UIO_READ;
+			break;
+		case PIOD_WRITE_I:
+			req = PT_WRITE_I;
+			uio.uio_rw = UIO_WRITE;
+			break;
+		case PIOD_WRITE_D:
+			req = PT_WRITE_D;
+			uio.uio_rw = UIO_WRITE;
+			break;
+		case PIOD_READ_AUXV:
+			req = PT_READ_D;
+			uio.uio_rw = UIO_READ;
+			temp = tr->ps_emul->e_arglen * sizeof(char *);
+			if (uio.uio_offset > temp)
+				return EIO;
+			if (uio.uio_resid > temp - uio.uio_offset)
+				uio.uio_resid = temp - uio.uio_offset;
+			piod->piod_len = iov.iov_len = uio.uio_resid;
+			error = process_auxv_offset(p, tr, &uio);
+			if (error)
+				return error;
+			break;
+		default:
+			return EINVAL;
+		}
+		error = process_domem(p, tr, &uio, req);
+		piod->piod_len -= uio.uio_resid;
+		return error;
+	      }
+
+	case PT_SETREGS:
+		return process_write_regs(t, addr);
+	case PT_GETREGS:
+		return process_read_regs(t, addr);
+
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+		return process_write_fpregs(t, addr);
+#endif
+#ifdef PT_SETFPREGS
+	case PT_GETFPREGS:
+		return process_read_fpregs(t, addr);
+#endif
+#ifdef PT_SETXMMREGS
+	case PT_SETXMMREGS:
+		return process_write_xmmregs(t, addr);
+#endif
+#ifdef PT_SETXMMREGS
+	case PT_GETXMMREGS:
+		return process_read_xmmregs(t, addr);
+#endif
+#ifdef PT_WCOOKIE
+	case PT_WCOOKIE:
+		*(register_t *)addr = process_get_wcookie(t);
+		return 0;
+#endif
+	default:
+		KASSERTMSG(0, "%s: unhandled request %d", __func__, req);
+		break;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Helper for doing "it could be a PID or TID" lookup.  On failure
+ * returns NULL; on success returns the selected process and sets *tp
+ * to an appropriate thread in that process.
+ */
+static inline struct process *
+process_tprfind(pid_t tpid, struct proc **tp)
+{
+	if (tpid > THREAD_PID_OFFSET) {
+		struct proc *t = tfind(tpid - THREAD_PID_OFFSET);
+
+		if (t == NULL)
+			return NULL;
+		*tp = t;
+		return t->p_p;
+	} else {
+		struct process *tr = prfind(tpid);
+
+		if (tr == NULL)
+			return NULL;
+		*tp = TAILQ_FIRST(&tr->ps_threads);
+		return tr;
+	}
+}
+
+
+/*
+ * Check whether 'tr' is currently traced by 'curpr' and in a state
+ * to be manipulated.  If 't' is supplied then it must be stopped and
+ * waited for.
+ */
+static inline int
+process_checktracestate(struct process *curpr, struct process *tr,
+    struct proc *t)
+{
+	/*
+	 * You can't do what you want to the process if:
+	 *	(1) It's not being traced at all,
+	 */
+	if (!ISSET(tr->ps_flags, PS_TRACED))
+		return EPERM;
+
+	/*
+	 *	(2) it's not being traced by _you_, or
+	 */
+	if (tr->ps_pptr != curpr)
+		return EBUSY;
+
+	/*
+	 *	(3) it's in the middle of execve(2)
+	 */
+	if (ISSET(tr->ps_flags, PS_INEXEC))
+		return EAGAIN;
+
+	/*
+	 *	(4) if a thread was specified and it's not currently stopped.
+	 */
+	if (t != NULL &&
+	    (t->p_stat != SSTOP || !ISSET(tr->ps_flags, PS_WAITED)))
+		return EBUSY;
+
+	return 0;
+}
+
 
 /*
  * Check if a process is allowed to fiddle with the memory of another.
@@ -694,13 +831,13 @@ process_checkioperm(struct proc *p, struct process *tr)
 
 	if ((tr->ps_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 	    ISSET(tr->ps_flags, PS_SUGIDEXEC | PS_SUGID)) &&
-	    (error = suser(p, 0)) != 0)
+	    (error = suser(p)) != 0)
 		return (error);
 
 	if ((tr->ps_pid == 1) && (securelevel > -1))
 		return (EPERM);
 
-	if (tr->ps_flags & PS_INEXEC)
+	if (ISSET(tr->ps_flags, PS_INEXEC))
 		return (EAGAIN);
 
 	return (0);

@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: bgpd,v 1.3 2016/02/07 20:56:48 sthen Exp $
+# $OpenBSD: bgpd,v 1.4 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/bgpd"
 

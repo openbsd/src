@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.104 2017/10/06 21:14:55 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.109 2018/04/24 15:40:55 pirofti Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp, *last = NULL;
+	struct in_addr *key;
 	struct mbuf *opts = NULL;
 	struct counters_ref ref;
 	uint64_t *counters;
@@ -128,6 +129,26 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	KASSERT(af == AF_INET);
 
 	ripsrc.sin_addr = ip->ip_src;
+	key = &ip->ip_dst;
+#if NPF > 0
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+		struct pf_divert *divert;
+
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key = &divert->addr.v4;
+			break;
+		case PF_DIVERT_REPLY:
+			break;
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	}
+#endif
+	NET_ASSERT_LOCKED();
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -141,22 +162,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
-#if NPF > 0
-		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-			struct pf_divert *divert;
-
-			/* XXX rdomain support */
-			if ((divert = pf_find_divert(m)) == NULL)
-				continue;
-			if (!divert->addr.v4.s_addr)
-				goto divert_reply;
-			if (inp->inp_laddr.s_addr != divert->addr.v4.s_addr)
-				continue;
-		} else
- divert_reply:
-#endif
 		if (inp->inp_laddr.s_addr &&
-		    inp->inp_laddr.s_addr != ip->ip_dst.s_addr)
+		    inp->inp_laddr.s_addr != key->s_addr)
 			continue;
 		if (inp->inp_faddr.s_addr &&
 		    inp->inp_faddr.s_addr != ip->ip_src.s_addr)
@@ -361,11 +368,11 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL)
 		return (in_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
+
+	soassertlocked(so);
 
 	if (inp == NULL) {
 		error = EINVAL;
@@ -382,10 +389,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/* FALLTHROUGH */
 	case PRU_ABORT:
 		soisdisconnected(so);
-		/* FALLTHROUGH */
-	case PRU_DETACH:
 		if (inp == NULL)
-			panic("rip_detach");
+			panic("rip_abort");
 #ifdef MROUTING
 		if (so == ip_mrouter[inp->inp_rtableid])
 			ip_mrouter_done(so);
@@ -514,11 +519,31 @@ rip_attach(struct socket *so, int proto)
 	if (proto < 0 || proto >= IPPROTO_MAX)
 		return EPROTONOSUPPORT;
 
-	if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
-	    (error = in_pcballoc(so, &rawcbtable))) {
+	if ((error = soreserve(so, rip_sendspace, rip_recvspace)))
 		return error;
-	}
+	NET_ASSERT_LOCKED();
+	if ((error = in_pcballoc(so, &rawcbtable)))
+		return error;
 	inp = sotoinpcb(so);
 	inp->inp_ip.ip_p = proto;
 	return 0;
+}
+
+int
+rip_detach(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (inp == NULL)
+		return (EINVAL);
+
+#ifdef MROUTING
+	if (so == ip_mrouter[inp->inp_rtableid])
+		ip_mrouter_done(so);
+#endif
+	in_pcbdetach(inp);
+
+	return (0);
 }

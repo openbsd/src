@@ -1,4 +1,4 @@
-# $OpenBSD: dot.cshrc,v 1.7 2009/01/30 08:42:26 sobrado Exp $
+# $OpenBSD: dot.cshrc,v 1.8 2018/02/02 02:29:54 yasuoka Exp $
 #
 # csh initialization
 
@@ -13,7 +13,7 @@ alias ll	ls -lsA
 alias tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
 alias z		suspend
 
-set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R6/bin,local/bin,local/sbin,games} .)
+set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R6/bin,local/bin,local/sbin,games})
 
 if ($?prompt) then
 	# An interactive shell -- set some stuff up

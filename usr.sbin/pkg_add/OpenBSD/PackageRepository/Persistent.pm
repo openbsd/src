@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistent.pm,v 1.2 2016/06/27 08:38:15 espie Exp $
+# $OpenBSD: Persistent.pm,v 1.3 2017/11/03 15:30:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -42,7 +42,7 @@ sub grab_object
 		last if m/^ABORTED/o;
 	}
 	print $cmdfh "GET ", $self->{path}.$object->{name}.".tgz", "\n";
-	close($cmdfh);
+	CORE::close($cmdfh);
 	$_ = <$getfh>;
 	chomp;
 	if (m/^ERROR:/o) {
@@ -66,8 +66,9 @@ sub grab_object
 				syswrite STDOUT, $buffer;
 			}
 		} while ($n != 0 && $remaining != 0);
-		exit(0);
 	}
+	delete $self->{controller};
+	CORE::close($getfh);
 }
 
 sub maxcount

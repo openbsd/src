@@ -1,5 +1,5 @@
-.\"	$OpenBSD: RIPEMD160.3,v 1.4 2016/11/29 14:51:09 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: RIPEMD160.3,v 1.6 2018/03/21 07:16:31 schwarze Exp $
+.\" full merge up to: OpenSSL bbda8ce9 Oct 31 15:43:01 2017 +0800
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2006, 2014 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt RIPEMD160 3
 .Os
 .Sh NAME
@@ -136,11 +136,16 @@ return 1 for success or 0 otherwise.
 .Xr EVP_DigestInit 3 ,
 .Xr HMAC 3
 .Sh STANDARDS
-ISO/IEC 10118-3 (draft) (??)
+.Bd -unfilled
+ISO/IEC 10118-3:2004/Cor 1:2011
+Hash-functions \(em Part 3: Dedicated hash-functions
+Clause 7: RIPEMD-160
+.Ed
 .Sh HISTORY
 .Fn RIPEMD160 ,
 .Fn RIPEMD160_Init ,
 .Fn RIPEMD160_Update ,
 and
 .Fn RIPEMD160_Final
-are available since SSLeay 0.9.0.
+first appeared in SSLeay 0.9.0 and have been available since
+.Ox 2.4 .

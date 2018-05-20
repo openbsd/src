@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.24 2015/12/14 13:59:42 tb Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.28 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "sh.h"
@@ -53,27 +54,13 @@ c_ulimit(char **wp)
 		{ "memory(kbytes)", RLIMIT_RSS, 1024, 'm' },
 		{ "nofiles(descriptors)", RLIMIT_NOFILE, 1, 'n' },
 		{ "processes", RLIMIT_NPROC, 1, 'p' },
-#ifdef RLIMIT_VMEM
-		{ "vmemory(kbytes)", RLIMIT_VMEM, 1024, 'v' },
-#endif /* RLIMIT_VMEM */
 		{ NULL }
 	};
-	static char	options[4 + NELEM(limits) * 2];
+	const char	*options = "HSat#f#c#d#s#l#m#n#p#";
 	int		how = SOFT | HARD;
 	const struct limits	*l;
 	int		optc, all = 0;
 
-	if (!options[0]) {
-		/* build options string on first call - yuck */
-		char *p = options;
-
-		*p++ = 'H'; *p++ = 'S'; *p++ = 'a';
-		for (l = limits; l->name; l++) {
-			*p++ = l->option;
-			*p++ = '#';
-		}
-		*p = '\0';
-	}
 	/* First check for -a, -H and -S. */
 	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != -1)
 		switch (optc) {
@@ -111,7 +98,7 @@ c_ulimit(char **wp)
 			for (l = limits; l->name && l->option != optc; l++)
 				;
 			if (!l->name) {
-				internal_errorf(0, "ulimit: %c", optc);
+				internal_warningf("%s: %c", __func__, optc);
 				return 1;
 			}
 			if (builtin_opt.optarg) {
@@ -153,7 +140,7 @@ set_ulimit(const struct limits *l, const char *v, int how)
 	if (strcmp(v, "unlimited") == 0)
 		val = RLIM_INFINITY;
 	else {
-		long rval;
+		int64_t rval;
 
 		if (!evaluate(v, &rval, KSH_RETURN_ERROR, false))
 			return 1;
@@ -201,6 +188,6 @@ print_ulimit(const struct limits *l, int how)
 		shprintf("unlimited\n");
 	else {
 		val /= l->factor;
-		shprintf("%ld\n", (long) val);
+		shprintf("%" PRIi64 "\n", (int64_t) val);
 	}
 }

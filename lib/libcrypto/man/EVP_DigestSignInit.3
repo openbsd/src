@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.3 2016/11/26 17:38:55 schwarze Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.5 2018/03/23 04:34:23 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 26 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -194,10 +194,12 @@ The error codes can be obtained from
 .Xr ERR 3 ,
 .Xr evp 3 ,
 .Xr EVP_DigestInit 3 ,
-.Xr EVP_DigestVerifyInit 3
+.Xr EVP_DigestVerifyInit 3 ,
+.Xr EVP_PKEY_meth_set_signctx 3
 .Sh HISTORY
 .Fn EVP_DigestSignInit ,
 .Fn EVP_DigestSignUpdate ,
 and
 .Fn EVP_DigestSignFinal
-were first added to OpenSSL 1.0.0.
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .

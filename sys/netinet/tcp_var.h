@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.124 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.132 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ struct tcpcb {
 	char	t_force;		/* 1 if forcing out a byte */
 	u_int	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
-#define	TF_DELACK	0x0002		/* ack, but try to delay it */
 #define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
 #define	TF_NOOPT	0x0008		/* don't use tcp options */
 #define	TF_SENTFIN	0x0010		/* have sent FIN */
@@ -95,15 +94,20 @@ struct tcpcb {
 #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
 #endif
 #define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
-#define TF_DEAD		0x00200000	/* dead and to-be-released */
 #define TF_PMTUD_PEND	0x00400000	/* Path MTU Discovery pending */
 #define TF_NEEDOUTPUT	0x00800000	/* call tcp_output after tcp_input */
 #define TF_BLOCKOUTPUT	0x01000000	/* avert tcp_output during tcp_input */
 #define TF_NOPUSH	0x02000000	/* don't push */
+#define TF_TMR_REXMT	0x04000000	/* retransmit timer armed */
+#define TF_TMR_PERSIST	0x08000000	/* retransmit persistence timer armed */
+#define TF_TMR_KEEP	0x10000000	/* keep alive timer armed */
+#define TF_TMR_2MSL	0x20000000	/* 2*msl quiet time timer armed */
+#define TF_TMR_REAPER	0x40000000	/* delayed cleanup timer armed, dead */
+#define TF_TMR_DELACK	0x80000000	/* delayed ack timer armed */
+#define TF_TIMER	TF_TMR_REXMT	/* used to shift with TCPT values */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
-	struct	timeout t_delack_to;	/* delayed ACK callback */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC793, Dec. 1981, page 21.
@@ -116,30 +120,18 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
-#if 1 /*def TCP_SACK*/
 	int	sack_enable;		/* enable SACK for this connection */
 	int	snd_numholes;		/* number of holes seen by sender */
 	struct sackhole *snd_holes;	/* linked list of holes (sorted) */
-#if 1 /*defined(TCP_SACK) && defined(TCP_FACK)*/
-	tcp_seq snd_fack;		/* for FACK congestion control */
-	u_long	snd_awnd;		/* snd_nxt - snd_fack + */
-					/* retransmitted data */
-	int retran_data;		/* amount of outstanding retx. data  */
-#endif /* TCP_FACK */
-#endif /* TCP_SACK */
-#if 1 /*defined(TCP_SACK) || defined(TCP_ECN)*/
 	tcp_seq snd_last;		/* for use in fast recovery */
-#endif
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
-#if 1 /*def TCP_SACK*/
 	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
 	int	rcv_numsacks;		/* # distinct sack blks present */
 	struct sackblk sackblks[MAX_SACK_BLKS]; /* seq nos. of sack blocks */
-#endif
 
 /*
  * Additional variables for this implementation.
@@ -205,39 +197,12 @@ struct tcpcb {
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 
 	int pf;
-
-	struct	timeout t_reap_to;	/* delayed cleanup timeout */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
 
 #ifdef _KERNEL
-extern int tcp_delack_ticks;
-void	tcp_delack(void *);
-
-#define TCP_INIT_DELACK(tp)						\
-	timeout_set_proc(&(tp)->t_delack_to, tcp_delack, tp)
-
-#define TCP_RESTART_DELACK(tp)						\
-	timeout_add(&(tp)->t_delack_to, tcp_delack_ticks)
-
-#define	TCP_SET_DELACK(tp)						\
-do {									\
-	if (((tp)->t_flags & TF_DELACK) == 0) {				\
-		(tp)->t_flags |= TF_DELACK;				\
-		TCP_RESTART_DELACK(tp);					\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define	TCP_CLEAR_DELACK(tp)						\
-do {									\
-	if ((tp)->t_flags & TF_DELACK) {				\
-		(tp)->t_flags &= ~TF_DELACK;				\
-		timeout_del(&(tp)->t_delack_to);			\
-	}								\
-} while (/* CONSTCOND */ 0)
-
 /*
  * Handy way of passing around TCP option info.
  */
@@ -691,6 +656,7 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 	counters_pkt(tcpcounters, pcounter, bcounter, v);
 }
 
+extern	struct pool tcpcb_pool;
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 extern	u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
@@ -698,11 +664,9 @@ extern	int tcptv_keep_init;	/* time to keep alive the initial SYN packet */
 extern	int tcp_mssdflt;	/* default maximum segment size */
 extern	int tcp_rst_ppslim;	/* maximum outgoing RST packet per second */
 extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
-#ifdef TCP_SACK
 extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
 extern	int tcp_sackhole_limit;	/* max entries for tcp sack queues */
-#endif
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
 extern	int tcp_do_rfc3390;	/* RFC3390 Increasing TCP's Initial Window */
 
@@ -719,7 +683,6 @@ extern	int tcp_syn_cache_active; /* active syn cache, may be 0 or 1 */
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
-void	 tcp_reaper(void *);
 int	 tcp_freeq(struct tcpcb *);
 #ifdef INET6
 void	 tcp6_ctlinput(int, struct sockaddr *, u_int, void *);
@@ -765,9 +728,9 @@ int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	 tcp_attach(struct socket *, int);
+int	 tcp_detach(struct socket *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
-#ifdef TCP_SACK
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
 void	 tcp_update_sack_list(struct tcpcb *tp, tcp_seq, tcp_seq);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
@@ -775,15 +738,10 @@ void	 tcp_clean_sackreport(struct tcpcb *tp);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *
 	 tcp_sack_output(struct tcpcb *tp);
-int	 tcp_sack_partialack(struct tcpcb *, struct tcphdr *);
 #ifdef DEBUG
 void	 tcp_print_holes(struct tcpcb *tp);
 #endif
-#endif /* TCP_SACK */
-#if defined(TCP_SACK)
-int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
 u_long	 tcp_seq_subtract(u_long, u_long );
-#endif /* TCP_SACK */
 #ifdef TCP_SIGNATURE
 int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
 int	tcp_signature(struct tdb *, int, struct mbuf *, struct tcphdr *,

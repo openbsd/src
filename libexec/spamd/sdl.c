@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.22 2015/05/18 16:04:21 reyk Exp $ */
+/*	$OpenBSD: sdl.c,v 1.24 2017/10/18 17:31:01 millert Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -44,6 +44,63 @@ static void sdl_clear(struct sdlist *);
 extern int debug;
 struct sdlist *blacklists = NULL;
 int blc = 0, blu = 0;
+
+static int
+compar_v4(const void *va, const void *vb)
+{
+	const struct sdentry_v4 *a = va;
+	const struct sdentry_v4 *b = vb;
+	struct in_addr aa;
+	struct in_addr bb;
+
+	/* The mask has already been applied. */
+	aa.s_addr = ntohl(a->sda.s_addr);
+	bb.s_addr = ntohl(b->sda.s_addr);
+
+	if (aa.s_addr > bb.s_addr)
+		return (1);
+	if (aa.s_addr < bb.s_addr)
+		return (-1);
+	return (0);
+}
+
+static int
+compar_v6(const void *va, const void *vb)
+{
+	const struct sdentry_v6 *a = va;
+	const struct sdentry_v6 *b = vb;
+	struct sdaddr_v6 aa;
+	struct sdaddr_v6 bb;
+
+	/* The mask has already been applied. */
+	aa.addr32[0] = ntohl(a->sda.addr32[0]);
+	aa.addr32[1] = ntohl(a->sda.addr32[1]);
+	aa.addr32[2] = ntohl(a->sda.addr32[2]);
+	aa.addr32[3] = ntohl(a->sda.addr32[3]);
+
+	bb.addr32[0] = ntohl(b->sda.addr32[0]);
+	bb.addr32[1] = ntohl(b->sda.addr32[1]);
+	bb.addr32[2] = ntohl(b->sda.addr32[2]);
+	bb.addr32[3] = ntohl(b->sda.addr32[3]);
+
+	if (aa.addr32[0] > bb.addr32[0])
+		return (1);
+	if (aa.addr32[0] < bb.addr32[0])
+		return (-1);
+	if (aa.addr32[1] > bb.addr32[1])
+		return (1);
+	if (aa.addr32[1] < bb.addr32[1])
+		return (-1);
+	if (aa.addr32[2] > bb.addr32[2])
+		return (1);
+	if (aa.addr32[2] < bb.addr32[2])
+		return (-1);
+	if (aa.addr32[3] > bb.addr32[3])
+		return (1);
+	if (aa.addr32[3] < bb.addr32[3])
+		return (-1);
+	return (0);
+}
 
 int
 sdl_add(char *sdname, char *sdstring, char **v4, u_int nv4, char **v6, u_int nv6)
@@ -131,6 +188,9 @@ sdl_add(char *sdname, char *sdstring, char **v4, u_int nv4, char **v6, u_int nv6
 			/* mask off address bits that won't ever be used */
 			n->s_addr = n->s_addr & m->s_addr;
 		}
+		/* spamd-setup output is sorted in host byte order */
+		mergesort(blacklists[idx].v4.addrs, nv4,
+		    sizeof(struct sdentry_v4), compar_v4);
 	}
 	if (nv6 != 0) {
 		blacklists[idx].v6.naddrs = nv6;
@@ -179,6 +239,9 @@ sdl_add(char *sdname, char *sdstring, char **v4, u_int nv4, char **v6, u_int nv6
 			for (j = 0; j < 4; j++)
 				n->addr32[j] = n->addr32[j] & m->addr32[j];
 		}
+		/* spamd-setup output is sorted in host byte order */
+		mergesort(blacklists[idx].v6.addrs, nv6,
+		    sizeof(struct sdentry_v6), compar_v6);
 	}
 	if (idx == blu) {
 		blu++;
@@ -225,31 +288,68 @@ sdl_del(char *sdname)
 }
 
 /*
- * Return 1 if the addresses a (with mask m) matches address b
- * otherwise return 0. It is assumed that address a has been
- * pre-masked out, we only need to mask b.
+ * Return 0 if the addresss a (with mask m) matches address key
+ * otherwise return 1 if a > key or -1 if a < key.  It is assumed
+ * that address a has been pre-masked out, we only need to mask key.
  */
 static int
-match_addr_v4(struct in_addr *a, struct in_addr *m, struct in_addr *b)
+match_addr_v4(const void *vkey, const void *ventry)
 {
-	if (a->s_addr == (b->s_addr & m->s_addr))
+	const struct in_addr *k = vkey;
+	const struct in_addr *a = &((const struct sdentry_v4 *)ventry)->sda;
+	const struct in_addr *m = &((const struct sdentry_v4 *)ventry)->sdm;
+	struct in_addr kk;
+	struct in_addr aa;
+
+	kk.s_addr = ntohl(k->s_addr & m->s_addr);
+	aa.s_addr = ntohl(a->s_addr);
+	if (kk.s_addr > aa.s_addr)
 		return (1);
+	if (kk.s_addr < aa.s_addr)
+		return (-1);
 	return (0);
 }
 
 /*
- * Return 1 if the addresses a (with mask m) matches address b
- * otherwise return 0. It is assumed that address a has been
- * pre-masked out, we only need to mask b.
+ * Return 0 if the addresss a (with mask m) matches address key
+ * otherwise return 1 if a > key or -1 if a < key.  It is assumed
+ * that address a has been pre-masked out, we only need to mask key.
  */
 static int
-match_addr_v6(struct sdaddr_v6 *a, struct sdaddr_v6 *m, struct sdaddr_v6 *b)
+match_addr_v6(const void *vkey, const void *ventry)
 {
-	if (((a->addr32[0]) == (b->addr32[0] & m->addr32[0])) &&
-	    ((a->addr32[1]) == (b->addr32[1] & m->addr32[1])) &&
-	    ((a->addr32[2]) == (b->addr32[2] & m->addr32[2])) &&
-	    ((a->addr32[3]) == (b->addr32[3] & m->addr32[3])))
+	const struct sdaddr_v6 *k = vkey;
+	const struct sdaddr_v6 *a = &((const struct sdentry_v6 *)ventry)->sda;
+	const struct sdaddr_v6 *m = &((const struct sdentry_v6 *)ventry)->sdm;
+	struct sdaddr_v6 kk;
+	struct sdaddr_v6 aa;
+
+	kk.addr32[0] = ntohl(k->addr32[0] & m->addr32[0]);
+	kk.addr32[1] = ntohl(k->addr32[1] & m->addr32[1]);
+	kk.addr32[2] = ntohl(k->addr32[2] & m->addr32[2]);
+	kk.addr32[3] = ntohl(k->addr32[3] & m->addr32[3]);
+
+	aa.addr32[0] = ntohl(a->addr32[0]);
+	aa.addr32[1] = ntohl(a->addr32[1]);
+	aa.addr32[2] = ntohl(a->addr32[2]);
+	aa.addr32[3] = ntohl(a->addr32[3]);
+
+	if (kk.addr32[0] > aa.addr32[0])
 		return (1);
+	if (kk.addr32[0] < aa.addr32[0])
+		return (-1);
+	if (kk.addr32[1] > aa.addr32[1])
+		return (1);
+	if (kk.addr32[1] < aa.addr32[1])
+		return (-1);
+	if (kk.addr32[2] > aa.addr32[2])
+		return (1);
+	if (kk.addr32[2] < aa.addr32[2])
+		return (-1);
+	if (kk.addr32[3] > aa.addr32[3])
+		return (1);
+	if (kk.addr32[3] < aa.addr32[3])
+		return (-1);
 	return (0);
 }
 
@@ -272,21 +372,18 @@ match_addr_v6(struct sdaddr_v6 *a, struct sdaddr_v6 *m, struct sdaddr_v6 *b)
 static struct sdlist **
 sdl_lookup_v4(struct sdlist *sdl, struct in_addr *src)
 {
-	struct sdentry_v4 *entry;
-	int i, matches = 0;
+	int matches = 0;
 	int sdnewlen = 0;
 	struct sdlist **sdnew = NULL;
 
 	while (sdl->tag != NULL) {
-		for (i = 0; i < sdl->v4.naddrs; i++) {
-			entry = &sdl->v4.addrs[i];
-			if (match_addr_v4(&entry->sda, &entry->sdm, src)) {
-				grow_sdlist(sdnew, matches, sdnewlen);
-				sdnew[matches] = sdl;
-				matches++;
-				sdnew[matches] = NULL;
-				break;
-			}
+		if (bsearch(src, sdl->v4.addrs, sdl->v4.naddrs,
+		    sizeof(struct sdentry_v4), match_addr_v4) != NULL) {
+			grow_sdlist(sdnew, matches, sdnewlen);
+			sdnew[matches] = sdl;
+			matches++;
+			sdnew[matches] = NULL;
+			break;
 		}
 		sdl++;
 	}
@@ -296,21 +393,18 @@ sdl_lookup_v4(struct sdlist *sdl, struct in_addr *src)
 static struct sdlist **
 sdl_lookup_v6(struct sdlist *sdl, struct sdaddr_v6 *src)
 {
-	struct sdentry_v6 *entry;
-	int i, matches = 0;
+	int matches = 0;
 	int sdnewlen = 0;
 	struct sdlist **sdnew = NULL;
 
 	while (sdl->tag != NULL) {
-		for (i = 0; i < sdl->v6.naddrs; i++) {
-			entry = &sdl->v6.addrs[i];
-			if (match_addr_v6(&entry->sda, &entry->sdm, src)) {
-				grow_sdlist(sdnew, matches, sdnewlen);
-				sdnew[matches] = sdl;
-				matches++;
-				sdnew[matches] = NULL;
-				break;
-			}
+		if (bsearch(src, sdl->v6.addrs, sdl->v6.naddrs,
+		    sizeof(struct sdentry_v6), match_addr_v6) != NULL) {
+			grow_sdlist(sdnew, matches, sdnewlen);
+			sdnew[matches] = sdl;
+			matches++;
+			sdnew[matches] = NULL;
+			break;
 		}
 		sdl++;
 	}
@@ -334,6 +428,50 @@ sdl_lookup(struct sdlist *head, int af, void *src)
 		return (sdl_lookup_v6(head, src));
 	default:
 		return (NULL);
+	}
+}
+
+static int
+sdl_check_v4(struct sdlist *sdl, struct in_addr *src)
+{
+	while (sdl->tag != NULL) {
+		if (bsearch(src, sdl->v4.addrs, sdl->v4.naddrs,
+		    sizeof(struct sdentry_v4), match_addr_v4) != NULL)
+			return (1);
+		sdl++;
+	}
+	return (0);
+}
+
+static int
+sdl_check_v6(struct sdlist *sdl, struct sdaddr_v6 *src)
+{
+	while (sdl->tag != NULL) {
+		if (bsearch(src, sdl->v6.addrs, sdl->v6.naddrs,
+		    sizeof(struct sdentry_v6), match_addr_v6) != NULL)
+			return (1);
+		sdl++;
+	}
+	return (0);
+}
+
+/*
+ * Given an address and address family
+ * returns 1 if address is on a blacklist, else 0.
+ */
+int
+sdl_check(struct sdlist *head, int af, void *src)
+{
+	if (head == NULL)
+		return (0);
+
+	switch (af) {
+	case AF_INET:
+		return (sdl_check_v4(head, src));
+	case AF_INET6:
+		return (sdl_check_v6(head, src));
+	default:
+		return (0);
 	}
 }
 

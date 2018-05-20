@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.95 2017/05/31 08:55:10 markus Exp $	*/
+/*	$OpenBSD: socket.h,v 1.96 2018/04/08 18:57:39 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -159,8 +159,8 @@ struct	splice {
  * Address families.
  */
 #define	AF_UNSPEC	0		/* unspecified */
-#define	AF_LOCAL	1		/* local to host (pipes, portals) */
-#define	AF_UNIX		AF_LOCAL	/* backward compatibility */
+#define	AF_UNIX		1		/* local to host */
+#define	AF_LOCAL	AF_UNIX		/* draft POSIX compatibility */
 #define	AF_INET		2		/* internetwork: UDP, TCP, etc. */
 #define	AF_IMPLINK	3		/* arpanet imp addresses */
 #define	AF_PUP		4		/* pup protocols: e.g. BSP */
@@ -246,7 +246,7 @@ struct sockproto {
  */
 #define	PF_UNSPEC	AF_UNSPEC
 #define	PF_LOCAL	AF_LOCAL
-#define	PF_UNIX		PF_LOCAL	/* backward compatibility */
+#define	PF_UNIX		AF_UNIX
 #define	PF_INET		AF_INET
 #define	PF_IMPLINK	AF_IMPLINK
 #define	PF_PUP		AF_PUP

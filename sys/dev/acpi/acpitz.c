@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.52 2017/04/02 00:28:56 deraadt Exp $ */
+/* $OpenBSD: acpitz.c,v 1.53 2018/04/05 02:37:06 mlarkin Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -308,7 +308,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 				node = aml_searchrel(sc->sc_devnode,
 				    ref->v_string);
 				if (node == NULL) {
-					printf("%s: %s[%d.%d] _PRO"
+					printf("%s: %s[%d.%d] _PR0"
 					    " not a valid device\n",
 					    DEVNAME(sc), name, x, y);
 					continue;
@@ -320,7 +320,7 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 			}
 			if (ref->type != AML_OBJTYPE_DEVICE &&
 			    ref->type != AML_OBJTYPE_POWERRSRC) {
-				printf("%s: %s[%d.%d] _PRO not a package\n",
+				printf("%s: %s[%d.%d] _PR0 not a package\n",
 				    DEVNAME(sc), name, x, y);
 				continue;
 			}

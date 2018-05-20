@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -24,6 +24,7 @@ SRCS=	APFloat.cpp \
 	COM.cpp \
 	CachePruning.cpp \
 	Chrono.cpp \
+	CodeGenCoverage.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
 	ConvertUTF.cpp \
@@ -47,6 +48,7 @@ SRCS=	APFloat.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	JamCRC.cpp \
+	KnownBits.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
 	Locale.cpp \

@@ -163,7 +163,8 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx, bool slow, bo
                          *   the `younger` process gives up all it's
                          *   resources.
 			 */
-			if (slow || ctx == NULL || ctx->stamp < lock->ctx->stamp) {
+			if (slow || ctx == NULL ||
+			    (lock->ctx && ctx->stamp < lock->ctx->stamp)) {
 				int s = msleep(lock, &lock->lock,
 					       intr ? PCATCH : 0,
 					       ctx ? ctx->ww_class->name : "ww_mutex_lock", 0);

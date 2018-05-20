@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.157 2017/08/17 19:44:27 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.162 2018/04/11 15:44:08 bluhm Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <machine/psl.h>
 #include <machine/segments.h>
 #include <machine/intrdefs.h>
+#include <machine/tss.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
@@ -102,7 +103,11 @@ union vmm_cpu_cap {
 #ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
 struct cpu_info {
-	struct device ci_dev;		/* our device */
+	u_int32_t	ci_kern_cr3;	/* U+K page table */
+	u_int32_t	ci_scratch;	/* for U<-->K transition */
+
+#define ci_PAGEALIGN	ci_dev
+	struct device *ci_dev;		/* our device */
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -115,6 +120,10 @@ struct cpu_info {
 	u_int ci_apicid;		/* our APIC ID */
 	u_int ci_acpi_proc_id;
 	u_int32_t ci_randseed;
+
+	u_int32_t ci_kern_esp;		/* kernel-only stack */
+	u_int32_t ci_intr_esp;		/* U<-->K trampoline stack */
+	u_int32_t ci_user_cr3;		/* U-K page table */
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
@@ -129,7 +138,6 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
-	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
@@ -175,6 +183,7 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	union descriptor *ci_gdt;
+	struct i386tss	*ci_tss;
 
 	volatile int ci_ddb_paused;	/* paused due to other proc in ddb */
 #define CI_DDB_RUNNING		0
@@ -223,14 +232,17 @@ struct cpu_info {
  * the only CPU on uniprocessors), and the primary CPU is the
  * first CPU on the CPU info list.
  */
-extern struct cpu_info cpu_info_primary;
+struct cpu_info_full;
+extern struct cpu_info_full cpu_info_full_primary;
+#define cpu_info_primary (*(struct cpu_info *)((char *)&cpu_info_full_primary + PAGE_SIZE*2 - offsetof(struct cpu_info, ci_PAGEALIGN)))
+
 extern struct cpu_info *cpu_info_list;
 
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
-#define CPU_INFO_UNIT(ci)	((ci)->ci_dev.dv_unit)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 
 #ifdef MULTIPROCESSOR
 
@@ -282,6 +294,8 @@ void cpu_unidle(struct cpu_info *);
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
 #endif
+
+#include <machine/cpufunc.h>
 
 #define aston(p)	((p)->p_md.md_astpending = 1)
 

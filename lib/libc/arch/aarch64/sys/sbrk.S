@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.2 2017/03/18 12:50:14 kettenis Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.3 2017/11/22 20:36:02 kettenis Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 	.globl	_C_LABEL(_end)
 
 	.data
-	.align	0
+	.align	3
 	.globl	__curbrk
 	.type	__curbrk,#object
 	.hidden	__curbrk
@@ -73,10 +73,10 @@ ENTRY(sbrk)
 	/* Return old curbrk value */
 	ret
 
-	.align	0
+	.align	3
 #if !defined(__PIC__)
 .Lcurbrk:
-	.word	__curbrk
+	.quad	__curbrk
 #endif
 END(sbrk)
 	.weak	sbrk

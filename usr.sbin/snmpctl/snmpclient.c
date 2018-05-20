@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.14 2017/08/10 16:03:10 rob Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.15 2018/02/08 18:02:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -423,7 +423,6 @@ snmpc_sendreq(struct snmpc *sc, u_long type)
 #endif
 
 	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
 
 	len = ber_write_elements(&ber, root);
 	if (ber_get_writebuf(&ber, (void *)&ptr) < 1)
@@ -459,7 +458,6 @@ snmpc_recvresp(int s, int msgver, u_int32_t msgid,
 		return (-1);
 
 	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
 	ber_set_application(&ber, smi_application);
 	ber_set_readbuf(&ber, buf, rlen);
 

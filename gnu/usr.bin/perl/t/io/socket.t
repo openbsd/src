@@ -128,6 +128,28 @@ SKIP: {
     }
 }
 
+SKIP:
+{
+    eval { require Errno; defined &Errno::EMFILE }
+      or skip "Can't load Errno or EMFILE not defined", 1;
+    my @socks;
+    my $sock_limit = 1000; # don't consume every file in the system
+    # Default limits on various systems I have:
+    #  65536 - Linux
+    #    256 - Solaris
+    #    128 - NetBSD
+    #    256 - Cygwin
+    #    256 - darwin
+    while (@socks < $sock_limit) {
+        socket my $work, PF_INET, SOCK_STREAM, $tcp
+          or last;
+        push @socks, $work;
+    }
+    @socks == $sock_limit
+      and skip "Didn't run out of open handles", 1;
+    is(0+$!, Errno::EMFILE(), "check correct errno for too many files");
+}
+
 done_testing();
 
 my @child_tests;

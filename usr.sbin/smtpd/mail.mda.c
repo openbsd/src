@@ -28,8 +28,6 @@
 #include <string.h>
 #include <unistd.h>
 
-extern char **environ;
-
 int
 main(int argc, char *argv[])
 {
@@ -50,6 +48,8 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		errx(1, "mail.mda: command required");
 
-	execve(argv[0], argv, environ);
-	err(1, NULL);
+	if (argc > 1)
+		errx(1, "mail.mda: only one command is supported");
+
+	return system(argv[0]) == 0 ? 0 : 1;
 }

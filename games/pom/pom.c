@@ -1,4 +1,4 @@
-/*	$OpenBSD: pom.c,v 1.25 2016/12/01 20:08:59 fcambus Exp $	*/
+/*	$OpenBSD: pom.c,v 1.28 2017/12/24 22:12:49 cheloha Exp $	*/
 /*    $NetBSD: pom.c,v 1.6 1996/02/06 22:47:29 jtc Exp $      */
 
 /*
@@ -44,7 +44,6 @@
  *
  */
 
-#include <sys/time.h>
 #include <ctype.h>
 #include <err.h>
 #include <math.h>
@@ -73,27 +72,26 @@ __dead void	badformat(void);
 int
 main(int argc, char *argv[])
 {
-	struct timeval tp;
-	struct timezone tzp;
 	struct tm *GMT;
 	time_t tmpt;
 	double days, today, tomorrow;
-	int cnt;
+	int cnt, principal, usertime;
 	char buf[1024];
+	char *descriptor, *name;
+
+	principal = 1;
+	usertime = 0;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if (argc > 1) {
+		usertime = 1;
 		tmpt = parsetime(argv[1]);
 		strftime(buf, sizeof(buf), "%a %Y %b %e %H:%M:%S (%Z)",
 			localtime(&tmpt));
-		printf("%s:  ", buf);
-	} else {
-		if (gettimeofday(&tp,&tzp))
-			err(1, "gettimeofday");
-		tmpt = tp.tv_sec;
-	}
+	} else
+		tmpt = time(NULL);
 	GMT = gmtime(&tmpt);
 	days = (GMT->tm_yday + 1) + ((GMT->tm_hour +
 	    (GMT->tm_min / 60.0) + (GMT->tm_sec / 3600.0)) / 24.0);
@@ -102,32 +100,37 @@ main(int argc, char *argv[])
 	/* Selected time could be before EPOCH */
 	for (cnt = GMT->tm_year; cnt < EPOCH; ++cnt)
 		days -= isleap(cnt + 1900) ? 366 : 365;
-	today = potm(days) + 0.5;
-	(void)printf("The Moon is ");
-	if ((int)today == 100)
-		(void)printf("Full\n");
-	else if (!(int)today)
-		(void)printf("New\n");
+	today = potm(days);
+	if (lround(today) == 100)
+		name = "Full";
+	else if (lround(today) == 0)
+		name = "New";
 	else {
 		tomorrow = potm(days + 1);
-		if ((int)today == 50)
-			(void)printf("%s\n", tomorrow > today ?
-			    "at the First Quarter" : "at the Last Quarter");
-			/* today is 0.5 too big, but it doesn't matter here
-			 * since the phase is changing fast enough
-			 */
-		else {
-			today -= 0.5;		/* Now it might matter */
-			(void)printf("%s ", tomorrow > today ?
-			    "Waxing" : "Waning");
-			if (today > 50)
-				(void)printf("Gibbous (%1.0f%% of Full)\n",
-				    today);
-			else if (today < 50)
-				(void)printf("Crescent (%1.0f%% of Full)\n",
-				    today);
+		if (lround(today) == 50) {
+			if (tomorrow > today)
+				name = "at the First Quarter";
+			else
+				name = "at the Last Quarter";
+		} else {
+			principal = 0;
+			if (tomorrow > today)
+				descriptor = "Waxing";
+			else
+				descriptor = "Waning";
+			if (today > 50.0)
+				name = "Gibbous";
+			else /* (today < 50.0) */
+				name = "Crescent";
 		}
 	}
+	if (usertime)
+		printf("%s:  ", buf);
+	printf("The Moon is ");
+	if (principal)
+		printf("%s\n", name);
+	else
+		printf("%s %s (%1.0f%% of Full)\n", descriptor, name, today);
 	return 0;
 }
 
@@ -184,13 +187,9 @@ dtor(double deg)
 void
 adj360(double *deg)
 {
-	for (;;)
-		if (*deg < 0.0)
-			*deg += 360.0;
-		else if (*deg > 360.0)
-			*deg -= 360.0;
-		else
-			break;
+	*deg = fmod(*deg, 360.0);
+	if (*deg < 0.0)
+		*deg += 360.0;
 }
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;

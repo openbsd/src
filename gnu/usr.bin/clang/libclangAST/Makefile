@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:10 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -50,6 +50,7 @@ SRCS=	APValue.cpp \
 	ODRHash.cpp \
 	OpenMPClause.cpp \
 	ParentMap.cpp \
+	QualTypeNames.cpp \
 	RawCommentList.cpp \
 	RecordLayout.cpp \
 	RecordLayoutBuilder.cpp \

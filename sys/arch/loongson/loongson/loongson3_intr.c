@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.5 2017/02/19 09:53:37 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.7 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -71,18 +71,6 @@ next_irq(uint32_t *isr)
 	irq = 63u - tmp;
 	*isr &= ~(1u << irq);
 	return irq;
-}
-
-static inline void
-setipl(struct cpu_info *ci, int newipl)
-{
-	asm volatile (
-	"	.set push\n"
-	"	.set noreorder\n");
-	ci->ci_ipl = newipl;
-	mips_sync();
-	asm volatile (
-	"	.set pop\n");
 }
 
 void
@@ -361,7 +349,7 @@ loongson3_splx(int newipl)
 {
 	struct cpu_info *ci = curcpu();
 
-	setipl(ci, newipl);
+	ci->ci_ipl = newipl;
 
 	if (CPU_IS_PRIMARY(ci))
 		REGVAL(LS3_IRT_INTENSET(0)) =
@@ -416,7 +404,7 @@ loongson3_intr(uint32_t pending, struct trapframe *frame)
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif
@@ -436,7 +424,7 @@ loongson3_intr(uint32_t pending, struct trapframe *frame)
 			printf("spurious interrupt %d\n", irq);
 	}
 
-	setipl(ci, ipl);
+	ci->ci_ipl = ipl;
 
 	/* Re-enable processed interrupts. */
 	REGVAL(LS3_IRT_INTENSET(0)) = imr;
@@ -492,7 +480,7 @@ loongson3_ht_intr(uint32_t pending, struct trapframe *frame)
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif
@@ -516,7 +504,7 @@ loongson3_ht_intr(uint32_t pending, struct trapframe *frame)
 		loongson3_ht_pic->pic_eoi(irq);
 	}
 
-	setipl(ci, ipl);
+	ci->ci_ipl = ipl;
 
 	/* Re-enable HT interrupts. */
 	REGVAL(LS3_IRT_INTENSET(0)) = 1u << LS3_IRQ_HT1(0);

@@ -3576,6 +3576,7 @@ dist/Time-HiRes/t/time.t		Test for Time::HiRes
 dist/Time-HiRes/t/tv_interval.t		Test for Time::HiRes
 dist/Time-HiRes/t/ualarm.t		Test for Time::HiRes
 dist/Time-HiRes/t/usleep.t		Test for Time::HiRes
+dist/Time-HiRes/t/utime.t		Test for Time::HiRes
 dist/Time-HiRes/t/Watchdog.pm		Test for Time::HiRes
 dist/Time-HiRes/typemap			Time::HiRes extension
 dist/XSLoader/Makefile.PL	Dynamic Loader makefile writer
@@ -5127,8 +5128,10 @@ pod/perl5220delta.pod		Perl changes in version 5.22.0
 pod/perl5221delta.pod		Perl changes in version 5.22.1
 pod/perl5222delta.pod		Perl changes in version 5.22.2
 pod/perl5223delta.pod		Perl changes in version 5.22.3
+pod/perl5224delta.pod		Perl changes in version 5.22.4
 pod/perl5240delta.pod		Perl changes in version 5.24.0
 pod/perl5241delta.pod		Perl changes in version 5.24.1
+pod/perl5242delta.pod		Perl changes in version 5.24.2
 pod/perl561delta.pod		Perl changes in version 5.6.1
 pod/perl56delta.pod		Perl changes in version 5.6
 pod/perl581delta.pod		Perl changes in version 5.8.1

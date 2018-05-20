@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.45 2017/07/05 11:43:09 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.52 2018/03/16 07:11:03 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2017 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -23,24 +23,26 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn pledge "const char *promises" "const char *paths[]"
+.Fn pledge "const char *promises" "const char *execpromises"
 .Sh DESCRIPTION
-The current process is forced into a restricted-service operating mode.
+The
+.Nm pledge
+system call forces the current process into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
 management, read-write operations on file descriptors, opening of files,
-networking.
+and networking.
 In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
 .Ar promises
 or
-.Ar paths .
+.Ar execpromises .
 .Pp
 Use of
-.Fn pledge
+.Nm pledge
 in an application will require at least some study and understanding
 of the interfaces called.
 Subsequent calls to
-.Fn pledge
+.Nm pledge
 can reduce the abilities further, but abilities can never be regained.
 .Pp
 A process which attempts a restricted operation is killed with an uncatchable
@@ -58,7 +60,7 @@ with the
 flag.
 .Pp
 A
-.Fa promises
+.Ar promises
 value of "" restricts the process to the
 .Xr _exit 2
 system call.
@@ -68,23 +70,34 @@ with another process.
 Passing
 .Dv NULL
 to
-.Fa promises
+.Ar promises
 or
-.Fa paths
+.Ar execpromises
 specifies to not change the current value.
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
-.Pp
-.Bl -tag -width "readlink(2)" -offset indent -compact
-.It Xr access 2
+.Bl -ohang -offset indent
+.It Xr access 2 :
 May check for existence of
 .Pa /etc/localtime .
-.Pp
-.It Xr adjtime 2
+.It Xr adjtime 2 :
 Read-only, for
 .Xr ntpd 8 .
-.Pp
-.It Xr ioctl 2
+.It Xo
+.Xr chmod 2 ,
+.Xr fchmod 2 ,
+.Xr fchmodat 2 ,
+.Xr chown 2 ,
+.Xr lchown 2 ,
+.Xr fchown 2 ,
+.Xr fchownat 2 ,
+.Xr mkfifo 2 ,
+and
+.Xr mknod 2 :
+.Xc
+Setuid/setgid/sticky bits are ignored.
+The user or group cannot be changed on a file.
+.It Xr ioctl 2 :
 Only the
 .Dv FIONREAD ,
 .Dv FIONBIO ,
@@ -105,57 +118,46 @@ based upon the requests
 .Va tty ,
 and
 .Va vmm .
-.Pp
-.It Xr chmod 2
-.It Xr fchmod 2
-.It Xr fchmodat 2
-.It Xr chown 2
-.It Xr lchown 2
-.It Xr fchown 2
-.It Xr fchownat 2
-.It Xr mkfifo 2
-.It Xr mknod 2
-Setuid/setgid/sticky bits are ignored.
-The user or group cannot be changed on a file.
-.Pp
-.It Xr mmap 2
-.It Xr mprotect 2
+.It Xo
+.Xr mmap 2
+and
+.Xr mprotect 2 :
+.Xc
 .Dv PROT_EXEC
 isn't allowed.
-.Pp
-.It Xr open 2
+.It Xr open 2 :
 May open
 .Pa /etc/localtime
 and any files below
 .Pa /usr/share/zoneinfo .
-.Pp
-.It Xr readlink 2
+.It Nm pledge :
+Can only reduce permissions for
+.Ar promises
+and
+.Ar execpromises .
+.It Xr readlink 2 :
 May operate on
 .Pa /etc/malloc.conf .
-.Pp
-.It Xr sysctl 3
+.It Xr sysctl 2 :
 A small set of read-only operations are allowed, sufficient to
 support:
 .Xr getdomainname 3 ,
 .Xr gethostname 3 ,
 .Xr getifaddrs 3 ,
 .Xr uname 3 ,
-system sensor readings.
-.Pp
-.It Fn pledge
-Can only reduce permissions; can only set a list of
-.Pa paths
-once.
+and system sensor readings.
 .El
 .Pp
 The
 .Ar promises
-is specified as a string, with space separated keywords:
-.Bl -tag -width "tmppath" -offset indent
+argument is specified as a string, with space separated keywords:
+.Bl -tag -width "prot_exec" -offset indent
 .It Va stdio
-The following system calls are permitted to allow most basic functions
-in libc, including memory allocation, most types of IO operations on
-previously allocated file descriptors:
+The following system calls are permitted.
+.Xr sendto 2
+is only permitted if its destination socket address is
+.Dv NULL .
+As a result, all the expected functionalities of libc stdio work.
 .Pp
 .Xr clock_getres 2 ,
 .Xr clock_gettime 2 ,
@@ -189,7 +191,6 @@ previously allocated file descriptors:
 .Xr getsid 2 ,
 .Xr getthrid 2 ,
 .Xr gettimeofday 2 ,
-.Xr getuid 2 ,
 .Xr getuid 2 ,
 .Xr issetugid 2 ,
 .Xr kevent 2 ,
@@ -226,13 +227,7 @@ previously allocated file descriptors:
 .Xr umask 2 ,
 .Xr wait4 2 ,
 .Xr write 2 ,
-.Xr writev 2 .
-.Pp
-Note that
-.Xr sendto 2
-is only permitted if its destination socket address is
-.Dv NULL .
-As a result, all the expected functionalities of libc stdio work.
+.Xr writev 2
 .It Va rpath
 A number of system calls are allowed if they only cause
 read-only effects on the filesystem:
@@ -253,7 +248,7 @@ read-only effects on the filesystem:
 .Xr fchown 2 ,
 .Xr fchownat 2 ,
 .Xr fstat 2 ,
-.Xr getfsstat 2 .
+.Xr getfsstat 2
 .It Va wpath
 A number of system calls are allowed and may cause
 write-effects on the filesystem:
@@ -272,7 +267,7 @@ write-effects on the filesystem:
 .Xr chown 2 ,
 .Xr fchown 2 ,
 .Xr fchownat 2 ,
-.Xr fstat 2 .
+.Xr fstat 2
 .It Va cpath
 A number of system calls and sub-modes are allowed, which may
 create new files or directories in the filesystem:
@@ -287,12 +282,12 @@ create new files or directories in the filesystem:
 .Xr unlinkat 2 ,
 .Xr mkdir 2 ,
 .Xr mkdirat 2 ,
-.Xr rmdir 2 .
+.Xr rmdir 2
 .It Va dpath
 A number of system calls are allowed to create special files:
 .Pp
 .Xr mkfifo 2 ,
-.Xr mknod 2 .
+.Xr mknod 2
 .It Va tmppath
 A number of system calls are allowed to do operations in the
 .Pa /tmp
@@ -303,13 +298,16 @@ directory, including create, read, or write:
 .Xr chflags 2 ,
 .Xr chown 2 ,
 .Xr unlink 2 ,
-.Xr fstat 2 .
+.Xr fstat 2
 .It Va inet
 The following system calls are allowed to operate in the
 .Dv AF_INET
 and
 .Dv AF_INET6
-domains:
+domains
+(though
+.Xr setsockopt 2
+has been substantially reduced in functionality):
 .Pp
 .Xr socket 2 ,
 .Xr listen 2 ,
@@ -320,10 +318,7 @@ domains:
 .Xr getpeername 2 ,
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
-.Xr getsockopt 2 .
-.Pp
-.Xr setsockopt 2
-has been reduced in functionality substantially.
+.Xr getsockopt 2
 .It Va mcast
 In combination with
 .Va inet
@@ -349,7 +344,7 @@ relating to a file:
 .Xr fchownat 2 ,
 .Xr lchown 2 ,
 .Xr fchown 2 ,
-.Xr utimes 2 .
+.Xr utimes 2
 .It Va chown
 The
 .Xr chown 2
@@ -378,7 +373,7 @@ domain:
 .Xr getpeername 2 ,
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
-.Xr getsockopt 2 .
+.Xr getsockopt 2
 .It Va dns
 Subsequent to a successful
 .Xr open 2
@@ -389,7 +384,7 @@ a few system calls become able to allow DNS network transactions:
 .Xr sendto 2 ,
 .Xr recvfrom 2 ,
 .Xr socket 2 ,
-.Xr connect 2 .
+.Xr connect 2
 .It Va getpw
 This allows read-only opening of files in
 .Pa /etc
@@ -429,9 +424,16 @@ In addition to allowing read-write operations on
 this opens up a variety of
 .Xr ioctl 2
 requests used by tty devices.
-The following
+If
+.Va tty
+is accompanied with
+.Va rpath ,
+.Xr revoke 2
+is permitted.
+Otherwise only the following
 .Xr ioctl 2
 requests are permitted:
+.Pp
 .Dv TIOCSPGRP ,
 .Dv TIOCGETA ,
 .Dv TIOCGPGRP ,
@@ -440,16 +442,9 @@ requests are permitted:
 .Dv TIOCSBRK ,
 .Dv TIOCCDTR ,
 .Dv TIOCSETA ,
-.Dv TIOCSETAW
-and
-.Dv TIOCSETAF .
-.Pp
-If
-.Va tty
-is accompanied with
-.Va rpath ,
-.Xr revoke 2
-is permitted.
+.Dv TIOCSETAW ,
+.Dv TIOCSETAF ,
+.Dv TIOCUCNTL
 .It Va proc
 Allows the following process relationship operations:
 .Pp
@@ -460,16 +455,20 @@ Allows the following process relationship operations:
 .Xr setpriority 2 ,
 .Xr setrlimit 2 ,
 .Xr setpgid 2 ,
-.Xr setsid 2 .
+.Xr setsid 2
 .It Va exec
 Allows a process to call
 .Xr execve 2 .
 Coupled with the
 .Va proc
 promise, this allows a process to fork and execute another program.
-The new program starts running without pledge active and hopefully
-makes a new
-.Fn pledge .
+If
+.Ar execpromises
+has been previously set the new program begins with those promises,
+unless setuid/setgid bits are set in which case execution is blocked with
+.Er EACCESS .
+Otherwise the new program starts running without pledge active,
+and hopefully makes a new pledge soon.
 .It Va prot_exec
 Allows the use of
 .Dv PROT_EXEC
@@ -486,13 +485,13 @@ and
 system calls.
 .It Va ps
 Allows enough
-.Xr sysctl 3
+.Xr sysctl 2
 interfaces to allow inspection of processes operating on the system using
 programs like
 .Xr ps 1 .
 .It Va vminfo
 Allows enough
-.Xr sysctl 3
+.Xr sysctl 2
 interfaces to allow inspection of the system's virtual memory by
 programs like
 .Xr top 1
@@ -514,7 +513,7 @@ process:
 .Xr setlogin 2 ,
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
-.Xr setpriority 2 .
+.Xr setpriority 2
 .It Va pf
 Allows a subset of
 .Xr ioctl 2
@@ -532,73 +531,62 @@ device:
 .Dv DIOCRGETTSTATS ,
 .Dv DIOCRSETADDRS ,
 .Dv DIOCXBEGIN ,
-.Dv DIOCXCOMMIT .
+.Dv DIOCXCOMMIT
 .It Va audio
 Allows a subset of
 .Xr ioctl 2
 operations on
 .Xr audio 4
-devices:
+devices
+(see
+.Xr sio_open 3
+for more information):
 .Pp
 .Dv AUDIO_GETPOS ,
 .Dv AUDIO_GETPAR ,
 .Dv AUDIO_SETPAR ,
 .Dv AUDIO_START ,
-.Dv AUDIO_STOP .
-.Pp
-See
-.Xr sio_open 3
-for more information on using the sndio API in combination with
-.Fn pledge .
+.Dv AUDIO_STOP
 .It Va bpf
 Allow
 .Dv BIOCGSTATS
-operation for statistics collection from a bpf device.
-.El
+operation for statistics collection from a
+.Xr bpf 4
+device.
+.It Va error
+Rather than killing the process upon violation, indicate error with
+.Er ENOSYS .
 .Pp
-A whitelist of permitted paths may be provided in
-.Ar paths .
-All other paths will return
-.Er ENOENT .
-At least one promise is required to be pledged in order to activate a whitelist.
+Also when
+.Nm pledge
+is called with higher
+.Ar promises
+or
+.Ar execpromises ,
+those changes will be ignored and return success.
+This is useful when a parent enforces
+.Ar execpromises
+but an execve'd child has a different idea.
+.El
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
-.Fn pledge
+.Nm pledge
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Fa paths
-or one of its elements, or
-.Fa promises
+.Ar promises
+or
+.Ar execpromises
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Ar promises
 is malformed or contains invalid keywords.
-.It Bq Er ENAMETOOLONG
-An element of
-.Fa paths
-is too large, prepending
-.Fa cwd
-to it would exceed
-.Dv PATH_MAX
-bytes, or
-.Fa promises
-is too long.
 .It Bq Er EPERM
 This process is attempting to increase permissions.
-.It Bq Er E2BIG
-The
-.Ar paths
-array is too large, or the total number of bytes exceeds a
-system-imposed limit.
-The limit in the system as released is 262144 bytes
-.Pf ( Dv ARG_MAX ) .
 .El
 .Sh HISTORY
 The
-.Fn pledge
+.Nm pledge
 system call first appeared in
 .Ox 5.9 .
-.Sh BUGS
-The path whitelist feature is not available at this time.

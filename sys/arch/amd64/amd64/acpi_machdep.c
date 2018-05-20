@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.78 2017/03/27 18:32:53 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.80 2018/01/11 22:31:09 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
@@ -28,12 +27,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/biosvar.h>
 #include <machine/isa_machdep.h>
 
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 
 #include <dev/isa/isareg.h>
@@ -53,7 +49,6 @@
 #endif
 
 #if NLAPIC > 0
-#include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
 
@@ -434,6 +429,7 @@ acpi_resume_cpu(struct acpi_softc *sc)
 	fpuinit(&cpu_info_primary);
 
 	cpu_init(&cpu_info_primary);
+	cpu_ucode_apply(&cpu_info_primary);
 
 	/* Re-initialise memory range handling on BSP */
 	if (mem_range_softc.mr_op != NULL)

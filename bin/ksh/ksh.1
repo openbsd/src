@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.195 2017/08/30 17:08:45 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.199 2018/05/18 13:25:20 benno Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: August 30 2017 $
+.Dd $Mdocdate: May 18 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -858,8 +858,6 @@ The following command aliases are defined automatically by the shell:
 .Ic r Ns ='fc -s'
 .It
 .Ic stop Ns ='kill -STOP'
-.It
-.Ic type Ns ='whence -v'
 .El
 .Pp
 Tracked aliases allow the shell to remember where it found a particular
@@ -1539,7 +1537,7 @@ By the way, don't blame me for
 this hack; it's in the original
 .Nm .
 .Pp
-The default prompt is
+The default prompt is the first part of the hostname, followed by
 .Sq $\ \&
 for non-root users,
 .Sq #\ \&
@@ -2788,11 +2786,16 @@ for more information.
 .Ar string Ns = Ns Op Ar editing-command
 .Ar ...
 .Xc
-The specified editing command is bound to the given
+In
+.Sx Emacs editing mode ,
+the specified editing command is bound to the given
 .Ar string .
 Future input of the
 .Ar string
 will cause the editing command to be immediately invoked.
+Bindings have no effect in
+.Sx Vi editing mode .
+.Pp
 If the
 .Fl m
 flag is given, the specified input
@@ -4070,6 +4073,11 @@ traps in functions are not yet implemented.
 .It Ic true
 A command that exits with a zero value.
 .Pp
+.It Ic type
+Short form of
+.Ic whence Fl v
+(see below).
+.Pp
 .It Xo
 .Ic typeset
 .Oo
@@ -4656,7 +4664,7 @@ Simply causes the character to appear as literal input.
 Most ordinary characters are bound to this.
 .It Xo backward-char:
 .Op Ar n
-.No ^B , ^XD
+.No ^B , ^X^D
 .Xc
 Moves the cursor backward
 .Ar n
@@ -4749,7 +4757,7 @@ Deletes
 characters after the cursor.
 .It Xo delete-word-backward:
 .Op Ar n
-.No ERASE , ^[^? , ^[^H , ^[h
+.No WERASE , ^[ERASE , ^W, ^[^? , ^[^H , ^[h
 .Xc
 Deletes
 .Ar n
@@ -4758,9 +4766,9 @@ words before the cursor.
 .Op Ar n
 .No ^[d
 .Xc
-Deletes characters after the cursor up to the end of
+Deletes
 .Ar n
-words.
+words after the cursor.
 .It Xo down-history:
 .Op Ar n
 .No ^N , ^XB
@@ -4830,8 +4838,6 @@ Goes to history number
 .Ar n .
 .It kill-line: KILL
 Deletes the entire input line.
-.It kill-region: ^W
-Deletes the input between the cursor and the mark.
 .It Xo kill-to-eol:
 .Op Ar n
 .No ^K
@@ -4937,6 +4943,14 @@ Inserts the most recently killed text string at the current cursor position.
 Immediately after a
 .Ic yank ,
 replaces the inserted text string with the next previously killed text string.
+.El
+.Pp
+The following editing commands lack default bindings but can be used with the
+.Ic bind
+command:
+.Bl -tag -width Ds
+.It kill-region
+Deletes the input between the cursor and the mark.
 .El
 .Ss Vi editing mode
 The vi command-line editor in

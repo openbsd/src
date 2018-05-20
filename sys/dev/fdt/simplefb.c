@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.2 2017/08/27 12:42:22 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.3 2017/12/18 10:13:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -18,6 +18,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -276,7 +278,7 @@ simplefb_wsmmap(void *v, off_t off, int prot)
 	if (off < 0 || off >= sc->sc_psize)
 		return -1;
 
-	return sc->sc_paddr + off;
+	return ((sc->sc_paddr + off) | PMAP_NOCACHE);
 }
 
 int

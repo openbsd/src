@@ -17,11 +17,12 @@ still not perl
 
 #!/some/path/that/leads/to/perl -l
 
-print "1..7";
+print "1..8";
+print "ok 1 - Correct line number" if __LINE__ == 4;
 if (-f 'run/switchx.aux') {
-    print "ok 1 - Test file exists";
+    print "ok 2 - Test file exists";
 }
-print "ok 2 - Test file utilized";
+print "ok 3 - Test file utilized";
 # other tests are in switchx2.aux
 
 __END__

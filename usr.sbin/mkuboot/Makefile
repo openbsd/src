@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2017/01/30 06:46:13 jsg Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/10/27 08:33:40 kevlo Exp $
 
-.if ${MACHINE} == "arm64" || ${MACHINE} == "armv7
+.if ${MACHINE} == "arm64" || ${MACHINE} == "armv7"
 
 PROG=	mkuboot
 SRCS=	mkuboot.c copy_elf32.c copy_elf64.c

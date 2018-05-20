@@ -1,6 +1,6 @@
 define(MACHINE,alpha)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.70 2016/09/11 19:59:53 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.71 2017/11/02 14:04:24 mpi Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -16,7 +16,6 @@ dnl ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 dnl WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-dnl
 dnl
 _TITLE(make)
 _DEV(all)
@@ -35,8 +34,8 @@ _DEV(ch, 14)
 _DEV(st, 12)
 _TITLE(term)
 _DEV(com, 26)
-_DEV(ttyB)
 _DEV(ttyc, 38)
+_DEV(ttyB, 15)
 _TITLE(pty)
 _DEV(ptm, 55)
 _DEV(pty, 5)
@@ -96,7 +95,7 @@ _std(1, 2, 39, 6)
 ttyB*|ttyc*)
 	U=${i##tty?}
 	case $i in
-	ttyB*)	type=B major=15 minor=Mult($U, 2);;
+	ttyB*)	type=B major=15 minor=$U;;
 	ttyc*)	type=c major=38 minor=$U;;
 	esac
 	M tty$type$U c $major $minor 660 dialer root
@@ -115,7 +114,7 @@ twrget(all, flo, fd, 1, 1B, 1C, 1D, 1E, 1F, 1G, 1H)dnl
 target(all, pty, 0)dnl
 target(all, tun, 0, 1, 2, 3)dnl
 target(all, tap, 0, 1, 2, 3)dnl
-target(all, xy, 0, 1, 2, 3)dnl
+target(all, ttyB, 0, 1)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl

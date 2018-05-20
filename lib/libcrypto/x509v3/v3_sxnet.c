@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.21 2018/05/13 15:03:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -253,7 +253,7 @@ sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 /* Add an id given the zone as an ASCII number */
 
 int
-SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen)
+SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
 
@@ -267,7 +267,8 @@ SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen)
 /* Add an id given the zone as an unsigned long */
 
 int
-SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen)
+SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
+    int userlen)
 {
 	ASN1_INTEGER *izone = NULL;
 
@@ -286,7 +287,8 @@ SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user, int userlen)
  */
 
 int
-SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user, int userlen)
+SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
+    int userlen)
 {
 	SXNET *sx = NULL;
 	SXNETID *id = NULL;
@@ -335,7 +337,7 @@ err:
 }
 
 ASN1_OCTET_STRING *
-SXNET_get_id_asc(SXNET *sx, char *zone)
+SXNET_get_id_asc(SXNET *sx, const char *zone)
 {
 	ASN1_INTEGER *izone = NULL;
 	ASN1_OCTET_STRING *oct;

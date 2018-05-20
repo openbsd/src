@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2013/08/09 19:51:11 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2017/10/27 16:59:14 bluhm Exp $
 
 SUBDIR =
 SUBDIR +=	error
 SUBDIR +=	tcp
 SUBDIR +=	udp
+SUBDIR +=	scapy
 SUBDIR +=	perf
 
 .include <bsd.subdir.mk>

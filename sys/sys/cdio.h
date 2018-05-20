@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.16 2006/12/23 17:35:35 krw Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.17 2017/10/24 09:36:13 jsg Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -218,7 +218,6 @@ struct	ioc_vol {
 #define	CDIOCALLOW	_IO('c', 25)
 #define	CDIOCPREVENT	_IO('c', 26)
 #define	CDIOCCLOSE	_IO('c', 27)
-#define CDIOCSETCDDA	_IOW('c', 28, int)	/* (re)set CDDA reading mode */
 
 struct ioc_play_msf {
 	u_char	start_m;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.26 2017/02/24 14:28:31 gsoares Exp $ */
+/*	$OpenBSD: ldape.c,v 1.27 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -76,7 +76,7 @@ send_ldap_extended_response(struct conn *conn, int msgid, unsigned long type,
 	struct ber_element	*root, *elm;
 	void			*buf;
 
-	log_debug("sending response %u with result %lld", type, result_code);
+	log_debug("sending response %lu with result %lld", type, result_code);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -133,7 +133,7 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 			scope_str = "sub";
 	}
 
-	log_debug("sending referral in response %u on msgid %lld",
+	log_debug("sending referral in response %lu on msgid %lld",
 	    type, req->msgid);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
@@ -346,11 +346,9 @@ ldape(int debug, int verbose, char *csockpath)
 	char			 host[128];
 	mode_t			old_umask = 0;
 	
-	log_init(debug);
-	log_verbose(verbose);
-
 	TAILQ_INIT(&conn_list);
 
+	ldap_loginit("ldap server", debug, verbose);
 	setproctitle("ldap server");
 	event_init();
 
@@ -443,7 +441,7 @@ ldape(int debug, int verbose, char *csockpath)
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (!namespace_has_referrals(ns) && namespace_open(ns) != 0)
-			fatal(ns->suffix);
+			fatal("%s", ns->suffix);
 	}
 
 	if ((pw = getpwnam(LDAPD_USER)) == NULL)

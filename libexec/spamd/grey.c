@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.64 2016/10/20 21:09:46 mestre Exp $	*/
+/*	$OpenBSD: grey.c,v 1.65 2017/10/18 17:31:01 millert Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -49,6 +49,7 @@ extern FILE *trapcfg;
 extern FILE *grey;
 extern int debug;
 extern int syncsend;
+extern int greyback[2];
 
 /* From netinet/in.h, but only _KERNEL_ gets them. */
 #define satosin(sa)	((struct sockaddr_in *)(sa))
@@ -323,6 +324,7 @@ int
 addwhiteaddr(char *addr)
 {
 	struct addrinfo hints, *res;
+	char ch;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;		/*for now*/
@@ -330,28 +332,43 @@ addwhiteaddr(char *addr)
 	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 
-	if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
-		if (whitecount == whitealloc) {
-			char **tmp;
+	if (getaddrinfo(addr, NULL, &hints, &res) != 0)
+		return(-1);
 
-			tmp = reallocarray(whitelist,
-			    whitealloc + 1024, sizeof(char *));
-			if (tmp == NULL) {
+	/* Check spamd blacklists in main process. */
+	if (send(greyback[0], res->ai_addr, res->ai_addr->sa_len, 0) == -1) {
+		syslog_r(LOG_ERR, &sdata, "%s: send: %m", __func__);
+	} else {
+		if (recv(greyback[0], &ch, sizeof(ch), 0) == 1) {
+			if (ch == '1') {
+				syslog_r(LOG_DEBUG, &sdata,
+				    "%s blacklisted, removing from whitelist",
+				    addr);
 				freeaddrinfo(res);
 				return(-1);
 			}
-			whitelist = tmp;
-			whitealloc += 1024;
 		}
-		whitelist[whitecount] = strdup(addr);
-		if (whitelist[whitecount] == NULL) {
+	}
+
+	if (whitecount == whitealloc) {
+		char **tmp;
+
+		tmp = reallocarray(whitelist,
+		    whitealloc + 1024, sizeof(char *));
+		if (tmp == NULL) {
 			freeaddrinfo(res);
 			return(-1);
 		}
-		whitecount++;
+		whitelist = tmp;
+		whitealloc += 1024;
+	}
+	whitelist[whitecount] = strdup(addr);
+	if (whitelist[whitecount] == NULL) {
 		freeaddrinfo(res);
-	} else
 		return(-1);
+	}
+	whitecount++;
+	freeaddrinfo(res);
 	return(0);
 }
 

@@ -24,16 +24,16 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.11 2016/12/22 11:04:44 rzalamena Exp $
+.\" $OpenBSD: multicast.4,v 1.12 2018/03/07 09:54:23 jmc Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
-.Dd $Mdocdate: December 22 2016 $
+.Dd $Mdocdate: March 7 2018 $
 .Dt MULTICAST 4
 .Os
 .\"
 .Sh NAME
 .Nm multicast
-.Nd Multicast Routing
+.Nd multicast routing
 .\"
 .Sh SYNOPSIS
 .Cd "options MROUTING"
@@ -52,8 +52,7 @@
 .Ft int
 .Fn setsockopt "int s" IPPROTO_IPV6 MRT6_INIT "const void *optval" "socklen_t optlen"
 .Sh DESCRIPTION
-.Tn "Multicast routing"
-is used to efficiently propagate data
+Multicast routing is used to efficiently propagate data
 packets to a set of multicast listeners in multipoint networks.
 If unicast is used to replicate the data to all listeners,
 then some of the network links may carry multiple copies of the same
@@ -75,7 +74,13 @@ the user must enable multicast forwarding via the
 variables
 .Va net.inet.ip.mforwarding
 and/or
-.Va net.inet.ip6.mforwarding .
+.Va net.inet.ip6.mforwarding ,
+and set
+.Va multicast
+to
+.Dq YES
+in
+.Xr rc.conf.local 8 .
 The user must also run a multicast routing capable user-level process,
 such as
 .Xr mrouted 8 .
@@ -121,8 +126,7 @@ In the case of
 kernels,
 it may be possible to open separate sockets
 for IGMP or MLD messages only.
-However, some other kernels (e.g.,
-.Tn Linux )
+However, some other kernels (e.g., Linux)
 require that the multicast
 routing socket must be used for sending and receiving of IGMP or MLD
 messages.

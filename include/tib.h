@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.5 2017/08/10 13:35:18 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.6 2017/11/28 18:57:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2011,2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -135,6 +135,7 @@
  */
 
 struct tib {
+	void	*tib_atexit;
 	int	tib_thread_flags;	/* internal to libpthread */
 	pid_t	tib_tid;
 	int	tib_cantcancel;
@@ -182,16 +183,12 @@ struct tib {
 	int	tib_cantcancel;
 	pid_t	tib_tid;
 	int	tib_thread_flags;	/* internal to libpthread */
-#if !defined(__LP64__) && !defined(__i386)
-	int	__tib_padding;		/* padding for 8byte alignment */
-#endif
+	void	*tib_atexit;
 };
 
 #if defined(__i386) || defined(__amd64)
 # define _TIB_PREP(tib)	\
 	((void)((tib)->__tib_self = (tib)))
-#elif !defined(__LP64__) && !defined(__i386)
-# define _TIB_PREP(tib)	((void)((tib)->__tib_padding = 0))
 #endif
 
 #define	TIB_EXTRA_ALIGN		sizeof(void *)
@@ -207,6 +204,7 @@ struct tib {
 
 #define	TIB_INIT(tib, dtv, thread)	do {		\
 		(tib)->tib_thread	= (thread);	\
+		(tib)->tib_atexit	= NULL;		\
 		(tib)->tib_locale	= NULL;		\
 		(tib)->tib_cantcancel	= 0;		\
 		(tib)->tib_cancel_point	= 0;		\

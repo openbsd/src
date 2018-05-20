@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.2,v 1.46 2015/11/07 22:57:52 jmc Exp $
+.\"	$OpenBSD: stat.2,v 1.47 2017/10/28 15:28:53 schwarze Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 7 2015 $
+.Dd $Mdocdate: October 28 2017 $
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ known by the file descriptor
 The
 .Fa sb
 argument is a pointer to a
-.Fn stat
+.Vt stat
 structure
 as defined by
 .In sys/stat.h
@@ -156,9 +156,9 @@ struct stat {
 .Ed
 .Pp
 The time-related fields of
-.Li struct stat
+.Vt struct stat
 are represented in
-.Li struct timespec
+.Vt struct timespec
 format, which has nanosecond precision.
 However, the actual precision is generally limited by the file
 system holding the file.
@@ -219,7 +219,7 @@ and
 macros are provided that expand to the
 .Fa tv_secs
 member of their respective
-.Li struct timespec
+.Vt struct timespec
 member.
 Deprecated macros are also provided for some transitional names:
 .Fa st_atimensec ,
@@ -228,10 +228,10 @@ Deprecated macros are also provided for some transitional names:
 .Fa st_atimespec ,
 .Fa st_mtimespec ,
 and
-.Fa st_ctimespec
+.Fa st_ctimespec .
 .Pp
 The size-related fields of the
-.Li struct stat
+.Vt struct stat
 are as follows:
 .Bl -tag -width XXXst_blksize
 .It Fa st_blksize
@@ -309,18 +309,20 @@ exceeded
 bytes.
 .It Bq Er ENOENT
 A component of
-.Em name
+.Fa path
 does not exist or
-.Em name
-is the empty path.
+.Fa path
+is an empty string.
 .It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
+Search permission is denied for a component of the
+.Fa path .
 .It Bq Er ELOOP
-Too many symbolic links were encountered in translating the pathname.
+Too many symbolic links were encountered in translating the
+.Fa path .
 .It Bq Er EFAULT
 .Fa sb
 or
-.Em name
+.Fa path
 points to an invalid address.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
@@ -424,12 +426,12 @@ The file generation number,
 is only available to the superuser.
 .Pp
 Certain programs written when the timestamps were just of type
-.Li time_t
+.Vt time_t
 assumed that the members were consecutive (and could therefore
 be treated as an array and have their address passed directly to
 .Xr utime 3 ) .
 The transition to timestamps of type
-.Li struct timespec
+.Vt struct timespec
 broke them irrevocably.
 .Sh BUGS
 Applying

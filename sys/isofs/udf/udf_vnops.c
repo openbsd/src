@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.64 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.66 2018/05/02 02:24:56 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -124,11 +124,10 @@ udf_hashins(struct unode *up)
 {
 	struct umount *ump;
 	struct udf_hash_lh *lh;
-	struct proc *p = curproc;
 
 	ump = up->u_ump;
 
-	vn_lock(up->u_vnode, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(up->u_vnode, LK_EXCLUSIVE | LK_RETRY);
 	mtx_enter(&ump->um_hashmtx);
 	lh = &ump->um_hashtbl[SipHash24(&ump->um_hashkey,
 	    &up->u_ino, sizeof(up->u_ino)) & ump->um_hashsz];
@@ -1104,7 +1103,7 @@ lookloop:
 				nchstats.ncs_pass2++;
 			if (!(flags & LOCKPARENT) || !(flags & ISLASTCN)) {
 				ap->a_cnp->cn_flags |= PDIRUNLOCK;
-				VOP_UNLOCK(dvp, p);
+				VOP_UNLOCK(dvp);
 			}
 
 			*vpp = tdp;
@@ -1146,12 +1145,11 @@ udf_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
 
 	/*
 	 * No need to sync anything, so just unlock the vnode and return.
 	 */
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }

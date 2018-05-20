@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.120 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.122 2018/04/26 12:50:07 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1348,8 +1348,6 @@ int
 ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ipw_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
@@ -1369,17 +1367,6 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				ipw_stop(ifp, 1);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-
-		if (error == ENETRESET)
-			error = 0;
 		break;
 
 	case SIOCG80211TXPOWER:
@@ -2036,9 +2023,6 @@ ipw_stop(struct ifnet *ifp, int disable)
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
-
-	/* in case we were scanning, release the scan "lock" */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }

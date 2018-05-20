@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.271 2017/08/14 19:50:31 uwe Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.277 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ extern void nfs_init(void);
 const char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
 "\tThe Regents of the University of California.  All rights reserved.\n"
-"Copyright (c) 1995-2017 OpenBSD. All rights reserved.  https://www.OpenBSD.org\n";
+"Copyright (c) 1995-2018 OpenBSD. All rights reserved.  https://www.OpenBSD.org\n";
 
 /* Components of the first process -- never freed. */
 struct	session session0;
@@ -124,6 +124,7 @@ extern	struct user *proc0paddr;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timespec boottime;
+int	db_active = 0;
 int	ncpus =  1;
 int	ncpusfound = 1;			/* number of cpus we find */
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -492,7 +493,7 @@ main(void *framep)
 		panic("cannot find root vnode");
 	p->p_fd->fd_cdir = rootvnode;
 	vref(p->p_fd->fd_cdir);
-	VOP_UNLOCK(rootvnode, p);
+	VOP_UNLOCK(rootvnode);
 	p->p_fd->fd_rdir = NULL;
 
 	/*
@@ -651,7 +652,7 @@ start_init(void *arg)
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_MASK, MAP_INHERIT_COPY,
-	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)))
+	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW|UVM_FLAG_STACK)))
 		panic("init: couldn't allocate argument space");
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {

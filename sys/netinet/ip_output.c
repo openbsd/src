@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.342 2017/09/20 16:22:02 visa Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.346 2018/03/21 14:42:41 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,8 +84,7 @@ struct tdb *
 ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
     int ipsecflowinfo);
 int
-ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
-    struct route *ro);
+ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
 #endif /* IPSEC */
 
 /*
@@ -216,7 +215,14 @@ reroute:
 			ifp = if_get(rtable_loindex(m->m_pkthdr.ph_rtableid));
 		else
 			ifp = if_get(ro->ro_rt->rt_ifidx);
+		/*
+		 * We aren't using rtisvalid() here because the UP/DOWN state
+		 * machine is broken with some Ethernet drivers like em(4).
+		 * As a result we might try to use an invalid cached route
+		 * entry while an interface is being detached.
+		 */
 		if (ifp == NULL) {
+			ipstat_inc(ips_noroute);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -233,7 +239,6 @@ reroute:
 
 #ifdef IPSEC
 	if (ipsec_in_use || inp != NULL) {
-		KERNEL_ASSERT_LOCKED();
 		/* Do we have any pending SAs to apply ? */
 		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
 		    ipsecflowinfo);
@@ -404,9 +409,9 @@ sendit:
 	 * Check if the packet needs encapsulation.
 	 */
 	if (tdb != NULL) {
-		KERNEL_ASSERT_LOCKED();
 		/* Callee frees mbuf */
-		error = ip_output_ipsec_send(tdb, m, ifp, ro);
+		error = ip_output_ipsec_send(tdb, m, ro,
+		    (flags & IP_FORWARDING) ? 1 : 0);
 		goto done;
 	}
 #endif /* IPSEC */
@@ -415,7 +420,8 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(AF_INET, PF_OUT, ifp, &m) != PF_PASS) {
+	if (pf_test(AF_INET, (flags & IP_FORWARDING) ? PF_FWD : PF_OUT,
+	    ifp, &m) != PF_PASS) {
 		error = EACCES;
 		m_freem(m);
 		goto done;
@@ -552,8 +558,7 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
 }
 
 int
-ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
-    struct route *ro)
+ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 {
 #if NPF > 0
 	struct ifnet *encif;
@@ -565,7 +570,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
 	 * Packet filter
 	 */
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
-	    pf_test(AF_INET, PF_OUT, encif, &m) != PF_PASS) {
+	    pf_test(AF_INET, fwd ? PF_FWD : PF_OUT, encif, &m) != PF_PASS) {
 		m_freem(m);
 		return EACCES;
 	}
@@ -991,7 +996,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 				if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1000,7 +1005,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 			case IP_ESP_TRANS_LEVEL:
 				if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1009,7 +1014,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 			case IP_ESP_NETWORK_LEVEL:
 				if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1017,7 +1022,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			case IP_IPCOMP_LEVEL:
 				if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
-				    suser(p, 0)) {
+				    suser(p)) {
 					error = EACCES;
 					break;
 				}
@@ -1042,7 +1047,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			/* needs privileges to switch when already set */
 			if (p->p_p->ps_rtableid != rtid &&
 			    p->p_p->ps_rtableid != 0 &&
-			    (error = suser(p, 0)) != 0)
+			    (error = suser(p)) != 0)
 				break;
 			/* table must exist */
 			if (!rtable_exists(rtid)) {

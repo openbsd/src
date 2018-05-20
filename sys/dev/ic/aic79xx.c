@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.62 2016/08/31 12:59:59 tom Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.64 2018/02/06 00:18:38 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -5268,11 +5268,6 @@ ahd_alloc(void *platform_arg, char *name)
 	ahd->int_coalescing_stop_threshold =
 	    AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
 
-	if (ahd_platform_alloc(ahd, platform_arg) != 0) {
-		free(ahd->seep_config, M_DEVBUF, 0);
-		return (NULL);
-	}
-
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_MEMORY) != 0) {
 		printf("%s: scb size = 0x%x, hscb size = 0x%x\n",
@@ -5392,7 +5387,6 @@ ahd_free(struct ahd_softc *ahd)
 		break;
 	}
 
-	ahd_platform_free(ahd);
 	ahd_fini_scbdata(ahd);
 	for (i = 0; i < AHD_NUM_TARGETS; i++) {
 		struct ahd_tmode_tstate *tstate;
@@ -5949,7 +5943,6 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 	scb_data->scbs_left -= newcount;
 	scb_data->sgs_left -= newcount;
 	for (i = 0; i < newcount; i++) {
-		struct scb_platform_data *pdata = NULL;
 		int error;
 
 		next_scb = (struct scb *)malloc(sizeof(*next_scb),
@@ -5957,14 +5950,6 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		if (next_scb == NULL)
 			break;
 
-		if (sizeof(*pdata) > 0) {
-			pdata = malloc(sizeof(*pdata), M_DEVBUF, M_NOWAIT);
-			if (pdata == NULL) {
-				free(next_scb, M_DEVBUF, 0);
-				break;
-			}
-		}
-		next_scb->platform_data = pdata;
 		next_scb->hscb_map = hscb_map;
 		next_scb->sg_map = sg_map;
 		next_scb->sense_map = sense_map;
@@ -5996,7 +5981,6 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 
 		if (error != 0) {
 			free(next_scb, M_DEVBUF, 0);
-			free(pdata, M_DEVBUF, 0);
 			break;
 		}
 		next_scb->hscb->tag = aic_htole16(scb_data->numscbs);
@@ -6133,12 +6117,6 @@ ahd_init(struct ahd_softc *ahd)
 
 	if ((ahd->flags & AHD_INITIATORROLE) == 0)
 		ahd->flags &= ~AHD_RESET_BUS_A;
-
-	/*
-	 * Before committing these settings to the chip, give
-	 * the OSM one last chance to modify our configuration.
-	 */
-	ahd_platform_init(ahd);
 
 	/* Bring up the chip. */
 	ahd_chip_init(ahd);
@@ -6879,7 +6857,6 @@ ahd_pause_and_flushwork(struct ahd_softc *ahd)
 
 	ahd_flush_qoutfifo(ahd);
 
-	ahd_platform_flushwork(ahd);
 	ahd->flags &= ~AHD_ALL_INTERRUPTS;
 }
 
@@ -7014,8 +6991,6 @@ ahd_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
 	ahd_search_qinfifo(ahd, target, channel, lun,
 			   /*tag*/SCB_LIST_NULL, ROLE_UNKNOWN,
 			   CAM_REQUEUE_REQ, SEARCH_COMPLETE);
-
-	ahd_platform_freeze_devq(ahd, scb);
 }
 
 void
@@ -7595,7 +7570,6 @@ ahd_abort_scbs(struct ahd_softc *ahd, int target, char channel,
 		}
 	}
 	ahd_restore_modes(ahd, saved_modes);
-	ahd_platform_abort_scbs(ahd, target, channel, lun, tag, role, status);
 	ahd->flags |= AHD_UPDATE_PEND_CMDS;
 	return found;
 }
@@ -7633,7 +7607,6 @@ ahd_reset_current_bus(struct ahd_softc *ahd)
 int
 ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 {
-	struct	ahd_devinfo devinfo;
 	u_int	initiator;
 	u_int	target;
 	u_int	max_scsiid;
@@ -7643,11 +7616,6 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 
 	ahd->pending_device = NULL;
 
-	ahd_compile_devinfo(&devinfo,
-			    CAM_TARGET_WILDCARD,
-			    CAM_TARGET_WILDCARD,
-			    CAM_LUN_WILDCARD,
-			    channel, ROLE_UNKNOWN);
 	ahd_pause(ahd);
 
 	/* Make sure the sequencer is in a safe location. */

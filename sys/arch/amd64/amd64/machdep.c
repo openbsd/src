@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.231 2017/07/12 06:26:32 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.242 2018/04/26 12:47:02 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -69,19 +69,14 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -91,16 +86,15 @@
 #include <stand/boot/bootarg.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
-#include <machine/cpu.h>
+#include <machine/cpu_full.h>
 #include <machine/cpufunc.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include <machine/specialreg.h>
 #include <machine/fpu.h>
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
@@ -108,7 +102,6 @@
 #include <machine/tss.h>
 
 #include <dev/isa/isareg.h>
-#include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
 
 #ifdef DDB
@@ -147,6 +140,14 @@ extern int db_console;
 #if NPCKBC > 0 && NUKBD > 0
 #include <dev/ic/pckbcvar.h>
 #endif
+
+/* #define MACHDEP_DEBUG */
+
+#ifdef MACHDEP_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* MACHDEP_DEBUG */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
@@ -248,6 +249,7 @@ bios_diskinfo_t	*bios_diskinfo;
 bios_memmap_t	*bios_memmap;
 u_int32_t	bios_cksumlen;
 bios_efiinfo_t	*bios_efiinfo;
+bios_ucode_t	*bios_ucode;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -263,6 +265,7 @@ void	cpu_init_extents(void);
 void	map_tramps(void);
 void	init_x86_64(paddr_t);
 void	(*cpuresetfn)(void);
+void	enter_shared_special_pages(void);
 
 #ifdef APERTURE
 int allowaperture = 0;
@@ -315,6 +318,69 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+#ifndef SMALL_KERNEL
+	cpu_ucode_setup();
+#endif
+	/* enter the IDT and trampoline code in the u-k maps */
+	enter_shared_special_pages();
+
+	/* initialize CPU0's TSS and GDT and put them in the u-k maps */
+	cpu_enter_pages(&cpu_info_full_primary);
+}
+
+/*
+ * enter_shared_special_pages
+ *
+ * Requests mapping of various special pages required in the Intel Meltdown
+ * case (to be entered into the U-K page table):
+ *
+ *  1 IDT page
+ *  Various number of pages covering the U-K ".kutext" section. This section
+ *   contains code needed during trampoline operation
+ *  Various number of pages covering the U-K ".kudata" section. This section
+ *   contains data accessed by the trampoline, before switching to U+K
+ *   (for example, various shared global variables used by IPIs, etc)
+ *
+ * The linker script places the required symbols in the sections above.
+ *
+ * On CPUs not affected by Meltdown, the calls to pmap_enter_special below
+ * become no-ops.
+ */
+void
+enter_shared_special_pages(void)
+{
+	extern char __kutext_start[], __kutext_end[], __kernel_kutext_phys[];
+	extern char __kudata_start[], __kudata_end[], __kernel_kudata_phys[];
+	vaddr_t va;
+	paddr_t pa;
+
+	/* idt */
+	pmap_enter_special(idt_vaddr, idt_paddr, PROT_READ);
+	DPRINTF("%s: entered idt page va 0x%llx pa 0x%llx\n", __func__,
+	    (uint64_t)idt_vaddr, (uint64_t)idt_paddr);
+
+	/* .kutext section */
+	va = (vaddr_t)__kutext_start;
+	pa = (paddr_t)__kernel_kutext_phys;
+	while (va < (vaddr_t)__kutext_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_EXEC);
+		DPRINTF("%s: entered kutext page va 0x%llx pa 0x%llx\n",
+		    __func__, (uint64_t)va, (uint64_t)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
+	/* .kudata section */
+	va = (vaddr_t)__kudata_start;
+	pa = (paddr_t)__kernel_kudata_phys;
+	while (va < (vaddr_t)__kudata_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_WRITE);
+		DPRINTF("%s: entered kudata page va 0x%llx pa 0x%llx\n",
+		    __func__, (uint64_t)va, (uint64_t)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
 }
 
 /*
@@ -331,12 +397,6 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_kstack = (u_int64_t)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
 
-	/* an empty iomap, by setting its offset to the TSS limit */
-	cpu_info_primary.ci_tss->tss_iobase = sizeof(struct x86_64_tss);
-	cpu_info_primary.ci_tss->tss_rsp0 = pcb->pcb_kstack;
-	cpu_info_primary.ci_tss->tss_ist[0] =
-	    (u_int64_t)proc0.p_addr + PAGE_SIZE - 16;
-
 	ltr(GSYSSEL(GPROC0_SEL, SEL_KPL));
 	lldt(0);
 }
@@ -348,15 +408,11 @@ x86_64_proc0_tss_ldt_init(void)
 #ifdef MULTIPROCESSOR
 void    
 x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
-{        
+{
 	struct pcb *pcb = ci->ci_idle_pcb;
  
-	ci->ci_tss->tss_iobase = sizeof(*ci->ci_tss);
-	ci->ci_tss->tss_rsp0 = pcb->pcb_kstack;
-	ci->ci_tss->tss_ist[0] = pcb->pcb_kstack - USPACE + PAGE_SIZE;
-
 	pcb->pcb_cr0 = rcr0();
-}       
+}
 #endif	/* MULTIPROCESSOR */
 
 bios_diskinfo_t *
@@ -418,13 +474,15 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
-/*  
+/*
  * machine dependent system variables.
- */ 
+ */
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	extern uint64_t tsc_frequency;
+	extern int tsc_is_invariant;
 	extern int amd64_has_xcrypt;
 	dev_t consdev;
 	dev_t dev;
@@ -496,6 +554,10 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			pckbc_release_console();
 		return (error);
 #endif
+	case CPU_TSCFREQ:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tsc_frequency));
+	case CPU_INVARIANTTSC:
+		return (sysctl_rdint(oldp, oldlenp, newp, tsc_is_invariant));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -524,14 +586,33 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	register_t sp, scp, sip;
 	u_long sss;
 
-	memcpy(&ksc, tf, sizeof(*tf));
-	bzero((char *)&ksc + sizeof(*tf), sizeof(ksc) - sizeof(*tf));
+	memset(&ksc, 0, sizeof ksc);
+	ksc.sc_rdi = tf->tf_rdi;
+	ksc.sc_rsi = tf->tf_rsi;
+	ksc.sc_rdx = tf->tf_rdx;
+	ksc.sc_rcx = tf->tf_rcx;
+	ksc.sc_r8  = tf->tf_r8;
+	ksc.sc_r9  = tf->tf_r9;
+	ksc.sc_r10 = tf->tf_r10;
+	ksc.sc_r11 = tf->tf_r11;
+	ksc.sc_r12 = tf->tf_r12;
+	ksc.sc_r13 = tf->tf_r13;
+	ksc.sc_r14 = tf->tf_r14;
+	ksc.sc_r15 = tf->tf_r15;
+	ksc.sc_rbx = tf->tf_rbx;
+	ksc.sc_rax = tf->tf_rax;
+	ksc.sc_rbp = tf->tf_rbp;
+	ksc.sc_rip = tf->tf_rip;
+	ksc.sc_cs  = tf->tf_cs;
+	ksc.sc_rflags = tf->tf_rflags;
+	ksc.sc_rsp = tf->tf_rsp;
+	ksc.sc_ss  = tf->tf_ss;
 	ksc.sc_mask = mask;
 
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_rsp) && (psp->ps_sigonstack & sigmask(sig)))
-		sp = (register_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size;
+		sp = trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		sp = tf->tf_rsp - 128;
 
@@ -634,9 +715,26 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	ksc.sc_trapno = tf->tf_trapno;
-	ksc.sc_err = tf->tf_err;
-	memcpy(tf, &ksc, sizeof(*tf));
+	tf->tf_rdi = ksc.sc_rdi;
+	tf->tf_rsi = ksc.sc_rsi;
+	tf->tf_rdx = ksc.sc_rdx;
+	tf->tf_rcx = ksc.sc_rcx;
+	tf->tf_r8  = ksc.sc_r8;
+	tf->tf_r9  = ksc.sc_r9;
+	tf->tf_r10 = ksc.sc_r10;
+	tf->tf_r11 = ksc.sc_r11;
+	tf->tf_r12 = ksc.sc_r12;
+	tf->tf_r13 = ksc.sc_r13;
+	tf->tf_r14 = ksc.sc_r14;
+	tf->tf_r15 = ksc.sc_r15;
+	tf->tf_rbx = ksc.sc_rbx;
+	tf->tf_rax = ksc.sc_rax;
+	tf->tf_rbp = ksc.sc_rbp;
+	tf->tf_rip = ksc.sc_rip;
+	tf->tf_cs  = ksc.sc_cs;
+	tf->tf_rflags = ksc.sc_rflags;
+	tf->tf_rsp = ksc.sc_rsp;
+	tf->tf_ss  = ksc.sc_ss;
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
@@ -726,7 +824,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
@@ -1000,25 +1098,27 @@ dumpsys(void)
 
 /*
  * Force the userspace FS.base to be reloaded from the PCB on return from
- * the kernel, and reset most the segment registers (%ds, %es, and %fs)
+ * the kernel, and reset the segment registers (%ds, %es, %fs, and %gs)
  * to their expected userspace value.
  */
 void
 reset_segs(void)
 {
 	/*
-	 * Segment registers (%ds, %es, %fs, %gs) aren't in the trapframe.
-	 * %gs is reset on return to userspace to avoid having to deal with
-	 * swapgs; others are reset on context switch and here.  This
-	 * operates like the cpu_switchto() sequence: if we haven't reset
-	 * %[def]s already, do so now.
-	 */
+	 * This operates like the cpu_switchto() sequence: if we
+	 * haven't reset %[defg]s already, do so now.
+	*/
 	if (curcpu()->ci_flags & CPUF_USERSEGS) {
 		curcpu()->ci_flags &= ~CPUF_USERSEGS;
 		__asm volatile(
 		    "movw %%ax,%%ds\n\t"
 		    "movw %%ax,%%es\n\t"
-		    "movw %%ax,%%fs" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
+		    "movw %%ax,%%fs\n\t"
+		    "cli\n\t"		/* block intr when on user GS.base */
+		    "swapgs\n\t"	/* swap from kernel to user GS.base */
+		    "movw %%ax,%%gs\n\t"/* set %gs to UDATA and GS.base to 0 */
+		    "swapgs\n\t"	/* back to kernel GS.base */
+		    "sti" : : "a"(GSEL(GUDATA_SEL, SEL_UPL)));
 	}
 }
 
@@ -1254,6 +1354,8 @@ init_x86_64(paddr_t first_avail)
 
 	x86_bus_space_init();
 
+	i8254_startclock();
+
 	/*
 	 * Attach the glass console early in case we need to display a panic.
 	 */
@@ -1284,17 +1386,16 @@ init_x86_64(paddr_t first_avail)
 /*
  * Memory on the AMD64 port is described by three different things.
  *
- * 1. biosbasemem, biosextmem - These are outdated, and should really
- *    only be used to santize the other values.  They are the things
- *    we get back from the BIOS using the legacy routines, usually
- *    only describing the lower 4GB of memory.
+ * 1. biosbasemem - This is outdated, and should really only be used to
+ *    santize the other values. Thiis is what we get back from the BIOS
+ *    using the legacy routines, describing memory below 640KB.
  *
  * 2. bios_memmap[] - This is the memory map as the bios has returned
  *    it to us.  It includes memory the kernel occupies, etc.
  *
  * 3. mem_cluster[] - This is the massaged free memory segments after
  *    taking into account the contents of bios_memmap, biosbasemem,
- *    biosextmem, and locore/machdep/pmap kernel allocations of physical
+ *    and locore/machdep/pmap kernel allocations of physical
  *    pages.
  *
  * The other thing is that the physical page *RANGE* is described by
@@ -1544,8 +1645,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, PROT_READ | PROT_WRITE);
-	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    PROT_READ | PROT_WRITE);
 
 #if defined(MULTIPROCESSOR) || \
     (NACPI > 0 && !defined(SMALL_KERNEL))
@@ -1553,8 +1652,8 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-	cpu_info_primary.ci_tss = (void *)(idt + NIDT);
-	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
+	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
+	cpu_info_primary.ci_gdt = &cpu_info_full_primary.cif_gdt;
 
 	/* make gdt gates and memory segments */
 	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GCODE_SEL), 0,
@@ -1578,9 +1677,10 @@ init_x86_64(paddr_t first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		ist = (x == 8) ? 1 : 0;
+		/* trap2 == NMI, trap8 == double fault */
+		ist = (x == 2) ? 2 : (x == 8) ? 1 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
+		    (x == 3) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 		idt_allocmap[x] = 1;
 	}
@@ -1882,6 +1982,10 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			bios_efiinfo = (bios_efiinfo_t *)q->ba_arg;
 			if (bios_efiinfo->fb_addr != 0)
 				docninit++;
+			break;
+
+		case BOOTARG_UCODE:
+			bios_ucode = (bios_ucode_t *)q->ba_arg;
 			break;
 
 		default:

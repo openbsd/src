@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.246 2017/05/31 05:59:09 mpi Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.253 2018/03/13 01:31:48 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -248,6 +248,13 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				memcpy(edst, LLADDR(satosdl(dst)),
 				    sizeof(edst));
 				break;
+#ifdef INET6
+			case AF_INET6:
+				error = nd6_resolve(ifp, rt, m, dst, edst);
+				if (error)
+					return (error == EAGAIN ? 0 : error);
+				break;
+#endif
 			case AF_INET:
 			case AF_MPLS:
 				error = arpresolve(ifp, rt, m, dst, edst);
@@ -310,14 +317,9 @@ int
 ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
 	struct ether_header *eh;
-	struct niqueue *inq;
+	void (*input)(struct ifnet *, struct mbuf *);
 	u_int16_t etype;
-	int llcfound = 0;
-	struct llc *l;
 	struct arpcom *ac;
-#if NPPPOE > 0
-	struct ether_header *eh_tmp;
-#endif
 
 	/* Drop short frames */
 	if (m->m_len < ETHER_HDR_LEN)
@@ -325,23 +327,26 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 	ac = (struct arpcom *)ifp;
 	eh = mtod(m, struct ether_header *);
-	m_adj(m, ETHER_HDR_LEN);
 
-	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+	/* Is the packet for us? */
+	if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
+
+		/* If not, it must be multicast or broadcast to go further */
+		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
+			goto dropanyway;
+
 		/*
 		 * If this is not a simplex interface, drop the packet
 		 * if it came from us.
 		 */
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0) {
 			if (memcmp(ac->ac_enaddr, eh->ether_shost,
-			    ETHER_ADDR_LEN) == 0) {
-				m_freem(m);
-				return (1);
-			}
+			    ETHER_ADDR_LEN) == 0)
+				goto dropanyway;
 		}
 
 		if (memcmp(etherbroadcastaddr, eh->ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
+		    ETHER_ADDR_LEN) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
@@ -352,67 +357,41 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	 * HW vlan tagged packets that were not collected by vlan(4) must
 	 * be dropped now.
 	 */
-	if (m->m_flags & M_VLANTAG) {
-		m_freem(m);
-		return (1);
-	}
-
-	/*
-	 * If packet is unicast, make sure it is for us.  Drop otherwise.
-	 * This check is required in promiscous mode, and for some hypervisors
-	 * where the MAC filter is 'best effort' only.
-	 */
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0) {
-		if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN)) {
-			m_freem(m);
-			return (1);
-		}
-	}
+	if (m->m_flags & M_VLANTAG)
+		goto dropanyway;
 
 	etype = ntohs(eh->ether_type);
 
-decapsulate:
 	switch (etype) {
 	case ETHERTYPE_IP:
-		ipv4_input(ifp, m);
-		return (1);
+		input = ipv4_input;
+		break;
 
 	case ETHERTYPE_ARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		arpinput(ifp, m);
-		return (1);
+		input = arpinput;
+		break;
 
 	case ETHERTYPE_REVARP:
 		if (ifp->if_flags & IFF_NOARP)
 			goto dropanyway;
-		revarpinput(ifp, m);
-		return (1);
+		input = revarpinput;
+		break;
 
 #ifdef INET6
 	/*
 	 * Schedule IPv6 software interrupt for incoming IPv6 packet.
 	 */
 	case ETHERTYPE_IPV6:
-		ipv6_input(ifp, m);
-		return (1);
+		input = ipv6_input;
+		break;
 #endif /* INET6 */
 #if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
 		if (m->m_flags & (M_MCAST | M_BCAST))
 			goto dropanyway;
-		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-		if (m == NULL)
-			return (1);
-
-		eh_tmp = mtod(m, struct ether_header *);
-		/*
-		 * danger!
-		 * eh_tmp and eh may overlap because eh
-		 * is stolen from the mbuf above.
-		 */
-		memmove(eh_tmp, eh, sizeof(struct ether_header));
 #ifdef PIPEX
 		if (pipex_enable) {
 			struct pipex_session *session;
@@ -424,44 +403,23 @@ decapsulate:
 		}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)
-			inq = &pppoediscinq;
+			niq_enqueue(&pppoediscinq, m);
 		else
-			inq = &pppoeinq;
-		break;
+			niq_enqueue(&pppoeinq, m);
+		return (1);
 #endif
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
-		mpls_input(m);
-		return (1);
+		input = mpls_input;
+		break;
 #endif
 	default:
-		if (llcfound || etype > ETHERMTU ||
-		    m->m_len < sizeof(struct llc))
-			goto dropanyway;
-		llcfound = 1;
-		l = mtod(m, struct llc *);
-		switch (l->llc_dsap) {
-		case LLC_SNAP_LSAP:
-			if (l->llc_control == LLC_UI &&
-			    l->llc_dsap == LLC_SNAP_LSAP &&
-			    l->llc_ssap == LLC_SNAP_LSAP) {
-				/* SNAP */
-				if (m->m_pkthdr.len > etype)
-					m_adj(m, etype - m->m_pkthdr.len);
-				m_adj(m, 6);
-				M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-				if (m == NULL)
-					return (1);
-				*mtod(m, struct ether_header *) = *eh;
-				goto decapsulate;
-			}
-		default:
-			goto dropanyway;
-		}
+		goto dropanyway;
 	}
 
-	niq_enqueue(inq, m);
+	m_adj(m, sizeof(*eh));
+	(*input)(ifp, m);
 	return (1);
 dropanyway:
 	m_freem(m);

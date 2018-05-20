@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasicreg.h,v 1.2 2003/06/02 23:28:04 millert Exp $ */
+/* $OpenBSD: ioasicreg.h,v 1.3 2017/10/13 08:58:42 mpi Exp $ */
 /* $NetBSD: ioasicreg.h,v 1.6 2000/07/17 02:18:17 thorpej Exp $ */
 
 /* 
@@ -138,6 +138,7 @@
 #define IOASIC_CSR_DIAGDN		0x00008000	/* rw */
 #define IOASIC_CSR_TXDIS_2		0x00004000	/* rw - 3min,3max+ */
 #define IOASIC_CSR_TXDIS_1		0x00002000	/* rw - 3min,3max+ */
+#define IOASIC_CSR_ETHERNET_UTP		0x00002000	/* rw - 3000 but 300 */
 #define IOASIC_CSR_ISDN_ENABLE		0x00001000	/* rw - 3000/maxine */
 #define IOASIC_CSR_SCC_ENABLE		0x00000800	/* rw */
 #define IOASIC_CSR_RTC_ENABLE		0x00000400	/* rw */

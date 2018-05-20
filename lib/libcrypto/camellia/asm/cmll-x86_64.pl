@@ -218,7 +218,7 @@ $code.=<<___;
 	mov	$t2,@S[2]
 	mov	$t3,@S[3]
 
-	.byte	0xf3,0xc3		# rep ret
+	retq
 .size	_x86_64_Camellia_encrypt,.-_x86_64_Camellia_encrypt
 
 # V1.x API
@@ -329,7 +329,7 @@ $code.=<<___;
 	mov	$t0,@S[2]
 	mov	$t1,@S[3]
 
-	.byte	0xf3,0xc3		# rep ret
+	retq
 .size	_x86_64_Camellia_decrypt,.-_x86_64_Camellia_decrypt
 ___
 

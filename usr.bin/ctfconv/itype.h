@@ -1,4 +1,4 @@
-/*	$OpenBSD: itype.h,v 1.3 2017/08/11 16:28:30 mpi Exp $ */
+/*	$OpenBSD: itype.h,v 1.4 2017/10/31 10:08:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -58,7 +58,7 @@ struct itype {
 #define	ITF_UNRES_MEMB		 0x02	    /* members need to be resolved */
 #define	ITF_FUNC		 0x04	    /* is a function */
 #define	ITF_OBJ			 0x08	    /* is an object */
-#define	ITF_VARARGS		 0x10	    /* takes varargs */
+#define	ITF_FORWARD		 0x10	    /* is a forward declaration */
 #define	ITF_INSERTED		 0x20	    /* already found/inserted */
 #define	ITF_USED		 0x40	    /* referenced in the current CU */
 #define	ITF_ANON		 0x80	    /* type without name */

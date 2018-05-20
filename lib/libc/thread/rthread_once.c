@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_once.c,v 1.1 2017/08/15 06:13:24 guenther Exp $ */
+/*	$OpenBSD: rthread_once.c,v 1.3 2017/11/04 22:53:57 jca Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.

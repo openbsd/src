@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.71 2017/04/10 17:27:33 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.80 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,6 +199,11 @@ SSL_SESSION_new(void)
 {
 	SSL_SESSION *ss;
 
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		SSLerrorx(SSL_R_LIBRARY_BUG);
+		return(NULL);
+	}
+
 	if ((ss = calloc(1, sizeof(*ss))) == NULL) {
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
@@ -228,17 +233,37 @@ SSL_SESSION_new(void)
 }
 
 const unsigned char *
-SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
+SSL_SESSION_get_id(const SSL_SESSION *ss, unsigned int *len)
 {
-	if (len)
-		*len = s->session_id_length;
-	return s->session_id;
+	if (len != NULL)
+		*len = ss->session_id_length;
+	return ss->session_id;
+}
+
+const unsigned char *
+SSL_SESSION_get0_id_context(const SSL_SESSION *ss, unsigned int *len)
+{
+	if (len != NULL)
+		*len = (unsigned int)ss->sid_ctx_length;
+	return ss->sid_ctx;
 }
 
 unsigned int
-SSL_SESSION_get_compress_id(const SSL_SESSION *s)
+SSL_SESSION_get_compress_id(const SSL_SESSION *ss)
 {
 	return 0;
+}
+
+unsigned long
+SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
+{
+	return s->tlsext_tick_lifetime_hint;
+}
+
+int
+SSL_SESSION_has_ticket(const SSL_SESSION *s)
+{
+	return (s->tlsext_ticklen > 0) ? 1 : 0;
 }
 
 /*
@@ -710,6 +735,13 @@ SSL_SESSION_free(SSL_SESSION *ss)
 }
 
 int
+SSL_SESSION_up_ref(SSL_SESSION *ss)
+{
+	int refs = CRYPTO_add(&ss->references, 1, CRYPTO_LOCK_SSL_SESSION);
+	return (refs > 1) ? 1 : 0;
+}
+
+int
 SSL_set_session(SSL *s, SSL_SESSION *session)
 {
 	int ret = 0;
@@ -753,6 +785,23 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 	return (ret);
 }
 
+size_t
+SSL_SESSION_get_master_key(const SSL_SESSION *ss, unsigned char *out,
+    size_t max_out)
+{
+	size_t len = ss->master_key_length;
+
+	if (out == NULL)
+		return len;
+
+	if (len > max_out)
+		len = max_out;
+
+	memcpy(out, ss->master_key, len);
+
+	return len;
+}
+
 long
 SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
@@ -789,10 +838,29 @@ SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	return (t);
 }
 
+int
+SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
+{
+	return s->ssl_version;
+}
+
 X509 *
 SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
 	return s->peer;
+}
+
+int
+SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+    unsigned int sid_len)
+{
+	if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+		SSLerrorx(SSL_R_SSL_SESSION_ID_TOO_LONG);
+		return 0;
+	}
+	s->session_id_length = sid_len;
+	memmove(s->session_id, sid, sid_len);
+	return 1;
 }
 
 int
@@ -1024,13 +1092,13 @@ void
 
 void
 SSL_CTX_sess_set_get_cb(SSL_CTX *ctx, SSL_SESSION *(*cb)(struct ssl_st *ssl,
-    unsigned char *data, int len, int *copy))
+    const unsigned char *data, int len, int *copy))
 {
 	ctx->internal->get_session_cb = cb;
 }
 
 SSL_SESSION *
-(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl, unsigned char *data,
+(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(SSL *ssl, const unsigned char *data,
     int len, int *copy)
 {
 	return ctx->internal->get_session_cb;
@@ -1090,7 +1158,7 @@ SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 
 void
 SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
-    int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len))
+    int (*cb)(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len))
 {
 	ctx->internal->app_verify_cookie_cb = cb;
 }

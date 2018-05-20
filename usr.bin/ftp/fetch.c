@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.164 2017/09/25 11:04:54 krw Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.167 2018/02/10 06:25:16 jsing Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	const char * volatile savefile;
 	char * volatile proxyurl = NULL;
 	char *credentials = NULL;
-	volatile int s = -1, out = -1;
+	volatile int fd = -1, out = -1;
 	volatile sig_t oldintr, oldinti;
 	FILE *fin = NULL;
 	off_t hashbytes;
@@ -364,13 +364,13 @@ noslash:
 	if (isfileurl) {
 		struct stat st;
 
-		s = open(path, O_RDONLY);
-		if (s == -1) {
+		fd = open(path, O_RDONLY);
+		if (fd == -1) {
 			warn("Can't open file %s", path);
 			goto cleanup_url_get;
 		}
 
-		if (fstat(s, &st) == -1)
+		if (fstat(fd, &st) == -1)
 			filesize = -1;
 		else
 			filesize = st.st_size;
@@ -399,7 +399,7 @@ noslash:
 				warn("Can't fstat %s", savefile);
 				goto cleanup_url_get;
 			}
-			if (lseek(s, st.st_size, SEEK_SET) == -1) {
+			if (lseek(fd, st.st_size, SEEK_SET) == -1) {
 				warn("Can't lseek %s", path);
 				goto cleanup_url_get;
 			}
@@ -429,7 +429,7 @@ noslash:
 		/* Finally, suck down the file. */
 		i = 0;
 		oldinti = signal(SIGINFO, psummary);
-		while ((len = read(s, buf, buflen)) > 0) {
+		while ((len = read(fd, buf, buflen)) > 0) {
 			bytes += len;
 			for (cp = buf; len > 0; len -= i, cp += i) {
 				if ((i = write(out, cp, len)) == -1) {
@@ -535,7 +535,7 @@ noslash:
 	if (verbose)
 		setvbuf(ttyout, NULL, _IOLBF, 0);
 
-	s = -1;
+	fd = -1;
 	for (res = res0; res; res = res->ai_next) {
 		if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf,
 		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
@@ -543,8 +543,8 @@ noslash:
 		if (verbose)
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (s == -1) {
+		fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (fd == -1) {
 			cause = "socket";
 			continue;
 		}
@@ -552,17 +552,17 @@ noslash:
 #ifndef SMALL
 		if (srcaddr) {
 			if (ares->ai_family != res->ai_family) {
-				close(s);
-				s = -1;
+				close(fd);
+				fd = -1;
 				errno = EINVAL;
 				cause = "bind";
 				continue;
 			}
-			if (bind(s, ares->ai_addr, ares->ai_addrlen) < 0) {
+			if (bind(fd, ares->ai_addr, ares->ai_addrlen) < 0) {
 				save_errno = errno;
-				close(s);
+				close(fd);
 				errno = save_errno;
-				s = -1;
+				fd = -1;
 				cause = "bind";
 				continue;
 			}
@@ -574,14 +574,14 @@ noslash:
 			alarmtimer(connect_timeout);
 		}
 
-		for (error = connect(s, res->ai_addr, res->ai_addrlen);
-		    error != 0 && errno == EINTR; error = connect_wait(s))
+		for (error = connect(fd, res->ai_addr, res->ai_addrlen);
+		    error != 0 && errno == EINTR; error = connect_wait(fd))
 			continue;
 		if (error != 0) {
 			save_errno = errno;
-			close(s);
+			close(fd);
 			errno = save_errno;
-			s = -1;
+			fd = -1;
 			cause = "connect";
 			continue;
 		}
@@ -595,7 +595,7 @@ noslash:
 
 #ifndef NOSSL
 		if (proxyenv && sslhost)
-			proxy_connect(s, sslhost, credentials);
+			proxy_connect(fd, sslhost, credentials);
 #endif /* !NOSSL */
 		break;
 	}
@@ -604,7 +604,7 @@ noslash:
 	if (srcaddr)
 		freeaddrinfo(ares);
 #endif /* !SMALL */
-	if (s < 0) {
+	if (fd < 0) {
 		warn("%s", cause);
 		goto cleanup_url_get;
 	}
@@ -630,15 +630,17 @@ noslash:
 			    tls_error(tls));
 			goto cleanup_url_get;
 		}
-		if (tls_connect_socket(tls, s, sslhost) != 0) {
+		if (tls_connect_socket(tls, fd, sslhost) != 0) {
 			fprintf(ttyout, "SSL failure: %s\n", tls_error(tls));
 			goto cleanup_url_get;
 		}
 	} else {
-		fin = fdopen(s, "r+");
+		fin = fdopen(fd, "r+");
+		fd = -1;
 	}
 #else /* !NOSSL */
-	fin = fdopen(s, "r+");
+	fin = fdopen(fd, "r+");
+	fd = -1;
 #endif /* !NOSSL */
 
 #ifdef SMALL
@@ -912,10 +914,14 @@ noslash:
 				*loctail = '\0';
 			if (verbose)
 				fprintf(ttyout, "Redirected to %s\n", redirurl);
-			if (fin != NULL)
+			if (fin != NULL) {
 				fclose(fin);
-			else if (s != -1)
-				close(s);
+				fin = NULL;
+			}
+			if (fd != -1) {
+				close(fd);
+				fd = -1;
+			}
 			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
 			goto cleanup_url_get;
@@ -1031,6 +1037,9 @@ improper:
 cleanup_url_get:
 #ifndef NOSSL
 	if (tls != NULL) {
+		if (tls_session_fd != -1)
+			dprintf(STDERR_FILENO, "tls session resumed: %s\n",
+			    tls_conn_session_resumed(tls) ? "yes" : "no");
 		do {
 			i = tls_close(tls);
 		} while (i == TLS_WANT_POLLIN || i == TLS_WANT_POLLOUT);
@@ -1039,10 +1048,14 @@ cleanup_url_get:
 	free(full_host);
 	free(sslhost);
 #endif /* !NOSSL */
-	if (fin != NULL)
+	if (fin != NULL) {
 		fclose(fin);
-	else if (s != -1)
-		close(s);
+		fin = NULL;
+	}
+	if (fd != -1) {
+		close(fd);
+		fd = -1;
+	}
 	if (out >= 0 && out != fileno(stdout))
 		close(out);
 	free(buf);

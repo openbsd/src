@@ -1,12 +1,13 @@
-/*	$OpenBSD: parse.y,v 1.315 2017/08/21 14:41:22 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.320 2018/04/26 14:12:19 krw Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
  * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
- * Copyright (c) 2016 Job Snijders <job@instituut.net>
+ * Copyright (c) 2016, 2017 Job Snijders <job@openbsd.org>
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
+ * Copyright (c) 2017, 2018 Sebastian Benoit <benno@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -123,6 +124,7 @@ struct filter_match_l {
 	struct filter_match	 m;
 	struct filter_prefix_l	*prefix_l;
 	struct filter_as_l	*as_l;
+	struct filter_prefixset	*prefixset;
 } fmopts;
 
 struct peer	*alloc_peer(void);
@@ -164,6 +166,7 @@ typedef struct {
 		struct filter_rib_l	*filter_rib;
 		struct filter_peers_l	*filter_peers;
 		struct filter_match_l	 filter_match;
+		struct filter_prefixset	*filter_prefixset;
 		struct filter_prefix_l	*filter_prefix;
 		struct filter_as_l	*filter_as;
 		struct filter_set	*filter_set;
@@ -173,6 +176,7 @@ typedef struct {
 			u_int8_t		len;
 		}			prefix;
 		struct filter_prefixlen	prefixlen;
+		struct prefixset	*prefixset;
 		struct {
 			u_int8_t		enc_alg;
 			char			enc_key[IPSEC_ENC_KEY_LEN];
@@ -200,8 +204,8 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN MAXASSEQ
-%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
+%token	PREFIX PREFIXLEN PREFIXSET SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN
+%token	MAXASSEQ SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN
 %token	ERROR INCLUDE
 %token	IPSEC ESP AH SPI IKE
@@ -216,6 +220,7 @@ typedef struct {
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
+%type	<v.prefixset>		prefixset
 %type	<v.u8>			action quick direction delete
 %type	<v.filter_rib>		filter_rib_h filter_rib_l filter_rib
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
@@ -360,6 +365,8 @@ varset		: STRING '=' string		{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -507,6 +514,9 @@ conf_main	: AS as4number		{
 			free($2);
 		}
 		| network
+		| prefixset		{
+			SIMPLEQ_INSERT_TAIL(conf->prefixsets, $1, entry);
+		}
 		| DUMP STRING STRING optnumber		{
 			int action;
 
@@ -678,6 +688,38 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 		}
 		;
 
+prefixset	: PREFIXSET STRING '{' filter_prefix_l '}'	{
+			struct filter_prefix_l	*n, *p;
+			struct prefixset_item	*pi;
+			if (find_prefixset($2, conf->prefixsets) != NULL)  {
+				yyerror("duplicate prefixset %s", $2);
+				free($2);
+				YYERROR;
+			}
+			if (($$ = calloc(1, sizeof(*$$)))
+			    == NULL)
+				fatal("prefixset");
+			if (strlcpy($$->name, $2,
+			    sizeof($$->name)) >=
+			    sizeof($$->name)) {
+				yyerror("prefix-set \"%s\" too long: max %zu",
+				    $2, sizeof($$->name) - 1);
+				free($2);
+				YYERROR;
+			}
+			SIMPLEQ_INIT(&$$->psitems);
+			n = $4;
+			while (n != NULL) {
+				if ((pi = calloc(1, sizeof(*pi))) == NULL)
+					fatal("prefixset item");
+				pi->p = n->p;
+				SIMPLEQ_INSERT_TAIL(&$$->psitems, pi, entry);
+				p = n;
+				n = n->next;
+				free(p);
+			}
+		}
+
 network		: NETWORK prefix filter_set	{
 			struct network	*n, *m;
 
@@ -697,6 +739,21 @@ network		: NETWORK prefix filter_set	{
 			}
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		| NETWORK PREFIXSET STRING filter_set	{
+			if ((find_prefixset($3, conf->prefixsets)) == NULL) {
+				yyerror("prefix-set not defined");
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			/*
+			 * XXX not implemented
+			 */
+			yyerror("network prefix-set not implemented.");
+			free($3);
+			free($4);
+			YYERROR;
 		}
 		| NETWORK family RTLABEL STRING filter_set	{
 			struct network	*n;
@@ -768,7 +825,6 @@ address		: STRING		{
 
 prefix		: STRING '/' NUMBER	{
 			char	*s;
-
 			if ($3 < 0 || $3 > 128) {
 				yyerror("bad prefixlen %lld", $3);
 				free($1);
@@ -1500,7 +1556,8 @@ encspec		: /* nada */	{
 		}
 		;
 
-filterrule	: action quick filter_rib_h direction filter_peer_h filter_match_h filter_set
+filterrule	: action quick filter_rib_h direction filter_peer_h
+				filter_match_h filter_set
 		{
 			struct filter_rule	 r;
 			struct filter_rib_l	 *rb, *rbnext;
@@ -1692,9 +1749,9 @@ filter_prefix_m	: filter_prefix_l
 			if (p != NULL)
 				p->next = $4;
 			$$ = $2;
-		} 
+		}
 
-filter_prefix_l	: filter_prefix				{ $$ = $1; }
+filter_prefix_l	: filter_prefix			{ $$ = $1; }
 		| filter_prefix_l comma filter_prefix	{
 			$3->next = $1;
 			$$ = $3;
@@ -1826,6 +1883,12 @@ filter_elm	: filter_prefix_h	{
 				yyerror("\"prefix\" already specified");
 				YYERROR;
 			}
+			if (fmopts.m.prefixset.name[0] != '\0') {
+				yyerror("\"prefix-set\" already specified, "
+				    "cannot be used with \"prefix\" in the "
+				    "same filter rule");
+				YYERROR;
+			}
 			fmopts.prefix_l = $1;
 		}
 		| filter_as_h		{
@@ -1915,6 +1978,35 @@ filter_elm	: filter_prefix_h	{
 				YYERROR;
 			}
 			fmopts.m.nexthop.flags = FILTER_NEXTHOP_NEIGHBOR;
+		}
+		| PREFIXSET STRING	{
+			if (fmopts.prefix_l != NULL) {
+				yyerror("\"prefix\" already specified, cannot "
+				    "be used with \"prefix-set\" in the same "
+				    "filter rule");
+				free($2);
+				YYERROR;
+			}
+			if (fmopts.m.prefixset.name[0] != '\0') {
+				yyerror("prefix-set filters already specified");
+				free($2);
+				YYERROR;
+			}
+			if ((find_prefixset($2, conf->prefixsets)) == NULL) {
+				yyerror("prefix-set not defined");
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(fmopts.m.prefixset.name, $2,
+			    sizeof(fmopts.m.prefixset.name)) >=
+			    sizeof(fmopts.m.prefixset.name)) {
+				yyerror("prefix-set name too long");
+				free($2);
+				YYERROR;
+			}
+			fmopts.m.prefixset.flags |= PREFIXSET_FLAG_FILTER;
+			fmopts.m.prefixset.ps = NULL;
+			free($2);
 		}
 		;
 
@@ -2429,6 +2521,7 @@ lookup(char *s)
 		{ "peer-as",		PEERAS},
 		{ "pftable",		PFTABLE},
 		{ "prefix",		PREFIX},
+		{ "prefix-set",		PREFIXSET},
 		{ "prefixlen",		PREFIXLEN},
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
@@ -2824,8 +2917,9 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 
 	netconf = &conf->networks;
 
-	add_rib("Adj-RIB-In", conf->default_tableid,
-	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	/* the Adj-RIB-In/Out have no fib so no need to set the tableid */
+	add_rib("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	add_rib("Adj-RIB-Out", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
@@ -3181,7 +3275,7 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 	switch (type) {
 	case -1:
 		if ((p = strchr(s, ':')) == NULL) {
-			yyerror("Bad ext-community %s is %s", s, errstr);
+			yyerror("Bad ext-community %s", s);
 			return (-1);
 		}
 		*p++ = '\0';
@@ -3239,7 +3333,7 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 		else if (strcmp(s, "not-found") == 0)
 			c->data.ext_opaq = EXT_COMMUNITY_OVS_NOTFOUND;
 		else {
-			yyerror("Bad ext-community %s is %s", s, errstr);
+			yyerror("Bad ext-community %s", s);
 			return (-1);
 		}
 		break;
@@ -3429,6 +3523,31 @@ find_rib(char *name)
 	SIMPLEQ_FOREACH(rr, &ribnames, entry) {
 		if (!strcmp(rr->name, name))
 			return (rr);
+	}
+	return (NULL);
+}
+
+struct prefixset *
+find_prefixset(char *name, struct prefixset_head *p)
+{
+	struct prefixset *ps;
+
+	SIMPLEQ_FOREACH(ps, p, entry) {
+		if (!strcmp(ps->name, name))
+			return (ps);
+	}
+	return (NULL);
+}
+
+/* returns the prefixset_item from psitems that matches i */
+struct prefixset_item *
+find_prefixsetitem(struct prefixset_item *i, struct prefixset_items_h *psitems)
+{
+	struct prefixset_item *psi;
+
+	SIMPLEQ_FOREACH(psi, psitems, entry) {
+		if (memcmp(&i->p, &psi->p, sizeof(psi->p)) == 0)
+			return(psi);
 	}
 	return (NULL);
 }

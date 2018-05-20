@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.97 2013/11/22 04:12:47 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.99 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -231,7 +231,7 @@ policy_callback(char *name)
 	/*
 	 * If dirty is set, this is the first request for an attribute, so
 	 * populate our value cache.
-         */
+	 */
 	if (dirty) {
 		ie = policy_exchange->data;
 

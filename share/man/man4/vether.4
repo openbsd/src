@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vether.4,v 1.4 2014/01/20 05:07:49 schwarze Exp $
+.\"	$OpenBSD: vether.4,v 1.5 2017/10/17 22:47:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: October 17 2017 $
 .Dt VETHER 4
 .Os
 .Sh NAME
@@ -46,6 +46,13 @@ the frame will show up there.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Ox 4.7 .
+.Sh AUTHORS
+.An Theo de Raadt Aq Mt deraadt@openbsd.org
 .Sh BUGS
 Like
 .Xr tun 4 ,

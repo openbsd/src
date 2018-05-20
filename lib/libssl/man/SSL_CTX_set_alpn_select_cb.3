@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.5 2017/08/28 17:36:58 jsing Exp $
+.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.7 2018/03/23 14:28:16 schwarze Exp $
 .\"	OpenSSL 87b81496 Apr 19 12:38:27 2017 -0400
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt SSL_CTX_SET_ALPN_SELECT_CB 3
 .Os
 .Sh NAME
@@ -259,3 +259,15 @@ ALPN protocol not selected.
 .Xr ssl 3 ,
 .Xr SSL_CTX_set_tlsext_servername_arg 3 ,
 .Xr SSL_CTX_set_tlsext_servername_callback 3
+.Sh HISTORY
+.Fn SSL_select_next_proto
+first appeared in OpenSSL 1.0.1 and has been available since
+.Ox 5.3 .
+.Pp
+.Fn SSL_CTX_set_alpn_protos ,
+.Fn SSL_set_alpn_protos ,
+.Fn SSL_CTX_set_alpn_select_cb ,
+and
+.Fn SSL_get0_alpn_selected
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 5.7 .

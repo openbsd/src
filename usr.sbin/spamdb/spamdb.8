@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.18 2014/06/22 15:11:59 schwarze Exp $
+.\"	$OpenBSD: spamdb.8,v 1.20 2017/10/29 19:11:34 millert Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2014 $
+.Dd $Mdocdate: October 29 2017 $
 .Dt SPAMDB 8
 .Os
 .Sh NAME
@@ -22,10 +22,8 @@
 .Nd spamd database tool
 .Sh SYNOPSIS
 .Nm spamdb
-.Oo Oo Fl Tt Oc
-.Fl a Ar keys Oc
-.Oo Oo Fl Tt Oc
-.Fl d Ar keys Oc
+.Op Fl adGTt
+.Op Ar keys ...
 .Sh DESCRIPTION
 .Nm
 manipulates the spamd database in
@@ -35,7 +33,7 @@ used for
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl a Ar keys
+.It Fl a
 Add or update the entries for
 .Ar keys .
 This can be used to whitelist one or more IP addresses
@@ -46,9 +44,17 @@ If any
 specified match entries already in the spamd database,
 .Nm
 updates the entry's time last seen to now.
-.It Fl d Ar keys
+.It Fl d
 Delete entries for
 .Ar keys .
+.It Fl G
+Delete the keys as GREY entries.
+See the GREYTRAPPING section of
+.Xr spamd 8
+for more information.
+Must be used in conjunction with the
+.Fl d
+option.
 .It Fl T
 Add or delete the keys as SPAMTRAP entries.
 See the GREYTRAPPING section of
@@ -82,9 +88,12 @@ Otherwise
 .Ar keys
 must be numerical IP addresses.
 .Ss DATABASE OUTPUT FORMAT
-If invoked without any arguments,
+If invoked without any options,
 .Nm
 lists the contents of the database in a text format.
+If one or more
+.Ar keys
+are specified, only matching entries will be printed.
 .Pp
 For SPAMTRAP entries the format is:
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.4 2017/08/10 18:03:51 reyk Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.5 2018/02/27 08:44:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1276,7 +1276,8 @@ vio_wait_ctrl(struct vio_softc *sc)
 	int r = 0;
 
 	while (sc->sc_ctrl_inuse != FREE) {
-		r = tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, "viowait", 0);
+		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
+		    "viowait", 0);
 		if (r == EINTR)
 			return r;
 	}
@@ -1295,7 +1296,8 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 			r = 1;
 			break;
 		}
-		r = tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, "viodone", 0);
+		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
+		    "viodone", 0);
 		if (r == EINTR)
 			break;
 	}

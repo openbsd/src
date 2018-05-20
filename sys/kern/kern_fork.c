@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.200 2017/09/27 06:45:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.202 2017/12/30 20:47:00 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/vmmeter.h>
-#include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>
@@ -237,7 +236,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 		vref(pr->ps_textvp);
 
 	pr->ps_flags = parent->ps_flags &
-	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_WXNEEDED);
+	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | PS_WXNEEDED);
 	if (parent->ps_session->s_ttyvp != NULL)
 		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
 

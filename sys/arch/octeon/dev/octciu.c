@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.6 2017/07/13 05:53:57 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.10 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -66,6 +66,8 @@ struct intrbank {
 #define BANK_SIZE	64
 #define IRQ_TO_BANK(x)	((x) >> 6)
 #define IRQ_TO_BIT(x)	((x) & 0x3f)
+
+#define IS_WORKQ_IRQ(x)	((unsigned int)(x) < 16)
 
 struct octciu_cpu {
 	struct intrbank		 scpu_ibank[NBANKS];
@@ -183,6 +185,7 @@ octciu_init(void)
 	struct octciu_softc *sc = octciu_sc;
 	struct octciu_cpu *scpu;
 	int cpuid = cpu_number();
+	int s;
 
 	scpu = &sc->sc_cpu[cpuid];
 
@@ -204,6 +207,10 @@ octciu_init(void)
 	scpu->scpu_ibank[2].en = CIU_IP4_EN2(cpuid);
 	scpu->scpu_ibank[2].sum = CIU_IP4_SUM2(cpuid);
 	scpu->scpu_ibank[2].id = 2;
+
+	s = splhigh();
+	octciu_intr_makemasks(sc);
+	splx(s);	/* causes hw mask update */
 }
 
 void *
@@ -221,6 +228,12 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 		panic("%s: illegal irq %d", __func__, irq);
 #endif
 
+#ifdef MULTIPROCESSOR
+	/* Span work queue interrupts across CPUs. */
+	if (IS_WORKQ_IRQ(irq))
+		cpuid = irq % ncpusfound;
+#endif
+
 	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
 	level &= ~IPL_MPSAFE;
 
@@ -234,6 +247,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 	ih->ih_level = level;
 	ih->ih_flags = flags;
 	ih->ih_irq = irq;
+	ih->ih_cpuid = cpuid;
 	evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
 
 	s = splhigh();
@@ -291,6 +305,7 @@ octciu_intr_disestablish(void *_ih)
 	int s;
 
 	KASSERT(irq < sc->sc_nbanks * BANK_SIZE);
+	KASSERT(!IS_WORKQ_IRQ(irq));
 
 	s = splhigh();
 
@@ -323,7 +338,8 @@ octciu_intr_disestablish(void *_ih)
 void
 octciu_intr_makemasks(struct octciu_softc *sc)
 {
-	struct octciu_cpu *scpu = &sc->sc_cpu[cpu_number()];
+	cpuid_t cpuid = cpu_number();
+	struct octciu_cpu *scpu = &sc->sc_cpu[cpuid];
 	struct intrhand *q;
 	uint intrlevel[OCTCIU_NINTS];
 	int irq, level;
@@ -331,8 +347,10 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < OCTCIU_NINTS; irq++) {
 		uint levels = 0;
-		for (q = sc->sc_intrhand[irq]; q != NULL; q = q->ih_next)
-			levels |= 1 << q->ih_level;
+		for (q = sc->sc_intrhand[irq]; q != NULL; q = q->ih_next) {
+			if (q->ih_cpuid == cpuid)
+				levels |= 1 << q->ih_level;
+		}
 		intrlevel[irq] = levels;
 	}
 
@@ -444,10 +462,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 	 * Now process allowed interrupts.
 	 */
 
-	__asm__ (".set noreorder\n");
 	ipl = ci->ci_ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	while ((irq = octciu_next_irq(&isr)) >= 0) {
 		irq += bank->id * BANK_SIZE;
@@ -462,7 +477,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 			if (ih->ih_flags & IH_MPSAFE)
 				need_lock = 0;
 			else
-				need_lock = ih->ih_level < IPL_CLOCK;
+				need_lock = 1;
 			if (need_lock)
 				__mp_lock(&kernel_lock);
 #endif
@@ -482,10 +497,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 			printf("spurious interrupt %d\n", irq);
 	}
 
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = ipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	/*
 	 * Reenable interrupts which have been serviced.
@@ -525,11 +537,7 @@ octciu_splx(int newipl)
 	struct octciu_softc *sc = octciu_sc;
 	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 
-	/* Update IPL. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 
 	/* Set hardware masks. */
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, scpu->scpu_ibank[0].en,

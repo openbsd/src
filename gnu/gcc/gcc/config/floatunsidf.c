@@ -13,3 +13,7 @@ __floatunsidf (USItype u)
 				 << (sizeof (USItype) * __CHAR_BIT__ - 1));
   return r;
 }
+
+#ifdef __ARM_EABI__
+__asm__ (".globl\t__aeabi_ui2d\n.set\t__aeabi_ui2d, __floatunsidf\n");
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.3 2015/08/31 02:53:56 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.4 2018/01/18 08:23:44 guenther Exp $	*/
 /*	$NetBSD: ffs.S,v 1.3 1996/10/17 03:08:13 cgd Exp $	*/
 
 /*
@@ -89,4 +89,5 @@ Ldone:
 Lallzero:
 	bis	zero, zero, v0
 	RET
-END_WEAK(ffs)
+END(ffs)
+.protected ffs

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.74 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.75 2018/05/15 14:58:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,6 +100,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 		s->cwd = format_single(item, cflag, c, s, wl, wp);
 	}
 
+	c->last_session = c->session;
 	if (c->session != NULL) {
 		if (dflag) {
 			TAILQ_FOREACH(c_loop, &clients, entry) {

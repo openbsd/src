@@ -1845,18 +1845,8 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
                         int fd = PerlIO_fileno(IoIFP(GvIOn(gv)));
 			APPLY_TAINT_PROPER();
                         if (fd < 0) {
-			    SETERRNO(EBADF,RMS_IFI);
+                            SETERRNO(EBADF,RMS_IFI);
 			    tot--;
-#if Uid_t_sign == 1
-			} else if (val < 0) {
-			    SETERRNO(EINVAL,LIB_INVARG);
-			    tot--;
-#endif
-#if Gid_t_sign == 1
-			} else if (val2 < 0) {
-			    SETERRNO(EINVAL,LIB_INVARG);
-			    tot--;
-#endif
                         } else if (fchown(fd, val, val2))
 			    tot--;
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.14 2016/10/04 13:54:32 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.18 2018/05/08 15:10:33 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -36,15 +36,16 @@
 #define _NETINET_TCP_TIMER_H_
 
 /*
- * Definitions of the TCP timers.  These timers are counted
- * down PR_SLOWHZ times a second.
+ * Definitions of the TCP timers.
  */
-#define	TCPT_NTIMERS	4
-
 #define	TCPT_REXMT	0		/* retransmit */
 #define	TCPT_PERSIST	1		/* retransmit persistence */
 #define	TCPT_KEEP	2		/* keep alive */
 #define	TCPT_2MSL	3		/* 2*msl quiet time timer */
+#define	TCPT_REAPER	4		/* delayed cleanup timeout */
+#define	TCPT_DELACK	5		/* delayed ack timeout */
+
+#define	TCPT_NTIMERS	6
 
 /*
  * The TCPT_REXMT timer is used to force retransmissions.
@@ -105,11 +106,11 @@
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
 
-#define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
+#define	TCP_DELACK_MSECS 200			/* time to delay ACK */
 
 #ifdef	TCPTIMERS
-const char *tcptimers[] =
-    { "REXMT", "PERSIST", "KEEP", "2MSL" };
+const char *tcptimers[TCPT_NTIMERS] =
+    { "REXMT", "PERSIST", "KEEP", "2MSL", "REAPER", "DELACK" };
 #endif /* TCPTIMERS */
 
 /*
@@ -119,13 +120,25 @@ const char *tcptimers[] =
 	timeout_set_proc(&(tp)->t_timer[(timer)], tcp_timer_funcs[(timer)], tp)
 
 #define	TCP_TIMER_ARM(tp, timer, nticks)				\
-	timeout_add(&(tp)->t_timer[(timer)], (nticks) * (hz / PR_SLOWHZ))
+do {									\
+	SET((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_add_msec(&(tp)->t_timer[(timer)], (nticks) * 500);	\
+} while (0)
+
+#define	TCP_TIMER_ARM_MSEC(tp, timer, msecs)				\
+do {									\
+	SET((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_add_msec(&(tp)->t_timer[(timer)], (msecs));	\
+} while (0)
 
 #define	TCP_TIMER_DISARM(tp, timer)					\
-	timeout_del(&(tp)->t_timer[(timer)])
+do {									\
+	CLR((tp)->t_flags, TF_TIMER << (timer));			\
+	timeout_del(&(tp)->t_timer[(timer)]);				\
+} while (0)
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
-	timeout_pending(&(tp)->t_timer[(timer)])
+	ISSET((tp)->t_flags, TF_TIMER << (timer))
 
 /*
  * Force a time value to be in a certain range.
@@ -144,6 +157,7 @@ typedef void (*tcp_timer_func_t)(void *);
 
 extern const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
 
+extern int tcp_delack_msecs;		/* delayed ACK timeout in millisecs */
 extern int tcptv_keep_init;
 extern int tcp_always_keepalive;	/* assume SO_KEEPALIVE is always set */
 extern int tcp_keepidle;		/* time before keepalive probes begin */

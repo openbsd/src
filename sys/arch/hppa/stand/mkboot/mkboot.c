@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.20 2014/10/26 10:32:30 miod Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.21 2017/12/30 23:08:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,11 +34,11 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

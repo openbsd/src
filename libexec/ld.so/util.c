@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2018/02/09 22:13:04 mortimer Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,6 +30,8 @@
 #include <syslog.h>
 #include "archdep.h"
 #include "resolve.h"
+#define KEYSTREAM_ONLY
+#include "chacha_private.h"
 
 /*
  * Stack protector dummies.
@@ -39,6 +41,12 @@
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
 void __stack_smash_handler(char [], int);
+
+#define KEYSZ 32
+#define IVSZ  8
+#define REKEY_AFTER_BYTES (1 << 31)
+static chacha_ctx chacha;
+static size_t chacha_bytes;
 
 void
 __stack_smash_handler(char func[], int damaged)
@@ -72,41 +80,25 @@ _dl_strdup(const char *orig)
 }
 
 void
-_dl_arc4randombuf(void *v, size_t buflen)
+_dl_arc4randombuf(void *buf, size_t buflen)
 {
-	static char bytes[256];
-	static u_int reserve;
-	char *buf = v;
-	size_t chunk;
+	if (chacha_bytes == 0) {
+		char bytes[KEYSZ + IVSZ];
 
-	while (buflen != 0) {
-		if (reserve == 0) {
-			if (_dl_getentropy(bytes, sizeof(bytes)) != 0)
-				_dl_die("no entropy");
-			reserve = sizeof(bytes);
-		}
-		if (buflen > reserve)
-			chunk = reserve;
-		else
-			chunk = buflen;
-#if 0
-		memcpy(buf, bytes + reserve - chunk, chunk);
-		memset(bytes + reserve - chunk, 0, chunk);
-#else
-		{
-			char *d = buf;
-			char *s = bytes + reserve - chunk;
-			u_int l;
-			for (l = chunk; l > 0; l--, s++, d++) {
-				*d = *s;
-				*s = 0;
-			}
-		}
-#endif
-		reserve -= chunk;
-		buflen -= chunk;
-		buf += chunk;
+		if (_dl_getentropy(bytes, KEYSZ + IVSZ) != 0)
+			_dl_die("no entropy");
+		chacha_keysetup(&chacha, bytes, KEYSZ * 8);
+		chacha_ivsetup(&chacha, bytes + KEYSZ);
+		if (_dl_getentropy(bytes, KEYSZ + IVSZ) != 0)
+			_dl_die("could not clobber rng key");
 	}
+
+	chacha_encrypt_bytes(&chacha, buf, buf, buflen);
+
+	if (REKEY_AFTER_BYTES - chacha_bytes < buflen)
+		chacha_bytes = 0;
+	else
+		chacha_bytes += buflen;
 }
 
 u_int32_t

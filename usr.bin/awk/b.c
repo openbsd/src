@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.18 2014/12/19 19:28:55 deraadt Exp $	*/
+/*	$OpenBSD: b.c,v 1.20 2018/01/24 16:28:25 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -260,6 +260,8 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 
 	if ((c = *p++) == 't')
 		c = '\t';
+	else if (c == 'v')
+		c = '\v';
 	else if (c == 'n')
 		c = '\n';
 	else if (c == 'f')
@@ -268,6 +270,8 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 		c = '\r';
 	else if (c == 'b')
 		c = '\b';
+	else if (c == 'a')
+		c = '\007';
 	else if (c == '\\')
 		c = '\\';
 	else if (c == 'x') {	/* hexadecimal goo follows */
@@ -327,7 +331,7 @@ char *cclenter(const char *argp)	/* add a character class */
 		i++;
 	}
 	*bp = 0;
-	dprintf( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
+	DPRINTF( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
 	xfree(op);
 	return (char *) tostring((char *) buf);
 }
@@ -611,7 +615,7 @@ Node *reparse(const char *p)	/* parses regular expression pointed to by p */
 {			/* uses relex() to scan regular expression */
 	Node *np;
 
-	dprintf( ("reparse <%s>\n", p) );
+	DPRINTF( ("reparse <%s>\n", p) );
 	lastre = prestr = (uschar *) p;	/* prestr points to string to be parsed */
 	rtok = relex();
 	/* GNU compatibility: an empty regexp matches anything */

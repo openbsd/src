@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.12 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.13 2018/04/14 07:09:21 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -96,10 +96,8 @@ ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 		return 0;
 
 #ifndef OPENSSL_NO_ENGINE
-	if (ecdsa->engine) {
-		ENGINE_finish(ecdsa->engine);
-		ecdsa->engine = NULL;
-	}
+	ENGINE_finish(ecdsa->engine);
+	ecdsa->engine = NULL;
 #endif
 	ecdsa->meth = meth;
 
@@ -126,7 +124,7 @@ ECDSA_DATA_new_method(ENGINE *engine)
 		ret->engine = ENGINE_get_default_ECDSA();
 	if (ret->engine) {
 		ret->meth = ENGINE_get_ECDSA(ret->engine);
-		if (!ret->meth) {
+		if (ret->meth == NULL) {
 			ECDSAerror(ERR_R_ENGINE_LIB);
 			ENGINE_finish(ret->engine);
 			free(ret);
@@ -164,8 +162,7 @@ ecdsa_data_free(void *data)
 	ECDSA_DATA *r = (ECDSA_DATA *)data;
 
 #ifndef OPENSSL_NO_ENGINE
-	if (r->engine)
-		ENGINE_finish(r->engine);
+	ENGINE_finish(r->engine);
 #endif
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 

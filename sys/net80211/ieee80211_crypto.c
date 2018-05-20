@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.71 2017/08/18 17:30:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.73 2018/04/28 14:46:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -196,7 +196,8 @@ ieee80211_get_txkey(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 	    ni->ni_rsncipher != IEEE80211_CIPHER_USEGROUP)
 		return &ni->ni_pairwise_key;
 
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) ||
+	if ((ic->ic_flags & IEEE80211_F_WEPON) ||
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
 	    IEEE80211_FC0_TYPE_MGT)
 		kid = ic->ic_def_txkey;
@@ -225,8 +226,7 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	default:
 		/* should not get there */
-		m_freem(m0);
-		m0 = NULL;
+		panic("invalid key cipher 0x%x", k->k_cipher);
 	}
 	return m0;
 }

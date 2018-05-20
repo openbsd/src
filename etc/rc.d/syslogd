@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: syslogd,v 1.4 2014/07/18 18:20:42 deraadt Exp $
+# $OpenBSD: syslogd,v 1.5 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/syslogd"
 

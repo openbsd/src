@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.123 2016/09/04 10:35:39 tedu Exp $
+#	$OpenBSD: files.isa,v 1.124 2018/02/14 23:51:49 jsg Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -168,12 +168,6 @@ file	dev/isa/if_ep_isa.c		ep_isa
 attach	ie at isa with ie_isa: elink
 file	dev/isa/if_ie.c			ie_isa
 
-# Intel i82595-based boards.
-# (Intel EtherExpress PRO/100)
-device	iy: ether, ifnet
-attach	iy at isa
-file	dev/isa/if_iy.c			iy
-
 # Intel EtherExpress PRO/10
 device	ex: ether, ifnet
 attach	ex at isa
@@ -213,13 +207,6 @@ file	dev/isa/sb.c			sb
 
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb & (sb_isa | sb_isapnp)
-
-# Soundcards based on Sierra's Aria chipset.
-# Such as the Prometheus Aria 16 or the Diamond
-# sonic sound.
-device	aria: audio
-attach	aria at isa
-file	dev/isa/aria.c			aria
 
 # ProAudio Spectrum
 device	pas: audio, isa_dma, sbdsp
@@ -320,14 +307,3 @@ file	dev/isa/asmc.c			asmc
 device	isagpio: gpiobus
 attach	isagpio at isa
 file	dev/isa/isagpio.c		isagpio
-
-#
-# PCMCIA PCIC (i82365SL and compatibles):
-#
-#device	pcicmaster {[irq = -1], [iomem = -1], [iosiz = 0]}
-#attach	pcicmaster at isa
-#device	pcic: pcmciabus
-#attach	pcic at pcicmaster
-#file	dev/isa/pcmcia_pcic.c		pcic | pcicmaster
-
-#file	dev/isa/pcmcia_isa.c		pcmcia

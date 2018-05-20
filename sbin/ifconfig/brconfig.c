@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.16 2017/07/31 02:32:11 jsg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.19 2018/02/24 06:31:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -46,6 +46,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 #include "brconfig.h"
 
@@ -57,6 +58,7 @@ void bridge_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
 int is_switch(char *);
+int bridge_arprule(struct ifbrlreq *, int *, char ***);
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
@@ -274,8 +276,12 @@ bridge_cfg(const char *delim)
 	u_int16_t bprio;
 
 	strlcpy(ifbp.ifbop_name, name, sizeof(ifbp.ifbop_name));
-	if (ioctl(s, SIOCBRDGGPARAM, (caddr_t)&ifbp))
-		err(1, "%s", name);
+	if (ioctl(s, SIOCBRDGGPARAM, (caddr_t)&ifbp) == -1) {
+		if (errno == ENOTTY)
+			return;
+		err(1, "%s SIOCBRDGGPARAM", name);
+	}
+
 	printf("%s", delim);
 	pri = ifbp.ifbop_priority;
 	ht = ifbp.ifbop_hellotime;
@@ -318,8 +324,11 @@ bridge_list(char *delim)
 			err(1, "malloc");
 		bifc.ifbic_buf = inbuf = inb;
 		strlcpy(bifc.ifbic_name, name, sizeof(bifc.ifbic_name));
-		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
-			err(1, "%s", name);
+		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0) {
+			if (errno == ENOTTY)
+				return;
+			err(1, "%s SIOCBRDGIFS", name);
+		}
 		if (bifc.ifbic_len + sizeof(*reqp) < len)
 			break;
 		len *= 2;
@@ -336,6 +345,16 @@ bridge_list(char *delim)
 		printf("port %u ifpriority %u ifcost %u",
 		    reqp->ifbr_portno, reqp->ifbr_priority,
 		    reqp->ifbr_path_cost);
+		if (reqp->ifbr_protected) {
+			int v;
+
+			v = ffs(reqp->ifbr_protected);
+			printf(" protected %u", v);
+			while (++v < 32) {
+				if ((1 << (v - 1)) & reqp->ifbr_protected)
+					printf(",%u", v);
+			}
+		};
 		if (reqp->ifbr_ifsflags & IFBIF_STP)
 			printf(" %s role %s",
 			    stpstates[reqp->ifbr_state],
@@ -452,6 +471,54 @@ bridge_priority(const char *arg, int d)
 	bp.ifbrp_prio = v;
 	if (ioctl(s, SIOCBRDGSPRI, (caddr_t)&bp) < 0)
 		err(1, "%s", name);
+}
+
+void
+bridge_protect(const char *ifname, const char *val)
+{
+	struct ifbreq breq;
+	unsigned long v;
+	char *optlist, *str;
+	char *endptr;
+
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+	breq.ifbr_protected = 0;
+
+	/* We muck with the string, so copy it. */
+	optlist = strdup(val);
+	if (optlist == NULL)
+		err(1, "strdup");
+
+	str = strtok(optlist, ",");
+	while (str != NULL) {
+		errno = 0;
+		v = strtoul(str, &endptr, 0);
+		if (str[0] == '\0' || endptr[0] != '\0' || v == 0 || v > 31 ||
+		    (errno == ERANGE && v == ULONG_MAX))
+			err(1, "invalid value for protected domain: %s", str);
+		breq.ifbr_protected |= (1 << (v - 1));
+		str = strtok(NULL, ",");
+	}
+
+	if (ioctl(s, SIOCBRDGSIFPROT, (caddr_t)&breq) < 0)
+		err(1, "%s: %s", name, val);
+
+	free(optlist);
+}
+
+void
+bridge_unprotect(const char *ifname, int d)
+{
+	struct ifbreq breq;
+
+	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+
+	breq.ifbr_protected = 0;
+
+	if (ioctl(s, SIOCBRDGSIFPROT, (caddr_t)&breq) < 0)
+		err(1, "%s: %d", name, 0);
 }
 
 void
@@ -821,6 +888,25 @@ bridge_showrule(struct ifbrlreq *r)
 	if (r->ifbr_tagname[0])
 		printf(" tag %s", r->ifbr_tagname);
 
+	if (r->ifbr_arpf.brla_flags & BRLA_ARP)
+		printf(" arp");
+	if (r->ifbr_arpf.brla_flags & BRLA_RARP)
+		printf(" rarp");
+	if (r->ifbr_arpf.brla_op == ARPOP_REQUEST ||
+	    r->ifbr_arpf.brla_op == ARPOP_REVREQUEST)
+		printf(" request");
+	if (r->ifbr_arpf.brla_op == ARPOP_REPLY ||
+	    r->ifbr_arpf.brla_op == ARPOP_REVREPLY)
+		printf(" reply");
+	if (r->ifbr_arpf.brla_flags & BRLA_SHA)
+		printf(" sha %s", ether_ntoa(&r->ifbr_arpf.brla_sha));
+	if (r->ifbr_arpf.brla_flags & BRLA_THA)
+		printf(" tha %s", ether_ntoa(&r->ifbr_arpf.brla_tha));
+	if (r->ifbr_arpf.brla_flags & BRLA_SPA)
+		printf(" spa %s", inet_ntoa(r->ifbr_arpf.brla_spa));
+	if (r->ifbr_arpf.brla_flags & BRLA_TPA)
+		printf(" tpa %s", inet_ntoa(r->ifbr_arpf.brla_tpa));
+
 	printf("\n");
 }
 
@@ -837,14 +923,13 @@ bridge_rule(int targc, char **targv, int ln)
 	int argc = targc;
 	struct ifbrlreq rule;
 	struct ether_addr *ea, *dea;
+	struct in_addr *ia;
 
 	if (argc == 0) {
 		warnx("invalid rule");
 		return (1);
 	}
-	rule.ifbr_tagname[0] = 0;
-	rule.ifbr_flags = 0;
-	rule.ifbr_action = 0;
+	bzero(&rule, sizeof(rule));
 	strlcpy(rule.ifbr_name, name, sizeof(rule.ifbr_name));
 
 	if (strcmp(argv[0], "block") == 0)
@@ -882,16 +967,19 @@ bridge_rule(int targc, char **targv, int ln)
 	argc--; argv++;
 
 	while (argc) {
+		dea = NULL;
 		if (strcmp(argv[0], "dst") == 0) {
 			if (rule.ifbr_flags & BRL_FLAG_DSTVALID)
 				goto bad_rule;
 			rule.ifbr_flags |= BRL_FLAG_DSTVALID;
 			dea = &rule.ifbr_dst;
+			argc--; argv++;
 		} else if (strcmp(argv[0], "src") == 0) {
 			if (rule.ifbr_flags & BRL_FLAG_SRCVALID)
 				goto bad_rule;
 			rule.ifbr_flags |= BRL_FLAG_SRCVALID;
 			dea = &rule.ifbr_src;
+			argc--; argv++;
 		} else if (strcmp(argv[0], "tag") == 0) {
 			if (argc < 2) {
 				warnx("missing tag name");
@@ -901,28 +989,37 @@ bridge_rule(int targc, char **targv, int ln)
 				warnx("tag already defined");
 				goto bad_rule;
 			}
-			if (strlcpy(rule.ifbr_tagname, argv[1],
+			argc--; argv++;
+			if (strlcpy(rule.ifbr_tagname, argv[0],
 			    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
-				warnx("tag name '%s' too long", argv[1]);
+				warnx("tag name '%s' too long", argv[0]);
 				goto bad_rule;
 			}
-			dea = NULL;
+			argc--; argv++;
+		} else if (strcmp(argv[0], "arp") == 0) {
+			rule.ifbr_arpf.brla_flags |= BRLA_ARP;
+			argc--; argv++;
+			if (bridge_arprule(&rule, &argc, &argv) == -1)
+				goto bad_rule;
+		} else if (strcmp(argv[0], "rarp") == 0) {
+			rule.ifbr_arpf.brla_flags |= BRLA_RARP;
+			argc--; argv++;
+			if (bridge_arprule(&rule, &argc, &argv) == -1)
+				goto bad_rule;
 		} else
 			goto bad_rule;
 
-		argc--; argv++;
-
-		if (argc == 0)
-			goto bad_rule;
 		if (dea != NULL) {
+			if (argc == 0)
+				goto bad_rule;
 			ea = ether_aton(argv[0]);
 			if (ea == NULL) {
 				warnx("invalid address: %s", argv[0]);
 				return (1);
 			}
 			bcopy(ea, dea, sizeof(*dea));
+			argc--; argv++;
 		}
-		argc--; argv++;
 	}
 
 	if (ioctl(s, SIOCBRDGARL, &rule) < 0) {
@@ -936,7 +1033,71 @@ bad_rule:
 	return (1);
 }
 
-#define MAXRULEWORDS 8
+int
+bridge_arprule(struct ifbrlreq *rule, int *argc, char ***argv)
+{
+	while (*argc) {
+		struct ether_addr	*ea, *dea = NULL;
+		struct in_addr		 ia, *dia = NULL;
+
+		if (strcmp((*argv)[0], "request") == 0) {
+			if (rule->ifbr_arpf.brla_flags & BRLA_ARP)
+				rule->ifbr_arpf.brla_op = ARPOP_REQUEST;
+			else if (rule->ifbr_arpf.brla_flags & BRLA_RARP)
+				rule->ifbr_arpf.brla_op = ARPOP_REVREQUEST;
+			else
+				errx(1, "bridge_arprule: arp/rarp undefined");
+		} else if (strcmp((*argv)[0], "reply") == 0) {
+			if (rule->ifbr_arpf.brla_flags & BRLA_ARP)
+				rule->ifbr_arpf.brla_op = ARPOP_REPLY;
+			else if (rule->ifbr_arpf.brla_flags & BRLA_RARP)
+				rule->ifbr_arpf.brla_op = ARPOP_REVREPLY;
+			else
+				errx(1, "bridge_arprule: arp/rarp undefined");
+		} else if (strcmp((*argv)[0], "sha") == 0) {
+			rule->ifbr_arpf.brla_flags |= BRLA_SHA;
+			dea = &rule->ifbr_arpf.brla_sha;
+		} else if (strcmp((*argv)[0], "tha") == 0) {
+			rule->ifbr_arpf.brla_flags |= BRLA_THA;
+			dea = &rule->ifbr_arpf.brla_tha;
+		} else if (strcmp((*argv)[0], "spa") == 0) {
+			rule->ifbr_arpf.brla_flags |= BRLA_SPA;
+			dia = &rule->ifbr_arpf.brla_spa;
+		} else if (strcmp((*argv)[0], "tpa") == 0) {
+			rule->ifbr_arpf.brla_flags |= BRLA_TPA;
+			dia = &rule->ifbr_arpf.brla_tpa;
+		} else
+			return (0);
+
+		(*argc)--; (*argv)++;
+		if (dea != NULL) {
+			if (*argc == 0)
+				return (-1);
+			ea = ether_aton((*argv)[0]);
+			if (ea == NULL) {
+				warnx("invalid address: %s", (*argv)[0]);
+				return (-1);
+			}
+			bcopy(ea, dea, sizeof(*dea));
+			(*argc)--; (*argv)++;
+		}
+		if (dia != NULL) {
+			if (*argc == 0)
+				return (-1);
+			ia.s_addr = inet_addr((*argv)[0]);
+			if (ia.s_addr == INADDR_NONE) {
+				warnx("invalid address: %s", (*argv)[0]);
+				return (-1);
+			}
+			bcopy(&ia, dia, sizeof(*dia));
+			(*argc)--; (*argv)++;
+		}
+	}
+	return (0);
+}
+
+
+#define MAXRULEWORDS 32
 
 void
 bridge_rulefile(const char *fname, int d)

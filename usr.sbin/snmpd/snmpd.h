@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.76 2017/07/28 13:17:43 florian Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.78 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@
 #define SMALL_READ_BUF_SIZE	1024
 #define READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
-#define	MAX_RTSOCK_BUF		(128 * 1024)
+#define	MAX_RTSOCK_BUF		(2 * 1024 * 1024)
 
 #define SNMP_ENGINEID_OLD	0x00
 #define SNMP_ENGINEID_NEW	0x80	/* RFC3411 */
@@ -404,6 +404,8 @@ struct snmp_message {
 	int			 sm_sock;
 	struct sockaddr_storage	 sm_ss;
 	socklen_t		 sm_slen;
+	int			 sm_sock_tcp;
+	struct event		 sm_sockev;
 	char			 sm_host[HOST_NAME_MAX+1];
 
 	struct sockaddr_storage	 sm_local_ss;
@@ -509,6 +511,7 @@ struct snmp_stats {
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
+	int			 ipproto;
 
 	TAILQ_ENTRY(address)	 entry;
 
@@ -521,7 +524,9 @@ TAILQ_HEAD(addresslist, address);
 
 struct listen_sock {
 	int				s_fd;
+	int				s_ipproto;
 	struct event			s_ev;
+	struct event			s_evt;
 	TAILQ_ENTRY(listen_sock)	entry;
 };
 TAILQ_HEAD(socklist, listen_sock);
@@ -739,7 +744,7 @@ char		*smi_print_element(struct ber_element *);
 void		 timer_init(void);
 
 /* snmpd.c */
-int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t);
+int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t, int);
 u_long		 snmpd_engine_time(void);
 char		*tohexstr(u_int8_t *, int);
 

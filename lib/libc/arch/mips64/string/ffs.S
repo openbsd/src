@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.4 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: ffs.S,v 1.5 2018/01/18 08:23:44 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,4 +46,5 @@ LEAF(ffs, 0)
 	beq	v1, zero, 1b		# no, continue
 done:
 	j	ra
-END_WEAK(ffs)
+END(ffs)
+.protected ffs

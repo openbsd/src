@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.165 2017/06/26 07:02:16 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.169 2018/04/11 04:48:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,6 +111,8 @@ struct audio_softc {
 	int offs;			/* offset between play & rec dir */
 	void (*conv_enc)(unsigned char *, int);	/* encode to native */
 	void (*conv_dec)(unsigned char *, int);	/* decode to user */
+	struct mixer_ctrl *mix_ents;	/* mixer state for suspend/resume */
+	int mix_nent;			/* size of mixer state */
 #if NWSKBD > 0
 	struct wskbd_vol spkr, mic;
 	struct task wskbd_task;
@@ -462,7 +464,7 @@ audio_rintr(void *addr)
 
 	sc->rec.pos += sc->rec.blksz;
 	audio_buf_wcommit(&sc->rec, sc->rec.blksz);
-	if (sc->rec.used == sc->rec.len) {
+	if (sc->rec.used > sc->rec.len - sc->rec.blksz) {
 		DPRINTFN(1, "%s: rec overrun\n", DEVNAME(sc));
 		sc->rec.xrun += sc->rec.blksz;
 		audio_buf_rdiscard(&sc->rec, sc->rec.blksz);
@@ -810,7 +812,6 @@ audio_setpar(struct audio_softc *sc)
 		sc->round = max;
 	else if (sc->round < min)
 		sc->round = min;
-	sc->round = sc->round;
 
 	/*
 	 * set buffer size (number of blocks)
@@ -995,6 +996,8 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	struct audio_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
 	struct audio_hw_if *ops = sa->hwif;
+	struct mixer_devinfo *mi;
+	struct mixer_ctrl *ent;
 	void *arg = sa->hdl;
 	int error;
 
@@ -1054,12 +1057,57 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->round = 960;
 	sc->nblks = 2;
 	sc->play.pos = sc->play.xrun = sc->rec.pos = sc->rec.xrun = 0;
+
+	/*
+	 * allocate an array of mixer_ctrl structures to save the
+	 * mixer state and prefill them.
+	 */
+
+	mi = malloc(sizeof(struct mixer_devinfo), M_TEMP, M_WAITOK);
+
+	sc->mix_nent = 0;
+	mi->index = 0;
+	while (1) {
+		if (sc->ops->query_devinfo(sc->arg, mi) != 0)
+			break;
+		switch (mi->type) {
+		case AUDIO_MIXER_SET:
+		case AUDIO_MIXER_ENUM:
+		case AUDIO_MIXER_VALUE:
+			sc->mix_nent++;
+		}
+		mi->index++;
+	}
+
+	sc->mix_ents = mallocarray(sc->mix_nent,
+	    sizeof(struct mixer_ctrl), M_DEVBUF, M_WAITOK);
+
+	ent = sc->mix_ents;
+	mi->index = 0;
+	while (1) {
+		if (sc->ops->query_devinfo(sc->arg, mi) != 0)
+			break;
+		switch (mi->type) {
+		case AUDIO_MIXER_VALUE:
+			ent->un.value.num_channels = mi->un.v.num_channels;
+			/* FALLTHROUGH */
+		case AUDIO_MIXER_SET:
+		case AUDIO_MIXER_ENUM:
+			ent->dev = mi->index;
+			ent->type = mi->type;
+			ent++;
+		}
+		mi->index++;
+	}
+
+	free(mi, M_TEMP, sizeof(struct mixer_devinfo));
 }
 
 int
 audio_activate(struct device *self, int act)
 {
 	struct audio_softc *sc = (struct audio_softc *)self;
+	int i;
 
 	switch (act) {
 	case DVACT_QUIESCE:
@@ -1082,10 +1130,23 @@ audio_activate(struct device *self, int act)
 		 */
 		if (sc->mode != 0 && sc->active)
 			audio_stop_do(sc);
+
+		/*
+		 * save mixer state
+		 */
+		for (i = 0; i != sc->mix_nent; i++)
+			sc->ops->get_port(sc->arg, sc->mix_ents + i);
+
 		DPRINTF("%s: quiesce: active = %d\n", DEVNAME(sc), sc->active);
 		break;
 	case DVACT_WAKEUP:
 		DPRINTF("%s: wakeup: active = %d\n", DEVNAME(sc), sc->active);
+
+		/*
+		 * restore mixer state
+		 */
+		for (i = 0; i != sc->mix_nent; i++)
+			sc->ops->set_port(sc->arg, sc->mix_ents + i);
 
 		/*
 		 * keep buffer usage the same, but set start pointer to
@@ -1157,6 +1218,7 @@ audio_detach(struct device *self, int flags)
 	}
 
 	/* free resources */
+	free(sc->mix_ents, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ctrl));
 	audio_buf_done(sc, &sc->play);
 	audio_buf_done(sc, &sc->rec);
 	return 0;
@@ -1358,14 +1420,13 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		tsleep(&sc->quiesce, 0, "au_qrd", 0);
 
 	/* start automatically if audio_ioc_start() was never called */
-	mtx_enter(&audio_lock);
 	if (audio_canstart(sc)) {
-		mtx_leave(&audio_lock);
 		error = audio_start(sc);
 		if (error)
 			return error;
-		mtx_enter(&audio_lock);
 	}
+
+	mtx_enter(&audio_lock);
 
 	/* if there is no data then sleep */
 	while (sc->rec.used == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -91,8 +91,6 @@ struct db_variable db_regs[] = {
 extern label_t       *db_recover;
 
 struct db_variable * db_eregs = db_regs + nitems(db_regs);
-
-int	db_active = 0;
 
 int
 db_access_und_sp(struct db_variable *vp, db_expr_t *valp, int rw)

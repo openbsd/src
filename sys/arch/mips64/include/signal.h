@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.12 2017/04/10 14:35:30 visa Exp $	*/
+/*	$OpenBSD: signal.h,v 1.13 2018/01/08 16:44:32 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,8 +38,6 @@
 #define _MIPS64_SIGNAL_H_
 
 #include <sys/cdefs.h>
-
-#if !defined(__ASSEMBLER__)
 #include <sys/types.h>
 
 /*
@@ -68,17 +66,5 @@ struct	sigcontext {
 	long	xxx[8];		/* XXX reserved */
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-
-#else /* __ASSEMBLER__ */
-#define SC_ONSTACK	(0 * REGSZ)
-#define	SC_MASK		(1 * REGSZ)
-#define	SC_PC		(2 * REGSZ)
-#define	SC_REGS		(3 * REGSZ)
-#define	SC_MULLO	(35 * REGSZ)
-#define	SC_MULHI	(36 * REGSZ)
-#define	SC_FPREGS	(37 * REGSZ)
-#define	SC_FPUSED	(70 * REGSZ)
-#define	SC_FPC_EIR	(71 * REGSZ)
-#endif /* __ASSEMBLER__ */
 
 #endif	/* !_MIPS64_SIGNAL_H_ */

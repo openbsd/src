@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.41 2014/03/26 14:41:41 mpi Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.43 2018/04/28 15:44:59 jasper Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -58,7 +58,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -329,7 +328,7 @@ pchb_rnd(void *v)
 
 		if (!sc->sc_rng_i--) {
 			sc->sc_rng_i = 4;
-			add_true_randomness(sc->sc_rng_ax);
+			enqueue_randomness(sc->sc_rng_ax);
 		}
 	}
 

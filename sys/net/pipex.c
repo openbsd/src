@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.105 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.106 2017/11/20 10:35:24 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -637,6 +637,7 @@ pipex_lookup_by_session_id(int protocol, int session_id)
 	struct pipex_hash_head *list;
 	struct pipex_session *session;
 
+	NET_ASSERT_LOCKED();
 	list = PIPEX_ID_HASHTABLE(session_id);
 	LIST_FOREACH(session, list, id_chain) {
 		if (session->protocol == protocol &&

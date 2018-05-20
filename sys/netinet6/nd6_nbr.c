@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.121 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.122 2017/11/23 13:32:25 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	/* (1) and (3) check. */
 	ifa = &in6ifa_ifpwithaddr(ifp, &taddr6)->ia_ifa;
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ifa && !carp_iamatch6(ifp))
+	if (ifp->if_type == IFT_CARP && ifa && !carp_iamatch(ifp))
 		ifa = NULL;
 #endif
 
@@ -668,7 +668,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 * Ignore NAs silently for carp addresses if we're not
 		 * the CARP master.
 		 */
-		if (ifp->if_type == IFT_CARP && !carp_iamatch6(ifp))
+		if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
 			goto freeit;
 #endif
 		log(LOG_ERR,
@@ -1014,7 +1014,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 
 #if NCARP > 0
 	/* Do not send NAs for carp addresses if we're not the CARP master. */
-	if (ifp->if_type == IFT_CARP && !carp_iamatch6(ifp))
+	if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
 		goto bad;
 #endif
 

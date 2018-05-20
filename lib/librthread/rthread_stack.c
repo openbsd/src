@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.17 2017/09/05 02:40:54 guenther Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.19 2018/02/11 04:12:22 deraadt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -65,7 +65,7 @@ _rthread_alloc_stack(pthread_t thread)
 #ifdef MACHINE_STACK_GROWS_UP
 		stack->sp = base + rnd;
 #else
-		stack->sp = base + thread->attr.stack_size - rnd;
+		stack->sp = base + thread->attr.stack_size - (_STACKALIGNBYTES+1) - rnd;
 #endif
 		/*
 		 * This impossible guardsize marks this stack as
@@ -92,7 +92,7 @@ _rthread_alloc_stack(pthread_t thread)
 
 	/* actually allocate the real stack */
 	base = mmap(NULL, size, PROT_READ | PROT_WRITE,
-	    MAP_PRIVATE | MAP_ANON, -1, 0);
+	    MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0);
 	if (base == MAP_FAILED) {
 		free(stack);
 		return (NULL);
@@ -103,7 +103,7 @@ _rthread_alloc_stack(pthread_t thread)
 	stack->sp = base + rnd;
 #else
 	guard = base;
-	stack->sp = base + size - rnd;
+	stack->sp = base + size - (_STACKALIGNBYTES+1) - rnd;
 #endif
 
 	/* memory protect the guard region */

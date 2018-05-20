@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.84 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.90 2018/05/02 02:24:55 visa Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/specdev.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/cdio.h>
@@ -135,7 +135,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	struct iso_mnt *imp = NULL;
-	struct iso_args args;
+	struct iso_args *args = data;
 	struct vnode *devvp;
 	char fspec[MNAMELEN];
 	int error;
@@ -143,26 +143,23 @@ cd9660_mount(mp, path, data, ndp, p)
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	error = copyin(data, &args, sizeof(struct iso_args));
-	if (error)
-		return (error);
-
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
 	 */
 	if (mp->mnt_flag & MNT_UPDATE) {
 		imp = VFSTOISOFS(mp);
-		if (args.fspec == NULL)
+		if (args && args->fspec == NULL)
 			return (vfs_export(mp, &imp->im_export,
-			    &args.export_info));
+			    &args->export_info));
+		return (0);
 	}
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	error = copyinstr(args.fspec, fspec, sizeof(fspec), NULL);
+	error = copyinstr(args->fspec, fspec, sizeof(fspec), NULL);
 	if (error)
 		return (error);
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, fspec, p);
@@ -180,7 +177,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	}
 
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = iso_mountfs(devvp, mp, p, &args);
+		error = iso_mountfs(devvp, mp, p, args);
 	else {
 		if (devvp != imp->im_devvp)
 			error = EINVAL;	/* needs translation */
@@ -198,7 +195,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	strlcpy(mp->mnt_stat.f_mntfromname, fspec, MNAMELEN);
 	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, fspec, MNAMELEN);
-	bcopy(&args, &mp->mnt_stat.mount_info.iso_args, sizeof(args));
+	bcopy(args, &mp->mnt_stat.mount_info.iso_args, sizeof(*args));
 
 	cd9660_statfs(mp, &mp->mnt_stat, p);
 
@@ -245,9 +242,9 @@ iso_mountfs(devvp, mp, p, argp)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -439,9 +436,9 @@ out:
 	if (supbp)
 		brelse(supbp);
 
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT, 0);
@@ -573,7 +570,7 @@ cd9660_unmount(mp, mntflags, p)
 	isomp = VFSTOISOFS(mp);
 
 	isomp->im_devvp->v_specmountpoint = NULL;
-	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT, 0);
@@ -647,9 +644,10 @@ cd9660_statfs(mp, sbp, p)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, p)
+cd9660_sync(mp, waitfor, stall, cred, p)
 	struct mount *mp;
 	int waitfor;
+	int stall;
 	struct ucred *cred;
 	struct proc *p;
 {
@@ -757,7 +755,7 @@ retry:
 		return (error);
 	}
 	ip = malloc(sizeof(*ip), M_ISOFSNODE, M_WAITOK | M_ZERO);
-	rrw_init_flags(&ip->i_lock, "isoinode", RWL_DUPOK);
+	rrw_init_flags(&ip->i_lock, "isoinode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;

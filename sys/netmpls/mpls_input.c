@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.60 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.68 2018/01/12 06:57:56 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -45,24 +45,28 @@
 #define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
 #endif
 
-int	mpls_ip_adjttl(struct mbuf *, u_int8_t);
+struct mbuf	*mpls_ip_adjttl(struct mbuf *, u_int8_t);
 #ifdef INET6
-int	mpls_ip6_adjttl(struct mbuf *, u_int8_t);
+struct mbuf	*mpls_ip6_adjttl(struct mbuf *, u_int8_t);
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
 
 void
-mpls_input(struct mbuf *m)
+mpls_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct sockaddr_mpls *smpls;
 	struct sockaddr_mpls sa_mpls;
 	struct shim_hdr	*shim;
 	struct rtentry *rt;
 	struct rt_mpls *rt_mpls;
-	struct ifnet   *ifp = NULL;
-	u_int8_t ttl;
+	uint8_t ttl;
 	int hasbos;
+
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS)) {
+		m_freem(m);
+		return;
+	}
 
 	/* drop all broadcast and multicast packets */
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -70,29 +74,32 @@ mpls_input(struct mbuf *m)
 		return;
 	}
 
-	if (m->m_len < sizeof(*shim))
-		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
+	if (m->m_len < sizeof(*shim)) {
+		m = m_pullup(m, sizeof(*shim));
+		if (m == NULL)
 			return;
+	}
 
 	shim = mtod(m, struct shim_hdr *);
-
 #ifdef MPLS_DEBUG
-	printf("mpls_input: iface %d label=%d, ttl=%d BoS %d\n",
-	    m->m_pkthdr.ph_ifidx, MPLS_LABEL_GET(shim->shim_label),
+	printf("mpls_input: iface %s label=%d, ttl=%d BoS %d\n",
+	    ifp->if_xname, MPLS_LABEL_GET(shim->shim_label),
 	    MPLS_TTL_GET(shim->shim_label),
 	    MPLS_BOS_ISSET(shim->shim_label));
 #endif
 
 	/* check and decrement TTL */
 	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	if (ttl-- <= 1) {
+	if (--ttl == 0) {
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
 		if (m == NULL)
 			return;
+
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	}
+	hasbos = MPLS_BOS_ISSET(shim->shim_label);
 
 	bzero(&sa_mpls, sizeof(sa_mpls));
 	smpls = &sa_mpls;
@@ -100,10 +107,10 @@ mpls_input(struct mbuf *m)
 	smpls->smpls_len = sizeof(*smpls);
 	smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
-	hasbos = MPLS_BOS_ISSET(shim->shim_label);
-
 	if (ntohl(smpls->smpls_label) < MPLS_LABEL_RESERVED_MAX) {
 		m = mpls_shim_pop(m);
+		if (m == NULL)
+			return;
 		if (!hasbos) {
 			/*
 			 * RFC 4182 relaxes the position of the
@@ -119,31 +126,22 @@ mpls_input(struct mbuf *m)
 			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
 do_v4:
-				if (mpls_ip_adjttl(m, ttl))
+				if ((m = mpls_ip_adjttl(m, ttl)) == NULL)
 					return;
-				ifp = if_get(m->m_pkthdr.ph_ifidx);
-				if (ifp == NULL) {
-					m_freem(m);
-					return;
-				}
 				ipv4_input(ifp, m);
-				if_put(ifp);
 				return;
 #ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
 do_v6:
-				if (mpls_ip6_adjttl(m, ttl))
+				if ((m = mpls_ip6_adjttl(m, ttl)) == NULL)
 					return;
-				ifp = if_get(m->m_pkthdr.ph_ifidx);
-				if (ifp == NULL) {
-					m_freem(m);
-					return;
-				}
 				ipv6_input(ifp, m);
-				if_put(ifp);
 				return;
 #endif	/* INET6 */
 			case MPLS_LABEL_IMPLNULL:
+				if (m->m_len < sizeof(u_char) &&
+				    (m = m_pullup(m, sizeof(u_char))) == NULL)
+					return;
 				switch (*mtod(m, u_char *) >> 4) {
 				case IPVERSION:
 					goto do_v4;
@@ -162,6 +160,8 @@ do_v6:
 			}
 		}
 	}
+
+	ifp = NULL;
 
 	rt = rtalloc(smplstosa(smpls), RT_RESOLVE, m->m_pkthdr.ph_rtableid);
 	if (rt == NULL) {
@@ -185,6 +185,8 @@ do_v6:
 	switch (rt_mpls->mpls_operation) {
 	case MPLS_OP_POP:
 		m = mpls_shim_pop(m);
+		if (m == NULL)
+			goto done;
 		if (!hasbos)
 			/* just forward to gw */
 			break;
@@ -211,12 +213,12 @@ do_v6:
 
 		switch(rt->rt_gateway->sa_family) {
 		case AF_INET:
-			if (mpls_ip_adjttl(m, ttl))
+			if ((m = mpls_ip_adjttl(m, ttl)) == NULL)
 				goto done;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (mpls_ip6_adjttl(m, ttl))
+			if ((m = mpls_ip6_adjttl(m, ttl)) == NULL)
 				goto done;
 			break;
 #endif
@@ -278,7 +280,7 @@ done:
 	rtfree(rt);
 }
 
-int
+struct mbuf *
 mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip *ip;
@@ -287,18 +289,18 @@ mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 	if (mpls_mapttl_ip) {
 		if (m->m_len < sizeof(struct ip) &&
 		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-			return -1;
+			return NULL;
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 		if (m->m_len < hlen) {
 			if ((m = m_pullup(m, hlen)) == NULL)
-				return -1;
+				return NULL;
 			ip = mtod(m, struct ip *);
 		}
 		/* make sure we have a valid header */
 		if (in_cksum(m, hlen) != 0) {
-			m_free(m);
-			return -1;
+			m_freem(m);
+			return NULL;
 		}
 
 		/* set IP ttl from MPLS ttl */
@@ -308,11 +310,11 @@ mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 	}
-	return 0;
+	return m;
 }
 
 #ifdef INET6
-int
+struct mbuf *
 mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip6_hdr *ip6hdr;
@@ -320,14 +322,14 @@ mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 	if (mpls_mapttl_ip6) {
 		if (m->m_len < sizeof(struct ip6_hdr) &&
 		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
-			return -1;
+			return NULL;
 
 		ip6hdr = mtod(m, struct ip6_hdr *);
 
 		/* set IPv6 ttl from MPLS ttl */
 		ip6hdr->ip6_hlim = ttl;
 	}
-	return 0;
+	return m;
 }
 #endif	/* INET6 */
 
@@ -346,7 +348,7 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 
 	for (nstk = 0; nstk < MPLS_INKERNEL_LOOP_MAX; nstk++) {
 		if (m->m_len < sizeof(*shim) &&
-		    (m = m_pullup(m, sizeof(*ip))) == NULL)
+		    (m = m_pullup(m, sizeof(*shim))) == NULL)
 			return (NULL);
 		stack[nstk] = *mtod(m, struct shim_hdr *);
 		m_adj(m, sizeof(*shim));
@@ -355,6 +357,9 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 	}
 	shim = &stack[0];
 
+	if (m->m_len < sizeof(u_char) &&
+	    (m = m_pullup(m, sizeof(u_char))) == NULL)
+		return (NULL);
 	switch (*mtod(m, u_char *) >> 4) {
 	case IPVERSION:
 		if (m->m_len < sizeof(*ip) &&

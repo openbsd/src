@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.119 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.126 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -126,10 +126,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	switch (req) {
 
-	case PRU_DETACH:
-		unp_detach(unp);
-		break;
-
 	case PRU_BIND:
 		error = unp_bind(unp, nam, p);
 		break;
@@ -174,8 +170,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		case SOCK_STREAM:
 		case SOCK_SEQPACKET:
-#define	rcv (&so->so_rcv)
-#define snd (&so2->so_snd)
 			if (unp->unp_conn == NULL)
 				break;
 			so2 = unp->unp_conn->unp_socket;
@@ -183,11 +177,9 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Adjust backpressure on sender
 			 * and wakeup any waiting to write.
 			 */
-			snd->sb_mbcnt = rcv->sb_mbcnt;
-			snd->sb_cc = rcv->sb_cc;
+			so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
+			so2->so_snd.sb_cc = so->so_rcv.sb_cc;
 			sowwakeup(so2);
-#undef snd
-#undef rcv
 			break;
 
 		default:
@@ -235,8 +227,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 		case SOCK_STREAM:
 		case SOCK_SEQPACKET:
-#define	rcv (&so2->so_rcv)
-#define	snd (&so->so_snd)
 			if (so->so_state & SS_CANTSENDMORE) {
 				error = EPIPE;
 				break;
@@ -252,22 +242,21 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(so2, rcv, m, control))
+				if (sbappendcontrol(so2, &so2->so_rcv, m,
+				    control)) {
 					control = NULL;
-				else {
+				} else {
 					error = ENOBUFS;
 					break;
 				}
 			} else if (so->so_type == SOCK_SEQPACKET)
-				sbappendrecord(so2, rcv, m);
+				sbappendrecord(so2, &so2->so_rcv, m);
 			else
-				sbappend(so2, rcv, m);
-			snd->sb_mbcnt = rcv->sb_mbcnt;
-			snd->sb_cc = rcv->sb_cc;
+				sbappend(so2, &so2->so_rcv, m);
+			so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
+			so->so_snd.sb_cc = so2->so_rcv.sb_cc;
 			sorwakeup(so2);
 			m = NULL;
-#undef snd
-#undef rcv
 			break;
 
 		default:
@@ -378,6 +367,21 @@ uipc_attach(struct socket *so, int proto)
 	return (0);
 }
 
+int
+uipc_detach(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	if (unp == NULL)
+		return (EINVAL);
+
+	NET_ASSERT_UNLOCKED();
+
+	unp_detach(unp);
+
+	return (0);
+}
+
 void
 unp_detach(struct unpcb *unp)
 {
@@ -464,7 +468,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	unp->unp_connid.gid = p->p_ucred->cr_gid;
 	unp->unp_connid.pid = p->p_p->ps_pid;
 	unp->unp_flags |= UNP_FEIDSBIND;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 
@@ -841,7 +845,7 @@ morespace:
 		error = pledge_sendfd(p, fp);
 		if (error)
 			goto fail;
-		    
+
 		/* kqueue descriptors cannot be copied */
 		if (fp->f_type == DTYPE_KQUEUE) {
 			error = EINVAL;
@@ -850,7 +854,6 @@ morespace:
 		rp->fp = fp;
 		rp->flags = fdp->fd_ofileflags[fd] & UF_PLEDGED;
 		rp--;
-		fp->f_count++;
 		if ((unp = fptounp(fp)) != NULL) {
 			unp->unp_file = fp;
 			unp->unp_msgcount++;
@@ -859,13 +862,15 @@ morespace:
 	}
 	return (0);
 fail:
+	if (fp != NULL)
+		FRELE(fp, p);
 	/* Back out what we just did. */
 	for ( ; i > 0; i--) {
 		rp++;
 		fp = rp->fp;
-		fp->f_count--;
 		if ((unp = fptounp(fp)) != NULL)
 			unp->unp_msgcount--;
+		FRELE(fp, p);
 		unp_rights--;
 	}
 
@@ -952,22 +957,6 @@ unp_gc(void *arg __unused)
 			unp->unp_flags |= UNP_GCMARK;
 
 			so = unp->unp_socket;
-#ifdef notdef
-			if (so->so_rcv.sb_flags & SB_LOCK) {
-				/*
-				 * This is problematical; it's not clear
-				 * we need to wait for the sockbuf to be
-				 * unlocked (on a uniprocessor, at least),
-				 * and it's also not clear what to do
-				 * if sbwait returns an error due to receipt
-				 * of a signal.  If sbwait does return
-				 * an error, we'll go into an infinite
-				 * loop.  Delete all of this for now.
-				 */
-				(void) sbwait(&so->so_rcv);
-				goto restart;
-			}
-#endif
 			unp_scan(so->so_rcv.sb_mb, unp_mark);
 		}
 	} while (unp_defer);

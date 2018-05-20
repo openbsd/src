@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.147 2017/07/18 06:19:07 mpi Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.150 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -832,7 +832,7 @@ ipsec_get_keystate(struct message *msg)
 	 * For phase 2 when no SA yet is setup we need to hash the IV used by
 	 * the ISAKMP SA concatenated with the message ID, and use that as an
 	 * IV for further cryptographic operations.
-         */
+	 */
 	if (!msg->isakmp_sa->keystate) {
 		log_print("ipsec_get_keystate: no keystate in ISAKMP SA %p",
 		    msg->isakmp_sa);
@@ -1206,7 +1206,7 @@ ipsec_responder(struct message *msg)
 	/*
 	 * XXX So far we don't accept any proposals for exchanges we don't
 	 * support.
-         */
+	 */
 	if (payload_first(msg, ISAKMP_PAYLOAD_SA)) {
 		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 		return -1;
@@ -1263,7 +1263,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			return (dv < IKE_GROUP_DESC_MODP_768 ||
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
-			    dv > IKE_GROUP_DESC_MODP_8192);
+			    dv > IKE_GROUP_DESC_ECP_521) &&
+			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    dv > IKE_GROUP_DESC_BP_512);
 		case IKE_ATTR_GROUP_TYPE:
 			return 1;
 		case IKE_ATTR_GROUP_PRIME:
@@ -1305,7 +1307,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			return (dv < IKE_GROUP_DESC_MODP_768 ||
 			    dv > IKE_GROUP_DESC_MODP_1536) &&
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
-			    IKE_GROUP_DESC_MODP_8192 < dv);
+			    dv > IKE_GROUP_DESC_ECP_521) &&
+			    (dv < IKE_GROUP_DESC_ECP_192 ||
+			    dv > IKE_GROUP_DESC_BP_512);
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 			return dv != IPSEC_ENCAP_TUNNEL &&
 			    dv != IPSEC_ENCAP_TRANSPORT &&
@@ -1556,7 +1560,7 @@ ipsec_decode_transform(struct message *msg, struct sa *sa, struct proto *proto,
 	/*
 	 * If no pseudo-random function was negotiated, it's HMAC.
 	 * XXX As PRF_HMAC currently is zero, this is a no-op.
-         */
+	 */
 	if (!ie->prf_type)
 		ie->prf_type = PRF_HMAC;
 }
@@ -2344,7 +2348,7 @@ ipsec_add_contact(struct message *msg)
 	/*
 	 * XXX There are better algorithms for already mostly-sorted data like
 	 * this, but only qsort is standard.  I will someday do this inline.
-         */
+	 */
 	qsort(contacts, contact_cnt, sizeof *contacts, addr_cmp);
 	return 0;
 }
@@ -2517,7 +2521,7 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 	 * XXX Real ugly way of making the offsets correct.  Be aware that id
 	 * now will point before the actual buffer and cannot be dereferenced
 	 * without an offset larger than or equal to ISAKM_GEN_SZ.
-         */
+	 */
 	id -= ISAKMP_GEN_SZ;
 
 	/* This is the actual length of the ID data field.  */
@@ -2527,7 +2531,7 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 	 * Conservative allocation.
 	 * XXX I think the ASN1 DN case can be thought through to give a better
 	 * estimate.
-         */
+	 */
 	size = MAXIMUM(sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 	    sizeof "asn1_dn/" + id_len);
 	buf = malloc(size);

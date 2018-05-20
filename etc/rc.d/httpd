@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: httpd,v 1.5 2016/02/02 17:51:11 sthen Exp $
+# $OpenBSD: httpd,v 1.6 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/httpd"
 

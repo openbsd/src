@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.13 2013/06/02 01:07:39 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.14 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ int cd9660_unmount(struct mount *, int, struct proc *);
 int cd9660_root(struct mount *, struct vnode **);
 int cd9660_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int cd9660_statfs(struct mount *, struct statfs *, struct proc *);
-int cd9660_sync(struct mount *, int, struct ucred *, struct proc *);
+int cd9660_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int cd9660_vget(struct mount *, ino_t, struct vnode **);
 int cd9660_fhtovp(struct mount *, struct fid *, struct vnode **);
 int cd9660_vptofh(struct vnode *, struct fid *);

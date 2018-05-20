@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.89 2017/05/30 06:01:30 tedu Exp $	 */
+/* $OpenBSD: machine.c,v 1.90 2018/05/14 12:31:21 mpi Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -108,7 +108,7 @@ char *procstatenames[] = {
 /* these are for detailing the cpu states */
 int64_t *cpu_states;
 char *cpustatenames[] = {
-	"user", "nice", "system", "interrupt", "idle", NULL
+	"user", "nice", "sys", "spin", "intr", "idle", NULL
 };
 
 /* these are for detailing the memory statistics */

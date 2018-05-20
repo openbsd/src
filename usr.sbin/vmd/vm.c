@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.28 2017/09/19 06:22:30 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.33 2018/04/27 12:15:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -31,6 +31,7 @@
 
 #include <machine/param.h>
 #include <machine/psl.h>
+#include <machine/pte.h>
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
 
@@ -64,7 +65,8 @@
 
 io_fn_t ioports_map[MAX_PORTS];
 
-int run_vm(int *, int *, struct vmop_create_params *, struct vcpu_reg_state *);
+int run_vm(int, int *, int *, struct vmop_create_params *,
+    struct vcpu_reg_state *);
 void vm_dispatch_vmm(int, short, void *);
 void *event_thread(void *);
 void *vcpu_run_loop(void *);
@@ -73,8 +75,8 @@ int vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void create_memory_map(struct vm_create_params *);
 int alloc_guest_mem(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
-void init_emulated_hw(struct vmop_create_params *, int *, int *);
-void restore_emulated_hw(struct vm_create_params *,int , int *, int *);
+void init_emulated_hw(struct vmop_create_params *, int, int *, int *);
+void restore_emulated_hw(struct vm_create_params *, int, int *, int *,int);
 void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
@@ -133,6 +135,11 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
 #endif
 	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
 	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
+	.vrs_crs[VCPU_REGS_CR4] = CR4_PAE | CR4_PSE,
+	.vrs_crs[VCPU_REGS_PDPTE0] = PML3_PAGE | PG_V,
+	.vrs_crs[VCPU_REGS_PDPTE1] = 0ULL,
+	.vrs_crs[VCPU_REGS_PDPTE2] = 0ULL,
+	.vrs_crs[VCPU_REGS_PDPTE3] = 0ULL,
 	.vrs_sregs[VCPU_REGS_CS] = { 0x8, 0xFFFFFFFF, 0xC09F, 0x0},
 	.vrs_sregs[VCPU_REGS_DS] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
 	.vrs_sregs[VCPU_REGS_ES] = { 0x10, 0xFFFFFFFF, 0xC093, 0x0},
@@ -143,7 +150,7 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
 	.vrs_idtr = { 0x0, 0xFFFF, 0x0, 0x0},
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
-	.vrs_msrs[VCPU_REGS_EFER] = 0ULL,
+	.vrs_msrs[VCPU_REGS_EFER] = EFER_LME | EFER_LMA,
 #ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
@@ -353,7 +360,7 @@ start_vm(struct vmd_vm *vm, int fd)
 
 	if (vm->vm_received) {
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
-		    vm->vm_disks);
+		    vm->vm_disks, vm->vm_cdrom);
 		mc146818_start();
 		restore_mem(vm->vm_receive_fd, vcp);
 	}
@@ -362,7 +369,7 @@ start_vm(struct vmd_vm *vm, int fd)
 		fatal("setup vm pipe");
 
 	/* Execute the vcpu run loop(s) for this VM */
-	ret = run_vm(vm->vm_disks, nicfds, &vm->vm_params, &vrs);
+	ret = run_vm(vm->vm_cdrom, vm->vm_disks, nicfds, &vm->vm_params, &vrs);
 
 	return (ret);
 }
@@ -891,8 +898,8 @@ vmm_create_vm(struct vm_create_params *vcp)
  * Initializes the userspace hardware emulation
  */
 void
-init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
-    int *child_taps)
+init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
+    int *child_disks, int *child_taps)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	int i;
@@ -915,6 +922,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	ioports_map[TIMER_BASE + TIMER_CNTR0] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR1] = vcpu_exit_i8253;
 	ioports_map[TIMER_BASE + TIMER_CNTR2] = vcpu_exit_i8253;
+	ioports_map[PCKBC_AUX] = vcpu_exit_i8253_misc;
 
 	/* Init mc146818 RTC */
 	mc146818_init(vcp->vcp_id, memlo, memhi);
@@ -927,6 +935,8 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	ioports_map[IO_ICU1 + 1] = vcpu_exit_i8259;
 	ioports_map[IO_ICU2] = vcpu_exit_i8259;
 	ioports_map[IO_ICU2 + 1] = vcpu_exit_i8259;
+	ioports_map[ELCR0] = vcpu_exit_i8259;
+	ioports_map[ELCR1] = vcpu_exit_i8259;
 
 	/* Init ns8250 UART */
 	ns8250_init(con_fd, vcp->vcp_id);
@@ -945,7 +955,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	pci_init();
 
 	/* Initialize virtio devices */
-	virtio_init(current_vm, child_disks, child_taps);
+	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
 }
 /*
  * restore_emulated_hw
@@ -954,7 +964,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
  */
 void
 restore_emulated_hw(struct vm_create_params *vcp, int fd,
-    int *child_taps, int *child_disks)
+    int *child_taps, int *child_disks, int child_cdrom)
 {
 	/* struct vm_create_params *vcp = &vmc->vmc_params; */
 	int i;
@@ -994,7 +1004,7 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
 	ioports_map[PCI_MODE1_DATA_REG + 2] = vcpu_exit_pci;
 	ioports_map[PCI_MODE1_DATA_REG + 3] = vcpu_exit_pci;
 	pci_restore(fd);
-	virtio_restore(fd, current_vm, child_disks, child_taps);
+	virtio_restore(fd, current_vm, child_cdrom, child_disks, child_taps);
 }
 
 /*
@@ -1003,6 +1013,7 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
  * Runs the VM whose creation parameters are specified in vcp
  *
  * Parameters:
+ *  child_cdrom: previously-opened child ISO disk file descriptor
  *  child_disks: previously-opened child VM disk file file descriptors
  *  child_taps: previously-opened child tap file descriptors
  *  vmc: vmop_create_params struct containing the VM's desired creation
@@ -1014,8 +1025,8 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
  *  !0 : the VM exited abnormally or failed to start
  */
 int
-run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
-    struct vcpu_reg_state *vrs)
+run_vm(int child_cdrom, int *child_disks, int *child_taps,
+    struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	struct vm_rwregs_params vregsp;
@@ -1027,6 +1038,9 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 	void *exit_status;
 
 	if (vcp == NULL)
+		return (EINVAL);
+
+	if (child_cdrom == -1 && strlen(vcp->vcp_cdrom))
 		return (EINVAL);
 
 	if (child_disks == NULL && vcp->vcp_ndisks != 0)
@@ -1060,7 +1074,7 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 	    vcp->vcp_name);
 
 	if (!current_vm->vm_received)
-		init_emulated_hw(vmc, child_disks, child_taps);
+		init_emulated_hw(vmc, child_cdrom, child_disks, child_taps);
 
 	ret = pthread_mutex_init(&threadmutex, NULL);
 	if (ret) {
@@ -1091,14 +1105,14 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 		if (vrp[i] == NULL) {
 			log_warn("%s: memory allocation error - "
 			    "exiting.", __progname);
-			/* caller will exit, so skip free'ing */
+			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_exit = malloc(sizeof(union vm_exit));
 		if (vrp[i]->vrp_exit == NULL) {
 			log_warn("%s: memory allocation error - "
 			    "exiting.", __progname);
-			/* caller will exit, so skip free'ing */
+			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_vm_id = vcp->vcp_id;
@@ -1110,7 +1124,7 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 			return (EIO);
 		}
 
-		/* once more becuase reset_cpu changes regs */
+		/* once more because reset_cpu changes regs */
 		if (current_vm->vm_received) {
 			vregsp.vrwp_vm_id = vcp->vcp_id;
 			vregsp.vrwp_vcpu_id = i;

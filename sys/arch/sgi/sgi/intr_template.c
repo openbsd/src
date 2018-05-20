@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.18 2017/02/11 03:44:22 visa Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.19 2018/02/24 11:42:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -138,10 +138,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 		int lvl, bitno;
 		uint64_t tmpisr;
 
-		__asm__ (".set noreorder\n");
 		ipl = ci->ci_ipl;
-		mips_sync();
-		__asm__ (".set reorder\n");
 
 		/* Service higher level interrupts first */
 		for (lvl = NIPLS - 1; lvl != IPL_NONE; lvl--) {
@@ -190,10 +187,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 					if (ih->ih_level < IPL_IPI)
 						setsr(sr);
 #endif
-					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;
-					mips_sync();
-					__asm__ (".set reorder\n");
 					if (ret == 1)
 						break;
 				}

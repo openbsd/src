@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.17 2018/05/19 10:54:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,8 +86,8 @@ X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid, int lastpos)
 }
 
 int
-X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk, ASN1_OBJECT *obj,
-    int lastpos)
+X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
+    const ASN1_OBJECT *obj, int lastpos)
 {
 	int n;
 	X509_EXTENSION *ex;
@@ -209,8 +209,8 @@ X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid, int crit,
 }
 
 X509_EXTENSION *
-X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex, ASN1_OBJECT *obj, int crit,
-    ASN1_OCTET_STRING *data)
+X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex, const ASN1_OBJECT *obj,
+    int crit, ASN1_OCTET_STRING *data)
 {
 	X509_EXTENSION *ret;
 
@@ -240,7 +240,7 @@ err:
 }
 
 int
-X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
+X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj)
 {
 	if ((ex == NULL) || (obj == NULL))
 		return (0);
@@ -288,7 +288,7 @@ X509_EXTENSION_get_data(X509_EXTENSION *ex)
 }
 
 int
-X509_EXTENSION_get_critical(X509_EXTENSION *ex)
+X509_EXTENSION_get_critical(const X509_EXTENSION *ex)
 {
 	if (ex == NULL)
 		return (0);

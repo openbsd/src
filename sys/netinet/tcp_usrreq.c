@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.155 2017/09/05 07:59:11 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.168 2018/04/24 15:40:55 pirofti Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -131,8 +131,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 	short ostate;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL) {
 #ifdef INET6
 		if (sotopf(so) == PF_INET6)
@@ -143,6 +141,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			return (in_control(so, (u_long)m, (caddr_t)nam,
 			    (struct ifnet *)control));
 	}
+
+	soassertlocked(so);
+
 	if (control && control->m_len) {
 		m_freem(control);
 		m_freem(m);
@@ -167,30 +168,13 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			m_freem(m);
 		return (error);
 	}
-	if (inp) {
-		tp = intotcpcb(inp);
-		/* tp might get 0 when using socket splicing */
-		if (tp == NULL) {
-			return (0);
-		}
-#ifdef KPROF
-		tcp_acounts[tp->t_state][req]++;
-#endif
-		ostate = tp->t_state;
-	} else
-		ostate = 0;
-	switch (req) {
+	tp = intotcpcb(inp);
+	/* tp might get 0 when using socket splicing */
+	if (tp == NULL)
+		return (0);
+	ostate = tp->t_state;
 
-	/*
-	 * PRU_DETACH detaches the TCP protocol from the socket.
-	 * If the protocol state is non-embryonic, then can't
-	 * do this directly: have to initiate a PRU_DISCONNECT,
-	 * which may finish later; embryonic TCB's can just
-	 * be discarded here.
-	 */
-	case PRU_DETACH:
-		tp = tcp_disconnect(tp);
-		break;
+	switch (req) {
 
 	/*
 	 * Give the socket an address.
@@ -268,14 +252,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 		tcp_set_iss_tsm(tp);
 		tcp_sendseqinit(tp);
-#if defined(TCP_SACK)
 		tp->snd_last = tp->snd_una;
-#endif
-#if defined(TCP_SACK) && defined(TCP_FACK)
-		tp->snd_fack = tp->snd_una;
-		tp->retran_data = 0;
-		tp->snd_awnd = 0;
-#endif
 		error = tcp_output(tp);
 		break;
 
@@ -496,7 +473,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 				error = EINVAL;
 			break;
 
-#ifdef TCP_SACK
 		case TCP_SACK_ENABLE:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
@@ -518,7 +494,6 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			else
 				tp->sack_enable = 0;
 			break;
-#endif
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
 			if (m == NULL || m->m_len < sizeof (int)) {
@@ -533,9 +508,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 
 			if (*mtod(m, int *)) {
 				tp->t_flags |= TF_SIGNATURE;
-#ifdef TCP_SACK
 				tp->sack_enable = 0;
-#endif /* TCP_SACK */
 			} else
 				tp->t_flags &= ~TF_SIGNATURE;
 			break;
@@ -559,11 +532,9 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		case TCP_MAXSEG:
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
-#ifdef TCP_SACK
 		case TCP_SACK_ENABLE:
 			*mtod(m, int *) = tp->sack_enable;
 			break;
-#endif
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
 			*mtod(m, int *) = tp->t_flags & TF_SIGNATURE;
@@ -581,7 +552,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 /*
  * Attach TCP protocol to socket, allocating
  * internet protocol control block, tcp control block,
- * bufer space, and entering LISTEN state if to accept connections.
+ * buffer space, and entering LISTEN state to accept connections.
  */
 int
 tcp_attach(struct socket *so, int proto)
@@ -600,13 +571,14 @@ tcp_attach(struct socket *so, int proto)
 			return (error);
 	}
 
+	NET_ASSERT_LOCKED();
 	error = in_pcballoc(so, &tcbtable);
 	if (error)
 		return (error);
 	inp = sotoinpcb(so);
 	tp = tcp_newtcpcb(inp);
 	if (tp == NULL) {
-		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
+		unsigned int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
 		in_pcbdetach(inp);
@@ -626,9 +598,51 @@ tcp_attach(struct socket *so, int proto)
 	if ((so->so_options & SO_LINGER) && so->so_linger == 0)
 		so->so_linger = TCP_LINGERTIME;
 
-	if (tp && (so->so_options & SO_DEBUG))
-		tcp_trace(TA_USER, 0, tp, (caddr_t)0, 0 /* XXX */, 0);
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, TCPS_CLOSED, tp, (caddr_t)0, PRU_ATTACH, 0);
 	return (0);
+}
+
+int
+tcp_detach(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp = NULL;
+	int error = 0;
+	short ostate;
+
+	soassertlocked(so);
+
+	inp = sotoinpcb(so);
+	/*
+	 * When a TCP is attached to a socket, then there will be
+	 * a (struct inpcb) pointed at by the socket, and this
+	 * structure will point at a subsidiary (struct tcpcb).
+	 */
+	if (inp == NULL) {
+		error = so->so_error;
+		if (error == 0)
+			error = EINVAL;
+		return (error);
+	}
+	tp = intotcpcb(inp);
+	/* tp might get 0 when using socket splicing */
+	if (tp == NULL)
+		return (0);
+	ostate = tp->t_state;
+
+	/*
+	 * Detach the TCP protocol from the socket.
+	 * If the protocol state is non-embryonic, then can't
+	 * do this directly: have to initiate a PRU_DISCONNECT,
+	 * which may finish later; embryonic TCB's can just
+	 * be discarded here.
+	 */
+	tp = tcp_disconnect(tp);
+
+	if (tp && (so->so_options & SO_DEBUG))
+		tcp_trace(TA_USER, ostate, tp, (caddr_t)0, PRU_DETACH, 0);
+	return (error);
 }
 
 /*
@@ -793,12 +807,12 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 #ifdef INET6
 		case AF_INET6:
 			inp = in6_pcblookup_listen(&tcbtable,
-			    &l6, lin6->sin6_port, 0, NULL, tir.rdomain);
+			    &l6, lin6->sin6_port, NULL, tir.rdomain);
 			break;
 #endif
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable,
-			    lin->sin_addr, lin->sin_port, 0, NULL, tir.rdomain);
+			    lin->sin_addr, lin->sin_port, NULL, tir.rdomain);
 			break;
 		}
 	}
@@ -955,82 +969,96 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	int error, nval;
 
-	NET_ASSERT_LOCKED();
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-#ifdef TCP_SACK
 	case TCPCTL_SACK:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_do_sack));
-#endif
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_do_sack);
+		NET_UNLOCK();
+		return (error);
+
 	case TCPCTL_SLOWHZ:
 		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
 
 	case TCPCTL_BADDYNAMIC:
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    baddynamicports.tcp, sizeof(baddynamicports.tcp));
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_ROOTONLY:
 		if (newp && securelevel > 0)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    rootonlyports.tcp, sizeof(rootonlyports.tcp)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    rootonlyports.tcp, sizeof(rootonlyports.tcp));
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_IDENT:
-		return (tcp_ident(oldp, oldlenp, newp, newlen, 0));
+		NET_LOCK();
+		error = tcp_ident(oldp, oldlenp, newp, newlen, 0);
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_DROP:
-		return (tcp_ident(oldp, oldlenp, newp, newlen, 1));
+		NET_LOCK();
+		error = tcp_ident(oldp, oldlenp, newp, newlen, 1);
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_ALWAYS_KEEPALIVE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_always_keepalive));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_always_keepalive);
+		NET_UNLOCK();
+		return (error);
 
 #ifdef TCP_ECN
 	case TCPCTL_ECN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		   &tcp_do_ecn));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		   &tcp_do_ecn);
+		NET_UNLOCK();
+		return (error);
 #endif
 	case TCPCTL_REASS_LIMIT:
+		NET_LOCK();
 		nval = tcp_reass_limit;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (error)
-			return (error);
-		if (nval != tcp_reass_limit) {
+		if (!error && nval != tcp_reass_limit) {
 			error = pool_sethardlimit(&tcpqe_pool, nval, NULL, 0);
-			if (error)
-				return (error);
-			tcp_reass_limit = nval;
+			if (!error)
+				tcp_reass_limit = nval;
 		}
-		return (0);
-#ifdef TCP_SACK
+		NET_UNLOCK();
+		return (error);
+
 	case TCPCTL_SACKHOLE_LIMIT:
+		NET_LOCK();
 		nval = tcp_sackhole_limit;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (error)
-			return (error);
-		if (nval != tcp_sackhole_limit) {
+		if (!error && nval != tcp_sackhole_limit) {
 			error = pool_sethardlimit(&sackhl_pool, nval, NULL, 0);
-			if (error)
-				return (error);
-			tcp_sackhole_limit = nval;
+			if (!error)
+				tcp_sackhole_limit = nval;
 		}
-		return (0);
-#endif
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_STATS:
 		return (tcp_sysctl_tcpstat(oldp, oldlenp, newp));
 
 	case TCPCTL_SYN_USE_LIMIT:
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_syn_use_limit);
-		if (error)
-			return (error);
-		if (newp != NULL) {
+		if (!error && newp != NULL) {
 			/*
 			 * Global tcp_syn_use_limit is used when reseeding a
 			 * new cache.  Also update the value in active cache.
@@ -1040,33 +1068,40 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			if (tcp_syn_cache[1].scs_use > tcp_syn_use_limit)
 				tcp_syn_cache[1].scs_use = tcp_syn_use_limit;
 		}
-		return (0);
+		NET_UNLOCK();
+		return (error);
 
 	case TCPCTL_SYN_HASH_SIZE:
+		NET_LOCK();
 		nval = tcp_syn_hash_size;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (error)
-			return (error);
-		if (nval != tcp_syn_hash_size) {
-			if (nval < 1 || nval > 100000)
-				return (EINVAL);
-			/*
-			 * If global hash size has been changed, switch sets as
-			 * soon as possible.  Then the actual hash array will
-			 * be reallocated.
-			 */
-			if (tcp_syn_cache[0].scs_size != nval)
-				tcp_syn_cache[0].scs_use = 0;
-			if (tcp_syn_cache[1].scs_size != nval)
-				tcp_syn_cache[1].scs_use = 0;
-			tcp_syn_hash_size = nval;
+		if (!error && nval != tcp_syn_hash_size) {
+			if (nval < 1 || nval > 100000) {
+				error = EINVAL;
+			} else {
+				/*
+				 * If global hash size has been changed,
+				 * switch sets as soon as possible.  Then
+				 * the actual hash array will be reallocated.
+				 */
+				if (tcp_syn_cache[0].scs_size != nval)
+					tcp_syn_cache[0].scs_use = 0;
+				if (tcp_syn_cache[1].scs_size != nval)
+					tcp_syn_cache[1].scs_use = 0;
+				tcp_syn_hash_size = nval;
+			}
 		}
-		return (0);
+		NET_UNLOCK();
+		return (error);
 
 	default:
-		if (name[0] < TCPCTL_MAXID)
-			return (sysctl_int_arr(tcpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < TCPCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(tcpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */

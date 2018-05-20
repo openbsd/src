@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.202 2017/08/22 15:02:34 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.214 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/in6_ifattach.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
@@ -118,12 +119,15 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
 
+uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
+
 int ip6_ours(struct mbuf **, int *, int, int);
 int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
+int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
 
 static struct mbuf_queue	ip6send_mq;
 
@@ -138,7 +142,7 @@ static struct task ip6send_task =
 void
 ip6_init(void)
 {
-	struct protosw *pr;
+	const struct protosw *pr;
 	int i;
 
 	pr = pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
@@ -521,7 +525,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	if (ipsec_in_use) {
 		int rv;
 
-		KERNEL_ASSERT_LOCKED();
 		rv = ipsec_forward_check(m, *offp, AF_INET6);
 		if (rv != 0) {
 			ip6stat_inc(ip6s_cantforward);
@@ -1189,50 +1192,44 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 }
 
 /*
- * Get pointer to the previous header followed by the header
+ * Get offset to the previous header followed by the header
  * currently processed.
- * XXX: This function supposes that
- *	M includes all headers,
- *	the next header field and the header length field of each header
- *	are valid, and
- *	the sum of each header length equals to OFF.
- * Because of these assumptions, this function must be called very
- * carefully. Moreover, it will not be used in the near future when
- * we develop `neater' mechanism to process extension headers.
  */
-u_int8_t *
+int
 ip6_get_prevhdr(struct mbuf *m, int off)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
-	if (off == sizeof(struct ip6_hdr))
-		return (&ip6->ip6_nxt);
-	else {
-		int len, nxt;
-		struct ip6_ext *ip6e = NULL;
+	if (off == sizeof(struct ip6_hdr)) {
+		return offsetof(struct ip6_hdr, ip6_nxt);
+	} else if (off < sizeof(struct ip6_hdr)) {
+		panic("%s: off < sizeof(struct ip6_hdr)", __func__);
+	} else {
+		int len, nlen, nxt;
+		struct ip6_ext ip6e;
 
 		nxt = ip6->ip6_nxt;
 		len = sizeof(struct ip6_hdr);
+		nlen = 0;
 		while (len < off) {
-			ip6e = (struct ip6_ext *)(mtod(m, caddr_t) + len);
+			m_copydata(m, len, sizeof(ip6e), (caddr_t)&ip6e);
 
 			switch (nxt) {
 			case IPPROTO_FRAGMENT:
-				len += sizeof(struct ip6_frag);
+				nlen = sizeof(struct ip6_frag);
 				break;
 			case IPPROTO_AH:
-				len += (ip6e->ip6e_len + 2) << 2;
+				nlen = (ip6e.ip6e_len + 2) << 2;
 				break;
 			default:
-				len += (ip6e->ip6e_len + 1) << 3;
+				nlen = (ip6e.ip6e_len + 1) << 3;
 				break;
 			}
-			nxt = ip6e->ip6e_nxt;
+			len += nlen;
+			nxt = ip6e.ip6e_nxt;
 		}
-		if (ip6e)
-			return (&ip6e->ip6e_nxt);
-		else
-			return NULL;
+
+		return (len - nlen);
 	}
 }
 
@@ -1345,7 +1342,7 @@ ip6_lasthdr(struct mbuf *m, int off, int proto, int *nxtp)
  * System control for IP6
  */
 
-u_char	inet6ctlerrmap[PRC_NCMDS] = {
+const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
@@ -1374,6 +1371,35 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 }
 
 int
+ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	struct ifnet *ifp;
+	uint8_t oldkey[IP6_SOIIKEY_LEN];
+	int error;
+
+	error = suser(curproc);
+	if (error != 0)
+		return (error);
+
+	memcpy(oldkey, ip6_soiikey, sizeof(oldkey));
+
+	error = sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
+	    sizeof(ip6_soiikey));
+
+	if (!error && memcmp(ip6_soiikey, oldkey, sizeof(oldkey)) != 0) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_flags & IFF_LOOPBACK)
+				continue;
+			NET_LOCK();
+			in6_soiiupdate(ifp);
+			NET_UNLOCK();
+		}
+	}
+
+	return (error);
+}
+
+int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
@@ -1382,8 +1408,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	extern struct mrt6stat mrt6stat;
 #endif
 	int error;
-
-	NET_ASSERT_LOCKED();
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
@@ -1398,18 +1422,27 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_MRTSTATS:
 		if (newp != NULL)
 			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &mrt6stat, sizeof(mrt6stat)));
+		NET_LOCK();
+		error = sysctl_struct(oldp, oldlenp, newp, newlen,
+		    &mrt6stat, sizeof(mrt6stat));
+		NET_UNLOCK();
+		return (error);
 	case IPV6CTL_MRTPROTO:
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_mrtproto);
 	case IPV6CTL_MRTMIF:
 		if (newp)
 			return (EPERM);
-		return mrt6_sysctl_mif(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt6_sysctl_mif(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 	case IPV6CTL_MRTMFC:
 		if (newp)
 			return (EPERM);
-		return mrt6_sysctl_mfc(oldp, oldlenp);
+		NET_LOCK();
+		error = mrt6_sysctl_mfc(oldp, oldlenp);
+		NET_UNLOCK();
+		return (error);
 #else
 	case IPV6CTL_MRTSTATS:
 	case IPV6CTL_MRTPROTO:
@@ -1418,19 +1451,27 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 #endif
 	case IPV6CTL_MTUDISCTIMEOUT:
+		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip6_mtudisc_timeout);
 		if (icmp6_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(icmp6_mtudisc_timeout_q,
 			    ip6_mtudisc_timeout);
+		NET_UNLOCK();
 		return (error);
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
+	case IPV6CTL_SOIIKEY:
+		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 	default:
-		if (name[0] < IPV6CTL_MAXID)
-			return (sysctl_int_arr(ipv6ctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen));
+		if (name[0] < IPV6CTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(ipv6ctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
@@ -1442,45 +1483,28 @@ ip6_send_dispatch(void *xmq)
 	struct mbuf_queue *mq = xmq;
 	struct mbuf *m;
 	struct mbuf_list ml;
-#ifdef IPSEC
-	int locked = 0;
-#endif /* IPSEC */
 
 	mq_delist(mq, &ml);
 	if (ml_empty(&ml))
 		return;
 
-	NET_LOCK();
-
-#ifdef IPSEC
-	/*
-	 * IPsec is not ready to run without KERNEL_LOCK().  So all
-	 * the traffic on your machine is punished if you have IPsec
-	 * enabled.
-	 */
-	extern int ipsec_in_use;
-	if (ipsec_in_use) {
-		NET_UNLOCK();
-		KERNEL_LOCK();
-		NET_LOCK();
-		locked = 1;
-	}
-#endif /* IPSEC */
-
+	NET_RLOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
+		/*
+		 * To avoid a "too big" situation at an intermediate router and
+		 * the path MTU discovery process, specify the IPV6_MINMTU
+		 * flag.  Note that only echo and node information replies are
+		 * affected, since the length of ICMP6 errors is limited to the
+		 * minimum MTU.
+		 */
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
-	NET_UNLOCK();
-
-#ifdef IPSEC
-	if (locked)
-		KERNEL_UNLOCK();
-#endif /* IPSEC */
+	NET_RUNLOCK();
 }
 
 void
 ip6_send(struct mbuf *m)
 {
 	mq_enqueue(&ip6send_mq, m);
-	task_add(softnettq, &ip6send_task);
+	task_add(net_tq(0), &ip6send_task);
 }

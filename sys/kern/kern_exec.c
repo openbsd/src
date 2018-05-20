@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.189 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.195 2018/04/28 03:13:04 visa Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/pool.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/exec.h>
@@ -139,6 +140,13 @@ check_exec(struct proc *p, struct exec_package *epp)
 		goto bad1;
 	}
 
+	/* SUID programs may not be started with execpromises */
+	if ((epp->ep_vap->va_mode & (VSUID | VSGID)) &&
+	    (p->p_p->ps_flags & PS_EXECPLEDGE)) {
+		error = EACCES;
+		goto bad1;
+	}
+
 	if ((vp->v_mount->mnt_flag & MNT_NOSUID))
 		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
 
@@ -155,7 +163,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		goto bad1;
 
 	/* unlock vp, we need it unlocked from here */
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
@@ -245,14 +253,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 	struct process *pr = p->p_p;
 	long argc, envc;
-	size_t len, sgap;
+	size_t len, sgap, dstsize;
 #ifdef MACHINE_STACK_GROWS_UP
 	size_t slen;
 #endif
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm;
-	char **tmpfap;
 	extern struct emul emul_native;
 	struct vnode *otvp;
 
@@ -300,21 +307,23 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	dp = argp;
 	argc = 0;
 
-	/* copy the fake args list, if there's one, freeing it as we go */
+	/*
+	 * Copy the fake args list, if there's one, freeing it as we go.
+	 * exec_script_makecmds() allocates either 2 or 3 fake args bounded
+	 * by MAXINTERP + MAXPATHLEN < NCARGS so no overflow can happen.
+	 */
 	if (pack.ep_flags & EXEC_HASARGL) {
-		tmpfap = pack.ep_fa;
-		while (*tmpfap != NULL) {
-			char *cp;
-
-			cp = *tmpfap;
-			while (*cp)
-				*dp++ = *cp++;
-			*dp++ = '\0';
-
-			free(*tmpfap, M_EXEC, 0);
-			tmpfap++; argc++;
+		dstsize = NCARGS;
+		for(; pack.ep_fa[argc] != NULL; argc++) {
+			len = strlcpy(dp, pack.ep_fa[argc], dstsize);
+			len++;
+			dp += len; dstsize -= len;
+			if (pack.ep_fa[argc+1] != NULL)
+				free(pack.ep_fa[argc], M_EXEC, len);
+			else
+				free(pack.ep_fa[argc], M_EXEC, MAXPATHLEN);
 		}
-		free(pack.ep_fa, M_EXEC, 0);
+		free(pack.ep_fa, M_EXEC, 4 * sizeof(char *));
 		pack.ep_flags &= ~EXEC_HASARGL;
 	}
 
@@ -446,9 +455,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto exec_abort;
 
-	/* old "stackgap" is gone now */
-	pr->ps_stackgap = 0;
-
 #ifdef MACHINE_STACK_GROWS_UP
 	pr->ps_strings = (vaddr_t)vm->vm_maxsaddr + sgap;
         if (uvm_map_protect(&vm->vm_map, (vaddr_t)vm->vm_maxsaddr,
@@ -520,7 +526,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	else
 		atomic_clearbits_int(&pr->ps_flags, PS_SUGIDEXEC);
 
-	atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
+	if (pr->ps_flags & PS_EXECPLEDGE) {
+		pr->ps_pledge = pr->ps_execpledge;
+		atomic_setbits_int(&pr->ps_flags, PS_PLEDGE);
+	} else {
+		atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
+		pr->ps_pledge = 0;
+	}
 
 	/*
 	 * deal with set[ug]id.
@@ -596,6 +608,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)vp;
 				FILE_SET_MATURE(fp, p);
+			} else {
+				FRELE(fp, p);
 			}
 		}
 		fdpunlock(p->p_fd);

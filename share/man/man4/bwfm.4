@@ -1,0 +1,126 @@
+.\" $OpenBSD: bwfm.4,v 1.6 2018/02/11 04:23:02 patrick Exp $
+.\"
+.\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 11 2018 $
+.Dt BWFM 4
+.Os
+.Sh NAME
+.Nm bwfm
+.Nd Broadcom and Cypress wireless network device
+.Sh SYNOPSIS
+.Cd "bwfm* at pci?"
+.Cd "bwfm* at sdmmc?"
+.Cd "bwfm* at usb?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Broadcom and Cypress FullMAC network
+adapters.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wired Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the current encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
+The
+.Nm
+driver relies on the software 802.11 stack for the WPA handshake.
+Both encryption and decryption of data frames are handled by the
+firmware.
+.Pp
+The firmware automatically selects the transmit speed and the channel
+depending on the received signal strength.
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
+.Sh FILES
+The driver needs a firmware file which is loaded when the driver
+attaches.
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
+.Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig bwfm0 scan
+.Pp
+The following
+.Xr hostname.if 5
+example configures bwfm0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+nwid mynwid
+wpakey mywpakey
+dhcp
+.Ed
+.Pp
+The following
+.Xr hostname.if 5
+example creates a host-based access point on boot:
+.Bd -literal -offset indent
+mediaopt hostap
+nwid mynwid
+wpakey mywpakey
+inet 192.168.1.1 255.255.255.0
+.Ed
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 6.3 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Patrick Wildt Aq Mt patrick@blueri.se .
+.Sh CAVEATS
+The firmware is outdated and contains known vulnerabilities.

@@ -51,7 +51,7 @@ sub BODY_00_15 {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___ if ($i<16);
-#if __ARM_ARCH__>=7
+#if __ARM_ARCH__>=7 && !defined(__STRICT_ALIGNMENT)
 	ldr	$T1,[$inp],#4
 #else
 	ldrb	$T1,[$inp,#3]			@ $i
@@ -70,7 +70,7 @@ $code.=<<___;
 	eor	$t1,$f,$g
 #if $i>=16
 	add	$T1,$T1,$t3			@ from BODY_16_xx
-#elif __ARM_ARCH__>=7 && defined(__ARMEL__)
+#elif __ARM_ARCH__>=7 && defined(__ARMEL__) && !defined(__STRICT_ALIGNMENT)
 	rev	$T1,$T1
 #endif
 #if $i==15

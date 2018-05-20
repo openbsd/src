@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.37 2016/03/24 04:56:08 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.39 2018/02/19 08:59:52 mpi Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -82,7 +81,7 @@ i386_iopl(struct proc *p, void *args, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return error;
 #ifdef APERTURE
 	if (!allowaperture && securelevel > 0)

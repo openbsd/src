@@ -193,7 +193,7 @@ int iter_indicates_dnssec_fwd(struct module_env* env,
  * @param dp: delegation point.
  * @param msg: delegation message, with DS if a secure referral.
  * @param dclass: class of query.
- * @return 1 if dnssec is expected, 0 if not.
+ * @return 1 if dnssec is expected, 0 if not or insecure point above qname.
  */
 int iter_indicates_dnssec(struct module_env* env, struct delegpt* dp,
 	struct dns_msg* msg, uint16_t dclass);
@@ -252,7 +252,7 @@ void caps_strip_reply(struct reply_info* rep);
 int caps_failed_rcode(struct reply_info* rep);
 
 /**
- * Store parent-side rrset in seperate rrset cache entries for later 
+ * Store parent-side rrset in separate rrset cache entries for later 
  * last-resort * lookups in case the child-side versions of this information 
  * fails.
  * @param env: environment with cache, time, ...

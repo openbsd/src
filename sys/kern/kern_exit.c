@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.161 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.164 2018/02/10 10:32:51 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
-#include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
@@ -118,8 +117,7 @@ exit1(struct proc *p, int rv, int flags)
 {
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
-	struct vnode *ovp;
-	
+
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
 	pr = p->p_p;
@@ -185,44 +183,7 @@ exit1(struct proc *p, int rv, int flags)
 #ifdef SYSVSEM
 		semexit(pr);
 #endif
-		if (SESS_LEADER(pr)) {
-			struct session *sp = pr->ps_session;
-
-			if (sp->s_ttyvp) {
-				/*
-				 * Controlling process.
-				 * Signal foreground pgrp,
-				 * drain controlling terminal
-				 * and revoke access to controlling terminal.
-				 */
-				if (sp->s_ttyp->t_session == sp) {
-					if (sp->s_ttyp->t_pgrp)
-						pgsignal(sp->s_ttyp->t_pgrp,
-						    SIGHUP, 1);
-					ttywait(sp->s_ttyp);
-					/*
-					 * The tty could have been revoked
-					 * if we blocked.
-					 */
-					if (sp->s_ttyvp)
-						VOP_REVOKE(sp->s_ttyvp,
-						    REVOKEALL);
-				}
-				ovp = sp->s_ttyvp;
-				sp->s_ttyvp = NULL;
-				if (ovp)
-					vrele(ovp);
-				/*
-				 * s_ttyp is not zero'd; we use this to
-				 * indicate that the session once had a
-				 * controlling terminal.  (for logging and
-				 * informational purposes)
-				 */
-			}
-			sp->s_leader = NULL;
-		}
-		fixjobc(pr, pr->ps_pgrp, 0);
-
+		killjobc(pr);
 #ifdef ACCOUNTING
 		acct_process(p);
 #endif
@@ -375,7 +336,8 @@ exit1(struct proc *p, int rv, int flags)
  * modify interrupt state.  We use a simple spin lock for this
  * proclist.  We use the p_hash member to linkup to deadproc.
  */
-struct mutex deadproc_mutex = MUTEX_INITIALIZER(IPL_NONE);
+struct mutex deadproc_mutex =
+    MUTEX_INITIALIZER_FLAGS(IPL_NONE, NULL, MTX_NOWITNESS);
 struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 
 /*

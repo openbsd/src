@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.23 2016/06/19 11:54:33 natano Exp $
+.\" $OpenBSD: mutex.9,v 1.24 2017/10/30 13:33:36 visa Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,23 +15,28 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2016 $
+.Dd $Mdocdate: October 30 2017 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
 .Nm mutex ,
 .Nm mtx_init ,
+.Nm mtx_init_flags ,
 .Nm mtx_enter ,
 .Nm mtx_enter_try ,
 .Nm mtx_leave ,
 .Nm MUTEX_ASSERT_LOCKED ,
 .Nm MUTEX_ASSERT_UNLOCKED ,
-.Nm MUTEX_INITIALIZER
+.Nm MUTEX_INITIALIZER ,
+.Nm MUTEX_INITIALIZER_FLAGS
 .Nd interface to CPU mutexes
 .Sh SYNOPSIS
 .In sys/mutex.h
 .Ft void
 .Fn mtx_init "struct mutex *mtxp" "int wantipl"
+.Ft void
+.Fn mtx_init_flags "struct mutex *mtxp" "int wantipl" "const char *name" \
+"int flags"
 .Ft void
 .Fn mtx_enter "struct mutex *mtxp"
 .Ft int
@@ -41,6 +46,7 @@
 .Fn MUTEX_ASSERT_LOCKED "struct mutex *mtxp"
 .Fn MUTEX_ASSERT_UNLOCKED "struct mutex *mtxp"
 .Fn MUTEX_INITIALIZER "int wantipl"
+.Fn MUTEX_INITIALIZER_FLAGS "int wantipl" "const char *name" "int flags"
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,6 +61,34 @@ When acquired, the mutex will cause the processor interrupt level to be raised
 to
 .Fa wantipl
 if necessary.
+.Pp
+The
+.Fn mtx_init_flags
+macro is similar to
+.Fn mtx_init ,
+but it additionally accepts parameters for
+.Xr witness 4 .
+The pointer
+.Fa name
+differentiates a lock type.
+Two mutexes have the same lock type only if they have been created by the same
+occurrence of
+.Fn mtx_init_flags
+with the same pointer
+.Fa name .
+The
+.Fa flags
+parameter is a bitwise OR of the following options:
+.Bl -tag -width MTX_NOWITNESS -offset indent
+.It Dv MTX_DUPOK
+Prevents
+.Xr witness 4
+from logging when a CPU acquires more than one lock of this lock type.
+.It Dv MTX_NOWITNESS
+Instructs
+.Xr witness 4
+to ignore this lock.
+.El
 .Pp
 The
 .Fn mtx_enter
@@ -84,8 +118,20 @@ When acquired, the mutex will cause the processor interrupt level to be raised
 to
 .Fa wantipl
 if necessary.
+.Pp
+The
+.Fn MUTEX_INITIALIZER_FLAGS
+macro is similar to
+.Fn MUTEX_INITIALIZER ,
+but it additionally accepts parameters for
+.Xr witness 4 .
+See the
+.Fn mtx_init_flags
+macro for details.
 .Sh CONTEXT
 .Fn mtx_init
+and
+.Fn mtx_init_flags
 can be called during autoconf, from process context, or from interrupt
 context.
 .Pp

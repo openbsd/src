@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.25 2015/09/26 16:01:00 guenther Exp $	*/
+/*	$OpenBSD: _types.h,v 1.26 2018/03/05 01:15:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,6 +55,7 @@ typedef struct label_t {
 #define	_STACKALIGNBYTES	_ALIGNBYTES
 #define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
 #define	_ALIGNED_POINTER(p,t)	((((unsigned long)(p)) & (sizeof(t) - 1)) == 0)
+#define	_MAX_PAGE_SHIFT		12	/* same as PAGE_SHIFT */
 
 typedef unsigned long		hppa_hpa_t;	/* XXX */
 typedef unsigned long		hppa_spa_t;	/* XXX */

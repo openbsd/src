@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.141 2017/05/18 07:08:45 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.144 2018/04/24 16:28:42 pirofti Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
 
 #ifdef MULTIPROCESSOR
-	KASSERT(timo || __mp_lock_held(&kernel_lock));
+	KASSERT(timo || _kernel_lock_held());
 #endif
 
 #ifdef DDB
@@ -133,7 +133,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 		s = splhigh();
 		splx(safepri);
 #ifdef MULTIPROCESSOR
-		if (__mp_lock_held(&kernel_lock)) {
+		if (_kernel_lock_held()) {
 			hold_count = __mp_release_all(&kernel_lock);
 			__mp_acquire_count(&kernel_lock, hold_count);
 		}
@@ -186,7 +186,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 		MUTEX_OLDIPL(mtx) = safepri;
 		mtx_leave(mtx);
 #ifdef MULTIPROCESSOR
-		if (__mp_lock_held(&kernel_lock)) {
+		if (_kernel_lock_held()) {
 			hold_count = __mp_release_all(&kernel_lock);
 			__mp_acquire_count(&kernel_lock, hold_count);
 		}
@@ -592,7 +592,7 @@ out:
 	p->p_thrslpid = 0;
 
 	if (error == ERESTART)
-		error = EINTR;
+		error = ECANCELED;
 
 	return (error);
 
@@ -614,13 +614,17 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, tp) != NULL) {
 		if ((error = copyin(SCARG(uap, tp), &ts, sizeof(ts)))) {
 			*retval = error;
-			return (0);
+			return 0;
+		}
+		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000) {
+			*retval = EINVAL;
+			return 0;
 		}
 		SCARG(uap, tp) = &ts;
 	}
 
 	*retval = thrsleep(p, uap);
-	return (0);
+	return 0;
 }
 
 int
@@ -702,5 +706,33 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 		sleep_setup(&sls, r, PWAIT, wmesg);
 		refcnt = r->refs;
 		sleep_finish(&sls, refcnt);
+	}
+}
+
+void
+cond_init(struct cond *c)
+{
+	c->c_wait = 1;
+}
+
+void
+cond_signal(struct cond *c)
+{
+	c->c_wait = 0;
+
+	wakeup_one(c);
+}
+
+void
+cond_wait(struct cond *c, const char *wmesg)
+{
+	struct sleep_state sls;
+	int wait;
+
+	wait = c->c_wait;
+	while (wait) {
+		sleep_setup(&sls, c, PWAIT, wmesg);
+		wait = c->c_wait;
+		sleep_finish(&sls, wait);
 	}
 }

@@ -166,6 +166,9 @@ struct query_info;
 struct edns_data;
 struct regional;
 struct worker;
+struct comm_base;
+struct auth_zones;
+struct outside_network;
 struct module_qstate;
 struct ub_randstate;
 struct mesh_area;
@@ -416,7 +419,7 @@ struct module_env {
 	/**
 	 * Kill newly attached sub. If attach_sub returns newq for 
 	 * initialisation, but that fails, then this routine will cleanup and
-	 * delete the fresly created sub.
+	 * delete the freshly created sub.
 	 * @param newq: the new subquery that is no longer needed.
 	 * 	It is removed.
 	 */
@@ -445,6 +448,10 @@ struct module_env {
 	struct sldns_buffer* scratch_buffer;
 	/** internal data for daemon - worker thread. */
 	struct worker* worker;
+	/** the worker event base */
+	struct comm_base* worker_base;
+	/** the outside network */
+	struct outside_network* outnet;
 	/** mesh area with query state dependencies */
 	struct mesh_area* mesh;
 	/** allocation service */
@@ -468,6 +475,8 @@ struct module_env {
 	struct val_neg_cache* neg_cache;
 	/** the 5011-probe timer (if any) */
 	struct comm_timer* probe_timer;
+	/** auth zones */
+	struct auth_zones* auth_zones;
 	/** Mapping of forwarding zones to targets.
 	 * iterator forwarder information. per-thread, created by worker */
 	struct iter_forwards* fwds;
@@ -608,6 +617,8 @@ struct module_qstate {
 	int no_cache_lookup;
 	/** whether modules should store answer in the cache */
 	int no_cache_store;
+	/** whether to refetch a fresh answer on finishing this state*/
+	int need_refetch;
 
 	/**
 	 * Attributes of clients that share the qstate that may affect IP-based

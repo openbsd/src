@@ -1,4 +1,4 @@
-.\"	$OpenBSD: GENERAL_NAME_new.3,v 1.2 2016/12/25 22:15:10 schwarze Exp $
+.\"	$OpenBSD: GENERAL_NAME_new.3,v 1.5 2018/03/22 21:08:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt GENERAL_NAME_NEW 3
 .Os
 .Sh NAME
@@ -142,3 +142,23 @@ if an error occurs.
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile,
 section 4.2: Certificate Extensions
+.Sh HISTORY
+.Fn GENERAL_NAME_new ,
+.Fn GENERAL_NAME_free ,
+.Fn GENERAL_NAMES_new ,
+and
+.Fn GENERAL_NAMES_free
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .
+.Pp
+.Fn OTHERNAME_new
+and
+.Fn OTHERNAME_free
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
+.Pp
+.Fn EDIPARTYNAME_new
+and
+.Fn EDIPARTYNAME_free
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

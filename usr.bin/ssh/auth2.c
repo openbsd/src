@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.143 2017/06/24 06:34:38 djm Exp $ */
+/* $OpenBSD: auth2.c,v 1.147 2018/05/11 03:22:55 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -54,6 +54,7 @@
 #endif
 #include "monitor_wrap.h"
 #include "ssherr.h"
+#include "digest.h"
 
 /* import */
 extern ServerOptions options;
@@ -136,7 +137,7 @@ userauth_banner(void)
 {
 	char *banner = NULL;
 
-	if (options.banner == NULL || (datafellows & SSH_BUG_BANNER) != 0)
+	if (options.banner == NULL)
 		return;
 
 	if ((banner = PRIVSEP(auth2_read_banner())) == NULL)
@@ -200,6 +201,43 @@ input_service_request(int type, u_int32_t seq, struct ssh *ssh)
 	return 0;
 }
 
+#define MIN_FAIL_DELAY_SECONDS 0.005
+static double
+user_specific_delay(const char *user)
+{
+	char b[512];
+	size_t len = ssh_digest_bytes(SSH_DIGEST_SHA512);
+	u_char *hash = xmalloc(len);
+	double delay;
+
+	(void)snprintf(b, sizeof b, "%llu%s",
+	     (unsigned long long)options.timing_secret, user);
+	if (ssh_digest_memory(SSH_DIGEST_SHA512, b, strlen(b), hash, len) != 0)
+		fatal("%s: ssh_digest_memory", __func__);
+	/* 0-4.2 ms of delay */
+	delay = (double)PEEK_U32(hash) / 1000 / 1000 / 1000 / 1000;
+	freezero(hash, len);
+	debug3("%s: user specific delay %0.3lfms", __func__, delay/1000);
+	return MIN_FAIL_DELAY_SECONDS + delay;
+}
+
+static void
+ensure_minimum_time_since(double start, double seconds)
+{
+	struct timespec ts;
+	double elapsed = monotime_double() - start, req = seconds, remain;
+
+	/* if we've already passed the requested time, scale up */
+	while ((remain = seconds - elapsed) < 0.0)
+		seconds *= 2;
+
+	ts.tv_sec = remain;
+	ts.tv_nsec = (remain - ts.tv_sec) * 1000000000;
+	debug3("%s: elapsed %0.3lfms, delaying %0.3lfms (requested %0.3lfms)",
+	    __func__, elapsed*1000, remain*1000, req*1000);
+	nanosleep(&ts, NULL);
+}
+
 /*ARGSUSED*/
 static int
 input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
@@ -208,6 +246,7 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	Authmethod *m = NULL;
 	char *user, *service, *method, *style = NULL;
 	int authenticated = 0;
+	double tstart = monotime_double();
 
 	if (authctxt == NULL)
 		fatal("input_userauth_request: no authctxt");
@@ -269,6 +308,9 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		debug2("input_userauth_request: try method %s", method);
 		authenticated =	m->userauth(ssh);
 	}
+	if (!authctxt->authenticated)
+		ensure_minimum_time_since(tstart,
+		    user_specific_delay(authctxt->user));
 	userauth_finish(ssh, authenticated, method, NULL);
 
 	free(service);
@@ -293,7 +335,7 @@ userauth_finish(struct ssh *ssh, int authenticated, const char *method,
 
 	/* Special handling for root */
 	if (authenticated && authctxt->pw->pw_uid == 0 &&
-	    !auth_root_allowed(method))
+	    !auth_root_allowed(ssh, method))
 		authenticated = 0;
 
 	if (authenticated && options.num_auth_methods != 0) {

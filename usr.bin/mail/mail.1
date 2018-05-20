@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.78 2017/05/29 12:50:33 jmc Exp $
+.\"	$OpenBSD: mail.1,v 1.79 2018/03/16 16:58:26 schwarze Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -358,7 +358,7 @@ the recipient is treated as a local or network mail address.
 Each command is typed on a line by itself, and may take arguments
 following the command word.
 The command need not be typed in its
-entirety -- the first command which matches the typed prefix is used.
+entirety \(em the first command which matches the typed prefix is used.
 For commands which take message lists as arguments, if no message
 list is given, then the next message forward which satisfies the
 command's requirements is used.
@@ -559,8 +559,7 @@ Takes a message list and invokes the pager on that list.
 .Pq Ic n
 (like
 .Ic +
-or
-.Tn CR )
+or CR)
 Goes to the next message in sequence and types it.
 With an argument list, types the next matching message.
 .It Ic preserve

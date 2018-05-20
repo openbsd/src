@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_aux.c,v 1.1 2017/07/29 17:25:20 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_aux.c,v 1.2 2018/02/25 01:45:01 guenther Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #include <dev/ofw/fdt.h>
 
 /*
- * This auxilliary device handles interrupts and clocks for one UART
+ * This auxiliary device handles interrupts and clocks for one UART
  * and two SPI controllers.  For now we only support the UART, so we
  * simply register its interrupt handler directly with our parent
  * interrupt controller.

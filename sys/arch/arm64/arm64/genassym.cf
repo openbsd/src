@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.3 2017/03/24 19:48:01 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2018/03/29 19:25:39 patrick Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -49,44 +49,50 @@ include <machine/intr.h>
 include <uvm/uvm_extern.h>
 
 include <machine/frame.h>
-struct sigframe
-member SF_SC sf_sc
 
-struct cpu_info
-member CI_CURPROC ci_curproc
+struct	sigframe
+member	sf_sc
 
-struct proc
-member P_ASTPENDING p_md.md_astpending
-member P_STAT p_stat
+struct	cpu_info
+member	ci_curproc
+ifdef MULTIPROCESSOR
+member	ci_el1_stkend
+member	ci_ttbr1
+member	ci_self
+endif
 
-struct pcb
-member PCB_ONFAULT pcb_onfault
-member PCB_FLAGS pcb_flags
-member PCB_SP pcb_sp
-member PCB_TCB pcb_tcb
+struct	proc
+member	p_addr
+member	p_cpu
+member	p_stat
+member	P_ASTPENDING	p_md.md_astpending
 
-struct trapframe
-member TF_X tf_x
-member TF_SP tf_sp
-member TF_ELR tf_elr
-define TF_SIZE sizeof(struct trapframe)
+export	SONPROC
 
-define PCB_FPU PCB_FPU
-define SONPROC SONPROC
+struct	pcb
+member	pcb_onfault
+member	pcb_flags
+member	pcb_sp
+member	pcb_tcb
 
-struct cpu_info
-member CI_CURPCB ci_curpcb
+export	PCB_FPU
 
-struct proc
-member P_ADDR p_addr
+struct	trapframe
+member	tf_x
+member	tf_sp
+member	tf_elr
+define	TF_SIZE		sizeof(struct trapframe)
 
-struct switchframe
-member SF_X19	sf_x19
-member SF_X21	sf_x21
-member SF_X23	sf_x23
-member SF_X25	sf_x25
-member SF_X27	sf_x27
-member SF_X29	sf_x29
-define SWITCHFRAME_SZ sizeof(struct switchframe)
+struct	cpu_info
+member	ci_curpcb
 
-define IPL_NONE IPL_NONE
+struct	switchframe
+member	sf_x19
+member	sf_x21
+member	sf_x23
+member	sf_x25
+member	sf_x27
+member	sf_x29
+define	SWITCHFRAME_SZ sizeof(struct switchframe)
+
+export	IPL_NONE

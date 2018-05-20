@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.76 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.78 2018/04/10 09:17:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/pool.h>
@@ -60,8 +61,13 @@ int	pipe_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	pipe_stat(struct file *fp, struct stat *ub, struct proc *p);
 
 static struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, pipe_poll, pipe_kqfilter,
-	pipe_stat, pipe_close 
+	.fo_read	= pipe_read,
+	.fo_write	= pipe_write,
+	.fo_ioctl	= pipe_ioctl,
+	.fo_poll	= pipe_poll,
+	.fo_kqfilter	= pipe_kqfilter,
+	.fo_stat	= pipe_stat,
+	.fo_close	= pipe_close
 };
 
 void	filt_pipedetach(struct knote *kn);

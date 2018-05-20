@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2017/08/22 23:20:00 jsg Exp $
+#	$OpenBSD: install.md,v 1.9 2018/03/23 05:02:27 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 # machine dependent section of installation/upgrade script.
 #
 
+NCPU=$(sysctl -n hw.ncpufound)
 NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
@@ -86,7 +87,7 @@ md_prep_fdisk() {
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk$ or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk or (E)dit the MBR?" "$_d"
 		case $resp in
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."

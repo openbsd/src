@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.14 2017/01/03 06:39:44 ratchov Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.16 2018/01/18 18:09:38 ratchov Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/selinfo.h>
 #include <sys/poll.h>
 
@@ -77,21 +76,8 @@ UMQ_FIXED_EP_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE, 1, 1) = {
 
 UMQ_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE) = {
 	UMQ_FIXED_EP_REG(YAMAHA, YAMAHA_UX256, ANYIFACE),
-#if 0
-	UMQ_YAMAHA_REG(YAMAHA, ANYPRODUCT, ANYIFACE),
-#endif
 	UMQ_TERMINATOR
 };
-
-
-/*
- * YAMAHA generic
- */
-UMQ_DEF(YAMAHA, ANYPRODUCT, ANYIFACE) = {
-	UMQ_YAMAHA_REG(YAMAHA, ANYPRODUCT, ANYIFACE),
-	UMQ_TERMINATOR
-};
-
 
 /*
  * ROLAND UM-1
@@ -354,7 +340,6 @@ UMQ_DEF(ROLAND, ROLAND_UMONE, ANYIFACE) = {
  */
 struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(YAMAHA, YAMAHA_UX256, ANYIFACE),
-	UMQ_REG(YAMAHA, ANYPRODUCT, ANYIFACE),
 	UMQ_REG(ROLAND, ROLAND_UM1, 2),
 	UMQ_REG(ROLAND, ROLAND_SC8850, 2),
 	UMQ_REG(ROLAND, ROLAND_SD90, 2),

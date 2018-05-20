@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.105 2017/08/11 17:25:09 mpi Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.106 2017/12/30 20:46:59 guenther Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -39,7 +39,6 @@
 #include <sys/disklabel.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/timeout.h>
 #include <scsi/scsi_all.h>

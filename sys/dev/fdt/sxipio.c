@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.4 2017/08/30 16:21:29 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.9 2017/12/28 18:05:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -89,6 +89,7 @@ struct sxipio_softc {
 
 #define SXIPIO_GPIO_IN		0
 #define SXIPIO_GPIO_OUT		1
+#define SXIPIO_DISABLED		7
 
 int	sxipio_match(struct device *, void *, void *);
 void	sxipio_attach(struct device *, struct device *, void *);
@@ -121,16 +122,28 @@ struct sxipio_pins sxipio_pins[] = {
 		sun4i_a10_pins, nitems(sun4i_a10_pins)
 	},
 	{
-		"allwinner,sun5i-a13-pinctrl",
-		sun5i_a13_pins, nitems(sun5i_a13_pins)
-	},
-	{
 		"allwinner,sun5i-a10s-pinctrl",
 		sun5i_a10s_pins, nitems(sun5i_a10s_pins)
 	},
 	{
+		"allwinner,sun5i-a13-pinctrl",
+		sun5i_a13_pins, nitems(sun5i_a13_pins)
+	},
+	{
+		"allwinner,sun5i-gr8-pinctrl",
+		sun5i_gr8_pins, nitems(sun5i_gr8_pins)
+	},
+	{
 		"allwinner,sun7i-a20-pinctrl",
 		sun7i_a20_pins, nitems(sun7i_a20_pins)
+	},
+	{
+		"allwinner,sun8i-r40-pinctrl",
+		sun8i_r40_pins, nitems(sun8i_r40_pins)
+	},
+	{
+		"allwinner,sun8i-a33-pinctrl",
+		sun8i_a33_pins, nitems(sun8i_a33_pins)
 	},
 	{
 		"allwinner,sun8i-h3-pinctrl",
@@ -153,8 +166,12 @@ struct sxipio_pins sxipio_pins[] = {
 		sun50i_a64_pins, nitems(sun50i_a64_pins)
 	},
 	{
+		"allwinner,sun50i-a64-r-pinctrl",
+		sun50i_a64_r_pins, nitems(sun50i_a64_r_pins)
+	},
+	{
 		"allwinner,sun50i-h5-pinctrl",
-		sun8i_h3_pins, nitems(sun8i_h3_pins)
+		sun50i_h5_pins, nitems(sun50i_h5_pins)
 	},
 };
 
@@ -291,6 +308,8 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 
 		/* Lookup the function of the pin. */
 		for (j = 0; j < nitems(sc->sc_pins[i].funcs); j++) {
+			if (sc->sc_pins[i].funcs[j].name == NULL)
+				continue;
 			if (strcmp(func, sc->sc_pins[i].funcs[j].name) == 0)
 				break;
 		}
@@ -446,7 +465,7 @@ sxipio_attach_gpio(struct device *parent)
 	uint32_t reg;
 	int port, pin;
 	int off, mux;
-	int state;
+	int state, flags;
 	int i;
 
 	for (i = 0; i < sc->sc_npins; i++) {
@@ -464,8 +483,20 @@ sxipio_attach_gpio(struct device *parent)
 		mux = (reg >> off) & 0x7;
 
 		/* Skip pins that have been assigned other functions. */
-		if (mux != SXIPIO_GPIO_IN && mux != SXIPIO_GPIO_OUT)
+		if (mux != SXIPIO_GPIO_IN && mux != SXIPIO_GPIO_OUT &&
+		    mux != SXIPIO_DISABLED)
 			continue;
+
+		switch (mux) {
+		case SXIPIO_GPIO_IN:
+			flags = GPIO_PIN_SET | GPIO_PIN_INPUT;
+			break;
+		case SXIPIO_GPIO_OUT:
+			flags = GPIO_PIN_SET | GPIO_PIN_OUTPUT;
+			break;
+		default:
+			flags = GPIO_PIN_SET;
+		}
 
 		/* Get pin state. */
 		reg = SXIREAD4(sc, SXIPIO_DAT(port));
@@ -473,8 +504,7 @@ sxipio_attach_gpio(struct device *parent)
 
 		sc->sc_gpio_pins[port][pin].pin_caps =
 		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-		sc->sc_gpio_pins[port][pin].pin_flags =
-		    GPIO_PIN_SET | (mux ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
+		sc->sc_gpio_pins[port][pin].pin_flags = flags;
 		sc->sc_gpio_pins[port][pin].pin_state = state;
 		sc->sc_gpio_pins[port][pin].pin_num = pin;
 	}

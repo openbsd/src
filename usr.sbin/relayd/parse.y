@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.216 2017/08/28 06:00:05 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.223 2018/04/26 14:12:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -99,7 +99,6 @@ objid_t			 last_relay_id = 0;
 objid_t			 last_proto_id = 0;
 objid_t			 last_rt_id = 0;
 objid_t			 last_nr_id = 0;
-objid_t			 last_key_id = 0;
 
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
@@ -164,15 +163,15 @@ typedef struct {
 
 %token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE SET CHECK CIPHERS CODE
 %token	COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL FILENAME
-%token	FORWARD FROM HASH HEADER HOST ICMP INCLUDE INET INET6 INTERFACE
-%token	INTERVAL IP LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP METHOD MODE NAT
-%token	NO DESTINATION NODELAY NOTHING ON PARENT PATH PFTAG PORT PREFORK
-%token	PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE
-%token	RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SNMP
-%token	SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS TO
-%token	ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
-%token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDH
-%token	EDH CURVE TICKETS
+%token	FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET INET6
+%token	INTERFACE INTERVAL IP LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP METHOD
+%token	MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH PFTAG PORT
+%token	PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST
+%token	RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION
+%token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
+%token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
+%token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
+%token	EDH TICKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -237,11 +236,10 @@ opttlsclient	: /*empty*/	{ $$ = 0; }
 		| WITH ssltls	{ $$ = 1; }
 		;
 
-http_type	: STRING	{
+http_type	: HTTP		{ $$ = 0; }
+		| STRING	{
 			if (strcmp("https", $1) == 0) {
 				$$ = 1;
-			} else if (strcmp("http", $1) == 0) {
-				$$ = 0;
 			} else {
 				yyerror("invalid check type: %s", $1);
 				free($1);
@@ -265,10 +263,9 @@ hostname	: /* empty */		{
 
 relay_proto	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
 		| TCP				{ $$ = RELAY_PROTO_TCP; }
+		| HTTP				{ $$ = RELAY_PROTO_HTTP; }
 		| STRING			{
-			if (strcmp("http", $1) == 0) {
-				$$ = RELAY_PROTO_HTTP;
-			} else if (strcmp("dns", $1) == 0) {
+			if (strcmp("dns", $1) == 0) {
 				$$ = RELAY_PROTO_DNS;
 			} else {
 				yyerror("invalid protocol type: %s", $1);
@@ -311,7 +308,15 @@ eflags		: STYLE STRING
 		}
 		;
 
-port		: PORT STRING {
+port		: PORT HTTP {
+			int p = 0;
+			$$.op = PF_OP_EQ;
+			if ((p = getservice("http")) == -1)
+				YYERROR;
+			$$.val[0] = p;
+			$$.val[1] = 0;
+		}
+		| PORT STRING {
 			char		*a, *b;
 			int		 p[2];
 
@@ -353,6 +358,8 @@ varset		: STRING '=' STRING	{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -412,6 +419,9 @@ main		: INTERVAL NUMBER	{
 				(void)strlcpy(conf->sc_conf.snmp_path,
 				    AGENTX_SOCKET,
 				    sizeof(conf->sc_conf.snmp_path));
+		}
+		| SOCKET STRING {
+			conf->sc_ps->ps_csock.cs_name = $2;
 		}
 		;
 
@@ -996,11 +1006,12 @@ proto		: relay_proto PROTO STRING	{
 			p->tcpflags = TCPFLAG_DEFAULT;
 			p->tlsflags = TLSFLAG_DEFAULT;
 			p->tcpbacklog = RELAY_BACKLOG;
+			p->httpheaderlen = RELAY_DEFHEADERLENGTH;
 			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->tlsciphers, TLSCIPHERS_DEFAULT,
 			    sizeof(p->tlsciphers));
-			(void)strlcpy(p->tlsecdhcurve, TLSECDHCURVE_DEFAULT,
-			    sizeof(p->tlsecdhcurve));
+			(void)strlcpy(p->tlsecdhecurves, TLSECDHECURVES_DEFAULT,
+			    sizeof(p->tlsecdhecurves));
 			(void)strlcpy(p->tlsdhparams, TLSDHPARAM_DEFAULT,
 			    sizeof(p->tlsdhparams));
 			if (last_proto_id == INT_MAX) {
@@ -1034,10 +1045,31 @@ protoptsl	: ssltls tlsflags
 		| ssltls '{' tlsflags_l '}'
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
+		| HTTP httpflags
+		| HTTP '{' httpflags_l '}'
 		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
 		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
 		| filterrule
 		| include
+		;
+
+
+httpflags_l	: httpflags comma httpflags_l
+		| httpflags
+		;
+
+httpflags	: HEADERLEN NUMBER	{
+			if (proto->type != RELAY_PROTO_HTTP) {
+				yyerror("can set http options only for "
+				    "http protocol");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > RELAY_MAXHEADERLENGTH) {
+				yyerror("invalid headerlen: %d", $2);
+				YYERROR;
+			}
+			proto->httpheaderlen = $2;
+		}
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -1051,7 +1083,7 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| SPLICE		{ /* default */ }
 		| NO SPLICE		{ proto->tcpflags |= TCPFLAG_NSPLICE; }
 		| BACKLOG NUMBER	{
-			if ($2 < 0 || $2 > RELAY_MAX_SESSIONS) {
+			if ($2 < 0 || $2 > RELAY_MAX_BACKLOG) {
 				yyerror("invalid backlog: %d", $2);
 				YYERROR;
 			}
@@ -1133,37 +1165,29 @@ tlsflags	: SESSION TICKETS { proto->tickets = 1; }
 			}
 			free($3);
 		}
-		| NO ECDH			{
-			(void)strlcpy(proto->tlsecdhcurve, "none",
-			    sizeof(proto->tlsecdhcurve));
-		}
-		| ECDH			{
-			(void)strlcpy(proto->tlsecdhcurve, "auto",
-			    sizeof(proto->tlsecdhcurve));
-		}
-		| ECDH CURVE STRING			{
+		| ECDHE STRING			{
 			struct tls_config	*tls_cfg;
 			if ((tls_cfg = tls_config_new()) == NULL) {
 				yyerror("tls_config_new failed");
-				free($3);
+				free($2);
 				YYERROR;
 			}
-			if (tls_config_set_ecdhecurve(tls_cfg, $3) != 0) {
-				yyerror("tls ecdh curve %s: %s", $3,
+			if (tls_config_set_ecdhecurves(tls_cfg, $2) != 0) {
+				yyerror("tls ecdhe %s: %s", $2,
 				    tls_config_error(tls_cfg));
 				tls_config_free(tls_cfg);
-				free($3);
+				free($2);
 				YYERROR;
 			}
 			tls_config_free(tls_cfg);
-			if (strlcpy(proto->tlsecdhcurve, $3,
-			    sizeof(proto->tlsecdhcurve)) >=
-			    sizeof(proto->tlsecdhcurve)) {
-				yyerror("tls ecdh truncated");
-				free($3);
+			if (strlcpy(proto->tlsecdhecurves, $2,
+			    sizeof(proto->tlsecdhecurves)) >=
+			    sizeof(proto->tlsecdhecurves)) {
+				yyerror("tls ecdhe curves truncated");
+				free($2);
 				YYERROR;
 			}
-			free($3);
+			free($2);
 		}
 		| CA FILENAME STRING		{
 			if (strlcpy(proto->tlsca, $3,
@@ -1641,6 +1665,9 @@ relay		: RELAY STRING	{
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
 			r->rl_conf.dstretry = 0;
+			r->rl_tls_cert_fd = -1;
+			r->rl_tls_ca_fd = -1;
+			r->rl_tls_cacert_fd = -1;
 			TAILQ_INIT(&r->rl_tables);
 			if (last_relay_id == INT_MAX) {
 				yyerror("too many relays defined");
@@ -2195,12 +2222,11 @@ lookup(char *s)
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
 		{ "cookie",		COOKIE },
-		{ "curve",		CURVE },
 		{ "demote",		DEMOTE },
 		{ "destination",	DESTINATION },
 		{ "digest",		DIGEST },
 		{ "disable",		DISABLE },
-		{ "ecdh",		ECDH },
+		{ "ecdhe",		ECDHE },
 		{ "edh",		EDH },
 		{ "error",		ERROR },
 		{ "expect",		EXPECT },
@@ -2210,7 +2236,9 @@ lookup(char *s)
 		{ "from",		FROM },
 		{ "hash",		HASH },
 		{ "header",		HEADER },
+		{ "headerlen",		HEADERLEN },
 		{ "host",		HOST },
+		{ "http",		HTTP },
 		{ "icmp",		ICMP },
 		{ "include",		INCLUDE },
 		{ "inet",		INET },
@@ -3171,10 +3199,8 @@ int
 relay_id(struct relay *rl)
 {
 	rl->rl_conf.id = ++last_relay_id;
-	rl->rl_conf.tls_keyid = ++last_key_id;
-	rl->rl_conf.tls_cakeyid = ++last_key_id;
 
-	if (last_relay_id == INT_MAX || last_key_id == INT_MAX)
+	if (last_relay_id == INT_MAX)
 		return (-1);
 
 	return (0);
@@ -3194,8 +3220,9 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	rb->rl_conf.flags =
 	    (ra->rl_conf.flags & ~F_TLS) | (rc.flags & F_TLS);
 	if (!(rb->rl_conf.flags & F_TLS)) {
-		rb->rl_tls_cert = NULL;
-		rb->rl_conf.tls_cert_len = 0;
+		rb->rl_tls_cert_fd = -1;
+		rb->rl_tls_cacert_fd = -1;
+		rb->rl_tls_ca_fd = -1;
 		rb->rl_tls_key = NULL;
 		rb->rl_conf.tls_key_len = 0;
 	}

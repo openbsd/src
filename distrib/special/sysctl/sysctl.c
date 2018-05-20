@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.9 2015/01/16 06:39:34 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.11 2018/02/18 17:47:47 naddy Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -18,13 +18,19 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 
-#include <unistd.h>
+#include <netinet/in.h>
+
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#define SOIIKEY_LEN 16
 
 struct var {
 	char *name;
@@ -87,6 +93,39 @@ pstring(struct var *v)
 }
 
 int
+parse_hex_char(char ch)
+{
+	if (ch >= '0' && ch <= '9')
+		return (ch - '0');
+
+	ch = tolower((unsigned char)ch);
+	if (ch >= 'a' && ch <= 'f')
+		return (ch - 'a' + 10);
+
+	return (-1);
+}
+
+int
+set_soii_key(char *src)
+{
+	uint8_t key[SOIIKEY_LEN];
+	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_SOIIKEY};
+	int i, c;
+
+	for(i = 0; i < SOIIKEY_LEN; i++) {
+		if ((c = parse_hex_char(src[2 * i])) == -1)
+			return (-1);
+		key[i] = c << 4;
+		if ((c = parse_hex_char(src[2 * i + 1])) == -1)
+			return (-1);
+		key[i] |= c;
+	}
+	
+	return sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL, key,
+	    SOIIKEY_LEN);
+}
+
+int
 main(int argc, char *argv[])
 {
 	int ch, i;
@@ -113,6 +152,16 @@ main(int argc, char *argv[])
 
 	while (argc--) {
 		name = *argv++;
+		/* 
+		 * strlen("net.inet6.ip6.soiikey="
+		 *     "00000000000000000000000000000000") == 54
+		 * strlen("net.inet6.ip6.soiikey=") == 22
+		 */
+		if (strlen(name) == 54 && strncmp(name,
+		    "net.inet6.ip6.soiikey=", 22) == 0) {
+			set_soii_key(name + 22);
+			continue;
+		}
 
 		for (i = 0; i < sizeof(vars)/sizeof(vars[0]); i++) {
 			if (strcmp(name, vars[i].name) == 0) {

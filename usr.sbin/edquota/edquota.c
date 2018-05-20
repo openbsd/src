@@ -35,13 +35,13 @@
  */
 #include <sys/param.h>	/* btodb dbtob */
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <ufs/ufs/quota.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fstab.h>
 #include <grp.h>
 #include <paths.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2016/08/17 10:49:09 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.21 2018/01/13 15:18:11 mpi Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -102,6 +102,7 @@ void    intr_establish(int, struct intrhand *);
 
 #define splzs()		splserial()
 
+#define	IPL_MPFLOOR	IPL_SERIAL
 #define	IPL_MPSAFE	0x100
 
 int	 splraise(int);

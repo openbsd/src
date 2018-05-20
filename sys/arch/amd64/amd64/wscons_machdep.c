@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.13 2016/06/21 15:24:55 jcs Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.14 2017/10/14 04:44:43 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -28,10 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/extent.h>
 
 #include <machine/bus.h>
 

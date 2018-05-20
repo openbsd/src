@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2017/06/29 05:40:35 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2018/02/06 20:35:21 naddy Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -20,8 +20,14 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/socket.h>
 #include <sys/hibernate.h>
 #include <uvm/uvm.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <machine/bootconfig.h>
 
@@ -34,7 +40,6 @@ enum devclass bootdev_class = DV_DULL;
 void
 unmap_startup(void)
 {
-#if 0
 	extern void *_start, *endboot;
 	vaddr_t p = (vaddr_t)&_start;
 
@@ -42,7 +47,6 @@ unmap_startup(void)
 		pmap_kremove(p, PAGE_SIZE);
 		p += PAGE_SIZE;
 	} while (p < (vaddr_t)&endboot);
-#endif
 }
 
 void
@@ -65,6 +69,7 @@ diskconf(void)
 	size_t	len;
 	char	*p;
 	dev_t	tmpdev;
+	extern uint8_t *bootmac;
 
 	if (*boot_file != '\0')
 		printf("bootfile: %s\n", boot_file);
@@ -78,6 +83,22 @@ diskconf(void)
 			len = strlen(boot_file);
 		bootdv = parsedisk(boot_file, len, 0, &tmpdev);
 	}
+
+#if defined(NFSCLIENT)
+	if (bootmac) {
+		struct ifnet *ifp;
+
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_type == IFT_ETHER &&
+			    memcmp(bootmac, ((struct arpcom *)ifp)->ac_enaddr,
+			    ETHER_ADDR_LEN) == 0)
+				break;
+		}
+		if (ifp)
+			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
+			    0, &tmpdev);
+	}
+#endif
 
 	if (bootdv != NULL)
 		printf("boot device: %s\n", bootdv->dv_xname);
@@ -98,10 +119,10 @@ device_register(struct device *dev, void *aux)
 }
 
 struct nam2blk nam2blk[] = {
-	{ "sd",		4 },
-	{ "nbd",	20 },
-	{ "tmpfsrd",	19 },
-	{ "cd",		6},
-	{ "wd",		0 },
+	{ "wd",		 0 },
+	{ "sd",		 4 },
+	{ "cd",		 6 },
+	{ "vnd",	14 },
+	{ "rd",		17 },
 	{ NULL,		-1 }
 };

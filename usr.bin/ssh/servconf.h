@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.h,v 1.127 2017/10/05 15:52:03 djm Exp $ */
+/* $OpenBSD: servconf.h,v 1.131 2018/04/13 03:57:26 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -51,15 +51,34 @@
 struct ssh;
 struct fwd_perm_list;
 
+/*
+ * Used to store addresses from ListenAddr directives. These may be
+ * incomplete, as they may specify addresses that need to be merged
+ * with any ports requested by ListenPort.
+ */
+struct queued_listenaddr {
+	char *addr;
+	int port; /* <=0 if unspecified */
+	char *rdomain;
+};
+
+/* Resolved listen addresses, grouped by optional routing domain */
+struct listenaddr {
+	char *rdomain;
+	struct addrinfo *addrs;
+};
+
 typedef struct {
 	u_int	num_ports;
 	u_int	ports_from_cmdline;
 	int	ports[MAX_PORTS];	/* Port number to listen on. */
+	struct queued_listenaddr *queued_listen_addrs;
 	u_int	num_queued_listens;
-	char   **queued_listen_addrs;
-	int    *queued_listen_ports;
-	struct addrinfo *listen_addrs;	/* Addresses for server to listen. */
+	struct listenaddr *listen_addrs;
+	u_int	num_listen_addrs;
 	int	address_family;		/* Address family used by the server. */
+
+	char	*routing_domain;	/* Bind session to routing domain */
 
 	char   **host_key_files;	/* Files containing host keys. */
 	u_int	num_host_key_files;     /* Number of files for host keys. */
@@ -188,6 +207,7 @@ typedef struct {
 
 	int	fingerprint_hash;
 	int	expose_userauth_info;
+	u_int64_t timing_secret;
 }       ServerOptions;
 
 /* Information about the incoming connection as used by Match */
@@ -197,6 +217,7 @@ struct connection_info {
 	const char *address; 	/* remote address */
 	const char *laddress;	/* local address */
 	int lport;		/* local port */
+	const char *rdomain;	/* routing domain if available */
 };
 
 
@@ -220,6 +241,7 @@ struct connection_info {
 		M_CP_STROPT(authorized_principals_command_user); \
 		M_CP_STROPT(hostbased_key_types); \
 		M_CP_STROPT(pubkey_key_types); \
+		M_CP_STROPT(routing_domain); \
 		M_CP_STRARRAYOPT(authorized_keys_files, num_authkeys_files); \
 		M_CP_STRARRAYOPT(allow_users, num_allow_users); \
 		M_CP_STRARRAYOPT(deny_users, num_deny_users); \

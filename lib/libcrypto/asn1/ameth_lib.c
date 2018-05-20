@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.16 2017/01/21 04:31:25 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.17 2018/05/13 06:40:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -299,7 +299,7 @@ EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
 }
 
 const EVP_PKEY_ASN1_METHOD*
-EVP_PKEY_get0_asn1(EVP_PKEY *pkey)
+EVP_PKEY_get0_asn1(const EVP_PKEY *pkey)
 {
 	return pkey->ameth;
 }

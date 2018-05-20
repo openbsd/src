@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.6 2017/08/27 19:33:02 drahn Exp $ */
+/* $OpenBSD: pmap.h,v 1.11 2018/05/16 09:07:45 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,10 +17,13 @@
 #ifndef	_ARM64_PMAP_H_
 #define	_ARM64_PMAP_H_
 
-#include <arm64/pte.h>
+#include <sys/mutex.h>
 
-#define PMAP_PA_MASK  ~((paddr_t)PAGE_MASK) /* to remove the flags */
+#include <machine/pte.h>
+
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define PMAP_NOCACHE	0x1 /* non-cacheable memory */
+#define PMAP_DEVICE	0x2 /* device memory */
 
 typedef struct pmap *pmap_t;
 
@@ -65,12 +68,14 @@ void pagezero_cache(vaddr_t);
  * Pmap stuff
  */
 struct pmap {
+	struct mutex pm_mtx;
 	union {
 		struct pmapvp0 *l0;	/* virtual to physical table 4 lvl */
 		struct pmapvp1 *l1;	/* virtual to physical table 3 lvl */
 	} pm_vp;
 	uint64_t pm_pt0pa;
 	int have_4_level_pt;
+	int pm_privileged;
 	int pm_asid;
 	int pm_refs;				/* ref count */
 	struct pmap_statistics  pm_stats;	/* pmap statistics */
@@ -86,8 +91,11 @@ vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
     long kernelend, long ram_start, long ram_end);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 
+paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 void pmap_avail_fixup();
 void pmap_physload_avail();
+
+#define PMAP_GROWKERNEL
 
 struct pv_entry;
 
@@ -95,20 +103,20 @@ struct pv_entry;
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 void pmap_postinit(void);
-void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
-void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
-vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
+void	pmap_map_early(paddr_t, psize_t);
 
 #ifndef _LOCORE
 
 #define __HAVE_VM_PAGE_MD
 struct vm_page_md {
+	struct mutex pv_mtx;
 	LIST_HEAD(,pte_desc) pv_list;
 	int pvh_attrs;				/* page attributes */
 };
 
 #define VM_MDPAGE_INIT(pg) do {			\
-        LIST_INIT(&((pg)->mdpage.pv_list));     \
+	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM);	\
+	LIST_INIT(&((pg)->mdpage.pv_list));     \
 	(pg)->mdpage.pvh_attrs = 0;		\
 } while (0)
 

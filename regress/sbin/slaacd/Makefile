@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/08/25 20:10:17 florian Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/10/11 17:21:44 florian Exp $
 
 # The following ports must be installed:
 #
@@ -40,9 +40,9 @@ regress:
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 ./
+PYTHON =	python2.7 -B ./
 .else
-PYTHON =	python2.7 ${.CURDIR}/
+PYTHON =	python2.7 -B ${.CURDIR}/
 .endif
 
 setup:
@@ -67,6 +67,13 @@ TARGETS	+=	send-solicitation
 run-regress-send-solicitation: cleanup setup
 	@echo '\n======== $@ ========'
 	route -T${RTABLE} exec ${PYTHON}sniff_sol.py ${CTR_SOCK}
+
+
+TARGETS	+=	parse-ra
+run-regress-parse-ra: cleanup setup
+	@echo '\n======== $@ ========'
+	route -T${RTABLE} exec ${PYTHON}process_ra.py ${PAIR1} ${PAIR2} \
+	    ${CTR_SOCK}
 
 TARGETS	+=	cleanup
 run-regress-cleanup: cleanup

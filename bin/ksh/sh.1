@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.143 2017/06/01 20:37:38 tb Exp $
+.\"	$OpenBSD: sh.1,v 1.148 2018/03/31 14:58:19 anton Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: March 31 2018 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -700,10 +700,10 @@ display the names and values of all shell variables.
 The options are described in the options description
 at the beginning of this manual.
 The sequence
-.Qq set -o
+.Ql set -o
 displays the current option settings;
 the sequence
-.Qq set +o
+.Ql set +o
 displays,
 in a format suitable to be reinput to the shell,
 a command suitable to achieve the current option settings.
@@ -713,10 +713,10 @@ with the special parameter
 .Sq #
 set to the number of positional parameters.
 The sequence
-.Qq set --
+.Ql set --
 indicates an end to option processing
 (i.e. only arguments follow);
-.Qq set --
+.Ql set --
 by itself unsets all positional parameters
 and sets
 .Sq #
@@ -1165,7 +1165,7 @@ if the user wants to indicate to the shell not to interpret them as such.
 The following characters need quoting if their literal meaning is desired:
 .Bd -literal -offset indent
 | & ; < > ( ) $ \` \e " \(aq <space> <tab> <newline>
-* ?  [ # ~ = %
+* ? [ # ~ = %
 .Ed
 .Pp
 A backslash
@@ -1190,7 +1190,7 @@ A backslash
 .Pq \e
 within double quotes retains its special meaning,
 but only when followed by a backquote, dollar sign,
-double quote, or another backslash.
+double quote, newline, or another backslash.
 An at sign
 .Pq @
 within double quotes has a special meaning
@@ -1738,7 +1738,7 @@ or within
 to have them executed in the current environment:
 .Pp
 .D1 Pq Ar command ...
-.D1 Brq Ar \ \&command ... Ns ;\&
+.D1 Brq \& Ar command ... ; No \&
 .Pp
 Any redirections specified after the closing bracket apply to all commands
 within the brackets.
@@ -2101,11 +2101,6 @@ A
 .Sq !\&
 in the prompt is expanded to the number of the next command in history
 to be typed.
-The default value is
-.Sq $\ \&
-for normal users and
-.Sq #\ \&
-for root.
 .It Ev PS2
 Newline prompt displayed in an interactive shell
 when a newline has been entered
@@ -2226,6 +2221,16 @@ and
 built-ins should exit/return from the outermost loop if the argument
 .Ar n
 is greater than the level of loops.
+.It
+The default value for the
+.Ev PS1
+user prompt contains the machine's hostname,
+followed by
+.Sq $\ \&
+for normal users and
+.Sq #\ \&
+for root;
+POSIX does not include the hostname.
 .El
 .Pp
 Enabling POSIX mode changes some behaviour to make

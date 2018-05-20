@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.62 2016/02/04 12:46:28 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.63 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -64,8 +64,6 @@ static int (*handler_message_create)(uint32_t *);
 static int (*handler_message_commit)(uint32_t, const char*);
 static int (*handler_message_delete)(uint32_t);
 static int (*handler_message_fd_r)(uint32_t);
-static int (*handler_message_corrupt)(uint32_t);
-static int (*handler_message_uncorrupt)(uint32_t);
 static int (*handler_envelope_create)(uint32_t, const char *, size_t, uint64_t *);
 static int (*handler_envelope_delete)(uint64_t);
 static int (*handler_envelope_update)(uint64_t, const char *, size_t);
@@ -294,27 +292,6 @@ err:
 	if (ofp)
 		fclose(ofp);
 	return 0;
-}
-
-int
-queue_message_corrupt(uint32_t msgid)
-{
-	int	r;
-
-	profile_enter("queue_message_corrupt");
-	r = handler_message_corrupt(msgid);
-	profile_leave();
-
-	log_trace(TRACE_QUEUE,
-	    "queue-backend: queue_message_corrupt(%08"PRIx32") -> %d", msgid, r);
-
-	return (r);
-}
-
-int
-queue_message_uncorrupt(uint32_t msgid)
-{
-	return handler_message_uncorrupt(msgid);
 }
 
 int
@@ -607,11 +584,9 @@ queue_envelope_load(uint64_t evpid, struct envelope *ep)
 			}
 			return (1);
 		}
-		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
-		    ep->id, e);
+		log_warnx("warn: invalid envelope %016" PRIx64 ": %s",
+		    evpid, e);
 	}
-
-	(void)queue_message_corrupt(evpid_to_msgid(evpid));
 	return (0);
 }
 
@@ -672,11 +647,9 @@ queue_message_walk(struct envelope *ep, uint32_t msgid, int *done, void **data)
 			 */
 			return (1);
 		}
-		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
-		    ep->id, e);
-		(void)queue_message_corrupt(evpid_to_msgid(evpid));
+		log_warnx("warn: invalid envelope %016" PRIx64 ": %s",
+		    evpid, e);
 	}
-
 	return (0);
 }
 
@@ -706,11 +679,9 @@ queue_envelope_walk(struct envelope *ep)
 				queue_envelope_cache_add(ep);
 			return (1);
 		}
-		log_debug("debug: invalid envelope %016" PRIx64 ": %s",
-		    ep->id, e);
-		(void)queue_message_corrupt(evpid_to_msgid(evpid));
+		log_warnx("warn: invalid envelope %016" PRIx64 ": %s",
+		    evpid, e);
 	}
-
 	return (0);
 }
 
@@ -791,18 +762,6 @@ void
 queue_api_on_message_fd_r(int(*cb)(uint32_t))
 {
 	handler_message_fd_r = cb;
-}
-
-void
-queue_api_on_message_corrupt(int(*cb)(uint32_t))
-{
-	handler_message_corrupt = cb;
-}
-
-void
-queue_api_on_message_uncorrupt(int(*cb)(uint32_t))
-{
-	handler_message_uncorrupt = cb;
 }
 
 void

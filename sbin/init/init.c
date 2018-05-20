@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.65 2017/06/16 06:46:54 natano Exp $	*/
+/*	$OpenBSD: init.c,v 1.67 2018/01/31 15:57:44 cheloha Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <login_cap.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -59,10 +60,6 @@
 #ifdef SECURE
 #include <pwd.h>
 #include <readpassphrase.h>
-#endif
-
-#ifdef LOGIN_CAP
-#include <login_cap.h>
 #endif
 
 #include "pathnames.h"
@@ -146,7 +143,7 @@ void setctty(char *);
 typedef struct init_session {
 	int	se_index;		/* index of entry in ttys file */
 	pid_t	se_process;		/* controlling process */
-	time_t	se_started;		/* used to avoid thrashing */
+	struct	timespec se_started;	/* used to avoid thrashing */
 	int	se_flags;		/* status of session */
 #define	SE_SHUTDOWN	0x1		/* session won't be restarted */
 #define	SE_PRESENT	0x2		/* session is in /etc/ttys */
@@ -177,15 +174,10 @@ pid_t start_getty(session_t *);
 void transition_handler(int);
 void alrm_handler(int);
 void setsecuritylevel(int);
+void setprocresources(char *);
 int getsecuritylevel(void);
 int setupargv(session_t *, struct ttyent *);
 int clang;
-
-#ifdef LOGIN_CAP
-void setprocresources(char *);
-#else
-#define setprocresources(p)
-#endif
 
 void clear_session_logs(session_t *);
 
@@ -1015,7 +1007,7 @@ start_getty(session_t *sp)
 {
 	pid_t pid;
 	sigset_t mask;
-	time_t current_time = time(NULL);
+	struct timespec current_time, elapsed;
 	int p[2], new = 1;
 
 	if (sp->se_flags & SE_DEVEXISTS)
@@ -1068,11 +1060,15 @@ start_getty(session_t *sp)
 		sleep(1);
 	}
 
-	if (current_time > sp->se_started &&
-	    current_time - sp->se_started < GETTY_SPACING) {
-		warning("getty repeating too quickly on port %s, sleeping",
-		    sp->se_device);
-		sleep(GETTY_SLEEP);
+	if (timespecisset(&sp->se_started)) {
+		clock_gettime(CLOCK_MONOTONIC, &current_time);
+		timespecsub(&current_time, &sp->se_started, &elapsed);
+		if (elapsed.tv_sec < GETTY_SPACING) {
+			warning(
+			    "getty repeating too quickly on port %s, sleeping",
+			    sp->se_device);
+			sleep(GETTY_SLEEP);
+		}
 	}
 
 	if (sp->se_window) {
@@ -1129,7 +1125,7 @@ collect_child(pid_t pid)
 	}
 
 	sp->se_process = pid;
-	sp->se_started = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &sp->se_started);
 	add_session(sp);
 }
 
@@ -1196,7 +1192,7 @@ f_multi_user(void)
 			break;
 		}
 		sp->se_process = pid;
-		sp->se_started = time(NULL);
+		clock_gettime(CLOCK_MONOTONIC, &sp->se_started);
 		add_session(sp);
 	}
 
@@ -1442,7 +1438,6 @@ f_death(void)
 	return single_user;
 }
 
-#ifdef LOGIN_CAP
 void
 setprocresources(char *class)
 {
@@ -1454,4 +1449,3 @@ setprocresources(char *class)
 		login_close(lc);
 	}
 }
-#endif

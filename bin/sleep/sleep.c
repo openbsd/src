@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.24 2015/10/11 20:17:49 guenther Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.26 2018/02/04 02:18:15 cheloha Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <ctype.h>
-#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,10 +72,10 @@ main(int argc, char *argv[])
 	cp = *argv;
 	while ((*cp != '\0') && (*cp != '.')) {
 		if (!isdigit((unsigned char)*cp))
-			usage();
+			errx(1, "seconds is invalid: %s", *argv);
 		t = (secs * 10) + (*cp++ - '0');
 		if (t / 10 != secs)	/* oflow */
-			return (EINVAL);
+			errx(1, "seconds is too large: %s", *argv);
 		secs = t;
 	}
 
@@ -87,7 +86,7 @@ main(int argc, char *argv[])
 			if (*cp == '\0')
 				break;
 			if (!isdigit((unsigned char)*cp))
-				usage();
+				errx(1, "seconds is invalid: %s", *argv);
 			nsecs += (*cp++ - '0') * i;
 		}
 
@@ -98,16 +97,28 @@ main(int argc, char *argv[])
 		 */
 		while (*cp != '\0') {
 			if (!isdigit((unsigned char)*cp++))
-				usage();
+				errx(1, "seconds is invalid: %s", *argv);
 		}
 	}
 
-	rqtp.tv_sec = secs;
-	rqtp.tv_nsec = nsecs;
-
-	if ((secs > 0) || (nsecs > 0))
+	while (secs > 0 || nsecs > 0) {
+		/*
+		 * nanosleep(2) supports a maximum of 100 million
+		 * seconds, so we break the nap up into multiple
+		 * calls if we have more than that.
+		 */
+		if (secs > 100000000) {
+			rqtp.tv_sec = 100000000;
+			rqtp.tv_nsec = 0;
+		} else {
+			rqtp.tv_sec = secs;
+			rqtp.tv_nsec = nsecs;
+		}
 		if (nanosleep(&rqtp, NULL))
 			err(1, NULL);
+		secs -= rqtp.tv_sec;
+		nsecs -= rqtp.tv_nsec;
+	}
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.132 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.134 2018/04/26 20:57:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -685,8 +686,6 @@ session_socket_error(int fd)
 const char *
 parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 {
-	size_t	 i;
-
 	if (len >= LINE_MAX)
 		return "line too long";
 
@@ -707,11 +706,6 @@ parse_smtp_response(char *line, size_t len, char **msg, int *cont)
 	if (line[0] < '2' || line[0] > '5' || !isdigit((unsigned char)line[1]) ||
 	    !isdigit((unsigned char)line[2]))
 		return "reply code out of range";
-
-	/* validate reply message */
-	for (i = 0; i < len; i++)
-		if (!isprint((unsigned char)line[i]))
-			return "non-printable character in reply";
 
 	return NULL;
 }

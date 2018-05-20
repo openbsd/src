@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMAnalysis
 NOPIC=
@@ -26,6 +26,7 @@ SRCS=	AliasAnalysis.cpp \
 	CallGraphSCCPass.cpp \
 	CallPrinter.cpp \
 	CaptureTracking.cpp \
+	CmpInstAnalysis.cpp \
 	CostModel.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
@@ -68,7 +69,7 @@ SRCS=	AliasAnalysis.cpp \
 	ObjCARCAliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
-	OptimizationDiagnosticInfo.cpp \
+	OptimizationRemarkEmitter.cpp \
 	OrderedBasicBlock.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
@@ -81,13 +82,14 @@ SRCS=	AliasAnalysis.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
-	SparsePropagation.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	TypeMetadataUtils.cpp \
 	ScopedNoAliasAA.cpp \
+	ValueLattice.cpp \
+	ValueLatticeUtils.cpp \
 	ValueTracking.cpp \
 	VectorUtils.cpp
 

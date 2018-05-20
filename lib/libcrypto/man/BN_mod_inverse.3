@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_mod_inverse.3,v 1.6 2017/01/30 01:29:31 schwarze Exp $
+.\"	$OpenBSD: BN_mod_inverse.3,v 1.10 2018/04/29 15:58:21 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 30 2017 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt BN_MOD_INVERSE 3
 .Os
 .Sh NAME
@@ -80,6 +80,14 @@ a new
 .Vt BIGNUM
 is created.
 .Pp
+If the flag
+.Dv BN_FLG_CONSTTIME
+is set on
+.Fa a
+or
+.Fa n ,
+it operates in constant time.
+.Pp
 .Fa ctx
 is a previously allocated
 .Vt BN_CTX
@@ -106,4 +114,10 @@ The error codes can be obtained by
 .Xr BN_set_flags 3
 .Sh HISTORY
 .Fn BN_mod_inverse
-is available in all versions of SSLeay and OpenSSL.
+first appeared in SSLeay 0.5.1 and has been available since
+.Ox 2.4 .
+.Pp
+The
+.Fa r
+argument was added in SSLeay 0.9.1 and
+.Ox 2.6 .

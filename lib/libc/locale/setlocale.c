@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.27 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.29 2018/03/29 16:39:04 schwarze Exp $	*/
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -42,8 +42,8 @@ dupgl(char **oldgl)
 	if ((newgl = calloc(_LC_LAST, sizeof(*newgl))) == NULL)	
 		return NULL;
 	for (ic = LC_ALL; ic < _LC_LAST; ic++) {
-		if ((newgl[ic] = strdup(oldgl != NULL ?
-		    oldgl[ic] : ic == LC_ALL ? "" : "C")) == NULL) {
+		if ((newgl[ic] = strdup(ic == LC_ALL ? "" :
+		    oldgl == NULL ? "C" : oldgl[ic])) == NULL) {
 			freegl(newgl);
 			return NULL;
 		}
@@ -92,8 +92,10 @@ setlocale(int category, const char *locname)
 		if (category == LC_ALL && strchr(locname, '/') != NULL) {
 
 			/* One value for each category. */
-			if ((firstname = strdup(locname)) == NULL)
+			if ((firstname = strdup(locname)) == NULL) {
+				freegl(newgl);
 				return NULL;
+			}
 			nextname = firstname;
 			for (ic = 1; ic < _LC_LAST; ic++)
 				if (nextname == NULL || changegl(ic,
@@ -136,17 +138,9 @@ setlocale(int category, const char *locname)
 		goto done;
 	}
 
-	/* Individual category. */
-	if (category > LC_ALL) {
+	/* Individual category, or LC_ALL uniformly set. */
+	if (category > LC_ALL || newgl[LC_ALL][0] != '\0') {
 		if (strlcpy(global_locname, newgl[category],
-		    sizeof(global_locname)) >= sizeof(global_locname))
-			global_locname[0] = '\0';
-		goto done;
-	}
-
-	/* LC_ALL overrides everything else. */
-	if (newgl[LC_ALL][0] != '\0') {
-		if (strlcpy(global_locname, newgl[LC_ALL],
 		    sizeof(global_locname)) >= sizeof(global_locname))
 			global_locname[0] = '\0';
 		goto done;
@@ -184,7 +178,7 @@ done:
 			global_locale = newgl;
 			if (category == LC_ALL || category == LC_CTYPE)
 				_GlobalRuneLocale =
-				    strchr(global_locname, '.') == NULL ?
+				    strchr(newgl[LC_CTYPE], '.') == NULL ?
 				    &_DefaultRuneLocale : _Utf8RuneLocale;
 		} else {
 			freegl(newgl);

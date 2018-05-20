@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.7 2017/08/23 12:58:00 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.9 2018/02/24 09:45:10 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -37,6 +37,7 @@ int mainbus_match_status(struct device *, void *, void *);
 void mainbus_attach_cpus(struct device *, cfmatch_t);
 int mainbus_match_primary(struct device *, void *, void *);
 int mainbus_match_secondary(struct device *, void *, void *);
+void mainbus_attach_efi(struct device *);
 void mainbus_attach_framebuffer(struct device *);
 
 struct mainbus_softc {
@@ -119,6 +120,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach primary CPU first. */
 	mainbus_attach_cpus(self, mainbus_match_primary);
+
+	mainbus_attach_efi(self);
 
 	sc->sc_rangeslen = OF_getproplen(OF_peer(0), "ranges");
 	if (sc->sc_rangeslen > 0 && !(sc->sc_rangeslen % sizeof(uint32_t))) {
@@ -215,6 +218,9 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	char buf[32];
 
+	if (fa->fa_node == 0)
+		return 0;
+
 	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "disabled") == 0)
 		return 0;
@@ -230,6 +236,7 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	int node = OF_finddevice("/cpus");
 	int acells, scells;
+	char buf[32];
 
 	if (node == 0)
 		return;
@@ -239,8 +246,14 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	sc->sc_acells = OF_getpropint(node, "#address-cells", 2);
 	sc->sc_scells = OF_getpropint(node, "#size-cells", 0);
 
-	for (node = OF_child(node); node != 0; node = OF_peer(node))
+	ncpusfound = 0;
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
+		    strcmp(buf, "cpu") == 0)
+			ncpusfound++;
+
 		mainbus_attach_node(self, node, match);
+	}
 
 	sc->sc_acells = acells;
 	sc->sc_scells = scells;
@@ -270,6 +283,23 @@ mainbus_match_secondary(struct device *parent, void *match, void *aux)
 		return 0;
 
 	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+void
+mainbus_attach_efi(struct device *self)
+{
+	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct fdt_attach_args fa;
+	int node = OF_finddevice("/chosen");
+
+	if (node == 0 || OF_getproplen(node, "openbsd,uefi-system-table") <= 0)
+		return;
+
+	memset(&fa, 0, sizeof(fa));
+	fa.fa_name = "efi";
+	fa.fa_iot = sc->sc_iot;
+	fa.fa_dmat = sc->sc_dmat;
+	config_found(self, &fa, NULL);
 }
 
 void

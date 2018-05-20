@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.12 2018/04/12 17:13:34 deraadt Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 12 2018 $
 .Dt PTHREAD_ATTR_SETSTACKADDR 3
 .Os
 .Sh NAME
@@ -34,6 +34,17 @@ attribute specifies the location of storage to be
 used for the created thread's stack.
 The size of the storage is at least
 .Dv PTHREAD_STACK_MIN .
+.Pp
+On
+.Ox
+the stack must have been allocated using
+.Xr mmap
+with the
+.Va MAP_STACK
+attribute.
+Otherwise, use of the stack will cause SIGABRT faults.
+.Xr pthread_attr_setstack 3
+can avoid this problem because it knows the size of the stack to remap.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_setstackaddr

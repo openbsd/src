@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.107 2017/01/25 07:21:18 jmc Exp $
+.\"	$OpenBSD: ftp.1,v 1.108 2018/02/10 06:25:16 jsing Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: January 25 2017 $
+.Dd $Mdocdate: February 10 2018 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -253,6 +253,13 @@ Don't perform server certificate validation.
 Require the server to present a valid OCSP stapling in the TLS handshake.
 .It Cm noverifytime
 Disable validation of certificate times and OCSP validation.
+.It Cm session Ns = Ns Ar /path/to/session
+Specify a file to use for TLS session data.
+If this file has a non-zero length, the session data will be read from this file
+and the client will attempt to resume the TLS session with the server.
+Upon completion of a successful TLS handshake this file will be updated
+with new session data, if available.
+This file will be created if it does not already exist.
 .El
 .Pp
 By default, server certificate validation is performed, and if it fails

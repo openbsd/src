@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.9 2016/10/05 07:44:24 patrick Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.10 2018/03/20 23:04:48 patrick Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -163,6 +163,7 @@ struct bus_space armv7_bs_tag = {
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
+struct bus_space *fdt_cons_bs_tag = &armv7_bs_tag;
 
 int
 armv7_bs_map(void *t, uint64_t bpa, bus_size_t size,

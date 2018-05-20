@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.13 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.17 2018/04/07 08:19:19 landry Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			5.0.0
+LLVM_V=			6.0.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -26,6 +26,7 @@ HEADERS+=	arm_acle.h ${GEN}
 HEADERS+=	adxintrin.h \
 		ammintrin.h \
 		avx2intrin.h \
+		avx512bitalgintrin.h \
 		avx512bwintrin.h \
 		avx512cdintrin.h \
 		avx512dqintrin.h \
@@ -34,24 +35,33 @@ HEADERS+=	adxintrin.h \
 		avx512ifmaintrin.h \
 		avx512ifmavlintrin.h \
 		avx512pfintrin.h \
+		avx512vbmi2intrin.h \
 		avx512vbmiintrin.h \
 		avx512vbmivlintrin.h \
+		avx512vlbitalgintrin.h \
 		avx512vlbwintrin.h \
 		avx512vlcdintrin.h \
 		avx512vldqintrin.h \
 		avx512vlintrin.h \
+		avx512vlvbmi2intrin.h \
+		avx512vlvnniintrin.h \
+		avx512vnniintrin.h \
 		avx512vpopcntdqintrin.h \
+		avx512vpopcntdqvlintrin.h \
 		avxintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
+		cetintrin.h \
 		cpuid.h \
 		clflushoptintrin.h \
+		clwbintrin.h \
 		clzerointrin.h \
 		emmintrin.h \
 		f16cintrin.h \
 		fma4intrin.h \
 		fmaintrin.h \
 		fxsrintrin.h \
+		gfniintrin.h \
 		ia32intrin.h \
 		immintrin.h \
 		lwpintrin.h \
@@ -71,6 +81,8 @@ HEADERS+=	adxintrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
+		vaesintrin.h \
+		vpclmulqdqintrin.h \
 		wmmintrin.h \
 		__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \

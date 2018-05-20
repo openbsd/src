@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2017/04/30 23:33:48 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2017/12/21 00:41:22 djm Exp $
 
 REGRESS_FAIL_EARLY?=	yes
 
@@ -42,8 +42,8 @@ CDIAGFLAGS+=	-Wswitch
 CDIAGFLAGS+=	-Wtrigraphs
 CDIAGFLAGS+=	-Wuninitialized
 CDIAGFLAGS+=	-Wunused
+CDIAGFLAGS+=	-Wno-unused-parameter
 .if ${COMPILER_VERSION:L} != "gcc3"
-CDIAGFLAGS+=	-Wpointer-sign
 CDIAGFLAGS+=	-Wold-style-definition
 .endif
 
@@ -59,17 +59,7 @@ LDADD+=-L${.CURDIR}/../test_helper -ltest_helper
 DPADD+=${.CURDIR}/../test_helper/libtest_helper.a
 .endif
 
-.if exists(${.CURDIR}/${SSHREL}/lib/${__objdir})
-LDADD+=-L${.CURDIR}/${SSHREL}/lib/${__objdir} -lssh
-LIBSSH=${.CURDIR}/${SSHREL}/lib/${__objdir}/libssh.a
-.else
-LDADD+=-L${.CURDIR}/${SSHREL}/lib -lssh
-LIBSSH=${.CURDIR}/${SSHREL}/lib/libssh.a
-.endif
-DPADD+=${LIBSSH}
-${PROG}: ${LIBSSH}
-${LIBSSH}:
-	cd ${.CURDIR}/${SSHREL} && ${MAKE} lib
+.PATH: ${.CURDIR}/${SSHREL}
 
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}

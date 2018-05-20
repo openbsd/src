@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.272 2017/04/15 13:56:43 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.283 2018/05/08 08:53:41 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/lock.h>
@@ -114,8 +115,9 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	struct nameidata nd;
 	struct vfsconf *vfsp;
 	int flags = SCARG(uap, flags);
+	void *args = NULL;
 
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	/*
@@ -130,15 +132,24 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, fspath, p);
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto fail;
 	vp = nd.ni_vp;
 	if (flags & MNT_UPDATE) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
-			return (EINVAL);
+			error = EINVAL;
+			goto fail;
 		}
 		mp = vp->v_mount;
 		vfsp = mp->mnt_vfc;
+
+		args = malloc(vfsp->vfc_datasize, M_TEMP, M_WAITOK | M_ZERO);
+		error = copyin(SCARG(uap, data), args, vfsp->vfc_datasize);
+		if (error) {
+			vput(vp);
+			goto fail;
+		}
+
 		mntflag = mp->mnt_flag;
 		/*
 		 * We only allow the filesystem to be reloaded if it
@@ -147,12 +158,13 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 		if ((flags & MNT_RELOAD) &&
 		    ((mp->mnt_flag & MNT_RDONLY) == 0)) {
 			vput(vp);
-			return (EOPNOTSUPP);	/* Needs translation */
+			error = EOPNOTSUPP;	/* Needs translation */
+			goto fail;
 		}
 
 		if ((error = vfs_busy(mp, VB_READ|VB_NOWAIT)) != 0) {
 			vput(vp);
-			return (error);
+			goto fail;
 		}
 		mp->mnt_flag |= flags & (MNT_RELOAD | MNT_UPDATE);
 		goto update;
@@ -164,20 +176,21 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	if ((flags & MNT_NOPERM) &&
 	    (flags & (MNT_NODEV | MNT_NOEXEC)) != (MNT_NODEV | MNT_NOEXEC)) {
 		vput(vp);
-		return (EPERM);
+		error = EPERM;
+		goto fail;
 	}
 	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0) {
 		vput(vp);
-		return (error);
+		goto fail;
 	}
 	if (vp->v_type != VDIR) {
 		vput(vp);
-		return (ENOTDIR);
+		goto fail;
 	}
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
 	if (error) {
 		vput(vp);
-		return (error);
+		goto fail;
 	}
 	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
 		if (!strcmp(vfsp->vfc_name, fstypename))
@@ -186,12 +199,21 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 
 	if (vfsp == NULL) {
 		vput(vp);
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		goto fail;
+	}
+
+	args = malloc(vfsp->vfc_datasize, M_TEMP, M_WAITOK | M_ZERO);
+	error = copyin(SCARG(uap, data), args, vfsp->vfc_datasize);
+	if (error) {
+		vput(vp);
+		goto fail;
 	}
 
 	if (vp->v_mountedhere != NULL) {
 		vput(vp);
-		return (EBUSY);
+		error = EBUSY;
+		goto fail;
 	}
 
 	/*
@@ -218,7 +240,7 @@ update:
 			free(mp, M_MOUNT, sizeof(*mp));
 		}
 		vput(vp);
-		return (error);
+		goto fail;
 	}
 
 	/*
@@ -237,7 +259,7 @@ update:
 	/*
 	 * Mount the filesystem.
 	 */
-	error = VFS_MOUNT(mp, fspath, SCARG(uap, data), &nd, p);
+	error = VFS_MOUNT(mp, fspath, args, &nd, p);
 	if (!error) {
 		mp->mnt_stat.f_ctime = time_second;
 	}
@@ -261,7 +283,7 @@ update:
 		}
 
 		vfs_unbusy(mp);
-		return (error);
+		goto fail;
 	}
 
 	vp->v_mountedhere = mp;
@@ -275,7 +297,7 @@ update:
 		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
 		vfs_unbusy(vp->v_mount);
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -289,6 +311,9 @@ update:
 		vfs_unbusy(vp->v_mount);
 		vput(vp);
 	}
+fail:
+	if (args)
+		free(args, M_TEMP, vfsp->vfc_datasize);
 	return (error);
 }
 
@@ -354,7 +379,7 @@ sys_unmount(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -469,7 +494,7 @@ dounmount_leaf(struct mount *mp, int flags, struct proc *p)
 		mp->mnt_syncer = NULL;
 	}
 	if (((mp->mnt_flag & MNT_RDONLY) ||
-	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
+	    (error = VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
 
@@ -518,7 +543,7 @@ sys_sync(struct proc *p, void *v, register_t *retval)
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
 			uvm_vnp_sync(mp);
-			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
+			VFS_SYNC(mp, MNT_NOWAIT, 0, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
 		}
@@ -563,7 +588,7 @@ copyout_statfs(struct statfs *sp, void *uaddr, struct proc *p)
 	int error;
 
 	/* Don't let non-root see filesystem id (for NFS security) */
-	if (suser(p, 0)) {
+	if (suser(p)) {
 		fsid_t fsid;
 
 		s = (char *)sp;
@@ -721,10 +746,13 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 	vp = fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type != VDIR) {
+		FRELE(fp, p);
 		return (ENOTDIR);
+	}
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	FRELE(fp, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
@@ -741,7 +769,7 @@ sys_fchdir(struct proc *p, void *v, register_t *retval)
 		vput(vp);
 		return (error);
 	}
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = vp;
 	vrele(old_cdir);
@@ -787,7 +815,7 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
@@ -828,7 +856,7 @@ change_dir(struct nameidata *ndp, struct proc *p)
 	if (error)
 		vput(vp);
 	else
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -938,7 +966,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			/* closef will vn_close the file for us. */
@@ -946,7 +974,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			closef(fp, p);
 			goto out;
 		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		fp->f_iflags |= FIF_HASLOCK;
 	}
 	if (localtrunc) {
@@ -962,14 +990,14 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 		}
 		if (error) {
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
 			goto out;
 		}
 	}
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
 out:
@@ -995,7 +1023,7 @@ sys_getfh(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = suser(p, 0);
+	error = suser(p);
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -1041,7 +1069,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	flags = FFLAGS(SCARG(uap, flags));
@@ -1121,16 +1149,16 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			vp = NULL;	/* closef will vn_close the file */
 			goto bad;
 		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		fp->f_iflags |= FIF_HASLOCK;
 	}
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	FILE_SET_MATURE(fp, p);
 
@@ -1164,7 +1192,7 @@ sys_fhstat(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1198,7 +1226,7 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p, 0)))
+	if ((error = suser(p)))
 		return (error);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
@@ -1264,7 +1292,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 	vp = nd.ni_vp;
 	if (!S_ISFIFO(mode) || dev != 0) {
 		if ((nd.ni_dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (error = suser(p, 0)) != 0)
+		    (error = suser(p)) != 0)
 			goto out;
 		if (p->p_fd->fd_rdir) {
 			error = EINVAL;
@@ -1587,12 +1615,11 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
-		return (ESPIPE);
 	vp = fp->f_data;
-	if (vp->v_type == VFIFO)
-		return (ESPIPE);
-	FREF(fp);
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		error = ESPIPE;
+		goto bad;
+	}
 	if (vp->v_type == VCHR)
 		special = 1;
 	else
@@ -1623,7 +1650,9 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		}
 	}
 	*(off_t *)retval = fp->f_offset = newoff;
+	mtx_enter(&fp->f_mtx);
 	fp->f_seek++;
+	mtx_leave(&fp->f_mtx);
 	error = 0;
  bad:
 	FRELE(fp, p);
@@ -1776,7 +1805,7 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 			return (ENOENT);
 	}
 	/* Don't let non-root see generation numbers (for NFS security) */
-	if (suser(p, 0))
+	if (suser(p))
 		sb.st_gen = 0;
 	error = copyout(&sb, buf, sizeof(sb));
 #ifdef KTRACE
@@ -1962,13 +1991,13 @@ dovchflags(struct proc *p, struct vnode *vp, u_int flags)
 	struct vattr vattr;
 	int error;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else if (flags == VNOVAL)
 		error = EINVAL;
 	else {
-		if (suser(p, 0)) {
+		if (suser(p)) {
 			if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
 			    != 0)
 				goto out;
@@ -2035,7 +2064,7 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
@@ -2071,7 +2100,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
@@ -2079,7 +2108,7 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 		vattr.va_mode = mode & ALLPERMS;
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2134,7 +2163,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
@@ -2142,7 +2171,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2186,7 +2215,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
@@ -2194,7 +2223,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2236,7 +2265,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
@@ -2244,7 +2273,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 			goto out;
 		if ((uid != -1 || gid != -1) &&
 		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (suser(p, 0) || suid_clear)) {
+		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -2260,7 +2289,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 out:
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2388,7 +2417,7 @@ dovutimens(struct proc *p, struct vnode *vp, struct timespec ts[2])
 		vattr.va_mtime = ts[1];
 	}
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else
@@ -2484,7 +2513,7 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) == 0 &&
@@ -2522,7 +2551,7 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	}
 	vp = fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0) {
@@ -2530,7 +2559,7 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		vattr.va_size = len;
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 bad:
 	FRELE(fp, p);
 	return (error);
@@ -2552,14 +2581,14 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
 #ifdef FFS_SOFTUPDATES
 	if (error == 0 && vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		error = softdep_fsync(vp);
 #endif
 
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	FRELE(fp, p);
 	return (error);
 }
@@ -2791,11 +2820,11 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
 	auio.uio_resid = buflen;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag);
 	fp->f_offset = auio.uio_offset;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	if (error)
 		goto bad;
 	*retval = buflen - auio.uio_resid;
@@ -2849,7 +2878,7 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
-	    (error = suser(p, 0)))
+	    (error = suser(p)))
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED)))
 		VOP_REVOKE(vp, REVOKEALL);
@@ -2872,14 +2901,17 @@ getvnode(struct proc *p, int fd, struct file **fpp)
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
 
-	if (fp->f_type != DTYPE_VNODE)
+	if (fp->f_type != DTYPE_VNODE) {
+		FRELE(fp, p);
 		return (EINVAL);
+	}
 
 	vp = fp->f_data;
-	if (vp->v_type == VBAD)
+	if (vp->v_type == VBAD) {
+		FRELE(fp, p);
 		return (EBADF);
+	}
 
-	FREF(fp);
 	*fpp = fp;
 
 	return (0);
@@ -2905,23 +2937,24 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
+	iov.iov_base = SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
+
 	if ((fp = fd_getfile_mode(fdp, fd, FREAD)) == NULL)
 		return (EBADF);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
-	iov.iov_base = SCARG(uap, buf);
-	iov.iov_len = SCARG(uap, nbyte);
-
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, &iov, 1, 0, &offset, retval));
@@ -2952,14 +2985,15 @@ sys_preadv(struct proc *p, void *v, register_t *retval)
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilereadv() will FRELE the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt), 1,
@@ -2986,23 +3020,24 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 	off_t offset;
 	int fd = SCARG(uap, fd);
 
+	iov.iov_base = (void *)SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
+
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
 
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
-	iov.iov_base = (void *)SCARG(uap, buf);
-	iov.iov_len = SCARG(uap, nbyte);
-
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, &iov, 1, 0, &offset, retval));
@@ -3033,14 +3068,15 @@ sys_pwritev(struct proc *p, void *v, register_t *retval)
 	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
 	    (vp->v_flag & VISTTY)) {
+		FRELE(fp, p);
 		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
-	if (offset < 0 && vp->v_type != VCHR)
+	if (offset < 0 && vp->v_type != VCHR) {
+		FRELE(fp, p);
 		return (EINVAL);
-
-	FREF(fp);
+	}
 
 	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),

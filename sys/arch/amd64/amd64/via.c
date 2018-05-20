@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.23 2017/05/02 11:47:49 mikeb Exp $	*/
+/*	$OpenBSD: via.c,v 1.29 2018/04/28 15:44:59 jasper Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -21,18 +21,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/extent.h>
-#include <sys/sysctl.h>
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
@@ -41,14 +32,7 @@
 #include <crypto/cryptosoft.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
-#include <machine/pio.h>
-#include <machine/bus.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/specialreg.h>
 
 #include <dev/rndvar.h>
@@ -113,6 +97,7 @@ viac3_crypto_setup(void)
 	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_ESN] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
@@ -160,7 +145,7 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (ENOMEM);
 			memcpy(ses, sc->sc_sessions, sesn * sizeof(*ses));
 			explicit_bzero(sc->sc_sessions, sesn * sizeof(*ses));
-			free(sc->sc_sessions, M_DEVBUF, 0);
+			free(sc->sc_sessions, M_DEVBUF, sesn * sizeof(*ses));
 			sc->sc_sessions = ses;
 			ses = &sc->sc_sessions[sesn];
 			sc->sc_nsessions++;
@@ -195,9 +180,9 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 
 			/* Build expanded keys for both directions */
 			AES_KeySetup_Encrypt(ses->ses_ekey, c->cri_key,
-			    c->cri_klen);
+			    c->cri_klen / 8);
 			AES_KeySetup_Decrypt(ses->ses_dkey, c->cri_key,
-			    c->cri_klen);
+			    c->cri_klen / 8);
 			for (i = 0; i < 4 * (AES_MAXROUNDS + 1); i++) {
 				ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);
 				ses->ses_dkey[i] = ntohl(ses->ses_dkey[i]);
@@ -269,6 +254,9 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			swd->sw_alg = c->cri_alg;
 
 			break;
+		case CRYPTO_ESN:
+			/* nothing to do */
+			break;
 		default:
 			viac3_crypto_freesession(sesn);
 			return (EINVAL);
@@ -300,13 +288,13 @@ viac3_crypto_freesession(u_int64_t tid)
 
 		if (swd->sw_ictx) {
 			explicit_bzero(swd->sw_ictx, axf->ctxsize);
-			free(swd->sw_ictx, M_CRYPTO_DATA, 0);
+			free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
 		}
 		if (swd->sw_octx) {
 			explicit_bzero(swd->sw_octx, axf->ctxsize);
-			free(swd->sw_octx, M_CRYPTO_DATA, 0);
+			free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
 		}
-		free(swd, M_CRYPTO_DATA, 0);
+		free(swd, M_CRYPTO_DATA, sizeof(*swd));
 	}
 
 	explicit_bzero(&sc->sc_sessions[sesn], sizeof(sc->sc_sessions[sesn]));
@@ -382,7 +370,7 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 				memcpy(crp->crp_buf + crd->crd_inject,
 				    sc->op_iv, 16);
 			if (err)
-				return (err);
+				goto errout;
 		}
 	} else {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_DECRYPT;
@@ -425,9 +413,10 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		memcpy(crp->crp_buf + crd->crd_skip, sc->op_buf,
 		    crd->crd_len);
 
+ errout:
 	if (sc->op_buf != NULL) {
 		explicit_bzero(sc->op_buf, crd->crd_len);
-		free(sc->op_buf, M_DEVBUF, 0);
+		free(sc->op_buf, M_DEVBUF, crd->crd_len);
 		sc->op_buf = NULL;
 	}
 
@@ -546,7 +535,7 @@ viac3_rnd(void *v)
 #endif
 
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
-		add_true_randomness(*p);
+		enqueue_randomness(*p);
 
 	timeout_add_msec(tmo, 10);
 }

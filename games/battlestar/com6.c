@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.23 2016/09/11 14:21:17 tb Exp $	*/
+/*	$OpenBSD: com6.c,v 1.24 2018/02/07 20:22:23 tedu Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -204,8 +204,9 @@ ride(void)
 		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
 		puts("forward through bush and fern.  You are thrown and the horse gallops off.");
 		ClearBit(location[position].objects, HORSE);
-		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || !beenthere[position] || location[position].flyhere)
-			;
+		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE ||
+		    !beenthere[position] || location[position].flyhere)
+			continue;
 		SetBit(location[position].objects, HORSE);
 		if (location[position].north)
 			position = location[position].north;

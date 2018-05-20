@@ -2113,7 +2113,7 @@ s	|OP*	|doform		|NN CV *cv|NN GV *gv|NULLOK OP *retop
 #  if !defined(HAS_MKDIR) || !defined(HAS_RMDIR)
 sR	|int	|dooneliner	|NN const char *cmd|NN const char *filename
 #  endif
-s	|SV *	|space_join_names_mortal|NN char *const *array
+s	|SV *	|space_join_names_mortal|NULLOK char *const *array
 #endif
 p	|OP *	|tied_method|NN SV *methname|NN SV **sp \
 				|NN SV *const sv|NN const MAGIC *const mg \
@@ -2282,7 +2282,8 @@ Es	|bool	|put_charclass_bitmap_innards|NN SV* sv		    \
 				|NN char* bitmap		    \
 				|NULLOK SV* nonbitmap_invlist	    \
 				|NULLOK SV* only_utf8_locale_invlist\
-				|NULLOK const regnode * const node
+				|NULLOK const regnode * const node  \
+				|const bool force_as_is_display
 Es	|SV*	|put_charclass_bitmap_innards_common		    \
 				|NN SV* invlist			    \
 				|NULLOK SV* posixes		    \

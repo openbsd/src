@@ -1,4 +1,4 @@
-/*	$OpenBSD: upap.c,v 1.10 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: upap.c,v 1.11 2017/11/17 20:48:30 jca Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -402,7 +402,7 @@ upap_rauthreq(u, inp, id, len)
      */
     retcode = check_passwd(u->us_unit, ruser, ruserlen, rpasswd,
 			   rpasswdlen, &msg, &msglen);
-    BZERO(rpasswd, rpasswdlen);
+    EXPLICIT_BZERO(rpasswd, rpasswdlen);
 
     upap_sresp(u, retcode, id, msg, msglen);
 

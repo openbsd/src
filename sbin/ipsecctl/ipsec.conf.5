@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.152 2017/04/14 18:06:28 bluhm Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.155 2018/04/17 12:13:29 stsp Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 14 2017 $
+.Dd $Mdocdate: April 17 2018 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -44,9 +44,7 @@ The IPsec protocol itself is described in
 In its most basic form, a
 .Em flow
 is established between hosts and/or networks,
-and then Security Associations
-.Pq Em SA
-are established,
+and then Security Associations (SAs) are established,
 which detail how the desired protection will be achieved.
 IPsec uses flows
 to determine whether to apply security services to an IP packet or not.
@@ -290,7 +288,16 @@ The
 .Ic local
 parameter specifies the address or FQDN of the local endpoint.
 Unless we are multi-homed or have aliases,
-this option is generally not needed.
+this parameter is generally not needed.
+This parameter does not affect the set of IP addresses
+.Xr isakmpd 8
+will listen on and send packets from.
+The
+.Em Listen-on
+directive in
+.Xr isakmpd.conf 5
+should additionally be used to ensure that the local endpoint will
+send IKE messages with an appropriate source IP address.
 .Pp
 The
 .Ic peer
@@ -668,6 +675,15 @@ keyword:
 .It Li modp4096 Ta 4096 Ta "[DH group 16]"
 .It Li modp6144 Ta 6144 Ta "[DH group 17]"
 .It Li modp8192 Ta 8192 Ta "[DH group 18]"
+.It Li ecp256 Ta 256 Ta "[DH group 19]"
+.It Li ecp384 Ta 384 Ta "[DH group 20]"
+.It Li ecp521 Ta 512 Ta "[DH group 21]"
+.It Li ecp192 Ta 192 Ta "[DH group 25]"
+.It Li ecp224 Ta 224 Ta "[DH group 26]"
+.It Li bp224 Ta 224 Ta "[DH group 27]"
+.It Li bp256 Ta 256 Ta "[DH group 28]"
+.It Li bp384 Ta 384 Ta "[DH group 29]"
+.It Li bp512 Ta 512 Ta "[DH group 30]"
 .It Li none Ta 0 Ta "[phase 2 only]"
 .El
 .Sh MANUAL FLOWS

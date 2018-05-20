@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.663 2017/08/11 22:30:38 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.673 2018/05/18 13:39:49 benno Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -70,6 +71,10 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
+	size_t			 ungetpos;
+	size_t			 ungetsize;
+	u_char			*ungetbuf;
+	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file;
@@ -81,8 +86,9 @@ int		 yylex(void);
 int		 yyerror(const char *, ...);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
+int		 igetc(void);
 int		 lgetc(int);
-int		 lungetc(int);
+void		 lungetc(int);
 int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -211,6 +217,7 @@ struct pool_opts {
 struct divertspec {
 	struct node_host	*addr;
 	u_int16_t		 port;
+	enum pf_divert_types	 type;
 };
 
 struct redirspec {
@@ -262,7 +269,6 @@ struct filter_opts {
 	u_int8_t		 prio;
 	u_int8_t		 set_prio[2];
 	struct divertspec	 divert;
-	struct divertspec	 divert_packet;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
 	struct redirspec	 rroute;
@@ -282,6 +288,11 @@ struct filter_opts {
 		sa_family_t		 af;
 		struct pf_poolhashkey	*key;
 	}			 route;
+
+	struct {
+		u_int32_t	limit;
+		u_int32_t	seconds;
+	}			 pktrate;
 } filter_opts;
 
 struct antispoof_opts {
@@ -337,6 +348,7 @@ struct table_opts {
 
 struct node_hfsc_opts	 hfsc_opts;
 struct node_state_opt	*keep_state_defaults = NULL;
+struct pfctl_watermarks	 syncookie_opts;
 
 int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
@@ -378,6 +390,7 @@ int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 int	 kw_casecmp(const void *, const void *);
 int	 map_tos(char *string, int *);
+int	 rdomain_exists(u_int);
 
 TAILQ_HEAD(loadanchorshead, loadanchors)
     loadanchorshead = TAILQ_HEAD_INITIALIZER(loadanchorshead);
@@ -444,6 +457,7 @@ typedef struct {
 		struct table_opts	 table_opts;
 		struct pool_opts	 pool_opts;
 		struct node_hfsc_opts	 hfsc_opts;
+		struct pfctl_watermarks	*watermarks;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -463,7 +477,7 @@ int	parseport(char *, struct range *r, int);
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT BINATTO NODF
 %token	MINTTL ERROR ALLOWOPTS FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
-%token	REASSEMBLE ANCHOR
+%token	REASSEMBLE ANCHOR SYNCOOKIES
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
@@ -472,7 +486,7 @@ int	parseport(char *, struct range *r, int);
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN MINIMUM BURST PARENT
 %token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
-%token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
+%token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW MAXPKTRATE
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE
 %token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO AFTO RDRTO RECEIVEDON NE LE GE
 %token	<v.string>		STRING
@@ -483,7 +497,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.number>		tos not yesno optnodf
 %type	<v.probability>		probability
 %type	<v.weight>		optweight
-%type	<v.i>			dir af optimizer
+%type	<v.i>			dir af optimizer syncookie_val
 %type	<v.i>			sourcetrack flush unaryop statelock
 %type	<v.b>			action
 %type	<v.b>			flags flag blockspec prio
@@ -522,6 +536,7 @@ int	parseport(char *, struct range *r, int);
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
+%type	<v.watermarks>		syncookie_opts
 %%
 
 ruleset		: /* empty */
@@ -681,6 +696,58 @@ option		: SET REASSEMBLE yesno optnodf		{
 			}
 			keep_state_defaults = $3;
 		}
+		| SET SYNCOOKIES syncookie_val syncookie_opts {
+			if (pfctl_set_syncookies(pf, $3, $4)) {
+				yyerror("error setting syncookies");
+				YYERROR;
+			}
+		}
+		;
+
+syncookie_val	: STRING	{
+			if (!strcmp($1, "never"))
+				$$ = PF_SYNCOOKIES_NEVER;
+			else if (!strcmp($1, "adaptive"))
+				$$ = PF_SYNCOOKIES_ADAPTIVE;
+			else if (!strcmp($1, "always"))
+				$$ = PF_SYNCOOKIES_ALWAYS;
+			else {
+				yyerror("illegal value for syncookies");
+				YYERROR;
+			}
+		}
+		;
+
+syncookie_opts	: /* empty */			{ $$ = NULL; }
+		| {
+			memset(&syncookie_opts, 0, sizeof(syncookie_opts));
+		  } '(' syncookie_opt_l ')'	{ $$ = &syncookie_opts; }
+		;
+
+syncookie_opt_l	: syncookie_opt_l comma syncookie_opt
+		| syncookie_opt
+		;
+
+syncookie_opt	: STRING STRING {
+			double	 val;
+			char	*cp;
+
+			val = strtod($2, &cp);
+			if (cp == NULL || strcmp(cp, "%"))
+				YYERROR;
+			if (val <= 0 || val > 100) {
+				yyerror("illegal percentage value");
+				YYERROR;
+			}
+			if (!strcmp($1, "start")) {
+				syncookie_opts.hi = val;
+			} else if (!strcmp($1, "end")) {
+				syncookie_opts.lo = val;
+			} else {
+				yyerror("illegal syncookie option");
+				YYERROR;
+			}
+		}
 		;
 
 stringall	: STRING	{ $$ = $1; }
@@ -728,6 +795,8 @@ varset		: STRING '=' varstring	{
 				if (isspace((unsigned char)*s)) {
 					yyerror("macro name cannot contain "
 					    "whitespace");
+					free($1);
+					free($3);
 					YYERROR;
 				}
 			}
@@ -835,6 +904,8 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			r.af = $6;
 			r.prob = $9.prob;
 			r.rtableid = $9.rtableid;
+			r.pktrate.limit = $9.pktrate.limit;
+			r.pktrate.seconds = $9.pktrate.seconds;
 
 			if ($9.tag)
 				if (strlcpy(r.tagname, $9.tag,
@@ -932,7 +1003,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 loadrule	: LOAD ANCHOR string FROM string	{
 			struct loadanchors	*loadanchor;
 
-			if (strlen(pf->anchor->name) + 1 +
+			if (strlen(pf->anchor->path) + 1 +
 			    strlen($3) >= PATH_MAX) {
 				yyerror("anchorname %s too long, max %u\n",
 				    $3, PATH_MAX - 1);
@@ -947,7 +1018,7 @@ loadrule	: LOAD ANCHOR string FROM string	{
 				err(1, "loadrule: malloc");
 			if (pf->anchor->name[0])
 				snprintf(loadanchor->anchorname, PATH_MAX,
-				    "%s/%s", pf->anchor->name, $3);
+				    "%s/%s", pf->anchor->path, $3);
 			else
 				strlcpy(loadanchor->anchorname, $3, PATH_MAX);
 			if ((loadanchor->filename = strdup($5)) == NULL)
@@ -1618,6 +1689,8 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 
 			r.tos = $8.tos;
+			r.pktrate.limit = $8.pktrate.limit;
+			r.pktrate.seconds = $8.pktrate.seconds;
 			r.keep_state = $8.keep.action;
 			o = $8.keep.options;
 
@@ -1904,7 +1977,6 @@ pfrule		: action dir logquick interface af proto fromto
 			}
 			if (expand_divertspec(&r, &$8.divert))
 				YYERROR;
-			r.divert_packet.port = $8.divert_packet.port;
 
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
 			    $7.src_os,
@@ -2035,6 +2107,11 @@ filter_opt	: USER uids {
 			filter_opts.rtableid = $2;
 		}
 		| DIVERTTO STRING PORT portplain {
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_TO;
 			if ((filter_opts.divert.addr = host($2, pf->opts)) == NULL) {
 				yyerror("could not parse divert address: %s",
 				    $2);
@@ -2049,9 +2126,18 @@ filter_opt	: USER uids {
 			}
 		}
 		| DIVERTREPLY {
-			filter_opts.divert.port = 1;	/* some random value */
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_REPLY;
 		}
 		| DIVERTPACKET PORT number {
+			if (filter_opts.divert.type != PF_DIVERT_NONE) {
+				yyerror("more than one divert option");
+				YYERROR;
+			}
+			filter_opts.divert.type = PF_DIVERT_PACKET;
 			/*
 			 * If IP reassembly was not turned off, also
 			 * forcibly enable TCP reassembly by default.
@@ -2063,8 +2149,7 @@ filter_opt	: USER uids {
 				yyerror("invalid divert port");
 				YYERROR;
 			}
-
-			filter_opts.divert_packet.port = htons($3);
+			filter_opts.divert.port = htons($3);
 		}
 		| SCRUB '(' scrub_opts ')' {
 			filter_opts.nodf = $3.nodf;
@@ -2183,6 +2268,19 @@ filter_opt	: USER uids {
 		}
 		| ONCE {
 			filter_opts.marker |= FOM_ONCE;
+		}
+		| MAXPKTRATE NUMBER '/' NUMBER {
+			if ($2 < 0 || $2 > UINT_MAX ||
+			    $4 < 0 || $4 > UINT_MAX) {
+				yyerror("only positive values permitted");
+				YYERROR;
+			}
+			if (filter_opts.pktrate.limit) {
+				yyerror("cannot respecify max-pkt-rate");
+				YYERROR;
+			}
+			filter_opts.pktrate.limit = $2;
+			filter_opts.pktrate.seconds = $4;
 		}
 		| filter_sets
 		;
@@ -2465,10 +2563,11 @@ if_item		: STRING			{
 			$$->tail = $$;
 		}
 		| RDOMAIN NUMBER		{
-			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
-				yyerror("rdomain outside range");
-				YYERROR;
-			}
+			if ($2 < 0 || $2 > RT_TABLEID_MAX)
+				yyerror("rdomain %lld outside range", $2);
+			else if (rdomain_exists($2) != 1)
+				yyerror("rdomain %lld does not exist", $2);
+
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: calloc");
@@ -4050,11 +4149,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 	/* Basic rule sanity check. */
 	switch (r->action) {
 	case PF_MATCH:
-		if (r->divert.port) {
-			yyerror("divert is not supported on match rules");
-			problems++;
-		}
-		if (r->divert_packet.port) {
+		if (r->divert.type != PF_DIVERT_NONE) {
 			yyerror("divert is not supported on match rules");
 			problems++;
 		}
@@ -4111,7 +4206,7 @@ process_tabledef(char *name, struct table_opts *opts, int popts)
 		    &opts->init_nodes);
 	if (!(pf->opts & PF_OPT_NOACTION) &&
 	    pfctl_define_table(name, opts->flags, opts->init_addr,
-	    pf->anchor->name, &ab, pf->anchor->ruleset.tticket)) {
+	    pf->anchor->path, &ab, pf->anchor->ruleset.tticket)) {
 		yyerror("cannot define table %s: %s", name,
 		    pfr_strerror(errno));
 		goto _error;
@@ -4393,38 +4488,43 @@ expand_divertspec(struct pf_rule *r, struct divertspec *ds)
 {
 	struct node_host *n;
 
-	if (ds->port == 0)
+	switch (ds->type) {
+	case PF_DIVERT_NONE:
 		return (0);
-
-	r->divert.port = ds->port;
-
-	if (r->direction == PF_OUT) {
-		if (ds->addr) {
-			yyerror("address specified for outgoing divert");
+	case PF_DIVERT_TO:
+		if (r->direction == PF_OUT) {
+			yyerror("divert-to used with outgoing rule");
 			return (1);
 		}
-		bzero(&r->divert.addr, sizeof(r->divert.addr));
+		if (r->af) {
+			for (n = ds->addr; n != NULL; n = n->next)
+				if (n->af == r->af)
+					break;
+			if (n == NULL) {
+				yyerror("divert-to address family mismatch");
+				return (1);
+			}
+			r->divert.addr = n->addr.v.a.addr;
+		} else {
+			r->af = ds->addr->af;
+			r->divert.addr = ds->addr->addr.v.a.addr;
+		}
+		r->divert.port = ds->port;
+		r->divert.type = ds->type;
 		return (0);
-	}
-
-	if (!ds->addr) {
-		yyerror("no address specified for incoming divert");
-		return (1);
-	}
-	if (r->af) {
-		for (n = ds->addr; n != NULL; n = n->next)
-			if (n->af == r->af)
-				break;
-		if (n == NULL) {
-			yyerror("address family mismatch for divert");
+	case PF_DIVERT_REPLY:
+		if (r->direction == PF_IN) {
+			yyerror("divert-reply used with incoming rule");
 			return (1);
 		}
-		r->divert.addr = n->addr.v.a.addr;
-	} else {
-		r->af = ds->addr->af;
-		r->divert.addr = ds->addr->addr.v.a.addr;
+		r->divert.type = ds->type;
+		return (0);
+	case PF_DIVERT_PACKET:
+		r->divert.port = ds->port;
+		r->divert.type = ds->type;
+		return (0);
 	}
-	return (0);
+	return (1);
 }
 
 int
@@ -5055,6 +5155,7 @@ lookup(char *s)
 		{ "matches",		MATCHES},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
+		{ "max-pkt-rate",	MAXPKTRATE},
 		{ "max-src-conn",	MAXSRCCONN},
 		{ "max-src-conn-rate",	MAXSRCCONNRATE},
 		{ "max-src-nodes",	MAXSRCNODES},
@@ -5112,6 +5213,7 @@ lookup(char *s)
 		{ "state-policy",	STATEPOLICY},
 		{ "static-port",	STATICPORT},
 		{ "sticky-address",	STICKYADDRESS},
+		{ "syncookies",		SYNCOOKIES},
 		{ "synproxy",		SYNPROXY},
 		{ "table",		TABLE},
 		{ "tag",		TAG},
@@ -5140,34 +5242,37 @@ lookup(char *s)
 	}
 }
 
-#define MAXPUSHBACK	128
+#define START_EXPAND	1
+#define DONE_EXPAND	2
 
-u_char	*parsebuf;
-int	 parseindex;
-u_char	 pushback_buffer[MAXPUSHBACK];
-int	 pushback_index = 0;
+static int expanding;
+
+int
+igetc(void)
+{
+	int c;
+	while (1) {
+		if (file->ungetpos > 0)
+			c = file->ungetbuf[--file->ungetpos];
+		else
+			c = getc(file->stream);
+		if (c == START_EXPAND)
+			expanding = 1;
+		else if (c == DONE_EXPAND)
+			expanding = 0;
+		else
+			break;
+	}
+	return (c);
+}
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
-	if (parsebuf) {
-		/* Read character from the parsebuffer instead of input. */
-		if (parseindex >= 0) {
-			c = parsebuf[parseindex++];
-			if (c != '\0')
-				return (c);
-			parsebuf = NULL;
-		} else
-			parseindex++;
-	}
-
-	if (pushback_index)
-		return (pushback_buffer[--pushback_index]);
-
 	if (quotec) {
-		if ((c = getc(file->stream)) == EOF) {
+		if ((c = igetc()) == EOF) {
 			yyerror("reached end of file while parsing quoted string");
 			if (popfile() == EOF)
 				return (EOF);
@@ -5176,8 +5281,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = getc(file->stream)) == '\\') {
-		next = getc(file->stream);
+	while ((c = igetc()) == '\\') {
+		next = igetc();
 		if (next != '\n') {
 			c = next;
 			break;
@@ -5186,28 +5291,39 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	while (c == EOF) {
-		if (popfile() == EOF)
-			return (EOF);
-		c = getc(file->stream);
+	if (c == EOF) {
+		/*
+		 * Fake EOL when hit EOF for the first time. This gets line
+		 * count right if last line in included file is syntactically
+		 * invalid and has no newline.
+		 */
+		if (file->eof_reached == 0) {
+			file->eof_reached = 1;
+			return ('\n');
+		}
+		while (c == EOF) {
+			if (popfile() == EOF)
+				return (EOF);
+			c = igetc();
+		}
 	}
+	
 	return (c);
 }
 
-int
+void
 lungetc(int c)
 {
 	if (c == EOF)
-		return (EOF);
-	if (parsebuf) {
-		parseindex--;
-		if (parseindex >= 0)
-			return (c);
+		return;
+	if (file->ungetpos >= file->ungetsize) {
+		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
+		if (p == NULL)
+			err(1, "lungetc");
+		file->ungetbuf = p;
+		file->ungetsize *= 2;
 	}
-	if (pushback_index < MAXPUSHBACK-1)
-		return (pushback_buffer[pushback_index++] = c);
-	else
-		return (EOF);
+	file->ungetbuf[file->ungetpos++] = c;
 }
 
 int
@@ -5215,14 +5331,9 @@ findeol(void)
 {
 	int	c;
 
-	parsebuf = NULL;
-
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		if (pushback_index)
-			c = pushback_buffer[--pushback_index];
-		else
-			c = lgetc(0);
+		c = lgetc(0);
 		if (c == '\n') {
 			file->lineno++;
 			break;
@@ -5250,7 +5361,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && parsebuf == NULL) {
+	if (c == '$' && !expanding) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -5272,8 +5383,13 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		parsebuf = val;
-		parseindex = 0;
+		p = val + strlen(val) - 1;
+		lungetc(DONE_EXPAND);
+		while (p >= val) {
+			lungetc(*p);
+			p--;
+		}
+		lungetc(START_EXPAND);
 		goto top;
 	}
 
@@ -5458,7 +5574,16 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = 1;
+	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
+	nfile->ungetsize = 16;
+	nfile->ungetbuf = malloc(nfile->ungetsize);
+	if (nfile->ungetbuf == NULL) {
+		warn("malloc");
+		fclose(nfile->stream);
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	}
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -5473,6 +5598,7 @@ popfile(void)
 		TAILQ_REMOVE(&files, file, entry);
 		fclose(file->stream);
 		free(file->name);
+		free(file->ungetbuf);
 		free(file);
 		file = prev;
 		return (0);
@@ -5826,4 +5952,38 @@ map_tos(char *s, int *val)
 		return (1);
 	}
 	return (0);
+}
+
+int
+rdomain_exists(u_int rdomain)
+{
+	size_t			 len;
+	struct rt_tableinfo	 info;
+	int			 mib[6];
+	static u_int		 found[RT_TABLEID_MAX+1];
+
+	if (found[rdomain] == 1)
+		return 1;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+	mib[5] = rdomain;
+
+	len = sizeof(info);
+	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1) {
+		if (errno == ENOENT) {
+			/* table nonexistent */
+			return 0;
+		}
+		err(1, "sysctl");
+	}
+	if (info.rti_domainid == rdomain) {
+		found[rdomain] = 1;
+		return 1;
+	}
+	/* rdomain is a table, but not an rdomain */
+	return 0;
 }

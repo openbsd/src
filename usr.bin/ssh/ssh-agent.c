@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.224 2017/07/24 04:34:28 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.231 2018/05/11 03:38:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -230,7 +230,8 @@ process_request_identities(SocketEntry *e)
 	    (r = sshbuf_put_u32(msg, idtab->nentries)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	TAILQ_FOREACH(id, &idtab->idlist, next) {
-		if ((r = sshkey_puts(id->key, msg)) != 0 ||
+		if ((r = sshkey_puts_opts(id->key, msg, SSHKEY_SERIALIZE_INFO))
+		     != 0 ||
 		    (r = sshbuf_put_cstring(msg, id->comment)) != 0) {
 			error("%s: put key/comment: %s", __func__,
 			    ssh_err(r));
@@ -272,10 +273,11 @@ process_sign_request2(SocketEntry *e)
 		fatal("%s: sshbuf_new failed", __func__);
 	if ((r = sshkey_froms(e->request, &key)) != 0 ||
 	    (r = sshbuf_get_string_direct(e->request, &data, &dlen)) != 0 ||
-	    (r = sshbuf_get_u32(e->request, &flags)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
-	if (flags & SSH_AGENT_OLD_SIGNATURE)
-		compat = SSH_BUG_SIGBLOB;
+	    (r = sshbuf_get_u32(e->request, &flags)) != 0) {
+		error("%s: couldn't parse request: %s", __func__, ssh_err(r));
+		goto send;
+	}
+
 	if ((id = lookup_identity(key)) == NULL) {
 		verbose("%s: %s key not found", __func__, sshkey_type(key));
 		goto send;
@@ -386,7 +388,7 @@ process_add_identity(SocketEntry *e)
 {
 	Identity *id;
 	int success = 0, confirm = 0;
-	u_int seconds;
+	u_int seconds, maxsign;
 	char *comment = NULL;
 	time_t death = 0;
 	struct sshkey *k = NULL;
@@ -417,6 +419,18 @@ process_add_identity(SocketEntry *e)
 		case SSH_AGENT_CONSTRAIN_CONFIRM:
 			confirm = 1;
 			break;
+		case SSH_AGENT_CONSTRAIN_MAXSIGN:
+			if ((r = sshbuf_get_u32(e->request, &maxsign)) != 0) {
+				error("%s: bad maxsign constraint: %s",
+				    __func__, ssh_err(r));
+				goto err;
+			}
+			if ((r = sshkey_enable_maxsign(k, maxsign)) != 0) {
+				error("%s: cannot enable maxsign: %s",
+				    __func__, ssh_err(r));
+				goto err;
+			}
+			break;
 		default:
 			error("%s: Unknown constraint %d", __func__, ctype);
  err:
@@ -432,14 +446,15 @@ process_add_identity(SocketEntry *e)
 		death = monotime() + lifetime;
 	if ((id = lookup_identity(k)) == NULL) {
 		id = xcalloc(1, sizeof(Identity));
-		id->key = k;
 		TAILQ_INSERT_TAIL(&idtab->idlist, id, next);
 		/* Increment the number of identities. */
 		idtab->nentries++;
 	} else {
-		sshkey_free(k);
+		/* key state might have been updated */
+		sshkey_free(id->key);
 		free(id->comment);
 	}
+	id->key = k;
 	id->comment = comment;
 	id->death = death;
 	id->confirm = confirm;
@@ -457,6 +472,11 @@ process_lock_agent(SocketEntry *e, int lock)
 	static u_int fail_count = 0;
 	size_t pwlen;
 
+	/*
+	 * This is deliberately fatal: the user has requested that we lock,
+	 * but we can't parse their request properly. The only safe thing to
+	 * do is abort.
+	 */
 	if ((r = sshbuf_get_cstring(e->request, &passwd, &pwlen)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (pwlen == 0) {
@@ -514,7 +534,7 @@ no_identities(SocketEntry *e)
 static void
 process_add_smartcard_key(SocketEntry *e)
 {
-	char *provider = NULL, *pin, canonical_provider[PATH_MAX];
+	char *provider = NULL, *pin = NULL, canonical_provider[PATH_MAX];
 	int r, i, count = 0, success = 0, confirm = 0;
 	u_int seconds;
 	time_t death = 0;
@@ -523,17 +543,23 @@ process_add_smartcard_key(SocketEntry *e)
 	Identity *id;
 
 	if ((r = sshbuf_get_cstring(e->request, &provider, NULL)) != 0 ||
-	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0) {
+		error("%s: buffer error: %s", __func__, ssh_err(r));
+		goto send;
+	}
 
 	while (sshbuf_len(e->request)) {
-		if ((r = sshbuf_get_u8(e->request, &type)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		if ((r = sshbuf_get_u8(e->request, &type)) != 0) {
+			error("%s: buffer error: %s", __func__, ssh_err(r));
+			goto send;
+		}
 		switch (type) {
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
-			if ((r = sshbuf_get_u32(e->request, &seconds)) != 0)
-				fatal("%s: buffer error: %s",
+			if ((r = sshbuf_get_u32(e->request, &seconds)) != 0) {
+				error("%s: buffer error: %s",
 				    __func__, ssh_err(r));
+				goto send;
+			}
 			death = monotime() + seconds;
 			break;
 		case SSH_AGENT_CONSTRAIN_CONFIRM:
@@ -591,8 +617,10 @@ process_remove_smartcard_key(SocketEntry *e)
 	Identity *id, *nxt;
 
 	if ((r = sshbuf_get_cstring(e->request, &provider, NULL)) != 0 ||
-	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0) {
+		error("%s: buffer error: %s", __func__, ssh_err(r));
+		goto send;
+	}
 	free(pin);
 
 	if (realpath(provider, canonical_provider) == NULL) {
@@ -666,7 +694,7 @@ process_message(u_int socknum)
 
 	debug("%s: socket %u (fd=%d) type %d", __func__, socknum, e->fd, type);
 
-	/* check wheter agent is locked */
+	/* check whether agent is locked */
 	if (locked && type != SSH_AGENTC_UNLOCK) {
 		sshbuf_reset(e->request);
 		switch (type) {
@@ -843,10 +871,10 @@ handle_conn_write(u_int socknum)
 }
 
 static void
-after_poll(struct pollfd *pfd, size_t npfd)
+after_poll(struct pollfd *pfd, size_t npfd, u_int maxfds)
 {
 	size_t i;
-	u_int socknum;
+	u_int socknum, activefds = npfd;
 
 	for (i = 0; i < npfd; i++) {
 		if (pfd[i].revents == 0)
@@ -866,19 +894,30 @@ after_poll(struct pollfd *pfd, size_t npfd)
 		/* Process events */
 		switch (sockets[socknum].type) {
 		case AUTH_SOCKET:
-			if ((pfd[i].revents & (POLLIN|POLLERR)) != 0 &&
-			    handle_socket_read(socknum) != 0)
-				close_socket(&sockets[socknum]);
+			if ((pfd[i].revents & (POLLIN|POLLERR)) == 0)
+				break;
+			if (npfd > maxfds) {
+				debug3("out of fds (active %u >= limit %u); "
+				    "skipping accept", activefds, maxfds);
+				break;
+			}
+			if (handle_socket_read(socknum) == 0)
+				activefds++;
 			break;
 		case AUTH_CONNECTION:
 			if ((pfd[i].revents & (POLLIN|POLLERR)) != 0 &&
 			    handle_conn_read(socknum) != 0) {
-				close_socket(&sockets[socknum]);
-				break;
+				goto close_sock;
 			}
 			if ((pfd[i].revents & (POLLOUT|POLLHUP)) != 0 &&
-			    handle_conn_write(socknum) != 0)
+			    handle_conn_write(socknum) != 0) {
+ close_sock:
+				if (activefds == 0)
+					fatal("activefds == 0 at close_sock");
 				close_socket(&sockets[socknum]);
+				activefds--;
+				break;
+			}
 			break;
 		default:
 			break;
@@ -887,7 +926,7 @@ after_poll(struct pollfd *pfd, size_t npfd)
 }
 
 static int
-prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp)
+prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp, u_int maxfds)
 {
 	struct pollfd *pfd = *pfdp;
 	size_t i, j, npfd = 0;
@@ -916,6 +955,16 @@ prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp)
 	for (i = j = 0; i < sockets_alloc; i++) {
 		switch (sockets[i].type) {
 		case AUTH_SOCKET:
+			if (npfd > maxfds) {
+				debug3("out of fds (active %zu >= limit %u); "
+				    "skipping arming listener", npfd, maxfds);
+				break;
+			}
+			pfd[j].fd = sockets[i].fd;
+			pfd[j].revents = 0;
+			pfd[j].events = POLLIN;
+			j++;
+			break;
 		case AUTH_CONNECTION:
 			pfd[j].fd = sockets[i].fd;
 			pfd[j].revents = 0;
@@ -1014,6 +1063,7 @@ main(int ac, char **av)
 	int timeout = -1; /* INFTIM */
 	struct pollfd *pfd = NULL;
 	size_t npfd = 0;
+	u_int maxfds;
 
 	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
@@ -1022,6 +1072,9 @@ main(int ac, char **av)
 	/* drop */
 	setegid(getgid());
 	setgid(getgid());
+
+	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		fatal("%s: getrlimit: %s", __progname, strerror(errno));
 
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
@@ -1116,6 +1169,18 @@ main(int ac, char **av)
 		printf("echo Agent pid %ld killed;\n", (long)pid);
 		exit(0);
 	}
+
+	/*
+	 * Minimum file descriptors:
+	 * stdio (3) + listener (1) + syslog (1 maybe) + connection (1) +
+	 * a few spare for libc / stack protectors / sanitisers, etc.
+	 */
+#define SSH_AGENT_MIN_FDS (3+1+1+1+4)
+	if (rlim.rlim_cur < SSH_AGENT_MIN_FDS)
+		fatal("%s: file descriptior rlimit %lld too low (minimum %u)",
+		    __progname, (long long)rlim.rlim_cur, SSH_AGENT_MIN_FDS);
+	maxfds = rlim.rlim_cur - SSH_AGENT_MIN_FDS;
+
 	parent_pid = getpid();
 
 	if (agentsocket == NULL) {
@@ -1232,7 +1297,7 @@ skip:
 		fatal("%s: pledge: %s", __progname, strerror(errno));
 
 	while (1) {
-		prepare_poll(&pfd, &npfd, &timeout);
+		prepare_poll(&pfd, &npfd, &timeout, maxfds);
 		result = poll(pfd, npfd, timeout);
 		saved_errno = errno;
 		if (parent_alive_interval != 0)
@@ -1243,7 +1308,7 @@ skip:
 				continue;
 			fatal("poll: %s", strerror(saved_errno));
 		} else if (result > 0)
-			after_poll(pfd, npfd);
+			after_poll(pfd, npfd, maxfds);
 	}
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2017/08/20 04:22:57 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2018/05/03 09:45:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -19,11 +19,26 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
+
+#include <uvm/uvm.h>
+
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
+
+#include <machine/cpufunc.h>
+#include <machine/fdt.h>
+
+#include "psci.h"
+#if NPSCI > 0
+#include <dev/fdt/pscivar.h>
+#endif
 
 /* CPU Identification */
 #define CPU_IMPL_ARM		0x41
@@ -87,6 +102,9 @@ const struct implementers {
 };
 
 char cpu_model[64];
+int cpu_node;
+
+struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
@@ -98,6 +116,9 @@ struct cfattach cpu_ca = {
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+void	cpu_flush_bp_noop(void);
+void	cpu_flush_bp_psci(void);
 
 void
 cpu_identify(struct cpu_info *ci)
@@ -141,7 +162,44 @@ cpu_identify(struct cpu_info *ci)
 		if (CPU_IS_PRIMARY(ci))
 			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
 	}
+
+	/*
+	 * Some ARM processors are vulnerable to branch target
+	 * injection attacks (CVE-2017-5715).
+	 */
+	switch (impl) {
+	case CPU_IMPL_ARM:
+		switch (part) {
+		case CPU_PART_CORTEX_A35:
+		case CPU_PART_CORTEX_A53:
+		case CPU_PART_CORTEX_A55:
+			/* Not vulnerable. */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+			break;
+		case CPU_PART_CORTEX_A57:
+		case CPU_PART_CORTEX_A72:
+		case CPU_PART_CORTEX_A73:
+		case CPU_PART_CORTEX_A75:
+		default:
+			/*
+			 * Vulnerable; call into the firmware and hope
+			 * we're running on top of Arm Trusted
+			 * Firmware with a fix for Security Advisory
+			 * TFV 6.
+			 */
+			ci->ci_flush_bp = cpu_flush_bp_psci;
+			break;
+		}
+		break;
+	default:
+		/* Not much we can do for an unknown processor.  */
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		break;
+	}
 }
+
+int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);
+int	cpu_clockspeed(int *);
 
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
@@ -167,14 +225,248 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	if (faa->fa_reg[0].addr == (mpidr & MPIDR_AFF)) {
 		ci = &cpu_info_primary;
-		ci->ci_cpuid = dev->dv_unit;
-		ci->ci_dev = dev;
-
-		printf(":");
-		cpu_identify(ci);
-	} else {
-		printf(": not configured");
+#ifdef MULTIPROCESSOR
+		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
+#endif
 	}
+#ifdef MULTIPROCESSOR
+	else {
+		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		cpu_info[dev->dv_unit] = ci;
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
+		ci->ci_flags |= CPUF_AP;
+	}
+#endif
+
+	ci->ci_dev = dev;
+	ci->ci_cpuid = dev->dv_unit;
+	ci->ci_mpidr = faa->fa_reg[0].addr;
+	ci->ci_node = faa->fa_node;
+	ci->ci_self = ci;
+
+	printf(" mpidr %llx:", ci->ci_mpidr);
+
+#ifdef MULTIPROCESSOR
+	if (ci->ci_flags & CPUF_AP) {
+		char buf[32];
+		uint64_t spinup_data = 0;
+		int spinup_method = 0;
+		int timeout = 10000;
+		int len;
+
+		len = OF_getprop(ci->ci_node, "enable-method",
+		    buf, sizeof(buf));
+		if (strcmp(buf, "psci") == 0) {
+			spinup_method = 1;
+		} else if (strcmp(buf, "spin-table") == 0) {
+			spinup_method = 2;
+			spinup_data = OF_getpropint64(ci->ci_node,
+			    "cpu-release-addr", 0);
+		}
+
+		sched_init_cpu(ci);
+		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
+			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
+			__asm volatile("dsb sy; sev");
+
+			while ((ci->ci_flags & CPUF_IDENTIFIED) == 0 &&
+			    --timeout)
+				delay(1000);
+			if (timeout == 0) {
+				printf(" failed to identify");
+				ci->ci_flags = 0;
+			}
+		} else {
+			printf(" failed to spin up");
+			ci->ci_flags = 0;
+		}
+	} else {
+#endif
+		cpu_identify(ci);
+
+		if (OF_getproplen(ci->ci_node, "clocks") > 0) {
+			cpu_node = ci->ci_node;
+			cpu_cpuspeed = cpu_clockspeed;
+		}
+#ifdef MULTIPROCESSOR
+	}
+#endif
 
 	printf("\n");
 }
+
+void
+cpu_flush_bp_noop(void)
+{
+}
+
+void
+cpu_flush_bp_psci(void)
+{
+#if NPSCI > 0
+	psci_flush_bp();
+#endif
+}
+
+int
+cpu_clockspeed(int *freq)
+{
+	*freq = clock_get_frequency(cpu_node, NULL) / 1000000;
+	return 0;
+}
+
+#ifdef MULTIPROCESSOR
+
+void cpu_boot_secondary(struct cpu_info *ci);
+void cpu_hatch(void);
+
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if ((ci->ci_flags & CPUF_AP) == 0)
+			continue;
+		if (ci->ci_flags & CPUF_PRIMARY)
+			continue;
+
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		cpu_boot_secondary(ci);
+	}
+}
+
+void
+cpu_hatch_spin_table(struct cpu_info *ci, uint64_t start, uint64_t data)
+{
+	/* this reuses the zero page for the core */
+	vaddr_t start_pg = zero_page + (PAGE_SIZE * ci->ci_cpuid);
+	paddr_t pa = trunc_page(data);
+	uint64_t offset = data - pa;
+	uint64_t *startvec = (uint64_t *)(start_pg + offset);
+
+	pmap_kenter_cache(start_pg, pa, PROT_READ|PROT_WRITE, PMAP_CACHE_CI);
+
+	*startvec = start;
+	__asm volatile("dsb sy; sev");
+
+	pmap_kremove(start_pg, PAGE_SIZE);
+}
+
+int
+cpu_hatch_secondary(struct cpu_info *ci, int method, uint64_t data)
+{
+	extern uint64_t pmap_avail_kvo;
+	extern paddr_t cpu_hatch_ci;
+	paddr_t startaddr;
+	void *kstack;
+	uint64_t ttbr1;
+	int rc = 0;
+
+	kstack = km_alloc(USPACE, &kv_any, &kp_zero, &kd_waitok);
+	ci->ci_el1_stkend = (vaddr_t)kstack + USPACE - 16;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)ci, &cpu_hatch_ci);
+
+	__asm("mrs %x0, ttbr1_el1": "=r"(ttbr1));
+	ci->ci_ttbr1 = ttbr1;
+
+	cpu_dcache_wb_range((vaddr_t)&cpu_hatch_ci, sizeof(paddr_t));
+	cpu_dcache_wb_range((vaddr_t)ci, sizeof(*ci));
+
+	startaddr = (vaddr_t)cpu_hatch + pmap_avail_kvo;
+
+	switch (method) {
+	case 1:
+		/* psci  */
+#if NPSCI > 0
+		rc = (psci_cpu_on(ci->ci_mpidr, startaddr, 0) == PSCI_SUCCESS);
+#endif
+		break;
+	case 2:
+		/* spin-table */
+		cpu_hatch_spin_table(ci, startaddr, data);
+		rc = 1;
+		break;
+	default:
+		/* no method to spin up CPU */
+		ci->ci_flags = 0;	/* mark cpu as not AP */
+	}
+
+	return rc;
+}
+
+void
+cpu_boot_secondary(struct cpu_info *ci)
+{
+	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
+	__asm volatile("dsb sy; sev");
+
+	while ((ci->ci_flags & CPUF_RUNNING) == 0)
+		__asm volatile("wfe");
+}
+
+void
+cpu_start_secondary(struct cpu_info *ci)
+{
+	uint64_t tcr;
+	int s;
+
+	ncpus++;
+	ci->ci_flags |= CPUF_PRESENT;
+	__asm volatile("dsb sy");
+
+	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
+		__asm volatile("wfe");
+
+	cpu_identify(ci);
+	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
+	__asm volatile("dsb sy");
+
+	while ((ci->ci_flags & CPUF_GO) == 0)
+		__asm volatile("wfe");
+
+	tcr = READ_SPECIALREG(tcr_el1);
+	tcr &= ~TCR_T0SZ(0x3f);
+	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
+	tcr |= TCR_A1;
+	WRITE_SPECIALREG(tcr_el1, tcr);
+
+	s = splhigh();
+	arm_intr_cpu_enable();
+	cpu_startclock();
+
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
+	__asm volatile("dsb sy; sev");
+
+	spllower(IPL_NONE);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	/* force cpu to enter kernel */
+	if (ci != curcpu())
+		arm_send_ipi(ci, ARM_IPI_NOP);
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	/*
+	 * This could send IPI or SEV depending on if the other
+	 * processor is sleeping (WFI or WFE), in userland, or if the
+	 * cpu is in other possible wait states?
+	 */
+	if (ci != curcpu())
+		arm_send_ipi(ci, ARM_IPI_NOP);
+}
+
+#endif

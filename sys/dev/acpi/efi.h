@@ -1,4 +1,4 @@
-/* $OpenBSD: efi.h,v 1.1 2017/05/25 21:21:18 kettenis Exp $ */
+/* $OpenBSD: efi.h,v 1.2 2018/01/04 14:30:08 kettenis Exp $ */
 
 /* Public Domain */
 
@@ -6,10 +6,22 @@
 #define _MACHINE_EFI_H_
 
 typedef uint8_t		UINT8;
+typedef int16_t		INT16;
+typedef uint16_t	UINT16;
 typedef uint32_t	UINT32;
 typedef uint64_t	UINT64;
+typedef u_long		UINTN;
+typedef uint16_t	CHAR16;
+typedef void		VOID;
+typedef uint32_t	EFI_GUID[4];
 typedef uint64_t	EFI_PHYSICAL_ADDRESS;
 typedef uint64_t	EFI_VIRTUAL_ADDRESS;
+typedef UINTN		EFI_STATUS;
+typedef VOID		*EFI_HANDLE;
+
+typedef VOID		*EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
+typedef VOID		*EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
+typedef VOID		*EFI_BOOT_SERVICES;
 
 typedef enum {
 	EfiReservedMemoryType,
@@ -56,5 +68,66 @@ typedef struct {
 
 #define NextMemoryDescriptor(Ptr, Size) \
 	((EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)Ptr) + Size))
+
+typedef struct {
+	UINT64				Signature;
+	UINT32				Revision;
+	UINT32				HeaderSize;
+	UINT32				CRC32;
+	UINT32				Reserved;
+} EFI_TABLE_HEADER;
+
+typedef struct {
+	UINT16				Year;
+	UINT8				Month;
+	UINT8				Day;
+	UINT8				Hour;
+	UINT8				Minute;
+	UINT8				Second;
+	UINT8				Pad1;
+	UINT32				Nanosecond;
+	INT16				TimeZone;
+	UINT8				Daylight;
+	UINT8				Pad2;
+} EFI_TIME;
+
+typedef VOID		*EFI_TIME_CAPABILITIES;
+
+typedef EFI_STATUS (*EFI_GET_TIME)(EFI_TIME *, EFI_TIME_CAPABILITIES *);
+typedef EFI_STATUS (*EFI_SET_TIME)(EFI_TIME *);
+typedef EFI_STATUS (*EFI_SET_VIRTUAL_ADDRESS_MAP)(UINTN, UINTN, UINT32, EFI_MEMORY_DESCRIPTOR *);
+
+typedef struct {
+	EFI_TABLE_HEADER		Hdr;
+	EFI_GET_TIME			GetTime;
+	EFI_SET_TIME			SetTime;
+	VOID				*GetWakeupTime;
+	VOID				*SetWakeupTime;
+
+	EFI_SET_VIRTUAL_ADDRESS_MAP	SetVirtualAddressMap;
+} EFI_RUNTIME_SERVICES;
+
+typedef struct {
+	EFI_GUID			VendorGuid;
+	VOID				*VendorTable;
+} EFI_CONFIGURATION_TABLE;
+
+typedef struct {
+	EFI_TABLE_HEADER		Hdr;
+	CHAR16				*FirmwareVendor;
+	UINT32				FirmwareRevision;
+	EFI_HANDLE			ConsoleInHandle;
+	EFI_SIMPLE_TEXT_INPUT_PROTOCOL	*ConIn;
+	EFI_HANDLE			ConsoleOutHandle;
+	EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	*ConOut;
+	EFI_HANDLE			StandardErrorHandle;
+	EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL	*StdErr;
+	EFI_RUNTIME_SERVICES		*RuntimeServices;
+	EFI_BOOT_SERVICES		*BootServices;
+	UINTN				NumberOfTableEntries;
+	EFI_CONFIGURATION_TABLE		*ConfigurationTable;
+} EFI_SYSTEM_TABLE;
+
+#define EFI_SUCCESS	0
 
 #endif /* _MACHINE_EFI_H_ */

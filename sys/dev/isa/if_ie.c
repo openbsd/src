@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.53 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.54 2017/11/04 10:55:38 florian Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -1158,8 +1158,10 @@ ieget(sc, ehp)
 	int head;
 
 	resid = totlen = ie_packet_len(sc);
-	if (totlen <= 0)
+	if (totlen <= 0) {
+		sc->sc_arpcom.ac_if.if_ierrors++;
 		return 0;
+	}
 
 	head = sc->rbhead;
 
@@ -1175,14 +1177,15 @@ ieget(sc, ehp)
 	 * This is only a consideration when FILTER is defined; i.e., when
 	 * we are either running BPF or doing multicasting.
 	 */
-	if (!check_eh(sc, ehp)) {
-		sc->sc_arpcom.ac_if.if_ierrors--; /* just this case, it's not an error */
+	if (!check_eh(sc, ehp))
+		/* not an error */
 		return 0;
-	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	if (m == NULL) {
+		sc->sc_arpcom.ac_if.if_ierrors++;
 		return 0;
+	}
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1197,6 +1200,7 @@ ieget(sc, ehp)
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				m_freem(top);
+				sc->sc_arpcom.ac_if.if_ierrors++;
 				return 0;
 			}
 			len = MLEN;
@@ -1248,6 +1252,9 @@ ieget(sc, ehp)
 	 * have now copied everything in from the shared memory.
 	 * This means that we are done.
 	 */
+
+	if (top == NULL)
+		sc->sc_arpcom.ac_if.if_ierrors++;
 	return top;
 }
 
@@ -1282,11 +1289,10 @@ ie_readframe(sc, num)
 	if (status & IE_FD_OK) {
 		m = ieget(sc, &eh);
 		ie_drop_packet_buffer(sc);
-	}
-	if (m == NULL) {
+	} else
 		sc->sc_arpcom.ac_if.if_ierrors++;
+	if (m == NULL)
 		return;
-	}
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)

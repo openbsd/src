@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.74 2017/08/22 20:27:18 anton Exp $
+.\"	$OpenBSD: vi.1,v 1.75 2018/02/12 01:10:46 schwarze Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: August 22 2017 $
+.Dd $Mdocdate: February 12 2018 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -1794,15 +1794,8 @@ Delete the lines from the file.
 Display buffers, screens or tags.
 .Pp
 .It Xo
-.Op Cm Ee Ns
-.Op Cm dit Ns
+.Cm e Ns Op Cm dit Ns | Ns Cm x Ns
 .Op Cm !\&
-.Op Ar +cmd
-.Op Ar file
-.Xc
-.It Xo
-.Op Cm Ee Ns
-.Cm x Ns Op Cm !\&
 .Op Ar +cmd
 .Op Ar file
 .Xc
@@ -1822,13 +1815,9 @@ command.
 .Xc
 Display and optionally change the file name.
 .Pp
-.It Xo
-.Op Cm Ff Ns
-.Cm g
-.Op Ar name
-.Xc
+.It Cm fg Op Ar name
 .Nm vi
-mode only.
+only.
 Foreground the specified screen.
 .Pp
 .It Xo
@@ -1880,9 +1869,9 @@ Display the lines unambiguously.
 .Cm map Ns Op Cm !\&
 .Op Ar lhs rhs
 .Xc
-Define or display maps (for
 .Nm vi
-only).
+only.
+Define or display maps.
 .Pp
 .It Xo
 .Op Ar line
@@ -1912,8 +1901,7 @@ Write the abbreviations, editor options and maps to the specified
 .Ar file .
 .Pp
 .It Xo
-.Op Cm Nn Ns
-.Op Cm ext Ns
+.Cm n Ns Op Cm ext Ns
 .Op Cm !\&
 .Op Ar file ...
 .Xc
@@ -1933,11 +1921,7 @@ Save the file in a form that can later be recovered using the
 .Fl r
 option.
 .Pp
-.It Xo
-.Op Cm \&Pp Ns
-.Cm rev Ns Op Cm ious Ns
-.Op Cm !\&
-.Xc
+.It Cm prev Ns Oo Cm ious Oc Ns Op Cm !\&
 Edit the previous file from the argument list.
 .Pp
 .It Xo
@@ -1960,6 +1944,8 @@ Append buffer contents to the current line.
 .Op Cm !\&
 .Xc
 End the editing session.
+In split-screen mode, only close the current screen
+and switch to the previous one.
 .Pp
 .It Xo
 .Op Ar line
@@ -1980,7 +1966,7 @@ if it was previously saved.
 .It Xo
 .Cm res Ns Op Cm ize
 .Op Cm + Ns | Ns Cm - Ns
-.Ar size
+.Ar lines
 .Xc
 .Nm vi
 mode only.
@@ -2132,8 +2118,7 @@ character is usually
 .Aq control-Z .
 .Pp
 .It Xo
-.Op Cm Tt Ns
-.Cm a Ns Op Cm g Ns
+.Cm ta Ns Op Cm g Ns
 .Op Cm !\&
 .Ar tagstring
 .Xc
@@ -2195,19 +2180,18 @@ editor.
 .Op Ar flags
 .Xc
 .Nm ex
-mode only.
+only.
 Enter
 .Nm vi .
 .Pp
 .It Xo
-.Op Cm Vi Ns
-.Cm i Ns Op Cm sual Ns
+.Cm vi Ns Op Cm sual Ns
 .Op Cm !\&
 .Op Ar +cmd
 .Op Ar file
 .Xc
 .Nm vi
-mode only.
+only.
 Edit a new file.
 .Pp
 .It Xo
@@ -2225,25 +2209,25 @@ command.
 .Op >>
 .Op Ar file
 .Xc
-.It Xo
-.Op Ar range
-.Cm w Ns Op Cm rite
-.Op Cm !\&
-.Op Ar file
-.Xc
+Write the file.
+.Pp
 .It Xo
 .Op Ar range
 .Cm wn Ns Op Cm !\&
 .Op >>
 .Op Ar file
 .Xc
+Write the file and edit the next file from the argument list.
+.Pp
 .It Xo
 .Op Ar range
 .Cm wq Ns Op Cm !\&
 .Op >>
 .Op Ar file
 .Xc
-Write the file.
+Write the file and exit the editor.
+In split-screen mode, close the current screen
+and switch to the previous one.
 .Pp
 .It Xo
 .Op Ar range
@@ -2253,6 +2237,8 @@ Write the file.
 .Xc
 Exit the editor,
 writing the file if it has been modified.
+In split-screen mode, close the current screen
+and switch to the previous one.
 .Pp
 .It Xo
 .Op Ar range
@@ -2271,6 +2257,21 @@ Copy the specified lines to a buffer.
 .Xc
 Adjust the window.
 .El
+.Pp
+For
+.Cm e ,
+.Cm fg ,
+.Cm n ,
+.Cm prev ,
+.Cm ta ,
+and
+.Cm vi ,
+if the first letter of the command is capitalized, the current screen is
+split and the new file is displayed in addition to the current screen.
+This feature is only available in
+.Nm vi ,
+not in
+.Nm ex .
 .Sh SET OPTIONS
 There are a large number of options that may be set
 .Pq or unset

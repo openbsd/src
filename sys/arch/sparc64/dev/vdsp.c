@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsp.c,v 1.42 2016/03/19 12:04:15 natano Exp $	*/
+/*	$OpenBSD: vdsp.c,v 1.45 2018/05/02 02:24:55 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2011, 2014 Mark Kettenis
  *
@@ -412,13 +412,13 @@ vdsp_tx_intr(void *arg)
 	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Tx link down\n"));
+			DPRINTF(("%s: Tx link down\n", __func__));
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Tx link up\n"));
+			DPRINTF(("%s: Tx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Tx link reset\n"));
+			DPRINTF(("%s: Tx link reset\n", __func__));
 			break;
 		}
 		lc->lc_tx_state = tx_state;
@@ -448,16 +448,16 @@ vdsp_rx_intr(void *arg)
 	if (rx_state != lc->lc_rx_state) {
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			DPRINTF(("Rx link down\n"));
+			DPRINTF(("%s: Rx link down\n", __func__));
 			lc->lc_tx_seqid = 0;
 			lc->lc_state = 0;
 			lc->lc_reset(lc);
 			break;
 		case LDC_CHANNEL_UP:
-			DPRINTF(("Rx link up\n"));
+			DPRINTF(("%s: Rx link up\n", __func__));
 			break;
 		case LDC_CHANNEL_RESET:
-			DPRINTF(("Rx link reset\n"));
+			DPRINTF(("%s: Rx link reset\n", __func__));
 			lc->lc_tx_seqid = 0;
 			lc->lc_state = 0;
 			lc->lc_reset(lc);
@@ -941,7 +941,7 @@ vdsp_open(void *arg1)
 			sc->sc_vdisk_size = va.va_size / DEV_BSIZE;
 		}
 
-		VOP_UNLOCK(nd.ni_vp, p);
+		VOP_UNLOCK(nd.ni_vp);
 		sc->sc_vp = nd.ni_vp;
 
 		vdsp_readlabel(sc);
@@ -1011,9 +1011,9 @@ vdsp_readlabel(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 	if (err) {
 		free(sc->sc_label, M_DEVBUF, 0);
 		sc->sc_label = NULL;
@@ -1041,9 +1041,9 @@ vdsp_writelabel(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 
 	return (err);
 }
@@ -1072,9 +1072,9 @@ vdsp_is_iso(struct vdsp_softc *sc)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	err = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 
 	if (err == 0 && memcmp(vdp->id, ISO_STANDARD_ID, sizeof(vdp->id)))
 		err = ENOENT;
@@ -1151,9 +1151,9 @@ vdsp_read_desc(struct vdsp_softc *sc, struct vdsk_desc_msg *dm)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	dm->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 
 	KERNEL_UNLOCK();
 	if (dm->status == 0) {
@@ -1225,9 +1225,9 @@ vdsp_read_dring(void *arg1, void *arg2)
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	vd->status = VOP_READ(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 
 	KERNEL_UNLOCK();
 	if (vd->status == 0) {
@@ -1324,9 +1324,9 @@ vdsp_write_dring(void *arg1, void *arg2)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = p;
 
-	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(sc->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	vd->status = VOP_WRITE(sc->sc_vp, &uio, 0, p->p_ucred);
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 
 fail:
 	free(buf, M_DEVBUF, 0);

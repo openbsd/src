@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.295 2017/08/24 08:48:37 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.302 2018/05/07 13:39:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -878,11 +878,37 @@ tty_draw_pane(struct tty *tty, const struct window_pane *wp, u_int py, u_int ox,
 	tty_draw_line(tty, wp, wp->screen, py, ox, oy);
 }
 
+static const struct grid_cell *
+tty_check_codeset(struct tty *tty, const struct grid_cell *gc)
+{
+	static struct grid_cell	new;
+	u_int			n;
+
+	/* Characters less than 0x7f are always fine, no matter what. */
+	if (gc->data.size == 1 && *gc->data.data < 0x7f)
+		return (gc);
+
+	/* UTF-8 terminal and a UTF-8 character - fine. */
+	if (tty->flags & TTY_UTF8)
+		return (gc);
+
+	/* Replace by the right number of underscores. */
+	n = gc->data.width;
+	if (n > UTF8_SIZE)
+		n = UTF8_SIZE;
+	memcpy(&new, gc, sizeof new);
+	new.data.size = n;
+	memset(new.data.data, '_', n);
+	return (&new);
+}
+
 void
 tty_draw_line(struct tty *tty, const struct window_pane *wp,
     struct screen *s, u_int py, u_int ox, u_int oy)
 {
+	struct grid		*gd = s->grid;
 	struct grid_cell	 gc, last;
+	const struct grid_cell	*gcp;
 	u_int			 i, j, ux, sx, nx, width;
 	int			 flags, cleared = 0;
 	char			 buf[512];
@@ -900,15 +926,15 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 	 * there may be empty background cells after it (from BCE).
 	 */
 	sx = screen_size_x(s);
-	if (sx > s->grid->linedata[s->grid->hsize + py].cellsize)
-		sx = s->grid->linedata[s->grid->hsize + py].cellsize;
+	if (sx > gd->linedata[gd->hsize + py].cellsize)
+		sx = gd->linedata[gd->hsize + py].cellsize;
 	if (sx > tty->sx)
 		sx = tty->sx;
 	ux = 0;
 
 	if (wp == NULL ||
 	    py == 0 ||
-	    (~s->grid->linedata[s->grid->hsize + py - 1].flags & GRID_LINE_WRAPPED) ||
+	    (~gd->linedata[gd->hsize + py - 1].flags & GRID_LINE_WRAPPED) ||
 	    ox != 0 ||
 	    tty->cx < tty->sx ||
 	    screen_size_x(s) < tty->sx) {
@@ -932,18 +958,16 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 	width = 0;
 
 	for (i = 0; i < sx; i++) {
-		grid_view_get_cell(s->grid, i, py, &gc);
+		grid_view_get_cell(gd, i, py, &gc);
+		gcp = tty_check_codeset(tty, &gc);
 		if (len != 0 &&
-		    (((~tty->flags & TTY_UTF8) &&
-		    (gc.data.size != 1 ||
-		    *gc.data.data >= 0x7f ||
-		    gc.data.width != 1)) ||
-		    (gc.attr & GRID_ATTR_CHARSET) ||
-		    gc.flags != last.flags ||
-		    gc.attr != last.attr ||
-		    gc.fg != last.fg ||
-		    gc.bg != last.bg ||
-		    (sizeof buf) - len < gc.data.size)) {
+		    ((gcp->attr & GRID_ATTR_CHARSET) ||
+		    gcp->flags != last.flags ||
+		    gcp->attr != last.attr ||
+		    gcp->fg != last.fg ||
+		    gcp->bg != last.bg ||
+		    ux + width + gcp->data.width >= screen_size_x(s) ||
+		    (sizeof buf) - len < gcp->data.size)) {
 			tty_attributes(tty, &last, wp);
 			tty_putn(tty, buf, len, width);
 			ux += width;
@@ -952,28 +976,27 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 			width = 0;
 		}
 
-		if (gc.flags & GRID_FLAG_SELECTED)
-			screen_select_cell(s, &last, &gc);
+		if (gcp->flags & GRID_FLAG_SELECTED)
+			screen_select_cell(s, &last, gcp);
 		else
-			memcpy(&last, &gc, sizeof last);
-		if (((~tty->flags & TTY_UTF8) &&
-		    (gc.data.size != 1 ||
-		    *gc.data.data >= 0x7f ||
-		    gc.data.width != 1)) ||
-		    (gc.attr & GRID_ATTR_CHARSET)) {
+			memcpy(&last, gcp, sizeof last);
+		if (ux + gcp->data.width > screen_size_x(s)) {
 			tty_attributes(tty, &last, wp);
-			if (~tty->flags & TTY_UTF8) {
-				for (j = 0; j < gc.data.width; j++)
-					tty_putc(tty, '_');
-			} else {
-				for (j = 0; j < gc.data.size; j++)
-					tty_putc(tty, gc.data.data[j]);
+			for (j = 0; j < gcp->data.width; j++) {
+				if (ux + j > screen_size_x(s))
+					break;
+				tty_putc(tty, ' ');
+				ux++;
 			}
+		} else if (gcp->attr & GRID_ATTR_CHARSET) {
+			tty_attributes(tty, &last, wp);
+			for (j = 0; j < gcp->data.size; j++)
+				tty_putc(tty, gcp->data.data[j]);
 			ux += gc.data.width;
 		} else {
-			memcpy(buf + len, gc.data.data, gc.data.size);
-			len += gc.data.size;
-			width += gc.data.width;
+			memcpy(buf + len, gcp->data.data, gcp->data.size);
+			len += gcp->data.size;
+			width += gcp->data.width;
 		}
 	}
 	if (len != 0) {
@@ -993,8 +1016,8 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 		}
 	}
 
-	nx = screen_size_x(s) - ux;
-	if (!cleared && ux < tty->sx && nx != 0) {
+	if (!cleared && ux < screen_size_x(s)) {
+		nx = screen_size_x(s) - ux;
 		tty_default_attributes(tty, wp, 8);
 		tty_clear_line(tty, wp, oy + py, ox + ux, nx, 8);
 	}
@@ -1038,7 +1061,7 @@ tty_write(void (*cmdfn)(struct tty *, const struct tty_ctx *),
 		ctx->xoff = wp->xoff;
 		ctx->yoff = wp->yoff;
 		if (status_at_line(c) == 0)
-			ctx->yoff++;
+			ctx->yoff += status_line_size(c->session);
 
 		cmdfn(&c->tty, ctx);
 	}
@@ -1221,13 +1244,18 @@ tty_cmd_linefeed(struct tty *tty, const struct tty_ctx *ctx)
 	tty_margin_pane(tty, ctx);
 
 	/*
-	 * If we want to wrap a pane, the cursor needs to be exactly on the
-	 * right of the region. But if the pane isn't on the right, it may be
-	 * off the edge - if so, move the cursor back to the right.
+	 * If we want to wrap a pane while using margins, the cursor needs to
+	 * be exactly on the right of the region. If the cursor is entirely off
+	 * the edge - move it back to the right. Some terminals are funny about
+	 * this and insert extra spaces, so only use the right if margins are
+	 * enabled.
 	 */
-	if (ctx->xoff + ctx->ocx > tty->rright)
-		tty_cursor(tty, tty->rright, ctx->yoff + ctx->ocy);
-	else
+	if (ctx->xoff + ctx->ocx > tty->rright) {
+		if (!tty_use_margin(tty))
+			tty_cursor(tty, 0, ctx->yoff + ctx->ocy);
+		else
+			tty_cursor(tty, tty->rright, ctx->yoff + ctx->ocy);
+	} else
 		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_putc(tty, '\n');
@@ -1252,11 +1280,16 @@ tty_cmd_scrollup(struct tty *tty, const struct tty_ctx *ctx)
 	tty_margin_pane(tty, ctx);
 
 	if (ctx->num == 1 || !tty_term_has(tty->term, TTYC_INDN)) {
-		tty_cursor(tty, tty->rright, tty->rlower);
+		if (!tty_use_margin(tty))
+			tty_cursor(tty, 0, tty->rlower);
+		else
+			tty_cursor(tty, tty->rright, tty->rlower);
 		for (i = 0; i < ctx->num; i++)
 			tty_putc(tty, '\n');
-	} else
+	} else {
+		tty_cursor(tty, 0, tty->cy);
 		tty_putcode1(tty, TTYC_INDN, ctx->num);
+	}
 }
 
 void
@@ -1400,7 +1433,7 @@ static void
 tty_cell(struct tty *tty, const struct grid_cell *gc,
     const struct window_pane *wp)
 {
-	u_int	i;
+	const struct grid_cell	*gcp;
 
 	/* Skip last character if terminal is stupid. */
 	if ((tty->term->flags & TERM_EARLYWRAP) &&
@@ -1416,22 +1449,16 @@ tty_cell(struct tty *tty, const struct grid_cell *gc,
 	tty_attributes(tty, gc, wp);
 
 	/* Get the cell and if ASCII write with putc to do ACS translation. */
-	if (gc->data.size == 1) {
-		if (*gc->data.data < 0x20 || *gc->data.data == 0x7f)
+	gcp = tty_check_codeset(tty, gc);
+	if (gcp->data.size == 1) {
+		if (*gcp->data.data < 0x20 || *gcp->data.data == 0x7f)
 			return;
-		tty_putc(tty, *gc->data.data);
-		return;
-	}
-
-	/* If not UTF-8, write _. */
-	if (!(tty->flags & TTY_UTF8)) {
-		for (i = 0; i < gc->data.width; i++)
-			tty_putc(tty, '_');
+		tty_putc(tty, *gcp->data.data);
 		return;
 	}
 
 	/* Write the data. */
-	tty_putn(tty, gc->data.data, gc->data.size, gc->data.width);
+	tty_putn(tty, gcp->data.data, gcp->data.size, gcp->data.width);
 }
 
 void
@@ -1973,8 +2000,7 @@ tty_colours_fg(struct tty *tty, const struct grid_cell *gc)
 	char			 s[32];
 
 	/* Is this a 24-bit or 256-colour colour? */
-	if (gc->fg & COLOUR_FLAG_RGB ||
-	    gc->fg & COLOUR_FLAG_256) {
+	if (gc->fg & COLOUR_FLAG_RGB || gc->fg & COLOUR_FLAG_256) {
 		if (tty_try_colour(tty, gc->fg, "38") == 0)
 			goto save_fg;
 		/* Should not get here, already converted in tty_check_fg. */
@@ -2003,8 +2029,7 @@ tty_colours_bg(struct tty *tty, const struct grid_cell *gc)
 	char			 s[32];
 
 	/* Is this a 24-bit or 256-colour colour? */
-	if (gc->bg & COLOUR_FLAG_RGB ||
-	    gc->bg & COLOUR_FLAG_256) {
+	if (gc->bg & COLOUR_FLAG_RGB || gc->bg & COLOUR_FLAG_256) {
 		if (tty_try_colour(tty, gc->bg, "48") == 0)
 			goto save_bg;
 		/* Should not get here, already converted in tty_check_bg. */
@@ -2034,11 +2059,15 @@ tty_try_colour(struct tty *tty, int colour, const char *type)
 
 	if (colour & COLOUR_FLAG_256) {
 		/*
-		 * If the user has specified -2 to the client, setaf and setab
-		 * may not work (or they may not want to use them), so send the
-		 * usual sequence.
+		 * If the user has specified -2 to the client (meaning
+		 * TERM_256COLOURS is set), setaf and setab may not work (or
+		 * they may not want to use them), so send the usual sequence.
+		 *
+		 * Also if RGB is set, setaf and setab do not support the 256
+		 * colour palette so use the sequences directly there too.
 		 */
-		if (tty->term_flags & TERM_256COLOURS)
+		if ((tty->term_flags & TERM_256COLOURS) ||
+		    tty_term_has(tty->term, TTYC_RGB))
 			goto fallback_256;
 
 		/*
@@ -2079,6 +2108,7 @@ tty_try_colour(struct tty *tty, int colour, const char *type)
 
 fallback_256:
 	xsnprintf(s, sizeof s, "\033[%s;5;%dm", type, colour & 0xff);
+	log_debug("%s: 256 colour fallback: %s", tty->client->name, s);
 	tty_puts(tty, s);
 	return (0);
 }

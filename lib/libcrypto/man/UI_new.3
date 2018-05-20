@@ -1,6 +1,6 @@
-.\"	$OpenBSD: UI_new.3,v 1.6 2017/03/26 00:06:10 schwarze Exp $
-.\"	OpenSSL UI_new.pod 5469600e Mar 11 00:51:53 2017 +0100
-.\"	OpenSSL UI_new.pod 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: UI_new.3,v 1.8 2018/03/22 21:08:22 schwarze Exp $
+.\" full merge up to: OpenSSL 78b19e90 Jan 11 00:12:01 2017 +0100
+.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
 .\" Copyright (c) 2001, 2016, 2017 The OpenSSL Project.  All rights reserved.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 26 2017 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt UI_NEW 3
 .Os
 .Sh NAME
@@ -292,8 +292,8 @@ When done with this UI, it should be freed using
 .Fn UI_free .
 .Pp
 .Fn UI_OpenSSL
-returns the built-in UI method (note: not the default one, since
-the default can be changed.
+returns the built-in UI method (note: not necessarily the default one,
+since the default can be changed.
 See further on).
 This method is the most machine/OS dependent part of OpenSSL and
 normally generates the most problems when porting.
@@ -381,7 +381,7 @@ whatever string and may include encodings that will be processed by the
 other method functions.
 .Pp
 .Fn UI_add_user_data
-adds a piece of memory for the method to use at any time.
+adds a user data pointer for the method to use at any time.
 The builtin UI method doesn't care about this info.
 Note that several calls to this function doesn't add data -
 the previous blob is replaced with the one given as argument.
@@ -418,6 +418,8 @@ can be used again or not.
 .Pp
 .Fn UI_set_default_method
 changes the default UI method to the one given.
+This function is not thread-safe and should not be called at the
+same time as other OpenSSL functions.
 .Pp
 .Fn UI_get_default_method
 returns a pointer to the current default UI method.
@@ -429,13 +431,84 @@ returns the UI method associated with a given
 .Fn UI_set_method
 changes the UI method associated with a given
 .Fa ui .
+.Sh RETURN VALUES
+.Fn UI_new
+and
+.Fn UI_new_method
+return a valid
+.Vt UI
+structure or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn UI_add_input_string ,
+.Fn UI_dup_input_string ,
+.Fn UI_add_verify_string ,
+.Fn UI_dup_verify_string ,
+.Fn UI_add_input_boolean ,
+.Fn UI_dup_input_boolean ,
+.Fn UI_add_info_string ,
+.Fn UI_dup_info_string ,
+.Fn UI_add_error_string ,
+and
+.Fn UI_dup_error_string
+return a positive number on success or a number
+less than or equal to zero otherwise.
+.Pp
+.Fn UI_construct_prompt
+and
+.Fn UI_get0_result
+return a string or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn UI_add_user_data
+and
+.Fn UI_get0_user_data
+return a pointer to the user data that was contained in
+.Fa ui
+before the call.
+In particular,
+.Dv NULL
+is a valid return value.
+.Pp
+.Fn UI_process
+returns 0 on success or a negative value on error.
+.Pp
+.Fn UI_ctrl
+returns a mask on success or \-1 on error.
+.Pp
+.Fn UI_get_default_method
+and
+.Fn UI_OpenSSL
+always return a pointer to a valid
+.Vt UI_METHOD
+structure.
+.Pp
+.Fn UI_get_method
+and
+.Fn UI_set_method
+return a pointer to the
+.Vt UI_METHOD
+structure that is installed in
+.Fa ui
+after the call.
+The OpenSSL documentation says that they can fail and return
+.Dv NULL ,
+but currently, this can only happen when and after
+.Fn UI_set_method
+is called with an explicit
+.Dv NULL
+argument.
 .Sh SEE ALSO
 .Xr des_read_pw 3 ,
 .Xr UI_create_method 3 ,
 .Xr UI_get_string_type 3 ,
 .Xr UI_UTIL_read_pw 3
 .Sh HISTORY
-The UI section was first introduced in OpenSSL 0.9.7.
+These functions first appeared in  OpenSSL 0.9.7
+and have been available since
+.Ox 3.2 .
 .Sh AUTHORS
 .An Richard Levitte Aq Mt richard@levitte.org
 for the OpenSSL project.

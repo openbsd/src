@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.3 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.4 2018/01/10 23:27:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -79,9 +79,11 @@
  */
 
 ENTRY(cpu_setttb)
-	dsb	ish
-	msr	ttbr0_el1, x0
-	dsb	ish
+	mrs	x2, ttbr1_el1
+	bfi	x2, x0, #48, #16
+	msr	ttbr1_el1, x2
+	isb
+	msr	ttbr0_el1, x1
 	isb
 	ret
 END(cpu_setttb)

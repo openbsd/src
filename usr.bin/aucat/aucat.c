@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
@@ -345,6 +346,23 @@ slot_init(struct slot *s)
 			enc_init(&s->conv, &s->afile.par, slot_nch);
 			s->convbuf =
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+		}
+
+		/*
+		 * cmap_copy() doesn't write samples in all channels,
+	         * for instance when mono->stereo conversion is
+	         * disabled. So we have to prefill cmap_copy() output
+	         * with silence.
+	         */
+		if (s->resampbuf) {
+			memset(s->resampbuf, 0,
+			    dev_round * slot_nch * sizeof(adata_t));
+		} else if (s->convbuf) {
+			memset(s->convbuf, 0,
+			    s->round * slot_nch * sizeof(adata_t));
+		} else {
+			memset(s->buf.data, 0,
+			    bufsz * slot_nch * sizeof(adata_t));
 		}
 	}
 	s->pstate = SLOT_INIT;
@@ -1040,6 +1058,9 @@ offline(void)
 	int rate, cmax;
 	struct slot *s;
 
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	rate = cmax = 0;
 	for (s = slot_list; s != NULL; s = s->next) {
 		if (s->afile.rate > rate)
@@ -1143,6 +1164,8 @@ playrec(char *dev, int mode, int bufsz, char *port)
 
 	if (!dev_open(dev, mode, bufsz, port))
 		return 0;
+	if (pledge("stdio audio", NULL) == -1)
+		err(1, "pledge");
 	n = sio_nfds(dev_sh);
 	if (dev_mh)
 		n += mio_nfds(dev_mh);
@@ -1346,6 +1369,9 @@ main(int argc, char **argv)
 	struct aparams par;
 	int n_flag, c;
 	long long pos;
+
+	if (pledge("stdio rpath wpath cpath inet unix dns audio", NULL) == -1)
+		err(1, "pledge");
 
 	vol = 127;
 	dup = 0;

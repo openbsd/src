@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2017/04/21 13:46:15 jca Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2018/04/15 11:57:29 mpf Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,6 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 	int				 ret = AGENTX_ERR_NONE;
 	int				 seensysuptime, seentrapoid;
 	size_t				 len = 0;
-	pid_t				 pid = -1;
 	char				*v = NULL;
 
 	*varcpy = NULL;
@@ -125,8 +124,8 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 
 	if (varbind != NULL)
 		len = ber_calc_len(varbind);
-	log_debug("trap_agentx: from pid %u len %zd elements %d",
-	    pid, len, x);
+	log_debug("trap_agentx: from packetid %d len %zu elements %d",
+	    pdu->hdr->packetid, len, x);
 
 	trap_send(&o, varbind);
 
@@ -184,7 +183,6 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 		ber_link_elements(c, elm);
 
 	bzero(&ber, sizeof(ber));
-	ber.fd = -1;
 
 	TAILQ_FOREACH(tr, &snmpd_env->sc_trapreceivers, entry) {
 		if (tr->sa_oid != NULL && tr->sa_oid->bo_n) {
@@ -196,7 +194,8 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 				continue;
 		}
 
-		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port))) == -1) {
+		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port),
+		    IPPROTO_UDP)) == -1) {
 			ret = -1;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.27 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: zs.c,v 1.28 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/time.h>

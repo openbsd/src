@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.1 2017/01/21 11:22:48 reyk Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -172,7 +172,7 @@ viornd_vq_done(struct virtqueue *vq)
 	printf("%s: got %d bytes of entropy\n", __func__, len);
 #endif
 	for (i = 0; (i + 1) * sizeof(int) <= len; i++)
-		add_true_randomness(sc->sc_buf[i]);
+		enqueue_randomness(sc->sc_buf[i]);
 
 	if (sc->sc_interval)
 		timeout_add_sec(&sc->sc_tick, sc->sc_interval);

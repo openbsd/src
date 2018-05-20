@@ -1,4 +1,4 @@
-/* $OpenBSD: setlocale.c,v 1.3 2017/02/25 07:28:32 jsg Exp $ */
+/* $OpenBSD: setlocale.c,v 1.4 2018/03/29 16:34:25 schwarze Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -75,7 +75,6 @@ main(int argc, char *argv[])
 
 	/* load from env */
 	/* NOTE: we don't support non-C locales for some categories */
-	/*test_setlocale("fr_FR.UTF-8", LC_ALL, "");*/ /* set */
 	test_setlocale("fr_FR.UTF-8", LC_CTYPE, ""); /* set */
 	test_setlocale("fr_FR.UTF-8", LC_MESSAGES, ""); /* set */
 	test_MB_CUR_MAX(4);
@@ -113,6 +112,7 @@ main(int argc, char *argv[])
 	test_setlocale("C", LC_ALL, "C"); /* reset */
 	test_setlocale("invalid.UTF-8", LC_CTYPE, "invalid.UTF-8"); /* set */
 	test_setlocale("invalid.UTF-8", LC_CTYPE, NULL);
+	test_setlocale("C/invalid.UTF-8/C/C/C/C", LC_ALL, NULL);
 	test_MB_CUR_MAX(4);
 
 	/* with invalid codeset (is an error) */

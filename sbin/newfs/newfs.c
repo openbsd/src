@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.109 2016/10/11 07:02:46 natano Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.110 2018/03/10 07:55:49 otto Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -144,9 +144,10 @@ extern	char *__progname;
 struct disklabel *getdisklabel(char *, int);
 
 #ifdef MFS
+static void waitformount(char *, pid_t);
 static int do_exec(const char *, const char *, char *const[]);
 static int isdir(const char *);
-static void copy(char *, char *, struct mfs_args *);
+static void copy(char *, char *);
 static int gettmpmnt(char *, size_t);
 #endif
 
@@ -178,10 +179,8 @@ main(int argc, char *argv[])
 #ifdef MFS
 	char mountfromname[BUFSIZ];
 	char *pop = NULL, node[PATH_MAX];
-	pid_t pid, res;
-	struct statfs sf;
+	pid_t pid;
 	struct stat mountpoint;
-	int status;
 #endif
 	uid_t mfsuid = 0;
 	gid_t mfsgid = 0;
@@ -513,10 +512,15 @@ havelabel:
 		rewritelabel(special, fso, lp);
 	if (!Nflag)
 		close(fso);
-	close(fsi);
+	if (fsi != -1)
+		close(fsi);
 #ifdef MFS
 	if (mfs) {
 		struct mfs_args args;
+		char tmpnode[PATH_MAX];
+
+		if (pop != NULL && gettmpmnt(tmpnode, sizeof(tmpnode)) == 0)
+			errx(1, "Cannot create tmp mountpoint for -P");
 		memset(&args, 0, sizeof(args));
 		args.base = membase;
 		args.size = fssize * DEV_BSIZE;
@@ -534,43 +538,14 @@ havelabel:
 			    "mfs:%d", getpid());
 			break;
 		default:
-			snprintf(mountfromname, sizeof(mountfromname),
-			    "mfs:%d", pid);
-			for (;;) {
-				/*
-				 * spin until the mount succeeds
-				 * or the child exits
-				 */
-				usleep(1);
-
-				/*
-				 * XXX Here is a race condition: another process
-				 * can mount a filesystem which hides our
-				 * ramdisk before we see the success.
-				 */
-				if (statfs(node, &sf) < 0)
-					err(ECANCELED, "statfs %s", node);
-				if (!strcmp(sf.f_mntfromname, mountfromname) &&
-				    !strncmp(sf.f_mntonname, node,
-					     MNAMELEN) &&
-				    !strcmp(sf.f_fstypename, "mfs")) {
-					if (pop != NULL)
-						copy(pop, node, &args);
-					exit(0);
-				}
-				res = waitpid(pid, &status, WNOHANG);
-				if (res == -1)
-					err(EDEADLK, "waitpid");
-				if (res != pid)
-					continue;
-				if (WIFEXITED(status)) {
-					if (WEXITSTATUS(status) == 0)
-						exit(0);
-					errx(1, "%s: mount: %s", node,
-					     strerror(WEXITSTATUS(status)));
-				} else
-					errx(EDEADLK, "abnormal termination");
+			if (pop != NULL) {
+				waitformount(tmpnode, pid);
+				copy(pop, tmpnode);
+				unmount(tmpnode, 0);
+				rmdir(tmpnode);
 			}
+			waitformount(node, pid);
+			exit(0);
 			/* NOTREACHED */
 		}
 
@@ -581,8 +556,11 @@ havelabel:
 		(void) chdir("/");
 
 		args.fspec = mountfromname;
-		if (mntflags & MNT_RDONLY && pop != NULL)
-			mntflags &= ~MNT_RDONLY;
+		if (pop != NULL) {
+			int tmpflags = mntflags & ~MNT_RDONLY;
+			if (mount(MOUNT_MFS, tmpnode, tmpflags, &args) < 0)
+				exit(errno); /* parent prints message */
+		}
 		if (mount(MOUNT_MFS, node, mntflags, &args) < 0)
 			exit(errno); /* parent prints message */
 	}
@@ -673,6 +651,50 @@ usage(void)
 
 #ifdef MFS
 
+static void
+waitformount(char *node, pid_t pid)
+{
+	char mountfromname[BUFSIZ];
+	struct statfs sf;
+	int status;
+	pid_t res;
+
+	snprintf(mountfromname, sizeof(mountfromname), "mfs:%d", pid);
+	for (;;) {
+		/*
+		 * spin until the mount succeeds
+		 * or the child exits
+		 */
+		usleep(1);
+
+		/*
+		 * XXX Here is a race condition: another process
+		 * can mount a filesystem which hides our
+		 * ramdisk before we see the success.
+		 */
+		if (statfs(node, &sf) < 0)
+			err(ECANCELED, "statfs %s", node);
+		if (!strcmp(sf.f_mntfromname, mountfromname) &&
+		    !strncmp(sf.f_mntonname, node,
+			     MNAMELEN) &&
+		    !strcmp(sf.f_fstypename, "mfs")) {
+			return;
+		}
+		res = waitpid(pid, &status, WNOHANG);
+		if (res == -1)
+			err(EDEADLK, "waitpid");
+		if (res != pid)
+			continue;
+		if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) == 0)
+				exit(0);
+			errx(1, "%s: mount: %s", node,
+			     strerror(WEXITSTATUS(status)));
+		} else
+			errx(EDEADLK, "abnormal termination");
+	}
+}
+
 static int
 do_exec(const char *dir, const char *cmd, char *const argv[])
 {
@@ -729,7 +751,7 @@ isdir(const char *path)
 }
 
 static void
-copy(char *src, char *dst, struct mfs_args *args)
+copy(char *src, char *dst)
 {
 	int ret, dir, created = 0;
 	struct ufs_args mount_args;
@@ -762,16 +784,6 @@ copy(char *src, char *dst, struct mfs_args *args)
 		if (unmount(dst, 0) != 0)
 			warn("unmount %s", dst);
 		errx(1, "copy %s to %s failed", mountpoint, dst);
-	}
-
-	if (mntflags & MNT_RDONLY) {
-		mntflags |= MNT_UPDATE;
-		if (mount(MOUNT_MFS, dst, mntflags, args) < 0) {
-			warn("%s: mount (update, rdonly)", dst);
-			if (unmount(dst, 0) != 0)
-				warn("unmount %s", dst);
-			exit(1);
-		}
 	}
 }
 

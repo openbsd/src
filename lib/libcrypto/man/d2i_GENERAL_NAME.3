@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_GENERAL_NAME.3,v 1.1 2016/12/28 20:36:33 schwarze Exp $
+.\"	$OpenBSD: d2i_GENERAL_NAME.3,v 1.4 2018/03/22 21:08:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt D2I_GENERAL_NAME 3
 .Os
 .Sh NAME
@@ -138,3 +138,23 @@ if an error occurs.
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile,
 section 4.2: Certificate Extensions
+.Sh HISTORY
+.Fn d2i_GENERAL_NAME ,
+.Fn i2d_GENERAL_NAME ,
+.Fn d2i_GENERAL_NAMES ,
+and
+.Fn i2d_GENERAL_NAMES
+first appeared in OpenSSL 0.9.2b and have been available since
+.Ox 2.6 .
+.Pp
+.Fn d2i_OTHERNAME
+and
+.Fn i2d_OTHERNAME
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
+.Pp
+.Fn d2i_EDIPARTYNAME
+and
+.Fn i2d_EDIPARTYNAME
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .

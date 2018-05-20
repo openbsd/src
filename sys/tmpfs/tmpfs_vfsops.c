@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.13 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.16 2018/04/06 15:14:27 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	tmpfs_vptofh(struct vnode *, struct fid *);
 int	tmpfs_statfs(struct mount *, struct statfs *, struct proc *);
-int	tmpfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	tmpfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	tmpfs_init(struct vfsconf *);
 
 int
@@ -84,7 +84,7 @@ int
 tmpfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
-	struct tmpfs_args args;
+	struct tmpfs_args *args = data;
 	tmpfs_mount_t *tmp;
 	tmpfs_node_t *root;
 	uint64_t memlimit;
@@ -121,25 +121,22 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	if (tmpfs_mem_info(1) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
-	error = copyin(data, &args, sizeof(struct tmpfs_args));
-	if (error)
-		return error;
-	if (args.ta_root_uid == VNOVAL || args.ta_root_gid == VNOVAL ||
-	    args.ta_root_mode == VNOVAL)
+	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL ||
+	    args->ta_root_mode == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
-	if (args.ta_size_max < PAGE_SIZE) {
+	if (args->ta_size_max < PAGE_SIZE) {
 		memlimit = UINT64_MAX;
 	} else {
-		memlimit = args.ta_size_max;
+		memlimit = args->ta_size_max;
 	}
 	KASSERT(memlimit > 0);
 
-	if (args.ta_nodes_max <= 3) {
+	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + (memlimit / 1024);
 	} else {
-		nodes = args.ta_nodes_max;
+		nodes = args->ta_nodes_max;
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
@@ -156,8 +153,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	tmpfs_mntmem_init(tmp, memlimit);
 
 	/* Allocate the root node. */
-	error = tmpfs_alloc_node(tmp, VDIR, args.ta_root_uid,
-	    args.ta_root_gid, args.ta_root_mode & ALLPERMS, NULL,
+	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
+	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL,
 	    VNOVAL, &root);
 	KASSERT(error == 0 && root != NULL);
 
@@ -180,7 +177,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 #endif
 	vfs_getnewfsid(mp);
 
-	mp->mnt_stat.mount_info.tmpfs_args = args;
+	mp->mnt_stat.mount_info.tmpfs_args = *args;
 
 	bzero(&mp->mnt_stat.f_mntonname, sizeof(mp->mnt_stat.f_mntonname));
 	bzero(&mp->mnt_stat.f_mntfromname, sizeof(mp->mnt_stat.f_mntfromname));
@@ -350,7 +347,8 @@ tmpfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 }
 
 int
-tmpfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+tmpfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
+    struct proc *p)
 {
 
 	return 0;

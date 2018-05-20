@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.23 2015/12/02 00:56:46 schwarze Exp $	*/
+/*	$OpenBSD: cut.c,v 1.24 2018/03/30 09:25:06 tobias Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -154,11 +154,32 @@ int autostart, autostop, maxval;
 
 char positions[_POSIX2_LINE_MAX + 1];
 
+int
+read_number(char **p)
+{
+	size_t pos;
+	int dash, n;
+	const char *errstr;
+	char *q;
+
+	q = *p + strcspn(*p, "-");
+	dash = *q == '-';
+	*q = '\0';
+	n = strtonum(*p, 1, _POSIX2_LINE_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "[-bcf] list: %s %s (allowed 1-%d)", *p, errstr,
+		    _POSIX2_LINE_MAX);
+	if (dash)
+		*q = '-';
+	*p = q;
+
+	return n;
+}
+
 void
 get_list(char *list)
 {
 	int setautostart, start, stop;
-	char *pos;
 	char *p;
 
 	/*
@@ -176,30 +197,27 @@ get_list(char *list)
 			setautostart = 1;
 		}
 		if (isdigit((unsigned char)*p)) {
-			start = stop = strtol(p, &p, 10);
+			start = stop = read_number(&p);
 			if (setautostart && start > autostart)
 				autostart = start;
 		}
 		if (*p == '-') {
-			if (isdigit((unsigned char)p[1]))
-				stop = strtol(p + 1, &p, 10);
+			if (isdigit((unsigned char)p[1])) {
+				++p;
+				stop = read_number(&p);
+			}
 			if (*p == '-') {
 				++p;
 				if (!autostop || autostop > stop)
 					autostop = stop;
 			}
 		}
-		if (*p)
+		if (*p != '\0' || !stop || !start)
 			errx(1, "[-bcf] list: illegal list value");
-		if (!stop || !start)
-			errx(1, "[-bcf] list: values may not include zero");
-		if (stop > _POSIX2_LINE_MAX)
-			errx(1, "[-bcf] list: %d too large (max %d)",
-			    stop, _POSIX2_LINE_MAX);
 		if (maxval < stop)
 			maxval = stop;
-		for (pos = positions + start; start++ <= stop; *pos++ = 1)
-			;
+		if (start <= stop)
+			memset(positions + start, 1, stop - start + 1);
 	}
 
 	/* overlapping ranges */

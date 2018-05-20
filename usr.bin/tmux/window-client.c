@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.8 2017/08/09 11:43:45 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.14 2018/02/28 08:55:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -210,37 +210,29 @@ window_client_build(void *modedata, u_int sort_type, __unused uint64_t *tag,
 	}
 }
 
-static struct screen *
-window_client_draw(__unused void *modedata, void *itemdata, u_int sx, u_int sy)
+static void
+window_client_draw(__unused void *modedata, void *itemdata,
+    struct screen_write_ctx *ctx, u_int sx, u_int sy)
 {
 	struct window_client_itemdata	*item = itemdata;
 	struct client			*c = item->c;
 	struct window_pane		*wp;
-	static struct screen		 s;
-	struct screen_write_ctx		 ctx;
+	u_int				 cx = ctx->s->cx, cy = ctx->s->cy;
 
 	if (c->session == NULL || (c->flags & (CLIENT_DEAD|CLIENT_DETACHING)))
-		return (NULL);
+		return;
 	wp = c->session->curw->window->active;
 
-	screen_init(&s, sx, sy, 0);
+	screen_write_preview(ctx, &wp->base, sx, sy - 3);
 
-	screen_write_start(&ctx, NULL, &s);
-	screen_write_clearscreen(&ctx, 8);
+	screen_write_cursormove(ctx, cx, cy + sy - 2);
+	screen_write_hline(ctx, sx, 0, 0);
 
-	screen_write_preview(&ctx, &wp->base, sx, sy - 3);
-
-	screen_write_cursormove(&ctx, 0, sy - 2);
-	screen_write_hline(&ctx, sx, 0, 0);
-
-	screen_write_cursormove(&ctx, 0, sy - 1);
-	if (c->old_status != NULL)
-		screen_write_copy(&ctx, c->old_status, 0, 0, sx, 1, NULL, NULL);
+	screen_write_cursormove(ctx, cx, cy + sy - 1);
+	if (c->status.old_status != NULL)
+		screen_write_fast_copy(ctx, c->status.old_status, 0, 0, sx, 1);
 	else
-		screen_write_copy(&ctx, &c->status, 0, 0, sx, 1, NULL, NULL);
-
-	screen_write_stop(&ctx);
-	return (&s);
+		screen_write_fast_copy(ctx, &c->status.status, 0, 0, sx, 1);
 }
 
 static struct screen *
@@ -264,6 +256,7 @@ window_client_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
 	data->data = mode_tree_start(wp, args, window_client_build,
 	    window_client_draw, NULL, data, window_client_sort_list,
 	    nitems(window_client_sort_list), &s);
+	mode_tree_zoom(data->data, args);
 
 	mode_tree_build(data->data);
 	mode_tree_draw(data->data);
@@ -301,7 +294,8 @@ window_client_resize(struct window_pane *wp, u_int sx, u_int sy)
 }
 
 static void
-window_client_do_detach(void* modedata, void *itemdata, key_code key)
+window_client_do_detach(void* modedata, void *itemdata,
+    __unused struct client *c, key_code key)
 {
 	struct window_client_modedata	*data = modedata;
 	struct window_client_itemdata	*item = itemdata;
@@ -321,56 +315,35 @@ window_client_key(struct window_pane *wp, struct client *c,
     __unused struct session *s, key_code key, struct mouse_event *m)
 {
 	struct window_client_modedata	*data = wp->modedata;
+	struct mode_tree_data		*mtd = data->data;
 	struct window_client_itemdata	*item;
-	char				*command, *name;
 	int				 finished;
 
-	/*
-	 * t = toggle tag
-	 * T = tag none
-	 * C-t = tag all
-	 * q = exit
-	 * O = change sort order
-	 *
-	 * d = detach client
-	 * D = detach tagged clients
-	 * x = detach and kill client
-	 * X = detach and kill tagged clients
-	 * z = suspend client
-	 * Z = suspend tagged clients
-	 * Enter = detach client
-	 */
-
-	finished = mode_tree_key(data->data, c, &key, m);
+	finished = mode_tree_key(mtd, c, &key, m, NULL, NULL);
 	switch (key) {
 	case 'd':
 	case 'x':
 	case 'z':
-		item = mode_tree_get_current(data->data);
-		window_client_do_detach(data, item, key);
-		mode_tree_build(data->data);
+		item = mode_tree_get_current(mtd);
+		window_client_do_detach(data, item, c, key);
+		mode_tree_build(mtd);
 		break;
 	case 'D':
 	case 'X':
 	case 'Z':
-		mode_tree_each_tagged(data->data, window_client_do_detach, key,
-		    0);
-		mode_tree_build(data->data);
+		mode_tree_each_tagged(mtd, window_client_do_detach, c, key, 0);
+		mode_tree_build(mtd);
 		break;
 	case '\r':
-		item = mode_tree_get_current(data->data);
-		command = xstrdup(data->command);
-		name = xstrdup(item->c->ttyname);
-		window_pane_reset_mode(wp);
-		mode_tree_run_command(c, NULL, command, name);
-		free(name);
-		free(command);
-		return;
+		item = mode_tree_get_current(mtd);
+		mode_tree_run_command(c, NULL, data->command, item->c->ttyname);
+		finished = 1;
+		break;
 	}
 	if (finished || server_client_how_many() == 0)
 		window_pane_reset_mode(wp);
 	else {
-		mode_tree_draw(data->data);
+		mode_tree_draw(mtd);
 		wp->flags |= PANE_REDRAW;
 	}
 }

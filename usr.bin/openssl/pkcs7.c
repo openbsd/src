@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.9 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,7 +277,7 @@ pkcs7_main(int argc, char **argv)
 		}
 	}
 	ret = 0;
-end:
+ end:
 	if (p7 != NULL)
 		PKCS7_free(p7);
 	if (in != NULL)

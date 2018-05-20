@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.88 2016/10/06 21:00:00 natano Exp $
+.\"	$OpenBSD: mount.8,v 1.89 2018/01/18 08:57:12 bentley Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: October 6 2016 $
+.Dd $Mdocdate: January 18 2018 $
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -159,7 +159,7 @@ can be used to mount the file system using soft dependencies.
 Multiple options can be specified in a comma-separated list.
 The available options are as follows:
 .Bl -tag -width 9n
-.It async
+.It Cm async
 Metadata I/O to the file system should be done asynchronously.
 By default, only regular data is read/written asynchronously.
 .Pp
@@ -179,25 +179,25 @@ The options
 and
 .Ic softdep
 are mutually exclusive.
-.It force
+.It Cm force
 The same as
 .Fl f ;
 forces the revocation of write access when trying to downgrade
 a file system mount status from read-write to read-only.
-.It noatime
+.It Cm noatime
 Do not update atime on files in the system unless the mtime or ctime
 is being changed as well.
 This option is useful for laptops and news servers where one does
 not want the extra disk activity associated with updating the atime.
-.It nodev
+.It Cm nodev
 Do not interpret character or block special devices on the file system.
 This option is useful for a server that has file systems containing
 special devices for architectures other than its own.
-.It noexec
+.It Cm noexec
 Do not allow execution of any binaries on the mounted file system.
 This option is useful for a server that has file systems containing
 binaries for architectures other than its own.
-.It noperm
+.It Cm noperm
 (FFS only)
 Do not check permissions when creating, accessing or modifying files and
 directories in the mounted file system.
@@ -209,17 +209,17 @@ will be honored so access to the filesystem can be locked down.
 The noperm option also enables the nodev and noexec options to ensure
 that interpretation of the file modes and special devices cannot be
 used to gain privileges.
-.It norw
+.It Cm norw
 An alias for rdonly.
-.It nosuid
+.It Cm nosuid
 Do not allow set-user-identifier or set-group-identifier bits to take effect.
-.It rdonly
+.It Cm rdonly
 The same as
 .Fl r ;
 mount the file system read-only (even the superuser may not write it).
-.It ro
+.It Cm ro
 An alias for rdonly.
-.It softdep
+.It Cm softdep
 (FFS only)
 Mount the file system using soft dependencies.
 Instead of metadata being written immediately, it is written in an ordered
@@ -234,14 +234,14 @@ The options
 and
 .Ic softdep
 are mutually exclusive.
-.It sync
+.It Cm sync
 Regular data I/O to the file system should be done synchronously.
 By default, only metadata is read/written synchronously.
-.It update
+.It Cm update
 The same as
 .Fl u ;
 indicate that the status of an already mounted file system should be changed.
-.It wxallowed
+.It Cm wxallowed
 Processes that ask for memory to be made writeable plus executable
 using the
 .Xr mmap 2

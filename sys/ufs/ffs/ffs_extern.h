@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.43 2016/08/10 08:04:57 natano Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.44 2018/02/10 05:24:23 deraadt Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ int ffs_oldfscompat(struct fs *);
 int ffs_unmount(struct mount *, int, struct proc *);
 int ffs_flushfiles(struct mount *, int, struct proc *);
 int ffs_statfs(struct mount *, struct statfs *, struct proc *);
-int ffs_sync(struct mount *, int, struct ucred *, struct proc *);
+int ffs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int ffs_vget(struct mount *, ino_t, struct vnode **);
 int ffs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int ffs_vptofh(struct vnode *, struct fid *);

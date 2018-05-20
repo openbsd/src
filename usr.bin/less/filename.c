@@ -363,20 +363,6 @@ bin_file(int f)
 }
 
 /*
- * Try to determine the size of a file by seeking to the end.
- */
-static off_t
-seek_filesize(int f)
-{
-	off_t spos;
-
-	spos = lseek(f, (off_t)0, SEEK_END);
-	if (spos == (off_t)-1)
-		return (-1);
-	return (spos);
-}
-
-/*
  * Read a string from a file.
  * Return a pointer to the string in memory.
  */
@@ -742,7 +728,6 @@ bad_file(char *filename)
 
 /*
  * Return the size of a file, as cheaply as possible.
- * In Unix, we can stat the file.
  */
 off_t
 filesize(int f)
@@ -751,7 +736,7 @@ filesize(int f)
 
 	if (fstat(f, &statbuf) >= 0)
 		return (statbuf.st_size);
-	return (seek_filesize(f));
+	return (-1);
 }
 
 /*

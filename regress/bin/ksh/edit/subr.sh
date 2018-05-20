@@ -1,4 +1,4 @@
-# $OpenBSD: subr.sh,v 1.7 2017/08/22 20:14:57 anton Exp $
+# $OpenBSD: subr.sh,v 1.8 2017/11/21 19:25:46 anton Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -18,18 +18,17 @@
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
-	act=$(echo -n "$stdin" | ./edit -p "$PS1" ${KSH:-/bin/ksh} -r)
+	act=$(echo -n "$stdin" | ./edit -p "$PS1" ${KSH:-/bin/ksh} -r 2>&1)
 	[ $? = 0 ] && [ "$exp" = "$act" ] && return 0
 
-	echo input:
-	echo ">>>$stdin<<<"
-	echo -n "$stdin" | hexdump -Cv
-	echo expected:
-	echo ">>>$exp<<<"
-	echo -n "$exp" | hexdump -Cv
-	echo actual:
-	echo ">>>$act<<<"
-	echo -n "$act" | hexdump -Cv
+	dump input "$stdin"
+	dump expected "$exp"
+	dump actual "$act"
 
 	exit 1
+}
+
+dump() {
+	printf '%s:\n>>>%s<<<\n' "$1" "$(echo -n "$2" | vis -ol)"
+	echo -n "$2" | hexdump -Cv
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.23 2017/02/22 14:24:50 renato Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.24 2018/02/08 00:16:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -46,7 +46,7 @@
 #define	READ_BUF_SIZE		65535
 #define	PKG_DEF_SIZE		512	/* compromise */
 #define	RT_BUF_SIZE		16384
-#define	MAX_RTSOCK_BUF		128 * 1024
+#define	MAX_RTSOCK_BUF		(2 * 1024 * 1024)
 
 #define	F_EIGRPD_INSERTED	0x0001
 #define	F_KERNEL		0x0002

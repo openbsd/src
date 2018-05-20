@@ -863,7 +863,7 @@ Same for the two ASCII-only range forms.
 =back
 
 There are various other synonyms that can be used besides the names
-listed in the table.  For example, C<\p{PosixAlpha}> can be written as
+listed in the table.  For example, C<\p{XPosixAlpha}> can be written as
 C<\p{Alpha}>.  All are listed in
 L<perluniprops/Properties accessible through \p{} and \P{}>.
 

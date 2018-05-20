@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.111 2017/09/01 15:05:31 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.113 2018/02/19 08:59:53 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* Must be super user */
-	error = suser(p, 0);
+	error = suser(p);
 	if (error)
 		return (error);
 
@@ -288,7 +288,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 	}
 	slp->ns_so = so;
 	slp->ns_nam = mynam;
-	fp->f_count++;
+	FREF(fp);
 	slp->ns_fp = fp;
 	so->so_upcallarg = (caddr_t)slp;
 	so->so_upcall = nfsrv_rcv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.21 2017/05/31 19:51:27 tedu Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.22 2018/02/07 20:22:23 tedu Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -71,6 +71,6 @@ main(int argc, char *argv[])
 			next = getword(next, words[wordcount], -1);
 		parse();
 		while (cypher())
-			;
+			continue;
 	}
 }

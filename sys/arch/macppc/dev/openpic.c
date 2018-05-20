@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.84 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.85 2018/01/22 09:08:43 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -99,7 +99,7 @@ void	*openpic_intr_establish(void *, int, int, int, int (*)(void *), void *,
 void	openpic_intr_disestablish(void *, void *);
 void	openpic_collect_preconf_intr(void);
 void	openpic_ext_intr(void);
-int	openpic_ext_intr_handler(struct intrhand *, int, int *);
+int	openpic_ext_intr_handler(struct intrhand *, int *);
 
 /* Generic IRQ management routines. */
 void	openpic_gen_acknowledge_irq(int, int);
@@ -658,7 +658,7 @@ openpic_ext_intr(void)
 		spurious = 1;
 		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
 			ppc_intr_enable(1);
-			ret = openpic_ext_intr_handler(ih, pcpl, &spurious);
+			ret = openpic_ext_intr_handler(ih, &spurious);
 			(void)ppc_intr_disable();
 			if (intr_shared_edge == 00 && ret == 1)
 				break;
@@ -679,7 +679,7 @@ openpic_ext_intr(void)
 }
 
 int
-openpic_ext_intr_handler(struct intrhand *ih, int pcpl, int *spurious)
+openpic_ext_intr_handler(struct intrhand *ih, int *spurious)
 {
 	int ret;
 #ifdef MULTIPROCESSOR
@@ -688,12 +688,11 @@ openpic_ext_intr_handler(struct intrhand *ih, int pcpl, int *spurious)
 	if (ih->ih_flags & IPL_MPSAFE)
 		need_lock = 0;
 	else
-		need_lock = pcpl < IPL_SCHED;
+		need_lock = 1;
 
 	if (need_lock)
 		KERNEL_LOCK();
 #endif
-
 	ret = (*ih->ih_fun)(ih->ih_arg);
 	if (ret) {
 		ih->ih_count.ec_count++;

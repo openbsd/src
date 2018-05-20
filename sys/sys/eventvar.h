@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.3 2012/03/25 20:33:52 deraadt Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.4 2017/10/11 08:01:10 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -44,7 +44,6 @@ struct kqueue {
 #define KQ_SEL		0x01
 #define KQ_SLEEP	0x02
 #define KQ_DYING	0x04
-	struct		kevent kq_kev[KQ_NEVENTS];
 };
 
 #endif /* !_SYS_EVENTVAR_H_ */

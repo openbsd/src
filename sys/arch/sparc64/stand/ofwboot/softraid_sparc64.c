@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.c,v 1.2 2016/09/11 17:53:26 jsing Exp $	*/
+/*	$OpenBSD: softraid_sparc64.c,v 1.3 2018/03/29 08:12:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -306,9 +306,25 @@ srprobe(void)
 	free(md, SR_META_SIZE * DEV_BSIZE);
 }
 
+struct sr_boot_chunk *
+sr_vol_boot_chunk(struct sr_boot_volume *bv)
+{
+	struct sr_boot_chunk *bc = NULL;
+
+	if (bv->sbv_level == 1 || bv->sbv_level == 'C' ) { /* RAID1 or CRYPTO */
+		/* Select first online chunk. */
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+			if (bc->sbc_state == BIOC_SDONLINE)
+				break;
+	}
+
+	return bc;
+}
+
+
 int
-sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
-    void *buf, size_t *rsize)
+sr_strategy(struct sr_boot_volume *bv, int sr_handle, int rw, daddr32_t blk,
+    size_t size, void *buf, size_t *rsize)
 {
 	struct diskinfo *sr_dip, *dip;
 	struct partition *pp;
@@ -320,7 +336,6 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 	u_char iv[8];
 	u_char *bp;
 	int err;
-	int ihandle;
 
 	/* We only support read-only softraid. */
 	if (rw != F_READ)
@@ -331,55 +346,28 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 	blk +=
 	    DL_GETPOFFSET(&sr_dip->disklabel.d_partitions[bv->sbv_part - 'a']);
 
+	bc = sr_vol_boot_chunk(bv);
+	if (bc == NULL)
+		return ENXIO;
+
+	dip = (struct diskinfo *)bc->sbc_diskinfo;
+	pp = &dip->disklabel.d_partitions[bc->sbc_part - 'a'];
+	bzero(&ofdev, sizeof(ofdev));
+	ofdev.handle = sr_handle;
+	ofdev.type = OFDEV_DISK;
+	ofdev.bsize = DEV_BSIZE;
+	ofdev.partoff = DL_GETPOFFSET(pp);
+
 	if (bv->sbv_level == 0) {
 		return ENOTSUP;
 	} else if (bv->sbv_level == 1) {
-
-		/* Select first online chunk. */
-		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
-			if (bc->sbc_state == BIOC_SDONLINE)
-				break;
-		if (bc == NULL)
-			return EIO;
-
-		dip = (struct diskinfo *)bc->sbc_diskinfo;
-		pp = &dip->disklabel.d_partitions[bc->sbc_part - 'a'];
 		blk += bv->sbv_data_blkno;
 
 		/* XXX - If I/O failed we should try another chunk... */
-		ihandle = OF_open(dip->path);
-		if (ihandle == -1)
-			return EIO;
-		bzero(&ofdev, sizeof(ofdev));
-		ofdev.handle = ihandle;
-		ofdev.type = OFDEV_DISK;
-		ofdev.bsize = DEV_BSIZE;
-		ofdev.partoff = DL_GETPOFFSET(pp);
 		err = strategy(&ofdev, rw, blk, size, buf, rsize);
-		OF_close(ihandle);
 		return err;
 
 	} else if (bv->sbv_level == 'C') {
-
-		/* Select first online chunk. */
-		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
-			if (bc->sbc_state == BIOC_SDONLINE)
-				break;
-		if (bc == NULL)
-			return EIO;
-
-		dip = (struct diskinfo *)bc->sbc_diskinfo;
-		pp = &dip->disklabel.d_partitions[bc->sbc_part - 'a'];
-
-		ihandle = OF_open(dip->path);
-		if (ihandle == -1)
-			return EIO;
-		bzero(&ofdev, sizeof(ofdev));
-		ofdev.handle = ihandle;
-		ofdev.type = OFDEV_DISK;
-		ofdev.bsize = DEV_BSIZE;
-		ofdev.partoff = DL_GETPOFFSET(pp);
-
 		/* XXX - select correct key. */
 		aes_xts_setkey(&ctx, (u_char *)bv->sbv_keys, 64);
 
@@ -395,7 +383,6 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 				printf("Read from crypto volume failed "
 				    "(read %d bytes): %s\n", *rsize,
 				    strerror(err));
-				OF_close(ihandle);
 				return err;
 			}
 			bcopy(&blkno, iv, sizeof(blkno));
@@ -404,7 +391,6 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
 				aes_xts_decrypt(&ctx, bp + j);
 		}
 		*rsize = nsect * DEV_BSIZE;
-		OF_close(ihandle);
 		return err;
 
 	} else

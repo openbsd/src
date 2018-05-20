@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.69 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.71 2018/04/27 09:40:59 tb Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 #include <sys/selinfo.h>
 #include <sys/device.h>
 #include <sys/poll.h>
@@ -159,7 +158,6 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_RADIOSHACK, USB_PRODUCT_RADIOSHACK_PL2303 },
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
 	{ USB_VENDOR_SAGEM, USB_PRODUCT_SAGEM_SERIAL },
-	{ USB_VENDOR_SAMSUNG2, USB_PRODUCT_SAMSUNG2_I330 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_SX1 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_X65 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_X75 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.224 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.229 2018/03/30 17:33:54 dhill Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -206,6 +206,7 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 	if (table->inpt_lhashtbl == NULL)
 		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_count = 0;
+	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 }
 
@@ -361,7 +362,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			return (error);
 	} else {
 		if (in_rootonly(ntohs(lport), so->so_proto->pr_protocol) &&
-		    suser(p, 0) != 0)
+		    suser(p) != 0)
 			return (EACCES);
 	}
 	if (nam) {
@@ -456,7 +457,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 		first = ipport_hifirstauto;	/* sysctl */
 		last = ipport_hilastauto;
 	} else if (inp->inp_flags & INP_LOWPORT) {
-		if (suser(p, 0))
+		if (suser(p))
 			return (EACCES);
 		first = IPPORT_RESERVED-1; /* 1023 */
 		last = 600;		   /* not IPPORT_RESERVED/2 */
@@ -481,7 +482,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 	candidate = lower + arc4random_uniform(count);
 
 	do {
-		if (count-- < 0) 	/* completely used? */
+		if (count-- < 0)	/* completely used? */
 			return (EADDRNOTAVAIL);
 		++candidate;
 		if (candidate < lower || candidate > higher)
@@ -549,7 +550,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 #ifdef IPSEC
 	{
 		/* Cause an IPsec SA to be established. */
-	  	/* error is just ignored */
+		/* error is just ignored */
 		ipsp_spd_inp(NULL, AF_INET, 0, &error, IPSP_DIRECTION_OUT,
 		    NULL, inp, NULL);
 	}
@@ -998,32 +999,34 @@ int
 in_pcbresize(struct inpcbtable *table, int hashsize)
 {
 	u_long nhash, nlhash;
+	int osize;
 	void *nhashtbl, *nlhashtbl, *ohashtbl, *olhashtbl;
 	struct inpcb *inp0, *inp1;
 
 	ohashtbl = table->inpt_hashtbl;
 	olhashtbl = table->inpt_lhashtbl;
+	osize = table->inpt_size;
 
 	nhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nhash);
+	if (nhashtbl == NULL)
+		return ENOBUFS;
 	nlhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nlhash);
-	if (nhashtbl == NULL || nlhashtbl == NULL) {
-		if (nhashtbl != NULL)
-			free(nhashtbl, M_PCB, 0);
-		if (nlhashtbl != NULL)
-			free(nlhashtbl, M_PCB, 0);
-		return (ENOBUFS);
+	if (nlhashtbl == NULL) {
+		hashfree(nhashtbl, hashsize, M_PCB);
+		return ENOBUFS;
 	}
 	table->inpt_hashtbl = nhashtbl;
 	table->inpt_lhashtbl = nlhashtbl;
 	table->inpt_hash = nhash;
 	table->inpt_lhash = nlhash;
+	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 
 	TAILQ_FOREACH_SAFE(inp0, &table->inpt_queue, inp_queue, inp1) {
 		in_pcbrehash(inp0);
 	}
-	free(ohashtbl, M_PCB, 0);
-	free(olhashtbl, M_PCB, 0);
+	hashfree(ohashtbl, osize, M_PCB);
+	hashfree(olhashtbl, osize, M_PCB);
 
 	return (0);
 }
@@ -1035,7 +1038,7 @@ int	in_pcbnotifymiss = 0;
 /*
  * The in(6)_pcbhashlookup functions are used to locate connected sockets
  * quickly:
- * 		faddr.fport <-> laddr.lport
+ *     faddr.fport <-> laddr.lport
  * No wildcard matching is done so that listening sockets are not found.
  * If the functions return NULL in(6)_pcblookup_listen can be used to
  * find a listening/bound socket that may accept the connection.
@@ -1074,8 +1077,8 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in_pcbhashlookup: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%d\n",
-		    ntohl(faddr.s_addr), ntohs(fport),
+		printf("%s: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%d\n",
+		    __func__, ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport), rdomain);
 	}
 #endif
@@ -1133,7 +1136,7 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
  */
 struct inpcb *
 in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
-    u_int lport_arg, int reverse, struct mbuf *m, u_int rdomain)
+    u_int lport_arg, struct mbuf *m, u_int rdomain)
 {
 	struct inpcbhead *head;
 	struct in_addr *key1, *key2;
@@ -1141,23 +1144,30 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	u_int16_t lport = lport_arg;
 
 	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
+	key1 = &laddr;
+	key2 = &zeroin_addr;
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		if ((divert = pf_find_divert(m)) == NULL)
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key1 = key2 = &divert->addr.v4;
+			lport = divert->port;
+			break;
+		case PF_DIVERT_REPLY:
 			return (NULL);
-		key1 = key2 = &divert->addr.v4;
-		lport = divert->port;
-	} else
-#endif
-	if (reverse) {
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin_addr;
 		key2 = &laddr;
-	} else {
-		key1 = &laddr;
-		key2 = &zeroin_addr;
 	}
+#endif
 
 	head = INPCBHASH(table, &zeroin_addr, 0, key1, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
@@ -1206,7 +1216,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 #ifdef INET6
 struct inpcb *
 in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
-    u_int lport_arg, int reverse, struct mbuf *m, u_int rtable)
+    u_int lport_arg, struct mbuf *m, u_int rtable)
 {
 	struct inpcbhead *head;
 	struct in6_addr *key1, *key2;
@@ -1214,23 +1224,30 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	u_int16_t lport = lport_arg;
 
 	rtable = rtable_l2(rtable);	/* convert passed rtableid to rdomain */
+	key1 = laddr;
+	key2 = &zeroin6_addr;
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		if ((divert = pf_find_divert(m)) == NULL)
+		divert = pf_find_divert(m);
+		KASSERT(divert != NULL);
+		switch (divert->type) {
+		case PF_DIVERT_TO:
+			key1 = key2 = &divert->addr.v6;
+			lport = divert->port;
+			break;
+		case PF_DIVERT_REPLY:
 			return (NULL);
-		key1 = key2 = &divert->addr.v6;
-		lport = divert->port;
-	} else
-#endif
-	if (reverse) {
+		default:
+			panic("%s: unknown divert type %d, mbuf %p, divert %p",
+			    __func__, divert->type, m, divert);
+		}
+	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
 		key1 = &zeroin6_addr;
 		key2 = laddr;
-	} else {
-		key1 = laddr;
-		key2 = &zeroin6_addr;
 	}
+#endif
 
 	head = IN6PCBHASH(table, &zeroin6_addr, 0, key1, lport, rtable);
 	LIST_FOREACH(inp, head, inp_hash) {

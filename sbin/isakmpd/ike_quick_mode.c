@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.110 2015/12/10 17:27:00 mmcc Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.114 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -302,7 +302,7 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	 * Add the authorizer (who is requesting the SA/ID);
 	 * this may be a public or a secret key, depending on
 	 * what mode of authentication we used in Phase 1.
-         */
+	 */
 	for (i = 0; i < nprinc; i++) {
 		LOG_DBG((LOG_POLICY, 40, "check_policy: "
 		    "adding authorizer [%s]", principal[i]));
@@ -366,7 +366,7 @@ policydone:
 	 * XXX Currently, check_policy() is only called from
 	 * message_negotiate_sa(), and so this log message reflects this.
 	 * Change to something better?
-         */
+	 */
 	if (result == 0)
 		log_print("check_policy: negotiated SA failed policy check");
 
@@ -374,7 +374,7 @@ policydone:
 	 * Given that we have only 2 return values from policy (true/false)
 	 * we can just return the query result directly (no pre-processing
 	 * needed).
-         */
+	 */
 	return result;
 }
 
@@ -406,6 +406,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	struct constant_map *id_map;
 	char           *protocol_id, *transform_id;
 	char           *local_id, *remote_id;
+	char           *name;
 	int             group_desc = -1, new_group_desc;
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct hash    *hash = hash_get(isa->hash);
@@ -621,9 +622,40 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 					}
 					conf_free_list(life_conf);
 				}
-				attribute_set_constant(xf->field,
-				    "ENCAPSULATION_MODE", ipsec_encap_cst,
-				    IPSEC_ATTR_ENCAPSULATION_MODE, &attr);
+
+				if (proto_id == IPSEC_PROTO_IPSEC_ESP &&
+				    (exchange->flags &
+				    EXCHANGE_FLAG_NAT_T_ENABLE)) {
+					name = conf_get_str(xf->field,
+					    "ENCAPSULATION_MODE");
+					if (name) {
+						value = constant_value(
+						    ipsec_encap_cst,
+						    name);
+						switch (value) {
+						case IPSEC_ENCAP_TUNNEL:
+							value = exchange->flags & EXCHANGE_FLAG_NAT_T_DRAFT ?
+							    IPSEC_ENCAP_UDP_ENCAP_TUNNEL_DRAFT :
+							    IPSEC_ENCAP_UDP_ENCAP_TUNNEL;
+							break;
+						case IPSEC_ENCAP_TRANSPORT:
+							value = exchange->flags & EXCHANGE_FLAG_NAT_T_DRAFT ?
+							    IPSEC_ENCAP_UDP_ENCAP_TRANSPORT_DRAFT :
+							    IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
+							break;
+						}
+						attr = attribute_set_basic(
+						    attr,
+						    IPSEC_ATTR_ENCAPSULATION_MODE,
+						    value);
+					}
+				} else {
+					attribute_set_constant(xf->field,
+					    "ENCAPSULATION_MODE",
+					    ipsec_encap_cst,
+					    IPSEC_ATTR_ENCAPSULATION_MODE,
+					    &attr);
+				}
 
 				if (proto_id != IPSEC_PROTO_IPCOMP) {
 					attribute_set_constant(xf->field,
@@ -813,7 +845,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	 * Add the payloads.  As this is a SA, we need to recompute the
 	 * lengths of the payloads containing others.  We also need to
 	 * reset these payload's "next payload type" field.
-         */
+	 */
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_SA, sa_buf, sa_len, 1))
 		goto bail_out;
 	SET_ISAKMP_GEN_LENGTH(sa_buf, sa_len + proposals_len);
@@ -846,7 +878,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 
 	/*
 	 * Save SA payload body in ie->sa_i_b, length ie->sa_i_b_len.
-         */
+	 */
 	ie->sa_i_b = message_copy(msg, ISAKMP_GEN_SZ, &ie->sa_i_b_len);
 	if (!ie->sa_i_b)
 		goto bail_out;
@@ -854,7 +886,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	/*
 	 * Generate a nonce, and add it to the message.
 	 * XXX I want a better way to specify the nonce's size.
-         */
+	 */
 	if (exchange_gen_nonce(msg, 16))
 		return -1;
 
@@ -1062,9 +1094,9 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	/*
 	 * As we are getting an answer on our transform offer, only one
 	 * transform should be given.
-         *
+	 *
 	 * XXX Currently we only support negotiating one SA per quick mode run.
-         */
+	 */
 	if (TAILQ_NEXT(sa_p, link)) {
 		log_print("initiator_recv_HASH_SA_NONCE: "
 		    "multiple SA payloads in quick mode not supported yet");
@@ -1332,7 +1364,7 @@ post_quick_mode(struct message *msg)
 	/*
 	 * Loop over all SA negotiations and do both an in- and an outgoing SA
 	 * per protocol.
-         */
+	 */
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 	    sa = TAILQ_NEXT(sa, next)) {
 		for (proto = TAILQ_FIRST(&sa->protos); proto;
@@ -1398,9 +1430,9 @@ post_quick_mode(struct message *msg)
 						LOG_DBG_BUF((LOG_NEGOTIATION,
 						    90, "post_quick_mode: "
 						    "g^xy", ie->g_xy,
-						    ie->g_x_len));
+						    ie->g_xy_len));
 						prf->Update(prf->prfctx,
-						    ie->g_xy, ie->g_x_len);
+						    ie->g_xy, ie->g_xy_len);
 					}
 					LOG_DBG((LOG_NEGOTIATION, 90,
 					    "post_quick_mode: "
@@ -1488,7 +1520,7 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 	/*
 	 * Check the payload's integrity.
 	 * XXX Share with ipsec_fill_in_hash?
-         */
+	 */
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "responder_recv_HASH_SA_NONCE: "
 	    "SKEYID_a", isa->skeyid_a, isa->skeyid_len));
 	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
@@ -1727,7 +1759,7 @@ next_sa:
 
 	/*
 	 * Try to find and set the connection name on the exchange.
-         */
+	 */
 
 	/*
 	 * Check for accepted identities as well as lookup the connection
@@ -1735,7 +1767,7 @@ next_sa:
 	 *
 	 * When not using policies make sure the peer proposes sane IDs.
 	 * Otherwise this is done by KeyNote.
-         */
+	 */
 	name = connection_passive_lookup_by_ids(ie->id_ci, ie->id_cr);
 	if (name) {
 		exchange->name = strdup(name);
@@ -1902,10 +1934,11 @@ gen_g_xy(struct message *msg)
 	struct ipsec_exch *ie = exchange->data;
 
 	/* Compute Diffie-Hellman shared value.  */
-	ie->g_xy = malloc(ie->g_x_len);
+	ie->g_xy_len = dh_secretlen(ie->group);
+	ie->g_xy = malloc(ie->g_xy_len);
 	if (!ie->g_xy) {
 		log_error("gen_g_xy: malloc (%lu) failed",
-		    (unsigned long)ie->g_x_len);
+		    (unsigned long)ie->g_xy_len);
 		return;
 	}
 	if (dh_create_shared(ie->group, ie->g_xy,
@@ -1914,7 +1947,7 @@ gen_g_xy(struct message *msg)
 		return;
 	}
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80, "gen_g_xy: g^xy", ie->g_xy,
-	    ie->g_x_len));
+	    ie->g_xy_len));
 }
 
 static int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_dup_DH.3,v 1.5 2016/12/10 22:47:49 schwarze Exp $
+.\"	$OpenBSD: DSA_dup_DH.3,v 1.7 2018/03/21 21:18:08 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt DSA_DUP_DH 3
 .Os
 .Sh NAME
@@ -82,10 +82,12 @@ The error codes can be obtained by
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr DH_new 3 ,
+.Xr DSA_get0_pqg 3 ,
 .Xr DSA_new 3 ,
 .Xr ERR_get_error 3
 .Sh HISTORY
 .Fn DSA_dup_DH
-was added in OpenSSL 0.9.4.
+first appeared in OpenSSL 0.9.4 and has been available since
+.Ox 2.6 .
 .Sh CAVEATS
 Be careful to avoid small subgroup attacks when using this.

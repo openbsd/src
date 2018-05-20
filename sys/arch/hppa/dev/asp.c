@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.14 2005/06/09 18:01:36 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.15 2018/05/14 13:54:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -45,7 +45,6 @@
 #include <machine/cpufunc.h>
 
 #include <hppa/dev/cpudevs.h>
-#include <hppa/dev/viper.h>
 
 #include <hppa/gsc/gscbusvar.h>
 
@@ -60,14 +59,9 @@ struct asp_hwr {
 };
 
 struct asp_trs {
-	u_int32_t asp_irr;
-	u_int32_t asp_imr;
-	u_int32_t asp_ipr;
-	u_int32_t asp_icr;
-	u_int32_t asp_iar;
-	u_int32_t asp_resv[3];
+	struct gscbus_ic asp_ic;
 	u_int8_t  asp_cled;
-	u_int8_t  asp_resv1[3];
+	u_int8_t  asp_resv[3];
 	struct {
 		u_int		:20,
 			asp_spu	: 3,	/* SPU ID board jumper */
@@ -111,14 +105,6 @@ const struct asp_spus_tag {
 	{ "#7", 0 }
 };
 
-struct asp_softc {
-	struct  device sc_dev;
-	struct gscbus_ic sc_ic;
-
-	volatile struct asp_hwr *sc_hw;
-	volatile struct asp_trs *sc_trs;
-};
-
 #define	ASP_IOMASK	0xfe000000
 /* ASP "Primary Controller" HPA */
 #define	ASP_CHPA	0xF0800000
@@ -126,8 +112,8 @@ struct asp_softc {
 int	aspmatch(struct device *, void *, void *);
 void	aspattach(struct device *, struct device *, void *);
 
-struct cfattach asp_ca = {
-	sizeof(struct asp_softc), aspmatch, aspattach
+const struct cfattach asp_ca = {
+	sizeof(struct device), aspmatch, aspattach
 };
 
 struct cfdriver asp_cd = {
@@ -156,45 +142,41 @@ aspattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct asp_softc *sc = (struct asp_softc *)self;
+	struct confargs *ca = aux;
+	volatile struct asp_trs *trs;
+	volatile struct asp_hwr *hw;
+	struct gscbus_ic *ic;
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
-	register u_int32_t irr;
-	register int s;
+	int s;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
 		printf(": can't map IO space\n");
 		return;
 	}
 
-	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
-	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
+	hw = (struct asp_hwr *)ca->ca_hpa;
+	trs = (struct asp_trs *)ASP_CHPA;
+	ic = (struct gscbus_ic *)&trs->asp_ic;
 
 #ifdef USELEDS
-	machine_ledaddr = &sc->sc_trs->asp_cled;
-	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
+	machine_ledaddr = &trs->asp_cled;
+	machine_ledword = asp_spus[trs->asp_spu].ledword;
 #endif
 
 	/* reset ASP */
-	/* sc->sc_hw->asp_reset = 1; */
+	/* hw->asp_reset = 1; */
 	/* delay(400000); */
 
 	s = splhigh();
-	viper_setintrwnd(1 << ca->ca_irq);
-
-	sc->sc_trs->asp_imr = ~0;
-	irr = sc->sc_trs->asp_irr;
-	sc->sc_trs->asp_imr = 0;
+	ic->imr = ~0;
+	(void)ic->irr;
+	ic->imr = 0;
 	splx(s);
 
 	printf (": %s rev %d, lan %d scsi %d\n",
-	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
-	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
-
-	sc->sc_ic.gsc_type = gsc_asp;
-	sc->sc_ic.gsc_dv = sc;
-	sc->sc_ic.gsc_base = sc->sc_trs;
+	    asp_spus[trs->asp_spu].name, hw->asp_version,
+	    trs->asp_lan, trs->asp_scsi);
 
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
@@ -206,6 +188,7 @@ aspattach(parent, self, aux)
 	ga.ga_dp.dp_mod = 0;
 	ga.ga_hpamask = ASP_IOMASK;
 	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
+	ga.ga_parent = gsc_asp;
+	ga.ga_ic = ic;
 	config_found(self, &ga, gscprint);
 }

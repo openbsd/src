@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.70 2017/06/27 22:18:24 tedu Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.75 2018/02/20 03:43:07 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -38,10 +38,6 @@
 #include <sys/ioccom.h>
 
 /* Socket ioctl's. */
-#define	SIOCSHIWAT	 _IOW('s',  0, int)		/* set high watermark */
-#define	SIOCGHIWAT	 _IOR('s',  1, int)		/* get high watermark */
-#define	SIOCSLOWAT	 _IOW('s',  2, int)		/* set low watermark */
-#define	SIOCGLOWAT	 _IOR('s',  3, int)		/* get low watermark */
 #define	SIOCATMARK	 _IOR('s',  7, int)		/* at oob mark? */
 #define	SIOCSPGRP	 _IOW('s',  8, int)		/* set process group */
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
@@ -64,12 +60,6 @@
 #define	SIOCGIFDATA	_IOWR('i', 27, struct ifreq)	/* get if_data */
 #define	SIOCSIFLLADDR	_IOW('i', 31, struct ifreq)	/* set link level addr */
 
-/* KAME IPv6 */
-/* SIOCAIFALIAS? */
-#define SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
-#define SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */
-#define SIOCDLIFADDR	 _IOW('i', 30, struct if_laddrreq) /* delete IF addr */
-
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
@@ -79,15 +69,11 @@
 #define	SIOCSIFMEDIA	_IOWR('i', 55, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA	_IOWR('i', 56, struct ifmediareq) /* get net media */
 
-#define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif address */
-#define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
-#define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 #define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
 #define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
-#define	SIOCBRDGGSIFS	_IOWR('i', 60, struct ifbreq)	/* get span ifs */
 #define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */
 #define	SIOCBRDGGIFFLGS	_IOWR('i', 62, struct ifbreq)	/* get brdg if flags */
 #define	SIOCBRDGSIFFLGS	 _IOW('i', 63, struct ifbreq)	/* set brdg if flags */
@@ -103,6 +89,7 @@
 #define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
 #define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
 #define	SIOCBRDGADDL	 _IOW('i', 73, struct ifbreq)	/* add local port */
+#define	SIOCBRDGSIFPROT	 _IOW('i', 74, struct ifbreq)	/* set protected grp */
 
 #define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
 #define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */
@@ -126,15 +113,11 @@
 #define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* set datapath id */
 #define	SIOCSWSDPID	 _IOW('i', 92, struct ifbrparam)/* get datapath id */
 #define	SIOCSWGMAXGROUP	_IOWR('i', 93, struct ifbrparam)/* get max groups */
-#define	SIOCSWSMAXGROUP	 _IOW('i', 94, struct ifbrparam)/* set max groups */
 #define	SIOCSWSPORTNO	_IOWR('i', 95, struct ifbreq)	/* set port number */
 #define	SIOCSWGMAXFLOW	_IOWR('i', 96, struct ifbrparam)/* get max flow per table */
-#define	SIOCSWSMAXFLOW	 _IOW('i', 97, struct ifbrparam)/* set max flow per table */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
-#define	SIOCSIFASYNCMAP  _IOW('i', 125, struct ifreq)	/* set ppp asyncmap */
-#define	SIOCGIFASYNCMAP _IOWR('i', 124, struct ifreq)	/* get ppp asyncmap */
 
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
 #define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */
@@ -207,6 +190,12 @@
 #define	SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
 #define	SIOCSUMBPARAM	 _IOW('i', 191, struct ifreq)	/* set MBIM param */
 #define	SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
+
+#define	SIOCSLIFPHYDF	_IOW('i', 193, struct ifreq)	/* set tunnel df/nodf */
+#define	SIOCGLIFPHYDF	_IOWR('i', 194, struct ifreq)	/* set tunnel df/nodf */
+
+#define	SIOCSVNETFLOWID	_IOW('i', 195, struct ifreq)	/* set vnet flowid */
+#define	SIOCGVNETFLOWID	_IOWR('i', 196, struct ifreq)	/* get vnet flowid */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

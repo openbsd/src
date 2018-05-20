@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.32 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.35 2018/04/26 09:30:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -59,6 +59,7 @@
 #define PLEDGE_CHOWN	0x0000000080000000ULL	/* chown(2) family */
 #define PLEDGE_CHOWNUID	0x0000000100000000ULL	/* allow owner/group changes */
 #define PLEDGE_BPF	0x0000000200000000ULL	/* bpf ioctl */
+#define PLEDGE_ERROR	0x0000000400000000ULL	/* ENOSYS instead of kill */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
@@ -88,7 +89,7 @@ static struct {
 	{ PLEDGE_PROC,		"proc" },
 	{ PLEDGE_SETTIME,	"settime" },
 	{ PLEDGE_FATTR,		"fattr" },
-	{ PLEDGE_PROTEXEC,	"protexec" },
+	{ PLEDGE_PROTEXEC,	"prot_exec" },
 	{ PLEDGE_TTY,		"tty" },
 	{ PLEDGE_SENDFD,	"sendfd" },
 	{ PLEDGE_RECVFD,	"recvfd" },
@@ -105,6 +106,7 @@ static struct {
 	{ PLEDGE_VMM,		"vmm" },
 	{ PLEDGE_CHOWNUID,	"chown" },
 	{ PLEDGE_BPF,		"bpf" },
+	{ PLEDGE_ERROR,		"error" },
 	{ 0, NULL },
 };
 #endif
@@ -124,7 +126,7 @@ int	pledge_chown(struct proc *p, uid_t, gid_t);
 int	pledge_adjtime(struct proc *p, const void *v);
 int	pledge_sendit(struct proc *p, const void *to);
 int	pledge_sockopt(struct proc *p, int set, int level, int optname);
-int	pledge_socket(struct proc *p, int domain, int state);
+int	pledge_socket(struct proc *p, int domain, unsigned int state);
 int	pledge_ioctl(struct proc *p, long com, struct file *);
 int	pledge_ioctl_drm(struct proc *p, long com, dev_t device);
 int	pledge_ioctl_vmm(struct proc *p, long com);

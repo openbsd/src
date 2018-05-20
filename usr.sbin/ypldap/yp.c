@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.18 2016/11/29 17:15:27 mestre Exp $ */
+/*	$OpenBSD: yp.c,v 1.19 2017/12/07 05:21:57 zhuk Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -490,25 +490,10 @@ ypproc_next_2_svc(ypreq_key *arg, struct svc_req *req)
 		(void)strncpy(key, arg->key.keydat_val,
 		    arg->key.keydat_len);
 		ukey.ue_line = key;
-		if ((ue = RB_FIND(user_name_tree, env->sc_user_names,
+		if ((ue = RB_NFIND(user_name_tree, env->sc_user_names,
 		    &ukey)) == NULL) {
-			/*
-			 * canacar's trick:
-			 * the user might have been deleted in between calls
-			 * to next since the tree may be modified by a reload.
-			 * next should still return the next user in
-			 * lexicographical order, hence insert the search key
-			 * and look up the next field, then remove it again.
-			 */
-			RB_INSERT(user_name_tree, env->sc_user_names, &ukey);
-			if ((ue = RB_NEXT(user_name_tree, &env->sc_user_names,
-			    &ukey)) == NULL) {
-				RB_REMOVE(user_name_tree, env->sc_user_names,
-				    &ukey);
-				res.stat = YP_NOKEY;
-				return (&res);
-			}
-			RB_REMOVE(user_name_tree, env->sc_user_names, &ukey);
+			res.stat = YP_NOKEY;
+			return (&res);
 		}
 		line = ue->ue_line + (strlen(ue->ue_line) + 1);
 		line = line + (strlen(line) + 1);
@@ -522,20 +507,10 @@ ypproc_next_2_svc(ypreq_key *arg, struct svc_req *req)
 		    arg->key.keydat_len);
 		
 		gkey.ge_line = key;
-		if ((ge = RB_FIND(group_name_tree, env->sc_group_names,
+		if ((ge = RB_NFIND(group_name_tree, env->sc_group_names,
 		    &gkey)) == NULL) {
-			/*
-			 * canacar's trick reloaded.
-			 */
-			RB_INSERT(group_name_tree, env->sc_group_names, &gkey);
-			if ((ge = RB_NEXT(group_name_tree, &env->sc_group_names,
-			    &gkey)) == NULL) {
-				RB_REMOVE(group_name_tree, env->sc_group_names,
-				    &gkey);
-				res.stat = YP_NOKEY;
-				return (&res);
-			}
-			RB_REMOVE(group_name_tree, env->sc_group_names, &gkey);
+			res.stat = YP_NOKEY;
+			return (&res);
 		}
 
 		line = ge->ge_line + (strlen(ge->ge_line) + 1);

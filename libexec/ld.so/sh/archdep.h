@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.10 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.11 2017/10/27 16:47:08 mpi Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -33,7 +33,7 @@
 
 #define	MACHID	EM_SH	/* ELF e_machine ID value checked */
 
-#include <elf_abi.h>
+#include <elf.h>
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"

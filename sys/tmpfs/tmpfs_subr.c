@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.18 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.20 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ again:
 		return error;
 	}
 
-	rrw_init_flags(&node->tn_vlock, "tnode", RWL_DUPOK);
+	rrw_init_flags(&node->tn_vlock, "tnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_type = node->tn_type;
 
 	/* Type-specific initialization. */
@@ -352,7 +352,7 @@ again:
 	uvm_vnp_setsize(vp, node->tn_size);
 	vp->v_data = node;
 	node->tn_vnode = vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	rw_exit_write(&node->tn_nlock);
 
 	KASSERT(VOP_ISLOCKED(vp));

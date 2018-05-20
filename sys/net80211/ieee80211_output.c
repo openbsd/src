@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.118 2017/02/02 16:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.122 2017/12/14 18:52:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
 
-int	ieee80211_classify(struct ieee80211com *, struct mbuf *);
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
 u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
@@ -977,13 +976,15 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		/* write PMKID List (only 1) */
 		memcpy(frm, ni->ni_pmkid, IEEE80211_PMKID_LEN);
 		frm += IEEE80211_PMKID_LEN;
-	} else {
-		/* no PMKID (PMKID Count=0) */
-		LE_WRITE_2(frm, 0); frm += 2;
 	}
 
 	if (!(ic->ic_caps & IEEE80211_C_MFP))
 		return frm;
+
+	if ((ni->ni_flags & IEEE80211_NODE_PMKID) == 0) {
+		/* no PMKID (PMKID Count=0) */
+		LE_WRITE_2(frm, 0); frm += 2;
+	}
 
 	/* write Group Integrity Cipher Suite field */
 	memcpy(frm, oui, 3); frm += 3;
@@ -1675,12 +1676,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		if ((m = ieee80211_get_deauth(ic, ni, arg1)) == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
-
-		if (ifp->if_flags & IFF_DEBUG) {
+#ifndef IEEE80211_STA_ONLY
+		if ((ifp->if_flags & IFF_DEBUG) &&
+		    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS))
 			printf("%s: station %s deauthenticate (reason %d)\n",
 			    ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 			    arg1);
-		}
+#endif
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
@@ -1700,12 +1703,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
 		if ((m = ieee80211_get_disassoc(ic, ni, arg1)) == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
-
-		if (ifp->if_flags & IFF_DEBUG) {
+#ifndef IEEE80211_STA_ONLY
+		if ((ifp->if_flags & IFF_DEBUG) &&
+		    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+		    ic->ic_opmode == IEEE80211_M_IBSS))
 			printf("%s: station %s disassociate (reason %d)\n",
 			    ifp->if_xname, ether_sprintf(ni->ni_macaddr),
 			    arg1);
-		}
+#endif
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_ACTION:

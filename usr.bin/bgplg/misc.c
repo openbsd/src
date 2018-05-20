@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2017/07/27 20:01:05 florian Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2017/12/18 09:12:49 job Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -34,16 +34,6 @@
 #include "bgplg.h"
 
 static volatile pid_t child = -1;
-
-int
-lg_show_version(struct cmd *cmds, char **argv)
-{
-	struct utsname uts;
-	if (uname(&uts) >= 0)
-		printf("%s %s (%s)\n\n", uts.sysname, uts.release, uts.machine);
-	printf("%s - %s\n", NAME, BRIEF);
-	return (0);
-}
 
 int
 lg_checkperm(struct cmd *cmd)

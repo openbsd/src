@@ -1,0 +1,119 @@
+.\" $OpenBSD: ENGINE_unregister_RSA.3,v 1.3 2018/04/18 03:39:22 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 18 2018 $
+.Dt ENGINE_UNREGISTER_RSA 3
+.Os
+.Sh NAME
+.Nm ENGINE_unregister_RSA ,
+.Nm ENGINE_unregister_DSA ,
+.Nm ENGINE_unregister_ECDH ,
+.Nm ENGINE_unregister_ECDSA ,
+.Nm ENGINE_unregister_DH ,
+.Nm ENGINE_unregister_RAND ,
+.Nm ENGINE_unregister_STORE ,
+.Nm ENGINE_unregister_ciphers ,
+.Nm ENGINE_unregister_digests
+.Nd revoke the registration of an ENGINE object
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft void
+.Fo ENGINE_unregister_RSA
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_DSA
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_ECDH
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_ECDSA
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_DH
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_RAND
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_STORE
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_ciphers
+.Fa "ENGINE *e"
+.Fc
+.Ft void
+.Fo ENGINE_unregister_digests
+.Fa "ENGINE *e"
+.Fc
+.Sh DESCRIPTION
+These functions remove
+.Fa e
+from the list of
+.Vt ENGINE
+objects that were previously registered for the respective algorithm
+with the functions described in
+.Xr ENGINE_register_RSA 3 .
+.Pp
+If
+.Fa e
+is currently used as the default engine for the algorithm
+as described in the
+.Fn ENGINE_set_default 3
+and
+.Fn ENGINE_get_default_RSA 3
+manual pages,
+.Xr ENGINE_finish 3
+is also called.
+.Pp
+.Fn ENGINE_unregister_ciphers
+and
+.Fn ENGINE_unregister_digests
+unregister
+.Fa e
+for all ciphers or digests, respectively.
+.Sh SEE ALSO
+.Xr ENGINE_cleanup 3 ,
+.Xr ENGINE_finish 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default 3
+.Sh HISTORY
+.Fn ENGINE_unregister_RSA ,
+.Fn ENGINE_unregister_DSA ,
+.Fn ENGINE_unregister_DH ,
+.Fn ENGINE_unregister_RAND ,
+.Fn ENGINE_unregister_ciphers ,
+and
+.Fn ENGINE_unregister_digests
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_unregister_ECDH ,
+.Fn ENGINE_unregister_ECDSA ,
+and
+.Fn ENGINE_unregister_STORE
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

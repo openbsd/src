@@ -82,6 +82,7 @@ void zc_error_prev_line(const char *fmt, ...) ATTR_FORMAT(printf, 1, 2);
 
 void parser_push_stringbuf(char* str);
 void parser_pop_stringbuf(void);
+void parser_flush(void);
 
 int process_rr(void);
 uint16_t *zparser_conv_hex(region_type *region, const char *hex, size_t len);

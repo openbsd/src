@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.43 2017/05/19 00:49:53 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.44 2018/01/13 15:18:11 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -50,6 +50,7 @@
 #define	IPL_IPI		11
 #define	IPL_NESTED	12	/* pseudo-level for sub-tables */
 
+#define	IPL_MPFLOOR	IPL_AUDIO
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
 
 #define	IST_NONE	0

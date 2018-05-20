@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcat.S,v 1.9 2015/08/31 02:53:56 guenther Exp $ */
+/*	$OpenBSD: strcat.S,v 1.10 2017/11/28 06:55:49 tb Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -9,7 +9,7 @@
 #if defined(APIWARN)
 #APP
 	.section .gnu.warning.strcat
-	.ascii "warning: strcat() is almost always misused, please use strlcat()"
+	.ascii "strcat() is almost always misused, please use strlcat()"
 #NO_APP
 #endif
 

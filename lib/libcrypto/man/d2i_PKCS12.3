@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_PKCS12.3,v 1.1 2016/12/26 18:04:45 schwarze Exp $
+.\"	$OpenBSD: d2i_PKCS12.3,v 1.2 2018/03/21 17:57:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 26 2016 $
+.Dd $Mdocdate: March 21 2018 $
 .Dt D2I_PKCS12 3
 .Os
 .Sh NAME
@@ -184,3 +184,19 @@ return 1 for success or 0 if an error occurs.
 .Xr PKCS12_SAFEBAG_new 3
 .Sh STANDARDS
 RFC 7292: PKCS #12: Personal Information Exchange Syntax
+.Sh HISTORY
+.Fn d2i_PKCS12 ,
+.Fn i2d_PKCS12 ,
+.Fn d2i_PKCS12_bio ,
+.Fn i2d_PKCS12_bio ,
+.Fn d2i_PKCS12_fp ,
+.Fn i2d_PKCS12_fp ,
+.Fn d2i_PKCS12_MAC_DATA ,
+.Fn i2d_PKCS12_MAC_DATA ,
+.Fn d2i_PKCS12_SAFEBAG ,
+.Fn i2d_PKCS12_SAFEBAG ,
+.Fn d2i_PKCS12_BAGS ,
+and
+.Fn i2d_PKCS12_BAGS
+first appeared in OpenSSL 0.9.3 and have been available since
+.Ox 2.6 .

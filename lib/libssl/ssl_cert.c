@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.66 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.67 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -454,7 +454,7 @@ set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
 }
 
 STACK_OF(X509_NAME) *
-SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
+SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 {
 	int i;
 	STACK_OF(X509_NAME) *ret;

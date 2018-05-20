@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.3 2017/04/24 07:14:27 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.4 2017/11/05 20:01:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <arpa/inet.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -38,12 +39,13 @@ extern struct vmd *env;
 ssize_t
 dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 {
-	unsigned char		*respbuf = NULL;
+	unsigned char		*respbuf = NULL, *op, *oe, dhcptype = 0;
 	ssize_t			 offset, respbuflen = 0;
 	struct packet_ctx	 pc;
 	struct dhcp_packet	 req, resp;
-	struct in_addr		 in, mask;
+	struct in_addr		 server_addr, mask, client_addr, requested_addr;
 	size_t			 resplen, o;
+	uint32_t		 ltime;
 
 	if (buflen < (ssize_t)(BOOTP_MIN_LEN + sizeof(struct ether_header)))
 		return (-1);
@@ -76,24 +78,54 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if (req.ciaddr.s_addr != 0 || req.file[0] != '\0' || req.hops != 0)
 		return (-1);
 
+	/* Get a few DHCP options (best effort as we fall back to BOOTP) */
+	if (memcmp(&req.options,
+	    DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN) == 0) {
+		memset(&requested_addr, 0, sizeof(requested_addr));
+		op = req.options + DHCP_OPTIONS_COOKIE_LEN;
+		oe = req.options + sizeof(req.options);
+		while (*op != DHO_END && op < oe) {
+			if (op[0] == DHO_PAD) {
+				op++;
+				continue;
+			}
+			if (op + 1 + op[1] >= oe)
+				break;
+			if (op[0] == DHO_DHCP_MESSAGE_TYPE &&
+			    op[1] == 1)
+				dhcptype = op[2];
+			else if (op[0] == DHO_DHCP_REQUESTED_ADDRESS &&
+			    op[1] == sizeof(requested_addr))
+				memcpy(&requested_addr, &op[2],
+				    sizeof(requested_addr));
+			op += 2 + op[1];
+		}
+	}
+
 	memset(&resp, 0, sizeof(resp));
 	resp.op = BOOTREPLY;
 	resp.htype = req.htype;
 	resp.hlen = req.hlen;
 	resp.xid = req.xid;
 
-	if ((in.s_addr = vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+	if ((client_addr.s_addr =
+	    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
 	    dev->vm_vmid, dev->idx, 1)) == 0)
 		return (-1);
-	memcpy(&resp.yiaddr, &in, sizeof(in));
-	memcpy(&ss2sin(&pc.pc_dst)->sin_addr, &in, sizeof(in));
+	memcpy(&resp.yiaddr, &client_addr,
+	    sizeof(client_addr));
+	memcpy(&ss2sin(&pc.pc_dst)->sin_addr, &client_addr,
+	    sizeof(client_addr));
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
-	if ((in.s_addr = vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+	if ((server_addr.s_addr =
+	    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
 	    dev->vm_vmid, dev->idx, 0)) == 0)
 		return (-1);
-	memcpy(&resp.siaddr, &in, sizeof(in));
-	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &in, sizeof(in));
+	memcpy(&resp.siaddr, &server_addr,
+	    sizeof(server_addr));
+	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &server_addr,
+	    sizeof(server_addr));
 	ss2sin(&pc.pc_src)->sin_port = htons(SERVER_PORT);
 
 	/* Packet is already allocated */
@@ -124,6 +156,44 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	    DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN);
 	o+= DHCP_OPTIONS_COOKIE_LEN;
 
+	/* Did we receive a DHCP request or was it just BOOTP? */
+	if (dhcptype) {
+		/*
+		 * There is no need for a real state machine as we always
+		 * answer with the same client IP and options for the VM.
+		 */
+		if (dhcptype == DHCPDISCOVER)
+			dhcptype = DHCPOFFER;
+		else if (dhcptype == DHCPREQUEST &&
+		    (requested_addr.s_addr == 0 ||
+		    client_addr.s_addr == requested_addr.s_addr))
+			dhcptype = DHCPACK;
+		else
+			dhcptype = DHCPNAK;
+
+		resp.options[o++] = DHO_DHCP_MESSAGE_TYPE;
+		resp.options[o++] = sizeof(dhcptype);
+		memcpy(&resp.options[o], &dhcptype, sizeof(dhcptype));
+		o += sizeof(dhcptype);
+
+		/* Our lease never changes, use the maximum lease time */
+		resp.options[o++] = DHO_DHCP_LEASE_TIME;
+		resp.options[o++] = sizeof(ltime);
+		ltime = ntohl(0xffffffff);
+		memcpy(&resp.options[o], &ltime, sizeof(ltime));
+		o += sizeof(ltime);
+
+		resp.options[o++] = DHO_DHCP_SERVER_IDENTIFIER;
+		resp.options[o++] = sizeof(server_addr);
+		memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
+		o += sizeof(server_addr);
+	}
+
+	resp.options[o++] = DHO_DOMAIN_NAME_SERVERS;
+	resp.options[o++] = sizeof(server_addr);
+	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
+	o += sizeof(server_addr);
+
 	resp.options[o++] = DHO_SUBNET_MASK;
 	resp.options[o++] = sizeof(mask);
 	mask.s_addr = htonl(0xfffffffe);
@@ -131,14 +201,14 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	o += sizeof(mask);
 
 	resp.options[o++] = DHO_ROUTERS;
-	resp.options[o++] = sizeof(in);
-	memcpy(&resp.options[o], &in, sizeof(in));
-	o += sizeof(in);
+	resp.options[o++] = sizeof(server_addr);
+	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
+	o += sizeof(server_addr);
 
 	resp.options[o++] = DHO_DOMAIN_NAME_SERVERS;
-	resp.options[o++] = sizeof(in);
-	memcpy(&resp.options[o], &in, sizeof(in));
-	o += sizeof(in);
+	resp.options[o++] = sizeof(server_addr);
+	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
+	o += sizeof(server_addr);
 
 	resp.options[o++] = DHO_END;
 
@@ -163,4 +233,3 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	free(respbuf);
 	return (0);
 }
-

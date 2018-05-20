@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.14 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: com3.c,v 1.15 2018/02/07 20:22:23 tedu Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -104,10 +104,11 @@ bury(void)
 	int     value;
 
 	if (TestBit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber <= wordcount)
-			;
+		while (wordtype[++wordnumber] != OBJECT &&
+		    wordtype[wordnumber] != NOUNS && wordnumber <= wordcount)
+			continue;
 		value = wordvalue[wordnumber];
-		if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, value) || value == BODY))
+		if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, value) || value == BODY)) {
 			switch (value) {
 			case BODY:
 				wordtype[wordnumber] = OBJECT;
@@ -138,6 +139,7 @@ bury(void)
 			default:
 				puts("Wha..?");
 			}
+		}
 		if (wordtype[wordnumber] == OBJECT && position > 88 && (TestBit(inven, value) || TestBit(location[position].objects, value))) {
 			puts("Buried.");
 			if (TestBit(inven, value)) {

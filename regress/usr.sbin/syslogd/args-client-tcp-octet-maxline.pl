@@ -8,7 +8,7 @@
 
 use strict;
 use warnings;
-use Socket;
+use Socket qw(AF_INET IPPROTO_TCP TCP_NOPUSH);
 use constant MAXLINE => 8192;
 use constant MAX_UDPMSG => 1180;
 
@@ -24,11 +24,15 @@ our %args = (
 	    print STDERR "<<< $msg\n";
 	    ${$self->{syslogd}}->loggrep(qr/tcp logger .* use \d+ bytes/, 5)
 		or die ref($self), " syslogd did not use bytes";
+	    setsockopt(\*STDOUT, IPPROTO_TCP, TCP_NOPUSH, pack('i', 1))
+		or die ref($self), " set TCP_NOPUSH failed: $!";
 	    $msg = generate_chars(MAXLINE);
 	    printf "%05d %s", MAXLINE+1, $msg;
 	    print STDERR "<<< $msg\n";
+	    setsockopt(\*STDOUT, IPPROTO_TCP, TCP_NOPUSH, pack('i', 0))
+		or die ref($self), " clear TCP_NOPUSH failed: $!";
 	    ${$self->{syslogd}}->loggrep("tcp logger .* incomplete", 5)
-		or die ref($self), " syslogd did not receive 2 incomplete";
+		or die ref($self), " syslogd did not receive incomplete";
 	    print "\n";
 	    print STDERR "<<< \n";
 	    write_shutdown($self);

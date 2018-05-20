@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.83 2017/01/21 05:42:03 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.85 2018/04/12 17:13:41 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -239,10 +239,29 @@ trap(a0, a1, a2, entry, framep)
 	p = curproc;
 	ucode = 0;
 	v = 0;
+	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user) {
+		vaddr_t sp;
+
 		p->p_md.md_tf = framep;
 		refreshcreds(p);
+
+		sp = PROC_STACK(p);
+		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+		    p->p_spstart == 0 || sp < p->p_spstart ||
+		    sp >= p->p_spend) {
+			KERNEL_LOCK();
+			if (!uvm_map_check_stack_range(p, sp)) {
+				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+				    0, sp, p->p_spstart, p->p_spend);
+				sv.sival_ptr = (void *)PROC_PC(p);
+				trapsignal(p, SIGSEGV, entry, SEGV_ACCERR, sv);
+			}
+
+			KERNEL_UNLOCK();
+		}
 	}
 
 	switch (entry) {
@@ -540,6 +559,7 @@ syscall(code, framep)
 	atomic_add_int(&uvmexp.syscalls, 1);
 	p = curproc;
 	p->p_md.md_tf = framep;
+	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	opc = framep->tf_regs[FRAME_PC] - 4;
 
 	callp = p->p_p->ps_emul->e_sysent;
@@ -570,7 +590,7 @@ syscall(code, framep)
 	default:
 		if (nargs > 10)		/* XXX */
 			panic("syscall: too many args (%d)", nargs);
-		if ((error = copyin((caddr_t)(alpha_pal_rdusp()), &args[6],
+		if ((error = copyin((caddr_t)(framep->tf_regs[FRAME_SP]), &args[6],
 		    (nargs - 6) * sizeof(u_long))))
 			goto bad;
 	case 6:	

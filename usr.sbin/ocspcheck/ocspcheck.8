@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ocspcheck.8,v 1.6 2017/01/26 22:59:55 jmc Exp $
+.\"	$OpenBSD: ocspcheck.8,v 1.9 2017/11/29 21:15:45 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2017 $
+.Dd $Mdocdate: November 29 2017 $
 .Dt OCSPCHECK 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm
 .Op Fl Nv
 .Op Fl C Ar CAfile
+.Op Fl i Ar staplefile
 .Op Fl o Ar staplefile
 .Ar file
 .Sh DESCRIPTION
@@ -45,10 +46,18 @@ By default no certificates are used beyond those in the
 certificate chain provided by the
 .Ar file
 argument.
+.It Fl i Ar staplefile
+Specify an input filename from which a DER-encoded OCSP response
+will be read instead of fetching it from the OCSP server.
+A filename
+of
+.Sq -
+will read the response from standard input.
 .It Fl N
 Do not use a nonce value in the OCSP request, or validate that the
 nonce was returned in the OCSP response.
-By default a nonce is always used and validated.
+By default a nonce is always used and validated when retrieving
+a response from an OCSP server.
 The use of this flag is a security risk as it will allow OCSP
 responses to be replayed.
 It should not be used unless the OCSP server does not support the
@@ -79,6 +88,11 @@ exits >0 if an error occurs or the OCSP response fails to validate.
 .Xr tls_config_set_ocsp_staple_file 3 ,
 .Xr tls_config_set_ocsp_staple_mem 3 ,
 .Xr httpd 8
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 6.1 .
 .Sh AUTHORS
 .Nm
 was written by

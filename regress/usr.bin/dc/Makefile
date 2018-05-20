@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2017/07/06 21:33:45 bluhm Exp $
+# $OpenBSD: Makefile,v 1.21 2017/12/01 08:40:47 otto Exp $
 
 DC?=		dc
 DCFLAGS=	-x
@@ -6,7 +6,7 @@ CLEANFILES=	*.log
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
-		t20 t21 t22 t23 t24 t25 t26 t27
+		t20 t21 t22 t23 t24 t25 t26 t27 t28
 
 # .in: input file
 # .out: desired result
@@ -38,6 +38,7 @@ REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 # t25: exp
 # t26: non-decimal fractions
 # t27: fix a double free
+# t28: more extensive test of Z (new implementation)
 
 .SUFFIXES: .in
 

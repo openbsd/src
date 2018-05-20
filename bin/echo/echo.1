@@ -1,4 +1,4 @@
-.\"	$OpenBSD: echo.1,v 1.23 2016/08/16 18:51:25 schwarze Exp $
+.\"	$OpenBSD: echo.1,v 1.24 2018/03/16 16:58:26 schwarze Exp $
 .\"	$NetBSD: echo.1,v 1.7 1995/03/21 09:04:26 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)echo.1	8.1 (Berkeley) 7/22/93
 .\"
-.Dd $Mdocdate: August 16 2016 $
+.Dd $Mdocdate: March 16 2018 $
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -54,7 +54,9 @@ character, to the standard
 output.
 .Pp
 When no operands are given, only the newline is written.
-The -- operand,
+The
+.Fl \-
+operand,
 which generally denotes an end to option processing,
 is treated as part of
 .Ar string .

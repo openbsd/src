@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.10 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.11 2017/10/27 16:47:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/types.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <fcntl.h>
 #include <unistd.h>
 

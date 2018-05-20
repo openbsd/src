@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.23 2017/09/25 17:36:35 krw Exp $	*/
+/*	$OpenBSD: lib.c,v 1.25 2017/12/08 17:04:15 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -120,7 +120,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 		firsttime = 0;
 		initgetrec();
 	}
-	   dprintf( ("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
+	   DPRINTF( ("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
 		*RS, *FS, *ARGC, *FILENAME) );
 	if (isrecord) {
 		donefld = 0;
@@ -129,7 +129,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 	saveb0 = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
-		   dprintf( ("argno=%d, file=|%s|\n", argno, file) );
+		   DPRINTF( ("argno=%d, file=|%s|\n", argno, file) );
 		if (infile == NULL) {	/* have to open a new file */
 			file = getargv(argno);
 			if (file == NULL || *file == '\0') {	/* deleted or zapped */
@@ -142,7 +142,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 				continue;
 			}
 			*FILENAME = file;
-			   dprintf( ("opening file %s\n", file) );
+			   DPRINTF( ("opening file %s\n", file) );
 			if (*file == '-' && *(file+1) == '\0')
 				infile = stdin;
 			else if ((infile = fopen(file, "r")) == NULL)
@@ -223,7 +223,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
 		FATAL("input record `%.30s...' too long", buf);
 	*rr = 0;
-	   dprintf( ("readrec saw <%s>, returns %d\n", buf, c == EOF && rr == buf ? 0 : 1) );
+	   DPRINTF( ("readrec saw <%s>, returns %d\n", buf, c == EOF && rr == buf ? 0 : 1) );
 	*pbuf = buf;
 	*pbufsize = bufsize;
 	return c == EOF && rr == buf ? 0 : 1;
@@ -240,7 +240,7 @@ char *getargv(int n)	/* get ARGV[n] */
 		return NULL;
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
 	s = getsval(x);
-	   dprintf( ("getargv(%d) returns |%s|\n", n, s) );
+	   DPRINTF( ("getargv(%d) returns |%s|\n", n, s) );
 	return s;
 }
 
@@ -259,7 +259,7 @@ void setclvar(char *s)	/* set var=value from s */
 		q->fval = atof(q->sval);
 		q->tval |= NUM;
 	}
-	   dprintf( ("command line set %s to |%s|\n", s, p) );
+	   DPRINTF( ("command line set %s to |%s|\n", s, p) );
 }
 
 
@@ -437,7 +437,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	if (*rec == '\0')
 		return 0;
 	pfa = makedfa(fs, 1);
-	   dprintf( ("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs) );
+	   DPRINTF( ("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs) );
 	tempstat = pfa->initstat;
 	for (i = 1; ; i++) {
 		if (i > nfields)
@@ -446,16 +446,16 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			xfree(fldtab[i]->sval);
 		fldtab[i]->tval = FLD | STR | DONTFREE;
 		fldtab[i]->sval = fr;
-		   dprintf( ("refldbld: i=%d\n", i) );
+		   DPRINTF( ("refldbld: i=%d\n", i) );
 		if (nematch(pfa, rec)) {
 			pfa->initstat = 2;	/* horrible coupling to b.c */
-			   dprintf( ("match %s (%d chars)\n", patbeg, patlen) );
+			   DPRINTF( ("match %s (%d chars)\n", patbeg, patlen) );
 			strncpy(fr, rec, patbeg-rec);
 			fr += patbeg - rec + 1;
 			*(fr-1) = '\0';
 			rec = patbeg + patlen;
 		} else {
-			   dprintf( ("no match %s\n", rec) );
+			   DPRINTF( ("no match %s\n", rec) );
 			strlcpy(fr, rec, fields + fieldssize - fr);
 			pfa->initstat = tempstat;
 			break;
@@ -488,15 +488,15 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	if (!adjbuf(&record, &recsize, 2+r-record, recsize, &r, "recbld 3"))
 		FATAL("built giant record `%.30s...'", record);
 	*r = '\0';
-	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
+	   DPRINTF( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
 
 	if (freeable(fldtab[0]))
 		xfree(fldtab[0]->sval);
 	fldtab[0]->tval = REC | STR | DONTFREE;
 	fldtab[0]->sval = record;
 
-	   dprintf( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
-	   dprintf( ("recbld = |%s|\n", record) );
+	   DPRINTF( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
+	   DPRINTF( ("recbld = |%s|\n", record) );
 	donerec = 1;
 }
 
@@ -532,33 +532,25 @@ void SYNTAX(const char *fmt, ...)
 void fpecatch(int sig)
 {
 	extern Node *curnode;
-	char buf[1024];
 
-	snprintf(buf, sizeof buf, "floating point exception\n");
-	write(STDERR_FILENO, buf, strlen(buf));
+	dprintf(STDERR_FILENO, "floating point exception\n");
 
 	if (compile_time != 2 && NR && *NR > 0) {
-		snprintf(buf, sizeof buf, " input record number %d", (int) (*FNR));
-		write(STDERR_FILENO, buf, strlen(buf));
-
+		dprintf(STDERR_FILENO, " input record number %d", (int) (*FNR));
 		if (strcmp(*FILENAME, "-") != 0) {
-			snprintf(buf, sizeof buf, ", file %s", *FILENAME);
-			write(STDERR_FILENO, buf, strlen(buf));
+			dprintf(STDERR_FILENO, ", file %s", *FILENAME);
 		}
-		write(STDERR_FILENO, "\n", 1);
+		dprintf(STDERR_FILENO, "\n");
 	}
 	if (compile_time != 2 && curnode) {
-		snprintf(buf, sizeof buf, " source line number %d", curnode->lineno);
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source line number %d", curnode->lineno);
 	} else if (compile_time != 2 && lineno) {
-		snprintf(buf, sizeof buf, " source line number %d", lineno);
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source line number %d", lineno);
 	}
 	if (compile_time == 1 && cursource() != NULL) {
-		snprintf(buf, sizeof buf, " source file %s", cursource());
-		write(STDERR_FILENO, buf, strlen(buf));
+		dprintf(STDERR_FILENO, " source file %s", cursource());
 	}
-	write(STDERR_FILENO, "\n", 1);
+	dprintf(STDERR_FILENO, "\n");
 	if (dbg > 1)		/* core dump if serious debugging on */
 		abort();
 	_exit(1);

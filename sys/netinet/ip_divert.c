@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.54 2017/10/06 22:08:30 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.57 2018/04/24 15:40:55 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -242,21 +242,18 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
-	soassertlocked(so);
-
 	if (req == PRU_CONTROL) {
 		return (in_control(so, (u_long)m, (caddr_t)addr,
 		    (struct ifnet *)control));
 	}
+
+	soassertlocked(so);
+
 	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 	switch (req) {
-
-	case PRU_DETACH:
-		in_pcbdetach(inp);
-		break;
 
 	case PRU_BIND:
 		error = in_pcbbind(inp, addr, p);
@@ -335,6 +332,20 @@ divert_attach(struct socket *so, int proto)
 }
 
 int
+divert_detach(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if (inp == NULL)
+		return (EINVAL);
+
+	in_pcbdetach(inp);
+	return (0);
+}
+
+int
 divert_sysctl_divstat(void *oldp, size_t *oldlenp, void *newp)
 {
 	uint64_t counters[divs_ncounters];
@@ -360,23 +371,35 @@ int
 divert_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
+	int error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	case DIVERTCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &divert_sendspace));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &divert_sendspace);
+		NET_UNLOCK();
+		return (error);
 	case DIVERTCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &divert_recvspace));
+		NET_LOCK();
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &divert_recvspace);
+		NET_UNLOCK();
+		return (error);
 	case DIVERTCTL_STATS:
 		return (divert_sysctl_divstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < DIVERTCTL_MAXID)
-			return sysctl_int_arr(divertctl_vars, name, namelen,
+		if (name[0] < DIVERTCTL_MAXID) {
+			NET_LOCK();
+			error = sysctl_int_arr(divertctl_vars, name, namelen,
 			    oldp, oldlenp, newp, newlen);
+			NET_UNLOCK();
+			return (error);
+		}
 
 		return (ENOPROTOOPT);
 	}

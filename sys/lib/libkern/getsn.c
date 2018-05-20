@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsn.c,v 1.6 2012/12/05 23:20:22 deraadt Exp $	*/
+/*	$OpenBSD: getsn.c,v 1.7 2018/04/25 11:15:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt
@@ -29,10 +29,11 @@
 #include <sys/systm.h>
 #include <dev/cons.h>
 
-int
-getsn(char *cp, int size)
+size_t
+getsn(char *cp, size_t size)
 {
-	int len = 0, c;
+	size_t len = 0;
+	int  c;
 	char *lp = cp;
 
 	while (1) {

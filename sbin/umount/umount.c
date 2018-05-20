@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.27 2016/12/16 17:44:59 krw Exp $	*/
+/*	$OpenBSD: umount.c,v 1.28 2018/01/05 08:13:31 mpi Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <netdb.h>
 #include <rpc/rpc.h>

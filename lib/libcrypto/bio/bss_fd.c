@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_fd.c,v 1.18 2015/02/12 03:54:07 jsing Exp $ */
+/* $OpenBSD: bss_fd.c,v 1.19 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
 
-static BIO_METHOD methods_fdp = {
+static const BIO_METHOD methods_fdp = {
 	.type = BIO_TYPE_FD,
 	.name = "file descriptor",
 	.bwrite = fd_write,
@@ -86,7 +86,7 @@ static BIO_METHOD methods_fdp = {
 	.destroy = fd_free
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_fd(void)
 {
 	return (&methods_fdp);

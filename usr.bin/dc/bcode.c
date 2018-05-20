@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.62 2017/12/29 08:16:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -46,6 +46,7 @@ struct bmachine {
 	volatile sig_atomic_t	interrupted;
 	struct source		*readstack;
 	size_t			readstack_sz;
+	BN_CTX			*ctx;
 };
 
 static struct bmachine	bmachine;
@@ -65,13 +66,13 @@ static __inline void	push(struct value *);
 static __inline struct value *tos(void);
 static __inline struct number	*pop_number(void);
 static __inline char	*pop_string(void);
-static __inline void	clear_stack(void);
-static __inline void	print_tos(void);
+static void		clear_stack(void);
+static void		print_tos(void);
 static void		print_err(void);
 static void		pop_print(void);
 static void		pop_printn(void);
-static __inline void	print_stack(void);
-static __inline void	dup(void);
+static void		print_stack(void);
+static void		dup(void);
 static void		swap(void);
 static void		drop(void);
 
@@ -95,18 +96,14 @@ static void		bdiv(void);
 static void		bmod(void);
 static void		bdivmod(void);
 static void		bexp(void);
-static bool		bsqrt_stop(const BIGNUM *, const BIGNUM *, u_int *);
 static void		bsqrt(void);
 static void		not(void);
 static void		equal_numbers(void);
 static void		less_numbers(void);
 static void		lesseq_numbers(void);
 static void		equal(void);
-static void		not_equal(void);
 static void		less(void);
-static void		not_less(void);
 static void		greater(void);
-static void		not_greater(void);
 static void		not_compare(void);
 static bool		compare_numbers(enum bcode_compare, struct number *,
 			    struct number *);
@@ -137,7 +134,8 @@ struct jump_entry {
 	opcode_function	f;
 };
 
-static opcode_function jump_table[UCHAR_MAX];
+
+static opcode_function jump_table[UCHAR_MAX + 1];
 
 static const struct jump_entry jump_table_data[] = {
 	{ ' ',	nop		},
@@ -214,8 +212,9 @@ static const struct jump_entry jump_table_data[] = {
 	{ '~',	bdivmod		}
 };
 
-#define JUMP_TABLE_DATA_SIZE \
-	(sizeof(jump_table_data)/sizeof(jump_table_data[0]))
+#ifndef nitems
+#define nitems(a)	(sizeof((a)) / sizeof((a)[0]))
+#endif
 
 /* ARGSUSED */
 static void
@@ -229,6 +228,9 @@ init_bmachine(bool extended_registers)
 {
 	int i;
 
+	bmachine.ctx = BN_CTX_new();
+	bn_checkp(bmachine.ctx);
+
 	bmachine.extended_regs = extended_registers;
 	bmachine.reg_array_size = bmachine.extended_regs ?
 	    REG_ARRAY_SIZE_BIG : REG_ARRAY_SIZE_SMALL;
@@ -238,10 +240,18 @@ init_bmachine(bool extended_registers)
 	if (bmachine.reg == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < UCHAR_MAX; i++)
+	for (i = 0; i < nitems(jump_table); i++)
 		jump_table[i] = unknown;
-	for (i = 0; i < JUMP_TABLE_DATA_SIZE; i++)
+
+	for (i = 0; i < nitems(jump_table_data); i++) {
+		if ((unsigned int)jump_table_data[i].ch >= nitems(jump_table))
+			errx(1, "opcode '%c' overflows jump table",
+			    jump_table_data[i].ch);
+		if (jump_table[jump_table_data[i].ch] != unknown)
+			errx(1, "opcode '%c' already assigned",
+			    jump_table_data[i].ch);
 		jump_table[jump_table_data[i].ch] = jump_table_data[i].f;
+	}
 
 	stack_init(&bmachine.stack);
 
@@ -349,30 +359,26 @@ scale_number(BIGNUM *n, int s)
 
 	abs_scale = s > 0 ? s : -s;
 
-	if (abs_scale < sizeof(factors)/sizeof(factors[0])) {
+	if (abs_scale < nitems(factors)) {
 		if (s > 0)
 			bn_check(BN_mul_word(n, factors[abs_scale]));
 		else
 			(void)BN_div_word(n, factors[abs_scale]);
 	} else {
 		BIGNUM *a, *p;
-		BN_CTX *ctx;
 
 		a = BN_new();
 		bn_checkp(a);
 		p = BN_new();
 		bn_checkp(p);
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
 
 		bn_check(BN_set_word(a, 10));
 		bn_check(BN_set_word(p, abs_scale));
-		bn_check(BN_exp(a, a, p, ctx));
+		bn_check(BN_exp(a, a, p, bmachine.ctx));
 		if (s > 0)
-			bn_check(BN_mul(n, n, a, ctx));
+			bn_check(BN_mul(n, n, a, bmachine.ctx));
 		else
-			bn_check(BN_div(n, NULL, n, a, ctx));
-		BN_CTX_free(ctx);
+			bn_check(BN_div(n, NULL, n, a, bmachine.ctx));
 		BN_free(a);
 		BN_free(p);
 	}
@@ -385,28 +391,25 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 
 	bn_checkp(BN_copy(i, n->number));
 
-	if (n->scale == 0 && f != NULL)
-		bn_check(BN_set_word(f, 0));
-	else if (n->scale < sizeof(factors)/sizeof(factors[0])) {
+	if (n->scale == 0) {
+		if (f != NULL)
+			bn_check(BN_set_word(f, 0));
+	} else if (n->scale < nitems(factors)) {
 		rem = BN_div_word(i, factors[n->scale]);
 		if (f != NULL)
 			bn_check(BN_set_word(f, rem));
 	} else {
 		BIGNUM *a, *p;
-		BN_CTX *ctx;
 
 		a = BN_new();
 		bn_checkp(a);
 		p = BN_new();
 		bn_checkp(p);
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
 
 		bn_check(BN_set_word(a, 10));
 		bn_check(BN_set_word(p, n->scale));
-		bn_check(BN_exp(a, a, p, ctx));
-		bn_check(BN_div(i, f, n->number, a, ctx));
-		BN_CTX_free(ctx);
+		bn_check(BN_exp(a, a, p, bmachine.ctx));
+		bn_check(BN_div(i, f, n->number, a, bmachine.ctx));
 		BN_free(a);
 		BN_free(p);
 	}
@@ -474,27 +477,26 @@ pop_string(void)
 	return stack_popstring(&bmachine.stack);
 }
 
-static __inline void
+static void
 clear_stack(void)
 {
 	stack_clear(&bmachine.stack);
 }
 
-static __inline void
+static void
 print_stack(void)
 {
 	stack_print(stdout, &bmachine.stack, "", bmachine.obase);
 }
 
-static __inline void
+static void
 print_tos(void)
 {
 	struct value *value = tos();
 	if (value != NULL) {
 		print_value(stdout, value, "", bmachine.obase);
 		(void)putchar('\n');
-	}
-	else
+	} else
 		warnx("stack empty");
 }
 
@@ -505,8 +507,7 @@ print_err(void)
 	if (value != NULL) {
 		print_value(stderr, value, "", bmachine.obase);
 		(void)putc('\n', stderr);
-	}
-	else
+	} else
 		warnx("stack empty");
 }
 
@@ -545,7 +546,7 @@ pop_printn(void)
 	}
 }
 
-static __inline void
+static void
 dup(void)
 {
 	stack_dup(&bmachine.stack);
@@ -591,7 +592,7 @@ set_scale(void)
 				bmachine.scale = (u_int)scale;
 			else
 				warnx("scale too large");
-			}
+		}
 		free_number(n);
 	}
 }
@@ -670,7 +671,6 @@ push_scale(void)
 	u_int		scale = 0;
 	struct number	*n;
 
-
 	value = pop();
 	if (value != NULL) {
 		switch (value->type) {
@@ -692,25 +692,52 @@ push_scale(void)
 static u_int
 count_digits(const struct number *n)
 {
-	struct number	*int_part, *fract_part;
-	u_int		i;
+	BIGNUM		*int_part, *a, *p;
+	uint		d;
+	const uint64_t	c = 1292913986; /* floor(2^32 * log_10(2)) */
+	int		bits;
 
 	if (BN_is_zero(n->number))
-		return n->scale ? n->scale : 1;
+		return n->scale;
 
-	int_part = new_number();
-	fract_part = new_number();
-	fract_part->scale = n->scale;
-	split_number(n, int_part->number, fract_part->number);
+	int_part = BN_new();
+	bn_checkp(int_part);
 
-	i = 0;
-	while (!BN_is_zero(int_part->number)) {
-		(void)BN_div_word(int_part->number, 10);
-		i++;
+	split_number(n, int_part, NULL);
+	bits = BN_num_bits(int_part);
+
+	if (bits == 0)
+		d = 0;
+	else {
+		/*
+		 * Estimate number of decimal digits based on number of bits.
+		 * Divide 2^32 factor out by shifting
+		 */
+		d = (c * bits) >> 32;
+
+		/* If close to a possible rounding error fix if needed */
+		if (d != (c * (bits - 1)) >> 32) {
+			a = BN_new();
+			bn_checkp(a);
+			p = BN_new();
+			bn_checkp(p);
+
+			bn_check(BN_set_word(a, 10));
+			bn_check(BN_set_word(p, d));
+			bn_check(BN_exp(a, a, p, bmachine.ctx));
+
+			if (BN_ucmp(int_part, a) >= 0)
+				d++;
+
+			BN_free(a);
+			BN_free(p);
+		} else
+			d++;
 	}
-	free_number(int_part);
-	free_number(fract_part);
-	return i + n->scale;
+
+	BN_free(int_part);
+
+	return d + n->scale;
 }
 
 static void
@@ -890,8 +917,7 @@ load_array(void)
 				n = new_number();
 				bn_check(BN_set_word(n->number, 0));
 				push_number(n);
-			}
-			else
+			} else
 				push(stack_dup_value(v, &copy));
 		}
 		free_number(inumber);
@@ -948,7 +974,6 @@ static void
 badd(void)
 {
 	struct number	*a, *b;
-	struct number	*r;
 
 	a = pop_number();
 	if (a == NULL)
@@ -959,23 +984,19 @@ badd(void)
 		return;
 	}
 
-	r = new_number();
-	r->scale = max(a->scale, b->scale);
-	if (r->scale > a->scale)
-		normalize(a, r->scale);
-	else if (r->scale > b->scale)
-		normalize(b, r->scale);
-	bn_check(BN_add(r->number, a->number, b->number));
-	push_number(r);
+	if (b->scale > a->scale)
+		normalize(a, b->scale);
+	else if (a->scale > b->scale)
+		normalize(b, a->scale);
+	bn_check(BN_add(b->number, a->number, b->number));
 	free_number(a);
-	free_number(b);
+	push_number(b);
 }
 
 static void
 bsub(void)
 {
 	struct number	*a, *b;
-	struct number	*r;
 
 	a = pop_number();
 	if (a == NULL)
@@ -986,33 +1007,24 @@ bsub(void)
 		return;
 	}
 
-	r = new_number();
-
-	r->scale = max(a->scale, b->scale);
-	if (r->scale > a->scale)
-		normalize(a, r->scale);
-	else if (r->scale > b->scale)
-		normalize(b, r->scale);
-	bn_check(BN_sub(r->number, b->number, a->number));
-	push_number(r);
+	if (b->scale > a->scale)
+		normalize(a, b->scale);
+	else if (a->scale > b->scale)
+		normalize(b, a->scale);
+	bn_check(BN_sub(b->number, b->number, a->number));
 	free_number(a);
-	free_number(b);
+	push_number(b);
 }
 
 void
 bmul_number(struct number *r, struct number *a, struct number *b, u_int scale)
 {
-	BN_CTX		*ctx;
-
 	/* Create copies of the scales, since r might be equal to a or b */
 	u_int ascale = a->scale;
 	u_int bscale = b->scale;
 	u_int rscale = ascale + bscale;
 
-	ctx = BN_CTX_new();
-	bn_checkp(ctx);
-	bn_check(BN_mul(r->number, a->number, b->number, ctx));
-	BN_CTX_free(ctx);
+	bn_check(BN_mul(r->number, a->number, b->number, bmachine.ctx));
 
 	r->scale = rscale;
 	if (rscale > bmachine.scale && rscale > ascale && rscale > bscale)
@@ -1023,7 +1035,6 @@ static void
 bmul(void)
 {
 	struct number	*a, *b;
-	struct number	*r;
 
 	a = pop_number();
 	if (a == NULL)
@@ -1034,12 +1045,9 @@ bmul(void)
 		return;
 	}
 
-	r = new_number();
-	bmul_number(r, a, b, bmachine.scale);
-
-	push_number(r);
+	bmul_number(b, a, b, bmachine.scale);
 	free_number(a);
-	free_number(b);
+	push_number(b);
 }
 
 static void
@@ -1048,7 +1056,6 @@ bdiv(void)
 	struct number	*a, *b;
 	struct number	*r;
 	u_int		scale;
-	BN_CTX		*ctx;
 
 	a = pop_number();
 	if (a == NULL)
@@ -1069,10 +1076,7 @@ bdiv(void)
 		normalize(a, scale);
 		normalize(b, scale + r->scale);
 
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
-		bn_check(BN_div(r->number, NULL, b->number, a->number, ctx));
-		BN_CTX_free(ctx);
+		bn_check(BN_div(r->number, NULL, b->number, a->number, bmachine.ctx));
 	}
 	push_number(r);
 	free_number(a);
@@ -1085,7 +1089,6 @@ bmod(void)
 	struct number	*a, *b;
 	struct number	*r;
 	u_int		scale;
-	BN_CTX		*ctx;
 
 	a = pop_number();
 	if (a == NULL)
@@ -1106,10 +1109,7 @@ bmod(void)
 		normalize(a, scale);
 		normalize(b, scale + bmachine.scale);
 
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
-		bn_check(BN_mod(r->number, b->number, a->number, ctx));
-		BN_CTX_free(ctx);
+		bn_check(BN_mod(r->number, b->number, a->number, bmachine.ctx));
 	}
 	push_number(r);
 	free_number(a);
@@ -1122,7 +1122,6 @@ bdivmod(void)
 	struct number	*a, *b;
 	struct number	*rdiv, *rmod;
 	u_int		scale;
-	BN_CTX		*ctx;
 
 	a = pop_number();
 	if (a == NULL)
@@ -1145,11 +1144,8 @@ bdivmod(void)
 		normalize(a, scale);
 		normalize(b, scale + bmachine.scale);
 
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
 		bn_check(BN_div(rdiv->number, rmod->number,
-		    b->number, a->number, ctx));
-		BN_CTX_free(ctx);
+		    b->number, a->number, bmachine.ctx));
 	}
 	push_number(rdiv);
 	push_number(rmod);
@@ -1182,20 +1178,19 @@ bexp(void)
 		bn_checkp(f);
 		split_number(p, i, f);
 		if (!BN_is_zero(f))
-			warnx("Runtime warning: non-zero fractional part in exponent");
-		BN_free(i);
+			warnx("Runtime warning: non-zero fractional part "
+			    "in exponent");
+		BN_free(p->number);
+		p->number = i;
 		BN_free(f);
 	}
 
-	normalize(p, 0);
-
-	neg = false;
-	if (BN_is_negative(p->number)) {
-		neg = true;
+	neg = BN_is_negative(p->number);
+	if (neg) {
 		negate(p);
 		rscale = bmachine.scale;
 	} else {
-		/* Posix bc says min(a.scale * b, max(a.scale, scale) */
+		/* Posix bc says min(a.scale * b, max(a.scale, scale)) */
 		u_long	b;
 		u_int	m;
 
@@ -1236,23 +1231,19 @@ bexp(void)
 		}
 
 		if (neg) {
-			BN_CTX	*ctx;
 			BIGNUM	*one;
 
 			one = BN_new();
 			bn_checkp(one);
 			bn_check(BN_one(one));
-			ctx = BN_CTX_new();
-			bn_checkp(ctx);
 			scale_number(one, r->scale + rscale);
 
 			if (BN_is_zero(r->number))
 				warnx("divide by zero");
 			else
 				bn_check(BN_div(r->number, NULL, one,
-				    r->number, ctx));
+				    r->number, bmachine.ctx));
 			BN_free(one);
-			BN_CTX_free(ctx);
 			r->scale = rscale;
 		} else
 			normalize(r, rscale);
@@ -1262,30 +1253,13 @@ bexp(void)
 	free_number(p);
 }
 
-static bool
-bsqrt_stop(const BIGNUM *x, const BIGNUM *y, u_int *onecount)
-{
-	BIGNUM *r;
-	bool ret;
-
-	r = BN_new();
-	bn_checkp(r);
-	bn_check(BN_sub(r, x, y));
-	if (BN_is_one(r))
-		(*onecount)++;
-	ret = BN_is_zero(r);
-	BN_free(r);
-	return ret || *onecount > 1;
-}
-
 static void
 bsqrt(void)
 {
 	struct number	*n;
 	struct number	*r;
-	BIGNUM		*x, *y;
+	BIGNUM		*x, *y, *t;
 	u_int		scale, onecount;
-	BN_CTX		*ctx;
 
 	onecount = 0;
 	n = pop_number();
@@ -1304,21 +1278,20 @@ bsqrt(void)
 		bn_check(BN_rshift(x, x, BN_num_bits(x)/2));
 		y = BN_new();
 		bn_checkp(y);
-		ctx = BN_CTX_new();
-		bn_checkp(ctx);
-		for (;;) {
-			bn_checkp(BN_copy(y, x));
-			bn_check(BN_div(x, NULL, n->number, x, ctx));
-			bn_check(BN_add(x, x, y));
-			bn_check(BN_rshift1(x, x));
-			if (bsqrt_stop(x, y, &onecount))
-				break;
-		}
+		do {
+			bn_check(BN_div(y, NULL, n->number, x, bmachine.ctx));
+			bn_check(BN_add(y, x, y));
+			bn_check(BN_rshift1(y, y));
+			bn_check(BN_sub(x, y, x));
+			t = x;
+			x = y;
+			y = t;
+		} while (!BN_is_zero(y) && (onecount += BN_is_one(y)) < 2);
+		bn_check(BN_sub(y, x, y));
 		r = bmalloc(sizeof(*r));
 		r->scale = scale;
 		r->number = y;
 		BN_free(x);
-		BN_CTX_free(ctx);
 		push_number(r);
 	}
 
@@ -1402,12 +1375,6 @@ lesseq_numbers(void)
 }
 
 static void
-not_equal(void)
-{
-	compare(BCODE_NOT_EQUAL);
-}
-
-static void
 less(void)
 {
 	compare(BCODE_LESS);
@@ -1418,37 +1385,25 @@ not_compare(void)
 {
 	switch (readch()) {
 	case '<':
-		not_less();
+		compare(BCODE_NOT_LESS);
 		break;
 	case '>':
-		not_greater();
+		compare(BCODE_NOT_GREATER);
 		break;
 	case '=':
-		not_equal();
+		compare(BCODE_NOT_EQUAL);
 		break;
 	default:
 		unreadch();
-		(void)fprintf(stderr, "! command is deprecated\n");
+		warnx("! command is deprecated");
 		break;
 	}
-}
-
-static void
-not_less(void)
-{
-	compare(BCODE_NOT_LESS);
 }
 
 static void
 greater(void)
 {
 	compare(BCODE_GREATER);
-}
-
-static void
-not_greater(void)
-{
-	compare(BCODE_NOT_GREATER);
 }
 
 static bool
@@ -1535,7 +1490,6 @@ compare(enum bcode_compare type)
 	}
 }
 
-
 static void
 nop(void)
 {
@@ -1601,11 +1555,8 @@ skipN(void)
 static void
 skip_until_mark(void)
 {
-	int ch;
-
 	for (;;) {
-		ch = readch();
-		switch (ch) {
+		switch (readch()) {
 		case 'M':
 			return;
 		case EOF:
@@ -1630,7 +1581,7 @@ skip_until_mark(void)
 			free(read_string(&bmachine.readstack[bmachine.readsp]));
 			break;
 		case '!':
-			switch (ch = readch()) {
+			switch (readch()) {
 				case '<':
 				case '>':
 				case '=':
@@ -1746,10 +1697,10 @@ eval(void)
 		(void)fprintf(stderr, "%zd =>\n", bmachine.readsp);
 #endif
 
-		if (0 <= ch && ch < UCHAR_MAX)
+		if (0 <= ch && ch < nitems(jump_table))
 			(*jump_table[ch])();
 		else
-			warnx("internal error: opcode %d", ch);
+			unknown();
 
 #ifdef DEBUGGING
 		stack_print(stderr, &bmachine.stack, "* ",

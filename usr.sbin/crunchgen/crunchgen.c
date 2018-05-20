@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.19 2017/07/27 15:33:42 espie Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.20 2018/02/06 00:05:24 henning Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -42,6 +42,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>
+#include <fcntl.h>
+#include <libgen.h>
 
 #define CRUNCH_VERSION	"1.3"
 
@@ -657,8 +659,8 @@ fillin_program(prog_t * p)
 void 
 fillin_program_objs(prog_t * p, char *path)
 {
-	char           *cp, *obj, tempfname[PATH_MAX];
-	int             fd, rc;
+	char           *cp, *obj, tempfname[PATH_MAX], cwd[PATH_MAX];
+	int             fd, dotfd, rc;
 	FILE           *f;
 
 	/* discover the objs from the srcdir Makefile */
@@ -678,9 +680,25 @@ fillin_program_objs(prog_t * p, char *path)
 	fprintf(f, "crunchgen_objs:\n\t@echo 'OBJS= '${OBJS}\n");
 	fclose(f);
 
-	snprintf(line, sizeof(line), "make -f %s crunchgen_objs 2>&1", tempfname);
+	if ((dotfd = open(".", O_RDONLY, 0)) == -1 ||
+	    getcwd(cwd, sizeof(cwd)) == NULL) {
+		perror("get cwd");
+		goterror = 1;
+		return;
+	}
+	if (chdir(dirname(path)) == -1) {
+		perror("chdir target dir");
+		goterror = 1;
+		return;
+	}
+	snprintf(line, sizeof(line), "make -f %s/%s crunchgen_objs 2>&1", cwd, tempfname);
 	if ((f = popen(line, "r")) == NULL) {
 		perror("submake pipe");
+		goterror = 1;
+		return;
+	}
+	if (fchdir(dotfd) == -1) {
+		perror("fchdir back");
 		goterror = 1;
 		return;
 	}

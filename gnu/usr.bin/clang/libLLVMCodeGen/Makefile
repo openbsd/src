@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -13,14 +13,12 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	Analysis.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
-	BranchCoalescing.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
 	CodeGenPrepare.cpp \
-	CountingFunctionInserter.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
@@ -30,13 +28,18 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	EdgeBundles.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
+	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
 	FEntryInserter.cpp \
+	IndirectBrExpandPass.cpp \
 	LazyMachineBlockFrequencyInfo.cpp \
 	LiveDebugValues.cpp \
+	LiveIntervals.cpp \
+	LiveStacks.cpp \
 	LiveRangeShrink.cpp \
 	LiveRegUnits.cpp \
+	LowLevelType.cpp \
 	FaultMaps.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
@@ -55,13 +58,11 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	LexicalScopes.cpp \
 	LiveDebugVariables.cpp \
 	LiveInterval.cpp \
-	LiveIntervalAnalysis.cpp \
 	LiveIntervalUnion.cpp \
 	LiveRangeCalc.cpp \
 	LiveRangeEdit.cpp \
 	LiveRegMatrix.cpp \
 	LivePhysRegs.cpp \
-	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
 	LowLevelType.cpp \
@@ -85,6 +86,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineLoopInfo.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
+	MachineOperand.cpp \
 	MachineOptimizationRemarkEmitter.cpp \
 	MachineOutliner.cpp \
 	MachinePassRegistry.cpp \
@@ -98,6 +100,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
 	MacroFusion.cpp \
+	MIRCanonicalizerPass.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
 	OptimizePHIs.cpp \

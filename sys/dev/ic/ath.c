@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.115 2017/05/31 09:17:39 stsp Exp $  */
+/*      $OpenBSD: ath.c,v 1.116 2018/01/31 11:27:03 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -88,7 +88,6 @@ int	ath_ioctl(struct ifnet *, u_long, caddr_t);
 void	ath_fatal_proc(void *, int);
 void	ath_rxorn_proc(void *, int);
 void	ath_bmiss_proc(void *, int);
-u_int   ath_chan2flags(struct ieee80211com *, struct ieee80211_channel *);
 int	ath_initkeytable(struct ath_softc *);
 void    ath_mcastfilter_accum(caddr_t, u_int32_t (*)[2]);
 void    ath_mcastfilter_compute(struct ath_softc *, u_int32_t (*)[2]);
@@ -601,26 +600,6 @@ ath_bmiss_proc(void *arg, int pending)
 	}
 }
 
-u_int
-ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
-{
-	enum ieee80211_phymode mode = ieee80211_chan2mode(ic, chan);
-
-	switch (mode) {
-	case IEEE80211_MODE_AUTO:
-		return 0;
-	case IEEE80211_MODE_11A:
-		return CHANNEL_A;
-	case IEEE80211_MODE_11B:
-		return CHANNEL_B;
-	case IEEE80211_MODE_11G:
-		return CHANNEL_G;
-	default:
-		panic("%s: unsupported mode %d", __func__, mode);
-		return 0;
-	}
-}
-
 int
 ath_init(struct ifnet *ifp)
 {
@@ -666,7 +645,7 @@ ath_init1(struct ath_softc *sc)
 	 * and then setup of the interrupt mask.
 	 */
 	hchan.channel = ic->ic_ibss_chan->ic_freq;
-	hchan.channelFlags = ath_chan2flags(ic, ic->ic_ibss_chan);
+	hchan.channelFlags = ic->ic_ibss_chan->ic_flags;
 	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_TRUE, &status)) {
 		printf("%s: unable to reset hardware; hal status %u\n",
 			ifp->if_xname, status);
@@ -789,12 +768,11 @@ ath_reset(struct ath_softc *sc, int full)
 	HAL_CHANNEL hchan;
 
 	/*
-	 * Convert to a HAL channel description with the flags
-	 * constrained to reflect the current operating mode.
+	 * Convert to a HAL channel description.
 	 */
 	c = ic->ic_ibss_chan;
 	hchan.channel = c->ic_freq;
-	hchan.channelFlags = ath_chan2flags(ic, c);
+	hchan.channelFlags = c->ic_flags;
 
 	ath_hal_set_intr(ah, 0);		/* disable interrupts */
 	ath_draintxq(sc);		/* stop xmit side */
@@ -2658,12 +2636,10 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		ath_draintxq(sc);		/* clear pending tx frames */
 		ath_stoprecv(sc);		/* turn off frame recv */
 		/*
-		 * Convert to a HAL channel description with
-		 * the flags constrained to reflect the current
-		 * operating mode.
+		 * Convert to a HAL channel description.
 		 */
 		hchan.channel = chan->ic_freq;
-		hchan.channelFlags = ath_chan2flags(ic, chan);
+		hchan.channelFlags = chan->ic_flags;
 		if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_TRUE,
 		    &status)) {
 			printf("%s: ath_chan_set: unable to reset "
@@ -2753,12 +2729,11 @@ ath_calibrate(void *arg)
 	sc->sc_stats.ast_per_cal++;
 
 	/*
-	 * Convert to a HAL channel description with the flags
-	 * constrained to reflect the current operating mode.
+	 * Convert to a HAL channel description.
 	 */
 	c = ic->ic_ibss_chan;
 	hchan.channel = c->ic_freq;
-	hchan.channelFlags = ath_chan2flags(ic, c);
+	hchan.channelFlags = c->ic_flags;
 
 	s = splnet();
 	DPRINTF(ATH_DEBUG_CALIBRATE,

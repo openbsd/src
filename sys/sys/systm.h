@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.133 2017/08/11 21:24:20 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.139 2018/03/20 15:45:32 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -72,12 +72,14 @@
  */
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
+extern const char *faultstr;	/* fault message */
 extern const char version[];		/* system version */
 extern const char copyright[];	/* system copyright */
 extern const char ostype[];
 extern const char osversion[];
 extern const char osrelease[];
 extern int cold;		/* cold start flag initialized in locore */
+extern int db_active;		/* running currently inside ddb(4) */
 
 extern int ncpus;		/* number of CPUs used */
 extern int ncpusfound;		/* number of CPUs found */
@@ -209,8 +211,12 @@ int	copyin(const void *, void *, size_t)
 int	copyout(const void *, void *, size_t);
 int	copyin32(const uint32_t *, uint32_t *);
 
+struct arc4random_ctx;
 void	arc4random_buf(void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,1,2)));
+struct arc4random_ctx	*arc4random_ctx_new(void);
+void	arc4random_ctx_free(struct arc4random_ctx *);
+void	arc4random_ctx_buf(struct arc4random_ctx *, void *, size_t);
 u_int32_t arc4random(void);
 u_int32_t arc4random_uniform(u_int32_t);
 
@@ -246,6 +252,11 @@ void	sleep_finish(struct sleep_state *, int);
 int	sleep_finish_timeout(struct sleep_state *);
 int	sleep_finish_signal(struct sleep_state *);
 void	sleep_queue_init(void);
+
+struct cond;
+void	cond_init(struct cond *);
+void	cond_wait(struct cond *, const char *);
+void	cond_signal(struct cond *);
 
 struct mutex;
 struct rwlock;
@@ -296,26 +307,36 @@ int	uiomove(void *, size_t, struct uio *);
 
 extern struct rwlock netlock;
 
-#define	NET_LOCK()							\
+#define	NET_LOCK()		NET_WLOCK()
+#define	NET_UNLOCK()		NET_WUNLOCK()
+#define	NET_ASSERT_UNLOCKED()	NET_ASSERT_WUNLOCKED()
+
+
+#define	NET_WLOCK()	do { rw_enter_write(&netlock); } while (0)
+#define	NET_WUNLOCK()	do { rw_exit_write(&netlock); } while (0)
+
+#define	NET_ASSERT_WLOCKED()						\
 do {									\
-	rw_enter_write(&netlock);					\
+	int _s = rw_status(&netlock);					\
+	if ((splassert_ctl > 0) && (_s != RW_WRITE))			\
+		splassert_fail(RW_WRITE, _s, __func__);			\
 } while (0)
 
-#define	NET_UNLOCK()							\
+#define	NET_ASSERT_WUNLOCKED()						\
 do {									\
-	rw_exit_write(&netlock);					\
+	int _s = rw_status(&netlock);					\
+	if ((splassert_ctl > 0) && (_s == RW_WRITE))			\
+		splassert_fail(0, RW_WRITE, __func__);			\
 } while (0)
+
+#define	NET_RLOCK()	do { rw_enter_read(&netlock); } while (0)
+#define	NET_RUNLOCK()	do { rw_exit_read(&netlock); } while (0)
 
 #define	NET_ASSERT_LOCKED()						\
 do {									\
-	if (rw_status(&netlock) != RW_WRITE)				\
-		splassert_fail(RW_WRITE, rw_status(&netlock), __func__);\
-} while (0)
-
-#define	NET_ASSERT_UNLOCKED()						\
-do {									\
-	if (rw_status(&netlock) == RW_WRITE)				\
-		splassert_fail(0, rw_status(&netlock), __func__);	\
+	int _s = rw_status(&netlock);					\
+	if ((splassert_ctl > 0) && (_s != RW_WRITE && _s != RW_READ))	\
+		splassert_fail(RW_READ, _s, __func__);			\
 } while (0)
 
 __returns_twice int	setjmp(label_t *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.11 2015/09/30 17:49:59 jsing Exp $ */
+/* $OpenBSD: x509cset.c,v 1.14 2018/02/22 17:01:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -64,6 +64,13 @@
 #include <openssl/x509.h>
 
 int
+X509_CRL_up_ref(X509_CRL *x)   
+{
+	int refs = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+	return (refs > 1) ? 1 : 0;
+}
+
+int
 X509_CRL_set_version(X509_CRL *x, long version)
 {
 	if (x == NULL)
@@ -102,6 +109,12 @@ X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 }
 
 int
+X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
+{
+	return X509_CRL_set_lastUpdate(x, tm);
+}
+
+int
 X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
 	ASN1_TIME *in;
@@ -120,6 +133,12 @@ X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 }
 
 int
+X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
+{
+	return X509_CRL_set_nextUpdate(x, tm);
+}
+
+int
 X509_CRL_sort(X509_CRL *c)
 {
 	int i;
@@ -134,6 +153,24 @@ X509_CRL_sort(X509_CRL *c)
 	}
 	c->crl->enc.modified = 1;
 	return 1;
+}
+
+const STACK_OF(X509_EXTENSION) *
+X509_REVOKED_get0_extensions(const X509_REVOKED *x)
+{
+	return x->extensions;
+}
+
+const ASN1_TIME *
+X509_REVOKED_get0_revocationDate(const X509_REVOKED *x)
+{
+	return x->revocationDate;
+}
+
+const ASN1_INTEGER *
+X509_REVOKED_get0_serialNumber(const X509_REVOKED *x)
+{
+	return x->serialNumber;
 }
 
 int

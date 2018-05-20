@@ -1,4 +1,4 @@
-/*      $OpenBSD: special.c,v 1.7 2011/01/19 13:01:25 okan Exp $      */
+/*      $OpenBSD: special.c,v 1.8 2018/03/05 16:53:39 cheloha Exp $      */
 /*      $NetBSD: special.c,v 1.2 1995/09/08 03:23:00 tls Exp $      */
 
 /*-
@@ -48,9 +48,9 @@ c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
 	int dfound;
 
 	if ((fp1 = fdopen(fd1, "r")) == NULL)
-		err(ERR_EXIT, "%s", file1);
+		fatal("%s", file1);
 	if ((fp2 = fdopen(fd2, "r")) == NULL)
-		err(ERR_EXIT, "%s", file2);
+		fatal("%s", file2);
 
 	dfound = 0;
 	while (skip1--)
@@ -79,9 +79,9 @@ c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
 	}
 
 eof:	if (ferror(fp1))
-		err(ERR_EXIT, "%s", file1);
+		fatal("%s", file1);
 	if (ferror(fp2))
-		err(ERR_EXIT, "%s", file2);
+		fatal("%s", file2);
 	if (feof(fp1)) {
 		if (!feof(fp2))
 			eofmsg(file1);

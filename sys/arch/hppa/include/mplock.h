@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.2 2017/07/16 22:48:38 guenther Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.3 2017/12/04 09:51:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -52,7 +52,7 @@ void	___mp_unlock(struct __mp_lock * LOCK_FL_VARS);
 int	___mp_release_all(struct __mp_lock * LOCK_FL_VARS);
 int	___mp_release_all_but_one(struct __mp_lock * LOCK_FL_VARS);
 void	___mp_acquire_count(struct __mp_lock *, int LOCK_FL_VARS);
-int	__mp_lock_held(struct __mp_lock *);
+int	__mp_lock_held(struct __mp_lock *, struct cpu_info *);
 
 #ifdef WITNESS
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.90 2017/08/10 20:13:57 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.93 2018/01/21 18:54:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -600,7 +600,7 @@ xen_intsrc_add(struct xen_softc *sc, struct xen_intsrc *xi)
 static inline struct xen_intsrc *
 xen_intsrc_acquire(struct xen_softc *sc, evtchn_port_t port)
 {
-	struct xen_intsrc *xi;
+	struct xen_intsrc *xi = NULL;
 
 	mtx_enter(&sc->sc_islck);
 	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
@@ -713,17 +713,10 @@ xen_intr_schedule(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL)
-		task_add(xi->xi_taskq, &xi->xi_task);
-}
-
-static void
-xen_barrier_task(void *arg)
-{
-	int *notdone = arg;
-
-	*notdone = 0;
-	wakeup_one(notdone);
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
+		if (!task_add(xi->xi_taskq, &xi->xi_task))
+			xen_intsrc_release(sc, xi);
+	}
 }
 
 /*
@@ -740,9 +733,6 @@ xen_intr_barrier(xen_intr_handle_t xih)
 {
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
-	struct sleep_state sls;
-	int notdone = 1;
-	struct task t = TASK_INITIALIZER(xen_barrier_task, &notdone);
 
 	/*
 	 * XXX This will need to be revised once intr_barrier starts
@@ -751,11 +741,7 @@ xen_intr_barrier(xen_intr_handle_t xih)
 	intr_barrier(NULL);
 
 	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
-		task_add(xi->xi_taskq, &t);
-		while (notdone) {
-			sleep_setup(&sls, &notdone, PWAIT, "xenbar");
-			sleep_finish(&sls, notdone);
-		}
+		taskq_barrier(xi->xi_taskq);
 		xen_intsrc_release(sc, xi);
 	}
 }
@@ -1220,11 +1206,10 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 	loop = 0;
 	while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
 		if (loop++ > 10) {
-			panic("%s: grant table reference %u is held "
-			    "by domain %d: frame %#x flags %#x\n",
-			    sc->sc_dev.dv_xname, ref + ge->ge_start,
-			    ge->ge_table[ref].domid, ge->ge_table[ref].frame,
-			    ge->ge_table[ref].flags);
+			panic("grant table reference %u is held "
+			    "by domain %d: frame %#x flags %#x",
+			    ref + ge->ge_start, ge->ge_table[ref].domid,
+			    ge->ge_table[ref].frame, ge->ge_table[ref].flags);
 		}
 #if (defined(__amd64__) || defined(__i386__))
 		__asm volatile("pause": : : "memory");

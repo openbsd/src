@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_dwarf.c,v 1.6 2017/09/08 05:36:52 deraadt Exp $	 */
+/*	$OpenBSD: db_dwarf.c,v 1.7 2017/10/27 08:40:15 mpi Exp $	 */
 /*
  * Copyright (c) 2014 Matthew Dempsky <matthew@dempsky.org>
  *
@@ -396,7 +396,7 @@ next:
 #include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <elf_abi.h>
+#include <elf.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>

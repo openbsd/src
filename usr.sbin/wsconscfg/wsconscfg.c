@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.15 2017/08/23 09:15:33 fcambus Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.16 2017/10/31 17:59:30 anton Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -125,13 +125,13 @@ main(int argc, char *argv[])
 			wmd.type = WSMUX_KBD;
 		wmd.idx = idx;
 		if (delete) {
-			res = ioctl(wsfd, WSMUX_REMOVE_DEVICE, &wmd);
+			res = ioctl(wsfd, WSMUXIO_REMOVE_DEVICE, &wmd);
 			if (res < 0)
-				err(3, "WSMUX_REMOVE_DEVICE");
+				err(3, "WSMUXIO_REMOVE_DEVICE");
 		} else {
-			res = ioctl(wsfd, WSMUX_ADD_DEVICE, &wmd);
+			res = ioctl(wsfd, WSMUXIO_ADD_DEVICE, &wmd);
 			if (res < 0)
-				err(3, "WSMUX_ADD_DEVICE");
+				err(3, "WSMUXIO_ADD_DEVICE");
 		}
 	} else if (delete) {
 		dsd.idx = idx;

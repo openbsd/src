@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.18 2016/01/31 00:14:50 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.19 2018/01/26 16:22:19 kettenis Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <arm/swi.h>
+#include <arm/vfp.h>
 
 #define MAXARGS 8
 
@@ -102,6 +103,9 @@ swi_handler(trapframe_t *frame)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	uvmexp.syscalls++;
+
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((frame->tf_spsr & PSR_I) == 0))

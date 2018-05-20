@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_POINT_add.3,v 1.6 2016/12/11 14:22:43 schwarze Exp $
+.\"	$OpenBSD: EC_POINT_add.3,v 1.8 2018/03/23 00:09:11 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EC_POINT_ADD 3
 .Os
 .Sh NAME
@@ -271,3 +271,22 @@ returns 1 if a precomputation has been done or 0 if not.
 .Xr EC_GROUP_new 3 ,
 .Xr EC_KEY_new 3 ,
 .Xr EC_POINT_new 3
+.Sh HISTORY
+.Fn EC_POINT_add ,
+.Fn EC_POINT_dbl ,
+.Fn EC_POINT_invert ,
+.Fn EC_POINT_is_at_infinity ,
+.Fn EC_POINT_is_on_curve ,
+.Fn EC_POINT_cmp ,
+.Fn EC_POINT_make_affine ,
+.Fn EC_POINTs_make_affine ,
+.Fn EC_POINTs_mul ,
+.Fn EC_POINT_mul ,
+and
+.Fn EC_GROUP_precompute_mult
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn EC_GROUP_have_precompute_mult
+first appeared in OpenSSL 0.9.8 and has been available since
+.Ox 4.5 .

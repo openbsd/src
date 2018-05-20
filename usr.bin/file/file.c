@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.64 2017/07/01 21:07:13 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.66 2018/01/15 19:45:51 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -17,13 +17,19 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <imsg.h>
 #include <libgen.h>
 #include <limits.h>
 #include <pwd.h>
@@ -36,31 +42,45 @@
 #include "magic.h"
 #include "xmalloc.h"
 
+struct input_msg {
+	int		idx;
+
+	struct stat	sb;
+	int		error;
+
+	char		link_path[PATH_MAX];
+	int		link_error;
+	int		link_target;
+};
+
+struct input_ack {
+	int		idx;
+};
+
 struct input_file {
-	struct magic	*m;
+	struct magic		*m;
+	struct input_msg	*msg;
 
-	const char	*path;
-	struct stat	 sb;
-	int		 fd;
-	int		 error;
+	const char		*path;
+	int			 fd;
 
-	char		 link_path[PATH_MAX];
-	int		 link_error;
-	int		 link_target;
-
-	void		*base;
-	size_t		 size;
-	int		 mapped;
-	char		*result;
+	void			*base;
+	size_t			 size;
+	int			 mapped;
+	char			*result;
 };
 
 extern char	*__progname;
 
 __dead void	 usage(void);
 
-static void	 prepare_input(struct input_file *, const char *);
+static int	 prepare_message(struct input_msg *, int, const char *);
+static void	 send_message(struct imsgbuf *, void *, size_t, int);
+static int	 read_message(struct imsgbuf *, struct imsg *, pid_t);
 
-static void	 read_link(struct input_file *, const char *);
+static void	 read_link(struct input_msg *, const char *);
+
+static __dead void child(int, pid_t, int, char **);
 
 static void	 test_file(struct input_file *, size_t);
 
@@ -77,6 +97,9 @@ static int	 iflag;
 static int	 Lflag;
 static int	 sflag;
 static int	 Wflag;
+
+static char	*magicpath;
+static FILE	*magicfp;
 
 static struct option longopts[] = {
 	{ "brief",       no_argument, NULL, 'b' },
@@ -96,16 +119,16 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int			 opt, idx;
-	char			*home, *magicpath;
+	int			 opt, pair[2], fd, idx;
+	char			*home;
 	struct passwd		*pw;
-	FILE			*magicfp = NULL;
-	struct magic		*m;
-	struct input_file	*inf = NULL;
-	size_t			 len, width = 0;
+	struct imsgbuf		 ibuf;
+	struct imsg		 imsg;
+	struct input_msg	 msg;
+	struct input_ack	*ack;
+	pid_t			 pid, parent;
 
-	if (pledge("stdio rpath getpw id", NULL) == -1)
-		err(1, "pledge");
+	tzset();
 
 	for (;;) {
 		opt = getopt_long(argc, argv, "bchiLsW", longopts, NULL);
@@ -145,6 +168,7 @@ main(int argc, char **argv)
 	} else if (argc == 0)
 		usage();
 
+	magicfp = NULL;
 	if (geteuid() != 0 && !issetugid()) {
 		home = getenv("HOME");
 		if (home == NULL || *home == '\0') {
@@ -168,19 +192,180 @@ main(int argc, char **argv)
 	if (magicfp == NULL)
 		err(1, "%s", magicpath);
 
-	if (!cflag) {
-		inf = xcalloc(argc, sizeof *inf);
-		for (idx = 0; idx < argc; idx++) {
-			len = strlen(argv[idx]) + 1;
-			if (len > width)
-				width = len;
-			prepare_input(&inf[idx], argv[idx]);
-		}
+	parent = getpid();
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
+		err(1, "socketpair");
+	switch (pid = fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		close(pair[0]);
+		child(pair[1], parent, argc, argv);
+	}
+	close(pair[1]);
+
+	fclose(magicfp);
+	magicfp = NULL;
+
+	if (cflag)
+		goto wait_for_child;
+
+	imsg_init(&ibuf, pair[0]);
+	for (idx = 0; idx < argc; idx++) {
+		fd = prepare_message(&msg, idx, argv[idx]);
+		send_message(&ibuf, &msg, sizeof msg, fd);
+
+		if (read_message(&ibuf, &imsg, pid) == 0)
+			break;
+		if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof *ack)
+			errx(1, "message too small");
+		ack = imsg.data;
+		if (ack->idx != idx)
+			errx(1, "index not expected");
+		imsg_free(&imsg);
 	}
 
-	tzset();
+wait_for_child:
+	close(pair[0]);
+	while (wait(NULL) == -1 && errno != ECHILD) {
+		if (errno != EINTR)
+			err(1, "wait");
+	}
+	_exit(0); /* let the child flush */
+}
 
-	if (pledge("stdio getpw id", NULL) == -1)
+static int
+prepare_message(struct input_msg *msg, int idx, const char *path)
+{
+	int	fd, mode, error;
+
+	memset(msg, 0, sizeof *msg);
+	msg->idx = idx;
+
+	if (strcmp(path, "-") == 0) {
+		if (fstat(STDIN_FILENO, &msg->sb) == -1) {
+			msg->error = errno;
+			return (-1);
+		}
+		return (STDIN_FILENO);
+	}
+
+	if (Lflag)
+		error = stat(path, &msg->sb);
+	else
+		error = lstat(path, &msg->sb);
+	if (error == -1) {
+		msg->error = errno;
+		return (-1);
+	}
+
+	/*
+	 * pledge(2) doesn't let us pass directory file descriptors around -
+	 * but in fact we don't need them, so just don't open directories or
+	 * symlinks (which could be to directories).
+	 */
+	mode = msg->sb.st_mode;
+	if (!S_ISDIR(mode) && !S_ISLNK(mode)) {
+		fd = open(path, O_RDONLY|O_NONBLOCK);
+		if (fd == -1 && (errno == ENFILE || errno == EMFILE))
+			err(1, "open");
+	} else
+		fd = -1;
+	if (S_ISLNK(mode))
+		read_link(msg, path);
+	return (fd);
+
+}
+
+static void
+send_message(struct imsgbuf *ibuf, void *msg, size_t msglen, int fd)
+{
+	if (imsg_compose(ibuf, -1, -1, 0, fd, msg, msglen) != 1)
+		err(1, "imsg_compose");
+	if (imsg_flush(ibuf) != 0)
+		err(1, "imsg_flush");
+}
+
+static int
+read_message(struct imsgbuf *ibuf, struct imsg *imsg, pid_t from)
+{
+	int	n;
+
+	while ((n = imsg_read(ibuf)) == -1 && errno == EAGAIN)
+		/* nothing */ ;
+	if (n == -1)
+		err(1, "imsg_read");
+	if (n == 0)
+		return (0);
+
+	if ((n = imsg_get(ibuf, imsg)) == -1)
+		err(1, "imsg_get");
+	if (n == 0)
+		return (0);
+
+	if ((pid_t)imsg->hdr.pid != from)
+		errx(1, "PIDs don't match");
+
+	return (n);
+
+}
+
+static void
+read_link(struct input_msg *msg, const char *path)
+{
+	struct stat	 sb;
+	char		 lpath[PATH_MAX];
+	char		*copy, *root;
+	int		 used;
+	ssize_t		 size;
+
+	size = readlink(path, lpath, sizeof lpath - 1);
+	if (size == -1) {
+		msg->link_error = errno;
+		return;
+	}
+	lpath[size] = '\0';
+
+	if (*lpath == '/')
+		strlcpy(msg->link_path, lpath, sizeof msg->link_path);
+	else {
+		copy = xstrdup(path);
+
+		root = dirname(copy);
+		if (*root == '\0' || strcmp(root, ".") == 0 ||
+		    strcmp (root, "/") == 0)
+			strlcpy(msg->link_path, lpath, sizeof msg->link_path);
+		else {
+			used = snprintf(msg->link_path, sizeof msg->link_path,
+			    "%s/%s", root, lpath);
+			if (used < 0 || (size_t)used >= sizeof msg->link_path) {
+				msg->link_error = ENAMETOOLONG;
+				free(copy);
+				return;
+			}
+		}
+
+		free(copy);
+	}
+
+	if (!Lflag && stat(path, &sb) == -1)
+		msg->link_target = errno;
+}
+
+static __dead void
+child(int fd, pid_t parent, int argc, char **argv)
+{
+	struct passwd		*pw;
+	struct magic		*m;
+	struct imsgbuf		 ibuf;
+	struct imsg		 imsg;
+	struct input_msg	*msg;
+	struct input_ack	 ack;
+	struct input_file	 inf;
+	int			 i, idx;
+	size_t			 len, width = 0;
+
+	if (pledge("stdio getpw recvfd id", NULL) == -1)
 		err(1, "pledge");
 
 	if (geteuid() == 0) {
@@ -195,7 +380,7 @@ main(int argc, char **argv)
 			err(1, "setresuid");
 	}
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio recvfd", NULL) == -1)
 		err(1, "pledge");
 
 	m = magic_load(magicfp, magicpath, cflag || Wflag);
@@ -203,97 +388,42 @@ main(int argc, char **argv)
 		magic_dump(m);
 		exit(0);
 	}
-	fclose(magicfp);
 
-	for (idx = 0; idx < argc; idx++) {
-		inf[idx].m = m;
-		test_file(&inf[idx], width);
-		if (inf[idx].fd != -1 && inf[idx].fd != STDIN_FILENO)
-			close(inf[idx].fd);
+	for (i = 0; i < argc; i++) {
+		len = strlen(argv[i]) + 1;
+		if (len > width)
+			width = len;
+	}
+
+	imsg_init(&ibuf, fd);
+	for (;;) {
+		if (read_message(&ibuf, &imsg, parent) == 0)
+			break;
+		if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof *msg)
+			errx(1, "message too small");
+		msg = imsg.data;
+
+		idx = msg->idx;
+		if (idx < 0 || idx >= argc)
+			errx(1, "index out of range");
+
+		memset(&inf, 0, sizeof inf);
+		inf.m = m;
+		inf.msg = msg;
+
+		inf.path = argv[idx];
+		inf.fd = imsg.fd;
+
+		test_file(&inf, width);
+
+		if (imsg.fd != -1)
+			close(imsg.fd);
+		imsg_free(&imsg);
+
+		ack.idx = idx;
+		send_message(&ibuf, &ack, sizeof ack, -1);
 	}
 	exit(0);
-}
-
-static void
-prepare_input(struct input_file *inf, const char *path)
-{
-	int	fd, mode, error;
-
-	inf->path = path;
-
-	if (strcmp(path, "-") == 0) {
-		if (fstat(STDIN_FILENO, &inf->sb) == -1) {
-			inf->error = errno;
-			inf->fd = -1;
-			return;
-		}
-		inf->fd = STDIN_FILENO;
-		return;
-	}
-
-	if (Lflag)
-		error = stat(path, &inf->sb);
-	else
-		error = lstat(path, &inf->sb);
-	if (error == -1) {
-		inf->error = errno;
-		inf->fd = -1;
-		return;
-	}
-
-	/* We don't need them, so don't open directories or symlinks. */
-	mode = inf->sb.st_mode;
-	if (!S_ISDIR(mode) && !S_ISLNK(mode)) {
-		fd = open(path, O_RDONLY|O_NONBLOCK);
-		if (fd == -1 && (errno == ENFILE || errno == EMFILE))
-			err(1, "open");
-	} else
-		fd = -1;
-	if (S_ISLNK(mode))
-		read_link(inf, path);
-	inf->fd = fd;
-}
-
-static void
-read_link(struct input_file *inf, const char *path)
-{
-	struct stat	 sb;
-	char		 lpath[PATH_MAX];
-	char		*copy, *root;
-	int		 used;
-	ssize_t		 size;
-
-	size = readlink(path, lpath, sizeof lpath - 1);
-	if (size == -1) {
-		inf->link_error = errno;
-		return;
-	}
-	lpath[size] = '\0';
-
-	if (*lpath == '/')
-		strlcpy(inf->link_path, lpath, sizeof inf->link_path);
-	else {
-		copy = xstrdup(path);
-
-		root = dirname(copy);
-		if (*root == '\0' || strcmp(root, ".") == 0 ||
-		    strcmp (root, "/") == 0)
-			strlcpy(inf->link_path, lpath, sizeof inf->link_path);
-		else {
-			used = snprintf(inf->link_path, sizeof inf->link_path,
-			    "%s/%s", root, lpath);
-			if (used < 0 || (size_t)used >= sizeof inf->link_path) {
-				inf->link_error = ENAMETOOLONG;
-				free(copy);
-				return;
-			}
-		}
-
-		free(copy);
-	}
-
-	if (!Lflag && stat(path, &sb) == -1)
-		inf->link_target = errno;
 }
 
 static void *
@@ -330,14 +460,14 @@ load_file(struct input_file *inf)
 {
 	size_t	used;
 
-	if (inf->sb.st_size == 0 && S_ISREG(inf->sb.st_mode))
+	if (inf->msg->sb.st_size == 0 && S_ISREG(inf->msg->sb.st_mode))
 		return (0); /* empty file */
-	if (inf->sb.st_size == 0 || inf->sb.st_size > FILE_READ_SIZE)
+	if (inf->msg->sb.st_size == 0 || inf->msg->sb.st_size > FILE_READ_SIZE)
 		inf->size = FILE_READ_SIZE;
 	else
-		inf->size = inf->sb.st_size;
+		inf->size = inf->msg->sb.st_size;
 
-	if (!S_ISREG(inf->sb.st_mode))
+	if (!S_ISREG(inf->msg->sb.st_mode))
 		goto try_read;
 
 	inf->base = mmap(NULL, inf->size, PROT_READ, MAP_PRIVATE, inf->fd, 0);
@@ -360,13 +490,13 @@ try_read:
 static int
 try_stat(struct input_file *inf)
 {
-	if (inf->error != 0) {
+	if (inf->msg->error != 0) {
 		xasprintf(&inf->result, "cannot stat '%s' (%s)", inf->path,
-		    strerror(inf->error));
+		    strerror(inf->msg->error));
 		return (1);
 	}
 	if (sflag || strcmp(inf->path, "-") == 0) {
-		switch (inf->sb.st_mode & S_IFMT) {
+		switch (inf->msg->sb.st_mode & S_IFMT) {
 		case S_IFIFO:
 			if (strcmp(inf->path, "-") != 0)
 				break;
@@ -377,29 +507,29 @@ try_stat(struct input_file *inf)
 		}
 	}
 
-	if (iflag && (inf->sb.st_mode & S_IFMT) != S_IFREG) {
+	if (iflag && (inf->msg->sb.st_mode & S_IFMT) != S_IFREG) {
 		xasprintf(&inf->result, "application/x-not-regular-file");
 		return (1);
 	}
 
-	switch (inf->sb.st_mode & S_IFMT) {
+	switch (inf->msg->sb.st_mode & S_IFMT) {
 	case S_IFDIR:
 		xasprintf(&inf->result, "directory");
 		return (1);
 	case S_IFLNK:
-		if (inf->link_error != 0) {
+		if (inf->msg->link_error != 0) {
 			xasprintf(&inf->result, "unreadable symlink '%s' (%s)",
-			    inf->path, strerror(inf->link_error));
+			    inf->path, strerror(inf->msg->link_error));
 			return (1);
 		}
-		if (inf->link_target == ELOOP)
+		if (inf->msg->link_target == ELOOP)
 			xasprintf(&inf->result, "symbolic link in a loop");
-		else if (inf->link_target != 0) {
+		else if (inf->msg->link_target != 0) {
 			xasprintf(&inf->result, "broken symbolic link to '%s'",
-			    inf->link_path);
+			    inf->msg->link_path);
 		} else {
 			xasprintf(&inf->result, "symbolic link to '%s'",
-			    inf->link_path);
+			    inf->msg->link_path);
 		}
 		return (1);
 	case S_IFSOCK:
@@ -407,13 +537,13 @@ try_stat(struct input_file *inf)
 		return (1);
 	case S_IFBLK:
 		xasprintf(&inf->result, "block special (%ld/%ld)",
-		    (long)major(inf->sb.st_rdev),
-		    (long)minor(inf->sb.st_rdev));
+		    (long)major(inf->msg->sb.st_rdev),
+		    (long)minor(inf->msg->sb.st_rdev));
 		return (1);
 	case S_IFCHR:
 		xasprintf(&inf->result, "character special (%ld/%ld)",
-		    (long)major(inf->sb.st_rdev),
-		    (long)minor(inf->sb.st_rdev));
+		    (long)major(inf->msg->sb.st_rdev),
+		    (long)minor(inf->msg->sb.st_rdev));
 		return (1);
 	case S_IFIFO:
 		xasprintf(&inf->result, "fifo (named pipe)");
@@ -440,16 +570,16 @@ try_access(struct input_file *inf)
 {
 	char tmp[256] = "";
 
-	if (inf->sb.st_size == 0 && S_ISREG(inf->sb.st_mode))
+	if (inf->msg->sb.st_size == 0 && S_ISREG(inf->msg->sb.st_mode))
 		return (0); /* empty file */
 	if (inf->fd != -1)
 		return (0);
 
-	if (inf->sb.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
+	if (inf->msg->sb.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
 		strlcat(tmp, "writable, ", sizeof tmp);
-	if (inf->sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
+	if (inf->msg->sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
 		strlcat(tmp, "executable, ", sizeof tmp);
-	if (S_ISREG(inf->sb.st_mode))
+	if (S_ISREG(inf->msg->sb.st_mode))
 		strlcat(tmp, "regular file, ", sizeof tmp);
 	strlcat(tmp, "no read permission", sizeof tmp);
 
@@ -515,7 +645,7 @@ static int
 try_unknown(struct input_file *inf)
 {
 	if (iflag)
-		xasprintf(&inf->result, "application/x-not-regular-file");
+		xasprintf(&inf->result, "application/octet-stream");
 	else
 		xasprintf(&inf->result, "data");
 	return (1);

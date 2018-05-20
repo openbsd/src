@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxcorereg.h,v 1.1 2014/03/13 02:17:13 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxcorereg.h,v 1.2 2017/11/01 14:43:01 visa Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -51,5 +51,10 @@
 #define COP_0_CVMCTL_IPTI		0x00000070
 #define COP_0_CVMCTL_LE			0x00000002
 #define COP_0_CVMCTL_USELY		0x00000001
+
+/* CvmMemCtl register */
+#define COP_0_CVMMEMCTL_LMTENA		0x0008000000000000ull
+#define COP_0_CVMMEMCTL_LMTLINE_M	0x0007e00000000000ull
+#define COP_0_CVMMEMCTL_LMTLINE_S	45
 
 #endif /* _CN30XXCOREREG_H_ */

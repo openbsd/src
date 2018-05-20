@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.47 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.50 2018/02/05 09:52:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2018 Stefan Sperling <stsp@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -130,16 +131,26 @@ void		athn_usb_newstate_cb(struct athn_usb_softc *, void *);
 void		athn_usb_newassoc(struct ieee80211com *,
 		    struct ieee80211_node *, int);
 void		athn_usb_newassoc_cb(struct athn_usb_softc *, void *);
-void		athn_usb_node_leave(struct ieee80211com *,
+struct ieee80211_node *athn_usb_node_alloc(struct ieee80211com *);
+void		athn_usb_count_active_sta(void *, struct ieee80211_node *);
+void		athn_usb_newauth_cb(struct athn_usb_softc *, void *);
+int		athn_usb_newauth(struct ieee80211com *,
+		    struct ieee80211_node *, int, uint16_t);
+void		athn_usb_node_free(struct ieee80211com *,
 		    struct ieee80211_node *);
-void		athn_usb_node_leave_cb(struct athn_usb_softc *, void *);
+void		athn_usb_node_free_cb(struct athn_usb_softc *, void *);
 int		athn_usb_ampdu_tx_start(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 void		athn_usb_ampdu_tx_start_cb(struct athn_usb_softc *, void *);
 void		athn_usb_ampdu_tx_stop(struct ieee80211com *,
 		    struct ieee80211_node *, uint8_t);
 void		athn_usb_ampdu_tx_stop_cb(struct athn_usb_softc *, void *);
+void		athn_usb_clean_nodes(void *, struct ieee80211_node *);
 int		athn_usb_create_node(struct athn_usb_softc *,
+		    struct ieee80211_node *);
+int		athn_usb_node_set_rates(struct athn_usb_softc *,
+		    struct ieee80211_node *);
+int		athn_usb_remove_node(struct athn_usb_softc *,
 		    struct ieee80211_node *);
 void		athn_usb_rx_enable(struct athn_softc *);
 int		athn_set_chan(struct athn_softc *, struct ieee80211_channel *,
@@ -159,6 +170,7 @@ void		athn_usb_delete_key_cb(struct athn_usb_softc *, void *);
 void		athn_usb_bcneof(struct usbd_xfer *, void *,
 		    usbd_status);
 void		athn_usb_swba(struct athn_usb_softc *);
+void		athn_usb_tx_status(void *, struct ieee80211_node *);
 void		athn_usb_rx_wmi_ctrl(struct athn_usb_softc *, uint8_t *, int);
 void		athn_usb_intr(struct usbd_xfer *, void *,
 		    usbd_status);
@@ -319,8 +331,13 @@ athn_usb_attachhook(struct device *self)
 	ifp->if_ioctl = athn_usb_ioctl;
 	ifp->if_start = athn_usb_start;
 	ifp->if_watchdog = athn_usb_watchdog;
+	ic->ic_node_alloc = athn_usb_node_alloc;
+	ic->ic_newauth = athn_usb_newauth;
 	ic->ic_newassoc = athn_usb_newassoc;
-	ic->ic_node_leave = athn_usb_node_leave;
+#ifndef IEEE80211_STA_ONLY
+	usc->sc_node_free = ic->ic_node_free;
+	ic->ic_node_free = athn_usb_node_free;
+#endif
 	ic->ic_updateslot = athn_usb_updateslot;
 	ic->ic_updateedca = athn_usb_updateedca;
 #ifdef notyet
@@ -629,12 +646,9 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	/* Determine which firmware image to load. */
 	if (usc->flags & ATHN_USB_FLAG_AR7010) {
 		dd = usbd_get_device_descriptor(usc->sc_udev);
-		if (UGETW(dd->bcdDevice) == 0x0202)
-			name = "athn-ar7010-11";
-		else
-			name = "athn-ar7010";
+		name = "athn-open-ar7010";
 	} else
-		name = "athn-ar9271";
+		name = "athn-open-ar9271";
 	/* Read firmware image from the filesystem. */
 	if ((error = loadfirmware(name, &fw, &fwsize)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
@@ -1026,20 +1040,15 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
 	uint32_t reg, imask;
-	uint8_t sta_index;
 	int s, error;
 
 	timeout_del(&sc->calib_to);
 
 	s = splnet();
 	ostate = ic->ic_state;
-	DPRINTF(("newstate %d -> %d\n", ostate, cmd->state));
 
-	if (ostate == IEEE80211_S_RUN) {
-		sta_index = ((struct athn_node *)ic->ic_bss)->sta_index;
-		(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
-		    &sta_index, sizeof(sta_index), NULL);
-		usc->nnodes--;
+	if (ostate == IEEE80211_S_RUN && ic->ic_opmode == IEEE80211_M_STA) {
+		athn_usb_remove_node(usc, ic->ic_bss);
 		reg = AR_READ(sc, AR_RX_FILTER);
 		reg = (reg & ~AR_RX_FILTER_MYBEACON) |
 		    AR_RX_FILTER_BEACON;
@@ -1053,13 +1062,21 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 	case IEEE80211_S_SCAN:
 		/* Make the LED blink while scanning. */
 		athn_set_led(sc, !sc->led_state);
-		(void)athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
+		error = athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
+		if (error)
+			printf("%s: could not switch to channel %d\n",
+			    usc->usb_dev.dv_xname,
+			    ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan));
 		if (!usbd_is_dying(usc->sc_udev))
 			timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
 		athn_set_led(sc, 0);
 		error = athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
+		if (error)
+			printf("%s: could not switch to channel %d\n",
+			    usc->usb_dev.dv_xname,
+			    ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan));
 		break;
 	case IEEE80211_S_ASSOC:
 		break;
@@ -1069,13 +1086,18 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
 
-		/* Create node entry for our BSS */
-		error = athn_usb_create_node(usc, ic->ic_bss);
-
+		if (ic->ic_opmode == IEEE80211_M_STA) {
+			/* Create node entry for our BSS */
+			error = athn_usb_create_node(usc, ic->ic_bss);
+			if (error)
+				printf("%s: could not update firmware station "
+				    "table\n", usc->usb_dev.dv_xname);
+		}
 		athn_set_bss(sc, ic->ic_bss);
 		athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			athn_usb_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 			athn_set_hostap_timers(sc);
 			/* Enable software beacon alert interrupts. */
 			imask = htobe32(AR_IMR_SWBA);
@@ -1108,50 +1130,180 @@ athn_usb_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 #ifndef IEEE80211_STA_ONLY
 	struct athn_usb_softc *usc = ic->ic_softc;
 
-	if (ic->ic_opmode != IEEE80211_M_HOSTAP || !isnew)
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+	    ic->ic_state != IEEE80211_S_RUN)
 		return;
-	/* Do it in a process context. */
+
+	/* Update the node's supported rates in a process context. */
 	ieee80211_ref_node(ni);
 	athn_usb_do_async(usc, athn_usb_newassoc_cb, &ni, sizeof(ni));
-}
-
-void
-athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
-{
-	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
-	struct ieee80211_node *ni = *(void **)arg;
-	int s;
-
-	s = splnet();
-	/* NB: Node may have left before we got scheduled. */
-	if (ni->ni_associd != 0 && ni->ni_state == IEEE80211_STA_ASSOC)
-		(void)athn_usb_create_node(usc, ni);
-	ieee80211_release_node(ic, ni);
-	splx(s);
 #endif
 }
 
+#ifndef IEEE80211_STA_ONLY
 void
-athn_usb_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
+athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
+{
+ 	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ieee80211_node *ni = *(void **)arg;
+	struct athn_node *an = (struct athn_node *)ni;
+	int s;
+
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+ 	s = splnet();
+	/* NB: Node may have left before we got scheduled. */
+	if (an->sta_index != 0)
+		(void)athn_usb_node_set_rates(usc, ni);
+	ieee80211_release_node(ic, ni);
+	splx(s);
+}
+#endif
+
+struct ieee80211_node *
+athn_usb_node_alloc(struct ieee80211com *ic)
+{
+	struct athn_node *an;
+
+	an = malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return (struct ieee80211_node *)an;
+}
+
+
+#ifndef IEEE80211_STA_ONLY
+void
+athn_usb_count_active_sta(void *arg, struct ieee80211_node *ni)
+{
+	int *nsta = arg;
+	struct athn_node *an = (struct athn_node *)ni;
+
+	if (an->sta_index == 0)
+		return;
+
+	if ((ni->ni_state == IEEE80211_STA_AUTH ||
+	    ni->ni_state == IEEE80211_STA_ASSOC) &&
+	    ni->ni_inact < IEEE80211_INACT_MAX)
+		(*nsta)++;
+}
+
+struct athn_usb_newauth_cb_arg {
+	struct ieee80211_node *ni;
+	uint16_t seq;
+};
+
+void
+athn_usb_newauth_cb(struct athn_usb_softc *usc, void *arg)
+{
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct athn_usb_newauth_cb_arg *a = arg;
+	struct ieee80211_node *ni = a->ni;
+	uint16_t seq = a->seq;
+	struct athn_node *an = (struct athn_node *)ni;
+	int s, error = 0;
+
+	free(arg, M_DEVBUF, sizeof(*arg));
+
+	if (ic->ic_state != IEEE80211_S_RUN)
+		return;
+
+	s = splnet();
+	if (an->sta_index == 0) {
+		error = athn_usb_create_node(usc, ni);
+		if (error)
+			printf("%s: could not add station %s to firmware "
+			    "table\n", usc->usb_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr));
+	}
+	if (error == 0)
+		ieee80211_auth_open_confirm(ic, ni, seq);
+	ieee80211_unref_node(&ni);
+	splx(s);
+}
+#endif
+
+int
+athn_usb_newauth(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int isnew, uint16_t seq)
+{
+#ifndef IEEE80211_STA_ONLY
+	struct athn_usb_softc *usc = ic->ic_softc;
+	struct ifnet *ifp = &ic->ic_if;
+	struct athn_node *an = (struct athn_node *)ni;
+	int nsta;
+	struct athn_usb_newauth_cb_arg *arg;
+
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+		return 0;
+
+	if (!isnew && an->sta_index != 0) /* already in firmware table */
+		return 0;
+
+	/* Check if we have room in the firmware table. */
+	nsta = 1; /* Account for default node. */
+	ieee80211_iterate_nodes(ic, athn_usb_count_active_sta, &nsta);
+	if (nsta >= AR_USB_MAX_STA) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: cannot authenticate station %s: firmware "
+			    "table is full\n", usc->usb_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr));
+		return ENOSPC;
+	}
+
+	/* 
+	 * In a process context, try to add this node to the
+	 * firmware table and confirm the AUTH request.
+	 */
+	arg = malloc(sizeof(*arg), M_DEVBUF, M_NOWAIT);
+	if (arg == NULL)
+		return ENOMEM;
+	arg->ni = ieee80211_ref_node(ni);
+	arg->seq = seq;
+	athn_usb_do_async(usc, athn_usb_newauth_cb, arg, sizeof(*arg));
+	return EBUSY;
+#else
+	return 0;
+#endif /* IEEE80211_STA_ONLY */
+}
+
+#ifndef IEEE80211_STA_ONLY
+void
+athn_usb_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct athn_usb_softc *usc = ic->ic_softc;
-	uint8_t sta_index;
+	struct athn_node *an = (struct athn_node *)ni;
 
-	/* Do it in a process context. */
-	sta_index = ((struct athn_node *)ni)->sta_index;
-	athn_usb_do_async(usc, athn_usb_node_leave_cb,
-	    &sta_index, sizeof(sta_index));
+	/* 
+	 * Remove the node from the firmware table in a process context.
+	 * Pass an index rather than the pointer which we will free.
+	 */
+	if (an->sta_index != 0)
+		athn_usb_do_async(usc, athn_usb_node_free_cb,
+		    &an->sta_index, sizeof(an->sta_index));
+	usc->sc_node_free(ic, ni);
 }
 
 void
-athn_usb_node_leave_cb(struct athn_usb_softc *usc, void *arg)
+athn_usb_node_free_cb(struct athn_usb_softc *usc, void *arg)
 {
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	uint8_t sta_index = *(uint8_t *)arg;
+	int error;
 
-	(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
 	    &sta_index, sizeof(sta_index), NULL);
-	usc->nnodes--;
+	if (error) {
+		printf("%s: could not remove station %u from firmware table\n",
+		    usc->usb_dev.dv_xname, sta_index);
+		return;
+	}
+	usc->free_node_slots |= (1 << sta_index);
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %u removed from firmware table\n",
+		    usc->usb_dev.dv_xname, sta_index);
 }
+#endif /* IEEE80211_STA_ONLY */
 
 int
 athn_usb_ampdu_tx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
@@ -1210,27 +1362,67 @@ athn_usb_ampdu_tx_stop_cb(struct athn_usb_softc *usc, void *arg)
 	    &aggr, sizeof(aggr), NULL);
 }
 
+#ifndef IEEE80211_STA_ONLY
+/* Try to find a node we can evict to make room in the firmware table. */
+void
+athn_usb_clean_nodes(void *arg, struct ieee80211_node *ni)
+{
+	struct athn_usb_softc *usc = arg;
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct athn_node *an = (struct athn_node *)ni;
+
+	/* 
+	 * Don't remove the default node (used for management frames).
+	 * Nodes which are not in the firmware table also have index zero.
+	 */
+	if (an->sta_index == 0)
+		return;
+
+	/* Remove non-associated nodes. */
+	if (ni->ni_state != IEEE80211_STA_AUTH &&
+	    ni->ni_state != IEEE80211_STA_ASSOC) {
+		athn_usb_remove_node(usc, ni);
+		return;
+	}
+
+	/* 
+	 * Kick off inactive associated nodes. This won't help
+	 * immediately but will help if the new STA retries later.
+	 */
+	if (ni->ni_inact >= IEEE80211_INACT_MAX) {
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_EXPIRE);
+		ieee80211_node_leave(ic, ni);
+	}
+}
+#endif
+
 int
 athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 {
 	struct athn_node *an = (struct athn_node *)ni;
 	struct ar_htc_target_sta sta;
-	struct ar_htc_target_rate rate;
-	int error, i, j;
+	int error, sta_index;
+#ifndef IEEE80211_STA_ONLY
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 
-	/* Firmware cannot handle more than 8 STAs. */
-	if (usc->nnodes > AR_USB_MAX_STA)
+	/* Firmware cannot handle more than 8 STAs. Try to make room first. */
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		ieee80211_iterate_nodes(ic, athn_usb_clean_nodes, usc);
+#endif
+	if (usc->free_node_slots == 0x00)
 		return ENOBUFS;
 
-	an->sta_index = IEEE80211_AID(ni->ni_associd);
+	sta_index = ffs(usc->free_node_slots) - 1;
+	if (sta_index < 0 || sta_index >= AR_USB_MAX_STA)
+		return ENOSPC;
 
 	/* Create node entry on target. */
 	memset(&sta, 0, sizeof(sta));
 	IEEE80211_ADDR_COPY(sta.macaddr, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(sta.bssid, ni->ni_bssid);
-	sta.associd = htobe16(ni->ni_associd);
-	sta.valid = 1;
-	sta.sta_index = an->sta_index;
+	sta.sta_index = sta_index;
 	sta.maxampdu = 0xffff;
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		sta.flags |= htobe16(AR_HTC_STA_HT);
@@ -1238,11 +1430,28 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	    &sta, sizeof(sta), NULL);
 	if (error != 0)
 		return (error);
-	usc->nnodes++;
+	an->sta_index = sta_index;
+	usc->free_node_slots &= ~(1 << an->sta_index);
+
+#ifndef IEEE80211_STA_ONLY
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %u (%s) added to firmware table\n",
+		    usc->usb_dev.dv_xname, sta_index,
+		    ether_sprintf(ni->ni_macaddr));
+#endif
+	return athn_usb_node_set_rates(usc, ni);
+}
+
+int
+athn_usb_node_set_rates(struct athn_usb_softc *usc, struct ieee80211_node *ni)
+{
+	struct athn_node *an = (struct athn_node *)ni;
+	struct ar_htc_target_rate rate;
+	int i, j;
 
 	/* Setup supported rates. */
 	memset(&rate, 0, sizeof(rate));
-	rate.sta_index = sta.sta_index;
+	rate.sta_index = an->sta_index;
 	rate.isnew = 1;
 	rate.lg_rates.rs_nrates = ni->ni_rates.rs_nrates;
 	memcpy(rate.lg_rates.rs_rates, ni->ni_rates.rs_rates,
@@ -1270,9 +1479,40 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 			rate.capflags |= htobe32(AR_RC_SGI_FLAG);
 #endif
 	}
-	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_RC_RATE_UPDATE,
+
+	return athn_usb_wmi_xcmd(usc, AR_WMI_CMD_RC_RATE_UPDATE,
 	    &rate, sizeof(rate), NULL);
-	return (error);
+}
+
+int
+athn_usb_remove_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
+{
+	struct athn_node *an = (struct athn_node *)ni;
+	int error;
+#ifndef IEEE80211_STA_ONLY
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+#endif
+
+	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+	    &an->sta_index, sizeof(an->sta_index), NULL);
+	if (error) {
+		printf("%s: could not remove station %u (%s) from "
+		    "firmware table\n", usc->usb_dev.dv_xname, an->sta_index,
+		    ether_sprintf(ni->ni_macaddr));
+		return error;
+	}
+
+#ifndef IEEE80211_STA_ONLY
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: station %u (%s) removed from firmware table\n",
+		    usc->usb_dev.dv_xname, an->sta_index,
+		    ether_sprintf(ni->ni_macaddr));
+#endif
+
+	usc->free_node_slots |= (1 << an->sta_index);
+	an->sta_index = 0;
+	return 0;
 }
 
 void
@@ -1319,7 +1559,15 @@ athn_usb_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		error = athn_hw_reset(sc, c, extc, 0);
 		if (error != 0)	/* Hopeless case. */
 			return (error);
+
+		error = athn_set_chan(sc, c, extc);
+		if (AR_SREV_9271(sc) && error == 0)
+			ar9271_load_ani(sc);
+		if (error != 0)
+			return (error);
 	}
+
+	sc->ops.set_txpower(sc, c, extc);
 
 	error = athn_usb_wmi_cmd(usc, AR_WMI_CMD_START_RECV);
 	if (error != 0)
@@ -1518,11 +1766,28 @@ athn_usb_swba(struct athn_usb_softc *usc)
 }
 #endif
 
+/* Update current transmit rate for a node based on firmware Tx status. */
+void
+athn_usb_tx_status(void *arg, struct ieee80211_node *ni)
+{
+	struct ar_wmi_evt_txstatus *ts = arg;
+	struct athn_node *an = (struct athn_node *)ni;
+	uint8_t rate_index = (ts->rate & AR_HTC_TXSTAT_RATE);
+
+	if (an->sta_index != ts->cookie) /* Tx report for a different node */
+		return;
+
+	if (ts->flags & AR_HTC_TXSTAT_MCS) {
+		if (isset(ni->ni_rxmcs, rate_index))
+			ni->ni_txmcs = rate_index;
+	} else if (rate_index < ni->ni_rates.rs_nrates)
+		ni->ni_txrate = rate_index;
+}
+
 void
 athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
 {
 	struct ar_wmi_cmd_hdr *wmi;
-	struct ar_wmi_evt_txrate *txrate;
 	uint16_t cmd_id;
 
 	if (__predict_false(len < sizeof(*wmi)))
@@ -1547,10 +1812,38 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, int len)
 		athn_usb_swba(usc);
 		break;
 #endif
-	case AR_WMI_EVT_TXRATE:
-		txrate = (struct ar_wmi_evt_txrate *)&wmi[1];
-		DPRINTF(("txrate=%d\n", betoh32(txrate->txrate)));
+	case AR_WMI_EVT_TXSTATUS: {
+		struct ar_wmi_evt_txstatus_list *tsl;
+		int i;
+
+		tsl = (struct ar_wmi_evt_txstatus_list *)&wmi[1];
+		for (i = 0; i < tsl->count && i < nitems(tsl->ts); i++) {
+			struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+			struct athn_node *an = (struct athn_node *)ic->ic_bss;
+			struct ar_wmi_evt_txstatus *ts = &tsl->ts[i];
+			uint8_t qid;
+
+			/* Skip the node we use to send management frames. */
+			if (ts->cookie == 0)
+				continue;
+
+			/* Skip Tx reports for non-data frame endpoints. */
+			qid = (ts->rate & AR_HTC_TXSTAT_EPID) >>
+				AR_HTC_TXSTAT_EPID_SHIFT;
+			if (qid != usc->ep_data[EDCA_AC_BE] &&
+			    qid != usc->ep_data[EDCA_AC_BK] &&
+			    qid != usc->ep_data[EDCA_AC_VI] &&
+			    qid != usc->ep_data[EDCA_AC_VO])
+				continue;
+
+			if (ts->cookie == an->sta_index)
+				athn_usb_tx_status(ts, ic->ic_bss);
+			else
+				ieee80211_iterate_nodes(ic, athn_usb_tx_status,
+				    ts);
+		}
 		break;
+	}
 	case AR_WMI_EVT_FATAL:
 		printf("%s: fatal firmware error\n", usc->usb_dev.dv_xname);
 		break;
@@ -1944,7 +2237,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ar_tx_mgmt *txm;
 	uint8_t *frm;
 	uint16_t qos;
-	uint8_t sta_index, qid, tid = 0;
+	uint8_t qid, tid = 0;
 	int hasqos, xferlen, error;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1983,7 +2276,6 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
-	sta_index = an->sta_index;
 
 	/* NB: We don't take advantage of USB Tx stream mode for now. */
 	hdr = (struct ar_stream_hdr *)data->buf;
@@ -1998,7 +2290,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		txf = (struct ar_tx_frame *)&htc[1];
 		memset(txf, 0, sizeof(*txf));
 		txf->data_type = AR_HTC_NORMAL;
-		txf->node_idx = sta_index;
+		txf->node_idx = an->sta_index;
 		txf->vif_idx = 0;
 		txf->tid = tid;
 		if (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
@@ -2010,15 +2302,17 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 				txf->flags |= htobe32(AR_HTC_TX_RTSCTS);
 		}
 		txf->key_idx = 0xff;
+		txf->cookie = an->sta_index;
 		frm = (uint8_t *)&txf[1];
 	} else {
 		htc->endpoint_id = usc->ep_mgmt;
 
 		txm = (struct ar_tx_mgmt *)&htc[1];
 		memset(txm, 0, sizeof(*txm));
-		txm->node_idx = sta_index;
+		txm->node_idx = an->sta_index;
 		txm->vif_idx = 0;
 		txm->key_idx = 0xff;
+		txm->cookie = an->sta_index;
 		frm = (uint8_t *)&txm[1];
 	}
 	/* Copy payload. */
@@ -2121,7 +2415,6 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct athn_softc *sc = ifp->if_softc;
 	struct athn_usb_softc *usc = (struct athn_usb_softc *)sc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(usc->sc_udev))
@@ -2143,15 +2436,6 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				athn_usb_stop(ifp);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	case SIOCS80211CHANNEL:
 		error = ieee80211_ioctl(ifp, cmd, data);
@@ -2292,17 +2576,13 @@ athn_usb_init(struct ifnet *ifp)
 	    &sta, sizeof(sta), NULL);
 	if (error != 0)
 		goto fail;
-	usc->nnodes++;
+	usc->free_node_slots = ~(1 << sta.sta_index);
 
 	/* Update target capabilities. */
 	memset(&hic, 0, sizeof(hic));
-	hic.flags = htobe32(0x400c2400);
-	hic.flags_ext = htobe32(0x00106080);
 	hic.ampdu_limit = htobe32(0x0000ffff);
 	hic.ampdu_subframes = 20;
-	hic.protmode = 1;	/* XXX */
-	hic.lg_txchainmask = sc->txchainmask;
-	hic.ht_txchainmask = sc->txchainmask;
+	hic.txchainmask = sc->txchainmask;
 	DPRINTF(("updating target configuration\n"));
 	error = athn_usb_wmi_xcmd(usc, AR_WMI_CMD_TARGET_IC_UPDATE,
 	    &hic, sizeof(hic), NULL);
@@ -2366,17 +2646,22 @@ athn_usb_stop(struct ifnet *ifp)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->calib_to);
 
-	/* Remove main interface. */
+	/* Remove all non-default nodes. */
+	for (sta_index = 1; sta_index < AR_USB_MAX_STA; sta_index++) {
+		if (usc->free_node_slots & (1 << sta_index))
+			continue;
+		(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
+		    &sta_index, sizeof(sta_index), NULL);
+	}
+
+	/* Remove main interface. This also invalidates our default node. */
 	memset(&hvif, 0, sizeof(hvif));
 	hvif.index = 0;
 	IEEE80211_ADDR_COPY(hvif.myaddr, ic->ic_myaddr);
 	(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_VAP_REMOVE,
 	    &hvif, sizeof(hvif), NULL);
-	/* Remove default node. */
-	sta_index = 0;
-	(void)athn_usb_wmi_xcmd(usc, AR_WMI_CMD_NODE_REMOVE,
-	    &sta_index, sizeof(sta_index), NULL);
-	usc->nnodes--;
+
+	usc->free_node_slots = 0xff;
 
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DRAIN_TXQ_ALL);

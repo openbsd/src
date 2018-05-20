@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.40 2017/07/21 13:15:05 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.43 2018/04/26 12:50:07 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -814,14 +814,12 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 {
 	struct rsu_cmd_newstate *cmd = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	enum ieee80211_state ostate;
 	int error, s;
 
 	s = splnet();
 	ostate = ic->ic_state;
-	DPRINTF(("newstate %s -> %s\n",
-	    ieee80211_state_name[ostate],
-	    ieee80211_state_name[cmd->state]));
 
 	if (ostate == IEEE80211_S_RUN) {
 		/* Stop calibration. */
@@ -838,6 +836,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 			printf("%s: could not send site survey command\n",
 			    sc->sc_dev.dv_xname);
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		splx(s);
 		return;
@@ -851,6 +853,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 			splx(s);
 			return;
 		}
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		if (ic->ic_flags & IEEE80211_F_RSNON)
 			ic->ic_bss->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
@@ -858,6 +864,10 @@ rsu_newstate_cb(struct rsu_softc *sc, void *arg)
 		return;
 	case IEEE80211_S_ASSOC:
 		/* No-op for this driver. See rsu_event_join_bss(). */
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: %s -> %s\n", ifp->if_xname,
+			    ieee80211_state_name[ic->ic_state],
+			    ieee80211_state_name[cmd->state]);
 		ic->ic_state = cmd->state;
 		splx(s);
 		return;
@@ -1674,8 +1684,6 @@ int
 rsu_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct rsu_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
@@ -1697,15 +1705,6 @@ rsu_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				rsu_stop(ifp);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &ic->ic_ac) :
-		    ether_delmulti(ifr, &ic->ic_ac);
-		if (error == ENETRESET)
-			error = 0;
 		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
@@ -2313,9 +2312,6 @@ rsu_stop(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	s = splusb();
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

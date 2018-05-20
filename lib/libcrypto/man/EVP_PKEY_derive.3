@@ -1,8 +1,9 @@
-.\"	$OpenBSD: EVP_PKEY_derive.3,v 1.5 2017/04/10 17:45:06 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: EVP_PKEY_derive.3,v 1.8 2018/03/23 04:34:23 schwarze Exp $
+.\" full merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2006, 2009, 2013 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2006, 2009, 2013, 2018 The OpenSSL Project.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EVP_PKEY_DERIVE 3
 .Os
 .Sh NAME
@@ -132,12 +133,13 @@ Derive shared secret (for example DH or EC keys):
 #include <openssl/rsa.h>
 
 EVP_PKEY_CTX *ctx;
+ENGINE *eng;
 unsigned char *skey;
 size_t skeylen;
 EVP_PKEY *pkey, *peerkey;
-/* NB: assumes pkey, peerkey have been already set up */
 
-ctx = EVP_PKEY_CTX_new(pkey);
+/* Assumes that pkey, eng, and peerkey have already been set up. */
+ctx = EVP_PKEY_CTX_new(pkey, eng);
 if (!ctx)
 	/* Error occurred */
 if (EVP_PKEY_derive_init(ctx) <= 0)
@@ -163,9 +165,15 @@ if (EVP_PKEY_derive(ctx, skey, &skeylen) <= 0)
 .Xr EVP_PKEY_CTX_new 3 ,
 .Xr EVP_PKEY_decrypt 3 ,
 .Xr EVP_PKEY_encrypt 3 ,
+.Xr EVP_PKEY_meth_set_derive 3 ,
 .Xr EVP_PKEY_sign 3 ,
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3 ,
 .Xr X25519 3
 .Sh HISTORY
-These functions were first added to OpenSSL 1.0.0.
+.Fn EVP_PKEY_derive_init ,
+.Fn EVP_PKEY_derive_set_peer ,
+and
+.Fn EVP_PKEY_derive
+first appeared in OpenSSL 1.0.0 and have been available since
+.Ox 4.9 .

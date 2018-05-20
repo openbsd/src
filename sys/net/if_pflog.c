@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.80 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.81 2018/01/09 15:24:24 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -137,10 +137,7 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	struct pflog_softc *pflogif;
 
-	if ((pflogif = malloc(sizeof(*pflogif),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
-		return (ENOMEM);
-
+	pflogif = malloc(sizeof(*pflogif), M_DEVBUF, M_WAITOK|M_ZERO);
 	pflogif->sc_unit = unit;
 	ifp = &pflogif->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "pflog%d", unit);

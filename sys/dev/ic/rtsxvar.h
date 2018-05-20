@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxvar.h,v 1.5 2017/09/06 13:07:38 jcs Exp $	*/
+/*	$OpenBSD: rtsxvar.h,v 1.6 2017/10/09 16:12:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -33,6 +33,9 @@ struct rtsx_softc {
 	bus_dma_tag_t	dmat;		/* DMA tag from attachment driver */
 	bus_dmamap_t	dmap_cmd;	/* DMA map for command transfer */
 	bus_dmamap_t	dmap_data;	/* DMA map for data transfer */
+	bus_dmamap_t	dmap_adma;	/* DMA map for ADMA SG descriptors */
+	caddr_t		admabuf;	/* buffer for ADMA SG descriptors */
+	bus_dma_segment_t adma_segs[1];	/* segments for ADMA SG buffer */
 	int		flags;
 	u_int32_t 	intr_status;	/* soft interrupt status */
 	u_int8_t	regs[RTSX_NREG];/* host controller state */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.4 2017/08/13 20:26:33 guenther Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.7 2018/04/24 17:19:35 pirofti Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -129,12 +129,13 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 struct futex *
 futex_get(uint32_t *uaddr, int flag)
 {
+	struct proc *p = curproc;
 	struct futex *f;
 
 	rw_assert_wrlock(&ftlock);
 
 	LIST_FOREACH(f, &ftlist, ft_list) {
-		if (f->ft_uaddr == uaddr && f->ft_pid == curproc->p_p->ps_pid) {
+		if (f->ft_uaddr == uaddr && f->ft_pid == p->p_p->ps_pid) {
 			f->ft_refcnt++;
 			break;
 		}
@@ -148,7 +149,7 @@ futex_get(uint32_t *uaddr, int flag)
 		f = pool_get(&ftpool, PR_WAITOK);
 		TAILQ_INIT(&f->ft_threads);
 		f->ft_uaddr = uaddr;
-		f->ft_pid = curproc->p_p->ps_pid;
+		f->ft_pid = p->p_p->ps_pid;
 		f->ft_refcnt = 1;
 		LIST_INSERT_HEAD(&ftlist, f, ft_list);
 	}
@@ -211,7 +212,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
 			return error;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
-			ktrabstimespec(p, timeout);
+			ktrabstimespec(p, &ts);
 #endif
 		to_ticks = (uint64_t)hz * ts.tv_sec +
 		    (ts.tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
@@ -225,7 +226,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
 
 	error = rwsleep(p, &ftlock, PUSER|PCATCH, "fsleep", (int)to_ticks);
 	if (error == ERESTART)
-		error = EINTR;
+		error = ECANCELED;
 	else if (error == EWOULDBLOCK) {
 		/* A race occured between a wakeup and a timeout. */
 		if (p->p_futex == NULL)

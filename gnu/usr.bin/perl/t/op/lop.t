@@ -10,7 +10,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 17;
+plan tests => 23;
 
 for my $i (undef, 0 .. 2, "", "0 but true") {
     my $true = 1;
@@ -56,3 +56,29 @@ is( $i, 10, 'negation precedence with &&' );
 ++$y;
 $i = !$x && !$x && !$x && $y;
 is( $i, 11, 'negation precedence with &&, multiple operands' );
+
+# [perl #127952]. This relates to OP_AND and OP_OR with a negated constant
+# on the lhs (either a negated bareword, or a negation of a do{} containing
+# a constant) and a negated non-foldable expression on the rhs. These cases
+# yielded 42 or "Bare" or "str" before the bug was fixed.
+{
+    $x = 42;
+
+    $i = !Bare || !$x;
+    is( $i, '', 'neg-bareword on lhs of || with non-foldable neg-true on rhs' );
+
+    $i = !Bare && !$x;
+    is( $i, '', 'neg-bareword on lhs of && with non-foldable neg-true on rhs' );
+
+    $i = do { !$x if !Bare };
+    is( $i, '', 'neg-bareword on rhs of modifier-if with non-foldable neg-true on lhs' );
+
+    $i = do { !$x unless !Bare };
+    is( $i, '', 'neg-bareword on rhs of modifier-unless with non-foldable neg-true on lhs' );
+
+    $i = !do { "str" } || !$x;
+    is( $i, '', 'neg-do-const on lhs of || with non-foldable neg-true on rhs' );
+
+    $i = !do { "str" } && !$x;
+    is( $i, '', 'neg-do-const on lhs of && with non-foldable neg-true on rhs' );
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.36 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.37 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/tty.h>
-#include <sys/file.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

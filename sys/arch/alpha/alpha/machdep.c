@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.181 2017/05/29 14:19:49 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.184 2018/04/12 17:13:41 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -69,7 +69,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -977,7 +976,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
@@ -1415,8 +1414,9 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
-		scp = (struct sigcontext *)(p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size - rndfsize);
+		scp = (struct sigcontext *)
+		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
+		    - rndfsize);
 	else
 		scp = (struct sigcontext *)(oldsp - rndfsize);
 

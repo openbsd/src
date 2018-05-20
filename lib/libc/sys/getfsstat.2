@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.20 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.21 2018/04/27 13:42:08 guenther Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,14 +30,14 @@
 .\"
 .\"	@(#)getfsstat.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: April 27 2018 $
 .Dt GETFSSTAT 2
 .Os
 .Sh NAME
 .Nm getfsstat
 .Nd get list of all mounted file systems
 .Sh SYNOPSIS
-.In sys/param.h
+.In sys/types.h
 .In sys/mount.h
 .Ft int
 .Fn getfsstat "struct statfs *buf" "size_t bufsize" "int flags"

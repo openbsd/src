@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.25 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.31 2018/01/23 20:49:58 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -41,8 +41,6 @@
  * A protocol is called through the pr_init entry before any other.
  * Thereafter it is called every 200ms through the pr_fasttimo entry and
  * every 500ms through the pr_slowtimo for timer based actions.
- * The system will call the pr_drain entry if it is low on space and
- * this should throw away any non-critical data.
  *
  * Protocols pass data between themselves as chains of mbufs using
  * the pr_input and pr_output hooks.  Pr_input passes data up (towards
@@ -84,12 +82,12 @@ struct protosw {
 		    struct mbuf *, struct mbuf *, struct proc *);
 
 	int	(*pr_attach)(struct socket *, int);
+	int	(*pr_detach)(struct socket *);
 
 /* utility hooks */
 	void	(*pr_init)(void);	/* initialization hook */
 	void	(*pr_fasttimo)(void);	/* fast timeout (200ms) */
 	void	(*pr_slowtimo)(void);	/* slow timeout (500ms) */
-	void	(*pr_drain)(void);	/* flush any excess space possible */
 					/* sysctl for protocol */
 	int	(*pr_sysctl)(int *, u_int, void *, size_t *, void *, size_t);
 };
@@ -123,6 +121,7 @@ struct protosw {
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */
+#define	PRU_ATTACH		0	/* attach protocol to up */
 #define	PRU_DETACH		1	/* detach protocol from up */
 #define	PRU_BIND		2	/* bind socket to address */
 #define	PRU_LISTEN		3	/* listen for connection */
@@ -149,8 +148,8 @@ struct protosw {
 #define	PRU_NREQ		22
 
 #ifdef PRUREQUESTS
-char *prurequests[] = {
-	"",		"DETACH",	"BIND",		"LISTEN",
+const char *prurequests[] = {
+	"ATTACH",	"DETACH",	"BIND",		"LISTEN",
 	"CONNECT",	"ACCEPT",	"DISCONNECT",	"SHUTDOWN",
 	"RCVD",		"SEND",		"ABORT",	"CONTROL",
 	"SENSE",	"RCVOOB",	"SENDOOB",	"SOCKADDR",
@@ -229,10 +228,10 @@ char	*prcorequests[] = {
 
 #ifdef _KERNEL
 struct sockaddr;
-struct protosw *pffindproto(int, int, int);
-struct protosw *pffindtype(int, int);
+const struct protosw *pffindproto(int, int, int);
+const struct protosw *pffindtype(int, int);
 void pfctlinput(int, struct sockaddr *);
 
 extern u_char ip_protox[];
-extern struct protosw inetsw[];
+extern const struct protosw inetsw[];
 #endif

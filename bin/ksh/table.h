@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.12 2017/08/30 17:08:45 jca Exp $	*/
+/*	$OpenBSD: table.h,v 1.14 2018/04/09 17:53:36 tobias Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -19,7 +19,7 @@ struct tbl {			/* table item */
 	Area	*areap;		/* area to allocate from */
 	union {
 		char *s;	/* string */
-		long i;		/* integer */
+		int64_t i;	/* integer */
 		int (*f)(char **);	/* int function */
 		struct op *t;	/* "function" tree */
 	} val;			/* value */
@@ -175,7 +175,7 @@ extern const struct builtin shbuiltins [], kshbuiltins [];
 #define PS1	0		/* command */
 #define PS2	1		/* command continuation */
 
-extern char *path;		/* copy of either PATH or def_path */
+extern char *search_path;	/* copy of either PATH or def_path */
 extern const char *def_path;	/* path to use if PATH not set */
 extern char *tmpdir;		/* TMPDIR value */
 extern const char *prompt;

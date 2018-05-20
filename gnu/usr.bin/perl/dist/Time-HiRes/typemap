@@ -28,6 +28,8 @@ AV *			T_AVREF
 HV *			T_HVREF
 CV *			T_CVREF
 
+clockid_t               T_IV
+
 IV			T_IV
 UV			T_UV
 NV                      T_NV

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.46 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.50 2018/05/15 09:21:52 mikeb Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -166,7 +166,7 @@ pppopen(dev_t dev, struct tty *tp, struct proc *p)
     struct ppp_softc *sc;
     int error, s;
 
-    if ((error = suser(p, 0)) != 0)
+    if ((error = suser(p)) != 0)
 	return (error);
 
     rw_enter_write(&ppp_pkt_init);
@@ -255,6 +255,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 {
     int s;
 
+    KERNEL_LOCK();
     s = spltty();
     m_freem(sc->sc_outm);
     sc->sc_outm = NULL;
@@ -268,6 +269,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 	sc->sc_flags &= ~SC_TIMEOUT;
     }
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -389,7 +391,7 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
     error = 0;
     switch (cmd) {
     case PPPIOCSASYNCMAP:
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 	    break;
 	sc->sc_asyncmap[0] = *(u_int *)data;
 	break;
@@ -399,7 +401,7 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
     case PPPIOCSRASYNCMAP:
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 	    break;
 	sc->sc_rasyncmap = *(u_int *)data;
 	break;
@@ -409,7 +411,7 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
     case PPPIOCSXASYNCMAP:
-	if ((error = suser(p, 0)) != 0)
+	if ((error = suser(p)) != 0)
 	    break;
 	s = spltty();
 	bcopy(data, sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
@@ -424,7 +426,9 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
     default:
+	NET_LOCK();
 	error = pppioctl(sc, cmd, data, flag, p);
+	NET_UNLOCK();
 	if (error == 0 && cmd == PPPIOCSMRU)
 	    ppppkt(sc);
     }
@@ -496,6 +500,7 @@ pppasyncstart(struct ppp_softc *sc)
     struct mbuf *m2;
     int s;
 
+    KERNEL_LOCK();
     idle = 0;
     while (CCOUNT(&tp->t_outq) < tp->t_hiwat) {
 	/*
@@ -662,6 +667,7 @@ pppasyncstart(struct ppp_softc *sc)
     }
 
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -674,12 +680,14 @@ pppasyncctlp(struct ppp_softc *sc)
     struct tty *tp;
     int s;
 
+    KERNEL_LOCK();
     /* Put a placeholder byte in canq for ttpoll()/ttnread(). */
     s = spltty();
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);
     ttwakeup(tp);
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*

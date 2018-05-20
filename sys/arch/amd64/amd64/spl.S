@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.11 2016/05/20 14:37:53 deraadt Exp $	*/
+/*	$OpenBSD: spl.S,v 1.12 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ _C_LABEL(splx):
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  */
-IDTVEC(spllower)
+KIDTVEC(spllower)
 	_PROF_PROLOGUE
 	pushq	%rbx
 	pushq	%r13
@@ -143,7 +143,7 @@ IDTVEC(spllower)
  *   ebx - cpl to restore
  *   r13 - address to resume loop at
  */
-IDTVEC(doreti)
+KIDTVEC(doreti)
 	popq	%rbx			# get previous priority
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
@@ -168,4 +168,8 @@ IDTVEC(doreti)
 	call	_C_LABEL(ast)
 	cli
 	jmp	5b
-3: 	INTRFASTEXIT
+3: 	
+#ifdef DIAGNOSTIC
+	movl	$254,%esi
+#endif /* DIAGNOSTIC */
+	INTRFASTEXIT

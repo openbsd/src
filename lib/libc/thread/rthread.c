@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread.c,v 1.8 2018/05/13 16:21:26 visa Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -18,6 +18,9 @@
 /*
  * The infrastructure of rthreads
  */
+
+#include <sys/types.h>
+#include <sys/atomic.h>
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -45,18 +48,24 @@ _spinlock(volatile _atomic_lock_t *lock)
 {
 	while (_atomic_lock(lock))
 		sched_yield();
+	membar_enter_after_atomic();
 }
 DEF_STRONG(_spinlock);
 
 int
 _spinlocktry(volatile _atomic_lock_t *lock)
 {
-	return 0 == _atomic_lock(lock);
+	if (_atomic_lock(lock) == 0) {
+		membar_enter_after_atomic();
+		return 1;
+	}
+	return 0;
 }
 
 void
 _spinunlock(volatile _atomic_lock_t *lock)
 {
+	membar_exit();
 	*lock = _ATOMIC_LOCK_UNLOCKED;
 }
 DEF_STRONG(_spinunlock);
@@ -137,6 +146,7 @@ pthread_exit(void *retval)
 		oclfn->fn(oclfn->arg);
 		free(oclfn);
 	}
+	_thread_finalize();
 	_rthread_tls_destructors(thread);
 
 	if (_thread_cb.tc_thread_release != NULL)

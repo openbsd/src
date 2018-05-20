@@ -1,10 +1,10 @@
-/*	$OpenBSD: ffs.S,v 1.5 2017/08/19 18:25:50 deraadt Exp $ */
+/*	$OpenBSD: ffs.S,v 1.7 2018/01/18 08:23:44 guenther Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(ffs)
 	bsfl	4(%esp),%eax
@@ -15,4 +15,5 @@ ENTRY(ffs)
 	.align 2,0xcc
 L1:	xorl	%eax,%eax		/* clear result */
 	ret
-END_WEAK(ffs)
+END(ffs)
+.protected ffs

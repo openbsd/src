@@ -1,4 +1,4 @@
-/*      $OpenBSD: misc.c,v 1.6 2011/01/19 13:01:25 okan Exp $      */
+/*      $OpenBSD: misc.c,v 1.7 2018/03/05 16:53:39 cheloha Exp $      */
 /*      $NetBSD: misc.c,v 1.2 1995/09/08 03:22:58 tls Exp $      */
 
 /*-
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 
 #include <err.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -53,4 +54,30 @@ diffmsg(char *file1, char *file2, off_t byte, off_t line)
 		(void)printf("%s %s differ: char %lld, line %lld\n",
 		    file1, file2, (long long)byte, (long long)line);
 	exit(DIFF_EXIT);
+}
+
+void
+fatal(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (!sflag) {
+		va_start(ap, fmt);
+		vwarn(fmt, ap);
+		va_end(ap);
+	}
+	exit(ERR_EXIT);
+}
+
+void
+fatalx(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (!sflag) {
+		va_start(ap, fmt);
+		vwarnx(fmt, ap);
+		va_end(ap);
+	}
+	exit(ERR_EXIT);
 }

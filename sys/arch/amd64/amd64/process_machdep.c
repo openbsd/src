@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.14 2015/06/28 18:54:54 guenther Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.15 2017/10/14 04:44:43 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -55,16 +55,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/vnode.h>
-#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/fpu.h>
 

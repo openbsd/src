@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.10 2015/08/20 22:39:29 deraadt Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.11 2017/10/29 08:45:53 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -29,8 +29,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 
+#include <elf.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

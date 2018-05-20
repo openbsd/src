@@ -14,6 +14,8 @@
 #ifndef LLVM_CONFIG_H
 #define LLVM_CONFIG_H
 
+/* Define if LLVM_ENABLE_DUMP is enabled */
+/* #undef LLVM_ENABLE_DUMP */
 
 /* Define if we link Polly to the tools */
 /* #undef LINK_POLLY_INTO_TOOLS */
@@ -64,7 +66,7 @@
 #define LLVM_USE_OPROFILE 0
 
 /* Major version of the LLVM API */
-#define LLVM_VERSION_MAJOR 4
+#define LLVM_VERSION_MAJOR 6
 
 /* Minor version of the LLVM API */
 #define LLVM_VERSION_MINOR 0
@@ -73,7 +75,7 @@
 #define LLVM_VERSION_PATCH 0
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "5.0.0"
+#define LLVM_VERSION_STRING "6.0.0"
 
 /* Define if we link Polly to the tools */
 /* #undef LINK_POLLY_INTO_TOOLS */

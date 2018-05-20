@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.61 2015/11/26 08:15:07 tim Exp $	*/
+/*	$OpenBSD: misc.c,v 1.62 2017/11/16 11:08:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -210,7 +210,7 @@ getuint64(char *prompt, u_int64_t oval, u_int64_t minval, u_int64_t maxval)
 	size_t n;
 	int64_t mult = 1;
 	double d, d2;
-	int secpercyl, saveerr;
+	int rslt, secpercyl, saveerr;
 	char unit;
 
 	if (oval > maxval)
@@ -228,7 +228,9 @@ getuint64(char *prompt, u_int64_t oval, u_int64_t minval, u_int64_t maxval)
 			errx(1, "eof");
 
 		if (buf[0] == '\0') {
-			return (oval);
+			rslt = snprintf(buf, sizeof(buf), "%llu", oval);
+			if (rslt == -1 || rslt >= sizeof(buf))
+				errx(1, "default value too long");
 		} else if (buf[0] == '*' && buf[1] == '\0') {
 			return (maxval);
 		}

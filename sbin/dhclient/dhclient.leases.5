@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.9 2013/07/16 09:45:28 schwarze Exp $
+.\"	$OpenBSD: dhclient.leases.5,v 1.14 2017/12/18 14:17:58 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: December 18 2017 $
 .Dt DHCLIENT.LEASES 5
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ The file is written as a log, so the last declaration is the most recent
 lease obtained.
 .Pp
 The lease file is named
-.Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME ,
+.Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME ,
 where
 .Qq IFNAME
 represents the network interface
@@ -64,12 +64,103 @@ is configured for the em0 network device,
 the lease file will be named
 .Pa /var/db/dhclient.leases.em0 ,
 .Pp
-The format of the lease declarations is described in
-.Xr dhclient.conf 5 .
+A lease statement has the format
+.Pp
+.D1 Ic lease No { Ar lease-declaration ; ... ; No }
+.Pp
+Where
+.Ar lease\-declaration
+is one of:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic bootp
+The lease was acquired using the
+BOOTP protocol rather than the DHCP protocol.
+.Pp
+.It Ic epoch
+The
+.Xr time 3
+when the lease was obtained.
+This value is used to convert the values of the DHCP options
+.Ic dhcp-lease-time ,
+.Ic dhcp-renewal-time ,
+and
+.Ic dhcp-rebinding-time
+to times.
+A value of 0 will cause
+.Ic epoch
+to be set to the current time when
+.Nm
+is processed.
+.Pp
+.It Ic expire Ar date
+.It Ic rebind Ar date
+.It Ic renew Ar date
+.Ic expire
+is when
+.Xr dhclient 8
+will no longer use the lease to configure the interface.
+.Ic rebind
+is when
+.Xr dhclient 8
+will begin trying to renew the lease with broadcasts to any server.
+.Ic renew
+is when
+.Xr dhclient 8
+will begin trying to renew the lease with unicasts to the originating server.
+.Pp
+Dates are specified in accordance with the
+.Xr strptime 3
+format:
+.Pp
+.D1 %w %Y/%m/%d \&%T UTC
+.Pp
+For example:
+.Pp
+.Dl renew 1 2017/10/16 14:03:49 UTC
+.Pp
+.Ic expire ,
+.Ic rebind ,
+.Ic renew
+are just comments that are ignored when processing
+.Nm .
+The values used by
+.Xr dhclient 8
+are always recalculated based on
+.Ic epoch
+when
+.Nm
+is processed.
+.Pp
+.It Ic filename Qq Ar string
+The boot filename.
+.Pp
+.It Ic fixed-address Ar ip-address
+The IPv4 address of the lease.
+This is required for all lease statements.
+The IPv4 address is specified as a dotted quad (e.g. 12.34.56.78).
+.Pp
+.It Ic next-server Ar ip-address
+The IPv4 address of the boot server.
+The IPv4 address is specified as a dotted quad (e.g. 12.34.56.78).
+.Pp
+.It Ic option Ar option option-value
+The value of
+.Ar option .
+DHCP options are described in
+.Xr dhcp-options 5 .
+.Pp
+.It Ic server-name Qq Ar string
+The name of the boot server.
+.Pp
+.It Ic ssid Qq Ar string
+The SSID to which the lease applies.
+.El
 .Sh FILES
 .Bl -tag -width "/var/db/dhclient.leases.IFNAME   "
-.It Pa /var/db/dhclient.leases. Ns Aq Ar IFNAME ,
-Current lease file.
+.It Pa /var/db/dhclient.leases . Ns Aq Ar IFNAME
+Persistent database of leases for
+.Aq Ar IFNAME .
 .El
 .Sh SEE ALSO
 .Xr dhclient.conf 5 ,
@@ -77,27 +168,3 @@ Current lease file.
 .Xr dhcpd.conf 5 ,
 .Xr dhclient 8 ,
 .Xr dhcpd 8
-.Sh STANDARDS
-.Rs
-.%A R. Droms
-.%D March 1997
-.%R RFC 2131
-.%T Dynamic Host Configuration Protocol
-.Re
-.Pp
-.Rs
-.%A S. Alexander
-.%A R. Droms
-.%D March 1997
-.%R RFC 2132
-.%T DHCP Options and BOOTP Vendor Extensions
-.Re
-.Sh AUTHORS
-.An -nosplit
-.Xr dhclient 8
-was written by
-.An Ted Lemon Aq Mt mellon@vix.com
-under a contract with Vixie Labs.
-.Pp
-The current implementation was reworked by
-.An Henning Brauer Aq Mt henning@openbsd.org .

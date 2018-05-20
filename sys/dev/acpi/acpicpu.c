@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.80 2017/04/27 16:34:18 deraadt Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.81 2017/11/30 00:21:42 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -311,12 +311,13 @@ acpicpu_set_pdc(struct acpicpu_softc *sc)
 
 /*
  * sanity check mwait hints against what cpuid told us
+ * ...but because intel screwed up, just check whether cpuid says
+ * the given state has _any_ substates.
  */
 static int
 check_mwait_hints(int state, int hints)
 {
 	int cstate;
-	int substate;
 	int num_substates;
 
 	if (cpu_mwait_size == 0)
@@ -328,11 +329,9 @@ check_mwait_hints(int state, int hints)
 		/* out of range of test against CPUID; just trust'em */
 		return (1);
 	}
-	substate = hints & 0xf;
 	num_substates = (cpu_mwait_states >> (4 * cstate)) & 0xf;
-	if (substate >= num_substates) {
-		printf("\nC%d: state %d: substate %d >= num %d",
-		    state, cstate, substate, num_substates);
+	if (num_substates == 0) {
+		printf(": C%d bad (state %d has no substates)", state, cstate);
 		return (0);
 	}
 	return (1);
@@ -383,7 +382,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 	if (state < 0 || state > 4)
 		return;
 	if (val->v_package[0]->type != AML_OBJTYPE_BUFFER) {
-		printf("\nC%d: unexpected ACPI object type %d",
+		printf(": C%d (unexpected ACPI object type %d)",
 		    state, val->v_package[0]->type);
 		return;
 	}
@@ -392,7 +391,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 	    grd->grd_descriptor != LR_GENREGISTER ||
 	    grd->grd_length != sizeof(grd->grd_gas) ||
 	    val->v_package[0]->v_buffer[sizeof(*grd)] != SRT_ENDTAG) {
-		printf("\nC%d: bogo buffer", state);
+		printf(": C%d (bogo buffer)", state);
 		return;
 	}
 
@@ -415,7 +414,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 
 				/* i386 and amd64 I/O space is 16bits */
 				if (addr > 0xffff) {
-					printf("\nC%d: bogo I/O addr %llx",
+					printf(": C%d (bogo I/O addr %llx)",
 					    state, addr);
 					return;
 				}
@@ -428,12 +427,12 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 				flags = grd->grd_gas.access_size;
 				break;
 			default:
-				printf("\nC%d: unknown FFH class %d",
+				printf(": C%d (unknown FFH class %d)",
 				    state, grd->grd_gas.register_bit_offset);
 				return;
 			}
 		} else {
-			printf("\nC%d: unknown FFH vendor %d",
+			printf(": C%d (unknown FFH vendor %d)",
 			    state, grd->grd_gas.register_bit_width);
 			return;
 		}
@@ -443,7 +442,7 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 		addr = grd->grd_gas.address;
 		if (grd->grd_gas.register_bit_width != 8 ||
 		    grd->grd_gas.register_bit_offset != 0) {
-			printf("\nC%d: unhandled %s spec: %d/%d", state,
+			printf(": C%d (unhandled %s spec: %d/%d)", state,
 			    "I/O", grd->grd_gas.register_bit_width,
 			    grd->grd_gas.register_bit_offset);
 			return;
@@ -455,9 +454,10 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 		/* dump the GAS for analysis */
 		{
 			int i;
-			printf("\nC%d: unhandled GAS:", state);
+			printf(": C%d (unhandled GAS:", state);
 			for (i = 0; i < sizeof(grd->grd_gas); i++)
 				printf(" %#x", ((u_char *)&grd->grd_gas)[i]);
+			printf(")");
 
 		}
 		return;
@@ -500,7 +500,7 @@ acpicpu_add_cdeppkg(struct aml_value *val, void *arg)
 
 	domain = val->v_package[2]->v_integer;
 	cindex = val->v_package[5]->v_integer;
-	printf("\nCSD c=%#llx d=%lld n=%lld i=%lli\n",
+	printf(": CSD (c=%#llx d=%lld n=%lld i=%lli)",
 	    coord_type, domain, num_proc, cindex);
 }
 

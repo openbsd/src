@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.37 2017/08/31 06:50:56 mestre Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.38 2018/01/05 08:13:31 mpi Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>

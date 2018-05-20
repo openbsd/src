@@ -15,9 +15,9 @@ print runperl( switches => ['-x'],
 # Test '-xdir'
 print runperl( switches => ['-x./run'],
                progfile => 'run/switchx2.aux',
-               args     => [ 3 ] );
+               args     => [ 4 ] );
 
-curr_test(5);
+curr_test(6);
 
 # Test the error message for not found
 like(runperl(switches => ['-x'], progfile => 'run/switchx3.aux', stderr => 1),

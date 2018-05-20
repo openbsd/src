@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.63 2016/11/14 03:23:45 dlg Exp $
+.\"	$OpenBSD: malloc.9,v 1.65 2017/11/27 09:23:44 mpi Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: November 27 2017 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -152,15 +152,10 @@ The following types are currently defined:
 Should be on free list.
 .It Dv M_DEVBUF
 Device driver memory.
-.It Dv M_DEBUG
-.Nm malloc
-debug structures.
 .It Dv M_PCB
 Protocol control blocks.
 .It Dv M_RTABLE
 Routing tables.
-.It Dv M_FTABLE
-Fragment reassembly headers.
 .It Dv M_IFADDR
 Interface addresses.
 .It Dv M_SOOPTS
@@ -397,69 +392,6 @@ panic:
 .It
 .Dq Data modified on freelist: Aq data object description
 .El
-.Sh DEBUGGING
-A kernel compiled with the
-.Cm MALLOC_DEBUG
-option allows for more extensive debugging of memory allocations.
-The
-.Va debug_malloc_type ,
-.Va debug_malloc_size ,
-.Va debug_malloc_size_lo
-and
-.Va debug_malloc_size_hi
-variables choose which allocation to debug.
-.Va debug_malloc_type
-should be set to the memory type and
-.Va debug_malloc_size
-should be set to the memory size to debug.
-0 can be used as a wildcard.
-.Va debug_malloc_size_lo
-and
-.Va debug_malloc_size_hi
-can be used to specify a range of sizes if the exact size to debug is not
-known.
-When those are used,
-.Va debug_malloc_size
-needs to be set to the wildcard.
-.Dv M_DEBUG
-can also be specified as an allocation type to force allocation with
-debugging.
-.Pp
-Every call to
-.Fn malloc
-or
-.Fn mallocarray
-with a memory type and size that matches the debugged type and size will
-allocate two virtual pages.
-The pointer returned will be aligned so that
-the requested area will end at the page boundary and the second virtual page
-will be left unmapped.
-This way we can catch reads and writes outside the allocated area.
-.Pp
-Every call to
-.Fn free
-with memory that was returned by the debugging allocators will cause the memory
-area to become unmapped so that we can catch dangling reads and writes to
-freed memory.
-.Pp
-There are no special diagnostics if any errors are caught by the debugging
-malloc.
-The errors will look like normal access to unmapped memory.
-On a memory access error, the
-.Ic show malloc
-command in
-.Xr ddb 4
-can be invoked to see what memory areas are allocated and freed.
-If the faulting address is within two pages from an address on the allocated
-list, there was an access outside the allocated area.
-If the faulting address is within two pages from an address on the free list,
-there was an access to freed memory.
-.Pp
-Care needs to be taken when using the
-.Cm MALLOC_DEBUG
-option:  the memory consumption can run away pretty quickly and there is
-a severe performance degradation when allocating and freeing debugged memory
-types.
 .Sh SEE ALSO
 .Xr systat 1 ,
 .Xr vmstat 8

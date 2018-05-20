@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.77 2017/09/11 06:40:46 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.81 2018/04/18 14:31:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,21 +43,7 @@ static const struct grid_cell_entry grid_default_entry = {
 	0, { .data = { 0, 8, 8, ' ' } }
 };
 
-static void	grid_expand_line(struct grid *, u_int, u_int, u_int);
 static void	grid_empty_line(struct grid *, u_int, u_int);
-
-static void	grid_reflow_copy(struct grid_line *, u_int, struct grid_line *,
-		    u_int, u_int);
-static void	grid_reflow_join(struct grid *, u_int *, struct grid_line *,
-		    u_int);
-static void	grid_reflow_split(struct grid *, u_int *, struct grid_line *,
-		    u_int, u_int);
-static void	grid_reflow_move(struct grid *, u_int *, struct grid_line *);
-
-static size_t	grid_string_cells_fg(const struct grid_cell *, int *);
-static size_t	grid_string_cells_bg(const struct grid_cell *, int *);
-static void	grid_string_cells_code(const struct grid_cell *,
-		    const struct grid_cell *, char *, size_t, int);
 
 /* Store cell in entry. */
 static void
@@ -180,10 +166,10 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py, u_int bg)
 
 /* Check grid y position. */
 static int
-grid_check_y(struct grid *gd, u_int py)
+grid_check_y(struct grid *gd, const char* from, u_int py)
 {
-	if ((py) >= (gd)->hsize + (gd)->sy) {
-		log_debug("y out of range: %u", py);
+	if (py >= gd->hsize + gd->sy) {
+		log_debug("%s: y out of range: %u", from, py);
 		return (-1);
 	}
 	return (0);
@@ -240,7 +226,10 @@ grid_create(u_int sx, u_int sy, u_int hlimit)
 	gd->hsize = 0;
 	gd->hlimit = hlimit;
 
-	gd->linedata = xcalloc(gd->sy, sizeof *gd->linedata);
+	if (gd->sy != 0)
+		gd->linedata = xcalloc(gd->sy, sizeof *gd->linedata);
+	else
+		gd->linedata = NULL;
 
 	return (gd);
 }
@@ -418,25 +407,16 @@ grid_empty_line(struct grid *gd, u_int py, u_int bg)
 const struct grid_line *
 grid_peek_line(struct grid *gd, u_int py)
 {
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return (NULL);
 	return (&gd->linedata[py]);
 }
 
-/* Get cell for reading. */
-void
-grid_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
+/* Get cell from line. */
+static void
+grid_get_cell1(struct grid_line *gl, u_int px, struct grid_cell *gc)
 {
-	struct grid_line	*gl;
-	struct grid_cell_entry	*gce;
-
-	if (grid_check_y(gd, py) != 0 || px >= gd->linedata[py].cellsize) {
-		memcpy(gc, &grid_default_cell, sizeof *gc);
-		return;
-	}
-
-	gl = &gd->linedata[py];
-	gce = &gl->celldata[px];
+	struct grid_cell_entry	*gce = &gl->celldata[px];
 
 	if (gce->flags & GRID_FLAG_EXTENDED) {
 		if (gce->offset >= gl->extdsize)
@@ -457,6 +437,18 @@ grid_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
 	utf8_set(&gc->data, gce->data.data);
 }
 
+/* Get cell for reading. */
+void
+grid_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
+{
+	if (grid_check_y(gd, __func__, py) != 0 ||
+	    px >= gd->linedata[py].cellsize) {
+		memcpy(gc, &grid_default_cell, sizeof *gc);
+		return;
+	}
+	return (grid_get_cell1(&gd->linedata[py], px, gc));
+}
+
 /* Set cell at relative position. */
 void
 grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
@@ -464,7 +456,7 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 	struct grid_line	*gl;
 	struct grid_cell_entry	*gce;
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
 
 	grid_expand_line(gd, py, px + 1, 8);
@@ -490,7 +482,7 @@ grid_set_cells(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc,
 	struct grid_cell	*gcp;
 	u_int			 i;
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
 
 	grid_expand_line(gd, py, px + slen, 8);
@@ -523,9 +515,9 @@ grid_clear(struct grid *gd, u_int px, u_int py, u_int nx, u_int ny, u_int bg)
 		return;
 	}
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
-	if (grid_check_y(gd, py + ny - 1) != 0)
+	if (grid_check_y(gd, __func__, py + ny - 1) != 0)
 		return;
 
 	for (yy = py; yy < py + ny; yy++) {
@@ -552,9 +544,9 @@ grid_clear_lines(struct grid *gd, u_int py, u_int ny, u_int bg)
 	if (ny == 0)
 		return;
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
-	if (grid_check_y(gd, py + ny - 1) != 0)
+	if (grid_check_y(gd, __func__, py + ny - 1) != 0)
 		return;
 
 	for (yy = py; yy < py + ny; yy++) {
@@ -572,13 +564,13 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny, u_int bg)
 	if (ny == 0 || py == dy)
 		return;
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
-	if (grid_check_y(gd, py + ny - 1) != 0)
+	if (grid_check_y(gd, __func__, py + ny - 1) != 0)
 		return;
-	if (grid_check_y(gd, dy) != 0)
+	if (grid_check_y(gd, __func__, dy) != 0)
 		return;
-	if (grid_check_y(gd, dy + ny - 1) != 0)
+	if (grid_check_y(gd, __func__, dy + ny - 1) != 0)
 		return;
 
 	/* Free any lines which are being replaced. */
@@ -612,7 +604,7 @@ grid_move_cells(struct grid *gd, u_int dx, u_int px, u_int py, u_int nx,
 	if (nx == 0 || px == dx)
 		return;
 
-	if (grid_check_y(gd, py) != 0)
+	if (grid_check_y(gd, __func__, py) != 0)
 		return;
 	gl = &gd->linedata[py];
 
@@ -953,164 +945,326 @@ grid_duplicate_lines(struct grid *dst, u_int dy, struct grid *src, u_int sy,
 	}
 }
 
-/* Copy a section of a line. */
+/* Mark line as dead. */
 static void
-grid_reflow_copy(struct grid_line *dst_gl, u_int to, struct grid_line *src_gl,
-    u_int from, u_int to_copy)
+grid_reflow_dead(struct grid_line *gl)
 {
-	struct grid_cell_entry	*gce;
-	u_int			 i, was;
+	memset(gl, 0, sizeof *gl);
+	gl->flags = GRID_LINE_DEAD;
+}
 
-	memcpy(&dst_gl->celldata[to], &src_gl->celldata[from],
-	    to_copy * sizeof *dst_gl->celldata);
+/* Add lines, return the first new one. */
+static struct grid_line *
+grid_reflow_add(struct grid *gd, u_int n)
+{
+	struct grid_line	*gl;
+	u_int			 sy = gd->sy + n;
 
-	for (i = to; i < to + to_copy; i++) {
-		gce = &dst_gl->celldata[i];
-		if (~gce->flags & GRID_FLAG_EXTENDED)
+	gd->linedata = xreallocarray(gd->linedata, sy, sizeof *gd->linedata);
+	gl = &gd->linedata[gd->sy];
+	memset(gl, 0, n * (sizeof *gl));
+	gd->sy = sy;
+	return (gl);
+}
+
+/* Move a line across. */
+static struct grid_line *
+grid_reflow_move(struct grid *gd, struct grid_line *from)
+{
+	struct grid_line	*to;
+
+	to = grid_reflow_add(gd, 1);
+	memcpy(to, from, sizeof *to);
+	grid_reflow_dead(from);
+	return (to);
+}
+
+/* Join line below onto this one. */
+static void
+grid_reflow_join(struct grid *target, struct grid *gd, u_int sx, u_int yy,
+    u_int width, u_int *cy, int already)
+{
+	struct grid_line	*gl, *from;
+	struct grid_cell	 gc;
+	u_int			 lines, want, left, i, to, line;
+	u_int			 at;
+	int			 wrapped = 1;
+
+	/*
+	 * Add a new target line.
+	 */
+	if (!already) {
+		to = target->sy;
+		gl = grid_reflow_move(target, &gd->linedata[yy]);
+	} else {
+		to = target->sy - 1;
+		gl = &target->linedata[to];
+	}
+	at = gl->cellused;
+
+	/*
+	 * Loop until no more to consume or the target line is full.
+	 */
+	lines = 0;
+	for (;;) {
+		/*
+		 * If this is now the last line, there is nothing more to be
+		 * done.
+		 */
+		if (yy + lines == gd->hsize + gd->sy)
+			break;
+		line = yy + 1 + lines;
+
+		/* If the next line is empty, skip it. */
+		if (~gd->linedata[line].flags & GRID_LINE_WRAPPED)
+			wrapped = 0;
+		if (gd->linedata[line].cellused == 0) {
+			if (!wrapped)
+				break;
 			continue;
-		was = gce->offset;
-
-		dst_gl->extddata = xreallocarray(dst_gl->extddata,
-		    dst_gl->extdsize + 1, sizeof *dst_gl->extddata);
-		gce->offset = dst_gl->extdsize++;
-		memcpy(&dst_gl->extddata[gce->offset], &src_gl->extddata[was],
-		    sizeof *dst_gl->extddata);
-	}
-}
-
-/* Join line data. */
-static void
-grid_reflow_join(struct grid *dst, u_int *py, struct grid_line *src_gl,
-    u_int new_x)
-{
-	struct grid_line	*dst_gl = &dst->linedata[(*py) - 1];
-	u_int			 left, to_copy, ox, nx;
-
-	/* How much is left on the old line? */
-	left = new_x - dst_gl->cellused;
-
-	/* Work out how much to append. */
-	to_copy = src_gl->cellused;
-	if (to_copy > left)
-		to_copy = left;
-	ox = dst_gl->cellused;
-	nx = ox + to_copy;
-
-	/* Resize the destination line. */
-	dst_gl->celldata = xreallocarray(dst_gl->celldata, nx,
-	    sizeof *dst_gl->celldata);
-	dst_gl->cellsize = dst_gl->cellused = nx;
-
-	/* Append as much as possible. */
-	grid_reflow_copy(dst_gl, ox, src_gl, 0, to_copy);
-
-	/* If there is any left in the source, split it. */
-	if (src_gl->cellused > to_copy) {
-		dst_gl->flags |= GRID_LINE_WRAPPED;
-
-		src_gl->cellused -= to_copy;
-		grid_reflow_split(dst, py, src_gl, new_x, to_copy);
-	}
-}
-
-/* Split line data. */
-static void
-grid_reflow_split(struct grid *dst, u_int *py, struct grid_line *src_gl,
-    u_int new_x, u_int offset)
-{
-	struct grid_line	*dst_gl = NULL;
-	u_int			 to_copy;
-
-	/* Loop and copy sections of the source line. */
-	while (src_gl->cellused > 0) {
-		/* Create new line. */
-		if (*py >= dst->hsize + dst->sy)
-			grid_scroll_history(dst, 8);
-		dst_gl = &dst->linedata[*py];
-		(*py)++;
-
-		/* How much should we copy? */
-		to_copy = new_x;
-		if (to_copy > src_gl->cellused)
-			to_copy = src_gl->cellused;
-
-		/* Expand destination line. */
-		dst_gl->celldata = xreallocarray(NULL, to_copy,
-		    sizeof *dst_gl->celldata);
-		dst_gl->cellsize = dst_gl->cellused = to_copy;
-		dst_gl->flags |= GRID_LINE_WRAPPED;
-
-		/* Copy the data. */
-		grid_reflow_copy(dst_gl, 0, src_gl, offset, to_copy);
-
-		/* Move offset and reduce old line size. */
-		offset += to_copy;
-		src_gl->cellused -= to_copy;
-	}
-
-	/* Last line is not wrapped. */
-	if (dst_gl != NULL)
-		dst_gl->flags &= ~GRID_LINE_WRAPPED;
-}
-
-/* Move line data. */
-static void
-grid_reflow_move(struct grid *dst, u_int *py, struct grid_line *src_gl)
-{
-	struct grid_line	*dst_gl;
-
-	/* Create new line. */
-	if (*py >= dst->hsize + dst->sy)
-		grid_scroll_history(dst, 8);
-	dst_gl = &dst->linedata[*py];
-	(*py)++;
-
-	/* Copy the old line. */
-	memcpy(dst_gl, src_gl, sizeof *dst_gl);
-	dst_gl->flags &= ~GRID_LINE_WRAPPED;
-
-	/* Clear old line. */
-	src_gl->celldata = NULL;
-	src_gl->extddata = NULL;
-}
-
-/*
- * Reflow lines from src grid into dst grid of width new_x. Returns number of
- * lines fewer in the visible area. The source grid is destroyed.
- */
-u_int
-grid_reflow(struct grid *dst, struct grid *src, u_int new_x)
-{
-	u_int			 py, sy, line;
-	int			 previous_wrapped;
-	struct grid_line	*src_gl;
-
-	py = 0;
-	sy = src->sy;
-
-	previous_wrapped = 0;
-	for (line = 0; line < sy + src->hsize; line++) {
-		src_gl = src->linedata + line;
-		if (!previous_wrapped) {
-			/* Wasn't wrapped. If smaller, move to destination. */
-			if (src_gl->cellused <= new_x)
-				grid_reflow_move(dst, &py, src_gl);
-			else
-				grid_reflow_split(dst, &py, src_gl, new_x, 0);
-		} else {
-			/* Previous was wrapped. Try to join. */
-			grid_reflow_join(dst, &py, src_gl, new_x);
 		}
-		previous_wrapped = (src_gl->flags & GRID_LINE_WRAPPED);
 
-		/* This is where we started scrolling. */
-		if (line == sy + src->hsize - src->hscrolled - 1)
-			dst->hscrolled = 0;
+		/*
+		 * Is the destination line now full? Copy the first character
+		 * separately because we need to leave "from" set to the last
+		 * line if this line is full.
+		 */
+		grid_get_cell1(&gd->linedata[line], 0, &gc);
+		if (width + gc.data.width > sx)
+			break;
+		width += gc.data.width;
+		grid_set_cell(target, at, to, &gc);
+		at++;
+
+		/* Join as much more as possible onto the current line. */
+		from = &gd->linedata[line];
+		for (want = 1; want < from->cellused; want++) {
+			grid_get_cell1(from, want, &gc);
+			if (width + gc.data.width > sx)
+				break;
+			width += gc.data.width;
+
+			grid_set_cell(target, at, to, &gc);
+			at++;
+		}
+		lines++;
+
+		/*
+		 * If this line wasn't wrapped or we didn't consume the entire
+		 * line, don't try to join any further lines.
+		 */
+		if (!wrapped || want != from->cellused || width == sx)
+			break;
+	}
+	if (lines == 0)
+		return;
+
+	/*
+	 * If we didn't consume the entire final line, then remove what we did
+	 * consume. If we consumed the entire line and it wasn't wrapped,
+	 * remove the wrap flag from this line.
+	 */
+	left = from->cellused - want;
+	if (left != 0) {
+		grid_move_cells(gd, 0, want, yy + lines, left, 8);
+		from->cellsize = from->cellused = left;
+		lines--;
+	} else if (!wrapped)
+		gl->flags &= ~GRID_LINE_WRAPPED;
+
+	/* Remove the lines that were completely consumed. */
+	for (i = yy + 1; i < yy + 1 + lines; i++) {
+		free(gd->linedata[i].celldata);
+		free(gd->linedata[i].extddata);
+		grid_reflow_dead(&gd->linedata[i]);
 	}
 
-	grid_destroy(src);
+	/* Adjust cursor and scroll positions. */
+	if (*cy > to + lines)
+		*cy -= lines;
+	else if (*cy > to)
+		*cy = to;
+	if (gd->hscrolled > to + lines)
+		gd->hscrolled -= lines;
+	else if (gd->hscrolled > to)
+		gd->hscrolled = to;
+}
 
-	if (py > sy)
-		return (0);
-	return (sy - py);
+/* Split this line into several new ones */
+static void
+grid_reflow_split(struct grid *target, struct grid *gd, u_int sx, u_int yy,
+    u_int at, u_int *cy)
+{
+	struct grid_line	*gl = &gd->linedata[yy], *first;
+	struct grid_cell	 gc;
+	u_int			 line, lines, width, i, xx;
+	u_int			 used = gl->cellused;
+	int			 flags = gl->flags;
+
+	/* How many lines do we need to insert? We know we need at least two. */
+	if (~gl->flags & GRID_LINE_EXTENDED)
+		lines = 1 + (gl->cellused - 1) / sx;
+	else {
+		lines = 2;
+		width = 0;
+		for (i = at; i < used; i++) {
+			grid_get_cell1(gl, i, &gc);
+			if (width + gc.data.width > sx) {
+				lines++;
+				width = 0;
+			}
+			width += gc.data.width;
+		}
+	}
+
+	/* Insert new lines. */
+	line = target->sy + 1;
+	first = grid_reflow_add(target, lines);
+
+	/* Copy sections from the original line. */
+	width = 0;
+	xx = 0;
+	for (i = at; i < used; i++) {
+		grid_get_cell1(gl, i, &gc);
+		if (width + gc.data.width > sx) {
+			target->linedata[line].flags |= GRID_LINE_WRAPPED;
+
+			line++;
+			width = 0;
+			xx = 0;
+		}
+		width += gc.data.width;
+		grid_set_cell(target, xx, line, &gc);
+		xx++;
+	}
+	if (flags & GRID_LINE_WRAPPED)
+		target->linedata[line].flags |= GRID_LINE_WRAPPED;
+
+	/* Move the remainder of the original line. */
+	gl->cellsize = gl->cellused = at;
+	gl->flags |= GRID_LINE_WRAPPED;
+	memcpy(first, gl, sizeof *first);
+	grid_reflow_dead(gl);
+
+	/* Adjust the cursor and scroll positions. */
+	if (yy <= *cy)
+		(*cy) += lines - 1;
+	if (yy <= gd->hscrolled)
+		gd->hscrolled += lines - 1;
+
+	/*
+	 * If the original line had the wrapped flag and there is still space
+	 * in the last new line, try to join with the next lines.
+	 */
+	if (width < sx && (flags & GRID_LINE_WRAPPED))
+		grid_reflow_join(target, gd, sx, yy, width, cy, 1);
+}
+
+/* Reflow lines on grid to new width. */
+void
+grid_reflow(struct grid *gd, u_int sx, u_int *cursor)
+{
+	struct grid		*target;
+	struct grid_line	*gl;
+	struct grid_cell	 gc;
+	u_int			 yy, cy, width, i, at, first;
+	struct timeval		 start, tv;
+
+	gettimeofday(&start, NULL);
+
+	log_debug("%s: %u lines, new width %u", __func__, gd->hsize + gd->sy,
+	    sx);
+	cy = gd->hsize + (*cursor);
+
+	/*
+	 * Create a destination grid. This is just used as a container for the
+	 * line data and may not be fully valid.
+	 */
+	target = grid_create(gd->sx, 0, 0);
+
+	/*
+	 * Loop over each source line.
+	 */
+	for (yy = 0; yy < gd->hsize + gd->sy; yy++) {
+		gl = &gd->linedata[yy];
+		if (gl->flags & GRID_LINE_DEAD)
+			continue;
+
+		/*
+		 * Work out the width of this line. first is the width of the
+		 * first character, at is the point at which the available
+		 * width is hit, and width is the full line width.
+		 */
+		first = at = width = 0;
+		if (~gl->flags & GRID_LINE_EXTENDED) {
+			first = 1;
+			width = gl->cellused;
+			if (width > sx)
+				at = sx;
+			else
+				at = width;
+		} else {
+			for (i = 0; i < gl->cellused; i++) {
+				grid_get_cell1(gl, i, &gc);
+				if (i == 0)
+					first = gc.data.width;
+				if (at == 0 && width + gc.data.width > sx)
+					at = i;
+				width += gc.data.width;
+			}
+		}
+
+		/*
+		 * If the line is exactly right or the first character is wider
+		 * than the targe width, just move it across unchanged.
+		 */
+		if (width == sx || first > sx) {
+			grid_reflow_move(target, gl);
+			continue;
+		}
+
+		/*
+		 * If the line is too big, it needs to be split, whether or not
+		 * it was previously wrapped.
+		 */
+		if (width > sx) {
+			grid_reflow_split(target, gd, sx, yy, at, &cy);
+			continue;
+		}
+
+		/*
+		 * If the line was previously wrapped, join as much as possible
+		 * of the next line.
+		 */
+		if (gl->flags & GRID_LINE_WRAPPED)
+			grid_reflow_join(target, gd, sx, yy, width, &cy, 0);
+		else
+			grid_reflow_move(target, gl);
+	}
+
+	/*
+	 * Replace the old grid with the new.
+	 */
+	if (target->sy < gd->sy)
+		grid_reflow_add(target, gd->sy - target->sy);
+	gd->hsize = target->sy - gd->sy;
+	free(gd->linedata);
+	gd->linedata = target->linedata;
+	free(target);
+
+	/*
+	 * Update scrolled and cursor positions.
+	 */
+	if (gd->hscrolled > gd->hsize)
+		gd->hscrolled = gd->hsize;
+	if (cy < gd->hsize)
+		*cursor = 0;
+	else
+		*cursor = cy - gd->hsize;
+
+	gettimeofday(&tv, NULL);
+	timersub(&tv, &start, &tv);
+	log_debug("%s: now %u lines (in %llu.%06u seconds)", __func__,
+	    gd->hsize + gd->sy, (unsigned long long)tv.tv_sec,
+	    (u_int)tv.tv_usec);
 }

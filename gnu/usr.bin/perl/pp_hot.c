@@ -1181,6 +1181,7 @@ S_aassign_copy_common(pTHX_ SV **firstlelem, SV **lastlelem,
         assert(svr);
 
         if (UNLIKELY(SvFLAGS(svr) & (SVf_BREAK|SVs_GMG) || copy_all)) {
+            U32 brk = (SvFLAGS(svr) & SVf_BREAK);
 
 #ifdef DEBUGGING
             if (fake) {
@@ -1216,7 +1217,7 @@ S_aassign_copy_common(pTHX_ SV **firstlelem, SV **lastlelem,
             /* ... but restore afterwards in case it's needed again,
              * e.g. ($a,$b,$c) = (1,$a,$a)
              */
-            SvFLAGS(svr) |= SVf_BREAK;
+            SvFLAGS(svr) |= brk;
         }
 
         if (!lcount)

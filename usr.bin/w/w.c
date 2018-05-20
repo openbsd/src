@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.63 2017/07/27 14:17:34 jca Exp $	*/
+/*	$OpenBSD: w.c,v 1.65 2017/12/18 05:51:53 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -66,7 +66,6 @@
 
 #include "extern.h"
 
-struct timeval	boottime;
 struct utmp	utmp;
 struct winsize	ws;
 kvm_t	       *kd;
@@ -224,7 +223,8 @@ main(int argc, char *argv[])
 
 #define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT"
 #define WUSED	(sizeof(HEADER) - sizeof("WHAT"))
-	(void)puts(HEADER);
+	if (header)
+		(void)puts(HEADER);
 
 	kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(*kp), &nentries);
 	if (kp == NULL)
@@ -425,10 +425,9 @@ static void
 pr_header(time_t *nowp, int nusers)
 {
 	double avenrun[3];
+	struct timespec boottime;
 	time_t uptime;
 	int days, hrs, i, mins;
-	int mib[2];
-	size_t size;
 	char buf[256];
 
 	/*
@@ -440,13 +439,9 @@ pr_header(time_t *nowp, int nusers)
 
 	/*
 	 * Print how long system has been up.
-	 * (Found by getting "boottime" from the kernel)
 	 */
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_BOOTTIME;
-	size = sizeof(boottime);
-	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) {
-		uptime = now - boottime.tv_sec;
+	if (clock_gettime(CLOCK_BOOTTIME, &boottime) != -1) {
+		uptime = boottime.tv_sec;
 		if (uptime > 59) {
 			uptime += 30;
 			days = uptime / SECSPERDAY;

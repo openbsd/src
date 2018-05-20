@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.7 2017/07/06 06:21:56 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.10 2018/03/01 06:47:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -23,7 +23,7 @@ OUTPUT_ARCH(i386:x86-64)
 PHDRS
 {
 	text PT_LOAD FILEHDR PHDRS;
-	rodata PT_LOAD;
+	rodata PT_LOAD FLAGS (4);
 	data PT_LOAD;
 	bss PT_LOAD;
 	openbsd_randomize PT_OPENBSD_RANDOMIZE;
@@ -50,6 +50,15 @@ SECTIONS
 		start = .;
 		locore0.o(.text)
 		*(.text .text.*)
+	} :text =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kutext_phys = (. - __kernel_virt_base) + 0x1000000;
+	.kutext : AT (__kernel_kutext_phys)
+	{
+		__kutext_start = ABSOLUTE(.);
+		*(.kutext)
+		__kutext_end = ABSOLUTE(.);
 	} :text =0xcccccccc
 
 	PROVIDE (etext = .);
@@ -84,6 +93,16 @@ SECTIONS
 		__data_start = ABSOLUTE(.);
 		*(.data .data.*)
 	} :data =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kudata_phys = (. - __kernel_virt_base) + 0x1000000;
+	.kudata : AT (__kernel_kudata_phys)
+	{
+		__kudata_start = ABSOLUTE(.);
+		*(.kudata)
+		__kudata_end = ABSOLUTE(.);
+	} :data =0xcccccccc
+
 	. = ALIGN(0x1000);
 	PROVIDE (edata = .);
 	_edata = .;

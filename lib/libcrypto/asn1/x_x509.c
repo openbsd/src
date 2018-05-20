@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.24 2015/03/19 14:00:22 tedu Exp $ */
+/* $OpenBSD: x_x509.c,v 1.26 2018/02/17 15:50:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,4 +343,20 @@ i2d_X509_AUX(X509 *a, unsigned char **pp)
 	if (a)
 		length += i2d_X509_CERT_AUX(a->aux, pp);
 	return length;
+}
+
+void
+X509_get0_signature(const ASN1_BIT_STRING **psig, const X509_ALGOR **palg,
+    const X509 *x)
+{
+	if (psig != NULL)
+		*psig = x->signature;
+	if (palg != NULL)
+		*palg = x->sig_alg;
+}
+
+int
+X509_get_signature_nid(const X509 *x)
+{
+	return OBJ_obj2nid(x->sig_alg->algorithm);
 }

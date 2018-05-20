@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.65 2016/09/27 01:37:38 dlg Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.69 2018/05/05 11:54:11 mpi Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -58,8 +58,6 @@
 struct pool nfs_node_pool;
 extern int prtactive;
 
-struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
-
 /* XXX */
 extern struct vops nfs_vops;
 
@@ -98,12 +96,10 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	nmp = VFSTONFS(mnt);
 
 loop:
-	rw_enter_write(&nfs_hashlock);
 	find.n_fhp = fh;
 	find.n_fhsize = fhsize;
 	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
-		rw_exit_write(&nfs_hashlock);
 		vp = NFSTOV(np);
 		error = vget(vp, LK_EXCLUSIVE, p);
 		if (error)
@@ -120,49 +116,41 @@ loop:
 	 * to see if this nfsnode has been added while we did not hold
 	 * the lock.
 	 */
-	rw_exit_write(&nfs_hashlock);
 	error = getnewvnode(VT_NFS, mnt, &nfs_vops, &nvp);
 	/* note that we don't have this vnode set up completely yet */
-	rw_enter_write(&nfs_hashlock);
 	if (error) {
 		*npp = NULL;
-		rw_exit_write(&nfs_hashlock);
 		return (error);
 	}
 	nvp->v_flag |= VLARVAL;
-	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
-	if (np != NULL) {
+	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
+	/*
+	 * getnewvnode() and pool_get() can sleep, check for race.
+	 */
+	if (RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find) != NULL) {
+		pool_put(&nfs_node_pool, np);
 		vgone(nvp);
-		rw_exit_write(&nfs_hashlock);
 		goto loop;
 	}
 
 	vp = nvp;
-	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
+#ifdef VFSLCKDEBUG
+	vp->v_flag |= VLOCKSWORK;
+#endif
+	rrw_init_flags(&np->n_lock, "nfsnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
 	np->n_vnode = vp;
-
 	rw_init(&np->n_commitlock, "nfs_commitlk");
-
-	/* 
-	 * Are we getting the root? If so, make sure the vnode flags
-	 * are correct 
-	 */
-	if ((fhsize == nmp->nm_fhsize) && !bcmp(fh, nmp->nm_fh, fhsize)) {
-		if (vp->v_type == VNON)
-			vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
-	}
-
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	/* lock the nfsnode, then put it on the rbtree */
+	rrw_enter(&np->n_lock, RW_WRITE);
 	np2 = RBT_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
-	rw_exit(&nfs_hashlock);
 	*npp = np;
 
 	return (0);
@@ -201,14 +189,15 @@ nfs_inactive(void *v)
 		 * Remove the silly file that was rename'd earlier
 		 */
 		nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, curproc);
+		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		free(sp, M_NFSREQ, sizeof(*sp));
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -239,9 +228,7 @@ nfs_reclaim(void *v)
 		    ap->a_vp);
 #endif
 	nmp = VFSTONFS(vp->v_mount);
-	rw_enter_write(&nfs_hashlock);
 	RBT_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
-	rw_exit_write(&nfs_hashlock);
 
 	if (np->n_rcred)
 		crfree(np->n_rcred);

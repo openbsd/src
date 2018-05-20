@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.146 2017/09/20 22:05:10 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.151 2018/04/24 07:06:49 stsp Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,17 +137,17 @@ dispatch(struct interface_info *ifi, int routefd)
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: bfdesc: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: bfdesc: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: routefd: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: routefd: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -181,10 +181,8 @@ packethandler(struct interface_info *ifi)
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct reject_elem	*ap;
 	struct option_data	*options;
-	char			*type, *info;
+	char			*src;
 	ssize_t			 result;
-	void			(*handler)(struct interface_info *,
-	    struct option_data *, char *);
 	int			 i, rslt;
 
 	result = receive_packet(ifi, &from, &hfrom);
@@ -202,35 +200,27 @@ packethandler(struct interface_info *ifi)
 	ifrom.s_addr = from.sin_addr.s_addr;
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
-#ifdef DEBUG
 		log_debug("%s: discarding packet with hlen == %u", log_procname,
 		    packet->hlen);
-#endif	/* DEBUG */
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
-#ifdef DEBUG
 		log_debug("%s: discarding packet with chaddr == %s",
 		    log_procname,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
-#endif	/* DEBUG */
 		return;
 	}
 
 	if (ifi->xid != packet->xid) {
-#ifdef DEBUG
 		log_debug("%s: discarding packet with XID != %u (%u)",
 		    log_procname, ifi->xid, packet->xid);
-#endif	/* DEBUG */
 		return;
 	}
 
 	TAILQ_FOREACH(ap, &config->reject_list, next)
 	    if (ifrom.s_addr == ap->addr.s_addr) {
-#ifdef DEBUG
 		    log_debug("%s: discarding packet from address on reject "
 			"list (%s)", log_procname, inet_ntoa(ifrom));
-#endif	/* DEBUG */
 		    return;
 	    }
 
@@ -245,59 +235,41 @@ packethandler(struct interface_info *ifi)
 	    ((options[i].len != config->send_options[i].len) ||
 	    memcmp(options[i].data, config->send_options[i].data,
 	    options[i].len) != 0)) {
-#ifdef DEBUG
 		log_debug("%s: discarding packet with client-identifier %s'",
 		    log_procname, pretty_print_option(i, &options[i], 0));
-#endif	/* DEBUG */
 		return;
 	}
 
-	type = "<unknown>";
-	handler = NULL;
+	rslt = asprintf(&src, "%s (%s)",inet_ntoa(ifrom), ether_ntoa(&hfrom));
+	if (rslt == -1)
+		fatal("src");
 
 	i = DHO_DHCP_MESSAGE_TYPE;
 	if (options[i].data != NULL) {
 		/* Always try a DHCP packet, even if a bad option was seen. */
 		switch (options[i].data[0]) {
 		case DHCPOFFER:
-			handler = dhcpoffer;
-			type = "DHCPOFFER";
+			dhcpoffer(ifi, options, src);
 			break;
 		case DHCPNAK:
-			handler = dhcpnak;
-			type = "DHCPNACK";
+			dhcpnak(ifi, src);
 			break;
 		case DHCPACK:
-			handler = dhcpack;
-			type = "DHCPACK";
+			dhcpack(ifi, options, src);
 			break;
 		default:
-#ifdef DEBUG
 			log_debug("%s: discarding DHCP packet of unknown type "
 			    "(%d)", log_procname, options[i].data[0]);
-#endif	/* DEBUG */
-			return;
+			break;
 		}
 	} else if (packet->op == BOOTREPLY) {
-		handler = dhcpoffer;
-		type = "BOOTREPLY";
+		bootreply(ifi, options, src);
 	} else {
-#ifdef DEBUG
 		log_debug("%s: discarding packet which is neither DHCP nor "
 		    "BOOTP", log_procname);
-#endif	/* DEBUG */
-		return;
 	}
 
-	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(ifrom),
-	    ether_ntoa(&hfrom));
-	if (rslt == -1)
-		fatal("info string");
-
-	if (handler != NULL)
-		(*handler)(ifi, options, info);
-
-	free(info);
+	free(src);
 }
 
 /*
@@ -325,7 +297,8 @@ set_timeout(struct interface_info *ifi, time_t secs,
     void (*where)(struct interface_info *))
 {
 	time(&ifi->timeout);
-	ifi->timeout += secs;
+	if (secs > 0)
+		ifi->timeout += secs;
 	ifi->timeout_func = where;
 }
 

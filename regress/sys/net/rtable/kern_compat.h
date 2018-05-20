@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.7 2017/07/27 13:34:30 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.8 2018/01/14 09:32:09 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -57,6 +57,9 @@ struct pool {
 #define rtref(_rt)		((_rt)->rt_refcnt++)
 #define rtfree(_rt)		(assert(--(_rt)->rt_refcnt >= 0))
 
+#ifndef IPL_NONE
+#define IPL_NONE 0
+#endif
 #define __mtx_enter(_mtx)	/* nothing */
 #define __mtx_leave(_mtx)	/* nothing */
 

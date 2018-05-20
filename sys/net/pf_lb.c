@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.61 2017/07/12 14:07:55 bluhm Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.62 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -155,7 +155,7 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 	int			sidx = pd->sidx;
 	int			didx = pd->didx;
 
-	bzero(&init_addr, sizeof(init_addr));
+	memset(&init_addr, 0, sizeof(init_addr));
 	if (pf_map_addr(pd->naf, r, &pd->nsaddr, naddr, &init_addr, sn, &r->nat,
 	    PF_SN_NAT))
 		return (1);
@@ -482,7 +482,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 				 * reset counter in case its value
 				 * has been removed from the pool.
 				 */
-				bzero(&rpool->counter, sizeof(rpool->counter));
+				memset(&rpool->counter, 0,
+				    sizeof(rpool->counter));
 				if (pfr_pool_get(rpool, &raddr, &rmask, af))
 					return (1);
 			}
@@ -524,7 +525,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		    rpool->addr.type == PF_ADDR_DYNIFTL) {
 			if (pfr_pool_get(rpool, &raddr, &rmask, af)) {
 				/* see PF_POOL_ROUNDROBIN */
-				bzero(&rpool->counter, sizeof(rpool->counter));
+				memset(&rpool->counter, 0,
+				    sizeof(rpool->counter));
 				if (pfr_pool_get(rpool, &raddr, &rmask, af))
 					return (1);
 			}

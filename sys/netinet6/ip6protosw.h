@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.12 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.13 2017/11/23 13:45:46 mpi Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ struct ip6ctlparam {
 
 #ifdef _KERNEL
 extern u_char ip6_protox[];
-extern struct protosw inet6sw[];
+extern const struct protosw inet6sw[];
 #endif
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */

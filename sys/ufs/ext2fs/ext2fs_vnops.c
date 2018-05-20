@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.77 2016/03/19 12:04:16 natano Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.81 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
@@ -432,7 +432,6 @@ ext2fs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct proc *p = cnp->cn_proc;
 	struct inode *ip;
 	int error;
 
@@ -450,7 +449,7 @@ ext2fs_link(void *v)
 		error = EXDEV;
 		goto out2;
 	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE, p))) {
+	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -477,7 +476,7 @@ ext2fs_link(void *v)
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 out2:
 	vput(dvp);
 	return (error);
@@ -518,7 +517,6 @@ ext2fs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct inode *ip, *xp, *dp;
-	struct proc *p = fcnp->cn_proc;
 	struct ext2fs_dirtemplate dirbuf;
 	/* struct timespec ts; */
 	int doingdirectory = 0, oldparent = 0, newparent = 0;
@@ -580,18 +578,18 @@ abortit:
 		(void) vfs_relookup(fdvp, &fvp, fcnp);
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
-	if ((error = vn_lock(fvp, LK_EXCLUSIVE, p)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -601,7 +599,7 @@ abortit:
                 	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
         	if (error) {
-                	VOP_UNLOCK(fvp, p);
+                	VOP_UNLOCK(fvp);
                 	error = EACCES;
                 	goto abortit;
         	}
@@ -613,7 +611,7 @@ abortit:
 			(fcnp->cn_flags&ISDOTDOT) ||
 			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, p);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -641,7 +639,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(ip, 1)) != 0) {
-		VOP_UNLOCK(fvp, p);
+		VOP_UNLOCK(fvp);
 		goto bad;
 	}
 
@@ -656,7 +654,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp, p);
+	VOP_UNLOCK(fvp);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {
@@ -874,7 +872,7 @@ bad:
 out:
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
-	if (vn_lock(fvp, LK_EXCLUSIVE, p) == 0) {
+	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 		vput(fvp);
@@ -1292,7 +1290,7 @@ struct vops ext2fs_vops = {
         .vop_write      = ext2fs_write,
         .vop_ioctl      = ufs_ioctl,
         .vop_poll       = ufs_poll,
-        .vop_kqfilter   = vop_generic_kqfilter,
+        .vop_kqfilter   = ufs_kqfilter,
         .vop_fsync      = ext2fs_fsync,
         .vop_remove     = ext2fs_remove,
         .vop_link       = ext2fs_link,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.54 2017/08/12 13:18:48 tedu Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.55 2017/12/11 05:27:40 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ bootsync(int howto)
 		printf("Warning IRQ's disabled during boot()\n");
 	}
 
-	vfs_shutdown();
+	vfs_shutdown(curproc);
 
 	if ((howto & RB_TIMEBAD) == 0) {
 		resettodr();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.178 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.181 2018/02/24 07:20:04 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/selinfo.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
@@ -193,10 +193,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
 
-	tp = malloc(sizeof(*tp), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (tp == NULL)
-		return (ENOMEM);
-
+	tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 	tp->tun_unit = unit;
 	tp->tun_flags = TUN_INITED|TUN_STAYUP;
 
@@ -617,7 +614,6 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
 	struct tuninfo		*tunp;
-	struct mbuf		*m;
 
 	switch (cmd) {
 	case TUNSIFINFO:
@@ -671,12 +667,8 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		m = ifq_deq_begin(&tp->tun_if.if_snd);
-		if (m != NULL) {
-			*(int *)data = m->m_pkthdr.len;
-			ifq_deq_rollback(&tp->tun_if.if_snd, m);
-		} else
-			*(int *)data = 0;
+		*(int *)data = ifq_empty(&tp->tun_if.if_snd) ?
+		    0 : tp->tun_if.if_mtu;
 		break;
 	case TIOCSPGRP:
 		tp->tun_pgid = *(int *)data;

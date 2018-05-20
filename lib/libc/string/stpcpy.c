@@ -1,4 +1,4 @@
-/*	$OpenBSD: stpcpy.c,v 1.2 2014/07/09 17:08:21 naddy Exp $	*/
+/*	$OpenBSD: stpcpy.c,v 1.3 2017/11/28 06:55:49 tb Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -33,7 +33,7 @@
 
 #if defined(APIWARN)
 __warn_references(stpcpy,
-    "warning: stpcpy() is dangerous; do not use it");
+    "stpcpy() is dangerous; do not use it");
 #endif
 
 char *

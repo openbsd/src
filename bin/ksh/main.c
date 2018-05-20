@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2017/08/11 23:10:55 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.92 2018/05/18 13:25:20 benno Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -69,9 +69,7 @@ int	 builtin_flag;
 char	*current_wd;
 int	 current_wd_size;
 
-#ifdef EDIT
 int	x_cols = 80;
-#endif /* EDIT */
 
 /*
  * shell initialization
@@ -90,15 +88,10 @@ static const char *initcoms [] = {
 	"alias",
 	 /* Standard ksh aliases */
 	  "hash=alias -t",	/* not "alias -t --": hash -r needs to work */
-	  "type=whence -v",
-#ifdef JOBS
 	  "stop=kill -STOP",
-#endif
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
-#ifdef HISTORY
 	  "history=fc -l",
-#endif /* HISTORY */
 	  "integer=typeset -i",
 	  "nohup=nohup ",
 	  "local=typeset",
@@ -228,9 +221,7 @@ main(int argc, char *argv[])
 	 * brace expansion, so set this before setting up FPOSIX
 	 * (change_flag() clears FBRACEEXPAND when FPOSIX is set).
 	 */
-#ifdef BRACE_EXPAND
 	Flag(FBRACEEXPAND) = 1;
-#endif /* BRACE_EXPAND */
 
 	/* set posix flag just before environment so that it will have
 	 * exactly the same effect as the POSIXLY_CORRECT environment
@@ -253,12 +244,12 @@ main(int argc, char *argv[])
 	/* Set edit mode to emacs by default, may be overridden
 	 * by the environment or the user.  Also, we want tab completion
 	 * on in vi by default. */
-#if defined(EDIT) && defined(EMACS)
+#if defined(EMACS)
 	change_flag(FEMACS, OF_SPECIAL, 1);
-#endif /* EDIT && EMACS */
-#if defined(EDIT) && defined(VI)
+#endif /* EMACS */
+#if defined(VI)
 	Flag(FVITABCOMPLETE) = 1;
-#endif /* EDIT && VI */
+#endif /* VI */
 
 	/* import environment */
 	if (environ != NULL)
@@ -295,7 +286,7 @@ main(int argc, char *argv[])
 			setstr(pwd_v, current_wd, KSH_RETURN_ERROR);
 	}
 	ppid = getppid();
-	setint(global("PPID"), (long) ppid);
+	setint(global("PPID"), (int64_t) ppid);
 	/* setstr can't fail here */
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 
@@ -316,7 +307,7 @@ main(int argc, char *argv[])
 		/* Set PS1 if it isn't set */
 		if (!(vp->flag & ISSET)) {
 			/* setstr can't fail here */
-			setstr(vp, safe_prompt, KSH_RETURN_ERROR);
+			setstr(vp, "\\h\\$ ", KSH_RETURN_ERROR);
 		}
 	}
 
@@ -371,11 +362,9 @@ main(int argc, char *argv[])
 	i = Flag(FMONITOR) != 127;
 	Flag(FMONITOR) = 0;
 	j_init(i);
-#ifdef EDIT
 	/* Do this after j_init(), as tty_fd is not initialized 'til then */
 	if (Flag(FTALKING))
 		x_init();
-#endif
 
 	l = genv->loc;
 	l->argv = make_argv(argc - (argi - 1), &argv[argi - 1]);
@@ -502,7 +491,7 @@ include(const char *name, int argc, char **argv, int intr_ok)
 			unwind(i);
 			/* NOTREACHED */
 		default:
-			internal_errorf(1, "include: %d", i);
+			internal_errorf("%s: %d", __func__, i);
 			/* NOTREACHED */
 		}
 	}
@@ -589,7 +578,7 @@ shell(Source *volatile s, volatile int toplevel)
 		default:
 			source = old_source;
 			quitenv(NULL);
-			internal_errorf(1, "shell: %d", i);
+			internal_errorf("%s: %d", __func__, i);
 			/* NOTREACHED */
 		}
 	}
@@ -609,7 +598,7 @@ shell(Source *volatile s, volatile int toplevel)
 			got_sigwinch = 1;
 			j_notify();
 			mcheck();
-			set_prompt(PS1, s);
+			set_prompt(PS1);
 		}
 
 		t = compile(s);

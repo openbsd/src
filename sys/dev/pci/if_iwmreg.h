@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.27 2017/05/03 14:53:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.28 2018/02/28 14:39:35 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -1812,6 +1812,9 @@ struct iwm_agn_scd_bc_tbl {
 #define IWM_NET_DETECT_PROFILES_CMD		0x57
 #define IWM_NET_DETECT_HOTSPOTS_CMD		0x58
 #define IWM_NET_DETECT_HOTSPOTS_QUERY_CMD	0x59
+
+/* system group command IDs */
+#define IWM_FSEQ_VER_MISMATCH_NOTIFICATION	0xff
 
 #define IWM_REPLY_MAX	0xff
 
@@ -5820,6 +5823,7 @@ iwm_cmd_id(uint8_t opcode, uint8_t groupid, uint8_t version)
 
 /* due to the conversion, this group is special */
 #define IWM_ALWAYS_LONG_GROUP	1
+#define IWM_SYSTEM_GROUP	4
 
 struct iwm_cmd_header {
 	uint8_t code;

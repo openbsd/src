@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.39 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.41 2018/02/04 10:06:51 stsp Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -196,6 +196,12 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define	IFM_25G_SR	49		/* 25GBase-SR */
 #define	IFM_50G_CR2	50		/* 50GBase-CR2 */
 #define	IFM_50G_KR2	51		/* 50GBase-KR2 */
+#define	IFM_25G_LR	52		/* 25GBase-LR */
+#define	IFM_25G_ER	53		/* 25GBase-ER */
+#define	IFM_10G_AOC	54		/* 10G Active Optical Cable */
+#define	IFM_25G_AOC	55		/* 25G Active Optical Cable */
+#define	IFM_40G_AOC	56		/* 40G Active Optical Cable */
+#define	IFM_100G_AOC	57		/* 100G Active Optical Cable */
 
 #define	IFM_ETH_MASTER	0x0000000000010000ULL	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x0000000000020000ULL	/* receive PAUSE frames */
@@ -307,6 +313,16 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define IFM_IEEE80211_HT_MCS74	93	/* 11n MCS 74 */
 #define IFM_IEEE80211_HT_MCS75	94	/* 11n MCS 75 */
 #define IFM_IEEE80211_HT_MCS76	95	/* 11n MCS 76 */
+#define IFM_IEEE80211_VHT_MCS0	96	/* 11ac MCS 0 */
+#define IFM_IEEE80211_VHT_MCS1	97	/* 11ac MCS 1 */
+#define IFM_IEEE80211_VHT_MCS2	98	/* 11ac MCS 2 */
+#define IFM_IEEE80211_VHT_MCS3	99	/* 11ac MCS 3 */
+#define IFM_IEEE80211_VHT_MCS4	100	/* 11ac MCS 4 */
+#define IFM_IEEE80211_VHT_MCS5	101	/* 11ac MCS 5 */
+#define IFM_IEEE80211_VHT_MCS6	102	/* 11ac MCS 6 */
+#define IFM_IEEE80211_VHT_MCS7	103	/* 11ac MCS 7 */
+#define IFM_IEEE80211_VHT_MCS8	104	/* 11ac MCS 8 */
+#define IFM_IEEE80211_VHT_MCS9	105	/* 11ac MCS 9 */
 
 #define	IFM_IEEE80211_ADHOC	0x0000000000010000ULL	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	0x0000000000020000ULL	/* Operate in Host AP mode */
@@ -320,6 +336,7 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define IFM_IEEE80211_11G	0x0000000300000000ULL	/* 2GHz, CCK mode */
 #define IFM_IEEE80211_FH	0x0000000400000000ULL	/* 2GHz, GFSK mode */
 #define IFM_IEEE80211_11N	0x0000000800000000ULL	/* 11n/HT 2GHz/5GHz */
+#define IFM_IEEE80211_11AC	0x0000001000000000ULL	/* 11ac/VHT 5GHz */
 
 /*
  * Digitally multiplexed "Carrier" Serial Interfaces
@@ -541,6 +558,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_10G_KR,		"10GBASE-KR" },			\
 	{ IFM_ETHER|IFM_10G_CR1,	"10GbaseCR1" },			\
 	{ IFM_ETHER|IFM_10G_CR1,	"10GBASE-CR1" },		\
+	{ IFM_ETHER|IFM_10G_AOC,	"10G-AOC" },			\
 	{ IFM_ETHER|IFM_20G_KR2,	"20GbaseKR2" },			\
 	{ IFM_ETHER|IFM_20G_KR2,	"20GBASE-KR2" },		\
 	{ IFM_ETHER|IFM_2500_KX,	"2500baseKX" },			\
@@ -559,6 +577,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_CX_SGMII,	"1000BASE-CX-SGMII" },		\
 	{ IFM_ETHER|IFM_40G_KR4,	"40GbaseKR4" },			\
 	{ IFM_ETHER|IFM_40G_KR4,	"40GBASE-KR4" },		\
+	{ IFM_ETHER|IFM_40G_AOC,	"40G-AOC" },			\
 	{ IFM_ETHER|IFM_10G_ER,		"10GbaseER" },			\
 	{ IFM_ETHER|IFM_10G_ER,		"10GBASE-ER" },			\
 	{ IFM_ETHER|IFM_100G_CR4,	"100GbaseCR4" },		\
@@ -569,6 +588,7 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_100G_KR4,	"100GBASE-KR4" },		\
 	{ IFM_ETHER|IFM_100G_LR4,	"100GbaseLR4" },		\
 	{ IFM_ETHER|IFM_100G_LR4,	"100GBASE-LR4" },		\
+	{ IFM_ETHER|IFM_100G_AOC,	"100G-AOC" },			\
 	{ IFM_ETHER|IFM_56G_R4,		"56GbaseR4" },			\
 	{ IFM_ETHER|IFM_56G_R4,		"56GBASE-R4" },			\
 	{ IFM_ETHER|IFM_25G_CR,		"25GbaseCR" },			\
@@ -577,6 +597,11 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_25G_KR,		"25GBASE-KR" },			\
 	{ IFM_ETHER|IFM_25G_SR,		"25GbaseSR" },			\
 	{ IFM_ETHER|IFM_25G_SR,		"25GBASE-SR" },			\
+	{ IFM_ETHER|IFM_25G_LR,		"25GbaseLR" },			\
+	{ IFM_ETHER|IFM_25G_LR,		"25GBASE-LR" },			\
+	{ IFM_ETHER|IFM_25G_ER,		"25GbaseER" },			\
+	{ IFM_ETHER|IFM_25G_ER,		"25GBASE-ER" },			\
+	{ IFM_ETHER|IFM_25G_AOC,	"25G-AOC" },			\
 	{ IFM_ETHER|IFM_50G_CR2,	"50GbaseCR2" },			\
 	{ IFM_ETHER|IFM_50G_CR2,	"50GBASE-CR2" },		\
 	{ IFM_ETHER|IFM_50G_KR2,	"50GbaseKR2" },			\
@@ -682,6 +707,16 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS74,	"HT-MCS74" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS75,	"HT-MCS75" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS76,	"HT-MCS76" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS0,	"VHT-MCS0" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS1,	"VHT-MCS1" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS2,	"VHT-MCS2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS3,	"VHT-MCS3" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS4,	"VHT-MCS4" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS5,	"VHT-MCS5" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS6,	"VHT-MCS6" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS7,	"VHT-MCS7" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS8,	"VHT-MCS8" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS9,	"VHT-MCS9" },		\
 									\
 	{ IFM_TDM|IFM_TDM_T1,		"t1" },				\
 	{ IFM_TDM|IFM_TDM_T1_AMI,	"t1-ami" },			\
@@ -707,6 +742,7 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_11G,	"11g" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_FH,	"fh" },			\
 	{ IFM_IEEE80211|IFM_IEEE80211_11N,	"11n" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_11AC,	"11ac" },		\
 	{ IFM_TDM|IFM_TDM_MASTER,		"master" },		\
 	{ 0, NULL },							\
 }
@@ -874,6 +910,17 @@ struct ifmedia_baudrate {
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS74, IF_Mbps(195) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS75, IF_Mbps(195) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_HT_MCS76, IF_Kbps(214500) },	\
+	/* These VHT rates correspond to 1 SS, no SGI, 40 MHz channel.*/\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS0, IF_Kbps(13500) },	\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS1, IF_Mbps(27) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS2, IF_Kbps(40500) },	\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS3, IF_Mbps(54) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS4, IF_Mbps(81) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS5, IF_Mbps(108) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS6, IF_Kbps(121500) },	\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS7, IF_Mbps(135) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS8, IF_Mbps(162) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_VHT_MCS9, IF_Mbps(180) },		\
 									\
 	{ IFM_TDM|IFM_TDM_T1,		IF_Kbps(1536) },		\
 	{ IFM_TDM|IFM_TDM_T1_AMI,	IF_Kbps(1536) },		\

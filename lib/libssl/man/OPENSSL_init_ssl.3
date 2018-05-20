@@ -1,0 +1,61 @@
+.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 24 2018 $
+.Dt OPENSSL_INIT_SSL 3
+.Os
+.Sh NAME
+.Nm OPENSSL_init_ssl
+.Nd initialise the crypto and ssl libraries
+.Sh SYNOPSIS
+.In openssl/ssl.h
+.Ft int
+.Fo OPENSSL_init_ssl
+.Fa "uint64_t options"
+.Fa "const void *dummy"
+.Fc
+.Sh DESCRIPTION
+.Fn OPENSSL_init_ssl
+calls
+.Xr OPENSSL_init_crypto 3
+and also allocates various resources used internally by the ssl library.
+.Pp
+Calling it is never useful because it is automatically called
+internally when needed.
+.Pp
+The
+.Fa options
+argument is passed on to
+.Xr OPENSSL_init_crypto 3
+and the
+.Fa dummy
+argument is ignored.
+.Pp
+If this function is called more than once,
+none of the calls except the first one have any effect.
+.Sh RETURN VALUES
+.Fn OPENSSL_init_ssl
+is intended to return 1 on success or 0 on error.
+.Sh SEE ALSO
+.Xr CONF_modules_load_file 3 ,
+.Xr OPENSSL_init_crypto 3
+.Sh HISTORY
+.Fn OPENSSL_init_ssl
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.3 .
+.Sh BUGS
+.Fn OPENSSL_init_ssl
+silently ignores even more configuration failures than
+.Xr OPENSSL_init_crypto 3 .

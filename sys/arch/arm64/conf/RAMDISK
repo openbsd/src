@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.37 2017/09/21 12:01:52 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.60 2018/05/16 13:42:35 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -47,6 +47,7 @@ config		bsd	root on rd0a swap on rd0b
 # The main bus device
 mainbus0	at root
 cpu0		at mainbus?
+efi0		at mainbus?
 simplebus*	at fdt?
 
 scsibus*	at scsi?
@@ -56,12 +57,14 @@ cd*		at scsibus?
 ch*		at scsibus?
 uk*		at scsibus?
 
-ampintc*	at fdt?
-ampintcmsi*	at fdt?
+ampintc*	at fdt? early 1
+ampintcmsi*	at fdt? early 1
 agintc*		at fdt?
 agtimer*	at fdt?
 ahci*		at fdt?
 dwge*		at fdt?
+dwpcie*		at fdt?
+pci*		at dwpcie?
 ehci*		at fdt?
 pciecam*	at fdt?
 pci*		at pciecam?
@@ -75,8 +78,8 @@ com*		at fdt?
 # Virt on-chip devices
 pluart*		at fdt?		# onboard uarts
 plrtc*		at fdt?
-psci*		at fdt?
-syscon*		at fdt?
+psci*		at fdt? early 1
+syscon*		at fdt? early 1
 
 virtio*		at fdt?
 virtio*		at pci?
@@ -89,12 +92,36 @@ vioscsi*	at virtio?
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
 
+# iMX
+imxccm*		at fdt? early 1
+imxiomuxc*	at fdt? early 1
+imxanatop*	at fdt? early 1
+imxgpc*		at fdt?
+imxgpio*	at fdt?
+fec*		at fdt?
+imxuart*	at fdt?
+imxiic*		at fdt?
+iic*		at imxiic?
+imxesdhc*	at fdt?
+sdmmc*		at imxesdhc?
+imxpd*		at fdt?
+imxdwusb*	at fdt?
+
 # Raspberry Pi 3
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
+bcmrng*		at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# Marvell SoCs
+mvclock*	at fdt? early 1
+mvicu*		at fdt? early 1
+mvpinctrl*	at fdt? early 1
+mvgpio*		at fdt?
+mvrng*		at fdt?
+mvrtc*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
@@ -103,6 +130,8 @@ rkpinctrl*	at fdt? early 1
 rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?
+rkpcie*		at fdt?
+pci*		at rkpcie?
 rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
@@ -111,9 +140,12 @@ sdmmc*		at dwmmc?
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
+sxirsb*		at fdt? early 1	# Reduced Serial Bus
 sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
+sxitwi*		at fdt?		# I2C controller
+iic*		at sxitwi?	# I2C bus
 dwxe*		at fdt?
 
 # PCI
@@ -195,6 +227,7 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
 
 pseudo-device	loop 1

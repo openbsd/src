@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.26 2017/03/27 10:06:41 reyk Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.27 2017/12/03 21:02:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -526,5 +526,9 @@ struct ikev2_cfg {
 #define IKEV2_CFG_INTERNAL_IP6_SERVER		23457	/* MS-IKEE */
 
 extern struct iked_constmap ikev2_cfg_map[];
+
+/* IKEv1 payload types */
+#define IKEV1_PAYLOAD_NONE	0	/* No payload */
+#define IKEV1_PAYLOAD_PROPOSAL	2	/* Proposal */
 
 #endif /* IKED_IKEV2_H */

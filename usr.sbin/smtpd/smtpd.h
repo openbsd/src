@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.536 2017/09/08 16:51:22 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.540 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -52,7 +52,7 @@
 #define SMTPD_QUEUE_EXPIRY	 (4 * 24 * 60 * 60)
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #define	SMTPD_NAME		 "OpenSMTPD"
-#define	SMTPD_VERSION		 "6.0.0"
+#define	SMTPD_VERSION		 "6.0.4"
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
 
@@ -204,7 +204,6 @@ enum imsg_type {
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_DISCOVER_EVPID,
 	IMSG_CTL_DISCOVER_MSGID,
-	IMSG_CTL_UNCORRUPT_MSGID,
 
 	IMSG_CTL_SMTP_SESSION,
 
@@ -1325,8 +1324,6 @@ int queue_message_delete(uint32_t);
 int queue_message_commit(uint32_t);
 int queue_message_fd_r(uint32_t);
 int queue_message_fd_rw(uint32_t);
-int queue_message_corrupt(uint32_t);
-int queue_message_uncorrupt(uint32_t);
 int queue_envelope_create(struct envelope *);
 int queue_envelope_delete(uint64_t);
 int queue_envelope_load(uint64_t, struct envelope *);
@@ -1487,6 +1484,9 @@ int getmailname(char *, size_t);
 int base64_encode(unsigned char const *, size_t, char *, size_t);
 int base64_decode(char const *, unsigned char *, size_t);
 
+void log_trace_verbose(int);
+void log_trace(int, const char *, ...)
+    __attribute__((format (printf, 2, 3)));
 
 /* waitq.c */
 int  waitq_wait(void *, void (*)(void *, void *, void *), void *);

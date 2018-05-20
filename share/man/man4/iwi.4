@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.50 2015/02/17 16:29:16 bentley Exp $
+.\" $OpenBSD: iwi.4,v 1.51 2017/10/17 22:47:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 17 2015 $
+.Dd $Mdocdate: October 17 2017 $
 .Dt IWI 4
 .Os
 .Sh NAME
@@ -36,8 +36,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for
-.Tn Intel
+driver provides support for Intel
 PRO/Wireless 2200BG/2915ABG Mini PCI and 2225BG PCI network adapters.
 .Pp
 These are the modes the
@@ -144,6 +143,11 @@ The file might be missing or corrupted.
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.7 .
 .Sh AUTHORS
 The
 .Nm

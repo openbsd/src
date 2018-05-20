@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.15 2014/01/23 23:56:27 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.17 2018/03/22 11:24:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -268,6 +268,9 @@ int64_t hv_ldc_rx_set_qhead(uint64_t ldc_id, uint64_t head_offset);
 #define LDC_CHANNEL_UP		1
 #define LDC_CHANNEL_RESET	2
 
+/* Used by drivers only, not part of the hypervisor API. */
+#define LDC_CHANNEL_INIT	((uint64_t)-1)
+
 int64_t	hv_ldc_set_map_table(uint64_t ldc_id, paddr_t base_raddr,
 	    uint64_t nentries);
 int64_t	hv_ldc_get_map_table(uint64_t ldc_id, paddr_t *base_raddr,
@@ -320,3 +323,11 @@ int64_t	hv_rng_data_read(paddr_t raddr, uint64_t *delta);
 #define H_ENOMAP	14
 #define H_ETOOMANY	15
 #define H_ECHANNEL	16
+
+extern uint64_t sun4v_group_interrupt_major;
+
+int64_t sun4v_intr_devino_to_sysino(uint64_t, uint64_t, uint64_t *);
+int64_t sun4v_intr_setcookie(uint64_t, uint64_t, uint64_t);
+int64_t sun4v_intr_setenabled(uint64_t, uint64_t, uint64_t);
+int64_t	sun4v_intr_setstate(uint64_t, uint64_t, uint64_t);
+int64_t	sun4v_intr_settarget(uint64_t, uint64_t, uint64_t);

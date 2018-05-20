@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.33 2017/02/28 23:19:42 millert Exp $
+# $OpenBSD: backward,v 1.34 2017/10/23 16:14:16 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -62,7 +62,9 @@ Link	America/Sao_Paulo	Brazil/East
 Link	America/Manaus		Brazil/West
 Link	America/Halifax		Canada/Atlantic
 Link	America/Winnipeg	Canada/Central
-Link	America/Regina		Canada/East-Saskatchewan
+# This line is commented out, as the name exceeded the 14-character limit
+# and was an unused misnomer.
+#Link	America/Regina		Canada/East-Saskatchewan
 Link	America/Toronto		Canada/Eastern
 Link	America/Edmonton	Canada/Mountain
 Link	America/St_Johns	Canada/Newfoundland

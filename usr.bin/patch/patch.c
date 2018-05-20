@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.64 2017/06/12 14:23:26 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.65 2018/04/07 14:55:13 anton Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -42,7 +43,6 @@
 #include "pch.h"
 #include "inp.h"
 #include "backupfile.h"
-#include "pathnames.h"
 #include "ed.h"
 
 mode_t		filemode = 0644;

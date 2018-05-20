@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: tftpproxy,v 1.2 2015/07/15 13:50:54 ajacoutot Exp $
+# $OpenBSD: tftpproxy,v 1.3 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/tftp-proxy"
 

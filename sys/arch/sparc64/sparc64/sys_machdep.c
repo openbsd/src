@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.3 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.4 2017/12/30 20:46:59 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.3 2000/12/13 18:13:11 jdolecek Exp $ */
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/uio.h>

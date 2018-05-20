@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.12 2017/09/15 02:35:39 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.14 2018/01/08 18:21:22 anton Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ttycom.h>
 
 #include <dev/ic/comreg.h>
 
@@ -133,6 +134,30 @@ com_rcv_event(int fd, short kind, void *arg)
 }
 
 /*
+ * com_rcv_handle_break
+ *
+ * Set/clear break detected condition based on received TIOCUCNTL_{S,C}BRK.
+ */
+static int
+com_rcv_handle_break(struct ns8250_dev *com, uint8_t cmd)
+{
+	switch (cmd) {
+	case 0: /* DATA */
+		return 0;
+	case TIOCUCNTL_SBRK:
+		com->regs.lsr |= LSR_BI;
+		break;
+	case TIOCUCNTL_CBRK:
+		com->regs.lsr &= ~LSR_BI;
+		break;
+	default:
+		log_warnx("unexpected UCNTL ioctl: %d", cmd);
+	}
+
+	return 1;
+}
+
+/*
  * com_rcv
  *
  * Move received byte into com data register.
@@ -141,7 +166,7 @@ com_rcv_event(int fd, short kind, void *arg)
 static void
 com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 {
-	char ch;
+	char buf[2];
 	ssize_t sz;
 
 	/*
@@ -149,7 +174,7 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 	 * If so, consume the character, buffer it into the com1 data register
 	 * assert IRQ4, and set the line status register RXRDY bit.
 	 */
-	sz = read(com->fd, &ch, sizeof(char));
+	sz = read(com->fd, buf, sizeof(buf));
 	if (sz == -1) {
 		/*
 		 * If we get EAGAIN, we'll retry and get the character later.
@@ -158,11 +183,14 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 		 */
 		if (errno != EAGAIN)
 			log_warn("unexpected read error on com device");
-	} else if (sz != 1)
-		log_warnx("unexpected read return value on com device");
+	} else if (sz != 1 && sz != 2)
+		log_warnx("unexpected read return value %zd on com device", sz);
 	else {
+		if (com_rcv_handle_break(com, buf[0]))
+			buf[1] = 0;
+
 		com->regs.lsr |= LSR_RXRDY;
-		com->regs.data = ch;
+		com->regs.data = buf[1];
 
 		if (com->regs.ier & IER_ERXRDY) {
 			com->regs.iir |= IIR_RXRDY;

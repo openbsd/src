@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.28 2017/02/15 21:28:23 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.31 2017/11/23 06:26:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1514,19 +1514,19 @@ slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 found:
 	if (!dev_ref(d))
 		return NULL;
+	if ((mode & d->mode) != mode) {
+		if (log_level >= 1) {
+			slot_log(s);
+			log_puts(": requested mode not supported\n");
+		}
+		dev_unref(d);
+		return 0;
+	}
 	s->dev = d;
 	s->ops = ops;
 	s->arg = arg;
 	s->pstate = SLOT_INIT;
 	s->tstate = MMC_OFF;
-
-	if ((mode & s->dev->mode) != mode) {
-		if (log_level >= 1) {
-			slot_log(s);
-			log_puts(": requested mode not supported\n");
-		}
-		return 0;
-	}
 	s->mode = mode;
 	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
@@ -1709,6 +1709,23 @@ slot_attach(struct slot *s)
 			enc_init(&s->sub.enc, &s->par, slot_nch);
 			s->sub.encbuf =
 			    xmalloc(s->round * slot_nch * sizeof(adata_t));
+		}
+
+		/*
+		 * cmap_copy() doesn't write samples in all channels,
+	         * for instance when mono->stereo conversion is
+	         * disabled. So we have to prefill cmap_copy() output
+	         * with silence.
+	         */
+		if (s->sub.resampbuf) {
+			memset(s->sub.resampbuf, 0,
+			    d->round * slot_nch * sizeof(adata_t));
+		} else if (s->sub.encbuf) {
+			memset(s->sub.encbuf, 0,
+			    s->round * slot_nch * sizeof(adata_t));
+		} else {
+			memset(s->sub.buf.data, 0,
+			    s->appbufsz * slot_nch * sizeof(adata_t));
 		}
 
 		/*

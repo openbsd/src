@@ -11,7 +11,7 @@ use warnings;
 use Errno ':POSIX';
 
 my $errno = ENOTCONN;
-my $kerngrep = qr/sendsyslog: dropped \d+ messages?, error $errno$/;
+my $kerngrep = qr/sendsyslog: dropped \d+ messages?, error $errno, pid \d+$/;
 
 our %args = (
     client => {

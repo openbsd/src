@@ -1,8 +1,8 @@
-.\"	$OpenBSD: d2i_PKCS8PrivateKey_bio.3,v 1.8 2017/01/07 17:27:15 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: d2i_PKCS8PrivateKey_bio.3,v 1.10 2018/03/22 16:06:33 schwarze Exp $
+.\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2002, 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2002, 2016, 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2017 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt D2I_PKCS8PRIVATEKEY_BIO 3
 .Os
 .Sh NAME
@@ -144,10 +144,30 @@ by converting the buffers to memory BIOs;
 see
 .Xr BIO_s_mem 3
 for details.
+.Sh RETURN VALUES
+.Fn d2i_PKCS8PrivateKey_bio
+and
+.Fn d2i_PKCS8PrivateKey_fp
+return a
+.Vt EVP_PKEY
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn i2d_PKCS8PrivateKey_bio ,
+.Fn i2d_PKCS8PrivateKey_fp ,
+.Fn i2d_PKCS8PrivateKey_nid_bio ,
+and
+.Fn i2d_PKCS8PrivateKey_nid_fp
+return 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr d2i_X509_SIG 3 ,
 .Xr PEM_write_PKCS8PrivateKey 3 ,
 .Xr PKCS8_PRIV_KEY_INFO_new 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.5
+and have been available since
+.Ox 2.7 .
 .Sh CAVEATS
 Do not confuse these functions with
 .Xr i2d_PKCS8PrivateKeyInfo_bio 3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.18 2017/08/13 11:10:30 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.19 2018/03/04 16:49:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include <grp.h>
-#include <vis.h>
 
 #include "smtpd.h"
 #include "log.h"

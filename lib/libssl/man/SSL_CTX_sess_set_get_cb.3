@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.2 2016/11/30 16:25:29 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.6 2018/04/25 14:07:57 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt SSL_CTX_SESS_SET_GET_CB 3
 .Os
 .Sh NAME
@@ -75,38 +75,38 @@
 .Ft void
 .Fo SSL_CTX_sess_set_get_cb
 .Fa "SSL_CTX *ctx"
-.Fa "SSL_SESSION (*get_session_cb)(SSL *, unsigned char *, int, int *)"
+.Fa "SSL_SESSION (*get_session_cb)(SSL *, const unsigned char *, int, int *)"
 .Fc
 .Ft int
 .Fo "(*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft void
 .Fo "(*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_ctx_st *ctx"
+.Fa "SSL_CTX *ctx"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft SSL_SESSION *
 .Fo "(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))"
-.Fa "struct ssl_st *ssl"
-.Fa "unsigned char *data"
+.Fa "SSL *ssl"
+.Fa "const unsigned char *data"
 .Fa "int len"
 .Fa "int *copy"
 .Fc
 .Ft int
 .Fo "(*new_session_cb)"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft void
 .Fo "(*remove_session_cb)"
-.Fa "struct ssl_ctx_st *ctx"
+.Fa "SSL_CTX *ctx"
 .Fa "SSL_SESSION *sess"
 .Fc
 .Ft SSL_SESSION *
 .Fo "(*get_session_cb)"
-.Fa "struct ssl_st *ssl"
+.Fa "SSL *ssl"
 .Fa "unsigned char *data"
 .Fa "int len"
 .Fa "int *copy"
@@ -205,3 +205,16 @@ not be explicitly freed with
 .Xr SSL_CTX_free 3 ,
 .Xr SSL_CTX_set_session_cache_mode 3 ,
 .Xr SSL_SESSION_free 3
+.Sh HISTORY
+.Fn SSL_CTX_sess_set_new_cb ,
+.Fn SSL_CTX_sess_set_get_cb ,
+.Fn SSL_CTX_sess_get_new_cb ,
+and
+.Fn SSL_CTX_sess_get_get_cb
+first appeared in SSLeay 0.6.0.
+.Fn SSL_CTX_sess_set_remove_cb
+and
+.Fn SSL_CTX_sess_get_remove_cb
+first appeared in SSLeay 0.8.0.
+These functions have been available since
+.Ox 2.4 .

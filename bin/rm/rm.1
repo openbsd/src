@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.42 2017/06/28 06:24:39 jmc Exp $
+.\"	$OpenBSD: rm.1,v 1.43 2018/03/31 20:49:12 schwarze Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: June 28 2017 $
+.Dd $Mdocdate: March 31 2018 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ option overrides any previous
 .Fl f
 options.
 .It Fl P
-Overwrite regular files before deleting them.
+Attempt to overwrite regular writable files before deleting them.
 Files are overwritten once with a random pattern.
 Files with multiple links will be unlinked but not overwritten.
 .It Fl R

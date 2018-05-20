@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.93 2017/08/17 08:37:38 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.96 2018/04/23 14:03:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,6 +95,12 @@ const struct options_table_entry options_table[] = {
 	  .minimum = 0,
 	  .maximum = INT_MAX,
 	  .default_num = 500
+	},
+
+	{ .name = "exit-empty",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_num = 1
 	},
 
 	{ .name = "exit-unattached",
@@ -508,8 +514,8 @@ const struct options_table_entry options_table[] = {
 	{ .name = "update-environment",
 	  .type = OPTIONS_TABLE_ARRAY,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID "
-			 "SSH_CONNECTION WINDOWID XAUTHORITY"
+	  .default_str = "DISPLAY KRB5CCNAME SSH_ASKPASS SSH_AUTH_SOCK "
+	  		 "SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY"
 	},
 
 	{ .name = "visual-activity",
@@ -548,7 +554,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "allow-rename",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_num = 1
+	  .default_num = 0
 	},
 
 	{ .name = "alternate-screen",

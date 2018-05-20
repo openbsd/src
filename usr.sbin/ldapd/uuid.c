@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.c,v 1.5 2016/08/27 01:42:37 guenther Exp $ */
+/*	$OpenBSD: uuid.c,v 1.6 2018/04/26 12:42:51 guenther Exp $ */
 /*
  * Copyright (c) 2002, Stockholms Universitet
  * (Stockholm University, Stockholm Sweden)
@@ -53,7 +53,6 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <sys/file.h>
 
 #include <fcntl.h>
 #include <ifaddrs.h>

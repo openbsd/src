@@ -1,0 +1,123 @@
+.\" $OpenBSD: ENGINE_register_all_RSA.3,v 1.3 2018/04/18 03:39:22 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 18 2018 $
+.Dt ENGINE_REGISTER_ALL_RSA 3
+.Os
+.Sh NAME
+.Nm ENGINE_register_all_RSA ,
+.Nm ENGINE_register_all_DSA ,
+.Nm ENGINE_register_all_ECDH ,
+.Nm ENGINE_register_all_ECDSA ,
+.Nm ENGINE_register_all_DH ,
+.Nm ENGINE_register_all_RAND ,
+.Nm ENGINE_register_all_STORE ,
+.Nm ENGINE_register_all_ciphers ,
+.Nm ENGINE_register_all_digests ,
+.Nm ENGINE_register_all_complete ,
+.Nm ENGINE_load_builtin_engines ,
+.Nm ENGINE_load_dynamic
+.Nd register all engines as implementing an algorithm
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft void
+.Fn ENGINE_register_all_RSA void
+.Ft void
+.Fn ENGINE_register_all_DSA void
+.Ft void
+.Fn ENGINE_register_all_ECDH void
+.Ft void
+.Fn ENGINE_register_all_ECDSA void
+.Ft void
+.Fn ENGINE_register_all_DH void
+.Ft void
+.Fn ENGINE_register_all_RAND void
+.Ft void
+.Fn ENGINE_register_all_STORE void
+.Ft void
+.Fn ENGINE_register_all_ciphers void
+.Ft void
+.Fn ENGINE_register_all_digests void
+.Ft int
+.Fn ENGINE_register_all_complete void
+.Ft void
+.Fn ENGINE_load_builtin_engines void
+.Ft void
+.Fn ENGINE_load_dynamic void
+.Sh DESCRIPTION
+These functions loop over all the
+.Vt ENGINE
+objects contained in the global table described in the
+.Xr ENGINE_add 3
+manual page.
+They register each object for the respective algorithm
+by calling the corresponding function described in
+.Xr ENGINE_register_RSA 3 .
+.Pp
+.Fn ENGINE_register_all_complete
+calls
+.Fn ENGINE_register_complete
+in this way, except that it skips those
+.Vt ENGINE
+objects that have the
+.Dv ENGINE_FLAGS_NO_REGISTER_ALL
+flag set with
+.Xr ENGINE_set_flags 3 .
+.Pp
+.Fn ENGINE_load_builtin_engines
+calls
+.Xr OPENSSL_init_crypto 3
+with no options, loads any built-in engines
+that are enabled by default, and calls
+.Fn ENGINE_register_all_complete .
+Currently, LibreSSL does not provide any engines.
+.Sy GOST
+and
+.Sy aesni
+support is provided by the crypto library itself
+and does not require any engines, not even built-in ones.
+.Pp
+.Fn ENGINE_load_dynamic
+has no effect and is only provided for compatibility.
+.Sh SEE ALSO
+.Xr ENGINE_add 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_flags 3 ,
+.Xr OPENSSL_config 3 ,
+.Xr OPENSSL_init_crypto 3
+.Sh HISTORY
+.Fn ENGINE_register_all_RSA ,
+.Fn ENGINE_register_all_DSA ,
+.Fn ENGINE_register_all_DH ,
+.Fn ENGINE_register_all_RAND ,
+.Fn ENGINE_register_all_ciphers ,
+.Fn ENGINE_register_all_digests ,
+.Fn ENGINE_register_all_complete ,
+.Fn ENGINE_load_builtin_engines ,
+and
+.Fn ENGINE_load_dynamic
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_register_all_ECDH ,
+.Fn ENGINE_register_all_ECDSA ,
+and
+.Fn ENGINE_register_all_STORE
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

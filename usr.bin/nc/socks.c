@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.24 2016/06/27 14:43:04 deraadt Exp $	*/
+/*	$OpenBSD: socks.c,v 1.25 2018/03/27 16:31:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -109,17 +109,16 @@ proxy_read_line(int fd, char *buf, size_t bufsz)
 	return (off);
 }
 
-static const char *
-getproxypass(const char *proxyuser, const char *proxyhost)
+static void
+getproxypass(const char *proxyuser, const char *proxyhost,
+    char *pw, size_t pwlen)
 {
 	char prompt[512];
-	static char pw[256];
 
 	snprintf(prompt, sizeof(prompt), "Proxy password for %s@%s: ",
 	   proxyuser, proxyhost);
-	if (readpassphrase(prompt, pw, sizeof(pw), RPP_REQUIRE_TTY) == NULL)
+	if (readpassphrase(prompt, pw, pwlen, RPP_REQUIRE_TTY) == NULL)
 		errx(1, "Unable to read proxy passphrase");
-	return (pw);
 }
 
 /*
@@ -188,7 +187,6 @@ socks_connect(const char *host, const char *port,
 	struct sockaddr_in *in4 = (struct sockaddr_in *)&addr;
 	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&addr;
 	in_port_t serverport;
-	const char *proxypass = NULL;
 
 	if (proxyport == NULL)
 		proxyport = (socksv == -1) ? HTTP_PROXY_PORT : SOCKS_PORT;
@@ -345,11 +343,14 @@ socks_connect(const char *host, const char *port,
 			err(1, "write failed (%zu/%d)", cnt, r);
 
 		if (authretry > 1) {
+			char proxypass[256];
 			char resp[1024];
 
-			proxypass = getproxypass(proxyuser, proxyhost);
+			getproxypass(proxyuser, proxyhost,
+			    proxypass, sizeof proxypass);
 			r = snprintf(buf, sizeof(buf), "%s:%s",
 			    proxyuser, proxypass);
+			explicit_bzero(proxypass, sizeof proxypass);
 			if (r == -1 || (size_t)r >= sizeof(buf) ||
 			    b64_ntop(buf, strlen(buf), resp,
 			    sizeof(resp)) == -1)
@@ -361,6 +362,8 @@ socks_connect(const char *host, const char *port,
 			r = strlen(buf);
 			if ((cnt = atomicio(vwrite, proxyfd, buf, r)) != r)
 				err(1, "write failed (%zu/%d)", cnt, r);
+			explicit_bzero(proxypass, sizeof proxypass);
+			explicit_bzero(buf, sizeof buf);
 		}
 
 		/* Terminate headers */

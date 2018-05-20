@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_dup_CA_list.3,v 1.2 2016/12/14 16:20:28 schwarze Exp $
+.\"	$OpenBSD: SSL_dup_CA_list.3,v 1.5 2018/04/25 13:51:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2016 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt SSL_DUP_CA_LIST 3
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Ft STACK_OF(X509_NAME) *
 .Fo SSL_dup_CA_list
-.Fa "STACK_OF(X509_NAME) *sk"
+.Fa "const STACK_OF(X509_NAME) *sk"
 .Fc
 .Sh DESCRIPTION
 .Fn SSL_dup_CA_list
@@ -49,4 +49,5 @@ on failure.
 .Xr X509_NAME_new 3
 .Sh HISTORY
 .Fn SSL_dup_CA_list
-is available in all versions of OpenSSL.
+first appeared in SSLeay 0.8.0 and has been available since
+.Ox 2.4 .

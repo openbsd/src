@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.4 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: string.h,v 1.6 2018/01/18 08:23:44 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -28,16 +28,16 @@ PROTO_NORMAL(bcmp);
 PROTO_NORMAL(bcopy);
 PROTO_NORMAL(bzero);
 PROTO_NORMAL(explicit_bzero);
-PROTO_NORMAL(ffs);
+PROTO_PROTECTED(ffs);
 PROTO_DEPRECATED(index);
 PROTO_NORMAL(memccpy);
 PROTO_NORMAL(memchr);
 PROTO_NORMAL(memcmp);
-PROTO_NORMAL(memcpy);
+/*PROTO_NORMAL(memcpy);			use declaration from namespace.h */
 PROTO_NORMAL(memmem);
-PROTO_NORMAL(memmove);
+/*PROTO_NORMAL(memmove);		use declaration from namespace.h */
 PROTO_NORMAL(memrchr);
-PROTO_NORMAL(memset);
+/*PROTO_NORMAL(memset);			use declaration from namespace.h */
 PROTO_DEPRECATED(rindex);
 PROTO_DEPRECATED(stpcpy);
 PROTO_NORMAL(stpncpy);

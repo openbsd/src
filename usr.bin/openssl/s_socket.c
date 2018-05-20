@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.8 2015/09/10 02:23:29 lteo Exp $ */
+/* $OpenBSD: s_socket.c,v 1.9 2018/02/07 05:47:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,7 +122,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 	}
 
 	perror("connect");
-out:
+ out:
 	if (s != -1)
 		close(s);
 	freeaddrinfo(ai_top);
@@ -210,7 +210,7 @@ init_server_long(int *sock, int port, char *ip, int type)
 		goto err;
 	*sock = s;
 	ret = 1;
-err:
+ err:
 	if ((ret == 0) && (s != -1)) {
 		shutdown(s, SHUT_RD);
 		close(s);
@@ -233,7 +233,7 @@ do_accept(int acc_sock, int *sock, char **host)
 	socklen_t len;
 /*	struct linger ling; */
 
-redoit:
+ redoit:
 
 	memset((char *) &from, 0, sizeof(from));
 	len = sizeof(from);
@@ -285,7 +285,7 @@ redoit:
 		}
 	}
 
-end:
+ end:
 	*sock = ret;
 	return (1);
 }

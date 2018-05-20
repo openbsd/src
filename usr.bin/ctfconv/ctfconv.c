@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.12 2017/09/29 16:05:53 jsg Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.16 2017/11/06 14:59:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -18,13 +18,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/ctf.h>
 
 #include <assert.h>
+#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -60,7 +60,7 @@ void		 dump_obj(struct itype *, int *);
 int		 iself(const char *, size_t);
 int		 elf_getshstab(const char *, size_t, const char **, size_t *);
 ssize_t		 elf_getsymtab(const char *, size_t, const char *, size_t,
-		     const Elf_Sym **, size_t *);
+		     const Elf_Sym **, size_t *, const char **, size_t *);
 ssize_t		 elf_getsection(char *, size_t, const char *, const char *,
 		     size_t, const char **, size_t *);
 
@@ -221,14 +221,10 @@ elf_convert(char *p, size_t filesize)
 	if (elf_getshstab(p, filesize, &shstab, &shstabsz))
 		return 1;
 
-	/* Find symbol table location and number of symbols. */
-	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb) == -1)
+	/* Find symbol table and associated string table. */
+	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb,
+	    &strtab, &strtabsz) == -1)
 		warnx("symbol table not found");
-
-	/* Find string table location and size. */
-	if (elf_getsection(p, filesize, ELF_STRTAB, shstab, shstabsz, &strtab,
-	    &strtabsz) == -1)
-		warnx("string table not found");
 
 	/* Find abbreviation location and size. */
 	if (elf_getsection(p, filesize, DEBUG_ABBREV, shstab, shstabsz, &abbuf,
@@ -416,14 +412,18 @@ dump_type(struct itype *it)
 		    (it->it_type == CTF_K_STRUCT) ? "STRUCT" : "UNION",
 		    type_name(it), it->it_size);
 		TAILQ_FOREACH(im, &it->it_members, im_next) {
-			printf("\t%s type=%u off=%zd\n",
+			printf("\t%s type=%u off=%zu\n",
 			    (im_name(im) == NULL) ? "unknown" : im_name(im),
 			    im->im_refp ? im->im_refp->it_idx : 0, im->im_off);
 		}
 		printf("\n");
 		break;
 	case CTF_K_ENUM:
-		printf("  [%u] ENUM %s\n\n", it->it_idx, type_name(it));
+		printf("  [%u] ENUM %s\n", it->it_idx, type_name(it));
+		TAILQ_FOREACH(im, &it->it_members, im_next) {
+			printf("\t%s = %zu\n", im_name(im), im->im_ref);
+		}
+		printf("\n");
 		break;
 	case CTF_K_FUNCTION:
 		printf("  [%u] FUNCTION (%s) returns: %u args: (",

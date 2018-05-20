@@ -33,6 +33,10 @@
  * called to make sure we cache line numbers often enough.
  */
 
+#include <sys/time.h>
+
+#include <time.h>
+
 #include "less.h"
 
 /*
@@ -197,14 +201,30 @@ add_lnum(off_t linenum, off_t pos)
 }
 
 static int loopcount;
-static time_t startime;
+static struct timespec timeout;
+
+static void
+timeout_set(int seconds)
+{
+	clock_gettime(CLOCK_MONOTONIC, &timeout);
+	timeout.tv_sec += seconds;
+}
+
+static int
+timeout_elapsed(void)
+{
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return timespeccmp(&now, &timeout, >=);
+}
 
 static void
 longish(void)
 {
 	if (loopcount >= 0 && ++loopcount > 100) {
 		loopcount = 0;
-		if (time(NULL) >= startime + LONGTIME) {
+		if (timeout_elapsed()) {
 			ierror("Calculating line numbers", NULL);
 			loopcount = -1;
 		}
@@ -274,7 +294,7 @@ find_linenum(off_t pos)
 	 * The decision is based on which way involves
 	 * traversing fewer bytes in the file.
 	 */
-	startime = time(NULL);
+	timeout_set(LONGTIME);
 	if (p == &anchor || pos - p->prev->pos < p->pos - pos) {
 		/*
 		 * Go forward.

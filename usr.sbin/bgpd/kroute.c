@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.216 2017/07/24 11:00:01 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.217 2017/11/29 19:40:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2644,6 +2644,8 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute,
 		hdr.rtm_mpls = MPLS_OP_PUSH;
 		hdr.rtm_addrs |= RTA_SRC;
 		hdr.rtm_msglen += sizeof(mpls);
+		/* clear gateway flag since this is for mpe(4) */
+		hdr.rtm_flags &= ~RTF_GATEWAY;
 		/* adjust iovec */
 		iov[iovcnt].iov_base = &mpls;
 		iov[iovcnt++].iov_len = sizeof(mpls);

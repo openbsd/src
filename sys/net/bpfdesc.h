@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.35 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.36 2018/01/24 00:25:17 dlg Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ struct bpf_if {
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
+	const char *bif_name;		/* name of "subsystem" */
 	struct ifnet *bif_ifp;		/* corresponding interface */
 };
 

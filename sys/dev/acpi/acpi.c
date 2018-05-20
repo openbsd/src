@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.332 2017/08/17 05:16:27 stsp Exp $ */
+/* $OpenBSD: acpi.c,v 1.343 2018/05/17 20:46:45 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -30,6 +30,8 @@
 #include <sys/sched.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -61,6 +63,7 @@
 
 #include "wd.h"
 #include "wsdisplay.h"
+#include "softraid.h"
 
 #ifdef ACPI_DEBUG
 int	acpi_debug = 16;
@@ -71,7 +74,7 @@ int	acpi_hasprocfvs;
 
 #define ACPIEN_RETRIES 15
 
-void 	acpi_pci_match(struct device *, struct pci_attach_args *);
+struct aml_node *acpi_pci_match(struct device *, struct pci_attach_args *);
 pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void	 acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
 int	acpi_pci_notify(struct aml_node *, int, void *);
@@ -669,7 +672,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 	return (1);
 }
 
-void
+struct aml_node *
 acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 {
 	struct acpi_pci *pdev;
@@ -695,7 +698,11 @@ acpi_pci_match(struct device *dev, struct pci_attach_args *pa)
 		acpi_pci_set_powerstate(pa->pa_pc, pa->pa_tag, state, 0);
 
 		aml_register_notify(pdev->node, NULL, acpi_pci_notify, pdev, 0);
+
+		return pdev->node;
 	}
+
+	return NULL;
 }
 
 pcireg_t
@@ -829,6 +836,109 @@ acpi_pciroots_attach(struct device *dev, void *aux, cfprint_t pr)
 		config_found(dev, pba, pr);
 	}
 }
+
+/* GPIO support */
+
+struct acpi_gpio_event {
+	struct aml_node *node;
+	uint16_t pin;
+};
+
+void
+acpi_gpio_event_task(void *arg0, int arg1)
+{
+	struct aml_node *node = arg0;
+	uint16_t pin = arg1;
+	char name[5];
+
+	snprintf(name, sizeof(name), "_E%.2X", pin);
+	aml_evalname(acpi_softc, node, name, 0, NULL, NULL);
+}
+
+int
+acpi_gpio_event(void *arg)
+{
+	struct acpi_gpio_event *ev = arg;
+
+	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev->node, ev->pin);
+	return 1;
+}
+
+int
+acpi_gpio_parse_events(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct aml_node *devnode = arg;
+	struct aml_node *node;
+	uint16_t pin;
+
+	switch (AML_CRSTYPE(crs)) {
+	case LR_GPIO:
+		node = aml_searchname(devnode,
+		    (char *)&crs->pad[crs->lr_gpio.res_off]);
+		pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
+		if (crs->lr_gpio.type == LR_GPIO_INT &&
+		    node && node->gpio && pin < 256) {
+			struct acpi_gpio *gpio = node->gpio;
+			struct acpi_gpio_event *ev;
+
+			ev = malloc(sizeof(*ev), M_DEVBUF, M_WAITOK);
+			ev->node = devnode;
+			ev->pin = pin;
+			gpio->intr_establish(gpio->cookie, pin,
+			    crs->lr_gpio.tflags, acpi_gpio_event, ev);
+		}
+		break;
+	default:
+		printf("%s: unknown resource type %d\n", __func__,
+		    AML_CRSTYPE(crs));
+	}
+
+	return 0;
+}
+
+void
+acpi_register_gpio(struct acpi_softc *sc, struct aml_node *devnode)
+{
+	struct aml_value arg[2];
+	struct aml_node *node;
+	struct aml_value res;
+
+	/* Register GeneralPurposeIO address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = ACPI_OPREG_GPIO;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(devnode, "_REG");
+	if (node && aml_evalnode(sc, node, 2, arg, NULL))
+		printf("%s: _REG failed\n", node->name);
+
+	/* Register GPIO signaled ACPI events. */
+	if (aml_evalname(sc, devnode, "_AEI", 0, NULL, &res))
+		return;
+	aml_parse_resource(&res, acpi_gpio_parse_events, devnode);
+}
+
+#ifndef SMALL_KERNEL
+
+void
+acpi_register_gsb(struct acpi_softc *sc, struct aml_node *devnode)
+{
+	struct aml_value arg[2];
+	struct aml_node *node;
+
+	/* Register GenericSerialBus address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = ACPI_OPREG_GSB;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(devnode, "_REG");
+	if (node && aml_evalnode(sc, node, 2, arg, NULL))
+		printf("%s: _REG failed\n", node->name);
+}
+
+#endif
 
 void
 acpi_attach(struct device *parent, struct device *self, void *aux)
@@ -2357,6 +2467,9 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	size_t rndbuflen = 0;
 	char *rndbuf = NULL;
 	int state, s;
+#if NSOFTRAID > 0
+	extern void sr_quiesce(void);
+#endif
 
 	switch (sleepmode) {
 	case ACPI_SLEEP_SUSPEND:
@@ -2395,8 +2508,12 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 
 #ifdef HIBERNATE
 	if (sleepmode == ACPI_SLEEP_HIBERNATE) {
-		uvmpd_hibernate();
+		/*
+		 * Discard useless memory to reduce fragmentation,
+		 * and attempt to create a hibernate work area
+		 */
 		hibernate_suspend_bufcache();
+		uvmpd_hibernate();
 		if (hibernate_alloc()) {
 			printf("%s: failed to allocate hibernate memory\n",
 			    sc->sc_dev.dv_xname);
@@ -2409,11 +2526,27 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	if (config_suspend_all(DVACT_QUIESCE))
 		goto fail_quiesce;
 
+	vfs_stall(curproc, 1);
+#if NSOFTRAID > 0
+	sr_quiesce();
+#endif
 	bufq_quiesce();
 
 #ifdef MULTIPROCESSOR
 	acpi_sleep_mp();
 #endif
+
+#ifdef HIBERNATE
+	if (sleepmode == ACPI_SLEEP_HIBERNATE) {
+		/*
+		 * We've just done various forms of syncing to disk
+		 * churned lots of memory dirty.  We don't need to
+		 * save that dirty memory to hibernate, so release it.
+		 */
+		hibernate_suspend_bufcache();
+		uvmpd_hibernate();
+	}
+#endif /* HIBERNATE */
 
 	resettodr();
 
@@ -2481,6 +2614,7 @@ fail_suspend:
 	acpi_resume_mp();
 #endif
 
+	vfs_stall(curproc, 0);
 	bufq_restart();
 
 fail_quiesce:
@@ -2502,6 +2636,8 @@ fail_alloc:
 	wsdisplay_resume();
 	rw_enter_write(&sc->sc_lck);
 #endif /* NWSDISPLAY > 0 */
+
+	sys_sync(curproc, NULL, NULL);
 
 	/* Restore hw.setperf */
 	if (cpu_setperf != NULL)
@@ -2784,13 +2920,14 @@ acpi_parsehid(struct aml_node *node, void *arg, char *outcdev, char *outdev,
 const char *acpi_skip_hids[] = {
 	"INT0800",	/* Intel 82802Firmware Hub Device */
 	"PNP0000",	/* 8259-compatible Programmable Interrupt Controller */
+	"PNP0001",	/* EISA Interrupt Controller */
 	"PNP0100",	/* PC-class System Timer */
 	"PNP0103",	/* HPET System Timer */
 	"PNP0200",	/* PC-class DMA Controller */
+	"PNP0201",	/* EISA DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
 	"PNP0A03",	/* PCI Bus */
 	"PNP0A08",	/* PCI Express Bus */
-	"PNP0B00",	/* AT Real-Time Clock */
 	"PNP0C01",	/* System Board */
 	"PNP0C02",	/* PNP Motherboard Resources */
 	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */
@@ -2801,8 +2938,13 @@ const char *acpi_skip_hids[] = {
 
 /* ISA devices for which we attach a driver later */
 const char *acpi_isa_hids[] = {
-	"PNP0303",	/* 8042 PS/2 Controller */
+	"PNP0303",	/* IBM Enhanced Keyboard (101/102-key, PS/2 Mouse) */
+	"PNP0400",	/* Standard LPT Parallel Port */
+	"PNP0401",	/* ECP Parallel Port */
 	"PNP0501",	/* 16550A-compatible COM Serial Port */
+	"PNP0700",	/* PC-class Floppy Disk Controller */
+	"PNP0F03",	/* Microsoft PS/2-style Mouse */
+	"PNP0F13",	/* PS/2 Mouse */
 	NULL
 };
 
@@ -3060,7 +3202,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
-		if ((error = suser(p, 0)) != 0)
+		if ((error = suser(p)) != 0)
 			break;
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;

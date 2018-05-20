@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.191 2017/08/12 16:31:09 florian Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.192 2018/02/10 01:24:28 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -436,6 +436,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	struct listen_addr	*la;
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
 
 	if (reconfpending) {
 		log_info("previous reload still running");
@@ -500,6 +502,22 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	/* networks go via kroute to the RDE */
 	if (kr_net_reload(0, &conf->networks))
 		return (-1);
+
+	/* prefixsets for filters in the RDE */
+	while ((ps = SIMPLEQ_FIRST(conf->prefixsets)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(conf->prefixsets, entry);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSET, 0, 0, -1,
+		    ps, sizeof(*ps)) == -1)
+			return (-1);
+		while ((psi = SIMPLEQ_FIRST(&ps->psitems)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&ps->psitems, entry);
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
+			    0, -1, psi, sizeof(*psi)) == -1)
+				return (-1);
+			free(psi);
+		}
+		free(ps);
+	}
 
 	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(conf->filters)) != NULL) {

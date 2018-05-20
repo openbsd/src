@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.28 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.30 2018/03/24 04:13:59 visa Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -64,6 +64,11 @@ struct	sigacts {
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)(int))2
 #define	SIG_HOLD	(void (*)(int))3
+
+/*
+ * Check if process p has an unmasked signal pending.
+ */
+#define	SIGPENDING(p)	(((p)->p_siglist & ~(p)->p_sigmask) != 0)
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -151,7 +156,6 @@ void	gsignal(int pgid, int sig);
 void	csignal(pid_t pgid, int signum, uid_t uid, uid_t euid);
 int	issignal(struct proc *p);
 void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
-void	postsig(int sig);
 void	psignal(struct proc *p, int sig);
 void	ptsignal(struct proc *p, int sig, enum signal_type type);
 #define prsignal(pr,sig)	ptsignal((pr)->ps_mainproc, (sig), SPROCESS)

@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.50 2017/06/01 15:23:43 sthen Exp $
+.\" $OpenBSD: iked.conf.5,v 1.53 2018/01/31 13:25:55 patrick Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: January 31 2018 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -136,6 +136,15 @@ This is the default.
 .It Ic set decouple
 Don't load the negotiated SAs and flows from the kernel.
 This mode is only useful for testing and debugging.
+.It Ic set mobike
+Enable MOBIKE (RFC 4555) support.
+This is the default.
+MOBIKE allows the peer IP address to be changed for IKE and IPsec SAs.
+Currently
+.Xr iked 8
+only supports MOBIKE when acting as a responder.
+.It Ic set nomobike
+Disables MOBIKE support.
 .It Ic set ocsp Ar URL
 Enable OCSP and set the URL of the OCSP responder.
 Please note that the matching responder and issuer certificates
@@ -376,6 +385,19 @@ and the default proposals are described below in
 If omitted,
 .Xr iked 8
 will use the default proposals for the IKEv2 protocol.
+.Pp
+The keyword
+.Ic ikesa
+can be used multiple times as a delimiter between IKE SA proposals.
+The order of the proposals depend on the order in the configuration.
+The keywords
+.Ic auth ,
+.Ic enc ,
+.Ic prf
+and
+.Ic group
+can be used multiple times within a single proposal to configure
+multiple crypto transforms.
 .It Xo
 .Ic childsa
 .Ic auth Ar algorithm
@@ -398,11 +420,24 @@ and the default proposals are described below in
 If omitted,
 .Xr iked 8
 will use the default proposals for the ESP or AH protocol.
+.Pp
 The
 .Ic group
 option will only be used to enable Perfect Forward Secrecy (PFS)
 for additional Child SAs exchanges that are not part of the initial
 key exchange.
+.Pp
+The keyword
+.Ic childsa
+can be used multiple times as a delimiter between Child SA proposals.
+The order of the proposals depend on the order in the configuration.
+The keywords
+.Ic auth ,
+.Ic enc
+and
+.Ic group
+can be used multiple times within a single proposal to configure
+multiple crypto transforms.
 .It Ic srcid Ar string Ic dstid Ar string
 .Ic srcid
 defines an ID of type
@@ -876,7 +911,13 @@ ikev2 "big test" \e
 	from 10.0.0.0/8 port 23 to 20.0.0.0/8 port 40 \e
 	from 192.168.1.1 to 192.168.2.2 \e
 	peer any local any \e
-	ikesa enc 3des auth hmac-sha1 group modp1024 \e
+	ikesa \e
+		enc 3des auth hmac-sha2-256 \e
+		group ecp256 group modp1024 \e
+	ikesa \e
+		enc 3des auth hmac-sha1 \e
+		group ecp256 group modp1024 \e
+	childsa enc aes-128 auth hmac-sha2-256 \e
 	childsa enc aes-128 auth hmac-sha1 \e
 	srcid host.example.com \e
 	dstid 192.168.0.254 \e

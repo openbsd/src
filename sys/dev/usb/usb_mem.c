@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.29 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.30 2018/03/07 04:39:54 jmatthew Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -108,12 +108,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	}
 	splx(s);
 
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("usb_block_allocmem: in interrupt context, failed\n");
-		return (USBD_NOMEM);
-	}
-#endif
+	assertwaitok();
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
@@ -162,12 +157,7 @@ free0:
 void
 usb_block_real_freemem(struct usb_dma_block *p)
 {
-#ifdef DIAGNOSTIC
-	if (!curproc) {
-		printf("usb_block_real_freemem: in interrupt context\n");
-		return;
-	}
-#endif
+	assertwaitok();
 	bus_dmamap_unload(p->tag, p->map);
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);

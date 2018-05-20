@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.173 2017/03/03 14:06:32 espie Exp $
+# $OpenBSD: Add.pm,v 1.174 2018/02/27 22:46:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -847,8 +847,9 @@ sub prepare_for_addition
 		my $key = "update_".OpenBSD::PackageName::splitstem($pkgname);
 		return if $state->defines($key);
 		if ($state->is_interactive) {
-			if ($state->confirm($pkgname.":".$self->{message}."\n".
-			    "Do you want to update now", 0)) {
+			if ($state->confirm_defaults_to_no(
+			    "#1: #2.\nDo you want to update now",
+			    $pkgname, $self->{message})) {
 			    	return;
 			}
 		} else {

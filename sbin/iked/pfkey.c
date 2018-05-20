@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.58 2017/04/18 02:29:56 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.59 2017/11/27 18:39:35 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,9 @@
 
 #define PFKEYV2_CHUNK sizeof(uint64_t)
 #define PFKEY_REPLY_TIMEOUT 1000
+
+/* only used internally */
+#define IKED_SADB_UPDATE_SA_ADDRESSES 0xff
 
 static uint32_t sadb_msg_seq = 0;
 static unsigned int sadb_decoupled = 0;
@@ -435,17 +438,18 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 {
 	struct sadb_msg		 smsg;
 	struct sadb_sa		 sadb;
-	struct sadb_address	 sa_src, sa_dst;
+	struct sadb_address	 sa_src, sa_dst, sa_pxy;
 	struct sadb_key		 sa_authkey, sa_enckey;
 	struct sadb_lifetime	 sa_ltime_hard, sa_ltime_soft;
 	struct sadb_x_udpencap	 udpencap;
 	struct sadb_x_tag	 sa_tag;
 	char			*tag = NULL;
 	struct sadb_x_tap	 sa_tap;
-	struct sockaddr_storage	 ssrc, sdst;
+	struct sockaddr_storage	 ssrc, sdst, spxy;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct iked_lifetime	*lt;
 	struct iked_policy	*pol;
+	struct iked_addr	*dst;
 	struct iovec		 iov[IOV_CNT];
 	uint32_t		 jitter;
 	int			 iov_cnt;
@@ -467,11 +471,24 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		return (-1);
 	}
 
+	dst = (action == IKED_SADB_UPDATE_SA_ADDRESSES &&
+	    sa->csa_dir == IPSP_DIRECTION_OUT) ?
+	    &sa->csa_ikesa->sa_peer_loaded :
+	    sa->csa_peer;
 	bzero(&sdst, sizeof(sdst));
-	memcpy(&sdst, &sa->csa_peer->addr, sizeof(sdst));
+	memcpy(&sdst, &dst->addr, sizeof(sdst));
 	if (socket_af((struct sockaddr *)&sdst, 0) == -1) {
 		log_warn("%s: invalid address", __func__);
 		return (-1);
+	}
+
+	bzero(&spxy, sizeof(spxy));
+	if (dst != sa->csa_peer) {
+		memcpy(&spxy, &sa->csa_peer->addr, sizeof(spxy));
+		if (socket_af((struct sockaddr *)&spxy, 0) == -1) {
+			log_warn("%s: invalid address", __func__);
+			return (-1);
+		}
 	}
 
 	bzero(&smsg, sizeof(smsg));
@@ -503,6 +520,10 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
+	bzero(&sa_pxy, sizeof(sa_pxy));
+	sa_pxy.sadb_address_len = (sizeof(sa_pxy) + ROUNDUP(spxy.ss_len)) / 8;
+	sa_pxy.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
+
 	bzero(&sa_authkey, sizeof(sa_authkey));
 	bzero(&sa_enckey, sizeof(sa_enckey));
 	bzero(&udpencap, sizeof udpencap);
@@ -522,6 +543,11 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 
 		log_debug("%s: udpencap port %d", __func__,
 		    ntohs(udpencap.sadb_x_udpencap_port));
+	}
+
+	if (action == IKED_SADB_UPDATE_SA_ADDRESSES) {
+		smsg.sadb_msg_type = SADB_UPDATE;
+		goto send;
 	}
 
 	if ((action == SADB_ADD || action == SADB_UPDATE) &&
@@ -654,6 +680,17 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	iov[iov_cnt].iov_len = ROUNDUP(sdst.ss_len);
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
+
+	if (spxy.ss_len) {
+		/* pxy addr */
+		iov[iov_cnt].iov_base = &sa_pxy;
+		iov[iov_cnt].iov_len = sizeof(sa_pxy);
+		iov_cnt++;
+		iov[iov_cnt].iov_base = &spxy;
+		iov[iov_cnt].iov_len = ROUNDUP(spxy.ss_len);
+		smsg.sadb_msg_len += sa_pxy.sadb_address_len;
+		iov_cnt++;
+	}
 
 	if (sa_ltime_soft.sadb_lifetime_len) {
 		/* soft lifetime */
@@ -1340,6 +1377,24 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 
 	sa->csa_loaded = 1;
 	return (0);
+}
+
+int
+pfkey_sa_update_addresses(int fd, struct iked_childsa *sa)
+{
+	uint8_t		 satype;
+
+	if (!sa->csa_ikesa)
+		return (-1);
+	/* check if peer has changed */
+	if (sa->csa_ikesa->sa_peer_loaded.addr.ss_family == AF_UNSPEC ||
+	    memcmp(&sa->csa_ikesa->sa_peer_loaded, &sa->csa_ikesa->sa_peer,
+	    sizeof(sa->csa_ikesa->sa_peer_loaded)) == 0)
+		return (0);
+	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
+		return (-1);
+	log_debug("%s: spi %s", __func__, print_spi(sa->csa_spi.spi, 4));
+	return pfkey_sa(fd, satype, IKED_SADB_UPDATE_SA_ADDRESSES, sa);
 }
 
 int

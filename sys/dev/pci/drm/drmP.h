@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.215 2017/07/22 14:33:45 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.217 2018/02/19 08:59:52 mpi Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -117,7 +117,7 @@ struct fb_image;
 #define DRM_MAXUNITS		8
 
 /* DRM_SUSER returns true if the user is superuser */
-#define DRM_SUSER(p)		(suser(p, 0) == 0)
+#define DRM_SUSER(p)		(suser(p) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
 #define DRM_WAKEUP(x)		wakeup(x)
@@ -735,6 +735,8 @@ struct drm_device {
 
 	struct drm_driver *driver;
 
+	struct klist	 note;
+
 	struct pci_dev	_pdev;
 	struct pci_dev	*pdev;
 	u_int16_t	 pci_device;
@@ -1014,6 +1016,9 @@ int	drm_agp_free_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_agp_unbind_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
 
+/* hotplug support */
+void	drm_sysfs_hotplug_event(struct drm_device *);
+
 static inline int
 drm_sysfs_connector_add(struct drm_connector *connector)
 {
@@ -1022,11 +1027,6 @@ drm_sysfs_connector_add(struct drm_connector *connector)
 
 static inline void
 drm_sysfs_connector_remove(struct drm_connector *connector)
-{
-}
-
-static inline void
-drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 }
 

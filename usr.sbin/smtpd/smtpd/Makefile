@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2017/08/13 11:10:31 eric Exp $
+#	$OpenBSD: Makefile,v 1.89 2018/01/06 07:57:53 sunil Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -14,6 +14,7 @@ SRCS+=	crypto.c
 SRCS+=	delivery.c
 SRCS+=	dict.c
 SRCS+=	dns.c
+SRCS+=	unpack_dns.c
 SRCS+=	envelope.c
 SRCS+=	esc.c
 SRCS+=	expand.c

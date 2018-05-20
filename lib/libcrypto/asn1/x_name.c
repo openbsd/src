@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.33 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: x_name.c,v 1.34 2018/02/20 17:09:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -639,4 +639,17 @@ X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 		}
 	}
 	return (*xn != NULL);
+}
+
+int
+X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder, size_t *pderlen)
+{
+	/* Make sure encoding is valid. */
+	if (i2d_X509_NAME(nm, NULL) <= 0)
+		return 0;
+	if (pder != NULL)
+		*pder = (unsigned char *)nm->bytes->data;
+	if (pderlen != NULL)
+		*pderlen = nm->bytes->length;
+	return 1;
 }

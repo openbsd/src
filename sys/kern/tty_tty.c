@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.20 2016/09/06 08:13:23 tedu Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.24 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
-#include <sys/file.h>
+#include <sys/fcntl.h>
 
 
 #define cttyvp(p) \
@@ -57,39 +57,37 @@ cttyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ttyvp == NULL)
 		return (ENXIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(ttyvp, flag, NOCRED, p);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
 int
 cttyread(dev_t dev, struct uio *uio, int flag)
 {
-	struct proc *p = uio->uio_procp;
 	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
 int
 cttywrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct proc *p = uio->uio_procp;
 	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
@@ -113,7 +111,7 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	}
 	switch (cmd) {
 	case TIOCSETVERAUTH:
-		if ((error = suser(p, 0)))
+		if ((error = suser(p)))
 			return error;
 		secs = *(int *)addr;
 		if (secs < 1 || secs > 3600)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_get_ex_new_index.3,v 1.7 2017/08/01 14:57:03 schwarze Exp $
+.\"	$OpenBSD: RSA_get_ex_new_index.3,v 1.10 2018/03/23 23:18:17 schwarze Exp $
 .\"	OpenSSL 35cb565a Nov 19 15:49:30 2015 -0500
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt RSA_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@
 .Fa "RSA *r"
 .Fa "int idx"
 .Fc
+.In openssl/crypto.h
 .Ft typedef int
 .Fo CRYPTO_EX_new
 .Fa "void *parent"
@@ -265,13 +266,15 @@ On failure an error code can be obtained from
 .Xr DH_set_ex_data 3 ,
 .Xr DSA_set_ex_data 3 ,
 .Xr RSA_new 3 ,
-.Xr X509_STORE_CTX_set_ex_data 3
+.Xr SSL_CTX_set_ex_data 3 ,
+.Xr SSL_SESSION_set_ex_data 3 ,
+.Xr SSL_set_ex_data 3 ,
+.Xr X509_STORE_CTX_set_ex_data 3 ,
+.Xr X509_STORE_set_ex_data 3
 .Sh HISTORY
-.Fn RSA_get_ex_new_index ,
-.Fn RSA_set_ex_data ,
-and
-.Fn RSA_get_ex_data
-are available since SSLeay 0.9.0.
+These functions first appeared in SSLeay 0.9.0
+and have been available since
+.Ox 2.4 .
 .Sh BUGS
 .Fa dup_func
 is currently never called.

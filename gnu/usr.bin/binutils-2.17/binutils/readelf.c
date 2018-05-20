@@ -67,6 +67,7 @@
 
 #define RELOC_MACROS_GEN_FUNC
 
+#include "elf/aarch64.h"
 #include "elf/alpha.h"
 #include "elf/arc.h"
 #include "elf/arm.h"
@@ -615,6 +616,7 @@ guess_is_rela (unsigned long e_machine)
     case EM_NIOS32:
     case EM_ALTERA_NIOS2:
     case EM_88K:
+    case EM_AARCH64:
       return TRUE;
 
     case EM_MMA:
@@ -1138,6 +1140,10 @@ dump_relocations (FILE *file,
 	case EM_88K:
 	  rtype = elf_m88k_reloc_type (type);
 	  break;
+
+	case EM_AARCH64:
+	  rtype = elf_aarch64_reloc_type (type);
+	  break;
 	}
 
       if (rtype == NULL)
@@ -1425,6 +1431,20 @@ get_alpha_dynamic_type (unsigned long type)
 }
 
 static const char *
+get_m88k_dynamic_type (unsigned long type)
+{
+  switch (type)
+    {
+    case DT_88K_ADDRBASE: return "88K_ADDRBASE";
+    case DT_88K_PLTSTART: return "88K_PLTSTART";
+    case DT_88K_PLTEND: return "88K_PLTEND";
+    case DT_88K_TDESC: return "88K_TDESC";
+    default:
+      return NULL;
+    }
+}
+
+static const char *
 get_dynamic_type (unsigned long type)
 {
   static char buff[64];
@@ -1531,6 +1551,9 @@ get_dynamic_type (unsigned long type)
 	      break;
 	    case EM_ALPHA:
 	      result = get_alpha_dynamic_type (type);
+	      break;
+	    case EM_88K:
+	      result = get_m88k_dynamic_type (type);
 	      break;
 	    default:
 	      result = NULL;

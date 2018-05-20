@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.63 2017/09/17 22:14:53 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.79 2018/01/04 03:02:05 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -100,15 +100,6 @@ skip_to_semi(FILE *cfile)
 		} else if (token == ';' && brace_count == 0) {
 			token = next_token(NULL, cfile);
 			return;
-		} else if (token == '\n') {
-			/*
-			 * EOL only happens when parsing
-			 * /etc/resolv.conf, and we treat it like a
-			 * semicolon because the resolv.conf file is
-			 * line-oriented.
-			 */
-			token = next_token(NULL, cfile);
-			return;
 		}
 		token = next_token(NULL, cfile);
 	} while (token != EOF);
@@ -128,34 +119,33 @@ parse_semi(FILE *cfile)
 	return 1;
 }
 
-char *
-parse_string(FILE *cfile, unsigned int *len)
+int
+parse_string(FILE *cfile, unsigned int *len, char **string)
 {
 	static char	 unvisbuf[1500];
-	char		*val, *s;
+	char		*val;
 	int		 i, token;
 
 	token = next_token(&val, cfile);
-	if (token != TOK_STRING) {
-		parse_warn("expecting string.");
-		if (token != ';')
-			skip_to_semi(cfile);
-		return NULL;
+	if (token == TOK_STRING) {
+		i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
+		if (i >= 0) {
+			*string = malloc(i+1);
+			if (*string == NULL)
+				fatal("unvis string %s", val);
+			memcpy(*string, unvisbuf, i+1);	/* Copy the NUL. */
+			if (len != NULL)
+				*len = i;
+			return 1;
+		}
 	}
 
-	i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
-	if (i == -1) {
-		parse_warn("could not unvis string");
-		return NULL;
-	}
-	s = malloc(i+1);
-	if (s == NULL)
-		fatal("unvis string %s", val);
-	memcpy(s, unvisbuf, i+1);	/* Copy the terminating NUL. */
-	if (len != NULL)
-		*len = i;
+	parse_warn("expecting string.");
 
-	return s;
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 /*
@@ -166,84 +156,73 @@ parse_string(FILE *cfile, unsigned int *len)
 int
 parse_cidr(FILE *cfile, unsigned char *cidr)
 {
-	struct in_addr	 addr;
+	uint8_t		 buf[5];
+	const char	*errstr;
+	char		*val;
+	long long	 numval;
+	unsigned int	 i;
 	int		 token;
-	int		 len;
 
-	token = '.';
-	len = 0;
-	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
-		if (parse_decimal(cfile, cidr + 1 + len, 'B') == 0)
+	memset(buf, 0, sizeof(buf));
+	i = 1;	/* Last four octets hold subnet, first octet the # of bits. */
+	do {
+		token = next_token(&val, cfile);
+		if (i == 0)
+			numval = strtonum(val, 0, 32, &errstr);
+		else
+			numval = strtonum(val, 0, UINT8_MAX, &errstr);
+		if (errstr != NULL)
 			break;
-		if (++len == sizeof(addr)) {
-			token = next_token(NULL, cfile);
-			break;
+		buf[i++] = numval;
+		if (i == 1) {
+			memcpy(cidr, buf, sizeof(buf)); /* XXX Need cidr_t */
+			return 1;
 		}
-	}
+		token = next_token(NULL, cfile);
+		if (token == '/')
+			i = 0;
+		if (i == sizeof(buf))
+			break;
+	} while (token == '.' || token == '/');
 
-	if (len == 0) {
-		parse_warn("expecting decimal value.");
-		skip_to_semi(cfile);
-		return 0;
-	} else if (token != '/') {
-		parse_warn("expecting '/'.");
-		skip_to_semi(cfile);
-		return 0;
-	} else if (parse_decimal(cfile, cidr, 'B') == 0 || *cidr > 32) {
-		parse_warn("expecting decimal value <= 32.");
-		skip_to_semi(cfile);
-		return 0;
-	}
+	parse_warn("expecting IPv4 CIDR block.");
 
-	return 1;
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 int
 parse_ip_addr(FILE *cfile, struct in_addr *addr)
 {
 	struct in_addr	 buf;
-	int		 len, token;
+	const char	*errstr;
+	char		*val;
+	long long	 numval;
+	unsigned int	 i;
+	int		 token;
 
-	token = '.';
-	len = 0;
-	for (token = '.'; token == '.'; token = next_token(NULL, cfile)) {
-		if (parse_decimal(cfile, (unsigned char *)&buf + len, 'B') == 0)
+	i = 0;
+	do {
+		token = next_token(&val, cfile);
+		numval = strtonum(val, 0, UINT8_MAX, &errstr);
+		if (errstr != NULL)
 			break;
-		if (++len == sizeof(buf))
-			break;
-	}
+		((uint8_t *)&buf)[i++] = numval;
+		if (i == sizeof(buf)) {
+			memcpy(addr, &buf, sizeof(*addr));
+			return 1;
+		}
+		token = next_token(NULL, cfile);
+	} while (token == '.');
 
-	if (len == 4) {
-		memcpy(addr, &buf, sizeof(*addr));
-		return 1;
-	} else if (token != '.') {
-		parse_warn("expecting '.'.");
+	parse_warn("expecting IPv4 address.");
+
+	if (token != ';')
 		skip_to_semi(cfile);
-		return 0;
-	} else {
-		parse_warn("expecting decimal value.");
-		skip_to_semi(cfile);
-		return 0;
-	}
-}
 
-/*
- * lease-time :== NUMBER SEMI
- */
-void
-parse_lease_time(FILE *cfile, time_t *timep)
-{
-	uint32_t	 value;
-
-	if (parse_decimal(cfile, (char *)&value, 'L') == 0) {
-		parse_warn("expecting unsigned 32-bit decimal value.");
-		skip_to_semi(cfile);
-		return;
-	}
-
-	*timep = betoh32(value);
-
-	parse_semi(cfile);
+	return 0;
 }
 
 int
@@ -266,20 +245,29 @@ parse_boolean(FILE *cfile, unsigned char *buf)
 		}
 	}
 
+	parse_warn("expecting boolean.");
+	if (token != ';')
+		skip_to_semi(cfile);
+
 	return 0;
 }
 
 int
-parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
+parse_number(FILE *cfile, unsigned char *buf, char fmt)
 {
 	const char	*errstr;
-	char		*val;
-	int		 bytes, token;
+	char		*val, *msg;
+	int		 bytes, rslt, token;
 	long long	 numval, low, high;
 
 	token = next_token(&val, cfile);
 
 	switch (fmt) {
+	case 't':	/* Signed 64-bit integer. */
+		low = INT64_MIN;
+		high = INT64_MAX;
+		bytes = 8;
+		break;
 	case 'l':	/* Signed 32-bit integer. */
 		low = INT32_MIN;
 		high = INT32_MAX;
@@ -305,98 +293,23 @@ parse_decimal(FILE *cfile, unsigned char *buf, char fmt)
 	}
 
 	numval = strtonum(val, low, high, &errstr);
-	if (errstr != NULL)
-		return 0;
-
-	numval = htobe64(numval);
-	memcpy(buf, (char *)&numval + (sizeof(numval) - bytes), bytes);
-
-	return 1;
-}
-
-int
-parse_hex(FILE *cfile, unsigned char *buf)
-{
-	char		*val, *ep;
-	unsigned long	 ulval;
-	int		 token;
-
-	token = next_token(&val, cfile);
-
-	errno = 0;
-	ulval = strtoul(val, &ep, 16);
-	if ((val[0] == '\0' || *ep != '\0') ||
-	    (errno == ERANGE && ulval == ULONG_MAX) ||
-	    (ulval > UINT8_MAX))
-		return 0;
-
-	buf[0] = ulval;
-
-	return 1;
-}
-
-/*
- * date :== NUMBER NUMBER SLASH NUMBER SLASH NUMBER
- *		NUMBER COLON NUMBER COLON NUMBER UTC SEMI
- *
- * Dates are always in UTC; first number is day of week; next is
- * year/month/day; next is hours:minutes:seconds on a 24-hour
- * clock.
- */
-time_t
-parse_date(FILE *cfile)
-{
-	char timestr[26]; /* "w yyyy/mm/dd hh:mm:ss UTC" */
-	struct tm	 tm;
-	char		*val, *p;
-	size_t		 n;
-	time_t		 guess;
-	int		 token;
-
-	memset(timestr, 0, sizeof(timestr));
-
-	do {
-		token = peek_token(NULL, cfile);
-		switch (token) {
-		case TOK_NAME:
-		case TOK_NUMBER:
-		case TOK_NUMBER_OR_NAME:
-		case '/':
-		case ':':
-			token = next_token(&val, cfile);
-			n = strlcat(timestr, val, sizeof(timestr));
-			if (n >= sizeof(timestr)) {
-				/* XXX Will break after year 9999! */
-				parse_warn("time string too long");
-				skip_to_semi(cfile);
-				return 0;
-			}
-			break;
-		case';':
-			break;
-		default:
-			parse_warn("invalid time string");
-			skip_to_semi(cfile);
-			return 0;
-		}
-	} while (token != ';');
-
-	parse_semi(cfile);
-
-	memset(&tm, 0, sizeof(tm));	/* 'cuz strptime ignores tm_isdt. */
-	p = strptime(timestr, DB_TIMEFMT, &tm);
-	if (p == NULL || *p != '\0') {
-		parse_warn("unparseable time string");
-		return 0;
+	if (errstr == NULL) {
+		numval = htobe64(numval);
+		memcpy(buf, (char *)&numval + (sizeof(numval) - bytes), bytes);
+		return 1;
 	}
 
-	guess = timegm(&tm);
-	if (guess == -1) {
-		parse_warn("time could not be represented");
-		return 0;
+	rslt = asprintf(&msg, "expecting integer between %lld and %lld", low,
+	    high);
+	if (rslt != -1) {
+		parse_warn(msg);
+		free(msg);
 	}
 
-	return guess;
+	if (token != ';')
+		skip_to_semi(cfile);
+
+	return 0;
 }
 
 void

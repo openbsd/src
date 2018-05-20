@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.26 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.27 2018/03/17 14:55:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,17 +175,15 @@ error:
 }
 
 EVP_PKEY *
-X509_PUBKEY_get(X509_PUBKEY *key)
+X509_PUBKEY_get0(X509_PUBKEY *key)
 {
 	EVP_PKEY *ret = NULL;
 
 	if (key == NULL)
 		goto error;
 
-	if (key->pkey != NULL) {
-		CRYPTO_add(&key->pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	if (key->pkey != NULL)
 		return key->pkey;
-	}
 
 	if (key->public_key == NULL)
 		goto error;
@@ -220,13 +218,25 @@ X509_PUBKEY_get(X509_PUBKEY *key)
 		key->pkey = ret;
 		CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
 	}
-	CRYPTO_add(&ret->references, 1, CRYPTO_LOCK_EVP_PKEY);
 
 	return ret;
 
 error:
 	EVP_PKEY_free(ret);
 	return (NULL);
+}
+
+EVP_PKEY *
+X509_PUBKEY_get(X509_PUBKEY *key)
+{
+	EVP_PKEY *pkey;
+
+	if ((pkey = X509_PUBKEY_get0(key)) == NULL)
+		return (NULL);
+
+	CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+
+	return pkey;
 }
 
 /* Now two pseudo ASN1 routines that take an EVP_PKEY structure

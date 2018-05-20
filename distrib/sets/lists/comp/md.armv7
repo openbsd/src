@@ -53,6 +53,7 @@
 ./usr/include/arm/tcb.h
 ./usr/include/arm/trap.h
 ./usr/include/arm/undefined.h
+./usr/include/arm/vfp.h
 ./usr/include/arm/vmparam.h
 ./usr/include/armv7
 ./usr/include/armv7/_float.h
@@ -67,7 +68,6 @@
 ./usr/include/armv7/cpu.h
 ./usr/include/armv7/db_machdep.h
 ./usr/include/armv7/disklabel.h
-./usr/include/armv7/elf_abi.h
 ./usr/include/armv7/endian.h
 ./usr/include/armv7/exec.h
 ./usr/include/armv7/fdt.h

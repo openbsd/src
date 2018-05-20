@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_man.c,v 1.120 2017/06/14 22:50:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.124 2018/04/11 17:10:35 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -200,8 +200,8 @@ static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, pre_bk, post_bk, NULL, NULL }, /* Bx */
 	{ NULL, pre_skip, NULL, NULL, NULL }, /* Db */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dc */
-	{ cond_body, pre_enc, post_enc, "\\(Lq", "\\(Rq" }, /* Do */
-	{ cond_body, pre_enc, post_enc, "\\(Lq", "\\(Rq" }, /* Dq */
+	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Do */
+	{ cond_body, pre_enc, post_enc, "\\(lq", "\\(rq" }, /* Dq */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ec */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ef */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Em */
@@ -608,6 +608,14 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 {
 	struct roff_node *n;
 
+	printf(".\\\" Automatically generated from an mdoc input file."
+	    "  Do not edit.\n");
+	for (n = mdoc->first->child; n != NULL; n = n->next) {
+		if (n->type != ROFFT_COMMENT)
+			break;
+		printf(".\\\"%s\n", n->string);
+	}
+
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
 	    mdoc->meta.title,
 	    (mdoc->meta.msec == NULL ? "" : mdoc->meta.msec),
@@ -622,7 +630,7 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 		fontqueue.head = fontqueue.tail = mandoc_malloc(8);
 		*fontqueue.tail = 'R';
 	}
-	for (n = mdoc->first->child; n != NULL; n = n->next)
+	for (; n != NULL; n = n->next)
 		print_node(&mdoc->meta, n);
 	putchar('\n');
 }
@@ -1406,7 +1414,7 @@ pre_it(DECL_ARGS)
 			if (bln->norm->Bl.type == LIST_diag)
 				print_line(".B \"", 0);
 			else
-				print_line(".R \"", 0);
+				print_line(".BR \\& \"", 0);
 			outflags &= ~MMAN_spc;
 			return 1;
 		case LIST_bullet:
@@ -1545,7 +1553,6 @@ static int
 pre_lk(DECL_ARGS)
 {
 	const struct roff_node *link, *descr, *punct;
-	int display;
 
 	if ((link = n->child) == NULL)
 		return 0;
@@ -1568,12 +1575,6 @@ pre_lk(DECL_ARGS)
 	}
 
 	/* Link target. */
-	display = man_strlen(link->string) >= 26;
-	if (display) {
-		print_line(".RS", MMAN_Bk_susp);
-		print_word("6n");
-		outflags |= MMAN_nl;
-	}
 	font_push('B');
 	print_word(link->string);
 	font_pop();
@@ -1583,8 +1584,6 @@ pre_lk(DECL_ARGS)
 		print_word(punct->string);
 		punct = punct->next;
 	}
-	if (display)
-		print_line(".RE", MMAN_nl);
 	return 0;
 }
 

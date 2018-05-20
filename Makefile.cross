@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.98 2017/09/23 12:35:52 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.99 2018/02/04 21:11:32 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -249,12 +249,15 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    ${MAKE} clean)
 	mv ${CROSSDIR}/usr/bin/clang ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang
 	mv ${CROSSDIR}/usr/bin/clang++ ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang++
-	mv ${CROSSDIR}/usr/bin/ld ${CROSSDIR}/usr/bin/${TARGET_CANON}-ld
 	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-clang ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang
-	cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-ld ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-ld
 	ln -sf ${TARGET_CANON}-cc ${CROSSDIR}/usr/${TARGET_CANON}/bin/cc
 	ln -sf ${TARGET_CANON}-c++ ${CROSSDIR}/usr/${TARGET_CANON}/bin/c++
-	ln -sf ${TARGET_CANON}-ld ${CROSSDIR}/usr/${TARGET_CANON}/bin/ld
+	@if [ -e ${CROSSDIR}/usr/bin/ld ]; then \
+		mv ${CROSSDIR}/usr/bin/ld ${CROSSDIR}/usr/bin/${TARGET_CANON}-ld ;\
+		cp -f ${CROSSDIR}/usr/bin/${TARGET_CANON}-ld \
+		    ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-ld ;\
+		ln -sf ${TARGET_CANON}-ld ${CROSSDIR}/usr/${TARGET_CANON}/bin/ld ;\
+	fi
 	echo "#!/bin/sh\n${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang --sysroot ${CROSSDIR} \"$$""@\"" > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc; \
 	chmod +x ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-cc;
 	echo "#!/bin/sh\n${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-clang --driver-mode=g++ --sysroot ${CROSSDIR} \"$$""@\"" > ${CROSSDIR}/usr/${TARGET_CANON}/bin/${TARGET_CANON}-c++; \

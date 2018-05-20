@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPIC=
@@ -14,12 +14,13 @@ SRCS=	ASanStackFrameLayout.cpp \
 	BreakCriticalEdges.cpp \
 	BuildLibCalls.cpp \
 	BypassSlowDivision.cpp \
+	CallPromotionUtils.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
-	CmpInstAnalysis.cpp \
 	CodeExtractor.cpp \
 	CtorUtils.cpp \
 	DemoteRegToStack.cpp \
+	EntryExitInstrumenter.cpp \
 	EscapeEnumerator.cpp \
 	Evaluator.cpp \
 	FlattenCFG.cpp \

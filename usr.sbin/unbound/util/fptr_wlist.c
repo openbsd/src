@@ -98,6 +98,9 @@ fptr_whitelist_comm_point(comm_point_callback_type *fptr)
 	else if(fptr == &outnet_udp_cb) return 1;
 	else if(fptr == &outnet_tcp_cb) return 1;
 	else if(fptr == &tube_handle_listen) return 1;
+	else if(fptr == &auth_xfer_probe_udp_callback) return 1;
+	else if(fptr == &auth_xfer_transfer_tcp_callback) return 1;
+	else if(fptr == &auth_xfer_transfer_http_callback) return 1;
 	return 0;
 }
 
@@ -122,6 +125,8 @@ fptr_whitelist_comm_timer(void (*fptr)(void*))
 #ifdef UB_ON_WINDOWS
 	else if(fptr == &wsvc_cron_cb) return 1;
 #endif
+	else if(fptr == &auth_xfer_timer) return 1;
+	else if(fptr == &auth_xfer_probe_timer_callback) return 1;
 	return 0;
 }
 
@@ -157,6 +162,7 @@ fptr_whitelist_event(void (*fptr)(int, short, void *))
 	else if(fptr == &comm_point_raw_handle_callback) return 1;
 	else if(fptr == &tube_handle_signal) return 1;
 	else if(fptr == &comm_base_handle_slow_accept) return 1;
+	else if(fptr == &comm_point_http_handle_callback) return 1;
 #ifdef UB_ON_WINDOWS
 	else if(fptr == &worker_win_stop_cb) return 1;
 #endif
@@ -215,6 +221,7 @@ fptr_whitelist_rbtree_cmp(int (*fptr) (const void *, const void *))
 	else if(fptr == &view_cmp) return 1;
 	else if(fptr == &auth_zone_cmp) return 1;
 	else if(fptr == &auth_data_cmp) return 1;
+	else if(fptr == &auth_xfer_cmp) return 1;
 	return 0;
 }
 
@@ -233,6 +240,7 @@ fptr_whitelist_hash_sizefunc(lruhash_sizefunc_type fptr)
 #endif
 #ifdef USE_DNSCRYPT
 	else if(fptr == &dnsc_shared_secrets_sizefunc) return 1;
+	else if(fptr == &dnsc_nonces_sizefunc) return 1;
 #endif
 	return 0;
 }
@@ -249,6 +257,7 @@ fptr_whitelist_hash_compfunc(lruhash_compfunc_type fptr)
 	else if(fptr == &test_slabhash_compfunc) return 1;
 #ifdef USE_DNSCRYPT
 	else if(fptr == &dnsc_shared_secrets_compfunc) return 1;
+	else if(fptr == &dnsc_nonces_compfunc) return 1;
 #endif
 	return 0;
 }
@@ -265,6 +274,7 @@ fptr_whitelist_hash_delkeyfunc(lruhash_delkeyfunc_type fptr)
 	else if(fptr == &test_slabhash_delkey) return 1;
 #ifdef USE_DNSCRYPT
 	else if(fptr == &dnsc_shared_secrets_delkeyfunc) return 1;
+	else if(fptr == &dnsc_nonces_delkeyfunc) return 1;
 #endif
 	return 0;
 }
@@ -283,6 +293,7 @@ fptr_whitelist_hash_deldatafunc(lruhash_deldatafunc_type fptr)
 #endif
 #ifdef USE_DNSCRYPT
 	else if(fptr == &dnsc_shared_secrets_deldatafunc) return 1;
+	else if(fptr == &dnsc_nonces_deldatafunc) return 1;
 #endif
 	return 0;
 }
@@ -505,6 +516,8 @@ int fptr_whitelist_mesh_cb(mesh_cb_func_type fptr)
 	else if(fptr == &libworker_bg_done_cb) return 1;
 	else if(fptr == &libworker_event_done_cb) return 1;
 	else if(fptr == &probe_answer_cb) return 1;
+	else if(fptr == &auth_xfer_probe_lookup_callback) return 1;
+	else if(fptr == &auth_xfer_transfer_lookup_callback) return 1;
 	return 0;
 }
 

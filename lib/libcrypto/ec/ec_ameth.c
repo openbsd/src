@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.20 2018/05/01 19:01:28 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -136,12 +136,12 @@ err:
 }
 
 static EC_KEY *
-eckey_type2param(int ptype, void *pval)
+eckey_type2param(int ptype, const void *pval)
 {
 	EC_KEY *eckey = NULL;
 
 	if (ptype == V_ASN1_SEQUENCE) {
-		ASN1_STRING *pstr = pval;
+		const ASN1_STRING *pstr = pval;
 		const unsigned char *pm = NULL;
 		int pmlen;
 
@@ -152,7 +152,7 @@ eckey_type2param(int ptype, void *pval)
 			goto ecerr;
 		}
 	} else if (ptype == V_ASN1_OBJECT) {
-		ASN1_OBJECT *poid = pval;
+		const ASN1_OBJECT *poid = pval;
 		EC_GROUP *group;
 
 		/*
@@ -187,7 +187,7 @@ static int
 eckey_pub_decode(EVP_PKEY * pkey, X509_PUBKEY * pubkey)
 {
 	const unsigned char *p = NULL;
-	void *pval;
+	const void *pval;
 	int ptype, pklen;
 	EC_KEY *eckey = NULL;
 	X509_ALGOR *palg;
@@ -235,7 +235,7 @@ static int
 eckey_priv_decode(EVP_PKEY * pkey, PKCS8_PRIV_KEY_INFO * p8)
 {
 	const unsigned char *p = NULL;
-	void *pval;
+	const void *pval;
 	int ptype, pklen;
 	EC_KEY *eckey = NULL;
 	X509_ALGOR *palg;
@@ -433,13 +433,15 @@ do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 	}
 	if (ktype > 0) {
 		public_key = EC_KEY_get0_public_key(x);
-		if ((pub_key = EC_POINT_point2bn(group, public_key,
+		if (public_key != NULL) {
+			if ((pub_key = EC_POINT_point2bn(group, public_key,
 			    EC_KEY_get_conv_form(x), NULL, ctx)) == NULL) {
-			reason = ERR_R_EC_LIB;
-			goto err;
+				reason = ERR_R_EC_LIB;
+				goto err;
+			}
+			if (pub_key)
+				buf_len = (size_t) BN_num_bytes(pub_key);
 		}
-		if (pub_key)
-			buf_len = (size_t) BN_num_bytes(pub_key);
 	}
 	if (ktype == 2) {
 		priv_key = EC_KEY_get0_private_key(x);

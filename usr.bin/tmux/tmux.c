@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.184 2017/07/12 09:21:25 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.186 2018/01/12 10:22:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@ int		 ptm_fd = -1;
 const char	*shell_command;
 
 static __dead void	 usage(void);
-static char		*make_label(const char *);
+static char		*make_label(const char *, char **);
 
 static const char	*getshell(void);
 static int		 checkshell(const char *);
@@ -109,12 +109,13 @@ areshell(const char *shell)
 }
 
 static char *
-make_label(const char *label)
+make_label(const char *label, char **cause)
 {
 	char		*base, resolved[PATH_MAX], *path, *s;
 	struct stat	 sb;
 	uid_t		 uid;
-	int		 saved_errno;
+
+	*cause = NULL;
 
 	if (label == NULL)
 		label = "default";
@@ -124,11 +125,16 @@ make_label(const char *label)
 		xasprintf(&base, "%s/tmux-%ld", s, (long)uid);
 	else
 		xasprintf(&base, "%s/tmux-%ld", _PATH_TMP, (long)uid);
-
-	if (mkdir(base, S_IRWXU) != 0 && errno != EEXIST)
+	if (realpath(base, resolved) == NULL &&
+	    strlcpy(resolved, base, sizeof resolved) >= sizeof resolved) {
+		errno = ERANGE;
+		free(base);
 		goto fail;
+	}
 
-	if (lstat(base, &sb) != 0)
+	if (mkdir(resolved, S_IRWXU) != 0 && errno != EEXIST)
+		goto fail;
+	if (lstat(resolved, &sb) != 0)
 		goto fail;
 	if (!S_ISDIR(sb.st_mode)) {
 		errno = ENOTDIR;
@@ -138,18 +144,11 @@ make_label(const char *label)
 		errno = EACCES;
 		goto fail;
 	}
-
-	if (realpath(base, resolved) == NULL)
-		strlcpy(resolved, base, sizeof resolved);
 	xasprintf(&path, "%s/%s", resolved, label);
-
-	free(base);
 	return (path);
 
 fail:
-	saved_errno = errno;
-	free(base);
-	errno = saved_errno;
+	xasprintf(cause, "error creating %s (%s)", resolved, strerror(errno));
 	return (NULL);
 }
 
@@ -191,9 +190,9 @@ find_home(void)
 int
 main(int argc, char **argv)
 {
-	char					*path, *label, **var;
+	char					*path, *label, *cause, **var;
 	char					 tmp[PATH_MAX];
-	const char				*s, *shell;
+	const char				*s, *shell, *cwd;
 	int					 opt, flags, keys;
 	const struct options_table_entry	*oe;
 
@@ -294,8 +293,9 @@ main(int argc, char **argv)
 	global_environ = environ_create();
 	for (var = environ; *var != NULL; var++)
 		environ_put(global_environ, *var);
-	if (getcwd(tmp, sizeof tmp) != NULL)
-		environ_set(global_environ, "PWD", "%s", tmp);
+	if ((cwd = getenv("PWD")) == NULL &&
+	    (cwd = getcwd(tmp, sizeof tmp)) != NULL)
+		environ_set(global_environ, "PWD", "%s", cwd);
 
 	global_options = options_create(NULL);
 	global_s_options = options_create(NULL);
@@ -340,8 +340,11 @@ main(int argc, char **argv)
 			path[strcspn(path, ",")] = '\0';
 		}
 	}
-	if (path == NULL && (path = make_label(label)) == NULL) {
-		fprintf(stderr, "can't create socket: %s\n", strerror(errno));
+	if (path == NULL && (path = make_label(label, &cause)) == NULL) {
+		if (cause != NULL) {
+			fprintf(stderr, "%s\n", cause);
+			free(cause);
+		}
 		exit(1);
 	}
 	socket_path = path;

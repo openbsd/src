@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.102 2017/06/15 03:47:07 dlg Exp $
+.\"	$OpenBSD: systat.1,v 1.104 2018/02/11 09:47:33 martijn Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 15 2017 $
+.Dd $Mdocdate: February 11 2018 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -219,6 +219,8 @@ command interpreter.
 .Bl -tag -width Fl
 .It Ic help
 Print the names of the available views on the command line.
+.It Ic order
+Print the names of the available orderings on the command line.
 .It Ic quit
 Quit
 .Nm .
@@ -384,6 +386,7 @@ changes the view to show all of them.
 Display kernel
 .Xr pool 9
 per CPU cache statistics.
+Ordering is available on all columns.
 .It Ic queues
 Display statistics about the active queues,
 similar to the output of

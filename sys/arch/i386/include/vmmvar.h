@@ -25,6 +25,7 @@
 #define VMM_MAX_MEM_RANGES	16
 #define VMM_MAX_DISKS_PER_VM	4
 #define VMM_MAX_PATH_DISK	128
+#define VMM_MAX_PATH_CDROM	128
 #define VMM_MAX_NAME_LEN	32
 #define VMM_MAX_KERNEL_PATH	128
 #define VMM_MAX_VCPUS_PER_VM	64
@@ -274,6 +275,13 @@ enum {
 };
 
 /*
+ * Port definitions not found elsewhere
+ */
+#define PCKBC_AUX	0x61
+#define ELCR0		0x4D0
+#define ELCR1		0x4D1
+
+/*
  * vm exit data
  *  vm_exit_inout		: describes an IN/OUT exit
  */
@@ -314,12 +322,16 @@ struct vcpu_segment_info {
 #define VCPU_REGS_EFLAGS	9
 #define VCPU_REGS_NGPRS		(VCPU_REGS_EFLAGS + 1)
 
-#define VCPU_REGS_CR0	0
-#define VCPU_REGS_CR2	1
-#define VCPU_REGS_CR3	2
-#define VCPU_REGS_CR4	3
-#define VCPU_REGS_CR8	4
-#define VCPU_REGS_NCRS	(VCPU_REGS_CR8 + 1)
+#define VCPU_REGS_CR0		0
+#define VCPU_REGS_CR2		1
+#define VCPU_REGS_CR3		2
+#define VCPU_REGS_CR4		3
+#define VCPU_REGS_CR8		4
+#define VCPU_REGS_PDPTE0	5
+#define VCPU_REGS_PDPTE1	6
+#define VCPU_REGS_PDPTE2	7
+#define VCPU_REGS_PDPTE3	8
+#define VCPU_REGS_NCRS	(VCPU_REGS_PDPTE3 + 1)
 
 #define VCPU_REGS_CS		0
 #define VCPU_REGS_DS		1
@@ -357,6 +369,7 @@ struct vm_create_params {
 	size_t			vcp_nnics;
 	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
 	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
+	char			vcp_cdrom[VMM_MAX_PATH_CDROM];
 	char			vcp_name[VMM_MAX_NAME_LEN];
 	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
 	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];

@@ -12,6 +12,7 @@ our %args = (
     relayd => {
 	protocol => [ "http" ],
 	relay => [ "session timeout 3" ],
+	loggrep => { qr/(buffer event|splice) timeout/ => 0 },
     },
     server => {
 	func => sub {

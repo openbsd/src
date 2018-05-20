@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vic.4,v 1.24 2016/10/11 12:10:47 reyk Exp $
+.\"	$OpenBSD: vic.4,v 1.25 2018/01/04 20:09:56 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2016 $
+.Dd $Mdocdate: January 4 2018 $
 .Dt VIC 4
 .Os
 .Sh NAME
@@ -91,6 +91,11 @@ ethernet0.virtualDev = "vmxnet"
 .Xr vmx 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.9 .
 .Sh AUTHORS
 .An -nosplit
 The

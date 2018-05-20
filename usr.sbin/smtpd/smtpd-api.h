@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.32 2017/09/08 16:51:22 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.33 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -49,8 +49,6 @@ enum {
 	PROC_QUEUE_MESSAGE_DELETE,
 	PROC_QUEUE_MESSAGE_COMMIT,
 	PROC_QUEUE_MESSAGE_FD_R,
-	PROC_QUEUE_MESSAGE_CORRUPT,
-	PROC_QUEUE_MESSAGE_UNCORRUPT,
 	PROC_QUEUE_ENVELOPE_CREATE,
 	PROC_QUEUE_ENVELOPE_DELETE,
 	PROC_QUEUE_ENVELOPE_LOAD,
@@ -272,8 +270,6 @@ void queue_api_on_message_create(int(*)(uint32_t *));
 void queue_api_on_message_commit(int(*)(uint32_t, const char*));
 void queue_api_on_message_delete(int(*)(uint32_t));
 void queue_api_on_message_fd_r(int(*)(uint32_t));
-void queue_api_on_message_corrupt(int(*)(uint32_t));
-void queue_api_on_message_uncorrupt(int(*)(uint32_t));
 void queue_api_on_envelope_create(int(*)(uint32_t, const char *, size_t, uint64_t *));
 void queue_api_on_envelope_delete(int(*)(uint64_t));
 void queue_api_on_envelope_update(int(*)(uint64_t, const char *, size_t));

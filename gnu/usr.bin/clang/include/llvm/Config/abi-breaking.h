@@ -19,7 +19,7 @@
 #define LLVM_ENABLE_REVERSE_ITERATION 0
 
 /* Allow selectively disabling link-time mismatch checking so that header-only
-+   ADT content from LLVM can be used without linking libSupport. */
+   ADT content from LLVM can be used without linking libSupport. */
 #if !LLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING
 
 // ABI_BREAKING_CHECKS protection: provides link-time failure when clients build

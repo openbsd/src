@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpip.c,v 1.6 2016/06/09 15:29:22 visa Exp $	*/
+/*	$OpenBSD: cn30xxpip.c,v 1.7 2017/11/05 04:57:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,15 +40,6 @@
 #include <octeon/dev/cn30xxgmxreg.h>
 #include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxpipvar.h>
-
-#ifdef OCTEON_ETH_DEBUG
-struct cn30xxpip_softc *__cn30xxpip_softc;
-
-void	cn30xxpip_intr_rml(void *);
-
-void	cn30xxpip_dump(void);
-void	cn30xxpip_int_enable(struct cn30xxpip_softc *, int);
-#endif
 
 /*
  * register definitions
@@ -132,12 +123,6 @@ cn30xxpip_init(struct cn30xxpip_attach_args *aa,
 		panic("can't map %s space", "pip register");
 
 	*rsc = sc;
-
-#ifdef OCTEON_ETH_DEBUG
-	cn30xxpip_int_enable(sc, 1);
-	__cn30xxpip_softc = sc;
-	printf("PIP Code initialized.\n");
-#endif
 }
 
 #define	_PIP_RD8(sc, off) \
@@ -239,106 +224,3 @@ cn30xxpip_stats(struct cn30xxpip_softc *sc, struct ifnet *ifp, int gmx_port)
 
 	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl);
 }
-
-
-#ifdef OCTEON_ETH_DEBUG
-int	cn30xxpip_intr_rml_verbose;
-
-void
-cn30xxpip_intr_rml(void *arg)
-{
-	struct cn30xxpip_softc *sc;
-	uint64_t reg;
-
-	sc = __cn30xxpip_softc;
-	KASSERT(sc != NULL);
-	reg = cn30xxpip_int_summary(sc);
-	if (cn30xxpip_intr_rml_verbose)
-		printf("%s: PIP_INT_REG=0x%016llx\n", __func__, reg);
-}
-
-void	cn30xxpip_dump_regs(void);
-void	cn30xxpip_dump_stats(void);
-
-void
-cn30xxpip_dump(void)
-{
-	cn30xxpip_dump_regs();
-	cn30xxpip_dump_stats();
-}
-
-void
-cn30xxpip_dump_regs(void)
-{
-	struct cn30xxpip_softc *sc = __cn30xxpip_softc;
-	const struct cn30xxpip_dump_reg_ *reg;
-	uint64_t tmp;
-	int i;
-
-	for (i = 0; i < (int)nitems(cn30xxpip_dump_regs_); i++) {
-		reg = &cn30xxpip_dump_regs_[i];
-		tmp = _PIP_RD8(sc, reg->offset);
-		printf("\t%-24s: %16llx\n", reg->name, tmp);
-	}
-}
-
-void
-cn30xxpip_dump_stats(void)
-{
-	struct cn30xxpip_softc *sc = __cn30xxpip_softc;
-	const struct cn30xxpip_dump_reg_ *reg;
-	uint64_t tmp;
-	int i;
-	uint64_t pip_stat_ctl;
-
-	pip_stat_ctl = _PIP_RD8(sc, PIP_STAT_CTL_OFFSET);
-	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl & ~PIP_STAT_CTL_RDCLR);
-	for (i = 0; i < (int)nitems(cn30xxpip_dump_stats_); i++) {
-		reg = &cn30xxpip_dump_stats_[i];
-		tmp = _PIP_RD8(sc, reg->offset);
-		printf("\t%-24s: %16llx\n", reg->name, tmp);
-	}
-	printf("\t%-24s:\n", "PIP_QOS_DIFF[0-63]");
-	for (i = 0; i < 64; i++) {
-		tmp = _PIP_RD8(sc, PIP_QOS_DIFF0_OFFSET + sizeof(uint64_t) * i);
-		printf("%s\t%16llx%s",
-		    ((i % 4) == 0) ? "\t" : "",
-		    tmp,
-		    ((i % 4) == 3) ? "\n" : "");
-	}
-	printf("\t%-24s:\n", "PIP_TAG_INC[0-63]");
-	for (i = 0; i < 64; i++) {
-		tmp = _PIP_RD8(sc, PIP_TAG_INC0_OFFSET + sizeof(uint64_t) * i);
-		printf("%s\t%16llx%s",
-		    ((i % 4) == 0) ? "\t" : "",
-		    tmp,
-		    ((i % 4) == 3) ? "\n" : "");
-	}
-	_PIP_WR8(sc, PIP_STAT_CTL_OFFSET, pip_stat_ctl);
-}
-
-void
-cn30xxpip_int_enable(struct cn30xxpip_softc *sc, int enable)
-{
-	uint64_t pip_int_xxx = 0;
-
-	SET(pip_int_xxx,
-	    PIP_INT_EN_BEPERR |
-	    PIP_INT_EN_FEPERR |
-	    PIP_INT_EN_SKPRUNT |
-	    PIP_INT_EN_BADTAG |
-	    PIP_INT_EN_PRTNXA |
-	    PIP_INT_EN_PKTDRP);
-	_PIP_WR8(sc, PIP_INT_REG_OFFSET, pip_int_xxx);
-	_PIP_WR8(sc, PIP_INT_EN_OFFSET, enable ? pip_int_xxx : 0);
-}
-uint64_t
-cn30xxpip_int_summary(struct cn30xxpip_softc *sc)
-{
-	uint64_t summary;
-
-	summary = _PIP_RD8(sc, PIP_INT_REG_OFFSET);
-	_PIP_WR8(sc, PIP_INT_REG_OFFSET, summary);
-	return summary;
-}
-#endif /* OCTEON_ETH_DEBUG */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.212 2017/05/04 20:41:10 tb Exp $
+.\"	$OpenBSD: sysctl.8,v 1.214 2018/02/16 07:27:07 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: May 4 2017 $
+.Dd $Mdocdate: February 16 2018 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -38,13 +38,8 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
-.Op Fl Aan
-.Nm sysctl
-.Op Fl n
-.Ar name ...
-.Nm sysctl
-.Op Fl nq
-.Ar name Ns = Ns Ar value ...
+.Op Fl Aanq
+.Op Ar name Ns Op = Ns Ar value
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,7 +48,7 @@ appropriate privilege to set kernel state.
 The state to be retrieved or set is described using a
 .Dq Management Information Base
 .Pq MIB
-style name, described as a dotted set of components.
+style name, using a dotted set of components.
 .Pp
 When retrieving a variable,
 a subset of the MIB name may be specified to retrieve a list of
@@ -61,9 +56,6 @@ variables in that subset.
 For example, to list all the machdep variables:
 .Pp
 .Dl $ sysctl machdep
-.Pp
-When setting a variable,
-the MIB name should be followed by an equal sign and the new value.
 .Pp
 The options are as follows:
 .Bl -tag -width xxx
@@ -86,18 +78,21 @@ For example, to set the psize shell variable to the pagesize of the hardware:
 Suppress all output when setting a variable.
 This option overrides the behaviour of
 .Fl n .
-.It Ar name Ns = Ns Ar value
-Attempt to set the specified variable
-.Ar name
-to
+.It Ar name Ns Op = Ns Ar value
+Retrieve the specified variable
+.Ar name ,
+or attempt to set it to
 .Ar value .
+Multiple
+.Ar name Ns Op = Ns Ar value
+arguments may be given.
 .El
 .Pp
 The information available from
 .Nm
 consists of integers, strings, and tables.
 For a detailed description of the variables, see
-.Xr sysctl 3 .
+.Xr sysctl 2 .
 Tables can only be retrieved by special purpose programs such as
 .Xr ps 1 ,
 .Xr systat 1 ,
@@ -181,7 +176,7 @@ into a safe place for debugging purposes:
 # sysctl kern.nosuidcoredump=3
 .Ed
 .Sh SEE ALSO
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr options 4 ,
 .Xr sysctl.conf 5
 .Sh HISTORY

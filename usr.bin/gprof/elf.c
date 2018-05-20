@@ -30,8 +30,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 
+#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
 #include <string.h>

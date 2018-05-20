@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.32 2017/04/28 13:53:05 mpi Exp $
+# $OpenBSD: mksubr,v 1.35 2018/02/14 17:26:56 otto Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -316,7 +316,7 @@ auto_or_type "mmapflagsname" "(__)?MAP_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/mm
 auto_orz_type "wait4optname" "W[A-Z]+[[:space:]]+[0-9]+" "sys/wait.h"
 #auto_or_type "timerflagsname" "TIMER_[A-Z]+[[:space:]]+0x[0-9A-Fa-f]+" "sys/time.h"
 #auto_or_type "getfsstatflagsname" "MNT_[A-Z]+[[:space:]]+[1-9][0-9]*" "sys/mount.h"
-auto_or_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
+auto_orz_type "mountflagsname" "MNT_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mount.h"
 auto_or_type "rebootoptname" "RB_[A-Z]+[[:space:]]+0x[0-9]+" "sys/reboot.h"
 auto_or_type "flockname" "LOCK_[A-Z]+[[:space:]]+0x[0-9]+" "sys/fcntl.h"
 #auto_or_type "thrcreateflagsname" "THR_[A-Z]+[[:space:]]+0x[0-9]+" "sys/thr.h"
@@ -329,7 +329,7 @@ auto_switch_type "pathconfname" "_PC_[_A-Z]+[[:space:]]+[0-9]+" "sys/unistd.h"
 auto_switch_type "rlimitname" "RLIMIT_[A-Z]+[[:space:]]+[0-9]+" "sys/resource.h"
 auto_switch_type "shutdownhowname" "SHUT_[A-Z]+[[:space:]]+[0-9]+" "sys/socket.h"
 auto_switch_type "prioname" "PRIO_[A-Z]+[[:space:]]+[0-9]" "sys/resource.h"
-auto_switch_type "madvisebehavname" "_?MADV_[A-Z]+[[:space:]]+[0-9]+" "sys/mman.h"
+auto_switch_type "madvisebehavname" "MADV_[A-Z]+[[:space:]]+[0-9A-Z_]+" "sys/mman.h"
 auto_switch_type "msyncflagsname" "MS_[A-Z]+[[:space:]]+0x[0-9]+" "sys/mman.h"
 auto_switch_type "clocktypename" "CLOCK_[_A-Z]+[[:space:]]+[0-9]+" "sys/_time.h"
 #auto_switch_type "schedpolicyname" "SCHED_[A-Z]+[[:space:]]+[0-9]+" "sched.h"
@@ -375,18 +375,25 @@ cat <<_EOF_
 void
 fcntlcmdname (int arg)
 {
+	int noarg = 0;
+
 	switch (arg1) {
 _EOF_
 egrep "^#[[:space:]]*define[[:space:]]+F_[A-Z_]+[[:space:]]+[0-9]+[[:space:]]*" \
 	$include_dir/sys/fcntl.h | \
-	awk 'BEGIN { o=0 } { for (i = 1; i <= NF; i++) \
+	awk 'BEGIN { o=0; \
+		noarg["F_GETFD"] = 1; \
+		noarg["F_GETFL"] = 1; \
+		noarg["F_ISATTY"] = 1; \
+		noarg["F_GETOWN"] = 1; \
+	     }{ for (i = 1; i <= NF; i++) \
 		if ($i ~ /define/) \
 			break; \
 		++i; \
-		if (o <= $(i+1)) \
-			printf "\tcase %s:\n\t\t(void)printf(\"%s\");\n\t\tbreak;\n", $i, $i; \
-		else \
+		if (o > $(i+1)) \
 			exit; \
+		printf "\tcase %s:\n\t\t(void)printf(\"%s\");%s\n\t\tbreak;\n", $i, $i, \
+			noarg[$i] ? "\n\t\tnoarg = 1;" : ""; \
 		o = $(i+1) }'
 cat <<_EOF_
 	default: /* Should not reach */
@@ -404,7 +411,7 @@ cat <<_EOF_
 	} else if (arg1 == F_SETFL) {
 		(void)putchar(',');
 		doflagsname(arg, 0);
-	} else if (!fancy || (arg1 != F_GETFD && arg1 != F_GETFL && arg1 != F_ISATTY))
+	} else if (!fancy || !noarg)
 		(void)printf(",%#x", arg);
 }
 

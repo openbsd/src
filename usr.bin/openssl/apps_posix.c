@@ -116,31 +116,42 @@
  * Functions that need to be overridden by non-POSIX operating systems.
  */
 
-#include <sys/times.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
-#include <unistd.h>
+#include <time.h>
 
 #include "apps.h"
 
 double
-app_tminterval(int stop, int usertime)
+app_timer_real(int stop)
 {
-	double ret = 0;
-	struct tms rus;
-	clock_t now = times(&rus);
-	static clock_t tmstart;
+	static struct timespec start;
+	struct timespec elapsed, now;
 
-	if (usertime)
-		now = rus.tms_utime;
-
-	if (stop == TM_START)
-		tmstart = now;
-	else {
-		long int tck = sysconf(_SC_CLK_TCK);
-		ret = (now - tmstart) / (double) tck;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	if (stop) {
+		timespecsub(&now, &start, &elapsed);
+		return elapsed.tv_sec + elapsed.tv_nsec / 1000000000.0;
 	}
+	start = now;
+	return 0.0;
+}
 
-	return (ret);
+double
+app_timer_user(int stop)
+{
+	static struct timeval start;
+	struct timeval elapsed;
+	struct rusage now;
+
+	getrusage(RUSAGE_SELF, &now);
+	if (stop) {
+		timersub(&now.ru_utime, &start, &elapsed);
+		return elapsed.tv_sec + elapsed.tv_usec / 1000000.0;
+	}
+	start = now.ru_utime;
+	return 0.0;
 }
 
 int

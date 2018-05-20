@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.35 2017/07/10 06:38:07 dlg Exp $
+.\"	$OpenBSD: kqueue.2,v 1.37 2018/01/13 17:13:12 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: July 10 2017 $
+.Dd $Mdocdate: January 13 2018 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -451,6 +451,20 @@ contains the number of times the timeout has expired since the last call to
 This filter automatically sets the
 .Dv EV_CLEAR
 flag internally.
+.It Dv EVFILT_DEVICE
+Takes a descriptor as the identifier and the events to watch for in
+.Va fflags ,
+and returns when one or more of the requested events occur on the
+descriptor.
+The events to monitor are:
+.Bl -tag -width XXNOTE_CHANGE
+.It Dv NOTE_CHANGE
+A device change event has occurred, e.g. an HDMI cable has been plugged in to a port.
+.El
+.Pp
+On return,
+.Va fflags
+contains the events which triggered the filter.
 .El
 .Sh RETURN VALUES
 .Fn kqueue

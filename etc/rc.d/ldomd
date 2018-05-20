@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: ldomd,v 1.1 2012/11/04 17:12:36 kettenis Exp $
+# $OpenBSD: ldomd,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/ldomd"
 

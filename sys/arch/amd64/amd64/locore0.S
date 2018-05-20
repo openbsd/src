@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.3 2017/10/05 06:18:10 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.7 2018/02/21 19:24:15 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/*
 	 * Load parameters from stack
-	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
+	 * (howto, bootdev, bootapiver, esym, extmem (unused), cnvmem, ac, av)
 	 */
 	movl	4(%esp),%eax
 	movl	%eax, RELOC(boothowto)
@@ -163,8 +163,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl    %eax,(%ebp)
 	movl    $KERNBASE_HI,4(%ebp)
 1:
-	movl	20(%esp), %eax
-	movl	%eax, RELOC(biosextmem)
 	movl	24(%esp), %eax
 	movl	%eax, RELOC(biosbasemem)
 
@@ -206,6 +204,48 @@ bi_size_ok:
 	movl	%ecx,8(%ebp)
 	movl	$0,  12(%ebp)
 
+	/*
+	 * Determine if CPU has meltdown. Certain Intel CPUs do not properly
+	 * respect page permissions when speculatively loading data into
+	 * the cache ("Meltdown" CVE). These CPUs must utilize a secondary
+	 * sanitized page table lacking kernel mappings when executing user
+	 * processes, and may not use PG_G global PTEs for kernel VAs.
+	 */
+	movl	$0x1, RELOC(cpu_meltdown)	/* assume insecure at first */
+	movl	$0x0, RELOC(pg_g_kern)
+	
+	cmpl	$0x756e6547, %ebx	# "Genu"
+	jne	.Lcpu_secure
+	cmpl	$0x6c65746e, %ecx	# "ntel"
+	jne	.Lcpu_secure
+	cmpl	$0x49656e69, %edx	# "ineI"
+	jne	.Lcpu_secure
+
+	/*
+	 * Intel CPU, now check if IA32_ARCH_CAPABILITIES is supported and
+	 * if it says this CPU is safe.
+	 */
+	movl	$0x0,	%eax
+	cpuid
+	cmpl	$0x7,	%eax
+	jl	.Lcpu_check_finished
+
+	movl	$0x7,	%eax
+	cpuid
+	testl	$SEFF0EDX_ARCH_CAP, %edx
+	jz	.Lcpu_check_finished
+	
+	/* IA32_ARCH_CAPABILITIES MSR avaialble, use it to check CPU security */
+	movl	$MSR_ARCH_CAPABILITIES, %ecx
+	rdmsr
+	testl	$ARCH_CAPABILITIES_RDCL_NO, %eax
+	jz	.Lcpu_check_finished
+
+.Lcpu_secure:
+	movl	$0x0, RELOC(cpu_meltdown)
+	movl	$PG_G, RELOC(pg_g_kern)
+
+.Lcpu_check_finished:
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
@@ -472,7 +512,8 @@ map_tables:
 	leal	(PROC0_DMP2_OFF)(%esi), %ebx
 	xorl	%eax, %eax
 	movl	$(NDML2_ENTRIES * NPDPG), %ecx
-1:	orl	$(PG_V|PG_KW|PG_PS|PG_G), %eax
+1:	orl	$(PG_V|PG_KW|PG_PS), %eax
+	orl	RELOC(pg_g_kern), %eax
 	cmpl	$__kernel_base_phys, %eax
 	jl	store_pte
 	cmpl	$__kernel_end_phys, %eax
@@ -653,10 +694,7 @@ farjmp64:
 	.long	longmode-KERNBASE
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 
-	.globl _C_LABEL(cpu_private)
-	.comm _C_LABEL(cpu_private),NBPG,NBPG
-
-/* XXX we want some guard here */
+	.align 8, 0xcc
 	.space 512
 tmpstk:
 

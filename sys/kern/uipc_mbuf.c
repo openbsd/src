@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.249 2017/09/15 18:13:05 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.256 2018/03/18 21:25:14 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
+#include <sys/sysctl.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -148,9 +149,6 @@ struct pool_allocator m_pool_allocator = {
 
 static void (*mextfree_fns[4])(caddr_t, u_int, void *);
 static u_int num_extfree_fns;
-
-const char *mclpool_warnmsg =
-    "WARNING: mclpools limit reached; increase kern.maxclusters";
 
 /*
  * Initialize the mbuf allocator.
@@ -306,7 +304,7 @@ m_resethdr(struct mbuf *m)
 	m_tag_delete_chain(m);
 
 #if NPF > 0
-	pf_pkt_unlink_state_key(m);
+	pf_mbuf_unlink_state_key(m);
 #endif	/* NPF > 0 */
 
 	/* like m_inithdr(), but keep any associated data and mbufs */
@@ -406,7 +404,7 @@ m_free(struct mbuf *m)
 	if (m->m_flags & M_PKTHDR) {
 		m_tag_delete_chain(m);
 #if NPF > 0
-		pf_pkt_unlink_state_key(m);
+		pf_mbuf_unlink_state_key(m);
 #endif	/* NPF > 0 */
 	}
 	if (m->m_flags & M_EXT)
@@ -814,11 +812,12 @@ m_adj(struct mbuf *mp, int req_len)
 		while (m != NULL && len > 0) {
 			if (m->m_len <= len) {
 				len -= m->m_len;
+				m->m_data += m->m_len;
 				m->m_len = 0;
 				m = m->m_next;
 			} else {
-				m->m_len -= len;
 				m->m_data += len;
+				m->m_len -= len;
 				len = 0;
 			}
 		}
@@ -1324,7 +1323,8 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 	to->m_pkthdr = from->m_pkthdr;
 
 #if NPF > 0
-	pf_pkt_state_key_ref(to);
+	to->m_pkthdr.pf.statekey = NULL;
+	pf_mbuf_link_state_key(to, from->m_pkthdr.pf.statekey);
 #endif	/* NPF > 0 */
 
 	SLIST_INIT(&to->m_pkthdr.ph_tags);
@@ -1648,4 +1648,35 @@ mq_purge(struct mbuf_queue *mq)
 	mq_delist(mq, &ml);
 
 	return (ml_purge(&ml));
+}
+
+int
+sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct mbuf_queue *mq)
+{
+	unsigned int maxlen;
+	int error;
+
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IFQCTL_LEN:
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
+	case IFQCTL_MAXLEN:
+		maxlen = mq->mq_maxlen;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
+		if (!error && maxlen != mq->mq_maxlen) {
+			mtx_enter(&mq->mq_mtx);
+			mq->mq_maxlen = maxlen;
+			mtx_leave(&mq->mq_mtx);
+		}
+		return (error);
+	case IFQCTL_DROPS:
+		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

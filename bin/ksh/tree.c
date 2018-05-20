@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.27 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: tree.c,v 1.34 2018/04/09 17:53:36 tobias Exp $	*/
 
 /*
  * command tree climbing
@@ -47,25 +47,8 @@ ptree(struct op *t, int indent, struct shf *shf)
 			fptreef(shf, indent, "#no-args# ");
 		break;
 	case TEXEC:
-#if 0 /* ?not useful - can't be called? */
-		/* Print original vars */
-		if (t->left->vars)
-			for (w = t->left->vars; *w != NULL; )
-				fptreef(shf, indent, "%S ", *w++);
-		else
-			fptreef(shf, indent, "#no-vars# ");
-		/* Print expanded vars */
-		if (t->args)
-			for (w = t->args; *w != NULL; )
-				fptreef(shf, indent, "%s ", *w++);
-		else
-			fptreef(shf, indent, "#no-args# ");
-		/* Print original io */
-		t = t->left;
-#else
 		t = t->left;
 		goto Chain;
-#endif
 	case TPAREN:
 		fptreef(shf, indent + 2, "( %T) ", t->left);
 		break;
@@ -382,13 +365,22 @@ vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 
 	while ((c = *fmt++)) {
 		if (c == '%') {
-			long n;
+			int64_t n;
 			char *p;
 			int neg;
 
 			switch ((c = *fmt++)) {
 			case 'c':
 				tputc(va_arg(va, int), shf);
+				break;
+			case 'd': /* decimal */
+				n = va_arg(va, int);
+				neg = n < 0;
+				p = u64ton(neg ? -n : n, 10);
+				if (neg)
+					*--p = '-';
+				while (*p)
+					tputc(*p++, shf);
 				break;
 			case 's':
 				p = va_arg(va, char *);
@@ -399,13 +391,8 @@ vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 				p = va_arg(va, char *);
 				tputS(p, shf);
 				break;
-			case 'd': case 'u': /* decimal */
-				n = (c == 'd') ? va_arg(va, int) :
-				    va_arg(va, unsigned int);
-				neg = c=='d' && n<0;
-				p = ulton((neg) ? -n : n, 10);
-				if (neg)
-					*--p = '-';
+			case 'u': /* unsigned decimal */
+				p = u64ton(va_arg(va, unsigned int), 10);
 				while (*p)
 					tputc(*p++, shf);
 				break;
@@ -545,9 +532,9 @@ wdscan(const char *wp, int c)
 				nest--;
 			break;
 		default:
-			internal_errorf(0,
-			    "wdscan: unknown char 0x%x (carrying on)",
-			    wp[-1]);
+			internal_warningf(
+			    "%s: unknown char 0x%x (carrying on)",
+			    __func__, wp[-1]);
 		}
 }
 

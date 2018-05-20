@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2017/02/19 19:59:12 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.10 2017/12/15 14:45:51 bluhm Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -61,97 +61,12 @@ test_kill()
 	kill(0, SIGINT);
 }
 
-#ifdef WLPATHS 
-static void
-open_close(const char *filename)
-{
-	int fd;
-	int saved_errno;
-
-	errno = 0;
-	printf("\n open_close(\"%s\")", filename);
-	fd = open(filename, O_RDONLY);
-	saved_errno = errno;
-	printf(" fd=%d errno=%d", fd, errno);
-	if (fd != -1)
-		close(fd);
-	errno = saved_errno;
-}
-
-static void
-test_wpaths()
-{
-	/* absolute file */
-	open_close("/etc/passwd");
-
-	/* relative */
-	open_close("generic");
-
-	/* relative */
-	open_close("../../../../../../../../../../../../../../../etc/passwd");
-
-	/* ENOENT */
-	open_close("/nonexistent");
-
-	/* calling exit to flush stdout */
-	printf("\n");
-	exit(EXIT_SUCCESS);
-}
-#endif
-
 static void
 test_pledge()
 {
 	if (pledge("stdio rpath", NULL) != 0)
 		_exit(errno);
 }
-
-#ifdef WLPATHS
-static void
-do_stat(const char *path)
-{
-	char resolved[PATH_MAX];
-	struct stat sb;
-
-	printf("\n stat(\"%s\"):", path);
-
-	/* call realpath(3) */
-	errno = 0;
-	if (realpath(path, resolved) != NULL)
-		printf(" realpath=\"%s\"", resolved);
-	else
-		printf(" realpath=failed(%d)", errno);
-
-	/* call stat(2) */
-	errno = 0;
-	if (stat(path, &sb) == 0)
-		printf(" uid=%d gid=%d mode=%04o", sb.st_uid, sb.st_gid,
-		    sb.st_mode);
-	else
-		printf(" errno=%d", errno);
-}
-
-static void
-test_stat()
-{
-	/* in whitelisted path */
-	do_stat("/usr/share/man/man8/afterboot.8");
-	do_stat("/usr/share/man/man8/");
-	do_stat("/usr/share/man");
-
-	/* parent of whitelisted path */
-	do_stat("/usr/share");
-	do_stat("/usr");
-	do_stat("/");
-
-	/* outside whitelisted path */
-	do_stat("/usr/bin/gzip");
-
-	/* calling exit to flush stdout */
-	printf("\n");
-	exit(EXIT_SUCCESS);
-}
-#endif
 
 static void
 test_rpath()
@@ -208,67 +123,45 @@ main(int argc, char *argv[])
 	 */
 
 	/* _exit is always allowed, and nothing else under flags=0 */
-	start_test(&ret, "", NULL, test_nop);
-	start_test(&ret, "", NULL, test_inet);
+	start_test(&ret, "", test_nop);
+	start_test(&ret, "", test_inet);
 
 	/* test coredump */
-	start_test(&ret, "abort", NULL, test_inet);
+	start_test(&ret, "abort", test_inet);
 
 	/* inet under inet is ok (stdio is needed of close(2)) */
-	start_test(&ret, "stdio", NULL, test_inet);
-	start_test(&ret, "inet", NULL, test_inet);
-	start_test(&ret, "stdio inet", NULL, test_inet);
+	start_test(&ret, "stdio", test_inet);
+	start_test(&ret, "inet", test_inet);
+	start_test(&ret, "stdio inet", test_inet);
 
 	/* kill under fattr is forbidden */
-	start_test(&ret, "fattr", NULL, test_kill);
+	start_test(&ret, "fattr", test_kill);
 
 	/* kill under stdio is allowed */
-	start_test(&ret, "stdio", NULL, test_kill);
+	start_test(&ret, "stdio", test_kill);
 
 	/* stdio for open(2) */
-	start_test(&ret, "stdio rpath", NULL, test_rpath);
-	start_test(&ret, "stdio wpath", NULL, test_wpath);
-	start_test(&ret, "cpath", NULL, test_cpath);
-
-#if WLPATHS
-	/*
-	 * test whitelist path
-	 */
-	start_test(&ret, "stdio rpath", NULL, test_wpaths);
-	start_test1(&ret, "stdio rpath", NULL, test_wpaths);
-	start_test1(&ret, "stdio rpath", "/", test_wpaths);
-	start_test1(&ret, "stdio rpath", "/etc", test_wpaths);
-	start_test1(&ret, "stdio rpath", "/etc/", test_wpaths);
-	start_test1(&ret, "stdio rpath", "/etc/passwd", test_wpaths);
-	// XXX start_test1(&ret, "stdio rpath", "/etc/passwd/", test_wpaths);
-	start_test1(&ret, "stdio rpath", "/bin", test_wpaths);
-	start_test1(&ret, "stdio rpath", "generic", test_wpaths);
-	start_test1(&ret, "stdio rpath", "", test_wpaths);
-	start_test1(&ret, "stdio rpath", ".", test_wpaths);
-#endif
+	start_test(&ret, "stdio rpath", test_rpath);
+	start_test(&ret, "stdio wpath", test_wpath);
+	start_test(&ret, "cpath", test_cpath);
 
 	/*
 	 * test pledge(2) arguments
 	 */
 	/* same request */
-	start_test(&ret, "stdio rpath", NULL, test_pledge);
+	start_test(&ret, "stdio rpath", test_pledge);
 	/* reduce request */
-	start_test(&ret, "stdio rpath wpath", NULL, test_pledge);
+	start_test(&ret, "stdio rpath wpath", test_pledge);
 	/* add request */
-	start_test(&ret, "stdio", NULL, test_pledge);
+	start_test(&ret, "stdio", test_pledge);
 	/* change request */
-	start_test(&ret, "stdio unix", NULL, test_pledge);
-
-	/* test stat(2) */
-#if WLPATHS
-	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);
-#endif
+	start_test(&ret, "stdio unix", test_pledge);
 
 	/* stdio */
-	start_test(&ret, NULL, NULL, test_request_stdio);
+	start_test(&ret, NULL, test_request_stdio);
 
 	/* tty */
-	start_test(&ret, NULL, NULL, test_request_tty);
+	start_test(&ret, NULL, test_request_tty);
 
 	return (ret);
 }

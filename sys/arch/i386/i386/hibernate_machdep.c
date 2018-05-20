@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.49 2016/05/20 02:30:41 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.51 2018/03/20 04:18:40 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -45,6 +45,7 @@
 #include "ahci.h"
 #include "softraid.h"
 #include "sd.h"
+#include "sdmmc.h"
 
 /* Hibernate support */
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
@@ -97,21 +98,35 @@ get_hibernate_io_function(dev_t dev)
 		    vaddr_t addr, size_t size, int op, void *page);
 		extern int sr_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
+		extern int sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno,
+		    vaddr_t addr, size_t size, int op, void *page);
 		struct device *dv = disk_lookup(&sd_cd, DISKUNIT(dev));
-
+		struct {
+			const char *driver;
+			hibio_fn io_func;
+		} sd_io_funcs[] = {
 #if NAHCI > 0
-		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
-		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
-		    "ahci") == 0)
-			return ahci_hibernate_io;
+			{ "ahci", ahci_hibernate_io },
 #endif
 #if NSOFTRAID > 0
-		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
-		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
-		    "softraid") == 0)
-			return sr_hibernate_io;
-	}
+			{ "softraid", sr_hibernate_io },
 #endif
+#if SDMMC > 0
+			{ "sdmmc", sdmmc_scsi_hibernate_io },
+#endif
+		};
+
+		if (dv && dv->dv_parent && dv->dv_parent->dv_parent) {
+			const char *driver = dv->dv_parent->dv_parent->dv_cfdata->
+			    cf_driver->cd_name;
+			int i;
+
+			for (i = 0; i < nitems(sd_io_funcs); i++) {
+				if (strcmp(driver, sd_io_funcs[i].driver) == 0)
+					return sd_io_funcs[i].io_func;
+			}
+		}
+	}
 #endif /* NSD > 0 */
 	return NULL;
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.46 2017/05/29 12:28:54 espie Exp $
+# $OpenBSD: State.pm,v 1.52 2018/05/16 10:02:40 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -96,6 +96,11 @@ sub locator
 	return "OpenBSD::PackageLocator";
 }
 
+sub cache_directory
+{
+	return undef;
+}
+
 sub new
 {
 	my $class = shift;
@@ -169,6 +174,15 @@ sub usage
 	exit($code);
 }
 
+my $forbidden = qr{[^[:print:]\s]};
+
+sub safe
+{
+	my ($self, $string) = @_;
+	$string =~ s/$forbidden/?/g;
+	return $string;
+}
+
 sub f
 {
 	my $self = shift;
@@ -176,9 +190,15 @@ sub f
 		return undef;
 	}
 	my ($fmt, @l) = @_;
-	# make it so that #0 is #
-	unshift(@l, '#');
-	$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;
+
+	# is there anything to format, actually ?
+	if ($fmt =~ m/\#\d/) {
+		# encode any unknown chars as ?
+		s/$forbidden/?/g for @l;
+		# make it so that #0 is #
+		unshift(@l, '#');
+		$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;
+	}
 	return $fmt;
 }
 
@@ -336,12 +356,13 @@ sub find_window_size
 	my $self = shift;
 	require Term::ReadKey;
 	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
-	if (@l != 4) {
-		$self->{width} = 80;
-		$self->{height} = 24;
-	} else {
-		$self->{width} = $l[0];
-		$self->{height} = $l[1];
+	# default to sane values
+	$self->{width} = 80;
+	$self->{height} = 24;
+	if (@l == 4) {
+		# only use what we got if sane
+		$self->{width} = $l[0] if $l[0] > 0;
+		$self->{height} = $l[1] if $l[1] > 0;
 		$SIG{'WINCH'} = sub {
 			$self->find_window_size;
 		};
@@ -378,7 +399,10 @@ sub fillup_names
 
 	for my $sym (keys %POSIX::) {
 		next unless $sym =~ /^SIG([A-Z].*)/;
-		$signal_name[eval "&POSIX::$sym()"] = $1;
+		my $value = eval "&POSIX::$sym()";
+		# skip over POSIX stuff we don't have like SIGRT or SIGPOLL
+		next unless defined $value;
+		$signal_name[$value] = $1;
 	}
 	# extra BSD signals
 	$signal_name[5] = 'TRAP';

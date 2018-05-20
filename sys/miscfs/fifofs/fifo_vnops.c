@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.58 2017/07/24 15:07:39 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.66 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/event.h>
 #include <sys/errno.h>
@@ -122,34 +123,26 @@ fifo_open(void *v)
 	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fifoinfo *fip;
-	struct proc *p = ap->a_p;
 	struct socket *rso, *wso;
 	int s, error;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = malloc(sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
-		if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0) {
+		if ((error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0)) != 0) {
 			free(fip, M_VNODE, sizeof *fip);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
-		if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0) {
+		if ((error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0)) != 0) {
 			(void)soclose(rso);
 			free(fip, M_VNODE, sizeof *fip);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_writesock = wso;
-		/*
-		 * XXXSMP
-		 * We only lock `wso' because AF_LOCAL sockets are
-		 * still relying on the KERNEL_LOCK().
-		 */
-		s = solock(wso);
 		if ((error = soconnect2(wso, rso)) != 0) {
-			sounlock(s);
 			(void)soclose(wso);
 			(void)soclose(rso);
 			free(fip, M_VNODE, sizeof *fip);
@@ -157,6 +150,7 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
+		s = solock(wso);
 		wso->so_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
 	} else {
@@ -188,18 +182,18 @@ fifo_open(void *v)
 	sounlock(s);
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_readers,
 			    PCATCH | PSOCK, "fifor", 0);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				goto bad;
 		}
 		if ((ap->a_mode & FWRITE) && fip->fi_readers == 0) {
-			VOP_UNLOCK(vp, p);
+			VOP_UNLOCK(vp);
 			error = tsleep(&fip->fi_writers,
 			    PCATCH | PSOCK, "fifow", 0);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				goto bad;
 		}
@@ -220,7 +214,6 @@ fifo_read(void *v)
 	struct vop_read_args *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
-	struct proc *p = uio->uio_procp;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -231,9 +224,9 @@ fifo_read(void *v)
 		return (0);
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, p);
+	VOP_UNLOCK(ap->a_vp);
 	error = soreceive(rso, NULL, uio, NULL, NULL, NULL, 0);
-	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY) {
 		rso->so_state &= ~SS_NBIO;
 		if (error == EWOULDBLOCK &&
@@ -252,7 +245,6 @@ fifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
-	struct proc *p = ap->a_uio->uio_procp;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -262,9 +254,9 @@ fifo_write(void *v)
 	/* XXXSMP changing state w/o lock isn't safe. */
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp, p);
+	VOP_UNLOCK(ap->a_vp);
 	error = sosend(wso, NULL, ap->a_uio, NULL, NULL, 0);
-	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
 	return (error);
@@ -307,10 +299,12 @@ fifo_poll(void *v)
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
 	int events = 0;
 	int revents = 0;
+	int s;
 
 	/*
 	 * FIFOs don't support out-of-band or high priority data.
 	 */
+	s = solock(rso);
 	if (ap->a_fflag & FREAD)
 		events |= ap->a_events & (POLLIN | POLLRDNORM);
 	if (ap->a_fflag & FWRITE)
@@ -333,13 +327,14 @@ fifo_poll(void *v)
 			events = POLLIN;
 		if (events & (POLLIN | POLLRDNORM)) {
 			selrecord(ap->a_p, &rso->so_rcv.sb_sel);
-			rso->so_rcv.sb_flagsintr |= SB_SEL;
+			rso->so_rcv.sb_flags |= SB_SEL;
 		}
 		if (events & (POLLOUT | POLLWRNORM)) {
 			selrecord(ap->a_p, &wso->so_snd.sb_sel);
-			wso->so_snd.sb_flagsintr |= SB_SEL;
+			wso->so_snd.sb_flags |= SB_SEL;
 		}
 	}
+	sounlock(s);
 	return (revents);
 }
 
@@ -348,7 +343,7 @@ fifo_inactive(void *v)
 {
 	struct vop_inactive_args *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -526,7 +521,7 @@ fifo_kqfilter(void *v)
 	ap->a_kn->kn_hook = so;
 
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_note, ap->a_kn, kn_selnext);
-	sb->sb_flags |= SB_KNOTE;
+	sb->sb_flagsintr |= SB_KNOTE;
 
 	return (0);
 }
@@ -538,7 +533,7 @@ filt_fifordetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_rcv.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_note))
-		so->so_rcv.sb_flags &= ~SB_KNOTE;
+		so->so_rcv.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int
@@ -566,7 +561,7 @@ filt_fifowdetach(struct knote *kn)
 
 	SLIST_REMOVE(&so->so_snd.sb_sel.si_note, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_note))
-		so->so_snd.sb_flags &= ~SB_KNOTE;
+		so->so_snd.sb_flagsintr &= ~SB_KNOTE;
 }
 
 int

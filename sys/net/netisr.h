@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.49 2017/05/28 12:51:34 yasuoka Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.50 2017/10/31 22:05:12 sashan Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ void	pipexintr(void);
 #define	schednetisr(anisr)						\
 do {									\
 	atomic_setbits_int(&netisr, (1 << (anisr)));			\
-	task_add(softnettq, &if_input_task_locked);			\
+	task_add(net_tq(0), &if_input_task_locked);			\
 } while (/* CONSTCOND */0)
 
 #endif /* _KERNEL */

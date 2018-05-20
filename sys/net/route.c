@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.367 2017/09/05 10:56:04 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.374 2018/04/24 06:19:47 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ int	rtflushclone1(struct rtentry *, void *, u_int);
 void	rtflushclone(unsigned int, struct rtentry *);
 int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
+int	rt_clone(struct rtentry **, struct sockaddr *, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
 
 #ifdef DDB
@@ -228,45 +229,51 @@ rtisvalid(struct rtentry *rt)
 struct rtentry *
 rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 {
-	struct rtentry		*rt0, *rt = NULL;
-	int			 error = 0;
-
-	NET_ASSERT_LOCKED();
+	struct rtentry		*rt = NULL;
 
 	rt = rtable_match(tableid, dst, src);
-	if (rt != NULL) {
-		if ((rt->rt_flags & RTF_CLONING) && ISSET(flags, RT_RESOLVE)) {
-			struct rt_addrinfo	 info;
-
-			rt0 = rt;
-
-			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = dst;
-
-			KERNEL_LOCK();
-			/*
-			 * The priority of cloned route should be different
-			 * to avoid conflict with /32 cloning routes.
-			 *
-			 * It should also be higher to let the ARP layer find
-			 * cloned routes instead of the cloning one.
-			 */
-			error = rtrequest(RTM_RESOLVE, &info,
-			    rt->rt_priority - 1, &rt, tableid);
-			if (error) {
-				rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0,
-				    error, tableid);
-			} else {
-				/* Inform listeners of the new route */
-				rtm_send(rt, RTM_ADD, 0, tableid);
-				rtfree(rt0);
-			}
-			KERNEL_UNLOCK();
-		}
-		rt->rt_use++;
-	} else
+	if (rt == NULL) {
 		rtstat_inc(rts_unreach);
+		return (NULL);
+	}
+
+	if (ISSET(rt->rt_flags, RTF_CLONING) && ISSET(flags, RT_RESOLVE))
+		rt_clone(&rt, dst, tableid);
+
+	rt->rt_use++;
 	return (rt);
+}
+
+int
+rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
+{
+	struct rt_addrinfo	 info;
+	struct rtentry		*rt = *rtp;
+	int			 error = 0;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = dst;
+
+	KERNEL_LOCK();
+	/*
+	 * The priority of cloned route should be different
+	 * to avoid conflict with /32 cloning routes.
+	 *
+	 * It should also be higher to let the ARP layer find
+	 * cloned routes instead of the cloning one.
+	 */
+	error = rtrequest(RTM_RESOLVE, &info, rt->rt_priority - 1, &rt,
+	    rtableid);
+	if (error) {
+		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, error, rtableid);
+	} else {
+		/* Inform listeners of the new route */
+		rtm_send(rt, RTM_ADD, 0, rtableid);
+		rtfree(*rtp);
+		*rtp = rt;
+	}
+	KERNEL_UNLOCK();
+	return (error);
 }
 
 /*
@@ -371,21 +378,57 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
 int
 rt_setgwroute(struct rtentry *rt, u_int rtableid)
 {
-	struct rtentry *nhrt;
+	struct rtentry *prt, *nhrt;
+	unsigned int rdomain = rtable_l2(rtableid);
+	int error;
 
 	NET_ASSERT_LOCKED();
 
 	KASSERT(ISSET(rt->rt_flags, RTF_GATEWAY));
 
 	/* If we cannot find a valid next hop bail. */
-	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rtable_l2(rtableid));
+	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rdomain);
 	if (nhrt == NULL)
 		return (ENOENT);
 
 	/* Next hop entry must be on the same interface. */
 	if (nhrt->rt_ifidx != rt->rt_ifidx) {
+		struct sockaddr_in6	sa_mask;
+
+		/*
+		 * If we found a non-L2 entry on a different interface
+		 * there's nothing we can do.
+		 */
+		if (!ISSET(nhrt->rt_flags, RTF_LLINFO)) {
+			rtfree(nhrt);
+			return (EHOSTUNREACH);
+		}
+
+		/*
+		 * We found a L2 entry, so we might have multiple
+		 * RTF_CLONING routes for the same subnet.  Query
+		 * the first route of the multipath chain and iterate
+		 * until we find the correct one.
+		 */
+		prt = rtable_lookup(rdomain, rt_key(nhrt->rt_parent),
+		    rt_plen2mask(nhrt->rt_parent, &sa_mask), NULL, RTP_ANY);
 		rtfree(nhrt);
-		return (EHOSTUNREACH);
+
+		while (prt != NULL && prt->rt_ifidx != rt->rt_ifidx)
+			prt = rtable_iterate(prt);
+
+		/* We found nothing or a non-cloning MPATH route. */
+		if (prt == NULL || !ISSET(prt->rt_flags, RTF_CLONING)) {
+			rtfree(prt);
+			return (EHOSTUNREACH);
+		}
+
+		error = rt_clone(&prt, rt->rt_gateway, rdomain);
+		if (error) {
+			rtfree(prt);
+			return (error);
+		}
+		nhrt = prt;
 	}
 
 	/*
@@ -664,26 +707,31 @@ rtequal(struct rtentry *a, struct rtentry *b)
 int
 rtflushclone1(struct rtentry *rt, void *arg, u_int id)
 {
-	struct rtentry *parent = arg;
+	struct rtentry *cloningrt = arg;
 	struct ifnet *ifp;
 	int error;
 
-	ifp = if_get(rt->rt_ifidx);
+	if (!ISSET(rt->rt_flags, RTF_CLONED))
+		return 0;
 
+	/* Cached route must stay alive as long as their parent are alive. */
+	if (ISSET(rt->rt_flags, RTF_CACHED) && (rt->rt_parent != cloningrt))
+		return 0;
+
+	if (!rtequal(rt->rt_parent, cloningrt))
+		return 0;
 	/*
 	 * This happens when an interface with a RTF_CLONING route is
 	 * being detached.  In this case it's safe to bail because all
 	 * the routes are being purged by rt_ifa_purge().
 	 */
+	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 	        return 0;
 
-	if (ISSET(rt->rt_flags, RTF_CLONED) && rtequal(rt->rt_parent, parent)) {
-	        error = rtdeletemsg(rt, ifp, id);
-	        if (error == 0)
-			error = EAGAIN;
-	} else
-		error = 0;
+	error = rtdeletemsg(rt, ifp, id);
+	if (error == 0)
+		error = EAGAIN;
 
 	if_put(ifp);
 	return error;
@@ -956,11 +1004,14 @@ rt_setgate(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
 	int glen = ROUNDUP(gate->sa_len);
 	struct sockaddr *sa;
 
-	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
+	if (rt->rt_gateway == NULL || glen != ROUNDUP(rt->rt_gateway->sa_len)) {
 		sa = malloc(glen, M_RTABLE, M_NOWAIT);
 		if (sa == NULL)
 			return (ENOBUFS);
-		free(rt->rt_gateway, M_RTABLE, 0);
+		if (rt->rt_gateway != NULL) {
+			free(rt->rt_gateway, M_RTABLE,
+			    ROUNDUP(rt->rt_gateway->sa_len));
+		}
 		rt->rt_gateway = sa;
 	}
 	memmove(rt->rt_gateway, gate, glen);
@@ -1028,8 +1079,11 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
 
 #ifdef MPLS
-	if ((flags & RTF_MPLS) == RTF_MPLS)
+	if ((flags & RTF_MPLS) == RTF_MPLS) {
 		info.rti_mpls = MPLS_OP_POP;
+		/* MPLS routes only exist in rdomain 0 */
+		rtableid = 0;
+	}
 #endif /* MPLS */
 
 	if ((flags & RTF_HOST) == 0)
@@ -1049,7 +1103,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 * userland that a new address has been added.
 		 */
 		if (flags & RTF_LOCAL)
-			rtm_addr(rt, RTM_NEWADDR, ifa);
+			rtm_addr(RTM_NEWADDR, ifa);
 		rtm_send(rt, RTM_ADD, 0, rtableid);
 		rtfree(rt);
 	}
@@ -1105,7 +1159,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (error == 0) {
 		rtm_send(rt, RTM_DELETE, 0, rtableid);
 		if (flags & RTF_LOCAL)
-			rtm_addr(rt, RTM_DELADDR, ifa);
+			rtm_addr(RTM_DELADDR, ifa);
 		rtfree(rt);
 	}
 	m_free(m);

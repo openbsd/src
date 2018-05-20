@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.19 2017/09/07 17:00:28 jcs Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.21 2017/10/09 20:06:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -32,30 +32,38 @@
 #include <dev/sdmmc/sdmmc_ioreg.h>
 
 /* 
- * We use two DMA buffers, a command buffer and a data buffer.
+ * We use three DMA buffers: a command buffer, a data buffer, and a buffer for
+ * ADMA transfer descriptors which describe scatter-gather (SG) I/O operations.
  *
  * The command buffer contains a command queue for the host controller,
  * which describes SD/MMC commands to run, and other parameters. The chip
- * runs the command queue when a special bit in the RTSX_HCBAR register is set
- * and signals completion with the TRANS_OK interrupt.
+ * runs the command queue when a special bit in the RTSX_HCBAR register is
+ * set and signals completion with the TRANS_OK interrupt.
  * Each command is encoded as a 4 byte sequence containing command number
  * (read, write, or check a host controller register), a register address,
  * and a data bit-mask and value.
- *
- * The data buffer is used to transfer data sectors to or from the SD card.
- * Data transfer is controlled via the RTSX_HDBAR register. Completion is
- * also signalled by the TRANS_OK interrupt.
- *
- * The chip is unable to perform DMA above 4GB.
- *
  * SD/MMC commands which do not transfer any data from/to the card only use
  * the command buffer.
+ *
+ * The smmmc stack provides DMA-safe buffers with data transfer commands.
+ * In this case we write a list of descriptors to the ADMA descriptor buffer,
+ * instructing the chip to transfer data directly from/to sdmmc DMA buffers.
+ *
+ * However, some sdmmc commands used during card initialization also carry
+ * data, and these don't come with DMA-safe buffers. In this case, we transfer
+ * data from/to the SD card via a DMA data bounce buffer.
+ *
+ * In both cases, data transfer is controlled via the RTSX_HDBAR register
+ * and completion is signalled by the TRANS_OK interrupt.
+ *
+ * The chip is unable to perform DMA above 4GB.
  */
 
 #define	RTSX_DMA_MAX_SEGSIZE	0x80000
 #define	RTSX_HOSTCMD_MAX	256
 #define	RTSX_HOSTCMD_BUFSIZE	(sizeof(u_int32_t) * RTSX_HOSTCMD_MAX)
 #define	RTSX_DMA_DATA_BUFSIZE	MAXPHYS
+#define	RTSX_ADMA_DESC_SIZE	(sizeof(uint64_t) * SDMMC_MAXNSEGS)
 
 #define READ4(sc, reg)							\
 	(bus_space_read_4((sc)->iot, (sc)->ioh, (reg)))
@@ -121,7 +129,10 @@ void	rtsx_hostcmd(u_int32_t *, int *, u_int8_t, u_int16_t, u_int8_t,
 		u_int8_t);
 int	rtsx_hostcmd_send(struct rtsx_softc *, int);
 u_int8_t rtsx_response_type(u_int16_t);
+int	rtsx_xfer_exec(struct rtsx_softc *, bus_dmamap_t, int);
 int	rtsx_xfer(struct rtsx_softc *, struct sdmmc_command *, u_int32_t *);
+int	rtsx_xfer_bounce(struct rtsx_softc *, struct sdmmc_command *);
+int	rtsx_xfer_adma(struct rtsx_softc *, struct sdmmc_command *);
 void	rtsx_card_insert(struct rtsx_softc *);
 void	rtsx_card_eject(struct rtsx_softc *);
 int	rtsx_led_enable(struct rtsx_softc *);
@@ -167,6 +178,7 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 {
 	struct sdmmcbus_attach_args saa;
 	u_int32_t sdio_cfg;
+	int rsegs;
 
 	sc->iot = iot;
 	sc->ioh = ioh;
@@ -189,7 +201,17 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	if (bus_dmamap_create(sc->dmat, RTSX_DMA_DATA_BUFSIZE, 1,
 	    RTSX_DMA_MAX_SEGSIZE, 0, BUS_DMA_NOWAIT,
 	    &sc->dmap_data) != 0)
-		return 1;
+	    	goto destroy_cmd;
+	if (bus_dmamap_create(sc->dmat, RTSX_ADMA_DESC_SIZE, 1,
+	    RTSX_DMA_MAX_SEGSIZE, 0, BUS_DMA_NOWAIT,
+	    &sc->dmap_adma) != 0)
+	    	goto destroy_data;
+	if (bus_dmamem_alloc(sc->dmat, RTSX_ADMA_DESC_SIZE, 0, 0,
+	    sc->adma_segs, 1, &rsegs, BUS_DMA_WAITOK|BUS_DMA_ZERO))
+	    	goto destroy_adma;
+	if (bus_dmamem_map(sc->dmat, sc->adma_segs, rsegs, RTSX_ADMA_DESC_SIZE,
+	    &sc->admabuf, BUS_DMA_WAITOK|BUS_DMA_COHERENT))
+	    	goto free_adma;
 
 	/*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must
@@ -200,17 +222,30 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	saa.sct = &rtsx_functions;
 	saa.sch = sc;
 	saa.flags = SMF_STOP_AFTER_MULTIPLE;
-	saa.caps = SMC_CAPS_4BIT_MODE;
+	saa.caps = SMC_CAPS_4BIT_MODE | SMC_CAPS_DMA;
+	saa.dmat = sc->dmat;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL)
-		return 1;
+		goto unmap_adma;
 
 	/* Now handle cards discovered during attachment. */
 	if (ISSET(sc->flags, RTSX_F_CARD_PRESENT))
 		rtsx_card_insert(sc);
 	
 	return 0;
+
+unmap_adma:
+	bus_dmamem_unmap(sc->dmat, sc->admabuf, RTSX_ADMA_DESC_SIZE);
+free_adma:
+	bus_dmamem_free(sc->dmat, sc->adma_segs, rsegs);
+destroy_adma:
+	bus_dmamap_destroy(sc->dmat, sc->dmap_adma);
+destroy_data:
+	bus_dmamap_destroy(sc->dmat, sc->dmap_data);
+destroy_cmd:
+	bus_dmamap_destroy(sc->dmat, sc->dmap_cmd);
+	return 1;
 }
 
 int
@@ -962,11 +997,24 @@ rtsx_hostcmd_send(struct rtsx_softc *sc, int ncmd)
 }
 
 int
+rtsx_xfer_exec(struct rtsx_softc *sc, bus_dmamap_t dmap, int dmaflags)
+{
+	int s = splsdmmc();
+
+	/* Tell the chip where the data buffer is and run the transfer. */
+	WRITE4(sc, RTSX_HDBAR, dmap->dm_segs[0].ds_addr);
+	WRITE4(sc, RTSX_HDBCTLR, dmaflags);
+
+	splx(s);
+
+	/* Wait for completion. */
+	return rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 10*hz);
+}
+
+int
 rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 {
-    	caddr_t datakvap;
-	bus_dma_segment_t segs;
-	int ncmd, s, dma_dir, error, rsegs, tmode;
+	int ncmd, dma_dir, error, tmode;
 	int read = ISSET(cmd->c_flags, SCF_CMD_READ);
 	u_int8_t cfg2;
 
@@ -1050,13 +1098,30 @@ rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 	if (error)
 		goto ret;
 
-	/* Allocate and map DMA memory for data transfer. */
+	if (cmd->c_dmamap)
+		error = rtsx_xfer_adma(sc, cmd);
+	else
+		error = rtsx_xfer_bounce(sc, cmd);
+ret:
+	DPRINTF(3,("%s: xfer done, error=%d\n", DEVNAME(sc), error));
+	return error;
+}
+
+int
+rtsx_xfer_bounce(struct rtsx_softc *sc, struct sdmmc_command *cmd)
+{
+    	caddr_t datakvap;
+	bus_dma_segment_t segs;
+	int rsegs, error;
+	int read = ISSET(cmd->c_flags, SCF_CMD_READ);
+
+	/* Allocate and map DMA bounce buffer for data transfer. */
 	error = bus_dmamem_alloc(sc->dmat, cmd->c_datalen, 0, 0, &segs, 1,
 	    &rsegs, BUS_DMA_WAITOK|BUS_DMA_ZERO);
 	if (error) {
 		DPRINTF(3, ("%s: could not allocate %d bytes\n",
 		    DEVNAME(sc), cmd->c_datalen));
-	    	goto ret;
+		return error;
 	}
 	error = bus_dmamem_map(sc->dmat, &segs, rsegs, cmd->c_datalen,
 	    &datakvap, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
@@ -1081,17 +1146,9 @@ rtsx_xfer(struct rtsx_softc *sc, struct sdmmc_command *cmd, u_int32_t *cmdbuf)
 	bus_dmamap_sync(sc->dmat, sc->dmap_data, 0, cmd->c_datalen,
 	    BUS_DMASYNC_PREWRITE);
 
-	s = splsdmmc();
-
-	/* Tell the chip where the data buffer is and run the transfer. */
-	WRITE4(sc, RTSX_HDBAR, sc->dmap_data->dm_segs[0].ds_addr);
-	WRITE4(sc, RTSX_HDBCTLR, RTSX_TRIG_DMA | (read ? RTSX_DMA_READ : 0) |
-	    (sc->dmap_data->dm_segs[0].ds_len & 0x00ffffff));
-
-	splx(s);
-
-	/* Wait for completion. */
-	error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 10*hz);
+	error = rtsx_xfer_exec(sc, sc->dmap_data,
+	    RTSX_TRIG_DMA | (read ? RTSX_DMA_READ : 0) |
+	    (cmd->c_datalen & 0x00ffffff));
 	if (error)
 		goto unload_databuf;
 
@@ -1113,8 +1170,48 @@ unmap_databuf:
 	bus_dmamem_unmap(sc->dmat, datakvap, cmd->c_datalen);
 free_databuf:
 	bus_dmamem_free(sc->dmat, &segs, rsegs);
-ret:
-	DPRINTF(3,("%s: xfer done, error=%d\n", DEVNAME(sc), error));
+	return error;
+}
+
+int
+rtsx_xfer_adma(struct rtsx_softc *sc, struct sdmmc_command *cmd)
+{
+	int i, error;
+	uint64_t *descp;
+	int read = ISSET(cmd->c_flags, SCF_CMD_READ);
+
+	/* Initialize scatter-gather transfer descriptors. */
+	descp = (uint64_t *)sc->admabuf;
+	for (i = 0; i < cmd->c_dmamap->dm_nsegs; i++) {
+		uint64_t paddr = cmd->c_dmamap->dm_segs[i].ds_addr;
+		uint64_t len = cmd->c_dmamap->dm_segs[i].ds_len;
+		uint8_t sgflags = RTSX_SG_VALID | RTSX_SG_TRANS_DATA;
+		uint64_t desc;
+
+		if (i == cmd->c_dmamap->dm_nsegs - 1)
+			sgflags |= RTSX_SG_END;
+		len &= 0x00ffffff;
+		desc = htole64((paddr << 32) | (len << 12) | sgflags);
+		memcpy(descp, &desc, sizeof(*descp));
+		descp++;
+	}
+
+	error = bus_dmamap_load(sc->dmat, sc->dmap_adma, sc->admabuf,
+	    RTSX_ADMA_DESC_SIZE, NULL, BUS_DMA_WAITOK);
+	if (error) {
+		DPRINTF(3, ("%s: could not load DMA map\n", DEVNAME(sc)));
+		return error;
+	}
+	bus_dmamap_sync(sc->dmat, sc->dmap_adma, 0, RTSX_ADMA_DESC_SIZE,
+	    	BUS_DMASYNC_PREWRITE);
+
+	error = rtsx_xfer_exec(sc, sc->dmap_adma,
+	    RTSX_ADMA_MODE | RTSX_TRIG_DMA | (read ? RTSX_DMA_READ : 0));
+
+	bus_dmamap_sync(sc->dmat, sc->dmap_adma, 0, RTSX_ADMA_DESC_SIZE,
+	    	BUS_DMASYNC_POSTWRITE);
+
+	bus_dmamap_unload(sc->dmat, sc->dmap_adma);
 	return error;
 }
 

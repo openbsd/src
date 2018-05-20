@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.22 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.33 2018/05/15 11:12:35 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,9 +52,12 @@
 char *boot_args = NULL;
 char *boot_file = "";
 
+uint8_t *bootmac = NULL;
+
 extern uint64_t esym;
 
-int stdout_node = 0;
+int stdout_node;
+int stdout_speed;
 
 void (*cpuresetfn)(void);
 void (*powerdownfn)(void);
@@ -148,6 +151,30 @@ inittodr(time_t base)
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
 void *
 fdt_find_cons(const char *name)
 {
@@ -163,8 +190,10 @@ fdt_find_cons(const char *name)
 		if (fdt_node_property(node, "stdout-path", &stdout) > 0) {
 			if (strchr(stdout, ':') != NULL) {
 				strlcpy(buf, stdout, sizeof(buf));
-				if ((p = strchr(buf, ':')) != NULL)
-					*p = '\0';
+				if ((p = strchr(buf, ':')) != NULL) {
+					*p++ = '\0';
+					stdout_speed = atoi(p);
+				}
 				stdout = buf;
 			}
 			if (stdout[0] != '/') {
@@ -195,6 +224,7 @@ fdt_find_cons(const char *name)
 }
 
 extern void	com_fdt_init_cons(void);
+extern void	imxuart_init_cons(void);
 extern void	pluart_init_cons(void);
 extern void	simplefb_init_cons(bus_space_tag_t);
 
@@ -209,6 +239,7 @@ consinit(void)
 	consinit_called = 1;
 
 	com_fdt_init_cons();
+	imxuart_init_cons();
 	pluart_init_cons();
 	simplefb_init_cons(&arm64_bs_tag);
 }
@@ -236,13 +267,17 @@ struct trapframe  proc0tf;
 void
 cpu_startup()
 {
-
 	u_int loop;
 	paddr_t minaddr;
 	paddr_t maxaddr;
 
 	proc0.p_addr = proc0paddr;
 
+	/*
+	 * Give pmap a chance to set up a few more things now the vm
+	 * is initialised
+	 */
+	pmap_postinit();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -336,7 +371,7 @@ boot(int howto)
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		vfs_shutdown();
+		vfs_shutdown(curproc);
 
 		if ((howto & RB_TIMEBAD) == 0) {
 			resettodr();
@@ -412,7 +447,7 @@ need_resched(struct cpu_info *ci)
 	/* There's a risk we'll be called before the idle threads start */
 	if (ci->ci_curproc) {
 		aston(ci->ci_curproc);
-		//cpu_kick(ci); /* multiprocessor only ?? */
+		cpu_kick(ci);
 	}
 }
 
@@ -742,6 +777,8 @@ uint32_t mmap_desc_ver;
 
 EFI_MEMORY_DESCRIPTOR *mmap;
 
+void	remap_efi_runtime(EFI_PHYSICAL_ADDRESS);
+
 void	collect_kernel_args(char *);
 void	process_kernel_args(void);
 
@@ -755,9 +792,8 @@ initarm(struct arm64_bootparams *abp)
 	paddr_t memstart, memend;
 	void *config = abp->arg2;
 	void *fdt = NULL;
+	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
-	int (*map_a4x_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
 	// NOTE that 1GB of ram is mapped in by default in
@@ -771,16 +807,23 @@ initarm(struct arm64_bootparams *abp)
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
-		char *args, *duid, *prop;
+		char *prop;
 		int len;
+		static uint8_t lladdr[6];
 
-		len = fdt_node_property(node, "bootargs", &args);
+		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
-			collect_kernel_args(args);
+			collect_kernel_args(prop);
 
-		len = fdt_node_property(node, "openbsd,bootduid", &duid);
+		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
-			memcpy(bootduid, duid, sizeof(bootduid));
+			memcpy(bootduid, prop, sizeof(bootduid));
+
+		len = fdt_node_property(node, "openbsd,bootmac", &prop);
+		if (len == sizeof(lladdr)) {
+			memcpy(lladdr, prop, sizeof(lladdr));
+			bootmac = lladdr;
+		}
 
 		len = fdt_node_property(node, "openbsd,uefi-mmap-start", &prop);
 		if (len == sizeof(mmap_start))
@@ -794,6 +837,10 @@ initarm(struct arm64_bootparams *abp)
 		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
 		if (len == sizeof(mmap_desc_ver))
 			mmap_desc_ver = bemtoh32((uint32_t *)prop);
+
+		len = fdt_node_property(node, "openbsd,uefi-system-table", &prop);
+		if (len == sizeof(system_table))
+			system_table = bemtoh64((uint64_t *)prop);
 	}
 
 	/* Set the pcpu data, this is needed by pmap_bootstrap */
@@ -811,9 +858,6 @@ initarm(struct arm64_bootparams *abp)
 	cache_setup();
 
 	process_kernel_args();
-
-	// XXX
-	paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 
 	void _start(void);
 	long kernbase = (long)&_start & ~0x00fff;
@@ -834,11 +878,11 @@ initarm(struct arm64_bootparams *abp)
 	vstart += round_page(MSGBUFSIZE);
 
 	zero_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 	copy_src_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 	copy_dst_page = vstart;
-	vstart += PAGE_SIZE;
+	vstart += MAXCPUS * PAGE_SIZE;
 
 	/* Relocate the FDT to safe memory. */
 	if (fdt_get_size(config) != 0) {
@@ -874,7 +918,7 @@ initarm(struct arm64_bootparams *abp)
 
 		for (va = vstart, csize = size; csize > 0;
 		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
-			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+			pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 
 		mmap = (void *)vstart;
 		vstart += size;
@@ -901,16 +945,16 @@ initarm(struct arm64_bootparams *abp)
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 
 	map_func_save = arm64_bs_tag._space_map;
-	map_a4x_func_save = arm64_a4x_bs_tag._space_map;
-
 	arm64_bs_tag._space_map = pmap_bootstrap_bs_map;
-	arm64_a4x_bs_tag._space_map = pmap_bootstrap_bs_map;
 
 	// cninit
 	consinit();
 
 	arm64_bs_tag._space_map = map_func_save;
-	arm64_a4x_bs_tag._space_map = map_a4x_func_save;
+
+	/* Remap EFI runtime. */
+	if (mmap_start != 0 && system_table != 0)
+		remap_efi_runtime(system_table);
 
 	/* XXX */
 	pmap_avail_fixup();
@@ -923,6 +967,7 @@ initarm(struct arm64_bootparams *abp)
 
 	/* Make all other physical memory available to UVM. */
 	if (mmap && mmap_desc_ver == EFI_MEMORY_DESCRIPTOR_VERSION) {
+		EFI_MEMORY_DESCRIPTOR *desc = mmap;
 		int i;
 
 		/*
@@ -933,20 +978,20 @@ initarm(struct arm64_bootparams *abp)
 		 */
 		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
-			    mmap->Type, mmap->PhysicalStart,
-			    mmap->VirtualStart, mmap->NumberOfPages,
-			    mmap->Attribute);
-			if (mmap->Type == EfiConventionalMemory &&
-			    mmap->NumberOfPages >= 16) {
-				uvm_page_physload(atop(mmap->PhysicalStart),
-				    atop(mmap->PhysicalStart) +
-				    mmap->NumberOfPages,
-				    atop(mmap->PhysicalStart),
-				    atop(mmap->PhysicalStart) +
-				    mmap->NumberOfPages, 0);
-				physmem += mmap->NumberOfPages;
+			    desc->Type, desc->PhysicalStart,
+			    desc->VirtualStart, desc->NumberOfPages,
+			    desc->Attribute);
+			if (desc->Type == EfiConventionalMemory &&
+			    desc->NumberOfPages >= 16) {
+				uvm_page_physload(atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages,
+				    atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages, 0);
+				physmem += desc->NumberOfPages;
 			}
-			mmap = NextMemoryDescriptor(mmap, mmap_desc_size);
+			desc = NextMemoryDescriptor(desc, mmap_desc_size);
 		}
 	} else {
 		paddr_t start, end;
@@ -1004,6 +1049,92 @@ initarm(struct arm64_bootparams *abp)
 	splraise(IPL_IPI);
 }
 
+void
+remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
+{
+	EFI_SYSTEM_TABLE *st = (EFI_SYSTEM_TABLE *)system_table;
+	EFI_RUNTIME_SERVICES *rs;
+	EFI_STATUS status;
+	EFI_MEMORY_DESCRIPTOR *src;
+	EFI_MEMORY_DESCRIPTOR *dst;
+	EFI_PHYSICAL_ADDRESS phys_start = ~0ULL;
+	EFI_PHYSICAL_ADDRESS phys_end = 0;
+	EFI_VIRTUAL_ADDRESS virt_start;
+	vsize_t space;
+	int i, count = 0;
+	paddr_t pa;
+
+	/*
+	 * Pick a random address somewhere in the lower half of the
+	 * usable virtual address space.
+	 */
+	space = 3 * (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / 4;
+	virt_start = VM_MIN_ADDRESS +
+	    ((vsize_t)arc4random_uniform(space >> PAGE_SHIFT) << PAGE_SHIFT);
+
+	/* Make sure the EFI system table is mapped. */
+	pmap_map_early(system_table, sizeof(EFI_SYSTEM_TABLE));
+	rs = st->RuntimeServices;
+
+	/*
+	 * Make sure memory for EFI runtime services is mapped.  We
+	 * only map normal memory at this point and pray that the
+	 * SetVirtualAddressMap call doesn't need anything else.
+	 */
+	src = mmap;
+	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+		if (src->Attribute & EFI_MEMORY_RUNTIME) {
+			if (src->Attribute & EFI_MEMORY_WB) {
+				pmap_map_early(src->PhysicalStart,
+				    src->NumberOfPages * PAGE_SIZE);
+				phys_start = MIN(phys_start,
+				    src->PhysicalStart);
+				phys_end = MAX(phys_end, src->PhysicalStart +
+				    src->NumberOfPages * PAGE_SIZE);
+			}
+			count++;
+		}
+		src = NextMemoryDescriptor(src, mmap_desc_size);
+	}
+
+	/* Allocate memory descriptors for new mappings. */
+	pa = pmap_steal_avail(count * mmap_desc_size,
+	    mmap_desc_size, NULL);
+	memset((void *)pa, 0, count * mmap_desc_size);
+
+	/*
+	 * Establish new mappings.  Apparently some EFI code relies on
+	 * the offset between code and data remaining the same so pick
+	 * virtual addresses for normal memory that meet that
+	 * constraint.  Other mappings are simply tagged to the end of
+	 * the last normal memory mapping.
+	 */
+	src = mmap;
+	dst = (EFI_MEMORY_DESCRIPTOR *)pa;
+	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+		if (src->Attribute & EFI_MEMORY_RUNTIME) {
+			if (src->Attribute & EFI_MEMORY_WB) {
+				src->VirtualStart = virt_start +
+				    (src->PhysicalStart - phys_start);
+			} else {
+				src->VirtualStart = virt_start +
+				     (phys_end - phys_start);
+				phys_end += src->NumberOfPages * PAGE_SIZE;
+			}
+			memcpy(dst, src, mmap_desc_size);
+			dst = NextMemoryDescriptor(dst, mmap_desc_size);
+		}
+		src = NextMemoryDescriptor(src, mmap_desc_size);
+	}
+
+	/* Install new mappings. */
+	dst = (EFI_MEMORY_DESCRIPTOR *)pa;
+	status = rs->SetVirtualAddressMap(count * mmap_desc_size,
+	    mmap_desc_size, mmap_desc_ver, dst);
+	if (status != EFI_SUCCESS)
+		printf("SetVirtualAddressMap failed: %lu\n", status);
+}
+
 int comcnspeed = B115200;
 char bootargs[MAX_BOOT_STRING];
 
@@ -1013,6 +1144,7 @@ collect_kernel_args(char *args)
 	/* Make a local copy of the bootargs */
 	strncpy(bootargs, args, MAX_BOOT_STRING - sizeof(int));
 }
+
 void
 process_kernel_args(void)
 {
@@ -1024,11 +1156,6 @@ process_kernel_args(void)
 	}
 
 	boothowto = 0;
-
-	/* Make a local copy of the bootargs */
-	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(int));
-
-	cp = bootargs;
 	boot_file = bootargs;
 
 	/* Skip the kernel image filename */

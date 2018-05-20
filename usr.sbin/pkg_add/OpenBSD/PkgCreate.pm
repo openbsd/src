@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.125 2017/09/18 13:40:32 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.139 2018/05/13 11:05:39 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -103,16 +103,20 @@ sub handle_options
 			    }
 			    $state->{system_version} += $d;
 		    },
+	    'w' => sub {
+			    my $w = shift;
+			    $state->{libset}{$w} = 1;
+		    },
 	    'W' => sub {
 			    my $w = shift;
 			    $state->{wantlib}{$w} = 1;
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:W:qQ',
-	    '[-nQqvx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
+	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:w:W:qQS',
+	    '[-nQqvSx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-U undisplayfile] [-V n] [-W wantedlib]',
+	    '[-U undisplayfile] [-V n] [-W wantedlib] [-w libset]',
 	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 
@@ -122,6 +126,8 @@ sub handle_options
 	} 
 
 	$state->{base} = $base;
+	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
+	    || defined $state->opt('S');
 }
 
 package OpenBSD::PkgCreate;
@@ -727,7 +733,7 @@ sub new
 {
 	my ($class, $filename) = @_;
 
-	open(my $fh, '<', $filename) or die "Missing file $filename";
+	open(my $fh, '<', $filename) or return undef;
 
 	bless { fh => $fh, name => $filename }, (ref($class) || $class);
 }
@@ -752,7 +758,7 @@ sub close
 
 sub deduce_name
 {
-	my ($self, $frag, $not) = @_;
+	my ($self, $frag, $not, $p, $state) = @_;
 
 	my $o = $self->name;
 	my $noto = $o;
@@ -764,7 +770,8 @@ sub deduce_name
 	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
 	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
 	unless (-e $o or -e $noto) {
-		die "Missing fragments for $frag: $o and $noto don't exist";
+		$p->missing_fragments($state, $frag, $o, $noto);
+		return;
 	}
 	if ($not) {
 		return $noto if -e $noto;
@@ -808,7 +815,7 @@ sub solve_wantlibs
 	my $okay = 1;
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	my $h = $solver->{set}->{new}[0];
-	for my $lib (@{$h->{plist}->{wantlib}}) {
+	for my $lib (@{$h->{plist}{wantlib}}) {
 		$solver->{localbase} = $h->{plist}->localbase;
 		next if $lib_finder->lookup($solver,
 		    $solver->{to_register}->{$h}, $state,
@@ -873,7 +880,7 @@ sub to_cache
 
 sub ask_tree
 {
-	my ($self, $state, $dep, $portsdir, @action) = @_;
+	my ($self, $state, $pkgpath, $portsdir, $data, @action) = @_;
 
 	my $make = OpenBSD::Paths->make;
 	my $pid = open(my $fh, "-|");
@@ -881,17 +888,21 @@ sub ask_tree
 		$state->fatal("cannot fork: $!");
 	}
 	if ($pid == 0) {
+		# make things debuggable because this child doesn't matter
+		$DB::inhibit_exit = 0;
 		chdir $portsdir or exit 2;
 		open STDERR, '>', '/dev/null';
 		$ENV{FULLPATH} = 'Yes';
 		delete $ENV{FLAVOR};
 		delete $ENV{SUBPACKAGE};
-		$ENV{SUBDIR} = $dep->{pkgpath};
+		$ENV{SUBDIR} = $pkgpath;
 		$ENV{ECHO_MSG} = ':';
+		# XXX we're already running as ${BUILD_USER}
+		# so we can't do this again
+		push(@action, 'PORTS_PRIVSEP=No');
 		exec $make ('make', @action);
 	}
-	my $plist = OpenBSD::PackingList->read($fh,
-	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	my $plist = OpenBSD::PackingList->read($fh, $data);
 	close($fh);
 	return $plist;
 }
@@ -906,7 +917,8 @@ sub really_solve_from_ports
 	if (defined $diskcache && -f $diskcache) {
 		$plist = OpenBSD::PackingList->fromfile($diskcache);
 	} else {
-		$plist = $self->ask_tree($state, $dep, $portsdir,
+		$plist = $self->ask_tree($state, $dep->{pkgpath}, $portsdir,
+		    \&OpenBSD::PackingList::PrelinkStuffOnly,
 		    'print-plist-libs-with-depends',
 		    'wantlib_args=no-wantlib-args');
 		if ($? != 0 || !defined $plist->pkgname) {
@@ -1044,11 +1056,16 @@ sub handle_fragment
 	} else {
 		return undef unless defined $not;
 	}
-	my $newname = $old->deduce_name($frag, $not);
+	my $newname = $old->deduce_name($frag, $not, $self, $state);
 	if (defined $newname) {
 		$state->set_status("switching to $newname")
-		    if !defined $state->opt('q');
-		return $old->new($newname);
+		    unless $state->{silent};
+		my $f = $old->new($newname);
+		if (!defined $f) {
+			$self->cant_read_fragment($state, $newname);
+		} else {
+			return $f;
+		}
 	}
 	return undef;
 }
@@ -1058,13 +1075,25 @@ sub FileClass
 	return "MyFile";
 }
 
+# hook for update-plist, which wants to record fragment positions
+sub record_fragment
+{
+}
+
+# hook for update-plist, which wants to record original file info
+sub annotate
+{
+}
+
 sub read_fragments
 {
 	my ($self, $state, $plist, $filename) = @_;
 
 	my $stack = [];
 	my $subst = $state->{subst};
-	push(@$stack, $self->FileClass->new($filename));
+	my $main = $self->FileClass->new($filename);
+	return undef if !defined $main;
+	push(@$stack, $main);
 	my $fast = $subst->value("LIBS_ONLY");
 
 	return $plist->read($stack,
@@ -1072,11 +1101,16 @@ sub read_fragments
 		my ($stack, $cont) = @_;
 		while(my $file = pop @$stack) {
 			while (my $l = $file->readline) {
-				$state->progress->working(2048) unless $state->opt('q');
+				$state->progress->working(2048) 
+				    unless $state->{silent};
+				# add a file name to uncommitted cvs tags so
+				# that the plist is always the same
 				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
 				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
+					$self->record_fragment($plist, $1, $2, 
+					    $file);
 					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont, $filename)) {
 						push(@$stack, $file);
 						$file = $f2;
@@ -1085,7 +1119,7 @@ sub read_fragments
 				}
 				my $s = $subst->do($l);
 				if ($fast) {
-					next unless $s =~ m/^\@(?:cwd|lib|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+					next unless $s =~ m/^\@(?:cwd|lib|libset|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
 	# XXX some things, like @comment no checksum, don't produce an object
 				my $o = &$cont($s);
@@ -1096,10 +1130,6 @@ sub read_fragments
 			}
 		}
 	    });
-}
-
-sub annotate
-{
 }
 
 sub add_description
@@ -1119,9 +1149,9 @@ sub add_description
 	if (!defined $opt_d) {
 		$state->usage("Description required");
 	}
-	return if $state->opt('q');
+	return if defined $state->opt('q');
 
-	open(my $fh, '>', $o->fullname) or die "Can't write to DESC: $!";
+	open(my $fh, '+>', $o->fullname) or die "Can't write to DESC: $!";
 	if (defined $comment) {
 		print $fh $subst->do($comment), "\n";
 	}
@@ -1140,6 +1170,20 @@ sub add_description
 		if (!$subst->empty('HOMEPAGE')) {
 			print $fh "\n", $subst->do('WWW: ${HOMEPAGE}'), "\n";
 		}
+	}
+	seek($fh, 0, 0) or die "Can't rewind DESC: $!";
+    	my $errors = 0;
+	while (<$fh>) {
+		chomp;
+		if ($state->safe($_) ne $_) {
+			$state->errsay(
+			    "DESC contains weird characters: #1 on line #2", 
+			    $_, $.);
+		$errors++;
+		}
+	}
+	if ($errors) {
+		$state->fatal("Can't continue");
 	}
 	close($fh);
 }
@@ -1185,6 +1229,9 @@ sub add_elements
 	for my $w (sort keys %{$state->{wantlib}}) {
 		OpenBSD::PackingElement::Wantlib->add($plist, $w);
 	}
+	for my $w (sort keys %{$state->{libset}}) {
+		OpenBSD::PackingElement::Libset->add($plist, $w);
+	}
 
 	if (defined $state->opt('A')) {
 		OpenBSD::PackingElement::Arch->add($plist, $state->opt('A'));
@@ -1204,6 +1251,13 @@ sub cant_read_fragment
 {
 	my ($self, $state, $frag) = @_;
 	$state->fatal("can't read packing-list #1", $frag);
+}
+
+sub missing_fragments
+{
+	my ($self, $state, $frag, $o, $noto) = @_;
+	$state->fatal("Missing fragments for #1: #2 and #3 don't exist",
+		$frag, $o, $noto);
 }
 
 sub read_all_fragments
@@ -1239,19 +1293,18 @@ sub create_plist
 		$pkgname = $1;
 		$pkgname =~ s/\.tgz$//o;
 	}
-	$state->say("Creating package #1", $pkgname)
-	    if !(defined $state->opt('q')) && $state->opt('v');
-	if (!$state->opt('q')) {
-		$plist->set_infodir(OpenBSD::Temp->dir);
-	}
-
-	unless (defined $state->opt('q') && defined $state->opt('n')) {
+	$plist->set_pkgname($pkgname);
+	unless ($state->{silent}) {
+		$state->say("Creating package #1", $pkgname)
+		    if defined $state->opt('v');
 		$state->set_status("reading plist");
 	}
-	$self->read_all_fragments($state, $plist);
-	$plist->set_pkgname($pkgname);
-
+	$plist->set_infodir(OpenBSD::Temp->dir);
+	if (!defined $state->opt('S')) {
+		$self->read_all_fragments($state, $plist);
+	}
 	$self->add_elements($plist, $state);
+
 	return $plist;
 }
 
@@ -1471,6 +1524,10 @@ sub parse_and_run
 	}
 
 
+	if (defined $state->opt('S')) {
+		print $plist->signature->string, "\n";
+		exit 0;
+	}
 	$plist->discover_directories($state);
 	my $ordered;
 	unless (defined $state->opt('q') && defined $state->opt('n')) {

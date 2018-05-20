@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.16 2016/10/28 07:22:59 schwarze Exp $      */
+/*      $OpenBSD: cmp.c,v 1.18 2018/03/05 16:57:37 cheloha Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -34,7 +34,9 @@
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +46,7 @@
 
 int	lflag, sflag;
 
+static off_t get_skip(const char *, const char *);
 static void __dead usage(void);
 
 int
@@ -84,52 +87,31 @@ main(int argc, char *argv[])
 		special = 1;
 		fd1 = 0;
 		file1 = "stdin";
-	} else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
-		if (sflag)
-			return ERR_EXIT;
-		else
-			err(ERR_EXIT, "%s", file1);
-	}
+	} else if ((fd1 = open(file1, O_RDONLY, 0)) == -1)
+		fatal("%s", file1);
 	if (strcmp(file2 = argv[1], "-") == 0) {
-		if (special) {
-			if (sflag)
-				return ERR_EXIT;
-			else
-				errx(ERR_EXIT,
-					"standard input may only be specified once");
-		}
+		if (special)
+			fatalx("standard input may only be specified once");
 		special = 1;
 		fd2 = 0;
 		file2 = "stdin";
-	} else if ((fd2 = open(file2, O_RDONLY, 0)) < 0) {
-		if (sflag)
-			return ERR_EXIT;
-		else
-			err(ERR_EXIT, "%s", file2);
-	}
+	} else if ((fd2 = open(file2, O_RDONLY, 0)) == -1)
+		fatal("%s", file2);
 
 	if (pledge("stdio", NULL) == -1)
 		err(ERR_EXIT, "pledge");
 
-	skip1 = argc > 2 ? strtoll(argv[2], NULL, 0) : 0;
-	skip2 = argc == 4 ? strtoll(argv[3], NULL, 0) : 0;
+	skip1 = (argc > 2) ? get_skip(argv[2], "skip1") : 0;
+	skip2 = (argc == 4) ? get_skip(argv[3], "skip2") : 0;
 
 	if (!special) {
-		if (fstat(fd1, &sb1)) {
-			if (sflag)
-				return ERR_EXIT;
-			else
-				err(ERR_EXIT, "%s", file1);
-		}
+		if (fstat(fd1, &sb1) == -1)
+			fatal("%s", file1);
 		if (!S_ISREG(sb1.st_mode))
 			special = 1;
 		else {
-			if (fstat(fd2, &sb2)) {
-				if (sflag)
-					return ERR_EXIT;
-				else
-					err(ERR_EXIT, "%s", file2);
-			}
+			if (fstat(fd2, &sb2) == -1)
+				fatal("%s", file2);
 			if (!S_ISREG(sb2.st_mode))
 				special = 1;
 		}
@@ -141,6 +123,23 @@ main(int argc, char *argv[])
 		c_regular(fd1, file1, skip1, sb1.st_size,
 		    fd2, file2, skip2, sb2.st_size);
 	return 0;
+}
+
+static off_t
+get_skip(const char *arg, const char *name)
+{
+	off_t skip;
+	char *ep;
+
+	errno = 0;
+	skip = strtoll(arg, &ep, 0);
+	if (arg[0] == '\0' || *ep != '\0')
+		fatalx("%s is invalid: %s", name, arg);
+	if (skip < 0)
+		fatalx("%s is too small: %s", name, arg);
+	if (skip == LLONG_MAX && errno == ERANGE)
+		fatalx("%s is too large: %s", name, arg);
+	return skip;
 }
 
 static void __dead

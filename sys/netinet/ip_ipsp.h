@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.183 2017/06/26 09:08:00 patrick Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.189 2017/11/20 14:14:26 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,10 +45,6 @@ struct m_tag;
 /* IPSP global definitions. */
 
 #include <sys/types.h>
-#ifdef _KERNEL
-#include <sys/timeout.h>
-#include <sys/tree.h>
-#endif
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <net/radix.h>
@@ -130,6 +126,8 @@ struct sockaddr_encap {
 #define	IPSP_DIRECTION_OUT	0x2
 
 #ifdef _KERNEL
+#include <sys/timeout.h>
+#include <sys/tree.h>
 
 #define	sen_data		Sen.Data
 #define	sen_ip_src		Sen.Sip4.Src
@@ -352,7 +350,6 @@ struct tdb {				/* tunnel descriptor block */
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
 
-#endif /* _KERNEL */
 
 struct tdb_ident {
 	u_int32_t spi;
@@ -394,8 +391,6 @@ struct ipsecinit {
 
 #define	IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
 
-#ifdef _KERNEL
-
 struct xformsw {
 	u_short	xf_type;		/* Unique ID of xform */
 	u_short	xf_flags;		/* flags (see below) */
@@ -411,6 +406,7 @@ struct xformsw {
 extern int ipsec_in_use;
 extern u_int64_t ipsec_last_added;
 extern int ipsec_policy_pool_initialized;
+extern int encdebug;			/* enable message reporting */
 
 extern int ipsec_keep_invalid;		/* lifetime of embryonic SAs (in sec) */
 extern int ipsec_require_pfs;		/* use Perfect Forward Secrecy */
@@ -423,6 +419,51 @@ extern int ipsec_soft_timeout;		/* seconds/SA before renegotiation */
 extern int ipsec_exp_timeout;		/* seconds/SA before it expires */
 extern int ipsec_soft_first_use;	/* seconds between 1st asso & renego */
 extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */	
+
+/*
+ * Names for IPsec sysctl objects
+ */
+#define	IPSEC_ENCDEBUG			IPCTL_ENCDEBUG			/* 12 */
+#define IPSEC_EXPIRE_ACQUIRE		IPCTL_IPSEC_EXPIRE_ACQUIRE	/* 14 */
+#define IPSEC_EMBRYONIC_SA_TIMEOUT	IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT/* 15 */
+#define IPSEC_REQUIRE_PFS		IPCTL_IPSEC_REQUIRE_PFS		/* 16 */
+#define IPSEC_SOFT_ALLOCATIONS          IPCTL_IPSEC_SOFT_ALLOCATIONS	/* 17 */
+#define IPSEC_ALLOCATIONS		IPCTL_IPSEC_ALLOCATIONS		/* 18 */
+#define IPSEC_SOFT_BYTES		IPCTL_IPSEC_SOFT_BYTES		/* 19 */
+#define IPSEC_BYTES			IPCTL_IPSEC_BYTES		/* 20 */
+#define IPSEC_TIMEOUT			IPCTL_IPSEC_TIMEOUT		/* 21 */
+#define IPSEC_SOFT_TIMEOUT		IPCTL_IPSEC_SOFT_TIMEOUT	/* 22 */
+#define IPSEC_SOFT_FIRSTUSE		IPCTL_IPSEC_SOFT_FIRSTUSE	/* 23 */
+#define IPSEC_FIRSTUSE			IPCTL_IPSEC_FIRSTUSE		/* 24 */
+#define IPSEC_MAXID	25
+
+#define	IPSECCTL_VARS { \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	NULL, \
+	&encdebug, \
+	NULL, \
+	&ipsec_expire_acquire, \
+	&ipsec_keep_invalid, \
+	&ipsec_require_pfs, \
+	&ipsec_soft_allocations, \
+	&ipsec_exp_allocations, \
+	&ipsec_soft_bytes, \
+	&ipsec_exp_bytes, \
+	&ipsec_exp_timeout, \
+	&ipsec_soft_timeout, \
+	&ipsec_soft_first_use, \
+	&ipsec_exp_first_use, \
+}
 
 extern char ipsec_def_enc[];
 extern char ipsec_def_auth[];
@@ -440,7 +481,6 @@ extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 extern struct comp_algo comp_algo_deflate;
 
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
-extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 
 /* Misc. */
 #ifdef ENCDEBUG
@@ -450,6 +490,8 @@ const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
 /* SPD tables */
 struct radix_node_head *spd_table_add(unsigned int);
 struct radix_node_head *spd_table_get(unsigned int);
+int spd_table_walk(unsigned int,
+    int (*walker)(struct ipsec_policy *, void *, unsigned int), void *);
 
 /* TDB management routines */
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
@@ -547,6 +589,8 @@ struct ipsec_ids *ipsp_ids_insert(struct ipsec_ids *);
 struct ipsec_ids *ipsp_ids_lookup(u_int32_t);
 void	ipsp_ids_free(struct ipsec_ids *);
 
+void	ipsec_init(void);
+int	ipsec_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
 void	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 int	ipsec_delete_policy(struct ipsec_policy *);

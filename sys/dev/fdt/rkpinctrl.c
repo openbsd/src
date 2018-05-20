@@ -1,6 +1,6 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.4 2017/07/23 17:08:29 kettenis Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.5 2018/02/25 13:26:44 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,9 @@
 #define RK3288_GRF_GPIO1A_IOMUX		0x0000
 #define RK3288_PMUGRF_GPIO0A_IOMUX	0x0084
 
+/* RK3328 registers */
+#define RK3328_GRF_GPIO0A_IOMUX		0x0000
+
 /* RK3399 registers */
 #define RK3399_GRF_GPIO2A_IOMUX		0xe000
 #define RK3399_PMUGRF_GPIO0A_IOMUX	0x0000
@@ -62,6 +65,7 @@ struct cfdriver rkpinctrl_cd = {
 };
 
 int	rk3288_pinctrl(uint32_t, void *);
+int	rk3328_pinctrl(uint32_t, void *);
 int	rk3399_pinctrl(uint32_t, void *);
 
 int
@@ -70,6 +74,7 @@ rkpinctrl_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-pinctrl") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-pinctrl"));
 }
 
@@ -85,13 +90,15 @@ rkpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_grf = regmap_byphandle(grf);
 	sc->sc_pmu = regmap_byphandle(pmu);
 
-	if (sc->sc_grf == NULL || sc->sc_pmu == NULL) {
+	if (sc->sc_grf == NULL && sc->sc_pmu == NULL) {
 		printf(": no registers\n");
 		return;
 	}
 
 	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-pinctrl"))
 		pinctrl_register(faa->fa_node, rk3288_pinctrl, sc);
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-pinctrl"))
+		pinctrl_register(faa->fa_node, rk3328_pinctrl, sc);
 	else
 		pinctrl_register(faa->fa_node, rk3399_pinctrl, sc);
 
@@ -159,6 +166,9 @@ rk3288_pinctrl(uint32_t phandle, void *cookie)
 	struct rkpinctrl_softc *sc = cookie;
 	uint32_t *pins;
 	int node, len, i;
+
+	KASSERT(sc->sc_grf);
+	KASSERT(sc->sc_pmu);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -230,6 +240,160 @@ rk3288_pinctrl(uint32_t phandle, void *cookie)
 		/* GPIO drive strength control */
 		if (strength >= 0) {
 			off = 0x1c0 + bank * 0x10 + (idx / 8) * 0x04;
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (strength << ((idx % 8) * 2));
+			regmap_write_4(rm, base + off, mask << 16 | bits);
+		}
+
+		splx(s);
+	}
+
+	free(pins, M_TEMP, len);
+	return 0;
+
+fail:
+	free(pins, M_TEMP, len);
+	return -1;
+}
+
+/*
+ * Rockchip RK3328
+ */
+
+int
+rk3328_pull(uint32_t bank, uint32_t idx, uint32_t phandle)
+{
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	if (OF_getproplen(node, "bias-disable") == 0)
+		return 0;
+	if (OF_getproplen(node, "bias-pull-up") == 0)
+		return 1;
+	if (OF_getproplen(node, "bias-pull-down") == 0)
+		return 2;
+
+	return -1;
+}
+
+int
+rk3328_strength(uint32_t bank, uint32_t idx, uint32_t phandle)
+{
+	int strength, level;
+	int levels[4] = { 2, 4, 8, 12 };
+	int node;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	strength = OF_getpropint(node, "drive-strength", -1);
+	if (strength == -1)
+		return -1;
+
+	/* Convert drive strength to level. */
+	for (level = 3; level >= 0; level--) {
+		if (strength >= levels[level])
+			break;
+	}
+	return level;
+}
+
+int
+rk3328_pinctrl(uint32_t phandle, void *cookie)
+{
+	struct rkpinctrl_softc *sc = cookie;
+	uint32_t *pins;
+	int node, len, i;
+
+	KASSERT(sc->sc_grf);
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	len = OF_getproplen(node, "rockchip,pins");
+	if (len <= 0)
+		return -1;
+
+	pins = malloc(len, M_TEMP, M_WAITOK);
+	if (OF_getpropintarray(node, "rockchip,pins", pins, len) != len)
+		goto fail;
+
+	for (i = 0; i < len / sizeof(uint32_t); i += 4) {
+		struct regmap *rm = sc->sc_grf;
+		bus_size_t base, off;
+		uint32_t bank, idx, mux;
+		int pull, strength;
+		uint32_t mask, bits;
+		int s;
+
+		bank = pins[i];
+		idx = pins[i + 1];
+		mux = pins[i + 2];
+		pull = rk3288_pull(bank, idx, pins[i + 3]);
+		strength = rk3288_strength(bank, idx, pins[i + 3]);
+
+		if (bank > 3 || idx > 32 || mux > 3)
+			continue;
+
+		base = RK3328_GRF_GPIO0A_IOMUX;
+
+		s = splhigh();
+
+		/* IOMUX control */
+		off = bank * 0x10 + (idx / 8) * 0x04;
+
+		/* GPIO2B, GPIO2C, GPIO3A and GPIO3B are special. */
+		if (bank == 2 && idx == 15) {
+			mask = 0x7;
+			bits = mux;
+		} else if (bank == 2 && idx >= 16 && idx <= 20) {
+			mask = (0x7 << ((idx - 16) * 3));
+			bits = (mux << ((idx - 16) * 3));
+		} else if (bank == 2 && idx >= 21 && idx <= 23) {
+			mask = (0x7 << ((idx - 21) * 3));
+			bits = (mux << ((idx - 21) * 3));
+		} else if (bank == 3 && idx <= 4) {
+			mask = (0x7 << (idx * 3));
+			bits = (mux << (idx * 3));
+		} else if (bank == 3 && idx >= 5 && idx <= 7) {
+			mask = (0x7 << ((idx - 5) * 3));
+			bits = (mux << ((idx - 5) * 3));
+		} else if (bank == 3 && idx >= 8 && idx <= 12) {
+			mask = (0x7 << ((idx - 8) * 3));
+			bits = (mux << ((idx - 8) * 3));
+		} else if (bank == 3 && idx >= 13 && idx <= 15) {
+			mask = (0x7 << ((idx - 13) * 3));
+			bits = (mux << ((idx - 13) * 3));
+		} else {
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (mux << ((idx % 8) * 2));
+		}
+		if (bank > 2 || (bank == 2 && idx >= 15))
+			off += 0x04;
+		if (bank > 2 || (bank == 2 && idx >= 21))
+			off += 0x04;
+		if (bank > 3 || (bank == 3 && idx >= 5))
+			off += 0x04;
+		if (bank > 3 || (bank == 3 && idx >= 13))
+			off += 0x04;
+		regmap_write_4(rm, base + off, mask << 16 | bits);
+
+		/* GPIO pad pull down and pull up control */
+		if (pull >= 0) {
+			off = 0x100 + bank * 0x10 + (idx / 8) * 0x04;
+			mask = (0x3 << ((idx % 8) * 2));
+			bits = (pull << ((idx % 8) * 2));
+			regmap_write_4(rm, base + off, mask << 16 | bits);
+		}
+
+		/* GPIO drive strength control */
+		if (strength >= 0) {
+			off = 0x200 + bank * 0x10 + (idx / 8) * 0x04;
 			mask = (0x3 << ((idx % 8) * 2));
 			bits = (strength << ((idx % 8) * 2));
 			regmap_write_4(rm, base + off, mask << 16 | bits);
@@ -335,6 +499,9 @@ rk3399_pinctrl(uint32_t phandle, void *cookie)
 	struct rkpinctrl_softc *sc = cookie;
 	uint32_t *pins;
 	int node, len, i;
+
+	KASSERT(sc->sc_grf);
+	KASSERT(sc->sc_pmu);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)

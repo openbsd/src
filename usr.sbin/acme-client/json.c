@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.9 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: json.c,v 1.10 2017/11/27 01:58:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -257,6 +257,33 @@ json_getarray(struct jsmnn *n, const char *name)
 }
 
 /*
+ * Extract subtree from the returned JSON object, making sure that it's
+ * the correct type.
+ * Returns NULL on failure.
+ */
+static struct jsmnn *
+json_getobj(struct jsmnn *n, const char *name)
+{
+	size_t		 i;
+
+	if (n->type != JSMN_OBJECT)
+		return NULL;
+	for (i = 0; i < n->fields; i++) {
+		if (n->d.obj[i].lhs->type != JSMN_STRING &&
+		    n->d.obj[i].lhs->type != JSMN_PRIMITIVE)
+			continue;
+		else if (strcmp(name, n->d.obj[i].lhs->d.str))
+			continue;
+		break;
+	}
+	if (i == n->fields)
+		return NULL;
+	if (n->d.obj[i].rhs->type != JSMN_OBJECT)
+		return NULL;
+	return n->d.obj[i].rhs;
+}
+
+/*
  * Extract a single string from the returned JSON object, making sure
  * that it's the correct type.
  * Returns NULL on failure.
@@ -373,17 +400,24 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 int
 json_parse_capaths(struct jsmnn *n, struct capaths *p)
 {
+	struct jsmnn	*meta;
 
 	if (n == NULL)
+		return 0;
+
+	meta = json_getobj(n, "meta");
+
+	if (meta == NULL)
 		return 0;
 
 	p->newauthz = json_getstr(n, "new-authz");
 	p->newcert = json_getstr(n, "new-cert");
 	p->newreg = json_getstr(n, "new-reg");
 	p->revokecert = json_getstr(n, "revoke-cert");
+	p->agreement = json_getstr(meta, "terms-of-service");
 
 	return p->newauthz != NULL && p->newcert != NULL &&
-	    p->newreg != NULL && p->revokecert != NULL;
+	    p->newreg != NULL && p->revokecert != NULL && p->agreement != NULL;
 }
 
 /*
@@ -397,6 +431,7 @@ json_free_capaths(struct capaths *p)
 	free(p->newcert);
 	free(p->newreg);
 	free(p->revokecert);
+	free(p->agreement);
 	memset(p, 0, sizeof(struct capaths));
 }
 

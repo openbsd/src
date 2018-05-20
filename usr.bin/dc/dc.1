@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.30 2017/02/23 06:40:17 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.33 2017/12/02 12:43:18 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 23 2017 $
+.Dd $Mdocdate: December 2 2017 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -189,6 +189,7 @@ The top value on the stack is duplicated.
 Equivalent to
 .Ic p ,
 except that the output is written to the standard error stream.
+This is a non-portable extension.
 .It Ic f
 All values on the stack are printed, separated by newlines.
 .It Ic G
@@ -244,7 +245,7 @@ Mark used by the
 operator.
 The
 .Ic M
-operator is a non-portable extensions, used by the
+operator is a non-portable extension, used by the
 .Xr bc 1
 command.
 .It Ic N
@@ -312,6 +313,7 @@ Replaces the number on the top of the stack with its length.
 The length of a string is its number of characters.
 The length of a number is its number of digits, not counting the minus sign
 and decimal point.
+The length of a zero value is its scale.
 .It Ic z
 The stack level is pushed onto the stack.
 .It Cm \&[ Ns ... Ns Cm \&]
@@ -535,3 +537,8 @@ The current version of the
 .Nm
 utility was written by
 .An Otto Moerbeek .
+.Sh CAVEATS
+While fractional input in base 10 is always exact,
+other bases may suffer from unintuitive rounding.
+To avoid surprising results, plain integer division can be used
+instead of the corresponding floating point notation.

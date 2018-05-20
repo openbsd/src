@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.8 2017/01/21 08:54:26 florian Exp $ */
+/*	$Id: extern.h,v 1.9 2017/11/27 01:58:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -162,6 +162,7 @@ struct	capaths {
 	char		*newcert;  /* sign certificate */
 	char		*newreg; /* new acme account */
 	char		*revokecert; /* revoke certificate */
+	char		*agreement; /* terms of service */
 };
 
 struct	jsmnn;
@@ -184,7 +185,7 @@ int		 keyproc(int, const char *,
 			const char **, size_t, int);
 int		 netproc(int, int, int, int, int, int, int, int,
 			struct authority_c *, const char *const *,
-			size_t, const char *);
+			size_t);
 
 /*
  * Debugging functions.

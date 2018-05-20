@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.90 2017/07/10 11:18:48 bluhm Exp $
+#	$OpenBSD: daily,v 1.91 2018/02/06 19:57:37 tb Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -90,7 +90,10 @@ while [ "X$ROOTBACKUP" = X1 ]; do
 	fi
 	rootbak=${rootbak#/dev/}
 	bakdisk=${rootbak%%?(.)[a-p]}
-	sysctl -n hw.disknames | grep -Fqw $bakdisk || break
+	if ! sysctl -n hw.disknames | grep -Fqw $bakdisk; then
+		echo "Backup disk '$bakdisk' not present in hw.disknames."
+		break
+	fi
 	bakpart=${rootbak##$bakdisk?(.)}
 	OLDIFS=$IFS
 	IFS=,

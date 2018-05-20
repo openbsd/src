@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.9 2010/04/20 22:05:41 tedu Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.10 2018/02/19 08:59:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -107,7 +107,7 @@ amdmsropen(dev_t dev, int flags, int devtype, struct proc *p)
 	if (amdmsr_cd.cd_ndevs == 0 || minor(dev) != 0)
 		return ENXIO;
 
-	if (suser(p, 0) != 0 || !allowaperture)
+	if (suser(p) != 0 || !allowaperture)
 		return EPERM;
 	/* allow only one simultaneous open() */
 	if (amdmsr_open_cnt > 0)

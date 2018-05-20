@@ -1,0 +1,37 @@
+.\" $OpenBSD: incr.in,v 1.1 2018/04/10 00:52:21 schwarze Exp $
+.TH NR-INCR 1 "April 10, 2018"
+.SH NAME
+nr-incr \- increment a number register by accessing it
+.SH DESCRIPTION
+.nr myr 0 1
+Roff can count by merely accessing a number register:
+\n+[myr]
+\n+[myr]
+\n+[myr]
+.PP
+.nr myr +0 1+1
+It can also change the step size:
+\n+[myr]
+\n+[myr]
+\n+[myr]
+.PP
+.nr myr +0 3
+It can also count down:
+\n-[myr]
+\n-[myr]
+\n-[myr]
+\n-[myr]
+.PP
+.nr myr -0 -2
+Down in negative steps is up:
+\n-[myr]
+\n-[myr]
+\n-[myr]
+\n-[myr]
+.PP
+.nr myr 42
+Go to some other value,
+then continue incrementing with an unchanged (negative) step size:
+\n+[myr]
+\n+[myr]
+\n+[myr]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.18 2016/07/17 17:30:47 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.20 2017/12/06 13:48:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -47,8 +47,7 @@ dc_main(int argc, char *argv[])
 	char		*buf, *p;
 	struct stat	st;
 
-	if ((buf = strdup("")) == NULL)
-		err(1, NULL);
+	buf = bstrdup("");
 	/* accept and ignore a single dash to be 4.4BSD dc(1) compatible */
 	optind = 1;
 	optreset = 1;
@@ -71,6 +70,11 @@ dc_main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc == 0) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+	}
 
 	init_bmachine(extended_regs);
 	(void)setvbuf(stdout, NULL, _IOLBF, 0);
@@ -108,9 +112,6 @@ dc_main(int argc, char *argv[])
 		 */
 		 return (0);
 	}
-
-	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
 
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);

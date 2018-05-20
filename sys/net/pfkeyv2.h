@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.77 2017/05/29 14:28:01 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.79 2017/11/20 10:56:51 mpi Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -378,13 +378,10 @@ int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int, u_int);
 int pfkeyv2_dump_policy(struct ipsec_policy *, void **, void **, int *);
 int pfkeyv2_dump_walker(struct tdb *, void *, int);
-int pfkeyv2_flush_walker(struct tdb *, void *, int);
 int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
 int pfkeyv2_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pfkeyv2_sysctl_walker(struct tdb *, void *, int);
-int pfkeyv2_ipo_walk(u_int, int (*)(struct ipsec_policy *, void *), void *);
 int pfkeyv2_sysctl_dump(void *);
-int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *);
 
 int pfdatatopacket(void *, int, struct mbuf **);
 

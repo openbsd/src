@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.36 2017/02/08 21:04:44 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.37 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ struct exec_vmcmd {
 	int	ev_flags;
 #define VMCMD_RELATIVE  0x0001  /* ev_addr is relative to base entry */
 #define VMCMD_BASE      0x0002  /* marks a base entry */
+#define VMCMD_STACK     0x0004  /* create with UVM_FLAG_STACK */
 };
 
 #define	EXEC_DEFAULT_VMCMD_SETSIZE	8	/* # of cmds in set to start */

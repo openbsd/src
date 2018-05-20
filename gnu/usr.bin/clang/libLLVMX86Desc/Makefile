@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMX86Desc
 NOPIC=
@@ -13,8 +13,9 @@ SRCS=	X86AsmBackend.cpp \
 	X86MCCodeEmitter.cpp \
 	X86MachObjectWriter.cpp \
 	X86ELFObjectWriter.cpp \
+	X86WinCOFFObjectWriter.cpp \
 	X86WinCOFFStreamer.cpp \
-	X86WinCOFFObjectWriter.cpp
+	X86WinCOFFTargetStreamer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/X86/MCTargetDesc
 

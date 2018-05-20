@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2017/04/26 21:25:43 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.61 2018/02/26 17:35:08 martijn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -723,7 +723,7 @@ exec_command(void)
 		if ((addr = read_file(*fnp ? fnp : old_filename,
 		    second_addr)) < 0)
 			return ERR;
-		else if (addr && addr != addr_last)
+		else if (addr)
 			modified = 1;
 		break;
 	case 's':

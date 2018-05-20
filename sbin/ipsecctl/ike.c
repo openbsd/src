@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.81 2015/12/09 21:41:50 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.82 2017/10/27 08:29:32 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -330,29 +330,56 @@ ike_section_p2(struct ipsec_rule *r, FILE *fd)
 		switch (r->p2xfs->groupxf->id) {
 		case GROUPXF_NONE:
 			break;
-		case GROUPXF_768:
+		case GROUPXF_1:
 			group_desc = "MODP_768";
 			break;
-		case GROUPXF_1024:
+		case GROUPXF_2:
 			group_desc = "MODP_1024";
 			break;
-		case GROUPXF_1536:
+		case GROUPXF_5:
 			group_desc = "MODP_1536";
 			break;
-		case GROUPXF_2048:
+		case GROUPXF_14:
 			group_desc = "MODP_2048";
 			break;
-		case GROUPXF_3072:
+		case GROUPXF_15:
 			group_desc = "MODP_3072";
 			break;
-		case GROUPXF_4096:
+		case GROUPXF_16:
 			group_desc = "MODP_4096";
 			break;
-		case GROUPXF_6144:
+		case GROUPXF_17:
 			group_desc = "MODP_6144";
 			break;
-		case GROUPXF_8192:
+		case GROUPXF_18:
 			group_desc = "MODP_8192";
+			break;
+		case GROUPXF_19:
+			group_desc = "ECP_256";
+			break;
+		case GROUPXF_20:
+			group_desc = "ECP_384";
+			break;
+		case GROUPXF_21:
+			group_desc = "ECP_521";
+			break;
+		case GROUPXF_25:
+			group_desc = "ECP_192";
+			break;
+		case GROUPXF_26:
+			group_desc = "ECP_224";
+			break;
+		case GROUPXF_27:
+			group_desc = "BP_224";
+			break;
+		case GROUPXF_28:
+			group_desc = "BP_256";
+			break;
+		case GROUPXF_29:
+			group_desc = "BP_384";
+			break;
+		case GROUPXF_30:
+			group_desc = "BP_512";
 			break;
 		default:
 			warnx("illegal group %s", r->p2xfs->groupxf->name);
@@ -496,34 +523,61 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 
 	if (r->p1xfs && r->p1xfs->groupxf) {
 		switch (r->p1xfs->groupxf->id) {
-		case GROUPXF_768:
+		case GROUPXF_1:
 			group_desc = "MODP_768";
 			break;
-		case GROUPXF_1024:
+		case GROUPXF_2:
 			group_desc = "MODP_1024";
 			break;
-		case GROUPXF_1536:
+		case GROUPXF_5:
 			group_desc = "MODP_1536";
 			break;
-		case GROUPXF_2048:
+		case GROUPXF_14:
 			group_desc = "MODP_2048";
 			break;
-		case GROUPXF_3072:
+		case GROUPXF_15:
 			group_desc = "MODP_3072";
 			break;
-		case GROUPXF_4096:
+		case GROUPXF_16:
 			group_desc = "MODP_4096";
 			break;
-		case GROUPXF_6144:
+		case GROUPXF_17:
 			group_desc = "MODP_6144";
 			break;
-		case GROUPXF_8192:
+		case GROUPXF_18:
 			group_desc = "MODP_8192";
+			break;
+		case GROUPXF_19:
+			group_desc = "ECP_256";
+			break;
+		case GROUPXF_20:
+			group_desc = "ECP_384";
+			break;
+		case GROUPXF_21:
+			group_desc = "ECP_521";
+			break;
+		case GROUPXF_25:
+			group_desc = "ECP_192";
+			break;
+		case GROUPXF_26:
+			group_desc = "ECP_224";
+			break;
+		case GROUPXF_27:
+			group_desc = "BP_224";
+			break;
+		case GROUPXF_28:
+			group_desc = "BP_256";
+			break;
+		case GROUPXF_29:
+			group_desc = "BP_384";
+			break;
+		case GROUPXF_30:
+			group_desc = "BP_512";
 			break;
 		default:
 			warnx("illegal group %s", r->p1xfs->groupxf->name);
 			return (-1);
-		};
+		}
 	} else
 		group_desc = "MODP_3072";
 

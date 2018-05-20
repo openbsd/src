@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.21 2015/12/05 18:43:36 mmcc Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.22 2018/03/16 12:31:09 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.21 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.22 2018/03/16 12:31:09 mpi Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -442,7 +442,7 @@ l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *_this)
 #endif
 	if (ipsec_util_purge_transport_sa((struct sockaddr *)&peer,
 	    (struct sockaddr *)&sock, proto, IPSEC_UTIL_DIRECTION_BOTH) != 0)
-		l2tp_ctrl_log(_this, LOG_NOTICE, "failed to purge IPSec SA");
+		l2tp_ctrl_log(_this, LOG_NOTICE, "failed to purge IPsec SA");
 }
 #endif
 

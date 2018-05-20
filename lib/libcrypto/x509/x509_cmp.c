@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.33 2018/05/18 19:24:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,7 +145,7 @@ X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 #endif
 
 X509_NAME *
-X509_get_issuer_name(X509 *a)
+X509_get_issuer_name(const X509 *a)
 {
 	return (a->cert_info->issuer);
 }
@@ -165,7 +165,7 @@ X509_issuer_name_hash_old(X509 *x)
 #endif
 
 X509_NAME *
-X509_get_subject_name(X509 *a)
+X509_get_subject_name(const X509 *a)
 {
 	return (a->cert_info->subject);
 }
@@ -321,9 +321,17 @@ X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
 EVP_PKEY *
 X509_get_pubkey(X509 *x)
 {
-	if ((x == NULL) || (x->cert_info == NULL))
+	if (x == NULL || x->cert_info == NULL)
 		return (NULL);
 	return (X509_PUBKEY_get(x->cert_info->key));
+}
+
+EVP_PKEY *
+X509_get0_pubkey(const X509 *x)
+{
+	if (x == NULL || x->cert_info == NULL)
+		return (NULL);
+	return (X509_PUBKEY_get0(x->cert_info->key));
 }
 
 ASN1_BIT_STRING *
@@ -335,12 +343,12 @@ X509_get0_pubkey_bitstr(const X509 *x)
 }
 
 int
-X509_check_private_key(X509 *x, EVP_PKEY *k)
+X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-	EVP_PKEY *xk;
+	const EVP_PKEY *xk;
 	int ret;
 
-	xk = X509_get_pubkey(x);
+	xk = X509_get0_pubkey(x);
 
 	if (xk)
 		ret = EVP_PKEY_cmp(xk, k);
@@ -359,8 +367,25 @@ X509_check_private_key(X509 *x, EVP_PKEY *k)
 	case -2:
 		X509error(X509_R_UNKNOWN_KEY_TYPE);
 	}
-	EVP_PKEY_free(xk);
 	if (ret > 0)
 		return 1;
 	return 0;
+}
+
+/*
+ * Not strictly speaking an "up_ref" as a STACK doesn't have a reference
+ * count but it has the same effect by duping the STACK and upping the ref of
+ * each X509 structure.
+ */
+STACK_OF(X509) *
+X509_chain_up_ref(STACK_OF(X509) *chain)
+{
+	STACK_OF(X509) *ret;
+	size_t i;
+
+	ret = sk_X509_dup(chain);
+	for (i = 0; i < sk_X509_num(ret); i++)
+		X509_up_ref(sk_X509_value(ret, i));
+
+	return ret;
 }

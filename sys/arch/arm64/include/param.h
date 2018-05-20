@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2017/08/09 03:06:55 jsg Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2018/01/05 17:42:35 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,9 @@
 #define	_MACHINE_PARAM_H_
 
 #ifdef _KERNEL
+#ifndef _LOCORE
 #include <machine/cpu.h>
+#endif
 #endif
 
 #define	_MACHINE	arm64
@@ -53,9 +55,6 @@
 
 #ifdef _KERNEL
 
-//#define	KERNBASE_HI	0xffffffff
-//#define	KERNBASE_LO	0x80000000
-
 #define	NBPG		PAGE_SIZE		/* bytes/page */
 #define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
 #define	PGOFSET		PAGE_MASK		/* byte offset into page */
@@ -64,7 +63,7 @@
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
-#define	NMBCLUSTERS	4096			/* map size, max cluster allocation */
+#define	NMBCLUSTERS	4096			/* max cluster allocation */
 
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	(16 * PAGE_SIZE)	/* default message buffer size */
@@ -76,8 +75,8 @@
  */
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
-#define		STACKALIGNBYTES		(16 - 1)
-#define		STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
+#define	STACKALIGNBYTES		(16 - 1)
+#define	STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
 
 #endif /* _KERNEL */
 

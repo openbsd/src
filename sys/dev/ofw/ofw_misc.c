@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.2 2017/05/05 17:38:22 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.5 2018/04/02 17:42:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 #include <dev/ofw/ofw_misc.h>
 
 struct regmap {
+	int			rm_node;
 	uint32_t		rm_phandle;
 	bus_space_tag_t		rm_tag;
 	bus_space_handle_t	rm_handle;
@@ -40,17 +41,40 @@ regmap_register(int node, bus_space_tag_t tag, bus_space_handle_t handle,
     bus_size_t size)
 {
 	struct regmap *rm;
-	uint32_t phandle;
 
-	phandle = OF_getpropint(node, "phandle", 0);
-	if (phandle) {
-		rm = malloc(sizeof(struct regmap), M_DEVBUF, M_WAITOK);
-		rm->rm_phandle = phandle;
-		rm->rm_tag = tag;
-		rm->rm_handle = handle;
-		rm->rm_size = size;
-		LIST_INSERT_HEAD(&regmaps, rm, rm_list);
+	rm = malloc(sizeof(struct regmap), M_DEVBUF, M_WAITOK);
+	rm->rm_node = node;
+	rm->rm_phandle = OF_getpropint(node, "phandle", 0);
+	rm->rm_tag = tag;
+	rm->rm_handle = handle;
+	rm->rm_size = size;
+	LIST_INSERT_HEAD(&regmaps, rm, rm_list);
+}
+
+struct regmap *
+regmap_bycompatible(char *compatible)
+{
+	struct regmap *rm;
+
+	LIST_FOREACH(rm, &regmaps, rm_list) {
+		if (OF_is_compatible(rm->rm_node, compatible))
+			return rm;
 	}
+
+	return NULL;
+}
+
+struct regmap *
+regmap_bynode(int node)
+{
+	struct regmap *rm;
+
+	LIST_FOREACH(rm, &regmaps, rm_list) {
+		if (rm->rm_node == node)
+			return rm;
+	}
+
+	return NULL;
 }
 
 struct regmap *

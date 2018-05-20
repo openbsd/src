@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.112 2017/08/10 15:01:42 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.113 2017/12/12 11:18:32 mpi Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1567,7 +1567,6 @@ int
 mpii_portenable(struct mpii_softc *sc)
 {
 	struct mpii_msg_portenable_request	*peq;
-	struct mpii_msg_portenable_repy		*pep;
 	struct mpii_ccb				*ccb;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portenable\n", DEVNAME(sc));
@@ -1596,7 +1595,6 @@ mpii_portenable(struct mpii_softc *sc)
 		    DEVNAME(sc));
 		return (1);
 	}
-	pep = ccb->ccb_rcb->rcb_reply;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	scsi_io_put(&sc->sc_iopool, ccb);

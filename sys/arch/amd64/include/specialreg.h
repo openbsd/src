@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.61 2017/08/12 19:53:37 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.70 2018/04/18 06:50:35 pd Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -214,6 +214,12 @@
 #define SEFF0ECX_AVX512VBMI	0x00000002 /* AVX-512 vector bit inst */
 #define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
+/* SEFF EDX bits */
+#define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
+#define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
+#define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
+#define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
+#define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
@@ -274,19 +280,28 @@
 /* Reserved			0x00004000 */
 #define	CPUIDECX_LWP		0x00008000 /* Lightweight profiling support */
 #define	CPUIDECX_FMA4		0x00010000 /* 4-operand FMA instructions */
-/* Reserved			0x00020000 */
+#define	CPUIDECX_TCE		0x00020000 /* Translation Cache Extension */
 /* Reserved			0x00040000 */
 #define	CPUIDECX_NODEID		0x00080000 /* Support for MSRC001C */
 /* Reserved			0x00100000 */
 #define	CPUIDECX_TBM		0x00200000 /* Trailing bit manipulation instruction */
 #define	CPUIDECX_TOPEXT		0x00400000 /* Topology extensions support */
+#define	CPUIDECX_CPCTR		0x00800000 /* core performance counter ext */
+#define	CPUIDECX_DBKP		0x04000000 /* DataBreakpointExtension */
+#define	CPUIDECX_PERFTSC	0x08000000 /* performance time-stamp counter */
+#define	CPUIDECX_PCTRL3		0x10000000 /* L3 performance counter ext */
+#define	CPUIDECX_MWAITX		0x20000000 /* MWAITX/MONITORX */
 
 /*
  * "Advanced Power Management Information" bits (CPUID function 0x80000007):
  * EDX bits.
  */
-
 #define CPUIDEDX_ITSC		(1 << 8)	/* Invariant TSC */
+
+/*
+ * AMD CPUID function 0x80000008 EBX bits
+ */
+#define CPUIDEBX_IBPB		(1ULL << 12)	/* Speculation Control IBPB */
 
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -311,6 +326,7 @@
 #define	MSR_CESR		0x011	/* P5 only (trap on P6) */
 #define	MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
+#define	MSR_PLATFORM_ID		0x017	/* Platform ID for microcode */
 #define MSR_APICBASE		0x01b
 #define APICBASE_BSP		0x100
 #define APICBASE_ENABLE_X2APIC	0x400
@@ -319,6 +335,11 @@
 #define MSR_EBC_FREQUENCY_ID    0x02c   /* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_IA32_FEATURE_CONTROL 0x03a
+#define MSR_SPEC_CTRL		0x048	/* Speculation Control IBRS / STIBP */
+#define SPEC_CTRL_IBRS		(1ULL << 0)
+#define SPEC_CTRL_STIBP		(1ULL << 1)
+#define MSR_PRED_CMD		0x049	/* Speculation Control IBPB */
+#define PRED_CMD_IBPB		(1ULL << 0)
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define	MSR_BBL_CR_D0		0x088	/* PII+ only */
 #define	MSR_BBL_CR_D1		0x089	/* PII+ only */
@@ -331,6 +352,8 @@
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
+#define MSR_ARCH_CAPABILITIES	0x10a
+#define ARCH_CAPABILITIES_RDCL_NO	(1 << 0)	/* Meltdown safe */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */
@@ -831,7 +854,7 @@
 #define	K7_BP2_MATCH			0xde
 #define	K7_BP3_MATCH			0xdf
 
-/* VIA C3 crypto featureset: for i386_has_xcrypt */
+/* VIA C3 crypto featureset: for amd64_has_xcrypt */
 #define C3_HAS_AES			1	/* cpu has AES */
 #define C3_HAS_SHA			2	/* cpu has SHA1 & SHA256 */
 #define C3_HAS_MM			4	/* cpu has RSA instructions */
@@ -1228,6 +1251,8 @@
 	 SVM_CLEANBITS_TPR | SVM_CLEANBITS_NP | SVM_CLEANBITS_CR | \
 	 SVM_CLEANBITS_DR | SVM_CLEANBITS_DT | SVM_CLEANBITS_SEG | \
 	 SVM_CLEANBITS_CR2 | SVM_CLEANBITS_LBR | SVM_CLEANBITS_AVIC )
+
+#define SVM_INTR_MISC_V_IGN_TPR 0x10
 
 /*
  * SVM : VMCB intercepts

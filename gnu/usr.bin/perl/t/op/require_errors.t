@@ -8,7 +8,7 @@ BEGIN {
 use strict;
 use warnings;
 
-plan(tests => 17);
+plan(tests => 19);
 
 my $nonfile = tempfile();
 
@@ -134,3 +134,11 @@ like $@, qr/^Can't locate strict\.pm\\0invalid: /, 'do nul check';
 eval "require strict\0::invalid;";
 like $@, qr/^syntax error at \(eval \d+\) line 1/, 'parse error with \0 in barewords module names';
 
+# Refs and globs that stringify with embedded nulls
+# These crashed from 5.20 to 5.24 [perl #128182].
+eval { no warnings 'syscalls'; require eval "qr/\0/" };
+like $@, qr/^Can't locate \(\?\^:\\0\):/,
+    'require ref that stringifies with embedded null';
+eval { no strict; no warnings 'syscalls'; require *{"\0a"} };
+like $@, qr/^Can't locate \*main::\\0a:/,
+    'require ref that stringifies with embedded null';

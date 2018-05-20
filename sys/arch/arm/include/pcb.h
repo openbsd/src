@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.7 2016/09/24 21:02:31 patrick Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.8 2018/01/26 16:22:20 kettenis Exp $	*/
 /*	$NetBSD: pcb.h,v 1.10 2003/10/13 21:46:39 scw Exp $	*/
 
 /*
@@ -38,9 +38,9 @@
 #define	_ARM_PCB_H_
 
 #include <machine/frame.h>
-#include <machine/fp.h>
 
 #include <arm/pte.h>
+#include <arm/reg.h>
 
 struct trapframe;
 
@@ -77,13 +77,14 @@ struct pcb_arm32 {
  */
 struct pcb {
 	u_int	pcb_flags;
-#define	PCB_OWNFPU	0x00000001
+#define	PCB_FPU		0x00000001	/* Process had FPU initialized */
 	struct	trapframe *pcb_tf;
 	caddr_t	pcb_onfault;			/* On fault handler */
 	union	{
 		struct	pcb_arm32 un_32;
 	} pcb_un;
-	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
+	struct fpreg pcb_fpstate;	/* Floating Point state */
+	struct cpu_info	*pcb_fpcpu;
 	void	*pcb_tcb;
 };
 

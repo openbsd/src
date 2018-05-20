@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.23 2015/11/01 15:38:53 mmcc Exp $	*/
+/*	$OpenBSD: table.c,v 1.25 2018/01/16 22:52:32 jca Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -18,7 +18,7 @@ struct table aliases;	/* aliases */
 struct table keywords;	/* keywords */
 struct table homedirs;	/* homedir() cache */
 
-char *path;		/* copy of either PATH or def_path */
+char *search_path;	/* copy of either PATH or def_path */
 const char *def_path;	/* path to use if PATH not set */
 char *tmpdir;		/* TMPDIR value */
 const char *prompt;
@@ -128,7 +128,7 @@ ktenter(struct table *tp, const char *n, unsigned int h)
 		if (tp->size <= INT_MAX/2)
 			texpand(tp, 2*tp->size);
 		else
-			internal_errorf(1, "too many vars");
+			internal_errorf("too many vars");
 		goto Search;
 	}
 

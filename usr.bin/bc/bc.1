@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.32 2015/11/17 05:45:35 mmcc Exp $
+.\"	$OpenBSD: bc.1,v 1.34 2017/10/09 06:59:07 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)bc.1	6.8 (Berkeley) 8/8/91
 .\"
-.Dd $Mdocdate: November 17 2015 $
+.Dd $Mdocdate: October 9 2017 $
 .Dt BC 1
 .Os
 .Sh NAME
@@ -76,9 +76,9 @@ If multiple
 options are specified, they are processed in the order given,
 separated by newlines.
 .It Fl l
-Allow specification of an arbitrary precision math library.
-The definitions in the library are available to command line
-expressions.
+Include an arbitrary precision math library.
+The definitions in the library are available to command line expressions
+and are documented below.
 .El
 .Pp
 The syntax for
@@ -262,7 +262,7 @@ Not specifying a return statement is equivalent to writing
 .Pp
 Functions available in the math library, which is loaded by specifying the
 .Fl l
-flag on the command line
+flag on the command line:
 .Pp
 .Bl -tag -width j(n,x) -offset indent -compact
 .It s(x)
@@ -332,7 +332,7 @@ the exponential function and
 prints approximate values of the exponential function of
 the first ten integers.
 .Bd -literal -offset indent
-$ bc -l -e 'scale = 500; 2 * a(2^10000)' -e quit
+$ bc -l -e 'scale = 500; 4 * a(1)' -e quit
 .Ed
 .Pp
 prints an approximation of pi.

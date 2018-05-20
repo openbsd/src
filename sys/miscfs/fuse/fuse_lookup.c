@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.16 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.19 2018/05/02 02:24:56 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -90,13 +90,18 @@ fusefs_lookup(void *v)
 
 			if ((nameiop == CREATE || nameiop == RENAME) &&
 			    (flags & ISLASTCN)) {
-				if (vdp->v_mount->mnt_flag & MNT_RDONLY)
-					return (EROFS);
+				/*
+				 * Access for write is interpreted as allowing
+				 * creation of files in the directory.
+				 */
+				if ((error = VOP_ACCESS(vdp, VWRITE, cred,
+				    cnp->cn_proc)) != 0)
+					return (error); 
 
 				cnp->cn_flags |= SAVENAME;
 
 				if (!lockparent) {
-					VOP_UNLOCK(vdp, p);
+					VOP_UNLOCK(vdp);
 					cnp->cn_flags |= PDIRUNLOCK;
 				}
 
@@ -144,13 +149,13 @@ fusefs_lookup(void *v)
 	}
 
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(vdp, p);	/* race to get the inode */
+		VOP_UNLOCK(vdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
 		if (error) {
-			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 
 			goto reclaim;
@@ -159,7 +164,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(vdp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}
@@ -179,7 +184,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 

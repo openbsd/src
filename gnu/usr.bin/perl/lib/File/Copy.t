@@ -24,6 +24,11 @@ BEGIN { *CORE::GLOBAL::rename = sub { CORE::rename($_[0], $_[1]) }; }
 use File::Copy qw(copy move cp);
 use Config;
 
+# If we have Time::HiRes, File::Copy loaded it for us.
+BEGIN {
+  eval { Time::HiRes->import(qw( stat utime )) };
+  note "Testing Time::HiRes::utime support" unless $@;
+}
 
 foreach my $code ("copy()", "copy('arg')", "copy('arg', 'arg', 'arg', 'arg')",
                   "move()", "move('arg')", "move('arg', 'arg', 'arg')"
@@ -100,7 +105,7 @@ for my $cross_partition_test (0..1) {
   ok -e "copy-$$",                '  target still there';
 
   # Doesn't really matter what time it is as long as its not now.
-  my $time = 1000000000;
+  my $time = 1000000000.12345;
   utime( $time, $time, "copy-$$" );
 
   # Recheck the mtime rather than rely on utime in case we're on a

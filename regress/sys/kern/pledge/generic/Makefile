@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.8 2017/02/21 15:46:25 tb Exp $
+#	$OpenBSD: Makefile,v 1.9 2017/10/12 15:07:53 bluhm Exp $
 PROG=	generic
-SRCS+=	main.c manager.c test_stdio.c test_tty.c
+SRCS=	main.c manager.c test_stdio.c test_tty.c
 NOMAN=	yes
 
 LDADD+=		-lutil

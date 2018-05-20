@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.28 2016/08/27 01:42:37 guenther Exp $ */
+/*	$OpenBSD: arptab.c,v 1.29 2018/04/26 12:42:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -37,9 +37,7 @@
  */
 
 
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 #include <sys/time.h>
 
 #include <net/if.h>
@@ -54,10 +52,10 @@
 
 #include <netdb.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <paths.h>
 #include <syslog.h>
 #include <string.h>
 #include <err.h>

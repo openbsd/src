@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.17 2017/08/12 21:47:59 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.25 2018/05/13 17:31:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,15 +170,16 @@
 #endif
 
 #include "bytestring.h"
+#include "ssl_tlsext.h"
 
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
 
 int
 ssl3_connect(SSL *s)
 {
-	void   (*cb)(const SSL *ssl, int type, int val) = NULL;
-	int	 ret = -1;
-	int	 new_state, state, skip = 0;
+	void (*cb)(const SSL *ssl, int type, int val) = NULL;
+	int ret = -1;
+	int new_state, state, skip = 0;
 
 	ERR_clear_error();
 	errno = 0;
@@ -210,10 +211,18 @@ ssl3_connect(SSL *s)
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
-			if ((s->version & 0xff00 ) != 0x0300) {
-				SSLerror(s, ERR_R_INTERNAL_ERROR);
-				ret = -1;
-				goto end;
+			if (SSL_IS_DTLS(s)) {
+				if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
+					SSLerror(s, ERR_R_INTERNAL_ERROR);
+					ret = -1;
+					goto end;
+				}
+			} else {
+				if ((s->version & 0xff00) != 0x0300) {
+					SSLerror(s, ERR_R_INTERNAL_ERROR);
+					ret = -1;
+					goto end;
+				}
 			}
 
 			/* s->version=SSL3_VERSION; */
@@ -234,24 +243,50 @@ ssl3_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			if (!tls1_init_finished_mac(s)) {
-				ret = -1;
-				goto end;
+			if (!SSL_IS_DTLS(s)) {
+				if (!tls1_init_finished_mac(s)) {
+					ret = -1;
+					goto end;
+				}
 			}
 
 			S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->internal->stats.sess_connect++;
 			s->internal->init_num = 0;
+
+			if (SSL_IS_DTLS(s)) {
+				/* mark client_random uninitialized */
+				memset(s->s3->client_random, 0,
+				    sizeof(s->s3->client_random));
+				D1I(s)->send_cookie = 0;
+				s->internal->hit = 0;
+			}
 			break;
 
 		case SSL3_ST_CW_CLNT_HELLO_A:
 		case SSL3_ST_CW_CLNT_HELLO_B:
-
 			s->internal->shutdown = 0;
-			ret = ssl3_client_hello(s);
+
+			if (SSL_IS_DTLS(s)) {
+				/* every DTLS ClientHello resets Finished MAC */
+				if (!tls1_init_finished_mac(s)) {
+					ret = -1;
+					goto end;
+				}
+
+				dtls1_start_timer(s);
+			}
+
+			ret = ssl3_send_client_hello(s);
 			if (ret <= 0)
 				goto end;
-			S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
+
+			if (SSL_IS_DTLS(s) && D1I(s)->send_cookie) {
+				S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
+				S3I(s)->hs.next_state = SSL3_ST_CR_SRVR_HELLO_A;
+			} else
+				S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
+
 			s->internal->init_num = 0;
 
 			/* turn on buffering for the next lot of output */
@@ -268,11 +303,29 @@ ssl3_connect(SSL *s)
 
 			if (s->internal->hit) {
 				S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
-				if (s->internal->tlsext_ticket_expected) {
-					/* receive renewed session ticket */
-					S3I(s)->hs.state = SSL3_ST_CR_SESSION_TICKET_A;
+				if (!SSL_IS_DTLS(s)) {
+					if (s->internal->tlsext_ticket_expected) {
+						/* receive renewed session ticket */
+						S3I(s)->hs.state = SSL3_ST_CR_SESSION_TICKET_A;
+					}
 				}
-			} else
+			} else if (SSL_IS_DTLS(s)) {
+				S3I(s)->hs.state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
+			} else {
+				S3I(s)->hs.state = SSL3_ST_CR_CERT_A;
+			}
+			s->internal->init_num = 0;
+			break;
+
+		case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A:
+		case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B:
+			ret = dtls1_get_hello_verify(s);
+			if (ret <= 0)
+				goto end;
+			dtls1_stop_timer(s);
+			if (D1I(s)->send_cookie) /* start again, with a cookie */
+				S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
+			else
 				S3I(s)->hs.state = SSL3_ST_CR_CERT_A;
 			s->internal->init_num = 0;
 			break;
@@ -340,6 +393,8 @@ ssl3_connect(SSL *s)
 			ret = ssl3_get_server_done(s);
 			if (ret <= 0)
 				goto end;
+			if (SSL_IS_DTLS(s))
+				dtls1_stop_timer(s);
 			if (S3I(s)->tmp.cert_req)
 				S3I(s)->hs.state = SSL3_ST_CW_CERT_A;
 			else
@@ -352,6 +407,8 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CW_CERT_B:
 		case SSL3_ST_CW_CERT_C:
 		case SSL3_ST_CW_CERT_D:
+			if (SSL_IS_DTLS(s))
+				dtls1_start_timer(s);
 			ret = ssl3_send_client_certificate(s);
 			if (ret <= 0)
 				goto end;
@@ -361,6 +418,8 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CW_KEY_EXCH_A:
 		case SSL3_ST_CW_KEY_EXCH_B:
+			if (SSL_IS_DTLS(s))
+				dtls1_start_timer(s);
 			ret = ssl3_send_client_key_exchange(s);
 			if (ret <= 0)
 				goto end;
@@ -386,9 +445,11 @@ ssl3_connect(SSL *s)
 				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
 				S3I(s)->change_cipher_spec = 0;
 			}
-			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
-				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
-				S3I(s)->change_cipher_spec = 0;
+			if (!SSL_IS_DTLS(s)) {
+				if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
+					S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
+					S3I(s)->change_cipher_spec = 0;
+				}
 			}
 
 			s->internal->init_num = 0;
@@ -396,6 +457,8 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CW_CERT_VRFY_A:
 		case SSL3_ST_CW_CERT_VRFY_B:
+			if (SSL_IS_DTLS(s))
+				dtls1_start_timer(s);
 			ret = ssl3_send_client_verify(s);
 			if (ret <= 0)
 				goto end;
@@ -406,6 +469,8 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CW_CHANGE_A:
 		case SSL3_ST_CW_CHANGE_B:
+			if (SSL_IS_DTLS(s) && !s->internal->hit)
+				dtls1_start_timer(s);
 			ret = ssl3_send_change_cipher_spec(s,
 			    SSL3_ST_CW_CHANGE_A, SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0)
@@ -426,37 +491,35 @@ ssl3_connect(SSL *s)
 				goto end;
 			}
 
+			if (SSL_IS_DTLS(s))
+				dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
+
 			break;
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
+			if (SSL_IS_DTLS(s) && !s->internal->hit)
+				dtls1_start_timer(s);
 			ret = ssl3_send_finished(s, SSL3_ST_CW_FINISHED_A,
-			    SSL3_ST_CW_FINISHED_B,
-			    TLS_MD_CLIENT_FINISH_CONST,
+			    SSL3_ST_CW_FINISHED_B, TLS_MD_CLIENT_FINISH_CONST,
 			    TLS_MD_CLIENT_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
-			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			if (!SSL_IS_DTLS(s))
+				s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 
 			/* clear flags */
-			s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
 				S3I(s)->hs.next_state = SSL_ST_OK;
-				if (s->s3->flags &
-				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
-					S3I(s)->hs.state = SSL_ST_OK;
-					s->s3->flags|=SSL3_FLAGS_POP_BUFFER;
-					S3I(s)->delay_buf_pop_ret = 0;
-				}
 			} else {
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
 					S3I(s)->hs.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
-
-				S3I(s)->hs.next_state = SSL3_ST_CR_FINISHED_A;
+					S3I(s)->hs.next_state =
+					    SSL3_ST_CR_FINISHED_A;
 			}
 			s->internal->init_num = 0;
 			break;
@@ -481,11 +544,16 @@ ssl3_connect(SSL *s)
 
 		case SSL3_ST_CR_FINISHED_A:
 		case SSL3_ST_CR_FINISHED_B:
-			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+			if (SSL_IS_DTLS(s))
+				D1I(s)->change_cipher_spec_ok = 1;
+			else
+				s->s3->flags |= SSL3_FLAGS_CCS_OK;
 			ret = ssl3_get_finished(s, SSL3_ST_CR_FINISHED_A,
 			    SSL3_ST_CR_FINISHED_B);
 			if (ret <= 0)
 				goto end;
+			if (SSL_IS_DTLS(s))
+				dtls1_stop_timer(s);
 
 			if (s->internal->hit)
 				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
@@ -497,6 +565,13 @@ ssl3_connect(SSL *s)
 		case SSL3_ST_CW_FLUSH:
 			s->internal->rwstate = SSL_WRITING;
 			if (BIO_flush(s->wbio) <= 0) {
+				if (SSL_IS_DTLS(s)) {
+					/* If the write error was fatal, stop trying */
+					if (!BIO_should_retry(s->wbio)) {
+						s->internal->rwstate = SSL_NOTHING;
+						S3I(s)->hs.state = S3I(s)->hs.next_state;
+					}
+				}
 				ret = -1;
 				goto end;
 			}
@@ -508,16 +583,12 @@ ssl3_connect(SSL *s)
 			/* clean a few things up */
 			tls1_cleanup_key_block(s);
 
-			BUF_MEM_free(s->internal->init_buf);
-			s->internal->init_buf = NULL;
+			if (!SSL_IS_DTLS(s)) {
+				BUF_MEM_free(s->internal->init_buf);
+				s->internal->init_buf = NULL;
+			}
 
-			/*
-			 * If we are not 'joining' the last two packets,
-			 * remove the buffering now
-			 */
-			if (!(s->s3->flags & SSL3_FLAGS_POP_BUFFER))
-				ssl_free_wbio_buffer(s);
-			/* else do it later in ssl3_write */
+			ssl_free_wbio_buffer(s);
 
 			s->internal->init_num = 0;
 			s->internal->renegotiate = 0;
@@ -534,6 +605,12 @@ ssl3_connect(SSL *s)
 
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+
+			if (SSL_IS_DTLS(s)) {
+				/* done with handshaking */
+				D1I(s)->handshake_read_seq = 0;
+				D1I(s)->next_handshake_write_seq = 0;
+			}
 
 			goto end;
 			/* break; */
@@ -571,14 +648,14 @@ end:
 }
 
 int
-ssl3_client_hello(SSL *s)
+ssl3_send_client_hello(SSL *s)
 {
-	unsigned char	*bufend, *p, *d;
-	uint16_t	 max_version;
-	size_t		 outlen;
-	int		 i;
+	CBB cbb, client_hello, session_id, cookie, cipher_suites;
+	CBB compression_methods;
+	uint16_t max_version;
+	size_t sl;
 
-	bufend = (unsigned char *)s->internal->init_buf->data + SSL3_RT_MAX_PLAIN_LENGTH;
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_A) {
 		SSL_SESSION *sess = s->session;
@@ -589,10 +666,10 @@ ssl3_client_hello(SSL *s)
 		}
 		s->client_version = s->version = max_version;
 
-		if ((sess == NULL) ||
-		    (sess->ssl_version != s->version) ||
+		if (sess == NULL ||
+		    sess->ssl_version != s->version ||
 		    (!sess->session_id_length && !sess->tlsext_tick) ||
-		    (sess->internal->not_resumable)) {
+		    sess->internal->not_resumable) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
 		}
@@ -606,7 +683,9 @@ ssl3_client_hello(SSL *s)
 		if (!SSL_IS_DTLS(s) || D1I(s)->send_cookie == 0)
 			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_CLIENT_HELLO);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &client_hello,
+		    SSL3_MT_CLIENT_HELLO))
+			goto err;
 
 		/*
 		 * Version indicates the negotiated version: for example from
@@ -638,27 +717,27 @@ ssl3_client_hello(SSL *s)
 		 * client_version in client hello and not resetting it to
 		 * the negotiated version.
 		 */
-
-		*(p++) = s->client_version >> 8;
-		*(p++) = s->client_version & 0xff;
+		if (!CBB_add_u16(&client_hello, s->client_version))
+			goto err;
 
 		/* Random stuff */
-		memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
-		p += SSL3_RANDOM_SIZE;
+		if (!CBB_add_bytes(&client_hello, s->s3->client_random,
+		    sizeof(s->s3->client_random)))
+			goto err;
 
 		/* Session ID */
-		if (s->internal->new_session)
-			i = 0;
-		else
-			i = s->session->session_id_length;
-		*(p++) = i;
-		if (i != 0) {
-			if (i > (int)sizeof(s->session->session_id)) {
+		if (!CBB_add_u8_length_prefixed(&client_hello, &session_id))
+			goto err;
+		if (!s->internal->new_session &&
+		    s->session->session_id_length > 0) {
+			sl = s->session->session_id_length;
+			if (sl > sizeof(s->session->session_id)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			memcpy(p, s->session->session_id, i);
-			p += i;
+			if (!CBB_add_bytes(&session_id,
+			    s->session->session_id, sl))
+				goto err;
 		}
 
 		/* DTLS Cookie. */
@@ -667,33 +746,37 @@ ssl3_client_hello(SSL *s)
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			*(p++) = D1I(s)->cookie_len;
-			memcpy(p, D1I(s)->cookie, D1I(s)->cookie_len);
-			p += D1I(s)->cookie_len;
+			if (!CBB_add_u8_length_prefixed(&client_hello, &cookie))
+				goto err;
+			if (!CBB_add_bytes(&cookie, D1I(s)->cookie,
+			    D1I(s)->cookie_len))
+				goto err;
 		}
 
 		/* Ciphers supported */
-		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &p[2],
-		    bufend - &p[2], &outlen))
-			goto err;
-		if (outlen == 0) {
+		if (!CBB_add_u16_length_prefixed(&client_hello, &cipher_suites))
+			return 0;
+		if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s),
+		    &cipher_suites)) {
 			SSLerror(s, SSL_R_NO_CIPHERS_AVAILABLE);
 			goto err;
 		}
-		s2n(outlen, p);
-		p += outlen;
 
-		/* add in (no) COMPRESSION */
-		*(p++) = 1;
-		*(p++) = 0; /* Add the NULL method */
+		/* Add in compression methods (null) */
+		if (!CBB_add_u8_length_prefixed(&client_hello,
+		    &compression_methods))
+			goto err;
+		if (!CBB_add_u8(&compression_methods, 0))
+			goto err;
 
-		/* TLS extensions*/
-		if ((p = ssl_add_clienthello_tlsext(s, p, bufend)) == NULL) {
+		/* TLS extensions */
+		if (!tlsext_clienthello_build(s, &client_hello)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
 
-		ssl3_handshake_msg_finish(s, p - d);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_B;
 	}
@@ -702,6 +785,8 @@ ssl3_client_hello(SSL *s)
 	return (ssl3_handshake_write(s));
 
 err:
+	CBB_cleanup(&cbb);
+
 	return (-1);
 }
 
@@ -715,7 +800,6 @@ ssl3_get_server_hello(SSL *s)
 	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
-	unsigned char *p;
 	unsigned long alg_k;
 	size_t outlen;
 	int i, al, ok;
@@ -913,21 +997,30 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	/* TLS extensions. */
-	p = (unsigned char *)CBS_data(&cbs);
-	if (!ssl_parse_serverhello_tlsext(s, &p, CBS_len(&cbs), &al)) {
-		/* 'al' set by ssl_parse_serverhello_tlsext */
+	if (!tlsext_serverhello_parse(s, &cbs, &al)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
+
+	/*
+	 * Determine if we need to see RI. Strictly speaking if we want to
+	 * avoid an attack we should *always* see RI even on initial server
+	 * hello because the client doesn't see any renegotiation during an
+	 * attack. However this would mean we could not connect to any server
+	 * which doesn't support RI so for the immediate future tolerate RI
+	 * absence on initial connect only.
+	 */
+	if (!S3I(s)->renegotiate_seen &&
+	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
+		al = SSL_AD_HANDSHAKE_FAILURE;
+		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		goto f_err;
+	}
+
 	if (ssl_check_serverhello_tlsext(s) <= 0) {
 		SSLerror(s, SSL_R_SERVERHELLO_TLSEXT);
 		goto err;
 	}
-
-	/* See if any data remains... */
-	if (p - CBS_data(&cbs) != CBS_len(&cbs))
-		goto truncated;
 
 	return (1);
 
@@ -2020,7 +2113,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	}
 
 	/* Generate a new ECDH key pair. */
-	if (!(EC_KEY_generate_key(ecdh))) {
+	if (!EC_KEY_generate_key(ecdh)) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
@@ -2030,6 +2123,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	}
 	if ((key = malloc(key_size)) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
 	}
 	key_len = ECDH_compute_key(key, key_size, point, ecdh, NULL);
 	if (key_len <= 0) {

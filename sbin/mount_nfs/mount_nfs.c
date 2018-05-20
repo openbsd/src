@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.53 2016/05/27 19:45:04 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.54 2018/01/05 08:13:31 mpi Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <syslog.h>
 

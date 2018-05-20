@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.33 2017/08/11 21:24:19 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.37 2018/04/26 10:45:45 pirofti Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -48,8 +48,13 @@
 #include <net/route.h>
 
 struct	fileops socketops = {
-	soo_read, soo_write, soo_ioctl, soo_poll, soo_kqfilter,
-	soo_stat, soo_close
+	.fo_read	= soo_read,
+	.fo_write	= soo_write,
+	.fo_ioctl	= soo_ioctl,
+	.fo_poll	= soo_poll,
+	.fo_kqfilter	= soo_kqfilter,
+	.fo_stat	= soo_stat,
+	.fo_close	= soo_close
 };
 
 int
@@ -125,17 +130,13 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		 * different entry since a socket's unnecessary
 		 */
 		if (IOCGROUP(cmd) == 'i') {
-			NET_LOCK();
 			error = ifioctl(so, cmd, data, p);
-			NET_UNLOCK();
 			return (error);
 		}
 		if (IOCGROUP(cmd) == 'r')
 			return (EOPNOTSUPP);
-		s = solock(so);
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data, NULL, p));
-		sounlock(s);
 		break;
 	}
 
@@ -168,11 +169,11 @@ soo_poll(struct file *fp, int events, struct proc *p)
 	if (revents == 0) {
 		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 			selrecord(p, &so->so_rcv.sb_sel);
-			so->so_rcv.sb_flagsintr |= SB_SEL;
+			so->so_rcv.sb_flags |= SB_SEL;
 		}
 		if (events & (POLLOUT | POLLWRNORM)) {
 			selrecord(p, &so->so_snd.sb_sel);
-			so->so_snd.sb_flagsintr |= SB_SEL;
+			so->so_snd.sb_flags |= SB_SEL;
 		}
 	}
 	sounlock(s);

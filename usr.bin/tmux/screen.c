@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.48 2017/10/05 13:29:18 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.50 2017/11/15 19:21:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,7 +197,8 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		 * is simpler and more reliable so let's do that.
 		 */
 		screen_reset_tabs(s);
-	}
+	} else
+		reflow = 0;
 
 	if (sy != screen_size_y(s))
 		screen_resize_y(s, sy);
@@ -469,14 +470,5 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 static void
 screen_reflow(struct screen *s, u_int new_x)
 {
-	struct grid	*old = s->grid;
-	u_int		 change;
-
-	s->grid = grid_create(old->sx, old->sy, old->hlimit);
-
-	change = grid_reflow(s->grid, old, new_x);
-	if (change < s->cy)
-		s->cy -= change;
-	else
-		s->cy = 0;
+	grid_reflow(s->grid, new_x, &s->cy);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_machdep.c,v 1.4 2016/07/16 06:41:20 tom Exp $	*/
+/*	$OpenBSD: arm_machdep.c,v 1.5 2018/03/16 21:46:04 kettenis Exp $	*/
 /*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 #include <sys/pool.h>
 
 #include <arm/cpufunc.h>
+#include <arm/vfp.h>
 
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
@@ -108,6 +109,11 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 {
 	struct trapframe *tf;
 
+	/* If we were using the FPU, forget about it. */
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		vfp_discard(p);
+	p->p_addr->u_pcb.pcb_flags &= ~PCB_FPU;
+
 	tf = p->p_addr->u_pcb.pcb_tf;
 
 	memset(tf, 0, sizeof(*tf));
@@ -118,6 +124,5 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_pc = pack->ep_entry;
 	tf->tf_spsr = PSR_USR32_MODE;
 
-	p->p_addr->u_pcb.pcb_flags = 0;
 	retval[1] = 0;
 }

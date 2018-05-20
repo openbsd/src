@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2017/08/23 15:49:08 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.26 2018/05/18 11:06:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -63,6 +63,8 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#include <crypto/sha2.h>
 
 #include <errno.h>
 #include <event.h>
@@ -179,6 +181,7 @@ struct address_proposal {
 	uint8_t				 prefix_len;
 	uint32_t			 vltime;
 	uint32_t			 pltime;
+	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
 };
 
 struct dfr_proposal {
@@ -204,8 +207,10 @@ struct slaacd_iface {
 	uint32_t			 if_index;
 	int				 running;
 	int				 autoconfprivacy;
+	int				 soii;
 	struct ether_addr		 hw_address;
 	struct sockaddr_in6		 ll_address;
+	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
 	LIST_HEAD(, radv)		 radvs;
 	LIST_HEAD(, address_proposal)	 addr_proposals;
 	LIST_HEAD(, dfr_proposal)	 dfr_proposals;
@@ -254,6 +259,8 @@ struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 struct dfr_proposal	*find_dfr_proposal_by_id(struct slaacd_iface *,
 			     int64_t);
+struct dfr_proposal	*find_dfr_proposal_by_gw(struct slaacd_iface *,
+			     struct sockaddr_in6 *);
 void			 find_prefix(struct slaacd_iface *, struct
 			     address_proposal *, struct radv **, struct
 			     radv_prefix **);
@@ -384,6 +391,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct address_proposal		*addr_proposal = NULL;
 	struct dfr_proposal		*dfr_proposal = NULL;
 	struct imsg_del_addr		 del_addr;
+	struct imsg_del_route		 del_route;
 	ssize_t				 n;
 	int				 shut = 0;
 #ifndef	SMALL
@@ -516,6 +524,28 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			}
 
 			break;
+		case IMSG_DEL_ROUTE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(del_route))
+				fatal("%s: IMSG_DEL_ROUTE wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&del_route, imsg.data, sizeof(del_route));
+			iface = get_slaacd_iface_by_id(del_route.if_index);
+			if (iface == NULL) {
+				log_debug("IMSG_DEL_ROUTE: unknown interface"
+				    ", ignoring");
+				break;
+			}
+
+			dfr_proposal = find_dfr_proposal_by_gw(iface,
+			    &del_route.gw);
+
+			if (dfr_proposal) {
+				dfr_proposal->state = PROPOSAL_WITHDRAWN;
+				free_dfr_proposal(dfr_proposal);
+				start_probe(iface);
+			}
+			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -573,16 +603,13 @@ engine_dispatch_main(int fd, short event, void *bula)
 			 * Setup pipe and event handler to the frontend
 			 * process.
 			 */
-			if (iev_frontend) {
-				log_warnx("%s: received unexpected imsg fd "
+			if (iev_frontend)
+				fatalx("%s: received unexpected imsg fd "
 				    "to engine", __func__);
-				break;
-			}
-			if ((fd = imsg.fd) == -1) {
-				log_warnx("%s: expected to receive imsg fd to "
+
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg fd to "
 				   "engine but didn't receive any", __func__);
-				break;
-			}
 
 			iev_frontend = malloc(sizeof(struct imsgev));
 			if (iev_frontend == NULL)
@@ -621,12 +648,15 @@ engine_dispatch_main(int fd, short event, void *bula)
 					iface->state = IF_DOWN;
 				iface->autoconfprivacy =
 				    imsg_ifinfo.autoconfprivacy;
+				iface->soii = imsg_ifinfo.soii;
 				memcpy(&iface->hw_address,
 				    &imsg_ifinfo.hw_address,
 				    sizeof(struct ether_addr));
 				memcpy(&iface->ll_address,
 				    &imsg_ifinfo.ll_address,
 				    sizeof(struct sockaddr_in6));
+				memcpy(iface->soiikey, imsg_ifinfo.soiikey,
+				    sizeof(iface->soiikey));
 				LIST_INIT(&iface->radvs);
 				LIST_INSERT_HEAD(&slaacd_interfaces,
 				    iface, entries);
@@ -641,12 +671,28 @@ engine_dispatch_main(int fd, short event, void *bula)
 					    imsg_ifinfo.autoconfprivacy;
 					need_refresh = 1;
 				}
+
+				if (iface->soii !=
+				    imsg_ifinfo.soii) {
+					iface->soii =
+					    imsg_ifinfo.soii;
+					need_refresh = 1;
+				}
+
 				if (memcmp(&iface->hw_address,
 					    &imsg_ifinfo.hw_address,
 					    sizeof(struct ether_addr)) != 0) {
 					memcpy(&iface->hw_address,
 					    &imsg_ifinfo.hw_address,
 					    sizeof(struct ether_addr));
+					need_refresh = 1;
+				}
+				if (memcmp(iface->soiikey,
+					    imsg_ifinfo.soiikey,
+					    sizeof(iface->soiikey)) != 0) {
+					memcpy(iface->soiikey,
+					    imsg_ifinfo.soiikey,
+					    sizeof(iface->soiikey));
 					need_refresh = 1;
 				}
 
@@ -766,6 +812,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	cei.if_index = iface->if_index;
 	cei.running = iface->running;
 	cei.autoconfprivacy = iface->autoconfprivacy;
+	cei.soii = iface->soii;
 	memcpy(&cei.hw_address, &iface->hw_address, sizeof(struct ether_addr));
 	memcpy(&cei.ll_address, &iface->ll_address,
 	    sizeof(struct sockaddr_in6));
@@ -1212,23 +1259,16 @@ void
 gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
     address_proposal *addr_proposal, int privacy)
 {
-	struct in6_addr	priv_in6;
+	SHA2_CTX ctx;
+	struct in6_addr	iid;
+	int dad_counter = 0; /* XXX not used */
+	u_int8_t digest[SHA512_DIGEST_LENGTH];
+
+	memset(&iid, 0, sizeof(iid));
 
 	/* from in6_ifadd() in nd6_rtr.c */
 	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
 #define s6_addr32 __u6_addr.__u6_addr32
-
-	/* XXX from in6_ifattach.c */
-#define EUI64_GBIT	0x01
-#define EUI64_UBIT	0x02
-
-	if (privacy) {
-		arc4random_buf(&priv_in6.s6_addr32[2], 8);
-		priv_in6.s6_addr[8] &= ~EUI64_GBIT; /* g bit to "individual" */
-		priv_in6.s6_addr[8] |= EUI64_UBIT;  /* u bit to "local" */
-		/* convert EUI64 into IPv6 interface identifier */
-		priv_in6.s6_addr[8] ^= EUI64_UBIT;
-	}
 
 	in6_prefixlen2mask(&addr_proposal->mask, addr_proposal->prefix_len);
 
@@ -1250,29 +1290,34 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	    addr_proposal->mask.s6_addr32[3];
 
 	if (privacy) {
-		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-		    (priv_in6.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
-		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-		    (priv_in6.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
-		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-		    (priv_in6.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
-		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-		    (priv_in6.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
+		arc4random_buf(&iid.s6_addr, sizeof(iid.s6_addr));
+	} else if (iface->soii) {
+		SHA512Init(&ctx);
+		SHA512Update(&ctx, &prefix->prefix,
+		    sizeof(prefix->prefix));
+		SHA512Update(&ctx, &iface->hw_address,
+		    sizeof(iface->hw_address));
+		SHA512Update(&ctx, &dad_counter, sizeof(dad_counter));
+		SHA512Update(&ctx, addr_proposal->soiikey,
+		    sizeof(addr_proposal->soiikey));
+		SHA512Final(digest, &ctx);
+
+		memcpy(&iid.s6_addr, digest + (sizeof(digest) -
+		    sizeof(iid.s6_addr)), sizeof(iid.s6_addr));
 	} else {
-		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[0] &
-		    ~addr_proposal->mask.s6_addr32[0]);
-		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[1] &
-		    ~addr_proposal->mask.s6_addr32[1]);
-		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[2] &
-		    ~addr_proposal->mask.s6_addr32[2]);
-		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-		    (iface->ll_address.sin6_addr.s6_addr32[3] &
-		    ~addr_proposal->mask.s6_addr32[3]);
+		/* This is safe, because we have a 64 prefix len */
+		memcpy(&iid.s6_addr, &iface->ll_address.sin6_addr,
+		    sizeof(iid.s6_addr));
 	}
 
+	addr_proposal->addr.sin6_addr.s6_addr32[0] |=
+	    (iid.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
+	addr_proposal->addr.sin6_addr.s6_addr32[1] |=
+	    (iid.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
+	addr_proposal->addr.sin6_addr.s6_addr32[2] |=
+	    (iid.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
+	addr_proposal->addr.sin6_addr.s6_addr32[3] |=
+	    (iid.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
 #undef s6_addr32
 }
 
@@ -1634,7 +1679,6 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			if (!prefix->autonomous || prefix->vltime == 0 ||
 			    prefix->pltime > prefix->vltime ||
-			    prefix->prefix_len != 64 ||
 			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
 				continue;
 			found = 0;
@@ -1651,6 +1695,11 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				if (memcmp(&addr_proposal->hw_address,
 				    &iface->hw_address,
 				    sizeof(addr_proposal->hw_address)) != 0)
+					continue;
+
+				if (memcmp(&addr_proposal->soiikey,
+				    &iface->soiikey,
+				    sizeof(addr_proposal->soiikey)) != 0)
 					continue;
 
 				if (addr_proposal->privacy) {
@@ -1711,10 +1760,12 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				}
 			}
 
-			if (!found)
+			if (!found &&
+			    (iface->soii || prefix->prefix_len <= 64))
 				/* new proposal */
 				gen_address_proposal(iface, ra, prefix, 0);
 
+			/* privacy addresses do not depend on eui64 */
 			if (!found_privacy && iface->autoconfprivacy) {
 				if (prefix->pltime <
 				    ND6_PRIV_MAX_DESYNC_FACTOR) {
@@ -1800,6 +1851,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->if_index = iface->if_index;
 	memcpy(&addr_proposal->hw_address, &iface->hw_address,
 	    sizeof(addr_proposal->hw_address));
+	memcpy(&addr_proposal->soiikey, &iface->soiikey,
+	    sizeof(addr_proposal->soiikey));
 	addr_proposal->privacy = privacy;
 	memcpy(&addr_proposal->prefix, &prefix->prefix,
 	    sizeof(addr_proposal->prefix));
@@ -1904,10 +1957,7 @@ configure_dfr(struct dfr_proposal *dfr_proposal)
 
 	if (prev_state == PROPOSAL_CONFIGURED || prev_state ==
 	    PROPOSAL_NEARLY_EXPIRED) {
-		/*
-		 * nothing to do here, routes do not expire in the kernel
-		 * XXX check if the route got deleted and re-add it?
-		 */
+		/* nothing to do here, routes do not expire in the kernel */
 		return;
 	}
 
@@ -2059,12 +2109,16 @@ address_proposal_timeout(int fd, short events, void *arg)
 			log_debug("%s: removing address proposal", __func__);
 			break;
 		}
-		if (addr_proposal->privacy)
-			break; /* just let it expire */
 
 		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
 		    0, &addr_proposal->if_index,
 		    sizeof(addr_proposal->if_index));
+
+		if (addr_proposal->privacy) {
+			addr_proposal->next_timeout = 0;
+			break; /* just let it expire */
+		}
+
 		tv.tv_sec = addr_proposal->next_timeout;
 		tv.tv_usec = arc4random_uniform(1000000);
 		addr_proposal->next_timeout *= 2;
@@ -2238,6 +2292,20 @@ find_dfr_proposal_by_id(struct slaacd_iface *iface, int64_t id)
 
 	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
 		if (dfr_proposal->id == id)
+			return (dfr_proposal);
+	}
+
+	return (NULL);
+}
+
+struct dfr_proposal*
+find_dfr_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
+    *addr)
+{
+	struct dfr_proposal	*dfr_proposal;
+
+	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
+		if (memcmp(&dfr_proposal->addr, addr, sizeof(*addr)) == 0)
 			return (dfr_proposal);
 	}
 

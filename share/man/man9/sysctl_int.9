@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.5 2013/06/04 19:27:13 schwarze Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.6 2018/01/12 04:36:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: January 12 2018 $
 .Dt SYSCTL_INT 9
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@
 .Sh DESCRIPTION
 These functions and data structures aim to simplify and partially
 implement operations for the kernel and user implementations of the
-.Xr sysctl 3
+.Xr sysctl 2
 interface.
 A single
 .Xr syscall 9
@@ -199,7 +199,7 @@ Old and new length checks are performed and data is copied in and/or out.
 A read-only version of the above.
 .El
 .Sh SEE ALSO
-.Xr sysctl 3 ,
+.Xr sysctl 2 ,
 .Xr sysctl.conf 5 ,
 .Xr sysctl 8 ,
 .Xr syscall 9

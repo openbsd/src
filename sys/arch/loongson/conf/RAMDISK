@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2016/11/17 14:44:34 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2018/04/24 03:17:36 visa Exp $
 
 machine		loongson mips64
 maxusers	4
@@ -132,6 +132,7 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 zyd*		at uhub?		# Zydas ZD1211
 ugen*		at uhub?		# USB Generic driver
 
+em*		at pci?			# Intel Pro/1000 ethernet
 ral*		at pci?
 re*		at pci?
 rl*		at pci?

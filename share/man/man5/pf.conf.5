@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.567 2017/07/13 14:41:17 schwarze Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.574 2018/02/09 07:14:17 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: February 9 2018 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -625,6 +625,21 @@ pass in inet proto tcp from any to 1.2.3.5 \e
 The macro expansion for the
 .Cm label
 directive occurs only at configuration file parse time, not during runtime.
+.Pp
+.It Cm max-pkt-rate Ar number Ns / Ns Ar seconds
+Measure the rate of packets matching the rule and states created by it.
+When the specified rate is exceeded, the rule stops matching.
+Only packets in the direction in which the state was created are considered,
+so that typically requests are counted and replies are not.
+For example,
+to pass up to 100 ICMP packets per 10 seconds:
+.Bd -literal -offset indent
+block in proto icmp
+pass in proto icmp max-pkt-rate 100/10
+.Ed
+.Pp
+When the rate is exceeded, all ICMP is blocked until the rate falls below
+100 per 10 seconds again.
 .Pp
 .It Cm once
 Creates a one shot rule that will remove itself from an active ruleset after
@@ -1340,6 +1355,35 @@ States are bound to an interface.
 .It Cm floating
 States can match packets on any interfaces (the default).
 .El
+.It Ic set Cm syncookies never | always | adaptive
+When
+.Cm syncookies
+are active, pf will answer each and every incoming TCP SYN with a
+syncookie SYNACK, without allocating any resources.
+Upon reception of the client's ACK in response to the syncookie
+SYNACK, pf will evaluate the ruleset and create state if the ruleset
+permits it, complete the three way handshake with the target host,
+and continue the connection with synproxy in place.
+This allows pf to be resilient against large synflood attacks,
+which could otherwise exhaust the state table.
+Due to the blind answers to each and every SYN,
+syncookies share the caveats of synproxy:
+seemingly accepting connections that will be dropped later on.
+.Pp
+.Bl -tag -width adaptive -compact
+.It Cm never
+pf will never send syncookie SYNACKs.
+.It Cm always
+pf will always send syncookie SYNACKs.
+.It Cm adaptive
+pf will enable syncookie mode when a given percentage of the state table
+is used up by half-open TCP connections, such as those that saw the initial
+SYN but didn't finish the three way handshake.
+The thresholds for entering and leaving syncookie mode can be specified using:
+.Bd -literal -offset indent
+set syncookies adaptive (start 25%, end 12%)
+.Ed
+.El
 .It Ic set Cm timeout Ar variable value
 .Bl -tag -width "src.track" -compact
 .It Cm frag
@@ -1478,6 +1522,8 @@ The maximum bandwidth that should be assigned to a given queue can be limited
 using the
 .Cm max
 keyword.
+If a limitation isn't imposed on the root queue, borrowing can result in
+saturating the bandwidth of the outgoing interface.
 Similarly, a minimum (reserved) bandwidth can be specified:
 .Pp
 .Dl queue ssh parent std bandwidth 10M min 5M max 25M
@@ -1497,8 +1543,42 @@ and
 to represent kilobits, megabits, and gigabits per second, respectively.
 The value must not exceed the interface bandwidth.
 .Pp
-In addition to the bandwidth specifications queues support the following
-options:
+If multiple connections are assigned the same queue, they're not guaranteed
+to share the queue bandwidth fairly.
+An alternative flow queue manager can be used to achieve fair sharing by
+indicating how many simultaneous states are expected with a
+.Cm flows
+option, unless a minimum bandwidth has been specified as well.
+.Pp
+When packets are classified by the stateful inspection engine, a flow
+identifier is assigned to all packets belonging to the state,
+thus limiting the number of individual flows that can be recognized
+by the resolution of a flow identifier.
+The current implementation is able to classify traffic into 32767 distinct
+flows.
+However, efficient fair sharing is observed even with a much smaller number
+of flows.
+For example on a 10Mbit/s DSL or a cable modem uplink, the following simple
+configuration can be used:
+.Bd -literal -offset 4n
+queue outq on em0 bandwidth 9M max 9M flows 1024 qlimit 1024 \e
+      default
+.Ed
+.Pp
+It's important to specify the upper bound within 90-95% of the expected
+bandwidth and raise the default queue limit.
+.Pp
+If a
+.Cm flows
+option appears without a
+.Cm bandwidth
+specification, the flow queue manager is selected as the queueing discipline
+for the corresponding interface acting as a default queue for all outgoing
+packets.
+In such a scenario, a queueing hierarchy is not supported.
+.Pp
+In addition to the bandwidth and flow specifications, queues support the
+following options:
 .Bl -tag -width xxxx
 .It Cm default
 Packets not matched by another queue are assigned to this queue.
@@ -1510,6 +1590,12 @@ If not given, it operates on all matching interfaces.
 Defines which parent queue the queue should be attached to.
 Mandatory for all queues except root queues.
 The parent queue must exist.
+.It Cm quantum Ar size
+Specifies the quantum of service for the flow queue manager.
+The lower the quantum size the more advantage is given to streams of smaller
+packets at the expense of bulk transfers.
+The default value is set to the configured Maximum Transmission Unit (MTU)
+of the specified interface.
 .It Cm qlimit Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
@@ -1557,42 +1643,6 @@ pass out on em0 inet proto tcp from any to any port 22 \e
 pass out on em0 inet proto tcp from any to any port 25 \e
       set queue mail
 .Ed
-.Pp
-In addition to bandwidth management, a fair traffic sharing option
-is provided via a flow queue.
-When packets are classified by the stateful inspection engine, a flow
-identifier is assigned to all packets belonging to this state.
-Outgoing traffic is split according to these identifiers
-into individual queues and is serviced in a way that provides
-a fair share of bandwidth for all connections sharing the queue.
-.Pp
-Configuration of a flow queue is similar to a regular one,
-except flow queues don't build a hierarchy
-and thus only one flow queue may be specified per interface.
-.Pp
-The core parameter of a flow queue is the number of expected simultaneous
-connections, or
-.Cm flows ,
-limited by the resolution of the flow identifier (the current
-implementation is able to classify traffic into 32767 distinct flows).
-Thus a minimal flow queue configuration is:
-.Pp
-.Dl queue fq on em0 flows 1024
-.Pp
-Another value affecting the flow queue is a quantum of service.
-The lower the
-.Cm quantum
-the more advantage is given to streams of small packets at the expense
-of bulk transfers.
-The default value for
-.Cm quantum
-is selected based on the configured Maximum Transmission Unit (MTU)
-of the specified interface.
-.Pp
-An additional configuration option
-.Cm qlimit
-sets the queue depth shared among all flows.
-The default is 1024.
 .Sh TABLES
 Tables are named structures which can hold a collection of addresses and
 networks.
@@ -2686,6 +2736,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "divert-packet" "port" port | "divert-reply" |
                  "divert-to" host "port" port |
                  "label" string | "tag" string | [ "!" ] "tagged" string |
+                 "max-pkt-rate" number "/" seconds |
                  "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "set queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" | "prio" number |

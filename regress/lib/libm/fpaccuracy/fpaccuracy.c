@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpaccuracy.c,v 1.1 2009/04/09 01:24:43 martynas Exp $	*/
+/*	$OpenBSD: fpaccuracy.c,v 1.2 2018/03/10 20:52:58 kettenis Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
@@ -42,6 +42,8 @@ main(int argc, char *argv[])
 	retval |= fpaccuracy_pow2_x(out);
 	retval |= fpaccuracy_powx_275(out);
 	retval |= fpaccuracy_sin(out);
+	retval |= fpaccuracy_sincos_sin(out);
+	retval |= fpaccuracy_sincos_cos(out);
 	retval |= fpaccuracy_sinh(out);
 	retval |= fpaccuracy_sqrt(out);
 	retval |= fpaccuracy_tan(out);

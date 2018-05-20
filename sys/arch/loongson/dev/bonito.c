@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.33 2017/05/17 11:52:25 visa Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.34 2018/02/24 11:42:30 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -483,10 +483,7 @@ bonito_splx(int newipl)
 	struct cpu_info *ci = curcpu();
 
 	/* Update masks to new ipl. Order highly important! */
-	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
-	mips_sync();
-	__asm__ (".set reorder\n");
 	bonito_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
@@ -704,10 +701,7 @@ bonito_intr_dispatch(uint64_t isr, int startbit, struct trapframe *frame)
 					rc = 1;
 					ih->ih_count.ec_count++;
 				}
-				__asm__ (".set noreorder\n");
 				curcpu()->ci_ipl = frame->ipl;
-				mips_sync();
-				__asm__ (".set reorder\n");
 			}
 			if (rc == 0) {
 				printf("spurious interrupt %d\n", bitno);

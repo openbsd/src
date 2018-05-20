@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.2 2017/08/21 09:41:15 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tlsext_servername_callback.3,v 1.3 2018/03/23 01:06:56 schwarze Exp $
 .\"	OpenSSL 190b9a03 Jun 28 15:46:13 2017 +0800
 .\"	OpenSSL 8c55c461 Mar 29 08:34:37 2017 +1000
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 21 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3
 .Os
 .Sh NAME
@@ -146,3 +146,7 @@ returns 1 on success or 0 in case of an error.
 .Sh SEE ALSO
 .Xr SSL_CTX_callback_ctrl 3 ,
 .Xr SSL_CTX_set_alpn_select_cb 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.8f
+and have been available since
+.Ox 4.5 .

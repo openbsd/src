@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_ram.c,v 1.7 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: queue_ram.c,v 1.8 2018/05/14 15:23:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -202,12 +202,6 @@ queue_ram_message_fd_r(uint32_t msgid)
 }
 
 static int
-queue_ram_message_corrupt(uint32_t msgid)
-{
-	return (queue_ram_message_delete(msgid));
-}
-
-static int
 queue_ram_envelope_create(uint32_t msgid, const char *buf, size_t len,
     uint64_t *evpid)
 {
@@ -327,7 +321,6 @@ queue_ram_init(struct passwd *pw, int server, const char * conf)
 	queue_api_on_message_commit(queue_ram_message_commit);
 	queue_api_on_message_delete(queue_ram_message_delete);
 	queue_api_on_message_fd_r(queue_ram_message_fd_r);
-	queue_api_on_message_corrupt(queue_ram_message_corrupt);
 	queue_api_on_envelope_create(queue_ram_envelope_create);
 	queue_api_on_envelope_delete(queue_ram_envelope_delete);
 	queue_api_on_envelope_update(queue_ram_envelope_update);

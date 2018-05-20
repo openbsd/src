@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.32 2017/08/13 02:12:16 tedu Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.33 2018/04/25 17:41:23 tb Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -51,6 +51,8 @@
 #include "scores.h"
 #include "screen.h"
 #include "tetris.h"
+
+#define NUMKEYS 6
 
 cell	board[B_SIZE];
 int	Rows, Cols;
@@ -142,7 +144,6 @@ randshape(void)
 		tmp = &shapes[classic? tmp->rotc : tmp->rot];
 	return (tmp);
 }
-	
 
 int
 main(int argc, char *argv[])
@@ -150,7 +151,7 @@ main(int argc, char *argv[])
 	int pos, c;
 	char *keys;
 	int level = 2;
-	char key_write[6][10];
+	char key_write[NUMKEYS][10];
 	const char *errstr;
 	int ch, i, j;
 
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 			classic = 1;
 			break;
 		case 'k':
-			if (strlen(keys = optarg) != 6)
+			if (strlen(keys = optarg) != NUMKEYS)
 				usage();
 			break;
 		case 'l':
@@ -199,8 +200,8 @@ main(int argc, char *argv[])
 
 	fallrate = 1000000000L / level;
 
-	for (i = 0; i <= 5; i++) {
-		for (j = i+1; j <= 5; j++) {
+	for (i = 0; i < NUMKEYS; i++) {
+		for (j = i+1; j < NUMKEYS; j++) {
 			if (keys[i] == keys[j])
 				errx(1, "duplicate command keys specified.");
 		}

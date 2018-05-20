@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.8 2017/08/28 17:41:59 jsing Exp $
+.\"	$OpenBSD: EVP_PKEY_CTX_ctrl.3,v 1.11 2018/03/23 23:18:17 schwarze Exp $
 .\"	OpenSSL EVP_PKEY_CTX_ctrl.pod 1722496f Jun 8 15:18:38 2017 -0400
 .\"	OpenSSL EVP_PKEY_CTX_ctrl.pod e03af178 Dec 11 17:05:57 2014 -0500
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt EVP_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -284,8 +284,11 @@ supported by the public key algorithm.
 .Xr EVP_PKEY_encrypt 3 ,
 .Xr EVP_PKEY_get_default_digest_nid 3 ,
 .Xr EVP_PKEY_keygen 3 ,
+.Xr EVP_PKEY_meth_set_ctrl 3 ,
 .Xr EVP_PKEY_sign 3 ,
 .Xr EVP_PKEY_verify 3 ,
 .Xr EVP_PKEY_verify_recover 3
 .Sh HISTORY
-These functions were first added to OpenSSL 1.0.0.
+These functions first appeared in OpenSSL 1.0.0
+and have been available since
+.Ox 4.9 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.65 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.69 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -192,10 +192,12 @@ fail:
 		}
 		dp = (struct vnode *)fp->f_data;
 		if (fp->f_type != DTYPE_VNODE || dp->v_type != VDIR) {
+			FRELE(fp, p);
 			pool_put(&namei_pool, cnp->cn_pnbuf);
 			return (ENOTDIR);
 		}
 		vref(dp);
+		FRELE(fp, p);
 	}
 	for (;;) {
 		if (!dp->v_mount) {
@@ -220,7 +222,7 @@ fail:
 			return(0);
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-			VOP_UNLOCK(ndp->ni_dvp, p);
+			VOP_UNLOCK(ndp->ni_dvp);
 		if (ndp->ni_loopcnt++ >= SYMLOOP_MAX) {
 			error = ELOOP;
 			break;
@@ -332,7 +334,6 @@ vfs_lookup(struct nameidata *ndp)
 	int dpunlocked = 0;		/* dp has already been unlocked */
 	int slashes;
 	struct componentname *cnp = &ndp->ni_cnd;
-	struct proc *p = cnp->cn_proc;
 	/*
 	 * Setup: break out flag bits into variables.
 	 */
@@ -346,7 +347,7 @@ vfs_lookup(struct nameidata *ndp)
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = ndp->ni_startdir;
 	ndp->ni_startdir = NULLVP;
-	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * If we have a leading string of slashes, remove them, and just make
@@ -473,7 +474,7 @@ dirloop:
 			dp = dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
 			vref(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
 
@@ -551,7 +552,7 @@ dirloop:
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		if (vfs_busy(mp, VB_READ|VB_WAIT))
 			continue;
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error) {
@@ -618,13 +619,13 @@ terminal:
 			vrele(ndp->ni_dvp);
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN) &&
 	    ((cnp->cn_flags & PDIRUNLOCK) == 0))
-		VOP_UNLOCK(ndp->ni_dvp, p);
+		VOP_UNLOCK(ndp->ni_dvp);
 	vrele(ndp->ni_dvp);
 bad:
 	if (dpunlocked)
@@ -641,7 +642,6 @@ bad:
 int
 vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
-	struct proc *p = cnp->cn_proc;
 	struct vnode *dp = 0;		/* the directory we are searching */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
@@ -657,7 +657,7 @@ vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = dvp;
-	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
 /* dirloop: */
 	/*
@@ -752,12 +752,12 @@ vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (!wantparent)
 		vrele(dvp);
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, p);
+		VOP_UNLOCK(dp);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-		VOP_UNLOCK(dvp, p);
+		VOP_UNLOCK(dvp);
 	vrele(dvp);
 bad:
 	vput(dp);

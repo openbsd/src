@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.42 2017/08/01 18:05:53 martijn Exp $	*/
+/*	$OpenBSD: compile.c,v 1.47 2017/12/13 16:07:54 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -59,7 +59,7 @@ static struct labhash {
 
 static char	 *compile_addr(char *, struct s_addr *);
 static char	 *compile_ccl(char **, char *);
-static char	 *compile_delimited(char *, char *, int);
+static char	 *compile_delimited(char *, char *);
 static char	 *compile_flags(char *, struct s_subst *);
 static char	 *compile_re(char *, regex_t **);
 static char	 *compile_subst(char *, struct s_subst *);
@@ -277,6 +277,8 @@ nonsel:		/* Now parse the command */
 			pledge_rpath = 1;
 			p++;
 			EATSPACE();
+			if (*p == '\0')
+				error(COMPILE, "filename expected");
 			cmd->t = duptoeol(p, "read command", NULL);
 			break;
 		case BRANCH:			/* b t */
@@ -349,7 +351,7 @@ nonsel:		/* Now parse the command */
  * with the processed string.
  */
 static char *
-compile_delimited(char *p, char *d, int is_tr)
+compile_delimited(char *p, char *d)
 {
 	char c;
 
@@ -374,10 +376,7 @@ compile_delimited(char *p, char *d, int is_tr)
 			p += 2;
 			continue;
 		} else if (*p == '\\' && p[1] == '\\') {
-			if (is_tr)
-				p++;
-			else
-				*d++ = *p++;
+			*d++ = *p++;
 		} else if (*p == c) {
 			*d = '\0';
 			return (p + 1);
@@ -434,7 +433,7 @@ compile_re(char *p, regex_t **repp)
 	char *re;
 
 	re = xmalloc(strlen(p) + 1); /* strlen(re) <= strlen(p) */
-	p = compile_delimited(p, re, 0);
+	p = compile_delimited(p, re);
 	if (p && strlen(re) == 0) {
 		*repp = NULL;
 		free(re);
@@ -459,7 +458,7 @@ compile_subst(char *p, struct s_subst *s)
 {
 	static char *lbuf;
 	static size_t bufsize;
-	int asize, ref, size;
+	size_t asize, ref, size;
 	char c, *text, *op, *sp;
 	int sawesc = 0;
 
@@ -539,7 +538,6 @@ compile_flags(char *p, struct s_subst *s)
 {
 	int gn;			/* True if we have seen g or n */
 	long l;
-	char wfile[PATH_MAX], *q, *eq;
 
 	s->n = 1;				/* Default */
 	s->p = 0;
@@ -577,32 +575,17 @@ compile_flags(char *p, struct s_subst *s)
 			continue;
 		case 'w':
 			p++;
-#ifdef HISTORIC_PRACTICE
-			if (*p != ' ') {
-				warning("space missing before w wfile");
-				return (p);
-			}
-#endif
 			EATSPACE();
-			q = wfile;
-			eq = wfile + sizeof(wfile) - 1;
-			while (*p) {
-				if (*p == '\n')
-					break;
-				if (q >= eq)
-					error(COMPILE, "wfile too long");
-				*q++ = *p++;
-			}
-			*q = '\0';
-			if (q == wfile)
-				error(COMPILE, "no wfile specified");
-			s->wfile = strdup(wfile);
+			if (*p == '\0')
+				error(COMPILE, "filename expected");
+			s->wfile = duptoeol(p, "s command w flag", NULL);
+			*p = '\0';
 			if (aflag)
 				pledge_wpath = 1;
-			else if ((s->wfd = open(wfile,
+			else if ((s->wfd = open(s->wfile,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
-				error(FATAL, "%s: %s", wfile, strerror(errno));
+				error(FATAL, "%s: %s", s->wfile, strerror(errno));
 			return (p);
 		default:
 			error(COMPILE,
@@ -617,46 +600,62 @@ compile_flags(char *p, struct s_subst *s)
  * Compile a translation set of strings into a lookup table.
  */
 static char *
-compile_tr(char *p, char **transtab)
+compile_tr(char *old, char **transtab)
 {
 	int i;
-	char *lt, *op, *np;
-	char *old = NULL, *new = NULL;
+	char delimiter, check[UCHAR_MAX + 1];
+	char *new, *end;
 
-	if (*p == '\0' || *p == '\\')
-		error(COMPILE,
-"transform pattern can not be delimited by newline or backslash");
-	old = xmalloc(strlen(p) + 1);
-	p = compile_delimited(p, old, 1);
-	if (p == NULL) {
-		error(COMPILE, "unterminated transform source string");
-		goto bad;
-	}
-	new = xmalloc(strlen(p) + 1);
-	p = compile_delimited(--p, new, 1);
-	if (p == NULL) {
-		error(COMPILE, "unterminated transform target string");
-		goto bad;
-	}
-	EATSPACE();
-	if (strlen(new) != strlen(old)) {
-		error(COMPILE, "transform strings are not the same length");
-		goto bad;
-	}
+	memset(check, 0, sizeof(check));
+	delimiter = *old;
+	if (delimiter == '\\')
+		error(COMPILE, "\\ can not be used as a string delimiter");
+	else if (delimiter == '\n' || delimiter == '\0')
+		error(COMPILE, "newline can not be used as a string delimiter");
+
+	new = old++;
+	do {
+		if ((new = strchr(new + 1, delimiter)) == NULL)
+			error(COMPILE, "unterminated transform source string");
+	} while (*(new - 1) == '\\' && *(new -2) != '\\');
+	*new = '\0';
+	end = new++;
+	do {
+		if ((end = strchr(end + 1, delimiter)) == NULL)
+			error(COMPILE, "unterminated transform target string");
+	} while (*(end -1) == '\\' && *(end -2) != '\\');
+	*end = '\0';
+
 	/* We assume characters are 8 bits */
-	lt = xmalloc(UCHAR_MAX + 1);
+	*transtab = xmalloc(UCHAR_MAX + 1);
 	for (i = 0; i <= UCHAR_MAX; i++)
-		lt[i] = (char)i;
-	for (op = old, np = new; *op; op++, np++)
-		lt[(u_char)*op] = *np;
-	*transtab = lt;
-	free(old);
-	free(new);
-	return (p);
-bad:
-	free(old);
-	free(new);
-	return (NULL);
+		(*transtab)[i] = (char)i;
+
+	while (*old != '\0' && *new != '\0') {
+		if (*old == '\\') {
+			old++;
+			if (*old == 'n')
+				*old = '\n';
+			else if (*old != delimiter && *old != '\\')
+				error(COMPILE, "Unexpected character after "
+				    "backslash");
+		}
+		if (*new == '\\') {
+			new++;
+			if (*new == 'n')
+				*new = '\n';
+			else if (*new != delimiter && *new != '\\')
+				error(COMPILE, "Unexpected character after "
+				    "backslash");
+		}
+		if (check[(u_char) *old] == 1)
+			error(COMPILE, "Repeated character in source string");
+		check[(u_char) *old] = 1;
+		(*transtab)[(u_char) *old++] = *new++;
+	}
+	if (*old != '\0' || *new != '\0')
+		error(COMPILE, "transform strings are not the same length");
+	return end + 1;
 }
 
 /*
@@ -665,9 +664,9 @@ bad:
 static char *
 compile_text(void)
 {
-	int asize, esc_nl, size;
+	size_t asize, size, bufsize;
 	char *lbuf, *text, *p, *op, *s;
-	size_t bufsize;
+	int esc_nl;
 
 	lbuf = text = NULL;
 	asize = size = 0;

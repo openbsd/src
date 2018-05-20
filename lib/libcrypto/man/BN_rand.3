@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_rand.3,v 1.6 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: BN_rand.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt BN_RAND 3
 .Os
 .Sh NAME
@@ -139,13 +139,20 @@ The error codes can be obtained by
 .Xr RAND_bytes 3
 .Sh HISTORY
 .Fn BN_rand
-is available in all versions of SSLeay and OpenSSL.
+first appeared in SSLeay 0.5.1 and has been available since
+.Ox 2.4 .
+.Pp
 .Fn BN_pseudo_rand
-was added in OpenSSL 0.9.5.
+first appeared in OpenSSL 0.9.5 and has been available since
+.Ox 2.7 .
+.Pp
 The
 .Fa top
 == -1 case and the function
 .Fn BN_rand_range
-were added in OpenSSL 0.9.6a.
+first appeared in OpenSSL 0.9.6a and have been available since
+.Ox 3.0 .
+.Pp
 .Fn BN_pseudo_rand_range
-was added in OpenSSL 0.9.6c.
+first appeared in OpenSSL 0.9.6c and have been available since
+.Ox 3.2 .

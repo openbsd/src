@@ -1,9 +1,12 @@
-.\"	$OpenBSD: HMAC.3,v 1.7 2017/08/01 14:57:03 schwarze Exp $
-.\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" $OpenBSD: HMAC.3,v 1.13 2018/03/23 23:18:17 schwarze Exp $
+.\" full merge up to: OpenSSL crypto/hmac a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" selective merge up to: OpenSSL man3/HMAC b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
-.\" Copyright (c) 2000-2002, 2006, 2008, 2009, 2013, 2016 The OpenSSL Project.
-.\" All rights reserved.
+.\" This file was written by Ulf Moeller <ulf@openssl.org>,
+.\" Richard Levitte <levitte@openssl.org>, and
+.\" Matt Caswell <matt@openssl.org>.
+.\" Copyright (c) 2000-2002, 2006, 2008, 2009, 2013, 2015, 2016
+.\" The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,20 +52,24 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 1 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt HMAC 3
 .Os
 .Sh NAME
 .Nm HMAC ,
+.Nm HMAC_CTX_new ,
+.Nm HMAC_CTX_reset ,
+.Nm HMAC_CTX_free ,
 .Nm HMAC_CTX_init ,
-.Nm HMAC_Init ,
-.Nm HMAC_Init_ex ,
-.Nm HMAC_Update ,
-.Nm HMAC_Final ,
 .Nm HMAC_CTX_cleanup ,
 .Nm HMAC_cleanup ,
+.Nm HMAC_Init_ex ,
+.Nm HMAC_Init ,
+.Nm HMAC_Update ,
+.Nm HMAC_Final ,
 .Nm HMAC_CTX_copy ,
 .Nm HMAC_CTX_set_flags ,
+.Nm HMAC_CTX_get_md ,
 .Nm HMAC_size
 .Nd HMAC message authentication code
 .Sh SYNOPSIS
@@ -77,16 +84,27 @@
 .Fa "unsigned char *md"
 .Fa "unsigned int *md_len"
 .Fc
+.Ft HMAC_CTX *
+.Fn HMAC_CTX_new void
+.Ft int
+.Fo HMAC_CTX_reset
+.Fa "HMAC_CTX *ctx"
+.Fc
+.Ft void
+.Fo HMAC_CTX_free
+.Fa "HMAC_CTX *ctx"
+.Fc
 .Ft void
 .Fo HMAC_CTX_init
 .Fa "HMAC_CTX *ctx"
 .Fc
-.Ft int
-.Fo HMAC_Init
+.Ft void
+.Fo HMAC_CTX_cleanup
 .Fa "HMAC_CTX *ctx"
-.Fa "const void *key"
-.Fa "int key_len"
-.Fa "const EVP_MD *md"
+.Fc
+.Ft void
+.Fo HMAC_cleanup
+.Fa "HMAC_CTX *ctx"
 .Fc
 .Ft int
 .Fo HMAC_Init_ex
@@ -95,6 +113,13 @@
 .Fa "int key_len"
 .Fa "const EVP_MD *md"
 .Fa "ENGINE *impl"
+.Fc
+.Ft int
+.Fo HMAC_Init
+.Fa "HMAC_CTX *ctx"
+.Fa "const void *key"
+.Fa "int key_len"
+.Fa "const EVP_MD *md"
 .Fc
 .Ft int
 .Fo HMAC_Update
@@ -108,14 +133,6 @@
 .Fa "unsigned char *md"
 .Fa "unsigned int *len"
 .Fc
-.Ft void
-.Fo HMAC_CTX_cleanup
-.Fa "HMAC_CTX *ctx"
-.Fc
-.Ft void
-.Fo HMAC_cleanup
-.Fa "HMAC_CTX *ctx"
-.Fc
 .Ft int
 .Fo HMAC_CTX_copy
 .Fa "HMAC_CTX *dctx"
@@ -125,6 +142,10 @@
 .Fo HMAC_CTX_set_flags
 .Fa "HMAC_CTX *ctx"
 .Fa "unsigned long flags"
+.Fc
+.Ft const EVP_MD *
+.Fo HMAC_CTX_get_md
+.Fa "const HMAC_CTX *ctx"
 .Fc
 .Ft size_t
 .Fo HMAC_size
@@ -158,7 +179,7 @@ If
 .Fa md
 is
 .Dv NULL ,
-the digest is placed in a static array.
+the digest is placed in a static array, which is not thread safe.
 The size of the output is placed in
 .Fa md_len ,
 unless it is
@@ -170,19 +191,48 @@ can be
 .Xr EVP_ripemd160 3 ,
 etc.
 .Pp
-.Fn HMAC_CTX_init
-initialises a
+.Fn HMAC_CTX_new
+allocates and initializes a new
 .Vt HMAC_CTX
-before first use.
-It must be called.
+object.
+.Pp
+.Fn HMAC_CTX_reset
+zeroes and re-initializes
+.Fa ctx
+and associated resources, making it suitable for new computations
+as if it was deleted with
+.Fn HMAC_CTX_free
+and newly created with
+.Fn HMAC_CTX_new .
+.Pp
+.Fn HMAC_CTX_free
+erases the key and other data from
+.Fa ctx ,
+releases any associated resources, and finally frees
+.Fa ctx
+itself.
+.Pp
+.Fn HMAC_CTX_init
+is a deprecated function to initialize an empty
+.Vt HMAC_CTX
+object, similar to
+.Fn CTX_new
+but without the allocation.
+Calling it is required for static objects and objects on the stack
+before using them.
 .Pp
 .Fn HMAC_CTX_cleanup
-erases the key and other data from the
-.Vt HMAC_CTX
-and releases any associated resources.
-It must be called when an
-.Vt HMAC_CTX
-is no longer required.
+is a deprecated function to erase the key and other data from
+.Fa ctx
+and release any associated resources, similar to
+.Fn HMAC_CTX_free
+but without freeing
+.Fa ctx
+itself.
+Calling it is required for static objects and objects on the stack
+that were initialized with
+.Fn HMAC_CTX_init
+and are no longer needed.
 .Pp
 .Fn HMAC_cleanup
 is an alias for
@@ -193,39 +243,66 @@ It is deprecated and implemented as a macro.
 The following functions may be used if the message is not completely
 stored in memory:
 .Pp
-.Fn HMAC_Init
-initializes a
-.Vt HMAC_CTX
-structure to use the hash function
+.Fn HMAC_Init_ex
+sets up or reuses
+.Fa ctx
+to use the hash function
 .Fa evp_md
 and the key
-.Fa key
-which is
-.Fa key_len
-bytes long.
-It is deprecated and only included for backward compatibility with
-OpenSSL 0.9.6b.
-.Pp
-.Fn HMAC_Init_ex
-initializes or reuses a
-.Vt HMAC_CTX
-structure to use the function
-.Fa evp_md
-and key
 .Fa key .
 Either can be
 .Dv NULL ,
-in which case the existing one will be reused.
+in which case the existing one is reused.
+The
+.Fa ctx
+must have been created with
+.Fn HMAC_CTX_new
+or initialized with
 .Fn HMAC_CTX_init
-must have been called before the first use of an
-.Vt HMAC_CTX
-in this function.
-.Sy N.B.
-.Fn HMAC_Init
-had this undocumented behaviour in previous versions of OpenSSL -
-failure to switch to
+before the first use in this function.
+If
 .Fn HMAC_Init_ex
-in programs that expect it will cause them to stop working.
+is called with a
+.Dv NULL
+.Fa key
+but
+.Fa evp_md
+is neither
+.Dv NULL
+nor the same as the previous digest used by
+.Fa ctx ,
+then an error is returned because reuse of an existing key with a
+different digest is not supported.
+.Pp
+.Fn HMAC_Init
+is a deprecated wrapper around
+.Fn HMAC_Init_ex .
+If called with both
+.Fa key
+and
+.Fa md ,
+it calls
+.Fn HMAC_CTX_init
+first, which only makes sense for an empty, uninitialized
+.Fa ctx ,
+but not for one already initialized with
+.Fn HMAC_CTX_new
+or
+.Fn HMAC_CTX_init .
+If
+.Fa key
+or
+.Fa md
+is
+.Dv NULL ,
+it does not call
+.Fn HMAC_CTX_init ;
+so in this case,
+.Fa ctx
+already needs to be initialized with
+.Fn HMAC_CTX_new
+or
+.Fn HMAC_CTX_init .
 .Pp
 .Fn HMAC_Update
 can be called repeatedly with chunks of the message to be authenticated
@@ -260,12 +337,29 @@ returns a pointer to the message authentication code or
 .Dv NULL
 if an error occurred.
 .Pp
+.Fn HMAC_CTX_new
+returns a pointer to the new
+.Vt HMAC_CTX
+object or
+.Dv NULL
+if an error occurred.
+.Pp
+.Fn HMAC_CTX_reset ,
 .Fn HMAC_Init_ex ,
 .Fn HMAC_Update ,
 .Fn HMAC_Final ,
 and
 .Fn HMAC_CTX_copy
 return 1 for success or 0 if an error occurred.
+.Pp
+.Fn HMAC_CTX_get_md
+returns the message digest that was previously set for
+.Fa ctx
+with
+.Fn HMAC_Init_ex ,
+or
+.Dv NULL
+if none was set.
 .Pp
 .Fn HMAC_size
 returns the length in bytes of the underlying hash function output
@@ -276,21 +370,34 @@ or 0 on error.
 RFC 2104
 .Sh HISTORY
 .Fn HMAC ,
+.Fn HMAC_cleanup ,
 .Fn HMAC_Init ,
 .Fn HMAC_Update ,
 .Fn HMAC_Final ,
 and
-.Fn HMAC_cleanup
-are available since SSLeay 0.9.0.
+.Fn HMAC_size
+first appeared in SSLeay 0.9.0 and have been available since
+.Ox 2.4 .
 .Pp
 .Fn HMAC_CTX_init ,
-.Fn HMAC_Init_ex ,
+.Fn HMAC_CTX_cleanup ,
 and
-.Fn HMAC_CTX_cleanup
-are available since OpenSSL 0.9.7.
+.Fn HMAC_Init_ex
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Pp
-.Fn HMAC_Init_ex ,
-.Fn HMAC_Update ,
+.Fn HMAC_CTX_set_flags
+first appeared in OpenSSL 0.9.7f and have been available since
+.Ox 3.8 .
+.Pp
+.Fn HMAC_CTX_copy
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .
+.Pp
+.Fn HMAC_CTX_new ,
+.Fn HMAC_CTX_reset ,
+.Fn HMAC_CTX_free ,
 and
-.Fn HMAC_Final
-did not return values in versions of OpenSSL before 1.0.0.
+.Fn HMAC_CTX_get_md
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

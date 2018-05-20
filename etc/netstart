@@ -1,9 +1,15 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.186 2017/07/25 21:17:11 rpe Exp $
+#	$OpenBSD: netstart,v 1.198 2018/04/28 22:38:32 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
+
+# Show usage of the netstart script and exit.
+usage() {
+	print -u2 "usage: ${0##*/} [[-n] interface ...]"
+	exit 1
+}
 
 # Echo file $1 to stdout. Skip comment lines and delete everything
 # after the first '#' from other lines. Strip leading and trailing
@@ -72,10 +78,35 @@ parse_hn_line() {
 	set +o noglob
 }
 
+# Create interface $1 if it does not yet exist.
+# Usage: ifcreate if1
+ifcreate() {
+	local _if=$1
+
+	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1
+}
+
+# Create interfaces for network pseudo-devices referred to by hostname.if files.
+# Usage: vifscreate
+vifscreate() {
+	local _vif _hn _if
+
+	for _vif in $(ifconfig -C); do
+		for _hn in /etc/hostname.${_vif}+([[:digit:]]); do
+			[[ -f $_hn ]] || continue
+			_if=${_hn#/etc/hostname.}
+
+			if ! ifcreate $_if; then
+				print -u2 "${0##*/}: create for '$_if' failed."
+			fi
+		done
+	done
+}
+
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
-	local _if=$1 _hn=$HN_DIR/hostname.$1 _cmds _i=0 _line _stat
+	local _if=$1 _hn=/etc/hostname.$1 _cmds _i=0 _line _stat
 	set -A _cmds
 
 	# Interface names must be alphanumeric only.  We check to avoid
@@ -83,22 +114,21 @@ ifstart() {
 	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
 	if [[ ! -f $_hn ]]; then
-		echo "${0##*/}: $_hn: No such file or directory"
+		print -u2 "${0##*/}: $_hn: No such file or directory."
 		return
 	fi
 
 	# Not using stat(1), we can't rely on having /usr yet.
 	set -A _stat -- $(ls -nL $_hn)
 	if [[ "${_stat[0]}${_stat[2]}${_stat[3]}" != *---00 ]]; then
-		echo "WARNING: $_hn is insecure, fixing permissions"
+		print -u2 "WARNING: $_hn is insecure, fixing permissions."
 		chmod -LR o-rwx $_hn
 		chown -LR root:wheel $_hn
 	fi
 
 	# Check for ifconfig'able interface, except if -n option is specified.
 	if ! $PRINT_ONLY; then
-		(ifconfig $_if || ifconfig $_if create) >/dev/null 2>&1 ||
-		return
+		ifcreate $_if || return
 	fi
 
 	# Parse the hostname.if(5) file and fill _cmds array with interface
@@ -129,9 +159,9 @@ ifmstart() {
 	local _sifs=$1 _xifs=$2 _hn _if _sif _xif
 
 	for _sif in ${_sifs:-ALL}; do
-		for _hn in /etc/hostname.*; do
+		for _hn in /etc/hostname.+([[:alpha:]])+([[:digit:]]); do
+			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
-			[[ $_if == '*' ]] && continue
 
 			# Skip unwanted ifs.
 			for _xif in $_xifs; do
@@ -144,18 +174,30 @@ ifmstart() {
 	done
 }
 
-# Parse /etc/mygate and add default routes for IPv4 and IPv6
+# Parse /etc/mygate and add default routes for IPv4 and IPv6.
 # Usage: defaultroute
 defaultroute() {
+	local _cmd;
+
 	! $V4_DHCPCONF && stripcom /etc/mygate |
 	while read gw; do
 		[[ $gw == @(*:*) ]] && continue
-		route -qn add -host default $gw && break
+		_cmd="route -qn add -host default $gw"
+		if $PRINT_ONLY; then
+			print -r -- "$_cmd" && break
+		else
+			$_cmd && break
+		fi
 	done
 	! $V6_AUTOCONF && stripcom /etc/mygate |
 	while read gw; do
 		[[ $gw == !(*:*) ]] && continue
-		route -qn add -host -inet6 default $gw && break
+		_cmd="route -qn add -host -inet6 default $gw"
+		if $PRINT_ONLY; then
+			print -r -- "$_cmd" && break
+		else
+			$_cmd && break
+		fi
 	done
 }
 
@@ -163,25 +205,25 @@ defaultroute() {
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
-HN_DIR=${HN_DIR:-/etc}
 PRINT_ONLY=false
-USAGE="USAGE: ${0##*/} [-n] [interface ...]"
 V4_DHCPCONF=false
 V6_AUTOCONF=false
 
 while getopts ":n" opt; do
 	case $opt in
 	n)	PRINT_ONLY=true;;
-	*)	print -u2 "$USAGE"; exit 1;;
+	*)	usage;;
 	esac
 done
 shift $((OPTIND-1))
 
 # Option -n is only supported if interface names are specified as parameters.
-if $PRINT_ONLY && (($# == 0)); then
-	print -u2 "Missing parameters.\n$USAGE"
-	exit 1
-fi
+$PRINT_ONLY && (($# == 0)) && usage
+
+# Load key material for the generation of IPv6 Semantically Opaque Interface
+# Identifiers (SOII) used for link local and SLAAC addresses.
+$PRINT_ONLY || [[ ! -f /etc/soii.key ]] ||
+	sysctl -q "net.inet6.ip6.soiikey=$(</etc/soii.key)"
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges), add default routes and return.
@@ -200,8 +242,8 @@ fi
 # automatically invokes the IPv6 address ::1.
 ifconfig lo0 inet 127.0.0.1/8
 
+# IPv6 configuration.
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	# IPv6 configurations.
 	ip6kernel=YES
 
 	# Disallow link-local unicast dest without outgoing scope identifiers.
@@ -215,12 +257,6 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 
 	# Disallow "internal" addresses to appear on the wire.
 	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
-
-	# Disallow packets to malicious IPv4 compatible prefix.
-	route -qn add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject >/dev/null
-	route -qn add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
-	route -qn add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject >/dev/null
 
 	# Disallow packets to malicious 6to4 prefix.
 	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject >/dev/null
@@ -252,17 +288,19 @@ else
 	ip6kernel=NO
 fi
 
+# Create all the pseudo interfaces up front.
+vifscreate
 
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed. Refer to hostname.if(5)
-ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge switch pflow"
+ifmstart "" "trunk svlan vlan carp pppoe tun tap gif etherip gre egre mobileip pflow"
 
 # The trunk interfaces need to come up first in this list.
 # The (s)vlan interfaces need to come up after trunk.
 # Configure all the carp interfaces which we know about before default route.
-ifmstart "trunk svlan vlan carp"
+ifmstart "trunk svlan vlan carp pppoe"
 
-# Look for default routes in /etc/mygate.
+# Set default routes for IPv4 and IPv6.
 defaultroute
 
 # Multicast routing.
@@ -271,17 +309,14 @@ if [[ $multicast != YES ]]; then
 	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject >/dev/null
 fi
 
-# Configure PPPoE, GIF, GRE, TUN and PFLOW interfaces, delayed because they
-# require routes to be set. TUN might depend on PPPoE, and GIF or GRE may
-# depend on either of them. PFLOW might bind to ip addresses configured
-# on either of them.
-ifmstart "pppoe tun gif gre bridge switch pflow"
-
 # Reject 127/8 other than 127.0.0.1.
 route -qn add -net 127 127.0.0.1 -reject >/dev/null
 
+# Configure interfaces that rely on routing
+ifmstart "tun tap gif etherip gre egre mobileip pflow"
+
 if [[ $ip6kernel == YES ]]; then
-	# This is to make sure DAD is completed before going further.
+	# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
 	count=0
 	while ((count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
 		sleep 1

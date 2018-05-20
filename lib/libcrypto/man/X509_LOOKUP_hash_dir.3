@@ -1,9 +1,9 @@
-.\"	$OpenBSD: X509_LOOKUP_hash_dir.3,v 1.3 2017/01/06 22:46:06 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>
 .\" and Claus Assmann.
-.\" Copyright (c) 2015, 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2015, 2016, 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2017 $
+.Dd $Mdocdate: March 27 2018 $
 .Dt X509_LOOKUP_HASH_DIR 3
 .Os
 .Sh NAME
@@ -141,9 +141,6 @@ filename causes these functions to load the default certificate
 store file (see
 .Xr X509_STORE_set_default_paths 3 ) .
 .Pp
-These functions return the number of objects loaded from file or 0
-in case of error.
-.Pp
 Both methods support adding several certificate locations into one
 .Sy X509_STORE .
 .Pp
@@ -211,8 +208,37 @@ sequence number greater than that of the already cached CRL.
 Note that the hash algorithm used for subject name hashing changed in
 OpenSSL 1.0.0, and all certificate stores have to be rehashed when
 moving from OpenSSL 0.9.8 to 1.0.0.
+.Sh RETURN VALUES
+.Fn X509_LOOKUP_hash_dir
+and
+.Fn X509_LOOKUP_file
+always return a pointer to a static
+.Vt X509_LOOKUP_METHOD
+structure.
+.Pp
+.Fn X509_load_cert_file ,
+.Fn X509_load_crl_file ,
+and
+.Fn X509_load_cert_crl_file
+return the number of objects loaded from the
+.Fa file
+or 0 on error.
 .Sh SEE ALSO
 .Xr d2i_X509_bio 3 ,
 .Xr PEM_read_PrivateKey 3 ,
 .Xr SSL_CTX_load_verify_locations 3 ,
 .Xr X509_STORE_load_locations 3
+.Sh HISTORY
+.Fn X509_LOOKUP_hash_dir ,
+.Fn X509_LOOKUP_file ,
+and
+.Fn X509_load_cert_file
+first appeared in SSLeay 0.8.0.
+.Fn X509_load_crl_file
+first appeared in SSLeay 0.9.0.
+These functions have been available since
+.Ox 2.4 .
+.Pp
+.Fn X509_load_cert_crl_file
+first appeared in OpenSSL 0.9.5 and has been available since
+.Ox 2.7 .

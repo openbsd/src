@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_OCSP_REQUEST.3,v 1.1 2016/12/27 22:06:55 schwarze Exp $
+.\"	$OpenBSD: d2i_OCSP_REQUEST.3,v 1.2 2018/03/22 21:08:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2016 $
+.Dd $Mdocdate: March 22 2018 $
 .Dt D2I_OCSP_REQUEST 3
 .Os
 .Sh NAME
@@ -175,3 +175,7 @@ if an error occurs.
 .Sh STANDARDS
 RFC 6960: X.509 Internet Public Key Infrastructure Online Certificate
 Status Protocol, section 4.1: Request Syntax
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.7
+and have been available since
+.Ox 3.2 .

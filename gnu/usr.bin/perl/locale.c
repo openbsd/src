@@ -836,7 +836,7 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
                        : NULL;
 	sl_result = my_setlocale(LC_MESSAGES, locale_param);
         DEBUG_LOCALE_INIT(LC_MESSAGES, locale_param, sl_result);
-	if (! sl_result)
+	if (! sl_result) {
 	    setlocale_failure = TRUE;
         }
 #       endif /* USE_LOCALE_MESSAGES */

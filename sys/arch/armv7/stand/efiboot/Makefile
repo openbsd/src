@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/07/04 14:54:15 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2018/05/11 11:58:59 kettenis Exp $
 
 NOMAN=		#
 
@@ -8,7 +8,8 @@ PROG=		BOOTARM.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
+SRCS+=		fdt.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -29,9 +30,11 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
+SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/arm ${S}/lib/libkern
 SRCS+=	divsi3.S divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
+SRCS+=	__aeabi_ldivmod.S
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
@@ -45,6 +48,7 @@ CPPFLAGS+=	-DNEEDS_HEAP_H
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
 COPTS+=		-Wall -Werror
+COPTS+=		-mfloat-abi=soft
 
 PROG.elf=	${PROG:S/.EFI/.elf/}
 CLEANFILES+=	${PROG.elf} ${PROG.elf}.tmp

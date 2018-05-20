@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.68 2016/08/21 03:26:04 beck Exp $	*/
+/*	$OpenBSD: login.c,v 1.69 2017/12/08 17:04:15 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -825,11 +825,8 @@ sigint(int signo)
 void
 timedout(int signo)
 {
-	char warn[1024];
-
-	snprintf(warn, sizeof warn,
+	dprintf(STDERR_FILENO,
 	    "Login timed out after %d seconds\n", timeout);
-	write(STDERR_FILENO, warn, strlen(warn));
 	if (username)
 		badlogin(username);
 	_exit(0);

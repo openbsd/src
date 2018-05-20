@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.30 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.33 2018/04/12 17:13:43 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 #include <arm/db_machdep.h>
 #include <arch/arm/arm/disassem.h>
 #include <arm/machdep.h>
+#include <arm/vfp.h>
  
 #ifdef DEBUG
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
@@ -188,6 +189,9 @@ data_abort_handler(trapframe_t *tf)
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
 
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
+
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((tf->tf_spsr & PSR_I) == 0))
 		enable_interrupts(PSR_I);
@@ -209,6 +213,15 @@ data_abort_handler(trapframe_t *tf)
 		goto out;
 	}
 
+	va = trunc_page((vaddr_t)far);
+
+	/*
+	 * Flush BP cache on processors that are vulnerable to branch
+	 * target injection attacks if access is outside user space.
+	 */
+	if (va < VM_MIN_ADDRESS || va >= VM_MAX_ADDRESS)
+		curcpu()->ci_flush_bp();
+
 	/*
 	 * At this point, we're dealing with one of the following data aborts:
 	 *
@@ -224,8 +237,26 @@ data_abort_handler(trapframe_t *tf)
 	 */
 
 	if (user) {
+		vaddr_t sp;
+
 		p->p_addr->u_pcb.pcb_tf = tf;
 		refreshcreds(p);
+
+		sp = PROC_STACK(p);
+		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+		    p->p_spstart == 0 || sp < p->p_spstart ||
+		    sp >= p->p_spend) {
+			KERNEL_LOCK();
+			if (!uvm_map_check_stack_range(p, sp)) {
+				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+				    0, sp, p->p_spstart, p->p_spend);
+
+				sv.sival_ptr = (void *)PROC_PC(p);
+				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
+			}
+			KERNEL_UNLOCK();
+		}
 	}
 
 	/*
@@ -255,8 +286,6 @@ data_abort_handler(trapframe_t *tf)
 		    "Program Counter\n");
 		dab_fatal(tf, fsr, far, p, NULL);
 	}
-
-	va = trunc_page((vaddr_t)far);
 
 	/*
 	 * It is only a kernel address space fault iff:
@@ -573,6 +602,9 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Prefetch aborts cannot happen in kernel mode */
 	if (__predict_false(!TRAP_USERMODE(tf)))
 		dab_fatal(tf, fsr, far, NULL, NULL);
+
+	/* Before enabling interrupts, save FPU state */
+	vfp_save();
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes

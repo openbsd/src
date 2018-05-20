@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2018/04/06 14:44:04 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ HDRS=	AArch64GenAsmMatcher.inc AArch64GenAsmWriter.inc \
 	AArch64GenInstrInfo.inc AArch64GenRegisterInfo.inc \
 	AArch64GenSubtargetInfo.inc \
 	AArch64GenMCCodeEmitter.inc AArch64GenMCPseudoLowering.inc \
-	AArch64GenSystemOperands.inc
+	AArch64GenSystemOperands.inc AArch64GenRegisterBank.inc \
+	AArch64GenGlobalISel.inc
 
 all: ${HDRS}
 
@@ -83,6 +84,16 @@ AArch64GenMCPseudoLowering.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 
 AArch64GenSystemOperands.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
+		-o ${.TARGET} ${.ALLSRC}
+
+AArch64GenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-bank \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
+		-o ${.TARGET} ${.ALLSRC}
+
+AArch64GenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 

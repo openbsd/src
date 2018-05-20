@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.43 2017/08/10 18:18:30 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.45 2018/03/19 16:34:47 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -17,10 +17,12 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,6 +37,9 @@ struct tls *
 tls_client(void)
 {
 	struct tls *ctx;
+
+	if (tls_init() == -1)
+		return (NULL);
 
 	if ((ctx = tls_new()) == NULL)
 		return (NULL);
@@ -159,6 +164,118 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 }
 
 static int
+tls_client_read_session(struct tls *ctx)
+{
+	int sfd = ctx->config->session_fd;
+	uint8_t *session = NULL;
+	size_t session_len = 0;
+	SSL_SESSION *ss = NULL;
+	BIO *bio = NULL;
+	struct stat sb;
+	ssize_t n;
+	int rv = -1;
+
+	if (fstat(sfd, &sb) == -1) {
+		tls_set_error(ctx, "failed to stat session file");
+		goto err;
+	}
+	if (sb.st_size < 0 || sb.st_size > INT_MAX) {
+		tls_set_errorx(ctx, "invalid session file size");
+		goto err;
+	}
+	session_len = (size_t)sb.st_size;
+
+	/* A zero size file means that we do not yet have a valid session. */
+	if (session_len == 0)
+		goto done;
+
+	if ((session = malloc(session_len)) == NULL)
+		goto err;
+
+	n = pread(sfd, session, session_len, 0);
+	if (n < 0 || (size_t)n != session_len) {
+		tls_set_error(ctx, "failed to read session file");
+		goto err;
+	}
+	if ((bio = BIO_new_mem_buf(session, session_len)) == NULL)
+		goto err;
+	if ((ss = PEM_read_bio_SSL_SESSION(bio, NULL, tls_password_cb,
+	    NULL)) == NULL) {
+		tls_set_errorx(ctx, "failed to parse session");
+		goto err;
+	}
+
+	if (SSL_set_session(ctx->ssl_conn, ss) != 1) {
+		tls_set_errorx(ctx, "failed to set session");
+		goto err;
+	}
+
+ done:
+	rv = 0;
+
+ err:
+	freezero(session, session_len);
+	SSL_SESSION_free(ss);
+	BIO_free(bio);
+
+	return rv;
+}
+
+static int
+tls_client_write_session(struct tls *ctx)
+{
+	int sfd = ctx->config->session_fd;
+	SSL_SESSION *ss = NULL;
+	BIO *bio = NULL;
+	long data_len;
+	char *data;
+	off_t offset;
+	size_t len;
+	ssize_t n;
+	int rv = -1;
+
+	if ((ss = SSL_get1_session(ctx->ssl_conn)) == NULL) {
+		if (ftruncate(sfd, 0) == -1) {
+			tls_set_error(ctx, "failed to truncate session file");
+			goto err;
+		}
+		goto done;
+	}
+
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		goto err;
+	if (PEM_write_bio_SSL_SESSION(bio, ss) == 0)
+		goto err;
+	if ((data_len = BIO_get_mem_data(bio, &data)) <= 0)
+		goto err;
+
+	len = (size_t)data_len;
+	offset = 0;
+
+	if (ftruncate(sfd, len) == -1) {
+		tls_set_error(ctx, "failed to truncate session file");
+		goto err;
+	}
+	while (len > 0) {
+		if ((n = pwrite(sfd, data + offset, len, offset)) == -1) {
+			tls_set_error(ctx, "failed to write session file");
+			goto err;
+		}
+		offset += n;
+		len -= n;
+	}
+
+ done:
+	rv = 0;
+
+ err:
+	SSL_SESSION_free(ss);
+	BIO_free_all(bio);
+
+	return (rv);
+}
+
+static int
 tls_connect_common(struct tls *ctx, const char *servername)
 {
 	union tls_addr addrbuf;
@@ -219,6 +336,12 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	if (SSL_set_app_data(ctx->ssl_conn, ctx) != 1) {
 		tls_set_errorx(ctx, "ssl application data failure");
 		goto err;
+	}
+
+	if (ctx->config->session_fd != -1) {
+		SSL_clear_options(ctx->ssl_conn, SSL_OP_NO_TICKET);
+		if (tls_client_read_session(ctx) == -1)
+			goto err;
 	}
 
 	if (SSL_set_tlsext_status_type(ctx->ssl_conn, TLSEXT_STATUSTYPE_ocsp) != 1) {
@@ -336,6 +459,12 @@ tls_handshake_client(struct tls *ctx)
 	}
 
 	ctx->state |= TLS_HANDSHAKE_COMPLETE;
+
+	if (ctx->config->session_fd != -1) {
+		if (tls_client_write_session(ctx) == -1)
+			goto err;
+	}
+
 	rv = 0;
 
  err:

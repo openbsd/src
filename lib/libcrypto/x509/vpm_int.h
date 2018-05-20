@@ -1,4 +1,4 @@
-/* $OpenBSD: vpm_int.h,v 1.3 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: vpm_int.h,v 1.4 2018/04/06 07:08:20 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2013.
@@ -69,6 +69,7 @@ struct X509_VERIFY_PARAM_ID_st {
 	size_t emaillen;
 	unsigned char *ip;          /* If not NULL IP address to match */
 	size_t iplen;               /* Length of IP address */
+	int poisoned;
 };
 
 __END_HIDDEN_DECLS

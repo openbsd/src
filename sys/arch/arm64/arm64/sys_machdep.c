@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.2 2017/12/30 20:46:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>

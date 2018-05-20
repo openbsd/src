@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.41 2017/09/15 14:19:56 ajacoutot Exp $	*/
+/*	$OpenBSD: run.c,v 1.42 2017/10/09 14:51:31 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -116,7 +116,7 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 		if (rminlen)
 			minlen += quantum - rminlen;
 		tbuf = (char *) realloc(*pbuf, minlen);
-		dprintf( ("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, *pbuf, tbuf) );
+		DPRINTF( ("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, *pbuf, tbuf) );
 		if (tbuf == NULL) {
 			if (whatrtn)
 				FATAL("out of memory in %s", whatrtn);
@@ -243,17 +243,17 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	for (ncall = 0, x = a[1]; x != NULL; x = x->nnext)	/* args in call */
 		ncall++;
 	ndef = (int) fcn->fval;			/* args in defn */
-	   dprintf( ("calling %s, %d args (%d in defn), fp=%d\n", s, ncall, ndef, (int) (fp-frame)) );
+	   DPRINTF( ("calling %s, %d args (%d in defn), fp=%d\n", s, ncall, ndef, (int) (fp-frame)) );
 	if (ncall > ndef)
 		WARNING("function %s called with %d args, uses only %d",
 			s, ncall, ndef);
 	if (ncall + ndef > NARGS)
 		FATAL("function %s has %d arguments, limit %d", s, ncall+ndef, NARGS);
 	for (i = 0, x = a[1]; x != NULL; i++, x = x->nnext) {	/* get call args */
-		   dprintf( ("evaluate args[%d], fp=%d:\n", i, (int) (fp-frame)) );
+		   DPRINTF( ("evaluate args[%d], fp=%d:\n", i, (int) (fp-frame)) );
 		y = execute(x);
 		oargs[i] = y;
-		   dprintf( ("args[%d]: %s %f <%s>, t=%o\n",
+		   DPRINTF( ("args[%d]: %s %f <%s>, t=%o\n",
 			   i, NN(y->nval), y->fval, isarr(y) ? "(array)" : NN(y->sval), y->tval) );
 		if (isfcn(y))
 			FATAL("can't use function %s as argument in %s", y->nval, s);
@@ -281,9 +281,9 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 	fp->nargs = ndef;	/* number defined with (excess are locals) */
 	fp->retval = gettemp();
 
-	   dprintf( ("start exec of %s, fp=%d\n", s, (int) (fp-frame)) );
+	   DPRINTF( ("start exec of %s, fp=%d\n", s, (int) (fp-frame)) );
 	y = execute((Node *)(fcn->sval));	/* execute body */
-	   dprintf( ("finished exec of %s, fp=%d\n", s, (int) (fp-frame)) );
+	   DPRINTF( ("finished exec of %s, fp=%d\n", s, (int) (fp-frame)) );
 
 	for (i = 0; i < ndef; i++) {
 		Cell *t = fp->args[i];
@@ -316,7 +316,7 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 		tempfree(y);	/* don't free twice! */
 	}
 	z = fp->retval;			/* return value */
-	   dprintf( ("%s returns %g |%s| %o\n", s, getfval(z), getsval(z), z->tval) );
+	   DPRINTF( ("%s returns %g |%s| %o\n", s, getfval(z), getsval(z), z->tval) );
 	fp--;
 	return(z);
 }
@@ -340,7 +340,7 @@ Cell *arg(Node **a, int n)	/* nth argument of a function */
 {
 
 	n = ptoi(a[0]);	/* argument number, counting from 0 */
-	   dprintf( ("arg(%d), fp->nargs=%d\n", n, fp->nargs) );
+	   DPRINTF( ("arg(%d), fp->nargs=%d\n", n, fp->nargs) );
 	if (n+1 > fp->nargs)
 		FATAL("argument #%d of function %s was not supplied",
 			n+1, fp->fcncell->nval);
@@ -476,7 +476,7 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		tempfree(y);
 	}
 	if (!isarr(x)) {
-		   dprintf( ("making %s into an array\n", NN(x->nval)) );
+		   DPRINTF( ("making %s into an array\n", NN(x->nval)) );
 		if (freeable(x))
 			xfree(x->sval);
 		x->tval &= ~(STR|NUM|DONTFREE);
@@ -540,7 +540,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 
 	ap = execute(a[1]);	/* array name */
 	if (!isarr(ap)) {
-		   dprintf( ("making %s into an array\n", ap->nval) );
+		   DPRINTF( ("making %s into an array\n", ap->nval) );
 		if (freeable(ap))
 			xfree(ap->sval);
 		ap->tval &= ~(STR|NUM|DONTFREE);
@@ -682,7 +682,7 @@ Cell *relop(Node **a, int n)	/* a[0 < a[1], etc. */
 void tfree(Cell *a)	/* free a tempcell */
 {
 	if (freeable(a)) {
-		   dprintf( ("freeing %s %s %o\n", NN(a->nval), NN(a->sval), a->tval) );
+		   DPRINTF( ("freeing %s %s %o\n", NN(a->nval), NN(a->sval), a->tval) );
 		xfree(a->sval);
 	}
 	if (a == tmps)
@@ -769,7 +769,7 @@ Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 		n = 0;
 	else if (n > k - m)
 		n = k - m;
-	   dprintf( ("substr: m=%d, n=%d, s=%s\n", m, n, s) );
+	   DPRINTF( ("substr: m=%d, n=%d, s=%s\n", m, n, s) );
 	y = gettemp();
 	temp = s[n+m-1];	/* with thanks to John Linderman */
 	s[n+m-1] = '\0';
@@ -1237,7 +1237,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	sep = *fs;
 	ap = execute(a[1]);	/* array name */
 	freesymtab(ap);
-	   dprintf( ("split: s=|%s|, a=%s, sep=|%s|\n", s, NN(ap->nval), fs) );
+	   DPRINTF( ("split: s=|%s|, a=%s, sep=|%s|\n", s, NN(ap->nval), fs) );
 	ap->tval &= ~STR;
 	ap->tval |= ARR;
 	ap->sval = (char *) makesymtab(NSYMTAB);

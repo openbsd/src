@@ -1,7 +1,8 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.8 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.10 2018/02/05 09:52:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2018 Stefan Sperling <stsp@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,47 +35,45 @@
 /* Wireless module interface commands. */
 #define AR_WMI_CMD_ECHO			0x001
 #define AR_WMI_CMD_ACCESS_MEMORY	0x002
-#define AR_WMI_CMD_DISABLE_INTR		0x003
-#define AR_WMI_CMD_ENABLE_INTR		0x004
-#define AR_WMI_CMD_RX_LINK		0x005
+#define AR_WMI_GET_FW_VERSION		0x003
+#define AR_WMI_CMD_DISABLE_INTR		0x004
+#define AR_WMI_CMD_ENABLE_INTR		0x005
 #define AR_WMI_CMD_ATH_INIT		0x006
 #define AR_WMI_CMD_ABORT_TXQ		0x007
 #define AR_WMI_CMD_STOP_TX_DMA		0x008
-#define AR_WMI_CMD_STOP_DMA_RECV	0x009
-#define AR_WMI_CMD_ABORT_TX_DMA		0x00a
-#define AR_WMI_CMD_DRAIN_TXQ		0x00b
-#define AR_WMI_CMD_DRAIN_TXQ_ALL	0x00c
-#define AR_WMI_CMD_START_RECV		0x00d
-#define AR_WMI_CMD_STOP_RECV		0x00e
-#define AR_WMI_CMD_FLUSH_RECV		0x00f
-#define AR_WMI_CMD_SET_MODE		0x010
-#define AR_WMI_CMD_RESET		0x011
-#define AR_WMI_CMD_NODE_CREATE		0x012
-#define AR_WMI_CMD_NODE_REMOVE		0x013
-#define AR_WMI_CMD_VAP_REMOVE		0x014
-#define AR_WMI_CMD_VAP_CREATE		0x015
-#define AR_WMI_CMD_BEACON_UPDATE	0x016
-#define AR_WMI_CMD_REG_READ		0x017
-#define AR_WMI_CMD_REG_WRITE		0x018
-#define AR_WMI_CMD_RC_STATE_CHANGE	0x019
-#define AR_WMI_CMD_RC_RATE_UPDATE	0x01a
-#define AR_WMI_CMD_DEBUG_INFO		0x01b
-#define AR_WMI_CMD_HOST_ATTACH		0x01c
-#define AR_WMI_CMD_TARGET_IC_UPDATE	0x01d
-#define AR_WMI_CMD_TGT_STATS		0x01e
-#define AR_WMI_CMD_TX_AGGR_ENABLE	0x01f
+#define AR_WMI_CMD_ABORT_TX_DMA		0x009
+#define AR_WMI_CMD_DRAIN_TXQ		0x00a
+#define AR_WMI_CMD_DRAIN_TXQ_ALL	0x00b
+#define AR_WMI_CMD_START_RECV		0x00c
+#define AR_WMI_CMD_STOP_RECV		0x00d
+#define AR_WMI_CMD_FLUSH_RECV		0x00e
+#define AR_WMI_CMD_SET_MODE		0x00f
+#define AR_WMI_CMD_NODE_CREATE		0x010
+#define AR_WMI_CMD_NODE_REMOVE		0x011
+#define AR_WMI_CMD_VAP_REMOVE		0x012
+#define AR_WMI_CMD_VAP_CREATE		0x013
+#define AR_WMI_CMD_REG_READ		0x014
+#define AR_WMI_CMD_REG_WRITE		0x015
+#define AR_WMI_CMD_RC_STATE_CHANGE	0x016
+#define AR_WMI_CMD_RC_RATE_UPDATE	0x017
+#define AR_WMI_CMD_TARGET_IC_UPDATE	0x018
+#define AR_WMI_CMD_TX_AGGR_ENABLE	0x019
 #define AR_WMI_CMD_TGT_DETACH		0x020
-#define AR_WMI_CMD_TGT_TXQ_ENABLE	0x021
-#define AR_WMI_CMD_AGGR_LIMIT		0x026
+#define AR_WMI_CMD_NODE_UPDATE		0x021
+#define AR_WMI_CMD_INT_STATS		0x022
+#define AR_WMI_CMD_TX_STATS		0x023
+#define AR_WMI_CMD_RX_STATS		0x024
+#define AR_WMI_CMD_BITRATE_MASK		0x025
+#define AR_WMI_CMD_REG_RMW		0x026
+
 /* Wireless module interface events. */
 #define AR_WMI_EVT_TGT_RDY		0x001
 #define AR_WMI_EVT_SWBA			0x002
 #define AR_WMI_EVT_FATAL		0x003
 #define AR_WMI_EVT_TXTO			0x004
 #define AR_WMI_EVT_BMISS		0x005
-#define AR_WMI_EVT_WLAN_TXCOMP		0x006
-#define AR_WMI_EVT_DELBA		0x007
-#define AR_WMI_EVT_TXRATE		0x008
+#define AR_WMI_EVT_DELBA		0x006
+#define AR_WMI_EVT_TXSTATUS		0x007
 
 /* Structure for service AR_SVC_WMI_CONTROL. */
 struct ar_wmi_cmd_hdr {
@@ -85,15 +84,8 @@ struct ar_wmi_cmd_hdr {
 } __packed;
 
 /* Values for AR_WMI_CMD_SET_MODE. */
-#define AR_HTC_MODE_AUTO	0
-#define AR_HTC_MODE_11A		1
-#define AR_HTC_MODE_11B		2
-#define AR_HTC_MODE_11G		3
-#define AR_HTC_MODE_FH		4
-#define AR_HTC_MODE_TURBO_A	5
-#define AR_HTC_MODE_TURBO_G	6
-#define AR_HTC_MODE_11NA	7
-#define AR_HTC_MODE_11NG	8
+#define AR_HTC_MODE_11NA	0
+#define AR_HTC_MODE_11NG	1
 
 #define AR_MAX_WRITE_COUNT	32
 /* Structure for command AR_WMI_CMD_REG_WRITE. */
@@ -104,14 +96,11 @@ struct ar_wmi_cmd_reg_write {
 
 /* Structure for command AR_WMI_CMD_NODE_{CREATE,REMOVE}. */
 struct ar_htc_target_sta {
-	uint16_t	associd;
-	uint16_t	txpower;
-	uint32_t	pariwisekey;
 	uint8_t		macaddr[IEEE80211_ADDR_LEN];
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
 	uint8_t		sta_index;
 	uint8_t		vif_index;
-	uint8_t		vif_sta;
+	uint8_t		is_vif_sta;
 	uint16_t	flags;
 #define AR_HTC_STA_AUTH	0x0001
 #define AR_HTC_STA_QOS	0x0002
@@ -119,14 +108,14 @@ struct ar_htc_target_sta {
 #define AR_HTC_STA_HT	0x0008
 
 	uint16_t	htcap;
-	uint8_t		valid;
-	uint16_t	capinfo;
-	uint32_t	reserved[2];
-	uint16_t	txseqmgmt;
-	uint8_t		is_vif_sta;
 	uint16_t	maxampdu;
+	uint8_t		pad;
+
+	/* Internal state. */
+	uint16_t	txseqmgmt;
 	uint16_t	iv16;
 	uint32_t	iv32;
+	void		*ni_vap;
 } __packed;
 
 /* Structures for command AR_WMI_CMD_RC_RATE_UPDATE. */
@@ -139,12 +128,14 @@ struct ar_htc_rateset {
 struct ar_htc_target_rate {
 	uint8_t			sta_index;
 	uint8_t			isnew;
+	uint8_t			pad[2];
 	uint32_t		capflags;
-#define AR_RC_DS_FLAG	0x00000001
-#define AR_RC_40_FLAG	0x00000002
-#define AR_RC_SGI_FLAG	0x00000004
-#define AR_RC_HT_FLAG	0x00000008
-#define AR_RC_STBC_FLAG	0x00000020
+#define AR_RC_DS_FLAG		0x00000001
+#define AR_RC_40_FLAG		0x00000002
+#define AR_RC_SGI_FLAG		0x00000004
+#define AR_RC_HT_FLAG		0x00000008
+#define AR_RC_STBC_FLAG		0x00000030 /* 2 bits */
+#define AR_RC_WEP_TKIP_FLAG	0x00000100 
 
 	struct ar_htc_rateset	lg_rates;
 	struct ar_htc_rateset	ht_rates;
@@ -161,7 +152,6 @@ struct ar_htc_target_aggr {
 /* Structure for command AR_WMI_CMD_VAP_CREATE. */
 struct ar_htc_target_vif {
 	uint8_t		index;
-	uint8_t		des_bssid[IEEE80211_ADDR_LEN];
 	uint32_t	opmode;
 #define AR_HTC_M_IBSS		0
 #define AR_HTC_M_STA		1
@@ -169,41 +159,60 @@ struct ar_htc_target_vif {
 #define AR_HTC_M_AHDEMO		3
 #define AR_HTC_M_HOSTAP		6
 #define AR_HTC_M_MONITOR	8
-
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
-	uint8_t		bssid[IEEE80211_ADDR_LEN];
-	uint32_t	flags;
-	uint32_t	flags_ext;
-	uint16_t	ps_sta;
-	uint16_t	rtsthreshold;
 	uint8_t		ath_cap;
-	int8_t		mcast_rate;
+	uint16_t	rtsthreshold;
+	uint8_t		pad;
+
+	/* Internal state. */
+	int8_t		nodeindex;
+	void		*iv_bss;
 } __packed;
 
 /* Structure for command AM_WMI_CMD_TARGET_IC_UPDATE. */
 struct ar_htc_cap_target {
-	uint32_t	flags;
-	uint32_t	flags_ext;
 	uint32_t	ampdu_limit;
 	uint8_t		ampdu_subframes;
-	uint8_t		ht_txchainmask;
-	uint8_t		lg_txchainmask;
-	uint8_t		rtscts_ratecode;
-	uint8_t		protmode;
+	uint8_t		enable_coex;
+	uint8_t		txchainmask;
+	uint8_t		pad;
 } __packed;
 
-/* Structure for event AR_WMI_EVT_TXRATE. */
-struct ar_wmi_evt_txrate {
-	uint32_t	txrate;
-	uint8_t		rssi_thresh;
-	uint8_t		per;
+struct ar_wmi_evt_txstatus {
+	uint8_t		cookie;
+
+	/* 
+	 * Legacy rates are indicated as rate array indices.
+	 * HT rates are indicated as MCS indices.
+	 */
+	uint8_t		rate;
+#define AR_HTC_TXSTAT_RATE		0x0f
+#define AR_HTC_TXSTAT_EPID		0xf0
+#define AR_HTC_TXSTAT_EPID_SHIFT	4
+
+	uint8_t		flags;
+#define AR_HTC_TXSTAT_ACK	0x01
+#define AR_HTC_TXSTAT_FILT	0x02
+#define AR_HTC_TXSTAT_RTC_CTS	0x04
+#define AR_HTC_TXSTAT_MCS	0x08
+#define AR_HTC_TXSTAT_CW40	0x10
+#define AR_HTC_TXSTAT_SGI	0x20
+} __packed;
+
+/* Structure for event AR_WMI_EVT_TXSTATUS. */
+#define AR_HTC_MAX_TX_STATUS 12
+struct ar_wmi_evt_txstatus_list {
+	uint8_t			count;
+	struct ar_wmi_evt_txstatus ts[AR_HTC_MAX_TX_STATUS];
 } __packed;
 
 /* HTC header. */
 struct ar_htc_frame_hdr {
 	uint8_t		endpoint_id;
 	uint8_t		flags;
-#define AR_HTC_FLAG_TRAILER	0x02
+#define AR_HTC_FLAG_NEED_CREDIT_UPDATE		0x01
+#define AR_HTC_FLAG_TRAILER			0x02
+#define AR_HTC_FLAG_CREDIT_REDISTRIBUTION	0x03
 
 	uint16_t	payload_len;
 	uint8_t		control[4];
@@ -236,7 +245,8 @@ struct ar_tx_frame {
 
 	uint8_t		key_type;
 	uint8_t		key_idx;
-	uint8_t		reserved[26];
+	uint8_t		cookie;
+	uint8_t		pad;
 } __packed;
 
 /* Structure for service AR_SVC_WMI_MGMT. */
@@ -247,7 +257,8 @@ struct ar_tx_mgmt {
 	uint8_t		flags;
 	uint8_t		key_type;
 	uint8_t		key_idx;
-	uint16_t	reserved;
+	uint8_t		cookie;
+	uint8_t		pad;
 } __packed;
 
 /* Structure for service AR_SVC_WMI_BEACON. */
@@ -459,6 +470,14 @@ struct athn_usb_softc {
 	uint8_t				ep_mgmt;
 	uint8_t				ep_data[EDCA_NUM_AC];
 
-	/* Firmware cannot handle more than 8 STAs. */
-	uint8_t				nnodes;
+	/* 
+	 * Firmware cannot handle more than 8 STAs.
+	 * We use a bitmask to keep track of available slots in the firmware's
+	 * node array. A 1 bit at index N, as determined by ffs(3), means the
+	 * slot at this index is available.
+	 */
+	uint8_t				free_node_slots;
+
+	void				(*sc_node_free)(struct ieee80211com *,
+					    struct ieee80211_node *);
 };

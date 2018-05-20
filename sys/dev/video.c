@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.40 2016/07/03 20:05:44 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.41 2017/10/11 08:08:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -178,7 +178,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 		sc->sc_vidmode = VIDMODE_READ;
  	}
  
-	DPRINTF(("resid=%d\n", uio->uio_resid));
+	DPRINTF(("resid=%zu\n", uio->uio_resid));
 
 	if (sc->sc_frames_ready < 1) {
 		/* block userland read until a frame is ready */
@@ -212,8 +212,8 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	    (sc = video_cd.cd_devs[unit]) == NULL || sc->hw_if == NULL)
 		return (ENXIO);
 
-	DPRINTF(("video_ioctl(%d, '%c', %d)\n",
-	    IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd & 0xff));
+	DPRINTF(("video_ioctl(%zu, '%c', %zu)\n",
+	    IOCPARM_LEN(cmd), (int) IOCGROUP(cmd), cmd & 0xff));
 
 	error = EOPNOTSUPP;
 	switch (cmd) {
@@ -389,7 +389,7 @@ videommap(dev_t dev, off_t off, int prot)
 	caddr_t p;
 	paddr_t pa;
 
-	DPRINTF(("%s: off=%d, prot=%d\n", __func__, off, prot));
+	DPRINTF(("%s: off=%lld, prot=%d\n", __func__, off, prot));
 
 	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||

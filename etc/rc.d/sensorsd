@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/ksh
 #
-# $OpenBSD: sensorsd,v 1.1 2011/07/06 18:55:36 robert Exp $
+# $OpenBSD: sensorsd,v 1.2 2018/01/11 19:52:12 rpe Exp $
 
 daemon="/usr/sbin/sensorsd"
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.h,v 1.10 2017/04/14 20:46:31 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.h,v 1.11 2017/11/02 14:01:18 florian Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -78,6 +78,6 @@ int	 divert_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 divert_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	 divert_attach(struct socket *, int);
-
+int	 divert_detach(struct socket *);
 #endif /* _KERNEL */
 #endif /* _IP_DIVERT_H_ */

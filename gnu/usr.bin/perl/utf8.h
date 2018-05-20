@@ -156,8 +156,8 @@ END_EXTERN_C
  * rarely do we need to distinguish them.  The term "NATIVE_UTF8" applies to
  * whichever one is applicable on the current platform */
 #ifdef PERL_SMALL_MACRO_BUFFER
-#define NATIVE_UTF8_TO_I8(ch) (ch)
-#define I8_TO_NATIVE_UTF8(ch) (ch)
+#define NATIVE_UTF8_TO_I8(ch) ((U8) (ch))
+#define I8_TO_NATIVE_UTF8(ch) ((U8) (ch))
 #else
 #define NATIVE_UTF8_TO_I8(ch) (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))
 #define I8_TO_NATIVE_UTF8(ch) (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))

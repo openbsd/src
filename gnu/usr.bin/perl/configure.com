@@ -1354,7 +1354,8 @@ $     vms_cc_available = vms_cc_available + "cc/decc "
 $   ENDIF
 $ ELSE
 $   IF (F$LOCATE("DEC",line).NE.F$LENGTH(line)).or.(F$LOCATE("Compaq",line).NE.F$LENGTH(line)) -
-    .or.(F$LOCATE("HP",F$EDIT(line,"UPCASE")).NE.F$LENGTH(line))
+    .or.(F$LOCATE("HP",F$EDIT(line,"UPCASE")).NE.F$LENGTH(line)) -
+    .or.(F$LOCATE("VSI",F$EDIT(line,"UPCASE")).NE.F$LENGTH(line))
 $   THEN 
 $     vms_cc_dflt = "/decc"
 $     vms_cc_available = vms_cc_available + "cc/decc "
@@ -1491,7 +1492,8 @@ $ THEN
 $   ans = F$EDIT(ans,"TRIM, COMPRESS, LOWERCASE")
 $   Mcc = ans
 $   IF (F$LOCATE("dec",ans).NE.F$LENGTH(ans)).or.(F$LOCATE("compaq",ans).NE.F$LENGTH(ans)) -
-    .or.(F$LOCATE("hp",ans).NE.F$LENGTH(ans))
+    .or.(F$LOCATE("hp",ans).NE.F$LENGTH(ans)) -
+    .or.(F$LOCATE("vsi",ans).NE.F$LENGTH(ans))
 $   THEN
 $     Mcc = "cc/decc"
 $! CPQ ?
@@ -1508,7 +1510,8 @@ $   ELSE ! Not_cxx
 $     IF Mcc.NES.dflt
 $     THEN
 $       IF F$LOCATE("dec",dflt) .NE. F$LENGTH(dflt) .or. -
-           F$LOCATE("compaq",dflt) .NE. F$LENGTH(dflt)
+           F$LOCATE("compaq",dflt) .NE. F$LENGTH(dflt) -
+          .or.(F$LOCATE("vsi",dflt).NE.F$LENGTH(dflt))
 $       THEN 
 $         C_COMPILER_Replace = "CC=cc=''Mcc'"
 $       ELSE

@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.91 2017/08/22 15:47:13 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.98 2018/05/01 15:14:43 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <sys/sysctl.h>
 
 #include <signal.h>
 #include <syslog.h>
@@ -83,6 +82,7 @@ struct dnscache {
 	size_t resplen;
 	struct timespec ts;
 	struct timespec basetime;
+	int permanent;
 };
 static TAILQ_HEAD(, dnscache) cachefifo;
 static RB_HEAD(cachetree, dnscache) cachetree;
@@ -229,6 +229,9 @@ adjustttl(struct dnscache *ent)
 	uint32_t ttl, cnt, i;
 	uint16_t len;
 	time_t diff;
+
+	if (ent->permanent)
+		return 0;
 
 	diff = now.tv_sec - ent->basetime.tv_sec;
 	if (diff <= 0)
@@ -601,10 +604,125 @@ fail:
 	return NULL;
 }
 
+static size_t
+encodename(const char *name, unsigned char *buf)
+{
+	const char *s = name;
+	const char *dot;
+	unsigned char len;
+	size_t totlen = 0;
+
+	while (*s) {
+		dot = strchr(s, '.');
+		if (!dot)
+			break;
+		len = dot - s;
+		*buf++ = len;
+		memcpy(buf, s, len);
+		buf += len;
+		totlen += len + 1;
+		if (*dot == 0)
+			break;
+		s = dot + 1;
+	}
+	*buf = 0;
+	totlen += 1;
+	return totlen;
+}
+
+static void
+preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
+{
+	struct dnspacket *req, *resp;
+	size_t reqlen, resplen;
+	struct dnscache *ent;
+	unsigned char *p;
+	uint16_t len, class;
+	uint32_t ttl;
+
+	/* header + len + name + type + class */
+	reqlen = sizeof(*req) + 1 + strlen(name) + 2 + 2;
+	req = malloc(reqlen);
+
+	req->id = 0;
+	req->flags = htons(0x100);
+	req->qdcount = htons(1);
+	req->ancount = 0;
+	req->nscount = 0;
+	req->arcount = 0;
+	p = (char *)req + sizeof(*req);
+	len = encodename(name, p);
+	p += len;
+	memcpy(p, &type, 2);
+	p += 2;
+	class = htons(1); /* IN */
+	memcpy(p, &class, 2);
+
+	/* req + name (compressed) + type + class + ttl + len + data */
+	resplen = reqlen + 2 + 2 + 2 + 4 + 2 + rdatalen;
+	resp = malloc(resplen);
+	memcpy(resp, req, reqlen);
+	resp->flags = htons(0x100 | 0x8000);	/* response */
+	resp->ancount = htons(1);
+	p = (char *)resp + reqlen;
+	len = htons(sizeof(*req));
+	memcpy(p, &len, 2);
+	*p |= 0xc0;
+	p += 2;
+	memcpy(p, &type, 2);
+	p += 2;
+	memcpy(p, &class, 2);
+	p += 2;
+	ttl = htonl(10);
+	memcpy(p, &ttl, 4);
+	p += 4;
+	len = htons(rdatalen);
+	memcpy(p, &len, 2);
+	p += 2;
+	memcpy(p, rdata, rdatalen);
+
+	ent = calloc(1, sizeof(*ent));
+	ent->req = req;
+	ent->reqlen = reqlen;
+	ent->resp = resp;
+	ent->resplen = resplen;
+	ent->permanent = 1;
+
+	RB_INSERT(cachetree, &cachetree, ent);
+
+}
+
+static void
+preloadA(const char *name, const char *ip)
+{
+	struct in_addr in;
+
+	inet_aton(ip, &in);
+
+	preloadcache(name, htons(1), &in, 4);
+}
+
+static void
+preloadPTR(const char *ip, const char *name)
+{
+	char ipbuf[256];
+	char namebuf[256];
+	struct in_addr in;
+
+	inet_aton(ip, &in);
+	in.s_addr = swap32(in.s_addr);
+	snprintf(ipbuf, sizeof(ipbuf), "%s.in-addr.arpa.", inet_ntoa(in));
+
+	encodename(name, namebuf);
+
+	preloadcache(ipbuf, htons(12), namebuf, 1 + strlen(namebuf));
+}
+
 static int
 readconfig(int conffd, union sockun *remoteaddr)
 {
 	const char ns[] = "nameserver";
+	const char rc[] = "record";
 	char buf[1024];
 	char *p;
 	struct sockaddr_in *sin = &remoteaddr->i;
@@ -617,29 +735,43 @@ readconfig(int conffd, union sockun *remoteaddr)
 	while (fgets(buf, sizeof(buf), conf) != NULL) {
 		buf[strcspn(buf, "\n")] = '\0';
 
-		if (strncmp(buf, ns, strlen(ns)) != 0)
-			continue;
-		p = buf + strlen(ns) + 1;
-		while (isspace((unsigned char)*p))
-			p++;
+		if (strncmp(buf, ns, strlen(ns)) == 0) {
+			p = buf + strlen(ns) + 1;
+			while (isspace((unsigned char)*p))
+				p++;
 
-		/* this will not end well */
-		if (strcmp(p, "127.0.0.1") == 0)
-			continue;
+			/* this will not end well */
+			if (strcmp(p, "127.0.0.1") == 0)
+				continue;
 
-		memset(remoteaddr, 0, sizeof(*remoteaddr));
-		if (inet_pton(AF_INET, p, &sin->sin_addr) == 1) {
-			sin->sin_len = sizeof(*sin);
-			sin->sin_family = AF_INET;
-			sin->sin_port = htons(53);
-			rv = AF_INET;
-		} else if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == 1) {
-			sin6->sin6_len = sizeof(*sin6);
-			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = htons(53);
-			rv = AF_INET6;
+			memset(remoteaddr, 0, sizeof(*remoteaddr));
+			if (inet_pton(AF_INET, p, &sin->sin_addr) == 1) {
+				sin->sin_len = sizeof(*sin);
+				sin->sin_family = AF_INET;
+				sin->sin_port = htons(53);
+				rv = AF_INET;
+			} else if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == 1) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = htons(53);
+				rv = AF_INET6;
+			}
+		} else if (strncmp(buf, rc, strlen(rc)) == 0) {
+			char rectype[16], name[256], value[256];
+			p = buf + strlen(rc) + 1;
+
+			memset(rectype, 0, sizeof(rectype));
+			sscanf(p, "%15s %255s %255s", rectype, name, value);
+			if (strcmp(rectype, "A") == 0) {
+				if (strlen(name) < 2 ||
+				    name[strlen(name) - 1] != '.') {
+					logmsg(LOG_ERR, "do not like name %s", name);
+					continue;
+				}
+				preloadA(name, value);
+				preloadPTR(value, name);
+			}
 		}
-		break;
 	}
 	fclose(conf);
 	return rv;
@@ -886,6 +1018,9 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 	int conffd = -1;
 	struct timespec ts, *timeout = NULL;
 
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	kq = kqueue();
 
 	/* catch these signals with kevent */
@@ -922,8 +1057,6 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 			case EVFILT_VNODE:
 				/* config file changed */
 				logmsg(LOG_INFO, "config changed, reloading");
-				close(conffd);
-				conffd = -1;
 				sleep(1);
 				raise(SIGHUP);
 				break;
@@ -931,6 +1064,8 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 				if (kev.ident == SIGHUP) {
 					/* signaled. kill child. */
 					logmsg(LOG_INFO, "received HUP, restarting");
+					close(conffd);
+					conffd = -1;
 					hupped = 1;
 					if (childdead)
 						goto doublebreak;
@@ -966,15 +1101,6 @@ doublebreak:
 	return 1;
 }
 
-static void
-resetport(void)
-{
-	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
-	int jackport = 0;
-
-	sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
-}
-
 static void __dead
 usage(void)
 {
@@ -985,8 +1111,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
-	int jackport = 54;
 	union sockun bindaddr;
 	int ld, ld6, ud, ud6, ch;
 	int one = 1;
@@ -1009,7 +1133,6 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			bindname = optarg;
-			jackport = 0;
 			break;
 		case 'W':
 			daemonized = 1;
@@ -1032,7 +1155,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i.sin_len = sizeof(bindaddr.i);
 	bindaddr.i.sin_family = AF_INET;
-	bindaddr.i.sin_port = htons(jackport ? jackport : 53);
+	bindaddr.i.sin_port = htons(53);
 	inet_aton(bindname, &bindaddr.i.sin_addr);
 
 	ud = socket(AF_INET, SOCK_DGRAM, 0);
@@ -1053,7 +1176,7 @@ main(int argc, char **argv)
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i6.sin6_len = sizeof(bindaddr.i6);
 	bindaddr.i6.sin6_family = AF_INET6;
-	bindaddr.i6.sin6_port = htons(jackport ? jackport : 53);
+	bindaddr.i6.sin6_port = htons(53);
 	bindaddr.i6.sin6_addr = in6addr_loopback;
 
 	ud6 = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -1071,11 +1194,6 @@ main(int argc, char **argv)
 	if (listen(ld6, 10) == -1)
 		logerr("listen: %s", strerror(errno));
 
-	if (jackport) {
-		atexit(resetport);
-		sysctl(dnsjacking, 2, NULL, NULL, &jackport, sizeof(jackport));
-	}
-	
 	if (debug) {
 		int conffd = openconfig(confname, -1);
 		return workerloop(conffd, ud, ld, ud6, ld6);

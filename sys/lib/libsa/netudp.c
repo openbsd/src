@@ -1,4 +1,4 @@
-/*	$OpenBSD: netudp.c,v 1.3 2015/07/16 16:12:15 mpi Exp $	*/
+/*	$OpenBSD: netudp.c,v 1.4 2018/03/31 17:09:56 patrick Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -183,11 +183,11 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 #endif
 		return -1;
 	}
-	ip->ip_len = ntohs(ip->ip_len);
-	if (n < ip->ip_len) {
+	if (n < ntohs(ip->ip_len)) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad length %d < %d.\n", n, ip->ip_len);
+			printf("readudp: bad length %d < %d.\n",
+			    n, ntohs(ip->ip_len));
 #endif
 		return -1;
 	}
@@ -204,7 +204,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	/* If there were ip options, make them go away */
 	if (hlen != sizeof(*ip)) {
 		bcopy(((u_char *)ip) + hlen, uh, len - hlen);
-		ip->ip_len = sizeof(*ip);
+		ip->ip_len = htons(sizeof(*ip));
 		n -= hlen - sizeof(*ip);
 	}
 	if (uh->uh_dport != d->myport) {
@@ -238,14 +238,11 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		}
 		*ip = tip;
 	}
-	uh->uh_dport = ntohs(uh->uh_dport);
-	uh->uh_sport = ntohs(uh->uh_sport);
-	uh->uh_ulen = ntohs(uh->uh_ulen);
-	if (uh->uh_ulen < sizeof(*uh)) {
+	if (ntohs(uh->uh_ulen) < sizeof(*uh)) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: bad udp len %d < %d\n",
-				uh->uh_ulen, sizeof(*uh));
+			    ntohs(uh->uh_ulen), sizeof(*uh));
 #endif
 		return -1;
 	}

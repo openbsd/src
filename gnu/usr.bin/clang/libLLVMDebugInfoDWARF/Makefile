@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2018/04/06 14:44:04 patrick Exp $
 
 LIB=	LLVMDebugInfoDWARF
 NOPIC=
@@ -23,6 +23,7 @@ SRCS=	DWARFAbbreviationDeclaration.cpp \
 	DWARFDebugPubTable.cpp \
 	DWARFDebugRangeList.cpp \
 	DWARFDie.cpp \
+	DWARFExpression.cpp \
 	DWARFFormValue.cpp \
 	DWARFGdbIndex.cpp \
 	DWARFTypeUnit.cpp \

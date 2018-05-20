@@ -1,0 +1,24 @@
+.\" $OpenBSD: undef.in,v 1.1 2018/04/09 22:26:25 schwarze Exp $
+.TH NR-UNDEF 1 "April 9, 2018"
+.SH NAME
+nr-undef \- using an undefined number register
+.SH DESCRIPTION
+The myr register is initially
+.ie rmyr defined.
+.el undefined.
+.PP
+Its initial value is \n[myr].
+.PP
+After interpolating it, is is now
+.ie rmyr defined.
+.el undefined.
+.PP
+.nr myr 1
+After defining it to \n[myr], it is of course still
+.ie rmyr defined.
+.el undefined.
+.PP
+.rr myr
+After removing it, it is again
+.ie rmyr defined.
+.el undefined.

@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_all.c,v 1.29 2015/07/19 22:34:27 doug Exp $ */
+/* $OpenBSD: eng_all.c,v 1.30 2018/03/17 16:20:01 beck Exp $ */
 /* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
  * project 2000.
  */
@@ -56,17 +56,16 @@
  *
  */
 
+#include <pthread.h>
+
 #include <openssl/opensslconf.h>
 
 #include "cryptlib.h"
 #include "eng_int.h"
 
 void
-ENGINE_load_builtin_engines(void)
+ENGINE_load_builtin_engines_internal(void)
 {
-	/* Some ENGINEs need this */
-	OPENSSL_cpuid_setup();
-
 #ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_PADLOCK
@@ -75,4 +74,15 @@ ENGINE_load_builtin_engines(void)
 #endif
 #endif
 	ENGINE_register_all_complete();
+}
+
+void
+ENGINE_load_builtin_engines(void)
+{
+	static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+	/* Prayer and clean living lets you ignore errors, OpenSSL style */
+	(void) OPENSSL_init_crypto(0, NULL);
+
+	(void) pthread_once(&once, ENGINE_load_builtin_engines_internal);
 }

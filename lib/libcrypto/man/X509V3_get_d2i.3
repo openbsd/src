@@ -1,8 +1,9 @@
-.\"	$OpenBSD: X509V3_get_d2i.3,v 1.6 2017/07/05 11:43:09 schwarze Exp $
-.\"	OpenSSL 047dd81e Jul 4 23:03:17 2014 +0100
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.14 2018/03/23 23:18:17 schwarze Exp $
+.\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
+.\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2014, 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2014, 2015, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2017 $
+.Dd $Mdocdate: March 23 2018 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -61,7 +62,10 @@
 .Nm X509_CRL_get_ext_d2i ,
 .Nm X509_CRL_add1_ext_i2d ,
 .Nm X509_REVOKED_get_ext_d2i ,
-.Nm X509_REVOKED_add1_ext_i2d
+.Nm X509_REVOKED_add1_ext_i2d ,
+.Nm X509_get0_extensions ,
+.Nm X509_CRL_get0_extensions ,
+.Nm X509_REVOKED_get0_extensions
 .Nd X509 extension decode and encode functions
 .Sh SYNOPSIS
 .In openssl/x509v3.h
@@ -135,6 +139,18 @@
 .Fa "int crit"
 .Fa "unsigned long flags"
 .Fc
+.Ft const STACK_OF(X509_EXTENSION) *
+.Fo X509_get0_extensions
+.Fa "const X509 *x"
+.Fc
+.Ft const STACK_OF(X509_EXTENSION) *
+.Fo X509_CRL_get0_extensions
+.Fa "const X509_CRL *crl"
+.Fc
+.Ft const STACK_OF(X509_EXTENSION) *
+.Fo X509_REVOKED_get0_extensions
+.Fa "const X509_REVOKED *r"
+.Fc
 .Sh DESCRIPTION
 .Fn X509V3_get_d2i
 looks for an extension with OID
@@ -204,7 +220,7 @@ operate on the extensions of certificate
 and are otherwise identical to
 .Fn X509V3_get_d2i
 and
-.Fn X509V3_add1_i2d 3 .
+.Fn X509V3_add1_i2d .
 .Pp
 .Fn X509_CRL_get_ext_d2i
 and
@@ -214,7 +230,7 @@ operate on the extensions of CRL
 and are otherwise identical to
 .Fn X509V3_get_d2i
 and
-.Fn X509V3_add1_i2d 3 .
+.Fn X509V3_add1_i2d .
 .Pp
 .Fn X509_REVOKED_get_ext_d2i
 and
@@ -226,7 +242,14 @@ structure
 (i.e. for CRL entry extensions), and are otherwise identical to
 .Fn X509V3_get_d2i
 and
-.Fn X509V3_add1_i2d 3 .
+.Fn X509V3_add1_i2d .
+.Pp
+.Fn X509_get0_extensions ,
+.Fn X509_CRL_get0_extensions ,
+and
+.Fn X509_REVOKED_get0_extensions
+return a stack of all the extensions of a certificate, a CRL,
+or a CRL entry, respectively.
 .Pp
 In almost all cases an extension can occur at most once and multiple
 occurrences is an error.
@@ -363,6 +386,14 @@ if an error occurs.
 returns 1 if the operation is successful, 0 if it fails due to a
 non-fatal error (extension not found, already exists, cannot be encoded),
 or -1 due to a fatal error such as a memory allocation failure.
+.Pp
+.Fn X509_get0_extensions ,
+.Fn X509_CRL_get0_extensions ,
+and
+.Fn X509_REVOKED_get0_extensions
+return a stack of extensions, or
+.Dv NULL
+if no extensions are present.
 .Sh SEE ALSO
 .Xr d2i_X509 3 ,
 .Xr d2i_X509_EXTENSION 3 ,
@@ -372,4 +403,35 @@ or -1 due to a fatal error such as a memory allocation failure.
 .Xr X509_get_pubkey 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_get_version 3 ,
-.Xr X509_new 3
+.Xr X509_new 3 ,
+.Xr X509_REVOKED_new 3
+.Sh HISTORY
+.Fn X509V3_EXT_d2i
+first appeared in OpenSSL 0.9.2b.
+.Fn X509V3_EXT_i2d
+first appeared in OpenSSL 0.9.3.
+Both functions have been available since
+.Ox 2.6 .
+.Pp
+.Fn X509V3_get_d2i ,
+.Fn X509_get_ext_d2i ,
+.Fn X509_CRL_get_ext_d2i ,
+and
+.Fn X509_REVOKED_get_ext_d2i
+first appeared in OpenSSL 0.9.5 and have been available since
+.Ox 2.7 .
+.Pp
+.Fn X509V3_add1_i2d ,
+.Fn X509_add1_ext_i2d ,
+.Fn X509_CRL_add1_ext_i2d ,
+and
+.Fn X509_REVOKED_add1_ext_i2d
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn X509_get0_extensions ,
+.Fn X509_CRL_get0_extensions ,
+and
+.Fn X509_REVOKED_get0_extensions
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

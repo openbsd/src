@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.8 2017/08/12 21:04:33 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.10 2018/04/25 07:12:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -732,6 +732,14 @@ tlsext_cb(SSL * s, int client_server, int type, unsigned char *data, int len,
 		extname = "renegotiation info";
 		break;
 
+	case TLSEXT_TYPE_application_layer_protocol_negotiation:
+		extname = "application layer protocol negotiation";
+		break;
+
+	case TLSEXT_TYPE_padding:
+		extname = "TLS padding";
+		break;
+
 	default:
 		extname = "unknown";
 		break;
@@ -813,7 +821,8 @@ generate_cookie_callback(SSL * ssl, unsigned char *cookie,
 }
 
 int
-verify_cookie_callback(SSL * ssl, unsigned char *cookie, unsigned int cookie_len)
+verify_cookie_callback(SSL * ssl, const unsigned char *cookie,
+    unsigned int cookie_len)
 {
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;

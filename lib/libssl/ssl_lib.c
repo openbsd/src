@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.170 2017/08/30 16:24:21 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.185 2018/04/25 07:10:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -469,10 +469,22 @@ SSL_set_trust(SSL *s, int trust)
 	return (X509_VERIFY_PARAM_set_trust(s->param, trust));
 }
 
+X509_VERIFY_PARAM *
+SSL_CTX_get0_param(SSL_CTX *ctx)
+{
+	return (ctx->param);
+}
+
 int
 SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
 {
 	return (X509_VERIFY_PARAM_set1(ctx->param, vpm));
+}
+
+X509_VERIFY_PARAM *
+SSL_get0_param(SSL *ssl)
+{
+	return (ssl->param);
 }
 
 int
@@ -554,6 +566,13 @@ SSL_free(SSL *s)
 
 	free(s->internal);
 	free(s);
+}
+
+int
+SSL_up_ref(SSL *s)
+{
+	int refs = CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+	return (refs > 1) ? 1 : 0;
 }
 
 void
@@ -746,7 +765,8 @@ SSL_CTX_get_verify_depth(const SSL_CTX *ctx)
 	return (X509_VERIFY_PARAM_get_depth(ctx->param));
 }
 
-int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int, X509_STORE_CTX *)
+int
+(*SSL_CTX_get_verify_callback(const SSL_CTX *ctx))(int, X509_STORE_CTX *)
 {
 	return (ctx->internal->default_verify_callback);
 }
@@ -920,6 +940,12 @@ SSL_connect(SSL *s)
 	return (s->method->internal->ssl_connect(s));
 }
 
+int
+SSL_is_server(const SSL *s)
+{
+	return s->server;
+}
+
 long
 SSL_get_default_timeout(const SSL *s)
 {
@@ -938,7 +964,7 @@ SSL_read(SSL *s, void *buf, int num)
 		s->internal->rwstate = SSL_NOTHING;
 		return (0);
 	}
-	return (s->method->internal->ssl_read(s, buf, num));
+	return ssl3_read(s, buf, num);
 }
 
 int
@@ -952,7 +978,7 @@ SSL_peek(SSL *s, void *buf, int num)
 	if (s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) {
 		return (0);
 	}
-	return (s->method->internal->ssl_peek(s, buf, num));
+	return ssl3_peek(s, buf, num);
 }
 
 int
@@ -968,7 +994,7 @@ SSL_write(SSL *s, const void *buf, int num)
 		SSLerror(s, SSL_R_PROTOCOL_IS_SHUTDOWN);
 		return (-1);
 	}
-	return (s->method->internal->ssl_write(s, buf, num));
+	return ssl3_write(s, buf, num);
 }
 
 int
@@ -1301,6 +1327,12 @@ SSL_get_cipher_list(const SSL *s, int n)
 	return (c->name);
 }
 
+STACK_OF(SSL_CIPHER) *
+SSL_CTX_get_ciphers(const SSL_CTX *ctx)
+{
+	return ctx->cipher_list;
+}
+
 /* Specify the ciphers to be used by default by the SSL_CTX. */
 int
 SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
@@ -1380,81 +1412,60 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 }
 
 int
-ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p,
-    size_t maxlen, size_t *outlen)
+ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 {
 	SSL_CIPHER *cipher;
-	int ciphers = 0;
-	CBB cbb;
+	int num_ciphers = 0;
 	int i;
 
-	*outlen = 0;
+	if (ciphers == NULL)
+		return 0;
 
-	if (sk == NULL)
-		return (0);
-
-	if (!CBB_init_fixed(&cbb, p, maxlen))
-		goto err;
-
-	for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
-		cipher = sk_SSL_CIPHER_value(sk, i);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
+			return 0;
 
 		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
 		if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
 		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
 
-		if (!CBB_add_u16(&cbb, ssl3_cipher_get_value(cipher)))
-			goto err;
+		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
+			return 0;
 
-		ciphers++;
+		num_ciphers++;
 	}
 
 	/* Add SCSV if there are other ciphers and we're not renegotiating. */
-	if (ciphers > 0 && !s->internal->renegotiate) {
-		if (!CBB_add_u16(&cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
-			goto err;
+	if (num_ciphers > 0 && !s->internal->renegotiate) {
+		if (!CBB_add_u16(cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
+			return 0;
 	}
 
-	if (!CBB_finish(&cbb, NULL, outlen))
-		goto err;
+	if (!CBB_flush(cbb))
+		return 0;
 
 	return 1;
-
- err:
-	CBB_cleanup(&cbb);
-
-	return 0;
 }
 
 STACK_OF(SSL_CIPHER) *
-ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
+ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 {
-	CBS			 cbs;
-	const SSL_CIPHER	*c;
-	STACK_OF(SSL_CIPHER)	*sk = NULL;
-	unsigned long		 cipher_id;
-	uint16_t		 cipher_value, max_version;
+	STACK_OF(SSL_CIPHER) *ciphers = NULL;
+	const SSL_CIPHER *cipher;
+	uint16_t cipher_value, max_version;
+	unsigned long cipher_id;
 
-	if (s->s3)
+	if (s->s3 != NULL)
 		S3I(s)->send_connection_binding = 0;
 
-	/*
-	 * RFC 5246 section 7.4.1.2 defines the interval as [2,2^16-2].
-	 */
-	if (num < 2 || num > 0x10000 - 2) {
-		SSLerror(s, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
-		return (NULL);
-	}
-
-	if ((sk = sk_SSL_CIPHER_new_null()) == NULL) {
+	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	CBS_init(&cbs, p, num);
-	while (CBS_len(&cbs) > 0) {
-		if (!CBS_get_u16(&cbs, &cipher_value)) {
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_get_u16(cbs, &cipher_value)) {
 			SSLerror(s, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 			goto err;
 		}
@@ -1495,18 +1506,18 @@ ssl_bytes_to_cipher_list(SSL *s, const unsigned char *p, int num)
 			continue;
 		}
 
-		if ((c = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
-			if (!sk_SSL_CIPHER_push(sk, c)) {
+		if ((cipher = ssl3_get_cipher_by_value(cipher_value)) != NULL) {
+			if (!sk_SSL_CIPHER_push(ciphers, cipher)) {
 				SSLerror(s, ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
 	}
 
-	return (sk);
+	return (ciphers);
 
 err:
-	sk_SSL_CIPHER_free(sk);
+	sk_SSL_CIPHER_free(ciphers);
 
 	return (NULL);
 }
@@ -1780,6 +1791,11 @@ SSL_CTX_new(const SSL_METHOD *meth)
 {
 	SSL_CTX	*ret;
 
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		SSLerrorx(SSL_R_LIBRARY_BUG);
+		return (NULL);
+	}
+
 	if (meth == NULL) {
 		SSLerrorx(SSL_R_NULL_SSL_METHOD_PASSED);
 		return (NULL);
@@ -1960,8 +1976,7 @@ SSL_CTX_free(SSL_CTX *ctx)
 #endif
 
 #ifndef OPENSSL_NO_ENGINE
-	if (ctx->internal->client_cert_engine)
-		ENGINE_finish(ctx->internal->client_cert_engine);
+	ENGINE_finish(ctx->internal->client_cert_engine);
 #endif
 
 	free(ctx->internal->tlsext_ecpointformatlist);
@@ -1973,10 +1988,29 @@ SSL_CTX_free(SSL_CTX *ctx)
 	free(ctx);
 }
 
+int
+SSL_CTX_up_ref(SSL_CTX *ctx)
+{
+	int refs = CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+	return ((refs > 1) ? 1 : 0);
+}
+
+pem_password_cb *
+SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx)
+{
+	return (ctx->default_passwd_callback);
+}
+
 void
 SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 {
 	ctx->default_passwd_callback = cb;
+}
+
+void *
+SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx)
+{
+	return ctx->default_passwd_callback_userdata;
 }
 
 void
@@ -2620,7 +2654,7 @@ SSL_get_certificate(const SSL *s)
 
 /* Fix this function so that it takes an optional type parameter */
 EVP_PKEY *
-SSL_get_privatekey(SSL *s)
+SSL_get_privatekey(const SSL *s)
 {
 	if (s->cert != NULL)
 		return (s->cert->key->privatekey);
@@ -2645,6 +2679,38 @@ const void *
 SSL_get_current_expansion(SSL *s)
 {
 	return (NULL);
+}
+
+size_t
+SSL_get_client_random(const SSL *s, unsigned char *out, size_t max_out)
+{
+	size_t len = sizeof(s->s3->client_random);
+
+	if (out == NULL)
+		return len;
+
+	if (len > max_out)
+		len = max_out;
+
+	memcpy(out, s->s3->client_random, len);
+
+	return len;
+}
+
+size_t
+SSL_get_server_random(const SSL *s, unsigned char *out, size_t max_out)
+{
+	size_t len = sizeof(s->s3->server_random);
+
+	if (out == NULL)
+		return len;
+
+	if (len > max_out)
+		len = max_out;
+
+	memcpy(out, s->s3->server_random, len);
+
+	return len;
 }
 
 int
@@ -2879,6 +2945,15 @@ SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 	ctx->cert_store = store;
 }
 
+X509 *
+SSL_CTX_get0_certificate(const SSL_CTX *ctx)
+{
+	if (ctx->internal->cert == NULL)
+		return NULL;
+
+	return ctx->internal->cert->key->x509;
+}
+
 int
 SSL_want(const SSL *s)
 {
@@ -2965,10 +3040,22 @@ SSL_cache_hit(SSL *s)
 }
 
 int
+SSL_CTX_get_min_proto_version(SSL_CTX *ctx)
+{
+	return ctx->internal->min_version;
+}
+
+int
 SSL_CTX_set_min_proto_version(SSL_CTX *ctx, uint16_t version)
 {
 	return ssl_version_set_min(ctx->method, version,
 	    ctx->internal->max_version, &ctx->internal->min_version);
+}
+
+int
+SSL_CTX_get_max_proto_version(SSL_CTX *ctx)
+{
+	return ctx->internal->max_version;
 }
 
 int
@@ -2979,10 +3066,21 @@ SSL_CTX_set_max_proto_version(SSL_CTX *ctx, uint16_t version)
 }
 
 int
+SSL_get_min_proto_version(SSL *ssl)
+{
+	return ssl->internal->min_version;
+}
+
+int
 SSL_set_min_proto_version(SSL *ssl, uint16_t version)
 {
 	return ssl_version_set_min(ssl->method, version,
 	    ssl->internal->max_version, &ssl->internal->min_version);
+}
+int
+SSL_get_max_proto_version(SSL *ssl)
+{
+	return ssl->internal->max_version;
 }
 
 int

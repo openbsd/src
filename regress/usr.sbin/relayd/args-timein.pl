@@ -17,6 +17,7 @@ our %args = (
     },
     relayd => {
 	relay => [ "session timeout 3" ],
+	loggrep => { qr/(buffer event|splice) timeout/ => 0 },
     },
     len => 9,
 );

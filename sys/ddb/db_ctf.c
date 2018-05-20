@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.21 2017/09/12 08:20:04 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.26 2018/01/09 10:19:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -58,6 +58,7 @@ static char		*db_ctf_decompress(const char *, size_t, off_t);
 const struct ctf_type	*db_ctf_type_by_name(const char *, unsigned int);
 const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
 const struct ctf_type	*db_ctf_type_by_index(uint16_t);
+void			 db_ctf_pprint(const struct ctf_type *, vaddr_t);
 void			 db_ctf_pprint_struct(const struct ctf_type *, vaddr_t);
 void			 db_ctf_pprint_ptr(const struct ctf_type *, vaddr_t);
 
@@ -90,7 +91,7 @@ db_ctf_init(void)
 	db_ctf.dlen = db_ctf.cth->cth_stroff + db_ctf.cth->cth_strlen;
 
 	if ((db_ctf.cth->cth_flags & CTF_F_COMPRESS) == 0) {
-		printf("unsupported non-compressed CTF section\n");
+		db_printf("unsupported non-compressed CTF section\n");
 		return;
 	}
 
@@ -293,13 +294,6 @@ db_ctf_type_by_name(const char *name, unsigned int kind)
 		if (CTF_INFO_KIND(ctt->ctt_info) != kind)
 			continue;
 
-		/*
-		 * Skip forward declaration that shouldn't be inserted
-		 * by ctfconv(1).
-		 */
-		if (kind == CTF_K_STRUCT && ctt->ctt_size == 0)
-			continue;
-
 		tname = db_ctf_off2name(ctt->ctt_name);
 		if (tname == NULL)
 			continue;
@@ -349,10 +343,16 @@ db_ctf_type_by_index(uint16_t index)
 void
 db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 {
+	db_addr_t		 taddr = (db_addr_t)ctt;
 	const struct ctf_type	*ref;
 	uint16_t		 kind;
+	uint32_t		 eob, toff;
 
 	kind = CTF_INFO_KIND(ctt->ctt_info);
+	if (ctt->ctt_size <= CTF_MAX_SIZE)
+		toff = sizeof(struct ctf_stype);
+	else
+		toff = sizeof(struct ctf_type);
 
 	switch (kind) {
 	case CTF_K_FLOAT:
@@ -362,7 +362,15 @@ db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 		db_printf("%lu", *((unsigned long *)addr));
 		break;
 	case CTF_K_INTEGER:
-		db_printf("%d", *((int *)addr));
+		eob = db_get_value((taddr + toff), sizeof(eob), 0);
+		switch (CTF_INT_BITS(eob)) {
+		case 64:
+			db_printf("0x%llx", *((long long *)addr));
+			break;
+		default:
+			db_printf("0x%x", *((int *)addr));
+			break;
+		}
 		break;
 	case CTF_K_STRUCT:
 	case CTF_K_UNION:
@@ -556,6 +564,12 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	Elf_Sym *st;
 	const struct ctf_type *ctt;
 	int t;
+
+	if (!db_ctf.ctf_found) {
+		db_printf("No CTF data found\n");
+		db_flush_lex();
+		return;
+	}
 
 	/*
 	 * Read the struct name from the debugger input.

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.56 2017/02/14 10:31:15 mpi Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.58 2018/04/28 03:13:05 visa Exp $  */
 
 /*
  *  Portions of this code are:
@@ -339,7 +339,7 @@ sync_fsync(void *v)
 	if (vfs_busy(mp, VB_READ|VB_NOWAIT) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
+		VFS_SYNC(mp, MNT_LAZY, 0, ap->a_cred, ap->a_p);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp);
@@ -360,7 +360,7 @@ sync_inactive(void *v)
 	int s;
 
 	if (vp->v_usecount == 0) {
-		VOP_UNLOCK(vp, ap->a_p);
+		VOP_UNLOCK(vp);
 		return (0);
 	}
 

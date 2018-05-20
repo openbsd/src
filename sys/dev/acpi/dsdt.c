@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.234 2017/05/28 15:36:45 anton Exp $ */
+/* $OpenBSD: dsdt.c,v 1.240 2018/05/19 17:38:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -33,6 +33,8 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+#include <dev/i2c/i2cvar.h>
+
 #ifdef SMALL_KERNEL
 #undef ACPI_DEBUG
 #endif
@@ -46,6 +48,9 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
+struct aml_value	*aml_loadtable(struct acpi_softc *, const char *,
+			    const char *, const char *, const char *,
+			    const char *, struct aml_value *);
 struct aml_scope	*aml_load(struct acpi_softc *, struct aml_scope *,
 			    struct aml_value *, struct aml_value *);
 
@@ -452,7 +457,7 @@ _acpi_os_free(void *ptr, const char *fn, int line)
 #endif
 
 		dnprintf(99, "free: %p %s:%d\n", sptr, fn, line);
-		free(sptr, M_ACPI, 0);
+		free(sptr, M_ACPI, sizeof(*sptr) + sptr->size);
 	}
 }
 
@@ -2208,8 +2213,6 @@ void aml_createfield(struct aml_value *, int, struct aml_value *, int, int,
 void aml_parsefieldlist(struct aml_scope *, int, int,
     struct aml_value *, struct aml_value *, int);
 
-#define GAS_PCI_CFG_SPACE_UNEVAL  0xCC
-
 int
 aml_evalhid(struct aml_node *node, struct aml_value *val)
 {
@@ -2222,8 +2225,75 @@ aml_evalhid(struct aml_node *node, struct aml_value *val)
 	return (0);
 }
 
-void aml_rwgas(struct aml_value *, int, int, struct aml_value *, int, int);
+int
+aml_opreg_sysmem_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_SYSTEM_MEMORY,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_sysio_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_SYSTEM_IOSPACE,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_pcicfg_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_PCI_CFG_SPACE,
+	    address, size, size, value);
+}
+
+int
+aml_opreg_ec_handler(void *cookie, int iodir, uint64_t address, int size,
+    uint64_t *value)
+{
+	return acpi_gasio(acpi_softc, iodir, GAS_EMBEDDED,
+	    address, size, size, value);
+}
+
+struct aml_regionspace {
+	void *cookie;
+	int (*handler)(void *, int, uint64_t, int, uint64_t *);
+};
+
+struct aml_regionspace aml_regionspace[256] = {
+	[ACPI_OPREG_SYSMEM] = { NULL, aml_opreg_sysmem_handler },
+	[ACPI_OPREG_SYSIO] = { NULL, aml_opreg_sysio_handler },
+	[ACPI_OPREG_PCICFG] = { NULL, aml_opreg_pcicfg_handler },
+	[ACPI_OPREG_EC] = { NULL, aml_opreg_ec_handler },
+};
+
+void
+aml_register_regionspace(struct aml_node *node, int iospace, void *cookie,
+    int (*handler)(void *, int, uint64_t, int, uint64_t *))
+{
+	struct aml_value arg[2];
+
+	KASSERT(iospace >= 0 && iospace < 256);
+
+	aml_regionspace[iospace].cookie = cookie;
+	aml_regionspace[iospace].handler = handler;
+
+	/* Register address space. */
+	memset(&arg, 0, sizeof(arg));
+	arg[0].type = AML_OBJTYPE_INTEGER;
+	arg[0].v_integer = iospace;
+	arg[1].type = AML_OBJTYPE_INTEGER;
+	arg[1].v_integer = 1;
+	node = aml_searchname(node, "_REG");
+	if (node)
+		aml_evalnode(acpi_softc, node, 2, arg, NULL);
+}
+
+void aml_rwgen(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
+void aml_rwgsb(struct aml_value *, int, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
@@ -2250,9 +2320,73 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 	return (0);
 }
 
+int
+acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
+    int access_size, int len, void *buffer)
+{
+	struct aml_regionspace *region = &aml_regionspace[iospace];
+	u_int8_t *pb;
+	int reg;
+
+	dnprintf(50, "genio: %.2x 0x%.8llx %s\n",
+	    iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
+
+	KASSERT((len % access_size) == 0);
+
+	pb = (u_int8_t *)buffer;
+	for (reg = 0; reg < len; reg += access_size) {
+		uint64_t value;
+		int err;
+
+		if (iodir == ACPI_IOREAD) {
+			err = region->handler(region->cookie, iodir,
+			    address + reg, access_size, &value);
+			if (err)
+				return err;
+			switch (access_size) {
+			case 1:
+				*(uint8_t *)(pb + reg) = value;
+				break;
+			case 2:
+				*(uint16_t *)(pb + reg) = value;
+				break;
+			case 4:
+				*(uint32_t *)(pb + reg) = value;
+				break;
+			default:
+				printf("%s: invalid access size %d on read\n",
+				    __func__, access_size);
+				return -1;
+			}
+		} else {
+			switch (access_size) {
+			case 1:
+				value = *(uint8_t *)(pb + reg);
+				break;
+			case 2:
+				value = *(uint16_t *)(pb + reg);
+				break;
+			case 4:
+				value = *(uint32_t *)(pb + reg);
+				break;
+			default:
+				printf("%s: invalid access size %d on write\n",
+				    __func__, access_size);
+				return -1;
+			}
+			err = region->handler(region->cookie, iodir,
+			    address + reg, access_size, &value);
+			if (err)
+				return err;
+		}
+	}
+
+	return 0;
+}
+
 /* Read/Write from opregion object */
 void
-aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
+aml_rwgen(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
     int mode, int flag)
 {
 	struct aml_value tmp;
@@ -2287,7 +2421,7 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	bpos += ((rgn->v_opregion.iobase & (sz - 1)) << 3);
 	bpos &= ((sz << 3) - 1);
 
-	if (rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
+	if (rgn->v_opregion.iospace == ACPI_OPREG_PCICFG) {
 		/* Get PCI Root Address for this opregion */
 		aml_rdpciaddr(rgn->node->parent, &pi);
 	}
@@ -2296,6 +2430,9 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	vbit = &val->v_integer;
 	tlen = roundup(bpos + blen, sz << 3);
 	type = rgn->v_opregion.iospace;
+
+	if (aml_regionspace[type].handler == NULL)
+		panic("%s: unregistered RegionSpace 0x%x\n", __func__, type);
 
 	/* Allocate temporary storage */
 	if (tlen > aml_intlen) {
@@ -2327,21 +2464,21 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 
 	if (mode == ACPI_IOREAD) {
 		/* Read bits from opregion */
-		acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+		acpi_genio(acpi_softc, ACPI_IOREAD, type, pi.addr,
 		    sz, tlen >> 3, tbit);
 		aml_bufcpy(vbit, 0, tbit, bpos, blen);
 	} else {
 		/* Write bits to opregion */
 		if (AML_FIELD_UPDATE(flag) == AML_FIELD_PRESERVE &&
 		    (bpos != 0 || blen != tlen)) {
-			acpi_gasio(acpi_softc, ACPI_IOREAD, type, pi.addr,
+			acpi_genio(acpi_softc, ACPI_IOREAD, type, pi.addr,
 			    sz, tlen >> 3, tbit);
 		} else if (AML_FIELD_UPDATE(flag) == AML_FIELD_WRITEASONES) {
 			memset(tbit, 0xff, tmp.length);
 		}
 		/* Copy target bits, then write to region */
 		aml_bufcpy(tbit, bpos, vbit, 0, blen);
-		acpi_gasio(acpi_softc, ACPI_IOWRITE, type, pi.addr,
+		acpi_genio(acpi_softc, ACPI_IOWRITE, type, pi.addr,
 		    sz, tlen >> 3, tbit);
 
 		aml_delref(&val, "fld.write");
@@ -2379,6 +2516,108 @@ aml_rwgpio(struct aml_value *conn, int bpos, int blen, struct aml_value *val,
 		_aml_setvalue(val, AML_OBJTYPE_INTEGER, v, NULL);
 	}
 }
+
+#ifndef SMALL_KERNEL
+
+void
+aml_rwgsb(struct aml_value *conn, int alen, int bpos, int blen,
+    struct aml_value *val, int mode, int flag)
+{
+	union acpi_resource *crs = (union acpi_resource *)conn->v_buffer;
+	struct aml_node *node;
+	i2c_tag_t tag;
+	i2c_op_t op;
+	i2c_addr_t addr;
+	int cmdlen, buflen;
+	uint8_t cmd;
+	uint8_t *buf;
+	int err;
+
+	if (conn->type != AML_OBJTYPE_BUFFER || conn->length < 5 ||
+	    AML_CRSTYPE(crs) != LR_SERBUS || AML_CRSLEN(crs) > conn->length ||
+	    crs->lr_i2cbus.revid != 1 || crs->lr_i2cbus.type != LR_SERBUS_I2C)
+		aml_die("Invalid GenericSerialBus");
+	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
+	    bpos & 0x3 || blen != 8)
+		aml_die("Invalid GenericSerialBus access");
+
+	node = aml_searchname(conn->node,
+	    (char *)&crs->lr_i2cbus.vdata[crs->lr_i2cbus.tlength - 6]);
+
+	if (node == NULL || node->i2c == NULL)
+		aml_die("Could not find GenericSerialBus controller");
+
+	switch (((flag >> 6) & 0x3)) {
+	case 0:			/* Normal */
+		switch (AML_FIELD_ATTR(flag)) {
+		case 0x02:	/* AttribQuick */
+			cmdlen = 0;
+			buflen = 0;
+			break;
+		case 0x04:	/* AttribSendReceive */
+			cmdlen = 0;
+			buflen = 1;
+			break;
+		case 0x06:	/* AttribByte */
+			cmdlen = 1;
+			buflen = 1;
+			break;
+		case 0x08:	/* AttribWord */
+			cmdlen = 1;
+			buflen = 2;
+			break;
+		case 0x0b:	/* AttribBytes */
+			cmdlen = 1;
+			buflen = alen;
+			break;
+		case 0x0e:	/* AttribRawBytes */
+			cmdlen = 0;
+			buflen = alen;
+			break;
+		default:
+			aml_die("unsupported access type 0x%x", flag);
+			break;
+		}
+		break;
+	case 1:			/* AttribBytes */
+		cmdlen = 1;
+		buflen = AML_FIELD_ATTR(flag);
+		break;
+	case 2:			/* AttribRawBytes */
+		cmdlen = 0;
+		buflen = AML_FIELD_ATTR(flag);
+		break;
+	default:
+		aml_die("unsupported access type 0x%x", flag);
+		break;
+	}
+
+	if (mode == ACPI_IOREAD) {
+		_aml_setvalue(val, AML_OBJTYPE_BUFFER, buflen + 2, NULL);
+		op = I2C_OP_READ_WITH_STOP;
+	} else {
+		op = I2C_OP_WRITE_WITH_STOP;
+	}
+
+	tag = node->i2c;
+	addr = crs->lr_i2cbus._adr;
+	cmd = bpos >> 3;
+	buf = val->v_buffer;
+
+	iic_acquire_bus(tag, 0);
+	err = iic_exec(tag, op, addr, &cmd, cmdlen, &buf[2], buflen, 0);
+	iic_release_bus(tag, 0);
+
+	/*
+	 * The ACPI specification doesn't tell us what the status
+	 * codes mean beyond implying that zero means success.  So use
+	 * the error returned from the transfer.  All possible error
+	 * numbers should fit in a single byte.
+	 */
+	buf[0] = err;
+}
+
+#endif
 
 void
 aml_rwindexfield(struct aml_value *fld, struct aml_value *val, int mode)
@@ -2473,7 +2712,7 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 	} else if (fld->v_field.type == AMLOP_BANKFIELD) {
 		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, fld->v_field.ref3, 0);
 		aml_rwfield(ref2, 0, aml_intlen, &tmp, ACPI_IOWRITE);
-		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
+		aml_rwgen(ref1, fld->v_field.bitpos, fld->v_field.bitlen,
 		    val, mode, fld->v_field.flags);
 	} else if (fld->v_field.type == AMLOP_FIELD) {
 		switch (ref1->v_opregion.iospace) {
@@ -2481,16 +2720,16 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val,
 			aml_rwgpio(ref2, bpos, blen, val, mode,
 			    fld->v_field.flags);
 			break;
-		case ACPI_OPREG_SYSMEM:
-		case ACPI_OPREG_SYSIO:
-		case ACPI_OPREG_PCICFG:
-		case ACPI_OPREG_EC:
-			aml_rwgas(ref1, fld->v_field.bitpos + bpos, blen,
+#ifndef SMALL_KERNEL
+		case ACPI_OPREG_GSB:
+			aml_rwgsb(ref2, fld->v_field.ref3,
+			    fld->v_field.bitpos + bpos, blen,
 			    val, mode, fld->v_field.flags);
 			break;
+#endif
 		default:
-			aml_die("Unsupported RegionSpace 0x%x",
-			    ref1->v_opregion.iospace);
+			aml_rwgen(ref1, fld->v_field.bitpos + bpos, blen,
+			    val, mode, fld->v_field.flags);
 			break;
 		}
 	} else if (mode == ACPI_IOREAD) {
@@ -2571,15 +2810,17 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 	bpos = 0;
 	while (mscope->pos < mscope->end) {
 		switch (*mscope->pos) {
-		case 0x00: /* reserved, length */
+		case 0x00: /* ReservedField */
 			mscope->pos++;
 			blen = aml_parselength(mscope);
 			break;
-		case 0x01: /* flags */
-			mscope->pos += 3;
+		case 0x01: /* AccessField */
+			mscope->pos++;
 			blen = 0;
+			flags = aml_get8(mscope->pos++);
+			flags |= aml_get8(mscope->pos++) << 8;
 			break;
-		case 0x02: /* connection */
+		case 0x02: /* ConnectionField */
 			mscope->pos++;
 			blen = 0;
 			conn = aml_parse(mscope, 'o', "Connection");
@@ -2587,7 +2828,14 @@ aml_parsefieldlist(struct aml_scope *mscope, int opcode, int flags,
 				aml_die("Could not parse connection");
 			conn->node = mscope->node;
 			break;
-		default: /* 4-byte name, length */
+		case 0x03: /* ExtendedAccessField */
+			mscope->pos++;
+			blen = 0;
+			flags = aml_get8(mscope->pos++);
+			flags |= aml_get8(mscope->pos++) << 8;
+			indexval = aml_get8(mscope->pos++);
+			break;
+		default: /* NamedField */
 			mscope->pos = aml_parsename(mscope->node, mscope->pos,
 			    &rv, 1);
 			blen = aml_parselength(mscope);
@@ -3406,6 +3654,37 @@ aml_seterror(struct aml_scope *scope, const char *fmt, ...)
 	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
 }
 
+struct aml_value *
+aml_loadtable(struct acpi_softc *sc, const char *signature,
+     const char *oemid, const char *oemtableid, const char *rootpath,
+     const char *parameterpath, struct aml_value *parameterdata)
+{
+	struct acpi_table_header *hdr;
+	struct acpi_dsdt *p_dsdt;
+	struct acpi_q *entry;
+
+	if (strlen(rootpath) > 0)
+		aml_die("LoadTable: RootPathString unsupported");
+	if (strlen(parameterpath) > 0)
+		aml_die("LoadTable: ParameterPathString unsupported");
+
+	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
+		hdr = entry->q_table;
+		if (strncmp(hdr->signature, signature,
+		    sizeof(hdr->signature)) == 0 &&
+		    strncmp(hdr->oemid, oemid, sizeof(hdr->oemid)) == 0 &&
+		    strncmp(hdr->oemtableid, oemtableid,
+		    sizeof(hdr->oemtableid)) == 0) {
+			p_dsdt = entry->q_table;
+			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
+			    sizeof(p_dsdt->hdr));
+			return aml_allocvalue(AML_OBJTYPE_DDBHANDLE, 0, 0);
+		}
+	}
+
+	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
+}
+
 /* Load new SSDT scope from memory address */
 struct aml_scope *
 aml_load(struct acpi_softc *sc, struct aml_scope *scope,
@@ -4067,7 +4346,9 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_LOADTABLE:
 		/* LoadTable(Sig:Str, OEMID:Str, OEMTable:Str, [RootPath:Str], [ParmPath:Str],
 		   [ParmData:DataRefObj]) => DDBHandle */
-		aml_die("LoadTable");
+		my_ret = aml_loadtable(acpi_softc, opargs[0]->v_string,
+		    opargs[1]->v_string, opargs[2]->v_string,
+		    opargs[3]->v_string, opargs[4]->v_string, opargs[5]);
 		break;
 	case AMLOP_LOAD:
 		/* Load(Object:NameString, DDBHandle:SuperName) */

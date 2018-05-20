@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.104 2016/04/02 14:37:42 krw Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.107 2018/01/15 09:54:48 mpi Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -286,7 +286,7 @@ set_slave_signals(void)
 	/*
 	 * Do a clean daemon shutdown on TERM/INT. These signals must be
 	 * initialized before monitor_init(). INT is only used with '-d'.
-         */
+	 */
 	signal(SIGTERM, daemon_shutdown_now);
 	if (debug == 1)		/* i.e '-dd' will skip this.  */
 		signal(SIGINT, daemon_shutdown_now);
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 	fd_set         *rfds, *wfds;
 	int             n, m;
 	size_t          mask_size;
-	struct timeval  tv, *timeout;
+	struct timespec ts, *timeout;
 
 	closefrom(STDERR_FILENO + 1);
 
@@ -505,10 +505,10 @@ main(int argc, char *argv[])
 			n = m;
 
 		/* Find out when the next timed event is.  */
-		timeout = &tv;
+		timeout = &ts;
 		timer_next_event(&timeout);
 
-		n = select(n, rfds, wfds, 0, timeout);
+		n = pselect(n, rfds, wfds, NULL, timeout, NULL);
 		if (n == -1) {
 			if (errno != EINTR) {
 				log_error("main: select");

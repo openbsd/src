@@ -201,6 +201,7 @@ answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 			return query_axfr(nsd, q);
 		}
 		/** Fallthrough: AXFR over UDP queries are discarded. */
+		/* fallthrough */
 	case TYPE_IXFR:
 		RCODE_SET(q->packet, RCODE_IMPL);
 		return QUERY_PROCESSED;

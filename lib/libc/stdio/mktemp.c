@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.38 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.39 2017/11/28 06:55:49 tb Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -119,7 +119,7 @@ _mktemp(char *path)
 }
 
 __warn_references(mktemp,
-    "warning: mktemp() possibly used unsafely; consider using mkstemp()");
+    "mktemp() possibly used unsafely; consider using mkstemp()");
 
 char *
 mktemp(char *path)

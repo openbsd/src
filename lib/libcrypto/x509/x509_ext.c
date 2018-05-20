@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ext.c,v 1.9 2015/02/10 08:33:10 jsing Exp $ */
+/* $OpenBSD: x509_ext.c,v 1.12 2018/05/18 19:28:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,31 +66,31 @@
 #include <openssl/x509v3.h>
 
 int
-X509_CRL_get_ext_count(X509_CRL *x)
+X509_CRL_get_ext_count(const X509_CRL *x)
 {
 	return (X509v3_get_ext_count(x->crl->extensions));
 }
 
 int
-X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos)
+X509_CRL_get_ext_by_NID(const X509_CRL *x, int nid, int lastpos)
 {
 	return (X509v3_get_ext_by_NID(x->crl->extensions, nid, lastpos));
 }
 
 int
-X509_CRL_get_ext_by_OBJ(X509_CRL *x, ASN1_OBJECT *obj, int lastpos)
+X509_CRL_get_ext_by_OBJ(const X509_CRL *x, const ASN1_OBJECT *obj, int lastpos)
 {
 	return (X509v3_get_ext_by_OBJ(x->crl->extensions, obj, lastpos));
 }
 
 int
-X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos)
+X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit, int lastpos)
 {
 	return (X509v3_get_ext_by_critical(x->crl->extensions, crit, lastpos));
 }
 
 X509_EXTENSION *
-X509_CRL_get_ext(X509_CRL *x, int loc)
+X509_CRL_get_ext(const X509_CRL *x, int loc)
 {
 	return (X509v3_get_ext(x->crl->extensions, loc));
 }
@@ -102,7 +102,7 @@ X509_CRL_delete_ext(X509_CRL *x, int loc)
 }
 
 void *
-X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx)
+X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->crl->extensions, nid, crit, idx);
 }
@@ -121,32 +121,32 @@ X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc)
 }
 
 int
-X509_get_ext_count(X509 *x)
+X509_get_ext_count(const X509 *x)
 {
 	return (X509v3_get_ext_count(x->cert_info->extensions));
 }
 
 int
-X509_get_ext_by_NID(X509 *x, int nid, int lastpos)
+X509_get_ext_by_NID(const X509 *x, int nid, int lastpos)
 {
 	return (X509v3_get_ext_by_NID(x->cert_info->extensions, nid, lastpos));
 }
 
 int
-X509_get_ext_by_OBJ(X509 *x, ASN1_OBJECT *obj, int lastpos)
+X509_get_ext_by_OBJ(const X509 *x, const ASN1_OBJECT *obj, int lastpos)
 {
 	return (X509v3_get_ext_by_OBJ(x->cert_info->extensions, obj, lastpos));
 }
 
 int
-X509_get_ext_by_critical(X509 *x, int crit, int lastpos)
+X509_get_ext_by_critical(const X509 *x, int crit, int lastpos)
 {
 	return (X509v3_get_ext_by_critical(x->cert_info->extensions, crit,
 	    lastpos));
 }
 
 X509_EXTENSION *
-X509_get_ext(X509 *x, int loc)
+X509_get_ext(const X509 *x, int loc)
 {
 	return (X509v3_get_ext(x->cert_info->extensions, loc));
 }
@@ -164,7 +164,7 @@ X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc)
 }
 
 void *
-X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx)
+X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
 }
@@ -177,31 +177,32 @@ X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit, unsigned long flags)
 }
 
 int
-X509_REVOKED_get_ext_count(X509_REVOKED *x)
+X509_REVOKED_get_ext_count(const X509_REVOKED *x)
 {
 	return (X509v3_get_ext_count(x->extensions));
 }
 
 int
-X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos)
+X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos)
 {
 	return (X509v3_get_ext_by_NID(x->extensions, nid, lastpos));
 }
 
 int
-X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x, ASN1_OBJECT *obj, int lastpos)
+X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
+    int lastpos)
 {
 	return (X509v3_get_ext_by_OBJ(x->extensions, obj, lastpos));
 }
 
 int
-X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos)
+X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpos)
 {
 	return (X509v3_get_ext_by_critical(x->extensions, crit, lastpos));
 }
 
 X509_EXTENSION *
-X509_REVOKED_get_ext(X509_REVOKED *x, int loc)
+X509_REVOKED_get_ext(const X509_REVOKED *x, int loc)
 {
 	return (X509v3_get_ext(x->extensions, loc));
 }
@@ -219,7 +220,7 @@ X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc)
 }
 
 void *
-X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx)
+X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid, int *crit, int *idx)
 {
 	return X509V3_get_d2i(x->extensions, nid, crit, idx);
 }

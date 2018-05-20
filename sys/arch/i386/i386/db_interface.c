@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.36 2017/07/19 14:34:10 kettenis Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.40 2018/03/31 13:45:03 bluhm Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ long		 db_switch_to_cpu;
 #endif
 
 db_regs_t	ddb_regs;
-int	db_active = 0;
 
 void kdbprinttrap(int, int);
 void db_sysregs_cmd(db_expr_t, int, db_expr_t, char *);
@@ -230,7 +229,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	for (i = 0; i < MAXCPUS; i++) {
 		if (cpu_info[i] != NULL) {
 			db_printf("%c%4d: ", (i == cpu_number()) ? '*' : ' ',
-			    cpu_info[i]->ci_dev.dv_unit);
+			    cpu_info[i]->ci_dev->dv_unit);
 			switch(cpu_info[i]->ci_ddb_paused) {
 			case CI_DDB_RUNNING:
 				db_printf("running\n");

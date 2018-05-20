@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.119 2017/09/28 16:16:34 patrick Exp $
+#	$OpenBSD: Makefile.i386,v 1.123 2018/04/27 15:19:32 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,6 +36,8 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
  .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+.else
+CMACHFLAGS+=	-mretpoline
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
@@ -50,7 +52,8 @@ LINKFLAGS=	-T ld.script -X --warn-common -nopie
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
 AFLAGS+=	-m32
-LINKFLAGS+= -melf_i386_obsd
+LDFLAGS=	-melf_i386_obsd
+LINKFLAGS+=	${LDFLAGS}
 .endif
 
 HOSTCC?=	${CC}
@@ -126,7 +129,7 @@ ld.script: ${_machdir}/conf/ld.script
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-MAKE_GAP = LD="${LD}" sh makegap.sh 0xcccccccc
+MAKE_GAP = LD="${LD}" LDFLAGS="${LDFLAGS}" sh makegap.sh 0xcccccccc
 
 gap.o:	Makefile makegap.sh vers.o
 	${MAKE_GAP}
@@ -148,12 +151,14 @@ locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
 locore.o mutex.o in_cksum.o mptramp.o: assym.h
 kvm86call.o acpi_wakecode.o vmm_support.o: assym.h
 
+hardlink-obsd:
+	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
+
 newinstall:
-	cmp -s bsd /bsd || ln -f /bsd /obsd
 	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
 	    sha256 -h /var/db/kernel.SHA256 /bsd
 
-install: update-link newinstall
+install: update-link hardlink-obsd newinstall
 
 # pull in the dependency information
 .ifnmake clean

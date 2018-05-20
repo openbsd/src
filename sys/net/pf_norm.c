@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.208 2017/06/26 18:33:24 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.209 2018/02/06 09:16:11 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1016,7 +1016,7 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 	src->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT);
 	if (src->scrub == NULL)
 		return (1);
-	bzero(src->scrub, sizeof(*src->scrub));
+	memset(src->scrub, 0, sizeof(*src->scrub));
 
 	switch (pd->af) {
 	case AF_INET: {

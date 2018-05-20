@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.40 2016/03/01 21:00:56 natano Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.44 2018/01/13 15:57:58 millert Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -38,13 +38,13 @@
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
+#include <sys/event.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -242,10 +242,11 @@ ext2fs_write(void *v)
 	struct buf *bp;
 	int32_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, size, xfersize;
+	int blkoffset, error, extended, flags, ioflag, size, xfersize;
 	size_t resid;
 	ssize_t overrun;
 
+	extended = 0;
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
@@ -312,7 +313,8 @@ ext2fs_write(void *v)
 			error = ext2fs_setsize(ip, uio->uio_offset + xfersize);
 			if (error)
 				break;
-			uvm_vnp_setsize(vp, ip->i_e2fs_size);
+			uvm_vnp_setsize(vp, ext2fs_size(ip));
+			extended = 1;
 		}
 		uvm_vnp_uncache(vp);
 
@@ -320,7 +322,19 @@ ext2fs_write(void *v)
 		if (size < xfersize)
 			xfersize = size;
 
-		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
+		error = uiomove(bp->b_data + blkoffset, xfersize, uio);
+		/*
+		 * If the buffer is not already filled and we encounter an
+		 * error while trying to fill it, we have to clear out any
+		 * garbage data from the pages instantiated for the buffer.
+		 * If we do not, a failed uiomove() during a write can leave
+		 * the prior contents of the pages exposed to a userland mmap.
+		 *
+		 * Note that we don't need to clear buffers that were
+		 * allocated with the B_CLRBUF flag set.
+		 */
+		if (error != 0 && !(flags & B_CLRBUF))
+			memset(bp->b_data + blkoffset, 0, xfersize);
 #if 0
 		if (ioflag & IO_NOCACHE)
 			bp->b_flags |= B_NOCACHE;
@@ -342,6 +356,8 @@ ext2fs_write(void *v)
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		if (ioflag & IO_UNIT) {
 			(void)ext2fs_truncate(ip, osize,

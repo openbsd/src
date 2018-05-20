@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.50 2016/09/10 05:48:18 jsg Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.52 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,8 +30,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/sysctl.h>
 
 #include <db.h>
+#include <elf.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -44,13 +47,6 @@
 #include <unistd.h>
 
 #include "extern.h"
-
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/sysctl.h>
-
-#include <elf_abi.h>
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx

@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
+/* $OpenBSD: ihidev.c,v 1.16 2018/01/12 08:11:47 mlarkin Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -38,6 +38,9 @@
 #define DPRINTF(x)
 #endif
 
+#define SLOW_POLL_MS	200
+#define FAST_POLL_MS	10
+
 /* 7.2 */
 enum {
 	I2C_HID_CMD_DESCR	= 0x0,
@@ -69,6 +72,8 @@ int	ihidev_hid_desc_parse(struct ihidev_softc *);
 int	ihidev_maxrepid(void *buf, int len);
 int	ihidev_print(void *aux, const char *pnp);
 int	ihidev_submatch(struct device *parent, void *cf, void *aux);
+
+extern int hz;
 
 struct cfattach ihidev_ca = {
 	sizeof(struct ihidev_softc),
@@ -108,13 +113,25 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_hid_desc_addr = ia->ia_size;
 
-	if (ia->ia_intr)
-		printf(" %s", iic_intr_string(sc->sc_tag, ia->ia_intr));
-
 	if (ihidev_hid_command(sc, I2C_HID_CMD_DESCR, NULL) ||
 	    ihidev_hid_desc_parse(sc)) {
 		printf(", failed fetching initial HID descriptor\n");
 		return;
+	}
+
+	if (ia->ia_intr) {
+		printf(" %s", iic_intr_string(sc->sc_tag, ia->ia_intr));
+
+		sc->sc_ih = iic_intr_establish(sc->sc_tag, ia->ia_intr,
+		    IPL_TTY, ihidev_intr, sc, sc->sc_dev.dv_xname);
+		if (sc->sc_ih == NULL)
+			printf(", can't establish interrupt");
+	}
+
+	if (sc->sc_ih == NULL) {
+		printf(" (polling)");
+		sc->sc_poll = 1;
+		sc->sc_fastpoll = 1;
 	}
 
 	printf(", vendor 0x%x product 0x%x, %s\n",
@@ -148,20 +165,11 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		if (isize > sc->sc_isize)
 			sc->sc_isize = isize;
 
-		DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname, repid,
-		    repsz));
+		if (repsz != 0)
+			DPRINTF(("%s: repid %d size %d\n", sc->sc_dev.dv_xname,
+			    repid, repsz));
 	}
 	sc->sc_ibuf = malloc(sc->sc_isize, M_DEVBUF, M_NOWAIT | M_ZERO);
-
-	/* register interrupt with system */
-	if (ia->ia_intr) {
-		sc->sc_ih = iic_intr_establish(sc->sc_tag, ia->ia_intr,
-		    IPL_TTY, ihidev_intr, sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL) {
-			printf(", can't establish interrupt\n");
-			return;
-		}
-	}
 
 	iha.iaa = ia;
 	iha.parent = sc;
@@ -217,6 +225,20 @@ ihidev_detach(struct device *self, int flags)
 		free(sc->sc_report, M_DEVBUF, sc->sc_reportlen);
 
 	return (0);
+}
+
+void
+ihidev_sleep(struct ihidev_softc *sc, int ms)
+{
+	int to = ms * hz / 1000;
+
+	if (cold)
+		delay(ms * 1000);
+	else {
+		if (to <= 0)
+			to = 1;
+		tsleep(&sc, PWAIT, "ihidev", to);
+	}
 }
 
 int
@@ -363,7 +385,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 			I2C_HID_CMD_SET_REPORT,
 			0, 0, 0, 0, 0, 0,
 		};
-		int cmdlen = 10;
+		int cmdlen = sizeof(cmd);
 		int report_id = rreq->id;
 		int report_len = 2 + (report_id ? 1 : 0) + rreq->len;
 		int dataoff;
@@ -377,7 +399,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		DPRINTF(("\n"));
 
 		/*
-		 * 7.2.2.4 - "The protocol is optimized for Report < 15.  If a
+		 * 7.2.3.4 - "The protocol is optimized for Report < 15.  If a
 		 * report ID >= 15 is necessary, then the Report ID in the Low
 		 * Byte must be set to 1111 and a Third Byte is appended to the
 		 * protocol.  This Third Byte contains the entire/actual report
@@ -482,7 +504,7 @@ ihidev_reset(struct ihidev_softc *sc)
 		return (1);
 	}
 
-	DELAY(1000);
+	ihidev_sleep(sc, 100);
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_RESET, 0)) {
 		printf("%s: failed to reset hardware\n", sc->sc_dev.dv_xname);
@@ -493,7 +515,7 @@ ihidev_reset(struct ihidev_softc *sc)
 		return (1);
 	}
 
-	DELAY(1000);
+	ihidev_sleep(sc, 100);
 
 	return (0);
 }
@@ -539,7 +561,7 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 			if (retries == 0)
 				return(1);
 
-			DELAY(1000);
+			ihidev_sleep(sc, 10);
 		}
 		else
 			break;
@@ -563,7 +585,7 @@ ihidev_intr(void *arg)
 	struct ihidev_softc *sc = arg;
 	struct ihidev *scd;
 	u_int psize;
-	int res, i;
+	int res, i, fast = 0;
 	u_char *p;
 	u_int rep = 0;
 
@@ -573,10 +595,8 @@ ihidev_intr(void *arg)
 	 */
 
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-
 	res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, NULL, 0,
 	    sc->sc_ibuf, sc->sc_isize, I2C_F_POLL);
-
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	/*
@@ -585,8 +605,17 @@ ihidev_intr(void *arg)
 	 */
 	psize = sc->sc_ibuf[0] | sc->sc_ibuf[1] << 8;
 	if (!psize || psize > sc->sc_isize) {
-		DPRINTF(("%s: %s: invalid packet size (%d vs. %d)\n",
-		    sc->sc_dev.dv_xname, __func__, psize, sc->sc_isize));
+		if (sc->sc_poll) {
+			/*
+			 * TODO: all fingers are up, should we pass to hid
+			 * layer?
+			 */
+			sc->sc_fastpoll = 0;
+			goto more_polling;
+		} else
+			DPRINTF(("%s: %s: invalid packet size (%d vs. %d)\n",
+			    sc->sc_dev.dv_xname, __func__, psize,
+			    sc->sc_isize));
 		return (1);
 	}
 
@@ -599,20 +628,49 @@ ihidev_intr(void *arg)
 	if (rep >= sc->sc_nrepid) {
 		printf("%s: %s: bad report id %d\n", sc->sc_dev.dv_xname,
 		    __func__, rep);
+		if (sc->sc_poll) {
+			sc->sc_fastpoll = 0;
+			goto more_polling;
+		}
 		return (1);
 	}
 
-	DPRINTF(("%s: ihidev_intr: hid input (rep %d):", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %s: hid input (rep %d):", sc->sc_dev.dv_xname, __func__,
 	    rep));
-	for (i = 0; i < sc->sc_isize; i++)
-		DPRINTF((" %.2x", sc->sc_ibuf[i]));
+	for (i = 0; i < psize; i++) {
+		if (i > 0 && p[i] != 0 && p[i] != 0xff) {
+			fast = 1;
+		}
+		DPRINTF((" %.2x", p[i]));
+	}
 	DPRINTF(("\n"));
 
 	scd = sc->sc_subdevs[rep];
-	if (scd == NULL || !(scd->sc_state & IHIDEV_OPEN))
+	if (scd == NULL || !(scd->sc_state & IHIDEV_OPEN)) {
+		if (sc->sc_poll) {
+			if (sc->sc_fastpoll) {
+				DPRINTF(("%s: fast->slow polling\n",
+				    sc->sc_dev.dv_xname));
+				sc->sc_fastpoll = 0;
+			}
+			goto more_polling;
+		}
 		return (1);
+	}
 
 	scd->sc_intr(scd, p, psize);
+
+	if (sc->sc_poll && fast != sc->sc_fastpoll) {
+		DPRINTF(("%s: %s->%s polling\n", sc->sc_dev.dv_xname,
+		    sc->sc_fastpoll ? "fast" : "slow",
+		    fast ? "fast" : "slow"));
+		sc->sc_fastpoll = fast;
+	}
+
+more_polling:
+	if (sc->sc_poll && sc->sc_refcnt && !timeout_pending(&sc->sc_timer))
+		timeout_add_msec(&sc->sc_timer,
+		    sc->sc_fastpoll ? FAST_POLL_MS : SLOW_POLL_MS);
 
 	return (1);
 }
@@ -680,6 +738,13 @@ ihidev_open(struct ihidev *scd)
 	/* power on */
 	ihidev_reset(sc);
 
+	if (sc->sc_poll) {
+		if (!timeout_initialized(&sc->sc_timer))
+			timeout_set(&sc->sc_timer, (void *)ihidev_intr, sc);
+		if (!timeout_pending(&sc->sc_timer))
+			timeout_add(&sc->sc_timer, FAST_POLL_MS);
+	}
+
 	return (0);
 }
 
@@ -698,6 +763,11 @@ ihidev_close(struct ihidev *scd)
 
 	if (--sc->sc_refcnt)
 		return;
+
+	/* no sub-devices open, conserve power */
+
+	if (sc->sc_poll)
+		timeout_del(&sc->sc_timer);
 
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER, &I2C_HID_POWER_OFF))
 		printf("%s: failed to power down\n", sc->sc_dev.dv_xname);
@@ -757,8 +827,7 @@ ihidev_get_report(struct device *dev, int type, int id, void *data, int len)
 }
 
 int
-ihidev_set_report(struct device *dev, int type, int id, void *data,
-    int len)
+ihidev_set_report(struct device *dev, int type, int id, void *data, int len)
 {
 	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
 	struct i2c_hid_report_request rreq;

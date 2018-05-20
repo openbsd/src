@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.19 2017/09/18 13:01:10 espie Exp $
+# $OpenBSD: Signature.pm,v 1.20 2018/02/06 15:17:26 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,56 +18,79 @@
 use strict;
 use warnings;
 
-package OpenBSD::PackageName::Name;
-sub long_string
-{
-	my $self = shift;
-	return '@'.$self->to_string;
-}
+package OpenBSD::PackingElement;
+sub signature {}
 
-sub always
+package OpenBSD::PackingElement::VersionElement;
+sub signature
 {
-	return 0;
-}
-package OpenBSD::LibObject;
-sub long_string
-{
-	my $self = shift;
-	return $self->to_string;
+	my ($self, $hash) = @_;
+	$hash->{$self->signature_key} = $self;
 }
 
 sub always
 {
 	return 1;
 }
-
-package OpenBSD::PackingElement;
-sub signature {}
-
 package OpenBSD::PackingElement::Dependency;
-sub signature
+sub signature_key
 {
-	my ($self, $hash) = @_;
-	$hash->{$self->{pkgpath}} = OpenBSD::PackageName->from_string($self->{def});
+	my $self = shift;
+	return $self->{pkgpath};
+}
+
+sub sigspec
+{
+	my $self = shift;
+	return OpenBSD::PackageName->from_string($self->{def});
+}
+
+sub long_string
+{
+	my $self = shift;
+	return '@'.$self->sigspec->to_string;
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	return $a->sigspec->compare($b->sigspec);
+}
+
+sub always
+{
+	return 0;
 }
 
 package OpenBSD::PackingElement::Wantlib;
-sub signature
+sub signature_key
 {
-	my ($self, $hash) = @_;
-
+	my $self = shift;
 	my $spec = $self->spec;
 	if ($spec->is_valid) {
-		$hash->{$spec->key} = $spec;
+		return $spec->key;
+	} else {
+		return "???";
 	}
 }
 
-package OpenBSD::PackingElement::Version;
-
-sub signature
+sub compare
 {
-	my ($self, $hash) = @_;
-	$hash->{VERSION} = $self;
+	my ($a, $b) = @_;
+	return $a->spec->compare($b->spec);
+}
+
+sub long_string
+{
+	my $self = shift;
+	return $self->spec->to_string;
+}
+
+
+package OpenBSD::PackingElement::Version;
+sub signature_key
+{
+	return 'VERSION';
 }
 
 sub long_string

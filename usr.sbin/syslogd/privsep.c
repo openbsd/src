@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.67 2017/04/05 11:31:45 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.68 2018/04/26 13:40:09 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -93,11 +93,12 @@ static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
 static int  may_read(int, void *, size_t);
 
+static struct passwd *pw;
+
 void
 priv_init(int lockfd, int nullfd, int argc, char *argv[])
 {
 	int i, socks[2];
-	struct passwd *pw;
 	char *execpath, childnum[11], **privargv;
 
 	/* Create sockets */
@@ -178,7 +179,12 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	struct sigaction sa;
 	sigset_t sigmask;
 
-	if (pledge("stdio rpath wpath cpath dns getpw sendfd id proc exec",
+	/* Redo the password lookup after re-exec of the privsep parent. */
+	pw = getpwnam("_syslogd");
+	if (pw == NULL)
+		errx(1, "unknown user _syslogd");
+
+	if (pledge("stdio rpath wpath cpath dns sendfd id proc exec",
 	    NULL) == -1)
 		err(1, "pledge priv");
 
@@ -440,7 +446,6 @@ static int
 open_pipe(char *cmd)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL};
-	struct passwd *pw;
 	int fd[2];
 	int bsize, flags;
 	pid_t pid;
@@ -490,13 +495,10 @@ open_pipe(char *cmd)
 	    &bsize, sizeof(bsize)) == -1)
 		bsize /= 2;
 
-	if ((pw = getpwnam("_syslogd")) == NULL)
-		errx(1, "unknown user _syslogd");
 	if (setgroups(1, &pw->pw_gid) == -1 ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 		err(1, "failure dropping privs");
-	endpwent();
 
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		err(1, "dup2 failed");

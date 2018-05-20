@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.69 2015/08/20 22:02:21 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.70 2017/12/05 20:31:45 jca Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -554,15 +554,13 @@ check_file_secrecy_fd(int fd, char *name, size_t *file_size)
 
 /* Calculate timeout.  Returns -1 on error. */
 long
-get_timeout(struct timeval *timeout)
+get_timeout(struct timespec *timeout)
 {
-	struct timeval	now, result;
+	struct timespec	now, result;
 
-	if (gettimeofday(&now, NULL) < 0)
+	if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
 		return -1;
-
-	timersub(timeout, &now, &result);
-
+	timespecsub(timeout, &now, &result);
 	return result.tv_sec;
 }
 

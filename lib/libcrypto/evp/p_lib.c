@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_lib.c,v 1.23 2018/05/13 06:38:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
 int
-EVP_PKEY_bits(EVP_PKEY *pkey)
+EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
 	if (pkey && pkey->ameth && pkey->ameth->pkey_bits)
 		return pkey->ameth->pkey_bits(pkey);
@@ -204,6 +204,13 @@ EVP_PKEY_new(void)
 	return (ret);
 }
 
+int
+EVP_PKEY_up_ref(EVP_PKEY *pkey)
+{
+	int refs = CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	return ((refs > 1) ? 1 : 0);
+}
+
 /* Setup a public key ASN1 method and ENGINE from a NID or a string.
  * If pkey is NULL just return 1 or 0 if the algorithm exists.
  */
@@ -222,11 +229,8 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 		if ((type == pkey->save_type) && pkey->ameth)
 			return 1;
 #ifndef OPENSSL_NO_ENGINE
-		/* If we have an ENGINE release it */
-		if (pkey->engine) {
-			ENGINE_finish(pkey->engine);
-			pkey->engine = NULL;
-		}
+		ENGINE_finish(pkey->engine);
+		pkey->engine = NULL;
 #endif
 	}
 	if (str)
@@ -234,7 +238,7 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 	else
 		ameth = EVP_PKEY_asn1_find(&e, type);
 #ifndef OPENSSL_NO_ENGINE
-	if (!pkey && e)
+	if (pkey == NULL)
 		ENGINE_finish(e);
 #endif
 	if (!ameth) {
@@ -273,19 +277,20 @@ EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 }
 
 void *
-EVP_PKEY_get0(EVP_PKEY *pkey)
+EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
 	return pkey->pkey.ptr;
 }
 
 #ifndef OPENSSL_NO_RSA
-int
-EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
+RSA *
+EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_RSA(pkey, key);
-	if (ret)
-		RSA_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_RSA) {
+		EVPerror(EVP_R_EXPECTING_AN_RSA_KEY);
+		return NULL;
+	}
+	return pkey->pkey.rsa;
 }
 
 RSA *
@@ -298,16 +303,26 @@ EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 	RSA_up_ref(pkey->pkey.rsa);
 	return pkey->pkey.rsa;
 }
+
+int
+EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
+{
+	int ret = EVP_PKEY_assign_RSA(pkey, key);
+	if (ret != 0)
+		RSA_up_ref(key);
+	return ret;
+}
 #endif
 
 #ifndef OPENSSL_NO_DSA
-int
-EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
+DSA *
+EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_DSA(pkey, key);
-	if (ret)
-		DSA_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_DSA) {
+		EVPerror(EVP_R_EXPECTING_A_DSA_KEY);
+		return NULL;
+	}
+	return pkey->pkey.dsa;
 }
 
 DSA *
@@ -320,17 +335,26 @@ EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 	DSA_up_ref(pkey->pkey.dsa);
 	return pkey->pkey.dsa;
 }
+
+int
+EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
+{
+	int ret = EVP_PKEY_assign_DSA(pkey, key);
+	if (ret != 0)
+		DSA_up_ref(key);
+	return ret;
+}
 #endif
 
 #ifndef OPENSSL_NO_EC
-
-int
-EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
+EC_KEY *
+EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
-	if (ret)
-		EC_KEY_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_EC) {
+		EVPerror(EVP_R_EXPECTING_A_EC_KEY);
+		return NULL;
+	}
+	return pkey->pkey.ec;
 }
 
 EC_KEY *
@@ -343,18 +367,27 @@ EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 	EC_KEY_up_ref(pkey->pkey.ec);
 	return pkey->pkey.ec;
 }
+
+int
+EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
+{
+	int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
+	if (ret != 0)
+		EC_KEY_up_ref(key);
+	return ret;
+}
 #endif
 
 
 #ifndef OPENSSL_NO_DH
-
-int
-EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+DH *
+EVP_PKEY_get0_DH(EVP_PKEY *pkey)
 {
-	int ret = EVP_PKEY_assign_DH(pkey, key);
-	if (ret)
-		DH_up_ref(key);
-	return ret;
+	if (pkey->type != EVP_PKEY_DH) {
+		EVPerror(EVP_R_EXPECTING_A_DH_KEY);
+		return NULL;
+	}
+	return pkey->pkey.dh;
 }
 
 DH *
@@ -366,6 +399,15 @@ EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 	}
 	DH_up_ref(pkey->pkey.dh);
 	return pkey->pkey.dh;
+}
+
+int
+EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+{
+	int ret = EVP_PKEY_assign_DH(pkey, key);
+	if (ret != 0)
+		DH_up_ref(key);
+	return ret;
 }
 #endif
 
@@ -381,8 +423,7 @@ EVP_PKEY_type(int type)
 	else
 		ret = NID_undef;
 #ifndef OPENSSL_NO_ENGINE
-	if (e)
-		ENGINE_finish(e);
+	ENGINE_finish(e);
 #endif
 	return ret;
 }
@@ -425,10 +466,8 @@ EVP_PKEY_free_it(EVP_PKEY *x)
 		x->pkey.ptr = NULL;
 	}
 #ifndef OPENSSL_NO_ENGINE
-	if (x->engine) {
-		ENGINE_finish(x->engine);
-		x->engine = NULL;
-	}
+	ENGINE_finish(x->engine);
+	x->engine = NULL;
 #endif
 }
 
