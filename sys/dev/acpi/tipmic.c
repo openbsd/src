@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipmic.c,v 1.1 2018/05/20 19:30:21 kettenis Exp $	*/
+/*	$OpenBSD: tipmic.c,v 1.2 2018/05/21 08:01:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -34,6 +34,19 @@
 #define TIPMIC_INTR_MASK		0x02
 #define  TIPMIC_INTR_MASK_ADC		(1 << 2)
 #define  TIPMIC_INTR_MASK_ALL		0xff
+#define TIPMIC_LDO1_CTRL		0x41
+#define TIPMIC_LDO2_CTRL		0x42
+#define TIPMIC_LDO3_CTRL		0x43
+#define TIPMIC_LDO5_CTRL		0x45
+#define TIPMIC_LDO6_CTRL		0x46
+#define TIPMIC_LDO7_CTRL		0x47
+#define TIPMIC_LDO8_CTRL		0x48
+#define TIPMIC_LDO9_CTRL		0x49
+#define TIPMIC_LDO10_CTRL		0x4a
+#define TIPMIC_LDO11_CTRL		0x4b
+#define TIPMIC_LDO12_CTRL		0x4c
+#define TIPMIC_LDO13_CTRL		0x4d
+#define TIPMIC_LDO14_CTRL		0x4e
 #define TIPMIC_ADC_CTRL			0x50
 #define  TIPMIC_ADC_CTRL_START		(1 << 0)
 #define  TIPMIC_ADC_CTRL_CH_MASK	(3 << 1)
@@ -49,6 +62,7 @@
 #define TIPMIC_SYSTEMP_LO		0x5b
 
 #define TIPMIC_REGIONSPACE_THERMAL	0x8c
+#define TIPMIC_REGIONSPACE_POWER	0x8d
 
 struct acpi_lpat {
 	int32_t temp;
@@ -88,6 +102,7 @@ int	tipmic_intr(void *);
 void	tipmic_get_lpat(struct tipmic_softc *);
 int32_t	tipmic_raw_to_temp(struct tipmic_softc *, int32_t);
 int	tipmic_thermal_opreg_handler(void *, int, uint64_t, int, uint64_t *);
+int	tipmic_power_opreg_handler(void *, int, uint64_t, int, uint64_t *);
 int	tipmic_read_pin(void *, int);
 void	tipmic_write_pin(void *, int, int);
 
@@ -141,6 +156,8 @@ tipmic_attach(struct device *parent, struct device *self, void *aux)
 	/* Register OEM defined address space. */
 	aml_register_regionspace(sc->sc_node, TIPMIC_REGIONSPACE_THERMAL,
 	    sc, tipmic_thermal_opreg_handler);
+	aml_register_regionspace(sc->sc_node, TIPMIC_REGIONSPACE_POWER,
+	    sc, tipmic_power_opreg_handler);
 }
 
 uint8_t
@@ -341,6 +358,56 @@ tipmic_thermal_opreg_handler(void *cookie, int iodir, uint64_t address,
 		return -1;
 
 	*value = temp;
+	return 0;
+}
+
+struct tipmic_regmap tipmic_power_regmap[] = {
+	{ 0x00, TIPMIC_LDO1_CTRL },
+	{ 0x04, TIPMIC_LDO2_CTRL },
+	{ 0x08, TIPMIC_LDO3_CTRL },
+	{ 0x0c, TIPMIC_LDO5_CTRL },
+	{ 0x10, TIPMIC_LDO6_CTRL },
+	{ 0x14, TIPMIC_LDO7_CTRL },
+	{ 0x18, TIPMIC_LDO8_CTRL },
+	{ 0x1c, TIPMIC_LDO9_CTRL },
+	{ 0x20, TIPMIC_LDO10_CTRL },
+	{ 0x24, TIPMIC_LDO11_CTRL },
+	{ 0x28, TIPMIC_LDO12_CTRL },
+	{ 0x2c, TIPMIC_LDO13_CTRL },
+	{ 0x30, TIPMIC_LDO14_CTRL }
+};
+
+int
+tipmic_power_opreg_handler(void *cookie, int iodir, uint64_t address,
+    int size, uint64_t *value)
+{
+	struct tipmic_softc *sc = cookie;
+	uint8_t reg, val;
+	int i;
+
+	/* Only allow 32-bit access. */
+	if (size != 4)
+		return -1;
+
+	for (i = 0; i < nitems(tipmic_power_regmap); i++) {
+		if (address == tipmic_power_regmap[i].address)
+			break;
+	}
+	if (i == nitems(tipmic_power_regmap))
+		return -1;
+
+	reg = tipmic_power_regmap[i].hi;
+	val = tipmic_read_1(sc, reg, 0);
+	if (iodir == ACPI_IOREAD) {
+		*value = val & 0x1;
+	} else {
+		if (*value)
+			val |= 0x1;
+		else
+			val &= ~0x1;
+		tipmic_write_1(sc, reg, val, 0);
+	}
+
 	return 0;
 }
 
