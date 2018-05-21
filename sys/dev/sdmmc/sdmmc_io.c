@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.32 2018/02/11 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.33 2018/05/21 17:12:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -305,19 +305,18 @@ sdmmc_print(void *aux, const char *pnp)
 		if (i != 0)
 			printf("\"");
 
-		if (cis->manufacturer != SDMMC_VENDOR_INVALID &&
+		if (cis->manufacturer != SDMMC_VENDOR_INVALID ||
 		    cis->product != SDMMC_PRODUCT_INVALID) {
-			printf("%s(", i ? " " : "");
+			printf("%s", i ? " " : "");
 			if (cis->manufacturer != SDMMC_VENDOR_INVALID)
-				printf("manufacturer 0x%x%s",
+				printf("manufacturer 0x%04x%s",
 				    cis->manufacturer,
 				    cis->product == SDMMC_PRODUCT_INVALID ?
 				    "" : ", ");
 			if (cis->product != SDMMC_PRODUCT_INVALID)
-				printf("product 0x%x", cis->product);
-			printf(")");
+				printf("product 0x%04x", cis->product);
 		}
-		printf("%sat %s", i ? " " : "", pnp);
+		printf(" at %s", pnp);
 	}
 	printf(" function %d", sf->number);
 
