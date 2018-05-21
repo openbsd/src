@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.9 2016/10/25 06:48:58 pirofti Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.10 2018/05/21 07:26:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -70,8 +70,11 @@ const char *sdhc_hids[] = {
 };
 
 int	sdhc_acpi_parse_resources(int, union acpi_resource *, void *);
-int	sdhc_acpi_card_detect(struct sdhc_softc *);
+int	sdhc_acpi_card_detect_nonremovable(struct sdhc_softc *);
+int	sdhc_acpi_card_detect_gpio(struct sdhc_softc *);
 int	sdhc_acpi_card_detect_intr(void *);
+void	sdhc_acpi_power_on(struct sdhc_acpi_softc *, struct aml_node *);
+void	sdhc_acpi_explore(struct sdhc_acpi_softc *);
 
 int
 sdhc_acpi_match(struct device *parent, void *match, void *aux)
@@ -122,9 +125,11 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_gpio_io_node && sc->sc_gpio_io_node->gpio) {
-		sc->sc.sc_card_detect = sdhc_acpi_card_detect;
+		sc->sc.sc_card_detect = sdhc_acpi_card_detect_gpio;
 		printf(", gpio");
 	}
+
+	printf("\n");
 
 	if (sc->sc_gpio_int_node && sc->sc_gpio_int_node->gpio) {
 		struct acpi_gpio *gpio = sc->sc_gpio_int_node->gpio;
@@ -133,7 +138,8 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_gpio_int_flags, sdhc_acpi_card_detect_intr, sc);
 	}
 
-	printf("\n");
+	sdhc_acpi_power_on(sc, sc->sc_node);
+	sdhc_acpi_explore(sc);
 
 	sc->sc.sc_host = &sc->sc_host;
 	sc->sc.sc_dmat = &pci_bus_dma_tag;
@@ -175,7 +181,13 @@ sdhc_acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 }
 
 int
-sdhc_acpi_card_detect(struct sdhc_softc *ssc)
+sdhc_acpi_card_detect_nonremovable(struct sdhc_softc *ssc)
+{
+	return 1;
+}
+
+int
+sdhc_acpi_card_detect_gpio(struct sdhc_softc *ssc)
 {
 	struct sdhc_acpi_softc *sc = (struct sdhc_acpi_softc *)ssc;
 	struct acpi_gpio *gpio = sc->sc_gpio_io_node->gpio;
@@ -193,4 +205,48 @@ sdhc_acpi_card_detect_intr(void *arg)
 	sdhc_needs_discover(&sc->sc);
 
 	return (1);
+}
+
+void
+sdhc_acpi_power_on(struct sdhc_acpi_softc *sc, struct aml_node *node)
+{
+	node = aml_searchname(node, "_PS0");
+	if (node && aml_evalnode(sc->sc_acpi, node, 0, NULL, NULL))
+		printf("%s: _PS0 failed\n", sc->sc.sc_dev.dv_xname);
+}
+
+int
+sdhc_acpi_do_explore(struct aml_node *node, void *arg)
+{
+	struct sdhc_acpi_softc *sc = arg;
+	int64_t sta, rmv;
+
+	/* We're only interested in our children. */
+	if (node == sc->sc_node)
+		return 0;
+
+	/* Only consider devices that are actually present. */
+	if (node->value == NULL ||
+	    node->value->type != AML_OBJTYPE_DEVICE)
+		return 1;
+	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta))
+		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
+	if ((sta & STA_PRESENT) == 0)
+		return 1;
+
+	/* Override card detect if we have non-removable devices. */
+	if (aml_evalinteger(sc->sc_acpi, node, "_RMV", 0, NULL, &rmv))
+		rmv = 1;
+	if (rmv == 0 && sc->sc.sc_card_detect == NULL)
+		sc->sc.sc_card_detect = sdhc_acpi_card_detect_nonremovable;
+
+	sdhc_acpi_power_on(sc, node);
+
+	return 1;
+}
+
+void
+sdhc_acpi_explore(struct sdhc_acpi_softc *sc)
+{
+	aml_walknodes(sc->sc_node, AML_WALK_PRE, sdhc_acpi_do_explore, sc);
 }
