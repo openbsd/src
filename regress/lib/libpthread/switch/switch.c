@@ -1,8 +1,8 @@
-/*	$OpenBSD: switch.c,v 1.5 2003/12/23 20:09:42 miod Exp $	*/
+/*	$OpenBSD: switch.c,v 1.6 2018/05/21 10:14:50 bluhm Exp $	*/
 /*
- * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
+ * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors,
  * proven@mit.edu All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -30,7 +30,7 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /* ==== test_switch.c ========================================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
@@ -43,6 +43,7 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -51,20 +52,18 @@
 
 const char buf[] = "abcdefghijklmnopqrstuvwxyz";
 char x[sizeof(buf)];
-int fd = 1;
 
 volatile int ending = 0;
 
 /* ==========================================================================
  * usage();
  */
-static void
+static __dead void
 usage(void)
 {
-    extern char *__progname;
-    printf("usage: %s [-?] [-c count]\n", __progname);
-	printf("count must be between 2 and 26\n");
-    errno = 0;
+	fprintf(stderr, "usage: %s [-?] [-c count]\n", getprogname());
+	fprintf(stderr, "count is number of theads, between 2 and 26\n");
+	exit(1);
 }
 
 static void *
@@ -74,7 +73,7 @@ new_thread(void *arg)
 
 	SET_NAME("writer");
 	while (!ending) {
-		CHECKe(write (fd, (char *) arg, 1));
+		CHECKe(write(STDOUT_FILENO, (char *) arg, 1));
 		x[(char *)arg - buf] = 1;
 		for (i = 0; i < 999999; i += 1)
 			;
@@ -88,31 +87,23 @@ main(int argc, char *argv[])
 	pthread_t thread;
 	int ch, count = 4;
 	long i;
+	const char *errstr;
 
-	/* Getopt variables. */
-	extern int optind, opterr;
-	extern char *optarg;
-
-	while ((ch = getopt(argc, argv, "c:?")) != -1)
-	  switch (ch)
-	    {
-	    case 'c':
-	      count = atoi(optarg);
-	      if ((count > 26) || (count < 2)) {
-			  count = 2;
-	      }
-	      break;
-	    case '?':
-	      usage();
-	      return(OK);
-	    default:
-	      usage();
-	      return(NOTOK);
-	    }
+	while ((ch = getopt(argc, argv, "c:?")) != -1) {
+		switch (ch) {
+		case 'c':
+			count = strtonum(optarg, 2, 26, &errstr);
+			if (errstr != NULL)
+				errx(1, "count is %s: %s", errstr, optarg);
+			break;
+		default:
+			usage();
+		}
+	}
 
 	/* create the threads */
 	for (i = 0; i < count; i++)
-		CHECKr(pthread_create(&thread, NULL, new_thread, 
+		CHECKr(pthread_create(&thread, NULL, new_thread,
 		    (void*)(buf+i)));
 
 	/* give all threads a chance to run */
