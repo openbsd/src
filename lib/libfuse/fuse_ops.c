@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.31 2018/05/20 02:51:26 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.32 2018/05/21 11:47:46 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -22,8 +22,8 @@
 #include "fuse_private.h"
 #include "debug.h"
 
-#define CHECK_OPT(opname)	DPRINTF("Opcode:\t%s\n", #opname);	\
-				DPRINTF("Inode:\t%llu\n",		\
+#define CHECK_OPT(opname)	DPRINTF("Opcode: %s\t", #opname);	\
+				DPRINTF("Inode: %llu\t",		\
 				    (unsigned long long)fbuf->fb_ino);	\
 				if (!f->op.opname) {			\
 					fbuf->fb_err = -ENOSYS;		\
@@ -63,7 +63,7 @@ ifuse_ops_init(struct fuse *f)
 {
 	struct fuse_conn_info fci;
 
-	DPRINTF("Opcode:\tinit\n");
+	DPRINTF("Opcode: init\t");
 
 	if (f->op.init) {
 		memset(&fci, 0, sizeof(fci));
@@ -81,8 +81,8 @@ ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	DPRINTF("Opcode:\tgetattr\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Opcode: getattr\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	memset(&fbuf->fb_attr, 0, sizeof(struct stat));
 
@@ -170,8 +170,8 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	DPRINTF("Opcode:\topendir\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Opcode: opendir\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	memset(&ffi, 0, sizeof(ffi));
 	ffi.flags = fbuf->fb_io_flags;
@@ -202,6 +202,21 @@ ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
 #define GENERIC_DIRSIZ(NLEN) \
 ((sizeof (struct dirent) - (MAXNAMLEN+1)) + ((NLEN+1 + 7) &~ 7))
 
+/*
+ * This function adds one directory entry to the buffer.
+ * FUSE file systems can implement readdir in one of two ways.
+ *
+ * 1. Read all directory entries in one operation. The off parameter
+ *    will always be 0 and this filler function always returns 0.
+ * 2. The file system keeps track of the directory entry offsets and
+ *    this filler function returns 1 when the buffer is full.
+ *
+ * OpenBSD currently supports 1. but will still call the file system's
+ * readdir function multiple times if either the kernel buffer or the
+ * buffer supplied by the calling application is too small to fit all
+ * entries. Each call to the file system's readdir function will fill
+ * the buffer with the next set of entries.
+ */
 static int
 ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
     off_t off)
@@ -287,10 +302,10 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	uint64_t offset;
 	uint32_t size;
 
-	DPRINTF("Opcode:\treaddir\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
-	DPRINTF("Offset:\t%llu\n", fbuf->fb_io_off);
-	DPRINTF("Size:\t%lu\n", fbuf->fb_io_len);
+	DPRINTF("Opcode: readdir\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Offset: %llu\t", fbuf->fb_io_off);
+	DPRINTF("Size: %lu\t", fbuf->fb_io_len);
 
 	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
@@ -355,8 +370,8 @@ ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	DPRINTF("Opcode:\treleasedir\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Opcode: releasedir\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	memset(&ffi, 0, sizeof(ffi));
 	ffi.fh = fbuf->fb_io_fd;
@@ -451,9 +466,8 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	struct fuse_vnode *vn;
 	char *realname;
 
-	DPRINTF("Opcode:\tlookup\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
-	DPRINTF("For file %s\n", fbuf->fb_dat);
+	DPRINTF("Opcode: lookup\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	if (strcmp((const char *)fbuf->fb_dat, "..") == 0) {
 		vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
@@ -479,7 +493,6 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 			ref_vn(vn);
 	}
 
-	DPRINTF("new ino %llu\n", (unsigned long long)vn->ino);
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
@@ -660,8 +673,8 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 	char name[PATH_MAX + 1];
 	int len, ret;
 
-	DPRINTF("Opcode:\treadlink\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Opcode: readlink\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
@@ -802,8 +815,8 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	uid_t uid;
 	gid_t gid;
 
-	DPRINTF("Opcode:\tsetattr\n");
-	DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+	DPRINTF("Opcode: setattr\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
@@ -962,7 +975,7 @@ ifuse_ops_destroy(struct fuse *f)
 {
 	struct fuse_context *ctx;
 
-	DPRINTF("Opcode:\tdestroy\n");
+	DPRINTF("Opcode: destroy\n");
 
 	if (f->op.destroy) {
 		ctx = fuse_get_context();
@@ -979,6 +992,9 @@ static int
 ifuse_ops_reclaim(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_vnode *vn;
+
+	DPRINTF("Opcode: reclaim\t");
+	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn != NULL)
@@ -1107,8 +1123,8 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		ret = ifuse_ops_mknod(f, fbuf);
 		break;
 	default:
-		DPRINTF("Opcode:\t%i not supported\n", fbuf->fb_type);
-		DPRINTF("Inode:\t%llu\n", (unsigned long long)fbuf->fb_ino);
+		DPRINTF("Opcode: %i not supported\t", fbuf->fb_type);
+		DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
 		fbuf->fb_err = -ENOSYS;
 		fbuf->fb_len = 0;
