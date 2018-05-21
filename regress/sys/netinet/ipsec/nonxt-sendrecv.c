@@ -1,4 +1,4 @@
-/*	$OpenBSD: nonxt-sendrecv.c,v 1.1 2018/05/19 10:50:57 bluhm Exp $	*/
+/*	$OpenBSD: nonxt-sendrecv.c,v 1.2 2018/05/21 01:19:21 bluhm Exp $	*/
 /*
  * Copyright (c) Alexander Bluhm <bluhm@genua.de>
  *
@@ -61,6 +61,9 @@ main(int argc, char *argv[])
 		usage();
 	}
 
+	if (pledge("stdio inet dns", NULL) == -1)
+		err(1, "pledge");
+
 	/* Create socket and connect it to remote address. */
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -107,6 +110,9 @@ main(int argc, char *argv[])
 			err(1, "bind");
 	}
 	freeaddrinfo(res0);
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
 	/* Send a protocol 59 packet. */
 	if (send(s, buf, 0, 0) == -1)

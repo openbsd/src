@@ -1,4 +1,4 @@
-/*	$OpenBSD: nonxt-reflect.c,v 1.1 2018/05/19 10:50:57 bluhm Exp $	*/
+/*	$OpenBSD: nonxt-reflect.c,v 1.2 2018/05/21 01:19:21 bluhm Exp $	*/
 /*
  * Copyright (c) Alexander Bluhm <bluhm@genua.de>
  *
@@ -32,8 +32,8 @@ void __dead usage(void);
 void
 usage(void)
 {
-	fprintf(stderr, "usage: nonxt-reflect [localaddr]\n"
-	    "Wait for protocol 59 packet in background and send answer.\n");
+	fprintf(stderr, "usage: nonxt-reflect localaddr\n"
+	    "Daemonize, wait for protocol 59 packets, and answer them.\n");
 	exit(1);
 }
 
@@ -41,24 +41,22 @@ int
 main(int argc, char *argv[])
 {
 	struct addrinfo hints, *res, *res0;
-	struct sockaddr_storage ss;
 	const char *cause = NULL, *local;
-	socklen_t slen;
 	int error;
 	int save_errno;
 	int s;
 	char buf[1024];
 
 	switch (argc) {
-	case 1:
-		local = NULL;
-		break;
 	case 2:
 		local = argv[1];
 		break;
 	default:
 		usage();
 	}
+
+	if (pledge("stdio inet dns proc", NULL) == -1)
+		err(1, "pledge");
 
 	/* Create socket and bind it to local address. */
 	memset(&hints, 0, sizeof(hints));
@@ -88,17 +86,25 @@ main(int argc, char *argv[])
 		err(1, "%s", cause);
 	freeaddrinfo(res0);
 
-	/* Scoket is ready to receive, test may proceed. */
-	daemon(0, 0);
+	/* Socket is ready to receive, parent process may proceed. */
+	daemon(1, 1);
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
-	/* Receive a protocol 59 packet. */
-	slen = sizeof(ss);
-	if (recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&ss, &slen)
-	    == -1)
-		err(1, "recv");
-	/* Send back a reply packet. */
-	if (sendto(s, buf, 0, 0, (struct sockaddr *)&ss, slen) == -1)
-		err(1, "send");
+	for (;;) {
+		struct sockaddr_storage ss;
+		socklen_t slen;
 
+		/* Receive a protocol 59 packet. */
+		slen = sizeof(ss);
+		if (recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&ss,
+		    &slen) == -1)
+			err(1, "recv");
+		/* Send back a reply packet. */
+		if (sendto(s, buf, 0, 0, (struct sockaddr *)&ss, slen) == -1)
+			err(1, "send");
+	}
+
+	/* NOTREACHED */
 	return 0;
 }
