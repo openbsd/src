@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.42 2018/05/20 02:51:26 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.43 2018/05/21 13:06:00 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -284,29 +284,31 @@ fusefs_close(void *v)
 	if (ap->a_vp->v_type == VDIR)
 		return (0);
 
+	/* Implementing flush is optional so don't error. */
+	if (fmp->undef_op & UNDEF_FLUSH)
+		return (0);
+
+	/* Only flush writeable file descriptors. */
 	if ((ap->a_fflag & FREAD) && (ap->a_fflag & FWRITE))
 		fufh_type = FUFH_RDWR;
 	else if (ap->a_fflag & (FWRITE))
 		fufh_type = FUFH_WRONLY;
+	else
+		return (0);
 
 	if (ip->fufh[fufh_type].fh_type == FUFH_INVALID)
 		return (EBADF);
 
-	/* No need to flush read-only file descriptors. */
-	if (!(ap->a_fflag & FWRITE))
-		return (0);
-
-	/* Implementing flush is optional. */
-	if (fmp->undef_op & UNDEF_FLUSH)
-		return (0);
-
 	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FLUSH, ap->a_p);
 	fbuf->fb_io_fd = ip->fufh[fufh_type].fh_id;
 	error = fb_queue(fmp->dev, fbuf);
-	if (error == ENOSYS)
+	fb_delete(fbuf);
+	if (error == ENOSYS) {
 		fmp->undef_op |= UNDEF_FLUSH;
 
-	fb_delete(fbuf);
+		/* Implementing flush is optional so don't error. */
+		return (0);
+	}
 
 	return (error);
 }
