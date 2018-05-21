@@ -1,3 +1,4 @@
+/*	$OpenBSD: f00f.c,v 1.2 2018/05/21 23:34:20 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@genua.de>
  *
