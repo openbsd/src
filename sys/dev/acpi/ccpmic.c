@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccpmic.c,v 1.1 2018/05/21 13:37:31 kettenis Exp $	*/
+/*	$OpenBSD: ccpmic.c,v 1.2 2018/05/21 15:00:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,21 @@
 
 #include <dev/i2c/i2cvar.h>
 
+#define CCPMIC_GPIO0P0CTLO		0x2b
+#define CCPMIC_GPIO0P0CTLI		0x33
+#define CCPMIC_GPIO1P0CTLO		0x3b
+#define CCPMIC_GPIO1P0CTLI		0x43
+#define CCPMIC_GPIOPANELCTL		0x52
+#define  CCPMIC_GPIOCTLO_RVAL_2KUP	(1 << 1)
+#define  CCPMIC_GPIOCTLO_DRV_REN	(1 << 3)
+#define  CCPMIC_GPIOCTLO_DIR_OUT	(1 << 5)
+#define  CCPMIC_GPIOCTLI_VALUE		(1 << 0)
+
+#define CCPMIC_GPIOCTLO_INPUT \
+    (CCPMIC_GPIOCTLO_DRV_REN | CCPMIC_GPIOCTLO_RVAL_2KUP)
+#define CCPMIC_GPIOCTLO_OUTPUT \
+    (CCPMIC_GPIOCTLO_INPUT | CCPMIC_GPIOCTLO_DIR_OUT)
+
 #define CCPMIC_V1P8SX			0x5d
 #define CCPMIC_V1P2SX			0x61
 #define CCPMIC_V2P85SX			0x66
@@ -39,6 +54,8 @@
 
 #define CCPMIC_REGIONSPACE_THERMAL	0x8c
 #define CCPMIC_REGIONSPACE_POWER	0x8d
+
+#define CCPMIC_NPINS			16
 
 struct acpi_lpat {
 	int32_t temp;
@@ -295,17 +312,42 @@ ccpmic_power_opreg_handler(void *cookie, int iodir, uint64_t address,
 }
 
 /* 
- * Allegdly the GPIOs are virtual and only there to deal with a
- * limitation of Microsoft Windows.
+ * We have 16 real GPIOs and a bunch of virtual ones.  The virtual
+ * ones are mostly there to deal with a limitation of Microsoft
+ * Windows.  We only implement the "panel" control GPIO, which
+ * actually maps onto a real GPIO.
  */
 
 int
 ccpmic_read_pin(void *cookie, int pin)
 {
-	return 0;
+	struct ccpmic_softc *sc = cookie;
+	uint8_t reg;
+
+	if (pin >= CCPMIC_NPINS)
+		return 0;
+
+	reg = ((pin < 8) ? CCPMIC_GPIO0P0CTLO : CCPMIC_GPIO1P0CTLO) + pin % 8;
+	ccpmic_write_1(sc, reg, CCPMIC_GPIOCTLO_INPUT, 0);
+	reg = ((pin < 8) ? CCPMIC_GPIO0P0CTLI : CCPMIC_GPIO1P0CTLI) + pin % 8;
+	return ccpmic_read_1(sc, reg, 0) & CCPMIC_GPIOCTLI_VALUE;
 }
 
 void
 ccpmic_write_pin(void *cookie, int pin, int value)
 {
+	struct ccpmic_softc *sc = cookie;
+	uint8_t reg;
+
+	if (pin == 0x5e) {
+		reg = CCPMIC_GPIOPANELCTL;
+		ccpmic_write_1(sc, reg, CCPMIC_GPIOCTLO_OUTPUT | !!value, 0);
+		return;
+	}
+
+	if (pin >= CCPMIC_NPINS)
+		return;
+
+	reg = ((pin < 8) ? CCPMIC_GPIO0P0CTLO : CCPMIC_GPIO1P0CTLO) + pin % 8;
+	ccpmic_write_1(sc, reg, CCPMIC_GPIOCTLO_OUTPUT | !!value, 0);
 }
