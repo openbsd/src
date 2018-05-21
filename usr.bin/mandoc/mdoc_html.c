@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.177 2018/05/21 00:29:41 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.178 2018/05/21 01:10:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1461,7 +1461,7 @@ mdoc_ms_pre(MDOC_ARGS)
 
 	if ((id = cond_id(n)) != NULL)
 		print_otag(h, TAG_A, "chR", "permalink", id);
-	print_otag(h, TAG_B, "cTi", "Ms", id);
+	print_otag(h, TAG_SPAN, "cTi", "Ms", id);
 	free(id);
 	return 1;
 }
