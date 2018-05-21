@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.176 2018/05/20 23:54:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.177 2018/05/21 00:29:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -984,7 +984,7 @@ mdoc_pa_pre(MDOC_ARGS)
 static int
 mdoc_ad_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_I, "c", "Ad");
+	print_otag(h, TAG_SPAN, "c", "Ad");
 	return 1;
 }
 
