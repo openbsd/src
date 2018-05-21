@@ -190,6 +190,9 @@ static bfd_boolean remove_leading_char = FALSE;
 /* Whether to permit wildcard in symbol comparison.  */
 static bfd_boolean wildcard = FALSE;
 
+/* True if --localize-hidden is in effect.  */
+static bfd_boolean localize_hidden = FALSE;
+
 /* List of symbols to strip, keep, localize, keep-global, weaken,
    or redefine.  */
 static struct symlist *strip_specific_list = NULL;
@@ -240,6 +243,7 @@ enum command_line_switch
     OPTION_STRIP_UNNEEDED_SYMBOL,
     OPTION_STRIP_UNNEEDED_SYMBOLS,
     OPTION_KEEP_SYMBOLS,
+    OPTION_LOCALIZE_HIDDEN,
     OPTION_LOCALIZE_SYMBOLS,
     OPTION_GLOBALIZE_SYMBOL,
     OPTION_GLOBALIZE_SYMBOLS,
@@ -328,6 +332,7 @@ static struct option copy_options[] =
   {"keep-global-symbols", required_argument, 0, OPTION_KEEPGLOBAL_SYMBOLS},
   {"keep-symbol", required_argument, 0, 'K'},
   {"keep-symbols", required_argument, 0, OPTION_KEEP_SYMBOLS},
+  {"localize-hidden", no_argument, 0, OPTION_LOCALIZE_HIDDEN},
   {"localize-symbol", required_argument, 0, 'L'},
   {"localize-symbols", required_argument, 0, OPTION_LOCALIZE_SYMBOLS},
   {"no-adjust-warnings", no_argument, 0, OPTION_NO_CHANGE_WARNINGS},
@@ -428,6 +433,7 @@ copy_usage (FILE *stream, int exit_status)
      --only-keep-debug             Strip everything but the debug information\n\
   -K --keep-symbol <name>          Do not strip symbol <name>\n\
      --keep-file-symbols           Do not strip file symbol(s)\n\
+     --localize-hidden             Turn all ELF hidden symbols into locals\n\
   -L --localize-symbol <name>      Force symbol <name> to be marked as a local\n\
      --globalize-symbol <name>     Force symbol <name> to be marked as a global\n\
   -G --keep-global-symbol <name>   Localize all symbols except <name>\n\
@@ -809,6 +815,24 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
   return FALSE;
 }
 
+/* Return true if SYM is a hidden symbol.  */
+
+static bfd_boolean
+is_hidden_symbol (asymbol *sym)
+{
+  elf_symbol_type *elf_sym;
+
+  elf_sym = elf_symbol_from (sym->the_bfd, sym);
+  if (elf_sym != NULL)
+    switch (ELF_ST_VISIBILITY (elf_sym->internal_elf_sym.st_other))
+      {
+      case STV_HIDDEN:
+      case STV_INTERNAL:
+       return TRUE;
+      }
+  return FALSE;
+}
+
 /* Choose which symbol entries to copy; put the result in OSYMS.
    We don't copy in place, because that confuses the relocs.
    Return the number of symbols to print.  */
@@ -955,7 +979,8 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 	      && (flags & (BSF_GLOBAL | BSF_WEAK))
 	      && (is_specified_symbol (name, localize_specific_list)
 		  || (keepglobal_specific_list != NULL
-		      && ! is_specified_symbol (name, keepglobal_specific_list))))
+		      && ! is_specified_symbol (name, keepglobal_specific_list))
+		  || (localize_hidden && is_hidden_symbol (sym))))
 	    {
 	      sym->flags &= ~ (BSF_GLOBAL | BSF_WEAK);
 	      sym->flags |= BSF_LOCAL;
@@ -1532,6 +1557,7 @@ copy_object (bfd *ibfd, bfd *obfd)
       || strip_symbols == STRIP_UNNEEDED
       || strip_symbols == STRIP_NONDEBUG
       || discard_locals != LOCALS_UNDEF
+      || localize_hidden
       || strip_specific_list != NULL
       || keep_specific_list != NULL
       || localize_specific_list != NULL
@@ -3058,6 +3084,10 @@ copy_main (int argc, char *argv[])
 
 	case OPTION_KEEP_SYMBOLS:
 	  add_specific_symbols (optarg, &keep_specific_list);
+	  break;
+
+	case OPTION_LOCALIZE_HIDDEN:
+	  localize_hidden = TRUE;
 	  break;
 
 	case OPTION_LOCALIZE_SYMBOLS:
