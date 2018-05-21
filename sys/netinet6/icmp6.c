@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.222 2018/03/27 15:03:52 dhill Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.223 2018/05/21 15:52:22 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -448,9 +448,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (ifp == NULL)
 		goto freeit;
 
-	if (ifp->if_type == IFT_CARP &&
-	    icmp6->icmp6_type == ICMP6_ECHO_REQUEST &&
-	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	if (icmp6->icmp6_type == ICMP6_ECHO_REQUEST &&
+	    carp_lsdrop(ifp, m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32, 1)) {
 		if_put(ifp);
 		goto freeit;
