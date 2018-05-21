@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/05/09 19:34:53 anton Exp $
+# $OpenBSD: Makefile,v 1.2 2018/05/21 19:58:16 anton Exp $
 
 REBOUND=	/usr/sbin/rebound
 
@@ -8,7 +8,7 @@ CFLAGS+=	-Wall -Wextra
 # IP address prefix.
 PREFIX=		172.16.0
 # IP address suffixes.
-IFS=		1 2 3
+IFS=		100 102 103
 
 .if ! (make(clean) || make(cleandir) || make(obj) || make(rebound-ns))
 PREREQ1!=	for v in ${IFS}; do \
