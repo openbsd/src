@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.41 2018/05/20 19:30:21 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.42 2018/05/21 13:37:31 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -131,6 +131,11 @@ file	dev/acpi/chvgpio.c		chvgpio
 device	tipmic
 attach	tipmic at i2c
 file	dev/acpi/tipmic.c		tipmic
+
+# "Intel" Crystal Cove PMIC
+device	ccpmic
+attach	ccpmic at i2c
+file	dev/acpi/ccpmic.c		ccpmic
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
