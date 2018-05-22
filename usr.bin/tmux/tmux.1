@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.597 2018/05/09 16:20:50 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.598 2018/05/22 08:49:12 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2018 $
+.Dd $Mdocdate: May 22 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3542,11 +3542,17 @@ The possible variables are listed in the table below, or the name of a
 .Nm
 option may be used for an option's value.
 Some variables have a shorter alias such as
-.Ql #S ,
-and
+.Ql #S ;
 .Ql ##
 is replaced by a single
-.Ql # .
+.Ql # ,
+.Ql #,
+by a
+.Ql \&,
+and
+.Ql #}
+by a
+.Ql } .
 .Pp
 Conditionals are available by prefixing with
 .Ql \&?
