@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.44 2018/01/06 18:51:20 jcs Exp $ */
+/* $OpenBSD: pckbd.c,v 1.45 2018/05/22 10:53:47 mpi Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -214,7 +214,7 @@ int
 pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
     struct pckbd_internal *id)
 {
-	int table;
+	int table = 3;
 
 	if (pckbc_xt_translation(kbctag)) {
 #ifdef DEBUG
@@ -247,7 +247,7 @@ pckbd_set_xtscancode(pckbc_tag_t kbctag, pckbc_slot_t kbcslot,
 	}
 
 	/* keep falling back until we hit a table that looks usable. */
-	for (table = 3; table >= 1; table--) {
+	for (; table >= 1; table--) {
 		u_char cmd[2];
 #ifdef DEBUG
 		printf("pckbd: trying table %d\n", table);
