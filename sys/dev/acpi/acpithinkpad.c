@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.58 2017/08/12 17:33:51 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.59 2018/05/22 01:41:15 mlarkin Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -110,8 +110,11 @@
 #define	THINKPAD_TABLET_SCREEN_CHANGED	0x60c0
 #define	THINKPAD_SWITCH_WIRELESS	0x7000
 
-#define THINKPAD_NSENSORS 9
+#define THINKPAD_NSENSORS 10
 #define THINKPAD_NTEMPSENSORS 8
+
+#define THINKPAD_SENSOR_FANRPM		THINKPAD_NTEMPSENSORS
+#define THINKPAD_SENSOR_PORTREPL	THINKPAD_NTEMPSENSORS + 1
 
 #define THINKPAD_ECOFFSET_VOLUME	0x30
 #define THINKPAD_ECOFFSET_VOLUME_MUTE_MASK 0x40
@@ -233,8 +236,15 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 	}
 
 	/* Add fan probe */
-	sc->sc_sens[i].type = SENSOR_FANRPM;
-	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
+	sc->sc_sens[THINKPAD_SENSOR_FANRPM].type = SENSOR_FANRPM;
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[THINKPAD_SENSOR_FANRPM]);
+
+	/* Add port replicator indicator */
+	sc->sc_sens[THINKPAD_SENSOR_PORTREPL].type = SENSOR_INDICATOR;
+	sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = SENSOR_S_UNKNOWN;
+	strlcpy(sc->sc_sens[THINKPAD_SENSOR_PORTREPL].desc, "port replicator",
+	        sizeof(sc->sc_sens[THINKPAD_SENSOR_PORTREPL].desc));
+	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[THINKPAD_SENSOR_PORTREPL]);
 
 	sensordev_install(&sc->sc_sensdev);
 }
@@ -260,7 +270,7 @@ thinkpad_sensor_refresh(void *arg)
 	/* Read fan RPM */
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANLO, 1, &lo);
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANHI, 1, &hi);
-	sc->sc_sens[i].value = ((hi << 8L) + lo);
+	sc->sc_sens[THINKPAD_SENSOR_FANRPM].value = ((hi << 8L) + lo);
 }
 
 void
@@ -420,6 +430,16 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BACKLIGHT_CHANGED:
 			thinkpad_get_brightness(sc);
+			break;
+		case THINKPAD_PORT_REPL_DOCKED:
+			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].value = 1;
+			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = 
+			    SENSOR_S_OK;
+			break;
+		case THINKPAD_PORT_REPL_UNDOCKED:
+			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].value = 0;
+			sc->sc_sens[THINKPAD_SENSOR_PORTREPL].status = 
+			    SENSOR_S_OK;
 			break;
 		default:
 			/* unknown or boring event */
