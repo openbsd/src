@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.70 2018/04/18 06:50:35 pd Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.71 2018/05/22 15:55:30 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -347,7 +347,7 @@
 #define MSR_BIOS_SIGN		0x08b
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
-#define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */   
+#define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
 #define MSR_MTRRcap		0x0fe
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
@@ -548,7 +548,7 @@
  * NCRx+0: A31-A24 of starting address
  * NCRx+1: A23-A16 of starting address
  * NCRx+2: A15-A12 of starting address | NCR_SIZE_xx.
- * 
+ *
  * The non-cacheable region's starting address must be aligned to the
  * size indicated by the NCR_SIZE_xx field.
  */
@@ -1185,7 +1185,7 @@
 #define VMCS_GUEST_IA32_SYSENTER_EIP	0x6826
 
 /* Natural-width host state fields */
-#define VMCS_HOST_IA32_CR0		0x6C00          
+#define VMCS_HOST_IA32_CR0		0x6C00
 #define VMCS_HOST_IA32_CR3		0x6C02
 #define VMCS_HOST_IA32_CR4		0x6C04
 #define VMCS_HOST_IA32_FS_BASE		0x6C06
@@ -1396,3 +1396,8 @@
 #define PAT_WB          0x6UL
 #define PAT_UCMINUS     0x7UL
 
+
+/*
+ * Default cr0 flags.
+ */
+#define CR0_DEFAULT	(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP)

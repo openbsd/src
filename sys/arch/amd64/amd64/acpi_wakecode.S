@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.41 2017/08/30 23:40:22 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.42 2018/05/22 15:55:30 guenther Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -73,7 +73,7 @@
  * ACPI before we went to sleep. ACPI's wakeup vector is a
  * physical address - in our case, it's calculated and mapped
  * by the kernel and stuffed into a low page early in the boot
- * process. 
+ * process.
  *
  * We wakeup in real mode, at some phys addr based on the ACPI
  * specification (cs = phys>>8, ip = phys & 0xF). For example,
@@ -103,7 +103,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	cld
 
 	/*
-	 * Set up segment registers for real mode. 
+	 * Set up segment registers for real mode.
 	 * We'll only be in real mode for a moment, and we don't have
 	 * ant real dependencies on data or stack, so we'll just use
 	 * the code segment for data and stack (eg, a 64k memory space).
@@ -117,8 +117,8 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 
 	/*
 	 * Set up stack to grow down from offset 0x0FFE.
-	 * We will only be doing a few push/pops and no calls in real 
-	 * mode, so as long as the real mode code in the segment 
+	 * We will only be doing a few push/pops and no calls in real
+	 * mode, so as long as the real mode code in the segment
 	 * plus stack doesn't exceed 0x0FFE (4094) bytes, we'll be ok.
 	 */
 	movw	$0x0FFE,%sp
@@ -132,8 +132,8 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	/*
 	 * Flush instruction prefetch queue
 	 */
-	jmp     1f
-1:	jmp     1f
+	jmp	1f
+1:	jmp	1f
 1:
 
 	/*
@@ -143,7 +143,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	 * with the same range. This GDT will only be in use for a short
 	 * time, until we restore the saved GDT that we had when we went
 	 * to sleep.
-	 */ 
+	 */
 	addr32 lgdtl	.Ltmp_gdt
 
 	/*
@@ -156,7 +156,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	/*
 	 * Force CPU into protected mode by making an intersegment jump (to
 	 * ourselves, just a few lines down from here). We rely on the kernel
-	 * to fixup the jump target addres previously. 
+	 * to fixup the jump target addres previously.
 	 */
 	ljmpl	$0x8, $.Lacpi_protected_mode_trampoline
 
@@ -171,7 +171,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 *
 	 * Set up segment selectors for protected mode.
 	 * We've already set up our cs via the intersegment jump earlier,
-	 * but we need to set ds,es,fs,gs,ss to all point to the 
+	 * but we need to set ds,es,fs,gs,ss to all point to the
 	 * 4GB flat data segment we defined earlier.
 	 */
 	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
@@ -186,7 +186,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * because we haven't put anything on the stack via a
 	 * call or push that we haven't cleaned up already.
 	 */
-	addl    $(ACPI_TRAMP_DATA), %esp
+	addl	$(ACPI_TRAMP_DATA), %esp
 
 	/* Set CR4 to something sane for entry into long mode */
 	mov	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT|CR4_PSE),%eax
@@ -196,13 +196,13 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * Set up a temporary long mode GDT describing 2
 	 * segments, one for code and one for data.
 	 */
-	lgdt 	.Ltmp_gdt64	
+	lgdt	.Ltmp_gdt64
 
 	/* Restore saved EFER (LME, NXE, etc) */
 	movl	$MSR_EFER, %ecx
 	rdmsr
 	movl	.Lacpi_saved_efer, %eax
-	andl 	$(EFER_LME | EFER_NXE | EFER_SCE), %eax	
+	andl	$(EFER_LME | EFER_NXE | EFER_SCE), %eax
 	wrmsr
 
 	/* Reenable paging using temporary cr3 */
@@ -211,22 +211,22 @@ _C_LABEL(acpi_protected_mode_resume):
 	movl	%eax, %cr3
 
 	/* Flush the prefetch queue again */
-	jmp 	1f
+	jmp	1f
 1:	jmp	1f
 1:
 
 	/* Reenable paging by setting the appropriate bits in CR0 */
-	movl    %cr0,%eax
-	orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%eax
-	movl    %eax,%cr0
+	movl	%cr0,%eax
+	orl	$CR0_DEFAULT,%eax
+	movl	%eax,%cr0
 
 	/* Flush the prefetch queue again */
-	jmp 	1f
+	jmp	1f
 1:	jmp	1f
 1:
 
 	/* Enter long mode by making another intersegment jump */
-	ljmp 	$0x8, $.Lacpi_long_mode_trampoline
+	ljmp	$0x8, $.Lacpi_long_mode_trampoline
 
 	.code64
 	.align 16, 0xcc
@@ -240,10 +240,10 @@ _C_LABEL(acpi_long_mode_resume):
 	lgdt	.Lacpi_saved_gdt
 
 	/* Reset segment registers */
-	movw    $GSEL(GDATA_SEL, SEL_KPL),%ax
-	movw    %ax,%ds
-	movw    %ax,%es
-	movw    %ax,%ss
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 
 	xorw	%ax, %ax
 	movw	%ax, %fs
@@ -301,20 +301,20 @@ _C_LABEL(acpi_long_mode_resume):
 	movq	%rax, %cr3
 
 	/* Flush the prefetch queue again */
-	jmp 	1f
+	jmp	1f
 1:	jmp	1f
 1:
 
 	movq	.Lacpi_saved_cr2, %rax
 	movq	%rax, %cr2
-	movq	.Lacpi_saved_cr0,	%rax
+	movq	.Lacpi_saved_cr0, %rax
 	movq	%rax, %cr0
 
 	/* Flush the prefetch queue again */
-	jmp 	1f
+	jmp	1f
 1:	jmp	1f
 1:
-	
+
 	lldt	.Lacpi_saved_ldt
 	lidt	.Lacpi_saved_idt
 
@@ -325,32 +325,32 @@ _C_LABEL(acpi_long_mode_resume):
 	andb	$0xF9, 5(%rax,%rcx)
 	ltr	%cx
 
-	pushq 	.Lacpi_saved_fl
+	pushq	.Lacpi_saved_fl
 	popfq
 
-	movq    .Lacpi_saved_rbx, %rbx
-	movq    .Lacpi_saved_rcx, %rcx
-	movq    .Lacpi_saved_rdx, %rdx
-	movq    .Lacpi_saved_rbp, %rbp
-	movq    .Lacpi_saved_rsi, %rsi
-	movq    .Lacpi_saved_rdi, %rdi
-	movq    .Lacpi_saved_rsp, %rsp
+	movq	.Lacpi_saved_rbx, %rbx
+	movq	.Lacpi_saved_rcx, %rcx
+	movq	.Lacpi_saved_rdx, %rdx
+	movq	.Lacpi_saved_rbp, %rbp
+	movq	.Lacpi_saved_rsi, %rsi
+	movq	.Lacpi_saved_rdi, %rdi
+	movq	.Lacpi_saved_rsp, %rsp
 
-	movq    .Lacpi_saved_r8, %r8
-	movq    .Lacpi_saved_r9, %r9
-	movq    .Lacpi_saved_r10, %r10
-	movq    .Lacpi_saved_r11, %r11
-	movq    .Lacpi_saved_r12, %r12
-	movq    .Lacpi_saved_r13, %r13
-	movq    .Lacpi_saved_r14, %r14
-	movq    .Lacpi_saved_r15, %r15
+	movq	.Lacpi_saved_r8, %r8
+	movq	.Lacpi_saved_r9, %r9
+	movq	.Lacpi_saved_r10, %r10
+	movq	.Lacpi_saved_r11, %r11
+	movq	.Lacpi_saved_r12, %r12
+	movq	.Lacpi_saved_r13, %r13
+	movq	.Lacpi_saved_r14, %r14
+	movq	.Lacpi_saved_r15, %r15
 
-	/* Poke CR3 one more time. Might not be necessary */	
+	/* Poke CR3 one more time. Might not be necessary */
 	movq	.Lacpi_saved_cr3, %rax
 	movq	%rax, %cr3
 
-	xorq	%rax, %rax	
-	jmp   	*.Lacpi_saved_ret
+	xorq	%rax, %rax
+	jmp	*.Lacpi_saved_ret
 
 #ifdef HIBERNATE
 	/*
@@ -456,9 +456,9 @@ NENTRY(hibernate_activate_resume_pt_machdep)
 	 */
 NENTRY(hibernate_switch_stack_machdep)
 	movq	(%rsp), %rax
-	movq    %rax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
-	movq    $(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %rax
-	movq    %rax, %rsp
+	movq	%rax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
+	movq	$(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %rax
+	movq	%rax, %rsp
 
 	/* On our own stack from here onward */
 	ret
@@ -495,14 +495,14 @@ _ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable)
 	 * Limit: 0xffffffff
 	 * Base: 0x00000000
 	 * Descriptor Type: Code
-	 * Segment Type: CRA 
+	 * Segment Type: CRA
 	 * Present: True
 	 * Priv: 0
 	 * AVL: False
 	 * 64-bit: False
 	 * 32-bit: True
 	 *
-	 */ 
+	 */
 	.word	0xffff, 0
 	.byte	0, 0x9f, 0xcf, 0
 
@@ -510,7 +510,7 @@ _ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable)
 	 * Data
 	 * Limit: 0xffffffff
 	 * Base: 0x00000000
-	 * Descriptor Type: 
+	 * Descriptor Type:
 	 * Segment Type: W
 	 * Present: True
 	 * Priv: 0
@@ -518,7 +518,7 @@ _ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable)
 	 * 64-bit: False
 	 * 32-bit: True
 	 *
-	 */ 
+	 */
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
 _ACPI_TRMP_DATA_LABEL(.Ltmp_gdt_end)
@@ -531,7 +531,7 @@ _ACPI_TRMP_DATA_OFFSET(.Lclean_idt)
 
 	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Ltmp_gdt64)
-	.word 	.Ltmp_gdt64_end - .Ltmp_gdtable64
+	.word	.Ltmp_gdt64_end - .Ltmp_gdtable64
 	.long	.Ltmp_gdtable64
 
 	.align 8, 0xcc
@@ -543,7 +543,7 @@ _ACPI_TRMP_DATA_LABEL(.Ltmp_gdt64_end)
 
 	.align 8, 0xcc
 _ACPI_TRMP_DATA_LABEL(.Ltmp_gdt6416)
-	.word 	.Ltmp_gdt6416_end - .Ltmp_gdtable6416
+	.word	.Ltmp_gdt6416_end - .Ltmp_gdtable6416
 	.quad	.Ltmp_gdtable6416
 
 	.align 8, 0xcc
@@ -610,9 +610,9 @@ _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_gdt)
 	.space 10
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ldt)	
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ldt)
 	.space 10
-	
+
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_tr)
 	.short 0
 
@@ -699,7 +699,7 @@ NENTRY(acpi_savecpu)
 	movq	%rax, .Lacpi_saved_cr4
 	movq	%cr8, %rax
 	movq	%rax, .Lacpi_saved_cr8
-	
+
 	pushq	%rcx
 	pushq	%rdx
 #if NLAPIC > 0
@@ -743,11 +743,11 @@ NENTRY(acpi_savecpu)
 	rdmsr
 	movl	%eax, .Lacpi_saved_kgs
 	movl	%edx, .Lacpi_saved_kgs+4
-	
+
 	movl	$MSR_EFER, %ecx
 	rdmsr
 	movl	%eax, .Lacpi_saved_efer
-	popq 	%rdx
+	popq	%rdx
 	popq	%rcx
 
 	sgdt	.Lacpi_saved_gdt

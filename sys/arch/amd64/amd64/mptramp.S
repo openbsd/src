@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.15 2017/06/29 08:14:36 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.16 2018/05/22 15:55:30 guenther Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-	
+
 /*
  * Copyright (c) 1999 Stefan Grefen
  *
@@ -45,11 +45,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD 
- *      Foundation, Inc. and its contributors.  
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived  
- *    from this software without specific prior written permission.   
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -65,7 +65,7 @@
  */
 /*
  * MP startup ...
- * the stuff from cpu_spinup_trampoline to mp_startup 
+ * the stuff from cpu_spinup_trampoline to mp_startup
  * is copied into the first 640 KB
  *
  * We startup the processors now when the kthreads become ready.
@@ -73,9 +73,9 @@
  *        1)   Get the processors running kernel-code from a special
  *                  page-table and stack page, do chip identification.
  *        2)   halt the processors waiting for them to be enabled
- *              by a idle-thread 
+ *              by a idle-thread
  */
-		
+
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/asm.h>
@@ -88,15 +88,15 @@
 #define addr32
 #endif
 
-#define _RELOC(x)       ((x) - KERNBASE)
-#define RELOC(x)        _RELOC(_C_LABEL(x))
+#define _RELOC(x)	((x) - KERNBASE)
+#define RELOC(x)	_RELOC(_C_LABEL(x))
 
-#define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
-#define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
+#define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
+#define _TRMP_OFFSET(a)	a = . - _C_LABEL(cpu_spinup_trampoline)
 
-#define _TRMP_DATA_LABEL(a)  a = . - _C_LABEL(mp_tramp_data_start) + \
-				MP_TRAMP_DATA
-#define _TRMP_DATA_OFFSET(a)  a = . - _C_LABEL(mp_tramp_data_start)
+#define _TRMP_DATA_LABEL(a)	a = . - _C_LABEL(mp_tramp_data_start) + \
+					MP_TRAMP_DATA
+#define _TRMP_DATA_OFFSET(a)	a = . - _C_LABEL(mp_tramp_data_start)
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -113,32 +113,32 @@
 	.code16
 _C_LABEL(cpu_spinup_trampoline):
 	cli
-	movw    $(MP_TRAMP_DATA >> 4), %ax
+	movw	$(MP_TRAMP_DATA >> 4), %ax
 	movw	%ax, %ds
 	movw	%cs, %ax
-	movw    %ax, %es
-	movw    %ax, %ss
-	addr32 lgdtl (.Lmptramp_gdt32_desc)   # load flat descriptor table
-	movl    %cr0, %eax       # get cr0
-	orl     $0x1, %eax      # enable protected mode
-	movl    %eax, %cr0      # doit
+	movw	%ax, %es
+	movw	%ax, %ss
+	addr32 lgdtl (.Lmptramp_gdt32_desc)	# load flat descriptor table
+	movl	%cr0, %eax	# get cr0
+	orl	$CR0_PE, %eax	# enable protected mode
+	movl	%eax, %cr0	# doit
 	ljmpl	$0x8, $.Lmp_startup
 
 _TRMP_LABEL(.Lmp_startup)
 	.code32
 
-	movl    $0x10, %eax     # data segment
-	movw    %ax, %ds
-	movw    %ax, %ss
-	movw    %ax, %es
-	movw    %ax, %fs
-	movw    %ax, %gs
+	movl	$0x10, %eax	# data segment
+	movw	%ax, %ds
+	movw	%ax, %ss
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
 
-	movl    $(MP_TRAMP_DATA + NBPG - 16),%esp	# bootstrap stack end,
+	movl	$(MP_TRAMP_DATA + NBPG - 16),%esp	# bootstrap stack end,
 							# with scratch space..
 
 	/* First, reset the PSL. */
-	pushl   $PSL_MBO
+	pushl	$PSL_MBO
 	popfl
 
 	movl	%cr4,%eax
@@ -166,20 +166,20 @@ _TRMP_LABEL(.Lmp_startup)
 
 	movl	$mp_pdirpa, %ecx
 	movl	(%ecx), %ecx
-        movl    %ecx,%cr3               # load ptd addr into mmu
+	movl	%ecx,%cr3		# load ptd addr into mmu
 
-	movl    $GSEL(GDATA_SEL, SEL_KPL),%eax 	#switch to new segment
-	movl    %eax,%ds
-	movl    %eax,%es
-	movl    %eax,%ss
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	#switch to new segment
+	movl	%eax,%ds
+	movl	%eax,%es
+	movl	%eax,%ss
 
 	movl	$.Lmptramp_gdt64_desc,%eax
 	lgdt	(%eax)
 
 	movl	$.Lmptramp_jmp64,%eax
 
-	movl    %cr0,%ecx               # get control word
-	orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%ecx
+	movl	%cr0,%ecx		# get control word
+	orl	$CR0_DEFAULT,%ecx
 	movl	%ecx, %cr0
 
 	ljmp	*(%eax)
@@ -189,21 +189,21 @@ _TRMP_LABEL(.Lmptramp_longmode)
 	movabsq	$_C_LABEL(cpu_spinup_trampoline_end),%rax
 	jmp	*%rax
 
-	
+
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
-	.globl  _C_LABEL(x2apic_enabled)
+	.globl	_C_LABEL(x2apic_enabled)
 	movl	x2apic_enabled,%eax
 	testl	%eax,%eax
 	jz	1f
 
-	mov     $MSR_APICBASE,%ecx
-	mov     $0,%edx
+	mov	$MSR_APICBASE,%ecx
+	mov	$0,%edx
 	rdmsr
-	orl     $APICBASE_ENABLE_X2APIC,%eax
+	orl	$APICBASE_ENABLE_X2APIC,%eax
 	wrmsr
-	mov     $MSR_X2APIC_ID,%ecx
+	mov	$MSR_X2APIC_ID,%ecx
 	rdmsr
-	andl    $X2APIC_ID_MASK,%eax
+	andl	$X2APIC_ID_MASK,%eax
 	jmp	2f
 1:
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
@@ -230,16 +230,16 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	/* Switch address space. */
 	movq	PCB_CR3(%rsi),%rax
 	movq	%rax,%cr3
-	movl    PCB_CR0(%rsi),%eax
-	movq    %rax,%cr0
+	movl	PCB_CR0(%rsi),%eax
+	movq	%rax,%cr0
 	call	_C_LABEL(cpu_hatch)
 	/* NOTREACHED */
 
 	.section .rodata
 _C_LABEL(mp_tramp_data_start):
 _TRMP_DATA_LABEL(.Lmptramp_jmp64)
-	.long   .Lmptramp_longmode
-	.word   GSEL(GCODE_SEL, SEL_KPL)
+	.long	.Lmptramp_longmode
+	.word	GSEL(GCODE_SEL, SEL_KPL)
 
 	.global mp_pdirpa
 _TRMP_DATA_LABEL(mp_pdirpa)
