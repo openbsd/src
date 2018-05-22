@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.10 2018/05/21 07:26:39 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.11 2018/05/22 21:17:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -233,6 +233,8 @@ sdhc_acpi_do_explore(struct aml_node *node, void *arg)
 		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
 	if ((sta & STA_PRESENT) == 0)
 		return 1;
+
+	acpi_attach_deps(sc->sc_acpi, node);
 
 	/* Override card detect if we have non-removable devices. */
 	if (aml_evalinteger(sc->sc_acpi, node, "_RMV", 0, NULL, &rmv))
