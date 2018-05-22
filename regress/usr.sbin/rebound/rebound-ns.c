@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound-ns.c,v 1.1 2018/05/09 19:34:53 anton Exp $ */
+/* $OpenBSD: rebound-ns.c,v 1.2 2018/05/22 06:58:57 anton Exp $ */
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
  *
@@ -75,6 +75,9 @@ main(int argc, char *argv[])
 	size_t nrecords = 0;
 	int c, fd;
 
+	if (pledge("stdio inet dns proc", NULL) == -1)
+		err(1, "pledge");
+
 	while ((c = getopt(argc, argv, "l:")) != -1)
 		switch (c) {
 		case 'l':
@@ -107,8 +110,11 @@ main(int argc, char *argv[])
 	if (bind(fd, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		err(1, "bind");
 
-	if (daemon(0, 1) == -1)
+	if (daemon(1, 1) == -1)
 		err(1, "daemon");
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
 	req.u8 = recvbuf;
 	for (;;) {
