@@ -15,9 +15,9 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    shutdown(\*STDOUT, 1)
-		or die "shutdown write failed: $!";
+		or die ref($self), " shutdown write failed: $!";
 	    ${$self->{syslogd}}->loggrep("tcp logger .* connection close", 5)
-		or die "no connection close in syslogd.log";
+		or die ref($self), " no connection close in syslogd.log";
 	},
 	loggrep => {
 	    qr/connect sock: 127.0.0.1 \d+/ => 1,
@@ -34,7 +34,7 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("tcp logger .* connection close", 5)
-		or die "no connection close in syslogd.log";
+		or die ref($self), " no connection close in syslogd.log";
 	},
 	loggrep => {},
     },

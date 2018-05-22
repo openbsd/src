@@ -19,7 +19,7 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
-		or die "no connection error in syslogd.log";
+		or die ref($self), " no connection error in syslogd.log";
 	    write_log($self);
 	},
     },
@@ -36,7 +36,7 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
-		or die "set socket linger failed: $!";
+		or die ref($self), " set socket linger failed: $!";
 	},
 	loggrep => {},
     },

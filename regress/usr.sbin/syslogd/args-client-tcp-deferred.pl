@@ -25,7 +25,7 @@ our %args = (
 		    Proto               => "tcp",
 		    PeerAddr            => "127.0.0.1",
 		    PeerPort            => 514,
-		) or die "id $i tcp socket connect failed: $!";
+		) or die ref($self), " id $i tcp socket connect failed: $!";
 		print STDERR "<<< id $i tcp connected\n";
 		${$self->{syslogd}}->loggrep("tcp logger .* accepted", 1, $i);
 		${$self->{syslogd}}->loggrep("accept deferred")

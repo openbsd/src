@@ -19,7 +19,7 @@ our %args = (
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep($errors, 5)
-		or die "no $errors in syslogd.log";
+		or die ref($self), " no $errors in syslogd.log";
 	})},
     },
     syslogd => {
@@ -38,9 +38,9 @@ our %args = (
 	    my $self = shift;
 	    $self->close();
 	    shutdown(\*STDOUT, 1)
-		or die "shutdown write failed: $!";
+		or die ref($self), " shutdown write failed: $!";
 	    ${$self->{syslogd}}->loggrep($errors, 5)
-		or die "no $errors in syslogd.log";
+		or die ref($self), " no $errors in syslogd.log";
 	    $self->listen();
 	})},
 	loggrep => {

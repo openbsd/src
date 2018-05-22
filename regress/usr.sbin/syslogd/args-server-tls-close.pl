@@ -15,7 +15,7 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* connection close", 5)
-		or die "no connection close in syslogd.log";
+		or die ref($self), " no connection close in syslogd.log";
 	    write_log($self);
 	},
     },
@@ -32,9 +32,9 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    shutdown(\*STDOUT, 1)
-		or die "shutdown write failed: $!";
+		or die ref($self), " shutdown write failed: $!";
 	    ${$self->{syslogd}}->loggrep("loghost .* connection close", 5)
-		or die "no connection close in syslogd.log";
+		or die ref($self), " no connection close in syslogd.log";
 	},
 	loggrep => {},
     },
