@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.55 2018/05/10 14:29:17 benno Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.56 2018/05/22 18:56:33 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -253,7 +253,6 @@ set_slice_timer(int on)
 	if (on) {
 		if (evtimer_pending(&mainstats.timer, NULL))
 			return;
-		timerclear(&tv);
 		/* XXX Is there a better way to do this ? */
 		tv.tv_sec = ptb->rflag / 1000;
 		tv.tv_usec = (ptb->rflag % 1000) * 1000;
