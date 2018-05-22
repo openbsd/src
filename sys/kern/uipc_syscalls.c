@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.170 2018/05/08 08:53:41 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.171 2018/05/22 09:51:01 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -340,24 +340,25 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	error = soaccept(so, nam);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
+out:
 	if (!error) {
 		if (nflag & FNONBLOCK)
 			so->so_state |= SS_NBIO;
 		else
 			so->so_state &= ~SS_NBIO;
+		sounlock(s);
 		fp->f_data = so;
 		FILE_SET_MATURE(fp, p);
 		*retval = tmpfd;
-	}
-out:
-	sounlock(s);
-	m_freem(nam);
-	if (error) {
+	} else {
+		sounlock(s);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
 		closef(fp, p);
 		fdpunlock(fdp);
 	}
+
+	m_freem(nam);
 	FRELE(headfp, p);
 	return (error);
 }
