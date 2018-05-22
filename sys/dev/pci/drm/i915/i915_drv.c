@@ -2338,8 +2338,24 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	inteldrm_init_backlight(dev_priv);
 
 	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
-	if (ri->ri_width < ri->ri_height)
-		ri->ri_flg |= RI_ROTATE_CCW;
+	if (ri->ri_width < ri->ri_height) {
+		pcireg_t subsys;
+
+#define PCI_PRODUCT_ASUSTEK_T100HA	0x1bdd
+
+		/*
+		 * Asus T100HA needs to be rotated counter-clockwise.
+		 * Everybody else seems to mount their panels the
+		 * other way around.
+		 */
+		subsys = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_SUBSYS_ID_REG);
+		if (PCI_VENDOR(subsys) == PCI_VENDOR_ASUSTEK &&
+		    PCI_PRODUCT(subsys) == PCI_PRODUCT_ASUSTEK_T100HA)
+			ri->ri_flg |= RI_ROTATE_CCW;
+		else
+			ri->ri_flg |= RI_ROTATE_CW;
+	}
 	ri->ri_hw = dev_priv;
 	rasops_init(ri, 160, 160);
 
@@ -2366,7 +2382,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		 * Clear the entire screen if we're doing rotation to
 		 * make sure no unrotated content survives.
 		 */
-		if (ri->ri_flg & RI_ROTATE_CCW)
+		if (ri->ri_flg & (RI_ROTATE_CW | RI_ROTATE_CCW))
 			memset(ri->ri_bits, 0, ri->ri_height * ri->ri_stride);
 
 		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
