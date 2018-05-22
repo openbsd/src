@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.1 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: main.h,v 1.2 2018/05/22 19:15:22 cheloha Exp $	*/
 /*
  *	Written by Alexaner Bluhm <bluhm@openbsd.org> 2016 Public Domain
  */
@@ -18,6 +18,7 @@
 int check_inheritance(void);
 int do_fdpass(void);
 int do_flock(void);
+int do_invalid_timer(void);
 int do_pipe(void);
 int do_process(void);
 int do_pty(void);

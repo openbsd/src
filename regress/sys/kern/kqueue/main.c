@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2018/05/22 19:15:22 cheloha Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -16,7 +16,7 @@ main(int argc, char **argv)
 	int ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fFilpPrstT")) != -1) {
+	while ((c = getopt(argc, argv, "fFiIlpPrstT")) != -1) {
 		switch (c) {
 		case 'f':
 			ret |= check_inheritance();
@@ -26,6 +26,9 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			ret |= do_timer();
+			break;
+		case 'I':
+			ret |= do_invalid_timer();
 			break;
 		case 'l':
 			ret |= do_flock();

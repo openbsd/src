@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.88 2018/04/27 10:13:37 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.89 2018/05/22 19:15:22 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -693,6 +693,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	const struct timespec *tsp, struct proc *p, int *retval)
 {
 	struct kevent *kevp;
+	struct timespec ats;
 	struct timeval atv, rtv, ttv;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
@@ -703,16 +704,18 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 		goto done;
 
 	if (tsp != NULL) {
-		TIMESPEC_TO_TIMEVAL(&atv, tsp);
-		if (tsp->tv_sec == 0 && tsp->tv_nsec == 0) {
+		ats = *tsp;
+		if (ats.tv_sec > 100000000 || timespecfix(&ats)) {
+			error = EINVAL;
+			goto done;
+		}
+		TIMESPEC_TO_TIMEVAL(&atv, &ats);
+		if (atv.tv_sec == 0 && atv.tv_usec == 0) {
 			/* No timeout, just poll */
 			timeout = -1;
 			goto start;
 		}
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done;
-		}
+		itimerround(&atv);
 
 		timeout = atv.tv_sec > 24 * 60 * 60 ?
 		    24 * 60 * 60 * hz : tvtohz(&atv);
