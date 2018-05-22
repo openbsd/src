@@ -1,4 +1,4 @@
-/*	$OpenBSD: nanosleep.c,v 1.6 2017/03/08 19:28:47 deraadt Exp $	*/
+/*	$OpenBSD: nanosleep.c,v 1.7 2018/05/22 18:33:41 cheloha Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -13,6 +14,7 @@
 #include <err.h>
 #include <signal.h>
 
+int invalid_time(void);
 int trivial(void);
 int with_signal(void);
 int time_elapsed(void);
@@ -29,8 +31,11 @@ main(int argc, char **argv)
 
 	ret = 0;
 
-	while ((ch = getopt(argc, argv, "tseES")) != -1) {
+	while ((ch = getopt(argc, argv, "itseES")) != -1) {
 		switch (ch) {
+		case 'i':
+			ret |= invalid_time();
+			break;
 		case 't':
 			ret |= trivial();
 			break;
@@ -46,7 +51,7 @@ main(int argc, char **argv)
 		case 'S':
 			ret |= short_time();
 		default:
-			fprintf(stderr, "Usage: nanosleep [-tse]\n");
+			fprintf(stderr, "Usage: nanosleep [-itseSE]\n");
 			exit(1);
 		}
 	}
@@ -257,5 +262,22 @@ short_time(void)
 	if (wait(&status) < 0)
 		err(1, "wait");
 
+	return 0;
+}
+
+int
+invalid_time(void)
+{
+	struct timespec ts[3] = { {-1, 0}, {0, -1}, {0, 1000000000L} };
+	int i, status;
+
+	for (i = 0; i < 3; i++) {
+		status = nanosleep(&ts[i], NULL);
+		if (status != -1 || errno != EINVAL) {
+			warnx("invalid-time: nanosleep %lld %ld",
+			    (long long)ts[i].tv_sec, ts[i].tv_nsec);
+			return 1;
+		}
+	}
 	return 0;
 }
