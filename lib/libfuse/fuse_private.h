@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.18 2018/05/16 13:09:17 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.19 2018/05/22 12:52:14 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -80,6 +80,7 @@ struct fuse_config {
 	int			set_mode;
 	int			set_uid;
 	int			set_gid;
+	int			use_ino;
 };
 
 struct fuse_core_opts {

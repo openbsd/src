@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.44 2018/05/15 11:57:32 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.45 2018/05/22 12:52:14 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -86,7 +86,7 @@ static struct fuse_opt fuse_lib_opts[] = {
 	FUSE_OPT_KEY("subtype=",		KEY_STUB),
 	FUSE_LIB_OPT("uid=",			set_uid),
 	FUSE_LIB_OPT("uid=%u",			uid),
-	FUSE_OPT_KEY("use_ino",			KEY_STUB),
+	FUSE_LIB_OPT("use_ino",			use_ino),
 	FUSE_OPT_KEY("dmask=%o",		KEY_STUB),
 	FUSE_OPT_KEY("fmask=%o",		KEY_STUB),
 	FUSE_LIB_OPT("umask=",			set_mode),

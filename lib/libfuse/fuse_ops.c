@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.32 2018/05/21 11:47:46 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.33 2018/05/22 12:52:14 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -44,7 +44,8 @@ update_attr(struct fuse *f, struct stat *attr, const char *realname,
 	if (attr->st_blocks == 0)
 		attr->st_blocks = 4;
 
-	attr->st_ino = vn->ino;
+	if (!f->conf.use_ino)
+		attr->st_ino = vn->ino;
 
 	if (f->conf.set_mode)
 		attr->st_mode = (attr->st_mode & S_IFMT) | (0777 & ~f->conf.umask);
@@ -248,20 +249,24 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 
 	dir = (struct dirent *) &fbuf->fb_dat[fbuf->fb_len];
 
-	/*
-	 * This always behaves as if readdir_ino option is set so getcwd(3)
-	 * works.
-	 */
-	v = get_vn_by_name_and_parent(f, (uint8_t *)name, fbuf->fb_ino);
-	if (v == NULL) {
-		if (strcmp(name, ".") == 0)
-			dir->d_fileno = fbuf->fb_ino;
-		else
-			dir->d_fileno = 0xffffffff;
-	} else
-		dir->d_fileno = v->ino;
+	if (stbuf != NULL && f->conf.use_ino)
+		dir->d_fileno = stbuf->st_ino;
+	else {
+		/*
+		 * This always behaves as if readdir_ino option is set so
+		 * getcwd(3) works.
+		 */
+		v = get_vn_by_name_and_parent(f, (uint8_t *)name, fbuf->fb_ino);
+		if (v == NULL) {
+			if (strcmp(name, ".") == 0)
+				dir->d_fileno = fbuf->fb_ino;
+			else
+				dir->d_fileno = 0xffffffff;
+		} else
+			dir->d_fileno = v->ino;
+	}
 
-	if (stbuf)
+	if (stbuf != NULL)
 		dir->d_type = IFTODT(stbuf->st_mode);
 	else
 		dir->d_type = DT_UNKNOWN;
@@ -501,6 +506,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	}
 
 	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+	fbuf->fb_ino = vn->ino;
 	free(fbuf->fb_dat);
 	free(realname);
 
@@ -1034,7 +1040,7 @@ ifuse_ops_mknod(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err) {
 		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
-		fbuf->fb_ino = fbuf->fb_attr.st_ino;
+		fbuf->fb_ino = vn->ino;
 	}
 	free(realname);
 

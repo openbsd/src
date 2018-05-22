@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.19 2018/05/02 02:24:56 visa Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.20 2018/05/22 12:52:14 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -111,7 +111,7 @@ fusefs_lookup(void *v)
 			return (ENOENT);
 		}
 
-		nid = fbuf->fb_attr.st_ino;
+		nid = fbuf->fb_ino;
 		nvtype = IFTOVT(fbuf->fb_attr.st_mode);
 		fb_delete(fbuf);
 	}
