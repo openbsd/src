@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.198 2018/05/17 08:09:26 mikeb Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.199 2018/05/22 06:33:35 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3810,42 +3810,100 @@ vcpu_must_stop(struct vcpu *vcpu)
 }
 
 /*
- * vmm_fpusave
+ * vmm_fpurestore
  *
- * Modified version of fpusave_cpu from fpu.c that only saves the FPU context
- * and does not call splipi/splx. Must be called with interrupts disabled.
+ * Restore the guest's FPU state, saving the existing userland thread's
+ * FPU context if necessary.  Must be called with interrupts disabled.
  */
-void
-vmm_fpusave(void)
+int
+vmm_fpurestore(struct vcpu *vcpu)
 {
 	struct proc *p;
 	struct cpu_info *ci = curcpu();
 
+	clts();
 	p = ci->ci_fpcurproc;
-	if (p == NULL)
-		return;
+	if (p != NULL) {
+		uvmexp.fpswtch++;
 
-	uvmexp.fpswtch++;
+		if (ci->ci_fpsaving != 0)
+			panic("%s: recursive save!", __func__);
+		/*
+		 * Set ci->ci_fpsaving, so that any pending exception will be
+		 * thrown away.  (It will be caught again if/when the FPU
+		 * state is restored.)
+		 */
+		ci->ci_fpsaving = 1;
+		if (xsave_mask)
+			xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
+		else
+			fxsave(&p->p_addr->u_pcb.pcb_savefpu);
 
-	if (ci->ci_fpsaving != 0)
-		panic("%s: recursive save!", __func__);
+		ci->ci_fpsaving = 0;
+
+		p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+
+		p->p_addr->u_pcb.pcb_fpcpu = NULL;
+		ci->ci_fpcurproc = NULL;
+	}
+
+	/* Initialize the guest FPU if not inited already */
+	if (!vcpu->vc_fpuinited) {
+		fninit();
+		bzero(&vcpu->vc_g_fpu.fp_fxsave,
+		    sizeof(vcpu->vc_g_fpu.fp_fxsave));
+		vcpu->vc_g_fpu.fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+		vcpu->vc_g_fpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+		fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
+		vcpu->vc_fpuinited = 1;
+	}
+
+	if (xsave_mask) {
+		/* Restore guest XCR0 and FPU context */
+		if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
+			DPRINTF("%s: guest attempted to set invalid "
+			    "bits in xcr0\n", __func__);
+			stts();
+			return EINVAL;
+		}
+
+		/* Restore guest %xcr0 */
+		xrstor(&vcpu->vc_g_fpu, xsave_mask);
+		xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
+	} else
+		fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
+
+	return 0;
+}
+
+/*
+ * vmm_fpusave
+ *
+ * Save the guest's FPU state.  Must be called with interrupts disabled.
+ */
+void
+vmm_fpusave(struct vcpu *vcpu)
+{
+	if (xsave_mask) {
+		/* Save guest %xcr0 */
+		vcpu->vc_gueststate.vg_xcr0 = xgetbv(0);
+
+		/* Restore host %xcr0 */
+		xsetbv(0, xsave_mask);
+
+		/*
+		 * Save full copy of FPU state - guest content is always
+		 * a subset of host's save area (see xsetbv exit handler)
+		 */	
+		xsave(&vcpu->vc_g_fpu, xsave_mask);
+	} else
+		fxsave(&vcpu->vc_g_fpu);
+
 	/*
-	 * Set ci->ci_fpsaving, so that any pending exception will be
-	 * thrown away.  (It will be caught again if/when the FPU
-	 * state is restored.)
+	 * FPU state is invalid, set CR0_TS to force DNA trap on next
+	 * access.
 	 */
-	ci->ci_fpsaving = 1;
-	if (xsave_mask)
-		xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
-	else
-		fxsave(&p->p_addr->u_pcb.pcb_savefpu);
-
-	ci->ci_fpsaving = 0;
-
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
-
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-	ci->ci_fpcurproc = NULL;
+	stts();
 }
 
 /*
@@ -4068,39 +4126,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Disable interrupts and save the current host FPU state. */
 		disable_intr();
-		clts();
-		vmm_fpusave();
-
-		/* Initialize the guest FPU if not inited already */
-		if (!vcpu->vc_fpuinited) {
-			fninit();
-			bzero(&vcpu->vc_g_fpu.fp_fxsave,
-			    sizeof(vcpu->vc_g_fpu.fp_fxsave));
-			vcpu->vc_g_fpu.fp_fxsave.fx_fcw =
-			    __INITIAL_NPXCW__;
-			vcpu->vc_g_fpu.fp_fxsave.fx_mxcsr =
-			    __INITIAL_MXCSR__;
-			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
-
-			vcpu->vc_fpuinited = 1;
+		if ((ret = vmm_fpurestore(vcpu))) {
+			enable_intr();
+			break;
 		}
-
-		if (xsave_mask) {
-			/* Restore guest XCR0 and FPU context */
-			if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
-				DPRINTF("%s: guest attempted to set invalid "
-				    "bits in xcr0\n", __func__);
-				ret = EINVAL;
-				stts();
-				enable_intr();
-				break;
-			}
-
-			/* Restore guest %xcr0 */
-			xrstor(&vcpu->vc_g_fpu, xsave_mask);
-			xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
-		} else
-			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
 
 		KERNEL_UNLOCK();
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
@@ -4111,27 +4140,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * the guest FPU state still possibly on the CPU. Save the FPU
 		 * state before re-enabling interrupts.
 		 */
-		if (xsave_mask) {
-			/* Save guest %xcr0 */
-			vcpu->vc_gueststate.vg_xcr0 = xgetbv(0);
-
-			/* Restore host %xcr0 */
-			xsetbv(0, xsave_mask);
-
-			/*
-			 * Save full copy of FPU state - guest content is
-			 * always a subset of host's save area (see xsetbv
-			 * exit handler)
-			 */	
-			xsave(&vcpu->vc_g_fpu, xsave_mask);
-		} else
-			fxsave(&vcpu->vc_g_fpu);
-
-		/*
-		 * FPU state is invalid, set CR0_TS to force DNA trap on next
-		 * access.
-		 */
-		stts();
+		vmm_fpusave(vcpu);
 
 		enable_intr();
 
@@ -6135,39 +6144,10 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Disable interrupts and save the current host FPU state. */
 		clgi();
-		clts();
-		vmm_fpusave();
-
-		/* Initialize the guest FPU if not inited already */
-		if (!vcpu->vc_fpuinited) {
-			fninit();
-			bzero(&vcpu->vc_g_fpu.fp_fxsave,
-			    sizeof(vcpu->vc_g_fpu.fp_fxsave));
-			vcpu->vc_g_fpu.fp_fxsave.fx_fcw =
-			    __INITIAL_NPXCW__;
-			vcpu->vc_g_fpu.fp_fxsave.fx_mxcsr =
-			    __INITIAL_MXCSR__;
-			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
-
-			vcpu->vc_fpuinited = 1;
+		if ((ret = vmm_fpurestore(vcpu))) {
+			stgi();
+			break;
 		}
-
-		if (xsave_mask) {
-			/* Restore guest XCR0 and FPU context */
-			if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
-				DPRINTF("%s: guest attempted to set invalid "
-				    "bits in xcr0\n", __func__);
-				ret = EINVAL;
-				stts();
-				enable_intr();
-				break;
-			}
-
-			/* Restore guest %xcr0 */
-			xrstor(&vcpu->vc_g_fpu, xsave_mask);
-			xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
-		} else
-			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
 
 		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
 		KERNEL_UNLOCK();
@@ -6182,27 +6162,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * the guest FPU state still possibly on the CPU. Save the FPU
 		 * state before re-enabling interrupts.
 		 */
-		if (xsave_mask) {
-			/* Save guest %xcr0 */
-			vcpu->vc_gueststate.vg_xcr0 = xgetbv(0);
-
-			/* Restore host %xcr0 */
-			xsetbv(0, xsave_mask);
-
-			/*
-			 * Save full copy of FPU state - guest content is
-			 * always a subset of host's save area (see xsetbv
-			 * exit handler)
-			 */	
-			xsave(&vcpu->vc_g_fpu, xsave_mask);
-		} else
-			fxsave(&vcpu->vc_g_fpu);
-
-		/*
-		 * FPU state is invalid, set CR0_TS to force DNA trap on next
-		 * access.
-		 */
-		stts();
+		vmm_fpusave(vcpu);
 
 		/*
 		 * Enable interrupts now. Note that if the exit was due to INTR
