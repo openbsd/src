@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.28 2018/04/12 17:13:43 deraadt Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.29 2018/05/22 02:13:42 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,14 +87,6 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 	siginfo_t sf_si;
 };
-
-#ifdef DEBUG
-int sigdebug = 0;
-pid_t sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
 
 /*
  * Send an interrupt to process.

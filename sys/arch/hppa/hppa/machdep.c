@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.251 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.252 2018/05/22 02:13:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -165,12 +165,6 @@ struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 struct pdc_model pdc_model PDC_ALIGNMENT;
-
-#ifdef DEBUG
-int sigdebug = 0;
-pid_t sigpid = 0;
-#define SDB_FOLLOW	0x01
-#endif
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };

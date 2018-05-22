@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.184 2018/04/12 17:13:41 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.185 2018/05/22 02:13:42 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1375,13 +1375,6 @@ regdump(framep)
 	printf("REGISTERS:\n");
 	printregs(&reg);
 }
-
-#ifdef DEBUG
-int sigdebug = 0;
-pid_t sigpid = 0;
-#define	SDB_FOLLOW	0x01
-#define	SDB_KSTACK	0x02
-#endif
 
 /*
  * Send an interrupt to process.
