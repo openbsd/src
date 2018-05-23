@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.19 2018/05/16 08:20:00 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.20 2018/05/23 08:36:15 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -321,18 +321,18 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t ih;
 
-	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x00,
-	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->sc_reg_iot, &sc->sc_reg_ioh,
-	    NULL, &sc->sc_reg_ios, 0)) {
-		printf(": can't map bar0\n");
-		return;
-	}
-
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08,
 	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->sc_tcm_iot, &sc->sc_tcm_ioh,
 	    NULL, &sc->sc_tcm_ios, 0)) {
 		printf(": can't map bar1\n");
-		goto bar0;
+		return;
+	}
+
+	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x00,
+	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->sc_reg_iot, &sc->sc_reg_ioh,
+	    NULL, &sc->sc_reg_ios, 0)) {
+		printf(": can't map bar0\n");
+		goto bar1;
 	}
 
 	sc->sc_pc = pa->pa_pc;
@@ -343,7 +343,7 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
-		goto bar1;
+		goto bar0;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
@@ -361,10 +361,10 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 	config_mountroot(self, bwfm_pci_attachhook);
 	return;
 
-bar1:
-	bus_space_unmap(sc->sc_tcm_iot, sc->sc_tcm_ioh, sc->sc_tcm_ios);
 bar0:
 	bus_space_unmap(sc->sc_reg_iot, sc->sc_reg_ioh, sc->sc_reg_ios);
+bar1:
+	bus_space_unmap(sc->sc_tcm_iot, sc->sc_tcm_ioh, sc->sc_tcm_ios);
 }
 
 void
