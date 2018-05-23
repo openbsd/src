@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2018/05/19 13:56:56 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.99 2018/05/23 19:11:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1123,6 +1123,7 @@ port		: PORT NUMBER {
 				YYERROR;
 			}
 			$$.val[0] = htons($2);
+			$$.op = 1;
 		}
 		| PORT STRING {
 			int	 val;
@@ -1135,6 +1136,7 @@ port		: PORT NUMBER {
 			free($2);
 
 			$$.val[0] = val;
+			$$.op = 1;
 		}
 		;
 
