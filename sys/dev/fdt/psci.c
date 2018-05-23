@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.7 2018/05/03 09:45:57 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.8 2018/05/23 09:12:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -54,7 +54,6 @@ struct psci_softc {
 	uint32_t	 sc_system_reset;
 	uint32_t	 sc_cpu_on;
 
-	uint32_t	 sc_version;
 	uint32_t	 sc_smccc_version;
 };
 
@@ -98,6 +97,7 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 	struct psci_softc *sc = (struct psci_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	char method[128];
+	uint32_t version;
 
 	if (OF_getprop(faa->fa_node, "method", method, sizeof(method))) {
 		if (strcmp(method, "hvc") == 0)
@@ -127,10 +127,10 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 
 	psci_sc = sc;
 
-	sc->sc_version = psci_version();
-	printf(": PSCI %d.%d", sc->sc_version >> 16, sc->sc_version & 0xffff);
+	version = psci_version();
+	printf(": PSCI %d.%d", version >> 16, version & 0xffff);
 
-	if (sc->sc_version >= 0x10000) {
+	if (version >= 0x10000) {
 		if (psci_features(SMCCC_VERSION) == PSCI_SUCCESS) {
 			sc->sc_smccc_version = smccc_version();
 			printf(", SMCCC %d.%d", sc->sc_smccc_version >> 16,
@@ -165,24 +165,14 @@ psci_powerdown(void)
 }
 
 /*
- * Firmware-based workaround for CVE-2017-5715.  We pick the
- * appropriate mechanism based on the PSCI and SMCCC versions.  We
- * determine whether the workaround is actually needed the first time
- * we are invoked such that we only make the firmware call if we
- * really need to.
+ * Firmware-based workaround for CVE-2017-5715.  We determine whether
+ * the workaround is actually implemented and needed the first time we
+ * are invoked such that we only make the firmware call when appropriate.
  */
 
 void
 psci_flush_bp_none(void)
 {
-}
-
-void
-psci_flush_bp_psci_version(void)
-{
-	struct psci_softc *sc = psci_sc;
-
-	(*sc->sc_callfn)(PSCI_VERSION, 0, 0, 0);
 }
 
 void
@@ -199,32 +189,17 @@ psci_flush_bp(void)
 	struct psci_softc *sc = psci_sc;
 	struct cpu_info *ci = curcpu();
 
-	/* No PSCI or an old version of PSCI; nothing we can do. */
-	if (sc == NULL || sc->sc_version < 0x10000) {
-		ci->ci_flush_bp = psci_flush_bp_none;
-		return;
-	}
-
 	/*
-	 * PSCI 1.0 or later with SMCCC 1.0; invoke PSCI_VERSION and
-	 * hope for the best.
+	 * SMCCC 1.1 allows us to detect if the workaround is
+	 * implemented and needed.
 	 */
-	if (sc->sc_smccc_version < 0x10001) {
-		ci->ci_flush_bp = psci_flush_bp_psci_version;
-		ci->ci_flush_bp();
-		return;
-	}
-
-	/*
-	 * SMCCC 1.1 or later; we can actually detect if the
-	 * workaround is implemented and needed.
-	 */
-	if (smccc_arch_features(SMCCC_ARCH_WORKAROUND_1) == 0) {
+	if (sc && sc->sc_smccc_version >= 0x10001 &&
+	    smccc_arch_features(SMCCC_ARCH_WORKAROUND_1) == 0) {
 		/* Workaround implemented and needed. */
 		ci->ci_flush_bp = psci_flush_bp_smccc_arch_workaround_1;
 		ci->ci_flush_bp();
 	} else {
-		/* No workaround needed. */
+		/* Workaround isn't implemented or isn't needed. */
 		ci->ci_flush_bp = psci_flush_bp_none;
 	}
 }
