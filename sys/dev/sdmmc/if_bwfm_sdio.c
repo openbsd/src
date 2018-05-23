@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.14 2018/05/23 09:08:18 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.15 2018/05/23 11:32:14 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -79,6 +79,8 @@ struct bwfm_sdio_softc {
 	struct rwlock		 *sc_lock;
 	void			 *sc_ih;
 
+	int			  sc_initialized;
+
 	uint32_t		  sc_bar0;
 	int			  sc_clkstate;
 	int			  sc_alp_only;
@@ -101,7 +103,7 @@ struct bwfm_sdio_softc {
 
 int		 bwfm_sdio_match(struct device *, void *, void *);
 void		 bwfm_sdio_attach(struct device *, struct device *, void *);
-void		 bwfm_sdio_attachhook(struct device *);
+int		 bwfm_sdio_preinit(struct bwfm_softc *);
 int		 bwfm_sdio_detach(struct device *, int);
 
 int		 bwfm_sdio_intr(void *);
@@ -157,7 +159,7 @@ void		 bwfm_sdio_debug_console(struct bwfm_sdio_softc *);
 #endif
 
 struct bwfm_bus_ops bwfm_sdio_bus_ops = {
-	.bs_init = NULL,
+	.bs_preinit = bwfm_sdio_preinit,
 	.bs_stop = NULL,
 	.bs_txcheck = bwfm_sdio_txcheck,
 	.bs_txdata = bwfm_sdio_txdata,
@@ -312,23 +314,28 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR, 0);
 	sc->sc_clkstate = CLK_SDONLY;
 
-	config_mountroot(self, bwfm_sdio_attachhook);
+	sc->sc_sc.sc_bus_ops = &bwfm_sdio_bus_ops;
+	sc->sc_sc.sc_proto_ops = &bwfm_proto_bcdc_ops;
+	bwfm_attach(&sc->sc_sc);
+	config_mountroot(self, bwfm_attachhook);
 	return;
 
 err:
 	free(sc->sc_sf, M_DEVBUF, 0);
 }
 
-void
-bwfm_sdio_attachhook(struct device *self)
+int
+bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 {
-	struct bwfm_sdio_softc *sc = (struct bwfm_sdio_softc *)self;
-	struct bwfm_softc *bwfm = (void *)sc;
+	struct bwfm_sdio_softc *sc = (void *)bwfm;
 	const char *name = NULL;
 	const char *nvname = NULL;
 	uint32_t clk, reg;
 	u_char *ucode, *nvram;
 	size_t size, nvlen;
+
+	if (sc->sc_initialized)
+		return 0;
 
 	rw_enter_write(sc->sc_lock);
 
@@ -349,20 +356,20 @@ bwfm_sdio_attachhook(struct device *self)
 	default:
 		printf("%s: unknown firmware for chip %s\n",
 		    DEVNAME(sc), bwfm->sc_chip.ch_name);
-		return;
+		return 1;
 	}
 
 	if (loadfirmware(name, &ucode, &size) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
-		return;
+		return 1;
 	}
 
 	if (loadfirmware(nvname, &nvram, &nvlen) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), nvname);
 		free(ucode, M_DEVBUF, size);
-		return;
+		return 1;
 	}
 
 	sc->sc_alp_only = 1;
@@ -372,7 +379,7 @@ bwfm_sdio_attachhook(struct device *self)
 		    DEVNAME(sc));
 		free(ucode, M_DEVBUF, size);
 		free(nvram, M_DEVBUF, nvlen);
-		return;
+		return 1;
 	}
 	sc->sc_alp_only = 0;
 	free(ucode, M_DEVBUF, size);
@@ -380,7 +387,7 @@ bwfm_sdio_attachhook(struct device *self)
 
 	bwfm_sdio_clkctl(sc, CLK_AVAIL, 0);
 	if (sc->sc_clkstate != CLK_AVAIL)
-		return;
+		return 1;
 
 	clk = bwfm_sdio_read_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR);
 	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR,
@@ -390,7 +397,7 @@ bwfm_sdio_attachhook(struct device *self)
 	    SDPCM_PROT_VERSION << SDPCM_PROT_VERSION_SHIFT);
 	if (sdmmc_io_function_enable(sc->sc_sf[2]) != 0) {
 		printf("%s: cannot enable function 2\n", DEVNAME(sc));
-		return;
+		return 1;
 	}
 
 	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
@@ -411,20 +418,18 @@ bwfm_sdio_attachhook(struct device *self)
 		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR, clk);
 	}
 
-	/* if interrupt establish fails */
 	sc->sc_ih = sdmmc_intr_establish(bwfm->sc_dev.dv_parent,
 	    bwfm_sdio_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf("%s: can't establish interrupt\n", DEVNAME(sc));
 		bwfm_sdio_clkctl(sc, CLK_NONE, 0);
-		return;
+		return 1;
 	}
 	sdmmc_intr_enable(sc->sc_sf[1]);
 	rw_exit(sc->sc_lock);
 
-	sc->sc_sc.sc_bus_ops = &bwfm_sdio_bus_ops;
-	sc->sc_sc.sc_proto_ops = &bwfm_proto_bcdc_ops;
-	bwfm_attach(&sc->sc_sc);
+	sc->sc_initialized = 1;
+	return 0;
 }
 
 int

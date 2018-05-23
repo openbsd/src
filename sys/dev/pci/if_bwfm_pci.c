@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.20 2018/05/23 08:36:15 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.21 2018/05/23 11:32:14 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -113,6 +113,8 @@ struct bwfm_pci_softc {
 	pcireg_t		 sc_id;
 	void 			*sc_ih;
 
+	int			 sc_initialized;
+
 	bus_space_tag_t		 sc_reg_iot;
 	bus_space_handle_t	 sc_reg_ioh;
 	bus_size_t		 sc_reg_ios;
@@ -185,7 +187,6 @@ struct bwfm_pci_dmamem {
 #define BWFM_PCI_DMA_KVA(_bdm)	((void *)(_bdm)->bdm_kva)
 
 int		 bwfm_pci_match(struct device *, void *, void *);
-void		 bwfm_pci_attachhook(struct device *);
 void		 bwfm_pci_attach(struct device *, struct device *, void *);
 int		 bwfm_pci_detach(struct device *, int);
 
@@ -257,6 +258,7 @@ void		 bwfm_pci_flowring_create(struct bwfm_pci_softc *,
 void		 bwfm_pci_flowring_create_cb(struct bwfm_softc *, void *);
 void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
 
+int		 bwfm_pci_preinit(struct bwfm_softc *);
 void		 bwfm_pci_stop(struct bwfm_softc *);
 int		 bwfm_pci_txcheck(struct bwfm_softc *);
 int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
@@ -280,7 +282,7 @@ struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 };
 
 struct bwfm_bus_ops bwfm_pci_bus_ops = {
-	.bs_init = NULL,
+	.bs_preinit = bwfm_pci_preinit,
 	.bs_stop = bwfm_pci_stop,
 	.bs_txcheck = bwfm_pci_txcheck,
 	.bs_txdata = bwfm_pci_txdata,
@@ -358,7 +360,10 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", intrstr);
 
-	config_mountroot(self, bwfm_pci_attachhook);
+	sc->sc_sc.sc_bus_ops = &bwfm_pci_bus_ops;
+	sc->sc_sc.sc_proto_ops = &bwfm_pci_msgbuf_ops;
+	bwfm_attach(&sc->sc_sc);
+	config_mountroot(self, bwfm_attachhook);
 	return;
 
 bar0:
@@ -367,11 +372,10 @@ bar1:
 	bus_space_unmap(sc->sc_tcm_iot, sc->sc_tcm_ioh, sc->sc_tcm_ios);
 }
 
-void
-bwfm_pci_attachhook(struct device *self)
+int
+bwfm_pci_preinit(struct bwfm_softc *bwfm)
 {
-	struct bwfm_pci_softc *sc = (struct bwfm_pci_softc *)self;
-	struct bwfm_softc *bwfm = (void *)sc;
+	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct bwfm_pci_ringinfo ringinfo;
 	const char *name = NULL;
 	u_char *ucode; size_t size;
@@ -380,10 +384,13 @@ bwfm_pci_attachhook(struct device *self)
 	uint32_t idx_offset, reg;
 	int i;
 
+	if (sc->sc_initialized)
+		return 0;
+
 	sc->sc_sc.sc_buscore_ops = &bwfm_pci_buscore_ops;
 	if (bwfm_chip_attach(&sc->sc_sc) != 0) {
 		printf("%s: cannot attach chip\n", DEVNAME(sc));
-		return;
+		return 1;
 	}
 
 	bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
@@ -408,13 +415,13 @@ bwfm_pci_attachhook(struct device *self)
 	default:
 		printf("%s: unknown firmware for chip %s\n",
 		    DEVNAME(sc), bwfm->sc_chip.ch_name);
-		return;
+		return 1;
 	}
 
 	if (loadfirmware(name, &ucode, &size) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
-		return;
+		return 1;
 	}
 
 	/* Retrieve RAM size from firmware. */
@@ -428,7 +435,7 @@ bwfm_pci_attachhook(struct device *self)
 		printf("%s: could not load microcode\n",
 		    DEVNAME(sc));
 		free(ucode, M_DEVBUF, size);
-		return;
+		return 1;
 	}
 	free(ucode, M_DEVBUF, size);
 
@@ -439,7 +446,7 @@ bwfm_pci_attachhook(struct device *self)
 	    sc->sc_shared_version < BWFM_SHARED_INFO_MIN_VERSION) {
 		printf("%s: PCIe version %d unsupported\n",
 		    DEVNAME(sc), sc->sc_shared_version);
-		return;
+		return 1;
 	}
 
 	if (sc->sc_shared_flags & BWFM_SHARED_INFO_DMA_INDEX) {
@@ -510,7 +517,7 @@ bwfm_pci_attachhook(struct device *self)
 			/* XXX: Fallback to TCM? */
 			printf("%s: cannot allocate idx buf\n",
 			    DEVNAME(sc));
-			return;
+			return 1;
 		}
 
 		idx_offset = sc->sc_dma_idx_sz;
@@ -651,12 +658,8 @@ bwfm_pci_attachhook(struct device *self)
 	bwfm_pci_debug_console(sc);
 #endif
 
-	sc->sc_ioctl_poll = 1;
-	sc->sc_sc.sc_bus_ops = &bwfm_pci_bus_ops;
-	sc->sc_sc.sc_proto_ops = &bwfm_pci_msgbuf_ops;
-	bwfm_attach(&sc->sc_sc);
-	sc->sc_ioctl_poll = 0;
-	return;
+	sc->sc_initialized = 1;
+	return 0;
 
 cleanup:
 	if (sc->sc_ioctl_buf)
@@ -677,6 +680,7 @@ cleanup:
 		bwfm_pci_dmamem_free(sc, sc->sc_ctrl_submit.ring);
 	if (sc->sc_dma_idx_buf)
 		bwfm_pci_dmamem_free(sc, sc->sc_dma_idx_buf);
+	return 1;
 }
 
 int

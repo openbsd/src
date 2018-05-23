@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.45 2018/05/17 06:53:45 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.46 2018/05/23 11:32:14 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -169,23 +169,9 @@ bwfm_attach(struct bwfm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	uint32_t bandlist[3], tmp;
-	int i, j, nbands, nmode, vhtmode;
 
 	TAILQ_INIT(&sc->sc_bcdc_rxctlq);
 	TAILQ_INIT(&sc->sc_bcdc_txctlq);
-
-	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
-		printf("%s: could not read io type\n", DEVNAME(sc));
-		return;
-	} else
-		sc->sc_io_type = tmp;
-	if (bwfm_fwvar_var_get_data(sc, "cur_etheraddr", ic->ic_myaddr,
-	    sizeof(ic->ic_myaddr))) {
-		printf("%s: could not read mac address\n", DEVNAME(sc));
-		return;
-	}
-	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
 
 	/* Init host async commands ring. */
 	sc->sc_cmdq.cur = sc->sc_cmdq.next = sc->sc_cmdq.queued = 0;
@@ -204,6 +190,63 @@ bwfm_attach(struct bwfm_softc *sc)
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
 	    IEEE80211_C_SCANALLBAND;	/* device scans all bands at once */
 
+	/* IBSS channel undefined for now. */
+	ic->ic_ibss_chan = &ic->ic_channels[0];
+
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = bwfm_ioctl;
+	ifp->if_start = bwfm_start;
+	ifp->if_watchdog = bwfm_watchdog;
+	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+
+	if_attach(ifp);
+	ieee80211_ifattach(ifp);
+
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = bwfm_newstate;
+	ic->ic_send_mgmt = bwfm_send_mgmt;
+	ic->ic_set_key = bwfm_set_key;
+	ic->ic_delete_key = bwfm_delete_key;
+
+	ieee80211_media_init(ifp, bwfm_media_change, ieee80211_media_status);
+}
+
+void
+bwfm_attachhook(struct device *self)
+{
+	struct bwfm_softc *sc = (struct bwfm_softc *)self;
+
+	if (sc->sc_bus_ops->bs_preinit != NULL &&
+	    sc->sc_bus_ops->bs_preinit(sc))
+		return;
+	if (bwfm_preinit(sc))
+		return;
+	sc->sc_initialized = 1;
+}
+
+int
+bwfm_preinit(struct bwfm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int i, j, nbands, nmode, vhtmode;
+	uint32_t bandlist[3], tmp;
+
+	if (sc->sc_initialized)
+		return 0;
+
+	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
+		printf("%s: could not read io type\n", DEVNAME(sc));
+		return 1;
+	} else
+		sc->sc_io_type = tmp;
+	if (bwfm_fwvar_var_get_data(sc, "cur_etheraddr", ic->ic_myaddr,
+	    sizeof(ic->ic_myaddr))) {
+		printf("%s: could not read mac address\n", DEVNAME(sc));
+		return 1;
+	}
+
 	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
 		nmode = 0;
 	if (bwfm_fwvar_var_get_int(sc, "vhtmode", &vhtmode))
@@ -211,7 +254,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	if (bwfm_fwvar_cmd_get_data(sc, BWFM_C_GET_BANDLIST, bandlist,
 	    sizeof(bandlist))) {
 		printf("%s: couldn't get supported band list\n", DEVNAME(sc));
-		return;
+		return 1;
 	}
 	nbands = letoh32(bandlist[0]);
 	for (i = 1; i <= nbands && i < nitems(bandlist); i++) {
@@ -260,26 +303,15 @@ bwfm_attach(struct bwfm_softc *sc)
 		}
 	}
 
-	/* IBSS channel undefined for now. */
-	ic->ic_ibss_chan = &ic->ic_channels[0];
+	/* Configure channel information obtained from firmware. */
+	ieee80211_channel_init(ifp);
 
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = bwfm_ioctl;
-	ifp->if_start = bwfm_start;
-	ifp->if_watchdog = bwfm_watchdog;
-	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-
-	if_attach(ifp);
-	ieee80211_ifattach(ifp);
-
-	sc->sc_newstate = ic->ic_newstate;
-	ic->ic_newstate = bwfm_newstate;
-	ic->ic_send_mgmt = bwfm_send_mgmt;
-	ic->ic_set_key = bwfm_set_key;
-	ic->ic_delete_key = bwfm_delete_key;
+	/* Configure MAC address. */
+	if (if_setlladdr(ifp, ic->ic_myaddr))
+		printf("%s: could not set MAC address\n", DEVNAME(sc));
 
 	ieee80211_media_init(ifp, bwfm_media_change, ieee80211_media_status);
+	return 0;
 }
 
 int
@@ -341,8 +373,18 @@ bwfm_init(struct ifnet *ifp)
 	struct bwfm_join_pref_params join_pref[2];
 	int pm;
 
-	if (sc->sc_bus_ops->bs_init)
-		sc->sc_bus_ops->bs_init(sc);
+	if (!sc->sc_initialized) {
+		if (sc->sc_bus_ops->bs_preinit != NULL &&
+		    sc->sc_bus_ops->bs_preinit(sc)) {
+			printf("%s: could not init bus\n", DEVNAME(sc));
+			return;
+		}
+		if (bwfm_preinit(sc)) {
+			printf("%s: could not init\n", DEVNAME(sc));
+			return;
+		}
+		sc->sc_initialized = 1;
+	}
 
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
 		printf("%s: could not set mpc\n", DEVNAME(sc));

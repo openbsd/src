@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.13 2018/05/16 08:20:00 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.14 2018/05/23 11:32:14 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -85,7 +85,7 @@ struct bwfm_chip {
 };
 
 struct bwfm_bus_ops {
-	void (*bs_init)(struct bwfm_softc *);
+	int (*bs_preinit)(struct bwfm_softc *);
 	void (*bs_stop)(struct bwfm_softc *);
 	int (*bs_txcheck)(struct bwfm_softc *);
 	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
@@ -159,6 +159,7 @@ struct bwfm_softc {
 #define		BWFM_IO_TYPE_D11N		1
 #define		BWFM_IO_TYPE_D11AC		2
 
+	int			 sc_initialized;
 	int			 sc_tx_timer;
 
 	int			 (*sc_newstate)(struct ieee80211com *,
@@ -173,6 +174,8 @@ struct bwfm_softc {
 };
 
 void bwfm_attach(struct bwfm_softc *);
+void bwfm_attachhook(struct device *);
+int bwfm_preinit(struct bwfm_softc *);
 int bwfm_detach(struct bwfm_softc *, int);
 int bwfm_chip_attach(struct bwfm_softc *);
 int bwfm_chip_set_active(struct bwfm_softc *, uint32_t);
