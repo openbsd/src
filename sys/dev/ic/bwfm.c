@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.46 2018/05/23 11:32:14 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.47 2018/05/23 14:10:48 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -102,6 +102,9 @@ int	 bwfm_fwvar_var_set_data(struct bwfm_softc *, char *, void *, size_t);
 int	 bwfm_fwvar_var_get_int(struct bwfm_softc *, char *, uint32_t *);
 int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, char *, uint32_t);
 
+uint32_t bwfm_chan2spec(struct bwfm_softc *, struct ieee80211_channel *);
+uint32_t bwfm_chan2spec_d11n(struct bwfm_softc *, struct ieee80211_channel *);
+uint32_t bwfm_chan2spec_d11ac(struct bwfm_softc *, struct ieee80211_channel *);
 uint32_t bwfm_spec2chan(struct bwfm_softc *, uint32_t);
 uint32_t bwfm_spec2chan_d11n(struct bwfm_softc *, uint32_t);
 uint32_t bwfm_spec2chan_d11ac(struct bwfm_softc *, uint32_t);
@@ -386,6 +389,9 @@ bwfm_init(struct ifnet *ifp)
 		sc->sc_initialized = 1;
 	}
 
+	/* Select default channel */
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
 		printf("%s: could not set mpc\n", DEVNAME(sc));
 		return;
@@ -505,6 +511,7 @@ bwfm_stop(struct ifnet *ifp)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct bwfm_join_params join;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
@@ -513,8 +520,13 @@ bwfm_stop(struct ifnet *ifp)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	memset(&join, 0, sizeof(join));
+	bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join, sizeof(join));
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_CAM);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_FAST_PS);
 
 	if (sc->sc_bus_ops->bs_stop)
 		sc->sc_bus_ops->bs_stop(sc);
@@ -1526,6 +1538,47 @@ bwfm_fwvar_var_set_int(struct bwfm_softc *sc, char *name, uint32_t data)
 
 /* Channel parameters */
 uint32_t
+bwfm_chan2spec(struct bwfm_softc *sc, struct ieee80211_channel *c)
+{
+	if (sc->sc_io_type == BWFM_IO_TYPE_D11N)
+		return bwfm_chan2spec_d11n(sc, c);
+	else
+		return bwfm_chan2spec_d11ac(sc, c);
+}
+
+uint32_t
+bwfm_chan2spec_d11n(struct bwfm_softc *sc, struct ieee80211_channel *c)
+{
+	uint32_t chanspec;
+
+	chanspec = ieee80211_mhz2ieee(c->ic_freq, 0) & BWFM_CHANSPEC_CHAN_MASK;
+	chanspec |= BWFM_CHANSPEC_D11N_SB_N;
+	chanspec |= BWFM_CHANSPEC_D11N_BW_20;
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		chanspec |= BWFM_CHANSPEC_D11N_BND_2G;
+	if (IEEE80211_IS_CHAN_5GHZ(c))
+		chanspec |= BWFM_CHANSPEC_D11N_BND_5G;
+
+	return chanspec;
+}
+
+uint32_t
+bwfm_chan2spec_d11ac(struct bwfm_softc *sc, struct ieee80211_channel *c)
+{
+	uint32_t chanspec;
+
+	chanspec = ieee80211_mhz2ieee(c->ic_freq, 0) & BWFM_CHANSPEC_CHAN_MASK;
+	chanspec |= BWFM_CHANSPEC_D11AC_SB_LLL;
+	chanspec |= BWFM_CHANSPEC_D11AC_BW_20;
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		chanspec |= BWFM_CHANSPEC_D11AC_BND_2G;
+	if (IEEE80211_IS_CHAN_5GHZ(c))
+		chanspec |= BWFM_CHANSPEC_D11AC_BND_5G;
+
+	return chanspec;
+}
+
+uint32_t
 bwfm_spec2chan(struct bwfm_softc *sc, uint32_t chanspec)
 {
 	if (sc->sc_io_type == BWFM_IO_TYPE_D11N)
@@ -1744,6 +1797,8 @@ bwfm_hostap(struct bwfm_softc *sc)
 
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 1);
+	bwfm_fwvar_var_set_int(sc, "chanspec",
+	    bwfm_chan2spec(sc, ic->ic_bss->ni_chan));
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
 
 	memset(&join, 0, sizeof(join));
@@ -2375,6 +2430,14 @@ bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
+#ifndef IEEE80211_STA_ONLY
+		/* Don't start a scan if we already have a channel. */
+		if (ic->ic_state == IEEE80211_S_INIT &&
+		    ic->ic_opmode == IEEE80211_M_HOSTAP &&
+		    ic->ic_des_chan != IEEE80211_CHAN_ANYC) {
+			break;
+		}
+#endif
 		bwfm_scan(sc);
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: %s -> %s\n", DEVNAME(sc),
