@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.14 2018/05/23 11:32:14 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.15 2018/05/23 14:15:06 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -325,7 +325,7 @@ bwfm_usb_preinit(struct bwfm_softc *bwfm)
 	if (error != 0) {
 		printf("%s: could not open tx pipe: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
-		return 1;
+		goto cleanup;
 	}
 
 	/* Firmware not yet loaded? */
