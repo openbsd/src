@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.86 2018/04/29 08:35:28 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.87 2018/05/23 19:52:03 phessler Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -1013,7 +1013,7 @@ justcleanup:
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
@@ -1058,7 +1058,7 @@ justcleanup:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
@@ -1080,7 +1080,7 @@ justcleanup:
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
