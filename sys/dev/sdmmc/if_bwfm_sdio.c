@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.13 2018/05/21 08:07:43 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.14 2018/05/23 09:08:18 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -191,11 +191,31 @@ bwfm_sdio_match(struct device *parent, void *match, void *aux)
 	if (sf == NULL)
 		return 0;
 
-	/* Look for Broadcom 433[04]. */
+	/* Look for Broadcom. */
 	cis = &sf->sc->sc_fn0->cis;
-	if (cis->manufacturer != 0x02d0 || (cis->product != 0x4330 &&
-	    cis->product != 0x4334))
+	if (cis->manufacturer != 0x02d0)
 		return 0;
+
+	/* Look for supported chips. */
+	switch (cis->product) {
+	case 0x4324:
+	case 0x4330:
+	case 0x4334:
+	case 0x4329:
+	case 0x4335:
+	case 0x4339:
+	case 0x4345:
+	case 0x4354:
+	case 0x4356:
+	case 0xa887:
+	case 0xa94c:
+	case 0xa94d:
+	case 0xa962:
+	case 0xa9a6:
+		break;
+	default:
+		return 0;
+	}
 
 	/* We need both functions, but ... */
 	if (sf->sc->sc_function_count <= 1)
