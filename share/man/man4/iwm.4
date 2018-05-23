@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.22 2017/04/27 05:49:32 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.23 2018/05/23 17:50:52 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2017 $
+.Dd $Mdocdate: May 23 2018 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -40,13 +40,13 @@ Also known as
 .Em infrastructure
 mode, this is used when associating with an access point, through
 which all traffic passes.
-.\" This mode is the default.
-.\" .It monitor mode
-.\" In this mode the driver is able to receive packets without
-.\" associating with an access point.
-.\" This disables the internal receive filter and enables the card to
-.\" capture packets from networks which it wouldn't normally have access to,
-.\" or to scan for access points.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 The
