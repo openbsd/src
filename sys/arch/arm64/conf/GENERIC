@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.71 2018/05/16 13:42:35 patrick Exp $
+# $OpenBSD: GENERIC,v 1.72 2018/05/23 08:53:31 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -59,6 +59,7 @@ pciecam*	at fdt?
 pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+bwfm*		at sdmmc?	# Broadcom FullMAC
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 
@@ -280,6 +281,7 @@ video*		at utvfu?
 audio*		at utvfu?
 udl*		at uhub?		# DisplayLink USB displays
 wsdisplay*	at udl?
+bwfm*		at uhub?		# Broadcom FullMAC
 
 amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs
