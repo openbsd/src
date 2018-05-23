@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.120 2018/03/29 01:21:02 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.121 2018/05/23 05:37:01 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -468,13 +468,5 @@ void mp_setperf_init(void);
 	{ "tscfreq", CTLTYPE_QUAD }, \
 	{ "invarianttsc", CTLTYPE_INT }, \
 }
-
-/*
- * Default cr4 flags.
- * Doesn't really belong here, but doesn't really belong anywhere else
- * either. Just to avoid painful mismatches of cr4 flags since they are
- * set in three different places.
- */
-#define CR4_DEFAULT (CR4_PAE|CR4_PGE|CR4_PSE|CR4_OSFXSR|CR4_OSXMMEXCPT)
 
 #endif /* !_MACHINE_CPU_H_ */
