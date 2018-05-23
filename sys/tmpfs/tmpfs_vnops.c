@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.29 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.30 2018/05/23 14:49:08 reyk Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -389,6 +389,7 @@ tmpfs_open(void *v)
 int
 tmpfs_close(void *v)
 {
+#ifdef DIAGNOSTIC
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
@@ -397,7 +398,7 @@ tmpfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
+#endif
 	return 0;
 }
 
@@ -659,6 +660,7 @@ out:
 int
 tmpfs_fsync(void *v)
 {
+#ifdef DIAGNOSTIC
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		struct ucred *a_cred;
@@ -671,6 +673,7 @@ tmpfs_fsync(void *v)
 
 	/* Nothing to do.  Just update. */
 	KASSERT(VOP_ISLOCKED(vp));
+#endif
 	return 0;
 }
 
