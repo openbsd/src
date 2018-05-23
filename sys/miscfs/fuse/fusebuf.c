@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.13 2018/05/17 11:25:11 helg Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.14 2018/05/23 13:09:37 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -55,7 +55,7 @@ fb_queue(dev_t dev, struct fusebuf *fbuf)
 
 	fuse_device_queue_fbuf(dev, fbuf);
 
-	if ((error = tsleep(fbuf, PWAIT, "fuse msg", TSLEEP_TIMEOUT * hz))) {
+	if ((error = tsleep(fbuf, PWAIT, "fuse", TSLEEP_TIMEOUT * hz))) {
 		fuse_device_cleanup(dev, fbuf);
 		return (error);
 	}
