@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipmic.c,v 1.2 2018/05/21 08:01:56 kettenis Exp $	*/
+/*	$OpenBSD: tipmic.c,v 1.3 2018/05/23 23:08:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -294,8 +294,10 @@ tipmic_thermal_opreg_handler(void *cookie, int iodir, uint64_t address,
 		if (address == tipmic_thermal_regmap[i].address)
 			break;
 	}
-	if (i == nitems(tipmic_thermal_regmap))
+	if (i == nitems(tipmic_thermal_regmap)) {
+		printf("%s: addr 0x%02llx\n", __func__, address);
 		return -1;
+	}
 
 	/* Turn ADC on and select the appropriate channel. */
 	reg = tipmic_read_1(sc, TIPMIC_ADC_CTRL, 0);
@@ -393,8 +395,10 @@ tipmic_power_opreg_handler(void *cookie, int iodir, uint64_t address,
 		if (address == tipmic_power_regmap[i].address)
 			break;
 	}
-	if (i == nitems(tipmic_power_regmap))
+	if (i == nitems(tipmic_power_regmap)) {
+		printf("%s: addr 0x%02llx\n", __func__, address);
 		return -1;
+	}
 
 	reg = tipmic_power_regmap[i].hi;
 	val = tipmic_read_1(sc, reg, 0);
