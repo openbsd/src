@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.3 2018/01/19 18:20:38 jcs Exp $ */
+/* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -192,6 +192,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	u_int32_t ic_con, st, cmd, resp;
 	int retries, tx_limit, rx_avail, x, readpos;
 	uint8_t *b;
+	int s;
 
 	if (sc->sc_busy)
 		return 1;
@@ -245,12 +246,14 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	if (flags & I2C_F_POLL)
 		DELAY(200);
 	else {
+		s = splbio();
 		dwiic_read(sc, DW_IC_CLR_INTR);
 		dwiic_write(sc, DW_IC_INTR_MASK, DW_IC_INTR_TX_EMPTY);
 
 		if (tsleep(&sc->sc_writewait, PRIBIO, "dwiic", hz / 2) != 0)
 			printf("%s: timed out waiting for tx_empty intr\n",
 			    sc->sc_dev.dv_xname);
+		splx(s);
 	}
 
 	/* send our command, one byte at a time */
@@ -320,7 +323,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		 * As TXFLR fills up, we need to clear it out by reading all
 		 * available data.
 		 */
-		while (tx_limit == 0 || x == len) {
+		while (I2C_OP_READ_P(op) && (tx_limit == 0 || x == len)) {
 			DPRINTF(("%s: %s: tx_limit %d, sent %d read reqs\n",
 			    sc->sc_dev.dv_xname, __func__, tx_limit, x));
 
@@ -332,6 +335,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 					DELAY(50);
 				}
 			} else {
+				s = splbio();
 				dwiic_read(sc, DW_IC_CLR_INTR);
 				dwiic_write(sc, DW_IC_INTR_MASK,
 				    DW_IC_INTR_RX_FULL);
@@ -341,6 +345,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 					printf("%s: timed out waiting for "
 					    "rx_full intr\n",
 					    sc->sc_dev.dv_xname);
+				splx(s);
 
 				rx_avail = dwiic_read(sc, DW_IC_RXFLR);
 			}
@@ -378,6 +383,32 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		}
 	}
 
+	if (I2C_OP_STOP_P(op) && I2C_OP_WRITE_P(op)) {
+		if (flags & I2C_F_POLL) {
+			/* wait for bus to be idle */
+			for (retries = 100; retries > 0; retries--) {
+				st = dwiic_read(sc, DW_IC_STATUS);
+				if (!(st & DW_IC_STATUS_ACTIVITY))
+					break;
+				DELAY(1000);
+			}
+			if (st & DW_IC_STATUS_ACTIVITY)
+				printf("%s: timed out waiting for bus idle\n",
+				    sc->sc_dev.dv_xname);
+		} else {
+			s = splbio();
+			while (sc->sc_busy) {
+				dwiic_write(sc, DW_IC_INTR_MASK,
+				    DW_IC_INTR_STOP_DET);
+				if (tsleep(&sc->sc_busy, PRIBIO, "dwiic",
+				    hz / 2) != 0)
+					printf("%s: timed out waiting for "
+					    "stop intr\n",
+					    sc->sc_dev.dv_xname);
+			}
+			splx(s);
+		}
+	}
 	sc->sc_busy = 0;
 
 	return 0;
@@ -449,6 +480,11 @@ dwiic_intr(void *arg)
 			DPRINTF(("%s: %s: waking up writer\n",
 			    sc->sc_dev.dv_xname, __func__));
 			wakeup(&sc->sc_writewait);
+		}
+		if (stat & DW_IC_INTR_STOP_DET) {
+			dwiic_write(sc, DW_IC_INTR_MASK, 0);
+			sc->sc_busy = 0;
+			wakeup(&sc->sc_busy);
 		}
 	}
 
