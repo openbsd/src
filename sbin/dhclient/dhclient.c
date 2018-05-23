@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.572 2018/05/19 22:10:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.573 2018/05/23 12:18:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -134,7 +134,7 @@ void		 fork_privchld(struct interface_info *, int, int);
 void		 get_ifname(struct interface_info *, int, char *);
 int		 get_ifa_family(char *, int);
 void		 interface_link_forceup(char *, int);
-int		 interface_status(char *);
+void		 interface_state(struct interface_info *);
 void		 get_hw_address(struct interface_info *);
 void		 tick_msg(const char *, int, time_t, time_t);
 
@@ -237,18 +237,17 @@ interface_link_forceup(char *name, int ioctlfd)
 	}
 }
 
-int
-interface_status(char *name)
+void
+interface_state(struct interface_info *ifi)
 {
 	struct ifaddrs	*ifap, *ifa;
 	struct if_data	*ifdata;
-	int		 ret;
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(name, ifa->ifa_name) == 0 &&
+		if (strcmp(ifi->name, ifa->ifa_name) == 0 &&
 		    (ifa->ifa_flags & IFF_LOOPBACK) == 0 &&
 		    (ifa->ifa_flags & IFF_POINTOPOINT) == 0 &&
 		    ifa->ifa_addr->sa_family == AF_LINK)
@@ -258,14 +257,13 @@ interface_status(char *name)
 	if (ifa == NULL ||
 	    (ifa->ifa_flags & IFF_UP) == 0 ||
 	    (ifa->ifa_flags & IFF_RUNNING) == 0) {
-		ret = 0;
+		ifi->link_state = LINK_STATE_DOWN;
 	} else {
 		ifdata = ifa->ifa_data;
-		ret = LINK_STATE_IS_UP(ifdata->ifi_link_state);
+		ifi->link_state = ifdata->ifi_link_state;
 	}
 
 	freeifaddrs(ifap);
-	return ret;
 }
 
 void
@@ -321,7 +319,7 @@ routehandler(struct interface_info *ifi, int routefd)
 	struct ifa_msghdr		*ifam;
 	char				*rtmmsg;
 	ssize_t				 n;
-	int				 linkstat;
+	int				 newlinkstatus, oldlinkstatus;
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
@@ -379,12 +377,13 @@ routehandler(struct interface_info *ifi, int routefd)
 			}
 		}
 
-		linkstat = interface_status(ifi->name);
-		if (linkstat != ifi->linkstat) {
+		oldlinkstatus = LINK_STATE_IS_UP(ifi->link_state);
+		interface_state(ifi);
+		newlinkstatus = LINK_STATE_IS_UP(ifi->link_state);
+		if (newlinkstatus != oldlinkstatus) {
 			log_debug("%s: link %s -> %s", log_procname,
-			    (ifi->linkstat != 0) ? "up" : "down",
-			    (linkstat != 0) ? "up" : "down");
-			ifi->linkstat = linkstat;
+			    (oldlinkstatus != 0) ? "up" : "down",
+			    (newlinkstatus != 0) ? "up" : "down");
 			ifi->state = S_PREBOOT;
 			state_preboot(ifi);
 		}
@@ -606,8 +605,8 @@ main(int argc, char *argv[])
 	 * the routing socket is listening, the RTM_IFINFO message with the
 	 * RTF_UP flag reset will cause premature exit.
 	 */
-	ifi->linkstat = interface_status(ifi->name);
-	if (ifi->linkstat == 0)
+	interface_state(ifi);
+	if (!LINK_STATE_IS_UP(ifi->link_state))
 		interface_link_forceup(ifi->name, ioctlfd);
 	close(ioctlfd);
 	ioctlfd = -1;
@@ -712,9 +711,9 @@ state_preboot(struct interface_info *ifi)
 	tickstart = ifi->startup_time + 3;
 	tickstop = ifi->startup_time + config->link_timeout;
 
-	ifi->linkstat = interface_status(ifi->name);
+	interface_state(ifi);
 
-	if (ifi->linkstat != 0) {
+	if (LINK_STATE_IS_UP(ifi->link_state)) {
 		tick_msg("link", 1, tickstart, tickstop);
 		if ((ifi->flags & IFI_VALID_LLADDR) == 0)
 			get_hw_address(ifi);
@@ -1392,14 +1391,16 @@ send_discover(struct interface_info *ifi)
 /*
  * Called if we haven't received any offers in a preset amount of time. When
  * this happens, we try to use existing leases that haven't yet expired.
+ *
+ * If LINK_STATE_UNKNOWN, do NOT use recorded leases.
  */
 void
 state_panic(struct interface_info *ifi)
 {
 	log_debug("%s: no acceptable DHCPOFFERS received", log_procname);
 
-	ifi->offer = get_recorded_lease(ifi);
-	if (ifi->offer != NULL) {
+	if (ifi->link_state >= LINK_STATE_UP) {
+		ifi->offer = get_recorded_lease(ifi);
 		ifi->state = S_REQUESTING;
 		ifi->offer_src = strdup(path_lease_db); /* NULL is OK. */
 		bind_lease(ifi);
