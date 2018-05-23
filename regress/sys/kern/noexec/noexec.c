@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.17 2017/07/18 23:00:31 bluhm Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.18 2018/05/23 19:22:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 	size_t size;
 	char *ep;
 	void *p, *ptr;
-	int ch;
+	int pflags, ch;
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0)
 		err(1, "sysconf");
@@ -196,6 +196,7 @@ main(int argc, char *argv[])
 	setvbuf(stderr, NULL, _IONBF, 0);
 
 	p = NULL;
+	pflags = MAP_PRIVATE|MAP_ANON|MAP_FIXED;
 	func = &noexec;
 	size = TESTSZ;
 	while ((ch = getopt(argc, argv, "TDBHSmps:")) != -1) {
@@ -225,6 +226,7 @@ main(int argc, char *argv[])
 				continue;
 			case 'S':
 				p = getaddr(&stack);
+				pflags |= MAP_STACK;
 				(void) strlcat(label, "stack", sizeof(label));
 				continue;
 			case 's':	/* only valid for heap and size */
@@ -243,7 +245,7 @@ main(int argc, char *argv[])
 			if (p) {
 				if ((ptr = mmap(p, size + 2 * page_size,
 				    PROT_READ|PROT_WRITE,
-				    MAP_ANON|MAP_FIXED, -1, 0)) == MAP_FAILED)
+				    pflags, -1, 0)) == MAP_FAILED)
 					err(1, "mmap");
 				(void) strlcat(label, "-mmap", sizeof(label));
 			} else {
