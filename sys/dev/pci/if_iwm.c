@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.229 2018/05/15 19:48:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.230 2018/05/23 17:49:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -426,7 +426,7 @@ uint8_t	iwm_ridx2rate(struct ieee80211_rateset *, int);
 int	iwm_rval2ridx(int);
 void	iwm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
 void	iwm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
-	    struct iwm_mac_ctx_cmd *, uint32_t, int);
+	    struct iwm_mac_ctx_cmd *, uint32_t);
 void	iwm_mac_ctxt_cmd_fill_sta(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_data_sta *, int);
 int	iwm_mac_ctxt_cmd(struct iwm_softc *, struct iwm_node *, uint32_t, int);
@@ -4446,6 +4446,7 @@ void
 iwm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
     struct iwm_mac_power_cmd *cmd)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
 	int dtim_period, dtim_msec, keep_alive;
 
@@ -4467,7 +4468,8 @@ iwm_power_build_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	keep_alive = roundup(keep_alive, 1000) / 1000;
 	cmd->keep_alive_seconds = htole16(keep_alive);
 
-	cmd->flags = htole16(IWM_POWER_FLAGS_POWER_SAVE_ENA_MSK);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		cmd->flags = htole16(IWM_POWER_FLAGS_POWER_SAVE_ENA_MSK);
 }
 
 int
@@ -4494,12 +4496,14 @@ iwm_power_mac_update_mode(struct iwm_softc *sc, struct iwm_node *in)
 int
 iwm_power_update_device(struct iwm_softc *sc)
 {
-	struct iwm_device_power_cmd cmd = {
-		.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK),
-	};
+	struct iwm_device_power_cmd cmd = { };
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_DEVICE_PS_CMD))
 		return 0;
+
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		cmd.flags = htole16(IWM_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK);
 
 	return iwm_send_cmd_pdu(sc,
 	    IWM_POWER_TABLE_CMD, 0, sizeof(cmd), &cmd);
@@ -4562,7 +4566,12 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 			add_sta_cmd.tfd_queue_msk |=
 			    htole32(1 << iwm_ac_to_tx_fifo[ac]);
 		}
-		IEEE80211_ADDR_COPY(&add_sta_cmd.addr, in->in_ni.ni_bssid);
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
+			    etherbroadcastaddr);
+		else
+			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
+			    in->in_ni.ni_bssid);
 	}
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
@@ -5230,7 +5239,7 @@ iwm_ack_rates(struct iwm_softc *sc, struct iwm_node *in, int *cck_rates,
 
 void
 iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
-    struct iwm_mac_ctx_cmd *cmd, uint32_t action, int assoc)
+    struct iwm_mac_ctx_cmd *cmd, uint32_t action)
 {
 #define IWM_EXP2(x)	((1 << (x)) - 1)	/* CWmin = 2^ECWmin - 1 */
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -5242,12 +5251,21 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	    in->in_color));
 	cmd->action = htole32(action);
 
-	cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		cmd->mac_type = htole32(IWM_FW_MAC_TYPE_LISTENER);
+	else if (ic->ic_opmode == IEEE80211_M_STA)
+		cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
+	else
+		panic("unsupported operating mode %d\n", ic->ic_opmode);
 	cmd->tsf_id = htole32(IWM_TSF_ID_A);
 
 	IEEE80211_ADDR_COPY(cmd->node_addr, ic->ic_myaddr);
-	IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		IEEE80211_ADDR_COPY(cmd->bssid_addr, etherbroadcastaddr);
+		return;
+	}
 
+	IEEE80211_ADDR_COPY(cmd->bssid_addr, ni->ni_bssid);
 	iwm_ack_rates(sc, in, &cck_ack_rates, &ofdm_ack_rates);
 	cmd->cck_rates = htole32(cck_ack_rates);
 	cmd->ofdm_rates = htole32(ofdm_ack_rates);
@@ -5332,6 +5350,7 @@ int
 iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
     int assoc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
 	struct iwm_mac_ctx_cmd cmd;
 	int active = (sc->sc_flags & IWM_FLAG_MAC_ACTIVE);
@@ -5343,11 +5362,19 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	iwm_mac_ctxt_cmd_common(sc, in, &cmd, action, assoc);
+	iwm_mac_ctxt_cmd_common(sc, in, &cmd, action);
 
-	/* Allow beacons to pass through as long as we are not associated or we
-	 * do not have dtim period information */
-	if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_PROMISC |
+		    IWM_MAC_FILTER_IN_CONTROL_AND_MGMT |
+		    IWM_MAC_FILTER_IN_BEACON |
+		    IWM_MAC_FILTER_IN_PROBE_REQUEST |
+		    IWM_MAC_FILTER_IN_CRC32);
+	} else if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
+		/* 
+		 * Allow beacons to pass through as long as we are not
+		 * associated or we do not have dtim period information.
+		 */
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_BEACON);
 	else
 		iwm_mac_ctxt_cmd_fill_sta(sc, in, &cmd.sta, assoc);
@@ -5564,7 +5591,10 @@ iwm_auth(struct iwm_softc *sc)
 
 	splassert(IPL_NET);
 
-	sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		sc->sc_phyctxt[0].channel = ic->ic_ibss_chan;
+	else
+		sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
 	err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
 	    IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err) {
@@ -5597,6 +5627,9 @@ iwm_auth(struct iwm_softc *sc)
 		goto rm_binding;
 	}
 	sc->sc_flags |= IWM_FLAG_STA_ACTIVE;
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return 0;
 
 	/*
 	 * Prevent the FW from wandering off channel during association
@@ -5728,8 +5761,16 @@ iwm_run(struct iwm_softc *sc)
 
 	splassert(IPL_NET);
 
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		/* Add a MAC context and a sniffing STA. */
+		err = iwm_auth(sc);
+		if (err)
+			return err;
+	}
+
 	/* Configure Rx chains for MIMO. */
-	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
+	if ((ic->ic_opmode == IEEE80211_M_MONITOR ||
+	    (in->in_ni.ni_flags & IEEE80211_NODE_HT)) &&
 	    !sc->sc_nvm.sku_cap_mimo_disable) {
 		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
 		    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
@@ -5797,6 +5838,11 @@ iwm_run(struct iwm_softc *sc)
 	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
 	ieee80211_mira_node_init(&in->in_mn);
 
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		iwm_led_blink_start(sc);
+		return 0;
+	}
+
 	/* Start at lowest available bit-rate, AMRR will raise. */
 	in->in_ni.ni_txrate = 0;
 	in->in_ni.ni_txmcs = 0;
@@ -5816,6 +5862,9 @@ iwm_run_stop(struct iwm_softc *sc)
 	int err;
 
 	splassert(IPL_NET);
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		iwm_led_blink_stop(sc);
 
 	err = iwm_sf_config(sc, IWM_SF_INIT_OFF);
 	if (err)
@@ -6564,6 +6613,12 @@ iwm_init(struct ifnet *ifp)
 
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+		return 0;
+	}
 
 	ieee80211_begin_scan(ifp);
 
@@ -7894,6 +7949,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_RSN |		/* WPA/RSN */
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
 	    IEEE80211_C_SCANALLBAND |	/* device scans all bands at once */
+	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
