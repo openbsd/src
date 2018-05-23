@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.52 2018/05/16 09:07:45 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.53 2018/05/23 06:45:20 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -958,72 +958,6 @@ pmap_vp_destroy(pmap_t pm)
 	}
 	pool_put(&pmap_vp_pool, vp0);
 	pm->pm_vp.l0 = NULL;
-}
-
-/*
- * Similar to pmap_steal_avail, but operating on vm_physmem since
- * uvm_page_physload() has been called.
- */
-vaddr_t
-pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
-{
-	struct vm_physseg *seg;
-	vaddr_t va;
-	paddr_t pa;
-	int segno;
-	u_int npg;
-
-	size = round_page(size);
-	npg = atop(size);
-
-	for (segno = 0, seg = vm_physmem; segno < vm_nphysseg; segno++, seg++) {
-		if (seg->avail_end - seg->avail_start < npg)
-			continue;
-		/*
-		 * We can only steal at an ``unused'' segment boundary,
-		 * i.e. either at the start or at the end.
-		 */
-		if (seg->avail_start == seg->start ||
-		    seg->avail_end == seg->end)
-			break;
-	}
-	if (segno == vm_nphysseg)
-		va = 0;
-	else {
-		if (seg->avail_start == seg->start) {
-			pa = ptoa(seg->avail_start);
-			seg->avail_start += npg;
-			seg->start += npg;
-		} else {
-			pa = ptoa(seg->avail_end) - size;
-			seg->avail_end -= npg;
-			seg->end -= npg;
-		}
-		/*
-		 * If all the segment has been consumed now, remove it.
-		 * Note that the crash dump code still knows about it
-		 * and will dump it correctly.
-		 */
-		if (seg->start == seg->end) {
-			if (vm_nphysseg-- == 1)
-				panic("pmap_steal_memory: out of memory");
-			while (segno < vm_nphysseg) {
-				seg[0] = seg[1]; /* struct copy */
-				seg++;
-				segno++;
-			}
-		}
-
-		va = (vaddr_t)pa;	/* 1:1 mapping */
-		bzero((void *)va, size);
-	}
-
-	if (start != NULL)
-		*start = VM_MIN_KERNEL_ADDRESS;
-	if (end != NULL)
-		*end = VM_MAX_KERNEL_ADDRESS;
-
-	return (va);
 }
 
 vaddr_t virtual_avail, virtual_end;
