@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctime.c,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: ctime.c,v 1.6 2018/05/23 16:23:48 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -66,8 +66,7 @@ ctime(const time_t *clock)
 	if (month > 2 && isleap(year))
 		tt--;
 
-	/* no field widths in printf() */
-	snprintf(buf, sizeof buf, "%s %s %d %d:%d:%d %d\n",
+	snprintf(buf, sizeof buf, "%s %s%3d %02d:%02d:%02d %d\n",
 	    ((wday  < 0 || wday  >=  7)? "???": wdays[wday]),
 	    ((month < 0 || month >= 12)? "???": months[month]),
 	    (int)tt, hh, mm, ss, year);
