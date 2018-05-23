@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.94 2018/05/19 13:56:56 jsing Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.95 2018/05/23 19:02:50 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2018 $
+.Dd $Mdocdate: May 23 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ For example:
 .Bd -literal -offset indent
 ext_ip="10.0.0.1"
 server "default" {
-	listen on $ext_ip
+	listen on $ext_ip port 80
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
