@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.47 2018/05/23 14:10:48 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.48 2018/05/23 14:12:33 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2115,7 +2115,8 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
 		struct bwfm_bss_info *bss;
 		size_t reslen;
 		int i;
-		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL) {
+		if (ntohl(e->msg.status) != BWFM_E_STATUS_PARTIAL &&
+		    ic->ic_state == IEEE80211_S_SCAN) {
 			ieee80211_end_scan(ifp);
 			break;
 		}
@@ -2172,14 +2173,16 @@ bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
 		break;
 	case BWFM_E_DEAUTH:
 	case BWFM_E_DISASSOC:
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		if (ic->ic_state != IEEE80211_S_INIT)
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 	case BWFM_E_LINK:
 		if (ntohl(e->msg.status) == BWFM_E_STATUS_SUCCESS &&
 		    ntohl(e->msg.reason) == 0)
 			break;
 		/* Link status has changed */
-		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+		if (ic->ic_state != IEEE80211_S_INIT)
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case BWFM_E_AUTH_IND:
