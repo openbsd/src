@@ -2255,7 +2255,10 @@
 ./usr/share/man/man8/macppc/eeprom.8
 ./usr/share/man/man8/macppc/gpioctl.8
 ./usr/share/man/man8/macppc/pdisk.8
+./usr/share/man/man8/mail.lmtp.8
 ./usr/share/man/man8/mail.local.8
+./usr/share/man/man8/mail.maildir.8
+./usr/share/man/man8/mail.mda.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
 ./usr/share/man/man8/makefs.8

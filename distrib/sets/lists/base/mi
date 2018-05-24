@@ -2213,7 +2213,10 @@
 ./usr/libexec/lockspool
 ./usr/libexec/lpr
 ./usr/libexec/lpr/lpf
+./usr/libexec/mail.lmtp
 ./usr/libexec/mail.local
+./usr/libexec/mail.maildir
+./usr/libexec/mail.mda
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd
 ./usr/libexec/radiusd
