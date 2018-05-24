@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.8 2018/05/24 15:06:25 schwarze Exp $
+.\"	$OpenBSD: table.5,v 1.9 2018/05/24 20:40:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -104,7 +104,7 @@ user2@example.org	otheruser1,otheruser2
 The following directive shares the same table format,
 but with a different meaning.
 Here, the user is allowed to send mail from the listed addresses:
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic listen on Ar interface Cm auth Oo Ar ... Oc Cm senders Pf < Ar table Ns >
 .Ed
 .Ss Domain tables
@@ -130,7 +130,7 @@ example.org
 .Ss Credentials tables
 Credentials tables are mappings of credentials.
 They can be used in two contexts:
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic listen on Ar interface Cm tls Oo Ar ... Oc Cm auth Pf < Ar table Ns >
 .Ic action Ar name Cm relay host Ar relay-url Cm auth Pf < Ar table Ns >
 .Ed
@@ -214,7 +214,7 @@ ipv6:::4
 .Ss Mailaddr tables
 Mailaddr tables are lists of email addresses.
 They can be used in the following contexts:
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 .Ic match Cm mail\-from Pf < Ar table Ns > Cm action Ar name
 .Ic match Cm rcpt\-to Pf < Ar table Ns > Cm action Ar name
 .Ed
