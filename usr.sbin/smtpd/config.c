@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2017/05/17 14:00:06 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,6 +39,7 @@
 void
 purge_config(uint8_t what)
 {
+	struct dispatcher	*d;
 	struct listener	*l;
 	struct table	*t;
 	struct rule	*r;
@@ -67,6 +68,13 @@ purge_config(uint8_t what)
 		}
 		free(env->sc_rules);
 		env->sc_rules = NULL;
+	}
+	if (what & PURGE_DISPATCHERS) {
+		while (dict_poproot(env->sc_dispatchers, (void **)&d)) {
+			free(d);
+		}
+		free(env->sc_dispatchers);
+		env->sc_dispatchers = NULL;
 	}
 	if (what & PURGE_PKI) {
 		while (dict_poproot(env->sc_pki_dict, (void **)&p)) {

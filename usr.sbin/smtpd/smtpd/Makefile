@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 2018/01/06 07:57:53 sunil Exp $
+#	$OpenBSD: Makefile,v 1.90 2018/05/24 11:38:24 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -11,7 +11,6 @@ SRCS+=	compress_backend.c
 SRCS+=	config.c
 SRCS+=	control.c
 SRCS+=	crypto.c
-SRCS+=	delivery.c
 SRCS+=	dict.c
 SRCS+=	dns.c
 SRCS+=	unpack_dns.c
@@ -57,12 +56,6 @@ SRCS+=		rfc2822.c
 
 # backends
 SRCS+=		compress_gzip.c
-
-SRCS+=		delivery_filename.c
-SRCS+=		delivery_maildir.c
-SRCS+=		delivery_mbox.c
-SRCS+=		delivery_mda.c
-SRCS+=		delivery_lmtp.c
 
 SRCS+=		table_db.c
 SRCS+=		table_getpwnam.c

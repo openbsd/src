@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.77 2016/11/30 11:52:48 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.78 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -160,7 +160,7 @@ bounce_add(uint64_t evpid)
 	}
 
 	key.bounce.dsn_ret = evp.dsn_ret;
-	key.bounce.expire = evp.expire;
+	key.bounce.ttl = evp.ttl;
 	msg = SPLAY_FIND(bounce_message_tree, &messages, &key);
 	if (msg == NULL) {
 		msg = xcalloc(1, sizeof(*msg), "bounce_add");
@@ -500,7 +500,7 @@ bounce_next(struct bounce_session *s)
 
 		if (s->msg->bounce.type == B_WARNING)
 			io_xprintf(s->io, notice_warning2,
-			    bounce_duration(s->msg->bounce.expire));
+			    bounce_duration(s->msg->bounce.ttl));
 
 		io_xprintf(s->io,
 		    "    Below is a copy of the original message:\n"

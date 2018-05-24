@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.33 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.34 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -111,7 +111,7 @@ struct scheduler_info {
 	enum delivery_type	type;
 	uint16_t		retry;
 	time_t			creation;
-	time_t			expire;
+	time_t			ttl;
 	time_t			lasttry;
 	time_t			lastbounce;
 	time_t			nexttry;
@@ -142,6 +142,8 @@ enum table_service {
 	K_MAILADDR	= 0x040,	/* returns struct mailaddr	*/
 	K_ADDRNAME	= 0x080,	/* returns struct addrname	*/
 	K_MAILADDRMAP	= 0x100,	/* returns struct maddrmap	*/
+	K_RELAYHOST	= 0x200,	/* returns struct relayhost	*/
+	K_STRING	= 0x400,
 };
 #define K_ANY		  0xfff
 

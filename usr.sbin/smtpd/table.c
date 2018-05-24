@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.24 2017/05/01 09:29:07 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.25 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -621,6 +621,11 @@ table_parse_lookup(enum table_service service, const char *key,
 			return (-1);
 		return (1);
 
+	case K_RELAYHOST:
+		if (!text_to_relayhost(&lk->relayhost, line))
+			return (-1);
+		return (1);
+
 	default:
 		return (-1);
 	}
@@ -689,6 +694,13 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 	case K_ADDRNAME:
 		ret = snprintf(buf, sizeof(buf), "%s",
 		    lk->addrname.name);
+		if (ret == -1 || (size_t)ret >= sizeof (buf))
+			goto err;
+		break;
+
+	case K_RELAYHOST:
+		ret = snprintf(buf, sizeof(buf), "%s",
+		    relayhost_to_text(&lk->relayhost));
 		if (ret == -1 || (size_t)ret >= sizeof (buf))
 			goto err;
 		break;

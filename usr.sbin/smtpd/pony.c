@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.19 2018/03/04 16:49:09 gilles Exp $	*/
+/*	$OpenBSD: pony.c,v 1.20 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -98,6 +98,7 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_QUEUE_TRANSFER:
 	case IMSG_MTA_OPEN_MESSAGE:
 	case IMSG_MTA_LOOKUP_CREDENTIALS:
+	case IMSG_MTA_LOOKUP_SMARTHOST:
 	case IMSG_MTA_LOOKUP_SOURCE:
 	case IMSG_MTA_LOOKUP_HELO:
 	case IMSG_MTA_DNS_HOST:

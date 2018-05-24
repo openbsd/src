@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.202 2018/01/03 11:12:21 sunil Exp $	*/
+/*	$OpenBSD: lka.c,v 1.203 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -299,6 +299,37 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_add_int(p, ret);
 		if (ret == LKA_OK)
 			m_add_string(p, addrname.name);
+		m_close(p);
+		return;
+
+	case IMSG_MTA_LOOKUP_SMARTHOST:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &tablename);
+		m_end(&m);
+
+		table = table_find(tablename, NULL);
+
+		m_create(p, IMSG_MTA_LOOKUP_SMARTHOST, 0, 0, -1);
+		m_add_id(p, reqid);
+
+		if (table == NULL) {
+			log_warn("warn: smarthost table %s missing", tablename);
+			m_add_int(p, LKA_TEMPFAIL);
+		}
+		else {
+			ret = table_fetch(table, NULL, K_RELAYHOST, &lk);
+			if (ret == -1)
+				m_add_int(p, LKA_TEMPFAIL);
+			else if (ret == 0)
+				m_add_int(p, LKA_PERMFAIL);
+			else {
+				snprintf(buf, sizeof(buf), "%s",
+				    relayhost_to_text(&lk.relayhost));
+				m_add_int(p, LKA_OK);
+				m_add_string(p, buf);
+			}
+		}
 		m_close(p);
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.43 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.44 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -228,7 +228,7 @@ scheduler_ram_insert(struct scheduler_info *si)
 	envelope->type = si->type;
 	envelope->message = message;
 	envelope->ctime = si->creation;
-	envelope->expire = si->creation + si->expire;
+	envelope->expire = si->creation + si->ttl;
 	envelope->sched = scheduler_backoff(si->creation,
 	    (si->type == D_MTA) ? BACKOFF_TRANSFER : BACKOFF_DELIVERY, si->retry);
 	tree_xset(&message->envelopes, envelope->evpid, envelope);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.206 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.207 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,9 @@
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
 
-static void mta_handle_envelope(struct envelope *);
+static void mta_handle_envelope(struct envelope *, const char *);
+static void mta_query_smarthost(struct envelope *);
+static void mta_on_smarthost(struct envelope *, const char *);
 static void mta_query_mx(struct mta_relay *);
 static void mta_query_secret(struct mta_relay *);
 static void mta_query_preference(struct mta_relay *);
@@ -146,6 +148,7 @@ static struct mta_block_tree		blocks;
 static struct tree wait_mx;
 static struct tree wait_preference;
 static struct tree wait_secret;
+static struct tree wait_smarthost;
 static struct tree wait_source;
 static struct tree flush_evp;
 static struct event ev_flush_evp;
@@ -173,7 +176,6 @@ void mta_hoststat_uncache(const char *, uint64_t);
 void mta_hoststat_reschedule(const char *);
 static void mta_hoststat_remove_entry(struct hoststat *);
 
-
 void
 mta_imsg(struct mproc *p, struct imsg *imsg)
 {
@@ -186,11 +188,12 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct mta_source	*source;
 	struct hoststat		*hs;
 	struct sockaddr_storage	 ss;
-	struct envelope		 evp;
+	struct envelope		 evp, *e;
 	struct msg		 m;
 	const char		*secret;
 	const char		*hostname;
 	const char		*dom;
+	const char		*smarthost;
 	uint64_t		 reqid;
 	time_t			 t;
 	char			 buf[LINE_MAX];
@@ -203,7 +206,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_envelope(&m, &evp);
 		m_end(&m);
-		mta_handle_envelope(&evp);
+		mta_handle_envelope(&evp, NULL);
 		return;
 
 	case IMSG_MTA_OPEN_MESSAGE:
@@ -230,6 +233,19 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		relay = tree_xpop(&wait_source, reqid);
 		mta_on_source(relay, (status == LKA_OK) ?
 		    mta_source((struct sockaddr *)&ss) : NULL);
+		return;
+
+	case IMSG_MTA_LOOKUP_SMARTHOST:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &status);
+		smarthost = NULL;
+		if (status == LKA_OK)
+			m_get_string(&m, &smarthost);
+		m_end(&m);
+
+		e = tree_xpop(&wait_smarthost, reqid);
+		mta_on_smarthost(e, smarthost);
 		return;
 
 	case IMSG_MTA_LOOKUP_HELO:
@@ -470,6 +486,7 @@ mta_postprivdrop(void)
 	SPLAY_INIT(&blocks);
 
 	tree_init(&wait_secret);
+	tree_init(&wait_smarthost);
 	tree_init(&wait_mx);
 	tree_init(&wait_preference);
 	tree_init(&wait_source);
@@ -605,12 +622,59 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 }
 
 static void
-mta_handle_envelope(struct envelope *evp)
+mta_handle_envelope(struct envelope *evp, const char *smarthost)
 {
 	struct mta_relay	*relay;
 	struct mta_task		*task;
 	struct mta_envelope	*e;
-	char			 buf[LINE_MAX];
+	struct dispatcher	*dispatcher;
+	char			 buf[LINE_MAX], *backupmx;
+
+	dispatcher = dict_xget(env->sc_dispatchers, evp->dispatcher);
+	if (dispatcher->u.remote.smarthost && smarthost == NULL) {
+		mta_query_smarthost(evp);
+		return;
+	}
+
+	memset(&evp->agent.mta, 0, sizeof(evp->agent.mta));
+
+	/* dispatcher init */
+	if (dispatcher->u.remote.pki)
+		strlcpy(evp->agent.mta.relay.pki_name, dispatcher->u.remote.pki,
+		    sizeof(evp->agent.mta.relay.pki_name));
+	if (dispatcher->u.remote.ca)
+		strlcpy(evp->agent.mta.relay.ca_name, dispatcher->u.remote.ca,
+		    sizeof(evp->agent.mta.relay.ca_name));
+	if (dispatcher->u.remote.auth)
+		strlcpy(evp->agent.mta.relay.authtable, dispatcher->u.remote.auth,
+		    sizeof(evp->agent.mta.relay.authtable));
+	if (dispatcher->u.remote.source)
+		strlcpy(evp->agent.mta.relay.sourcetable, dispatcher->u.remote.source,
+		    sizeof(evp->agent.mta.relay.sourcetable));
+	if (dispatcher->u.remote.helo_source)
+		strlcpy(evp->agent.mta.relay.helotable, dispatcher->u.remote.helo_source,
+		    sizeof(evp->agent.mta.relay.helotable));
+	if (dispatcher->u.remote.helo)
+		strlcpy(evp->agent.mta.relay.heloname, dispatcher->u.remote.helo,
+		    sizeof(evp->agent.mta.relay.heloname));
+	if (dispatcher->u.remote.backup) {
+		evp->agent.mta.relay.flags |= RELAY_BACKUP;
+		backupmx = dispatcher->u.remote.backupmx;
+		if (backupmx == NULL)
+			backupmx = evp->smtpname;
+		strlcpy(evp->agent.mta.relay.hostname, backupmx,
+		    sizeof(evp->agent.mta.relay.hostname));
+	}
+
+	if (smarthost) {
+		if (text_to_relayhost(&evp->agent.mta.relay, smarthost) == 0) {
+			m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+			m_add_evpid(p_queue, evp->id);
+			m_add_string(p_queue, "Cannot parse smarthost");
+			m_add_int(p_queue, ESC_OTHER_STATUS);
+			m_close(p_queue);
+		}
+	}
 
 	relay = mta_relay(evp);
 	/* ignore if we don't know the limits yet */
@@ -661,6 +725,7 @@ mta_handle_envelope(struct envelope *evp)
 	e = xcalloc(1, sizeof *e, "mta_envelope");
 	e->id = evp->id;
 	e->creation = evp->creation;
+	e->smtpname = xstrdup(evp->smtpname, "mta_envelope:smtpname");
 	(void)snprintf(buf, sizeof buf, "%s@%s",
 	    evp->dest.user, evp->dest.domain);
 	e->dest = xstrdup(buf, "mta_envelope:dest");
@@ -730,6 +795,7 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 
 		log_debug("debug: mta: flush for %016"PRIx64" (-> %s)", e->id, e->dest);
 
+		free(e->smtpname);
 		free(e->dest);
 		free(e->rcpt);
 		free(e->dsn_orcpt);
@@ -838,6 +904,30 @@ mta_query_secret(struct mta_relay *relay)
 	m_close(p_lka);
 
 	mta_relay_ref(relay);
+}
+
+static void
+mta_query_smarthost(struct envelope *evp0)
+{
+	struct dispatcher *dispatcher;
+	struct envelope *evp;
+
+	evp = malloc(sizeof(*evp));
+	memmove(evp, evp0, sizeof(*evp));
+
+	dispatcher = dict_xget(env->sc_dispatchers, evp->dispatcher);
+
+	log_debug("debug: mta: querying smarthost for %s:%s...",
+	    evp->dispatcher, dispatcher->u.remote.smarthost);
+
+	tree_xset(&wait_smarthost, evp->id, evp);
+
+	m_create(p_lka, IMSG_MTA_LOOKUP_SMARTHOST, 0, 0, -1);
+	m_add_id(p_lka, evp->id);
+	m_add_string(p_lka, dispatcher->u.remote.smarthost);
+	m_close(p_lka);
+
+	log_debug("debug: mta: querying smarthost");
 }
 
 static void
@@ -950,6 +1040,23 @@ mta_on_secret(struct mta_relay *relay, const char *secret)
 	relay->status &= ~RELAY_WAIT_SECRET;
 	mta_drain(relay);
 	mta_relay_unref(relay); /* from mta_query_secret() */
+}
+
+static void
+mta_on_smarthost(struct envelope *evp, const char *smarthost)
+{
+	if (smarthost == NULL) {
+		log_warnx("warn: Failed to retrieve smarthost "
+			    "for envelope %"PRIx64, evp->id);
+		m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_string(p_queue, "Cannot retrieve smarthost");
+		m_add_int(p_queue, ESC_OTHER_STATUS);
+		return;
+	}
+
+	mta_handle_envelope(evp, smarthost);
+	free(evp);
 }
 
 static void

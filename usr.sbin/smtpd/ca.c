@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.28 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: ca.c,v 1.29 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,7 @@ ca(void)
 {
 	struct passwd	*pw;
 
-	purge_config(PURGE_LISTENERS|PURGE_TABLES|PURGE_RULES);
+	purge_config(PURGE_LISTENERS|PURGE_TABLES|PURGE_RULES|PURGE_DISPATCHERS);
 
 	if ((pw = getpwnam(SMTPD_USER)) == NULL)
 		fatalx("unknown user " SMTPD_USER);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.56 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.57 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -216,7 +216,7 @@ scheduler_imsg(struct mproc *p, struct imsg *imsg)
 				req.timestamp = timestamp;
 				req.bounce.type = B_WARNING;
 				req.bounce.delay = env->sc_bounce_warn[i];
-				req.bounce.expire = si.expire;
+				req.bounce.ttl = si.ttl;
 				m_compose(p, IMSG_SCHED_ENVELOPE_BOUNCE, 0, 0, -1,
 				    &req, sizeof req);
 				break;
@@ -433,7 +433,7 @@ scheduler(void)
 		errx(1, "cannot find scheduler backend \"%s\"",
 		    backend_scheduler);
 
-	purge_config(PURGE_EVERYTHING);
+	purge_config(PURGE_EVERYTHING & ~PURGE_DISPATCHERS);
 
 	if ((pw = getpwnam(SMTPD_USER)) == NULL)
 		fatalx("unknown user " SMTPD_USER);

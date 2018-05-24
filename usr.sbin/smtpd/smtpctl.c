@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.160 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.161 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1212,7 +1212,7 @@ show_queue_envelope(struct envelope *e, int online)
 	    e->dest.user, e->dest.domain,
 
 	    (size_t) e->creation,
-	    (size_t) (e->creation + e->expire),
+	    (size_t) (e->creation + e->ttl),
 	    (size_t) e->lasttry,
 	    (size_t) e->retry,
 	    runstate,

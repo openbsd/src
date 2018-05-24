@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.294 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.295 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1210,27 +1210,54 @@ static void
 forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 {
 	char		 ebuf[128], sfn[32];
-	struct delivery_backend	*db;
+	struct dispatcher	*dsp;
 	struct child	*child;
 	pid_t		 pid;
 	int		 allout, pipefd[2];
+	struct passwd	*pw;
+	uid_t	pw_uid;
+	gid_t	pw_gid;
+	const char	*pw_dir;
+	char	*mda_environ[3];
+	const char *mda_command;
+	char	mda_exec[LINE_MAX];
+
+	dsp = dict_xget(env->sc_dispatchers, deliver->dispatcher);
 
 	log_debug("debug: smtpd: forking mda for session %016"PRIx64
-	    ": \"%s\" as %s", id, deliver->to, deliver->user);
+	    ": %s as %s", id, deliver->userinfo.username,
+	    dsp->u.local.user ? dsp->u.local.user : deliver->userinfo.username);
 
-	db = delivery_backend_lookup(deliver->mode);
-	if (db == NULL) {
-		(void)snprintf(ebuf, sizeof ebuf, "could not find delivery backend");
-		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_pony, id);
-		m_add_string(p_pony, ebuf);
-		m_close(p_pony);
-		return;
+	if (dsp->u.local.user) {
+		if ((pw = getpwnam(dsp->u.local.user)) == NULL) {
+			(void)snprintf(ebuf, sizeof ebuf,
+			    "delivery user '%s' does not exist",
+			    dsp->u.local.user);
+			m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
+			m_add_id(p_pony, id);
+			m_add_string(p_pony, ebuf);
+			m_close(p_pony);
+			return;
+		}
+		pw_uid = pw->pw_uid;
+		pw_gid = pw->pw_gid;
+		pw_dir = pw->pw_dir;
+	}
+	else {
+		pw_uid = deliver->userinfo.uid;
+		pw_gid = deliver->userinfo.gid;
+		pw_dir = deliver->userinfo.directory;
 	}
 
-	if (deliver->userinfo.uid == 0 && !db->allow_root) {
+	if (pw_uid == 0 && deliver->mda_exec[0]) {
+		pw_uid = deliver->userinfo.uid;
+		pw_gid = deliver->userinfo.gid;
+		pw_dir = deliver->userinfo.directory;
+	}
+
+	if (pw_uid == 0 && !dsp->u.local.requires_root) {
 		(void)snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
-		    deliver->user);
+		    deliver->userinfo.username);
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
 		m_add_string(p_pony, ebuf);
@@ -1286,12 +1313,11 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		m_close(p);
 		return;
 	}
-
-	if (chdir(deliver->userinfo.directory) < 0 && chdir("/") < 0)
+	if (chdir(pw_dir) < 0 && chdir("/") < 0)
 		err(1, "chdir");
-	if (setgroups(1, &deliver->userinfo.gid) ||
-	    setresgid(deliver->userinfo.gid, deliver->userinfo.gid, deliver->userinfo.gid) ||
-	    setresuid(deliver->userinfo.uid, deliver->userinfo.uid, deliver->userinfo.uid))
+	if (setgroups(1, &pw_gid) ||
+	    setresgid(pw_gid, pw_gid, pw_gid) ||
+	    setresuid(pw_uid, pw_uid, pw_uid))
 		err(1, "forkmda: cannot drop privileges");
 	if (dup2(pipefd[0], STDIN_FILENO) < 0 ||
 	    dup2(allout, STDOUT_FILENO) < 0 ||
@@ -1311,7 +1337,29 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
-	db->open(deliver);
+	if (deliver->mda_exec[0])
+		mda_command = deliver->mda_exec;
+	else
+		mda_command = dsp->u.local.command;
+
+	if (strlcpy(mda_exec, mda_command, sizeof (mda_exec))
+	    >= sizeof (mda_exec))
+		err(1, "mda command line too long");
+
+	if (! mda_expand_format(mda_exec, sizeof mda_exec, deliver,
+		&deliver->userinfo))
+		err(1, "mda command line could not be expanded");
+
+	mda_environ[0] = "PATH=" _PATH_DEFPATH;
+
+	(void)snprintf(ebuf, sizeof ebuf, "HOME=%s", pw_dir);
+	mda_environ[1] = xstrdup(ebuf, "forkmda");
+
+	mda_environ[2] = (char *)NULL;
+	execle("/bin/sh", "/bin/sh", "-c", mda_exec, (char *)NULL,
+	    mda_environ);
+	perror("execle");
+	_exit(1);
 }
 
 static void
@@ -1804,6 +1852,7 @@ imsg_to_str(int type)
 	CASE(IMSG_MTA_LOOKUP_CREDENTIALS);
 	CASE(IMSG_MTA_LOOKUP_SOURCE);
 	CASE(IMSG_MTA_LOOKUP_HELO);
+	CASE(IMSG_MTA_LOOKUP_SMARTHOST);
 	CASE(IMSG_MTA_OPEN_MESSAGE);
 	CASE(IMSG_MTA_SCHEDULE);
 	CASE(IMSG_MTA_TLS_INIT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.17 2017/08/29 07:37:11 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.18 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -50,7 +50,8 @@ static void  table_static_close(void *);
 
 struct table_backend table_backend_static = {
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
-	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP,
+	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
+	K_STRING,
 	table_static_config,
 	table_static_open,
 	table_static_update,
