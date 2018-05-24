@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.15 2018/05/23 11:32:14 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.16 2018/05/24 11:44:46 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -356,20 +356,20 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	default:
 		printf("%s: unknown firmware for chip %s\n",
 		    DEVNAME(sc), bwfm->sc_chip.ch_name);
-		return 1;
+		goto err;
 	}
 
 	if (loadfirmware(name, &ucode, &size) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
-		return 1;
+		goto err;
 	}
 
 	if (loadfirmware(nvname, &nvram, &nvlen) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), nvname);
 		free(ucode, M_DEVBUF, size);
-		return 1;
+		goto err;
 	}
 
 	sc->sc_alp_only = 1;
@@ -379,7 +379,7 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		    DEVNAME(sc));
 		free(ucode, M_DEVBUF, size);
 		free(nvram, M_DEVBUF, nvlen);
-		return 1;
+		goto err;
 	}
 	sc->sc_alp_only = 0;
 	free(ucode, M_DEVBUF, size);
@@ -387,7 +387,7 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 
 	bwfm_sdio_clkctl(sc, CLK_AVAIL, 0);
 	if (sc->sc_clkstate != CLK_AVAIL)
-		return 1;
+		goto err;
 
 	clk = bwfm_sdio_read_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR);
 	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR,
@@ -397,7 +397,7 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	    SDPCM_PROT_VERSION << SDPCM_PROT_VERSION_SHIFT);
 	if (sdmmc_io_function_enable(sc->sc_sf[2]) != 0) {
 		printf("%s: cannot enable function 2\n", DEVNAME(sc));
-		return 1;
+		goto err;
 	}
 
 	bwfm_sdio_dev_write(sc, SDPCMD_HOSTINTMASK,
@@ -423,13 +423,17 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	if (sc->sc_ih == NULL) {
 		printf("%s: can't establish interrupt\n", DEVNAME(sc));
 		bwfm_sdio_clkctl(sc, CLK_NONE, 0);
-		return 1;
+		goto err;
 	}
 	sdmmc_intr_enable(sc->sc_sf[1]);
 	rw_exit(sc->sc_lock);
 
 	sc->sc_initialized = 1;
 	return 0;
+
+err:
+	rw_exit(sc->sc_lock);
+	return 1;
 }
 
 int
