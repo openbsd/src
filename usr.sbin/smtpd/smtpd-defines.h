@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-defines.h,v 1.8 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd-defines.h,v 1.9 2018/05/24 13:03:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -35,7 +35,7 @@
 #define PATH_CHROOT		"/var/empty"
 #define SMTPD_QUEUE_USER	"_smtpq"
 #define SMTPD_QUEUE_GROUP	"_smtpq"
-#define PATH_SPOOL		"/var/spool/smtpd.new"
+#define PATH_SPOOL		"/var/spool/smtpd"
 
 #define SUBADDRESSING_DELIMITER	"+"
 
