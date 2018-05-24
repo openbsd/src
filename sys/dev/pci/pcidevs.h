@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1849 2018/05/18 19:01:08 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1850 2018/05/24 02:53:13 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1354,6 +1354,7 @@
 #define	PCI_PRODUCT_ATI_SR5690_PCIE_8	0x5a1e		/* SR5690 PCIE */
 #define	PCI_PRODUCT_ATI_SR5690_PCIE_9	0x5a1f		/* SR5690 PCIE */
 #define	PCI_PRODUCT_ATI_SR5690_PCIE_A	0x5a20		/* SR5690 PCIE */
+#define	PCI_PRODUCT_ATI_SR5690_IOMMU	0x5a23		/* SR5690 IOMMU */
 #define	PCI_PRODUCT_ATI_RS400_HB	0x5a31		/* RS400 Host */
 #define	PCI_PRODUCT_ATI_RC410_HB	0x5a33		/* RC410 Host */
 #define	PCI_PRODUCT_ATI_RX480_PCIE	0x5a34		/* RX480 PCIE */

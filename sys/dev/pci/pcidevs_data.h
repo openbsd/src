@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1849 2018/05/18 19:01:08 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1850 2018/05/24 02:53:13 mlarkin Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3650,6 +3650,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SR5690_PCIE_A,
 	    "SR5690 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SR5690_IOMMU,
+	    "SR5690 IOMMU",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS400_HB,
