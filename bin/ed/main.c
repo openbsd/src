@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2018/02/26 17:35:08 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2018/05/24 06:24:29 martijn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -67,7 +67,7 @@ void handle_winch(int);
 static int next_addr(void);
 static int check_addr_range(int, int);
 static int get_matching_node_addr(regex_t *, int);
-static char *get_filename(void);
+static char *get_filename(int);
 static int get_shell_command(void);
 static int append_lines(int);
 static int join_lines(int, int);
@@ -544,7 +544,7 @@ exec_command(void)
 		} else if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
-		} else if ((fnp = get_filename()) == NULL)
+		} else if ((fnp = get_filename(1)) == NULL)
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (delete_lines(1, addr_last) < 0)
@@ -554,15 +554,7 @@ exec_command(void)
 			return ERR;
 		else if (open_sbuf() < 0)
 			return FATAL;
-		if (*fnp && *fnp != '!')
-			strlcpy(old_filename, fnp, sizeof old_filename);
-#ifdef BACKWARDS
-		if (*fnp == '\0' && *old_filename == '\0') {
-			seterrmsg("no current filename");
-			return ERR;
-		}
-#endif
-		if (read_file(*fnp ? fnp : old_filename, 0) < 0)
+		if (read_file(fnp, 0) < 0)
 			return ERR;
 		clear_undo_stack();
 		modified = 0;
@@ -575,16 +567,14 @@ exec_command(void)
 		} else if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
-		} else if ((fnp = get_filename()) == NULL)
+		} else if ((fnp = get_filename(1)) == NULL)
 			return ERR;
 		else if (*fnp == '!') {
 			seterrmsg("invalid redirection");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
-		if (*fnp)
-			strlcpy(old_filename, fnp, sizeof old_filename);
-		puts(strip_escapes(old_filename));
+		puts(strip_escapes(fnp));
 		break;
 	case 'g':
 	case 'v':
@@ -708,20 +698,11 @@ exec_command(void)
 			return ERR;
 		} else if (addr_cnt == 0)
 			second_addr = addr_last;
-		if ((fnp = get_filename()) == NULL)
+		if ((fnp = get_filename(0)) == NULL)
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
-		if (*old_filename == '\0' && *fnp != '!')
-			strlcpy(old_filename, fnp, sizeof old_filename);
-#ifdef BACKWARDS
-		if (*fnp == '\0' && *old_filename == '\0') {
-			seterrmsg("no current filename");
-			return ERR;
-		}
-#endif
-		if ((addr = read_file(*fnp ? fnp : old_filename,
-		    second_addr)) < 0)
+		if ((addr = read_file(fnp, second_addr)) < 0)
 			return ERR;
 		else if (addr)
 			modified = 1;
@@ -845,23 +826,15 @@ exec_command(void)
 		if (!isspace((unsigned char)*ibufp)) {
 			seterrmsg("unexpected command suffix");
 			return ERR;
-		} else if ((fnp = get_filename()) == NULL)
+		} else if ((fnp = get_filename(0)) == NULL)
 			return ERR;
 		if (addr_cnt == 0 && !addr_last)
 			first_addr = second_addr = 0;
 		else if (check_addr_range(1, addr_last) < 0)
 			return ERR;
 		GET_COMMAND_SUFFIX();
-		if (*old_filename == '\0' && *fnp != '!')
-			strlcpy(old_filename, fnp, sizeof old_filename);
-#ifdef BACKWARDS
-		if (*fnp == '\0' && *old_filename == '\0') {
-			seterrmsg("no current filename");
-			return ERR;
-		}
-#endif
-		if ((addr = write_file(*fnp ? fnp : old_filename,
-		    (c == 'W') ? "a" : "w", first_addr, second_addr)) < 0)
+		if ((addr = write_file(fnp, (c == 'W') ? "a" : "w",
+		    first_addr, second_addr)) < 0)
 			return ERR;
 		else if (addr == addr_last && *fnp != '!')
 			modified = 0;
@@ -971,10 +944,10 @@ get_matching_node_addr(regex_t *pat, int dir)
 
 /* get_filename: return pointer to copy of filename in the command buffer */
 static char *
-get_filename(void)
+get_filename(int save)
 {
-	static char *file = NULL;
-	static int filesz = 0;
+	static char filename[PATH_MAX];
+	char *p;
 	int n;
 
 	if (*ibufp != '\n') {
@@ -990,22 +963,23 @@ get_filename(void)
 				return NULL;
 			if (n) printf("%s\n", shcmd + 1);
 			return shcmd;
-		} else if (n >= PATH_MAX) {
+		} else if (n >= PATH_MAX - 1) {
 			seterrmsg("filename too long");
+			return NULL;
+		}
+	} else {
+		if (*old_filename == '\0') {
+			seterrmsg("no current filename");
 			return  NULL;
 		}
+		return old_filename;
 	}
-#ifndef BACKWARDS
-	else if (*old_filename == '\0') {
-		seterrmsg("no current filename");
-		return  NULL;
-	}
-#endif
-	REALLOC(file, filesz, PATH_MAX, NULL);
+
+	p = save ? old_filename : *old_filename ? filename : old_filename;
 	for (n = 0; *ibufp != '\n';)
-		file[n++] = *ibufp++;
-	file[n] = '\0';
-	return file;
+		p[n++] = *ibufp++;
+	p[n] = '\0';
+	return p;
 }
 
 
