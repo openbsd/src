@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.138 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.139 2018/05/24 14:08:42 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -151,10 +151,10 @@ ufs_create(void *v)
 	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
 			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
-	if (error)
-		return (error);
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	return (0);
+	if (error == 0)
+		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	vput(ap->a_dvp);
+	return (error);
 }
 
 /*
@@ -171,9 +171,12 @@ ufs_mknod(void *v)
 
 	if ((error =
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
+	    ap->a_dvp, vpp, ap->a_cnp)) != 0) {
+		vput(ap->a_dvp);
 		return (error);
+	}
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	vput(ap->a_dvp);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
@@ -1392,9 +1395,12 @@ ufs_symlink(void *v)
 
 	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 	    vpp, ap->a_cnp);
-	if (error)
+	if (error) {
+		vput(ap->a_dvp);
 		return (error);
+	}
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	vput(ap->a_dvp);
 	vp = *vpp;
 	ip = VTOI(vp);
 	len = strlen(ap->a_target);
@@ -1837,7 +1843,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	if ((error = UFS_INODE_ALLOC(pdir, mode, cnp->cn_cred, &tvp)) != 0) {
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-		vput(dvp);
 		return (error);
 	}
 
@@ -1851,7 +1856,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		pool_put(&namei_pool, cnp->cn_pnbuf);
 		UFS_INODE_FREE(ip, ip->i_number, mode);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 
@@ -1880,7 +1884,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1890,7 +1893,6 @@ bad:
 	 * or the directory so must deallocate the inode.
 	 */
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	ip->i_effnlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
