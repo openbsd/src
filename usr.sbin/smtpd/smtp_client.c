@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.3 2018/05/21 21:25:37 krw Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.4 2018/05/24 11:01:30 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -551,7 +551,7 @@ smtp_client_response(struct smtp_client *proto, const char *line)
 			 */
 			for (i = 0, seen = 0; i < proto->mail->rcptcount; i++) {
 				rcpt = &proto->mail->rcpt[i];
-				if (rcpt[i].done)
+				if (rcpt->done)
 					continue;
 				if (seen) {
 					io_set_read(proto->io);
