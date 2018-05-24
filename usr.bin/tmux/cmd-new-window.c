@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.74 2018/05/03 16:56:59 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.75 2018/05/24 09:42:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,10 +95,8 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	if ((tmp = args_get(args, 'c')) != NULL)
 		cwd = format_single(item, tmp, c, s, NULL, NULL);
-	else if (item->client != NULL && item->client->session == NULL)
-		cwd = xstrdup(item->client->cwd);
 	else
-		cwd = xstrdup(s->cwd);
+		cwd = xstrdup(server_client_get_cwd(item->client, s));
 
 	if ((tmp = args_get(args, 'n')) != NULL)
 		name = format_single(item, tmp, c, s, NULL, NULL);

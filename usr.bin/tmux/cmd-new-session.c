@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.110 2018/03/01 12:53:08 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.111 2018/05/24 09:42:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -156,10 +156,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	/* Get the new session working directory. */
 	if ((tmp = args_get(args, 'c')) != NULL)
 		cwd = format_single(item, tmp, c, NULL, NULL, NULL);
-	else if (c != NULL && c->session == NULL && c->cwd != NULL)
-		cwd = xstrdup(c->cwd);
 	else
-		cwd = xstrdup(".");
+		cwd = xstrdup(server_client_get_cwd(c, NULL));
 
 	/*
 	 * If this is a new client, check for nesting and save the termios

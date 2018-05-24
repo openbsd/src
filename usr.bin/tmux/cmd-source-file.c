@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.35 2017/04/19 16:59:54 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.36 2018/05/24 09:42:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -61,7 +61,7 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 	if (*path == '/')
 		pattern = xstrdup(path);
 	else {
-		utf8_stravis(&tmp, server_client_get_cwd(c), VIS_GLOB);
+		utf8_stravis(&tmp, server_client_get_cwd(c, NULL), VIS_GLOB);
 		xasprintf(&pattern, "%s/%s", tmp, path);
 		free(tmp);
 	}
