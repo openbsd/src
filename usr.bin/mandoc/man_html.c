@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.102 2018/05/08 21:42:11 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.103 2018/05/25 20:23:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -426,11 +426,10 @@ man_SH_pre(MAN_ARGS)
 	char	*id;
 
 	if (n->type == ROFFT_HEAD) {
-		id = html_make_id(n);
+		id = html_make_id(n, 1);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
 		if (id != NULL)
 			print_otag(h, TAG_A, "chR", "permalink", id);
-		free(id);
 	}
 	return 1;
 }
@@ -496,11 +495,10 @@ man_SS_pre(MAN_ARGS)
 	char	*id;
 
 	if (n->type == ROFFT_HEAD) {
-		id = html_make_id(n);
+		id = html_make_id(n, 1);
 		print_otag(h, TAG_H2, "cTi", "Ss", id);
 		if (id != NULL)
 			print_otag(h, TAG_A, "chR", "permalink", id);
-		free(id);
 	}
 	return 1;
 }
