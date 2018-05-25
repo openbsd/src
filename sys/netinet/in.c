@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.151 2018/05/02 12:40:52 tb Exp $	*/
+/*	$OpenBSD: in.c,v 1.152 2018/05/25 06:05:08 tb Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -227,6 +227,15 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
 		return in_ioctl_get(cmd, data, ifp);
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
+	case SIOCSIFADDR:
+	case SIOCSIFNETMASK:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFBRDADDR:
+		break;
+	default:
+		return (EOPNOTSUPP);
 	}
 
 	NET_LOCK();
@@ -329,17 +338,17 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		ifa_update_broadaddr(ifp, &ia->ia_ifa, &ifr->ifr_broadaddr);
 		break;
 
+	case SIOCSIFNETMASK:
+		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
+		    ifra->ifra_addr.sin_addr.s_addr;
+		break;
+
 	case SIOCSIFADDR:
 		in_ifscrub(ifp, ia);
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
 		if (error)
 			break;
 		dohooks(ifp->if_addrhooks, 0);
-		break;
-
-	case SIOCSIFNETMASK:
-		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
-		    ifra->ifra_addr.sin_addr.s_addr;
 		break;
 
 	case SIOCAIFADDR: {
@@ -389,10 +398,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		 */
 		in_purgeaddr(&ia->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
-		break;
-
-	default:
-		error = EOPNOTSUPP;
 		break;
 	}
 
