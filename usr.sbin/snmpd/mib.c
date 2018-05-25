@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.86 2018/05/09 13:56:46 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.87 2018/05/25 08:23:15 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -414,6 +414,8 @@ int	 mib_hrswrun(struct oid *, struct ber_oid *, struct ber_element **);
 
 int	 kinfo_proc_comp(const void *, const void *);
 int	 kinfo_proc(u_int32_t, struct kinfo_proc **);
+void	 kinfo_timer_cb(int, short, void *);
+void	 kinfo_proc_free(void);
 int	 kinfo_args(struct kinfo_proc *, char **);
 
 static struct oid hr_mib[] = {
@@ -857,24 +859,29 @@ kinfo_proc_comp(const void *a, const void *b)
 	return (((*k1)->p_pid > (*k2)->p_pid) ? 1 : -1);
 }
 
+static struct event	  kinfo_timer;
+static struct kinfo_proc *kp = NULL;
+static struct kinfo_proc **klist = NULL;
+static size_t		  nkp = 0, nklist = 0;
+
 int
 kinfo_proc(u_int32_t idx, struct kinfo_proc **kinfo)
 {
-	static struct kinfo_proc *kp = NULL;
-	static size_t		 nkp = 0;
-	int			 mib[] = { CTL_KERN, KERN_PROC,
-				    KERN_PROC_ALL, 0, sizeof(*kp), 0 };
-	struct kinfo_proc	**klist;
-	size_t			 size, count, i;
+	int		 mib[] = { CTL_KERN, KERN_PROC,
+			    KERN_PROC_ALL, 0, sizeof(*kp), 0 };
+	size_t		 size, count, i;
+	struct timeval	 timer;
 
+	if (kp != NULL && klist != NULL)
+		goto cached;
+
+	kinfo_proc_free();
 	for (;;) {
 		size = nkp * sizeof(*kp);
 		mib[5] = nkp;
 		if (sysctl(mib, sizeofa(mib), kp, &size, NULL, 0) == -1) {
 			if (errno == ENOMEM) {
-				free(kp);
-				kp = NULL;
-				nkp = 0;
+				kinfo_proc_free();
 				continue;
 			}
 
@@ -887,30 +894,55 @@ kinfo_proc(u_int32_t idx, struct kinfo_proc **kinfo)
 
 		kp = malloc(size);
 		if (kp == NULL) {
-			nkp = 0;
+			kinfo_proc_free();
 			return (-1);
 		}
 		nkp = count;
 	}
 
 	klist = calloc(count, sizeof(*klist));
-	if (klist == NULL)
+	if (klist == NULL) {
+		kinfo_proc_free();
 		return (-1);
+	}
+	nklist = count;
 
-	for (i = 0; i < count; i++)
+	for (i = 0; i < nklist; i++)
 		klist[i] = &kp[i];
-	qsort(klist, count, sizeof(*klist), kinfo_proc_comp);
+	qsort(klist, nklist, sizeof(*klist), kinfo_proc_comp);
 
+	evtimer_set(&kinfo_timer, kinfo_timer_cb, NULL);
+	timer.tv_sec = 5;
+	timer.tv_usec = 0;
+	evtimer_add(&kinfo_timer, &timer);
+
+cached:
 	*kinfo = NULL;
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < nklist; i++) {
 		if (klist[i]->p_pid >= (int32_t)idx) {
 			*kinfo = klist[i];
 			break;
 		}
 	}
-	free(klist);
 
 	return (0);
+}
+
+void
+kinfo_timer_cb(int fd, short event, void *arg)
+{
+	kinfo_proc_free();
+}
+
+void
+kinfo_proc_free(void)
+{
+	free(kp);
+	kp = NULL;
+	nkp = 0;
+	free(klist);
+	klist = NULL;
+	nklist = 0;
 }
 
 int
