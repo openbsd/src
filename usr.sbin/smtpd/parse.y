@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.201 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.202 2018/05/25 14:10:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -779,6 +779,14 @@ match:
 MATCH {
 	rule = xcalloc(1, sizeof *rule, "rule");
 } match_options action {
+	if (!rule->flag_from) {
+		rule->table_from = strdup("<localhost>");
+		rule->flag_from = 1;
+	}
+	if (!rule->flag_for) {
+		rule->table_for = strdup("<localnames>");
+		rule->flag_for = 1;
+	}
 	TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
 	rule = NULL;
 }
