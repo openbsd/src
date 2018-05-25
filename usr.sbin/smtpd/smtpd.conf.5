@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.177 2018/05/25 09:17:01 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.178 2018/05/25 14:41:57 millert Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -357,6 +357,7 @@ Specify that session may address any destination.
 .Cm for local
 .Xc
 Specify that session may address any local domain.
+This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
 .Cm for domain
@@ -375,6 +376,7 @@ Specify that session may originate from any source.
 .Xc
 Specify that session may only originate from a local IP address,
 or from the local enqueuer.
+This is the default, and may be omitted.
 .It Xo
 .Op Ic \&!
 .Cm from socket
