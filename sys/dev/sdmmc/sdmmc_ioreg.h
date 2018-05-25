@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.7 2018/02/11 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.8 2018/05/25 00:12:53 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -47,7 +47,7 @@
 #define SD_ARG_CMD53_REG_MASK		0x1ffff
 #define SD_ARG_CMD53_LENGTH_SHIFT	0
 #define SD_ARG_CMD53_LENGTH_MASK	0x1ff
-#define SD_ARG_CMD53_LENGTH_MAX		64 /* XXX should be 511? */
+#define SD_ARG_CMD53_LENGTH_MAX		511
 
 /* 48-bit response decoding (32 bits w/o CRC) */
 #define MMC_R4(resp)			((resp)[0])
