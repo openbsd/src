@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.58 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.59 2018/05/25 00:04:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -33,6 +33,7 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
+#include <dev/sdmmc/sdmmc_ioreg.h>
 
 #define SDHC_COMMAND_TIMEOUT	hz
 #define SDHC_BUFFER_TIMEOUT	hz
@@ -849,8 +850,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		mode |= SDHC_BLOCK_COUNT_ENABLE;
 		if (blkcount > 1) {
 			mode |= SDHC_MULTI_BLOCK_MODE;
-			/* XXX only for memory commands? */
-			mode |= SDHC_AUTO_CMD12_ENABLE;
+			if (cmd->c_opcode != SD_IO_RW_EXTENDED)
+				mode |= SDHC_AUTO_CMD12_ENABLE;
 		}
 	}
 	if (cmd->c_dmamap && cmd->c_datalen > 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.4 2018/05/03 11:18:08 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.5 2018/05/25 00:04:11 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
+#include <dev/sdmmc/sdmmc_ioreg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -903,7 +904,8 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 		command |= SDHC_MIX_CTRL_BCEN;
 		if (blkcount > 1) {
 			command |= SDHC_MIX_CTRL_MSBSEL;
-			command |= SDHC_MIX_CTRL_AC12EN;
+			if (cmd->c_opcode != SD_IO_RW_EXTENDED)
+				command |= SDHC_MIX_CTRL_AC12EN;
 		}
 	}
 	if (cmd->c_dmamap && cmd->c_datalen > 0 &&
