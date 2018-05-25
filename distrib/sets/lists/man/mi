@@ -1229,6 +1229,7 @@
 ./usr/share/man/man4/carp.4
 ./usr/share/man/man4/cas.4
 ./usr/share/man/man4/ccp.4
+./usr/share/man/man4/ccpmic.4
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/cdce.4
 ./usr/share/man/man4/cfxga.4
