@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.176 2018/05/24 12:40:38 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.177 2018/05/25 09:17:01 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 24 2018 $
+.Dd $Mdocdate: May 25 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -726,7 +726,8 @@ action "relay" relay
 
 match for local action "mda_with_aliases"
 match from any for domain "example.com" action "mda_without_aliases"
-match for any relay
+match for any action "relay"
+match auth from any for any action "relay"
 .Ed
 .Pp
 For sites that wish to sign messages using DKIM, the
