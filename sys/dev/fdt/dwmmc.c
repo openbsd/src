@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.9 2018/05/26 15:25:25 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.10 2018/05/26 21:17:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
@@ -33,6 +34,7 @@
 
 #define SDMMC_CTRL		0x0000
 #define  SDMMC_CTRL_USE_INTERNAL_DMAC	(1 << 25)
+#define  SDMMC_CTRL_DMA_ENABLE		(1 << 5)
 #define  SDMMC_CTRL_INT_ENABLE		(1 << 4)
 #define  SDMMC_CTRL_DMA_RESET		(1 << 2)
 #define  SDMMC_CTRL_FIFO_RESET		(1 << 1)
@@ -109,10 +111,19 @@
 #define SDMMC_UHS_REG		0x0074
 #define SDMMC_RST_n		0x0078
 #define SDMMC_BMOD		0x0080
+#define  SDMMC_BMOD_DE			(1 << 7)
+#define  SDMMC_BMOD_FB			(1 << 1)
+#define  SDMMC_BMOD_SWR			(1 << 0)
 #define SDMMC_PLDMND		0x0084
 #define SDMMC_DBADDR		0x0088
 #define SDMMC_IDSTS		0x008c
+#define  SDMMC_IDSTS_NIS		(1 << 8)
+#define  SDMMC_IDSTS_RI			(1 << 1)
+#define  SDMMC_IDSTS_TI			(1 << 0)
 #define SDMMC_IDINTEN		0x0090
+#define  SDMMC_IDINTEN_NI		(1 << 8)
+#define  SDMMC_IDINTEN_RI		(1 << 1)
+#define  SDMMC_IDINTEN_TI		(1 << 0)
 #define SDMMC_DSCADDR		0x0094
 #define SDMMC_BUFADDR		0x0098
 #define SDMMC_CLKSEL		0x009c
@@ -132,11 +143,31 @@
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
+struct dwmmc_desc {
+	uint32_t des[4];
+};
+
+#define DWMMC_NDESC	(PAGE_SIZE / sizeof(struct dwmmc_desc))
+#define DWMMC_MAXSEGSZ	0x1000
+
+#define DES0_OWN	(1U << 31)
+#define DES0_CES	(1 << 30)
+#define DES0_ER		(1 << 5)
+#define DES0_CH		(1 << 4)
+#define DES0_FS		(1 << 3)
+#define DES0_LD		(1 << 2)
+#define DES0_DIC	(1 << 1)
+
+#define DES1_BS2(sz)	(((sz) & 0x1fff) << 13)
+#define DES1_BS1(sz)	(((sz) & 0x1fff) << 0)
+
 struct dwmmc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_size;
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_dmap;
 	int			sc_node;
 
 	void			*sc_ih;
@@ -146,6 +177,12 @@ struct dwmmc_softc {
 	uint32_t		sc_fifo_width;
 	void (*sc_read_data)(struct dwmmc_softc *, u_char *, int);
 	void (*sc_write_data)(struct dwmmc_softc *, u_char *, int);
+
+	bus_dmamap_t		sc_desc_map;
+	bus_dma_segment_t	sc_desc_segs[1];
+	caddr_t			sc_desc;
+	int			sc_dmamode;
+	uint32_t		sc_idsts;
 
 	uint32_t		sc_gpio[4];
 	int			sc_sdio_irq;
@@ -192,6 +229,8 @@ struct sdmmc_chip_functions dwmmc_chip_functions = {
 	.card_intr_ack = dwmmc_card_intr_ack,
 };
 
+int	dwmmc_alloc_descriptors(struct dwmmc_softc *);
+void	dwmmc_init_descriptors(struct dwmmc_softc *);
 void	dwmmc_transfer_data(struct dwmmc_softc *, struct sdmmc_command *);
 void	dwmmc_read_data32(struct dwmmc_softc *, u_char *, int);
 void	dwmmc_write_data32(struct dwmmc_softc *, u_char *, int);
@@ -216,7 +255,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
 	uint32_t hcon, ciu_div, width;
-	int timeout;
+	int error, timeout;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -295,8 +334,9 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	if (timeout == 0)
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
 
-	/* We don't do DMA yet. */
-	HCLR4(sc, SDMMC_CTRL, SDMMC_CTRL_USE_INTERNAL_DMAC);
+	/* Disable DMA. */
+	HCLR4(sc, SDMMC_CTRL, SDMMC_CTRL_USE_INTERNAL_DMAC |
+	    SDMMC_CTRL_DMA_ENABLE);
 
 	/* Enable interrupts, but mask them all. */
 	HWRITE4(sc, SDMMC_INTMASK, 0);
@@ -305,17 +345,34 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	dwmmc_bus_width(sc, 1);
 
+	sc->sc_dmat = faa->fa_dmat;
+	dwmmc_alloc_descriptors(sc);
+	dwmmc_init_descriptors(sc);
+
+	error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, DWMMC_NDESC,
+	    DWMMC_MAXSEGSZ, 0, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
+	if (error) {
+		printf(": can't create DMA map\n");
+		goto unmap;
+	}
+
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
 	saa.sct = &dwmmc_chip_functions;
 	saa.sch = sc;
+	saa.dmat = sc->sc_dmat;
+	saa.dmap = sc->sc_dmap;
 
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (width >= 8)
 		saa.caps |= SMC_CAPS_8BIT_MODE;
 	if (width >= 4)
 		saa.caps |= SMC_CAPS_4BIT_MODE;
-	
+
+	/* XXX DMA doesn't work on Samsung Exynos yet. */
+	if (!OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"))
+		saa.caps |= SMC_CAPS_DMA;
+
 	sc->sc_sdmmc = config_found(self, &saa, NULL);
 	return;
 
@@ -324,11 +381,79 @@ unmap:
 }
 
 int
+dwmmc_alloc_descriptors(struct dwmmc_softc *sc)
+{
+	int error, rseg;
+
+	/* Allocate descriptor memory */
+	error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE,
+	    PAGE_SIZE, sc->sc_desc_segs, 1, &rseg,
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	if (error)
+		return error;
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_desc_segs, rseg,
+	    PAGE_SIZE, &sc->sc_desc, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, sc->sc_desc_segs, rseg);
+		return error;
+	}
+	error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+	    0, BUS_DMA_WAITOK, &sc->sc_desc_map);
+	if (error) {
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_desc, PAGE_SIZE);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_desc_segs, rseg);
+		return error;
+	}
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_desc_map,
+	    sc->sc_desc, PAGE_SIZE, NULL, BUS_DMA_WAITOK | BUS_DMA_WRITE);
+	if (error) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_desc_map);
+		bus_dmamem_unmap(sc->sc_dmat, sc->sc_desc, PAGE_SIZE);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_desc_segs, rseg);
+		return error;
+	}
+
+	return 0;
+}
+
+void
+dwmmc_init_descriptors(struct dwmmc_softc *sc)
+{
+	struct dwmmc_desc *desc;
+	bus_addr_t addr;
+	int i;
+
+	desc = (void *)sc->sc_desc;
+	addr = sc->sc_desc_map->dm_segs[0].ds_addr;
+	for (i = 0; i < DWMMC_NDESC; i++) {
+		addr += sizeof(struct dwmmc_desc);
+		desc[i].des[3] = addr;
+	}
+	desc[DWMMC_NDESC - 1].des[3] = sc->sc_desc_map->dm_segs[0].ds_addr;
+	desc[DWMMC_NDESC - 1].des[0] = DES0_ER;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
+	    PAGE_SIZE, BUS_DMASYNC_PREWRITE);
+
+	HWRITE4(sc, SDMMC_IDSTS, 0xffffffff);
+	HWRITE4(sc, SDMMC_IDINTEN,
+	    SDMMC_IDINTEN_NI | SDMMC_IDINTEN_RI | SDMMC_IDINTEN_TI);
+	HWRITE4(sc, SDMMC_DBADDR, sc->sc_desc_map->dm_segs[0].ds_addr);
+}
+
+int
 dwmmc_intr(void *arg)
 {
 	struct dwmmc_softc *sc = arg;
 	uint32_t stat;
 	int handled = 0;
+
+	stat = HREAD4(sc, SDMMC_IDSTS);
+	if (stat) {
+		HWRITE4(sc, SDMMC_IDSTS, stat);
+		sc->sc_idsts |= stat;
+		wakeup(&sc->sc_idsts);
+		handled = 1;
+	}
 
 	stat = HREAD4(sc, SDMMC_MINTSTS);
 	if (stat & SDMMC_RINTSTS_SDIO) {
@@ -505,13 +630,44 @@ dwmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	return 0;
 }
 
+int
+dwmmc_dma_setup(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	struct dwmmc_desc *desc = (void *)sc->sc_desc;
+	uint32_t flags;
+	int seg;
+
+	flags = DES0_OWN | DES0_FS | DES0_CH | DES0_DIC;
+	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+		bus_addr_t addr = cmd->c_dmamap->dm_segs[seg].ds_addr;
+		bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
+
+		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
+			flags |= DES0_LD;
+			flags &= ~DES0_DIC;
+		}
+
+		KASSERT((desc[seg].des[0] & DES0_OWN) == 0);
+		desc[seg].des[0] = flags;
+		desc[seg].des[1] = DES1_BS1(len);
+		desc[seg].des[2] = addr;
+		flags &= ~DES0_FS;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->sc_idsts = 0;
+	return 0;
+}
+
 void
 dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct dwmmc_softc *sc = sch;
 	uint32_t cmdval = SDMMC_CMD_START_CMD | SDMMC_CMD_USE_HOLD_REG;
 	uint32_t status;
-	int timeout;
+	int error, timeout;
 	int s;
 
 #if 0
@@ -556,16 +712,6 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		HWRITE4(sc, SDMMC_BYTCNT, cmd->c_datalen);
 		HWRITE4(sc, SDMMC_BLKSIZ, cmd->c_blklen);
 
-		HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_FIFO_RESET);
-		for (timeout = 1000; timeout > 0; timeout--) {
-			if ((HREAD4(sc, SDMMC_CTRL) &
-			    SDMMC_CTRL_FIFO_RESET) == 0)
-				break;
-			delay(100);
-		}
-		if (timeout == 0)
-			printf("%s: FIFO reset failed\n", sc->sc_dev.dv_xname);
-
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			/* Set card read threshold to the size of a block. */
 			HWRITE4(sc, SDMMC_CARDTHRCTL, 
@@ -576,6 +722,46 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cmdval |= SDMMC_CMD_DATA_EXPECTED;
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
 			cmdval |= SDMMC_CMD_WR;
+	}
+
+	if (cmd->c_datalen > 0 && !cmd->c_dmamap) {
+		HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_FIFO_RESET);
+		for (timeout = 1000; timeout > 0; timeout--) {
+			if ((HREAD4(sc, SDMMC_CTRL) &
+			    SDMMC_CTRL_FIFO_RESET) == 0)
+				break;
+			delay(100);
+		}
+		if (timeout == 0)
+			printf("%s: FIFO reset failed\n", sc->sc_dev.dv_xname);
+
+		if (sc->sc_dmamode) {
+			HCLR4(sc, SDMMC_CTRL, SDMMC_CTRL_USE_INTERNAL_DMAC |
+			    SDMMC_CTRL_DMA_ENABLE);
+			sc->sc_dmamode = 0;
+		}
+	}
+
+	if (cmd->c_datalen > 0 && cmd->c_dmamap) {
+		dwmmc_dma_setup(sc, cmd);
+
+		if (!sc->sc_dmamode) {
+			HSET4(sc, SDMMC_BMOD, SDMMC_BMOD_SWR);
+			for (timeout = 1000; timeout > 0; timeout--) {
+				if ((HREAD4(sc, SDMMC_BMOD) &
+				    SDMMC_BMOD_SWR) == 0)
+					break;
+				delay(100);
+			}
+			if (timeout == 0)
+				printf("%s: DMA reset failed\n",
+				    sc->sc_dev.dv_xname);
+			
+			HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_USE_INTERNAL_DMAC |
+			    SDMMC_CTRL_DMA_ENABLE);
+			HSET4(sc, SDMMC_BMOD, SDMMC_BMOD_FB | SDMMC_BMOD_DE);
+			sc->sc_dmamode = 1;
+		}
 	}
 
 	HWRITE4(sc, SDMMC_RINTSTS, ~SDMMC_RINTSTS_SDIO);
@@ -614,8 +800,29 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 
-	if (cmd->c_datalen > 0)
+	if (cmd->c_datalen > 0 && !cmd->c_dmamap)
 		dwmmc_transfer_data(sc, cmd);
+	
+	if (cmd->c_datalen > 0 && cmd->c_dmamap) {
+		while (sc->sc_idsts == 0) {
+			error = tsleep(&sc->sc_idsts, PWAIT, "idsts", hz);
+			if (error) {
+				cmd->c_error = error;
+				goto done;
+			}
+		}
+		
+		for (timeout = 10000; timeout > 0; timeout--) {
+			status = HREAD4(sc, SDMMC_RINTSTS);
+			if (status & SDMMC_RINTSTS_DTO)
+				break;
+			delay(100);
+		}
+		if (timeout == 0) {
+			cmd->c_error = ETIMEDOUT;
+			goto done;
+		}
+	}
 
 	if (cmdval & SDMMC_CMD_SEND_AUTO_STOP) {
 		for (timeout = 10000; timeout > 0; timeout--) {
