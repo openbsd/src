@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.250 2018/02/06 15:17:26 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.251 2018/05/26 18:12:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -553,9 +553,6 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
-	if ($self->name =~ m/^\//) {
-		$state->set_cwd(dirname($self->name));
-	}
 	$state->{lastfile} = $self;
 	$state->{lastchecksummable} = $self;
 	$self->compute_modes($state);
@@ -666,12 +663,6 @@ sub format
 	}
 	return 1;
 }
-
-package OpenBSD::PackingElement::Mandoc;
-our @ISA=qw(OpenBSD::PackingElement::Manpage);
-
-sub keyword() { "mandoc" }
-__PACKAGE__->register_with_factory;
 
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
