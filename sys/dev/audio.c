@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.170 2018/05/26 10:13:18 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.171 2018/05/26 10:16:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -62,6 +62,7 @@
 #define MIXER_RECORD_ENABLE		1	/* record.enable control */
 #define  MIXER_RECORD_ENABLE_OFF	0	/* record.enable=off value */
 #define  MIXER_RECORD_ENABLE_ON		1	/* record.enable=on value */
+#define  MIXER_RECORD_ENABLE_SYSCTL	2	/* record.enable=sysctl val */
 
 /*
  * dma buffer
@@ -163,6 +164,12 @@ struct cfdriver audio_cd = {
  * audio_{p,r}int()) with the mutex locked.
  */
 struct mutex audio_lock = MUTEX_INITIALIZER(IPL_AUDIO);
+
+/*
+ * Global flag to control if audio recording is enabled when the
+ * mixerctl setting is record.enable=sysctl
+ */
+int audio_record_enable = 0;
 
 #ifdef AUDIO_DEBUG
 /*
@@ -472,7 +479,9 @@ audio_rintr(void *addr)
 	}
 
 	sc->rec.pos += sc->rec.blksz;
-	if (sc->record_enable == MIXER_RECORD_ENABLE_OFF) {
+	if ((sc->record_enable == MIXER_RECORD_ENABLE_SYSCTL &&
+		!audio_record_enable) ||
+	    sc->record_enable == MIXER_RECORD_ENABLE_OFF) {
 		ptr = audio_buf_wgetblk(&sc->rec, &count);
 		audio_fill_sil(sc, ptr, sc->rec.blksz);
 	}
@@ -1070,7 +1079,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->round = 960;
 	sc->nblks = 2;
 	sc->play.pos = sc->play.xrun = sc->rec.pos = sc->rec.xrun = 0;
-	sc->record_enable = MIXER_RECORD_ENABLE_OFF;
+	sc->record_enable = MIXER_RECORD_ENABLE_SYSCTL;
 
 	/*
 	 * allocate an array of mixer_ctrl structures to save the
@@ -1634,12 +1643,15 @@ audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
 		strlcpy(devinfo->label.name, "enable", MAX_AUDIO_DEV_LEN);
 		devinfo->type = AUDIO_MIXER_ENUM;
 		devinfo->mixer_class = MIXER_RECORD + sc->mix_nent;
-		devinfo->un.e.num_mem = 2;
+		devinfo->un.e.num_mem = 3;
 		devinfo->un.e.member[0].ord = MIXER_RECORD_ENABLE_OFF;
 		strlcpy(devinfo->un.e.member[0].label.name, "off",
 		    MAX_AUDIO_DEV_LEN);
 		devinfo->un.e.member[1].ord = MIXER_RECORD_ENABLE_ON;
 		strlcpy(devinfo->un.e.member[1].label.name, "on",
+		    MAX_AUDIO_DEV_LEN);
+		devinfo->un.e.member[2].ord = MIXER_RECORD_ENABLE_SYSCTL;
+		strlcpy(devinfo->un.e.member[2].label.name, "sysctl",
 		    MAX_AUDIO_DEV_LEN);
 		break;
 	default:
@@ -1689,6 +1701,7 @@ audio_mixer_write(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
 		switch (c->un.ord) {
 		case MIXER_RECORD_ENABLE_OFF:
 		case MIXER_RECORD_ENABLE_ON:
+		case MIXER_RECORD_ENABLE_SYSCTL:
 			break;
 		default:
 			return EINVAL;

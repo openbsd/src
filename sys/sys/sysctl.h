@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.176 2018/05/16 14:53:43 visa Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.177 2018/05/26 10:16:14 ratchov Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -184,7 +184,8 @@ struct ctlname {
 #define	KERN_GLOBAL_PTRACE	81	/* allow ptrace globally */
 #define	KERN_CONSBUFSIZE	82	/* int: console message buffer size */
 #define	KERN_CONSBUF		83	/* console message buffer */
-#define	KERN_MAXID		84	/* number of valid kern ids */
+#define	KERN_AUDIO		84	/* struct: audio properties */
+#define	KERN_MAXID		85	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -269,6 +270,9 @@ struct ctlname {
 	{ "proc_nobroadcastkill", CTLTYPE_NODE }, \
 	{ "proc_vmmap", CTLTYPE_NODE }, \
 	{ "global_ptrace", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
+	{ "gap", 0 }, \
+	{ "audio", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -298,6 +302,17 @@ struct ctlname {
 #define KERN_PROC_NARGV		2
 #define KERN_PROC_ENV		3
 #define KERN_PROC_NENV		4
+
+/*
+ * KERN_AUDIO
+ */
+#define KERN_AUDIO_RECORD	1
+#define KERN_AUDIO_MAXID	2
+
+#define CTL_KERN_AUDIO_NAMES { \
+	{ 0, 0 }, \
+	{ "record", CTLTYPE_INT }, \
+}
 
 /*
  * KERN_PROC subtype ops return arrays of relatively fixed size

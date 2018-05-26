@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.337 2018/05/16 14:53:43 visa Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.338 2018/05/26 10:16:14 ratchov Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
 extern u_int net_livelocks;
+extern int audio_record_enable;
 
 int allowkmem;
 
@@ -134,6 +135,7 @@ int sysctl_proc_vmmap(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
+int sysctl_audio(int *, u_int, void *, size_t *, void *, size_t);
 
 void fill_file(struct kinfo_file *, struct file *, struct filedesc *, int,
     struct vnode *, struct process *, struct proc *, struct socket *, int);
@@ -302,6 +304,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_TIMECOUNTER:
 		case KERN_CPTIME2:
 		case KERN_FILE:
+		case KERN_AUDIO:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -655,6 +658,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_WITNESSWATCH:
 		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
 #endif
+	case KERN_AUDIO:
+		return (sysctl_audio(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2367,4 +2373,17 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &ci->ci_schedstate.spc_cp_time,
 	    sizeof(ci->ci_schedstate.spc_cp_time)));
+}
+
+int
+sysctl_audio(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	if (name[0] != KERN_AUDIO_RECORD)
+		return (ENOENT);
+
+	return (sysctl_int(oldp, oldlenp, newp, newlen, &audio_record_enable));
 }
