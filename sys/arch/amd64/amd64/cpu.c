@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.119 2018/05/26 18:49:28 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.120 2018/05/26 23:09:39 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -534,7 +534,12 @@ cpu_init(struct cpu_info *ci)
 			xsave_mask |= XCR0_AVX;
 		xsetbv(0, xsave_mask);
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
-		fpu_save_len = ebx;
+		if (CPU_IS_PRIMARY(ci)) {
+			fpu_save_len = ebx;
+			KASSERT(fpu_save_len <= sizeof(struct savefpu));
+		} else {
+			KASSERT(ebx == fpu_save_len);
+		}
 	}
 
 #if NVMM > 0
