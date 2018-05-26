@@ -1,11 +1,11 @@
-/* $OpenBSD: mandoc.css,v 1.16 2018/05/21 01:10:06 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.17 2018/05/26 17:37:47 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
 
 /* Global defaults. */
 
-html {		max-width: 100ex; }
+html {		max-width: 65em; }
 body {		font-family: Helvetica,Arial,sans-serif; }
 table {		margin-top: 0em;
 		margin-bottom: 0em; }
@@ -52,14 +52,14 @@ td.foot-os {	text-align: right; }
 /* Sections and paragraphs. */
 
 div.manual-text {
-		margin-left: 5ex; }
+		margin-left: 3.8em; }
 h1.Sh {		margin-top: 2ex;
 		margin-bottom: 1ex;
-		margin-left: -4ex;
+		margin-left: -3.2em;
 		font-size: 110%; }
 h2.Ss {		margin-top: 2ex;
 		margin-bottom: 1ex;
-		margin-left: -2ex;
+		margin-left: -1.2em;
 		font-size: 105%; }
 div.Pp {	margin: 1ex 0ex; }
 a.Sx { }
@@ -68,7 +68,7 @@ a.Xr { }
 /* Displays and lists. */
 
 div.Bd { }
-div.D1 {	margin-left: 5ex; }
+div.D1 {	margin-left: 3.8em; }
 
 ul.Bl-bullet {	list-style-type: disc;
 		padding-left: 1em; }
@@ -81,54 +81,54 @@ ul.Bl-item {	list-style-type: none;
 		padding-left: 0em; }
 ul.Bl-item > li { }
 ul.Bl-compact > li {
-		margin-top: 0ex; }
+		margin-top: 0em; }
 
 ol.Bl-enum {	padding-left: 2em; }
 ol.Bl-enum > li { }
 ol.Bl-compact > li {
-		margin-top: 0ex; }
+		margin-top: 0em; }
 
 dl.Bl-diag { }
 dl.Bl-diag > dt {
 		font-style: normal;
 		font-weight: bold; }
 dl.Bl-diag > dd {
-		margin-left: 0ex; }
+		margin-left: 0em; }
 dl.Bl-hang { }
 dl.Bl-hang > dt { }
 dl.Bl-hang > dd {
-		margin-left: 10.2ex; }
+		margin-left: 5.5em; }
 dl.Bl-inset { }
 dl.Bl-inset > dt { }
 dl.Bl-inset > dd {
-		margin-left: 0ex; }
+		margin-left: 0em; }
 dl.Bl-ohang { }
 dl.Bl-ohang > dt { }
 dl.Bl-ohang > dd {
-		margin-left: 0ex; }
-dl.Bl-tag {	margin-left: 10.2ex; }
+		margin-left: 0em; }
+dl.Bl-tag {	margin-left: 5.5em; }
 dl.Bl-tag > dt {
 		float: left;
-		margin-top: 0ex;
-		margin-left: -10.2ex;
-		padding-right: 2ex;
+		margin-top: 0em;
+		margin-left: -5.5em;
+		padding-right: 1.2em;
 		vertical-align: top; }
 dl.Bl-tag > dd {
 		clear: right;
 		width: 100%;
-		margin-top: 0ex;
-		margin-left: 0ex;
+		margin-top: 0em;
+		margin-left: 0em;
 		vertical-align: top;
 		overflow: auto; }
 dl.Bl-compact > dt {
-		margin-top: 0ex; }
+		margin-top: 0em; }
 
 table.Bl-column { }
 table.Bl-column > tbody > tr { }
 table.Bl-column > tbody > tr > td {
 		margin-top: 1em; }
 table.Bl-compact > tbody > tr > td {
-		margin-top: 0ex; }
+		margin-top: 0em; }
 
 cite.Rs {	font-style: normal;
 		font-weight: normal; }
