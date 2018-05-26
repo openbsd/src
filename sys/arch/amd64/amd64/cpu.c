@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.118 2018/05/26 18:02:01 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.119 2018/05/26 18:49:28 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -514,7 +514,6 @@ cpu_init(struct cpu_info *ci)
 	 */
 	patinit(ci);
 
-	lcr0(rcr0() | CR0_WP);
 	cr4 = rcr4() | CR4_DEFAULT;
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
