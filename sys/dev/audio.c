@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.169 2018/04/11 04:48:31 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.170 2018/05/26 10:13:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,6 +54,14 @@
 #define AUDIO_DEV_MIXER		0x10	/* minor of /dev/mixer0 */
 #define AUDIO_DEV_AUDIOCTL	0xc0	/* minor of /dev/audioctl */
 #define AUDIO_BUFSZ		65536	/* buffer size in bytes */
+
+/*
+ * mixer entries added by the audio(4) layer
+ */
+#define MIXER_RECORD			0	/* record class */
+#define MIXER_RECORD_ENABLE		1	/* record.enable control */
+#define  MIXER_RECORD_ENABLE_OFF	0	/* record.enable=off value */
+#define  MIXER_RECORD_ENABLE_ON		1	/* record.enable=on value */
 
 /*
  * dma buffer
@@ -118,6 +126,7 @@ struct audio_softc {
 	struct task wskbd_task;
 	int wskbd_taskset;
 #endif
+	int record_enable;		/* mixer record.enable value */
 };
 
 int audio_match(struct device *, void *, void *);
@@ -463,6 +472,10 @@ audio_rintr(void *addr)
 	}
 
 	sc->rec.pos += sc->rec.blksz;
+	if (sc->record_enable == MIXER_RECORD_ENABLE_OFF) {
+		ptr = audio_buf_wgetblk(&sc->rec, &count);
+		audio_fill_sil(sc, ptr, sc->rec.blksz);
+	}
 	audio_buf_wcommit(&sc->rec, sc->rec.blksz);
 	if (sc->rec.used > sc->rec.len - sc->rec.blksz) {
 		DPRINTFN(1, "%s: rec overrun\n", DEVNAME(sc));
@@ -1057,6 +1070,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->round = 960;
 	sc->nblks = 2;
 	sc->play.pos = sc->play.xrun = sc->rec.pos = sc->rec.xrun = 0;
+	sc->record_enable = MIXER_RECORD_ENABLE_OFF;
 
 	/*
 	 * allocate an array of mixer_ctrl structures to save the
@@ -1603,10 +1617,96 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 }
 
 int
-audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr)
+audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
+{
+	if (devinfo->index < sc->mix_nent)
+		return sc->ops->query_devinfo(sc->arg, devinfo);	
+
+	devinfo->next = -1;
+	devinfo->prev = -1;
+	switch (devinfo->index - sc->mix_nent) {
+	case MIXER_RECORD:
+		strlcpy(devinfo->label.name, AudioCrecord, MAX_AUDIO_DEV_LEN);
+		devinfo->type = AUDIO_MIXER_CLASS;
+		devinfo->mixer_class = -1;
+		break;
+	case MIXER_RECORD_ENABLE:
+		strlcpy(devinfo->label.name, "enable", MAX_AUDIO_DEV_LEN);
+		devinfo->type = AUDIO_MIXER_ENUM;
+		devinfo->mixer_class = MIXER_RECORD + sc->mix_nent;
+		devinfo->un.e.num_mem = 2;
+		devinfo->un.e.member[0].ord = MIXER_RECORD_ENABLE_OFF;
+		strlcpy(devinfo->un.e.member[0].label.name, "off",
+		    MAX_AUDIO_DEV_LEN);
+		devinfo->un.e.member[1].ord = MIXER_RECORD_ENABLE_ON;
+		strlcpy(devinfo->un.e.member[1].label.name, "on",
+		    MAX_AUDIO_DEV_LEN);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+audio_mixer_read(struct audio_softc *sc, struct mixer_ctrl *c)
+{
+	if (c->dev < sc->mix_nent)
+		return sc->ops->get_port(sc->arg, c);
+
+	switch (c->dev - sc->mix_nent) {
+	case MIXER_RECORD:
+		return EBADF;
+	case MIXER_RECORD_ENABLE:
+		c->un.ord = sc->record_enable;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+audio_mixer_write(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
 {
 	int error;
 
+	if (c->dev < sc->mix_nent) {
+		error = sc->ops->set_port(sc->arg, c);
+		if (error)
+			return error;
+		if (sc->ops->commit_settings)
+			return sc->ops->commit_settings(sc->arg);
+		return 0;
+	}
+
+	switch (c->dev - sc->mix_nent) {
+	case MIXER_RECORD:
+		return EBADF;
+	case MIXER_RECORD_ENABLE:
+		switch (c->un.ord) {
+		case MIXER_RECORD_ENABLE_OFF:
+		case MIXER_RECORD_ENABLE_ON:
+			break;
+		default:
+			return EINVAL;
+		}
+		if (suser(p) == 0)
+			sc->record_enable = c->un.ord;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr,
+	struct proc *p)
+{
 	/* block if quiesced */
 	while (sc->quiesce)
 		tsleep(&sc->quiesce, 0, "mix_qio", 0);
@@ -1616,17 +1716,11 @@ audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr)
 		/* All handled in the upper FS layer. */
 		break;
 	case AUDIO_MIXER_DEVINFO:
-		((mixer_devinfo_t *)addr)->un.v.delta = 0;
-		return sc->ops->query_devinfo(sc->arg, (mixer_devinfo_t *)addr);
+		return audio_mixer_devinfo(sc, addr);
 	case AUDIO_MIXER_READ:
-		return sc->ops->get_port(sc->arg, (mixer_ctrl_t *)addr);
+		return audio_mixer_read(sc, addr);
 	case AUDIO_MIXER_WRITE:
-		error = sc->ops->set_port(sc->arg, (mixer_ctrl_t *)addr);
-		if (error)
-			return error;
-		if (sc->ops->commit_settings)
-			return sc->ops->commit_settings(sc->arg);
-		break;
+		return audio_mixer_write(sc, addr, p);
 	default:
 		return ENOTTY;
 	}
@@ -1778,7 +1872,7 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = audio_ioctl(sc, cmd, addr);
 		break;
 	case AUDIO_DEV_MIXER:
-		error = audio_ioctl_mixer(sc, cmd, addr);
+		error = audio_ioctl_mixer(sc, cmd, addr, p);
 		break;
 	default:
 		error = ENXIO;
