@@ -76,6 +76,7 @@
 #define RK3399_CLK_I2C6			69
 #define RK3399_CLK_I2C7			70
 #define RK3399_CLK_SDMMC		76
+#define RK3399_CLK_SDIO			77
 #define RK3399_CLK_EMMC			78
 #define RK3399_CLK_TSADC		79
 #define RK3399_CLK_UART0		81

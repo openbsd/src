@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.22 2018/02/25 20:42:13 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.23 2018/05/26 12:49:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1047,6 +1047,35 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return rk3399_get_i2c(sc, RK3399_CRU_CLKSEL_CON(61), 8);
 	case RK3399_CLK_SDMMC:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(16));
+		mux = (reg >> 8) & 0x7;
+		div_con = reg & 0x7f;
+		switch (mux) {
+		case 0:
+			idx = RK3399_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3399_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3399_PLL_NPLL;
+			break;
+#ifdef notyet
+		case 3:
+			idx = RK3399_PLL_PPLL;
+			break;
+		case 4:
+			idx = RK3399_USB_480M;
+			break;
+#endif
+		case 5:
+			return 24000000 / (div_con + 1);
+		default:
+			return 0;
+		}
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+		break;
+	case RK3399_CLK_SDIO:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(15));
 		mux = (reg >> 8) & 0x7;
 		div_con = reg & 0x7f;
 		switch (mux) {
