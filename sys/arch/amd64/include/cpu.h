@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.121 2018/05/23 05:37:01 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.122 2018/05/26 18:02:01 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -267,7 +267,6 @@ extern void need_resched(struct cpu_info *);
 extern struct cpu_info *cpu_info[MAXCPUS];
 
 void cpu_boot_secondary_processors(void);
-void cpu_init_idle_pcbs(void);    
 
 void cpu_kick(struct cpu_info *);
 void cpu_unidle(struct cpu_info *);
@@ -371,7 +370,6 @@ void	dumpconf(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_bufinit(void);
-void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
 void	cpu_proc_fork(struct proc *, struct proc *);
 int	amd64_pa_used(paddr_t);
 extern void (*cpu_idle_enter_fcn)(void);

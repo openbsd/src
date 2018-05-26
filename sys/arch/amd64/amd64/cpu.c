@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.117 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.118 2018/05/26 18:02:01 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -605,24 +605,6 @@ cpu_boot_secondary_processors(void)
 }
 
 void
-cpu_init_idle_pcbs(void)
-{
-	struct cpu_info *ci;
-	u_long i;
-
-	for (i=0; i < MAXCPUS; i++) {
-		ci = cpu_info[i];
-		if (ci == NULL)
-			continue;
-		if (ci->ci_idle_pcb == NULL)
-			continue;
-		if ((ci->ci_flags & CPUF_PRESENT) == 0)
-			continue;
-		x86_64_init_pcb_tss_ldt(ci);
-	}
-}
-
-void
 cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
@@ -742,7 +724,6 @@ cpu_hatch(void *v)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
 #endif
 
-	lcr0(ci->ci_idle_pcb->pcb_cr0);
 	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
