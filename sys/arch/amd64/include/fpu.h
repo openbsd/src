@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.12 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.13 2018/05/26 17:28:17 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -7,10 +7,11 @@
 #include <sys/types.h>
 
 /*
- * amd64 only uses the extended save/restore format used
- * by fxsave/fsrestore, to always deal with the SSE registers,
- * which are part of the ABI to pass floating point values.
- * Must be stored in memory on a 16-byte boundary.
+ * If the CPU supports xsave/xrstor then we use them so that we can provide
+ * AVX support.  Otherwise we require fxsave/fxrstor, as the SSE registers
+ * are part of the ABI for passing floating point values.
+ * While fxsave/fxrstor only required 16-byte alignment for the save area,
+ * xsave/xrstor requires the save area to have 64-byte alignment.
  */
 
 struct fxsave64 {
