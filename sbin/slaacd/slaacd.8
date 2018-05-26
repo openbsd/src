@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.6 2018/05/02 14:55:37 jmc Exp $
+.\"	$OpenBSD: slaacd.8,v 1.7 2018/05/26 15:25:17 florian Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2018 $
+.Dd $Mdocdate: May 26 2018 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -92,6 +92,14 @@ socket used for communication with
 .Re
 .Pp
 .Rs
+.%A R. Hinden
+.%A S. Deering
+.%D February 2006
+.%R RFC 4291
+.%T IP Version 6 Addressing Architecture
+.Re
+.Pp
+.Rs
 .%A T. Narten
 .%A E. Nordmark
 .%A W. Simpson
@@ -99,6 +107,15 @@ socket used for communication with
 .%D September 2007
 .%R RFC 4861
 .%T Neighbor Discovery for IP version 6 (IPv6)
+.Re
+.Pp
+.Rs
+.%A T. Narten
+.%A R. Draves
+.%A S. Krishnan
+.%D September 2007
+.%R RFC 4941
+.%T Privacy Extensions for Stateless Address Autoconfiguration in IPv6
 .Re
 .Pp
 .Rs
@@ -124,6 +141,16 @@ socket used for communication with
 .%D February 2016
 .%R RFC 7772
 .%T Reducing Energy Consumption of Router Advertisements
+.Re
+.Pp
+.Rs
+.%A F. Gont
+.%A A. Cooper
+.%A D. Thaler
+.%A W. Liu
+.%D February 2017
+.%R RFC 8064
+.%T Recommendation on Stable IPv6 Interface Identifiers
 .Re
 .Sh HISTORY
 The
