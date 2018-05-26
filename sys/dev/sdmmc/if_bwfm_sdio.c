@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.16 2018/05/24 11:44:46 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.17 2018/05/26 12:50:18 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -352,6 +352,10 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	case BRCM_CC_43340_CHIP_ID:
 		name = "brcmfmac43340-sdio.bin";
 		nvname = "brcmfmac43340-sdio.nvram";
+		break;
+	case BRCM_CC_4356_CHIP_ID:
+		name = "brcmfmac4356-sdio.bin";
+		nvname = "brcmfmac4356-sdio.nvram";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
