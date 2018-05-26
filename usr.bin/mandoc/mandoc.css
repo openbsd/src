@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.17 2018/05/26 17:37:47 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.18 2018/05/26 20:04:38 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -229,3 +229,17 @@ a.Ux { }
 .Li {		font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
+
+/* Overrides to avoid excessive margins on small devices. */
+
+@media (max-width: 37.5em) {
+div.manual-text {
+		margin-left: 0.5em; }
+h1.Sh, h2.Ss {	margin-left: 0em; }
+div.D1 {	margin-left: 2em; }
+dl.Bl-hang > dd {
+		margin-left: 2em; }
+dl.Bl-tag {	margin-left: 2em; }
+dl.Bl-tag > dt {
+		margin-left: -2em; }
+}
