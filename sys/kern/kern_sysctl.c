@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.339 2018/05/26 14:36:35 sthen Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.340 2018/05/27 08:11:13 ratchov Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -112,6 +112,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#include "audio.h"
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
