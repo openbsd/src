@@ -149,6 +149,7 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 #define A64_CLK_BUS_OHCI0	44
 #define A64_CLK_BUS_OHCI1	45
 #define A64_CLK_BUS_PIO		58
+#define A64_CLK_BUS_THS		59
 #define A64_CLK_BUS_I2C0	63
 #define A64_CLK_BUS_I2C1	64
 #define A64_CLK_BUS_I2C2	65
@@ -158,6 +159,7 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 #define A64_CLK_BUS_UART3	70
 #define A64_CLK_BUS_UART4	71
 
+#define A64_CLK_THS		73
 #define A64_CLK_MMC0		75
 #define A64_CLK_MMC1		76
 #define A64_CLK_MMC2		77
@@ -180,6 +182,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_OHCI0] = { 0x0060, 28 },
 	[A64_CLK_BUS_OHCI1] = { 0x0060, 29 },
 	[A64_CLK_BUS_PIO] =   { 0x0068, 5 },
+	[A64_CLK_BUS_THS] =   { 0x0068, 8 },
 	[A64_CLK_BUS_I2C0] =  { 0x006c, 0, A64_CLK_APB2 },
 	[A64_CLK_BUS_I2C1] =  { 0x006c, 1, A64_CLK_APB2 },
 	[A64_CLK_BUS_I2C2] =  { 0x006c, 2, A64_CLK_APB2 },
@@ -188,6 +191,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_BUS_UART2] = { 0x006c, 18, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART3] = { 0x006c, 19, A64_CLK_APB2 },
 	[A64_CLK_BUS_UART4] = { 0x006c, 20, A64_CLK_APB2 },
+	[A64_CLK_THS] =       { 0x0074, 31 },
 	[A64_CLK_MMC0] =      { 0x0088, 31 },
 	[A64_CLK_MMC1] =      { 0x008c, 31 },
 	[A64_CLK_MMC2] =      { 0x0090, 31 },
@@ -507,14 +511,12 @@ struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
 #define A64_RST_BUS_MMC0	8
 #define A64_RST_BUS_MMC1	9
 #define A64_RST_BUS_MMC2	10
-
 #define A64_RST_BUS_EMAC	13
-
 #define A64_RST_BUS_EHCI0	19
 #define A64_RST_BUS_EHCI1	20
 #define A64_RST_BUS_OHCI0	21
 #define A64_RST_BUS_OHCI1	22
-
+#define A64_RST_BUS_THS		38
 #define A64_RST_BUS_I2C0	42
 #define A64_RST_BUS_I2C1	43
 #define A64_RST_BUS_I2C2	44
@@ -530,6 +532,7 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_BUS_EHCI1] = { 0x02c0, 25 },
 	[A64_RST_BUS_OHCI0] = { 0x02c0, 28 },
 	[A64_RST_BUS_OHCI1] = { 0x02c0, 29 },
+	[A64_RST_BUS_THS] =   { 0x02d0, 8 },
 	[A64_RST_BUS_I2C0] =  { 0x02d8, 0 },
 	[A64_RST_BUS_I2C1] =  { 0x02d8, 1 },
 	[A64_RST_BUS_I2C2] =  { 0x02d8, 2 },
