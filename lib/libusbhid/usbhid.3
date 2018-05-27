@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.17 2014/05/13 14:05:02 jmc Exp $
+.\"	$OpenBSD: usbhid.3,v 1.18 2018/05/27 18:45:51 jmc Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2014 $
+.Dd $Mdocdate: May 27 2018 $
 .Dt USBHID 3
 .Os
 .Sh NAME
@@ -65,22 +65,22 @@
 .Fn hid_report_size "report_desc_t d" "hid_kind_t k" "int id"
 .Ft int
 .Fn hid_locate "report_desc_t d" "u_int usage" "hid_kind_t k" "hid_item_t *h" "int id"
-.Ft char *
+.Ft const char *
 .Fn hid_usage_page "int i"
-.Ft char *
+.Ft const char *
 .Fn hid_usage_in_page "u_int u"
 .Ft int
 .Fn hid_parse_usage_page "const char *"
-.Ft char *
+.Ft int
 .Fn hid_parse_usage_in_page "const char *"
 .Ft void
 .Fn hid_init "char *file"
 .Ft int
 .Fn hid_start "char *file"
-.Ft int
+.Ft int_32t
 .Fn hid_get_data "void *data" "hid_item_t *h"
 .Ft void
-.Fn hid_set_data "void *data" "hid_item_t *h" "u_int data"
+.Fn hid_set_data "void *data" "hid_item_t *h" "int32_t data"
 .Sh DESCRIPTION
 The
 .Nm
