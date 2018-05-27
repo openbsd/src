@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.19 2018/05/27 12:34:25 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.20 2018/05/27 23:25:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -737,6 +737,7 @@ sxiccmu_mmc_do_set_frequency(struct sxiccmu_clock *sc, uint32_t freq,
 		n = 2, m = 15;
 		clk_src = CCU_SDx_CLK_SRC_SEL_OSC24M;
 		break;
+	case 20000000:
 	case 25000000:
 	case 26000000:
 	case 50000000:
