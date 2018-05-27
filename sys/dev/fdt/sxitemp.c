@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.3 2018/05/27 19:44:25 kettenis Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.4 2018/05/27 21:59:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,7 @@
 #define  THS_CTRL0_SENSOR_ACQ(x)	((x) & 0xffff)
 #define THS_CTRL2			0x0040
 #define  THS_CTRL2_ADC_ACQ(x)		(((x) & 0xffff) << 16)
+#define  THS_CTRL2_SENSE2_EN		(1 << 2)
 #define  THS_CTRL2_SENSE1_EN		(1 << 1)
 #define  THS_CTRL2_SENSE0_EN		(1 << 0)
 #define THS_INT_CTRL			0x0044
@@ -44,6 +45,7 @@
 #define  THS_FILTER_TYPE(x)		((x) & 0x3) 
 #define THS0_DATA			0x0080
 #define THS1_DATA			0x0084
+#define THS2_DATA			0x0088
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -57,8 +59,9 @@ struct sxitemp_softc {
 
 	uint64_t		(*sc_calc_temp0)(int64_t);
 	uint64_t		(*sc_calc_temp1)(int64_t);
+	uint64_t		(*sc_calc_temp2)(int64_t);
 
-	struct ksensor		sc_sensors[2];
+	struct ksensor		sc_sensors[3];
 	struct ksensordev	sc_sensordev;
 };
 
@@ -75,6 +78,7 @@ struct cfdriver sxitemp_cd = {
 
 uint64_t sxitemp_h3_calc_temp(int64_t);
 uint64_t sxitemp_r40_calc_temp(int64_t);
+uint64_t sxitemp_a64_calc_temp(int64_t);
 uint64_t sxitemp_h5_calc_temp0(int64_t);
 uint64_t sxitemp_h5_calc_temp1(int64_t);
 void	sxitemp_refresh_sensors(void *);
@@ -86,6 +90,7 @@ sxitemp_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ths") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ths") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-ths") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-h5-ths"));
 }
 
@@ -123,6 +128,12 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_calc_temp0 = sxitemp_r40_calc_temp;
 		sc->sc_calc_temp1 = sxitemp_r40_calc_temp;
 		enable = THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN;
+	} else if (OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-ths")) {
+		sc->sc_calc_temp0 = sxitemp_a64_calc_temp;
+		sc->sc_calc_temp1 = sxitemp_a64_calc_temp;
+		sc->sc_calc_temp2 = sxitemp_a64_calc_temp;
+		enable = THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN |
+		    THS_CTRL2_SENSE2_EN;
 	} else {
 		sc->sc_calc_temp0 = sxitemp_h5_calc_temp0;
 		sc->sc_calc_temp1 = sxitemp_h5_calc_temp1;
@@ -152,6 +163,13 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sensors[1].flags = SENSOR_FINVALID;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[1]);
 	}
+	if (sc->sc_calc_temp2) {
+		strlcpy(sc->sc_sensors[2].desc, "",
+		    sizeof(sc->sc_sensors[2].desc));
+		sc->sc_sensors[2].type = SENSOR_TEMP;
+		sc->sc_sensors[2].flags = SENSOR_FINVALID;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[2]);
+	}
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, sxitemp_refresh_sensors, 5);
 }
@@ -168,6 +186,13 @@ sxitemp_r40_calc_temp(int64_t data)
 {
 	/* From BSP as the R40 User Manual says T.B.D. */
 	return -112500 * data + 250000000;
+}
+
+uint64_t
+sxitemp_a64_calc_temp(int64_t data)
+{
+	/* From BSP as the A64 User Manual isn't correct. */
+	return (2170000000000 - data * 1000000000) / 8560;
 }
 
 uint64_t
@@ -204,5 +229,11 @@ sxitemp_refresh_sensors(void *arg)
 		data = HREAD4(sc, THS1_DATA);
 		sc->sc_sensors[1].value = sc->sc_calc_temp1(data) + 273150000;
 		sc->sc_sensors[1].flags &= ~SENSOR_FINVALID;
+	}
+
+	if (sc->sc_calc_temp2) {
+		data = HREAD4(sc, THS2_DATA);
+		sc->sc_sensors[2].value = sc->sc_calc_temp2(data) + 273150000;
+		sc->sc_sensors[2].flags &= ~SENSOR_FINVALID;
 	}
 }
