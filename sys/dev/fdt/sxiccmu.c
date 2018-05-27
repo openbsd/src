@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.18 2018/02/10 22:31:34 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.19 2018/05/27 12:34:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -32,7 +32,11 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
+
+/* R40 */
+#define R40_GMAC_CLK_REG		0x0164
 
 #ifdef DEBUG_CCMU
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -152,6 +156,15 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].addr, faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
+	/* On the R40, the GMAC needs to poke at one of our registers. */
+	if (OF_is_compatible(node, "allwinner,sun8i-r40-ccu")) {
+		bus_space_handle_t ioh;
+
+		bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		    R40_GMAC_CLK_REG, 4, &ioh);
+		regmap_register(faa->fa_node, sc->sc_iot, ioh, 4);
+	}
+
 	printf("\n");
 
 	if (OF_is_compatible(node, "allwinner,sun4i-a10-ccu") ||
@@ -181,7 +194,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nresets = nitems(sun8i_h3_resets);
 		sc->sc_get_frequency = sxiccmu_h3_get_frequency;
 		sc->sc_set_frequency = sxiccmu_h3_set_frequency;
-	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu") ||	
+	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-r-ccu") ||
 	    OF_is_compatible(node, "allwinner,sun50i-a64-r-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun8i_h3_r_gates;
@@ -889,7 +902,7 @@ sxiccmu_a10_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	return 0;
 }
 
-/* Allwinner H3/A64 */
+/* Allwinner A23/A64/H3/H5/R40 */
 #define CCU_AHB1_APB1_CFG_REG		0x0054
 #define CCU_AHB1_CLK_SRC_SEL		(3 << 12)
 #define CCU_AHB1_CLK_SRC_SEL_LOSC	(0 << 12)
@@ -1168,12 +1181,38 @@ sxiccmu_h3_r_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 uint32_t
 sxiccmu_r40_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t parent;
+	uint32_t reg, div;
+
 	switch (idx) {
+	case R40_CLK_LOSC:
+		return clock_get_frequency(sc->sc_node, "losc");
+	case R40_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
 	case R40_CLK_PLL_PERIPH0:
 		/* Not hardcoded, but recommended. */
 		return 600000000;
 	case R40_CLK_PLL_PERIPH0_2X:
-		return sxiccmu_r40_get_frequency(sc, A64_CLK_PLL_PERIPH0) * 2;
+		return sxiccmu_r40_get_frequency(sc, R40_CLK_PLL_PERIPH0) * 2;
+	case R40_CLK_AHB1:
+		reg = SXIREAD4(sc, CCU_AHB1_APB1_CFG_REG);
+		div = CCU_AHB1_CLK_DIV_RATIO(reg);
+		switch (reg & CCU_AHB1_CLK_SRC_SEL) {
+		case CCU_AHB1_CLK_SRC_SEL_LOSC:
+			parent = R40_CLK_LOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_OSC24M:
+			parent = R40_CLK_HOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_AXI:
+			parent = R40_CLK_AXI;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_PERIPH0:
+			parent = R40_CLK_PLL_PERIPH0;
+			div *= CCU_AHB1_PRE_DIV(reg);
+			break;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	case R40_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
