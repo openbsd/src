@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.66 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.67 2018/05/27 06:02:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -87,7 +87,6 @@ udf_hashlookup(struct umount *ump, udfino_t id, int flags, struct vnode **vpp)
 {
 	struct unode *up;
 	struct udf_hash_lh *lh;
-	struct proc *p = curproc;
 	int error;
 
 	*vpp = NULL;
@@ -104,7 +103,7 @@ loop:
 	LIST_FOREACH(up, lh, u_le) {
 		if (up->u_ino == id) {
 			mtx_leave(&ump->um_hashmtx);
-			error = vget(up->u_vnode, flags, p);
+			error = vget(up->u_vnode, flags);
 			if (error == ENOENT)
 				goto loop;
 			if (error)

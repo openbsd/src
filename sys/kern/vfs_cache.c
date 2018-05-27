@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.55 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.56 2018/05/27 06:02:14 visa Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 	struct namecache *ncp;
 	struct namecache n;
 	struct vnode *vp;
-	struct proc *p = curproc;
 	u_long vpid;
 	int error;
 
@@ -211,7 +210,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp);
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() succeeded and both LOCKPARENT and
 		 * ISLASTCN is set, lock the directory vnode as well.
@@ -224,7 +223,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() failed or either of LOCKPARENT or
 		 * ISLASTCN is set, unlock the directory vnode.

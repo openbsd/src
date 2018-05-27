@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.60 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.61 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -738,7 +738,7 @@ ntfs_vgetex(struct mount *mp, ntfsino_t ino, u_int32_t attrtype, char *attrname,
 
 	if (FTOV(fp)) {
 		/* vget() returns error if the vnode has been recycled */
-		if (vget(FTOV(fp), lkflags, p) == 0) {
+		if (vget(FTOV(fp), lkflags) == 0) {
 			*vpp = FTOV(fp);
 			return (0);
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.30 2018/05/02 02:24:56 visa Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.31 2018/05/27 06:02:14 visa Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -210,7 +210,6 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
-	struct proc *p = curproc;
 	char *obp;
 	int error, vpid;
 
@@ -235,7 +234,7 @@ vfs_getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	/* Release current lock before acquiring the parent lock */
 	VOP_UNLOCK(lvp);
 
-	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
 	if (error)
 		*uvpp = NULL;
 

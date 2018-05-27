@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.145 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.146 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -591,7 +591,7 @@ int	vcount(struct vnode *);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 void	vflushbuf(struct vnode *, int);
 int	vflush(struct mount *, struct vnode *, int);
-int	vget(struct vnode *, int, struct proc *);
+int	vget(struct vnode *, int);
 void	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct proc *);
 int	vinvalbuf(struct vnode *, int, struct ucred *, struct proc *,

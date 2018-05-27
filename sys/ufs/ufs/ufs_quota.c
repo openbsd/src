@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.43 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.44 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -462,12 +462,11 @@ int
 quotaon_vnode(struct vnode *vp, void *arg) 
 {
 	int error;
-	struct proc *p = (struct proc *)arg;
 
 	if (vp->v_type == VNON || vp->v_writecount == 0)
 		return (0);
 
-	if (vget(vp, LK_EXCLUSIVE, p)) {
+	if (vget(vp, LK_EXCLUSIVE)) {
 		return (0);
 	}
 
@@ -544,7 +543,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 	 * adding references to quota file being opened.
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
-	error = vfs_mount_foreach_vnode(mp, quotaon_vnode, p);
+	error = vfs_mount_foreach_vnode(mp, quotaon_vnode, NULL);
 
 	ump->um_qflags[type] &= ~QTF_OPENING;
 	if (error)
@@ -567,8 +566,7 @@ quotaoff_vnode(struct vnode *vp, void *arg)
 	if (vp->v_type == VNON)
 		return (0);
 
-
-	if (vget(vp, LK_EXCLUSIVE, qa->p))
+	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 	ip = VTOI(vp);
 	dq = ip->i_dquot[qa->type];
@@ -760,13 +758,12 @@ int
 qsync_vnode(struct vnode *vp, void *arg)
 {
 	int i;
-	struct proc *p = curproc;
 	struct dquot *dq;
 	    
 	if (vp->v_type == VNON)
 		return (0);
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, p))
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 		return (0);
 
 	for (i = 0; i < MAXQUOTAS; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.106 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.107 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	/*
 	 * Step 5: invalidate all cached file data.
 	 */
-	if (vget(vp, LK_EXCLUSIVE, era->p))
+	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 
 	if (vinvalbuf(vp, 0, era->cred, era->p, 0, 0))
@@ -725,7 +725,7 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 		goto end;
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, esa->p)) {
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
 		nlink0 = 1;	/* potentially */
 		goto end;
 	}

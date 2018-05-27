@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.96 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.97 2018/05/27 06:02:14 visa Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
 			auio.uio_iovcnt++;
 		auio.uio_resid += kth->ktr_len;
 	}
-	vget(vp, LK_EXCLUSIVE | LK_RETRY, curp);
+	vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, cred);
 	if (!error) {
 		vput(vp);

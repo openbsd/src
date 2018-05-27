@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.89 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.90 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -676,7 +676,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 		return (0);
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, msa->p))
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 		return (0);
 
 	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)

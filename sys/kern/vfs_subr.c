@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.272 2018/05/08 10:53:35 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.273 2018/05/27 06:02:14 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -540,7 +540,7 @@ loop:
 			vgonel(vp, p);
 			goto loop;
 		}
-		if (vget(vp, LK_EXCLUSIVE, p)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			goto loop;
 		}
 		break;
@@ -606,7 +606,7 @@ loop:
  * having been changed to a new file system type.
  */
 int
-vget(struct vnode *vp, int flags, struct proc *p)
+vget(struct vnode *vp, int flags)
 {
 	int error, s, onfreelist;
 

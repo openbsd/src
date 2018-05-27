@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.62 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.63 2018/05/27 06:02:14 visa Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -104,7 +104,6 @@ static struct denode *
 msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 {
 	struct denode *dep;
-	struct proc *p = curproc; /* XXX */
 
 	for (;;)
 		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)]; ;
@@ -117,7 +116,7 @@ msdosfs_hashget(dev_t dev, uint32_t dirclust, uint32_t diroff)
 			    dep->de_refcnt != 0) {
 				struct vnode *vp = DETOV(dep);
 
-				if (!vget(vp, LK_EXCLUSIVE, p))
+				if (!vget(vp, LK_EXCLUSIVE))
 					return (dep);
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.69 2018/05/05 11:54:11 mpi Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.70 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	struct nfsmount		*nmp;
 	struct nfsnode		*np, find, *np2;
 	struct vnode		*vp, *nvp;
-	struct proc		*p = curproc;		/* XXX */
 	int			 error;
 
 	nmp = VFSTONFS(mnt);
@@ -101,7 +100,7 @@ loop:
 	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
 		vp = NFSTOV(np);
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		if (error)
 			goto loop;
 		*npp = np;
