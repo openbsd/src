@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.2 2017/12/31 15:41:25 kettenis Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.3 2018/05/27 19:44:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -73,6 +73,7 @@ struct cfdriver sxitemp_cd = {
 	NULL, "sxitemp", DV_DULL
 };
 
+uint64_t sxitemp_h3_calc_temp(int64_t);
 uint64_t sxitemp_r40_calc_temp(int64_t);
 uint64_t sxitemp_h5_calc_temp0(int64_t);
 uint64_t sxitemp_h5_calc_temp1(int64_t);
@@ -83,7 +84,8 @@ sxitemp_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ths") ||
+	return (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ths") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ths") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-h5-ths"));
 }
 
@@ -93,6 +95,7 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 	struct sxitemp_softc *sc = (struct sxitemp_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	int node = faa->fa_node;
+	uint32_t enable;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -113,34 +116,51 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable_all(node);
 	reset_deassert_all(node);
 
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ths")) {
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-ths")) {
+		sc->sc_calc_temp0 = sxitemp_h3_calc_temp;
+		enable = THS_CTRL2_SENSE0_EN;
+	} else if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-ths")) {
 		sc->sc_calc_temp0 = sxitemp_r40_calc_temp;
 		sc->sc_calc_temp1 = sxitemp_r40_calc_temp;
+		enable = THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN;
 	} else {
 		sc->sc_calc_temp0 = sxitemp_h5_calc_temp0;
 		sc->sc_calc_temp1 = sxitemp_h5_calc_temp1;
+		enable = THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN;
 	}
 
 	/* Start data acquisition. */
 	HWRITE4(sc, THS_FILTER, THS_FILTER_EN | THS_FILTER_TYPE(1));
 	HWRITE4(sc, THS_INT_CTRL, THS_INT_CTRL_THERMAL_PER(800));
 	HWRITE4(sc, THS_CTRL0, THS_CTRL0_SENSOR_ACQ(31));
-	HWRITE4(sc, THS_CTRL2, THS_CTRL2_ADC_ACQ(31) |
-	    THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN);
+	HWRITE4(sc, THS_CTRL2, THS_CTRL2_ADC_ACQ(31) | enable);
 
 	/* Register sensors. */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
-	strlcpy(sc->sc_sensors[0].desc, "CPU", sizeof(sc->sc_sensors[0].desc));
-	sc->sc_sensors[0].type = SENSOR_TEMP;
-	sc->sc_sensors[0].flags = SENSOR_FINVALID;
-	sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[0]);
-	strlcpy(sc->sc_sensors[1].desc, "GPU", sizeof(sc->sc_sensors[1].desc));
-	sc->sc_sensors[1].type = SENSOR_TEMP;
-	sc->sc_sensors[1].flags = SENSOR_FINVALID;
-	sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[1]);
+	if (sc->sc_calc_temp0) {
+		strlcpy(sc->sc_sensors[0].desc, "CPU",
+		    sizeof(sc->sc_sensors[0].desc));
+		sc->sc_sensors[0].type = SENSOR_TEMP;
+		sc->sc_sensors[0].flags = SENSOR_FINVALID;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[0]);
+	}
+	if (sc->sc_calc_temp1) {
+		strlcpy(sc->sc_sensors[1].desc, "GPU",
+		    sizeof(sc->sc_sensors[1].desc));
+		sc->sc_sensors[1].type = SENSOR_TEMP;
+		sc->sc_sensors[1].flags = SENSOR_FINVALID;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[1]);
+	}
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, sxitemp_refresh_sensors, 5);
+}
+
+uint64_t
+sxitemp_h3_calc_temp(int64_t data)
+{
+	/* From BSP since the H3 Data Sheet isn't accurate. */
+	return 217000000 - data * 1000000000 / 8253;
 }
 
 uint64_t
@@ -174,11 +194,15 @@ sxitemp_refresh_sensors(void *arg)
 	struct sxitemp_softc *sc = arg;
 	uint32_t data;
 
-	data = HREAD4(sc, THS0_DATA);
-	sc->sc_sensors[0].value = sc->sc_calc_temp0(data) + 273150000;
-	sc->sc_sensors[0].flags &= ~SENSOR_FINVALID;
+	if (sc->sc_calc_temp0) {
+		data = HREAD4(sc, THS0_DATA);
+		sc->sc_sensors[0].value = sc->sc_calc_temp0(data) + 273150000;
+		sc->sc_sensors[0].flags &= ~SENSOR_FINVALID;
+	}
 
-	data = HREAD4(sc, THS1_DATA);
-	sc->sc_sensors[1].value = sc->sc_calc_temp1(data) + 273150000;
-	sc->sc_sensors[1].flags &= ~SENSOR_FINVALID;
+	if (sc->sc_calc_temp1) {
+		data = HREAD4(sc, THS1_DATA);
+		sc->sc_sensors[1].value = sc->sc_calc_temp1(data) + 273150000;
+		sc->sc_sensors[1].flags &= ~SENSOR_FINVALID;
+	}
 }
