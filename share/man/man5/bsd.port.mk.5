@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.479 2018/05/08 08:03:59 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.480 2018/05/27 08:03:58 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 8 2018 $
+.Dd $Mdocdate: May 27 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2862,11 +2862,22 @@ in
 .Ev MULTI_PACKAGES ) .
 Add other
 variables as needed.
-Some variable names are prefixed by a ^.
-This is only relevant for
-.Cm update-plist ,
-where it means the variable will only be substituted at the beginning of
-a path.
+.Pp
+.Ev TRUEPREFIX
+is never passed to
+.Xr pkg_create 1
+as it is identical to
+.Ev PREFIX .
+.Pp
+By default,
+.Xr update-plist 1
+is run with the following options:
+.Bd -literal -offset indent
+update-plist -i ARCH -i BASE_PKGPATH -i FULLPKGNAME
+-i FULLPKGPATH -i LOCALSTATEDIR -i MACHINE_ARCH
+-s BASE_PKGPATH -s LOCALBASE -s LOCALSTATEDIR -s PREFIX
+-s RCDIR -s SYSCONFDIR -s X11BASE
+.Ed
 .It Ev SUDO
 User settings.
 If set to
