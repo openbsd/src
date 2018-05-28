@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.107 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.108 2018/05/28 15:46:28 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -504,7 +504,10 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	VOP_UNLOCK(devvp);
+	if (error != 0)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
