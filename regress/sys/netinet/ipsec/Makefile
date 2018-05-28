@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2018/05/21 01:19:21 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.23 2018/05/28 20:59:28 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -209,6 +209,13 @@ stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
+	@date >$@
+
+stamp-reflect: nonxt-reflect
+	@echo '\n======== $@ ========'
+	ssh ${IPS_SSH} make -C ${.CURDIR} nonxt-reflect
+	ssh ${IPS_SSH} ${SUDO} rcctl start inetd nonxt_reflect
+	ssh ${ECO_SSH} ${SUDO} rcctl start inetd nonxt_reflect
 	@date >$@
 
 DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
@@ -484,7 +491,7 @@ REGRESS_TARGETS =	${TARGETS:S/^/run-regress-send-/} \
     ${TARGETS:N*_IPIP_*:N*_BUNDLE_*:N*_IN_*:N*_OUT_*:N*-SRC_*:Nudp-*_IPCOMP_*:Ntcp-*_IPCOMP_*:N*-small-*:Nnonxt-*_IPCOMP_*:S/-big-/-/:S/^/run-regress-bpf-/} \
     ${TARGETS:N*_IPIP_*:N*_IPCOMP_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:S/-big-/-/:S/^/run-regress-pflog-/}
 ${REGRESS_TARGETS:Mrun-regress-send-*}: \
-    stamp-ipsec stamp-bpf stamp-pflog stamp-drop
+    stamp-ipsec stamp-reflect stamp-bpf stamp-pflog stamp-drop
 
 CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcpdump
 
