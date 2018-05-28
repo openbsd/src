@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.2 2016/12/18 14:40:25 patrick Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.3 2018/05/28 19:39:15 kettenis Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*-
@@ -32,9 +32,6 @@
 #ifndef _MACHINE_BOOTCONFIG_H_
 #define	_MACHINE_BOOTCONFIG_H_
 
-#define    MAX_BOOT_STRING 255
-extern char bootstring[MAX_BOOT_STRING];
-
 struct arm64_bootparams {
 	vaddr_t		modulep;
 	vaddr_t		kern_l1pt;	/* L1 page table for the kernel */
@@ -45,14 +42,8 @@ struct arm64_bootparams {
 	void		*arg2; // passed to kernel in R2
 };
 
-extern paddr_t physmap[];
-extern u_int physmap_idx;
-
-
 void initarm(struct arm64_bootparams *);
 
 extern char *boot_file;
 
 #endif /* _MACHINE_BOOTCONFIG_H_ */
-
-/* End of bootconfig.h */

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.33 2018/05/15 11:12:35 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.34 2018/05/28 19:39:15 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1136,13 +1136,13 @@ remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
 }
 
 int comcnspeed = B115200;
-char bootargs[MAX_BOOT_STRING];
+char bootargs[256];
 
 void
 collect_kernel_args(char *args)
 {
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING - sizeof(int));
+	strlcpy(bootargs, args, sizeof(bootargs));
 }
 
 void
