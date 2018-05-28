@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.171 2018/05/22 09:51:01 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.172 2018/05/28 09:17:11 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -101,9 +101,10 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
 	error = socreate(SCARG(uap, domain), &so, type, SCARG(uap, protocol));
-	if (error != 0)
-		goto out;
+	if (error)
+		return (error);
 
+	KERNEL_LOCK();
 	fdplock(fdp);
 	error = falloc(p, cloexec, &fp, &fd);
 	fdpunlock(fdp);
@@ -120,7 +121,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		FILE_SET_MATURE(fp, p);
 		*retval = fd;
 	}
-out:
+	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -475,6 +476,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		if (error != 0)
 			goto free2;
 	}
+	KERNEL_LOCK();
 	fdplock(fdp);
 	if ((error = falloc(p, cloexec, &fp1, &sv[0])) != 0)
 		goto free3;
@@ -503,6 +505,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		FILE_SET_MATURE(fp1, p);
 		FILE_SET_MATURE(fp2, p);
 		fdpunlock(fdp);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 	fdremove(fdp, sv[1]);
@@ -514,6 +517,7 @@ free4:
 	so1 = NULL;
 free3:
 	fdpunlock(fdp);
+	KERNEL_UNLOCK();
 free2:
 	if (so2 != NULL)
 		(void)soclose(so2);
