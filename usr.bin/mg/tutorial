@@ -218,10 +218,12 @@ you're editing a file named "tutorial". If you've edited this file and not
 saved it, it should have a "**" to the left of those words. If this file is 
 read-only, you should see a "%%" to the left of those words. 
 
-To the right of the status line, you should see L followed by digits and C
-followed by some more digits. These indicate the line number and column number
-of the file that your cursor is currently on. If you move the cursor around,
-you should see the line and column number change.
+To the right of the status line, you should see L followed by digits
+and, if column-number-mode is enabled, C followed by some more digits.
+Type M-x column-number-mode Enter to enable it if it is disabled (the
+default). These indicate the line number and column number of the file
+that your cursor is currently on. If you move the cursor around, you
+should see the line and column number change.
 
 In the middle of the screen, you should see the word "(fundamental)" which 
 indicates that the current editing mode is "fundamental-mode". The mg editor
@@ -346,7 +348,7 @@ Author Info
 -----------
 
 Original Author of this document: Mayukh Bose, 
-Date last updated: 2015-12-21
+Date last updated: 2018-05-27
 
 Copyright
 ---------
