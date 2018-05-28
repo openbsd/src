@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2018/05/28 19:36:43 kettenis Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
 
 #include "DEFS.h"
 #include <sys/syscall.h>
-#include <arm64/swi.h>
 
 #define SYSENTRY(x)					\
 	.weak _C_LABEL(x);				\
