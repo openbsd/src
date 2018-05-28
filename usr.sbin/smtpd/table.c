@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.25 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.26 2018/05/28 17:11:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -622,6 +622,7 @@ table_parse_lookup(enum table_service service, const char *key,
 		return (1);
 
 	case K_RELAYHOST:
+		memset(&lk->relayhost, 0, sizeof(lk->relayhost));
 		if (!text_to_relayhost(&lk->relayhost, line))
 			return (-1);
 		return (1);
