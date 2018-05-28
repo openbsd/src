@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.2 2018/05/16 13:42:35 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.3 2018/05/28 09:03:59 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -109,9 +109,23 @@
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct imxccm_gate {
-	uint8_t reg;
+	uint16_t reg;
 	uint8_t pos;
-	uint8_t parent;
+	uint16_t parent;
+};
+
+struct imxccm_divider {
+	uint16_t reg;
+	uint16_t shift;
+	uint16_t mask;
+	uint16_t parent;
+	uint16_t fixed;
+};
+
+struct imxccm_mux {
+	uint16_t reg;
+	uint16_t shift;
+	uint16_t mask;
 };
 
 #include "imxccm_clocks.h"
@@ -124,6 +138,10 @@ struct imxccm_softc {
 
 	struct imxccm_gate	*sc_gates;
 	int			sc_ngates;
+	struct imxccm_divider	*sc_divs;
+	int			sc_ndivs;
+	struct imxccm_mux	*sc_muxs;
+	int			sc_nmuxs;
 	struct clock_device	sc_cd;
 };
 
@@ -146,8 +164,14 @@ uint32_t imxccm_get_ahbclk(struct imxccm_softc *);
 uint32_t imxccm_get_ipgclk(struct imxccm_softc *);
 uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
+uint32_t imxccm_imx8mq_i2c(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mq_uart(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mq_usdhc(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mq_usb(struct imxccm_softc *sc, uint32_t);
 void imxccm_enable(void *, uint32_t *, int);
 uint32_t imxccm_get_frequency(void *, uint32_t *);
+int imxccm_set_frequency(void *, uint32_t *, uint32_t);
+int imxccm_set_parent(void *, uint32_t *, uint32_t *);
 
 int
 imxccm_match(struct device *parent, void *match, void *aux)
@@ -157,7 +181,8 @@ imxccm_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-ccm") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-ccm") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-ccm") ||
-	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-ccm"));
+	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-ccm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-ccm"));
 }
 
 void
@@ -174,7 +199,14 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	if (OF_is_compatible(sc->sc_node, "fsl,imx6ul-ccm")) {
+	if (OF_is_compatible(sc->sc_node, "fsl,imx8mq-ccm")) {
+		sc->sc_gates = imx8mq_gates;
+		sc->sc_ngates = nitems(imx8mq_gates);
+		sc->sc_divs = imx8mq_divs;
+		sc->sc_ndivs = nitems(imx8mq_divs);
+		sc->sc_muxs = imx8mq_muxs;
+		sc->sc_nmuxs = nitems(imx8mq_muxs);
+	} else if (OF_is_compatible(sc->sc_node, "fsl,imx6ul-ccm")) {
 		sc->sc_gates = imx6ul_gates;
 		sc->sc_ngates = nitems(imx6ul_gates);
 	} else {
@@ -188,6 +220,8 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cd.cd_cookie = sc;
 	sc->sc_cd.cd_enable = imxccm_enable;
 	sc->sc_cd.cd_get_frequency = imxccm_get_frequency;
+	sc->sc_cd.cd_set_frequency = imxccm_set_frequency;
+	sc->sc_cd.cd_set_parent = imxccm_set_parent;
 	clock_register(&sc->sc_cd);
 }
 
@@ -331,12 +365,130 @@ imxccm_get_ipg_perclk(struct imxccm_softc *sc)
 	return freq / (ipg_podf + 1);
 }
 
+uint32_t
+imxccm_imx8mq_enet(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	case 1:
+		return 266 * 1000 * 1000; /* sys1_pll_266m */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_i2c(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_uart(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_usdhc(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	case 1:
+		return 400 * 1000 * 1000; /* sys1_pll_400m */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_usb(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	case 1:
+		if (idx == IMX8MQ_CLK_USB_CORE_REF_SRC ||
+		    idx == IMX8MQ_CLK_USB_PHY_REF_SRC)
+			return 100 * 1000 * 1000; /* sys1_pll_100m */
+		if (idx == IMX8MQ_CLK_USB_BUS_SRC)
+			return 500 * 1000 * 1000; /* sys2_pll_500m */
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
 void
 imxccm_enable(void *cookie, uint32_t *cells, int on)
 {
 	struct imxccm_softc *sc = cookie;
-	uint32_t idx = cells[0];
-	uint8_t reg, pos;
+	uint32_t idx = cells[0], parent;
+	uint16_t reg;
+	uint8_t pos;
 
 	/* Dummy clock. */
 	if (idx == 0)
@@ -356,10 +508,30 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 		case IMX6_CLK_ENET_REF:
 			imxanatop_enable_enet();
 			return;
+		case IMX6_CLK_IPG:
+		case IMX6_CLK_IPG_PER:
+			/* always on */
+			return;
 		default:
 			break;
 		}
 	}
+
+	if (on) {
+		if (idx < sc->sc_ngates && sc->sc_gates[idx].parent) {
+			parent = sc->sc_gates[idx].parent;
+			imxccm_enable(sc, &parent, on);
+		}
+
+		if (idx < sc->sc_ndivs && sc->sc_divs[idx].parent) {
+			parent = sc->sc_divs[idx].parent;
+			imxccm_enable(sc, &parent, on);
+		}
+	}
+
+	if ((idx < sc->sc_ndivs && sc->sc_divs[idx].reg != 0) ||
+	    (idx < sc->sc_nmuxs && sc->sc_muxs[idx].reg != 0))
+		return;
 
 	if (idx >= sc->sc_ngates || sc->sc_gates[idx].reg == 0) {
 		printf("%s: 0x%08x\n", __func__, idx);
@@ -380,7 +552,7 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t parent;
+	uint32_t div, parent;
 
 	/* Dummy clock. */
 	if (idx == 0)
@@ -391,7 +563,39 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		return imxccm_get_frequency(sc, &parent);
 	}
 
-	if (sc->sc_gates == imx6ul_gates) {
+	if (idx < sc->sc_ndivs && sc->sc_divs[idx].parent) {
+		div = HREAD4(sc, sc->sc_divs[idx].reg);
+		div = div >> sc->sc_divs[idx].shift;
+		div = div & sc->sc_divs[idx].mask;
+		parent = sc->sc_divs[idx].parent;
+		return imxccm_get_frequency(sc, &parent) / (div + 1);
+	}
+
+	if (sc->sc_gates == imx8mq_gates) {
+		switch (idx) {
+		case IMX8MQ_CLK_A53_SRC:
+			return 1000 * 1000 * 1000; /* arm_pll */
+		case IMX8MQ_CLK_ENET_AXI_SRC:
+			return imxccm_imx8mq_enet(sc, idx);
+		case IMX8MQ_CLK_I2C1_SRC:
+		case IMX8MQ_CLK_I2C2_SRC:
+		case IMX8MQ_CLK_I2C3_SRC:
+		case IMX8MQ_CLK_I2C4_SRC:
+			return imxccm_imx8mq_i2c(sc, idx);
+		case IMX8MQ_CLK_UART1_SRC:
+		case IMX8MQ_CLK_UART2_SRC:
+		case IMX8MQ_CLK_UART3_SRC:
+		case IMX8MQ_CLK_UART4_SRC:
+			return imxccm_imx8mq_uart(sc, idx);
+		case IMX8MQ_CLK_USDHC1_SRC:
+		case IMX8MQ_CLK_USDHC2_SRC:
+			return imxccm_imx8mq_usdhc(sc, idx);
+		case IMX8MQ_CLK_USB_BUS_SRC:
+		case IMX8MQ_CLK_USB_CORE_REF_SRC:
+		case IMX8MQ_CLK_USB_PHY_REF_SRC:
+			return imxccm_imx8mq_usb(sc, idx);
+		}
+	} else if (sc->sc_gates == imx6ul_gates) {
 		switch (idx) {
 		case IMX6UL_CLK_ARM:
 			return imxccm_get_armclk(sc);
@@ -429,3 +633,68 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 	return 0;
 }
 
+int
+imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct imxccm_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t div, parent;
+
+	if (sc->sc_divs == imx8mq_divs) {
+		switch (idx) {
+		case IMX8MQ_CLK_USB_BUS_SRC:
+		case IMX8MQ_CLK_USB_CORE_REF_SRC:
+		case IMX8MQ_CLK_USB_PHY_REF_SRC:
+			if (imxccm_get_frequency(sc, cells) != freq)
+				break;
+			return 0;
+		case IMX8MQ_CLK_USDHC1_DIV:
+			parent = sc->sc_divs[idx].parent;
+			if (imxccm_get_frequency(sc, &parent) != freq)
+				break;
+			imxccm_enable(cookie, &parent, 1);
+			div = HREAD4(sc, sc->sc_divs[idx].reg);
+			div &= ~(sc->sc_divs[idx].mask << sc->sc_divs[idx].shift);
+			div |= (0x0 << sc->sc_divs[idx].shift);
+			HWRITE4(sc, sc->sc_divs[idx].reg, div);
+			return 0;
+		}
+	}
+
+	printf("%s: 0x%08x %x\n", __func__, idx, freq);
+	return -1;
+}
+
+int
+imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
+{
+	struct imxccm_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t pidx = pcells[0];
+	uint32_t mux;
+
+	if (sc->sc_muxs == imx8mq_muxs) {
+		switch (idx) {
+		case IMX8MQ_CLK_USB_BUS_SRC:
+			if (pidx != IMX8MQ_SYS2_PLL_500M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MQ_CLK_USB_CORE_REF_SRC:
+		case IMX8MQ_CLK_USB_PHY_REF_SRC:
+			if (pidx != IMX8MQ_SYS1_PLL_100M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		}
+	}
+
+	printf("%s: 0x%08x 0x%08x\n", __func__, idx, pidx);
+	return -1;
+}
