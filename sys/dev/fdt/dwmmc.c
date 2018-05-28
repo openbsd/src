@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.10 2018/05/26 21:17:21 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.11 2018/05/28 21:50:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -98,6 +98,9 @@
 #define SDMMC_STATUS_FIFO_COUNT(x)	(((x) >> 17) & 0x1fff)
 #define  SDMMC_STATUS_DATA_BUSY		(1 << 9)
 #define SDMMC_FIFOTH		0x004c
+#define  SDMMC_FIFOTH_MSIZE_SHIFT	28
+#define  SDMMC_FIFOTH_RXWM_SHIFT	16
+#define  SDMMC_FIFOTH_TXWM_SHIFT	0
 #define SDMMC_CDETECT		0x0050
 #define  SDMMC_CDETECT_CARD_DETECT_0	(1 << 0)
 #define SDMMC_WRTPRT		0x0054
@@ -342,6 +345,11 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, SDMMC_INTMASK, 0);
 	HWRITE4(sc, SDMMC_RINTSTS, 0xffffffff);
 	HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_INT_ENABLE);
+
+	/* Set FIFO thresholds. */
+	HWRITE4(sc, SDMMC_FIFOTH, 2 << SDMMC_FIFOTH_MSIZE_SHIFT |
+	    (sc->sc_fifo_depth / 2 - 1) << SDMMC_FIFOTH_RXWM_SHIFT |
+	    (sc->sc_fifo_depth / 2) << SDMMC_FIFOTH_TXWM_SHIFT);
 
 	dwmmc_bus_width(sc, 1);
 
