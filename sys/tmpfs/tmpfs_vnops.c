@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.30 2018/05/23 14:49:08 reyk Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.31 2018/05/28 16:02:08 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -317,11 +317,14 @@ tmpfs_create(void *v)
 	struct vnode *dvp = ap->a_dvp, **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *vap = ap->a_vap;
+	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(vap->va_type == VREG || vap->va_type == VSOCK);
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	vput(dvp);
+	return error;
 }
 
 int
@@ -346,6 +349,7 @@ tmpfs_mknod(void *v)
 
 	/* tmpfs_alloc_file() will unlock 'dvp'. */
 	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	vput(dvp);
 	if (error)
 		return error;
 
@@ -853,9 +857,12 @@ tmpfs_mkdir(void *v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *vap = ap->a_vap;
+	int error;
 
 	KASSERT(vap->va_type == VDIR);
-	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	vput(dvp);
+	return error;
 }
 
 int
@@ -962,6 +969,7 @@ tmpfs_symlink(void *v)
 	vap->va_type = VLNK;
 
 	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, target);
+	vput(dvp);
 	if (error == 0)
 		vput(*vpp);
 

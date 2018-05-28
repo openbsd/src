@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.81 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.82 2018/05/28 16:02:08 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -80,9 +80,13 @@ int
 ext2fs_create(void *v)
 {
 	struct vop_create_args *ap = v;
-	return ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
+	int error;
+
+	error = ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
 					  ap->a_vap->va_mode),
 			  	ap->a_dvp, ap->a_vpp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (error);
 }
 
 /*
@@ -98,9 +102,10 @@ ext2fs_mknod(void *v)
 	struct inode *ip;
 	int error;
 
-	if ((error =
-		ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-		ap->a_dvp, vpp, ap->a_cnp)) != 0)
+	error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
+	    ap->a_dvp, vpp, ap->a_cnp);
+	vput(ap->a_dvp);
+	if (error != 0)
 		return (error);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
@@ -1085,6 +1090,7 @@ ext2fs_symlink(void *v)
 
 	error = ext2fs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 			      vpp, ap->a_cnp);
+	vput(ap->a_dvp);
 	if (error)
 		return (error);
 	vp = *vpp;
@@ -1180,7 +1186,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	if ((error = ext2fs_inode_alloc(pdir, mode, cnp->cn_cred, &tvp))
 	    != 0) {
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-		vput(dvp);
 		return (error);
 	}
 	ip = VTOI(tvp);
@@ -1205,7 +1210,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1215,7 +1219,6 @@ bad:
 	 * or the directory so must deallocate the inode.
 	 */
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	tvp->v_type = VNON;

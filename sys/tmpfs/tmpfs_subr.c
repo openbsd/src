@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.21 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.22 2018/05/28 16:02:08 visa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -426,7 +426,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 out:
 	if (error == 0 && (cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	return error;
 }
 
