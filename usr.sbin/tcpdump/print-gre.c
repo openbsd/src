@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.19 2018/02/24 08:53:36 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.20 2018/05/28 00:06:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -79,6 +79,8 @@ struct wccp_redirect {
 
 void gre_print_0(const u_char *, u_int);
 void gre_print_1(const u_char *, u_int);
+void gre_print_pptp(const u_char *, u_int, uint16_t);
+void gre_print_eoip(const u_char *, u_int, uint16_t);
 void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);
@@ -271,7 +273,7 @@ trunc:
 void
 gre_print_1(const u_char *p, u_int length)
 {
-	uint16_t flags, proto, len;
+	uint16_t flags, proto;
 	int l;
 
 	l = snapend - p;
@@ -281,18 +283,6 @@ gre_print_1(const u_char *p, u_int length)
 	l -= sizeof(flags);
 	length -= sizeof(flags);
 
-	printf("pptp");
-
-	if (vflag) {
-		printf(" [%s%s%s%s%s%s] ",
-		    (flags & GRE_CP) ? "C" : "",
-		    (flags & GRE_RP) ? "R" : "",
-		    (flags & GRE_KP) ? "K" : "",
-		    (flags & GRE_SP) ? "S" : "",
-		    (flags & GRE_sP) ? "s" : "",
-		    (flags & GRE_AP) ? "A" : "");
-	}
-
 	if (l < sizeof(proto))
 		goto trunc;
 
@@ -300,6 +290,45 @@ gre_print_1(const u_char *p, u_int length)
 	p += sizeof(proto);
 	l -= sizeof(proto);
 	length -= sizeof(proto);
+
+	switch (proto) {
+	case ETHERTYPE_PPP:
+		gre_print_pptp(p, length, flags);
+		break;
+	case 0x6400:
+		/* MikroTik RouterBoard Ethernet over IP (EoIP) */
+		gre_print_eoip(p, length, flags);
+		break;
+	default:
+		printf("unknown-gre1-proto-%04x", proto);
+		break;
+	}
+
+	return;
+
+trunc:
+	printf("[|gre1]");
+}
+
+void
+gre_print_pptp(const u_char *p, u_int length, uint16_t flags)
+{
+	uint16_t len;
+	int l;
+
+	l = snapend - p;
+
+	printf("pptp");
+
+	if (vflag) {
+		printf(" [%s%s%s%s%s%s]",
+		    (flags & GRE_CP) ? "C" : "",
+		    (flags & GRE_RP) ? "R" : "",
+		    (flags & GRE_KP) ? "K" : "",
+		    (flags & GRE_SP) ? "S" : "",
+		    (flags & GRE_sP) ? "s" : "",
+		    (flags & GRE_AP) ? "A" : "");
+	}
 
 	if (flags & GRE_CP) {
 		printf(" cpset!");
@@ -365,18 +394,67 @@ gre_print_1(const u_char *p, u_int length)
 
 	printf(": ");
 
-	switch (proto) {
-	case ETHERTYPE_PPP:
-		ppp_hdlc_print(p, len);
-		break;
-	default:
-		printf("unknown-proto-%04x", proto);
-		break;
-	}
+	ppp_hdlc_print(p, len);
 	return;
 
 trunc:
 	printf("[|pptp]");
+}
+
+void
+gre_print_eoip(const u_char *p, u_int length, uint16_t flags)
+{
+	uint16_t len, id;
+	int l;
+
+	l = snapend - p;
+
+	printf("eoip");
+
+	flags &= ~GRE_VERS;
+	if (flags != GRE_KP) {
+		printf(" unknown-eoip-flags-%04x!", flags);
+		return;
+	}
+
+	if (l < sizeof(len))
+		goto trunc;
+
+	len = EXTRACT_16BITS(p);
+	p += sizeof(len);
+	l -= sizeof(len);
+	length -= sizeof(len);
+
+	if (l < sizeof(id))
+		goto trunc;
+
+	id = EXTRACT_LE_16BITS(p);
+	p += sizeof(id);
+	l -= sizeof(id);
+	length -= sizeof(id);
+
+	if (vflag)
+		printf(" len=%u tunnel-id=%u", len, id);
+	else
+		printf(" %u", id);
+
+        if (length < len) {
+                (void)printf(" truncated-eoip - %d bytes missing!",
+		    len - length);
+		len = length;
+	}
+
+	printf(": ");
+
+	if (len == 0)
+		printf("keepalive");
+	else
+		ether_tryprint(p, len, 0);
+
+	return;
+
+trunc:
+	printf("[|eoip]");
 }
 
 void
