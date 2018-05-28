@@ -83,14 +83,14 @@ main(void)
 
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-        serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        serv_addr.sin_port = htons(TEST_PORT);
+	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	serv_addr.sin_port = htons(TEST_PORT);
 
-        if (bind(s, (struct sockaddr *)&serv_addr, sizeof(serv_addr)))
+	if (bind(s, (struct sockaddr *)&serv_addr, sizeof(serv_addr)))
 		err(1, "bind");
 
-        if (listen(s, 3))
-        	err(1, "listen");
+	if (listen(s, 3))
+		err(1, "listen");
 
 	len = sizeof(client_addr);
 	fd = accept(s, &client_addr, &len);
