@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_full.h,v 1.1 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: cpu_full.h,v 1.2 2018/05/28 20:52:44 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Philip Guenther <guenther@openbsd.org>
  * Copyright (c) 2018 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -26,10 +26,14 @@
 struct cpu_info_full {
 	/* page mapped kRO in u-k */
 	union {
-		struct i386tss		u_tss; /* followed by gdt */
-		char			u_align[PAGE_SIZE];
+		struct {
+			struct i386tss		uu_tss;
+			union descriptor	uu_gdt[NGDT];
+		} u_tssgdt;
+	char			u_align[PAGE_SIZE];
 	} cif_TSS_RO;
-#define cif_tss cif_TSS_RO.u_tss
+#define cif_tss cif_TSS_RO.u_tssgdt.uu_tss
+#define cif_gdt cif_TSS_RO.u_tssgdt.uu_gdt
 
 	/* start of page mapped kRW in u-k */
 	uint32_t cif_tramp_stack[(PAGE_SIZE
@@ -41,9 +45,6 @@ struct cpu_info_full {
 	 */
 	struct cpu_info cif_cpu;
 } __aligned(PAGE_SIZE);
-
-/* idt and align shim must fit exactly in a page */
-CTASSERT(_ALIGN(sizeof(struct gate_descriptor) * NIDT) <= PAGE_SIZE);
 
 /* tss, align shim, and gdt must fit in a page */
 CTASSERT(_ALIGN(sizeof(struct i386tss)) +

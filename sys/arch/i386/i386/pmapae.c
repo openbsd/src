@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.54 2018/04/20 07:27:54 mlarkin Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.55 2018/05/28 20:52:44 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -99,6 +99,14 @@
 #include <stand/boot/bootarg.h>
 
 #include "ksyms.h"
+
+/* #define PMAPAE_DEBUG */
+
+#ifdef PMAPAE_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif	/* PMAPAE_DEBUG */
 
 /*
  * this file contains the code for the "pmap module."   the module's
@@ -347,6 +355,8 @@
 #undef NBPD
 #define NBPD		(1U << PDSHIFT)	/* # bytes mapped by PD (2MB) */
 
+#define PDSHIFT86	22		/* for pmap86 transfer */
+
 #undef PDSLOT_PTE
 #define PDSLOT_PTE	(1660U)	/* 1660: for recursive PDP map */
 #undef PDSLOT_KERN
@@ -374,6 +384,9 @@
 #define PT_MASK		0x001ff000	/* page table address bits */
 #define pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
 #define ptei(VA)	(((VA) & PT_MASK) >> PGSHIFT)
+
+#define PD_MASK86	0xffc00000	/* for pmap86 transfer */
+#define PT_MASK86	0x003ff000	/* for pmap86 transfer */
 
 /*
  * Mach derived conversion macros
@@ -456,6 +469,8 @@ extern caddr_t pmap_csrcp, pmap_cdstp, pmap_zerop, pmap_ptpp, pmap_flshp;
 extern int pmap_pg_g;
 extern int pmap_pg_wc;
 extern struct pmap_head pmaps;
+
+extern uint32_t	cpu_meltdown;
 
 /*
  * local prototypes
@@ -616,6 +631,10 @@ pmap_bootstrap_pae(void)
 
 	cpu_pae = 1;
 
+	DPRINTF("%s: pm_pdir 0x%x pm_pdirpa 0x%x pm_pdirsize %d\n", __func__,
+	    (uint32_t)kpm->pm_pdir, (uint32_t)kpm->pm_pdirpa,
+	    kpm->pm_pdirsize);
+
 	va = (vaddr_t)kpm->pm_pdir;
 	kpm->pm_pdidx[0] = (va + 0*NBPG - KERNBASE) | PG_V;
 	kpm->pm_pdidx[1] = (va + 1*NBPG - KERNBASE) | PG_V;
@@ -628,11 +647,13 @@ pmap_bootstrap_pae(void)
 	PDE(kpm, PDSLOT_PTE+3) = kpm->pm_pdidx[3] | PG_KW | PG_M | PG_U;
 
 	/* transfer all kernel mappings over into pae tables */
-	for (va = KERNBASE, eva = va + (nkpde << 22);
+	for (va = KERNBASE, eva = va + (nkpde << PDSHIFT86);
 	    va < eva; va += PAGE_SIZE) {
 		if (!pmap_valid_entry(PDE(kpm, pdei(va)))) {
 			ptp = uvm_pagealloc(&kpm->pm_obj, va, NULL,
 			    UVM_PGA_ZERO);
+			if (ptp == NULL)
+				panic("%s: uvm_pagealloc() failed", __func__);
 			ptaddr = VM_PAGE_TO_PHYS(ptp);
 			PDE(kpm, pdei(va)) = ptaddr | PG_KW | PG_V |
 			    PG_U | PG_M;
@@ -663,12 +684,74 @@ pmap_bootstrap_pae(void)
 			pmap_pte_set_pae(va, pmap_pte_paddr_86(va), bits);
 	}
 
+	/* Transfer special mappings */
+	if (kpm->pm_pdir_intel) {
+		uint32_t	*pd, *ptp;
+		uint32_t	 l1idx, l2idx;
+		paddr_t		 npa;
+		struct vm_page	*ptppg;
+
+		pd = (uint32_t *)kpm->pm_pdir_intel;
+		kpm->pm_pdir_intel = kpm->pm_pdirpa_intel = 0;
+
+		for (va = KERNBASE, eva = va + (nkpde << PDSHIFT86); va < eva;
+		    va += PAGE_SIZE) {
+			l1idx = ((va & PT_MASK86) >> PGSHIFT);
+			l2idx = ((va & PD_MASK86) >> PDSHIFT86);
+
+			if (!pmap_valid_entry(pd[l2idx]))
+				continue;
+
+			npa = pd[l2idx]	& PMAP_PA_MASK;
+			ptppg = PHYS_TO_VM_PAGE(npa);
+			mtx_enter(&ptppg->mdpage.pv_mtx);
+
+			/* still running on pmap86 */
+			ptp = (uint32_t *)pmap_tmpmap_pa_86(npa);
+
+			if (!pmap_valid_entry(ptp[l1idx])) {
+				mtx_leave(&ptppg->mdpage.pv_mtx);
+				pmap_tmpunmap_pa_86();
+				continue;
+			}
+			DPRINTF("%s: va 0x%x l2idx %u 0x%x lx1idx %u 0x%x\n",
+			    __func__, (uint32_t)va, l2idx, (uint32_t)pd[l2idx],
+			    l1idx, (uint32_t)ptp[l1idx]);
+
+			/* protection and cacheability */
+			bits = ptp[l1idx] & (PG_PROT|PG_N|PG_WT);
+			npa = ptp[l1idx] & PMAP_PA_MASK;
+
+			/* still running on pmap86 */
+			pmap_tmpunmap_pa_86();
+			mtx_leave(&ptppg->mdpage.pv_mtx);
+
+			/* enforce use of pmap86 */
+			cpu_pae = 0;
+			pmap_enter_special_pae(va, npa, 0, bits);
+			cpu_pae = 1;
+
+			if (--ptppg->wire_count == 1) {
+				ptppg->wire_count = 0;
+				uvm_pagerealloc(ptppg, NULL, 0);
+				DPRINTF("%s: freeing PT page 0x%x\n", __func__,
+				    (uint32_t)VM_PAGE_TO_PHYS(ptppg));
+			}
+		}
+		uvm_km_free(kernel_map, (vaddr_t)pd, NBPG);
+		DPRINTF("%s: freeing PDP 0x%x\n", __func__, (uint32_t)pd);
+	}
+
 	if (!cpu_paenable(&kpm->pm_pdidx[0])) {
 		extern struct user *proc0paddr;
 
 		proc0paddr->u_pcb.pcb_cr3 = kpm->pm_pdirpa =
 		    (vaddr_t)kpm - KERNBASE;
 		kpm->pm_pdirsize = 4 * NBPG;
+
+		DPRINTF("%s: pm_pdir 0x%x pm_pdirpa 0x%x pm_pdirsize %d\n",
+		    __func__, (uint32_t)kpm->pm_pdir, (uint32_t)kpm->pm_pdirpa,
+		    kpm->pm_pdirsize);
 
 		csrc_pte = vtopte(pmap_csrcp);
 		cdst_pte = vtopte(pmap_cdstp);
@@ -748,6 +831,7 @@ struct vm_page *
 pmap_alloc_ptp_pae(struct pmap *pmap, int pde_index, pt_entry_t pde_flags)
 {
 	struct vm_page *ptp;
+	pd_entry_t *pva_intel;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
@@ -759,6 +843,22 @@ pmap_alloc_ptp_pae(struct pmap *pmap, int pde_index, pt_entry_t pde_flags)
 	ptp->wire_count = 1;	/* no mappings yet */
 	PDE(pmap, pde_index) = (pd_entry_t)(VM_PAGE_TO_PHYS(ptp) |
 	    PG_RW | PG_V | PG_M | PG_U | pde_flags);
+
+	/*
+	 * Meltdown special case - if we are adding a new PDE for
+	 * usermode addresses, just copy the PDE to the U-K
+	 * table.
+	 */
+	if (pmap->pm_pdir_intel && ptp_i2v(pde_index) < VM_MAXUSER_ADDRESS) {
+		pva_intel = (pd_entry_t *)pmap->pm_pdir_intel;
+		pva_intel[pde_index] = PDE(pmap, pde_index);
+		DPRINTF("%s: copying usermode PDE (content=0x%llx) pde_index "
+		    "%d from 0x%llx -> 0x%llx\n", __func__,
+		    PDE(pmap, pde_index), pde_index,
+		    (uint64_t)&PDE(pmap, pde_index),
+		    (uint64_t)&(pva_intel[pde_index]));
+	}
+
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
 	return(ptp);
@@ -800,6 +900,8 @@ void
 pmap_drop_ptp_pae(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
     pt_entry_t *ptes)
 {
+	pd_entry_t *pva_intel;
+
 	i386_atomic_testset_uq(&PDE(pm, pdei(va)), 0);
 	pmap_tlb_shootpage(curcpu()->ci_curpmap, ((vaddr_t)ptes) + ptp->offset);
 #ifdef MULTIPROCESSOR
@@ -816,6 +918,16 @@ pmap_drop_ptp_pae(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
 	ptp->wire_count = 0;
 	/* Postpone free to after shootdown. */
 	uvm_pagerealloc(ptp, NULL, 0);
+
+	if (pm->pm_pdir_intel) {
+		KASSERT(va < VM_MAXUSER_ADDRESS);
+		/* Zap special meltdown PDE */
+		pva_intel = (pd_entry_t *)pm->pm_pdir_intel;
+		i386_atomic_testset_uq(&pva_intel[pdei(va)], 0);
+		DPRINTF("%s: cleared meltdown PDE @ index %lu "
+		    "(va range start 0x%x)\n", __func__, pdei(va),
+		    (uint32_t)va);
+	}
 }
 
 /*
@@ -849,10 +961,6 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	pmap->pm_pdidx[3] |= PG_V;
 	pmap->pm_pdirsize = 4 * NBPG;
 
-	/* XXX hshoexer */
-	pmap->pm_pdir_intel = pmap->pm_pdir;
-	pmap->pm_pdirpa_intel = pmap->pm_pdirpa;
-
 	/* init PDP */
 	/* zero init area */
 	bzero((void *)pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
@@ -878,6 +986,44 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	/* zero the rest */
 	bzero(&PDE(pmap, PDSLOT_KERN + nkpde), pmap->pm_pdirsize -
 	    ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+
+	/*
+	 * Intel CPUs need a special page table to be used during usermode
+	 * execution, one that lacks all kernel mappings.
+	 */
+	if (cpu_meltdown) {
+		int i;
+
+		if ((va = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
+			panic("%s: kernel_map out of virtual space!", __func__);
+		if (!pmap_extract(pmap_kernel(),
+		    (vaddr_t)&pmap->pm_pdidx_intel, &pmap->pm_pdirpa_intel))
+			panic("%s: can't locate PDPT\n", __func__);
+		pmap->pm_pdir_intel = va;
+
+		for (i = 0; i < 4; i++) {
+			pmap->pm_pdidx_intel[i] = 0;
+			if (!pmap_extract(pmap, va + i * NBPG,
+			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
+				panic("%s: can't locate PD page\n", __func__);
+			pmap->pm_pdidx_intel[i] |= PG_V;
+			DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
+			    i, pmap->pm_pdidx_intel[i]);
+		}
+
+		/* Copy PDEs from pmap_kernel's U-K view */
+		bcopy((void *)pmap_kernel()->pm_pdir_intel,
+		    (void *)pmap->pm_pdir_intel, 4 * NBPG);
+
+		DPRINTF("%s: pmap %p pm_pdir 0x%lx pm_pdirpa 0x%lx "
+		    "pdir_intel 0x%lx pdirpa_intel 0x%lx\n",
+		    __func__, pmap, pmap->pm_pdir, pmap->pm_pdirpa,
+		    pmap->pm_pdir_intel, pmap->pm_pdirpa_intel);
+	} else {
+		pmap->pm_pdir_intel = 0;
+		pmap->pm_pdirpa_intel = 0;
+	}
+
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 }
 
@@ -1757,10 +1903,124 @@ out:
 	return error;
 }
 
+/*
+ * Allocate an extra PDPT and PT pages as needed to map kernel pages
+ * used for the U-K mappings.  These special mappings are set up
+ * during bootstrap and get never removed and are part of pmap_kernel.
+ *
+ * New pmaps inherit the kernel portion of pmap_kernel including
+ * the special mappings (see pmap_pinit_pd_pae()).
+ */
 void
 pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 {
-	/* XXX hshoexer nothing yet */
+	struct pmap 	*pmap = pmap_kernel();
+	struct vm_page	*ptppg = NULL, *pdppg;
+	pd_entry_t	*pd, *ptp;
+	pt_entry_t	*ptes;
+	uint32_t	 l2idx, l1idx;
+	vaddr_t		 vapd;
+	paddr_t		 npa;
+	int		 i;
+
+	/* If CPU is secure, no need to do anything */
+	if (!cpu_meltdown)
+		return;
+
+	/* Must be kernel VA */
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		panic("%s: invalid special mapping va 0x%lx requested",
+		    __func__, va);
+
+	if (!pmap->pm_pdir_intel) {
+		if ((vapd = uvm_km_zalloc(kernel_map, 4 * NBPG)) == 0)
+			panic("%s: kernel_map out of virtual space!", __func__);
+		pmap->pm_pdir_intel = vapd;
+		if (!pmap_extract(pmap, (vaddr_t)&pmap->pm_pdidx_intel,
+		    &pmap->pm_pdirpa_intel))
+			panic("%s: can't locate PDPT\n", __func__);
+
+		for (i = 0; i < 4; i++) {
+			pmap->pm_pdidx_intel[i] = 0;
+			if (!pmap_extract(pmap, vapd + i*NBPG,
+			    (paddr_t *)&pmap->pm_pdidx_intel[i]))
+				panic("%s: can't locate PD page\n", __func__);
+
+			/* ensure PDPs are wired down XXX hshoexer why? */
+			pdppg = PHYS_TO_VM_PAGE(pmap->pm_pdidx_intel[i]);
+			if (pdppg == NULL)
+				panic("%s: no vm_page for pdidx %d", __func__, i);
+			atomic_clearbits_int(&pdppg->pg_flags, PG_BUSY);
+			pdppg->wire_count = 1;	/* no mappings yet */
+
+			pmap->pm_pdidx_intel[i] |= PG_V;
+
+			DPRINTF("%s: pm_pdidx_intel[%d] = 0x%llx\n", __func__,
+			    i, pmap->pm_pdidx_intel[i]);
+		}
+	}
+
+	DPRINTF("%s: pm_pdir_intel 0x%x pm_pdirpa_intel 0x%x\n", __func__,
+	    (uint32_t)pmap->pm_pdir_intel, (uint32_t)pmap->pm_pdirpa_intel);
+
+	/* These are the PAE versions of pdei() and ptei() */
+	l2idx = pdei(va);
+	l1idx = ptei(va);
+
+	DPRINTF("%s: va 0x%08lx pa 0x%08lx prot 0x%08lx flags 0x%08x "
+	    "l2idx %u l1idx %u\n", __func__, va, pa, (unsigned long)prot,
+	    flags, l2idx, l1idx);
+
+	if ((pd = (pd_entry_t *)pmap->pm_pdir_intel) == 0)
+		panic("%s: PD not initialized for pmap @ %p\n", __func__, pmap);
+
+	/* npa = phsyaddr of PT page */
+	npa = pd[l2idx] & PMAP_PA_MASK;
+
+	/* Valide PDE for the 2MB region containing va? */
+	if (!npa) {
+		/*
+		 * No valid PDE - allocate PT page and set PDE.  We
+		 * get it from pm_obj, which is used for PT pages.
+		 * We calculate the offset  from l2idx+2048, so we are
+		 * beyond the regular PT pages. For their l2dix
+		 * 0 <= l2idx < 2048 holds.
+		 */
+		ptppg = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(l2idx + 2048),
+		    NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (ptppg == NULL)
+			panic("%s: failed to allocate PT page", __func__);
+
+		atomic_clearbits_int(&ptppg->pg_flags, PG_BUSY);
+		ptppg->wire_count = 1;	/* no mappings yet */
+
+		npa = VM_PAGE_TO_PHYS(ptppg);
+		pd[l2idx] = (npa | PG_RW | PG_V | PG_M | PG_U);
+
+		DPRINTF("%s: allocated new PT page at phys 0x%x, "
+		    "setting PDE[%d] = 0x%llx\n", __func__, (uint32_t)npa,
+		    l2idx, pd[l2idx]);
+	}
+
+	/* temporarily map PT page and set PTE for U-K mapping */
+	if (ptppg == NULL && (ptppg = PHYS_TO_VM_PAGE(npa)) == NULL)
+		panic("%s: no vm_page for PT page", __func__);
+	mtx_enter(&ptppg->mdpage.pv_mtx);
+	ptp = (pd_entry_t *)pmap_tmpmap_pa(npa);
+	ptp[l1idx] = (pa | protection_codes[prot] | PG_V | PG_M | PG_U | flags);
+	DPRINTF("%s: setting PTE[%d] = 0x%llx\n", __func__, l1idx, ptp[l1idx]);
+	pmap_tmpunmap_pa();
+	mtx_leave(&ptppg->mdpage.pv_mtx);
+
+	/* if supported, set the PG_G flag on the corresponding U+K entry */
+	if (!(cpu_feature & CPUID_PGE))
+		return;
+	ptes = pmap_map_ptes_pae(pmap);	/* pmap_kernel -> PTE_BASE */
+	if (pmap_valid_entry(ptes[atop(va)]))
+		ptes[atop(va)] |= PG_G;
+	else
+		DPRINTF("%s: no U+K mapping for special mapping?\n", __func__);
+	pmap_unmap_ptes_pae(pmap);	/* pmap_kernel -> nothing */
 }
 
 /*

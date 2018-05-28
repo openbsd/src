@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.616 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.617 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1698,6 +1698,7 @@ identifycpu(struct cpu_info *ci)
 	char *brandstr_from, *brandstr_to;
 	char *cpu_device = ci->ci_dev->dv_xname;
 	int skipspace;
+	extern uint32_t cpu_meltdown;
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -2019,6 +2020,9 @@ identifycpu(struct cpu_info *ci)
 				    cpu_tpm_eaxfeatures[i].feature_bit)
 					printf(",%s", cpu_tpm_eaxfeatures[i].feature_name);
 		}
+
+		if (cpu_meltdown)
+			printf(",MELTDOWN");
 
 		printf("\n");
 	}
@@ -3098,7 +3102,7 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_self = &cpu_info_primary;
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
-	cpu_info_primary.ci_gdt = (void *)(cpu_info_primary.ci_tss + 1);
+	cpu_info_primary.ci_gdt = (void *)&cpu_info_full_primary.cif_gdt;
 
 	/* make bootstrap gdt gates and memory segments */
 	setsegment(&cpu_info_primary.ci_gdt[GCODE_SEL].sd, 0, 0xfffff,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.65 2018/02/10 09:46:58 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.66 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -168,6 +168,10 @@
 #define	CPUIDECX_F16C	0x20000000	/* 16bit fp conversion  */
 #define	CPUIDECX_RDRAND	0x40000000	/* RDRAND instruction  */
 #define	CPUIDECX_HV	0x80000000	/* Running on hypervisor */
+/* SEFF EDX bits */
+#define SEFF0EDX_IBRS	0x04000000	/* IBRS / IBPB Speculation Control */
+#define SEFF0EDX_STIBP	0x08000000	/* STIBP Speculation Control */
+#define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
 
 /*
  * "Structured Extended Feature Flags Parameters" (CPUID function 0x7, leaf 0)
@@ -329,6 +333,8 @@
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
+#define MSR_ARCH_CAPABILITIES	0x10a
+#define ARCH_CAPABILITIES_RDCL_NO	(1 << 0)	/* Meltdown safe */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */

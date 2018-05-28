@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.41 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.42 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
-	ci->ci_gdt = (void *)(ci->ci_tss + 1);
 	bcopy(cpu_info_primary.ci_gdt, ci->ci_gdt, GDT_SIZE);
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 0, 0);

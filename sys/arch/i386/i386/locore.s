@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.186 2018/05/11 15:27:43 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.187 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -265,6 +265,8 @@ INTRENTRY_LABEL(label):	/* from kernel */	; \
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
 	.globl	_C_LABEL(lapic_tpr)
+	.globl	_C_LABEL(pg_g_kern)
+	.globl	_C_LABEL(cpu_meltdown)
 
 #if NLAPIC > 0
 	.align NBPG
@@ -318,6 +320,10 @@ _C_LABEL(bootdev):	.long	0	# device we booted from
 _C_LABEL(proc0paddr):	.long	0
 _C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
 _C_LABEL(PTDsize):	.long	NBPG	# size of PTD, for libkvm
+_C_LABEL(pg_g_kern):	.long	0	# 0x100 if global pages should be used
+					# in kernel mappings, 0 otherwise (for
+					# insecure CPUs)
+_C_LABEL(cpu_meltdown): .long	0	# 1 if this CPU has Meltdown
 
 	.text
 

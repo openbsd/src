@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.84 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.85 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 
 struct pmap {
 	uint64_t pm_pdidx[4];		/* PDIEs for PAE mode */
+	uint64_t pm_pdidx_intel[4];	/* PDIEs for PAE mode U-K */
 
 	struct mutex pm_mtx;
 	struct mutex pm_apte_mtx;
@@ -226,7 +227,9 @@ extern struct pool pmap_pv_pool;
  * Prototypes
  */
 
+vaddr_t pmap_tmpmap_pa_86(paddr_t);
 vaddr_t pmap_tmpmap_pa(paddr_t);
+void pmap_tmpunmap_pa_86(void);
 void pmap_tmpunmap_pa(void);
 
 void pmap_bootstrap(vaddr_t);

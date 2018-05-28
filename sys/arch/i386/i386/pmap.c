@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.201 2018/04/20 07:27:54 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.202 2018/05/28 20:52:44 bluhm Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -74,6 +74,14 @@
 #include <stand/boot/bootarg.h>
 
 #include "vmm.h"
+
+/* #define PMAP_DEBUG */
+
+#ifdef PMAP_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif	/* PMAP_DEBUG */
 
 /*
  * this file contains the code for the "pmap module."   the module's
@@ -372,6 +380,13 @@ int nkptp_max = 1024 - (KERNBASE / NBPD) - 1;
 extern int cpu_pae;
 
 /*
+ * pg_g_kern:  if CPU is affected by Meltdown pg_g_kern is 0,
+ * otherwise it is is set to PG_G.  pmap_pg_g will be dervied
+ * from pg_g_kern, see pmap_bootstrap().
+ */
+extern int pg_g_kern;
+
+/*
  * pmap_pg_g: if our processor supports PG_G in the PTE then we
  * set pmap_pg_g to PG_G (otherwise it is zero).
  */
@@ -444,6 +459,8 @@ struct pool pmap_pmap_pool;
 pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *flsh_pte;
 caddr_t pmap_csrcp, pmap_cdstp, pmap_zerop, pmap_ptpp, pmap_flshp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
+
+extern uint32_t cpu_meltdown;
 
 /*
  * local prototypes
@@ -684,16 +701,13 @@ pmap_pte_paddr_86(vaddr_t va)
  */
 
 vaddr_t
-pmap_tmpmap_pa(paddr_t pa)
+pmap_tmpmap_pa_86(paddr_t pa)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
 #endif
 	pt_entry_t *ptpte;
 	caddr_t ptpva;
-
-	if (cpu_pae)
-		return pmap_tmpmap_pa_pae(pa);
 
 	ptpte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(pmap_ptpp, id);
@@ -706,23 +720,28 @@ pmap_tmpmap_pa(paddr_t pa)
 	return((vaddr_t)ptpva);
 }
 
+
+vaddr_t
+pmap_tmpmap_pa(paddr_t pa)
+{
+	if (cpu_pae)
+		return pmap_tmpmap_pa_pae(pa);
+
+	return pmap_tmpmap_pa_86(pa);
+}
+
 /*
  * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
  */
 
 void
-pmap_tmpunmap_pa(void)
+pmap_tmpunmap_pa_86(void)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
 #endif
 	pt_entry_t *ptpte;
 	caddr_t ptpva;
-
-	if (cpu_pae) {
-		pmap_tmpunmap_pa_pae();
-		return;
-	}
 
 	ptpte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(pmap_ptpp, id);
@@ -739,6 +758,17 @@ pmap_tmpunmap_pa(void)
 	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
 	 */
 #endif
+}
+
+void
+pmap_tmpunmap_pa(void)
+{
+	if (cpu_pae) {
+		pmap_tmpunmap_pa_pae();
+		return;
+	}
+
+	pmap_tmpunmap_pa_86();
 }
 
 paddr_t
@@ -946,18 +976,19 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	/*
-	 * enable global TLB entries if they are supported
+	 * enable global TLB entries if they are supported and the
+	 * CPU is not affected by Meltdown.
 	 */
 
 	if (cpu_feature & CPUID_PGE) {
 		lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
-		pmap_pg_g = PG_G;		/* enable software */
+		pmap_pg_g = pg_g_kern;	/* if safe to use, enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS; kva < virtual_avail;
 		     kva += PAGE_SIZE)
 			if (pmap_valid_entry(PTE_BASE[atop(kva)]))
-				PTE_BASE[atop(kva)] |= PG_G;
+				PTE_BASE[atop(kva)] |= pmap_pg_g;
 	}
 
 	/*
@@ -1195,6 +1226,7 @@ struct vm_page *
 pmap_alloc_ptp_86(struct pmap *pmap, int pde_index, pt_entry_t pde_flags)
 {
 	struct vm_page *ptp;
+	pd_entry_t *pva_intel;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
@@ -1206,6 +1238,21 @@ pmap_alloc_ptp_86(struct pmap *pmap, int pde_index, pt_entry_t pde_flags)
 	ptp->wire_count = 1;	/* no mappings yet */
 	PDE(pmap, pde_index) = (pd_entry_t)(VM_PAGE_TO_PHYS(ptp) |
 	    PG_RW | PG_V | PG_M | PG_U | pde_flags);
+
+	/*
+	 * Meltdown special case - if we are adding a new PDE for
+	 * usermode addresses, just copy the PDE to the U-K page
+	 * table.
+	 */
+	if (pmap->pm_pdir_intel && ptp_i2v(pde_index) < VM_MAXUSER_ADDRESS) {
+		pva_intel = (pd_entry_t *)pmap->pm_pdir_intel;
+		pva_intel[pde_index] = PDE(pmap, pde_index);
+		DPRINTF("%s: copying usermode PDE (content=0x%x) pde_index %d "
+		    "from 0x%x -> 0x%x\n", __func__, PDE(pmap, pde_index),
+		    pde_index, (uint32_t)&PDE(pmap, pde_index),
+		    (uint32_t)&(pva_intel[pde_index]));
+	}
+
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
 	return(ptp);
@@ -1247,6 +1294,8 @@ void
 pmap_drop_ptp_86(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
     pt_entry_t *ptes)
 {
+	pd_entry_t *pva_intel;
+
 	i386_atomic_testset_ul(&PDE(pm, pdei(va)), 0);
 	pmap_tlb_shootpage(curcpu()->ci_curpmap, ((vaddr_t)ptes) + ptp->offset);
 #ifdef MULTIPROCESSOR
@@ -1263,6 +1312,16 @@ pmap_drop_ptp_86(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
 	ptp->wire_count = 0;
 	/* Postpone free to after shootdown. */
 	uvm_pagerealloc(ptp, NULL, 0);
+
+	if (pm->pm_pdir_intel) {
+		KASSERT(va < VM_MAXUSER_ADDRESS);
+		/* Zap special meltdown PDE */
+		pva_intel = (pd_entry_t *)pm->pm_pdir_intel;
+		i386_atomic_testset_ul(&pva_intel[pdei(va)], 0);
+		DPRINTF("%s: cleared meltdown PDE @ index %lu "
+		    "(va range start 0x%x)\n", __func__, pdei(va),
+		    (uint32_t)va);
+	}
 }
 
 /*
@@ -1318,10 +1377,6 @@ pmap_pinit_pd_86(struct pmap *pmap)
 			    &pmap->pm_pdirpa);
 	pmap->pm_pdirsize = NBPG;
 
-	/* XXX hshoexer */
-	pmap->pm_pdir_intel = pmap->pm_pdir;
-	pmap->pm_pdirpa_intel = pmap->pm_pdirpa;
-
 	/* init PDP */
 	/* zero init area */
 	bzero((void *)pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
@@ -1341,6 +1396,34 @@ pmap_pinit_pd_86(struct pmap *pmap)
 	/* zero the rest */
 	bzero(&PDE(pmap, PDSLOT_KERN + nkpde),
 	       NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+
+	/*
+	 * Intel CPUs need a special page table to be used during usermode
+	 * execution, one that lacks all kernel mappings.
+	 */
+	if (cpu_meltdown) {
+		pmap->pm_pdir_intel = uvm_km_zalloc(kernel_map, NBPG);
+		if (pmap->pm_pdir_intel == 0)
+			panic("%s: kernel_map out of virtual space!", __func__);
+
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir_intel,
+		    &pmap->pm_pdirpa_intel))
+			panic("%s: unknown PA mapping for meltdown PD\n",
+			    __func__);
+
+		/* Copy PDEs from pmap_kernel's U-K view */
+		bcopy((void *)pmap_kernel()->pm_pdir_intel,
+		    (void *)pmap->pm_pdir_intel, NBPG);
+
+		DPRINTF("%s: pmap %p pm_pdir 0x%lx pm_pdirpa 0x%lx "
+		    "pdir_intel 0x%lx pdirpa_intel 0x%lx\n",
+		    __func__, pmap, pmap->pm_pdir, pmap->pm_pdirpa,
+		    pmap->pm_pdir_intel, pmap->pm_pdirpa_intel);
+	} else {
+		pmap->pm_pdir_intel = 0;
+		pmap->pm_pdirpa_intel = 0;
+	}
+
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 }
 
@@ -1443,7 +1526,11 @@ pmap_switch(struct proc *o, struct proc *p)
 	 */
 	if (pmap->pm_pdirpa_intel) {
 		self->ci_kern_cr3 = pmap->pm_pdirpa;
+#if 0		/* XXX hshoexer:  Do not unmap kernel, yet */
 		self->ci_user_cr3 = pmap->pm_pdirpa_intel;
+#else
+		self->ci_user_cr3 = pmap->pm_pdirpa;
+#endif
 	}
 
 	/*
@@ -2421,10 +2508,112 @@ out:
 	return error;
 }
 
+/*
+ * Allocate an extra PD page and PT pages as needed to map kernel
+ * pages used for the U-K mappings.  These special mappings are set
+ * up during bootstrap and get never removed and are part of
+ * pmap_kernel.
+ *
+ * New pmaps inherit the kernel portion of pmap_kernel including
+ * the special mappings (see pmap_pinit_pd_86()).
+ *
+ * To be able to release PT pages when migrating to PAE paging, use
+ * wire_count for number of PTEs in the PT page.
+ */
 void
 pmap_enter_special_86(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 {
-	/* XXX hshoexer nothing yet */
+	struct pmap	*pmap = pmap_kernel();
+	struct vm_page	*ptppg = NULL;
+	pd_entry_t	*pd, *ptp;
+	pt_entry_t	*ptes;
+	uint32_t	 l2idx, l1idx;
+	paddr_t		 npa;
+
+	/* If CPU is secure, no need to do anything */
+	if (!cpu_meltdown)
+		return;
+
+	/* Must be kernel VA */
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		panic("%s: invalid special mapping va 0x%lx requested",
+		    __func__, va);
+
+	if (!pmap->pm_pdir_intel) {
+		if ((pmap->pm_pdir_intel = uvm_km_zalloc(kernel_map, NBPG))
+		    == 0)
+			panic("%s: kernel_map out of virtual space!", __func__);
+		if (!pmap_extract(pmap, pmap->pm_pdir_intel,
+		    &pmap->pm_pdirpa_intel))
+			panic("%s: can't locate PD page\n", __func__);
+	}
+
+	DPRINTF("%s: pm_pdir_intel 0x%x pm_pdirpa_intel 0x%x\n", __func__,
+	    (uint32_t)pmap->pm_pdir_intel, (uint32_t)pmap->pm_pdirpa_intel);
+
+	l2idx = pdei(va);
+	l1idx = ptei(va);
+
+	DPRINTF("%s: va 0x%08lx pa 0x%08lx prot 0x%08lx flags 0x%08x "
+	    "l2idx %u l1idx %u\n", __func__, va, pa, (unsigned long)prot,
+	    flags, l2idx, l1idx);
+
+	if ((pd = (pd_entry_t *)pmap->pm_pdir_intel) == NULL)
+		panic("%s: PD not initialized for pmap @ %p\n", __func__, pmap);
+
+	/* npa = physaddr of PT page */
+	npa = pd[l2idx] & PMAP_PA_MASK;
+
+	/* Valid PDE for the 4MB region containing va? */
+	if (!npa) {
+		/*
+		 * No valid PDE - allocate PT page and set PDE.  We
+		 * get it from pm_obj, which is used for PT pages.
+		 * We calculate the offset  from l2idx+1024, so we are
+		 * beyond the regular PT pages. For their l2dix
+		 * 0 <= l2idx < 1024 holds.
+		 */
+		ptppg = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(l2idx + 1024),
+		    NULL, UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (ptppg == NULL)
+			panic("%s: failed to allocate PT page", __func__);
+
+		atomic_clearbits_int(&ptppg->pg_flags, PG_BUSY);
+		ptppg->wire_count = 1;	/* no mappings yet */
+
+		npa = VM_PAGE_TO_PHYS(ptppg);
+		pd[l2idx] = (npa | PG_RW | PG_V | PG_M | PG_U);
+
+		DPRINTF("%s: allocated new PT page at phys 0x%x, "
+		    "setting PDE[%d] = 0x%x\n", __func__, (uint32_t)npa,
+		    l2idx, pd[l2idx]);
+	}
+
+	/* temporarily map PT page and set PTE for U-K mapping */
+	if (ptppg == NULL && (ptppg = PHYS_TO_VM_PAGE(npa)) == NULL)
+		panic("%s: no vm_page for PT page", __func__);
+	mtx_enter(&ptppg->mdpage.pv_mtx);
+	ptp = (pd_entry_t *)pmap_tmpmap_pa(npa);
+	ptp[l1idx] = (pa | protection_codes[prot] | PG_V | PG_M | PG_U | flags);
+	ptppg->wire_count++;
+	DPRINTF("%s: setting PTE[%d] = 0x%x (wire_count %d)\n", __func__,
+	    l1idx, ptp[l1idx], ptppg->wire_count);
+	pmap_tmpunmap_pa();
+	mtx_leave(&ptppg->mdpage.pv_mtx);
+
+	/*
+	 * if supported, set the PG_G flag on the corresponding U+K
+	 * entry.  U+K mappings can use PG_G, as they are mapped
+	 * along with user land anyway.
+	 */
+	if (!(cpu_feature & CPUID_PGE))
+		return;
+	ptes = pmap_map_ptes_86(pmap);	/* pmap_kernel -> PTE_BASE */
+	if (pmap_valid_entry(ptes[atop(va)]))
+		ptes[atop(va)] |= PG_G;
+	else
+		DPRINTF("%s: no U+K mapping for special mapping?\n", __func__);
+	pmap_unmap_ptes_86(pmap);	/* pmap_kernel -> nothing */
 }
 
 /*
