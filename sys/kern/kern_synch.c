@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.144 2018/04/24 16:28:42 pirofti Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.145 2018/05/28 18:51:27 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -236,31 +236,32 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
  * entered the sleep queue we drop the it. After sleeping we re-lock.
  */
 int
-rwsleep(const volatile void *ident, struct rwlock *wl, int priority,
+rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
     const char *wmesg, int timo)
 {
 	struct sleep_state sls;
-	int error, error1;
+	int error, error1, status;
 	WITNESS_SAVE_DECL(lock_fl);
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
-	rw_assert_wrlock(wl);
+	rw_assert_anylock(rwl);
+	status = rw_status(rwl);
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
 	sleep_setup_signal(&sls, priority);
 
-	WITNESS_SAVE(&wl->rwl_lock_obj, lock_fl);
+	WITNESS_SAVE(&rwl->rwl_lock_obj, lock_fl);
 
-	rw_exit_write(wl);
+	rw_exit(rwl);
 
 	sleep_finish(&sls, 1);
 	error1 = sleep_finish_timeout(&sls);
 	error = sleep_finish_signal(&sls);
 
 	if ((priority & PNORELOCK) == 0) {
-		rw_enter_write(wl);
-		WITNESS_RESTORE(&wl->rwl_lock_obj, lock_fl);
+		rw_enter(rwl, status);
+		WITNESS_RESTORE(&rwl->rwl_lock_obj, lock_fl);
 	}
 
 	/* Signal errors are higher priority than timeouts. */
