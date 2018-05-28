@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.18 2018/05/26 20:04:38 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.19 2018/05/28 15:39:20 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -41,7 +41,6 @@ table.head {	width: 100%;
 td.head-vol {	text-align: center; }
 td.head-rtitle {
 		text-align: right; }
-div.Nd {	display: inline; }
 
 table.foot {	width: 100%;
 		border-top: 1px dotted #808080;
@@ -53,22 +52,23 @@ td.foot-os {	text-align: right; }
 
 div.manual-text {
 		margin-left: 3.8em; }
-h1.Sh {		margin-top: 2ex;
+.Nd {		display: inline; }
+.Sh {		margin-top: 2ex;
 		margin-bottom: 1ex;
 		margin-left: -3.2em;
 		font-size: 110%; }
-h2.Ss {		margin-top: 2ex;
+.Ss {		margin-top: 2ex;
 		margin-bottom: 1ex;
 		margin-left: -1.2em;
 		font-size: 105%; }
-div.Pp {	margin: 1ex 0ex; }
-a.Sx { }
-a.Xr { }
+.Pp {		margin: 1ex 0ex; }
+.Sx { }
+.Xr { }
 
 /* Displays and lists. */
 
-div.Bd { }
-div.D1 {	margin-left: 3.8em; }
+.Bd { }
+.D1 {		margin-left: 3.8em; }
 
 ul.Bl-bullet {	list-style-type: disc;
 		padding-left: 1em; }
@@ -130,25 +130,28 @@ table.Bl-column > tbody > tr > td {
 table.Bl-compact > tbody > tr > td {
 		margin-top: 0em; }
 
-cite.Rs {	font-style: normal;
+.Rs {		font-style: normal;
 		font-weight: normal; }
-span.RsA { }
-i.RsB {		font-weight: normal; }
-span.RsC { }
-span.RsD { }
-i.RsI {		font-weight: normal; }
-i.RsJ {		font-weight: normal; }
-span.RsN { }
-span.RsO { }
-span.RsP { }
-span.RsQ { }
-span.RsR { }
-span.RsT {	text-decoration: underline; }
-a.RsU { }
-span.RsV { }
+.RsA { }
+.RsB {		font-style: italic;
+		font-weight: normal; }
+.RsC { }
+.RsD { }
+.RsI {		font-style: italic;
+		font-weight: normal; }
+.RsJ {		font-style: italic;
+		font-weight: normal; }
+.RsN { }
+.RsO { }
+.RsP { }
+.RsQ { }
+.RsR { }
+.RsT {		text-decoration: underline; }
+.RsU { }
+.RsV { }
 
-span.eqn { }
-table.tbl { }
+.eqn { }
+.tbl { }
 
 /* Semantic markup for command line utilities. */
 
@@ -156,66 +159,66 @@ table.Nm { }
 code.Nm {	font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-code.Fl {	font-style: normal;
+.Fl {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-code.Cm {	font-style: normal;
+.Cm {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-var.Ar {	font-style: italic;
+.Ar {		font-style: italic;
 		font-weight: normal; }
-div.Op {	display: inline; }
-code.Ic {	font-style: normal;
+.Op {		display: inline; }
+.Ic {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-code.Ev {	font-style: normal;
+.Ev {		font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
-span.Pa {	font-style: italic;
+.Pa {		font-style: italic;
 		font-weight: normal; }
 
 /* Semantic markup for function libraries. */
 
-span.Lb { }
+.Lb { }
 code.In {	font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
 a.In { }
-code.Fd {	font-style: normal;
+.Fd {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-var.Ft {	font-style: italic;
+.Ft {		font-style: italic;
 		font-weight: normal; }
-code.Fn {	font-style: normal;
+.Fn {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-var.Fa {	font-style: italic;
+.Fa {		font-style: italic;
 		font-weight: normal; }
-var.Vt {	font-style: italic;
+.Vt {		font-style: italic;
 		font-weight: normal; }
-var.Va {	font-style: italic;
+.Va {		font-style: italic;
 		font-weight: normal; }
-code.Dv {	font-style: normal;
+.Dv {		font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
-code.Er {	font-style: normal;
+.Er {		font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
 
 /* Various semantic markup. */
 
-span.An { }
-a.Lk { }
-a.Mt { }
-code.Cd {	font-style: normal;
+.An { }
+.Lk { }
+.Mt { }
+.Cd {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
-span.Ad {	font-style: italic;
+.Ad {		font-style: italic;
 		font-weight: normal; }
-span.Ms {	font-style: normal;
+.Ms {		font-style: normal;
 		font-weight: bold; }
-span.St { }
-a.Ux { }
+.St { }
+.Ux { }
 
 /* Physical markup. */
 
@@ -235,8 +238,8 @@ a.Ux { }
 @media (max-width: 37.5em) {
 div.manual-text {
 		margin-left: 0.5em; }
-h1.Sh, h2.Ss {	margin-left: 0em; }
-div.D1 {	margin-left: 2em; }
+.Sh, .Ss {	margin-left: 0em; }
+.D1 {		margin-left: 2em; }
 dl.Bl-hang > dd {
 		margin-left: 2em; }
 dl.Bl-tag {	margin-left: 2em; }
