@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.8 2018/05/27 16:19:25 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.9 2018/05/28 08:22:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -411,7 +411,9 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_clk = DWXE_MDIO_CMD_MDC_DIV_RATIO_M_16;
 
-	dwxe_lladdr_read(sc, sc->sc_lladdr);
+	if (OF_getprop(faa->fa_node, "local-mac-address",
+	    &sc->sc_lladdr, ETHER_ADDR_LEN) != ETHER_ADDR_LEN)
+		dwxe_lladdr_read(sc, sc->sc_lladdr);
 	printf(": address %s\n", ether_sprintf(sc->sc_lladdr));
 
 	/* Do hardware specific initializations. */
