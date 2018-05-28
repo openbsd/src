@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.598 2018/05/22 08:49:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.599 2018/05/28 11:45:26 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 22 2018 $
+.Dd $Mdocdate: May 28 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3574,6 +3574,21 @@ if
 is enabled, or
 .Ql no
 if not.
+Conditionals can be nested arbitrarily.
+Inside a conditional,
+.Ql \&,
+and
+.Ql }
+must be escaped as
+.Ql #,
+and
+.Ql #} ,
+unless they are part of a
+.Ql #{...}
+replacement. For example:
+.Bd -literal -offset indent
+#{?pane_in_mode,#[fg=white#,bg=red],#[fg=red#,bg=white]}#W .
+.Ed
 .Pp
 Comparisons may be expressed by prefixing two comma-separated
 alternatives by
