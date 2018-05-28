@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.366 2018/05/12 02:02:34 ccardenas Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.367 2018/05/28 08:53:35 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h> /* NBBY isset */
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
