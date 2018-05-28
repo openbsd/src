@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.32 2018/04/28 15:44:59 jasper Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.33 2018/05/28 18:05:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -297,7 +297,7 @@ tc_getfrequency(void)
  * XXX: not locked.
  */
 void
-tc_setrealtimeclock(struct timespec *ts)
+tc_setrealtimeclock(const struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
@@ -326,7 +326,7 @@ tc_setrealtimeclock(struct timespec *ts)
  * XXX: not locked.
  */
 void
-tc_setclock(struct timespec *ts)
+tc_setclock(const struct timespec *ts)
 {
 	struct bintime bt, bt2;
 #ifndef SMALL_KERNEL

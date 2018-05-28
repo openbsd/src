@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.102 2018/05/22 18:33:41 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.103 2018/05/28 18:05:42 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ int64_t adjtimedelta;		/* unapplied time correction (microseconds) */
 
 /* This function is used by clock_settime and settimeofday */
 int
-settime(struct timespec *ts)
+settime(const struct timespec *ts)
 {
 	struct timespec now;
 

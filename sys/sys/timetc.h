@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.5 2014/04/03 17:58:31 beck Exp $ */
+/*	$OpenBSD: timetc.h,v 1.6 2018/05/28 18:05:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -81,8 +81,8 @@ extern struct timecounter *timecounter;
 
 u_int64_t tc_getfrequency(void);
 void	tc_init(struct timecounter *tc);
-void	tc_setclock(struct timespec *ts);
-void	tc_setrealtimeclock(struct timespec *ts);
+void	tc_setclock(const struct timespec *ts);
+void	tc_setrealtimeclock(const struct timespec *ts);
 void	tc_ticktock(void);
 void	inittimecounter(void);
 int	sysctl_tc(int *, u_int, void *, size_t *, void *, size_t);
