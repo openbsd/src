@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.152 2018/05/25 06:05:08 tb Exp $	*/
+/*	$OpenBSD: in.c,v 1.153 2018/05/28 10:46:46 tb Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 
 void in_socktrim(struct sockaddr_in *);
 
+int in_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *, int);
 int in_ioctl_get(u_long, caddr_t, struct ifnet *);
 void in_purgeaddr(struct ifaddr *);
 int in_addhost(struct in_ifaddr *, struct sockaddr_in *);
@@ -216,7 +217,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error = 0;
-	int newifaddr;
 
 	if (ifp == NULL)
 		return (ENXIO);
@@ -230,6 +230,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 	case SIOCSIFADDR:
+		return in_ioctl_change_ifaddr(cmd, data, ifp, privileged);
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
@@ -248,47 +249,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	}
 
 	switch (cmd) {
-	case SIOCAIFADDR:
-	case SIOCDIFADDR:
-		if (ifra->ifra_addr.sin_family == AF_INET) {
-			for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
-				if ((ifa->ifa_addr->sa_family == AF_INET) &&
-				    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
-				    ifra->ifra_addr.sin_addr.s_addr)
-					break;
-			}
-			ia = ifatoia(ifa);
-		}
-		if (cmd == SIOCDIFADDR && ia == NULL) {
-			error = EADDRNOTAVAIL;
-			goto err;
-		}
-		/* FALLTHROUGH */
-	case SIOCSIFADDR:
-		if (!privileged) {
-			error = EPERM;
-			goto err;
-		}
-
-		if (ia == NULL) {
-			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
-			ia->ia_addr.sin_family = AF_INET;
-			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
-			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
-			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
-			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
-			ia->ia_sockmask.sin_len = 8;
-			if (ifp->if_flags & IFF_BROADCAST) {
-				ia->ia_broadaddr.sin_len = sizeof(ia->ia_addr);
-				ia->ia_broadaddr.sin_family = AF_INET;
-			}
-			ia->ia_ifp = ifp;
-
-			newifaddr = 1;
-		} else
-			newifaddr = 0;
-		break;
-
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
@@ -342,7 +302,76 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
 		    ifra->ifra_addr.sin_addr.s_addr;
 		break;
+	}
 
+err:
+	NET_UNLOCK();
+	return (error);
+}
+
+int
+in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
+    int privileged)
+{
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa;
+	struct in_ifaddr *ia = NULL;
+	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
+	int error = 0;
+	int newifaddr;
+
+	NET_LOCK();
+
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			ia = ifatoia(ifa);
+			break;
+		}
+	}
+
+	switch (cmd) {
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
+		if (ifra->ifra_addr.sin_family == AF_INET) {
+			for (; ifa != NULL; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+				if ((ifa->ifa_addr->sa_family == AF_INET) &&
+				    ifatoia(ifa)->ia_addr.sin_addr.s_addr ==
+				    ifra->ifra_addr.sin_addr.s_addr)
+					break;
+			}
+			ia = ifatoia(ifa);
+		}
+		if (cmd == SIOCDIFADDR && ia == NULL) {
+			error = EADDRNOTAVAIL;
+			goto err;
+		}
+		/* FALLTHROUGH */
+	case SIOCSIFADDR:
+		if (!privileged) {
+			error = EPERM;
+			goto err;
+		}
+
+		if (ia == NULL) {
+			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
+			ia->ia_addr.sin_family = AF_INET;
+			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
+			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
+			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
+			ia->ia_sockmask.sin_len = 8;
+			if (ifp->if_flags & IFF_BROADCAST) {
+				ia->ia_broadaddr.sin_len = sizeof(ia->ia_addr);
+				ia->ia_broadaddr.sin_family = AF_INET;
+			}
+			ia->ia_ifp = ifp;
+
+			newifaddr = 1;
+		} else
+			newifaddr = 0;
+		break;
+	}
+	switch(cmd) {
 	case SIOCSIFADDR:
 		in_ifscrub(ifp, ia);
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), newifaddr);
@@ -399,6 +428,9 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		in_purgeaddr(&ia->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
 		break;
+
+	default:
+		panic("invalid ioctl %lu", cmd);
 	}
 
 err:
