@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.209 2018/05/28 17:10:15 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.210 2018/05/28 19:13:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -628,6 +628,7 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 	struct mta_task		*task;
 	struct mta_envelope	*e;
 	struct dispatcher	*dispatcher;
+	struct mailaddr		 maddr;
 	char			 buf[LINE_MAX], *backupmx;
 
 	dispatcher = dict_xget(env->sc_dispatchers, evp->dispatcher);
@@ -719,6 +720,17 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 			    evp->sender.user, evp->sender.domain);
 		else
 			buf[0] = '\0';
+
+		if (dispatcher->u.remote.mail_from && evp->sender.user[0]) {
+			memset(&maddr, 0, sizeof (maddr));
+			if (text_to_mailaddr(&maddr,
+				dispatcher->u.remote.mail_from)) {
+				(void)snprintf(buf, sizeof buf, "%s@%s",
+				    maddr.user[0] ? maddr.user : evp->sender.user,
+				    maddr.domain[0] ? maddr.domain : evp->sender.domain);
+			}
+		}
+
 		task->sender = xstrdup(buf, "mta_task:sender");
 		stat_increment("mta.task", 1);
 	}
