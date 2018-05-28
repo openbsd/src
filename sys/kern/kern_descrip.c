@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.158 2018/05/08 09:03:58 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.159 2018/05/28 08:55:11 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -634,13 +634,14 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		return (EDEADLK);
 	}
 
-	/*
-	 * Don't fd_getfile here. We want to closef LARVAL files and
-	 * closef can deal with that.
-	 */
 	oldfp = fdp->fd_ofiles[new];
-	if (oldfp != NULL)
+	if (oldfp != NULL) {
+		if (!FILE_IS_USABLE(oldfp)) {
+			FRELE(fp, p);
+			return (EBUSY);
+		}
 		FREF(oldfp);
+	}
 
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
