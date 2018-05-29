@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1067 2018/05/07 10:44:01 tb Exp $
+#	$OpenBSD: install.sub,v 1.1068 2018/05/29 20:37:22 kettenis Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2637,6 +2637,7 @@ apply() {
 	if [[ $DEFCONS == y ]]; then
 		cp /mnt/etc/ttys /tmp/i/ttys
 		sed	-e "/^$CTTY/s/std.9600/std.${CSPEED}/" \
+			-e "/^$CTTY/s/std.115200/std.${CSPEED}/" \
 			-e "/^$CTTY/s/unknown/vt220	/" \
 			-e "/$CTTY/s/off.*/on secure/" /tmp/i/ttys >/mnt/etc/ttys
 		[[ -n $CPROM ]] &&
