@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.203 2018/05/29 19:32:34 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.204 2018/05/29 22:16:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -179,7 +179,7 @@ typedef struct {
 %token	HELO HELO_SRC HOST HOSTNAME HOSTNAMES
 %token	INCLUDE INET4 INET6
 %token	KEY
-%token	LIMIT LISTEN LOCAL
+%token	LIMIT LISTEN LMTP LOCAL
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NODSN
 %token	ON
@@ -364,6 +364,14 @@ MBOX {
 	else
 		asprintf(&dispatcher->u.local.command,
 		    "/usr/libexec/mail.maildir \"%s\"", $2);
+} dispatcher_local_options
+| LMTP STRING {
+	asprintf(&dispatcher->u.local.command,
+	    "/usr/libexec/mail.lmtp -f %%{sender} -d %s %%{user.username}", $2);
+} dispatcher_local_options
+| LMTP STRING RCPT_TO {
+	asprintf(&dispatcher->u.local.command,
+	    "/usr/libexec/mail.lmtp -f %%{sender} -d %s %%{dest}", $2);
 } dispatcher_local_options
 | MDA STRING {
 	asprintf(&dispatcher->u.local.command,
@@ -1534,6 +1542,7 @@ lookup(char *s)
 		{ "key",		KEY },
 		{ "limit",		LIMIT },
 		{ "listen",		LISTEN },
+		{ "lmtp",		LMTP },
 		{ "local",		LOCAL },
 		{ "mail-from",		MAIL_FROM },
 		{ "maildir",		MAILDIR },

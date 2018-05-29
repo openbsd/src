@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	FILE *conn;
-	const char *destination = "inet:localhost";
+	const char *destination = "localhost";
 	struct session	session;
 
 	if (! geteuid())
@@ -199,11 +199,9 @@ lmtp_connect_unix(const char *destination)
 static FILE *
 lmtp_connect(const char *destination)
 {
-	if (strncasecmp(destination, "unix:", 5) == 0)
-		return lmtp_connect_unix(destination + 5);
-	if (strncasecmp(destination, "inet:", 5) == 0)
-		return lmtp_connect_inet(destination + 5);
-	errx(1, "invalid destination address, must start with 'unix:' or 'inet:'");
+	if (destination[0] == '/')
+		return lmtp_connect_unix(destination);
+	return lmtp_connect_inet(destination);
 }
 
 static void
