@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.295 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.296 2018/05/29 18:16:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1213,13 +1213,15 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	struct dispatcher	*dsp;
 	struct child	*child;
 	pid_t		 pid;
-	int		 allout, pipefd[2];
+	int		 allout, pipefd[2], idx;
 	struct passwd	*pw;
+	const char	*pw_name;
 	uid_t	pw_uid;
 	gid_t	pw_gid;
 	const char	*pw_dir;
-	char	*mda_environ[3];
+	char	*mda_environ[10];
 	const char *mda_command;
+	const char *tag;
 	char	mda_exec[LINE_MAX];
 
 	dsp = dict_xget(env->sc_dispatchers, deliver->dispatcher);
@@ -1239,17 +1241,20 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 			m_close(p_pony);
 			return;
 		}
+		pw_name = pw->pw_name;
 		pw_uid = pw->pw_uid;
 		pw_gid = pw->pw_gid;
 		pw_dir = pw->pw_dir;
 	}
 	else {
+		pw_name = deliver->userinfo.username;
 		pw_uid = deliver->userinfo.uid;
 		pw_gid = deliver->userinfo.gid;
 		pw_dir = deliver->userinfo.directory;
 	}
 
 	if (pw_uid == 0 && deliver->mda_exec[0]) {
+		pw_name = deliver->userinfo.username;
 		pw_uid = deliver->userinfo.uid;
 		pw_gid = deliver->userinfo.gid;
 		pw_dir = deliver->userinfo.directory;
@@ -1350,12 +1355,24 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		&deliver->userinfo))
 		err(1, "mda command line could not be expanded");
 
-	mda_environ[0] = "PATH=" _PATH_DEFPATH;
+	/* setup environment similar to other MTA */
 
-	(void)snprintf(ebuf, sizeof ebuf, "HOME=%s", pw_dir);
-	mda_environ[1] = xstrdup(ebuf, "forkmda");
+	idx = 0;
+	mda_environ[idx++] = xasprintf("PATH=%s", _PATH_DEFPATH);
+	mda_environ[idx++] = xasprintf("DOMAIN=%s", deliver->rcpt.domain);
+	mda_environ[idx++] = xasprintf("HOME=%s", pw_dir);
+	mda_environ[idx++] = xasprintf("RECIPIENT=%s@%s", deliver->rcpt.user, deliver->rcpt.domain);
+	mda_environ[idx++] = xasprintf("SHELL=/bin/sh");
+	mda_environ[idx++] = xasprintf("LOCAL=%s", deliver->rcpt.user);
+	mda_environ[idx++] = xasprintf("LOGNAME=%s", pw_name);
+	mda_environ[idx++] = xasprintf("USER=%s", pw_name);
 
-	mda_environ[2] = (char *)NULL;
+	if ((tag = strchr(deliver->rcpt.user, *env->sc_subaddressing_delim)) != NULL)
+		if (strlen(tag+1))
+			mda_environ[idx++] = xasprintf("EXTENSION=%s", tag+1);
+
+	mda_environ[idx++] = (char *)NULL;
+
 	execle("/bin/sh", "/bin/sh", "-c", mda_exec, (char *)NULL,
 	    mda_environ);
 	perror("execle");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.134 2018/04/26 20:57:59 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.135 2018/05/29 18:16:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -111,6 +111,24 @@ xmemdup(const void *ptr, size_t size, const char *where)
 
 	return (r);
 }
+
+void *
+xasprintf(const char *format, ...)
+{
+	int ret;
+	va_list ap;
+	char	*retp = NULL;
+
+	va_start(ap, format);
+	ret = vasprintf(&retp, format, ap);
+	va_end(ap);
+	if (ret == -1) {
+		log_warnx("asprintf(%p)", format);
+		fatalx("exiting");
+	}
+	return retp;
+}
+
 
 #if !defined(NO_IO)
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.542 2018/05/24 12:22:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.543 2018/05/29 18:16:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1488,6 +1488,7 @@ int rmtree(char *, int);
 int mvpurge(char *, char *);
 int mktmpfile(void);
 const char *parse_smtp_response(char *, size_t, char **, int *);
+void *xasprintf(const char *, ...);
 void *xmalloc(size_t, const char *);
 void *xcalloc(size_t, size_t, const char *);
 char *xstrdup(const char *, const char *);
