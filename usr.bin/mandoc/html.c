@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.100 2018/05/28 14:12:35 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.101 2018/05/29 02:10:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -692,12 +692,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 				su = &mysu;
 				a2width(arg2, su);
 			}
-			if (*fmt == '*') {
-				if (su != NULL && su->unit == SCALE_EN &&
-				    su->scale > 5.9 && su->scale < 6.1)
-					su = NULL;
-				fmt++;
-			}
 			if (*fmt == '+') {
 				if (su != NULL) {
 					/* Make even bold text fit. */
@@ -705,11 +699,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 					/* Add padding. */
 					su->scale += 3.0;
 				}
-				fmt++;
-			}
-			if (*fmt == '-') {
-				if (su != NULL)
-					su->scale *= -1.0;
 				fmt++;
 			}
 			break;
