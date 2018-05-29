@@ -31,7 +31,6 @@
 ./usr/include/arm64/loadfile_machdep.h
 ./usr/include/arm64/lock.h
 ./usr/include/arm64/machdep.h
-./usr/include/arm64/machine_reg.h
 ./usr/include/arm64/mplock.h
 ./usr/include/arm64/mutex.h
 ./usr/include/arm64/openpromio.h
@@ -50,7 +49,6 @@
 ./usr/include/arm64/softintr.h
 ./usr/include/arm64/spinlock.h
 ./usr/include/arm64/stdarg.h
-./usr/include/arm64/swi.h
 ./usr/include/arm64/sysarch.h
 ./usr/include/arm64/tcb.h
 ./usr/include/arm64/trap.h
