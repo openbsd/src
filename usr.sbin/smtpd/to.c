@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.29 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: to.c,v 1.30 2018/05/29 21:05:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -402,62 +402,6 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	if (relay->authlabel[0] != '\0' && !(relay->flags & F_AUTH))
 		return 0;
 	return 1;
-}
-
-const char *
-relayhost_to_text(const struct relayhost *relay)
-{
-	static char	buf[4096];
-	char		port[4096];
-	uint16_t	mask = F_SMTPS|F_STARTTLS|F_AUTH|F_TLS_OPTIONAL|F_LMTP|F_BACKUP;
-
-	memset(buf, 0, sizeof buf);
-	switch (relay->flags & mask) {
-	case F_SMTPS|F_STARTTLS|F_AUTH:
-		(void)strlcat(buf, "secure+auth://", sizeof buf);
-		break;
-	case F_SMTPS|F_STARTTLS:
-		(void)strlcat(buf, "secure://", sizeof buf);
-		break;
-	case F_STARTTLS|F_AUTH:
-		(void)strlcat(buf, "tls+auth://", sizeof buf);
-		break;
-	case F_SMTPS|F_AUTH:
-		(void)strlcat(buf, "smtps+auth://", sizeof buf);
-		break;
-	case F_STARTTLS:
-		(void)strlcat(buf, "tls://", sizeof buf);
-		break;
-	case F_SMTPS:
-		(void)strlcat(buf, "smtps://", sizeof buf);
-		break;
-	case F_BACKUP|F_STARTTLS:
-		(void)strlcat(buf, "tls+backup://", sizeof buf);
-		break;
-	case F_BACKUP:
-		(void)strlcat(buf, "backup://", sizeof buf);
-		break;
-	case F_TLS_OPTIONAL:
-		(void)strlcat(buf, "smtp+tls://", sizeof buf);
-		break;
-	case F_LMTP:
-		(void)strlcat(buf, "lmtp://", sizeof buf);
-		break;
-	default:
-		(void)strlcat(buf, "smtp://", sizeof buf);
-		break;
-	}
-	if (relay->authlabel[0]) {
-		(void)strlcat(buf, relay->authlabel, sizeof buf);
-		(void)strlcat(buf, "@", sizeof buf);
-	}
-	(void)strlcat(buf, relay->hostname, sizeof buf);
-	if (relay->port) {
-		(void)strlcat(buf, ":", sizeof buf);
-		(void)snprintf(port, sizeof port, "%d", relay->port);
-		(void)strlcat(buf, port, sizeof buf);
-	}
-	return buf;
 }
 
 uint64_t
