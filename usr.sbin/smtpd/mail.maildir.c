@@ -28,11 +28,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#define	SUBADDRESSING_DELIMITER	"+"
 #define	MAILADDR_ESCAPE		"!#$%&'*/?^`{|}~"
 
-static int	maildir_subdir(const char *, const char *, char *, size_t);
-static void	maildir_engine(const char *, const char *, const char *);
+static int	maildir_subdir(const char *, char *, size_t);
+static void	maildir_engine(const char *);
 static int	mkdirs_component(const char *, mode_t);
 static int	mkdirs(const char *, mode_t);
 
@@ -40,24 +39,12 @@ int
 main(int argc, char *argv[])
 {
 	int	ch;
-	char	*pathname = NULL;
-	char	*recipient = NULL;
-	char	*delim = SUBADDRESSING_DELIMITER;
 
 	if (! geteuid())
 		errx(1, "mail.maildir: may not be executed as root");
 
-	while ((ch = getopt(argc, argv, "d:p:r:")) != -1) {
+	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
-		case 'd':
-			delim = optarg;
-			break;
-		case 'p':
-			pathname = optarg;
-			break;
-		case 'r':
-			recipient = optarg;
-			break;
 		default:
 			break;
 		}
@@ -65,39 +52,33 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (pathname == NULL)
-		errx(1, "no maildir pathname specified");
+	if (argc > 1)
+		errx(1, "mail.maildir: only one maildir is allowed");
 
-	maildir_engine(pathname, recipient, delim);
+	maildir_engine(argv[0]);
 
 	return (0);
 }
 
 static int
-maildir_subdir(const char *recipient, const char *delim, char *dest, size_t len)
+maildir_subdir(const char *extension, char *dest, size_t len)
 {
-	char		*tag;
 	char		*sanitized;
 
-	if ((tag = strchr(recipient, *delim))) {
-		tag++;
-		while (*tag == '.')
-			tag++;
-	}
-	if (tag == NULL)
-		return 1;
-
-	if (strlcpy(dest, tag, len) >= len)
+	if (strlcpy(dest, extension, len) >= len)
 		return 0;
+
 	for (sanitized = dest; *sanitized; sanitized++)
 		if (strchr(MAILADDR_ESCAPE, *sanitized))
 			*sanitized = ':';
+
 	return 1;
 }
 
 static void
-maildir_engine(const char *dirname, const char *recipient, const char *delim)
+maildir_engine(const char *dirname)
 {
+	char	root[PATH_MAX];
 	char	tmp[PATH_MAX];
 	char	new[PATH_MAX];
 	char	subdir[PATH_MAX];
@@ -107,10 +88,20 @@ maildir_engine(const char *dirname, const char *recipient, const char *delim)
 	size_t	linesize = 0;
 	ssize_t	linelen;
 	struct stat	sb;
+	char	*home;
+	char	*extension;
 
-	if (recipient) {
+
+	if (dirname == NULL) {
+		if ((home = getenv("HOME")) == NULL)
+			err(1, NULL);
+		(void)snprintf(root, sizeof root, "%s/Maildir", home);
+		dirname = root;
+	}
+	
+	if ((extension = getenv("EXTENSION")) != NULL) {
 		memset(subdir, 0, sizeof subdir);
-		if (! maildir_subdir(recipient, delim, subdir, sizeof(subdir)))
+		if (! maildir_subdir(extension, subdir, sizeof(subdir)))
 			err(1, NULL);
 
 		if (subdir[0]) {

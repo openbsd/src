@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.202 2018/05/25 14:10:28 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.203 2018/05/29 19:32:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -355,16 +355,15 @@ MBOX {
 	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{sender} %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
-	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.maildir -p %%{user.directory}/Maildir -r %%{dest.user}");
+	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir");
 } dispatcher_local_options
 | MAILDIR STRING {
 	if (strncmp($2, "~/", 2) == 0)
 		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir -p %%{user.directory}/%s -r %%{dest.user}}", $2+2);
+		    "/usr/libexec/mail.maildir \"%%{user.directory}/%s\"", $2+2);
 	else
 		asprintf(&dispatcher->u.local.command,
-		    "/usr/libexec/mail.maildir -p %s -r %%{dest.user}}", $2);
+		    "/usr/libexec/mail.maildir \"%s\"", $2);
 } dispatcher_local_options
 | MDA STRING {
 	asprintf(&dispatcher->u.local.command,
