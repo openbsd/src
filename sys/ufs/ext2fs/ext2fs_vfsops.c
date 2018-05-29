@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.108 2018/05/28 15:46:28 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.109 2018/05/29 14:29:52 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -442,7 +442,10 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	if (vinvalbuf(devvp, 0, cred, p, 0, 0))
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
+	VOP_UNLOCK(devvp);
+	if (error != 0)
 		panic("ext2fs_reload: dirty1");
 
 	/*
