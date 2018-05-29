@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.38 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.39 2018/05/29 19:48:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -342,31 +342,6 @@ ascii_load_flags(enum envelope_flags *dest, char *buf)
 }
 
 static int
-ascii_load_mta_relay_url(struct relayhost *relay, char *buf)
-{
-	if (!text_to_relayhost(relay, buf))
-		return 0;
-	return 1;
-}
-
-static int
-ascii_load_mta_relay_flags(uint16_t *dest, char *buf)
-{
-	char *flag;
-
-	while ((flag = strsep(&buf, " ,|")) != NULL) {
-		if (strcasecmp(flag, "verify") == 0)
-			*dest |= F_TLS_VERIFY;
-		else if (strcasecmp(flag, "tls") == 0)
-			*dest |= F_STARTTLS;
-		else
-			return 0;
-	}
-
-	return 1;
-}
-
-static int
 ascii_load_bounce_type(enum bounce_type *dest, char *buf)
 {
 	if (strcasecmp(buf, "error") == 0)
@@ -436,44 +411,6 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 
 	if (strcasecmp("last-try", field) == 0)
 		return ascii_load_time(&ep->lasttry, buf);
-
-	if (strcasecmp("mta-relay", field) == 0) {
-		int ret;
-		uint16_t flags = ep->agent.mta.relay.flags;
-		ret = ascii_load_mta_relay_url(&ep->agent.mta.relay, buf);
-		if (!ret)
-			return (0);
-		ep->agent.mta.relay.flags |= flags;
-		return ret;
-	}
-
-	if (strcasecmp("mta-relay-auth", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.authtable, buf,
-		    sizeof ep->agent.mta.relay.authtable);
-
-	if (strcasecmp("mta-relay-cert", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.pki_name, buf,
-		    sizeof ep->agent.mta.relay.pki_name);
-
-	if (strcasecmp("mta-relay-ca", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.ca_name, buf,
-		    sizeof ep->agent.mta.relay.ca_name);
-
-	if (strcasecmp("mta-relay-flags", field) == 0)
-		return ascii_load_mta_relay_flags(&ep->agent.mta.relay.flags,
-		    buf);
-
-	if (strcasecmp("mta-relay-heloname", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.heloname, buf,
-		    sizeof ep->agent.mta.relay.heloname);
-
-	if (strcasecmp("mta-relay-helotable", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.helotable, buf,
-		    sizeof ep->agent.mta.relay.helotable);
-
-	if (strcasecmp("mta-relay-source", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.sourcetable, buf,
-		    sizeof ep->agent.mta.relay.sourcetable);
 
 	if (strcasecmp("retry", field) == 0)
 		return ascii_load_uint16(&ep->retry, buf);
@@ -632,34 +569,6 @@ ascii_dump_flags(enum envelope_flags flags, char *buf, size_t len)
 }
 
 static int
-ascii_dump_mta_relay_url(const struct relayhost *relay, char *buf, size_t len)
-{
-	return bsnprintf(buf, len, "%s", relayhost_to_text(relay));
-}
-
-static int
-ascii_dump_mta_relay_flags(uint16_t flags, char *buf, size_t len)
-{
-	size_t cpylen = 0;
-
-	buf[0] = '\0';
-	if (flags) {
-		if (flags & F_TLS_VERIFY) {
-			if (buf[0] != '\0')
-				(void)strlcat(buf, " ", len);
-			cpylen = strlcat(buf, "verify", len);
-		}
-		if (flags & F_STARTTLS) {
-			if (buf[0] != '\0')
-				(void)strlcat(buf, " ", len);
-			cpylen = strlcat(buf, "tls", len);
-		}
-	}
-
-	return cpylen < len ? 1 : 0;
-}
-
-static int
 ascii_dump_bounce_type(enum bounce_type type, char *dest, size_t len)
 {
 	char *p = NULL;
@@ -743,41 +652,6 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 
 	if (strcasecmp(field, "last-try") == 0)
 		return ascii_dump_time(ep->lasttry, buf, len);
-
-	if (strcasecmp(field, "mta-relay") == 0) {
-		if (ep->agent.mta.relay.hostname[0])
-			return ascii_dump_mta_relay_url(&ep->agent.mta.relay,
-			    buf, len);
-		return (1);
-	}
-
-	if (strcasecmp(field, "mta-relay-auth") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.authtable,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-cert") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.pki_name,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-ca") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.ca_name,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-flags") == 0)
-		return ascii_dump_mta_relay_flags(ep->agent.mta.relay.flags,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-heloname") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.heloname,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-helotable") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.helotable,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-source") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.sourcetable,
-		    buf, len);
 
 	if (strcasecmp(field, "retry") == 0)
 		return ascii_dump_uint16(ep->retry, buf, len);
