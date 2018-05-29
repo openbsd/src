@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.296 2018/05/29 18:16:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.297 2018/05/29 22:10:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1361,7 +1361,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	mda_environ[idx++] = xasprintf("PATH=%s", _PATH_DEFPATH);
 	mda_environ[idx++] = xasprintf("DOMAIN=%s", deliver->rcpt.domain);
 	mda_environ[idx++] = xasprintf("HOME=%s", pw_dir);
-	mda_environ[idx++] = xasprintf("RECIPIENT=%s@%s", deliver->rcpt.user, deliver->rcpt.domain);
+	mda_environ[idx++] = xasprintf("RECIPIENT=%s@%s", deliver->dest.user, deliver->dest.domain);
 	mda_environ[idx++] = xasprintf("SHELL=/bin/sh");
 	mda_environ[idx++] = xasprintf("LOCAL=%s", deliver->rcpt.user);
 	mda_environ[idx++] = xasprintf("LOGNAME=%s", pw_name);
