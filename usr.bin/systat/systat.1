@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.104 2018/02/11 09:47:33 martijn Exp $
+.\"	$OpenBSD: systat.1,v 1.105 2018/05/30 13:43:51 krw Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: February 11 2018 $
+.Dd $Mdocdate: May 30 2018 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -141,8 +141,9 @@ argument expects to be one of:
 .Ic buckets ,
 .Ic nfsclient ,
 .Ic nfsserver ,
+.Ic cpu ,
 or
-.Ic cpu .
+.Ic uvm .
 These displays can also be requested interactively and are described in
 full detail below.
 .Ar view
@@ -565,6 +566,198 @@ number of zeroed pages
 .It kmapent
 number of kernel map entries
 .El
+.It Ic uvm
+Display statistics relevant to the uvm subsystem.
+The statistics are divided into eight groups.
+.Bl -tag -compact -width "reserve_pagedaemon" -indent offet
+.Pp
+.It Page Counters
+.It npages
+pages managed by uvm
+.It free
+free pages
+.It active
+active pages
+.It inactive
+freed pages that may be wanted back
+.It paging
+pages in the process of being paged out
+.It wired
+wired pages
+.It zeropages
+zero'd pages
+.It reserve_pagedaemon
+pages reserved for pagedaemon
+.It reserve_kernel
+pages reserved for kernel.
+.It anonpages
+pages used by anon pagers
+.It vnodepages
+pages used by vnode page cache
+.It vtextpages
+pages used by vtext vnodes
+.Pp
+.It Stats Counters
+.It faults
+page fault count
+.It traps
+trap count
+.It intrs
+interrupt count
+.It swtch
+context switch count
+.It softs
+software interrupt count
+.It syscalls
+system calls
+.It pageins
+pagein operation count
+.It obsolete_swapins
+swapins
+.It obsolete_swapouts
+swapouts
+.It pgswapin
+pages swapped in
+.It pgswapout
+pages swapped out
+.It forks
+forks.
+.It forks_ppwait
+forks where parent waits
+.It forks_sharevm
+forks where vmspace is shared
+.It pga_zerohit
+pagealloc found requested zero'd pages
+.It pga_zeromiss
+pagealloc failed to obtain zero'd pages
+.It zeroaborts
+page zeroing was aborted
+.Pp
+.It Fault Counters
+.It fltnoram
+fault was out of ram
+.It fltnoanon
+fault was out of anons
+.It fltnoamap
+fault was out of amap chunks
+.It fltpgwait
+fault had to wait on a page
+.It fltpgrele
+fault found a released page
+.It fltrelck
+fault relock called
+.It fltrelckok
+fault relock was a success
+.It fltanget
+fault got anon page
+.It fltanretry
+fault retried an anon get
+.It fltamcopy
+fault cleared "needs copy"
+.It fltnamap
+fault mapped a neighbor anon page
+.It fltnomap
+fault mapped a neighbor obj page
+.It fltlget
+fault did a locked pgo_get
+.It fltget
+fault did an unlocked get
+.It flt_anon
+fault anon (case 1a)
+.It flt_acow
+fault anon cow (case 1b)
+.It flt_obj
+fault was on object page (2a)
+.It flt_prcopy
+fault promotes with copy (2b)
+.It flt_przero
+fault promotes with zerofill (2b)
+.Pp
+.It Pageout Params
+.It freemin
+minimum number of free pages
+.It freetarg
+target number of free pages
+.It inactarg
+target number of inactive pages
+.It wiredmax
+maximum number of wired pages
+.It anonmin
+mininumu threshold for anon pages
+.It vtextmin
+minimum threshold for vtext pages
+.It vnodemin
+minimum threshold for vnode pages
+.It anonminpct
+minimum percent anon pages
+.It vtextminpct
+minimum percent vtext pages
+.It vnodeminpct
+minimum percent vnode pages
+.Pp
+.It Swap Counters
+.It nswapdev
+configured swap devices
+.It swpages
+PAGE_SIZE'ed swap pages
+.It swpginuse
+swap pages in use
+.It swpgonly
+in use swap pages not in RAM
+.It nswget
+fault called uvm_swap_get()
+.It nanon
+total anon's
+.It nanonneeded
+anons currently needed
+.It nfreeanon
+free anon's
+.Pp
+.It Daemon Counters
+.It pdwoke
+times daemon woke up
+.It pdrevs
+times daemon rev'd clock hand
+.It pdswout
+times daemon called for swapout
+.It pdfreed
+pages daemon freed since boot
+.It pdscans
+pages daemon scanned since boot
+.It pdanscan
+anonymous pages scanned by daemon
+.It pdobscan
+object pages scanned by daemon
+.It pdreact
+pages daemon reactivated since boot
+.It pdbusy
+times daemon found a busy page
+.It pdpageouts
+times daemon started a pageout
+.It  pdpending
+times daemon got a pending pagout
+.It pddeact
+pages daemon deactivates
+.It pdreanon
+reactivated anon pages
+.It pdrevnode
+reactivated vnode pages
+.It pdrevtext
+reactivated vtext pages
+.Pp
+.It Misc Counters
+.It fpswtch
+FPU context switches
+.It kmapent
+kernel map entries
+.Pp
+.It Constants
+.It pagesize
+size of a page, always a power of 2
+.It pagemask
+page mask
+.It pageshift
+page shift
 .El
 .\".Pp
 .\"The following commands are specific to the

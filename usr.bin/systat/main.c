@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.67 2018/02/08 07:00:33 martijn Exp $	 */
+/* $Id: main.c,v 1.68 2018/05/30 13:43:51 krw Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -392,6 +392,7 @@ initialize(void)
 	initmalloc();
 	initnfs();
 	initcpu();
+	inituvm();
 }
 
 void

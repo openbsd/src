@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.21 2015/03/12 01:03:00 claudio Exp $	*/
+/*	$OpenBSD: systat.h,v 1.22 2018/05/30 13:43:51 krw Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ int initpool(void);
 int initmalloc(void);
 int initnfs(void);
 int initcpu(void);
+int inituvm(void);
 
 void fetchkre(void);
 void fetchifstat(void);
