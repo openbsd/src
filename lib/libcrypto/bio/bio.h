@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.43 2018/05/12 18:51:59 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.44 2018/05/30 00:23:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -597,7 +597,7 @@ BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 asn1_ps_func **psuffix_free);
 
 int BIO_get_new_index(void);
-BIO_METHOD *BIO_s_file(void );
+const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # define BIO_s_file_internal	BIO_s_file
