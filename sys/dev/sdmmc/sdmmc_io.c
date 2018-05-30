@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.34 2018/05/25 00:12:53 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.35 2018/05/30 14:53:11 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -40,6 +40,8 @@ int	sdmmc_submatch(struct device *, void *, void *);
 int	sdmmc_print(void *, const char *);
 int	sdmmc_io_rw_direct(struct sdmmc_softc *, struct sdmmc_function *,
 	    int, u_char *, int);
+int	sdmmc_io_rw_extended_subr(struct sdmmc_softc *, struct sdmmc_function *,
+	    bus_dmamap_t, int, u_char *, int, int);
 int	sdmmc_io_rw_extended(struct sdmmc_softc *, struct sdmmc_function *,
 	    int, u_char *, int, int);
 int	sdmmc_io_xchg(struct sdmmc_softc *, struct sdmmc_function *,
@@ -387,8 +389,8 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
  * into `arg' to indicate that the length is a number of blocks.
  */
 int
-sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
-    int reg, u_char *datap, int len, int arg)
+sdmmc_io_rw_extended_subr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    bus_dmamap_t dmap, int reg, u_char *datap, int len, int arg)
 {
 	struct sdmmc_command cmd;
 	int error;
@@ -414,6 +416,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_opcode = SD_IO_RW_EXTENDED;
 	cmd.c_arg = arg;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
+	cmd.c_dmamap = dmap;
 	cmd.c_data = datap;
 	if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE)) {
 		cmd.c_datalen = len * sf->cur_blklen;
@@ -428,6 +431,45 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 	error = sdmmc_mmc_command(sc, &cmd);
 
+	return error;
+}
+
+int
+sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+    int reg, u_char *datap, int len, int arg)
+{
+	int datalen = len, error, read = 0;
+
+	if (!ISSET(sc->sc_caps, SMC_CAPS_DMA))
+		return sdmmc_io_rw_extended_subr(sc, sf, NULL, reg,
+		    datap, len, arg);
+
+	if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE))
+		datalen = len * sf->cur_blklen;
+
+	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
+		read = 1;
+
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, datap, datalen,
+	    NULL, BUS_DMA_NOWAIT | (read ? BUS_DMA_READ : BUS_DMA_WRITE));
+	if (error)
+		goto out;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    read ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	error = sdmmc_io_rw_extended_subr(sc, sf, sc->sc_dmap, reg,
+	    datap, len, arg);
+	if (error)
+		goto unload;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
+	    read ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+unload:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+
+out:
 	return error;
 }
 
@@ -459,8 +501,8 @@ sdmmc_io_read_2(struct sdmmc_function *sf, int reg)
 	
 	rw_assert_wrlock(&sf->sc->sc_lock);
 
-	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 2,
-	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
+	(void)sdmmc_io_rw_extended_subr(sf->sc, sf, NULL, reg,
+	    (u_char *)&data, 2, SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
 	return data;
 }
 
@@ -469,8 +511,8 @@ sdmmc_io_write_2(struct sdmmc_function *sf, int reg, u_int16_t data)
 {
 	rw_assert_wrlock(&sf->sc->sc_lock);
 
-	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 2,
-	    SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
+	(void)sdmmc_io_rw_extended_subr(sf->sc, sf, NULL, reg,
+	    (u_char *)&data, 2, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
 }
 
 u_int32_t
@@ -480,8 +522,8 @@ sdmmc_io_read_4(struct sdmmc_function *sf, int reg)
 	
 	rw_assert_wrlock(&sf->sc->sc_lock);
 
-	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 4,
-	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
+	(void)sdmmc_io_rw_extended_subr(sf->sc, sf, NULL, reg,
+	    (u_char *)&data, 4, SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
 	return data;
 }
 
@@ -490,8 +532,8 @@ sdmmc_io_write_4(struct sdmmc_function *sf, int reg, u_int32_t data)
 {
 	rw_assert_wrlock(&sf->sc->sc_lock);
 
-	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 4,
-	    SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
+	(void)sdmmc_io_rw_extended_subr(sf->sc, sf, NULL, reg,
+	    (u_char *)&data, 4, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
 }
 
 int
