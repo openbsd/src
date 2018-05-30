@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.5 2018/05/25 00:04:11 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.6 2018/05/30 13:32:40 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -966,7 +966,8 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 
 		HWRITE4(sc, SDHC_ADMA_SYS_ADDR,
 		    sc->adma_map->dm_segs[0].ds_addr);
-	}
+	} else
+		HCLR4(sc, SDHC_PROT_CTRL, SDHC_PROT_CTRL_DMASEL_MASK);
 
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
