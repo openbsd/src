@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.552 2018/05/17 11:04:14 tb Exp $	*/
+/*	$OpenBSD: if.c,v 1.553 2018/05/30 18:15:47 sthen Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ int	if_getgroup(caddr_t, struct ifnet *);
 int	if_getgroupmembers(caddr_t);
 int	if_getgroupattribs(caddr_t);
 int	if_setgroupattribs(caddr_t);
+int	if_getgrouplist(caddr_t);
 
 void	if_linkstate(struct ifnet *);
 void	if_linkstate_task(void *);
@@ -1851,6 +1852,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFGCLONERS:
 	case SIOCGIFGMEMB:
 	case SIOCGIFGATTR:
+	case SIOCGIFGLIST:
 	case SIOCGIFFLAGS:
 	case SIOCGIFXFLAGS:
 	case SIOCGIFMETRIC:
@@ -2187,6 +2189,11 @@ ifioctl_get(u_long cmd, caddr_t data)
 	case SIOCGIFGATTR:
 		NET_RLOCK();
 		error = if_getgroupattribs(data);
+		NET_RUNLOCK();
+		return (error);
+	case SIOCGIFGLIST:
+		NET_RLOCK();
+		error = if_getgrouplist(data);
 		NET_RUNLOCK();
 		return (error);
 	}
@@ -2620,6 +2627,41 @@ if_setgroupattribs(caddr_t data)
 
 	TAILQ_FOREACH(ifgm, &ifg->ifg_members, ifgm_next)
 		ifgm->ifgm_ifp->if_ioctl(ifgm->ifgm_ifp, SIOCSIFGATTR, data);
+
+	return (0);
+}
+
+/*
+ * Stores all groups in memory pointed to by data
+ */
+int
+if_getgrouplist(caddr_t data)
+{
+	struct ifgroupreq	*ifgr = (struct ifgroupreq *)data;
+	struct ifg_group	*ifg;
+	struct ifg_req		 ifgrq, *ifgp;
+	int			 len, error;
+
+	if (ifgr->ifgr_len == 0) {
+		TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
+			ifgr->ifgr_len += sizeof(ifgrq);
+		return (0);
+	}
+
+	len = ifgr->ifgr_len;
+	ifgp = ifgr->ifgr_groups;
+	TAILQ_FOREACH(ifg, &ifg_head, ifg_next) {
+		if (len < sizeof(ifgrq))
+			return (EINVAL);
+		bzero(&ifgrq, sizeof ifgrq);
+		strlcpy(ifgrq.ifgrq_group, ifg->ifg_group,
+                    sizeof(ifgrq.ifgrq_group));
+		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
+                    sizeof(struct ifg_req))))
+			return (error);
+		len -= sizeof(ifgrq);
+		ifgp++;
+	}
 
 	return (0);
 }
