@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.18 2018/05/27 16:20:33 kettenis Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.19 2018/05/30 14:04:53 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -26,6 +26,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/pool.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -87,6 +88,9 @@ struct bwfm_sdio_softc {
 	int			  sc_sr_enabled;
 	uint32_t		  sc_console_addr;
 
+	char			 *sc_bounce_buf;
+	size_t			  sc_bounce_size;
+
 	char			 *sc_console_buf;
 	size_t			  sc_console_buf_size;
 	uint32_t		  sc_console_readidx;
@@ -95,7 +99,6 @@ struct bwfm_sdio_softc {
 
 	uint8_t			  sc_tx_seq;
 	uint8_t			  sc_tx_max_seq;
-	char			 *sc_rxdata_buf;
 	struct mbuf_queue	  sc_txdata_queue;
 
 	struct task		  sc_task;
@@ -243,8 +246,8 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
 	mq_init(&sc->sc_txdata_queue, 16, IPL_SOFTNET);
-	sc->sc_rxdata_buf = malloc(64 * 1024 + sizeof(struct bwfm_sdio_hwhdr) +
-	    sizeof(struct bwfm_sdio_swhdr), M_DEVBUF, M_WAITOK);
+	sc->sc_bounce_size = 64 * 1024;
+	sc->sc_bounce_buf = dma_alloc(sc->sc_bounce_size, PR_WAITOK);
 	sc->sc_tx_seq = 0xff;
 
 	rw_assert_wrlock(&sf->sc->sc_lock);
@@ -699,6 +702,7 @@ bwfm_sdio_detach(struct device *self, int flags)
 
 	bwfm_detach(&sc->sc_sc, flags);
 
+	dma_free(sc->sc_bounce_buf, sc->sc_bounce_size);
 	free(sc->sc_sf, M_DEVBUF, 0);
 
 	return 0;
@@ -817,6 +821,9 @@ bwfm_sdio_buf_read(struct bwfm_sdio_softc *sc, struct sdmmc_function *sf,
 {
 	int err;
 
+	KASSERT(((vaddr_t)data & 0x3) == 0);
+	KASSERT((size & 0x3) == 0);
+
 	if (sf == sc->sc_sf[1])
 		err = sdmmc_io_read_region_1(sf, reg, data, size);
 	else
@@ -833,6 +840,9 @@ bwfm_sdio_buf_write(struct bwfm_sdio_softc *sc, struct sdmmc_function *sf,
     uint32_t reg, char *data, size_t size)
 {
 	int err;
+
+	KASSERT(((vaddr_t)data & 0x3) == 0);
+	KASSERT((size & 0x3) == 0);
 
 	err = sdmmc_io_write_region_1(sf, reg, data, size);
 
@@ -855,16 +865,22 @@ bwfm_sdio_ram_read_write(struct bwfm_sdio_softc *sc, uint32_t reg,
 		sbaddr = reg + off;
 		bwfm_sdio_backplane(sc, sbaddr);
 
-		sdaddr = (reg + off) & BWFM_SDIO_SB_OFT_ADDR_MASK;
+		sdaddr = sbaddr & BWFM_SDIO_SB_OFT_ADDR_MASK;
 		size = min(left, (BWFM_SDIO_SB_OFT_ADDR_PAGE - sdaddr));
 		sdaddr |= BWFM_SDIO_SB_ACCESS_2_4B_FLAG;
 
-		if (write)
+		if (write) {
+			memcpy(sc->sc_bounce_buf, data + off, size);
+			if (roundup(size, 4) != size)
+				memset(sc->sc_bounce_buf + size, 0,
+				    roundup(size, 4) - size);
 			err = bwfm_sdio_buf_write(sc, sc->sc_sf[1], sdaddr,
-			    data+off, size);
-		else
+			    sc->sc_bounce_buf, roundup(size, 4));
+		} else {
 			err = bwfm_sdio_buf_read(sc, sc->sc_sf[1], sdaddr,
-			    data+off, size);
+			    sc->sc_bounce_buf, roundup(size, 4));
+			memcpy(data + off, sc->sc_bounce_buf, size);
+		}
 		if (err)
 			break;
 
@@ -1019,8 +1035,7 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
 	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
-	char *buf;
-	size_t len;
+	size_t len, roundto;
 
 	if (!bwfm_sdio_tx_ok(sc))
 		return;
@@ -1029,9 +1044,16 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
 
 		len = sizeof(*hwhdr) + sizeof(*swhdr) + ctl->len;
-		buf = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 
-		hwhdr = (void *)buf;
+		/* Zero-pad to either block-size or 4-byte alignment. */
+		if (len > 512 && (len % 512) != 0)
+			roundto = 512;
+		else
+			roundto = 4;
+
+		KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
+
+		hwhdr = (void *)sc->sc_bounce_buf;
 		hwhdr->frmlen = htole16(len);
 		hwhdr->cksum = htole16(~len);
 
@@ -1044,8 +1066,12 @@ bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
 
 		memcpy(&swhdr[1], ctl->buf, ctl->len);
 
-		bwfm_sdio_frame_read_write(sc, buf, len, 1);
-		free(buf, M_TEMP, len);
+		if (roundup(len, roundto) != len)
+			memset(sc->sc_bounce_buf + len, 0,
+			    roundup(len, roundto) - len);
+
+		bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
+		    roundup(len, roundto), 1);
 
 		TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
 	}
@@ -1058,9 +1084,8 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
 	struct bwfm_proto_bcdc_hdr *bcdc;
+	size_t len, roundto;
 	struct mbuf *m;
-	char *buf;
-	size_t len;
 	int i;
 
 	if (!bwfm_sdio_tx_ok(sc))
@@ -1074,9 +1099,16 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 
 		len = sizeof(*hwhdr) + sizeof(*swhdr) + sizeof(*bcdc)
 		    + m->m_pkthdr.len;
-		buf = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
 
-		hwhdr = (void *)buf;
+		/* Zero-pad to either block-size or 4-byte alignment. */
+		if (len > 512 && (len % 512) != 0)
+			roundto = 512;
+		else
+			roundto = 4;
+
+		KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
+
+		hwhdr = (void *)sc->sc_bounce_buf;
 		hwhdr->frmlen = htole16(len);
 		hwhdr->cksum = htole16(~len);
 
@@ -1095,9 +1127,13 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 
 		m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&bcdc[1]);
 
-		bwfm_sdio_frame_read_write(sc, buf, len, 1);
+		if (roundup(len, roundto) != len)
+			memset(sc->sc_bounce_buf + len, 0,
+			    roundup(len, roundto) - len);
 
-		free(buf, M_TEMP, len);
+		bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
+		    roundup(len, roundto), 1);
+
 		m_freem(m);
 	}
 
@@ -1117,18 +1153,18 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 	off_t off;
 	int nsub;
 
-	hwhdr = (struct bwfm_sdio_hwhdr *)sc->sc_rxdata_buf;
+	hwhdr = (struct bwfm_sdio_hwhdr *)sc->sc_bounce_buf;
 	swhdr = (struct bwfm_sdio_swhdr *)&hwhdr[1];
 	data = (char *)&swhdr[1];
 
 	do {
 		/* If we know the next size, just read ahead. */
 		if (nextlen) {
-			if (bwfm_sdio_frame_read_write(sc, sc->sc_rxdata_buf,
+			if (bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
 			    nextlen, 0))
 				break;
 		} else {
-			if (bwfm_sdio_frame_read_write(sc, sc->sc_rxdata_buf,
+			if (bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
 			    sizeof(*hwhdr) + sizeof(*swhdr), 0))
 				break;
 		}
@@ -1164,7 +1200,10 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 		}
 
 		if (!nextlen) {
-			if (bwfm_sdio_frame_read_write(sc, data, flen, 0))
+			KASSERT(roundup(flen, 4) <= sc->sc_bounce_size -
+			    (sizeof(*hwhdr) + sizeof(*swhdr)));
+			if (bwfm_sdio_frame_read_write(sc, data,
+			    roundup(flen, 4), 0))
 				break;
 		}
 
