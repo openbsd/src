@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2016/06/14 12:48:49 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2018/05/30 13:54:09 mpi Exp $	*/
 /*	$NetBSD: intr.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #define	IPL_HIGH	15	/* everything */
 
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+#define	IPL_MPFLOOR	IPL_NONE	/* no MP on landisk */
 
 #define	splraise(_ipl)		_cpu_intr_raise((_ipl) << 4)
 #define	splsoftclock()		splraise(IPL_SOFTCLOCK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2017/03/09 15:36:52 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2018/05/30 13:54:09 mpi Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 
 /* Interrupt priority "flags". */
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+#define	IPL_MPFLOOR	IPL_NONE	/* no MP on armv7 */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
