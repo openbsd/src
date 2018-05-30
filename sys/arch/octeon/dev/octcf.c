@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.31 2017/12/30 23:08:29 guenther Exp $ */
+/*	$OpenBSD: octcf.c,v 1.32 2018/05/30 14:53:56 fcambus Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -563,7 +563,7 @@ octcfioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
 		octcfgetdisklabel(dev, wd, lp, 0);
 		bcopy(lp, wd->sc_dk.dk_label, sizeof(*lp));
-		free(lp, M_TEMP, 0);
+		free(lp, M_TEMP, sizeof(*lp));
 		goto exit;
 
 	case DIOCGPDINFO:
@@ -788,7 +788,7 @@ octcf_get_params(struct octcf_softc *wd, struct ataparams *params)
 
 	if (error != 0) {
 		printf("%s: identify failed: %d\n", __func__, error);
-		free(tb, M_DEVBUF, 0);
+		free(tb, M_DEVBUF, ATAPARAMS_SIZE);
 		return CMD_ERR;
 	} else {
 		/*
@@ -818,7 +818,7 @@ octcf_get_params(struct octcf_softc *wd, struct ataparams *params)
 			params->atap_model[1] == 'E') ||
 		     (params->atap_model[0] == 'F' &&
 			 params->atap_model[1] == 'X'))) {
-			free(tb, M_DEVBUF, 0);
+			free(tb, M_DEVBUF, ATAPARAMS_SIZE);
 			return CMD_OK;
 		}
 		for (i = 0; i < sizeof(params->atap_model); i += 2) {
@@ -834,7 +834,7 @@ octcf_get_params(struct octcf_softc *wd, struct ataparams *params)
 			*p = swap16(*p);
 		}
 
-		free(tb, M_DEVBUF, 0);
+		free(tb, M_DEVBUF, ATAPARAMS_SIZE);
 		return CMD_OK;
 	}
 }
