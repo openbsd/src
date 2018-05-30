@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.23 2018/05/13 06:38:46 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.24 2018/05/30 15:40:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,7 +93,7 @@ EVP_PKEY_bits(const EVP_PKEY *pkey)
 }
 
 int
-EVP_PKEY_size(EVP_PKEY *pkey)
+EVP_PKEY_size(const EVP_PKEY *pkey)
 {
 	if (pkey && pkey->ameth && pkey->ameth->pkey_size)
 		return pkey->ameth->pkey_size(pkey);

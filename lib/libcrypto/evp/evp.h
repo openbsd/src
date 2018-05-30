@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.63 2018/05/13 06:40:55 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.64 2018/05/30 15:40:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -868,7 +868,7 @@ int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);
 int EVP_PKEY_bits(const EVP_PKEY *pkey);
-int EVP_PKEY_size(EVP_PKEY *pkey);
+int EVP_PKEY_size(const EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
