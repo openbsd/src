@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.19 2015/11/15 07:38:29 deraadt Exp $
+ *	$OpenBSD: locate.code.c,v 1.20 2018/05/30 15:13:22 espie Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.19 2015/11/15 07:38:29 deraadt Exp $
+ * 	$Id: locate.code.c,v 1.20 2018/05/30 15:13:22 espie Exp $
  */
 
 /*
@@ -140,8 +140,13 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	/* First copy bigram array to stdout. */
-	if (fgets(bigrams, sizeof(bigrams), fp) == NULL)
-		err(1, "fgets");
+	if (fgets(bigrams, sizeof(bigrams), fp) == NULL) {
+		if (ferror(fp)) {
+			err(1, "fgets on %s", argv[0]);
+		} else {
+			errx(1, "premature end of bigram file %s", argv[0]);
+		}
+	}
 
 	if (strlen(bigrams) != BGBUFSIZE)
 		errx(1, "bigram array too small to build db, index more files");
