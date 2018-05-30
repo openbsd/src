@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.139 2018/05/13 11:05:39 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.140 2018/05/30 11:10:03 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -113,11 +113,11 @@ sub handle_options
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:w:W:qQS',
+	$state->SUPER::handle_options('p:f:d:M:U:u:A:B:P:V:w:W:qQS',
 	    '[-nQqvSx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-U undisplayfile] [-V n] [-W wantedlib] [-w libset]',
-	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
+	    '[-U undisplayfile] [-u userlist] [-V n] [-W wantedlib]',
+	    '[-w libset] [-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 
 	my $base = '/';
@@ -128,6 +128,41 @@ sub handle_options
 	$state->{base} = $base;
 	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
 	    || defined $state->opt('S');
+	if (defined $state->opt('u')) {
+		$state->{userlist} = $state->parse_userdb($state->opt('u'));
+	}
+}
+
+sub parse_userdb
+{
+	my ($self, $fname) = @_;
+	my $result = {};
+	open(my $fh, '<', $fname) or 
+		$self->error("Can't open #1: #2", $fname, $!);
+	# skip header
+	while (<$fh>) {
+		last if m/^\-\-\-\-\-\-\-/;
+	}
+	# record ids and error out on duplicates
+	my $known = {};
+	while (<$fh>) {
+		next if m/^\#/;
+		chomp;
+		my @l = split(/\s+/, $_);
+		if (@l < 3 || $l[0] !~ m/^\d+$/ || $l[1] !~ m/^_/) {
+			$self->error("Bad line: #1 at #2 of #3",
+			    $_, $., $fname);
+			next;
+		}
+		if (defined $known->{$l[0]}) {
+			$self->error("Duplicate id: #1 in #2",
+			    $l[0], $fname);
+			next;
+		}
+		$known->{$l[0]} = 1;
+		$result->{$l[1]} = $l[0];
+	}
+	return $result;
 }
 
 package OpenBSD::PkgCreate;
@@ -667,6 +702,39 @@ sub avert_duplicates_and_other_checks
 	$state->{has_no_default_conflict}++;
 }
 
+package OpenBSD::PackingElement::NewAuth;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $state) = @_;
+	my $userlist = $state->{userlist};
+	if (defined $userlist) {
+		my $entry = $userlist->{$self->{name}};
+		my $id = $self->id;
+		$id =~ s/^!//;
+		if (!defined $entry) {
+			$state->error("#1 #2: not registered in #3",
+			    $self->keyword, $self->{name}, $state->opt('u'));
+		} elsif ($entry != $id) {
+			$state->error(
+			    "#1 #2: id mismatch in #3 (#4 vs #5)",
+			    $self->keyword, $self->{name}, $state->opt('u'),
+			    $entry, $id);
+		}
+	}
+	$self->SUPER::avert_duplicates_and_other_checks($state);
+}
+
+package OpenBSD::PackingElement::NewUser;
+sub id
+{
+	return shift->{uid};
+}
+
+package OpenBSD::PackingElement::NewGroup;
+sub id
+{
+	return shift->{gid};
+}
 
 package OpenBSD::PackingElement::Lib;
 sub check_version
