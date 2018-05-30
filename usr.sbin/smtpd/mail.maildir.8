@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.maildir.8,v 1.4 2018/05/30 09:31:57 gilles Exp $
+.\"	$OpenBSD: mail.maildir.8,v 1.5 2018/05/30 12:37:57 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -29,12 +29,14 @@
 reads the standard input up to an end-of-file and adds it to the
 mail directory located in
 .Ar pathname
-or to the mail directory Maildir located in the user home directory.
+or to the mail directory
+.Pa Maildir
+located in the user's home directory.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl j
-Scan message for X-Spam and move to Junk folder if result is positive,
+Scan message for X-Spam and move to Junk folder if result is positive.
 .El
 .Sh EXIT STATUS
 .Ex -std mail.maildir
