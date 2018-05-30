@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.15 2016/12/30 15:34:35 jsing Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.16 2018/05/30 15:32:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -100,7 +100,7 @@ OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 }
 
 char *
-OPENSSL_uni2asc(unsigned char *uni, int unilen)
+OPENSSL_uni2asc(const unsigned char *uni, int unilen)
 {
 	size_t asclen, u16len, i;
 	char *asctmp;

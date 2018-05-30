@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.23 2018/05/13 14:28:14 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.24 2018/05/30 15:32:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -237,7 +237,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
     int saltlen, const EVP_MD *md_type);
 unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     unsigned char **uni, int *unilen);
-char *OPENSSL_uni2asc(unsigned char *uni, int unilen);
+char *OPENSSL_uni2asc(const unsigned char *uni, int unilen);
 
 PKCS12 *PKCS12_new(void);
 void PKCS12_free(PKCS12 *a);
