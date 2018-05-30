@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.553 2018/05/30 18:15:47 sthen Exp $	*/
+/*	$OpenBSD: if.c,v 1.554 2018/05/30 22:20:41 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2114,7 +2114,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFLLPRIO:
 		if ((error = suser(p)))
 			break;
-		if (ifr->ifr_llprio > UCHAR_MAX) {
+		if (ifr->ifr_llprio < IFQ_MINPRIO ||
+		    ifr->ifr_llprio > IFQ_MAXPRIO) {
 			error = EINVAL;
 			break;
 		}
