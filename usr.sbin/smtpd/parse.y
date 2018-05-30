@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.205 2018/05/30 09:31:57 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.206 2018/05/30 19:01:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -257,6 +257,40 @@ optnl		: '\n' optnl
 		;
 
 nl		: '\n' optnl
+		;
+
+negation	: '!'		{ $$ = 1; }
+		| /* empty */	{ $$ = 0; }
+		;
+
+assign		: '=' | ARROW;
+
+
+keyval		: STRING assign STRING		{
+			table->t_type = T_HASH;
+			table_add(table, $1, $3);
+			free($1);
+			free($3);
+		}
+		;
+
+keyval_list	: keyval
+		| keyval comma keyval_list
+		;
+
+stringel	: STRING			{
+			table->t_type = T_LIST;
+			table_add(table, $1, NULL);
+			free($1);
+		}
+		;
+
+string_list	: stringel
+		| stringel comma string_list
+		;
+
+tableval_list	: string_list			{ }
+		| keyval_list			{ }
 		;
 
 
@@ -1424,35 +1458,6 @@ table		: TABLE STRING STRING	{
 		}
 		;
 
-assign		: '=' | ARROW;
-
-keyval		: STRING assign STRING		{
-			table->t_type = T_HASH;
-			table_add(table, $1, $3);
-			free($1);
-			free($3);
-		}
-		;
-
-keyval_list	: keyval
-		| keyval comma keyval_list
-		;
-
-stringel	: STRING			{
-			table->t_type = T_LIST;
-			table_add(table, $1, NULL);
-			free($1);
-		}
-		;
-
-string_list	: stringel
-		| stringel comma string_list
-		;
-
-tableval_list	: string_list			{ }
-		| keyval_list			{ }
-		;
-
 tablenew	: STRING			{
 			struct table	*t;
 
@@ -1486,9 +1491,6 @@ tables		: tablenew			{ $$ = $1; }
 		| tableref			{ $$ = $1; }
 		;
 
-negation	: '!'		{ $$ = 1; }
-		| /* empty */	{ $$ = 0; }
-		;
 
 %%
 
