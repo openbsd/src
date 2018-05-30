@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -31,7 +35,8 @@
 #define	MAILADDR_ESCAPE		"!#$%&'*/?^`{|}~"
 
 static int	maildir_subdir(const char *, char *, size_t);
-static void	maildir_engine(const char *);
+static void	maildir_mkdirs(const char *);
+static void	maildir_engine(const char *, int);
 static int	mkdirs_component(const char *, mode_t);
 static int	mkdirs(const char *, mode_t);
 
@@ -39,12 +44,16 @@ int
 main(int argc, char *argv[])
 {
 	int	ch;
+	int	junk = 0;
 
 	if (! geteuid())
 		errx(1, "mail.maildir: may not be executed as root");
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "j")) != -1) {
 		switch (ch) {
+		case 'j':
+			junk = 1;
+			break;
 		default:
 			break;
 		}
@@ -55,7 +64,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		errx(1, "mail.maildir: only one maildir is allowed");
 
-	maildir_engine(argv[0]);
+	maildir_engine(argv[0], junk);
 
 	return (0);
 }
@@ -76,12 +85,40 @@ maildir_subdir(const char *extension, char *dest, size_t len)
 }
 
 static void
-maildir_engine(const char *dirname)
+maildir_mkdirs(const char *dirname)
 {
-	char	root[PATH_MAX];
+	uint	i;
+	int	ret;
+	char	pathname[PATH_MAX];
+	char	*subdirs[] = { "cur", "tmp", "new" };
+
+	if (mkdirs(dirname, 0700) < 0 && errno != EEXIST)
+		err(1, NULL);
+
+	for (i = 0; i < nitems(subdirs); ++i) {
+		ret = snprintf(pathname, sizeof pathname, "%s/%s", dirname,
+		    subdirs[i]);
+		if (ret == -1 || (size_t)ret >= sizeof pathname)
+			errx(1, "path too long");
+		if (mkdir(pathname, 0700) < 0 && errno != EEXIST)
+			err(1, NULL);
+	}
+}
+
+static void
+maildir_engine(const char *dirname, int junk)
+{
+	char	rootpath[PATH_MAX];
+	char	junkpath[PATH_MAX];
+	char	extpath[PATH_MAX];
+	char	subdir[PATH_MAX];
+	char	filename[PATH_MAX];
+
 	char	tmp[PATH_MAX];
 	char	new[PATH_MAX];
-	char	subdir[PATH_MAX];
+
+	int	ret;
+
 	int	fd;
 	FILE    *fp;
 	char	*line = NULL;
@@ -91,43 +128,47 @@ maildir_engine(const char *dirname)
 	char	*home;
 	char	*extension;
 
+	int	is_junk = 0;
+	int	in_hdr  = 1;
 
 	if (dirname == NULL) {
 		if ((home = getenv("HOME")) == NULL)
 			err(1, NULL);
-		(void)snprintf(root, sizeof root, "%s/Maildir", home);
-		dirname = root;
+		ret = snprintf(rootpath, sizeof rootpath, "%s/Maildir", home);
+		if (ret == -1 || (size_t)ret >= sizeof rootpath)
+			errx(1, "path too long");
+		dirname = rootpath;
 	}
-	
-	if ((extension = getenv("EXTENSION")) != NULL) {
-		memset(subdir, 0, sizeof subdir);
-		if (! maildir_subdir(extension, subdir, sizeof(subdir)))
-			err(1, NULL);
+	maildir_mkdirs(dirname);
 
-		if (subdir[0]) {
-			(void)snprintf(tmp, sizeof tmp, "%s/.%s", dirname, subdir);
-			if (stat(tmp, &sb) != -1)
-				dirname = tmp;
+	if (junk) {
+		/* create Junk subdirectory */
+		ret = snprintf(junkpath, sizeof junkpath, "%s/.Junk", dirname);
+		if (ret == -1 || (size_t)ret >= sizeof junkpath)
+			errx(1, "path too long");
+		maildir_mkdirs(junkpath);
+	}
+
+	if ((extension = getenv("EXTENSION")) != NULL) {
+		if (maildir_subdir(extension, subdir, sizeof(subdir)) &&
+		    subdir[0]) {
+			ret = snprintf(extpath, sizeof extpath, "%s/.%s",
+			    dirname, subdir);
+			if (ret == -1 || (size_t)ret >= sizeof extpath)
+				errx(1, "path too long");
+			if (stat(extpath, &sb) != -1) {
+				dirname = extpath;
+				maildir_mkdirs(dirname);
+			}
 		}
 	}
 
-	if (mkdirs(dirname, 0700) < 0 && errno != EEXIST)
-		err(1, NULL);
-
-	if (chdir(dirname) < 0)
-		err(1, NULL);
-
-	if (mkdir("cur", 0700) < 0 && errno != EEXIST)
-		err(1, NULL);
-	if (mkdir("tmp", 0700) < 0 && errno != EEXIST)
-		err(1, NULL);
-	if (mkdir("new", 0700) < 0 && errno != EEXIST)
-		err(1, NULL);
-
-	(void)snprintf(tmp, sizeof tmp, "tmp/%lld.%08x.%s",
+	(void)snprintf(filename, sizeof filename, "%lld.%08x.%s",
 	    (long long int) time(NULL),
 	    arc4random(),
 	    "localhost");
+
+	(void)snprintf(tmp, sizeof tmp, "%s/tmp/%s", dirname, filename);
 
 	fd = open(tmp, O_CREAT | O_EXCL | O_WRONLY, 0600);
 	if (fd < 0)
@@ -137,20 +178,25 @@ maildir_engine(const char *dirname)
 
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
 		line[strcspn(line, "\n")] = '\0';
+		if (line[0] == '\0')
+			in_hdr = 0;
+		if (junk && in_hdr && strcmp(line, "X-Spam: yes") == 0)
+			is_junk = 1;
 		fprintf(fp, "%s\n", line);
 	}
 	free(line);
 	if (ferror(stdin))
 		err(1, NULL);
 
-	
 	if (fflush(fp) == EOF ||
 	    ferror(fp) ||
 	    fsync(fd) < 0 ||
 	    fclose(fp) == EOF)
 		err(1, NULL);
 
-	(void)snprintf(new, sizeof new, "new/%s", tmp + 4);
+	(void)snprintf(new, sizeof new, "%s/new/%s",
+	    is_junk ? junkpath : dirname, filename);
+
 	if (rename(tmp, new) < 0)
 		err(1, NULL);
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.180 2018/05/29 22:16:15 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.181 2018/05/30 09:31:57 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 29 2018 $
+.Dd $Mdocdate: May 30 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ Optionally,
 might be specified to use the
 recipient email address (after expansion) instead of the
 local user in the LMTP session as RCPT TO.
-.It Cm maildir Op Ar pathname
+.It Cm maildir Op Ar pathname Op Ar junk
 Deliver the message to the maildir in
 .Ar pathname
 if specified, or by default to
@@ -115,6 +115,11 @@ The
 .Ar pathname
 may contain format specifiers that are expanded before use
 .Pq see Sx FORMAT SPECIFIERS .
+.Pp
+If the
+.Ar junk
+keyword is provided, message will be moved to the Junk
+folder if it contains a positive X-Spam header.
 .It Cm mbox
 Deliver the message to the user's mbox with
 .Xr mail.local 8 .
