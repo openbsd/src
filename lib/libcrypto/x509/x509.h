@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.68 2018/05/30 15:35:45 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.69 2018/05/30 15:59:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1002,7 +1002,7 @@ int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
 EVP_PKEY *	X509_get0_pubkey(const X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
-int		X509_certificate_type(X509 *x,EVP_PKEY *pubkey /* optional */);
+int		X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 int		X509_REQ_set_version(X509_REQ *x,long version);
 int		X509_REQ_set_subject_name(X509_REQ *req,X509_NAME *name);
