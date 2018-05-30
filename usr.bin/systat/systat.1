@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.105 2018/05/30 13:43:51 krw Exp $
+.\"	$OpenBSD: systat.1,v 1.106 2018/05/30 13:53:09 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -567,13 +567,13 @@ number of zeroed pages
 number of kernel map entries
 .El
 .It Ic uvm
-Display statistics relevant to the uvm subsystem.
+Display statistics relevant to the UVM subsystem.
 The statistics are divided into eight groups.
-.Bl -tag -compact -width "reserve_pagedaemon" -indent offet
 .Pp
-.It Page Counters
+.Bl -tag -compact -width "reserve_pagedaemon" -offset indent
+.It Page Counters:
 .It npages
-pages managed by uvm
+pages managed by UVM
 .It free
 free pages
 .It active
@@ -597,7 +597,7 @@ pages used by vnode page cache
 .It vtextpages
 pages used by vtext vnodes
 .Pp
-.It Stats Counters
+.It Stats Counters:
 .It faults
 page fault count
 .It traps
@@ -633,7 +633,7 @@ pagealloc failed to obtain zero'd pages
 .It zeroaborts
 page zeroing was aborted
 .Pp
-.It Fault Counters
+.It Fault Counters:
 .It fltnoram
 fault was out of ram
 .It fltnoanon
@@ -673,7 +673,7 @@ fault promotes with copy (2b)
 .It flt_przero
 fault promotes with zerofill (2b)
 .Pp
-.It Pageout Params
+.It Pageout Params:
 .It freemin
 minimum number of free pages
 .It freetarg
@@ -695,7 +695,7 @@ minimum percent vtext pages
 .It vnodeminpct
 minimum percent vnode pages
 .Pp
-.It Swap Counters
+.It Swap Counters:
 .It nswapdev
 configured swap devices
 .It swpages
@@ -713,7 +713,7 @@ anons currently needed
 .It nfreeanon
 free anon's
 .Pp
-.It Daemon Counters
+.It Daemon Counters:
 .It pdwoke
 times daemon woke up
 .It pdrevs
@@ -745,19 +745,20 @@ reactivated vnode pages
 .It pdrevtext
 reactivated vtext pages
 .Pp
-.It Misc Counters
+.It Misc Counters:
 .It fpswtch
 FPU context switches
 .It kmapent
 kernel map entries
 .Pp
-.It Constants
+.It Constants:
 .It pagesize
 size of a page, always a power of 2
 .It pagemask
 page mask
 .It pageshift
 page shift
+.El
 .El
 .\".Pp
 .\"The following commands are specific to the
