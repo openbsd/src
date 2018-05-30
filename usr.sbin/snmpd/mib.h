@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.38 2016/03/07 19:33:26 mmcc Exp $	*/
+/*	$OpenBSD: mib.h,v 1.39 2018/05/30 18:17:20 sthen Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -722,6 +722,12 @@
 #define MIB_carpIp6PktsSent		MIB_carpStats, 13
 #define MIB_carpNoMemory		MIB_carpStats, 14
 #define MIB_carpTransitionsToMaster	MIB_carpStats, 15
+#define MIB_carpGroupTable		MIB_carpMIBObjects, 4
+#define MIB_carpGroupEntry		MIB_carpGroupTable, 1
+#define OIDIDX_carpGroupEntry		10
+#define OIDIDX_carpGroupIndex		11
+#define MIB_carpGroupName		MIB_carpGroupEntry, 2
+#define MIB_carpGroupDemote		MIB_carpGroupEntry, 3
 #define MIB_localSystem			MIB_openBSD, 23
 #define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
 #define MIB_localTest			MIB_openBSD, 42
@@ -1272,6 +1278,10 @@
 	{ MIBDECL(carpIp6PktsSent) },			\
 	{ MIBDECL(carpNoMemory) },			\
 	{ MIBDECL(carpTransitionsToMaster) },		\
+	{ MIBDECL(carpGroupTable) },			\
+	{ MIBDECL(carpGroupEntry) },			\
+	{ MIBDECL(carpGroupName) },			\
+	{ MIBDECL(carpGroupDemote) },			\
 	{ MIBDECL(localSystem) },			\
 	{ MIBDECL(localTest) },				\
 							\

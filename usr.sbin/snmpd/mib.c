@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.87 2018/05/25 08:23:15 gerhard Exp $	*/
+/*	$OpenBSD: mib.c,v 1.88 2018/05/30 18:17:20 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1454,6 +1454,7 @@ char	*mib_sensorvalue(struct sensor *);
 int	 mib_carpsysctl(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpstats(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpiftable(struct oid *, struct ber_oid *, struct ber_element **);
+int	 mib_carpgrouptable(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_carpifnum(struct oid *, struct ber_oid *, struct ber_element **);
 struct carpif
 	*mib_carpifget(u_int);
@@ -1669,6 +1670,8 @@ static struct oid openbsd_mib[] = {
 	{ MIB(carpIfAdvbase),		OID_TRD, mib_carpiftable },
 	{ MIB(carpIfAdvskew),		OID_TRD, mib_carpiftable },
 	{ MIB(carpIfState),		OID_TRD, mib_carpiftable },
+	{ MIB(carpGroupName),		OID_TRD, mib_carpgrouptable },
+	{ MIB(carpGroupDemote),		OID_TRD, mib_carpgrouptable },
 	{ MIB(memMIBObjects),		OID_MIB },
 	{ MIB(memMIBVersion),		OID_RD, mps_getint, NULL, NULL,
 	    OIDVER_OPENBSD_MEM },
@@ -2903,6 +2906,105 @@ mib_carpiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	}
 
 	free(cif);
+	return (0);
+}
+
+static struct ifg_req *
+mib_carpgroupget(u_int idx)
+{
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg = NULL;
+	u_int			 len;
+	int			 s = -1;
+
+	bzero(&ifgr, sizeof(ifgr));
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		log_warn("socket");
+		return (NULL);
+	}
+
+	if (ioctl(s, SIOCGIFGLIST, (caddr_t)&ifgr) == -1) {
+		log_warn("SIOCGIFGLIST");
+		goto err;
+	}
+	len = ifgr.ifgr_len;
+
+	if (len / sizeof(*ifgr.ifgr_groups) <= idx-1)
+		goto err;
+
+	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL) {
+		log_warn("alloc");
+		return (NULL);
+	}
+	if (ioctl(s, SIOCGIFGLIST, (caddr_t)&ifgr) == -1) {
+		log_warn("SIOCGIFGLIST");
+		free(ifgr.ifgr_groups);
+		goto err;
+	}
+	close(s);
+
+	if ((ifg = calloc(1, sizeof *ifg)) == NULL) {
+		log_warn("alloc");
+		goto err;
+	}
+
+	memcpy(ifg, &ifgr.ifgr_groups[idx-1], sizeof *ifg);
+	free(ifgr.ifgr_groups);
+	return ifg;
+ err:
+	free(ifgr.ifgr_groups);
+	close(s);
+	return (NULL);
+}
+
+int
+mib_carpgrouptable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg;
+	uint32_t		 idx;
+	int			 s;
+
+	/* Get and verify the current row index */
+	idx = o->bo_id[OIDIDX_carpGroupIndex];
+
+	if ((ifg = mib_carpgroupget(idx)) == NULL)
+		return (1);
+
+	/* Tables need to prepend the OID on their own */
+	o->bo_id[OIDIDX_carpGroupIndex] = idx;
+	*elm = ber_add_oid(*elm, o);
+
+	switch (o->bo_id[OIDIDX_carpGroupEntry]) {
+	case 2:
+		*elm = ber_add_string(*elm, ifg->ifgrq_group);
+		break;
+	case 3:
+		if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+			log_warn("socket");
+			free(ifg);
+			return (1);
+		}
+
+		bzero(&ifgr, sizeof(ifgr));
+		strlcpy(ifgr.ifgr_name, ifg->ifgrq_group, sizeof(ifgr.ifgr_name));
+		if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
+			log_warn("SIOCGIFGATTR");
+			close(s);
+			free(ifg);
+			return (1);
+		}
+
+		close(s);
+		*elm = ber_add_integer(*elm, ifgr.ifgr_attrib.ifg_carp_demoted);
+		break;
+	default:
+		free(ifg);
+		return (1);
+	}
+
+	free(ifg);
 	return (0);
 }
 
