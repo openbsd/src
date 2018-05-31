@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.83 2017/05/02 11:44:32 mikeb Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.84 2018/05/31 19:40:58 fcambus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -971,7 +971,8 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_kschedule) {
 				explicit_bzero(swd->sw_kschedule, txf->ctxsize);
-				free(swd->sw_kschedule, M_CRYPTO_DATA, 0);
+				free(swd->sw_kschedule, M_CRYPTO_DATA,
+				    txf->ctxsize);
 			}
 			break;
 
@@ -985,11 +986,11 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
+				free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
 			}
 			if (swd->sw_octx) {
 				explicit_bzero(swd->sw_octx, axf->ctxsize);
-				free(swd->sw_octx, M_CRYPTO_DATA, 0);
+				free(swd->sw_octx, M_CRYPTO_DATA, axf->ctxsize);
 			}
 			break;
 
@@ -1001,12 +1002,12 @@ swcr_freesession(u_int64_t tid)
 
 			if (swd->sw_ictx) {
 				explicit_bzero(swd->sw_ictx, axf->ctxsize);
-				free(swd->sw_ictx, M_CRYPTO_DATA, 0);
+				free(swd->sw_ictx, M_CRYPTO_DATA, axf->ctxsize);
 			}
 			break;
 		}
 
-		free(swd, M_CRYPTO_DATA, 0);
+		free(swd, M_CRYPTO_DATA, sizeof(*swd));
 	}
 	return 0;
 }
