@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.182 2018/05/30 13:44:03 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.183 2018/05/31 13:36:35 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 30 2018 $
+.Dd $Mdocdate: May 31 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -179,9 +179,9 @@ option.
 .It Cm virtual Pf < Ar table Ns >
 Use the mapping
 .Ar table
-for
-.Xr virtual 5
-expansion.
+for virtual expansion.
+The aliasing table format is described in
+.Xr table 5 .
 .El
 .Pp
 The relay delivery methods also support additional options:
@@ -205,6 +205,17 @@ to advertise during the HELO phase.
 .It Cm host Ar relay-url
 Do not perform MX lookups but relay messages to the relay host described by
 .Ar relay-url .
+.It Cm auth Pf < Ar table Ns >
+Use the mapping
+.Ar table
+for connecting to
+.Ar relay-url
+using credentials.
+This option is usable only with
+.Cm host
+option.
+The credential table format is described in
+.Xr table 5 .
 .It Cm mail\-from Ar mailaddr
 Use
 .Ar mailaddr
