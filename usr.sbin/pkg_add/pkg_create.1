@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.108 2018/01/08 05:42:48 bentley Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.109 2018/05/31 09:05:17 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 8 2018 $
+.Dd $Mdocdate: May 31 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkgpath : Ns Ar pkgspec : Ns Ar default
 .Op Fl U Ar undisplayfile
+.Op Fl u Ar userlist
 .Op Fl V Ar n
 .Op Fl W Ar libspec
 .Fl d Ar desc
@@ -225,6 +226,20 @@ Display the file (using
 .Xr more 1 )
 when deinstalling the package.
 Useful for reminders about stuff to clean up.
+.It Fl u Ar userlist
+Check all
+.Cm @newuser
+and
+.Cm @newgroup
+statements against a
+.Ar userlist
+file
+.Po
+usually
+.Pa ${PORTSDIR}/infrastructure/db/user.list
+.Pc
+and error out for entries not registered in that file.
+Also error out if the file is incoherent.
 .It Fl V Ar n
 Adds
 .Ar n
