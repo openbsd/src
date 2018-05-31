@@ -1538,17 +1538,12 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 		}
 
 		sleep_setup_signal(&sls, state);
-
-		sleep_finish(&sls, 1);
-		sleep_finish_timeout(&sls);
-		ret = sleep_finish_signal(&sls);
+		sleep_finish_all(&sls, 1);
 	}
 	if (!irq_test_in_progress)
 		ring->irq_put(ring);
 
-	sleep_finish(&sls, 0);
-	sleep_finish_timeout(&sls);
-	sleep_finish_signal(&sls);
+	sleep_finish_all(&sls, 0);
 
 out:
 	now = ktime_get_raw_ns();
