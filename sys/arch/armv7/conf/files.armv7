@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.35 2018/05/04 16:12:12 visa Exp $
+#	$OpenBSD: files.armv7,v 1.36 2018/05/31 20:03:18 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -75,10 +75,6 @@ include "arch/armv7/exynos/files.exynos"
 include "arch/armv7/vexpress/files.vexpress"
 include "arch/armv7/broadcom/files.broadcom"
 include "arch/armv7/marvell/files.marvell"
-
-# Console related stuff
-attach	com at fdt with com_fdt
-file	arch/armv7/dev/com_fdt.c		com_fdt
 
 # ARM PrimeCell PL011 UART
 device	pluart

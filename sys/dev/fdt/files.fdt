@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.60 2018/05/16 13:21:50 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.61 2018/05/31 20:03:18 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -240,3 +240,6 @@ file	dev/fdt/if_fec.c		fec
 
 attach	ccp at fdt with ccp_fdt
 file	dev/fdt/ccp_fdt.c		ccp_fdt
+
+attach	com at fdt with com_fdt
+file	dev/fdt/com_fdt.c		com_fdt
