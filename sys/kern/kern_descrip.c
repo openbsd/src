@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.160 2018/05/29 08:28:35 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.161 2018/05/31 11:38:15 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -962,7 +962,7 @@ restart:
 	 * We need to block interrupts as long as `f_mtx' is being taken
 	 * with and without the KERNEL_LOCK().
 	 */
-	mtx_init(&fp->f_mtx, IPL_VM);
+	mtx_init(&fp->f_mtx, IPL_MPFLOOR);
 	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
