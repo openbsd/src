@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.211 2018/05/29 20:43:07 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.212 2018/05/31 11:56:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -667,17 +667,14 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 		    sizeof(evp->agent.mta.relay.hostname));
 	}
 
-	if (smarthost) {
-		if (text_to_relayhost(&evp->agent.mta.relay, smarthost) == 0) {
-			log_warnx("warn: Failed to parse smarthost %s",
-			    smarthost);
-			m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
-			m_add_evpid(p_queue, evp->id);
-			m_add_string(p_queue, "Cannot parse smarthost");
-			m_add_int(p_queue, ESC_OTHER_STATUS);
-			m_close(p_queue);
-			return;
-		}
+	if (smarthost && !text_to_relayhost(&evp->agent.mta.relay, smarthost)) {
+		log_warnx("warn: Failed to parse smarthost %s", smarthost);
+		m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_string(p_queue, "Cannot parse smarthost");
+		m_add_int(p_queue, ESC_OTHER_STATUS);
+		m_close(p_queue);
+		return;
 	}
 
 	relay = mta_relay(evp);
