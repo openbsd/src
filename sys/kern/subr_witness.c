@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.16 2018/05/16 14:57:22 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.17 2018/05/31 14:52:26 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -366,7 +366,7 @@ static void	witness_setflag(struct lock_object *lock, int flag, int set);
 #ifdef WITNESS_WATCH
 static int witness_watch = 3;
 #else
-static int witness_watch = 0;
+static int witness_watch = 2;
 #endif
 
 #ifdef WITNESS_SKIPSPIN
