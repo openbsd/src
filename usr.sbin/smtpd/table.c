@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.28 2018/05/29 20:58:16 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.29 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -230,7 +230,7 @@ table_create(const char *backend, const char *name, const char *tag,
 	if (tb == NULL)
 		fatalx("table_create: backend \"%s\" does not exist", backend);
 
-	t = xcalloc(1, sizeof(*t), "table_create");
+	t = xcalloc(1, sizeof(*t));
 	t->t_backend = tb;
 
 	/* XXX */
@@ -298,7 +298,7 @@ table_add(struct table *t, const char *key, const char *val)
 		return;
 	}
 
-	old = dict_set(&t->t_dict, lkey, val ? xstrdup(val, "table_add") : NULL);
+	old = dict_set(&t->t_dict, lkey, val ? xstrdup(val) : NULL);
 	if (old) {
 		log_warnx("warn: duplicate key \"%s\" in static table \"%s\"",
 		    lkey, t->t_name);

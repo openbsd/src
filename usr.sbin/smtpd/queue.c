@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.186 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.187 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -516,7 +516,7 @@ queue_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_msgid(&m, &msgid);
 		m_end(&m);
 		/* handle concurrent walk requests */
-		wi = xcalloc(1, sizeof *wi, "queu_imsg");
+		wi = xcalloc(1, sizeof *wi);
 		wi->msgid = msgid;
 		wi->peerid = imsg->hdr.peerid;
 		evtimer_set(&wi->ev, queue_msgid_walk, wi);

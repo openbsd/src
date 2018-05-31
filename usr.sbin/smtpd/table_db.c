@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.9 2015/11/24 07:40:26 gilles Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.10 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -110,7 +110,7 @@ table_db_open(struct table *table)
 	struct dbhandle	       *handle;
 	struct stat		sb;
 
-	handle = xcalloc(1, sizeof *handle, "table_db_open");
+	handle = xcalloc(1, sizeof *handle);
 	if (strlcpy(handle->pathname, table->t_config, sizeof handle->pathname)
 	    >= sizeof handle->pathname)
 		goto error;
@@ -219,7 +219,7 @@ table_db_get_entry_match(void *hdl, const char *key, size_t *len,
 
 	for (r = handle->db->seq(handle->db, &dbk, &dbd, R_FIRST); !r;
 	     r = handle->db->seq(handle->db, &dbk, &dbd, R_NEXT)) {
-		buf = xmemdup(dbk.data, dbk.size, "table_db_get_entry_cmp");
+		buf = xmemdup(dbk.data, dbk.size);
 		if (func(key, buf)) {
 			*len = dbk.size;
 			return buf;
@@ -249,5 +249,5 @@ table_db_get_entry(void *hdl, const char *key, size_t *len)
 
 	*len = dbv.size;
 
-	return xmemdup(dbv.data, dbv.size, "table_db_get_entry");
+	return xmemdup(dbv.data, dbv.size);
 }

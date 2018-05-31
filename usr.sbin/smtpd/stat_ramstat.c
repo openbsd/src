@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_ramstat.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: stat_ramstat.c,v 1.11 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -84,7 +84,7 @@ ramstat_increment(const char *name, size_t val)
 	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = xcalloc(1, sizeof *np, "ramstat_increment");
+		np = xcalloc(1, sizeof *np);
 		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
@@ -102,7 +102,7 @@ ramstat_decrement(const char *name, size_t val)
 	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = xcalloc(1, sizeof *np, "ramstat_decrement");
+		np = xcalloc(1, sizeof *np);
 		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}
@@ -120,7 +120,7 @@ ramstat_set(const char *name, const struct stat_value *val)
 	(void)strlcpy(lk.key, name, sizeof (lk.key));
 	np = RB_FIND(stats_tree, &stats, &lk);
 	if (np == NULL) {
-		np = xcalloc(1, sizeof *np, "ramstat_set");
+		np = xcalloc(1, sizeof *np);
 		(void)strlcpy(np->key, name, sizeof (np->key));
 		RB_INSERT(stats_tree, &stats, np);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.297 2018/05/29 22:10:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.298 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -228,7 +228,7 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		c->cause = xstrdup(cause, "parent_imsg");
+		c->cause = xstrdup(cause);
 		log_debug("debug: smtpd: kill requested for %u: %s",
 		    c->pid, c->cause);
 		kill(c->pid, SIGTERM);
@@ -1358,18 +1358,18 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	/* setup environment similar to other MTA */
 
 	idx = 0;
-	mda_environ[idx++] = xasprintf("PATH=%s", _PATH_DEFPATH);
-	mda_environ[idx++] = xasprintf("DOMAIN=%s", deliver->rcpt.domain);
-	mda_environ[idx++] = xasprintf("HOME=%s", pw_dir);
-	mda_environ[idx++] = xasprintf("RECIPIENT=%s@%s", deliver->dest.user, deliver->dest.domain);
-	mda_environ[idx++] = xasprintf("SHELL=/bin/sh");
-	mda_environ[idx++] = xasprintf("LOCAL=%s", deliver->rcpt.user);
-	mda_environ[idx++] = xasprintf("LOGNAME=%s", pw_name);
-	mda_environ[idx++] = xasprintf("USER=%s", pw_name);
+	xasprintf(&mda_environ[idx++], "PATH=%s", _PATH_DEFPATH);
+	xasprintf(&mda_environ[idx++], "DOMAIN=%s", deliver->rcpt.domain);
+	xasprintf(&mda_environ[idx++], "HOME=%s", pw_dir);
+	xasprintf(&mda_environ[idx++], "RECIPIENT=%s@%s", deliver->dest.user, deliver->dest.domain);
+	xasprintf(&mda_environ[idx++], "SHELL=/bin/sh");
+	xasprintf(&mda_environ[idx++], "LOCAL=%s", deliver->rcpt.user);
+	xasprintf(&mda_environ[idx++], "LOGNAME=%s", pw_name);
+	xasprintf(&mda_environ[idx++], "USER=%s", pw_name);
 
 	if ((tag = strchr(deliver->rcpt.user, *env->sc_subaddressing_delim)) != NULL)
 		if (strlen(tag+1))
-			mda_environ[idx++] = xasprintf("EXTENSION=%s", tag+1);
+			xasprintf(&mda_environ[idx++], "EXTENSION=%s", tag+1);
 
 	mda_environ[idx++] = (char *)NULL;
 

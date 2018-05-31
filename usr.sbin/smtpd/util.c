@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.135 2018/05/29 18:16:14 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.136 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -60,73 +60,64 @@ int	tracing = 0;
 int	foreground_log = 0;
 
 void *
-xmalloc(size_t size, const char *where)
+xmalloc(size_t size)
 {
 	void	*r;
 
-	if ((r = malloc(size)) == NULL) {
-		log_warnx("%s: malloc(%zu)", where, size);
-		fatalx("exiting");
-	}
+	if ((r = malloc(size)) == NULL)
+		fatal("malloc");
 
 	return (r);
 }
 
 void *
-xcalloc(size_t nmemb, size_t size, const char *where)
+xcalloc(size_t nmemb, size_t size)
 {
 	void	*r;
 
-	if ((r = calloc(nmemb, size)) == NULL) {
-		log_warnx("%s: calloc(%zu, %zu)", where, nmemb, size);
-		fatalx("exiting");
-	}
+	if ((r = calloc(nmemb, size)) == NULL)
+		fatal("calloc");
 
 	return (r);
 }
 
 char *
-xstrdup(const char *str, const char *where)
+xstrdup(const char *str)
 {
 	char	*r;
 
-	if ((r = strdup(str)) == NULL) {
-		log_warnx("%s: strdup(%p)", where, str);
-		fatalx("exiting");
-	}
+	if ((r = strdup(str)) == NULL)
+		fatal("strdup");
 
 	return (r);
 }
 
 void *
-xmemdup(const void *ptr, size_t size, const char *where)
+xmemdup(const void *ptr, size_t size)
 {
 	void	*r;
 
-	if ((r = malloc(size)) == NULL) {
-		log_warnx("%s: malloc(%zu)", where, size);
-		fatalx("exiting");
-	}
+	if ((r = malloc(size)) == NULL)
+		fatal("malloc");
+
 	memmove(r, ptr, size);
 
 	return (r);
 }
 
-void *
-xasprintf(const char *format, ...)
+int
+xasprintf(char **ret, const char *format, ...)
 {
-	int ret;
+	int r;
 	va_list ap;
-	char	*retp = NULL;
 
 	va_start(ap, format);
-	ret = vasprintf(&retp, format, ap);
+	r = vasprintf(ret, format, ap);
 	va_end(ap);
-	if (ret == -1) {
-		log_warnx("asprintf(%p)", format);
-		fatalx("exiting");
-	}
-	return retp;
+	if (r == -1)
+		fatal("vasprintf");
+
+	return (r);
 }
 
 

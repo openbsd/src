@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.114 2018/04/23 10:27:24 sunil Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.115 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -246,7 +246,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		if ((pw = getpwuid(getuid())) == NULL)
 			user = "anonymous";
 		if (pw != NULL)
-			user = xstrdup(pw->pw_name, "enqueue");
+			user = xstrdup(pw->pw_name);
 	}
 	else {
 		uid_t ruid = getuid();
@@ -258,7 +258,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		} else if ((pw = getpwuid(ruid)) == NULL) {
 			user = "anonymous";
 		}
-		user = xstrdup(pw ? pw->pw_name : user, "enqueue");
+		user = xstrdup(pw ? pw->pw_name : user);
 	}
 
 	build_from(fake_from, pw);
@@ -543,7 +543,7 @@ build_from(char *fake_from, struct passwd *pw)
 			if (fake_from[strlen(fake_from) - 1] != '>')
 				errx(1, "leading < but no trailing >");
 			fake_from[strlen(fake_from) - 1] = 0;
-			p = xstrdup(fake_from + 1, "build_from");
+			p = xstrdup(fake_from + 1);
 
 			msg.from = qualify_addr(p);
 			free(p);
@@ -758,7 +758,7 @@ qualify_addr(char *in)
 		if (asprintf(&out, "%s@%s", in, host) == -1)
 			err(1, "qualify asprintf");
 	} else
-		out = xstrdup(in, "qualify_addr");
+		out = xstrdup(in);
 
 	return (out);
 }

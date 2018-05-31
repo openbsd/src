@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.98 2017/05/24 21:27:32 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.99 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -191,7 +191,7 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 
 	mta_session_init();
 
-	s = xcalloc(1, sizeof *s, "mta_session");
+	s = xcalloc(1, sizeof *s);
 	s->id = generate_uid();
 	s->relay = relay;
 	s->route = route;
@@ -305,7 +305,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		h = s->route->dst;
 		h->lastptrquery = time(NULL);
 		if (name)
-			h->ptrname = xstrdup(name, "mta: ptr");
+			h->ptrname = xstrdup(name);
 		waitq_run(&h->ptrname, h->ptrname);
 		return;
 
@@ -332,9 +332,9 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			}
 		}
 
-		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "mta:ca_cert");
+		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert);
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
-		    sizeof *resp_ca_cert, "mta:ca_cert");
+		    sizeof *resp_ca_cert);
 		ssl = ssl_mta_init(resp_ca_cert->name,
 		    resp_ca_cert->cert, resp_ca_cert->cert_len, env->sc_tls_ciphers);
 		if (ssl == NULL)
@@ -377,7 +377,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		if (status == LKA_OK) {
-			s->helo = xstrdup(name, "mta_session_imsg");
+			s->helo = xstrdup(name);
 			mta_connect(s);
 		} else {
 			mta_source_error(s->relay, s->route,
@@ -489,9 +489,9 @@ mta_connect(struct mta_session *s)
 			return;
 		}
 		else if (s->relay->heloname)
-			s->helo = xstrdup(s->relay->heloname, "mta_connect");
+			s->helo = xstrdup(s->relay->heloname);
 		else
-			s->helo = xstrdup(env->sc_hostname, "mta_connect");
+			s->helo = xstrdup(env->sc_hostname);
 	}
 
 	if (s->io) {

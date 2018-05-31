@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.330 2018/05/10 07:21:47 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.331 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -746,7 +746,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			smtp_enter_state(s, STATE_QUIT);
 		}
 		else {
-			rcpt = xcalloc(1, sizeof(*rcpt), "smtp_rcpt");
+			rcpt = xcalloc(1, sizeof(*rcpt));
 			rcpt->destcount = s->tx->destcount;
 			rcpt->maddr = s->tx->evp.rcpt;
 			TAILQ_INSERT_TAIL(&s->tx->rcpts, rcpt, entry);
@@ -849,9 +849,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert, "smtp:ca_cert");
+		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert);
 		resp_ca_cert->cert = xstrdup((char *)imsg->data +
-		    sizeof *resp_ca_cert, "smtp:ca_cert");
+		    sizeof *resp_ca_cert);
 		ssl_ctx = dict_get(env->sc_ssl_dict, resp_ca_cert->name);
 		ssl = ssl_smtp_init(ssl_ctx, s->listener->flags & F_TLS_VERIFY);
 		io_set_read(s->io);

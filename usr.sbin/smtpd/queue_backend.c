@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.63 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.64 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -457,7 +457,7 @@ queue_envelope_cache_add(struct envelope *e)
 	while (tree_count(&evpcache_tree) >= env->sc_queue_evpcache_size)
 		queue_envelope_cache_del(TAILQ_LAST(&evpcache_list, evplst)->id);
 
-	cached = xcalloc(1, sizeof *cached, "queue_envelope_cache_add");
+	cached = xcalloc(1, sizeof *cached);
 	*cached = *e;
 	TAILQ_INSERT_HEAD(&evpcache_list, cached, entry);
 	tree_xset(&evpcache_tree, e->id, cached);

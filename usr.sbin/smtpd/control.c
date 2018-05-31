@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.122 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.123 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -312,7 +312,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	count = tree_get(&ctl_count, euid);
 	if (count == NULL) {
-		count = xcalloc(1, sizeof *count, "control_accept");
+		count = xcalloc(1, sizeof *count);
 		tree_xset(&ctl_count, euid, count);
 	}
 
@@ -328,7 +328,7 @@ control_accept(int listenfd, short event, void *arg)
 		++connid;
 	} while (tree_get(&ctl_conns, connid));
 
-	c = xcalloc(1, sizeof(*c), "control_accept");
+	c = xcalloc(1, sizeof(*c));
 	c->euid = euid;
 	c->egid = egid;
 	c->id = connid;

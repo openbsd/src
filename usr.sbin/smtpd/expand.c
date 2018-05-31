@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.30 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: expand.c,v 1.31 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -83,7 +83,7 @@ expand_insert(struct expand *expand, struct expandnode *node)
 		return;
 	}
 
-	xn = xmemdup(node, sizeof *xn, "expand_insert");
+	xn = xmemdup(node, sizeof *xn);
 	xn->rule = expand->rule;
 	xn->parent = expand->parent;
 	if (xn->parent)

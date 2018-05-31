@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.82 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.83 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -81,7 +81,7 @@ lka_session(uint64_t id, struct envelope *envelope)
 		tree_init(&sessions);
 	}
 
-	lks = xcalloc(1, sizeof(*lks), "lka_session");
+	lks = xcalloc(1, sizeof(*lks));
 	lks->id = id;
 	RB_INIT(&lks->expand.tree);
 	TAILQ_INIT(&lks->deliverylist);
@@ -466,7 +466,7 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 	const char		*user;
 	const char		*format;
 
-	ep = xmemdup(&lks->envelope, sizeof *ep, "lka_submit");
+	ep = xmemdup(&lks->envelope, sizeof *ep);
 	(void)strlcpy(ep->dispatcher, rule->dispatcher, sizeof ep->dispatcher);
 
 	dsp = dict_xget(env->sc_dispatchers, ep->dispatcher);

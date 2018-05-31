@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.57 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.58 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -452,10 +452,10 @@ scheduler(void)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("scheduler: cannot drop privileges");
 
-	evpids = xcalloc(env->sc_scheduler_max_schedule, sizeof *evpids, "scheduler: init evpids");
-	types = xcalloc(env->sc_scheduler_max_schedule, sizeof *types, "scheduler: init types");
-	msgids = xcalloc(env->sc_scheduler_max_msg_batch_size, sizeof *msgids, "scheduler: list msg");
-	state = xcalloc(env->sc_scheduler_max_evp_batch_size, sizeof *state, "scheduler: list evp");
+	evpids = xcalloc(env->sc_scheduler_max_schedule, sizeof *evpids);
+	types = xcalloc(env->sc_scheduler_max_schedule, sizeof *types);
+	msgids = xcalloc(env->sc_scheduler_max_msg_batch_size, sizeof *msgids);
+	state = xcalloc(env->sc_scheduler_max_evp_batch_size, sizeof *state);
 
 	imsg_callback = scheduler_imsg;
 	event_init();

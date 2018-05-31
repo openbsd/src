@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.6 2015/12/05 13:14:21 claudio Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.7 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -123,7 +123,7 @@ table_proc_open(struct table *table)
 	struct table_open_params op;
 	int			 fd;
 
-	priv = xcalloc(1, sizeof(*priv), "table_proc_open");
+	priv = xcalloc(1, sizeof(*priv));
 
 	fd = fork_proc_backend("table", table->t_config, table->t_name);
 	if (fd == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.131 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.132 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -707,7 +707,7 @@ mda_user(const struct envelope *evp)
 			return (u);
 	}
 
-	u = xcalloc(1, sizeof *u, "mda_user");
+	u = xcalloc(1, sizeof *u);
 	u->id = generate_uid();
 	TAILQ_INIT(&u->envelopes);
 	(void)strlcpy(u->name, evp->mda_user, sizeof(u->name));
@@ -768,26 +768,25 @@ mda_envelope(const struct envelope *evp)
 	struct mda_envelope	*e;
 	char			 buf[LINE_MAX];
 
-	e = xcalloc(1, sizeof *e, "mda_envelope");
+	e = xcalloc(1, sizeof *e);
 	e->id = evp->id;
 	e->creation = evp->creation;
 	buf[0] = '\0';
 	if (evp->sender.user[0] && evp->sender.domain[0])
 		(void)snprintf(buf, sizeof buf, "%s@%s",
 		    evp->sender.user, evp->sender.domain);
-	e->sender = xstrdup(buf, "mda_envelope:sender");
+	e->sender = xstrdup(buf);
 	(void)snprintf(buf, sizeof buf, "%s@%s", evp->dest.user,
 	    evp->dest.domain);
-	e->dest = xstrdup(buf, "mda_envelope:dest");
+	e->dest = xstrdup(buf);
 	(void)snprintf(buf, sizeof buf, "%s@%s", evp->rcpt.user,
 	    evp->rcpt.domain);
-	e->rcpt = xstrdup(buf, "mda_envelope:rcpt");
+	e->rcpt = xstrdup(buf);
 	e->user = evp->mda_user[0] ?
-	    xstrdup(evp->mda_user, "mda_envelope:mda_user") :
-	    xstrdup(evp->dest.user, "mda_envelope:user");
-	e->dispatcher = xstrdup(evp->dispatcher, "mda_envelope:user");
+	    xstrdup(evp->mda_user) : xstrdup(evp->dest.user);
+	e->dispatcher = xstrdup(evp->dispatcher);
 	if (evp->mda_exec[0])
-		e->mda_exec = xstrdup(evp->mda_exec, "mda_envelope:mda_exec");
+		e->mda_exec = xstrdup(evp->mda_exec);
 	stat_increment("mda.envelope", 1);
 	return (e);
 }
@@ -810,7 +809,7 @@ mda_session(struct mda_user * u)
 {
 	struct mda_session *s;
 
-	s = xcalloc(1, sizeof *s, "mda_session");
+	s = xcalloc(1, sizeof *s);
 	s->id = generate_uid();
 	s->user = u;
 	s->io = io_new();

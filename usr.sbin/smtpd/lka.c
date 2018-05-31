@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.204 2018/05/29 20:43:07 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.205 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -167,13 +167,13 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_SMTP_TLS_VERIFY_CERT:
 	case IMSG_MTA_TLS_VERIFY_CERT:
-		req_ca_vrfy = xmemdup(imsg->data, sizeof *req_ca_vrfy, "lka:ca_vrfy");
+		req_ca_vrfy = xmemdup(imsg->data, sizeof *req_ca_vrfy);
 		req_ca_vrfy->cert = xmemdup((char *)imsg->data +
-		    sizeof *req_ca_vrfy, req_ca_vrfy->cert_len, "lka:ca_vrfy");
+		    sizeof *req_ca_vrfy, req_ca_vrfy->cert_len);
 		req_ca_vrfy->chain_cert = xcalloc(req_ca_vrfy->n_chain,
-		    sizeof (unsigned char *), "lka:ca_vrfy");
+		    sizeof (unsigned char *));
 		req_ca_vrfy->chain_cert_len = xcalloc(req_ca_vrfy->n_chain,
-		    sizeof (off_t), "lka:ca_vrfy");
+		    sizeof (off_t));
 		return;
 
 	case IMSG_SMTP_TLS_VERIFY_CHAIN:
@@ -182,7 +182,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 			fatalx("lka:ca_vrfy: chain without a certificate");
 		req_ca_vrfy_chain = imsg->data;
 		req_ca_vrfy->chain_cert[req_ca_vrfy->chain_offset] = xmemdup((char *)imsg->data +
-		    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len, "lka:ca_vrfy");
+		    sizeof *req_ca_vrfy_chain, req_ca_vrfy_chain->cert_len);
 		req_ca_vrfy->chain_cert_len[req_ca_vrfy->chain_offset] = req_ca_vrfy_chain->cert_len;
 		req_ca_vrfy->chain_offset++;
 		return;

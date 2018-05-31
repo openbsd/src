@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.68 2018/04/26 20:57:59 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.69 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -400,7 +400,7 @@ parse_setentry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 static int
 make_plain(DBT *val, char *text)
 {
-	val->data = xstrdup(text, "make_plain");
+	val->data = xstrdup(text);
 	val->size = strlen(text) + 1;
 
 	return (val->size);
@@ -416,7 +416,7 @@ make_aliases(DBT *val, char *text)
 	val->data = NULL;
 	val->size = 0;
 
-	origtext = xstrdup(text, "make_aliases");
+	origtext = xstrdup(text);
 
 	while ((subrcpt = strsep(&text, ",")) != NULL) {
 		/* subrcpt: strip initial and trailing whitespace. */
@@ -452,7 +452,7 @@ conf_aliases(char *cfgpath)
 	if (table == NULL)
 		return (PATH_ALIASES);
 
-	path = xstrdup(table->t_config, "conf_aliases");
+	path = xstrdup(table->t_config);
 	p = strstr(path, ".db");
 	if (p == NULL || strcmp(p, ".db") != 0) {
 		return (path);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.85 2018/01/06 07:57:53 sunil Exp $	*/
+/*	$OpenBSD: dns.c,v 1.86 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -119,7 +119,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*domain, *mx, *host;
 	socklen_t		 sl;
 
-	s = xcalloc(1, sizeof *s, "dns_imsg");
+	s = xcalloc(1, sizeof *s);
 	s->type = imsg->hdr.type;
 	s->p = p;
 
@@ -361,7 +361,7 @@ dns_lookup_host(struct dns_session *s, const char *host, int preference)
 	char			*p;
 	void			*as;
 
-	lookup = xcalloc(1, sizeof *lookup, "dns_lookup_host");
+	lookup = xcalloc(1, sizeof *lookup);
 	lookup->preference = preference;
 	lookup->session = s;
 	s->refcount++;
