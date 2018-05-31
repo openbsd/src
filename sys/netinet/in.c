@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.156 2018/05/31 16:34:40 tb Exp $	*/
+/*	$OpenBSD: in.c,v 1.157 2018/05/31 17:17:01 tb Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -425,9 +425,9 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	case SIOCDIFADDR:
 		/*
 		 * Even if the individual steps were safe, shouldn't
-		 * these kinds of changes happen atomically?  What 
+		 * these kinds of changes happen atomically?  What
 		 * should happen to a packet that was routed after
-		 * the scrub but before the other steps? 
+		 * the scrub but before the other steps?
 		 */
 		in_purgeaddr(&ia->ia_ifa);
 		dohooks(ifp->if_addrhooks, 0);
