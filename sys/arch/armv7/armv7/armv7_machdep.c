@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.53 2018/05/15 11:11:35 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.54 2018/05/31 09:12:59 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -206,16 +206,6 @@ void	process_kernel_args(char *);
 void	consinit(void);
 
 bs_protos(bs_notimpl);
-
-#ifndef CONSPEED
-#define CONSPEED B115200	/* What u-boot */
-#endif
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-
-int comcnspeed = CONSPEED;
-int comcnmode = CONMODE;
 
 int stdout_node;
 int stdout_speed;
