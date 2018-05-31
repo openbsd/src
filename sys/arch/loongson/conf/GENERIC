@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 2018/04/24 03:17:36 visa Exp $
+#	$OpenBSD: GENERIC,v 1.58 2018/05/31 19:31:54 fcambus Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -164,6 +164,7 @@ atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
 axen*		at uhub?	# ASIX Electronics AX88179 USB Ethernet
+bwfm*		at uhub?	# Broadcom FullMAC
 cdce*		at uhub?	# CDC Ethernet
 urndis*		at uhub?	# Remote NDIS Ethernet
 cue*		at uhub?	# CATC USB-EL1201A based Ethernet
