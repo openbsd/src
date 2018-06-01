@@ -1,4 +1,4 @@
-/* $OpenBSD: elfrd_size.c,v 1.9 2018/04/26 12:42:50 guenther Exp $ */
+/* $OpenBSD: elfrd_size.c,v 1.10 2018/06/01 21:20:13 mortimer Exp $ */
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -114,9 +114,9 @@ ELFNAME(find_rd_root_image)(char *file, int fd, Elf_Phdr *ph, int segment,
 		fprintf(stderr, "segment %d rd_root_size_off = 0x%llx\n", segment,
 		    rd_root_size_off);
 		if ((ph->p_vaddr - ph->p_paddr) != 0)
-			fprintf(stderr, "root_off v %tx p %tx, diff %tx altered %llx\n",
-			    ph->p_vaddr, ph->p_paddr,
-			    (ph->p_vaddr - ph->p_paddr),
+			fprintf(stderr, "root_off v %zx p %zx, diff %zx altered %llx\n",
+			    (size_t)ph->p_vaddr, (size_t)ph->p_paddr,
+			    (size_t)(ph->p_vaddr - ph->p_paddr),
 			    rd_root_size_off - (ph->p_vaddr - ph->p_paddr));
 		fprintf(stderr, "rd_root_image_off = 0x%llx\n", rd_root_image_off);
 	}
