@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.12 2018/06/01 18:25:17 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.13 2018/06/01 20:45:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -370,6 +370,11 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	saa.sch = sc;
 	saa.dmat = sc->sc_dmat;
 	saa.dmap = sc->sc_dmap;
+
+	if (OF_getproplen(sc->sc_node, "cap-mmc-highspeed") == 0)
+		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+	if (OF_getproplen(sc->sc_node, "cap-sd-highspeed") == 0)
+		saa.caps |= SMC_CAPS_SD_HIGHSPEED;
 
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (width >= 8)
