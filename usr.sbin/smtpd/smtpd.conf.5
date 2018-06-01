@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.185 2018/06/01 12:43:19 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.186 2018/06/01 19:42:24 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -231,6 +231,22 @@ for the source IP address.
 If the list contains more than one address, all of them are used
 in such a way that traffic is routed as efficiently as possible.
 .El
+.It Ic bounce Cm warn\-interval Ar delay Op , Ar delay ...
+Send warning messages to the envelope sender when temporary delivery
+failures cause a message to remain on the queue for longer than
+.Ar delay .
+Each
+.Ar delay
+parameter consists of a positive decimal integer and a unit
+.Cm s , m , h ,
+or
+.Cm d .
+At most four
+.Ar delay
+parameters can be specified.
+The default is
+.Qq Ic bounce Cm warn\-interval No 4h ,
+sending a single warning after four hours.
 .It Ic ca Ar hostname Cm cert Ar cafile
 Associate a custom CA certificate located in
 .Ar cafile
@@ -457,6 +473,13 @@ The same
 are supported as for the
 .Ic match Cm action
 directive.
+.It Ic mta Cm max\-deferred Ar number
+When delivery to a given host is suspended due to temporary failures,
+cache at most
+.Ar number
+envelopes for that host such that they can be delivered
+as soon as another delivery succeeds to that host.
+The default is 100.
 .It Ic pki Ar hostname Cm cert Ar certfile
 Associate the certificate located in
 .Ar certfile
@@ -496,33 +519,10 @@ the key length is determined automatically.
 The default is
 .Cm none ,
 which disables DHE cipher suites.
-.It Ic set bounce Cm warn\-interval Ar delay Op , Ar delay ...
-Send warning messages to the envelope sender when temporary delivery
-failures cause a message to remain on the queue for longer than
-.Ar delay .
-Each
-.Ar delay
-parameter consists of a positive decimal integer and a unit
-.Cm s , m , h ,
-or
-.Cm d .
-At most four
-.Ar delay
-parameters can be specified.
-The default is
-.Qq Ic set bounce Cm warn\-interval No 4h ,
-sending a single warning after four hours.
-.It Ic set mta Cm max\-deferred Ar number
-When delivery to a given host is suspended due to temporary failures,
-cache at most
-.Ar number
-envelopes for that host such that they can be delivered
-as soon as another delivery succeeds to that host.
-The default is 100.
-.It Ic set queue Cm compression
+.It Ic queue Cm compression
 Store queue files in a compressed format.
 This may be useful to save disk space.
-.It Ic set queue Cm encryption Op Ar key
+.It Ic queue Cm encryption Op Ar key
 Encrypt queue files with
 .Xr EVP_aes_256_gcm 3 .
 If no
@@ -536,7 +536,7 @@ or a single dash
 is given instead of a
 .Ar key ,
 the key is read from the standard input.
-.It Ic set queue Cm ttl Ar delay
+.It Ic queue Cm ttl Ar delay
 Set the default expiration time for temporarily undeliverable
 messages, given as a positive decimal integer followed by a unit
 .Cm s , m , h ,
@@ -544,21 +544,21 @@ or
 .Cm d .
 The default is four days
 .Pq 4d .
-.It Ic set smtp Cm ciphers Ar control
+.It Ic smtp Cm ciphers Ar control
 Set the
 .Ar control
 string for
 .Xr SSL_CTX_set_cipher_list 3 .
 The default is
 .Qq HIGH:!aNULL:!MD5 .
-.It Ic set smtp Cm max\-message\-size Ar size
+.It Ic smtp Cm max\-message\-size Ar size
 Reject messages larger than
 .Ar size ,
 given as a positive number of bytes or as a string to be parsed with
 .Xr scan_scaled 3 .
 The default is
 .Qq 35M .
-.It Ic set smtp Cm sub\-addr\-delim Ar character
+.It Ic smtp Cm sub\-addr\-delim Ar character
 When resolving the local part of a local email address, ignore the ASCII
 .Ar character
 and all characters following it.

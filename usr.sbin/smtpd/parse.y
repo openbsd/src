@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.208 2018/06/01 12:24:16 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.209 2018/06/01 19:42:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -187,7 +187,7 @@ typedef struct {
 %token	PKI PORT
 %token	QUEUE
 %token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT
-%token	SCHEDULER SENDER SENDERS SET SMTP SMTPS SOCKET SRC SUB_ADDR_DELIM
+%token	SCHEDULER SENDER SENDERS SMTP SMTPS SOCKET SRC SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TO TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
@@ -204,10 +204,15 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar include '\n'
 		| grammar varset '\n'
-		| grammar limit '\n'
+		| grammar bounce '\n'
+		| grammar ca '\n'
+		| grammar mda '\n'
+		| grammar mta '\n'
+		| grammar pki '\n'
+		| grammar queue '\n'
+		| grammar scheduler '\n'
+		| grammar smtp '\n'
 		| grammar listen '\n'
-		| grammar set '\n'
-		| grammar pkica '\n'
 		| grammar table '\n'
 		| grammar dispatcher '\n'
 		| grammar match '\n'
@@ -292,6 +297,131 @@ string_list	: stringel
 tableval_list	: string_list			{ }
 		| keyval_list			{ }
 		;
+
+bounce:
+BOUNCE WARN_INTERVAL {
+	memset(conf->sc_bounce_warn, 0, sizeof conf->sc_bounce_warn);
+} bouncedelays
+;
+
+
+ca:
+CA STRING {
+	char buf[HOST_NAME_MAX+1];
+
+	/* if not catchall, check that it is a valid domain */
+	if (strcmp($2, "*") != 0) {
+		if (!res_hnok($2)) {
+			yyerror("not a valid domain name: %s", $2);
+			free($2);
+			YYERROR;
+		}
+	}
+	xlowercase(buf, $2, sizeof(buf));
+	free($2);
+	sca = dict_get(conf->sc_ca_dict, buf);
+	if (sca == NULL) {
+		sca = xcalloc(1, sizeof *sca);
+		(void)strlcpy(sca->ca_name, buf, sizeof(sca->ca_name));
+		dict_set(conf->sc_ca_dict, sca->ca_name, sca);
+	}
+} ca_params
+;
+
+
+ca_params_opt:
+CERT STRING {
+	sca->ca_cert_file = $2;
+}
+;
+
+ca_params:
+ca_params_opt
+;
+
+
+mda:
+MDA LIMIT limits_mda
+;
+
+
+mta:
+MTA MAX_DEFERRED NUMBER  {
+	conf->sc_mta_max_deferred = $3;
+}
+| MTA LIMIT FOR DOMAIN STRING {
+	struct mta_limits	*d;
+
+	limits = dict_get(conf->sc_limits_dict, $5);
+	if (limits == NULL) {
+		limits = xcalloc(1, sizeof(*limits));
+		dict_xset(conf->sc_limits_dict, $5, limits);
+		d = dict_xget(conf->sc_limits_dict, "default");
+		memmove(limits, d, sizeof(*limits));
+	}
+	free($5);
+} limits_mta
+| MTA LIMIT {
+	limits = dict_get(conf->sc_limits_dict, "default");
+} limits_mta
+;
+
+
+queue:
+QUEUE COMPRESSION {
+	conf->sc_queue_flags |= QUEUE_COMPRESSION;
+}
+| QUEUE ENCRYPTION {
+	conf->sc_queue_flags |= QUEUE_ENCRYPTION;
+}
+| QUEUE ENCRYPTION STRING {
+	if (strcasecmp($3, "stdin") == 0 || strcasecmp($3, "-") == 0) {
+		conf->sc_queue_key = "stdin";
+		free($3);
+	}
+	else
+		conf->sc_queue_key = $3;
+	conf->sc_queue_flags |= QUEUE_ENCRYPTION;
+}
+| QUEUE TTL STRING {
+	conf->sc_ttl = delaytonum($3);
+	if (conf->sc_ttl == -1) {
+		yyerror("invalid ttl delay: %s", $3);
+		free($3);
+		YYERROR;
+	}
+	free($3);
+}
+;
+
+
+smtp:
+SMTP LIMIT limits_smtp
+| SMTP CIPHERS STRING {
+	conf->sc_tls_ciphers = $3;
+}
+| SMTP MAX_MESSAGE_SIZE size {
+	conf->sc_maxsize = $3;
+}
+| SMTP SUB_ADDR_DELIM STRING {
+	if (strlen($3) != 1) {
+		yyerror("subaddressing-delimiter must be one character");
+		free($3);
+		YYERROR;
+	}
+	if (isspace((int)*$3) ||  !isprint((int)*$3) || *$3== '@') {
+		yyerror("sub-addr-delim uses invalid character");
+		free($3);
+		YYERROR;
+	}
+	conf->sc_subaddressing_delim = $3;
+}
+;
+
+
+scheduler:
+SCHEDULER LIMIT limits_scheduler
+;
 
 
 dispatcher_local_option:
@@ -997,39 +1127,6 @@ limits_scheduler: opt_limit_scheduler limits_scheduler
 		| /* empty */
 		;
 
-opt_ca		: CERT STRING {
-			sca->ca_cert_file = $2;
-		}
-		;
-
-ca		: opt_ca
-		;
-
-opt_pki		: CERT STRING {
-			pki->pki_cert_file = $2;
-		}
-		| KEY STRING {
-			pki->pki_key_file = $2;
-		}
-		| DHE STRING {
-			if (strcasecmp($2, "none") == 0)
-				pki->pki_dhe = 0;
-			else if (strcasecmp($2, "auto") == 0)
-				pki->pki_dhe = 1;
-			else if (strcasecmp($2, "legacy") == 0)
-				pki->pki_dhe = 2;
-			else {
-				yyerror("invalid DHE keyword: %s", $2);
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		;
-
-pki		: opt_pki pki
-		| /* empty */
-		;
 
 opt_sock_listen : FILTER STRING {
 			if (config_lo_filter(&listen_opts, $2)) {
@@ -1306,118 +1403,59 @@ if_listen	: opt_if_listen if_listen
 		| /* empty */
 		;
 
-set		: SET BOUNCE WARN_INTERVAL {
-			memset(conf->sc_bounce_warn, 0, sizeof conf->sc_bounce_warn);
-		} bouncedelays
-		| SET MTA MAX_DEFERRED NUMBER  {
-			conf->sc_mta_max_deferred = $4;
-		}
-		| SET QUEUE COMPRESSION {
-			conf->sc_queue_flags |= QUEUE_COMPRESSION;
-		}
-		| SET QUEUE ENCRYPTION {
-			conf->sc_queue_flags |= QUEUE_ENCRYPTION;
-		}
-		| SET QUEUE ENCRYPTION STRING {
-			if (strcasecmp($4, "stdin") == 0 || strcasecmp($4, "-") == 0) {
-				conf->sc_queue_key = "stdin";
-				free($4);
-			}
-			else
-				conf->sc_queue_key = $4;
-			conf->sc_queue_flags |= QUEUE_ENCRYPTION;
-		}
-		| SET QUEUE TTL STRING {
-			conf->sc_ttl = delaytonum($4);
-			if (conf->sc_ttl == -1) {
-				yyerror("invalid ttl delay: %s", $4);
-				free($4);
-				YYERROR;
-			}
-			free($4);
-		}
-		| SET SMTP CIPHERS STRING {
-			conf->sc_tls_ciphers = $4;
-		}
-		| SET SMTP MAX_MESSAGE_SIZE size {
-			conf->sc_maxsize = $4;
-		}
-		| SET SMTP SUB_ADDR_DELIM STRING {
-			if (strlen($4) != 1) {
-				yyerror("subaddressing-delimiter must be one character");
-				free($4);
-				YYERROR;
-			}
-			if (isspace((int)*$4) ||  !isprint((int)*$4) || *$4== '@') {
-				yyerror("sub-addr-delim uses invalid character");
-				free($4);
-				YYERROR;
-			}
-			conf->sc_subaddressing_delim = $4;
-		}
-		;
 
-limit		: LIMIT SMTP limits_smtp
-		| LIMIT MDA limits_mda
-		| LIMIT MTA FOR DOMAIN STRING {
-			struct mta_limits	*d;
+pki:
+PKI STRING {
+	char buf[HOST_NAME_MAX+1];
 
-			limits = dict_get(conf->sc_limits_dict, $5);
-			if (limits == NULL) {
-				limits = xcalloc(1, sizeof(*limits));
-				dict_xset(conf->sc_limits_dict, $5, limits);
-				d = dict_xget(conf->sc_limits_dict, "default");
-				memmove(limits, d, sizeof(*limits));
-			}
-			free($5);
-		} limits_mta
-		| LIMIT MTA {
-			limits = dict_get(conf->sc_limits_dict, "default");
-		} limits_mta
-		| LIMIT SCHEDULER limits_scheduler
-		;
-
-pkica		: PKI STRING	{
-			char buf[HOST_NAME_MAX+1];
-
-			/* if not catchall, check that it is a valid domain */
-			if (strcmp($2, "*") != 0) {
-				if (!res_hnok($2)) {
-					yyerror("not a valid domain name: %s", $2);
-					free($2);
-					YYERROR;
-				}
-			}
-			xlowercase(buf, $2, sizeof(buf));
+	/* if not catchall, check that it is a valid domain */
+	if (strcmp($2, "*") != 0) {
+		if (!res_hnok($2)) {
+			yyerror("not a valid domain name: %s", $2);
 			free($2);
-			pki = dict_get(conf->sc_pki_dict, buf);
-			if (pki == NULL) {
-				pki = xcalloc(1, sizeof *pki);
-				(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
-				dict_set(conf->sc_pki_dict, pki->pki_name, pki);
-			}
-		} pki
-		| CA STRING	{
-			char buf[HOST_NAME_MAX+1];
+			YYERROR;
+		}
+	}
+	xlowercase(buf, $2, sizeof(buf));
+	free($2);
+	pki = dict_get(conf->sc_pki_dict, buf);
+	if (pki == NULL) {
+		pki = xcalloc(1, sizeof *pki);
+		(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
+		dict_set(conf->sc_pki_dict, pki->pki_name, pki);
+	}
+} pki_params
+;
+ 
+pki_params_opt:
+CERT STRING {
+	pki->pki_cert_file = $2;
+}
+| KEY STRING {
+	pki->pki_key_file = $2;
+}
+| DHE STRING {
+	if (strcasecmp($2, "none") == 0)
+		pki->pki_dhe = 0;
+	else if (strcasecmp($2, "auto") == 0)
+		pki->pki_dhe = 1;
+	else if (strcasecmp($2, "legacy") == 0)
+		pki->pki_dhe = 2;
+	else {
+		yyerror("invalid DHE keyword: %s", $2);
+		free($2);
+		YYERROR;
+	}
+	free($2);
+}
+;
 
-			/* if not catchall, check that it is a valid domain */
-			if (strcmp($2, "*") != 0) {
-				if (!res_hnok($2)) {
-					yyerror("not a valid domain name: %s", $2);
-					free($2);
-					YYERROR;
-				}
-			}
-			xlowercase(buf, $2, sizeof(buf));
-			free($2);
-			sca = dict_get(conf->sc_ca_dict, buf);
-			if (sca == NULL) {
-				sca = xcalloc(1, sizeof *sca);
-				(void)strlcpy(sca->ca_name, buf, sizeof(sca->ca_name));
-				dict_set(conf->sc_ca_dict, sca->ca_name, sca);
-			}
-		} ca
-		;
+
+pki_params:
+pki_params_opt pki_params
+| /* empty */
+;
+
 
 listen		: LISTEN {
 			memset(&listen_opts, 0, sizeof listen_opts);
@@ -1596,7 +1634,6 @@ lookup(char *s)
 		{ "relay",		RELAY },
 		{ "scheduler",		SCHEDULER },
 		{ "senders",   		SENDERS },
-		{ "set",   		SET },
 		{ "smtp",		SMTP },
 		{ "smtps",		SMTPS },
 		{ "socket",		SOCKET },
