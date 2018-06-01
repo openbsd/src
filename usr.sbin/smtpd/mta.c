@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.213 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.214 2018/06/01 12:24:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -676,6 +676,9 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 		m_close(p_queue);
 		return;
 	}
+
+	if (smarthost && dispatcher->u.remote.tls_noverify == 0)
+		evp->agent.mta.relay.flags |= F_TLS_VERIFY;
 
 	relay = mta_relay(evp);
 	/* ignore if we don't know the limits yet */

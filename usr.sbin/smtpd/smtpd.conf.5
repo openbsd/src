@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.183 2018/05/31 13:36:35 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.184 2018/06/01 12:24:16 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2018 $
+.Dd $Mdocdate: June 1 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -205,6 +205,9 @@ to advertise during the HELO phase.
 .It Cm host Ar relay-url
 Do not perform MX lookups but relay messages to the relay host described by
 .Ar relay-url .
+If the URL uses TLS, the certificate will be verified by default.
+.It Cm tls no-verify
+Do not require a valid certificate for the specified host.
 .It Cm auth Pf < Ar table Ns >
 Use the mapping
 .Ar table

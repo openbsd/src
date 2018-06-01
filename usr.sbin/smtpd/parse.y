@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.207 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.208 2018/06/01 12:24:16 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -182,7 +182,7 @@ typedef struct {
 %token	KEY
 %token	LIMIT LISTEN LMTP LOCAL
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
-%token	NODSN
+%token	NODSN NOVERIFY
 %token	ON
 %token	PKI PORT
 %token	QUEUE
@@ -540,6 +540,19 @@ HELO STRING {
 	}
 
 	dispatcher->u.remote.smarthost = strdup(t->t_name);
+}
+| TLS NOVERIFY {
+	if (dispatcher->u.remote.smarthost == NULL) {
+		yyerror("tls no-verify may not be specified without host on a dispatcher");
+		YYERROR;
+	}
+
+	if (dispatcher->u.remote.tls_noverify == 1) {
+		yyerror("tls no-verify already specified for this dispatcher");
+		YYERROR;
+	}
+
+	dispatcher->u.remote.tls_noverify = 1;
 }
 | AUTH tables {
 	struct table   *t = $2;
@@ -1571,6 +1584,7 @@ lookup(char *s)
 		{ "mta",		MTA },
 		{ "mx",			MX },
 		{ "no-dsn",		NODSN },
+		{ "no-verify",		NOVERIFY },
 		{ "on",			ON },
 		{ "pki",		PKI },
 		{ "port",		PORT },
