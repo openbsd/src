@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.53 2018/05/23 06:45:20 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.54 2018/06/01 23:10:59 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1009,10 +1009,10 @@ pmap_kpted_alloc(void)
 }
 
 /*
- * In pmap_bootstrap() we allocate the page tables for the first 512 MB
+ * In pmap_bootstrap() we allocate the page tables for the first GB
  * of the kernel address space.
  */
-vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + 512 * 1024 * 1024;
+vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + 1024 * 1024 * 1024;
 
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
