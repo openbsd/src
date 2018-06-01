@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.478 2018/06/01 03:11:49 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.479 2018/06/01 03:33:53 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1244,7 +1244,8 @@ main(int ac, char **av)
 	strlcpy(shorthost, thishost, sizeof(shorthost));
 	shorthost[strcspn(thishost, ".")] = '\0';
 	snprintf(portstr, sizeof(portstr), "%d", options.port);
-	snprintf(uidstr, sizeof(uidstr), "%d", pw->pw_uid);
+	snprintf(uidstr, sizeof(uidstr), "%llu",
+	    (unsigned long long)pw->pw_uid);
 
 	if ((md = ssh_digest_start(SSH_DIGEST_SHA1)) == NULL ||
 	    ssh_digest_update(md, thishost, strlen(thishost)) < 0 ||
@@ -1269,6 +1270,7 @@ main(int ac, char **av)
 		    "L", shorthost,
 		    "d", pw->pw_dir,
 		    "h", host,
+		    "i", uidstr,
 		    "l", thishost,
 		    "n", host_arg,
 		    "p", portstr,
@@ -1289,6 +1291,7 @@ main(int ac, char **av)
 		    "C", conn_hash_hex,
 		    "L", shorthost,
 		    "h", host,
+		    "i", uidstr,
 		    "l", thishost,
 		    "n", host_arg,
 		    "p", portstr,
@@ -1451,9 +1454,14 @@ main(int ac, char **av)
 		} else {
 			p = tilde_expand_filename(options.identity_agent,
 			    original_real_uid);
-			cp = percent_expand(p, "d", pw->pw_dir,
-			    "u", pw->pw_name, "l", thishost, "h", host,
-			    "r", options.user, (char *)NULL);
+			cp = percent_expand(p,
+			    "d", pw->pw_dir,
+			    "h", host,
+			    "i", uidstr,
+			    "l", thishost,
+			    "r", options.user,
+			    "u", pw->pw_name,
+			    (char *)NULL);
 			setenv(SSH_AUTHSOCKET_ENV_NAME, cp, 1);
 			free(cp);
 			free(p);
@@ -1858,6 +1866,7 @@ ssh_session2(struct ssh *ssh, struct passwd *pw)
 		    "L", shorthost,
 		    "d", pw->pw_dir,
 		    "h", host,
+		    "i", uidstr,
 		    "l", thishost,
 		    "n", host_arg,
 		    "p", portstr,
@@ -2056,9 +2065,14 @@ load_public_identity_files(struct passwd *pw)
 	for (i = 0; i < options.num_certificate_files; i++) {
 		cp = tilde_expand_filename(options.certificate_files[i],
 		    original_real_uid);
-		filename = percent_expand(cp, "d", pw->pw_dir,
-		    "u", pw->pw_name, "l", thishost, "h", host,
-		    "r", options.user, (char *)NULL);
+		filename = percent_expand(cp,
+		    "d", pw->pw_dir,
+		    "h", host,
+		    "i", host,
+		    "l", thishost,
+		    "r", options.user,
+		    "u", pw->pw_name,
+		    (char *)NULL);
 		free(cp);
 
 		public = key_load_public(filename, NULL);
