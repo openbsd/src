@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.17 2018/05/31 14:52:26 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.18 2018/06/01 15:48:19 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -791,19 +791,19 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 	if (lock1 != NULL) {
 		if ((lock1->li_flags & LI_EXCLUSIVE) != 0 &&
 		    (flags & LOP_EXCLUSIVE) == 0) {
-			db_printf("shared lock of (%s) %s @ %s:%d\n",
+			printf("shared lock of (%s) %s @ %s:%d\n",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
-			db_printf("while exclusively locked from %s:%d\n",
+			printf("while exclusively locked from %s:%d\n",
 			    fixup_filename(lock1->li_file), lock1->li_line);
 			panic("excl->share");
 		}
 		if ((lock1->li_flags & LI_EXCLUSIVE) == 0 &&
 		    (flags & LOP_EXCLUSIVE) != 0) {
-			db_printf("exclusive lock of (%s) %s @ %s:%d\n",
+			printf("exclusive lock of (%s) %s @ %s:%d\n",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
-			db_printf("while share locked from %s:%d\n",
+			printf("while share locked from %s:%d\n",
 			    fixup_filename(lock1->li_file), lock1->li_line);
 			panic("share->excl");
 		}
@@ -872,12 +872,12 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			w_rmatrix[i][i] |= WITNESS_REVERSAL;
 			w->w_reversed = 1;
 			mtx_leave(&w_mtx);
-			db_printf(
+			printf(
 			    "acquiring duplicate lock of same type: \"%s\"\n",
 			    w->w_type->lt_name);
-			db_printf(" 1st %s @ %s:%d\n", plock->li_lock->lo_name,
+			printf(" 1st %s @ %s:%d\n", plock->li_lock->lo_name,
 			    fixup_filename(plock->li_file), plock->li_line);
-			db_printf(" 2nd %s @ %s:%d\n", lock->lo_name,
+			printf(" 2nd %s @ %s:%d\n", lock->lo_name,
 			    fixup_filename(file), line);
 			witness_debugger(1);
 		} else
@@ -990,14 +990,14 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			 */
 			if (((lock->lo_flags & LO_SLEEPABLE) != 0 &&
 			    (lock1->li_lock->lo_flags & LO_SLEEPABLE) == 0))
-				db_printf("lock order reversal: "
+				printf("lock order reversal: "
 				    "(sleepable after non-sleepable)\n");
 			else if ((lock1->li_lock->lo_flags & LO_SLEEPABLE) == 0
 			    && lock == &kernel_lock.mpl_lock_obj)
-				db_printf("lock order reversal: "
+				printf("lock order reversal: "
 				    "(Giant after non-sleepable)\n");
 			else
-				db_printf("lock order reversal:\n");
+				printf("lock order reversal:\n");
 
 			/*
 			 * Try to locate an earlier lock with
@@ -1016,26 +1016,26 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 					i--;
 			} while (i >= 0);
 			if (i < 0) {
-				db_printf(" 1st %p %s (%s) @ %s:%d\n",
+				printf(" 1st %p %s (%s) @ %s:%d\n",
 				    lock1->li_lock, lock1->li_lock->lo_name,
 				    w1->w_type->lt_name,
 				    fixup_filename(lock1->li_file),
 				    lock1->li_line);
-				db_printf(" 2nd %p %s (%s) @ %s:%d\n",
+				printf(" 2nd %p %s (%s) @ %s:%d\n",
 				    lock, lock->lo_name, w->w_type->lt_name,
 				    fixup_filename(file), line);
 			} else {
-				db_printf(" 1st %p %s (%s) @ %s:%d\n",
+				printf(" 1st %p %s (%s) @ %s:%d\n",
 				    lock2->li_lock, lock2->li_lock->lo_name,
 				    lock2->li_lock->lo_witness->w_type->lt_name,
 				    fixup_filename(lock2->li_file),
 				    lock2->li_line);
-				db_printf(" 2nd %p %s (%s) @ %s:%d\n",
+				printf(" 2nd %p %s (%s) @ %s:%d\n",
 				    lock1->li_lock, lock1->li_lock->lo_name,
 				    w1->w_type->lt_name,
 				    fixup_filename(lock1->li_file),
 				    lock1->li_line);
-				db_printf(" 3rd %p %s (%s) @ %s:%d\n", lock,
+				printf(" 3rd %p %s (%s) @ %s:%d\n", lock,
 				    lock->lo_name, w->w_type->lt_name,
 				    fixup_filename(file), line);
 			}
@@ -1300,17 +1300,17 @@ found:
 	/* First, check for shared/exclusive mismatches. */
 	if ((instance->li_flags & LI_EXCLUSIVE) != 0 && witness_watch > 0 &&
 	    (flags & LOP_EXCLUSIVE) == 0) {
-		db_printf("shared unlock of (%s) %s @ %s:%d\n",
+		printf("shared unlock of (%s) %s @ %s:%d\n",
 		    class->lc_name, lock->lo_name, fixup_filename(file), line);
-		db_printf("while exclusively locked from %s:%d\n",
+		printf("while exclusively locked from %s:%d\n",
 		    fixup_filename(instance->li_file), instance->li_line);
 		panic("excl->ushare");
 	}
 	if ((instance->li_flags & LI_EXCLUSIVE) == 0 && witness_watch > 0 &&
 	    (flags & LOP_EXCLUSIVE) != 0) {
-		db_printf("exclusive unlock of (%s) %s @ %s:%d\n",
+		printf("exclusive unlock of (%s) %s @ %s:%d\n",
 		    class->lc_name, lock->lo_name, fixup_filename(file), line);
-		db_printf("while share locked from %s:%d\n",
+		printf("while share locked from %s:%d\n",
 		    fixup_filename(instance->li_file),
 		    instance->li_line);
 		panic("share->uexcl");
@@ -1322,7 +1322,7 @@ found:
 	}
 	/* The lock is now being dropped, check for NORELEASE flag */
 	if ((instance->li_flags & LI_NORELEASE) != 0 && witness_watch > 0) {
-		db_printf("forbidden unlock of (%s) %s @ %s:%d\n",
+		printf("forbidden unlock of (%s) %s @ %s:%d\n",
 		    class->lc_name, lock->lo_name, fixup_filename(file), line);
 		panic("lock marked norelease");
 	}
@@ -1368,11 +1368,11 @@ witness_thread_exit(struct proc *p)
 		for (n = 0; lle != NULL; lle = lle->ll_next)
 			for (i = lle->ll_count - 1; i >= 0; i--) {
 				if (n == 0)
-					db_printf("Thread %p exiting with "
+					printf("Thread %p exiting with "
 					    "the following locks held:\n", p);
 				n++;
 				witness_list_lock(&lle->ll_children[i],
-				    db_printf);
+				    printf);
 			}
 		panic("Thread %p cannot exit while holding sleeplocks\n", p);
 	}
