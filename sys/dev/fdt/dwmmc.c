@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.11 2018/05/28 21:50:38 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.12 2018/06/01 18:25:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -377,8 +377,9 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	if (width >= 4)
 		saa.caps |= SMC_CAPS_4BIT_MODE;
 
-	/* XXX DMA doesn't work on Samsung Exynos yet. */
-	if (!OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"))
+	/* XXX DMA doesn't work on all variants yet. */
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-dw-mshc"))
 		saa.caps |= SMC_CAPS_DMA;
 
 	sc->sc_sdmmc = config_found(self, &saa, NULL);
