@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.73 2018/04/26 12:42:51 guenther Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.74 2018/06/01 07:36:13 tb Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -531,9 +531,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 			ia->ia_netmask =
 			    ((struct sockaddr_in *) ifa->ifa_netmask)->
 			    sin_addr.s_addr;
-			/* If SIOCGIFNETMASK didn't work,
-			   figure out a mask from the IP
-			   address class. */
+			/* Figure out a mask from the IP address class. */
 			if (ia->ia_netmask == 0)
 				ia->ia_netmask =
 				    ipaddrtonetmask(ia->ia_ipaddr);
@@ -629,8 +627,7 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 		warning("write: only %d of %d bytes written", n, len);
 }
 /*
- * Get the netmask of an IP address.  This routine is used if
- * SIOCGIFNETMASK doesn't work.
+ * Get the netmask of an IP address.
  */
 u_int32_t
 ipaddrtonetmask(u_int32_t addr)
