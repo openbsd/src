@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.44 2018/05/31 20:19:05 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.45 2018/06/01 14:23:48 fcambus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ viac3_crypto_setup(void)
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
 		free(vc3_sc, M_DEVBUF, sizeof(*vc3_sc));
+		vc3_sc = NULL;
 		return;
 	}
 
