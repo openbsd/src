@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.184 2018/06/01 12:24:16 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.185 2018/06/01 12:43:19 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -36,7 +36,8 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
-Argument names not beginning with a letter, digit, or underscore
+Argument names not beginning with a letter, digit, or underscore,
+or otherwise using a reserved keyword,
 must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
@@ -705,13 +706,13 @@ A secrets file is needed to specify a username and password:
 .Nm
 would look like this:
 .Bd -literal -offset indent
-table "aliases" file:/etc/mail/aliases
-table "secrets" file:/etc/mail/secrets
+table aliases file:/etc/mail/aliases
+table secrets file:/etc/mail/secrets
 
 listen on lo0
 
 action "local" mbox alias <aliases>
-action "relay" relay host "tls+auth://label@smtp.example.com" \e
+action "relay" relay host tls+auth://label@smtp.example.com \e
 	auth <secrets>
 
 match for local action "local"
@@ -737,20 +738,20 @@ In the example above,
 a certificate valid for one year was created.
 The configuration file would look like this:
 .Bd -literal -offset indent
-pki "mail.example.com" cert "/etc/ssl/mail.example.com.crt"
-pki "mail.example.com" key "/etc/ssl/private/mail.example.com.key"
+pki mail.example.com cert "/etc/ssl/mail.example.com.crt"
+pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
 
-table "aliases" file:/etc/mail/aliases
+table aliases file:/etc/mail/aliases
 
 listen on lo0
-listen on egress tls pki "mail.example.com" auth
+listen on egress tls pki mail.example.com auth
 
-action "mda_with_aliases" mda "/path/to/mda \-f \-" alias <aliases>
-action "mda_without_aliases" mda "/path/to/mda \-f \-"
+action mda_with_aliases mda "/path/to/mda \-f \-" alias <aliases>
+action mda_without_aliases mda "/path/to/mda \-f \-"
 action "relay" relay
 
-match for local action "mda_with_aliases"
-match from any for domain "example.com" action "mda_without_aliases"
+match for local action mda_with_aliases
+match from any for domain example.com action mda_without_aliases
 match for any action "relay"
 match auth from any for any action "relay"
 .Ed
@@ -763,18 +764,18 @@ but all outgoing mail is passed to dkimproxy_out on port 10027
 for signing.
 The signed messages are received on port 10028 and tagged for relaying.
 .Bd -literal -offset indent
-table "aliases" file:/etc/mail/aliases
+table aliases file:/etc/mail/aliases
 
 listen on lo0
-listen on lo0 port 10028 tag "DKIM"
+listen on lo0 port 10028 tag DKIM
 
 action "mbox" mbox alias <aliases>
 action "relay" relay
-action "relay_dkim" relay host smtp://127.0.0.1:10027
+action relay_dkim relay host smtp://127.0.0.1:10027
 
 match for local action "mbox"
-match tag "DKIM" for any action "relay"
-match for any action "relay_dkim"
+match tag DKIM for any action "relay"
+match for any action relay_dkim
 .Ed
 .Pp
 Sites that accept non-local messages may be able to cut down on the
@@ -785,8 +786,8 @@ The following example uses a list table
 to specify the IP addresses of relays that may legitimately
 originate mail with the owner's domain as the sender.
 .Bd -literal -offset indent
-table "aliases" file:/etc/mail/aliases
-table "other-relays" file:/etc/mail/other-relays
+table aliases file:/etc/mail/aliases
+table other-relays file:/etc/mail/other-relays
 
 listen on lo0
 listen on egress
@@ -796,7 +797,7 @@ action "relay" relay
 
 match for local action "mbox"
 match for any action "relay"
-match !from src <other-relays> mail\-from "@example.com" for any \e
+match !from src <other-relays> mail\-from @example.com for any \e
       reject
 match from any for domain example.com action "mbox"
 .Ed
