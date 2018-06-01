@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.1 2018/05/30 13:43:51 krw Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.2 2018/06/01 19:21:33 bluhm Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -238,7 +238,7 @@ print_uvmexp_field(field_def *fvalue, field_def *fname, int *new, int *old,
     const char *name)
 {
 	char *uppername;
-	size_t i;
+	size_t len, i;
 
 	if (new == NULL && name == NULL)
 		return;
@@ -255,11 +255,13 @@ print_uvmexp_field(field_def *fvalue, field_def *fname, int *new, int *old,
 		print_fld_str(fname, name);
 		return;
 	}
-	uppername = calloc(1, strlen(name) + 1);
+	len = strlen(name);
+	uppername = malloc(len + 1);
 	if (uppername == NULL)
-		err(1, "calloc");
-	for (i = 0; i < strlen(name); i++)
+		err(1, "malloc");
+	for (i = 0; i < len; i++)
 		uppername[i] = toupper(name[i]);
+	uppername[len] = '\0';
 	print_fld_str(fname, uppername);
 	free(uppername);
 }
