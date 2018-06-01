@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.13 2018/06/01 20:45:08 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.14 2018/06/01 22:01:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -257,7 +257,8 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct dwmmc_softc *sc = (struct dwmmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
-	uint32_t hcon, ciu_div, width;
+	uint32_t freq, div = 0;
+	uint32_t hcon, width;
 	int error, timeout;
 
 	if (faa->fa_nreg < 1) {
@@ -307,9 +308,17 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Some Rockchip variants pre-divide the clock. */
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc"))
+		div = 1;
+
+	freq = OF_getpropint(faa->fa_node, "clock-frequency", 0);
+	if (freq > 0)
+		clock_set_frequency(faa->fa_node, "ciu", (div + 1) * freq);
+
 	sc->sc_clkbase = clock_get_frequency(faa->fa_node, "ciu");
-	ciu_div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", 0);
-	sc->sc_clkbase /= (ciu_div + 1);
+	div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", div);
+	sc->sc_clkbase /= (div + 1);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    dwmmc_intr, sc, sc->sc_dev.dv_xname);
