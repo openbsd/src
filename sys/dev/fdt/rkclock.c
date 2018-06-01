@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.23 2018/05/26 12:49:16 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.24 2018/06/01 21:19:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -94,6 +94,10 @@
 #define  RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT	8
 #define  RK3399_CRU_ATCLK_CORE_DIV_CON_MASK	(0x1f << 0)
 #define  RK3399_CRU_ATCLK_CORE_DIV_CON_SHIFT	0
+#define  RK3399_CRU_CLK_SD_PLL_SEL_MASK		(0x7 << 8)
+#define  RK3399_CRU_CLK_SD_PLL_SEL_SHIFT	8
+#define  RK3399_CRU_CLK_SD_DIV_CON_MASK		(0x3f << 0)
+#define  RK3399_CRU_CLK_SD_DIV_CON_SHIFT	0
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
 #define RK3399_CRU_SDMMC_CON(i)		(0x0580 + (i) * 4)
@@ -1009,6 +1013,28 @@ rk3399_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
 	return freq / (div_con + 1);
 }
 
+int
+rk3399_set_sdclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
+{
+	int idx = RK3399_PLL_CPLL;
+	uint32_t parent_freq;
+	int div_con;
+
+	parent_freq = rk3399_get_frequency(sc, &idx);
+	for (div_con = 0; div_con <= RK3399_CRU_CLK_SD_DIV_CON_MASK; div_con++)
+		if (parent_freq / (div_con + 1) <= freq)
+			break;
+	if (div_con > RK3399_CRU_CLK_SD_DIV_CON_MASK)
+		return -1;
+
+	/* Configure CPLL as source. */
+	HWRITE4(sc, clksel, RK3399_CRU_CLK_SD_PLL_SEL_MASK << 16 |
+		RK3399_CRU_CLK_SD_DIV_CON_MASK << 16 |
+		div_con << RK3399_CRU_CLK_SD_DIV_CON_SHIFT);
+
+	return 0;
+}
+
 uint32_t
 rk3399_get_frequency(void *cookie, uint32_t *cells)
 {
@@ -1160,6 +1186,10 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(0), freq);
 	case RK3399_ARMCLKB:
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(2), freq);
+	case RK3399_CLK_SDMMC:
+		return rk3399_set_sdclk(sc, RK3399_CRU_CLKSEL_CON(16), freq);
+	case RK3399_CLK_SDIO:
+		return rk3399_set_sdclk(sc, RK3399_CRU_CLKSEL_CON(15), freq);
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
