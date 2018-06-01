@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.209 2018/06/01 19:42:24 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.210 2018/06/01 20:31:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -367,6 +367,59 @@ MTA MAX_DEFERRED NUMBER  {
 ;
 
 
+pki:
+PKI STRING {
+	char buf[HOST_NAME_MAX+1];
+
+	/* if not catchall, check that it is a valid domain */
+	if (strcmp($2, "*") != 0) {
+		if (!res_hnok($2)) {
+			yyerror("not a valid domain name: %s", $2);
+			free($2);
+			YYERROR;
+		}
+	}
+	xlowercase(buf, $2, sizeof(buf));
+	free($2);
+	pki = dict_get(conf->sc_pki_dict, buf);
+	if (pki == NULL) {
+		pki = xcalloc(1, sizeof *pki);
+		(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
+		dict_set(conf->sc_pki_dict, pki->pki_name, pki);
+	}
+} pki_params
+;
+ 
+pki_params_opt:
+CERT STRING {
+	pki->pki_cert_file = $2;
+}
+| KEY STRING {
+	pki->pki_key_file = $2;
+}
+| DHE STRING {
+	if (strcasecmp($2, "none") == 0)
+		pki->pki_dhe = 0;
+	else if (strcasecmp($2, "auto") == 0)
+		pki->pki_dhe = 1;
+	else if (strcasecmp($2, "legacy") == 0)
+		pki->pki_dhe = 2;
+	else {
+		yyerror("invalid DHE keyword: %s", $2);
+		free($2);
+		YYERROR;
+	}
+	free($2);
+}
+;
+
+
+pki_params:
+pki_params_opt pki_params
+| /* empty */
+;
+
+
 queue:
 QUEUE COMPRESSION {
 	conf->sc_queue_flags |= QUEUE_COMPRESSION;
@@ -395,6 +448,11 @@ QUEUE COMPRESSION {
 ;
 
 
+scheduler:
+SCHEDULER LIMIT limits_scheduler
+;
+
+
 smtp:
 SMTP LIMIT limits_smtp
 | SMTP CIPHERS STRING {
@@ -416,11 +474,6 @@ SMTP LIMIT limits_smtp
 	}
 	conf->sc_subaddressing_delim = $3;
 }
-;
-
-
-scheduler:
-SCHEDULER LIMIT limits_scheduler
 ;
 
 
@@ -1402,59 +1455,6 @@ sock_listen	: opt_sock_listen sock_listen
 if_listen	: opt_if_listen if_listen
 		| /* empty */
 		;
-
-
-pki:
-PKI STRING {
-	char buf[HOST_NAME_MAX+1];
-
-	/* if not catchall, check that it is a valid domain */
-	if (strcmp($2, "*") != 0) {
-		if (!res_hnok($2)) {
-			yyerror("not a valid domain name: %s", $2);
-			free($2);
-			YYERROR;
-		}
-	}
-	xlowercase(buf, $2, sizeof(buf));
-	free($2);
-	pki = dict_get(conf->sc_pki_dict, buf);
-	if (pki == NULL) {
-		pki = xcalloc(1, sizeof *pki);
-		(void)strlcpy(pki->pki_name, buf, sizeof(pki->pki_name));
-		dict_set(conf->sc_pki_dict, pki->pki_name, pki);
-	}
-} pki_params
-;
- 
-pki_params_opt:
-CERT STRING {
-	pki->pki_cert_file = $2;
-}
-| KEY STRING {
-	pki->pki_key_file = $2;
-}
-| DHE STRING {
-	if (strcasecmp($2, "none") == 0)
-		pki->pki_dhe = 0;
-	else if (strcasecmp($2, "auto") == 0)
-		pki->pki_dhe = 1;
-	else if (strcasecmp($2, "legacy") == 0)
-		pki->pki_dhe = 2;
-	else {
-		yyerror("invalid DHE keyword: %s", $2);
-		free($2);
-		YYERROR;
-	}
-	free($2);
-}
-;
-
-
-pki_params:
-pki_params_opt pki_params
-| /* empty */
-;
 
 
 listen		: LISTEN {
