@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.99 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.100 2018/06/01 19:28:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -99,6 +99,7 @@ enum mta_state {
 #define MTA_EXT_AUTH		0x04
 #define MTA_EXT_AUTH_PLAIN     	0x08
 #define MTA_EXT_AUTH_LOGIN     	0x10
+#define MTA_EXT_SIZE     	0x20
 
 struct mta_session {
 	uint64_t		 id;
@@ -117,6 +118,8 @@ struct mta_session {
 	struct event		 ev;
 	struct io		*io;
 	int			 ext;
+
+	size_t			 ext_size;
 
 	size_t			 msgtried;
 	size_t			 msgcount;
@@ -1206,6 +1209,11 @@ mta_io(struct io *io, int evt, void *arg)
 				s->ext |= MTA_EXT_PIPELINING;
 			else if (strcmp(msg, "DSN") == 0)
 				s->ext |= MTA_EXT_DSN;
+			else if (strncmp(msg, "SIZE ", 5) == 0) {
+				s->ext_size = strtonum(msg+5, 0, UINT32_MAX, &error);
+				if (error == NULL)
+					s->ext |= MTA_EXT_SIZE;
+			}
 		}
 
 		/* continuation reply, we parse out the repeating statuses and ESC */
