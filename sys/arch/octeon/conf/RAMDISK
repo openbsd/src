@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.37 2017/08/01 16:18:11 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.38 2018/06/01 17:15:27 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -49,7 +49,7 @@ ppb*		at pci?
 pci*		at ppb?
 
 cn30xxsmi*	at fdt?		# MDIO controller
-com*		at fdt?
+com*		at fdt_octeon?
 octcib*		at fdt?		# Interrupt controller
 octcit*		at fdt?		# Interrupt controller v3
 octciu*		at fdt?		# Interrupt controller v1
