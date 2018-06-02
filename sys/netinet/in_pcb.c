@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.230 2018/06/02 16:11:09 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.231 2018/06/02 16:27:44 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1077,7 +1077,7 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("%s: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%d\n",
+		printf("%s: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%u\n",
 		    __func__, ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport), rdomain);
 	}
@@ -1118,9 +1118,8 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in6_pcbhashlookup: faddr=");
-		printf(" fport=%d laddr=", ntohs(fport));
-		printf(" lport=%d\n", ntohs(lport));
+		printf("%s: faddr= fport=%d laddr= lport=%d rdom=%u\n",
+		    __func__, ntohs(fport), ntohs(lport), rtable);
 	}
 #endif
 	return (inp);
@@ -1195,12 +1194,6 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 				break;
 		}
 	}
-#ifdef DIAGNOSTIC
-	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in_pcblookup_listen: laddr=%08x lport=%d\n",
-		    ntohl(laddr.s_addr), ntohs(lport));
-	}
-#endif
 	/*
 	 * Move this PCB to the head of hash chain so that
 	 * repeated accesses are quicker.  This is analogous to
@@ -1210,6 +1203,12 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 		LIST_REMOVE(inp, inp_hash);
 		LIST_INSERT_HEAD(head, inp, inp_hash);
 	}
+#ifdef DIAGNOSTIC
+	if (inp == NULL && in_pcbnotifymiss) {
+		printf("%s: laddr=%08x lport=%d rdom=%u\n",
+		    __func__, ntohl(laddr.s_addr), ntohs(lport), rdomain);
+	}
+#endif
 	return (inp);
 }
 
@@ -1271,12 +1270,6 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 				break;
 		}
 	}
-#ifdef DIAGNOSTIC
-	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in6_pcblookup_listen: laddr= lport=%d\n",
-		    ntohs(lport));
-	}
-#endif
 	/*
 	 * Move this PCB to the head of hash chain so that
 	 * repeated accesses are quicker.  This is analogous to
@@ -1286,6 +1279,12 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 		LIST_REMOVE(inp, inp_hash);
 		LIST_INSERT_HEAD(head, inp, inp_hash);
 	}
+#ifdef DIAGNOSTIC
+	if (inp == NULL && in_pcbnotifymiss) {
+		printf("%s: laddr= lport=%d rdom=%u\n",
+		    __func__, ntohs(lport), rtable);
+	}
+#endif
 	return (inp);
 }
 #endif /* INET6 */
