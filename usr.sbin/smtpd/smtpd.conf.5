@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.186 2018/06/01 19:42:24 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.187 2018/06/02 06:07:33 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 1 2018 $
+.Dd $Mdocdate: June 2 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -797,7 +797,7 @@ action "relay" relay
 
 match for local action "mbox"
 match for any action "relay"
-match !from src <other-relays> mail\-from @example.com for any \e
+match !from src <other-relays> mail\-from "@example.com" for any \e
       reject
 match from any for domain example.com action "mbox"
 .Ed
