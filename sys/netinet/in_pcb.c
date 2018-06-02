@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.229 2018/03/30 17:33:54 dhill Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.230 2018/06/02 16:11:09 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1001,7 +1001,7 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	u_long nhash, nlhash;
 	int osize;
 	void *nhashtbl, *nlhashtbl, *ohashtbl, *olhashtbl;
-	struct inpcb *inp0, *inp1;
+	struct inpcb *inp;
 
 	ohashtbl = table->inpt_hashtbl;
 	olhashtbl = table->inpt_lhashtbl;
@@ -1022,8 +1022,8 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 
-	TAILQ_FOREACH_SAFE(inp0, &table->inpt_queue, inp_queue, inp1) {
-		in_pcbrehash(inp0);
+	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
+		in_pcbrehash(inp);
 	}
 	hashfree(ohashtbl, osize, M_PCB);
 	hashfree(olhashtbl, osize, M_PCB);
