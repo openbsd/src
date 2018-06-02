@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.72 2018/05/23 08:53:31 patrick Exp $
+# $OpenBSD: GENERIC,v 1.73 2018/06/02 12:31:25 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -146,7 +146,6 @@ sdmmc*		at sximmc?	# SD/MMC bus
 sxitemp*	at fdt?		# Temperature sensor
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
-sypwr*		at iic?		# Silergy SY8106A
 dwxe*		at fdt?
 
 # PCI
@@ -299,8 +298,10 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+fanpwr*		at iic?			# FAN53555 regulator
 islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
+sypwr*		at iic?			# SY8106A regulator
 
 # GPIO "pin bus" drivers
 gpioiic*	at gpio?		# I2C bus bit-banging
