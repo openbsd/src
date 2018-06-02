@@ -1285,6 +1285,7 @@
 ./usr/share/man/man4/ex.4
 ./usr/share/man/man4/exphy.4
 ./usr/share/man/man4/exrtc.4
+./usr/share/man/man4/fanpwr.4
 ./usr/share/man/man4/fd.4
 ./usr/share/man/man4/fdc.4
 ./usr/share/man/man4/fec.4
