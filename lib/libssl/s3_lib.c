@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.166 2018/04/07 16:55:13 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.167 2018/06/02 16:29:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,22 +237,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 128,
 	},
 
-	/* Cipher 09 */
-	{
-		.valid = 1,
-		.name = SSL3_TXT_RSA_DES_64_CBC_SHA,
-		.id = SSL3_CK_RSA_DES_64_CBC_SHA,
-		.algorithm_mkey = SSL_kRSA,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_LOW,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 56,
-		.alg_bits = 56,
-	},
-
 	/* Cipher 0A */
 	{
 		.valid = 1,
@@ -272,22 +256,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 	/*
 	 * Ephemeral DH (DHE) ciphers.
 	 */
-
-	/* Cipher 15 */
-	{
-		.valid = 1,
-		.name = SSL3_TXT_EDH_RSA_DES_64_CBC_SHA,
-		.id = SSL3_CK_EDH_RSA_DES_64_CBC_SHA,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aRSA,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_LOW,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 56,
-		.alg_bits = 56,
-	},
 
 	/* Cipher 16 */
 	{
@@ -319,22 +287,6 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
 		.strength_bits = 128,
 		.alg_bits = 128,
-	},
-
-	/* Cipher 1A */
-	{
-		.valid = 1,
-		.name = SSL3_TXT_ADH_DES_64_CBC_SHA,
-		.id = SSL3_CK_ADH_DES_64_CBC_SHA,
-		.algorithm_mkey = SSL_kDHE,
-		.algorithm_auth = SSL_aNULL,
-		.algorithm_enc = SSL_DES,
-		.algorithm_mac = SSL_SHA1,
-		.algorithm_ssl = SSL_SSLV3,
-		.algo_strength = SSL_LOW,
-		.algorithm2 = SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
-		.strength_bits = 56,
-		.alg_bits = 56,
 	},
 
 	/* Cipher 1B */
