@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.32 2018/05/19 14:23:16 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.33 2018/06/02 16:45:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1889,85 +1889,83 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 static int
 ssl3_get_client_kex_ecdhe_ecp(SSL *s, unsigned char *p, long n)
 {
+	unsigned char *key = NULL;
+	int key_size = 0, key_len;
 	EC_POINT *point = NULL;
-	const EC_GROUP *group;
 	BN_CTX *bn_ctx = NULL;
+	const EC_GROUP *group;
+	CBS cbs, public;
 	EC_KEY *ecdh;
-	int key_size;
-	int ret = 1;
-	int i;
+	int ret = -1;
+
+	if (n < 0)
+		goto err;
+
+	CBS_init(&cbs, p, n);
+
+	if (!CBS_get_u8_length_prefixed(&cbs, &public))
+		goto err;
+	if (CBS_len(&cbs) != 0)
+		goto err;
 
 	/*
-	 * Use the ephemeral values we saved when
-	 * generating the ServerKeyExchange message.
+	 * Use the ephemeral values we saved when generating the
+	 * ServerKeyExchange message.
 	 */
-	ecdh = S3I(s)->tmp.ecdh;
-	group = EC_KEY_get0_group(ecdh);
-
-	/* Let's get client's public key */
-	if ((point = EC_POINT_new(group)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+	if ((ecdh = S3I(s)->tmp.ecdh) == NULL) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
+	group = EC_KEY_get0_group(ecdh);
 
 	/*
-	 * Get client's public key from encoded point
-	 * in the ClientKeyExchange message.
+	 * Get client's public key from encoded point in the ClientKeyExchange
+	 * message.
 	 */
 	if ((bn_ctx = BN_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-
-	/* Get encoded point length */
-	if (n < 1)
+	if ((point = EC_POINT_new(group)) == NULL) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
-	i = *p;
-	p += 1;
-	if (n != 1 + i) {
+	}
+	if (EC_POINT_oct2point(group, point, CBS_data(&public),
+	    CBS_len(&public), bn_ctx) == 0) {
 		SSLerror(s, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (EC_POINT_oct2point(group, point, p, i, bn_ctx) == 0) {
-		SSLerror(s, ERR_R_EC_LIB);
-		goto err;
-	}
-
-	/*
-	 * p is pointing to somewhere in the buffer
-	 * currently, so set it to the start.
-	 */
-	p = (unsigned char *)s->internal->init_buf->data;
 
 	/* Compute the shared pre-master secret */
-	key_size = ECDH_size(ecdh);
-	if (key_size <= 0) {
+	if ((key_size = ECDH_size(ecdh)) <= 0) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
-	i = ECDH_compute_key(p, key_size, point, ecdh, NULL);
-	if (i <= 0) {
+	if ((key = malloc(key_size)) == NULL) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if ((key_len = ECDH_compute_key(key, key_size, point, ecdh,
+	    NULL)) <= 0) {
 		SSLerror(s, ERR_R_ECDH_LIB);
 		goto err;
 	}
 
-	EC_POINT_free(point);
-	BN_CTX_free(bn_ctx);
+	/* Compute the master secret */
+	s->session->master_key_length = tls1_generate_master_secret(s,
+	    s->session->master_key, key, key_len);
+
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	S3I(s)->tmp.ecdh = NULL;
 
-	/* Compute the master secret */
-	s->session->master_key_length =
-	    tls1_generate_master_secret(
-		s, s->session->master_key, p, i);
-
-	explicit_bzero(p, i);
-	return (ret);
+	ret = 1;
 
  err:
+	freezero(key, key_size);
 	EC_POINT_free(point);
 	BN_CTX_free(bn_ctx);
-	return (-1);
+
+	return (ret);
 }
 
 static int
