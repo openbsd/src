@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.8 2017/10/11 17:35:53 jsing Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.9 2018/06/02 16:35:02 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -49,7 +49,6 @@ static uint8_t cipher_bytes[] = {
 	0xcc, 0xaa,	/* DHE-RSA-CHACHA20-POLY1305 */
 	0x00, 0x9c,	/* AES128-GCM-SHA256 */
 	0x00, 0x3d,	/* AES256-SHA256 */
-	0x00, 0x09,	/* DES-CBC-SHA */
 };
 
 static uint16_t cipher_values[] = {
@@ -58,7 +57,6 @@ static uint16_t cipher_values[] = {
 	0xccaa,		/* DHE-RSA-CHACHA20-POLY1305 */
 	0x009c,		/* AES128-GCM-SHA256 */
 	0x003d,		/* AES256-SHA256 */
-	0x0009,		/* DES-CBC-SHA */
 };
 
 #define N_CIPHERS (sizeof(cipher_bytes) / 2)
