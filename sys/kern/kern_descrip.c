@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.162 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.163 2018/06/02 12:42:18 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -637,6 +637,8 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	struct filedesc *fdp = p->p_fd;
 
 	fdpassertlocked(fdp);
+	KASSERT(fp->f_iflags & FIF_INSERTED);
+
 	if (fp->f_count == LONG_MAX-2) {
 		FRELE(fp, p);
 		return (EDEADLK);
