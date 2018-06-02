@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.33 2018/05/19 11:03:33 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.34 2018/06/02 04:45:21 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -666,7 +666,7 @@ UI_method_set_prompt_constructor(UI_METHOD *method,
 }
 
 int
-(*UI_method_get_opener(UI_METHOD * method))(UI *)
+(*UI_method_get_opener(const UI_METHOD * method))(UI *)
 {
 	if (method)
 		return method->ui_open_session;
@@ -675,7 +675,7 @@ int
 }
 
 int
-(*UI_method_get_writer(UI_METHOD *method))(UI *, UI_STRING *)
+(*UI_method_get_writer(const UI_METHOD *method))(UI *, UI_STRING *)
 {
 	if (method)
 		return method->ui_write_string;
@@ -684,7 +684,7 @@ int
 }
 
 int
-(*UI_method_get_flusher(UI_METHOD *method)) (UI *)
+(*UI_method_get_flusher(const UI_METHOD *method)) (UI *)
 {
 	if (method)
 		return method->ui_flush;
@@ -693,7 +693,7 @@ int
 }
 
 int
-(*UI_method_get_reader(UI_METHOD *method))(UI *, UI_STRING *)
+(*UI_method_get_reader(const UI_METHOD *method))(UI *, UI_STRING *)
 {
 	if (method)
 		return method->ui_read_string;
@@ -702,7 +702,7 @@ int
 }
 
 int
-(*UI_method_get_closer(UI_METHOD *method))(UI *)
+(*UI_method_get_closer(const UI_METHOD *method))(UI *)
 {
 	if (method)
 		return method->ui_close_session;
@@ -711,7 +711,7 @@ int
 }
 
 char *
-(*UI_method_get_prompt_constructor(UI_METHOD *method))(UI *, const char *,
+(*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI *, const char *,
     const char *)
 {
 	if (method)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.10 2018/05/19 11:03:33 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.11 2018/06/02 04:45:21 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -312,12 +312,12 @@ int UI_method_set_flusher(UI_METHOD *method, int (*flusher)(UI *ui));
 int UI_method_set_reader(UI_METHOD *method, int (*reader)(UI *ui, UI_STRING *uis));
 int UI_method_set_closer(UI_METHOD *method, int (*closer)(UI *ui));
 int UI_method_set_prompt_constructor(UI_METHOD *method, char *(*prompt_constructor)(UI* ui, const char* object_desc, const char* object_name));
-int (*UI_method_get_opener(UI_METHOD *method))(UI*);
-int (*UI_method_get_writer(UI_METHOD *method))(UI*, UI_STRING*);
-int (*UI_method_get_flusher(UI_METHOD *method))(UI*);
-int (*UI_method_get_reader(UI_METHOD *method))(UI*, UI_STRING*);
-int (*UI_method_get_closer(UI_METHOD *method))(UI*);
-char * (*UI_method_get_prompt_constructor(UI_METHOD *method))(UI*, const char*, const char*);
+int (*UI_method_get_opener(const UI_METHOD *method))(UI*);
+int (*UI_method_get_writer(const UI_METHOD *method))(UI*, UI_STRING*);
+int (*UI_method_get_flusher(const UI_METHOD *method))(UI*);
+int (*UI_method_get_reader(const UI_METHOD *method))(UI*, UI_STRING*);
+int (*UI_method_get_closer(const UI_METHOD *method))(UI*);
+char * (*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI*, const char*, const char*);
 
 /* The following functions are helpers for method writers to access relevant
    data from a UI_STRING. */
