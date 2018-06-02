@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.161 2018/05/31 11:38:15 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.162 2018/06/02 10:27:43 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -144,6 +144,17 @@ find_last_set(struct filedesc *fd, int last)
 	return i;
 }
 
+static __inline int
+fd_inuse(struct filedesc *fdp, int fd)
+{
+	u_int off = fd >> NDENTRYSHIFT;
+
+	if (fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK)))
+		return 1;
+
+	return 0;
+}
+
 static __inline void
 fd_used(struct filedesc *fdp, int fd)
 {
@@ -190,7 +201,7 @@ fd_iterfile(struct file *fp, struct proc *p)
 		nfp = LIST_NEXT(fp, f_list);
 
 	/* don't FREF when f_count == 0 to avoid race in fdrop() */
-	while (nfp != NULL && (nfp->f_count == 0 || !FILE_IS_USABLE(nfp)))
+	while (nfp != NULL && nfp->f_count == 0)
 		nfp = LIST_NEXT(nfp, f_list);
 	if (nfp != NULL)
 		FREF(nfp);
@@ -207,9 +218,6 @@ fd_getfile(struct filedesc *fdp, int fd)
 	struct file *fp;
 
 	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
-		return (NULL);
-
-	if (!FILE_IS_USABLE(fp))
 		return (NULL);
 
 	FREF(fp);
@@ -634,19 +642,17 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		return (EDEADLK);
 	}
 
-	oldfp = fdp->fd_ofiles[new];
-	if (oldfp != NULL) {
-		if (!FILE_IS_USABLE(oldfp)) {
-			FRELE(fp, p);
-			return (EBUSY);
-		}
-		FREF(oldfp);
-	}
+	oldfp = fd_getfile(fdp, new);
+	if (dup2 && oldfp == NULL) {
+		if (fd_inuse(fdp, new)) {
+ 			FRELE(fp, p);
+ 			return (EBUSY);
+ 		}
+		fd_used(fdp, new);
+ 	}
 
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
-	if (dup2 && oldfp == NULL)
-		fd_used(fdp, new);
 	*retval = new;
 
 	if (oldfp != NULL) {
@@ -656,6 +662,23 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	}
 
 	return (0);
+}
+
+void
+fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
+{
+	struct file *fq;
+
+	fdpassertlocked(fdp);
+	if ((fq = fdp->fd_ofiles[0]) != NULL) {
+		LIST_INSERT_AFTER(fq, fp, f_list);
+	} else {
+		LIST_INSERT_HEAD(&filehead, fp, f_list);
+	}
+	KASSERT(fdp->fd_ofiles[fd] == NULL);
+	fdp->fd_ofiles[fd] = fp;
+	fdp->fd_ofileflags[fd] |= (flags & UF_EXCLOSE);
+	fp->f_iflags |= FIF_INSERTED;
 }
 
 void
@@ -671,21 +694,14 @@ int
 fdrelease(struct proc *p, int fd)
 {
 	struct filedesc *fdp = p->p_fd;
-	struct file **fpp, *fp;
+	struct file *fp;
 
 	fdpassertlocked(fdp);
 
-	/*
-	 * Don't fd_getfile here. We want to closef LARVAL files and closef
-	 * can deal with that.
-	 */
-	fpp = &fdp->fd_ofiles[fd];
-	fp = *fpp;
+	fp = fd_getfile(fdp, fd);
 	if (fp == NULL)
 		return (EBADF);
-	FREF(fp);
-	*fpp = NULL;
-	fd_unused(fdp, fd);
+	fdremove(fdp, fd);
 	if (fd < fdp->fd_knlistsize)
 		knote_fdclose(p, fd);
 	return (closef(fp, p));
@@ -928,9 +944,9 @@ fdexpand(struct proc *p)
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(struct proc *p, int flags, struct file **resultfp, int *resultfd)
+falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
-	struct file *fp, *fq;
+	struct file *fp;
 	int error, i;
 
 	KASSERT(resultfp != NULL);
@@ -963,14 +979,6 @@ restart:
 	 * with and without the KERNEL_LOCK().
 	 */
 	mtx_init(&fp->f_mtx, IPL_MPFLOOR);
-	fp->f_iflags = FIF_LARVAL;
-	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
-		LIST_INSERT_AFTER(fq, fp, f_list);
-	} else {
-		LIST_INSERT_HEAD(&filehead, fp, f_list);
-	}
-	p->p_fd->fd_ofiles[i] = fp;
-	p->p_fd->fd_ofileflags[i] |= (flags & UF_EXCLOSE);
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
@@ -1196,8 +1204,8 @@ fdrop(struct file *fp, struct proc *p)
 	else
 		error = 0;
 
-	/* Free fp */
-	LIST_REMOVE(fp, f_list);
+	if (fp->f_iflags & FIF_INSERTED)
+		LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
 	numfiles--;
 	pool_put(&file_pool, fp);
@@ -1312,7 +1320,7 @@ dupfdopen(struct proc *p, int indx, int mode)
 	 * of file descriptors, or the fd to be dup'd has already been
 	 * closed, reject. Note, there is no need to check for new == old
 	 * because fd_getfile will return NULL if the file at indx is
-	 * newly created by falloc (FIF_LARVAL).
+	 * newly created by falloc.
 	 */
 	if ((wfp = fd_getfile(fdp, dupfd)) == NULL)
 		return (EBADF);
