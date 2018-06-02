@@ -413,6 +413,7 @@ client_hello_test(int testno, struct client_hello_test *cht)
 	    memcmp(&client_hello[i], &wbuf[i], len - i) != 0) {
 		fprintf(stderr, "FAIL: ClientHello differs:\n");
 		fprintf(stderr, "received:\n");
+		memset(&wbuf[cht->random_start], 0, SSL3_RANDOM_SIZE);
 		hexdump(wbuf, len);
 		fprintf(stderr, "test data:\n");
 		hexdump(client_hello, client_hello_len);
