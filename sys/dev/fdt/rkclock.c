@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.24 2018/06/01 21:19:04 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.25 2018/06/02 13:00:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -70,6 +70,7 @@
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
+#define RK3399_CRU_VPLL_CON(i)		(0x00c0 + (i) * 4)
 #define  RK3399_CRU_PLL_FBDIV_MASK		(0xfff << 0)
 #define  RK3399_CRU_PLL_FBDIV_SHIFT		0
 #define  RK3399_CRU_PLL_POSTDIV2_MASK		(0x7 << 12)
@@ -96,7 +97,7 @@
 #define  RK3399_CRU_ATCLK_CORE_DIV_CON_SHIFT	0
 #define  RK3399_CRU_CLK_SD_PLL_SEL_MASK		(0x7 << 8)
 #define  RK3399_CRU_CLK_SD_PLL_SEL_SHIFT	8
-#define  RK3399_CRU_CLK_SD_DIV_CON_MASK		(0x3f << 0)
+#define  RK3399_CRU_CLK_SD_DIV_CON_MASK		(0x7f << 0)
 #define  RK3399_CRU_CLK_SD_DIV_CON_SHIFT	0
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
@@ -854,8 +855,16 @@ rk3399_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	case 696000000U:
 		postdiv1 = 2; postdiv2 = refdiv = 1;
 		break;
+	case 676000000U:
+		postdiv1 = 2; postdiv2 = 1; refdiv = 3;
+		break;
+	case 1000000000U:
+	case 800000000U:
 	case 600000000U:
 		postdiv1 = 3; postdiv2 = refdiv = 1;
+		break;
+	case 594000000U:
+		postdiv1 = 4; postdiv2 = refdiv = 1;
 		break;
 	case 408000000U:
 		postdiv1 = postdiv2 = 2; refdiv = 1;
@@ -1013,25 +1022,28 @@ rk3399_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
 	return freq / (div_con + 1);
 }
 
+uint32_t
+rk3399_div_con(struct rkclock_softc *sc, int idx, uint32_t freq)
+{
+	uint32_t parent_freq, div;
+
+	parent_freq = rk3399_get_frequency(sc, &idx);
+	div = (parent_freq + freq - 1) / freq;
+	return (div > 0 ? div - 1 : 0);
+}
+
 int
 rk3399_set_sdclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 {
-	int idx = RK3399_PLL_CPLL;
-	uint32_t parent_freq;
 	int div_con;
 
-	parent_freq = rk3399_get_frequency(sc, &idx);
-	for (div_con = 0; div_con <= RK3399_CRU_CLK_SD_DIV_CON_MASK; div_con++)
-		if (parent_freq / (div_con + 1) <= freq)
-			break;
+	/* Use CPLL as source. */
+	div_con = rk3399_div_con(sc, RK3399_PLL_CPLL, freq);
 	if (div_con > RK3399_CRU_CLK_SD_DIV_CON_MASK)
 		return -1;
-
-	/* Configure CPLL as source. */
 	HWRITE4(sc, clksel, RK3399_CRU_CLK_SD_PLL_SEL_MASK << 16 |
 		RK3399_CRU_CLK_SD_DIV_CON_MASK << 16 |
 		div_con << RK3399_CRU_CLK_SD_DIV_CON_SHIFT);
-
 	return 0;
 }
 
@@ -1055,6 +1067,8 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return rk3399_get_pll(sc, RK3399_CRU_GPLL_CON(0));
 	case RK3399_PLL_NPLL:
 		return rk3399_get_pll(sc, RK3399_CRU_NPLL_CON(0));
+	case RK3399_PLL_VPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_VPLL_CON(0));
 	case RK3399_ARMCLKL:
 		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(0));
 	case RK3399_ARMCLKB:
@@ -1157,6 +1171,24 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		if (mux == 2)
 			return 24000000 / (div_con + 1);
 		break;
+	case RK3399_ACLK_PERIPH:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(14));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		div_con = reg & 0x1f;
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+	case RK3399_ACLK_PERILP0:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(23));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		div_con = reg & 0x1f;
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+	case RK3399_HCLK_PERILP1:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(25));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		div_con = reg & 0x1f;
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
 	case RK3399_HCLK_SDMMC:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(13));
 		mux = (reg >> 15) & 0x1;
@@ -1176,12 +1208,19 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t reg, mux;
 
 	switch (idx) {
 	case RK3399_PLL_ALPLL:
 		return rk3399_set_pll(sc, RK3399_CRU_LPLL_CON(0), freq);
 	case RK3399_PLL_ABPLL:
 		return rk3399_set_pll(sc, RK3399_CRU_BPLL_CON(0), freq);
+	case RK3399_PLL_CPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_CPLL_CON(0), freq);
+	case RK3399_PLL_GPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_GPLL_CON(0), freq);
+	case RK3399_PLL_NPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_NPLL_CON(0), freq);
 	case RK3399_ARMCLKL:
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(0), freq);
 	case RK3399_ARMCLKB:
@@ -1190,6 +1229,98 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3399_set_sdclk(sc, RK3399_CRU_CLKSEL_CON(16), freq);
 	case RK3399_CLK_SDIO:
 		return rk3399_set_sdclk(sc, RK3399_CRU_CLKSEL_CON(15), freq);
+	case RK3399_ACLK_PERIPH:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(14));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(14),
+		    0x1f << 16 | rk3399_div_con(sc, idx, freq));
+		return 0;
+	case RK3399_ACLK_PERILP0:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(23));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(23),
+		    0x1f << 16 | rk3399_div_con(sc, idx, freq));
+		return 0;
+	case RK3399_ACLK_VIO:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(42));
+		mux = (reg >> 6) & 0x3;
+		switch (mux) {
+		case 0:
+			idx = RK3399_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3399_PLL_GPLL;
+			break;
+#ifdef notyet
+		case 2:
+			idx = RK3399_PLL_PPLL;
+			break;
+#endif
+		default:
+			return -1;
+		}
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(42),
+		    0x1f << 16 | rk3399_div_con(sc, idx, freq));
+		return 0;
+	case RK3399_ACLK_CCI:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(5));
+		mux = (reg >> 6) & 0x3;
+		switch (mux) {
+		case 0:
+			idx = RK3399_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3399_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3399_PLL_NPLL;
+			break;
+		case 3:
+			idx = RK3399_PLL_VPLL;
+			break;
+		}
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(5),
+		    0x1f << 16 | rk3399_div_con(sc, idx, freq));
+		return 0;
+	case RK3399_PCLK_PERIPH:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(14));
+		idx = RK3399_ACLK_PERIPH;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(14),
+		    (0x7 << 28 | rk3399_div_con(sc, idx, freq)) << 12);
+		return 0;
+	case RK3399_PCLK_PERILP0:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(23));
+		idx = RK3399_ACLK_PERILP0;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(23),
+		    (0x7 << 28 | rk3399_div_con(sc, idx, freq)) << 12);
+		return 0;
+	case RK3399_PCLK_PERILP1:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(25));
+		idx = RK3399_HCLK_PERILP1;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(25),
+		    (0x3 << 24 | rk3399_div_con(sc, idx, freq)) << 8);
+		return 0;
+	case RK3399_HCLK_PERIPH:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(14));
+		idx = RK3399_ACLK_PERIPH;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(14),
+		    (0x3 << 24 | rk3399_div_con(sc, idx, freq)) << 8);
+		return 0;
+	case RK3399_HCLK_PERILP0:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(23));
+		idx = RK3399_ACLK_PERILP0;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(23),
+		    (0x3 << 24 | rk3399_div_con(sc, idx, freq)) << 8);
+		return 0;
+	case RK3399_HCLK_PERILP1:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(25));
+		mux = (reg >> 7) & 0x1;
+		idx = mux ? RK3399_PLL_CPLL : RK3399_PLL_GPLL;
+		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(25),
+		    0x1f << 16 | rk3399_div_con(sc, idx, freq));
+		return 0;
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
@@ -1266,7 +1397,16 @@ rk3399_pmu_get_frequency(void *cookie, uint32_t *cells)
 int
 rk3399_pmu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3399_PLL_PPLL:
+		return rk3399_set_pll(sc, RK3399_PMUCRU_PPLL_CON(0), freq);
+		break;
+	default:
+		break;
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
