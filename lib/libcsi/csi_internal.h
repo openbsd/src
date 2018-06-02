@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_internal.h,v 1.1 2018/06/02 17:40:33 jsing Exp $ */
+/* $OpenBSD: csi_internal.h,v 1.2 2018/06/02 17:43:14 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -53,6 +53,7 @@ int csi_bn_to_integer(struct csi_err *_err, BIGNUM *_bn,
     struct csi_integer *_integer);
 
 struct csi_dh_params *csi_dh_params_dup(struct csi_dh_params *_cdhp);
+int csi_dh_public_is_valid(struct csi_dh *_cdh, BIGNUM *_pubkey);
 
 __END_HIDDEN_DECLS
 

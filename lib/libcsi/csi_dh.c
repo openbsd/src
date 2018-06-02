@@ -1,5 +1,7 @@
-/* $OpenBSD: csi_dh.c,v 1.1 2018/06/02 17:40:33 jsing Exp $ */
+/* $OpenBSD: csi_dh.c,v 1.2 2018/06/02 17:43:14 jsing Exp $ */
 /*
+ * Copyright (c) 2000, 2001, 2015 Markus Friedl <markus@openbsd.org>
+ * Copyright (c) 2006, 2016 Damien Miller <djm@openbsd.org>
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -156,6 +158,60 @@ csi_dh_set_params(struct csi_dh *cdh, struct csi_dh_params *params)
 }
 
 int
+csi_dh_public_is_valid(struct csi_dh *cdh, BIGNUM *pubkey)
+{
+	BIGNUM *tmp = NULL;
+        int bits_set = 0;
+	int rv = 0;
+	int i;
+
+	if ((tmp = BN_new()) == NULL) {
+		csi_err_setx(&cdh->err, CSI_ERR_MEM, "out of memory");
+		goto bad;
+	}
+
+	if (BN_is_negative(pubkey)) {
+		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+		    "invalid DH public key value (negative)");
+		goto bad;
+	}
+
+	if (BN_cmp(pubkey, BN_value_one()) != 1) {
+		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+		    "invalid DH public key value (<= 1)");
+		goto bad;
+	}
+
+	if (!BN_sub(tmp, cdh->dh->p, BN_value_one()) ||
+	    BN_cmp(pubkey, tmp) != -1) {
+		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+		    "invalid DH public key value (>= p-1)");
+		goto bad;
+	}
+
+	/*
+	 * If g == 2 and bits_set == 1, then computing log_g(pubkey) is trivial.
+	 */
+	for (i = 0; i <= BN_num_bits(pubkey); i++) {
+		if (BN_is_bit_set(pubkey, i))
+			bits_set++;
+	}
+	if (bits_set < 4) {
+		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+		    "invalid DH public key value (%d/%d bits)",
+		    bits_set, BN_num_bits(cdh->dh->p));
+		goto bad;
+	}
+
+	rv = 1;
+
+ bad:
+	BN_clear_free(tmp);
+
+	return rv;
+}
+
+int
 csi_dh_set_peer_public(struct csi_dh *cdh, struct csi_dh_public *peer)
 {
 	BIGNUM *ppk = NULL;
@@ -166,6 +222,8 @@ csi_dh_set_peer_public(struct csi_dh *cdh, struct csi_dh_public *peer)
 	}
 
 	if (csi_integer_to_bn(&cdh->err, "key", &peer->key, &ppk) == -1)
+		goto err;
+	if (!csi_dh_public_is_valid(cdh, ppk))
 		goto err;
 
 	cdh->peer_pubkey = ppk;
@@ -244,15 +302,49 @@ int
 csi_dh_generate_keys(struct csi_dh *cdh, size_t length,
     struct csi_dh_public **public)
 {
+	int pbits;
+
 	if (cdh->dh == NULL) {
 		csi_err_setx(&cdh->err, CSI_ERR_INVAL, "no params set");
 		goto err;
+	}
+
+	if (length > 0) {
+		if (length > INT_MAX / 2) {
+			csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+			    "length too large");
+			goto err;
+		}
+		if (length < CSI_MIN_DH_LENGTH)
+			length = CSI_MIN_DH_LENGTH;
+
+		/*
+		 * Pollard Rho, Big Step/Little Step attacks are O(sqrt(n)),
+		 * so double requested length.
+		 */
+		length *= 2;
+
+		if ((pbits = BN_num_bits(cdh->dh->p)) <= 0) {
+			csi_err_setx(&cdh->err, CSI_ERR_CRYPTO,
+			    "invalid p bignum");
+			goto err;
+		}
+		if ((int)length > pbits) {
+			csi_err_setx(&cdh->err, CSI_ERR_INVAL,
+			    "length too large");
+			goto err;
+		}
+
+		cdh->dh->length = MINIMUM((int)length, pbits - 1);
 	}
 
 	if (!DH_generate_key(cdh->dh)) {
 		csi_err_setx(&cdh->err, CSI_ERR_CRYPTO, "dh generation failed");
 		goto err;
 	}
+
+	if (!csi_dh_public_is_valid(cdh, cdh->dh->pub_key))
+		goto err;
 
 	if (public != NULL) {
 		csi_dh_public_free(*public);
