@@ -1457,6 +1457,10 @@ def fstack_protector_strong : Flag<["-"], "fstack-protector-strong">, Group<f_Gr
   HelpText<"Use a strong heuristic to apply stack protectors to functions">;
 def fstack_protector : Flag<["-"], "fstack-protector">, Group<f_Group>,
   HelpText<"Enable stack protectors for functions potentially vulnerable to stack smashing">;
+def fno_ret_protector : Flag<["-"], "fno-ret-protector">, Group<f_Group>,
+  HelpText<"Disable return protector">;
+def fret_protector : Flag<["-"], "fret-protector">, Group<f_Group>,
+  HelpText<"Enable return protector">;
 def fstandalone_debug : Flag<["-"], "fstandalone-debug">, Group<f_Group>, Flags<[CoreOption]>,
   HelpText<"Emit full debug info for all types used by the program">;
 def fno_standalone_debug : Flag<["-"], "fno-standalone-debug">, Group<f_Group>, Flags<[CoreOption]>,

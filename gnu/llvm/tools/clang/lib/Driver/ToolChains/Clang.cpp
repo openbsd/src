@@ -3969,6 +3969,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
 
+  // -ret-protector
+  unsigned RetProtector = 1;
+  if (Arg *A = Args.getLastArg(options::OPT_fno_ret_protector,
+        options::OPT_fret_protector)) {
+    if (A->getOption().matches(options::OPT_fno_ret_protector))
+      RetProtector = 0;
+    else if (A->getOption().matches(options::OPT_fret_protector))
+      RetProtector = 1;
+  }
+
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
                    false))
