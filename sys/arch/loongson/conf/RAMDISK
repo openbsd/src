@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2018/04/24 03:17:36 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2018/06/03 07:38:47 fcambus Exp $
 
 machine		loongson mips64
 maxusers	4
@@ -111,6 +111,7 @@ atu*		at uhub?		# Atmel AT76c50x based 802.11b
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
+bwfm*		at uhub?		# Broadcom FullMAC
 cdce*		at uhub?		# CDC Ethernet
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
