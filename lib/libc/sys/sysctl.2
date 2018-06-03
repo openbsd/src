@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.6 2018/05/26 12:47:52 schwarze Exp $
+.\"	$OpenBSD: sysctl.2,v 1.7 2018/06/03 06:00:37 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2018 $
+.Dd $Mdocdate: June 3 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1093,10 +1093,6 @@ and a stack trace if possible.
 .It 3
 The same as 2, but also drop into the kernel debugger.
 .El
-.Pp
-See
-.Xr witness 4
-for more information.
 .It Dv KERN_WXABORT Pq Va kern.wxabort
 Generate an abort,
 rather than returning an error,
