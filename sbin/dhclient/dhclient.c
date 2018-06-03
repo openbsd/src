@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.573 2018/05/23 12:18:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.574 2018/06/03 20:51:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1401,10 +1401,12 @@ state_panic(struct interface_info *ifi)
 
 	if (ifi->link_state >= LINK_STATE_UP) {
 		ifi->offer = get_recorded_lease(ifi);
-		ifi->state = S_REQUESTING;
-		ifi->offer_src = strdup(path_lease_db); /* NULL is OK. */
-		bind_lease(ifi);
-		return;
+		if (ifi->offer != NULL) {
+			ifi->state = S_REQUESTING;
+			ifi->offer_src = strdup(path_lease_db); /* NULL is OK. */
+			bind_lease(ifi);
+			return;
+		}
 	}
 
 	/*
