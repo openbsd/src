@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.81 2018/04/18 14:31:42 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.82 2018/06/03 10:17:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1011,7 +1011,7 @@ grid_reflow_join(struct grid *target, struct grid *gd, u_int sx, u_int yy,
 		 * If this is now the last line, there is nothing more to be
 		 * done.
 		 */
-		if (yy + lines == gd->hsize + gd->sy)
+		if (yy + 1 + lines == gd->hsize + gd->sy)
 			break;
 		line = yy + 1 + lines;
 
@@ -1021,6 +1021,7 @@ grid_reflow_join(struct grid *target, struct grid *gd, u_int sx, u_int yy,
 		if (gd->linedata[line].cellused == 0) {
 			if (!wrapped)
 				break;
+			lines++;
 			continue;
 		}
 

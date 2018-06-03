@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.599 2018/05/28 11:45:26 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.600 2018/06/03 10:17:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2018 $
+.Dd $Mdocdate: June 3 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3585,7 +3585,8 @@ and
 .Ql #} ,
 unless they are part of a
 .Ql #{...}
-replacement. For example:
+replacement.
+For example:
 .Bd -literal -offset indent
 #{?pane_in_mode,#[fg=white#,bg=red],#[fg=red#,bg=white]}#W .
 .Ed
