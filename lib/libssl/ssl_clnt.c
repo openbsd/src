@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.25 2018/05/13 17:31:06 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.26 2018/06/03 15:31:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2049,13 +2049,15 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		SSLerror(s, ERR_R_DH_LIB);
 		goto err;
 	}
-	key_size = DH_size(dh_clnt);
+	if ((key_size = DH_size(dh_clnt)) <= 0) {
+		SSLerror(s, ERR_R_DH_LIB);
+		goto err;
+	}
 	if ((key = malloc(key_size)) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	key_len = DH_compute_key(key, dh_srvr->pub_key, dh_clnt);
-	if (key_len <= 0) {
+	if ((key_len = DH_compute_key(key, dh_srvr->pub_key, dh_clnt)) <= 0) {
 		SSLerror(s, ERR_R_DH_LIB);
 		goto err;
 	}
