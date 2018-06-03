@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.231 2018/06/03 09:59:13 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.232 2018/06/03 10:25:10 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1260,6 +1260,43 @@ and
 .Cm do-test
 targets are added.
 .It lang/php
+Used for ports using PHP in some way:
+either extensions to PHP, or software written in PHP.
+Sets
+.Ev MODPHP_RUN_DEPENDS ,
+.Ev MODPHP_LIB_DEPENDS ,
+.Ev MODPHP_WANTLIB ,
+.Ev MODPHP_BIN ,
+.Ev MODPHP_PHPIZE ,
+.Ev MODPHP_PHP_CONFIG ,
+.Ev MODPHP_INCDIR
+and
+.Ev MODPHP_LIBDIR .
+Adds to
+.Ev RUN_DEPENDS
+and
+.Ev BUILD_DEPENDS
+unless
+.Ev MODPHP_RUNDEP
+or
+.Ev MODPHP_BUILDDEP
+are set.
+If
+.Ev MODPHP_DO_PHPIZE
+is set, prepares a build environment for extensions that use phpize.
+.Pp
+Ports using PDO for database connectivity often have a choice of
+dependencies (pdo_sqlite, pdo_mysql, pdo_pgsql and others).
+The module constructs
+.Ev MODPHP_PDO_DEPENDS
+from the PDO types listed in
+.Ev MODPHP_PDO_ALLOWED
+(defaulting to "sqlite mysql pgsql").
+This can be added to
+.Ev RUN_DEPENDS
+and allows any of these PDO packages to satisfy the dependency, with
+.Ev MODPHP_PDO_PREF
+(sqlite by default) chosen if none are installed.
 .It lang/php/pecl
 Used for ports for PHP PECL extensions.
 Sets default
