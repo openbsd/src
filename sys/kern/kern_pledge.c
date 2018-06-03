@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.230 2018/04/28 12:49:21 kn Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.231 2018/06/03 18:20:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -911,6 +911,11 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	if (miblen == 2 &&		/* vm.loadavg / getloadavg(3) */
 	    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
 		return (0);
+#ifdef CPU_SSE
+	if (miblen == 2 &&		/* i386 libm tests for SSE */
+	    mib[0] == CTL_MACHDEP && mib[1] == CPU_SSE)
+		return (0);
+#endif /* CPU_SSE */
 
 	snprintf(buf, sizeof(buf), "%s(%d): pledge sysctl %d:",
 	    p->p_p->ps_comm, p->p_p->ps_pid, miblen);
