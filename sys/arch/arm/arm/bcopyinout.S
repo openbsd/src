@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.7 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.8 2018/06/03 18:58:11 kettenis Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -41,10 +41,6 @@
 #include <machine/asm.h>
 #include <arm/sysreg.h>
 
-#ifdef __XSCALE__
-#include "bcopyinout_xscale.S"
-#else
-
 	.text
 	.align	2
 
@@ -59,13 +55,6 @@
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11}
 		
-#if defined(__XSCALE__)
-#define HELLOCPP #
-#define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
-#else
-#define PREFETCH(rx,o)
-#endif
-
 /*
  * r0 = user space address
  * r1 = kernel space address
@@ -91,9 +80,6 @@ ENTRY(copyin)
 	ldr	r5, [r4, #PCB_ONFAULT]
 	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
-
-	PREFETCH(r0, 0)
-	PREFETCH(r1, 0)
 
 	/*
 	 * If not too many bytes, take the slow path.
@@ -191,9 +177,6 @@ ENTRY(copyin)
 	 * copy cacheline
 	 */
 .Licaligned:
-	PREFETCH(r0, 32)
-	PREFETCH(r1, 32)
-
 	sub	r2, r2, #0x20
 
 	/* Copy a cacheline */
@@ -307,9 +290,6 @@ ENTRY(copyout)
 	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
-	PREFETCH(r0, 0)
-	PREFETCH(r1, 0)
-
 	/*
 	 * If not too many bytes, take the slow path.
 	 */
@@ -403,9 +383,6 @@ ENTRY(copyout)
 	 * copy cacheline
 	 */
 .Lcaligned:
-	PREFETCH(r0, 32)
-	PREFETCH(r1, 32)
-
 	sub	r2, r2, #0x20
 
 	/* Copy a cacheline */
@@ -512,9 +489,6 @@ ENTRY(kcopy)
 	adr	r3, .Lcopyfault
 	str	r3, [r4, #PCB_ONFAULT]
 
-	PREFETCH(r0, 0)
-	PREFETCH(r1, 0)
-
 	/*
 	 * If not too many bytes, take the slow path.
 	 */
@@ -608,9 +582,6 @@ ENTRY(kcopy)
 	 * copy cacheline
 	 */
 .Lkcaligned:
-	PREFETCH(r0, 32)
-	PREFETCH(r1, 32)
-
 	sub	r2, r2, #0x20
 
 	/* Copy a cacheline */
@@ -679,7 +650,6 @@ ENTRY(kcopy)
 	RESTORE_REGS
 
 	mov	pc, lr
-#endif	/* !__XSCALE__ */
 
 /*
  * int badaddr_read_1(const uint8_t *src, uint8_t *dest)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.33 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: fault.c,v 1.34 2018/06/03 18:58:11 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -508,52 +508,6 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
     struct sigdata *sd)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-
-#ifdef __XSCALE__
-	if ((fsr & FAULT_IMPRECISE) != 0 &&
-	    (tf->tf_spsr & PSR_MODE) == PSR_ABT32_MODE) {
-		/*
-		 * Oops, an imprecise, double abort fault. We've lost the
-		 * r14_abt/spsr_abt values corresponding to the original
-		 * abort, and the spsr saved in the trapframe indicates
-		 * ABT mode.
-		 */
-		tf->tf_spsr &= ~PSR_MODE;
-
-		/*
-		 * We use a simple heuristic to determine if the double abort
-		 * happened as a result of a kernel or user mode access.
-		 * If the current trapframe is at the top of the kernel stack,
-		 * the fault _must_ have come from user mode.
-		 */
-		if (tf != ((trapframe_t *)pcb->pcb_un.un_32.pcb32_sp) - 1) {
-			/*
-			 * Kernel mode. We're either about to die a
-			 * spectacular death, or pcb_onfault will come
-			 * to our rescue. Either way, the current value
-			 * of tf->tf_pc is irrelevant.
-			 */
-			tf->tf_spsr |= PSR_SVC32_MODE;
-			if (pcb->pcb_onfault == NULL)
-				printf("\nKernel mode double abort!\n");
-		} else {
-			/*
-			 * User mode. We've lost the program counter at the
-			 * time of the fault (not that it was accurate anyway;
-			 * it's not called an imprecise fault for nothing).
-			 * About all we can do is copy r14_usr to tf_pc and
-			 * hope for the best. The process is about to get a
-			 * SIGBUS, so it's probably history anyway.
-			 */
-			tf->tf_spsr |= PSR_USR32_MODE;
-			tf->tf_pc = tf->tf_usr_lr;
-		}
-	}
-
-	/* FAR is invalid for imprecise exceptions */
-	if ((fsr & FAULT_IMPRECISE) != 0)
-		far = 0;
-#endif /* __XSCALE__ */
 
 	if (pcb->pcb_onfault) {
 		KDASSERT(TRAP_USERMODE(tf) == 0);
