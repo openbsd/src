@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.232 2018/06/03 21:00:15 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.233 2018/06/03 21:32:32 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -656,11 +656,12 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
  * any errors for each matching socket.
  */
 void
-in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,
+in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
     int errno, void (*notify)(struct inpcb *, int))
 {
 	struct inpcb *inp, *ninp;
 	struct in_addr faddr;
+	u_int rdomain;
 
 	NET_ASSERT_LOCKED();
 
@@ -678,7 +679,7 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	rdomain = rtable_l2(rdomain);
+	rdomain = rtable_l2(rtable);
 	TAILQ_FOREACH_SAFE(inp, &table->inpt_queue, inp_queue, ninp) {
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
@@ -765,7 +766,7 @@ in_rtchange(struct inpcb *inp, int errno)
 
 struct inpcb *
 in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
-    int flags, u_int rdomain)
+    int flags, u_int rtable)
 {
 	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
@@ -775,8 +776,9 @@ in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
 	struct in6_addr *laddr6 = (struct in6_addr *)laddrp;
 #endif
 	struct inpcbhead *head;
+	u_int rdomain;
 
-	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
+	rdomain = rtable_l2(rtable);
 	head = INPCBLHASH(table, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_lhash) {
 		if (rtable_l2(inp->inp_rtableid) != rdomain)
@@ -1045,13 +1047,14 @@ int	in_pcbnotifymiss = 0;
  */
 struct inpcb *
 in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
-    u_int fport_arg, struct in_addr laddr, u_int lport_arg, u_int rdomain)
+    u_int fport_arg, struct in_addr laddr, u_int lport_arg, u_int rtable)
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+	u_int rdomain;
 
-	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
+	rdomain = rtable_l2(rtable);
 	head = INPCBHASH(table, &faddr, fport, &laddr, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
@@ -1093,16 +1096,17 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
 	struct inpcbhead *head;
 	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+	u_int rdomain;
 
-	rtable = rtable_l2(rtable);	/* convert passed rtableid to rdomain */
-	head = IN6PCBHASH(table, faddr, fport, laddr, lport, rtable);
+	rdomain = rtable_l2(rtable);
+	head = IN6PCBHASH(table, faddr, fport, laddr, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
 		if (!(inp->inp_flags & INP_IPV6))
 			continue;
 		if (IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) &&
 		    inp->inp_fport == fport && inp->inp_lport == lport &&
 		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr) &&
-		    rtable_l2(inp->inp_rtableid) == rtable) {
+		    rtable_l2(inp->inp_rtableid) == rdomain) {
 			/*
 			 * Move this PCB to the head of hash chain so that
 			 * repeated accesses are quicker.  This is analogous to
@@ -1118,7 +1122,7 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
 		printf("%s: faddr= fport=%d laddr= lport=%d rdom=%u\n",
-		    __func__, ntohs(fport), ntohs(lport), rtable);
+		    __func__, ntohs(fport), ntohs(lport), rdomain);
 	}
 #endif
 	return (inp);
@@ -1134,14 +1138,14 @@ in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
  */
 struct inpcb *
 in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
-    u_int lport_arg, struct mbuf *m, u_int rdomain)
+    u_int lport_arg, struct mbuf *m, u_int rtable)
 {
 	struct inpcbhead *head;
 	struct in_addr *key1, *key2;
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
+	u_int rdomain;
 
-	rdomain = rtable_l2(rdomain);	/* convert passed rtableid to rdomain */
 	key1 = &laddr;
 	key2 = &zeroin_addr;
 #if NPF > 0
@@ -1167,6 +1171,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	}
 #endif
 
+	rdomain = rtable_l2(rtable);
 	head = INPCBHASH(table, &zeroin_addr, 0, key1, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
@@ -1220,8 +1225,8 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	struct in6_addr *key1, *key2;
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
+	u_int rdomain;
 
-	rtable = rtable_l2(rtable);	/* convert passed rtableid to rdomain */
 	key1 = laddr;
 	key2 = &zeroin6_addr;
 #if NPF > 0
@@ -1247,25 +1252,27 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 	}
 #endif
 
-	head = IN6PCBHASH(table, &zeroin6_addr, 0, key1, lport, rtable);
+	rdomain = rtable_l2(rtable);
+	head = IN6PCBHASH(table, &zeroin6_addr, 0, key1, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
 		if (!(inp->inp_flags & INP_IPV6))
 			continue;
 		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
 		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key1) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-		    rtable_l2(inp->inp_rtableid) == rtable)
+		    rtable_l2(inp->inp_rtableid) == rdomain)
 			break;
 	}
 	if (inp == NULL && ! IN6_ARE_ADDR_EQUAL(key1, key2)) {
-		head = IN6PCBHASH(table, &zeroin6_addr, 0, key2, lport, rtable);
+		head = IN6PCBHASH(table, &zeroin6_addr, 0, key2, lport,
+		    rdomain);
 		LIST_FOREACH(inp, head, inp_hash) {
 			if (!(inp->inp_flags & INP_IPV6))
 				continue;
 			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
 			    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key2) &&
 			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-			    rtable_l2(inp->inp_rtableid) == rtable)
+			    rtable_l2(inp->inp_rtableid) == rdomain)
 				break;
 		}
 	}
@@ -1281,7 +1288,7 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
 		printf("%s: laddr= lport=%d rdom=%u\n",
-		    __func__, ntohs(lport), rtable);
+		    __func__, ntohs(lport), rdomain);
 	}
 #endif
 	return (inp);
