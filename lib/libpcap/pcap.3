@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.47 2018/04/05 03:47:27 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.48 2018/06/03 10:45:15 tb Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 5 2018 $
+.Dd $Mdocdate: June 3 2018 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -108,7 +108,7 @@
 .Ft int
 .Fn pcap_sendpacket "pcap_t *p" "const u_char *buf" "int size"
 .Ft int
-.Fn pcap_compile "pcap_t *p" "struct bpf_program *program" "char *buf" "int optimize" "bpf_u_int32 netmask"
+.Fn pcap_compile "pcap_t *p" "struct bpf_program *program" "const char *buf" "int optimize" "bpf_u_int32 netmask"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
 .Ft void
@@ -138,10 +138,10 @@
 .Ft int
 .Fn pcap_get_selectable_fd "pcap_t *p"
 .Ft void
-.Fn pcap_perror "pcap_t *p" "char *prefix"
+.Fn pcap_perror "pcap_t *p" "const char *prefix"
 .Ft "char *"
 .Fn pcap_geterr "pcap_t *p"
-.Ft "char *"
+.Ft "const char *"
 .Fn pcap_strerror "int errnum"
 .Ft void
 .Fn pcap_close "pcap_t *p"
