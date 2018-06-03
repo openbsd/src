@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.7 2018/04/24 17:19:35 pirofti Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.8 2018/06/03 15:09:26 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -31,6 +31,8 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <uvm/uvm.h>
+
 /*
  * Atomicity is only needed on MULTIPROCESSOR kernels.  Fall back on
  * copyin(9) until non-MULTIPROCESSOR architectures have a copyin32(9)
@@ -46,21 +48,23 @@
 struct futex {
 	LIST_ENTRY(futex)	 ft_list;	/* list of all futexes */
 	TAILQ_HEAD(, proc)	 ft_threads;	/* sleeping queue */
-	uint32_t		*ft_uaddr;	/* userspace address */
+	struct uvm_object	*ft_obj;	/* UVM object */
+	voff_t			 ft_off;	/* UVM offset */
 	pid_t			 ft_pid;	/* process identifier */
 	unsigned int		 ft_refcnt;	/* # of references */
 };
 
 /* Syscall helpers. */
-int		 futex_wait(uint32_t *, uint32_t, const struct timespec *);
-int		 futex_wake(uint32_t *, uint32_t);
-int		 futex_requeue(uint32_t *, uint32_t, uint32_t *, uint32_t);
+int	 futex_wait(uint32_t *, uint32_t, const struct timespec *, int);
+int	 futex_wake(uint32_t *, uint32_t, int);
+int	 futex_requeue(uint32_t *, uint32_t, uint32_t *, uint32_t, int);
 
 /* Flags for futex_get(). */
 #define FT_CREATE	0x1	/* Create a futex if it doesn't exist. */
+#define FT_PRIVATE	0x2	/* Futex is process-private. */
 
-struct futex	*futex_get(uint32_t *, int);
-void		 futex_put(struct futex *);
+struct futex *futex_get(uint32_t *, int);
+void	 futex_put(struct futex *);
 
 /*
  * The global futex lock serialize futex(2) calls such that no wakeup
@@ -94,23 +98,30 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 	uint32_t val = SCARG(uap, val);
 	const struct timespec *timeout = SCARG(uap, timeout);
 	void *g = SCARG(uap, g);
+	int flags = 0;
+
+	if (op & FUTEX_PRIVATE_FLAG)
+		flags |= FT_PRIVATE;
 
 	switch (op) {
 	case FUTEX_WAIT:
+	case FUTEX_WAIT_PRIVATE:
 		KERNEL_LOCK();
 		rw_enter_write(&ftlock);
-		*retval = futex_wait(uaddr, val, timeout);
+		*retval = futex_wait(uaddr, val, timeout, flags);
 		rw_exit_write(&ftlock);
 		KERNEL_UNLOCK();
 		break;
 	case FUTEX_WAKE:
+	case FUTEX_WAKE_PRIVATE:
 		rw_enter_write(&ftlock);
-		*retval = futex_wake(uaddr, val);
+		*retval = futex_wake(uaddr, val, flags);
 		rw_exit_write(&ftlock);
 		break;
 	case FUTEX_REQUEUE:
+	case FUTEX_REQUEUE_PRIVATE:
 		rw_enter_write(&ftlock);
-		*retval = futex_requeue(uaddr, val, g, (unsigned long)timeout);
+		*retval = futex_requeue(uaddr, val, g, (u_long)timeout, flags);
 		rw_exit_write(&ftlock);
 		break;
 	default:
@@ -127,29 +138,47 @@ sys_futex(struct proc *p, void *v, register_t *retval)
  * If such futex does not exist and FT_CREATE is given, create it.
  */
 struct futex *
-futex_get(uint32_t *uaddr, int flag)
+futex_get(uint32_t *uaddr, int flags)
 {
 	struct proc *p = curproc;
+	vm_map_t map = &p->p_vmspace->vm_map;
+	vm_map_entry_t entry;
+	struct uvm_object *obj = NULL;
+	voff_t off = (vaddr_t)uaddr;
+	pid_t pid = p->p_p->ps_pid;
 	struct futex *f;
 
 	rw_assert_wrlock(&ftlock);
 
+	if (!(flags & FT_PRIVATE)) {
+		vm_map_lock_read(map);
+		if (uvm_map_lookup_entry(map, (vaddr_t)uaddr, &entry) &&
+		    UVM_ET_ISOBJ(entry) && entry->object.uvm_obj &&
+		    entry->inheritance == MAP_INHERIT_SHARE) {
+			obj = entry->object.uvm_obj;
+			off = entry->offset + ((vaddr_t)uaddr - entry->start);
+			pid = 0;
+		}
+		vm_map_unlock_read(map);
+	}
+
 	LIST_FOREACH(f, &ftlist, ft_list) {
-		if (f->ft_uaddr == uaddr && f->ft_pid == p->p_p->ps_pid) {
+		if (f->ft_obj == obj && f->ft_off == off && f->ft_pid == pid) {
 			f->ft_refcnt++;
 			break;
 		}
 	}
 
-	if ((f == NULL) && (flag & FT_CREATE)) {
+	if ((f == NULL) && (flags & FT_CREATE)) {
 		/*
 		 * We rely on the rwlock to ensure that no other thread
 		 * create the same futex.
 		 */
 		f = pool_get(&ftpool, PR_WAITOK);
 		TAILQ_INIT(&f->ft_threads);
-		f->ft_uaddr = uaddr;
-		f->ft_pid = p->p_p->ps_pid;
+		f->ft_obj = obj;
+		f->ft_off = off;
+		f->ft_pid = pid;
 		f->ft_refcnt = 1;
 		LIST_INSERT_HEAD(&ftlist, f, ft_list);
 	}
@@ -181,7 +210,8 @@ futex_put(struct futex *f)
  * indefinitly if the argument is NULL.
  */
 int
-futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
+futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
+    int flags)
 {
 	struct proc *p = curproc;
 	struct futex *f;
@@ -220,7 +250,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
 			to_ticks = INT_MAX;
 	}
 
-	f = futex_get(uaddr, FT_CREATE);
+	f = futex_get(uaddr, flags | FT_CREATE);
 	TAILQ_INSERT_TAIL(&f->ft_threads, p, p_fut_link);
 	p->p_futex = f;
 
@@ -251,7 +281,8 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
  * address ``uaddr2''.
  */
 int
-futex_requeue(uint32_t *uaddr, uint32_t n, uint32_t *uaddr2, uint32_t m)
+futex_requeue(uint32_t *uaddr, uint32_t n, uint32_t *uaddr2, uint32_t m,
+    int flags)
 {
 	struct futex *f, *g;
 	struct proc *p;
@@ -259,7 +290,7 @@ futex_requeue(uint32_t *uaddr, uint32_t n, uint32_t *uaddr2, uint32_t m)
 
 	rw_assert_wrlock(&ftlock);
 
-	f = futex_get(uaddr, 0);
+	f = futex_get(uaddr, flags);
 	if (f == NULL)
 		return 0;
 
@@ -288,7 +319,7 @@ futex_requeue(uint32_t *uaddr, uint32_t n, uint32_t *uaddr2, uint32_t m)
  * ``uaddr''.
  */
 int
-futex_wake(uint32_t *uaddr, uint32_t n)
+futex_wake(uint32_t *uaddr, uint32_t n, int flags)
 {
-	return futex_requeue(uaddr, n, NULL, 0);
+	return futex_requeue(uaddr, n, NULL, 0, flags);
 }
