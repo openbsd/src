@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.100 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.101 2018/06/03 19:58:02 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -323,7 +323,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
  *    once PCB to be notified has been located.
  */
 int
-in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
+in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
     uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg,
     u_int rdomain, int cmd, void *cmdarg, void (*notify)(struct inpcb *, int))
 {
@@ -373,7 +373,7 @@ in6_pcbnotify(struct inpcbtable *head, struct sockaddr_in6 *dst,
 	}
 	errno = inet6ctlerrmap[cmd];
 
-	TAILQ_FOREACH_SAFE(inp, &head->inpt_queue, inp_queue, ninp) {
+	TAILQ_FOREACH_SAFE(inp, &table->inpt_queue, inp_queue, ninp) {
 		if ((inp->inp_flags & INP_IPV6) == 0)
 			continue;
 
