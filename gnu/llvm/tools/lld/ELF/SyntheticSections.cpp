@@ -2571,6 +2571,9 @@ void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
 // The sentinel has to be removed if there are no other .ARM.exidx entries.
 bool ARMExidxSentinelSection::empty() const {
   OutputSection *OS = getParent();
+  if (!OS)
+    return false;
+
   for (auto *B : OS->SectionCommands)
     if (auto *ISD = dyn_cast<InputSectionDescription>(B))
       for (auto *S : ISD->Sections)
