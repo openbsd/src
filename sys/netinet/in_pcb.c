@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.231 2018/06/02 16:27:44 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.232 2018/06/03 21:00:15 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ in_pcbhash(struct inpcbtable *table, int rdom,
 	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
 
-	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_hash]);
+	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_mask]);
 }
 
 #define	INPCBHASH(table, faddr, fport, laddr, lport, rdom) \
@@ -171,7 +171,7 @@ in6_pcbhash(struct inpcbtable *table, int rdom,
 	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
 
-	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_hash]);
+	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_mask]);
 }
 
 #define	IN6PCBHASH(table, faddr, fport, laddr, lport, rdom) \
@@ -187,7 +187,7 @@ in_pcblhash(struct inpcbtable *table, int rdom, u_short lport)
 	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
 
-	return (&table->inpt_lhashtbl[SipHash24_End(&ctx) & table->inpt_lhash]);
+	return (&table->inpt_lhashtbl[SipHash24_End(&ctx) & table->inpt_lmask]);
 }
 
 #define	INPCBLHASH(table, lport, rdom) in_pcblhash(table, rdom, lport)
@@ -198,11 +198,11 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 
 	TAILQ_INIT(&table->inpt_queue);
 	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
-	    &table->inpt_hash);
+	    &table->inpt_mask);
 	if (table->inpt_hashtbl == NULL)
 		panic("in_pcbinit: hashinit failed");
 	table->inpt_lhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
-	    &table->inpt_lhash);
+	    &table->inpt_lmask);
 	if (table->inpt_lhashtbl == NULL)
 		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_count = 0;
@@ -269,9 +269,8 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
-	if (table->inpt_hash != 0 &&
-	    table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_hash))
-		(void)in_pcbresize(table, (table->inpt_hash + 1) * 2);
+	if (table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_size))
+		(void)in_pcbresize(table, table->inpt_size * 2);
 	TAILQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	head = INPCBLHASH(table, inp->inp_lport, inp->inp_rtableid);
 	LIST_INSERT_HEAD(head, inp, inp_lhash);
@@ -998,7 +997,7 @@ in_pcbrehash(struct inpcb *inp)
 int
 in_pcbresize(struct inpcbtable *table, int hashsize)
 {
-	u_long nhash, nlhash;
+	u_long nmask, nlmask;
 	int osize;
 	void *nhashtbl, *nlhashtbl, *ohashtbl, *olhashtbl;
 	struct inpcb *inp;
@@ -1007,18 +1006,18 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	olhashtbl = table->inpt_lhashtbl;
 	osize = table->inpt_size;
 
-	nhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nhash);
+	nhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nmask);
 	if (nhashtbl == NULL)
 		return ENOBUFS;
-	nlhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nlhash);
+	nlhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &nlmask);
 	if (nlhashtbl == NULL) {
 		hashfree(nhashtbl, hashsize, M_PCB);
 		return ENOBUFS;
 	}
 	table->inpt_hashtbl = nhashtbl;
 	table->inpt_lhashtbl = nlhashtbl;
-	table->inpt_hash = nhash;
-	table->inpt_lhash = nlhash;
+	table->inpt_mask = nmask;
+	table->inpt_lmask = nlmask;
 	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
 

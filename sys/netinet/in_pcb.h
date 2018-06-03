@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.108 2018/06/02 16:38:21 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.109 2018/06/03 21:00:15 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ struct inpcbtable {
 	TAILQ_HEAD(inpthead, inpcb) inpt_queue;
 	struct inpcbhead *inpt_hashtbl, *inpt_lhashtbl;
 	SIPHASH_KEY inpt_key;
-	u_long	  inpt_hash, inpt_lhash;
+	u_long	  inpt_mask, inpt_lmask;
 	int	  inpt_count, inpt_size;
 };
 
