@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.158 2018/06/03 17:46:22 tb Exp $	*/
+/*	$OpenBSD: in.c,v 1.159 2018/06/03 18:35:48 tb Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -215,7 +215,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia = NULL;
-	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error = 0;
 
@@ -307,7 +306,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		}
 
 		ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr =
-		    ifra->ifra_addr.sin_addr.s_addr;
+		    satosin(&ifr->ifr_addr)->sin_addr.s_addr;
 		break;
 	}
 
