@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.298 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.299 2018/06/03 14:04:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1213,16 +1213,12 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	struct dispatcher	*dsp;
 	struct child	*child;
 	pid_t		 pid;
-	int		 allout, pipefd[2], idx;
+	int		 allout, pipefd[2];
 	struct passwd	*pw;
 	const char	*pw_name;
 	uid_t	pw_uid;
 	gid_t	pw_gid;
 	const char	*pw_dir;
-	char	*mda_environ[10];
-	const char *mda_command;
-	const char *tag;
-	char	mda_exec[LINE_MAX];
 
 	dsp = dict_xget(env->sc_dispatchers, deliver->dispatcher);
 
@@ -1342,41 +1338,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
-	if (deliver->mda_exec[0])
-		mda_command = deliver->mda_exec;
-	else
-		mda_command = dsp->u.local.command;
-
-	if (strlcpy(mda_exec, mda_command, sizeof (mda_exec))
-	    >= sizeof (mda_exec))
-		err(1, "mda command line too long");
-
-	if (! mda_expand_format(mda_exec, sizeof mda_exec, deliver,
-		&deliver->userinfo))
-		err(1, "mda command line could not be expanded");
-
-	/* setup environment similar to other MTA */
-
-	idx = 0;
-	xasprintf(&mda_environ[idx++], "PATH=%s", _PATH_DEFPATH);
-	xasprintf(&mda_environ[idx++], "DOMAIN=%s", deliver->rcpt.domain);
-	xasprintf(&mda_environ[idx++], "HOME=%s", pw_dir);
-	xasprintf(&mda_environ[idx++], "RECIPIENT=%s@%s", deliver->dest.user, deliver->dest.domain);
-	xasprintf(&mda_environ[idx++], "SHELL=/bin/sh");
-	xasprintf(&mda_environ[idx++], "LOCAL=%s", deliver->rcpt.user);
-	xasprintf(&mda_environ[idx++], "LOGNAME=%s", pw_name);
-	xasprintf(&mda_environ[idx++], "USER=%s", pw_name);
-
-	if ((tag = strchr(deliver->rcpt.user, *env->sc_subaddressing_delim)) != NULL)
-		if (strlen(tag+1))
-			xasprintf(&mda_environ[idx++], "EXTENSION=%s", tag+1);
-
-	mda_environ[idx++] = (char *)NULL;
-
-	execle("/bin/sh", "/bin/sh", "-c", mda_exec, (char *)NULL,
-	    mda_environ);
-	perror("execle");
-	_exit(1);
+	mda_unpriv(dsp, deliver, pw_name, pw_dir);
 }
 
 static void
