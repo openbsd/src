@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.33 2018/06/02 16:45:31 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.34 2018/06/03 15:33:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1829,8 +1829,9 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 static int
 ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 {
+	int key_size = 0, key_len, al;
+	unsigned char *key = NULL;
 	BIGNUM *bn = NULL;
-	int key_size, al;
 	CBS cbs, dh_Yc;
 	DH *dh;
 
@@ -1857,22 +1858,26 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 		goto err;
 	}
 
-	key_size = DH_compute_key(p, bn, dh);
-	if (key_size <= 0) {
+	if ((key_size = DH_size(dh)) <= 0) {
 		SSLerror(s, ERR_R_DH_LIB);
-		BN_clear_free(bn);
+		goto err;
+	}
+	if ((key = malloc(key_size)) == NULL) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if ((key_len = DH_compute_key(key, bn, dh)) <= 0) {
+		SSLerror(s, ERR_R_DH_LIB);
 		goto err;
 	}
 
-	s->session->master_key_length =
-	    tls1_generate_master_secret(
-	        s, s->session->master_key, p, key_size);
-
-	explicit_bzero(p, key_size);
+	s->session->master_key_length = tls1_generate_master_secret(s,
+	    s->session->master_key, key, key_len);
 
 	DH_free(S3I(s)->tmp.dh);
 	S3I(s)->tmp.dh = NULL;
 
+	freezero(key, key_size);
 	BN_clear_free(bn);
 
 	return (1);
@@ -1883,6 +1888,9 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
+	freezero(key, key_size);
+	BN_clear_free(bn);
+
 	return (-1);
 }
 
