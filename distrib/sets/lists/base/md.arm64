@@ -29,6 +29,9 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/bin/clang
+./usr/bin/clang++
+./usr/bin/clang-cpp
 ./usr/bin/objcopy
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o

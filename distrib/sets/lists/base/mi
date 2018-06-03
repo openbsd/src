@@ -329,6 +329,7 @@
 ./usr/bin/bc
 ./usr/bin/bgplgsh
 ./usr/bin/biff
+./usr/bin/c++
 ./usr/bin/c2ph
 ./usr/bin/cal
 ./usr/bin/calendar
@@ -2185,6 +2186,7 @@
 ./usr/libexec/auth/login_token
 ./usr/libexec/auth/login_yubikey
 ./usr/libexec/comsat
+./usr/libexec/cpp
 ./usr/libexec/cvs
 ./usr/libexec/cvs/contrib
 ./usr/libexec/cvs/contrib/clmerge

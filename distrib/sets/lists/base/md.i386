@@ -68,6 +68,9 @@
 ./sbin/kbd
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
+./usr/bin/clang
+./usr/bin/clang++
+./usr/bin/clang-cpp
 ./usr/bin/objcopy
 ./usr/bin/pctr
 ./usr/lib/crtbegin.o

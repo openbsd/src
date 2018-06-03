@@ -1,5 +1,4 @@
 ./sys
-./usr/bin/c++
 ./usr/bin/c++filt
 ./usr/bin/cpp
 ./usr/bin/ctfdump
@@ -1512,7 +1511,6 @@
 ./usr/lib/libz.a
 ./usr/lib/libz_p.a
 ./usr/lib/rcrt0.o
-./usr/libexec/cpp
 ./usr/sbin/kgmon
 ./usr/share/info/binutils.info
 ./usr/share/man/man1/addr2line.1
