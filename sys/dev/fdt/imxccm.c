@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.3 2018/05/28 09:03:59 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.4 2018/06/03 18:17:27 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -135,6 +135,7 @@ struct imxccm_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
+	uint32_t		sc_phandle;
 
 	struct imxccm_gate	*sc_gates;
 	int			sc_ngates;
@@ -198,6 +199,8 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
+
+	sc->sc_phandle = OF_getpropint(sc->sc_node, "phandle", 0);
 
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mq-ccm")) {
 		sc->sc_gates = imx8mq_gates;
@@ -670,8 +673,15 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 {
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t pidx = pcells[0];
+	uint32_t pidx;
 	uint32_t mux;
+
+	if (pcells[0] != sc->sc_phandle) {
+		printf("%s: 0x%08x parent 0x%08x\n", __func__, idx, pcells[0]);
+		return -1;
+	}
+
+	pidx = pcells[1];
 
 	if (sc->sc_muxs == imx8mq_muxs) {
 		switch (idx) {
