@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.17 2017/04/27 15:46:14 millert Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.18 2018/06/03 10:29:28 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -200,7 +200,7 @@ char *sdup(const char *);
 
 struct bpf_insn *icode_to_fcode(struct block *, int *);
 int pcap_parse(void);
-void lex_init(char *);
+void lex_init(const char *);
 void sappend(struct slist *, struct slist *);
 
 /* XXX */

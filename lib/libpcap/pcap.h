@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.19 2018/04/05 03:47:27 lteo Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.20 2018/06/03 10:29:28 sthen Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -188,16 +188,16 @@ int	pcap_setfilter(pcap_t *, struct bpf_program *);
 int 	pcap_setdirection(pcap_t *, pcap_direction_t);
 int	pcap_getnonblock(pcap_t *, char *);
 int	pcap_setnonblock(pcap_t *, int, char *);
-void	pcap_perror(pcap_t *, char *);
+void	pcap_perror(pcap_t *, const char *);
 int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_sendpacket(pcap_t *, const u_char *, int);
 const char *pcap_statustostr(int);
-char	*pcap_strerror(int);
+const char *pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
-int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
+int	pcap_compile(pcap_t *, struct bpf_program *, const char *, int,
 	    bpf_u_int32);
 int	pcap_compile_nopcap(int, int, struct bpf_program *,
-	    char *, int, bpf_u_int32);
+	    const char *, int, bpf_u_int32);
 void	pcap_freecode(struct bpf_program *);
 int	pcap_offline_filter(const struct bpf_program *,
 	    const struct pcap_pkthdr *, const u_char *);
@@ -230,7 +230,7 @@ void	pcap_freealldevs(pcap_if_t *);
 
 const char *pcap_lib_version(void);
 
-char	*bpf_image(struct bpf_insn *, int);
+char	*bpf_image(const struct bpf_insn *, int);
 
 int	pcap_get_selectable_fd(pcap_t *);
 
