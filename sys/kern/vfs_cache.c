@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.56 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.57 2018/06/04 19:42:54 kn Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -128,9 +128,7 @@ cache_zap(struct namecache *ncp)
 }
 
 /*
- * Look for a name in the cache. We don't do this if the segment name is
- * long, simply so the cache can avoid holding long names (which would
- * either waste space, or add greatly to the complexity).
+ * Look for a name in the cache.
  * dvp points to the directory to search. The componentname cnp holds
  * the information on the entry being sought, such as its length
  * and its name. If the lookup succeeds, vpp is set to point to the vnode
