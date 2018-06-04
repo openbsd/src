@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.210 2018/06/01 20:31:33 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.211 2018/06/04 15:57:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -63,6 +63,10 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
+	size_t			 ungetpos;
+	size_t			 ungetsize;
+	u_char			*ungetbuf;
+	int			 eof_reached;
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
@@ -73,8 +77,9 @@ int		 yyparse(void);
 int		 yylex(void);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
+int		 igetc(void);
 int		 lgetc(int);
-int		 lungetc(int);
+void		 lungetc(int);
 int		 findeol(void);
 int		 yyerror(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)))
@@ -191,7 +196,7 @@ typedef struct {
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TO TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
-%token	WARN_INTERVAL
+%token	WARN_INTERVAL WRAPPER
 
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -342,6 +347,13 @@ ca_params_opt
 
 mda:
 MDA LIMIT limits_mda
+| MDA WRAPPER STRING STRING {
+	if (dict_get(conf->sc_mda_wrappers, $3)) {
+		yyerror("mda wrapper already declared with that name: %s", $3);
+		YYERROR;
+	}
+	dict_set(conf->sc_mda_wrappers, $3, $4);
+}
 ;
 
 
@@ -558,6 +570,13 @@ USER STRING {
 	}
 
 	dispatcher->u.local.table_userbase = strdup(t->t_name);
+}
+| WRAPPER STRING {
+	if (! dict_get(conf->sc_mda_wrappers, $2)) {
+		yyerror("no mda wrapper with that name: %s", $2);
+		YYERROR;
+	}
+	dispatcher->u.local.mda_wrapper = $2;
 }
 ;
 
@@ -1651,6 +1670,7 @@ lookup(char *s)
 		{ "verify",		VERIFY },
 		{ "virtual",		VIRTUAL },
 		{ "warn-interval",	WARN_INTERVAL },
+		{ "wrapper",		WRAPPER },
 	};
 	const struct keywords	*p;
 
@@ -1663,34 +1683,39 @@ lookup(char *s)
 		return (STRING);
 }
 
-#define MAXPUSHBACK	128
+#define START_EXPAND	1
+#define DONE_EXPAND	2
 
-unsigned char	*parsebuf;
-int		 parseindex;
-unsigned char	 pushback_buffer[MAXPUSHBACK];
-int		 pushback_index = 0;
+static int	expanding;
+
+int
+igetc(void)
+{
+	int	c;
+
+	while (1) {
+		if (file->ungetpos > 0)
+			c = file->ungetbuf[--file->ungetpos];
+		else
+			c = getc(file->stream);
+
+		if (c == START_EXPAND)
+			expanding = 1;
+		else if (c == DONE_EXPAND)
+			expanding = 0;
+		else
+			break;
+	}
+	return (c);
+}
 
 int
 lgetc(int quotec)
 {
 	int		c, next;
 
-	if (parsebuf) {
-		/* Read character from the parsebuffer instead of input. */
-		if (parseindex >= 0) {
-			c = parsebuf[parseindex++];
-			if (c != '\0')
-				return (c);
-			parsebuf = NULL;
-		} else
-			parseindex++;
-	}
-
-	if (pushback_index)
-		return (pushback_buffer[--pushback_index]);
-
 	if (quotec) {
-		if ((c = getc(file->stream)) == EOF) {
+		if ((c = igetc()) == EOF) {
 			yyerror("reached end of file while parsing "
 			    "quoted string");
 			if (file == topfile || popfile() == EOF)
@@ -1700,8 +1725,8 @@ lgetc(int quotec)
 		return (c);
 	}
 
-	while ((c = getc(file->stream)) == '\\') {
-		next = getc(file->stream);
+	while ((c = igetc()) == '\\') {
+		next = igetc();
 		if (next != '\n') {
 			c = next;
 			break;
@@ -1710,37 +1735,45 @@ lgetc(int quotec)
 		file->lineno++;
 	}
 
-	while (c == EOF) {
-		if (file == topfile || popfile() == EOF)
-			return (EOF);
-		c = getc(file->stream);
+	if (c == EOF) {
+		/*
+		 * Fake EOL when hit EOF for the first time. This gets line
+		 * count right if last line in included file is syntactically
+		 * invalid and has no newline.
+		 */
+		if (file->eof_reached == 0) {
+			file->eof_reached = 1;
+			return ('\n');
+		}
+		while (c == EOF) {
+			if (file == topfile || popfile() == EOF)
+				return (EOF);
+			c = igetc();
+		}
 	}
 	return (c);
 }
 
-int
+void
 lungetc(int c)
 {
 	if (c == EOF)
-		return (EOF);
-	if (parsebuf) {
-		parseindex--;
-		if (parseindex >= 0)
-			return (c);
+		return;
+
+	if (file->ungetpos >= file->ungetsize) {
+		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
+		if (p == NULL)
+			err(1, "lungetc");
+		file->ungetbuf = p;
+		file->ungetsize *= 2;
 	}
-	if (pushback_index < MAXPUSHBACK-1)
-		return (pushback_buffer[pushback_index++] = c);
-	else
-		return (EOF);
+	file->ungetbuf[file->ungetpos++] = c;
 }
 
 int
 findeol(void)
 {
 	int	c;
-
-	parsebuf = NULL;
-	pushback_index = 0;
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
@@ -1772,7 +1805,7 @@ top:
 	if (c == '#')
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && parsebuf == NULL) {
+	if (c == '$' && !expanding) {
 		while (1) {
 			if ((c = lgetc(0)) == EOF)
 				return (0);
@@ -1794,8 +1827,13 @@ top:
 			yyerror("macro '%s' not defined", buf);
 			return (findeol());
 		}
-		parsebuf = val;
-		parseindex = 0;
+		p = val + strlen(val) - 1;
+		lungetc(DONE_EXPAND);
+		while (p >= val) {
+			lungetc(*p);
+			p--;
+		}
+		lungetc(START_EXPAND);
 		goto top;
 	}
 
@@ -1957,7 +1995,16 @@ pushfile(const char *name, int secret)
 		free(nfile);
 		return (NULL);
 	}
-	nfile->lineno = 1;
+	nfile->lineno = TAILQ_EMPTY(&files) ? 1 : 0;
+	nfile->ungetsize = 16;
+	nfile->ungetbuf = malloc(nfile->ungetsize);
+	if (nfile->ungetbuf == NULL) {
+		log_warn("warn: malloc");
+		fclose(nfile->stream);
+		free(nfile->name);
+		free(nfile);
+		return (NULL);
+	}
 	TAILQ_INSERT_TAIL(&files, nfile, entry);
 	return (nfile);
 }
@@ -1973,6 +2020,7 @@ popfile(void)
 	TAILQ_REMOVE(&files, file, entry);
 	fclose(file->stream);
 	free(file->name);
+	free(file->ungetbuf);
 	free(file);
 	file = prev;
 	return (file ? 0 : EOF);
@@ -2005,6 +2053,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	conf->sc_pki_dict = calloc(1, sizeof(*conf->sc_pki_dict));
 	conf->sc_ssl_dict = calloc(1, sizeof(*conf->sc_ssl_dict));
 	conf->sc_limits_dict = calloc(1, sizeof(*conf->sc_limits_dict));
+	conf->sc_mda_wrappers = calloc(1, sizeof(*conf->sc_mda_wrappers));
 
 	/* Report mails delayed for more than 4 hours */
 	conf->sc_bounce_warn[0] = 3600 * 4;
@@ -2016,7 +2065,8 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	    conf->sc_ca_dict == NULL		||
 	    conf->sc_pki_dict == NULL		||
 	    conf->sc_ssl_dict == NULL		||
-	    conf->sc_limits_dict == NULL) {
+	    conf->sc_limits_dict == NULL        ||
+	    conf->sc_mda_wrappers == NULL) {
 		log_warn("warn: cannot allocate memory");
 		free(conf->sc_tables_dict);
 		free(conf->sc_rules);
@@ -2026,6 +2076,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		free(conf->sc_pki_dict);
 		free(conf->sc_ssl_dict);
 		free(conf->sc_limits_dict);
+		free(conf->sc_mda_wrappers);
 		return (-1);
 	}
 
@@ -2034,6 +2085,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	table = NULL;
 
 	dict_init(conf->sc_dispatchers);
+	dict_init(conf->sc_mda_wrappers);
 	dict_init(conf->sc_ca_dict);
 	dict_init(conf->sc_pki_dict);
 	dict_init(conf->sc_ssl_dict);

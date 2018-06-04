@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.548 2018/06/03 14:04:06 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.549 2018/06/04 15:57:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -531,6 +531,7 @@ struct smtpd {
 	size_t				sc_session_max_rcpt;
 	size_t				sc_session_max_mails;
 
+	struct dict		       *sc_mda_wrappers;
 	size_t				sc_mda_max_session;
 	size_t				sc_mda_max_user_session;
 	size_t				sc_mda_task_hiwat;
@@ -1046,6 +1047,7 @@ struct dispatcher_local {
 	uint8_t	expand_only;
 	uint8_t	forward_only;
 
+	char	*mda_wrapper;
 	char	*command;
 
 	char	*table_alias;
@@ -1245,7 +1247,7 @@ void mda_unpriv(struct dispatcher *, struct deliver *, const char *, const char 
 
 /* mda_variables.c */
 size_t mda_expand_format(char *, size_t, const struct deliver *,
-    const struct userinfo *);
+    const struct userinfo *, const char *);
 
 
 /* makemap.c */

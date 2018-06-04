@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.189 2018/06/04 12:15:10 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.190 2018/06/04 15:57:46 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -473,6 +473,16 @@ The same
 are supported as for the
 .Ic match Cm action
 directive.
+.It Ic mda Cm wrapper Ar name Ar command
+Associate
+.Ar command
+to the mail delivery agent wrapper named
+.Ar name .
+When a local delivery specifies a wrapper, the
+.Ar command
+associated to the wrapper will be executed instead.
+The command may contain format specifiers
+.Pq see Sx FORMAT SPECIFIERS .
 .It Ic mta Cm max\-deferred Ar number
 When delivery to a given host is suspended due to temporary failures,
 cache at most
@@ -626,6 +636,7 @@ The following formats are currently supported:
 .It %{dest.domain}    Ta domain part after expansion
 .It %{user.username}  Ta local user
 .It %{user.directory} Ta home directory of the local user
+.It %{mda}	      Ta mda command, only available for mda wrappers
 .El
 .Pp
 Expansion formats also support partial expansion using the optional
