@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.11 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.12 2018/06/04 09:25:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -32,9 +32,7 @@
 #include <machine/fdt.h>
 #include <machine/intr.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <dev/fdt/sunxireg.h>
-/* #include <armv7/sunxi/sxipiovar.h> */
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
