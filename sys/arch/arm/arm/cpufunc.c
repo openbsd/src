@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.53 2018/02/25 01:45:01 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.54 2018/06/04 22:10:58 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -140,7 +140,6 @@ struct cpu_functions armv7_cpufuncs = {
 
 struct cpu_functions cpufuncs;
 u_int cputype;
-u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 int	arm_icache_min_line_size = 32;
 int	arm_dcache_min_line_size = 32;
@@ -331,7 +330,6 @@ set_cpufuncs()
 		case VMSA_V7_LDT:
 			cpufuncs = armv7_cpufuncs;
 			/* V4 or higher */
-			cpu_reset_needs_v4_MMU_disable = 1;
 			arm_get_cachetype_cp15v7();
 			armv7_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
 			armv7_dcache_sets_max = (1U << (arm_dcache_l2_linesize +
