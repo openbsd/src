@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.6 2018/05/30 13:32:40 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.7 2018/06/04 10:33:51 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -436,7 +436,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_DMA;
 	
 	if (caps & SDHC_HOST_CTRL_CAP_HSS)
-		saa.caps |= SMC_CAPS_MMC_HIGHSPEED;
+		saa.caps |= SMC_CAPS_MMC_HIGHSPEED | SMC_CAPS_SD_HIGHSPEED;
 
 	width = OF_getpropint(sc->sc_node, "bus-width", 1);
 	if (width >= 8)
