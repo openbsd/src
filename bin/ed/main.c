@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2018/05/24 06:24:29 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2018/06/04 13:26:21 martijn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -851,11 +851,7 @@ exec_command(void)
 		return ERR;
 	case 'z':
 		first_addr = 1;
-#ifdef BACKWARDS
 		if (check_addr_range(first_addr, current_addr + 1) < 0)
-#else
-		if (check_addr_range(first_addr, current_addr + !isglobal) < 0)
-#endif
 			return ERR;
 		else if ('0' < *ibufp && *ibufp <= '9')
 			STRTOI(rows, ibufp);
@@ -882,11 +878,7 @@ exec_command(void)
 		break;
 	case '\n':
 		first_addr = 1;
-#ifdef BACKWARDS
 		if (check_addr_range(first_addr, current_addr + 1) < 0
-#else
-		if (check_addr_range(first_addr, current_addr + !isglobal) < 0
-#endif
 		 || display_lines(second_addr, second_addr, 0) < 0)
 			return ERR;
 		break;
