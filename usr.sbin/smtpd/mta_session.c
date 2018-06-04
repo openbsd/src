@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.100 2018/06/01 19:28:59 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.101 2018/06/04 21:46:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/uio.h>
 
 #include <ctype.h>
@@ -262,7 +263,8 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*name;
 	void			*ssl;
 	int			 dnserror, status;
-
+	struct stat		 sb;
+	
 	switch (imsg->hdr.type) {
 
 	case IMSG_MTA_OPEN_MESSAGE:
@@ -285,6 +287,25 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
+		if (s->ext & MTA_EXT_SIZE) {
+			if (fstat(imsg->fd, &sb) == -1) {
+				log_debug("debug: mta: failed to stat msg fd");
+				mta_flush_task(s, IMSG_MTA_DELIVERY_TEMPFAIL,
+				    "Could not stat message fd", 0, 0);
+				mta_enter_state(s, MTA_READY);
+				close(imsg->fd);
+				return;
+			}
+			if (sb.st_size > (off_t)s->ext_size) {
+				log_debug("debug: mta: message too large for peer");
+				mta_flush_task(s, IMSG_MTA_DELIVERY_PERMFAIL,
+				    "message too large for peer", 0, 0);
+				mta_enter_state(s, MTA_READY);
+				close(imsg->fd);
+				return;
+			}
+		}
+		
 		s->datafp = fdopen(imsg->fd, "r");
 		if (s->datafp == NULL)
 			fatal("mta: fdopen");
