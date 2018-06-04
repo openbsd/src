@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.21 2018/06/04 04:46:08 guenther Exp $
+.\" $OpenBSD: rwlock.9,v 1.22 2018/06/04 04:49:08 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -224,6 +224,7 @@ can be called during autoconf, from process context, or from interrupt context.
 .Pp
 All other functions can be called during autoconf or from process context.
 .Sh SEE ALSO
+.Xr witness 4 ,
 .Xr mutex 9 ,
 .Xr spl 9
 .Sh HISTORY
