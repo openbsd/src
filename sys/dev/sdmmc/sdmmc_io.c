@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.35 2018/05/30 14:53:11 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.36 2018/06/04 10:37:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -49,6 +49,7 @@ int	sdmmc_io_xchg(struct sdmmc_softc *, struct sdmmc_function *,
 void	sdmmc_io_reset(struct sdmmc_softc *);
 int	sdmmc_io_send_op_cond(struct sdmmc_softc *, u_int32_t, u_int32_t *);
 void	sdmmc_io_set_blocklen(struct sdmmc_function *, unsigned int);
+int	sdmmc_io_set_highspeed(struct sdmmc_function *sf, int);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -183,9 +184,13 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		sdmmc_print_cis(sf);
 
 	if (sf->number == 0) {
-		/* XXX respect host and card capabilities */
-		(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
-		    25000, SDMMC_TIMING_LEGACY);
+		if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
+		    sdmmc_io_set_highspeed(sf, 1) == 0)
+			(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
+			    SDMMC_SDCLK_50MHZ, SDMMC_TIMING_HIGHSPEED);
+		else
+			(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
+			    SDMMC_SDCLK_25MHZ, SDMMC_TIMING_LEGACY);
 	}
 
 	return 0;
@@ -856,4 +861,22 @@ sdmmc_io_set_blocklen(struct sdmmc_function *sf, unsigned int blklen)
 	sdmmc_io_write_1(sf0, SD_IO_FBR_BASE(sf->number) +
 	    SD_IO_FBR_BLOCKLEN+ 1, (blklen >> 8) & 0xff);
 	sf->cur_blklen = blklen;
+}
+
+int
+sdmmc_io_set_highspeed(struct sdmmc_function *sf, int enable)
+{
+	struct sdmmc_softc *sc = sf->sc;
+	u_int8_t rv;
+
+	rw_assert_wrlock(&sc->sc_lock);
+
+	rv = sdmmc_io_read_1(sf, SD_IO_CCCR_SPEED);
+	if (enable && !(rv & CCCR_SPEED_SHS))
+		return 1;
+	rv &= ~CCCR_SPEED_MASK;
+	if (enable)
+		rv |= CCCR_SPEED_EHS;
+	sdmmc_io_write_1(sf, SD_IO_CCCR_SPEED, rv);
+	return 0;
 }
