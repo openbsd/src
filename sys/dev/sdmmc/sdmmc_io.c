@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.37 2018/06/04 13:33:10 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.38 2018/06/04 15:04:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -871,10 +871,9 @@ sdmmc_io_set_blocklen(struct sdmmc_function *sf, unsigned int blklen)
 void
 sdmmc_io_set_bus_width(struct sdmmc_function *sf, int width)
 {
-	struct sdmmc_softc *sc = sf->sc;
 	u_int8_t rv;
 
-	rw_assert_wrlock(&sc->sc_lock);
+	rw_assert_wrlock(&sf->sc->sc_lock);
 	rv = sdmmc_io_read_1(sf, SD_IO_CCCR_BUS_WIDTH);
 	rv &= ~CCCR_BUS_WIDTH_MASK;
 	if (width == 4)
@@ -887,10 +886,9 @@ sdmmc_io_set_bus_width(struct sdmmc_function *sf, int width)
 int
 sdmmc_io_set_highspeed(struct sdmmc_function *sf, int enable)
 {
-	struct sdmmc_softc *sc = sf->sc;
 	u_int8_t rv;
 
-	rw_assert_wrlock(&sc->sc_lock);
+	rw_assert_wrlock(&sf->sc->sc_lock);
 
 	rv = sdmmc_io_read_1(sf, SD_IO_CCCR_SPEED);
 	if (enable && !(rv & CCCR_SPEED_SHS))
