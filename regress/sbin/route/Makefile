@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.29 2018/02/20 12:44:28 mpi Exp $
+# $OpenBSD: Makefile,v 1.30 2018/06/04 19:22:13 kn Exp $
 
+ROUTE?=		/sbin/route
 RDOMAIN?=	5
 
 .MAIN: all
@@ -27,7 +28,7 @@ RDOMAIN?=	5
 .endif
 .endif
 
-RCMD=		${SUDO} route -T ${RDOMAIN} -n
+RCMD=		${SUDO} ${ROUTE} -T ${RDOMAIN} -n
 
 netmask:
 .for mod in -net -dst
