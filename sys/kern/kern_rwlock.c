@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.35 2018/03/21 12:28:39 bluhm Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.36 2018/06/04 04:46:07 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -223,6 +223,8 @@ _rw_enter(struct rwlock *rwl, int flags LOCK_FL_VARS)
 	lop_flags = LOP_NEWORDER;
 	if (flags & RW_WRITE)
 		lop_flags |= LOP_EXCLUSIVE;
+	if (flags & RW_DUPOK)
+		lop_flags |= LOP_DUPOK;
 	if ((flags & RW_NOSLEEP) == 0 && (flags & RW_DOWNGRADE) == 0)
 		WITNESS_CHECKORDER(&rwl->rwl_lock_obj, lop_flags, file, line,
 		    NULL);
