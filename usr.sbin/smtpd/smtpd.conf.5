@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.187 2018/06/02 06:07:33 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.188 2018/06/04 11:52:40 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 2 2018 $
+.Dd $Mdocdate: June 4 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -438,7 +438,7 @@ In addition, the following transaction options:
 .Op Ic \&!
 .Cm auth
 .Xc
-Specify that transaction should be authenticated.
+Matches any transactions which have been authenticated.
 .It Xo
 .Op Ic \&!
 .Cm helo
