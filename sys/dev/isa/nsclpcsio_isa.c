@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.13 2008/10/15 19:12:18 blambert Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.14 2018/06/04 05:24:11 kevlo Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -279,12 +279,11 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct nsclpcsio_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct gpiobus_attach_args gba;
-	bus_space_tag_t iot;
 	int iobase;
 	int i;
 
 	iobase = ia->ipa_io[0].base;
-	sc->sc_iot = iot = ia->ia_iot;
+	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(ia->ia_iot, iobase, 2, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
