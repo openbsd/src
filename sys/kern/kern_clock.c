@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.94 2018/05/14 12:31:21 mpi Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.95 2018/06/04 18:16:43 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -78,20 +78,6 @@
  * If the statistics clock is running fast, it must be divided by the ratio
  * profhz/stathz for statistics.  (For profiling, every tick counts.)
  */
-
-/*
- * Bump a timeval by a small number of usec's.
- */
-#define BUMPTIME(t, usec) { \
-	volatile struct timeval *tp = (t); \
-	long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
 
 int	stathz;
 int	schedhz;
