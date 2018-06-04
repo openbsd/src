@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.284 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.285 2018/06/04 04:57:09 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 
 update:
 	/* Ensure that the parent mountpoint does not get unmounted. */
-	error = vfs_busy(vp->v_mount, VB_READ|VB_NOWAIT);
+	error = vfs_busy(vp->v_mount, VB_READ|VB_NOWAIT|VB_DUPOK);
 	if (error) {
 		if (mp->mnt_flag & MNT_UPDATE) {
 			mp->mnt_flag = mntflag;
@@ -439,7 +439,7 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 				error = EBUSY;
 				goto err;
 			}
-			error = vfs_busy(mp, VB_WRITE|VB_WAIT);
+			error = vfs_busy(mp, VB_WRITE|VB_WAIT|VB_DUPOK);
 			if (error) {
 				if ((flags & MNT_DOOMED)) {
 					/*

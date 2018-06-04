@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.273 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.274 2018/06/04 04:57:09 guenther Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -187,6 +187,11 @@ vfs_busy(struct mount *mp, int flags)
 		rwflags |= RW_SLEEPFAIL;
 	else
 		rwflags |= RW_NOSLEEP;
+
+#ifdef WITNESS
+	if (flags & VB_DUPOK)
+		rwflags |= RW_DUPOK;
+#endif
 
 	if (rw_enter(&mp->mnt_lock, rwflags))
 		return (EBUSY);
@@ -1602,7 +1607,7 @@ vfs_stall(struct proc *p, int stall)
 	 */
 	TAILQ_FOREACH_REVERSE(mp, &mountlist, mntlist, mnt_list) {
 		if (stall) {
-			error = vfs_busy(mp, VB_WRITE|VB_WAIT);
+			error = vfs_busy(mp, VB_WRITE|VB_WAIT|VB_DUPOK);
 			if (error) {
 				printf("%s: busy\n", mp->mnt_stat.f_mntonname);
 				allerror = error;
