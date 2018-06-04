@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.191 2018/06/04 16:34:09 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.192 2018/06/04 21:13:34 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -384,6 +384,10 @@ directive, receive the incoming message, put a copy into each
 matching envelope, and atomically save the envelopes to the mail
 spool for later processing by the respective dispatcher
 .Ar name .
+If the envelope does not match any options,
+it is rejected.
+Rules are evaluated sequentially,
+with the first match winning.
 .Pp
 The following matching options are supported and can all be negated:
 .Bl -tag -width Ds
