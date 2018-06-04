@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.188 2018/06/04 11:52:40 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.189 2018/06/04 12:15:10 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -720,11 +720,11 @@ match for any action "relay"
 .Ed
 .Pp
 In this second example,
-the aim is to permit mail relaying for any user that can authenticate
-using their normal login credentials.
+the aim is to permit mail delivery and relaying only for users that can authenticate
+(using their normal login credentials).
 An RSA certificate must be provided to prove the server's identity.
-The mail server listens on all interfaces the default route(s) point to.
-Mail with a local destination should be sent to an external mda.
+The mail server listens on all interfaces the default routes point to.
+Mail with a local destination is sent to an external MDA.
 First, the RSA certificate is created:
 .Bd -literal -offset indent
 # openssl genrsa \-out /etc/ssl/private/mail.example.com.key 4096
