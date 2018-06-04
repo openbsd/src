@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.9 2018/06/04 10:37:14 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.10 2018/06/04 13:33:10 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -71,7 +71,7 @@
 #define SD_IO_CCCR_BUS_WIDTH		0x07
 #define  CCCR_BUS_WIDTH_1		(0<<0)
 #define  CCCR_BUS_WIDTH_4		(2<<0)
-#define  CCCR_BUS_WIDTH_8		(3<<0)
+#define  CCCR_BUS_WIDTH_MASK		(3<<0)
 #define SD_IO_CCCR_CISPTR		0x09 /* XXX 9-10, 10-11, or 9-12 */
 #define SD_IO_CCCR_SPEED		0x13
 #define  CCCR_SPEED_SHS			(1<<0)
