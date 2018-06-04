@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.22 2018/06/04 04:49:08 guenther Exp $
+.\" $OpenBSD: rwlock.9,v 1.23 2018/06/04 04:52:33 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -154,7 +154,7 @@ Prevents
 .Xr witness 4 ,
 for just this
 .Fn rw_enter ,
-from logging when this thread already has more than one lock of this lock type.
+from logging when this thread already has a lock of this lock type.
 .El
 .Pp
 The
