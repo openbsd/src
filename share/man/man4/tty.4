@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.50 2018/05/01 15:16:50 anton Exp $
+.\"	$OpenBSD: tty.4,v 1.51 2018/06/05 06:32:26 anton Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 1 2018 $
+.Dd $Mdocdate: June 5 2018 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -227,29 +227,25 @@ Return the current process group the terminal is associated
 with in the integer pointed to by
 .Fa tpgrp .
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcgetpgrp
+.Xr tcgetpgrp 3
 call.
 .It Dv TIOCSPGRP Fa int *tpgrp
 Associate the terminal with the process group (as an integer) pointed to by
 .Fa tpgrp .
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcsetpgrp
+.Xr tcsetpgrp 3
 call.
 .It Dv TIOCGETA Fa struct termios *term
 Place the current value of the termios state associated with the
 device in the termios structure pointed to by
 .Fa term .
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcgetattr
+.Xr tcgetattr 3
 call.
 .It Dv TIOCSETA Fa struct termios *term
 Set the termios state associated with the device immediately.
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcsetattr
+.Xr tcsetattr 3
 call with the
 .Dv TCSANOW
 option.
@@ -257,8 +253,7 @@ option.
 First wait for any output to complete, then set the termios state
 associated with the device.
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcsetattr
+.Xr tcsetattr 3
 call with the
 .Dv TCSADRAIN
 option.
@@ -266,8 +261,7 @@ option.
 First wait for any output to complete, clear any pending input,
 then set the termios state associated with the device.
 This is the underlying call that implements the
-.Xr termios 4
-.Fn tcsetattr
+.Xr tcsetattr 3
 call with the
 .Dv TCSAFLUSH
 option.
@@ -281,10 +275,12 @@ Performs no action and returns
 .It Dv TIOCNOTTY Fa void
 This call is obsolete but left for compatibility.
 In the past, when a process that didn't have a controlling terminal
-(see
+.Po
+see
 .Em The Controlling Terminal
 in
-.Xr termios 4 )
+.Xr termios 4
+.Pc
 first opened a terminal device, it acquired that terminal as its
 controlling terminal.
 For some programs this was a hazard as they didn't want a controlling
@@ -300,15 +296,15 @@ on that file descriptor.
 .Pp
 The current system does not allocate a controlling terminal to
 a process on an
-.Fn open
+.Xr open 2
 call: there is a specific ioctl called
 .Dv TIOCSCTTY
 to make a terminal the controlling
 terminal.
 In addition, a program can
-.Fn fork
+.Xr fork 2
 and call the
-.Fn setsid
+.Xr setsid 2
 system call which will place the process into its own session - which
 has the effect of disassociating it from the controlling terminal.
 This is the new and preferred method for programs to lose their controlling
@@ -385,8 +381,8 @@ If
 .Fa on
 points to a non-zero integer, redirect kernel console output
 .Po
-kernel
-.Fn printf Ns s
+see
+.Xr printf 9
 .Pc
 to this terminal.
 If
