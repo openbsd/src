@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.192 2018/06/04 21:13:34 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.193 2018/06/05 05:58:12 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2018 $
+.Dd $Mdocdate: June 5 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -442,7 +442,7 @@ In addition, the following transaction options:
 .Op Ic \&!
 .Cm auth
 .Xc
-Matches any transactions which have been authenticated.
+Matches transactions which have been authenticated.
 .It Xo
 .Op Ic \&!
 .Cm helo
@@ -464,6 +464,12 @@ Specify that transactions's MAIL FROM should match the string or list table
 .Xc
 Specify that transaction's RCPT TO should match the string or list table
 .Ar recipient .
+.It Xo
+.Op Ic \&!
+.Cm tag Ar tag
+.Xc
+Matches transactions tagged with the given
+.Ar tag .
 .It Xo
 .Op Ic \&!
 .Cm tls
