@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.96 2018/05/20 18:14:01 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.97 2018/06/05 05:04:31 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -589,7 +589,7 @@ NENTRY(Xsyscall_untramp)
 
 	/* Could registers have been changed that require an iretq? */
 	testl	$MDP_IRET, P_MD_FLAGS(%r14)
-	jne	intr_fast_exit
+	jne	intr_user_exit_post_ast
 
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
@@ -675,15 +675,45 @@ NENTRY(proc_trampoline)
 
 
 /*
- * Return via iretq, for real interrupts and signal returns
+ * Returning to userspace via iretq.  We do things in this order:
+ *  - check for ASTs
+ *  - DIAGNOSTIC: no more C calls after this, so check the SPL
+ *  - restore most registers
+ *  - restore FS.base if it's not already in the CPU
+ *  - update the iret frame from the trapframe
+ *  - finish reading from the trapframe
+ *  - switch to the trampoline stack	\
+ *  - jump to the .kutext segment	|-- Meltdown workaround
+ *  - switch to the user page tables	/
+ *  - swapgs
+ *  - iretq
  */
-NENTRY(intr_fast_exit)
+NENTRY(intr_user_exit)
 #ifdef DIAGNOSTIC
 	pushfq
 	popq	%rdx
 	testq	$PSL_I,%rdx
-	jnz	.Lintr_exit_not_blocked
+	jnz	.Lintr_user_exit_not_blocked
 #endif /* DIAGNOSTIC */
+
+	/* Check for ASTs */
+	CHECK_ASTPENDING(%r11)
+	je	intr_user_exit_post_ast
+	CLEAR_ASTPENDING(%r11)
+	sti
+	movq	%rsp,%rdi
+	call	_C_LABEL(ast)
+	cli
+	jmp	intr_user_exit
+
+	.global	intr_user_exit_post_ast
+intr_user_exit_post_ast:
+#ifdef DIAGNOSTIC
+	/* no more C calls after this, so check the SPL */
+	cmpl	$0,CPUVAR(ILEVEL)
+	jne	.Luser_spl_not_lowered
+#endif /* DIAGNOSTIC */
+
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8
@@ -696,11 +726,6 @@ NENTRY(intr_fast_exit)
 	movq	TF_RBP(%rsp),%rbp
 	movq	TF_RBX(%rsp),%rbx
 
-	testq	$SEL_RPL,TF_CS(%rsp)
-	je	intr_exit_recurse		/* returning back to kernel? */
-
-	/* returning to userspace.  XXX fix up iret frame here */
-
 	/* restore FS.base if it's not already in the CPU */
 	btsl	$CPUF_USERSEGS_BIT,CPUVAR(FLAGS)
 	jc	99f
@@ -712,14 +737,6 @@ NENTRY(intr_fast_exit)
 	wrmsr
 99:
 	/*
-	 * Returning to userspace.  We need to go things in this order:
-	 *  - update the iret frame from the trapframe
-	 *  - finish reading from the trapframe
-	 *  - switch to the trampoline stack
-	 *  - jump to the .kutext segment
-	 *  - switch to the user page tables
-	 *  - swapgs
-	 *  - iretq
 	 * To get the final value for the register that was used
 	 * for the mov to %cr3, we need access to somewhere accessible
 	 * on the user page tables, so we save it in CPUVAR(SCRATCH)
@@ -757,7 +774,64 @@ KUENTRY(iretq_tramp)
 _C_LABEL(doreti_iret):
 	iretq
 
-NENTRY(intr_exit_recurse)
+#ifdef DIAGNOSTIC
+	.text
+.Lintr_user_exit_not_blocked:
+	movl	warn_once(%rip),%edi
+	testl	%edi,%edi
+	jnz	1f
+	incl	%edi
+	movl	%edi,warn_once(%rip)
+	leaq	.Lnot_blocked(%rip),%rdi
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+1:	cli
+	jmp	intr_user_exit
+
+.Luser_spl_not_lowered:
+	sti
+	leaq	intr_spl_lowered(%rip),%rdi
+	movl	CPUVAR(ILEVEL),%esi
+	xorl	%edx,%edx		/* always SPL zero for userspace */
+	xorl	%eax,%eax
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	$0,CPUVAR(ILEVEL)
+	cli
+	jmp	intr_user_exit
+
+	.section .rodata
+intr_spl_lowered:
+	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
+	.text
+#endif /* DIAGNOSTIC */
+
+
+/*
+ * Return to supervisor mode from trap or interrupt
+ */
+NENTRY(intr_fast_exit)
+#ifdef DIAGNOSTIC
+	pushfq
+	popq	%rdx
+	testq	$PSL_I,%rdx
+	jnz	.Lintr_exit_not_blocked
+#endif /* DIAGNOSTIC */
+	movq	TF_RDI(%rsp),%rdi
+	movq	TF_RSI(%rsp),%rsi
+	movq	TF_R8(%rsp),%r8
+	movq	TF_R9(%rsp),%r9
+	movq	TF_R10(%rsp),%r10
+	movq	TF_R12(%rsp),%r12
+	movq	TF_R13(%rsp),%r13
+	movq	TF_R14(%rsp),%r14
+	movq	TF_R15(%rsp),%r15
+	movq	TF_RBP(%rsp),%rbp
+	movq	TF_RBX(%rsp),%rbx
 	movq	TF_RDX(%rsp),%rdx
 	movq	TF_RCX(%rsp),%rcx
 	movq	TF_R11(%rsp),%r11
@@ -812,7 +886,6 @@ NENTRY(intr_exit_recurse)
 
 #ifdef DIAGNOSTIC
 .Lintr_exit_not_blocked:
-	xchgw	%bx, %bx
 	movl	warn_once(%rip),%edi
 	testl	%edi,%edi
 	jnz	1f

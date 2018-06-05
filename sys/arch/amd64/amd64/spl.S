@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.12 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.13 2018/06/05 05:04:31 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -158,18 +158,6 @@ KIDTVEC(doreti)
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:	CHECK_ASTPENDING(%r11)
-	je	3f
-	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	3f
-4:	CLEAR_ASTPENDING(%r11)
-	sti
-	movq	%rsp, %rdi
-	call	_C_LABEL(ast)
-	cli
-	jmp	5b
-3: 	
-#ifdef DIAGNOSTIC
-	movl	$254,%esi
-#endif /* DIAGNOSTIC */
+	testb	$SEL_RPL,TF_CS(%rsp)
+	jnz	intr_user_exit
 	INTRFASTEXIT
