@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_dh_groups.c,v 1.1 2018/06/02 17:40:33 jsing Exp $ */
+/* $OpenBSD: csi_dh_groups.c,v 1.2 2018/06/05 18:06:07 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -328,7 +328,7 @@ static struct csi_dh_params dh_modp_group16 = {
 struct csi_dh_params *
 csi_dh_params_modp_group16()
 {
-	return &dh_modp_group16;
+	return csi_dh_params_dup(&dh_modp_group16);
 }
 
 /*
@@ -443,7 +443,7 @@ static struct csi_dh_params dh_modp_group17 = {
 struct csi_dh_params *
 csi_dh_params_modp_group17()
 {
-	return &dh_modp_group17;
+	return csi_dh_params_dup(&dh_modp_group17);
 }
 
 /*
