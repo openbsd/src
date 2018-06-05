@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.8 2018/05/31 09:12:59 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.9 2018/06/05 19:23:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -31,15 +31,14 @@
 #include <sys/select.h>
 #include <sys/kernel.h>
 
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
 #include <dev/cons.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
-
-#include <machine/bus.h>
-#include <machine/fdt.h>
-#include <arm/armv7/armv7var.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
@@ -184,6 +183,7 @@ int pluart_intr(void *);
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
+cdev_decl(com);
 cdev_decl(pluart);
 
 struct cfdriver pluart_cd = {
@@ -211,7 +211,7 @@ pluart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	pluartcnattach(&armv7_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
+	pluartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
 
 int
@@ -839,8 +839,6 @@ pluart_sc(dev_t dev)
 void
 pluartcnprobe(struct consdev *cp)
 {
-	cp->cn_dev = makedev(12 /* XXX */, 0);
-	cp->cn_pri = CN_MIDPRI;
 }
 
 void
@@ -855,17 +853,25 @@ pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
 		NULL, NULL, pluartcngetc, pluartcnputc, pluartcnpollc, NULL,
 		NODEV, CN_MIDPRI
 	};
+	int maj;
 
 	if (bus_space_map(iot, iobase, UART_SPACE, 0, &pluartconsioh))
-			return ENOMEM;
+		return ENOMEM;
 
 	/* Disable FIFO. */
 	bus_space_write_4(iot, pluartconsioh, UART_LCR_H,
 	    bus_space_read_4(iot, pluartconsioh, UART_LCR_H) & ~UART_LCR_H_FEN);
 
+	/* Look for major of com(4) to replace. */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == comopen)
+			break;
+	if (maj == nchrdev)
+		return ENXIO;
+
 	cn_tab = &pluartcons;
-	cn_tab->cn_dev = makedev(12 /* XXX */, 0);
-	cdevsw[12] = pluartdev; 	/* KLUDGE */
+	cn_tab->cn_dev = makedev(maj, 0);
+	cdevsw[12] = pluartdev;		/* KLUDGE */
 
 	pluartconsiot = iot;
 	pluartconsaddr = iobase;
