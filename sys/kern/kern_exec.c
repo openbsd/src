@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.196 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.197 2018/06/05 09:29:05 mpi Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -584,7 +584,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				struct vnode *vp;
 				int indx;
 
-				if ((error = falloc(p, &fp, &indx)) != 0)
+				if ((error = falloc(p, 0, &fp, &indx)) != 0)
 					break;
 #ifdef DIAGNOSTIC
 				if (indx != i)
@@ -607,9 +607,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)vp;
-				fdinsert(p->p_fd, indx, 0, fp);
+				FILE_SET_MATURE(fp, p);
+			} else {
+				FRELE(fp, p);
 			}
-			FRELE(fp, p);
 		}
 		fdpunlock(p->p_fd);
 		if (error)

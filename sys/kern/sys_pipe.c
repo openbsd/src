@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.79 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.80 2018/06/05 09:29:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -154,7 +154,7 @@ dopipe(struct proc *p, int *ufds, int flags)
 
 	fdplock(fdp);
 
-	error = falloc(p, &rf, &fds[0]);
+	error = falloc(p, cloexec, &rf, &fds[0]);
 	if (error != 0)
 		goto free2;
 	rf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
@@ -162,7 +162,7 @@ dopipe(struct proc *p, int *ufds, int flags)
 	rf->f_data = rpipe;
 	rf->f_ops = &pipeops;
 
-	error = falloc(p, &wf, &fds[1]);
+	error = falloc(p, cloexec, &wf, &fds[1]);
 	if (error != 0)
 		goto free3;
 	wf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
@@ -173,8 +173,8 @@ dopipe(struct proc *p, int *ufds, int flags)
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 
-	fdinsert(fdp, fds[0], cloexec, rf);
-	fdinsert(fdp, fds[1], cloexec, wf);
+	FILE_SET_MATURE(rf, p);
+	FILE_SET_MATURE(wf, p);
 
 	error = copyout(fds, ufds, sizeof(fds));
 	if (error != 0) {
@@ -186,9 +186,6 @@ dopipe(struct proc *p, int *ufds, int flags)
 		ktrfds(p, fds, 2);
 #endif
 	fdpunlock(fdp);
-
-	FRELE(rf, p);
-	FRELE(wf, p);
 	return (error);
 
 free3:

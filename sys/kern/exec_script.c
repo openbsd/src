@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.45 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.46 2018/06/05 09:29:05 mpi Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -170,20 +170,17 @@ check_shell:
 #endif
 
 		fdplock(p->p_fd);
-		error = falloc(p, &fp, &epp->ep_fd);
-		if (error) {
-			fdpunlock(p->p_fd);
+		error = falloc(p, 0, &fp, &epp->ep_fd);
+		fdpunlock(p->p_fd);
+		if (error)
 			goto fail;
-		}
 
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
 		fp->f_data = (caddr_t) scriptvp;
 		fp->f_flag = FREAD;
-		fdinsert(p->p_fd, epp->ep_fd, 0, fp);
-		fdpunlock(p->p_fd);
-		FRELE(fp, p);
+		FILE_SET_MATURE(fp, p);
 	}
 
 	/* set up the parameters for the recursive check_exec() call */

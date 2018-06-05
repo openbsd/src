@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.36 2018/06/02 10:27:43 mpi Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.37 2018/06/05 09:29:05 mpi Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -125,13 +125,12 @@ void	filedesc_init(void);
 int	dupfdopen(struct proc *, int, int);
 int	fdalloc(struct proc *p, int want, int *result);
 void	fdexpand(struct proc *);
-int	falloc(struct proc *_p, struct file **_rfp, int *_rfd);
+int	falloc(struct proc *_p, int _flags, struct file **_rfp, int *_rfd);
 struct	filedesc *fdinit(void);
 struct	filedesc *fdshare(struct process *);
 struct	filedesc *fdcopy(struct process *);
 void	fdfree(struct proc *p);
 int	fdrelease(struct proc *p, int);
-void	fdinsert(struct filedesc *, int, int, struct file *);
 void	fdremove(struct filedesc *, int);
 void	fdcloseexec(struct proc *);
 struct file *fd_iterfile(struct file *, struct proc *);
