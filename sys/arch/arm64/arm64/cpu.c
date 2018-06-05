@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.18 2018/05/03 09:45:57 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.19 2018/06/05 09:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -51,6 +51,7 @@
 #define CPU_PART_CORTEX_A72	0xd08
 #define CPU_PART_CORTEX_A73	0xd09
 #define CPU_PART_CORTEX_A75	0xd0a
+#define CPU_PART_CORTEX_A76	0xd0b
 
 #define CPU_PART_THUNDERX_T88	0x0a1
 #define CPU_PART_THUNDERX_T81	0x0a2
@@ -79,6 +80,7 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_A72, "Cortex-A72" },
 	{ CPU_PART_CORTEX_A73, "Cortex-A73" },
 	{ CPU_PART_CORTEX_A75, "Cortex-A75" },
+	{ CPU_PART_CORTEX_A76, "Cortex-A76" },
 	{ 0 },
 };
 
