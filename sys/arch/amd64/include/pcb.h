@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.16 2017/04/26 07:05:24 mlarkin Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.17 2018/06/05 06:39:11 guenther Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
 
 /*-
@@ -69,7 +69,6 @@
 
 #include <sys/signal.h>
 
-#include <machine/tss.h>
 #include <machine/fpu.h>
 
 /*
@@ -84,9 +83,7 @@ struct pcb {
 	u_int64_t	pcb_kstack;	/* kernel stack address */
 	u_int64_t	pcb_fsbase;	/* per-thread offset: %fs */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
-	struct	cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	struct	pmap *pcb_pmap;		/* back pointer to our pmap */
-	int	pcb_cr0;		/* saved image of CR0 */
 };
 
 #ifdef _KERNEL

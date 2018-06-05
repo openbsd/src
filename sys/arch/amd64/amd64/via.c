@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.31 2018/06/01 14:23:48 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.32 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -306,18 +306,11 @@ static __inline void
 viac3_cbc(void *cw, void *src, void *dst, void *key, int rep,
     void *iv)
 {
-	unsigned int creg0;
-
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
-
 	/* Do the deed */
 	__asm volatile("pushfq; popfq");
 	__asm volatile("rep xcryptcbc" :
 	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
-
-	lcr0(creg0);
 }
 
 int
@@ -507,14 +500,8 @@ void
 viac3_rnd(void *v)
 {
 	struct timeout *tmo = v;
-	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
+	unsigned int *p, i, rv, len = VIAC3_RNG_BUFSIZ;
 	static int buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX why + 2? */
-#ifdef MULTIPROCESSOR
-	int s = splipi();
-#endif
-
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
 	/*
 	 * Here we collect the random data from the VIA C3 RNG.  We make
@@ -524,12 +511,6 @@ viac3_rnd(void *v)
 	__asm volatile("rep xstorerng"
 	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
 	    : "memory", "cc");
-
-	lcr0(creg0);
-
-#ifdef MULTIPROCESSOR
-	splx(s);
-#endif
 
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
 		enqueue_randomness(*p);

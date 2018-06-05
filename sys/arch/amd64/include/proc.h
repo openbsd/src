@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.9 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.10 2018/06/05 06:39:11 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -46,7 +46,6 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_IRET	0x0002	/* return via iret, not sysret */
 				/* (iret can restore r11 and rcx) */
 

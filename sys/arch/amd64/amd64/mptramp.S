@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.16 2018/05/22 15:55:30 guenther Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.17 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	/* Switch address space. */
 	movq	PCB_CR3(%rsi),%rax
 	movq	%rax,%cr3
-	movl	PCB_CR0(%rsi),%eax
+	movl	$CR0_DEFAULT,%eax
 	movq	%rax,%cr0
 	call	_C_LABEL(cpu_hatch)
 	/* NOTREACHED */

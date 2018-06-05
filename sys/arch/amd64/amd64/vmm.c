@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.199 2018/05/22 06:33:35 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.200 2018/06/05 06:39:10 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3818,60 +3818,33 @@ vcpu_must_stop(struct vcpu *vcpu)
 int
 vmm_fpurestore(struct vcpu *vcpu)
 {
-	struct proc *p;
 	struct cpu_info *ci = curcpu();
 
-	clts();
-	p = ci->ci_fpcurproc;
-	if (p != NULL) {
-		uvmexp.fpswtch++;
-
-		if (ci->ci_fpsaving != 0)
-			panic("%s: recursive save!", __func__);
-		/*
-		 * Set ci->ci_fpsaving, so that any pending exception will be
-		 * thrown away.  (It will be caught again if/when the FPU
-		 * state is restored.)
-		 */
-		ci->ci_fpsaving = 1;
-		if (xsave_mask)
-			xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
-		else
-			fxsave(&p->p_addr->u_pcb.pcb_savefpu);
-
-		ci->ci_fpsaving = 0;
-
-		p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
-
-		p->p_addr->u_pcb.pcb_fpcpu = NULL;
-		ci->ci_fpcurproc = NULL;
+	/* save vmmd's FPU state if we haven't already */
+	if (ci->ci_flags & CPUF_USERXSTATE) {
+		ci->ci_flags &= ~CPUF_USERXSTATE;
+		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
 	}
 
-	/* Initialize the guest FPU if not inited already */
-	if (!vcpu->vc_fpuinited) {
-		fninit();
-		bzero(&vcpu->vc_g_fpu.fp_fxsave,
-		    sizeof(vcpu->vc_g_fpu.fp_fxsave));
-		vcpu->vc_g_fpu.fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
-		vcpu->vc_g_fpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-		fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
-		vcpu->vc_fpuinited = 1;
-	}
-
-	if (xsave_mask) {
+	if (vcpu->vc_fpuinited) {
 		/* Restore guest XCR0 and FPU context */
 		if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
-			DPRINTF("%s: guest attempted to set invalid "
-			    "bits in xcr0\n", __func__);
-			stts();
+			DPRINTF("%s: guest attempted to set invalid %s\n"
+			    __func__, "bits in xcr0");
 			return EINVAL;
 		}
 
+		if (xrstor_user(&vcpu->vc_g_fpu, xsave_mask)) {
+			DPRINTF("%s: guest attempted to set invalid %s\n"
+			    __func__, "xsave/xrstor state");
+			return EINVAL;
+		}
+	}
+
+	if (xsave_mask) {
 		/* Restore guest %xcr0 */
-		xrstor(&vcpu->vc_g_fpu, xsave_mask);
 		xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
-	} else
-		fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
+	}
 
 	return 0;
 }
@@ -3890,20 +3863,14 @@ vmm_fpusave(struct vcpu *vcpu)
 
 		/* Restore host %xcr0 */
 		xsetbv(0, xsave_mask);
-
-		/*
-		 * Save full copy of FPU state - guest content is always
-		 * a subset of host's save area (see xsetbv exit handler)
-		 */	
-		xsave(&vcpu->vc_g_fpu, xsave_mask);
-	} else
-		fxsave(&vcpu->vc_g_fpu);
+	}
 
 	/*
-	 * FPU state is invalid, set CR0_TS to force DNA trap on next
-	 * access.
-	 */
-	stts();
+	 * Save full copy of FPU state - guest content is always
+	 * a subset of host's save area (see xsetbv exit handler)
+	 */	
+	fpusavereset(&vcpu->vc_g_fpu);
+	vcpu->vc_fpuinited = 1;
 }
 
 /*

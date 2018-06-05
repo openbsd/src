@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2018/05/13 22:01:13 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -224,6 +224,7 @@ copyfault:
 	case T_FPOPFLT|T_USER:		/* impossible without 32bit compat */
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
+	case T_DNA|T_USER:
 		panic("impossible trap");
 	case T_DIVIDE|T_USER:
 		sv.sival_ptr = (void *)frame->tf_rip;

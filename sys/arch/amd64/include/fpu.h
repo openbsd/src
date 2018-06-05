@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.13 2018/05/26 17:28:17 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.14 2018/06/05 06:39:11 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -64,23 +64,22 @@ extern uint32_t	fpu_mxcsr_mask;
 extern uint64_t	xsave_mask;
 
 void fpuinit(struct cpu_info *);
-void fpudrop(void);
-void fpudiscard(struct proc *);
 void fputrap(struct trapframe *);
-void fpusave_proc(struct proc *, int);
-void fpusave_cpu(struct cpu_info *, int);
+void fpusave(struct savefpu *);
+void fpusavereset(struct savefpu *);
 void fpu_kernel_enter(void);
 void fpu_kernel_exit(void);
 
+int	xrstor_user(struct savefpu *_addr, uint64_t _mask);
+#define	fpureset() \
+	xrstor_user(&proc0.p_addr->u_pcb.pcb_savefpu, xsave_mask)
+
 #define fninit()		__asm("fninit")
 #define fwait()			__asm("fwait")
-#define fnclex()		__asm("fnclex")
+/* should be fxsave64, but where we use this it doesn't matter */
 #define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
-#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
-#define clts()			__asm("clts")
-#define stts()			lcr0(rcr0() | CR0_TS)
 
 static inline void
 xsave(struct savefpu *addr, uint64_t mask)
@@ -89,18 +88,9 @@ xsave(struct savefpu *addr, uint64_t mask)
 
 	lo = mask;
 	hi = mask >> 32;
+	/* should be xsave64, but where we use this it doesn't matter */
 	__asm volatile("xsave %0" : "=m" (*addr) : "a" (lo), "d" (hi) :
 	    "memory");
-}
-
-static inline void
-xrstor(struct savefpu *addr, uint64_t mask)
-{
-	uint32_t lo, hi;
-
-	lo = mask;
-	hi = mask >> 32;
-	__asm volatile("xrstor %0" : : "m" (*addr), "a" (lo), "d" (hi));
 }
 
 #endif

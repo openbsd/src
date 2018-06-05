@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.80 2018/01/11 22:31:09 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.81 2018/06/05 06:39:10 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -384,7 +384,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	 */
 	if (acpi_savecpu()) {
 		/* Suspend path */
-		fpusave_cpu(curcpu(), 1);
+		KASSERT((curcpu()->ci_flags & CPUF_USERXSTATE) == 0);
 		wbinvd();
 
 #ifdef HIBERNATE
@@ -411,6 +411,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		return (ECANCELED);
 	}
 	/* Resume path */
+	fpureset();
 
 	/* Reset the vectors */
 	sc->sc_facs->wakeup_vector = 0;

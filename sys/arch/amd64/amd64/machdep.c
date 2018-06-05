@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.244 2018/05/26 18:02:01 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.245 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ paddr_t tramp_pdirpa;
 
 int kbd_reset;
 int lid_action = 1;
-int forceukbd;
+int forceukbd = 1;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -386,7 +386,6 @@ x86_64_proc0_tss_ldt_init(void)
 	struct pcb *pcb;
 
 	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_fsbase = 0;
 	pcb->pcb_kstack = (u_int64_t)proc0.p_addr + USPACE - 16;
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_kstack - 1;
@@ -562,6 +561,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigcontext ksc;
+	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	siginfo_t ksi;
 	register_t sp, scp, sip;
 	u_long sss;
@@ -599,17 +599,19 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	sp &= ~15ULL;	/* just in case */
 	sss = (sizeof(ksc) + 15) & ~15;
 
-	if (p->p_md.md_flags & MDP_USEDFPU) {
-		fpusave_proc(p, 1);
-		sp -= fpu_save_len;
-		ksc.sc_fpstate = (struct fxsave64 *)sp;
-		if (copyout(&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
-		    (void *)sp, fpu_save_len))
-			sigexit(p, SIGILL);
-
-		/* Signal handlers get a completely clean FP state */
-		p->p_md.md_flags &= ~MDP_USEDFPU;
+	/* Save FPU state to PCB if necessary, then copy it out */
+	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
+		curcpu()->ci_flags &= ~CPUF_USERXSTATE;
+		fpusavereset(&p->p_addr->u_pcb.pcb_savefpu);
 	}
+	sp -= fpu_save_len;
+	ksc.sc_fpstate = (struct fxsave64 *)sp;
+	if (copyout(sfp, (void *)sp, fpu_save_len))
+		sigexit(p, SIGILL);
+
+	/* Now reset the FPU state in PCB */
+	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
+	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
 
 	sip = 0;
 	if (psp->ps_siginfo & sigmask(sig)) {
@@ -639,6 +641,9 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	tf->tf_rflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_rsp = scp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* The reset state _is_ the userspace state for this thread now */
+	curcpu()->ci_flags |= CPUF_USERXSTATE;
 }
 
 /*
@@ -683,16 +688,23 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
 		return (EINVAL);
 
-	if (p->p_md.md_flags & MDP_USEDFPU)
-		fpusave_proc(p, 0);
+	/* Current state is obsolete; toss it and force a reload */
+	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
+		curcpu()->ci_flags &= ~CPUF_USERXSTATE;
+		fpureset();
+	}
 
-	if (ksc.sc_fpstate) {
+	/* Copy in the FPU state to restore */
+	if (__predict_true(ksc.sc_fpstate != NULL)) {
 		struct fxsave64 *fx = &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave;
 
 		if ((error = copyin(ksc.sc_fpstate, fx, fpu_save_len)))
 			return (error);
 		fx->fx_mxcsr &= fpu_mxcsr_mask;
-		p->p_md.md_flags |= MDP_USEDFPU;
+	} else {
+		/* shouldn't happen, but handle it */
+		memcpy(&p->p_addr->u_pcb.pcb_savefpu,
+		    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
 	}
 
 	tf->tf_rdi = ksc.sc_rdi;
@@ -726,6 +738,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	 * when a signal was being delivered, the process will be
 	 * completely restored, including the userland %rcx and %r11
 	 * registers which the 'sysretq' instruction cannot restore.
+	 * Also need to make sure we can handle faulting on xrstor.
 	 */
 	p->p_md.md_flags |= MDP_IRET;
 
@@ -1111,10 +1124,19 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 {
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
-	p->p_md.md_flags &= ~MDP_USEDFPU;
+	/* Reset FPU state in PCB */
+	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
+	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
+
+	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
+		/* state in CPU is obsolete; reset it */
+		fpureset();
+	} else {
+		/* the reset state _is_ the userspace state now */
+		curcpu()->ci_flags |= CPUF_USERXSTATE;
+	}
+
+	/* To reset all registers we have to return via iretq */
 	p->p_md.md_flags |= MDP_IRET;
 
 	reset_segs();

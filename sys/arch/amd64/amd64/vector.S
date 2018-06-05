@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.59 2018/06/05 05:04:31 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.60 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -179,17 +179,7 @@ IDTVEC(trap05)
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(trap07)
-	pushq	$0			# dummy error code
-	pushq	$T_DNA
-	INTRENTRY(trap07)
-	sti
-	cld
-	SMAP_CLAC
-	movq	CPUVAR(SELF),%rdi
-	movq	%rsp, %rsi
-	call	_C_LABEL(fpudna)
-	cli
-	jmp	intr_user_exit_post_ast
+	ZTRAP(T_DNA)		# impossible: we don't do lazy FPU
 IDTVEC(trap08)
 	pushq	$T_DOUBLEFLT
 	jmp	calltrap_specstk
@@ -321,6 +311,8 @@ KUENTRY(alltraps)
 	jz	2f
 .Lreal_trap:
 #endif /* !defined(GPROF) && defined(DDBPROF) */
+	.globl	recall_trap
+recall_trap:
 	movq	%rsp, %rdi
 	call	_C_LABEL(trap)
 2:	/* Check for ASTs on exit to user mode. */
