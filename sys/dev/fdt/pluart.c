@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.9 2018/06/05 19:23:01 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.1 2018/06/05 20:41:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
