@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.24 2018/01/08 11:52:14 mpi Exp $
+.\"	$OpenBSD: pty.4,v 1.25 2018/06/05 16:43:19 anton Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)pty.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: January 8 2018 $
+.Dd $Mdocdate: June 5 2018 $
 .Dt PTY 4
 .Os
 .Sh NAME
@@ -78,42 +78,38 @@ calls apply only to pseudo terminals and may only be applied to the
 .Nm
 master:
 .Bl -tag -width TIOCREMOTE
-.It Dv TIOCEXT
-Enable/disable
-.Em external processing .
-External processing is enabled by specifying (by reference) a non-zero
-.Vt int
-parameter
-and disabled by specifying (by reference) a zero
-.Vt int
-parameter.
+.It Dv TIOCEXT Fa int *on
+If
+.Fa on
+points to a non-zero integer,
+enable
+external processing.
+Otherwise,
+disable external processing.
 .Pp
 While external processing is enabled, input line editing, character echo,
 and mapping of control characters to signals are disabled
 regardless of the terminal's
 .Xr termios 4
 settings.
-.It Dv TIOCSTOP
+.It Dv TIOCSTOP Fa void
 Stops output to a terminal (e.g., like typing
 .Ql ^S ) .
-Takes
-no parameter.
-.It Dv TIOCSTART
-Restarts output (stopped by
+.It Dv TIOCSTART Fa void
+Restarts output
+.Po
+stopped by
 .Dv TIOCSTOP
 or by typing
-.Ql ^S ) .
-Takes no parameter.
-.It Dv TIOCPKT
-Enable/disable
-.Em packet
-mode.
-Packet mode is enabled by specifying (by reference) a non-zero
-.Vt int
-parameter
-and disabled by specifying (by reference) a zero
-.Vt int
-parameter.
+.Ql ^S
+.Pc .
+.It Dv TIOCPKT Fa int *on
+If
+.Fa on
+points to a non-zero integer,
+enable packet mode.
+Otherwise,
+disable packet mode.
 .Pp
 While packet mode is enabled, each subsequent
 .Xr read 2
@@ -167,8 +163,11 @@ While this mode is in use, the presence of control status information
 to be read from the master side may be detected by a
 .Xr select 2
 for exceptional conditions.
-.It Dv TIOCUCNTL
-Enable/disable a mode that allows a small number of simple user
+.It Dv TIOCUCNTL Fa int *on
+If
+.Fa on
+points to a non-zero integer,
+enable a mode that allows a small number of simple user
 .Xr ioctl 2
 commands to be passed through the pseudo terminal,
 using a protocol similar to that of
@@ -178,10 +177,7 @@ The
 and
 .Dv TIOCPKT
 modes are mutually exclusive.
-This mode is enabled from the master side of a pseudo terminal
-by specifying (by reference)
-a nonzero parameter and disabled by specifying (by reference)
-a zero parameter.
+This mode is enabled from the master side of a pseudo terminal.
 Each subsequent
 .Xr read 2
 from the master side will return data written on the slave part of
@@ -221,9 +217,12 @@ As with
 mode, command operations may be detected with a
 .Xr select 2
 for exceptional conditions.
-.It Dv TIOCREMOTE
-A mode for the master half of a pseudo terminal, independent
-of
+.It Dv TIOCREMOTE Fa int *on
+If
+.Fa on
+points to a non-zero integer,
+enable a mode for the master half of a pseudo terminal,
+independent of
 .Dv TIOCPKT .
 This mode causes input to the pseudo terminal
 to be flow controlled and not input edited (regardless of the terminal mode).
