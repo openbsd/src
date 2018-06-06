@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.140 2018/05/30 11:10:03 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.141 2018/06/06 10:13:10 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -140,8 +140,16 @@ sub parse_userdb
 	open(my $fh, '<', $fname) or 
 		$self->error("Can't open #1: #2", $fname, $!);
 	# skip header
+	my $separator_found = 0;
 	while (<$fh>) {
-		last if m/^\-\-\-\-\-\-\-/;
+		if (m/^\-\-\-\-\-\-\-/) {
+			$separator_found = 1;
+			last;
+		}
+	}
+	if (!$separator_found) {
+		$self->error("File #1 does not appear to be a user.db", $fname);
+		return;
 	}
 	# record ids and error out on duplicates
 	my $known = {};
