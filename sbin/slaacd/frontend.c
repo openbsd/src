@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.19 2018/05/18 13:21:46 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.20 2018/06/06 14:08:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -149,7 +149,7 @@ frontend(int debug, int verbose)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio inet recvfd route", NULL) == -1)
+	if (pledge("stdio unix recvfd route", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -345,7 +345,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    route_receive, NULL);
 			break;
 		case IMSG_STARTUP:
-			if (pledge("stdio inet route", NULL) == -1)
+			if (pledge("stdio unix route", NULL) == -1)
 				fatal("pledge");
 			frontend_startup();
 			break;
