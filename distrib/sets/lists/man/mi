@@ -1152,7 +1152,6 @@
 ./usr/share/man/man4/arm64/ampintc.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
-./usr/share/man/man4/arm64/pluart.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
@@ -1172,7 +1171,6 @@
 ./usr/share/man/man4/armv7/ommmc.4
 ./usr/share/man/man4/armv7/ompinmux.4
 ./usr/share/man/man4/armv7/omwugen.4
-./usr/share/man/man4/armv7/pluart.4
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sitaracm.4
 ./usr/share/man/man4/armv7/sunxi.4
@@ -1610,6 +1608,7 @@
 ./usr/share/man/man4/piixpm.4
 ./usr/share/man/man4/pipex.4
 ./usr/share/man/man4/plrtc.4
+./usr/share/man/man4/pluart.4
 ./usr/share/man/man4/pms.4
 ./usr/share/man/man4/ppb.4
 ./usr/share/man/man4/ppp.4
