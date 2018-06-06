@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6ctl.8,v 1.11 2017/11/05 17:45:02 jca Exp $
+.\"	$OpenBSD: ospf6ctl.8,v 1.12 2018/06/06 05:52:59 remi Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2017 $
+.Dd $Mdocdate: June 6 2018 $
 .Dt OSPF6CTL 8
 .Os
 .Sh NAME
@@ -78,6 +78,10 @@ Show only LSAs from the specified area
 Show only ASBR LSAs.
 .It Cm external
 Show only AS-External LSAs.
+.It Cm intra
+Show only Intra-Area-Prefix LSAs.
+.It Cm link
+Show only Link LSAs.
 .It Cm network
 Show only Network LSAs.
 .It Cm router
