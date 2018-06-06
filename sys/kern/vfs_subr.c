@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.274 2018/06/04 04:57:09 guenther Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.275 2018/06/06 19:02:38 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1603,9 +1603,10 @@ vfs_stall(struct proc *p, int stall)
 
 	/*
 	 * The loop variable mp is protected by vfs_busy() so that it cannot
-	 * be unmounted while VFS_SYNC() sleeps.
+	 * be unmounted while VFS_SYNC() sleeps.  Traverse forward to keep the
+	 * lock order consistent with dounmount().
 	 */
-	TAILQ_FOREACH_REVERSE(mp, &mountlist, mntlist, mnt_list) {
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (stall) {
 			error = vfs_busy(mp, VB_WRITE|VB_WAIT|VB_DUPOK);
 			if (error) {
