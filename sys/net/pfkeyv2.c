@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.181 2018/06/06 06:47:01 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.182 2018/06/06 07:10:12 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -133,7 +133,12 @@ struct sockaddr pfkey_addr = { 2, PF_KEY, };
 struct domain pfkeydomain;
 
 struct keycb {
-	struct rawcb		rcb;
+	struct rawcb		kcb_rcb;
+#define kcb_socket	kcb_rcb.rcb_socket
+#define kcb_faddr	kcb_rcb.rcb_faddr
+#define kcb_laddr	kcb_rcb.rcb_laddr
+#define kcb_proto	kcb_rcb.rcb_proto
+
 	SRPL_ENTRY(keycb)	kcb_list;
 	struct refcnt		refcnt;
 	int			flags;
@@ -247,7 +252,6 @@ pfkey_init(void)
 int
 pfkeyv2_attach(struct socket *so, int proto)
 {
-	struct rawcb *rp;
 	struct keycb *kp;
 	int error;
 
@@ -255,31 +259,24 @@ pfkeyv2_attach(struct socket *so, int proto)
 		return EACCES;
 
 	kp = malloc(sizeof(struct keycb), M_PCB, M_WAITOK | M_ZERO);
-	rp = &kp->rcb;
-	so->so_pcb = rp;
+	so->so_pcb = kp;
 	refcnt_init(&kp->refcnt);
 
 	error = soreserve(so, RAWSNDQ, RAWRCVQ);
-
 	if (error) {
 		free(kp, M_PCB, sizeof(struct keycb));
 		return (error);
 	}
 
-	rp->rcb_socket = so;
-	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
-	rp->rcb_proto.sp_protocol = proto;
+	kp->kcb_socket = so;
+	kp->kcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
+	kp->kcb_proto.sp_protocol = proto;
 
 	so->so_options |= SO_USELOOPBACK;
 	soisconnected(so);
 
-	rp->rcb_faddr = &pfkey_addr;
+	kp->kcb_faddr = &pfkey_addr;
 	kp->pid = curproc->p_p->ps_pid;
-
-	/*
-	 * XXX we should get this from the socket instead but
-	 * XXX rawcb doesn't store the rdomain like inpcb does.
-	 */
 	kp->rdomain = rtable_l2(curproc->p_p->ps_rtableid);
 
 	rw_enter(&pfkey_cb.kcb_lk, RW_WRITE);
@@ -373,7 +370,7 @@ ret:
 int
 pfkey_sendup(struct keycb *kp, struct mbuf *m0, int more)
 {
-	struct socket *so = kp->rcb.rcb_socket;
+	struct socket *so = kp->kcb_socket;
 	struct mbuf *m;
 
 	if (more) {
@@ -473,7 +470,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 */
 		SRPL_FOREACH(s, &sr, &pfkey_cb.kcb, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-			    (s->rcb.rcb_socket != so) &&
+			    (s->kcb_socket != so) &&
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s, packet, 1);
 		}

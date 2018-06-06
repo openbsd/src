@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.266 2018/06/06 06:47:01 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.267 2018/06/06 07:10:12 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -135,8 +135,13 @@ int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
 
 struct routecb {
-	struct rawcb		rcb;
-	SRPL_ENTRY(routecb)	rcb_list;
+	struct rawcb		rop_rcb;
+#define rop_socket	rop_rcb.rcb_socket
+#define rop_faddr	rop_rcb.rcb_faddr
+#define rop_laddr	rop_rcb.rcb_laddr
+#define rop_proto	rop_rcb.rcb_proto
+
+	SRPL_ENTRY(routecb)	rop_list;
 	struct refcnt		refcnt;
 	struct timeout		timeout;
 	unsigned int		msgfilter;
@@ -212,9 +217,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * empty so that we can clear the flag.
 		 */
 		if (((rop->flags & ROUTECB_FLAG_FLUSH) != 0) &&
-		    ((sbspace(rop->rcb.rcb_socket,
-		    &rop->rcb.rcb_socket->so_rcv) ==
-		    rop->rcb.rcb_socket->so_rcv.sb_hiwat)))
+		    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
+		    rop->rop_socket->so_rcv.sb_hiwat)))
 			rop->flags &= ~ROUTECB_FLAG_FLUSH;
 		break;
 
@@ -228,7 +232,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 int
 route_attach(struct socket *so, int proto)
 {
-	struct rawcb    *rp;
 	struct routecb	*rop;
 	int		 error;
 
@@ -238,7 +241,6 @@ route_attach(struct socket *so, int proto)
 	 * and works directly on the raw socket.
 	 */
 	rop = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
-	rp = &rop->rcb;
 	so->so_pcb = rop;
 	/* Init the timeout structure */
 	timeout_set(&rop->timeout, rtm_senddesync, rop);
@@ -253,19 +255,19 @@ route_attach(struct socket *so, int proto)
 		return (error);
 	}
 
-	rp->rcb_socket = so;
-	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
-	rp->rcb_proto.sp_protocol = proto;
+	rop->rop_socket = so;
+	rop->rop_proto.sp_family = so->so_proto->pr_domain->dom_family;
+	rop->rop_proto.sp_protocol = proto;
 
 	rop->rtableid = curproc->p_p->ps_rtableid;
 
 	soisconnected(so);
 	so->so_options |= SO_USELOOPBACK;
 
-	rp->rcb_faddr = &route_src;
+	rop->rop_faddr = &route_src;
 
 	rw_enter(&route_cb.rcb_lk, RW_WRITE);
-	SRPL_INSERT_HEAD_LOCKED(&route_cb.rcb_rc, &route_cb.rcb, rop, rcb_list);
+	SRPL_INSERT_HEAD_LOCKED(&route_cb.rcb_rc, &route_cb.rcb, rop, rop_list);
 	route_cb.any_count++;
 	rw_exit(&route_cb.rcb_lk);
 
@@ -289,7 +291,7 @@ route_detach(struct socket *so)
 	route_cb.any_count--;
 
 	SRPL_REMOVE_LOCKED(&route_cb.rcb_rc, &route_cb.rcb,
-	    rop, routecb, rcb_list);
+	    rop, routecb, rop_list);
 	rw_exit(&route_cb.rcb_lk);
 
 	/* wait for all references to drop */
@@ -389,11 +391,11 @@ rtm_senddesync(void *data)
 	 */
 	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
-		struct socket *so = rop->rcb.rcb_socket;
+		struct socket *so = rop->rop_socket;
 		if (sbappendaddr(so, &so->so_rcv, &route_src,
 		    desync_mbuf, NULL) != 0) {
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
-			sorwakeup(rop->rcb.rcb_socket);
+			sorwakeup(rop->rop_socket);
 			return;
 		}
 		m_freem(desync_mbuf);
@@ -406,7 +408,6 @@ void
 route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 {
 	struct routecb *rop;
-	struct rawcb *rp;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
 	struct socket *last = NULL;
@@ -420,14 +421,13 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		return;
 	}
 
-	SRPL_FOREACH(rop, &sr, &route_cb.rcb, rcb_list) {
-		rp = &rop->rcb;
-		if (!(rp->rcb_socket->so_state & SS_ISCONNECTED))
+	SRPL_FOREACH(rop, &sr, &route_cb.rcb, rop_list) {
+		if (!(rop->rop_socket->so_state & SS_ISCONNECTED))
 			continue;
-		if (rp->rcb_socket->so_state & SS_CANTRCVMORE)
+		if (rop->rop_socket->so_state & SS_CANTRCVMORE)
 			continue;
 		/* Check to see if we don't want our own messages. */
-		if (so == rp->rcb_socket && !(so->so_options & SO_USELOOPBACK))
+		if (so == rop->rop_socket && !(so->so_options & SO_USELOOPBACK))
 			continue;
 
 		/*
@@ -435,9 +435,9 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		 * messages that match the address family. Address family
 		 * agnostic messages are always send.
 		 */
-		if (rp->rcb_proto.sp_protocol != AF_UNSPEC &&
-		    sa_family != AF_UNSPEC &&
-		    rp->rcb_proto.sp_protocol != sa_family)
+		if (sa_family != AF_UNSPEC &&
+		    rop->rop_proto.sp_protocol != AF_UNSPEC &&
+		    rop->rop_proto.sp_protocol != sa_family)
 			continue;
 
 		/* filter messages that the process does not want */
@@ -483,7 +483,7 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		}
 		/* keep a reference for last */
 		refcnt_take(&rop->refcnt);
-		last = rop->rcb.rcb_socket;
+		last = rop->rop_socket;
 	}
 	SRPL_LEAVE(&sr);
 
