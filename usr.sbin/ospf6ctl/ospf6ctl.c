@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.47 2017/11/05 16:56:02 jca Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.48 2018/06/06 05:51:43 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -944,9 +944,10 @@ show_db_msg_detail(struct imsg *imsg)
 			bcopy(prefix + 1, &ia6,
 			    LSA_PREFIXSIZE(prefix->prefixlen));
 
-			printf("    Prefix: %s/%d%s\n", log_in6addr(&ia6),
-			    prefix->prefixlen,
-			    print_prefix_opt(prefix->options));
+			printf("    Prefix: %s/%d%s Metric: %d\n",
+			    log_in6addr(&ia6), prefix->prefixlen,
+			    print_prefix_opt(prefix->options),
+			    ntohs(prefix->metric));
 
 			off += sizeof(struct lsa_prefix)
 			    + LSA_PREFIXSIZE(prefix->prefixlen);
