@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.53 2017/07/12 15:21:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.54 2018/06/06 10:33:07 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -8,7 +8,8 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest-disabled inter1 manual1 oldlib1
+	qttest gstest exotest-disabled inter1 manual1 oldlib1 \
+	usertest-1 usertest-2 usertest-3
 
 collision-check{1,2}-disabled:
 	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
@@ -643,6 +644,29 @@ rep1/ol-1.tgz: plist21
 	@touch ${SRC23}/lib/subdir/libol.so.1.0
 	@${CREATE_PKG} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@
 
+usertest-1:
+	@if ${CREATE_PKG} -u ${.CURDIR}/baduser1 \
+	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    	exit 1; \
+	else \
+		exit 0; \
+	fi
+
+usertest-2:
+	@if ${CREATE_PKG} -u ${.CURDIR}/baduser2 \
+	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    	exit 1; \
+	else \
+		exit 0; \
+	fi
+
+usertest-3:
+	@if ${CREATE_PKG} -u ${.CURDIR}/baduser3 \
+	    -f ${.CURDIR}/empty truc-0.tgz; then \
+	    	exit 1; \
+	else \
+		exit 0; \
+	fi
 keys:
 	mkdir signify
 	signify -G -n -s signify/test-pkg.sec -p signify/test-pkg.pub
