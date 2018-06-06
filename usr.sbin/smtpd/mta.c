@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.215 2018/06/05 11:34:21 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.216 2018/06/06 12:00:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -641,24 +641,6 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 	memset(&relayh, 0, sizeof(relayh));
 
 	/* dispatcher init */
-	if (dispatcher->u.remote.pki)
-		strlcpy(relayh.pki_name, dispatcher->u.remote.pki,
-		    sizeof(relayh.pki_name));
-	if (dispatcher->u.remote.ca)
-		strlcpy(relayh.ca_name, dispatcher->u.remote.ca,
-		    sizeof(relayh.ca_name));
-	if (dispatcher->u.remote.auth)
-		strlcpy(relayh.authtable, dispatcher->u.remote.auth,
-		    sizeof(relayh.authtable));
-	if (dispatcher->u.remote.source)
-		strlcpy(relayh.sourcetable, dispatcher->u.remote.source,
-		    sizeof(relayh.sourcetable));
-	if (dispatcher->u.remote.helo_source)
-		strlcpy(relayh.helotable, dispatcher->u.remote.helo_source,
-		    sizeof(relayh.helotable));
-	if (dispatcher->u.remote.helo)
-		strlcpy(relayh.heloname, dispatcher->u.remote.helo,
-		    sizeof(relayh.heloname));
 	if (dispatcher->u.remote.backup) {
 		relayh.flags |= RELAY_BACKUP;
 		backupmx = dispatcher->u.remote.backupmx;
@@ -1730,9 +1712,19 @@ mta_log(const struct mta_envelope *evp, const char *prefix, const char *source,
 static struct mta_relay *
 mta_relay(struct envelope *e, struct relayhost *relayh)
 {
+	struct dispatcher	*dispatcher;
 	struct mta_relay	 key, *r;
 
+	dispatcher = dict_xget(env->sc_dispatchers, e->dispatcher);
+
 	memset(&key, 0, sizeof key);
+
+	key.pki_name = dispatcher->u.remote.pki;
+	key.ca_name = dispatcher->u.remote.ca;
+	key.authtable = dispatcher->u.remote.auth;
+	key.sourcetable = dispatcher->u.remote.source;
+	key.helotable = dispatcher->u.remote.helo_source;
+	key.heloname = dispatcher->u.remote.helo;
 
 	if (relayh->flags & RELAY_BACKUP) {
 		key.domain = mta_domain(e->dest.domain, 0);
@@ -1748,27 +1740,9 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 
 	key.flags |= relayh->flags;
 	key.port = relayh->port;
-	key.pki_name = relayh->pki_name;
-	if (!key.pki_name[0])
-		key.pki_name = NULL;
-	key.ca_name = relayh->ca_name;
-	if (!key.ca_name[0])
-		key.ca_name = NULL;
-	key.authtable = relayh->authtable;
-	if (!key.authtable[0])
-		key.authtable = NULL;
 	key.authlabel = relayh->authlabel;
 	if (!key.authlabel[0])
 		key.authlabel = NULL;
-	key.sourcetable = relayh->sourcetable;
-	if (!key.sourcetable[0])
-		key.sourcetable = NULL;
-	key.helotable = relayh->helotable;
-	if (!key.helotable[0])
-		key.helotable = NULL;
-	key.heloname = relayh->heloname;
-	if (!key.heloname[0])
-		key.heloname = NULL;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
 		r = xcalloc(1, sizeof *r);
