@@ -165,6 +165,24 @@ public:
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const = 0;
 
+  /// determineReturnProtectorTempRegister - Find a register that can be used
+  /// during function prologue / epilogue to store the return protector cookie
+  virtual bool determineReturnProtectorTempRegister(MachineFunction &MF,
+                  const SmallVector<MachineBasicBlock *, 4> &SaveBlocks,
+                  const SmallVector<MachineBasicBlock *, 4> &RestoreBlocks) const {
+    return false;
+  }
+
+  /// insertReturnProtectorPrologue/Epilogue - Insert ret-protector code
+  virtual void insertReturnProtectorPrologue(MachineFunction &MF,
+                                             MachineBasicBlock &MBB) const
+  {}
+  virtual bool insertReturnProtectorEpilogue(MachineFunction &MF,
+                                             MachineBasicBlock &MBB) const
+  {
+    return false;
+  }
+
   /// Replace a StackProbe stub (if any) with the actual probe code inline
   virtual void inlineStackProbe(MachineFunction &MF,
                                 MachineBasicBlock &PrologueMBB) const {}

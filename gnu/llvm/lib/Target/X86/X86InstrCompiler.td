@@ -267,6 +267,21 @@ def MORESTACK_RET_RESTORE_R10 : I<0, Pseudo, (outs), (ins),
 }
 
 //===----------------------------------------------------------------------===//
+// Pseudo instruction used by retguard
+
+// This is lowered to a JE 2; INT3; INT3. Prior to this pseudo should be a
+// compare instruction to ensure the retguard cookie is correct.
+// We use a pseudo here in order to avoid splitting the BB just before the return.
+// Splitting the BB and inserting a JE_1 over a new INT3 BB occasionally
+// resulted in incorrect code when a value from a byte register (CL) was
+// used as a return value. When emitted as a split BB, the single byte
+// register would sometimes be widened to 4 bytes, which would corrupt
+// the return value (ie mov %ecx, %eax instead of mov %cl, %al).
+let isCodeGenOnly = 1, Uses = [EFLAGS] in {
+def RETGUARD_JMP_TRAP: I<0, Pseudo, (outs), (ins), "", []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 

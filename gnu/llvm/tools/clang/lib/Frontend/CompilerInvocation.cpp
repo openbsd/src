@@ -872,6 +872,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     Opts.StackAlignment = StackAlignment;
   }
 
+  Opts.ReturnProtector = Args.hasArg(OPT_ret_protector);
+
   if (Arg *A = Args.getLastArg(OPT_mstack_probe_size)) {
     StringRef Val = A->getValue();
     unsigned StackProbeSize = Opts.StackProbeSize;

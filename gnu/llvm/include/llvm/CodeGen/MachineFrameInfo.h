@@ -237,6 +237,11 @@ class MachineFrameInfo {
   /// The frame index for the stack protector.
   int StackProtectorIdx = -1;
 
+  /// The register to use for the return protector temp register
+  unsigned ReturnProtectorTempRegister = 0;
+  /// Set to true if using return protectors
+  bool ReturnProtector = false;
+
   /// The frame index for the function context. Used for SjLj exceptions.
   int FunctionContextIdx = -1;
 
@@ -313,6 +318,14 @@ public:
   int getStackProtectorIndex() const { return StackProtectorIdx; }
   void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
   bool hasStackProtectorIndex() const { return StackProtectorIdx != -1; }
+
+  /// Return the temporary register for the return protector cookie calculation
+  int getReturnProtectorTempRegister() const { return ReturnProtectorTempRegister; }
+  void setReturnProtectorTempRegister(unsigned I) { ReturnProtectorTempRegister = I; }
+  bool hasReturnProtectorTempRegister() const { return ReturnProtectorTempRegister != 0; }
+  /// Return the return protector level
+  void setReturnProtector(bool I) { ReturnProtector = I; }
+  bool hasReturnProtector() const { return ReturnProtector; }
 
   /// Return the index for the function context object.
   /// This object is used for SjLj exceptions.

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.92 2017/11/14 10:02:56 kettenis Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.93 2018/06/06 00:14:29 mortimer Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -34,7 +34,7 @@ CXXFLAGS+=	${NOPIE_FLAGS}
 AFLAGS+=	${NOPIE_FLAGS}
 .endif
 
-DIST_CFLAGS+=	-Oz
+DIST_CFLAGS+=	-Oz -fno-stack-protector
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"

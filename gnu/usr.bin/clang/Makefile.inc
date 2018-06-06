@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2017/04/17 15:53:21 kettenis Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2018/06/06 00:14:29 mortimer Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -20,6 +20,9 @@ CLANG_INCLUDES=	-I${LLVM_SRCS}/tools/clang/include
 CPPFLAGS+=	-I${LLVM_SRCS}/include -I${.CURDIR}/../include -I${.OBJDIR} \
 		-I${.OBJDIR}/../include
 CPPFLAGS+=	-DNDEBUG
+.if ${MACHINE} == "amd64"
+CPPFLAGS+=	-fno-ret-protector
+.endif
 CPPFLAGS+=	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 		-D__STDC_FORMAT_MACROS
 

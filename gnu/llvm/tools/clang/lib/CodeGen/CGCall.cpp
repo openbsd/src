@@ -1878,6 +1878,9 @@ void CodeGenModule::ConstructAttributeList(
     FuncAttrs.addAttribute("disable-tail-calls",
                            llvm::toStringRef(DisableTailCalls));
 
+    if (CodeGenOpts.ReturnProtector)
+      FuncAttrs.addAttribute("ret-protector");
+
     // Add target-cpu and target-features attributes to functions. If
     // we have a decl for the function and it has a target attribute then
     // parse that and add it to the feature set.

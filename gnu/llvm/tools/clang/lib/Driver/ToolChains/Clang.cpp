@@ -3978,6 +3978,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else if (A->getOption().matches(options::OPT_fret_protector))
       RetProtector = 1;
   }
+  if (RetProtector &&
+      (getToolChain().getArch() == llvm::Triple::x86_64) &&
+      !Args.hasArg(options::OPT_fno_stack_protector) &&
+      !Args.hasArg(options::OPT_pg)) {
+    CmdArgs.push_back(Args.MakeArgString("-D_RET_PROTECTOR"));
+    CmdArgs.push_back(Args.MakeArgString(Twine("-ret-protector")));
+  }
 
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
