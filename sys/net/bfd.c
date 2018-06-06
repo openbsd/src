@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.70 2018/04/28 08:14:09 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.71 2018/06/06 06:55:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -611,7 +611,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 
 	s = solock(so);
 	error = soconnect(so, m);
-	sounlock(s);
+	sounlock(so, s);
 	if (error && error != ECONNREFUSED) {
 		printf("%s: soconnect error %d\n",
 		    __func__, error);

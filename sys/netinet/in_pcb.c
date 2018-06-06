@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.233 2018/06/03 21:32:32 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.234 2018/06/06 06:55:22 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -584,8 +584,13 @@ in_pcbdetach(struct inpcb *inp)
 
 	NET_ASSERT_LOCKED();
 
-	so->so_pcb = 0;
-	sofree(so);
+	so->so_pcb = NULL;
+	/*
+	 * As long as the NET_LOCK() is the default lock for Internet
+	 * sockets, do not release it to not introduce new sleeping
+	 * points.
+	 */
+	sofree(so, 0);
 	m_freem(inp->inp_options);
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);

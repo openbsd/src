@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.66 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.67 2018/06/06 06:55:22 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ fifo_open(void *v)
 		fip->fi_writers++;
 		if ((ap->a_mode & O_NONBLOCK) && fip->fi_readers == 0) {
 			error = ENXIO;
-			sounlock(s);
+			sounlock(wso, s);
 			goto bad;
 		}
 		if (fip->fi_writers == 1) {
@@ -179,7 +179,7 @@ fifo_open(void *v)
 				wakeup(&fip->fi_readers);
 		}
 	}
-	sounlock(s);
+	sounlock(wso, s);
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
 			VOP_UNLOCK(vp);
@@ -334,7 +334,7 @@ fifo_poll(void *v)
 			wso->so_snd.sb_flags |= SB_SEL;
 		}
 	}
-	sounlock(s);
+	sounlock(rso, s);
 	return (revents);
 }
 
@@ -369,7 +369,7 @@ fifo_close(void *v)
 
 			s = solock(wso);
 			socantsendmore(wso);
-			sounlock(s);
+			sounlock(wso, s);
 		}
 	}
 	if (ap->a_fflag & FWRITE) {
@@ -380,7 +380,7 @@ fifo_close(void *v)
 			/* SS_ISDISCONNECTED will result in POLLHUP */
 			rso->so_state |= SS_ISDISCONNECTED;
 			socantrcvmore(rso);
-			sounlock(s);
+			sounlock(rso, s);
 		}
 	}
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {

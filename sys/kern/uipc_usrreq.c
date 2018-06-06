@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.126 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.127 2018/06/06 06:55:22 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -612,11 +612,19 @@ unp_drop(struct unpcb *unp, int errno)
 {
 	struct socket *so = unp->unp_socket;
 
+	KERNEL_ASSERT_LOCKED();
+
 	so->so_error = errno;
 	unp_disconnect(unp);
 	if (so->so_head) {
 		so->so_pcb = NULL;
-		sofree(so);
+		/*
+		 * sofree() releases the socket lock, so we need to
+		 * grab it beforehand as long as Unix sockets rely on
+		 * the KERNEL_LOCK();
+		 */
+		KERNEL_LOCK();
+		sofree(so, 0);
 		m_freem(unp->unp_addr);
 		free(unp, M_PCB, sizeof *unp);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.37 2018/04/26 10:45:45 pirofti Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.38 2018/06/06 06:55:22 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			so->so_state |= SS_NBIO;
 		else
 			so->so_state &= ~SS_NBIO;
-		sounlock(s);
+		sounlock(so, s);
 		break;
 
 	case FIOASYNC:
@@ -102,7 +102,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}
-		sounlock(s);
+		sounlock(so, s);
 		break;
 
 	case FIONREAD:
@@ -176,7 +176,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 			so->so_snd.sb_flags |= SB_SEL;
 		}
 	}
-	sounlock(s);
+	sounlock(so, s);
 	return (revents);
 }
 
@@ -197,7 +197,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 	ub->st_gid = so->so_egid;
 	(void) ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, NULL, NULL, p));
-	sounlock(s);
+	sounlock(so, s);
 	return (0);
 }
 

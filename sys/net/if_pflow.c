@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.87 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.88 2018/06/06 06:55:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -442,7 +442,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 
 				s = solock(so);
 				error = sobind(so, m, p);
-				sounlock(s);
+				sounlock(so, s);
 				m_freem(m);
 				if (error) {
 					soclose(so);

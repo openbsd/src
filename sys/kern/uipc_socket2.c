@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.93 2018/05/07 15:51:53 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.94 2018/06/06 06:55:22 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -277,25 +277,38 @@ solock(struct socket *so)
 {
 	int s = 0;
 
-	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
-	    (so->so_proto->pr_domain->dom_family != PF_KEY))
-		NET_LOCK();
-	else {
-		KERNEL_LOCK();
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
 		s = -42;
+		NET_LOCK();
+		break;
+	case PF_UNIX:
+	case PF_ROUTE:
+	case PF_KEY:
+	default:
+		KERNEL_LOCK();
+		break;
 	}
 
 	return (s);
 }
 
 void
-sounlock(int s)
+sounlock(struct socket *so, int s)
 {
-	if (s != -42)
-		NET_UNLOCK();
-	else {
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		if (s == -42)
+			NET_UNLOCK();
+		break;
+	case PF_UNIX:
+	case PF_ROUTE:
+	case PF_KEY:
+	default:
 		KERNEL_UNLOCK();
+		break;
 	}
 }
 
