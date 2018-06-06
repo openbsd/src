@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.216 2018/06/06 12:00:26 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.217 2018/06/06 19:12:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -659,9 +659,6 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 		m_close(p_queue);
 		return;
 	}
-
-	if (smarthost && dispatcher->u.remote.tls_noverify == 0)
-		relayh.flags |= F_TLS_VERIFY;
 
 	relay = mta_relay(evp, &relayh);
 	/* ignore if we don't know the limits yet */
@@ -1743,6 +1740,10 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 	key.authlabel = relayh->authlabel;
 	if (!key.authlabel[0])
 		key.authlabel = NULL;
+
+	if (dispatcher->u.remote.smarthost &&
+	    dispatcher->u.remote.tls_noverify == 0)
+		key.flags |= F_TLS_VERIFY;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
 		r = xcalloc(1, sizeof *r);
