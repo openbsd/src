@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.28 2013/08/07 06:19:36 deraadt Exp $
+.\"	$OpenBSD: mktemp.1,v 1.29 2018/06/07 11:37:21 jmc Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013
 .\"	Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 7 2013 $
+.Dd $Mdocdate: June 7 2018 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -142,11 +142,6 @@ This is slightly better than
 but still introduces a race condition.
 Use of this option is not encouraged.
 .El
-.Pp
-The
-.Nm
-utility
-exits with a value of 0 on success or 1 on failure.
 .Sh ENVIRONMENT
 .Bl -tag -width TMPDIR
 .It Ev TMPDIR
@@ -154,6 +149,8 @@ directory in which to place the temporary file when in
 .Fl t
 mode
 .El
+.Sh EXIT STATUS
+.Ex -std mktemp
 .Sh EXAMPLES
 The following
 .Xr sh 1
