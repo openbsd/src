@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.12 2018/04/29 02:31:11 mortimer Exp $
+.\" $OpenBSD: clang-local.1,v 1.13 2018/06/07 05:40:08 yasuoka Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 29 2018 $
+.Dd $Mdocdate: June 7 2018 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -52,6 +52,9 @@ This behavior can be turned off by passing
 to the compiler and
 .Fl nopie
 to the linker.
+Also it is turned off when
+.Fl pg
+flag is used.
 .It
 The
 .Fl fstrict-aliasing
