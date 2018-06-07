@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.551 2018/06/06 12:00:26 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.552 2018/06/07 16:28:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -75,26 +75,23 @@
 
 #define F_STARTTLS		0x01
 #define F_SMTPS			0x02
-#define	F_TLS_OPTIONAL		0x04
 #define F_SSL		       (F_STARTTLS | F_SMTPS)
 #define F_AUTH			0x08
-#define	F_BACKUP		0x10	/* XXX - MUST BE SYNC-ED WITH RELAY_BACKUP */
 #define	F_STARTTLS_REQUIRE	0x20
 #define	F_AUTH_REQUIRE		0x40
-#define	F_LMTP			0x80
 #define	F_MASK_SOURCE		0x100
 #define	F_TLS_VERIFY		0x200
 #define	F_EXT_DSN		0x400
 #define	F_RECEIVEDAUTH		0x800
 #define	F_MASQUERADE		0x1000
 
-/* must match F_* for mta */
+
 #define RELAY_STARTTLS		0x01
 #define RELAY_SMTPS		0x02
 #define	RELAY_TLS_OPTIONAL     	0x04
 #define RELAY_SSL		(RELAY_STARTTLS | RELAY_SMTPS)
 #define RELAY_AUTH		0x08
-#define RELAY_BACKUP		0x10	/* XXX - MUST BE SYNC-ED WITH F_BACKUP */
+#define RELAY_BACKUP		0x10
 #define RELAY_MX		0x20
 #define RELAY_LMTP		0x80
 #define	RELAY_TLS_VERIFY	0x200
