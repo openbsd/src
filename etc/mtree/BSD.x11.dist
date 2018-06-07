@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.45 2017/08/05 14:13:39 jsg Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.46 2018/06/07 21:23:44 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -357,6 +357,8 @@
                     damageproto
                     ..
                     dri2proto
+                    ..
+                    dri3proto
                     ..
                     fixesproto
                     ..
