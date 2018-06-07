@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.101 2018/06/04 21:46:56 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.102 2018/06/07 11:31:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -377,7 +377,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 
 		if (resp_ca_vrfy->status == CA_OK)
 			s->flags |= MTA_VERIFIED;
-		else if (s->relay->flags & F_TLS_VERIFY) {
+		else if (s->relay->flags & RELAY_TLS_VERIFY) {
 			errno = 0;
 			mta_error(s, "SSL certificate check failed");
 			mta_free(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.218 2018/06/07 07:06:06 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.219 2018/06/07 11:31:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1735,7 +1735,7 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 
 	if (dispatcher->u.remote.smarthost &&
 	    dispatcher->u.remote.tls_noverify == 0)
-		key.flags |= F_TLS_VERIFY;
+		key.flags |= RELAY_TLS_VERIFY;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
 		r = xcalloc(1, sizeof *r);
