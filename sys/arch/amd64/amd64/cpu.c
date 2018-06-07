@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.121 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.122 2018/06/07 04:07:28 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -511,11 +511,10 @@ replacexsave(void)
 
 	/* find out whether xsaveopt is supported */
 	CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
-	printf("using xsave%s\n", (eax & 1) ? "opt" : "");
-
 	s = splhigh();
 	codepatch_replace(CPTAG_XRSTOR, &_xrstor, 4);
-	codepatch_replace(CPTAG_XSAVE, (eax & 1) ? &_xsaveopt : &_xsave, 4);
+	codepatch_replace(CPTAG_XSAVE,
+	    (eax & XSAVE_XSAVEOPT) ? &_xsaveopt : &_xsave, 4);
 	splx(s);
 }
 
