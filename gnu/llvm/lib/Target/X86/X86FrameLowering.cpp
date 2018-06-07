@@ -3185,7 +3185,6 @@ void X86FrameLowering::insertReturnProtectorPrologue(MachineFunction &MF,
   if (!MFI.hasReturnProtector() || !MFI.hasReturnProtectorTempRegister())
     return;
 
-  unsigned CFIIndex;
   MachineBasicBlock::instr_iterator MBBI = MBB.instr_begin();
   DebugLoc MBBDL = MBB.findDebugLoc(MBBI);
   const Function &Fn = MF.getFunction();
