@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.13 2018/06/05 05:04:31 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.14 2018/06/07 04:09:35 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ _C_LABEL(splx):
 	ret
 #endif /* PROF || GPROF */
 #endif
-	
+
 /*
  * Process pending interrupts.
  *
@@ -124,17 +124,17 @@ KIDTVEC(spllower)
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
 	andq	CPUVAR(IPENDING),%rax		# any non-masked bits left?
-	jz	2f
-	bsrq	%rax,%rax
-	btrq	%rax,CPUVAR(IPENDING)
-	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
-	jmp	*IS_RECURSE(%rax)
-2:
+	jnz	2f
 	movl	%ebx,CPUVAR(ILEVEL)
 	sti
 	popq	%r13
 	popq	%rbx
 	ret
+2:	bsrq	%rax,%rax
+	btrq	%rax,CPUVAR(IPENDING)
+	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
+	movq    IS_RECURSE(%rax),%rax
+	jmp     retpoline_rax
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -151,13 +151,13 @@ KIDTVEC(doreti)
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
 	andq	CPUVAR(IPENDING),%rax
-	jz	2f
-	bsrq    %rax,%rax               # slow, but not worth optimizing
-	btrq    %rax,CPUVAR(IPENDING)
-	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
-	jmp	*IS_RESUME(%rax)
-2:	/* Check for ASTs on exit to user mode. */
+	jnz	2f
 	movl	%ebx,CPUVAR(ILEVEL)
 	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	intr_user_exit
+	jnz	intr_user_exit		# Check for ASTs on exit to user mode
 	INTRFASTEXIT
+2:	bsrq    %rax,%rax               # slow, but not worth optimizing
+	btrq    %rax,CPUVAR(IPENDING)
+	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
+	movq    IS_RESUME(%rax),%rax
+	jmp     retpoline_rax

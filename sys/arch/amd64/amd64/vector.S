@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.60 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.61 2018/06/07 04:09:35 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -1130,6 +1130,9 @@ _C_LABEL(ioapic_level_stubs):
 /*
  * Soft interrupt handlers
  */
+NENTRY(retpoline_r13)
+	JMP_RETPOLINE(r13)
+
 KIDTVEC(softtty)
 	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
 	sti
@@ -1137,7 +1140,7 @@ KIDTVEC(softtty)
 	movl	$X86_SOFTINTR_SOFTTTY,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
+	jmp	retpoline_r13
 
 KIDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
@@ -1146,7 +1149,7 @@ KIDTVEC(softnet)
 	movl	$X86_SOFTINTR_SOFTNET,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
+	jmp	retpoline_r13
 
 KIDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
@@ -1155,4 +1158,4 @@ KIDTVEC(softclock)
 	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
+	jmp	retpoline_r13

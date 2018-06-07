@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.98 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.99 2018/06/07 04:09:35 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -247,8 +247,7 @@ gdt64_end:
 	.section .rodata
 	.globl	_C_LABEL(sigcode)
 _C_LABEL(sigcode):
-	call	*%rax
-
+	call	1f
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
@@ -257,6 +256,8 @@ _C_LABEL(sigcode):
 _C_LABEL(sigcoderet):
 	movq	$SYS_exit,%rax
 	syscall
+	.align	16,0xcc
+1:	JMP_RETPOLINE(rax)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
@@ -490,28 +491,25 @@ switch_restored:
 ENTRY(cpu_idle_enter)
 	movq	_C_LABEL(cpu_idle_enter_fcn),%rax
 	cmpq	$0,%rax
-	je	1f
-	jmpq	*%rax
-1:
-	ret
-
-ENTRY(cpu_idle_cycle)
-	movq	_C_LABEL(cpu_idle_cycle_fcn),%rax
-	cmpq	$0,%rax
-	je	1f
-	call	*%rax
-	ret
-1:
-	sti
-	hlt
+	jne	retpoline_rax
 	ret
 
 ENTRY(cpu_idle_leave)
 	movq	_C_LABEL(cpu_idle_leave_fcn),%rax
 	cmpq	$0,%rax
-	je	1f
-	jmpq	*%rax
-1:
+	jne	retpoline_rax
+	ret
+
+/* placed here for correct static branch prediction in cpu_idle_* */
+NENTRY(retpoline_rax)
+	JMP_RETPOLINE(rax)
+
+ENTRY(cpu_idle_cycle)
+	movq	_C_LABEL(cpu_idle_cycle_fcn),%rax
+	cmpq	$0,%rax
+	jne	retpoline_rax
+	sti
+	hlt
 	ret
 
 	.globl	_C_LABEL(panic)
@@ -720,7 +718,8 @@ NENTRY(proc_trampoline)
 #endif
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	movq	%r13,%rdi
-	call	*%r12
+	movq	%r12,%rax
+	call	retpoline_rax
 	movq	CPUVAR(CURPROC),%r14
 	jmp	.Lsyscall_check_asts
 

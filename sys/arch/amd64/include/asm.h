@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.10 2018/06/07 04:09:35 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -119,5 +119,14 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
+
+/* generic retpoline ("return trampoline") generator */
+#define	JMP_RETPOLINE(reg)		\
+		call	69f		; \
+	68:	pause			; \
+		jmp	68b		; \
+		.align	16,0xcc		; \
+	69:	mov	%reg,(%rsp)	; \
+		ret
 
 #endif /* !_MACHINE_ASM_H_ */
