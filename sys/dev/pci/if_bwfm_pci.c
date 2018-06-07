@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.22 2018/06/07 11:18:25 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.23 2018/06/07 11:24:19 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -304,8 +304,9 @@ struct cfattach bwfm_pci_ca = {
 };
 
 static const struct pci_matchid bwfm_pci_devices[] = {
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43602 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4350 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4356 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43602 },
 };
 
 int
@@ -412,6 +413,10 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 			name = "brcmfmac4350c2-pcie.bin";
 			nvname = "brcmfmac4350c2-pcie.nvram";
 		}
+		break;
+	case BRCM_CC_4356_CHIP_ID:
+		name = "brcmfmac4356-pcie.bin";
+		nvname = "brcmfmac4356-pcie.nvram";
 		break;
 	case BRCM_CC_43602_CHIP_ID:
 		name = "brcmfmac43602-pcie.bin";
