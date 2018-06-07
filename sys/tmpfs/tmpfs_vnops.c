@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.31 2018/05/28 16:02:08 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.32 2018/06/07 13:37:28 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -317,14 +317,11 @@ tmpfs_create(void *v)
 	struct vnode *dvp = ap->a_dvp, **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *vap = ap->a_vap;
-	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(vap->va_type == VREG || vap->va_type == VSOCK);
-	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
-	vput(dvp);
-	return error;
+	return tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
 
 int
@@ -342,20 +339,15 @@ tmpfs_mknod(void *v)
 	enum vtype vt = vap->va_type;
 	int error;
 
-	if (vt != VBLK && vt != VCHR && vt != VFIFO) {
-		vput(dvp);
+	if (vt != VBLK && vt != VCHR && vt != VFIFO)
 		return EINVAL;
-	}
 
-	/* tmpfs_alloc_file() will unlock 'dvp'. */
 	error = tmpfs_alloc_file(dvp, vpp, vap, cnp, NULL);
-	vput(dvp);
-	if (error)
-		return error;
 
-	vput(*vpp);
+	if (error == 0)
+		vput(*vpp);
 
-	return 0;
+	return error;
 }
 
 int

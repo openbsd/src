@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.114 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.115 2018/06/07 13:37:28 visa Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -961,7 +961,9 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (nd.ni_vp == NULL) {
 		if (va.va_type == VREG || va.va_type == VSOCK) {
 			vrele(nd.ni_startdir);
-			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
+			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
+			    &va);
+			vput(nd.ni_dvp);
 			if (!error) {
 				pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 				if (exclusive_flag) {
@@ -993,6 +995,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 				va.va_rdev = (dev_t)rdev;
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd,
 			    &va);
+			vput(nd.ni_dvp);
 			if (error) {
 				vrele(nd.ni_startdir);
 				if (nd.ni_cnd.cn_flags & HASBUF) {
@@ -1202,6 +1205,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	if (vtyp == VSOCK) {
 		vrele(nd.ni_startdir);
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
+		vput(nd.ni_dvp);
 		if (!error)
 			pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 	} else {
@@ -1214,6 +1218,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 			goto out;
 		}
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
+		vput(nd.ni_dvp);
 		if (error) {
 			vrele(nd.ni_startdir);
 			goto out;

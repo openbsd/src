@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.43 2018/05/21 13:06:00 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.44 2018/06/07 13:37:28 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -932,15 +932,11 @@ fusefs_create(void *v)
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-	if (!fmp->sess_init) {
-		error = ENXIO;
-		goto out;
-	}
+	if (!fmp->sess_init)
+		return (ENXIO);
 
-	if (fmp->undef_op & UNDEF_MKNOD) {
-		error = ENOSYS;
-		goto out;
-	}
+	if (fmp->undef_op & UNDEF_MKNOD)
+		return (ENOSYS);
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -955,22 +951,18 @@ fusefs_create(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_MKNOD;
 
-		fb_delete(fbuf);
 		goto out;
 	}
 
-	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
-		fb_delete(fbuf);
+	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
 		goto out;
-	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	fb_delete(fbuf);
 out:
-	vput(ap->a_dvp);
+	fb_delete(fbuf);
 	return (error);
 }
 
@@ -992,15 +984,11 @@ fusefs_mknod(void *v)
 	ip = VTOI(dvp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	if (!fmp->sess_init) {
-		error = ENXIO;
-		goto out;
-	}
+	if (!fmp->sess_init)
+		return (ENXIO);
 
-	if (fmp->undef_op & UNDEF_MKNOD) {
-		error = ENOSYS;
-		goto out;
-	}
+	if (fmp->undef_op & UNDEF_MKNOD)
+		return (ENOSYS);
 
 	fbuf = fb_setup(cnp->cn_namelen + 1, ip->ufs_ino.i_number,
 	    FBT_MKNOD, p);
@@ -1017,21 +1005,16 @@ fusefs_mknod(void *v)
 		if (error == ENOSYS)
 			fmp->undef_op |= UNDEF_MKNOD;
 
-		fb_delete(fbuf);
 		goto out;
 	}
 
-	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp))) {
-		fb_delete(fbuf);
+	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
 		goto out;
-	}
 
 	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	fb_delete(fbuf);
-	vput(ap->a_dvp);
 
 	/* Remove inode so that it will be reloaded by VFS_VGET and
 	 * checked to see if it is an alias of an existing entry in
@@ -1041,9 +1024,8 @@ fusefs_mknod(void *v)
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	*vpp = NULL;
-	return (0);
 out:
-	vput(ap->a_dvp);
+	fb_delete(fbuf);
 	return (error);
 }
 

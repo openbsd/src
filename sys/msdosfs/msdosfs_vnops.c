@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.120 2018/05/07 14:43:01 mpi Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.121 2018/06/07 13:37:28 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -164,13 +164,11 @@ msdosfs_create(void *v)
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -181,7 +179,6 @@ msdosfs_mknod(void *v)
 
 	pool_put(&namei_pool, ap->a_cnp->cn_pnbuf);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	return (EINVAL);
 }
 

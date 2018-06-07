@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.92 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.93 2018/06/07 13:37:27 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 				va.va_vaflags |= VA_EXCLUSIVE;
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
+			vput(ndp->ni_dvp);
 			if (error)
 				return (error);
 			fmode &= ~O_TRUNC;

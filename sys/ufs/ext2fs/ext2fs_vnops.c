@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.82 2018/05/28 16:02:08 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.83 2018/06/07 13:37:28 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -80,13 +80,9 @@ int
 ext2fs_create(void *v)
 {
 	struct vop_create_args *ap = v;
-	int error;
 
-	error = ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
-					  ap->a_vap->va_mode),
-			  	ap->a_dvp, ap->a_vpp, ap->a_cnp);
-	vput(ap->a_dvp);
-	return (error);
+	return (ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type,
+	    ap->a_vap->va_mode), ap->a_dvp, ap->a_vpp, ap->a_cnp));
 }
 
 /*
@@ -104,7 +100,6 @@ ext2fs_mknod(void *v)
 
 	error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 	    ap->a_dvp, vpp, ap->a_cnp);
-	vput(ap->a_dvp);
 	if (error != 0)
 		return (error);
 	ip = VTOI(*vpp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.139 2018/05/24 14:08:42 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.140 2018/06/07 13:37:28 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ ufs_create(void *v)
 			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
 	if (error == 0)
 		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	return (error);
 }
 
@@ -171,12 +170,9 @@ ufs_mknod(void *v)
 
 	if ((error =
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, vpp, ap->a_cnp)) != 0) {
-		vput(ap->a_dvp);
+	    ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
-	}
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {

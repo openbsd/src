@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.127 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.128 2018/06/07 13:37:27 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -456,6 +456,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	vput(nd.ni_dvp);
 	if (error) {
 		m_freem(nam2);
 		return (error);

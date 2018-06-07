@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.286 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.287 2018/06/07 13:37:27 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1337,6 +1337,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 out:
 	if (!error) {
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+		vput(nd.ni_dvp);
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)

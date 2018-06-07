@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.176 2018/05/05 11:54:11 mpi Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.177 2018/06/07 13:37:28 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1401,7 +1401,6 @@ nfs_mknod(void *v)
 		vput(newvp);
 
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(ap->a_dvp);
 
 	return (error);
 }
@@ -1427,11 +1426,8 @@ nfs_create(void *v)
 	/*
 	 * Oops, not for me..
 	 */
-	if (vap->va_type == VSOCK) {
-		error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap);
-		vput(dvp);
-		return (error);
-	}
+	if (vap->va_type == VSOCK)
+		return (nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap));
 
 	if (vap->va_vaflags & VA_EXCLUSIVE)
 		fmode |= O_EXCL;
@@ -1502,7 +1498,6 @@ nfsmout:
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
-	vput(dvp);
 	return (error);
 }
 
