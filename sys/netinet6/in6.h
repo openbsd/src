@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.101 2018/02/10 05:52:08 florian Exp $	*/
+/*	$OpenBSD: in6.h,v 1.102 2018/06/07 08:46:24 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -405,7 +405,7 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 
 #ifdef _KERNEL
 extern	const u_char inet6ctlerrmap[];
-extern	struct in6_addr zeroin6_addr;
+extern	const struct in6_addr zeroin6_addr;
 
 struct mbuf;
 struct ifnet;

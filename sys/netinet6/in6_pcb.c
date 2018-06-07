@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.102 2018/06/03 21:32:32 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.103 2018/06/07 08:46:24 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -132,7 +132,7 @@
  * Globals
  */
 
-struct in6_addr zeroin6_addr;
+const struct in6_addr zeroin6_addr;
 
 /*
  * Keep separate inet6ctlerrmap, because I may remap some of these.
