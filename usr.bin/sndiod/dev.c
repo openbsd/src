@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.31 2017/11/23 06:26:45 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.32 2018/06/08 06:20:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,12 +45,8 @@ void dev_midi_omsg(void *, unsigned char *, int);
 void dev_midi_fill(void *, int);
 void dev_midi_exit(void *);
 
-int play_filt_resamp(struct slot *, void *, void *, int);
-int play_filt_dec(struct slot *, void *, void *, int);
 void dev_mix_badd(struct dev *, struct slot *);
 void dev_mix_adjvol(struct dev *);
-int rec_filt_resamp(struct slot *, void *, void *, int);
-int rec_filt_enc(struct slot *, void *, void *, int);
 void dev_sub_bcopy(struct dev *, struct slot *);
 
 void dev_onmove(struct dev *, int);
@@ -552,56 +548,14 @@ slot_skip(struct slot *s)
 	return max - s->skip;
 }
 
-int
-play_filt_resamp(struct slot *s, void *res_in, void *out, int todo)
-{
-	int i, offs, vol, nch;
-	void *in;
-
-	if (s->mix.resampbuf) {
-		todo = resamp_do(&s->mix.resamp,
-		    res_in, s->mix.resampbuf, todo);
-		in = s->mix.resampbuf;
-	} else
-		in = res_in;
-
-	nch = s->mix.cmap.nch;
-	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
-	cmap_add(&s->mix.cmap, in, out, vol, todo);
-
-	offs = 0;
-	for (i = s->mix.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, (adata_t *)in + offs, out, vol, todo);
-	}
-	offs = 0;
-	for (i = s->mix.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, in, (adata_t *)out + offs, vol, todo);
-	}
-	return todo;
-}
-
-int
-play_filt_dec(struct slot *s, void *in, void *out, int todo)
-{
-	void *tmp;
-
-	tmp = s->mix.decbuf;
-	if (tmp)
-		dec_do(&s->mix.dec, in, tmp, todo);
-	return play_filt_resamp(s, tmp ? tmp : in, out, todo);
-}
-
 /*
- * mix "todo" frames from the input block over the output block; if
- * there are frames to drop, less frames are consumed from the input
+ * Mix the slot input block over the output block
  */
 void
 dev_mix_badd(struct dev *d, struct slot *s)
 {
-	adata_t *idata, *odata;
-	int icount;
+	adata_t *idata, *odata, *in;
+	int icount, i, offs, vol, nch;
 
 	odata = DEV_PBUF(d);
 	idata = (adata_t *)abuf_rgetblk(&s->mix.buf, &icount);
@@ -614,7 +568,43 @@ dev_mix_badd(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
-	play_filt_dec(s, idata, odata, s->round);
+
+	/*
+	 * Apply the following processing chain:
+	 *
+	 *	dec -> resamp-> cmap
+	 *
+	 * where the first two are optional.
+	 */
+
+	in = idata;
+
+	if (s->mix.decbuf) {
+		dec_do(&s->mix.dec, (void *)in, s->mix.decbuf, s->round);
+		in = s->mix.decbuf;
+	}
+
+	if (s->mix.resampbuf) {
+		resamp_do(&s->mix.resamp, in, s->mix.resampbuf, s->round);
+		in = s->mix.resampbuf;
+	}
+
+	nch = s->mix.cmap.nch;
+	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
+	cmap_add(&s->mix.cmap, in, odata, vol, d->round);
+
+	offs = 0;
+	for (i = s->mix.join - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->mix.cmap, in + offs, odata, vol, d->round);
+	}
+
+	offs = 0;
+	for (i = s->mix.expand - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->mix.cmap, in, odata + offs, vol, d->round);
+	}
+
 	abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
 }
 
@@ -663,55 +653,18 @@ dev_mix_adjvol(struct dev *d)
 	}
 }
 
-int
-rec_filt_resamp(struct slot *s, void *in, void *res_out, int todo)
-{
-	int i, vol, offs, nch;
-	void *out = res_out;
-
-	out = (s->sub.resampbuf) ? s->sub.resampbuf : res_out;
-
-	nch = s->sub.cmap.nch;
-	vol = ADATA_UNIT / s->sub.join;
-	cmap_copy(&s->sub.cmap, in, out, vol, todo);
-
-	offs = 0;
-	for (i = s->sub.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->sub.cmap, (adata_t *)in + offs, out, vol, todo);
-	}
-	offs = 0;
-	for (i = s->sub.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_copy(&s->sub.cmap, in, (adata_t *)out + offs, vol, todo);
-	}
-	if (s->sub.resampbuf) {
-		todo = resamp_do(&s->sub.resamp,
-		    s->sub.resampbuf, res_out, todo);
-	}
-	return todo;
-}
-
-int
-rec_filt_enc(struct slot *s, void *in, void *out, int todo)
-{
-	void *tmp;
-
-	tmp = s->sub.encbuf;
-	todo = rec_filt_resamp(s, in, tmp ? tmp : out, todo);
-	if (tmp)
-		enc_do(&s->sub.enc, tmp, out, todo);
-	return todo;
-}
-
 /*
  * Copy data from slot to device
  */
 void
 dev_sub_bcopy(struct dev *d, struct slot *s)
 {
-	adata_t *idata, *odata;
+	adata_t *idata, *enc_out, *resamp_out, *cmap_out;
+	void *odata;
 	int ocount, moffs;
+
+	int i, vol, offs, nch;
+
 
 	if (s->mode & MODE_MON) {
 		moffs = d->poffs + d->round;
@@ -727,8 +680,44 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
-	ocount = rec_filt_enc(s, idata, odata, d->round);
-	abuf_wcommit(&s->sub.buf, ocount * s->sub.bpf);
+
+	/*
+	 * Apply the following processing chain:
+	 *
+	 *	cmap -> resamp -> enc
+	 *
+	 * where the last two are optional.
+	 */
+
+	enc_out = odata;
+	resamp_out = s->sub.encbuf ? s->sub.encbuf : enc_out;
+	cmap_out = s->sub.resampbuf ? s->sub.resampbuf : resamp_out;
+
+	nch = s->sub.cmap.nch;
+	vol = ADATA_UNIT / s->sub.join;
+	cmap_copy(&s->sub.cmap, idata, cmap_out, vol, d->round);
+
+	offs = 0;
+	for (i = s->sub.join - 1; i > 0; i--) {
+		offs += nch;
+		cmap_add(&s->sub.cmap, idata + offs, cmap_out, vol, d->round);
+	}
+
+	offs = 0;
+	for (i = s->sub.expand - 1; i > 0; i--) {
+		offs += nch;
+		cmap_copy(&s->sub.cmap, idata, cmap_out + offs, vol, d->round);
+	}
+
+	if (s->sub.resampbuf) {
+		resamp_do(&s->sub.resamp,
+		    s->sub.resampbuf, resamp_out, d->round);
+	}
+
+	if (s->sub.encbuf)
+		enc_do(&s->sub.enc, s->sub.encbuf, (void *)enc_out, s->round);
+
+	abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
 }
 
 /*
