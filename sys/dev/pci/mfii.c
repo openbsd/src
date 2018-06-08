@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.55 2018/05/18 05:20:32 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.56 2018/06/08 07:09:50 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -302,14 +302,12 @@ struct mfii_softc {
 	 * in sc_ld_list
 	 */
 	struct {
-		uint32_t	ld_present;
 		char		ld_dev[16];	/* device name sd? */
 	}			sc_ld[MFI_MAX_LD];
+	int			sc_target_lds[MFI_MAX_LD];
 
 	/* scsi ioctl from sd device */
 	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
-
-	uint32_t		sc_ld_cnt;
 
 	/* bio */
 	struct mfi_conf		*sc_cfg;
@@ -498,6 +496,8 @@ static const char *mfi_bbu_indicators[] = {
 	"periodic learn req'd"
 };
 
+void		mfii_init_ld_sensor(struct mfii_softc *, int);
+void		mfii_refresh_ld_sensor(struct mfii_softc *, int);
 int		mfii_create_sensors(struct mfii_softc *);
 void		mfii_refresh_sensors(void *);
 void		mfii_bbu(struct mfii_softc *);
@@ -777,10 +777,6 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL)
 		goto free_sgl;
 
-	sc->sc_ld_cnt = sc->sc_info.mci_lds_present;
-	for (i = 0; i < sc->sc_ld_cnt; i++)
-		sc->sc_ld[i].ld_present = 1;
-
 	sc->sc_link.openings = sc->sc_max_cmds;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfii_switch;
@@ -799,6 +795,17 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (mfii_aen_register(sc) != 0) {
 		/* error printed by mfii_aen_register */
 		goto intr_disestablish;
+	}
+
+	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
+	    sizeof(sc->sc_ld_list), SCSI_DATA_IN) != 0) {
+		printf("%s: getting list of logical disks failed\n", DEVNAME(sc));
+		goto intr_disestablish;
+	}
+	memset(sc->sc_target_lds, -1, sizeof(sc->sc_target_lds));
+	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
+		int target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		sc->sc_target_lds[target] = i;
 	}
 
 	/* enable interrupts */
@@ -940,7 +947,7 @@ mfii_detach(struct device *self, int flags)
 	if (sc->sc_sensors) {
 		sensordev_deinstall(&sc->sc_sensordev);
 		free(sc->sc_sensors, M_DEVBUF,
-		    sc->sc_ld_cnt * sizeof(struct ksensor));
+		    MFI_MAX_LD * sizeof(struct ksensor));
 	}
 
 	if (sc->sc_bbu) {
@@ -2058,7 +2065,7 @@ mfii_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 		goto done;
 	}
 
-	if (!sc->sc_ld[link->target].ld_present) {
+	if (sc->sc_target_lds[link->target] == -1) {
 		rv = EIO;
 		goto done;
 	}
@@ -2794,7 +2801,7 @@ done:
 int
 mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 {
-	int			i, per, rv = EINVAL;
+	int			i, per, target, rv = EINVAL;
 	struct scsi_link	*link;
 	struct device		*dev;
 
@@ -2815,7 +2822,8 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 	}
 
 	i = bv->bv_volid;
-	link = scsi_get_link(sc->sc_scsibus, i, 0);
+	target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+	link = scsi_get_link(sc->sc_scsibus, target, 0);
 	if (link == NULL) {
 		strlcpy(bv->bv_dev, "cache", sizeof(bv->bv_dev));
 	} else {
@@ -3635,12 +3643,67 @@ mfii_bbu(struct mfii_softc *sc)
 	}
 }
 
-int
-mfii_create_sensors(struct mfii_softc *sc)
+void
+mfii_refresh_ld_sensor(struct mfii_softc *sc, int ld)
+{
+	struct ksensor *sensor;
+	int target;
+
+	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
+	sensor = &sc->sc_sensors[target];
+	
+	switch(sc->sc_ld_list.mll_list[ld].mll_state) {
+	case MFI_LD_OFFLINE:
+		sensor->value = SENSOR_DRIVE_FAIL;
+		sensor->status = SENSOR_S_CRIT;
+		break;
+
+	case MFI_LD_PART_DEGRADED:
+	case MFI_LD_DEGRADED:
+		sensor->value = SENSOR_DRIVE_PFAIL;
+		sensor->status = SENSOR_S_WARN;
+		break;
+
+	case MFI_LD_ONLINE:
+		sensor->value = SENSOR_DRIVE_ONLINE;
+		sensor->status = SENSOR_S_OK;
+		break;
+
+	default:
+		sensor->value = 0; /* unknown */
+		sensor->status = SENSOR_S_UNKNOWN;
+		break;
+	}
+}
+
+void
+mfii_init_ld_sensor(struct mfii_softc *sc, int ld)
 {
 	struct device		*dev;
 	struct scsi_link	*link;
-	int			i;
+	struct ksensor		*sensor;
+	int			target;
+
+	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
+	sensor = &sc->sc_sensors[target];
+
+	link = scsi_get_link(sc->sc_scsibus, target, 0);
+	if (link == NULL) {
+		strlcpy(sensor->desc, "cache", sizeof(sensor->desc));
+	} else {
+		dev = link->device_softc;
+		if (dev != NULL)
+			strlcpy(sensor->desc, dev->dv_xname,
+			    sizeof(sensor->desc));
+	}
+	sensor->type = SENSOR_DRIVE;
+	mfii_refresh_ld_sensor(sc, ld);
+}
+
+int
+mfii_create_sensors(struct mfii_softc *sc)
+{
+	int			i, target;
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -3681,29 +3744,15 @@ mfii_create_sensors(struct mfii_softc *sc)
 		}
 	}
 
-	sc->sc_sensors = mallocarray(sc->sc_ld_cnt, sizeof(struct ksensor),
+	sc->sc_sensors = mallocarray(MFI_MAX_LD, sizeof(struct ksensor),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 
-	for (i = 0; i < sc->sc_ld_cnt; i++) {
-		link = scsi_get_link(sc->sc_scsibus, i, 0);
-
-		if (link == NULL) {
-			strlcpy(sc->sc_sensors[i].desc, "cache",
-			    sizeof(sc->sc_sensors[i].desc));
-		} else {
-			dev = link->device_softc;
-			if (dev == NULL)
-				continue;
-
-			strlcpy(sc->sc_sensors[i].desc, dev->dv_xname,
-			    sizeof(sc->sc_sensors[i].desc));
-		}
-
-		sc->sc_sensors[i].type = SENSOR_DRIVE;
-		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
-		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
+		mfii_init_ld_sensor(sc, i);
+		target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[target]);
 	}
 
 	if (sensor_task_register(sc, mfii_refresh_sensors, 10) == NULL)
@@ -3715,7 +3764,7 @@ mfii_create_sensors(struct mfii_softc *sc)
 
 bad:
 	free(sc->sc_sensors, M_DEVBUF,
-	    sc->sc_ld_cnt * sizeof(struct ksensor));
+	    MFI_MAX_LD * sizeof(struct ksensor));
 
 	return (1);
 }
@@ -3724,51 +3773,17 @@ void
 mfii_refresh_sensors(void *arg)
 {
 	struct mfii_softc	*sc = arg;
-	int			i, rv;
-	struct bioc_vol		bv;
+	int			i;
 
+	rw_enter_write(&sc->sc_lock);
 	if (sc->sc_bbu != NULL)
 		mfii_bbu(sc);
 
-	for (i = 0; i < sc->sc_ld_cnt; i++) {
-		bzero(&bv, sizeof(bv));
-		bv.bv_volid = i;
+	mfii_bio_getitall(sc);
+	rw_exit_write(&sc->sc_lock);
 
-		rw_enter_write(&sc->sc_lock);
-		rv = mfii_ioctl_vol(sc, &bv);
-		rw_exit_write(&sc->sc_lock);
-
-		if (rv != 0) {
-			sc->sc_sensors[i].value = 0; /* unknown */
-			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
-			continue;
-		}
-
-		switch(bv.bv_status) {
-		case BIOC_SVOFFLINE:
-			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
-			sc->sc_sensors[i].status = SENSOR_S_CRIT;
-			break;
-
-		case BIOC_SVDEGRADED:
-			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
-			sc->sc_sensors[i].status = SENSOR_S_WARN;
-			break;
-
-		case BIOC_SVSCRUB:
-		case BIOC_SVONLINE:
-			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
-			sc->sc_sensors[i].status = SENSOR_S_OK;
-			break;
-
-		case BIOC_SVINVALID:
-			/* FALLTRHOUGH */
-		default:
-			sc->sc_sensors[i].value = 0; /* unknown */
-			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
-			break;
-		}
-	}
+	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++)
+		mfii_refresh_ld_sensor(sc, i);
 }
 #endif /* SMALL_KERNEL */
 #endif /* NBIO > 0 */
