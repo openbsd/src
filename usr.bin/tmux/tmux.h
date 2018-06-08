@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.825 2018/05/24 09:42:49 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.826 2018/06/08 20:54:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2203,6 +2203,9 @@ void		 layout_free_cell(struct layout_cell *);
 void		 layout_print_cell(struct layout_cell *, const char *, u_int);
 void		 layout_destroy_cell(struct window *, struct layout_cell *,
 		     struct layout_cell **);
+void		 layout_resize_layout(struct window *, struct layout_cell *,
+		     enum layout_type, int, int);
+struct layout_cell *layout_search_by_border(struct layout_cell *, u_int, u_int);
 void		 layout_set_size(struct layout_cell *, u_int, u_int, u_int,
 		     u_int);
 void		 layout_make_leaf(struct layout_cell *, struct window_pane *);
