@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.56 2018/06/08 07:09:50 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.57 2018/06/08 07:14:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -465,6 +465,7 @@ void			mfii_aen_pd_remove(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
 void			mfii_aen_pd_state_change(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_state *);
+void			mfii_aen_ld_update(struct mfii_softc *);
 
 #if NBIO > 0
 int		mfii_ioctl(struct device *, u_long, caddr_t);
@@ -1186,6 +1187,11 @@ mfii_aen(void *arg)
 		mfii_aen_pd_state_change(sc, &med->args.pd_state);
 		break;
 
+	case MFI_EVT_LD_CREATED:
+	case MFI_EVT_LD_DELETED:
+		mfii_aen_ld_update(sc);
+		break;
+
 	default:
 		break;
 	}
@@ -1257,6 +1263,60 @@ mfii_aen_pd_state_change(struct mfii_softc *sc,
 
 		scsi_probe_target(sc->sc_pd->pd_scsibus, target);
 	}
+}
+
+void
+mfii_aen_ld_update(struct mfii_softc *sc)
+{
+	int i, state, target, old, nld;
+	int newlds[MFI_MAX_LD];
+
+	if (mfii_mgmt(sc, MR_DCMD_LD_GET_LIST, NULL, &sc->sc_ld_list,
+	    sizeof(sc->sc_ld_list), SCSI_DATA_IN) != 0) {
+		DNPRINTF(MFII_D_MISC, "%s: getting list of logical disks failed\n",
+		    DEVNAME(sc));
+		return;
+	}
+
+	memset(newlds, -1, sizeof(newlds));
+
+	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
+		state = sc->sc_ld_list.mll_list[i].mll_state;
+		target = sc->sc_ld_list.mll_list[i].mll_ld.mld_target;
+		DNPRINTF(MFII_D_MISC, "%s: target %d: state %d\n",
+		    DEVNAME(sc), target, state);
+		newlds[target] = i;
+	}
+
+	for (i = 0; i < MFI_MAX_LD; i++) {
+		old = sc->sc_target_lds[i];
+		nld = newlds[i];
+		
+		if (old == -1 && nld != -1) {
+			DNPRINTF(MFII_D_MISC, "%s: attaching target %d\n",
+			    DEVNAME(sc), i);
+
+			scsi_probe_target(sc->sc_scsibus, i);
+
+#ifndef SMALL_KERNEL
+			mfii_init_ld_sensor(sc, nld);
+			sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+#endif
+		} else if (nld == -1 && old != -1) {
+			DNPRINTF(MFII_D_MISC, "%s: detaching target %d\n",
+			    DEVNAME(sc), i);
+
+			scsi_activate(sc->sc_scsibus, i, -1,
+			    DVACT_DEACTIVATE);
+			scsi_detach_target(sc->sc_scsibus, i,
+			    DETACH_FORCE);
+#ifndef SMALL_KERNEL
+			sensor_detach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+#endif
+		}
+	}
+
+	memcpy(sc->sc_target_lds, newlds, sizeof(sc->sc_target_lds));
 }
 
 void
