@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.111 2018/05/24 09:42:49 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.112 2018/06/08 09:41:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -202,17 +202,27 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		sy = 24;
 	}
 	if ((is_control || detached) && args_has(args, 'x')) {
-		sx = strtonum(args_get(args, 'x'), 1, USHRT_MAX, &errstr);
-		if (errstr != NULL) {
-			cmdq_error(item, "width %s", errstr);
-			goto error;
+		tmp = args_get(args, 'x');
+		if (strcmp(tmp, "-") == 0)
+			sx = c->tty.sx;
+		else {
+			sx = strtonum(tmp, 1, USHRT_MAX, &errstr);
+			if (errstr != NULL) {
+				cmdq_error(item, "width %s", errstr);
+				goto error;
+			}
 		}
 	}
 	if ((is_control || detached) && args_has(args, 'y')) {
-		sy = strtonum(args_get(args, 'y'), 1, USHRT_MAX, &errstr);
-		if (errstr != NULL) {
-			cmdq_error(item, "height %s", errstr);
-			goto error;
+		tmp = args_get(args, 'y');
+		if (strcmp(tmp, "-") == 0)
+			sy = c->tty.sy;
+		else {
+			sy = strtonum(tmp, 1, USHRT_MAX, &errstr);
+			if (errstr != NULL) {
+				cmdq_error(item, "height %s", errstr);
+				goto error;
+			}
 		}
 	}
 	if (sx == 0)
