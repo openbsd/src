@@ -1,4 +1,4 @@
-/* $OpenBSD: dhtest.c,v 1.1 2018/06/02 17:46:04 jsing Exp $ */
+/* $OpenBSD: dhtest.c,v 1.2 2018/06/08 17:28:36 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -21,9 +21,64 @@
 
 #include <csi.h>
 
+struct dh_params_test {
+	const char *name;
+	struct csi_dh_params *(*func)(void);
+};
+
+struct dh_params_test dh_params_tests[] = {
+	{
+		.name = "modp group1",
+		.func = csi_dh_params_modp_group1,
+	},
+	{
+		.name = "modp group2",
+		.func = csi_dh_params_modp_group2,
+	},
+	{
+		.name = "modp group5",
+		.func = csi_dh_params_modp_group5,
+	},
+	{
+		.name = "modp group14",
+		.func = csi_dh_params_modp_group14,
+	},
+	{
+		.name = "modp group15",
+		.func = csi_dh_params_modp_group15,
+	},
+	{
+		.name = "modp group16",
+		.func = csi_dh_params_modp_group16,
+	},
+	{
+		.name = "modp group17",
+		.func = csi_dh_params_modp_group17,
+	},
+	{
+		.name = "modp group18",
+		.func = csi_dh_params_modp_group18,
+	},
+};
+
+#define N_DH_PARAMS_TESTS \
+    (sizeof(dh_params_tests) / sizeof(*dh_params_tests))
+
 static int
 dh_params_test(void)
 {
+	struct csi_dh_params *params;
+	size_t i;
+
+	for (i = 0; i < N_DH_PARAMS_TESTS; i++) {
+		if ((params = dh_params_tests[i].func()) == NULL) {
+			fprintf(stderr, "FAIL: %s params failed\n",
+			    dh_params_tests[i].name);
+			return 1;
+		}
+		csi_dh_params_free(params);
+	}
+
 	return 0;
 }
 
