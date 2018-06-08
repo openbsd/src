@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.6 2016/10/20 05:29:55 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.7 2018/06/08 06:21:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,7 +115,6 @@ struct resamp {
 	unsigned int ctx_start;
 	adata_t ctx[NCHAN_MAX * RESAMP_NCTX];
 	unsigned int iblksz, oblksz;
-	int diff;
 	int nch;
 };
 
@@ -146,7 +145,7 @@ int aparams_strtoenc(struct aparams *, char *);
 int aparams_enctostr(struct aparams *, char *);
 int aparams_native(struct aparams *);
 
-int resamp_do(struct resamp *, adata_t *, adata_t *, int);
+void resamp_do(struct resamp *, adata_t *, adata_t *, int);
 void resamp_init(struct resamp *, unsigned int, unsigned int, int);
 void enc_do(struct conv *, unsigned char *, unsigned char *, int);
 void enc_sil_do(struct conv *, unsigned char *, int);
