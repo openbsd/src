@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.1 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.2 2018/06/08 15:38:15 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -57,7 +57,7 @@ enum lock_class_index {
 };
 
 struct lock_object {
-	struct lock_type	*lo_type;
+	const struct lock_type	*lo_type;
 	const char		*lo_name;	/* Individual lock name. */
 	struct witness		*lo_witness;	/* Data for witness. */
 	uint32_t		 lo_flags;

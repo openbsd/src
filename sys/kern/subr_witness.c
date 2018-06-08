@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.18 2018/06/01 15:48:19 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.19 2018/06/08 15:38:15 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -226,7 +226,7 @@ struct lock_list_entry {
  * (for example, "vnode interlock").
  */
 struct witness {
-	struct lock_type	*w_type;
+	const struct lock_type	*w_type;
 	const char		*w_subtype;
 	uint32_t		w_index;  /* Index in the relationship matrix */
 	struct lock_class	*w_class;
@@ -282,7 +282,7 @@ struct witness_lock_order_hash {
 };
 
 struct witness_pendhelp {
-	struct lock_type	*wh_type;
+	const struct lock_type	*wh_type;
 	struct lock_object	*wh_lock;
 };
 
@@ -315,7 +315,7 @@ witness_lock_order_key_equal(const struct witness_lock_order_key *a,
 static int	_isitmyx(struct witness *w1, struct witness *w2, int rmask,
 		    const char *fname);
 static void	adopt(struct witness *parent, struct witness *child);
-static struct witness	*enroll(struct lock_type *, const char *,
+static struct witness	*enroll(const struct lock_type *, const char *,
 			    struct lock_class *);
 static struct lock_instance	*find_instance(struct lock_list_entry *list,
 				    const struct lock_object *lock);
@@ -337,7 +337,8 @@ static void	witness_debugger(int dump);
 static void	witness_free(struct witness *m);
 static struct witness	*witness_get(void);
 static uint32_t	witness_hash_djb2(const uint8_t *key, uint32_t size);
-static struct witness	*witness_hash_get(struct lock_type *, const char *);
+static struct witness	*witness_hash_get(const struct lock_type *,
+		    const char *);
 static void	witness_hash_put(struct witness *w);
 static void	witness_init_hash_tables(void);
 static void	witness_increment_graph_generation(void);
@@ -528,7 +529,7 @@ witness_initialize(void)
 }
 
 void
-witness_init(struct lock_object *lock, struct lock_type *type)
+witness_init(struct lock_object *lock, const struct lock_type *type)
 {
 	struct lock_class *class;
 
@@ -1475,7 +1476,7 @@ witness_line(struct lock_object *lock)
 }
 
 static struct witness *
-enroll(struct lock_type *type, const char *subtype,
+enroll(const struct lock_type *type, const char *subtype,
     struct lock_class *lock_class)
 {
 	struct witness *w;
@@ -2369,7 +2370,7 @@ witness_init_hash_tables(void)
 }
 
 static struct witness *
-witness_hash_get(struct lock_type *type, const char *subtype)
+witness_hash_get(const struct lock_type *type, const char *subtype)
 {
 	struct witness *w;
 	uint32_t hash;

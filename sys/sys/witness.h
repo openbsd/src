@@ -1,4 +1,4 @@
-/*	$OpenBSD: witness.h,v 1.2 2018/05/16 14:53:43 visa Exp $	*/
+/*	$OpenBSD: witness.h,v 1.3 2018/06/08 15:38:15 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -70,7 +70,7 @@
 #ifdef _KERNEL
 
 void	witness_initialize(void);
-void	witness_init(struct lock_object *, struct lock_type *);
+void	witness_init(struct lock_object *, const struct lock_type *);
 int	witness_defineorder(struct lock_object *, struct lock_object *);
 void	witness_checkorder(struct lock_object *, int, const char *, int,
 	    struct lock_object *);

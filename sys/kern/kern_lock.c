@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.64 2018/05/14 12:31:21 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.65 2018/06/08 15:38:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -91,7 +91,7 @@ _kernel_lock_held(void)
 #include <machine/cpu.h>
 
 void
-___mp_lock_init(struct __mp_lock *mpl, struct lock_type *type)
+___mp_lock_init(struct __mp_lock *mpl, const struct lock_type *type)
 {
 	memset(mpl->mpl_cpus, 0, sizeof(mpl->mpl_cpus));
 	mpl->mpl_users = 0;
@@ -374,7 +374,7 @@ __mtx_leave(struct mutex *mtx)
 #ifdef WITNESS
 void
 _mtx_init_flags(struct mutex *m, int ipl, const char *name, int flags,
-    struct lock_type *type)
+    const struct lock_type *type)
 {
 	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
 

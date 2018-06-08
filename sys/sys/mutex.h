@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.14 2018/03/27 08:32:29 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.15 2018/06/08 15:38:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -104,7 +104,7 @@ void __mtx_init(struct mutex *, int);
 #define __MTX_NAME __FILE__ ":" __MTX_S(__LINE__)
 
 #define MTX_LO_INITIALIZER(name, flags) \
-	{ .lo_type = &(struct lock_type){ .lt_name = __MTX_NAME }, \
+	{ .lo_type = &(const struct lock_type){ .lt_name = __MTX_NAME }, \
 	  .lo_name = (name) != NULL ? (name) : __MTX_NAME, \
 	  .lo_flags = MTX_LO_FLAGS(flags) }
 
@@ -133,14 +133,14 @@ void	__mtx_leave(struct mutex *);
 #ifdef WITNESS
 
 void	_mtx_init_flags(struct mutex *, int, const char *, int,
-	    struct lock_type *);
+	    const struct lock_type *);
 
 void	_mtx_enter(struct mutex *, const char *, int);
 int	_mtx_enter_try(struct mutex *, const char *, int);
 void	_mtx_leave(struct mutex *, const char *, int);
 
 #define mtx_init_flags(m, ipl, name, flags) do {			\
-	static struct lock_type __lock_type = { .lt_name = #m };	\
+	static const struct lock_type __lock_type = { .lt_name = #m };	\
 	_mtx_init_flags(m, ipl, name, flags, &__lock_type);		\
 } while (0)
 

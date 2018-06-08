@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.23 2018/06/04 04:46:07 guenther Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.24 2018/06/08 15:38:15 guenther Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -81,7 +81,7 @@ struct rwlock {
 	 (LO_CLASS_RRWLOCK << LO_CLASSSHIFT))
 
 #define RWLOCK_LO_INITIALIZER(name, flags) \
-	{ .lo_type = &(struct lock_type){ .lt_name = name },		\
+	{ .lo_type = &(const struct lock_type){ .lt_name = name },	\
 	  .lo_name = (name),						\
 	  .lo_flags = RWLOCK_LO_FLAGS(flags) }
 
@@ -132,11 +132,12 @@ struct rrwlock {
 
 #ifdef _KERNEL
 
-void	_rw_init_flags(struct rwlock *, const char *, int, struct lock_type *);
+void	_rw_init_flags(struct rwlock *, const char *, int,
+	    const struct lock_type *);
 
 #ifdef WITNESS
 #define rw_init_flags(rwl, name, flags) do {				\
-	static struct lock_type __lock_type = { .lt_name = #rwl };	\
+	static const struct lock_type __lock_type = { .lt_name = #rwl };\
 	_rw_init_flags(rwl, name, flags, &__lock_type);			\
 } while (0)
 #define rw_init(rwl, name)	rw_init_flags(rwl, name, 0)
@@ -175,14 +176,15 @@ int	rw_status(struct rwlock *);
 #define rw_enter(rwl, flags)	_rw_enter(rwl, flags LOCK_FILE_LINE)
 #define rw_exit(rwl)		_rw_exit(rwl LOCK_FILE_LINE)
 
-void	_rrw_init_flags(struct rrwlock *, char *, int, struct lock_type *);
+void	_rrw_init_flags(struct rrwlock *, char *, int,
+	    const struct lock_type *);
 int	_rrw_enter(struct rrwlock *, int LOCK_FL_VARS);
 void	_rrw_exit(struct rrwlock * LOCK_FL_VARS);
 int	rrw_status(struct rrwlock *);
 
 #ifdef WITNESS
 #define rrw_init_flags(rrwl, name, flags) do {				\
-	static struct lock_type __lock_type = { .lt_name = #rrwl };	\
+	static const struct lock_type __lock_type = { .lt_name = #rrwl };\
 	_rrw_init_flags(rrwl, name, flags, &__lock_type);		\
 } while (0)
 #define rrw_init(rrwl, name)	rrw_init_flags(rrwl, name, 0)

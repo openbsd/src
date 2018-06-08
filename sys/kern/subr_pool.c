@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.222 2018/02/06 22:35:32 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.223 2018/06/08 15:38:15 guenther Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ struct pool phpool;
 
 struct pool_lock_ops {
 	void	(*pl_init)(struct pool *, union pool_lock *,
-		    struct lock_type *);
+		    const struct lock_type *);
 	void	(*pl_enter)(union pool_lock * LOCK_FL_VARS);
 	int	(*pl_enter_try)(union pool_lock * LOCK_FL_VARS);
 	void	(*pl_leave)(union pool_lock * LOCK_FL_VARS);
@@ -91,7 +91,7 @@ static const struct pool_lock_ops pool_lock_ops_rw;
 
 #ifdef WITNESS
 #define pl_init(pp, pl) do {						\
-	static struct lock_type __lock_type = { .lt_name = #pl };	\
+	static const struct lock_type __lock_type = { .lt_name = #pl };	\
 	(pp)->pr_lock_ops->pl_init(pp, pl, &__lock_type);		\
 } while (0)
 #else /* WITNESS */
@@ -2190,7 +2190,7 @@ pool_cache_cpus_info(struct pool *pp, void *oldp, size_t *oldlenp)
 
 void
 pool_lock_mtx_init(struct pool *pp, union pool_lock *lock,
-    struct lock_type *type)
+    const struct lock_type *type)
 {
 	_mtx_init_flags(&lock->prl_mtx, pp->pr_ipl, pp->pr_wchan, 0, type);
 }
@@ -2244,7 +2244,7 @@ static const struct pool_lock_ops pool_lock_ops_mtx = {
 
 void
 pool_lock_rw_init(struct pool *pp, union pool_lock *lock,
-    struct lock_type *type)
+    const struct lock_type *type)
 {
 	_rw_init_flags(&lock->prl_rwlock, pp->pr_wchan, 0, type);
 }
