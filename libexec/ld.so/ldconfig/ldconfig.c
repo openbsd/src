@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.37 2018/04/26 12:42:50 guenther Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.38 2018/06/08 19:24:46 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -386,7 +386,10 @@ buildhints(void)
 		warn("%s", tmpfilenam);
 		goto out;
 	}
-	fchmod(fd, 0444);
+	if (fchmod(fd, 0444) == -1) {
+		warn("%s: failed to change mode", tmpfilenam);
+		goto out;
+	}
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
