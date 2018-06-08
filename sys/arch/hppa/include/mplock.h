@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.3 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.4 2018/06/08 15:38:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -56,10 +56,10 @@ int	__mp_lock_held(struct __mp_lock *, struct cpu_info *);
 
 #ifdef WITNESS
 
-void	_mp_lock_init(struct __mp_lock *, struct lock_type *);
+void	_mp_lock_init(struct __mp_lock *, const struct lock_type *);
 
 #define __mp_lock_init(mpl) do {					\
-	static struct lock_type __lock_type = { .lt_name = #mpl };	\
+	static const struct lock_type __lock_type = { .lt_name = #mpl };\
 	_mp_lock_init((mpl), &__lock_type);				\
 } while (0)
 
