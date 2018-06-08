@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.33 2018/05/22 12:52:14 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.34 2018/06/08 23:43:40 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -850,9 +850,9 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_UID ||
 	    io->fi_flags & FUSE_FATTR_GID) ) {
 		uid = (io->fi_flags & FUSE_FATTR_UID) ?
-		    fbuf->fb_attr.st_uid : (gid_t)-1;
+		    fbuf->fb_attr.st_uid : (uid_t)-1;
 		gid = (io->fi_flags & FUSE_FATTR_GID) ?
-		    fbuf->fb_attr.st_gid : (uid_t)-1;
+		    fbuf->fb_attr.st_gid : (gid_t)-1;
 		if (f->op.chown)
 			fbuf->fb_err = f->op.chown(realname, uid, gid);
 		else
@@ -861,16 +861,16 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 
 	if (!fbuf->fb_err && ( io->fi_flags & FUSE_FATTR_MTIME ||
 		io->fi_flags & FUSE_FATTR_ATIME)) {
-		ts[0] = fbuf->fb_attr.st_atim;
-		ts[1] = fbuf->fb_attr.st_mtim;
-		tbuf.actime = ts[0].tv_sec;
-		tbuf.modtime = ts[1].tv_sec;
 
-		if (f->op.utimens)
+		if (f->op.utimens) {
+			ts[0] = fbuf->fb_attr.st_atim;
+			ts[1] = fbuf->fb_attr.st_mtim;
 			fbuf->fb_err = f->op.utimens(realname, ts);
-		else if (f->op.utime)
+		} else if (f->op.utime) {
+			tbuf.actime = fbuf->fb_attr.st_atim.tv_sec;
+			tbuf.modtime = fbuf->fb_attr.st_mtim.tv_sec;
 			fbuf->fb_err = f->op.utime(realname, &tbuf);
-		else
+		} else
 			fbuf->fb_err = -ENOSYS;
 	}
 
