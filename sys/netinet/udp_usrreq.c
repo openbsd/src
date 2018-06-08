@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.248 2018/05/14 15:24:23 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.249 2018/06/08 14:09:57 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -132,6 +132,9 @@ int *udpctl_vars[UDPCTL_MAXID] = UDPCTL_VARS;
 struct	inpcbtable udbtable;
 struct	cpumem *udpcounters;
 
+void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
+	    struct ip6_hdr *, int, struct udphdr *, struct sockaddr *,
+	    u_int32_t);
 int	udp_output(struct inpcb *, struct mbuf *, struct mbuf *, struct mbuf *);
 void	udp_notify(struct inpcb *, int);
 int	udp_sysctl_udpstat(void *, size_t *, void *);
@@ -155,7 +158,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip *ip = NULL;
 	struct udphdr *uh;
 	struct inpcb *inp = NULL;
-	struct mbuf *opts = NULL;
 	struct ip save_ip;
 	int len;
 	u_int16_t savesum;
@@ -166,18 +168,14 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		struct sockaddr_in6 sin6;
 #endif /* INET6 */
 	} srcsa, dstsa;
-#ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
-#endif /* INET6 */
 #ifdef IPSEC
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
 	int error, protoff;
 #endif /* IPSEC */
-#if defined(IPSEC) || defined(PIPEX)
 	u_int32_t ipsecflowinfo = 0;
-#endif /* define(IPSEC) || defined(PIPEX) */
 
 	udpstat_inc(udps_ipackets);
 
@@ -376,8 +374,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * fixing the interface.  Maybe 4.5BSD will remedy this?)
 		 */
 
-		iphlen += sizeof(struct udphdr);
-
 		/*
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
@@ -442,30 +438,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 				if (n != NULL) {
-#ifdef INET6
-					if (ip6 && (last->inp_flags &
-					    IN6P_CONTROLOPTS ||
-					    last->inp_socket->so_options &
-					    SO_TIMESTAMP))
-						ip6_savecontrol(last, n, &opts);
-#endif /* INET6 */
-					if (ip && (last->inp_flags &
-					    INP_CONTROLOPTS ||
-					    last->inp_socket->so_options &
-					    SO_TIMESTAMP))
-						ip_savecontrol(last, &opts,
-						    ip, n);
-
-					m_adj(n, iphlen);
-					if (sbappendaddr(last->inp_socket,
-					    &last->inp_socket->so_rcv,
-					    &srcsa.sa, n, opts) == 0) {
-						m_freem(n);
-						m_freem(opts);
-						udpstat_inc(udps_fullsock);
-					} else
-						sorwakeup(last->inp_socket);
-					opts = NULL;
+					udp_sbappend(last, n, ip, ip6, iphlen,
+					    uh, &srcsa.sa, 0);
 				}
 			}
 			last = inp;
@@ -492,22 +466,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			goto bad;
 		}
 
-#ifdef INET6
-		if (ip6 && (last->inp_flags & IN6P_CONTROLOPTS ||
-		    last->inp_socket->so_options & SO_TIMESTAMP))
-			ip6_savecontrol(last, m, &opts);
-#endif /* INET6 */
-		if (ip && (last->inp_flags & INP_CONTROLOPTS ||
-		    last->inp_socket->so_options & SO_TIMESTAMP))
-			ip_savecontrol(last, &opts, ip, m);
-
-		m_adj(m, iphlen);
-		if (sbappendaddr(last->inp_socket, &last->inp_socket->so_rcv,
-		    &srcsa.sa, m, opts) == 0) {
-			udpstat_inc(udps_fullsock);
-			goto bad;
-		}
-		sorwakeup(last->inp_socket);
+		udp_sbappend(last, m, ip, ip6, iphlen, uh, &srcsa.sa, 0);
 		return IPPROTO_DONE;
 	}
 	/*
@@ -597,14 +556,42 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		ipsecflowinfo = tdb->tdb_ids->id_flow;
 #endif /*IPSEC */
 
-	opts = NULL;
+#ifdef PIPEX
+	if (pipex_enable && inp->inp_pipex) {
+		struct pipex_session *session;
+		int off = iphlen + sizeof(struct udphdr);
+		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
+			if ((m = *mp = pipex_l2tp_input(m, off, session,
+			    ipsecflowinfo)) == NULL) {
+				/* the packet is handled by PIPEX */
+				return IPPROTO_DONE;
+			}
+		}
+	}
+#endif
+
+	udp_sbappend(inp, m, ip, ip6, iphlen, uh, &srcsa.sa, ipsecflowinfo);
+	return IPPROTO_DONE;
+bad:
+	m_freem(m);
+	return IPPROTO_DONE;
+}
+
+void
+udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
+    struct ip6_hdr *ip6, int iphlen, struct udphdr *uh,
+    struct sockaddr *srcaddr, u_int32_t ipsecflowinfo)
+{
+	struct socket *so = inp->inp_socket;
+	struct mbuf *opts = NULL;
+
 #ifdef INET6
 	if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS ||
-	    inp->inp_socket->so_options & SO_TIMESTAMP))
+	    so->so_options & SO_TIMESTAMP))
 		ip6_savecontrol(inp, m, &opts);
 #endif /* INET6 */
 	if (ip && (inp->inp_flags & INP_CONTROLOPTS ||
-	    inp->inp_socket->so_options & SO_TIMESTAMP))
+	    so->so_options & SO_TIMESTAMP))
 		ip_savecontrol(inp, &opts, ip, m);
 #ifdef INET6
 	if (ip6 && (inp->inp_flags & IN6P_RECVDSTPORT)) {
@@ -634,34 +621,14 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		    sizeof(u_int32_t), IP_IPSECFLOWINFO, IPPROTO_IP);
 	}
 #endif
-#ifdef PIPEX
-	if (pipex_enable && inp->inp_pipex) {
-		struct pipex_session *session;
-		int off = iphlen + sizeof(struct udphdr);
-		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
-			if ((m = *mp = pipex_l2tp_input(m, off, session,
-			    ipsecflowinfo)) == NULL) {
-				m_freem(opts);
-				/* the packet is handled by PIPEX */
-				return IPPROTO_DONE;
-			}
-		}
-	}
-#endif
-
-	iphlen += sizeof(struct udphdr);
-	m_adj(m, iphlen);
-	if (sbappendaddr(inp->inp_socket, &inp->inp_socket->so_rcv, &srcsa.sa,
-	    m, opts) == 0) {
+	m_adj(m, iphlen + sizeof(struct udphdr));
+	if (sbappendaddr(so, &so->so_rcv, srcaddr, m, opts) == 0) {
 		udpstat_inc(udps_fullsock);
-		goto bad;
+		m_freem(m);
+		m_freem(opts);
+		return;
 	}
-	sorwakeup(inp->inp_socket);
-	return IPPROTO_DONE;
-bad:
-	m_freem(m);
-	m_freem(opts);
-	return IPPROTO_DONE;
+	sorwakeup(so);
 }
 
 /*
