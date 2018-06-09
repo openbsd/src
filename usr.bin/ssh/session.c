@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.298 2018/06/06 18:29:18 markus Exp $ */
+/* $OpenBSD: session.c,v 1.299 2018/06/09 02:58:02 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -861,6 +861,19 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 	if (getenv("TZ"))
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
+	if (s->term)
+		child_set_env(&env, &envsize, "TERM", s->term);
+	if (s->display)
+		child_set_env(&env, &envsize, "DISPLAY", s->display);
+#ifdef KRB5
+	if (s->authctxt->krb5_ticket_file)
+		child_set_env(&env, &envsize, "KRB5CCNAME",
+		    s->authctxt->krb5_ticket_file);
+#endif
+	if (auth_sock_name != NULL)
+		child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME,
+		    auth_sock_name);
+
 
 	/* Set custom environment options from pubkey authentication. */
 	if (options.permit_user_env) {
@@ -873,6 +886,13 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 			}
 			free(ocp);
 		}
+	}
+
+	/* read $HOME/.ssh/environment. */
+	if (options.permit_user_env) {
+		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
+		    pw->pw_dir);
+		read_environment_file(&env, &envsize, buf);
 	}
 
 	/* SSH_CLIENT deprecated */
@@ -894,28 +914,10 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		child_set_env(&env, &envsize, "SSH_USER_AUTH", auth_info_file);
 	if (s->ttyfd != -1)
 		child_set_env(&env, &envsize, "SSH_TTY", s->tty);
-	if (s->term)
-		child_set_env(&env, &envsize, "TERM", s->term);
-	if (s->display)
-		child_set_env(&env, &envsize, "DISPLAY", s->display);
 	if (original_command)
 		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
 		    original_command);
-#ifdef KRB5
-	if (s->authctxt->krb5_ticket_file)
-		child_set_env(&env, &envsize, "KRB5CCNAME",
-		    s->authctxt->krb5_ticket_file);
-#endif
-	if (auth_sock_name != NULL)
-		child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME,
-		    auth_sock_name);
 
-	/* read $HOME/.ssh/environment. */
-	if (options.permit_user_env) {
-		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
-		    pw->pw_dir);
-		read_environment_file(&env, &envsize, buf);
-	}
 	if (debug_flag) {
 		/* dump the environment */
 		fprintf(stderr, "Environment:\n");
