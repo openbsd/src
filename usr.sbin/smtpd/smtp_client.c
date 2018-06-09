@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.4 2018/05/24 11:01:30 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.5 2018/06/09 10:01:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -73,6 +73,7 @@ enum {
 #define SMTP_EXT_AUTH_PLAIN     0x08
 #define SMTP_EXT_AUTH_LOGIN     0x10
 #define SMTP_EXT_DSN		0x20
+#define SMTP_EXT_SIZE		0x40
 
 struct smtp_client {
 	void			*tag;
@@ -81,6 +82,7 @@ struct smtp_client {
 	int			 state;
 	int			 flags;
 	int			 ext;
+	size_t			 ext_size;
 
 	struct io		*io;
 	char			*reply;
@@ -645,6 +647,7 @@ smtp_client_io(struct io *io, int evt, void *arg)
 static int
 smtp_client_readline(struct smtp_client *proto)
 {
+	const char *e;
 	size_t len;
 	char *line, *msg, *p;
 	int cont;
@@ -702,6 +705,11 @@ smtp_client_readline(struct smtp_client *proto)
 			proto->ext |= SMTP_EXT_PIPELINING;
 		else if (strcmp(msg, "DSN") == 0)
 			proto->ext |= SMTP_EXT_DSN;
+		else if (strncmp(msg, "SIZE ", 5) == 0) {
+			proto->ext_size = strtonum(msg + 5, 0, SIZE_T_MAX, &e);
+			if (e == NULL)
+				proto->ext |= SMTP_EXT_SIZE;
+		}
 	}
 
 	if (smtp_client_replycat(proto, line) == -1) {
