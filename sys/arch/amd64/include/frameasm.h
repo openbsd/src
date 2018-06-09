@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.13 2018/04/26 12:47:02 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.14 2018/06/09 16:51:23 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -96,8 +96,6 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	movl	%cs,%r11d		; \
 	pushq	%r11			; \
 	pushq	%r13			;
-
-#define	INTR_FAKE_TRAP	0xbadabada
 
 #define CHECK_ASTPENDING(reg)	movq	CPUVAR(CURPROC),reg		; \
 				cmpq	$0, reg				; \

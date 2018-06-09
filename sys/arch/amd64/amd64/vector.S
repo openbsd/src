@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.61 2018/06/07 04:09:35 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.62 2018/06/09 16:51:23 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -171,7 +171,75 @@ KUENTRY(calltrap_specstk_tramp)
 	iretq
 
 IDTVEC(trap03)
+#if defined(GPROF) || !defined(DDBPROF)
 	ZTRAP(T_BPTFLT)
+#else /* !defined(GPROF) && defined(DDBPROF) */
+	pushq	$0
+	pushq	$T_BPTFLT
+	INTRENTRY(trap03)
+	sti
+	cld
+	SMAP_CLAC
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	movq	%rsp, %rdi
+	call	_C_LABEL(db_prof_hook)
+	cmpl	$1, %eax
+	jne	recall_trap
+
+	cli
+	movq	TF_RDI(%rsp),%rdi
+	movq	TF_RSI(%rsp),%rsi
+	movq	TF_R8(%rsp),%r8
+	movq	TF_R9(%rsp),%r9
+	movq	TF_R10(%rsp),%r10
+	movq	TF_R12(%rsp),%r12
+	movq	TF_R13(%rsp),%r13
+	movq	TF_R14(%rsp),%r14
+	movq	TF_R15(%rsp),%r15
+	movq	TF_RBP(%rsp),%rbp
+	movq	TF_RBX(%rsp),%rbx
+	movq	TF_RDX(%rsp),%rdx
+	movq	TF_RCX(%rsp),%rcx
+	movq	TF_R11(%rsp),%r11
+	movq	TF_RAX(%rsp),%rax
+
+	/*
+	 * We are returning from a probe trap so we need to fix the
+	 * stack layout and emulate the patched instruction.
+	 *
+	 * The code below does that by trashing %rax, so it MUST be
+	 * restored afterward.
+	 * Reserve enough room to emulate "pushq %rbp".
+	 */
+	subq	$16, %rsp
+
+	/* Shift hardware-saved registers. */
+	movq	(TF_RIP + 16)(%rsp), %rax
+	movq	%rax, TF_RIP(%rsp)
+	movq	(TF_CS + 16)(%rsp), %rax
+	movq	%rax, TF_CS(%rsp)
+	movq	(TF_RFLAGS + 16)(%rsp), %rax
+	movq	%rax, TF_RFLAGS(%rsp)
+	movq	(TF_RSP + 16)(%rsp), %rax
+	movq	%rax, TF_RSP(%rsp)
+	movq	(TF_SS + 16)(%rsp), %rax
+	movq	%rax, TF_SS(%rsp)
+
+	/* Pull 8 bytes off the stack and store %rbp in the expected location.*/
+	movq	TF_RSP(%rsp), %rax
+	subq	$8, %rax
+	movq	%rax, TF_RSP(%rsp)
+	movq	%rbp, (%rax)
+
+	/* Write back overwritten %rax */
+	movq	(TF_RAX + 16)(%rsp),%rax
+
+	addq	$TF_RIP,%rsp
+	iretq
+#endif /* !defined(GPROF) && defined(DDBPROF) */
+
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)	# impossible: INTO instruction invalid in amd64
 IDTVEC(trap05)
@@ -294,23 +362,6 @@ KUENTRY(alltraps)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-#if !defined(GPROF) && defined(DDBPROF)
-	cmpl	$T_BPTFLT,TF_TRAPNO(%rsp)
-	jne	.Lreal_trap
-
-	movq	%rsp, %rdi
-	call	_C_LABEL(db_prof_hook)
-	cmpl	$1, %eax
-	jne	.Lreal_trap
-
-	/*
-	 * Abuse the error field to indicate that intr_fast_exit needs
-	 * to emulate the patched instruction.
-	 */
-	movl	$INTR_FAKE_TRAP, TF_ERR(%rsp)
-	jz	2f
-.Lreal_trap:
-#endif /* !defined(GPROF) && defined(DDBPROF) */
 	.globl	recall_trap
 recall_trap:
 	movq	%rsp, %rdi
