@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.72 2017/08/12 16:27:50 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.73 2018/06/10 14:31:49 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1301,7 +1301,6 @@ append_prefix_lsa(struct lsa **lsa, u_int16_t *len, struct lsa_prefix *prefix)
 	/* Append prefix to LSA. */
 	copy = (struct lsa_prefix *)(new_lsa + *len);
 	memcpy(copy, prefix, lsa_prefix_len);
-	copy->metric = 0;
 
 	*lsa = (struct lsa *)new_lsa;
 	*len = new_len;
@@ -1353,6 +1352,8 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 		bzero(&addr, sizeof(addr));
 		memcpy(&addr, new->prefix + 1,
 		    LSA_PREFIXSIZE(new->prefix->prefixlen));
+
+		new->prefix->metric = 0;
 
 		if (!(IN6_IS_ADDR_LINKLOCAL(&addr)) &&
 		    (new->prefix->options & OSPF_PREFIX_NU) == 0 &&
@@ -1514,6 +1515,7 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 			if (iface->type == IF_TYPE_POINTOMULTIPOINT ||
 			    iface->state & IF_STA_LOOPBACK) {
 				lsa_prefix->prefixlen = 128;
+				lsa_prefix->metric = 0;
 			} else {
 				lsa_prefix->prefixlen = ia->prefixlen;
 				lsa_prefix->metric = htons(iface->metric);
