@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.73 2018/06/10 14:31:49 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.74 2018/06/10 14:39:38 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1363,7 +1363,8 @@ prefix_tree_add(struct prefix_tree *tree, struct lsa_link *lsa)
 				old->prefix->options |= new->prefix->options;
 				free(new);
 			}
-		}
+		} else
+			free(new);
 
 		cur_prefix = cur_prefix + len;
 	}
