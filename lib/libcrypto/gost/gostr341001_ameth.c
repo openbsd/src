@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.12 2018/05/01 19:01:28 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.13 2018/06/10 14:39:49 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -421,21 +421,17 @@ priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 	p = pkey_buf;
 	if (V_ASN1_OCTET_STRING == *p) {
 		/* New format - Little endian octet string */
-		unsigned char rev_buf[32];
-		int i;
 		ASN1_OCTET_STRING *s =
 		    d2i_ASN1_OCTET_STRING(NULL, &p, priv_len);
 
-		if (s == NULL || s->length != 32) {
+		if (s == NULL) {
 			GOSTerror(EVP_R_DECODE_ERROR);
 			ASN1_STRING_free(s);
 			return 0;
 		}
-		for (i = 0; i < 32; i++) {
-			rev_buf[31 - i] = s->data[i];
-		}
+
+		pk_num = GOST_le2bn(s->data, s->length, NULL);
 		ASN1_STRING_free(s);
-		pk_num = BN_bin2bn(rev_buf, 32, NULL);
 	} else {
 		priv_key = d2i_ASN1_INTEGER(NULL, &p, priv_len);
 		if (priv_key == NULL)
