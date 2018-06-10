@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.163 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.164 2018/06/10 15:12:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1030,6 +1030,18 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 
 	term_word(p, title);
 	term_flushln(p);
+
+	/*
+	 * Reset the terminal state for more output after the footer:
+	 * Some output modes, in particular PostScript and PDF, print
+	 * the header and the footer into a buffer such that it can be
+	 * reused for multiple output pages, then go on to format the
+	 * main text.
+	 */
+
+        p->tcol->offset = 0;
+        p->flags = 0;
+
 	free(title);
 }
 
