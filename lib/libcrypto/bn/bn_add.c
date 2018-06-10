@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_add.c,v 1.12 2018/06/10 19:38:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,8 +79,8 @@ BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	 */
 	if (a_neg ^ b->neg) {
 		/* only one is negative */
-		if (a_neg)
-				{ tmp = a;
+		if (a_neg) {
+			tmp = a;
 			a = b;
 			b = tmp;
 		}
