@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.238 2018/04/18 12:10:54 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.239 2018/06/10 20:41:47 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2304,6 +2304,7 @@ relay_tls_handshake(int fd, short event, void *arg)
 	struct relay		*rlay = con->se_relay;
 	int			 retry_flag = 0;
 	int			 ret;
+	char			*msg;
 
 	if (event == EV_TIMEOUT) {
 		relay_close(con, "TLS handshake timeout");
@@ -2355,10 +2356,13 @@ relay_tls_handshake(int fd, short event, void *arg)
 	} else if (ret == TLS_WANT_POLLOUT) {
 		retry_flag = EV_WRITE;
 	} else {
-		log_debug("TLS handshake failed: %s: %s: %s",
-		    rlay->rl_conf.name, __func__,
-		    tls_error(cre->tls));
-		relay_close(con, "TLS handshake error");
+		if (asprintf(&msg, "TLS handshake error: %s",
+		    tls_error(cre->tls)) >= 0) {
+			relay_close(con, msg);
+			free(msg);
+		} else {
+			relay_close(con, "TLS handshake error");
+		}
 		return;
 	}
 
