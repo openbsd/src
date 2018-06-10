@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.180 2018/05/29 01:55:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.181 2018/06/10 16:15:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -747,7 +747,7 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
-	char		 cattr[21];
+	char		 cattr[28];
 	struct tag	*t;
 	struct mdoc_bl	*bl;
 	size_t		 i;
@@ -817,7 +817,7 @@ mdoc_bl_pre(MDOC_ARGS)
 		break;
 	case LIST_tag:
 		if (bl->offs)
-			print_otag(h, TAG_DIV, "cswl", "Bl-tag", bl->offs);
+			print_otag(h, TAG_DIV, "c", "Bd-indent");
 		print_otag(h, TAG_DL, "c", bl->comp ?
 		    "Bl-tag Bl-compact" : "Bl-tag");
 		return 1;
@@ -828,9 +828,11 @@ mdoc_bl_pre(MDOC_ARGS)
 	default:
 		abort();
 	}
+	if (bl->offs != NULL)
+		(void)strlcat(cattr, " Bd-indent", sizeof(cattr));
 	if (bl->comp)
 		(void)strlcat(cattr, " Bl-compact", sizeof(cattr));
-	print_otag(h, elemtype, "cswl", cattr, bl->offs);
+	print_otag(h, elemtype, "c", cattr);
 	return 1;
 }
 
@@ -862,7 +864,7 @@ mdoc_d1_pre(MDOC_ARGS)
 	if (n->type != ROFFT_BLOCK)
 		return 1;
 
-	print_otag(h, TAG_DIV, "c", "D1");
+	print_otag(h, TAG_DIV, "c", "Bd Bd-indent");
 
 	if (n->tok == MDOC_Dl)
 		print_otag(h, TAG_CODE, "c", "Li");
@@ -884,7 +886,7 @@ mdoc_sx_pre(MDOC_ARGS)
 static int
 mdoc_bd_pre(MDOC_ARGS)
 {
-	int			 comp, offs, sv;
+	int			 comp, sv;
 	struct roff_node	*nn;
 
 	if (n->type == ROFFT_HEAD)
@@ -909,18 +911,9 @@ mdoc_bd_pre(MDOC_ARGS)
 
 	if (n->norm->Bd.offs == NULL ||
 	    ! strcmp(n->norm->Bd.offs, "left"))
-		offs = 0;
-	else if ( ! strcmp(n->norm->Bd.offs, "indent"))
-		offs = INDENT;
-	else if ( ! strcmp(n->norm->Bd.offs, "indent-two"))
-		offs = INDENT * 2;
+		print_otag(h, TAG_DIV, "c", "Bd");
 	else
-		offs = -1;
-
-	if (offs == -1)
-		print_otag(h, TAG_DIV, "cswl", "Bd", n->norm->Bd.offs);
-	else
-		print_otag(h, TAG_DIV, "cshl", "Bd", offs);
+		print_otag(h, TAG_DIV, "c", "Bd Bd-indent");
 
 	if (n->norm->Bd.type != DISP_unfilled &&
 	    n->norm->Bd.type != DISP_literal)

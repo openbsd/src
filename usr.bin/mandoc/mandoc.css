@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.19 2018/05/28 15:39:20 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.20 2018/06/10 16:15:40 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -68,7 +68,7 @@ div.manual-text {
 /* Displays and lists. */
 
 .Bd { }
-.D1 {		margin-left: 3.8em; }
+.Bd-indent {	margin-left: 3.8em; }
 
 ul.Bl-bullet {	list-style-type: disc;
 		padding-left: 1em; }
@@ -239,7 +239,7 @@ a.In { }
 div.manual-text {
 		margin-left: 0.5em; }
 .Sh, .Ss {	margin-left: 0em; }
-.D1 {		margin-left: 2em; }
+.Bd-indent {	margin-left: 2em; }
 dl.Bl-hang > dd {
 		margin-left: 2em; }
 dl.Bl-tag {	margin-left: 2em; }
