@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.34 2018/06/03 15:33:37 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.35 2018/06/10 13:50:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1724,21 +1724,17 @@ ssl3_send_certificate_request(SSL *s)
 }
 
 static int
-ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 {
 	unsigned char fakekey[SSL_MAX_MASTER_KEY_LENGTH];
 	unsigned char *pms = NULL;
+	unsigned char *p;
 	size_t pms_len = 0;
 	EVP_PKEY *pkey = NULL;
 	RSA *rsa = NULL;
-	CBS cbs, enc_pms;
+	CBS enc_pms;
 	int decrypt_len;
 	int al = -1;
-
-	if (n < 0)
-		goto err;
-
-	CBS_init(&cbs, p, n);
 
 	arc4random_buf(fakekey, sizeof(fakekey));
 	fakekey[0] = s->client_version >> 8;
@@ -1760,9 +1756,9 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 		goto err;
 	p = pms;
 
-	if (!CBS_get_u16_length_prefixed(&cbs, &enc_pms))
+	if (!CBS_get_u16_length_prefixed(cbs, &enc_pms))
 		goto truncated;
-	if (CBS_len(&cbs) != 0 || CBS_len(&enc_pms) != RSA_size(rsa)) {
+	if (CBS_len(cbs) != 0 || CBS_len(&enc_pms) != RSA_size(rsa)) {
 		SSLerror(s, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
 		goto err;
 	}
@@ -1827,23 +1823,17 @@ ssl3_get_client_kex_rsa(SSL *s, unsigned char *p, long n)
 }
 
 static int
-ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 {
 	int key_size = 0, key_len, al;
 	unsigned char *key = NULL;
 	BIGNUM *bn = NULL;
-	CBS cbs, dh_Yc;
+	CBS dh_Yc;
 	DH *dh;
 
-	if (n < 0)
-		goto err;
-
-	CBS_init(&cbs, p, n);
-
-	if (!CBS_get_u16_length_prefixed(&cbs, &dh_Yc))
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_Yc))
 		goto truncated;
-
-	if (CBS_len(&cbs) != 0)
+	if (CBS_len(cbs) != 0)
 		goto truncated;
 
 	if (S3I(s)->tmp.dh == NULL) {
@@ -1895,25 +1885,20 @@ ssl3_get_client_kex_dhe(SSL *s, unsigned char *p, long n)
 }
 
 static int
-ssl3_get_client_kex_ecdhe_ecp(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 {
 	unsigned char *key = NULL;
 	int key_size = 0, key_len;
 	EC_POINT *point = NULL;
 	BN_CTX *bn_ctx = NULL;
 	const EC_GROUP *group;
-	CBS cbs, public;
 	EC_KEY *ecdh;
+	CBS public;
 	int ret = -1;
 
-	if (n < 0)
+	if (!CBS_get_u8_length_prefixed(cbs, &public))
 		goto err;
-
-	CBS_init(&cbs, p, n);
-
-	if (!CBS_get_u8_length_prefixed(&cbs, &public))
-		goto err;
-	if (CBS_len(&cbs) != 0)
+	if (CBS_len(cbs) != 0)
 		goto err;
 
 	/*
@@ -1977,17 +1962,15 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, unsigned char *p, long n)
 }
 
 static int
-ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_ecdhe_ecx(SSL *s, CBS *cbs)
 {
 	uint8_t *shared_key = NULL;
-	CBS cbs, ecpoint;
+	CBS ecpoint;
 	int ret = -1;
 
-	if (n < 0)
+	if (!CBS_get_u8_length_prefixed(cbs, &ecpoint))
 		goto err;
-
-	CBS_init(&cbs, p, n);
-	if (!CBS_get_u8_length_prefixed(&cbs, &ecpoint))
+	if (CBS_len(cbs) != 0)
 		goto err;
 	if (CBS_len(&ecpoint) != X25519_KEY_LENGTH)
 		goto err;
@@ -2013,30 +1996,25 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
 }
 
 static int
-ssl3_get_client_kex_ecdhe(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 {
         if (S3I(s)->tmp.x25519 != NULL)
-		return ssl3_get_client_kex_ecdhe_ecx(s, p, n);
+		return ssl3_get_client_kex_ecdhe_ecx(s, cbs);
 
-	return ssl3_get_client_kex_ecdhe_ecp(s, p, n);
+	return ssl3_get_client_kex_ecdhe_ecp(s, cbs);
 }
 
 static int
-ssl3_get_client_kex_gost(SSL *s, unsigned char *p, long n)
+ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 {
 	EVP_PKEY_CTX *pkey_ctx;
 	EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
 	unsigned char premaster_secret[32];
 	unsigned long alg_a;
 	size_t outlen = 32;
-	CBS cbs, gostblob;
+	CBS gostblob;
 	int al;
 	int ret = 0;
-
-	if (n < 0)
-		goto err;
-
-	CBS_init(&cbs, p, n);
 
 	/* Get our certificate private key*/
 	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
@@ -2062,9 +2040,9 @@ ssl3_get_client_kex_gost(SSL *s, unsigned char *p, long n)
 	}
 
 	/* Decrypt session key */
-	if (!CBS_get_asn1(&cbs, &gostblob, CBS_ASN1_SEQUENCE))
+	if (!CBS_get_asn1(cbs, &gostblob, CBS_ASN1_SEQUENCE))
 		goto truncated;
-	if (CBS_len(&cbs) != 0)
+	if (CBS_len(cbs) != 0)
 		goto truncated;
 	if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen,
 	    CBS_data(&gostblob), CBS_len(&gostblob)) <= 0) {
@@ -2103,8 +2081,8 @@ int
 ssl3_get_client_key_exchange(SSL *s)
 {
 	unsigned long alg_k;
-	unsigned char *p;
 	int al, ok;
+	CBS cbs;
 	long n;
 
 	/* 2048 maxlen is a guess.  How long a key does that permit? */
@@ -2113,25 +2091,34 @@ ssl3_get_client_key_exchange(SSL *s)
 	if (!ok)
 		return ((int)n);
 
-	p = (unsigned char *)s->internal->init_msg;
+	if (n < 0)
+		goto err;
+
+	CBS_init(&cbs, s->internal->init_msg, n);
 
 	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 
 	if (alg_k & SSL_kRSA) {
-		if (ssl3_get_client_kex_rsa(s, p, n) != 1)
+		if (ssl3_get_client_kex_rsa(s, &cbs) != 1)
 			goto err;
 	} else if (alg_k & SSL_kDHE) {
-		if (ssl3_get_client_kex_dhe(s, p, n) != 1)
+		if (ssl3_get_client_kex_dhe(s, &cbs) != 1)
 			goto err;
 	} else if (alg_k & SSL_kECDHE) {
-		if (ssl3_get_client_kex_ecdhe(s, p, n) != 1)
+		if (ssl3_get_client_kex_ecdhe(s, &cbs) != 1)
 			goto err;
 	} else if (alg_k & SSL_kGOST) {
-		if (ssl3_get_client_kex_gost(s, p, n) != 1)
+		if (ssl3_get_client_kex_gost(s, &cbs) != 1)
 			goto err;
 	} else {
 		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_UNKNOWN_CIPHER_TYPE);
+		goto f_err;
+	}
+
+	if (CBS_len(&cbs) != 0) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 		goto f_err;
 	}
 
