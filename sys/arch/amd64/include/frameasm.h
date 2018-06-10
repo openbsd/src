@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.14 2018/06/09 16:51:23 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.15 2018/06/10 15:02:50 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -48,14 +48,21 @@
 	.text				; \
 	.global	INTRENTRY_LABEL(label)	; \
 INTRENTRY_LABEL(label):	/* from kernel */ \
+	INTR_ENTRY_KERN			; \
+	jmp	99f			; \
+98:	/* from userspace */		  \
+	INTR_ENTRY_USER			; \
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+
+#define	INTR_ENTRY_KERN \
 	subq	$152,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
 	/* the hardware puts err next to %rip, we move it elsewhere and */ \
 	/* later put %rbp in this slot to make it look like a call frame */ \
 	movq	(TF_RIP - 8)(%rsp),%rcx	; \
-	movq	%rcx,TF_ERR(%rsp)	; \
-	jmp	99f			; \
-98:	/* from userspace */		  \
+	movq	%rcx,TF_ERR(%rsp)
+
+#define	INTR_ENTRY_USER \
 	movq	CPUVAR(KERN_RSP),%rax	; \
 	xchgq	%rax,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
@@ -76,8 +83,7 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	movq	%rcx,TF_RSP(%rsp)	; \
 	movq	IRETQ_SS(%rax),%rcx	; \
 	movq	%rcx,TF_SS(%rsp)	; \
-	movq	CPUVAR(SCRATCH),%rax	; \
-99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+	movq	CPUVAR(SCRATCH),%rax
 
 /* For faking up an interrupt frame when we're already in the kernel */
 #define	INTR_REENTRY \
