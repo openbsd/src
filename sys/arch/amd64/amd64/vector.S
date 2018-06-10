@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.63 2018/06/10 14:26:41 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.64 2018/06/10 15:51:41 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -176,7 +176,14 @@ IDTVEC(trap03)
 #else /* !defined(GPROF) && defined(DDBPROF) */
 	pushq	$0
 	pushq	$T_BPTFLT
-	INTRENTRY(trap03)
+	testb	$SEL_RPL,24(%rsp)
+	je	INTRENTRY_LABEL(trap03)
+	jmp	alltraps
+	.text
+	.global	INTRENTRY_LABEL(trap03)
+INTRENTRY_LABEL(trap03):
+	INTR_ENTRY_KERN
+	INTR_SAVE_MOST_GPRS_NO_ADJ
 	sti
 	cld
 	SMAP_CLAC
