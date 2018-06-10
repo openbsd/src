@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.3 2018/05/18 15:58:17 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.4 2018/06/10 09:25:50 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -54,6 +54,7 @@ struct imxiic_softc {
 	bus_size_t		sc_ios;
 	void			*sc_ih;
 	int			sc_node;
+	int			sc_bitrate;
 
 	struct rwlock		sc_buslock;
 	struct i2c_controller	i2c_tag;
@@ -133,8 +134,10 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	/* set iomux pins */
 	pinctrl_byname(faa->fa_node, "default");
 
-	/* set speed to 100kHz */
-	imxiic_setspeed(sc, 100);
+	/* set speed */
+	sc->sc_bitrate = OF_getpropint(sc->sc_node,
+	    "clock-frequency", 100000) / 1000;
+	imxiic_setspeed(sc, sc->sc_bitrate);
 
 	/* reset */
 	HWRITE2(sc, I2C_I2CR, 0);
@@ -322,8 +325,8 @@ imxiic_i2c_acquire_bus(void *cookie, int flags)
 	/* clock gating */
 	clock_enable(sc->sc_node, NULL);
 
-	/* set speed to 100kHz */
-	imxiic_setspeed(sc, 100);
+	/* set speed */
+	imxiic_setspeed(sc, sc->sc_bitrate);
 
 	/* enable the controller */
 	HWRITE2(sc, I2C_I2SR, 0);
