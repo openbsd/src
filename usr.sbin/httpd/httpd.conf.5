@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.95 2018/05/23 19:02:50 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.96 2018/06/11 12:12:51 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2018 $
+.Dd $Mdocdate: June 11 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -206,7 +206,7 @@ may contain predefined macros that will be expanded at runtime:
 .It Ic $DOCUMENT_URI
 The request path.
 .It Ic $QUERY_STRING
-The optional query string of the request.
+The URL encoded query string of the request.
 .It Ic $REMOTE_ADDR
 The IP address of the connected client.
 .It Ic $REMOTE_PORT
@@ -218,7 +218,7 @@ The request path and optional query string.
 .It Ic $SERVER_ADDR
 The configured IP address of the server.
 .It Ic $SERVER_PORT
-The configured TCP server port of the server.
+The configured TCP port of the server.
 .It Ic $SERVER_NAME
 The name of the server.
 .It Ic $HTTP_HOST
