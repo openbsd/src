@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.183 2018/06/06 07:12:51 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.184 2018/06/11 09:05:05 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -132,21 +132,21 @@ extern struct radix_node_head **spd_tables;
 struct sockaddr pfkey_addr = { 2, PF_KEY, };
 struct domain pfkeydomain;
 
-struct keycb {
-	struct rawcb		kcb_rcb;
-#define kcb_socket	kcb_rcb.rcb_socket
-#define kcb_faddr	kcb_rcb.rcb_faddr
-#define kcb_laddr	kcb_rcb.rcb_laddr
-#define kcb_proto	kcb_rcb.rcb_proto
+struct pkpcb {
+	struct rawcb		pkp_rcb;
+#define kcb_socket	pkp_rcb.rcb_socket
+#define kcb_faddr	pkp_rcb.rcb_faddr
+#define kcb_laddr	pkp_rcb.rcb_laddr
+#define kcb_proto	pkp_rcb.rcb_proto
 
-	SRPL_ENTRY(keycb)	kcb_list;
+	SRPL_ENTRY(pkpcb)	kcb_list;
 	struct refcnt		kcb_refcnt;
 	int			kcb_flags;
 	uint32_t		kcb_pid;
 	uint32_t		kcb_registration; /* Inc. if SATYPE_MAX > 31 */
 	unsigned int		kcb_rdomain;
 };
-#define sotokeycb(so) ((struct keycb *)(so)->so_pcb)
+#define sotokeycb(so) ((struct pkpcb *)(so)->so_pcb)
 
 
 struct dump_state {
@@ -154,13 +154,13 @@ struct dump_state {
 	struct socket *socket;
 };
 
-struct pfkey_cb {
-	SRPL_HEAD(, keycb)	kcb;
-	struct srpl_rc		kcb_rc;
-	struct rwlock		kcb_lk;
+struct pkptable {
+	SRPL_HEAD(, pkpcb)	pkp_list;
+	struct srpl_rc		pkp_rc;
+	struct rwlock		pkp_lk;
 };
 
-struct pfkey_cb pfkey_cb;
+struct pkptable pkptable;
 struct mutex pfkeyv2_mtx = MUTEX_INITIALIZER(IPL_NONE);
 static uint32_t pfkeyv2_seq = 1;
 static int nregistered = 0;
@@ -174,7 +174,7 @@ int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
     struct mbuf *);
-int pfkey_sendup(struct keycb *, struct mbuf *, int);
+int pfkey_sendup(struct pkpcb *, struct mbuf *, int);
 int pfkeyv2_sa_flush(struct tdb *, void *, int);
 int pfkeyv2_policy_flush(struct ipsec_policy *, void *, unsigned int);
 int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *, unsigned int);
@@ -223,7 +223,7 @@ struct domain pfkeydomain = {
 void
 keycb_ref(void *null, void *v)
 {
-	struct keycb *kp = v;
+	struct pkpcb *kp = v;
 
 	refcnt_take(&kp->kcb_refcnt);
 }
@@ -231,7 +231,7 @@ keycb_ref(void *null, void *v)
 void
 keycb_unref(void *null, void *v)
 {
-	struct keycb *kp = v;
+	struct pkpcb *kp = v;
 
 	refcnt_rele_wake(&kp->kcb_refcnt);
 }
@@ -240,9 +240,9 @@ void
 pfkey_init(void)
 {
 	rn_init(sizeof(struct sockaddr_encap));
-	srpl_rc_init(&pfkey_cb.kcb_rc, keycb_ref, keycb_unref, NULL);
-	rw_init(&pfkey_cb.kcb_lk, "pfkey");
-	SRPL_INIT(&pfkey_cb.kcb);
+	srpl_rc_init(&pkptable.pkp_rc, keycb_ref, keycb_unref, NULL);
+	rw_init(&pkptable.pkp_lk, "pfkey");
+	SRPL_INIT(&pkptable.pkp_list);
 }
 
 
@@ -252,19 +252,19 @@ pfkey_init(void)
 int
 pfkeyv2_attach(struct socket *so, int proto)
 {
-	struct keycb *kp;
+	struct pkpcb *kp;
 	int error;
 
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	kp = malloc(sizeof(struct keycb), M_PCB, M_WAITOK | M_ZERO);
+	kp = malloc(sizeof(struct pkpcb), M_PCB, M_WAITOK | M_ZERO);
 	so->so_pcb = kp;
 	refcnt_init(&kp->kcb_refcnt);
 
 	error = soreserve(so, RAWSNDQ, RAWRCVQ);
 	if (error) {
-		free(kp, M_PCB, sizeof(struct keycb));
+		free(kp, M_PCB, sizeof(struct pkpcb));
 		return (error);
 	}
 
@@ -279,9 +279,9 @@ pfkeyv2_attach(struct socket *so, int proto)
 	kp->kcb_pid = curproc->p_p->ps_pid;
 	kp->kcb_rdomain = rtable_l2(curproc->p_p->ps_rtableid);
 
-	rw_enter(&pfkey_cb.kcb_lk, RW_WRITE);
-	SRPL_INSERT_HEAD_LOCKED(&pfkey_cb.kcb_rc, &pfkey_cb.kcb, kp, kcb_list);
-	rw_exit(&pfkey_cb.kcb_lk);
+	rw_enter(&pkptable.pkp_lk, RW_WRITE);
+	SRPL_INSERT_HEAD_LOCKED(&pkptable.pkp_rc, &pkptable.pkp_list, kp, kcb_list);
+	rw_exit(&pkptable.pkp_lk);
 
 	return (0);
 }
@@ -292,7 +292,7 @@ pfkeyv2_attach(struct socket *so, int proto)
 int
 pfkeyv2_detach(struct socket *so)
 {
-	struct keycb *kp;
+	struct pkpcb *kp;
 
 	soassertlocked(so);
 
@@ -311,17 +311,17 @@ pfkeyv2_detach(struct socket *so)
 		mtx_leave(&pfkeyv2_mtx);
 	}
 
-	rw_enter(&pfkey_cb.kcb_lk, RW_WRITE);
-	SRPL_REMOVE_LOCKED(&pfkey_cb.kcb_rc, &pfkey_cb.kcb,
-	    kp, keycb, kcb_list);
-	rw_exit(&pfkey_cb.kcb_lk);
+	rw_enter(&pkptable.pkp_lk, RW_WRITE);
+	SRPL_REMOVE_LOCKED(&pkptable.pkp_rc, &pkptable.pkp_list, kp, pkpcb,
+	    kcb_list);
+	rw_exit(&pkptable.pkp_lk);
 
 	/* wait for all references to drop */
 	refcnt_finalize(&kp->kcb_refcnt, "pfkeyrefs");
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
-	free(kp, M_PCB, sizeof(struct keycb));
+	free(kp, M_PCB, sizeof(struct pkpcb));
 
 	return (0);
 }
@@ -368,7 +368,7 @@ ret:
 }
 
 int
-pfkey_sendup(struct keycb *kp, struct mbuf *m0, int more)
+pfkey_sendup(struct pkpcb *kp, struct mbuf *m0, int more)
 {
 	struct socket *so = kp->kcb_socket;
 	struct mbuf *m;
@@ -403,7 +403,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 	int i, j, rval;
 	void *p, *buffer = NULL;
 	struct mbuf *packet;
-	struct keycb *s;
+	struct pkpcb *s;
 	struct sadb_msg *smsg;
 	struct srp_ref sr;
 
@@ -468,7 +468,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 * Search for promiscuous listeners, skipping the
 		 * original destination.
 		 */
-		SRPL_FOREACH(s, &sr, &pfkey_cb.kcb, kcb_list) {
+		SRPL_FOREACH(s, &sr, &pkptable.pkp_list, kcb_list) {
 			if ((s->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (s->kcb_socket != so) &&
 			    (s->kcb_rdomain == rdomain))
@@ -483,7 +483,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 * Send the message to all registered sockets that match
 		 * the specified satype (e.g., all IPSEC-ESP negotiators)
 		 */
-		SRPL_FOREACH(s, &sr, &pfkey_cb.kcb, kcb_list) {
+		SRPL_FOREACH(s, &sr, &pkptable.pkp_list, kcb_list) {
 			if ((s->kcb_flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->kcb_rdomain == rdomain)) {
 				if (!satype)    /* Just send to everyone registered */
@@ -514,7 +514,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 			goto ret;
 
 		/* Send to all registered promiscuous listeners */
-		SRPL_FOREACH(s, &sr, &pfkey_cb.kcb, kcb_list) {
+		SRPL_FOREACH(s, &sr, &pkptable.pkp_list, kcb_list) {
 			if ((s->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    !(s->kcb_flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->kcb_rdomain == rdomain))
@@ -526,7 +526,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 
 	case PFKEYV2_SENDMESSAGE_BROADCAST:
 		/* Send message to all sockets */
-		SRPL_FOREACH(s, &sr, &pfkey_cb.kcb, kcb_list) {
+		SRPL_FOREACH(s, &sr, &pkptable.pkp_list, kcb_list) {
 			if (s->kcb_rdomain == rdomain)
 				pfkey_sendup(s, packet, 1);
 		}
@@ -997,7 +997,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct ipsec_acquire *ipa;
 	struct radix_node_head *rnh;
 	struct radix_node *rn = NULL;
-	struct keycb *kp, *bkp;
+	struct pkpcb *kp, *bkp;
 	void *freeme = NULL, *bckptr = NULL;
 	void *headers[SADB_EXT_MAX + 1];
 	union sockaddr_union *sunionp;
@@ -1055,7 +1055,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			goto ret;
 
 		/* Send to all promiscuous listeners */
-		SRPL_FOREACH(bkp, &sr, &pfkey_cb.kcb, kcb_list) {
+		SRPL_FOREACH(bkp, &sr, &pkptable.pkp_list, kcb_list) {
 			if ((bkp->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (bkp->kcb_rdomain == rdomain))
 				pfkey_sendup(bkp, packet, 1);
@@ -1830,7 +1830,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			if ((rval = pfdatatopacket(message, len, &packet)) != 0)
 				goto ret;
 
-			SRPL_FOREACH(bkp, &sr, &pfkey_cb.kcb, kcb_list) {
+			SRPL_FOREACH(bkp, &sr, &pkptable.pkp_list, kcb_list) {
 				if ((bkp != kp) &&
 				    (bkp->kcb_rdomain == rdomain) &&
 				    (!smsg->sadb_msg_seq ||
