@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2018/06/11 10:01:55 denis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.101 2018/06/11 10:04:12 denis Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t	 		 ungetpos;
+	size_t			 ungetpos;
 	size_t			 ungetsize;
 	u_char			*ungetbuf;
 	int			 eof_reached;
