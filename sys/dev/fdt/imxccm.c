@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.4 2018/06/03 18:17:27 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.5 2018/06/11 09:20:46 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -183,6 +183,7 @@ imxccm_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "fsl,imx6sl-ccm") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx6sx-ccm") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx6ul-ccm") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx7d-ccm") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-ccm"));
 }
 
@@ -209,6 +210,13 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ndivs = nitems(imx8mq_divs);
 		sc->sc_muxs = imx8mq_muxs;
 		sc->sc_nmuxs = nitems(imx8mq_muxs);
+	} else if (OF_is_compatible(sc->sc_node, "fsl,imx7d-ccm")) {
+		sc->sc_gates = imx7d_gates;
+		sc->sc_ngates = nitems(imx7d_gates);
+		sc->sc_divs = imx7d_divs;
+		sc->sc_ndivs = nitems(imx7d_divs);
+		sc->sc_muxs = imx7d_muxs;
+		sc->sc_nmuxs = nitems(imx7d_muxs);
 	} else if (OF_is_compatible(sc->sc_node, "fsl,imx6ul-ccm")) {
 		sc->sc_gates = imx6ul_gates;
 		sc->sc_ngates = nitems(imx6ul_gates);
@@ -366,6 +374,73 @@ imxccm_get_ipg_perclk(struct imxccm_softc *sc)
 	ipg_podf = cscmr1 & CCM_CSCMR1_PERCLK_CLK_PODF_MASK;
 
 	return freq / (ipg_podf + 1);
+}
+
+uint32_t
+imxccm_imx7d_i2c(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc");
+	case 1:
+		return 120000000; /* pll_sys_main_120m_clk */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx7d_uart(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc");
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx7d_usdhc(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc");
+	case 1:
+		return 392000000; /* pll_sys_pfd0_392m_clk */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
 }
 
 uint32_t
@@ -598,6 +673,26 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		case IMX8MQ_CLK_USB_PHY_REF_SRC:
 			return imxccm_imx8mq_usb(sc, idx);
 		}
+	} else if (sc->sc_gates == imx7d_gates) {
+		switch (idx) {
+		case IMX7D_I2C1_ROOT_SRC:
+		case IMX7D_I2C2_ROOT_SRC:
+		case IMX7D_I2C3_ROOT_SRC:
+		case IMX7D_I2C4_ROOT_SRC:
+			return imxccm_imx7d_i2c(sc, idx);
+		case IMX7D_UART1_ROOT_SRC:
+		case IMX7D_UART2_ROOT_SRC:
+		case IMX7D_UART3_ROOT_SRC:
+		case IMX7D_UART4_ROOT_SRC:
+		case IMX7D_UART5_ROOT_SRC:
+		case IMX7D_UART6_ROOT_SRC:
+		case IMX7D_UART7_ROOT_SRC:
+			return imxccm_imx7d_uart(sc, idx);
+		case IMX7D_USDHC1_ROOT_SRC:
+		case IMX7D_USDHC2_ROOT_SRC:
+		case IMX7D_USDHC3_ROOT_SRC:
+			return imxccm_imx7d_usdhc(sc, idx);
+		}
 	} else if (sc->sc_gates == imx6ul_gates) {
 		switch (idx) {
 		case IMX6UL_CLK_ARM:
@@ -612,7 +707,7 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		case IMX6UL_CLK_USDHC2:
 			return imxccm_get_usdhx(sc, idx - IMX6UL_CLK_USDHC1 + 1);
 		}
-	} else {
+	} else if (sc->sc_gates == imx6_gates) {
 		switch (idx) {
 		case IMX6_CLK_AHB:
 			return imxccm_get_ahbclk(sc);
@@ -641,7 +736,7 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t div, parent;
+	uint32_t reg, div, parent, parent_freq;
 
 	if (sc->sc_divs == imx8mq_divs) {
 		switch (idx) {
@@ -656,10 +751,31 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 			if (imxccm_get_frequency(sc, &parent) != freq)
 				break;
 			imxccm_enable(cookie, &parent, 1);
-			div = HREAD4(sc, sc->sc_divs[idx].reg);
-			div &= ~(sc->sc_divs[idx].mask << sc->sc_divs[idx].shift);
-			div |= (0x0 << sc->sc_divs[idx].shift);
-			HWRITE4(sc, sc->sc_divs[idx].reg, div);
+			reg = HREAD4(sc, sc->sc_divs[idx].reg);
+			reg &= ~(sc->sc_divs[idx].mask << sc->sc_divs[idx].shift);
+			reg |= (0x0 << sc->sc_divs[idx].shift);
+			HWRITE4(sc, sc->sc_divs[idx].reg, reg);
+			return 0;
+		}
+	} else if (sc->sc_divs == imx7d_divs) {
+		switch (idx) {
+		case IMX7D_USDHC1_ROOT_CLK:
+		case IMX7D_USDHC2_ROOT_CLK:
+		case IMX7D_USDHC3_ROOT_CLK:
+			parent = sc->sc_gates[idx].parent;
+			return imxccm_set_frequency(sc, &parent, freq);
+		case IMX7D_USDHC1_ROOT_DIV:
+		case IMX7D_USDHC2_ROOT_DIV:
+		case IMX7D_USDHC3_ROOT_DIV:
+			parent = sc->sc_divs[idx].parent;
+			parent_freq = imxccm_get_frequency(sc, &parent);
+			div = 0;
+			while (parent_freq / (div + 1) > freq)
+				div++;
+			reg = HREAD4(sc, sc->sc_divs[idx].reg);
+			reg &= ~(sc->sc_divs[idx].mask << sc->sc_divs[idx].shift);
+			reg |= (div << sc->sc_divs[idx].shift);
+			HWRITE4(sc, sc->sc_divs[idx].reg, reg);
 			return 0;
 		}
 	}
