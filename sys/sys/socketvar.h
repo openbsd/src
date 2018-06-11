@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.83 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.84 2018/06/11 08:57:35 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -157,6 +157,12 @@ struct socket {
 #ifdef _KERNEL
 
 #include <lib/libkern/libkern.h>
+
+/*
+ * Values for sounlock()/sofree().
+ */
+#define SL_NOUNLOCK	0x00
+#define SL_LOCKED	0x42
 
 void	soassertlocked(struct socket *);
 
