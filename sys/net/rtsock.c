@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.268 2018/06/06 07:12:52 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.269 2018/06/11 08:48:54 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -113,7 +113,8 @@ int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
-void	rtm_senddesync(void *);
+void	rtm_senddesync_timer(void *);
+void	rtm_senddesync(struct socket *);
 int	rtm_sendup(struct socket *, struct mbuf *, int);
 
 int	rtm_getifa(struct rt_addrinfo *, unsigned int);
@@ -243,7 +244,7 @@ route_attach(struct socket *so, int proto)
 	rop = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
 	so->so_pcb = rop;
 	/* Init the timeout structure */
-	timeout_set(&rop->rop_timeout, rtm_senddesync, rop);
+	timeout_set(&rop->rop_timeout, rtm_senddesync_timer, so);
 	refcnt_init(&rop->rop_refcnt);
 
 	if (curproc == NULL)
@@ -374,12 +375,23 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 }
 
 void
-rtm_senddesync(void *data)
+rtm_senddesync_timer(void *xso)
 {
-	struct routecb	*rop;
+	struct socket	*so = xso;
+	int 		 s;
+
+	s = solock(so);
+	rtm_senddesync(so);
+	sounlock(so, s);
+}
+
+void
+rtm_senddesync(struct socket *so)
+{
+	struct routecb	*rop = sotoroutecb(so);
 	struct mbuf	*desync_mbuf;
 
-	rop = (struct routecb *)data;
+	soassertlocked(so);
 
 	/* If we are in a DESYNC state, try to send a RTM_DESYNC packet */
 	if ((rop->rop_flags & ROUTECB_FLAG_DESYNC) == 0)
@@ -391,7 +403,6 @@ rtm_senddesync(void *data)
 	 */
 	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
-		struct socket *so = rop->rop_socket;
 		if (sbappendaddr(so, &so->so_rcv, &route_src,
 		    desync_mbuf, NULL) != 0) {
 			rop->rop_flags &= ~ROUTECB_FLAG_DESYNC;
@@ -405,15 +416,15 @@ rtm_senddesync(void *data)
 }
 
 void
-route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
+route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 {
+	struct socket *so;
 	struct routecb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
 	struct socket *last = NULL;
 	struct srp_ref sr;
-
-	KERNEL_ASSERT_LOCKED();
+	int s;
 
 	/* ensure that we can access the rtm_type via mtod() */
 	if (m->m_len < offsetof(struct rt_msghdr, rtm_type) + 1) {
@@ -422,14 +433,6 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 	}
 
 	SRPL_FOREACH(rop, &sr, &route_cb.rcb, rop_list) {
-		if (!(rop->rop_socket->so_state & SS_ISCONNECTED))
-			continue;
-		if (rop->rop_socket->so_state & SS_CANTRCVMORE)
-			continue;
-		/* Check to see if we don't want our own messages. */
-		if (so == rop->rop_socket && !(so->so_options & SO_USELOOPBACK))
-			continue;
-
 		/*
 		 * If route socket is bound to an address family only send
 		 * messages that match the address family. Address family
@@ -440,15 +443,31 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		    rop->rop_proto.sp_protocol != sa_family)
 			continue;
 
+
+		so = rop->rop_socket;
+		s = solock(so);
+
+		/*
+		 * Check to see if we don't want our own messages and
+		 * if we can receive anything.
+		 */
+		if ((so0 == so && !(so0->so_options & SO_USELOOPBACK)) ||
+		    !(so->so_state & SS_ISCONNECTED) ||
+		    (so->so_state & SS_CANTRCVMORE)) {
+next:
+			sounlock(so, s);
+			continue;
+		}
+
 		/* filter messages that the process does not want */
 		rtm = mtod(m, struct rt_msghdr *);
 		/* but RTM_DESYNC can't be filtered */
 		if (rtm->rtm_type != RTM_DESYNC && rop->rop_msgfilter != 0 &&
 		    !(rop->rop_msgfilter & (1 << rtm->rtm_type)))
-			continue;
+			goto next;
 		if (rop->rop_priority != 0 &&
 		    rop->rop_priority < rtm->rtm_priority)
-			continue;
+			goto next;
 		switch (rtm->rtm_type) {
 		case RTM_IFANNOUNCE:
 		case RTM_DESYNC:
@@ -461,13 +480,13 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 			/* check against rdomain id */
 			if (rop->rop_rtableid != RTABLE_ANY &&
 			    rtable_l2(rop->rop_rtableid) != rtm->rtm_tableid)
-				continue;
+				goto next;
 			break;
 		default:
 			/* check against rtable id */
 			if (rop->rop_rtableid != RTABLE_ANY &&
 			    rop->rop_rtableid != rtm->rtm_tableid)
-				continue;
+				goto next;
 			break;
 		}
 
@@ -476,10 +495,13 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		 * any more messages until the flag is cleared.
 		 */
 		if ((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0)
-			continue;
+			goto next;
+		sounlock(so, s);
 
 		if (last) {
+			s = solock(last);
 			rtm_sendup(last, m, 1);
+			sounlock(last, s);
 			refcnt_rele_wake(&sotoroutecb(last)->rop_refcnt);
 		}
 		/* keep a reference for last */
@@ -489,7 +511,9 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 	SRPL_LEAVE(&sr);
 
 	if (last) {
+		s = solock(last);
 		rtm_sendup(last, m, 0);
+		sounlock(last, s);
 		refcnt_rele_wake(&sotoroutecb(last)->rop_refcnt);
 	} else
 		m_freem(m);
@@ -500,6 +524,8 @@ rtm_sendup(struct socket *so, struct mbuf *m0, int more)
 {
 	struct routecb *rop = sotoroutecb(so);
 	struct mbuf *m;
+
+	soassertlocked(so);
 
 	if (more) {
 		m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
@@ -512,7 +538,7 @@ rtm_sendup(struct socket *so, struct mbuf *m0, int more)
 	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0) {
 		/* Flag socket as desync'ed and flush required */
 		rop->rop_flags |= ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
-		rtm_senddesync(rop);
+		rtm_senddesync(so);
 		m_freem(m);
 		return (ENOBUFS);
 	}

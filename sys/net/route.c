@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.374 2018/04/24 06:19:47 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.375 2018/06/11 08:48:54 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
 	memset(&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
 
-	KERNEL_LOCK();
 	/*
 	 * The priority of cloned route should be different
 	 * to avoid conflict with /32 cloning routes.
@@ -262,8 +261,10 @@ rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
 	 * It should also be higher to let the ARP layer find
 	 * cloned routes instead of the cloning one.
 	 */
+	KERNEL_LOCK();
 	error = rtrequest(RTM_RESOLVE, &info, rt->rt_priority - 1, &rt,
 	    rtableid);
+	KERNEL_UNLOCK();
 	if (error) {
 		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, error, rtableid);
 	} else {
@@ -272,7 +273,6 @@ rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
 		rtfree(*rtp);
 		*rtp = rt;
 	}
-	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -655,9 +655,7 @@ out:
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_AUTHOR] = src;
-	KERNEL_LOCK();
 	rtm_miss(RTM_REDIRECT, &info, flags, prio, ifidx, error, rdomain);
-	KERNEL_UNLOCK();
 }
 
 /*
@@ -683,9 +681,7 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	if (!ISSET(rt->rt_flags, RTF_HOST))
 		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
-	KERNEL_LOCK();
 	rtm_send(rt, RTM_DELETE, error, tableid);
-	KERNEL_UNLOCK();
 	if (error == 0)
 		rtfree(rt);
 	return (error);

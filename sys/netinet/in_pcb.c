@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.235 2018/06/07 08:46:24 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.236 2018/06/11 08:48:54 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -722,10 +722,8 @@ in_losing(struct inpcb *inp)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
 
-		KERNEL_LOCK();
 		rtm_miss(RTM_LOSING, &info, rt->rt_flags, rt->rt_priority,
 		    rt->rt_ifidx, 0, inp->inp_rtableid);
-		KERNEL_UNLOCK();
 		if (rt->rt_flags & RTF_DYNAMIC) {
 			struct ifnet *ifp;
 
