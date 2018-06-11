@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.2 2018/05/31 09:12:59 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.3 2018/06/11 09:15:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -135,8 +135,10 @@ imxuart_init_cons(void)
 	struct fdt_reg reg;
 	void *node;
 
-	if ((node = fdt_find_cons("fsl,imx21-uart")) == NULL)
+	if ((node = fdt_find_cons("fsl,imx21-uart")) == NULL &&
+	    (node = fdt_find_cons("fsl,imx6q-uart")) == NULL)
 		return;
+
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
@@ -148,7 +150,8 @@ imxuart_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx21-uart");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx21-uart") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx6q-uart"));
 }
 
 void
