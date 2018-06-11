@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.66 2018/05/10 13:30:25 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.67 2018/06/11 07:40:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ tcp_timer_init(void)
 void
 tcp_timer_delack(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	short ostate;
 
 	/*
@@ -124,11 +124,14 @@ tcp_timer_delack(void *arg)
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_DELACK);
 
-	ostate = tp->t_state;
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)
-		tcp_trace(TA_TIMER, ostate, tp, (caddr_t)0, TCPT_DELACK, 0);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_DELACK, 0);
  out:
 	NET_UNLOCK();
 }
@@ -192,7 +195,7 @@ tcp_timer_freesack(struct tcpcb *tp)
 void
 tcp_timer_rexmt(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	uint32_t rto;
 	short ostate;
 
@@ -239,7 +242,10 @@ tcp_timer_rexmt(void *arg)
 		    tp->t_softerror : ETIMEDOUT);
 		goto out;
 	}
-	ostate = tp->t_state;
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcpstat_inc(tcps_rexmttimeo);
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
@@ -374,8 +380,8 @@ tcp_timer_rexmt(void *arg)
 #endif
 	}
 	(void) tcp_output(tp);
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)
-		tcp_trace(TA_TIMER, ostate, tp, (caddr_t)0, TCPT_REXMT, 0);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_REXMT, 0);
  out:
 	NET_UNLOCK();
 }
@@ -383,7 +389,7 @@ tcp_timer_rexmt(void *arg)
 void
 tcp_timer_persist(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	uint32_t rto;
 	short ostate;
 
@@ -397,7 +403,10 @@ tcp_timer_persist(void *arg)
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		goto out;
 
-	ostate = tp->t_state;
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcpstat_inc(tcps_persisttimeo);
 	/*
 	 * Hack: if the peer is dead/unreachable, we do not
@@ -420,8 +429,8 @@ tcp_timer_persist(void *arg)
 	tp->t_force = 1;
 	(void) tcp_output(tp);
 	tp->t_force = 0;
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)
-		tcp_trace(TA_TIMER, ostate, tp, (caddr_t)0, TCPT_PERSIST, 0);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_PERSIST, 0);
  out:
 	NET_UNLOCK();
 }
@@ -429,7 +438,7 @@ tcp_timer_persist(void *arg)
 void
 tcp_timer_keep(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	short ostate;
 
 	NET_LOCK();
@@ -439,7 +448,10 @@ tcp_timer_keep(void *arg)
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_KEEP);
 
-	ostate = tp->t_state;
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcpstat_inc(tcps_keeptimeo);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
@@ -467,8 +479,8 @@ tcp_timer_keep(void *arg)
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)
-		tcp_trace(TA_TIMER, ostate, tp, (caddr_t)0, TCPT_KEEP, 0);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
 	NET_UNLOCK();
 	return;
@@ -482,7 +494,7 @@ tcp_timer_keep(void *arg)
 void
 tcp_timer_2msl(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	short ostate;
 
 	NET_LOCK();
@@ -492,7 +504,10 @@ tcp_timer_2msl(void *arg)
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_2MSL);
 
-	ostate = tp->t_state;
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcp_timer_freesack(tp);
 
 	if (tp->t_state != TCPS_TIME_WAIT &&
@@ -500,8 +515,8 @@ tcp_timer_2msl(void *arg)
 		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 	else
 		tp = tcp_close(tp);
-	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG))
-		tcp_trace(TA_TIMER, ostate, tp, (caddr_t)0, TCPT_2MSL, 0);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_2MSL, 0);
  out:
 	NET_UNLOCK();
 }

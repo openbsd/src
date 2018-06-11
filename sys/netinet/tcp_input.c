@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.355 2018/05/08 15:10:33 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.356 2018/06/11 07:40:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -366,12 +366,13 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int tlen, off;
-	struct tcpcb *tp = NULL;
+	struct tcpcb *otp = NULL, *tp = NULL;
 	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked;
 	int hdroptlen = 0;
-	short ostate = 0;
+	short ostate;
+	caddr_t saveti;
 	tcp_seq iss, *reuse = NULL;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -635,20 +636,21 @@ findpcb:
 			dst.sin6.sin6_port = th->th_dport;
 			break;
 #endif /* INET6 */
-		default:
-			goto badsyn;	/*sanity*/
 		}
 
 		if (so->so_options & SO_DEBUG) {
+			otp = tp;
 			ostate = tp->t_state;
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
+				saveti = (caddr_t) &tcp_saveti6;
 				memcpy(&tcp_saveti6.ti6_i, ip6, sizeof(*ip6));
 				memcpy(&tcp_saveti6.ti6_t, th, sizeof(*th));
 				break;
 #endif
 			case AF_INET:
+				saveti = (caddr_t) &tcp_saveti;
 				memcpy(&tcp_saveti.ti_i, ip, sizeof(*ip));
 				memcpy(&tcp_saveti.ti_t, th, sizeof(*th));
 				break;
@@ -2001,20 +2003,8 @@ dodata:							/* XXX */
 			break;
 		}
 	}
-	if (so->so_options & SO_DEBUG) {
-		switch (tp->pf) {
-#ifdef INET6
-		case PF_INET6:
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6,
-			    0, tlen);
-			break;
-#endif /* INET6 */
-		case PF_INET:
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti,
-			    0, tlen);
-			break;
-		}
-	}
+	if (otp)
+		tcp_trace(TA_INPUT, ostate, tp, otp, saveti, 0, tlen);
 
 	/*
 	 * Return any desired output.
@@ -2089,20 +2079,8 @@ drop:
 	/*
 	 * Drop space held by incoming segment and return.
 	 */
-	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)) {
-		switch (tp->pf) {
-#ifdef INET6
-		case PF_INET6:
-			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti6,
-			    0, tlen);
-			break;
-#endif /* INET6 */
-		case PF_INET:
-			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti,
-			    0, tlen);
-			break;
-		}
-	}
+	if (otp)
+		tcp_trace(TA_DROP, ostate, tp, otp, saveti, 0, tlen);
 
 	m_freem(m);
 	return IPPROTO_DONE;

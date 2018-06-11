@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.26 2018/05/10 13:30:25 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.27 2018/06/11 07:40:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -110,18 +110,19 @@ int	tcp_debx;
  * Tcp debug routines
  */
 void
-tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
-   int req, int len)
+tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
+    caddr_t headers, int req, int len)
 {
 #ifdef TCPDEBUG
 	tcp_seq seq, ack;
 	int flags;
 #endif
+	int pf = PF_UNSPEC;
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
 	struct tcpiphdr *ti = (struct tcpiphdr *)headers;
 	struct tcphdr *th;
 #ifdef INET6
-	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)ti;
+	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)headers;
 #endif
 
 	if (tcp_debx == TCP_NDEBUG)
@@ -129,40 +130,54 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 	td->td_time = iptime();
 	td->td_act = act;
 	td->td_ostate = ostate;
-	td->td_tcb = (caddr_t)tp;
-	if (tp)
+	td->td_tcb = (caddr_t)otp;
+	if (tp) {
+		pf = tp->pf;
 		td->td_cb = *tp;
-	else
+	} else
 		bzero((caddr_t)&td->td_cb, sizeof (*tp));
-	switch (tp->pf) {
+
+	bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
+	bzero(&td->td_ti, sizeof(struct tcpiphdr));
+	if (headers) {
+		/* The address family may be in tcpcb or ip header. */
+		if (pf == PF_UNSPEC) {
+			switch (ti6->ti6_i.ip6_vfc & IPV6_VERSION_MASK) {
 #ifdef INET6
-	case PF_INET6:
-		if (ti6) {
+			case IPV6_VERSION:
+				pf = PF_INET6;
+				break;
+#endif /* INET6 */
+			case IPVERSION:
+				pf = PF_INET;
+				break;
+			}
+		}
+		switch (pf) {
+#ifdef INET6
+		case PF_INET6:
 			th = &ti6->ti6_t;
 			td->td_ti6 = *ti6;
 			td->td_ti6.ti6_plen = len;
-		} else
-			bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
-		break;
+			break;
 #endif /* INET6 */
-	case PF_INET:
-		if (ti) {
+		case PF_INET:
 			th = &ti->ti_t;
 			td->td_ti = *ti;
 			td->td_ti.ti_len = len;
-		} else
-			bzero(&td->td_ti, sizeof(struct tcpiphdr));
-		break;
-	default:
-		return;
+			break;
+		default:
+			headers = NULL;
+			break;
+		}
 	}
 
 	td->td_req = req;
 #ifdef TCPDEBUG
 	if (tcpconsdebug == 0)
 		return;
-	if (tp)
-		printf("%p %s:", tp, tcpstates[ostate]);
+	if (otp)
+		printf("%p %s:", otp, tcpstates[ostate]);
 	else
 		printf("???????? ");
 	printf("%s ", tanames[act]);
@@ -171,7 +186,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 	case TA_INPUT:
 	case TA_OUTPUT:
 	case TA_DROP:
-		if (ti == 0)
+		if (headers == NULL)
 			break;
 		seq = th->th_seq;
 		ack = th->th_ack;
@@ -205,7 +220,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, caddr_t headers,
 		printf(" -> %s", tcpstates[tp->t_state]);
 	/* print out internal state of tp !?! */
 	printf("\n");
-	if (tp == 0)
+	if (tp == NULL)
 		return;
 	printf("\trcv_(nxt,wnd,up) (%x,%lx,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
 	    tp->rcv_nxt, tp->rcv_wnd, tp->rcv_up, tp->snd_una, tp->snd_nxt,
