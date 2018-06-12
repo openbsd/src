@@ -110,7 +110,8 @@ StringRef elf::getOutputSectionName(InputSectionBase *S) {
   for (StringRef V :
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
         ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
-        ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab."}) {
+        ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab.",
+	".openbsd.randomdata."}) {
     StringRef Prefix = V.drop_back();
     if (S->Name.startswith(V) || S->Name == Prefix)
       return Prefix;
