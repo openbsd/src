@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.74 2018/06/10 14:39:38 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.75 2018/06/12 20:02:13 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -640,7 +640,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct lsa		*lsa;
 	struct vertex		*v;
 	ssize_t			 n;
-	int			 shut = 0, wasvalid;
+	int			 shut = 0, link_ok, prev_link_ok;
 	unsigned int		 ifindex;
 
 	if (event & EV_READ) {
@@ -710,20 +710,23 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			if (iface == NULL)
 				fatalx("interface lost in rde");
 
-			wasvalid = (iface->flags & IFF_UP) &&
+			prev_link_ok = (iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate);
 
 			if_update(iface, ifp->mtu, ifp->flags, ifp->if_type,
 			    ifp->linkstate, ifp->baudrate);
 
 			/* Resend LSAs if interface state changes. */
-			if (wasvalid != (iface->flags & IFF_UP) &&
-			    LINK_STATE_IS_UP(iface->linkstate)) {
-				area = area_find(rdeconf, iface->area_id);
-				if (!area)
-					fatalx("interface lost area");
-				orig_intra_area_prefix_lsas(area);
-			}
+			link_ok = (iface->flags & IFF_UP) &&
+			          LINK_STATE_IS_UP(iface->linkstate);
+			if (prev_link_ok == link_ok)
+				break;
+
+			area = area_find(rdeconf, iface->area_id);
+			if (!area)
+				fatalx("interface lost area");
+			orig_intra_area_prefix_lsas(area);
+
 			break;
 		case IMSG_IFADD:
 			if ((iface = malloc(sizeof(struct iface))) == NULL)
