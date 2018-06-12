@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dh_key.c,v 1.28 2018/06/12 15:32:54 sthen Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,6 +107,11 @@ generate_key(DH *dh)
 	BN_CTX *ctx;
 	BN_MONT_CTX *mont = NULL;
 	BIGNUM *pub_key = NULL, *priv_key = NULL;
+
+	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+		DHerror(DH_R_MODULUS_TOO_LARGE);
+		return 0;
+	}
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL)
