@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.12 2016/02/14 20:05:55 reyk Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.13 2018/06/12 20:12:36 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2016 $
+.Dd $Mdocdate: June 12 2018 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -273,9 +273,15 @@ The default value is 10; valid range is 1\-65535 seconds.
 .It Ic metric Ar cost
 Set the interface metric a.k.a. cost.
 The default value is 10; valid range is 1\-65535.
+A metric of 65535 is used for
+.Xr carp 4
+interfaces with status backup.
 .It Ic passive
 Prevent transmission and reception of OSPF packets on this interface.
 The specified interface will be announced as a stub network.
+Passive mode is enforced for
+.Xr carp 4
+interfaces.
 .It Ic retransmit-interval Ar seconds
 Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.
