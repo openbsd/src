@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.28 2018/06/12 15:32:54 sthen Exp $ */
+/* $OpenBSD: dh_key.c,v 1.29 2018/06/12 15:33:18 sthen Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,7 +200,7 @@ compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	BN_CTX_start(ctx);
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	
+
 	if (dh->priv_key == NULL) {
 		DHerror(DH_R_NO_PRIVATE_VALUE);
 		goto err;
