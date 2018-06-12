@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.69 2016/09/08 15:11:29 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.70 2018/06/12 01:58:05 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	int left, wantspace = 0;
-	char **argv, **p;
+	char **p;
 
 	/*
 	 * Determine the available number of display columns.
@@ -118,8 +118,8 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 		left = INT_MAX;
 
 	if (needenv && kd != NULL) {
-		argv = kvm_getenvv(kd, kp, termwidth);
-		if ((p = argv) != NULL) {
+		char **envp = kvm_getenvv(kd, kp, termwidth);
+		if ((p = envp) != NULL) {
 			while (*p) {
 				if (wantspace) {
 					putchar(' ');
@@ -132,11 +132,12 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 				wantspace = 1;
 			}
 		}
-	} else
-		argv = NULL;
+	}
 
 	if (needcomm) {
 		if (!commandonly) {
+			char **argv = NULL;
+
 			if (kd != NULL) {
 				argv = kvm_getargv(kd, kp, termwidth);
 				if ((p = argv) != NULL) {
