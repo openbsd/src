@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.240 2018/05/19 17:38:29 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.241 2018/06/12 07:11:18 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2431,8 +2431,10 @@ aml_rwgen(struct aml_value *rgn, int bpos, int blen, struct aml_value *val,
 	tlen = roundup(bpos + blen, sz << 3);
 	type = rgn->v_opregion.iospace;
 
-	if (aml_regionspace[type].handler == NULL)
-		panic("%s: unregistered RegionSpace 0x%x\n", __func__, type);
+	if (aml_regionspace[type].handler == NULL) {
+		printf("%s: unregistered RegionSpace 0x%x\n", __func__, type);
+		return;
+	}
 
 	/* Allocate temporary storage */
 	if (tlen > aml_intlen) {
