@@ -40,7 +40,7 @@ namespace {
         cookie->setInitializer(Constant::getNullValue(cookietype));
         cookie->setLinkage(GlobalVariable::WeakAnyLinkage);
         cookie->setVisibility(GlobalValue::HiddenVisibility);
-        cookie->setSection(".openbsd.randomdata");
+        cookie->setSection(".openbsd.randomdata.retguard");
         cookie->setExternallyInitialized(true);
         F.addFnAttr("ret-protector-cookie", cookiename);
         NumSymbols++;
