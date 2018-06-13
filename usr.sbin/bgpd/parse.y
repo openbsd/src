@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.322 2018/06/13 09:33:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.323 2018/06/13 09:44:59 job Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1227,12 +1227,32 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE AS4BYTE yesno {
 			curpeer->conf.capabilities.as4byte = $3;
 		}
+		| ANNOUNCE SELF {
+			yyerror("support for the 'announce self' directive has"
+			    " been removed. Urgent configuration review "
+			    "required!");
+			YYERROR;
+		}
 		| ANNOUNCE STRING {
 			if (!strcmp($2, "all"))
 				logit(LOG_ERR, "%s:%d: %s", file->name,
 				    yylval.lineno,
-				    "deprecated use of announce all");
-			else {
+				    "warning: 'announce all' is deprecated");
+			else if (!strcmp($2, "none")) {
+				logit(LOG_ERR, "%s:%d: %s", file->name,
+				    yylval.lineno,
+				    "warning: 'announce none' is deprecated, "
+				    "use 'export none' instead");
+				curpeer->conf.export_type = EXPORT_NONE;
+			} else if (!strcmp($2, "default-route")) {
+				logit(LOG_ERR, "%s:%d: %s", file->name,
+				    yylval.lineno,
+				    "warning: 'announce default-route' is "
+				    "deprecated, use 'export default-route' "
+				    "instead");
+				curpeer->conf.export_type =
+				    EXPORT_DEFAULT_ROUTE;
+			} else {
 				yyerror("syntax error");
 				free($2);
 				YYERROR;
