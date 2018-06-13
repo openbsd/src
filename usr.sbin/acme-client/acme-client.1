@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.23 2017/10/17 22:47:58 schwarze Exp $
+.\"	$OpenBSD: acme-client.1,v 1.24 2018/06/13 15:08:24 reyk Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: June 13 2018 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ which will properly map response challenges:
 .Bd -literal -offset indent
 location "/.well-known/acme-challenge/*" {
 	root "/acme"
-	root strip 2
+	request strip 2
 }
 .Ed
 .Sh FILES

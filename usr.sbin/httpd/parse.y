@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2018/06/11 10:04:12 denis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2018/06/13 15:08:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -491,6 +491,7 @@ serveroptsl	: LISTEN ON STRING opttls port 		{
 				YYERROR;
 			}
 		}
+		| request
 		| root
 		| directory
 		| logformat
@@ -809,7 +810,17 @@ rootflags	: STRING		{
 			free($1);
 			srv->srv_conf.flags |= SRVFLAG_ROOT;
 		}
-		| STRIP NUMBER		{
+		;
+
+request		: REQUEST requestflags
+		| REQUEST '{' optnl requestflags_l '}'
+		;
+
+requestflags_l	: requestflags optcommanl requestflags_l
+		| requestflags optnl
+		;
+
+requestflags	: STRIP NUMBER			{
 			if ($2 < 0 || $2 > INT_MAX) {
 				yyerror("invalid strip number");
 				YYERROR;

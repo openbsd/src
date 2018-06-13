@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.11 2017/11/27 01:58:52 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.12 2018/06/13 15:08:24 reyk Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2017 $
+.Dd $Mdocdate: June 13 2018 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -169,7 +169,7 @@ server "example.com" {
         tls key "/etc/ssl/private/example.com.key"
         location "/.well-known/acme-challenge/*" {
                 root "/acme"
-                root strip 2
+                request strip 2
         }
         root "/htdocs"
 }
