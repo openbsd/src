@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.3 2018/06/13 17:02:01 jmc Exp $
+.\" $OpenBSD: ldap.1,v 1.4 2018/06/13 18:26:03 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -81,10 +81,10 @@ The LDAP URL is described in RFC 4516 with the following format:
 .Sm off
 .Op Ar protocol No ://
 .Ar host Op : Ar port
-.Oo Ar / basedn
-.Op Ar \? attribute,...
-.Op Ar \? scope
-.Op Ar \? filter
+.Oo / basedn
+.Op ? Ar attribute , ...
+.Op ? Ar scope
+.Op ? Ar filter
 .Oc
 .Sm on
 .Pp
