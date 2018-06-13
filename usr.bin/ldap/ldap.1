@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.2 2018/06/13 15:51:08 reyk Exp $
+.\" $OpenBSD: ldap.1,v 1.3 2018/06/13 17:02:01 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -15,11 +15,11 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: June 13 2018 $
-.Dt ldap 1
+.Dt LDAP 1
 .Os
 .Sh NAME
 .Nm ldap
-.Nd Simple LDAP client.
+.Nd simple LDAP client
 .Sh SYNOPSIS
 .Nm ldap
 .Ar command
@@ -104,7 +104,7 @@ This is the same as the
 option.
 .It ldapi
 Connect to a UNIX-domain socket.
-The host argument is required to be an URL-encoded path, for example
+The host argument is required to be a URL-encoded path, for example
 .Ar ldapi://%2fvar%2frun%2fldapi
 for
 .Pa /var/run/ldapi .
@@ -128,8 +128,7 @@ instead.
 Request the server to abort the search request after
 .Ar timelimit
 seconds.
-The default value is
-.Ar 0
+The default value is 0.
 for no limit.
 .It Fl s Ar scope
 Specify the
@@ -159,9 +158,13 @@ Enable TLS using the StartTLS operation.
 Request the server to limit the search result to a maximum number of
 .Ar sizelimit
 entries.
-The default value is
-.Ar 0
+The default value is 0.
 for no limit.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ssl/cert.pemXXX" -compact
+.It Pa /etc/ssl/cert.pem
+Default CA file.
 .El
 .Sh EXAMPLES
 The following script can be used with the
@@ -185,11 +188,6 @@ Match Group ldapusers
 	AuthorizedKeysCommand /etc/ssh/ldap-authorized_keys.sh
 	AuthorizedKeysCommandUser _ldap
 .Ed
-.Sh FILES
-.Bl -tag -width "/etc/ssl/cert.pemXXX" -compact
-.It Pa /etc/ssl/cert.pem
-Default CA file.
-.El
 .Sh SEE ALSO
 .Xr sshd_config 5 ,
 .Xr ldapd 8 ,
@@ -216,7 +214,7 @@ Default CA file.
 .%D June 2006
 .%R RFC 4516
 .%T Lightweight Directory Access Protocol (LDAP): Uniform Resource Locator
-..Re
+.Re
 .Sh AUTHORS
 .An -nosplit
 The
@@ -226,6 +224,6 @@ program was written by
 .Sh CAVEATS
 The
 .Nm
-tool does not support SASL authentication;
-authentication should be performed using simple authentication over a
+tool does not support SASL authentication.
+Authentication should be performed using simple authentication over a
 TLS connection.
