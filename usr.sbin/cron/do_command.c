@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.58 2018/06/13 11:27:30 job Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.59 2018/06/13 13:30:03 tb Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -425,7 +425,6 @@ child_process(entry *e, user *u)
 	 */
 	int waiter;
 	if (jobpid > 0) {
-				;
 		while (waitpid(jobpid, &waiter, 0) < 0 && errno == EINTR)
 			;
 
@@ -440,9 +439,7 @@ child_process(entry *e, user *u)
 			mail = NULL;
 		}
 
-		/* only close pipe if we opened it -- i.e., we're
-		* mailing...
-		*/
+		/* only close pipe if we opened it -- i.e., we're mailing... */
 		if (mail) {
 			/*
 			 * Note: the pclose will probably see the termination
