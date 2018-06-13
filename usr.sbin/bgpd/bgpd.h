@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.317 2018/02/10 01:24:28 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.318 2018/06/13 09:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -239,12 +239,10 @@ struct bgpd_config {
 
 extern int cmd_opts;
 
-enum announce_type {
-	ANNOUNCE_UNDEF,
-	ANNOUNCE_SELF,
-	ANNOUNCE_NONE,
-	ANNOUNCE_DEFAULT_ROUTE,
-	ANNOUNCE_ALL
+enum export_type {
+	EXPORT_UNSET,
+	EXPORT_NONE,
+	EXPORT_DEFAULT_ROUTE
 };
 
 enum enforce_as {
@@ -318,7 +316,7 @@ struct peer_config {
 	u_int32_t		 remote_as;
 	u_int32_t		 local_as;
 	u_int32_t		 max_prefix;
-	enum announce_type	 announce_type;
+	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
 	enum reconf_action	 reconf_action;

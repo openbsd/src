@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.107 2018/02/10 01:24:28 benno Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.108 2018/06/13 09:33:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -500,16 +500,10 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tannounce restart no\n", c);
 	if (p->capabilities.as4byte == 0)
 		printf("%s\tannounce as4byte no\n", c);
-	if (p->announce_type == ANNOUNCE_SELF)
-		printf("%s\tannounce self\n", c);
-	else if (p->announce_type == ANNOUNCE_NONE)
-		printf("%s\tannounce none\n", c);
-	else if (p->announce_type == ANNOUNCE_ALL)
-		printf("%s\tannounce all\n", c);
-	else if (p->announce_type == ANNOUNCE_DEFAULT_ROUTE)
-		printf("%s\tannounce default-route\n", c);
-	else
-		printf("%s\tannounce ???\n", c);
+	if (p->export_type == EXPORT_NONE)
+		printf("%s\texport none\n", c);
+	else if (p->export_type == EXPORT_DEFAULT_ROUTE)
+		printf("%s\texport default-route\n", c);
 	if (p->enforce_as == ENFORCE_AS_ON)
 		printf("%s\tenforce neighbor-as yes\n", c);
 	else

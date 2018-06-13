@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.89 2018/02/10 05:54:31 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.90 2018/06/13 09:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -318,26 +318,14 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 			return (0);
 	}
 
-	/* announce type handling */
-	switch (peer->conf.announce_type) {
-	case ANNOUNCE_UNDEF:
-	case ANNOUNCE_NONE:
-	case ANNOUNCE_DEFAULT_ROUTE:
+	/* export type handling */
+	if (peer->conf.export_type == EXPORT_NONE ||
+	    peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
 		/*
 		 * no need to withdraw old prefix as this will be
 		 * filtered out as well.
 		 */
 		return (-1);
-	case ANNOUNCE_ALL:
-		break;
-	case ANNOUNCE_SELF:
-		/*
-		 * pass only prefix that have an aspath count
-		 * of zero this is equal to the ^$ regex.
-		 */
-		if (asp->aspath->ascnt != 0)
-			return (0);
-		break;
 	}
 
 	/* well known communities */

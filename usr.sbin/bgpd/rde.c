@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.379 2018/02/10 05:54:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.380 2018/06/13 09:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3538,7 +3538,9 @@ peer_dump(u_int32_t id, u_int8_t aid)
 		return;
 	}
 
-	if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
+	if (peer->conf.export_type == EXPORT_NONE)
+		/* nothing */;
+	else if (peer->conf.export_type == EXPORT_DEFAULT_ROUTE)
 		up_generate_default(out_rules, peer, aid);
 	else
 		rib_dump(peer->rib, rde_up_dump_upcall, peer, aid);

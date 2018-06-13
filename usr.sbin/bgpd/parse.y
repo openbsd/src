@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.321 2018/06/11 08:49:02 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.322 2018/06/13 09:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -194,7 +194,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
-%token	RDOMAIN RD EXPORTTRGT IMPORTTRGT
+%token	RDOMAIN RD EXPORT EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
@@ -1227,21 +1227,26 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE AS4BYTE yesno {
 			curpeer->conf.capabilities.as4byte = $3;
 		}
-		| ANNOUNCE SELF {
-			curpeer->conf.announce_type = ANNOUNCE_SELF;
-		}
 		| ANNOUNCE STRING {
-			if (!strcmp($2, "self"))
-				curpeer->conf.announce_type = ANNOUNCE_SELF;
-			else if (!strcmp($2, "none"))
-				curpeer->conf.announce_type = ANNOUNCE_NONE;
-			else if (!strcmp($2, "all"))
-				curpeer->conf.announce_type = ANNOUNCE_ALL;
-			else if (!strcmp($2, "default-route"))
-				curpeer->conf.announce_type =
-				    ANNOUNCE_DEFAULT_ROUTE;
+			if (!strcmp($2, "all"))
+				logit(LOG_ERR, "%s:%d: %s", file->name,
+				    yylval.lineno,
+				    "deprecated use of announce all");
 			else {
-				yyerror("invalid announce type");
+				yyerror("syntax error");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| EXPORT STRING {
+			if (!strcmp($2, "none"))
+				curpeer->conf.export_type = EXPORT_NONE;
+			else if (!strcmp($2, "default-route"))
+				curpeer->conf.export_type =
+				    EXPORT_DEFAULT_ROUTE;
+			else {
+				yyerror("invalid export type");
 				free($2);
 				YYERROR;
 			}
@@ -2480,6 +2485,7 @@ lookup(char *s)
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},
 		{ "evaluate",		EVALUATE},
+		{ "export",		EXPORT},
 		{ "export-target",	EXPORTTRGT},
 		{ "ext-community",	EXTCOMMUNITY},
 		{ "fib-priority",	FIBPRIORITY},
@@ -3397,7 +3403,7 @@ alloc_peer(void)
 	p->state = STATE_NONE;
 	p->next = NULL;
 	p->conf.distance = 1;
-	p->conf.announce_type = ANNOUNCE_UNDEF;
+	p->conf.export_type = EXPORT_UNSET;
 	p->conf.announce_capa = 1;
 	for (i = 0; i < AID_MAX; i++)
 		p->conf.capabilities.mp[i] = -1;
@@ -3857,9 +3863,6 @@ neighbor_consistent(struct peer *p)
 
 	/* set default values if they where undefined */
 	p->conf.ebgp = (p->conf.remote_as != conf->as);
-	if (p->conf.announce_type == ANNOUNCE_UNDEF)
-		p->conf.announce_type = p->conf.ebgp ?
-		    ANNOUNCE_SELF : ANNOUNCE_ALL;
 	if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
 		p->conf.enforce_as = p->conf.ebgp ?
 		    ENFORCE_AS_ON : ENFORCE_AS_OFF;

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.165 2018/02/10 11:19:09 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.166 2018/06/13 09:33:51 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2018 $
+.Dd $Mdocdate: June 13 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -638,41 +638,6 @@ There are several neighbor properties:
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic announce
-.Sm off
-.Pq Ic all | none | self | default-route
-.Sm on
-.Xc
-If set to
-.Ic none ,
-no
-.Em UPDATE
-messages will be sent to the neighbor.
-If set to
-.Ic default-route ,
-only the default route will be announced to the neighbor.
-If set to
-.Ic all ,
-all generated
-.Em UPDATE
-messages will be sent to the neighbor.
-This is usually used for
-.Em transit AS's
-and
-.Em IBGP
-peers.
-The default value
-for
-.Em EBGP
-peers is
-.Ic self ,
-which limits the sent
-.Em UPDATE
-messages to announcements of the local AS.
-The default for IBGP peers is
-.Ic all .
-.Pp
-.It Xo
-.Ic announce
 .Pq Ic IPv4 Ns | Ns Ic IPv6
 .Pq Ic none Ns | Ns Ic unicast Ns | Ns Ic vpn
 .Xc
@@ -848,6 +813,21 @@ The default value for IBGP peers is
 .Ic no
 otherwise the default is
 .Ic yes .
+.Pp
+.It Xo
+.Ic export
+.Sm off
+.Pq Ic none | default-route
+.Sm on
+.Xc
+If set to
+.Ic none ,
+no
+.Em UPDATE
+messages will be sent to the neighbor.
+If set to
+.Ic default-route ,
+only the default route will be announced to the neighbor.
 .Pp
 .It Ic holdtime Ar seconds
 Set the holdtime in seconds.
@@ -1077,6 +1057,7 @@ The last matching
 or
 .Ic deny
 rule decides what action is taken.
+The default action is to deny.
 .Pp
 The following actions can be used in the filter:
 .Bl -tag -width xxxxxxxx
