@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.31 2018/04/28 14:22:21 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.32 2018/06/13 15:05:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,11 +142,8 @@ redo:
 	/* Compute  s = inv(k) (m + xr) mod q */
 	if (!BN_mod_mul(&xr, dsa->priv_key, r, dsa->q, ctx))	/* s = xr */
 		goto err;
-	if (!BN_add(s, &xr, &m))				/* s = m + xr */
+	if (!BN_mod_add(s, &xr, &m, dsa->q, ctx))		/* s = m + xr */
 		goto err;
-	if (BN_cmp(s, dsa->q) > 0)
-		if (!BN_sub(s, s, dsa->q))
-			goto err;
 	if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))
 		goto err;
 
