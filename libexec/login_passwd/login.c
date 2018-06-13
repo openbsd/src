@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.17 2018/06/13 14:54:42 reyk Exp $	*/
+/*	$OpenBSD: login.c,v 1.18 2018/06/13 15:02:09 reyk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -48,6 +48,7 @@ main(int argc, char **argv)
 	int arg_login = 0, arg_notickets = 0;
 	char invokinguser[LOGIN_NAME_MAX];
 	char *wheel = NULL, *class = NULL;
+	struct passwd *pwd;
 
 	invokinguser[0] = '\0';
 
@@ -104,6 +105,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* get the password hash before pledge(2) or it will return '*' */
+	pwd = getpwnam_shadow(username);
+
+	if (pledge("stdio rpath tty id", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
+		exit(1);
+	}
+
 	if (back == NULL && (back = fdopen(3, "r+")) == NULL) {
 		syslog(LOG_ERR, "reopening back channel: %m");
 		exit(1);
@@ -148,7 +157,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	ret = pwd_login(username, password, wheel, lastchance, class);
+	ret = pwd_login(username, password, wheel, lastchance, class, pwd);
 
 	if (password != NULL)
 		explicit_bzero(password, strlen(password));
