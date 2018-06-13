@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.140 2018/06/07 13:37:28 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.141 2018/06/13 14:57:24 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1293,9 +1293,9 @@ ufs_rmdir(void *v)
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
 	/*
-	 * No rmdir "." or of mounted on directories.
+	 * No rmdir ".".
 	 */
-	if (dp == ip || vp->v_mountedhere != NULL) {
+	if (dp == ip) {
 		if (dp == ip)
 			vrele(dvp);
 		else

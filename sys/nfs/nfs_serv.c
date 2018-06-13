@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.115 2018/06/07 13:37:28 visa Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.116 2018/06/13 14:57:24 visa Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1976,6 +1976,13 @@ nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	 */
 	if (nd.ni_dvp == vp) {
 		error = EINVAL;
+		goto out;
+	}
+	/*
+	 * A mounted on directory cannot be deleted.
+	 */
+	if (vp->v_mountedhere != NULL) {
+		error = EBUSY;
 		goto out;
 	}
 	/*
