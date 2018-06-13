@@ -1,4 +1,4 @@
-/* $OpenBSD: common.h,v 1.8 2016/09/03 10:50:16 gsoares Exp $ */
+/* $OpenBSD: common.h,v 1.9 2018/06/13 14:54:42 reyk Exp $ */
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
@@ -54,8 +54,6 @@
 
 extern FILE *back;
 
-#ifdef PASSWD
 int pwd_login(char *, char *, char *, int, char *);
-#endif
 
 #endif /* !_COMMON_H_ */

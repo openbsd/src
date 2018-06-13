@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.16 2016/09/03 11:24:40 tedu Exp $	*/
+/*	$OpenBSD: login.c,v 1.17 2018/06/13 14:54:42 reyk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -148,11 +148,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	ret = AUTH_FAILED;
-#ifdef PASSWD
-	if (ret != AUTH_OK)
-		ret = pwd_login(username, password, wheel, lastchance, class);
-#endif
+	ret = pwd_login(username, password, wheel, lastchance, class);
 
 	if (password != NULL)
 		explicit_bzero(password, strlen(password));
