@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.132 2018/05/09 03:23:20 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.133 2018/06/13 14:38:42 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1608,7 +1608,7 @@ fn_name(vaddr_t addr)
 	for (i = 0; names[i].name != NULL; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	snprintf(buf, sizeof(buf), "%p", addr);
+	snprintf(buf, sizeof(buf), "%p", (void *)addr);
 	return (buf);
 }
 #endif	/* !DDB */

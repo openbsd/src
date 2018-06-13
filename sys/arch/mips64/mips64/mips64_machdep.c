@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.25 2017/09/02 15:56:29 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.26 2018/06/13 14:38:42 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -186,7 +186,7 @@ exec_md_map(struct proc *p, struct exec_package *pack)
 	if (rc != 0)
 		return rc;
 #ifdef DEBUG
-	printf("%s: p %p fppgva %p\n", __func__, p, va);
+	printf("%s: p %p fppgva %p\n", __func__, p, (void *)va);
 #endif
 	p->p_md.md_fppgva = va;
 #endif

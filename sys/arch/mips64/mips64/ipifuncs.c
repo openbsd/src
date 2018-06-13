@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.18 2018/02/18 14:42:32 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.19 2018/06/13 14:38:42 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -131,7 +131,7 @@ mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
 	if (cpuid >= CPU_MAXID || get_cpu_info(cpuid) == NULL)
 		panic("mips_send_ipi: bogus cpu_id");
 	if (!cpuset_isset(&cpus_running, get_cpu_info(cpuid)))
-	        panic("mips_send_ipi: CPU %ld not running", cpuid);
+	        panic("mips_send_ipi: CPU %u not running", cpuid);
 #endif
 
 	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
@@ -162,7 +162,7 @@ void
 mips64_ipi_nop(void)
 {
 #ifdef DEBUG
-	printf("mips64_ipi_nop on cpu%d\n", cpu_number());
+	printf("mips64_ipi_nop on cpu%lu\n", cpu_number());
 #endif
 }
 
