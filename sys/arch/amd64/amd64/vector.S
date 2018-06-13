@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.64 2018/06/10 15:51:41 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.65 2018/06/13 23:39:00 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -187,13 +187,10 @@ INTRENTRY_LABEL(trap03):
 	sti
 	cld
 	SMAP_CLAC
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
 	movq	%rsp, %rdi
 	call	_C_LABEL(db_prof_hook)
 	cmpl	$1, %eax
-	jne	recall_trap
+	jne	.Lreal_kern_trap
 
 	cli
 	movq	TF_RDI(%rsp),%rdi
@@ -355,29 +352,45 @@ Xexceptions:
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
 
 /*
- * All traps go through here. Call the generic trap handler, and
- * check for ASTs afterwards.
+ * All traps go through here.  Figure out whether we're
+ * a) coming from usermode and need the Meltdown mitigation before
+ *    jumping to user trap handling followed by AST and
+ *    return-to-userspace handling, or
+ * b) coming from supervisor mode and can directly jump to kernel
+ *    trap handling before returning sans AST or other handling.
  */
 KUENTRY(alltraps)
-	INTRENTRY(alltraps)
+	testb	$SEL_RPL,24(%rsp)
+	je	alltraps_kern
+	swapgs
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(KERN_CR3),%rax
+	testq	%rax,%rax
+	jz	alltraps_user
+	movq	%rax,%cr3
+	jmp	alltraps_user
+END(alltraps)
+
+/*
+ * Traps from supervisor mode (kernel)
+ */
+NENTRY(alltraps_kern)
+	INTR_ENTRY_KERN
+	INTR_SAVE_MOST_GPRS_NO_ADJ
 	sti
 	cld
 	SMAP_CLAC
+.Lreal_kern_trap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-	.globl	recall_trap
-recall_trap:
 	movq	%rsp, %rdi
-	call	_C_LABEL(trap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	intr_user_exit
+	call	_C_LABEL(trap)		/* kerntrap */
+2:	cli
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else /* DIAGNOSTIC */
-1:	cmpl	CPUVAR(ILEVEL),%ebx
+	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -397,6 +410,24 @@ spl_lowered:
 	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 	.text
 #endif /* DIAGNOSTIC */
+END(alltraps_kern)
+
+/*
+ * Traps from userspace
+ */
+NENTRY(alltraps_user)
+	INTR_ENTRY_USER
+	INTR_SAVE_MOST_GPRS_NO_ADJ
+	sti
+	cld
+	SMAP_CLAC
+	.globl	recall_trap
+recall_trap:
+	movq	%rsp, %rdi
+	call	_C_LABEL(trap)		/* usertrap */
+	cli
+	jmp	intr_user_exit
+END(alltraps_user)
 
 
 /*
