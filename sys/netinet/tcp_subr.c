@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.171 2018/05/08 15:10:33 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.172 2018/06/14 01:24:08 yasuoka Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -191,6 +191,9 @@ tcp_template(struct tcpcb *tp)
 	struct mbuf *m;
 	struct tcphdr *th;
 
+	CTASSERT(sizeof(struct ip) + sizeof(struct tcphdr) <= MHLEN);
+	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct tcphdr) <= MHLEN);
+
 	if ((m = tp->t_template) == 0) {
 		m = m_get(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
@@ -208,19 +211,6 @@ tcp_template(struct tcpcb *tp)
 #endif /* INET6 */
 		}
 		m->m_len += sizeof (struct tcphdr);
-
-		/*
-		 * The link header, network header, TCP header, and TCP options
-		 * all must fit in this mbuf. For now, assume the worst case of
-		 * TCP options size. Eventually, compute this from tp flags.
-		 */
-		if (m->m_len + MAX_TCPOPTLEN + max_linkhdr >= MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
-				return (0);
-			}
-		}
 	}
 
 	switch(tp->pf) {
