@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.93 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.94 2018/06/14 14:55:10 florian Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -567,6 +567,7 @@ init(void)
 		/*NOTREACHED*/
 	}
 
+	freeaddrinfo(res);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -580,6 +581,7 @@ init(void)
 		/*NOTREACHED*/
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 
 	pfd[0].fd = ripsock;
 	pfd[0].events = POLLIN;
