@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.25 2017/04/18 14:16:48 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.26 2018/06/14 19:51:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1404,10 +1404,10 @@ magic_test(struct magic *m, const void *base, size_t size, int flags)
 	if (*ms.out != '\0') {
 		if (flags & MAGIC_TEST_MIME) {
 			if (ms.mimetype != NULL)
-				return (xstrdup(ms.mimetype));
+				return (ms.mimetype);
 			return (NULL);
 		}
-		return (xstrdup(ms.out));
+		return (ms.out);
 	}
 	return (NULL);
 }
