@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.19 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.20 2018/06/14 17:00:35 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -94,7 +94,9 @@ __FBSDID("$FreeBSD: head/sys/kern/subr_witness.c 313261 2017-02-05 02:27:04Z mar
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
+#endif
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -571,6 +573,16 @@ witness_init(struct lock_object *lock, const struct lock_type *type)
 		lock->lo_witness = enroll(type, lock->lo_name, class);
 }
 
+static inline int
+is_kernel_lock(const struct lock_object *lock)
+{
+#ifdef MULTIPROCESSOR
+	return (lock == &kernel_lock.mpl_lock_obj);
+#else
+	return (0);
+#endif
+}
+
 #ifdef DDB
 static void
 witness_ddb_compute_levels(void)
@@ -924,7 +936,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			 * lock, then skip it.
 			 */
 			if ((lock1->li_lock->lo_flags & LO_SLEEPABLE) != 0 &&
-			    lock == &kernel_lock.mpl_lock_obj)
+			    is_kernel_lock(lock))
 				continue;
 
 			/*
@@ -932,7 +944,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			 * is Giant, then skip it.
 			 */
 			if ((lock->lo_flags & LO_SLEEPABLE) != 0 &&
-			    lock1->li_lock == &kernel_lock.mpl_lock_obj)
+			    is_kernel_lock(lock1->li_lock))
 				continue;
 
 			/*
@@ -950,7 +962,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 			 * lock, then treat it as a reversal.
 			 */
 			if ((lock1->li_lock->lo_flags & LO_SLEEPABLE) == 0 &&
-			    lock == &kernel_lock.mpl_lock_obj)
+			    is_kernel_lock(lock))
 				goto reversal;
 
 			/*
@@ -994,7 +1006,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 				printf("lock order reversal: "
 				    "(sleepable after non-sleepable)\n");
 			else if ((lock1->li_lock->lo_flags & LO_SLEEPABLE) == 0
-			    && lock == &kernel_lock.mpl_lock_obj)
+			    && is_kernel_lock(lock))
 				printf("lock order reversal: "
 				    "(Giant after non-sleepable)\n");
 			else
@@ -1087,7 +1099,7 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 	 * always come before Giant.
 	 */
 	if (flags & LOP_NEWORDER &&
-	    !(plock->li_lock == &kernel_lock.mpl_lock_obj &&
+	    !(is_kernel_lock(plock->li_lock) &&
 	    (lock->lo_flags & LO_SLEEPABLE) != 0))
 		itismychild(plock->li_lock->lo_witness, w);
 out:
@@ -1407,7 +1419,7 @@ witness_warn(int flags, struct lock_object *lock, const char *fmt, ...)
 			if (lock1->li_lock == lock)
 				continue;
 			if (flags & WARN_KERNELOK &&
-			    lock1->li_lock == &kernel_lock.mpl_lock_obj)
+			    is_kernel_lock(lock1->li_lock))
 				continue;
 			if (flags & WARN_SLEEPOK &&
 			    (lock1->li_lock->lo_flags & LO_SLEEPABLE) != 0)
