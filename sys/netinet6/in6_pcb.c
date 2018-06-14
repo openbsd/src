@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.103 2018/06/07 08:46:24 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.104 2018/06/14 17:00:58 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -247,6 +247,8 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	struct sockaddr_in6 *sin6;
 	int error;
 	struct sockaddr_in6 tmp;
+
+	KASSERT(inp->inp_flags & INP_IPV6);
 
 	if ((error = in6_nam2sin6(nam, &sin6)))
 		return (error);

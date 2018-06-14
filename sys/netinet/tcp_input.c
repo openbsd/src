@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.356 2018/06/11 07:40:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.357 2018/06/14 17:00:57 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3537,27 +3537,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		goto resetandabort;
 	am->m_len = src->sa_len;
 	memcpy(mtod(am, caddr_t), src, src->sa_len);
-
-	switch (src->sa_family) {
-	case AF_INET:
-		/* drop IPv4 packet to AF_INET6 socket */
-		if (inp->inp_flags & INP_IPV6) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		if (in_pcbconnect(inp, am)) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (in6_pcbconnect(inp, am)) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		break;
-#endif
+	if (in_pcbconnect(inp, am)) {
+		(void) m_free(am);
+		goto resetandabort;
 	}
 	(void) m_free(am);
 

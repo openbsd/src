@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.237 2018/06/11 08:57:35 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.238 2018/06/14 17:00:57 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -511,8 +511,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6)
 		return (in6_pcbconnect(inp, nam));
-	if ((inp->inp_flags & INP_IPV6) != 0)
-		panic("IPv6 pcb passed into in_pcbconnect");
+	KASSERT((inp->inp_flags & INP_IPV6) == 0);
 #endif /* INET6 */
 
 	if ((error = in_nam2sin(nam, &sin)))
