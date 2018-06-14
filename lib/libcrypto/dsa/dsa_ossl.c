@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.35 2018/06/14 17:15:41 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.36 2018/06/14 18:03:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,8 +118,9 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 
 	/*
-	 * If the digest length is greater than the size of q use the
-	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-3, 4.2.
+	 * If the digest length is greater than N (the bit length of q), the
+	 * leftmost N bits of the digest shall be used, see FIPS 186-3, 4.2.
+	 * In this case the digest length is given in bytes.
 	 */
 	if (dlen > BN_num_bytes(dsa->q))
 		dlen = BN_num_bytes(dsa->q);
