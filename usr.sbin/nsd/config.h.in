@@ -25,6 +25,9 @@
 /* Define to the default facility for syslog. */
 #undef FACILITY
 
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
+
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 
