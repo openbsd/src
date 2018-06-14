@@ -545,7 +545,11 @@ remote_accept_callback(int fd, short event, void* arg)
 
 	/* perform the accept */
 	addrlen = sizeof(addr);
+#ifndef HAVE_ACCEPT4
 	newfd = accept(fd, (struct sockaddr*)&addr, &addrlen);
+#else
+	newfd = accept4(fd, (struct sockaddr*)&addr, &addrlen, SOCK_NONBLOCK);
+#endif
 	if(newfd == -1) {
 		if (    errno != EINTR
 			&& errno != EWOULDBLOCK
@@ -569,10 +573,13 @@ remote_accept_callback(int fd, short event, void* arg)
 		close(newfd);
 		return;
 	}
+
+#ifndef HAVE_ACCEPT4
 	if (fcntl(newfd, F_SETFL, O_NONBLOCK) == -1) {
 		log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
 		goto close_exit;
 	}
+#endif
 
 	/* setup state to service the remote control command */
 	n = (struct rc_state*)calloc(1, sizeof(*n));

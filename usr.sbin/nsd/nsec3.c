@@ -385,7 +385,7 @@ nsec3_clear_precompile(struct namedb* db, zone_type* zone)
 	walk = zone->apex;
 	while(walk && domain_is_subdomain(walk, zone->apex)) {
 		if(walk->nsec3) {
-			if(nsec3_domain_part_of_zone(walk, zone)) {
+			if(nsec3_condition_hash(walk, zone)) {
 				walk->nsec3->nsec3_node.key = NULL;
 				walk->nsec3->nsec3_cover = NULL;
 				walk->nsec3->nsec3_wcard_child_cover = NULL;
@@ -397,8 +397,7 @@ nsec3_clear_precompile(struct namedb* db, zone_type* zone)
 					walk->nsec3->hash_wc = NULL;
 				}
 			}
-			if(!walk->parent ||
-				nsec3_domain_part_of_zone(walk->parent, zone)) {
+			if(nsec3_condition_dshash(walk, zone)) {
 				walk->nsec3->nsec3_ds_parent_cover = NULL;
 				walk->nsec3->nsec3_ds_parent_is_exact = 0;
 				if (walk->nsec3->ds_parent_hash) {
@@ -440,7 +439,8 @@ nsec3_condition_dshash(domain_type* d, zone_type* z)
 {
 	return d->is_existing && !domain_has_only_NSEC3(d, z) &&
 		(domain_find_rrset(d, z, TYPE_DS) ||
-		domain_find_rrset(d, z, TYPE_NS)) && d != z->apex;
+		domain_find_rrset(d, z, TYPE_NS)) && d != z->apex
+		&& nsec3_domain_part_of_zone(d->parent, z);
 }
 
 zone_type*

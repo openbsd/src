@@ -2886,7 +2886,11 @@ handle_tcp_accept(int fd, short event, void* arg)
 
 	/* Accept it... */
 	addrlen = sizeof(addr);
+#ifndef HAVE_ACCEPT4
 	s = accept(fd, (struct sockaddr *) &addr, &addrlen);
+#else
+	s = accept4(fd, (struct sockaddr *) &addr, &addrlen, SOCK_NONBLOCK);
+#endif
 	if (s == -1) {
 		/**
 		 * EMFILE and ENFILE is a signal that the limit of open
@@ -2923,11 +2927,13 @@ handle_tcp_accept(int fd, short event, void* arg)
 		return;
 	}
 
+#ifndef HAVE_ACCEPT4
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1) {
 		log_msg(LOG_ERR, "fcntl failed: %s", strerror(errno));
 		close(s);
 		return;
 	}
+#endif
 
 	/*
 	 * This region is deallocated when the TCP connection is
