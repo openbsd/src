@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.34 2018/06/14 17:14:12 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.35 2018/06/14 17:15:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,15 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (ctx == NULL)
 		goto err;
 
+	/*
+	 * If the digest length is greater than the size of q use the
+	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-3, 4.2.
+	 */
+	if (dlen > BN_num_bytes(dsa->q))
+		dlen = BN_num_bytes(dsa->q);
+	if (BN_bin2bn(dgst, dlen, &m) == NULL)
+		goto err;
+
  redo:
 	if (dsa->kinv == NULL || dsa->r == NULL) {
 		if (!DSA_sign_setup(dsa, ctx, &kinv, &r))
@@ -128,15 +137,6 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		dsa->r = NULL;
 		noredo = 1;
 	}
-
-	/*
-	 * If the digest length is greater than the size of q use the
-	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-3, 4.2.
-	 */
-	if (dlen > BN_num_bytes(dsa->q))
-		dlen = BN_num_bytes(dsa->q);
-	if (BN_bin2bn(dgst,dlen,&m) == NULL)
-		goto err;
 
 	/* Compute  s = inv(k) (m + xr) mod q */
 	if (!BN_mod_mul(&xr, dsa->priv_key, r, dsa->q, ctx))	/* s = xr */
