@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.238 2018/06/14 17:00:57 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.239 2018/06/14 17:16:03 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -269,6 +269,18 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
+	inp->inp_hops = -1;
+#ifdef INET6
+	/*
+	 * Small change in this function to set the INP_IPV6 flag so routines
+	 * outside pcb-specific routines don't need to use sotopf(), and all
+	 * of its pointer chasing, later.
+	 */
+	if (sotopf(so) == PF_INET6)
+		inp->inp_flags = INP_IPV6;
+	inp->inp_cksum6 = -1;
+#endif /* INET6 */
+
 	if (table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_size))
 		(void)in_pcbresize(table, table->inpt_size * 2);
 	TAILQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
@@ -286,18 +298,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 		    rtable_l2(inp->inp_rtableid));
 	LIST_INSERT_HEAD(head, inp, inp_hash);
 	so->so_pcb = inp;
-	inp->inp_hops = -1;
 
-#ifdef INET6
-	/*
-	 * Small change in this function to set the INP_IPV6 flag so routines
-	 * outside pcb-specific routines don't need to use sotopf(), and all
-	 * of its pointer chasing, later.
-	 */
-	if (sotopf(so) == PF_INET6)
-		inp->inp_flags = INP_IPV6;
-	inp->inp_cksum6 = -1;
-#endif /* INET6 */
 	return (0);
 }
 
