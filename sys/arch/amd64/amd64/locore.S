@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.100 2018/06/09 16:51:23 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.101 2018/06/14 19:57:29 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -583,6 +583,7 @@ NENTRY(Xsyscall_untramp)
 	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
 	movq	%rcx,TF_RIP(%rsp)
 	movq	%rax,TF_ERR(%rsp)	/* stash syscall # for SPL check */
+	INTR_CLEAR_GPRS
 
 	movq	CPUVAR(CURPROC),%r14
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame

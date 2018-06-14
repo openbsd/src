@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.15 2018/06/10 15:02:50 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.16 2018/06/14 19:57:29 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -33,6 +33,30 @@
 	movq	%rdx,TF_RDX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)
 
+/*
+ * We clear registers when coming from userspace to prevent
+ * user-controlled values from being availible for use in speculative
+ * execution in the kernel.  %rsp and %rbp are the kernel values when
+ * this is used, so there are only 14 to clear.  32bit operations clear
+ * the register upper-halves automatically.
+ */
+#define INTR_CLEAR_GPRS \
+	xorl	%eax,%eax		; \
+	movl	%eax,%ebx		; \
+	movl	%eax,%ecx		; \
+	movl	%eax,%edx		; \
+	movl	%eax,%esi		; \
+	movl	%eax,%edi		; \
+	movl	%eax,%r8d		; \
+	movl	%eax,%r9d		; \
+	movl	%eax,%r10d		; \
+	movl	%eax,%r11d		; \
+	movl	%eax,%r12d		; \
+	movl	%eax,%r13d		; \
+	movl	%eax,%r14d		; \
+	movl	%eax,%r15d
+
+
 /* For real interrupt code paths, where we can come from userspace */
 #define INTRENTRY_LABEL(label)	X##label##_untramp
 #define	INTRENTRY(label) \
@@ -52,7 +76,8 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	jmp	99f			; \
 98:	/* from userspace */		  \
 	INTR_ENTRY_USER			; \
-99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
+	INTR_CLEAR_GPRS
 
 #define	INTR_ENTRY_KERN \
 	subq	$152,%rsp		; \

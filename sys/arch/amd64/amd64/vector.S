@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.65 2018/06/13 23:39:00 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.66 2018/06/14 19:57:29 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ calltrap_specstk:			# special stack path
 	.text
 	.globl	INTRENTRY_LABEL(calltrap_specstk)
 INTRENTRY_LABEL(calltrap_specstk):
+	INTR_CLEAR_GPRS
 	cld
 	SMAP_CLAC
 	movq	%rsp,%rdi
@@ -418,6 +419,7 @@ END(alltraps_kern)
 NENTRY(alltraps_user)
 	INTR_ENTRY_USER
 	INTR_SAVE_MOST_GPRS_NO_ADJ
+	INTR_CLEAR_GPRS
 	sti
 	cld
 	SMAP_CLAC
