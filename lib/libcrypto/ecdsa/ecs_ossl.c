@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.11 2018/06/13 15:05:04 jsing Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.12 2018/06/14 18:51:01 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -221,14 +221,14 @@ static ECDSA_SIG *
 ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
 {
-	int     ok = 0, i;
-	BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL, *order = NULL;
-	const BIGNUM *ckinv;
-	BN_CTX     *ctx = NULL;
-	const EC_GROUP   *group;
+	BIGNUM *b = NULL, *binv = NULL, *bm = NULL, *bxr = NULL;
+	BIGNUM *kinv = NULL, *m = NULL, *order = NULL, *range = NULL, *s;
+	const BIGNUM *ckinv, *priv_key;
+	BN_CTX *ctx = NULL;
+	const EC_GROUP *group;
 	ECDSA_SIG  *ret;
 	ECDSA_DATA *ecdsa;
-	const BIGNUM *priv_key;
+	int     ok = 0, i;
 
 	ecdsa = ecdsa_check(eckey);
 	group = EC_KEY_get0_group(eckey);
@@ -247,7 +247,9 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	s = ret->s;
 
 	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
-	    (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
+	    (range = BN_new()) == NULL || (b = BN_new()) == NULL ||
+	    (binv = BN_new()) == NULL || (bm = BN_new()) == NULL ||
+	    (bxr = BN_new()) == NULL || (m = BN_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -286,11 +288,53 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			}
 		}
 
-		if (!BN_mod_mul(tmp, priv_key, ret->r, order, ctx)) {
+		/*
+		 * Compute s = inv(k)(m + xr) mod order.
+		 *
+		 * In order to reduce the possibility of a side-channel attack,
+		 * the following is calculated using a blinding value:
+		 *
+		 *  s = inv(k)inv(b)(bm + bxr) mod order
+		 *
+		 * where b is a random value in the range [1, order-1].
+		 */
+		
+		/* Generate b in range [1, order-1]. */
+		if (!BN_sub(range, order, BN_value_one())) {
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_add(s, tmp, m, order, ctx)) {
+		if (!BN_rand_range(b, range)) {
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		if (!BN_add(b, b, BN_value_one())) {
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+
+		if (BN_mod_inverse_ct(binv, b, order, ctx) == NULL) {
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+
+		if (!BN_mod_mul(bxr, b, priv_key, order, ctx)) { /* bx */
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		if (!BN_mod_mul(bxr, bxr, ret->r, order, ctx)) { /* bxr */
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		if (!BN_mod_mul(bm, b, m, order, ctx)) { /* bm */
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		if (!BN_mod_add(s, bm, bxr, order, ctx)) { /* s = bm + bxr */
+			ECDSAerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		if (!BN_mod_mul(s, s, binv, order, ctx)) { /* s = m + xr */
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -298,9 +342,12 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
+
 		if (BN_is_zero(s)) {
-			/* if kinv and r have been supplied by the caller
-			 * don't to generate new kinv and r values */
+			/*
+			 * If kinv and r have been supplied by the caller,
+			 * don't generate new kinv and r values
+			 */
 			if (in_kinv != NULL && in_r != NULL) {
 				ECDSAerror(ECDSA_R_NEED_NEW_SETUP_VALUES);
 				goto err;
@@ -318,10 +365,14 @@ err:
 		ret = NULL;
 	}
 	BN_CTX_free(ctx);
-	BN_clear_free(m);
-	BN_clear_free(tmp);
-	BN_free(order);
+	BN_clear_free(b);
+	BN_clear_free(binv);
+	BN_clear_free(bm);
+	BN_clear_free(bxr);
 	BN_clear_free(kinv);
+	BN_clear_free(m);
+	BN_free(order);
+	BN_free(range);
 	return ret;
 }
 
