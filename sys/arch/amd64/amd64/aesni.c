@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.47 2018/06/01 18:39:48 fcambus Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.48 2018/06/14 18:44:43 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -246,7 +246,9 @@ aesni_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			}
 
 			/* prepare a hash subkey */
+			fpu_kernel_enter();
 			aesni_enc(ses, ses->ses_ghash->H, ses->ses_ghash->H);
+			fpu_kernel_exit();
 			break;
 
 		case CRYPTO_MD5_HMAC:
