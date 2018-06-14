@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.27 2017/05/27 07:37:36 tedu Exp $	*/
+/*	$OpenBSD: subr.c,v 1.28 2018/06/14 23:19:27 gsoares Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -372,7 +372,7 @@ portselector(void)
 {
 	char c, baud[20], *type = "default";
 	struct portselect *ps;
-	int len;
+	size_t len;
 
 	alarm(5*60);
 	for (len = 0; len < sizeof (baud) - 1; len++) {
