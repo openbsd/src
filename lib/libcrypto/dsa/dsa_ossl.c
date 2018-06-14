@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.33 2018/06/13 18:01:04 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.34 2018/06/14 17:14:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,9 +146,6 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))
 		goto err;
 
-	ret = DSA_SIG_new();
-	if (ret == NULL)
-		goto err;
 	/*
 	 * Redo if r or s is zero as required by FIPS 186-3: this is very
 	 * unlikely.
@@ -159,6 +156,11 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 			goto err;
 		}
 		goto redo;
+	}
+
+	if ((ret = DSA_SIG_new()) == NULL) {
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
 	}
 	ret->r = r;
 	ret->s = s;
