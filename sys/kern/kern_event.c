@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.91 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.92 2018/06/15 01:09:49 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -705,7 +705,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 
 	if (tsp != NULL) {
 		ats = *tsp;
-		if (ats.tv_sec > 100000000 || timespecfix(&ats)) {
+		if (timespecfix(&ats)) {
 			error = EINVAL;
 			goto done;
 		}
