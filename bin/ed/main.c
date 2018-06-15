@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2018/06/15 08:26:31 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2018/06/15 08:45:03 martijn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -983,11 +983,7 @@ get_shell_command(void)
 				REALLOC(buf, n, i + 1, ERR);
 				buf[i++] = *ibufp++;
 			}
-#ifdef BACKWARDS
-			else if (shcmd == NULL || *(shcmd + 1) == '\0')
-#else
 			else if (shcmd == NULL)
-#endif
 			{
 				seterrmsg("no previous command");
 				return ERR;
@@ -1010,6 +1006,10 @@ get_shell_command(void)
 			s = ibufp++;
 			break;
 		}
+	if (i == 1) {
+		seterrmsg("no command");
+		return ERR;
+	}
 	REALLOC(shcmd, shcmdsz, i + 1, ERR);
 	memcpy(shcmd, buf, i);
 	shcmd[shcmdi = i] = '\0';
