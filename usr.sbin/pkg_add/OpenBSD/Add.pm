@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.174 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: Add.pm,v 1.175 2018/06/15 09:37:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,8 @@ sub perform_installation
 {
 	my ($handle, $state) = @_;
 
+	return if $state->defines('stub');
+
 	$state->{partial} = $handle->{partial};
 	$state->progress->visit_with_size($handle->{plist}, 'install');
 	if ($handle->{location}{early_close}) {
@@ -112,6 +114,8 @@ sub perform_installation
 sub perform_extraction
 {
 	my ($handle, $state) = @_;
+
+	return if $state->defines('stub');
 
 	$handle->{partial} = {};
 	$state->{partial} = $handle->{partial};
@@ -412,6 +416,7 @@ sub prepare_for_addition
 		$state->{problems}++;
 		return;
 	}
+	return if $state->defines('stub');
 	my $s = $state->vstat->add($fname, $self->{tieto} ? 0 : $self->{size},
 	    $pkgname);
 	return unless defined $s;

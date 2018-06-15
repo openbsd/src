@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.150 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: Delete.pm,v 1.151 2018/06/15 09:37:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -141,10 +141,12 @@ sub delete_plist
 
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
-	if (!$state->{size_only}) {
-		$plist->register_manpage($state, 'rmman');
-		manpages_unindex($state);
-		$state->progress->visit_with_size($plist, 'delete');
+	if (!$state->defines('stub')) {
+		if (!$state->{size_only}) {
+			$plist->register_manpage($state, 'rmman');
+			manpages_unindex($state);
+			$state->progress->visit_with_size($plist, 'delete');
+		}
 	}
 
 	unregister_dependencies($plist, $state);

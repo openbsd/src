@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.141 2018/06/06 10:13:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.142 2018/06/15 09:37:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -204,6 +204,7 @@ sub pretend_to_archive
 }
 
 sub record_digest {}
+sub stub_digest {}
 sub archive {}
 sub really_archived { 0 }
 sub comment_create_package {}
@@ -392,6 +393,12 @@ sub record_digest
 	push(@$new, $self);
 }
 
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub set_destdir
 {
@@ -460,6 +467,12 @@ sub prepare_for_archival
 
 sub forbidden() { 1 }
 
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 # override for CONTENTS: we cannot checksum this.
 package OpenBSD::PackingElement::FCONTENTS;
 sub makesum_plist
@@ -482,6 +495,12 @@ sub comment_create_package
 	my ($self, $state) = @_;
 	$self->SUPER::comment_create_package($state);
 	$state->say("GZIP: END OF SIGNATURE CHUNK");
+}
+
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
 }
 
 package OpenBSD::PackingElement::Cwd;
@@ -1605,19 +1624,25 @@ sub parse_and_run
 		exit 0;
 	}
 	$plist->discover_directories($state);
-	my $ordered;
+	my $ordered = [];
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checking dependencies");
 		$self->check_dependencies($plist, $state);
-		$state->set_status("checksumming");
-		if ($regen_package) {
-			$state->progress->visit_with_count($plist, 'verify_checksum');
+		if ($state->defines("stub")) {
+			$plist->stub_digest($ordered);
 		} else {
-			$plist = $self->make_plist_with_sum($state, $plist);
+			$state->set_status("checksumming");
+			if ($regen_package) {
+				$state->progress->visit_with_count($plist, 
+				    'verify_checksum');
+			} else {
+				$plist = $self->make_plist_with_sum($state, 
+				    $plist);
+			}
+			$ordered = $self->save_history($plist, 
+			    $state->defines('HISTORY_DIR'));
+			$self->show_bad_symlinks($state);
 		}
-		$ordered = $self->save_history($plist, 
-		    $state->defines('HISTORY_DIR'));
-		$self->show_bad_symlinks($state);
 		$state->end_status;
 	}
 
@@ -1664,7 +1689,9 @@ sub parse_and_run
 	} else {
 		$self->create_package($state, $plist, $ordered, $wname);
 	}
-	$self->finish_manpages($state, $plist);
+	if (!$state->defines("stub")) {
+		$self->finish_manpages($state, $plist);
+	}
 	}catch {
 		print STDERR "$0: $_\n";
 		return 1;
