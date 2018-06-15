@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.12 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: frame.h,v 1.13 2018/06/15 17:58:41 bluhm Exp $	*/
 /*	$NetBSD: frame.h,v 1.12 1995/10/11 04:20:08 mycroft Exp $	*/
 
 /*-
@@ -54,14 +54,14 @@ struct trapframe {
 	int	tf_ds;
 	int	tf_edi;
 	int	tf_esi;
-	int	tf_ebp;
+	int	tf_err;		/* not the hardware position */
 	int	tf_ebx;
 	int	tf_edx;
 	int	tf_ecx;
 	int	tf_eax;
 	int	tf_trapno;
 	/* below portion defined in 386 hardware */
-	int	tf_err;
+	int	tf_ebp;	/* hardware puts err here, INTRENTRY() moves it up */
 	int	tf_eip;
 	int	tf_cs;
 	int	tf_eflags;
@@ -86,13 +86,13 @@ struct intrframe {
 	int	if_ds;
 	int	if_edi;
 	int	if_esi;
-	int	if_ebp;
+	int	:32;		/* for compat with trap frame - err */
 	int	if_ebx;
 	int	if_edx;
 	int	if_ecx;
 	int	if_eax;
 	int	:32;		/* for compat with trap frame - trapno */
-	int	:32;		/* for compat with trap frame - err */
+	int	if_ebp;
 	/* below portion defined in 386 hardware */
 	int	if_eip;
 	int	if_cs;
