@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.20 2018/06/14 17:00:35 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.21 2018/06/15 14:07:36 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -370,12 +370,6 @@ static void	witness_setflag(struct lock_object *lock, int flag, int set);
 static int witness_watch = 3;
 #else
 static int witness_watch = 2;
-#endif
-
-#ifdef WITNESS_SKIPSPIN
-int	witness_skipspin = 1;
-#else
-int	witness_skipspin = 0;
 #endif
 
 int witness_count = WITNESS_COUNT;
@@ -1499,10 +1493,7 @@ enroll(const struct lock_type *type, const char *subtype,
 	if (witness_watch < 0 || panicstr != NULL || db_active)
 		return (NULL);
 	if ((lock_class->lc_flags & LC_SPINLOCK)) {
-		if (witness_skipspin)
-			return (NULL);
-		else
-			typelist = &w_spin;
+		typelist = &w_spin;
 	} else if ((lock_class->lc_flags & LC_SLEEPLOCK)) {
 		typelist = &w_sleep;
 	} else {
@@ -1901,11 +1892,8 @@ witness_save(struct lock_object *lock, const char **filep, int *linep)
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
 		lock_list = curproc->p_sleeplocks;
-	else {
-		if (witness_skipspin)
-			return;
+	else
 		lock_list = witness_cpu[cpu_number()].wc_spinlocks;
-	}
 	instance = find_instance(lock_list, lock);
 	if (instance == NULL) {
 		panic("%s: lock (%s) %s not locked", __func__,
@@ -1930,11 +1918,8 @@ witness_restore(struct lock_object *lock, const char *file, int line)
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
 		lock_list = curproc->p_sleeplocks;
-	else {
-		if (witness_skipspin)
-			return;
+	else
 		lock_list = witness_cpu[cpu_number()].wc_spinlocks;
-	}
 	instance = find_instance(lock_list, lock);
 	if (instance == NULL)
 		panic("%s: lock (%s) %s not locked", __func__,
@@ -2035,11 +2020,8 @@ witness_setflag(struct lock_object *lock, int flag, int set)
 	class = LOCK_CLASS(lock);
 	if (class->lc_flags & LC_SLEEPLOCK)
 		lock_list = curproc->p_sleeplocks;
-	else {
-		if (witness_skipspin)
-			return;
+	else
 		lock_list = witness_cpu[cpu_number()].wc_spinlocks;
-	}
 	instance = find_instance(lock_list, lock);
 	if (instance == NULL) {
 		panic("%s: lock (%s) %s not locked", __func__,
