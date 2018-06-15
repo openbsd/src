@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.194 2018/06/13 13:30:31 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.195 2018/06/15 08:57:17 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 13 2018 $
+.Dd $Mdocdate: June 15 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -660,9 +660,9 @@ may use format specifiers which are expanded before delivery or
 relaying.
 The following formats are currently supported:
 .Bl -column %{user.directory} -offset indent
-.It %{sender}         Ta sender email address
-.It %{sender.user}    Ta user part of the sender email address
-.It %{sender.domain}  Ta domain part of the sender email address
+.It %{sender}         Ta sender email address, may be empty string
+.It %{sender.user}    Ta user part of the sender email address, may be empty
+.It %{sender.domain}  Ta domain part of the sender email address, may be empty
 .It %{rcpt}           Ta recipient email address
 .It %{rcpt.user}      Ta user part of the recipient email address
 .It %{rcpt.domain}    Ta domain part of the recipient email address
@@ -671,6 +671,7 @@ The following formats are currently supported:
 .It %{dest.domain}    Ta domain part after expansion
 .It %{user.username}  Ta local user
 .It %{user.directory} Ta home directory of the local user
+.It %{mbox.from}      Ta name used in mbox From separator lines
 .It %{mda}            Ta mda command, only available for mda wrappers
 .El
 .Pp

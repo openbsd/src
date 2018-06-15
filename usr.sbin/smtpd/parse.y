@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.211 2018/06/04 15:57:46 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.212 2018/06/15 08:57:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -589,7 +589,7 @@ dispatcher_local:
 MBOX {
 	dispatcher->u.local.requires_root = 1;
 	dispatcher->u.local.user = xstrdup("root");
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{sender} %%{user.username}");
+	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
 	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir");
@@ -615,11 +615,11 @@ MBOX {
 } dispatcher_local_options
 | LMTP STRING {
 	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f %%{sender} -d %s %%{user.username}", $2);
+	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{user.username}", $2);
 } dispatcher_local_options
 | LMTP STRING RCPT_TO {
 	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f %%{sender} -d %s %%{dest}", $2);
+	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{dest}", $2);
 } dispatcher_local_options
 | MDA STRING {
 	asprintf(&dispatcher->u.local.command,

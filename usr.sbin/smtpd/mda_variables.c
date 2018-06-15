@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.3 2018/06/04 15:57:46 gilles Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.4 2018/06/15 08:57:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -116,18 +116,24 @@ mda_expand_token(char *dest, size_t len, const char *token,
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			dlv->sender.user, dlv->sender.domain) >= (int)sizeof tmp)
 			return 0;
+		if (strcmp(tmp, "@") == 0)
+			(void)strlcpy(tmp, "", sizeof tmp);
 		string = tmp;
 	}
 	else if (!strcasecmp("rcpt", rtoken)) {
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			dlv->rcpt.user, dlv->rcpt.domain) >= (int)sizeof tmp)
 			return 0;
+		if (strcmp(tmp, "@") == 0)
+			(void)strlcpy(tmp, "", sizeof tmp);
 		string = tmp;
 	}
 	else if (!strcasecmp("dest", rtoken)) {
 		if (snprintf(tmp, sizeof tmp, "%s@%s",
 			dlv->dest.user, dlv->dest.domain) >= (int)sizeof tmp)
 			return 0;
+		if (strcmp(tmp, "@") == 0)
+			(void)strlcpy(tmp, "", sizeof tmp);
 		string = tmp;
 	}
 	else if (!strcasecmp("sender.user", rtoken))
@@ -151,6 +157,14 @@ mda_expand_token(char *dest, size_t len, const char *token,
 	else if (!strcasecmp("mda", rtoken)) {
 		string = mda_command;
 		replace = 0;
+	}
+	else if (!strcasecmp("mbox.from", rtoken)) {
+		if (snprintf(tmp, sizeof tmp, "%s@%s",
+			dlv->sender.user, dlv->sender.domain) >= (int)sizeof tmp)
+			return 0;
+		if (strcmp(tmp, "@") == 0)
+			(void)strlcpy(tmp, "MAILER-DAEMON", sizeof tmp);
+		string = tmp;
 	}
 	else
 		return 0;
