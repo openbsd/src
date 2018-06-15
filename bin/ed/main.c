@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2018/06/04 13:26:21 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2018/06/15 08:26:31 martijn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -404,7 +404,6 @@ next_addr(void)
 }
 
 
-#ifdef BACKWARDS
 /* GET_THIRD_ADDR: get a legal address from the command buffer */
 #define GET_THIRD_ADDR(addr) \
 	do { \
@@ -425,26 +424,6 @@ next_addr(void)
 		first_addr = ol1; \
 		second_addr = ol2; \
 	} while (0)
-
-#else	/* BACKWARDS */
-/* GET_THIRD_ADDR: get a legal address from the command buffer */
-#define GET_THIRD_ADDR(addr) \
-	do { \
-		int ol1, ol2; \
-		\
-		ol1 = first_addr; \
-		ol2 = second_addr; \
-		if (extract_addr_range() < 0) \
-			return ERR; \
-		if (second_addr < 0 || addr_last < second_addr) { \
-			seterrmsg("invalid address"); \
-			return ERR; \
-		} \
-		addr = second_addr; \
-		first_addr = ol1; \
-		second_addr = ol2; \
-	} while (0)
-#endif
 
 
 /* GET_COMMAND_SUFFIX: verify the command suffix in the command buffer */
