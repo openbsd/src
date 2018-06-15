@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.158 2018/02/13 15:04:54 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.159 2018/06/15 09:39:03 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -47,12 +47,12 @@ sub lookup
 		}
 		$known->{$dep} = 1;
 		if ($self->find_in_new_source($solver, $state, $obj, $dep)) {
-			$dependencies->{$dep} = 1;
+			$dependencies->{$dep} = 2;
 			return 1;
 		}
 	}
 	if (my $r = $self->find_elsewhere($solver, $state, $obj)) {
-		$dependencies->{$r} = 1;
+		$dependencies->{$r} = 3;
 		return 1;
 	}
 
