@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.69 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.70 2018/06/15 20:41:15 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -91,9 +91,10 @@
 
 #include "isa.h"
 
-void trap(struct trapframe *);
-void ast(struct trapframe *);
-void syscall(struct trapframe *);
+int	pageflttrap(struct trapframe *, int _usermode);
+void	trap(struct trapframe *);
+void	ast(struct trapframe *);
+void	syscall(struct trapframe *);
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -130,6 +131,134 @@ static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
     long _type);
 static inline void check_stack(struct proc *_p, long _type);
 
+/*
+ * pageflttrap(frame, usermode): page fault handler
+ * Returns non-zero if the fault was handled (possibly by generating
+ * a signal).  Returns zero, possibly still holding the kernel lock,
+ * if something was so broken that we should panic.
+ */
+int
+pageflttrap(struct trapframe *frame, int usermode)
+{
+	struct proc *p = curproc;
+	struct pcb *pcb;
+	int error;
+	uint64_t cr2;
+	vaddr_t va;
+	struct vm_map *map;
+	vm_prot_t ftype;
+
+	if (p == NULL || p->p_addr == NULL || p->p_vmspace == NULL)
+		return 0;
+
+	map = &p->p_vmspace->vm_map;
+	pcb = &p->p_addr->u_pcb;
+	cr2 = rcr2();
+	va = trunc_page((vaddr_t)cr2);
+
+	KERNEL_LOCK();
+
+	if (!usermode) {
+		extern struct vm_map *kernel_map;
+
+		/* This will only trigger if SMEP is enabled */
+		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
+			panic("attempt to execute user address %p "
+			    "in supervisor mode", (void *)cr2);
+		/* This will only trigger if SMAP is enabled */
+		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
+		    frame->tf_err & PGEX_P)
+			panic("attempt to access user address %p "
+			    "in supervisor mode", (void *)cr2);
+
+		/*
+		 * It is only a kernel address space fault iff:
+		 *	1. when running in ring0  and
+		 *	2. pcb_onfault not set or
+		 *	3. pcb_onfault set but supervisor space fault
+		 * The last can occur during an exec() copyin where the
+		 * argument space is lazy-allocated.
+		 */
+		if (va >= VM_MIN_KERNEL_ADDRESS) {
+			map = kernel_map;
+#ifdef DIAGNOSTIC
+			if (va == 0) {
+				printf("bad kernel access at %llx\n", cr2);
+				return 0;
+			}
+#endif
+		}
+	}
+
+	if (frame->tf_err & PGEX_W)
+		ftype = PROT_WRITE;
+	else if (frame->tf_err & PGEX_I)
+		ftype = PROT_EXEC;
+	else
+		ftype = PROT_READ;
+
+	if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
+		/* Fault the original page in. */
+		caddr_t onfault = pcb->pcb_onfault;
+
+		pcb->pcb_onfault = NULL;
+		error = uvm_fault(map, va, frame->tf_err & PGEX_P ?
+		    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
+		pcb->pcb_onfault = onfault;
+	} else
+		error = EFAULT;
+
+	if (error == 0) {
+		if (map != kernel_map)
+			uvm_grow(p, va);
+	} else if (!usermode) {
+		if (pcb->pcb_onfault != 0) {
+			KERNEL_UNLOCK();
+			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
+			return 1;
+		} else {
+			/*
+			 * Bad memory access in the kernel; save the fault
+			 * info for DDB and retain the kernel lock to keep
+			 * faultbuf from being overwritten by another CPU.
+			 */
+			static char faultbuf[512];
+			snprintf(faultbuf, sizeof faultbuf,
+			    "uvm_fault(%p, 0x%llx, 0, %d) -> %x",
+			    map, cr2, ftype, error);
+			printf("%s\n", faultbuf);
+			faultstr = faultbuf;
+			return 0;
+		}
+	} else {
+		union sigval sv;
+		int signal, sicode;
+
+		signal = SIGSEGV;
+		sicode = SEGV_MAPERR;
+		if (error == ENOMEM) {
+			printf("UVM: pid %d (%s), uid %d killed:"
+			    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
+			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+			signal = SIGKILL;
+		} else {
+			frame_dump(frame, p, "SEGV", cr2);
+			if (error == EACCES)
+				sicode = SEGV_ACCERR;
+			else if (error == EIO) {
+				signal = SIGBUS;
+				sicode = BUS_OBJERR;
+			}
+		}
+		sv.sival_ptr = (void *)cr2;
+		trapsignal(p, signal, T_PAGEFLT, sicode, sv);
+	}
+
+	KERNEL_UNLOCK();
+
+	return 1;
+}
+
 
 /*
  * trap(frame):
@@ -143,17 +272,11 @@ trap(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
-	struct pcb *pcb;
-	caddr_t onfault;
-	int error;
-	uint64_t cr2;
 	union sigval sv;
 
 	verify_smap(__func__);
 	uvmexp.traps++;
 	debug_trap(frame, p, type);
-
-	pcb = (p != NULL && p->p_addr != NULL) ? &p->p_addr->u_pcb : NULL;
 
 	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
@@ -188,14 +311,6 @@ trap(struct trapframe *frame)
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
-		if (p == NULL)
-			goto we_re_toast;
-		/* Check for copyin/copyout fault. */
-		if (pcb->pcb_onfault != 0) {
-copyfault:
-			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
-			return;
-		}
 		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
@@ -239,120 +354,14 @@ copyfault:
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == NULL)
-			goto we_re_toast;
-		cr2 = rcr2();
-		KERNEL_LOCK();
-		/* This will only trigger if SMEP is enabled */
-		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
-			panic("attempt to execute user address %p "
-			    "in supervisor mode", (void *)cr2);
-		/* This will only trigger if SMAP is enabled */
-		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
-		    frame->tf_err & PGEX_P)
-			panic("attempt to access user address %p "
-			    "in supervisor mode", (void *)cr2);
-		goto faultcommon;
+		if (pageflttrap(frame, 0))
+			return;
+		goto we_re_toast;
 
-	case T_PAGEFLT|T_USER: {	/* page fault */
-		vaddr_t va, fa;
-		struct vmspace *vm;
-		struct vm_map *map;
-		vm_prot_t ftype;
-		extern struct vm_map *kernel_map;
-		int signal, sicode;
-
-		cr2 = rcr2();
-		KERNEL_LOCK();
-faultcommon:
-		vm = p->p_vmspace;
-		if (vm == NULL)
-			goto we_re_toast;
-		fa = cr2;
-		va = trunc_page((vaddr_t)cr2);
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. (type & T_USER) == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (type == T_PAGEFLT && va >= VM_MIN_KERNEL_ADDRESS)
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-		if (frame->tf_err & PGEX_W)
-			ftype = PROT_WRITE;
-		else if (frame->tf_err & PGEX_I)
-			ftype = PROT_EXEC;
-		else
-			ftype = PROT_READ;
-
-#ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", fa);
-			goto we_re_toast;
-		}
-#endif
-
-		if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
-			/* Fault the original page in. */
-			onfault = pcb->pcb_onfault;
-			pcb->pcb_onfault = NULL;
-			error = uvm_fault(map, va, frame->tf_err & PGEX_P?
-			    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
-			pcb->pcb_onfault = onfault;
-		} else
-			error = EFAULT;
-
-		if (error == 0) {
-			if (map != kernel_map)
-				uvm_grow(p, va);
-
-			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK();
-				return;
-			}
-			KERNEL_UNLOCK();
+	case T_PAGEFLT|T_USER:		/* page fault */
+		if (pageflttrap(frame, 1))
 			goto out;
-		}
-
-		if (type == T_PAGEFLT) {
-			static char faultbuf[512];
-			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK();
-				goto copyfault;
-			}
-			snprintf(faultbuf, sizeof faultbuf,
-			    "uvm_fault(%p, 0x%lx, 0, %d) -> %x",
-			    map, fa, ftype, error);
-			printf("%s\n", faultbuf);
-			faultstr = faultbuf;
-			goto we_re_toast;
-		}
-
-		signal = SIGSEGV;
-		sicode = SEGV_MAPERR;
-		if (error == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed:"
-			    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
-			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
-			signal = SIGKILL;
-		} else {
-			frame_dump(frame, p, "SEGV", cr2);
-			if (error == EACCES)
-				sicode = SEGV_ACCERR;
-			else if (error == EIO) {
-				signal = SIGBUS;
-				sicode = BUS_OBJERR;
-			}
-		}
-		sv.sival_ptr = (void *)fa;
-		trapsignal(p, signal, T_PAGEFLT, sicode, sv);
-		KERNEL_UNLOCK();
-		break;
-	}
+		goto we_re_toast;
 
 	case T_TRCTRAP:
 		goto we_re_toast;
