@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.65 2017/02/02 22:19:59 reyk Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.66 2018/06/15 12:36:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -230,8 +230,14 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 		goto abort;
 	}
 
-	if ((ret = server_file_modified_since(clt->clt_descreq, st)) != -1)
-		return (ret);
+	if ((ret = server_file_modified_since(clt->clt_descreq, st)) != -1) {
+		/* send the header without a body */
+		media = media_find_config(env, srv_conf, path);
+		if ((ret = server_response_http(clt, ret, media, -1,
+		    MINIMUM(time(NULL), st->st_mtim.tv_sec))) == -1)
+			goto fail;
+		goto done;
+	}
 
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)

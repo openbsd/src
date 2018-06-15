@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.120 2018/06/11 12:12:51 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.121 2018/06/15 12:36:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -1362,7 +1362,7 @@ server_response_http(struct client *clt, unsigned int code,
 	    (error = server_httperror_byid(code)) == NULL)
 		return (-1);
 
-	if (server_log_http(clt, code, size) == -1)
+	if (server_log_http(clt, code, size >= 0 ? size : 0) == -1)
 		return (-1);
 
 	/* Add error codes */
@@ -1388,9 +1388,9 @@ server_response_http(struct client *clt, unsigned int code,
 		return (-1);
 
 	/* Set content length, if specified */
-	if ((cl =
+	if (size >= 0 && ((cl =
 	    kv_add(&resp->http_headers, "Content-Length", NULL)) == NULL ||
-	    kv_set(cl, "%lld", (long long)size) == -1)
+	    kv_set(cl, "%lld", (long long)size) == -1))
 		return (-1);
 
 	/* Set last modification time */
@@ -1423,7 +1423,7 @@ server_response_http(struct client *clt, unsigned int code,
 	    server_bufferevent_print(clt, "\r\n") == -1)
 		return (-1);
 
-	if (size == 0 || resp->http_method == HTTP_METHOD_HEAD) {
+	if (size <= 0 || resp->http_method == HTTP_METHOD_HEAD) {
 		bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 		if (clt->clt_persist)
 			clt->clt_toread = TOREAD_HTTP_HEADER;
