@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.65 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.66 2018/06/15 13:59:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -27,11 +27,6 @@
 
 #include <ddb/db_output.h>
 
-#if defined(MULTIPROCESSOR) || defined(WITNESS)
-#include <sys/mplock.h>
-struct __mp_lock kernel_lock;
-#endif
-
 #ifdef MP_LOCKDEBUG
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
@@ -42,6 +37,9 @@ int __mp_lock_spinout = 200000000;
 #endif /* MP_LOCKDEBUG */
 
 #ifdef MULTIPROCESSOR
+
+#include <sys/mplock.h>
+struct __mp_lock kernel_lock;
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
