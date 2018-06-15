@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.12 2018/06/14 18:51:01 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.13 2018/06/15 05:00:41 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -92,7 +92,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	BIGNUM	 *k = NULL, *r = NULL, *order = NULL, *X = NULL;
 	EC_POINT *tmp_point = NULL;
 	const EC_GROUP *group;
-	int 	 order_bits, ret = 0;
+	int order_bits, ret = 0;
 
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
@@ -124,7 +124,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		goto err;
 	}
 
-	/* Preallocate space */
+	/* Preallocate space. */
 	order_bits = BN_num_bits(order);
 	if (!BN_set_bit(k, order_bits) ||
 	    !BN_set_bit(r, order_bits) ||
@@ -135,16 +135,17 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		/* get random k */
 		do
 			if (!BN_rand_range(k, order)) {
-				ECDSAerror(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
+				ECDSAerror(
+				    ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
 				goto err;
 			}
 		while (BN_is_zero(k));
 
 		/*
 		 * We do not want timing information to leak the length of k,
-		 * so we compute G*k using an equivalent scalar of fixed
+		 * so we compute G * k using an equivalent scalar of fixed
 		 * bit-length.
-		 * 
+		 *
 		 * We unconditionally perform both of these additions to prevent
 		 * a small timing information leakage.  We then choose the sum
 		 * that is one bit longer than the order.  This guarantees the
@@ -175,8 +176,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 			}
 		}
 #ifndef OPENSSL_NO_EC2M
-		else /* NID_X9_62_characteristic_two_field */
-		{
+		else {	/* NID_X9_62_characteristic_two_field */
 			if (!EC_POINT_get_affine_coordinates_GF2m(group,
 			    tmp_point, X, NULL, ctx)) {
 				ECDSAerror(ERR_R_EC_LIB);
@@ -203,8 +203,8 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	*kinvp = k;
 	ret = 1;
 
-err:
-	if (!ret) {
+ err:
+	if (ret == 0) {
 		BN_clear_free(k);
 		BN_clear_free(r);
 	}
@@ -259,20 +259,19 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 	i = BN_num_bits(order);
-	/* Need to truncate digest if it is too long: first truncate whole
-	 * bytes.
-	 */
+	/* Truncate digest if it is too long: first truncate whole bytes. */
 	if (8 * dgst_len > i)
 		dgst_len = (i + 7)/8;
 	if (!BN_bin2bn(dgst, dgst_len, m)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	/* If still too long truncate remaining bits with a shift */
+	/* If it is still too long, truncate the remaining bits with a shift. */
 	if ((8 * dgst_len > i) && !BN_rshift(m, m, 8 - (i & 0x7))) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
+
 	do {
 		if (in_kinv == NULL || in_r == NULL) {
 			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &ret->r)) {
@@ -298,7 +297,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		 *
 		 * where b is a random value in the range [1, order-1].
 		 */
-		
+
 		/* Generate b in range [1, order-1]. */
 		if (!BN_sub(range, order, BN_value_one())) {
 			ECDSAerror(ERR_R_BN_LIB);
@@ -359,7 +358,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 
 	ok = 1;
 
-err:
+ err:
 	if (!ok) {
 		ECDSA_SIG_free(ret);
 		ret = NULL;
@@ -429,16 +428,14 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	}
 	/* digest -> m */
 	i = BN_num_bits(order);
-	/* Need to truncate digest if it is too long: first truncate whole
-	 * bytes.
-	 */
+	/* Truncate digest if it is too long: first truncate whole bytes. */
 	if (8 * dgst_len > i)
 		dgst_len = (i + 7)/8;
 	if (!BN_bin2bn(dgst, dgst_len, m)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	/* If still too long truncate remaining bits with a shift */
+	/* If it is still too long, truncate the remaining bits with a shift. */
 	if ((8 * dgst_len > i) && !BN_rshift(m, m, 8 - (i & 0x7))) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
@@ -471,8 +468,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 		}
 	}
 #ifndef OPENSSL_NO_EC2M
-	else /* NID_X9_62_characteristic_two_field */
-	{
+	else { /* NID_X9_62_characteristic_two_field */
 		if (!EC_POINT_get_affine_coordinates_GF2m(group,
 		    point, X, NULL, ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
@@ -484,10 +480,11 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	/*  if the signature is correct u1 is equal to sig->r */
+
+	/* If the signature is correct, then u1 is equal to sig->r. */
 	ret = (BN_ucmp(u1, sig->r) == 0);
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
