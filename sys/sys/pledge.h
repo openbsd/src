@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.35 2018/04/26 09:30:08 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.36 2018/06/16 15:37:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -60,6 +60,7 @@
 #define PLEDGE_CHOWNUID	0x0000000100000000ULL	/* allow owner/group changes */
 #define PLEDGE_BPF	0x0000000200000000ULL	/* bpf ioctl */
 #define PLEDGE_ERROR	0x0000000400000000ULL	/* ENOSYS instead of kill */
+#define PLEDGE_WROUTE	0x0000000800000000ULL	/* interface address ioctls */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
@@ -107,6 +108,7 @@ static struct {
 	{ PLEDGE_CHOWNUID,	"chown" },
 	{ PLEDGE_BPF,		"bpf" },
 	{ PLEDGE_ERROR,		"error" },
+	{ PLEDGE_WROUTE,	"wroute" },
 	{ 0, NULL },
 };
 #endif
