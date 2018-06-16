@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.83 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.84 2018/06/16 19:41:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -363,7 +363,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		if ((tag = strchr(xn->u.user, *env->sc_subaddressing_delim)) != NULL)
 			*tag++ = '\0';
 
-		userbase = table_find(dsp->u.local.table_userbase, NULL);
+		userbase = table_find(env, dsp->u.local.table_userbase, NULL);
 		r = table_lookup(userbase, NULL, xn->u.user, K_USERINFO, &lk);
 		if (r == -1) {
 			log_trace(TRACE_EXPAND, "expand: lka_expand: "

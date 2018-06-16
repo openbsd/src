@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.39 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.40 2018/06/16 19:41:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,7 @@ purge_config(uint8_t what)
 	}
 	if (what & PURGE_TABLES) {
 		while (dict_root(env->sc_tables_dict, NULL, (void **)&t))
-			table_destroy(t);
+			table_destroy(env, t);
 		free(env->sc_tables_dict);
 		env->sc_tables_dict = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.212 2018/06/15 08:57:17 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.213 2018/06/16 19:41:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -945,7 +945,7 @@ negation TAG tables {
 	rule->flag_from_socket = 1;
 }
 | negation FROM LOCAL {
-	struct table	*t = table_find("<localhost>", NULL);
+	struct table	*t = table_find(conf, "<localhost>", NULL);
 
 	if (rule->flag_from) {
 		yyerror("from already specified for this rule");
@@ -955,7 +955,7 @@ negation TAG tables {
 	rule->table_from = strdup(t->t_name);
 }
 | negation FROM ANY {
-	struct table	*t = table_find("<anyhost>", NULL);
+	struct table	*t = table_find(conf, "<anyhost>", NULL);
 
 	if (rule->flag_from) {
 		yyerror("from already specified for this rule");
@@ -983,7 +983,7 @@ negation TAG tables {
 }
 
 | negation FOR LOCAL {
-	struct table   *t = table_find("<localnames>", NULL);
+	struct table   *t = table_find(conf, "<localnames>", NULL);
 
 	if (rule->flag_for) {
 		yyerror("for already specified for this rule");
@@ -993,7 +993,7 @@ negation TAG tables {
 	rule->table_for = strdup(t->t_name);
 }
 | negation FOR ANY {
-	struct table   *t = table_find("<anydestination>", NULL);
+	struct table   *t = table_find(conf, "<anydestination>", NULL);
 
 	if (rule->flag_for) {
 		yyerror("for already specified for this rule");
@@ -1509,7 +1509,7 @@ table		: TABLE STRING STRING	{
 				free($3);
 				YYERROR;
 			}
-			table = table_create(backend, $2, NULL, config);
+			table = table_create(conf, backend, $2, NULL, config);
 			if (!table_config(table)) {
 				yyerror("invalid configuration file %s for table %s",
 				    config, table->t_name);
@@ -1521,7 +1521,7 @@ table		: TABLE STRING STRING	{
 			free($3);
 		}
 		| TABLE STRING {
-			table = table_create("static", $2, NULL, NULL);
+			table = table_create(conf, "static", $2, NULL, NULL);
 			free($2);
 		} '{' tableval_list '}' {
 			table = NULL;
@@ -1531,14 +1531,14 @@ table		: TABLE STRING STRING	{
 tablenew	: STRING			{
 			struct table	*t;
 
-			t = table_create("static", NULL, NULL, NULL);
+			t = table_create(conf, "static", NULL, NULL, NULL);
 			t->t_type = T_LIST;
 			table_add(t, $1, NULL);
 			free($1);
 			$$ = t;
 		}
 		| '{'				{
-			table = table_create("static", NULL, NULL, NULL);
+			table = table_create(conf, "static", NULL, NULL, NULL);
 		} tableval_list '}'		{
 			$$ = table;
 		}
@@ -1547,7 +1547,7 @@ tablenew	: STRING			{
 tableref       	: '<' STRING '>'       		{
 			struct table	*t;
 
-			if ((t = table_find($2, NULL)) == NULL) {
+			if ((t = table_find(conf, $2, NULL)) == NULL) {
 				yyerror("no such table: %s", $2);
 				free($2);
 				YYERROR;
@@ -2128,7 +2128,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	 */
 	set_local(hostname);
 
-	t = table_create("static", "<anydestination>", NULL, NULL);
+	t = table_create(conf, "static", "<anydestination>", NULL, NULL);
 	t->t_type = T_LIST;
 	table_add(t, "*", NULL);
 
@@ -2139,7 +2139,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	if (strcmp(hostname, hostname_copy) != 0)
 		table_add(t, hostname_copy, NULL);
 
-	table_create("getpwnam", "<getpwnam>", NULL, NULL);
+	table_create(conf, "getpwnam", "<getpwnam>", NULL, NULL);
 
 	/* bounce dispatcher */
 	dispatcher = xcalloc(1, sizeof *dispatcher);
@@ -2556,7 +2556,7 @@ set_local(const char *hostname)
 {
 	struct table	*t;
 
-	t = table_create("static", "<localnames>", NULL, NULL);
+	t = table_create(conf, "static", "<localnames>", NULL, NULL);
 	t->t_type = T_LIST;
 	table_add(t, "localhost", NULL);
 	table_add(t, hostname, NULL);
@@ -2574,7 +2574,7 @@ set_localaddrs(struct table *localnames)
 	struct table		*t;
 	char buf[NI_MAXHOST + 5];
 
-	t = table_create("static", "<anyhost>", NULL, NULL);
+	t = table_create(conf, "static", "<anyhost>", NULL, NULL);
 	table_add(t, "local", NULL);
 	table_add(t, "0.0.0.0/0", NULL);
 	table_add(t, "::/0", NULL);
@@ -2582,7 +2582,7 @@ set_localaddrs(struct table *localnames)
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	t = table_create("static", "<localhost>", NULL, NULL);
+	t = table_create(conf, "static", "<localhost>", NULL, NULL);
 	table_add(t, "local", NULL);
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
