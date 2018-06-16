@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1068 2018/05/29 20:37:22 kettenis Exp $
+#	$OpenBSD: install.sub,v 1.1069 2018/06/16 15:56:51 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1147,7 +1147,7 @@ v6_config() {
 		*)	_addr=$resp
 			;;
 		esac
-	
+
 		# Ask for prefix lenght if the user did not use CIDR notation.
 		if [[ $_addr == */* ]]; then
 			_prefixlen=
@@ -1557,7 +1557,7 @@ install_files() {
 				for _tmpsrc in $_tmpfs/sets.+([0-9]).+([0-9]); do
 					[[ -d $_tmpsrc ]] && rm -r $_tmpsrc
 				done
-	
+
 				# Create a download directory for the sets and
 				# check that the _sndio user can read files from
 				# it. Otherwise cleanup and skip the filesystem.
