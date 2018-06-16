@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1069 2018/06/16 15:56:51 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1070 2018/06/16 16:08:50 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2222,7 +2222,7 @@ is_rootdisk() {
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _default=$(get_dkdevs)
+	local _default=$(get_dkdevs) _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
 
 	while :; do
@@ -2231,11 +2231,14 @@ get_rootinfo() {
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
-		*)	if isin "$resp" $(get_dkdevs); then
+		*)	# Translate $resp to disk dev name in case it is a DUID.
+			# get_dkdev_name bounces back the disk dev name if not.
+			_dkdev=$(get_dkdev_name "$resp")
+			if isin "$_dkdev" $(get_dkdevs); then
 				[[ $MODE == install ]] && break
-				is_rootdisk "$resp" && break
+				is_rootdisk "$_dkdev" && break
 				echo "$resp is not a valid root disk."
-				_default="$(rmel "$resp" $_default) $resp"
+				_default="$(rmel "$_dkdev" $_default) $_dkdev"
 			else
 				echo "no such disk"
 			fi
@@ -2245,9 +2248,9 @@ get_rootinfo() {
 	done
 	log_answers "$_q" "$resp"
 
-	make_dev $resp || exit
+	make_dev $_dkdev || exit
 
-	ROOTDISK=$resp
+	ROOTDISK=$_dkdev
 	ROOTDEV=${ROOTDISK}a
 	SWAPDEV=${ROOTDISK}b
 }
