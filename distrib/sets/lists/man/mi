@@ -1396,6 +1396,7 @@
 ./usr/share/man/man4/imxgpc.4
 ./usr/share/man/man4/imxgpio.4
 ./usr/share/man/man4/imxiic.4
+./usr/share/man/man4/imxrtc.4
 ./usr/share/man/man4/imxuart.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
