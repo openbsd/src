@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.160 2018/06/15 10:28:21 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.161 2018/06/16 08:41:55 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -82,7 +82,7 @@ sub may_adjust
 		} elsif ($u->pkgname ne $dep) {
 			$state->say("converting into #1", $u->pkgname) 
 			    if $state->verbose >=3;
-			return $u;
+			return $u->pkgname;
 		} else {
 			$state->say("didn't change") 
 			    if $state->verbose >=3;
