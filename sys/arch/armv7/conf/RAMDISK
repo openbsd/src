@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.97 2018/05/16 13:42:35 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.98 2018/06/16 14:32:56 kettenis Exp $
 
 machine		armv7 arm
 
@@ -55,6 +55,7 @@ sdmmc*		at imxesdhc?		# SD/MMC bus
 imxahci*	at fdt?			# AHCI/SATA
 imxehci*	at fdt?			# EHCI
 usb*		at imxehci?
+imxrtc*		at fdt?			# SNVS RTC
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
