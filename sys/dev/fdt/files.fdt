@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.63 2018/06/05 20:41:19 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.64 2018/06/16 14:11:35 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -238,6 +238,10 @@ file	dev/fdt/imxiomuxc.c		imxiomuxc
 device	imxpd: fdt
 attach	imxpd at fdt
 file	dev/fdt/imxpd.c			imxpd
+
+device	imxrtc
+attach	imxrtc at fdt
+file	dev/fdt/imxrtc.c		imxrtc
 
 device	imxuart
 attach	imxuart at fdt
