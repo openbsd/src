@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.5 2016/03/24 05:27:19 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.6 2018/06/16 16:06:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -46,12 +46,8 @@
  *
  * Our start code starts with two nops because execution may skip up to
  * two instructions; see setregs() in the kernel for details.
- *
- * The definitions of environ and __progname prevent the creation
- * of COPY relocations for WEAK symbols.
  */
 #define	MD_CRT0_START					\
-	char **environ, *__progname;			\
 	__asm(						\
 	"	.text					\n" \
 	"	.align 3				\n" \
@@ -67,4 +63,40 @@
 	"	br.n	___start			\n" \
 	"	 addu	%r4, %r4, 4			\n" \
 	"	 /* envp = argv + argc + 1 */		\n" \
+	"	.previous");
+
+#define	MD_RCRT0_START					\
+	__asm(						\
+	"	.text					\n" \
+	"	.align 3				\n" \
+	"	.globl __start				\n" \
+	"	.globl _start				\n" \
+	"__start:					\n" \
+	"_start:					\n" \
+	"	or	%r0, %r0, %r0			\n" \
+	"	or	%r0, %r0, %r0			\n" \
+	\
+	"	or	%r2, %r31, 0			\n" \
+	"	subu	%r31, %r31, 4*16		\n" \
+	"	or	%r3, %r31, 0			\n" \
+	"	bsr	1f				\n" \
+	"	bsr	_DYNAMIC#plt			\n" \
+	"1:	ld	%r6, %r1, 0			\n" \
+	"	mak	%r5, %r6, 26<2>			\n" \
+	"	addu	%r4, %r5, %r1			\n" \
+	"	bsr	_dl_boot_bind#plt		\n" \
+	"	addu	%r31, %r31, 4*16		\n" \
+	\
+	"	ld	%r2, %r31, 0	/* argc */	\n" \
+	"	addu	%r3, %r31, 4	/* argv */	\n" \
+	"	lda	%r4, %r3[%r2]			\n" \
+	"	or	%r5, %r0, %r0	/* cleanup */	\n" \
+	"	br.n	___start			\n" \
+	"	 addu	%r4, %r4, 4			\n" \
+	"	 /* envp = argv + argc + 1 */		\n" \
+	\
+	"_dl_exit:					\n" \
+	"	or	%r13, %r0, 1			\n" \
+	"	tb0	0, %r0, 450			\n" \
+	"	or	%r0, %r0, %r0			\n" \
 	"	.previous");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.6 2017/10/27 16:47:08 mpi Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.7 2018/06/16 16:06:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,8 +48,10 @@ RELOC_DYN(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
 	if (ELF32_R_TYPE(r->r_info) == RELOC_BBASED_32) {
 		*p = v + r->r_addend;
-	} else {
-		_dl_exit(6);
+	} else if (ELF32_R_TYPE(r->r_info) == RELOC_32) {
+		*p = v + s->st_value + r->r_addend;
+	} else if (ELF32_R_TYPE(r->r_info) != RELOC_NONE) {
+		_dl_exit(ELF32_R_TYPE(r->r_info) + 100);
 	}
 }
 
