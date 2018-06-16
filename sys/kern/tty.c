@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.140 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.141 2018/06/16 13:55:03 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -959,9 +959,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			ttstart(tp);
 		}
 		splx(s);
-		break;
-	case TIOCSTI:			/* simulate terminal input */
-		return (EIO);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
 		s = spltty();
