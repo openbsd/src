@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.14 2018/06/15 19:24:13 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.15 2018/06/16 08:11:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -282,7 +282,9 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		}
 
 		/*
-		 * Compute s = inv(k)(m + xr) mod order.
+		 * Compute:
+		 *
+		 *  s = inv(k)(m + xr) mod order
 		 *
 		 * In order to reduce the possibility of a side-channel attack,
 		 * the following is calculated using a blinding value:
