@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.7 2018/06/17 11:12:27 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.8 2018/06/17 19:46:48 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -98,8 +98,31 @@
 #define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		(1 << 6)
 
 /* Analog registers */
+#define CCM_ANALOG_PLL_USB1			0x0010
+#define CCM_ANALOG_PLL_USB1_SET			0x0014
+#define CCM_ANALOG_PLL_USB1_CLR			0x0018
+#define  CCM_ANALOG_PLL_USB1_LOCK		(1U << 31)
+#define  CCM_ANALOG_PLL_USB1_BYPASS		(1 << 16)
+#define  CCM_ANALOG_PLL_USB1_ENABLE		(1 << 13)
+#define  CCM_ANALOG_PLL_USB1_POWER		(1 << 12)
+#define  CCM_ANALOG_PLL_USB1_EN_USB_CLKS	(1 << 6)
+#define CCM_ANALOG_PLL_USB2			0x0020
+#define CCM_ANALOG_PLL_USB2_SET			0x0024
+#define CCM_ANALOG_PLL_USB2_CLR			0x0028
+#define  CCM_ANALOG_PLL_USB2_LOCK		(1U << 31)
+#define  CCM_ANALOG_PLL_USB2_BYPASS		(1 << 16)
+#define  CCM_ANALOG_PLL_USB2_ENABLE		(1 << 13)
+#define  CCM_ANALOG_PLL_USB2_POWER		(1 << 12)
+#define  CCM_ANALOG_PLL_USB2_EN_USB_CLKS	(1 << 6)
+#define CCM_ANALOG_PLL_ENET			0x00e0
 #define CCM_ANALOG_PLL_ENET_SET			0x00e4
-#define  CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ	(1 << 10)
+#define CCM_ANALOG_PLL_ENET_CLR			0x00e8
+#define  CCM_ANALOG_PLL_ENET_LOCK		(1U << 31)
+#define  CCM_ANALOG_PLL_ENET_ENABLE_100M	(1 << 20) /* i.MX6 */
+#define  CCM_ANALOG_PLL_ENET_BYPASS		(1 << 16)
+#define  CCM_ANALOG_PLL_ENET_ENABLE		(1 << 13) /* i.MX6 */
+#define  CCM_ANALOG_PLL_ENET_POWERDOWN		(1 << 12) /* i.MX6 */
+#define  CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ	(1 << 10) /* i.MX7 */
 
 #define HCLK_FREQ				24000000
 #define PLL3_80M				80000000
@@ -218,8 +241,6 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_muxs = imx8mq_muxs;
 		sc->sc_nmuxs = nitems(imx8mq_muxs);
 	} else if (OF_is_compatible(sc->sc_node, "fsl,imx7d-ccm")) {
-		sc->sc_anatop = regmap_bycompatible("fsl,imx7d-anatop");
-		KASSERT(sc->sc_anatop);
 		sc->sc_gates = imx7d_gates;
 		sc->sc_ngates = nitems(imx7d_gates);
 		sc->sc_divs = imx7d_divs;
@@ -383,6 +404,57 @@ imxccm_get_ipg_perclk(struct imxccm_softc *sc)
 	ipg_podf = cscmr1 & CCM_CSCMR1_PERCLK_CLK_PODF_MASK;
 
 	return freq / (ipg_podf + 1);
+}
+
+void
+imxccm_imx6_enable_pll_enet(struct imxccm_softc *sc, int on)
+{
+	KASSERT(on);
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_ENET_CLR,
+	    CCM_ANALOG_PLL_ENET_POWERDOWN);
+
+	/* Wait for the PLL to lock. */
+	while ((regmap_read_4(sc->sc_anatop,
+	    CCM_ANALOG_PLL_ENET) & CCM_ANALOG_PLL_ENET_LOCK) == 0)
+		;
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_ENET_CLR,
+	    CCM_ANALOG_PLL_ENET_BYPASS);
+}
+
+void
+imxccm_imx6_enable_pll_usb1(struct imxccm_softc *sc, int on)
+{
+	KASSERT(on);
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB1_SET,
+	    CCM_ANALOG_PLL_USB1_POWER);
+
+	/* Wait for the PLL to lock. */
+	while ((regmap_read_4(sc->sc_anatop,
+	    CCM_ANALOG_PLL_USB1) & CCM_ANALOG_PLL_USB1_LOCK) == 0)
+		;
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB1_CLR,
+	    CCM_ANALOG_PLL_USB1_BYPASS);
+}
+
+void
+imxccm_imx6_enable_pll_usb2(struct imxccm_softc *sc, int on)
+{
+	KASSERT(on);
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB2_SET,
+	    CCM_ANALOG_PLL_USB2_POWER);
+
+	/* Wait for the PLL to lock. */
+	while ((regmap_read_4(sc->sc_anatop,
+	    CCM_ANALOG_PLL_USB2) & CCM_ANALOG_PLL_USB2_LOCK) == 0)
+		;
+
+	regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB2_CLR,
+	    CCM_ANALOG_PLL_USB2_BYPASS);
 }
 
 uint32_t
@@ -593,6 +665,13 @@ imxccm_imx8mq_usb(struct imxccm_softc *sc, uint32_t idx)
 }
 
 void
+imxccm_enable_parent(struct imxccm_softc *sc, uint32_t parent, int on)
+{
+	if (on)
+		imxccm_enable(sc, &parent, on);
+}
+
+void
 imxccm_enable(void *cookie, uint32_t *cells, int on)
 {
 	struct imxccm_softc *sc = cookie;
@@ -605,6 +684,11 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 		return;
 
 	if (sc->sc_gates == imx7d_gates) {
+		if (sc->sc_anatop == NULL) {
+			sc->sc_anatop = regmap_bycompatible("fsl,imx7d-anatop");
+			KASSERT(sc->sc_anatop);
+		}
+
 		switch (idx) {
 		case IMX7D_PLL_ENET_MAIN_125M_CLK:
 			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_ENET_SET,
@@ -614,18 +698,59 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 			break;
 		}
 	} else if (sc->sc_gates == imx6_gates) {
+		if (sc->sc_anatop == NULL) {
+			sc->sc_anatop = regmap_bycompatible("fsl,imx6q-anatop");
+			KASSERT(sc->sc_anatop);
+		}
+
 		switch (idx) {
+		case IMX6_CLK_PLL3:
+			imxccm_imx6_enable_pll_usb1(sc, on);
+			return;
+		case IMX6_CLK_PLL6:
+			imxccm_imx6_enable_pll_enet(sc, on);
+			return;
+		case IMX6_CLK_PLL7:
+			imxccm_imx6_enable_pll_usb2(sc, on);
+			return;
+		case IMX6_CLK_PLL3_USB_OTG:
+			imxccm_enable_parent(sc, IMX6_CLK_PLL3, on);
+			regmap_write_4(sc->sc_anatop,
+			    on ? CCM_ANALOG_PLL_USB1_SET : CCM_ANALOG_PLL_USB1_CLR,
+			    CCM_ANALOG_PLL_USB1_ENABLE);
+			return;
+		case IMX6_CLK_PLL6_ENET:
+			imxccm_enable_parent(sc, IMX6_CLK_PLL6, on);
+			regmap_write_4(sc->sc_anatop,
+			    on ? CCM_ANALOG_PLL_ENET_SET : CCM_ANALOG_PLL_ENET_CLR,
+			    CCM_ANALOG_PLL_ENET_ENABLE);
+			return;
+		case IMX6_CLK_PLL7_USB_HOST:
+			imxccm_enable_parent(sc, IMX6_CLK_PLL7, on);
+			regmap_write_4(sc->sc_anatop,
+			    on ? CCM_ANALOG_PLL_USB2_SET : CCM_ANALOG_PLL_USB2_CLR,
+			    CCM_ANALOG_PLL_USB2_ENABLE);
+			return;
 		case IMX6_CLK_USBPHY1:
-			imxanatop_enable_pll_usb1();
+			/* PLL outputs should alwas be on. */
+			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB1_SET,
+			    CCM_ANALOG_PLL_USB1_EN_USB_CLKS);
+			imxccm_enable_parent(sc, IMX6_CLK_PLL3_USB_OTG, on);
 			return;
 		case IMX6_CLK_USBPHY2:
-			imxanatop_enable_pll_usb2();
+			/* PLL outputs should alwas be on. */
+			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB2_SET,
+			    CCM_ANALOG_PLL_USB2_EN_USB_CLKS);
+			imxccm_enable_parent(sc, IMX6_CLK_PLL7_USB_HOST, on);
 			return;
 		case IMX6_CLK_SATA_REF_100:
-			imxanatop_enable_sata();
+			imxccm_enable_parent(sc, IMX6_CLK_PLL6_ENET, on);
+			regmap_write_4(sc->sc_anatop,
+			   on ? CCM_ANALOG_PLL_ENET_SET : CCM_ANALOG_PLL_ENET_CLR,
+			   CCM_ANALOG_PLL_ENET_ENABLE_100M);
 			return;
 		case IMX6_CLK_ENET_REF:
-			imxanatop_enable_enet();
+			imxccm_enable_parent(sc, IMX6_CLK_PLL6_ENET, on);
 			return;
 		case IMX6_CLK_IPG:
 		case IMX6_CLK_IPG_PER:

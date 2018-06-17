@@ -20,11 +20,17 @@
 #define IMX6_CLK_USDHC2		0xa4
 #define IMX6_CLK_USDHC3		0xa5
 #define IMX6_CLK_USDHC4		0xa6
+#define IMX6_CLK_PLL3_USB_OTG	0xac
+#define IMX6_CLK_PLL7_USB_HOST	0xb0
+#define IMX6_CLK_PLL6_ENET	0xb1
 #define IMX6_CLK_USBPHY1	0xb6
 #define IMX6_CLK_USBPHY2	0xb7
 #define IMX6_CLK_SATA_REF	0xba
 #define IMX6_CLK_SATA_REF_100	0xbb
 #define IMX6_CLK_ENET_REF	0xbe
+#define IMX6_CLK_PLL3		0xe1
+#define IMX6_CLK_PLL6		0xe4
+#define IMX6_CLK_PLL7		0xe5
 
 struct imxccm_gate imx6_gates[] = {
 	[IMX6_CLK_ENET] = { CCM_CCGR1, 5, IMX6_CLK_IPG },

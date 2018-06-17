@@ -1,4 +1,4 @@
-/* $OpenBSD: imxanatop.c,v 1.2 2018/05/16 13:42:35 patrick Exp $ */
+/* $OpenBSD: imxanatop.c,v 1.3 2018/06/17 19:46:48 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -310,70 +310,4 @@ imxanatop_get_pll3_pfd(unsigned int pfd)
 
 	return imxanatop_decode_pll(USB1_PLL3, HCLK_FREQ) * 18ULL
 	    / ANALOG_PFD_480_PFDx_FRAC(HREAD4(sc, ANALOG_PFD_480), pfd);
-}
-
-void
-imxanatop_enable_pll_enet(void)
-{
-	struct imxanatop_softc *sc = imxanatop_sc;
-	KASSERT(sc != NULL);
-
-	if (HREAD4(sc, ANALOG_PLL_ENET) & ANALOG_PLL_ENET_ENABLE)
-		return;
-
-	HCLR4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_POWERDOWN);
-
-	HSET4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_ENABLE);
-
-	while(!(HREAD4(sc, ANALOG_PLL_ENET) & ANALOG_PLL_ENET_LOCK));
-
-	HCLR4(sc, ANALOG_PLL_ENET, ANALOG_PLL_ENET_BYPASS);
-}
-
-void
-imxanatop_enable_enet(void)
-{
-	struct imxanatop_softc *sc = imxanatop_sc;
-	KASSERT(sc != NULL);
-
-	imxanatop_enable_pll_enet();
-	HWRITE4(sc, ANALOG_PLL_ENET_SET, ANALOG_PLL_ENET_DIV_125M);
-}
-
-void
-imxanatop_enable_sata(void)
-{
-	struct imxanatop_softc *sc = imxanatop_sc;
-	KASSERT(sc != NULL);
-
-	imxanatop_enable_pll_enet();
-	HWRITE4(sc, ANALOG_PLL_ENET_SET, ANALOG_PLL_ENET_100M_SATA);
-}
-
-void
-imxanatop_enable_pll_usb1(void)
-{
-	struct imxanatop_softc *sc = imxanatop_sc;
-	KASSERT(sc != NULL);
-
-	HWRITE4(sc, ANALOG_PLL_USB1_CLR, ANALOG_PLL_USB1_BYPASS);
-
-	HWRITE4(sc, ANALOG_PLL_USB1_SET,
-	      ANALOG_PLL_USB1_ENABLE
-	    | ANALOG_PLL_USB1_POWER
-	    | ANALOG_PLL_USB1_EN_USB_CLKS);
-}
-
-void
-imxanatop_enable_pll_usb2(void)
-{
-	struct imxanatop_softc *sc = imxanatop_sc;
-	KASSERT(sc != NULL);
-
-	HWRITE4(sc, ANALOG_PLL_USB2_CLR, ANALOG_PLL_USB2_BYPASS);
-
-	HWRITE4(sc, ANALOG_PLL_USB2_SET,
-	      ANALOG_PLL_USB2_ENABLE
-	    | ANALOG_PLL_USB2_POWER
-	    | ANALOG_PLL_USB2_EN_USB_CLKS);
 }
