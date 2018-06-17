@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.42 2017/04/21 13:50:23 jca Exp $	*/
+/*	$OpenBSD: control.c,v 1.43 2018/06/17 18:19:59 rob Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -537,7 +537,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
 			struct agentx_varbind_hdr	 vbhdr;
 			struct ber_element		**elm, **iter;
 
-			if (snmp_agentx_read_response(pdu, &resp) == -1) {
+			if (snmp_agentx_read_raw(pdu, &resp, sizeof(resp)) == -1) {
 				msg->sm_error = SNMP_ERROR_GENERR;
 				goto dispatch;
 			}

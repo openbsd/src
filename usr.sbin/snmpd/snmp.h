@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.14 2015/06/11 18:49:09 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.15 2018/06/17 18:19:59 rob Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -369,7 +369,6 @@ struct agentx_handle *
 struct agentx_handle *
 	snmp_agentx_fdopen(int, char *, struct snmp_oid *);
 int	snmp_agentx_response(struct agentx_handle *, struct agentx_pdu *);
-int	snmp_agentx_read_response(struct agentx_pdu *, struct agentx_response_data *);
 int	snmp_agentx_open_response(struct agentx_handle *, struct agentx_pdu *);
 struct agentx_pdu *
 	snmp_agentx_open_pdu(struct agentx_handle *, char *descr,
