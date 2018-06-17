@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.4 2018/06/12 20:20:42 kettenis Exp $ */
+/* $OpenBSD: if_fec.c,v 1.5 2018/06/17 17:20:23 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -717,6 +717,8 @@ fec_stop(struct fec_softc *sc)
 	HSET4(sc, ENET_ECR, ENET_ECR_RESET);
 	while (HREAD4(sc, ENET_ECR) & ENET_ECR_ETHEREN)
 		continue;
+
+	HWRITE4(sc, ENET_MSCR, (sc->sc_phy_speed << 1) | 0x100);
 }
 
 void
