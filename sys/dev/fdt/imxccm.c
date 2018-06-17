@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.6 2018/06/12 20:19:57 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.7 2018/06/17 11:12:27 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,6 +31,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/imxanatopvar.h>
@@ -96,6 +97,10 @@
 #define CCM_CSCMR1_PERCLK_CLK_PODF_MASK		0x1f
 #define CCM_CSCMR1_PERCLK_CLK_SEL_MASK		(1 << 6)
 
+/* Analog registers */
+#define CCM_ANALOG_PLL_ENET_SET			0x00e4
+#define  CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ	(1 << 10)
+
 #define HCLK_FREQ				24000000
 #define PLL3_80M				80000000
 
@@ -136,6 +141,8 @@ struct imxccm_softc {
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
 	uint32_t		sc_phandle;
+
+	struct regmap		*sc_anatop;
 
 	struct imxccm_gate	*sc_gates;
 	int			sc_ngates;
@@ -211,6 +218,8 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_muxs = imx8mq_muxs;
 		sc->sc_nmuxs = nitems(imx8mq_muxs);
 	} else if (OF_is_compatible(sc->sc_node, "fsl,imx7d-ccm")) {
+		sc->sc_anatop = regmap_bycompatible("fsl,imx7d-anatop");
+		KASSERT(sc->sc_anatop);
 		sc->sc_gates = imx7d_gates;
 		sc->sc_ngates = nitems(imx7d_gates);
 		sc->sc_divs = imx7d_divs;
@@ -595,7 +604,16 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 	if (idx == 0)
 		return;
 
-	if (sc->sc_gates == imx6_gates) {
+	if (sc->sc_gates == imx7d_gates) {
+		switch (idx) {
+		case IMX7D_PLL_ENET_MAIN_125M_CLK:
+			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_ENET_SET,
+			    CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ);
+			return;
+		default:
+			break;
+		}
+	} else if (sc->sc_gates == imx6_gates) {
 		switch (idx) {
 		case IMX6_CLK_USBPHY1:
 			imxanatop_enable_pll_usb1();
