@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.88 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.89 2018/06/17 18:07:18 benno Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -352,6 +352,7 @@ set(int argc, char **argv)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
+	freeaddrinfo(res);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -426,6 +427,7 @@ get(char *host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
+	freeaddrinfo(res);
 	dump(&sin->sin6_addr, 0);
 	if (found_entry == 0) {
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
@@ -468,7 +470,7 @@ delete(char *host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
-
+	freeaddrinfo(res);
 	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
