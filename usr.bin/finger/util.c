@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2018/06/17 14:58:27 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2018/06/17 15:00:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -153,7 +153,7 @@ match(struct passwd *pw, char *user)
 
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
 void
-expandusername(char *gecos, char *login, char *buf, int buflen)
+expandusername(char *gecos, char *login, char *buf, size_t buflen)
 {
 	char *p, *bp;
 
