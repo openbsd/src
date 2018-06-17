@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.4 2018/06/13 18:26:03 jmc Exp $
+.\" $OpenBSD: ldap.1,v 1.5 2018/06/17 23:12:48 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2018 $
+.Dd $Mdocdate: June 17 2018 $
 .Dt LDAP 1
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ in the LDAP Data Interchange Format (LDIF).
 .Pp
 The command is as follows:
 .Bl -tag -width Ds
-.It Cm search Ar options Ar filter Op Ar attribute ...
+.It Cm search Ar options Oo Ar filter Oc Op Ar attribute ...
 Perform a directory search request.
 The optional
 .Ar filter
