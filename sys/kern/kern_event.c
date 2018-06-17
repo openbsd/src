@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.92 2018/06/15 01:09:49 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.93 2018/06/17 08:22:02 anton Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -80,8 +80,8 @@ struct fileops kqueueops = {
 	.fo_close	= kqueue_close
 };
 
-void	knote_attach(struct knote *kn, struct filedesc *fdp);
-void	knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp);
+void	knote_attach(struct knote *kn);
+void	knote_drop(struct knote *kn, struct proc *p);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 #define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
@@ -152,9 +152,13 @@ KQREF(struct kqueue *kq)
 void
 KQRELE(struct kqueue *kq)
 {
-	if (--kq->kq_refs == 0) {
-		pool_put(&kqueue_pool, kq);
-	}
+	if (--kq->kq_refs > 0)
+		return;
+
+	LIST_REMOVE(kq, kq_next);
+	free(kq->kq_knlist, M_TEMP, kq->kq_knlistsize * sizeof(struct klist));
+	hashfree(kq->kq_knhash, KN_HASHSIZE, M_TEMP);
+	pool_put(&kqueue_pool, kq);
 }
 
 void kqueue_init(void);
@@ -453,10 +457,9 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_data = kq;
 	KQREF(kq);
 	*retval = fd;
-	if (fdp->fd_knlistsize < 0)
-		fdp->fd_knlistsize = 0;		/* this process has a kq */
 	kq->kq_fdp = fdp;
 	FILE_SET_MATURE(fp, p);
+	LIST_INSERT_HEAD(&p->p_p->ps_kqlist, kq, kq_next);
 	return (0);
 }
 
@@ -583,19 +586,19 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
 
-		if (kev->ident < fdp->fd_knlistsize) {
-			SLIST_FOREACH(kn, &fdp->fd_knlist[kev->ident], kn_link) {
+		if (kev->ident < kq->kq_knlistsize) {
+			SLIST_FOREACH(kn, &kq->kq_knlist[kev->ident], kn_link) {
 				if (kq == kn->kn_kq &&
 				    kev->filter == kn->kn_filter)
 					break;
 			}
 		}
 	} else {
-		if (fdp->fd_knhashmask != 0) {
+		if (kq->kq_knhashmask != 0) {
 			struct klist *list;
 
-			list = &fdp->fd_knhash[
-			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];
+			list = &kq->kq_knhash[
+			    KN_HASH((u_long)kev->ident, kq->kq_knhashmask)];
 			SLIST_FOREACH(kn, list, kn_link) {
 				if (kev->ident == kn->kn_id &&
 				    kq == kn->kn_kq &&
@@ -637,9 +640,9 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			kev->data = 0;
 			kn->kn_kevent = *kev;
 
-			knote_attach(kn, fdp);
+			knote_attach(kn);
 			if ((error = fops->f_attach(kn)) != 0) {
-				knote_drop(kn, p, fdp);
+				knote_drop(kn, p);
 				goto done;
 			}
 		} else {
@@ -660,7 +663,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 	} else if (kev->flags & EV_DELETE) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p, p->p_fd);
+		knote_drop(kn, p);
 		goto done;
 	}
 
@@ -796,7 +799,7 @@ start:
 			kn->kn_status &= ~KN_QUEUED;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
-			knote_drop(kn, p, p->p_fd);
+			knote_drop(kn, p);
 			s = splhigh();
 		} else if (kn->kn_flags & (EV_CLEAR | EV_DISPATCH)) {
 			if (kn->kn_flags & EV_CLEAR) {
@@ -900,12 +903,11 @@ int
 kqueue_close(struct file *fp, struct proc *p)
 {
 	struct kqueue *kq = fp->f_data;
-	struct filedesc *fdp = p->p_fd;
 	struct knote **knp, *kn, *kn0;
 	int i;
 
-	for (i = 0; i < fdp->fd_knlistsize; i++) {
-		knp = &SLIST_FIRST(&fdp->fd_knlist[i]);
+	for (i = 0; i < kq->kq_knlistsize; i++) {
+		knp = &SLIST_FIRST(&kq->kq_knlist[i]);
 		kn = *knp;
 		while (kn != NULL) {
 			kn0 = SLIST_NEXT(kn, kn_link);
@@ -920,9 +922,9 @@ kqueue_close(struct file *fp, struct proc *p)
 			kn = kn0;
 		}
 	}
-	if (fdp->fd_knhashmask != 0) {
-		for (i = 0; i < fdp->fd_knhashmask + 1; i++) {
-			knp = &SLIST_FIRST(&fdp->fd_knhash[i]);
+	if (kq->kq_knhashmask != 0) {
+		for (i = 0; i < kq->kq_knhashmask + 1; i++) {
+			knp = &SLIST_FIRST(&kq->kq_knhash[i]);
 			kn = *knp;
 			while (kn != NULL) {
 				kn0 = SLIST_NEXT(kn, kn_link);
@@ -994,7 +996,7 @@ knote_remove(struct proc *p, struct klist *list)
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p, p->p_fd);
+		knote_drop(kn, p);
 	}
 }
 
@@ -1004,10 +1006,16 @@ knote_remove(struct proc *p, struct klist *list)
 void
 knote_fdclose(struct proc *p, int fd)
 {
-	struct filedesc *fdp = p->p_fd;
-	struct klist *list = &fdp->fd_knlist[fd];
+	struct kqueue *kq;
+	struct klist *list;
 
-	knote_remove(p, list);
+	LIST_FOREACH(kq, &p->p_p->ps_kqlist, kq_next) {
+		if (fd >= kq->kq_knlistsize)
+			continue;
+
+		list = &kq->kq_knlist[fd];
+		knote_remove(p, list);
+	}
 }
 
 /*
@@ -1026,35 +1034,36 @@ knote_processexit(struct proc *p)
 }
 
 void
-knote_attach(struct knote *kn, struct filedesc *fdp)
+knote_attach(struct knote *kn)
 {
+	struct kqueue *kq = kn->kn_kq;
 	struct klist *list;
 	int size;
 
 	if (!kn->kn_fop->f_isfd) {
-		if (fdp->fd_knhashmask == 0)
-			fdp->fd_knhash = hashinit(KN_HASHSIZE, M_TEMP,
-			    M_WAITOK, &fdp->fd_knhashmask);
-		list = &fdp->fd_knhash[KN_HASH(kn->kn_id, fdp->fd_knhashmask)];
+		if (kq->kq_knhashmask == 0)
+			kq->kq_knhash = hashinit(KN_HASHSIZE, M_TEMP,
+			    M_WAITOK, &kq->kq_knhashmask);
+		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
 		goto done;
 	}
 
-	if (fdp->fd_knlistsize <= kn->kn_id) {
-		size = fdp->fd_knlistsize;
+	if (kq->kq_knlistsize <= kn->kn_id) {
+		size = kq->kq_knlistsize;
 		while (size <= kn->kn_id)
 			size += KQEXTENT;
 		list = mallocarray(size, sizeof(struct klist), M_TEMP,
 		    M_WAITOK);
-		memcpy(list, fdp->fd_knlist,
-		    fdp->fd_knlistsize * sizeof(struct klist));
-		memset(&list[fdp->fd_knlistsize], 0,
-		    (size - fdp->fd_knlistsize) * sizeof(struct klist));
-		free(fdp->fd_knlist, M_TEMP,
-		    fdp->fd_knlistsize * sizeof(struct klist));
-		fdp->fd_knlistsize = size;
-		fdp->fd_knlist = list;
+		memcpy(list, kq->kq_knlist,
+		    kq->kq_knlistsize * sizeof(struct klist));
+		memset(&list[kq->kq_knlistsize], 0,
+		    (size - kq->kq_knlistsize) * sizeof(struct klist));
+		free(kq->kq_knlist, M_TEMP,
+		    kq->kq_knlistsize * sizeof(struct klist));
+		kq->kq_knlistsize = size;
+		kq->kq_knlist = list;
 	}
-	list = &fdp->fd_knlist[kn->kn_id];
+	list = &kq->kq_knlist[kn->kn_id];
 done:
 	SLIST_INSERT_HEAD(list, kn, kn_link);
 	kn->kn_status = 0;
@@ -1065,14 +1074,15 @@ done:
  * while calling FRELE and knote_free.
  */
 void
-knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
+knote_drop(struct knote *kn, struct proc *p)
 {
+	struct kqueue *kq = kn->kn_kq;
 	struct klist *list;
 
 	if (kn->kn_fop->f_isfd)
-		list = &fdp->fd_knlist[kn->kn_id];
+		list = &kq->kq_knlist[kn->kn_id];
 	else
-		list = &fdp->fd_knhash[KN_HASH(kn->kn_id, fdp->fd_knhashmask)];
+		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
 
 	SLIST_REMOVE(list, kn, knote, kn_link);
 	if (kn->kn_status & KN_QUEUED)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.202 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.203 2018/06/17 08:22:02 anton Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -198,6 +198,7 @@ process_initialize(struct process *pr, struct proc *p)
 	KASSERT(p->p_ucred->cr_ref >= 2);	/* new thread and new process */
 
 	LIST_INIT(&pr->ps_children);
+	LIST_INIT(&pr->ps_kqlist);
 
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 }

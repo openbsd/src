@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.164 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.165 2018/06/17 08:22:02 anton Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -650,8 +650,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	*retval = new;
 
 	if (oldfp != NULL) {
-		if (new < fdp->fd_knlistsize)
-			knote_fdclose(p, new);
+		knote_fdclose(p, new);
 		closef(oldfp, p);
 	}
 
@@ -686,8 +685,7 @@ fdrelease(struct proc *p, int fd)
 	FREF(fp);
 	*fpp = NULL;
 	fd_unused(fdp, fd);
-	if (fd < fdp->fd_knlistsize)
-		knote_fdclose(p, fd);
+	knote_fdclose(p, fd);
 	return (closef(fp, p));
 }
 
@@ -999,7 +997,6 @@ fdinit(void)
 	newfdp->fd_fd.fd_nfiles = NDFILE;
 	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
 	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
-	newfdp->fd_fd.fd_knlistsize = -1;
 
 	newfdp->fd_fd.fd_freefile = 0;
 	newfdp->fd_fd.fd_lastfile = 0;
@@ -1129,8 +1126,6 @@ fdfree(struct proc *p)
 		vrele(fdp->fd_cdir);
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
-	free(fdp->fd_knlist, M_TEMP, fdp->fd_knlistsize * sizeof(struct klist));
-	hashfree(fdp->fd_knhash, KN_HASHSIZE, M_TEMP);
 	pool_put(&fdesc_pool, fdp);
 }
 

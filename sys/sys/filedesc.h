@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.37 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.38 2018/06/17 08:22:02 anton Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -72,11 +72,6 @@ struct filedesc {
 	struct rwlock fd_lock;		/* lock for the file descs; must be */
 					/* held when writing to fd_ofiles, */
 					/* fd_ofileflags, or fd_{hi,lo}map */
-
-	int	fd_knlistsize;		/* size of knlist */
-	struct	klist *fd_knlist;	/* list of attached knotes */
-	u_long	fd_knhashmask;		/* size of knhash */
-	struct	klist *fd_knhash;	/* hash table for attached knotes */
 
 	int fd_flags;			/* flags on the file descriptor table */
 };
