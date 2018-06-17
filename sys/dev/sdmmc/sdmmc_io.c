@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.38 2018/06/04 15:04:57 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.39 2018/06/17 17:10:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -186,14 +186,14 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (sf->number == 0) {
 		if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
-		    sdmmc_io_set_highspeed(sf, 1) == 0)
+		    sdmmc_io_set_highspeed(sf, 1) == 0) {
 			(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
 			    SDMMC_SDCLK_50MHZ, SDMMC_TIMING_HIGHSPEED);
 			if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE)) {
 				sdmmc_io_set_bus_width(sf, 4);
 				sdmmc_chip_bus_width(sc->sct, sc->sch, 4);
 			}
-		else
+		} else
 			(void)sdmmc_chip_bus_clock(sc->sct, sc->sch,
 			    SDMMC_SDCLK_25MHZ, SDMMC_TIMING_LEGACY);
 	}
