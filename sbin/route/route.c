@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.214 2018/05/01 18:14:10 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.215 2018/06/18 09:17:06 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -754,13 +754,13 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 	else if (bits) {
 		addr = net;
 		mask = 0xffffffff << (32 - bits);
-	} else if (net < 128) {
+	} else if (net < IN_CLASSA_MAX) {
 		addr = net << IN_CLASSA_NSHIFT;
 		mask = IN_CLASSA_NET;
-	} else if (net < 65536) {
+	} else if (net < IN_CLASSB_MAX) {
 		addr = net << IN_CLASSB_NSHIFT;
 		mask = IN_CLASSB_NET;
-	} else if (net < 16777216L) {
+	} else if (net < (1 << 24)) {
 		addr = net << IN_CLASSC_NSHIFT;
 		mask = IN_CLASSC_NET;
 	} else {
@@ -1003,7 +1003,7 @@ getmplslabel(char *s, int in)
 	const char *errstr;
 	u_int32_t label;
 
-	label = strtonum(s, 0, 0x000fffff, &errstr);
+	label = strtonum(s, 0, MPLS_LABEL_MAX, &errstr);
 	if (errstr)
 		errx(1, "bad label: %s is %s", s, errstr);
 	if (in) {
@@ -1117,7 +1117,7 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 		cmd = RTM_CHANGE;
 	else if (cmd == 'g') {
 		cmd = RTM_GET;
-		if (so_ifp.sa.sa_family == 0) {
+		if (so_ifp.sa.sa_family == AF_UNSPEC) {
 			so_ifp.sa.sa_family = AF_LINK;
 			so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
 			rtm_addrs |= RTA_IFP;
@@ -1185,7 +1185,7 @@ mask_addr(union sockunion *addr, union sockunion *mask, int which)
 	switch (addr->sa.sa_family) {
 	case AF_INET:
 	case AF_INET6:
-	case 0:
+	case AF_UNSPEC:
 		return;
 	}
 	cp1 = mask->sa.sa_len + 1 + (char *)addr;
