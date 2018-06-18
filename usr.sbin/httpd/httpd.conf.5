@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.99 2018/06/15 17:17:40 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.100 2018/06/18 06:04:25 jmc Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 15 2018 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -24,9 +24,9 @@
 .Nm
 is the configuration file for the HTTP daemon,
 .Xr httpd 8 .
-.Sh SECTIONS
+.Pp
 .Nm
-is divided into four main sections:
+is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the

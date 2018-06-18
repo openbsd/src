@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.21 2017/05/30 12:17:17 jmc Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.22 2018/06/18 06:04:25 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 30 2017 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -24,10 +24,10 @@
 The
 .Xr ypldap 8
 daemon provides YP maps using LDAP as a backend.
-.Sh SECTIONS
+.Pp
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
