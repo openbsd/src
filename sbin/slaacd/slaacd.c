@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.22 2018/05/17 13:39:00 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.23 2018/06/18 16:13:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -320,11 +320,8 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 #endif /* SMALL */
 
-#if 0
-	/* XXX ioctl SIOCAIFADDR_IN6 */
-BROKEN	if (pledge("stdio cpath sendfd", NULL) == -1)
+	if (pledge("stdio cpath sendfd wroute", NULL) == -1)
 		fatal("pledge");
-#endif
 
 	main_imsg_compose_frontend_fd(IMSG_ICMP6SOCK, 0, icmp6sock);
 
@@ -457,11 +454,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
-#if 0
-			/* XXX ioctl SIOCAIFADDR_IN6 */
-BROKEN			if (pledge("stdio cpath", NULL) == -1)
+			if (pledge("stdio cpath wroute", NULL) == -1)
 				fatal("pledge");
-#endif
 			break;
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
