@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.17 2016/03/22 17:58:28 mmcc Exp $	*/
+/*	$OpenBSD: re.c,v 1.18 2018/06/18 17:08:20 martijn Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -94,15 +94,9 @@ extract_pattern(int delimiter)
 	char *nd;
 	int len;
 
-	for (nd = ibufp; *nd != delimiter && *nd != '\n'; nd++)
+	for (nd = ibufp; *nd != delimiter && *nd != '\n'; nd++) {
 		switch (*nd) {
 		default:
-			break;
-		case '[':
-			if ((nd = parse_char_class(++nd)) == NULL) {
-				seterrmsg("unbalanced brackets ([])");
-				return NULL;
-			}
 			break;
 		case '\\':
 			if (*++nd == '\n') {
@@ -111,29 +105,11 @@ extract_pattern(int delimiter)
 			}
 			break;
 		}
+	}
 	len = nd - ibufp;
 	REALLOC(lhbuf, lhbufsz, len + 1, NULL);
 	memcpy(lhbuf, ibufp, len);
 	lhbuf[len] = '\0';
 	ibufp = nd;
 	return (isbinary) ? NUL_TO_NEWLINE(lhbuf, len) : lhbuf;
-}
-
-
-/* parse_char_class: expand a POSIX character class */
-static char *
-parse_char_class(char *s)
-{
-	int c, d;
-
-	if (*s == '^')
-		s++;
-	if (*s == ']')
-		s++;
-	for (; *s != ']' && *s != '\n'; s++)
-		if (*s == '[' && ((d = *(s+1)) == '.' || d == ':' || d == '='))
-			for (s++, c = *++s; *s != ']' || c != d; s++)
-				if ((c = *s) == '\n')
-					return NULL;
-	return  (*s == ']') ? s : NULL;
 }
