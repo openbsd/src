@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.209 2018/02/06 09:16:11 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.210 2018/06/18 11:00:31 procter Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1008,8 +1008,9 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 {
 	struct tcphdr	*th = &pd->hdr.tcp;
 	u_int32_t	 tsval, tsecr;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opt;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
+
 
 	KASSERT(src->scrub == NULL);
 
@@ -1042,44 +1043,26 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 	if ((th->th_flags & TH_SYN) == 0)
 		return (0);
 
-	if (th->th_off > (sizeof(struct tcphdr) >> 2) && src->scrub &&
-	    pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
-	    pd->af)) {
-		/* Diddle with TCP options */
-		int	hlen;
+	olen = (th->th_off << 2) - sizeof(*th);
+	if (olen < TCPOLEN_TIMESTAMP || !pf_pull_hdr(pd->m,
+	    pd->off + sizeof(*th), opts, olen, NULL, NULL, pd->af))
+		return (0);
 
-		opt = hdr + sizeof(struct tcphdr);
-		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
-		while (hlen >= TCPOLEN_TIMESTAMP) {
-			switch (*opt) {
-			case TCPOPT_EOL:	/* FALLTHROUGH */
-			case TCPOPT_NOP:
-				opt++;
-				hlen--;
-				break;
-			case TCPOPT_TIMESTAMP:
-				if (opt[1] >= TCPOLEN_TIMESTAMP) {
-					src->scrub->pfss_flags |=
-					    PFSS_TIMESTAMP;
-					src->scrub->pfss_ts_mod = arc4random();
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_TIMESTAMP, TCPOLEN_TIMESTAMP)) != NULL) {
 
-					/* note PFSS_PAWS not set yet */
-					memcpy(&tsval, &opt[2],
-					    sizeof(u_int32_t));
-					memcpy(&tsecr, &opt[6],
-					    sizeof(u_int32_t));
-					src->scrub->pfss_tsval0 = ntohl(tsval);
-					src->scrub->pfss_tsval = ntohl(tsval);
-					src->scrub->pfss_tsecr = ntohl(tsecr);
-					getmicrouptime(&src->scrub->pfss_last);
-				}
-				/* FALLTHROUGH */
-			default:
-				hlen -= MAX(opt[1], 2);
-				opt += MAX(opt[1], 2);
-				break;
-			}
-		}
+		src->scrub->pfss_flags |= PFSS_TIMESTAMP;
+		src->scrub->pfss_ts_mod = arc4random();
+		/* note PFSS_PAWS not set yet */
+		memcpy(&tsval, &opt[2], sizeof(u_int32_t));
+		memcpy(&tsecr, &opt[6], sizeof(u_int32_t));
+		src->scrub->pfss_tsval0 = ntohl(tsval);
+		src->scrub->pfss_tsval = ntohl(tsval);
+		src->scrub->pfss_tsecr = ntohl(tsecr);
+		getmicrouptime(&src->scrub->pfss_last);
+
+		opt += opt[1];
 	}
 
 	return (0);
@@ -1103,12 +1086,12 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 {
 	struct tcphdr	*th = &pd->hdr.tcp;
 	struct timeval	 uptime;
-	u_int32_t	 tsval, tsecr;
 	u_int		 tsval_from_last;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opts, *opt;
+	u_int32_t	 tsval, tsecr;
 	int		 copyback = 0;
 	int		 got_ts = 0;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 
 	KASSERT(src->scrub || dst->scrub);
 
@@ -1140,87 +1123,68 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 		unhandled_af(pd->af);
 	}
 
-	if (th->th_off > (sizeof(struct tcphdr) >> 2) &&
+	olen = (th->th_off << 2) - sizeof(*th);
+
+	if (olen >= TCPOLEN_TIMESTAMP &&
 	    ((src->scrub && (src->scrub->pfss_flags & PFSS_TIMESTAMP)) ||
 	    (dst->scrub && (dst->scrub->pfss_flags & PFSS_TIMESTAMP))) &&
-	    pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
+	    pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, olen, NULL, NULL,
 	    pd->af)) {
-		/* Diddle with TCP options */
-		int hlen;
-		opt = opts = hdr + sizeof(struct tcphdr);
-		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
-		while (hlen >= TCPOLEN_TIMESTAMP) {
-			switch (*opt) {
-			case TCPOPT_EOL:	/* FALLTHROUGH */
-			case TCPOPT_NOP:
-				opt++;
-				hlen--;
-				break;
-			case TCPOPT_TIMESTAMP:
-				/* Modulate the timestamps.  Can be used for
-				 * NAT detection, OS uptime determination or
-				 * reboot detection.
-				 */
 
-				if (got_ts) {
-					/* Huh?  Multiple timestamps!? */
-					if (pf_status.debug >= LOG_NOTICE) {
-						log(LOG_NOTICE,
-						    "pf: %s: multiple TS??",
-						    __func__);
-						pf_print_state(state);
-						addlog("\n");
-					}
-					REASON_SET(reason, PFRES_TS);
-					return (PF_DROP);
+		/* Modulate the timestamps.  Can be used for NAT detection, OS
+		 * uptime determination or reboot detection.
+		 */
+		opt = opts;
+		while ((opt = pf_find_tcpopt(opt, opts, olen,
+			    TCPOPT_TIMESTAMP, TCPOLEN_TIMESTAMP)) != NULL) {
+
+			u_int8_t *ts = opt + 2;
+			u_int8_t *tsr = opt + 6;
+
+			if (got_ts) {
+				/* Huh?  Multiple timestamps!? */
+				if (pf_status.debug >= LOG_NOTICE) {
+					log(LOG_NOTICE,
+					    "pf: %s: multiple TS??", __func__);
+					pf_print_state(state);
+					addlog("\n");
 				}
-				if (opt[1] >= TCPOLEN_TIMESTAMP) {
-					u_int8_t *ts = opt + 2;
-					u_int8_t *tsr = opt + 6;
-
-					memcpy(&tsval, ts, sizeof(u_int32_t));
-					memcpy(&tsecr, tsr, sizeof(u_int32_t));
-
-					/* modulate TS */
-					if (tsval && src->scrub &&
-					    (src->scrub->pfss_flags &
-					    PFSS_TIMESTAMP)) {
-						/* tsval used further on */
-						tsval = ntohl(tsval);
-						pf_patch_32_unaligned(pd, ts,
-						    htonl(tsval +
-						    src->scrub->pfss_ts_mod),
-						    PF_ALGNMNT(ts - opts));
-						copyback = 1;
-					}
-
-					/* modulate TS reply if any (!0) */
-					if (tsecr && dst->scrub &&
-					    (dst->scrub->pfss_flags &
-					    PFSS_TIMESTAMP)) {
-						/* tsecr used further on */
-						tsecr = ntohl(tsecr)
-						    - dst->scrub->pfss_ts_mod;
-						pf_patch_32_unaligned(pd, tsr,
-						    htonl(tsecr),
-						    PF_ALGNMNT(tsr - opts));
-						copyback = 1;
-					}
-					got_ts = 1;
-				}
-				/* FALLTHROUGH */
-			default:
-				hlen -= MAX(opt[1], 2);
-				opt += MAX(opt[1], 2);
-				break;
+				REASON_SET(reason, PFRES_TS);
+				return (PF_DROP);
 			}
+
+			memcpy(&tsval, ts, sizeof(u_int32_t));
+			memcpy(&tsecr, tsr, sizeof(u_int32_t));
+
+			/* modulate TS */
+			if (tsval && src->scrub &&
+			    (src->scrub->pfss_flags & PFSS_TIMESTAMP)) {
+				/* tsval used further on */
+				tsval = ntohl(tsval);
+				pf_patch_32_unaligned(pd,
+				    ts, htonl(tsval + src->scrub->pfss_ts_mod),
+				    PF_ALGNMNT(ts - opts));
+				copyback = 1;
+			}
+
+			/* modulate TS reply if any (!0) */
+			if (tsecr && dst->scrub &&
+			    (dst->scrub->pfss_flags & PFSS_TIMESTAMP)) {
+				/* tsecr used further on */
+				tsecr = ntohl(tsecr) - dst->scrub->pfss_ts_mod;
+				pf_patch_32_unaligned(pd,
+				    tsr, htonl(tsecr), PF_ALGNMNT(tsr - opts));
+				copyback = 1;
+			}
+
+			got_ts = 1;
+			opt += opt[1];
 		}
+
 		if (copyback) {
 			/* Copyback the options, caller copys back header */
 			*writeback = 1;
-			m_copyback(pd->m, pd->off + sizeof(struct tcphdr),
-			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
-			    sizeof(struct tcphdr), M_NOWAIT);
+			m_copyback(pd->m, pd->off + sizeof(*th), olen, opts, M_NOWAIT);
 		}
 	}
 
@@ -1492,47 +1456,32 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 int
 pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 {
-	struct tcphdr	*th = &pd->hdr.tcp;
-	u_int16_t	 mss;
-	int		 thoff;
-	int		 opt, cnt, optlen = 0;
-	u_int8_t	 opts[MAX_TCPOPTLEN];
-	u_int8_t	*optp = opts;
+	int		 olen, optsoff;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 
-	thoff = th->th_off << 2;
-	cnt = thoff - sizeof(struct tcphdr);
-
-	if (cnt <= 0 || cnt > MAX_TCPOPTLEN || !pf_pull_hdr(pd->m,
-	    pd->off + sizeof(*th), opts, cnt, NULL, NULL, pd->af))
+	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
+	optsoff = pd->off + sizeof(struct tcphdr);
+	if (olen < TCPOLEN_MAXSEG ||
+	    !pf_pull_hdr(pd->m, optsoff, opts, olen, NULL, NULL, pd->af))
 		return (0);
 
-	for (; cnt > 0; cnt -= optlen, optp += optlen) {
-		opt = optp[0];
-		if (opt == TCPOPT_EOL)
-			break;
-		if (opt == TCPOPT_NOP)
-			optlen = 1;
-		else {
-			if (cnt < 2)
-				break;
-			optlen = optp[1];
-			if (optlen < 2 || optlen > cnt)
-				break;
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_MAXSEG, TCPOLEN_MAXSEG)) != NULL) {
+		u_int16_t	mss;
+		u_int8_t       *mssp = opt + 2;
+		memcpy(&mss, mssp, sizeof(mss));
+		if (ntohs(mss) > maxmss) {
+			size_t mssoffopts = mssp - opts;
+			pf_patch_16_unaligned(pd, &mss,
+			    htons(maxmss), PF_ALGNMNT(mssoffopts));
+			m_copyback(pd->m, optsoff + mssoffopts,
+			    sizeof(mss), &mss, M_NOWAIT);
+			m_copyback(pd->m, pd->off,
+			    sizeof(struct tcphdr), &pd->hdr.tcp, M_NOWAIT);
 		}
-		if (opt == TCPOPT_MAXSEG) {
-			u_int8_t *mssp = optp + 2;
-			memcpy(&mss, mssp, sizeof(mss));
-			if (ntohs(mss) > maxmss) {
-				size_t mssoffopts = mssp - opts;
-				pf_patch_16_unaligned(pd, &mss,
-				    htons(maxmss), PF_ALGNMNT(mssoffopts));
-				m_copyback(pd->m,
-				    pd->off + sizeof(*th) + mssoffopts,
-				    sizeof(mss), &mss, M_NOWAIT);
-				m_copyback(pd->m, pd->off, sizeof(*th), th,
-				    M_NOWAIT);
-			}
-		}
+
+		opt += opt[1];
 	}
 
 	return (0);

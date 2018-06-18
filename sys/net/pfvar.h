@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.477 2018/04/05 03:32:39 lteo Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.478 2018/06/18 11:00:31 procter Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1934,6 +1934,8 @@ void			 pf_mbuf_link_state_key(struct mbuf *,
 			    struct pf_state_key *);
 void			 pf_mbuf_unlink_state_key(struct mbuf *);
 
+u_int8_t*		 pf_find_tcpopt(u_int8_t *, u_int8_t *, size_t,
+			    u_int8_t, u_int8_t);
 u_int8_t		 pf_get_wscale(struct pf_pdesc *);
 u_int16_t		 pf_get_mss(struct pf_pdesc *);
 struct mbuf *		 pf_build_tcp(const struct pf_rule *, sa_family_t,

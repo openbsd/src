@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1067 2018/06/04 12:22:45 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1068 2018/06/18 11:00:31 procter Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1986,7 +1986,7 @@ pf_patch_32(struct pf_pdesc *pd, u_int32_t *f, u_int32_t v)
 
 	/* optimise: inline udp fixup code is unused; let compiler scrub it */
 	if (proto == IPPROTO_UDP)
-		panic("pf_patch_32: udp");
+		panic("%s: udp", __func__);
 
 	/* optimise: skip *f != v guard; true for all use-cases */
 	pf_cksum_fixup(pc, *f / (1 << 16), v / (1 << 16), proto);
@@ -2689,59 +2689,41 @@ pf_translate_icmp_af(struct pf_pdesc *pd, int af, void *arg)
 int
 pf_modulate_sack(struct pf_pdesc *pd, struct pf_state_peer *dst)
 {
-	struct tcphdr	*th = &pd->hdr.tcp;
-	int		 hlen = (th->th_off << 2) - sizeof(*th);
-	int		 thoptlen = hlen;
-	u_int8_t	 opts[MAX_TCPOPTLEN], *opt = opts;
-	int		 copyback = 0, i, olen;
 	struct sackblk	 sack;
+	int		 copyback = 0, i;
+	int		 olen, optsoff;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt, *eoh;
 
-#define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
-	if (hlen < TCPOLEN_SACKLEN || hlen > MAX_TCPOPTLEN || !pf_pull_hdr(
-	    pd->m, pd->off + sizeof(*th), opts, hlen, NULL, NULL, pd->af))
-		return 0;
+	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
+	optsoff = pd->off + sizeof(struct tcphdr);
+#define TCPOLEN_MINSACK	(TCPOLEN_SACK + 2)
+	if (olen < TCPOLEN_MINSACK ||
+	    !pf_pull_hdr(pd->m, optsoff, opts, olen, NULL, NULL, pd->af))
+		return (0);
 
-	while (hlen >= TCPOLEN_SACKLEN) {
-		olen = opt[1];
-		switch (*opt) {
-		case TCPOPT_EOL:	/* FALLTHROUGH */
-		case TCPOPT_NOP:
-			opt++;
-			hlen--;
-			break;
-		case TCPOPT_SACK:
-			if (olen > hlen)
-				olen = hlen;
-			if (olen >= TCPOLEN_SACKLEN) {
-				for (i = 2; i + TCPOLEN_SACK <= olen;
-				    i += TCPOLEN_SACK) {
-					size_t startoff = (opt + i) - opts;
-					memcpy(&sack, &opt[i], sizeof(sack));
-					pf_patch_32_unaligned(pd, &sack.start,
-					    htonl(ntohl(sack.start) -
-						dst->seqdiff),
-					    PF_ALGNMNT(startoff));
-					pf_patch_32_unaligned(pd, &sack.end,
-					    htonl(ntohl(sack.end) -
-						dst->seqdiff),
-					    PF_ALGNMNT(startoff +
-						sizeof(sack.start)));
-					memcpy(&opt[i], &sack, sizeof(sack));
-				}
-				copyback = 1;
-			}
-			/* FALLTHROUGH */
-		default:
-			if (olen < 2)
-				olen = 2;
-			hlen -= olen;
-			opt += olen;
+	eoh = opts + olen;
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_SACK, TCPOLEN_MINSACK)) != NULL)
+	{
+		size_t safelen = MIN(opt[1], (eoh - opt));
+		for (i = 2; i + TCPOLEN_SACK <= safelen; i += TCPOLEN_SACK) {
+			size_t startoff = (opt + i) - opts;
+			memcpy(&sack, &opt[i], sizeof(sack));
+			pf_patch_32_unaligned(pd, &sack.start,
+			    htonl(ntohl(sack.start) - dst->seqdiff),
+			    PF_ALGNMNT(startoff));
+			pf_patch_32_unaligned(pd, &sack.end,
+			    htonl(ntohl(sack.end) - dst->seqdiff),
+			    PF_ALGNMNT(startoff + sizeof(sack.start)));
+			memcpy(&opt[i], &sack, sizeof(sack));
 		}
+		copyback = 1;
+		opt += opt[1];
 	}
 
 	if (copyback)
-		m_copyback(pd->m, pd->off + sizeof(*th), thoptlen, opts,
-		    M_NOWAIT);
+		m_copyback(pd->m, optsoff, olen, opts, M_NOWAIT);
 	return (copyback);
 }
 
@@ -3265,82 +3247,85 @@ pf_socket_lookup(struct pf_pdesc *pd)
 	return (1);
 }
 
+/* post: r  => (r[0] == type /\ r[1] >= min_typelen >= 2  "validity"
+ *                      /\ (eoh - r) >= min_typelen >= 2  "safety"  )
+ *
+ * warning: r + r[1] may exceed opts bounds for r[1] > min_typelen
+ */
+u_int8_t*
+pf_find_tcpopt(u_int8_t *opt, u_int8_t *opts, size_t hlen, u_int8_t type,
+    u_int8_t min_typelen)
+{
+	u_int8_t *eoh = opts + hlen;
+
+	if (min_typelen < 2)
+		return (NULL);
+
+	while ((eoh - opt) >= min_typelen) {
+		switch (*opt) {
+		case TCPOPT_EOL:
+			/* FALLTHROUGH - Workaround the failure of some
+			   systems to NOP-pad their bzero'd option buffers,
+			   producing spurious EOLs */
+		case TCPOPT_NOP:
+			opt++;
+			continue;
+		default:
+			if (opt[0] == type &&
+			    opt[1] >= min_typelen)
+			        return (opt);
+		}
+
+		opt += MAX(opt[1], 2); /* evade infinite loops */
+	}
+
+	return (NULL);
+}
+
 u_int8_t
 pf_get_wscale(struct pf_pdesc *pd)
 {
-	struct tcphdr	*th = &pd->hdr.tcp;
-	int		 hlen;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opt, optlen;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 	u_int8_t	 wscale = 0;
 
-	hlen = th->th_off << 2;		/* hlen <= sizeof(hdr) */
-	if (hlen <= sizeof(struct tcphdr))
+	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
+	if (olen < TCPOLEN_WINDOW || !pf_pull_hdr(pd->m,
+	    pd->off + sizeof(struct tcphdr), opts, olen, NULL, NULL, pd->af))
 		return (0);
-	if (!pf_pull_hdr(pd->m, pd->off, hdr, hlen, NULL, NULL, pd->af))
-		return (0);
-	opt = hdr + sizeof(struct tcphdr);
-	hlen -= sizeof(struct tcphdr);
-	while (hlen >= 3) {
-		switch (*opt) {
-		case TCPOPT_EOL:
-		case TCPOPT_NOP:
-			++opt;
-			--hlen;
-			break;
-		case TCPOPT_WINDOW:
-			wscale = opt[2];
-			if (wscale > TCP_MAX_WINSHIFT)
-				wscale = TCP_MAX_WINSHIFT;
-			wscale |= PF_WSCALE_FLAG;
-			/* FALLTHROUGH */
-		default:
-			optlen = opt[1];
-			if (optlen < 2)
-				optlen = 2;
-			hlen -= optlen;
-			opt += optlen;
-			break;
-		}
+
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_WINDOW, TCPOLEN_WINDOW)) != NULL) {
+		wscale = opt[2];
+		wscale = MIN(wscale, TCP_MAX_WINSHIFT);
+		wscale |= PF_WSCALE_FLAG;
+
+		opt += opt[1];
 	}
+
 	return (wscale);
 }
 
 u_int16_t
 pf_get_mss(struct pf_pdesc *pd)
 {
-	struct tcphdr	*th = &pd->hdr.tcp;
-	int		 hlen;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opt, optlen;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 	u_int16_t	 mss = tcp_mssdflt;
 
-	hlen = th->th_off << 2;		/* hlen <= sizeof(hdr) */
-	if (hlen <= sizeof(struct tcphdr))
+	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
+	if (olen < TCPOLEN_MAXSEG || !pf_pull_hdr(pd->m,
+	    pd->off + sizeof(struct tcphdr), opts, olen, NULL, NULL, pd->af))
 		return (0);
-	if (!pf_pull_hdr(pd->m, pd->off, hdr, hlen, NULL, NULL, pd->af))
-		return (0);
-	opt = hdr + sizeof(struct tcphdr);
-	hlen -= sizeof(struct tcphdr);
-	while (hlen >= TCPOLEN_MAXSEG) {
-		switch (*opt) {
-		case TCPOPT_EOL:
-		case TCPOPT_NOP:
-			++opt;
-			--hlen;
-			break;
-		case TCPOPT_MAXSEG:
+
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_MAXSEG, TCPOLEN_MAXSEG)) != NULL) {
 			memcpy(&mss, (opt + 2), 2);
 			mss = ntohs(mss);
-			/* FALLTHROUGH */
-		default:
-			optlen = opt[1];
-			if (optlen < 2)
-				optlen = 2;
-			hlen -= optlen;
-			opt += optlen;
-			break;
-		}
+
+			opt += opt[1];
 	}
 	return (mss);
 }
