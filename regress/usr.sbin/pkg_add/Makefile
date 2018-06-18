@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.55 2018/06/18 13:58:55 espie Exp $
+# $OpenBSD: Makefile,v 1.56 2018/06/18 14:06:11 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -9,7 +9,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
 	qttest gstest exotest-disabled inter1 manual1 oldlib1 \
-	usertest-1 usertest-2 usertest-3
+	usertest-1 usertest-2 usertest-3 cups-bug
 
 collision-check{1,2}-disabled:
 	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
