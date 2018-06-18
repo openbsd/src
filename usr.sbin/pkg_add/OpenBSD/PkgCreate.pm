@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.142 2018/06/15 09:37:29 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.143 2018/06/18 17:59:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -804,23 +804,6 @@ sub is_forbidden() { 1 }
 
 package OpenBSD::PackingElement::Version;
 sub is_forbidden() { 1 }
-
-package OpenBSD::PackingElement::Fragment;
-our @ISA=qw(OpenBSD::PackingElement);
-
-sub needs_keyword() { 0 }
-
-sub stringize
-{
-	return '%%'.shift->{name}.'%%';
-}
-
-package OpenBSD::PackingElement::NoFragment;
-our @ISA=qw(OpenBSD::PackingElement::Fragment);
-sub stringize
-{
-	return '!%%'.shift->{name}.'%%';
-}
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;
