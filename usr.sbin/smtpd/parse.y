@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.213 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.214 2018/06/18 18:19:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -154,8 +154,6 @@ static int	host_v6(struct listen_opts *);
 static int	host_dns(struct listen_opts *);
 static int	interface(struct listen_opts *);
 
-void		 set_local(const char *);
-void		 set_localaddrs(struct table *);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
 
@@ -1517,6 +1515,7 @@ table		: TABLE STRING STRING	{
 				free($3);
 				YYERROR;
 			}
+			table = NULL;
 			free($2);
 			free($3);
 		}
@@ -1541,6 +1540,7 @@ tablenew	: STRING			{
 			table = table_create(conf, "static", NULL, NULL, NULL);
 		} tableval_list '}'		{
 			$$ = table;
+			table = NULL;
 		}
 		;
 
@@ -2030,122 +2030,15 @@ int
 parse_config(struct smtpd *x_conf, const char *filename, int opts)
 {
 	struct sym     *sym, *next;
-	struct table   *t;
-	char		hostname[HOST_NAME_MAX+1];
-	char		hostname_copy[HOST_NAME_MAX+1];
-
-	if (getmailname(hostname, sizeof hostname) == -1)
-		return (-1);
 
 	conf = x_conf;
-	memset(conf, 0, sizeof(*conf));
-
-	(void)strlcpy(conf->sc_hostname, hostname, sizeof(conf->sc_hostname));
-
-	conf->sc_maxsize = DEFAULT_MAX_BODY_SIZE;
-	conf->sc_subaddressing_delim = SUBADDRESSING_DELIMITER;
-
-	conf->sc_tables_dict = calloc(1, sizeof(*conf->sc_tables_dict));
-	conf->sc_rules = calloc(1, sizeof(*conf->sc_rules));
-	conf->sc_dispatchers = calloc(1, sizeof(*conf->sc_dispatchers));
-	conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners));
-	conf->sc_ca_dict = calloc(1, sizeof(*conf->sc_ca_dict));
-	conf->sc_pki_dict = calloc(1, sizeof(*conf->sc_pki_dict));
-	conf->sc_ssl_dict = calloc(1, sizeof(*conf->sc_ssl_dict));
-	conf->sc_limits_dict = calloc(1, sizeof(*conf->sc_limits_dict));
-	conf->sc_mda_wrappers = calloc(1, sizeof(*conf->sc_mda_wrappers));
-
-	/* Report mails delayed for more than 4 hours */
-	conf->sc_bounce_warn[0] = 3600 * 4;
-
-	if (conf->sc_tables_dict == NULL	||
-	    conf->sc_rules == NULL		||
-	    conf->sc_dispatchers == NULL	||
-	    conf->sc_listeners == NULL		||
-	    conf->sc_ca_dict == NULL		||
-	    conf->sc_pki_dict == NULL		||
-	    conf->sc_ssl_dict == NULL		||
-	    conf->sc_limits_dict == NULL        ||
-	    conf->sc_mda_wrappers == NULL) {
-		log_warn("warn: cannot allocate memory");
-		free(conf->sc_tables_dict);
-		free(conf->sc_rules);
-		free(conf->sc_dispatchers);
-		free(conf->sc_listeners);
-		free(conf->sc_ca_dict);
-		free(conf->sc_pki_dict);
-		free(conf->sc_ssl_dict);
-		free(conf->sc_limits_dict);
-		free(conf->sc_mda_wrappers);
-		return (-1);
-	}
-
 	errors = 0;
-
-	table = NULL;
-
-	dict_init(conf->sc_dispatchers);
-	dict_init(conf->sc_mda_wrappers);
-	dict_init(conf->sc_ca_dict);
-	dict_init(conf->sc_pki_dict);
-	dict_init(conf->sc_ssl_dict);
-	dict_init(conf->sc_tables_dict);
-
-	dict_init(conf->sc_limits_dict);
-	limits = xcalloc(1, sizeof(*limits));
-	limit_mta_set_defaults(limits);
-	dict_xset(conf->sc_limits_dict, "default", limits);
-
-	TAILQ_INIT(conf->sc_listeners);
-	TAILQ_INIT(conf->sc_rules);
-
-	conf->sc_ttl = SMTPD_QUEUE_EXPIRY;
-	conf->sc_opts = opts;
-
-	conf->sc_mta_max_deferred = 100;
-	conf->sc_scheduler_max_inflight = 5000;
-	conf->sc_scheduler_max_schedule = 10;
-	conf->sc_scheduler_max_evp_batch_size = 256;
-	conf->sc_scheduler_max_msg_batch_size = 1024;
-	
-	conf->sc_session_max_rcpt = 1000;
-	conf->sc_session_max_mails = 100;
-
-	conf->sc_mda_max_session = 50;
-	conf->sc_mda_max_user_session = 7;
-	conf->sc_mda_task_hiwat = 50;
-	conf->sc_mda_task_lowat = 30;
-	conf->sc_mda_task_release = 10;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		purge_config(PURGE_EVERYTHING);
 		return (-1);
 	}
 	topfile = file;
-
-	/*
-	 * declare special "localhost", "anyhost" and "localnames" tables
-	 */
-	set_local(hostname);
-
-	t = table_create(conf, "static", "<anydestination>", NULL, NULL);
-	t->t_type = T_LIST;
-	table_add(t, "*", NULL);
-
-	/* can't truncate here */
-	(void)strlcpy(hostname_copy, hostname, sizeof hostname_copy);
-
-	hostname_copy[strcspn(hostname_copy, ".")] = '\0';
-	if (strcmp(hostname, hostname_copy) != 0)
-		table_add(t, hostname_copy, NULL);
-
-	table_create(conf, "getpwnam", "<getpwnam>", NULL, NULL);
-
-	/* bounce dispatcher */
-	dispatcher = xcalloc(1, sizeof *dispatcher);
-	dispatcher->type = DISPATCHER_BOUNCE;
-	conf->sc_dispatcher_bounce = dispatcher;
-	dispatcher = NULL;
 
 	/*
 	 * parse configuration
@@ -2549,71 +2442,6 @@ interface(struct listen_opts *lo)
 	freeifaddrs(ifap);
 
 	return ret;
-}
-
-void
-set_local(const char *hostname)
-{
-	struct table	*t;
-
-	t = table_create(conf, "static", "<localnames>", NULL, NULL);
-	t->t_type = T_LIST;
-	table_add(t, "localhost", NULL);
-	table_add(t, hostname, NULL);
-
-	set_localaddrs(t);
-}
-
-void
-set_localaddrs(struct table *localnames)
-{
-	struct ifaddrs *ifap, *p;
-	struct sockaddr_storage ss;
-	struct sockaddr_in	*sain;
-	struct sockaddr_in6	*sin6;
-	struct table		*t;
-	char buf[NI_MAXHOST + 5];
-
-	t = table_create(conf, "static", "<anyhost>", NULL, NULL);
-	table_add(t, "local", NULL);
-	table_add(t, "0.0.0.0/0", NULL);
-	table_add(t, "::/0", NULL);
-
-	if (getifaddrs(&ifap) == -1)
-		fatal("getifaddrs");
-
-	t = table_create(conf, "static", "<localhost>", NULL, NULL);
-	table_add(t, "local", NULL);
-
-	for (p = ifap; p != NULL; p = p->ifa_next) {
-		if (p->ifa_addr == NULL)
-			continue;
-		switch (p->ifa_addr->sa_family) {
-		case AF_INET:
-			sain = (struct sockaddr_in *)&ss;
-			*sain = *(struct sockaddr_in *)p->ifa_addr;
-			sain->sin_len = sizeof(struct sockaddr_in);
-			table_add(t, ss_to_text(&ss), NULL);
-			table_add(localnames, ss_to_text(&ss), NULL);
-			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
-			break;
-
-		case AF_INET6:
-			sin6 = (struct sockaddr_in6 *)&ss;
-			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
-			sin6->sin6_len = sizeof(struct sockaddr_in6);
-			table_add(t, ss_to_text(&ss), NULL);
-			table_add(localnames, ss_to_text(&ss), NULL);
-			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
-			(void)snprintf(buf, sizeof buf, "[ipv6:%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
-			break;
-		}
-	}
-
-	freeifaddrs(ifap);
 }
 
 int

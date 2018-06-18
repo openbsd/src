@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.299 2018/06/03 14:04:06 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.300 2018/06/18 18:19:14 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -438,9 +438,12 @@ main(int argc, char *argv[])
 	int		 save_argc = argc;
 	char		**save_argv = argv;
 	char		*rexec = NULL;
-	struct smtpd	 conf;
+	struct smtpd	*conf;
 
-	env = &conf;
+	if ((conf = config_default()) == NULL)
+		err(1, NULL);
+
+	env = conf;
 
 	flags = 0;
 	opts = 0;
@@ -564,7 +567,7 @@ main(int argc, char *argv[])
 
 	ssl_init();
 
-	if (parse_config(&conf, conffile, opts))
+	if (parse_config(conf, conffile, opts))
 		exit(1);
 
 	if (strlcpy(env->sc_conffile, conffile, PATH_MAX)
@@ -964,7 +967,7 @@ imsg_wait(struct imsgbuf *ibuf, struct imsg *imsg, int timeout)
 
 	pfd[0].fd = ibuf->fd;
 	pfd[0].events = POLLIN;
-	
+
 	while (1) {
 		if ((n = imsg_get(ibuf, imsg)) == -1)
 			return -1;
