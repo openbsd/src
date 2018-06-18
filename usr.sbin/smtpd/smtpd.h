@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.553 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.554 2018/06/18 18:14:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1371,7 +1371,7 @@ void smtp_collect(void);
 
 /* smtp_session.c */
 int smtp_session(struct listener *, int, const struct sockaddr_storage *,
-    const char *);
+    const char *, struct io *);
 void smtp_session_imsg(struct mproc *, struct imsg *);
 
 

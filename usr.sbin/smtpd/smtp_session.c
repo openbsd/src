@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.331 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.332 2018/06/18 18:14:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -535,7 +535,7 @@ smtp_session_init(void)
 
 int
 smtp_session(struct listener *listener, int sock,
-    const struct sockaddr_storage *ss, const char *hostname)
+    const struct sockaddr_storage *ss, const char *hostname, struct io *io)
 {
 	struct smtp_session	*s;
 
@@ -549,7 +549,12 @@ smtp_session(struct listener *listener, int sock,
 	s->id = generate_uid();
 	s->listener = listener;
 	memmove(&s->ss, ss, sizeof(*ss));
-	s->io = io_new();
+
+	if (io != NULL)
+		s->io = io;
+	else
+		s->io = io_new();
+
 	io_set_callback(s->io, smtp_io, s);
 	io_set_fd(s->io, sock);
 	io_set_timeout(s->io, SMTPD_SESSION_TIMEOUT * 1000);
