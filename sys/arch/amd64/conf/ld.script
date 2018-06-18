@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.11 2018/06/14 20:00:59 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.12 2018/06/18 05:43:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -41,6 +41,7 @@ __kernel_base = 0xffffffff80000000;
 __kernel_virt_base = __kernel_base + 0x1000000;
 __kernel_phys_base = 0x1000000;
 __kernel_base_phys =  __kernel_phys_base + SIZEOF_HEADERS;
+__kernel_virt_to_phys = __kernel_phys_base - __kernel_virt_base;
 
 ENTRY(start)
 SECTIONS
@@ -53,7 +54,7 @@ SECTIONS
 	} :text =0xcccccccc
 
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_kutext_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_kutext_phys = . + __kernel_virt_to_phys;
 	.kutext : AT (__kernel_kutext_phys)
 	{
 		__kutext_start = ABSOLUTE(.);
@@ -66,7 +67,7 @@ SECTIONS
 
 	/* Move rodata to the next page, so we can nuke X and W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_rodata_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_rodata_phys = . + __kernel_virt_to_phys;
 	.rodata : AT (__kernel_rodata_phys)
 	{
 		__rodata_start = ABSOLUTE(.);
@@ -76,21 +77,23 @@ SECTIONS
 	} :rodata =0xcccccccc
 
 	. = ALIGN(0x1000);
-	__kernel_randomdata_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_randomdata_phys = . + __kernel_virt_to_phys;
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
 		__retguard_start = ABSOLUTE(.);
+		__retguard_start_phys = . + __kernel_virt_to_phys;
 		*(.openbsd.randomdata.retguard)
+		. = ALIGN(0x1000);
 		__retguard_end = ABSOLUTE(.);
+		__retguard_end_phys = . + __kernel_virt_to_phys;
 		*(.openbsd.randomdata .openbsd.randomdata.*)
 	} :rodata :openbsd_randomize =0xcccccccc
 	. = ALIGN(0x1000);
 	PROVIDE (erodata = .);
 	_erodata = .;
-
 	/* Move data to the next page, so we can add W bit on them */
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_data_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_data_phys = . + __kernel_virt_to_phys;
 	.data : AT (__kernel_data_phys)
 	{
 		__data_start = ABSOLUTE(.);
@@ -98,7 +101,7 @@ SECTIONS
 	} :data =0xcccccccc
 
 	. = ALIGN(__ALIGN_SIZE);
-	__kernel_kudata_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_kudata_phys = . + __kernel_virt_to_phys;
 	.kudata : AT (__kernel_kudata_phys)
 	{
 		__kudata_start = ABSOLUTE(.);
@@ -111,7 +114,7 @@ SECTIONS
 	_edata = .;
 
 	/* BSS starts right after padded data */
-	__kernel_bss_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_bss_phys = . + __kernel_virt_to_phys;
 	.bss : AT (__kernel_bss_phys)
 	{
 		*(.bss .bss.*)
@@ -125,7 +128,7 @@ SECTIONS
 	. = ALIGN(0x200000);
 	_end = .;
 	PROVIDE (end = .);
-	__kernel_end_phys = (. - __kernel_virt_base) + 0x1000000;
+	__kernel_end_phys = . + __kernel_virt_to_phys;
 
 	/* XXX - hack alert, since we are not C++, nuke these */
 	/DISCARD/ :
