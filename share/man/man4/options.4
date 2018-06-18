@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.259 2018/05/16 14:58:48 visa Exp $
+.\"	$OpenBSD: options.4,v 1.260 2018/06/18 06:06:52 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 16 2018 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -459,13 +459,13 @@ between 5% and 10% of total available RAM.
 .It Cd option DST= Ns Ar value
 If
 .Ar value
-is non-zero, indicates that the hardware realtime clock device
+is non-zero, indicates that the hardware real-time clock device
 is one hour ahead of the offset given in
 .Sq TIMEZONE ,
 due to Daylight Saving Time (DST).
 If
 .Ar value
-is zero, the hardware realtime clock device is not in Daylight Saving Time.
+is zero, the hardware real-time clock device is not in Daylight Saving Time.
 .Pp
 .It Cd option NKMEMPAGES= Ns Ar value
 .It Cd option NKMEMPAGES_MAX= Ns Ar value
@@ -491,15 +491,15 @@ panic.
 .Pp
 .It Cd option \&"TIMEZONE= Ns Ar value Ns Cm \&"
 .Ar value
-indicates the time zone offset of the hardware realtime clock device,
+indicates the time zone offset of the hardware real-time clock device,
 in minutes,
 from UTC.
-It is useful when the hardware realtime clock device is configured
+It is useful when the hardware real-time clock device is configured
 with local time,
 when dual-booting
 .Ox
 with other operating systems on a single machine.
-For instance, if the hardware realtime clock is set to Tokyo time,
+For instance, if the hardware real-time clock is set to Tokyo time,
 .Ar value
 should be
 .Li \&-540
