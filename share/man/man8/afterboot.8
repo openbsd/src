@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.161 2018/06/18 06:00:12 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.162 2018/06/18 06:02:18 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -435,7 +435,7 @@ This makes it possible to send mail locally, but not receive mail from remote
 servers, which is ideal if you have one central incoming mail machine and
 several clients.
 To cause smtpd to accept external network connections, modify the
-.Va listen
+.Ic listen on
 directive in
 .Pa /etc/mail/smtpd.conf
 to include the interfaces to listen on.
