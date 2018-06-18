@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.29 2017/05/30 12:04:27 tb Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.30 2018/06/18 09:17:09 benno Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 30 2017 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt RC.CONF 8
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ rc calls:
 rc reorders some libraries for improved protection against ROP.
 .It Cm multicast
 See
-.Xr netstart 8 .
+.Xr multicast 4 .
 .It Cm pf
 rc calls:
 .Xr pfctl 8
