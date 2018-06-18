@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.554 2018/05/30 22:20:41 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.555 2018/06/18 12:13:10 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1765,9 +1765,11 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	if (rdomain != rtable_l2(rdomain))
 		return (EINVAL);
 
-	/* remove all routing entries when switching domains */
-	/* XXX this is a bit ugly */
 	if (rdomain != ifp->if_rdomain) {
+		if ((ifp->if_flags & IFF_LOOPBACK) &&
+		    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
+			return (EPERM);
+
 		s = splnet();
 		/*
 		 * We are tearing down the world.
