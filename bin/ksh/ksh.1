@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.200 2018/05/30 21:20:52 benno Exp $
+.\"	$OpenBSD: ksh.1,v 1.201 2018/06/18 17:03:58 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: May 30 2018 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1717,6 +1717,10 @@ loops to store the value that is read from standard input.
 The number of seconds since the shell started or, if the parameter has been
 assigned an integer value, the number of seconds since the assignment plus the
 value that was assigned.
+.It Ev TERM
+The user's terminal type.
+If set, it will be used to determine the escape sequence used to
+clear the screen.
 .It Ev TMOUT
 If set to a positive integer in an interactive shell, it specifies the maximum
 number of seconds the shell will wait for input after printing the primary
@@ -4690,6 +4694,11 @@ Moves the cursor to the beginning of the edited input line.
 Uppercase the first character in the next
 .Ar n
 words, leaving the cursor past the end of the last word.
+.It clear-screen:
+Clears the screen if the
+.Ev TERM
+parameter is set and the terminal supports clearing the screen, then
+reprints the prompt string and the current input line.
 .It comment: ^[#
 If the current line does not begin with a comment character, one is added at
 the beginning of the line and the line is entered (as if return had been

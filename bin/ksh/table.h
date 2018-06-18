@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.14 2018/04/09 17:53:36 tobias Exp $	*/
+/*	$OpenBSD: table.h,v 1.15 2018/06/18 17:03:58 millert Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -170,6 +170,7 @@ extern const struct builtin shbuiltins [], kshbuiltins [];
 #define	V_TMOUT			16
 #define	V_TMPDIR		17
 #define	V_LINENO		18
+#define	V_TERM			19
 
 /* values for set_prompt() */
 #define PS1	0		/* command */

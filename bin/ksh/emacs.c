@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.84 2018/01/16 17:17:18 jca Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.85 2018/06/18 17:03:58 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -21,6 +21,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef SMALL
+# include <term.h>
+# include <curses.h>
+#endif
 
 #include "sh.h"
 #include "edit.h"
@@ -28,6 +32,7 @@
 static	Area	aedit;
 #define	AEDIT	&aedit		/* area for kill ring and macro defns */
 
+#undef CTRL
 #define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
 #define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
 
@@ -146,6 +151,7 @@ static int	isu8cont(unsigned char);
 /* proto's for keybindings */
 static int	x_abort(int);
 static int	x_beg_hist(int);
+static int	x_clear_screen(int);
 static int	x_comp_comm(int);
 static int	x_comp_file(int);
 static int	x_complete(int);
@@ -202,6 +208,7 @@ static int	x_debug_info(int);
 static const struct x_ftab x_ftab[] = {
 	{ x_abort,		"abort",			0 },
 	{ x_beg_hist,		"beginning-of-history",		0 },
+	{ x_clear_screen,	"clear-screen",			0 },
 	{ x_comp_comm,		"complete-command",		0 },
 	{ x_comp_file,		"complete-file",		0 },
 	{ x_complete,		"complete",			0 },
@@ -1004,12 +1011,19 @@ x_draw_line(int c)
 {
 	x_redraw(-1);
 	return KSTD;
-
 }
 
-/* Redraw (part of) the line.  If limit is < 0, the everything is redrawn
- * on a NEW line, otherwise limit is the screen column up to which needs
- * redrawing.
+static int
+x_clear_screen(int c)
+{
+	x_redraw(-2);
+	return KSTD;
+}
+
+/* Redraw (part of) the line.
+ * A non-negative limit is the screen column up to which needs
+ * redrawing. A limit of -1 redraws on a new line, while a limit
+ * of -2 (attempts to) clear the screen.
  */
 static void
 x_redraw(int limit)
@@ -1018,9 +1032,20 @@ x_redraw(int limit)
 	char	*cp;
 
 	x_adj_ok = 0;
-	if (limit == -1)
+	if (limit == -2) {
+		int cleared = 0;
+#ifndef SMALL
+		if (cur_term != NULL && clear_screen != NULL) {
+			if (tputs(clear_screen, 1, x_putc) != ERR)
+				cleared = 1;
+		}
+#endif
+		if (!cleared)
+			x_e_putc('\n');
+	}
+	else if (limit == -1)
 		x_e_putc('\n');
-	else
+	else if (limit >= 0)
 		x_e_putc('\r');
 	x_flush();
 	if (xbp == xbuf) {

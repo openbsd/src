@@ -1,6 +1,9 @@
-#	$OpenBSD: Makefile,v 1.38 2018/01/06 16:28:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.39 2018/06/18 17:03:58 millert Exp $
 
 PROG=	ksh
+DPADD+=	${LIBCURSES}
+LDADD+=	-lcurses
+
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
 	exec.c expr.c history.c io.c jobs.c lex.c mail.c main.c \
 	misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c \
