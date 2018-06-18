@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.684 2018/04/11 04:15:26 bket Exp $
+$OpenBSD: usbdevs,v 1.685 2018/06/18 19:03:33 mikeb Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2190,6 +2190,7 @@ product HP R1500G2		0x1fe0	R1500 G2 UPS
 product HP T750G2		0x1fe1	T750 G2 UPS
 product HP 640C			0x2004	DeskJet 640c
 product HP 1020			0x2b17	LaserJet 1020
+product HP LD220		0x3524	LD220
 product HP P1100		0x3102	Photosmart P1100
 product HP 1018			0x4117	LaserJet 1018
 product HP HN210E		0x811c	HN210E Ethernet
