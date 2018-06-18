@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.93 2018/06/17 08:22:02 anton Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.94 2018/06/18 09:15:05 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -445,10 +445,9 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	int fd, error;
 
 	fdplock(fdp);
-	error = falloc(p, 0, &fp, &fd);
-	fdpunlock(fdp);
+	error = falloc(p, &fp, &fd);
 	if (error)
-		return (error);
+		goto out;
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
@@ -458,9 +457,12 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	KQREF(kq);
 	*retval = fd;
 	kq->kq_fdp = fdp;
-	FILE_SET_MATURE(fp, p);
 	LIST_INSERT_HEAD(&p->p_p->ps_kqlist, kq, kq_next);
-	return (0);
+	fdinsert(fdp, fd, 0, fp);
+	FRELE(fp, p);
+out:
+	fdpunlock(fdp);
+	return (error);
 }
 
 int

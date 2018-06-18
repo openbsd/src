@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.289 2018/06/14 00:23:36 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.290 2018/06/18 09:15:05 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -899,7 +899,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct file *fp;
 	struct vnode *vp;
 	struct vattr vattr;
-	int flags, cmode;
+	int flags, cloexec, cmode;
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
@@ -911,10 +911,10 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			return (error);
 	}
 
-	fdplock(fdp);
+	cloexec = (oflags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
-	if ((error = falloc(p, (oflags & O_CLOEXEC) ? UF_EXCLOSE : 0, &fp,
-	    &indx)) != 0)
+	fdplock(fdp);
+	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
 	flags = FFLAGS(oflags);
 	if (flags & FREAD)
@@ -999,7 +999,8 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
-	FILE_SET_MATURE(fp, p);
+	fdinsert(fdp, indx, cloexec, fp);
+	FRELE(fp, p);
 out:
 	fdpunlock(fdp);
 	return (error);
@@ -1060,7 +1061,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	struct vnode *vp = NULL;
 	struct mount *mp;
 	struct ucred *cred = p->p_ucred;
-	int flags;
+	int flags, cloexec;
 	int type, indx, error=0;
 	struct flock lf;
 	struct vattr va;
@@ -1078,9 +1079,10 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	if ((flags & O_CREAT))
 		return (EINVAL);
 
+	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
+
 	fdplock(fdp);
-	if ((error = falloc(p, (flags & O_CLOEXEC) ? UF_EXCLOSE : 0, &fp,
-	    &indx)) != 0) {
+	if ((error = falloc(p, &fp, &indx)) != 0) {
 		fp = NULL;
 		goto bad;
 	}
@@ -1160,9 +1162,9 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
-	FILE_SET_MATURE(fp, p);
-
+	fdinsert(fdp, indx, cloexec, fp);
 	fdpunlock(fdp);
+	FRELE(fp, p);
 	return (0);
 
 bad:

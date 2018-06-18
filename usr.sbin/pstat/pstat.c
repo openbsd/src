@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.116 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.117 2018/06/18 09:15:05 mpi Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -1044,8 +1044,6 @@ filemode(void)
 
 		if (kf->f_iflags & FIF_HASLOCK)
 			*fbp++ = 'L';
-		if (kf->f_iflags & FIF_LARVAL)
-			*fbp++ = 'l';
 
 		*fbp = '\0';
 		(void)printf("%6s  %3ld", flagbuf, (long)kf->f_count);

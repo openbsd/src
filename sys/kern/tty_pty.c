@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.86 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.87 2018/06/18 09:15:05 mpi Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1070,11 +1070,11 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case PTMGET:
 		fdplock(fdp);
 		/* Grab two filedescriptors. */
-		if ((error = falloc(p, 0, &cfp, &cindx)) != 0) {
+		if ((error = falloc(p, &cfp, &cindx)) != 0) {
 			fdpunlock(fdp);
 			break;
 		}
-		if ((error = falloc(p, 0, &sfp, &sindx)) != 0) {
+		if ((error = falloc(p, &sfp, &sindx)) != 0) {
 			fdremove(fdp, cindx);
 			closef(cfp, p);
 			fdpunlock(fdp);
@@ -1166,11 +1166,12 @@ retry:
 		memcpy(ptm->cn, pti->pty_pn, sizeof(pti->pty_pn));
 		memcpy(ptm->sn, pti->pty_sn, sizeof(pti->pty_sn));
 
-		/* mark the files mature now that we've passed all errors */
-		FILE_SET_MATURE(cfp, p);
-		FILE_SET_MATURE(sfp, p);
-
+		/* insert files now that we've passed all errors */
+		fdinsert(fdp, cindx, 0, cfp);
+		fdinsert(fdp, sindx, 0, sfp);
 		fdpunlock(fdp);
+		FRELE(cfp, p);
+		FRELE(sfp, p);
 		break;
 	default:
 		error = EINVAL;

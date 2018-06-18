@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.47 2018/06/05 09:29:05 mpi Exp $	*/
+/*	$OpenBSD: file.h,v 1.48 2018/06/18 09:15:05 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -91,10 +91,7 @@ struct file {
 };
 
 #define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */
-#define FIF_LARVAL		0x02	/* not fully constructed, don't use */
-
-#define FILE_IS_USABLE(fp) \
-	(((fp)->f_iflags & FIF_LARVAL) == 0)
+#define FIF_INSERTED		0x80	/* present in `filehead' */
 
 #define FREF(fp) \
 	do { \
@@ -103,11 +100,6 @@ struct file {
 		(fp)->f_count++; \
 	} while (0)
 #define FRELE(fp,p)	(--(fp)->f_count == 0 ? fdrop(fp, p) : 0)
-
-#define FILE_SET_MATURE(fp,p) do {				\
-	(fp)->f_iflags &= ~FIF_LARVAL;				\
-	FRELE(fp, p);						\
-} while (0)
 
 int	fdrop(struct file *, struct proc *);
 
