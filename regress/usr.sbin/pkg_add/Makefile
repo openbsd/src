@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.54 2018/06/06 10:33:07 espie Exp $
+# $OpenBSD: Makefile,v 1.55 2018/06/18 13:58:55 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -51,7 +51,7 @@ LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewa
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
 .for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 \
-    26 27 28 29 30 31 32 33 34 35
+    26 27 28 29 30 31 32 33 34 35 36
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
 D$i ?= ${.OBJDIR}/dest$i
@@ -643,6 +643,26 @@ rep1/ol-1.tgz: plist21
 	@mkdir -p ${SRC23}/lib/subdir
 	@touch ${SRC23}/lib/subdir/libol.so.1.0
 	@${CREATE_PKG} -B src23 -DLIBol_VERSION=1.0 -f plist21 $@
+
+.for o in cups-2.2.7p1 cups-filters-1.20.3 cups-libs-2.2.7 ghostscript-9.07p7
+CUPS_FILES += rep2/$o.tgz
+rep2/$o.tgz: ${.CURDIR}/oldcups/$o/+CONTENTS
+	mkdir -p rep2
+	cd rep2 && pkg_create -Dstub -f ${.CURDIR}/oldcups/$o/+CONTENTS
+.endfor
+
+.for n in cups-2.2.8 cups-filters-1.20.3 cups-libs-2.2.8 ghostscript-9.07p7
+CUPS_FILES += rep3/$n.tgz
+rep3/$n.tgz: ${.CURDIR}/newcups/$n/+CONTENTS
+	mkdir -p rep3
+	cd rep3 && pkg_create -Dstub -f ${.CURDIR}/newcups/$n/+CONTENTS
+.endfor
+
+cups-bug: ${CUPS_FILES}
+	rm -rf ${D36}
+	mkdir -p ${D36}/vardbpkg ${D36}/usr/local
+	PKG_DBDIR=${D36}/vardbpkg PKG_PATH=${.OBJDIR}/rep2 perl ${.CURDIR}/injectadd -Dstub -Dunsigned -Dnonroot -B ${D36} cups
+	PKG_DBDIR=${D36}/vardbpkg PKG_PATH=${.OBJDIR}/rep3 perl ${.CURDIR}/injectadd -Dstub -Dunsigned -Dnonroot -B ${D36} -u
 
 usertest-1:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser1 \
