@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.19 2018/05/30 14:04:53 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.20 2018/06/18 15:01:22 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -635,8 +635,7 @@ bwfm_sdio_readshared(struct bwfm_sdio_softc *sc)
 int
 bwfm_sdio_intr(void *v)
 {
-	struct bwfm_sdio_softc *sc = (void *)v;
-	task_add(systq, &sc->sc_task);
+	bwfm_sdio_task(v);
 	return 1;
 }
 
