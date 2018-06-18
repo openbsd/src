@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.45 2018/06/18 11:24:15 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.46 2018/06/18 12:04:20 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -319,11 +319,9 @@ fusefs_access(void *v)
 	struct vop_access_args *ap;
 	struct fusefs_node *ip;
 	struct fusefs_mnt *fmp;
-	struct fusebuf *fbuf;
 	struct ucred *cred;
 	struct vattr vattr;
 	struct proc *p;
-	uint32_t mask = 0;
 	int error = 0;
 
 	ap = v;
@@ -335,47 +333,22 @@ fusefs_access(void *v)
 	if (!fmp->sess_init)
 		return (ENXIO);
 
-	if (fmp->undef_op & UNDEF_ACCESS)
-		goto system_check;
-
-	if (ap->a_vp->v_type == VLNK)
-		goto system_check;
-
-	if (ap->a_vp->v_type == VREG && (ap->a_mode & VWRITE & VEXEC))
-		goto system_check;
-
-	if ((ap->a_mode & VWRITE) && (fmp->mp->mnt_flag & MNT_RDONLY))
-		return (EACCES);
-
-	if ((ap->a_mode & VWRITE) != 0)
-		mask |= 0x2;
-
-	if ((ap->a_mode & VREAD) != 0)
-		mask |= 0x4;
-
-	if ((ap->a_mode & VEXEC) != 0)
-		mask |= 0x1;
-
-	fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_ACCESS, p);
-	fbuf->fb_io_mode = mask;
-
-	error = fb_queue(fmp->dev, fbuf);
-	if (error) {
-		if (error == ENOSYS) {
-			fmp->undef_op |= UNDEF_ACCESS;
-			fb_delete(fbuf);
-			goto system_check;
+	/*
+	 * Disallow write attempts on filesystems mounted read-only;
+	 * unless the file is a socket, fifo, or a block or character
+	 * device resident on the filesystem.
+	 */
+	if ((ap->a_mode & VWRITE) && (fmp->mp->mnt_flag & MNT_RDONLY)) {
+		switch (ap->a_vp->v_type) {
+		case VREG:
+		case VDIR:
+		case VLNK:
+			return (EROFS);
+		default:
+			break;
 		}
-
-		printf("fusefs: access error %i\n", error);
-		fb_delete(fbuf);
-		return (error);
 	}
 
-	fb_delete(fbuf);
-	return (error);
-
-system_check:
 	if ((error = VOP_GETATTR(ap->a_vp, &vattr, cred, p)) != 0)
 		return (error);
 
@@ -536,8 +509,8 @@ fusefs_setattr(void *v)
 		}
 
 		/*
-		 * chmod returns EFTYPE if the effective user ID is not the                  
-		 * super-user, the mode includes the sticky bit (S_ISVTX), and               
+		 * chmod returns EFTYPE if the effective user ID is not the		  
+		 * super-user, the mode includes the sticky bit (S_ISVTX), and	       
 		 * path does not refer to a directory 
 		 */
 		if (cred->cr_uid != 0 && vp->v_type != VDIR && 
