@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.195 2018/06/15 08:57:17 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.196 2018/06/18 08:15:29 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 15 2018 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -27,6 +27,25 @@
 .Nm
 is the configuration file for the mail daemon
 .Xr smtpd 8 .
+.Pp
+When mail arrives,
+each
+.Dq RCPT TO:
+command generates a mail envelope.
+If an envelope matches any of a pre-designated set of actions
+(set using the
+.Ic action
+keyword),
+the message is accepted for delivery.
+A copy of the message, as well as its associated envelopes,
+is saved in the mail queue and later dispatched
+according to whatever method the action rule specified.
+If an envelope does not match any options,
+it is rejected.
+The
+.Ic match
+rules are evaluated sequentially,
+with the first match winning.
 .Pp
 The current line can be extended over multiple lines using a backslash
 .Pq Sq \e .
@@ -64,14 +83,13 @@ is described below.
 .Bl -tag -width Ds
 .It Ic action Ar name method Op Ar options
 When the queue runner processes an envelope from the mail queue,
-it uses the
+it carries out the
 .Ic action
-directive matching the dispatcher
-.Ar name
-that was selected by the
-.Ic match Cm action
+.Ar name ,
+selected by the
+.Ic match No ... Cm action
 directive when the message was received.
-That
+The
 .Ic action
 directive provides configuration data for delivery attempts.
 Required lookups are performed at the time of each delivery attempt.
@@ -391,10 +409,7 @@ address of the originating host is suppressed in Received: header lines.
 .\" Cm filter Ar string
 .\" is parsed, but not implemented, see smtpf_session.c.
 .It Ic match Ar options Cm action Ar name
-During an incoming SMTP session, each
-.Ic RCPT TO:
-command generates an envelope.
-If at least one envelope matches the
+If at least one mail envelope matches the
 .Ar options
 of one
 .Ic match Cm action
@@ -402,10 +417,6 @@ directive, receive the incoming message, put a copy into each
 matching envelope, and atomically save the envelopes to the mail
 spool for later processing by the respective dispatcher
 .Ar name .
-If the envelope does not match any options,
-it is rejected.
-Rules are evaluated sequentially,
-with the first match winning.
 .Pp
 The following matching options are supported and can all be negated:
 .Bl -tag -width Ds
