@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.161 2018/06/16 08:41:55 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.162 2018/06/18 15:41:20 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -328,6 +328,8 @@ sub do
 	return;
 }
 
+# both the solver and the conflict cache inherit from cloner
+# they both want to merge several hashes from extra data.
 package OpenBSD::Cloner;
 sub clone
 {
@@ -340,6 +342,9 @@ sub clone
 	}
 }
 
+# The actual solver derives from SolverBase:
+# there is a specific subclass for pkg_create which does resolve
+# dependencies in a much lighter way than the normal pkg_add code.
 package OpenBSD::Dependencies::SolverBase;
 our @ISA = qw(OpenBSD::Cloner);
 
