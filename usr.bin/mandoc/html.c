@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.102 2018/06/10 16:46:52 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.103 2018/06/18 01:49:12 schwarze Exp $
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -709,6 +709,9 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		/* Second letter: style name. */
 
 		switch (*fmt++) {
+		case 'h':
+			attr = "height";
+			break;
 		case 'i':
 			attr = "text-indent";
 			break;
