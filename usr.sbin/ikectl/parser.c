@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.16 2016/06/14 13:45:40 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.17 2018/06/18 10:20:19 benno Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -273,6 +273,7 @@ parse_addr(const char *word)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+		freeaddrinfo(r);
 		return (0);
 	}
 
@@ -327,7 +328,6 @@ match_token(char *word, const struct token table[])
 		case ADDRESS:
 		case FQDN:
 			if (!match && word != NULL && strlen(word) > 0) {
-				parse_addr(word);
 				res.host = strdup(word);
 				if (parse_addr(word) == 0)
 					res.htype = HOST_IPADDR;
