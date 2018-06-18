@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.44 2018/06/07 13:37:28 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.45 2018/06/18 11:24:15 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -440,6 +440,7 @@ fusefs_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode *vp = ap->a_vp;
 	struct fusefs_node *ip = VTOI(vp);
+	struct ucred *cred = ap->a_cred;
 	struct proc *p = ap->a_p;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
@@ -485,6 +486,11 @@ fusefs_setattr(void *v)
 	}
 
 	if (vap->va_size != VNOVAL) {
+		/*
+		 * Disallow write attempts on read-only file systems;
+		 * unless the file is a socket, fifo, or a block or
+		 * character device resident on the file system.
+		 */
 		switch (vp->v_type) {
 		case VDIR:
 			error = EISDIR;
@@ -528,6 +534,18 @@ fusefs_setattr(void *v)
 			error = EROFS;
 			goto out;
 		}
+
+		/*
+		 * chmod returns EFTYPE if the effective user ID is not the                  
+		 * super-user, the mode includes the sticky bit (S_ISVTX), and               
+		 * path does not refer to a directory 
+		 */
+		if (cred->cr_uid != 0 && vp->v_type != VDIR && 
+		    (vap->va_mode & S_ISTXT)) { 
+			error = EFTYPE;
+			goto out;
+		}
+
 		fbuf->fb_attr.st_mode = vap->va_mode & ALLPERMS;
 		io->fi_flags |= FUSE_FATTR_MODE;
 	}
