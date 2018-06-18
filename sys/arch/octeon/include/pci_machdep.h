@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2016/05/04 14:30:01 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.9 2018/06/18 13:41:34 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -75,20 +75,20 @@ struct mips_pci_chipset {
     (*(c)->pc_conf_size)((c)->pc_conf_v, (t))
 #ifdef DEBUG_PCI_CONF
 static inline pcireg_t pci_conf_read_db(void * c, pcitag_t t, int r,
-				     char* f,char* func,int l)
+				     const char *f, const char *func,int l)
 {
   pcireg_t v;
   struct mips_pci_chipset *pc = c;
   v = (*(pc)->pc_conf_read)(pc->pc_conf_v, t, r);
-  printf("%s:%s:%d:pci_conf_read(%x,%x) = %x\n",f,func,l,t,r,v);
+  printf("%s:%s:%d:pci_conf_read(%lx,%x) = %x\n",f,func,l,t,r,v);
   return v;
 }
 
 static inline void pci_conf_write_db(void * c, pcitag_t t, int r, pcireg_t v,
-				     char* f,char* func,int l)
+				     const char *f, const char *func,int l)
 {
   struct mips_pci_chipset *pc = c;
-  printf("%s:%s:%d:pci_conf_write(%x,%x,%x)\n",f,func,l,t,r,v);
+  printf("%s:%s:%d:pci_conf_write(%lx,%x,%x)\n",f,func,l,t,r,v);
   (*(pc)->pc_conf_write)(pc->pc_conf_v, t, r, v);
 }
 
