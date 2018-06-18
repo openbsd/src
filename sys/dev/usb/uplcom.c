@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.71 2018/04/27 09:40:59 tb Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.72 2018/06/18 19:05:24 mikeb Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+	{ USB_VENDOR_HP, USB_PRODUCT_HP_LD220 },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
 	{ USB_VENDOR_LEADTEK, USB_PRODUCT_LEADTEK_9531 },
