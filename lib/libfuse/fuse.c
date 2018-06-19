@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.45 2018/05/22 12:52:14 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.46 2018/06/19 11:27:54 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -228,10 +228,10 @@ fuse_loop(struct fuse *fuse)
 			}
 
 			ctx.fuse = fuse;
-			ctx.uid = fuse->conf.uid;
-			ctx.gid = fuse->conf.gid;
-			ctx.pid = fuse->conf.pid;
-			ctx.umask = fuse->conf.umask;
+			ctx.uid = fbuf.fb_uid;
+			ctx.gid = fbuf.fb_gid;
+			ctx.pid = fbuf.fb_tid;
+			ctx.umask = fbuf.fb_umask;
 			ctx.private_data = fuse->private_data;
 			ictx = &ctx;
 
