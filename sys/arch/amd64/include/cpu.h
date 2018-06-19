@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.123 2018/06/05 06:39:11 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.124 2018/06/19 19:29:52 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct cpu_info {
 
 	int		ci_inatomic;
 
-#define ARCH_HAVE_CPU_TOPOLOGY
+#define __HAVE_CPU_TOPOLOGY
 	u_int32_t	ci_smt_id;
 	u_int32_t	ci_core_id;
 	u_int32_t	ci_pkg_id;

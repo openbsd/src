@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.341 2018/06/02 16:38:21 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.342 2018/06/19 19:29:52 kettenis Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -782,6 +782,10 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			    allowpowerdown));
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &allowpowerdown));
+#ifdef __HAVE_CPU_TOPOLOGY
+	case HW_SMT:
+		return (sysctl_hwsmt(oldp, oldlenp, newp, newlen));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

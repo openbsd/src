@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.177 2018/05/26 10:16:14 ratchov Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.178 2018/06/19 19:29:52 kettenis Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -863,7 +863,8 @@ struct kinfo_file {
 #define	HW_NCPUFOUND		21	/* int: number of cpus found*/
 #define	HW_ALLOWPOWERDOWN	22	/* allow power button shutdown */
 #define	HW_PERFPOLICY		23	/* set performance policy */
-#define	HW_MAXID		24	/* number of valid hw ids */
+#define	HW_SMT			24	/* int: enable SMT/HT/CMT */
+#define	HW_MAXID		25	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -890,6 +891,7 @@ struct kinfo_file {
 	{ "ncpufound", CTLTYPE_INT }, \
 	{ "allowpowerdown", CTLTYPE_INT }, \
 	{ "perfpolicy", CTLTYPE_STRING }, \
+	{ "smt", CTLTYPE_INT }, \
 }
 
 /*

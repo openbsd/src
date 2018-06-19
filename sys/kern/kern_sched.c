@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.47 2017/12/14 23:21:04 dlg Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.48 2018/06/19 19:29:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -56,6 +56,8 @@ uint64_t sched_wasidle;		/* Times we came out of idle */
 struct taskq *sbartq;
 #endif
 
+int sched_smt;
+
 /*
  * A few notes about cpu_switchto that is implemented in MD code.
  *
@@ -97,6 +99,11 @@ sched_init_cpu(struct cpu_info *ci)
 	 * structures.
 	 */
 	cpuset_init_cpu(ci);
+
+#ifdef __HAVE_CPU_TOPOLOGY
+	if (!sched_smt && ci->ci_smt_id > 0)
+		return;
+#endif
 	cpuset_add(&sched_all_cpus, ci);
 }
 
@@ -615,9 +622,13 @@ sched_start_secondary_cpus(void)
 
 		if (CPU_IS_PRIMARY(ci))
 			continue;
-		cpuset_add(&sched_all_cpus, ci);
 		atomic_clearbits_int(&spc->spc_schedflags,
 		    SPCF_SHOULDHALT | SPCF_HALTED);
+#ifdef __HAVE_CPU_TOPOLOGY
+		if (!sched_smt && ci->ci_smt_id > 0)
+			continue;
+#endif
+		cpuset_add(&sched_all_cpus, ci);
 	}
 }
 
@@ -793,3 +804,42 @@ cpuset_complement(struct cpuset *to, struct cpuset *a, struct cpuset *b)
 	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
 		to->cs_set[i] = b->cs_set[i] & ~a->cs_set[i];
 }
+
+#ifdef __HAVE_CPU_TOPOLOGY
+
+#include <sys/sysctl.h>
+
+int
+sysctl_hwsmt(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int err, newsmt;
+
+	newsmt = sched_smt;
+	err = sysctl_int(oldp, oldlenp, newp, newlen, &newsmt);
+	if (err)
+		return err;
+	if (newsmt > 1)
+		newsmt = 1;
+	if (newsmt < 0)
+		newsmt = 0;
+	if (newsmt == sched_smt)
+		return 0;
+
+	sched_smt = newsmt;
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		if (ci->ci_smt_id == 0)
+			continue;
+		if (sched_smt)
+			cpuset_add(&sched_all_cpus, ci);
+		else
+			cpuset_del(&sched_all_cpus, ci);
+	}
+
+	return 0;
+}
+
+#endif
