@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.162 2018/06/18 15:41:20 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.163 2018/06/19 14:12:11 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -197,9 +197,11 @@ sub find_elsewhere
 sub find_in_already_done
 {
 	my ($self, $solver, $state, $obj) = @_;
-	my $r = $self->{known_tags}->{$obj};
+	my $r = $self->{known_tags}{$obj->name};
 	if (defined $r) {
-		$state->say("Found tag #1 in #2", $obj, $r)
+		my ($dep, $d) = @$r;
+		$obj->{definition_list} = $d;
+		$state->say("Found tag #1 in #2", $obj->stringize, $dep)
 		    if $state->verbose >= 3;
 	}
 	return $r;
@@ -208,9 +210,9 @@ sub find_in_already_done
 sub find_in_plist
 {
 	my ($self, $plist, $dep) = @_;
-	if ($plist->has('define-tag')) {
-		for my $t (@{$plist->{'define-tag'}}) {
-			$self->{known_tags}->{$t->name} = $dep;
+	if (defined $plist->{tags_definitions}) {
+		while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
+			$self->{known_tags}{$name} = [$dep, $d];
 		}
 	}
 }
@@ -794,12 +796,12 @@ sub solve_tags
 	my $okay = 1;
 
 	my $tag_finder = OpenBSD::lookup::tag->new($solver);
-	for my $h ($solver->{set}->newer) {
-		for my $tag (keys %{$h->{plist}->{tags}}) {
+	for my $h ($solver->{set}->all_handles) {
+		for my $tag (@{$h->{plist}{tags}}) {
 			next if $tag_finder->lookup($solver,
 			    $solver->{to_register}->{$h}, $state, $tag);
 			$state->errsay("Can't install #1: tag definition not found #2",
-			    $h->pkgname, $tag);
+			    $h->pkgname, $tag->name);
 			if ($okay) {
 				$solver->dump($state);
 				$tag_finder->dump($state);
