@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.106 2018/05/30 13:53:09 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.107 2018/06/19 22:35:07 krw Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: May 30 2018 $
+.Dd $Mdocdate: June 19 2018 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -590,8 +590,6 @@ zero'd pages
 pages reserved for pagedaemon
 .It reserve_kernel
 pages reserved for kernel.
-.It anonpages
-pages used by anon pagers
 .It vnodepages
 pages used by vnode page cache
 .It vtextpages
@@ -612,10 +610,6 @@ software interrupt count
 system calls
 .It pageins
 pagein operation count
-.It obsolete_swapins
-swapins
-.It obsolete_swapouts
-swapouts
 .It pgswapin
 pages swapped in
 .It pgswapout
@@ -630,8 +624,6 @@ forks where vmspace is shared
 pagealloc found requested zero'd pages
 .It pga_zeromiss
 pagealloc failed to obtain zero'd pages
-.It zeroaborts
-page zeroing was aborted
 .Pp
 .It Fault Counters:
 .It fltnoram
@@ -708,10 +700,6 @@ in use swap pages not in RAM
 fault called uvm_swap_get()
 .It nanon
 total anon's
-.It nanonneeded
-anons currently needed
-.It nfreeanon
-free anon's
 .Pp
 .It Daemon Counters:
 .It pdwoke
@@ -738,12 +726,6 @@ times daemon started a pageout
 times daemon got a pending pagout
 .It pddeact
 pages daemon deactivates
-.It pdreanon
-reactivated anon pages
-.It pdrevnode
-reactivated vnode pages
-.It pdrevtext
-reactivated vtext pages
 .Pp
 .It Misc Counters:
 .It fpswtch

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.144 2018/04/26 15:55:14 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.145 2018/06/19 22:35:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -517,8 +517,6 @@ dosum(void)
 	/* swap */
 	(void)printf("%11u swap pages\n", uvmexp.swpages);
 	(void)printf("%11u swap pages in use\n", uvmexp.swpginuse);
-	(void)printf("%11u total anons in system\n", uvmexp.nanon);
-	(void)printf("%11u free anons\n", uvmexp.nfreeanon);
 
 	/* stat counters */
 	(void)printf("%11u page faults\n", uvmexp.faults);

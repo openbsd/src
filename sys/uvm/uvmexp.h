@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.2 2016/05/08 11:52:32 stefan Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.3 2018/06/19 22:35:07 krw Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -55,9 +55,9 @@ struct uvmexp {
 	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel;	/* number of pages reserved for kernel */
-	int anonpages;		/* number of pages used by anon pagers */
-	int vnodepages;		/* number of pages used by vnode page cache */
-	int vtextpages;		/* number of pages used by vtext vnodes */
+	int unused01;		/* formerly anonpages */
+	int vnodepages;		/* XXX # of pages used by vnode page cache */
+	int vtextpages;		/* XXX # of pages used by vtext vnodes */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
@@ -77,9 +77,9 @@ struct uvmexp {
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
-	int nanon;	/* number total of anon's in system */
-	int nanonneeded;/* number of anons currently needed */
-	int nfreeanon;	/* number of free anon's */
+	int nanon;	/* XXX number total of anon's in system */
+	int unused05;	/* formerly nanonneeded */
+	int unused06;	/* formerly nfreeanon */
 
 	/* stat counters */
 	int faults;		/* page fault count */
@@ -90,8 +90,8 @@ struct uvmexp {
 	int syscalls;		/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
-	int obsolete_swapins;	/* swapins */
-	int obsolete_swapouts;	/* swapouts */
+	int unused07;		/* formerly obsolete_swapins */
+	int unused08;		/* formerly obsolete_swapouts */
 	int pgswapin;		/* pages swapped in */
 	int pgswapout;		/* pages swapped out */
 	int forks;  		/* forks */
@@ -101,8 +101,7 @@ struct uvmexp {
 				   was available */
 	int pga_zeromiss;	/* pagealloc where zero wanted and zero
 				   not available */
-	int zeroaborts;		/* number of times page zeroing was
-				   aborted */
+	int unused09;		/* formerly zeroaborts */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -138,9 +137,9 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	int pdreanon;	/* anon pages reactivated due to min threshold */
-	int pdrevnode;	/* vnode pages reactivated due to min threshold */
-	int pdrevtext;	/* vtext pages reactivated due to min threshold */
+	int unused11;	/* formerly pdreanon */
+	int unused12;	/* formerly pdrevnode */
+	int unused13;	/* formerly pdrevtext */
 
 	int fpswtch;	/* FPU context switches */
 	int kmapent;	/* number of kernel map entries */

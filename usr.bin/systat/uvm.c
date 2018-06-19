@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.2 2018/06/01 19:21:33 bluhm Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.3 2018/06/19 22:35:07 krw Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -82,20 +82,18 @@ struct uvmline uvmline[] = {
 	  &uvmexp.fltrelckok, &last_uvmexp.fltrelckok, "fltrelckok" },
 	{ &uvmexp.reserve_pagedaemon, &last_uvmexp.reserve_pagedaemon,
 	  "reserve_pagedaemon",
-	  &uvmexp.obsolete_swapins, &last_uvmexp.obsolete_swapins,
-	  "obsolete_swapins",
+	  NULL, NULL, NULL,
 	  &uvmexp.fltanget, &last_uvmexp.fltanget, "fltanget" },
 	{ &uvmexp.reserve_kernel, &last_uvmexp.reserve_kernel, "reserve_kernel",
-	  &uvmexp.obsolete_swapouts, &last_uvmexp.obsolete_swapouts,
-	  "obsolete_swapouts",
+	  NULL, NULL, NULL,
 	  &uvmexp.fltanretry, &last_uvmexp.fltanretry, "fltanretry" },
-	{ &uvmexp.anonpages, &last_uvmexp.anonpages, "anonpages",
+	{ NULL, NULL, NULL,
 	  &uvmexp.pgswapin, &last_uvmexp.pgswapin, "pgswapin",
 	  &uvmexp.fltamcopy, &last_uvmexp.fltamcopy, "fltamcopy" },
-	{ &uvmexp.vnodepages, &last_uvmexp.vnodepages, "vnodepages",
+	{ NULL, NULL, NULL,
 	  &uvmexp.pgswapout, &last_uvmexp.pgswapout, "pgswapout",
 	  &uvmexp.fltnamap, &last_uvmexp.fltnamap, "fltnamap" },
-	{ &uvmexp.vtextpages, &last_uvmexp.vtextpages, "vtextpages",
+	{ NULL, NULL, NULL, 
 	  &uvmexp.forks, &last_uvmexp.forks, "forks",
 	  &uvmexp.fltnomap, &last_uvmexp.fltnomap, "fltnomap" },
 	{ NULL, NULL, NULL,
@@ -111,7 +109,7 @@ struct uvmline uvmline[] = {
 	  &uvmexp.pga_zeromiss, &last_uvmexp.pga_zeromiss, "pga_zeromiss",
 	  &uvmexp.flt_acow, &last_uvmexp.flt_acow, "flt_acow" },
 	{ &uvmexp.inactarg, &last_uvmexp.inactarg, "inactarg",
-	  &uvmexp.zeroaborts, &last_uvmexp.zeroaborts, "zeroaborts",
+	  NULL, NULL, NULL,
 	  &uvmexp.flt_obj, &last_uvmexp.flt_obj, "flt_obj" },
 	{ &uvmexp.wiredmax, &last_uvmexp.wiredmax, "wiredmax",
 	  NULL, NULL, NULL,
@@ -135,13 +133,13 @@ struct uvmline uvmline[] = {
 	  &uvmexp.nswget, &last_uvmexp.nswget, "nswget",
 	  &uvmexp.pdswout, &last_uvmexp.pdswout, "pdswout" },
 	{ NULL, NULL, NULL,
-	  &uvmexp.nanon, &last_uvmexp.nanon, "nanon",
+	  NULL, NULL, NULL,
 	  &uvmexp.pdfreed, &last_uvmexp.pdfreed, "pdfreed" },
 	{ NULL, NULL, "Misc Counters",
-	  &uvmexp.nanonneeded, &last_uvmexp.nanonneeded, "nanonneeded",
+	  NULL, NULL, NULL,
 	  &uvmexp.pdscans, &last_uvmexp.pdscans, "pdscans" },
 	{ &uvmexp.fpswtch, &last_uvmexp.fpswtch, "fpswtch",
-	  &uvmexp.nfreeanon, &last_uvmexp.nfreeanon, "nfreeanon",
+	  NULL, NULL, NULL,
 	  &uvmexp.pdanscan, &last_uvmexp.pdanscan, "pdanscan" },
 	{ &uvmexp.kmapent, &last_uvmexp.kmapent, "kmapent",
 	  NULL, NULL, NULL,
@@ -163,13 +161,13 @@ struct uvmline uvmline[] = {
 	  &uvmexp.pddeact, &last_uvmexp.pddeact, "pddeact" },
 	{ NULL, NULL, NULL,
 	  NULL, NULL, NULL,
-	  &uvmexp.pdreanon, &last_uvmexp.pdreanon, "pdrenon" },
+	  NULL, NULL, NULL },
 	{ NULL, NULL, NULL,
 	  NULL, NULL, NULL,
-	  &uvmexp.pdrevnode, &last_uvmexp.pdrevnode, "pdrevnode" },
+	  NULL, NULL, NULL },
 	{ NULL, NULL, NULL,
 	  NULL, NULL, NULL,
-	  &uvmexp.pdrevtext, &last_uvmexp.pdrevtext, "pdrevtext" }
+	  NULL, NULL, NULL }
 };
 
 field_def fields_uvm[] = {
