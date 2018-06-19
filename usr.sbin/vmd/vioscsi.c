@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.5 2018/04/26 01:10:10 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.6 2018/06/19 17:12:34 reyk Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -88,7 +88,7 @@ vioscsi_next_ring_item(struct vioscsi_dev *dev, struct vring_avail *avail,
 static const char *
 vioscsi_op_names(uint8_t type)
 {
-	switch(type) {
+	switch (type) {
 	/* defined in scsi_all.h */
 	case TEST_UNIT_READY: return "TEST_UNIT_READY";
 	case REQUEST_SENSE: return "REQUEST_SENSE";
@@ -354,7 +354,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		 * ERR_RECOVERY_PAGE is 12 bytes
 		 * CDVD_CAPABILITIES_PAGE is 27 bytes
 		 */
-		switch(mode_page_code) {
+		switch (mode_page_code) {
 		case ERR_RECOVERY_PAGE:
 			mode_reply_len = 16;
 			mode_reply =
@@ -454,7 +454,7 @@ mode_sense_error:
 			    __func__, acct->resp_desc->addr);
 			goto mode_sense_out;
 		}
-	
+
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
@@ -497,7 +497,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		 * ERR_RECOVERY_PAGE is 12 bytes
 		 * CDVD_CAPABILITIES_PAGE is 27 bytes
 		 */
-		switch(mode_page_code) {
+		switch (mode_page_code) {
 		case ERR_RECOVERY_PAGE:
 			mode_reply_len = 20;
 			mode_reply =
@@ -596,14 +596,14 @@ mode_sense_big_error:
 			    __func__, acct->resp_desc->addr);
 			goto mode_sense_big_out;
 		}
-	
+
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
 		vioscsi_next_ring_item(dev, acct->avail, acct->used,
 		    acct->req_desc, acct->req_idx);
 	}
-mode_sense_big_out:	
+mode_sense_big_out:
 	return (ret);
 }
 
@@ -661,7 +661,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
-			
+
 	if (write_mem(acct->resp_desc->addr, &resp, acct->resp_desc->len)) {
 		log_warnx("%s: unable to write OK resp status data @ 0x%llx",
 		    __func__, acct->resp_desc->addr);
@@ -815,7 +815,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 		goto rpl_out;
 
 	}
-	
+
 	reply_rpl = calloc(1, sizeof(*reply_rpl));
 
 	if (reply_rpl == NULL) {
@@ -863,7 +863,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 		vioscsi_next_ring_item(dev, acct->avail, acct->used,
 		    acct->req_desc, acct->req_idx);
 	}
-	
+
 free_rpl:
 	free(reply_rpl);
 rpl_out:
@@ -1079,7 +1079,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 			vioscsi_next_ring_item(dev, acct->avail, acct->used,
 			    acct->req_desc, acct->req_idx);
 		}
-	
+
 		goto free_read_10;
 	}
 
@@ -1443,7 +1443,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 			    __func__, acct->resp_desc->addr);
 			goto gesn_out;
 		}
-	
+
 		ret = 1;
 		dev->cfg.isr_status = 1;
 		/* Move ring indexes */
@@ -1841,16 +1841,16 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (sz == 1) {
 				/* read third byte of cmd_per_lun */
 				*data &= 0xFFFFFF00;
-				*data |=
-				    (uint32_t)(VIOSCSI_CMD_PER_LUN >> 16) & 0xFF;
+				*data |= (uint32_t)(VIOSCSI_CMD_PER_LUN >> 16)
+				    & 0xFF;
 			}
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 15:
 			if (sz == 1) {
 				/* read fourth byte of cmd_per_lun */
 				*data &= 0xFFFFFF00;
-				*data |=
-				    (uint32_t)(VIOSCSI_CMD_PER_LUN >> 24) & 0xFF;
+				*data |= (uint32_t)(VIOSCSI_CMD_PER_LUN >> 24)
+				    & 0xFF;
 			}
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 16:
@@ -1927,10 +1927,13 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 28:
 			/* VIRTIO_SCSI_CONFIG_MAX_CHANNEL, 16bit */
-			*data &= 0xFFFF0000; /* defined by standard to be zero */
+
+			/* defined by standard to be zero */
+			*data &= 0xFFFF0000;
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 29:
-			*data &= 0xFFFF0000; /* defined by standard to be zero */
+			/* defined by standard to be zero */
+			*data &= 0xFFFF0000;
 			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 30:
 			/* VIRTIO_SCSI_CONFIG_MAX_TARGET, 16bit */
@@ -2039,7 +2042,7 @@ void
 vioscsi_update_qs(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if(dev->cfg.queue_select > VIRTIO_MAX_QUEUES) {
+	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
@@ -2053,7 +2056,7 @@ void
 vioscsi_update_qa(struct vioscsi_dev *dev)
 {
 	/* Invalid queue? */
-	if(dev->cfg.queue_select > VIRTIO_MAX_QUEUES)
+	if (dev->cfg.queue_select > VIRTIO_MAX_QUEUES)
 		return;
 
 	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
@@ -2191,7 +2194,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 		    req.cdb[0], vioscsi_op_names(req.cdb[0]));
 
 		/* opcode is first byte */
-		switch(req.cdb[0]) {
+		switch (req.cdb[0]) {
 		case TEST_UNIT_READY:
 		case START_STOP:
 			ret = vioscsi_handle_tur(dev, &req, &acct);

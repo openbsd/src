@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.33 2018/04/27 12:15:10 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.34 2018/06/19 17:12:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -502,7 +502,7 @@ send_vm(int fd, struct vm_create_params *vcp)
 	unsigned int		   flags = 0;
 	unsigned int		   i;
 	int			   ret = 0;
-	size_t			   sz; 
+	size_t			   sz;
 
 	if (dump_send_header(fd)) {
 		log_info("%s: failed to send vm dump header", __func__);
@@ -646,7 +646,7 @@ dump_vmr(int fd, struct vm_mem_range *vmr)
 	char	buf[PAGE_SIZE];
 
 	while (rem > 0) {
-		if(read_mem(vmr->vmr_gpa + read, buf, PAGE_SIZE)) {
+		if (read_mem(vmr->vmr_gpa + read, buf, PAGE_SIZE)) {
 			log_warn("failed to read vmr");
 			return (-1);
 		}
@@ -1318,11 +1318,13 @@ vcpu_run_loop(void *arg)
 		/* Still more pending? */
 		if (i8259_is_pending()) {
 			/* XXX can probably avoid ioctls here by providing intr in vrp */
-			if (vcpu_pic_intr(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 1)) {
+			if (vcpu_pic_intr(vrp->vrp_vm_id,
+			    vrp->vrp_vcpu_id, 1)) {
 				fatal("can't set INTR");
 			}
 		} else {
-			if (vcpu_pic_intr(vrp->vrp_vm_id, vrp->vrp_vcpu_id, 0)) {
+			if (vcpu_pic_intr(vrp->vrp_vm_id,
+			    vrp->vrp_vcpu_id, 0)) {
 				fatal("can't clear INTR");
 			}
 		}
@@ -1890,9 +1892,10 @@ set_return_data(union vm_exit *vei, uint32_t data)
 /*
  * get_input_data
  *
- * Utility function for manipulating register data in vm exit info structs. This
- * function ensures that the data is copied from the vei->vei.vei_data field with
- * the proper size for the operation being performed.
+ * Utility function for manipulating register data in vm exit info
+ * structs. This function ensures that the data is copied from the
+ * vei->vei.vei_data field with the proper size for the operation being
+ * performed.
  *
  * Parameters:
  *  vei: exit information

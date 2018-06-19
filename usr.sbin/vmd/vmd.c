@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.85 2018/05/13 22:48:11 pd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.86 2018/06/19 17:12:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -103,7 +103,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		if (res == 0 &&
-		    config_setvm(ps, vm, imsg->hdr.peerid, vm->vm_params.vmc_uid) == -1) {
+		    config_setvm(ps, vm,
+		    imsg->hdr.peerid, vm->vm_params.vmc_uid) == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
@@ -240,7 +241,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
-		if(check_vmh(&vmh)) {
+
+		if (check_vmh(&vmh)) {
 			res = ENOENT;
 			close(imsg->fd);
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -469,7 +471,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    vm->vm_params.vmc_params.vcp_name,
 				    VMM_MAX_NAME_LEN);
 				vir.vir_info.vir_memory_size =
-				    vm->vm_params.vmc_params.vcp_memranges[0].vmr_size;
+				    vm->vm_params.vmc_params.
+				    vcp_memranges[0].vmr_size;
 				vir.vir_info.vir_ncpus =
 				    vm->vm_params.vmc_params.vcp_ncpus;
 				/* get the configured user id for this vm */
@@ -497,7 +500,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 int
-check_vmh(struct vm_dump_header *vmh) {
+check_vmh(struct vm_dump_header *vmh)
+{
 	int i;
 	unsigned int code, leaf;
 	unsigned int a, b, c, d;
@@ -517,7 +521,7 @@ check_vmh(struct vm_dump_header *vmh) {
 			return (-1);
 		}
 
-		switch(code) {
+		switch (code) {
 		case 0x00:
 		CPUID_LEAF(code, leaf, a, b, c, d);
 		if (vmh->vmh_cpuids[i].a > a) {
@@ -854,7 +858,8 @@ vmd_configure(void)
 			    vm->vm_params.vmc_params.vcp_name);
 			continue;
 		}
-		if (config_setvm(&env->vmd_ps, vm, -1, vm->vm_params.vmc_uid) == -1)
+		if (config_setvm(&env->vmd_ps, vm,
+		    -1, vm->vm_params.vmc_uid) == -1)
 			return (-1);
 	}
 
@@ -890,7 +895,8 @@ vmd_reload(unsigned int reset, const char *filename)
 		 */
 
 		if (reload) {
-			TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, next_vm) {
+			TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry,
+			    next_vm) {
 				if (vm->vm_running == 0) {
 					log_debug("%s: calling vm_remove",
 					    __func__);
@@ -930,7 +936,8 @@ vmd_reload(unsigned int reset, const char *filename)
 					    vm->vm_params.vmc_params.vcp_name);
 					continue;
 				}
-				if (config_setvm(&env->vmd_ps, vm, -1, vm->vm_params.vmc_uid) == -1)
+				if (config_setvm(&env->vmd_ps, vm,
+				    -1, vm->vm_params.vmc_uid) == -1)
 					return (-1);
 			} else {
 				log_debug("%s: not creating vm \"%s\": "
@@ -1159,14 +1166,14 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		log_warnx("invalid VM name");
 		goto fail;
 	} else if (*vcp->vcp_name == '-' || *vcp->vcp_name == '.' ||
-		   *vcp->vcp_name == '_') {
-		log_warnx("Invalid VM name");
+	    *vcp->vcp_name == '_') {
+		log_warnx("invalid VM name");
 		goto fail;
 	} else {
 		for (s = vcp->vcp_name; *s != '\0'; ++s) {
 			if (!(isalnum(*s) || *s == '.' || *s == '-' ||
-			      *s == '_')) {
-				log_warnx("Invalid VM name");
+			    *s == '_')) {
+				log_warnx("invalid VM name");
 				goto fail;
 			}
 		}

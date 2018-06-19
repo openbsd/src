@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2018/06/11 09:32:55 denis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2018/06/19 17:12:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -204,7 +204,8 @@ switch		: SWITCH string			{
 		} '{' optnl switch_opts_l '}'	{
 			if (strnlen(vsw->sw_ifname,
 			    sizeof(vsw->sw_ifname)) == 0) {
-				yyerror("switch \"%s\" is missing interface name",
+				yyerror("switch \"%s\" "
+				    "is missing interface name",
 				    vsw->sw_name);
 				YYERROR;
 			}
@@ -214,7 +215,8 @@ switch		: SWITCH string			{
 				    " skipped (disabled)",
 				    file->name, yylval.lineno, vsw->sw_name);
 			} else if (!env->vmd_noaction) {
-				TAILQ_INSERT_TAIL(env->vmd_switches, vsw, sw_entry);
+				TAILQ_INSERT_TAIL(env->vmd_switches,
+				    vsw, sw_entry);
 				env->vmd_nswitches++;
 				log_debug("%s:%d: switch \"%s\" registered",
 				    file->name, yylval.lineno, vsw->sw_name);
@@ -318,10 +320,12 @@ vm		: VM string			{
 				} else {
 					if (vcp_disable)
 						vm->vm_disabled = 1;
-					log_debug("%s:%d: vm \"%s\" registered (%s)",
+					log_debug("%s:%d: vm \"%s\" "
+					    "registered (%s)",
 					    file->name, yylval.lineno,
 					    vcp->vcp_name,
-					    vcp_disable ? "disabled" : "enabled");
+					    vcp_disable ?
+					    "disabled" : "enabled");
 				}
 				vm->vm_from_config = 1;
 			}

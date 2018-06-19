@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.17 2018/04/27 12:15:10 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.18 2018/06/19 17:12:34 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -739,7 +739,7 @@ vcpu_exit_elcr(struct vm_run_params *vrp)
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		log_debug("%s: ELCR[%d] set to 0x%x", __func__, elcr_reg,
 		    (uint8_t)vei->vei.vei_data);
-		elcr[elcr_reg] = (uint8_t)vei->vei.vei_data;	
+		elcr[elcr_reg] = (uint8_t)vei->vei.vei_data;
 	} else {
 		set_return_data(vei, elcr[elcr_reg]);
 	}

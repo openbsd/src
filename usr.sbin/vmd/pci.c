@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.24 2018/04/27 12:15:10 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.25 2018/06/19 17:12:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -394,19 +394,20 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		else {
 			switch (sz) {
 			case 4:
-				set_return_data(vei, pci.pci_devices[d].pd_cfg_space[o / 4]);
+				set_return_data(vei,
+				    pci.pci_devices[d].pd_cfg_space[o / 4]);
 				break;
 			case 2:
 				if (ofs == 0)
-					set_return_data(vei,
-					    pci.pci_devices[d].pd_cfg_space[o / 4]);
+					set_return_data(vei, pci.pci_devices[d].
+					    pd_cfg_space[o / 4]);
 				else
-					set_return_data(vei,
-					    pci.pci_devices[d].pd_cfg_space[o / 4] >> 16);
+					set_return_data(vei, pci.pci_devices[d].
+					    pd_cfg_space[o / 4] >> 16);
 				break;
 			case 1:
-				set_return_data(vei,
-				    pci.pci_devices[d].pd_cfg_space[o / 4] >> (ofs * 8));
+				set_return_data(vei, pci.pci_devices[d].
+				    pd_cfg_space[o / 4] >> (ofs * 8));
 				break;
 			}
 		}

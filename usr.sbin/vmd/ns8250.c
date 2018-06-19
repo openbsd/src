@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.14 2018/01/08 18:21:22 anton Exp $ */
+/* $OpenBSD: ns8250.c,v 1.15 2018/06/19 17:12:34 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -262,7 +262,8 @@ vcpu_process_com_data(union vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			com1_dev.regs.lsr &= ~LSR_RXRDY;
 		} else {
 			set_return_data(vei, com1_dev.regs.data);
-			log_warnx("%s: guest reading com1 when not ready", __func__);
+			log_warnx("%s: guest reading com1 when not ready",
+			    __func__);
 		}
 
 		/* Reading the data register always clears RXRDY from IIR */

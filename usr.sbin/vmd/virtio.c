@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.60 2018/04/30 08:27:53 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.61 2018/06/19 17:12:34 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -384,7 +384,8 @@ vioblk_finish_read(struct ioinfo *info)
 }
 
 static struct ioinfo *
-vioblk_start_write(struct vioblk_dev *dev, off_t sector, paddr_t addr, size_t len)
+vioblk_start_write(struct vioblk_dev *dev, off_t sector,
+    paddr_t addr, size_t len)
 {
 	struct ioinfo *info;
 
@@ -510,10 +511,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				struct ioinfo *info;
 				const uint8_t *secdata;
 
-				info = vioblk_start_read(dev, cmd.sector + secbias,
+				info = vioblk_start_read(dev,
+				    cmd.sector + secbias,
 				    (ssize_t)secdata_desc->len);
 
-				/* read the data (use current data descriptor) */
+				/* read the data, use current data descriptor */
 				secdata = vioblk_finish_read(info);
 				if (secdata == NULL) {
 					vioblk_free_info(info);
@@ -527,14 +529,16 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					log_warnx("can't write sector "
 					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
-					dump_descriptor_chain(desc, cmd_desc_idx);
+					dump_descriptor_chain(desc,
+					    cmd_desc_idx);
 					vioblk_free_info(info);
 					goto out;
 				}
 
 				vioblk_free_info(info);
 
-				secbias += (secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE);
+				secbias += (secdata_desc->len /
+				    VIRTIO_BLK_SECTOR_SIZE);
 				secdata_desc_idx = secdata_desc->next &
 				    VIOBLK_QUEUE_MASK;
 				secdata_desc = &desc[secdata_desc_idx];
@@ -553,8 +557,10 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
+			    cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
+			    cmd_desc->len;
 			used->idx++;
 
 			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
@@ -585,7 +591,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			do {
 				struct ioinfo *info;
 
-				info = vioblk_start_write(dev, cmd.sector + secbias,
+				info = vioblk_start_write(dev,
+				    cmd.sector + secbias,
 				    secdata_desc->addr, secdata_desc->len);
 
 				if (info == NULL) {
@@ -645,7 +652,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			ds = VIRTIO_BLK_S_OK;
 			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-				log_warnx("fl vioblk: can't write device status "
+				log_warnx("fl vioblk: "
+				    "can't write device status "
 				    "data @ 0x%llx", ds_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
 				goto out;
@@ -867,7 +875,8 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 				*data |= (uint32_t)(dev->max_xfer >> 16) & 0xFF;
 			} else if (sz == 2) {
 				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->max_xfer >> 16) & 0xFFFF;
+				*data |= (uint32_t)(dev->max_xfer >> 16)
+				    & 0xFFFF;
 			}
 			/* XXX handle invalid sz */
 			break;

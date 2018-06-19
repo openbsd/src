@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.25 2018/05/23 02:19:34 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.26 2018/06/19 17:12:34 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -394,6 +394,6 @@ i8253_start()
 {
 	int i;
 	for (i = 0; i < 3; i++)
-		if(i8253_channel[i].in_use)
+		if (i8253_channel[i].in_use)
 			i8253_reset(i);
 }
