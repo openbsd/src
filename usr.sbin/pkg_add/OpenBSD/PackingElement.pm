@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.252 2018/06/19 10:19:04 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.253 2018/06/19 13:23:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1371,6 +1371,7 @@ sub add_object
 package OpenBSD::PackingElement::DefineTag;
 our @ISA=qw(OpenBSD::PackingElement::TagBase);
 
+sub category() {'define-tag'}
 sub keyword() { 'define-tag' }
 __PACKAGE__->register_with_factory;
 
