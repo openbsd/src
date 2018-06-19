@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.113 2017/12/12 11:18:32 mpi Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.114 2018/06/19 10:32:41 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -431,7 +431,13 @@ static const struct pci_matchid mpii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_1 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_2 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_3 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_4 }
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3108_4 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3408 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3416 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508_1 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516_1 }
 };
 
 int
@@ -492,13 +498,13 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
 
-	if (mpii_init(sc) != 0) {
-		printf("%s: unable to initialize ioc\n", DEVNAME(sc));
+	if (mpii_iocfacts(sc) != 0) {
+		printf("%s: unable to get iocfacts\n", DEVNAME(sc));
 		goto unmap;
 	}
 
-	if (mpii_iocfacts(sc) != 0) {
-		printf("%s: unable to get iocfacts\n", DEVNAME(sc));
+	if (mpii_init(sc) != 0) {
+		printf("%s: unable to initialize ioc\n", DEVNAME(sc));
 		goto unmap;
 	}
 
@@ -556,7 +562,8 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX bail on unsupported porttype? */
 	if ((sc->sc_porttype == MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL) ||
-	    (sc->sc_porttype == MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL)) {
+	    (sc->sc_porttype == MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL) ||
+	    (sc->sc_porttype == MPII_PORTFACTS_PORTTYPE_TRI_MODE)) {
 		if (mpii_eventnotify(sc) != 0) {
 			printf("%s: unable to enable events\n", DEVNAME(sc));
 			goto free_queues;
@@ -876,7 +883,8 @@ mpii_scsi_probe(struct scsi_link *link)
 	int flags;
 
 	if ((sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL) &&
-	    (sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL))
+	    (sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL) &&
+	    (sc->sc_porttype != MPII_PORTFACTS_PORTTYPE_TRI_MODE))
 		return (ENXIO);
 
 	dev = sc->sc_devs[link->target];
@@ -1261,12 +1269,16 @@ mpii_iocfacts(struct mpii_softc *sc)
 	if (ISSET(lemtoh32(&ifp.ioc_capabilities),
 	    MPII_IOCFACTS_CAPABILITY_INTEGRATED_RAID))
 		SET(sc->sc_flags, MPII_F_RAID);
+	if (ISSET(lemtoh32(&ifp.ioc_capabilities),
+	    MPII_IOCFACTS_CAPABILITY_EVENT_REPLAY))
+		sc->sc_ioc_event_replay = 1;
 
 	sc->sc_max_cmds = MIN(lemtoh16(&ifp.request_credit),
 	    MPII_REQUEST_CREDIT);
 
-	/* SAS3 controllers have different sgl layouts */
-	if (ifp.msg_version_maj == 2 && ifp.msg_version_min == 5)
+	/* SAS3 and 3.5 controllers have different sgl layouts */
+	if (ifp.msg_version_maj == 2 && ((ifp.msg_version_min == 5)
+	    || (ifp.msg_version_min == 6)))
 		SET(sc->sc_flags, MPII_F_SAS3);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpiireg.h,v 1.12 2017/01/16 18:09:35 mikeb Exp $	*/
+/*	$OpenBSD: mpiireg.h,v 1.13 2018/06/19 10:32:41 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -524,6 +524,7 @@ struct mpii_msg_portfacts_reply {
 #define MPII_PORTFACTS_PORTTYPE_ISCSI			(0x20)
 #define MPII_PORTFACTS_PORTTYPE_SAS_PHYSICAL		(0x30)
 #define MPII_PORTFACTS_PORTTYPE_SAS_VIRTUAL		(0x31)
+#define MPII_PORTFACTS_PORTTYPE_TRI_MODE		(0x40)
 	u_int16_t		reserved6;
 
 	u_int16_t		max_posted_cmd_buffers;
