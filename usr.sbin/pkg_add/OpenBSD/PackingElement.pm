@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.251 2018/05/26 18:12:43 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.252 2018/06/19 10:19:04 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -303,18 +303,6 @@ sub compute_digest
 	require OpenBSD::md5;
 	$class = 'OpenBSD::sha' if !defined $class;
 	return $class->new($filename);
-}
-
-sub write
-{
-	my ($self, $fh) = @_;
-
-	$self->SUPER::write($fh);
-	if (defined $self->{tags}) {
-		for my $tag (sort keys %{$self->{tags}}) {
-			print $fh "\@tag ", $tag, "\n";
-		}
-	}
 }
 
 # exec/unexec and friends
@@ -762,50 +750,6 @@ sub add
 
 	$plist->{state}->{lastchecksummable}->add_digest(OpenBSD::sha->fromstring($args));
 	return;
-}
-
-package OpenBSD::PackingElement::tag;
-our @ISA=qw(OpenBSD::PackingElement::Annotation);
-
-__PACKAGE__->register_with_factory('tag');
-
-sub add
-{
-	my ($class, $plist, $args) = @_;
-
-	if ($args eq 'no checksum') {
-		$plist->{state}{lastfile}{nochecksum} = 1;
-	} else {
-		my $object = $plist->{state}{lastfileobject};
-		$object->{tags}{$args} = 1;
-		push(@{$plist->{tags}{$args}}, $object);
-	}
-	return undef;
-}
-
-package OpenBSD::PackingElement::DefineTag;
-our @ISA=qw(OpenBSD::PackingElement::Meta);
-
-sub category() { 'define-tag' }
-sub keyword() { 'define-tag' }
-__PACKAGE__->register_with_factory;
-
-sub new
-{
-	my ($class, $args) = @_;
-	my ($tag, $condition, @command) = split(/\s+/, $args);
-	bless {
-		name => $tag,
-		when => $condition,
-		command => join(' ', @command)
-	}, $class;
-}
-
-sub stringize
-{
-	my $self = shift;
-	return join(' ', map { $self->{$_}}
-		(qw(name when command)));
 }
 
 package OpenBSD::PackingElement::symlink;
@@ -1382,6 +1326,59 @@ sub run
 	    if $state->verbose >= 2;
 	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded})
 	    unless $state->{not};
+}
+
+# so tags are going to get triggered by packages we depend on.
+# turns out it's simpler to have them as "actions" because that's basically
+# what's going to happen, so destate is good for them, gives us access
+# to things like %D
+package OpenBSD::PackingElement::TagBase;
+our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($tag, @params) = split(/\s+/, $args);
+	bless {
+		name => $tag,
+		params => \@params,
+	    }, $class;
+}
+
+sub stringize
+{
+	my $self = shift;
+	return join(' ', $self->name, @{$self->{params}});
+}
+
+package OpenBSD::PackingElement::Tag;
+our @ISA=qw(OpenBSD::PackingElement::TagBase);
+sub keyword() { 'tag' }
+
+__PACKAGE__->register_with_factory;
+
+# tags are a kind of dependency, we have a special list for them, BUT
+# they're still part of the normal packing-list
+sub add_object
+{
+	my ($self, $plist) = @_;
+	push(@{$plist->{tags}}, $self);
+	$self->SUPER::add_object($plist);
+}
+
+# and the define tag thingy is very similar... the main difference being
+# how it's actually registered
+package OpenBSD::PackingElement::DefineTag;
+our @ISA=qw(OpenBSD::PackingElement::TagBase);
+
+sub keyword() { 'define-tag' }
+__PACKAGE__->register_with_factory;
+
+sub add_object
+{
+	my ($self, $plist) = @_;
+	push(@{$plist->{tags_definitions}{$self->name}}, $self);
+	$self->SUPER::add_object($plist);
 }
 
 package OpenBSD::PackingElement::Exec;
