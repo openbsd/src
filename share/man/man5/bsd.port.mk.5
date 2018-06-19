@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.483 2018/06/18 13:27:16 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.484 2018/06/19 19:06:47 kn Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: June 19 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -743,27 +743,9 @@ See
 .Cm lock .
 .It Cm update-patches
 Create or update patches for a port, using
-.Xr update-patches 1 ,
-which invokes
-.Xr diff 1
-between
-.Pa file
-and
-.Pa file.orig ,
-based on
-.Pa file.orig
-existence.
-In order to generate a patch, the original file needs to be named
-.Pa file.orig
-and
-.Pa file
-edited.
-After the target is invoked, the patches are placed under the
-patches/ directory.
-It moves existing patches from
-.Pa patch-file
-to
-.Pa patch-file.orig .
+.Xr update-patches 1 .
+See
+.Ev EDIT_PATCHES .
 .It Cm update
 Update an existing installation to a newer package:
 scan the installation for a package with the same
@@ -1572,6 +1554,12 @@ to see
 .Ev REORDER_DEPENDENCIES
 actions.
 Silent by default.
+.It Ev EDIT_PATCHES
+User settings.
+If set to
+.Sq \&No ,
+.Cm update-patches
+will not open changed files in an editor.
 .It Ev EPOCH
 Epoch number of the current package.
 Defaults to empty (no need for numbering changes), then
