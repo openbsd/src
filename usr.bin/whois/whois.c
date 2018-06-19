@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.57 2018/06/17 15:34:54 florian Exp $   */
+/*      $OpenBSD: whois.c,v 1.58 2018/06/19 11:28:11 jca Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -196,13 +196,13 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 		break;	/*okay*/
 	}
+	freeaddrinfo(res);
 	if (s == -1) {
 		if (reason) {
 			errno = error;
 			warn("%s: %s", server, reason);
 		} else
 			warn("unknown error in connection attempt");
-		freeaddrinfo(res);
 		return (1);
 	}
 
@@ -269,7 +269,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 		error = whois(query, nhost, port, 0);
 		free(nhost);
 	}
-	freeaddrinfo(res);
+
 	return (error);
 }
 
@@ -287,7 +287,7 @@ choose_server(const char *name, const char *country, char **tofree)
 	char *server;
 	const char *qhead;
 	char *ep;
-	struct addrinfo hints, *res;
+	struct addrinfo hints, *res = NULL;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = 0;
@@ -339,6 +339,8 @@ choose_server(const char *name, const char *country, char **tofree)
 		if (asprintf(&server, "%s%s", qhead, QNICHOST_TAIL) == -1)
 			err(1, NULL);
 	}
+	if (res != NULL)
+		freeaddrinfo(res);
 
 	*tofree = server;
 	return (server);
