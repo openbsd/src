@@ -131,6 +131,7 @@
 ./usr/share/man/man1/last.1
 ./usr/share/man/man1/lastcomm.1
 ./usr/share/man/man1/ld.so.1
+./usr/share/man/man1/ldap.1
 ./usr/share/man/man1/ldd.1
 ./usr/share/man/man1/leave.1
 ./usr/share/man/man1/less.1
