@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.39 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.40 2018/06/19 14:27:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -252,7 +252,7 @@ sub really_remove
 	for my $pkgname ($set->older_names) {
 		$set->setup_header($state, $set->{older}{$pkgname});
 		$state->log->set_context('-'.$pkgname);
-		OpenBSD::Delete::delete_package($pkgname, $state);
+		OpenBSD::Delete::delete_package($pkgname, $state, $set);
 	}
 	$state->progress->next($state->ntogo);
 	$state->syslog("Removed #1", $set->print);

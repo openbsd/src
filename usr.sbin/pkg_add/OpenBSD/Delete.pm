@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.151 2018/06/15 09:37:29 espie Exp $
+# $OpenBSD: Delete.pm,v 1.152 2018/06/19 14:27:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -81,7 +81,7 @@ sub remove_packing_info
 
 sub delete_package
 {
-	my ($pkgname, $state) = @_;
+	my ($pkgname, $state, $set) = @_;
 	$state->progress->message($state->f("reading list for #1", $pkgname));
 	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
 	    $state->fatal("bad package #1", $pkgname);
@@ -112,7 +112,7 @@ sub delete_package
 	    if $state->{problems};
 	$state->vstat->synchronize;
 
-	delete_plist($plist, $state);
+	delete_plist($plist, $state, $set);
 }
 
 sub unregister_dependencies
@@ -137,7 +137,7 @@ sub unregister_dependencies
 
 sub delete_plist
 {
-	my ($plist, $state) = @_;
+	my ($plist, $state, $set) = @_;
 
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
