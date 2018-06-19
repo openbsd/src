@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.20 2018/06/07 22:28:11 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.21 2018/06/19 13:01:34 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -90,6 +90,7 @@ struct fuse_core_opts {
 
 struct fuse_mount_opts {
 	char			*fsname;
+	int			allow_other;
 	int			def_perms;
 	int			max_read;
 	int			noatime;

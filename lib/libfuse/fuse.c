@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.46 2018/06/19 11:27:54 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.47 2018/06/19 13:01:34 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -64,8 +64,6 @@ static struct fuse_opt fuse_core_opts[] = {
 #define FUSE_LIB_OPT(o, m) {o, offsetof(struct fuse_config, m), 1}
 static struct fuse_opt fuse_lib_opts[] = {
 	FUSE_OPT_KEY("ac_attr_timeout=",	KEY_STUB),
-	FUSE_OPT_KEY("allow_other",		KEY_STUB),
-	FUSE_OPT_KEY("allow_root",		KEY_STUB),
 	FUSE_OPT_KEY("attr_timeout=",		KEY_STUB),
 	FUSE_OPT_KEY("auto_cache",		KEY_STUB),
 	FUSE_OPT_KEY("noauto_cache",		KEY_STUB),
@@ -97,6 +95,8 @@ static struct fuse_opt fuse_lib_opts[] = {
 /* options supported by fuse_mount */
 #define FUSE_MOUNT_OPT(o, m) {o, offsetof(struct fuse_mount_opts, m), 1}
 static struct fuse_opt fuse_mount_opts[] = {
+	FUSE_MOUNT_OPT("allow_other",		allow_other),
+	FUSE_OPT_KEY("allow_root",		KEY_STUB),
 	FUSE_OPT_KEY("async_read",		KEY_STUB),
 	FUSE_OPT_KEY("blkdev",			KEY_STUB),
 	FUSE_OPT_KEY("blksize=",		KEY_STUB),
@@ -253,6 +253,7 @@ fuse_loop(struct fuse *fuse)
 				ioexch.fbxch_data = fbuf.fb_dat;
 
 				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch)) {
+printf("libfuse: FIOCSETFBDAT error\n");
 					free(fbuf.fb_dat);
 					return (-1);
 				}
@@ -261,6 +262,7 @@ fuse_loop(struct fuse *fuse)
 			ictx = NULL;
 
 			if (n != FUSEBUFSIZE) {
+printf("libfuse: write error: %s\n", strerror(errno));
 				errno = EINVAL;
 				return (-1);
 			}
@@ -315,6 +317,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 	memset(&fargs, 0, sizeof(fargs));
 	fargs.fd = fc->fd;
 	fargs.max_read = opts.max_read;
+	fargs.allow_other = opts.allow_other;
 
 	if (mount(MOUNT_FUSEFS, fc->dir, mnt_flags, &fargs)) {
 		switch (errno) {

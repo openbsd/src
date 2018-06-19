@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.37 2018/05/20 03:06:50 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.38 2018/06/19 13:01:34 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -107,6 +107,11 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	else
 		fmp->max_read = FUSEBUFMAXSIZE;
 
+	/* Only root may specify allow_other. */
+	if (args->allow_other && (error = suser_ucred(p->p_ucred)))
+		return (error);
+	fmp->allow_other = args->allow_other;
+
 	mp->mnt_data = fmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
@@ -201,6 +206,10 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	int error;
 
 	fmp = VFSTOFUSEFS(mp);
+
+	/* Deny other users unless allow_other mount option was specified. */
+	if (!fmp->allow_other && p->p_ucred->cr_uid != mp->mnt_stat.f_owner)
+		return (EPERM);
 
 	copy_statfs_info(sbp, mp);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.9 2018/05/20 02:51:26 helg Exp $ */
+/* $OpenBSD: fusefs.h,v 1.10 2018/06/19 13:01:34 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -52,6 +52,7 @@ struct fusefs_mnt {
 	uint32_t undef_op;
 	int max_read;
 	int sess_init;
+	int allow_other;
 	dev_t dev;
 };
 

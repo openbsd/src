@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.46 2018/06/18 12:04:20 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.47 2018/06/19 13:01:34 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -330,6 +330,13 @@ fusefs_access(void *v)
 	ip = VTOI(ap->a_vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
+	/* 
+	 * Only user that mounted the file system can access it unless
+	 * allow_other mount option was specified.
+	 */
+	if (!fmp->allow_other && cred->cr_uid != fmp->mp->mnt_stat.f_owner)
+		return (EACCES);
+
 	if (!fmp->sess_init)
 		return (ENXIO);
 
@@ -365,6 +372,7 @@ fusefs_getattr(void *v)
 	struct fusefs_mnt *fmp;
 	struct vattr *vap = ap->a_vap;
 	struct proc *p = ap->a_p;
+	struct ucred *cred = p->p_ucred;
 	struct fusefs_node *ip;
 	struct fusebuf *fbuf;
 	struct stat *st;
@@ -372,6 +380,33 @@ fusefs_getattr(void *v)
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+
+	/* 
+	 * Only user that mounted the file system can access it unless
+	 * allow_other mount option was specified. Return dummy values
+	 * for the root inode in this situation.
+	 */
+	if (!fmp->allow_other && cred->cr_uid != fmp->mp->mnt_stat.f_owner) {
+		VATTR_NULL(vap);
+		vap->va_type = VNON;
+		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			vap->va_mode = S_IRUSR | S_IXUSR;
+		else
+			vap->va_mode = S_IRWXU;
+		vap->va_nlink = 1;
+		vap->va_uid = fmp->mp->mnt_stat.f_owner;
+		vap->va_gid = fmp->mp->mnt_stat.f_owner;
+		vap->va_fsid = fmp->mp->mnt_stat.f_fsid.val[0];
+		vap->va_fileid = ip->ufs_ino.i_number;
+		vap->va_size = S_BLKSIZE;
+		vap->va_blocksize = S_BLKSIZE;
+		vap->va_atime.tv_sec = fmp->mp->mnt_stat.f_ctime;
+		vap->va_mtime.tv_sec = fmp->mp->mnt_stat.f_ctime;
+		vap->va_ctime.tv_sec = fmp->mp->mnt_stat.f_ctime;
+		vap->va_rdev = fmp->dev;
+		vap->va_bytes = S_BLKSIZE;
+		return (0);
+	}
 
 	if (!fmp->sess_init)
 		return (ENXIO);
@@ -851,15 +886,16 @@ fusefs_reclaim(void *v)
 {
 	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct proc *p = ap->a_p;
 	struct fusefs_node *ip = VTOI(vp);
 	struct fusefs_filehandle *fufh = NULL;
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf;
-	int type;
+	int type, error = 0;
 
 	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
 
-	/*close opened files*/
+	/* Close opened files. */
 	for (type = 0; type < FUFH_MAXTYPE; type++) {
 		fufh = &(ip->fufh[type]);
 		if (fufh->fh_type != FUFH_INVALID) {
@@ -870,13 +906,13 @@ fusefs_reclaim(void *v)
 	}
 
 	/*
-	 * if the fuse connection is opened
-	 * ask libfuse to free the vnodes
+	 * If the fuse connection is opened ask libfuse to free the vnodes.
 	 */
 	if (fmp->sess_init && ip->ufs_ino.i_number != FUSE_ROOTINO) {
-		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, ap->a_p);
-		if (fb_queue(fmp->dev, fbuf))
-			printf("fusefs: libfuse vnode reclaim failed\n");
+		fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_RECLAIM, p);
+		error = fb_queue(fmp->dev, fbuf);
+		if (error)
+			printf("fusefs: vnode reclaim failed: %d\n", error);
 		fb_delete(fbuf);
 	}
 
@@ -887,6 +923,8 @@ fusefs_reclaim(void *v)
 
 	free(ip, M_FUSEFS, sizeof(*ip));
 	vp->v_data = NULL;
+
+	/* Must return success otherwise kernel panic in vclean(9). */
 	return (0);
 }
 
