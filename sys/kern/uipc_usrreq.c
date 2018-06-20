@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.129 2018/06/11 08:57:35 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.130 2018/06/20 10:52:49 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -906,6 +906,7 @@ unp_gc(void *arg __unused)
 			fp = defer->ud_fp[i].fp;
 			if (fp == NULL)
 				continue;
+			 /* closef() expects a refcount of 2 */
 			FREF(fp);
 			if ((unp = fptounp(fp)) != NULL)
 				unp->unp_msgcount--;
@@ -922,6 +923,8 @@ unp_gc(void *arg __unused)
 	do {
 		nunref = 0;
 		LIST_FOREACH(unp, &unp_head, unp_link) {
+			mtx_enter(&fhdlk);
+			fp = unp->unp_file;
 			if (unp->unp_flags & UNP_GCDEFER) {
 				/*
 				 * This socket is referenced by another
@@ -932,8 +935,9 @@ unp_gc(void *arg __unused)
 				unp_defer--;
 			} else if (unp->unp_flags & UNP_GCMARK) {
 				/* marked as live in previous pass */
+				mtx_leave(&fhdlk);
 				continue;
-			} else if ((fp = unp->unp_file) == NULL) {
+			} else if (fp == NULL) {
 				/* not being passed, so can't be in loop */
 			} else if (fp->f_count == 0) {
 				/*
@@ -950,9 +954,11 @@ unp_gc(void *arg __unused)
 				if (fp->f_count == unp->unp_msgcount) {
 					nunref++;
 					unp->unp_flags |= UNP_GCDEAD;
+					mtx_leave(&fhdlk);
 					continue;
 				}
 			}
+			mtx_leave(&fhdlk);
 
 			/*
 			 * This is the first time we've seen this socket on

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.176 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.177 2018/06/20 10:52:49 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -691,13 +691,16 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	error = sosend(fp->f_data, to, &auio, NULL, control, flags);
+	error = sosend(so, to, &auio, NULL, control, flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
+			KERNEL_LOCK();
 			ptsignal(p, SIGPIPE, STHREAD);
+			KERNEL_UNLOCK();
+		}
 	}
 	if (error == 0) {
 		*retsize = len - auio.uio_resid;
@@ -1176,7 +1179,8 @@ getsock(struct proc *p, int fdes, struct file **fpp)
 {
 	struct file *fp;
 
-	if ((fp = fd_getfile(p->p_fd, fdes)) == NULL)
+	fp = fd_getfile(p->p_fd, fdes);
+	if (fp == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_SOCKET) {
 		FRELE(fp, p);

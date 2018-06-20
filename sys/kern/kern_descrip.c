@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.166 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.167 2018/06/20 10:52:49 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -66,7 +66,11 @@
 
 /*
  * Descriptor management.
+ *
+ * We need to block interrupts as long as `fhdlk' is being taken
+ * with and without the KERNEL_LOCK().
  */
+struct mutex fhdlk = MUTEX_INITIALIZER(IPL_MPFLOOR);
 struct filelist filehead;	/* head of list of open files */
 int numfiles;			/* actual number of open files */
 
@@ -195,16 +199,18 @@ fd_iterfile(struct file *fp, struct proc *p)
 {
 	struct file *nfp;
 
+	mtx_enter(&fhdlk);
 	if (fp == NULL)
 		nfp = LIST_FIRST(&filehead);
 	else
 		nfp = LIST_NEXT(fp, f_list);
 
-	/* don't FREF when f_count == 0 to avoid race in fdrop() */
+	/* don't refcount when f_count == 0 to avoid race in fdrop() */
 	while (nfp != NULL && nfp->f_count == 0)
 		nfp = LIST_NEXT(nfp, f_list);
 	if (nfp != NULL)
-		FREF(nfp);
+		nfp->f_count++;
+	mtx_leave(&fhdlk);
 
 	if (fp != NULL)
 		FRELE(fp, p);
@@ -217,10 +223,17 @@ fd_getfile(struct filedesc *fdp, int fd)
 {
 	struct file *fp;
 
-	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+	vfs_stall_barrier();
+
+	if ((u_int)fd >= fdp->fd_nfiles)
 		return (NULL);
 
-	FREF(fp);
+	mtx_enter(&fhdlk);
+	fp = fdp->fd_ofiles[fd];
+	if (fp != NULL)
+		fp->f_count++;
+	mtx_leave(&fhdlk);
+
 	return (fp);
 }
 
@@ -671,6 +684,8 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 	struct file *fq;
 
 	fdpassertlocked(fdp);
+
+	mtx_enter(&fhdlk);
 	if ((fq = fdp->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
@@ -680,6 +695,7 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 	fdp->fd_ofiles[fd] = fp;
 	fdp->fd_ofileflags[fd] |= (flags & UF_EXCLOSE);
 	fp->f_iflags |= FIF_INSERTED;
+	mtx_leave(&fhdlk);
 }
 
 void
@@ -978,7 +994,11 @@ restart:
 	crhold(fp->f_cred);
 	*resultfp = fp;
 	*resultfd = i;
-	FREF(fp);
+
+	mtx_enter(&fhdlk);
+	fp->f_count++;
+	mtx_leave(&fhdlk);
+
 	return (0);
 }
 
@@ -1069,6 +1089,7 @@ fdcopy(struct process *pr)
 	newfdp->fd_flags = fdp->fd_flags;
 	newfdp->fd_cmask = fdp->fd_cmask;
 
+	mtx_enter(&fhdlk);
 	for (i = 0; i <= fdp->fd_lastfile; i++) {
 		struct file *fp = fdp->fd_ofiles[i];
 
@@ -1085,12 +1106,13 @@ fdcopy(struct process *pr)
 			    fp->f_type == DTYPE_KQUEUE)
 				continue;
 
-			FREF(fp);
+			fp->f_count++;
 			newfdp->fd_ofiles[i] = fp;
 			newfdp->fd_ofileflags[i] = fdp->fd_ofileflags[i];
 			fd_used(newfdp, i);
 		}
 	}
+	mtx_leave(&fhdlk);
 	fdpunlock(fdp);
 
 	return (newfdp);
@@ -1112,8 +1134,9 @@ fdfree(struct proc *p)
 	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++) {
 		fp = *fpp;
 		if (fp != NULL) {
-			FREF(fp);
 			*fpp = NULL;
+			 /* closef() expects a refcount of 2 */
+			FREF(fp);
 			(void) closef(fp, p);
 		}
 	}
@@ -1149,11 +1172,11 @@ closef(struct file *fp, struct proc *p)
 	if (fp == NULL)
 		return (0);
 
-#ifdef DIAGNOSTIC
-	if (fp->f_count < 2)
-		panic("closef: count (%ld) < 2", fp->f_count);
-#endif
+	KASSERTMSG(fp->f_count >= 2, "count (%ld) < 2", fp->f_count);
+
+	mtx_enter(&fhdlk);
 	fp->f_count--;
+	mtx_leave(&fhdlk);
 
 	/*
 	 * POSIX record locking dictates that any close releases ALL
@@ -1185,18 +1208,19 @@ fdrop(struct file *fp, struct proc *p)
 {
 	int error;
 
-#ifdef DIAGNOSTIC
-	if (fp->f_count != 0)
-		panic("fdrop: count (%ld) != 0", fp->f_count);
-#endif
+	MUTEX_ASSERT_LOCKED(&fhdlk);
+
+	KASSERTMSG(fp->f_count == 0, "count (%ld) != 0", fp->f_count);
+
+	if (fp->f_iflags & FIF_INSERTED)
+		LIST_REMOVE(fp, f_list);
+	mtx_leave(&fhdlk);
 
 	if (fp->f_ops)
 		error = (*fp->f_ops->fo_close)(fp, p);
 	else
 		error = 0;
 
-	if (fp->f_iflags & FIF_INSERTED)
-		LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
 	numfiles--;
 	pool_put(&file_pool, fp);
