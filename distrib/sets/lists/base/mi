@@ -1052,7 +1052,9 @@
 ./usr/libdata/perl5/OpenBSD/ArcCheck.pm
 ./usr/libdata/perl5/OpenBSD/CollisionReport.pm
 ./usr/libdata/perl5/OpenBSD/Delete.pm
+./usr/libdata/perl5/OpenBSD/Dependencies
 ./usr/libdata/perl5/OpenBSD/Dependencies.pm
+./usr/libdata/perl5/OpenBSD/Dependencies/SolverBase.pm
 ./usr/libdata/perl5/OpenBSD/Error.pm
 ./usr/libdata/perl5/OpenBSD/ForwardDependencies.pm
 ./usr/libdata/perl5/OpenBSD/FwUpdate.pm
