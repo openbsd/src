@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.574 2018/06/03 20:51:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.575 2018/06/20 12:10:46 sthen Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -959,7 +959,7 @@ dhcpnak(struct interface_info *ifi, const char *src)
 void
 bind_lease(struct interface_info *ifi)
 {
-	struct client_lease	*lease, *pl;
+	struct client_lease	*lease, *pl, *ll;
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
 	char			*msg = NULL;
@@ -1028,20 +1028,20 @@ newlease:
 	 * dynamic leases.
 	 */
 	seen = 0;
-	TAILQ_FOREACH_SAFE(lease, &ifi->lease_db, next, pl) {
+	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
 		if (ifi->active == NULL)
 			continue;
-		if (ifi->ssid_len != lease->ssid_len)
+		if (ifi->ssid_len != ll->ssid_len)
 			continue;
-		if (memcmp(ifi->ssid, lease->ssid, lease->ssid_len)
+		if (memcmp(ifi->ssid, ll->ssid, ll->ssid_len)
 		    != 0)
 			continue;
-		if (ifi->active == lease)
+		if (ifi->active == ll)
 			seen = 1;
-		else if (lease_expiry(lease) < cur_time ||
-		    lease->address.s_addr == ifi->active->address.s_addr) {
-			TAILQ_REMOVE(&ifi->lease_db, lease, next);
-			free_client_lease(lease);
+		else if (lease_expiry(ll) < cur_time ||
+		    ll->address.s_addr == ifi->active->address.s_addr) {
+			TAILQ_REMOVE(&ifi->lease_db, ll, next);
+			free_client_lease(ll);
 		}
 	}
 	if (seen == 0)
