@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.78 2018/06/20 10:13:31 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.79 2018/06/20 10:23:18 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -91,6 +91,11 @@ sub older_names
 }
 
 sub all_handles
+{
+	&older;
+}
+
+sub changed_handles
 {
 	&older;
 }
@@ -332,6 +337,12 @@ sub all_handles
 {
 	my $self = shift;
 	return ($self->older, $self->newer, $self->kept);
+}
+
+sub changed_handles
+{
+	my $self = shift;
+	return ($self->older, $self->newer);
 }
 
 sub hint_names
