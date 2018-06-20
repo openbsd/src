@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.163 2018/06/19 14:12:11 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.164 2018/06/20 14:34:49 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -186,6 +186,18 @@ sub find_elsewhere
 
 package OpenBSD::lookup::tag;
 our @ISA=qw(OpenBSD::lookup);
+sub new
+{
+	my ($class, $solver, $state) = @_;
+
+	# prepare for closure
+	if (!defined $solver->{old_dependencies}) {
+		$solver->solve_old_depends($state);
+	}
+	my @todo = ($solver->dependencies, keys %{$solver->{old_dependencies}});
+	bless { todo => \@todo, done => {}, known => {} }, $class;
+}
+
 sub find_in_extra_sources
 {
 }
@@ -433,6 +445,21 @@ sub solve_depends
 	}
 
 	return sort values %{$self->{deplist}};
+}
+
+sub solve_old_depends
+{
+	my ($self, $state) = @_;
+
+	$self->{old_dependencies} = {};
+	for my $package ($self->{set}->older) {
+		for my $dep (@{$package->dependency_info->{depend}}) {
+			my $v = $self->solve_dependency($state, $dep, $package);
+			# XXX
+			next if !defined $v;
+			$self->{old_dependencies}{$v} = $dep;
+		}
+	}
 }
 
 sub solve_wantlibs
@@ -790,26 +817,34 @@ sub errsay_library
 	$state->errsay("Can't install #1 because of libraries", $h->pkgname);
 }
 
+sub solve_handle_tags
+{
+	my ($solver, $h, $state) = @_;
+	my $plist = $h->plist;
+	return 1 if !defined $plist->{tags};
+	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
+	for my $tag (@{$plist->{tags}}) {
+		next if $solver->{tag_finder}->lookup($solver,
+		    $solver->{to_register}->{$h}, $state, $tag);
+		$state->errsay("Can't do #1: tag definition not found #2",
+		    $plist->pkgname, $tag->name);
+		return 0;
+	}
+	return 1;
+}
+
 sub solve_tags
 {
 	my ($solver, $state) = @_;
-	my $okay = 1;
 
-	my $tag_finder = OpenBSD::lookup::tag->new($solver);
-	for my $h ($solver->{set}->all_handles) {
-		for my $tag (@{$h->{plist}{tags}}) {
-			next if $tag_finder->lookup($solver,
-			    $solver->{to_register}->{$h}, $state, $tag);
-			$state->errsay("Can't install #1: tag definition not found #2",
-			    $h->pkgname, $tag->name);
-			if ($okay) {
-				$solver->dump($state);
-				$tag_finder->dump($state);
-				$okay = 0;
-			}
-	    	}
+	for my $h ($solver->{set}->changed_handles) {
+		if (!$solver->solve_handle_tags($h, $state)) {
+			$solver->dump($state);
+			$solver->{tag_finder}->dump($state);
+			return 0;
+		}
 	}
-	return $okay;
+	return 1;
 }
 
 package OpenBSD::PackingElement;
