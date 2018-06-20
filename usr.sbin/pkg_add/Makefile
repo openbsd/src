@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.87 2017/02/27 21:53:11 rpe Exp $
+# $OpenBSD: Makefile,v 1.88 2018/06/20 08:53:49 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ PACKAGES= \
     OpenBSD/ArcCheck.pm \
     OpenBSD/CollisionReport.pm \
     OpenBSD/Delete.pm \
+    OpenBSD/Dependencies/SolverBase.pm \
     OpenBSD/Dependencies.pm \
     OpenBSD/Error.pm \
     OpenBSD/ForwardDependencies.pm \
@@ -70,8 +71,8 @@ PACKAGES= \
     OpenBSD/FwUpdate.pm \
     OpenBSD/md5.pm
 
-PACKAGEDIRS=OpenBSD  OpenBSD/PackageRepository OpenBSD/ProgressMeter \
-    OpenBSD/LibSpec
+PACKAGEDIRS=OpenBSD  OpenBSD/Dependencies OpenBSD/PackageRepository \
+    OpenBSD/ProgressMeter OpenBSD/LibSpec
 
 SCRIPTS= pkg_add \
     pkg_mklocatedb
