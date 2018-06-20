@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.99 2018/06/19 14:27:08 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.100 2018/06/20 10:13:31 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -244,18 +244,7 @@ sub merge
 
 package OpenBSD::UpdateSet;
 use OpenBSD::PackageInfo;
-use OpenBSD::Error;
 use OpenBSD::Handle;
-
-OpenBSD::Auto::cache(solver,
-    sub {
-	return OpenBSD::Dependencies::Solver->new(shift);
-    });
-
-OpenBSD::Auto::cache(conflict_cache,
-    sub {
-	return OpenBSD::ConflictCache->new;
-    });
 
 sub setup_header
 {
@@ -606,7 +595,6 @@ sub recheck_conflicts
 package OpenBSD::PkgAdd;
 our @ISA = qw(OpenBSD::AddDelete);
 
-use OpenBSD::Dependencies;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
