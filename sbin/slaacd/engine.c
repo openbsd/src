@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.26 2018/05/18 11:06:59 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.27 2018/06/20 14:55:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1262,6 +1262,7 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	SHA2_CTX ctx;
 	struct in6_addr	iid;
 	int dad_counter = 0; /* XXX not used */
+	int i;
 	u_int8_t digest[SHA512_DIGEST_LENGTH];
 
 	memset(&iid, 0, sizeof(iid));
@@ -1280,14 +1281,9 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 	memcpy(&addr_proposal->addr.sin6_addr, &prefix->prefix,
 	    sizeof(addr_proposal->addr.sin6_addr));
 
-	addr_proposal->addr.sin6_addr.s6_addr32[0] &=
-	    addr_proposal->mask.s6_addr32[0];
-	addr_proposal->addr.sin6_addr.s6_addr32[1] &=
-	    addr_proposal->mask.s6_addr32[1];
-	addr_proposal->addr.sin6_addr.s6_addr32[2] &=
-	    addr_proposal->mask.s6_addr32[2];
-	addr_proposal->addr.sin6_addr.s6_addr32[3] &=
-	    addr_proposal->mask.s6_addr32[3];
+	for (i = 0; i < 4; i++)
+		addr_proposal->addr.sin6_addr.s6_addr32[i] &=
+		    addr_proposal->mask.s6_addr32[i];
 
 	if (privacy) {
 		arc4random_buf(&iid.s6_addr, sizeof(iid.s6_addr));
@@ -1310,14 +1306,9 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 		    sizeof(iid.s6_addr));
 	}
 
-	addr_proposal->addr.sin6_addr.s6_addr32[0] |=
-	    (iid.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
-	addr_proposal->addr.sin6_addr.s6_addr32[1] |=
-	    (iid.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
-	addr_proposal->addr.sin6_addr.s6_addr32[2] |=
-	    (iid.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
-	addr_proposal->addr.sin6_addr.s6_addr32[3] |=
-	    (iid.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
+	for (i = 0; i < 4; i++)
+		addr_proposal->addr.sin6_addr.s6_addr32[i] |=
+		    (iid.s6_addr32[i] & ~addr_proposal->mask.s6_addr32[i]);
 #undef s6_addr32
 }
 
