@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.164 2018/06/20 14:34:49 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.165 2018/06/20 14:56:55 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -154,7 +154,7 @@ sub find_in_new_source
 {
 	my ($self, $solver, $state, $obj, $dep) = @_;
 
-	if (defined $solver->{set}->{newer}->{$dep}) {
+	if (defined $solver->{set}{newer}{$dep}) {
 		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}->{newer}->{$dep}->plist, $state);
 	} else {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep, $state);
@@ -817,6 +817,20 @@ sub errsay_library
 	$state->errsay("Can't install #1 because of libraries", $h->pkgname);
 }
 
+sub find_in_self
+{
+	my ($solver, $plist, $state, $tag) = @_;
+	return 0 unless defined $plist->{tags_definitions};
+	while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
+		next unless $tag->name eq $name;
+		$tag->{definition_list} = $d;
+		$state->say("Found tag #1 in self", $tag->stringize)
+		    if $state->verbose >= 3;
+		return 1;
+	}
+	return 0;
+}
+
 sub solve_handle_tags
 {
 	my ($solver, $h, $state) = @_;
@@ -825,7 +839,9 @@ sub solve_handle_tags
 	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
 	for my $tag (@{$plist->{tags}}) {
 		next if $solver->{tag_finder}->lookup($solver,
-		    $solver->{to_register}->{$h}, $state, $tag);
+		    $solver->{to_register}{$h}, $state, $tag);
+		# XXX
+		next if $solver->find_in_self($plist, $state, $tag);
 		$state->errsay("Can't do #1: tag definition not found #2",
 		    $plist->pkgname, $tag->name);
 		return 0;
