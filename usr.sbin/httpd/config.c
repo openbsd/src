@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2018/05/19 13:56:56 jsing Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2018/06/20 16:43:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -474,6 +474,13 @@ config_getserver_config(struct httpd *env, struct server *srv,
 			srv_conf->flags |= parent->flags & f;
 			memcpy(&srv_conf->default_type,
 			    &parent->default_type, sizeof(struct media_type));
+		}
+
+		f = SRVFLAG_PATH_REWRITE|SRVFLAG_NO_PATH_REWRITE;
+		if ((srv_conf->flags & f) == 0) {
+			srv_conf->flags |= parent->flags & f;
+			(void)strlcpy(srv_conf->path, parent->path,
+			    sizeof(srv_conf->path));
 		}
 
 		f = SRVFLAG_SERVER_HSTS;

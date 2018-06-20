@@ -1,7 +1,7 @@
-/*	$OpenBSD: server_http.c,v 1.121 2018/06/15 12:36:05 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.122 2018/06/20 16:43:05 reyk Exp $	*/
 
 /*
- * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1170,13 +1170,16 @@ server_response(struct httpd *httpd, struct client *clt)
 	struct kv		*kv, key, *host;
 	struct str_find		 sm;
 	int			 portval = -1, ret;
-	char			*hostval;
+	char			*hostval, *query;
 	const char		*errstr = NULL;
 
-	/* Canonicalize the request path */
+	/* Decode the URL */
 	if (desc->http_path == NULL ||
-	    url_decode(desc->http_path) == NULL ||
-	    canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
+	    url_decode(desc->http_path) == NULL)
+		goto fail;
+
+	/* Canonicalize the request path */
+	if (canonicalize_path(desc->http_path, path, sizeof(path)) == NULL)
 		goto fail;
 	free(desc->http_path);
 	if ((desc->http_path = strdup(path)) == NULL)
@@ -1279,6 +1282,42 @@ server_response(struct httpd *httpd, struct client *clt)
 
 	/* Now search for the location */
 	srv_conf = server_getlocation(clt, desc->http_path);
+
+	/* Optional rewrite */
+	if (srv_conf->flags & SRVFLAG_PATH_REWRITE) {
+		/* Expand macros */
+		if (server_expand_http(clt, srv_conf->path,
+		    path, sizeof(path)) == NULL)
+			goto fail;
+
+		/*
+		 * Reset and update the query.  The updated query must already
+		 * be URL encoded - either specified by the user or by using the
+		 * original $QUERY_STRING.
+		 */
+		free(desc->http_query);
+		desc->http_query = NULL;
+		if ((query = strchr(path, '?')) != NULL) {
+			*query++ = '\0';
+			if ((desc->http_query = strdup(query)) == NULL)
+				goto fail;
+		}
+
+		/* Canonicalize the updated request path */
+		if (canonicalize_path(path,
+		    path, sizeof(path)) == NULL)
+			goto fail;
+
+		log_debug("%s: rewrote %s -> %s?%s", __func__,
+		    desc->http_path, path, desc->http_query);
+
+		free(desc->http_path);
+		if ((desc->http_path = strdup(path)) == NULL)
+			goto fail;
+
+		/* Now search for the updated location */
+		srv_conf = server_getlocation(clt, desc->http_path);
+	}
 
 	if (srv_conf->flags & SRVFLAG_BLOCK) {
 		server_abort_http(clt, srv_conf->return_code,

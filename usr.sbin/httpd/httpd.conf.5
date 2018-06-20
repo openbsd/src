@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.100 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.101 2018/06/20 16:43:05 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: June 20 2018 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -198,6 +198,8 @@ argument can be used with return codes in the 3xx range to send a
 .Sq Location:
 header for redirection to a specified URI.
 .Pp
+It is possible to rewrite the request to redirect it to a different
+external location.
 The
 .Ar uri
 may contain predefined macros that will be expanded at runtime:
@@ -396,10 +398,10 @@ the
 using pattern matching instead of shell globbing rules,
 see
 .Xr patterns 7 .
-The pattern may contain captures that can be used in the
-.Ar uri
-of an enclosed
+The pattern may contain captures that can be used in an enclosed
 .Ic block return
+or
+.Ic request rewrite
 option.
 .It Oo Ic no Oc Ic log Op Ar option
 Set the specified logging options.
@@ -462,6 +464,19 @@ in a location.
 Configure the options for the request path.
 Valid options are:
 .Bl -tag -width Ds
+.It Oo Ic no Oc Ic rewrite Ar path
+Enable or disable rewriting of the request.
+Unlike the redirection with
+.Ic block return ,
+this will change the request path internally before
+.Nm httpd
+makes a final decision about the matching location.
+The
+.Ar path
+argument may contain predefined macros that will be expanded at runtime.
+See the
+.Ic block return
+option for the list of supported macros.
 .It Ic strip Ar number
 Strip
 .Ar number
@@ -715,6 +730,17 @@ server "example.com" {
 
 server "www.example.com" {
 	listen on 10.0.0.1 port 80
+}
+.Ed
+The request can also be rewritten with the
+.Ic request rewrite
+directive:
+.Bd -literal -offset indent
+server "example.com" {
+	listen on * port 80
+	location match "/old/(.*)" {
+		request rewrite "/new/%1"
+	}
 }
 .Ed
 .Sh SEE ALSO

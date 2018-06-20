@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.137 2018/05/19 13:56:56 jsing Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.138 2018/06/20 16:43:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -398,13 +398,15 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_SERVER_MATCH	0x00200000
 #define SRVFLAG_SERVER_HSTS	0x00400000
 #define SRVFLAG_DEFAULT_TYPE	0x00800000
+#define SRVFLAG_PATH_REWRITE	0x01000000
+#define SRVFLAG_NO_PATH_REWRITE	0x02000000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG\13SOCKET"	\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
 	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
-	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE"
+	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -470,8 +472,9 @@ struct server_config {
 	uint32_t		 parent_id;
 	char			 name[HOST_NAME_MAX+1];
 	char			 location[HTTPD_LOCATION_MAX];
-	char			 index[PATH_MAX];
 	char			 root[PATH_MAX];
+	char			 path[PATH_MAX];
+	char			 index[PATH_MAX];
 	char			 socket[PATH_MAX];
 	char			 accesslog[PATH_MAX];
 	char			 errorlog[PATH_MAX];

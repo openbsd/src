@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2018/06/13 15:08:24 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2018/06/20 16:43:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -139,7 +139,7 @@ typedef struct {
 %token	LISTEN LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY OCSP ON PORT PREFORK
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
-%token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
+%token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
 %token	CA CLIENT CRL OPTIONAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -820,7 +820,23 @@ requestflags_l	: requestflags optcommanl requestflags_l
 		| requestflags optnl
 		;
 
-requestflags	: STRIP NUMBER			{
+requestflags	: REWRITE STRING		{
+			if (strlcpy(srv->srv_conf.path, $2,
+			    sizeof(srv->srv_conf.path)) >=
+			    sizeof(srv->srv_conf.path)) {
+				yyerror("request path too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			srv->srv_conf.flags |= SRVFLAG_PATH_REWRITE;
+			srv->srv_conf.flags &= ~SRVFLAG_NO_PATH_REWRITE;
+		}
+		| NO REWRITE			{
+			srv->srv_conf.flags |= SRVFLAG_NO_PATH_REWRITE;
+			srv->srv_conf.flags &= ~SRVFLAG_PATH_REWRITE;
+		}
+		| STRIP NUMBER			{
 			if ($2 < 0 || $2 > INT_MAX) {
 				yyerror("invalid strip number");
 				YYERROR;
@@ -1277,6 +1293,7 @@ lookup(char *s)
 		{ "request",		REQUEST },
 		{ "requests",		REQUESTS },
 		{ "return",		RETURN },
+		{ "rewrite",		REWRITE },
 		{ "root",		ROOT },
 		{ "sack",		SACK },
 		{ "server",		SERVER },
