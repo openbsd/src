@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.96 2018/06/07 04:07:28 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.97 2018/06/20 19:30:34 sthen Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -792,18 +792,36 @@ cpu_topology(struct cpu_info *ci)
 		if (ci->ci_pnfeatset < 0x80000008)
 			goto no_topology;
 
-		CPUID(0x80000008, eax, ebx, ecx, edx);
-		core_bits = (ecx >> 12) & 0xf;
-		if (core_bits == 0)
-			goto no_topology;
-		/* So coreidsize 2 gives 3, 3 gives 7... */
-		core_mask = (1 << core_bits) - 1;
-		/* Core id is the least significant considering mask */
-		ci->ci_core_id = apicid & core_mask;
-		/* Pkg id is the upper remaining bits */
-		ci->ci_pkg_id = apicid & ~core_mask;
-		ci->ci_pkg_id >>= core_bits;
+		if (ci->ci_pnfeatset >= 0x8000001e) {
+			struct cpu_info *ci_other;
+			CPU_INFO_ITERATOR cii;
+
+			CPUID(0x8000001e, eax, ebx, ecx, edx);
+			ci->ci_core_id = ebx & 0xff;
+			ci->ci_pkg_id = ecx & 0xff;
+			ci->ci_smt_id = 0;
+			CPU_INFO_FOREACH(cii, ci_other) {
+				if (ci != ci_other &&
+				    ci_other->ci_core_id == ci->ci_core_id)
+					ci->ci_smt_id++;
+			}
+		} else {
+			CPUID(0x80000008, eax, ebx, ecx, edx);
+			core_bits = (ecx >> 12) & 0xf;
+			if (core_bits == 0)
+				goto no_topology;
+			/* So coreidsize 2 gives 3, 3 gives 7... */
+			core_mask = (1 << core_bits) - 1;
+			/* Core id is the least significant considering mask */
+			ci->ci_core_id = apicid & core_mask;
+			/* Pkg id is the upper remaining bits */
+			ci->ci_pkg_id = apicid & ~core_mask;
+			ci->ci_pkg_id >>= core_bits;
+		}
 	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			struct cpu_info *ci_other;
+			CPU_INFO_ITERATOR cii;
+
 		/* We only support leaf 1/4 detection */
 		if (cpuid_level < 4)
 			goto no_topology;
@@ -824,9 +842,15 @@ cpu_topology(struct cpu_info *ci)
 		pkg_bits = core_bits + smt_bits;
 		pkg_mask = -1 << core_bits;
 
-		ci->ci_smt_id = apicid & smt_mask;
+		// ci->ci_smt_id = apicid & smt_mask;
 		ci->ci_core_id = (apicid & core_mask) >> smt_bits;
 		ci->ci_pkg_id = (apicid & pkg_mask) >> pkg_bits;
+			ci->ci_smt_id = 0;
+			CPU_INFO_FOREACH(cii, ci_other) {
+				if (ci != ci_other &&
+				    ci_other->ci_core_id == ci->ci_core_id)
+					ci->ci_smt_id++;
+			}
 	} else
 		goto no_topology;
 #ifdef DEBUG
