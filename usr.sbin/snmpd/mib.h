@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.39 2018/05/30 18:17:20 sthen Exp $	*/
+/*	$OpenBSD: mib.h,v 1.40 2018/06/20 09:20:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -439,6 +439,7 @@
 #define MIB_netflix			MIB_enterprises, 10949
 #define MIB_google			MIB_enterprises, 11129
 #define MIB_f5Networks			MIB_enterprises, 12276
+#define MIB_bsws			MIB_enterprises, 13635
 #define MIB_sFlow			MIB_enterprises, 14706
 #define MIB_microSystems		MIB_enterprises, 18623
 #define MIB_paloAltoNetworks		MIB_enterprises, 25461
@@ -449,6 +450,7 @@
 #define MIB_openBSD			MIB_enterprises, OIDVAL_openBSD_eid
 #define MIB_nicira			MIB_enterprises, 39961
 #define MIB_esdenera			MIB_enterprises, 42459
+#define MIB_arcaTrust			MIB_enterprises, 52198
 
 /* UCD-DISKIO-MIB */
 #define MIB_ucdExperimental		MIB_ucDavis, 13
@@ -1018,6 +1020,7 @@
 	{ MIBDECL(netflix) },				\
 	{ MIBDECL(google) },				\
 	{ MIBDECL(f5Networks) },			\
+	{ MIBDECL(bsws) },				\
 	{ MIBDECL(sFlow) },				\
 	{ MIBDECL(microSystems) },			\
 	{ MIBDECL(paloAltoNetworks) },			\
@@ -1027,6 +1030,7 @@
 	{ MIBDECL(openBSD) },				\
 	{ MIBDECL(nicira) },				\
 	{ MIBDECL(esdenera) },				\
+	{ MIBDECL(arcaTrust) },				\
 							\
 	{ MIBDECL(ucdExperimental) },			\
 	{ MIBDECL(ucdDiskIOMIB) },			\
