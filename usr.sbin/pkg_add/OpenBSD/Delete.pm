@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.152 2018/06/19 14:27:08 espie Exp $
+# $OpenBSD: Delete.pm,v 1.153 2018/06/20 10:15:42 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -79,20 +79,12 @@ sub remove_packing_info
 	    $state->fatal("can't finish removing directory #1: #2", $dir, $!);
 }
 
-sub delete_package
+sub delete_handle
 {
-	my ($pkgname, $state, $set) = @_;
+	my ($handle, $state) = @_;
+	my $pkgname = $handle->pkgname;
 	$state->progress->message($state->f("reading list for #1", $pkgname));
-	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
-	    $state->fatal("bad package #1", $pkgname);
-	if (!defined $plist->pkgname) {
-		$state->fatal("package #1 is missing a \@name in plist",
-		    $pkgname);
-	}
-	if ($plist->pkgname ne $pkgname) {
-		$state->fatal("Package real name #1 does not match #2",
-			$plist->pkgname, $pkgname);
-	}
+	my $plist = $handle->plist;
 	if ($plist->has('firmware')) {
 		if ($state->is_interactive) {
 			if (!$state->confirm_defaults_to_no(
@@ -101,7 +93,8 @@ sub delete_package
 				return;
 			}
 		} else {
-			$state->errsay("NOT deleting #1: use fwupdate -d", $pkgname);
+			$state->errsay("NOT deleting #1: use fwupdate -d", 
+			    $pkgname);
 			return;
 		}
 	}
@@ -112,7 +105,7 @@ sub delete_package
 	    if $state->{problems};
 	$state->vstat->synchronize;
 
-	delete_plist($plist, $state, $set);
+	delete_plist($plist, $state);
 }
 
 sub unregister_dependencies
@@ -137,7 +130,7 @@ sub unregister_dependencies
 
 sub delete_plist
 {
-	my ($plist, $state, $set) = @_;
+	my ($plist, $state) = @_;
 
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
