@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.10 2017/05/30 09:33:31 jmatthew Exp $ */
-/*	$OpenBSD: aldap.h,v 1.10 2017/05/30 09:33:31 jmatthew Exp $ */
+/*	$Id: aldap.h,v 1.11 2018/06/21 10:37:00 reyk Exp $ */
+/*	$OpenBSD: aldap.h,v 1.11 2018/06/21 10:37:00 reyk Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -25,6 +25,10 @@
 #include "ber.h"
 
 #define LDAP_URL 		"ldap://"
+#define LDAPS_URL 		"ldaps://"
+#define LDAPTLS_URL 		"ldap+tls://"
+#define LDAPI_URL 		"ldapi://"
+
 #define LDAP_PORT 		389
 #define LDAPS_PORT 		636
 #define LDAP_PAGED_OID		"1.2.840.113556.1.4.319"
@@ -79,7 +83,9 @@ struct aldap_message {
 
 enum aldap_protocol {
 	LDAP,
-	LDAPS
+	LDAPS,
+	LDAPTLS,
+	LDAPI
 };
 
 struct aldap_url {
@@ -222,11 +228,10 @@ char	*aldap_get_dn(struct aldap_message *);
 char	*aldap_get_diagmsg(struct aldap_message *);
 char	**aldap_get_references(struct aldap_message *);
 void	 aldap_free_references(char **values);
-#if 0
-int	 aldap_parse_url(char *, struct aldap_url *);
+int	 aldap_parse_url(const char *, struct aldap_url *);
 void	 aldap_free_url(struct aldap_url *);
-int	 aldap_search_url(struct aldap *, char *, int, int, int);
-#endif
+int	 aldap_search_url(struct aldap *, char *, int, int, int,
+	    struct aldap_page_control *);
 
 int	 aldap_count_attrs(struct aldap_message *);
 int	 aldap_match_attr(struct aldap_message *, char *, char ***);
