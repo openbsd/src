@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.124 2018/06/21 07:33:30 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.125 2018/06/21 07:49:13 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -807,6 +807,15 @@ hibernate_inflate_region(union hibernate_info *hib, paddr_t dest,
 			    hib->piglet_pa + (110 * PAGE_SIZE) +
 			    hib->retguard_ofs, 0);
 			hib->retguard_ofs += PAGE_SIZE;
+			if (hib->retguard_ofs > 255 * PAGE_SIZE) {
+				/*
+				 * XXX - this will likely reboot/hang most
+				 *       machines since the console output
+				 *       buffer will be unmapped, but there's
+				 *       not much else we can do here.
+				 */
+				panic("retguard move error, out of space");
+			}
 		} else {
 			hibernate_enter_resume_mapping(
 			    HIBERNATE_INFLATE_PAGE, dest, 0);
