@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.15 2018/06/19 11:27:54 helg Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.16 2018/06/21 14:53:36 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -58,17 +58,31 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	return (fbuf);
 }
 
+/*
+ * Puts the fbuf on the queue and waits for the file system to process
+ * it. The current process will block indefinitely and cannot be
+ * interrupted or killed. This is consistent with how VFS system calls
+ * should behave. nfs supports the -ointr or -i mount option and FUSE
+ * can too but this is non-trivial. The file system daemon must be
+ * multi-threaded and also support being interrupted. Note that
+ * libfuse currently only supports single-threaded deamons.
+ *
+ * Why not timeout similar to mount_nfs -osoft?
+ * It introduces another point of failure and a possible mount option
+ * (to specify the timeout) that users need to understand and tune to
+ * avoid premature timeouts for slow file systems. More complexity,
+ * less reliability.
+ *
+ * In the case where the daemon has become unresponsive the daemon
+ * will have to be killed in order for the current process to
+ * wakeup. The FUSE device is automatically closed when the daemon
+ * terminates and any waiting fbuf is woken up.
+ */
 int
 fb_queue(dev_t dev, struct fusebuf *fbuf)
 {
-	int error = 0;
-
 	fuse_device_queue_fbuf(dev, fbuf);
-
-	if ((error = tsleep(fbuf, PWAIT, "fuse", TSLEEP_TIMEOUT * hz))) {
-		fuse_device_cleanup(dev, fbuf);
-		return (error);
-	}
+	tsleep(fbuf, PWAIT, "fuse", 0);
 
 	return (fbuf->fb_err);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.20 2018/05/22 12:52:14 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.21 2018/06/21 14:53:36 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -84,8 +84,8 @@ fusefs_lookup(void *v)
 		if (error) {
 			fb_delete(fbuf);
 
-			/* tsleep return */
-			if (error == EWOULDBLOCK)
+			/* file system is dead */
+			if (error == ENXIO)
 				return (error);
 
 			if ((nameiop == CREATE || nameiop == RENAME) &&

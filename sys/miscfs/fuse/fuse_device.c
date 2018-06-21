@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.26 2018/05/17 11:25:11 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.27 2018/06/21 14:53:36 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -157,7 +157,6 @@ void
 fuse_destroy(dev_t dev, struct fuse_d *fd)
 {
 	LIST_REMOVE(fd, fd_list);
-	fuse_device_cleanup(dev, NULL);
 	free(fd, M_DEVBUF, sizeof(*fd));
 }
 
@@ -187,10 +186,8 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 				    fb_next);
 
 			stat_fbufs_in--;
-			if (fbuf == NULL)
-				fb_delete(f);
-			else
-				break;
+			f->fb_err = ENXIO;
+			wakeup(f);
 		}
 		lprev = f;
 	}
@@ -208,10 +205,8 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 				    fb_next);
 
 			stat_fbufs_wait--;
-			if (fbuf == NULL)
-				fb_delete(f);
-			else
-				break;
+			f->fb_err = ENXIO;
+			wakeup(f);
 		}
 		lprev = f;
 	}
@@ -277,6 +272,7 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (fd->fd_fmp) {
 		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
+		fuse_device_cleanup(dev, NULL);
 		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE|VB_NOWAIT)) != 0)
 			goto end;
 		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, curproc);
