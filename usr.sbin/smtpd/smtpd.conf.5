@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.196 2018/06/18 08:15:29 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.197 2018/06/21 19:33:47 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: June 21 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ command generates a mail envelope.
 If an envelope matches any of a pre-designated set of actions
 (set using the
 .Ic action
-keyword),
+directive),
 the message is accepted for delivery.
 A copy of the message, as well as its associated envelopes,
 is saved in the mail queue and later dispatched
@@ -47,6 +47,7 @@ The
 rules are evaluated sequentially,
 with the first match winning.
 .Pp
+The format of the configuration file is fairly flexible.
 The current line can be extended over multiple lines using a backslash
 .Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
@@ -54,22 +55,22 @@ Comments can be put anywhere in the file using a hash mark
 and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
-.Pp
 Argument names not beginning with a letter, digit, or underscore,
-or otherwise using a reserved keyword,
+as well as reserved words
+(such as
+.Ic listen ,
+.Ic match ,
+and
+.Cm port ) ,
 must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
 .Pp
 Macros can be defined that are later expanded in context.
 Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example
-.Ic listen ,
-.Ic match ,
-.Cm port ) .
+and may contain any of those characters,
+but may not be reserved words.
 Macros are not expanded inside quotes.
-.Pp
 For example:
 .Bd -literal -offset indent
 lan_addr = "192.168.0.1"
@@ -124,7 +125,7 @@ Optionally,
 might be specified to use the
 recipient email address (after expansion) instead of the
 local user in the LMTP session as RCPT TO.
-.It Cm maildir Op Ar pathname Op Ar junk
+.It Cm maildir Op Ar pathname Op Cm junk
 Deliver the message to the maildir in
 .Ar pathname
 if specified, or by default to
@@ -136,8 +137,8 @@ may contain format specifiers that are expanded before use
 .Pq see Sx FORMAT SPECIFIERS .
 .Pp
 If the
-.Ar junk
-keyword is provided, message will be moved to the Junk
+.Cm junk
+argument is provided, the message will be moved to the Junk
 folder if it contains a positive X-Spam header.
 .It Cm mbox
 Deliver the message to the user's mbox with
