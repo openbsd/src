@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.87 2018/06/13 09:33:51 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.88 2018/06/21 17:28:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -363,7 +363,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 	if (asp != NULL && f->match.community.as != COMMUNITY_UNSET) {
 		switch (f->match.community.as) {
 		case COMMUNITY_ERROR:
-			fatalx("rde_apply_set bad community string");
+			fatalx("rde_filter_match bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			cas = peer->conf.remote_as;
 			break;
@@ -377,7 +377,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 
 		switch (f->match.community.type) {
 		case COMMUNITY_ERROR:
-			fatalx("rde_apply_set bad community string");
+			fatalx("rde_filter_match bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			type = peer->conf.remote_as;
 			break;
@@ -401,7 +401,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 	    COMMUNITY_UNSET) {
 		switch (f->match.large_community.as) {
 		case COMMUNITY_ERROR:
-			fatalx("rde_apply_set bad community string");
+			fatalx("rde_filter_match bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			las = peer->conf.remote_as;
 			break;
@@ -415,7 +415,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 
 		switch (f->match.large_community.ld1) {
 		case COMMUNITY_ERROR:
-			fatalx("rde_apply_set bad community string");
+			fatalx("rde_filter_match bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			ld1 = peer->conf.remote_as;
 			break;
@@ -429,7 +429,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 
 		switch (f->match.large_community.ld2) {
 		case COMMUNITY_ERROR:
-			fatalx("rde_apply_set bad community string");
+			fatalx("rde_filter_match bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			ld2 = peer->conf.remote_as;
 			break;
