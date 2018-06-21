@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.141 2018/06/13 14:57:24 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.142 2018/06/21 14:17:23 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1292,17 +1292,6 @@ ufs_rmdir(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	/*
-	 * No rmdir ".".
-	 */
-	if (dp == ip) {
-		if (dp == ip)
-			vrele(dvp);
-		else
-			vput(dvp);
-		vput(vp);
-		return (EINVAL);
-	}
 	/*
 	 * Do not remove a directory that is in the process of being renamed.
 	 * Verify the directory is empty (and valid). Rmdir ".." will not be

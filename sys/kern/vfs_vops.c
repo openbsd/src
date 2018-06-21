@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.18 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.19 2018/06/21 14:17:23 visa Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -457,6 +457,8 @@ VOP_RMDIR(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 
 	ASSERT_VP_ISLOCKED(dvp);
 	ASSERT_VP_ISLOCKED(vp);
+
+	KASSERT(dvp != vp);
 
 	if (dvp->v_op->vop_rmdir == NULL)
 		return (EOPNOTSUPP);

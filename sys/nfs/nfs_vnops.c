@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.177 2018/06/07 13:37:28 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.178 2018/06/21 14:17:23 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1974,13 +1974,6 @@ nfs_rmdir(void *v)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 
 	info.nmi_v3 = NFS_ISV3(dvp);
-
-	if (dvp == vp) {
-		vrele(dvp);
-		vput(dvp);
-		pool_put(&namei_pool, cnp->cn_pnbuf);
-		return (EINVAL);
-	}
 
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
 	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3) +

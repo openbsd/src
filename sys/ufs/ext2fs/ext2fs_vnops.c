@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.83 2018/06/07 13:37:28 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.84 2018/06/21 14:17:23 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1012,14 +1012,6 @@ ext2fs_rmdir(void *v)
 
 	ip = VTOI(vp);
 	dp = VTOI(dvp);
-	/*
-	 * No rmdir "." please.
-	 */
-	if (dp == ip) {
-		vrele(dvp);
-		vput(vp);
-		return (EINVAL);
-	}
 	/*
 	 * Verify the directory is empty (and valid).
 	 * (Rmdir ".." won't be valid since
