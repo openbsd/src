@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.7 2018/06/03 06:00:37 jmc Exp $
+.\"	$OpenBSD: sysctl.2,v 1.8 2018/06/21 19:56:06 kettenis Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 3 2018 $
+.Dd $Mdocdate: June 21 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -293,6 +293,7 @@ privileges may change the value.
 .It Dv HW_PRODUCT Ta "string" Ta "no"
 .It Dv HW_SENSORS Ta "node" Ta "not applicable"
 .It Dv HW_SETPERF Ta "integer" Ta "yes"
+.It Dv HW_SMT Ta "integer" Ta "yes"
 .It Dv HW_USERMEM Ta "integer" Ta "no"
 .It Dv HW_USERMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_UUID Ta "string" Ta "no"
@@ -385,6 +386,10 @@ It is only modifiable if
 .Dv HW_PERFPOLICY
 is set to
 .Dq manual .
+.It Dv HW_SMT Pq Va hw.smt
+If set to 1, enable simultanious multithreading (SMT) on CPUs that
+support it.
+Disabled by default.
 .It Dv HW_USERMEM
 The amount of available non-kernel memory in bytes.
 This variable is deprecated; use
