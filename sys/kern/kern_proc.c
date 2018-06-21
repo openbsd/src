@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.83 2018/03/27 08:42:49 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.84 2018/06/21 13:58:21 visa Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ procinit(void)
 	    PR_WAITOK, "processpl", NULL);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, IPL_NONE,
 	    PR_WAITOK, "zombiepl", NULL);
-	pool_init(&ucred_pool, sizeof(struct ucred), 0, IPL_NONE,
+	pool_init(&ucred_pool, sizeof(struct ucred), 0, IPL_MPFLOOR,
 	    PR_WAITOK, "ucredpl", NULL);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, IPL_NONE,
 	    PR_WAITOK, "pgrppl", NULL);
