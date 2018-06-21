@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.168 2018/02/10 05:54:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.169 2018/06/21 17:26:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -198,8 +198,6 @@ struct rde_aspath {
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int32_t			 weight;	/* low prio lpref */
-	u_int32_t			 prefix_cnt; /* # of prefixes */
-	u_int32_t			 active_cnt; /* # of active prefixes */
 	u_int32_t			 flags;		/* internally used */
 	u_int16_t			 rtlabelid;	/* route label id */
 	u_int16_t			 pftableid;	/* pf table id */

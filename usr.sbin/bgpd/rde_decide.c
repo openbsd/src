@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.67 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.68 2018/06/21 17:26:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -249,10 +249,8 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		/* decision process is turned off */
 		if (p != NULL)
 			LIST_INSERT_HEAD(&re->prefix_h, p, rib_l);
-		if (re->active != NULL) {
-			prefix_aspath(re->active)->active_cnt--;
+		if (re->active != NULL)
 			re->active = NULL;
-		}
 		return;
 	}
 
@@ -284,8 +282,6 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 
 	if (re->active != xp) {
 		/* need to generate an update */
-		if (re->active != NULL)
-			prefix_aspath(re->active)->active_cnt--;
 
 		/*
 		 * Send update with remove for re->active and add for xp
@@ -297,7 +293,5 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 			rde_send_kroute(re_rib(re), xp, re->active);
 
 		re->active = xp;
-		if (xp != NULL)
-			prefix_aspath(xp)->active_cnt++;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.159 2018/02/10 05:54:31 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.160 2018/06/21 17:26:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -346,12 +346,6 @@ rib_restart(struct rib_context *ctx)
 	return (re);
 }
 
-/* used to bump correct prefix counters */
-#define PREFIX_COUNT(x, op)			\
-	do {					\
-		(x)->prefix_cnt += (op);	\
-	} while (0)
-
 /* path specific functions */
 
 static struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
@@ -606,8 +600,8 @@ void
 path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
-	if (asp->prefix_cnt != 0 || asp->active_cnt != 0)
-		log_warnx("path_destroy: prefix count out of sync");
+	if (!TAILQ_EMPTY(&asp->prefixes) || !TAILQ_EMPTY(&asp->updates))
+		log_warnx("path_destroy: still has prefixes, leaking");
 
 	nexthop_unlink(asp);
 	LIST_REMOVE(asp, path_l);
@@ -793,7 +787,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 		TAILQ_INSERT_HEAD(&asp->updates, np, path_l);
 	else
 		TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
-	PREFIX_COUNT(asp, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
@@ -816,7 +809,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 		TAILQ_REMOVE(&oasp->updates, p, path_l);
 	else
 		TAILQ_REMOVE(&oasp->prefixes, p, path_l);
-	PREFIX_COUNT(oasp, -1);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
@@ -939,7 +931,7 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
 }
 
 /*
- * Searches in the prefix list of specified pt_entry for a prefix entry
+ * Searches in the prefix list of specified rib_entry for a prefix entry
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
@@ -1010,7 +1002,6 @@ prefix_destroy(struct prefix *p)
 	struct rde_aspath	*asp;
 
 	asp = prefix_aspath(p);
-	PREFIX_COUNT(asp, -1);
 
 	prefix_unlink(p);
 	prefix_free(p);
@@ -1035,7 +1026,6 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 		for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = xp) {
 			xp = TAILQ_NEXT(p, path_l);
 			if (reloadtime > p->lastchange) {
-				PREFIX_COUNT(asp, -1);
 				prefix_unlink(p);
 				prefix_free(p);
 			}
@@ -1056,7 +1046,6 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp,
 		TAILQ_INSERT_HEAD(&asp->updates, pref, path_l);
 	else
 		TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
-	PREFIX_COUNT(asp, 1);
 
 	pref->_p._aspath = asp;
 	pref->re = re;
