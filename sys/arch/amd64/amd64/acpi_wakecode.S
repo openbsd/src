@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.42 2018/05/22 15:55:30 guenther Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.43 2018/06/21 07:33:30 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -359,6 +359,36 @@ _C_LABEL(acpi_long_mode_resume):
 	 */
 	.code64
 NENTRY(hibernate_resume_machdep)
+	/*
+	 * On resume time page table, switch temporarily to the suspended
+	 * kernel's old page table (needed to access the suspended kernel's
+	 * retguard area)
+	 */
+	movq	.Lacpi_saved_cr3, %rax
+	movq	%rax, %cr3
+
+	/*
+	 * Now back on suspended kernel's page tables. Need to copy
+	 * into rodata, so instead of fixing up the perms here and
+	 * resetting them later, temporarily disable CR0.WP to allow
+	 * us to write.
+	 */
+	movq	%cr0, %rax
+	andq	$(~CR0_WP), %rax
+	movq	%rax, %cr0
+
+	movq	%rdi, %rsi
+	movq	$__retguard_start, %rdi
+	movq	$__retguard_end, %rcx
+	subq	%rdi, %rcx
+	shrq	$0x3, %rcx
+	rep	movsq
+
+	/* Reenable CR0.WP */
+	movq	%cr0, %rax
+	orq	$(CR0_WP), %rax
+	movq	%rax, %cr0
+
 	cli
 	/* Jump to the identity mapped version of ourself */
 	mov	$.Lhibernate_resume_vector_2, %rax

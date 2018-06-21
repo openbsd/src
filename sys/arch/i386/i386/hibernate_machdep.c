@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.51 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.52 2018/06/21 07:33:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -52,7 +52,6 @@ void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 
-extern	void hibernate_resume_machdep(void);
 extern	void hibernate_flush(void);
 extern	caddr_t start, end;
 extern	int ndumpmem;
