@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.166 2018/06/21 08:28:21 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.167 2018/06/22 13:59:38 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -444,6 +444,7 @@ sub find_in_self
 	while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
 		next unless $tag->name eq $name;
 		$tag->{definition_list} = $d;
+		$tag->{found_in_self} = 1;
 		$state->say("Found tag #1 in self", $tag->stringize)
 		    if $state->verbose >= 3;
 		return 1;
