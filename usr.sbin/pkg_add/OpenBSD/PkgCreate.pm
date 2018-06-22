@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.144 2018/06/21 08:28:21 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.145 2018/06/22 21:29:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -867,7 +867,8 @@ our @ISA = qw(OpenBSD::Dependencies::SolverBase);
 sub new
 {
 	my ($class, $plist) = @_;
-	bless { set => OpenBSD::PseudoSet->new($plist), bad => [] }, $class;
+	bless { set => OpenBSD::PseudoSet->new($plist), 
+	    old_dependencies => {}, bad => [] }, $class;
 }
 
 sub solve_all_depends
@@ -879,7 +880,8 @@ sub solve_all_depends
 		if (@todo == 0) {
 			return;
 		}
-		if ($solver->solve_wantlibs($state, 0)) {
+		if ($solver->solve_wantlibs($state, 0) &&
+		    $solver->solve_tags($state, 0)) {
 			return;
 		}
 		$solver->{set}->add_new(@todo);
@@ -892,11 +894,11 @@ sub solve_wantlibs
 
 	my $okay = 1;
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
-	my $h = $solver->{set}->{new}[0];
+	my $h = $solver->{set}{new}[0];
 	for my $lib (@{$h->{plist}{wantlib}}) {
 		$solver->{localbase} = $h->{plist}->localbase;
 		next if $lib_finder->lookup($solver,
-		    $solver->{to_register}->{$h}, $state,
+		    $solver->{to_register}{$h}, $state,
 		    $lib->spec);
 		$okay = 0;
 		OpenBSD::SharedLibs::report_problem($state,
@@ -905,6 +907,29 @@ sub solve_wantlibs
 	if (!$okay && $final) {
 		$solver->dump($state);
 		$lib_finder->dump($state);
+	}
+	return $okay;
+}
+
+sub solve_tags
+{
+	my ($solver, $state, $final) = @_;
+
+	my $okay = 1;
+	my $h = $solver->{set}{new}[0];
+	my $plist = $h->{plist};
+	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
+	return 1 if !defined $plist->{tags};
+	for my $tag (@{$plist->{tags}}) {
+		next if $solver->{tag_finder}->lookup($solver,
+		    $solver->{to_register}{$h}, $state, $tag);
+		next if $solver->find_in_self($plist, $state, $tag);
+		$state->errsay("Can't do #1: tag definition not found #2",
+		    $plist->pkgname, $tag->name) if $final;
+		$okay = 0;
+	}
+	if (!$okay && $final) {
+		$solver->dump($state);
 	}
 	return $okay;
 }
@@ -1467,6 +1492,9 @@ sub check_dependencies
 
 	$solver->solve_all_depends($state);
 	if (!$solver->solve_wantlibs($state, 1)) {
+		$state->{bad}++;
+	}
+	if (!$solver->solve_tags($state, 1)) {
 		$state->{bad}++;
 	}
 }

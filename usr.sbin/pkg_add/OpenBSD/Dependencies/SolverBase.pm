@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.2 2018/06/21 08:28:21 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.3 2018/06/22 21:29:06 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -180,6 +180,63 @@ sub find_elsewhere
 		}
 	}
 	return undef;
+}
+
+package OpenBSD::lookup::tag;
+our @ISA=qw(OpenBSD::lookup);
+sub new
+{
+	my ($class, $solver, $state) = @_;
+
+	# prepare for closure
+	if (!defined $solver->{old_dependencies}) {
+		$solver->solve_old_depends($state);
+	}
+	my @todo = ($solver->dependencies, keys %{$solver->{old_dependencies}});
+	bless { todo => \@todo, done => {}, known => {} }, $class;
+}
+
+sub find_in_extra_sources
+{
+}
+
+sub find_elsewhere
+{
+}
+
+sub find_in_already_done
+{
+	my ($self, $solver, $state, $obj) = @_;
+	my $r = $self->{known_tags}{$obj->name};
+	if (defined $r) {
+		my ($dep, $d) = @$r;
+		$obj->{definition_list} = $d;
+		$state->say("Found tag #1 in #2", $obj->stringize, $dep)
+		    if $state->verbose >= 3;
+	}
+	return $r;
+}
+
+sub find_in_plist
+{
+	my ($self, $plist, $dep) = @_;
+	if (defined $plist->{tags_definitions}) {
+		while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
+			$self->{known_tags}{$name} = [$dep, $d];
+		}
+	}
+}
+
+sub find_in_new_source
+{
+	my ($self, $solver, $state, $obj, $dep) = @_;
+	my $plist = OpenBSD::PackingList->from_installation($dep,
+	    \&OpenBSD::PackingList::DependOnly);
+	if (!defined $plist) {
+		$state->errsay("Can't read plist for #1", $dep);
+	}
+	$self->find_in_plist($plist, $dep);
+	return $self->find_in_already_done($solver, $state, $obj);
 }
 
 
@@ -363,6 +420,21 @@ sub find_dep_in_self
 
 	return $self->find_candidate($dep, $self->{set}->newer_names,
 	    $self->{set}->kept_names);
+}
+
+sub find_in_self
+{
+	my ($solver, $plist, $state, $tag) = @_;
+	return 0 unless defined $plist->{tags_definitions};
+	while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
+		next unless $tag->name eq $name;
+		$tag->{definition_list} = $d;
+		$tag->{found_in_self} = 1;
+		$state->say("Found tag #1 in self", $tag->stringize)
+		    if $state->verbose >= 3;
+		return 1;
+	}
+	return 0;
 }
 
 use OpenBSD::PackageInfo;
