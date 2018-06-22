@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.5 2018/01/10 23:27:18 kettenis Exp $ */
+/* $OpenBSD: exception.S,v 1.6 2018/06/22 16:08:12 drahn Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -125,8 +125,11 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 	mrs	x18, tpidr_el1
 	ldr	x1, [x18, #CI_CURPROC]
 	cbz	x1, 2f
-	ldr	w1, [x1, #P_ASTPENDING]
-	cbz	w1, 2f
+	ldr	w2, [x1, #P_ASTPENDING]
+	cbz	w2, 2f
+
+	// clear astpending before enabling interrupts.
+	str	wzr, [x1, #P_ASTPENDING]
 
 	/* Restore interrupts */
 	msr	daif, x19
