@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.34 2018/06/03 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.35 2018/06/22 18:50:42 guenther Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -205,6 +205,29 @@ data_abort_handler(trapframe_t *tf)
 	/* Grab the current pcb */
 	pcb = &p->p_addr->u_pcb;
 
+	if (user) {
+		vaddr_t sp;
+
+		pcb->pcb_tf = tf;
+		refreshcreds(p);
+
+		sp = PROC_STACK(p);
+		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
+		    p->p_spstart == 0 || sp < p->p_spstart ||
+		    sp >= p->p_spend) {
+			KERNEL_LOCK();
+			if (!uvm_map_check_stack_range(p, sp)) {
+				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
+				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+				    0, sp, p->p_spstart, p->p_spend);
+
+				sv.sival_ptr = (void *)PROC_PC(p);
+				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
+			}
+			KERNEL_UNLOCK();
+		}
+	}
+
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[ftyp].func != NULL)) {
 		if ((data_aborts[ftyp].func)(tf, fsr, far, p, &sd)) {
@@ -235,29 +258,6 @@ data_abort_handler(trapframe_t *tf)
 	 * These are the main virtual memory-related faults signalled by
 	 * the MMU.
 	 */
-
-	if (user) {
-		vaddr_t sp;
-
-		p->p_addr->u_pcb.pcb_tf = tf;
-		refreshcreds(p);
-
-		sp = PROC_STACK(p);
-		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-		    p->p_spstart == 0 || sp < p->p_spstart ||
-		    sp >= p->p_spend) {
-			KERNEL_LOCK();
-			if (!uvm_map_check_stack_range(p, sp)) {
-				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
-				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-				    0, sp, p->p_spstart, p->p_spend);
-
-				sv.sival_ptr = (void *)PROC_PC(p);
-				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
-			}
-			KERNEL_UNLOCK();
-		}
-	}
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
@@ -476,8 +476,6 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	sd->addr = far;
 	sd->trap = fsr;
 
-	p->p_addr->u_pcb.pcb_tf = tf;
-
 	return (1);
 }
 
@@ -570,13 +568,13 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	p = curproc;
 
+	p->p_addr->u_pcb.pcb_tf = tf;
+
 	/* Invoke access fault handler if appropriate */
 	if (FAULT_TYPE_V7(fsr) == FAULT_ACCESS_2) {
 		dab_access(tf, fsr, far, p, NULL);
 		goto out;
 	}
-
-	p->p_addr->u_pcb.pcb_tf = tf;
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(far >= VM_MAXUSER_ADDRESS ||
