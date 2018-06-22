@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.4 2017/10/28 14:44:46 bru Exp $ */
+/* $OpenBSD: iatp.c,v 1.5 2018/06/22 15:58:26 jcs Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -682,12 +682,12 @@ iatp_read_reg(struct iatp_softc *sc, uint16_t reg, size_t len, void *val)
 	uint8_t cmd[2] = { reg & 0xff, (reg >> 8) & 0xff };
 	int ret;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
 
 	ret = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &cmd,
 	    sizeof(cmd), val, len, I2C_F_POLL);
 
-	iic_release_bus(sc->sc_tag, 0);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	return ret;
 }
