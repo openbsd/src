@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.65 2018/04/07 14:55:13 anton Exp $	*/
+/*	$OpenBSD: patch.c,v 1.66 2018/06/22 15:37:15 zhuk Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -454,6 +454,7 @@ get_some_switches(void)
 		{"context",		no_argument,		0,	'c'},
 		{"debug",		required_argument,	0,	'x'},
 		{"directory",		required_argument,	0,	'd'},
+		{"dry-run",		no_argument,		0,	'C'},
 		{"ed",			no_argument,		0,	'e'},
 		{"force",		no_argument,		0,	'f'},
 		{"forward",		no_argument,		0,	'N'},
