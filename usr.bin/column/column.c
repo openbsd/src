@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.25 2016/09/04 20:33:36 martijn Exp $	*/
+/*	$OpenBSD: column.c,v 1.26 2018/06/22 12:27:00 rob Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 
 void  c_columnate(void);
 void *ereallocarray(void *, size_t, size_t);
-void *ecalloc(size_t, size_t);
 void  input(FILE *);
 void  maketbl(void);
 void  print(void);
@@ -339,16 +338,6 @@ void *
 ereallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	if ((ptr = reallocarray(ptr, nmemb, size)) == NULL)
-		err(1, NULL);
-	return ptr;
-}
-
-void *
-ecalloc(size_t nmemb, size_t size)
-{
-	void *ptr;
-
-	if ((ptr = calloc(nmemb, size)) == NULL)
 		err(1, NULL);
 	return ptr;
 }
