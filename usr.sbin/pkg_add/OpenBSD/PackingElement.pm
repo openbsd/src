@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.254 2018/06/22 13:58:55 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.255 2018/06/22 15:01:07 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1387,14 +1387,18 @@ sub category() {'define-tag'}
 sub keyword() { 'define-tag' }
 __PACKAGE__->register_with_factory;
 
+# define-tag may be parsed several times, but these objects must be
+# unique for tag accumulation to work correctly
+my $cache = {};
+
 sub new
 {
 	my ($class, $args) = @_;
 	my ($tag, $mode, $params) = split(/\s+/, $args, 3);
-	bless {
-		name => $tag,
-		mode => $mode,
-		params => $params,
+	$cache->{$args} //= bless {
+	    name => $tag,
+	    mode => $mode,
+	    params => $params,
 	    }, $class;
 }
 
@@ -1417,6 +1421,11 @@ sub add_object
 sub add_tag
 {
 	my ($self, $tag, $mode, $state) = @_;
+	# add the tag contents if they exist
+	# they're stored in a hash because the order doesn't matter
+	if ($tag->{params} ne '') {
+		$self->{list}{$tag->{expanded}} = 1;
+	}
 	# special case: we have to run things *now* if deleting
 	if ($mode eq 'delete' && $tag->{found_in_self}) {
 		$self->run_tag($state);
@@ -1429,6 +1438,10 @@ sub add_tag
 sub run_tag
 {
 	my ($self, $state) = @_;
+	if ($self->{expanded} =~ m/\%l/) {
+		my $l = join(' ', keys %{$self->{list}});
+		$self->{expanded} =~ s/\%l/$l/g;
+	}
 	$self->run($state);
 }
 
