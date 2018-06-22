@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.78 2017/07/01 12:23:22 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.79 2018/06/22 15:00:04 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -64,6 +64,11 @@ sub framework
 		my $dielater = $self->do_the_main_work($state);
 		# cleanup various things
 		$state->{recorder}->cleanup($state);
+		if (defined $state->{atend}) {
+			for my $d (values %{$state->{atend}}) {
+				$d->run_tag($state);
+			}
+		}
 		$state->ldconfig->ensure;
 		OpenBSD::PackingElement->finish($state);
 		$state->progress->clear;
@@ -163,7 +168,7 @@ sub is_empty
 {
 	my $self = shift;
 	return !(defined $self->{dirs} or defined $self->{users} or
-		defined $self->{groups});
+	    defined $self->{groups});
 }
 
 sub cleanup
