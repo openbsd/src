@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.255 2018/06/22 15:01:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.256 2018/06/22 21:16:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1325,13 +1325,12 @@ sub destate
 
 sub run
 {
-	my ($self, $state) = @_;
+	my ($self, $state, $v) = @_;
 
+	$v //= $self->{expanded};
 	$state->ldconfig->ensure;
-	$state->say("#1 #2", $self->keyword, $self->{expanded})
-	    if $state->verbose >= 2;
-	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded})
-	    unless $state->{not};
+	$state->say("#1 #2", $self->keyword, $v) if $state->verbose >= 2;
+	$state->log->system(OpenBSD::Paths->sh, '-c', $v) unless $state->{not};
 }
 
 # so tags are going to get triggered by packages we depend on.
@@ -1442,7 +1441,15 @@ sub run_tag
 		my $l = join(' ', keys %{$self->{list}});
 		$self->{expanded} =~ s/\%l/$l/g;
 	}
-	$self->run($state);
+	if ($self->{expanded} =~ m/\%u/) {
+		for my $p (keys %{$self->{list}}) {
+			my $v = $self->{expanded};
+			$v =~ s/\%u/$p/g;
+			$self->run($state, $v);
+		}
+	} else {
+		$self->run($state);
+	}
 }
 
 package OpenBSD::PackingElement::Exec;
