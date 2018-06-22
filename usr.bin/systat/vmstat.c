@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.85 2018/05/19 13:24:10 bluhm Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.86 2018/06/22 14:22:06 krw Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include "dkstats.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static struct Info {
 	long	time[CPUSTATES];
@@ -99,7 +100,7 @@ static	float hertz;
 static	int nintr;
 static	long *intrloc;
 static	char **intrname;
-static	int nextintsrow;
+static	int ipktsrow;
 
 WINDOW *
 openkre(void)
@@ -199,7 +200,6 @@ initvmstat(void)
 			return (-1);
 	}
 
-	nextintsrow = INTSROW + 2;
 	allocinfo(&s);
 	allocinfo(&s1);
 	allocinfo(&s2);
@@ -239,8 +239,19 @@ labelkre(void)
 	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
 	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
 
-	mvprintw(LINES - 3, INTSCOL + 9, "IPKTS");
-	mvprintw(LINES - 2, INTSCOL + 9, "OPKTS");
+	j = INTSROW + 2;
+	for (i = 0; i < nintr; i++) {
+		intrloc[i] = 0;
+		if (s.intrcnt[i] == 0 || ipktsrow == LINES)
+			continue;
+		intrloc[i] = j++;
+		mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s", intrname[i]);
+	}
+	ipktsrow = MAXIMUM(j, MINIMUM(LINES - 3, VMSTATROW + 17));
+	if (LINES - 1 > ipktsrow)
+		mvprintw(ipktsrow, INTSCOL + 9, "IPKTS");
+	if (LINES - 1 > ipktsrow + 1)
+		mvprintw(ipktsrow + 1, INTSCOL + 9, "OPKTS");
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -261,9 +272,9 @@ labelkre(void)
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 	if (LINES - 1 > VMSTATROW + 17)
-		mvprintw(VMSTATROW + 17, VMSTATCOL + 10, "pzidle");
+		mvprintw(VMSTATROW + 17, VMSTATCOL + 10, "pzidl");
 	if (LINES - 1 > VMSTATROW + 18)
-		mvprintw(VMSTATROW + 18, VMSTATCOL + 10, "kmapent");
+		mvprintw(VMSTATROW + 18, VMSTATCOL + 10, "kmape");
 
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
@@ -340,20 +351,12 @@ showkre(void)
 	etime /= hertz;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
-		if (s.intrcnt[i] == 0)
-			continue;
-		if (intrloc[i] == 0) {
-			if (nextintsrow == LINES)
-				continue;
-			intrloc[i] = nextintsrow++;
-			mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s",
-			    intrname[i]);
-		}
 		t = intcnt = s.intrcnt[i];
 		s.intrcnt[i] -= s1.intrcnt[i];
 		intcnt = (u_int64_t)((float)s.intrcnt[i]/etime + 0.5);
 		inttotal += intcnt;
-		putuint64(intcnt, intrloc[i], INTSCOL, 8);
+		if (intrloc[i] != 0)
+			putuint64(intcnt, intrloc[i], INTSCOL, 8);
 	}
 	putuint64(inttotal, INTSROW + 1, INTSCOL, 8);
 	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
@@ -361,8 +364,10 @@ showkre(void)
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
 	    nchtotal.ncs_miss + nchtotal.ncs_long;
 
-	putint(sum.ifc_ip, LINES - 3, INTSCOL, 8);
-	putint(sum.ifc_op, LINES - 2, INTSCOL, 8);
+	if (LINES - 1 > ipktsrow)
+		putint(sum.ifc_ip, ipktsrow, INTSCOL, 8);
+	if (LINES - 1 > ipktsrow + 1)
+		putint(sum.ifc_op, ipktsrow + 1, INTSCOL, 8);
 
 	psiz = 0;
 	f2 = 0.0;
