@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.202 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.203 2018/06/22 13:21:14 bluhm Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1526,11 +1526,7 @@ pmap_switch(struct proc *o, struct proc *p)
 	 */
 	if (pmap->pm_pdirpa_intel) {
 		self->ci_kern_cr3 = pmap->pm_pdirpa;
-#if 0		/* XXX hshoexer:  Do not unmap kernel, yet */
 		self->ci_user_cr3 = pmap->pm_pdirpa_intel;
-#else
-		self->ci_user_cr3 = pmap->pm_pdirpa;
-#endif
 	}
 
 	/*

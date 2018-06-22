@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.617 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.618 2018/06/22 13:21:14 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3102,6 +3102,7 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_self = &cpu_info_primary;
 	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;
+	cpu_info_primary.ci_nmi_tss = &cpu_info_full_primary.cif_nmi_tss;
 	cpu_info_primary.ci_gdt = (void *)&cpu_info_full_primary.cif_gdt;
 
 	/* make bootstrap gdt gates and memory segments */
@@ -3122,13 +3123,16 @@ init386(paddr_t first_avail)
 	setsegment(&cpu_info_primary.ci_gdt[GUGS_SEL].sd, 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
 	setsegment(&cpu_info_primary.ci_gdt[GTSS_SEL].sd,
-	    cpu_info_primary.ci_tss, sizeof(cpu_info_primary.ci_tss)-1,
+	    cpu_info_primary.ci_tss, sizeof(struct i386tss)-1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	setsegment(&cpu_info_primary.ci_gdt[GNMITSS_SEL].sd,
+	    cpu_info_primary.ci_nmi_tss, sizeof(struct i386tss)-1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 
 	/* exceptions */
 	setgate(&idt[  0], &IDTVEC(div),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
 	setgate(&idt[  1], &IDTVEC(dbg),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
-	setgate(&idt[  2], &IDTVEC(nmi),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);
+	setgate(&idt[  2], NULL,             0, SDT_SYSTASKGT, SEL_KPL, GNMITSS_SEL);
 	setgate(&idt[  3], &IDTVEC(bpt),     0, SDT_SYS386IGT, SEL_UPL, GCODE_SEL);
 	setgate(&idt[  4], &IDTVEC(ofl),     0, SDT_SYS386IGT, SEL_UPL, GCODE_SEL);
 	setgate(&idt[  5], &IDTVEC(bnd),     0, SDT_SYS386IGT, SEL_KPL, GCODE_SEL);

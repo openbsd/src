@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.24 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: segments.h,v 1.25 2018/06/22 13:21:14 bluhm Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -222,8 +222,9 @@ void idt_vec_free(int);
 #define	GUFS_SEL	11	/* User per-thread (%fs) descriptor */
 #define	GUGS_SEL	12	/* User per-thread (%gs) descriptor */
 #define GTSS_SEL	13	/* common TSS */
-#define	GBIOS32_SEL	14	/* spare slot for 32 bit BIOS calls */
-#define	NGDT		15
+#define GNMITSS_SEL	14	/* NMI TSS */
+#define	GBIOS32_SEL	15	/* spare slot for 32 bit BIOS calls */
+#define	NGDT		16
 
 #define GDT_SIZE	(NGDT << 3)
 

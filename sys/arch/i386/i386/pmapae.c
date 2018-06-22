@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.55 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.56 2018/06/22 13:21:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -748,6 +748,9 @@ pmap_bootstrap_pae(void)
 		proc0paddr->u_pcb.pcb_cr3 = kpm->pm_pdirpa =
 		    (vaddr_t)kpm - KERNBASE;
 		kpm->pm_pdirsize = 4 * NBPG;
+
+		/* Reset cr3 for NMI task switch */
+		cpu_update_nmi_cr3(kpm->pm_pdirpa);
 
 		DPRINTF("%s: pm_pdir 0x%x pm_pdirpa 0x%x pm_pdirsize %d\n",
 		    __func__, (uint32_t)kpm->pm_pdir, (uint32_t)kpm->pm_pdirpa,

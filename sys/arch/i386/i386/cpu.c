@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.92 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.93 2018/06/22 13:21:14 bluhm Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -131,6 +131,8 @@ int     cpu_activate(struct device *, int);
 void	patinit(struct cpu_info *ci);
 void	cpu_idle_mwait_cycle(void);
 void	cpu_init_mwait(struct cpu_softc *);
+void	cpu_init_tss(struct i386tss *, void *, void *);
+void	cpu_update_nmi_cr3(vaddr_t);
 #if NVMM > 0
 void	cpu_init_vmm(struct cpu_info *ci);
 #endif /* NVMM > 0 */
@@ -250,6 +252,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		ci = &cif->cif_cpu;
 #ifdef MULTIPROCESSOR
 		ci->ci_tss = &cif->cif_tss;
+		ci->ci_nmi_tss = &cif->cif_nmi_tss;
 		ci->ci_gdt = (void *)&cif->cif_gdt;
 		cpu_enter_pages(cif);
 		if (cpu_info[cpunum] != NULL)
@@ -558,6 +561,7 @@ cpu_enter_pages(struct cpu_info_full *cif)
 {
 	vaddr_t	va;
 	paddr_t pa;
+	extern void Xnmi(void);
 
 	/* The TSS + GDT need to be readable */
 	va = (vaddr_t)&cif->cif_tss;
@@ -573,15 +577,23 @@ cpu_enter_pages(struct cpu_info_full *cif)
 	DPRINTF("%s: entered t.stack page at va 0x%08x pa 0x%08x\n", __func__,
 	    (uint32_t)va, (uint32_t)pa);
 
-	cif->cif_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	/* Setup trampoline stack in TSS */
 	cif->cif_tss.tss_esp0 = va + sizeof(cif->cif_tramp_stack) - 16;
+	cif->cif_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	DPRINTF("%s: cif_tss.tss_esp0 = 0x%08x\n", __func__,
 	    (uint32_t)cif->cif_tss.tss_esp0);
 	cif->cif_cpu.ci_intr_esp = cif->cif_tss.tss_esp0 -
 	    sizeof(struct trampframe);
 
+	/* Setup NMI stack in NMI TSS */
+	va = (vaddr_t)&cif->cif_nmi_stack + sizeof(cif->cif_nmi_stack);
+	cpu_init_tss(&cif->cif_nmi_tss, (void *)va, Xnmi);
+	DPRINTF("%s: cif_nmi_tss.tss_esp0 = 0x%08x\n", __func__,
+	    (uint32_t)cif->cif_nmi_tss.tss_esp0);
+
 	/* empty iomap */
 	cif->cif_tss.tss_ioopt = sizeof(cif->cif_tss) << 16;
+	cif->cif_nmi_tss.tss_ioopt = sizeof(cif->cif_nmi_tss) << 16;
 }
 
 #ifdef MULTIPROCESSOR
@@ -865,3 +877,29 @@ cpu_init_mwait(struct cpu_softc *sc)
 		cpu_idle_cycle_fcn = &cpu_idle_mwait_cycle;
 }
 
+void
+cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+{
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack - 16);
+	tss->tss_ss0 = tss->tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_ds = tss->tss_es = tss->tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = GSEL(GNULL_SEL, SEL_KPL);
+	tss->tss_ldt = GSEL(GNULL_SEL, SEL_KPL);
+	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	/* PSL_I not set -> no IRQs after task switch */
+	tss->tss_eflags = PSL_MBO;
+	tss->tss_eip = (int)func;
+}
+
+void
+cpu_update_nmi_cr3(vaddr_t cr3)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cii, ci)
+		ci->ci_nmi_tss->tss_cr3 = cr3;
+}
