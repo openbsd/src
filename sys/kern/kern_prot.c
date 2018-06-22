@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.74 2018/06/21 13:58:21 visa Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.75 2018/06/22 13:33:30 visa Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -950,7 +950,7 @@ crget(void)
 
 /*
  * Increment the reference count of a cred structure.
- * Return the passed structure.
+ * Returns the passed structure.
  */
 struct ucred *
 crhold(struct ucred *cr)
