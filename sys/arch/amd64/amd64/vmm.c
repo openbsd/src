@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.201 2018/06/21 05:41:54 kevlo Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.202 2018/06/22 05:21:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3268,8 +3268,10 @@ vm_teardown(struct vm *vm)
 	vm_impl_deinit(vm);
 
 	/* teardown guest vmspace */
-	if (vm->vm_map != NULL)
+	if (vm->vm_map != NULL) {
 		uvm_map_deallocate(vm->vm_map);
+		vm->vm_map = NULL;
+	}
 
 	vmm_softc->vm_ct--;
 	if (vmm_softc->vm_ct < 1)
@@ -3626,7 +3628,7 @@ vm_terminate(struct vm_terminate_params *vtp)
 	/*
 	 * Find desired VM
 	 */
-	rw_enter_read(&vmm_softc->vm_lock);
+	rw_enter_write(&vmm_softc->vm_lock);
 	error = vm_find(vtp->vtp_vm_id, &vm);
 
 	if (error == 0) {
@@ -3644,18 +3646,16 @@ vm_terminate(struct vm_terminate_params *vtp)
 			    old, next));
 		}
 		rw_exit_read(&vm->vm_vcpu_lock);
-	}
-	rw_exit_read(&vmm_softc->vm_lock);
-
-	if (error != 0)
+	} else {
+		rw_exit_write(&vmm_softc->vm_lock);
 		return (error);
+	}
 
-	/* XXX possible race here two threads terminating the same vm? */
-	rw_enter_write(&vmm_softc->vm_lock);
 	SLIST_REMOVE(&vmm_softc->vm_list, vm, vm, vm_link);
-	rw_exit_write(&vmm_softc->vm_lock);
 	if (vm->vm_vcpus_running == 0)
 		vm_teardown(vm);
+
+	rw_exit_write(&vmm_softc->vm_lock);
 
 	return (0);
 }
