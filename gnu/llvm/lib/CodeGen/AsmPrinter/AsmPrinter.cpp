@@ -2684,11 +2684,15 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock &MBB) const {
     }
   }
 
-  // Emit an alignment directive for this block, if needed.
-  if (unsigned Align = MBB.getAlignment())
-    EmitAlignment(Align);
   MCCodePaddingContext Context;
   setupCodePaddingContext(MBB, Context);
+  // Emit an alignment directive for this block, if needed.
+  if (unsigned Align = MBB.getAlignment()) {
+    if (Context.IsBasicBlockReachableViaFallthrough)
+      EmitAlignment(Align);
+    else
+      EmitTrapAlignment(Align);
+  }
   OutStreamer->EmitCodePaddingBasicBlockStart(Context);
 
   // If the block has its address taken, emit any labels that were used to
