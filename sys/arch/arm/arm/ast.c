@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.14 2014/11/18 20:51:01 krw Exp $	*/
+/*	$OpenBSD: ast.c,v 1.15 2018/06/22 15:20:37 kettenis Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ ast(struct trapframe *tf)
 	struct proc *p = curproc;
 
 	/* Interrupts were restored by exception_exit. */
+
+	p->p_addr->u_pcb.pcb_tf = tf;
 
 	uvmexp.traps++;
 
