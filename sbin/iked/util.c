@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2017/12/13 08:27:06 patrick Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2018/06/22 13:20:08 rob Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -703,7 +703,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	char *p, *q;
 
 	if ((tmp = calloc(1, len)) == NULL) {
-		log_debug("expand_string: calloc");
+		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
 	p = q = label;
@@ -711,7 +711,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
-			log_debug("expand_string: string too long");
+			log_debug("%s: string too long", __func__);
 			free(tmp);
 			return (-1);
 		}
@@ -719,7 +719,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		p = q;
 	}
 	if (strlcat(tmp, p, len) >= len) {
-		log_debug("expand_string: string too long");
+		log_debug("%s: string too long", __func__);
 		free(tmp);
 		return (-1);
 	}
