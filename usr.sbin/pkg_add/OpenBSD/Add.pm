@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.175 2018/06/15 09:37:29 espie Exp $
+# $OpenBSD: Add.pm,v 1.176 2018/06/22 13:58:55 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -781,6 +781,17 @@ sub should_run
 {
 	my ($self, $state) = @_;
 	return $state->replacing;
+}
+
+package OpenBSD::PackingElement::Tag;
+
+sub install
+{
+	my ($self, $state) = @_;
+
+	for my $d (@{$self->{definition_list}}) {
+		$d->add_tag($self, "install", $state);
+	}
 }
 
 package OpenBSD::PackingElement::Lib;
