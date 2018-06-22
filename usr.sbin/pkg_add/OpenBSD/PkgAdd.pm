@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.101 2018/06/20 10:21:40 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.102 2018/06/22 15:02:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -993,12 +993,12 @@ sub process_set
 		$state->tracker->cant($set);
 		return ();
 	}
-#	if (!$set->solver->solve_tags($state)) {
-#		if (!$state->defines('libdepends')) {
-#			$state->{bad}++;
-#			return ();
-#		}
-#	}
+	if (!$set->solver->solve_tags($state)) {
+		if (!$state->defines('libdepends')) {
+			$state->{bad}++;
+			return ();
+		}
+	}
 	if (!$set->recheck_conflicts($state)) {
 		$state->{bad}++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL, "fatal conflicts");
