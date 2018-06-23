@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.109 2018/05/31 09:05:17 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.110 2018/06/23 11:08:24 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: May 31 2018 $
+.Dd $Mdocdate: June 23 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -386,6 +386,41 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
+.Pp
+.It Cm @define-tag Ar tag Ar mode Ar command
+Define a tag of name
+.Ar tag .
+Tags are commands that will be executed at specific points during
+.Xr pkg_add 1
+and
+.Xr pkg_delete 1 .
+Currently, only mode
+.Sq at-end
+is defined, anything else will error out during package creation:
+.Pp
+if the tag occurs in dependencies, the given
+.Ar command
+is executed at the end, similar to
+.Cm @exec
+commands.
+.Pp
+Actual tags may themselves contain parameters, so the
+.Ar command
+recognizes two additional escape sequences:
+.Bl -tag -width indent
+.It Cm "\&%l"
+list of tag parameters, in a random order, with duplicates removed.
+.It Cm "\&%u"
+execute the command once for each distinct tag parameter.
+.El
+.Pp
+As a special case, an actual
+.Cm @tag
+may be present in the same package that
+.Cm @define-tag ,
+to cater to the special case of package deletion: e.g.,
+the need to execute the actual command near the end of package deletion, but
+before the command is removed from the file system.
 .Pp
 .It Cm @exec Ar command
 Execute
@@ -758,6 +793,16 @@ Some special elements, such as new users and new groups, are always
 deleted last, so that
 .Cm @unexec
 can rely on them.
+.Pp
+.It Cm @tag Ar name Op Ar parameter
+Reference a tag of given
+.Ar name .
+The corresponding
+.Cm @define-tag
+definition must be accessible through the dependency tree.
+.Ar parameter
+is amenable to the same substitutions as
+.Cm @exec .
 .Pp
 .It Cm @unexec-always Ar command
 Synonym of
