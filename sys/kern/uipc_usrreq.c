@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.130 2018/06/20 10:52:49 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.131 2018/06/23 11:33:32 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -657,7 +657,8 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	int i, *fdp = NULL;
+	struct filedesc *fdp = p->p_fd;
+	int i, *fds = NULL;
 	struct fdpass *rp;
 	struct file *fp;
 	int nfds, error = 0;
@@ -686,22 +687,22 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 		 * No to block devices.  If passing a directory,
 		 * make sure that it is underneath the root.
 		 */
-		if (p->p_fd->fd_rdir != NULL && fp->f_type == DTYPE_VNODE) {
+		if (fdp->fd_rdir != NULL && fp->f_type == DTYPE_VNODE) {
 			struct vnode *vp = (struct vnode *)fp->f_data;
 
 			if (vp->v_type == VBLK ||
 			    (vp->v_type == VDIR &&
-			    !vn_isunder(vp, p->p_fd->fd_rdir, p))) {
+			    !vn_isunder(vp, fdp->fd_rdir, p))) {
 				error = EPERM;
 				break;
 			}
 		}
 	}
 
-	fdp = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
+	fds = mallocarray(nfds, sizeof(int), M_TEMP, M_WAITOK);
 
 restart:
-	fdplock(p->p_fd);
+	fdplock(fdp);
 	if (error != 0) {
 		if (nfds > 0) {
 			rp = ((struct fdpass *)CMSG_DATA(cm));
@@ -716,12 +717,12 @@ restart:
 	 */
 	rp = ((struct fdpass *)CMSG_DATA(cm));
 	for (i = 0; i < nfds; i++) {
-		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
+		if ((error = fdalloc(p, 0, &fds[i])) != 0) {
 			/*
 			 * Back out what we've done so far.
 			 */
 			for (--i; i >= 0; i--)
-				fdremove(p->p_fd, fdp[i]);
+				fdremove(fdp, fds[i]);
 
 			if (error == ENOSPC) {
 				fdexpand(p);
@@ -734,7 +735,7 @@ restart:
 				 */
 				error = EMSGSIZE;
 			}
-			fdpunlock(p->p_fd);
+			fdpunlock(fdp);
 			goto restart;
 		}
 
@@ -743,12 +744,12 @@ restart:
 		 * fdalloc() works properly.. We finalize it all
 		 * in the loop below.
 		 */
-		p->p_fd->fd_ofiles[fdp[i]] = rp->fp;
-		p->p_fd->fd_ofileflags[fdp[i]] = (rp->flags & UF_PLEDGED);
+		fdp->fd_ofiles[fds[i]] = rp->fp;
+		fdp->fd_ofileflags[fds[i]] = (rp->flags & UF_PLEDGED);
 		rp++;
 
 		if (flags & MSG_CMSG_CLOEXEC)
-			p->p_fd->fd_ofileflags[fdp[i]] |= UF_EXCLOSE;
+			fdp->fd_ofileflags[fds[i]] |= UF_EXCLOSE;
 	}
 
 	/*
@@ -770,13 +771,13 @@ restart:
 	 * Copy temporary array to message and adjust length, in case of
 	 * transition from large struct file pointers to ints.
 	 */
-	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
+	memcpy(CMSG_DATA(cm), fds, nfds * sizeof(int));
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 	rights->m_len = CMSG_LEN(nfds * sizeof(int));
  out:
-	fdpunlock(p->p_fd);
-	if (fdp)
-		free(fdp, M_TEMP, nfds * sizeof(int));
+	fdpunlock(fdp);
+	if (fds != NULL)
+		free(fds, M_TEMP, nfds * sizeof(int));
 	return (error);
 }
 
