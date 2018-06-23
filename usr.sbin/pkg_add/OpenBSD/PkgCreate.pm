@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.147 2018/06/23 13:13:38 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.148 2018/06/23 21:52:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -875,6 +875,7 @@ sub solve_all_depends
 {
 	my ($solver, $state) = @_;
 
+	$solver->{tag_finder} = OpenBSD::lookup::tag->new($solver, $state);
 	while (1) {
 		my @todo = $solver->solve_depends($state);
 		if (@todo == 0) {
@@ -947,7 +948,6 @@ sub solve_tags
 	my $okay = 1;
 	my $h = $solver->{set}{new}[0];
 	my $plist = $h->{plist};
-	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
 	return 1 if !defined $plist->{tags};
 	for my $tag (@{$plist->{tags}}) {
 		$solver->{tag_finder}->lookup($solver,
@@ -1061,6 +1061,7 @@ sub really_solve_from_ports
 		}
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
+	$self->{tag_finder}->find_in_plist($plist, $dep->{pkgpath});
 	$self->add_dep($plist);
 	return $plist->pkgname;
 }
@@ -1251,7 +1252,7 @@ sub read_fragments
 				}
 				my $s = $subst->do($l);
 				if ($fast) {
-					next unless $s =~ m/^\@(?:cwd|lib|libset|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+					next unless $s =~ m/^\@(?:cwd|lib|libset|define-tag|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
 	# XXX some things, like @comment no checksum, don't produce an object
 				my $o = &$cont($s);
