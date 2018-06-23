@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.148 2018/06/23 21:52:06 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.149 2018/06/23 22:28:13 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -944,6 +944,7 @@ sub verify_tag
 sub solve_tags
 {
 	my ($solver, $state, $final) = @_;
+	return 1;
 
 	my $okay = 1;
 	my $h = $solver->{set}{new}[0];
