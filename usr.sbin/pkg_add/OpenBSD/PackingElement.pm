@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.256 2018/06/22 21:16:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.257 2018/06/23 09:19:49 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1358,7 +1358,7 @@ sub new
 	my ($tag, $params) = split(/\s+/, $args, 2);
 	bless {
 		name => $tag,
-		params => $params,
+		params => $params // '',
 	    }, $class;
 }
 

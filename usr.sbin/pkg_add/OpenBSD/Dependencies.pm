@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.168 2018/06/22 21:29:06 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.169 2018/06/23 09:19:49 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -406,7 +406,7 @@ sub solve_handle_tags
 		    $solver->{to_register}{$h}, $state, $tag);
 		# XXX
 		next if $solver->find_in_self($plist, $state, $tag);
-		$state->errsay("Can't do #1: tag definition not found #2",
+		$state->errsay("Error in #1: tag definition not found #2",
 		    $plist->pkgname, $tag->name);
 		return 0;
 	}
