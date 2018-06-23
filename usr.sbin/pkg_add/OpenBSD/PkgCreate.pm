@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.146 2018/06/23 13:11:41 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.147 2018/06/23 13:13:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -921,7 +921,7 @@ sub verify_tag
 	}
 	my $use_params = 0;
 	for my $d (@{$tag->{definition_list}}) {
-		if ($d->{expanded} =~ m/\%[lu]/) {
+		if ($d->need_params) {
 			$use_params = 1;
 			last;
 		}
