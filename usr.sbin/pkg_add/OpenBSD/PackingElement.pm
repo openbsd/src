@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.258 2018/06/23 13:13:38 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.259 2018/06/23 22:46:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1434,21 +1434,30 @@ sub add_tag
 	}
 }
 
+sub destate
+{
+}
+
 sub run_tag
 {
 	my ($self, $state) = @_;
-	if ($self->{expanded} =~ m/\%l/) {
-		my $l = join(' ', keys %{$self->{list}});
-		$self->{expanded} =~ s/\%l/$l/g;
+	my $command = $self->command;
+	if ($command =~ m/\%D/) {
+		$command =~ s/\%D/$state->{localbase}/g;
 	}
-	if ($self->{expanded} =~ m/\%u/) {
+
+	if ($command =~ m/\%l/) {
+		my $l = join(' ', keys %{$self->{list}});
+		$command =~ s/\%l/$l/g;
+	}
+	if ($command =~ m/\%u/) {
 		for my $p (keys %{$self->{list}}) {
-			my $v = $self->{expanded};
+			my $v = $command;
 			$v =~ s/\%u/$p/g;
 			$self->run($state, $v);
 		}
 	} else {
-		$self->run($state);
+		$self->run($state, $command);
 	}
 }
 
