@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.14 2018/06/05 06:39:11 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.15 2018/06/24 00:49:25 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -64,7 +64,7 @@ extern uint32_t	fpu_mxcsr_mask;
 extern uint64_t	xsave_mask;
 
 void fpuinit(struct cpu_info *);
-void fputrap(struct trapframe *);
+int fputrap(int _type);
 void fpusave(struct savefpu *);
 void fpusavereset(struct savefpu *);
 void fpu_kernel_enter(void);

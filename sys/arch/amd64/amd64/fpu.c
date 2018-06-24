@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.40 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.41 2018/06/24 00:49:25 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -36,9 +36,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/signalvar.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -48,7 +45,6 @@
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 
-void	trap(struct trapframe *);
 
 /*
  * The mask of enabled XSAVE features.
@@ -89,27 +85,25 @@ fpuinit(struct cpu_info *ci)
 
 /*
  * Record the FPU state and reinitialize it all except for the control word.
- * Then generate a SIGFPE.
+ * Returns the code to include in an SIGFPE.
  *
  * Reinitializing the state allows naive SIGFPE handlers to longjmp without
  * doing any fixups.
  */
-void
-fputrap(struct trapframe *frame)
+int
+fputrap(int type)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
-	int code;
-	union sigval sv;
 
 	KASSERT(ci->ci_flags & CPUF_USERXSTATE);
 	ci->ci_flags &= ~CPUF_USERXSTATE;
 	fpusavereset(sfp);
 
-	if (frame->tf_trapno == T_XMM) {
+	if (type == T_XMM) {
 		mxcsr = sfp->fp_fxsave.fx_mxcsr;
 	  	statbits = mxcsr;
 		mxcsr &= ~0x3f;
@@ -124,11 +118,7 @@ fputrap(struct trapframe *frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
-	code = x86fpflags_to_siginfo (statbits);
-	sv.sival_ptr = (void *)frame->tf_rip;	/* XXX - ? */
-	KERNEL_LOCK();
-	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
-	KERNEL_UNLOCK();
+	return x86fpflags_to_siginfo(statbits);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2018/06/15 20:41:15 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2018/06/24 00:49:25 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -273,6 +273,7 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
 	union sigval sv;
+	int code;
 
 	verify_smap(__func__);
 	uvmexp.traps++;
@@ -350,7 +351,11 @@ trap(struct trapframe *frame)
 
 	case T_ARITHTRAP|T_USER:
 	case T_XMM|T_USER:
-		fputrap(frame);
+		code = fputrap(type);
+		sv.sival_ptr = (void *)frame->tf_rip;
+		KERNEL_LOCK();
+		trapsignal(p, SIGFPE, type &~ T_USER, code, sv);
+		KERNEL_UNLOCK();
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
