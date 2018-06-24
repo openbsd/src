@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.169 2018/06/23 09:19:49 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.170 2018/06/24 12:38:41 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -400,17 +400,17 @@ sub solve_handle_tags
 	my ($solver, $h, $state) = @_;
 	my $plist = $h->plist;
 	return 1 if !defined $plist->{tags};
+	my $okay = 1;
 	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
 	for my $tag (@{$plist->{tags}}) {
-		next if $solver->{tag_finder}->lookup($solver,
-		    $solver->{to_register}{$h}, $state, $tag);
-		# XXX
-		next if $solver->find_in_self($plist, $state, $tag);
-		$state->errsay("Error in #1: tag definition not found #2",
-		    $plist->pkgname, $tag->name);
-		return 0;
+		$solver->{tag_finder}->lookup($solver,
+		    $solver->{to_register}{$h}, $state, $tag)
+		 || $solver->find_in_self($plist, $state, $tag);
+		if (!$solver->verify_tag($tag, $state, $plist)) {
+			$okay = 0;
+		}
 	}
-	return 1;
+	return $okay;
 }
 
 sub solve_tags

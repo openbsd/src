@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.4 2018/06/24 10:22:23 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.5 2018/06/24 12:38:41 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -454,6 +454,37 @@ sub add_dep
 {
 	my ($self, $d) = @_;
 	$self->{deplist}{$d} = $d;
+}
+
+
+sub verify_tag
+{
+	my ($self, $tag, $state, $plist) = @_;
+	my $msg = "Error in #1: \@tag #2";
+	if (!defined $tag->{definition_list}) {
+		$state->errsay("$msg definition not found",
+		    $plist->pkgname, $tag->name);
+		return 0;
+	}
+	my $use_params = 0;
+	for my $d (@{$tag->{definition_list}}) {
+		if ($d->need_params) {
+			$use_params = 1;
+			last;
+		}
+	}
+	if ($tag->{params} eq '' && $use_params) {
+		$state->errsay(
+		    "$msg has no parameters but some define wants them",
+		    $plist->pkgname, $tag->name);
+		return 0;
+	} elsif ($tag->{params} ne '' && !$use_params) {
+		$state->errsay(
+		    "$msg has parameters but no define uses them",
+		    $plist->pkgname, $tag->name);
+		return 0;
+	}
+	return 1;
 }
 
 1;
