@@ -1,4 +1,4 @@
-/* $OpenBSD: efi.h,v 1.2 2018/01/04 14:30:08 kettenis Exp $ */
+/* $OpenBSD: efi.h,v 1.3 2018/06/24 10:38:44 kettenis Exp $ */
 
 /* Public Domain */
 
@@ -13,7 +13,6 @@ typedef uint64_t	UINT64;
 typedef u_long		UINTN;
 typedef uint16_t	CHAR16;
 typedef void		VOID;
-typedef uint32_t	EFI_GUID[4];
 typedef uint64_t	EFI_PHYSICAL_ADDRESS;
 typedef uint64_t	EFI_VIRTUAL_ADDRESS;
 typedef UINTN		EFI_STATUS;
@@ -22,6 +21,17 @@ typedef VOID		*EFI_HANDLE;
 typedef VOID		*EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
 typedef VOID		*EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 typedef VOID		*EFI_BOOT_SERVICES;
+
+typedef struct {
+	UINT32	Data1;
+	UINT16	Data2;
+	UINT16	Data3;
+	UINT8	Data4[8];
+} EFI_GUID;
+
+#define EFI_ACPI_20_TABLE_GUID \
+  { 0x8868e871, 0xe4f1, 0x11d3, \
+    { 0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81} }
 
 typedef enum {
 	EfiReservedMemoryType,
@@ -130,4 +140,6 @@ typedef struct {
 
 #define EFI_SUCCESS	0
 
-#endif /* _MACHINE_EFI_H_ */
+#define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
+
+#endif /* _DEV_ACPI_EFI_H_ */

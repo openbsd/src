@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.4 2018/04/06 19:09:05 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.5 2018/06/24 10:38:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -40,6 +40,8 @@ extern uint32_t mmap_desc_size;
 extern uint32_t mmap_desc_ver;
 
 extern EFI_MEMORY_DESCRIPTOR *mmap;
+
+uint64_t efi_acpi_table;
 
 struct efi_softc {
 	struct device	sc_dev;
@@ -168,18 +170,25 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * The FirmwareVendor field has been converted from a physical
-	 * pointer to a virtual pointer, so we have to activate our
-	 * pmap to access it.
+	 * The FirmwareVendor and ConfigurationTable fields have been
+	 * converted from a physical pointer to a virtual pointer, so
+	 * we have to activate our pmap to access them.
 	 */
+	efi_enter(sc);
 	if (st->FirmwareVendor) {
 		printf("%s: ", sc->sc_dev.dv_xname);
-		efi_enter(sc);
 		for (i = 0; st->FirmwareVendor[i]; i++)
 			printf("%c", st->FirmwareVendor[i]);
-		efi_leave(sc);
 		printf(" rev 0x%x\n", st->FirmwareRevision);
 	}
+	for (i = 0; i < st->NumberOfTableEntries; i++) {
+		EFI_CONFIGURATION_TABLE *ct = &st->ConfigurationTable[i];
+		static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
+
+		if (efi_guidcmp(&acpi_guid, &ct->VendorGuid) == 0)
+			efi_acpi_table = (uint64_t)ct->VendorTable;
+	}
+	efi_leave(sc);
 
 	if (rs == NULL)
 		return;
@@ -278,4 +287,3 @@ efi_settime(struct todr_chip_handle *handle, struct timeval *tv)
 		return EIO;
 	return 0;
 }
-
