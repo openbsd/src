@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.171 2018/05/26 10:16:13 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.172 2018/06/24 23:54:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1088,20 +1088,13 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 
 	mi = malloc(sizeof(struct mixer_devinfo), M_TEMP, M_WAITOK);
 
-	sc->mix_nent = 0;
 	mi->index = 0;
 	while (1) {
 		if (sc->ops->query_devinfo(sc->arg, mi) != 0)
 			break;
-		switch (mi->type) {
-		case AUDIO_MIXER_SET:
-		case AUDIO_MIXER_ENUM:
-		case AUDIO_MIXER_VALUE:
-			sc->mix_nent++;
-		}
 		mi->index++;
 	}
-
+	sc->mix_nent = mi->index;
 	sc->mix_ents = mallocarray(sc->mix_nent,
 	    sizeof(struct mixer_ctrl), M_DEVBUF, M_WAITOK);
 
@@ -1118,9 +1111,9 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 		case AUDIO_MIXER_ENUM:
 			ent->dev = mi->index;
 			ent->type = mi->type;
-			ent++;
 		}
 		mi->index++;
+		ent++;
 	}
 
 	free(mi, M_TEMP, sizeof(struct mixer_devinfo));
