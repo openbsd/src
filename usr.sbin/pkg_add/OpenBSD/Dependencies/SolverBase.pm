@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.3 2018/06/22 21:29:06 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.4 2018/06/24 10:22:23 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -153,7 +153,7 @@ sub find_in_new_source
 	my ($self, $solver, $state, $obj, $dep) = @_;
 
 	if (defined $solver->{set}{newer}{$dep}) {
-		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}->{newer}->{$dep}->plist, $state);
+		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}{newer}{$dep}->plist, $state);
 	} else {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($dep, $state);
 	}
