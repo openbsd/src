@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.45 2018/01/13 15:43:39 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.46 2018/06/24 18:39:57 schwarze Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -161,9 +161,7 @@ main(int argc, char *argv[])
 			if (prec == -1)
 				prec = 0;
 		}
-		break;
 	case 0:
-		usage();
 		break;
 	default:
 		errx(1, "Too many arguments.  What do you mean by %s?",
