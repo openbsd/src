@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.167 2018/06/20 10:52:49 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.168 2018/06/24 05:58:05 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -957,7 +957,7 @@ int
 falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
 	struct file *fp;
-	int error, i;
+	int error, i, nfiles;
 
 	KASSERT(resultfp != NULL);
 	KASSERT(resultfd != NULL);
@@ -971,7 +971,9 @@ restart:
 		}
 		return (error);
 	}
-	if (numfiles >= maxfiles) {
+	nfiles = atomic_inc_int_nv(&numfiles);
+	if (nfiles > maxfiles) {
+		atomic_dec_int(&numfiles);
 		fd_unused(p->p_fd, i);
 		tablefull("file");
 		return (ENFILE);
@@ -982,7 +984,6 @@ restart:
 	 * of open files at that point, otherwise put it at the front of
 	 * the list of open files.
 	 */
-	numfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
 	/*
 	 * We need to block interrupts as long as `f_mtx' is being taken
@@ -1222,7 +1223,7 @@ fdrop(struct file *fp, struct proc *p)
 		error = 0;
 
 	crfree(fp->f_cred);
-	numfiles--;
+	atomic_dec_int(&numfiles);
 	pool_put(&file_pool, fp);
 
 	return (error);
