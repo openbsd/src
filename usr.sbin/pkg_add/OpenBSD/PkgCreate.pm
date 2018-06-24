@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.149 2018/06/23 22:28:13 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.150 2018/06/24 12:44:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -912,35 +912,6 @@ sub solve_wantlibs
 	return $okay;
 }
 
-sub verify_tag
-{
-	my ($self, $tag, $state, $final) = @_;
-	if (!defined $tag->{definition_list}) {
-		$state->errsay("Can't find \@tag #1 in dependency tree",
-		    $tag->name) if $final;
-		return 0;
-	}
-	my $use_params = 0;
-	for my $d (@{$tag->{definition_list}}) {
-		if ($d->need_params) {
-			$use_params = 1;
-			last;
-		}
-	}
-	if ($tag->{params} eq '' && $use_params) {
-		$state->errsay(
-		    "\@tag #1 has no parameters but some define wants them",
-		    $tag->name) if $final;
-		return 0;
-	} elsif ($tag->{params} ne '' && !$use_params) {
-		$state->errsay(
-		    "\@tag #1 has parameters but no define uses them",
-		    $tag->name) if $final;
-		return 0;
-	}
-	return 1;
-}
-
 sub solve_tags
 {
 	my ($solver, $state, $final) = @_;
@@ -954,7 +925,7 @@ sub solve_tags
 		$solver->{tag_finder}->lookup($solver,
 		    $solver->{to_register}{$h}, $state, $tag) ||
 		    $solver->find_in_self($plist, $state, $tag);
-		if (!$solver->verify_tag($tag, $state, $final)) {
+		if (!$solver->verify_tag($tag, $state, $plist)) {
 			$okay = 0;
 		}
 	}
