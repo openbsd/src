@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.42 2018/06/22 15:02:09 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.43 2018/06/24 19:59:35 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -372,12 +372,9 @@ sub process_set
 		}
 		if (defined $pkg->plist->{tags}) {
 			if (!$set->solver->solve_tags($state)) {
-		    		if (!$state->defines('libdepends')) {
-					$set->cleanup(
-					    OpenBSD::Handle::CANT_DELETE);
-					$state->tracker->cant($set);
-					return ();
-				}
+				$set->cleanup(OpenBSD::Handle::CANT_DELETE);
+				$state->tracker->cant($set);
+				return ();
 			}
 		}
 	}
