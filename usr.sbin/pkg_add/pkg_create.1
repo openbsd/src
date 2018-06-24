@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.110 2018/06/23 11:08:24 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.111 2018/06/24 12:50:38 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 23 2018 $
+.Dd $Mdocdate: June 24 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -403,6 +403,10 @@ if the tag occurs in dependencies, the given
 is executed at the end, similar to
 .Cm @exec
 commands.
+.Pp
+The
+.Cm "\&%D"
+escape sequence stands for localbase.
 .Pp
 Actual tags may themselves contain parameters, so the
 .Ar command
