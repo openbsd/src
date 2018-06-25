@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.270 2018/06/11 09:05:05 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.271 2018/06/25 09:39:16 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -804,13 +804,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 {
 	struct rtentry		*rt = *prt;
 	struct ifnet		*ifp = NULL;
-	struct ifaddr		*ifa = NULL;
-#ifdef MPLS
-	struct sockaddr_mpls	*psa_mpls;
-#endif
 	int			 plen, newgate = 0, error = 0;
 
-	NET_LOCK();
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
 		if (info->rti_info[RTAX_GATEWAY] == NULL) {
@@ -836,9 +831,13 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rtfree(rt);
 		rt = NULL;
 
-		if ((error = rtm_getifa(info, tableid)) != 0)
+		NET_LOCK();
+		if ((error = rtm_getifa(info, tableid)) != 0) {
+			NET_UNLOCK();
 			break;
+		}
 		error = rtrequest(RTM_ADD, info, prio, &rt, tableid);
+		NET_UNLOCK();
 		if (error == 0)
 			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
@@ -872,10 +871,12 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 * pointer stays valid for other CPUs.
 		 */
 		if ((ISSET(rt->rt_flags, RTF_CACHED))) {
+			NET_LOCK();
 			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
 			/* Reset the MTU of the gateway route. */
 			rtable_walk(tableid, rt_key(rt)->sa_family,
 			    route_cleargateway, rt);
+			NET_UNLOCK();
 			if_put(ifp);
 			break;
 		}
@@ -893,7 +894,9 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rtfree(rt);
 		rt = NULL;
 
+		NET_LOCK();
 		error = rtrequest_delete(info, prio, ifp, &rt, tableid);
+		NET_UNLOCK();
 		if_put(ifp);
 		break;
 	case RTM_CHANGE:
@@ -966,8 +969,13 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			 */
 			if (newgate || info->rti_info[RTAX_IFP] != NULL ||
 			    info->rti_info[RTAX_IFA] != NULL) {
-				if ((error = rtm_getifa(info, tableid)) != 0)
+				struct ifaddr	*ifa = NULL;
+
+				NET_LOCK();
+				if ((error = rtm_getifa(info, tableid)) != 0) {
+					NET_UNLOCK();
 					break;
+				}
 				ifa = info->rti_ifa;
 				if (rt->rt_ifa != ifa) {
 					ifp = if_get(rt->rt_ifidx);
@@ -983,6 +991,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 					rt_if_linkstate_change(rt, ifa->ifa_ifp,
 					    tableid);
 				}
+				NET_UNLOCK();
 			}
 change:
 			if (info->rti_info[RTAX_GATEWAY] != NULL) {
@@ -992,23 +1001,27 @@ change:
 				 */
 				if (!newgate && rt->rt_gateway->sa_family !=
 				    info->rti_info[RTAX_GATEWAY]->sa_family) {
-				    	error = EINVAL;
+					error = EINVAL;
 					break;
 				}
 
+				NET_LOCK();
 				error = rt_setgate(rt,
 				    info->rti_info[RTAX_GATEWAY], tableid);
+				NET_UNLOCK();
 				if (error)
 					break;
 			}
 #ifdef MPLS
 			if ((rtm->rtm_flags & RTF_MPLS) &&
 			    info->rti_info[RTAX_SRC] != NULL) {
-				struct rt_mpls *rt_mpls;
+				struct sockaddr_mpls	*psa_mpls;
+				struct rt_mpls		*rt_mpls;
 
 				psa_mpls = (struct sockaddr_mpls *)
 				    info->rti_info[RTAX_SRC];
 
+				NET_LOCK();
 				if (rt->rt_llinfo == NULL) {
 					rt->rt_llinfo =
 					    malloc(sizeof(struct rt_mpls),
@@ -1027,8 +1040,10 @@ change:
 				/* XXX: set experimental bits */
 
 				rt->rt_flags |= RTF_MPLS;
+				NET_UNLOCK();
 			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
 			    !(rtm->rtm_flags & RTF_MPLS))) {
+				NET_LOCK();
 				/* if gateway changed remove MPLS information */
 				if (rt->rt_llinfo != NULL &&
 				    rt->rt_flags & RTF_MPLS) {
@@ -1037,6 +1052,7 @@ change:
 					rt->rt_llinfo = NULL;
 					rt->rt_flags &= ~RTF_MPLS;
 				}
+				NET_UNLOCK();
 			}
 #endif
 
@@ -1050,6 +1066,7 @@ change:
 			}
 #endif
 
+			NET_LOCK();
 			/* Hack to allow some flags to be toggled */
 			if (rtm->rtm_fmask)
 				rt->rt_flags =
@@ -1072,11 +1089,14 @@ change:
 			}
 			if_group_routechange(info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK]);
+			NET_UNLOCK();
 			/* FALLTHROUGH */
 		case RTM_LOCK:
+			NET_LOCK();
 			rt->rt_locks &= ~(rtm->rtm_inits);
 			rt->rt_locks |=
 			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
+			NET_UNLOCK();
 			break;
 		}
 		break;
@@ -1088,7 +1108,6 @@ change:
 			error = ESRCH;
 		break;
 	}
-	NET_UNLOCK();
 
 	*prt = rt;
 	return (error);
@@ -1153,6 +1172,12 @@ int
 rtm_getifa(struct rt_addrinfo *info, unsigned int rtid)
 {
 	struct ifnet	*ifp = NULL;
+
+	/*
+	 * The "returned" `ifa' is guaranteed to be alive only if
+	 * the NET_LOCK() is held.
+	 */
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * ifp may be specified by sockaddr_dl when protocol address
