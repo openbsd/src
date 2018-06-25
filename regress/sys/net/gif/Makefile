@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2018/06/25 15:09:58 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/06/25 22:22:49 bluhm Exp $
 
 # Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -71,16 +71,16 @@ regress:
 .endif
 .endif
 
-.PHONY: check-rdomains ifconfig unconfig
+.PHONY: busy-rdomains ifconfig unconfig
 
-check-rdomains:
+busy-rdomains:
 	# check if rdomains are busy
 .for n in ${NUMS}
 	@if /sbin/ifconfig | grep -v '^lo${n}:' | grep ' rdomain ${n} '; then\
 	    echo routing domain ${n} is already used >&2; exit 1; fi
 .endfor
 
-ifconfig: check-rdomains unconfig
+ifconfig: unconfig
 	# create and configure loopback interfaces
 .for n in ${NUMS}
 	${SUDO} /sbin/ifconfig lo${n} rdomain ${n}
@@ -123,7 +123,7 @@ unconfig:
 
 stamp-setup: Makefile
 	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} ifconfig
+	${.MAKE} -C ${.CURDIR} busy-rdomains ifconfig
 	# wait until DAD for inet6 tunnel addresses has finished
 	sleep 1
 	date >$@
