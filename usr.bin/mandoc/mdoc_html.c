@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.183 2018/06/25 14:06:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.184 2018/06/25 16:54:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -717,8 +717,7 @@ mdoc_it_pre(MDOC_ARGS)
 			break;
 		case ROFFT_BODY:
 			if (n->child == NULL) {
-				print_otag(h, TAG_DD, "ss?",
-				    "width", "auto");
+				print_otag(h, TAG_DD, "s", "width", "auto");
 				print_text(h, "\\ ");
 			} else
 				print_otag(h, TAG_DD, "");
@@ -1173,7 +1172,7 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	for (n = n->child->next; n; n = n->next) {
 		if (NODE_SYNPRETTY & n->flags)
-			t = print_otag(h, TAG_VAR, "cTss?", "Fa",
+			t = print_otag(h, TAG_VAR, "cTs", "Fa",
 			    "white-space", "nowrap");
 		else
 			t = print_otag(h, TAG_VAR, "cT", "Fa");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.107 2018/06/25 14:13:50 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.108 2018/06/25 16:54:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -100,19 +100,6 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"munderover",	0},
 	{"munder",	0},
 	{"mover",	0},
-};
-
-static	const char	*const roffscales[SCALE_MAX] = {
-	"cm", /* SCALE_CM */
-	"in", /* SCALE_IN */
-	"pc", /* SCALE_PC */
-	"pt", /* SCALE_PT */
-	"em", /* SCALE_EM */
-	"em", /* SCALE_MM */
-	"ex", /* SCALE_EN */
-	"ex", /* SCALE_BU */
-	"em", /* SCALE_VS */
-	"ex", /* SCALE_FS */
 };
 
 /* Avoid duplicate HTML id= attributes. */
@@ -321,57 +308,6 @@ html_make_id(const struct roff_node *n, int unique)
 	return buf;
 }
 
-int
-html_strlen(const char *cp)
-{
-	size_t		 rsz;
-	int		 skip, sz;
-
-	/*
-	 * Account for escaped sequences within string length
-	 * calculations.  This follows the logic in term_strlen() as we
-	 * must calculate the width of produced strings.
-	 * Assume that characters are always width of "1".  This is
-	 * hacky, but it gets the job done for approximation of widths.
-	 */
-
-	sz = 0;
-	skip = 0;
-	while (1) {
-		rsz = strcspn(cp, "\\");
-		if (rsz) {
-			cp += rsz;
-			if (skip) {
-				skip = 0;
-				rsz--;
-			}
-			sz += rsz;
-		}
-		if ('\0' == *cp)
-			break;
-		cp++;
-		switch (mandoc_escape(&cp, NULL, NULL)) {
-		case ESCAPE_ERROR:
-			return sz;
-		case ESCAPE_UNICODE:
-		case ESCAPE_NUMBERED:
-		case ESCAPE_SPECIAL:
-		case ESCAPE_OVERSTRIKE:
-			if (skip)
-				skip = 0;
-			else
-				sz++;
-			break;
-		case ESCAPE_SKIPCHAR:
-			skip = 1;
-			break;
-		default:
-			break;
-		}
-	}
-	return sz;
-}
-
 static int
 print_escape(struct html *h, char c)
 {
@@ -551,13 +487,10 @@ struct tag *
 print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 {
 	va_list		 ap;
-	struct roffsu	*su;
-	char		 numbuf[16];
 	struct tag	*t;
 	const char	*attr;
 	char		*arg1, *arg2;
-	double		 v;
-	int		 have_style, tflags;
+	int		 tflags;
 
 	tflags = htmltags[tag].flags;
 
@@ -597,17 +530,12 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 	va_start(ap, fmt);
 
-	have_style = 0;
 	while (*fmt != '\0') {
-		if (*fmt == 's') {
-			have_style = 1;
-			fmt++;
-			break;
-		}
 
-		/* Parse a non-style attribute and its arguments. */
+		/* Parse attributes and arguments. */
 
 		arg1 = va_arg(ap, char *);
+		arg2 = NULL;
 		switch (*fmt++) {
 		case 'c':
 			attr = "class";
@@ -618,6 +546,10 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		case 'i':
 			attr = "id";
 			break;
+		case 's':
+			attr = "style";
+			arg2 = va_arg(ap, char *);
+			break;
 		case '?':
 			attr = arg1;
 			arg1 = va_arg(ap, char *);
@@ -625,13 +557,12 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		default:
 			abort();
 		}
-		arg2 = NULL;
 		if (*fmt == 'M')
 			arg2 = va_arg(ap, char *);
 		if (arg1 == NULL)
 			continue;
 
-		/* Print the non-style attributes. */
+		/* Print the attributes. */
 
 		print_byte(h, ' ');
 		print_word(h, attr);
@@ -658,71 +589,19 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			fmt++;
 			break;
 		default:
-			print_encode(h, arg1, NULL, 1);
+			if (arg2 == NULL)
+				print_encode(h, arg1, NULL, 1);
+			else {
+				print_word(h, arg1);
+				print_byte(h, ':');
+				print_byte(h, ' ');
+				print_word(h, arg2);
+				print_byte(h, ';');
+			}
 			break;
 		}
 		print_byte(h, '"');
 	}
-
-	/* Print out styles. */
-
-	while (*fmt != '\0') {
-		arg1 = NULL;
-		su = NULL;
-
-		/* First letter: input argument type. */
-
-		switch (*fmt++) {
-		case 's':
-			arg1 = va_arg(ap, char *);
-			break;
-		case 'u':
-			su = va_arg(ap, struct roffsu *);
-			break;
-		default:
-			abort();
-		}
-
-		/* Second letter: style name. */
-
-		switch (*fmt++) {
-		case 'h':
-			attr = "height";
-			break;
-		case '?':
-			attr = arg1;
-			arg1 = va_arg(ap, char *);
-			break;
-		default:
-			abort();
-		}
-		if (su == NULL && arg1 == NULL)
-			continue;
-
-		if (have_style == 1)
-			print_word(h, " style=\"");
-		else
-			print_byte(h, ' ');
-		print_word(h, attr);
-		print_byte(h, ':');
-		print_byte(h, ' ');
-		if (su != NULL) {
-			v = su->scale;
-			if (su->unit == SCALE_MM && (v /= 100.0) == 0.0)
-				v = 1.0;
-			else if (su->unit == SCALE_BU)
-				v /= 24.0;
-			(void)snprintf(numbuf, sizeof(numbuf), "%.2f", v);
-			print_word(h, numbuf);
-			print_word(h, roffscales[su->unit]);
-		} else
-			print_word(h, arg1);
-		print_byte(h, ';');
-		have_style = 2;
-	}
-	if (have_style == 2)
-		print_byte(h, '"');
-
 	va_end(ap);
 
 	/* Accommodate for "well-formed" singleton escaping. */

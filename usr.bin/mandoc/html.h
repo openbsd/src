@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.53 2018/06/25 13:46:01 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.54 2018/06/25 16:54:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -132,4 +132,3 @@ void		  print_paragraph(struct html *);
 void		  print_endline(struct html *);
 
 char		 *html_make_id(const struct roff_node *, int);
-int		  html_strlen(const char *);
