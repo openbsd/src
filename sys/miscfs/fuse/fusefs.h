@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.11 2018/06/21 14:53:36 helg Exp $ */
+/* $OpenBSD: fusefs.h,v 1.12 2018/06/25 12:03:53 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -79,7 +79,7 @@ int fusefs_file_close(struct fusefs_mnt *, struct fusefs_node *,
     enum fufh_type, int, int, struct proc *);
 
 /* device helpers. */
-void fuse_device_cleanup(dev_t, struct fusebuf *);
+void fuse_device_cleanup(dev_t);
 void fuse_device_queue_fbuf(dev_t, struct fusebuf *);
 void fuse_device_set_fmp(struct fusefs_mnt *, int);
 

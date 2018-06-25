@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.38 2018/06/19 13:01:34 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.39 2018/06/25 12:03:53 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -168,7 +168,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		fb_delete(fbuf);
 	}
 
-	fuse_device_cleanup(fmp->dev, NULL);
+	fuse_device_cleanup(fmp->dev);
 	fuse_device_set_fmp(fmp, 0);
 	free(fmp, M_FUSEFS, sizeof(*fmp));
 	mp->mnt_data = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.27 2018/06/21 14:53:36 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.28 2018/06/25 12:03:53 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -161,11 +161,10 @@ fuse_destroy(dev_t dev, struct fuse_d *fd)
 }
 
 /*
- * if fbuf == NULL cleanup all msgs else remove fbuf from
- * sc_fbufs_in and sc_fbufs_wait.
+ * Cleanup all msgs from sc_fbufs_in and sc_fbufs_wait.
  */
 void
-fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
+fuse_device_cleanup(dev_t dev)
 {
 	struct fuse_d *fd;
 	struct fusebuf *f, *ftmp, *lprev;
@@ -177,37 +176,32 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 	/* clear FIFO IN*/
 	lprev = NULL;
 	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_in, fb_next, ftmp) {
-		if (fbuf == f || fbuf == NULL) {
-			DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
-			if (lprev == NULL)
-				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
-			else
-				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lprev,
-				    fb_next);
+		DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
+		if (lprev == NULL)
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
+		else
+			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lprev,
+			    fb_next);
 
-			stat_fbufs_in--;
-			f->fb_err = ENXIO;
-			wakeup(f);
-		}
+		stat_fbufs_in--;
+		f->fb_err = ENXIO;
+		wakeup(f);
 		lprev = f;
 	}
 
 	/* clear FIFO WAIT*/
 	lprev = NULL;
 	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_wait, fb_next, ftmp) {
-		if (fbuf == f || fbuf == NULL) {
-			DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
-			if (lprev == NULL)
-				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait,
-				    fb_next);
-			else
-				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lprev,
-				    fb_next);
+		DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
+		if (lprev == NULL)
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
+		else
+			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lprev,
+			    fb_next);
 
-			stat_fbufs_wait--;
-			f->fb_err = ENXIO;
-			wakeup(f);
-		}
+		stat_fbufs_wait--;
+		f->fb_err = ENXIO;
+		wakeup(f);
 		lprev = f;
 	}
 }
@@ -272,7 +266,7 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (fd->fd_fmp) {
 		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
-		fuse_device_cleanup(dev, NULL);
+		fuse_device_cleanup(dev);
 		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE|VB_NOWAIT)) != 0)
 			goto end;
 		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, curproc);
