@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.20 2018/06/10 16:15:40 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.21 2018/06/25 13:01:14 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -153,6 +153,9 @@ table.Bl-compact > tbody > tr > td {
 .eqn { }
 .tbl { }
 
+.HP {		margin-left: 3.8em;
+		text-indent: -3.8em; }
+
 /* Semantic markup for command line utilities. */
 
 table.Nm { }
@@ -245,4 +248,6 @@ dl.Bl-hang > dd {
 dl.Bl-tag {	margin-left: 2em; }
 dl.Bl-tag > dt {
 		margin-left: -2em; }
+.HP {		margin-left: 2em;
+		text-indent: -2em; }
 }
