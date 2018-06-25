@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.375 2018/06/11 08:48:54 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.376 2018/06/25 09:41:45 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -518,8 +518,7 @@ rtfree(struct rtentry *rt)
 		ifafree(rt->rt_ifa);
 		rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
-		if (rt->rt_flags & RTF_MPLS)
-			free(rt->rt_llinfo, M_TEMP, sizeof(struct rt_mpls));
+		rt_mpls_clear(rt);
 #endif
 		free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
 		free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
@@ -814,9 +813,6 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct sockaddr_rtlabel	*sa_rl, sa_rl2;
 	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
 	int			 dlen, error;
-#ifdef MPLS
-	struct sockaddr_mpls	*sa_mpls;
-#endif
 
 	NET_ASSERT_LOCKED();
 
@@ -892,32 +888,15 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (info->rti_flags & RTF_MPLS &&
 		    (info->rti_info[RTAX_SRC] != NULL ||
 		    info->rti_info[RTAX_DST]->sa_family == AF_MPLS)) {
-			struct rt_mpls *rt_mpls;
-
-			sa_mpls = (struct sockaddr_mpls *)
-			    info->rti_info[RTAX_SRC];
-
-			rt->rt_llinfo = malloc(sizeof(struct rt_mpls),
-			    M_TEMP, M_NOWAIT|M_ZERO);
-
-			if (rt->rt_llinfo == NULL) {
+			error = rt_mpls_set(rt, info->rti_info[RTAX_SRC],
+			    info->rti_mpls);
+			if (error) {
 				free(ndst, M_RTABLE, dlen);
 				pool_put(&rtentry_pool, rt);
-				return (ENOMEM);
+				return (error);
 			}
-
-			rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
-
-			if (sa_mpls != NULL)
-				rt_mpls->mpls_label = sa_mpls->smpls_label;
-
-			rt_mpls->mpls_operation = info->rti_mpls;
-
-			/* XXX: set experimental bits */
-
-			rt->rt_flags |= RTF_MPLS;
 		} else
-			rt->rt_flags &= ~RTF_MPLS;
+			rt_mpls_clear(rt);
 #endif
 
 		ifa->ifa_refcnt++;
@@ -1485,6 +1464,40 @@ rt_timer_timer(void *arg)
 
 	timeout_add_sec(to, 1);
 }
+
+#ifdef MPLS
+int
+rt_mpls_set(struct rtentry *rt, struct sockaddr *src, uint8_t op)
+{
+	struct sockaddr_mpls	*psa_mpls = (struct sockaddr_mpls *)src;
+	struct rt_mpls		*rt_mpls;
+
+	rt->rt_llinfo = malloc(sizeof(struct rt_mpls), M_TEMP, M_NOWAIT|M_ZERO);
+	if (rt->rt_llinfo == NULL)
+		return (ENOMEM);
+
+	rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
+	if (psa_mpls != NULL)
+		rt_mpls->mpls_label = psa_mpls->smpls_label;
+
+	rt_mpls->mpls_operation = op;
+
+	/* XXX: set experimental bits */
+	rt->rt_flags |= RTF_MPLS;
+
+	return (0);
+}
+
+void
+rt_mpls_clear(struct rtentry *rt)
+{
+	if (rt->rt_llinfo != NULL && rt->rt_flags & RTF_MPLS) {
+		free(rt->rt_llinfo, M_TEMP, sizeof(struct rt_mpls));
+		rt->rt_llinfo = NULL;
+	}
+	rt->rt_flags &= ~RTF_MPLS;
+}
+#endif
 
 u_int16_t
 rtlabel_name2id(char *name)

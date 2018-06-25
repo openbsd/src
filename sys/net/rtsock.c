@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.271 2018/06/25 09:39:16 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.272 2018/06/25 09:41:45 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -557,9 +557,6 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 #ifdef BFD
 	struct sockaddr_bfd	 sa_bfd;
 #endif
-#ifdef MPLS
-	struct sockaddr_mpls	 sa_mpls;
-#endif
 	struct ifnet		*ifp = NULL;
 	int			 len;
 
@@ -574,6 +571,8 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 #endif
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
+		struct sockaddr_mpls	 sa_mpls;
+
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		sa_mpls.smpls_family = AF_MPLS;
 		sa_mpls.smpls_len = sizeof(sa_mpls);
@@ -1015,43 +1014,17 @@ change:
 #ifdef MPLS
 			if ((rtm->rtm_flags & RTF_MPLS) &&
 			    info->rti_info[RTAX_SRC] != NULL) {
-				struct sockaddr_mpls	*psa_mpls;
-				struct rt_mpls		*rt_mpls;
-
-				psa_mpls = (struct sockaddr_mpls *)
-				    info->rti_info[RTAX_SRC];
-
 				NET_LOCK();
-				if (rt->rt_llinfo == NULL) {
-					rt->rt_llinfo =
-					    malloc(sizeof(struct rt_mpls),
-					    M_TEMP, M_WAITOK | M_ZERO);
-				}
-
-				rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
-
-				if (psa_mpls != NULL) {
-					rt_mpls->mpls_label =
-					    psa_mpls->smpls_label;
-				}
-
-				rt_mpls->mpls_operation = info->rti_mpls;
-
-				/* XXX: set experimental bits */
-
-				rt->rt_flags |= RTF_MPLS;
+				error = rt_mpls_set(rt,
+				    info->rti_info[RTAX_SRC], info->rti_mpls);
 				NET_UNLOCK();
+				if (error)
+					break;
 			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
 			    !(rtm->rtm_flags & RTF_MPLS))) {
 				NET_LOCK();
 				/* if gateway changed remove MPLS information */
-				if (rt->rt_llinfo != NULL &&
-				    rt->rt_flags & RTF_MPLS) {
-					free(rt->rt_llinfo, M_TEMP,
-					    sizeof(struct rt_mpls));
-					rt->rt_llinfo = NULL;
-					rt->rt_flags &= ~RTF_MPLS;
-				}
+				rt_mpls_clear(rt);
 				NET_UNLOCK();
 			}
 #endif
@@ -1654,9 +1627,6 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 #ifdef BFD
 	struct sockaddr_bfd	 sa_bfd;
 #endif
-#ifdef MPLS
-	struct sockaddr_mpls	 sa_mpls;
-#endif
 	struct sockaddr_rtlabel	 sa_rl;
 	struct sockaddr_in6	 sa_mask;
 
@@ -1694,6 +1664,8 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 #endif
 #ifdef MPLS
 	if (rt->rt_flags & RTF_MPLS) {
+		struct sockaddr_mpls	 sa_mpls;
+
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		sa_mpls.smpls_family = AF_MPLS;
 		sa_mpls.smpls_len = sizeof(sa_mpls);

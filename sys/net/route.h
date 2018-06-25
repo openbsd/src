@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.169 2018/04/24 06:19:47 florian Exp $	*/
+/*	$OpenBSD: route.h,v 1.170 2018/06/25 09:41:45 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -441,6 +441,9 @@ void			 rt_timer_queue_change(struct rttimer_queue *, long);
 void			 rt_timer_queue_destroy(struct rttimer_queue *);
 unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
 void			 rt_timer_timer(void *);
+
+int	 rt_mpls_set(struct rtentry *, struct sockaddr *, uint8_t);
+void	 rt_mpls_clear(struct rtentry *);
 
 int	 rtisvalid(struct rtentry *);
 int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
