@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.290 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.291 2018/06/25 16:06:27 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -916,6 +916,8 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	fdplock(fdp);
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		goto out;
+	fdpunlock(fdp);
+
 	flags = FFLAGS(oflags);
 	if (flags & FREAD)
 		ni_pledge |= PLEDGE_RPATH;
@@ -935,6 +937,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
 	}
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		fdplock(fdp);
 		if (error == ENODEV &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
@@ -969,6 +972,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
+			fdplock(fdp);
 			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
@@ -991,6 +995,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		}
 		if (error) {
 			VOP_UNLOCK(vp);
+			fdplock(fdp);
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
 			closef(fp, p);
@@ -999,6 +1004,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
+	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
 	FRELE(fp, p);
 out:
