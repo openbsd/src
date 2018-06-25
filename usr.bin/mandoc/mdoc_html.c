@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.182 2018/06/25 13:46:01 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.183 2018/06/25 14:06:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1414,7 +1414,7 @@ mdoc_bf_pre(MDOC_ARGS)
 		cattr = "Bf No";
 
 	/* Cannot use TAG_SPAN because it may contain blocks. */
-	print_otag(h, TAG_DIV, "cshl", cattr, 1);
+	print_otag(h, TAG_DIV, "c", cattr);
 	return 1;
 }
 
