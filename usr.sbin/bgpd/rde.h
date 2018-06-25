@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.169 2018/06/21 17:26:16 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.170 2018/06/25 14:28:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -224,7 +224,7 @@ struct nexthop {
 	 */
 	u_int32_t		costs;
 #endif
-	int			refcnt;	/* filterset reference counter */
+	int			refcnt;
 	enum nexthop_state	state;
 	u_int8_t		nexthop_netlen;
 	u_int8_t		flags;
@@ -506,13 +506,14 @@ prefix_peer(struct prefix *p)
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);
-void		 nexthop_modify(struct rde_aspath *, struct bgpd_addr *,
+void		 nexthop_modify(struct rde_aspath *, struct nexthop *,
 		     enum action_types, u_int8_t);
 void		 nexthop_link(struct rde_aspath *);
 void		 nexthop_unlink(struct rde_aspath *);
-int		 nexthop_delete(struct nexthop *);
 void		 nexthop_update(struct kroute_nexthop *);
 struct nexthop	*nexthop_get(struct bgpd_addr *);
+struct nexthop	*nexthop_ref(struct nexthop *);
+int		 nexthop_put(struct nexthop *);
 int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_update.c */

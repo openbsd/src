@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.88 2018/06/21 17:28:02 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.89 2018/06/25 14:28:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -130,8 +130,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
 		case ACTION_SET_NEXTHOP_SELF:
-			nexthop_modify(asp, &set->action.nexthop, set->type,
-			    aid);
+			nexthop_modify(asp, set->action.nh, set->type, aid);
 			break;
 		case ACTION_SET_COMMUNITY:
 			switch (set->action.community.as) {
@@ -607,7 +606,6 @@ void
 filterset_free(struct filter_set_head *sh)
 {
 	struct filter_set	*s;
-	struct nexthop		*nh;
 
 	if (sh == NULL)
 		return;
@@ -619,11 +617,8 @@ filterset_free(struct filter_set_head *sh)
 		else if (s->type == ACTION_PFTABLE_ID)
 			pftable_unref(s->action.id);
 		else if (s->type == ACTION_SET_NEXTHOP &&
-		    bgpd_process == PROC_RDE) {
-			nh = nexthop_get(&s->action.nexthop);
-			--nh->refcnt;
-			(void)nexthop_delete(nh);
-		}
+		    bgpd_process == PROC_RDE)
+			nexthop_put(s->action.nh);
 		free(s);
 	}
 }

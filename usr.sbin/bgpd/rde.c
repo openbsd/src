@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.380 2018/06/13 09:33:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.381 2018/06/25 14:28:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -377,7 +377,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
 	struct filter_set	*s;
-	struct nexthop		*nh;
 	u_int8_t		*asdata;
 	ssize_t			 n;
 	int			 verbose;
@@ -570,12 +569,9 @@ badnet:
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
+			if (s->type == ACTION_SET_NEXTHOP)
+				s->action.nh = nexthop_get(&s->action.nexthop);
 			TAILQ_INSERT_TAIL(session_set, s, entry);
-
-			if (s->type == ACTION_SET_NEXTHOP) {
-				nh = nexthop_get(&s->action.nexthop);
-				nh->refcnt++;
-			}
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
@@ -668,7 +664,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct filter_head	*nr;
 	struct filter_rule	*r;
 	struct filter_set	*s;
-	struct nexthop		*nh;
 	struct rib		*rib;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi;
@@ -907,12 +902,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
+			if (s->type == ACTION_SET_NEXTHOP)
+				s->action.nh = nexthop_get(&s->action.nexthop);
 			TAILQ_INSERT_TAIL(parent_set, s, entry);
-
-			if (s->type == ACTION_SET_NEXTHOP) {
-				nh = nexthop_get(&s->action.nexthop);
-				nh->refcnt++;
-			}
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
@@ -1263,8 +1255,7 @@ rde_update_dispatch(struct imsg *imsg)
 		 * But first unlock the previously locked nexthop.
 		 */
 		if (asp->nexthop) {
-			asp->nexthop->refcnt--;
-			(void)nexthop_delete(asp->nexthop);
+			(void)nexthop_put(asp->nexthop);
 			asp->nexthop = NULL;
 		}
 		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, asp)) == -1) {
@@ -1361,11 +1352,6 @@ rde_update_dispatch(struct imsg *imsg)
 
 done:
 	if (attrpath_len != 0) {
-		/* unlock the previously locked entry */
-		if (asp->nexthop) {
-			asp->nexthop->refcnt--;
-			(void)nexthop_delete(asp->nexthop);
-		}
 		/* free allocated attribute memory that is no longer used */
 		path_put(asp);
 	}
@@ -1569,12 +1555,6 @@ bad_flags:
 			return (-1);
 		}
 		a->nexthop = nexthop_get(&nexthop);
-		/*
-		 * lock the nexthop because it is not yet linked else
-		 * withdraws may remove this nexthop which in turn would
-		 * cause a use after free error.
-		 */
-		a->nexthop->refcnt++;
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
@@ -1908,12 +1888,6 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 	}
 
 	asp->nexthop = nexthop_get(&nexthop);
-	/*
-	 * lock the nexthop because it is not yet linked else
-	 * withdraws may remove this nexthop which in turn would
-	 * cause a use after free error.
-	 */
-	asp->nexthop->refcnt++;
 
 	/* ignore reserved (old SNPA) field as per RFC4760 */
 	totlen += nhlen + 1;

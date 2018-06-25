@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.160 2018/06/21 17:26:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.161 2018/06/25 14:28:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -607,7 +607,6 @@ path_destroy(struct rde_aspath *asp)
 	LIST_REMOVE(asp, path_l);
 	TAILQ_REMOVE(&asp->peer->path_h, asp, peer_l);
 	asp->peer = NULL;
-	asp->nexthop = NULL;
 	asp->flags &= ~F_ATTR_LINKED;
 
 	path_put(asp);
@@ -654,7 +653,7 @@ path_copy(struct rde_aspath *asp)
 		nasp->aspath->refcnt++;
 		rdemem.aspath_refs++;
 	}
-	nasp->nexthop = asp->nexthop;
+	nasp->nexthop = nexthop_ref(asp->nexthop);
 	nasp->med = asp->med;
 	nasp->lpref = asp->lpref;
 	nasp->weight = asp->weight;
@@ -705,6 +704,7 @@ path_put(struct rde_aspath *asp)
 	rtlabel_unref(asp->rtlabelid);
 	pftable_unref(asp->pftableid);
 	aspath_put(asp->aspath);
+	nexthop_put(asp->nexthop);
 	attr_freeall(asp);
 	rdemem.path_cnt--;
 	free(asp);
@@ -1161,10 +1161,14 @@ nexthop_shutdown(void)
 		    nh != NULL; nh = nnh) {
 			nnh = LIST_NEXT(nh, nexthop_l);
 			nh->state = NEXTHOP_UNREACH;
-			(void)nexthop_delete(nh);
+			(void)nexthop_put(nh);
 		}
-		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i]))
-			log_warnx("nexthop_shutdown: non-free table");
+		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i])) {
+			nh = LIST_FIRST(&nexthoptable.nexthop_hashtbl[i]);
+			log_warnx("nexthop_shutdown: non-free table, "
+			    "nexthop %s refcnt %d",
+			    log_addr(&nh->exit_nexthop), nh->refcnt);
+		}
 	}
 
 	free(nexthoptable.nexthop_hashtbl);
@@ -1185,6 +1189,7 @@ nexthop_update(struct kroute_nexthop *msg)
 	}
 
 	oldstate = nh->state;
+
 	if (msg->valid)
 		nh->state = NEXTHOP_REACH;
 	else
@@ -1202,9 +1207,10 @@ nexthop_update(struct kroute_nexthop *msg)
 	    sizeof(nh->nexthop_net));
 	nh->nexthop_netlen = msg->netlen;
 
-	if (nexthop_delete(nh))
-		/* nexthop no longer used */
-		return;
+	if (oldstate == NEXTHOP_LOOKUP)
+		/* drop reference which was hold during the lookup */
+		if (nexthop_put(nh))
+			return;
 
 	if (rde_noevaluate())
 		/*
@@ -1219,12 +1225,13 @@ nexthop_update(struct kroute_nexthop *msg)
 }
 
 void
-nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop,
+nexthop_modify(struct rde_aspath *asp, struct nexthop *nh,
     enum action_types type, u_int8_t aid)
 {
-	struct nexthop	*nh;
+	if (asp->flags & F_ATTR_LINKED)
+		fatalx("nexthop_modify: trying to modify linked asp");
 
-	if (type == ACTION_SET_NEXTHOP && aid != nexthop->aid)
+	if (type == ACTION_SET_NEXTHOP && aid != nh->exit_nexthop.aid)
 		return;
 
 	asp->flags &= ~F_NEXTHOP_MASK;
@@ -1242,12 +1249,8 @@ nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop,
 		asp->flags |= F_NEXTHOP_SELF;
 		break;
 	case ACTION_SET_NEXTHOP:
-		nh = nexthop_get(nexthop);
-		if (asp->flags & F_ATTR_LINKED)
-			nexthop_unlink(asp);
-		asp->nexthop = nh;
-		if (asp->flags & F_ATTR_LINKED)
-			nexthop_link(asp);
+		nexthop_put(asp->nexthop);
+		asp->nexthop = nexthop_ref(nh);
 		break;
 	default:
 		break;
@@ -1273,30 +1276,11 @@ nexthop_unlink(struct rde_aspath *asp)
 
 	LIST_REMOVE(asp, nexthop_l);
 
-	/* see if list is empty */
+	/* remove reference to nexthop */
 	nh = asp->nexthop;
 	asp->nexthop = NULL;
 
-	(void)nexthop_delete(nh);
-}
-
-int
-nexthop_delete(struct nexthop *nh)
-{
-	/* nexthop still used by some other aspath */
-	if (!LIST_EMPTY(&nh->path_h))
-		return (0);
-
-	/* either pinned or in a state where it may not be deleted */
-	if (nh->refcnt > 0 || nh->state == NEXTHOP_LOOKUP)
-		return (0);
-
-	LIST_REMOVE(nh, nexthop_l);
-	rde_send_nexthop(&nh->exit_nexthop, 0);
-
-	rdemem.nexthop_cnt--;
-	free(nh);
-	return (1);
+	(void)nexthop_put(nh);
 }
 
 struct nexthop *
@@ -1313,6 +1297,7 @@ nexthop_get(struct bgpd_addr *nexthop)
 
 		LIST_INIT(&nh->path_h);
 		nh->state = NEXTHOP_LOOKUP;
+		nexthop_ref(nh);	/* take reference for lookup */
 		nh->exit_nexthop = *nexthop;
 		LIST_INSERT_HEAD(nexthop_hash(nexthop), nh,
 		    nexthop_l);
@@ -1320,7 +1305,36 @@ nexthop_get(struct bgpd_addr *nexthop)
 		rde_send_nexthop(&nh->exit_nexthop, 1);
 	}
 
-	return (nh);
+	return nexthop_ref(nh);
+}
+
+struct nexthop *
+nexthop_ref(struct nexthop *nexthop)
+{
+	if (nexthop)
+		nexthop->refcnt++;
+	return (nexthop);
+}
+
+int
+nexthop_put(struct nexthop *nh)
+{
+	if (nh == NULL)
+		return (0);
+
+	if (--nh->refcnt > 0)
+		return (0);
+
+	/* sanity check */
+	if (!LIST_EMPTY(&nh->path_h) || nh->state == NEXTHOP_LOOKUP)
+		fatalx("nexthop_put: refcnt error");
+
+	LIST_REMOVE(nh, nexthop_l);
+	rde_send_nexthop(&nh->exit_nexthop, 0);
+
+	rdemem.nexthop_cnt--;
+	free(nh);
+	return (1);
 }
 
 int
