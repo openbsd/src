@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.100 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.101 2018/06/25 22:16:53 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -275,7 +275,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct area	*narea;
 	static struct iface	*niface;
-	struct ifaddrdel	*ifc;
+	struct ifaddrchange	*ifc;
 	struct imsg	 imsg;
 	struct imsgev	*iev = bula;
 	struct imsgbuf	*ibuf = &iev->ibuf;
@@ -361,9 +361,38 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				}
 			}
 			break;
+		case IMSG_IFADDRADD:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct ifaddrchange))
+				fatalx("IFADDRADD imsg with wrong len");
+			ifc = imsg.data;
+
+			LIST_FOREACH(area, &oeconf->area_list, entry) {
+				LIST_FOREACH(iface, &area->iface_list, entry) {
+					if (ifc->ifindex == iface->ifindex &&
+					    ifc->addr.s_addr ==
+					    iface->addr.s_addr) {
+						iface->mask = ifc->mask;
+						iface->dst = ifc->dst;
+						/*
+						 * Previous down event might
+						 * have failed if the address
+						 * was not present at that
+						 * time.
+						 */
+						if_fsm(iface, IF_EVT_DOWN);
+						if_fsm(iface, IF_EVT_UP);
+						log_warnx("interface %s:%s "
+						    "returned", iface->name,
+						    inet_ntoa(iface->addr));
+						break;
+					}
+				}
+			}
+			break;
 		case IMSG_IFADDRDEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct ifaddrdel))
+			    sizeof(struct ifaddrchange))
 				fatalx("IFADDRDEL imsg with wrong len");
 			ifc = imsg.data;
 

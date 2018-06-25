@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.100 2018/02/11 02:27:33 benno Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.101 2018/06/25 22:16:53 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -132,6 +132,7 @@ enum imsg_type {
 	IMSG_RECONF_REDIST,
 	IMSG_RECONF_END,
 	IMSG_DEMOTE,
+	IMSG_IFADDRADD,
 	IMSG_IFADDRDEL
 };
 
@@ -363,8 +364,10 @@ struct iface {
 	u_int8_t		 passive;
 };
 
-struct ifaddrdel {
+struct ifaddrchange {
 	struct in_addr		addr;
+	struct in_addr		mask;
+	struct in_addr		dst;
 	unsigned int		ifindex;
 };
 

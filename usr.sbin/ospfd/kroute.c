@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.109 2018/02/11 02:27:33 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.110 2018/06/25 22:16:53 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1072,8 +1072,9 @@ void
 if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node *kif;
-	struct kif_addr *ka;
+	struct kif_node 	*kif;
+	struct kif_addr 	*ka;
+	struct ifaddrchange	 ifn;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
@@ -1094,15 +1095,21 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 		ka->dstbrd.s_addr = INADDR_NONE;
 
 	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
+
+	ifn.addr = ka->addr;
+	ifn.mask = ka->mask;
+	ifn.dst = ka->dstbrd;
+	ifn.ifindex = ifindex;
+	main_imsg_compose_ospfe(IMSG_IFADDRADD, 0, &ifn, sizeof(ifn));
 }
 
 void
 if_deladdr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node *kif;
-	struct kif_addr *ka, *nka;
-	struct ifaddrdel ifc;
+	struct kif_node 	*kif;
+	struct kif_addr		*ka, *nka;
+	struct ifaddrchange	 ifc;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
