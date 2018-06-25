@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.90 2018/05/17 20:21:15 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.91 2018/06/25 22:33:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -25,7 +25,8 @@
 
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
-#include <machine/biosvar.h>
+
+#include <machine/bus.h>
 
 #include "acpipwrres.h"
 
@@ -296,14 +297,22 @@ struct acpi_dev_rank {
 #define ACPI_IOC_SETSLEEPSTATE	_IOW('A', 2, int)
 
 #if defined(_KERNEL)
+
 struct   acpi_gas;
-int	 acpi_map_address(struct acpi_softc *, struct acpi_gas *, bus_addr_t, bus_size_t,
-			  bus_space_handle_t *, bus_space_tag_t *);
+int	 acpi_map_address(struct acpi_softc *, struct acpi_gas *, bus_addr_t,
+	     bus_size_t, bus_space_handle_t *, bus_space_tag_t *);
 
 int	 acpi_map(paddr_t, size_t, struct acpi_mem_map *);
 void	 acpi_unmap(struct acpi_mem_map *);
+
+int	 acpi_bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	     bus_space_handle_t *);
+void	 acpi_bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+struct	 bios_attach_args;
 int	 acpi_probe(struct device *, struct cfdata *, struct bios_attach_args *);
 u_int	 acpi_checksum(const void *, size_t);
+void	 acpi_attach_common(struct acpi_softc *, paddr_t);
 void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);
 void	 acpi_powerdown(void);

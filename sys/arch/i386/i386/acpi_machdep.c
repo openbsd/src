@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.65 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.66 2018/06/25 22:33:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -28,6 +28,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/biosvar.h>
 #include <machine/bus.h>
 #include <machine/conf.h>
 #include <machine/acpiapm.h>
@@ -102,6 +103,20 @@ acpi_unmap(struct acpi_mem_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
 	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
+}
+
+int
+acpi_bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
+{
+	return _bus_space_map(t, addr, size, flags, bshp);
+}
+
+void
+acpi_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t size)
+{
+	_bus_space_unmap(t, bsh, size, NULL);
 }
 
 u_int8_t *

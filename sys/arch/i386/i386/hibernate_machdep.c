@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.52 2018/06/21 07:33:30 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.53 2018/06/25 22:33:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -26,11 +26,10 @@
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 
-#include <dev/acpi/acpivar.h>
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
 
+#include <machine/biosvar.h>
 #include <machine/hibernate.h>
 #include <machine/hibernate_var.h>
 #include <machine/kcore.h>
@@ -39,6 +38,8 @@
 #ifdef MULTIPROCESSOR
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
+
+#include <dev/acpi/acpivar.h>
 
 #include "acpi.h"
 #include "wd.h"

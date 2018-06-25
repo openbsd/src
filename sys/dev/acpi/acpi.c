@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.344 2018/05/20 09:12:35 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.345 2018/06/25 22:33:24 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -79,8 +79,6 @@ pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void	 acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
 int	acpi_pci_notify(struct aml_node *, int, void *);
 
-int	acpi_match(struct device *, void *, void *);
-void	acpi_attach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
 
@@ -198,21 +196,55 @@ static const char *sbtn_pnp[] = {
 int	mouse_has_softbtn;
 #endif /* SMALL_KERNEL */
 
+struct acpi_softc *acpi_softc;
+
 /* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
-
-struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach
-};
 
 struct cfdriver acpi_cd = {
 	NULL, "acpi", DV_DULL
 };
 
-struct acpi_softc *acpi_softc;
+#if defined(__amd64__) || defined(__i386__)
 
-#define acpi_bus_space_map	_bus_space_map
-#define acpi_bus_space_unmap	_bus_space_unmap
+#include <machine/biosvar.h>
+
+int	acpi_match(struct device *, void *, void *);
+void	acpi_attach(struct device *, struct device *, void *);
+
+struct cfattach acpi_ca = {
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
+};
+
+int
+acpi_match(struct device *parent, void *match, void *aux)
+{
+	struct bios_attach_args	*ba = aux;
+	struct cfdata		*cf = match;
+
+	/* sanity */
+	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
+		return (0);
+
+	if (!acpi_probe(parent, cf, ba))
+		return (0);
+
+	return (1);
+}
+
+void
+acpi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)self;
+	struct bios_attach_args *ba = aux;
+
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_memt = ba->ba_memt;
+
+	acpi_attach_common(sc, ba->ba_acpipbase);
+}
+
+#endif
 
 uint8_t
 acpi_pci_conf_read_1(pci_chipset_tag_t pc, pcitag_t tag, int reg)
@@ -336,7 +368,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				}
 			}
 		}
-		acpi_bus_space_unmap(iot, ioh, len, NULL);
+		acpi_bus_space_unmap(iot, ioh, len);
 		break;
 
 	case GAS_PCI_CFG_SPACE:
@@ -490,22 +522,6 @@ acpi_foundprt(struct aml_node *node, void *arg)
 
 	/* Default just continue search */
 	return 0;
-}
-
-int
-acpi_match(struct device *parent, void *match, void *aux)
-{
-	struct bios_attach_args	*ba = aux;
-	struct cfdata		*cf = match;
-
-	/* sanity */
-	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
-		return (0);
-
-	if (!acpi_probe(parent, cf, ba))
-		return (0);
-
-	return (1);
 }
 
 TAILQ_HEAD(, acpi_pci) acpi_pcidevs =
@@ -942,10 +958,8 @@ acpi_register_gsb(struct acpi_softc *sc, struct aml_node *devnode)
 #endif
 
 void
-acpi_attach(struct device *parent, struct device *self, void *aux)
+acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 {
-	struct bios_attach_args *ba = aux;
-	struct acpi_softc *sc = (struct acpi_softc *)self;
 	struct acpi_mem_map handle;
 	struct acpi_rsdp *rsdp;
 	struct acpi_q *entry;
@@ -959,14 +973,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t pm1;
 	int s;
 
-	sc->sc_iot = ba->ba_iot;
-	sc->sc_memt = ba->ba_memt;
-
 	rw_init(&sc->sc_lck, "acpilk");
 
 	acpi_softc = sc;
 
-	if (acpi_map(ba->ba_acpipbase, sizeof(struct acpi_rsdp), &handle)) {
+	if (acpi_map(base, sizeof(struct acpi_rsdp), &handle)) {
 		printf(": can't map memory\n");
 		return;
 	}
@@ -1150,11 +1161,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		aaa.aaa_name = "acpitimer";
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
-#if 0
-		aaa.aaa_pcit = sc->sc_pcit;
-		aaa.aaa_smbust = sc->sc_smbust;
-#endif
-		config_found(self, &aaa, acpi_print);
+		config_found(&sc->sc_dev, &aaa, acpi_print);
 	}
 #endif /* SMALL_KERNEL */
 
@@ -1167,12 +1174,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		memset(&aaa, 0, sizeof(aaa));
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
-	#if 0
-		aaa.aaa_pcit = sc->sc_pcit;
-		aaa.aaa_smbust = sc->sc_smbust;
-	#endif
 		aaa.aaa_table = entry->q_table;
-		config_found_sm(self, &aaa, acpi_print, acpi_submatch);
+		config_found_sm(&sc->sc_dev, &aaa, acpi_print, acpi_submatch);
 	}
 
 	/* initialize runtime environment */
@@ -3402,4 +3405,5 @@ acpikqfilter(dev_t dev, struct knote *kn)
 {
 	return (ENXIO);
 }
+
 #endif /* SMALL_KERNEL */
