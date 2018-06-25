@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.5 2018/06/24 12:38:41 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.6 2018/06/25 12:34:40 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -473,7 +473,7 @@ sub verify_tag
 			last;
 		}
 	}
-	if ($tag->{params} eq '' && $use_params) {
+	if ($tag->{params} eq '' && $use_params && !$tag->{found_in_self}) {
 		$state->errsay(
 		    "$msg has no parameters but some define wants them",
 		    $plist->pkgname, $tag->name);
