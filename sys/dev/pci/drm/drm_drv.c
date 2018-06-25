@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.157 2018/01/31 05:04:41 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.158 2018/06/25 22:29:16 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -207,10 +207,8 @@ static struct drm_ioctl_desc drm_ioctls[] = {
 
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 
-#ifdef notyet
 	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_HANDLE_TO_FD, drm_prime_handle_to_fd_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-#endif
 
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
 	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
@@ -736,6 +734,9 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	if (dev->driver->driver_features & DRIVER_GEM)
 		drm_gem_open(dev, file_priv);
 
+	if (drm_core_check_feature(dev, DRIVER_PRIME))
+		drm_prime_init_file_private(&file_priv->prime);
+
 	if (dev->driver->open) {
 		ret = dev->driver->open(dev, file_priv);
 		if (ret != 0) {
@@ -828,6 +829,10 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	if (dev->driver->postclose)
 		dev->driver->postclose(dev, file_priv);
+
+
+	if (drm_core_check_feature(dev, DRIVER_PRIME))
+		drm_prime_destroy_file_private(&file_priv->prime);
 
 	SPLAY_REMOVE(drm_file_tree, &dev->files, file_priv);
 	drm_free(file_priv);
@@ -1116,12 +1121,10 @@ drm_getcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	case DRM_CAP_DUMB_PREFER_SHADOW:
 		req->value = dev->mode_config.prefer_shadow;
 		break;
-#ifdef notyet
 	case DRM_CAP_PRIME:
 		req->value |= dev->driver->prime_fd_to_handle ? DRM_PRIME_CAP_IMPORT : 0;
 		req->value |= dev->driver->prime_handle_to_fd ? DRM_PRIME_CAP_EXPORT : 0;
 		break;
-#endif
 	case DRM_CAP_TIMESTAMP_MONOTONIC:
 		req->value = drm_timestamp_monotonic;
 		break;

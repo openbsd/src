@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.217 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: drmP.h,v 1.218 2018/06/25 22:29:16 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -352,6 +352,12 @@ struct drm_pending_event {
 	void (*destroy)(struct drm_pending_event *event);
 };
 
+/* initial implementaton using a linked list - todo hashtab */
+struct drm_prime_file_private {
+	struct list_head head;
+	struct rwlock lock;
+};
+
 /** File private data */
 struct drm_file {
 	unsigned always_authenticated :1;
@@ -394,6 +400,8 @@ struct drm_file {
 	wait_queue_head_t event_wait;
 	struct list_head event_list;
 	int event_space;
+
+	struct drm_prime_file_private prime;
 
 	struct selinfo rsel;
 	SPLAY_ENTRY(drm_file) link;
@@ -479,6 +487,34 @@ struct drm_gem_object {
 	 */
 	uint32_t pending_read_domains;
 	uint32_t pending_write_domain;
+
+	/**
+	 * dma_buf - dma buf associated with this GEM object
+	 *
+	 * Pointer to the dma-buf associated with this gem object (either
+	 * through importing or exporting). We break the resulting reference
+	 * loop when the last gem handle for this object is released.
+	 *
+	 * Protected by obj->object_name_lock
+	 */
+	struct dma_buf *dma_buf;
+
+	/**
+	 * import_attach - dma buf attachment backing this object
+	 *
+	 * Any foreign dma_buf imported as a gem object has this set to the
+	 * attachment point for the device. This is invariant over the lifetime
+	 * of a gem object.
+	 *
+	 * The driver's ->gem_free_object callback is responsible for cleaning
+	 * up the dma_buf attachment and references acquired at import time.
+	 *
+	 * Note that the drm gem/prime core does not depend upon drivers setting
+	 * this field any more. So for drivers where this doesn't make sense
+	 * (e.g. virtual devices or a displaylink behind an usb bus) they can
+	 * simply leave it as NULL.
+	 */
+	struct dma_buf_attachment *import_attach;
 
 	struct uvm_object uobj;
 	SPLAY_ENTRY(drm_gem_object) entry;
@@ -645,6 +681,20 @@ struct drm_driver {
 
 	int	(*gem_fault)(struct drm_gem_object *, struct uvm_faultinfo *,
 		    off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
+
+	/* prime: */
+	/* export handle -> fd (see drm_gem_prime_handle_to_fd() helper) */
+	int (*prime_handle_to_fd)(struct drm_device *dev, struct drm_file *file_priv,
+				uint32_t handle, uint32_t flags, int *prime_fd);
+	/* import fd -> handle (see drm_gem_prime_fd_to_handle() helper) */
+	int (*prime_fd_to_handle)(struct drm_device *dev, struct drm_file *file_priv,
+				int prime_fd, uint32_t *handle);
+	/* export GEM -> dmabuf */
+	struct dma_buf * (*gem_prime_export)(struct drm_device *dev,
+				struct drm_gem_object *obj, int flags);
+	/* import dmabuf -> GEM */
+	struct drm_gem_object * (*gem_prime_import)(struct drm_device *dev,
+				struct dma_buf *dma_buf);
 
 	int	(*dumb_create)(struct drm_file *file_priv,
 		    struct drm_device *dev, struct drm_mode_create_dumb *args);
@@ -981,6 +1031,18 @@ static inline wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc
 /* Modesetting support */
 extern void drm_vblank_pre_modeset(struct drm_device *dev, unsigned int pipe);
 extern void drm_vblank_post_modeset(struct drm_device *dev, unsigned int pipe);
+
+extern struct dma_buf *drm_gem_prime_export(struct drm_device *dev,
+					    struct drm_gem_object *obj,
+					    int flags);
+extern int drm_gem_prime_handle_to_fd(struct drm_device *dev,
+		struct drm_file *file_priv, uint32_t handle, uint32_t flags,
+		int *prime_fd);
+extern struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
+		struct dma_buf *dma_buf);
+extern int drm_gem_prime_fd_to_handle(struct drm_device *dev,
+		struct drm_file *file_priv, int prime_fd, uint32_t *handle);
+extern void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
 
 bool	drm_mode_parse_command_line_for_connector(const char *,
 	    struct drm_connector *, struct drm_cmdline_mode *);

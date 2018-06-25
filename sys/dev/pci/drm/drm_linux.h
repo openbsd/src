@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.88 2018/04/25 01:27:46 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.89 2018/06/25 22:29:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/errno.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/stdint.h>
@@ -2713,5 +2714,39 @@ release_firmware(const struct firmware *fw)
 }
 
 void *memchr_inv(const void *, int, size_t);
+
+struct dma_buf_ops;
+
+struct dma_buf {
+	const struct dma_buf_ops *ops;
+	void *priv;
+	size_t size;
+	struct file *file;
+};
+
+struct dma_buf_attachment;
+
+void	get_dma_buf(struct dma_buf *);
+struct dma_buf *dma_buf_get(int);
+void	dma_buf_put(struct dma_buf *);
+int	dma_buf_fd(struct dma_buf *, int);
+
+struct dma_buf_ops {
+	void (*release)(struct dma_buf *);
+};
+
+struct dma_buf_export_info {
+	const struct dma_buf_ops *ops;
+	size_t size;
+	int flags;
+	void *priv;
+};
+
+#define DEFINE_DMA_BUF_EXPORT_INFO(x)  struct dma_buf_export_info x 
+
+struct dma_buf *dma_buf_export(const struct dma_buf_export_info *);
+
+#define dma_buf_attach(x, y) NULL
+#define dma_buf_detach(x, y) panic("dma_buf_detach")
 
 #endif

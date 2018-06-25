@@ -45,7 +45,6 @@ void drm_vm_close_locked(struct drm_device *dev, struct vm_area_struct *vma);
 #endif
 
 /* drm_prime.c */
-#ifdef __linux__
 int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
 				 struct drm_file *file_priv);
 int drm_prime_fd_to_handle_ioctl(struct drm_device *dev, void *data,
@@ -55,7 +54,6 @@ void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv);
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv);
 void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpriv,
 					struct dma_buf *dma_buf);
-#endif
 
 /* drm_info.c */
 #ifdef __linux__

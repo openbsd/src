@@ -606,13 +606,15 @@ struct drm_driver kms_driver = {
 	.dumb_create = radeon_mode_dumb_create,
 	.dumb_map_offset = radeon_mode_dumb_mmap,
 	.dumb_destroy = drm_gem_dumb_destroy,
-#ifdef notyet
+#ifdef __linux__
 	.fops = &radeon_driver_kms_fops,
+#endif
 
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = radeon_gem_prime_export,
 	.gem_prime_import = drm_gem_prime_import,
+#ifdef notyet
 	.gem_prime_pin = radeon_gem_prime_pin,
 	.gem_prime_unpin = radeon_gem_prime_unpin,
 	.gem_prime_res_obj = radeon_gem_prime_res_obj,

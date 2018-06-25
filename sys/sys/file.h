@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.49 2018/06/20 10:52:49 mpi Exp $	*/
+/*	$OpenBSD: file.h,v 1.50 2018/06/25 22:29:16 kettenis Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct file {
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
+#define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
 	short	f_type;		/* [I] descriptor type */
 	long	f_count;	/* [F] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */

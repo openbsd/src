@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.41 2018/04/25 01:27:46 jsg Exp $
+# $OpenBSD: files.drm,v 1.42 2018/06/25 22:29:16 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
@@ -32,6 +32,7 @@ file	dev/pci/drm/drm_cache.c			drm
 file	dev/pci/drm/drm_panel.c			drm & inteldrm
 file	dev/pci/drm/drm_dp_mst_topology.c	drm
 file	dev/pci/drm/drm_mipi_dsi.c		drm & inteldrm
+file	dev/pci/drm/drm_prime.c			drm
 file	dev/pci/drm/linux_hdmi.c		drm
 file	dev/pci/drm/linux_list_sort.c		drm
 file	dev/pci/drm/linux_reservation.c		drm
@@ -59,6 +60,7 @@ file	dev/pci/drm/i915/i915_drv.c		inteldrm
 file	dev/pci/drm/i915/i915_gem.c		inteldrm
 file	dev/pci/drm/i915/i915_gem_context.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_batch_pool.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_dmabuf.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_evict.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_execbuffer.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_fence.c	inteldrm
@@ -195,7 +197,7 @@ file	dev/pci/drm/radeon/radeon_legacy_tv.c		radeondrm
 #file	dev/pci/drm/radeon/radeon_mn.c			radeondrm	not needed?
 file	dev/pci/drm/radeon/radeon_object.c		radeondrm
 file	dev/pci/drm/radeon/radeon_pm.c			radeondrm
-#file	dev/pci/drm/radeon/radeon_prime.c		radeondrm
+file	dev/pci/drm/radeon/radeon_prime.c		radeondrm
 file	dev/pci/drm/radeon/radeon_ring.c		radeondrm
 file	dev/pci/drm/radeon/radeon_sa.c			radeondrm
 file	dev/pci/drm/radeon/radeon_semaphore.c		radeondrm

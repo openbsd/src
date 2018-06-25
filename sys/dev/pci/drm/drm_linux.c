@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.23 2018/04/25 01:27:46 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.24 2018/06/25 22:29:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -19,6 +19,9 @@
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/stat.h>
 
 struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
 void *sch_ident;
@@ -802,4 +805,154 @@ unsigned int
 fence_context_alloc(unsigned int num)
 {
 	return __sync_add_and_fetch(&drm_fence_count, num) - num;
+}
+
+int
+dmabuf_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+{
+	return (ENXIO);
+}
+
+int
+dmabuf_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+{
+	return (ENXIO);
+}
+
+int
+dmabuf_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
+{
+	return (ENOTTY);
+}
+
+int
+dmabuf_poll(struct file *fp, int events, struct proc *p)
+{
+	return (0);
+}
+
+int
+dmabuf_kqfilter(struct file *fp, struct knote *kn)
+{
+	return (EINVAL);
+}
+
+int
+dmabuf_stat(struct file *fp, struct stat *st, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+
+	memset(st, 0, sizeof(*st));
+	st->st_size = dmabuf->size;
+	st->st_mode = S_IFIFO;	/* XXX */
+	return (0);
+}
+
+int
+dmabuf_close(struct file *fp, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+
+	fp->f_data = NULL;
+	dmabuf->ops->release(dmabuf);
+	free(dmabuf, M_DRM, sizeof(struct dma_buf));
+	return (0);
+}
+
+struct fileops dmabufops = {
+	.fo_read	= dmabuf_read,
+	.fo_write	= dmabuf_write,
+	.fo_ioctl	= dmabuf_ioctl,
+	.fo_poll	= dmabuf_poll,
+	.fo_kqfilter	= dmabuf_kqfilter,
+	.fo_stat	= dmabuf_stat,
+	.fo_close	= dmabuf_close
+};
+
+struct dma_buf *
+dma_buf_export(const struct dma_buf_export_info *info)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct dma_buf *dmabuf;
+	struct file *fp;
+	int fd, error;
+
+	fdplock(fdp);
+	error = falloc(p, &fp, &fd);
+	if (error) {
+		fdpunlock(fdp);
+		return ERR_PTR(-error);
+	}
+	fdremove(fdp, fd);
+	fdpunlock(fdp);
+	fp->f_type = DTYPE_DMABUF;
+	fp->f_ops = &dmabufops;
+	dmabuf = malloc(sizeof(struct dma_buf), M_DRM, M_WAITOK | M_ZERO);
+	dmabuf->priv = info->priv;
+	dmabuf->ops = info->ops;
+	dmabuf->size = info->size;
+	dmabuf->file = fp;
+	fp->f_data = dmabuf;
+	return dmabuf;
+}
+
+struct dma_buf *
+dma_buf_get(int fd)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return ERR_PTR(-EBADF);
+
+	if (fp->f_type != DTYPE_DMABUF) {
+		FRELE(fp, p);
+		return ERR_PTR(-EINVAL);
+	}
+
+	return fp->f_data;
+}
+
+void
+dma_buf_put(struct dma_buf *dmabuf)
+{
+	KASSERT(dmabuf);
+	KASSERT(dmabuf->file);
+
+	FRELE(dmabuf->file, curproc);
+}
+
+int
+dma_buf_fd(struct dma_buf *dmabuf, int flags)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp = dmabuf->file;
+	int fd, cloexec, error;
+
+	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
+
+	fdplock(fdp);
+restart:
+	if ((error = fdalloc(p, 0, &fd)) != 0) {
+		if (error == ENOSPC) {
+			fdexpand(p);
+			goto restart;
+		}
+		fdpunlock(fdp);
+		return -error;
+	}
+
+	fdinsert(fdp, fd, cloexec, fp);
+	fdpunlock(fdp);
+
+	return fd;
+}
+
+void
+get_dma_buf(struct dma_buf *dmabuf)
+{
+	FREF(dmabuf->file);
 }
