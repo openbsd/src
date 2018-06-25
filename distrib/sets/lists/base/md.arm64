@@ -450,6 +450,7 @@
 ./usr/libdata/perl5/aarch64-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/aarch64-openbsd
 ./usr/mdec/BOOTAA64.EFI
+./usr/sbin/acpidump
 ./usr/sbin/eeprom
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
