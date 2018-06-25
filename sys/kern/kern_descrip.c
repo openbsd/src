@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.168 2018/06/24 05:58:05 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.169 2018/06/25 09:36:28 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -686,15 +686,17 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 	fdpassertlocked(fdp);
 
 	mtx_enter(&fhdlk);
-	if ((fq = fdp->fd_ofiles[0]) != NULL) {
-		LIST_INSERT_AFTER(fq, fp, f_list);
-	} else {
-		LIST_INSERT_HEAD(&filehead, fp, f_list);
+	if ((fp->f_iflags & FIF_INSERTED) == 0) {
+		fp->f_iflags |= FIF_INSERTED;
+		if ((fq = fdp->fd_ofiles[0]) != NULL) {
+			LIST_INSERT_AFTER(fq, fp, f_list);
+		} else {
+			LIST_INSERT_HEAD(&filehead, fp, f_list);
+		}
 	}
 	KASSERT(fdp->fd_ofiles[fd] == NULL);
 	fdp->fd_ofiles[fd] = fp;
 	fdp->fd_ofileflags[fd] |= (flags & UF_EXCLOSE);
-	fp->f_iflags |= FIF_INSERTED;
 	mtx_leave(&fhdlk);
 }
 
@@ -957,7 +959,7 @@ int
 falloc(struct proc *p, struct file **resultfp, int *resultfd)
 {
 	struct file *fp;
-	int error, i, nfiles;
+	int error, i;
 
 	KASSERT(resultfp != NULL);
 	KASSERT(resultfd != NULL);
@@ -971,13 +973,32 @@ restart:
 		}
 		return (error);
 	}
+
+	fp = fnew(p);
+	if (fp == NULL) {
+		fd_unused(p->p_fd, i);
+		return (ENFILE);
+	}
+
+	*resultfp = fp;
+	*resultfd = i;
+
+	return (0);
+}
+
+struct file *
+fnew(struct proc *p)
+{
+	struct file *fp;
+	int nfiles;
+
 	nfiles = atomic_inc_int_nv(&numfiles);
 	if (nfiles > maxfiles) {
 		atomic_dec_int(&numfiles);
-		fd_unused(p->p_fd, i);
 		tablefull("file");
-		return (ENFILE);
+		return (NULL);
 	}
+
 	/*
 	 * Allocate a new file descriptor.
 	 * If the process has file descriptor zero open, add to the list
@@ -993,14 +1014,12 @@ restart:
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
-	*resultfp = fp;
-	*resultfd = i;
 
 	mtx_enter(&fhdlk);
 	fp->f_count++;
 	mtx_leave(&fhdlk);
 
-	return (0);
+	return (fp);
 }
 
 /*
