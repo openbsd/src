@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.104 2018/06/25 13:01:14 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.105 2018/06/25 13:32:59 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,8 +51,6 @@ static	void		  print_man_head(const struct roff_meta *,
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
 static	int		  fillmode(struct html *, int);
-static	int		  a2width(const struct roff_node *,
-				struct roffsu *);
 static	int		  man_B_pre(MAN_ARGS);
 static	int		  man_HP_pre(MAN_ARGS);
 static	int		  man_IP_pre(MAN_ARGS);
@@ -366,14 +364,6 @@ fillmode(struct html *h, int want)
 	return had;
 }
 
-static int
-a2width(const struct roff_node *n, struct roffsu *su)
-{
-	if (n->type != ROFFT_TEXT)
-		return 0;
-	return a2roffsu(n->string, su, SCALE_EN) != NULL;
-}
-
 static void
 man_root_pre(const struct roff_meta *man, struct html *h)
 {
@@ -623,18 +613,10 @@ man_ign_pre(MAN_ARGS)
 static int
 man_RS_pre(MAN_ARGS)
 {
-	struct roffsu	 su;
-
 	if (n->type == ROFFT_HEAD)
 		return 0;
-	else if (n->type == ROFFT_BODY)
-		return 1;
-
-	SCALE_HS_INIT(&su, INDENT);
-	if (n->head->child)
-		a2width(n->head->child, &su);
-
-	print_otag(h, TAG_DIV, "sul", &su);
+	if (n->type == ROFFT_BLOCK)
+		print_otag(h, TAG_DIV, "c", "Bd-indent");
 	return 1;
 }
 
