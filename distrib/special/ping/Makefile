@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2015/10/30 13:39:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/06/25 16:29:00 deraadt Exp $
 
 PROG=	ping
-COPTS+=	-DSMALL 
+COPTS+=	-DSMALL
 .PATH:  ${.CURDIR}/../../../sbin/ping
 
 LDADD=	-lm

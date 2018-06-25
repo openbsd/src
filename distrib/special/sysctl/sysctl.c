@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.11 2018/02/18 17:47:47 naddy Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.12 2018/06/25 16:29:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -120,7 +120,7 @@ set_soii_key(char *src)
 			return (-1);
 		key[i] |= c;
 	}
-	
+
 	return sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL, key,
 	    SOIIKEY_LEN);
 }
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 
 	while (argc--) {
 		name = *argv++;
-		/* 
+		/*
 		 * strlen("net.inet6.ip6.soiikey="
 		 *     "00000000000000000000000000000000") == 54
 		 * strlen("net.inet6.ip6.soiikey=") == 22
@@ -172,4 +172,4 @@ main(int argc, char *argv[])
 	}
 
 	exit(0);
-}	
+}
