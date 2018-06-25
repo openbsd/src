@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.106 2018/06/25 13:59:33 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.107 2018/06/25 14:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -551,13 +551,13 @@ struct tag *
 print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 {
 	va_list		 ap;
-	struct roffsu	 mysu, *su;
+	struct roffsu	*su;
 	char		 numbuf[16];
 	struct tag	*t;
 	const char	*attr;
 	char		*arg1, *arg2;
 	double		 v;
-	int		 i, have_style, tflags;
+	int		 have_style, tflags;
 
 	tflags = htmltags[tag].flags;
 
@@ -673,11 +673,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		/* First letter: input argument type. */
 
 		switch (*fmt++) {
-		case 'h':
-			i = va_arg(ap, int);
-			su = &mysu;
-			SCALE_HS_INIT(su, i);
-			break;
 		case 's':
 			arg1 = va_arg(ap, char *);
 			break;
@@ -693,9 +688,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		switch (*fmt++) {
 		case 'h':
 			attr = "height";
-			break;
-		case 'l':
-			attr = "margin-left";
 			break;
 		case '?':
 			attr = arg1;
