@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.260 2018/06/24 12:38:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.261 2018/06/25 12:35:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1390,6 +1390,10 @@ __PACKAGE__->register_with_factory;
 # unique for tag accumulation to work correctly
 my $cache = {};
 
+my $subclass = {
+	'at-end' => 'Atend',
+	'cleanup' => 'Cleanup' };
+
 sub new
 {
 	my ($class, $args) = @_;
@@ -1410,12 +1414,21 @@ sub stringize
 sub add_object
 {
 	my ($self, $plist) = @_;
-	if ($self->{mode} ne 'at-end') {
-		die "\@define-tag only has at-end mode so far";
+	my $sub = $subclass->{$self->{mode}};
+	if (!defined $sub) {
+		die "unknown mode for \@define-tag";
 	}
+	bless $self, "OpenBSD::PackingElement::DefineTag::$sub";
 	push(@{$plist->{tags_definitions}{$self->name}}, $self);
 	$self->SUPER::add_object($plist);
 }
+
+sub destate
+{
+}
+
+package OpenBSD::PackingElement::DefineTag::Atend;
+our @ISA = qw(OpenBSD::PackingElement::DefineTag);
 
 sub add_tag
 {
@@ -1432,10 +1445,6 @@ sub add_tag
 	} else {
 		$state->{atend}{$self->name} = $self;
 	}
-}
-
-sub destate
-{
 }
 
 sub run_tag
@@ -1455,9 +1464,11 @@ sub run_tag
 			my $v = $command;
 			$v =~ s/\%u/$p/g;
 			$self->run($state, $v);
+			$state->say("Running #1", $v);
 		}
 	} else {
 		$self->run($state, $command);
+		$state->say("Running #1", $command);
 	}
 }
 
@@ -1465,6 +1476,24 @@ sub need_params
 {
 	my $self = shift;
 	return $self->{params} =~ m/\%[lu]/;
+}
+
+package OpenBSD::PackingElement::DefineTag::Cleanup;
+our @ISA = qw(OpenBSD::PackingElement::DefineTag);
+
+sub add_tag
+{
+	my ($self, $tag, $mode, $state) = @_;
+	# okay, we don't need to look at directories if we're not deleting
+	return unless $mode eq 'delete';
+	# this does not work at all like 'at-end'
+	# instead we record a hash of directories we may want to cleanup
+	push(@{$state->{tag_cleanup}{$tag->{expanded}}}, $self);
+}
+
+sub need_params
+{
+	1
 }
 
 package OpenBSD::PackingElement::Exec;
