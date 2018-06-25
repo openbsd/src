@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.16 2018/03/02 03:11:23 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.17 2018/06/25 22:39:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -379,6 +379,9 @@ efi_makebootargs(char *bootargs)
 		    &ST->ConfigurationTable[i].VendorGuid) == 0)
 			fdt = ST->ConfigurationTable[i].VendorTable;
 	}
+
+	if (fdt == NULL)
+		fdt = efi_acpi();
 
 	if (!fdt_init(fdt))
 		return NULL;

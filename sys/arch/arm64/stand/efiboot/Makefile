@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2018/04/08 13:27:22 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.6 2018/06/25 22:39:14 kettenis Exp $
 
 NOMAN=		#
 
@@ -8,8 +8,8 @@ PROG=		BOOTAA64.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c
-SRCS+=		efipxe.c efirng.c fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efiacpi.c
+SRCS+=		efidev.c efipxe.c efirng.c fdt.c dt_blob.S
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -78,3 +78,8 @@ CLEANFILES+=	machine
 NOPROG=yes
 .include <bsd.prog.mk>
 .endif
+
+DTC=	dtc
+DTCOPTS= -p 4096 -H epapr
+update-blob:
+	${DTC} ${DTCOPTS} -O asm -o ${.CURDIR}/dt_blob.S ${.CURDIR}/acpi.dts
