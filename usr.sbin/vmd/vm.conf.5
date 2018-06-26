@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.30 2018/06/26 10:00:08 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.31 2018/06/26 11:34:25 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -105,7 +105,7 @@ Set the control socket owner to the specified user or group.
 Users with access to the control socket will be allowed to use
 .Nm vmctl
 for restricted access to
-.Nm vmd.
+.Nm vmd .
 The default is
 .Ar root:wheel .
 .It Cm socket owner Pf : Ar group
