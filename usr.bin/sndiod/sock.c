@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.24 2018/06/26 07:15:17 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.25 2018/06/26 07:20:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -626,9 +626,7 @@ sock_setpar(struct sock *f)
 			rchan = 1;
 		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
-		s->sub.slot_cmin = s->opt->rmin;
 		s->sub.slot_cmax = s->opt->rmin + rchan - 1;
-		s->sub.dev_cmin = s->opt->rmin;
 		s->sub.dev_cmax = s->opt->rmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
@@ -650,9 +648,7 @@ sock_setpar(struct sock *f)
 			pchan = 1;
 		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
-		s->mix.slot_cmin = s->opt->pmin;
 		s->mix.slot_cmax = s->opt->pmin + pchan - 1;
-		s->mix.dev_cmin = s->opt->pmin;
 		s->mix.dev_cmax = s->opt->pmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
