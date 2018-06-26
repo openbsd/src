@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.13 2018/06/26 07:13:54 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.14 2018/06/26 07:15:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -237,7 +237,8 @@ void dev_midi_vol(struct dev *, struct slot *);
  * sio_open(3) like interface for clients
  */
 void slot_log(struct slot *);
-struct slot *slot_new(struct dev *, char *, struct slotops *, void *, int);
+struct slot *slot_new(struct dev *, struct opt *, char *,
+    struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
 void slot_start(struct slot *);

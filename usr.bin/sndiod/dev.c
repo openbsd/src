@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.36 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.37 2018/06/26 07:15:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -73,7 +73,6 @@ void dev_mmcstop(struct dev *);
 void dev_mmcloc(struct dev *, unsigned int);
 
 void slot_log(struct slot *);
-struct slot *slot_new(struct dev *, char *, struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
 void slot_attach(struct slot *);
@@ -1546,7 +1545,8 @@ slot_freebufs(struct slot *s)
  * allocate a new slot and register the given call-backs
  */
 struct slot *
-slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
+slot_new(struct dev *d, struct opt *opt, char *who,
+    struct slotops *ops, void *arg, int mode)
 {
 	char *p;
 	char name[SLOT_NAMEMAX];
@@ -1641,6 +1641,17 @@ slot_new(struct dev *d, char *who, struct slotops *ops, void *arg, int mode)
 #endif
 
 found:
+	if ((mode & MODE_REC) && (opt->mode & MODE_MON)) {
+		mode |= MODE_MON;
+		mode &= ~MODE_REC;
+	}
+	if ((mode & opt->mode) != mode) {
+		if (log_level >= 1) {
+			slot_log(s);
+			log_puts(": requested mode not allowed\n");
+		}
+		return 0;
+	}
 	if (!dev_ref(d))
 		return NULL;
 	if ((mode & d->mode) != mode) {
@@ -1652,27 +1663,32 @@ found:
 		return 0;
 	}
 	s->dev = d;
+	s->opt = opt;
 	s->ops = ops;
 	s->arg = arg;
 	s->pstate = SLOT_INIT;
-	s->tstate = MMC_OFF;
 	s->mode = mode;
 	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = s->mix.dev_cmin = 0;
-		s->mix.slot_cmax = s->mix.dev_cmax = d->pchan - 1;
+		s->mix.slot_cmin = s->mix.dev_cmin = s->opt->pmin;
+		s->mix.slot_cmax = s->mix.dev_cmax = s->opt->pmax;
 	}
 	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = s->sub.dev_cmin = 0;
-		s->sub.slot_cmax = s->sub.dev_cmax =
-		    ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1;
+		s->sub.slot_cmin = s->sub.dev_cmin = s->opt->rmin;
+		s->sub.slot_cmax = s->sub.dev_cmax = s->opt->rmax;
 	}
-	s->xrun = XRUN_IGNORE;
-	s->dup = 0;
+	if (s->opt->mmc) {
+		s->xrun = XRUN_SYNC;
+		s->tstate = MMC_STOP;
+	} else {
+		s->xrun = XRUN_IGNORE;
+		s->tstate = MMC_OFF;
+	}
+	s->mix.maxweight = s->opt->maxweight;
+	s->dup = s->opt->dup;
 	s->appbufsz = d->bufsz;
 	s->round = d->round;
 	s->rate = d->rate;
-	s->mix.maxweight = ADATA_UNIT;
 	dev_midi_slotdesc(d, s);
 	dev_midi_vol(d, s);
 	return s;

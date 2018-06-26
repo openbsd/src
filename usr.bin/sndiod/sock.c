@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.23 2018/06/26 07:13:54 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.24 2018/06/26 07:15:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -860,39 +860,10 @@ sock_hello(struct sock *f)
 		log_puts("\n");
 	}
 #endif
-	if ((mode & MODE_REC) && (opt->mode & MODE_MON)) {
-		mode |= MODE_MON;
-		mode &= ~MODE_REC;
-	}
-	if ((mode & opt->mode) != mode) {
-		if (log_level >= 1) {
-			sock_log(f);
-			log_puts(": requested mode not allowed\n");
-		}
-		return 0;
-	}
-	s = slot_new(d, p->who, &sock_slotops, f, mode);
+	s = slot_new(d, opt, p->who, &sock_slotops, f, mode);
 	if (s == NULL)
 		return 0;
-	s->opt = opt;
 	f->midi = NULL;
-	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = s->mix.dev_cmin = s->opt->pmin;
-		s->mix.slot_cmax = s->mix.dev_cmax = s->opt->pmax;
-	}
-	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = s->sub.dev_cmin = s->opt->rmin;
-		s->sub.slot_cmax = s->sub.dev_cmax = s->opt->rmax;
-	}
-	if (s->opt->mmc) {
-		s->xrun = XRUN_SYNC;
-		s->tstate = MMC_STOP;
-	} else {
-		s->xrun = XRUN_IGNORE;
-		s->tstate = MMC_OFF;
-	}
-	s->mix.maxweight = s->opt->maxweight;
-	s->dup = s->opt->dup;
 	f->slot = s;
 	return 1;
 }
