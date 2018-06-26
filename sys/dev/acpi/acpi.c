@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.346 2018/06/26 06:52:58 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.347 2018/06/26 07:38:39 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -602,12 +602,12 @@ acpi_getpci(struct aml_node *node, void *arg)
 			if (!aml_evalname(sc, node, "_CRS", 0, NULL, &res)) {
 				aml_parse_resource(&res, acpi_getminbus,
 				    &pci->bus);
-				dnprintf(10, "%s post-crs: %d\n", aml_nodename(node), 
-				    pci->bus);
+				dnprintf(10, "%s post-crs: %d\n",
+				    aml_nodename(node), pci->bus);
 			}
 			if (!aml_evalinteger(sc, node, "_BBN", 0, NULL, &val)) {
-				dnprintf(10, "%s post-bbn: %d, %lld\n", aml_nodename(node), 
-				    pci->bus, val);
+				dnprintf(10, "%s post-bbn: %d, %lld\n",
+				    aml_nodename(node), pci->bus, val);
 				if (pci->bus == -1)
 					pci->bus = val;
 			}
@@ -1072,9 +1072,11 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	 * extended (64-bit) pointer if it exists
 	 */
 	if (sc->sc_fadt->hdr_revision < 3 || sc->sc_fadt->x_dsdt == 0)
-		entry = acpi_maptable(sc, sc->sc_fadt->dsdt, NULL, NULL, NULL, -1);
+		entry = acpi_maptable(sc, sc->sc_fadt->dsdt, NULL, NULL, NULL,
+		    -1);
 	else
-		entry = acpi_maptable(sc, sc->sc_fadt->x_dsdt, NULL, NULL, NULL, -1);
+		entry = acpi_maptable(sc, sc->sc_fadt->x_dsdt, NULL, NULL, NULL,
+		    -1);
 
 	if (entry == NULL)
 		printf(" !DSDT");
@@ -2016,8 +2018,10 @@ acpi_interrupt(void *arg)
 				if (en & sts & (1L << jdx)) {
 					/* Signal this GPE */
 					sc->gpe_table[idx+jdx].active = 1;
-					dnprintf(10, "queue gpe: %x\n", idx+jdx);
-					acpi_addtask(sc, acpi_gpe_task, NULL, idx+jdx);
+					dnprintf(10, "queue gpe: %x\n",
+					    idx+jdx);
+					acpi_addtask(sc, acpi_gpe_task, NULL,
+					    idx+jdx);
 
 					/*
 					 * Edge interrupts need their STS bits
@@ -2191,7 +2195,8 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 		dnprintf(10, "error: GPE %.2x already enabled\n", gpe);
 		return -EBUSY;
 	}
-	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe, edge ? "edge" : "level");
+	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe,
+	    edge ? "edge" : "level");
 	ptbl->handler = handler;
 	ptbl->arg = arg;
 	ptbl->edge = edge;
@@ -2339,8 +2344,10 @@ acpi_init_states(struct acpi_softc *sc)
 		sc->sc_sleeptype[i].slp_typb = -1;
 		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
 			if (res.type == AML_OBJTYPE_PACKAGE) {
-				sc->sc_sleeptype[i].slp_typa = aml_val2int(res.v_package[0]);
-				sc->sc_sleeptype[i].slp_typb = aml_val2int(res.v_package[1]);
+				sc->sc_sleeptype[i].slp_typa =
+				    aml_val2int(res.v_package[0]);
+				sc->sc_sleeptype[i].slp_typb =
+				    aml_val2int(res.v_package[1]);
 				printf(" S%d", i);
 			}
 			aml_freevalue(&res);
@@ -2613,7 +2620,8 @@ fail_suspend:
 	/* 3rd resume AML step: _TTS(runstate) */
 	aml_node_setval(sc, sc->sc_tts, sc->sc_state);
 
-	resume_randomness(rndbuf, rndbuflen);	/* force RNG upper level reseed */
+	/* force RNG upper level reseed */
+	resume_randomness(rndbuf, rndbuflen);
 
 #ifdef MULTIPROCESSOR
 	acpi_resume_mp();
