@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.18 2018/06/26 07:31:29 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.19 2018/06/26 07:36:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,7 +47,7 @@ struct slot {
 		unsigned int vol;		/* volume within the vol */
 		struct abuf buf;		/* socket side buffer */
 		int bpf;			/* byte per frame */
-		int slot_cmax;			/* slot source chans */
+		int nch;			/* number of play chans */
 		struct cmap cmap;		/* channel mapper state */
 		struct resamp resamp;		/* resampler state */
 		struct conv dec;		/* format decoder params */
@@ -59,7 +59,7 @@ struct slot {
 		struct abuf buf;		/* socket side buffer */
 		int prime;			/* initial cycles to skip */
 		int bpf;			/* byte per frame */
-		int slot_cmax;			/* slot destination chans */
+		int nch;			/* number of rec chans */
 		struct cmap cmap;		/* channel mapper state */
 		struct resamp resamp;		/* buffer for resampling */
 		struct conv enc;		/* buffer for encoding */
