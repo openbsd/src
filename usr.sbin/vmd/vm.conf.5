@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.29 2018/06/18 06:04:25 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.30 2018/06/26 10:00:08 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: June 26 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -100,6 +100,16 @@ in the
 section below.
 The default is
 .Ar 100.64.0.0/10 .
+.It Cm socket owner Ar user Ns Op : Ns Ar group
+Set the control socket owner to the specified user or group.
+Users with access to the control socket will be allowed to use
+.Nm vmctl
+for restricted access to
+.Nm vmd.
+The default is
+.Ar root:wheel .
+.It Cm socket owner Pf : Ar group
+Set the control socket owner to the specified group.
 .El
 .Sh VM CONFIGURATION
 Each

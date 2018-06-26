@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.86 2018/06/19 17:12:34 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.87 2018/06/26 10:00:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -85,6 +85,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmd_vm			*vm = NULL;
 	char				*str = NULL;
 	uint32_t			 id = 0;
+	struct control_sock		*rcs;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -274,6 +275,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, imsg->fd,
 			    NULL, 0);
 		}
+		break;
+	case IMSG_VMDOP_DONE:
+		control_reset(&ps->ps_csock);
+		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
+			control_reset(rcs);
+		cmd = 0;
 		break;
 	default:
 		return (-1);

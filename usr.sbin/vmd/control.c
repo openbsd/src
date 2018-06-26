@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2018/05/13 22:48:11 pd Exp $	*/
+/*	$OpenBSD: control.c,v 1.24 2018/06/26 10:00:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -103,6 +103,7 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_CONFIG:
 		config_getconfig(ps->ps_env, imsg);
+		proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
 		break;
 	case IMSG_CTL_RESET:
 		config_getreset(ps->ps_env, imsg);
@@ -169,6 +170,18 @@ control_init(struct privsep *ps, struct control_sock *cs)
 
 	cs->cs_fd = fd;
 	cs->cs_env = ps;
+
+	proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
+
+	return (0);
+}
+
+int
+control_reset(struct control_sock *cs)
+{
+	/* Updating owner of the control socket */
+	if (chown(cs->cs_name, cs->cs_uid, cs->cs_gid) == -1)
+		return (-1);
 
 	return (0);
 }

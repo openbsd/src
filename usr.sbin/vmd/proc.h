@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.12 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.13 2018/06/26 10:00:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -62,6 +62,8 @@ struct control_sock {
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
+	uid_t		 cs_uid;
+	gid_t		 cs_gid;
 
 	TAILQ_ENTRY(control_sock) cs_entry;
 };
@@ -192,6 +194,7 @@ int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 /* control.c */
 void	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
+int	 control_reset(struct control_sock *);
 int	 control_listen(struct control_sock *);
 void	 control_cleanup(struct control_sock *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.68 2018/04/27 12:15:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.69 2018/06/26 10:00:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -105,7 +105,8 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFRDOMAIN,
 	IMSG_VMDOP_VM_SHUTDOWN,
 	IMSG_VMDOP_VM_REBOOT,
-	IMSG_VMDOP_CONFIG
+	IMSG_VMDOP_CONFIG,
+	IMSG_VMDOP_DONE
 };
 
 struct vmop_result {

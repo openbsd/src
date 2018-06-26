@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2018/06/19 17:12:34 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2018/06/26 10:00:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -119,7 +119,8 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR LOCAL
-%token	LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SWITCH UP VM VMID
+%token	LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP
+%token	VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -189,6 +190,10 @@ main		: LOCAL PREFIX STRING {
 			}
 
 			memcpy(&env->vmd_cfg.cfg_localprefix, &h, sizeof(h));
+		}
+		| SOCKET OWNER owner_id {
+			env->vmd_ps.ps_csock.cs_uid = $3.uid;
+			env->vmd_ps.ps_csock.cs_gid = $3.gid == -1 ? 0 : $3.gid;
 		}
 		;
 
@@ -678,6 +683,7 @@ lookup(char *s)
 		{ "prefix",		PREFIX },
 		{ "rdomain",		RDOMAIN },
 		{ "size",		SIZE },
+		{ "socket",		SOCKET },
 		{ "switch",		SWITCH },
 		{ "up",			UP },
 		{ "vm",			VM }
