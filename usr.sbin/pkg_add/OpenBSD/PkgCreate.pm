@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.150 2018/06/24 12:44:38 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.151 2018/06/26 09:42:18 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -881,8 +881,7 @@ sub solve_all_depends
 		if (@todo == 0) {
 			return;
 		}
-		if ($solver->solve_wantlibs($state, 0) &&
-		    $solver->solve_tags($state, 0)) {
+		if ($solver->solve_wantlibs($state, 0)) {
 			return;
 		}
 		$solver->{set}->add_new(@todo);
@@ -908,29 +907,6 @@ sub solve_wantlibs
 	if (!$okay && $final) {
 		$solver->dump($state);
 		$lib_finder->dump($state);
-	}
-	return $okay;
-}
-
-sub solve_tags
-{
-	my ($solver, $state, $final) = @_;
-	return 1;
-
-	my $okay = 1;
-	my $h = $solver->{set}{new}[0];
-	my $plist = $h->{plist};
-	return 1 if !defined $plist->{tags};
-	for my $tag (@{$plist->{tags}}) {
-		$solver->{tag_finder}->lookup($solver,
-		    $solver->{to_register}{$h}, $state, $tag) ||
-		    $solver->find_in_self($plist, $state, $tag);
-		if (!$solver->verify_tag($tag, $state, $plist)) {
-			$okay = 0;
-		}
-	}
-	if (!$okay && $final) {
-		$solver->dump($state);
 	}
 	return $okay;
 }
@@ -1494,9 +1470,6 @@ sub check_dependencies
 
 	$solver->solve_all_depends($state);
 	if (!$solver->solve_wantlibs($state, 1)) {
-		$state->{bad}++;
-	}
-	if (!$solver->solve_tags($state, 1)) {
 		$state->{bad}++;
 	}
 }
