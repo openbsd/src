@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.22 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.23 2018/06/26 07:13:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -274,7 +274,6 @@ sock_new(int fd)
 
 	f = xmalloc(sizeof(struct sock));
 	f->pstate = SOCK_AUTH;
-	f->opt = NULL;
 	f->slot = NULL;
 	f->port = NULL;
 	f->midi = NULL;
@@ -627,10 +626,10 @@ sock_setpar(struct sock *f)
 			rchan = 1;
 		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
-		s->sub.slot_cmin = f->opt->rmin;
-		s->sub.slot_cmax = f->opt->rmin + rchan - 1;
-		s->sub.dev_cmin = f->opt->rmin;
-		s->sub.dev_cmax = f->opt->rmax;
+		s->sub.slot_cmin = s->opt->rmin;
+		s->sub.slot_cmax = s->opt->rmin + rchan - 1;
+		s->sub.dev_cmin = s->opt->rmin;
+		s->sub.dev_cmax = s->opt->rmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
@@ -651,10 +650,10 @@ sock_setpar(struct sock *f)
 			pchan = 1;
 		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
-		s->mix.slot_cmin = f->opt->pmin;
-		s->mix.slot_cmax = f->opt->pmin + pchan - 1;
-		s->mix.dev_cmin = f->opt->pmin;
-		s->mix.dev_cmax = f->opt->pmax;
+		s->mix.slot_cmin = s->opt->pmin;
+		s->mix.slot_cmax = s->opt->pmin + pchan - 1;
+		s->mix.dev_cmin = s->opt->pmin;
+		s->mix.dev_cmax = s->opt->pmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
@@ -714,7 +713,7 @@ sock_setpar(struct sock *f)
 			return 0;
 		}
 		s->xrun = p->xrun;
-		if (f->opt->mmc && s->xrun == XRUN_IGNORE)
+		if (s->opt->mmc && s->xrun == XRUN_IGNORE)
 			s->xrun = XRUN_SYNC;
 #ifdef DEBUG
 		if (log_level >= 3) {
@@ -774,6 +773,7 @@ sock_hello(struct sock *f)
 	struct slot *s;
 	struct port *c;
 	struct dev *d;
+	struct opt *opt;
 	unsigned int mode;
 
 	mode = ntohs(p->mode);
@@ -845,8 +845,8 @@ sock_hello(struct sock *f)
 	d = dev_bynum(p->devnum);
 	if (d == NULL)
 		return 0;
-	f->opt = opt_byname(d, p->opt);
-	if (f->opt == NULL)
+	opt = opt_byname(d, p->opt);
+	if (opt == NULL)
 		return 0;
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -854,17 +854,17 @@ sock_hello(struct sock *f)
 		log_puts(": using ");
 		dev_log(d);
 		log_puts(".");
-		log_puts(f->opt->name);
+		log_puts(opt->name);
 		log_puts(", mode = ");
 		log_putx(mode);
 		log_puts("\n");
 	}
 #endif
-	if ((mode & MODE_REC) && (f->opt->mode & MODE_MON)) {
+	if ((mode & MODE_REC) && (opt->mode & MODE_MON)) {
 		mode |= MODE_MON;
 		mode &= ~MODE_REC;
 	}
-	if ((mode & f->opt->mode) != mode) {
+	if ((mode & opt->mode) != mode) {
 		if (log_level >= 1) {
 			sock_log(f);
 			log_puts(": requested mode not allowed\n");
@@ -874,24 +874,25 @@ sock_hello(struct sock *f)
 	s = slot_new(d, p->who, &sock_slotops, f, mode);
 	if (s == NULL)
 		return 0;
+	s->opt = opt;
 	f->midi = NULL;
 	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = s->mix.dev_cmin = f->opt->pmin;
-		s->mix.slot_cmax = s->mix.dev_cmax = f->opt->pmax;
+		s->mix.slot_cmin = s->mix.dev_cmin = s->opt->pmin;
+		s->mix.slot_cmax = s->mix.dev_cmax = s->opt->pmax;
 	}
 	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = s->sub.dev_cmin = f->opt->rmin;
-		s->sub.slot_cmax = s->sub.dev_cmax = f->opt->rmax;
+		s->sub.slot_cmin = s->sub.dev_cmin = s->opt->rmin;
+		s->sub.slot_cmax = s->sub.dev_cmax = s->opt->rmax;
 	}
-	if (f->opt->mmc) {
+	if (s->opt->mmc) {
 		s->xrun = XRUN_SYNC;
 		s->tstate = MMC_STOP;
 	} else {
 		s->xrun = XRUN_IGNORE;
 		s->tstate = MMC_OFF;
 	}
-	s->mix.maxweight = f->opt->maxweight;
-	s->dup = f->opt->dup;
+	s->mix.maxweight = s->opt->maxweight;
+	s->dup = s->opt->dup;
 	f->slot = s;
 	return 1;
 }

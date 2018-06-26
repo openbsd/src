@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.12 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.13 2018/06/26 07:13:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,6 +39,7 @@ struct slot {
 	struct slotops *ops;			/* client callbacks */
 	struct slot *next;			/* next on the play list */
 	struct dev *dev;			/* device this belongs to */
+	struct opt *opt;			/* config used */
 	void *arg;				/* user data for callbacks */
 	struct aparams par;			/* socket side params */
 	struct {
