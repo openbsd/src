@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.14 2016/09/11 17:53:26 jsing Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.15 2018/06/26 19:43:27 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -619,6 +619,26 @@ OF_child(int phandle)
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.child;
+}
+
+int
+OF_parent(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t parent;
+	} args;
+	
+	args.name = ADR2CELL("parent");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.parent;
 }
 
 int

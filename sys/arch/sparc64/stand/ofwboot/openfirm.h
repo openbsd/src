@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.6 2014/11/26 19:47:03 stsp Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.7 2018/06/26 19:43:27 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -57,5 +57,6 @@ int OF_milliseconds(void);
 void OF_chain(void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen);
 int OF_peer(int);
 int OF_child(int);
+int OF_parent(int);
 int OF_package_to_path(int, char *, int);
 
