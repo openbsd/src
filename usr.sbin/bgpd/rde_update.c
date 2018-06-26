@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.90 2018/06/13 09:33:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.91 2018/06/26 13:34:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -169,7 +169,7 @@ up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 		return (memcmp(a->prefix.vpn4.labelstack,
 		    b->prefix.vpn4.labelstack, a->prefix.vpn4.labellen));
 	default:
-		fatalx("pt_prefix_cmp: unknown af");
+		fatalx("up_prefix_cmp: unknown af");
 	}
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
