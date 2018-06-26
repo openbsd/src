@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.44 2018/06/26 07:42:04 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.45 2018/06/26 07:43:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1737,8 +1737,6 @@ slot_setvol(struct slot *s, unsigned int vol)
 	}
 #endif
 	s->vol = vol;
-	if (s->ops == NULL)
-		return;
 	s->mix.vol = MIDI_TO_ADATA(s->vol);
 }
 
