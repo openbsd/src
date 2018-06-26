@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.45 2018/06/26 07:43:19 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.46 2018/06/26 07:44:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -131,9 +131,6 @@ slot_log(struct slot *s)
 	static char *pstates[] = {
 		"ini", "sta", "rdy", "run", "stp", "mid"
 	};
-	static char *tstates[] = {
-		"off", "sta", "run", "stp"
-	};
 #endif
 	log_puts(s->name);
 	log_putu(s->unit);
@@ -144,8 +141,6 @@ slot_log(struct slot *s)
 		if (s->ops) {
 			log_puts(",pst=");
 			log_puts(pstates[s->pstate]);
-			log_puts(",mmc=");
-			log_puts(tstates[s->tstate]);
 		}
 	}
 #endif
@@ -999,7 +994,6 @@ dev_new(char *path, struct aparams *par,
 		d->slot[i].unit = i;
 		d->slot[i].ops = NULL;
 		d->slot[i].vol = MIDI_MAXCTL;
-		d->slot[i].tstate = MMC_OFF;
 		d->slot[i].serial = d->serial++;
 		strlcpy(d->slot[i].name, "prog", SLOT_NAMEMAX);
 	}
@@ -1314,9 +1308,9 @@ dev_sync_attach(struct dev *d)
 	}
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = d->slot + i;
-		if (!s->ops || s->tstate == MMC_OFF)
+		if (!s->ops || !s->opt->mmc)
 			continue;
-		if (s->tstate != MMC_START || s->pstate != SLOT_READY) {
+		if (s->pstate != SLOT_READY) {
 #ifdef DEBUG
 			if (log_level >= 3) {
 				slot_log(s);
@@ -1330,18 +1324,9 @@ dev_sync_attach(struct dev *d)
 		return;
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = d->slot + i;
-		if (!s->ops)
+		if (!s->ops || !s->opt->mmc)
 			continue;
-		if (s->tstate == MMC_START) {
-#ifdef DEBUG
-			if (log_level >= 3) {
-				slot_log(s);
-				log_puts(": started\n");
-			}
-#endif
-			s->tstate = MMC_RUN;
-			slot_attach(s);
-		}
+		slot_attach(s);
 	}
 	d->tstate = MMC_RUN;
 	dev_midi_full(d);
@@ -1671,13 +1656,7 @@ found:
 		s->mix.nch = s->opt->pmax - s->opt->pmin + 1;
 	if (s->mode & MODE_RECMASK)
 		s->sub.nch = s->opt->rmax - s->opt->rmin + 1;
-	if (s->opt->mmc) {
-		s->xrun = XRUN_SYNC;
-		s->tstate = MMC_STOP;
-	} else {
-		s->xrun = XRUN_IGNORE;
-		s->tstate = MMC_OFF;
-	}
+	s->xrun = s->opt->mmc ? XRUN_SYNC : XRUN_IGNORE;
 	s->appbufsz = d->bufsz;
 	s->round = d->round;
 	s->rate = d->rate;
@@ -1820,12 +1799,10 @@ slot_ready(struct slot *s)
 	 */
 	if (s->dev->pstate == DEV_CFG)
 		return;
-	if (s->tstate == MMC_OFF)
+	if (!s->opt->mmc)
 		slot_attach(s);
-	else {
-		s->tstate = MMC_START;
+	else
 		dev_sync_attach(s->dev);
-	}
 }
 
 /*
@@ -1921,9 +1898,6 @@ slot_stop(struct slot *s)
 		s->pstate = SLOT_READY;
 		slot_ready(s);
 	}
-
-	if (s->tstate != MMC_OFF)
-		s->tstate = MMC_STOP;
 
 	if (s->pstate == SLOT_RUN) {
 		if (s->mode & MODE_PLAY) {

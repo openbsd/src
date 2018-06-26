@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.19 2018/06/26 07:36:27 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.20 2018/06/26 07:44:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -89,7 +89,6 @@ struct slot {
 	unsigned int unit;			/* instance of name */
 	unsigned int serial;			/* global unique number */
 	unsigned int vol;			/* current (midi) volume */
-	unsigned int tstate;			/* mmc state */
 };
 
 struct opt {
@@ -190,7 +189,6 @@ struct dev {
 	/*
 	 * MIDI machine control (MMC)
 	 */
-#define MMC_OFF		0			/* ignore MMC messages */
 #define MMC_STOP	1			/* stopped, can't start */
 #define MMC_START	2			/* attempting to start */
 #define MMC_RUN		3			/* started */
