@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.21 2018/06/15 14:07:36 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.22 2018/06/26 14:45:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -98,6 +98,7 @@ __FBSDID("$FreeBSD: head/sys/kern/subr_witness.c 313261 2017-02-05 02:27:04Z mar
 #include <sys/mplock.h>
 #endif
 #include <sys/mutex.h>
+#include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/stdint.h>
@@ -290,7 +291,11 @@ struct witness_pendhelp {
 
 struct witness_cpu {
 	struct lock_list_entry	*wc_spinlocks;
-};
+	struct lock_list_entry	*wc_lle_cache;
+	unsigned int		 wc_lle_count;
+} __aligned(CACHELINESIZE);
+
+#define WITNESS_LLE_CACHE_MAX	8
 
 struct witness_cpu witness_cpu[MAXCPUS];
 
@@ -1761,9 +1766,23 @@ static struct lock_list_entry *
 witness_lock_list_get(void)
 {
 	struct lock_list_entry *lle;
+	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
+	int s;
 
 	if (witness_watch < 0)
 		return (NULL);
+
+	s = splhigh();
+	if (wcpu->wc_lle_count > 0) {
+		lle = wcpu->wc_lle_cache;
+		wcpu->wc_lle_cache = lle->ll_next;
+		wcpu->wc_lle_count--;
+		splx(s);
+		memset(lle, 0, sizeof(*lle));
+		return (lle);
+	}
+	splx(s);
+
 	mtx_enter(&w_mtx);
 	lle = w_lock_list_free;
 	if (lle == NULL) {
@@ -1781,6 +1800,19 @@ witness_lock_list_get(void)
 static void
 witness_lock_list_free(struct lock_list_entry *lle)
 {
+	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
+	int s;
+
+	s = splhigh();
+	if (wcpu->wc_lle_count < WITNESS_LLE_CACHE_MAX) {
+		lle->ll_next = wcpu->wc_lle_cache;
+		wcpu->wc_lle_cache = lle;
+		wcpu->wc_lle_count++;
+		splx(s);
+		return;
+	}
+	splx(s);
+
 	mtx_enter(&w_mtx);
 	lle->ll_next = w_lock_list_free;
 	w_lock_list_free = lle;
