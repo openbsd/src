@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.15 2018/06/26 07:22:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.16 2018/06/26 07:27:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -71,7 +71,6 @@ struct slot {
 	} sub;
 	int xrun;				/* underrun policy */
 	int skip;				/* cycles to skip (for xrun) */
-	int dup;				/* mono-to-stereo and alike */
 #define SLOT_BUFSZ(s) \
 	((s)->appbufsz + (s)->dev->bufsz / (s)->dev->round * (s)->round)
 	int appbufsz;				/* slot-side buffer size */
