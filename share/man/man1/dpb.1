@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.2 2018/06/26 06:56:07 jmc Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -233,7 +233,7 @@ if run with
 .Fl a :
 pseudo-flavors that disable subpackages and are not necessary for bootstrap
 will be disabled, so that the same port is built once, as far as possible.
-This flag disables that optimization, which might be desireable if you want
+This flag disables that optimization, which might be desirable if you want
 to build a small subset of packages which would pull in the kitchen sink
 otherwise.
 .It Ar DONT_CLEAN_LOCKS
@@ -828,7 +828,7 @@ alone.
 Prevents
 .Nm
 from scheduling anything else on the same host after it starts building.
-\".It Ar memoryhog
+.\".It Ar memoryhog
 .It Ar nojunk
 Port that hardcodes includes in its Makefile mechanisms.
 Prevents
@@ -1058,7 +1058,7 @@ usable as
 .Li nc -U path
 .Pp
 Currents commands are as follows:
-.Bl -tag -offset aaaa -with addhost
+.Bl -tag -offset aaaa -width addhost
 .It Cm addhost Ar hostline
 Add a new host
 .It Cm addpath Ar fullpkgpath ...
@@ -1072,7 +1072,6 @@ Self explanatory
 .It Cm stats
 Show the current stats line
 .El
-.Pp
 .Sh SHUTTING DOWN GRACEFULLY
 .Nm
 periodically checks for a file named
@@ -1481,7 +1480,7 @@ can clean up the host correctly.
 In particular,
 .Ar junk
 will not clean up dependencies already scheduled for installation.
-Ports that do no obtain the lock on first try are put to sleep.
+Ports that do not obtain the lock on first try are put to sleep.
 .It Received IO
 Printed in a
 .Pa paths/pkgpath.log

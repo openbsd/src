@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: bulk.8,v 1.2 2018/06/26 06:56:07 jmc Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -88,7 +88,6 @@ Likewise, maxproc-cur is too small for machines with more than 4-6 cpus.
 Note that _pbuild does not need network access, and is now blocked by default
 in
 .Xr pf 4 .
-.Ed
 .Pp
 Recent
 .Ox
@@ -158,7 +157,8 @@ Check that the full config can still build ports.
 .Pp
 You're now ready for a full bulk.
 Beware that even fast configs (3 amd64 with 8 cores each) may take over 24 hours
-to finish. It's generally appropriate to run
+to finish.
+It's generally appropriate to run
 .Xr dpb 1
 under
 .Xr tmux 1 .

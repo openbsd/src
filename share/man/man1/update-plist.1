@@ -1,4 +1,4 @@
-.\"	$OpenBSD: update-plist.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: update-plist.1,v 1.2 2018/06/26 06:56:07 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Marc Espie <espie@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm update-plist
-.Nd create or update packing-list(s) for a given port.
+.Nd create or update packing-list(s) for a given port
 .Sh SYNOPSIS
 .Ev PORTSDIR Ns = Ns Ar path
 .Op Ev FAKE_TREE_OWNER Ns = Ns Ar user Ev PORTS_TREE_OWNER Ns = Ns Ar user Nm doas
@@ -110,7 +110,8 @@ pipes.
 Default is
 .Sq hw.ncpu .
 .It Fl n
-Do not move the final packing-lists in position. Instead, leave the
+Do not move the final packing-lists in position.
+Instead, leave the
 .Pa <file>.new
 files for comparison.
 .It Fl q
