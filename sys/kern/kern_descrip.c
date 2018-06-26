@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.170 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.171 2018/06/26 14:43:01 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1377,10 +1377,11 @@ dupfdopen(struct proc *p, int indx, int mode)
 		return (EDEADLK);
 	}
 
+	KASSERT(wfp->f_iflags & FIF_INSERTED);
 	fdp->fd_ofiles[indx] = wfp;
 	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
 	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
-	fd_used(fdp, indx);
+
 	return (0);
 }
 
