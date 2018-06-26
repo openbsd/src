@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.26 2018/06/26 07:30:26 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.27 2018/06/26 07:31:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -635,7 +635,7 @@ sock_setpar(struct sock *f)
 			log_puts(":");
 			log_putu(s->opt->rmax);
 			log_puts(" -> ");
-			log_putu(s->sub.slot_cmin);
+			log_putu(s->opt->rmin);
 			log_puts(":");
 			log_putu(s->sub.slot_cmax);
 			log_puts("\n");
@@ -652,7 +652,7 @@ sock_setpar(struct sock *f)
 		if (log_level >= 3) {
 			sock_log(f);
 			log_puts(": playback channels ");
-			log_putu(s->mix.slot_cmin);
+			log_putu(s->opt->pmin);
 			log_puts(":");
 			log_putu(s->mix.slot_cmax);
 			log_puts(" -> ");
@@ -1010,13 +1010,13 @@ sock_execmsg(struct sock *f)
 			aparams_log(&s->par);
 			if (s->mode & MODE_PLAY) {
 				log_puts(", play ");
-				log_puti(s->mix.slot_cmin);
+				log_puti(s->opt->pmin);
 				log_puts(":");
 				log_puti(s->mix.slot_cmax);
 			}
 			if (s->mode & MODE_RECMASK) {
 				log_puts(", rec ");
-				log_puti(s->sub.slot_cmin);
+				log_puti(s->opt->rmin);
 				log_puts(":");
 				log_puti(s->sub.slot_cmax);
 			}
@@ -1123,11 +1123,11 @@ sock_execmsg(struct sock *f)
 		m->u.par.msb = s->par.msb;
 		if (s->mode & MODE_PLAY) {
 			m->u.par.pchan = htons(s->mix.slot_cmax -
-			    s->mix.slot_cmin + 1);
+			    s->opt->pmin + 1);
 		}
 		if (s->mode & MODE_RECMASK) {
 			m->u.par.rchan = htons(s->sub.slot_cmax -
-			    s->sub.slot_cmin + 1);
+			    s->opt->rmin + 1);
 		}
 		m->u.par.rate = htonl(s->rate);
 		m->u.par.appbufsz = htonl(s->appbufsz);
