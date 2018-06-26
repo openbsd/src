@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.43 2018/06/26 07:39:59 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.44 2018/06/26 07:42:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1865,7 +1865,6 @@ slot_start(struct slot *s)
 	}
 #endif
 	slot_allocbufs(s);
-	s->mix.weight = MIDI_TO_ADATA(MIDI_MAXCTL);
 	if (s->mode & MODE_PLAY) {
 		s->pstate = SLOT_START;
 	} else {
