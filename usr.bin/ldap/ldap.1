@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.5 2018/06/17 23:12:48 jmc Exp $
+.\" $OpenBSD: ldap.1,v 1.6 2018/06/26 09:47:20 reyk Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2018 $
+.Dd $Mdocdate: June 26 2018 $
 .Dt LDAP 1
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Op Fl l Ar timelimit
 .Op Fl s Ar scope
 .Op Fl w Ar secret
+.Op Fl y Ar secretfile
 .Op Fl z Ar sizelimit
 .Op Ar arguments ...
 .Sh DESCRIPTION
@@ -82,9 +83,11 @@ The LDAP URL is described in RFC 4516 with the following format:
 .Op Ar protocol No ://
 .Ar host Op : Ar port
 .Oo / basedn
-.Op ? Ar attribute , ...
-.Op ? Ar scope
-.Op ? Ar filter
+.Oo ? Op Ar attribute , ...
+.Oo ? Op Ar scope
+.Op ? Op Ar filter
+.Oc
+.Oc
 .Oc
 .Sm on
 .Pp
@@ -152,6 +155,13 @@ Use simple authentication.
 This is the default as
 .Nm
 does not support SASL authentication.
+.It Fl y Ar secretfile
+Read the bind secret from the first line of the specified file or from
+standard input if the
+.Ar secretfile
+argument is
+.Sq - .
+The file must not be world-readable if it is a regular file.
 .It Fl Z
 Enable TLS using the StartTLS operation.
 .It Fl z Ar sizelimit

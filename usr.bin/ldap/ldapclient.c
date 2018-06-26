@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.1.1.1 2018/06/13 15:45:58 reyk Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.2 2018/06/26 09:47:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/tree.h>
 #include <sys/un.h>
 
@@ -55,6 +56,7 @@
 #define LDAPHOST	"localhost"
 #define LDAPFILTER	"(objectClass=*)"
 #define LDIF_LINELENGTH	79
+#define LDAPPASSMAX	1024
 
 struct ldapc {
 	struct aldap		*ldap_al;
@@ -95,8 +97,8 @@ usage(void)
 
 	fprintf(stderr,
 "usage: %s search [-LvxZ] [-b basedn] [-c capath] [-D binddn] [-H host]\n"
-"                   [-l timelimit] [-s scope] [-w secret|-W] [-z sizelimit]\n"
-"                   [filter] [attributes ...]\n",
+"                   [-l timelimit] [-s scope] [-w secret|-W] [-y secretfile]\n"
+"                   [-z sizelimit] [filter] [attributes ...]\n",
 	    __progname);
 
 	exit(1);
@@ -105,12 +107,14 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	char			 passbuf[BUFSIZ];
-	const char		*errstr, *url = NULL;
+	char			 passbuf[LDAPPASSMAX];
+	const char		*errstr, *url = NULL, *secretfile = NULL;
+	struct stat		 st;
 	struct ldapc		 ldap;
 	struct ldapc_search	 ls;
 	int			 ch;
 	int			 verbose = 1;
+	FILE			*fp;
 
 	if (pledge("stdio inet unix tty rpath dns", NULL) == -1)
 		err(1, "pledge");
@@ -135,7 +139,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "b:c:D:H:Ll:s:vWw:xZz:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:D:H:Ll:s:vWw:xy:Zz:")) != -1) {
 		switch (ch) {
 		case 'b':
 			ls.ls_basedn = optarg;
@@ -182,6 +186,10 @@ main(int argc, char *argv[])
 		case 'x':
 			/* provided for compatibility */
 			break;
+		case 'y':
+			secretfile = optarg;
+			ldap.ldap_flags |= F_NEEDAUTH;
+			break;
 		case 'Z':
 			ldap.ldap_flags |= F_STARTTLS;
 			break;
@@ -224,6 +232,27 @@ main(int argc, char *argv[])
 		if (ldap.ldap_binddn == NULL) {
 			log_warnx("missing -D binddn");
 			usage();
+		}
+		if (secretfile != NULL) {
+			if (ldap.ldap_secret != NULL)
+				errx(1, "conflicting -w/-y options");
+
+			/* read password from stdin or file (first line) */
+			if (strcmp(secretfile, "-") == 0)
+				fp = stdin;
+			else if (stat(secretfile, &st) == -1)
+				err(1, "failed to access %s", secretfile);
+			else if (S_ISREG(st.st_mode) && (st.st_mode & S_IROTH))
+				errx(1, "%s is world-readable", secretfile);
+			else if ((fp = fopen(secretfile, "r")) == NULL)
+				err(1, "failed to open %s", secretfile);
+			if (fgets(passbuf, sizeof(passbuf), fp) == NULL)
+				err(1, "failed to read %s", secretfile);
+			if (fp != stdin)
+				fclose(fp);
+
+			passbuf[strcspn(passbuf, "\n")] = '\0';
+			ldap.ldap_secret = passbuf;
 		}
 		if (ldap.ldap_secret == NULL) {
 			if (readpassphrase("Password: ",
