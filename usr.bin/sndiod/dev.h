@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.14 2018/06/26 07:15:17 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.15 2018/06/26 07:22:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,7 +44,6 @@ struct slot {
 	struct aparams par;			/* socket side params */
 	struct {
 		int weight;			/* dynamic range */
-		int maxweight;			/* max dynamic range allowed */
 		unsigned int vol;		/* volume within the vol */
 		struct abuf buf;		/* socket side buffer */
 		int bpf;			/* byte per frame */
