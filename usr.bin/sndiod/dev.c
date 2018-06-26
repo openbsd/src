@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.32 2018/06/08 06:20:49 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.33 2018/06/26 07:09:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1866,11 +1866,13 @@ slot_stop(struct slot *s)
 	}
 #endif
 	if (s->pstate == SLOT_START) {
-		if (s->mode & MODE_PLAY) {
-			s->pstate = SLOT_READY;
-			slot_ready(s);
-		} else
-			s->pstate = SLOT_INIT;
+		/*
+		 * If in rec-only mode, we're already in the READY or
+		 * RUN states. We're here because the play buffer was
+		 * not full enough, try to start so it's drained.
+		 */
+		s->pstate = SLOT_READY;
+		slot_ready(s);
 	}
 	if (s->mode & MODE_RECMASK)
 		abuf_done(&s->sub.buf);
