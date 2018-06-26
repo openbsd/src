@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.188 2018/04/23 13:46:34 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.189 2018/06/26 11:14:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2438,12 +2438,11 @@ void
 window_copy_add_formats(struct window_pane *wp, struct format_tree *ft)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
-	struct screen			*s = &data->screen;
 
 	if (wp->mode != &window_copy_mode)
 		return;
 
-	format_add(ft, "selection_present", "%d", s->sel.flag);
+	format_add(ft, "selection_present", "%d", data->screen.sel.flag);
 	format_add(ft, "scroll_position", "%d", data->oy);
 }
 
