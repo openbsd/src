@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.35 2018/06/26 07:11:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.36 2018/06/26 07:12:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,6 +23,7 @@
 #include "dsp.h"
 #include "siofile.h"
 #include "midi.h"
+#include "opt.h"
 #include "sysex.h"
 #include "utils.h"
 
@@ -971,6 +972,7 @@ dev_new(char *path, struct aparams *par,
 	d = xmalloc(sizeof(struct dev));
 	d->path = xstrdup(path);
 	d->num = dev_sndnum++;
+	d->opt_list = NULL;
 
 	/*
 	 * XXX: below, we allocate a midi input buffer, since we don't
@@ -1238,6 +1240,8 @@ dev_del(struct dev *d)
 		log_puts(": deleting\n");
 	}
 #endif
+	while (d->opt_list != NULL)
+		opt_del(d, d->opt_list);
 	if (d->pstate != DEV_CFG)
 		dev_close(d);
 	for (p = &dev_list; *p != d; p = &(*p)->next) {

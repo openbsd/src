@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.11 2016/03/23 06:16:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.12 2018/06/26 07:12:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,12 +95,25 @@ struct slot {
 	unsigned int tstate;			/* mmc state */
 };
 
+struct opt {
+	struct opt *next;
+#define OPT_NAMEMAX 11
+	char name[OPT_NAMEMAX + 1];
+	int maxweight;		/* max dynamic range for clients */
+	int pmin, pmax;		/* play channels */
+	int rmin, rmax;		/* recording channels */
+	int mmc;		/* true if MMC control enabled */
+	int dup;		/* true if join/expand enabled */
+	int mode;		/* bitmap of MODE_XXX */
+};
+
 /*
  * audio device with plenty of slots
  */
 struct dev {
 	struct dev *next;
 	struct slot *slot_list;			/* audio streams attached */
+	struct opt *opt_list;
 	struct midi *midi;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.1 2012/11/23 07:03:28 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.2 2018/06/26 07:12:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,24 +19,9 @@
 
 struct dev;
 
-struct opt {
-	struct opt *next;
-#define OPT_NAMEMAX 11
-	char name[OPT_NAMEMAX + 1];
-	int maxweight;		/* max dynamic range for clients */
-	int pmin, pmax;		/* play channels */
-	int rmin, rmax;		/* recording channels */
-	int mmc;		/* true if MMC control enabled */
-	int dup;		/* true if join/expand enabled */
-	int mode;		/* bitmap of MODE_XXX */
-	struct dev *dev;	/* device to which we're attached */
-};
-
-extern struct opt *opt_list;
-
-struct opt *opt_new(char *, struct dev *, int, int, int, int,
+struct opt *opt_new(struct dev *, char *, int, int, int, int,
     int, int, int, unsigned int);
-void opt_del(struct opt *);
-struct opt *opt_byname(char *, unsigned int);
+void opt_del(struct dev *, struct opt *);
+struct opt *opt_byname(struct dev *, char *);
 
 #endif /* !defined(OPT_H) */

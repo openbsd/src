@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.32 2016/10/20 05:48:50 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.33 2018/06/26 07:12:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -332,7 +332,7 @@ mkopt(char *path, struct dev *d,
 {
 	struct opt *o;
 
-	o = opt_new(path, d, pmin, pmax, rmin, rmax,
+	o = opt_new(d, path, pmin, pmax, rmin, rmax,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
 		return NULL;
@@ -531,7 +531,7 @@ main(int argc, char **argv)
 	if (dev_list == NULL)
 		mkdev(DEFAULT_DEV, &par, 0, bufsz, round, rate, hold, autovol);
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (opt_byname("default", d->num))
+		if (opt_byname(d, "default"))
 			continue;
 		if (mkopt("default", d, pmin, pmax, rmin, rmax,
 			mode, vol, mmc, dup) == NULL)
@@ -614,8 +614,6 @@ main(int argc, char **argv)
 		; /* nothing */
 	midi_done();
 
-	while (opt_list != NULL)
-		opt_del(opt_list);
 	while (dev_list)
 		dev_del(dev_list);
 	while (port_list)
