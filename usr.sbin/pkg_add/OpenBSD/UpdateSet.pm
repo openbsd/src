@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.79 2018/06/20 10:23:18 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.80 2018/06/26 09:40:33 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,8 @@ sub add_older
 {
 	my $self = shift;
 	for my $h (@_) {
-		$self->{older}->{$h->pkgname} = $h;
+		$self->{older}{$h->pkgname} = $h;
+		$h->{is_old} = 1;
 	}
 	return $self;
 }
@@ -257,7 +258,7 @@ sub add_newer
 {
 	my $self = shift;
 	for my $h (@_) {
-		$self->{newer}->{$h->pkgname} = $h;
+		$self->{newer}{$h->pkgname} = $h;
 		$self->{updates}++;
 	}
 	return $self;

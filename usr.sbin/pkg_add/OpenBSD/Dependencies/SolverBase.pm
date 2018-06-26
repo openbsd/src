@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.7 2018/06/25 18:18:00 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.8 2018/06/26 09:40:33 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -460,12 +460,14 @@ sub add_dep
 
 sub verify_tag
 {
-	my ($self, $tag, $state, $plist) = @_;
-	my $msg = "Error in #1: \@tag #2";
+	my ($self, $tag, $state, $plist, $is_old) = @_;
+	my $bad_return = $is_old ? 1 : 0;
+	my $type = $is_old ? "Warning" : "Error";
+	my $msg = "#1 in #2: \@tag #3";
 	if (!defined $tag->{definition_list}) {
 		$state->errsay("$msg definition not found",
-		    $plist->pkgname, $tag->name);
-		return 0;
+		    $type, $plist->pkgname, $tag->name);
+		return $bad_return;
 	}
 	my $use_params = 0;
 	for my $d (@{$tag->{definition_list}}) {
@@ -477,13 +479,13 @@ sub verify_tag
 	if ($tag->{params} eq '' && $use_params && !$tag->{found_in_self}) {
 		$state->errsay(
 		    "$msg has no parameters but some define wants them",
-		    $plist->pkgname, $tag->name);
-		return 0;
+		    $type, $plist->pkgname, $tag->name);
+		return $bad_return;
 	} elsif ($tag->{params} ne '' && !$use_params) {
 		$state->errsay(
 		    "$msg has parameters but no define uses them",
-		    $plist->pkgname, $tag->name);
-		return 0;
+		    $type, $plist->pkgname, $tag->name);
+		return $bad_return;
 	}
 	return 1;
 }

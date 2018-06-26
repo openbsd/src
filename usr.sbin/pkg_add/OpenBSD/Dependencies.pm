@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.170 2018/06/24 12:38:41 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.171 2018/06/26 09:40:33 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -250,7 +250,7 @@ sub find_dep_in_stuff_to_install
 	$v = $self->find_candidate($dep, keys %{$state->tracker->{to_install}});
 	if ($v) {
 		$self->set_cache($dep, _cache::to_install->new($v));
-		$self->add_dep($state->tracker->{to_install}->{$v});
+		$self->add_dep($state->tracker->{to_install}{$v});
 	}
 	return $v;
 }
@@ -406,7 +406,7 @@ sub solve_handle_tags
 		$solver->{tag_finder}->lookup($solver,
 		    $solver->{to_register}{$h}, $state, $tag)
 		 || $solver->find_in_self($plist, $state, $tag);
-		if (!$solver->verify_tag($tag, $state, $plist)) {
+		if (!$solver->verify_tag($tag, $state, $plist, $h->{is_old})) {
 			$okay = 0;
 		}
 	}
@@ -417,14 +417,17 @@ sub solve_tags
 {
 	my ($solver, $state) = @_;
 
+	my $okay = 1;
 	for my $h ($solver->{set}->changed_handles) {
 		if (!$solver->solve_handle_tags($h, $state)) {
-			$solver->dump($state);
-			$solver->{tag_finder}->dump($state);
-			return 0;
+			$okay = 0;
 		}
 	}
-	return 1;
+	if (!$okay) {
+		$solver->dump($state);
+		$solver->{tag_finder}->dump($state);
+	}
+	return $okay;
 }
 
 package OpenBSD::PackingElement;
