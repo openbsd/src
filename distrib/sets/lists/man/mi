@@ -31,6 +31,9 @@
 ./usr/share/man/man1/captoinfo.1
 ./usr/share/man/man1/cat.1
 ./usr/share/man/man1/cdio.1
+./usr/share/man/man1/check-lib-depends.1
+./usr/share/man/man1/check-manpages.1
+./usr/share/man/man1/check-problems.1
 ./usr/share/man/man1/chflags.1
 ./usr/share/man/man1/chgrp.1
 ./usr/share/man/man1/chio.1
@@ -38,6 +41,7 @@
 ./usr/share/man/man1/chpass.1
 ./usr/share/man/man1/ci.1
 ./usr/share/man/man1/cksum.1
+./usr/share/man/man1/clean-old-distfiles.1
 ./usr/share/man/man1/cmp.1
 ./usr/share/man/man1/co.1
 ./usr/share/man/man1/col.1
@@ -68,7 +72,10 @@
 ./usr/share/man/man1/dig.1
 ./usr/share/man/man1/dirname.1
 ./usr/share/man/man1/doas.1
+./usr/share/man/man1/dolock.1
 ./usr/share/man/man1/domainname.1
+./usr/share/man/man1/dpb-replay.1
+./usr/share/man/man1/dpb.1
 ./usr/share/man/man1/du.1
 ./usr/share/man/man1/echo.1
 ./usr/share/man/man1/ed.1
@@ -95,6 +102,7 @@
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getent.1
 ./usr/share/man/man1/getopt.1
+./usr/share/man/man1/getpkgpath.1
 ./usr/share/man/man1/grep.1
 ./usr/share/man/man1/groups.1
 ./usr/share/man/man1/gzexe.1
@@ -185,6 +193,8 @@
 ./usr/share/man/man1/nslookup.1
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/openssl.1
+./usr/share/man/man1/out-of-date.1
+./usr/share/man/man1/outdated-perl-ports.1
 ./usr/share/man/man1/pagesize.1
 ./usr/share/man/man1/passwd.1
 ./usr/share/man/man1/paste.1
@@ -349,6 +359,7 @@
 ./usr/share/man/man1/pkg_info.1
 ./usr/share/man/man1/pkg_mklocatedb.1
 ./usr/share/man/man1/pkg_sign.1
+./usr/share/man/man1/pkg_subst.1
 ./usr/share/man/man1/pkill.1
 ./usr/share/man/man1/pl2pm.1
 ./usr/share/man/man1/pod2html.1
@@ -357,10 +368,16 @@
 ./usr/share/man/man1/pod2usage.1
 ./usr/share/man/man1/podchecker.1
 ./usr/share/man/man1/podselect.1
+./usr/share/man/man1/portbump.1
+./usr/share/man/man1/portcheck.1
+./usr/share/man/man1/portgen.1
+./usr/share/man/man1/portimport.1
+./usr/share/man/man1/portslogger.1
 ./usr/share/man/man1/pr.1
 ./usr/share/man/man1/printenv.1
 ./usr/share/man/man1/printf.1
 ./usr/share/man/man1/procmap.1
+./usr/share/man/man1/proot.1
 ./usr/share/man/man1/prove.1
 ./usr/share/man/man1/ps.1
 ./usr/share/man/man1/pstruct.1
@@ -375,6 +392,9 @@
 ./usr/share/man/man1/rdist.1
 ./usr/share/man/man1/rdistd.1
 ./usr/share/man/man1/readlink.1
+./usr/share/man/man1/register-plist.1
+./usr/share/man/man1/resolve-lib.1
+./usr/share/man/man1/retrieve-index.1
 ./usr/share/man/man1/rev.1
 ./usr/share/man/man1/rlog.1
 ./usr/share/man/man1/rm.1
@@ -445,6 +465,8 @@
 ./usr/share/man/man1/uniq.1
 ./usr/share/man/man1/units.1
 ./usr/share/man/man1/unvis.1
+./usr/share/man/man1/update-patches.1
+./usr/share/man/man1/update-plist.1
 ./usr/share/man/man1/uptime.1
 ./usr/share/man/man1/usbhidaction.1
 ./usr/share/man/man1/usbhidctl.1
@@ -2145,6 +2167,7 @@
 ./usr/share/man/man8/bgplgsh.8
 ./usr/share/man/man8/bioctl.8
 ./usr/share/man/man8/boot_config.8
+./usr/share/man/man8/bulk.8
 ./usr/share/man/man8/chat.8
 ./usr/share/man/man8/chown.8
 ./usr/share/man/man8/chroot.8
