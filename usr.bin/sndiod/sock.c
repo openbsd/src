@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.28 2018/06/26 07:36:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.29 2018/06/26 07:39:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -764,7 +764,6 @@ int
 sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
-	struct slot *s;
 	struct port *c;
 	struct dev *d;
 	struct opt *opt;
@@ -842,23 +841,10 @@ sock_hello(struct sock *f)
 	opt = opt_byname(d, p->opt);
 	if (opt == NULL)
 		return 0;
-#ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": using ");
-		dev_log(d);
-		log_puts(".");
-		log_puts(opt->name);
-		log_puts(", mode = ");
-		log_putx(mode);
-		log_puts("\n");
-	}
-#endif
-	s = slot_new(d, opt, p->who, &sock_slotops, f, mode);
-	if (s == NULL)
+	f->slot = slot_new(d, opt, p->who, &sock_slotops, f, mode);
+	if (f->slot == NULL)
 		return 0;
 	f->midi = NULL;
-	f->slot = s;
 	return 1;
 }
 
