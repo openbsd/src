@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.39 2018/06/26 07:27:44 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.40 2018/06/26 07:30:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1425,7 +1425,7 @@ slot_allocbufs(struct slot *s)
 		abuf_init(&s->mix.buf, s->appbufsz * s->mix.bpf);
 
 		slot_nch = s->mix.slot_cmax - s->mix.slot_cmin + 1;
-		dev_nch = s->mix.dev_cmax - s->mix.dev_cmin + 1;
+		dev_nch = s->opt->pmax - s->opt->pmin + 1;
 		s->mix.decbuf = NULL;
 		s->mix.resampbuf = NULL;
 		s->mix.join = 1;
@@ -1440,7 +1440,7 @@ slot_allocbufs(struct slot *s)
 		    s->mix.slot_cmin, s->mix.slot_cmax,
 		    s->mix.slot_cmin, s->mix.slot_cmax,
 		    0, d->pchan - 1,
-		    s->mix.dev_cmin, s->mix.dev_cmax);
+		    s->opt->pmin, s->opt->pmax);
 		if (!aparams_native(&s->par)) {
 			dec_init(&s->mix.dec, &s->par, slot_nch);
 			s->mix.decbuf =
@@ -1460,7 +1460,7 @@ slot_allocbufs(struct slot *s)
 		abuf_init(&s->sub.buf, s->appbufsz * s->sub.bpf);
 
 		slot_nch = s->sub.slot_cmax - s->sub.slot_cmin + 1;
-		dev_nch = s->sub.dev_cmax - s->sub.dev_cmin + 1;
+		dev_nch = s->opt->rmax - s->opt->rmin + 1;
 		s->sub.encbuf = NULL;
 		s->sub.resampbuf = NULL;
 		s->sub.join = 1;
@@ -1473,7 +1473,7 @@ slot_allocbufs(struct slot *s)
 		}
 		cmap_init(&s->sub.cmap,
 		    0, ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1,
-		    s->sub.dev_cmin, s->sub.dev_cmax,
+		    s->opt->rmin, s->opt->rmax,
 		    s->sub.slot_cmin, s->sub.slot_cmax,
 		    s->sub.slot_cmin, s->sub.slot_cmax);
 		if (s->rate != d->rate) {
@@ -1670,12 +1670,12 @@ found:
 	s->mode = mode;
 	aparams_init(&s->par);
 	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = s->mix.dev_cmin = s->opt->pmin;
-		s->mix.slot_cmax = s->mix.dev_cmax = s->opt->pmax;
+		s->mix.slot_cmin = s->opt->pmin;
+		s->mix.slot_cmax = s->opt->pmax;
 	}
 	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = s->sub.dev_cmin = s->opt->rmin;
-		s->sub.slot_cmax = s->sub.dev_cmax = s->opt->rmax;
+		s->sub.slot_cmin = s->opt->rmin;
+		s->sub.slot_cmax = s->opt->rmax;
 	}
 	if (s->opt->mmc) {
 		s->xrun = XRUN_SYNC;

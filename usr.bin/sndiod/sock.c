@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.25 2018/06/26 07:20:37 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.26 2018/06/26 07:30:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -627,14 +627,13 @@ sock_setpar(struct sock *f)
 		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
 		s->sub.slot_cmax = s->opt->rmin + rchan - 1;
-		s->sub.dev_cmax = s->opt->rmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
 			log_puts(": recording channels ");
-			log_putu(s->sub.dev_cmin);
+			log_putu(s->opt->rmin);
 			log_puts(":");
-			log_putu(s->sub.dev_cmax);
+			log_putu(s->opt->rmax);
 			log_puts(" -> ");
 			log_putu(s->sub.slot_cmin);
 			log_puts(":");
@@ -649,7 +648,6 @@ sock_setpar(struct sock *f)
 		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
 		s->mix.slot_cmax = s->opt->pmin + pchan - 1;
-		s->mix.dev_cmax = s->opt->pmax;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
@@ -658,9 +656,9 @@ sock_setpar(struct sock *f)
 			log_puts(":");
 			log_putu(s->mix.slot_cmax);
 			log_puts(" -> ");
-			log_putu(s->mix.dev_cmin);
+			log_putu(s->opt->pmin);
 			log_puts(":");
-			log_putu(s->mix.dev_cmax);
+			log_putu(s->opt->pmax);
 			log_puts("\n");
 		}
 #endif
