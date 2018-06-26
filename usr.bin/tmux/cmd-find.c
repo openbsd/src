@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.65 2018/05/28 11:50:47 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.66 2018/06/26 13:21:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -919,8 +919,7 @@ cmd_find_from_client(struct cmd_find_state *fs, struct client *c, int flags)
 
 			cmd_find_log_state(__func__, fs);
 			return (0);
-		}
-		else {
+		} else {
 			log_debug("%s: session $%u does not have pane %%%u",
 			    __func__, s->id, wp->id);
 		}
