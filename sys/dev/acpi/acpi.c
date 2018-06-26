@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.345 2018/06/25 22:33:24 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.346 2018/06/26 06:52:58 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -240,6 +240,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_memt = ba->ba_memt;
+	sc->sc_dmat = &pci_bus_dma_tag;
 
 	acpi_attach_common(sc, ba->ba_acpipbase);
 }
@@ -3006,6 +3007,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_dmat = sc->sc_dmat;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 
