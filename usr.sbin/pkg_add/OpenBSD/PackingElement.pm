@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.261 2018/06/25 12:35:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.262 2018/06/26 18:19:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1464,11 +1464,13 @@ sub run_tag
 			my $v = $command;
 			$v =~ s/\%u/$p/g;
 			$self->run($state, $v);
-			$state->say("Running #1", $v);
+			$state->say("Running #1", $v) 
+			    if $state->defines("TRACE_TAGS");
 		}
 	} else {
 		$self->run($state, $command);
-		$state->say("Running #1", $command);
+		$state->say("Running #1", $command)
+		    if $state->defines("TRACE_TAGS");
 	}
 }
 
