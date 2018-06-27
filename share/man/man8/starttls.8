@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.25 2018/06/11 05:49:09 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.26 2018/06/27 05:39:02 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2018 $
+.Dd $Mdocdate: June 27 2018 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ For
 it's as simple as adding pki configuration to
 .Xr smtpd.conf 5 :
 .Bd -literal -offset indent
-pki mail.example.com certificate "/etc/ssl/mail.example.com.crt"
+pki mail.example.com cert "/etc/ssl/mail.example.com.crt"
 pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
 
 listen on [...] tls pki mail.example.com auth
