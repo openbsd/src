@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.32 2018/02/08 18:02:06 jca Exp $ */
+/*	$OpenBSD: ber.c,v 1.33 2018/06/27 13:22:17 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -880,7 +880,7 @@ ber_calc_len(struct ber_element *root)
 		size += ber_calc_len(root->be_next);
 
 	/* This is an empty element, do not use a minimal size */
-	if (root->be_class != BER_CLASS_CONTEXT &&
+	if (root->be_class == BER_CLASS_UNIVERSAL &&
 	    root->be_type == BER_TYPE_EOC && root->be_len == 0)
 		return (0);
 
