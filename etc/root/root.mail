@@ -27,7 +27,7 @@ find further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are
 available from mirror sites.  Mirror selection is usually automatic
-during install/upgrade -- a mirror URLs from https://www.openbsd.org/ftp.html
+during install/upgrade -- a mirror URL from https://www.openbsd.org/ftp.html
 is stored into the file /etc/installurl.  Installation of packages is
 as simple as:
 
