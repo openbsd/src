@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.170 2018/06/25 14:28:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.171 2018/06/27 13:14:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -310,9 +310,8 @@ struct prefix {
 	LIST_ENTRY(prefix)		 rib_l;
 	TAILQ_ENTRY(prefix)		 path_l;
 	struct rib_entry		*re;
-	union {
-		struct rde_aspath		*_aspath;
-	}				 _p;
+	struct rde_aspath		*aspath;
+	struct rde_peer			*peer;
 	time_t				 lastchange;
 	int				 flags;
 };
@@ -495,13 +494,13 @@ void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
 static inline struct rde_aspath *
 prefix_aspath(struct prefix *p)
 {
-	return (p->_p._aspath);
+	return (p->aspath);
 }
 
 static inline struct rde_peer *
 prefix_peer(struct prefix *p)
 {
-	return (p->_p._aspath->peer);
+	return (p->peer);
 }
 
 void		 nexthop_init(u_int32_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.161 2018/06/25 14:28:33 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.162 2018/06/27 13:14:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -777,7 +777,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 
 	/* create new prefix node */
 	np = prefix_alloc();
-	np->_p._aspath = asp;
+	np->aspath = asp;
+	np->peer = asp->peer;
 	np->re = p->re;
 	np->lastchange = time(NULL);
 	np->flags = flag;
@@ -812,7 +813,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
-	p->_p._aspath = NULL;
+	p->aspath = NULL;
+	p->peer = NULL;
 	p->re = NULL;
 	prefix_free(p);
 
@@ -1047,7 +1049,8 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp,
 	else
 		TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
 
-	pref->_p._aspath = asp;
+	pref->aspath = asp;
+	pref->peer = asp->peer;
 	pref->re = re;
 	pref->lastchange = time(NULL);
 	pref->flags = flag;
@@ -1079,7 +1082,8 @@ prefix_unlink(struct prefix *pref)
 		rib_remove(re);
 
 	/* destroy all references to other objects */
-	pref->_p._aspath = NULL;
+	pref->aspath = NULL;
+	pref->peer = NULL;
 	pref->re = NULL;
 	pref->flags = 0;
 
