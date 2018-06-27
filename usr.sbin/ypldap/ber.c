@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.14 2018/06/27 13:22:17 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.15 2018/06/27 20:11:27 rob Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -269,7 +269,7 @@ ber_add_nstring(struct ber_element *prev, const char *string0, size_t len)
 	struct ber_element *elm;
 	char *string;
 
-	if ((string = calloc(1, len)) == NULL)
+	if ((string = calloc(1, len + 1)) == NULL)
 		return NULL;
 	if ((elm = ber_get_element(BER_TYPE_OCTETSTRING)) == NULL) {
 		free(string);
