@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.15 2018/06/27 20:11:27 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.16 2018/06/27 20:38:10 rob Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1079,8 +1079,8 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	DPRINTF("ber read element size %zd\n", len);
 	totlen += r + len;
 
-	/* If the total size of the element is larger than external
-	 * buffer don't bother to continue. */
+	/* If the total size of the element is larger than the buffer
+	 * don't bother to continue. */
 	if (len > ber->br_rend - ber->br_rptr) {
 		errno = ECANCELED;
 		return -1;
