@@ -1,3 +1,4 @@
+ASN = "65001"
 peer1 = "10.1.0.2"
 peer2 = "10.1.0.3"
 AS 65001
@@ -11,12 +12,12 @@ rde rib Adj-RIB-In no evaluate
 rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 
+prefix-set "mynetworks" { 192.0.2.0/24  }
 
 
 neighbor 10.2.1.1 {
 	remote-as 65023
 	local-address 10.0.0.8
-	announce self
 	enforce neighbor-as yes
 	enforce local-as yes
 	ipsec esp in spi 1010 sha1 XXXXXX aes XXXXXX
@@ -25,7 +26,6 @@ neighbor 10.2.1.1 {
 }
 neighbor 10.0.0.0/24 {
 	descr "template for local peers"
-	announce self
 	enforce neighbor-as no
 	enforce local-as yes
 	announce IPv4 unicast
@@ -34,7 +34,6 @@ neighbor 10.0.2.0 {
 	descr "upstream2"
 	remote-as 65004
 	local-address 10.0.0.8
-	announce self
 	enforce neighbor-as yes
 	enforce local-as yes
 	ipsec ah ike
@@ -48,7 +47,7 @@ neighbor 10.0.1.0 {
 	local-address 10.0.0.8
 	holdtime 180
 	holdtime min 3
-	announce none
+	export none
 	enforce neighbor-as yes
 	enforce local-as yes
 	tcp md5sig
@@ -58,7 +57,6 @@ group "peering AS65002" {
 	neighbor 10.1.0.2 {
 		descr "AS 65001 peer 1"
 		remote-as 65002
-		announce self
 		enforce neighbor-as yes
 		enforce local-as yes
 		tcp md5sig
@@ -68,7 +66,6 @@ group "peering AS65002" {
 		descr "AS 65001 peer 2"
 		remote-as 65002
 		local-address 10.0.0.8
-		announce all
 		enforce neighbor-as yes
 		enforce local-as yes
 		ipsec esp ike
@@ -81,7 +78,6 @@ group "peering AS65042" {
 		descr "peering AS 65042"
 		remote-as 65042
 		local-address 10.0.0.8
-		announce self
 		enforce neighbor-as yes
 		enforce local-as yes
 		ipsec ah ike
@@ -91,7 +87,6 @@ group "peering AS65042" {
 		descr "peering AS 65042"
 		remote-as 65042
 		local-address 10.0.0.8
-		announce self
 		enforce neighbor-as yes
 		enforce local-as yes
 		ipsec ah ike
@@ -100,10 +95,7 @@ group "peering AS65042" {
 }
 
 
-deny from ebgp 
-deny to ebgp 
 allow from ibgp 
-allow to ibgp 
 allow from any prefix 0.0.0.0/0 prefixlen 8 - 24 
 allow from any prefix ::/0 prefixlen 16 - 48 
 match from any community 65535:0 set { localpref 0 }
@@ -139,3 +131,5 @@ deny from any AS 65536 - 65551
 deny from any AS 65552 - 131071 
 deny from any AS 4200000000 - 4294967294 
 deny from any AS 4294967295 
+allow to ibgp 
+allow to ebgp prefix-set "mynetworks" large-community 65001:1:1 
