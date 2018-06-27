@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbusvar.h,v 1.3 2008/12/30 21:23:33 kettenis Exp $	*/
+/*	$OpenBSD: vbusvar.h,v 1.4 2018/06/27 11:38:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -32,6 +32,8 @@ struct vbus_attach_args {
 	int		va_nintr;
 };
 
-int vbus_intr_map(int, int, uint64_t *);
+int	vbus_intr_map(int, int, uint64_t *);
+int	vbus_intr_setstate(bus_space_tag_t, uint64_t, uint64_t);
+int	vbus_intr_setenabled(bus_space_tag_t, uint64_t, uint64_t);
 
 #endif
