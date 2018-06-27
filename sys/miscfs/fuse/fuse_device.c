@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.28 2018/06/25 12:03:53 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.29 2018/06/27 13:58:22 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -56,9 +56,7 @@ int stat_fbufs_wait = 0;
 int stat_opened_fusedev = 0;
 
 LIST_HEAD(, fuse_d) fuse_d_list;
-struct fuse_d *fuse_create(int);
 struct fuse_d *fuse_lookup(int);
-void	fuse_destroy(dev_t dev, struct fuse_d *fd);
 
 void	fuseattach(int);
 int	fuseopen(dev_t, int, int, struct proc *);
@@ -137,29 +135,6 @@ fuse_lookup(int unit)
 	return (NULL);
 }
 
-struct fuse_d *
-fuse_create(int unit)
-{
-	struct fuse_d *fd;
-
-	if ((fd = fuse_lookup(unit)) != NULL)
-		return (NULL);
-
-	fd = malloc(sizeof(*fd), M_DEVBUF, M_WAITOK | M_ZERO);
-	fd->fd_unit = unit;
-	SIMPLEQ_INIT(&fd->fd_fbufs_in);
-	SIMPLEQ_INIT(&fd->fd_fbufs_wait);
-	LIST_INSERT_HEAD(&fuse_d_list, fd, fd_list);
-	return (fd);
-}
-
-void
-fuse_destroy(dev_t dev, struct fuse_d *fd)
-{
-	LIST_REMOVE(fd, fd_list);
-	free(fd, M_DEVBUF, sizeof(*fd));
-}
-
 /*
  * Cleanup all msgs from sc_fbufs_in and sc_fbufs_wait.
  */
@@ -173,7 +148,7 @@ fuse_device_cleanup(dev_t dev)
 	if (fd == NULL)
 		return;
 
-	/* clear FIFO IN*/
+	/* clear FIFO IN */
 	lprev = NULL;
 	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_in, fb_next, ftmp) {
 		DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
@@ -242,12 +217,19 @@ int
 fuseopen(dev_t dev, int flags, int fmt, struct proc * p)
 {
 	struct fuse_d *fd;
+	int unit = minor(dev);
 
 	if (flags & O_EXCL)
 		return (EBUSY); /* No exclusive opens */
 
-	if ((fd = fuse_create(minor(dev))) == NULL)
+	if ((fd = fuse_lookup(unit)) != NULL)
 		return (EBUSY);
+
+	fd = malloc(sizeof(*fd), M_DEVBUF, M_WAITOK | M_ZERO);
+	fd->fd_unit = unit;
+	SIMPLEQ_INIT(&fd->fd_fbufs_in);
+	SIMPLEQ_INIT(&fd->fd_fbufs_wait);
+	LIST_INSERT_HEAD(&fuse_d_list, fd, fd_list);
 
 	stat_opened_fusedev++;
 	return (0);
@@ -267,16 +249,17 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
 		fuse_device_cleanup(dev);
-		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE|VB_NOWAIT)) != 0)
+		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE | VB_NOWAIT)) != 0)
 			goto end;
-		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, curproc);
+		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, p);
 		if (error)
 			printf("fuse: unmount failed with error %d\n", error);
 		fd->fd_fmp = NULL;
 	}
 
 end:
-	fuse_destroy(dev, fd);
+	LIST_REMOVE(fd, fd_list);
+	free(fd, M_DEVBUF, sizeof(*fd));
 	stat_opened_fusedev--;
 	return (0);
 }
