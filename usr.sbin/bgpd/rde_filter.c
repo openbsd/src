@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.89 2018/06/25 14:28:33 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.90 2018/06/27 11:06:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -494,6 +494,44 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 
 	/* matched somewhen or is anymatch rule  */
 	return (1);
+}
+
+/* return 1 when prefix matches filter_prefix, 0 if not */
+int
+rde_test_prefix(struct filter_prefix *fp, struct bgpd_addr *prefix,
+    u_int8_t plen)
+{
+	if (fp->addr.aid != prefix->aid)
+		/* don't use IPv4 rules for IPv6 and vice versa */
+		return (0);
+
+	if (prefix_compare(prefix, &fp->addr, fp->len))
+		return (0);
+
+	/* test prefixlen stuff too */
+	switch (fp->op) {
+	case OP_NONE: /* perfect match */
+		return (plen == fp->len);
+	case OP_EQ:
+		return (plen == fp->len_min);
+	case OP_NE:
+		return (plen != fp->len_min);
+	case OP_RANGE:
+		return ((plen >= fp->len_min) &&
+		    (plen <= fp->len_max));
+	case OP_XRANGE:
+		return ((plen < fp->len_min) ||
+		    (plen > fp->len_max));
+	case OP_LE:
+		return (plen <= fp->len_min);
+	case OP_LT:
+		return (plen < fp->len_min);
+	case OP_GE:
+		return (plen >= fp->len_min);
+	case OP_GT:
+		return (plen > fp->len_min);
+	}
+	return (0); /* should not be reached */
 }
 
 int
@@ -992,42 +1030,4 @@ rde_filter(struct filter_head *rules, struct rde_aspath **new,
  nextrule: ;
 	}
 	return (action);
-}
-
-/* return 1 when prefix matches filter_prefix, 0 if not */
-int
-rde_test_prefix(struct filter_prefix *fp, struct bgpd_addr *prefix,
-    u_int8_t plen)
-{
-	if (fp->addr.aid != prefix->aid)
-		/* don't use IPv4 rules for IPv6 and vice versa */
-		return (0);
-
-	if (prefix_compare(prefix, &fp->addr, fp->len))
-		return (0);
-
-	/* test prefixlen stuff too */
-	switch (fp->op) {
-	case OP_NONE: /* perfect match */
-		return (plen == fp->len);
-	case OP_EQ:
-		return (plen == fp->len_min);
-	case OP_NE:
-		return (plen != fp->len_min);
-	case OP_RANGE:
-		return ((plen >= fp->len_min) &&
-		    (plen <= fp->len_max));
-	case OP_XRANGE:
-		return ((plen < fp->len_min) ||
-		    (plen > fp->len_max));
-	case OP_LE:
-		return (plen <= fp->len_min);
-	case OP_LT:
-		return (plen < fp->len_min);
-	case OP_GE:
-		return (plen >= fp->len_min);
-	case OP_GT:
-		return (plen > fp->len_min);
-	}
-	return (0); /* should not be reached */
 }
