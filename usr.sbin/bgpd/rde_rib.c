@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.163 2018/06/28 08:07:21 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.164 2018/06/28 08:55:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1227,32 +1227,32 @@ nexthop_update(struct kroute_nexthop *msg)
 }
 
 void
-nexthop_modify(struct rde_aspath *asp, struct nexthop *nh,
-    enum action_types type, u_int8_t aid)
+nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
+    struct nexthop **nexthop, u_int32_t *flags)
 {
-	if (asp->flags & F_ATTR_LINKED)
-		fatalx("nexthop_modify: trying to modify linked asp");
-
-	if (type == ACTION_SET_NEXTHOP && aid != nh->exit_nexthop.aid)
-		return;
-
-	asp->flags &= ~F_NEXTHOP_MASK;
+	*flags &= ~F_NEXTHOP_MASK;
 	switch (type) {
 	case ACTION_SET_NEXTHOP_REJECT:
-		asp->flags |= F_NEXTHOP_REJECT;
+		*flags |= F_NEXTHOP_REJECT;
 		break;
 	case ACTION_SET_NEXTHOP_BLACKHOLE:
-		asp->flags |= F_NEXTHOP_BLACKHOLE;
+		*flags |= F_NEXTHOP_BLACKHOLE;
 		break;
 	case ACTION_SET_NEXTHOP_NOMODIFY:
-		asp->flags |= F_NEXTHOP_NOMODIFY;
+		*flags |= F_NEXTHOP_NOMODIFY;
 		break;
 	case ACTION_SET_NEXTHOP_SELF:
-		asp->flags |= F_NEXTHOP_SELF;
+		*flags |= F_NEXTHOP_SELF;
 		break;
 	case ACTION_SET_NEXTHOP:
-		nexthop_put(asp->nexthop);
-		asp->nexthop = nexthop_ref(nh);
+		/*
+		 * it is possible that a prefix matches but has the wrong
+		 * address family for the set nexthop. In this case ignore it.
+		 */
+		if (aid != setnh->exit_nexthop.aid)
+			break;
+		nexthop_put(*nexthop);
+		*nexthop = nexthop_ref(setnh);
 		break;
 	default:
 		break;

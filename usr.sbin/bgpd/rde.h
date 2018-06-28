@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.172 2018/06/28 08:07:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.173 2018/06/28 08:55:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -507,8 +507,8 @@ prefix_peer(struct prefix *p)
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);
-void		 nexthop_modify(struct rde_aspath *, struct nexthop *,
-		     enum action_types, u_int8_t);
+void		 nexthop_modify(struct nexthop *, enum action_types, u_int8_t,
+		    struct nexthop **, u_int32_t *);
 void		 nexthop_link(struct rde_aspath *);
 void		 nexthop_unlink(struct rde_aspath *);
 void		 nexthop_update(struct kroute_nexthop *);

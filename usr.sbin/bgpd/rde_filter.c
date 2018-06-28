@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.91 2018/06/28 08:07:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.92 2018/06/28 08:55:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,9 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 
 	if (asp == NULL)
 		return;
+
+	if (asp->flags & F_ATTR_LINKED)
+		fatalx("rde_apply_set: trying to modify linked asp");
 
 	TAILQ_FOREACH(set, sh, entry) {
 		switch (set->type) {
@@ -130,7 +133,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
 		case ACTION_SET_NEXTHOP_SELF:
-			nexthop_modify(asp, set->action.nh, set->type, aid);
+			nexthop_modify(set->action.nh, set->type, aid,
+			    &asp->nexthop, &asp->flags);
 			break;
 		case ACTION_SET_COMMUNITY:
 			switch (set->action.community.as) {
