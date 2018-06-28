@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.92 2018/06/28 08:55:56 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.93 2018/06/28 09:54:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -985,9 +985,10 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
-    struct rde_aspath **new, struct prefix *p, struct rde_aspath *asp)
+    struct rde_aspath **new, struct prefix *p)
 {
 	struct filter_rule	*f;
+	struct rde_aspath	*asp = prefix_aspath(p);
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
 
 	if (new != NULL)

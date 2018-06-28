@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.173 2018/06/28 08:55:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.174 2018/06/28 09:54:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -403,8 +403,7 @@ void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
-		     struct rde_aspath **, struct prefix *,
-		     struct rde_aspath *);
+		     struct rde_aspath **, struct prefix *);
 void		 rde_apply_set(struct filter_set_head *, struct rde_aspath *,
 		     u_int8_t, struct rde_peer *, struct rde_peer *);
 int		 rde_filter_equal(struct filter_head *, struct filter_head *,

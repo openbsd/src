@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.382 2018/06/28 08:07:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.383 2018/06/28 09:54:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1381,7 +1381,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 		if (*ribs[i].name == '\0')
 			break;
 		/* input filter */
-		action = rde_filter(ribs[i].in_rules, peer, &fasp, p, asp);
+		action = rde_filter(ribs[i].in_rules, peer, &fasp, p);
 
 		if (fasp == NULL)
 			fasp = asp;
@@ -2229,10 +2229,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
 	rib.weight = asp->weight;
-	strlcpy(rib.descr, asp->peer->conf.descr, sizeof(rib.descr));
-	memcpy(&rib.remote_addr, &asp->peer->remote_addr,
+	strlcpy(rib.descr, prefix_peer(p)->conf.descr, sizeof(rib.descr));
+	memcpy(&rib.remote_addr, &prefix_peer(p)->remote_addr,
 	    sizeof(rib.remote_addr));
-	rib.remote_id = asp->peer->remote_bgpid;
+	rib.remote_id = prefix_peer(p)->remote_bgpid;
 	if (asp->nexthop != NULL) {
 		memcpy(&rib.true_nexthop, &asp->nexthop->true_nexthop,
 		    sizeof(rib.true_nexthop));
@@ -2251,7 +2251,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.flags = 0;
 	if (p->re->active == p)
 		rib.flags |= F_PREF_ACTIVE;
-	if (!asp->peer->conf.ebgp)
+	if (!prefix_peer(p)->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;
@@ -2259,7 +2259,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
-	staletime = asp->peer->staletime[p->re->prefix->aid];
+	staletime = prefix_peer(p)->staletime[p->re->prefix->aid];
 	if (staletime && p->lastchange <= staletime)
 		rib.flags |= F_PREF_STALE;
 	rib.aspath_len = aspath_length(asp->aspath);
@@ -2299,24 +2299,21 @@ rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
     struct ctl_show_rib_request *req)
 {
 	struct bgpd_addr	 addr;
-	struct rde_aspath	*asp, *fasp;
+	struct rde_aspath	*fasp;
 	enum filter_actions	 a;
 
 	if (up_test_update(peer, p) != 1)
 		return;
 
 	pt_getaddr(p->re->prefix, &addr);
-	asp = prefix_aspath(p);
-	a = rde_filter(out_rules, peer, &fasp, p, asp);
-	if (fasp)
-		fasp->peer = asp->peer;
-	else
-		fasp = asp;
+	a = rde_filter(out_rules, peer, &fasp, p);
+	if (fasp == NULL)
+		fasp = prefix_aspath(p);
 
 	if (a == ACTION_ALLOW)
 		rde_dump_rib_as(p, fasp, req->pid, req->flags);
 
-	if (fasp != asp)
+	if (fasp != prefix_aspath(p))
 		path_put(fasp);
 }
 
@@ -3067,14 +3064,14 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 
 		/* check if prefix changed */
 		if (rib->state == RECONF_RELOAD) {
-			oa = rde_filter(rib->in_rules_tmp, peer, &oasp, p, asp);
+			oa = rde_filter(rib->in_rules_tmp, peer, &oasp, p);
 			oasp = oasp != NULL ? oasp : asp;
 		} else {
 			/* make sure we update everything for RECONF_REINIT */
 			oa = ACTION_DENY;
 			oasp = asp;
 		}
-		na = rde_filter(rib->in_rules, peer, &nasp, p, asp);
+		na = rde_filter(rib->in_rules, peer, &nasp, p);
 		nasp = nasp != NULL ? nasp : asp;
 
 		/* go through all 4 possible combinations */
@@ -3123,8 +3120,8 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, peer, &oasp, p, prefix_aspath(p));
-	na = rde_filter(out_rules, peer, &nasp, p, prefix_aspath(p));
+	oa = rde_filter(out_rules_tmp, peer, &oasp, p);
+	na = rde_filter(out_rules, peer, &nasp, p);
 	oasp = oasp != NULL ? oasp : prefix_aspath(p);
 	nasp = nasp != NULL ? nasp : prefix_aspath(p);
 
@@ -3166,7 +3163,7 @@ rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, peer, &oasp, p, prefix_aspath(p));
+	oa = rde_filter(out_rules_tmp, peer, &oasp, p);
 	oasp = oasp != NULL ? oasp : prefix_aspath(p);
 
 	if (oa == ACTION_DENY)

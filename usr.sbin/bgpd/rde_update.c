@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.92 2018/06/28 08:07:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.93 2018/06/28 09:54:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -409,9 +409,8 @@ withdraw:
 		if (up_test_update(peer, old) != 1)
 			return;
 
-		asp = prefix_aspath(old);
 		pt_getaddr(old->re->prefix, &addr);
-		if (rde_filter(rules, peer, NULL, old, asp) == ACTION_DENY)
+		if (rde_filter(rules, peer, NULL, old) == ACTION_DENY)
 			return;
 
 		/* withdraw prefix */
@@ -427,14 +426,14 @@ withdraw:
 		}
 
 		asp = prefix_aspath(new);
-		pt_getaddr(new->re->prefix, &addr);
-		if (rde_filter(rules, peer, &fasp, new, asp) == ACTION_DENY) {
+		if (rde_filter(rules, peer, &fasp, new) == ACTION_DENY) {
 			path_put(fasp);
 			goto withdraw;
 		}
 		if (fasp == NULL)
 			fasp = asp;
 
+		pt_getaddr(new->re->prefix, &addr);
 		up_generate(peer, fasp, &addr, new->re->prefix->prefixlen);
 
 		/* free modified aspath */
@@ -487,7 +486,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	p.flags = 0;
 
 	/* filter as usual */
-	if (rde_filter(rules, peer, &fasp, &p, asp) == ACTION_DENY) {
+	if (rde_filter(rules, peer, &fasp, &p) == ACTION_DENY) {
 		path_put(fasp);
 		path_put(asp);
 		return;
