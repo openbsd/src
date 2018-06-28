@@ -1,4 +1,4 @@
-/* $OpenBSD: imxanatop.c,v 1.3 2018/06/17 19:46:48 kettenis Exp $ */
+/* $OpenBSD: imxanatop.c,v 1.4 2018/06/28 10:07:35 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -136,15 +136,6 @@ struct cfdriver imxanatop_cd = {
 void	imxanatop_attach_regulator(struct imxanatop_softc *, int);
 uint32_t imxanatop_get_voltage(void *);
 int	imxanatop_set_voltage(void *, uint32_t);
-
-uint32_t imxanatop_decode_pll(enum imxanatop_clocks, uint32_t);
-uint32_t imxanatop_get_pll2_pfd(unsigned int);
-uint32_t imxanatop_get_pll3_pfd(unsigned int);
-void	imxanatop_enable_pll_usb1(void);
-void	imxanatop_enable_pll_usb2(void);
-void	imxanatop_enable_pll_enet(void);
-void	imxanatop_enable_enet(void);
-void	imxanatop_enable_sata(void);
 
 int
 imxanatop_match(struct device *parent, void *match, void *aux)
