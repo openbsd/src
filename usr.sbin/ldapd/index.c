@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.c,v 1.11 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: index.c,v 1.12 2018/06/28 02:41:49 gsoares Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -138,6 +138,7 @@ index_rdn_key(struct namespace *ns, struct btval *dn, struct btval *key)
 	if (parent_dn == NULL) {
 		rdnsz = dnsz;
 		pdnsz = 0;
+		parent_dn = "";
 	} else {
 		rdnsz = parent_dn - (char *)dn->data;
 		pdnsz = dnsz - rdnsz - 1;
