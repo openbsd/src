@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.685 2018/06/18 19:03:33 mikeb Exp $
+$OpenBSD: usbdevs,v 1.686 2018/06/28 15:02:06 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4025,6 +4025,11 @@ product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB		0x2020	Hub
 product SMC2 2504HUB		0x2504	Hub
 product SMC2 2513HUB		0x2513	Hub
+product SMC2 LAN7500		0x7500	LAN7500
+product SMC2 LAN7505		0x7505	LAN7505
+product SMC2 LAN7800		0x7800	LAN7800
+product SMC2 LAN7801		0x7801	LAN7801
+product SMC2 LAN7850		0x7850	LAN7850
 product SMC2 SMSC9500		0x9500	SMSC9500
 product SMC2 SMSC9505		0x9505	SMSC9505
 product SMC2 SMSC9500A		0x9e00	SMSC9500A
