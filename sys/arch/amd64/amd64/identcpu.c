@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.98 2018/06/28 21:28:41 sthen Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.99 2018/06/28 21:31:36 sthen Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -819,9 +819,6 @@ cpu_topology(struct cpu_info *ci)
 			ci->ci_pkg_id >>= core_bits;
 		}
 	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
-			struct cpu_info *ci_other;
-			CPU_INFO_ITERATOR cii;
-
 		/* We only support leaf 1/4 detection */
 		if (cpuid_level < 4)
 			goto no_topology;
