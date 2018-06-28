@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.97 2018/06/20 19:30:34 sthen Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.98 2018/06/28 21:28:41 sthen Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -842,15 +842,9 @@ cpu_topology(struct cpu_info *ci)
 		pkg_bits = core_bits + smt_bits;
 		pkg_mask = -1 << core_bits;
 
-		// ci->ci_smt_id = apicid & smt_mask;
+		ci->ci_smt_id = apicid & smt_mask;
 		ci->ci_core_id = (apicid & core_mask) >> smt_bits;
 		ci->ci_pkg_id = (apicid & pkg_mask) >> pkg_bits;
-			ci->ci_smt_id = 0;
-			CPU_INFO_FOREACH(cii, ci_other) {
-				if (ci != ci_other &&
-				    ci_other->ci_core_id == ci->ci_core_id)
-					ci->ci_smt_id++;
-			}
 	} else
 		goto no_topology;
 #ifdef DEBUG
