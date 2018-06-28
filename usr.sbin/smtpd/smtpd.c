@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.300 2018/06/18 18:19:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.301 2018/06/28 17:40:10 tim Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -564,6 +564,8 @@ main(int argc, char *argv[])
 
 	if (argc || *argv)
 		usage();
+
+	env->sc_opts |= opts;
 
 	ssl_init();
 
