@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.162 2018/06/27 13:14:44 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.163 2018/06/28 08:07:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -47,8 +47,6 @@ struct rib_entry *rib_restart(struct rib_context *);
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
-struct prefix	*prefix_get(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_add(struct rib *, struct rde_aspath *,
 		    struct bgpd_addr *, int, int);
 void		 prefix_move(struct rde_aspath *, struct prefix *, int);

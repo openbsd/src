@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.381 2018/06/25 14:28:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.382 2018/06/28 08:07:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1364,6 +1364,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	struct rde_aspath	*fasp;
+	struct prefix		*p;
 	enum filter_actions	 action;
 	u_int16_t		 i;
 
@@ -1372,12 +1373,15 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen, 0))
 		peer->prefix_cnt++;
 
+	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0);
+	if (p == NULL)
+		fatalx("rde_update_update: no prefix in Adj-RIB-In");
+
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		/* input filter */
-		action = rde_filter(ribs[i].in_rules, &fasp, peer, asp, prefix,
-		    prefixlen, peer);
+		action = rde_filter(ribs[i].in_rules, peer, &fasp, p, asp);
 
 		if (fasp == NULL)
 			fasp = asp;
@@ -2303,8 +2307,7 @@ rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
 
 	pt_getaddr(p->re->prefix, &addr);
 	asp = prefix_aspath(p);
-	a = rde_filter(out_rules, &fasp, peer, asp, &addr,
-	    p->re->prefix->prefixlen, asp->peer);
+	a = rde_filter(out_rules, peer, &fasp, p, asp);
 	if (fasp)
 		fasp->peer = asp->peer;
 	else
@@ -3064,16 +3067,14 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 
 		/* check if prefix changed */
 		if (rib->state == RECONF_RELOAD) {
-			oa = rde_filter(rib->in_rules_tmp, &oasp, peer,
-			    asp, &addr, pt->prefixlen, peer);
+			oa = rde_filter(rib->in_rules_tmp, peer, &oasp, p, asp);
 			oasp = oasp != NULL ? oasp : asp;
 		} else {
 			/* make sure we update everything for RECONF_REINIT */
 			oa = ACTION_DENY;
 			oasp = asp;
 		}
-		na = rde_filter(rib->in_rules, &nasp, peer, asp,
-		    &addr, pt->prefixlen, peer);
+		na = rde_filter(rib->in_rules, peer, &nasp, p, asp);
 		nasp = nasp != NULL ? nasp : asp;
 
 		/* go through all 4 possible combinations */
@@ -3122,10 +3123,8 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, &oasp, peer, prefix_aspath(p),
-	    &addr, pt->prefixlen, prefix_peer(p));
-	na = rde_filter(out_rules, &nasp, peer, prefix_aspath(p),
-	    &addr, pt->prefixlen, prefix_peer(p));
+	oa = rde_filter(out_rules_tmp, peer, &oasp, p, prefix_aspath(p));
+	na = rde_filter(out_rules, peer, &nasp, p, prefix_aspath(p));
 	oasp = oasp != NULL ? oasp : prefix_aspath(p);
 	nasp = nasp != NULL ? nasp : prefix_aspath(p);
 
@@ -3167,8 +3166,7 @@ rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, &oasp, peer, prefix_aspath(p),
-	    &addr, pt->prefixlen, prefix_peer(p));
+	oa = rde_filter(out_rules_tmp, peer, &oasp, p, prefix_aspath(p));
 	oasp = oasp != NULL ? oasp : prefix_aspath(p);
 
 	if (oa == ACTION_DENY)
@@ -3648,9 +3646,9 @@ network_add(struct network_config *nc, int flagstatic)
 	}
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
-	rde_apply_set(asp, &nc->attrset, nc->prefix.aid, peerself, peerself);
+	rde_apply_set(&nc->attrset, asp, nc->prefix.aid, peerself, peerself);
 	if (vpnset)
-		rde_apply_set(asp, vpnset, nc->prefix.aid, peerself, peerself);
+		rde_apply_set(vpnset, asp, nc->prefix.aid, peerself, peerself);
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;

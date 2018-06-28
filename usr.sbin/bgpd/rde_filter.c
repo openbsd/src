@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.90 2018/06/27 11:06:49 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.91 2018/06/28 08:07:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -29,13 +29,13 @@
 #include "rde.h"
 #include "log.h"
 
-int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
-	    struct bgpd_addr *, u_int8_t, struct rde_peer *, struct rde_peer *);
+int	rde_filter_match(struct filter_rule *, struct rde_peer *,
+	    struct rde_aspath *, struct prefix *);
+int	rde_prefix_match(struct filter_prefix *, struct prefix *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
-int	rde_test_prefix(struct filter_prefix *, struct bgpd_addr *, u_int8_t);
 
 void
-rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
+rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
     u_int8_t aid, struct rde_peer *from, struct rde_peer *peer)
 {
 	struct filter_set	*set;
@@ -330,9 +330,8 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 }
 
 int
-rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
-    struct bgpd_addr *prefix, u_int8_t plen, struct rde_peer *peer,
-    struct rde_peer *from)
+rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
+    struct rde_aspath *asp, struct prefix *p)
 {
 	u_int32_t	pas;
 	int		cas, type;
@@ -453,7 +452,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
 			cmpaddr = &f->match.nexthop.addr;
 		else
-			cmpaddr = &from->remote_addr;
+			cmpaddr = &prefix_peer(p)->remote_addr;
 		if (cmpaddr->aid != nexthop->aid)
 			/* don't use IPv4 rules for IPv6 and vice versa */
 			return (0);
@@ -481,7 +480,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		log_debug("%s: processing filter for prefixset %s",
 		    __func__, f->match.prefixset.name);
 		SIMPLEQ_FOREACH(psi, &f->match.prefixset.ps->psitems, entry) {
-			if (rde_test_prefix(&psi->p, prefix, plen)) {
+			if (rde_prefix_match(&psi->p, p)) {
 				log_debug("%s: prefixset %s matched %s",
 				    __func__, f->match.prefixset.ps->name,
 				    log_addr(&psi->p.addr));
@@ -490,7 +489,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		}
 		return (0);
 	} else if (f->match.prefix.addr.aid != 0)
-		return (rde_test_prefix(&f->match.prefix, prefix, plen));
+		return (rde_prefix_match(&f->match.prefix, p));
 
 	/* matched somewhen or is anymatch rule  */
 	return (1);
@@ -498,9 +497,14 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 
 /* return 1 when prefix matches filter_prefix, 0 if not */
 int
-rde_test_prefix(struct filter_prefix *fp, struct bgpd_addr *prefix,
-    u_int8_t plen)
+rde_prefix_match(struct filter_prefix *fp, struct prefix *p)
 {
+	struct bgpd_addr addr, *prefix = &addr;
+	u_int8_t plen;
+
+	pt_getaddr(p->re->prefix, prefix);
+	plen = p->re->prefix->prefixlen;
+
 	if (fp->addr.aid != prefix->aid)
 		/* don't use IPv4 rules for IPv6 and vice versa */
 		return (0);
@@ -976,9 +980,8 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 	} while (0)
 
 enum filter_actions
-rde_filter(struct filter_head *rules, struct rde_aspath **new,
-    struct rde_peer *peer, struct rde_aspath *asp, struct bgpd_addr *prefix,
-    u_int8_t prefixlen, struct rde_peer *from)
+rde_filter(struct filter_head *rules, struct rde_peer *peer,
+    struct rde_aspath **new, struct prefix *p, struct rde_aspath *asp)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
@@ -1010,7 +1013,8 @@ rde_filter(struct filter_head *rules, struct rde_aspath **new,
 		    (f->peer.peerid &&
 		     f->peer.peerid != peer->conf.id),
 		     f->skip[RDE_FILTER_SKIP_PEERID].ptr);
-		if (rde_filter_match(f, asp, prefix, prefixlen, peer, from)) {
+
+		if (rde_filter_match(f, peer, asp, p)) {
 			if (asp != NULL && new != NULL) {
 				/* asp may get modified so create a copy */
 				if (*new == NULL) {
@@ -1018,8 +1022,8 @@ rde_filter(struct filter_head *rules, struct rde_aspath **new,
 					/* ... and use the copy from now on */
 					asp = *new;
 				}
-				rde_apply_set(asp, &f->set, prefix->aid,
-				    from, peer);
+				rde_apply_set(&f->set, asp, p->re->prefix->aid,
+				    prefix_peer(p), peer);
 			}
 			if (f->action != ACTION_NONE)
 				action = f->action;

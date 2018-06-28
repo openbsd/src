@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.91 2018/06/26 13:34:26 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.92 2018/06/28 08:07:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -411,8 +411,7 @@ withdraw:
 
 		asp = prefix_aspath(old);
 		pt_getaddr(old->re->prefix, &addr);
-		if (rde_filter(rules, NULL, peer, asp, &addr,
-		    old->re->prefix->prefixlen, asp->peer) == ACTION_DENY)
+		if (rde_filter(rules, peer, NULL, old, asp) == ACTION_DENY)
 			return;
 
 		/* withdraw prefix */
@@ -429,8 +428,7 @@ withdraw:
 
 		asp = prefix_aspath(new);
 		pt_getaddr(new->re->prefix, &addr);
-		if (rde_filter(rules, &fasp, peer, asp, &addr,
-		    new->re->prefix->prefixlen, asp->peer) == ACTION_DENY) {
+		if (rde_filter(rules, peer, &fasp, new, asp) == ACTION_DENY) {
 			path_put(fasp);
 			goto withdraw;
 		}
@@ -445,12 +443,18 @@ withdraw:
 	}
 }
 
+struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
+void rib_remove(struct rib_entry *);
+int rib_empty(struct rib_entry *);
+
 /* send a default route to the specified peer */
 void
 up_generate_default(struct filter_head *rules, struct rde_peer *peer,
     u_int8_t aid)
 {
 	struct rde_aspath	*asp, *fasp;
+	struct prefix		 p;
+	struct rib_entry	*re;
 	struct bgpd_addr	 addr;
 
 	if (peer->capa.mp[aid] == 0)
@@ -467,12 +471,23 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	 */
 	/* rde_apply_set(asp, set, af, NULL ???, DIR_IN); */
 
-	/* filter as usual */
+	/*
+	 * XXX this is ugly but it will get better once we have a proper
+	 * Adj-RIB-Out. Since then this will be just inserted there.
+	 */
+	bzero(&p, sizeof(p));
 	bzero(&addr, sizeof(addr));
 	addr.aid = aid;
+	re = rib_get(peer->rib, &addr, 0);
+	if (re == NULL)
+		re = rib_add(peer->rib, &addr, 0);
+	p.re = re;
+	p.aspath = asp;
+	p.peer = peer;
+	p.flags = 0;
 
-	if (rde_filter(rules, &fasp, peer, asp, &addr, 0, NULL) ==
-	    ACTION_DENY) {
+	/* filter as usual */
+	if (rde_filter(rules, peer, &fasp, &p, asp) == ACTION_DENY) {
 		path_put(fasp);
 		path_put(asp);
 		return;
@@ -487,6 +502,9 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	if (fasp != asp)
 		path_put(fasp);
 	path_put(asp);
+
+	if (rib_empty(re))
+		rib_remove(re);
 }
 
 /* generate a EoR marker in the update list. This is a horrible hack. */
