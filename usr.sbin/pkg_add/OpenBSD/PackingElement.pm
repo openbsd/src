@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.262 2018/06/26 18:19:44 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.263 2018/06/28 18:05:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1365,7 +1365,11 @@ sub new
 sub stringize
 {
 	my $self = shift;
-	return join(' ', $self->name, $self->{params});
+	if ($self->{params} ne '') {
+		return join(' ', $self->name, $self->{params});
+	} else {
+		return $self->name;
+	}
 }
 
 # tags are a kind of dependency, we have a special list for them, BUT
