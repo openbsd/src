@@ -1,4 +1,4 @@
-/* $OpenBSD: alloc_entry.c,v 1.6 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: alloc_entry.c,v 1.7 2018/06/28 15:34:10 deraadt Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
@@ -50,7 +50,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: alloc_entry.c,v 1.6 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: alloc_entry.c,v 1.7 2018/06/28 15:34:10 deraadt Exp $")
 
 #define ABSENT_OFFSET    -1
 #define CANCELLED_OFFSET -2
@@ -255,7 +255,7 @@ _nc_merge_entry(TERMTYPE *const to, TERMTYPE *const from)
     _nc_align_termtype(to, from);
 #endif
     for_each_boolean(i, from) {
-	if (to->Booleans[i] != (char) CANCELLED_BOOLEAN) {
+	if (to->Booleans[i] != CANCELLED_BOOLEAN) {
 	    int mergebool = from->Booleans[i];
 
 	    if (mergebool == CANCELLED_BOOLEAN)
