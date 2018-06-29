@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.15 2018/06/29 19:28:02 rob Exp $
+.\" $OpenBSD: ber.3,v 1.16 2018/06/29 20:28:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -113,7 +113,7 @@
 .Ft "struct ber_element *"
 .Fn "ber_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
 .Ft "struct ber_element *"
-.Fn "ber_add_noid" "struct ber_element *prev" "struct ber_oid *oid, int n"
+.Fn "ber_add_noid" "struct ber_element *prev" "struct ber_oid *oid" "int n"
 .Ft "struct ber_element *"
 .Fn "ber_add_oidstring" "struct ber_element *prev" "const char *string"
 .Ft "int"
@@ -240,14 +240,14 @@ Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
 .Sh SEE ALSO
 .Xr socket 2
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules.
 .Sh HISTORY
 The
 .Nm ber
 manpage first appeared in
 .Ox 4.3 .
-.Sh STANDARDS
-ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
-Information technology - ASN.1 encoding rules.
 .Sh AUTHORS
 .An -nosplit
 The
