@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.40 2018/03/14 18:52:16 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.41 2018/06/29 17:39:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -21,16 +21,16 @@
 
 /*	Root System Descriptor Pointer */
 struct acpi_rsdp1 {
-	u_int8_t	signature[8];
+	uint8_t		signature[8];
 #define	RSDP_SIG	"RSD PTR "
 #define	rsdp_signaturee	rsdp1.signature
-	u_int8_t	checksum;	/* make sum == 0 */
+	uint8_t		checksum;	/* make sum == 0 */
 #define	rsdp_checksum	rsdp1.checksum
-	u_int8_t	oemid[6];
+	uint8_t		oemid[6];
 #define	rsdp_oemid	rsdp1.oemid
-	u_int8_t	revision;	/* 0 for 1, 2 for 2 */
+	uint8_t		revision;	/* 0 for 1, 2 for 2 */
 #define	rsdp_revision	rsdp1.revision
-	u_int32_t	rsdt;		/* physical */
+	uint32_t	rsdt;		/* physical */
 #define	rsdp_rsdt	rsdp1.rsdt
 } __packed;
 
@@ -40,73 +40,73 @@ struct acpi_rsdp {
 	 * The following values are only valid
 	 * when rsdp_revision == 2
 	 */
-	u_int32_t	rsdp_length;		/* length of rsdp */
-	u_int64_t	rsdp_xsdt;		/* physical */
-	u_int8_t	rsdp_extchecksum;	/* entire table */
-	u_int8_t	rsdp_reserved[3];	/* must be zero */
+	uint32_t	rsdp_length;		/* length of rsdp */
+	uint64_t	rsdp_xsdt;		/* physical */
+	uint8_t		rsdp_extchecksum;	/* entire table */
+	uint8_t		rsdp_reserved[3];	/* must be zero */
 } __packed;
 
 struct acpi_table_header {
-	u_int8_t	signature[4];
+	uint8_t		signature[4];
 #define	hdr_signature		hdr.signature
-	u_int32_t	length;
+	uint32_t	length;
 #define	hdr_length		hdr.length
-	u_int8_t	revision;
+	uint8_t		revision;
 #define	hdr_revision		hdr.revision
-	u_int8_t	checksum;
+	uint8_t		checksum;
 #define	hdr_checksum		hdr.checksum
-	u_int8_t	oemid[6];
+	uint8_t		oemid[6];
 #define hdr_oemid		hdr.oemid
-	u_int8_t	oemtableid[8];
+	uint8_t		oemtableid[8];
 #define hdr_oemtableid		hdr.oemtableid
-	u_int32_t	oemrevision;
+	uint32_t	oemrevision;
 #define	hdr_oemrevision		hdr.oemrevision
-	u_int8_t	aslcompilerid[4];
+	uint8_t		aslcompilerid[4];
 #define hdr_aslcompilerid	hdr.aslcompilerid
-	u_int32_t	aslcompilerrevision;
+	uint32_t	aslcompilerrevision;
 #define	hdr_aslcompilerrevision	hdr.aslcompilerrevision
 } __packed;
 
 struct acpi_rsdt {
 	struct acpi_table_header	hdr;
 #define RSDT_SIG	"RSDT"
-	u_int32_t			table_offsets[1];
+	uint32_t			table_offsets[1];
 } __packed;
 
 struct acpi_xsdt {
 	struct acpi_table_header	hdr;
 #define XSDT_SIG	"XSDT"
-	u_int64_t			table_offsets[1];
+	uint64_t			table_offsets[1];
 } __packed;
 
 struct acpi_gas {
-	u_int8_t	address_space_id;
+	uint8_t		address_space_id;
 #define GAS_SYSTEM_MEMORY	0
 #define GAS_SYSTEM_IOSPACE	1
 #define GAS_PCI_CFG_SPACE	2
 #define GAS_EMBEDDED		3
 #define GAS_SMBUS		4
 #define GAS_FUNCTIONAL_FIXED	127
-	u_int8_t	register_bit_width;
-	u_int8_t	register_bit_offset;
-	u_int8_t	access_size;
+	uint8_t		register_bit_width;
+	uint8_t		register_bit_offset;
+	uint8_t		access_size;
 #define GAS_ACCESS_UNDEFINED	0
 #define GAS_ACCESS_BYTE		1
 #define GAS_ACCESS_WORD		2
 #define GAS_ACCESS_DWORD	3
 #define GAS_ACCESS_QWORD	4
-	u_int64_t	address;
+	uint64_t	address;
 } __packed;
 
 struct acpi_fadt {
 	struct acpi_table_header	hdr;
 #define	FADT_SIG	"FACP"
-	u_int32_t	firmware_ctl;	/* phys addr FACS */
-	u_int32_t	dsdt;		/* phys addr DSDT */
-	u_int8_t	int_model;	/* interrupt model (hdr_revision < 3) */
+	uint32_t	firmware_ctl;	/* phys addr FACS */
+	uint32_t	dsdt;		/* phys addr DSDT */
+	uint8_t		int_model;	/* interrupt model (hdr_revision < 3) */
 #define	FADT_INT_DUAL_PIC	0
 #define	FADT_INT_MULTI_APIC	1
-	u_int8_t	pm_profile;	/* power mgmt profile */
+	uint8_t		pm_profile;	/* power mgmt profile */
 #define	FADT_PM_UNSPEC		0
 #define	FADT_PM_DESKTOP		1
 #define	FADT_PM_MOBILE		2
@@ -115,43 +115,43 @@ struct acpi_fadt {
 #define	FADT_PM_SOHO_SERVER	5
 #define	FADT_PM_APPLIANCE	6
 #define	FADT_PM_PERF_SERVER	7
-	u_int16_t	sci_int;	/* SCI interrupt */
-	u_int32_t	smi_cmd;	/* SMI command port */
-	u_int8_t	acpi_enable;	/* value to enable */
-	u_int8_t	acpi_disable;	/* value to disable */
-	u_int8_t	s4bios_req;	/* value for S4 */
-	u_int8_t	pstate_cnt;	/* value for performance (hdr_revision > 2) */
-	u_int32_t	pm1a_evt_blk;	/* power management 1a */
-	u_int32_t	pm1b_evt_blk;	/* power mangement 1b */
-	u_int32_t	pm1a_cnt_blk;	/* pm control 1a */
-	u_int32_t	pm1b_cnt_blk;	/* pm control 1b */
-	u_int32_t	pm2_cnt_blk;	/* pm control 2 */
-	u_int32_t	pm_tmr_blk;
-	u_int32_t	gpe0_blk;
-	u_int32_t	gpe1_blk;
-	u_int8_t	pm1_evt_len;
-	u_int8_t	pm1_cnt_len;
-	u_int8_t	pm2_cnt_len;
-	u_int8_t	pm_tmr_len;
-	u_int8_t	gpe0_blk_len;
-	u_int8_t	gpe1_blk_len;
-	u_int8_t	gpe1_base;
-	u_int8_t	cst_cnt;	/* (hdr_revision > 2) */
-	u_int16_t	p_lvl2_lat;
-	u_int16_t	p_lvl3_lat;
-	u_int16_t	flush_size;
-	u_int16_t	flush_stride;
-	u_int8_t	duty_offset;
-	u_int8_t	duty_width;
-	u_int8_t	day_alrm;
-	u_int8_t	mon_alrm;
-	u_int8_t	century;
-	u_int16_t	iapc_boot_arch;	/* (hdr_revision > 2) */
+	uint16_t	sci_int;	/* SCI interrupt */
+	uint32_t	smi_cmd;	/* SMI command port */
+	uint8_t		acpi_enable;	/* value to enable */
+	uint8_t		acpi_disable;	/* value to disable */
+	uint8_t		s4bios_req;	/* value for S4 */
+	uint8_t		pstate_cnt;	/* value for performance (hdr_revision > 2) */
+	uint32_t	pm1a_evt_blk;	/* power management 1a */
+	uint32_t	pm1b_evt_blk;	/* power mangement 1b */
+	uint32_t	pm1a_cnt_blk;	/* pm control 1a */
+	uint32_t	pm1b_cnt_blk;	/* pm control 1b */
+	uint32_t	pm2_cnt_blk;	/* pm control 2 */
+	uint32_t	pm_tmr_blk;
+	uint32_t	gpe0_blk;
+	uint32_t	gpe1_blk;
+	uint8_t		pm1_evt_len;
+	uint8_t		pm1_cnt_len;
+	uint8_t		pm2_cnt_len;
+	uint8_t		pm_tmr_len;
+	uint8_t		gpe0_blk_len;
+	uint8_t		gpe1_blk_len;
+	uint8_t		gpe1_base;
+	uint8_t		cst_cnt;	/* (hdr_revision > 2) */
+	uint16_t	p_lvl2_lat;
+	uint16_t	p_lvl3_lat;
+	uint16_t	flush_size;
+	uint16_t	flush_stride;
+	uint8_t		duty_offset;
+	uint8_t		duty_width;
+	uint8_t		day_alrm;
+	uint8_t		mon_alrm;
+	uint8_t		century;
+	uint16_t	iapc_boot_arch;	/* (hdr_revision > 2) */
 #define	FADT_LEGACY_DEVICES		0x0001	/* Legacy devices supported */
 #define	FADT_i8042			0x0002	/* Keyboard controller present */
 #define	FADT_NO_VGA			0x0004	/* Do not probe VGA */
-	u_int8_t	reserved1;
-	u_int32_t	flags;
+	uint8_t		reserved1;
+	uint32_t	flags;
 #define	FADT_WBINVD			0x00000001
 #define	FADT_WBINVD_FLUSH		0x00000002
 #define	FADT_PROC_C1			0x00000004
@@ -181,12 +181,12 @@ struct acpi_fadt {
 	 * extended values above
 	 */
 	struct acpi_gas	reset_reg;
-	u_int8_t	reset_value;
-	u_int8_t	reserved2a;
-	u_int8_t	reserved2b;
-	u_int8_t	reserved2c;
-	u_int64_t	x_firmware_ctl;
-	u_int64_t	x_dsdt;
+	uint8_t		reset_value;
+	uint8_t		reserved2a;
+	uint8_t		reserved2b;
+	uint8_t		reserved2c;
+	uint64_t	x_firmware_ctl;
+	uint64_t	x_dsdt;
 	struct acpi_gas	x_pm1a_evt_blk;
 	struct acpi_gas	x_pm1b_evt_blk;
 	struct acpi_gas	x_pm1a_cnt_blk;
@@ -202,13 +202,13 @@ struct acpi_fadt {
 struct acpi_dsdt {
 	struct acpi_table_header	hdr;
 #define DSDT_SIG	"DSDT"
-	u_int8_t	aml[1];
+	uint8_t		aml[1];
 } __packed;
 
 struct acpi_ssdt {
 	struct acpi_table_header	hdr;
 #define SSDT_SIG	"SSDT"
-	u_int8_t	aml[1];
+	uint8_t		aml[1];
 } __packed;
 
 /*
@@ -222,40 +222,40 @@ struct acpi_psdt {
 struct acpi_madt {
 	struct acpi_table_header	hdr;
 #define MADT_SIG	"APIC"
-	u_int32_t	local_apic_address;
-	u_int32_t	flags;
+	uint32_t	local_apic_address;
+	uint32_t	flags;
 #define ACPI_APIC_PCAT_COMPAT	0x00000001
 } __packed;
 
 struct acpi_madt_lapic {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_LAPIC		0
-	u_int8_t	length;
-	u_int8_t	acpi_proc_id;
-	u_int8_t	apic_id;
-	u_int32_t	flags;
+	uint8_t		length;
+	uint8_t		acpi_proc_id;
+	uint8_t		apic_id;
+	uint32_t	flags;
 #define	ACPI_PROC_ENABLE	0x00000001
 } __packed;
 
 struct acpi_madt_ioapic {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_IOAPIC	1
-	u_int8_t	length;
-	u_int8_t	acpi_ioapic_id;
-	u_int8_t	reserved;
-	u_int32_t	address;
-	u_int32_t	global_int_base;
+	uint8_t		length;
+	uint8_t		acpi_ioapic_id;
+	uint8_t		reserved;
+	uint32_t	address;
+	uint32_t	global_int_base;
 } __packed;
 
 struct acpi_madt_override {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_OVERRIDE	2
-	u_int8_t	length;
-	u_int8_t	bus;
+	uint8_t		length;
+	uint8_t		bus;
 #define	ACPI_OVERRIDE_BUS_ISA	0
-	u_int8_t	source;
-	u_int32_t	global_int;
-	u_int16_t	flags;
+	uint8_t		source;
+	uint32_t	global_int;
+	uint16_t	flags;
 #define	ACPI_OVERRIDE_POLARITY_BITS	0x3
 #define	ACPI_OVERRIDE_POLARITY_BUS		0x0
 #define	ACPI_OVERRIDE_POLARITY_HIGH		0x1
@@ -267,88 +267,88 @@ struct acpi_madt_override {
 } __packed;
 
 struct acpi_madt_nmi {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_NMI		3
-	u_int8_t	length;
-	u_int16_t	flags;		/* Same flags as acpi_madt_override */
-	u_int32_t	global_int;
+	uint8_t		length;
+	uint16_t	flags;		/* Same flags as acpi_madt_override */
+	uint32_t	global_int;
 } __packed;
 
 struct acpi_madt_lapic_nmi {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_LAPIC_NMI	4
-	u_int8_t	length;
-	u_int8_t	acpi_proc_id;
-	u_int16_t	flags;		/* Same flags as acpi_madt_override */
-	u_int8_t	local_apic_lint;
+	uint8_t		length;
+	uint8_t		acpi_proc_id;
+	uint16_t	flags;		/* Same flags as acpi_madt_override */
+	uint8_t		local_apic_lint;
 } __packed;
 
 struct acpi_madt_lapic_override {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_LAPIC_OVERRIDE	5
-	u_int8_t	length;
-	u_int16_t	reserved;
-	u_int64_t	lapic_address;
+	uint8_t		length;
+	uint16_t	reserved;
+	uint64_t	lapic_address;
 } __packed;
 
 struct acpi_madt_io_sapic {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_IO_SAPIC	6
-	u_int8_t	length;
-	u_int8_t	iosapic_id;
-	u_int8_t	reserved;
-	u_int32_t	global_int_base;
-	u_int64_t	iosapic_address;
+	uint8_t		length;
+	uint8_t		iosapic_id;
+	uint8_t		reserved;
+	uint32_t	global_int_base;
+	uint64_t	iosapic_address;
 } __packed;
 
 struct acpi_madt_local_sapic {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_LOCAL_SAPIC	7
-	u_int8_t	length;
-	u_int8_t	acpi_proc_id;
-	u_int8_t	local_sapic_id;
-	u_int8_t	local_sapic_eid;
-	u_int8_t	reserved[3];
-	u_int32_t	flags;		/* Same flags as acpi_madt_lapic */
-	u_int32_t	acpi_proc_uid;
-	u_int8_t	acpi_proc_uid_string[1];
+	uint8_t		length;
+	uint8_t		acpi_proc_id;
+	uint8_t		local_sapic_id;
+	uint8_t		local_sapic_eid;
+	uint8_t		reserved[3];
+	uint32_t	flags;		/* Same flags as acpi_madt_lapic */
+	uint32_t	acpi_proc_uid;
+	uint8_t		acpi_proc_uid_string[1];
 } __packed;
 
 struct acpi_madt_platform_int {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_PLATFORM_INT	8
-	u_int8_t	length;
-	u_int16_t	flags;		/* Same flags as acpi_madt_override */
-	u_int8_t	int_type;
+	uint8_t		length;
+	uint16_t	flags;		/* Same flags as acpi_madt_override */
+	uint8_t		int_type;
 #define	ACPI_MADT_PLATFORM_PMI		1
 #define	ACPI_MADT_PLATFORM_INIT		2
 #define	ACPI_MADT_PLATFORM_CORR_ERROR	3
-	u_int8_t	proc_id;
-	u_int8_t	proc_eid;
-	u_int8_t	io_sapic_vec;
-	u_int32_t	global_int;
-	u_int32_t	platform_int_flags;
+	uint8_t		proc_id;
+	uint8_t		proc_eid;
+	uint8_t		io_sapic_vec;
+	uint32_t	global_int;
+	uint32_t	platform_int_flags;
 #define	ACPI_MADT_PLATFORM_CPEI		0x00000001
 } __packed;
 
 struct acpi_madt_x2apic {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_X2APIC	9
-	u_int8_t	length;
-	u_int8_t	reserved[2];
-	u_int32_t	apic_id;
-	u_int32_t	flags;		/* Same flags as acpi_madt_lapic */
-	u_int32_t	acpi_proc_uid;
+	uint8_t		length;
+	uint8_t		reserved[2];
+	uint32_t	apic_id;
+	uint32_t	flags;		/* Same flags as acpi_madt_lapic */
+	uint32_t	acpi_proc_uid;
 } __packed;
 
 struct acpi_madt_x2apic_nmi {
-	u_int8_t	apic_type;
+	uint8_t		apic_type;
 #define	ACPI_MADT_X2APIC_NMI	10
-	u_int8_t	length;
-	u_int16_t	flags;		/* Same flags as acpi_madt_override */
-	u_int32_t	apic_proc_uid;
-	u_int8_t	local_x2apic_lint;
-	u_int8_t	reserved[3];
+	uint8_t		length;
+	uint16_t	flags;		/* Same flags as acpi_madt_override */
+	uint32_t	apic_proc_uid;
+	uint8_t		local_x2apic_lint;
+	uint8_t		reserved[3];
 } __packed;
 
 union acpi_madt_entry {
@@ -368,9 +368,9 @@ union acpi_madt_entry {
 struct acpi_sbst {
 	struct acpi_table_header	hdr;
 #define SBST_SIG	"SBST"
-	u_int32_t	warning_energy_level;
-	u_int32_t	low_energy_level;
-	u_int32_t	critical_energy_level;
+	uint32_t	warning_energy_level;
+	uint32_t	low_energy_level;
+	uint32_t	critical_energy_level;
 } __packed;
 
 struct acpi_ecdt {
@@ -378,59 +378,59 @@ struct acpi_ecdt {
 #define ECDT_SIG	"ECDT"
 	struct acpi_gas	ec_control;
 	struct acpi_gas ec_data;
-	u_int32_t	uid;
-	u_int8_t	gpe_bit;
-	u_int8_t	ec_id[1];
+	uint32_t	uid;
+	uint8_t		gpe_bit;
+	uint8_t		ec_id[1];
 } __packed;
 
 struct acpi_srat {
 	struct acpi_table_header	hdr;
 #define SRAT_SIG	"SRAT"
-	u_int32_t	reserved1;
-	u_int64_t	reserved2;
+	uint32_t	reserved1;
+	uint64_t	reserved2;
 } __packed;
 
 struct acpi_slit {
 	struct acpi_table_header	hdr;
 #define SLIT_SIG	"SLIT"
-	u_int64_t	number_of_localities;
+	uint64_t	number_of_localities;
 } __packed;
 
 struct acpi_hpet {
 	struct acpi_table_header	hdr;
 #define HPET_SIG	"HPET"
-	u_int32_t	event_timer_block_id;
+	uint32_t	event_timer_block_id;
 	struct acpi_gas	base_address;
-	u_int8_t	hpet_number;
-	u_int16_t	main_counter_min_clock_tick;
-	u_int8_t	page_protection;
+	uint8_t		hpet_number;
+	uint16_t	main_counter_min_clock_tick;
+	uint8_t		page_protection;
 } __packed;
 
 struct acpi_mcfg {
 	struct acpi_table_header	hdr;
 #define MCFG_SIG	"MCFG"
-	u_int8_t	reserved[8];
-	u_int64_t	base_address;
-	u_int16_t	segment;
-	u_int8_t	min_bus_number;
-	u_int8_t	max_bus_number;
-	u_int32_t	reserved1;
+	uint8_t		reserved[8];
+	uint64_t	base_address;
+	uint16_t	segment;
+	uint8_t		min_bus_number;
+	uint8_t		max_bus_number;
+	uint32_t	reserved1;
 } __packed;
 
 struct acpi_facs {
-	u_int8_t	signature[4];
+	uint8_t		signature[4];
 #define	FACS_SIG	"FACS"
-	u_int32_t	length;
-	u_int32_t	hardware_signature;
-	u_int32_t	wakeup_vector;
-	u_int32_t	global_lock;
+	uint32_t	length;
+	uint32_t	hardware_signature;
+	uint32_t	wakeup_vector;
+	uint32_t	global_lock;
 #define	FACS_LOCK_PENDING	0x00000001
 #define	FACS_LOCK_OWNED		0x00000002
-	u_int32_t	flags;
+	uint32_t	flags;
 #define	FACS_S4BIOS_F		0x00000001	/* S4BIOS_REQ supported */
 	uint64_t	x_wakeup_vector;
-	u_int8_t	version;
-	u_int8_t	reserved[31];
+	uint8_t		version;
+	uint8_t		reserved[31];
 } __packed;
 
 /*
@@ -640,13 +640,13 @@ struct acpi_ivrs {
 /*
  * PCI Configuration space
  */
-#define ACPI_ADR_PCIDEV(addr)	(u_int16_t)(addr >> 16)
-#define ACPI_ADR_PCIFUN(addr)	(u_int16_t)(addr & 0xFFFF)
-#define ACPI_PCI_BUS(addr) (u_int16_t)((addr) >> 48)
-#define ACPI_PCI_DEV(addr) (u_int16_t)((addr) >> 32)
-#define ACPI_PCI_FN(addr)  (u_int16_t)((addr) >> 16)
-#define ACPI_PCI_REG(addr) (u_int16_t)(addr)
-#define ACPI_PCI_ADDR(b,d,f,r) ((u_int64_t)(b)<<48LL | (u_int64_t)(d)<<32LL | (f)<<16LL | (r))
+#define ACPI_ADR_PCIDEV(addr)	(uint16_t)(addr >> 16)
+#define ACPI_ADR_PCIFUN(addr)	(uint16_t)(addr & 0xFFFF)
+#define ACPI_PCI_BUS(addr) (uint16_t)((addr) >> 48)
+#define ACPI_PCI_DEV(addr) (uint16_t)((addr) >> 32)
+#define ACPI_PCI_FN(addr)  (uint16_t)((addr) >> 16)
+#define ACPI_PCI_REG(addr) (uint16_t)(addr)
+#define ACPI_PCI_ADDR(b,d,f,r) ((uint64_t)(b)<<48LL | (uint64_t)(d)<<32LL | (f)<<16LL | (r))
 
 /*
  * PM1 Status Registers Fixed Hardware Feature Status Bits

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.22 2017/10/06 13:33:53 mikeb Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.23 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -34,10 +34,10 @@ int acpihpet_activate(struct device *, int);
 
 u_int acpihpet_gettime(struct timecounter *tc);
 
-u_int64_t	acpihpet_r(bus_space_tag_t _iot, bus_space_handle_t _ioh,
+uint64_t	acpihpet_r(bus_space_tag_t _iot, bus_space_handle_t _ioh,
 		    bus_size_t _ioa);
 void		acpihpet_w(bus_space_tag_t _iot, bus_space_handle_t _ioh,
-		    bus_size_t _ioa, u_int64_t _val);
+		    bus_size_t _ioa, uint64_t _val);
 
 static struct timecounter hpet_timecounter = {
 	acpihpet_gettime,	/* get_timecount */
@@ -50,13 +50,13 @@ static struct timecounter hpet_timecounter = {
 
 #define HPET_TIMERS	3
 struct hpet_regs {
-	u_int64_t	configuration;
-	u_int64_t	interrupt_status;
-	u_int64_t	main_counter;
+	uint64_t	configuration;
+	uint64_t	interrupt_status;
+	uint64_t	main_counter;
 	struct {	/* timers */
-		u_int64_t config;
-		u_int64_t compare;
-		u_int64_t interrupt;
+		uint64_t config;
+		uint64_t compare;
+		uint64_t interrupt;
 	} timers[HPET_TIMERS];
 };
 
@@ -66,7 +66,7 @@ struct acpihpet_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	u_int32_t		sc_conf;
+	uint32_t		sc_conf;
 	struct hpet_regs	sc_save;
 };
 
@@ -79,10 +79,10 @@ struct cfdriver acpihpet_cd = {
 	NULL, "acpihpet", DV_DULL
 };
 
-u_int64_t
+uint64_t
 acpihpet_r(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t ioa)
 {
-	u_int64_t val;
+	uint64_t val;
 
 	val = bus_space_read_4(iot, ioh, ioa + 4);
 	val = val << 32;
@@ -92,7 +92,7 @@ acpihpet_r(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t ioa)
 
 void
 acpihpet_w(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t ioa,
-    u_int64_t val)
+    uint64_t val)
 {
 	bus_space_write_4(iot, ioh, ioa + 4, val >> 32);
 	bus_space_write_4(iot, ioh, ioa, val & 0xffffffff);
@@ -200,8 +200,8 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_softc *psc = (struct acpi_softc *)parent;
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_hpet *hpet = (struct acpi_hpet *)aaa->aaa_table;
-	u_int64_t period, freq;	/* timer period in femtoseconds (10^-15) */
-	u_int32_t v1, v2;
+	uint64_t period, freq;	/* timer period in femtoseconds (10^-15) */
+	uint32_t v1, v2;
 	int timeout;
 
 	if (acpi_map_address(psc, &hpet->base_address, 0, HPET_REG_SIZE,
@@ -248,7 +248,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	period = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    HPET_CAPABILITIES + sizeof(u_int32_t));
+	    HPET_CAPABILITIES + sizeof(uint32_t));
 
 	/* Period must be > 0 and less than 100ns (10^8 fs) */
 	if (period == 0 || period > HPET_MAX_PERIOD) {
@@ -260,7 +260,7 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	freq = 1000000000000000ull / period;
 	printf(": %lld Hz\n", freq);
 
-	hpet_timecounter.tc_frequency = (u_int32_t)freq;
+	hpet_timecounter.tc_frequency = (uint32_t)freq;
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&hpet_timecounter);

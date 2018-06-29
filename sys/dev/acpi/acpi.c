@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.348 2018/06/29 04:55:55 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.349 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -295,7 +295,7 @@ int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
     int access_size, int len, void *buffer)
 {
-	u_int8_t *pb;
+	uint8_t *pb;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pci_chipset_tag_t pc;
@@ -307,7 +307,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 
 	KASSERT((len % access_size) == 0);
 
-	pb = (u_int8_t *)buffer;
+	pb = (uint8_t *)buffer;
 	switch (iospace) {
 	case GAS_SYSTEM_MEMORY:
 	case GAS_SYSTEM_IOSPACE:
@@ -449,9 +449,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			return (-1);
 		}
 		if (iodir == ACPI_IOREAD)
-			acpiec_read(sc->sc_ec, (u_int8_t)address, len, buffer);
+			acpiec_read(sc->sc_ec, (uint8_t)address, len, buffer);
 		else
-			acpiec_write(sc->sc_ec, (u_int8_t)address, len, buffer);
+			acpiec_write(sc->sc_ec, (uint8_t)address, len, buffer);
 		break;
 	}
 	return (0);
@@ -1904,8 +1904,8 @@ acpi_sleep_task(void *arg0, int sleepmode)
 void
 acpi_reset(void)
 {
-	u_int32_t		 reset_as, reset_len;
-	u_int32_t		 value;
+	uint32_t		 reset_as, reset_len;
+	uint32_t		 value;
 	struct acpi_softc	*sc = acpi_softc;
 	struct acpi_fadt	*fadt = sc->sc_fadt;
 
@@ -2002,8 +2002,8 @@ int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t processed = 0, idx, jdx;
-	u_int16_t sts, en;
+	uint32_t processed = 0, idx, jdx;
+	uint16_t sts, en;
 
 	dnprintf(40, "ACPI Interrupt\n");
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
@@ -2398,7 +2398,7 @@ acpi_sleep_pm(struct acpi_softc *sc, int state)
 	}
 }
 
-u_int32_t acpi_force_bm;
+uint32_t acpi_force_bm;
 
 void
 acpi_resume_pm(struct acpi_softc *sc, int fromstate)

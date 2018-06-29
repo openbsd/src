@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.43 2018/01/17 07:40:29 bentley Exp $ */
+/* $OpenBSD: acpidev.h,v 1.44 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -78,27 +78,27 @@
  * }
  */
 struct acpibat_bix {
-	u_int8_t	bix_revision;
-	u_int32_t	bix_power_unit;
+	uint8_t		bix_revision;
+	uint32_t	bix_power_unit;
 #define BIX_POWER_MW		0x00
 #define BIX_POWER_MA		0x01
-	u_int32_t	bix_capacity;
+	uint32_t	bix_capacity;
 #define BIX_UNKNOWN		0xffffffff
-	u_int32_t	bix_last_capacity;
-	u_int32_t	bix_technology;
+	uint32_t	bix_last_capacity;
+	uint32_t	bix_technology;
 #define BIX_TECH_PRIMARY	0x00
 #define BIX_TECH_SECONDARY	0x01
-	u_int32_t	bix_voltage;
-	u_int32_t	bix_warning;
-	u_int32_t	bix_low;
-	u_int32_t	bix_cycle_count;
-	u_int32_t	bix_accuracy;
-	u_int32_t	bix_max_sample;
-	u_int32_t	bix_min_sample;
-	u_int32_t	bix_max_avg;
-	u_int32_t	bix_min_avg;
-	u_int32_t	bix_cap_granu1;
-	u_int32_t	bix_cap_granu2;
+	uint32_t	bix_voltage;
+	uint32_t	bix_warning;
+	uint32_t	bix_low;
+	uint32_t	bix_cycle_count;
+	uint32_t	bix_accuracy;
+	uint32_t	bix_max_sample;
+	uint32_t	bix_min_sample;
+	uint32_t	bix_max_avg;
+	uint32_t	bix_min_avg;
+	uint32_t	bix_cap_granu1;
+	uint32_t	bix_cap_granu2;
 	char		bix_model[20];
 	char		bix_serial[20];
 	char		bix_type[20];
@@ -133,14 +133,14 @@ struct acpibat_bix {
  *     Battery Present Rate [=0xFFFFFFFF] = unknown
  */
 struct acpibat_bst {
-	u_int32_t	bst_state;
+	uint32_t	bst_state;
 #define BST_DISCHARGE		0x01
 #define BST_CHARGE		0x02
 #define BST_CRITICAL		0x04
-	u_int32_t	bst_rate;
+	uint32_t	bst_rate;
 #define BST_UNKNOWN		0xffffffff
-	u_int32_t	bst_capacity;
-	u_int32_t	bst_voltage;
+	uint32_t	bst_capacity;
+	uint32_t	bst_voltage;
 };
 
 /*
@@ -174,23 +174,23 @@ struct acpibat_bst {
  * }
  */
 struct acpibat_bmd {
-	u_int32_t	bmd_status;
+	uint32_t	bmd_status;
 #define BMD_AML_CALIBRATE_CYCLE	0x01
 #define BMD_CHARGING_DISABLED	0x02
 #define BMD_DISCHARGE_WHILE_AC	0x04
 #define BMD_RECALIBRATE_BAT	0x08
 #define BMD_GOTO_STANDBY_SPEED	0x10
-	u_int32_t	bmd_capability;
+	uint32_t	bmd_capability;
 #define BMD_CB_AML_CALIBRATION	0x01
 #define BMD_CB_DISABLE_CHARGER	0x02
 #define BMD_CB_DISCH_WHILE_AC	0x04
 #define BMD_CB_AFFECT_ALL_BATT	0x08
 #define BMD_CB_FULL_CHRG_FIRST	0x10
-	u_int32_t	bmd_recalibrate_count;
+	uint32_t	bmd_recalibrate_count;
 #define BMD_ONLY_CALIB_IF_ST3	0x00	/* only recal when status bit 3 set */
-	u_int32_t	bmd_quick_recalibrate_time;
+	uint32_t	bmd_quick_recalibrate_time;
 #define BMD_UNKNOWN		0xffffffff
-	u_int32_t	bmd_slow_recalibrate_time;
+	uint32_t	bmd_slow_recalibrate_time;
 };
 
 /*
@@ -257,12 +257,12 @@ struct acpibat_bmd {
  * }
  */
 struct acpicpu_pss {
-	u_int32_t	pss_core_freq;
-	u_int32_t	pss_power;
-	u_int32_t	pss_trans_latency;
-	u_int32_t	pss_bus_latency;
-	u_int32_t	pss_ctrl;
-	u_int32_t	pss_status;
+	uint32_t	pss_core_freq;
+	uint32_t	pss_power;
+	uint32_t	pss_trans_latency;
+	uint32_t	pss_bus_latency;
+	uint32_t	pss_ctrl;
+	uint32_t	pss_status;
 };
 
 int acpicpu_fetch_pss(struct acpicpu_pss **);
@@ -274,8 +274,8 @@ void acpicpu_set_notify(void (*)(struct acpicpu_pss *, int));
  *
  */
 struct acpi_grd {
-	u_int8_t	grd_descriptor;
-	u_int16_t	grd_length;
+	uint8_t		grd_descriptor;
+	uint16_t	grd_length;
 	struct acpi_gas	grd_gas;
 } __packed;
 
@@ -370,7 +370,7 @@ struct acpiec_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
-	u_int32_t		sc_gpe;
+	uint32_t		sc_gpe;
 	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
 	int			sc_gotsci;
 	int			sc_glk;

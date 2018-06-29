@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.92 2018/06/26 06:52:58 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.93 2018/06/29 17:39:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -65,7 +65,7 @@ struct acpi_attach_args {
 
 struct acpi_mem_map {
 	vaddr_t		 baseva;
-	u_int8_t	*va;
+	uint8_t		*va;
 	size_t		 vsize;
 	paddr_t		 pa;
 };
@@ -74,7 +74,7 @@ struct acpi_q {
 	SIMPLEQ_ENTRY(acpi_q)	 q_next;
 	int			 q_id;
 	void			*q_table;
-	u_int8_t		 q_data[0];
+	uint8_t			 q_data[0];
 };
 
 struct acpi_taskq {
@@ -138,9 +138,9 @@ typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 #define ACPI_SST_SLEEP_CONTEXT	4
 
 struct acpi_parsestate {
-	u_int8_t		*start;
-	u_int8_t		*end;
-	u_int8_t		*pos;
+	uint8_t			*start;
+	uint8_t			*end;
+	uint8_t			*pos;
 };
 
 struct acpi_reg_map {
@@ -241,8 +241,8 @@ struct acpi_softc {
 	struct gpe_block	*gpe_table;
 
 	int			sc_threadwaiting;
-	u_int32_t		sc_gpe_sts;
-	u_int32_t		sc_gpe_en;
+	uint32_t		sc_gpe_sts;
+	uint32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
 
 	struct aml_node		*sc_tts;
@@ -344,11 +344,11 @@ void	acpi_register_gsb(struct acpi_softc *, struct aml_node *);
 
 int	acpi_set_gpehandler(struct acpi_softc *, int,
 	    int (*)(struct acpi_softc *, int, void *), void *, int);
-void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
+void	acpi_enable_gpe(struct acpi_softc *, uint32_t);
 
 int	acpiec_intr(struct acpiec_softc *);
-void	acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
-void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+void	acpiec_read(struct acpiec_softc *, uint8_t, int, uint8_t *);
+void	acpiec_write(struct acpiec_softc *, uint8_t, int, uint8_t *);
 void	acpiec_handle_events(struct acpiec_softc *);
 
 #if NACPIPWRRES > 0

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.241 2018/06/12 07:11:18 mlarkin Exp $ */
+/* $OpenBSD: dsdt.c,v 1.242 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -63,13 +63,13 @@ struct aml_value	*aml_allocvalue(int, int64_t, const void *);
 struct aml_value	*_aml_setvalue(struct aml_value *, int, int64_t,
 			    const void *);
 
-u_int64_t		aml_convradix(u_int64_t, int, int);
-u_int64_t		aml_evalexpr(u_int64_t, u_int64_t, int);
-int			aml_lsb(u_int64_t);
-int			aml_msb(u_int64_t);
+uint64_t		aml_convradix(uint64_t, int, int);
+uint64_t		aml_evalexpr(uint64_t, uint64_t, int);
+int			aml_lsb(uint64_t);
+int			aml_msb(uint64_t);
 
-int			aml_tstbit(const u_int8_t *, int);
-void			aml_setbit(u_int8_t *, int, int);
+int			aml_tstbit(const uint8_t *, int);
+void			aml_setbit(uint8_t *, int, int);
 
 void			aml_addref(struct aml_value *, const char *);
 void			aml_delref(struct aml_value **, const char *);
@@ -101,7 +101,7 @@ struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
 
 const char		*aml_getname(const char *);
 int64_t			aml_hextoint(const char *);
-void			aml_dump(int, u_int8_t *);
+void			aml_dump(int, uint8_t *);
 void			_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
 
@@ -488,7 +488,7 @@ acpi_stall(int us)
 
 #ifdef ACPI_DEBUG
 void
-aml_dump(int len, u_int8_t *buf)
+aml_dump(int len, uint8_t *buf)
 {
 	int		idx;
 
@@ -502,7 +502,7 @@ aml_dump(int len, u_int8_t *buf)
 
 /* Bit mangling code */
 int
-aml_tstbit(const u_int8_t *pb, int bit)
+aml_tstbit(const uint8_t *pb, int bit)
 {
 	pb += aml_bytepos(bit);
 
@@ -510,7 +510,7 @@ aml_tstbit(const u_int8_t *pb, int bit)
 }
 
 void
-aml_setbit(u_int8_t *pb, int bit, int val)
+aml_setbit(uint8_t *pb, int bit, int val)
 {
 	pb += aml_bytepos(bit);
 
@@ -1061,10 +1061,10 @@ aml_freevalue(struct aml_value *val)
 
 /* Convert number from one radix to another
  * Used in BCD conversion routines */
-u_int64_t
-aml_convradix(u_int64_t val, int iradix, int oradix)
+uint64_t
+aml_convradix(uint64_t val, int iradix, int oradix)
 {
-	u_int64_t rv = 0, pwr;
+	uint64_t rv = 0, pwr;
 
 	rv = 0;
 	pwr = 1;
@@ -1078,7 +1078,7 @@ aml_convradix(u_int64_t val, int iradix, int oradix)
 
 /* Calculate LSB */
 int
-aml_lsb(u_int64_t val)
+aml_lsb(uint64_t val)
 {
 	int		lsb;
 
@@ -1093,7 +1093,7 @@ aml_lsb(u_int64_t val)
 
 /* Calculate MSB */
 int
-aml_msb(u_int64_t val)
+aml_msb(uint64_t val)
 {
 	int		msb;
 
@@ -1107,10 +1107,10 @@ aml_msb(u_int64_t val)
 }
 
 /* Evaluate Math operands */
-u_int64_t
-aml_evalexpr(u_int64_t lhs, u_int64_t rhs, int opcode)
+uint64_t
+aml_evalexpr(uint64_t lhs, uint64_t rhs, int opcode)
 {
-	u_int64_t res = 0;
+	uint64_t res = 0;
 
 	switch (opcode) {
 		/* Math operations */
@@ -1216,8 +1216,8 @@ aml_evalexpr(u_int64_t lhs, u_int64_t rhs, int opcode)
 void
 aml_bufcpy(void *pvDst, int dstPos, const void *pvSrc, int srcPos, int len)
 {
-	const u_int8_t *pSrc = pvSrc;
-	u_int8_t *pDst = pvDst;
+	const uint8_t *pSrc = pvSrc;
+	uint8_t *pDst = pvDst;
 	int		idx;
 
 	if (aml_bytealigned(dstPos|srcPos|len)) {
@@ -1437,7 +1437,7 @@ int odp;
 const char hext[] = "0123456789ABCDEF";
 
 const char *
-aml_eisaid(u_int32_t pid)
+aml_eisaid(uint32_t pid)
 {
 	static char id[8];
 
@@ -2325,7 +2325,7 @@ acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
     int access_size, int len, void *buffer)
 {
 	struct aml_regionspace *region = &aml_regionspace[iospace];
-	u_int8_t *pb;
+	uint8_t *pb;
 	int reg;
 
 	dnprintf(50, "genio: %.2x 0x%.8llx %s\n",
@@ -2333,7 +2333,7 @@ acpi_genio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 
 	KASSERT((len % access_size) == 0);
 
-	pb = (u_int8_t *)buffer;
+	pb = (uint8_t *)buffer;
 	for (reg = 0; reg < len; reg += access_size) {
 		uint64_t value;
 		int err;
@@ -4451,7 +4451,7 @@ parse_error:
 }
 
 int
-acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
+acpi_parse_aml(struct acpi_softc *sc, uint8_t *start, uint32_t length)
 {
 	struct aml_scope *scope;
 	struct aml_value res;

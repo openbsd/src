@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.59 2018/05/22 01:41:15 mlarkin Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.60 2018/06/29 17:39:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -141,7 +141,7 @@ struct acpithinkpad_softc {
 	uint64_t		 sc_brightness;
 };
 
-extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+extern void acpiec_read(struct acpiec_softc *, uint8_t, int, uint8_t *);
 
 int	thinkpad_match(struct device *, void *, void *);
 void	thinkpad_attach(struct device *, struct device *, void *);
@@ -253,7 +253,7 @@ void
 thinkpad_sensor_refresh(void *arg)
 {
 	struct acpithinkpad_softc *sc = arg;
-	u_int8_t lo, hi, i;
+	uint8_t lo, hi, i;
 	int64_t tmp;
 	char sname[5];
 
@@ -735,7 +735,7 @@ thinkpad_attach_deferred(void *v __unused)
 int
 thinkpad_get_volume_mute(struct acpithinkpad_softc *sc)
 {
-	u_int8_t vol = 0;
+	uint8_t vol = 0;
 
 	if (sc->sc_acpi->sc_ec == NULL)
 		return (-1);
