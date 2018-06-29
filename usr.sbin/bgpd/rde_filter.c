@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.93 2018/06/28 09:54:48 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.94 2018/06/29 11:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -305,8 +305,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 			/* FALLTHROUGH */
 		case ACTION_PFTABLE_ID:
 			pftable_unref(asp->pftableid);
-			asp->pftableid = set->action.id;
-			pftable_ref(asp->pftableid);
+			asp->pftableid = pftable_ref(set->action.id);
 			break;
 		case ACTION_RTLABEL:
 			/* convert the route label to an id for faster access */
@@ -315,8 +314,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 			/* FALLTHROUGH */
 		case ACTION_RTLABEL_ID:
 			rtlabel_unref(asp->rtlabelid);
-			asp->rtlabelid = set->action.id;
-			rtlabel_ref(asp->rtlabelid);
+			asp->rtlabelid = rtlabel_ref(set->action.id);
 			break;
 		case ACTION_SET_ORIGIN:
 			asp->origin = set->action.origin;
@@ -1023,7 +1021,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 			if (asp != NULL && new != NULL) {
 				/* asp may get modified so create a copy */
 				if (*new == NULL) {
-					*new = path_copy(asp);
+					*new = path_copy(path_get(), asp);
 					/* ... and use the copy from now on */
 					asp = *new;
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.319 2018/06/25 14:28:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.320 2018/06/29 11:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1110,11 +1110,11 @@ void		 rib_ref(u_int16_t);
 u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);
-void		 rtlabel_ref(u_int16_t);
+u_int16_t	 rtlabel_ref(u_int16_t);
 u_int16_t	 pftable_name2id(const char *);
 const char	*pftable_id2name(u_int16_t);
 void		 pftable_unref(u_int16_t);
-void		 pftable_ref(u_int16_t);
+u_int16_t	 pftable_ref(u_int16_t);
 
 /* parse.y */
 int		 cmdline_symset(char *);

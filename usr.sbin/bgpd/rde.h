@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.174 2018/06/28 09:54:48 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.175 2018/06/29 11:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -351,7 +351,7 @@ void		 attr_shutdown(void);
 int		 attr_optadd(struct rde_aspath *, u_int8_t, u_int8_t,
 		     void *, u_int16_t);
 struct attr	*attr_optget(const struct rde_aspath *, u_int8_t);
-void		 attr_copy(struct rde_aspath *, struct rde_aspath *);
+void		 attr_copy(struct rde_aspath *, const struct rde_aspath *);
 int		 attr_compare(struct rde_aspath *, struct rde_aspath *);
 void		 attr_freeall(struct rde_aspath *);
 void		 attr_free(struct rde_aspath *, struct attr *);
@@ -473,7 +473,8 @@ void		 path_remove(struct rde_aspath *);
 u_int32_t	 path_remove_stale(struct rde_aspath *, u_int8_t);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
-struct rde_aspath *path_copy(struct rde_aspath *);
+struct rde_aspath *path_copy(struct rde_aspath *, const struct rde_aspath *);
+struct rde_aspath *path_prep(struct rde_aspath *);
 struct rde_aspath *path_get(void);
 void		 path_put(struct rde_aspath *);
 

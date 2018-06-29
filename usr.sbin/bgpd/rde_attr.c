@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.101 2018/04/02 19:25:33 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.102 2018/06/29 11:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -209,7 +209,7 @@ attr_optget(const struct rde_aspath *asp, u_int8_t type)
 }
 
 void
-attr_copy(struct rde_aspath *t, struct rde_aspath *s)
+attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 {
 	u_int8_t	l;
 

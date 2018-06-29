@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.164 2018/06/28 08:55:56 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.165 2018/06/29 11:45:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -420,7 +420,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 	 */
 	if ((asp = path_lookup(nasp, peer)) == NULL) {
 		/* Path not available, create and link a new one. */
-		asp = path_copy(nasp);
+		asp = path_copy(path_get(), nasp);
 		path_link(asp, peer);
 	}
 
@@ -638,46 +638,36 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 }
 
 /*
- * copy asp to a new UNLINKED one mainly for filtering
+ * Copy asp to a new UNLINKED aspath.
+ * On dst either path_get() or path_prep() had to be called before.
  */
 struct rde_aspath *
-path_copy(struct rde_aspath *asp)
+path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 {
-	struct rde_aspath *nasp;
-
-	nasp = path_get();
-	nasp->aspath = asp->aspath;
-	if (nasp->aspath != NULL) {
-		nasp->aspath->refcnt++;
+	dst->aspath = src->aspath;
+	if (dst->aspath != NULL) {
+		dst->aspath->refcnt++;
 		rdemem.aspath_refs++;
 	}
-	nasp->nexthop = nexthop_ref(asp->nexthop);
-	nasp->med = asp->med;
-	nasp->lpref = asp->lpref;
-	nasp->weight = asp->weight;
-	nasp->origin = asp->origin;
-	nasp->rtlabelid = asp->rtlabelid;
-	rtlabel_ref(nasp->rtlabelid);
-	nasp->pftableid = asp->pftableid;
-	pftable_ref(nasp->pftableid);
+	dst->nexthop = nexthop_ref(src->nexthop);
+	dst->med = src->med;
+	dst->lpref = src->lpref;
+	dst->weight = src->weight;
+	dst->origin = src->origin;
+	dst->rtlabelid = rtlabel_ref(src->rtlabelid);
+	dst->pftableid = pftable_ref(src->pftableid);
 
-	nasp->flags = asp->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE);
-	attr_copy(nasp, asp);
+	dst->flags = src->flags & ~(F_ATTR_LINKED | F_ATTR_UPDATE);
+	attr_copy(dst, src);
 
-	return (nasp);
+	return (dst);
 }
 
-/* alloc and initialize new entry. May not fail. */
+/* initialize or pepare an aspath for use */
 struct rde_aspath *
-path_get(void)
+path_prep(struct rde_aspath *asp)
 {
-	struct rde_aspath *asp;
-
-	asp = calloc(1, sizeof(*asp));
-	if (asp == NULL)
-		fatal("path_alloc");
-	rdemem.path_cnt++;
-
+	memset(asp, 0, sizeof(*asp));
 	TAILQ_INIT(&asp->prefixes);
 	TAILQ_INIT(&asp->updates);
 	asp->origin = ORIGIN_INCOMPLETE;
@@ -687,6 +677,20 @@ path_get(void)
 	/* rtlabel = 0 */
 
 	return (asp);
+}
+
+/* alloc and initialize new entry. May not fail. */
+struct rde_aspath *
+path_get(void)
+{
+	struct rde_aspath *asp;
+
+	asp = malloc(sizeof(*asp));
+	if (asp == NULL)
+		fatal("path_get");
+	rdemem.path_cnt++;
+
+	return (path_prep(asp));
 }
 
 /* free an unlinked element */
