@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.33 2018/06/27 13:22:17 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.34 2018/06/29 15:18:03 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1258,7 +1258,7 @@ ber_free(struct ber *b)
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
-	return ber_read(b, c, 1);
+	return ber_readbuf(b, c, 1);
 }
 
 static ssize_t

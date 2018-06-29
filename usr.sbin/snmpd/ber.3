@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.13 2013/10/01 12:48:27 reyk Exp $
+.\" $OpenBSD: ber.3,v 1.14 2018/06/29 15:18:03 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2013 $
+.Dd $Mdocdate: June 29 2018 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -25,8 +25,10 @@
 .Nm ber_replace_elements ,
 .Nm ber_add_sequence ,
 .Nm ber_add_set ,
+.Nm ber_add_enumerated ,
 .Nm ber_add_integer ,
 .Nm ber_get_integer ,
+.Nm ber_get_enumerated ,
 .Nm ber_add_boolean ,
 .Nm ber_get_boolean ,
 .Nm ber_add_string ,
@@ -40,10 +42,12 @@
 .Nm ber_add_eoc ,
 .Nm ber_get_eoc ,
 .Nm ber_add_oid ,
+.Nm ber_add_noid ,
 .Nm ber_add_oidstring ,
 .Nm ber_get_oid ,
 .Nm ber_oid2ber ,
 .Nm ber_string2oid ,
+.Nm ber_oid_cmp ,
 .Nm ber_printf_elements ,
 .Nm ber_scanf_elements ,
 .Nm ber_get_writebuf ,
@@ -54,7 +58,7 @@
 .Nm ber_free_elements ,
 .Nm ber_calc_len ,
 .Nm ber_set_application ,
-.Nm ber_set_writecallback
+.Nm ber_set_writecallback ,
 .Nm ber_free
 .Nd parse ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
@@ -77,6 +81,10 @@
 .Fn "ber_add_integer" "struct ber_element *prev" "long long val"
 .Ft "int"
 .Fn "ber_get_integer" "struct ber_element *root" "long long *val"
+.Ft "struct ber_element *"
+.Fn "ber_add_enumerated" "struct ber_element *prev" "long long val"
+.Ft "int"
+.Fn "ber_get_enumerated" "struct ber_element *root" "long long *val"
 .Ft "struct ber_element *"
 .Fn "ber_add_boolean" "struct ber_element *prev" "int bool"
 .Ft "int"
@@ -104,6 +112,8 @@
 .Ft "struct ber_element *"
 .Fn "ber_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
 .Ft "struct ber_element *"
+.Fn "ber_add_noid" "struct ber_element *prev" "struct ber_oid *oid, int n"
+.Ft "struct ber_element *"
 .Fn "ber_add_oidstring" "struct ber_element *prev" "const char *string"
 .Ft "int"
 .Fn "ber_get_oid" "struct ber_element *root" "struct ber_oid *oid"
@@ -111,6 +121,8 @@
 .Fn "ber_oid2ber" "struct ber_oid *oid" "u_int8_t *buf" "size_t size"
 .Ft "int"
 .Fn "ber_string2oid" "const char *string" "struct ber_oid *oid"
+.Ft "int"
+.Fn "ber_oid_cmp" "struct ber_oid *oid" "struct ber_oid *oid"
 .Ft "struct ber_element *"
 .Fn "ber_printf_elements" "struct ber_element *prev" "char *format" "..."
 .Ft "int"
@@ -153,6 +165,8 @@ using the
 .Fn ber_add_set ,
 .Fn ber_add_integer ,
 .Fn ber_get_integer ,
+.Fn ber_add_enumerated ,
+.Fn ber_get_enumerated ,
 .Fn ber_add_boolean ,
 .Fn ber_get_boolean ,
 .Fn ber_add_string ,
@@ -182,11 +196,12 @@ struct ber_oid {
 .Ed
 .Pp
 .Fn ber_add_oid ,
+.Fn ber_add_noid ,
 .Fn ber_add_oidstring ,
 .Fn ber_get_oid ,
 .Fn ber_oid2ber ,
-.Fn ber_oid_cmp ,
 .Fn ber_string2oid
+.Fn ber_oid_cmp ,
 .Sh FORMAT STRINGS
 .Fn ber_printf_elements ,
 .Fn ber_scanf_elements
@@ -203,6 +218,7 @@ struct ber_oid {
 .Sh RETURN VALUES
 Upon successful completion
 .Fn ber_get_integer ,
+.Fn ber_get_enumerated ,
 .Fn ber_get_boolean ,
 .Fn ber_get_string ,
 .Fn ber_get_nstring ,
@@ -225,6 +241,9 @@ The
 .Nm ber
 manpage first appeared in
 .Ox 4.3 .
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules.
 .Sh AUTHORS
 .An -nosplit
 The
@@ -234,5 +253,13 @@ library was written by
 .An Marc Balmer Aq Mt marc@openbsd.org
 and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+Only the subset of
+.Nm ber
+data types specified above are supported.
+.Pp
+Indefinite length
+.Nm ber
+encoding is not supported.
 .Sh BUGS
 This manpage is a stub.

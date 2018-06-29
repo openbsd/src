@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.14 2018/06/27 13:22:17 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.15 2018/06/29 15:18:03 rob Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -729,7 +729,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ber = parent[level--];
 			ret++;
-			continue;
+			break;
 		default:
 			goto fail;
 		}
