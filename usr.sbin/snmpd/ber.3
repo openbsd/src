@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.14 2018/06/29 15:18:03 rob Exp $
+.\" $OpenBSD: ber.3,v 1.15 2018/06/29 19:28:02 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -55,6 +55,7 @@
 .Nm ber_set_readbuf ,
 .Nm ber_read_elements ,
 .Nm ber_getpos ,
+.Nm ber_free_element ,
 .Nm ber_free_elements ,
 .Nm ber_calc_len ,
 .Nm ber_set_application ,
@@ -138,6 +139,8 @@
 .Ft off_t
 .Fn "ber_getpos" "struct ber_element *elm"
 .Ft "void"
+.Fn "ber_free_element" "struct ber_element *root"
+.Ft "void"
 .Fn "ber_free_elements" "struct ber_element *root"
 .Ft "size_t"
 .Fn "ber_calc_len" "struct ber_element *root"
@@ -211,6 +214,7 @@ struct ber_oid {
 .Fn ber_set_readbuf ,
 .Fn ber_read_elements ,
 .Fn ber_getpos ,
+.Fn ber_free_element ,
 .Fn ber_free_elements ,
 .Fn ber_set_application ,
 .Fn ber_set_writecallback ,
