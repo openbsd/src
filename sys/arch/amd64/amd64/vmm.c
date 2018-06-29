@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.202 2018/06/22 05:21:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.203 2018/06/29 04:50:47 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3829,8 +3829,9 @@ vmm_fpurestore(struct vcpu *vcpu)
 	if (vcpu->vc_fpuinited) {
 		/* Restore guest XCR0 and FPU context */
 		if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
-			DPRINTF("%s: guest attempted to set invalid %s\n",
-			    __func__, "bits in xcr0");
+			DPRINTF("%s: guest attempted to set invalid bits in "
+			    "xcr0 (guest %%xcr0=0x%llx, host mask=0x%llx)\n",
+			    __func__, vcpu->vc_gueststate.vg_xcr0, ~xsave_mask);
 			return EINVAL;
 		}
 
