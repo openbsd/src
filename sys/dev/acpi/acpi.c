@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.347 2018/06/26 07:38:39 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.348 2018/06/29 04:55:55 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2191,11 +2191,10 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 	ptbl = acpi_find_gpe(sc, gpe);
 	if (ptbl == NULL || handler == NULL)
 		return -EINVAL;
-	if (ptbl->handler != NULL) {
-		dnprintf(10, "error: GPE %.2x already enabled\n", gpe);
-		return -EBUSY;
-	}
-	dnprintf(50, "Adding GPE handler %.2x (%s)\n", gpe,
+	if (ptbl->handler != NULL)
+		printf("%s: GPE 0x%.2x already enabled\n", DEVNAME(sc), gpe);
+
+	dnprintf(50, "Adding GPE handler 0x%.2x (%s)\n", gpe,
 	    edge ? "edge" : "level");
 	ptbl->handler = handler;
 	ptbl->arg = arg;
