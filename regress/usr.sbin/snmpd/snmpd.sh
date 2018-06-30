@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.6 2018/06/30 17:24:27 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.7 2018/06/30 17:37:59 rob Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -191,7 +191,7 @@ eval $snmpctl_command > /dev/null 2>&1
 if [ $? -eq 0 ]
 then
 	echo "Non-defaut ro community string test failed."
-	fail=1
+	FAILED=1
 fi
 
 # get with SHA authentication
@@ -241,7 +241,7 @@ system="$(eval $snmpget_command | awk '{ print $2 }')"
 if [ "$system" != "$os" ]
 then
 	echo "seclevel auth with SHA failed"
-	fail=1
+	FAILED=1
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
@@ -330,7 +330,7 @@ eval $snmpset_command > /dev/null 2>&1
 if [ $? -eq 0  ]
 then
 	echo "Setting of a ro custom oid test unexpectedly succeeded."
-	fail=1
+	FAILED=1
 fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
