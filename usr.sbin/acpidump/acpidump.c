@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.18 2018/06/24 10:39:59 kettenis Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.19 2018/06/30 19:45:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -532,7 +532,10 @@ acpi_handle_facp(struct FACPbody *facp)
 	struct ACPIsdt	*dsdp;
 
 	acpi_print_facp(facp);
-	dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
+	if (facp->dsdt_ptr == 0)
+		dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->x_dsdt);
+	else
+		dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
 	if (acpi_checksum(dsdp, dsdp->len))
 		errx(1, "DSDT is corrupt");
 	acpi_handle_dsdt(dsdp);
