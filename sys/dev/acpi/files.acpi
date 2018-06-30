@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.43 2018/06/30 18:15:12 mlarkin Exp $
+#	$OpenBSD: files.acpi,v 1.44 2018/06/30 18:19:30 mlarkin Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -170,7 +170,7 @@ device	acpisbs
 attach	acpisbs at acpi
 file	dev/acpi/acpisbs.c		acpisbs
 
-# MSHW0040 Sufrace/Surface Book media buttons
+# MSHW0040 Surface/Surface Book media buttons
 device	acpisurface
 attach	acpisurface at acpi
 file	dev/acpi/acpisurface.c		acpisurface
