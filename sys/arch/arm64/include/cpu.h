@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.8 2018/06/28 21:19:45 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.9 2018/06/30 10:20:21 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -281,6 +281,12 @@ disable_irq_daif_ret()
 
 #define restore_interrupts(old_daif)					\
 	restore_daif(old_daif)
+
+static inline void
+intr_enable(void)
+{
+	enable_irq_daif();
+}
 
 static inline u_long
 intr_disable(void)
