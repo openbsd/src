@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.1 2018/06/25 22:39:14 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.2 2018/06/30 19:20:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -330,8 +330,11 @@ efi_acpi_fadt(struct acpi_table_header *hdr)
 	struct acpi_fadt *fadt = (struct acpi_fadt *)hdr;
 	void *node;
 
-	/* The PSCI flags were introduced in ACPI 6.0. */
-	if (fadt->hdr_revision < 6)
+	/*
+	 * The PSCI flags were introduced in ACPI 5.1.  The relevant
+	 * field is set to zero for ACPU 5.0.
+	 */
+	if (fadt->hdr_revision < 5)
 		return;
 
 	node = fdt_find_node("/psci");
@@ -377,7 +380,7 @@ static uint64_t gicd_base;
 static uint64_t gicr_base;
 
 void
-efi_acpi_madt_gic(struct acpi_madt_gic *gic, uint8_t revision)
+efi_acpi_madt_gic(struct acpi_madt_gic *gic)
 {
 	uint64_t mpidr = gic->mpidr;
 	void *node, *child;
@@ -385,10 +388,10 @@ efi_acpi_madt_gic(struct acpi_madt_gic *gic, uint8_t revision)
 	char name[32];
 
 	/*
-	 * MPIDR field was introduced in ACPI 6.0.  Fall back on the
-	 * ACPI Processor UID on ACPI 5.x.
+	 * MPIDR field was introduced in ACPI 5.1.  Fall back on the
+	 * ACPI Processor UID on ACPI 5.0.
 	 */
-	mpidr = (revision > 3) ? gic->mpidr : gic->acpi_proc_uid;
+	mpidr = (gic->length >= 76) ? gic->mpidr : gic->acpi_proc_uid;
 
 	snprintf(name, sizeof(name), "cpu@%llx", mpidr);
 	reg = htobe64(mpidr);
@@ -406,7 +409,7 @@ efi_acpi_madt_gic(struct acpi_madt_gic *gic, uint8_t revision)
 
 	/* Stash GIC information. */
 	gicc_base = gic->base_address;
-	if (revision > 3)
+	if (gic->length >= 76)
 		gicr_base = gic->gicr_base_address;
 }
 
@@ -472,7 +475,7 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 
 		switch (entry->madt_gic.apic_type) {
 		case ACPI_MADT_GIC:
-			efi_acpi_madt_gic(&entry->madt_gic, madt->hdr_revision);
+			efi_acpi_madt_gic(&entry->madt_gic);
 			break;
 		case ACPI_MADT_GICD:
 			efi_acpi_madt_gicd(&entry->madt_gicd);
@@ -491,6 +494,8 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 	 */
 
 	switch (gic_version) {
+	case 0:
+		/* ACPI 5.0 doesn't provide a version; assume GICv2 */
 	case 2:
 		/* GICv2 */
 		compat = "arm,gic-400";
