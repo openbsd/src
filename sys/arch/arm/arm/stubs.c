@@ -1,4 +1,4 @@
-/*	$OpenBSD: stubs.c,v 1.10 2015/10/21 07:59:17 mpi Exp $	*/
+/*	$OpenBSD: stubs.c,v 1.11 2018/06/30 15:23:35 deraadt Exp $	*/
 /*	$NetBSD: stubs.c,v 1.14 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -233,5 +233,3 @@ abort:
 	printf("\n\n");
 	delay(1000000);
 }
-
-/* End of stubs.c */

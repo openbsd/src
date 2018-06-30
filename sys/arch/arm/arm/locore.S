@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 2018/06/04 22:10:58 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.16 2018/06/30 15:23:35 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -168,6 +168,3 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
-
-
-/* End of locore.S */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2018/01/26 16:22:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.51 2018/06/30 15:23:36 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -311,5 +311,3 @@ void board_startup(void);
 #endif /* _KERNEL */
 
 #endif /* !_ARM_CPU_H_ */
-
-/* End of cpu.h */

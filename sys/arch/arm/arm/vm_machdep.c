@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2018/03/16 21:46:04 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2018/06/30 15:23:35 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -205,5 +205,3 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
-
-/* End of vm_machdep.c */

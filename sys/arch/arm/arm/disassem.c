@@ -1,4 +1,4 @@
-/*	$OpenBSD: disassem.c,v 1.4 2016/04/25 04:05:55 jsg Exp $	*/
+/*	$OpenBSD: disassem.c,v 1.5 2018/06/30 15:23:35 deraadt Exp $	*/
 /*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
 
 /*
@@ -688,5 +688,3 @@ disassemble(u_int address)
 
 	(void)disasm(&disassemble_di, address, 0);
 }
-
-/* End of disassem.c */

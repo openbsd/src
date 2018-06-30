@@ -1,4 +1,4 @@
-/* $OpenBSD: frame.h,v 1.2 2018/05/04 15:43:34 visa Exp $ */
+/* $OpenBSD: frame.h,v 1.3 2018/06/30 15:23:37 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -75,5 +75,3 @@ struct callframe {
 #endif /* !_LOCORE */
 
 #endif /* _MACHINE_FRAME_H_ */
-
-/* End of frame.h */

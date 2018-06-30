@@ -1,4 +1,4 @@
-/*	$OpenBSD: setstack.S,v 1.3 2015/01/18 14:55:02 jsg Exp $	*/
+/*	$OpenBSD: setstack.S,v 1.4 2018/06/30 15:23:35 deraadt Exp $	*/
 /*	$NetBSD: setstack.S,v 1.2 2002/08/15 01:37:02 briggs Exp $	*/
 
 /*
@@ -89,5 +89,3 @@ ENTRY(get_stackptr)
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	mov	pc, lr			/* Exit */
-
-/* End of setstack.S */
