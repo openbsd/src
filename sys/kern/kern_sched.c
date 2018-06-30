@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.48 2018/06/19 19:29:52 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.49 2018/06/30 14:43:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -470,6 +470,10 @@ sched_steal_proc(struct cpu_info *self)
 	struct cpuset set;
 
 	KASSERT((self->ci_schedstate.spc_schedflags & SPCF_SHOULDHALT) == 0);
+
+	/* Don't steal if we don't want to schedule processes in this CPU. */
+	if (!cpuset_isset(&sched_all_cpus, self))
+		return (NULL);
 
 	cpuset_copy(&set, &sched_queued_cpus);
 
