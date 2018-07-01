@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.12 2018/06/26 06:52:58 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.13 2018/07/01 11:37:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -92,7 +92,7 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
-	printf(": %s", sc->sc_node->name);
+	printf(" %s", sc->sc_node->name);
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL, &res)) {
 		printf(", can't find registers\n");
