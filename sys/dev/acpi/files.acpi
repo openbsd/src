@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.44 2018/06/30 18:19:30 mlarkin Exp $
+#	$OpenBSD: files.acpi,v 1.45 2018/07/01 10:29:30 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -136,6 +136,10 @@ file	dev/acpi/tipmic.c		tipmic
 device	ccpmic
 attach	ccpmic at i2c
 file	dev/acpi/ccpmic.c		ccpmic
+
+# NS16550 compatible UART
+attach	com at acpi with com_acpi
+file	dev/acpi/com_acpi.c		com_acpi
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
