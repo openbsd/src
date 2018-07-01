@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.66 2017/09/04 13:47:56 jcs Exp $ */
+/* $OpenBSD: acpibat.c,v 1.67 2018/07/01 19:40:49 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -40,7 +40,10 @@ struct cfdriver acpibat_cd = {
 	NULL, "acpibat", DV_DULL
 };
 
-const char *acpibat_hids[] = { ACPI_DEV_CMB, 0 };
+const char *acpibat_hids[] = {
+	ACPI_DEV_CMB,
+	NULL
+};
 
 void	acpibat_monitor(struct acpibat_softc *);
 void	acpibat_refresh(void *);

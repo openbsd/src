@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.60 2018/06/29 17:39:18 kettenis Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.61 2018/07/01 19:40:49 mlarkin Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -195,7 +195,7 @@ const char *acpithinkpad_hids[] = {
 	"IBM0068",
 	"LEN0068",
 	"LEN0268",
-	0
+	NULL
 };
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.58 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpiec.c,v 1.59 2018/07/01 19:40:49 mlarkin Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -87,7 +87,10 @@ struct cfdriver acpiec_cd = {
 	NULL, "acpiec", DV_DULL
 };
 
-const char *acpiec_hids[] = { ACPI_DEV_ECD, 0 };
+const char *acpiec_hids[] = {
+	ACPI_DEV_ECD,
+	NULL
+};
 
 void
 acpiec_wait(struct acpiec_softc *sc, uint8_t mask, uint8_t val)

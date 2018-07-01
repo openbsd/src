@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.10 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.11 2018/07/01 19:40:49 mlarkin Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -124,7 +124,7 @@ const char *acpitoshiba_hids[] = {
 	"TOS6200",	/* Libretto */
 	"TOS6207",	/* Dynabook */
 	"TOS6208",	/* SPA40 */
-	0
+	NULL
 };
 
 int
