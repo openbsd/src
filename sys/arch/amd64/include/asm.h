@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2018/07/01 04:47:32 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2018/07/01 12:13:50 mortimer Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -96,6 +96,44 @@
 	pushq %rbp; leaq (%rsp),%rbp; call PIC_PLT(__mcount); popq %rbp
 #else
 # define _PROF_PROLOGUE
+#endif
+
+#if defined(_RET_PROTECTOR)
+# define RETGUARD_SETUP_OFF(x, reg, off) \
+	RETGUARD_SYMBOL(x); \
+	movq (__retguard_ ## x)(%rip), %reg; \
+	xorq off(%rsp), %reg
+# define RETGUARD_SETUP(x, reg) \
+	RETGUARD_SETUP_OFF(x, reg, 0)
+# define RETGUARD_CHECK(x, reg) \
+	xorq (%rsp), %reg; \
+	cmpq (__retguard_ ## x)(%rip), %reg; \
+	je 66f; \
+	int3; int3; \
+66:
+# define RETGUARD_PUSH(reg) \
+	pushq %reg
+# define RETGUARD_POP(reg) \
+	popq %reg
+# define RETGUARD_SYMBOL(x) \
+	.ifndef __retguard_ ## x; \
+	.hidden __retguard_ ## x; \
+	.type   __retguard_ ## x,@object; \
+	.pushsection .openbsd.randomdata.retguard,"aw",@progbits; \
+	.weak   __retguard_ ## x; \
+	.p2align 3; \
+	__retguard_ ## x: ; \
+	.quad 0; \
+	.size __retguard_ ## x, 8; \
+	.popsection; \
+	.endif
+#else
+# define RETGUARD_SETUP_OFF(x, reg, off)
+# define RETGUARD_SETUP(x, reg)
+# define RETGUARD_CHECK(x, reg)
+# define RETGUARD_PUSH(reg)
+# define RETGUARD_POP(reg)
+# define RETGUARD_SYMBOL(x)
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
