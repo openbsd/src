@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.343 2018/06/20 10:52:49 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.344 2018/07/01 16:33:15 visa Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1264,8 +1264,11 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		kf->p_tid = -1;
 		strlcpy(kf->p_comm, pr->ps_comm, sizeof(kf->p_comm));
 	}
-	if (fdp != NULL)
+	if (fdp != NULL) {
+		fdplock(fdp);
 		kf->fd_ofileflags = fdp->fd_ofileflags[fd];
+		fdpunlock(fdp);
+	}
 }
 
 /*

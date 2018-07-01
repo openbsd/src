@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.131 2018/06/23 11:33:32 visa Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.132 2018/07/01 16:33:15 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -839,6 +839,7 @@ morespace:
 
 	ip = ((int *)CMSG_DATA(cm)) + nfds - 1;
 	rp = ((struct fdpass *)CMSG_DATA(cm)) + nfds - 1;
+	fdplock(fdp);
 	for (i = 0; i < nfds; i++) {
 		memcpy(&fd, ip, sizeof fd);
 		ip--;
@@ -868,8 +869,10 @@ morespace:
 		}
 		unp_rights++;
 	}
+	fdpunlock(fdp);
 	return (0);
 fail:
+	fdpunlock(fdp);
 	if (fp != NULL)
 		FRELE(fp, p);
 	/* Back out what we just did. */
