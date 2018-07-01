@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2018/07/01 12:13:50 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.13 2018/07/01 16:02:12 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -70,17 +70,17 @@
 
 #ifdef _KERNEL
 #define	KUTEXT	.section .kutext, "ax"
-/*#define	KUTEXT	.text */
 
-/* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
 #define	IDTVEC(name) \
-	KUTEXT; ALIGN_TEXT; \
+	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+#define	IDTVEC_NOALIGN(name) \
 	.globl X ## name; .type X ## name,@function; X ## name:
 #define	KIDTVEC(name) \
-	.text; ALIGN_TEXT; \
-	.globl X ## name; .type X ## name,@function; X ## name:
+	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+#define	KIDTVEC_FALLTHROUGH(name) \
+	_ALIGN_TEXT; IDTVEC_NOALIGN(name)
 #define KUENTRY(x) \
-	KUTEXT; _ALIGN_TEXT; .globl x; .type x,@function; x:
+	KUTEXT; _ALIGN_TRAPS; .globl x; .type x,@function; x:
 
 #endif /* _KERNEL */
 

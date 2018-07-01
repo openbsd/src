@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.66 2018/06/14 19:57:29 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.67 2018/07/01 16:02:12 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ IDTVEC(trap0d)
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
-IDTVEC(trap0f)
+IDTVEC_NOALIGN(trap0f)
 	iretq
 IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
@@ -318,17 +318,17 @@ IDTVEC(trap12)
 IDTVEC(trap13)
 	ZTRAP(T_XMM)
 IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
+IDTVEC_NOALIGN(trap15)
+IDTVEC_NOALIGN(trap16)
+IDTVEC_NOALIGN(trap17)
+IDTVEC_NOALIGN(trap18)
+IDTVEC_NOALIGN(trap19)
+IDTVEC_NOALIGN(trap1a)
+IDTVEC_NOALIGN(trap1b)
+IDTVEC_NOALIGN(trap1c)
+IDTVEC_NOALIGN(trap1d)
+IDTVEC_NOALIGN(trap1e)
+IDTVEC_NOALIGN(trap1f)
 	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
@@ -485,11 +485,11 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
-KIDTVEC(resume_lapic_ipi)
+KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-        sti
+	sti
 	cld
 	SMAP_CLAC
 	pushq	%rbx
@@ -569,7 +569,7 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
-KIDTVEC(resume_lapic_ltimer)
+KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
@@ -604,7 +604,7 @@ IDTVEC(intr_xen_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
-KIDTVEC(resume_xen_upcall)
+KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
@@ -638,7 +638,7 @@ IDTVEC(intr_hyperv_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
-KIDTVEC(resume_hyperv_upcall)
+KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
@@ -668,7 +668,7 @@ KIDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$16,%rsp		/* space for __if_{trapno,err} */;\
 	INTR_REENTRY							;\
-KIDTVEC(resume_##name##num)						\
+KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
