@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.95 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.amd64,v 1.96 2018/07/01 15:52:12 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -232,6 +232,7 @@ include "dev/gpio/files.gpio"
 # ACPI
 #
 include "dev/acpi/files.acpi"
+attach	acpi at bios
 file	arch/amd64/amd64/acpi_machdep.c		acpi
 file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
 

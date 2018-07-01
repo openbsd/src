@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.237 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.i386,v 1.238 2018/07/01 15:52:12 kettenis Exp $
 #
 # new style config file for i386 architecture
 #
@@ -389,6 +389,7 @@ include "dev/onewire/files.onewire"
 include "dev/sdmmc/files.sdmmc"
 
 include "dev/acpi/files.acpi"
+attach	acpi at bios
 file	arch/i386/i386/acpi_machdep.c		acpi
 file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
 

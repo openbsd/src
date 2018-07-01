@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.82 2018/06/25 22:33:24 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.83 2018/07/01 15:52:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -32,11 +32,12 @@
 
 #include <machine/cpuvar.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
+#include <dev/isa/isareg.h>
+#include <dev/pci/pcivar.h>
 
 #include "isa.h"
 #include "ioapic.h"
@@ -63,6 +64,42 @@ extern int acpi_savecpu(void) __returns_twice;
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
 
 u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
+
+int	acpi_match(struct device *, void *, void *);
+void	acpi_attach(struct device *, struct device *, void *);
+
+struct cfattach acpi_ca = {
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
+};
+
+int
+acpi_match(struct device *parent, void *match, void *aux)
+{
+	struct bios_attach_args	*ba = aux;
+	struct cfdata		*cf = match;
+
+	/* sanity */
+	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
+		return (0);
+
+	if (!acpi_probe(parent, cf, ba))
+		return (0);
+
+	return (1);
+}
+
+void
+acpi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)self;
+	struct bios_attach_args *ba = aux;
+
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_memt = ba->ba_memt;
+	sc->sc_dmat = &pci_bus_dma_tag;
+
+	acpi_attach_common(sc, ba->ba_acpipbase);
+}
 
 int
 acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)

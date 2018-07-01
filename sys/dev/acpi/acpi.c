@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.351 2018/07/01 10:27:34 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.352 2018/07/01 15:52:12 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -204,48 +204,6 @@ extern struct aml_node aml_root;
 struct cfdriver acpi_cd = {
 	NULL, "acpi", DV_DULL
 };
-
-#if defined(__amd64__) || defined(__i386__)
-
-#include <machine/biosvar.h>
-
-int	acpi_match(struct device *, void *, void *);
-void	acpi_attach(struct device *, struct device *, void *);
-
-struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach
-};
-
-int
-acpi_match(struct device *parent, void *match, void *aux)
-{
-	struct bios_attach_args	*ba = aux;
-	struct cfdata		*cf = match;
-
-	/* sanity */
-	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
-		return (0);
-
-	if (!acpi_probe(parent, cf, ba))
-		return (0);
-
-	return (1);
-}
-
-void
-acpi_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct acpi_softc *sc = (struct acpi_softc *)self;
-	struct bios_attach_args *ba = aux;
-
-	sc->sc_iot = ba->ba_iot;
-	sc->sc_memt = ba->ba_memt;
-	sc->sc_dmat = &pci_bus_dma_tag;
-
-	acpi_attach_common(sc, ba->ba_acpipbase);
-}
-
-#endif
 
 uint8_t
 acpi_pci_conf_read_1(pci_chipset_tag_t pc, pcitag_t tag, int reg)
