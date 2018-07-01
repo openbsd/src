@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.350 2018/06/30 10:16:35 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.351 2018/07/01 10:27:34 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2873,6 +2873,50 @@ acpi_foundsony(struct aml_node *node, void *arg)
 	config_found(self, &aaa, acpi_print);
 
 	return 0;
+}
+
+/* Support for _DSD Device Properties. */
+
+uint32_t
+acpi_getpropint(struct aml_node *node, const char *prop, uint32_t defval)
+{
+	struct aml_value dsd;
+	int i;
+
+	/* daffd814-6eba-4d8c-8a91-bc9bbf4aa301 */
+	static uint8_t prop_guid[] = {
+		0x14, 0xd8, 0xff, 0xda, 0xba, 0x6e, 0x8c, 0x4d,
+		0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01,
+	};
+
+	if (aml_evalname(acpi_softc, node, "_DSD", 0, NULL, &dsd))
+		return defval;
+
+	if (dsd.type != AML_OBJTYPE_PACKAGE || dsd.length != 2 ||
+	    dsd.v_package[0]->type != AML_OBJTYPE_BUFFER ||
+	    dsd.v_package[1]->type != AML_OBJTYPE_PACKAGE)
+		return defval;
+
+	/* Check UUID. */
+	if (dsd.v_package[0]->length != sizeof(prop_guid) ||
+	    memcmp(dsd.v_package[0]->v_buffer, prop_guid,
+	    sizeof(prop_guid)) != 0)
+		return defval;
+
+	/* Check properties. */
+	for (i = 0; i < dsd.v_package[1]->length; i++) {
+		struct aml_value *res = dsd.v_package[1]->v_package[i];
+
+		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
+		    res->v_package[0]->type != AML_OBJTYPE_STRING ||
+		    res->v_package[1]->type != AML_OBJTYPE_INTEGER)
+			continue;
+
+		if (strcmp(res->v_package[0]->v_string, prop) == 0)
+			return res->v_package[1]->v_integer;
+	}
+	
+	return defval;
 }
 
 int
