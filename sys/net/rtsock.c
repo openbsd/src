@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.272 2018/06/25 09:41:45 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.273 2018/07/01 08:53:03 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -668,7 +668,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	case RTM_DELETE:
 	case RTM_GET:
 	case RTM_CHANGE:
-	case RTM_LOCK:
 	case RTM_PROPOSAL:
 		break;
 	default:
@@ -899,7 +898,6 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		if_put(ifp);
 		break;
 	case RTM_CHANGE:
-	case RTM_LOCK:
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
 		    prio);
@@ -1062,10 +1060,6 @@ change:
 			}
 			if_group_routechange(info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_NETMASK]);
-			NET_UNLOCK();
-			/* FALLTHROUGH */
-		case RTM_LOCK:
-			NET_LOCK();
 			rt->rt_locks &= ~(rtm->rtm_inits);
 			rt->rt_locks |=
 			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);

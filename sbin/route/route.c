@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.215 2018/06/18 09:17:06 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.216 2018/07/01 08:53:03 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1206,9 +1206,9 @@ char *msgtypes[] = {
 	"RTM_LOSING: Kernel Suspects Partitioning",
 	"RTM_REDIRECT: Told to use different route",
 	"RTM_MISS: Lookup failed on this address",
-	"RTM_LOCK: fix specified metrics",
-	"RTM_OLDADD: caused by SIOCADDRT",
-	"RTM_OLDDEL: caused by SIOCDELRT",
+	"",
+	"",
+	"",
 	"RTM_RESOLVE: Route created by cloning",
 	"RTM_NEWADDR: address being added to iface",
 	"RTM_DELADDR: address being removed from iface",
