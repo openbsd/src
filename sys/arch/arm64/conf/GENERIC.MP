@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.MP,v 1.3 2018/06/30 15:23:37 deraadt Exp $
+#	$OpenBSD: GENERIC.MP,v 1.4 2018/07/01 19:30:37 kettenis Exp $
 
 include "arch/arm64/conf/GENERIC"
 
@@ -7,3 +7,5 @@ option	MULTIPROCESSOR
 #option	WITNESS
 
 cpu*		at mainbus?
+
+xhci*		at acpi?

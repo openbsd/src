@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.23 2018/06/05 20:41:19 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.24 2018/07/01 19:30:37 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -136,3 +136,9 @@ file	arch/arm64/dev/bcm2835_dwctwo.c		bcmdwctwo	needs-flag
 device	pciecam: pcibus
 attach	pciecam at fdt
 file	arch/arm64/dev/pciecam.c		pciecam
+
+# ACPI
+include "dev/acpi/files.acpi"
+
+attach	acpi at fdt with acpi_fdt
+file	arch/arm64/arm64/acpi_machdep.c		acpi_fdt
