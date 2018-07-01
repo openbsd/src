@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.25 2015/12/22 08:36:40 mmcc Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.26 2018/07/01 08:51:50 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -30,15 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <dev/usb/usb.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
-#include <dev/usb/usb.h>
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -131,7 +133,7 @@ usbdev(int f, int a, int rec)
 		int s = di.udi_ports[p];
 
 		if (s >= USB_MAX_DEVICES) {
-			if (verbose) {
+			if (verbose > 1) {
 				printf("%*sport %d %s\n", indent+1, "", p+1,
 				    s == USB_PORT_ENABLED ? "enabled" :
 				    s == USB_PORT_SUSPENDED ? "suspended" :
@@ -143,7 +145,7 @@ usbdev(int f, int a, int rec)
 		}
 		indent++;
 		printf("%*s", indent, "");
-		if (verbose)
+		if (verbose > 1)
 			printf("port %d ", p+1);
 		if (s == 0)
 			printf("addr 0 should never happen!\n");
@@ -167,7 +169,7 @@ usbdump(int f)
 void
 dumpone(char *name, int f, int addr)
 {
-	if (verbose)
+	if (!addr)
 		printf("Controller %s:\n", name);
 	indent = 0;
 	memset(done, 0, sizeof done);
@@ -201,7 +203,7 @@ main(int argc, char **argv)
 			dev = optarg;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		default:
 			usage();
@@ -209,6 +211,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc != 0)
+		usage();
 
 	if (dev == 0) {
 		for (ncont = 0, i = 0; i < 10; i++) {
@@ -229,10 +234,12 @@ main(int argc, char **argv)
 			    __progname);
 	} else {
 		f = open(dev, O_RDONLY);
-		if (f >= 0)
+		if (f >= 0) {
 			dumpone(dev, f, addr);
-		else
+			close(f);
+		} else
 			err(1, "%s", dev);
 	}
-	exit(0);
+
+	return 0;
 }
