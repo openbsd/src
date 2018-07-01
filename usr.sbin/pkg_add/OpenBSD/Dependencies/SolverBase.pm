@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.8 2018/06/26 09:40:33 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.9 2018/07/01 08:24:20 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -231,8 +231,14 @@ sub find_in_plist
 sub find_in_new_source
 {
 	my ($self, $solver, $state, $obj, $dep) = @_;
-	my $plist = OpenBSD::PackingList->from_installation($dep,
-	    \&OpenBSD::PackingList::DependOnly);
+	my $plist;
+
+	if (defined $solver->{set}{newer}{$dep}) {
+		$plist = $solver->{set}{newer}{$dep}->plist;
+	} else {
+		$plist = OpenBSD::PackingList->from_installation($dep,
+		    \&OpenBSD::PackingList::DependOnly);
+	}
 	if (!defined $plist) {
 		$state->errsay("Can't read plist for #1", $dep);
 	}
