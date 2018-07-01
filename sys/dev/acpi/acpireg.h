@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.41 2018/06/29 17:39:18 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.42 2018/07/01 10:26:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -416,6 +416,35 @@ struct acpi_mcfg {
 	uint8_t		max_bus_number;
 	uint32_t	reserved1;
 } __packed;
+
+struct acpi_spcr {
+	struct acpi_table_header	hdr;
+#define SPCR_SIG	"SPCR"
+	uint8_t		interface_type;
+#define SPCR_16550	0
+#define SPCR_16450	1
+#define SPCR_ARM_PL011	3
+#define SPCR_ARM_SBSA	14
+	uint8_t		reserved1[3];
+	struct acpi_gas	base_address;
+	uint8_t		interrupt_type;
+	uint8_t		irq;
+	uint32_t	gsiv;
+	uint8_t		baud_rate;
+	uint8_t		parity;
+	uint8_t		stop_bits;
+	uint8_t		flow_control;
+	uint8_t		terminal_type;
+	uint8_t		reserved2;
+	uint16_t	pci_device_id;
+	uint16_t	pci_vendor_id;
+	uint8_t		pci_bus;
+	uint8_t		pci_device;
+	uint8_t		pci_function;
+	uint32_t	pci_flags;
+	uint8_t		pci_segment;
+	uint32_t	reserved3;
+};
 
 struct acpi_facs {
 	uint8_t		signature[4];
