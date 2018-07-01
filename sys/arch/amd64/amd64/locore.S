@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.101 2018/06/14 19:57:29 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.102 2018/07/01 04:47:32 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ _C_LABEL(sigcode):
 _C_LABEL(sigcoderet):
 	movq	$SYS_exit,%rax
 	syscall
-	.align	16,0xcc
+	_ALIGN_TRAPS
 1:	JMP_RETPOLINE(rax)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
@@ -660,14 +660,14 @@ KUENTRY(syscall_trampback)
 	sysretq
 
 	.text
-	.align	16,0xcc
+	_ALIGN_TRAPS
 	/* in this case, need FS.base but not xstate, rarely happens */
 .Lsyscall_restore_fsbase:	/* CPU doesn't have curproc's FS.base */
 	orl	$CPUF_USERSEGS,CPUVAR(FLAGS)
 	movq	CPUVAR(CURPCB),%rdi
 	jmp	.Lsyscall_restore_fsbase_real
 
-	.align	16,0xcc
+	_ALIGN_TRAPS
 .Lsyscall_restore_xstate:	/* CPU doesn't have curproc's xstate */
 	orl	$(CPUF_USERXSTATE|CPUF_USERSEGS),CPUVAR(FLAGS)
 	movq	CPUVAR(CURPCB),%rdi
@@ -825,7 +825,7 @@ _C_LABEL(doreti_iret):
 	iretq
 
 	.text
-	.align	16,0xcc
+	_ALIGN_TRAPS
 .Lintr_restore_xstate:		/* CPU doesn't have curproc's xstate */
 	orl	$CPUF_USERXSTATE,CPUVAR(FLAGS)
 	movq	CPUVAR(CURPCB),%rdi

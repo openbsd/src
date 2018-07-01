@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.10 2018/06/07 04:09:35 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.11 2018/07/01 04:47:32 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -61,8 +61,9 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-#define _ALIGN_TEXT .align 16, 0x90
+#define _ALIGN_TEXT	.align	16, 0x90
 #endif
+#define _ALIGN_TRAPS	.align	16, 0xcc
 
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
@@ -125,7 +126,7 @@
 		call	69f		; \
 	68:	pause			; \
 		jmp	68b		; \
-		.align	16,0xcc		; \
+		_ALIGN_TRAPS		; \
 	69:	mov	%reg,(%rsp)	; \
 		ret
 
