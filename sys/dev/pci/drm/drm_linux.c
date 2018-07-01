@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.24 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.25 2018/07/01 12:12:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -873,19 +873,12 @@ struct dma_buf *
 dma_buf_export(const struct dma_buf_export_info *info)
 {
 	struct proc *p = curproc;
-	struct filedesc *fdp = p->p_fd;
 	struct dma_buf *dmabuf;
 	struct file *fp;
-	int fd, error;
 
-	fdplock(fdp);
-	error = falloc(p, &fp, &fd);
-	if (error) {
-		fdpunlock(fdp);
-		return ERR_PTR(-error);
-	}
-	fdremove(fdp, fd);
-	fdpunlock(fdp);
+	fp = fnew(p);
+	if (fp == NULL)
+		return ERR_PTR(-ENFILE);
 	fp->f_type = DTYPE_DMABUF;
 	fp->f_ops = &dmabufops;
 	dmabuf = malloc(sizeof(struct dma_buf), M_DRM, M_WAITOK | M_ZERO);
