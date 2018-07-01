@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.5 2018/04/09 21:55:25 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.6 2018/07/01 18:58:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -271,7 +271,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	    "%s pciio", sc->sc_dev.dv_xname);
 	snprintf(sc->sc_memex_name, sizeof(sc->sc_memex_name),
 	    "%s pcimem", sc->sc_dev.dv_xname);
-	sc->sc_busex = extent_create("pcibus", 0, 255,
+	sc->sc_busex = extent_create(sc->sc_busex_name, 0, 255,
 	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
 	sc->sc_ioex = extent_create(sc->sc_ioex_name, 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
