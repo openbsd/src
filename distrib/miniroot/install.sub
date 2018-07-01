@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1070 2018/06/16 16:08:50 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1071 2018/07/01 20:45:22 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -517,29 +517,34 @@ unlock() {
 	rm -df /tmp/i/lock 2>/dev/null
 }
 
-# Add trap to kill the listener process.
+# Add a trap to kill the dmesg listener co-process on exit of the installer.
 retrap() {
 	trap 'kill -KILL $CPPID 2>/dev/null; echo; stty echo; exit 0' \
 		INT EXIT TERM
 }
 
-# Start listener process looking for dmesg changes.
+# Start a listener process looking for dmesg changes which indicates a possible
+# plug-in/-out of devices (e.g. usb disks, cdroms, etc.). This is used to abort
+# and redraw question prompts, especially in ask_which().
 start_dmesg_listener() {
 	local _update=/tmp/i/update
 
-	# Make sure lock is initially released.
+	# Ensure the lock is initially released and that no update files exists.
 	unlock
-
-	# The dmesg listener will check for the existence of this file and sends
-	# a signal to the child process if the dmesg output differs from the
-	# contents of that file.
 	rm -f $_update
 
+	# Do not start the listener if in non-interactive mode.
 	$AUTO && return
 
+	# To ensure that only one dmesg listener instance can be active, run it
+	# in a co-process subshell of which there can always only be one active.
 	(
 	while :; do
 		lock
+		# The dmesg listener will continously check for the existence of
+		# the update file and sends a signal to the parent process (that
+		# is the installer script) if the dmesg output differs from the
+		# contents of that file.
 		if [[ -e $_update && "$(dmesg)" != "$(<$_update)" ]]; then
 			dmesg >$_update
 			kill -TERM 2>/dev/null $$ || exit 1
@@ -548,9 +553,11 @@ start_dmesg_listener() {
 		sleep .5
 	done
 	) |&
-	CPPID=$!
 
-	# Kill the child on exit.
+	# Save the co-process PID in a global variable so it can be used in
+	# the retrap() function which adds a trap to kill the co-process on
+	# exit of the installer script.
+	CPPID=$!
 	retrap
 }
 
