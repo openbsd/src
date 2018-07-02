@@ -1,5 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.1 2018/06/05 20:41:19 kettenis Exp $	*/
-
+/*	$OpenBSD: pluart.c,v 1.1 2018/07/02 12:46:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -32,16 +31,13 @@
 #include <sys/kernel.h>
 
 #include <machine/bus.h>
-#include <machine/fdt.h>
 
+#include <dev/ic/pluartvar.h>
 #include <dev/cons.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
-
-#include <dev/ofw/fdt.h>
-#include <dev/ofw/openfirm.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
@@ -121,53 +117,8 @@
 #define UART_DMACR		0x48		/* DMA control register */
 #define UART_SPACE		0x100
 
-struct pluart_softc {
-	struct device	sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	struct soft_intrhand *sc_si;
-	void *sc_irq;
-	struct tty	*sc_tty;
-	struct timeout	sc_diag_tmo;
-	struct timeout	sc_dtr_tmo;
-	int		sc_overflows;
-	int		sc_floods;
-	int		sc_errors;
-	int		sc_halt;
-	u_int16_t	sc_ucr1;
-	u_int16_t	sc_ucr2;
-	u_int16_t	sc_ucr3;
-	u_int16_t	sc_ucr4;
-	u_int8_t	sc_hwflags;
-#define COM_HW_NOIEN    0x01
-#define COM_HW_FIFO     0x02
-#define COM_HW_SIR      0x20
-#define COM_HW_CONSOLE  0x40
-	u_int8_t	sc_swflags;
-#define COM_SW_SOFTCAR  0x01
-#define COM_SW_CLOCAL   0x02
-#define COM_SW_CRTSCTS  0x04
-#define COM_SW_MDMBUF   0x08
-#define COM_SW_PPS      0x10
-	int		sc_fifolen;
-
-	u_int8_t	sc_initialize;
-	u_int8_t	sc_cua;
-	u_int16_t 	*sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
-#define UART_IBUFSIZE 128
-#define UART_IHIGHWATER 100
-	u_int16_t		sc_ibufs[2][UART_IBUFSIZE];
-
-	struct clk	*sc_clk;
-};
-
-int  pluartprobe(struct device *parent, void *self, void *aux);
-void pluartattach(struct device *parent, struct device *self, void *aux);
-
 void pluartcnprobe(struct consdev *cp);
 void pluartcninit(struct consdev *cp);
-int pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
-    tcflag_t cflag);
 int pluartcngetc(dev_t dev);
 void pluartcnputc(dev_t dev, int c);
 void pluartcnpollc(dev_t dev, int on);
@@ -179,8 +130,6 @@ void pluart_raisedtr(void *arg);
 void pluart_softint(void *arg);
 struct pluart_softc *pluart_sc(dev_t dev);
 
-int pluart_intr(void *);
-
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -190,62 +139,21 @@ struct cfdriver pluart_cd = {
 	NULL, "pluart", DV_TTY
 };
 
-struct cfattach pluart_ca = {
-	sizeof(struct pluart_softc), pluartprobe, pluartattach
-};
-
 bus_space_tag_t	pluartconsiot;
 bus_space_handle_t pluartconsioh;
 bus_addr_t	pluartconsaddr;
 tcflag_t	pluartconscflag = TTYDEF_CFLAG;
 int		pluartdefaultrate = B38400;
 
-void
-pluart_init_cons(void)
-{
-	struct fdt_reg reg;
-	void *node;
-
-	if ((node = fdt_find_cons("arm,pl011")) == NULL)
-		return;
-	if (fdt_get_reg(node, 0, &reg))
-		return;
-
-	pluartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
-}
-
-int
-pluartprobe(struct device *parent, void *self, void *aux)
-{
-	struct fdt_attach_args *faa = aux;
-
-	return OF_is_compatible(faa->fa_node, "arm,pl011");
-}
-
 struct cdevsw pluartdev =
 	cdev_tty_init(3/*XXX NUART */ ,pluart);		/* 12: serial port */
 
 void
-pluartattach(struct device *parent, struct device *self, void *aux)
+pluart_attach_common(struct pluart_softc *sc, int console)
 {
-	struct fdt_attach_args *faa = aux;
-	struct pluart_softc *sc = (struct pluart_softc *) self;
 	int maj;
 
-	if (faa->fa_nreg < 1) {
-		printf(": no register data\n");
-		return;
-	}
-
-	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY, pluart_intr,
-	    sc, sc->sc_dev.dv_xname);
-
-	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
-	    0, &sc->sc_ioh))
-		panic("pluartattach: bus_space_map failed!");
-
-	if (stdout_node == faa->fa_node) {
+	if (console) {
 		/* Locate the major number. */
 		for (maj = 0; maj < nchrdev; maj++)
 			if (cdevsw[maj].d_open == pluartopen)

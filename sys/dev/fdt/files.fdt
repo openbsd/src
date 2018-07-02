@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.64 2018/06/16 14:11:35 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.65 2018/07/02 12:46:20 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -79,9 +79,8 @@ attach	plrtc at fdt
 file	dev/fdt/plrtc.c			plrtc
 
 # ARM PrimeCell PL011 UART
-device	pluart
-attach	pluart at fdt
-file	dev/fdt/pluart.c		pluart
+attach	pluart at fdt with pluart_fdt
+file	dev/fdt/pluart_fdt.c		pluart_fdt
 
 # ARM Power State Coordination Interface
 device	psci

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.661 2018/04/20 04:37:21 dlg Exp $
+#	$OpenBSD: files,v 1.662 2018/07/02 12:46:20 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -323,6 +323,10 @@ file	dev/ic/ti.c			ti
 device	com: tty
 file	dev/ic/com.c			com & (com | com_cardbus | com_gsc |
 					       com_isapnp)	needs-flag
+
+# ARM PrimeCell PL011 UART
+device	pluart: tty
+file	dev/ic/pluart.c			pluart
 
 # PC-like keyboard controller
 define	pckbcslot {[slot = -1]}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.48 2018/07/02 11:23:19 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.49 2018/07/02 12:46:20 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -143,6 +143,10 @@ file	dev/acpi/ahci_acpi.c		ahci_acpi
 # NS16550 compatible UART
 attach	com at acpi with com_acpi
 file	dev/acpi/com_acpi.c		com_acpi
+
+# PL011 UART
+attach	pluart at acpi with pluart_acpi
+file	dev/acpi/pluart_acpi.c		pluart_acpi
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi

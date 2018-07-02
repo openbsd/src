@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.75 2018/07/02 11:23:19 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.76 2018/07/02 12:46:20 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -42,6 +42,7 @@ acpibtn*	at acpi?
 acpiec*		at acpi?
 ahci*		at acpi?
 com*		at acpi?
+pluart*		at acpi?
 xhci*		at acpi?
 simplebus*	at fdt?
 
