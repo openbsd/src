@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.5 2018/06/24 10:38:44 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.6 2018/07/02 07:25:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -25,6 +25,7 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
+#include <machine/vfp.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -215,12 +216,16 @@ efi_enter(struct efi_softc *sc)
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
+
+	vfp_kernel_enter();
 }
 
 void
 efi_leave(struct efi_softc *sc)
 {
 	struct pmap *pm = curcpu()->ci_curpm;
+
+	vfp_kernel_exit();
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
