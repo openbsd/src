@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1075 2018/07/02 20:21:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1076 2018/07/02 20:47:46 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -328,13 +328,13 @@ get_dkdevs_uninitialized() {
 	bsort $_disks
 }
 
-# Return list of network devices. Filter out dynamically created network
-# pseudo-devices except vlan.
+# Return list of all network devices, optionally limited by parameters to
+# ifconfig. Filter out dynamically created network pseudo-devices except vlan.
 get_ifs() {
-	local _if _iflist=$(rmel vlan $(ifconfig -C))
+	local _if _if_list=$(rmel vlan $(ifconfig -C))
 
 	for _if in $(ifconfig "$@" 2>/dev/null | sed '/^[a-z]/!d;s/:.*//'); do
-		isin "${_if%%+([0-9])}" $_iflist || echo $_if
+		isin "${_if%%+([0-9])}" $_if_list || echo $_if
 	done
 }
 
