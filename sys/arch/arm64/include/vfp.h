@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.h,v 1.3 2018/01/26 16:15:26 kettenis Exp $ */
+/* $OpenBSD: vfp.h,v 1.4 2018/07/02 07:23:37 kettenis Exp $ */
 /*-
  * Copyright (c) 2015 The FreeBSD Foundation
  * All rights reserved.
@@ -43,6 +43,8 @@ void	vfp_discard(struct proc *);
 void	vfp_save(void);
 void	vfp_enable(void);
 int	vfp_fault(vaddr_t, uint32_t, trapframe_t *, int);
+void	vfp_kernel_enter(void);
+void	vfp_kernel_exit(void);
 #endif
 
 #endif

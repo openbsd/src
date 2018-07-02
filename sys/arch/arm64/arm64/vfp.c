@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.c,v 1.3 2018/01/26 16:15:26 kettenis Exp $ */
+/* $OpenBSD: vfp.c,v 1.4 2018/07/02 07:23:37 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -252,4 +252,19 @@ vfp_discard(struct proc *p)
 		ci->ci_fpuproc = NULL;
 		curpcb->pcb_fpcpu  = NULL;
 	}
+}
+
+void
+vfp_kernel_enter(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	ci->ci_fpuproc = NULL;
+	set_vfp_enable(1);
+}
+
+void
+vfp_kernel_exit(void)
+{
+	set_vfp_enable(0);
 }
