@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.90 2018/01/13 15:56:02 millert Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.91 2018/07/02 20:56:22 bluhm Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -435,11 +435,10 @@ ffs_fsync(void *v)
 		skipmeta = 1;
 	s = splbio();
 loop:
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
-	     bp = LIST_NEXT(bp, b_vnbufs))
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
 		bp->b_flags &= ~B_SCANNED;
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
+	}
+	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 		/* 
 		 * Reasons to skip this buffer: it has already been considered
 		 * on this pass, this pass is the first time through on a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.275 2018/06/06 19:02:38 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.276 2018/07/02 20:56:22 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2025,7 +2025,7 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 	if ((vp->v_bioflag & VBIOONSYNCLIST) &&
-	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		vp->v_bioflag &= ~VBIOONSYNCLIST;
 		LIST_REMOVE(vp, v_synclist);
 	}
@@ -2091,7 +2091,7 @@ reassignbuf(struct buf *bp)
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
 		if ((vp->v_bioflag & VBIOONSYNCLIST) &&
-		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		    LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			vp->v_bioflag &= ~VBIOONSYNCLIST;
 			LIST_REMOVE(vp, v_synclist);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.178 2018/06/21 14:17:23 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.179 2018/07/02 20:56:22 bluhm Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2867,18 +2867,15 @@ again:
 	bvecpos = 0;
 	if (NFS_ISV3(vp) && commit) {
 		s = splbio();
-		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
+		LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 			if (bvecpos >= NFS_COMMITBVECSIZ)
 				break;
 			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
-			    != (B_DELWRI | B_NEEDCOMMIT)) {
-				nbp = LIST_NEXT(bp, b_vnbufs);
+			    != (B_DELWRI | B_NEEDCOMMIT))
 				continue;
-			}
 			bremfree(bp);
 			bp->b_flags |= B_WRITEINPROG;
 			buf_acquire(bp);
-			nbp = LIST_NEXT(bp, b_vnbufs);
 
 			/*
 			 * A list of these buffers is kept so that the
@@ -2939,8 +2936,7 @@ again:
 	 */
 loop:
 	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
+	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 		if (bp->b_flags & B_BUSY) {
 			if (waitfor != MNT_WAIT || passone)
 				continue;
@@ -2993,7 +2989,7 @@ loop:
 			goto loop2;
 		}
 
-		if (LIST_FIRST(&vp->v_dirtyblkhd) && commit) {
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd) && commit) {
 #if 0
 			vprint("nfs_fsync: dirty", vp);
 #endif

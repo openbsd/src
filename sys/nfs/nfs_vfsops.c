@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.121 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.122 2018/07/02 20:56:22 bluhm Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+		if (VOP_ISLOCKED(vp) || LIST_EMPTY(&vp->v_dirtyblkhd))
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
