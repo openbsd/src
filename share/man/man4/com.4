@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.43 2017/07/03 08:27:59 visa Exp $
+.\"	$OpenBSD: com.4,v 1.44 2018/07/02 15:39:33 kettenis Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: July 3 2017 $
+.Dd $Mdocdate: July 2 2018 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -62,7 +62,11 @@
 .Cd "com0 at isa? port 0x3f8 irq 4"
 .Cd "com1 at isa? port 0x2f8 irq 3"
 .Pp
-.Cd "# arm64 and armv7"
+.Cd "# armv7"
+.Cd "com* at fdt?"
+.Pp
+.Cd "# arm64"
+.Cd "com* at acpi?"
 .Cd "com* at fdt?"
 .Pp
 .Cd "# hppa"

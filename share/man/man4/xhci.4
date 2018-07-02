@@ -1,4 +1,4 @@
-.\" $OpenBSD: xhci.4,v 1.2 2017/03/25 03:02:40 jsg Exp $
+.\" $OpenBSD: xhci.4,v 1.3 2018/07/02 15:39:33 kettenis Exp $
 .\"
 .\" Copyright (c) 2014 Martin Pieuchot
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: July 2 2018 $
 .Dt XHCI 4
 .Os
 .Sh NAME
 .Nm xhci
 .Nd USB eXtensible Host Controller Interface
 .Sh SYNOPSIS
+.Cd "xhci* at acpi?"
 .Cd "xhci* at fdt?"
 .Cd "xhci* at pci?"
 .Cd "usb*  at xhci?"

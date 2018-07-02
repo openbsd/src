@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahci.4,v 1.12 2017/03/25 03:02:40 jsg Exp $
+.\"	$OpenBSD: ahci.4,v 1.13 2018/07/02 15:39:33 kettenis Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: July 2 2018 $
 .Dt AHCI 4
 .Os
 .Sh NAME
 .Nm ahci
 .Nd Advanced Host Controller Interface for Serial ATA
 .Sh SYNOPSIS
+.Cd "ahci* at acpi?"
 .Cd "ahci* at fdt?"
 .Cd "ahci* at pci?"
 .Cd "ahci* at jmb?"
