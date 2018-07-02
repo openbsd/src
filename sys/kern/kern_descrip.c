@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.173 2018/07/01 16:33:15 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.174 2018/07/02 14:21:45 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -840,6 +840,8 @@ fdalloc(struct proc *p, int want, int *result)
 	struct filedesc *fdp = p->p_fd;
 	int lim, last, i;
 	u_int new, off;
+
+	fdpassertlocked(fdp);
 
 	/*
 	 * Search for a free descriptor starting at the higher
