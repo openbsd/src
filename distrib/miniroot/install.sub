@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1074 2018/07/02 19:47:28 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1075 2018/07/02 20:21:29 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -317,7 +317,8 @@ get_cddevs() {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
 
-# Return list of disks not yet initialized.
+# Return sorted list of disks not in DISKS_DONE which contains disks already
+# initialized during installation.
 get_dkdevs_uninitialized() {
 	local _disks=$(get_dkdevs) _d
 
