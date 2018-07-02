@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.40 2018/06/25 09:36:28 mpi Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.41 2018/07/02 14:36:33 visa Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  *	@(#)filedesc.h	8.1 (Berkeley) 6/2/93
  */
 
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 /*
  * This structure is used for the management of descriptors.  It may be
@@ -72,6 +73,8 @@ struct filedesc {
 	struct rwlock fd_lock;		/* lock for the file descs; must be */
 					/* held when writing to fd_ofiles, */
 					/* fd_ofileflags, or fd_{hi,lo}map */
+	struct mutex fd_fplock;		/* lock for reading fd_ofiles without
+					 * fd_lock */
 
 	int fd_flags;			/* flags on the file descriptor table */
 };

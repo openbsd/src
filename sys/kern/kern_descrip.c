@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.174 2018/07/02 14:21:45 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.175 2018/07/02 14:36:33 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -198,6 +198,7 @@ struct file *
 fd_iterfile(struct file *fp, struct proc *p)
 {
 	struct file *nfp;
+	unsigned int count;
 
 	mtx_enter(&fhdlk);
 	if (fp == NULL)
@@ -206,10 +207,15 @@ fd_iterfile(struct file *fp, struct proc *p)
 		nfp = LIST_NEXT(fp, f_list);
 
 	/* don't refcount when f_count == 0 to avoid race in fdrop() */
-	while (nfp != NULL && nfp->f_count == 0)
-		nfp = LIST_NEXT(nfp, f_list);
-	if (nfp != NULL)
-		nfp->f_count++;
+	while (nfp != NULL) {
+		count = nfp->f_count;
+		if (count == 0) {
+			nfp = LIST_NEXT(nfp, f_list);
+			continue;
+		}
+		if (atomic_cas_uint(&nfp->f_count, count, count + 1) == count)
+			break;
+	}
 	mtx_leave(&fhdlk);
 
 	if (fp != NULL)
@@ -228,11 +234,11 @@ fd_getfile(struct filedesc *fdp, int fd)
 	if ((u_int)fd >= fdp->fd_nfiles)
 		return (NULL);
 
-	mtx_enter(&fhdlk);
+	mtx_enter(&fdp->fd_fplock);
 	fp = fdp->fd_ofiles[fd];
 	if (fp != NULL)
-		fp->f_count++;
-	mtx_leave(&fhdlk);
+		atomic_inc_int(&fp->f_count);
+	mtx_leave(&fdp->fd_fplock);
 
 	return (fp);
 }
@@ -654,7 +660,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	fdpassertlocked(fdp);
 	KASSERT(fp->f_iflags & FIF_INSERTED);
 
-	if (fp->f_count == LONG_MAX-2) {
+	if (fp->f_count >= FDUP_MAX_COUNT) {
 		FRELE(fp, p);
 		return (EDEADLK);
 	}
@@ -668,7 +674,14 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		fd_used(fdp, new);
  	}
 
+	/*
+	 * Use `fd_fplock' to synchronize with fd_getfile() so that
+	 * the function no longer creates a new reference to the old file.
+	 */
+	mtx_enter(&fdp->fd_fplock);
 	fdp->fd_ofiles[new] = fp;
+	mtx_leave(&fdp->fd_fplock);
+
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
 	*retval = new;
 
@@ -696,18 +709,31 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 			LIST_INSERT_HEAD(&filehead, fp, f_list);
 		}
 	}
+	mtx_leave(&fhdlk);
+
+	mtx_enter(&fdp->fd_fplock);
 	KASSERT(fdp->fd_ofiles[fd] == NULL);
 	fdp->fd_ofiles[fd] = fp;
+	mtx_leave(&fdp->fd_fplock);
+
 	fdp->fd_ofileflags[fd] |= (flags & UF_EXCLOSE);
-	mtx_leave(&fhdlk);
 }
 
 void
 fdremove(struct filedesc *fdp, int fd)
 {
 	fdpassertlocked(fdp);
+
+	/*
+	 * Use `fd_fplock' to synchronize with fd_getfile() so that
+	 * the function no longer creates a new reference to the file.
+	 */
+	mtx_enter(&fdp->fd_fplock);
 	fdp->fd_ofiles[fd] = NULL;
+	mtx_leave(&fdp->fd_fplock);
+
 	fdp->fd_ofileflags[fd] = 0;
+
 	fd_unused(fdp, fd);
 }
 
@@ -890,13 +916,16 @@ void
 fdexpand(struct proc *p)
 {
 	struct filedesc *fdp = p->p_fd;
-	int nfiles;
+	int nfiles, oldnfiles;
 	size_t copylen;
-	struct file **newofile;
+	struct file **newofile, **oldofile;
 	char *newofileflags;
 	u_int *newhimap, *newlomap;
 
 	fdpassertlocked(fdp);
+
+	oldnfiles = fdp->fd_nfiles;
+	oldofile = fdp->fd_ofiles;
 
 	/*
 	 * No space in current array.
@@ -931,9 +960,6 @@ fdexpand(struct proc *p)
 	memcpy(newofileflags, fdp->fd_ofileflags, copylen);
 	memset(newofileflags + copylen, 0, nfiles * sizeof(char) - copylen);
 
-	if (fdp->fd_nfiles > NDFILE)
-		free(fdp->fd_ofiles, M_FILEDESC, fdp->fd_nfiles * OFILESIZE);
-
 	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
 		copylen = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int);
 		memcpy(newhimap, fdp->fd_himap, copylen);
@@ -954,9 +980,16 @@ fdexpand(struct proc *p)
 		fdp->fd_himap = newhimap;
 		fdp->fd_lomap = newlomap;
 	}
+
+	mtx_enter(&fdp->fd_fplock);
 	fdp->fd_ofiles = newofile;
+	mtx_leave(&fdp->fd_fplock);
+
 	fdp->fd_ofileflags = newofileflags;
-	fdp->fd_nfiles = nfiles;	
+	fdp->fd_nfiles = nfiles;
+
+	if (oldnfiles > NDFILE)
+		free(oldofile, M_FILEDESC, oldnfiles * OFILESIZE);
 }
 
 /*
@@ -1023,9 +1056,7 @@ fnew(struct proc *p)
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
 
-	mtx_enter(&fhdlk);
-	fp->f_count++;
-	mtx_leave(&fhdlk);
+	FREF(fp);
 
 	return (fp);
 }
@@ -1040,6 +1071,7 @@ fdinit(void)
 
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK|PR_ZERO);
 	rw_init(&newfdp->fd_fd.fd_lock, "fdlock");
+	mtx_init(&newfdp->fd_fd.fd_fplock, IPL_MPFLOOR);
 
 	/* Create the file descriptor table. */
 	newfdp->fd_fd.fd_refcnt = 1;
@@ -1117,7 +1149,6 @@ fdcopy(struct process *pr)
 	newfdp->fd_flags = fdp->fd_flags;
 	newfdp->fd_cmask = fdp->fd_cmask;
 
-	mtx_enter(&fhdlk);
 	for (i = 0; i <= fdp->fd_lastfile; i++) {
 		struct file *fp = fdp->fd_ofiles[i];
 
@@ -1130,17 +1161,16 @@ fdcopy(struct process *pr)
 			 * tied to the process that opened them to enforce
 			 * their internal consistency, so close them here.
 			 */
-			if (fp->f_count == LONG_MAX-2 ||
+			if (fp->f_count >= FDUP_MAX_COUNT ||
 			    fp->f_type == DTYPE_KQUEUE)
 				continue;
 
-			fp->f_count++;
+			FREF(fp);
 			newfdp->fd_ofiles[i] = fp;
 			newfdp->fd_ofileflags[i] = fdp->fd_ofileflags[i];
 			fd_used(newfdp, i);
 		}
 	}
-	mtx_leave(&fhdlk);
 	fdpunlock(fdp);
 
 	return (newfdp);
@@ -1200,11 +1230,9 @@ closef(struct file *fp, struct proc *p)
 	if (fp == NULL)
 		return (0);
 
-	KASSERTMSG(fp->f_count >= 2, "count (%ld) < 2", fp->f_count);
+	KASSERTMSG(fp->f_count >= 2, "count (%u) < 2", fp->f_count);
 
-	mtx_enter(&fhdlk);
-	fp->f_count--;
-	mtx_leave(&fhdlk);
+	atomic_dec_int(&fp->f_count);
 
 	/*
 	 * POSIX record locking dictates that any close releases ALL
@@ -1236,10 +1264,9 @@ fdrop(struct file *fp, struct proc *p)
 {
 	int error;
 
-	MUTEX_ASSERT_LOCKED(&fhdlk);
+	KASSERTMSG(fp->f_count == 0, "count (%u) != 0", fp->f_count);
 
-	KASSERTMSG(fp->f_count == 0, "count (%ld) != 0", fp->f_count);
-
+	mtx_enter(&fhdlk);
 	if (fp->f_iflags & FIF_INSERTED)
 		LIST_REMOVE(fp, f_list);
 	mtx_leave(&fhdlk);
@@ -1376,13 +1403,18 @@ dupfdopen(struct proc *p, int indx, int mode)
 		FRELE(wfp, p);
 		return (EACCES);
 	}
-	if (wfp->f_count == LONG_MAX-2) {
+	if (wfp->f_count >= FDUP_MAX_COUNT) {
 		FRELE(wfp, p);
 		return (EDEADLK);
 	}
 
 	KASSERT(wfp->f_iflags & FIF_INSERTED);
+
+	mtx_enter(&fdp->fd_fplock);
+	KASSERT(fdp->fd_ofiles[indx] == NULL);
 	fdp->fd_ofiles[indx] = wfp;
+	mtx_leave(&fdp->fd_fplock);
+
 	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
 	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
 

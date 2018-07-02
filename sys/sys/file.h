@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.50 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD: file.h,v 1.51 2018/07/02 14:36:33 visa Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -66,11 +66,12 @@ struct	fileops {
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	F	global `fhdlk' mutex
+ *	a	atomic operations
  *	f	per file `f_mtx'
  *	k	kernel lock
  */
 struct file {
-	LIST_ENTRY(file) f_list;/* [k] list of active files */
+	LIST_ENTRY(file) f_list;/* [F] list of active files */
 	struct mutex f_mtx;
 	short	f_flag;		/* [k] see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
@@ -79,7 +80,7 @@ struct file {
 #define	DTYPE_KQUEUE	4	/* event queue */
 #define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
 	short	f_type;		/* [I] descriptor type */
-	long	f_count;	/* [F] reference count */
+	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
 	struct	fileops *f_ops; /* [I] file operation pointers */
 	off_t	f_offset;	/* [k] */
@@ -99,25 +100,16 @@ struct file {
 	do { \
 		extern void vfs_stall_barrier(void); \
 		vfs_stall_barrier(); \
-		mtx_enter(&fhdlk); \
-		(fp)->f_count++; \
-		mtx_leave(&fhdlk); \
+		atomic_inc_int(&(fp)->f_count); \
 	} while (0)
 
 #define FRELE(fp,p) \
-({ \
-	int rv = 0; \
-	mtx_enter(&fhdlk); \
-	if (--(fp)->f_count == 0) \
-		rv = fdrop(fp, p); \
-	else \
-		mtx_leave(&fhdlk); \
-	rv; \
-})
+	(atomic_dec_int_nv(&fp->f_count) == 0 ? fdrop(fp, p) : 0)
+
+#define FDUP_MAX_COUNT		(UINT_MAX - 2 * MAXCPUS)
 
 int	fdrop(struct file *, struct proc *);
 
-extern struct mutex fhdlk;		/* protects `filehead' and f_count */
 LIST_HEAD(filelist, file);
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int numfiles;			/* actual number of open files */

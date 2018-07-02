@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.132 2018/07/01 16:33:15 visa Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.133 2018/07/02 14:36:33 visa Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -744,12 +744,16 @@ restart:
 		 * fdalloc() works properly.. We finalize it all
 		 * in the loop below.
 		 */
+		mtx_enter(&fdp->fd_fplock);
+		KASSERT(fdp->fd_ofiles[fds[i]] == NULL);
 		fdp->fd_ofiles[fds[i]] = rp->fp;
-		fdp->fd_ofileflags[fds[i]] = (rp->flags & UF_PLEDGED);
-		rp++;
+		mtx_leave(&fdp->fd_fplock);
 
+		fdp->fd_ofileflags[fds[i]] = (rp->flags & UF_PLEDGED);
 		if (flags & MSG_CMSG_CLOEXEC)
 			fdp->fd_ofileflags[fds[i]] |= UF_EXCLOSE;
+
+		rp++;
 	}
 
 	/*
@@ -847,7 +851,7 @@ morespace:
 			error = EBADF;
 			goto fail;
 		}
-		if (fp->f_count == LONG_MAX-2) {
+		if (fp->f_count >= FDUP_MAX_COUNT) {
 			error = EDEADLK;
 			goto fail;
 		}
@@ -927,7 +931,6 @@ unp_gc(void *arg __unused)
 	do {
 		nunref = 0;
 		LIST_FOREACH(unp, &unp_head, unp_link) {
-			mtx_enter(&fhdlk);
 			fp = unp->unp_file;
 			if (unp->unp_flags & UNP_GCDEFER) {
 				/*
@@ -939,7 +942,6 @@ unp_gc(void *arg __unused)
 				unp_defer--;
 			} else if (unp->unp_flags & UNP_GCMARK) {
 				/* marked as live in previous pass */
-				mtx_leave(&fhdlk);
 				continue;
 			} else if (fp == NULL) {
 				/* not being passed, so can't be in loop */
@@ -958,11 +960,9 @@ unp_gc(void *arg __unused)
 				if (fp->f_count == unp->unp_msgcount) {
 					nunref++;
 					unp->unp_flags |= UNP_GCDEAD;
-					mtx_leave(&fhdlk);
 					continue;
 				}
 			}
-			mtx_leave(&fhdlk);
 
 			/*
 			 * This is the first time we've seen this socket on
