@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.47 2018/07/01 15:54:59 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.48 2018/07/02 11:23:19 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -147,6 +147,10 @@ file	dev/acpi/com_acpi.c		com_acpi
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
 file	dev/acpi/sdhc_acpi.c		sdhc_acpi
+
+# XHCI
+attach	xhci at acpi with xhci_acpi
+file	dev/acpi/xhci_acpi.c		xhci_acpi
 
 # Synopsys DesignWare I2C controller
 attach	dwiic at acpi with dwiic_acpi
