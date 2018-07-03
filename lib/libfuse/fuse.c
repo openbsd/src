@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.47 2018/06/19 13:01:34 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.48 2018/07/03 23:23:26 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -253,7 +253,6 @@ fuse_loop(struct fuse *fuse)
 				ioexch.fbxch_data = fbuf.fb_dat;
 
 				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch)) {
-printf("libfuse: FIOCSETFBDAT error\n");
 					free(fbuf.fb_dat);
 					return (-1);
 				}
@@ -262,7 +261,6 @@ printf("libfuse: FIOCSETFBDAT error\n");
 			ictx = NULL;
 
 			if (n != FUSEBUFSIZE) {
-printf("libfuse: write error: %s\n", strerror(errno));
 				errno = EINVAL;
 				return (-1);
 			}
