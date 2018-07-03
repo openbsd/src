@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.40 2015/12/22 21:01:07 mmcc Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.41 2018/07/03 06:56:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -374,6 +374,7 @@ static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
 #define GTP_U_PORT		2152
 #define GTP_PRIME_PORT		3386
 #define UDPENCAP_PORT		4500		/*XXX*/
+#define GRE_PORT		4754
 #define MULTICASTDNS_PORT	5353
 
 #ifdef INET6
@@ -640,6 +641,10 @@ udp_print(const u_char *bp, u_int length, const u_char *bp2)
 			iapp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(VQP_PORT))
 			vqp_print((const u_char *)(up + 1), length);
+		else if (ISPORT(GRE_PORT)) {
+			printf(" ");
+			gre_print((const u_char *)(up + 1), length);
+		}
 #ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
 			ripng_print((const u_char *)(up + 1), length);
