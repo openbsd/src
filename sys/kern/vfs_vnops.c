@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.93 2018/06/07 13:37:27 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.94 2018/07/03 12:58:18 anton Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ vn_writechk(struct vnode *vp)
 	 * unless the file is a socket or a block or character
 	 * device resident on the file system.
 	 */
-	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
+	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
 		switch (vp->v_type) {
 		case VREG:
 		case VDIR:
