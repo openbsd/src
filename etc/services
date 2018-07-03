@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.94 2015/07/27 11:02:39 sthen Exp $
+# $OpenBSD: services,v 1.95 2018/07/03 23:52:27 dlg Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -244,6 +244,8 @@ ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
 ipsec-nat-t	4500/udp	ipsec-msft	# IPsec NAT-Traversal
 hylafax		4559/tcp			# HylaFAX client-server protocol
 hylafax		4559/udp			# HylaFAX client-server protocol
+gre-in-udp	4754/udp			# GRE-in-UDP Encapsulation
+gre-udp-dtls	4755/udp			# GRE-in-UDP Encapsulation with DTLS
 vxlan		4789/udp			# VXLAN
 rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
