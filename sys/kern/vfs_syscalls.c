@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.291 2018/06/25 16:06:27 visa Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.292 2018/07/03 20:40:25 kettenis Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1621,51 +1621,24 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		syscallarg(off_t) offset;
 		syscallarg(int) whence;
 	} */ *uap = v;
-	struct ucred *cred = p->p_ucred;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	struct vattr vattr;
-	struct vnode *vp;
-	off_t offarg, newoff;
-	int error, special;
+	off_t offset;
+	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	vp = fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto bad;
 	}
-	if (vp->v_type == VCHR)
-		special = 1;
-	else
-		special = 0;
-	offarg = SCARG(uap, offset);
+	offset = SCARG(uap, offset);
 
-	switch (SCARG(uap, whence)) {
-	case SEEK_CUR:
-		newoff = fp->f_offset + offarg;
-		break;
-	case SEEK_END:
-		error = VOP_GETATTR(vp, &vattr, cred, p);
-		if (error)
-			goto bad;
-		newoff = offarg + (off_t)vattr.va_size;
-		break;
-	case SEEK_SET:
-		newoff = offarg;
-		break;
-	default:
-		error = EINVAL;
+	error = (*fp->f_ops->fo_seek)(fp, &offset, SCARG(uap, whence), p);
+	if (error)
 		goto bad;
-	}
-	if (!special) {
-		if (newoff < 0) {
-			error = EINVAL;
-			goto bad;
-		}
-	}
-	*(off_t *)retval = fp->f_offset = newoff;
+
+	*(off_t *)retval = offset;
 	mtx_enter(&fp->f_mtx);
 	fp->f_seek++;
 	mtx_leave(&fp->f_mtx);

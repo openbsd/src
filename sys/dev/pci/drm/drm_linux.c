@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.25 2018/07/01 12:12:14 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.26 2018/07/03 20:40:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/stat.h>
+#include <sys/unistd.h>
 
 struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
 void *sch_ident;
@@ -859,6 +860,29 @@ dmabuf_close(struct file *fp, struct proc *p)
 	return (0);
 }
 
+int
+dmabuf_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+	off_t newoff;
+
+	if (*offset != 0)
+		return (EINVAL);
+
+	switch (whence) {
+	case SEEK_SET:
+		newoff = 0;
+		break;
+	case SEEK_END:
+		newoff = dmabuf->size;
+		break;
+	default:
+		return (EINVAL);
+	}
+	fp->f_offset = *offset = newoff;
+	return (0);
+}
+
 struct fileops dmabufops = {
 	.fo_read	= dmabuf_read,
 	.fo_write	= dmabuf_write,
@@ -866,7 +890,8 @@ struct fileops dmabufops = {
 	.fo_poll	= dmabuf_poll,
 	.fo_kqfilter	= dmabuf_kqfilter,
 	.fo_stat	= dmabuf_stat,
-	.fo_close	= dmabuf_close
+	.fo_close	= dmabuf_close,
+	.fo_seek	= dmabuf_seek,
 };
 
 struct dma_buf *

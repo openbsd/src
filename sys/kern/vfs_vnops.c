@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.94 2018/07/03 12:58:18 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.95 2018/07/03 20:40:25 kettenis Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ int vn_write(struct file *, off_t *, struct uio *, struct ucred *);
 int vn_poll(struct file *, int, struct proc *);
 int vn_kqfilter(struct file *, struct knote *);
 int vn_closefile(struct file *, struct proc *);
+int vn_seek(struct file *, off_t *, int, struct proc *);
 
 struct 	fileops vnops = {
 	.fo_read	= vn_read,
@@ -72,7 +73,8 @@ struct 	fileops vnops = {
 	.fo_poll	= vn_poll,
 	.fo_kqfilter	= vn_kqfilter,
 	.fo_stat	= vn_statfile,
-	.fo_close	= vn_closefile
+	.fo_close	= vn_closefile,
+	.fo_seek	= vn_seek,
 };
 
 /*
@@ -559,6 +561,46 @@ int
 vn_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (VOP_KQFILTER(fp->f_data, kn));
+}
+
+int
+vn_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
+{
+	struct ucred *cred = p->p_ucred;
+	struct vnode *vp = fp->f_data;
+	struct vattr vattr;
+	off_t newoff;
+	int error, special;
+
+	if (vp->v_type == VFIFO)
+		return (ESPIPE);
+	if (vp->v_type == VCHR)
+		special = 1;
+	else
+		special = 0;
+
+	switch (whence) {
+	case SEEK_CUR:
+		newoff = fp->f_offset + *offset;
+		break;
+	case SEEK_END:
+		error = VOP_GETATTR(vp, &vattr, cred, p);
+		if (error)
+			return (error);
+		newoff = *offset + (off_t)vattr.va_size;
+		break;
+	case SEEK_SET:
+		newoff = *offset;
+		break;
+	default:
+		return (EINVAL);
+	}
+	if (!special) {
+		if (newoff < 0)
+			return(EINVAL);
+	}
+	fp->f_offset = *offset = newoff;
+	return (0);
 }
 
 /*
