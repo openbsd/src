@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.336 2018/07/03 06:42:13 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.337 2018/07/03 11:56:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -163,7 +163,7 @@ void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
     char *);
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
-void	display_edit(struct disklabel *, char, u_int64_t);
+void	display_edit(struct disklabel *, char);
 void	psize(u_int64_t sz, char unit, struct disklabel *lp);
 char	*get_token(char **, size_t *);
 int	apply_unit(double, u_char, u_int64_t *);
@@ -337,8 +337,7 @@ editor(int f)
 			break;
 
 		case 'p':
-			display_edit(&newlab, arg ? *arg : 0,
-			    editor_countfree(&newlab));
+			display_edit(&newlab, arg ? *arg : 0);
 			break;
 
 		case 'l':
@@ -2349,10 +2348,12 @@ psize(u_int64_t sz, char unit, struct disklabel *lp)
 }
 
 void
-display_edit(struct disklabel *lp, char unit, u_int64_t fr)
+display_edit(struct disklabel *lp, char unit)
 {
+	u_int64_t fr;
 	int i;
 
+	fr = editor_countfree(lp);
 	unit = canonical_unit(lp, unit);
 
 	printf("OpenBSD area: ");
