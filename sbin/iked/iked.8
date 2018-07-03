@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.20 2017/03/27 10:06:41 reyk Exp $
+.\" $OpenBSD: iked.8,v 1.21 2018/07/03 13:37:11 stsp Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2017 $
+.Dd $Mdocdate: July 3 2018 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -61,7 +61,8 @@ By default,
 .Nm
 blocks any IPv6 traffic unless a flow for this address family has been
 negotiated.
-This option is used to prevent VPN traffic leakages on dual stack hosts.
+This option disables VPN traffic leakage prevention on dual stack hosts
+(RFC 7359).
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro
