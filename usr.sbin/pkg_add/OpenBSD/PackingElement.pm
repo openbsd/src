@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.263 2018/06/28 18:05:21 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.264 2018/07/03 09:27:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1396,6 +1396,7 @@ my $cache = {};
 
 my $subclass = {
 	'at-end' => 'Atend',
+	'supersedes' => 'Supersedes',
 	'cleanup' => 'Cleanup' };
 
 sub new
@@ -1443,7 +1444,7 @@ sub add_tag
 		$self->{list}{$tag->{expanded}} = 1;
 	}
 	# special case: we have to run things *now* if deleting
-	if ($mode eq 'delete' && $tag->{found_in_self}) {
+	if ($mode eq 'delete' && $tag->{found_in_self} && !$state->replacing) {
 		$self->run_tag($state);
 		delete $state->{atend}{$self->name};
 	} else {
@@ -1500,6 +1501,20 @@ sub add_tag
 sub need_params
 {
 	1
+}
+
+package OpenBSD::PackingElement::DefineTag::Supersedes;
+our @ISA = qw(OpenBSD::PackingElement::DefineTag);
+
+sub add_tag
+{
+	my ($self, $tag, $mode, $state) = @_;
+	$state->{superseded}{$self->{params}} = 1;
+}
+
+sub need_params
+{
+	0
 }
 
 package OpenBSD::PackingElement::Exec;
