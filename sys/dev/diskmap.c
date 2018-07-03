@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.20 2018/05/09 08:42:02 mpi Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.21 2018/07/03 05:50:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -57,9 +57,9 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct dk_diskmap *dm;
 	struct nameidata ndp;
 	struct filedesc *fdp = p->p_fd;
-	struct file *fp = NULL;
-	struct vnode *vp = NULL, *ovp;
-	char *devname;
+	struct file *fp0 = NULL, *fp = NULL;
+	struct vnode *vp = NULL;
+	char *devname, flags;
 	int fd, error = EINVAL;
 
 	if (cmd != DIOCMAP)
@@ -80,57 +80,66 @@ diskmapioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			goto invalid;
 
 	/* Attempt to open actual device. */
-	if ((error = getvnode(p, fd, &fp)) != 0)
+	if ((error = getvnode(p, fd, &fp0)) != 0)
 		goto invalid;
-
-	KASSERT(fp->f_type == DTYPE_VNODE);
-	KASSERT(fp->f_ops == &vnops);
-
-	fdplock(fdp);
 
 	NDINIT(&ndp, 0, 0, UIO_SYSSPACE, devname, p);
 	ndp.ni_pledge = PLEDGE_RPATH;
-	if ((error = vn_open(&ndp, fp->f_flag, 0)) != 0)
+	if ((error = vn_open(&ndp, fp0->f_flag, 0)) != 0)
 		goto bad;
 
 	vp = ndp.ni_vp;
-
-	/* Close the original vnode. */
-	ovp = (struct vnode *)fp->f_data;
-	if (fp->f_flag & FWRITE)
-		ovp->v_writecount--;
-
-	if (ovp->v_writecount == 0) {
-		vn_lock(ovp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(ovp, fp->f_flag, p->p_ucred, p);
-		vput(ovp);
-	}
-
-	fp->f_data = (caddr_t)vp;
-	fp->f_offset = 0;
-	mtx_enter(&fp->f_mtx);
-	fp->f_rxfer = 0;
-	fp->f_wxfer = 0;
-	fp->f_seek = 0;
-	fp->f_rbytes = 0;
-	fp->f_wbytes = 0;
-	mtx_leave(&fp->f_mtx);
-
 	VOP_UNLOCK(vp);
 
-	FRELE(fp, p);
+	fdplock(fdp);
+	/*
+	 * Stop here if the 'struct file *' has been replaced,
+	 * for example by another thread calling dup2(2), while
+	 * this thread was sleeping in vn_open().
+	 *
+	 * Note that this would not happen for correct usages of
+	 * "/dev/diskmap".
+	 */
+	if (fdp->fd_ofiles[fd] != fp0) {
+		error = EAGAIN;
+		goto bad;
+	}
+
+	fp = fnew(p);
+	if (fp == NULL) {
+		error = ENFILE;
+		goto bad;
+	}
+
+	/* Zap old file. */
+	mtx_enter(&fdp->fd_fplock);
+	KASSERT(fdp->fd_ofiles[fd] == fp0);
+	flags = fdp->fd_ofileflags[fd];
+	fdp->fd_ofiles[fd] = NULL;
+	fdp->fd_ofileflags[fd] = 0;
+	mtx_leave(&fdp->fd_fplock);
+
+	/* Insert new file. */
+	fp->f_flag = fp0->f_flag;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = (caddr_t)vp;
+	fdinsert(fdp, fd, flags, fp);
 	fdpunlock(fdp);
+	FRELE(fp, p);
+
+	closef(fp0, p);
 	free(devname, M_DEVBUF, PATH_MAX);
 
 	return 0;
 
 bad:
-	if (vp)
-		vput(vp);
-	if (fp)
-		FRELE(fp, p);
-
 	fdpunlock(fdp);
+
+	if (vp)
+		vrele(vp);
+	if (fp0)
+		FRELE(fp0, p);
 
 invalid:
 	free(devname, M_DEVBUF, PATH_MAX);
