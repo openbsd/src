@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.41 2018/07/03 06:56:52 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.42 2018/07/03 23:51:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -288,7 +288,8 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 	return (hdr + len);
 }
 
-static int udp_cksum(const struct ip *ip, const struct udphdr *up, int len)
+static int
+udp_cksum(const struct ip *ip, const struct udphdr *up, int len)
 {
 	union phu {
 		struct phdr {
@@ -317,8 +318,8 @@ static int udp_cksum(const struct ip *ip, const struct udphdr *up, int len)
 }
 
 #ifdef INET6
-static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
-	u_int len)
+static int
+udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up, u_int len)
 {
 	union {
 		struct {
@@ -346,8 +347,6 @@ static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
 	return in_cksum((u_short *)up, len, sum);
 }
 #endif
-
-
 
 /* XXX probably should use getservbyname() and cache answers */
 #define TFTP_PORT		69		/*XXX*/
