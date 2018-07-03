@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.6 2018/06/26 09:47:20 reyk Exp $
+.\" $OpenBSD: ldap.1,v 1.7 2018/07/03 10:10:09 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: July 3 2018 $
 .Dt LDAP 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd simple LDAP client
 .Sh SYNOPSIS
 .Nm ldap
-.Ar command
+.Cm search
 .Op Fl LvWxZ
 .Op Fl b Ar basedn
 .Op Fl c Ar CAfile
@@ -33,17 +33,16 @@
 .Op Fl w Ar secret
 .Op Fl y Ar secretfile
 .Op Fl z Ar sizelimit
-.Op Ar arguments ...
+.Op Ar filter
+.Op Ar attributes ...
 .Sh DESCRIPTION
 The
 .Nm
 program is a simple LDAP client program.
 It queries an LDAP server to perform a command and outputs the results
 in the LDAP Data Interchange Format (LDIF).
-.Pp
-The command is as follows:
 .Bl -tag -width Ds
-.It Cm search Ar options Oo Ar filter Oc Op Ar attribute ...
+.It Cm search Ar options Oo Ar filter Oc Op Ar attributes ...
 Perform a directory search request.
 The optional
 .Ar filter
@@ -82,14 +81,26 @@ The LDAP URL is described in RFC 4516 with the following format:
 .Sm off
 .Op Ar protocol No ://
 .Ar host Op : Ar port
-.Oo / basedn
-.Oo ? Op Ar attribute , ...
-.Oo ? Op Ar scope
-.Op ? Op Ar filter
-.Oc
-.Oc
+.Oo
+.Li / Ar basedn
+.Li ?\& Ar attribute , ...
+.Li ?\& Ar scope
+.Li ?\& Ar filter
 .Oc
 .Sm on
+.Pp
+The default is
+.Ar ldap://localhost:389/ .
+Each of
+.Ar basedn , attribute , scope
+and
+.Ar filter
+may be omitted,
+but the preceding
+.Sq /
+or
+.Sq ?\&
+is required if a subsequent field is non-empty.
 .Pp
 The following protocols are supported:
 .Pp
@@ -112,9 +123,6 @@ The host argument is required to be a URL-encoded path, for example
 for
 .Pa /var/run/ldapi .
 .El
-.Pp
-The default is
-.Ar ldap://localhost:389/ .
 .It Fl L
 Output the directory search result in a standards-compliant version of
 the LDAP Data Interchange Format (LDIF).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.2 2018/06/26 09:47:20 reyk Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.3 2018/07/03 10:10:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -96,9 +96,9 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-"usage: %s search [-LvxZ] [-b basedn] [-c capath] [-D binddn] [-H host]\n"
-"                   [-l timelimit] [-s scope] [-w secret|-W] [-y secretfile]\n"
-"                   [-z sizelimit] [filter] [attributes ...]\n",
+"usage: %s search [-LvWxZ] [-b basedn] [-c CAfile] [-D binddn] [-H host]\n"
+"	    [-l timelimit] [-s scope] [-w secret] [-y secretfile] [-z sizelimit]\n"
+"	    [filter] [attributes ...]\n",
 	    __progname);
 
 	exit(1);
