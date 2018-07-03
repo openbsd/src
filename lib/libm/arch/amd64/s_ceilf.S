@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ceilf.S,v 1.5 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_ceilf.S,v 1.6 2018/07/03 22:43:34 mortimer Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -7,6 +7,7 @@
 #include <machine/asm.h>
 
 ENTRY(ceilf)
+	RETGUARD_SETUP(ceilf, r11)
 	fstcw	-8(%rsp)
 	movw	-8(%rsp),%dx
 	orw	$0x0800,%dx
@@ -19,5 +20,6 @@ ENTRY(ceilf)
 	fldcw	-8(%rsp)
 	fstps	-4(%rsp)
 	movss	-4(%rsp),%xmm0
+	RETGUARD_CHECK(ceilf, r11)
 	ret
 END(ceilf)

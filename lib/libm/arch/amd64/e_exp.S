@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.6 2016/09/12 19:47:01 guenther Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.7 2018/07/03 22:43:34 mortimer Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(exp)
+	RETGUARD_SETUP(exp, r11)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	/*
 	 * If x is +-Inf, then the subtraction would give Inf-Inf = NaN.
@@ -82,6 +83,7 @@ ENTRY(exp)
 	fldcw	-8(%rsp)
 1:
 	XMM_DOUBLE_EPILOGUE
+	RETGUARD_CHECK(exp, r11)
 	ret
 
 x_Inf_or_NaN:
@@ -94,9 +96,11 @@ x_Inf_or_NaN:
 	cmpl	$0,-8(%rsp)
 	jne	x_not_minus_Inf
 	xorpd	%xmm0,%xmm0
+	RETGUARD_CHECK(exp, r11)
 	ret
 
 x_not_minus_Inf:
 	movsd	ARG_DOUBLE_ONE,%xmm0
+	RETGUARD_CHECK(exp, r11)
 	ret
 END_STD(exp)
