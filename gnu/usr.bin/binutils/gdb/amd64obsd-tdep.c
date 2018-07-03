@@ -383,7 +383,6 @@ amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
   ULONGEST cs;
-  char *name;
   int i;
 
   if (*this_cache)
@@ -394,16 +393,7 @@ amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
   func = frame_func_unwind (next_frame);
   sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
-
-  find_pc_partial_function (func, &name, NULL, NULL);
-  if (name && ((strncmp(name, "Xintr", 5) == 0)
-	       || (strncmp (name, "Xresume", 7) == 0)
-	       || (strncmp (name, "Xrecurse", 8) == 0)
-	       || (strcmp (name, "Xdoreti") == 0)
-	       || (strncmp (name, "Xsoft", 5) == 0)))
-    addr = sp + 8;		/* It's an interrupt frame.  */
-  else
-    addr = sp;
+  addr = sp;
 
   for (i = 0; i < ARRAY_SIZE (amd64obsd_tf_reg_offset); i++)
     if (amd64obsd_tf_reg_offset[i] != -1)

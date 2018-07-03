@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.36 2018/06/05 06:39:10 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.37 2018/07/03 20:15:57 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -75,6 +75,10 @@ member	tf_cs
 member	tf_rflags
 member	tf_rsp
 member	tf_ss
+
+struct	intrframe
+member	if_ppl
+member	if_err
 
 define  FRAMESIZE               sizeof(struct trapframe)
 

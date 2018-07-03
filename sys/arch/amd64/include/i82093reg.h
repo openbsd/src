@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.6 2016/06/29 06:05:15 mlarkin Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.7 2018/07/03 20:15:57 guenther Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -160,7 +160,7 @@
 	ioapic_asm_unlock(num)
 
 #define ioapic_unmask(num) \
-	cmpq	$IREENT_MAGIC,(TF_ERR+8)(%rsp)			;\
+	cmpq	$IREENT_MAGIC,IF_ERR(%rsp)			;\
 	jne	79f						;\
 	movq	IS_PIC(%r14),%rdi				;\
 	ioapic_asm_lock(num)					;\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.67 2018/07/01 16:02:12 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.68 2018/07/03 20:15:57 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -472,12 +472,12 @@ _C_LABEL(x2apic_eoi):
 KIDTVEC(recurse_lapic_ipi)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_lapic_ipi)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -492,7 +492,7 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 	sti
 	cld
 	SMAP_CLAC
-	pushq	%rbx
+	movq	%rbx,IF_PPL(%rsp)
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 2:
@@ -556,12 +556,12 @@ IDTVEC(ipi_invlrange)
 KIDTVEC(recurse_lapic_ltimer)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_lapic_ltimer)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -576,7 +576,7 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 	sti
 	cld
 	SMAP_CLAC
-	pushq	%rbx
+	movq	%rbx,IF_PPL(%rsp)
 	xorq	%rdi,%rdi
 	call	_C_LABEL(lapic_clockintr)
 	jmp	_C_LABEL(Xdoreti)
@@ -593,12 +593,12 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 KIDTVEC(recurse_xen_upcall)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_xen_upcall)
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_xen_upcall)
 	call	_C_LABEL(xen_intr_ack)
 	movl	CPUVAR(ILEVEL),%ebx
@@ -611,7 +611,7 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 	sti
 	cld
 	SMAP_CLAC
-	pushq	%rbx
+	movq	%rbx,IF_PPL(%rsp)
 	call	_C_LABEL(xen_intr)
 	jmp	_C_LABEL(Xdoreti)
 2:
@@ -628,12 +628,12 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 KIDTVEC(recurse_hyperv_upcall)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTR_REENTRY
 	jmp	1f
 IDTVEC(intr_hyperv_upcall)
 	pushq	$0
-	subq	$8,%rsp			/* unused __if_trapno */
+	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_hyperv_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
@@ -645,7 +645,7 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 	sti
 	cld
 	SMAP_CLAC
-	pushq	%rbx
+	movq	%rbx,IF_PPL(%rsp)
 	call	_C_LABEL(hv_intr)
 	jmp	_C_LABEL(Xdoreti)
 2:
@@ -666,7 +666,7 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 KIDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE_HWFRAME						;\
-	subq	$16,%rsp		/* space for __if_{trapno,err} */;\
+	subq	$16,%rsp		/* space for if_{ppl,err} */	;\
 	INTR_REENTRY							;\
 KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
@@ -676,7 +676,7 @@ KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	jmp	1f							;\
 IDTVEC(intr_##name##num)						;\
 	pushq	$0			/* dummy error code */		;\
-	subq	$8,%rsp			/* unused __if_trapno */	;\
+	subq	$8,%rsp			/* if_ppl filled in below */	;\
 	INTRENTRY(intr_##name##num)					;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	mask(num)			/* mask it in hardware */	;\
@@ -689,7 +689,7 @@ IDTVEC(intr_##name##num)						;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
 1:									\
-	pushq	%r13							;\
+	movq	%r13,IF_PPL(%rsp)					;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
 	sti								;\
 	cld								;\
