@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.4 2018/06/29 18:28:42 rob Exp $ */
+/*	$OpenBSD: ber.h,v 1.5 2018/07/03 18:49:10 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -17,13 +17,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _BER_H
+#define _BER_H
+
 struct ber_element {
 	struct ber_element	*be_next;
 	unsigned long		 be_type;
 	unsigned long		 be_encoding;
 	size_t			 be_len;
+	off_t			 be_offs;
 	int			 be_free;
 	u_int8_t		 be_class;
+	void			(*be_cb)(void *, size_t);
+	void			*be_cbarg;
 	union {
 		struct ber_element	*bv_sub;
 		void			*bv_val;
@@ -35,6 +41,7 @@ struct ber_element {
 };
 
 struct ber {
+	off_t	 br_offs;
 	u_char	*br_wbuf;
 	u_char	*br_wptr;
 	u_char	*br_wend;
@@ -119,10 +126,17 @@ ssize_t			 ber_get_writebuf(struct ber *, void **);
 int			 ber_write_elements(struct ber *, struct ber_element *);
 void			 ber_set_readbuf(struct ber *, void *, size_t);
 struct ber_element	*ber_read_elements(struct ber *, struct ber_element *);
+off_t			 ber_getpos(struct ber_element *);
 void			 ber_free_element(struct ber_element *);
 void			 ber_free_elements(struct ber_element *);
 size_t			 ber_calc_len(struct ber_element *);
 void			 ber_set_application(struct ber *,
 			    unsigned long (*)(struct ber_element *));
+void			 ber_set_writecallback(struct ber_element *,
+			    void (*)(void *, size_t), void *);
 void			 ber_free(struct ber *);
+int			 ber_oid_cmp(struct ber_oid *, struct ber_oid *);
+
 __END_DECLS
+
+#endif /* _BER_H */

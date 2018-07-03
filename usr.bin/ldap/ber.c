@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.7 2018/07/01 20:03:48 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.8 2018/07/03 18:49:10 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -631,10 +631,11 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 	va_list			 ap;
 	int			*d, level = -1;
 	unsigned long		*t;
-	long long		*i;
+	long long		*i, l;
 	void			**ptr;
 	size_t			*len, ret = 0, n = strlen(fmt);
 	char			**s;
+	off_t			*pos;
 	struct ber_oid		*o;
 	struct ber_element	*parent[_MAX_SEQ], **e;
 
@@ -654,6 +655,13 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			d = va_arg(ap, int *);
 			if (ber_get_boolean(ber, d) == -1)
 				goto fail;
+			ret++;
+			break;
+		case 'd':
+			d = va_arg(ap, int *);
+			if (ber_get_integer(ber, &l) == -1)
+				goto fail;
+			*d = l;
 			ret++;
 			break;
 		case 'e':
@@ -712,6 +720,11 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			ret++;
 			break;
+		case 'p':
+			pos = va_arg(ap, off_t *);
+			*pos = ber_getpos(ber);
+			ret++;
+			continue;
 		case '{':
 		case '(':
 			if (ber->be_encoding != BER_TYPE_SEQUENCE &&
@@ -821,6 +834,12 @@ ber_read_elements(struct ber *ber, struct ber_element *elm)
 	return root;
 }
 
+off_t
+ber_getpos(struct ber_element *elm)
+{
+	return elm->be_offs;
+}
+
 void
 ber_free_element(struct ber_element *root)
 {
@@ -893,6 +912,8 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 	uint8_t u;
 
 	ber_dump_header(ber, root);
+	if (root->be_cb)
+		root->be_cb(root->be_cbarg, ber->br_wptr - ber->br_wbuf);
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
@@ -1101,6 +1122,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 
 	elm->be_type = type;
 	elm->be_len = len;
+	elm->be_offs = ber->br_offs;	/* element position within stream */
 	elm->be_class = class;
 
 	if (elm->be_encoding == 0) {
@@ -1232,6 +1254,15 @@ ber_set_application(struct ber *b, unsigned long (*cb)(struct ber_element *))
 }
 
 void
+ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
+    void *arg)
+{
+	elm->be_cb = cb;
+	elm->be_cbarg = arg;
+}
+
+
+void
 ber_free(struct ber *b)
 {
 	free(b->br_wbuf);
@@ -1258,5 +1289,33 @@ ber_read(struct ber *ber, void *buf, size_t len)
 		b += r;
 		remain -= r;
 	}
-	return (b - (u_char *)buf);
+	r = b - (u_char *)buf;
+	ber->br_offs += r;
+	return r;
+}
+
+int
+ber_oid_cmp(struct ber_oid *a, struct ber_oid *b)
+{
+	size_t	 i;
+	for (i = 0; i < BER_MAX_OID_LEN; i++) {
+		if (a->bo_id[i] != 0) {
+			if (a->bo_id[i] == b->bo_id[i])
+				continue;
+			else if (a->bo_id[i] < b->bo_id[i]) {
+				/* b is a successor of a */
+				return (1);
+			} else {
+				/* b is a predecessor of a */
+				return (-1);
+			}		
+		} else if (b->bo_id[i] != 0) {
+			/* b is larger, but a child of a */
+			return (2);
+		} else
+			break;
+	}
+
+	/* b and a are identical */
+	return (0);
 }
