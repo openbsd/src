@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.43 2018/06/21 07:33:30 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.44 2018/07/03 23:21:15 mortimer Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -465,6 +465,7 @@ _ACPI_TRMP_OFFSET(.Lhib_hlt_real)
 	.code64
 	/* Switch to hibernate resume pagetable */
 NENTRY(hibernate_activate_resume_pt_machdep)
+	RETGUARD_SETUP(hibernate_activate_resume_pt_machdep, r11)
 	/* Enable large pages */
 	movq	%cr4, %rax
 	orq	$(CR4_PSE), %rax
@@ -478,23 +479,27 @@ NENTRY(hibernate_activate_resume_pt_machdep)
 	movq	%rax,	%cr3
 	jmp	1f
 
-1:	nop
+1:	RETGUARD_CHECK(hibernate_activate_resume_pt_machdep, r11)
 	ret
 
 	/*
 	 * Switch to the private resume-time hibernate stack
 	 */
 NENTRY(hibernate_switch_stack_machdep)
+	RETGUARD_SETUP(hibernate_switch_stack_machdep, r11)
 	movq	(%rsp), %rax
 	movq	%rax, HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET
 	movq	$(HIBERNATE_STACK_PAGE + HIBERNATE_STACK_OFFSET), %rax
 	movq	%rax, %rsp
 
 	/* On our own stack from here onward */
+	RETGUARD_CHECK(hibernate_switch_stack_machdep, r11)
 	ret
 
 NENTRY(hibernate_flush)
+	RETGUARD_SETUP(hibernate_flush, r11)
 	invlpg	HIBERNATE_INFLATE_PAGE
+	RETGUARD_CHECK(hibernate_flush, r11)
 	ret
 #endif /* HIBERNATE */
 
@@ -716,6 +721,9 @@ NENTRY(acpi_savecpu)
 	movq	%r14, .Lacpi_saved_r14
 	movq	%r15, .Lacpi_saved_r15
 
+	/* Scratch reg saved - set up retguard */
+	RETGUARD_SETUP(acpi_savecpu, r11)
+
 	pushfq
 	popq	.Lacpi_saved_fl
 
@@ -786,4 +794,5 @@ NENTRY(acpi_savecpu)
 	str	.Lacpi_saved_tr
 
 	movl	$1, %eax
+	RETGUARD_CHECK(acpi_savecpu, r11)
 	ret

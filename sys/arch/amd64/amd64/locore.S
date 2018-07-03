@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.102 2018/07/01 04:47:32 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.103 2018/07/03 23:21:15 mortimer Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ _C_LABEL(sigfillsiz):
  * Change the global descriptor table.
  */
 NENTRY(lgdt)
+	RETGUARD_SETUP(lgdt, r11)
 	/* Reload the descriptor table. */
 	movq	%rdi,%rax
 	lgdt	(%rax)
@@ -290,6 +291,7 @@ NENTRY(lgdt)
 	popq	%rax
 	pushq	$GSEL(GCODE_SEL, SEL_KPL)
 	pushq	%rax
+	RETGUARD_CHECK(lgdt, r11)
 	lretq
 
 ENTRY(setjmp)
@@ -442,6 +444,9 @@ restore_saved:
 	movq	PCB_RSP(%r13),%rsp
 	movq	PCB_RBP(%r13),%rbp
 
+	/* Stack pivot done, setup RETGUARD */
+	RETGUARD_SETUP_OFF(cpu_switchto, r11, 6*8)
+
 	movq	PCB_CR3(%r13),%rax
 	movq	%rax,%cr3			/* %rax used below too */
 
@@ -486,6 +491,7 @@ switch_restored:
 	popq	%r12
 	popq	%rbp
 	popq	%rbx
+	RETGUARD_CHECK(cpu_switchto, r11)
 	ret
 
 ENTRY(cpu_idle_enter)
@@ -530,10 +536,11 @@ switch_active:
  * Update pcb, saving current processor state.
  */
 ENTRY(savectx)
+	RETGUARD_SETUP(savectx, r11)
 	/* Save stack pointers. */
 	movq	%rsp,PCB_RSP(%rdi)
 	movq	%rbp,PCB_RBP(%rdi)
-
+	RETGUARD_CHECK(savectx, r11)
 	ret
 
 IDTVEC(syscall32)
@@ -962,6 +969,7 @@ warn_once:
  */
 
 ENTRY(xrstor_user)
+	RETGUARD_SETUP(xrstor_user, r11)
 	movq	%rsi, %rdx
 	movl	%esi, %eax
 	shrq	$32, %rdx
@@ -971,23 +979,28 @@ xrstor_fault:
 	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
 	CODEPATCH_END(CPTAG_XRSTOR)
 	xorl	%eax, %eax
+	RETGUARD_CHECK(xrstor_user, r11)
 	ret
 NENTRY(xrstor_resume)
 	movl	$1, %eax
+	RETGUARD_CHECK(xrstor_user, r11)
 	ret
 END(xrstor_user)
 
 ENTRY(fpusave)
+	RETGUARD_SETUP(fpusave, r11)
 	movq	xsave_mask(%rip),%rdx
 	movl	%edx,%eax
 	shrq	$32,%rdx
 	CODEPATCH_START
 	.byte 0x48; fxsave	(%rdi)		/* really fxsave64 */
 	CODEPATCH_END(CPTAG_XSAVE)
+	RETGUARD_CHECK(fpusave, r11)
 	ret
 END(fpusave)
 
 ENTRY(fpusavereset)
+	RETGUARD_SETUP(fpusavereset, r11)
 	movq	xsave_mask(%rip),%rdx
 	movl	%edx,%eax
 	shrq	$32,%rdx
@@ -1001,6 +1014,7 @@ ENTRY(fpusavereset)
 	CODEPATCH_START
 	.byte 0x48; fxrstor	(%rdi)		/* really fxrstor64 */
 	CODEPATCH_END(CPTAG_XRSTOR)
+	RETGUARD_CHECK(fpusavereset, r11)
 	ret
 END(fpusavereset)
 
@@ -1018,6 +1032,7 @@ _C_LABEL(_xsaveopt):
 	.byte 0x48; xsaveopt	(%rdi)		/* really xsaveopt64 */
 
 ENTRY(pagezero)
+	RETGUARD_SETUP(pagezero, r11)
 	movq    $-PAGE_SIZE,%rdx
 	subq    %rdx,%rdi
 	xorq    %rax,%rax
@@ -1029,6 +1044,7 @@ ENTRY(pagezero)
 	addq    $32,%rdx
 	jne     1b
 	sfence
+	RETGUARD_CHECK(pagezero, r11)
 	ret
 
 #if NXEN > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.11 2017/09/16 02:03:40 guenther Exp $	*/
+/*	$OpenBSD: copy.S,v 1.12 2018/07/03 23:21:15 mortimer Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
  */
 
 ENTRY(kcopy)
+	RETGUARD_SETUP(copy, r10)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	PCB_ONFAULT(%rax)
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
@@ -76,6 +77,7 @@ ENTRY(kcopy)
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	xorq	%rax,%rax
+	RETGUARD_CHECK(copy, r10)
 	ret
 
 1:	addq	%rcx,%rdi		# copy backward
@@ -97,9 +99,11 @@ ENTRY(kcopy)
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	xorq	%rax,%rax
+	RETGUARD_CHECK(copy, r10)
 	ret
 
 ENTRY(copyout)
+	RETGUARD_SETUP(copy, r10)
 	pushq	$0
 
 	xchgq	%rdi,%rsi
@@ -132,9 +136,11 @@ ENTRY(copyout)
 	SMAP_CLAC
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
+	RETGUARD_CHECK(copy, r10)
 	ret
 
 ENTRY(copyin)
+	RETGUARD_SETUP(copy, r10)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	$0
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
@@ -169,6 +175,7 @@ ENTRY(copyin)
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
+	RETGUARD_CHECK(copy, r10)
 	ret
 
 NENTRY(copy_fault)
@@ -176,9 +183,11 @@ NENTRY(copy_fault)
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
 	movl	$EFAULT,%eax
+	RETGUARD_CHECK(copy, r10)
 	ret
 
 ENTRY(copyoutstr)
+	RETGUARD_SETUP(copystr_return, r10)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
 	movq	%rcx,%r9
@@ -220,6 +229,7 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 
 ENTRY(copyinstr)
+	RETGUARD_SETUP(copystr_return, r10)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
 	movq	%rcx,%r9
@@ -272,10 +282,12 @@ copystr_return:
 	jz	8f
 	subq	%rdx,%r8
 	movq	%r8,(%r9)
-
-8:	ret
+8:
+	RETGUARD_CHECK(copystr_return, r10)
+	ret
 
 ENTRY(copystr)
+	RETGUARD_SETUP(copystr, r10)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
 
@@ -301,8 +313,9 @@ ENTRY(copystr)
 	jz	7f
 	subq	%rdx,%r8
 	movq	%r8,(%rcx)
-
-7:	ret
+7:
+	RETGUARD_CHECK(copystr, r10)
+	ret
 
 	.section .rodata
 	.globl _C_LABEL(_stac)

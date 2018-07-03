@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.15 2018/07/03 20:15:57 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.16 2018/07/03 23:21:15 mortimer Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -86,16 +86,20 @@
 
 	.align 16, 0xcc
 _C_LABEL(splhigh):
+	RETGUARD_SETUP(splhigh, r11)
 	movl	$IPL_HIGH,%eax
 	xchgl	%eax,CPUVAR(ILEVEL)
+	RETGUARD_CHECK(splhigh, r11)
 	ret
 
 	.align 16, 0xcc
 _C_LABEL(splx):
+	RETGUARD_SETUP(splx, r11)
 	movl	4(%esp),%eax
 	movl	%eax,CPUVAR(ILEVEL)
 	testl	%eax,%eax
 	jnz	_C_LABEL(Xspllower)
+	RETGUARD_CHECK(splx, r11)
 	ret
 #endif /* PROF || GPROF */
 #endif
@@ -116,8 +120,10 @@ _C_LABEL(splx):
  */
 KIDTVEC(spllower)
 	_PROF_PROLOGUE
+	RETGUARD_SETUP(Xspllower, r11)
 	pushq	%rbx
 	pushq	%r13
+	RETGUARD_PUSH(r11)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
@@ -127,8 +133,10 @@ KIDTVEC(spllower)
 	jnz	2f
 	movl	%ebx,CPUVAR(ILEVEL)
 	sti
+	RETGUARD_POP(r11)
 	popq	%r13
 	popq	%rbx
+	RETGUARD_CHECK(Xspllower, r11)
 	ret
 2:	bsrq	%rax,%rax
 	btrq	%rax,CPUVAR(IPENDING)
