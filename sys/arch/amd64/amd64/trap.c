@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.71 2018/06/24 00:49:25 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.72 2018/07/03 05:45:21 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -179,15 +179,8 @@ pageflttrap(struct trapframe *frame, int usermode)
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (va >= VM_MIN_KERNEL_ADDRESS) {
+		if (va >= VM_MIN_KERNEL_ADDRESS)
 			map = kernel_map;
-#ifdef DIAGNOSTIC
-			if (va == 0) {
-				printf("bad kernel access at %llx\n", cr2);
-				return 0;
-			}
-#endif
-		}
 	}
 
 	if (frame->tf_err & PGEX_W)
