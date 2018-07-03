@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.23 2018/03/01 20:48:11 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.24 2018/07/03 12:51:44 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 1 2018 $
+.Dd $Mdocdate: July 3 2018 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -862,17 +862,23 @@ statement.
 .Pp
 The
 .Ic echo-client-id
-statement enables or disables RFC 6842 compliant behavior:
+statement controls RFC 6842 compliant behavior and has a default
+value of true:
 .Pp
 .D1 Ic echo-client-id Ar flag ;
 .Pp
-If it is present and has a value of true or on,
-and a DHCP DISCOVER or REQUEST is received which contains
-the client identifier option (Option code 61), the server will copy the option
-into its response (DHCP ACK or NAK) per RFC 6842.
-In other words if the client sends the option it will receive it back.
-By default, this flag is on
-and client identifiers will be echoed back to the client.
+Some devices, especially old printers, require
+.Ic echo-client-id
+to be false.
+.Pp
+When
+.Ic echo-client-id
+is true
+.Xr dhcpd 8
+copies option dhcp-client-identifier (code 61)
+from
+DHCP DISCOVER or REQUEST messages into
+the DHCP ACK or NAK reply sent to the client.
 .Sh REFERENCE: OPTION STATEMENTS
 DHCP option statements are documented in the
 .Xr dhcp-options 5
