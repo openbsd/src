@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.99 2018/06/28 21:31:36 sthen Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.100 2018/07/03 08:42:32 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -218,6 +218,11 @@ const struct {
 	{ CPUIDEDX_ITSC,	"ITSC" },
 }, cpu_amdspec_ebxfeatures[] = {
 	{ CPUIDEBX_IBPB,	"IBPB" },
+	{ CPUIDEBX_IBRS,	"IBRS" },
+	{ CPUIDEBX_STIBP,	"STIBP" },
+	{ CPUIDEBX_SSBD,	"SSBD" },
+	{ CPUIDEBX_VIRT_SSBD,	"VIRTSSBD" },
+	{ CPUIDEBX_SSBD_NOTREQ,	"SSBDNR" },
 }, cpu_xsave_extfeatures[] = {
 	{ XSAVE_XSAVEOPT,	"XSAVEOPT" },
 	{ XSAVE_XSAVEC,		"XSAVEC" },
