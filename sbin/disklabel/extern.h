@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.30 2017/09/29 18:32:09 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.31 2018/07/03 06:37:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -44,5 +44,4 @@ extern  int aflag, dflag, uidflag;
 extern  int donothing;
 extern	int verbose;
 extern	int quiet;
-extern	char print_unit;
 extern	struct disklabel lab;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.227 2018/02/25 17:24:44 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.228 2018/07/03 06:37:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -87,7 +87,6 @@ int	uidflag;
 int	verbose;
 int	quiet;
 int	donothing;
-char	print_unit;
 
 void	makedisktab(FILE *, struct disklabel *);
 void	makelabel(char *, char *, struct disklabel *);
@@ -117,9 +116,10 @@ getphysmem(void)
 int
 main(int argc, char *argv[])
 {
-	int ch, f, error = 0;
 	FILE *t;
 	char *autotable = NULL;
+	int ch, f, error = 0;
+	char print_unit = '\0';
 
 	getphysmem();
 
