@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.26 2018/07/01 08:51:50 mpi Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.27 2018/07/03 13:21:31 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -46,13 +46,15 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
+
 #define USBDEV "/dev/usb"
 
 int verbose = 0;
 int showdevs = 0;
 
 void usage(void);
-void usbdev(int f, int a, int rec);
+void usbdev(int f, uint8_t, int rec);
 void usbdump(int f);
 void dumpone(char *name, int f, int addr);
 int main(int, char **);
@@ -70,22 +72,25 @@ char done[USB_MAX_DEVICES];
 int indent;
 
 void
-usbdev(int f, int a, int rec)
+usbdev(int f, uint8_t addr, int rec)
 {
 	struct usb_device_info di;
-	int e, p, i;
+	int e, p, i, s, nports;
 
-	di.udi_addr = a;
+	di.udi_addr = addr;
 	e = ioctl(f, USB_DEVICEINFO, &di);
 	if (e) {
 		if (errno != ENXIO)
-			printf("addr %d: I/O error\n", a);
+			printf("addr %d: I/O error\n", addr);
 		return;
 	}
 
-	printf("addr %d: ", a);
-	done[a] = 1;
+	printf("addr %02u: ", addr);
+	done[addr] = 1;
+	printf("%04x:%04x %s, %s", di.udi_vendorNo, di.udi_productNo,
+	    di.udi_vendor, di.udi_product);
 	if (verbose) {
+		printf("\n\t ");
 		switch (di.udi_speed) {
 		case USB_SPEED_LOW:
 			printf("low speed, ");
@@ -111,15 +116,11 @@ usbdev(int f, int a, int rec)
 			printf("config %d, ", di.udi_config);
 		else
 			printf("unconfigured, ");
-	}
-	if (verbose) {
-		printf("%s(0x%04x), %s(0x%04x), rev %s",
-		    di.udi_product, di.udi_productNo,
-		    di.udi_vendor, di.udi_vendorNo, di.udi_release);
+
+		printf("rev %s", di.udi_release);
 		if (strlen(di.udi_serial))
 			printf(", iSerialNumber %s", di.udi_serial);
-	} else
-		printf("%s, %s", di.udi_product, di.udi_vendor);
+	}
 	printf("\n");
 	if (showdevs) {
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
@@ -129,29 +130,29 @@ usbdev(int f, int a, int rec)
 	}
 	if (!rec)
 		return;
-	for (p = 0; p < di.udi_nports && p < nitems(di.udi_ports); p++) {
-		int s = di.udi_ports[p];
 
-		if (s >= USB_MAX_DEVICES) {
-			if (verbose > 1) {
-				printf("%*sport %d %s\n", indent+1, "", p+1,
+	nports = MINIMUM(di.udi_nports, nitems(di.udi_ports));
+	if (verbose > 1) {
+		for (p = 0; p < nports; p++) {
+			s = di.udi_ports[p];
+			printf("\t port %02u:", p+1);
+			if (s < USB_MAX_DEVICES)
+				printf(" addr %02u\n", s);
+			else {
+				printf(" %s\n",
 				    s == USB_PORT_ENABLED ? "enabled" :
 				    s == USB_PORT_SUSPENDED ? "suspended" :
 				    s == USB_PORT_POWERED ? "powered" :
 				    s == USB_PORT_DISABLED ? "disabled" :
 				    "???");
 			}
-			continue;
 		}
-		indent++;
-		printf("%*s", indent, "");
-		if (verbose > 1)
-			printf("port %d ", p+1);
-		if (s == 0)
-			printf("addr 0 should never happen!\n");
-		else
+	}
+
+	for (p = 0; p < nports ; p++) {
+		s = di.udi_ports[p];
+		if (s < USB_MAX_DEVICES)
 			usbdev(f, s, 1);
-		indent--;
 	}
 }
 
