@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.40 2018/07/03 06:54:47 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.41 2018/07/03 07:07:17 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -67,6 +67,7 @@ int qledebug = QLE_D_PORT;
 #define QLE_DEFAULT_PORT_NAME		0x400000007F000003ULL /* from isp(4) */
 
 #define QLE_WAIT_FOR_LOOP		10
+#define QLE_LOOP_SETTLE			10
 
 /* rounded up range of assignable handles */
 #define QLE_MAX_TARGETS			2048
@@ -359,7 +360,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 
 	pcireg_t bars[] = { QLE_PCI_MEM_BAR, QLE_PCI_IO_BAR };
 	pcireg_t memtype;
-	int r, i, rv;
+	int r, i, rv, loop_up;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -628,6 +629,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_update_task, qle_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */
+	loop_up = 0;
 	for (i = 0; i < QLE_WAIT_FOR_LOOP * 10000; i++) {
 		u_int16_t isr, info;
 
@@ -638,8 +640,11 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 
 		qle_handle_intr(sc, isr, info);
 
-		if (sc->sc_loop_up)
-			break;
+		if (sc->sc_loop_up) {
+			if (++loop_up == QLE_LOOP_SETTLE)
+				break;
+		} else
+			loop_up = 0;
 	}
 
 	if (sc->sc_loop_up) {
