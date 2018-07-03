@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.79 2017/01/22 10:17:39 dlg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.80 2018/07/03 14:33:43 kevlo Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1303,8 +1303,7 @@ udav_ifmedia_change(struct ifnet *ifp)
 
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		     miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 

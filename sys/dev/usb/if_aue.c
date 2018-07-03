@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.107 2018/07/03 00:49:14 kevlo Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.108 2018/07/03 14:33:43 kevlo Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1396,9 +1396,8 @@ aue_ifmedia_upd(struct ifnet *ifp)
 	sc->aue_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
-			 mii_phy_reset(miisc);
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);
 
