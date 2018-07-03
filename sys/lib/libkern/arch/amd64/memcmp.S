@@ -7,6 +7,7 @@
 #include <machine/asm.h>
 
 ENTRY(memcmp)
+	RETGUARD_SETUP(memcmp, r11)
 	movq	%rdx,%rcx		/* compare by longs */
 	shrq	$3,%rcx
 	repe
@@ -20,7 +21,7 @@ ENTRY(memcmp)
 	jne	L6			/* do we match? */
 
 	xorl	%eax,%eax		/* we match, return zero	*/
-	ret
+	jmp L7
 
 L5:	movl	$8,%ecx			/* We know that one of the next	*/
 	subq	%rcx,%rdi		/* eight pairs of bytes do not	*/
@@ -32,4 +33,5 @@ L6:	xorl	%eax,%eax		/* Perform unsigned comparison	*/
 	xorl	%edx,%edx
 	movb	-1(%rsi),%dl
 	subl    %edx,%eax
+L7:	RETGUARD_CHECK(memcmp, r11)
 	ret

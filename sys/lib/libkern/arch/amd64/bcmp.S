@@ -1,6 +1,7 @@
 #include <machine/asm.h>
 
 ENTRY(bcmp)
+	RETGUARD_SETUP(bcmp, r11)
 	xorl	%eax,%eax		/* clear return value */
 
 	movq	%rdx,%rcx		/* compare by words */
@@ -16,4 +17,5 @@ ENTRY(bcmp)
 	je	L2
 
 L1:	incl	%eax
-L2:	ret
+L2:	RETGUARD_CHECK(bcmp, r11)
+	ret

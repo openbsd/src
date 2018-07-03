@@ -44,6 +44,8 @@ _ENTRY(_C_LABEL(htonl))
 _ENTRY(_C_LABEL(ntohl))
 _ENTRY(_C_LABEL(bswap32))
 _PROF_PROLOGUE
+	RETGUARD_SETUP(htonl, r11)
 	movl	%edi,%eax
 	bswap	%eax
+	RETGUARD_CHECK(htonl, r11)
 	ret
