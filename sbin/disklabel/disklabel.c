@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.228 2018/07/03 06:37:45 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.229 2018/07/03 06:42:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -394,8 +394,8 @@ parselabel(void)
 		err(4, NULL);
 	i = asprintf(&partduid,
 	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
-            lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
-            lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
+	    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
+	    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
 	if (i == -1)
 		err(4, NULL);
 	setfsent();
@@ -600,8 +600,8 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
 	    lp->d_packname);
 	fprintf(f, "duid: %02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx\n",
-            lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
-            lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
+	    lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
+	    lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
