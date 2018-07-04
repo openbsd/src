@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.69 2017/09/20 18:28:14 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.70 2018/07/04 08:37:10 mpi Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -307,9 +307,9 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 		if (result == -1)
 			log_warn("%s: writev(%s)", log_procname, desc);
 		else if (result < total) {
-			result = -1;
 			log_warnx("%s, writev(%s): %zd of %u bytes",
 			    log_procname, desc, result, total);
+			result = -1;
 		}
 	} else {
 		memset(&msg, 0, sizeof(msg));
