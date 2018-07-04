@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.48 2018/05/23 14:12:33 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.49 2018/07/04 12:57:18 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1323,10 +1323,10 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 
 	reqid = sc->sc_bcdc_reqid++;
 
-	dcmd = malloc(size, M_TEMP, M_WAITOK | M_ZERO);
 	if (len > sizeof(dcmd->buf))
 		return ret;
 
+	dcmd = malloc(size, M_TEMP, M_WAITOK | M_ZERO);
 	dcmd->hdr.cmd = htole32(cmd);
 	dcmd->hdr.len = htole32(len);
 	dcmd->hdr.flags |= BWFM_BCDC_DCMD_SET;
@@ -2007,7 +2007,7 @@ bwfm_rx_assoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 	((uint16_t *)(&wh[1]))[0] = IEEE80211_CAPINFO_ESS; /* XXX */
 	((uint16_t *)(&wh[1]))[1] = 100; /* XXX */
 	if (reassoc) {
-		memset(&wh[1] + 4, 0, IEEE80211_ADDR_LEN);
+		memset(((uint8_t *)&wh[1]) + 4, 0, IEEE80211_ADDR_LEN);
 		memcpy(((uint8_t *)&wh[1]) + 4 + IEEE80211_ADDR_LEN,
 		    &e[1], ieslen);
 	} else
@@ -2069,7 +2069,7 @@ bwfm_rx_leave_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 	IEEE80211_ADDR_COPY(wh->i_addr2, &e->msg.addr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
 	*(uint16_t *)wh->i_seq = 0;
-	memset(&wh[1], 0, 2);
+	memset((uint8_t *)&wh[1], 0, 2);
 
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
