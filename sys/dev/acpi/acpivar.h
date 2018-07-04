@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.94 2018/07/01 10:27:34 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.95 2018/07/04 20:46:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -27,6 +27,8 @@
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>
+
+#include <dev/pci/pcivar.h>
 
 #include "acpipwrres.h"
 
@@ -206,6 +208,8 @@ struct acpi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;
 	bus_dma_tag_t		sc_dmat;
+
+	pci_chipset_tag_t	sc_pc;		/* XXX assume single segment */
 
 	/*
 	 * First-level ACPI tables

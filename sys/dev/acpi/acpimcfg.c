@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimcfg.c,v 1.2 2011/01/05 22:29:31 kettenis Exp $ */
+/* $OpenBSD: acpimcfg.c,v 1.3 2018/07/04 20:46:22 kettenis Exp $ */
 /*
  * Copyright (c) 2010 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,8 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/apicvar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -61,6 +59,7 @@ acpimcfg_match(struct device *parent, void *match, void *aux)
 void
 acpimcfg_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct acpi_softc *sc = (struct acpi_softc *)parent;
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_mcfg *mcfg = (struct acpi_mcfg *)aaa->aaa_table;
 
@@ -74,7 +73,6 @@ acpimcfg_attach(struct device *parent, struct device *self, void *aux)
 	if (mcfg->min_bus_number == mcfg->max_bus_number)
 		return;
 
-	pci_mcfg_addr = mcfg->base_address;
-	pci_mcfg_min_bus = mcfg->min_bus_number;
-	pci_mcfg_max_bus = mcfg->max_bus_number;
+	sc->sc_pc = pci_mcfg_init(aaa->aaa_memt, mcfg->base_address,
+	    mcfg->min_bus_number, mcfg->max_bus_number);
 }

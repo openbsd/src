@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.67 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.68 2018/07/04 20:46:22 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -99,9 +99,8 @@
  */
 bus_addr_t pci_mcfg_addr;
 int pci_mcfg_min_bus, pci_mcfg_max_bus;
-bus_space_tag_t pci_mcfgt = X86_BUS_SPACE_MEM;
+bus_space_tag_t pci_mcfgt;
 bus_space_handle_t pci_mcfgh[256];
-void pci_mcfg_map_bus(int);
 
 struct mutex pci_conf_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
@@ -140,6 +139,17 @@ struct bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+pci_chipset_tag_t
+pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int min_bus, int max_bus)
+{
+	pci_mcfgt = iot;
+	pci_mcfg_addr = addr;
+	pci_mcfg_min_bus = min_bus;
+	pci_mcfg_max_bus = max_bus;
+
+	return NULL;
+}
 
 void
 pci_attach_hook(struct device *parent, struct device *self,

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.352 2018/07/01 15:52:12 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.353 2018/07/04 20:46:22 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -352,7 +352,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			return (0);
 		}
 
-		pc = NULL;
+		pc = sc->sc_pc;
 		tag = pci_make_tag(pc,
 		    ACPI_PCI_BUS(address), ACPI_PCI_DEV(address),
 		    ACPI_PCI_FN(address));
@@ -540,7 +540,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 	struct acpi_pci *pci, *ppci;
 	struct aml_value res;
 	struct acpi_softc *sc = arg;
-	pci_chipset_tag_t pc = NULL;
+	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag;
 	uint64_t val;
 	uint32_t reg;
@@ -776,7 +776,7 @@ int
 acpi_pci_notify(struct aml_node *node, int ntype, void *arg)
 {
 	struct acpi_pci *pdev = arg;
-	pci_chipset_tag_t pc = NULL;
+	pci_chipset_tag_t pc = acpi_softc->sc_pc;
 	pcitag_t tag;
 	pcireg_t reg;
 	int offset;
