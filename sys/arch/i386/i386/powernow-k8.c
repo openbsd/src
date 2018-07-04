@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.33 2018/03/31 13:45:03 bluhm Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.34 2018/07/04 02:06:15 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -320,9 +320,15 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 	uint8_t *p;
 	int i;
 
+	/*
+	 * Look in the 0xe0000 - 0x100000 physical address
+	 * range for the pst tables; 16 byte blocks. End 10 bytes
+	 * before the end of the range to avoid memcmp across a
+	 * page boundary into unmapped memory.
+	 */
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p +=
-	    BIOS_STEP) {
+	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN) - 10;
+	    p += BIOS_STEP) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
 			psb = (struct psb_s *)p;
 			if (psb->version != PN8_PSB_VERSION)
