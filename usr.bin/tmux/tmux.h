@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.827 2018/07/04 09:44:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.828 2018/07/04 12:30:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1594,6 +1594,7 @@ void printflike(4, 5) hooks_insert(struct hooks *, struct cmdq_item *,
 		    struct cmd_find_state *, const char *, ...);
 
 /* notify.c */
+void	notify_hook(struct cmdq_item *, const char *);
 void	notify_input(struct window_pane *, struct evbuffer *);
 void	notify_client(const char *, struct client *);
 void	notify_session(const char *, struct session *);
