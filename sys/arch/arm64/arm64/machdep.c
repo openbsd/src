@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.35 2018/05/30 11:58:04 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.36 2018/07/04 22:26:20 drahn Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -253,6 +253,7 @@ void
 cpu_idle_cycle()
 {
 	restore_daif(0x0); // enable interrupts
+	__asm volatile("dsb sy");
 	__asm volatile("wfi");
 }
 
