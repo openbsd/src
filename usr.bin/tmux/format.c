@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.157 2018/06/27 17:36:10 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.158 2018/07/04 09:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -548,11 +548,11 @@ format_cb_history_bytes(struct format_tree *ft, struct format_entry *fe)
 
 	size = 0;
 	for (i = 0; i < gd->hsize; i++) {
-		gl = &gd->linedata[i];
+		gl = grid_get_line(gd, i);
 		size += gl->cellsize * sizeof *gl->celldata;
 		size += gl->extdsize * sizeof *gl->extddata;
 	}
-	size += gd->hsize * sizeof *gd->linedata;
+	size += gd->hsize * sizeof *gl;
 
 	xasprintf(&fe->value, "%llu", size);
 }

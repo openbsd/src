@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.83 2018/06/11 11:14:10 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.84 2018/07/04 09:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -143,6 +143,18 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 	gcp = &gl->extddata[gce->offset];
 	memcpy(gcp, gc, sizeof *gcp);
 	return (gcp);
+}
+
+struct grid_line *
+grid_get_line(struct grid *gd, u_int line)
+{
+	return (&gd->linedata[line]);
+}
+
+void
+grid_adjust_lines(struct grid *gd, u_int lines)
+{
+	gd->linedata = xreallocarray(gd->linedata, lines, sizeof *gd->linedata);
 }
 
 /* Copy default into a cell. */
