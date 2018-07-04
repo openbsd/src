@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.127 2018/04/24 15:40:55 pirofti Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.128 2018/07/04 02:08:13 anton Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -666,13 +666,15 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	/*
 	 * Not supported.
 	 */
-	case PRU_RCVOOB:
-	case PRU_RCVD:
 	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
+
+	case PRU_RCVD:
+	case PRU_RCVOOB:
+		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	case PRU_SOCKADDR:
 		in6_setsockaddr(in6p, nam);

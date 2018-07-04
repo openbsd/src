@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.109 2018/04/24 15:40:55 pirofti Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.110 2018/07/04 02:08:13 anton Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -482,13 +482,15 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	/*
 	 * Not supported.
 	 */
-	case PRU_RCVOOB:
-	case PRU_RCVD:
 	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
+
+	case PRU_RCVD:
+	case PRU_RCVOOB:
+		return (EOPNOTSUPP);	/* do not free mbuf's */
 
 	case PRU_SOCKADDR:
 		in_setsockaddr(inp, nam);
