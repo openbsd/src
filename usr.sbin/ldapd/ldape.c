@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.27 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: ldape.c,v 1.28 2018/07/04 10:05:56 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -229,7 +229,8 @@ ldap_abandon(struct request *req)
 int
 ldap_unbind(struct request *req)
 {
-	log_debug("current bind dn = %s", req->conn->binddn);
+	log_debug("current bind dn = %s",
+	    req->conn->binddn == NULL ? "" : req->conn->binddn);
 	conn_disconnect(req->conn);
 	request_free(req);
 	return -1;		/* don't send any response */
