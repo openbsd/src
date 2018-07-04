@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.121 2016/07/04 21:51:40 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.122 2018/07/04 20:54:43 kn Exp $
 
 machine		sparc64
 maxusers	4
@@ -295,4 +295,5 @@ pseudo-device	rd 1
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
 pseudo-device	vlan
+pseudo-device	trunk
 pseudo-device	bio 1
