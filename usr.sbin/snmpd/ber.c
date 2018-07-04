@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.37 2018/07/01 20:03:48 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.38 2018/07/04 13:04:30 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1212,8 +1212,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 static ssize_t
 ber_readbuf(struct ber *b, void *buf, size_t nbytes)
 {
-	size_t	 sz;
-	size_t	 len;
+	size_t	 sz, len;
 
 	if (b->br_rbuf == NULL)
 		return -1;
@@ -1227,6 +1226,7 @@ ber_readbuf(struct ber *b, void *buf, size_t nbytes)
 
 	bcopy(b->br_rptr, buf, len);
 	b->br_rptr += len;
+	b->br_offs += len;
 
 	return (len);
 }
@@ -1271,7 +1271,7 @@ ber_free(struct ber *b)
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
-	return ber_read(b, c, 1);
+	return ber_readbuf(b, c, 1);
 }
 
 static ssize_t
@@ -1284,14 +1284,10 @@ ber_read(struct ber *ber, void *buf, size_t len)
 		r = ber_readbuf(ber, b, remain);
 		if (r == -1)
 			return -1;
-		if (r == 0)
-			return (b - (u_char *)buf);
 		b += r;
 		remain -= r;
 	}
-	r = b - (u_char *)buf;
-	ber->br_offs += r;
-	return r;
+	return (b - (u_char *)buf);
 }
 
 int
