@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.126 2017/07/30 21:17:05 anton Exp $
+.\"	$OpenBSD: make.1,v 1.127 2018/07/04 14:11:49 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 30 2017 $
+.Dd $Mdocdate: July 4 2018 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1044,7 +1044,7 @@ in a context where it is not defined.
 .It Ic .poison empty Pq Ar variable
 It is an error to try to use the value of
 .Ar variable
-in a context where it is not defined or empty.
+in a context where it is not defined or is empty.
 .It Xo
 .Ic \&.if
 .Oo \&! Oc Ns Ar expression
