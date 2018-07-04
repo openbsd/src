@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.53 2018/06/25 22:33:24 kettenis Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.54 2018/07/04 02:05:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -31,7 +31,6 @@
 
 #include <machine/biosvar.h>
 #include <machine/hibernate.h>
-#include <machine/hibernate_var.h>
 #include <machine/kcore.h>
 #include <machine/pmap.h>
 
@@ -53,7 +52,6 @@ void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 
-extern	void hibernate_flush(void);
 extern	caddr_t start, end;
 extern	int ndumpmem;
 extern  struct dumpmem dumpmem[];
