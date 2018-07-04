@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.20 2018/07/04 13:31:57 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.21 2018/07/04 15:21:24 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -229,7 +229,6 @@ ber_get_enumerated(struct ber_element *elm, long long *n)
 	*n = elm->be_numeric;
 	return 0;
 }
-
 
 struct ber_element *
 ber_add_boolean(struct ber_element *prev, int bool)
@@ -1261,7 +1260,6 @@ ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
 	elm->be_cbarg = arg;
 }
 
-
 void
 ber_free(struct ber *b)
 {
@@ -1304,7 +1302,7 @@ ber_oid_cmp(struct ber_oid *a, struct ber_oid *b)
 			} else {
 				/* b is a predecessor of a */
 				return (-1);
-			}		
+			}
 		} else if (b->bo_id[i] != 0) {
 			/* b is larger, but a child of a */
 			return (2);
