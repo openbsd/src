@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.38 2018/07/04 13:04:30 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.39 2018/07/04 13:31:57 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -768,7 +768,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
  *	root	fully populated element tree
  *
  * returns:
- *      >=0     number of bytes written
+ *	>=0	number of bytes written
  *	-1	on failure and sets errno
  */
 int
