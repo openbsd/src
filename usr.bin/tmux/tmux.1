@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.602 2018/06/08 09:43:58 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.603 2018/07/04 12:25:26 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2018 $
+.Dd $Mdocdate: July 4 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3423,6 +3423,14 @@ Run when the program running in a pane exits, but
 is on so the pane has not closed.
 .It pane-exited
 Run when the program running in a pane exits.
+.It pane-focus-in
+Run when the focus enters a pane, if the
+.Ic focus-events
+option is on.
+.It pane-focus-out
+Run when the focus exits a pane, if the
+.Ic focus-events
+option is on.
 .It pane-set-clipboard
 Run when the terminal clipboard is set using the
 .Xr xterm 1
