@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.383 2018/06/28 09:54:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.384 2018/07/05 10:25:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3047,8 +3047,8 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 	struct prefix		*p, *np;
 	struct pt_entry		*pt;
 	struct rde_peer		*peer;
-	struct rde_aspath	*asp, *oasp, *nasp;
-	enum filter_actions	 oa, na;
+	struct rde_aspath	*asp, *fasp;
+	enum filter_actions	 action;
 	struct bgpd_addr	 addr;
 
 	pt = re->prefix;
@@ -3062,39 +3062,20 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		asp = prefix_aspath(p);
 		peer = asp->peer;
 
-		/* check if prefix changed */
-		if (rib->state == RECONF_RELOAD) {
-			oa = rde_filter(rib->in_rules_tmp, peer, &oasp, p);
-			oasp = oasp != NULL ? oasp : asp;
-		} else {
-			/* make sure we update everything for RECONF_REINIT */
-			oa = ACTION_DENY;
-			oasp = asp;
-		}
-		na = rde_filter(rib->in_rules, peer, &nasp, p);
-		nasp = nasp != NULL ? nasp : asp;
+		action = rde_filter(rib->in_rules, peer, &fasp, p);
+		fasp = fasp != NULL ? fasp : asp;
 
-		/* go through all 4 possible combinations */
-		/* if (oa == ACTION_DENY && na == ACTION_DENY) */
-			/* nothing todo */
-		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
+		if (action == ACTION_ALLOW) {
 			/* update Local-RIB */
-			path_update(&rib->rib, peer, nasp, &addr,
+			path_update(&rib->rib, peer, fasp, &addr,
 			    pt->prefixlen, 0);
-		} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
+		} else if (action == ACTION_DENY) {
 			/* remove from Local-RIB */
 			prefix_remove(&rib->rib, peer, &addr, pt->prefixlen, 0);
-		} else if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
-			if (path_compare(nasp, oasp) != 0)
-				/* send update */
-				path_update(&rib->rib, peer, nasp, &addr,
-				    pt->prefixlen, 0);
 		}
 
-		if (oasp != asp)
-			path_put(oasp);
-		if (nasp != asp)
-			path_put(nasp);
+		if (fasp != asp)
+			path_put(fasp);
 	}
 }
 
