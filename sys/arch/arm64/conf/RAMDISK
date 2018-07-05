@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.63 2018/07/02 12:46:20 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.64 2018/07/05 19:25:38 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -50,6 +50,9 @@ cpu0		at mainbus?
 efi0		at mainbus?
 acpi0		at mainbus?
 acpiec*		at acpi?
+acpimcfg*	at acpi?
+acpipci*	at acpi?
+pci*		at acpipci?
 ahci*		at acpi?
 com*		at acpi?
 pluart*		at acpi?

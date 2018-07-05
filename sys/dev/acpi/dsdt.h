@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.75 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.76 2018/07/05 19:25:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -191,8 +191,13 @@ union acpi_resource {
 		uint8_t		typecode;
 		uint16_t	length;
 		uint8_t		type;
+#define LR_TYPE_MEMORY		0
+#define LR_TYPE_IO		1
+#define LR_TYPE_BUS		2
 		uint8_t		flags;
 		uint8_t		tflags;
+#define LR_MEMORY_TTP		(1L << 5)
+#define LR_IO_TTP		(1L << 4)
 		uint16_t	_gra;
 		uint16_t	_min;
 		uint16_t	_max;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.353 2018/07/04 20:46:22 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.354 2018/07/05 19:25:38 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1145,8 +1145,10 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	/* Get PCI mapping */
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_getpci, sc);
 
+#if defined (__amd64__) || defined(__i386__)
 	/* attach pci interrupt routing tables */
 	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
+#endif
 
 	aml_find_node(&aml_root, "_HID", acpi_foundec, sc);
 
@@ -2941,7 +2943,9 @@ const char *acpi_skip_hids[] = {
 	"PNP0201",	/* EISA DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
 	"PNP0A03",	/* PCI Bus */
+#if defined(__amd64__) || defined(__i386__)
 	"PNP0A08",	/* PCI Express Bus */
+#endif
 	"PNP0C01",	/* System Board */
 	"PNP0C02",	/* PNP Motherboard Resources */
 	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */
