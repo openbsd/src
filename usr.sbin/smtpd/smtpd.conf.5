@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.197 2018/06/21 19:33:47 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.198 2018/07/05 14:56:26 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 21 2018 $
+.Dd $Mdocdate: July 5 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -32,19 +32,21 @@ When mail arrives,
 each
 .Dq RCPT TO:
 command generates a mail envelope.
-If an envelope matches any of a pre-designated set of actions
-(set using the
-.Ic action
+If an envelope matches
+any of a pre-designated set of criteria
+(using the
+.Ic match
 directive),
 the message is accepted for delivery.
 A copy of the message, as well as its associated envelopes,
 is saved in the mail queue and later dispatched
-according to whatever method the action rule specified.
+according to an associated set of actions
+(using the
+.Ic action
+directive).
 If an envelope does not match any options,
 it is rejected.
-The
-.Ic match
-rules are evaluated sequentially,
+The match rules are evaluated sequentially,
 with the first match winning.
 .Pp
 The format of the configuration file is fairly flexible.
