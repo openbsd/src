@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.205 2018/07/02 05:37:18 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.206 2018/07/05 03:48:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -175,6 +175,8 @@ int vmm_get_guest_faulttype(void);
 int vmx_get_guest_faulttype(void);
 int svm_get_guest_faulttype(struct vmcb *);
 int vmx_get_exit_qualification(uint64_t *);
+int vmm_get_guest_cpu_cpl(struct vcpu *);
+int vmm_get_guest_cpu_mode(struct vcpu *);
 int svm_fault_page(struct vcpu *, paddr_t);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
@@ -4891,6 +4893,111 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 	}
 
 	return (ret);
+}
+
+/*
+ * vmm_get_guest_cpu_cpl
+ *
+ * Determines current CPL of 'vcpu'. On VMX/Intel, this is gathered from the
+ * VMCS field for the DPL of SS (this seems odd, but is documented that way
+ * in the SDM). For SVM/AMD, this is gathered directly from the VMCB's 'cpl'
+ * field, as per the APM.
+ *
+ * Parameters:
+ *  vcpu: guest VCPU for which CPL is to be checked
+ *
+ * Return Values:
+ *  -1: the CPL could not be determined
+ *  0-3 indicating the current CPL. For real mode operation, 0 is returned.
+ */
+int
+vmm_get_guest_cpu_cpl(struct vcpu *vcpu)
+{
+	int mode;
+	struct vmcb *vmcb;
+	uint64_t ss_ar;
+
+	mode = vmm_get_guest_cpu_mode(vcpu);
+
+	if (mode == VMM_CPU_MODE_UNKNOWN)
+		return (-1);
+
+	if (mode == VMM_CPU_MODE_REAL)
+		return (0);
+
+	if (vmm_softc->mode == VMM_MODE_SVM ||
+	    vmm_softc->mode == VMM_MODE_RVI) {
+		vmcb = (struct vmcb *)vcpu->vc_control_va;
+		return (vmcb->v_cpl);
+	} else if (vmm_softc->mode == VMM_MODE_VMX ||
+	    vmm_softc->mode == VMM_MODE_EPT) {
+		if (vmread(VMCS_GUEST_IA32_SS_AR, &ss_ar))
+			return (-1);
+		return ((ss_ar & 0x60) >> 5);
+	} else
+		return (-1);
+}			
+
+/*
+ * vmm_get_guest_cpu_mode
+ *
+ * Determines current CPU mode of 'vcpu'.
+ *
+ * Parameters:
+ *  vcpu: guest VCPU for which mode is to be checked
+ *
+ * Return Values:
+ *  One of VMM_CPU_MODE_*, or VMM_CPU_MODE_UNKNOWN if the mode could not be
+ *   ascertained.
+ */
+int
+vmm_get_guest_cpu_mode(struct vcpu *vcpu)
+{
+	uint64_t cr0, efer, cs_ar;
+	uint8_t l, dib;
+	struct vmcb *vmcb;
+	struct vmx_msr_store *msr_store;
+
+	if (vmm_softc->mode == VMM_MODE_SVM ||
+            vmm_softc->mode == VMM_MODE_RVI) {
+		vmcb = (struct vmcb *)vcpu->vc_control_va;
+		cr0 = vmcb->v_cr0;
+		efer = vmcb->v_efer;
+		cs_ar = vmcb->v_cs.vs_attr;
+		cs_ar = (cs_ar & 0xff) | ((cs_ar << 4) & 0xf000);
+	} else if (vmm_softc->mode == VMM_MODE_VMX ||
+	    vmm_softc->mode == VMM_MODE_EPT) {
+		if (vmread(VMCS_GUEST_IA32_CR0, &cr0))
+			return (VMM_CPU_MODE_UNKNOWN);
+		if (vmread(VMCS_GUEST_IA32_CS_AR, &cs_ar))
+			return (VMM_CPU_MODE_UNKNOWN);
+		msr_store =
+		    (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+		efer = msr_store[VCPU_REGS_EFER].vms_data;
+	} else
+		return (VMM_CPU_MODE_UNKNOWN);
+
+	l = (cs_ar & 0x2000) >> 13;
+	dib = (cs_ar & 0x4000) >> 14;
+
+	/* Check CR0.PE */
+	if (!(cr0 & CR0_PE))
+		return (VMM_CPU_MODE_REAL);
+
+	/* Check EFER */
+	if (efer & EFER_LMA) {
+		/* Could be compat or long mode, check CS.L */
+		if (l)
+			return (VMM_CPU_MODE_LONG);
+		else
+			return (VMM_CPU_MODE_COMPAT);
+	}
+
+	/* Check prot vs prot32 */
+	if (dib)
+		return (VMM_CPU_MODE_PROT32);
+	else
+		return (VMM_CPU_MODE_PROT);
 }
 
 /*
