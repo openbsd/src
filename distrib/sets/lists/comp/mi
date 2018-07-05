@@ -2305,6 +2305,7 @@
 ./usr/share/man/man3/ftw.3
 ./usr/share/man/man3/funopen.3
 ./usr/share/man/man3/fuse_main.3
+./usr/share/man/man3/fuse_set_signal_handlers.3
 ./usr/share/man/man3/fwide.3
 ./usr/share/man/man3/gai_strerror.3
 ./usr/share/man/man3/get_rfc3526_prime_8192.3
