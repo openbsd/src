@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.23 2018/06/07 11:24:19 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.24 2018/07/05 11:51:37 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -183,7 +183,7 @@ struct bwfm_pci_dmamem {
 
 #define BWFM_PCI_DMA_MAP(_bdm)	((_bdm)->bdm_map)
 #define BWFM_PCI_DMA_LEN(_bdm)	((_bdm)->bdm_size)
-#define BWFM_PCI_DMA_DVA(_bdm)	((_bdm)->bdm_map->dm_segs[0].ds_addr)
+#define BWFM_PCI_DMA_DVA(_bdm)	((uint64_t)(_bdm)->bdm_map->dm_segs[0].ds_addr)
 #define BWFM_PCI_DMA_KVA(_bdm)	((void *)(_bdm)->bdm_kva)
 
 int		 bwfm_pci_match(struct device *, void *, void *);
@@ -941,7 +941,7 @@ bwfm_pci_fill_rx_ioctl_ring(struct bwfm_pci_softc *sc, struct if_rxring *rxring,
 		req->msg.msgtype = msgtype;
 		req->msg.request_id = htole32(pktid);
 		req->host_buf_len = htole16(MSGBUF_MAX_PKT_SIZE);
-		req->host_buf_addr.high_addr = htole32(paddr >> 32);
+		req->host_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
 		req->host_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 		bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
 	}
@@ -981,7 +981,7 @@ bwfm_pci_fill_rx_buf_ring(struct bwfm_pci_softc *sc)
 		req->msg.msgtype = MSGBUF_TYPE_RXBUF_POST;
 		req->msg.request_id = htole32(pktid);
 		req->data_buf_len = htole16(MSGBUF_MAX_PKT_SIZE);
-		req->data_buf_addr.high_addr = htole32(paddr >> 32);
+		req->data_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
 		req->data_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 		bwfm_pci_ring_write_commit(sc, &sc->sc_rxpost_submit);
 	}
@@ -1789,7 +1789,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 
 	tx->msg.request_id = htole32(pktid);
 	tx->data_len = htole16(m->m_len - ETHER_HDR_LEN);
-	tx->data_buf_addr.high_addr = htole32(paddr >> 32);
+	tx->data_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
 	tx->data_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 
 	bwfm_pci_ring_write_commit(sc, ring);
