@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.275 2018/07/05 13:48:06 benno Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.276 2018/07/05 21:48:32 sthen Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		/*
 		 * If route socket is bound to an address family only send
 		 * messages that match the address family. Address family
-		 * agnostic messages are always send.
+		 * agnostic messages are always sent.
 		 */
 		if (sa_family != AF_UNSPEC &&
 		    rop->rop_proto.sp_protocol != AF_UNSPEC &&
