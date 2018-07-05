@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.46 2018/03/16 19:45:13 benno Exp $
+.\"	$OpenBSD: route.4,v 1.47 2018/07/05 13:42:48 benno Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: July 5 2018 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -272,13 +272,13 @@ Messages include:
 #define RTM_LOSING	0x5	/* Kernel Suspects Partitioning */
 #define RTM_REDIRECT	0x6	/* Told to use different route */
 #define RTM_MISS	0x7	/* Lookup failed on this address */
-#define RTM_LOCK	0x8	/* fix specified metrics */
 #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
 #define RTM_IFINFO	0xe	/* iface going up/down etc. */
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
+#define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -358,6 +358,9 @@ the
 message uses an
 .Vt if_announcemsghdr
 header,
+.Dv RTM_INVALIDATE
+is used only internally in the kernel and should never appear in a route
+message,
 and all other messages use the
 .Vt rt_msghdr
 header.
