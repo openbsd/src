@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.48 2018/07/03 23:23:26 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.49 2018/07/05 10:57:31 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -476,20 +476,51 @@ DEF(fuse_destroy);
 void
 fuse_remove_signal_handlers(unused struct fuse_session *se)
 {
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGPIPE, SIG_DFL);
+	struct sigaction old_sa;
+
+	if (sigaction(SIGHUP, NULL, &old_sa) == 0)
+		if (old_sa.sa_handler == ifuse_sighdlr)
+			signal(SIGHUP, SIG_DFL);
+
+	if (sigaction(SIGINT, NULL, &old_sa) == 0)
+		if (old_sa.sa_handler == ifuse_sighdlr)
+			signal(SIGINT, SIG_DFL);
+
+	if (sigaction(SIGTERM, NULL, &old_sa) == 0)
+		if (old_sa.sa_handler == ifuse_sighdlr)
+			signal(SIGTERM, SIG_DFL);
+
+	if (sigaction(SIGPIPE, NULL, &old_sa) == 0)
+		if (old_sa.sa_handler == SIG_IGN)
+			signal(SIGPIPE, SIG_DFL);
 }
 DEF(fuse_remove_signal_handlers);
 
 int
 fuse_set_signal_handlers(unused struct fuse_session *se)
 {
-	signal(SIGHUP, ifuse_sighdlr);
-	signal(SIGINT, ifuse_sighdlr);
-	signal(SIGTERM, ifuse_sighdlr);
-	signal(SIGPIPE, SIG_IGN);
+	struct sigaction old_sa;
+
+	if (sigaction(SIGHUP, NULL, &old_sa) == -1)
+		return (-1);
+	if (old_sa.sa_handler == SIG_DFL)
+		signal(SIGHUP, ifuse_sighdlr);
+
+	if (sigaction(SIGINT, NULL, &old_sa) == -1)
+		return (-1);
+	if (old_sa.sa_handler == SIG_DFL)
+		signal(SIGINT, ifuse_sighdlr);
+
+	if (sigaction(SIGTERM, NULL, &old_sa) == -1)
+		return (-1);
+	if (old_sa.sa_handler == SIG_DFL)
+		signal(SIGTERM, ifuse_sighdlr);
+
+	if (sigaction(SIGPIPE, NULL, &old_sa) == -1)
+		return (-1);
+	if (old_sa.sa_handler == SIG_DFL)
+		signal(SIGPIPE, SIG_IGN);
+
 	return (0);
 }
 
