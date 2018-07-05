@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.224 2018/06/14 08:46:09 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.225 2018/07/05 14:45:07 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
 #include <sys/signalvar.h>
 #include <net/if.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
+#include <sys/rwlock.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -89,6 +91,7 @@ struct pool socket_pool;
 #ifdef SOCKET_SPLICE
 struct pool sosplice_pool;
 struct taskq *sosplice_taskq;
+struct rwlock sosplice_lock = RWLOCK_INITIALIZER("sosplicelk");
 #endif
 
 void
@@ -1088,13 +1091,22 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	struct file	*fp;
 	struct socket	*sosp;
 	struct sosplice	*sp;
+	struct taskq	*tq;
 	int		 error = 0;
 
 	soassertlocked(so);
 
-	if (sosplice_taskq == NULL)
-		sosplice_taskq = taskq_create("sosplice", 1, IPL_SOFTNET, 
-		    TASKQ_MPSAFE);
+	if (sosplice_taskq == NULL) {
+		rw_enter_write(&sosplice_lock);
+		if (sosplice_taskq == NULL) {
+			tq = taskq_create("sosplice", 1, IPL_SOFTNET,
+			    TASKQ_MPSAFE);
+			/* Ensure the taskq is fully visible to other CPUs. */
+			membar_producer();
+			sosplice_taskq = tq;
+		}
+		rw_exit_write(&sosplice_lock);
+	}
 	if (sosplice_taskq == NULL)
 		return (ENOMEM);
 
