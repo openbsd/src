@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.274 2018/07/05 11:59:26 benno Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.275 2018/07/05 13:48:06 benno Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -474,6 +474,7 @@ next:
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
 		case RTM_IFINFO:
+		case RTM_BFD:
 			/* check against rdomain id */
 			if (rop->rop_rtableid != RTABLE_ANY &&
 			    rtable_l2(rop->rop_rtableid) != rtm->rtm_tableid)
