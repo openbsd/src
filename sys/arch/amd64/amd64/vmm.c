@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.206 2018/07/05 03:48:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.207 2018/07/05 04:36:14 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -215,6 +215,7 @@ void vmm_decode_mtrrdeftype_value(uint64_t);
 void vmm_decode_efer_value(uint64_t);
 void vmm_decode_rflags(uint64_t);
 void vmm_decode_misc_enable_value(uint64_t);
+const char *vmm_decode_cpu_mode(struct vcpu *);
 
 extern int mtrr2mrt(int);
 
@@ -7338,7 +7339,12 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 	struct vmx_msr_store *msr_store;
 
 	/* XXX reformat this for 32 bit guest as needed */
-	DPRINTF("vcpu @ %p\n", vcpu);
+	DPRINTF("vcpu @ %p in %s mode\n", vcpu, vmm_decode_cpu_mode(vcpu));
+	i = vmm_get_guest_cpu_cpl(vcpu);
+	if (i == -1)
+		DPRINTF(" CPL=unknown\n");
+	else
+		DPRINTF(" CPL=%d\n", i);
 	DPRINTF(" rax=0x%016llx rbx=0x%016llx rcx=0x%016llx\n",
 	    vcpu->vc_gueststate.vg_rax, vcpu->vc_gueststate.vg_rbx,
 	    vcpu->vc_gueststate.vg_rcx);
@@ -8087,5 +8093,20 @@ vmm_decode_misc_enable_value(uint64_t misc)
 			DPRINTF("%s", misc_info[i].vrdi_absent);
 
 	DPRINTF(")\n");
+}
+
+const char *
+vmm_decode_cpu_mode(struct vcpu *vcpu)
+{
+	int mode = vmm_get_guest_cpu_mode(vcpu);
+
+	switch (mode) {
+	case VMM_CPU_MODE_REAL: return "real";
+	case VMM_CPU_MODE_PROT: return "16 bit protected";
+	case VMM_CPU_MODE_PROT32: return "32 bit protected";
+	case VMM_CPU_MODE_COMPAT: return "compatibility";
+	case VMM_CPU_MODE_LONG: return "long";
+	default: return "unknown";
+	}
 }
 #endif /* VMM_DEBUG */
