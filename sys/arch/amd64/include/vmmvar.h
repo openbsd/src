@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.53 2018/04/27 10:26:15 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.54 2018/07/05 05:07:03 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -319,6 +319,15 @@ enum {
 enum {
 	VEI_DIR_OUT,
 	VEI_DIR_IN
+};
+
+enum {
+	VMM_CPU_MODE_REAL,
+	VMM_CPU_MODE_PROT,
+	VMM_CPU_MODE_PROT32,
+	VMM_CPU_MODE_COMPAT,
+	VMM_CPU_MODE_LONG,
+	VMM_CPU_MODE_UNKNOWN,
 };
 
 /*
