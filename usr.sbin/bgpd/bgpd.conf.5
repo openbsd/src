@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.169 2018/06/18 06:04:25 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.170 2018/07/05 19:51:35 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: July 5 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -646,9 +646,10 @@ is a no-op.
 and
 .Ic announce default-route
 are aliases for
-.Em export none
-respectively
-.Em export default-route .
+.Ic export none
+and
+.Ic export default-route ,
+respectively.
 These three directives are provided for backward compatibility, but will
 eventually be removed.
 .Pp
