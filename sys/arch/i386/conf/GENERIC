@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.830 2018/03/27 21:11:17 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.831 2018/07/05 11:54:43 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -334,6 +334,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
+bwfm*	at uhub?		# Broadcom FullMAC
 
 puc*	at pci?			# PCI "universal" communication device
 com*	at cardbus?
@@ -342,6 +343,7 @@ sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 rtsx*	at pci?			# Realtek SD Card Reader
 sdmmc*	at rtsx?		# SD/MMC bus
+bwfm*	at sdmmc?		# Broadcom FullMAC
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -467,6 +469,7 @@ uha*	at eisa?		# UltraStor 24f SCSI controllers
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 vmwpvs*	at pci?			# VMware ParaVirtual SCSI
+bwfm*	at pci?			# Broadcom FullMAC
 
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
