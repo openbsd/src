@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.47 2018/07/06 06:43:19 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.48 2018/07/06 06:59:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -447,20 +447,20 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			break;
 
 		case PT_WB:
-			wb_print((void *)(up + 1), length);
+			wb_print(cp, length);
 			break;
 
 		case PT_RPC:
-			rp = (struct rpc_msg *)(up + 1);
+			rp = (struct rpc_msg *)cp;
 			direction = (enum msg_type)ntohl(rp->rm_direction);
 			if (direction == CALL)
-				sunrpcrequest_print((u_char *)rp, length, iph);
+				sunrpcrequest_print(cp, length, iph);
 			else
-				nfsreply_print((u_char *)rp, length, iph);
+				nfsreply_print(cp, length, iph);
 			break;
 
 		case PT_RTP:
-			rtp_print((void *)(up + 1), length, up);
+			rtp_print(cp, length, up);
 			break;
 
 		case PT_RTCP:
@@ -487,20 +487,20 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		struct rpc_msg *rp;
 		enum msg_type direction;
 
-		rp = (struct rpc_msg *)(up + 1);
+		rp = (struct rpc_msg *)cp;
 		if (TTEST(rp->rm_direction)) {
 			direction = (enum msg_type)ntohl(rp->rm_direction);
 			if (dport == NFS_PORT && direction == CALL) {
-				nfsreq_print((u_char *)rp, length, iph);
+				nfsreq_print(cp, length, iph);
 				return;
 			}
 			if (sport == NFS_PORT && direction == REPLY) {
-				nfsreply_print((u_char *)rp, length, iph);
+				nfsreply_print(cp, length, iph);
 				return;
 			}
 #ifdef notdef
 			if (dport == SUNRPC_PORT && direction == CALL) {
-				sunrpcrequest_print((u_char *)rp, length, iph);
+				sunrpcrequest_print(cp, length, iph);
 				return;
 			}
 #endif
@@ -518,72 +518,69 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))
 		if (ISPORT(NAMESERVER_PORT))
-			ns_print((const u_char *)(up + 1), length, 0);
+			ns_print(cp, length, 0);
 		else if (ISPORT(MULTICASTDNS_PORT))
-			ns_print((const u_char *)(up + 1), length, 1);
+			ns_print(cp, length, 1);
 		else if (ISPORT(LWRES_PORT))
-			lwres_print((const u_char *)(up + 1), length);
+			lwres_print(cp, length);
 		else if (ISPORT(TIMED_PORT))
-			timed_print((const u_char *)(up + 1), length);
+			timed_print(cp, length);
 		else if (ISPORT(TFTP_PORT))
-			tftp_print((const u_char *)(up + 1), length);
+			tftp_print(cp, length);
 		else if (ISPORT(IPPORT_BOOTPC) || ISPORT(IPPORT_BOOTPS))
-			bootp_print((const u_char *)(up + 1), length,
-			    sport, dport);
+			bootp_print(cp, length, sport, dport);
 		else if (ISPORT(RIP_PORT))
-			rip_print((const u_char *)(up + 1), length);
+			rip_print(cp, length);
 		else if (ISPORT(SNMP_PORT) || ISPORT(SNMPTRAP_PORT))
-			snmp_print((const u_char *)(up + 1), length);
+			snmp_print(cp, length);
 		else if (ISPORT(NTP_PORT))
-			ntp_print((const u_char *)(up + 1), length);
+			ntp_print(cp, length);
 		else if (ISPORT(KERBEROS_PORT) || ISPORT(KERBEROS_SEC_PORT))
-			krb_print((const void *)(up + 1), length);
+			krb_print(cp, length);
 		else if (ISPORT(L2TP_PORT))
-			l2tp_print((const u_char *)(up + 1), length);
+			l2tp_print(cp, length);
 		else if (ISPORT(UDPENCAP_PORT))
-			udpencap_print((const u_char *)(up + 1), length, iph);
+			udpencap_print(cp, length, iph);
 		else if (ISPORT(ISAKMP_PORT))
-			ike_print((const u_char *)(up + 1), length);
+			ike_print(cp, length);
 #if 0
 		else if (ISPORT(NETBIOS_NS_PORT))
-			nbt_udp137_print((const u_char *)(up + 1), length);
+			nbt_udp137_print(cp, length);
 		else if (ISPORT(NETBIOS_DGRAM_PORT))
-			nbt_udp138_print((const u_char *)(up + 1), length);
+			nbt_udp138_print(cp, length);
 #endif
                 else if (ISPORT(OLD_RADIUS_AUTH_PORT) ||
                          ISPORT(OLD_RADIUS_ACCT_PORT) ||
                          ISPORT(RADIUS_AUTH_PORT)     ||
                          ISPORT(RADIUS_ACCT_PORT))
-                        radius_print((const u_char *)(up + 1), length);
+                        radius_print(cp, length);
 		else if (dport == 3456)
-			vat_print((const void *)(up + 1), length, up);
+			vat_print(cp, length, up);
 		else if (ISPORT(IAPP_PORT) || ISPORT(IAPP_OLD_PORT))
-			iapp_print((const u_char *)(up + 1), length);
+			iapp_print(cp, length);
 		else if (ISPORT(VQP_PORT))
-			vqp_print((const u_char *)(up + 1), length);
+			vqp_print(cp, length);
 		else if (ISPORT(GRE_PORT))
-			gre_print((const u_char *)(up + 1), length);
+			gre_print(cp, length);
 		else if (ISPORT(MPLS_PORT))
 			mpls_print(cp, length);
 #ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
-			ripng_print((const u_char *)(up + 1), length);
+			ripng_print(cp, length);
 		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2)) {
-			dhcp6_print((const u_char *)(up + 1), length,
-				sport, dport);
+			dhcp6_print(cp, length, sport, dport);
 		}
 #endif /*INET6*/
 		else if (ISPORT(GTP_C_PORT) || ISPORT(GTP_U_PORT) ||
 		    ISPORT(GTP_PRIME_PORT))
-			gtp_print((const u_char *)(up + 1), length,
-			    sport, dport);
+			gtp_print(cp, length, sport, dport);
 		/*
 		 * Kludge in test for whiteboard packets.
 		 */
 		else if (dport == 4567)
-			wb_print((const void *)(up + 1), length);
+			wb_print(cp, length);
 		else if (dport == HSRP_PORT)
-			hsrp_print((const u_char *)(up + 1), length);
+			hsrp_print(cp, length);
 		else
 			printf("udp %u", length);
 #undef ISPORT
