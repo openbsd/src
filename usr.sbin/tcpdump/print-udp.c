@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.48 2018/07/06 06:59:51 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.49 2018/07/06 07:13:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -314,6 +314,7 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 #define GTP_PRIME_PORT		3386
 #define UDPENCAP_PORT		4500		/*XXX*/
 #define GRE_PORT		4754
+#define VXLAN_PORT		4789
 #define MULTICASTDNS_PORT	5353
 #define MPLS_PORT		6635
 
@@ -473,6 +474,9 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		case PT_GRE:
 			gre_print(cp, length);
 			break;
+		case PT_VXLAN:
+			vxlan_print(cp, length);
+			break;
 		case PT_MPLS:
 			mpls_print(cp, length);
 			break;
@@ -562,6 +566,8 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			vqp_print(cp, length);
 		else if (ISPORT(GRE_PORT))
 			gre_print(cp, length);
+		else if (ISPORT(VXLAN_PORT))
+			vxlan_print(cp, length);
 		else if (ISPORT(MPLS_PORT))
 			mpls_print(cp, length);
 #ifdef INET6

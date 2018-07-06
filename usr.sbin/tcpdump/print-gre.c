@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.20 2018/05/28 00:06:45 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.21 2018/07/06 07:13:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -540,4 +540,65 @@ gre_sre_asn_print(u_int8_t sreoff, u_int8_t srelen, const u_char *bp, u_int len)
 		len -= 2;
 		srelen -= 2;
 	}
+}
+
+struct vxlan_header {
+	uint16_t	flags;
+#define VXLAN_I			0x0800
+	uint16_t	proto;
+	uint32_t	vni;
+#define VXLAN_VNI_SHIFT		8
+#define VXLAN_VNI_MASK		(0xffffffU << VXLAN_VNI_SHIFT)
+#define VXLAN_VNI_RESERVED	(~VXLAN_VNI_MASK)
+};
+
+void
+vxlan_print(const u_char *p, u_int length)
+{
+	const struct vxlan_header *vh;
+	uint16_t flags, proto;
+	uint32_t vni;
+	size_t l;
+
+	l = snapend - p;
+	if (l < sizeof(*vh)) {
+		printf("[|vxlan]");
+		return;
+	}
+	vh = (const struct vxlan_header *)p;
+
+	flags = ntohs(vh->flags);
+	if (flags & ~VXLAN_I) {
+		printf("vxlan-invalid-flags %04x", flags);
+		return;
+	}
+
+	proto = ntohs(vh->proto);
+	if (proto != 0) {
+		printf("vxlan-invalid-proto %04x", proto);
+		return;
+	}
+
+	vni = ntohl(vh->vni);
+	if (flags & VXLAN_I) {
+		if (vni & VXLAN_VNI_RESERVED) {
+			printf("vxlan-vni-reserved %02x",
+			    vni & VXLAN_VNI_RESERVED);
+			return;
+		}
+
+		printf("vxlan %u: ", vni >> VXLAN_VNI_SHIFT);
+	} else {
+		if (vh->vni != 0) {
+			printf("vxlan-invalid-vni %08x\n", vni);
+			return;
+		}
+
+		printf("vxlan: ");
+	}
+
+	p += sizeof(*vh);
+	length -= sizeof(*vh);
+
+	ether_tryprint(p, length, 0);
 }
