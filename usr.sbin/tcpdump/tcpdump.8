@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.95 2018/07/06 06:18:03 dlg Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.96 2018/07/06 06:35:46 dlg Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,9 +229,11 @@ Currently known types are
 .Pq Visual Audio Tool ,
 .Cm wb
 .Pq distributed White Board ,
-and
 .Cm gre
-.Pq Generic Routing Encapsulation over UDP .
+.Pq Generic Routing Encapsulation over UDP ,
+and
+.Cm mpls
+.Pq Multiprocol Label Switching over UDP .
 .It Fl t
 Do not print a timestamp on each dump line.
 .It Fl tt
