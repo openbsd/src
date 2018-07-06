@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.11 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.12 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -241,7 +241,7 @@ void radius_print(const u_char *data, u_int len) {
 	int first, l, ac, al;
 
 	if(len < sizeof(struct radius_header)) {
-		fputs(" [|radius]", stdout);
+		fputs("[|radius]", stdout);
 		return;
 	}
 
@@ -249,15 +249,15 @@ void radius_print(const u_char *data, u_int len) {
 
 	if(rhp->code > DEFINED_OPCODES ||
 	   rhp->code < 1) 
-		fprintf(stdout, " Code:%d id:%x [%d]", 
+		fprintf(stdout, "Code:%d id:%x [%d]", 
 		rhp->code, rhp->id, ntohs(rhp->len));
 	else
-		fprintf(stdout, " %s id:%x [%d]", 
+		fprintf(stdout, "%s id:%x [%d]", 
 			radius_codes[rhp->code].name,
 			rhp->id, ntohs(rhp->len));
 
 	if(ntohs(rhp->len) > len) {
-		fputs(" [|radius]", stdout);
+		fputs("[|radius]", stdout);
 		return;
 	}
 

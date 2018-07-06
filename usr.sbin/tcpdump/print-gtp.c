@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.9 2015/12/22 21:01:07 mmcc Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.10 2018/07/06 05:47:22 dlg Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -304,12 +304,12 @@ gtp_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	else if (version == GTP_VERSION_1)
 		gtp_v1_print(cp, length, sport, dport);
 	else
-		printf(" GTP (version %i)", version);
+		printf("GTP (version %i)", version);
 
 	return;
 
 trunc:
-	printf(" [|GTP]");
+	printf("[|GTP]");
 }
 
 /*
@@ -502,7 +502,7 @@ gtp_v0_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	cp += sizeof(struct gtp_v0_hdr);
 	len = ntohs(gh->length);
 	bcopy(&gh->tid, &tid, sizeof(tid));
-	printf(" GTPv0 (len %u, seqno %u, flow %u, N-PDU %u, tid 0x%llx) ",
+	printf("GTPv0 (len %u, seqno %u, flow %u, N-PDU %u, tid 0x%llx) ",
 	    ntohs(gh->length), ntohs(gh->seqno), ntohs(gh->flow),
 	    ntohs(gh->npduno), betoh64(tid));
 
@@ -549,7 +549,7 @@ gtp_v0_print_prime(const u_char *cp)
 	cp += sizeof(*gph);
 
 	len = ntohs(gph->length);
-	printf(" GTPv0' (len %u, seq %u) ", len, ntohs(gph->seqno));
+	printf("GTPv0' (len %u, seq %u) ", len, ntohs(gph->seqno));
 
 	/* Decode GTP message. */
 	printf("%s", tok2str(gtp_v0_msgtype, "Message Type %u", gph->msgtype));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tftp.c,v 1.12 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-tftp.c,v 1.13 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -77,7 +77,7 @@ tftp_print(const u_char *bp, u_int length)
 	tp = (const struct tftphdr *)bp;
 
 	/* Print length */
-	printf(" %d", length);
+	printf("%d", length);
 
 	/* Print tftp request type */
 	TCHECK(tp->th_opcode);

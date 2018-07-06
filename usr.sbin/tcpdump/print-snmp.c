@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.21 2016/03/15 05:03:11 mmcc Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.22 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -1047,8 +1047,6 @@ snmp_print(const u_char *np, u_int length)
 		truncated = 1;
 		length = snapend - np;
 	}
-
-	putchar(' ');
 
 	/* initial Sequence */
 	if ((count = asn1_parse(np, length, &elem)) < 0)

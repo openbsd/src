@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.37 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.38 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -203,9 +203,7 @@ ike_print (const u_int8_t *cp, u_int length)
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
 
-	printf(" isakmp");
-
-	printf(" v%d.%d", ih->version >> 4, ih->version & 0xf);
+	printf("isakmp v%u.%u", ih->version >> 4, ih->version & 0xf);
 
 	printf(" exchange ");
 	if (ih->exgtype < (sizeof exgtypes/sizeof exgtypes[0]))

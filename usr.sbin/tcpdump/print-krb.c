@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-krb.c,v 1.11 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-krb.c,v 1.12 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -271,17 +271,17 @@ krb_print(const u_char *dat, u_int length)
 	case 1:
 	case 2:
 	case 3:
-		printf(" v%d", kp->pvno);
+		printf("v%d", kp->pvno);
 		break;
 
 	case 4:
-		printf(" v%d", kp->pvno);
+		printf("v%d", kp->pvno);
 		krb4_print((const u_char *)kp);
 		break;
 
 	case 106:
 	case 107:
-		fputs(" v5", stdout);
+		fputs("v5", stdout);
 		/* Decode ASN.1 here "someday" */
 		break;
 	}

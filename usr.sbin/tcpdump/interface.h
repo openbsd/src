@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.73 2018/07/06 04:49:21 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.74 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.73 2018/07/06 04:49:21 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.74 2018/07/06 05:47:22 dlg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -255,11 +255,11 @@ extern void sl_bsdos_if_print(u_char *, const struct pcap_pkthdr *,
     const u_char *);
 extern void snmp_print(const u_char *, u_int);
 extern void sunrpcrequest_print(const u_char *, u_int, const u_char *);
-extern void cnfp_print(const u_char *, u_int, const u_char *);
+extern void cnfp_print(const u_char *, u_int);
 extern void tcp_print(const u_char *, u_int, const u_char *);
 extern void tftp_print(const u_char *, u_int);
 extern void timed_print(const u_char *, u_int);
-extern void udp_print(const u_char *, u_int, const u_char *);
+extern void udp_print(const u_char *, u_int, const void *);
 extern void wb_print(const void *, u_int);
 extern void ike_print(const u_char *, u_int);
 extern void udpencap_print(const u_char *, u_int, const u_char *);

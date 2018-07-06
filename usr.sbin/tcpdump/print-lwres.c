@@ -354,7 +354,7 @@ lwres_print(const u_char *bp, u_int length)
 	np = (const struct lwres_lwpacket *)bp;
 	TCHECK(np->authlength);
 
-	printf(" lwres");
+	printf("lwres");
 	v = ntohs(np->version);
 	if (vflag || v != LWRES_LWPACKETVERSION_0)
 		printf(" v%u", v);

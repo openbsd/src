@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ripng.c,v 1.5 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-ripng.c,v 1.6 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -75,13 +75,13 @@ ripng_print(const u_char *dat, int length)
 		if (j == 1
 		    &&  rp->rip6_nets->rip6_metric == HOPCNT_INFINITY6
 		    &&  IN6_IS_ADDR_UNSPECIFIED(&rp->rip6_nets->rip6_dest)) {
-			printf(" ripng-req dump");
+			printf("ripng-req dump");
 			break;
 		}
 		if (j * sizeof(*ni) != length - 4)
-			printf(" ripng-req %d[%d]:", j, length);
+			printf("ripng-req %d[%d]:", j, length);
 		else
-			printf(" ripng-req %d:", j);
+			printf("ripng-req %d:", j);
 		trunc = ((i / sizeof(*ni)) * sizeof(*ni) != i);
 		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni) {
 			if (vflag)
@@ -94,9 +94,9 @@ ripng_print(const u_char *dat, int length)
 	case RIP6_RESPONSE:
 		j = length / sizeof(*ni);
 		if (j * sizeof(*ni) != length - 4)
-			printf(" ripng-resp %d[%d]:", j, length);
+			printf("ripng-resp %d[%d]:", j, length);
 		else
-			printf(" ripng-resp %d:", j);
+			printf("ripng-resp %d:", j);
 		trunc = ((i / sizeof(*ni)) * sizeof(*ni) != i);
 		for (ni = rp->rip6_nets; (i -= sizeof(*ni)) >= 0; ++ni) {
 			if (vflag)
@@ -109,7 +109,7 @@ ripng_print(const u_char *dat, int length)
 			printf("[|rip]");
 		break;
 	default:
-		printf(" ripng-%d ?? %d", rp->rip6_cmd, length);
+		printf("ripng-%d ?? %d", rp->rip6_cmd, length);
 		break;
 	}
 	if (rp->rip6_vers != RIP6_VERSION)

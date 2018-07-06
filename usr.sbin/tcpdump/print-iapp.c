@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-iapp.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-iapp.c,v 1.6 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,7 @@ iapp_print(const u_char *p, u_int len)
 	TCHECK2(*wf, sizeof(struct ieee80211_iapp_frame));
 
 	/* Print common IAPP information */
-	printf(" IAPPv%u ", wf->i_version);
+	printf("IAPPv%u ", wf->i_version);
 	if (wf->i_command & 0xf0)
 		printf("unknown: 0x%0x ", wf->i_command);
 	else
@@ -100,6 +100,6 @@ iapp_print(const u_char *p, u_int len)
 	return;
 
 trunc:
-	printf(" [|IAPP]");
+	printf("[|IAPP]");
 }
 
