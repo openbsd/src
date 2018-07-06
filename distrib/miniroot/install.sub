@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1077 2018/07/06 19:16:28 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1078 2018/07/06 19:42:01 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -458,8 +458,8 @@ configure_disk() {
 	if [[ -f $_fstab ]]; then
 		# Avoid duplicate mount points on different disks.
 		while read _pp _mp _rest; do
+			# Multiple swap partitions are ok.
 			if [[ $_mp == none ]]; then
-				# Multiple swap partitions are ok.
 				echo "$_pp $_mp $_rest" >>/tmp/i/fstab
 				continue
 			fi
@@ -471,12 +471,13 @@ configure_disk() {
 			fi
 		done <$_fstab
 
+		# Duplicate mountpoint.
 		if [[ -z $_disk ]]; then
-			# Duplicate mountpoint.
 			# Allow disklabel(8) to read back mountpoint info
 			# if it is immediately run against the same disk.
 			cat /tmp/i/fstab.$_rest >/etc/fstab
 			rm /tmp/i/fstab.$_rest
+
 			set -- $(grep -h " $_mp " /tmp/i/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
 			$AUTO && exit 1 || return 1
@@ -486,12 +487,16 @@ configure_disk() {
 		# other filesystems.
 		while read _pp _mp _fstype _rest; do
 			[[ $_fstype == ffs ]] || continue
+
+			# Use machine-dependent newfs options for the root
+			# partition if defined.
 			_opt=
 			[[ $_mp == / ]] && _opt=$MDROOTFSOPT
+
 			newfs -q $_opt ${_pp##/dev/}
-			# N.B.: '!' is lexically < '/'. That is
-			#	required for correct sorting of
-			#	mount points.
+
+			# N.B.: '!' is lexically < '/'.
+			# That is required for correct sorting of mount points.
 			FSENT="$FSENT $_mp!$_pp"
 		done <$_fstab
 	fi
