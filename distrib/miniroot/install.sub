@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1078 2018/07/06 19:42:01 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1079 2018/07/06 20:13:42 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -610,7 +610,7 @@ get_responsefile() {
 		_path=${_aifile%auto_@(install|upgrade)}
 		AI_MODE=${_aifile##*?(/)auto_}
 
-		# Extract installer server ip address from lease file.
+		# Extract install server ip address from lease file.
 		AI_SERVER=$(lease_value $_lf \
 			server-name tftp-server-name next-server)
 
@@ -619,12 +619,15 @@ get_responsefile() {
 		hostname "$AI_HOSTNAME"
 	done
 
-	# Fetch response file if server and mode are known, otherwise tell which
-	# one was missing. Try to fetch mac-mode.conf, then hostname-mode.conf,
-	# and finally mode.conf.
+	# Try to fetch mac-mode.conf, then hostname-mode.conf, and finally
+	# mode.conf if install server and mode are known, otherwise tell which
+	# one was missing.
 	if [[ -n $AI_SERVER && -n $AI_MODE ]]; then
 		AI_MAC=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
 		for _rf in {$AI_MAC-,${AI_HOSTNAME:+$AI_HOSTNAME-,}}$AI_MODE; do
+			# Append HTTP_SETDIR as parameter to _url which can be
+			# used by the webserver to return dynamically created
+			# response files.
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if unpriv ftp -Vo - "$_url" \
