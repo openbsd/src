@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.49 2018/02/10 10:00:32 dlg Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.50 2018/07/06 04:49:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -309,40 +309,6 @@ ip_optprint(const u_char *cp, u_int length)
 
 trunc:
 	printf("[|ip]");
-}
-
-/*
- * compute an IP header checksum.
- * don't modifiy the packet.
- */
-u_short
-in_cksum(const u_short *addr, int len, int csum)
-{
-	int nleft = len;
-	const u_short *w = addr;
-	u_short answer;
-	int sum = csum;
-
- 	/*
-	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
-	 *  we add sequential 16 bit words to it, and at the end, fold
-	 *  back all the carry bits from the top 16 bits into the lower
-	 *  16 bits.
- 	 */
-	while (nleft > 1)  {
-		sum += *w++;
-		nleft -= 2;
-	}
-	if (nleft == 1)
-		sum += htons(*(u_char *)w<<8);
-
-	/*
-	 * add back carry outs from top 16 bits to low 16 bits
-	 */
-	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
-	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* truncate to 16 bits */
-	return (answer);
 }
 
 /*

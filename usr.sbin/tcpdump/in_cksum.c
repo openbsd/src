@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.1 2014/06/20 04:01:42 lteo Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.2 2018/07/06 04:49:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -85,4 +85,41 @@ in_cksum_shouldbe(u_int16_t sum, u_int16_t computed_sum)
 	shouldbe = (shouldbe & 0xFFFF) + (shouldbe >> 16);
 	shouldbe = (shouldbe & 0xFFFF) + (shouldbe >> 16);
 	return shouldbe;
+}
+
+uint32_t
+in_cksum_add(const void *buf, size_t len, uint32_t sum)
+{
+	const uint16_t *words = buf;
+
+	while (len > 1) {
+		sum += *words++;
+		len -= sizeof(*words);
+	}
+
+	if (len == 1) {
+		uint8_t byte = *(const uint8_t *)words;
+		sum += htons(byte << 8);
+	}
+
+	return (sum);
+}
+
+uint16_t
+in_cksum_fini(uint32_t sum)
+{
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);			/* add carry */
+
+	return (~sum);
+}
+
+/*
+ * compute an IP header checksum.
+ * don't modifiy the packet.
+ */
+uint16_t
+in_cksum(const void *addr, size_t len, uint32_t sum)
+{
+	return (in_cksum_fini(in_cksum_add(addr, len, sum)));
 }
