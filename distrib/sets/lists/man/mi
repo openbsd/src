@@ -1,4 +1,3 @@
-./usr/share/man/man4/acpisurface.4
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/cvs.info
@@ -1095,6 +1094,7 @@
 ./usr/share/man/man4/acpipwrres.4
 ./usr/share/man/man4/acpisbs.4
 ./usr/share/man/man4/acpisony.4
+./usr/share/man/man4/acpisurface.4
 ./usr/share/man/man4/acpithinkpad.4
 ./usr/share/man/man4/acpitimer.4
 ./usr/share/man/man4/acpitoshiba.4
@@ -1172,6 +1172,7 @@
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
 ./usr/share/man/man4/arm64
+./usr/share/man/man4/arm64/acpipci.4
 ./usr/share/man/man4/arm64/agtimer.4
 ./usr/share/man/man4/arm64/ampintc.4
 ./usr/share/man/man4/arm64/efi.4
