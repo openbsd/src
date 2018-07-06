@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1076 2018/07/02 20:47:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1077 2018/07/06 19:16:28 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -395,16 +395,10 @@ disk_has() {
 	fi
 }
 
-# Handle disklabel auto-layout during interactive installation and
-# autopartitioning during unattended installation for the root disk.
-# In the latter case, ask for and download autopartitioning template.
-# Abort unattended installation if autopartitioning fails.
-#
-# Parameters:
-#
-# $1 = disk
-# $2 = /path/to/fstab
-#
+# Handle disklabel auto-layout for the root disk $1 during interactive install
+# and autopartitioning during unattended install by asking for and downloading
+# autopartitioning template. Write the resulting fstab to $2. Abort unattended
+# installation if autopartitioning fails.
 disklabel_autolayout() {
 	local _disk=$1 _f=$2 _dl=/tmp/i/disklabel.auto _op _qst
 
