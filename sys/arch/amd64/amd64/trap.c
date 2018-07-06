@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2018/07/03 05:45:21 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2018/07/06 02:43:01 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -92,7 +92,8 @@
 #include "isa.h"
 
 int	pageflttrap(struct trapframe *, int _usermode);
-void	trap(struct trapframe *);
+void	kerntrap(struct trapframe *);
+void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
 void	syscall(struct trapframe *);
 
@@ -124,6 +125,7 @@ const int	trap_types = nitems(trap_type);
 int	trapdebug = 0;
 #endif
 
+static void trap_print(struct trapframe *, int _type);
 static inline void frame_dump(struct trapframe *_tf, struct proc *_p,
     const char *_sig, uint64_t _cr2);
 static inline void verify_smap(const char *_func);
@@ -254,30 +256,20 @@ pageflttrap(struct trapframe *frame, int usermode)
 
 
 /*
- * trap(frame):
+ * kerntrap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
  * common code is called from assembly language IDT gate entry
  * routines that prepare a suitable stack frame, and restore this
  * frame after the exception has been processed.
  */
 void
-trap(struct trapframe *frame)
+kerntrap(struct trapframe *frame)
 {
-	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
-	union sigval sv;
-	int code;
 
 	verify_smap(__func__);
 	uvmexp.traps++;
-	debug_trap(frame, p, type);
-
-	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
-		type |= T_USER;
-		p->p_md.md_regs = frame;
-		refreshcreds(p);
-		check_stack(p, type);
-	}
+	debug_trap(frame, curproc, type);
 
 	switch (type) {
 
@@ -287,16 +279,7 @@ trap(struct trapframe *frame)
 		if (db_ktrap(type, 0, frame))
 			return;
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %ld", (u_long)frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %llx rip %llx cs %llx rflags %llx cr2 "
-		       " %llx cpl %x rsp %llx\n",
-		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
-
+		trap_print(frame, type);
 		panic("trap type %d, code=%llx, pc=%llx",
 		    type, frame->tf_err, frame->tf_rip);
 		/*NOTREACHED*/
@@ -307,74 +290,16 @@ trap(struct trapframe *frame)
 	case T_TSSFLT:
 		goto we_re_toast;
 
-	case T_PROTFLT|T_USER:		/* protection fault */
-	case T_TSSFLT|T_USER:
-	case T_SEGNPFLT|T_USER:
-	case T_STKFLT|T_USER:
-		frame_dump(frame, p, "BUS", 0);
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGBUS, type & ~T_USER, BUS_OBJERR, sv);
-		KERNEL_UNLOCK();
-		goto out;
-	case T_ALIGNFLT|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGBUS, type & ~T_USER, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
-		goto out;
-
-	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
-		KERNEL_UNLOCK();
-		goto out;
-	case T_FPOPFLT|T_USER:		/* impossible without 32bit compat */
-	case T_BOUND|T_USER:
-	case T_OFLOW|T_USER:
-	case T_DNA|T_USER:
-		panic("impossible trap");
-	case T_DIVIDE|T_USER:
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
-		KERNEL_UNLOCK();
-		goto out;
-
-	case T_ARITHTRAP|T_USER:
-	case T_XMM|T_USER:
-		code = fputrap(type);
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGFPE, type &~ T_USER, code, sv);
-		KERNEL_UNLOCK();
-		goto out;
-
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (pageflttrap(frame, 0))
 			return;
 		goto we_re_toast;
 
-	case T_PAGEFLT|T_USER:		/* page fault */
-		if (pageflttrap(frame, 1))
-			goto out;
-		goto we_re_toast;
-
 	case T_TRCTRAP:
 		goto we_re_toast;
 
-	case T_BPTFLT|T_USER:		/* bpt instruction fault */
-	case T_TRCTRAP|T_USER:		/* trace trap */
-		sv.sival_ptr = (void *)frame->tf_rip;
-		KERNEL_LOCK();
-		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
-		break;
-
 #if NISA > 0
 	case T_NMI:
-	case T_NMI|T_USER:
 #ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -389,12 +314,100 @@ trap(struct trapframe *frame)
 			return;
 #endif /* NISA > 0 */
 	}
+}
 
-	if ((type & T_USER) == 0)
-		return;
+
+/*
+ * usertrap(frame): handler for exceptions, faults, and traps from userspace
+ *	This is called from the assembly language IDT gate entries
+ * which prepare a suitable stack frame and restores the CPU state
+ * after the fault has been processed.
+ */
+void
+usertrap(struct trapframe *frame)
+{
+	struct proc *p = curproc;
+	int type = (int)frame->tf_trapno;
+	union sigval sv;
+	int sig, code;
+
+	verify_smap(__func__);
+	uvmexp.traps++;
+	debug_trap(frame, p, type);
+
+	p->p_md.md_regs = frame;
+	refreshcreds(p);
+	check_stack(p, type);
+
+	switch (type) {
+	case T_PROTFLT:			/* protection fault */
+	case T_TSSFLT:
+	case T_SEGNPFLT:
+	case T_STKFLT:
+		frame_dump(frame, p, "BUS", 0);
+		sig = SIGBUS;
+		code = BUS_OBJERR;
+		break;
+	case T_ALIGNFLT:
+		sig = SIGBUS;
+		code = BUS_ADRALN;
+		break;
+	case T_PRIVINFLT:		/* privileged instruction fault */
+		sig = SIGILL;
+		code = ILL_PRVOPC;
+		break;
+	case T_DIVIDE:
+		sig = SIGFPE;
+		code = FPE_INTDIV;
+		break;
+	case T_ARITHTRAP:
+	case T_XMM:			/* real arithmetic exceptions */
+		sig = SIGFPE;
+		code = fputrap(type);
+		break;
+	case T_BPTFLT:			/* bpt instruction fault */
+	case T_TRCTRAP:			/* trace trap */
+		sig = SIGTRAP;
+		code = TRAP_BRKPT;
+		break;
+
+	case T_PAGEFLT:			/* page fault */
+		if (pageflttrap(frame, 1))
+			goto out;
+		/* FALLTHROUGH */
+
+	default:
+		trap_print(frame, type);
+		panic("impossible trap");
+	}
+
+	sv.sival_ptr = (void *)frame->tf_rip;
+	KERNEL_LOCK();
+	trapsignal(p, sig, type, code, sv);
+	KERNEL_UNLOCK();
+
 out:
 	userret(p);
 }
+
+
+static void
+trap_print(struct trapframe *frame, int type)
+{
+	if (type < trap_types)
+		printf("fatal %s", trap_type[type]);
+	else
+		printf("unknown trap %d", type);
+	printf(" in %s mode\n", KERNELMODE(frame->tf_cs, frame->tf_rflags) ?
+	    "supervisor" : "user");
+	printf("trap type %d code %llx rip %llx cs %llx rflags %llx cr2 "
+	       " %llx cpl %x rsp %llx\n",
+	    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
+	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
+	printf("gsbase %p  kgsbase %p\n",
+	    (void *)rdmsr(MSR_GSBASE), (void *)rdmsr(MSR_KERNELGSBASE));
+}
+
 
 static inline void
 frame_dump(struct trapframe *tf, struct proc *p, const char *sig, uint64_t cr2)

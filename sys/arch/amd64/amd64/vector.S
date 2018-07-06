@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.68 2018/07/03 20:15:57 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.69 2018/07/06 02:43:01 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ INTRENTRY_LABEL(calltrap_specstk):
 	cld
 	SMAP_CLAC
 	movq	%rsp,%rdi
-	call	trap
+	call	_C_LABEL(kerntrap)
 	movl	$MSR_GSBASE,%ecx	# restore GS.base
 	movq	%r12,%rax
 	movq	%r13,%rdx
@@ -386,7 +386,7 @@ NENTRY(alltraps_kern)
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp, %rdi
-	call	_C_LABEL(trap)		/* kerntrap */
+	call	_C_LABEL(kerntrap)
 2:	cli
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
@@ -426,7 +426,7 @@ NENTRY(alltraps_user)
 	.globl	recall_trap
 recall_trap:
 	movq	%rsp, %rdi
-	call	_C_LABEL(trap)		/* usertrap */
+	call	_C_LABEL(usertrap)
 	cli
 	jmp	intr_user_exit
 END(alltraps_user)
