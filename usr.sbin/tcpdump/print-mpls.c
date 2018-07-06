@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-mpls.c,v 1.3 2016/07/11 00:27:50 rzalamena Exp $	*/
+/*	$OpenBSD: print-mpls.c,v 1.4 2018/07/06 07:00:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -45,25 +45,23 @@ mpls_print(const u_char *bp, u_int len)
 	u_int32_t tag, label, exp, bottom, ttl;
 	int has_cw;
 
- again:
-	if (bp + sizeof(tag) > snapend)
-		goto trunc;
+	do {
+		if (bp + sizeof(tag) > snapend)
+			goto trunc;
 
-	tag = EXTRACT_32BITS(bp);
-	bp += sizeof(tag);
-	len -= sizeof(tag);
+		tag = EXTRACT_32BITS(bp);
+		bp += sizeof(tag);
+		len -= sizeof(tag);
 
-	label = (tag >> 12) & 0xfffff;
-	exp = (tag >> 9) & 0x7;
-	bottom = (tag >> 8) & 0x1;
-	ttl = (tag >> 0) & 0xff;
+		label = (tag >> 12) & 0xfffff;
+		exp = (tag >> 9) & 0x7;
+		bottom = (tag >> 8) & 0x1;
+		ttl = (tag >> 0) & 0xff;
 
-	printf("MPLS(label %u, exp %u, ttl %u) ", label, exp, ttl);
+		printf("MPLS(label %u, exp %u, ttl %u) ", label, exp, ttl);
 
-	/* XXX decode "Router Alert Label" */
-
-	if (!bottom)
-		goto again;
+		/* XXX decode "Router Alert Label" */
+	} while (!bottom);
 
 	/* Handle pseudowire control word. */
 	has_cw = controlword_tryprint(&bp, &len);
