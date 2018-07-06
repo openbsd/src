@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1079 2018/07/06 20:13:42 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1080 2018/07/06 21:07:46 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -666,19 +666,16 @@ get_responsefile() {
 	return 1
 }
 
-# Search question in $AI_RESPFILE, return answer in $resp.
+# Find a response to question $1 in $AI_RESPFILE and return it via $resp.
+# Return default answer $2 if provided and none is found in the file.
 #
-# 1) split question and answer at leftmost =
-# 2) strip leading/trailing blanks
-# 3) compare questions case insensitive
-# 4) ignore empty and comment lines and lines without =
-# 5) return default answer if provided and none is found in file
-# 6) treat empty/missing/multiple answers as error and exit
+# Move the existing ai.conf file to a tmp file, read from it line by line
+# and write a new ai.conf file skipping the line containing the response.
 #
-# Parameters:
-#
-# $1 = the question to search for
-# $2 = the default answer
+# 1) skip empty and comment lines and lines without =
+# 2) split question (_key) and answer (_val) at leftmost =
+# 3) strip leading/trailing blanks
+# 4) compare questions case insensitive (typeset -l)
 #
 _autorespond() {
 	typeset -l _q=$1 _key
@@ -686,7 +683,6 @@ _autorespond() {
 
 	[[ -f $AI_RESPFILE ]] || return
 
-	# Find a suitable response in /tmp/ai/ai.conf and remove it if found.
 	mv /tmp/ai/ai.conf /tmp/ai/ai.conf.tmp
 	while IFS=' 	' read -r _l; do
 		[[ $_l == [!#=]*=?* ]] || continue
