@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.190 2018/07/04 09:44:07 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.191 2018/07/06 07:11:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2447,6 +2447,7 @@ window_copy_add_formats(struct window_pane *wp, struct format_tree *ft)
 
 	format_add(ft, "selection_present", "%d", data->screen.sel.flag);
 	format_add(ft, "scroll_position", "%d", data->oy);
+	format_add(ft, "rectangle_toggle", "%d", data->rectflag);
 }
 
 static void
