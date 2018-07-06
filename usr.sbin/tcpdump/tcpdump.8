@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.98 2018/07/06 07:13:21 dlg Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.99 2018/07/06 09:59:12 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -210,34 +210,36 @@ Force packets selected by
 .Ar expression
 to be interpreted as the specified
 .Ar type .
-Currently known types are
-.Cm tftp
-.Pq Trivial File Transfer Protocol ,
-.Cm vrrp
-.Pq Virtual Router Redundancy protocol ,
-.Cm cnfp
-.Pq Cisco NetFlow protocol ,
-.Cm rpc
-.Pq Remote Procedure Call ,
-.Cm rtp
-.Pq Real-Time Applications protocol ,
-.Cm rtcp
-.Pq Real-Time Applications control protocol ,
-.Cm sack
-.Pq RFC 2018 TCP Selective Acknowledgements Options ,
-.Cm tcp
-.Pq Transmission Control Protocol ,
-.Cm vat
-.Pq Visual Audio Tool ,
-.Cm wb
-.Pq distributed White Board ,
-.Cm gre
-.Pq Generic Routing Encapsulation over UDP ,
-.Cm vxlan
-.Pq Virtual eXtensible Local Area Network ,
-and
-.Cm mpls
-.Pq Multiprocol Label Switching over UDP .
+Currently known types are:
+.Pp
+.Bl -tag -width "vxlan" -offset indent -compact
+.It Cm cnfp
+Cisco NetFlow protocol
+.It Cm gre
+Generic Routing Encapsulation over UDP
+.It Cm mpls
+Multiprocol Label Switching over UDP
+.It Cm rpc
+Remote Procedure Call
+.It Cm rtcp
+Real-Time Applications control protocol
+.It Cm rtp
+Real-Time Applications protocol
+.It Cm sack
+RFC 2018 TCP Selective Acknowledgements Options
+.It Cm tcp
+Transmission Control Protocol
+.It Cm tftp
+Trivial File Transfer Protocol
+.It Cm vat
+Visual Audio Tool
+.It Cm vrrp
+Virtual Router Redundancy protocol
+.It Cm vxlan
+Virtual eXtensible Local Area Network
+.It Cm wb
+distributed White Board
+.El
 .It Fl t
 Do not print a timestamp on each dump line.
 .It Fl tt
