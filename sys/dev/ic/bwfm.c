@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.49 2018/07/04 12:57:18 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.50 2018/07/06 12:30:36 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1426,10 +1426,6 @@ bwfm_proto_bcdc_rxctl(struct bwfm_softc *sc, char *buf, size_t len)
 void
 bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 {
-#ifdef __STRICT_ALIGNMENT
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
-#endif
 	struct bwfm_proto_bcdc_hdr *hdr;
 
 	hdr = mtod(m, struct bwfm_proto_bcdc_hdr *);
@@ -1442,20 +1438,6 @@ bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 		return;
 	}
 	m_adj(m, sizeof(*hdr) + (hdr->data_offset << 2));
-
-#ifdef __STRICT_ALIGNMENT
-	/* Remaining data is an ethernet packet, so align. */
-	if ((mtod(m, paddr_t) & 0x3) != ETHER_ALIGN) {
-		struct mbuf *m0;
-		m0 = m_dup_pkt(m, ETHER_ALIGN, M_WAITOK);
-		m_freem(m);
-		if (m0 == NULL) {
-			ifp->if_ierrors++;
-			return;
-		}
-		m = m0;
-	}
-#endif
 
 	bwfm_rx(sc, m);
 }
@@ -1880,6 +1862,20 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	struct bwfm_event *e = mtod(m, struct bwfm_event *);
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211_node *ni;
+
+#ifdef __STRICT_ALIGNMENT
+	/* Remaining data is an ethernet packet, so align. */
+	if ((mtod(m, paddr_t) & 0x3) != ETHER_ALIGN) {
+		struct mbuf *m0;
+		m0 = m_dup_pkt(m, ETHER_ALIGN, M_WAITOK);
+		m_freem(m);
+		if (m0 == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+		m = m0;
+	}
+#endif
 
 	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
