@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmbus.c,v 1.1 2016/10/21 20:11:36 patrick Exp $ */
+/* $OpenBSD: mvmbus.c,v 1.2 2018/07/06 11:14:41 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -227,7 +227,7 @@ mvmbus_window_is_free(struct mvmbus_softc *sc, int window)
 	 * don't do this yet, make sure we don't use this window.
 	 */
 	if (window == 13)
-		return 1;
+		return 0;
 	return !sc->sc_windows[window].enabled;
 }
 
@@ -294,14 +294,12 @@ mvmbus_setup_window(struct mvmbus_softc *sc, int window, paddr_t base,
 void
 mvmbus_disable_window(struct mvmbus_softc *sc, int window)
 {
-	int i;
-
 	bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 	    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_BASE, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 	    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_CTRL, 0);
 
-	for (i = 0; i < sc->sc_num_remappable_wins; i++) {
+	if (window < sc->sc_num_remappable_wins) {
 		bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 		    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_REMAP_LO, 0);
 		bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
