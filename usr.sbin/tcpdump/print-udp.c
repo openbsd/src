@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.46 2018/07/06 06:35:46 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.47 2018/07/06 06:43:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -475,6 +475,9 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			break;
 		case PT_MPLS:
 			mpls_print(cp, length);
+			break;
+		case PT_TFTP:
+			tftp_print(cp, length);
 			break;
 		}
 		return;
