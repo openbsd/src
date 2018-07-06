@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2018/05/30 13:54:09 mpi Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2018/07/06 13:08:10 patrick Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,8 @@ struct interrupt_controller {
 	void	*ic_cookie;
 	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
 		    void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 
@@ -167,6 +169,10 @@ void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
+	    void *, char *);
+void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
+	    int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
 void	 arm_intr_route(void *, int, struct cpu_info *);
 
