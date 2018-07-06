@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.74 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.75 2018/07/06 06:18:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.74 2018/07/06 05:47:22 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.75 2018/07/06 06:18:03 dlg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -60,6 +60,7 @@ extern char *device;		/* as specified by -i  */
 #define PT_CNFP		6	/* Cisco NetFlow protocol */
 #define PT_VRRP		7	/* Virtual Router Redundancy protocol */
 #define PT_TCP		8	/* TCP */
+#define PT_GRE		9	/* Generic Routing Encapsulation (over UDP) */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
