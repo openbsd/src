@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.156 2018/06/30 08:28:36 espie Exp $
+# $OpenBSD: Delete.pm,v 1.157 2018/07/07 11:32:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -373,6 +373,16 @@ sub should_run
 	my ($self, $state) = @_;
 	return $state->replacing;
 }
+
+package OpenBSD::PackingElement::DefineTag::Atend;
+sub delete
+{
+	my ($self, $state) = @_;
+	if (!$state->replacing) {
+		$state->{tags}{deleted}{$self->name} = 1;
+	}
+}
+
 
 package OpenBSD::PackingElement::Tag;
 sub delete

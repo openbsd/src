@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.264 2018/07/03 09:27:27 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.265 2018/07/07 11:32:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1445,10 +1445,12 @@ sub add_tag
 	}
 	# special case: we have to run things *now* if deleting
 	if ($mode eq 'delete' && $tag->{found_in_self} && !$state->replacing) {
-		$self->run_tag($state);
-		delete $state->{atend}{$self->name};
+		
+		$self->run_tag($state) 
+		    unless $state->{tags}{superseded}{$self->name};
+		delete $state->{tags}{atend}{$self->name};
 	} else {
-		$state->{atend}{$self->name} = $self;
+		$state->{tags}{atend}{$self->name} = $self;
 	}
 }
 
@@ -1509,7 +1511,7 @@ our @ISA = qw(OpenBSD::PackingElement::DefineTag);
 sub add_tag
 {
 	my ($self, $tag, $mode, $state) = @_;
-	$state->{superseded}{$self->{params}} = 1;
+	$state->{tags}{superseded}{$self->{params}} = 1;
 }
 
 sub need_params
