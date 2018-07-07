@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.49 2018/06/30 14:43:36 kettenis Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.50 2018/07/07 15:19:25 visa Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -218,8 +218,11 @@ sched_exit(struct proc *p)
 
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 
+#ifdef MULTIPROCESSOR
 	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_UNLOCK();
+	KERNEL_ASSERT_LOCKED();
+	__mp_release_all(&kernel_lock);
+#endif
 
 	SCHED_LOCK(s);
 	idle = spc->spc_idleproc;
