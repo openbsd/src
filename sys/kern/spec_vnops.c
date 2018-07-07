@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.94 2018/07/07 15:40:02 visa Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.95 2018/07/07 15:41:25 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -561,11 +561,16 @@ spec_getattr(void *v)
 {
 	struct vop_getattr_args	*ap = v;
 	struct vnode		*vp = ap->a_vp;
+	int			 error;
 
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	return (VOP_GETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p));
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
+	error = VOP_GETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, ap->a_p);
+	VOP_UNLOCK(vp->v_specparent);
+
+	return (error);
 }
 
 int
@@ -591,11 +596,16 @@ spec_access(void *v)
 {
 	struct vop_access_args	*ap = v;
 	struct vnode		*vp = ap->a_vp;
+	int			 error;
 
 	if (!(vp->v_flag & VCLONE))
 		return (EBADF);
 
-	return (VOP_ACCESS(vp->v_specparent, ap->a_mode, ap->a_cred, ap->a_p));
+	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
+	error = VOP_ACCESS(vp->v_specparent, ap->a_mode, ap->a_cred, ap->a_p);
+	VOP_UNLOCK(vp->v_specparent);
+
+	return (error);
 }
 
 /*
