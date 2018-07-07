@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1085 2018/07/07 14:35:06 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1086 2018/07/07 14:39:23 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1281,7 +1281,7 @@ configure_ifs() {
 		# asking the user.
 		resp=$(hostname -s)
 		[[ -n $_first && $_first != $_if ]] &&
-			ask "Symbolic (host) name for $_if?" $resp
+			ask "Symbolic (host) name for $_if?" "$resp"
 		_name=$resp
 
 		v4_config $_if $_name $_hn
@@ -1951,7 +1951,7 @@ set_term() {
 	export TERM=${TERM:-${MDTERM:-vt220}}
 
 	if [[ -n $CONSOLE ]]; then
-		ask "Terminal type?" $TERM
+		ask "Terminal type?" "$TERM"
 		TERM=$resp
 	else
 		[[ -x /sbin/kbd ]] || return
@@ -2093,7 +2093,7 @@ user_setup() {
 	done
 	ADMIN=$resp
 	while :; do
-		ask "Full name for user $ADMIN?" $ADMIN
+		ask "Full name for user $ADMIN?" "$ADMIN"
 		case $resp in
 		*[:\&,]*)
 			echo "':', '&' or ',' are not allowed."
