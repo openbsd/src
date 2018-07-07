@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.84 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.85 2018/07/07 13:38:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -121,6 +121,7 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 		log_trace(TRACE_EXPAND, "expand: ~/.forward failed for user %s",
 		    fwreq->user);
 		lks->error = LKA_PERMFAIL;
+		lks->errormsg = "524 5.2.4 Mailing list expansion problem";
 		break;
 	case 1:
 		if (fd == -1) {
@@ -177,6 +178,7 @@ lka_session_forward_reply(struct forward_req *fwreq, int fd)
 	default:
 		/* temporary failure while looking up ~/.forward */
 		lks->error = LKA_TEMPFAIL;
+		lks->errormsg = "424 4.2.4 Mailing list expansion problem";
 	}
 
 	lka_resume(lks);
