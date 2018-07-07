@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.337 2018/07/03 11:56:52 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.338 2018/07/07 09:59:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -2472,9 +2472,12 @@ apply_unit(double val, u_char unit, u_int64_t *n)
 int
 parse_sizespec(const char *buf, double *val, char **unit)
 {
+	errno = 0;
 	*val = strtod(buf, unit);
-	if ((*val == 0 && *unit == buf) || *val <= 0)
-		return (-1);
+	if (errno == ERANGE || *val < 0 || *val > ULLONG_MAX)
+		return (-1);	/* too big/small */
+	if (*val == 0 && *unit == buf)
+		return (-1);	/* No conversion performed. */
 	if (*unit != NULL && *unit[0] == '\0')
 		*unit = NULL;
 	return (0);
