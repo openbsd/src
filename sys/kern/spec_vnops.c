@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.93 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.94 2018/07/07 15:40:02 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ spec_setattr(void *v)
 
 	vn_lock(vp->v_specparent, LK_EXCLUSIVE|LK_RETRY);
 	error = VOP_SETATTR(vp->v_specparent, ap->a_vap, ap->a_cred, p);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp->v_specparent);
 
 	return (error);
 }
