@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.128 2017/12/30 23:08:29 guenther Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.129 2018/07/07 13:03:08 landry Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ struct chan {
 #define UAUDIO_FLAG_VENDOR_CLASS 0x0010	/* claims vendor class but works */
 #define UAUDIO_FLAG_DEPENDENT	 0x0020	/* play and record params must equal */
 #define UAUDIO_FLAG_EMU0202	 0x0040
+#define UAUDIO_FLAG_BAD_ADC_LEN	 0x0080	/* bad audio control descriptor size */
 
 struct uaudio_devs {
 	struct usb_devno	 uv_dev;
@@ -222,6 +223,18 @@ struct uaudio_devs {
 		UAUDIO_FLAG_BAD_AUDIO },
 	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMZOOM },
 		UAUDIO_FLAG_BAD_AUDIO },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC200 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC210 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC250 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC270 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC310 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
+	{ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WEBCAMC500 },
+		UAUDIO_FLAG_BAD_ADC_LEN },
 	{ { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1 },
 		UAUDIO_FLAG_NO_FRAC }
 };
@@ -1814,6 +1827,10 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	sc->sc_audio_rev = UGETW(acdp->bcdADC);
 	DPRINTFN(2,("%s: found AC header, vers=%03x, len=%d\n",
 		 __func__, sc->sc_audio_rev, aclen));
+
+	/* Some webcams descriptors advertise an off-by-one wTotalLength */
+	if (sc->sc_quirks & UAUDIO_FLAG_BAD_ADC_LEN)
+		aclen++;
 
 	sc->sc_nullalt = -1;
 
