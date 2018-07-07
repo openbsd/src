@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.9 2018/07/01 08:24:20 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.10 2018/07/07 06:25:53 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -432,16 +432,12 @@ sub find_dep_in_self
 sub find_in_self
 {
 	my ($solver, $plist, $state, $tag) = @_;
-	return 0 unless defined $plist->{tags_definitions};
-	while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
-		next unless $tag->name eq $name;
-		$tag->{definition_list} = $d;
-		$tag->{found_in_self} = 1;
-		$state->say("Found tag #1 in self", $tag->stringize)
-		    if $state->verbose >= 3;
-		return 1;
-	}
-	return 0;
+	return 0 unless defined $plist->{tags_definitions}{$tag->name};
+	$tag->{definition_list} = $plist->{tags_definitions}{$tag->name};
+	$tag->{found_in_self} = 1;
+	$state->say("Found tag #1 in self", $tag->stringize)
+	    if $state->verbose >= 3;
+	return 1;
 }
 
 use OpenBSD::PackageInfo;
