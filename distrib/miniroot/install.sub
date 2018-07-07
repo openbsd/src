@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1084 2018/07/07 13:11:47 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1085 2018/07/07 14:35:06 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -681,7 +681,7 @@ _autorespond() {
 	typeset -l _q=$1 _key
 	local _def=$2 _l _val
 
-	[[ -f $AI_RESPFILE ]] || return
+	[[ -f $AI_RESPFILE && -n $_q ]] || return
 
 	mv /tmp/ai/ai.conf /tmp/ai/ai.conf.tmp
 	while IFS=' 	' read -r _l; do
