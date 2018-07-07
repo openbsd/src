@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.175 2018/07/02 14:36:33 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.176 2018/07/07 16:14:40 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -499,10 +499,11 @@ restart:
 		break;
 
 	case F_SETOWN:
+		tmp = (long)SCARG(uap, arg);
 		if (fp->f_type == DTYPE_SOCKET) {
 			struct socket *so = fp->f_data;
 
-			so->so_pgid = (long)SCARG(uap, arg);
+			so->so_pgid = tmp;
 			so->so_siguid = p->p_ucred->cr_ruid;
 			so->so_sigeuid = p->p_ucred->cr_uid;
 			break;
@@ -510,21 +511,21 @@ restart:
 		if (fp->f_type == DTYPE_PIPE) {
 			struct pipe *mpipe = fp->f_data;
 
-			mpipe->pipe_pgid = (long)SCARG(uap, arg);
+			mpipe->pipe_pgid = tmp;
 			break;
 		}
-		if ((long)SCARG(uap, arg) <= 0) {
-			SCARG(uap, arg) = (void *)(-(long)SCARG(uap, arg));
+		if (tmp <= 0) {
+			tmp = -tmp;
 		} else {
-			struct process *pr1 = prfind((long)SCARG(uap, arg));
+			struct process *pr1 = prfind(tmp);
 			if (pr1 == 0) {
 				error = ESRCH;
 				break;
 			}
-			SCARG(uap, arg) = (void *)(long)pr1->ps_pgrp->pg_id;
+			tmp = pr1->ps_pgrp->pg_id;
 		}
 		error = ((*fp->f_ops->fo_ioctl)
-			(fp, TIOCSPGRP, (caddr_t)&SCARG(uap, arg), p));
+			(fp, TIOCSPGRP, (caddr_t)&tmp, p));
 		break;
 
 	case F_SETLKW:
