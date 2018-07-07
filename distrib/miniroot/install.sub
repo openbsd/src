@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1083 2018/07/07 12:54:33 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1084 2018/07/07 13:11:47 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -744,15 +744,9 @@ ask() {
 	log_answers "$1" "$resp"
 }
 
-# Ask the user a yes/no question, and insist on 'y', 'yes', 'n' or 'no'.
-# Return 'y' or 'n' in $resp.
-# Exit code: (y)es => 0, (n)o => 1
-#
-# Parameters:
-#
-# $1 = the question to ask the user
-# $2 = the default answer (assumed to be 'n' if empty).
-#
+# Ask the user a yes/no question $1 with 'no' as default answer unless $2 is
+# set to 'yes' and insist on 'y', 'yes', 'n' or 'no' as response.
+# Return response via $resp as 'y' with exit code 0 or 'n' with exit code 1.
 ask_yn() {
 	local _q=$1 _a=${2:-no}
 	typeset -l _resp
