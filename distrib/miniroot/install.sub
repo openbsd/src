@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1082 2018/07/07 10:26:28 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1083 2018/07/07 12:54:33 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -735,11 +735,11 @@ _ask() {
 	return $_redo
 }
 
-# Ask for user input presenting question $1 with an optional default answer $2.
-# Save the answer in the global variable $resp. Additionally write the question
-# and the answer to a logfile. Parameters $1 and $2 are passed on to _ask(),
-# which is called repeatedly until it succeds.
+# Ask for user response to question $1 with an optional default answer $2.
+# Write the question and the answer to a logfile.
 ask() {
+
+	# Prompt again in case the dmesg listener detected a change.
 	while ! _ask "$1" "$2"; do done
 	log_answers "$1" "$resp"
 }
