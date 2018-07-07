@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1081 2018/07/07 09:25:00 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1082 2018/07/07 10:26:28 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -696,12 +696,15 @@ _autorespond() {
 	err_exit "\nQuestion has no answer in response file."
 }
 
-# Issue a read into the global variable $resp.
+# Capture user response either by issuing an interactive read or by searching
+# the response file and store the response in the global variable $resp.
+#
 # Optionally present a question $1 and a default answer $2 shown in [].
 #
-# If the dmesg output is changed while inside this function, the current read
-# will be aborted and the function will return a non-zero value. Normally, the
-# caller function will then reprint any prompt and call the function again.
+# If the dmesg output is changed while waiting for the interactive response,
+# the current read will be aborted and the function will return a non-zero
+# value. Normally, the caller function will then reprint any prompt and call
+# the function again.
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
 
