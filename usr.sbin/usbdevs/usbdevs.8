@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbdevs.8,v 1.10 2018/07/01 08:51:50 mpi Exp $
+.\" $OpenBSD: usbdevs.8,v 1.11 2018/07/08 20:04:44 schwarze Exp $
 .\" $NetBSD: usbdevs.8,v 1.5 2000/10/15 12:44:11 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 1 2018 $
+.Dd $Mdocdate: July 8 2018 $
 .Dt USBDEVS 8
 .Os
 .Sh NAME
@@ -55,7 +55,9 @@ Show the device drivers associated with each device.
 Only print information for the given USB controller.
 .It Fl v
 Be verbose.
-Multiple -v options increase the verbosity.
+Multiple
+.Fl v
+options increase the verbosity.
 .El
 .Sh FILES
 .Bl -tag -width Pa
