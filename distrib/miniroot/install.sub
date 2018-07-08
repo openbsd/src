@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1087 2018/07/08 13:42:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1088 2018/07/08 19:59:37 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -809,18 +809,12 @@ ask_which() {
 	done
 }
 
-# Ask for user input until a non-empty reply is entered.
-# Save the user input (or the default) in $resp.
-#
-# Parameters:
-#
-# $1 = the question to ask the user
-# $2 = the default answer
-#
-function ask_until {
+# Ask for user response to question $1 with an optional default answer $2
+# until a non-empty reply is entered.
+ask_until() {
 	resp=
 
-	while true; do
+	while :; do
 		ask "$1" "$2"
 		[[ -n $resp ]] && break
 		echo "A response is required."
