@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1852 2018/07/03 08:14:47 fcambus Exp 
+ *	OpenBSD: pcidevs,v 1.1854 2018/07/08 17:34:07 thfr Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -735,7 +735,22 @@
 #define	PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_2	0x1425		/* AMD64 15h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_15_3X_PCIE_3	0x1426		/* AMD64 15h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_16_PCIE	0x1439		/* AMD64 16h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_RC	0x1450		/* AMD64 17h Root Complex */
+#define	PCI_PRODUCT_AMD_AMD64_17_IOMMU	0x1451		/* AMD64 17h IOMMU */
+#define	PCI_PRODUCT_AMD_AMD64_17_PCIE_1	0x1452		/* AMD64 17h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_PCIE_2	0x1453		/* AMD64 17h PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_PCIE_3	0x1454		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_CCPV5A	0x1456		/* Cryptographic Co-processor v5a */
+#define	PCI_PRODUCT_AMD_AMD64_17_HDA	0x1457		/* AMD64 17h HD Audio */
+#define	PCI_PRODUCT_AMD_AMD64_17_XHCI	0x145c		/* AMD64 17h USB xHCI */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_1	0x1460		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_2	0x1461		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_3	0x1462		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_4	0x1463		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_5	0x1464		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_6	0x1465		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_7	0x1466		/* AMD64 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_DF_8	0x1467		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_CCPV5B	0x1468		/* Cryptographic Co-processor v5b */
 #define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1510		/* AMD64 14h Host */
 #define	PCI_PRODUCT_AMD_AMD64_14_PCIE_1	0x1512		/* AMD64 14h PCIE */
@@ -771,6 +786,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_MISC	0x1583		/* AMD64 16h Misc Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_CPU_PM	0x1584		/* AMD64 16h CPU Power */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_MISC_2	0x1585		/* AMD64 16h Misc Cfg */
+#define	PCI_PRODUCT_AMD_RAVENRIDGE_HDA	0x15e3		/* Raven Ridge HD Audio */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_LINK	0x1600		/* AMD64 15/0xh Link Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_ADDR	0x1601		/* AMD64 15/0xh Address Map */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_DRAM	0x1602		/* AMD64 15/0xh DRAM Cfg */
@@ -814,6 +830,9 @@
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_2	0x43a1		/* Hudson-2 PCIE */
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_3	0x43a2		/* Hudson-2 PCIE */
 #define	PCI_PRODUCT_AMD_HUDSON2_PCIE_4	0x43a3		/* Hudson-2 PCIE */
+#define	PCI_PRODUCT_AMD_300SERIES_PCIE	0x43b4		/* 300 Series PCIE */
+#define	PCI_PRODUCT_AMD_300SERIES_SATA	0x43b7		/* 300 Series SATA */
+#define	PCI_PRODUCT_AMD_300SERIES_XHCI	0x43bb		/* 300 Series xHCI */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 */
