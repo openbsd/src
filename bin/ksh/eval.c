@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.61 2018/07/08 13:18:44 anton Exp $	*/
+/*	$OpenBSD: eval.c,v 1.62 2018/07/08 17:52:48 tb Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -57,8 +57,6 @@ static char	*maybe_expand_tilde(char *, XString *, char **, int);
 static	char   *tilde(char *);
 static	char   *homedir(char *);
 static void	alt_expand(XPtrV *, char *, char *, char *, int);
-
-static struct tbl *varcpy(struct tbl *);
 
 /* compile and expand word */
 char *
@@ -192,8 +190,7 @@ expand(char *cp,	/* input word */
 	doblank = 0;
 	make_magic = 0;
 	word = (f&DOBLANK) ? IFS_WS : IFS_WORD;
-
-	memset(&st_head, 0, sizeof(st_head));
+	st_head.next = NULL;
 	st = &st_head;
 
 	while (1) {
@@ -308,7 +305,7 @@ expand(char *cp,	/* input word */
 					st->stype = stype;
 					st->base = Xsavepos(ds, dp);
 					st->f = f;
-					st->var = varcpy(x.var);
+					st->var = x.var;
 					st->quote = quote;
 					/* skip qualifier(s) */
 					if (stype)
@@ -580,7 +577,7 @@ expand(char *cp,	/* input word */
 					Xinit(ds, dp, 128, ATEMP);
 			}
 			if (c == 0)
-				goto done;
+				return;
 			if (word != IFS_NWS)
 				word = ctype(c, C_IFSWS) ? IFS_WS : IFS_NWS;
 		} else {
@@ -684,14 +681,6 @@ expand(char *cp,	/* input word */
 			*dp++ = c; /* save output char */
 			word = IFS_WORD;
 		}
-	}
-
-done:
-	for (st = &st_head; st != NULL; st = st->next) {
-		if (st->var == NULL || (st->var->flag & RDONLY) == 0)
-			continue;
-
-		afree(st->var, ATEMP);
 	}
 }
 
@@ -1296,24 +1285,4 @@ alt_expand(XPtrV *wp, char *start, char *exp_start, char *end, int fdo)
 		}
 	}
 	return;
-}
-
-/*
- * Copy the given variable if it's flagged as read-only.
- * Such variables have static storage and only one can therefore be referenced
- * at a time.
- * This is necessary in order to allow variable expansion expressions to refer
- * to multiple read-only variables.
- */
-static struct tbl *
-varcpy(struct tbl *vp)
-{
-	struct tbl *cpy;
-
-	if ((vp->flag & RDONLY) == 0)
-		return vp;
-
-	cpy = alloc(sizeof(struct tbl), ATEMP);
-	memcpy(cpy, vp, sizeof(struct tbl));
-	return cpy;
 }
