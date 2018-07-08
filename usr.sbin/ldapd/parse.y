@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2018/06/11 18:19:03 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.30 2018/07/08 17:15:07 krw Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -769,11 +769,11 @@ pushfile(const char *name, int secret)
 	log_debug("parsing config %s", name);
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("malloc");
+		log_warn("calloc");
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("malloc");
+		log_warn("strdup");
 		free(nfile);
 		return (NULL);
 	}
