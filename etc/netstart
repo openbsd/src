@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.198 2018/04/28 22:38:32 rpe Exp $
+#	$OpenBSD: netstart,v 1.199 2018/07/08 20:10:26 tb Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -200,6 +200,13 @@ defaultroute() {
 		fi
 	done
 }
+
+# Make sure the invoking user has the right privileges.  Check for presence of
+# id(1) to avoid problems with diskless setups.
+if [[ -x /usr/bin/id ]] && (($(id -u) != 0)); then
+	echo "${0##*/}: need root privileges"
+	exit 1
+fi
 
 # Get network related vars from rc.conf using the parsing routine from rc.subr.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
