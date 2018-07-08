@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.108 2018/06/22 14:22:06 krw Exp $
+.\"	$OpenBSD: systat.1,v 1.109 2018/07/08 13:23:57 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 22 2018 $
+.Dd $Mdocdate: July 8 2018 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -293,7 +293,7 @@ this is the default.
 .It Ic iostat
 Display statistics about disk throughput.
 Statistics
-on disk throughput show, for each drive, data transferred in kilobytes,
+on disk throughput show, for each drive, data transferred in bytes,
 number of disk transactions performed, and time spent in disk accesses
 (in fractions of a second).
 .It Ic malloc
