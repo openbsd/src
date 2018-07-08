@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.72 2018/07/08 13:04:04 jca Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.73 2018/07/08 16:41:12 jca Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -36,7 +36,7 @@
 #endif
 
 struct ifnet			**enc_ifps;	/* rdomain-mapped enc ifs */
-u_int				  enc_max_id;
+u_int				  enc_max_rdomain;
 struct ifnet			**enc_allifps;	/* unit-mapped enc ifs */
 u_int				  enc_max_unit;
 #define ENC_MAX_UNITS		  4096		/* XXX n per rdomain */
@@ -210,7 +210,7 @@ enc_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 struct ifnet *
-enc_getif(u_int id, u_int unit)
+enc_getif(u_int rdomain, u_int unit)
 {
 	struct ifnet	*ifp;
 
@@ -221,7 +221,7 @@ enc_getif(u_int id, u_int unit)
 		if (unit > enc_max_unit)
 			return (NULL);
 		ifp = enc_allifps[unit];
-		if (ifp == NULL || ifp->if_rdomain != id)
+		if (ifp == NULL || ifp->if_rdomain != rdomain)
 			return (NULL);
 		return (ifp);
 	}
@@ -229,20 +229,20 @@ enc_getif(u_int id, u_int unit)
 	/* Otherwise return the default enc interface for this rdomain */
 	if (enc_ifps == NULL)
 		return (NULL);
-	else if (id > RT_TABLEID_MAX)
+	else if (rdomain > RT_TABLEID_MAX)
 		return (NULL);
-	else if (id > enc_max_id)
+	else if (rdomain > enc_max_rdomain)
 		return (NULL);
-	return (enc_ifps[id]);
+	return (enc_ifps[rdomain]);
 }
 
 struct ifaddr *
-enc_getifa(u_int id, u_int unit)
+enc_getifa(u_int rdomain, u_int unit)
 {
 	struct ifnet		*ifp;
 	struct enc_softc	*sc;
 
-	ifp = enc_getif(id, unit);
+	ifp = enc_getif(rdomain, unit);
 	if (ifp == NULL)
 		return (NULL);
 
@@ -250,7 +250,7 @@ enc_getifa(u_int id, u_int unit)
 	return (&sc->sc_ifa);
 }
 int
-enc_setif(struct ifnet *ifp, u_int id)
+enc_setif(struct ifnet *ifp, u_int rdomain)
 {
 	struct ifnet	**new;
 	size_t		 newlen;
@@ -265,28 +265,28 @@ enc_setif(struct ifnet *ifp, u_int id)
 	 * for this rdomain, so only the first enc interface that
 	 * was added for this rdomain becomes the default.
 	 */
-	if (enc_getif(id, 0) != NULL)
+	if (enc_getif(rdomain, 0) != NULL)
 		return (0);
 
-	if (id > RT_TABLEID_MAX)
+	if (rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
 
-	if (enc_ifps == NULL || id > enc_max_id) {
-		if ((new = mallocarray(id + 1, sizeof(struct ifnet *),
+	if (enc_ifps == NULL || rdomain > enc_max_rdomain) {
+		if ((new = mallocarray(rdomain + 1, sizeof(struct ifnet *),
 		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 			return (ENOBUFS);
-		newlen = sizeof(struct ifnet *) * (id + 1);
+		newlen = sizeof(struct ifnet *) * (rdomain + 1);
 
 		if (enc_ifps != NULL) {
 			memcpy(new, enc_ifps,
-			    sizeof(struct ifnet *) * (enc_max_id + 1));
+			    sizeof(struct ifnet *) * (enc_max_rdomain + 1));
 			free(enc_ifps, M_DEVBUF, 0);
 		}
 		enc_ifps = new;
-		enc_max_id = id;
+		enc_max_rdomain = rdomain;
 	}
 
-	enc_ifps[id] = ifp;
+	enc_ifps[rdomain] = ifp;
 
 	/* Indicate that this interface is the rdomain default */
 	ifp->if_link_state = LINK_STATE_UP;
@@ -297,14 +297,14 @@ enc_setif(struct ifnet *ifp, u_int id)
 void
 enc_unsetif(struct ifnet *ifp)
 {
-	u_int			 id = ifp->if_rdomain, i;
+	u_int			 rdomain = ifp->if_rdomain, i;
 	struct ifnet		*oifp, *nifp;
 
-	if ((oifp = enc_getif(id, 0)) == NULL || oifp != ifp)
+	if ((oifp = enc_getif(rdomain, 0)) == NULL || oifp != ifp)
 		return;
 
 	/* Clear slot for this rdomain */
-	enc_ifps[id] = NULL;
+	enc_ifps[rdomain] = NULL;
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
 
 	/*
@@ -314,10 +314,10 @@ enc_unsetif(struct ifnet *ifp)
 	for (i = 0; i < (enc_max_unit + 1); i++) {
 		nifp = enc_allifps[i];
 
-		if (nifp == NULL || nifp == ifp || nifp->if_rdomain != id)
+		if (nifp == NULL || nifp == ifp || nifp->if_rdomain != rdomain)
 			continue;
 
-		enc_ifps[id] = nifp;
+		enc_ifps[rdomain] = nifp;
 		nifp->if_link_state = LINK_STATE_UP;
 		break;
 	}
