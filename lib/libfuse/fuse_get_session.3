@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_get_session.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_get_session.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm fuse_get_session
-.Nd gets the FUSE session associated with a FUSE handle
+.Nd get the FUSE session associated with a FUSE handle
 .Sh SYNOPSIS
 .In fuse.h
 .Ft struct fuse_session *
@@ -33,8 +33,7 @@ returns the FUSE session associated with the FUSE file handle
 .Xr fuse_set_signal_handlers 3
 .Sh STANDARDS
 The
-.Fn
-fuse_get_session
+.Fn fuse_get_session
 function conforms to FUSE 2.6.
 .Sh HISTORY
 The

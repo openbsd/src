@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_destroy.3,v 1.1 2018/07/08 02:49:38 helg Exp $
+.\" $OpenBSD: fuse_destroy.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm fuse_destroy
-.Nd frees memory associated with a FUSE handle
+.Nd free memory associated with a FUSE handle
 .Sh SYNOPSIS
 .In fuse.h
 .Ft void
@@ -40,8 +40,7 @@ before calling this function.
 .Xr fuse_unmount 3
 .Sh STANDARDS
 The
-.Fn
-fuse_destroy
+.Fn fuse_destroy
 function conforms to FUSE 2.6.
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_new.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_new.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -31,16 +31,14 @@
 Initialises the FUSE library on the channel returned by
 .Xr fuse_mount 3 .
 .Pp
-and passing this function the
-.Em ops
-argument containing all the callbacks of the filesystem.
 FUSE operations work in the same way as their UNIX file system
-counterparts. A major exception is that these routines return
+counterparts.
+A major exception is that these routines return
 a negated errno value (-errno) on failure.
 .Pp
-All operations are optional but functional file system will want to 
+All operations are optional but a functional file system will want to
 implement at least statfs, readdir, open, read and getattr.
-.Bd
+.Bd -literal
 struct fuse_operations {
     int    (*getattr)(const char *, struct stat *);
     int    (*readlink)(const char *, char *, size_t);
@@ -89,53 +87,63 @@ struct fuse_operations {
 };
 .Ed
 .Pp
-There order of calls is:
+The order of calls is:
+.Bd -literal -offset indent
 init
-...
+\&...
 opendir
 readdir
 releasedir
 open
 read
 write
-...
+\&...
 flush
 release
-...
+\&...
 destroy
-.Pp
-.Bl -tag -width Ds
+.Ed
+.Bl -tag -width "releasedir"
 .It access
-Not implemented. OpenBSD always behaves as if the default_permissions
-mount option was specified. See
+Not implemented.
+.Ox
+always behaves as if the default_permissions mount option was specified.
+See
 .Xr fuse_mount 3 .
 .It chmod
 Called when file access permissions are changed.
 .It chown
 Called when either the file owner or group is changed.
 .It create
-Not implemented on OpenBSD. File systems must implement mknod instead.
+Not implemented on
+.Ox .
+File systems must implement mknod instead.
 In the reference implementation this is an atomic operation that both
-creates and opens the file. There is no equivalent in the OpenBSD VFS.
+creates and opens the file.
+There is no equivalent in the
+.Ox
+VFS.
 .It getattr
 Corresponds to the
 .Xr stat 2
-system call. flags and extended attributes are ignored. This operation
-is mandatory.
+system call.
+Flags and extended attributes are ignored.
+This operation is mandatory.
 .It getxattr
 Not implemented.
 .It flush
 Called when the file is closed by the
 .Xr close 2
-system call. This is the only way for a file system to return an error
-on close.
+system call.
+This is the only way for a file system to return an error on close.
 .It getdir
-Deprecated. File system should implement readdir instead.
+Deprecated.
+File system should implement readdir instead.
 .It flush
 Called when the file is closed by the
 .Xr close 2
-system call. This is the only way for a file system to return an error
-on close.
+system call.
+This is the only way for a file system to return an error on close.
 .It mknod
 Called on
 .Xr open 2
@@ -145,57 +153,65 @@ to create regular files, pipes and device special files.
 .It open
 Called on
 .Xr open 2 .
-Due to the difference between FUSE and the OpenBSD VFS, open will only
-be called once for each file for every different combination of flags
-provided to
-.Xr open 2.
+Due to the difference between FUSE and the
+.Ox
+VFS,
+open will only be called once for each file
+for every different combination of flags provided to
+.Xr open 2 .
 The O_CREAT and O_TRUNC flags are never passed from the kernel to open,
 the mknod and truncate operations are invoked before open instead.
 .It opendir
 Called when a directory is opened for reading.
 .It release
-Called when there are no more reference to the file.
+Called when there are no more references to the file.
 .It releasedir
-Called when there are no more reference to the directory.
+Called when there are no more references to the directory.
 .It setattr
 Equivalent to
 .Xr chown 2
 and
 .Xr chmod 2
-system calls. Setting file flags is not supported.
+system calls.
+Setting file flags is not supported.
 .It setxattr
 Not implemented.
 .El
 .Pp
 Options supported by args are:
-.Bl -tag -width Ds
+.Bl -tag -width "readdir_ino"
 .It debug, -d
 Print debug information to stdout.
 .It gid=%u
-The gid that will be reported as the group for all files by getattr.
+The GID that will be reported as the group for all files by getattr.
 .It hard_remove
 Immediately delete a file even if it's currently open by a process.
 Otherwise FUSE will temporarily rename the file and only delete it when
-if is no longer reference. This is to avoid the file system having to
-deal with this situation. This is always set on OpenBSD.
+it is no longer referenced.
+This is to avoid the file system having to deal with this situation.
+This is always set on
+.Ox .
 .It readdir_ino
 Similar to use_ino but the file system's inode number is only reported
-for readdir. This is always set on OpenBSD since it's needed by
+for readdir.
+This is always set on
+.Ox .
 .It uid=%u
-The uid that will be reported as the owner for all files by getattr.
+The UID that will be reported as the owner for all files by getattr.
 .It umask=%o
 The file mode mask applied to the permission for all files by getattr.
-.Xr getcwd 3 .
 .It use_ino
 By default, FUSE will return an internal inode number for getattr and
 readdir and this will be different every time the file system is
-mounted. If this is set the file system's own inode number will be
-reported instead. Useful only for file system that have inode numbers.
+mounted.
+If this is set the file system's own inode number will be
+reported instead.
+Useful only for file system that have inode numbers.
 .El
 .Sh SEE ALSO
-.Xr fuse_mount 3 ,
+.Xr fuse_get_context 3 ,
 .Xr fuse_main 3 ,
-.Xr fuse_get_context 3
+.Xr fuse_mount 3
 .Sh STANDARDS
 The
 .Fn fuse_new

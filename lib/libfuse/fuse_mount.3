@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_mount.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_mount.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Sh NAME
 .Nm fuse_mount ,
 .Nm fuse_unmount
-.Nd Mount or dismount a FUSE file system
+.Nd mount or dismount a FUSE file system
 .Sh SYNOPSIS
 .In fuse.h
 .Ft struct fuse_chan *
@@ -29,7 +29,7 @@
 .Sh DESCRIPTION
 The
 .Fn fuse_mount
-calls the
+function calls the
 .Xr mount 2
 system call to graft the FUSE file system on to the file system tree
 at the point
@@ -39,33 +39,40 @@ are FUSE specific mount options as documented by
 .Xr mount 2 .
 .Pp
 The following mount options can be specified by preceding them with
--o, either individually or together separated by a comma.
+.Fl o ,
+either individually or together separated by a comma.
 .Bl -tag -width Ds
 .It allow_other
-Allow other users to access the file system. By default, FUSE will
-prevent other users from accessing the file system or to
+Allow other users to access the file system.
+By default, FUSE will prevent other users from accessing the file system or to
 .Xr statfs 2
-the file system. This security measure is particularly important for
-network file system that may expose private files. It also guards against
-system processes being blocked indefinitely if the file system stops
-responding.
+the file system.
+This security measure is particularly important for
+network file system that may expose private files.
+It also guards against system processes being blocked indefinitely
+if the file system stops responding.
 .It default_permissions
-Request that the kernel enforce file access permissions. 
-Alternatively, FUSE file systems can choose to implement access 
-checks internally. On OpenBSD, this option is always set.
+Request that the kernel enforce file access permissions.
+Alternatively, FUSE file systems can choose to implement access
+checks internally.
+On
+.Ox ,
+this option is always set.
 .It kernel_cache
-Enables buffering of files in the kernel. Not recommended for file
-systems that can be updated external to FUSE, such as network file
-systems. Not implemented.
+Enables buffering of files in the kernel.
+Not recommended for file systems that can be updated external to FUSE,
+such as network file systems.
+Not implemented.
 .It max_read=%u
-Specify the maximum size of read operations. Note that the kernel
-limits this to FUSEBUFMAXSIZE. This option should not be 
-specified on the command line. The correct (or optimum) value depends 
-on the filesystem implementation and should thus be specified by the 
-filesystem internally.
+Specify the maximum size of read operations.
+Note that the kernel limits this to FUSEBUFMAXSIZE.
+This option should not be specified on the command line.
+The correct (or optimum) value depends on the filesystem implementation
+and should thus be specified by the filesystem internally.
 .It ro
-Mount the file system read-only. Can also be specified by itself with
--r.
+Mount the file system read-only.
+Can also be specified by itself with
+.Fl r .
 .El
 .Pp
 .Fn fuse_unmount
@@ -73,11 +80,12 @@ will attempt to unmount the file system mounted at
 .Fa dir
 by calling the
 .Xr unmount 2
-system call. If this is successful, the kernel will send the
+system call.
+If this is successful, the kernel will send the
 FBT_DESTROY message to the file system, causing
-.Xr fuse_loop 2
-to terminate. There is no way to determine whether this call was
-successful.
+.Xr fuse_loop 3
+to terminate.
+There is no way to determine whether this call was successful.
 .Pp
 Only the super user can mount and unmount FUSE file systems.
 .Sh RETURN VALUES

@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_setup.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_setup.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -33,15 +33,19 @@ session and installs signal handlers that will try to unmount the file
 system on SIGINT, SIGTERM or SIGHUP.
 .Pp
 .Fn fuse_setup
-will parse the arguments specified by argv and if neither the -f, -d or
--odebug options were specified, detach from the controlling terminal
+will parse the arguments specified by argv and if neither the
+.Fl f , Fl d
+or
+.Fl odebug
+options were specified, detach from the controlling terminal
 and run in the background.
 On success,
 .Fa mt
 will be 1 if the file system operations will be invoked in
 parallel (multi-threaded) or 0 if file system operations are serialized.
-File system that do not support multi-threaded operation must include
-the -s argument in
+File systems that do not support multi-threaded operation must include the
+.Fl s
+argument in
 .Fa argv .
 .Ox
 does not currently support multi-threaded operation.
@@ -53,9 +57,10 @@ argument that does not match one of the options recognised by
 .Xr fuse_parse_cmd_line 3 .
 .Pp
 .Fa fuse_operations
-is a struct of size 
+is a struct of size
 .Fa size
-that contains pointers to FUSE file system operations. See
+that contains pointers to FUSE file system operations.
+See
 .Xr fuse_new 3 .
 .Sh RETURN VALUES
 .Fn fuse_setup
@@ -70,8 +75,7 @@ will return NULL on failure.
 .Xr fuse 4
 .Sh STANDARDS
 The
-.Fn
-fuse_setup
+.Fn fuse_setup
 function conforms to FUSE 2.6.
 .Sh HISTORY
 The

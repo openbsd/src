@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_parse_cmd_line.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_parse_cmd_line.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -29,51 +29,58 @@
 .Fn fuse_parse_cmd_line
 is a helper function to parse standard FUSE arguments.
 .Fa args
-can be constructed using the 
+can be constructed using the
 .Xr FUSE_ARGS_INIT 3
 macro.
 .Pp
 .Fn fuse_parse_cmd_line
 supports the following arguments.
 .Bl -tag -width Ds
-.It -d, -odebug
+.It Fl d , Fl odebug
 Causes debug information for subsequent FUSE library calls to be output to
-stderr. Implies -f.
-.It -f
+stderr.
+Implies
+.Fl f .
+.It Fl f
 If this is specified then
 .Fa fg
-will be set to 1 on success. This flag indicates that the file system
-should not detach from the controlling terminal and run in the
-foreground.
-.It -h, --help, -ho
+will be set to 1 on success.
+This flag indicates that the file system
+should not detach from the controlling terminal and run in the foreground.
+.It Fl h , Fl -help , Fl ho
 Print usage information for the options supported by
 .Fn fuse_parse_cmd_line .
-.It -s
+.It Fl s
 If this is specified then
 .Fa mt
-will be set to 0 on success. This flag indicates that the file system
-should be run in multi-threaded mode. -s is currently ignored and
+will be set to 0 on success.
+This flag indicates that the file system
+should be run in multi-threaded mode.
+.Fl s
+is currently ignored and
 .Fa mt
 will always be 0.
-.It -V, --version
+.It Fl V , Fl -version
 Print the FUSE library version to stderr.
 .El
 .Pp
 If the first argument not recognised by
-.Fn fuse_parse_cmd_line .
+.Fn fuse_parse_cmd_line
 is a valid directory then
 .Fa mp
 will be set to the canonicalized absolute pathname of this directory.
 .Sh RETURN VALUES
 The
 .Fn fuse_parse_cmd_line
-function will return 0 on success and -1 if -h, --help, -ho, -v or --version
+function will return 0 on success and -1 if
+.Fl h , Fl -help , Fl ho , Fl v
+or
+.Fl -version
 are included in
 .Fa argv
 or
 .Fa mp
 does not exist or is not a directory.
-.El
 .Sh SEE ALSO
 .Xr FUSE_ARGS_INIT 3 ,
 .Xr fuse_daemonize 3 ,

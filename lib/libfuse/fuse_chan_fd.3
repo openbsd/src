@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_chan_fd.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_chan_fd.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -32,17 +32,17 @@ and writing by
 .Sh RETURN VALUES
 If successful,
 .Fn fuse_chan_fd
-returns a non-negative integer, termed a file descriptor. If
+returns a non-negative integer, termed a file descriptor.
+If
 .Fa ch
 is NULL a value of -1 is returned.
 .Sh SEE ALSO
-.Xr open 3 ,
 .Xr fuse_mount 3 ,
+.Xr open 3 ,
 .Xr fuse 4
 .Sh STANDARDS
 The
-.Fn
-fuse_chan_fd
+.Fn fuse_chan_fd
 function conforms to FUSE 2.6.
 .Sh HISTORY
 The

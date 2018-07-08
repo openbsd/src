@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_daemonize.3,v 1.1 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_daemonize.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -30,13 +30,13 @@ If
 is 1,
 .Fn fuse_daemonize
 will detach from the controlling terminal and run in the background as a
-system daemon. Otherwise, the process will continue to run in the
-foreground.
+system daemon.
+Otherwise, the process will continue to run in the foreground.
 .Pp
-The current working directory is changed to the root (/) and standard input,
+The current working directory is changed to the root (/) and standard input;
 standard output and standard error are redirected to /dev/null.
 .Sh RETURN VALUES
-Upon success, 
+Upon success,
 .Fn fuse_daemonize
 returns 0; otherwise -1 is returned.
 .Sh ERRORS

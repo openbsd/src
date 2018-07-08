@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_main.3,v 1.4 2018/07/08 02:28:42 helg Exp $
+.\" $OpenBSD: fuse_main.3,v 1.5 2018/07/08 06:17:10 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -34,13 +34,14 @@ and passing this function the
 .Em ops
 argument containing all the callbacks of the filesystem,
 or by using the other functions,
-as detailed in 
+as detailed in
 .Xr fuse_loop 3
 .Pp
 .Fa argv
 is the list of arguments supplied to the program's main method and
 must at a minimum specify the directory on which the file system is to
-be mounted. The other arguments can be custom arguments specific to the
+be mounted.
+The other arguments can be custom arguments specific to the
 file system or those supported by
 .Xr fuse_parse_cmd_line 3 ,
 .Xr fuse_new 3
@@ -123,12 +124,12 @@ main(int ac, char **av)
 }
 .Ed
 .Sh SEE ALSO
-.Xr fuse 4 ,
 .Xr fuse_loop 3 ,
 .Xr fuse_mount 3 ,
 .Xr fuse_new 3 ,
 .Xr fuse_parse_cmd_line 3 ,
-.Xr fuse_setup 3
+.Xr fuse_setup 3 ,
+.Xr fuse 4
 .Sh STANDARDS
 The
 .Fn fuse_main
