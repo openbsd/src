@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvmsg.c,v 1.1 2018/07/04 02:16:54 anton Exp $	*/
+/*	$OpenBSD: recvmsg.c,v 1.2 2018/07/08 02:18:51 anton Exp $	*/
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
  *
@@ -77,7 +77,6 @@ main(int argc, char *argv[])
 static __dead void
 usage(void)
 {
-
 	fprintf(stderr, "usage: recvmsg [-46dr]\n");
 	exit(1);
 }
