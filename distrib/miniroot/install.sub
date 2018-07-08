@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1086 2018/07/07 14:39:23 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1087 2018/07/08 13:42:46 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -789,8 +789,8 @@ ask_which() {
 		set -- $_dynlist; _dynlist="$*"
 		set +o noglob
 		(($# < 1)) && resp=done && return
-
 		: ${_dyndef:=$1}
+
 		echo "Available ${_name}s are: $_dynlist."
 		_q="Which $_name $_query?"
 		echo -n "$_q (or 'done') ${_dyndef:+[$_dyndef] }"
