@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.102 2018/06/07 11:31:51 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.103 2018/07/08 13:06:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -342,7 +342,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (resp_ca_cert->status == CA_FAIL) {
 			if (s->relay->pki_name) {
 				log_info("%016"PRIx64" mta "
-				    "event=closing reason=ca-failure",
+				    "closing reason=ca-failure",
 				    s->id);
 				mta_free(s);
 				return;
@@ -574,7 +574,7 @@ mta_connect(struct mta_session *s)
 		schema = "smtp://";
 
 	log_info("%016"PRIx64" mta "
-	    "event=connecting address=%s%s:%d host=%s",
+	    "connecting address=%s%s:%d host=%s",
 	    s->id, schema, sa_to_text(s->route->dst->sa),
 	    portno, s->route->dst->ptrname);
 
@@ -740,7 +740,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 		}
 
 		if (s->msgtried >= MAX_TRYBEFOREDISABLE) {
-			log_info("%016"PRIx64" mta event=host-rejects-all-mails",
+			log_info("%016"PRIx64" mta host-rejects-all-mails",
 			    s->id);
 			mta_route_down(s->relay, s->route);
 			mta_enter_state(s, MTA_QUIT);
@@ -1169,7 +1169,7 @@ mta_io(struct io *io, int evt, void *arg)
 	switch (evt) {
 
 	case IO_CONNECTED:
-		log_info("%016"PRIx64" mta event=connected", s->id);
+		log_info("%016"PRIx64" mta connected", s->id);
 
 		if (s->use_smtps) {
 			io_set_write(io);
@@ -1182,7 +1182,7 @@ mta_io(struct io *io, int evt, void *arg)
 		break;
 
 	case IO_TLSREADY:
-		log_info("%016"PRIx64" mta event=starttls ciphers=%s",
+		log_info("%016"PRIx64" mta starttls ciphers=%s",
 		    s->id, ssl_to_text(io_ssl(s->io)));
 		s->flags |= MTA_TLS;
 
@@ -1269,7 +1269,7 @@ mta_io(struct io *io, int evt, void *arg)
 			(void)strlcpy(s->replybuf, line, sizeof s->replybuf);
 
 		if (s->state == MTA_QUIT) {
-			log_info("%016"PRIx64" mta event=closed reason=quit messages=%zu",
+			log_info("%016"PRIx64" mta disconnected reason=quit messages=%zu",
 			    s->id, s->msgcount);
 			mta_free(s);
 			return;
@@ -1510,7 +1510,7 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 		    " after %zu message%s sent: %s", s->id, s->msgcount,
 		    (s->msgcount > 1) ? "s" : "", error);
 	else
-		log_info("%016"PRIx64" mta event=error reason=%s",
+		log_info("%016"PRIx64" mta error reason=%s",
 		    s->id, error);
 
 	/*
