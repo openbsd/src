@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.12 2018/06/13 15:08:24 reyk Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.13 2018/07/08 15:41:17 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2018 $
+.Dd $Mdocdate: July 8 2018 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -26,15 +26,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-config file is divided into three main sections:
+file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Authorities
-TLS authorities that can be contacted via ACME.
+Certificate authorities (CAs) that can be contacted via ACME.
 .It Sy Domains
-Domains that the user wants to receive TLS certificates for.
+Certificate specifications.
 .El
 .Pp
 Additional configuration files can be included with the
@@ -52,7 +52,7 @@ and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
-Argument names not beginning with a letter, digit, underscore or '/'
+Argument names not beginning with a letter, digit, underscore, or '/'
 must be quoted.
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
@@ -85,7 +85,7 @@ It is followed by a block of options enclosed in curly brackets:
 .It Ic account key Ar file
 Specify a
 .Ar file
-used to identify the user of this CA.
+used to identify the user of this certificate authority.
 .It Ic api url Ar url
 Specify the
 .Ar url
@@ -100,31 +100,35 @@ authority letsencrypt {
 }
 .Ed
 .Sh DOMAINS
-The domains that are configured to obtain SSL certificates through ACME.
+The certificates to be obtained through ACME.
 .Bl -tag -width Ds
 .It Ic domain Ar name Brq ...
 Each domain section begins with the
 .Ic domain
-keyword followed by the domain name.
+keyword followed by the name to be used as the common name component
+of the subject of the X.509 certificate.
 .El
 .Pp
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic alternative names Brq ...
-Specify a list of alternative names the certificate will be valid for.
+Specify a list of alternative names for which the certificate will be valid.
+The common name is included automatically if this option is present,
+but there is no automatic conversion/inclusion between "www." and
+plain domain name forms.
 .It Ic domain key Ar file
 The private key file for which the certificate will be obtained.
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
 .It Ic domain chain certificate Ar file
 The filename in which to store the certificate chain
-that will be returned by the CA.
+that will be returned by the certificate authority.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
 .It Ic domain full chain certificate Ar file
 The filename in which to store the full certificate chain
-that will be returned by the CA.
+that will be returned by the certificate authority.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
@@ -136,7 +140,7 @@ in one file, and is required by most browsers.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
-section) to use for this domain is selected.
+section) to use.
 .It Ic challengedir Ar path
 The directory in which the challenge file will be stored.
 If it is not specified, a default of
@@ -146,11 +150,11 @@ will be used.
 .Pp
 An example domain declaration looks like this:
 .Bd -literal -offset indent
-domain example.com {
-	alternative names { secure.example.com www.example.com }
-	domain key "/etc/ssl/private/example.com.key"
-	domain certificate "/etc/ssl/example.com.crt"
-	domain full chain certificate "/etc/ssl/example.com.fullchain.pem"
+domain www.example.com {
+	alternative names { example.com secure.example.com }
+	domain key "/etc/ssl/private/www.example.com.key"
+	domain certificate "/etc/ssl/www.example.com.crt"
+	domain full chain certificate "/etc/ssl/www.example.com.fullchain.pem"
 	sign with letsencrypt
 	challengedir "/var/www/acme"
 }
@@ -160,13 +164,13 @@ An
 .Xr httpd.conf 5
 server declaration to use that certificate looks like this:
 .Bd -literal -offset indent
-server "example.com" {
-        alias "www.example.com"
+server "www.example.com" {
+        alias "example.com"
         alias "secure.example.com"
         listen on $ext_addr port 80
         listen on $ext_addr tls port 443
-        tls certificate "/etc/ssl/example.com.fullchain.pem"
-        tls key "/etc/ssl/private/example.com.key"
+        tls certificate "/etc/ssl/www.example.com.fullchain.pem"
+        tls key "/etc/ssl/private/www.example.com.key"
         location "/.well-known/acme-challenge/*" {
                 root "/acme"
                 request strip 2
