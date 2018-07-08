@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1088 2018/07/08 19:59:37 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1089 2018/07/08 21:25:59 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -405,7 +405,7 @@ disklabel_autolayout() {
 	# Skip disklabel auto-layout for any disk except the root disk.
 	[[ $_disk != $ROOTDISK ]] && return
 
-	while $AUTO; do
+	while $AI; do
 		ask "URL to autopartitioning template for disklabel?" none
 		[[ $resp == none ]] && break
 		if ! $FTP_TLS && [[ $resp == https://* ]]; then
@@ -452,7 +452,7 @@ configure_disk() {
 	# Make sure a '/' mount point exists on the root disk.
 	if ! grep -qs ' / ffs ' /tmp/i/fstab.$ROOTDISK; then
 		echo "'/' must be configured!"
-		$AUTO && exit 1 || return 1
+		$AI && exit 1 || return 1
 	fi
 
 	if [[ -f $_fstab ]]; then
@@ -480,7 +480,7 @@ configure_disk() {
 
 			set -- $(grep -h " $_mp " /tmp/i/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
-			$AUTO && exit 1 || return 1
+			$AI && exit 1 || return 1
 		fi
 
 		# Add ffs filesystems to list after newfs'ing them. Ignore
@@ -535,7 +535,7 @@ start_dmesg_listener() {
 	rm -f $_update
 
 	# Do not start the listener if in non-interactive mode.
-	$AUTO && return
+	$AI && return
 
 	# To ensure that only one dmesg listener instance can be active, run it
 	# in a co-process subshell of which there can always only be one active.
@@ -759,7 +759,7 @@ ask_yn() {
 		n|no)	resp=n; return 1;;
 		esac
 		echo "'$resp' is not a valid choice."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 }
 
@@ -805,7 +805,7 @@ ask_which() {
 			break
 		fi
 		echo "'$resp' is not a valid choice."
-		$AUTO && [[ -n $AI_RESPFILE ]] && exit 1
+		$AI && [[ -n $AI_RESPFILE ]] && exit 1
 	done
 }
 
@@ -818,7 +818,7 @@ ask_until() {
 		ask "$1" "$2"
 		[[ -n $resp ]] && break
 		echo "A response is required."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 }
 
@@ -841,7 +841,7 @@ ask_pass() {
 ask_password() {
 	local _q=$1
 
-	if $AUTO; then
+	if $AI; then
 		echo -n "$_q "
 		_autorespond "$_q"
 		echo '<provided>'
@@ -1030,7 +1030,7 @@ v4_config() {
 			;;
 		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 				echo "DHCP not possible - no /sbin/dhclient."
-				$AUTO && exit 1 || continue
+				$AI && exit 1 || continue
 			else
 				dhcp_request $_if
 				echo "dhcp" >>$_hn
@@ -1057,7 +1057,7 @@ v4_config() {
 		else
 			_addr=
 			_mask=
-			$AUTO && exit 1
+			$AI && exit 1
 		fi
 	done
 }
@@ -1087,7 +1087,7 @@ v6_defroute() {
 
 	_prompt="IPv6 default router?"
 
-	if $AUTO; then
+	if $AI; then
 		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
 	else
 		PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
@@ -1128,14 +1128,14 @@ v6_config() {
 		autoconf)
 			if ! ifconfig $_if inet6 >/dev/null 2>&1; then
 				echo "No INET6 support."
-				$AUTO && exit 1 || return
+				$AI && exit 1 || return
 			fi
 			if ifconfig $_if inet6 autoconf; then
 				echo "inet6 autoconf" >>$_hn
 				return
 			else
 				echo "inet6 autoconf failed."
-				$AUTO && exit 1 || return
+				$AI && exit 1 || return
 			fi
 			;;
 		*)	_addr=$resp
@@ -1157,7 +1157,7 @@ v6_config() {
 		else
 			_addr=
 			_prefixlen=
-			$AUTO && exit 1
+			$AI && exit 1
 		fi
 	done
 
@@ -1345,7 +1345,7 @@ sane_install() {
 		[[ -n $_q ]] && return 1
 		# If sane_install has no argument, harass the user.
 		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
-			$AUTO && exit 1 || return 1
+			$AI && exit 1 || return 1
 		fi
 	done
 }
@@ -1514,7 +1514,7 @@ install_files() {
 		for _n in $THESETS; do echo $_n; done | show_cols | sed 's/^/    /'
 		COLUMNS=$_col
 
-		$AUTO && exit 1
+		$AI && exit 1
 		echo
 		return
 	fi
@@ -1602,7 +1602,7 @@ install_files() {
 				rm -f "$_tmpsrc/$_f"
 				if ! ask_yn "Fetching of $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$AUTO && exit 1
+					$AI && exit 1
 					return
 				fi
 				_unver=$(rmel $_f $_unver)
@@ -1616,7 +1616,7 @@ install_files() {
 			else
 				if ! ask_yn "Checksum test for $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$AUTO && exit 1
+					$AI && exit 1
 					return
 				fi
 			fi
@@ -1627,7 +1627,7 @@ install_files() {
 	if [[ -n $_issue ]] &&
 		! ask_yn "$_issue. Continue without verification?"; then
 		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-		$AUTO && exit 1
+		$AI && exit 1
 		return
 	fi
 
@@ -1651,7 +1651,7 @@ install_files() {
 		if (($?)); then
 			if ! ask_yn "Installation of $_f failed. Continue anyway?"; then
 				[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-				$AUTO && exit 1
+				$AI && exit 1
 				return
 			fi
 		else
@@ -1732,7 +1732,7 @@ install_http() {
 			esac
 			if ! $FTP_TLS && [[ $_tls == force ]]; then
 				echo "https not supported on this platform."
-				$AUTO && exit 1 || continue
+				$AI && exit 1 || continue
 			fi
 			HTTP_SERVER=${resp#*://}
 			break
@@ -1781,7 +1781,7 @@ install_http() {
 		ftp -w 15 -vMo $_sig "$_url_base/SHA256.sig" \
 			>$_ftp_stdout 2>/dev/null; then
 		case $_tls in
-		force)	$AUTO && exit 1 || return
+		force)	$AI && exit 1 || return
 			;;
 		try)	ask_yn "Unable to connect using https. Use http instead?" ||
 				return
@@ -1807,7 +1807,7 @@ install_http() {
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
 		if [[ ${_rurl_base%/$HTTP_SETDIR} == "$_http_proto://$INSTALL_MIRROR" ]]; then
-			$AUTO && exit 1 || return
+			$AI && exit 1 || return
 		fi
 	fi
 
@@ -1851,7 +1851,7 @@ install_mounted_fs() {
 		# Accept a valid absolute path.
 		[[ -d /$resp ]] && { _dir=/$resp; break; }
 		echo "The directory '$resp' does not exist."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 
 	install_files "file://$_dir" "$(ls $_dir/)"
@@ -2104,7 +2104,7 @@ user_setup() {
 	ADMIN_PASS=$_password
 
 	ADMIN_KEY=
-	$AUTO && ask "Public ssh key for user $ADMIN" none &&
+	$AI && ask "Public ssh key for user $ADMIN" none &&
 		[[ $resp != none ]] && ADMIN_KEY=$resp
 }
 
@@ -2132,7 +2132,7 @@ ask_root_sshd() {
 			SSHD_ENABLEROOT=prohibit-password
 			;;
 		*)	echo "'$resp' is not a valid choice."
-			$AUTO && exit 1
+			$AI && exit 1
 			continue
 			;;
 		esac
@@ -2238,7 +2238,7 @@ get_rootinfo() {
 			fi
 			;;
 		esac
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 	log_answers "$_q" "$resp"
 
@@ -2599,7 +2599,7 @@ install_sets() {
 			;;
 		[nN]*)	isin nfs $_locs && install_nfs && INSTALL_METHOD=nfs
 			;;
-		*)	$AUTO && err_exit "'$resp' is not a valid choice."
+		*)	$AI && err_exit "'$resp' is not a valid choice."
 			;;
 		esac
 
@@ -2607,7 +2607,7 @@ install_sets() {
 		[[ -n $INSTALL_METHOD ]] && _d=$INSTALL_METHOD
 
 		# Set default to 'done' to leave the while-loop.
-		sane_install quiet || $AUTO && _d=done
+		sane_install quiet || $AI && _d=done
 	done
 }
 
@@ -2810,7 +2810,7 @@ using the 'mail' command.
 __EOT
 
 	md_congrats
-	$AUTO && >/tmp/ai/ai.done
+	$AI && >/tmp/ai/ai.done
 }
 
 do_autoinstall() {
@@ -2838,7 +2838,7 @@ do_install() {
 			"$(hostname -s)"
 		[[ $resp != *+([[:cntrl:]]|[[:space:]])* ]] && break
 		echo "Invalid hostname."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
@@ -2863,7 +2863,7 @@ do_install() {
 
 	# Ask for the root user public ssh key during autoinstall.
 	_rootkey=
-	if $AUTO; then
+	if $AI; then
 		ask "Public ssh key for root account?" none
 		[[ $resp != none ]] && _rootkey=$resp
 	fi
@@ -3164,13 +3164,13 @@ do_upgrade() {
 # ------------------------------------------------------------------------------
 
 # Parse parameters.
-AUTO=false
+AI=false
 MODE=
 PROGNAME=${0##*/}
 AI_RESPFILE=
 while getopts "af:m:" opt; do
 	case $opt in
-	a)	AUTO=true;;
+	a)	AI=true;;
 	f)	AI_RESPFILE=$OPTARG;;
 	m)	MODE=$OPTARG;;
 	*)	usage;;
@@ -3180,10 +3180,10 @@ shift $((OPTIND-1))
 (($# == 0)) || usage
 
 # The installer can be started by using the symbolic links 'install', 'upgrade'
-# and 'autoinstall' pointing to this script. Set MODE and AUTO based on that.
+# and 'autoinstall' pointing to this script. Set MODE and AI based on that.
 if [[ -z $MODE ]]; then
 	case $PROGNAME in
-	autoinstall)		AUTO=true;;
+	autoinstall)		AI=true;;
 	install|upgrade)	MODE=$PROGNAME;;
 	*)			exit 1;;
 	esac
@@ -3297,7 +3297,7 @@ export COLUMNS=$(stty -a </dev/console |
 ((COLUMNS == 0)) && COLUMNS=80
 
 # Interactive or automatic installation?
-if ! $AUTO; then
+if ! $AI; then
 	cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
@@ -3328,7 +3328,7 @@ esac
 # In case of autoinstall, this is a second process of install.sub.
 # Exiting here returns to the original process, which handles the
 # automatic reboot in do_autoinstall().
-$AUTO && exit
+$AI && exit
 
 _d=reboot
 [[ $MODE == install && $MDHALT == y ]] && _d=halt
