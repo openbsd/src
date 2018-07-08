@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.111 2018/06/24 12:50:38 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.112 2018/07/08 17:01:34 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 24 2018 $
+.Dd $Mdocdate: July 8 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -418,13 +418,20 @@ list of tag parameters, in a random order, with duplicates removed.
 execute the command once for each distinct tag parameter.
 .El
 .Pp
-As a special case, an actual
+As a special case, deleting the package that contains the
+.Cm @define-tag
+will work differently:
+If that
 .Cm @tag
-may be present in the same package that
+is present in the same package as the
 .Cm @define-tag ,
-to cater to the special case of package deletion: e.g.,
-the need to execute the actual command near the end of package deletion, but
-before the command is removed from the file system.
+then it will be run when encountered, presumably before the command itself
+has been deleted.
+If that
+.Cm @tag
+is not present, the command won't be run at all,
+since the package has been deleted from the file system,
+and usually cleaning up only requires removing index files.
 .Pp
 .It Cm @exec Ar command
 Execute
