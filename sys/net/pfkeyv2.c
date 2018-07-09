@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.186 2018/06/25 09:48:17 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.187 2018/07/09 16:51:29 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -142,10 +142,7 @@ struct domain pfkeydomain;
  *	s	socket lock
  */
 struct pkpcb {
-	struct rawcb		pkp_rcb;
-#define kcb_socket	pkp_rcb.rcb_socket	/* [I] associated socket */
-#define kcb_faddr	pkp_rcb.rcb_faddr	/* [I] */
-#define kcb_proto	pkp_rcb.rcb_proto	/* [I] */
+	struct socket		*kcb_socket;	/* [I] associated socket */
 
 	SRPL_ENTRY(pkpcb)	kcb_list;	/* [l] */
 	struct refcnt		kcb_refcnt;	/* [a] */
@@ -279,13 +276,10 @@ pfkeyv2_attach(struct socket *so, int proto)
 	}
 
 	kp->kcb_socket = so;
-	kp->kcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
-	kp->kcb_proto.sp_protocol = proto;
 
 	so->so_options |= SO_USELOOPBACK;
 	soisconnected(so);
 
-	kp->kcb_faddr = &pfkey_addr;
 	kp->kcb_pid = curproc->p_p->ps_pid;
 	kp->kcb_rdomain = rtable_l2(curproc->p_p->ps_rtableid);
 
@@ -337,10 +331,81 @@ pfkeyv2_detach(struct socket *so)
 }
 
 int
-pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *mbuf,
+pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
-	return (raw_usrreq(so, req, mbuf, nam, control, p));
+	struct pkpcb *kp;
+	int error = 0;
+
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
+
+	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EOPNOTSUPP;
+		goto release;
+	}
+
+	kp = sotokeycb(so);
+	if (kp == NULL) {
+		error = EINVAL;
+		goto release;
+	}
+
+	switch (req) {
+	/* no connect, bind, accept. Socket is connected from the start */
+	case PRU_CONNECT:
+	case PRU_BIND:
+	case PRU_CONNECT2:
+	case PRU_LISTEN:
+	case PRU_ACCEPT:
+		error = EOPNOTSUPP;
+		break;
+
+	case PRU_DISCONNECT:
+	case PRU_ABORT:
+		soisdisconnected(so);
+		break;
+	case PRU_SHUTDOWN:
+		socantsendmore(so);
+		break;
+	case PRU_SENSE:
+		/* stat: don't bother with a blocksize. */
+		return (0);
+
+	/* minimal support, just implement a fake peer address */
+	case PRU_SOCKADDR:
+		error = EINVAL;
+		break;
+	case PRU_PEERADDR:
+		bcopy(&pfkey_addr, mtod(nam, caddr_t), pfkey_addr.sa_len);
+		nam->m_len = pfkey_addr.sa_len;
+		break;
+
+	case PRU_RCVOOB:
+	case PRU_RCVD:
+		return (EOPNOTSUPP);
+
+	case PRU_SENDOOB:
+		error = EOPNOTSUPP;
+		break;
+	case PRU_SEND:
+		if (nam) {
+			error = EISCONN;
+			break;
+		}
+		error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+		m = NULL;
+		break;
+	default:
+		panic("pfkeyv2_usrreq");
+	}
+
+ release:
+	m_freem(control);
+	m_freem(m);
+	return (error);
 }
 
 int
