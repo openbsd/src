@@ -72,7 +72,6 @@
 ./usr/share/man/man1/dig.1
 ./usr/share/man/man1/dirname.1
 ./usr/share/man/man1/doas.1
-./usr/share/man/man1/dolock.1
 ./usr/share/man/man1/domainname.1
 ./usr/share/man/man1/dpb-replay.1
 ./usr/share/man/man1/dpb.1
@@ -372,6 +371,7 @@
 ./usr/share/man/man1/portcheck.1
 ./usr/share/man/man1/portgen.1
 ./usr/share/man/man1/portimport.1
+./usr/share/man/man1/portlock.1
 ./usr/share/man/man1/portslogger.1
 ./usr/share/man/man1/pr.1
 ./usr/share/man/man1/printenv.1
@@ -1239,6 +1239,7 @@
 ./usr/share/man/man4/bktr.4
 ./usr/share/man/man4/bmtphy.4
 ./usr/share/man/man4/bnx.4
+./usr/share/man/man4/bnxt.4
 ./usr/share/man/man4/boca.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/brgphy.4
