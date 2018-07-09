@@ -1,4 +1,4 @@
-/* $OpenBSD: sshlogin.c,v 1.32 2015/12/26 20:51:35 guenther Exp $ */
+/* $OpenBSD: sshlogin.c,v 1.33 2018/07/09 21:26:02 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -54,12 +54,13 @@
 #include <limits.h>
 
 #include "sshlogin.h"
+#include "ssherr.h"
 #include "log.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "misc.h"
 #include "servconf.h"
 
-extern Buffer loginmsg;
+extern struct sshbuf *loginmsg;
 extern ServerOptions options;
 
 /*
@@ -114,8 +115,9 @@ get_last_login_time(uid_t uid, const char *logname,
 static void
 store_lastlog_message(const char *user, uid_t uid)
 {
-	char *time_string, hostname[HOST_NAME_MAX+1] = "", buf[512];
+	char *time_string, hostname[HOST_NAME_MAX+1] = "";
 	time_t last_login_time;
+	int r;
 
 	if (!options.print_lastlog)
 		return;
@@ -127,12 +129,13 @@ store_lastlog_message(const char *user, uid_t uid)
 		time_string = ctime(&last_login_time);
 		time_string[strcspn(time_string, "\n")] = '\0';
 		if (strcmp(hostname, "") == 0)
-			snprintf(buf, sizeof(buf), "Last login: %s\r\n",
+			r = sshbuf_putf(loginmsg, "Last login: %s\r\n",
 			    time_string);
 		else
-			snprintf(buf, sizeof(buf), "Last login: %s from %s\r\n",
+			r = sshbuf_putf(loginmsg, "Last login: %s from %s\r\n",
 			    time_string, hostname);
-		buffer_append(&loginmsg, buf, strlen(buf));
+		if (r != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	}
 }
 
