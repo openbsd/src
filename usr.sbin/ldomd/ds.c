@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.5 2014/10/15 21:37:27 deraadt Exp $	*/
+/*	$OpenBSD: ds.c,v 1.6 2018/07/09 14:46:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -35,6 +35,7 @@ void	ldc_rx_ctrl_rts(struct ldc_conn *, struct ldc_pkt *);
 void	ldc_rx_ctrl_rdx(struct ldc_conn *, struct ldc_pkt *);
 
 void	ldc_send_ack(struct ldc_conn *);
+void	ldc_send_nack(struct ldc_conn *);
 void	ldc_send_rtr(struct ldc_conn *);
 void	ldc_send_rts(struct ldc_conn *);
 void	ldc_send_rdx(struct ldc_conn *);
@@ -83,8 +84,7 @@ ldc_rx_ctrl_vers(struct ldc_conn *lc, struct ldc_pkt *lp)
 		    lvp->minor == LDC_VERSION_MINOR)
 			ldc_send_ack(lc);
 		else
-			/* XXX do nothing for now. */
-			;
+			ldc_send_nack(lc);
 		break;
 
 	case LDC_ACK:
@@ -311,6 +311,26 @@ ldc_send_ack(struct ldc_conn *lc)
 		err(1, "write");
 
 	lc->lc_state = LDC_RCV_VERS;
+}
+
+void
+ldc_send_nack(struct ldc_conn *lc)
+{
+	struct ldc_pkt lp;
+	ssize_t nbytes;
+
+	bzero(&lp, sizeof(lp));
+	lp.type = LDC_CTRL;
+	lp.stype = LDC_NACK;
+	lp.ctrl = LDC_VERS;
+	lp.major = 1;
+	lp.minor = 0;
+
+	nbytes = write(lc->lc_fd, &lp, sizeof(lp));
+	if (nbytes != sizeof(lp))
+		err(1, "write");
+
+	lc->lc_state = 0;
 }
 
 void
