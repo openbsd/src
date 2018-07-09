@@ -1594,7 +1594,6 @@
 ./usr/share/man/man2/i386/i386_get_fsbase.2
 ./usr/share/man/man2/i386/i386_get_gsbase.2
 ./usr/share/man/man2/i386/i386_iopl.2
-./usr/share/man/man2/i386/i386_vm86.2
 ./usr/share/man/man2/intro.2
 ./usr/share/man/man2/ioctl.2
 ./usr/share/man/man2/issetugid.2
