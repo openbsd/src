@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.112 2018/07/09 10:02:28 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.113 2018/07/09 18:50:38 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -193,6 +193,7 @@ pcfrtc*		at iic?
 pcxrtc*		at iic?
 rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
+pcagpio*	at iic?
 
 # virtio devices
 vioblk*		at virtio?

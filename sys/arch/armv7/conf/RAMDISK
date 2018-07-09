@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.101 2018/07/09 10:02:28 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.102 2018/07/09 18:50:38 patrick Exp $
 
 machine		armv7 arm
 
@@ -182,6 +182,7 @@ pcfrtc*		at iic?
 pcxrtc*		at iic?
 rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
+pcagpio*	at iic?
 
 # virtio devices
 vioblk*		at virtio?
