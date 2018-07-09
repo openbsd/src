@@ -1683,6 +1683,7 @@
 ./usr/share/man/man2/wait.2
 ./usr/share/man/man2/write.2
 ./usr/share/man/man3/ACCESS_DESCRIPTION_new.3
+./usr/share/man/man3/ASN1_INTEGER_get.3
 ./usr/share/man/man3/ASN1_OBJECT_new.3
 ./usr/share/man/man3/ASN1_STRING_TABLE_add.3
 ./usr/share/man/man3/ASN1_STRING_length.3
