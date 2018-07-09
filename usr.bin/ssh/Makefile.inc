@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.58 2018/02/23 15:58:37 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.59 2018/07/09 21:56:06 markus Exp $
 
 .include <bsd.own.mk>
 
@@ -101,10 +101,6 @@ SRCS_PKT+=	packet.c
 SRCS_PKT+=	umac.c
 SRCS_PKT+=	umac128.c
 
-.if (${OPENSSL:L} == "yes")
-SRCS_PROT+=	bufbn.c
-SRCS_PROT+=	bufec.c
-.endif
 SRCS_PROT+=	channels.c
 SRCS_PROT+=	crc32.c
 SRCS_PROT+=	monitor_fdpass.c
