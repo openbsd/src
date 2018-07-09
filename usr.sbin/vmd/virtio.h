@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.25 2018/04/26 15:59:12 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.26 2018/07/09 08:43:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -139,6 +139,8 @@ struct viornd_dev {
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
 	uint8_t pci_id;
+	int irq;
+	uint32_t vm_id;
 };
 
 struct vioblk_dev {
@@ -151,6 +153,8 @@ struct vioblk_dev {
 	uint32_t max_xfer;
 
 	uint8_t pci_id;
+	int irq;
+	uint32_t vm_id;
 };
 
 /* vioscsi will use at least 3 queues - 5.6.2 Virtqueues
@@ -176,6 +180,8 @@ struct vioscsi_dev {
 	uint32_t max_xfer;
 
 	uint8_t pci_id;
+	uint32_t vm_id;
+	int irq;
 };
 
 struct vionet_dev {
@@ -250,7 +256,7 @@ uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int viornd_dump(int);
-int viornd_restore(int);
+int viornd_restore(int, struct vm_create_params *);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);

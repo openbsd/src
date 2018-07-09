@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.61 2018/06/19 17:12:34 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.62 2018/07/09 08:43:09 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1769,6 +1769,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 	    sizeof(struct vring_desc) * VIORND_QUEUE_SIZE
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
 	viornd.pci_id = id;
+	viornd.irq = pci_get_dev_irq(id);
 
 	if (vcp->vcp_ndisks > 0) {
 		nr_vioblk = vcp->vcp_ndisks;
@@ -1812,6 +1813,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
 			vioblk[i].max_xfer = 1048576;
 			vioblk[i].pci_id = id;
+			vioblk[i].irq = pci_get_dev_irq(id);
 		}
 	}
 
@@ -1942,6 +1944,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 		vioscsi->n_blocks = sz >> 11; /* num of 2048 blocks in file */
 		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->pci_id = id;
+		vioscsi->irq = pci_get_dev_irq(id);
 	}
 
 	/* virtio control device */
@@ -1993,7 +1996,7 @@ vmmci_restore(int fd, uint32_t vm_id)
 }
 
 int
-viornd_restore(int fd)
+viornd_restore(int fd, struct vm_create_params *vcp)
 {
 	log_debug("%s: receiving viornd", __func__);
 	if (atomicio(read, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
@@ -2005,6 +2008,8 @@ viornd_restore(int fd)
 		    __progname);
 		return (-1);
 	}
+	viornd.vm_id = vcp->vcp_id;
+
 	return (0);
 }
 
@@ -2146,7 +2151,7 @@ virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom, int *child_disks,
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	int ret;
 
-	if ((ret = viornd_restore(fd)) == -1)
+	if ((ret = viornd_restore(fd, vcp)) == -1)
 		return ret;
 
 	if ((ret = vioblk_restore(fd, vcp, child_disks)) == -1)
