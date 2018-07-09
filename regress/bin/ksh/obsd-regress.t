@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.6 2018/07/08 13:22:24 anton Exp $
+#	$OpenBSD: obsd-regress.t,v 1.7 2018/07/09 00:23:55 anton Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -56,9 +56,12 @@ stdin:
 	echo ${1%$2}
 	set -- foobar barbaz baz
 	echo ${1%${2%$3}}
+	set -- aa bb cc
+	echo ${*:+$*}
 expected-stdout:
 	script
 	foo
+	aa bb cc
 ---
 
 name: and-list-error-1
