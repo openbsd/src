@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1089 2018/07/08 21:25:59 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1090 2018/07/09 08:25:08 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -822,13 +822,12 @@ ask_until() {
 	done
 }
 
-# Ask for a password, saving the input in $resp.
+# Capture a user password and save it in $resp, optionally showing prompt $1.
 #
-# 1) Display $1 as the prompt.
-# 2) *Don't* allow the '!' options that ask does.
-# 3) *Don't* echo input.
-# 4) *Don't* interpret "\" as escape character.
-# 5) Preserve whitespace in input
+# 1) *Don't* allow the '!' options that ask does.
+# 2) *Don't* echo input.
+# 3) *Don't* interpret "\" as escape character.
+# 4) Preserve whitespace in input
 #
 ask_pass() {
 	stty -echo
@@ -837,7 +836,8 @@ ask_pass() {
 	echo
 }
 
-# Ask for a password twice, saving the input in $_password.
+# Ask for a password twice showing prompt $1. Ensure both inputs are identical
+# and save it in $_password.
 ask_password() {
 	local _q=$1
 
