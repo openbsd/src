@@ -1,4 +1,4 @@
-.\"	$OpenBSD: retrieve-index.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: port-search-helper.1,v 1.1 2018/07/09 13:51:08 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
-.Dt RETRIEVE-INDEX 1
+.Dd $Mdocdate: July 9 2018 $
+.Dt PORT-SEARCH-HELPER 1
 .Os
 .Sh NAME
-.Nm retrieve-index
+.Nm port-search-helper
 .Nd find index entry in ports index according to selected criteria
 .Sh SYNOPSIS
-.Nm retrieve-index
+.Nm
 .Cm index Ns = Ns Ar file
 .Op Cm category Ns = Ns Ar cat
 .Op Cm maintainer Ns = Ns Ar person
@@ -36,7 +36,10 @@ such as category, maintainer name or actual name.
 Matching is done using perl regular expressions, and corresponding entries
 get printed as a list on a single line on standard output.
 .Nm
-is a helper script used for searches from the ports infrastructure.
+is a helper script used by
+.Pa ${PORTSDIR}/Makefile
+for searches.
+.Pp
 It relies on
 .Pa ${PORTSDIR}/INDEX
 being accurate.
