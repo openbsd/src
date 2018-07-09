@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.35 2017/11/05 16:56:02 jca Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.36 2018/07/09 13:19:46 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -121,7 +121,6 @@ main(int argc, char *argv[])
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_procinit(log_procnames[ospfd_process]);
-	log_setverbose(1);
 
 	while ((ch = getopt(argc, argv, "cdD:f:s:nv")) != -1) {
 		switch (ch) {
