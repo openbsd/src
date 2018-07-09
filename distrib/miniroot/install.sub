@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1091 2018/07/09 10:23:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1092 2018/07/09 11:19:46 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -988,12 +988,13 @@ vlan_config() {
 }
 
 # Configure IPv4 interface $1, add hostname $2 to the hosts file and create the
-# hostname.if(5) file $3. Ask the user for the IP address and the network mask
-# if IP adress was not in CIDR notation.
+# hostname.if file $3. Ask the user for the IPv4 address and network mask if the
+# address was not in specified in CIDR notation, unless he chooses 'dhcp'.
 v4_config() {
 	local _if=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
-	# Preset the default answer for the IP address question in $_addr.
+	# Preset the default answers by preserving possibly existing
+	# configuration from previous runs.
 	if ifconfig $_if | grep -q 'groups:.* dhcp'; then
 		_addr=dhcp
 	else
@@ -1094,19 +1095,17 @@ v6_defroute() {
 		echo "$_resp" >>/tmp/i/mygate
 }
 
-# Configure IPv6 interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-# $2 = hostname to add to hosts file
-# $3 = /path/to/hostname.if
-#
+# Configure IPv6 interface $1, add hostname $2 to the hosts file, create the
+# hostname.if file $3 and finish by executing v6_defroute(). Ask the user for
+# the IPv6 address and prefix length if the address was not specified in CIDR
+# notation, unless he chooses 'autoconf'.
 v6_config() {
 	local _if=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
+	# Preset the default answers by preserving possibly existing
+	# configuration from previous runs.
 	set -- $(v6_info $_if)
 	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
 
@@ -1157,8 +1156,7 @@ v6_config() {
 	v6_defroute $_if
 }
 
-# Perform an 802.11 network scan on interface $1.
-# The result is cached in $WLANLIST.
+# Perform an 802.11 network scan on interface $1 and cache the result a file.
 ieee80211_scan() {
 	# N.B. Skipping quoted nwid's for now.
 	[[ -f $WLANLIST ]] ||
@@ -1168,6 +1166,7 @@ ieee80211_scan() {
 }
 
 # Configure 802.11 interface $1 and append ifconfig options to hostname.if $2.
+# Ask the user for the access point ESSID, the security protocol and a secret.
 ieee80211_config() {
 	local _if=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
 
