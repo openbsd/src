@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.208 2018/07/09 13:33:32 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.209 2018/07/09 22:07:14 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -166,6 +166,7 @@ int vmx_handle_inout(struct vcpu *);
 int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
 int vmm_inject_ud(struct vcpu *);
+int vmm_inject_gp(struct vcpu *);
 int vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
@@ -4648,6 +4649,27 @@ vmx_handle_exit(struct vcpu *vcpu)
 }
 
 /*
+ * vmm_inject_gp
+ *
+ * Injects an #GP exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_gp(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #GP at guest %%rip 0x%llx\n", __func__,
+	    vcpu->vc_gueststate.vg_rip);
+	vcpu->vc_event = VMM_EX_GP;
+	
+	return (0);
+}
+
+/*
  * vmm_inject_ud
  *
  * Injects an #UD exception into the guest VCPU.
@@ -5304,12 +5326,32 @@ int
 vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 {
 	struct vmx_msr_store *msr_store;
-	uint64_t ectls, oldcr0, cr4;
+	uint64_t ectls, oldcr0, cr4, mask;
 	int ret;
 
-	/*
-	 * XXX this is the place to place handling of the must1,must0 bits
-	 */
+	/* Check must-be-0 bits */
+	mask = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
+	if (r & mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr0. Zeros "
+		    "mask=0x%llx, data=0x%llx\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	/* Check must-be-1 bits */
+	mask = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0;
+	if ((r & mask) != mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr0. Ones "
+		    "mask=0x%llx, data=0x%llx\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
 
 	if (vmread(VMCS_GUEST_IA32_CR0, &oldcr0)) {
 		printf("%s: can't read guest cr0\n", __func__);
@@ -5384,9 +5426,31 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 int
 vmx_handle_cr4_write(struct vcpu *vcpu, uint64_t r)
 {
-	/*
-	 * XXX this is the place to place handling of the must1,must0 bits
-	 */
+	uint64_t mask;
+
+	/* Check must-be-0 bits */
+	mask = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
+	if (r & mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr4. Zeros "
+		    "mask=0x%llx, data=0x%llx\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	/* Check must-be-1 bits */
+	mask = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0;
+	if ((r & mask) != mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr4. Ones "
+		    "mask=0x%llx, data=0x%llx\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
 
 	/* CR4_VMXE must always be enabled */
 	r |= CR4_VMXE;
