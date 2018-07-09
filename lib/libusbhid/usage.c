@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.16 2014/10/08 04:49:36 deraadt Exp $	*/
+/*	$OpenBSD: usage.c,v 1.17 2018/07/09 08:57:04 mpi Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -264,9 +264,9 @@ hid_parse_usage_page(const char *name)
 int
 hid_parse_usage_in_page(const char *name)
 {
-	const char *sep;
+	const char *sep, *fmtsep, *errstr, *fmtname;
 	unsigned int l;
-	int k, j;
+	int k, j, us, pu, len;
 
 	sep = strchr(name, ':');
 	if (sep == NULL)
@@ -278,9 +278,21 @@ hid_parse_usage_in_page(const char *name)
 	return -1;
  found:
 	sep++;
-	for (j = 0; j < pages[k].pagesize; j++)
+	for (j = 0; j < pages[k].pagesize; j++) {
+		us = pages[k].page_contents[j].usage;
+		if (us == -1) {
+			fmtname = pages[k].page_contents[j].name;
+			fmtsep = strchr(fmtname, '%');
+			len = fmtsep - fmtname;
+			if (fmtsep != NULL && strncmp(sep, fmtname, len) == 0) {
+				pu = strtonum(sep + len, 0x1, 0xFFFF, &errstr);
+				if (errstr == NULL)
+					return (pages[k].usage << 16) | pu;
+			}
+		}
 		if (strcmp(pages[k].page_contents[j].name, sep) == 0)
 			return (pages[k].usage << 16) |
 			    pages[k].page_contents[j].usage;
+	}
 	return -1;
 }
