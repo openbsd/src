@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_init.3,v 1.12 2018/07/08 21:06:40 schwarze Exp $
+.\" $OpenBSD: tls_init.3,v 1.13 2018/07/09 19:47:20 tb Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2018 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt TLS_INIT 3
 .Os
 .Sh NAME
@@ -45,8 +45,8 @@ Both clients and servers are supported.
 The
 .Fn tls_init
 function initializes global data structures.
-Calling it manually is no
-longer necessary since it is invoked internally when needed.
+It is no longer necessary to call this function directly,
+since it is invoked internally when needed.
 It may be called more than once, and may be called concurrently.
 .Pp
 Before a connection is created, a configuration must be created.
