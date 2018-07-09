@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.111 2018/07/09 09:58:40 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.112 2018/07/09 10:02:28 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -201,8 +201,33 @@ viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
 
+# PCI
+ppb*		at pci?			# PCI-PCI bridges
+pci*		at ppb?
+
+# PCI Ethernet
+em*		at pci?			# Intel Pro/1000 Ethernet
+ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+mskc*		at pci?			# Marvell Yukon-2
+msk*		at mskc?		#  each port of above
+re*		at pci?			# Realtek 8169/8169S/8110S
+
+# PCI SCSI
+ahci*		at pci? flags 0x0000	# AHCI SATA controllers
+					# flags 0x0001 to force SATA 1 (1.5Gb/s)
+nvme*		at pci?			# NVMe controllers
+
+# USB Controllers
+ohci*		at pci?			# Open Host Controller
+uhci*		at pci?			# Universal Host Controller (Intel)
+ehci*		at pci?			# Enhanced Host Controller
+xhci*		at pci?			# eXtensible Host Controller
+
 # USB bus support
+usb*		at ohci?
+usb*		at uhci?
 usb*		at ehci?	flags 0x1
+usb*		at xhci?
 
 # USB devices
 uhub*	at usb?			# USB Hubs
