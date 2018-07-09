@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1095 2018/07/09 13:45:54 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1096 2018/07/09 16:12:23 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1495,10 +1495,10 @@ install_files() {
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
 	#
-	# Sets will be installed in the order given in THESETS to ensure proper
+	# Sets will be installed in the order given in ALLSETS to ensure proper
 	# installation.  So, to minimize user confusion display the sets in the
 	# order in which they will be installed.
-	for _f in $THESETS; do
+	for _f in $ALLSETS; do
 		isin "$_f" $_files || continue
 		_sets=$(addel $_f $_sets)
 		isin "$_f" $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
@@ -1510,7 +1510,7 @@ install_files() {
 		echo "and found no $OBSD sets.  The set names looked for were:"
 
 		let COLUMNS=_col-8
-		for _n in $THESETS; do echo $_n; done | show_cols | sed 's/^/    /'
+		for _n in $ALLSETS; do echo $_n; done | show_cols | sed 's/^/    /'
 		COLUMNS=$_col
 
 		$AI && exit 1
@@ -1528,7 +1528,7 @@ install_files() {
 	_get_sets=$resp
 
 	# Reorder $_get_sets.
-	_get_sets=$(for s in $THESETS; do isin "$s" $_get_sets && echo $s; done)
+	_get_sets=$(for s in $ALLSETS; do isin "$s" $_get_sets && echo $s; done)
 
 	# Note which sets didn't verify ok.
 	_unver=$_get_sets
@@ -2840,7 +2840,7 @@ do_install() {
 		$AI && exit 1
 	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
-	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	ALLSETS="$ALLSETS site$VERSION-$(hostname -s).tgz"
 	export PS1='\h# '
 
 	echo
@@ -3119,7 +3119,7 @@ do_upgrade() {
 
 	# Set system hostname and register hostname specific site set.
 	hostname $(stripcom /tmp/i/myname)
-	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	ALLSETS="$ALLSETS site$VERSION-$(hostname -s).tgz"
 	export PS1='\h# '
 
 	_f=/mnt/etc/soii.key
@@ -3215,7 +3215,7 @@ done
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
 #	MDROOTFSOPT - newfs options for the root partition
-#	MDSETS	    - list of files to add to DEFAULT and THESETS
+#	MDSETS	    - list of files to add to DEFAULT and ALLSETS
 #	MDSANESETS  - list of files to add to SANESETS
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
@@ -3277,16 +3277,16 @@ CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 # as a console. If a suitable device is found, set CDEV, CTTY, CSPEED, CPROM.
 md_consoleinfo
 
-# Selected sets will be installed in the order they are listed in $THESETS.
+# Selected sets will be installed in the order they are listed in $ALLSETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
 SETS=$(echo {base,comp,man,game,xbase,xshare,xfont,xserv}$VERSION.tgz)
 DEFAULTSETS="${MDSETS:-bsd bsd.rd} $SETS"
-THESETS="${MDSETS:-bsd bsd.rd} $SETS site$VERSION.tgz"
+ALLSETS="${MDSETS:-bsd bsd.rd} $SETS site$VERSION.tgz"
 SANESETS="${MDSANESETS:-bsd} base${VERSION}.tgz"
 if ((NCPU > 1)); then
 	DEFAULTSETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS"
-	THESETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS site$VERSION.tgz"
+	ALLSETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS site$VERSION.tgz"
 	SANESETS="${MDSANESETS:-bsd bsd.mp} base${VERSION}.tgz"
 fi
 
