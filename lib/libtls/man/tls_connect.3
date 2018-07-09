@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_connect.3,v 1.3 2017/01/28 00:59:36 schwarze Exp $
+.\" $OpenBSD: tls_connect.3,v 1.4 2018/07/09 19:51:18 tb Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2014, 2015 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt TLS_CONNECT 3
 .Os
 .Sh NAME
@@ -84,13 +84,15 @@ If it is
 then a
 .Fa host
 of the format "hostname:port" is permitted.
+The name to use for verification is inferred from the
+.Ar host
+value.
 .Pp
 The
 .Fn tls_connect_servername
 function has the same behaviour, however the name to use for verification is
-explicitly provided, rather than being inferred from the
-.Ar host
-value.
+explicitly provided, for the case where the TLS server name differs from the
+DNS name.
 .Pp
 An already existing socket can be upgraded to a secure connection by calling
 .Fn tls_connect_socket .
