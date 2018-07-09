@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.189 2018/06/22 13:21:14 bluhm Exp $	*/
+/*	$OpenBSD: locore.s,v 1.190 2018/07/09 19:20:29 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -100,40 +100,6 @@
 #define	CLEAR_ASTPENDING(cpreg)				\
 	movl	$0,P_MD_ASTPENDING(cpreg)
 
-#ifdef VM86
-#define SAVE_VM86	\
-	testl	$PSL_VM,TRF_EFLAGS(%ebp)	; \
-	jz	102f				; \
-	movl	TRF_VM86_ES(%ebp),%eax		; \
-	movl	%eax,IRF_VM86_ES(%esp)		; \
-	movl	TRF_VM86_DS(%ebp),%eax		; \
-	movl	%eax,IRF_VM86_DS(%esp)		; \
-	movl	TRF_VM86_FS(%ebp),%eax		; \
-	movl	%eax,IRF_VM86_FS(%esp)		; \
-	movl	TRF_VM86_GS(%ebp),%eax		; \
-	movl	%eax,IRF_VM86_GS(%esp)		; \
-	102:
-
-#define RESTORE_VM86	\
-	testl	$PSL_VM,TRF_EFLAGS(%ebp)	; \
-	jz	101f				; \
-	movl	TRF_VM86_ES(%esp),%eax		; \
-	movl	%eax,TRF_VM86_ES(%ebp)		; \
-	movl	TRF_VM86_DS(%esp),%eax		; \
-	movl	%eax,TRF_VM86_DS(%ebp)		; \
-	movl	TRF_VM86_FS(%esp),%eax		; \
-	movl	%eax,TRF_VM86_FS(%ebp)		; \
-	movl	TRF_VM86_GS(%esp),%eax		; \
-	movl	%eax,TRF_VM86_GS(%ebp)		; \
-	101:
-
-#else
-
-#define	SAVE_VM86	;
-#define RESTORE_VM86	;
-
-#endif	/* VM86 */
-
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -151,8 +117,7 @@
 	movl	TRF_ERR(%ebp),%eax	; \
 	movl	%eax,IRF_ERR(%esp)	; \
 	movl	TRF_TRAPNO(%ebp),%eax	; \
-	movl	%eax,IRF_TRAPNO(%esp)	; \
-	SAVE_VM86
+	movl	%eax,IRF_TRAPNO(%esp)
 
 #define INTR_ENABLE_U_PLUS_K	\
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
@@ -1315,10 +1280,6 @@ calltrap:
 	CHECK_ASTPENDING(%ecx)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%esp)
-#ifdef VM86
-	jnz	5f
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-#endif
 	jz	1f
 5:	CLEAR_ASTPENDING(%ecx)
 	sti
@@ -1488,7 +1449,6 @@ NENTRY(intr_fast_exit)
 	movl	%eax,TRF__DEADBEEF(%ebp)
 	movl	TRF__KERN_ESP(%esp),%eax
 	movl	%eax,TRF__KERN_ESP(%ebp)
-	RESTORE_VM86
 	movl	TRF_FS(%esp),%eax
 	movl	%eax,TRF_FS(%ebp)
 	movl	TRF_EAX(%esp),%eax

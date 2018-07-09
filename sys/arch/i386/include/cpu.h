@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.163 2018/06/22 13:21:14 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.164 2018/07/09 19:20:30 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -509,11 +509,6 @@ int	kvtop(caddr_t);
 /* mp_setperf.c */
 void	mp_setperf_init(void);
 #endif
-
-#ifdef VM86
-/* vm86.c */
-void	vm86_gpfault(struct proc *, int);
-#endif /* VM86 */
 
 int	cpu_paenable(void *);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.618 2018/06/22 13:21:14 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.619 2018/07/09 19:20:29 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -138,10 +138,6 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#endif
-
-#ifdef VM86
-#include <machine/vm86.h>
 #endif
 
 #include "isa.h"
@@ -2434,22 +2430,11 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	frame.sf_sc.sc_err = tf->tf_err;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
 	frame.sf_sc.sc_mask = mask;
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
-		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
-		frame.sf_sc.sc_es = tf->tf_vm86_es;
-		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
-	} else
-#endif
-	{
-		frame.sf_sc.sc_fs = tf->tf_fs;
-		frame.sf_sc.sc_gs = tf->tf_gs;
-		frame.sf_sc.sc_es = tf->tf_es;
-		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
-	}
+	frame.sf_sc.sc_fs = tf->tf_fs;
+	frame.sf_sc.sc_gs = tf->tf_gs;
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_ds = tf->tf_ds;
+	frame.sf_sc.sc_eflags = tf->tf_eflags;
 	frame.sf_sc.sc_edi = tf->tf_edi;
 	frame.sf_sc.sc_esi = tf->tf_esi;
 	frame.sf_sc.sc_ebp = tf->tf_ebp;
@@ -2465,10 +2450,6 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
 		initsiginfo(&frame.sf_si, sig, code, type, val);
-#ifdef VM86
-		if (sig == SIGURG)	/* VM86 userland trap */
-			frame.sf_si.si_trapno = code;
-#endif
 	}
 
 	/* XXX don't copyout siginfo if not needed? */
@@ -2537,32 +2518,21 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Restore signal ksc.
 	 */
-#ifdef VM86
-	if (ksc.sc_eflags & PSL_VM) {
-		tf->tf_vm86_gs = ksc.sc_gs;
-		tf->tf_vm86_fs = ksc.sc_fs;
-		tf->tf_vm86_es = ksc.sc_es;
-		tf->tf_vm86_ds = ksc.sc_ds;
-		set_vflags(p, ksc.sc_eflags);
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((ksc.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
-			return (EINVAL);
+	/*
+	 * Check for security violations.  If we're returning to
+	 * protected mode, the CPU will validate the segment registers
+	 * automatically and generate a trap on violations.  We handle
+	 * the trap, rather than doing all of the checking here.
+	 */
+	if (((ksc.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
+		return (EINVAL);
 
-		tf->tf_fs = ksc.sc_fs;
-		tf->tf_gs = ksc.sc_gs;
-		tf->tf_es = ksc.sc_es;
-		tf->tf_ds = ksc.sc_ds;
-		tf->tf_eflags = ksc.sc_eflags;
-	}
+	tf->tf_fs = ksc.sc_fs;
+	tf->tf_gs = ksc.sc_gs;
+	tf->tf_es = ksc.sc_es;
+	tf->tf_ds = ksc.sc_ds;
+	tf->tf_eflags = ksc.sc_eflags;
 	tf->tf_edi = ksc.sc_edi;
 	tf->tf_esi = ksc.sc_esi;
 	tf->tf_ebp = ksc.sc_ebp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.39 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.40 2018/07/09 19:20:29 guenther Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -61,10 +61,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/sysarch.h>
-
-#ifdef VM86
-#include <machine/vm86.h>
-#endif
 
 extern struct vm_map *kernel_map;
 
@@ -147,12 +143,6 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	case I386_IOPL:
 		error = i386_iopl(p, SCARG(uap, parms), retval);
 		break;
-
-#ifdef VM86
-	case I386_VM86:
-		error = i386_vm86(p, SCARG(uap, parms), retval);
-		break;
-#endif
 
 	case I386_GET_FSBASE:
 	      {

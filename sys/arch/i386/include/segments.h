@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.25 2018/06/22 13:21:14 bluhm Exp $	*/
+/*	$OpenBSD: segments.h,v 1.26 2018/07/09 19:20:30 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -59,13 +59,8 @@
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
 
-#ifdef VM86
-#define	USERMODE(c, f)		(ISPL(c) == SEL_UPL || ((f) & PSL_VM) != 0)
-#define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL && ((f) & PSL_VM) == 0)
-#else
 #define	USERMODE(c, f)		(ISPL(c) == SEL_UPL)
 #define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
-#endif
 
 #ifndef _LOCORE
 

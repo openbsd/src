@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.34 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: icu.s,v 1.35 2018/07/09 19:20:30 guenther Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -96,10 +96,6 @@ KIDTVEC(doreti)
 	movl	%ebx,CPL
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
-#ifdef VM86
-	jnz	4f
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-#endif
 	jz	3f
 4:	CLEAR_ASTPENDING(%ecx)
 	sti

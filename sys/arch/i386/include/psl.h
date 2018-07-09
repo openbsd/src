@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.20 2013/05/16 19:26:04 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.21 2018/07/09 19:20:30 guenther Exp $	*/
 /*	$NetBSD: psl.h,v 1.30 1996/05/13 01:28:05 mycroft Exp $	*/
 
 /*-
@@ -64,11 +64,7 @@
 #define	PSL_MBZ		0xffc08028	/* must be zero bits */
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
-#ifdef VM86
-#define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_NT | PSL_VIF | PSL_VIP)
-#else
 #define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_NT | PSL_VM | PSL_VIF | PSL_VIP)
-#endif
 
 #ifdef _KERNEL
 #include <machine/intr.h>

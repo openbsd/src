@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.238 2018/07/01 15:52:12 kettenis Exp $
+#	$OpenBSD: files.i386,v 1.239 2018/07/09 19:20:29 guenther Exp $
 #
 # new style config file for i386 architecture
 #
@@ -254,9 +254,6 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 #
 # Compatibility modules
 #
-
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
 
 # VM86 in kernel
 file	arch/i386/i386/kvm86.c			kvm86

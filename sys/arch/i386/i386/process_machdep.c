@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.28 2013/05/08 15:36:30 tedu Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.29 2018/07/09 19:20:29 guenther Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -73,10 +73,6 @@
 #include <machine/reg.h>
 #include <machine/segments.h>
 
-#ifdef VM86
-#include <machine/vm86.h>
-#endif
-
 #include "npx.h"
 
 static __inline struct trapframe *process_frame(struct proc *);
@@ -147,22 +143,11 @@ process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		regs->r_gs = tf->tf_vm86_gs & 0xffff;
-		regs->r_fs = tf->tf_vm86_fs & 0xffff;
-		regs->r_es = tf->tf_vm86_es & 0xffff;
-		regs->r_ds = tf->tf_vm86_ds & 0xffff;
-		regs->r_eflags = get_vflags(p);
-	} else
-#endif
-	{
-		regs->r_gs = tf->tf_gs & 0xffff;
-		regs->r_fs = tf->tf_fs & 0xffff;
-		regs->r_es = tf->tf_es & 0xffff;
-		regs->r_ds = tf->tf_ds & 0xffff;
-		regs->r_eflags = tf->tf_eflags;
-	}
+	regs->r_gs = tf->tf_gs & 0xffff;
+	regs->r_fs = tf->tf_fs & 0xffff;
+	regs->r_es = tf->tf_es & 0xffff;
+	regs->r_ds = tf->tf_ds & 0xffff;
+	regs->r_eflags = tf->tf_eflags;
 	regs->r_edi = tf->tf_edi;
 	regs->r_esi = tf->tf_esi;
 	regs->r_ebp = tf->tf_ebp;
@@ -253,29 +238,18 @@ process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		tf->tf_vm86_gs = regs->r_gs & 0xffff;
-		tf->tf_vm86_fs = regs->r_fs & 0xffff;
-		tf->tf_vm86_es = regs->r_es & 0xffff;
-		tf->tf_vm86_ds = regs->r_ds & 0xffff;
-		set_vflags(p, regs->r_eflags);
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.
-		 */
-		if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(regs->r_cs, regs->r_eflags))
-			return (EINVAL);
+	/*
+	 * Check for security violations.
+	 */
+	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs->r_cs, regs->r_eflags))
+		return (EINVAL);
 
-		tf->tf_gs = regs->r_gs & 0xffff;
-		tf->tf_fs = regs->r_fs & 0xffff;
-		tf->tf_es = regs->r_es & 0xffff;
-		tf->tf_ds = regs->r_ds & 0xffff;
-		tf->tf_eflags = regs->r_eflags;
-	}
+	tf->tf_gs = regs->r_gs & 0xffff;
+	tf->tf_fs = regs->r_fs & 0xffff;
+	tf->tf_es = regs->r_es & 0xffff;
+	tf->tf_ds = regs->r_ds & 0xffff;
+	tf->tf_eflags = regs->r_eflags;
 	tf->tf_edi = regs->r_edi;
 	tf->tf_esi = regs->r_esi;
 	tf->tf_ebp = regs->r_ebp;
