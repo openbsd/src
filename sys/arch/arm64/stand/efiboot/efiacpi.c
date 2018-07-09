@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.2 2018/06/30 19:20:28 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.3 2018/07/09 14:01:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -424,6 +424,7 @@ efi_acpi_madt_gicd(struct acpi_madt_gicd *gicd)
 void
 efi_acpi_madt_gic_msi(struct acpi_madt_gic_msi *msi)
 {
+	static uint32_t phandle = 2;
 	void *node, *child;
 	uint64_t reg[2];
 	char name[32];
@@ -447,6 +448,8 @@ efi_acpi_madt_gic_msi(struct acpi_madt_gic_msi *msi)
 		fdt_node_add_property(child, "arm,msi-num-spis",
 		    &spi_count, sizeof(spi_count));
 	}
+	fdt_node_add_property(child, "phandle", &phandle, sizeof(phandle));
+	phandle++;
 }
 
 void
