@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1092 2018/07/09 11:19:46 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1093 2018/07/09 11:57:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1283,7 +1283,9 @@ configure_ifs() {
 	done
 }
 
-# Set up IPv4 default route.
+# Set up IPv4 default route by asking the user for an IPv4 address and preserve
+# that information in /etc/mygate. If setting the default route fails, try to
+# revert to a possibly existing previous one.
 v4_defroute() {
 	local _dr _dr_if
 
@@ -1303,10 +1305,12 @@ v4_defroute() {
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
 		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" &&
-			{ echo "$resp" >>/tmp/i/mygate; break; }
-		# Put the old default route back. The new one did not work.
-		route -n add -inet -host default $_dr >/dev/null 2>&1
+		if route -n add -inet -host default "$resp"; then
+			echo "$resp" >>/tmp/i/mygate
+			break
+		else
+			route -n add -inet -host default $_dr >/dev/null 2>&1
+		fi
 	done
 }
 
