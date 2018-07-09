@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.109 2018/06/16 14:32:56 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.110 2018/07/09 09:55:06 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,7 +22,9 @@ option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=1
 
 option		CONF_HAVE_GPIO
+option		PCIVERBOSE
 option		USBVERBOSE
+option		USER_PCICONF	# user-space PCI configuration
 
 config		bsd	swap generic
 
@@ -33,7 +35,8 @@ cpu0		at mainbus?
 
 # Cortex-A9
 cortex0		at mainbus?
-ampintc*	at fdt?
+ampintc*	at fdt? early 1
+ampintcmsi*	at fdt? early 1
 amptimer*	at cortex?
 agtimer*	at fdt?
 armliicc*	at cortex?
@@ -117,6 +120,8 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
+pciecam*	at fdt?
+pci*		at pciecam?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
