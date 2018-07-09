@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.481 2018/06/08 03:35:36 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.482 2018/07/09 21:03:30 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -77,7 +77,7 @@
 #include "cipher.h"
 #include "digest.h"
 #include "packet.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "channels.h"
 #include "key.h"
 #include "authfd.h"
@@ -167,7 +167,7 @@ uid_t original_real_uid;
 uid_t original_effective_uid;
 
 /* command to be executed */
-Buffer command;
+struct sshbuf *command;
 
 /* Should we execute a command or invoke a subsystem? */
 int subsystem_flag = 0;
@@ -1011,7 +1011,8 @@ main(int ac, char **av)
 #endif
 
 	/* Initialize the command to execute on remote host. */
-	buffer_init(&command);
+	if ((command = sshbuf_new()) == NULL)
+		fatal("sshbuf_new failed");
 
 	/*
 	 * Save the command to execute on the remote host in a buffer. There
@@ -1028,9 +1029,10 @@ main(int ac, char **av)
 	} else {
 		/* A command has been specified.  Store it into the buffer. */
 		for (i = 0; i < ac; i++) {
-			if (i)
-				buffer_append(&command, " ", 1);
-			buffer_append(&command, av[i], strlen(av[i]));
+			if ((r = sshbuf_putf(command, "%s%s",
+			    i ? " " : "", av[i])) != 0)
+				fatal("%s: buffer error: %s",
+				    __func__, ssh_err(r));
 		}
 	}
 
@@ -1202,11 +1204,11 @@ main(int ac, char **av)
 	if (original_effective_uid != 0)
 		options.use_privileged_port = 0;
 
-	if (buffer_len(&command) != 0 && options.remote_command != NULL)
+	if (sshbuf_len(command) != 0 && options.remote_command != NULL)
 		fatal("Cannot execute command-line and remote command.");
 
 	/* Cannot fork to background if no command. */
-	if (fork_after_authentication_flag && buffer_len(&command) == 0 &&
+	if (fork_after_authentication_flag && sshbuf_len(command) == 0 &&
 	    options.remote_command == NULL && !no_shell_flag)
 		fatal("Cannot fork into background without a command "
 		    "to execute.");
@@ -1219,7 +1221,7 @@ main(int ac, char **av)
 		tty_flag = 1;
 
 	/* Allocate a tty by default if no command specified. */
-	if (buffer_len(&command) == 0 && options.remote_command == NULL)
+	if (sshbuf_len(command) == 0 && options.remote_command == NULL)
 		tty_flag = options.request_tty != REQUEST_TTY_NO;
 
 	/* Force no tty */
@@ -1279,8 +1281,9 @@ main(int ac, char **av)
 		    (char *)NULL);
 		debug3("expanded RemoteCommand: %s", options.remote_command);
 		free(cp);
-		buffer_append(&command, options.remote_command,
-		    strlen(options.remote_command));
+		if ((r = sshbuf_put(command, options.remote_command,
+		    strlen(options.remote_command))) != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	}
 
 	if (options.control_path != NULL) {
@@ -1796,7 +1799,7 @@ ssh_session2_setup(struct ssh *ssh, int id, int success, void *arg)
 	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 	client_session2_setup(ssh, id, tty_flag, subsystem_flag, getenv("TERM"),
-	    NULL, fileno(stdin), &command, environ);
+	    NULL, fileno(stdin), command, environ);
 }
 
 /* open new channel for a session */
