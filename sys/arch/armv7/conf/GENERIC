@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2018/07/09 09:55:06 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.111 2018/07/09 09:58:40 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -171,6 +171,8 @@ mvpinctrl*	at fdt?
 mvmdio*		at fdt?
 mvneta*		at fdt?
 mvmpic*		at fdt?
+mvpcie*		at fdt?
+pci*		at mvpcie?
 mvpxa*		at fdt?
 sdmmc*		at mvpxa?
 
