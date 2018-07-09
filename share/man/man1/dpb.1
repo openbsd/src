@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.4 2018/07/09 11:56:32 jmc Exp $
+.\"	$OpenBSD: dpb.1,v 1.5 2018/07/09 18:27:58 jmc Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -22,7 +22,6 @@
 .Nd distributed ports builder
 .Sh SYNOPSIS
 .Nm dpb
-.Bk -words
 .Op Fl acemqrRsuUvx
 .Op Fl A Ar arch
 .Op Fl b Ar logfile
@@ -43,7 +42,6 @@
 .Op Fl S Ar logfile
 .Op Fl X Ar pathlist
 .Op Ar pathlist ...
-.Ek
 .Sh DESCRIPTION
 .Nm
 is used to build ports on a cluster of machines, or on a single machine
