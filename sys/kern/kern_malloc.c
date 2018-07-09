@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.134 2018/07/09 08:46:30 bluhm Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.135 2018/07/09 20:02:18 bluhm Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -250,7 +250,6 @@ malloc(size_t size, int type, int flags)
 			if (wake)
 				wakeup(ksp);
 #endif
-			
 			return (NULL);
 		}
 		mtx_enter(&malloc_mtx);
@@ -281,7 +280,8 @@ malloc(size_t size, int type, int flags)
 			poison_mem(cp, allocsize);
 			freep->kf_type = M_FREE;
 #endif /* DIAGNOSTIC */
-			XSIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep, kf_flist);
+			XSIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep,
+			    kf_flist);
 			if (cp <= va)
 				break;
 			cp -= allocsize;
@@ -309,7 +309,7 @@ malloc(size_t size, int type, int flags)
 		if (!rv)  {
 			printf("%s %zd of object %p size 0x%lx %s %s"
 			    " (invalid addr %p)\n",
-			    "Data modified on freelist: word", 
+			    "Data modified on freelist: word",
 			    (int32_t *)&addr - (int32_t *)kbp, va, size,
 			    "previous type", savedtype, (void *)addr);
 		}
@@ -643,7 +643,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			memall = malloc(totlen + M_LAST, M_SYSCTL,
 			    M_WAITOK|M_ZERO);
 			for (siz = 0, i = 0; i < M_LAST; i++) {
-				snprintf(memall + siz, 
+				snprintf(memall + siz,
 				    totlen + M_LAST - siz,
 				    "%s,", memname[i] ? memname[i] : "");
 				siz += strlen(memall + siz);
@@ -701,7 +701,7 @@ malloc_printit(
 
 		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d %8d\n",
 		    memname[i], km->ks_inuse, km->ks_memuse / 1024,
-		    km->ks_maxused / 1024, km->ks_limit / 1024, 
+		    km->ks_maxused / 1024, km->ks_limit / 1024,
 		    km->ks_calls, km->ks_limblocks, km->ks_mapblocks);
 	}
 #else
