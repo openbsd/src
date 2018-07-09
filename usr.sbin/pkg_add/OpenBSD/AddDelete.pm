@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.80 2018/07/07 11:32:01 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.81 2018/07/09 14:51:15 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,6 @@ sub framework
 		$self->process_parameters($state);
 		my $dielater = $self->do_the_main_work($state);
 		# cleanup various things
-		$state->{recorder}->cleanup($state);
 		if (defined $state->{tags}{atend}) {
 			while (my ($k, $d) = each %{$state->{tags}{atend}}) {
 				next if $state->{tags}{deleted}{$k};
@@ -71,6 +70,7 @@ sub framework
 				$d->run_tag($state);
 			}
 		}
+		$state->{recorder}->cleanup($state);
 		$state->ldconfig->ensure;
 		OpenBSD::PackingElement->finish($state);
 		$state->progress->clear;
