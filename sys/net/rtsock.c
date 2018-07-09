@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.276 2018/07/05 21:48:32 sthen Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.277 2018/07/09 16:49:36 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -136,11 +136,7 @@ int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
 
 struct rtpcb {
-	struct rawcb		rop_rcb;
-#define rop_socket	rop_rcb.rcb_socket
-#define rop_faddr	rop_rcb.rcb_faddr
-#define rop_laddr	rop_rcb.rcb_laddr
-#define rop_proto	rop_rcb.rcb_proto
+	struct socket		*rop_socket;
 
 	SRPL_ENTRY(rtpcb)	rop_list;
 	struct refcnt		rop_refcnt;
@@ -148,6 +144,7 @@ struct rtpcb {
 	unsigned int		rop_msgfilter;
 	unsigned int		rop_flags;
 	u_int			rop_rtableid;
+	unsigned short		rop_proto;
 	u_char			rop_priority;
 };
 #define	sotortpcb(so)	((struct rtpcb *)(so)->so_pcb)
@@ -203,15 +200,54 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct rtpcb	*rop;
 	int		 error = 0;
 
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
+
 	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EOPNOTSUPP;
+		goto release;
+	}
 
 	rop = sotortpcb(so);
 	if (rop == NULL) {
-		m_freem(m);
-		return (EINVAL);
+		error = EINVAL;
+		goto release;
 	}
 
 	switch (req) {
+	/* no connect, bind, accept. Socket is connected from the start */
+	case PRU_CONNECT:
+	case PRU_BIND:
+	case PRU_CONNECT2:
+	case PRU_LISTEN:
+	case PRU_ACCEPT:
+		error = EOPNOTSUPP;
+		break;
+
+	case PRU_DISCONNECT:
+	case PRU_ABORT:
+		soisdisconnected(so);
+		break;
+	case PRU_SHUTDOWN:
+		socantsendmore(so);
+		break;
+	case PRU_SENSE:
+		/* stat: don't bother with a blocksize. */
+		return (0);
+
+	/* minimal support, just implement a fake peer address */
+	case PRU_SOCKADDR:
+		error = EINVAL;
+		break;
+	case PRU_PEERADDR:
+		bcopy(&route_src, mtod(nam, caddr_t), route_src.sa_len);
+		nam->m_len = route_src.sa_len;
+		break;
+
+	case PRU_RCVOOB:
+		return (EOPNOTSUPP);
 	case PRU_RCVD:
 		/*
 		 * If we are in a FLUSH state, check if the buffer is
@@ -221,12 +257,26 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
 		    rop->rop_socket->so_rcv.sb_hiwat)))
 			rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
-		break;
+		return (0);
 
+	case PRU_SENDOOB:
+		error = EOPNOTSUPP;
+		break;
+	case PRU_SEND:
+		if (nam) {
+			error = EISCONN;
+			break;
+		}
+		error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+		m = NULL;
+		break;
 	default:
-		error = raw_usrreq(so, req, m, nam, control, p);
+		panic("route_usrreq");
 	}
 
+ release:
+	m_freem(control);
+	m_freem(m);
 	return (error);
 }
 
@@ -257,15 +307,12 @@ route_attach(struct socket *so, int proto)
 	}
 
 	rop->rop_socket = so;
-	rop->rop_proto.sp_family = so->so_proto->pr_domain->dom_family;
-	rop->rop_proto.sp_protocol = proto;
+	rop->rop_proto = proto;
 
 	rop->rop_rtableid = curproc->p_p->ps_rtableid;
 
 	soisconnected(so);
 	so->so_options |= SO_USELOOPBACK;
-
-	rop->rop_faddr = &route_src;
 
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
 	SRPL_INSERT_HEAD_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop, rop_list);
@@ -438,9 +485,8 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		 * messages that match the address family. Address family
 		 * agnostic messages are always sent.
 		 */
-		if (sa_family != AF_UNSPEC &&
-		    rop->rop_proto.sp_protocol != AF_UNSPEC &&
-		    rop->rop_proto.sp_protocol != sa_family)
+		if (sa_family != AF_UNSPEC && rop->rop_proto != AF_UNSPEC &&
+		    rop->rop_proto != sa_family)
 			continue;
 
 
