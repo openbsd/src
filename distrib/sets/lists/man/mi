@@ -101,7 +101,6 @@
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getent.1
 ./usr/share/man/man1/getopt.1
-./usr/share/man/man1/getpkgpath.1
 ./usr/share/man/man1/grep.1
 ./usr/share/man/man1/groups.1
 ./usr/share/man/man1/gzexe.1
@@ -367,6 +366,9 @@
 ./usr/share/man/man1/pod2usage.1
 ./usr/share/man/man1/podchecker.1
 ./usr/share/man/man1/podselect.1
+./usr/share/man/man1/port-getpkgpath-helper.1
+./usr/share/man/man1/port-resolve-lib-helper.1
+./usr/share/man/man1/port-search-helper.1
 ./usr/share/man/man1/portbump.1
 ./usr/share/man/man1/portcheck.1
 ./usr/share/man/man1/portgen.1
@@ -393,8 +395,6 @@
 ./usr/share/man/man1/rdistd.1
 ./usr/share/man/man1/readlink.1
 ./usr/share/man/man1/register-plist.1
-./usr/share/man/man1/resolve-lib.1
-./usr/share/man/man1/retrieve-index.1
 ./usr/share/man/man1/rev.1
 ./usr/share/man/man1/rlog.1
 ./usr/share/man/man1/rm.1
