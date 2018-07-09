@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.38 2015/12/30 14:59:10 tedu Exp $	*/
+/*	$OpenBSD: mt.c,v 1.39 2018/07/09 19:38:29 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <limits.h>
 
 #include "mt.h"
 
@@ -195,6 +196,9 @@ main(int argc, char *argv[])
 		err(1, "no remote support");
 #endif
 	}
+
+	if (strlen(tape) >= PATH_MAX)
+		err(1, "tape name too long for protocol");
 
 	if (eject) {
 		if (insert)
