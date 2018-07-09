@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.94 2018/06/29 11:45:50 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.95 2018/07/09 14:08:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -35,7 +35,7 @@ int	rde_prefix_match(struct filter_prefix *, struct prefix *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 void
-rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
+rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
     u_int8_t aid, struct rde_peer *from, struct rde_peer *peer)
 {
 	struct filter_set	*set;
@@ -46,76 +46,80 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 	u_int16_t		 nl;
 	u_int8_t		 prepend;
 
-	if (asp == NULL)
+	if (state == NULL)
 		return;
-
-	if (asp->flags & F_ATTR_LINKED)
-		fatalx("rde_apply_set: trying to modify linked asp");
 
 	TAILQ_FOREACH(set, sh, entry) {
 		switch (set->type) {
 		case ACTION_SET_LOCALPREF:
-			asp->lpref = set->action.metric;
+			state->aspath.lpref = set->action.metric;
 			break;
 		case ACTION_SET_RELATIVE_LOCALPREF:
 			if (set->action.relative > 0) {
-				if (set->action.relative + asp->lpref <
-				    asp->lpref)
-					asp->lpref = UINT_MAX;
+				if (set->action.relative + state->aspath.lpref <
+				    state->aspath.lpref)
+					state->aspath.lpref = UINT_MAX;
 				else
-					asp->lpref += set->action.relative;
+					state->aspath.lpref +=
+					    set->action.relative;
 			} else {
 				if ((u_int32_t)-set->action.relative >
-				    asp->lpref)
-					asp->lpref = 0;
+				    state->aspath.lpref)
+					state->aspath.lpref = 0;
 				else
-					asp->lpref += set->action.relative;
+					state->aspath.lpref +=
+					    set->action.relative;
 			}
 			break;
 		case ACTION_SET_MED:
-			asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
-			asp->med = set->action.metric;
+			state->aspath.flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
+			state->aspath.med = set->action.metric;
 			break;
 		case ACTION_SET_RELATIVE_MED:
-			asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
+			state->aspath.flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
 			if (set->action.relative > 0) {
-				if (set->action.relative + asp->med <
-				    asp->med)
-					asp->med = UINT_MAX;
+				if (set->action.relative + state->aspath.med <
+				    state->aspath.med)
+					state->aspath.med = UINT_MAX;
 				else
-					asp->med += set->action.relative;
+					state->aspath.med +=
+					    set->action.relative;
 			} else {
 				if ((u_int32_t)-set->action.relative >
-				    asp->med)
-					asp->med = 0;
+				    state->aspath.med)
+					state->aspath.med = 0;
 				else
-					asp->med += set->action.relative;
+					state->aspath.med +=
+					    set->action.relative;
 			}
 			break;
 		case ACTION_SET_WEIGHT:
-			asp->weight = set->action.metric;
+			state->aspath.weight = set->action.metric;
 			break;
 		case ACTION_SET_RELATIVE_WEIGHT:
 			if (set->action.relative > 0) {
-				if (set->action.relative + asp->weight <
-				    asp->weight)
-					asp->weight = UINT_MAX;
+				if (set->action.relative + state->aspath.weight <
+				    state->aspath.weight)
+					state->aspath.weight = UINT_MAX;
 				else
-					asp->weight += set->action.relative;
+					state->aspath.weight +=
+					    set->action.relative;
 			} else {
 				if ((u_int32_t)-set->action.relative >
-				    asp->weight)
-					asp->weight = 0;
+				    state->aspath.weight)
+					state->aspath.weight = 0;
 				else
-					asp->weight += set->action.relative;
+					state->aspath.weight +=
+					    set->action.relative;
 			}
 			break;
 		case ACTION_SET_PREPEND_SELF:
 			prep_as = peer->conf.local_as;
 			prepend = set->action.prepend;
-			np = aspath_prepend(asp->aspath, prep_as, prepend, &nl);
-			aspath_put(asp->aspath);
-			asp->aspath = aspath_get(np, nl);
+			np = aspath_prepend(state->aspath.aspath, prep_as,
+			    prepend, &nl);
+			aspath_put(state->aspath.aspath);
+			state->aspath.aspath = aspath_get(np, nl);
 			free(np);
 			break;
 		case ACTION_SET_PREPEND_PEER:
@@ -123,9 +127,10 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 				break;
 			prep_as = from->conf.remote_as;
 			prepend = set->action.prepend;
-			np = aspath_prepend(asp->aspath, prep_as, prepend, &nl);
-			aspath_put(asp->aspath);
-			asp->aspath = aspath_get(np, nl);
+			np = aspath_prepend(state->aspath.aspath, prep_as,
+			    prepend, &nl);
+			aspath_put(state->aspath.aspath);
+			state->aspath.aspath = aspath_get(np, nl);
 			free(np);
 			break;
 		case ACTION_SET_NEXTHOP:
@@ -134,7 +139,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 		case ACTION_SET_NEXTHOP_NOMODIFY:
 		case ACTION_SET_NEXTHOP_SELF:
 			nexthop_modify(set->action.nh, set->type, aid,
-			    &asp->nexthop, &asp->flags);
+			    &state->aspath.nexthop, &state->aspath.flags);
 			break;
 		case ACTION_SET_COMMUNITY:
 			switch (set->action.community.as) {
@@ -167,7 +172,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 				break;
 			}
 
-			community_set(asp, as, type);
+			community_set(&state->aspath, as, type);
 			break;
 		case ACTION_DEL_COMMUNITY:
 			switch (set->action.community.as) {
@@ -200,7 +205,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 				break;
 			}
 
-			community_delete(asp, as, type);
+			community_delete(&state->aspath, as, type);
 			break;
 		case ACTION_SET_LARGE_COMMUNITY:
 			switch (set->action.large_community.as) {
@@ -248,7 +253,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 				break;
 			}
 
-			community_large_set(asp, las, ld1, ld2);
+			community_large_set(&state->aspath, las, ld1, ld2);
 			break;
 		case ACTION_DEL_LARGE_COMMUNITY:
 			switch (set->action.large_community.as) {
@@ -296,7 +301,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 				break;
 			}
 
-			community_large_delete(asp, las, ld1, ld2);
+			community_large_delete(&state->aspath, las, ld1, ld2);
 			break;
 		case ACTION_PFTABLE:
 			/* convert pftable name to an id */
@@ -304,8 +309,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 			set->type = ACTION_PFTABLE_ID;
 			/* FALLTHROUGH */
 		case ACTION_PFTABLE_ID:
-			pftable_unref(asp->pftableid);
-			asp->pftableid = pftable_ref(set->action.id);
+			pftable_unref(state->aspath.pftableid);
+			state->aspath.pftableid = pftable_ref(set->action.id);
 			break;
 		case ACTION_RTLABEL:
 			/* convert the route label to an id for faster access */
@@ -313,18 +318,18 @@ rde_apply_set(struct filter_set_head *sh, struct rde_aspath *asp,
 			set->type = ACTION_RTLABEL_ID;
 			/* FALLTHROUGH */
 		case ACTION_RTLABEL_ID:
-			rtlabel_unref(asp->rtlabelid);
-			asp->rtlabelid = rtlabel_ref(set->action.id);
+			rtlabel_unref(state->aspath.rtlabelid);
+			state->aspath.rtlabelid = rtlabel_ref(set->action.id);
 			break;
 		case ACTION_SET_ORIGIN:
-			asp->origin = set->action.origin;
+			state->aspath.origin = set->action.origin;
 			break;
 		case ACTION_SET_EXT_COMMUNITY:
-			community_ext_set(asp, &set->action.ext_community,
+			community_ext_set(&state->aspath, &set->action.ext_community,
 			    peer->conf.remote_as);
 			break;
 		case ACTION_DEL_EXT_COMMUNITY:
-			community_ext_delete(asp, &set->action.ext_community,
+			community_ext_delete(&state->aspath, &set->action.ext_community,
 			    peer->conf.remote_as);
 			break;
 		}
@@ -627,6 +632,20 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		fb = TAILQ_NEXT(fb, entry);
 	}
 	return (1);
+}
+
+void
+rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp)
+{
+	memset(state, 0, sizeof(*state));
+
+	path_copy(path_prep(&state->aspath), asp);
+}
+
+void
+rde_filterstate_clean(struct filterstate *state)
+{
+	path_clean(&state->aspath);
 }
 
 void
@@ -983,14 +1002,11 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
-    struct rde_aspath **new, struct prefix *p)
+    struct prefix *p, struct filterstate *state)
 {
 	struct filter_rule	*f;
 	struct rde_aspath	*asp = prefix_aspath(p);
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
-
-	if (new != NULL)
-		*new = NULL;
 
 	if (asp->flags & F_ATTR_PARSE_ERR)
 		/*
@@ -1018,15 +1034,9 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->skip[RDE_FILTER_SKIP_PEERID].ptr);
 
 		if (rde_filter_match(f, peer, asp, p)) {
-			if (asp != NULL && new != NULL) {
-				/* asp may get modified so create a copy */
-				if (*new == NULL) {
-					*new = path_copy(path_get(), asp);
-					/* ... and use the copy from now on */
-					asp = *new;
-				}
-				rde_apply_set(&f->set, asp, p->re->prefix->aid,
-				    prefix_peer(p), peer);
+			if (state != NULL) {
+				rde_apply_set(&f->set, state,
+				    p->re->prefix->aid, prefix_peer(p), peer);
 			}
 			if (f->action != ACTION_NONE)
 				action = f->action;

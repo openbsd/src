@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.384 2018/07/05 10:25:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.385 2018/07/09 14:08:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1363,7 +1363,7 @@ void
 rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
-	struct rde_aspath	*fasp;
+	struct filterstate	 state;
 	struct prefix		*p;
 	enum filter_actions	 action;
 	u_int16_t		 i;
@@ -1380,16 +1380,15 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
+		rde_filterstate_prep(&state, asp);
 		/* input filter */
-		action = rde_filter(ribs[i].in_rules, peer, &fasp, p);
-
-		if (fasp == NULL)
-			fasp = asp;
+		action = rde_filter(ribs[i].in_rules, peer, p, &state);
 
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
-			    &fasp->nexthop->exit_nexthop, prefix, prefixlen);
-			path_update(&ribs[i].rib, peer, fasp, prefix,
+			    &state.aspath.nexthop->exit_nexthop, prefix,
+			    prefixlen);
+			path_update(&ribs[i].rib, peer, &state.aspath, prefix,
 			    prefixlen, 0);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
@@ -1397,9 +1396,8 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 			    NULL, prefix, prefixlen);
 		}
 
-		/* free modified aspath */
-		if (fasp != asp)
-			path_put(fasp);
+		/* clear state */
+		rde_filterstate_clean(&state);
 	}
 }
 
@@ -2298,23 +2296,19 @@ void
 rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
     struct ctl_show_rib_request *req)
 {
-	struct bgpd_addr	 addr;
-	struct rde_aspath	*fasp;
+	struct filterstate	 state;
 	enum filter_actions	 a;
 
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	pt_getaddr(p->re->prefix, &addr);
-	a = rde_filter(out_rules, peer, &fasp, p);
-	if (fasp == NULL)
-		fasp = prefix_aspath(p);
+	rde_filterstate_prep(&state, prefix_aspath(p));
+	a = rde_filter(out_rules, peer, p, &state);
 
 	if (a == ACTION_ALLOW)
-		rde_dump_rib_as(p, fasp, req->pid, req->flags);
+		rde_dump_rib_as(p, &state.aspath, req->pid, req->flags);
 
-	if (fasp != prefix_aspath(p))
-		path_put(fasp);
+	rde_filterstate_clean(&state);
 }
 
 void
@@ -3043,11 +3037,12 @@ rde_reload_done(void)
 void
 rde_softreconfig_in(struct rib_entry *re, void *ptr)
 {
+	struct filterstate	 state;
 	struct rib_desc		*rib = ptr;
 	struct prefix		*p, *np;
 	struct pt_entry		*pt;
 	struct rde_peer		*peer;
-	struct rde_aspath	*asp, *fasp;
+	struct rde_aspath	*asp;
 	enum filter_actions	 action;
 	struct bgpd_addr	 addr;
 
@@ -3062,30 +3057,29 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		asp = prefix_aspath(p);
 		peer = asp->peer;
 
-		action = rde_filter(rib->in_rules, peer, &fasp, p);
-		fasp = fasp != NULL ? fasp : asp;
+		rde_filterstate_prep(&state, asp);
+		action = rde_filter(rib->in_rules, peer, p, &state);
 
 		if (action == ACTION_ALLOW) {
 			/* update Local-RIB */
-			path_update(&rib->rib, peer, fasp, &addr,
+			path_update(&rib->rib, peer, &state.aspath, &addr,
 			    pt->prefixlen, 0);
 		} else if (action == ACTION_DENY) {
 			/* remove from Local-RIB */
 			prefix_remove(&rib->rib, peer, &addr, pt->prefixlen, 0);
 		}
 
-		if (fasp != asp)
-			path_put(fasp);
+		rde_filterstate_clean(&state);
 	}
 }
 
 void
 rde_softreconfig_out(struct rib_entry *re, void *ptr)
 {
+	struct filterstate	 ostate, nstate;
 	struct prefix		*p = re->active;
 	struct pt_entry		*pt;
 	struct rde_peer		*peer = ptr;
-	struct rde_aspath	*oasp, *nasp;
 	enum filter_actions	 oa, na;
 	struct bgpd_addr	 addr;
 
@@ -3101,40 +3095,37 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, peer, &oasp, p);
-	na = rde_filter(out_rules, peer, &nasp, p);
-	oasp = oasp != NULL ? oasp : prefix_aspath(p);
-	nasp = nasp != NULL ? nasp : prefix_aspath(p);
+	rde_filterstate_prep(&ostate, prefix_aspath(p));
+	rde_filterstate_prep(&nstate, prefix_aspath(p));
+	oa = rde_filter(out_rules_tmp, peer, p, &ostate);
+	na = rde_filter(out_rules, peer, p, &nstate);
 
 	/* go through all 4 possible combinations */
 	/* if (oa == ACTION_DENY && na == ACTION_DENY) */
 		/* nothing todo */
 	if (oa == ACTION_DENY && na == ACTION_ALLOW) {
 		/* send update */
-		up_generate(peer, nasp, &addr, pt->prefixlen);
+		up_generate(peer, &nstate.aspath, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 		/* send withdraw */
 		up_generate(peer, NULL, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
 		/* send update if path attributes changed */
-		if (path_compare(nasp, oasp) != 0)
-			up_generate(peer, nasp, &addr, pt->prefixlen);
+		if (path_compare(&nstate.aspath, &ostate.aspath) != 0)
+			up_generate(peer, &nstate.aspath, &addr, pt->prefixlen);
 	}
 
-	if (oasp != prefix_aspath(p))
-		path_put(oasp);
-	if (nasp != prefix_aspath(p))
-		path_put(nasp);
+	rde_filterstate_clean(&ostate);
+	rde_filterstate_clean(&nstate);
 }
 
 void
 rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 {
+	struct filterstate	 ostate;
 	struct rde_peer		*peer = ptr;
 	struct prefix		*p = re->active;
 	struct pt_entry		*pt;
-	struct rde_aspath	*oasp;
-	enum filter_actions	 oa;
 	struct bgpd_addr	 addr;
 
 	pt = re->prefix;
@@ -3144,18 +3135,12 @@ rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	oa = rde_filter(out_rules_tmp, peer, &oasp, p);
-	oasp = oasp != NULL ? oasp : prefix_aspath(p);
-
-	if (oa == ACTION_DENY)
-		/* nothing todo */
-		goto done;
-
-	/* send withdraw */
-	up_generate(peer, NULL, &addr, pt->prefixlen);
-done:
-	if (oasp != prefix_aspath(p))
-		path_put(oasp);
+	rde_filterstate_prep(&ostate, prefix_aspath(p));
+	if (rde_filter(out_rules_tmp, peer, p, &ostate) != ACTION_DENY) {
+		/* send withdraw */
+		up_generate(peer, NULL, &addr, pt->prefixlen);
+	}
+	rde_filterstate_clean(&ostate);
 }
 
 /*
@@ -3570,6 +3555,7 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 void
 network_add(struct network_config *nc, int flagstatic)
 {
+	struct filterstate	 state;
 	struct rdomain		*rd;
 	struct rde_aspath	*asp;
 	struct filter_set_head	*vpnset = NULL;
@@ -3624,15 +3610,18 @@ network_add(struct network_config *nc, int flagstatic)
 	}
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
-	rde_apply_set(&nc->attrset, asp, nc->prefix.aid, peerself, peerself);
+	rde_filterstate_prep(&state, asp);
+	rde_apply_set(&nc->attrset, &state, nc->prefix.aid, peerself, peerself);
 	if (vpnset)
-		rde_apply_set(vpnset, asp, nc->prefix.aid, peerself, peerself);
+		rde_apply_set(vpnset, &state, nc->prefix.aid, peerself,
+		    peerself);
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
 		path_update(&ribs[i].rib, peerself, asp, &nc->prefix,
 		    nc->prefixlen, 0);
 	}
+	rde_filterstate_clean(&state);
 	path_put(asp);
 	filterset_free(&nc->attrset);
 }

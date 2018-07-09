@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.175 2018/06/29 11:45:50 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.176 2018/07/09 14:08:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -318,6 +318,10 @@ struct prefix {
 
 #define F_PREFIX_USE_UPDATES	0x01	/* linked onto the updates list */
 
+struct filterstate {
+	struct rde_aspath	aspath;
+};
+
 extern struct rde_memstats rdemem;
 
 /* prototypes */
@@ -402,9 +406,11 @@ u_char		*community_ext_delete_non_trans(u_char *, u_int16_t,
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
+void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *);
+void		 rde_filterstate_clean(struct filterstate *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
-		     struct rde_aspath **, struct prefix *);
-void		 rde_apply_set(struct filter_set_head *, struct rde_aspath *,
+		     struct prefix *, struct filterstate *);
+void		 rde_apply_set(struct filter_set_head *, struct filterstate *,
 		     u_int8_t, struct rde_peer *, struct rde_peer *);
 int		 rde_filter_equal(struct filter_head *, struct filter_head *,
 		     struct rde_peer *, struct prefixset_head *);
@@ -476,6 +482,7 @@ int		 path_empty(struct rde_aspath *);
 struct rde_aspath *path_copy(struct rde_aspath *, const struct rde_aspath *);
 struct rde_aspath *path_prep(struct rde_aspath *);
 struct rde_aspath *path_get(void);
+void		 path_clean(struct rde_aspath *);
 void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)

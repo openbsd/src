@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.93 2018/06/28 09:54:48 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.94 2018/07/09 14:08:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -398,8 +398,8 @@ void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct rde_aspath		*asp, *fasp;
-	struct bgpd_addr		 addr;
+	struct filterstate		state;
+	struct bgpd_addr		addr;
 
 	if (peer->state != PEER_UP)
 		return;
@@ -410,7 +410,7 @@ withdraw:
 			return;
 
 		pt_getaddr(old->re->prefix, &addr);
-		if (rde_filter(rules, peer, NULL, old) == ACTION_DENY)
+		if (rde_filter(rules, peer, old, NULL) == ACTION_DENY)
 			return;
 
 		/* withdraw prefix */
@@ -425,20 +425,17 @@ withdraw:
 			return;
 		}
 
-		asp = prefix_aspath(new);
-		if (rde_filter(rules, peer, &fasp, new) == ACTION_DENY) {
-			path_put(fasp);
+		rde_filterstate_prep(&state, prefix_aspath(new));
+		if (rde_filter(rules, peer, new, &state) == ACTION_DENY) {
+			rde_filterstate_clean(&state);
 			goto withdraw;
 		}
-		if (fasp == NULL)
-			fasp = asp;
 
 		pt_getaddr(new->re->prefix, &addr);
-		up_generate(peer, fasp, &addr, new->re->prefix->prefixlen);
+		up_generate(peer, &state.aspath, &addr,
+		    new->re->prefix->prefixlen);
 
-		/* free modified aspath */
-		if (fasp != asp)
-			path_put(fasp);
+		rde_filterstate_clean(&state);
 	}
 }
 
@@ -451,7 +448,8 @@ void
 up_generate_default(struct filter_head *rules, struct rde_peer *peer,
     u_int8_t aid)
 {
-	struct rde_aspath	*asp, *fasp;
+	struct filterstate	 state;
+	struct rde_aspath	*asp;
 	struct prefix		 p;
 	struct rib_entry	*re;
 	struct bgpd_addr	 addr;
@@ -486,20 +484,16 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	p.flags = 0;
 
 	/* filter as usual */
-	if (rde_filter(rules, peer, &fasp, &p) == ACTION_DENY) {
-		path_put(fasp);
-		path_put(asp);
+	rde_filterstate_prep(&state, asp);
+	if (rde_filter(rules, peer, &p, &state) == ACTION_DENY) {
+		rde_filterstate_clean(&state);
 		return;
 	}
 
-	if (fasp == NULL)
-		fasp = asp;
-
-	up_generate(peer, fasp, &addr, 0);
+	up_generate(peer, &state.aspath, &addr, 0);
 
 	/* no longer needed */
-	if (fasp != asp)
-		path_put(fasp);
+	rde_filterstate_clean(&state);
 	path_put(asp);
 
 	if (rib_empty(re))
