@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.45 2015/08/29 23:07:51 deraadt Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.46 2018/07/09 07:50:28 krw Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -224,16 +224,6 @@ struct nfsm_info {
 	*mrq = info.nmi_mreq;						\
 	if (error && (!(nfsd->nd_flag & ND_NFSV3) || error == EBADRPC))	\
 		return(0);						\
-}
-
-#define nfsm_writereply(s, v3) {					\
-	nfsd->nd_repstat = error;					\
-	if (error && !(v3))						\
-	   (void) nfs_rephead(0, nfsd, slp, error, &info.nmi_mreq,	\
-	       &info.nmi_mb);						\
-	else								\
-	   (void) nfs_rephead((s), nfsd, slp, error, &info.nmi_mreq,	\
-	       &info.nmi_mb);						\
 }
 
 #define nfsm_adv(s) {							\
