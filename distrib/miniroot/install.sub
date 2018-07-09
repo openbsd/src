@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1093 2018/07/09 11:57:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1094 2018/07/09 12:32:30 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1331,15 +1331,17 @@ get_fqdn() {
 # Support functions for install_sets()
 # ------------------------------------------------------------------------------
 
-# Check that missing required sets were deliberately skipped.
-# Care is taken to make sure the return value is correct.
+# SANESETS defines the required list of set files for a sane install or upgrade.
+# During install_files(), each successfully installed set file is removed from
+# DEFAULTSETS. Check if there are SANESETS still in DEFAULTSETS and if they were
+# deliberately skipped. If $1 is not defined, ask the user about each skipped
+# set file. Care is taken to make sure the return value is correct.
 sane_install() {
 	local _q=$1 _s
 
 	for _s in $SANESETS; do
 		isin "$_s" $DEFAULTSETS || continue
 		[[ -n $_q ]] && return 1
-		# If sane_install has no argument, harass the user.
 		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
 			$AI && exit 1 || return 1
 		fi
