@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.123 2018/06/19 19:29:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.124 2018/07/09 12:58:43 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -571,6 +571,9 @@ cpu_init(struct cpu_info *ci)
 	/* Give proc0 a clean FPU save area */
 	sfp = &proc0.p_addr->u_pcb.pcb_savefpu;
 	memset(sfp, 0, fpu_save_len);
+	sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+	sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+	fpureset();
 	if (xsave_mask) {
 		/* must not use xsaveopt here */
 		xsave(sfp, xsave_mask);
