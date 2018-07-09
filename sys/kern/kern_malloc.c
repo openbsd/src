@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.133 2018/01/18 18:08:51 bluhm Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.134 2018/07/09 08:46:30 bluhm Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -384,6 +384,7 @@ free(void *addr, int type, size_t freedsize)
 		    memname[type]);
 #endif
 
+	mtx_enter(&malloc_mtx);
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
@@ -409,14 +410,17 @@ free(void *addr, int type, size_t freedsize)
 			addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
+		u_short pagecnt = kup->ku_pagecnt;
+
+		kup->ku_indx = 0;
+		kup->ku_pagecnt = 0;
+		mtx_leave(&malloc_mtx);
 		s = splvm();
-		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(kup->ku_pagecnt));
+		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(pagecnt));
 		splx(s);
 #ifdef KMEMSTATS
 		mtx_enter(&malloc_mtx);
 		ksp->ks_memuse -= size;
-		kup->ku_indx = 0;
-		kup->ku_pagecnt = 0;
 		if (ksp->ks_memuse + size >= ksp->ks_limit &&
 		    ksp->ks_memuse < ksp->ks_limit)
 			wakeup(ksp);
@@ -427,7 +431,6 @@ free(void *addr, int type, size_t freedsize)
 		return;
 	}
 	freep = (struct kmem_freelist *)addr;
-	mtx_enter(&malloc_mtx);
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for multiple frees. Use a quick check to see if
