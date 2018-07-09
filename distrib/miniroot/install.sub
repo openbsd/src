@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1094 2018/07/09 12:32:30 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1095 2018/07/09 13:45:54 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1348,14 +1348,15 @@ sane_install() {
 	done
 }
 
-# Show list of available sets and let the user select which sets to install.
-# Set $resp to list of selected sets.
+# Show list of available sets $1 and let the user select which sets to install.
+# Preselect sets listed in $2 and store the list of selected sets in $resp.
 #
-# Parameters:
-#
-# $1 = available sets
-# $2 = already selected sets
-#
+# If the list of available sets only contains kernels during an upgrade, assume
+# that the user booted into the installer using the currently installed bsd.rd
+# and specified a set location pointing to a new release. In this case, only
+# show and preselect bsd.rd. By setting UPGRADE_BSDRD the signify key for the
+# next release is used to verify the downloaded bsd.rd, the current bsd.rd is
+# preserved and no questions about missing sets are asked.
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
 	local _bsd_rd _no_sets=true
