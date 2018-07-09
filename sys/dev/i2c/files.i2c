@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.60 2018/04/07 18:16:35 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.61 2018/07/09 18:48:52 patrick Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -70,7 +70,7 @@ attach	admtt at i2c
 file	dev/i2c/adm1031.c			admtt
 
 # PCA9554
-device	pcagpio: gpiobus
+device	pcagpio
 attach	pcagpio at i2c
 file	dev/i2c/pca9554.c			pcagpio
 
