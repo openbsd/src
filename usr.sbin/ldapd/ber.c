@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.21 2018/07/04 15:21:24 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.22 2018/07/09 09:21:26 jca Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -31,8 +31,6 @@
 
 #include "ber.h"
 
-#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
-
 #define BER_TYPE_CONSTRUCTED	0x20	/* otherwise primitive */
 #define BER_TYPE_SINGLE_MAX	30
 #define BER_TAG_MASK		0x1f
@@ -48,7 +46,6 @@ static ssize_t	get_id(struct ber *b, unsigned long *tag, int *class,
     int *cstruct);
 static ssize_t	get_len(struct ber *b, ssize_t *len);
 static ssize_t	ber_read_element(struct ber *ber, struct ber_element *elm);
-static ssize_t	ber_readbuf(struct ber *b, void *buf, size_t nbytes);
 static ssize_t	ber_getc(struct ber *b, u_char *c);
 static ssize_t	ber_read(struct ber *ber, void *buf, size_t len);
 
@@ -1208,28 +1205,6 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	return totlen;
 }
 
-static ssize_t
-ber_readbuf(struct ber *b, void *buf, size_t nbytes)
-{
-	size_t	 sz, len;
-
-	if (b->br_rbuf == NULL)
-		return -1;
-
-	sz = b->br_rend - b->br_rptr;
-	len = MINIMUM(nbytes, sz);
-	if (len == 0) {
-		errno = ECANCELED;
-		return (-1);	/* end of buffer and parser wants more data */
-	}
-
-	bcopy(b->br_rptr, buf, len);
-	b->br_rptr += len;
-	b->br_offs += len;
-
-	return (len);
-}
-
 void
 ber_set_readbuf(struct ber *b, void *buf, size_t len)
 {
@@ -1269,23 +1244,28 @@ ber_free(struct ber *b)
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
-	return ber_readbuf(b, c, 1);
+	return ber_read(b, c, 1);
 }
 
 static ssize_t
 ber_read(struct ber *ber, void *buf, size_t len)
 {
-	u_char *b = buf;
-	ssize_t	r, remain = len;
+	size_t	sz;
 
-	while (remain > 0) {
-		r = ber_readbuf(ber, b, remain);
-		if (r == -1)
-			return -1;
-		b += r;
-		remain -= r;
+	if (ber->br_rbuf == NULL)
+		return -1;
+
+	sz = ber->br_rend - ber->br_rptr;
+	if (len > sz) {
+		errno = ECANCELED;
+		return -1;	/* parser wants more data than available */
 	}
-	return (b - (u_char *)buf);
+
+	bcopy(ber->br_rptr, buf, len);
+	ber->br_rptr += len;
+	ber->br_offs += len;
+
+	return len;
 }
 
 int
