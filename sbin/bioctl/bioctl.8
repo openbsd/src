@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.104 2017/04/06 18:55:42 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.105 2018/07/09 14:10:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2017 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -45,10 +45,10 @@
 .Op Fl C Ar flag Ns Op Pf , Ar flag Ns Op Pf , Ar ...
 .Op Fl c Ar raidlevel
 .Op Fl k Ar keydisk
-.Op Fl l Ar special Ns Op Pf , Ar special Ns Op Pf , Ar ...
-.Op Fl O Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
+.Op Fl l Ar chunk Ns Op Pf , Ar chunk Ns Op Pf , Ar ...
+.Op Fl O Ar chunk | channel : Ns Ar target Ns Op Pf . Ar lun
 .Op Fl p Ar passfile
-.Op Fl R Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
+.Op Fl R Ar chunk | channel : Ns Ar target Ns Op Pf . Ar lun
 .Op Fl r Ar rounds
 .Ar device
 .Sh DESCRIPTION
@@ -72,11 +72,11 @@ enclosures, it is also possible to directly specify the enclosure name
 .Pp
 In the second synopsis,
 .Xr softraid 4
-devices are managed.
+volumes are managed.
 .Ar device
-specifies either a drive (e.g. sd0) or a
+specifies either a volume (e.g. sd0) or the
 .Xr softraid 4
-device (e.g. softraid0).
+controller (always softraid0).
 .Pp
 The options for RAID controllers are as follows:
 .Bl -tag -width Ds
@@ -129,15 +129,16 @@ This is the default if no other option is given.
 .It Fl q
 Show vendor, product, revision, and serial number for the given disk.
 .It Fl R Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
-Manually kick off a rebuild of a RAID volume, using
+Manually kick off a rebuild of a degraded RAID volume, using
 .Ar device
 or
 .Ar channel : Ns Ar target Ns Op Pf . Ar lun
 as a new chunk (with
 .Xr softraid 4 ,
 a partition of fstype
-.Dq RAID )
-in the volume.
+.Dq RAID ) ,
+replacing the offline chunk in the volume;
+it is not possible to change the number of chunks.
 .Ar device
 must be specified as a full path to the chunk device file (e.g. /dev/wd0d).
 A RAID volume rather than a RAID controller is expected as the final argument.
@@ -197,13 +198,13 @@ with unclean data in the metadata areas.
 Do not automatically assemble this volume at boot time.
 .El
 .It Fl c Ar raidlevel
-Create a
+Create a new
 .Xr softraid 4
-device of level
+volume of level
 .Ar raidlevel .
-The device must begin with
-.Dq softraid
-followed by a number.
+The device must be
+.Dq softraid0 ;
+it supports multiple volumes.
 .Pp
 Valid raidlevels are:
 .Pp
@@ -225,36 +226,39 @@ CONCAT:
 A concatenating discipline.
 .El
 .Pp
-The RAID 0, RAID 1 and CONCAT disciplines require a minimum of two devices to
+The RAID 0, RAID 1 and CONCAT disciplines require a minimum of two chunks to
 be provided via
 .Fl l .
-RAID 5 requires at least three devices
+RAID 5 requires at least three chunks
 and the CRYPTO discipline requires exactly one.
 .It Fl d
-Detach volume specified by device.
+Delete volume specified by
+.Ar device .
 .It Fl k Ar keydisk
 Use special device
 .Ar keydisk
 as a key disk for a crypto volume.
-.It Fl l Ar special Ns Op Pf , Ar special Ns Op Pf , Ar ...
-Use
-.Ar special
-device list to create within the
+.It Fl l Ar chunk Ns Op Pf , Ar chunk Ns Op Pf , Ar ...
+Use the
+.Ar chunk
+device list to create a new volume within the
 .Xr softraid 4
 framework.
 Requires
 .Fl c .
-.It Fl O Ar device | channel : Ns Ar target Ns Op Pf . Ar lun
+.It Fl O Ar chunk | channel : Ns Ar target Ns Op Pf . Ar lun
 Set the state of
-.Ar device
+.Ar chunk
 or
 .Ar channel : Ns Ar target Ns Op Pf . Ar lun
 to offline.
 The state of the RAID volume will change in the same way that it would if the
 disk physically went offline.
-.Ar device
+.Ar chunk
 must be specified as a full path to the chunk device file (e.g. /dev/wd0d).
-A RAID volume rather than a RAID controller is expected as the final argument.
+A RAID volume rather than a RAID controller is expected as the
+.Ar device
+argument.
 .It Fl P
 Change the passphrase on the selected crypto volume.
 .It Fl p Ar passfile
@@ -279,15 +283,18 @@ rather than
 This option cannot be used during the initial creation of the crypto volume.
 .El
 .Sh EXAMPLES
-Configure softraid0 with 4 special devices
+Configure a new
+.Xr softraid 4
+volume with four chunks
 (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e)
 and a RAID level of 1:
 .Bd -literal -offset 3n
 # bioctl -c 1 -l /dev/sd2e,/dev/sd3e,/dev/sd4e,/dev/sd5e softraid0
 .Ed
 .Pp
-Configure softraid0 with one special device (/dev/sd2e) and an encrypting
-volume:
+Configure a new
+.Xr softraid 4
+volume with one chunk (/dev/sd2e) and an encrypting discipline:
 .Bd -literal -offset 3n
 # bioctl -c C -l /dev/sd2e softraid0
 .Ed
