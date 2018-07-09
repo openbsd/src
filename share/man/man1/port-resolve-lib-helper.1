@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolve-lib.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: port-resolve-lib-helper.1,v 1.1 2018/07/09 14:53:30 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
-.Dt RESOLVE-LIB 1
+.Dd $Mdocdate: July 9 2018 $
+.Dt PORT-RESOLVE-LIB-HELPER 1
 .Os
 .Sh NAME
-.Nm resolve-lib
+.Nm port-resolve-lib-helper
 .Nd resolve library specs during ports build
 .Sh SYNOPSIS
-.Nm resolve-lib
+.Nm
 .Op Fl needed
 .Op Fl silent
 .Ar spec ...
@@ -66,3 +66,9 @@ is used to sort out
 .Nm
 will succeed if at least one of the libraries matches against a shared
 library passed on the command line.
+.Pp
+This is a helper script used by
+.Xr bsd.port.mk 5
+to complete all wantlib information for
+.Xr pkg_create 1
+and other tools.
