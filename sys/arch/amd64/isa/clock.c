@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.27 2018/07/09 19:38:33 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -304,10 +304,14 @@ i8254_initclocks(void)
 	stathz = 128;
 	profhz = 1024;
 
-	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
-	    0, "clock");
-	isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK, rtcintr,
-	    0, "rtc");
+	/*
+	 * While the clock interrupt handler isn't really MPSAFE, the
+	 * i8254 can't really be used as a clock on a true MP system.
+	 */
+	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK | IPL_MPSAFE,
+	    clockintr, 0, "clock");
+	isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK | IPL_MPSAFE,
+	    rtcintr, 0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */
 
