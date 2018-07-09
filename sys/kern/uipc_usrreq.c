@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.133 2018/07/02 14:36:33 visa Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.134 2018/07/09 10:58:21 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	default:
-		panic("piusrreq");
+		panic("uipc_usrreq");
 	}
 release:
 	m_freem(control);
