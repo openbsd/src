@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.85 2018/04/30 15:06:18 schwarze Exp $
+.\"	$OpenBSD: route.8,v 1.86 2018/07/09 14:11:00 jca Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 30 2018 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -48,15 +48,6 @@
 .Sh DESCRIPTION
 .Nm
 is a utility used to manually view and manipulate the network routing tables.
-Except for setting up the default route, it normally is not needed to
-manipulate routes, as a
-system routing table management daemon, such as
-.Xr ripd 8 ,
-.Xr ospfd 8 ,
-or
-.Xr bgpd 8 ,
-should tend to this task.
-.Pp
 .Nm
 can be used to modify nearly any aspect of the routing policy,
 except packet forwarding, which can be manipulated through the
