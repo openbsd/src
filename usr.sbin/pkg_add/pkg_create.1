@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.112 2018/07/08 17:01:34 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.113 2018/07/09 09:35:13 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: July 8 2018 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -387,19 +387,19 @@ If
 does not begin with an @, same as
 .Dl name/
 .Pp
-.It Cm @define-tag Ar tag Ar mode Ar command
+.It Cm @define-tag Ar tag Ar mode Ar params
 Define a tag of name
 .Ar tag .
-Tags are commands that will be executed at specific points during
+Tags define actions to be performed at specific time during
 .Xr pkg_add 1
 and
 .Xr pkg_delete 1 .
-Currently, only mode
-.Sq at-end
-is defined, anything else will error out during package creation:
-.Pp
-if the tag occurs in dependencies, the given
-.Ar command
+A given tag may be defined several times with additional properties.
+Currently, the following modes are defined
+.Bl -tag -width abc -compact
+.It Ar at-end
+if the tag occurs in any dependency, the given command
+.Ar params
 is executed at the end, similar to
 .Cm @exec
 commands.
@@ -409,8 +409,8 @@ The
 escape sequence stands for localbase.
 .Pp
 Actual tags may themselves contain parameters, so the
-.Ar command
-recognizes two additional escape sequences:
+.Ar params
+list recognizes two additional escape sequences:
 .Bl -tag -width indent
 .It Cm "\&%l"
 list of tag parameters, in a random order, with duplicates removed.
@@ -432,6 +432,24 @@ If that
 is not present, the command won't be run at all,
 since the package has been deleted from the file system,
 and usually cleaning up only requires removing index files.
+.Pp
+.It Ar supersedes
+If the given tag is found in dependencies, it supersedes the other
+tag given in the same line.
+For instance:
+.Bd -literal -offset indent
+@define-tag mktexlsr at-end mktexlsr
+@define-tag mktexlsr-local at-end mktexlsr texmf-local
+@define-tag mktexlsr supersedes mktexlsr-local
+.Ed
+.Pp
+Here, the tag
+.Ar mktexlsr
+rebuilds every texmf directory index, whereas
+.Ar mktexlsr-local
+only rebuilds the local texmf directory index,
+so if both tags are seen, only the global command will be run.
+.El
 .Pp
 .It Cm @exec Ar command
 Execute
