@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.16 2018/06/14 19:57:29 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.17 2018/07/09 08:35:36 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -42,19 +42,19 @@
  */
 #define INTR_CLEAR_GPRS \
 	xorl	%eax,%eax		; \
-	movl	%eax,%ebx		; \
-	movl	%eax,%ecx		; \
-	movl	%eax,%edx		; \
-	movl	%eax,%esi		; \
-	movl	%eax,%edi		; \
-	movl	%eax,%r8d		; \
-	movl	%eax,%r9d		; \
-	movl	%eax,%r10d		; \
-	movl	%eax,%r11d		; \
-	movl	%eax,%r12d		; \
-	movl	%eax,%r13d		; \
-	movl	%eax,%r14d		; \
-	movl	%eax,%r15d
+	xorl	%ebx,%ebx		; \
+	xorl	%ecx,%ecx		; \
+	xorl	%edx,%edx		; \
+	xorl	%esi,%esi		; \
+	xorl	%edi,%edi		; \
+	xorl	%r8d,%r8d		; \
+	xorl	%r9d,%r9d		; \
+	xorl	%r10d,%r10d		; \
+	xorl	%r11d,%r11d		; \
+	xorl	%r12d,%r12d		; \
+	xorl	%r13d,%r13d		; \
+	xorl	%r14d,%r14d		; \
+	xorl	%r15d,%r15d
 
 
 /* For real interrupt code paths, where we can come from userspace */
