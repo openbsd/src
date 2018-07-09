@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.16 2018/05/17 13:39:00 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.17 2018/07/09 07:41:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -75,8 +75,6 @@ enum imsg_type {
 	IMSG_CONFIGURE_DFR,
 	IMSG_WITHDRAW_DFR,
 };
-
-extern const char* imsg_type_name[];
 
 enum {
 	PROC_MAIN,
