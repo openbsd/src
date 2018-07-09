@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.52 2018/04/28 16:16:43 schwarze Exp $
+.\"	$OpenBSD: netintro.4,v 1.53 2018/07/09 09:18:52 schwarze Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: April 28 2018 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -90,16 +90,12 @@ Network interfaces comprise the lowest layer of the
 networking subsystem, interacting with the actual transport
 hardware.
 An interface may support one or more protocol families and/or address formats.
-The
-.Sx SYNOPSIS
-section of each network interface entry gives a sample
+The SYNOPSIS section of each network interface entry gives a sample
 specification of the related drivers for use in providing a system description
 to the
 .Xr config 8
 program.
-The
-.Sx DIAGNOSTICS
-section lists messages which may appear on the console
+The DIAGNOSTICS section lists messages which may appear on the console
 and/or in the system error log,
 .Pa /var/log/messages
 (see
