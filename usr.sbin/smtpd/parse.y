@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.214 2018/06/18 18:19:14 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.215 2018/07/09 12:05:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1975,16 +1975,16 @@ pushfile(const char *name, int secret)
 	struct file	*nfile;
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("warn: malloc");
+		log_warn("%s", __func__);
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("warn: malloc");
+		log_warn("%s", __func__);
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("warn: %s", nfile->name);
+		log_warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -1999,7 +1999,7 @@ pushfile(const char *name, int secret)
 	nfile->ungetsize = 16;
 	nfile->ungetbuf = malloc(nfile->ungetsize);
 	if (nfile->ungetbuf == NULL) {
-		log_warn("warn: malloc");
+		log_warn("%s", __func__);
 		fclose(nfile->stream);
 		free(nfile->name);
 		free(nfile);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2014/11/20 05:51:20 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2018/07/09 12:05:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -489,7 +489,7 @@ pushfile(const char *name)
 	nfile = xzalloc(sizeof(struct file));
 	nfile->name = xstrdup(name);
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s", nfile->name);
+		warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);

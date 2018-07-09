@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.674 2018/07/08 17:15:07 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.675 2018/07/09 12:05:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5549,23 +5549,21 @@ pushfile(const char *name, int secret)
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
 	    (nfile->name = strdup(name)) == NULL) {
-		if (nfile) {
-			warn("strdup");
+		warn("%s", __func__);
+		if (nfile)
 			free(nfile);
-		} else
-			warn("calloc");
 		return (NULL);
 	}
 	if (TAILQ_FIRST(&files) == NULL && strcmp(nfile->name, "-") == 0) {
 		nfile->stream = stdin;
 		free(nfile->name);
 		if ((nfile->name = strdup("stdin")) == NULL) {
-			warn("strdup");
+			warn("%s", __func__);
 			free(nfile);
 			return (NULL);
 		}
 	} else if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		warn("%s", nfile->name);
+		warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -5580,7 +5578,7 @@ pushfile(const char *name, int secret)
 	nfile->ungetsize = 16;
 	nfile->ungetbuf = malloc(nfile->ungetsize);
 	if (nfile->ungetbuf == NULL) {
-		warn("malloc");
+		warn("%s", __func__);
 		fclose(nfile->stream);
 		free(nfile->name);
 		free(nfile);

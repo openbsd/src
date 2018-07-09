@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2018/07/08 17:15:07 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.31 2018/07/09 12:05:11 krw Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -769,16 +769,16 @@ pushfile(const char *name, int secret)
 	log_debug("parsing config %s", name);
 
 	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
-		log_warn("calloc");
+		log_warn("%s", __func__);
 		return (NULL);
 	}
 	if ((nfile->name = strdup(name)) == NULL) {
-		log_warn("strdup");
+		log_warn("%s", __func__);
 		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s", nfile->name);
+		log_warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -794,7 +794,7 @@ pushfile(const char *name, int secret)
 	nfile->ungetsize = 16;
 	nfile->ungetbuf = malloc(nfile->ungetsize);
 	if (nfile->ungetbuf == NULL) {
-		log_warn("malloc");
+		log_warn("%s", __func__);
 		fclose(nfile->stream);
 		free(nfile->name);
 		free(nfile);
