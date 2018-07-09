@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.62 2018/07/09 08:43:09 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.63 2018/07/09 16:11:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -308,6 +308,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = viornd.cfg.isr_status;
 			viornd.cfg.isr_status = 0;
+			vcpu_deassert_pic_irq(viornd.vm_id, 0, viornd.irq);
 			break;
 		}
 	}
@@ -759,6 +760,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 				dev->cfg.queue_notify = 0;
 				dev->cfg.isr_status = 0;
 				dev->vq[0].last_avail = 0;
+				vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
 			}
 			break;
 		default:
@@ -927,6 +929,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = dev->cfg.isr_status;
 			dev->cfg.isr_status = 0;
+			vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
 			break;
 		}
 	}
@@ -982,6 +985,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 				dev->vq[RXQ].notified_avail = 0;
 				dev->vq[TXQ].last_avail = 0;
 				dev->vq[TXQ].notified_avail = 0;
+				vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
 			}
 			break;
 		default:
@@ -1022,6 +1026,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = dev->cfg.isr_status;
 			dev->cfg.isr_status = 0;
+			vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
 			break;
 		}
 	}
@@ -1727,6 +1732,7 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = vmmci.cfg.isr_status;
 			vmmci.cfg.isr_status = 0;
+			vcpu_deassert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
 			break;
 		}
 	}
@@ -1770,6 +1776,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
 	viornd.pci_id = id;
 	viornd.irq = pci_get_dev_irq(id);
+	viornd.vm_id = vcp->vcp_id;
 
 	if (vcp->vcp_ndisks > 0) {
 		nr_vioblk = vcp->vcp_ndisks;
@@ -1813,6 +1820,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
 			vioblk[i].max_xfer = 1048576;
 			vioblk[i].pci_id = id;
+			vioblk[i].vm_id = vcp->vcp_id;
 			vioblk[i].irq = pci_get_dev_irq(id);
 		}
 	}
@@ -1944,6 +1952,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 		vioscsi->n_blocks = sz >> 11; /* num of 2048 blocks in file */
 		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->pci_id = id;
+		vioscsi->vm_id = vcp->vcp_id;
 		vioscsi->irq = pci_get_dev_irq(id);
 	}
 
