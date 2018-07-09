@@ -1,13 +1,15 @@
-#	$OpenBSD: files.cortex,v 1.6 2016/08/10 06:51:57 kettenis Exp $
+#	$OpenBSD: files.cortex,v 1.7 2018/07/09 09:51:43 patrick Exp $
 
 # ARM core
 device	cortex {}
 attach	cortex at fdt
 file	arch/arm/cortex/cortex.c		cortex
 
-device	ampintc
+device	ampintc: fdt
 attach	ampintc at fdt
-file	arch/arm/cortex/ampintc.c		ampintc
+device	ampintcmsi
+attach	ampintcmsi at fdt
+file	arch/arm/cortex/ampintc.c		ampintc | ampintcmsi
 
 device	amptimer
 attach	amptimer at cortex
