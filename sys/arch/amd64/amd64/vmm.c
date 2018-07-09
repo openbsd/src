@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.207 2018/07/05 04:36:14 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.208 2018/07/09 13:33:32 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4578,6 +4578,19 @@ vmx_handle_exit(struct vcpu *vcpu)
 		break;
 	case VMX_EXIT_MWAIT:
 	case VMX_EXIT_MONITOR:
+	case VMX_EXIT_VMXON:
+	case VMX_EXIT_VMWRITE:
+	case VMX_EXIT_VMREAD:
+	case VMX_EXIT_VMLAUNCH:
+	case VMX_EXIT_VMRESUME:
+	case VMX_EXIT_VMPTRLD:
+	case VMX_EXIT_VMPTRST:
+	case VMX_EXIT_VMCLEAR:
+	case VMX_EXIT_VMCALL:
+	case VMX_EXIT_VMFUNC:
+	case VMX_EXIT_VMXOFF:
+	case VMX_EXIT_INVVPID:
+	case VMX_EXIT_INVEPT:
 		ret = vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
