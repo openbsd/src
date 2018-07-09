@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.8 2018/04/28 15:44:59 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.9 2018/07/09 20:09:00 jasper Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -59,7 +59,7 @@
 struct urng_chip {
 	int	bufsiz;
 	int	endpoint;
-	int	iface;
+	int	ctl_iface_idx;
 	int	msecs;
 	int	read_timeout;
 };
@@ -141,14 +141,15 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_first_run = 1;
 #endif
 
-	DPRINTF(("%s: bufsiz: %d, endpoint: %d iface: %d, msecs: %d, read_timeout: %d\n",
+	DPRINTF(("%s: bufsiz: %d, endpoint: %d ctl iface: %d, msecs: %d, read_timeout: %d\n",
 		DEVNAME(sc),
 		sc->sc_chip.bufsiz,
 		sc->sc_chip.endpoint,
-		sc->sc_chip.iface,
+		sc->sc_chip.ctl_iface_idx,
 		sc->sc_chip.msecs,
 		sc->sc_chip.read_timeout));
 
+	/* Find the bulk endpoints. */
 	id = usbd_get_interface_descriptor(uaa->iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
@@ -176,6 +177,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
+	/* Open the pipes. */
 	error = usbd_open_pipe(uaa->iface, ep_ibulk, USBD_EXCLUSIVE_USE,
 		    &sc->sc_inpipe);
 	if (error) {
@@ -184,6 +186,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
+	/* Allocate the transfer buffers. */
 	sc->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_xfer == NULL) {
 		printf("%s: could not alloc xfer\n", DEVNAME(sc));
@@ -197,6 +200,7 @@ urng_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
+	/* And off we go! */
 	usb_init_task(&sc->sc_task, urng_task, sc, USB_TASK_TYPE_GENERIC);
 	timeout_set(&sc->sc_timeout, urng_timeout, sc);
 	usb_add_task(sc->sc_udev, &sc->sc_task);
@@ -241,7 +245,6 @@ urng_task(void *arg)
 	time_t elapsed;
 	int rate;
 #endif
-
 	usbd_setup_xfer(sc->sc_xfer, sc->sc_inpipe, NULL, sc->sc_buf,
 	    sc->sc_chip.bufsiz, USBD_SHORT_XFER_OK | USBD_SYNCHRONOUS,
 	    sc->sc_chip.read_timeout, NULL);
