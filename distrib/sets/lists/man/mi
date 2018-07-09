@@ -191,7 +191,6 @@
 ./usr/share/man/man1/nslookup.1
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/openssl.1
-./usr/share/man/man1/out-of-date.1
 ./usr/share/man/man1/outdated-perl-ports.1
 ./usr/share/man/man1/pagesize.1
 ./usr/share/man/man1/passwd.1
@@ -356,6 +355,7 @@
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
 ./usr/share/man/man1/pkg_mklocatedb.1
+./usr/share/man/man1/pkg_outdated.1
 ./usr/share/man/man1/pkg_sign.1
 ./usr/share/man/man1/pkg_subst.1
 ./usr/share/man/man1/pkill.1
