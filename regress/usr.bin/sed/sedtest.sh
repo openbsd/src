@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.6 2016/10/11 19:31:15 martijn Exp $
+#	$OpenBSD: sedtest.sh,v 1.7 2018/07/09 13:07:09 schwarze Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -408,19 +408,28 @@ u2/g' lines1
 	mark '8.15' ; $SED -e '1N;2y/\n/X/' lines1
 	mark '8.16'
 	echo 'eeefff' | $SED -e 'p' -e 's/e/X/p' -e ':x' -e 's//Y/p' -e '/f/bx'
-	echo '[ as an s delimiter and its escapes'
+	echo 'various special characters as delimiters'
+# POSIX says "Within the BRE and the replacement, the BRE delimiter itself
+# can be used as a literal character if it is preceded by a <backslash>". 
+# That is an ambiguous statement.  We interpret it in the sense that the
+# character is passed on literally to the RE engine, without the backslash.
 	mark '8.17' ; $SED -e 's[_[X[' lines1
-# This is a matter of interpretation
-# POSIX 1003.1, 2004 says "Within the BRE and the replacement,
-# the BRE delimiter itself can be used as a *literal* character
-# if it is preceded by a backslash
-	mark '8.18' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X['
-	mark '8.19' ; sed 's/l/[/' lines1 | $SED -e 's[\[.[X\[['
+	mark '8.18' ; $SED -e 's$1\$$\$R$' lines1
+	mark '8.19' ; $SED -Ee 's(\(3|5)(\(\1)(' lines1
+	mark '8.20' ; $SED -e 's*_1\**\*R*' lines1
+	mark '8.21' ; $SED -Ee 's+_1\++\+R+' lines1
+	mark '8.22' ; $SED -e 's.1\..R\..g' lines1
+	mark '8.23' ; sed 's/_/\//' lines1 | $SED -e 's/\/1/R/'
+	mark '8.24' ; $SED -Ee 's?_1\??\?R?' lines1
+	mark '8.25' ; $SED -e 's[\[2-4][\[R][' lines1
+	mark '8.26' ; $SED -e 's^\^l^R\^^' lines1
+	mark '8.27' ; $SED -Ee 's{1\{2}{\{R}{' lines1
+	mark '8.28' ; $SED -Ee 's|2\|4|\|R|' lines1
 	echo '\ in y command'
-	mark '8.20'
+	mark '8.29'
 	printf 'a\\b(c\n' |
 	$SED 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ, /\\()"%abcdefghijklmnopqrstuvwxyz,------%'
-	mark '8.21'
+	mark '8.30'
 # Test if an unmatched line is only printed once.
 	printf 'z\n' | $SED -e 's/^a*/b/2p'
 }
