@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.675 2018/07/09 12:05:10 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.676 2018/07/09 15:07:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1678,14 +1678,6 @@ pfrule		: action dir logquick interface af proto fromto
 						    "apply to tcp");
 					YYERROR;
 				}
-#if 0
-				if (($8.flags.b1 & parse_flags("S")) == 0 &&
-				    $7.src_os) {
-					yyerror("OS fingerprinting requires "
-					    "the SYN TCP flag (flags S/SA)");
-					YYERROR;
-				}
-#endif
 			}
 
 			r.tos = $8.tos;
