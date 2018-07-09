@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1090 2018/07/09 08:25:08 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1091 2018/07/09 10:23:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -865,7 +865,8 @@ ask_password() {
 # Support functions for donetconfig()
 # ------------------------------------------------------------------------------
 
-# Issue a DHCP request to configure interface $1.
+# Issue a DHCP request to configure interface $1 and add it to group 'dhcp' to
+# later be able to identify DHCP configured interfaces.
 dhcp_request() {
 	local _if=$1
 
@@ -903,14 +904,9 @@ hextodec() {
 	echo $(($1)).$(($2)).$(($3)).$(($4))
 }
 
-# Create an entry in the hosts file. If an entry with the same symbolic name and
-# address family already exists, delete it.
-#
-# Parameters:
-#
-# $1 = IP address (v6 if it contains ':', else v4)
-# $2 = symbolic name
-#
+# Create an entry in the hosts file using IP address $1 and symbolic name $2.
+# Treat $1 as IPv6 address if it contains ':', otherwise as IPv4. If an entry
+# with the same name and address family already exists, delete it first.
 add_hostent() {
 	local _addr=$1 _name=$2 _delim="."
 
@@ -923,12 +919,8 @@ add_hostent() {
 	echo "$_addr $_name" >>/tmp/i/hosts
 }
 
-# Configure VLAN interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-#
+# Configure VLAN interface $1 and create the corresponding hostname.if(5) file.
+# Ask the user what parent network interface and vnetid to use.
 vlan_config() {
 	local _if=$1 _hn=/tmp/i/hostname.$1 _hn_vd _vd _vdvi _vdvi_used _vi
 	local _sed_vdvi='s/.encap: vnetid ([[:alnum:]]+) parent ([[:alnum:]]+)/\2:\1/p'
@@ -995,17 +987,13 @@ vlan_config() {
 	ifconfig $_if $_vi parent $_vd
 }
 
-# Configure IPv4 interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-# $2 = hostname to add to hosts file
-# $3 = /path/to/hostname.if
-#
+# Configure IPv4 interface $1, add hostname $2 to the hosts file and create the
+# hostname.if(5) file $3. Ask the user for the IP address and the network mask
+# if IP adress was not in CIDR notation.
 v4_config() {
 	local _if=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
+	# Preset the default answer for the IP address question in $_addr.
 	if ifconfig $_if | grep -q 'groups:.* dhcp'; then
 		_addr=dhcp
 	else
@@ -1076,12 +1064,17 @@ v6_info() {
 		/.inet6 /s///p'
 }
 
-# Set up IPv6 default route on interface $1.
+# Configure an IPv6 default route on interface $1 and preserve that information
+# in the /etc/mygate file. Ask the user to either select from a list of default
+# router candidates or to enter a router IPv6 address.
 v6_defroute() {
 	local _if=$1 _prompt _resp _routers PS3
 
+	# Only continue if there is not yet any IPv6 default route set.
 	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
+	# Get a sorted, unique list of default router canditates by issuing a
+	# ping6 to the All-Routers multicast address.
 	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
 		sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}'))
 
