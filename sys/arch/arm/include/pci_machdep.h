@@ -1,51 +1,35 @@
-/*	$OpenBSD: pci_machdep.h,v 1.14 2016/05/04 14:30:00 kettenis Exp $	*/
-/*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:52 thorpej Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.15 2018/07/09 09:53:06 patrick Exp $ */
 
 /*
- * Modified for arm32 by Mark Brinicombe
+ * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
  *
- * from: sys/arch/alpha/pci/pci_machdep.h
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * Copyright (c) 1996 Carnegie-Mellon University.
- * All rights reserved.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- * Author: Chris G. Demetriou
- *
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
- * Carnegie Mellon requests users of this software to return to
- *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
  */
 
-/*
- * Machine-specific definitions for PCI autoconfiguration.
- */
+typedef struct arm32_pci_chipset *pci_chipset_tag_t;
+typedef u_long pcitag_t;
+typedef u_long pci_intr_handle_t;
 
-/*
- * Types provided to machine-independent PCI code
- */
-typedef struct	arm32_pci_chipset	*pci_chipset_tag_t;
-typedef u_long	pcitag_t;
-typedef u_long	pci_intr_handle_t;
-
-/*
- * Forward declarations.
- */
 struct pci_attach_args;
 
 /*
@@ -67,9 +51,13 @@ struct arm32_pci_chipset {
 	void		*pc_intr_v;
 	int		(*pc_intr_map)(struct pci_attach_args *,
 			    pci_intr_handle_t *);
+	int		(*pc_intr_map_msi)(struct pci_attach_args *,
+			    pci_intr_handle_t *);
+	int		(*pc_intr_map_msix)(struct pci_attach_args *,
+			    int, pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *, const char *);
+			    int, int (*)(void *), void *, char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 };
 
@@ -90,14 +78,16 @@ struct arm32_pci_chipset {
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
-#define	pci_intr_map(pa, ihp)						\
-    (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_map_msi(pa, ihp)	(-1)
-#define	pci_intr_map_msix(pa, vec, ihp)	(-1)
+#define	pci_intr_map(c, ihp)						\
+    (*(c)->pa_pc->pc_intr_map)((c), (ihp))
+#define	pci_intr_map_msi(c, ihp)					\
+    (*(c)->pa_pc->pc_intr_map_msi)((c), (ihp))
+#define	pci_intr_map_msix(c, vec, ihp)					\
+    (*(c)->pa_pc->pc_intr_map_msix)((c), (vec), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
-#define	pci_intr_establish(c, ih, l, h, a, n)				\
-    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (n))
+#define	pci_intr_establish(c, ih, l, h, a, nm)				\
+    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_probe_device_hook(c, a)	(0)
