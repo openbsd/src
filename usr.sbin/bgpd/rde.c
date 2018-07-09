@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.385 2018/07/09 14:08:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.386 2018/07/09 14:44:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,7 +51,7 @@ void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
-void		 rde_update_update(struct rde_peer *, struct rde_aspath *,
+int		 rde_update_update(struct rde_peer *, struct rde_aspath *,
 		     struct bgpd_addr *, u_int8_t);
 void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
 		     u_int8_t);
@@ -1208,18 +1208,8 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		rde_update_update(peer, asp, &prefix, prefixlen);
-
-		/* max prefix checker */
-		if (peer->conf.max_prefix &&
-		    peer->prefix_cnt > peer->conf.max_prefix) {
-			log_peer_warnx(&peer->conf, "prefix limit reached"
-			    " (>%u/%u)", peer->prefix_cnt,
-			    peer->conf.max_prefix);
-			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
-			    NULL, 0);
+		if (rde_update_update(peer, asp, &prefix, prefixlen) == -1)
 			goto done;
-		}
 
 	}
 
@@ -1289,21 +1279,9 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				rde_update_update(peer, asp, &prefix,
-				    prefixlen);
-
-				/* max prefix checker */
-				if (peer->conf.max_prefix &&
-				    peer->prefix_cnt > peer->conf.max_prefix) {
-					log_peer_warnx(&peer->conf,
-					    "prefix limit reached"
-					    " (>%u/%u)", peer->prefix_cnt,
-					    peer->conf.max_prefix);
-					rde_update_err(peer, ERR_CEASE,
-					    ERR_CEASE_MAX_PREFIX, NULL, 0);
+				if (rde_update_update(peer, asp, &prefix,
+				    prefixlen) == -1)
 					goto done;
-				}
-
 			}
 			break;
 		case AID_VPN_IPv4:
@@ -1327,21 +1305,9 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				rde_update_update(peer, asp, &prefix,
-				    prefixlen);
-
-				/* max prefix checker */
-				if (peer->conf.max_prefix &&
-				    peer->prefix_cnt > peer->conf.max_prefix) {
-					log_peer_warnx(&peer->conf,
-					    "prefix limit reached"
-					    " (>%u/%u)", peer->prefix_cnt,
-					    peer->conf.max_prefix);
-					rde_update_err(peer, ERR_CEASE,
-					    ERR_CEASE_MAX_PREFIX, NULL, 0);
+				if (rde_update_update(peer, asp, &prefix,
+				    prefixlen) == -1)
 					goto done;
-				}
-
 			}
 			break;
 		default:
@@ -1359,7 +1325,7 @@ done:
 	return (error);
 }
 
-void
+int
 rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
@@ -1372,6 +1338,14 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	/* add original path to the Adj-RIB-In */
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen, 0))
 		peer->prefix_cnt++;
+
+	/* max prefix checker */
+	if (peer->conf.max_prefix && peer->prefix_cnt > peer->conf.max_prefix) {
+		log_peer_warnx(&peer->conf, "prefix limit reached (>%u/%u)",
+		    peer->prefix_cnt, peer->conf.max_prefix);
+		rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX, NULL, 0);
+		return (-1);
+	}
 
 	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0);
 	if (p == NULL)
@@ -1399,6 +1373,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 		/* clear state */
 		rde_filterstate_clean(&state);
 	}
+	return (0);
 }
 
 void
