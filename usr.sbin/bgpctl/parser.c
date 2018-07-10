@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.81 2017/10/15 20:44:21 deraadt Exp $ */
+/*	$OpenBSD: parser.c,v 1.82 2018/07/10 13:03:06 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -492,6 +492,7 @@ parse(int argc, char *argv[])
 	res.large_community.as = COMMUNITY_UNSET;
 	res.large_community.ld1 = COMMUNITY_UNSET;
 	res.large_community.ld2 = COMMUNITY_UNSET;
+	res.rtableid = getrtable();
 	TAILQ_INIT(&res.set);
 	if ((res.irr_outdir = getcwd(NULL, 0)) == NULL) {
 		fprintf(stderr, "getcwd failed: %s\n", strerror(errno));
