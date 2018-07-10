@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1097 2018/07/10 09:33:34 halex Exp $
+#	$OpenBSD: install.sub,v 1.1098 2018/07/10 14:22:36 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1314,8 +1314,8 @@ v4_defroute() {
 	done
 }
 
-# Extract fully qualified domain name from current hostname. If none is
-# currently set, use 'my.domain'.
+# Extract the domain part from currently configured fully qualified domain name.
+# If none is set, use 'my.domain'.
 get_fqdn() {
 	local _dn
 
@@ -1452,10 +1452,10 @@ unpriv2() {
 	do_as _file "$@"
 }
 
-# Find filesystems to store prefetched sets.
-# Prefer filesystems which are not used during extraction with 512M free space.
-# Otherwise use any other filesystem with 2 GB free space to prevent overflow
-# during extraction.
+# Find and list filesystems to store the prefetched sets. Prefer filesystems
+# which are not used during extraction with 512M free space. Otherwise search
+# any other filesystem that has 2 GB free space to prevent overflow during
+# extraction.
 prefetcharea_fs_list() {
 	local _fs_list
 
@@ -1481,9 +1481,9 @@ prefetcharea_fs_list() {
 	[[ -n $_fs_list ]] && echo $_fs_list || return 1
 }
 
-# Install a user-selected subset of the files in $2 from the source
-# named in $1. Display an error message for failed installs so the
-# user will know to try again.
+# Install a user-selected subset of the files listed in $2 from the source $1.
+# Display an error message for each failed install and ask the user whether to
+# continue or not.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS _tmpfs \
 		_tmpfs_list _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
@@ -1492,8 +1492,9 @@ install_files() {
 	# Fetch sets from local sources (disk, cdrom, nfs) as root.
 	[[ $_src == file://* ]] && _srclocal=true _unpriv=
 
-	# Initialize _sets to the list of sets found in _src, and initialize
-	# _get_sets to the intersection of _sets and DEFAULTSETS.
+	# Based on the file list in $_files, create two list for select_sets().
+	# _sets:     the list of files the user can select from
+	# _get_sets: the list of files that are shown as pre-selectd
 	#
 	# Sets will be installed in the order given in ALLSETS to ensure proper
 	# installation.  So, to minimize user confusion display the sets in the
@@ -1533,7 +1534,7 @@ install_files() {
 	# Note which sets didn't verify ok.
 	_unver=$_get_sets
 
-	# Try to prefetch and control checksum files.
+	# Try to prefetch and control checksum of the set files.
 	# Use dummy for loop as combined assignment and do { ... } while(0).
 	for _issue in ''; do
 		! isin SHA256.sig $_files &&
@@ -1577,6 +1578,8 @@ install_files() {
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
+		# The bsd.rd only download/verify/install assumes that the sets
+		# location of the next release. So use the right signature file.
 		$UPGRADE_BSDRD &&
 			PUB_KEY=/mnt/etc/signify/openbsd-$((VERSION + 1))-base.pub
 
@@ -1585,13 +1588,14 @@ install_files() {
 			signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
+		# Fetch and verify the set files.
 		for _f in $_get_sets; do
 			rm -f /tmp/h /tmp/fail
 
-			# Fetch set and create checksum by pipe through sha256.
-			# Create a flag file in case ftp failed. Sets from net
-			# are written to prefetch area, the output of local sets
-			# is discarded.
+			# Fetch set file and create a checksum by piping through
+			# sha256. Create a flag file in case ftp failed. Sets
+			# from net are written to the prefetch area, the output
+			# of local sets is discarded.
 			( $_unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >/tmp/fail ) |
 			( $_srclocal && unpriv2 sha256 >/tmp/h ||
 				unpriv2 -f /tmp/h sha256 -ph /tmp/h >"$_tmpsrc/$_f" )
@@ -1630,9 +1634,14 @@ install_files() {
 		return
 	fi
 
+	# Install the set files.
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
+
+		# Take the set file from the prefetch area if possible.
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
+
+		# Extract the set files and put the kernel files in place.
 		case $_fsrc in
 		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" |
 				tar -zxphf - -C /mnt &&
@@ -1642,7 +1651,9 @@ install_files() {
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
+		*)	# Make a backup of the existing ramdisk kernel in the
+			# bsd.rd only download/verify/install case.
+			$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
 				cp /mnt/$_f /mnt/$_f.old.$VERSION
 			$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
@@ -1654,7 +1665,12 @@ install_files() {
 				return
 			fi
 		else
+			# Remove each successfully installed set file from
+			# DEFAULTSETS which is checked by sane_sets().
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			# Reset DEFAULTSETS to make sure that sane_sets() does
+			# not complain about missing set files in the bsd.rd
+			# only download/verify/install case,
 			$UPGRADE_BSDRD && DEFAULTSETS=
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
