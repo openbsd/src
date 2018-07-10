@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.479 2018/07/10 09:28:27 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.480 2018/07/10 16:48:22 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -620,9 +620,9 @@ struct pf_rule {
 #define PFRULE_AFTO		0x00200000	/* af-to rule */
 #define	PFRULE_EXPIRED		0x00400000	/* one shot rule hit by pkt */
 
-#define PFSTATE_HIWAT		10000	/* default state table size */
-#define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
-#define PFSTATE_ADAPT_END	12000	/* default adaptive timeout end */
+#define PFSTATE_HIWAT		100000	/* default state table size */
+#define PFSTATE_ADAPT_START	60000	/* default adaptive timeout start */
+#define PFSTATE_ADAPT_END	120000	/* default adaptive timeout end */
 #define	PF_PKTDELAY_MAXPKTS	10000	/* max # of pkts held in delay queue */
 
 struct pf_rule_item {
