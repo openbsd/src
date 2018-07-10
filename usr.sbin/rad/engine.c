@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2018/07/10 22:13:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -414,7 +414,6 @@ parse_rs(struct imsg_ra_rs *rs)
 	struct nd_router_solicit	*nd_rs;
 	struct imsg_send_ra		 send_ra;
 	ssize_t				 len;
-	int				 source_linkaddr = 0;
 	const char			*hbuf;
 	char				 ifnamebuf[IFNAMSIZ];
 	uint8_t				*p;
