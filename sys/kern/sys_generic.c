@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.119 2018/05/08 08:53:41 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.120 2018/07/10 08:58:50 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) data;
 	} */ *uap = v;
 	struct file *fp;
-	struct filedesc *fdp;
+	struct filedesc *fdp = p->p_fd;
 	u_long com = SCARG(uap, com);
 	int error = 0;
 	u_int size;
@@ -398,7 +398,6 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 #define STK_PARAMS	128
 	long long stkbuf[STK_PARAMS / sizeof(long long)];
 
-	fdp = p->p_fd;
 	if ((fp = fd_getfile_mode(fdp, SCARG(uap, fd), FREAD|FWRITE)) == NULL)
 		return (EBADF);
 
@@ -478,16 +477,10 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 
 	case FIOSETOWN:
 		tmp = *(int *)data;
-		if (fp->f_type == DTYPE_SOCKET) {
-			struct socket *so = fp->f_data;
 
-			so->so_pgid = tmp;
-			so->so_siguid = p->p_ucred->cr_ruid;
-			so->so_sigeuid = p->p_ucred->cr_uid;
-			error = 0;
-			break;
-		}
-		if (tmp <= 0) {
+		if (fp->f_type == DTYPE_SOCKET || fp->f_type == DTYPE_PIPE) {
+			/* nothing */
+		} else if (tmp <= 0) {
 			tmp = -tmp;
 		} else {
 			struct process *pr = prfind(tmp);
@@ -502,11 +495,6 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		break;
 
 	case FIOGETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			error = 0;
-			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
-			break;
-		}
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
 		*(int *)data = -*(int *)data;
 		break;

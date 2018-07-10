@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.176 2018/07/07 16:14:40 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.177 2018/07/10 08:58:50 mpi Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -484,14 +484,6 @@ restart:
 		break;
 
 	case F_GETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			*retval = ((struct socket *)fp->f_data)->so_pgid;
-			break;
-		}
-		if (fp->f_type == DTYPE_PIPE) {
-			*retval = ((struct pipe *)fp->f_data)->pipe_pgid;
-			break;
-		}
 		tmp = 0;
 		error = (*fp->f_ops->fo_ioctl)
 			(fp, TIOCGPGRP, (caddr_t)&tmp, p);
@@ -500,21 +492,9 @@ restart:
 
 	case F_SETOWN:
 		tmp = (long)SCARG(uap, arg);
-		if (fp->f_type == DTYPE_SOCKET) {
-			struct socket *so = fp->f_data;
-
-			so->so_pgid = tmp;
-			so->so_siguid = p->p_ucred->cr_ruid;
-			so->so_sigeuid = p->p_ucred->cr_uid;
-			break;
-		}
-		if (fp->f_type == DTYPE_PIPE) {
-			struct pipe *mpipe = fp->f_data;
-
-			mpipe->pipe_pgid = tmp;
-			break;
-		}
-		if (tmp <= 0) {
+		if (fp->f_type == DTYPE_SOCKET || fp->f_type == DTYPE_PIPE) {
+			/* nothing */
+		} else if (tmp <= 0) {
 			tmp = -tmp;
 		} else {
 			struct process *pr1 = prfind(tmp);

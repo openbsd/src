@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.81 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.82 2018/07/10 08:58:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -665,6 +665,8 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		*(int *)data = mpipe->pipe_buffer.cnt;
 		return (0);
 
+	case TIOCSPGRP:
+		/* FALLTHROUGH */
 	case SIOCSPGRP:
 		mpipe->pipe_pgid = *(int *)data;
 		return (0);
@@ -672,6 +674,10 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGPGRP:
 		*(int *)data = mpipe->pipe_pgid;
 		return (0);
+
+	case TIOCGPGRP:
+		*(int *)data = -mpipe->pipe_pgid;
+		break;
 
 	}
 	return (ENOTTY);
