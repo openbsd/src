@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.574 2018/02/09 07:14:17 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.575 2018/07/10 09:31:07 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 9 2018 $
+.Dd $Mdocdate: July 10 2018 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -668,6 +668,10 @@ will match any existing interface except loopback ones.
 .It Cm rtable Ar number
 Used to select an alternate routing table for the routing lookup.
 Only effective before the route lookup happened, i.e. when filtering inbound.
+.Pp
+.It Cm set delay Ar milliseconds
+Packets matching this rule will be delayed at the outbound interface by the
+given number of milliseconds.
 .Pp
 .It Cm set prio Ar priority | Pq Ar priority , priority
 Packets matching this rule will be assigned a specific queueing priority.
@@ -2737,6 +2741,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "divert-to" host "port" port |
                  "label" string | "tag" string | [ "!" ] "tagged" string |
                  "max-pkt-rate" number "/" seconds |
+                 "set delay" number |
                  "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "set queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" | "prio" number |
