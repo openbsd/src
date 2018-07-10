@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.16 2018/07/03 23:21:15 mortimer Exp $	*/
+/*	$OpenBSD: spl.S,v 1.17 2018/07/10 16:01:26 deraadt Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -64,8 +64,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define ALIGN_TEXT	.align 16,0x90
 
 #include <machine/asm.h>
 #include <machine/psl.h>
