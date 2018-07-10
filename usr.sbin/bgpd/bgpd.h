@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.321 2018/07/10 12:40:41 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.322 2018/07/10 13:06:28 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,7 +153,7 @@ extern const struct aid aid_vals[];
 
 #define AID_PTSIZE	{				\
 	0,						\
-	sizeof(struct pt_entry4), 			\
+	sizeof(struct pt_entry4),			\
 	sizeof(struct pt_entry6),			\
 	sizeof(struct pt_entry_vpn4)			\
 }
@@ -661,7 +661,7 @@ struct filter_aslen {
 
 struct filter_prefixset {
 	int			 flags;
-	char	 		 name[PREFIXSET_NAME_LEN];
+	char			 name[PREFIXSET_NAME_LEN];
 	struct prefixset	*ps;
 };
 
@@ -1149,7 +1149,8 @@ int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
 int		 aspath_match(void *, u_int16_t, struct filter_as *, u_int32_t);
-int		 as_compare(u_int8_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+int		 as_compare(u_int8_t, u_int32_t, u_int32_t, u_int32_t,
+		    u_int32_t);
 u_int32_t	 aspath_extract(const void *, int);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
