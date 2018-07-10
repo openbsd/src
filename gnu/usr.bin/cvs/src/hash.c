@@ -306,7 +306,7 @@ findnode (list, key)
     /* This probably should be "assert (list != NULL)" (or if not we
        should document the current behavior), but only if we check all
        the callers to see if any are relying on this behavior.  */
-    if ((list == (List *) NULL))
+    if (list == (List *) NULL)
 	return ((Node *) NULL);
 
     assert (key != NULL);
