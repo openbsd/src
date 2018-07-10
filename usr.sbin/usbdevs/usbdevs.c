@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.27 2018/07/03 13:21:31 mpi Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.28 2018/07/10 09:18:36 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ int verbose = 0;
 int showdevs = 0;
 
 void usage(void);
-void usbdev(int f, uint8_t, int rec);
+void usbdev(int f, uint8_t);
 void usbdump(int f);
 void dumpone(char *name, int f, int addr);
 int main(int, char **);
@@ -69,13 +69,13 @@ usage(void)
 }
 
 char done[USB_MAX_DEVICES];
-int indent;
 
 void
-usbdev(int f, uint8_t addr, int rec)
+usbdev(int f, uint8_t addr)
 {
 	struct usb_device_info di;
-	int e, p, i, s, nports;
+	int e, i, port, nports;
+	uint16_t change, status;
 
 	di.udi_addr = addr;
 	e = ioctl(f, USB_DEVICEINFO, &di);
@@ -89,6 +89,7 @@ usbdev(int f, uint8_t addr, int rec)
 	done[addr] = 1;
 	printf("%04x:%04x %s, %s", di.udi_vendorNo, di.udi_productNo,
 	    di.udi_vendor, di.udi_product);
+
 	if (verbose) {
 		printf("\n\t ");
 		switch (di.udi_speed) {
@@ -122,48 +123,96 @@ usbdev(int f, uint8_t addr, int rec)
 			printf(", iSerialNumber %s", di.udi_serial);
 	}
 	printf("\n");
+
 	if (showdevs) {
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
 			if (di.udi_devnames[i][0])
-				printf("%*s  %s\n", indent, "",
-				    di.udi_devnames[i]);
+				printf("\t driver: %s\n", di.udi_devnames[i]);
 	}
-	if (!rec)
-		return;
 
-	nports = MINIMUM(di.udi_nports, nitems(di.udi_ports));
 	if (verbose > 1) {
-		for (p = 0; p < nports; p++) {
-			s = di.udi_ports[p];
-			printf("\t port %02u:", p+1);
-			if (s < USB_MAX_DEVICES)
-				printf(" addr %02u\n", s);
-			else {
-				printf(" %s\n",
-				    s == USB_PORT_ENABLED ? "enabled" :
-				    s == USB_PORT_SUSPENDED ? "suspended" :
-				    s == USB_PORT_POWERED ? "powered" :
-				    s == USB_PORT_DISABLED ? "disabled" :
-				    "???");
-			}
-		}
-	}
+		nports = MINIMUM(di.udi_nports, nitems(di.udi_ports));
+		for (port = 0; port < nports; port++) {
+			status = di.udi_ports[port] & 0xffff;
+			change = di.udi_ports[port] >> 16;
+			printf("\t port %02u: %04x.%04x", port+1, change,
+			    status);
 
-	for (p = 0; p < nports ; p++) {
-		s = di.udi_ports[p];
-		if (s < USB_MAX_DEVICES)
-			usbdev(f, s, 1);
+			if (status & UPS_CURRENT_CONNECT_STATUS)
+				printf(" connect");
+
+			if (status & UPS_PORT_ENABLED)
+				printf(" enabled");
+
+			if (status & UPS_SUSPEND)
+				printf(" supsend");
+
+			if (status & UPS_OVERCURRENT_INDICATOR)
+				printf(" overcurrent");
+
+			if (di.udi_speed < USB_SPEED_SUPER) {
+				if (status & UPS_PORT_L1)
+					printf(" l1");
+
+				if (status & UPS_PORT_POWER)
+					printf(" power");
+			} else {
+				if (status & UPS_PORT_POWER_SS)
+					printf(" power");
+
+				switch (UPS_PORT_LS_GET(status)) {
+				case UPS_PORT_LS_U0:
+					printf(" U0");
+					break;
+				case UPS_PORT_LS_U1:
+					printf(" U1");
+					break;
+				case UPS_PORT_LS_U2:
+					printf(" U2");
+					break;
+				case UPS_PORT_LS_U3:
+					printf(" U3");
+					break;
+				case UPS_PORT_LS_SS_DISABLED:
+					printf(" SS.disabled");
+					break;
+				case UPS_PORT_LS_RX_DETECT:
+					printf(" Rx.detect");
+					break;
+				case UPS_PORT_LS_SS_INACTIVE:
+					printf(" ss.inactive");
+					break;
+				case UPS_PORT_LS_POLLING:
+					printf(" polling");
+					break;
+				case UPS_PORT_LS_RECOVERY:
+					printf(" recovery");
+					break;
+				case UPS_PORT_LS_HOT_RESET:
+					printf(" hot.reset");
+					break;
+				case UPS_PORT_LS_COMP_MOD:
+					printf(" comp.mod");
+					break;
+				case UPS_PORT_LS_LOOPBACK:
+					printf(" loopback");
+					break;
+				}
+			}
+
+			printf("\n");
+		}
 	}
 }
 
 void
 usbdump(int f)
 {
-	int a;
+	uint8_t addr;
 
-	for (a = 1; a < USB_MAX_DEVICES; a++) {
-		if (!done[a])
-			usbdev(f, a, 1);
+	for (addr = 1; addr < USB_MAX_DEVICES; addr++) {
+		if (!done[addr])
+			usbdev(f, addr);
 	}
 }
 
@@ -172,10 +221,9 @@ dumpone(char *name, int f, int addr)
 {
 	if (!addr)
 		printf("Controller %s:\n", name);
-	indent = 0;
 	memset(done, 0, sizeof done);
 	if (addr)
-		usbdev(f, addr, 0);
+		usbdev(f, addr);
 	else
 		usbdump(f);
 }
