@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.3 2018/07/09 14:01:13 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.4 2018/07/10 13:06:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -324,6 +324,8 @@ struct acpi_spcr {
 /* We'll never see ACPI 1.0 tables on ARM. */
 static EFI_GUID acpi_guid = ACPI_20_TABLE_GUID;
 
+static int psci = 0;
+
 void
 efi_acpi_fadt(struct acpi_table_header *hdr)
 {
@@ -336,6 +338,8 @@ efi_acpi_fadt(struct acpi_table_header *hdr)
 	 */
 	if (fadt->hdr_revision < 5)
 		return;
+
+	psci = fadt->arm_boot_arch & FADT_PSCI_COMPLIANT;
 
 	node = fdt_find_node("/psci");
 	if (fadt->arm_boot_arch & FADT_PSCI_COMPLIANT)
@@ -402,7 +406,7 @@ efi_acpi_madt_gic(struct acpi_madt_gic *gic)
 	fdt_node_add_string_property(child, "device_type", "cpu");
 	fdt_node_add_string_property(child, "compatible", "arm,armv8");
 	fdt_node_add_property(child, "reg", &reg, sizeof(reg));
-	if (gic->parking_protocol_version == 0)
+	if (gic->parking_protocol_version == 0 || psci)
 		fdt_node_add_string_property(child, "enable-method", "psci");
 	if ((gic->flags & ACPI_PROC_ENABLE) == 0)
 		fdt_node_add_string_property(child, "status", "disabled");
