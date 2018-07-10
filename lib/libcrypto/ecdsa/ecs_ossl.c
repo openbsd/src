@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.15 2018/06/16 08:11:33 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.16 2018/07/10 21:36:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -65,7 +65,9 @@
 #include "bn_lcl.h"
 #include "ecs_locl.h"
 
-static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dlen,
+static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
+    BIGNUM *order, BIGNUM *ret);
+static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
     const BIGNUM *, const BIGNUM *, EC_KEY *eckey);
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
     BIGNUM **rp);
@@ -83,6 +85,30 @@ const ECDSA_METHOD *
 ECDSA_OpenSSL(void)
 {
 	return &openssl_ecdsa_meth;
+}
+
+static int
+ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len, BIGNUM *order,
+    BIGNUM *ret)
+{
+	int dgst_bits, order_bits;
+
+	if (!BN_bin2bn(dgst, dgst_len, ret)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		return 0;
+	}
+
+	/* FIPS 186-3 6.4: Use order_bits leftmost bits if digest is too long */
+	dgst_bits = 8 * dgst_len;
+	order_bits = BN_num_bits(order);
+	if (dgst_bits > order_bits) {
+		if (!BN_rshift(ret, ret, dgst_bits - order_bits)) {
+			ECDSAerror(ERR_R_BN_LIB);
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 static int
@@ -220,7 +246,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	const EC_GROUP *group;
 	ECDSA_SIG  *ret;
 	ECDSA_DATA *ecdsa;
-	int ok = 0, order_bits;
+	int ok = 0;
 
 	ecdsa = ecdsa_check(eckey);
 	group = EC_KEY_get0_group(eckey);
@@ -250,21 +276,8 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	/* Truncate digest if it is too long: first truncate whole bytes. */
-	order_bits = BN_num_bits(order);
-	if (8 * dgst_len > order_bits)
-		dgst_len = (order_bits + 7) / 8;
-	if (!BN_bin2bn(dgst, dgst_len, m)) {
-		ECDSAerror(ERR_R_BN_LIB);
+	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
 		goto err;
-	}
-	/* If it is still too long, truncate the remaining bits with a shift. */
-	if (8 * dgst_len > order_bits) {
-		if (!BN_rshift(m, m, 8 - (order_bits & 0x7))) {
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-	}
 
 	do {
 		if (in_kinv == NULL || in_r == NULL) {
@@ -380,7 +393,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
-	int order_bits, ret = -1;
+	int ret = -1;
 
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
 	    (pub_key = EC_KEY_get0_public_key(eckey)) == NULL || sig == NULL) {
@@ -418,21 +431,8 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 		goto err;
 	}
 
-	/* Truncate digest if it is too long: first truncate whole bytes. */
-	order_bits = BN_num_bits(order);
-	if (8 * dgst_len > order_bits)
-		dgst_len = (order_bits + 7) / 8;
-	if (!BN_bin2bn(dgst, dgst_len, m)) {
-		ECDSAerror(ERR_R_BN_LIB);
+	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
 		goto err;
-	}
-	/* If it is still too long, truncate the remaining bits with a shift. */
-	if (8 * dgst_len > order_bits) {
-		if (!BN_rshift(m, m, 8 - (order_bits & 0x7))) {
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-	}
 
 	if (!BN_mod_inverse_ct(u2, sig->s, order, ctx)) {	/* w = inv(s) */
 		ECDSAerror(ERR_R_BN_LIB);
