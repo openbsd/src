@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.389 2018/07/10 12:38:50 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.390 2018/07/10 15:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1040,13 +1040,6 @@ rde_update_dispatch(struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
-		if (prefixlen > 32) {
-			log_peer_warnx(&peer->conf, "bad withdraw prefix");
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
-			    NULL, 0);
-			goto done;
-		}
-
 		p += pos;
 		len -= pos;
 
@@ -1120,15 +1113,6 @@ rde_update_dispatch(struct imsg *imsg)
 					    mpa.unreach, mpa.unreach_len);
 					goto done;
 				}
-				if (prefixlen > 128) {
-					log_peer_warnx(&peer->conf,
-					    "bad IPv6 withdraw prefix");
-					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.unreach, mpa.unreach_len);
-					goto done;
-				}
-
 				mpp += pos;
 				mplen -= pos;
 
@@ -1146,15 +1130,6 @@ rde_update_dispatch(struct imsg *imsg)
 					    mpa.unreach, mpa.unreach_len);
 					goto done;
 				}
-				if (prefixlen > 32) {
-					log_peer_warnx(&peer->conf,
-					    "bad VPNv4 withdraw prefix");
-					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.unreach, mpa.unreach_len);
-					goto done;
-				}
-
 				mpp += pos;
 				mplen -= pos;
 
@@ -1190,13 +1165,6 @@ rde_update_dispatch(struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
-		if (prefixlen > 32) {
-			log_peer_warnx(&peer->conf, "bad nlri prefix");
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
-			    NULL, 0);
-			goto done;
-		}
-
 		p += pos;
 		nlri_len -= pos;
 
@@ -1269,13 +1237,6 @@ rde_update_dispatch(struct imsg *imsg)
 					    mpa.reach, mpa.reach_len);
 					goto done;
 				}
-				if (prefixlen > 128) {
-					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
-					goto done;
-				}
-
 				mpp += pos;
 				mplen -= pos;
 
@@ -1295,13 +1256,6 @@ rde_update_dispatch(struct imsg *imsg)
 					    mpa.reach, mpa.reach_len);
 					goto done;
 				}
-				if (prefixlen > 32) {
-					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
-					goto done;
-				}
-
 				mpp += pos;
 				mplen -= pos;
 
@@ -1913,6 +1867,8 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	prefix->aid = AID_INET;
 	*prefixlen = pfxlen;
 
+	if (pfxlen > 32)
+		return (-1);
 	if ((plen = rde_update_extract_prefix(p, len, &prefix->v4, pfxlen,
 	    sizeof(prefix->v4))) == -1)
 		return (-1);
@@ -1937,6 +1893,8 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	prefix->aid = AID_INET6;
 	*prefixlen = pfxlen;
 
+	if (pfxlen > 128)
+		return (-1);
 	if ((plen = rde_update_extract_prefix(p, len, &prefix->v6, pfxlen,
 	    sizeof(prefix->v6))) == -1)
 		return (-1);
@@ -1998,6 +1956,8 @@ rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	prefix->aid = AID_VPN_IPv4;
 	*prefixlen = pfxlen;
 
+	if (pfxlen > 32)
+		return (-1);
 	if ((rv = rde_update_extract_prefix(p, len, &prefix->vpn4.addr,
 	    pfxlen, sizeof(prefix->vpn4.addr))) == -1)
 		return (-1);
