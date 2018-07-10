@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.209 2018/07/09 22:07:14 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.210 2018/07/10 09:04:22 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1176,7 +1176,6 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 		}
 	}
 
-	/* Convert the low 512GB of the pmap to EPT */
 	ret = pmap_convert(pmap, PMAP_TYPE_EPT);
 	if (ret) {
 		printf("%s: pmap_convert failed\n", __func__);
