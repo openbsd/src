@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.202 2017/11/27 16:53:04 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.203 2018/07/10 13:02:14 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -129,12 +129,12 @@ main(int argc, char *argv[])
 	char			*sockname;
 	enum imsg_type		 type;
 
+	if (pledge("stdio rpath wpath cpath unix inet dns", NULL) == -1)
+		err(1, "pledge");
+
 	r = getrtable();
 	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, r) == -1)
 		err(1, "asprintf");
-
-	if (pledge("stdio rpath wpath cpath unix inet dns", NULL) == -1)
-		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
