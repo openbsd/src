@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.44 2018/06/19 18:15:01 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.45 2018/07/10 16:15:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -80,8 +80,9 @@ config_purge(struct vmd *env, unsigned int reset)
 	struct vmd_switch	*vsw;
 	unsigned int		 what;
 
-	log_debug("%s: %s purging vms and switches",
+	DPRINTF("%s: %s purging vms and switches",
 	    __func__, ps->ps_title[privsep_process]);
+
 	/* Reset global configuration (prefix was verified before) */
 	(void)host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix);
 
@@ -89,8 +90,7 @@ config_purge(struct vmd *env, unsigned int reset)
 	what = ps->ps_what[privsep_process] & reset;
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL) {
-			log_debug("%s: calling vm_remove", __func__);
-			vm_remove(vm);
+			vm_remove(vm, __func__);
 		}
 		env->vmd_nvm = 0;
 	}
@@ -107,7 +107,8 @@ config_setconfig(struct vmd *env)
 	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 id;
 
-	log_debug("%s: setting config", __func__);
+	DPRINTF("%s: setting config", __func__);
+
 	for (id = 0; id < PROC_MAX; id++) {
 		if (id == privsep_process)
 			continue;
@@ -138,7 +139,8 @@ config_setreset(struct vmd *env, unsigned int reset)
 	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 id;
 
-	log_debug("%s: resetting state", __func__);
+	DPRINTF("%s: resetting state", __func__);
+
 	for (id = 0; id < PROC_MAX; id++) {
 		if ((reset & ps->ps_what[id]) == 0 ||
 		    id == privsep_process)
@@ -152,14 +154,14 @@ config_setreset(struct vmd *env, unsigned int reset)
 int
 config_getreset(struct vmd *env, struct imsg *imsg)
 {
-	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 mode;
 
 	IMSG_SIZE_CHECK(imsg, &mode);
 	memcpy(&mode, imsg->data, sizeof(mode));
 
 	log_debug("%s: %s resetting state",
-	    __func__, ps->ps_title[privsep_process]);
+	    __func__, env->vmd_ps.ps_title[privsep_process]);
+
 	config_purge(env, mode);
 
 	return (0);
@@ -423,11 +425,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	if (vm->vm_from_config) {
-		log_debug("%s: calling stop vm %d", __func__, vm->vm_vmid);
-		vm_stop(vm, 0);
+		vm_stop(vm, 0, __func__);
 	} else {
-		log_debug("%s: calling remove vm %d", __func__, vm->vm_vmid);
-		vm_remove(vm);
+		vm_remove(vm, __func__);
 	}
 	errno = saved_errno;
 	if (errno == 0)
@@ -460,8 +460,7 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 		imsg->fd = -1;
 	}
 
-	log_debug("%s: calling vm_remove", __func__);
-	vm_remove(vm);
+	vm_remove(vm, __func__);
 	if (errno == 0)
 		errno = EINVAL;
 
@@ -485,7 +484,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 
 	if (n >= vm->vm_params.vmc_params.vcp_ndisks ||
 	    vm->vm_disks[n] != -1 || imsg->fd == -1) {
-		log_debug("invalid disk id");
+		log_warnx("invalid disk id");
 		errno = EINVAL;
 		return (-1);
 	}
@@ -510,7 +509,7 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 	memcpy(&n, imsg->data, sizeof(n));
 	if (n >= vm->vm_params.vmc_params.vcp_nnics ||
 	    vm->vm_ifs[n].vif_fd != -1 || imsg->fd == -1) {
-		log_debug("invalid interface id");
+		log_warnx("invalid interface id");
 		goto fail;
 	}
 	vm->vm_ifs[n].vif_fd = imsg->fd;
@@ -534,7 +533,7 @@ config_getcdrom(struct privsep *ps, struct imsg *imsg)
 	}
 
 	if (imsg->fd == -1) {
-		log_debug("invalid cdrom id");
+		log_warnx("invalid cdrom id");
 		goto fail;
 	}
 

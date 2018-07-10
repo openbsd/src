@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.87 2018/06/26 10:00:08 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.88 2018/07/10 16:15:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -366,7 +366,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				errno = vmr.vmr_result;
 				log_warn("%s: failed to foward vm result",
 				    vcp->vcp_name);
-				vm_remove(vm);
+				vm_remove(vm, __func__);
 				return (-1);
 			}
 		}
@@ -374,14 +374,14 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (vmr.vmr_result) {
 			errno = vmr.vmr_result;
 			log_warn("%s: failed to start vm", vcp->vcp_name);
-			vm_remove(vm);
+			vm_remove(vm, __func__);
 			break;
 		}
 
 		/* Now configure all the interfaces */
 		if (vm_priv_ifconfig(ps, vm) == -1) {
 			log_warn("%s: failed to configure vm", vcp->vcp_name);
-			vm_remove(vm);
+			vm_remove(vm, __func__);
 			break;
 		}
 
@@ -391,7 +391,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		log_debug("%s: forwarding TERMINATE VM for vm id %d",
+		DPRINTF("%s: forwarding TERMINATE VM for vm id %d",
 		    __func__, vmr.vmr_id);
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
@@ -413,7 +413,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		log_debug("%s: handling TERMINATE_EVENT for vm id %d ret %d",
+		DPRINTF("%s: handling TERMINATE_EVENT for vm id %d ret %d",
 		    __func__, vmr.vmr_id, vmr.vmr_result);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL) {
 			log_debug("%s: vm %d is no longer available",
@@ -422,19 +422,13 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (vmr.vmr_result != EAGAIN) {
 			if (vm->vm_from_config) {
-				log_debug("%s: about to stop vm id %d",
-				    __func__, vm->vm_vmid);
-				vm_stop(vm, 0);
+				vm_stop(vm, 0, __func__);
 			} else {
-				log_debug("%s: about to remove vm %d",
-				    __func__, vm->vm_vmid);
-				vm_remove(vm);
+				vm_remove(vm, __func__);
 			}
 		} else {
 			/* Stop VM instance but keep the tty open */
-			log_debug("%s: about to stop vm id %d with tty open",
-			    __func__, vm->vm_vmid);
-			vm_stop(vm, 1);
+			vm_stop(vm, 1, __func__);
 			config_setvm(ps, vm, (uint32_t)-1, vm->vm_uid);
 		}
 		break;
@@ -460,7 +454,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
 			log_debug("%s: GET_INFO_VM failed for vm %d, removing",
 			    __func__, vm->vm_vmid);
-			vm_remove(vm);
+			vm_remove(vm, __func__);
 			return (-1);
 		}
 		break;
@@ -491,7 +485,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    sizeof(vir)) == -1) {
 					log_debug("%s: GET_INFO_VM_END failed",
 					    __func__);
-					vm_remove(vm);
+					vm_remove(vm, __func__);
 					return (-1);
 				}
 			}
@@ -905,9 +899,9 @@ vmd_reload(unsigned int reset, const char *filename)
 			TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry,
 			    next_vm) {
 				if (vm->vm_running == 0) {
-					log_debug("%s: calling vm_remove",
+					DPRINTF("%s: calling vm_remove",
 					    __func__);
-					vm_remove(vm);
+					vm_remove(vm, __func__);
 				}
 			}
 		}
@@ -963,8 +957,9 @@ vmd_shutdown(void)
 	struct vmd_vm *vm, *vm_next;
 
 	log_debug("%s: performing shutdown", __func__);
+
 	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
-		vm_remove(vm);
+		vm_remove(vm, __func__);
 	}
 
 	proc_kill(&env->vmd_ps);
@@ -1053,14 +1048,18 @@ vm_getbypid(pid_t pid)
 }
 
 void
-vm_stop(struct vmd_vm *vm, int keeptty)
+vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 {
+	struct privsep	*ps = &env->vmd_ps;
 	unsigned int	 i;
 
 	if (vm == NULL)
 		return;
 
-	log_debug("%s: stopping vm %d", __func__, vm->vm_vmid);
+	log_debug("%s: %s %s stopping vm %d%s",
+	    __func__, ps->ps_title[privsep_process], caller,
+	    vm->vm_vmid, keeptty ? ", keeping tty open" : "");
+
 	vm->vm_running = 0;
 	vm->vm_shutdown = 0;
 
@@ -1101,16 +1100,20 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 }
 
 void
-vm_remove(struct vmd_vm *vm)
+vm_remove(struct vmd_vm *vm, const char *caller)
 {
+	struct privsep	*ps = &env->vmd_ps;
+
 	if (vm == NULL)
 		return;
 
-	log_debug("%s: removing vm id %d from running config",
-	    __func__, vm->vm_vmid);
+	log_debug("%s: %s %s removing vm %d from running config",
+	    __func__, ps->ps_title[privsep_process], caller,
+	    vm->vm_vmid);
+
 	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
-	log_debug("%s: calling vm_stop", __func__);
-	vm_stop(vm, 0);
+
+	vm_stop(vm, 0, caller);
 	free(vm);
 }
 

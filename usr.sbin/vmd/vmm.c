@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.81 2018/04/13 17:12:44 martijn Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.82 2018/07/10 16:15:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -152,14 +152,15 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vtp);
 		memcpy(&vtp, imsg->data, sizeof(vtp));
 		id = vtp.vtp_vm_id;
-		log_debug("%s: recv'ed TERMINATE_VM for %d", __func__, id);
+
+		DPRINTF("%s: recv'ed TERMINATE_VM for %d", __func__, id);
 
 		if (id == 0) {
 			res = ENOENT;
 		} else if ((vm = vm_getbyvmid(id)) != NULL) {
 			if (vm->vm_shutdown == 0) {
-				log_debug("%s: sending shutdown req to vm %d",
-				    __func__, id);
+				log_debug("%s: sending shutdown request"
+				    " to vm %d", __func__, id);
 
 				/*
 				 * Request reboot but mark the VM as shutting
@@ -302,7 +303,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL) {
 				log_debug("%s: removing vm, START_VM_RESPONSE",
 				    __func__);
-				vm_remove(vm);
+				vm_remove(vm, __func__);
 			}
 		}
 		if (id == 0)
@@ -382,8 +383,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 					log_warnx("could not terminate VM %u",
 					    vm->vm_vmid);
 
-				log_debug("%s: calling vm_remove", __func__);
-				vm_remove(vm);
+				vm_remove(vm, __func__);
 			} else
 				fatalx("unexpected cause of SIGCHLD");
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
@@ -409,8 +409,7 @@ vmm_shutdown(void)
 
 		/* XXX suspend or request graceful shutdown */
 		(void)terminate_vm(&vtp);
-		log_debug("%s: calling vm_remove", __func__);
-		vm_remove(vm);
+		vm_remove(vm, __func__);
 	}
 }
 
@@ -495,8 +494,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &vmr);
 			memcpy(&vmr, imsg.data, sizeof(vmr));
 			if (!vmr.vmr_result) {
-				log_debug("%s: calling vm_remove", __func__);
-				vm_remove(vm);
+				vm_remove(vm, __func__);
 			}
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
@@ -674,8 +672,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 	return (0);
 
  err:
-	log_debug("%s: calling vm_remove", __func__);
-	vm_remove(vm);
+	vm_remove(vm, __func__);
 
 	return (ret);
 }
