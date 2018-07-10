@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.71 2018/07/10 16:15:51 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.72 2018/07/10 20:43:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -64,12 +64,6 @@
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
 #define VMD_DHCP_PREFIX		"100.64.0.0/10"
-
-#ifdef VMD_DEBUG
-#define dprintf(x...)   do { log_debug(x); } while(0)
-#else
-#define dprintf(x...)
-#endif /* VMD_DEBUG */
 
 enum imsg_type {
 	IMSG_VMDOP_START_VM_REQUEST = IMSG_PROC_MAX,

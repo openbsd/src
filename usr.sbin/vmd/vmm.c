@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.82 2018/07/10 16:15:51 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.83 2018/07/10 20:43:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -479,7 +479,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-		dprintf("%s: got imsg %d from %s",
+		DPRINTF("%s: got imsg %d from %s",
 		    __func__, imsg.hdr.type,
 		    vm->vm_params.vmc_params.vcp_name);
 

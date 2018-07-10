@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.88 2018/07/10 16:15:51 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.89 2018/07/10 20:43:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1004,7 +1004,7 @@ vm_id2vmid(uint32_t id, struct vmd_vm *vm)
 {
 	if (vm == NULL && (vm = vm_getbyid(id)) == NULL)
 		return (0);
-	dprintf("%s: vmm id %u is vmid %u", __func__,
+	DPRINTF("%s: vmm id %u is vmid %u", __func__,
 	    id, vm->vm_vmid);
 	return (vm->vm_vmid);
 }
@@ -1014,7 +1014,7 @@ vm_vmid2id(uint32_t vmid, struct vmd_vm *vm)
 {
 	if (vm == NULL && (vm = vm_getbyvmid(vmid)) == NULL)
 		return (0);
-	dprintf("%s: vmid %u is vmm id %u", __func__,
+	DPRINTF("%s: vmid %u is vmm id %u", __func__,
 	    vmid, vm->vm_params.vmc_params.vcp_id);
 	return (vm->vm_params.vmc_params.vcp_id);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.6 2018/06/19 17:12:34 reyk Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.7 2018/07/10 20:43:15 reyk Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -287,7 +287,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
 	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
 
@@ -301,7 +301,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing inq_data to 0x%llx size %d at "
+	DPRINTF("%s: writing inq_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -397,7 +397,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->req_desc, &(acct->resp_idx));
 
-		dprintf("%s: writing resp to 0x%llx size %d "
+		DPRINTF("%s: writing resp to 0x%llx size %d "
 		    "at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -415,7 +415,7 @@ vioscsi_handle_mode_sense(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		dprintf("%s: writing mode_reply to 0x%llx "
+		DPRINTF("%s: writing mode_reply to 0x%llx "
 		    "size %d at local idx %d req_idx %d "
 		    "global_idx %d",__func__, acct->resp_desc->addr,
 		    acct->resp_desc->len, acct->resp_idx, acct->req_idx,
@@ -540,7 +540,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->req_desc, &(acct->resp_idx));
 
-		dprintf("%s: writing resp to 0x%llx size %d "
+		DPRINTF("%s: writing resp to 0x%llx size %d "
 		    "at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -558,7 +558,7 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		dprintf("%s: writing mode_reply to 0x%llx "
+		DPRINTF("%s: writing mode_reply to 0x%llx "
 		    "size %d at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -657,7 +657,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -672,7 +672,7 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing r_cap_data to 0x%llx size %d at "
+	DPRINTF("%s: writing r_cap_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -732,7 +732,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -747,7 +747,7 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing r_cap_data_16 to 0x%llx size %d "
+	DPRINTF("%s: writing r_cap_data_16 to 0x%llx size %d "
 	    "at local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -833,7 +833,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d", __func__, acct->resp_desc->addr,
 	    acct->resp_desc->len, acct->resp_idx, acct->req_idx, acct->idx);
 
@@ -847,7 +847,7 @@ vioscsi_handle_report_luns(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing reply_rpl to 0x%llx size %d at "
+	DPRINTF("%s: writing reply_rpl to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -960,7 +960,7 @@ vioscsi_handle_read_6(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -975,7 +975,7 @@ vioscsi_handle_read_6(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing read_buf to 0x%llx size %d at "
+	DPRINTF("%s: writing read_buf to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1089,7 +1089,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1111,7 +1111,7 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 		acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 		    acct->resp_desc, &(acct->resp_idx));
 
-		dprintf("%s: writing read_buf to 0x%llx size "
+		DPRINTF("%s: writing read_buf to 0x%llx size "
 		    "%d at local idx %d req_idx %d global_idx %d",
 		    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 		    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1338,7 +1338,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1353,7 +1353,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing toc_data to 0x%llx size %d at "
+	DPRINTF("%s: writing toc_data to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1471,7 +1471,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->req_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1486,7 +1486,7 @@ vioscsi_handle_gesn(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing gesn_reply to 0x%llx size %d at "
+	DPRINTF("%s: writing gesn_reply to 0x%llx size %d at "
 	    "local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1616,7 +1616,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc,
 	    acct->req_desc, &(acct->resp_idx));
 
-	dprintf("%s: writing resp to 0x%llx size %d at local "
+	DPRINTF("%s: writing resp to 0x%llx size %d at local "
 	    "idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);
@@ -1632,7 +1632,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	acct->resp_desc = vioscsi_next_ring_desc(acct->desc, acct->resp_desc,
 	    &(acct->resp_idx));
 
-	dprintf("%s: writing get_conf_reply to 0x%llx size %d "
+	DPRINTF("%s: writing get_conf_reply to 0x%llx size %d "
 	    "at local idx %d req_idx %d global_idx %d",
 	    __func__, acct->resp_desc->addr, acct->resp_desc->len,
 	    acct->resp_idx, acct->req_idx, acct->idx);

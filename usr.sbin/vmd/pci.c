@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.25 2018/06/19 17:12:34 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.26 2018/07/10 20:43:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -95,7 +95,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
-		dprintf("%s: adding pci bar cookie for dev %d bar %d = %p",
+		DPRINTF("%s: adding pci bar cookie for dev %d bar %d = %p",
 		    __progname, id, bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_IO_BAR_SIZE;
@@ -192,7 +192,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		    pci_pic_irqs[pci.pci_next_pic_irq];
 		pci.pci_devices[*id].pd_int = 1;
 		pci.pci_next_pic_irq++;
-		dprintf("assigned irq %d to pci dev %d",
+		DPRINTF("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
 		pic_set_elcr(pci.pci_devices[*id].pd_irq, 1);
 	}
