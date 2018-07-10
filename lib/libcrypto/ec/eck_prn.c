@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.13 2018/07/10 22:06:14 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -321,7 +321,7 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 			goto err;
 	}
 	ret = 1;
-err:
+ err:
 	if (!ret)
 		ECerror(reason);
 	BN_free(p);

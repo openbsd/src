@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.18 2018/07/10 21:55:49 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.19 2018/07/10 22:06:14 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -223,7 +223,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP * group,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -268,7 +268,7 @@ ec_GFp_simple_group_get_curve(const EC_GROUP * group, BIGNUM * p, BIGNUM * a, BI
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -349,7 +349,7 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 	}
 	ret = 1;
 
-err:
+ err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -459,7 +459,7 @@ ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP * group, EC_POINT *
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -507,7 +507,7 @@ ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP * group, const EC_P
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -627,7 +627,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -814,7 +814,7 @@ ec_GFp_simple_add(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, cons
 
 	ret = 1;
 
-end:
+ end:
 	if (ctx)		/* otherwise we already called BN_CTX_end */
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -957,7 +957,7 @@ ec_GFp_simple_dbl(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, BN_C
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1078,7 +1078,7 @@ ec_GFp_simple_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX
 
 	ret = (0 == BN_ucmp(tmp, rh));
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1180,7 +1180,7 @@ ec_GFp_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * b
 	/* points are equal */
 	ret = 0;
 
-end:
+ end:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1218,7 +1218,7 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1383,7 +1383,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	if (heap != NULL) {

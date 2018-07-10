@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.14 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ec_key.c,v 1.15 2018/07/10 22:06:14 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -253,7 +253,7 @@ EC_KEY_generate_key(EC_KEY * eckey)
 
 	ok = 1;
 
-err:
+ err:
 	BN_free(order);
 	if (pub_key != NULL && eckey->pub_key == NULL)
 		EC_POINT_free(pub_key);
@@ -324,7 +324,7 @@ EC_KEY_check_key(const EC_KEY * eckey)
 		}
 	}
 	ok = 1;
-err:
+ err:
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 	return (ok);
@@ -395,7 +395,7 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 
 	ok = 1;
 
-err:
+ err:
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 	return ok;
