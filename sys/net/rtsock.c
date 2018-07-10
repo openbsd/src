@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.278 2018/07/10 10:02:14 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.279 2018/07/10 20:28:34 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <net/if_dl.h>
 #include <net/if_var.h>
 #include <net/route.h>
-#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 
@@ -94,6 +93,9 @@
 #include <sys/stdarg.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
+
+#define	ROUTESNDQ	8192
+#define	ROUTERCVQ	8192
 
 const struct sockaddr route_src = { 2, PF_ROUTE, };
 
@@ -300,7 +302,7 @@ route_attach(struct socket *so, int proto)
 	if (curproc == NULL)
 		error = EACCES;
 	else
-		error = soreserve(so, RAWSNDQ, RAWRCVQ);
+		error = soreserve(so, ROUTESNDQ, ROUTERCVQ);
 	if (error) {
 		free(rop, M_PCB, sizeof(struct rtpcb));
 		return (error);

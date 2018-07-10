@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.188 2018/07/10 10:02:14 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.189 2018/07/10 20:28:34 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -86,7 +86,6 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 #include <net/radix.h>
-#include <net/raw_cb.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
@@ -97,6 +96,8 @@
 #include <net/pfvar.h>
 #endif
 
+#define	PFKEYSNDQ	8192
+#define	PFKEYRCVQ	8192
 
 static const struct sadb_alg ealgs[] = {
 	{ SADB_EALG_NULL, 0, 0, 0 },
@@ -269,7 +270,7 @@ pfkeyv2_attach(struct socket *so, int proto)
 	so->so_pcb = kp;
 	refcnt_init(&kp->kcb_refcnt);
 
-	error = soreserve(so, RAWSNDQ, RAWRCVQ);
+	error = soreserve(so, PFKEYSNDQ, PFKEYRCVQ);
 	if (error) {
 		free(kp, M_PCB, sizeof(struct pkpcb));
 		return (error);
