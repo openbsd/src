@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2018/07/09 12:05:11 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2018/07/10 16:42:12 krw Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -946,7 +946,7 @@ pushfile(const char *name, int secret)
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%%s: s", __func__, nfile->name);
+		log_warn("%s: %s", __func__, nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
