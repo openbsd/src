@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -408,10 +408,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal("pledge");
 			frontend_startup();
 			break;
-		case IMSG_CTL_END:
-		case IMSG_CTL_SHOW_MAIN_INFO:
-			control_imsg_relay(&imsg);
-			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -458,10 +454,6 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_CTL_END:
-		case IMSG_CTL_SHOW_ENGINE_INFO:
-			control_imsg_relay(&imsg);
-			break;
 		case IMSG_SEND_RA:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(send_ra))
 				fatal("%s: IMSG_SEND_RA wrong length: %d",
@@ -485,15 +477,6 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
-}
-
-void
-frontend_showinfo_ctl(struct ctl_conn *c)
-{
-	static struct ctl_frontend_info cfi;
-
-	imsg_compose_event(&c->iev, IMSG_CTL_SHOW_FRONTEND_INFO, 0, 0, -1,
-	    &cfi, sizeof(struct ctl_frontend_info));
 }
 
 void

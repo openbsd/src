@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -266,22 +266,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
-			break;
-		case IMSG_CTL_SHOW_MAIN_INFO:
-			c->iev.ibuf.pid = imsg.hdr.pid;
-			frontend_imsg_compose_main(imsg.hdr.type, imsg.hdr.pid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
-			break;
-		case IMSG_CTL_SHOW_FRONTEND_INFO:
-			frontend_showinfo_ctl(c);
-			imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1,
-			    NULL, 0);
-			break;
-		case IMSG_CTL_SHOW_ENGINE_INFO:
-			c->iev.ibuf.pid = imsg.hdr.pid;
-			frontend_imsg_compose_engine(imsg.hdr.type,
-			    imsg.hdr.pid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,

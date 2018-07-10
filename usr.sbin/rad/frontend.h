@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -24,4 +24,3 @@ void		 frontend_dispatch_main(int, short, void *);
 void		 frontend_dispatch_engine(int, short, void *);
 int		 frontend_imsg_compose_main(int, pid_t, void *, uint16_t);
 int		 frontend_imsg_compose_engine(int, pid_t, void *, uint16_t);
-void		 frontend_showinfo_ctl(struct ctl_conn *);

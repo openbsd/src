@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -53,11 +53,6 @@
 const char* imsg_type_name[] = {
 	"IMSG_NONE",
 	"IMSG_CTL_LOG_VERBOSE",
-	"IMSG_CTL_RELOAD",
-	"IMSG_CTL_SHOW_ENGINE_INFO",
-	"IMSG_CTL_SHOW_FRONTEND_INFO",
-	"IMSG_CTL_SHOW_MAIN_INFO",
-	"IMSG_CTL_END",
 	"IMSG_RECONF_CONF",
 	"IMSG_RECONF_RA_IFACE",
 	"IMSG_RECONF_RA_AUTOPREFIX",
@@ -84,7 +79,6 @@ static int	main_imsg_send_config(struct rad_conf *);
 
 int	main_reload(void);
 int	main_sendboth(enum imsg_type, void *, uint16_t);
-void	main_showinfo_ctl(struct imsg *);
 
 void	free_ra_iface_conf(struct ra_iface_conf *);
 void	in6_prefixlen2mask(struct in6_addr *, int len);
@@ -434,9 +428,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
-		case IMSG_CTL_SHOW_MAIN_INFO:
-			main_showinfo_ctl(&imsg);
-			break;
 		default:
 			log_debug("%s: error handling imsg %s", __func__,
 			    imsg_type_name[imsg.hdr.type]);
@@ -629,37 +620,6 @@ main_sendboth(enum imsg_type type, void *buf, uint16_t len)
 	if (imsg_compose_event(iev_engine, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	return (0);
-}
-
-void
-main_showinfo_ctl(struct imsg *imsg)
-{
-	struct ctl_main_info cmi;
-	size_t n;
-
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_SHOW_MAIN_INFO:
-		memset(cmi.text, 0, sizeof(cmi.text));
-		n = strlcpy(cmi.text, "I'm a little teapot.",
-		    sizeof(cmi.text));
-		if (n >= sizeof(cmi.text))
-			log_debug("%s: I was cut off!", __func__);
-		main_imsg_compose_frontend(IMSG_CTL_SHOW_MAIN_INFO,
-		    imsg->hdr.pid, &cmi, sizeof(cmi));
-		memset(cmi.text, 0, sizeof(cmi.text));
-		n = strlcpy(cmi.text, "Full of sencha.",
-		    sizeof(cmi.text));
-		if (n >= sizeof(cmi.text))
-			log_debug("%s: I was cut off!", __func__);
-		main_imsg_compose_frontend(IMSG_CTL_SHOW_MAIN_INFO,
-		    imsg->hdr.pid, &cmi, sizeof(cmi));
-		main_imsg_compose_frontend(IMSG_CTL_END, imsg->hdr.pid, NULL,
-		    0);
-		break;
-	default:
-		log_debug("%s: error handling imsg", __func__);
-		break;
-	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2018/07/10 22:13:16 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -47,7 +47,6 @@ __dead void	 engine_shutdown(void);
 void		 engine_sig_handler(int sig, short, void *);
 void		 engine_dispatch_frontend(int, short, void *);
 void		 engine_dispatch_main(int, short, void *);
-void		 engine_showinfo_ctl(struct imsg *);
 void		 parse_ra_rs(struct imsg_ra_rs *);
 void		 parse_ra(struct imsg_ra_rs *);
 void		 parse_rs(struct imsg_ra_rs *);
@@ -207,9 +206,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
-		case IMSG_CTL_SHOW_ENGINE_INFO:
-			engine_showinfo_ctl(&imsg);
-			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -342,36 +338,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
-void
-engine_showinfo_ctl(struct imsg *imsg)
-{
-	char			 filter[IF_NAMESIZE];
-	struct ctl_engine_info	 cei;
-	struct ra_iface_conf	*ra_iface_conf;
-
-	switch (imsg->hdr.type) {
-	case IMSG_CTL_SHOW_ENGINE_INFO:
-		memcpy(filter, imsg->data, sizeof(filter));
-		SIMPLEQ_FOREACH(ra_iface_conf, &engine_conf->ra_iface_list,
-		    entry) {
-			if (filter[0] == '\0' || memcmp(filter,
-			    ra_iface_conf->name, sizeof(filter)) == 0) {
-				memcpy(cei.name, ra_iface_conf->name,
-				    sizeof(cei.name));
-
-				engine_imsg_compose_frontend(
-				    IMSG_CTL_SHOW_ENGINE_INFO, imsg->hdr.pid,
-				    &cei, sizeof(cei));
-			}
-		}
-		engine_imsg_compose_frontend(IMSG_CTL_END, imsg->hdr.pid, NULL,
-		    0);
-		break;
-	default:
-		log_debug("%s: error handling imsg", __func__);
-		break;
-	}
-}
 
 void
 parse_ra_rs(struct imsg_ra_rs *ra_rs)

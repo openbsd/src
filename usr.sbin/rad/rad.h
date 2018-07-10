@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -51,10 +51,6 @@ enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_RELOAD,
-	IMSG_CTL_SHOW_ENGINE_INFO,
-	IMSG_CTL_SHOW_FRONTEND_INFO,
-	IMSG_CTL_SHOW_MAIN_INFO,
-	IMSG_CTL_END,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_RA_IFACE,
 	IMSG_RECONF_RA_AUTOPREFIX,
@@ -104,22 +100,6 @@ struct ra_iface_conf {
 struct rad_conf {
 	struct ra_options_conf				 ra_options;
 	SIMPLEQ_HEAD(ra_iface_conf_head, ra_iface_conf)	 ra_iface_list;
-};
-
-struct ctl_frontend_info {
-	int		yesno;
-	int		integer;
-	char		global_text[RAD_MAXTEXT];
-};
-
-struct ctl_engine_info {
-	char		name[IF_NAMESIZE];
-	int		yesno;
-	int		integer;
-};
-
-struct ctl_main_info {
-	char		text[RAD_MAXTEXT];
 };
 
 struct imsg_ra_rs {
