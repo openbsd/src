@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.55 2018/07/10 10:55:21 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.56 2018/07/10 12:17:38 friehm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -241,9 +241,28 @@ kr_change(struct kroute *kroute, int krcount)
 	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
 	kr = kroute_find(&kroute->prefix, kroute->prefixlen, RTP_OSPF);
-	if (kr != NULL && kr->next == NULL && krcount == 1)
-		/* single path OSPF route */
-		action = RTM_CHANGE;
+	if (kr != NULL && kr->next == NULL && krcount == 1) {
+		/*
+		 * single path OSPF route.
+		 * The kernel does not allow to change a gateway route to a
+		 * cloning route or contrary. In this case remove and add the
+		 * route, otherwise change the existing one.
+		 */
+		if ((IN6_IS_ADDR_UNSPECIFIED(&kroute->nexthop) &&
+		    !IN6_IS_ADDR_UNSPECIFIED(&kr->r.nexthop)) ||
+		    (!IN6_IS_ADDR_UNSPECIFIED(&kroute->nexthop) &&
+		    IN6_IS_ADDR_UNSPECIFIED(&kr->r.nexthop))) {
+			if (kr_delete_fib(kr) == 0)
+				kr = NULL;
+			else {
+				log_warn("kr_change: failed to remove route: "
+				    "%s/%d", log_in6addr(&kr->r.prefix),
+				    kr->r.prefixlen);
+				return (-1);
+			}
+		} else
+			action = RTM_CHANGE;
+	}
 
 	return (kr_change_fib(kr, kroute, krcount, action));
 }
