@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.320 2018/07/10 09:05:11 jca Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.321 2018/07/10 09:30:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -872,30 +872,35 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		printf(" max-pkt-rate %u/%u", r->pktrate.limit,
 		    r->pktrate.seconds);
 
-	if (r->scrub_flags & PFSTATE_SETMASK || r->qname[0]) {
+	if (r->scrub_flags & PFSTATE_SETMASK || r->qname[0] ||
+	    r->rule_flag & PFRULE_SETDELAY) {
 		char *comma = "";
 		printf(" set (");
 		if (r->scrub_flags & PFSTATE_SETPRIO) {
 			if (r->set_prio[0] == r->set_prio[1])
-				printf("%s prio %u", comma, r->set_prio[0]);
+				printf("%sprio %u", comma, r->set_prio[0]);
 			else
-				printf("%s prio(%u, %u)", comma, r->set_prio[0],
+				printf("%sprio(%u, %u)", comma, r->set_prio[0],
 				    r->set_prio[1]);
-			comma = ",";
+			comma = ", ";
 		}
 		if (r->qname[0]) {
 			if (r->pqname[0])
-				printf("%s queue(%s, %s)", comma, r->qname,
+				printf("%squeue(%s, %s)", comma, r->qname,
 				    r->pqname);
 			else
-				printf("%s queue %s", comma, r->qname);
-			comma = ",";
+				printf("%squeue %s", comma, r->qname);
+			comma = ", ";
 		}
 		if (r->scrub_flags & PFSTATE_SETTOS) {
-			printf("%s tos 0x%2.2x", comma, r->set_tos);
-			comma = ",";
+			printf("%stos 0x%2.2x", comma, r->set_tos);
+			comma = ", ";
 		}
-		printf(" )");
+		if (r->rule_flag & PFRULE_SETDELAY) {
+			printf("%sdelay %u", comma, r->delay);
+			comma = ", ";
+		}
+		printf(")");
 	}
 
 	ropts = 0;

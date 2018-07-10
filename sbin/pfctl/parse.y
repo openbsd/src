@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.677 2018/07/10 08:44:55 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.678 2018/07/10 09:30:49 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -242,6 +242,7 @@ struct filter_opts {
 #define FOM_SETPRIO	0x0400
 #define FOM_ONCE	0x1000
 #define FOM_PRIO	0x2000
+#define FOM_SETDELAY	0x4000
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct node_if		*rcv;
@@ -268,6 +269,7 @@ struct filter_opts {
 	u_int			 rtableid;
 	u_int8_t		 prio;
 	u_int8_t		 set_prio[2];
+	u_int16_t		 delay;
 	struct divertspec	 divert;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
@@ -485,7 +487,7 @@ int	parseport(char *, struct range *r, int);
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
 %token	WEIGHT BANDWIDTH FLOWS QUANTUM
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN MINIMUM BURST PARENT
-%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT
+%token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT DELAY
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW MAXPKTRATE
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE
@@ -2179,6 +2181,19 @@ filter_set	: prio {
 			}
 			filter_opts.marker |= FOM_SETTOS;
 			filter_opts.settos = $2;
+		}
+		| DELAY NUMBER {
+			if (filter_opts.delay) {
+				yyerror("delay cannot be respecified");
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > 0xffff) {
+				yyerror("illegal delay value %d (0-%u)", $2,
+				    0xffff);
+				YYERROR;
+			}
+			filter_opts.marker |= FOM_SETDELAY;
+			filter_opts.delay = $2;
 		}
 		;
 
@@ -4983,6 +4998,7 @@ lookup(char *s)
 		{ "code",		CODE},
 		{ "debug",		DEBUG},
 		{ "default",		DEFAULT},
+		{ "delay",		DELAY},
 		{ "divert-packet",	DIVERTPACKET},
 		{ "divert-reply",	DIVERTREPLY},
 		{ "divert-to",		DIVERTTO},
@@ -5909,6 +5925,10 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 			r->prio = PF_PRIO_ZERO;
 		else
 			r->prio = opts->prio;
+	}
+	if (opts->marker & FOM_SETDELAY) {
+		r->delay = opts->delay;
+		r->rule_flag |= PFRULE_SETDELAY;
 	}
 	if (opts->marker & FOM_SETPRIO) {
 		r->set_prio[0] = opts->set_prio[0];

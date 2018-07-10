@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.354 2018/02/08 09:15:46 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.355 2018/07/10 09:30:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -145,6 +145,7 @@ static const struct {
 	{ "frags",		PF_LIMIT_FRAGS },
 	{ "tables",		PF_LIMIT_TABLES },
 	{ "table-entries",	PF_LIMIT_TABLE_ENTRIES },
+	{ "pktdelay-pkts",	PF_LIMIT_PKTDELAY_PKTS },
 	{ NULL,			0 }
 };
 
@@ -1765,6 +1766,7 @@ pfctl_init_options(struct pfctl *pf)
 	pf->limit[PF_LIMIT_SRC_NODES] = PFSNODE_HIWAT;
 	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
 	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
+	pf->limit[PF_LIMIT_PKTDELAY_PKTS] = PF_PKTDELAY_MAXPKTS;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM64;
