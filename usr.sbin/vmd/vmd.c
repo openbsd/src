@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.89 2018/07/10 20:43:15 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.90 2018/07/10 21:12:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -421,11 +421,10 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 		if (vmr.vmr_result != EAGAIN) {
-			if (vm->vm_from_config) {
+			if (vm->vm_from_config)
 				vm_stop(vm, 0, __func__);
-			} else {
+			else
 				vm_remove(vm, __func__);
-			}
 		} else {
 			/* Stop VM instance but keep the tty open */
 			vm_stop(vm, 1, __func__);
