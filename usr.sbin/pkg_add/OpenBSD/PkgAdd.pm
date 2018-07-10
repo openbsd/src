@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.103 2018/06/24 19:59:35 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.104 2018/07/10 10:37:59 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -129,16 +129,6 @@ sub handle_options
 		    $state->usage("bad option: -P #1", $state->opt('P'));
 		}
 	}
-	if (defined $state->opt('B')) {
-		$state->{destdir} = $state->opt('B');
-	}
-	if (defined $state->{destdir}) {
-		$state->{destdir}.='/';
-	} else {
-		$state->{destdir} = '';
-	}
-
-
 	$state->{hard_replace} = $state->opt('r');
 	$state->{newupdates} = $state->opt('u') || $state->opt('U');
 	$state->{allow_replacing} = $state->{hard_replace} ||

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.81 2018/07/09 14:51:15 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.82 2018/07/10 10:37:59 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -231,6 +231,11 @@ sub handle_options
 	if (defined $ENV{PKG_CHECKSUM}) {
 		$state->{subst}->add('checksum', 1);
 	}
+	my $base = $state->opt('B') // '';
+	if ($base ne '') {
+		$base.='/' unless $base =~ m/\/$/o;
+	}
+	$state->{destdir} = $base;
 }
 
 sub init
