@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.556 2018/06/21 07:40:43 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.557 2018/07/10 09:30:13 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -684,6 +684,11 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 	unsigned int idx;
 	struct ifqueue *ifq;
 	int error;
+
+#if NPF > 0
+	if (m->m_pkthdr.pf.delay > 0)
+		return (pf_delay_pkt(m, ifp->if_index));
+#endif	
 
 #if NBRIDGE > 0
 	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
