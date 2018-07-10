@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.108 2018/07/10 20:43:26 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.109 2018/07/10 20:44:39 florian Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -216,8 +216,9 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
  * in6 - upper 64bits are preserved
  */
 int
-in6_get_soii_ifid(struct ifnet *ifp, struct in6_addr *in6)
+in6_get_soii_ifid(struct ifnet *ifp0, struct in6_addr *in6)
 {
+	struct ifnet *ifp;
 	SHA2_CTX ctx;
 	u_int8_t digest[SHA512_DIGEST_LENGTH];
 	struct in6_addr prefix;
@@ -225,10 +226,25 @@ in6_get_soii_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	int dad_counter = 0; /* XXX not used */
 	char *addr;
 
-	if (ifp->if_xflags & IFXF_INET6_NOSOII)
+	if (ifp0->if_xflags & IFXF_INET6_NOSOII)
 		return -1;
 
-	sdl = ifp->if_sadl;
+	sdl = ifp0->if_sadl;
+
+	if (sdl == NULL || sdl->sdl_alen == 0) {
+		/*
+		 * try to get it from some other hardware interface like
+		 * in in6_get_ifid()
+		 */
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp == ifp0)
+				continue;
+			sdl = ifp->if_sadl;
+			if (sdl != NULL && sdl->sdl_alen != 0)
+				break;
+		}
+	}
+
 	if (sdl == NULL || sdl->sdl_alen == 0)
 		return -1;
 
