@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.4 2018/07/09 16:20:33 bluhm Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.5 2018/07/10 20:21:53 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <machine/fpu.h>
 
 /*
  * Implementations are permitted to define additional exception flags
