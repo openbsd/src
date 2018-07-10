@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.277 2018/07/09 16:49:36 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.278 2018/07/10 10:02:14 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 
-struct sockaddr		route_src = { 2, PF_ROUTE, };
+const struct sockaddr route_src = { 2, PF_ROUTE, };
 
 struct walkarg {
 	int	w_op, w_arg, w_given, w_needed, w_tmemsize;
