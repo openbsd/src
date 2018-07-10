@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.189 2018/05/22 02:13:42 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.190 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -404,8 +404,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -453,7 +452,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sf.sf_sip = &fp->sf_si;
-		initsiginfo(&sf.sf_si, sig, code, type, val);
+		sf.sf_si = *ksip;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.185 2018/05/22 02:13:42 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.186 2018/07/10 04:19:59 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1380,8 +1380,7 @@ regdump(framep)
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct sigcontext ksc, *scp;
@@ -1390,7 +1389,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct sigacts *psp = p->p_p->ps_sigacts;
 	unsigned long oldsp;
 	int fsize, rndfsize, kscsize;
-	siginfo_t *sip, ksi;
+	siginfo_t *sip;
 
 	oldsp = alpha_pal_rdusp();
 	frame = p->p_md.md_tf;
@@ -1398,7 +1397,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	rndfsize = ((fsize + 15) / 16) * 16;
 	kscsize = rndfsize;
 	if (psp->ps_siginfo & sigmask(sig)) {
-		fsize += sizeof ksi;
+		fsize += sizeof *ksip;
 		rndfsize = ((fsize + 15) / 16) * 16;
 	}
 
@@ -1440,9 +1439,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		initsiginfo(&ksi, sig, code, type, val);
 		sip = (void *)scp + kscsize;
-		if (copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize) != 0)
+		if (copyout(ksip, (caddr_t)sip, fsize - kscsize) != 0)
 			goto trash;
 	} else
 		sip = NULL;

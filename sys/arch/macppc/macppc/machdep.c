@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.183 2018/04/12 17:13:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.184 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -442,8 +442,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
  * Send a signal to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -476,7 +475,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 	}
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof frame) != 0)

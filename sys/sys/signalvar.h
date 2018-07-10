@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.30 2018/03/24 04:13:59 visa Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.31 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -178,7 +178,6 @@ void	sigactsfree(struct process *);
 /*
  * Machine-dependent functions:
  */
-void	sendsig(sig_t action, int sig, int returnmask, u_long code,
-	    int type, union sigval val);
+void	sendsig(sig_t _catcher, int _sig, sigset_t _mask, const siginfo_t *_si);
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.619 2018/07/09 19:20:29 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.620 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2381,8 +2381,7 @@ pentium_cpuspeed(int *freq)
  * specified pc, psl.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
@@ -2449,7 +2448,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 	}
 
 	/* XXX don't copyout siginfo if not needed? */

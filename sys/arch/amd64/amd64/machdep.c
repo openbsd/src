@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.246 2018/06/16 03:30:11 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.247 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -546,23 +546,19 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * Send an interrupt to process.
  *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user
- * specified pc, psl.
+ * Stack is set up to allow sigcode to call routine, followed by
+ * syscall to sigreturn routine below.  After sigreturn resets the
+ * signal mask, the stack, and the frame pointer, it returns to the
+ * user specified pc.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_p->ps_sigacts;
 	struct sigcontext ksc;
 	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
-	siginfo_t ksi;
 	register_t sp, scp, sip;
 	u_long sss;
 
@@ -615,11 +611,10 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 
 	sip = 0;
 	if (psp->ps_siginfo & sigmask(sig)) {
-		sip = sp - ((sizeof(ksi) + 15) & ~15);
-		sss += (sizeof(ksi) + 15) & ~15;
+		sip = sp - ((sizeof(*ksip) + 15) & ~15);
+		sss += (sizeof(*ksip) + 15) & ~15;
 
-		initsiginfo(&ksi, sig, code, type, val);
-		if (copyout(&ksi, (void *)sip, sizeof(ksi)))
+		if (copyout(ksip, (void *)sip, sizeof(*ksip)))
 			sigexit(p, SIGILL);
 	}
 	scp = sp - sss;

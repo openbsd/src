@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.47 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.48 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -448,8 +448,7 @@ struct sigframe {
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct sigframe *fp, frame;
@@ -470,7 +469,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	bzero(&frame, sizeof(frame));
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 		sip = &fp->sf_si;
 	} else
 		sip = NULL;

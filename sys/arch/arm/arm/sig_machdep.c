@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.17 2018/06/23 22:15:14 kettenis Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.18 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -69,15 +69,13 @@ process_frame(struct proc *p)
 /*
  * Send an interrupt to process.
  *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user specified pc.
+ * Stack is set up to allow sigcode to call routine, followed by
+ * syscall to sigreturn routine below.  After sigreturn resets the
+ * signal mask, the stack, and the frame pointer, it returns to the
+ * user specified pc.
  */
 void
-sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
-   union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -129,7 +127,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
 
 	/* Save signal mask. */
-	frame.sf_sc.sc_mask = returnmask;
+	frame.sf_sc.sc_mask = mask;
 
 	/* Save FPU registers. */
 	frame.sf_sc.sc_fpused = pcb->pcb_flags & PCB_FPU;
@@ -143,7 +141,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 	}
 
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;

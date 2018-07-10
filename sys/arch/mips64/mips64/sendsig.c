@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.29 2018/05/22 02:13:42 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.30 2018/07/10 04:19:59 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,8 +92,7 @@ struct sigframe {
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
@@ -139,10 +138,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	}
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		siginfo_t si;
-
-		initsiginfo(&si, sig, code, type, val);
-		if (copyout((caddr_t)&si, (caddr_t)&fp->sf_si, sizeof si))
+		if (copyout(ksip, (caddr_t)&fp->sf_si, sizeof *ksip))
 			goto bail;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.220 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.221 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -798,17 +798,15 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	if ((pr->ps_flags & PS_TRACED) == 0 &&
 	    (ps->ps_sigcatch & mask) != 0 &&
 	    (p->p_sigmask & mask) == 0) {
+		siginfo_t si;
+		initsiginfo(&si, signum, trapno, code, sigval);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
-			siginfo_t si;
-
-			initsiginfo(&si, signum, trapno, code, sigval);
 			ktrpsig(p, signum, ps->ps_sigact[signum],
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		(*pr->ps_emul->e_sendsig)(ps->ps_sigact[signum], signum,
-		    p->p_sigmask, trapno, code, sigval);
+		sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si);
 		postsig_done(p, signum, ps);
 	} else {
 		p->p_sisig = signum;
@@ -1359,6 +1357,7 @@ postsig(struct proc *p, int signum)
 	sig_t action;
 	u_long trapno;
 	int mask, returnmask;
+	siginfo_t si;
 	union sigval sigval;
 	int s, code;
 
@@ -1379,12 +1378,10 @@ postsig(struct proc *p, int signum)
 		code = p->p_sicode;
 		sigval = p->p_sigval;
 	}
+	initsiginfo(&si, signum, trapno, code, sigval);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
-		siginfo_t si;
-
-		initsiginfo(&si, signum, trapno, code, sigval);
 		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
 		    p->p_oldmask : p->p_sigmask, code, &si);
 	}
@@ -1431,8 +1428,7 @@ postsig(struct proc *p, int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		(*pr->ps_emul->e_sendsig)(action, signum, returnmask, trapno,
-		    code, sigval);
+		sendsig(action, signum, returnmask, &si);
 		postsig_done(p, signum, ps);
 		splx(s);
 	}
