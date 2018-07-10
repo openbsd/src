@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.54 2017/12/19 17:46:28 martijn Exp $
+.\"	$OpenBSD: sed.1,v 1.55 2018/07/10 09:10:03 schwarze Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 19 2017 $
+.Dd $Mdocdate: July 10 2018 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -155,9 +155,11 @@ An address is not required, but if specified must be a number (that counts
 input lines
 cumulatively across input files), a dollar character
 .Pq Ql $
-that addresses the last line of input, or a context address
-(which consists of a regular expression preceded and followed by a
-delimiter).
+that addresses the last line of input, or a context address,
+which is a regular expression preceded and followed by a delimiter.
+The delimiter can be any character except a newline or a backslash.  
+Unless it is a slash, the opening delimiter needs to be escaped with
+a backslash.
 .Pp
 A command line with no addresses selects every pattern space.
 .Pp
@@ -196,20 +198,16 @@ has the following two additions to BREs:
 .Pp
 .Bl -enum -compact
 .It
-In a context address, any character other than a backslash
-.Pq Ql \e
-or newline character may be used to delimit the regular expression.
-The opening delimiter should be preceded by a backslash
-unless it is a slash.
-Putting a backslash character before the delimiting character
-causes the character to be treated literally.
-For example, in the context address \exabc\exdefx, the RE delimiter
+The character delimiting the regular expression
+can be used inside the regular expression by prepending a backslash
+or by including it in a character class.
+For example, in the context address \ex\ex[xy]x, the RE delimiter
 is an
 .Sq x
-and the second
+and the other
 .Sq x
-stands for itself, so that the regular expression is
-.Dq abcxdef .
+characters stand for themselves, so that the regular expression is
+.Dq x[xy] .
 .Pp
 .It
 The escape sequence \en matches a newline character embedded in the
@@ -412,9 +410,8 @@ string for the first instance of the regular expression
 in the pattern space.
 Any character other than backslash or newline can be used instead of
 a slash to delimit the regular expression and the replacement.
-Within the regular expression and the replacement,
-the delimiter itself can be used as a literal character
-if it is preceded by a backslash.
+Also see the the section about
+.Sx SED REGULAR EXPRESSIONS .
 .Pp
 An ampersand
 .Pq Ql &
