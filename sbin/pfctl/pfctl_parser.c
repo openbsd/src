@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.319 2018/02/08 02:26:39 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.320 2018/07/10 09:05:11 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -134,7 +134,8 @@ static const struct icmptypeent icmp6_type[] = {
 	{ "niqry",	ICMP6_NI_QUERY },
 	{ "nirep",	ICMP6_NI_REPLY },
 	{ "mtraceresp",	MLD_MTRACE_RESP },
-	{ "mtrace",	MLD_MTRACE }
+	{ "mtrace",	MLD_MTRACE },
+	{ "listenrepv2", MLDV2_LISTENER_REPORT },
 };
 
 static const struct icmpcodeent icmp_code[] = {
