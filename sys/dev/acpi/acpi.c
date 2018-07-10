@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.354 2018/07/05 19:25:38 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.355 2018/07/10 17:11:42 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -645,6 +645,21 @@ acpi_getpci(struct aml_node *node, void *arg)
 
 	/* Device does not have children, stop scanning */
 	return (1);
+}
+
+struct aml_node *
+acpi_find_pci(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	struct acpi_pci *pdev;
+	int bus, dev, fun;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &fun);
+	TAILQ_FOREACH(pdev, &acpi_pcidevs, next) {
+		if (pdev->bus == bus && pdev->dev == dev && pdev->fun == fun)
+			return pdev->node;
+	}
+
+	return NULL;
 }
 
 struct aml_node *

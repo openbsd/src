@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.1 2018/07/05 19:25:38 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.2 2018/07/10 17:11:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -331,11 +331,62 @@ struct acpipci_intr_handle {
 	int			ih_msi;
 };
 
-struct aml_node *acpi_pci_match(struct device *, struct pci_attach_args *);
-
 int
 acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
+	struct acpipci_softc *sc = pa->pa_pc->pc_intr_v;
+	struct aml_node *node;
+	struct aml_value res;
+	uint64_t addr, pin, source, index;
+	struct acpipci_intr_handle *ih;
+	int i;
+
+	if (pa->pa_bridgetag == NULL)
+		return -1;
+
+	node = acpi_find_pci(pa->pa_pc, *pa->pa_bridgetag);
+	if (node == NULL)
+		return -1;
+
+	if (aml_evalname(sc->sc_acpi, node, "_PRT", 0, NULL, &res))
+		return -1;
+
+	if (res.type != AML_OBJTYPE_PACKAGE)
+		return -1;
+
+	for (i = 0; i < res.length; i++) {
+		struct aml_value *val = res.v_package[i];
+
+		if (val->type != AML_OBJTYPE_PACKAGE)
+			continue;
+		if (val->length != 4)
+			continue;
+		if (val->v_package[0]->type != AML_OBJTYPE_INTEGER ||
+		    val->v_package[1]->type != AML_OBJTYPE_INTEGER ||
+		    val->v_package[2]->type != AML_OBJTYPE_INTEGER ||
+		    val->v_package[3]->type != AML_OBJTYPE_INTEGER)
+			continue;
+		    
+		addr = val->v_package[0]->v_integer;
+		pin = val->v_package[1]->v_integer;
+		source = val->v_package[2]->v_integer;
+		index = val->v_package[3]->v_integer;
+		if (ACPI_ADR_PCIDEV(addr) != pa->pa_device ||
+		    ACPI_ADR_PCIFUN(addr) != 0xffff ||
+		    pin != pa->pa_intrpin - 1 || source != 0)
+			continue;
+		
+		ih = malloc(sizeof(struct acpipci_intr_handle),
+		    M_DEVBUF, M_WAITOK);
+		ih->ih_pc = pa->pa_pc;
+		ih->ih_tag = pa->pa_tag;
+		ih->ih_intrpin = index;
+		ih->ih_msi = 0;
+		*ihp = (pci_intr_handle_t)ih;
+
+		return 0;
+	}
+
 	return -1;
 }
 
@@ -370,11 +421,13 @@ const char *
 acpipci_intr_string(void *v, pci_intr_handle_t ihp)
 {
 	struct acpipci_intr_handle *ih = (struct acpipci_intr_handle *)ihp;
+	static char irqstr[32];
 
 	if (ih->ih_msi)
 		return "msi";
 
-	return "intx";
+	snprintf(irqstr, sizeof(irqstr), "irq %d", ih->ih_intrpin);
+	return irqstr;
 }
 
 void *
@@ -424,6 +477,9 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		}
 		pci_conf_write(ih->ih_pc, ih->ih_tag,
 		    off, reg | PCI_MSI_MC_MSIE);
+	} else {
+		cookie = acpi_intr_establish(ih->ih_intrpin, 0, level,
+		    func, arg, name);
 	}
 
 	free(ih, M_DEVBUF, sizeof(struct acpipci_intr_handle));

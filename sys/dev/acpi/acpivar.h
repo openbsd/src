@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.95 2018/07/04 20:46:22 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.96 2018/07/10 17:11:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -387,6 +387,8 @@ int	acpi_release_glk(uint32_t *);
 
 void	acpi_pciroots_attach(struct device *, void *, cfprint_t);
 void	acpi_attach_deps(struct acpi_softc *, struct aml_node *);
+
+struct aml_node *acpi_find_pci(pci_chipset_tag_t, pcitag_t);
 
 void	*acpi_intr_establish(int, int, int, int (*)(void *), void *,
 	    const char *);
