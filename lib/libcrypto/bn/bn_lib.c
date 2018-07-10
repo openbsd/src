@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.40 2018/05/12 17:31:41 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.41 2018/07/10 21:52:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -887,6 +887,54 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 		BN_CONSTTIME_SWAP(0);
 	}
 #undef BN_CONSTTIME_SWAP
+}
+
+/*
+ * Constant-time conditional swap of a and b.
+ * a and b are swapped if condition is not 0.
+ * The code assumes that at most one bit of condition is set. XXX add check!
+ * nwords is the number of words to swap.
+ */
+int
+BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
+{
+	BN_ULONG t;
+	int i;
+
+	if (a == b)
+		return 1;
+	if (bn_wexpand(a, nwords) == NULL || bn_wexpand(b, nwords) == NULL)
+		return 0;
+	if (a->top > nwords || b->top > nwords) {
+		BNerror(BN_R_INVALID_LENGTH);
+		return 0;
+	}
+
+	condition = ((condition - 1) >> (BN_BITS2 - 1)) - 1;
+
+	/* swap top field */
+	t = (a->top ^ b->top) & condition;
+	a->top ^= t;
+	b->top ^= t;
+
+	/* swap neg field */
+	t = (a->neg ^ b->neg) & condition;
+	a->neg ^= t;
+	b->neg ^= t;
+
+	/* swap BN_FLG_CONSTTIME from flag field */
+	t = ((a->flags ^ b->flags) & BN_FLG_CONSTTIME) & condition;
+	a->flags ^= t;
+	b->flags ^= t;
+
+	/* swap the data */
+	for (i = 0; i < nwords; i++) {
+		t = (a->d[i] ^ b->d[i]) & condition;
+		a->d[i] ^= t;
+		b->d[i] ^= t;
+	}
+
+	return 1;
 }
 
 BN_GENCB *
