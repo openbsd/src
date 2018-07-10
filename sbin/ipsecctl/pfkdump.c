@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.46 2017/04/19 15:59:38 bluhm Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.47 2018/07/10 09:35:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
+#include <sys/queue.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 #include <netdb.h>
