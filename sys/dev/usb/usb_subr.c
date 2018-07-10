@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.136 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.137 2018/07/10 09:17:03 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1304,7 +1304,7 @@ void
 usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 {
 	struct usbd_port *p;
-	int i, err, s;
+	int i;
 
 	di->udi_bus = dev->bus->usbctl->dv_unit;
 	di->udi_addr = dev->address;
@@ -1338,20 +1338,8 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 		for (i = 0;
 		    i < nitems(di->udi_ports) && i < dev->hub->nports; i++) {
 			p = &dev->hub->ports[i];
-			if (p->device)
-				err = p->device->address;
-			else {
-				s = UGETW(p->status.wPortStatus);
-				if (s & UPS_PORT_ENABLED)
-					err = USB_PORT_ENABLED;
-				else if (s & UPS_SUSPEND)
-					err = USB_PORT_SUSPENDED;
-				else if (s & UPS_PORT_POWER)
-					err = USB_PORT_POWERED;
-				else
-					err = USB_PORT_DISABLED;
-			}
-			di->udi_ports[i] = err;
+			di->udi_ports[i] = UGETW(p->status.wPortChange) << 16 |
+			    UGETW(p->status.wPortStatus);
 		}
 		di->udi_nports = dev->hub->nports;
 	} else
