@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.478 2018/06/18 11:00:31 procter Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.479 2018/07/10 09:28:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -121,7 +121,8 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 
 enum	{ PF_NOPFROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
-	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_MAX };
+	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_PKTDELAY_PKTS,
+	  PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN, PF_POOL_LEASTSTATES };
@@ -459,11 +460,12 @@ struct pf_rule_actions {
 	u_int16_t	pqid;
 	u_int16_t	max_mss;
 	u_int16_t	flags;
+	u_int16_t	delay;
 	u_int8_t	log;
 	u_int8_t	set_tos;
 	u_int8_t	min_ttl;
 	u_int8_t	set_prio[2];
-	u_int8_t	pad[3];
+	u_int8_t	pad[1];
 };
 
 union pf_rule_ptr {
@@ -546,6 +548,7 @@ struct pf_rule {
 	u_int16_t		 tag;
 	u_int16_t		 match_tag;
 	u_int16_t		 scrub_flags;
+	u_int16_t		 delay;
 
 	struct pf_rule_uid	 uid;
 	struct pf_rule_gid	 gid;
@@ -605,8 +608,9 @@ struct pf_rule {
 #define	PFRULE_RETURNICMP	0x0004
 #define	PFRULE_RETURN		0x0008
 #define	PFRULE_NOSYNC		0x0010
-#define PFRULE_SRCTRACK		0x0020  /* track source states */
-#define PFRULE_RULESRCTRACK	0x0040  /* per rule */
+#define	PFRULE_SRCTRACK		0x0020  /* track source states */
+#define	PFRULE_RULESRCTRACK	0x0040  /* per rule */
+#define	PFRULE_SETDELAY		0x0080
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
@@ -619,7 +623,7 @@ struct pf_rule {
 #define PFSTATE_HIWAT		10000	/* default state table size */
 #define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
 #define PFSTATE_ADAPT_END	12000	/* default adaptive timeout end */
-
+#define	PF_PKTDELAY_MAXPKTS	10000	/* max # of pkts held in delay queue */
 
 struct pf_rule_item {
 	SLIST_ENTRY(pf_rule_item)	 entry;
@@ -761,6 +765,7 @@ struct pf_state {
 	int32_t			 creation;
 	int32_t			 expire;
 	int32_t			 pfsync_time;
+	int			 rtableid[2];	/* rtables stack and wire */
 	u_int16_t		 qid;
 	u_int16_t		 pqid;
 	u_int16_t		 tag;
@@ -781,14 +786,13 @@ struct pf_state {
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state; /* PFSYNC_S_x */
 	u_int8_t		 sync_updates;
-	int			 rtableid[2];	/* rtables stack and wire */
 	u_int8_t		 min_ttl;
 	u_int8_t		 set_tos;
 	u_int8_t		 set_prio[2];
 	u_int16_t		 max_mss;
 	u_int16_t		 if_index_in;
 	u_int16_t		 if_index_out;
-	u_int8_t		 pad2[2];
+	u_int16_t		 delay;
 };
 
 /*
@@ -1423,6 +1427,12 @@ enum pf_divert_types {
 	PF_DIVERT_PACKET
 };
 
+struct pf_pktdelay {
+	struct timeout	*to;
+	struct mbuf	*m;
+	u_int		 ifidx;
+};
+
 /* Fragment entries reference mbuf clusters, so base the default on that. */
 #define PFFRAG_FRENT_HIWAT	(NMBCLUSTERS / 16) /* Number of entries */
 #define PFFRAG_FRAG_HIWAT	(NMBCLUSTERS / 32) /* Number of packets */
@@ -1676,7 +1686,8 @@ extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 extern u_int32_t		 ticket_pabuf;
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_rule_item_pl, pf_queue_pl;
+				    pf_rule_item_pl, pf_queue_pl,
+				    pf_pktdelay_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
@@ -1785,6 +1796,7 @@ int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
 void	pf_route6(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
 void	pf_init_threshold(struct pf_threshold *, u_int32_t, u_int32_t);
+int	pf_delay_pkt(struct mbuf *, u_int);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);

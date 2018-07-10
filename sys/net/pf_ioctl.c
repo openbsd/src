@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.334 2018/04/24 23:05:09 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.335 2018/07/10 09:28:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -169,6 +169,9 @@ pfattach(int num)
 	    IPL_SOFTNET, 0, "pfqueue", NULL);
 	pool_init(&pf_tag_pl, sizeof(struct pf_tagname), 0,
 	    IPL_SOFTNET, 0, "pftag", NULL);
+	pool_init(&pf_pktdelay_pl, sizeof(struct pf_pktdelay), 0,
+	    IPL_SOFTNET, 0, "pfpktdelay", NULL);
+
 	hfsc_initialize();
 	pfr_initialize();
 	pfi_initialize();

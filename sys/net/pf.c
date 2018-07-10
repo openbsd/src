@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1068 2018/06/18 11:00:31 procter Exp $ */
+/*	$OpenBSD: pf.c,v 1.1069 2018/07/10 09:28:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -161,7 +161,7 @@ struct pf_test_ctx {
 
 struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
-struct pool		 pf_rule_item_pl, pf_sn_item_pl;
+struct pool		 pf_rule_item_pl, pf_sn_item_pl, pf_pktdelay_pl;
 
 void			 pf_add_threshold(struct pf_threshold *);
 int			 pf_check_threshold(struct pf_threshold *);
@@ -258,6 +258,7 @@ void			 pf_state_key_link_inpcb(struct pf_state_key *,
 			    struct inpcb *);
 void			 pf_state_key_unlink_inpcb(struct pf_state_key *);
 void			 pf_inpcb_unlink_state_key(struct inpcb *);
+void			 pf_pktenqueue_delayed(void *);
 
 #if NPFLOG > 0
 void			 pf_log_matches(struct pf_pdesc *, struct pf_rule *,
@@ -273,7 +274,8 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_src_tree_pl, PFSNODE_HIWAT, PFSNODE_HIWAT },
 	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT, PFFRAG_FRENT_HIWAT },
 	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT, PFR_KTABLE_HIWAT },
-	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT }
+	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT },
+	{ &pf_pktdelay_pl, PF_PKTDELAY_MAXPKTS, PF_PKTDELAY_MAXPKTS }
 };
 
 #define STATE_LOOKUP(i, k, d, s, m)					\
@@ -3474,6 +3476,8 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 		a->set_prio[0] = r->set_prio[0];
 		a->set_prio[1] = r->set_prio[1];
 	}
+	if (r->rule_flag & PFRULE_SETDELAY)
+		a->delay = r->delay;
 }
 
 #define PF_TEST_ATTRIB(t, a)			\
@@ -3969,6 +3973,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 #endif	/* NPFSYNC > 0 */
 	s->set_prio[0] = act->set_prio[0];
 	s->set_prio[1] = act->set_prio[1];
+	s->delay = act->delay;
 	SLIST_INIT(&s->src_nodes);
 
 	switch (pd->proto) {
@@ -7017,6 +7022,7 @@ done:
 				if (s->state_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = s->set_prio[0];
 			}
+			pd.m->m_pkthdr.pf.delay = s->delay;
 		} else {
 			pf_scrub(pd.m, r->scrub_flags, pd.af, r->min_ttl,
 			    r->set_tos);
@@ -7029,6 +7035,7 @@ done:
 				if (r->scrub_flags & PFSTATE_SETPRIO)
 					pd.m->m_pkthdr.pf.prio = r->set_prio[0];
 			}
+			pd.m->m_pkthdr.pf.delay = r->delay;
 		}
 	}
 
@@ -7380,4 +7387,37 @@ pf_state_key_unlink_reverse(struct pf_state_key *sk)
 		pf_state_key_unref(skrev);
 		pf_state_key_unref(sk);
 	}
+}
+
+int
+pf_delay_pkt(struct mbuf *m, u_int ifidx)
+{
+	struct pf_pktdelay	*pdy;
+
+	if ((pdy = pool_get(&pf_pktdelay_pl, PR_NOWAIT)) == NULL) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+	pdy->ifidx = ifidx;
+	pdy->m = m;
+	timeout_set(pdy->to, pf_pktenqueue_delayed, pdy);
+	timeout_add_msec(pdy->to, m->m_pkthdr.pf.delay);
+	m->m_pkthdr.pf.delay = 0;
+	return (0);
+}
+
+void
+pf_pktenqueue_delayed(void *arg)
+{
+	struct pf_pktdelay	*pdy = arg;
+	struct ifnet		*ifp;
+
+	ifp = if_get(pdy->ifidx);
+	if (ifp != NULL) {
+		if_enqueue(ifp, pdy->m);
+		if_put(ifp);
+	} else
+		m_freem(pdy->m);
+
+	pool_put(&pf_pktdelay_pl, pdy);
 }

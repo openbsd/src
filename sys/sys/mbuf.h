@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.235 2018/02/11 00:24:13 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.236 2018/07/10 09:28:27 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -100,10 +100,11 @@ struct pkthdr_pf {
 	struct inpcb	*inp;		/* connected pcb for outgoing packet */
 	u_int32_t	 qid;		/* queue id */
 	u_int16_t	 tag;		/* tag id */
+	u_int16_t	 delay;		/* delay packet by X ms */
 	u_int8_t	 flags;
 	u_int8_t	 routed;
 	u_int8_t	 prio;
-	u_int8_t	 pad[3];
+	u_int8_t	 pad[1];
 };
 
 /* pkthdr_pf.flags */
