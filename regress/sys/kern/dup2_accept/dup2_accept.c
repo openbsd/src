@@ -1,3 +1,4 @@
+/*	$OpenBSD: dup2_accept.c,v 1.3 2018/07/10 08:08:00 mpi Exp $	*/
 /*
  * Copyright (c) 2018 Martin Pieuchot
  *
