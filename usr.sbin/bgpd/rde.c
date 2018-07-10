@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.388 2018/07/10 09:12:52 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.389 2018/07/10 12:38:50 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3534,7 +3534,7 @@ network_add(struct network_config *nc, int flagstatic)
 	in_addr_t		 prefix4;
 	u_int16_t		 i;
 
-	if (nc->rtableid) {
+	if (nc->rtableid != conf->default_tableid) {
 		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
 			if (rd->rtableid != nc->rtableid)
 				continue;
