@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.17 2018/06/25 22:39:14 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.18 2018/07/10 13:05:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -358,6 +358,7 @@ efi_framebuffer(void)
 	    "simple-framebuffer", strlen("simple-framebuffer") + 1);
 }
 
+int acpi = 0;
 char *bootmac = NULL;
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 
@@ -380,7 +381,7 @@ efi_makebootargs(char *bootargs)
 			fdt = ST->ConfigurationTable[i].VendorTable;
 	}
 
-	if (fdt == NULL)
+	if (fdt == NULL || acpi)
 		fdt = efi_acpi();
 
 	if (!fdt_init(fdt))
@@ -739,14 +740,23 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
  * Commands
  */
 
+int Xacpi_efi(void);
 int Xexit_efi(void);
 int Xpoweroff_efi(void);
 
 const struct cmd_table cmd_machine[] = {
+	{ "acpi",	CMDT_CMD, Xacpi_efi },
 	{ "exit",	CMDT_CMD, Xexit_efi },
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 	{ NULL, 0 }
 };
+
+int
+Xacpi_efi(void)
+{
+	acpi = 1;
+	return (0);
+}
 
 int
 Xexit_efi(void)
