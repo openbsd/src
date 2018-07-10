@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.83 2018/07/10 20:43:15 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.84 2018/07/10 20:52:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -54,7 +54,7 @@
 #include "vmm.h"
 
 void vmm_sighdlr(int, short, void *);
-int vmm_start_vm(struct imsg *, uint32_t *);
+int vmm_start_vm(struct imsg *, uint32_t *, pid_t *);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 void vmm_run(struct privsep *, struct privsep_proc *, void *);
 void vmm_dispatch_vm(int, short, void *);
@@ -110,6 +110,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_result	 vmr;
 	struct vmop_create_params vmc;
 	uint32_t		 id = 0;
+	pid_t			 pid = 0;
 	unsigned int		 mode;
 
 	switch (imsg->hdr.type) {
@@ -142,7 +143,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_START_VM_END:
-		res = vmm_start_vm(imsg, &id);
+		res = vmm_start_vm(imsg, &id, &pid);
 		/* Check if the ID can be mapped correctly */
 		if ((id = vm_id2vmid(id, NULL)) == 0)
 			res = ENOENT;
@@ -284,7 +285,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 		vm->vm_receive_fd = imsg->fd;
-		res = vmm_start_vm(imsg, &id);
+		res = vmm_start_vm(imsg, &id, &pid);
 		/* Check if the ID can be mapped correctly */
 		if ((id = vm_id2vmid(id, NULL)) == 0)
 			res = ENOENT;
@@ -314,6 +315,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
 		vmr.vmr_id = id;
+		vmr.vmr_pid = pid;
 		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd,
 		    imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
 			return (-1);
@@ -580,13 +582,14 @@ opentap(char *ifname)
  * Parameters:
  *  imsg: The VM data structure that is including the VM create parameters.
  *  id: Returns the VM id as reported by the kernel and obtained from the VM.
+ *  pid: Returns the VM pid to the parent.
  *
  * Return values:
  *  0: success
  *  !0 : failure - typically an errno indicating the source of the failure
  */
 int
-vmm_start_vm(struct imsg *imsg, uint32_t *id)
+vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 {
 	struct vm_create_params	*vcp;
 	struct vmd_vm		*vm;
@@ -654,6 +657,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id)
 			goto err;
 
 		*id = vcp->vcp_id;
+		*pid = vm->vm_pid;
 
 		if (vmm_pipe(vm, fds[0], vmm_dispatch_vm) == -1)
 			fatal("setup vm pipe");
