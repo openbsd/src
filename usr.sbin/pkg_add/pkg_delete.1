@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.58 2018/01/08 05:42:48 bentley Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.59 2018/07/10 10:20:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 8 2018 $
+.Dd $Mdocdate: July 10 2018 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -191,12 +191,6 @@ If set, verify files checksums during deletion, exactly like
 .It Ev PKG_DBDIR
 Where to look for installed packages instead of
 .Pa /var/db/pkg .
-.It Ev PKG_DESTDIR
-Value for
-.Ar pkg-destdir ,
-if no
-.Fl B
-option is specified.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,

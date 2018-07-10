@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.113 2018/07/09 09:35:13 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.114 2018/07/10 10:20:51 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: July 10 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -923,15 +923,6 @@ inclusion will be ignored.
 However, if both the positive and negative fragment files do not exist,
 .Nm
 will error out, to make it easier to spot fragment names errors.
-.Sh ENVIRONMENT
-.Bl -tag -width PKG_DESTDIR
-.It Ev PKG_DESTDIR
-Default value for
-.Ar pkg-destdir ,
-if no
-.Fl B
-option is specified.
-.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
