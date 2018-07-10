@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.9 2018/07/03 20:15:57 guenther Exp $	*/
+/*	$OpenBSD: frame.h,v 1.10 2018/07/10 08:57:44 guenther Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -97,10 +97,6 @@ struct trapframe {
 	int64_t	tf_err;		/* not the hardware position */
 	int64_t	tf_rbx;
 	int64_t	tf_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
 	int64_t	tf_trapno;
 	int64_t	tf_rbp;	/* hardware puts err here, INTRENTRY() moves it up */
 	/* below portion defined in hardware */
@@ -131,10 +127,6 @@ struct intrframe {
 	int64_t	if_err;		/* IREENT_MAGIC if resume/recurse */
 	int64_t	if_rbx;
 	int64_t	if_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
 	int64_t if_ppl;		/* previous priority level */
 	int64_t	if_rbp;
 	/* below portion defined in hardware */

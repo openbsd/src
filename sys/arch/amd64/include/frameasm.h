@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.17 2018/07/09 08:35:36 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.18 2018/07/10 08:57:44 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -80,7 +80,7 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	INTR_CLEAR_GPRS
 
 #define	INTR_ENTRY_KERN \
-	subq	$152,%rsp		; \
+	subq	$120,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
 	/* the hardware puts err next to %rip, we move it elsewhere and */ \
 	/* later put %rbp in this slot to make it look like a call frame */ \
@@ -112,7 +112,6 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 
 /* For faking up an interrupt frame when we're already in the kernel */
 #define	INTR_REENTRY \
-	subq	$32,%rsp		; \
 	INTR_SAVE_GPRS
 
 #define INTRFASTEXIT \

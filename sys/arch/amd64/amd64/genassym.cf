@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.37 2018/07/03 20:15:57 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.38 2018/07/10 08:57:44 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -64,10 +64,6 @@ member	tf_r15
 member	tf_rbp
 member	tf_rbx
 member	tf_rax
-member	tf_gs
-member	tf_fs
-member	tf_es
-member	tf_ds
 member	tf_trapno
 member	tf_err
 member	tf_rip
