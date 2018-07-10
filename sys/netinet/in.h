@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.130 2018/06/07 08:46:24 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.131 2018/07/10 11:34:12 mpi Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -660,6 +660,7 @@ struct ip_mreq {
 #define IPCTL_IPPORT_HILASTAUTO	10
 #define	IPCTL_IPPORT_MAXQUEUE	11
 #define	IPCTL_ENCDEBUG		12
+#define IPCTL_IPSEC_STATS	13
 #define IPCTL_IPSEC_EXPIRE_ACQUIRE 14   /* How long to wait for key mgmt. */
 #define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
 #define IPCTL_IPSEC_REQUIRE_PFS 16
@@ -703,7 +704,7 @@ struct ip_mreq {
 	{ "porthilast", CTLTYPE_INT }, \
 	{ "maxqueue", CTLTYPE_INT }, \
 	{ "encdebug", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ 0, 0 /* ipsecstat */ }, \
 	{ "ipsec-expire-acquire", CTLTYPE_INT }, \
 	{ "ipsec-invalid-life", CTLTYPE_INT }, \
 	{ "ipsec-pfs", CTLTYPE_INT }, \
@@ -746,7 +747,7 @@ struct ip_mreq {
 	&ipport_hilastauto, \
 	&ip_maxqueue, \
 	NULL /* encdebug */, \
-	NULL, \
+	NULL /* ipsecstat */, \
 	NULL /* ipsec_expire_acquire */, \
 	NULL /* ipsec_keep_invalid */, \
 	NULL /* ipsec_require_pfs */, \

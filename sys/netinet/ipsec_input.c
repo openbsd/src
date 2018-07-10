@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.163 2018/05/14 15:24:23 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.164 2018/07/10 11:34:12 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -77,6 +77,9 @@
 
 #include <net/if_enc.h>
 
+#include <crypto/cryptodev.h>
+#include <crypto/xform.h>
+
 #include "bpfilter.h"
 
 void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
@@ -112,6 +115,7 @@ int *ipcompctl_vars[IPCOMPCTL_MAXID] = IPCOMPCTL_VARS;
 struct cpumem *espcounters;
 struct cpumem *ahcounters;
 struct cpumem *ipcompcounters;
+struct cpumem *ipseccounters;
 
 char ipsec_def_enc[20];
 char ipsec_def_auth[20];
@@ -122,6 +126,7 @@ int *ipsecctl_vars[IPSEC_MAXID] = IPSECCTL_VARS;
 int esp_sysctl_espstat(void *, size_t *, void *);
 int ah_sysctl_ahstat(void *, size_t *, void *);
 int ipcomp_sysctl_ipcompstat(void *, size_t *, void *);
+int ipsec_sysctl_ipsecstat(void *, size_t *, void *);
 
 void
 ipsec_init(void)
@@ -129,6 +134,7 @@ ipsec_init(void)
 	espcounters = counters_alloc(esps_ncounters);
 	ahcounters = counters_alloc(ahs_ncounters);
 	ipcompcounters = counters_alloc(ipcomps_ncounters);
+	ipseccounters = counters_alloc(ipsec_ncounters);
 
 	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
 	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
@@ -167,6 +173,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 
 	NET_ASSERT_LOCKED();
 
+	ipsecstat_inc(ipsec_ipackets);
+	ipsecstat_add(ipsec_ibytes, m->m_pkthdr.len);
 	IPSEC_ISTAT(esps_input, ahs_input, ipcomps_input);
 
 	if (m == NULL) {
@@ -322,6 +330,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	 * everything else.
 	 */
 	error = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
+	if (error)
+		ipsecstat_inc(ipsec_idrops);
 	return error;
 
  drop:
@@ -329,11 +339,79 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	return error;
 }
 
+void
+ipsec_input_cb(struct cryptop *crp)
+{
+	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
+	struct mbuf *m = (struct mbuf *) crp->crp_buf;
+	struct tdb *tdb;
+	int error;
+
+	if (m == NULL) {
+		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
+		ipsecstat_inc(ipsec_crypto);
+		goto droponly;
+	}
+
+
+	NET_LOCK();
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	if (tdb == NULL) {
+		DPRINTF(("%s: TDB is expired while in crypto", __func__));
+		ipsecstat_inc(ipsec_notdb);
+		goto baddone;
+	}
+
+	/* Check for crypto errors */
+	if (crp->crp_etype) {
+		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
+			NET_UNLOCK();
+			crypto_dispatch(crp);
+			return;
+		}
+		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		ipsecstat_inc(ipsec_noxform);
+		goto baddone;
+	}
+
+	/* Release the crypto descriptors */
+	crypto_freereq(crp);
+
+	switch (tdb->tdb_sproto) {
+	case IPPROTO_ESP:
+		error = esp_input_cb(tdb, tc, m);
+		break;
+	case IPPROTO_AH:
+		break;
+	case IPPROTO_IPCOMP:
+		break;
+	default:
+		panic("%s: unknown/unsupported security protocol %d",
+		    __func__, tdb->tdb_sproto);
+	}
+
+	NET_UNLOCK();
+	if (error)
+		ipsecstat_inc(ipsec_idrops);
+	return;
+
+ baddone:
+	NET_UNLOCK();
+ droponly:
+	ipsecstat_inc(ipsec_idrops);
+	free(tc, M_XDATA, 0);
+	m_freem(m);
+	crypto_freereq(crp);
+}
+
 /*
  * IPsec input callback, called by the transform callback. Takes care of
  * filtering and other sanity checks on the processed packet.
  */
-void
+int
 ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 {
 	int af, sproto;
@@ -364,7 +442,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	if (m == NULL) {
 		/* The called routine will print a message if necessary */
 		IPSEC_ISTAT(esps_badkcr, ahs_badkcr, ipcomps_badkcr);
-		return;
+		return -1;
 	}
 
 	/* Fix IPv4 header */
@@ -374,7 +452,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			    __func__, ipsp_address(&tdbp->tdb_dst,
 			    buf, sizeof(buf)), ntohl(tdbp->tdb_spi)));
 			IPSEC_ISTAT(esps_hdrops, ahs_hdrops, ipcomps_hdrops);
-			return;
+			return -1;
 		}
 
 		ip = mtod(m, struct ip *);
@@ -389,7 +467,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip),
@@ -403,7 +481,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
@@ -424,7 +502,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			    buf, sizeof(buf)), ntohl(tdbp->tdb_spi)));
 
 			IPSEC_ISTAT(esps_hdrops, ahs_hdrops, ipcomps_hdrops);
-			return;
+			return -1;
 		}
 
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -439,7 +517,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip), (caddr_t) &ipn);
@@ -451,7 +529,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
@@ -475,7 +553,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			cksum = 0;
 			m_copyback(m, skip + offsetof(struct udphdr, uh_sum),
@@ -494,7 +572,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				m_freem(m);
 				IPSEC_ISTAT(esps_hdrops, ahs_hdrops,
 				    ipcomps_hdrops);
-				return;
+				return -1;
 			}
 			cksum = 0;
 			m_copyback(m, skip + offsetof(struct tcphdr, th_sum),
@@ -524,7 +602,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			m_freem(m);
 			DPRINTF(("%s: failed to get tag\n", __func__));
 			IPSEC_ISTAT(esps_hdrops, ahs_hdrops, ipcomps_hdrops);
-			return;
+			return -1;
 		}
 
 		tdbi = (struct tdb_ident *)(mtag + 1);
@@ -566,6 +644,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	if (tdbp->tdb_flags & TDBF_TUNNELING)
 		m->m_flags |= M_TUNNEL;
 
+	ipsecstat_add(ipsec_idecompbytes, m->m_pkthdr.len);
+
 #if NBPFILTER > 0
 	if ((encif = enc_getif(tdbp->tdb_rdomain, tdbp->tdb_tap)) != NULL) {
 		encif->if_ipackets++;
@@ -597,20 +677,21 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		/* This is the enc0 interface unless for ipcomp. */
 		if ((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL) {
 			m_freem(m);
-			return;
+			return -1;
 		}
 		if (pf_test(af, PF_IN, ifp, &m) != PF_PASS) {
 			if_put(ifp);
 			m_freem(m);
-			return;
+			return -1;
 		}
 		if_put(ifp);
 		if (m == NULL)
-			return;
+			return -1;
 	}
 #endif
 	/* Call the appropriate IPsec transform callback. */
 	ip_deliver(&m, &skip, prot, af);
+	return 0;
 #undef IPSEC_ISTAT
 }
 
@@ -639,6 +720,8 @@ ipsec_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    ipsec_def_comp, sizeof(ipsec_def_comp));
 		NET_UNLOCK();
 		return (error);
+	case IPCTL_IPSEC_STATS:
+		return (ipsec_sysctl_ipsecstat(oldp, oldlenp, newp));
 	default:
 		if (name[0] < IPSEC_MAXID) {
 			NET_LOCK();
@@ -760,6 +843,18 @@ ipcomp_sysctl_ipcompstat(void *oldp, size_t *oldlenp, void *newp)
 	    ipcomps_ncounters);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &ipcompstat,
 	    sizeof(ipcompstat)));
+}
+
+int
+ipsec_sysctl_ipsecstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct ipsecstat ipsecstat;
+
+	CTASSERT(sizeof(ipsecstat) == (ipsec_ncounters * sizeof(uint64_t)));
+	memset(&ipsecstat, 0, sizeof ipsecstat);
+	counters_read(ipseccounters, (uint64_t *)&ipsecstat, ipsec_ncounters);
+	return (sysctl_rdstruct(oldp, oldlenp, newp, &ipsecstat,
+	    sizeof(ipsecstat)));
 }
 
 /* IPv4 AH wrapper. */

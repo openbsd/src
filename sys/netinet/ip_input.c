@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.337 2018/05/21 15:52:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.338 2018/07/10 11:34:12 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1623,6 +1623,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 #ifdef IPSEC
 	case IPCTL_ENCDEBUG:
+	case IPCTL_IPSEC_STATS:
 	case IPCTL_IPSEC_EXPIRE_ACQUIRE:
 	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
 	case IPCTL_IPSEC_REQUIRE_PFS:

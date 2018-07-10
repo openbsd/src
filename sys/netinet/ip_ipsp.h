@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.189 2017/11/20 14:14:26 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.190 2018/07/10 11:34:12 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -40,14 +40,10 @@
 #ifndef _NETINET_IPSP_H_
 #define _NETINET_IPSP_H_
 
-struct m_tag;
-
 /* IPSP global definitions. */
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <netinet/in.h>
-#include <net/radix.h>
 
 union sockaddr_union {
 	struct sockaddr		sa;
@@ -125,9 +121,58 @@ struct sockaddr_encap {
 #define	IPSP_DIRECTION_IN	0x1
 #define	IPSP_DIRECTION_OUT	0x2
 
+struct ipsecstat {
+	uint64_t	ipsec_ipackets;		/* Input IPsec packets */
+	uint64_t	ipsec_opackets;		/* Output IPsec packets */
+	uint64_t	ipsec_ibytes;		/* Input bytes */
+	uint64_t	ipsec_obytes;		/* Output bytes */
+	uint64_t	ipsec_idecompbytes;	/* Input bytes, decompressed */
+	uint64_t	ipsec_ouncompbytes;	/* Output bytes, uncompressed */
+	uint64_t	ipsec_idrops;		/* Dropped on input */
+	uint64_t	ipsec_odrops;		/* Dropped on output */
+	uint64_t	ipsec_crypto;		/* Crypto processing failure */
+	uint64_t	ipsec_notdb;		/* Expired while in crypto */
+	uint64_t	ipsec_noxform;		/* Crypto error */
+};
+
 #ifdef _KERNEL
+
 #include <sys/timeout.h>
 #include <sys/tree.h>
+#include <sys/queue.h>
+#include <net/radix.h>
+#include <sys/percpu.h>
+
+enum ipsec_counters {
+	ipsec_ipackets,
+	ipsec_opackets,
+	ipsec_ibytes,
+	ipsec_obytes,
+	ipsec_idecompbytes,
+	ipsec_ouncompbytes,
+	ipsec_idrops,
+	ipsec_odrops,
+	ipsec_crypto,
+	ipsec_notdb,
+	ipsec_noxform,
+	ipsec_ncounters
+};
+
+extern struct cpumem *ipseccounters;
+
+static inline void
+ipsecstat_inc(enum ipsec_counters c)
+{
+	counters_inc(ipseccounters, c);
+}
+
+static inline void
+ipsecstat_add(enum ipsec_counters c, uint64_t v)
+{
+	counters_add(ipseccounters, c, v);
+}
+
+struct m_tag;
 
 #define	sen_data		Sen.Data
 #define	sen_ip_src		Sen.Sip4.Src
@@ -424,6 +469,7 @@ extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */
  * Names for IPsec sysctl objects
  */
 #define	IPSEC_ENCDEBUG			IPCTL_ENCDEBUG			/* 12 */
+#define	IPSEC_STATS			IPCTL_IPSEC_STATS		/* 13 */
 #define IPSEC_EXPIRE_ACQUIRE		IPCTL_IPSEC_EXPIRE_ACQUIRE	/* 14 */
 #define IPSEC_EMBRYONIC_SA_TIMEOUT	IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT/* 15 */
 #define IPSEC_REQUIRE_PFS		IPCTL_IPSEC_REQUIRE_PFS		/* 16 */
@@ -451,7 +497,7 @@ extern int ipsec_exp_first_use;		/* seconds between 1st asso & expire */
 	NULL, \
 	NULL, \
 	&encdebug, \
-	NULL, \
+	NULL, /* ipsecstat */ \
 	&ipsec_expire_acquire, \
 	&ipsec_keep_invalid, \
 	&ipsec_require_pfs, \
@@ -481,6 +527,8 @@ extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 extern struct comp_algo comp_algo_deflate;
 
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
+
+struct cryptop;
 
 /* Misc. */
 #ifdef ENCDEBUG
@@ -540,6 +588,7 @@ int	esp_attach(void);
 int	esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int	esp_zeroize(struct tdb *);
 int	esp_input(struct mbuf *, struct tdb *, int, int);
+int	esp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *);
 int	esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
@@ -592,7 +641,8 @@ void	ipsp_ids_free(struct ipsec_ids *);
 void	ipsec_init(void);
 int	ipsec_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipsec_common_input(struct mbuf *, int, int, int, int, int);
-void	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
+void	ipsec_input_cb(struct cryptop *);
+int	ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 int	ipsec_delete_policy(struct ipsec_policy *);
 ssize_t	ipsec_hdrsz(struct tdb *);
 void	ipsec_adjust_mtu(struct mbuf *, u_int32_t);
