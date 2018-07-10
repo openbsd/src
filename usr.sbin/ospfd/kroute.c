@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.110 2018/06/25 22:16:53 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.111 2018/07/10 11:49:04 friehm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1449,10 +1449,8 @@ rtmsg_process(char *buf, size_t len)
 			if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
 				switch (sa->sa_family) {
 				case AF_INET:
-					if (rtm->rtm_flags & RTF_CONNECTED) {
+					if (rtm->rtm_flags & RTF_CONNECTED)
 						flags |= F_CONNECTED;
-						break;
-					}
 
 					nexthop.s_addr = ((struct
 					    sockaddr_in *)sa)->sin_addr.s_addr;
