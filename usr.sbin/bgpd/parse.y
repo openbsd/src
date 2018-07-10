@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.325 2018/07/09 12:05:11 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.326 2018/07/10 09:55:14 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -487,6 +487,11 @@ conf_main	: AS as4number		{
 			free($3);
 		}
 		| RDE RIB STRING RTABLE NUMBER {
+			if ($5 > RT_TABLEID_MAX) {
+				yyerror("rtable %llu too big: max %u", $5,
+				    RT_TABLEID_MAX);
+				YYERROR;
+			}
 			if (add_rib($3, $5, 0)) {
 				free($3);
 				YYERROR;
@@ -495,6 +500,11 @@ conf_main	: AS as4number		{
 		}
 		| RDE RIB STRING RTABLE NUMBER FIBUPDATE yesno {
 			int	flags = 0;
+			if ($5 > RT_TABLEID_MAX) {
+				yyerror("rtable %llu too big: max %u", $5,
+				    RT_TABLEID_MAX);
+				YYERROR;
+			}
 			if ($7 == 0)
 				flags = F_RIB_NOFIBSYNC;
 			if (add_rib($3, $5, flags)) {
@@ -631,6 +641,11 @@ conf_main	: AS as4number		{
 		}
 		| RTABLE NUMBER {
 			struct rde_rib *rr;
+			if ($2 > RT_TABLEID_MAX) {
+				yyerror("rtable %llu too big: max %u", $2,
+				    RT_TABLEID_MAX);
+				YYERROR;
+			}
 			if (ktable_exists($2, NULL) != 1) {
 				yyerror("rtable id %lld does not exist", $2);
 				YYERROR;
@@ -888,6 +903,11 @@ optnumber	: /* empty */		{ $$ = 0; }
 		;
 
 rdomain		: RDOMAIN NUMBER optnl '{' optnl	{
+			if ($2 > RT_TABLEID_MAX) {
+				yyerror("rtable %llu too big: max %u", $2,
+				    RT_TABLEID_MAX);
+				YYERROR;
+			}
 			if (ktable_exists($2, NULL) != 1) {
 				yyerror("rdomain %lld does not exist", $2);
 				YYERROR;
