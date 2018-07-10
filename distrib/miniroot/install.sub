@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1096 2018/07/09 16:12:23 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1097 2018/07/10 09:33:34 halex Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2351,6 +2351,9 @@ enable_network() {
 	echo "127.0.0.1\tlocalhost" >/tmp/i/hosts
 	echo "::1\t\tlocalhost" >>/tmp/i/hosts
 
+	_f=/mnt/etc/soii.key
+	[[ -f $_f ]] && sysctl "net.inet6.ip6.soiikey=$(<$_f)"
+
 	# Set the address for the loopback interface. Bringing the
 	# interface up, automatically invokes the IPv6 address ::1.
 	ifconfig lo0 inet 127.0.0.1/8
@@ -3121,9 +3124,6 @@ do_upgrade() {
 	hostname $(stripcom /tmp/i/myname)
 	ALLSETS="$ALLSETS site$VERSION-$(hostname -s).tgz"
 	export PS1='\h# '
-
-	_f=/mnt/etc/soii.key
-	[[ ! -f $_f ]] || sysctl net.inet6.ip6.soiikey=$(<$_f)
 
 	# Configure the network.
 	enable_network
