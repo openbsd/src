@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.326 2018/07/10 09:55:14 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.327 2018/07/10 12:40:41 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2994,9 +2994,10 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 
 	netconf = &conf->networks;
 
-	/* the Adj-RIB-In/Out have no fib so no need to set the tableid */
-	add_rib("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
-	add_rib("Adj-RIB-Out", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	add_rib("Adj-RIB-In", conf->default_tableid,
+	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	add_rib("Adj-RIB-Out", conf->default_tableid,
+	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
@@ -3586,8 +3587,8 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 			free(rr);
 			return (-1);
 		}
-		rr->rtableid = rtableid;
 	}
+	rr->rtableid = rtableid;
 	SIMPLEQ_INSERT_TAIL(&ribnames, rr, entry);
 	return (0);
 }
