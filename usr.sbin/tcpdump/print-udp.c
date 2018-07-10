@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.49 2018/07/06 07:13:21 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.50 2018/07/10 00:38:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -403,6 +403,8 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		    udpport_string(dport));
 	}
 
+	printf(": ");
+
 	cksum += htons(length);
 
 	ulen = ntohs(up->uh_ulen);
@@ -416,9 +418,9 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 
 		if (usum == 0) {
 			if (ipv == 4)
-				printf(" [no udp cksum]");
+				printf("[no udp cksum] ");
 			else		
-				printf(" [invalid udp cksum 0]");
+				printf("[invalid udp cksum 0] ");
 		} else {
 			cksum += htons(IPPROTO_UDP);
 			cksum += up->uh_sport;
@@ -428,15 +430,13 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			sum = in_cksum(cp, length, cksum);
 
 			if (sum == usum)
-				printf(" [udp sum ok]");
+				printf("[udp sum ok] ");
 			else {
-				printf(" [bad udp cksum %04x! -> %04x]",
+				printf("[bad udp cksum %04x! -> %04x] ",
 				    usum, sum);
 			}
 		}
 	}
-
-	printf(": ");
 
 	if (packettype) {
 		struct rpc_msg *rp;
