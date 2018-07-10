@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.575 2018/07/10 09:31:07 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.576 2018/07/10 19:27:11 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1485,8 +1485,8 @@ For example:
 .Bd -literal -offset indent
 set timeout tcp.first 120
 set timeout tcp.established 86400
-set timeout { adaptive.start 6000, adaptive.end 12000 }
-set limit states 10000
+set timeout { adaptive.start 60000, adaptive.end 120000 }
+set limit states 100000
 .Ed
 .Pp
 With 9000 state table entries, the timeout values are scaled to 50%
