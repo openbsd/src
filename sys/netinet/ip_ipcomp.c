@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.61 2018/05/12 09:38:33 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.62 2018/07/11 09:07:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -57,7 +57,6 @@
 #include "bpfilter.h"
 
 void ipcomp_output_cb(struct cryptop *);
-void ipcomp_input_cb(struct cryptop *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)      if (encdebug) printf x
@@ -169,7 +168,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
 	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
-	crp->crp_callback = ipcomp_input_cb;
+	crp->crp_callback = ipsec_input_cb;
 	crp->crp_sid = tdb->tdb_cryptoid;
 	crp->crp_opaque = (caddr_t)tc;
 
@@ -184,43 +183,19 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	return crypto_dispatch(crp);
 }
 
-/*
- * IPComp input callback, called directly by the crypto driver
- */
-void
-ipcomp_input_cb(struct cryptop *crp)
+int
+ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 {
-	int skip, protoff, roff, hlen = IPCOMP_HLENGTH, clen;
+	int skip, protoff, roff, hlen = IPCOMP_HLENGTH;
 	u_int8_t nproto;
-	struct mbuf *m, *m1, *mo;
-	struct tdb_crypto *tc;
-	struct tdb *tdb;
+	struct mbuf *m1, *mo;
 	struct ipcomp  *ipcomp;
 	caddr_t addr;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
 
-	tc = (struct tdb_crypto *) crp->crp_opaque;
-	skip = tc->tc_skip;
-	protoff = tc->tc_protoff;
-
-	m = (struct mbuf *) crp->crp_buf;
-	if (m == NULL) {
-		/* Shouldn't happen... */
-		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
-		ipcompstat_inc(ipcomps_crypto);
-		goto droponly;
-	}
-
-	NET_LOCK();
-
-	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	if (tdb == NULL) {
-		DPRINTF(("%s: TDB expired while in crypto", __func__));
-		ipcompstat_inc(ipcomps_notdb);
-		goto baddone;
-	}
+	NET_ASSERT_LOCKED();
 
 	/* update the counters */
 	tdb->tdb_cur_bytes += m->m_pkthdr.len - (skip + hlen);
@@ -240,24 +215,8 @@ ipcomp_input_cb(struct cryptop *crp)
 		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;	/* Turn off checking */
 	}
 
-	/* Check for crypto errors */
-	if (crp->crp_etype) {
-		if (crp->crp_etype == EAGAIN) {
-			/* Reset the session ID */
-			if (tdb->tdb_cryptoid != 0)
-				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK();
-			crypto_dispatch(crp);
-			return;
-		}
-		DPRINTF(("%s: crypto error %d\n", __func__,
-		    crp->crp_etype));
-		ipcompstat_inc(ipcomps_noxform);
-		goto baddone;
-	}
-
-	/* Length of data after processing */
-	clen = crp->crp_olen;
+	skip = tc->tc_skip;
+	protoff = tc->tc_protoff;
 
 	/* In case it's not done already, adjust the size of the mbuf chain */
 	m->m_pkthdr.len = clen + hlen + skip;
@@ -331,23 +290,18 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 
 	/* Release the crypto descriptors */
-	crypto_freereq(crp);
 	free(tc, M_XDATA, 0);
 
 	/* Restore the Next Protocol field */
 	m_copyback(m, protoff, sizeof(u_int8_t), &nproto, M_NOWAIT);
 
 	/* Back to generic IPsec input processing */
-	ipsec_common_input_cb(m, tdb, skip, protoff);
-	NET_UNLOCK();
-	return;
+	return ipsec_common_input_cb(m, tdb, skip, protoff);
 
  baddone:
-	NET_UNLOCK();
- droponly:
 	m_freem(m);
-	crypto_freereq(crp);
 	free(tc, M_XDATA, 0);
+	return -1;
 }
 
 /*

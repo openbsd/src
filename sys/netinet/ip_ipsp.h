@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.190 2018/07/10 11:34:12 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.191 2018/07/11 09:07:59 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -572,6 +572,7 @@ int 	ah_attach(void);
 int 	ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int 	ah_zeroize(struct tdb *);
 int	ah_input(struct mbuf *, struct tdb *, int, int);
+int	ah_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
 int	ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
@@ -588,7 +589,7 @@ int	esp_attach(void);
 int	esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int	esp_zeroize(struct tdb *);
 int	esp_input(struct mbuf *, struct tdb *, int, int);
-int	esp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *);
+int	esp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
 int	esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
@@ -604,6 +605,7 @@ int	ipcomp_attach(void);
 int	ipcomp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf *, struct tdb *, int, int);
+int	ipcomp_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	ipcomp4_input(struct mbuf **, int *, int, int);

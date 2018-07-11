@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.155 2018/07/10 11:34:12 mpi Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.156 2018/07/11 09:07:59 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -531,7 +531,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
  * ESP input callback, called directly by the crypto driver.
  */
 int
-esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m)
+esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 {
 	u_int8_t lastthree[3], aalg[AH_HMAC_MAX_HASHLEN];
 	int hlen, roff, skip, protoff;

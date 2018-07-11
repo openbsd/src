@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.164 2018/07/10 11:34:12 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.165 2018/07/11 09:07:59 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -335,6 +335,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	return error;
 
  drop:
+	ipsecstat_inc(ipsec_idrops);
 	m_freem(m);
 	return error;
 }
@@ -345,7 +346,7 @@ ipsec_input_cb(struct cryptop *crp)
 	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
 	struct mbuf *m = (struct mbuf *) crp->crp_buf;
 	struct tdb *tdb;
-	int error;
+	int clen, error;
 
 	if (m == NULL) {
 		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
@@ -377,16 +378,21 @@ ipsec_input_cb(struct cryptop *crp)
 		goto baddone;
 	}
 
+	/* Length of data after processing */
+	clen = crp->crp_olen;
+
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
 	switch (tdb->tdb_sproto) {
 	case IPPROTO_ESP:
-		error = esp_input_cb(tdb, tc, m);
+		error = esp_input_cb(tdb, tc, m, clen);
 		break;
 	case IPPROTO_AH:
+		error = ah_input_cb(tdb, tc, m, clen);
 		break;
 	case IPPROTO_IPCOMP:
+		error = ipcomp_input_cb(tdb, tc, m, clen);
 		break;
 	default:
 		panic("%s: unknown/unsupported security protocol %d",
