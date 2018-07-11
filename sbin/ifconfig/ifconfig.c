@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.367 2018/05/28 08:53:35 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.368 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -185,6 +185,8 @@ void	setifbroadaddr(const char *, int);
 void	setifmtu(const char *, int);
 void	setifllprio(const char *, int);
 void	setifnwid(const char *, int);
+void	setifjoin(const char *, int);
+void	delifjoin(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
 void	setifwpa(const char *, int);
@@ -373,6 +375,8 @@ const struct	cmd {
 	{ "mtu",	NEXTARG,	0,		setifmtu },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "-nwid",	-1,		0,		setifnwid },
+	{ "join",	NEXTARG0,	0,		setifjoin },
+	{ "-join",	NEXTARG0,	0,		delifjoin },
 	{ "bssid",	NEXTARG,	0,		setifbssid },
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
@@ -658,6 +662,9 @@ const struct afswtch {
 };
 
 const struct afswtch *afp;	/*the address family being set or asked about*/
+
+char joinname[IEEE80211_NWID_LEN];
+char nwidname[IEEE80211_NWID_LEN];
 
 int ifaliases = 0;
 int aflag = 0;
@@ -1636,9 +1643,72 @@ setifnwid(const char *val, int d)
 	}
 	nwid.i_len = len;
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void)strlcpy(nwidname, nwid.i_nwid, sizeof(nwidname));
 	ifr.ifr_data = (caddr_t)&nwid;
 	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
 		warn("SIOCS80211NWID");
+}
+
+void
+setifjoin(const char *val, int d)
+{
+	struct ieee80211_join join;
+	int len;
+
+	if (val == NULL) {
+		/* TODO: display the list of join'd networks */
+		return;
+	}
+
+	if (d != 0) {
+		/* no network id is especially desired */
+		memset(&join, 0, sizeof(join));
+		len = 0;
+	} else {
+		len = sizeof(join.i_nwid);
+		if (get_string(val, NULL, join.i_nwid, &len) == NULL)
+			return;
+	}
+	join.i_len = len;
+	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	(void)strlcpy(joinname, join.i_nwid, sizeof(joinname));
+	ifr.ifr_data = (caddr_t)&join;
+	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
+		warn("SIOCS80211JOIN");
+}
+
+void
+delifjoin(const char *val, int d)
+{
+	struct ieee80211_join join;
+	int len;
+
+	memset(&join, 0, sizeof(join));
+	len = 0;
+	join.i_flags |= IEEE80211_JOIN_DEL;
+
+	if (val == NULL) {
+		ifr.ifr_data = (caddr_t)&join;
+		if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
+			warn("SIOCS80211JOIN");
+		return;
+	}
+
+	if (d != 0) {
+		/* no network id is especially desired */
+		memset(&join, 0, sizeof(join));
+		len = 0;
+	} else {
+		len = sizeof(join.i_nwid);
+		if (val != NULL &&
+		    get_string(val, NULL, join.i_nwid, &len) == NULL)
+			return;
+	}
+	join.i_len = len;
+	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t)&join;
+	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
+		warn("SIOCS80211JOIN");
 }
 
 void
@@ -1923,8 +1993,20 @@ setifwpakey(const char *val, int d)
 		memset(&ifr, 0, sizeof(ifr));
 		ifr.ifr_data = (caddr_t)&nwid;
 		strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-		if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr))
-			err(1, "SIOCG80211NWID");
+
+		/* Use the value specified in 'join' or 'nwid' */
+		if (strlen(joinname) != 0) {
+			strlcpy(nwid.i_nwid, joinname, sizeof(nwid.i_nwid));
+			nwid.i_len = strlen(joinname);
+		} else if (strlen(nwidname) != 0) {
+			strlcpy(nwid.i_nwid, nwidname, sizeof(nwid.i_nwid));
+			nwid.i_len = strlen(nwidname);
+		} else {
+			warnx("no nwid or join command, guessing nwid to use");
+
+			if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr))
+				err(1, "SIOCG80211NWID");
+		}
 
 		passlen = strlen(val);
 		if (passlen == 2 + 2 * sizeof(psk.i_psk) &&
@@ -2082,9 +2164,10 @@ print_cipherset(u_int32_t cipherset)
 void
 ieee80211_status(void)
 {
-	int len, i, nwkey_verbose, inwid, inwkey, ipsk, ichan, ipwr;
+	int len, i, nwkey_verbose, inwid, ijoin, inwkey, ipsk, ichan, ipwr;
 	int ibssid, iwpa;
 	struct ieee80211_nwid nwid;
+	struct ieee80211_join join;
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_wpapsk psk;
 	struct ieee80211_power power;
@@ -2101,6 +2184,10 @@ ieee80211_status(void)
 	ifr.ifr_data = (caddr_t)&nwid;
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	inwid = ioctl(s, SIOCG80211NWID, (caddr_t)&ifr);
+
+	ifr.ifr_data = (caddr_t)&join;
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ijoin = ioctl(s, SIOCG80211JOIN, (caddr_t)&ifr);
 
 	memset(&nwkey, 0, sizeof(nwkey));
 	strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
@@ -2127,8 +2214,8 @@ ieee80211_status(void)
 	iwpa = ioctl(s, SIOCG80211WPAPARMS, &wpa);
 
 	/* check if any ieee80211 option is active */
-	if (inwid == 0 || inwkey == 0 || ipsk == 0 || ipwr == 0 ||
-	    ichan == 0 || ibssid == 0 || iwpa == 0)
+	if (inwid == 0 || ijoin == 0 || inwkey == 0 || ipsk == 0 ||
+	    ipwr == 0 || ichan == 0 || ibssid == 0 || iwpa == 0)
 		fputs("\tieee80211:", stdout);
 	else
 		return;
@@ -2138,7 +2225,10 @@ ieee80211_status(void)
 		len = nwid.i_len;
 		if (len > IEEE80211_NWID_LEN)
 			len = IEEE80211_NWID_LEN;
-		fputs(" nwid ", stdout);
+		if (ijoin == 0 && join.i_flags & IEEE80211_JOIN_FOUND)
+			fputs(" join ", stdout);
+		else
+			fputs(" nwid ", stdout);
 		print_string(nwid.i_nwid, len);
 	}
 

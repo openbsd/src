@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.60 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.61 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -392,6 +392,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int i, error = 0;
 	struct ieee80211_nwid nwid;
+	struct ieee80211_join join;
+	struct ieee80211_ess *ess;
 	struct ieee80211_wpapsk *psk;
 	struct ieee80211_keyavail *ka;
 	struct ieee80211_keyrun *kr;
@@ -445,10 +447,53 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
 		break;
+	case SIOCS80211JOIN:
+		if ((error = suser(curproc)) != 0)
+			break;
+		if ((error = copyin(ifr->ifr_data, &join, sizeof(join))) != 0)
+			break;
+		if (join.i_len > IEEE80211_NWID_LEN) {
+			error = EINVAL;
+			break;
+		}
+		if (join.i_flags & IEEE80211_JOIN_DEL)
+			ieee80211_del_ess(ic, join.i_nwid, join.i_len ? 0 : 1);
+		memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+		ic->ic_des_esslen = join.i_len;
+		memcpy(ic->ic_des_essid, join.i_nwid, join.i_len);
+		/* disable WPA/WEP */
+		ieee80211_disable_rsn(ic);
+		ieee80211_disable_wep(ic);
+		/* save nwid for auto-join */
+		if (!(join.i_flags & IEEE80211_JOIN_DEL))
+			ieee80211_add_ess(ic, ic->ic_des_essid, 0, 0);
+		ieee80211_set_ess(ic, ic->ic_des_essid);
+		error = ENETRESET;
+		break;
+	case SIOCG80211JOIN:
+		memset(&join, 0, sizeof(join));
+		error = ENOENT;
+		if (ic->ic_bss == NULL)
+			break;
+		TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+			if (memcmp(ess->essid, ic->ic_bss->ni_essid,
+			    IEEE80211_NWID_LEN) == 0) {
+				join.i_len = ic->ic_bss->ni_esslen;
+				memcpy(join.i_nwid, ic->ic_bss->ni_essid,
+				    join.i_len);
+				join.i_flags = IEEE80211_JOIN_FOUND;
+				error = copyout(&join, ifr->ifr_data,
+				    sizeof(join));
+				break;
+			}
+		}
+		break;
 	case SIOCS80211NWKEY:
 		if ((error = suser(curproc)) != 0)
 			break;
 		error = ieee80211_ioctl_setnwkeys(ic, (void *)data);
+		if (error == ENETRESET)
+			ieee80211_add_ess(ic, ic->ic_des_essid, 0, 1);
 		break;
 	case SIOCG80211NWKEY:
 		error = ieee80211_ioctl_getnwkeys(ic, (void *)data);
@@ -457,6 +502,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(curproc)) != 0)
 			break;
 		error = ieee80211_ioctl_setwpaparms(ic, (void *)data);
+		if (error == ENETRESET)
+			ieee80211_add_ess(ic, ic->ic_des_essid, 1, 0);
 		break;
 	case SIOCG80211WPAPARMS:
 		error = ieee80211_ioctl_getwpaparms(ic, (void *)data);
@@ -474,6 +521,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_flags &= ~IEEE80211_F_PSK;
 			memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
 		}
+		ieee80211_add_ess(ic, ic->ic_des_essid, 1, 0);
 		error = ENETRESET;
 		break;
 	case SIOCG80211WPAPSK:

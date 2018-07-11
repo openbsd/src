@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.31 2017/10/27 12:22:40 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.32 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -274,6 +274,25 @@ struct ieee80211_keyrun {
 #define IEEE80211_SCAN_TIMEOUT	30	/* timeout in seconds */
 
 #define SIOCS80211SCAN		 _IOW('i', 210, struct ifreq)
+
+#define	SIOCS80211JOIN		_IOWR('i', 255, struct ifreq)
+#define	SIOCG80211JOIN		_IOWR('i', 256, struct ifreq)
+
+/* join is pointed at by ifr.ifr_data */
+struct ieee80211_join {
+	u_int8_t	i_len;	/* length of i_nwid */
+	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
+	u_int32_t	i_flags;
+
+	struct ieee80211_wpapsk	i_wpapsk;
+	struct ieee80211_nwkey	i_nwkey;
+};
+
+#define IEEE80211_JOIN_SHOW	0x01
+#define IEEE80211_JOIN_FOUND	0x02
+#define IEEE80211_JOIN_DEL	0x04
+#define IEEE80211_JOIN_NWKEY	0x08
+#define IEEE80211_JOIN_WPA	0x10
 
 /* node and requests */
 struct ieee80211_nodereq {

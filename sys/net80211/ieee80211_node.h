@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.74 2018/04/28 14:49:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.75 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -307,6 +307,17 @@ struct ieee80211_node {
 
 RBT_HEAD(ieee80211_tree, ieee80211_node);
 
+struct ieee80211_ess_rbt {
+	RBT_ENTRY(ieee80211_ess_rbt)	 ess_rbt;
+	u_int8_t			 esslen;
+	u_int8_t			 essid[IEEE80211_NWID_LEN];
+	struct ieee80211_node		*ni2;
+	struct ieee80211_node		*ni5;
+	struct ieee80211_node		*ni;
+};
+
+RBT_HEAD(ieee80211_ess_tree, ieee80211_ess_rbt);
+
 static inline void
 ieee80211_node_incref(struct ieee80211_node *ni)
 {
@@ -412,6 +423,9 @@ void ieee80211_set_tim(struct ieee80211com *, int, int);
 
 int ieee80211_node_cmp(const struct ieee80211_node *,
 		const struct ieee80211_node *);
+int ieee80211_ess_cmp(const struct ieee80211_ess_rbt *,
+		const struct ieee80211_ess_rbt *);
 RBT_PROTOTYPE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+RBT_PROTOTYPE(ieee80211_ess_tree, ieee80211_ess_rbt, ess_rbt, ieee80211_ess_cmp);
 
 #endif /* _NET80211_IEEE80211_NODE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.129 2018/04/28 14:49:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.130 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@ u_int8_t ieee80211_node_getrssi(struct ieee80211com *,
     const struct ieee80211_node *);
 int ieee80211_node_checkrssi(struct ieee80211com *,
     const struct ieee80211_node *);
+int ieee80211_ess_is_better(struct ieee80211com *ic, struct ieee80211_node *,
+    struct ieee80211_node *);
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
     const u_int8_t *);
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
@@ -119,6 +121,331 @@ ieee80211_node_cache_timeout(void *arg)
 }
 #endif
 
+/*
+ * For debug purposes
+ */
+void
+ieee80211_print_ess(struct ieee80211_ess *ess)
+{
+	ieee80211_print_essid(ess->essid, ess->esslen);
+	if (ess->flags & IEEE80211_F_RSNON) {
+		printf(" wpa");
+		if (ess->rsnprotos & IEEE80211_PROTO_RSN)
+			printf(",wpa2");
+		if (ess->rsnprotos & IEEE80211_PROTO_WPA)
+			printf(",wpa1");
+
+		if (ess->rsnakms & IEEE80211_AKM_8021X ||
+		    ess->rsnakms & IEEE80211_AKM_SHA256_8021X)
+			printf(",802.1x");
+		printf(" ");
+
+		if (ess->rsnciphers & IEEE80211_CIPHER_USEGROUP)
+			printf("usegroup");
+		if (ess->rsnciphers & IEEE80211_CIPHER_WEP40)
+			printf("wep40");
+		if (ess->rsnciphers & IEEE80211_CIPHER_WEP104)
+			printf("wep104");
+		if (ess->rsnciphers & IEEE80211_CIPHER_TKIP)
+			printf("tkip");
+		if (ess->rsnciphers & IEEE80211_CIPHER_CCMP)
+			printf("ccmp");
+	}
+	if (ess->flags & IEEE80211_F_WEPON) {
+		int i = ess->def_txkey;
+
+		printf(" wep,");
+		if (ess->nw_keys[i].k_cipher & IEEE80211_CIPHER_WEP40)
+			printf("wep40");
+		if (ess->nw_keys[i].k_cipher & IEEE80211_CIPHER_WEP104)
+			printf("wep104");
+	}
+	if (ess->flags == 0)
+		printf(" clear");
+	printf("\n");
+}
+
+void
+ieee80211_print_ess_list(struct ieee80211com *ic)
+{
+	struct ifnet		*ifp = &ic->ic_if;
+	struct ieee80211_ess	*ess;
+
+	printf("%s: known networks\n", ifp->if_xname);
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		ieee80211_print_ess(ess);
+	}
+}
+
+void
+ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int all)
+{
+	struct ieee80211_ess *ess, *next;
+
+	TAILQ_FOREACH_SAFE(ess, &ic->ic_ess, ess_next, next) {
+		if (all == 1 || (memcmp(ess->essid, nwid,
+		    IEEE80211_NWID_LEN) == 0)) {
+			TAILQ_REMOVE(&ic->ic_ess, ess, ess_next);
+			explicit_bzero(ess, sizeof(*ess));
+			free(ess, M_DEVBUF, sizeof(*ess));
+			if (all != 1)
+				return;
+		}
+	}
+
+}
+
+int
+ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
+{
+	struct ieee80211_ess *ess;
+	int i = 0, new = 0, ness = 0;
+
+	/* Don't save an empty nwid */
+	if (strnlen(nwid, IEEE80211_NWID_LEN) == 0)
+		return (0);
+
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		if (memcmp(ess->essid, nwid, IEEE80211_NWID_LEN) == 0)
+			break;
+		ness++;
+	}
+
+	KASSERTMSG(wpa == 0 || wep == 0,
+	    "%s: both wpa and wep are configured", __func__);
+
+	if (ess == NULL) {
+		/* if not found, and wpa/wep are set, then return */
+		if (wpa != 0 || wep != 0) {
+			return (ENOENT);
+		}
+		if (ness > IEEE80211_CACHE_SIZE)
+			return (ERANGE);
+		new = 1;
+		ess = malloc(sizeof(*ess), M_DEVBUF, M_NOWAIT|M_ZERO);
+		if (ess == NULL)
+			return (ENOMEM);
+	}
+
+	memcpy(ess->essid, nwid, ic->ic_des_esslen);
+	ess->esslen = ic->ic_des_esslen;
+
+	if (wpa) {
+		if (ic->ic_flags & (IEEE80211_F_RSNON|IEEE80211_F_PSK)) {
+			ess->flags = IEEE80211_F_RSNON;
+			if (ic->ic_flags & IEEE80211_F_PSK)
+				ess->flags |= IEEE80211_F_PSK;
+			explicit_bzero(ess->psk, sizeof(ess->psk));
+			memcpy(ess->psk, ic->ic_psk, IEEE80211_PMK_LEN);
+			ess->rsnprotos = ic->ic_rsnprotos;
+			ess->rsnakms = ic->ic_rsnakms;
+			ess->rsngroupcipher = ic->ic_rsngroupcipher;
+			ess->rsnciphers = ic->ic_rsnciphers;
+
+			/* Disable WEP */
+			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+				explicit_bzero(&ess->nw_keys[i],
+				    sizeof(ess->nw_keys[0]));
+			}
+			ess->def_txkey = 0;
+			ess->flags &= ~IEEE80211_F_WEPON;
+		} else {
+			/* Disable WPA */
+			ess->rsnprotos = ess->rsnakms =
+			    ess->rsngroupcipher = ess->rsnciphers = 0;
+			explicit_bzero(ess->psk, sizeof(ess->psk));
+			ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+		}
+	} else if (wep) {
+		if (ic->ic_flags & IEEE80211_F_WEPON) {
+			struct ieee80211_key	*k;
+			int i;
+
+			ess->flags = IEEE80211_F_WEPON;
+			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+				memcpy(&ess->nw_keys[i], &ic->ic_nw_keys[i],
+				    sizeof(struct ieee80211_key));
+				k = &ic->ic_nw_keys[i];
+				k->k_priv = NULL;
+			}
+			ess->def_txkey = ic->ic_def_txkey;
+
+			/* Disable WPA */
+			ess->rsnprotos = ess->rsnakms =
+			    ess->rsngroupcipher = ess->rsnciphers = 0;
+			explicit_bzero(ess->psk, sizeof(ess->psk));
+			ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+		} else {
+			/* Disable WEP */
+			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+				explicit_bzero(&ess->nw_keys[i],
+				    sizeof(ess->nw_keys[0]));
+			}
+			ess->def_txkey = 0;
+			ess->flags &= ~IEEE80211_F_WEPON;
+		}
+	}
+
+	if (new)
+		TAILQ_INSERT_TAIL(&ic->ic_ess, ess, ess_next);
+
+	return (0);
+}
+
+int
+ieee80211_ess_is_better(struct ieee80211com *ic, struct ieee80211_node *nicur,
+    struct ieee80211_node *selni)
+{
+	uint8_t			 min_5ghz_rssi;
+
+	if (ic->ic_max_rssi)
+		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
+	else
+		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
+
+	if (selni == NULL)
+		return 1;
+
+	/* First 5GHz with acceptable signal */
+	if ((IEEE80211_IS_CHAN_5GHZ(nicur->ni_chan) &&
+	    !IEEE80211_IS_CHAN_5GHZ(selni->ni_chan)) &&
+	    nicur->ni_rssi > min_5ghz_rssi)
+		return 1;
+
+	/* Prefer 5GHz N over not-N */
+	if ((IEEE80211_IS_CHAN_5GHZ(nicur->ni_chan) &&
+	    nicur->ni_rssi > min_5ghz_rssi) &&
+	    ieee80211_node_supports_ht(nicur))
+		return 1;
+
+	/* Settle for just N */
+	if (ieee80211_node_supports_ht(nicur) &&
+	    !ieee80211_node_supports_ht(selni))
+		return 1;
+
+	/* Last resort of best rssi */
+	if (nicur->ni_rssi > selni->ni_rssi)
+		return 1;
+
+	return 0;
+}
+
+int
+ieee80211_match_ess(struct ieee80211com *ic)
+{
+	struct ifnet		*ifp = &ic->ic_if;
+	struct ieee80211_ess	*ess, *seless = NULL;
+	struct ieee80211_node	*ni, *selni = NULL;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return (0);
+
+	/*
+	 * Apple's iOS uses the algorithm described at
+	 * https://support.apple.com/en-us/HT202831
+	 *
+	 * basically:
+	 * last network recently joined
+	 * then strongest security
+	 * then rssi level
+	 */
+
+	/* skip if it's the same network */
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		if (LINK_STATE_IS_UP(ifp->if_link_state) &&
+		    ess->esslen == ic->ic_des_esslen &&
+		    (memcmp(ic->ic_des_essid, ess->essid,
+		     IEEE80211_NWID_LEN) == 0)) {
+			if (ifp->if_flags & IFF_DEBUG) {
+				printf(" %s: staying on ",
+				    ifp->if_xname);
+				ieee80211_print_essid(ess->essid, ess->esslen);
+				printf("\n");
+			}
+			return (0);
+		}
+	}
+
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
+			if (memcmp(ess->essid, ni->ni_essid,
+			    IEEE80211_NWID_LEN) != 0 ||
+			    ni->ni_fails != 0)
+				continue;
+
+			if (selni == NULL ||
+			    ieee80211_ess_is_better(ic, ni, selni) > 1) {
+				seless = ess;
+				selni = ni;
+			}
+		}
+	}
+
+	if (seless && !(seless->esslen == ic->ic_des_esslen &&
+	    (memcmp(ic->ic_des_essid, seless->essid,
+	     IEEE80211_NWID_LEN) == 0))) {
+		ieee80211_set_ess(ic, seless->essid);
+		return (1);
+	}
+
+	return (0);
+}
+void
+ieee80211_set_ess(struct ieee80211com *ic, char *nwid)
+{
+	struct ifnet		*ifp = &ic->ic_if;
+	struct ieee80211_ess	*ess;
+
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		if (memcmp(ess->essid, nwid, IEEE80211_NWID_LEN) == 0)
+			break;
+	}
+
+	if (ess == NULL)
+		return;
+
+	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+	ic->ic_des_esslen = ess->esslen;
+	memcpy(ic->ic_des_essid, ess->essid, ic->ic_des_esslen);
+
+	ieee80211_disable_wep(ic);
+	ieee80211_disable_rsn(ic);
+	if (ess->flags & IEEE80211_F_RSNON) {
+		explicit_bzero(ic->ic_psk, sizeof(ic->ic_psk));
+		memcpy(ic->ic_psk, ess->psk, sizeof(ic->ic_psk));
+
+		ic->ic_rsnprotos = ess->rsnprotos;
+		ic->ic_rsnakms = ess->rsnakms;
+		ic->ic_rsngroupcipher = ess->rsngroupcipher;
+		ic->ic_rsnciphers = ess->rsnciphers;
+		ic->ic_flags |= IEEE80211_F_RSNON;
+		if (ess->flags & IEEE80211_F_PSK)
+			ic->ic_flags |= IEEE80211_F_PSK;
+	} else if (ess->flags & IEEE80211_F_WEPON) {
+		struct ieee80211_key	*k;
+		int			 i;
+
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			k = &ic->ic_nw_keys[i];
+			if (k->k_cipher != IEEE80211_CIPHER_NONE)
+				(*ic->ic_delete_key)(ic, NULL, k);
+			memcpy(&ic->ic_nw_keys[i], &ess->nw_keys[i],
+			    sizeof(struct ieee80211_key));
+			(*ic->ic_set_key)(ic, NULL, k);
+		}
+		ic->ic_def_txkey = ess->def_txkey;
+		ic->ic_flags |= IEEE80211_F_WEPON;
+	}
+
+	/* join the (new) ess station */
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
+		ieee80211_media_change(ifp);
+	}
+
+	return;
+}
+
 void
 ieee80211_node_attach(struct ifnet *ifp)
 {
@@ -165,6 +492,7 @@ ieee80211_node_attach(struct ifnet *ifp)
 		    ieee80211_node_cache_timeout, ic);
 	}
 #endif
+	TAILQ_INIT(&ic->ic_ess);
 }
 
 struct ieee80211_node *
@@ -205,6 +533,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 		ic->ic_bss = NULL;
 	}
+	ieee80211_del_ess(ic, NULL, 1);
 	ieee80211_free_allnodes(ic, 1);
 #ifndef IEEE80211_STA_ONLY
 	free(ic->ic_aid_bitmap, M_DEVBUF,
@@ -739,6 +1068,10 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ieee80211_next_scan(ifp);
 		return;
 	}
+
+	/* Possibly switch which ssid we are associated with */
+	if (!bgscan)
+		ieee80211_match_ess(ic);
 
 	for (; ni != NULL; ni = nextbs) {
 		nextbs = RBT_NEXT(ieee80211_tree, ni);
@@ -2195,6 +2528,17 @@ ieee80211_node_cmp(const struct ieee80211_node *b1,
 }
 
 /*
+ * Compare nodes in the tree by essid
+ */
+int
+ieee80211_ess_cmp(const struct ieee80211_ess_rbt *b1,
+    const struct ieee80211_ess_rbt *b2)
+{
+	return (memcmp(b1->essid, b2->essid, IEEE80211_NWID_LEN));
+}
+
+/*
  * Generate red-black tree function logic
  */
 RBT_GENERATE(ieee80211_tree, ieee80211_node, ni_node, ieee80211_node_cmp);
+RBT_GENERATE(ieee80211_ess_tree, ieee80211_ess_rbt, ess_rbt, ieee80211_ess_cmp);

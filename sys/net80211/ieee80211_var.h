@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.85 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.86 2018/07/11 20:18:09 phessler Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -334,12 +334,37 @@ struct ieee80211com {
 	u_int8_t		ic_aselcaps;
 	u_int8_t		ic_dialog_token;
 	int			ic_fixed_mcs;
+	TAILQ_HEAD(, ieee80211_ess)	 ic_ess;
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
 
 LIST_HEAD(ieee80211com_head, ieee80211com);
 extern struct ieee80211com_head ieee80211com_head;
+
+/* list of APs we want to automatically use */
+/* all data is copied from struct ieee80211com */
+struct ieee80211_ess {
+	/* nwid */
+	int			esslen;
+	u_int8_t		essid[IEEE80211_NWID_LEN];
+
+	/* clear/wep/wpa */
+	u_int32_t		flags;
+
+	/* nwkey */
+	struct ieee80211_key    nw_keys[IEEE80211_GROUP_NKID];
+	int			def_txkey;
+
+	/* wpakey */
+	u_int8_t		psk[IEEE80211_PMK_LEN];
+	u_int			rsnprotos;
+	u_int			rsnakms;
+	u_int			rsnciphers;
+	enum ieee80211_cipher	rsngroupcipher;
+
+	TAILQ_ENTRY(ieee80211_ess) ess_next;
+};
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
@@ -426,6 +451,9 @@ enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
 void	ieee80211_disable_wep(struct ieee80211com *); 
 void	ieee80211_disable_rsn(struct ieee80211com *); 
+int	ieee80211_add_ess(struct ieee80211com *, char *, int, int);
+void	ieee80211_del_ess(struct ieee80211com *, char *, int);
+void	ieee80211_set_ess(struct ieee80211com *, char *);
 
 extern	int ieee80211_cache_size;
 
