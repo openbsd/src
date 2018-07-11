@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.212 2018/07/11 12:55:01 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.213 2018/07/11 13:19:42 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5988,13 +5988,13 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		break;
 	case 0x04: 	/* Deterministic cache info */
 		if (*rcx == 0) {
-			*rax = eax;
+			*rax = eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
 			*rbx = ebx;
 			*rcx = ecx;
 			*rdx = edx;
 		} else {
 			CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
-			*rax = eax;
+			*rax = eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
 			*rbx = ebx;
 			*rcx = ecx;
 			*rdx = edx;

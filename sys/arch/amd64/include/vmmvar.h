@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.54 2018/07/05 05:07:03 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.55 2018/07/11 13:19:42 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -608,6 +608,11 @@ struct vm_rwregs_params {
  * 0x80000001  EDX:RDTSCP Support
  */
 #define VMM_FEAT_EFLAGS_MASK ~(CPUID_RDTSCP)
+
+/*
+ * CPUID[0x4] deterministic cache info
+ */
+#define VMM_CPUID4_CACHE_TOPOLOGY_MASK	0x3FF
 
 #ifdef _KERNEL
 
