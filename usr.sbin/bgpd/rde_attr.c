@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.103 2018/07/11 16:34:36 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.104 2018/07/11 19:05:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -99,7 +99,7 @@ void		 attr_put(struct attr *);
 
 struct attr_table {
 	struct attr_list	*hashtbl;
-	u_int32_t		 hashmask;
+	u_int64_t		 hashmask;
 } attrtable;
 
 SIPHASH_KEY attrtablekey;
@@ -287,7 +287,6 @@ attr_diff(struct attr *oa, struct attr *ob)
 		return (-1);
 
 	fatalx("attr_diff: equal attributes encountered");
-	return (0);
 }
 
 int
@@ -311,6 +310,18 @@ attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 	}
 
 	return (0);
+}
+
+u_int64_t
+attr_hash(struct rde_aspath *a)
+{
+	u_int64_t	hash = 0;
+	u_int8_t	l;
+
+	for (l = 0; l < a->others_len; l++)
+		if (a->others[l] != NULL)
+			hash ^= a->others[l]->hash;
+	return (hash);
 }
 
 void
@@ -384,7 +395,7 @@ attr_lookup(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
 {
 	struct attr_list	*head;
 	struct attr		*a;
-	u_int32_t		 hash;
+	u_int64_t		 hash;
 	SIPHASH_CTX		ctx;
 
 	flags &= ~ATTR_DEFMASK;	/* normalize mask */
