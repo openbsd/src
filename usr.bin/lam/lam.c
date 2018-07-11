@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.20 2018/07/11 11:35:06 schwarze Exp $	*/
+/*	$OpenBSD: lam.c,v 1.21 2018/07/11 11:42:17 schwarze Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -78,6 +78,10 @@ main(int argc, char *argv[])
 	getargs(argc, argv);
 	if (numfiles == 0)
 		usage();
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	/* Concatenate lines from each file, then print. */
 	for (;;) {
 		linep = line;
