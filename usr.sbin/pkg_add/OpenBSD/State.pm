@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.52 2018/05/16 10:02:40 espie Exp $
+# $OpenBSD: State.pm,v 1.53 2018/07/11 09:54:49 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -105,6 +105,10 @@ sub new
 {
 	my $class = shift;
 	my $cmd = shift;
+	if (!defined $cmd) {
+		$cmd = $0;
+		$cmd =~ s,.*/,,;
+	}
 	my $o = bless {cmd => $cmd}, $class;
 	$o->init(@_);
 	return $o;
