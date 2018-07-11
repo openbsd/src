@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.3 2018/07/11 14:01:44 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.4 2018/07/11 14:03:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -61,6 +61,7 @@ enum imsg_type {
 	IMSG_STARTUP_DONE,
 	IMSG_RA_RS,
 	IMSG_SEND_RA,
+	IMSG_UPDATE_IF,
 	IMSG_SOCKET_IPC
 };
 

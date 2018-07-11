@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.3 2018/07/10 22:14:19 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.4 2018/07/11 14:03:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -43,13 +43,28 @@
 #include "rad.h"
 #include "engine.h"
 
-__dead void	 engine_shutdown(void);
-void		 engine_sig_handler(int sig, short, void *);
-void		 engine_dispatch_frontend(int, short, void *);
-void		 engine_dispatch_main(int, short, void *);
-void		 parse_ra_rs(struct imsg_ra_rs *);
-void		 parse_ra(struct imsg_ra_rs *);
-void		 parse_rs(struct imsg_ra_rs *);
+#define	MAX_RTR_ADV_INTERVAL	600
+#define	MIN_RTR_ADV_INTERVAL	200
+
+struct engine_iface {
+	TAILQ_ENTRY(engine_iface)	entry;
+	struct event			timer;
+	uint32_t			if_index;
+};
+
+TAILQ_HEAD(, engine_iface)	engine_interfaces;
+
+
+__dead void		 engine_shutdown(void);
+void			 engine_sig_handler(int sig, short, void *);
+void			 engine_dispatch_frontend(int, short, void *);
+void			 engine_dispatch_main(int, short, void *);
+void			 parse_ra_rs(struct imsg_ra_rs *);
+void			 parse_ra(struct imsg_ra_rs *);
+void			 parse_rs(struct imsg_ra_rs *);
+void			 update_iface(uint32_t);
+struct engine_iface	*find_engine_iface_by_id(uint32_t);
+void			 iface_timeout(int, short, void *);
 
 struct rad_conf	*engine_conf;
 struct imsgev		*iev_frontend;
@@ -170,6 +185,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct imsg_ra_rs	 ra_rs;
 	ssize_t			 n;
+	uint32_t		 if_index;
 	int			 shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
@@ -200,6 +216,13 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				    __func__, imsg.hdr.len);
 			memcpy(&ra_rs, imsg.data, sizeof(ra_rs));
 			parse_ra_rs(&ra_rs);
+			break;
+		case IMSG_UPDATE_IF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
+				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&if_index, imsg.data, sizeof(if_index));
+			update_iface(if_index);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* Already checked by frontend. */
@@ -438,6 +461,57 @@ parse_rs(struct imsg_ra_rs *rs)
 		len -= nd_opt_hdr->nd_opt_len * 8 - 2;
 		p += nd_opt_hdr->nd_opt_len * 8 - 2;
 	}
+	engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
+	    sizeof(send_ra));
+}
+
+struct engine_iface*
+find_engine_iface_by_id(uint32_t if_index)
+{
+	struct engine_iface	*engine_iface;
+
+	TAILQ_FOREACH(engine_iface, &engine_interfaces, entry) {
+		if (engine_iface->if_index == if_index)
+			return engine_iface;
+	}
+	return (NULL);
+}
+
+void
+update_iface(uint32_t if_index)
+{
+	struct engine_iface	*engine_iface;
+	struct timeval		 tv;
+
+	if ((engine_iface = find_engine_iface_by_id(if_index)) == NULL) {
+		engine_iface = calloc(1, sizeof(*engine_iface));
+		engine_iface->if_index = if_index;
+		evtimer_set(&engine_iface->timer, iface_timeout, engine_iface);
+	}
+
+	tv.tv_sec = 0;
+	tv.tv_usec = arc4random_uniform(1000000);
+	evtimer_add(&engine_iface->timer, &tv);
+}
+
+void
+iface_timeout(int fd, short events, void *arg)
+{
+	struct engine_iface	*engine_iface = (struct engine_iface *)arg;
+	struct imsg_send_ra	 send_ra;
+	struct timeval		 tv;
+
+
+	tv.tv_sec = MIN_RTR_ADV_INTERVAL +
+	    arc4random_uniform(MAX_RTR_ADV_INTERVAL - MIN_RTR_ADV_INTERVAL);
+	tv.tv_usec = arc4random_uniform(1000000);
+
+	log_debug("%s new timeout in %lld", __func__, tv.tv_sec);
+
+	evtimer_add(&engine_iface->timer, &tv);
+
+	send_ra.if_index = engine_iface->if_index;
+	memcpy(&send_ra.to, &all_nodes, sizeof(send_ra.to));
 	engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
 	    sizeof(send_ra));
 }
