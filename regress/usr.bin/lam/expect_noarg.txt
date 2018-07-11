@@ -1,0 +1,7 @@
+123456789123456789123456789
+accent édoubleカオascii
+comb é3byte ‒truncate
+four 𠀀badbyte �end
+incom �cont �end
+twoand three
+three only

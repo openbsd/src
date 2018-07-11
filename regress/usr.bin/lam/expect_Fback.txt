@@ -1,0 +1,7 @@
+01234567890123456789 123456
+00accent édoubleカオ  ascii
+0000comb é0003byte ‒ trunca
+000four 𠀀0badbyte �    end
+000incom �0000cont �    end
+0000000two and th
+ three 
