@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.177 2018/04/03 02:52:50 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.178 2018/07/11 14:20:18 sf Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -473,6 +473,11 @@ vlan_up(struct ifvlan *ifv)
 	ifp->if_hardmtu = hardmtu;
 	SET(ifp->if_flags, ifp0->if_flags & IFF_SIMPLEX);
 
+	/*
+	 * Note: In cases like vio(4) and em(4) where the offsets of the
+	 * csum can be freely defined, we could actually do csum offload
+	 * for VLAN and QINQ packets.
+	 */
 	if (ifv->ifv_type != ETHERTYPE_VLAN) {
 		/*
 		 * Hardware offload only works with the default VLAN
@@ -481,12 +486,8 @@ vlan_up(struct ifvlan *ifv)
 		ifp->if_capabilities = 0;
 	} else if (ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
 		/*
-		 * If the parent interface can do hardware-assisted
-		 * VLAN encapsulation, then propagate its hardware-
-		 * assisted checksumming flags.
-		 *
-		 * If the card cannot handle hardware tagging, it cannot
-		 * possibly compute the correct checksums for tagged packets.
+		 * Chips that can do hardware-assisted VLAN encapsulation, can
+		 * calculate the correct checksum for VLAN tagged packets.
 		 */
 		ifp->if_capabilities = ifp0->if_capabilities & IFCAP_CSUM_MASK;
 	}
