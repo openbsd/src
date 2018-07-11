@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.217 2018/07/10 13:11:38 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.218 2018/07/11 15:25:42 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -853,7 +853,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 	int afamily, bits, irc;
 	in_addr_t addr;
 
-	if (af == 0) {
+	if (af == AF_UNSPEC) {
 		if (strchr(s, ':') != NULL) {
 			af = AF_INET6;
 			aflen = sizeof(struct sockaddr_in6);
