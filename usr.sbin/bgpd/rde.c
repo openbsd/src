@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.391 2018/07/11 16:34:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.392 2018/07/11 17:35:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -171,8 +171,8 @@ rde_sighdlr(int sig)
 }
 
 u_int32_t	peerhashsize = 64;
-u_int32_t	pathhashsize = 1024;
-u_int32_t	attrhashsize = 512;
+u_int32_t	pathhashsize = 128 * 1024;
+u_int32_t	attrhashsize = 16 * 1024;
 u_int32_t	nexthophashsize = 64;
 
 void
