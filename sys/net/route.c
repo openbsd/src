@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.376 2018/06/25 09:41:45 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.377 2018/07/11 19:52:19 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1272,7 +1272,6 @@ rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
 	}
 
 	return (EAGAIN);
-
 }
 
 /*
