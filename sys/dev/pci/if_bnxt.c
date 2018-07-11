@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.3 2018/07/11 06:43:30 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.4 2018/07/11 06:48:58 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -342,10 +342,6 @@ int		bnxt_hwrm_func_rgtr_async_events(struct bnxt_softc *);
 #if 0
 int bnxt_hwrm_func_drv_unrgtr(struct bnxt_softc *softc, bool shutdown);
 
-int bnxt_hwrm_set_link_setting(struct bnxt_softc *softc, bool set_pause,
-    bool set_eee, bool set_link); 
-int bnxt_hwrm_set_pause(struct bnxt_softc *softc);
-
 int bnxt_hwrm_port_qstats(struct bnxt_softc *softc);
 
 int bnxt_hwrm_rss_cfg(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic,
@@ -603,8 +599,6 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, bnxt_media_change,
 	    bnxt_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -1212,10 +1206,392 @@ bnxt_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	bnxt_hwrm_port_phy_qcfg(sc, ifmr);
 }
 
+uint64_t
+bnxt_get_media_type(uint64_t speed, int phy_type)
+{
+	switch (phy_type) {
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASECR:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASECR_CA_L:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASECR_CA_S:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASECR_CA_N:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_100G_BASECR4:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_40G_BASECR4:
+		switch (speed) {
+		case IF_Gbps(1):
+			return IFM_1000_T;
+		case IF_Gbps(10):
+			return IFM_10G_SFP_CU;
+		case IF_Gbps(25):
+			return IFM_25G_CR;
+		case IF_Gbps(40):
+			return IFM_40G_CR4;
+		case IF_Gbps(50):
+			return IFM_50G_CR2;
+		case IF_Gbps(100):
+			return IFM_100G_CR4;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASELR:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_100G_BASELR4:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_40G_BASELR4:
+		switch (speed) {
+		case IF_Gbps(1):
+			return IFM_1000_LX;
+		case IF_Gbps(10):
+			return IFM_10G_LR;
+		case IF_Gbps(25):
+			return IFM_25G_LR;
+		case IF_Gbps(40):
+			return IFM_40G_LR4;
+		case IF_Gbps(100):
+			return IFM_100G_LR4;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASESR:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASESR:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_100G_BASESR4:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_100G_BASESR10:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_1G_BASESX:
+		switch (speed) {
+		case IF_Gbps(1):
+			return IFM_1000_SX;
+		case IF_Gbps(10):
+			return IFM_10G_SR;
+		case IF_Gbps(25):
+			return IFM_25G_SR;
+		case IF_Gbps(40):
+			return IFM_40G_SR4;
+		case IF_Gbps(100):
+			return IFM_100G_SR4;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_100G_BASEER4:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_40G_BASEER4:
+		switch (speed) {
+		case IF_Gbps(10):
+			return IFM_10G_ER;
+		case IF_Gbps(25):
+			return IFM_25G_ER;
+		}
+		/* missing IFM_40G_ER4, IFM_100G_ER4 */
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASEKR4:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASEKR2:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASEKR:
+		switch (speed) {
+		case IF_Gbps(10):
+			return IFM_10G_KR;
+		case IF_Gbps(20):
+			return IFM_20G_KR2;
+		case IF_Gbps(25):
+			return IFM_25G_KR;
+		case IF_Gbps(40):
+			return IFM_40G_KR4;
+		case IF_Gbps(50):
+			return IFM_50G_KR2;
+		case IF_Gbps(100):
+			return IFM_100G_KR4;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASEKX:
+		switch (speed) {
+		case IF_Gbps(1):
+			return IFM_1000_KX;
+		case IF_Mbps(2500):
+			return IFM_2500_KX;
+		case IF_Gbps(10):
+			return IFM_10G_KX4;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASET:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASETE:
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_1G_BASET:
+		switch (speed) {
+		case IF_Mbps(10):
+			return IFM_10_T;
+		case IF_Mbps(100):
+			return IFM_100_TX;
+		case IF_Gbps(1):
+			return IFM_1000_T;
+		case IF_Mbps(2500):
+			return IFM_2500_T;
+		case IF_Gbps(10):
+			return IFM_10G_T;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_SGMIIEXTPHY:
+		switch (speed) {
+		case IF_Gbps(1):
+			return IFM_1000_SGMII;
+		}
+		break;
+
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_40G_ACTIVE_CABLE:
+		switch (speed) {
+		case IF_Gbps(10):
+			return IFM_10G_AOC;
+		case IF_Gbps(25):
+			return IFM_25G_AOC;
+		case IF_Gbps(40):
+			return IFM_40G_AOC;
+		case IF_Gbps(100):
+			return IFM_100G_AOC;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+void
+bnxt_add_media_type(struct bnxt_softc *sc, int supported_speeds, uint64_t speed, uint64_t ifmt)
+{
+	int speed_bit = 0;
+	switch (speed) {
+	case IF_Gbps(1):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_1GB;
+		break;
+	case IF_Gbps(2):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_2GB;
+		break;
+	case IF_Mbps(2500):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_2_5GB;
+		break;
+	case IF_Gbps(10):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_10GB;
+		break;
+	case IF_Gbps(20):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_20GB;
+		break;
+	case IF_Gbps(25):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_25GB;
+		break;
+	case IF_Gbps(40):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_40GB;
+		break;
+	case IF_Gbps(50):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_50GB;
+		break;
+	case IF_Gbps(100):
+		speed_bit = HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_100GB;
+		break;
+	}
+	if (supported_speeds & speed_bit)
+		ifmedia_add(&sc->sc_media, IFM_ETHER | ifmt, 0, NULL);
+}
+
+int
+bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
+{
+	struct ifnet *ifp = &softc->sc_ac.ac_if;
+	struct hwrm_port_phy_qcfg_input req = {0};
+	struct hwrm_port_phy_qcfg_output *resp =
+	    BNXT_DMA_KVA(softc->sc_cmd_resp);
+	int link_state = LINK_STATE_DOWN;
+	int speeds[] = {
+		IF_Gbps(1), IF_Gbps(2), IF_Mbps(2500), IF_Gbps(10), IF_Gbps(20),
+		IF_Gbps(25), IF_Gbps(40), IF_Gbps(50), IF_Gbps(100)
+	};
+	uint64_t media_type;
+	int rc = 0;
+	int i;
+
+	BNXT_HWRM_LOCK(softc);
+	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_PORT_PHY_QCFG);
+
+	rc = _hwrm_send_message(softc, &req, sizeof(req));
+	if (rc) {
+		printf("%s: failed to query port phy config\n", DEVNAME(softc));
+		goto exit;
+	}
+
+	if (resp->link == HWRM_PORT_PHY_QCFG_OUTPUT_LINK_LINK) {
+		if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
+			link_state = LINK_STATE_HALF_DUPLEX;
+		else
+			link_state = LINK_STATE_FULL_DUPLEX;
+
+		switch (resp->link_speed) {
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_10MB:
+			ifp->if_baudrate = IF_Mbps(10);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_100MB:
+			ifp->if_baudrate = IF_Mbps(100);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_1GB:
+			ifp->if_baudrate = IF_Gbps(1);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_2GB:
+			ifp->if_baudrate = IF_Gbps(2);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_2_5GB:
+			ifp->if_baudrate = IF_Mbps(2500);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_10GB:
+			ifp->if_baudrate = IF_Gbps(10);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_20GB:
+			ifp->if_baudrate = IF_Gbps(20);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_25GB:
+			ifp->if_baudrate = IF_Gbps(25);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_40GB:
+			ifp->if_baudrate = IF_Gbps(40);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_50GB:
+			ifp->if_baudrate = IF_Gbps(50);
+			break;
+		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_100GB:
+			ifp->if_baudrate = IF_Gbps(100);
+			break;
+		}
+	}
+
+	ifmedia_delete_instance(&softc->sc_media, IFM_INST_ANY);
+	for (i = 0; i < nitems(speeds); i++) {
+		media_type = bnxt_get_media_type(speeds[i], resp->phy_type);
+		if (media_type != 0)
+			bnxt_add_media_type(softc, resp->support_speeds,
+			    speeds[i], media_type);
+	}
+	ifmedia_add(&softc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+	ifmedia_set(&softc->sc_media, IFM_ETHER|IFM_AUTO);
+
+	if (ifmr != NULL) {
+		ifmr->ifm_status = IFM_AVALID;
+		if (LINK_STATE_IS_UP(ifp->if_link_state)) {
+			ifmr->ifm_status |= IFM_ACTIVE;
+			ifmr->ifm_active = IFM_ETHER | IFM_AUTO;
+			if (resp->pause & HWRM_PORT_PHY_QCFG_OUTPUT_PAUSE_TX)
+				ifmr->ifm_active |= IFM_ETH_TXPAUSE;
+			if (resp->pause & HWRM_PORT_PHY_QCFG_OUTPUT_PAUSE_RX)
+				ifmr->ifm_active |= IFM_ETH_RXPAUSE;
+			if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
+				ifmr->ifm_active |= IFM_HDX;
+			else
+				ifmr->ifm_active |= IFM_FDX;
+
+			media_type = bnxt_get_media_type(ifp->if_baudrate, resp->phy_type);
+			if (media_type != 0)
+				ifmr->ifm_active |= media_type;
+		}
+	}
+
+exit:
+	BNXT_HWRM_UNLOCK(softc);
+
+	if (rc == 0 && (link_state != ifp->if_link_state)) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
+
+	return rc;
+}
+
 int
 bnxt_media_change(struct ifnet *ifp)
 {
-	return 0;
+	struct bnxt_softc *sc = (struct bnxt_softc *)ifp->if_softc;
+	struct hwrm_port_phy_cfg_input req = {0};
+	uint64_t link_speed;
+
+	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+		return EINVAL;
+
+	if (sc->sc_flags & BNXT_FLAG_NPAR)
+		return ENODEV;
+
+	bnxt_hwrm_cmd_hdr_init(sc, &req, HWRM_PORT_PHY_CFG);
+
+	switch (IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+	case IFM_100G_CR4:
+	case IFM_100G_SR4:
+	case IFM_100G_KR4:
+	case IFM_100G_LR4:
+	case IFM_100G_AOC:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_100GB;
+		break;
+
+	case IFM_50G_CR2:
+	case IFM_50G_KR2:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_50GB;
+		break;
+
+	case IFM_40G_CR4:
+	case IFM_40G_SR4:
+	case IFM_40G_LR4:
+	case IFM_40G_KR4:
+	case IFM_40G_AOC:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_40GB;
+		break;
+
+	case IFM_25G_CR:
+	case IFM_25G_KR:
+	case IFM_25G_SR:
+	case IFM_25G_LR:
+	case IFM_25G_ER:
+	case IFM_25G_AOC:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_25GB;
+		break;
+
+	case IFM_10G_LR:
+	case IFM_10G_SR:
+	case IFM_10G_CX4:
+	case IFM_10G_T:
+	case IFM_10G_SFP_CU:
+	case IFM_10G_LRM:
+	case IFM_10G_KX4:
+	case IFM_10G_KR:
+	case IFM_10G_CR1:
+	case IFM_10G_ER:
+	case IFM_10G_AOC:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_10GB;
+		break;
+
+	case IFM_2500_SX:
+	case IFM_2500_KX:
+	case IFM_2500_T:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_2_5GB;
+		break;
+
+	case IFM_1000_T:
+	case IFM_1000_LX:
+	case IFM_1000_SX:
+	case IFM_1000_CX:
+	case IFM_1000_KX:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_1GB;
+		break;
+
+	case IFM_100_TX:
+		link_speed = HWRM_PORT_PHY_QCFG_OUTPUT_FORCE_LINK_SPEED_100MB;
+		break;
+
+	default:
+		link_speed = 0;
+	}
+
+	if (link_speed == 0) {
+		req.auto_mode |=
+		    HWRM_PORT_PHY_CFG_INPUT_AUTO_MODE_ALL_SPEEDS;
+		req.flags |=
+		    htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESTART_AUTONEG);
+		req.enables |=
+		    htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_MODE);
+	} else {
+		req.force_link_speed = htole16(link_speed);
+		req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_FORCE);
+	}
+	req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESET_PHY);
+
+	return hwrm_send_message(sc, &req, sizeof(req));
 }
 
 void
@@ -1609,7 +1985,7 @@ bnxt_hwrm_queue_qportcfg(struct bnxt_softc *softc)
 
 qportcfg_exit:
 	BNXT_HWRM_UNLOCK(softc);
-	return (rc);
+	return rc;
 }
 
 int
@@ -1847,133 +2223,6 @@ bnxt_hwrm_func_reset(struct bnxt_softc *softc)
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
 
-#if 0
-static void
-bnxt_hwrm_set_link_common(struct bnxt_softc *softc,
-    struct hwrm_port_phy_cfg_input *req)
-{
-	uint8_t autoneg = softc->link_info.autoneg;
-	uint16_t fw_link_speed = softc->link_info.req_link_speed;
-
-	if (autoneg & BNXT_AUTONEG_SPEED) {
-		req->auto_mode |=
-		    HWRM_PORT_PHY_CFG_INPUT_AUTO_MODE_ALL_SPEEDS;
-
-		req->enables |=
-		    htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_MODE);
-		req->flags |=
-		    htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESTART_AUTONEG);
-	} else {
-		req->force_link_speed = htole16(fw_link_speed);
-		req->flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_FORCE);
-	}
-
-	/* tell chimp that the setting takes effect immediately */
-	req->flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESET_PHY);
-}
-
-
-static void
-bnxt_hwrm_set_pause_common(struct bnxt_softc *softc,
-    struct hwrm_port_phy_cfg_input *req)
-{
-	struct bnxt_link_info *link_info = &softc->link_info;
-
-	if (link_info->flow_ctrl.autoneg) {
-		req->auto_pause =
-		    HWRM_PORT_PHY_CFG_INPUT_AUTO_PAUSE_AUTONEG_PAUSE;
-		if (link_info->flow_ctrl.rx)
-			req->auto_pause |=
-			    HWRM_PORT_PHY_CFG_INPUT_AUTO_PAUSE_RX;
-		if (link_info->flow_ctrl.tx)
-			req->auto_pause |=
-			    HWRM_PORT_PHY_CFG_INPUT_AUTO_PAUSE_TX;
-		req->enables |=
-		    htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_PAUSE);
-	} else {
-		if (link_info->flow_ctrl.rx)
-			req->force_pause |=
-			    HWRM_PORT_PHY_CFG_INPUT_FORCE_PAUSE_RX;
-		if (link_info->flow_ctrl.tx)
-			req->force_pause |=
-			    HWRM_PORT_PHY_CFG_INPUT_FORCE_PAUSE_TX;
-		req->enables |=
-			htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_FORCE_PAUSE);
-	}
-}
-
-
-/* JFV this needs interface connection */
-static void
-bnxt_hwrm_set_eee(struct bnxt_softc *softc, struct hwrm_port_phy_cfg_input *req)
-{
-	/* struct ethtool_eee *eee = &softc->eee; */
-	bool	eee_enabled = false;
-
-	if (eee_enabled) {
-# i f 0
-		uint16_t eee_speeds;
-		uint32_t flags = HWRM_PORT_PHY_CFG_INPUT_FLAGS_EEE_ENABLE;
-
-		if (eee->tx_lpi_enabled)
-			flags |= HWRM_PORT_PHY_CFG_INPUT_FLAGS_EEE_TX_LPI;
-
-		req->flags |= htole32(flags);
-		eee_speeds = bnxt_get_fw_auto_link_speeds(eee->advertised);
-		req->eee_link_speed_mask = htole16(eee_speeds);
-		req->tx_lpi_timer = htole32(eee->tx_lpi_timer);
-# e n d i f
-	} else {
-		req->flags |=
-		    htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_EEE_DISABLE);
-	}
-}
-
-
-int
-bnxt_hwrm_set_link_setting(struct bnxt_softc *softc, bool set_pause,
-    bool set_eee, bool set_link)
-{
-	struct hwrm_port_phy_cfg_input req = {0};
-	int rc;
-
-	if (softc->sc_flags & BNXT_FLAG_NPAR)
-		return ENOTSUP;
-
-	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_PORT_PHY_CFG);
-	
-	if (set_pause) {
-		bnxt_hwrm_set_pause_common(softc, &req);
-
-		if (softc->link_info.flow_ctrl.autoneg)
-			set_link = true;
-	}
-
-	if (set_link)
-		bnxt_hwrm_set_link_common(softc, &req);
-	
-	if (set_eee)
-		bnxt_hwrm_set_eee(softc, &req);
-	
-	BNXT_HWRM_LOCK(softc);
-	rc = _hwrm_send_message(softc, &req, sizeof(req));
-
-	if (!rc) {
-		if (set_pause) {
-			/* since changing of 'force pause' setting doesn't 
-			 * trigger any link change event, the driver needs to
-			 * update the current pause result upon successfully i
-			 * return of the phy_cfg command */
-			if (!softc->link_info.flow_ctrl.autoneg) 
-				bnxt_report_link(softc);
-		}
-	}
-	BNXT_HWRM_UNLOCK(softc);
-	return rc;
-}
-
-#endif
-
 int
 bnxt_hwrm_vnic_cfg(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic)
 {
@@ -2028,7 +2277,7 @@ bnxt_hwrm_vnic_alloc(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic)
 
 fail:
 	BNXT_HWRM_UNLOCK(softc);
-	return (rc);
+	return rc;
 }
 
 int
@@ -3035,99 +3284,6 @@ bnxt_hwrm_fw_set_time(struct bnxt_softc *softc, uint16_t year, uint8_t month,
 	req.zone = htole16(zone);
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
-
-#endif
-
-int
-bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
-{
-	struct ifnet *ifp = &softc->sc_ac.ac_if;
-	struct hwrm_port_phy_qcfg_input req = {0};
-	struct hwrm_port_phy_qcfg_output *resp =
-	    BNXT_DMA_KVA(softc->sc_cmd_resp);
-	int rc = 0;
-	int link_state = LINK_STATE_DOWN;
-
-	BNXT_HWRM_LOCK(softc);
-	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_PORT_PHY_QCFG);
-
-	rc = _hwrm_send_message(softc, &req, sizeof(req));
-	if (rc) {
-		printf("%s: failed to query port phy config\n", DEVNAME(softc));
-		goto exit;
-	}
-
-	if (resp->link == HWRM_PORT_PHY_QCFG_OUTPUT_LINK_LINK) {
-		if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
-			link_state = LINK_STATE_HALF_DUPLEX;
-		else
-			link_state = LINK_STATE_FULL_DUPLEX;
-
-		switch (resp->link_speed) {
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_10MB:
-			ifp->if_baudrate = IF_Mbps(10);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_100MB:
-			ifp->if_baudrate = IF_Mbps(100);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_1GB:
-			ifp->if_baudrate = IF_Gbps(1);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_2GB:
-			ifp->if_baudrate = IF_Gbps(2);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_2_5GB:
-			ifp->if_baudrate = IF_Mbps(2500);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_10GB:
-			ifp->if_baudrate = IF_Gbps(10);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_20GB:
-			ifp->if_baudrate = IF_Gbps(20);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_25GB:
-			ifp->if_baudrate = IF_Gbps(25);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_40GB:
-			ifp->if_baudrate = IF_Gbps(40);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_50GB:
-			ifp->if_baudrate = IF_Gbps(50);
-			break;
-		case HWRM_PORT_PHY_QCFG_OUTPUT_LINK_SPEED_100GB:
-			ifp->if_baudrate = IF_Gbps(100);
-			break;
-		}
-	}
-
-	if (ifmr != NULL) {
-		ifmr->ifm_status = IFM_AVALID;
-		if (LINK_STATE_IS_UP(ifp->if_link_state)) {
-			ifmr->ifm_status |= IFM_ACTIVE;
-			ifmr->ifm_active = IFM_ETHER | IFM_AUTO;
-			if (resp->pause & HWRM_PORT_PHY_QCFG_OUTPUT_PAUSE_TX)
-				ifmr->ifm_active |= IFM_ETH_TXPAUSE;
-			if (resp->pause & HWRM_PORT_PHY_QCFG_OUTPUT_PAUSE_RX)
-				ifmr->ifm_active |= IFM_ETH_RXPAUSE;
-			if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
-				ifmr->ifm_active |= IFM_HDX;
-			else
-				ifmr->ifm_active |= IFM_FDX;
-		}
-	}
-
-exit:
-	BNXT_HWRM_UNLOCK(softc);
-
-	if (rc == 0 && (link_state != ifp->if_link_state)) {
-		ifp->if_link_state = link_state;
-		if_link_state_change(ifp);
-	}
-
-	return rc;
-}
-
-#if 0
 
 uint16_t
 bnxt_hwrm_get_wol_fltrs(struct bnxt_softc *softc, uint16_t handle)
