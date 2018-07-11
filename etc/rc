@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.526 2018/07/11 08:31:48 florian Exp $
+#	$OpenBSD: rc,v 1.527 2018/07/11 21:49:37 sthen Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -334,6 +334,12 @@ if [[ $1 == shutdown ]]; then
 				[[ -x /etc/rc.d/${_d[_i]} ]] &&
 					/etc/rc.d/${_d[_i]} stop
 			done
+			echo '.'
+		fi
+
+		if /etc/rc.d/vmd check > /dev/null; then
+			echo -n 'stopping VMs'
+			/etc/rc.d/vmd stop > /dev/null
 			echo '.'
 		fi
 
