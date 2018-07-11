@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.84 2018/07/04 09:44:07 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.85 2018/07/11 06:43:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -145,12 +145,14 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 	return (gcp);
 }
 
+/* Get line data. */
 struct grid_line *
 grid_get_line(struct grid *gd, u_int line)
 {
 	return (&gd->linedata[line]);
 }
 
+/* Adjust number of lines. */
 void
 grid_adjust_lines(struct grid *gd, u_int lines)
 {
