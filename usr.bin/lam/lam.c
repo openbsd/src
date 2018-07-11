@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.19 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: lam.c,v 1.20 2018/07/11 11:35:06 schwarze Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -109,6 +109,10 @@ getargs(int argc, char *argv[])
 	P = S = F = T = 0;		/* capitalized options */
 	while (optind < argc) {
 		switch (ch = getopt(argc, argv, "F:f:P:p:S:s:T:t:")) {
+		case 'P': case 'p':
+			P = (ch == 'P');
+			ip->pad = 1;
+			/* FALLTHROUGH */
 		case 'F': case 'f':
 			F = (ch == 'F');
 			/* Validate format string argument. */
@@ -123,10 +127,6 @@ getargs(int argc, char *argv[])
 				err(1, NULL);
 			snprintf(p, siz, "%%%ss", optarg);
 			ip->format = p;
-			break;
-		case 'P': case 'p':
-			P = (ch == 'P');
-			ip->pad = 1;
 			break;
 		case 'S': case 's':
 			S = (ch == 'S');
