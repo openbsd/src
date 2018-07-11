@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.73 2018/07/11 09:35:44 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.74 2018/07/11 13:19:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -82,7 +82,6 @@ enum imsg_type {
 	IMSG_VMDOP_RECEIVE_VM_RESPONSE,
 	IMSG_VMDOP_RECEIVE_VM_END,
 	IMSG_VMDOP_TERMINATE_VM_REQUEST,
-	IMSG_VMDOP_KILL_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_RESPONSE,
 	IMSG_VMDOP_TERMINATE_VM_EVENT,
 	IMSG_VMDOP_GET_INFO_VM_REQUEST,
@@ -122,6 +121,9 @@ struct vmop_id {
 	uint32_t		 vid_id;
 	char			 vid_name[VMM_MAX_NAME_LEN];
 	uid_t			 vid_uid;
+	unsigned int		 vid_flags;
+#define VMOP_FORCE		0x01
+#define VMOP_WAIT		0x02
 };
 
 struct vmop_ifreq {

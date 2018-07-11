@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2018/07/11 09:35:44 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.27 2018/07/11 13:19:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -352,7 +352,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		switch (imsg.hdr.type) {
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		case IMSG_VMDOP_KILL_VM_REQUEST:
 		case IMSG_VMDOP_START_VM_REQUEST:
 		case IMSG_VMDOP_PAUSE_VM:
 		case IMSG_VMDOP_UNPAUSE_VM:
@@ -411,7 +410,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		case IMSG_VMDOP_KILL_VM_REQUEST:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
 				goto fail;
 			memcpy(&vid, imsg.data, sizeof(vid));

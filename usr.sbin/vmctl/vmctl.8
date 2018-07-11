@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.40 2018/07/11 09:35:44 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.41 2018/07/11 13:19:47 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -147,7 +147,7 @@ with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
-.It Cm stop Ar id Op Fl f
+.It Cm stop Ar id Op Fl fw
 Stops (terminates) a VM defined by the specified VM
 .Ar id .
 By default,
@@ -156,9 +156,15 @@ a graceful shutdown will be attempted if the VM supports the
 device.
 Once stopped, if the VM was not defined in a configuration file, then it is
 removed.
-The
-.Fl f
-option forcefully stops the VM without attempting a graceful shutdown.
+.Pp
+The following options can be specified when stopping a VM:
+.Bl -tag -width "-w"
+.It Fl f
+Forcefully stop the VM without attempting a graceful shutdown.
+.It Fl w
+Wait until the VM has been terminated.
+.El
+.Pp
 .It Cm unpause Ar id
 Unpause (resume from a paused state) a VM with the specified
 .Ar id .

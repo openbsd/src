@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: vmd,v 1.7 2018/02/20 10:12:14 sthen Exp $
+# $OpenBSD: vmd,v 1.8 2018/07/11 13:19:47 reyk Exp $
 
 daemon="/usr/sbin/vmd"
 
@@ -17,10 +17,7 @@ list_running() {
 
 rc_stop() {
 	for vm in $(list_running); do
-		_rc_do vmctl stop "$vm"
-		while list_running | fgrep -wq "$vm"; do
-			sleep .1
-		done
+		_rc_do vmctl stop "$vm" -w
 	done
 
 	pkill -T "${daemon_rtable}" -xf "${pexp}"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.51 2018/07/11 09:35:44 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.52 2018/07/11 13:19:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -410,25 +410,22 @@ unpause_vm_complete(struct imsg *imsg, int *ret)
  * Parameters:
  *  terminate_id: ID of the vm to be terminated
  *  name: optional name of the VM to be terminated
- *  force: forcefully kill the VM process
+ *  flags: VMOP_FORCE or VMOP_WAIT flags
  */
 void
-terminate_vm(uint32_t terminate_id, const char *name, int force)
+terminate_vm(uint32_t terminate_id, const char *name, unsigned int flags)
 {
 	struct vmop_id vid;
-	int cmd;
 
 	memset(&vid, 0, sizeof(vid));
 	vid.vid_id = terminate_id;
 	if (name != NULL)
 		(void)strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
 
-	if (force)
-		cmd = IMSG_VMDOP_KILL_VM_REQUEST;
-	else
-		cmd = IMSG_VMDOP_TERMINATE_VM_REQUEST;
+	vid.vid_flags = flags & (VMOP_FORCE|VMOP_WAIT);
 
-	imsg_compose(ibuf, cmd, 0, 0, -1, &vid, sizeof(vid));
+	imsg_compose(ibuf, IMSG_VMDOP_TERMINATE_VM_REQUEST,
+	    0, 0, -1, &vid, sizeof(vid));
 }
 
 /*
@@ -441,6 +438,7 @@ terminate_vm(uint32_t terminate_id, const char *name, int force)
  * Parameters:
  *  imsg : response imsg received from vmd
  *  ret  : return value
+ *  flags: VMOP_FORCE or VMOP_WAIT flags
  *
  * Return:
  *  Always 1 to indicate we have processed the return message (even if it
@@ -452,7 +450,7 @@ terminate_vm(uint32_t terminate_id, const char *name, int force)
  *   EIO   : terminate_vm command failed
  */
 int
-terminate_vm_complete(struct imsg *imsg, int *ret)
+terminate_vm_complete(struct imsg *imsg, int *ret, unsigned int flags)
 {
 	struct vmop_result *vmr;
 	int res;
@@ -475,8 +473,12 @@ terminate_vm_complete(struct imsg *imsg, int *ret)
 				warn("terminate vm command failed");
 				*ret = EIO;
 			}
+		} else if (flags & VMOP_WAIT) {
+			warnx("terminated vm %d", vmr->vmr_id);
+		} else if (flags & VMOP_FORCE) {
+			warnx("requested to terminate vm %d", vmr->vmr_id);
 		} else {
-			warnx("sent request to terminate vm %d", vmr->vmr_id);
+			warnx("requested to shutdown vm %d", vmr->vmr_id);
 			*ret = 0;
 		}
 	} else {

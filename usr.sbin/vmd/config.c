@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.45 2018/07/10 16:15:51 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.46 2018/07/11 13:19:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -451,6 +451,7 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 	/* If the fd is -1, the kernel will be searched on the disk */
 	vm->vm_kernel = imsg->fd;
 	vm->vm_running = 1;
+	vm->vm_peerid = (uint32_t)-1;
 
 	return (0);
 

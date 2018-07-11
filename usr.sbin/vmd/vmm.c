@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.85 2018/07/11 09:35:44 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.86 2018/07/11 13:19:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -111,7 +111,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_create_params vmc;
 	uint32_t		 id = 0;
 	pid_t			 pid = 0;
-	unsigned int		 mode;
+	unsigned int		 mode, flags;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -150,17 +150,19 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-	case IMSG_VMDOP_KILL_VM_REQUEST:
-		IMSG_SIZE_CHECK(imsg, &vtp);
-		memcpy(&vtp, imsg->data, sizeof(vtp));
-		id = vtp.vtp_vm_id;
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+		flags = vid.vid_flags;
 
 		DPRINTF("%s: recv'ed TERMINATE_VM for %d", __func__, id);
+
+		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 
 		if (id == 0) {
 			res = ENOENT;
 		} else if ((vm = vm_getbyvmid(id)) != NULL) {
-			if (imsg->hdr.type == IMSG_VMDOP_KILL_VM_REQUEST) {
+			if (flags & VMOP_FORCE) {
 				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
 				vm->vm_shutdown = 1;
 				(void)terminate_vm(&vtp);
@@ -189,12 +191,16 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				 * Check to see if the VM process is still
 				 * active.  If not, return VMD_VM_STOP_INVALID.
 				 */
-				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
-				if (vtp.vtp_vm_id == 0) {
+				if (vm_vmid2id(vm->vm_vmid, vm) == 0) {
 					log_debug("%s: no vm running anymore",
 					    __func__);
 					res = VMD_VM_STOP_INVALID;
 				}
+			}
+			if ((flags & VMOP_WAIT) &&
+			    res == 0 && vm->vm_shutdown == 1) {
+				vm->vm_peerid = imsg->hdr.peerid;
+				cmd = 0;
 			}
 		} else {
 			/* vm doesn't exist, cannot stop vm */
@@ -202,7 +208,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    __func__);
 			res = VMD_VM_STOP_INVALID;
 		}
-		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		res = get_info_vm(ps, imsg, 0);
@@ -387,7 +392,8 @@ vmm_sighdlr(int sig, short event, void *arg)
 				vmr.vmr_id = vm_id2vmid(vmid, vm);
 				if (proc_compose_imsg(ps, PROC_PARENT,
 				    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
-				    0, -1, &vmr, sizeof(vmr)) == -1)
+				    vm->vm_peerid, -1,
+				    &vmr, sizeof(vmr)) == -1)
 					log_warnx("could not signal "
 					    "termination of VM %u to "
 					    "parent", vm->vm_vmid);
