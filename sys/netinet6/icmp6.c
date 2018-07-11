@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.224 2018/06/02 16:38:21 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.225 2018/07/11 13:06:16 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1806,6 +1806,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 		nrt->rt_rmx = rt->rt_rmx;
 		rtfree(rt);
 		rt = nrt;
+		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
 	error = rt_timer_add(rt, icmp6_mtudisc_timeout, icmp6_mtudisc_timeout_q,
 	    rtableid);

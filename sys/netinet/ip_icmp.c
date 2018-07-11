@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.175 2018/05/21 15:52:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.176 2018/07/11 13:06:16 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -990,6 +990,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 		nrt->rt_rmx = rt->rt_rmx;
 		rtfree(rt);
 		rt = nrt;
+		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q,
 	    rtableid);
