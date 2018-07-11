@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2018/07/11 07:39:22 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2018/07/11 16:43:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -118,9 +118,9 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR LOCAL
-%token	LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP
-%token	VM VMID
+%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR
+%token	LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET SWITCH
+%token	UP VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
