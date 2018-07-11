@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2018/07/11 07:39:22 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2018/07/11 10:23:47 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -985,7 +985,6 @@ parse_config(char *filename, int opts)
 		}
 	}
 
-	/* free global config defaults */
 	if (errors) {
 		clear_config(conf);
 		return (NULL);
