@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.210 2018/07/10 09:04:22 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.211 2018/07/11 12:45:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -653,13 +653,14 @@ vm_intr_pending(struct vm_intr_params *vip)
  *
  * Parameters:
  *   vrwp: Describes the VM and VCPU to get/set the registers from. The
- *   register values are returned here as well.
+ *    register values are returned here as well.
  *   dir: 0 for reading, 1 for writing
  *
  * Return values:
  *  0: if successful
- *  ENOENT: if the VM/VCPU defined by 'vgp' cannot be found
- *  EINVAL: if an error occured reading the registers of the guest
+ *  ENOENT: if the VM/VCPU defined by 'vrwp' cannot be found
+ *  EINVAL: if an error occured accessing the registers of the guest
+ *  EPERM: if the vm cannot be accessed from the calling process
  */
 int
 vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
@@ -700,8 +701,10 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		return (dir == 0) ?
 		    vcpu_readregs_svm(vcpu, vrwp->vrwp_mask, vrs) :
 		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
-	else
-		panic("unknown vmm mode");
+	else {
+		DPRINTF("%s: unknown vmm mode", __func__);
+		return (EINVAL);
+	}
 }
 
 /*
