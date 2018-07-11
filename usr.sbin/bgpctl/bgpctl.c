@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.203 2018/07/10 13:02:14 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.204 2018/07/11 16:35:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <math.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1673,8 +1674,10 @@ int
 show_rib_memory_msg(struct imsg *imsg)
 {
 	struct rde_memstats	stats;
+	struct rde_hashstats	hash;
 	size_t			pts = 0;
 	int			i;
+	double			avg, dev;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB_MEM:
@@ -1714,12 +1717,24 @@ show_rib_memory_msg(struct imsg *imsg)
 		    stats.path_cnt * sizeof(struct rde_aspath) +
 		    stats.aspath_size + stats.attr_cnt * sizeof(struct attr) +
 		    stats.attr_data));
+		printf("\nRDE hash statistics\n");
 		break;
+	case IMSG_CTL_SHOW_RIB_HASH:
+		memcpy(&hash, imsg->data, sizeof(hash));
+		printf("\t%s: size %lld, %lld entires\n", hash.name, hash.num,
+		    hash.sum);
+		avg = (double)hash.sum / (double)hash.num;
+		dev = sqrt(fmax(0, hash.sumq / hash.num - avg * avg));
+		printf("\t    min %lld max %lld avg/std-dev = %.3f/%.3f\n",
+		    hash.min, hash.max, avg, dev);
+		break;
+	case IMSG_CTL_END:
+		return (1);
 	default:
 		break;
 	}
 
-	return (1);
+	return (0);
 }
 
 void
