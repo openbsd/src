@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.90 2018/07/10 21:12:20 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.91 2018/07/11 09:35:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -111,6 +111,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+	case IMSG_VMDOP_KILL_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
 		if ((id = vid.vid_id) == 0) {
@@ -119,7 +120,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				res = ENOENT;
 				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
-			} else if (vm->vm_shutdown) {
+			} else if (vm->vm_shutdown &&
+			    imsg->hdr.type != IMSG_VMDOP_KILL_VM_REQUEST) {
 				res = EALREADY;
 				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;

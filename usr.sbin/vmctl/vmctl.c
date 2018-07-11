@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.50 2018/07/04 02:55:37 anton Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.51 2018/07/11 09:35:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -410,19 +410,25 @@ unpause_vm_complete(struct imsg *imsg, int *ret)
  * Parameters:
  *  terminate_id: ID of the vm to be terminated
  *  name: optional name of the VM to be terminated
+ *  force: forcefully kill the VM process
  */
 void
-terminate_vm(uint32_t terminate_id, const char *name)
+terminate_vm(uint32_t terminate_id, const char *name, int force)
 {
 	struct vmop_id vid;
+	int cmd;
 
 	memset(&vid, 0, sizeof(vid));
 	vid.vid_id = terminate_id;
 	if (name != NULL)
 		(void)strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
 
-	imsg_compose(ibuf, IMSG_VMDOP_TERMINATE_VM_REQUEST, 0, 0, -1,
-	    &vid, sizeof(vid));
+	if (force)
+		cmd = IMSG_VMDOP_KILL_VM_REQUEST;
+	else
+		cmd = IMSG_VMDOP_TERMINATE_VM_REQUEST;
+
+	imsg_compose(ibuf, cmd, 0, 0, -1, &vid, sizeof(vid));
 }
 
 /*

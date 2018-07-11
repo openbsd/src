@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.39 2018/02/24 13:14:09 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.40 2018/07/11 09:35:44 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2018 $
+.Dd $Mdocdate: July 11 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -147,14 +147,18 @@ with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
-.It Cm stop Ar id
+.It Cm stop Ar id Op Fl f
 Stops (terminates) a VM defined by the specified VM
 .Ar id .
-A graceful shutdown will be attempted if the VM supports the
+By default,
+a graceful shutdown will be attempted if the VM supports the
 .Xr vmmci 4
 device.
 Once stopped, if the VM was not defined in a configuration file, then it is
 removed.
+The
+.Fl f
+option forcefully stops the VM without attempting a graceful shutdown.
 .It Cm unpause Ar id
 Unpause (resume from a paused state) a VM with the specified
 .Ar id .

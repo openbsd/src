@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.18 2018/01/03 05:39:56 ccardenas Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.19 2018/07/11 09:35:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -54,6 +54,7 @@ struct parse_result {
 	char			**disks;
 	int			 disable;
 	int			 verbose;
+	int			 force;
 	unsigned int		 mode;
 	struct ctl_command	*ctl;
 };
@@ -85,7 +86,7 @@ int	 create_imagefile(const char *, long);
 int	 vm_start(uint32_t, const char *, int, int, char **, int,
 	    char **, char *, char *);
 int	 vm_start_complete(struct imsg *, int *, int);
-void	 terminate_vm(uint32_t, const char *);
+void	 terminate_vm(uint32_t, const char *, int);
 int	 terminate_vm_complete(struct imsg *, int *);
 void	 pause_vm(uint32_t, const char *);
 int	 pause_vm_complete(struct imsg *, int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.84 2018/07/10 20:52:51 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.85 2018/07/11 09:35:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -150,6 +150,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+	case IMSG_VMDOP_KILL_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vtp);
 		memcpy(&vtp, imsg->data, sizeof(vtp));
 		id = vtp.vtp_vm_id;
@@ -159,7 +160,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (id == 0) {
 			res = ENOENT;
 		} else if ((vm = vm_getbyvmid(id)) != NULL) {
-			if (vm->vm_shutdown == 0) {
+			if (imsg->hdr.type == IMSG_VMDOP_KILL_VM_REQUEST) {
+				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
+				vm->vm_shutdown = 1;
+				(void)terminate_vm(&vtp);
+				res = 0;
+			} else if (vm->vm_shutdown == 0) {
 				log_debug("%s: sending shutdown request"
 				    " to vm %d", __func__, id);
 
@@ -369,21 +375,22 @@ vmm_sighdlr(int sig, short event, void *arg)
 
 				vmid = vm->vm_params.vmc_params.vcp_id;
 				vtp.vtp_vm_id = vmid;
-				log_debug("%s: attempting to terminate vm %d",
-				    __func__, vm->vm_vmid);
-				if (terminate_vm(&vtp) == 0) {
-					memset(&vmr, 0, sizeof(vmr));
-					vmr.vmr_result = ret;
-					vmr.vmr_id = vm_id2vmid(vmid, vm);
-					if (proc_compose_imsg(ps, PROC_PARENT,
-					    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
-					    0, -1, &vmr, sizeof(vmr)) == -1)
-						log_warnx("could not signal "
-						    "termination of VM %u to "
-						    "parent", vm->vm_vmid);
-				} else
-					log_warnx("could not terminate VM %u",
+
+				if (terminate_vm(&vtp) == 0)
+					log_debug("%s: terminated vm %s"
+					    " (id %d)", __func__,
+					    vm->vm_params.vmc_params.vcp_name,
 					    vm->vm_vmid);
+
+				memset(&vmr, 0, sizeof(vmr));
+				vmr.vmr_result = ret;
+				vmr.vmr_id = vm_id2vmid(vmid, vm);
+				if (proc_compose_imsg(ps, PROC_PARENT,
+				    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
+				    0, -1, &vmr, sizeof(vmr)) == -1)
+					log_warnx("could not signal "
+					    "termination of VM %u to "
+					    "parent", vm->vm_vmid);
 
 				vm_remove(vm, __func__);
 			} else
@@ -536,8 +543,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 int
 terminate_vm(struct vm_terminate_params *vtp)
 {
-	log_debug("%s: terminating vmid %d", __func__, vtp->vtp_vm_id);
-	if (ioctl(env->vmd_fd, VMM_IOC_TERM, vtp) < 0)
+	if (ioctl(env->vmd_fd, VMM_IOC_TERM, vtp) == -1)
 		return (errno);
 
 	return (0);
@@ -748,7 +754,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 			vtp.vtp_vm_id = info[i].vir_id;
 			if ((ret = terminate_vm(&vtp)) != 0)
 				return (ret);
-			log_debug("%s: terminated VM %s (id %d)", __func__,
+			log_debug("%s: terminated vm %s (id %d)", __func__,
 			    info[i].vir_name, info[i].vir_id);
 			continue;
 		}

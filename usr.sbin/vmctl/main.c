@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2018/02/24 10:39:35 phessler Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2018/07/11 09:35:44 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -73,7 +73,7 @@ struct ctl_command ctl_commands[] = {
 	    " [-Lc] [-b image] [-r image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
+	{ "stop",	CMD_STOP,	ctl_stop,	"id [-f]" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
@@ -212,7 +212,7 @@ vmmaction(struct parse_result *res)
 		}
 		break;
 	case CMD_STOP:
-		terminate_vm(res->id, res->name);
+		terminate_vm(res->id, res->name, res->force);
 		break;
 	case CMD_STATUS:
 		get_info_vm(res->id, res->name, 0);
@@ -641,11 +641,27 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
-	if (argc == 2) {
-		if (parse_vmid(res, argv[1], 0) == -1)
-			errx(1, "invalid id: %s", argv[1]);
-	} else if (argc != 2)
+	int		 ch;
+
+	if (argc < 2)
 		ctl_usage(res->ctl);
+
+	if (parse_vmid(res, argv[1], 0) == -1)
+		errx(1, "invalid id: %s", argv[1]);
+
+	argc--;
+	argv++;
+
+	while ((ch = getopt(argc, argv, "f")) != -1) {
+		switch (ch) {
+		case 'f':
+			res->force = 1;
+			break;
+		default:
+			ctl_usage(res->ctl);
+			/* NOTREACHED */
+		}
+	}
 
 	return (vmmaction(res));
 }
