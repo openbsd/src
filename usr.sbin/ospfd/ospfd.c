@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.98 2018/07/09 13:19:46 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.99 2018/07/11 12:09:34 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -115,11 +115,10 @@ main(int argc, char *argv[])
 	int			 ipforwarding;
 	int			 mib[4];
 	size_t			 len;
-	char			*sockname;
+	char			*sockname = NULL;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
-	sockname = OSPFD_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_procinit(log_procnames[ospfd_process]);
@@ -185,6 +184,13 @@ main(int argc, char *argv[])
 		kif_clear();
 		exit(1);
 	}
+
+	if (sockname == NULL) {
+		if (asprintf(&sockname, "%s.%d", OSPFD_SOCKET,
+		    ospfd_conf->rdomain) == -1)
+			err(1, "asprintf");
+	}
+
 	ospfd_conf->csock = sockname;
 
 	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
