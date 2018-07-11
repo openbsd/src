@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.108 2018/06/13 09:33:51 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.109 2018/07/11 14:08:46 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -409,6 +409,10 @@ print_network(struct network_config *n, const char *c)
 	case NETWORK_RTLABEL:
 		printf("%snetwork %s rtlabel \"%s\"", c,
 		    print_af(n->prefix.aid), rtlabel_id2name(n->rtlabel));
+		break;
+	case NETWORK_PRIORITY:
+		printf("%snetwork %s priority %d", c,
+		    print_af(n->prefix.aid), n->priority);
 		break;
 	default:
 		printf("%snetwork %s/%u", c, log_addr(&n->prefix),

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.170 2018/07/05 19:51:35 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.171 2018/07/11 14:08:46 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2018 $
+.Dd $Mdocdate: July 11 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -273,6 +273,11 @@ Log received and sent updates.
 .Pq Ic inet Ns | Ns Ic inet6
 .Ic rtlabel Ar label Op Ic set ...\&
 .Xc
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic priority Ar number Op Ic set ...\&
+.Xc
 .\" NOT IMPLEMENTED. DO WE WANT THIS?
 .\" .It Xo
 .\" .Ic network prefix-set
@@ -290,6 +295,11 @@ If set to
 .Ic rtlabel ,
 routes with the specified
 .Ar label
+will be announced.
+If set to
+.Ic priority ,
+routes with the specified
+.Ar priority
 will be announced.
 .Bd -literal -offset indent
 network 192.168.7.0/24

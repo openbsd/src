@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.327 2018/07/10 12:40:41 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.328 2018/07/11 14:08:46 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -211,7 +211,7 @@ typedef struct {
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY
 %token	PREFIX PREFIXLEN PREFIXSET SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN
 %token	MAXASSEQ SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
-%token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN
+%token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
 %token	ERROR INCLUDE
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
@@ -789,6 +789,30 @@ network		: NETWORK prefix filter_set	{
 			}
 			n->net.type = NETWORK_RTLABEL;
 			n->net.rtlabel = rtlabel_name2id($4);
+			filterset_move($5, &n->net.attrset);
+			free($5);
+
+			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		| NETWORK family PRIORITY NUMBER filter_set	{
+			struct network	*n;
+			if ($4 < RTP_LOCAL && $4 > RTP_MAX) {
+				yyerror("priority %lld > max %d or < min %d", $4,
+				    RTP_MAX, RTP_LOCAL);
+				YYERROR;
+			}
+
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
+			    -1) {
+				yyerror("unknown family");
+				filterset_free($5);
+				free($5);
+				YYERROR;
+			}
+			n->net.type = NETWORK_PRIORITY;
+			n->net.priority = $4;
 			filterset_move($5, &n->net.attrset);
 			free($5);
 
@@ -2576,6 +2600,7 @@ lookup(char *s)
 		{ "prefixlen",		PREFIXLEN},
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
+		{ "priority",		PRIORITY},
 		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
 		{ "rd",			RD},
@@ -2972,6 +2997,7 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 	struct sym		*sym, *next;
 	struct peer		*p, *pnext;
 	struct rde_rib		*rr;
+	struct network	       	*n;
 	int			 errors = 0;
 
 	conf = new_config();
@@ -3010,6 +3036,15 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 	errors = file->errors;
 	popfile();
 
+	/* check that we dont try to announce our own routes */
+	TAILQ_FOREACH(n, netconf, entry)
+	    if (n->net.priority == conf->fib_priority) {
+		    errors++;
+		    logit(LOG_CRIT, "network priority %d == fib-priority "
+			"%d is not allowed.",
+			n->net.priority, conf->fib_priority);
+	    }
+	
 	/* Free macros and check which have not been used. */
 	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		if ((cmd_opts & BGPD_OPT_VERBOSE2) && !sym->used)

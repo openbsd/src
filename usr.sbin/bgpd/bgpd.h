@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.322 2018/07/10 13:06:28 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.323 2018/07/11 14:08:46 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -344,7 +344,8 @@ enum network_type {
 	NETWORK_STATIC,
 	NETWORK_CONNECTED,
 	NETWORK_RTLABEL,
-	NETWORK_MRTCLONE
+	NETWORK_MRTCLONE,
+	NETWORK_PRIORITY
 };
 
 struct network_config {
@@ -355,6 +356,7 @@ struct network_config {
 	u_int16_t		 rtlabel;
 	enum network_type	 type;
 	u_int8_t		 prefixlen;
+	u_int8_t		 priority;
 	u_int8_t		 old;	/* used for reloading */
 };
 

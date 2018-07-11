@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.218 2018/07/10 13:06:28 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.219 2018/07/11 14:08:46 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1127,6 +1127,10 @@ kr_net_match(struct ktable *kt, struct kroute *kr)
 		case NETWORK_MRTCLONE:
 			/* can not happen */
 			break;
+		case NETWORK_PRIORITY:
+			if (kr->priority == xn->net.priority)
+				return (xn);
+			break;
 		}
 	}
 	return (NULL);
@@ -1162,6 +1166,10 @@ kr_net_match6(struct ktable *kt, struct kroute6 *kr6)
 			break;
 		case NETWORK_MRTCLONE:
 			/* can not happen */
+			break;
+		case NETWORK_PRIORITY:
+			if (kr6->priority == xn->net.priority)
+				return (xn);
 			break;
 		}
 	}
