@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.42 2018/07/11 07:38:00 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.43 2018/07/11 13:57:53 kn Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -837,8 +837,10 @@ bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl)
 
 /*
  * Constant-time conditional swap of a and b.
- * a and b are swapped if condition is not 0.  The code assumes that at most one bit of condition is set.
- * nwords is the number of words to swap.  The code assumes that at least nwords are allocated in both a and b,
+ * a and b are swapped if condition is not 0.
+ * The code assumes that at most one bit of condition is set.
+ * nwords is the number of words to swap.
+ * The code assumes that at least nwords are allocated in both a and b,
  * and that no more than nwords are used by either a or b.
  * a and b cannot be the same number
  */
