@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.68 2018/02/10 01:24:28 benno Exp $ */
+/*	$OpenBSD: config.c,v 1.69 2018/07/11 21:10:07 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -46,6 +46,7 @@ struct bgpd_config *
 new_config(void)
 {
 	struct bgpd_config	*conf;
+	u_int			 rdomid;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -54,6 +55,10 @@ new_config(void)
 	conf->bgpid = get_bgpid();
 	conf->fib_priority = RTP_BGP;
 	conf->default_tableid = getrtable();
+	ktable_exists(conf->default_tableid, &rdomid);
+	if (rdomid != conf->default_tableid)
+		fatalx("current routing table %u is not a routing domain",
+		    conf->default_tableid);
 
 	if (asprintf(&conf->csock, "%s.%d", SOCKET_NAME,
 	    conf->default_tableid) == -1)
