@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.4 2018/07/11 14:35:37 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.5 2018/07/11 16:25:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -518,7 +518,7 @@ test_stat(int do_uv)
 //	UV_SHOULD_SUCCEED((stat("/etc/fonts/conf.d/10-scale-bitmap-fonts.conf", &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((stat(uv_file1, &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat(uv_file2, &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat(uv_file2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat(uv_dir1, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat(uv_dir2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
@@ -580,7 +580,7 @@ test_symlink(int do_uv)
 	UV_SHOULD_SUCCEED((symlink(uv_file2, filename) == -1), "symlink");
 	UV_SHOULD_SUCCEED((lstat(filename, &sb) == -1), "lstat");
 	UV_SHOULD_SUCCEED((readlink(filename, buf, sizeof(buf)) == -1), "readlink");
-	UV_SHOULD_SUCCEED((lstat(uv_file2, &sb) == -1), "lstat");
+	UV_SHOULD_ENOENT((lstat(uv_file2, &sb) == -1), "lstat");
 	UV_SHOULD_ENOENT((symlink(uv_file1, filename2) == -1), "symlink");
 	UV_SHOULD_ENOENT((readlink(filename2, buf, sizeof(buf)) == -1), "readlink");
 	unlink(filename);
