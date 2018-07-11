@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.177 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.178 2018/07/11 17:44:57 kn Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -240,6 +240,16 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		devvp = ump->um_devvp;
 		error = 0;
 		ronly = fs->fs_ronly;
+
+		/*
+		 * Soft updates won't be set if read/write,
+		 * so "async" will be illegal.
+		 */
+		if (ronly == 0 && (mp->mnt_flag & MNT_ASYNC) &&
+		    (fs->fs_flags & FS_DOSOFTDEP)) {
+			error = EINVAL;
+			goto error_1;
+		}
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/* Flush any dirty data */
