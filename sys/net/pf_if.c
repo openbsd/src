@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.93 2018/04/24 20:23:41 bluhm Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.94 2018/07/11 09:05:51 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -296,6 +296,19 @@ pfi_group_change(const char *group)
 		panic("pfi_kif_get failed");
 
 	pfi_kif_update(kif);
+}
+
+void
+pfi_group_addmember(const char *group, struct ifnet *ifp)
+{
+	struct pfi_kif		*gkif, *ikif;
+
+	if ((gkif = pfi_kif_get(group)) == NULL ||
+	    (ikif = pfi_kif_get(ifp->if_xname)) == NULL)
+		panic("pfi_kif_get failed");
+	ikif->pfik_flags |= gkif->pfik_flags;
+
+	pfi_group_change(group);	
 }
 
 int

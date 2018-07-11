@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.480 2018/07/10 16:48:22 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.481 2018/07/11 09:05:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1853,6 +1853,7 @@ void		 pfi_detach_ifnet(struct ifnet *);
 void		 pfi_attach_ifgroup(struct ifg_group *);
 void		 pfi_detach_ifgroup(struct ifg_group *);
 void		 pfi_group_change(const char *);
+void		 pfi_group_addmember(const char *, struct ifnet *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
