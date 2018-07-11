@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.525 2018/02/18 18:52:02 rpe Exp $
+#	$OpenBSD: rc,v 1.526 2018/07/11 08:31:48 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -575,14 +575,7 @@ run_upgrade_script sysmerge
 
 echo -n 'starting network daemons:'
 start_daemon ldomd sshd switchd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
-start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd
-
-if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	if (($(sysctl -n net.inet6.ip6.forwarding) == 1)); then
-		start_daemon route6d rtadvd
-	fi
-fi
-
+start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd route6d rtadvd
 start_daemon hostapd lpd smtpd slowcgi httpd ftpd
 start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd vmd spamd spamlogd sndiod
