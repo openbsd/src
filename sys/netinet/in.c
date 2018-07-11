@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.159 2018/06/03 18:35:48 tb Exp $	*/
+/*	$OpenBSD: in.c,v 1.160 2018/07/11 21:18:23 nayden Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ in_ioctl_sifaddr(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	int newifaddr;
 
 	if (cmd != SIOCSIFADDR)
-		panic("invalid ioctl %lu", cmd);
+		panic("%s: invalid ioctl %lu", __func__, cmd);
 
 	if (!privileged)
 		return (EPERM);
@@ -477,7 +477,7 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		break;
 
 	default:
-		panic("invalid ioctl %lu", cmd);
+		panic("%s: invalid ioctl %lu", __func__, cmd);
 	}
 
 	NET_UNLOCK();
@@ -542,7 +542,7 @@ in_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 		break;
 
 	default:
-		panic("invalid ioctl %lu", cmd);
+		panic("%s: invalid ioctl %lu", __func__, cmd);
 	}
 
 err:

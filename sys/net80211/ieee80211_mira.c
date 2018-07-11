@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.11 2017/04/23 21:04:55 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.12 2018/07/11 21:18:23 nayden Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -614,7 +614,7 @@ ieee80211_mira_next_rateset(struct ieee80211_mira_node *mn, int mcs)
 		else				/* MCS 0-7 */
 			return NULL;
 	} else
-		panic("invalid probing mode %d", mn->probing);
+		panic("%s: invalid probing mode %d", __func__, mn->probing);
 
 	rsnext = &ieee80211_mira_ratesets[next];
 	if ((rsnext->mcs_mask & mn->valid_rates) == 0)
@@ -695,7 +695,7 @@ ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
 #endif
 	} else
-		panic("invalid probing mode %d", mn->probing);
+		panic("%s: invalid probing mode %d", __func__, mn->probing);
 }
 
 int
@@ -709,7 +709,7 @@ ieee80211_mira_next_mcs(struct ieee80211_mira_node *mn,
 	else if (mn->probing & IEEE80211_MIRA_PROBING_UP)
 		next = ieee80211_mira_next_intra_rate(mn, ni);
 	else
-		panic("invalid probing mode %d", mn->probing);
+		panic("%s: invalid probing mode %d", __func__, mn->probing);
 
 	return next;
 }
@@ -725,7 +725,7 @@ ieee80211_mira_prev_mcs(struct ieee80211_mira_node *mn,
 	else if (mn->probing & IEEE80211_MIRA_PROBING_UP)
 		next = ieee80211_mira_next_lower_intra_rate(mn, ni);
 	else
-		panic("invalid probing mode %d", mn->probing);
+		panic("%s: invalid probing mode %d", __func__, mn->probing);
 
 	return next;
 }

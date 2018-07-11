@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.224 2018/05/02 07:19:45 tb Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.225 2018/07/11 21:18:23 nayden Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ nd6_option(union nd_opts *ndopts)
 	if (!ndopts)
 		panic("ndopts == NULL in nd6_option");
 	if (!ndopts->nd_opts_last)
-		panic("uninitialized ndopts in nd6_option");
+		panic("%s: uninitialized ndopts", __func__);
 	if (!ndopts->nd_opts_search)
 		return NULL;
 	if (ndopts->nd_opts_done)
@@ -230,7 +230,7 @@ nd6_options(union nd_opts *ndopts)
 	if (!ndopts)
 		panic("ndopts == NULL in nd6_options");
 	if (!ndopts->nd_opts_last)
-		panic("uninitialized ndopts in nd6_options");
+		panic("%s: uninitialized ndopts", __func__);
 	if (!ndopts->nd_opts_search)
 		return 0;
 

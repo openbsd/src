@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.65 2018/06/15 12:39:38 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.66 2018/07/11 21:18:23 nayden Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -839,7 +839,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	}
 
 	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
-		panic("pppx_ifs modified while lock was held");
+		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
 	rw_exit_write(&pppx_ifs_lk);
 
@@ -991,7 +991,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 
 	rw_enter_write(&pppx_ifs_lk);
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
-		panic("pppx_ifs modified while lock was held");
+		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 	rw_exit_write(&pppx_ifs_lk);
 
