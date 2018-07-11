@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.39 2018/05/24 07:27:41 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.40 2018/07/11 18:04:18 nayden Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -669,7 +669,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		    vcpu_readregs_svm(vcpu, vrwp->vrwp_mask, vrs) :
 		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
@@ -1236,7 +1236,7 @@ vm_impl_init(struct vm *vm, struct proc *p)
 		 vmm_softc->mode == VMM_MODE_RVI)
 		return vm_impl_init_svm(vm, p);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
@@ -1276,7 +1276,7 @@ vm_impl_deinit(struct vm *vm)
 		 vmm_softc->mode == VMM_MODE_RVI)
 		vm_impl_deinit_svm(vm);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
@@ -2592,7 +2592,7 @@ vcpu_reset_regs(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		 vmm_softc->mode == VMM_MODE_RVI)
 		ret = vcpu_reset_regs_svm(vcpu, vrs);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 
 	return (ret);
 }
@@ -2737,7 +2737,7 @@ vcpu_init(struct vcpu *vcpu)
 		 vmm_softc->mode == VMM_MODE_RVI)
 		ret = vcpu_init_svm(vcpu);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 
 	return (ret);
 }
@@ -2810,7 +2810,7 @@ vcpu_deinit(struct vcpu *vcpu)
 		 vmm_softc->mode == VMM_MODE_RVI)
 		vcpu_deinit_svm(vcpu);
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
@@ -3885,7 +3885,7 @@ vmm_get_guest_faulttype(void)
 	else if (vmm_softc->mode == VMM_MODE_RVI)
 		return vmx_get_guest_faulttype();
 	else
-		panic("unknown vmm mode");
+		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
