@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.82 2018/07/10 10:37:59 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.83 2018/07/11 16:53:14 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,6 +53,20 @@ sub do_the_main_work
 	return $dielater;
 }
 
+sub handle_end_tags
+{
+	my ($self, $state) = @_;
+	return if !defined $state->{tags}{atend};
+	$state->progress->for_list("Running tags", 
+	    [keys %{$state->{tags}{atend}}],
+	    sub {
+	    	my $k = shift;
+		return if $state->{tags}{deleted}{$k};
+		return if $state->{tags}{superseded}{$k};
+		$state->{tags}{atend}{$k}->run_tag($state);
+	    });
+}
+
 sub framework
 {
 	my ($self, $state) = @_;
@@ -63,13 +77,7 @@ sub framework
 		$self->process_parameters($state);
 		my $dielater = $self->do_the_main_work($state);
 		# cleanup various things
-		if (defined $state->{tags}{atend}) {
-			while (my ($k, $d) = each %{$state->{tags}{atend}}) {
-				next if $state->{tags}{deleted}{$k};
-				next if $state->{tags}{superseded}{$k};
-				$d->run_tag($state);
-			}
-		}
+		$self->handle_end_tags($state);
 		$state->{recorder}->cleanup($state);
 		$state->ldconfig->ensure;
 		OpenBSD::PackingElement->finish($state);
