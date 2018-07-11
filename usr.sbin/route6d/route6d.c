@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.96 2018/07/01 15:42:37 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.97 2018/07/11 20:38:57 claudio Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -1604,7 +1604,6 @@ rtrecv(void)
 	case RTM_ADD:
 		rtable++;
 		return;
-	case RTM_LOSING:
 	case RTM_MISS:
 	case RTM_RESOLVE:
 	case RTM_GET:
@@ -1641,7 +1640,6 @@ rtrecv(void)
 	case RTM_NEWADDR:
 	case RTM_IFINFO:
 	case RTM_ADD:
-	case RTM_LOSING:
 	case RTM_MISS:
 	case RTM_RESOLVE:
 	case RTM_GET:
@@ -2256,7 +2254,6 @@ do { \
 	RTTYPE("DELETE", RTM_DELETE);
 	RTTYPE("CHANGE", RTM_CHANGE);
 	RTTYPE("GET", RTM_GET);
-	RTTYPE("LOSING", RTM_LOSING);
 	RTTYPE("REDIRECT", RTM_REDIRECT);
 	RTTYPE("MISS", RTM_MISS);
 	RTTYPE("RESOLVE", RTM_RESOLVE);
