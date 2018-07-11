@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.1 2018/07/09 10:46:15 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.2 2018/07/11 06:39:57 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1363,8 +1363,6 @@ bnxt_rx(struct bnxt_softc *sc, struct mbuf_list *ml, int *slots,
 	struct rx_pkt_cmpl *rx = (struct rx_pkt_cmpl *)cmpl;
 	/* struct rx_pkt_cmpl_hi *rxhi = (struct rx_pkt_cmpl_hi *)cmpl2; */
 
-	if (rx->opaque != sc->sc_rx_cons)
-		printf("%s: expected rx %d, got %d\n", DEVNAME(sc), sc->sc_rx_cons, rx->opaque);
 	bs = &sc->sc_rx_slots[rx->opaque];
 
 	bus_dmamap_sync(sc->sc_dmat, bs->bs_map, 0, bs->bs_map->dm_mapsize,
