@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tmpfs.c,v 1.6 2016/06/06 17:09:03 espie Exp $	*/
+/*	$OpenBSD: mount_tmpfs.c,v 1.7 2018/07/11 07:03:03 martijn Exp $	*/
 /*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
@@ -241,9 +241,9 @@ pathadj(const char *input, char *adjusted)
 {
 
 	if (realpath(input, adjusted) == NULL)
-		warn("Warning: realpath %s", input);
+		err(1, "realpath %s", input);
 	if (strncmp(input, adjusted, PATH_MAX)) {
-		warnx("\"%s\" is a non-resolved or relative path.", input);
+		warnx("\"%s\" is a relative path.", input);
 		warnx("using \"%s\" instead.", adjusted);
 	}
 }
