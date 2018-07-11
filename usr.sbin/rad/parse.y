@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2018/07/11 08:47:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -136,7 +136,7 @@ grammar		: /* empty */
 include		: INCLUDE STRING		{
 			struct file	*nfile;
 
-			if ((nfile = pushfile($2, 1)) == NULL) {
+			if ((nfile = pushfile($2, 0)) == NULL) {
 				yyerror("failed to include file %s", $2);
 				free($2);
 				YYERROR;
@@ -705,7 +705,7 @@ parse_config(char *filename)
 	conf = config_new_empty();
 	ra_options = NULL;
 
-	file = pushfile(filename, !(cmd_opts & OPT_NOACTION));
+	file = pushfile(filename, 0);
 	if (file == NULL) {
 		free(conf);
 		return (NULL);
