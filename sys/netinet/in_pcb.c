@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.239 2018/06/14 17:16:03 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.240 2018/07/11 13:08:00 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -709,21 +709,11 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
 void
 in_losing(struct inpcb *inp)
 {
-	struct rtentry *rt;
-	struct rt_addrinfo info;
-	struct sockaddr_in6 sa_mask;
+	struct rtentry *rt = inp->inp_route.ro_rt;
 
-	if ((rt = inp->inp_route.ro_rt)) {
-		inp->inp_route.ro_rt = 0;
+	if (rt) {
+		inp->inp_route.ro_rt = NULL;
 
-		memset(&info, 0, sizeof(info));
-		info.rti_flags = rt->rt_flags;
-		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
-
-		rtm_miss(RTM_LOSING, &info, rt->rt_flags, rt->rt_priority,
-		    rt->rt_ifidx, 0, inp->inp_rtableid);
 		if (rt->rt_flags & RTF_DYNAMIC) {
 			struct ifnet *ifp;
 
@@ -734,10 +724,8 @@ in_losing(struct inpcb *inp)
 			 * so we're dealing with a stale cache and have
 			 * nothing to do.
 			 */
-			if (ifp != NULL) {
-				rtrequest_delete(&info, rt->rt_priority, ifp,
-				    NULL, inp->inp_rtableid);
-			}
+			if (ifp != NULL)
+				rtdeletemsg(rt, ifp, inp->inp_rtableid);
 			if_put(ifp);
 		}
 		/*
