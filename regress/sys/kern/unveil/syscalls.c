@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.3 2018/07/07 23:16:24 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.4 2018/07/11 14:35:37 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -473,11 +473,20 @@ test_access(int do_uv)
 		do_unveil();
 	}
 
+	UV_SHOULD_SUCCEED((access(uv_file1, R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access(uv_file2, R_OK) == -1), "access");
+	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
+
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((access(uv_file1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_file2, R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
 
 	return 0;
 }
@@ -506,11 +515,13 @@ test_stat(int do_uv)
 	}
 	struct stat sb;
 
+//	UV_SHOULD_SUCCEED((stat("/etc/fonts/conf.d/10-scale-bitmap-fonts.conf", &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((stat(uv_file1, &sb) == -1), "stat");
-	UV_SHOULD_ENOENT((stat(uv_file2, &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat(uv_file2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat(uv_dir1, &sb) == -1), "stat");
-	UV_SHOULD_ENOENT((stat(uv_dir2, &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat(uv_dir2, &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
 
 	return 0;
 }
@@ -524,11 +535,18 @@ test_statfs(int do_uv)
 	}
 	struct statfs sb;
 
+
+	UV_SHOULD_SUCCEED((statfs("/home", &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs("/", &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_file1, &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_file2, &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_dir1, &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_dir2, &sb) == -1), "statfs");
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((statfs(uv_file1, &sb) == -1), "statfs");
-	UV_SHOULD_ENOENT((statfs(uv_file2, &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_file2, &sb) == -1), "statfs");
 	UV_SHOULD_SUCCEED((statfs(uv_dir1, &sb) == -1), "statfs");
-	UV_SHOULD_ENOENT((statfs(uv_dir2, &sb) == -1), "statfs");
+	UV_SHOULD_SUCCEED((statfs(uv_dir2, &sb) == -1), "statfs");
 
 	return 0;
 }
@@ -562,7 +580,7 @@ test_symlink(int do_uv)
 	UV_SHOULD_SUCCEED((symlink(uv_file2, filename) == -1), "symlink");
 	UV_SHOULD_SUCCEED((lstat(filename, &sb) == -1), "lstat");
 	UV_SHOULD_SUCCEED((readlink(filename, buf, sizeof(buf)) == -1), "readlink");
-	UV_SHOULD_ENOENT((lstat(uv_file2, &sb) == -1), "lstat");
+	UV_SHOULD_SUCCEED((lstat(uv_file2, &sb) == -1), "lstat");
 	UV_SHOULD_ENOENT((symlink(uv_file1, filename2) == -1), "symlink");
 	UV_SHOULD_ENOENT((readlink(filename2, buf, sizeof(buf)) == -1), "readlink");
 	unlink(filename);
