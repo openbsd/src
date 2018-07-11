@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.176 2018/07/09 14:08:48 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.177 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -352,6 +352,7 @@ int		 attr_writebuf(struct ibuf *, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
 void		 attr_init(u_int32_t);
 void		 attr_shutdown(void);
+void		 attr_hash_stats(struct rde_hashstats *);
 int		 attr_optadd(struct rde_aspath *, u_int8_t, u_int8_t,
 		     void *, u_int16_t);
 struct attr	*attr_optget(const struct rde_aspath *, u_int8_t);
@@ -369,6 +370,7 @@ int		 aspath_verify(void *, u_int16_t, int);
 #define		 AS_ERR_SOFT	-4
 void		 aspath_init(u_int32_t);
 void		 aspath_shutdown(void);
+void		 aspath_hash_stats(struct rde_hashstats *);
 struct aspath	*aspath_get(void *, u_int16_t);
 void		 aspath_put(struct aspath *);
 u_char		*aspath_inflate(void *, u_int16_t, u_int16_t *);
@@ -472,6 +474,7 @@ re_rib(struct rib_entry *re)
 void		 path_init(u_int32_t);
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
+void		 path_hash_stats(struct rde_hashstats *);
 int		 path_update(struct rib *, struct rde_peer *,
 		     struct rde_aspath *, struct bgpd_addr *, int, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);

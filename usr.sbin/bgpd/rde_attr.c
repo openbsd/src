@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.102 2018/06/29 11:45:50 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.103 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -135,6 +135,31 @@ attr_shutdown(void)
 			log_warnx("attr_shutdown: free non-free table");
 
 	free(attrtable.hashtbl);
+}
+
+void
+attr_hash_stats(struct rde_hashstats *hs)
+{
+	struct attr		*a;
+	u_int32_t		i;
+	int64_t			n;
+
+	memset(hs, 0, sizeof(*hs));
+	strlcpy(hs->name, "attr hash", sizeof(hs->name)); 
+	hs->min = LLONG_MAX;
+	hs->num = attrtable.hashmask + 1;
+
+	for (i = 0; i <= attrtable.hashmask; i++) {
+		n = 0;
+		LIST_FOREACH(a, &attrtable.hashtbl[i], entry)
+			n++;
+		if (n < hs->min)
+			hs->min = n;
+		if (n > hs->max)
+			hs->max = n;
+		hs->sum += n;
+		hs->sumq += n * n;
+	}
 }
 
 int
@@ -506,6 +531,31 @@ aspath_shutdown(void)
 			log_warnx("aspath_shutdown: free non-free table");
 
 	free(astable.hashtbl);
+}
+
+void
+aspath_hash_stats(struct rde_hashstats *hs)
+{
+	struct aspath		*a;
+	u_int32_t		i;
+	int64_t			n;
+
+	memset(hs, 0, sizeof(*hs));
+	strlcpy(hs->name, "aspath hash", sizeof(hs->name)); 
+	hs->min = LLONG_MAX;
+	hs->num = astable.hashmask + 1;
+
+	for (i = 0; i <= astable.hashmask; i++) {
+		n = 0;
+		LIST_FOREACH(a, &astable.hashtbl[i], entry)
+			n++;
+		if (n < hs->min)
+			hs->min = n;
+		if (n > hs->max)
+			hs->max = n;
+		hs->sum += n;
+		hs->sumq += n * n;
+	}
 }
 
 struct aspath *

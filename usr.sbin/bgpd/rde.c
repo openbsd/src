@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.390 2018/07/10 15:13:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.391 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -376,6 +376,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct ctl_show_rib_request	req;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
+	struct rde_hashstats	 rdehash;
 	struct filter_set	*s;
 	u_int8_t		*asdata;
 	ssize_t			 n;
@@ -620,6 +621,17 @@ badnet:
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
+			path_hash_stats(&rdehash);
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
+			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
+			aspath_hash_stats(&rdehash);
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
+			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
+			attr_hash_stats(&rdehash);
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
+			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
+			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by SE */

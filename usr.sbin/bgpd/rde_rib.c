@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.168 2018/07/10 07:58:13 benno Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.169 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <siphash.h>
@@ -387,6 +388,31 @@ path_shutdown(void)
 			log_warnx("path_free: free non-free table");
 
 	free(pathtable.path_hashtbl);
+}
+
+void
+path_hash_stats(struct rde_hashstats *hs)
+{
+	struct rde_aspath	*a;
+	u_int32_t		i;
+	int64_t			n;
+
+	memset(hs, 0, sizeof(*hs));
+	strlcpy(hs->name, "path hash", sizeof(hs->name)); 
+	hs->min = LLONG_MAX;
+	hs->num = pathtable.path_hashmask + 1;
+
+	for (i = 0; i <= pathtable.path_hashmask; i++) {
+		n = 0;
+		LIST_FOREACH(a, &pathtable.path_hashtbl[i], path_l)
+			n++;
+		if (n < hs->min)
+			hs->min = n;
+		if (n > hs->max)
+			hs->max = n;
+		hs->sum += n;
+		hs->sumq += n * n;
+	}
 }
 
 int

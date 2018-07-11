@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.323 2018/07/11 14:08:46 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.324 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -391,6 +391,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB_LARGECOMMUNITY,
 	IMSG_CTL_SHOW_NETWORK,
 	IMSG_CTL_SHOW_RIB_MEM,
+	IMSG_CTL_SHOW_RIB_HASH,
 	IMSG_CTL_SHOW_TERSE,
 	IMSG_CTL_SHOW_TIMER,
 	IMSG_CTL_LOG_VERBOSE,
@@ -996,6 +997,15 @@ struct rde_memstats {
 	int64_t		attr_refs;
 	int64_t		attr_data;
 	int64_t		attr_dcnt;
+};
+
+struct rde_hashstats {
+	char		name[16];
+	int64_t		num;
+	int64_t		min;
+	int64_t		max;
+	int64_t		sum;
+	int64_t		sumq;
 };
 
 #define	MRT_FILE_LEN	512

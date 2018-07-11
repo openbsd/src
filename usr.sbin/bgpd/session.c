@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.364 2017/05/29 14:22:51 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.365 2018/07/11 16:34:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2877,6 +2877,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 		case IMSG_CTL_SHOW_RIB_ATTR:
 		case IMSG_CTL_SHOW_RIB_MEM:
+		case IMSG_CTL_SHOW_RIB_HASH:
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (idx != PFD_PIPE_ROUTE_CTL)
