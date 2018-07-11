@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2018/07/11 14:03:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.5 2018/07/11 17:32:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -43,8 +43,8 @@
 #include "rad.h"
 #include "engine.h"
 
-#define	MAX_RTR_ADV_INTERVAL	600
-#define	MIN_RTR_ADV_INTERVAL	200
+#define	MAX_RTR_ADV_INTERVAL		600
+#define	MIN_RTR_ADV_INTERVAL		200
 
 struct engine_iface {
 	TAILQ_ENTRY(engine_iface)	entry;
@@ -63,6 +63,7 @@ void			 parse_ra_rs(struct imsg_ra_rs *);
 void			 parse_ra(struct imsg_ra_rs *);
 void			 parse_rs(struct imsg_ra_rs *);
 void			 update_iface(uint32_t);
+void			 remove_iface(uint32_t);
 struct engine_iface	*find_engine_iface_by_id(uint32_t);
 void			 iface_timeout(int, short, void *);
 
@@ -147,6 +148,8 @@ engine(int debug, int verbose)
 	if (inet_pton(AF_INET6, "ff02::1", &all_nodes.sin6_addr) != 1)
 		fatal("inet_pton");
 
+	TAILQ_INIT(&engine_interfaces);
+
 	event_dispatch();
 
 	engine_shutdown();
@@ -223,6 +226,13 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				    __func__, imsg.hdr.len);
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			update_iface(if_index);
+			break;
+		case IMSG_REMOVE_IF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
+				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&if_index, imsg.data, sizeof(if_index));
+			remove_iface(if_index);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* Already checked by frontend. */
@@ -487,6 +497,7 @@ update_iface(uint32_t if_index)
 		engine_iface = calloc(1, sizeof(*engine_iface));
 		engine_iface->if_index = if_index;
 		evtimer_set(&engine_iface->timer, iface_timeout, engine_iface);
+		TAILQ_INSERT_TAIL(&engine_interfaces, engine_iface, entry);
 	}
 
 	tv.tv_sec = 0;
@@ -495,12 +506,39 @@ update_iface(uint32_t if_index)
 }
 
 void
+remove_iface(uint32_t if_index)
+{
+	struct engine_iface	*engine_iface;
+	struct imsg_send_ra	 send_ra;
+	char			 if_name[IF_NAMESIZE];
+
+	if ((engine_iface = find_engine_iface_by_id(if_index)) == NULL) {
+		/* we don't know this interface, frontend can delete it */
+		engine_imsg_compose_frontend(IMSG_REMOVE_IF, 0,
+		    &if_index, sizeof(if_index));
+		return;
+	}
+
+	send_ra.if_index = engine_iface->if_index;
+	memcpy(&send_ra.to, &all_nodes, sizeof(send_ra.to));
+
+	TAILQ_REMOVE(&engine_interfaces, engine_iface, entry);
+	evtimer_del(&engine_iface->timer);
+
+	if (if_indextoname(if_index, if_name) != NULL)
+		engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
+		    sizeof(send_ra));
+	engine_imsg_compose_frontend(IMSG_REMOVE_IF, 0,
+	    &engine_iface->if_index, sizeof(engine_iface->if_index));
+	free(engine_iface);
+}
+
+void
 iface_timeout(int fd, short events, void *arg)
 {
 	struct engine_iface	*engine_iface = (struct engine_iface *)arg;
 	struct imsg_send_ra	 send_ra;
 	struct timeval		 tv;
-
 
 	tv.tv_sec = MIN_RTR_ADV_INTERVAL +
 	    arc4random_uniform(MAX_RTR_ADV_INTERVAL - MIN_RTR_ADV_INTERVAL);

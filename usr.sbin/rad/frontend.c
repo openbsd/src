@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2018/07/11 14:03:13 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2018/07/11 17:32:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -129,6 +129,7 @@ int			 in6_mask2prefixlen(struct in6_addr *);
 void			 get_interface_prefixes(struct ra_iface *,
 			     struct ra_prefix_conf *);
 void			 build_package(struct ra_iface *);
+void			 build_leaving_package(struct ra_iface *);
 void			 ra_output(struct ra_iface *, struct sockaddr_in6 *);
 
 struct rad_conf	*frontend_conf;
@@ -434,6 +435,7 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct imsg_send_ra	 send_ra;
 	struct ra_iface		*ra_iface;
+	uint32_t		 if_index;
 	int			 n, shut = 0;
 
 	if (event & EV_READ) {
@@ -464,6 +466,17 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			ra_iface = find_ra_iface_by_id(send_ra.if_index);
 			if (ra_iface)
 				ra_output(ra_iface, &send_ra.to);
+			break;
+		case IMSG_REMOVE_IF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
+				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&if_index, imsg.data, sizeof(if_index));
+			ra_iface = find_ra_iface_by_id(if_index);
+			if (ra_iface) {
+				TAILQ_REMOVE(&ra_interfaces, ra_iface, entry);
+				free_ra_iface(ra_iface);
+			}
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -631,7 +644,7 @@ merge_ra_interfaces(void)
 {
 	struct ra_iface_conf	*ra_iface_conf;
 	struct ra_prefix_conf	*ra_prefix_conf;
-	struct ra_iface		*ra_iface, *tmp;
+	struct ra_iface		*ra_iface;
 	uint32_t		 if_index;
 
 	TAILQ_FOREACH(ra_iface, &ra_interfaces, entry)
@@ -660,13 +673,6 @@ merge_ra_interfaces(void)
 		}
 	}
 
-	TAILQ_FOREACH_SAFE(ra_iface, &ra_interfaces, entry, tmp) {
-		if (ra_iface->removed) {
-			TAILQ_REMOVE(&ra_interfaces, ra_iface, entry);
-			free_ra_iface(ra_iface);
-		}
-	}
-
 	TAILQ_FOREACH(ra_iface, &ra_interfaces, entry) {
 		while ((ra_prefix_conf = SIMPLEQ_FIRST(&ra_iface->prefixes))
 		    != NULL) {
@@ -675,6 +681,14 @@ merge_ra_interfaces(void)
 			free(ra_prefix_conf);
 		}
 		ra_iface->prefix_count = 0;
+
+		if (ra_iface->removed) {
+			log_debug("iface removed: %s", ra_iface->name);
+			build_leaving_package(ra_iface);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
+			    &ra_iface->if_index, sizeof(ra_iface->if_index));
+			continue;
+		}
 
 		ra_iface_conf = find_ra_iface_conf(
 		    &frontend_conf->ra_iface_list, ra_iface->name);
@@ -895,6 +909,22 @@ build_package(struct ra_iface *ra_iface)
 		frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0,
 		    &ra_iface->if_index, sizeof(ra_iface->if_index));
 	}
+}
+
+void
+build_leaving_package(struct ra_iface *ra_iface)
+{
+	struct nd_router_advert		 ra;
+	size_t				 len;
+
+	len = sizeof(ra);
+
+	memset(&ra, 0, sizeof(ra));
+
+	ra.nd_ra_type = ND_ROUTER_ADVERT;
+
+	memcpy(ra_iface->data, &ra, sizeof(ra));
+	ra_iface->datalen = sizeof(ra);
 }
 
 void
