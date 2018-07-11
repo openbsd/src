@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.211 2018/07/11 12:45:01 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.212 2018/07/11 12:55:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5099,8 +5099,6 @@ svm_handle_inout(struct vcpu *vcpu)
 	 *
 	 * XXX something better than a hardcoded list here, maybe
 	 * configure via vmd via the device list in vm create params?
-	 *
-	 * XXX handle not eax target
 	 */
 	switch (vcpu->vc_exit.vei.vei_port) {
 	case IO_ICU1 ... IO_ICU1 + 1:
@@ -5119,8 +5117,20 @@ svm_handle_inout(struct vcpu *vcpu)
 	default:
 		/* Read from unsupported ports returns FFs */
 		if (vcpu->vc_exit.vei.vei_dir == 1) {
-			vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
-			vmcb->v_rax = 0xFFFFFFFF;
+			switch(vcpu->vc_exit.vei.vei_size) {
+			case 1:
+				vcpu->vc_gueststate.vg_rax |= 0xFF;
+				vmcb->v_rax |= 0xFF;
+				break;
+			case 2:
+				vcpu->vc_gueststate.vg_rax |= 0xFFFF;
+				vmcb->v_rax |= 0xFFFF;
+				break;
+			case 4:
+				vcpu->vc_gueststate.vg_rax |= 0xFFFFFFFF;
+				vmcb->v_rax |= 0xFFFFFFFF;
+				break;
+			}	
 		}
 		ret = 0;
 	}
@@ -5182,8 +5192,6 @@ vmx_handle_inout(struct vcpu *vcpu)
 	 *
 	 * XXX something better than a hardcoded list here, maybe
 	 * configure via vmd via the device list in vm create params?
-	 *
-	 * XXX handle not eax target
 	 */
 	switch (vcpu->vc_exit.vei.vei_port) {
 	case IO_ICU1 ... IO_ICU1 + 1:
@@ -5203,7 +5211,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 		/* Read from unsupported ports returns FFs */
 		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
 			if (vcpu->vc_exit.vei.vei_size == 4)
-				vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
+				vcpu->vc_gueststate.vg_rax |= 0xFFFFFFFF;
 			else if (vcpu->vc_exit.vei.vei_size == 2)
 				vcpu->vc_gueststate.vg_rax |= 0xFFFF;
 			else if (vcpu->vc_exit.vei.vei_size == 1)
