@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.73 2018/07/09 21:56:06 markus Exp $
+#	$OpenBSD: Makefile,v 1.74 2018/07/11 18:53:29 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c sshconnect.c sshconnect2.c mux.c
 SRCS+=	atomicio.c authfd.c compat.c dns.c fatal.c \
-	hostfile.c key.c msg.c readpass.c utf8.c
+	hostfile.c msg.c readpass.c utf8.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXC} ${SRCS_KEY} ${SRCS_KEYP} \
 	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
