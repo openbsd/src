@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2015/09/18 13:30:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2018/07/11 14:48:40 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -31,6 +31,8 @@
 #include "biosdev.h"
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
+#include <machine/specialreg.h>
+#include <machine/vmmvar.h>
 
 #ifdef EFIBOOT
 #include "efiboot.h"
@@ -44,11 +46,15 @@ volatile struct BIOS_regs	BIOS_regs;
 #define CKPT(c) /* c */
 #endif
 
+const char *vmm_hv_signature = VMM_HV_SIGNATURE;
+
 void
 machdep(void)
 {
-	int i, j;
+	int i, j, vmm = 0;
 	struct i386_boot_probes *pr;
+	uint32_t dummy, ebx, ecx, edx;
+	dev_t dev;
 
 	/*
 	 * The list of probe routines is now in conf.c.
@@ -64,6 +70,22 @@ machdep(void)
 
 			printf("\n");
 		}
+	}
+
+	CPUID(0x1, dummy, dummy, ecx, dummy);
+	if (ecx & CPUIDECX_HV) {
+		CPUID(0x40000000, dummy, ebx, ecx, edx);
+		if (memcmp(&ebx, &vmm_hv_signature[0], sizeof(uint32_t)) == 0 &&
+		    memcmp(&ecx, &vmm_hv_signature[4], sizeof(uint32_t)) == 0 &&
+		    memcmp(&edx, &vmm_hv_signature[8], sizeof(uint32_t)) == 0)
+			vmm = 1;
+	}
+
+	/* Set console to com0/115200 by default in vmm */
+	if (vmm) {
+		dev = ttydev("com0");
+		cnspeed(dev, 115200);
+		cnset(dev);
 	}
 }
 
