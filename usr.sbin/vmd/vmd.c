@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.91 2018/07/11 09:35:44 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.92 2018/07/11 10:31:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@ void	 vmd_shutdown(void);
 int	 vmd_control_run(void);
 int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
-int	 check_vmh(struct vm_dump_header *);
+int	 vmd_check_vmh(struct vm_dump_header *);
 
 struct vmd	*env;
 
@@ -245,7 +245,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		if (check_vmh(&vmh)) {
+		if (vmd_check_vmh(&vmh)) {
 			res = ENOENT;
 			close(imsg->fd);
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
@@ -502,7 +502,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 int
-check_vmh(struct vm_dump_header *vmh)
+vmd_check_vmh(struct vm_dump_header *vmh)
 {
 	int i;
 	unsigned int code, leaf;
