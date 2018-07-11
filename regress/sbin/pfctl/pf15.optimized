@@ -10,11 +10,11 @@
   [ Skip steps: i=end d=4 r=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 match all set ( tos 0x10 )
+@3 match all set (tos 0x10)
   [ Skip steps: i=end r=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 match out all set ( tos 0x08 ) tagged THROUGHPUT
+@4 match out all set (tos 0x08) tagged THROUGHPUT
   [ Skip steps: i=end d=end r=end f=end p=end sa=end da=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
