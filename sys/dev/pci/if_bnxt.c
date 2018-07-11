@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.2 2018/07/11 06:39:57 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.3 2018/07/11 06:43:30 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -100,6 +100,9 @@
 #define BNXT_FLAG_NPAR          0x0002
 #define BNXT_FLAG_WOL_CAP       0x0004
 #define BNXT_FLAG_SHORT_CMD     0x0008
+
+/* NVRam stuff has a five minute timeout */
+#define BNXT_NVM_TIMEO	(5 * 60 * 1000)
 
 #define NEXT_CP_CONS_V(_ring, _cons, _v_bit)		\
 do {	 						\
@@ -290,6 +293,10 @@ void		bnxt_rx(struct bnxt_softc *, struct mbuf_list *, int *,
 
 int		bnxt_txeof(struct bnxt_softc *, struct cmpl_base *);
 
+int		_hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
+int		hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
+void		bnxt_hwrm_cmd_hdr_init(struct bnxt_softc *, void *, uint16_t);
+int 		bnxt_hwrm_err_map(uint16_t err);
 
 /* HWRM Function Prototypes */
 int		bnxt_hwrm_ring_alloc(struct bnxt_softc *, uint8_t,
@@ -1412,24 +1419,7 @@ bnxt_txeof(struct bnxt_softc *sc, struct cmpl_base *cmpl)
 
 /* bnxt_hwrm.c */
 
-static int bnxt_hwrm_err_map(uint16_t err);
-#if 0
-static void	bnxt_hwrm_set_link_common(struct bnxt_softc *softc,
-		    struct hwrm_port_phy_cfg_input *req);
-static void	bnxt_hwrm_set_pause_common(struct bnxt_softc *softc,
-		    struct hwrm_port_phy_cfg_input *req);
-static void	bnxt_hwrm_set_eee(struct bnxt_softc *softc,
-		    struct hwrm_port_phy_cfg_input *req);
-#endif
-
-static int	_hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
-static int	hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
-static void bnxt_hwrm_cmd_hdr_init(struct bnxt_softc *, void *, uint16_t);
-
-/* NVRam stuff has a five minute timeout */
-#define BNXT_NVM_TIMEO	(5 * 60 * 1000)
-
-static int
+int
 bnxt_hwrm_err_map(uint16_t err)
 {
 	int rc;
@@ -1458,7 +1448,7 @@ bnxt_hwrm_err_map(uint16_t err)
 	return rc;
 }
 
-static void
+void
 bnxt_hwrm_cmd_hdr_init(struct bnxt_softc *softc, void *request,
     uint16_t req_type)
 {
@@ -1470,7 +1460,7 @@ bnxt_hwrm_cmd_hdr_init(struct bnxt_softc *softc, void *request,
 	req->resp_addr = htole64(BNXT_DMA_DVA(softc->sc_cmd_resp));
 }
 
-static int
+int
 _hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 {
 	struct input *req = msg;
@@ -1574,7 +1564,7 @@ _hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 }
 
 
-static int
+int
 hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 {
 	int rc;
