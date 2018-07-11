@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.55 2018/07/10 09:10:03 schwarze Exp $
+.\"	$OpenBSD: sed.1,v 1.56 2018/07/11 06:47:38 martijn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 10 2018 $
+.Dd $Mdocdate: July 11 2018 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ cumulatively across input files), a dollar character
 .Pq Ql $
 that addresses the last line of input, or a context address,
 which is a regular expression preceded and followed by a delimiter.
-The delimiter can be any character except a newline or a backslash.  
+The delimiter can be any character except a newline or a backslash.
 Unless it is a slash, the opening delimiter needs to be escaped with
 a backslash.
 .Pp
@@ -417,9 +417,6 @@ An ampersand
 .Pq Ql &
 appearing in the replacement is replaced by the string matching the
 regular expression.
-The special meaning of
-.Ql &
-in this context can be suppressed by preceding it by a backslash.
 The string
 .Ql \e# ,
 where
@@ -428,9 +425,16 @@ is a digit, is replaced by the text matched
 by the corresponding backreference expression (see
 .Xr re_format 7 ) .
 .Pp
-A line can be split by substituting a newline character into it.
-To specify a newline character in the replacement string, precede it with
-a backslash.
+All other instances of a backslash will print the literal character
+following it.
+Using a backslash before any other character other than
+.Ql & ,
+.Ql \e ,
+digit, newline
+.Pq ascii 0x0a ,
+and the delimiter is unspecified and might not be portable to other
+implementations of
+.Nm .
 .Pp
 The value of
 .Ar flags
