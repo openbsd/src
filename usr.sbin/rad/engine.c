@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2018/07/11 17:32:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2018/07/11 19:05:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -238,6 +238,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			/* Already checked by frontend. */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
+			break;
+		case IMSG_SHUTDOWN:
+			engine_imsg_compose_frontend(IMSG_SHUTDOWN, 0, NULL, 0);
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
