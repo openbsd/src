@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.5 2018/07/11 16:25:39 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.6 2018/07/11 20:01:56 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -72,6 +72,13 @@ do_unveil(void)
 	if (unveil(uv_dir1, uv_flags) == -1)
                 err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	if (unveil(uv_file1, uv_flags) == -1)
+                err(1, "%s:%d - unveil", __FILE__, __LINE__);
+}
+
+static void
+do_unveil2(void)
+{
+	if (unveil(uv_dir1, uv_flags) == -1)
                 err(1, "%s:%d - unveil", __FILE__, __LINE__);
 }
 
@@ -408,12 +415,37 @@ test_chdir(int do_uv)
 {
 	if (do_uv) {
 		printf("testing chdir\n");
-		do_unveil();
+		do_unveil2();
 	}
 
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
+	UV_SHOULD_ENOENT((chdir(uv_dir2) == -1), "chdir");
 	UV_SHOULD_SUCCEED((chdir(uv_dir1) == -1), "chdir");
 	UV_SHOULD_ENOENT((chdir(uv_dir2) == -1), "chdir");
+
+	return 0;
+}
+static int
+test_parent_dir(int do_uv)
+{
+	char filename[255];
+	if (do_uv) {
+		printf("testing chdir\n");
+		do_unveil2();
+	} else {
+		(void) snprintf(filename, sizeof(filename), "/%s/doof", uv_dir1);
+		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
+		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir2", uv_dir1);
+		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
+		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
+		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
+	}
+	sleep(1);
+	UV_SHOULD_SUCCEED((chdir(uv_dir1) == -1), "chdir");
+	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
+	UV_SHOULD_SUCCEED((chdir(filename) == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../subdir2") == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../subdir1") == -1), "chdir");
 
 	return 0;
 }
@@ -657,6 +689,8 @@ main (int argc, char *argv[])
 	UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
 	close(fd2);
 
+
+	failures += runcompare(test_parent_dir);
 	failures += runcompare(test_open);
 	failures += runcompare(test_opendir);
 	failures += runcompare(test_noflags);
