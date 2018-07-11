@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.679 2018/07/11 07:39:22 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.680 2018/07/11 18:06:25 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1326,12 +1326,20 @@ table_host_list	: tablespec optnl			{ $$ = $1; }
 		}
 		;
 
-queuespec	: QUEUE STRING interface queue_opts		{
-			if ($3 == NULL && $4.parent == NULL) {
+queuespec	: QUEUE STRING ON if_item queue_opts		{
+			struct node_host	*n;
+
+			if ($4 == NULL && $5.parent == NULL) {
 				yyerror("root queue without interface");
 				YYERROR;
 			}
-			expand_queue($2, $3, &$4);
+			if ((n = ifa_exists($4->ifname)) == NULL ||
+			    n->af != AF_LINK) {
+				yyerror("not an interface");
+				YYERROR;
+			}
+
+			expand_queue($2, $4, &$5);
 		}
 		;
 
