@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.2 2018/07/10 22:14:19 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.3 2018/07/11 14:01:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -49,20 +49,6 @@
 #include "frontend.h"
 #include "engine.h"
 #include "control.h"
-
-const char* imsg_type_name[] = {
-	"IMSG_NONE",
-	"IMSG_CTL_LOG_VERBOSE",
-	"IMSG_RECONF_CONF",
-	"IMSG_RECONF_RA_IFACE",
-	"IMSG_RECONF_RA_AUTOPREFIX",
-	"IMSG_RECONF_RA_PREFIX",
-	"IMSG_RECONF_END",
-	"IMSG_ICMP6SOCK",
-	"IMSG_STARTUP",
-	"IMSG_STARTUP_DONE",
-	"IMSG_SOCKET_IPC",
-};
 
 __dead void	usage(void);
 __dead void	main_shutdown(void);
@@ -429,8 +415,8 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 		default:
-			log_debug("%s: error handling imsg %s", __func__,
-			    imsg_type_name[imsg.hdr.type]);
+			log_debug("%s: error handling imsg %d", __func__,
+			    imsg.hdr.type);
 			break;
 		}
 		imsg_free(&imsg);
