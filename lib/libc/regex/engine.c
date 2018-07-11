@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.24 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: engine.c,v 1.25 2018/07/11 12:38:46 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -72,11 +72,11 @@ struct match {
 	struct re_guts *g;
 	int eflags;
 	regmatch_t *pmatch;	/* [nsub+1] (0 element unused) */
-	char *offp;		/* offsets work from here */
-	char *beginp;		/* start of string -- virtual NUL precedes */
-	char *endp;		/* end of string -- virtual NUL here */
-	char *coldp;		/* can be no match starting before here */
-	char **lastpos;		/* [nplus+1] */
+	const char *offp;	/* offsets work from here */
+	const char *beginp;	/* start of string -- virtual NUL precedes */
+	const char *endp;	/* end of string -- virtual NUL here */
+	const char *coldp;	/* can be no match starting before here */
+	const char **lastpos;	/* [nplus+1] */
 	STATEVARS;
 	states st;		/* current states */
 	states fresh;		/* states for a fresh start */
@@ -84,11 +84,15 @@ struct match {
 	states empty;		/* empty set of states */
 };
 
-static int matcher(struct re_guts *, char *, size_t, regmatch_t[], int);
-static char *dissect(struct match *, char *, char *, sopno, sopno);
-static char *backref(struct match *, char *, char *, sopno, sopno, sopno, int);
-static char *fast(struct match *, char *, char *, sopno, sopno);
-static char *slow(struct match *, char *, char *, sopno, sopno);
+static int matcher(struct re_guts *, const char *, size_t, regmatch_t[], int);
+static const char *dissect(struct match *, const char *, const char *, sopno,
+    sopno);
+static const char *backref(struct match *, const char *, const char *, sopno,
+    sopno, sopno, int);
+static const char *fast(struct match *, const char *, const char *, sopno,
+    sopno);
+static const char *slow(struct match *, const char *, const char *, sopno,
+    sopno);
 static states step(struct re_guts *, sopno, sopno, states, int, states);
 #define MAX_RECURSION	100
 #define	BOL	(OUT+1)
@@ -102,10 +106,11 @@ static states step(struct re_guts *, sopno, sopno, states, int, states);
 #define	NONCHAR(c)	((c) > CHAR_MAX)
 #define	NNONCHAR	(CODEMAX-CHAR_MAX)
 #ifdef REDEBUG
-static void print(struct match *, char *, states, int, FILE *);
+static void print(struct match *, const char *, states, int, FILE *);
 #endif
 #ifdef REDEBUG
-static void at(struct match *, char *, char *, char *, sopno, sopno);
+static void at(struct match *, const char *, const char *, const char *,
+    sopno, sopno);
 #endif
 #ifdef REDEBUG
 static const char *pchar(int);
@@ -126,18 +131,18 @@ static int nope = 0;
  - matcher - the actual matching engine
  */
 static int			/* 0 success, REG_NOMATCH failure */
-matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
-    int eflags)
+matcher(struct re_guts *g, const char *string, size_t nmatch,
+    regmatch_t pmatch[], int eflags)
 {
-	char *endp;
+	const char *endp;
 	int i;
 	struct match mv;
 	struct match *m = &mv;
-	char *dp;
+	const char *dp;
 	const sopno gf = g->firststate+1;	/* +1 for OEND */
 	const sopno gl = g->laststate;
-	char *start;
-	char *stop;
+	const char *start;
+	const char *stop;
 
 	/* simplify the situation where possible */
 	if (g->cflags&REG_NOSUB)
@@ -286,22 +291,23 @@ matcher(struct re_guts *g, char *string, size_t nmatch, regmatch_t pmatch[],
 /*
  - dissect - figure out what matched what, no back references
  */
-static char *			/* == stop (success) always */
-dissect(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
+static const char *		/* == stop (success) always */
+dissect(struct match *m, const char *start, const char *stop, sopno startst,
+    sopno stopst)
 {
 	int i;
-	sopno ss;	/* start sop of current subRE */
-	sopno es;	/* end sop of current subRE */
-	char *sp;	/* start of string matched by it */
-	char *stp;	/* string matched by it cannot pass here */
-	char *rest;	/* start of rest of string */
-	char *tail;	/* string unmatched by rest of RE */
-	sopno ssub;	/* start sop of subsubRE */
-	sopno esub;	/* end sop of subsubRE */
-	char *ssp;	/* start of string matched by subsubRE */
-	char *sep;	/* end of string matched by subsubRE */
-	char *oldssp;	/* previous ssp */
-	char *dp;
+	sopno ss;		/* start sop of current subRE */
+	sopno es;		/* end sop of current subRE */
+	const char *sp;		/* start of string matched by it */
+	const char *stp;	/* string matched by it cannot pass here */
+	const char *rest;	/* start of rest of string */
+	const char *tail;	/* string unmatched by rest of RE */
+	sopno ssub;		/* start sop of subsubRE */
+	sopno esub;		/* end sop of subsubRE */
+	const char *ssp;	/* start of string matched by subsubRE */
+	const char *sep;	/* end of string matched by subsubRE */
+	const char *oldssp;	/* previous ssp */
+	const char *dp;
 
 	AT("diss", start, stop, startst, stopst);
 	sp = start;
@@ -467,17 +473,17 @@ dissect(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 /*
  - backref - figure out what matched what, figuring in back references
  */
-static char *			/* == stop (success) or NULL (failure) */
-backref(struct match *m, char *start, char *stop, sopno startst, sopno stopst,
-    sopno lev, int rec)			/* PLUS nesting level */
+static const char *		/* == stop (success) or NULL (failure) */
+backref(struct match *m, const char *start, const char *stop, sopno startst,
+    sopno stopst, sopno lev, int rec)			/* PLUS nesting level */
 {
 	int i;
 	sopno ss;	/* start sop of current subRE */
-	char *sp;	/* start of string matched by it */
+	const char *sp;	/* start of string matched by it */
 	sopno ssub;	/* start sop of subsubRE */
 	sopno esub;	/* end sop of subsubRE */
-	char *ssp;	/* start of string matched by subsubRE */
-	char *dp;
+	const char *ssp;/* start of string matched by subsubRE */
+	const char *dp;
 	size_t len;
 	int hard;
 	sop s;
@@ -664,18 +670,19 @@ backref(struct match *m, char *start, char *stop, sopno startst, sopno stopst,
 /*
  - fast - step through the string at top speed
  */
-static char *			/* where tentative match ended, or NULL */
-fast(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
+static const char *			/* where tentative match ended, or NULL */
+fast(struct match *m, const char *start, const char *stop, sopno startst,
+    sopno stopst)
 {
 	states st = m->st;
 	states fresh = m->fresh;
 	states tmp = m->tmp;
-	char *p = start;
+	const char *p = start;
 	int c;
-	int lastc;	/* previous c */
+	int lastc;		/* previous c */
 	int flagch;
 	int i;
-	char *coldp;	/* last p after which no match was underway */
+	const char *coldp;	/* last p after which no match was underway */
 
 	if (start == m->offp || (start == m->beginp && !(m->eflags&REG_NOTBOL)))
 		c = OUT;
@@ -752,18 +759,19 @@ fast(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
 /*
  - slow - step through the string more deliberately
  */
-static char *			/* where it ended */
-slow(struct match *m, char *start, char *stop, sopno startst, sopno stopst)
+static const char *		/* where it ended */
+slow(struct match *m, const char *start, const char *stop, sopno startst,
+    sopno stopst)
 {
 	states st = m->st;
 	states empty = m->empty;
 	states tmp = m->tmp;
-	char *p = start;
+	const char *p = start;
 	int c;
-	int lastc;	/* previous c */
+	int lastc;		/* previous c */
 	int flagch;
 	int i;
-	char *matchp;	/* last p at which a match ended */
+	const char *matchp;	/* last p at which a match ended */
 
 	if (start == m->offp || (start == m->beginp && !(m->eflags&REG_NOTBOL)))
 		c = OUT;
@@ -954,7 +962,7 @@ step(struct re_guts *g,
  - print - print a set of states
  */
 static void
-print(struct match *m, char *caption, states st, int ch, FILE *d)
+print(struct match *m, const char *caption, states st, int ch, FILE *d)
 {
 	struct re_guts *g = m->g;
 	int i;
@@ -978,8 +986,8 @@ print(struct match *m, char *caption, states st, int ch, FILE *d)
  - at - print current situation
  */
 static void
-at(struct match *m, char *title, char *start, char *stop, sopno startst,
-    sopno stopst)
+at(struct match *m, const char *title, const char *start, const char *stop,
+    sopno startst, sopno stopst)
 {
 	if (!(m->eflags&REG_TRACE))
 		return;
