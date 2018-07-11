@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.8 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.9 2018/07/11 14:51:01 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -98,9 +98,6 @@ poke_daemon(unsigned char cookie)
 	const char *cronsock = _PATH_CRON_SOCK;
 	struct stat sb;
 	struct sockaddr_un s_un;
-
-	if (stat(cronsock, &sb) != 0)
-		cronsock = _PATH_CRON_SOCK_OLD;	/* backwards compatibility */
 
 	bzero(&s_un, sizeof(s_un));
 	if (strlcpy(s_un.sun_path, cronsock, sizeof(s_un.sun_path)) >=
