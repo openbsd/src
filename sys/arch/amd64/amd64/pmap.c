@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2018/04/26 06:51:48 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2018/07/11 20:07:55 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -278,8 +278,6 @@ extern vaddr_t lo32_paddr;
 
 vaddr_t virtual_avail;
 extern int end;
-
-extern uint32_t cpu_meltdown;
 
 /*
  * local prototypes

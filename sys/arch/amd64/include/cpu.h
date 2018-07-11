@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.125 2018/07/06 02:43:01 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.126 2018/07/11 20:07:55 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -352,6 +352,7 @@ extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
 extern int cpuspeed;
+extern int cpu_meltdown;
 
 /* cpu.c */
 extern u_int cpu_mwait_size;

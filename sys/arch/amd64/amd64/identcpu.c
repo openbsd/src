@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.100 2018/07/03 08:42:32 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.101 2018/07/11 20:07:55 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -466,7 +466,6 @@ identifycpu(struct cpu_info *ci)
 	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
-	extern uint32_t cpu_meltdown;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, ci->ci_pnfeatset, dummy, dummy, dummy);
