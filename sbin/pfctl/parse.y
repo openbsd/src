@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.678 2018/07/10 09:30:49 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.679 2018/07/11 07:39:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4139,7 +4139,7 @@ expand_label_str(char *label, size_t len, const char *srch, const char *repl)
 	char *p, *q;
 
 	if ((tmp = calloc(1, len)) == NULL)
-		err(1, "expand_label_str: calloc");
+		err(1, "%s", __func__);
 	p = q = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
@@ -4729,12 +4729,12 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		if (src_host->addr.type == PF_ADDR_DYNIFTL) {
 			osrch = src_host;
 			if ((src_host = gen_dynnode(src_host, r->af)) == NULL)
-				err(1, "expand_rule: calloc");
+				err(1, "%s", __func__);
 		}
 		if (dst_host->addr.type == PF_ADDR_DYNIFTL) {
 			odsth = dst_host;
 			if ((dst_host = gen_dynnode(dst_host, r->af)) == NULL)
-				err(1, "expand_rule: calloc");
+				err(1, "%s", __func__);
 		}
 
 		error += check_netmask(src_host, r->af);
@@ -4858,14 +4858,14 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			rb.direction = PF_IN;
 
 			if ((srch = calloc(1, sizeof(*srch))) == NULL)
-				err(1, "expand_rule: calloc");
+				err(1, "%s", __func__);
 			bcopy(src_host, srch, sizeof(*srch));
 			srch->ifname = NULL;
 			srch->next = NULL;
 			srch->tail = NULL;
 
 			if ((dsth = calloc(1, sizeof(*dsth))) == NULL)
-				err(1, "expand_rule: calloc");
+				err(1, "%s", __func__);
 			bcopy(&rb.nat.addr, &dsth->addr, sizeof(dsth->addr));
 			dsth->ifname = NULL;
 			dsth->next = NULL;
@@ -4874,7 +4874,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			bzero(&binat, sizeof(binat));
 			if ((binat.rdr =
 			    calloc(1, sizeof(*binat.rdr))) == NULL)
-				err(1, "expand_rule: calloc");
+				err(1, "%s", __func__);
 			bcopy(nat->rdr, binat.rdr, sizeof(*binat.rdr));
 			bcopy(&nat->pool_opts, &binat.pool_opts,
 			    sizeof(binat.pool_opts));
@@ -5198,7 +5198,7 @@ lungetc(int c)
 	if (file->ungetpos >= file->ungetsize) {
 		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
 		if (p == NULL)
-			err(1, "lungetc");
+			err(1, "%s", __func__);
 		file->ungetbuf = p;
 		file->ungetsize *= 2;
 	}
@@ -5307,7 +5307,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	case '!':
 		next = lgetc(0);
@@ -5389,7 +5389,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {
@@ -5570,7 +5570,7 @@ pfctl_cmdline_symset(char *s)
 		return (-1);
 
 	if ((sym = malloc(strlen(s) - strlen(val) + 1)) == NULL)
-		err(1, "pfctl_cmdline_symset: malloc");
+		err(1, "%s", __func__);
 
 	strlcpy(sym, s, strlen(s) - strlen(val) + 1);
 
@@ -5857,7 +5857,7 @@ rdomain_exists(u_int rdomain)
 			/* table nonexistent */
 			return 0;
 		}
-		err(1, "sysctl");
+		err(1, "%s", __func__);
 	}
 	if (info.rti_domainid == rdomain) {
 		found[rdomain] = 1;

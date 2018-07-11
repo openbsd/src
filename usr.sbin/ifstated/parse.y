@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2018/07/09 12:05:11 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2018/07/11 07:39:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -586,7 +586,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	}
 
@@ -644,7 +644,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {
@@ -731,7 +731,7 @@ parse_config(char *filename, int opts)
 	struct ifsd_state *state;
 
 	if ((conf = calloc(1, sizeof(struct ifsd_config))) == NULL) {
-		err(1, NULL);
+		err(1, "%s", __func__);
 		return (NULL);
 	}
 
@@ -878,7 +878,7 @@ cmdline_symset(char *s)
 
 	len = strlen(s) - strlen(val) + 1;
 	if ((sym = malloc(len)) == NULL)
-		err(1, NULL);
+		err(1, "%s", __func__);
 
 	strlcpy(sym, s, len);
 
@@ -921,12 +921,12 @@ init_state(struct ifsd_state *state)
 	TAILQ_INIT(&state->external_tests);
 
 	if ((state->init = calloc(1, sizeof(*state->init))) == NULL)
-		err(1, "init_state: calloc");
+		err(1, "%s", __func__);
 	state->init->type = IFSD_ACTION_CONDITION;
 	TAILQ_INIT(&state->init->act.c.actions);
 
 	if ((state->body = calloc(1, sizeof(*state->body))) == NULL)
-		err(1, "init_state: calloc");
+		err(1, "%s", __func__);
 	state->body->type = IFSD_ACTION_CONDITION;
 	TAILQ_INIT(&state->body->act.c.actions);
 }
@@ -948,7 +948,7 @@ new_ifstate(char *ifname, int s)
 			break;
 	if (ifstate == NULL) {
 		if ((ifstate = calloc(1, sizeof(*ifstate))) == NULL)
-			err(1, NULL);
+			err(1, "%s", __func__);
 		if (strlcpy(ifstate->ifname, ifname,
 		    sizeof(ifstate->ifname)) >= sizeof(ifstate->ifname))
 			errx(1, "ifname strlcpy truncation");
@@ -979,9 +979,9 @@ new_external(char *command, u_int32_t frequency)
 			break;
 	if (external == NULL) {
 		if ((external = calloc(1, sizeof(*external))) == NULL)
-			err(1, NULL);
+			err(1, "%s", __func__);
 		if ((external->command = strdup(command)) == NULL)
-			err(1, NULL);
+			err(1, "%s", __func__);
 		external->frequency = frequency;
 		TAILQ_INIT(&external->expressions);
 		TAILQ_INSERT_TAIL(&state->external_tests, external, entries);

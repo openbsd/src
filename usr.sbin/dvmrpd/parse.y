@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2018/07/09 12:05:11 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2018/07/11 07:39:22 krw Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -592,7 +592,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	}
 
@@ -650,7 +650,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2018/07/09 12:05:11 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2018/07/11 07:39:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -685,7 +685,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	}
 
@@ -743,7 +743,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {
@@ -937,7 +937,7 @@ cmdline_symset(char *s)
 
 	len = strlen(s) - strlen(val) + 1;
 	if ((sym = malloc(len)) == NULL)
-		errx(1, "cmdline_symset: malloc");
+		errx(1, "%s", __func__);
 
 	(void)strlcpy(sym, s, len);
 

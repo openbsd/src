@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2018/07/09 12:05:10 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2018/07/11 07:39:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1407,7 +1407,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	}
 
@@ -1465,7 +1465,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {
@@ -1666,7 +1666,7 @@ cmdline_symset(char *s)
 
 	len = strlen(s) - strlen(val) + 1;
 	if ((sym = malloc(len)) == NULL)
-		err(1, "cmdline_symset: malloc");
+		err(1, "%s", __func__);
 
 	strlcpy(sym, s, len);
 
@@ -1959,11 +1959,11 @@ host(const char *s)
 		if (errno == ERANGE || !q || *q || mask > 128 || q == (p + 1))
 			errx(1, "host: invalid netmask '%s'", p);
 		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			err(1, "host: calloc");
+			err(1, "%s", __func__);
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 	} else {
 		if ((ps = strdup(s)) == NULL)
-			err(1, "host: strdup");
+			err(1, "%s", __func__);
 		mask = -1;
 	}
 
@@ -2009,7 +2009,7 @@ host_v6(const char *s, int prefixlen)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "host_v6: calloc");
+		err(1, "%s", __func__);
 	ipa->af = res->ai_family;
 	memcpy(&ipa->address, res->ai_addr, sizeof(struct sockaddr_in6));
 	if (prefixlen > 128)
@@ -2026,10 +2026,10 @@ host_v6(const char *s, int prefixlen)
 	if (prefixlen != 128) {
 		ipa->netaddress = 1;
 		if (asprintf(&ipa->name, "%s/%d", hbuf, prefixlen) == -1)
-			err(1, "host_v6: asprintf");
+			err(1, "%s", __func__);
 	} else {
 		if ((ipa->name = strdup(hbuf)) == NULL)
-			err(1, "host_v6: strdup");
+			err(1, "%s", __func__);
 	}
 
 	freeaddrinfo(res);
@@ -2056,7 +2056,7 @@ host_v4(const char *s, int mask)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "host_v4: calloc");
+		err(1, "%s", __func__);
 
 	ina.sin_family = AF_INET;
 	ina.sin_len = sizeof(ina);
@@ -2064,7 +2064,7 @@ host_v4(const char *s, int mask)
 
 	ipa->name = strdup(s);
 	if (ipa->name == NULL)
-		err(1, "host_v4: strdup");
+		err(1, "%s", __func__);
 	ipa->af = AF_INET;
 	ipa->next = NULL;
 	ipa->tail = ipa;
@@ -2098,7 +2098,7 @@ host_dns(const char *s, int mask)
 
 		ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (ipa == NULL)
-			err(1, "host_dns: calloc");
+			err(1, "%s", __func__);
 		switch (res->ai_family) {
 		case AF_INET:
 			memcpy(&ipa->address, res->ai_addr,
@@ -2115,7 +2115,7 @@ host_dns(const char *s, int mask)
 			err(1, "host_dns: getnameinfo");
 		ipa->name = strdup(hbuf);
 		if (ipa->name == NULL)
-			err(1, "host_dns: strdup");
+			err(1, "%s", __func__);
 		ipa->af = res->ai_family;
 		ipa->next = NULL;
 		ipa->tail = ipa;
@@ -2162,7 +2162,7 @@ host_any(void)
 
 	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
 	if (ipa == NULL)
-		err(1, "host_any: calloc");
+		err(1, "%s", __func__);
 	ipa->af = AF_UNSPEC;
 	ipa->netaddress = 1;
 	ipa->tail = ipa;
@@ -2191,10 +2191,10 @@ ifa_load(void)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "ifa_load: calloc");
+			err(1, "%s", __func__);
 		n->af = ifa->ifa_addr->sa_family;
 		if ((n->name = strdup(ifa->ifa_name)) == NULL)
-			err(1, "ifa_load: strdup");
+			err(1, "%s", __func__);
 		if (n->af == AF_INET) {
 			sa_in = (struct sockaddr_in *)ifa->ifa_addr;
 			memcpy(&n->address, sa_in, sizeof(*sa_in));
@@ -2270,7 +2270,7 @@ ifa_grouplookup(const char *ifa_name)
 
 	len = ifgr.ifgr_len;
 	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
-		err(1, "calloc");
+		err(1, "%s", __func__);
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 		err(1, "ioctl");
 
@@ -2314,10 +2314,10 @@ ifa_lookup(const char *ifa_name)
 			continue;
 		n = calloc(1, sizeof(struct ipsec_addr_wrap));
 		if (n == NULL)
-			err(1, "ifa_lookup: calloc");
+			err(1, "%s", __func__);
 		memcpy(n, p, sizeof(struct ipsec_addr_wrap));
 		if ((n->name = strdup(p->name)) == NULL)
-			err(1, "ifa_lookup: strdup");
+			err(1, "%s", __func__);
 		switch (n->af) {
 		case AF_INET:
 			set_ipmask(n, 32);
@@ -2634,7 +2634,7 @@ copy_transforms(unsigned int type,
 			*dst = recallocarray(*dst, *ndst,
 			    *ndst + 1, sizeof(struct iked_transform));
 			if (*dst == NULL)
-				err(1, "copy_transforms: recallocarray");
+				err(1, "%s", __func__);
 			b = *dst + (*ndst)++;
 
 			b->xform_type = type;
@@ -2652,7 +2652,7 @@ copy_transforms(unsigned int type,
 		*dst = recallocarray(*dst, *ndst,
 		    *ndst + 1, sizeof(struct iked_transform));
 		if (*dst == NULL)
-			err(1, "copy_transforms: recallocarray");
+			err(1, "%s", __func__);
 		b = *dst + (*ndst)++;
 		memcpy(b, a, sizeof(*b));
 	}
@@ -2804,7 +2804,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	if (ike_sa == NULL || ike_sa->nxfs == 0) {
 		if ((p = calloc(1, sizeof(*p))) == NULL)
-			err(1, "create_ike: calloc");
+			err(1, "%s", __func__);
 		p->prop_id = ikepropid++;
 		p->prop_protoid = IKEV2_SAPROTO_IKE;
 		p->prop_nxforms = ikev2_default_nike_transforms;
@@ -2814,7 +2814,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
 			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "create_ike: calloc");
+				err(1, "%s", __func__);
 
 			xf = NULL;
 			xfi = 0;
@@ -2850,7 +2850,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 
 	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
 		if ((p = calloc(1, sizeof(*p))) == NULL)
-			err(1, "create_ike: calloc");
+			err(1, "%s", __func__);
 		p->prop_id = ipsecpropid++;
 		p->prop_protoid = saproto;
 		p->prop_nxforms = ikev2_default_nesp_transforms;
@@ -2876,7 +2876,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 			}
 
 			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "create_ike: calloc");
+				err(1, "%s", __func__);
 
 			xf = NULL;
 			xfi = 0;

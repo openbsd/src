@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2018/07/09 12:05:11 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2018/07/11 07:39:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -748,7 +748,7 @@ lungetc(int c)
 	if (file->ungetpos >= file->ungetsize) {
 		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
 		if (p == NULL)
-			err(1, "lungetc");
+			err(1, "%s", __func__);
 		file->ungetbuf = p;
 		file->ungetsize *= 2;
 	}
@@ -857,7 +857,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(1, "yylex: strdup");
+			err(1, "%s", __func__);
 		return (STRING);
 	}
 
@@ -915,7 +915,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(1, "yylex: strdup");
+				err(1, "%s", __func__);
 		return (token);
 	}
 	if (c == '\n') {

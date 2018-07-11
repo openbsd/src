@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2018/07/09 12:05:11 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2018/07/11 07:39:22 krw Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -517,7 +517,7 @@ lungetc(int c)
 	if (file->ungetpos >= file->ungetsize) {
 		void *p = reallocarray(file->ungetbuf, file->ungetsize, 2);
 		if (p == NULL)
-			err(1, "lungetc");
+			err(1, "%s", __func__);
 		file->ungetbuf = p;
 		file->ungetsize *= 2;
 	}
@@ -626,7 +626,7 @@ top:
 		}
 		yylval.v.string = strdup(buf);
 		if (yylval.v.string == NULL)
-			err(EXIT_FAILURE, "yylex: strdup");
+			err(EXIT_FAILURE, "%s", __func__);
 		return (STRING);
 	}
 
@@ -684,7 +684,7 @@ nodigits:
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING) {
 			if ((yylval.v.string = strdup(buf)) == NULL)
-				err(EXIT_FAILURE, "yylex: strdup");
+				err(EXIT_FAILURE, "%s", __func__);
 		}
 		return (token);
 	}
@@ -754,7 +754,7 @@ parse_config(const char *filename, int opts)
 	struct sym	*sym, *next;
 
 	if ((conf = calloc(1, sizeof(struct acme_conf))) == NULL)
-		err(EXIT_FAILURE, "parse_config");
+		err(EXIT_FAILURE, "%s", __func__);
 	conf->opts = opts;
 
 	if ((file = pushfile(filename)) == NULL) {
@@ -879,7 +879,7 @@ conf_new_authority(struct acme_conf *c, char *s)
 	if (a)
 		return (NULL);
 	if ((a = calloc(1, sizeof(struct authority_c))) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(EXIT_FAILURE, "%s", __func__);
 	TAILQ_INSERT_TAIL(&c->authority_list, a, entry);
 
 	a->name = s;
@@ -914,7 +914,7 @@ conf_new_domain(struct acme_conf *c, char *s)
 	if (d)
 		return (NULL);
 	if ((d = calloc(1, sizeof(struct domain_c))) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(EXIT_FAILURE, "%s", __func__);
 	TAILQ_INSERT_TAIL(&c->domain_list, d, entry);
 
 	d->domain = s;
@@ -948,7 +948,7 @@ conf_new_keyfile(struct acme_conf *c, char *s)
 	}
 
 	if ((k = calloc(1, sizeof(struct keyfile))) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(EXIT_FAILURE, "%s", __func__);
 	LIST_INSERT_HEAD(&c->used_key_list, k, entry);
 
 	k->name = s;
