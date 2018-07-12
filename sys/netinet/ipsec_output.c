@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.72 2018/06/04 12:13:01 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.73 2018/07/12 15:51:50 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -46,6 +46,8 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
+
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 #ifdef ENCDEBUG
@@ -358,6 +360,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		goto drop;
 	}
 
+        ipsecstat_add(ipsec_ouncompbytes, m->m_pkthdr.len);
+
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
 		if ((m->m_pkthdr.len - hlen) < tdb->tdb_compalgxform->minlen) {
@@ -373,6 +377,81 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
  drop:
 	m_freem(m);
 	return error;
+}
+
+/*
+ * IPsec output callback, called directly by the crypto driver.
+ */
+void
+ipsec_output_cb(struct cryptop *crp)
+{
+	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
+	struct mbuf *m = (struct mbuf *) crp->crp_buf;
+	struct tdb *tdb;
+	int error, ilen, olen;
+
+	if (m == NULL) {
+		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
+		ipsecstat_inc(ipsec_crypto);
+		goto droponly;
+	}
+
+	NET_LOCK();
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	if (tdb == NULL) {
+		DPRINTF(("%s: TDB is expired while in crypto\n", __func__));
+		ipsecstat_inc(ipsec_notdb);
+		goto baddone;
+	}
+
+	/* Check for crypto errors. */
+	if (crp->crp_etype) {
+		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
+			NET_UNLOCK();
+			crypto_dispatch(crp);
+			return;
+		}
+		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		ipsecstat_inc(ipsec_noxform);
+		goto baddone;
+	}
+
+	olen = crp->crp_olen;
+	ilen = crp->crp_ilen;
+
+	/* Release crypto descriptors. */
+	crypto_freereq(crp);
+
+	switch (tdb->tdb_sproto) {
+	case IPPROTO_ESP:
+		error = esp_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	case IPPROTO_AH:
+		error = ah_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	case IPPROTO_IPCOMP:
+		error = ipcomp_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	default:
+		panic("%s: unknown/unsupported security protocol %d",
+		    __func__, tdb->tdb_sproto);
+	}
+
+	NET_UNLOCK();
+	if (error)
+		ipsecstat_inc(ipsec_odrops);
+	return;
+
+ baddone:
+	NET_UNLOCK();
+ droponly:
+	m_freem(m);
+	free(tc, M_XDATA, 0);
+	crypto_freereq(crp);
+	ipsecstat_inc(ipsec_odrops);
 }
 
 /*
@@ -497,6 +576,9 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	if (tdb->tdb_onext)
 		return ipsp_process_packet(m, tdb->tdb_onext,
 		    tdb->tdb_dst.sa.sa_family, 0);
+
+	ipsecstat_inc(ipsec_opackets);
+	ipsecstat_add(ipsec_obytes, m->m_pkthdr.len);
 
 #if NPF > 0
 	/* Add pf tag if requested. */

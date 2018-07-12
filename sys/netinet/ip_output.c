@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.346 2018/03/21 14:42:41 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.347 2018/07/12 15:51:50 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -564,6 +564,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	struct ifnet *encif;
 #endif
 	struct ip *ip;
+	int error;
 
 #if NPF > 0
 	/*
@@ -633,7 +634,10 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	m->m_flags &= ~(M_MCAST | M_BCAST);
 
 	/* Callee frees mbuf */
-	return ipsp_process_packet(m, tdb, AF_INET, 0);
+	error = ipsp_process_packet(m, tdb, AF_INET, 0);
+	if (error)
+		ipsecstat_inc(ipsec_odrops);
+	return error;
 }
 #endif /* IPSEC */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.156 2018/07/11 09:07:59 mpi Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.157 2018/07/12 15:51:50 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -68,8 +68,6 @@
 #include <crypto/xform.h>
 
 #include "bpfilter.h"
-
-void esp_output_cb(struct cryptop *);
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -966,7 +964,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
-	crp->crp_callback = esp_output_cb;
+	crp->crp_callback = ipsec_output_cb;
 	crp->crp_opaque = (caddr_t)tc;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
@@ -1005,66 +1003,20 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	return error;
 }
 
-/*
- * ESP output callback, called directly by the crypto driver.
- */
-void
-esp_output_cb(struct cryptop *crp)
+int
+esp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int ilen,
+    int olen)
 {
-	struct tdb_crypto *tc;
-	struct tdb *tdb;
-	struct mbuf *m;
-
-	tc = (struct tdb_crypto *) crp->crp_opaque;
-
-	m = (struct mbuf *) crp->crp_buf;
-	if (m == NULL) {
-		/* Shouldn't happen... */
-		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
-		espstat_inc(esps_crypto);
-		goto droponly;
-	}
-
-	NET_LOCK();
-
-	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	if (tdb == NULL) {
-		DPRINTF(("%s: TDB is expired while in crypto\n", __func__));
-		espstat_inc(esps_notdb);
-		goto baddone;
-	}
-
-	/* Check for crypto errors. */
-	if (crp->crp_etype) {
-		if (crp->crp_etype == EAGAIN) {
-			/* Reset the session ID */
-			if (tdb->tdb_cryptoid != 0)
-				tdb->tdb_cryptoid = crp->crp_sid;
-			NET_UNLOCK();
-			crypto_dispatch(crp);
-			return;
-		}
-		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
-		espstat_inc(esps_noxform);
-		goto baddone;
-	}
-
 	/* Release crypto descriptors. */
-	crypto_freereq(crp);
 	free(tc, M_XDATA, 0);
 
 	/* Call the IPsec input callback. */
-	if (ipsp_process_done(m, tdb))
+	if (ipsp_process_done(m, tdb)) {
 		espstat_inc(esps_outfail);
-	NET_UNLOCK();
-	return;
+		return -1;
+	}
 
- baddone:
-	NET_UNLOCK();
- droponly:
-	m_freem(m);
-	crypto_freereq(crp);
-	free(tc, M_XDATA, 0);
+	return 0;
 }
 
 #define SEEN_SIZE	howmany(TDB_REPLAYMAX, 32)
