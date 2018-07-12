@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.215 2018/07/12 10:15:44 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.216 2018/07/12 10:16:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4287,7 +4287,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				ret = EINVAL;
 	} else
 		ret = EINVAL;
-
 
 #ifdef VMM_DEBUG
 	KERNEL_ASSERT_LOCKED();
