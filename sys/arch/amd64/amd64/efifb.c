@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.16 2018/04/27 21:36:12 jcs Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.17 2018/07/12 12:47:57 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -325,12 +325,6 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		case 8:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_8;
-			break;
-		case 4:
-			*(u_int *)data = WSDISPLAYIO_DEPTH_4;
-			break;
-		case 1:
-			*(u_int *)data = WSDISPLAYIO_DEPTH_1;
 			break;
 		default:
 			return (-1);
