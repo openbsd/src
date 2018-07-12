@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.36 2018/07/10 08:40:20 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.37 2018/07/12 10:15:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1108,7 +1108,7 @@ run_vm(int child_cdrom, int *child_disks, int *child_taps,
 			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
-		vrp[i]->vrp_exit = malloc(sizeof(union vm_exit));
+		vrp[i]->vrp_exit = malloc(sizeof(struct vm_exit));
 		if (vrp[i]->vrp_exit == NULL) {
 			log_warn("%s: memory allocation error - "
 			    "exiting.", __progname);
@@ -1394,7 +1394,7 @@ vcpu_pic_intr(uint32_t vm_id, uint32_t vcpu_id, uint8_t intr)
 uint8_t
 vcpu_exit_pci(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr;
 
 	intr = 0xFF;
@@ -1433,7 +1433,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 void
 vcpu_exit_inout(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr = 0xFF;
 
 	if (ioports_map[vei->vei.vei_port] != NULL)
@@ -1873,7 +1873,7 @@ mutex_unlock(pthread_mutex_t *m)
  *  data: return data
  */
 void
-set_return_data(union vm_exit *vei, uint32_t data)
+set_return_data(struct vm_exit *vei, uint32_t data)
 {
 	switch (vei->vei.vei_size) {
 	case 1:
@@ -1903,7 +1903,7 @@ set_return_data(union vm_exit *vei, uint32_t data)
  *  data: location to store the result
  */
 void
-get_input_data(union vm_exit *vei, uint32_t *data)
+get_input_data(struct vm_exit *vei, uint32_t *data)
 {
 	switch (vei->vei.vei_size) {
 	case 1:

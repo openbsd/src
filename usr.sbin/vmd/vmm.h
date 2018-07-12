@@ -20,5 +20,5 @@ typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 
 void vcpu_assert_pic_irq(uint32_t, uint32_t, int);
 void vcpu_deassert_pic_irq(uint32_t, uint32_t, int);
-void set_return_data(union vm_exit *, uint32_t);
-void get_input_data(union vm_exit *, uint32_t *);
+void set_return_data(struct vm_exit *, uint32_t);
+void get_input_data(struct vm_exit *, uint32_t *);

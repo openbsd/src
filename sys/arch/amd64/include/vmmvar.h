@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.55 2018/07/11 13:19:42 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.56 2018/07/12 10:15:44 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -352,16 +352,6 @@ struct vm_exit_inout {
 };
 
 /*
- * union vm_exit
- *
- * Contains VM exit information communicated to vmd(8). This information is
- * gathered by vmm(4) from the CPU on each exit that requires help from vmd.
- */
-union vm_exit {
-	struct vm_exit_inout	vei;		/* IN/OUT exit */
-};
-
-/*
  * struct vcpu_segment_info
  *
  * Describes a segment + selector set, used in constructing the initial vcpu
@@ -440,6 +430,21 @@ struct vm_mem_range {
 	size_t	vmr_size;
 };
 
+/*
+ * struct vm_exit
+ *
+ * Contains VM exit information communicated to vmd(8). This information is
+ * gathered by vmm(4) from the CPU on each exit that requires help from vmd.
+ */
+struct vm_exit {
+	union {
+		struct vm_exit_inout	vei;		/* IN/OUT exit */
+	};
+
+	struct vcpu_reg_state		vrs;
+};
+
+
 struct vm_create_params {
 	/* Input parameters to VMM_IOC_CREATE */
 	size_t			vcp_nmemranges;
@@ -465,7 +470,7 @@ struct vm_run_params {
 	uint16_t	vrp_irq;		/* IRQ to inject */
 
 	/* Input/output parameter to VMM_IOC_RUN */
-	union vm_exit	*vrp_exit;		/* updated exit data */
+	struct vm_exit	*vrp_exit;		/* updated exit data */
 
 	/* Output parameter from VMM_IOC_RUN */
 	uint16_t	vrp_exit_reason;	/* exit reason */
@@ -845,7 +850,7 @@ struct vcpu {
 	uint8_t vc_virt_mode;
 
 	struct cpu_info *vc_last_pcpu;
-	union vm_exit vc_exit;
+	struct vm_exit vc_exit;
 
 	uint16_t vc_intr;
 	uint8_t vc_irqready;

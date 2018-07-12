@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.27 2018/07/09 16:11:37 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.28 2018/07/12 10:15:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -137,7 +137,7 @@ i8253_do_readback(uint32_t data)
 uint8_t
 vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint16_t cur;
 	uint64_t ns, ticks;
 	struct timespec now, delta;
@@ -197,7 +197,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 	uint8_t sel, rw, data;
 	uint64_t ns, ticks;
 	struct timespec now, delta;
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 
 	get_input_data(vei, &out_data);
 

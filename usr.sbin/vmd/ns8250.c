@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.16 2018/07/09 16:11:37 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.17 2018/07/12 10:15:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -216,7 +216,7 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
  *  interrupt to inject, or 0xFF if nothing to inject
  */
 uint8_t
-vcpu_process_com_data(union vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
+vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -299,7 +299,7 @@ vcpu_process_com_data(union vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
  *      instruction being performed
  */
 void
-vcpu_process_com_lcr(union vm_exit *vei)
+vcpu_process_com_lcr(struct vm_exit *vei)
 {
 	uint8_t data = (uint8_t)vei->vei.vei_data;
 	uint16_t divisor;
@@ -352,7 +352,7 @@ vcpu_process_com_lcr(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_iir(union vm_exit *vei)
+vcpu_process_com_iir(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -391,7 +391,7 @@ vcpu_process_com_iir(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_mcr(union vm_exit *vei)
+vcpu_process_com_mcr(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -420,7 +420,7 @@ vcpu_process_com_mcr(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_lsr(union vm_exit *vei)
+vcpu_process_com_lsr(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -452,7 +452,7 @@ vcpu_process_com_lsr(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_msr(union vm_exit *vei)
+vcpu_process_com_msr(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -484,7 +484,7 @@ vcpu_process_com_msr(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_scr(union vm_exit *vei)
+vcpu_process_com_scr(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -514,7 +514,7 @@ vcpu_process_com_scr(union vm_exit *vei)
  *      instruction being performed
  */
 void
-vcpu_process_com_ier(union vm_exit *vei)
+vcpu_process_com_ier(struct vm_exit *vei)
 {
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -560,7 +560,7 @@ uint8_t
 vcpu_exit_com(struct vm_run_params *vrp)
 {
 	uint8_t intr = 0xFF;
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 
 	mutex_lock(&com1_dev.mutex);
 

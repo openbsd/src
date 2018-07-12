@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.18 2018/06/19 17:12:34 reyk Exp $ */
+/* $OpenBSD: i8259.c,v 1.19 2018/07/12 10:15:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -586,7 +586,7 @@ i8259_read_cmdreg(uint8_t n)
  *  vei: vm exit info for this I/O
  */
 static void
-i8259_io_write(union vm_exit *vei)
+i8259_io_write(struct vm_exit *vei)
 {
 	uint16_t port = vei->vei.vei_port;
 	uint32_t data;
@@ -627,7 +627,7 @@ i8259_io_write(union vm_exit *vei)
  *  data that was read, based on the port information in 'vei'
  */
 static uint8_t
-i8259_io_read(union vm_exit *vei)
+i8259_io_read(struct vm_exit *vei)
 {
 	uint16_t port = vei->vei.vei_port;
 	uint8_t n = 0;
@@ -670,7 +670,7 @@ i8259_io_read(union vm_exit *vei)
 uint8_t
 vcpu_exit_i8259(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		i8259_io_write(vei);
@@ -728,7 +728,7 @@ pic_set_elcr(uint8_t irq, uint8_t val)
 uint8_t
 vcpu_exit_elcr(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t elcr_reg = vei->vei.vei_port - ELCR0;
 
 	if (elcr_reg > 1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.26 2018/07/10 20:43:15 reyk Exp $	*/
+/*	$OpenBSD: pci.c,v 1.27 2018/07/12 10:15:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -228,7 +228,7 @@ pci_init(void)
 void
 pci_handle_address_reg(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -253,7 +253,7 @@ pci_handle_io(struct vm_run_params *vrp)
 	int i, j, k, l;
 	uint16_t reg, b_hi, b_lo;
 	pci_iobar_fn_t fn;
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr, dir;
 
 	k = -1;
@@ -303,7 +303,7 @@ pci_handle_io(struct vm_run_params *vrp)
 void
 pci_handle_data_reg(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t b, d, f, o, baridx, ofs, sz;
 	int ret;
 	pci_cs_fn_t csfunc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.214 2018/07/11 18:04:18 nayden Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.215 2018/07/12 10:15:44 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3740,7 +3740,7 @@ vm_run(struct vm_run_params *vrp)
 	 */
 	if (vrp->vrp_continue) {
 		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
-		    sizeof(union vm_exit)) == EFAULT) {
+		    sizeof(struct vm_exit)) == EFAULT) {
 			return (EFAULT);
 		}
 	}
@@ -3773,7 +3773,7 @@ vm_run(struct vm_run_params *vrp)
 		vcpu->vc_state = VCPU_STATE_STOPPED;
 
 		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
-		    sizeof(union vm_exit)) == EFAULT) {
+		    sizeof(struct vm_exit)) == EFAULT) {
 			ret = EFAULT;
 		} else
 			ret = 0;
@@ -4272,6 +4272,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 	}
 
+	/* Copy the VCPU register state to the exit structure */
+	if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
+		ret = EINVAL;
 	/*
 	 * We are heading back to userspace (vmd), either because we need help
 	 * handling an exit, a guest interrupt is pending, or we failed in some
@@ -4284,6 +4287,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				ret = EINVAL;
 	} else
 		ret = EINVAL;
+
 
 #ifdef VMM_DEBUG
 	KERNEL_ASSERT_LOCKED();
@@ -6398,8 +6402,11 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	/*
 	 * We are heading back to userspace (vmd), either because we need help
 	 * handling an exit, a guest interrupt is pending, or we failed in some
-	 * way to enter the guest.
+	 * way to enter the guest. Copy the guest registers to the exit struct
+	 * and return to vmd.
 	 */
+	if (vcpu_readregs_svm(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
+		ret = EINVAL;
 
 #ifdef VMM_DEBUG
 	KERNEL_ASSERT_LOCKED();

@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.h,v 1.5 2017/06/07 14:53:28 mlarkin Exp $ */
+/* $OpenBSD: ns8250.h,v 1.6 2018/07/12 10:15:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -60,13 +60,13 @@ struct ns8250_dev {
 
 void ns8250_init(int, uint32_t);
 uint8_t vcpu_exit_com(struct vm_run_params *);
-uint8_t vcpu_process_com_data(union vm_exit *, uint32_t, uint32_t);
-void vcpu_process_com_lcr(union vm_exit *);
-void vcpu_process_com_lsr(union vm_exit *);
-void vcpu_process_com_ier(union vm_exit *);
-void vcpu_process_com_mcr(union vm_exit *);
-void vcpu_process_com_iir(union vm_exit *);
-void vcpu_process_com_msr(union vm_exit *);
-void vcpu_process_com_scr(union vm_exit *);
+uint8_t vcpu_process_com_data(struct vm_exit *, uint32_t, uint32_t);
+void vcpu_process_com_lcr(struct vm_exit *);
+void vcpu_process_com_lsr(struct vm_exit *);
+void vcpu_process_com_ier(struct vm_exit *);
+void vcpu_process_com_mcr(struct vm_exit *);
+void vcpu_process_com_iir(struct vm_exit *);
+void vcpu_process_com_msr(struct vm_exit *);
+void vcpu_process_com_scr(struct vm_exit *);
 int ns8250_dump(int);
 int ns8250_restore(int, int, uint32_t);
