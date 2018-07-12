@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1071 2018/07/11 11:39:31 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1072 2018/07/12 14:28:07 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6881,7 +6881,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv6 packet with ICMPv4 payload");
-			goto unlock;
+			break;
 		}
 		action = pf_test_state_icmp(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
@@ -6906,7 +6906,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv4 packet with ICMPv6 payload");
-			goto unlock;
+			break;
 		}
 		action = pf_test_state_icmp(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
@@ -6932,13 +6932,13 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			    pf_synflood_check(&pd)) {
 				pf_syncookie_send(&pd);
 				action = PF_DROP;
-				goto unlock;
+				break;
 			}
 			if ((pd.hdr.tcp.th_flags & TH_ACK) && pd.p_len == 0)
 				pqid = 1;
 			action = pf_normalize_tcp(&pd);
 			if (action == PF_DROP)
-				goto unlock;
+				break;
 		}
 		action = pf_test_state(&pd, &s, &reason, 0);
 		if (s == NULL && action != PF_PASS && action != PF_AFRT &&
@@ -6999,7 +6999,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		break;
 	}
 
-unlock:
 	PF_UNLOCK();
 
 	/*
