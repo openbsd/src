@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.40 2018/07/11 18:04:18 nayden Exp $ */
+/* $OpenBSD: vmm.c,v 1.41 2018/07/12 15:48:02 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3267,7 +3267,7 @@ vm_run(struct vm_run_params *vrp)
 	 */
 	if (vrp->vrp_continue) {
 		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
-		    sizeof(union vm_exit)) == EFAULT) {
+		    sizeof(struct vm_exit)) == EFAULT) {
 			return (EFAULT);
 		}
 	}
@@ -3300,7 +3300,7 @@ vm_run(struct vm_run_params *vrp)
 		vcpu->vc_state = VCPU_STATE_STOPPED;
 
 		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
-		    sizeof(union vm_exit)) == EFAULT) {
+		    sizeof(struct vm_exit)) == EFAULT) {
 			ret = EFAULT;
 		} else
 			ret = 0;
