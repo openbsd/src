@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.6 2018/07/11 19:05:25 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.7 2018/07/12 08:18:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -20,7 +20,7 @@
 
 #define CONF_FILE		"/etc/rad.conf"
 #define	RAD_SOCKET		"/var/run/rad.sock"
-#define RAD_USER		"_rtadvd"	/* XXX */
+#define RAD_USER		"_rad"
 
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
