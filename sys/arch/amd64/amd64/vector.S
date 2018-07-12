@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.72 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.73 2018/07/12 14:24:54 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -121,7 +121,9 @@ IDTVEC(trap02)
 	pushq	$0
 	pushq	$T_NMI
 calltrap_specstk:			# special stack path
-	INTR_REENTRY
+	INTR_ENTRY_KERN
+	INTR_SAVE_MOST_GPRS_NO_ADJ
+	INTR_CLEAR_GPRS
 	movl	$MSR_GSBASE,%ecx	# save current GS.base...
 	rdmsr
 	movq	%rax,%r12		# ...in %r12 and %r13
@@ -139,7 +141,6 @@ calltrap_specstk:			# special stack path
 	.text
 	.globl	INTRENTRY_LABEL(calltrap_specstk)
 INTRENTRY_LABEL(calltrap_specstk):
-	INTR_CLEAR_GPRS
 	cld
 	SMAP_CLAC
 	movq	%rsp,%rdi
@@ -163,10 +164,11 @@ INTRENTRY_LABEL(calltrap_specstk):
 KUENTRY(calltrap_specstk_tramp)
 	movq	%r15,%cr3		# restore %cr3
 	popq	%r15
-	popq	%rbp
+	addq	$8,%rsp			# ignore tf_err
 	popq	%rbx
 	popq	%rax
-	addq	$16,%rsp
+	addq	$8,%rsp			# ignore tf_trapno
+	popq	%rbp
 	iretq
 
 IDTVEC(trap03)
