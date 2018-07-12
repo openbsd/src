@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.37 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.38 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -114,11 +114,10 @@ main(int argc, char *argv[])
 	int			 ipforwarding;
 	int			 mib[4];
 	size_t			 len;
-	char			*sockname;
+	char			*sockname = NULL;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
-	sockname = OSPF6D_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_procinit(log_procnames[ospfd_process]);
@@ -182,6 +181,13 @@ main(int argc, char *argv[])
 	/* parse config file */
 	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
+
+	if (sockname == NULL) {
+		if (asprintf(&sockname, "%s.%d", OSPF6D_SOCKET,
+		    ospfd_conf->rdomain) == -1)
+			err(1, "asprintf");
+	}
+
 	ospfd_conf->csock = sockname;
 
 	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
@@ -260,7 +266,8 @@ main(int argc, char *argv[])
 	    iev_rde->handler, iev_rde);
 	event_add(&iev_rde->ev, NULL);
 
-	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
+	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
+	    ospfd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
 
 	event_dispatch();

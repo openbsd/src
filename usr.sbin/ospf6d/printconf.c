@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: printconf.c,v 1.7 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -44,6 +44,9 @@ print_mainconf(struct ospfd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
+
+	if (conf->rdomain)
+		printf("rdomain %d\n", conf->rdomain);
 
 	if (conf->flags & OSPFD_FLAG_STUB_ROUTER)
 		printf("stub router yes\n");

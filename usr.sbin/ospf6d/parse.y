@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.38 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -109,6 +109,7 @@ struct config_defaults	 ifacedefs;
 struct config_defaults	*defs;
 
 struct area	*conf_get_area(struct in_addr);
+int		 conf_check_rdomain(u_int);
 
 typedef struct {
 	union {
@@ -121,7 +122,7 @@ typedef struct {
 
 %}
 
-%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL
+%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL RDOMAIN
 %token	STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
@@ -231,6 +232,13 @@ conf_main	: ROUTERID STRING {
 			}
 			rtlabel_tag(rtlabel_name2id($2), $4);
 			free($2);
+		}
+		| RDOMAIN NUMBER {
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rdomain");
+				YYERROR;
+			}
+			conf->rdomain = $2;
 		}
 		| SPFDELAY NUMBER {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
@@ -613,6 +621,7 @@ lookup(char *s)
 		{"no",			NO},
 		{"on",			ON},
 		{"passive",		PASSIVE},
+		{"rdomain",		RDOMAIN},
 		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},
 		{"router",		ROUTER},
@@ -1027,6 +1036,9 @@ parse_config(char *filename, int opts)
 		}
 	}
 
+	/* check that all interfaces belong to the configured rdomain */
+	errors += conf_check_rdomain(conf->rdomain);
+
 	if (errors) {
 		clear_config(conf);
 		return (NULL);
@@ -1128,6 +1140,25 @@ conf_get_area(struct in_addr id)
 	a->id.s_addr = id.s_addr;
 
 	return (a);
+}
+
+int
+conf_check_rdomain(u_int rdomain)
+{
+	struct area	*a;
+	struct iface	*i;
+	int		 errs = 0;
+
+	LIST_FOREACH(a, &conf->area_list, entry)
+		LIST_FOREACH(i, &a->iface_list, entry)
+			if (i->rdomain != rdomain) {
+				logit(LOG_CRIT,
+				    "interface %s not in rdomain %u",
+				    i->name, rdomain);
+				errs++;
+			}
+
+	return (errs);
 }
 
 void

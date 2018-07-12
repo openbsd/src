@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.36 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.37 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -312,6 +312,7 @@ struct iface {
 	u_int32_t		 ls_ack_cnt;
 	time_t			 uptime;
 	unsigned int		 ifindex;
+	u_int			 rdomain;
 	int			 fd;
 	int			 state;
 	int			 mtu;
@@ -384,6 +385,7 @@ struct ospfd_conf {
 	int			flags;
 	u_int8_t		border;
 	u_int8_t		redistribute;
+	u_int			rdomain;
 	char			*csock;
 };
 
@@ -525,7 +527,7 @@ struct iface	*if_find(unsigned int);
 struct iface	*if_findname(char *);
 struct iface	*if_new(u_short, char *);
 void		 if_update(struct iface *, int, int, u_int8_t, u_int8_t,
-		    u_int64_t);
+		    u_int64_t, u_int32_t);
 
 /* in_cksum.c */
 u_int16_t	 in_cksum(void *, size_t);
@@ -534,7 +536,7 @@ u_int16_t	 in_cksum(void *, size_t);
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
-int		 kr_init(int);
+int		 kr_init(int, u_int);
 int		 kr_change(struct kroute *, int);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);

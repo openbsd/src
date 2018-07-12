@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.53 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.54 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -324,7 +324,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			    LINK_STATE_IS_UP(iface->linkstate);
 
 			if_update(iface, ifp->mtu, ifp->flags, ifp->if_type,
-			    ifp->linkstate, ifp->baudrate);
+			    ifp->linkstate, ifp->baudrate, ifp->rdomain);
 
 			isvalid = (iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate);

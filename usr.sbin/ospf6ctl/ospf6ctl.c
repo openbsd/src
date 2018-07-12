@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.48 2018/06/06 05:51:43 remi Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.49 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -90,13 +90,16 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
-	int			 ctl_sock;
+	int			 ctl_sock, r;
 	int			 done = 0, verbose = 0;
 	int			 n;
 	int			 ch;
 	char			*sockname;
 
-	sockname = OSPF6D_SOCKET;
+	r = getrtable();
+	if (asprintf(&sockname, "%s.%d", OSPF6D_SOCKET, r) == -1)
+		err(1, "asprintf");
+
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.57 2018/07/12 12:19:05 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.58 2018/07/12 13:45:03 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -47,6 +47,7 @@ struct {
 	int			fib_sync;
 	int			fd;
 	struct event		ev;
+	u_int			rdomain;
 } kr_state;
 
 struct kroute_node {
@@ -94,12 +95,13 @@ RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 
 int
-kr_init(int fs)
+kr_init(int fs, u_int rdomain)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
 
 	kr_state.fib_sync = fs;
+	kr_state.rdomain = rdomain;
 
 	if ((kr_state.fd = socket(AF_ROUTE,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, AF_INET6)) == -1) {
@@ -718,7 +720,7 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 	}
 
 	if_update(iface, ifd->ifi_mtu, flags, ifd->ifi_type,
-	    ifd->ifi_link_state, ifd->ifi_baudrate);
+	    ifd->ifi_link_state, ifd->ifi_baudrate, ifd->ifi_rdomain);
 
 	return (iface);
 }
@@ -1012,6 +1014,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_priority = RTP_OSPF;
+	hdr.rtm_tableid = kr_state.rdomain;	/* rtableid */
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
 	else
@@ -1143,7 +1146,7 @@ fetchtable(void)
 	mib[3] = AF_INET6;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	mib[6] = 0;	/* rtableid */
+	mib[6] = kr_state.rdomain;	/* rtableid */
 
 	if (sysctl(mib, 7, NULL, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
@@ -1377,7 +1380,7 @@ dispatch_rtmsg(void)
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-			if (rtm->rtm_tableid != 0)
+			if (rtm->rtm_tableid != kr_state.rdomain)
 				continue;
 
 			if (rtm->rtm_pid == kr_state.pid) /* caused by us */
