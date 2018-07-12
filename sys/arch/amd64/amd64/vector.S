@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.71 2018/07/10 16:01:26 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.72 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -358,22 +358,59 @@ Xexceptions:
  * b) coming from supervisor mode and can directly jump to kernel
  *    trap handling before returning sans AST or other handling.
  */
-KUENTRY(alltraps)
+KUTEXT_PAGE_START
+ 	.align	NBPG, 0xcc
+	/*
+	 * This is the Meltdown alltraps page, which is mapped into
+	 * the U-K page tables at the same location as alltraps
+	 * below.  For this, the Meltdown case, we must be coming from
+	 * userspace so we skip the SEL_RPL test and go directly to
+	 * the swapgs+use-scratch+change-cr3 sequence.  Switching to
+	 * the kernel page tables (thank you, Intel) will make us
+	 * continue at the "movq CPUVAR(KERN_RSP),%rax" after alltraps
+	 * below.  In case the CPU speculates past the mov to cr3,
+	 * we put a retpoline-style pause-jmp-to-pause loop.
+	 */
+Xalltraps:
+	swapgs
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(KERN_CR3),%rax
+	movq	%rax,%cr3
+0:	pause
+	jmp	0b
+KUTEXT_PAGE_END
+
+KTEXT_PAGE_START
+	.align	NBPG, 0xcc
+GENTRY(alltraps)
 	testb	$SEL_RPL,24(%rsp)
 	je	alltraps_kern
 	swapgs
 	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_CR3),%rax
-	testq	%rax,%rax
-	jz	alltraps_user
-	movq	%rax,%cr3
-	jmp	alltraps_user
+	.space	(0b - Xalltraps) - (. - alltraps), 0x90
+
+	/*
+	 * Traps from userspace
+	 */
+	INTR_ENTRY_USER
+	INTR_SAVE_MOST_GPRS_NO_ADJ
+	INTR_CLEAR_GPRS
+	sti
+	cld
+	SMAP_CLAC
+	.globl	recall_trap
+recall_trap:
+	movq	%rsp, %rdi
+	call	_C_LABEL(usertrap)
+	cli
+	jmp	intr_user_exit
 END(alltraps)
 
 /*
  * Traps from supervisor mode (kernel)
  */
-NENTRY(alltraps_kern)
+	_ALIGN_TRAPS
+GENTRY(alltraps_kern)
 	INTR_ENTRY_KERN
 	INTR_SAVE_MOST_GPRS_NO_ADJ
 	sti
@@ -404,30 +441,13 @@ NENTRY(alltraps_kern)
 	movl	%ebx,CPUVAR(ILEVEL)
 	jmp	2b
 
-	.section .rodata
+	.pushsection .rodata
 spl_lowered:
 	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-	.text
+	.popsection
 #endif /* DIAGNOSTIC */
 END(alltraps_kern)
-
-/*
- * Traps from userspace
- */
-NENTRY(alltraps_user)
-	INTR_ENTRY_USER
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	INTR_CLEAR_GPRS
-	sti
-	cld
-	SMAP_CLAC
-	.globl	recall_trap
-recall_trap:
-	movq	%rsp, %rdi
-	call	_C_LABEL(usertrap)
-	cli
-	jmp	intr_user_exit
-END(alltraps_user)
+KTEXT_PAGE_END
 
 
 /*

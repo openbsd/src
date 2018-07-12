@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.5 2018/06/05 06:39:11 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.6 2018/07/12 14:11:11 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -52,6 +52,7 @@ void codepatch_call(uint16_t tag, void *func);
 #define CPTAG_EOI		3
 #define CPTAG_XRSTOR		4
 #define CPTAG_XSAVE		5
+#define CPTAG_MELTDOWN_NOP	6
 
 /*
  * As stac/clac SMAP instructions are 3 bytes, we want the fastest

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.104 2018/07/10 16:01:26 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.105 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -458,18 +458,16 @@ restore_saved:
 	movq	%rdx,CPUVAR(KERN_RSP)
 	movq	PCB_PMAP(%r13),%rcx
 
+	CODEPATCH_START
 	/*
 	 * Meltdown: iff we're doing separate U+K and U-K page tables,
 	 * then record them in cpu_info for easy access in syscall and
-	 * interrupt trampolines.  XXX code patch this
+	 * interrupt trampolines.
 	 */
-
 	movq	PM_PDIRPA_INTEL(%rcx),%rdx
-	testq	%rdx,%rdx
-	jz	0f			/* yay, no intel suckiness */
 	movq	%rax,CPUVAR(KERN_CR3)
 	movq	%rdx,CPUVAR(USER_CR3)
-0:
+	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 
 	/* set the new pmap's bit for the cpu */
 	lock
@@ -546,30 +544,47 @@ IDTVEC(syscall32)
 
 /*
  * syscall insn entry.
+ * Enter here with interrupts blocked; %rcx contains the caller's
+ * %rip and the original rflags has been copied to %r11.  %cs and
+ * %ss have been updated to the kernel segments, but %rsp is still
+ * the user-space value.
+ * First order of business is to swap to the kernel GS.base so that
+ * we can access our struct cpu_info.  After possibly mucking with
+ * pagetables, we switch to our kernel stack.  Once that's in place
+ * we can unblock interrupts and save the rest of the syscall frame.
  */
-IDTVEC(syscall)
+KUTEXT_PAGE_START
+ 	.align	NBPG, 0xcc
+XUsyscall_meltdown:
 	/*
-	 * Enter here with interrupts blocked; %rcx contains the caller's
-	 * %rip and the original rflags has been copied to %r11.  %cs and
-	 * %ss have been updated to the kernel segments, but %rsp is still
-	 * the user-space value.
-	 * First order of business is to swap to the kernel GS.base so that
-	 * we can access our struct cpu_info and use the scratch space there
-	 * to switch to the kernel page tables (thank you, Intel), then
-	 * switch to our kernel stack.  Once that's in place we can
-	 * unblock interrupts and save the rest of the syscall frame.
+	 * This is the real Xsyscall_meltdown page, which is mapped into
+	 * the U-K page tables at the same location as Xsyscall_meltdown
+	 * below.  For this, the Meltdown case, we use the scratch space
+	 * in cpu_info so we can switch to the kernel page tables
+	 * (thank you, Intel), at which point we'll continue at the
+	 * "movq CPUVAR(KERN_RSP),%rax" after Xsyscall below.
+	 * In case the CPU speculates past the mov to cr3, we put a
+	 * retpoline-style pause-jmp-to-pause loop.
 	 */
 	swapgs
-	movq	%r15,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_CR3),%r15
-	testq	%r15,%r15
-	jz	Xsyscall_untramp
-	movq	%r15,%cr3
-	jmp	Xsyscall_untramp
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(KERN_CR3),%rax
+	movq	%rax,%cr3
+0:	pause
+	jmp	0b
+KUTEXT_PAGE_END
 
-NENTRY(Xsyscall_untramp)
-	movq	CPUVAR(KERN_RSP),%r15
-	xchgq	%r15,%rsp
+KTEXT_PAGE_START
+	.align	NBPG, 0xcc
+IDTVEC_NOALIGN(syscall_meltdown)
+	/* pad to match real Xsyscall_meltdown positioning above */
+	movq	CPUVAR(KERN_CR3),%rax
+	movq	%rax,%cr3
+IDTVEC_NOALIGN(syscall)
+	swapgs
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(KERN_RSP),%rax
+	xchgq	%rax,%rsp
 	sti
 
 	/*
@@ -580,8 +595,8 @@ NENTRY(Xsyscall_untramp)
 	 * saved. Then, fill in the rest.
 	 */
 	movq	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_SS(%rsp)
-	movq	%r15,TF_RSP(%rsp)
-	movq	CPUVAR(SCRATCH),%r15
+	movq	%rax,TF_RSP(%rsp)
+	movq	CPUVAR(SCRATCH),%rax
 	INTR_SAVE_MOST_GPRS_NO_ADJ
 	movq	%rcx,TF_RCX(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
@@ -648,21 +663,29 @@ NENTRY(Xsyscall_untramp)
 	 */
 	movq	TF_RDX(%rsp),%rdx
 	movq	TF_RAX(%rsp),%rax
-	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(USER_CR3),%rax
-
 	movq	TF_RIP(%rsp),%rcx
 	movq	TF_RFLAGS(%rsp),%r11
 	movq	TF_RSP(%rsp),%rsp
-	testq	%rax,%rax
-	jz	1f
-	jmp	syscall_trampback
-
-KUENTRY(syscall_trampback)
+	CODEPATCH_START
+	movq	%rax,CPUVAR(SCRATCH)
+	movq	CPUVAR(USER_CR3),%rax
 	movq	%rax,%cr3
-1:	movq	CPUVAR(SCRATCH),%rax
+Xsyscall_trampback:
+0:	pause
+	jmp	0b
+	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
 	sysretq
+KTEXT_PAGE_END
+
+KUTEXT_PAGE_START
+	.space	(Xsyscall_trampback - Xsyscall_meltdown) - \
+		(. - XUsyscall_meltdown), 0xcc
+	movq	%rax,%cr3
+	movq	CPUVAR(SCRATCH),%rax
+	swapgs
+	sysretq
+KUTEXT_PAGE_END
 
 	.text
 	_ALIGN_TRAPS
@@ -745,7 +768,9 @@ NENTRY(proc_trampoline)
  *  - swapgs
  *  - iretq
  */
-NENTRY(intr_user_exit)
+KTEXT_PAGE_START
+        _ALIGN_TRAPS
+GENTRY(intr_user_exit)
 #ifdef DIAGNOSTIC
 	pushfq
 	popq	%rdx
@@ -809,25 +834,34 @@ intr_user_exit_post_ast:
 	movq	$(GSEL(GUDATA_SEL,SEL_UPL)),IRETQ_SS(%rdx)
 	/* finish with the trap frame */
 	movq	TF_RAX(%rsp),%rax
-	movq	%rax,CPUVAR(SCRATCH)
 	movq	TF_RCX(%rsp),%rcx
 	movq	TF_R11(%rsp),%r11
 	/* switch to the trampoline stack */
 	xchgq	%rdx,%rsp
 	movq	TF_RDX(%rdx),%rdx
+	CODEPATCH_START
+	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(USER_CR3),%rax
-	testq	%rax,%rax
-	jz	1f
-	jmp	iretq_tramp
-
-KUENTRY(iretq_tramp)
 	movq	%rax,%cr3
-1:	movq	CPUVAR(SCRATCH),%rax
+Xiretq_trampback:
+0:	pause
+	jmp	0b
+	.space	5,0xcc		/* pad to match "movq CPUVAR(SCRATCH),%rax" */
+	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
 
 	.globl	_C_LABEL(doreti_iret)
 _C_LABEL(doreti_iret):
 	iretq
+KTEXT_PAGE_END
+
+KUTEXT_PAGE_START
+	.space	(Xiretq_trampback - Xsyscall_meltdown) - \
+		(. - XUsyscall_meltdown), 0xcc
+	movq	CPUVAR(SCRATCH),%rax
+	swapgs
+	iretq
+KUTEXT_PAGE_END
 
 	.text
 	_ALIGN_TRAPS

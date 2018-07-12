@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.247 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.248 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -345,6 +345,8 @@ void
 enter_shared_special_pages(void)
 {
 	extern char __kutext_start[], __kutext_end[], __kernel_kutext_phys[];
+	extern char __text_page_start[], __text_page_end[];
+	extern char __kernel_kutext_page_phys[];
 	extern char __kudata_start[], __kudata_end[], __kernel_kudata_phys[];
 	vaddr_t va;
 	paddr_t pa;
@@ -360,6 +362,17 @@ enter_shared_special_pages(void)
 	while (va < (vaddr_t)__kutext_end) {
 		pmap_enter_special(va, pa, PROT_READ | PROT_EXEC);
 		DPRINTF("%s: entered kutext page va 0x%llx pa 0x%llx\n",
+		    __func__, (uint64_t)va, (uint64_t)pa);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
+	/* .kutext.page section */
+	va = (vaddr_t)__text_page_start;
+	pa = (paddr_t)__kernel_kutext_page_phys;
+	while (va < (vaddr_t)__text_page_end) {
+		pmap_enter_special(va, pa, PROT_READ | PROT_EXEC);
+		DPRINTF("%s: entered kutext.page va 0x%llx pa 0x%llx\n",
 		    __func__, (uint64_t)va, (uint64_t)pa);
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;

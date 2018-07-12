@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.124 2018/07/09 12:58:43 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.125 2018/07/12 14:11:11 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -140,6 +140,7 @@ struct cpu_softc {
 };
 
 void	replacesmap(void);
+void	replacemeltdown(void);
 
 extern long _stac;
 extern long _clac;
@@ -159,6 +160,21 @@ replacesmap(void)
 	codepatch_replace(CPTAG_STAC, &_stac, 3);
 	codepatch_replace(CPTAG_CLAC, &_clac, 3);
 
+	splx(s);
+}
+
+void
+replacemeltdown(void)
+{
+	static int replacedone = 0;
+	int s;
+
+	if (replacedone)
+		return;
+	replacedone = 1;
+
+	s = splhigh();
+	codepatch_nop(CPTAG_MELTDOWN_NOP);
 	splx(s);
 }
 
@@ -880,7 +896,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #endif	/* MULTIPROCESSOR */
 
 typedef void (vector)(void);
-extern vector Xsyscall, Xsyscall32;
+extern vector Xsyscall_meltdown, Xsyscall, Xsyscall32;
 
 void
 cpu_init_msrs(struct cpu_info *ci)
@@ -888,7 +904,8 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_STAR,
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
 	    ((uint64_t)GSEL(GUCODE32_SEL, SEL_UPL) << 48));
-	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
+	wrmsr(MSR_LSTAR, cpu_meltdown ? (uint64_t)Xsyscall_meltdown :
+	    (uint64_t)Xsyscall);
 	wrmsr(MSR_CSTAR, (uint64_t)Xsyscall32);
 	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C|PSL_D|PSL_AC);
 

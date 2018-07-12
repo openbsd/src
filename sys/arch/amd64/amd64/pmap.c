@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2018/07/11 20:07:55 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2086,15 +2086,25 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	    "0x%llx was 0x%llx\n", __func__, (uint64_t)npa, (uint64_t)pd,
 	    (uint64_t)prot, (uint64_t)pd[l1idx]);
 
-	pd[l1idx] = pa | protection_codes[prot] | PG_V | PG_G | PG_W;
-	DPRINTF("%s: setting PTE[%lld] = 0x%llx\n", __func__, l1idx, pd[l1idx]);
+	pd[l1idx] = pa | protection_codes[prot] | PG_V | PG_W;
 
-	/* now set the PG_G flag on the corresponding U+K entry */
+	/*
+	 * Look up the corresponding U+K entry.  If we're installing the
+	 * same PA into the U-K map then set the PG_G bit on both 
+	 */
 	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
-	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs])))
-		ptes[offs] |= PG_G;
-	else
+	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
+		if (((pd[l1idx] ^ ptes[offs]) & PG_FRAME) == 0) {
+			pd[l1idx] |= PG_G;
+			ptes[offs] |= PG_G;
+		} else {
+			DPRINTF("%s: special diffing mapping at %llx\n",
+			    __func__, (long long)va);
+		}
+	} else
 		DPRINTF("%s: no U+K mapping for special mapping?\n", __func__);
+
+	DPRINTF("%s: setting PTE[%lld] = 0x%llx\n", __func__, l1idx, pd[l1idx]);
 }
 
 void pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)

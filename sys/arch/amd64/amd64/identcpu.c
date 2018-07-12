@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.101 2018/07/11 20:07:55 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.102 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <machine/cpufunc.h>
 
 void	replacesmap(void);
+void	replacemeltdown(void);
 uint64_t cpu_freq(struct cpu_info *);
 void	tsc_timecounter_init(struct cpu_info *, uint64_t);
 #if NVMM > 0
@@ -633,6 +634,8 @@ identifycpu(struct cpu_info *ci)
 
 	if (cpu_meltdown)
 		printf(",MELTDOWN");
+	else
+		replacemeltdown();
 
 	printf("\n");
 

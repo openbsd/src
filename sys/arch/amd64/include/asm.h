@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2018/07/10 16:01:26 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.15 2018/07/12 14:11:11 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -65,24 +65,30 @@
 #endif
 #define _ALIGN_TRAPS	.align	16, 0xcc
 
+#define	_GENTRY(x)	.globl x; .type x,@function; x:
 #define _ENTRY(x) \
-	.text; _ALIGN_TRAPS; .globl x; .type x,@function; x:
+	.text; _ALIGN_TRAPS; _GENTRY(x)
 #define _NENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+	.text; _ALIGN_TEXT; _GENTRY(x)
 
 #ifdef _KERNEL
-#define	KUTEXT	.section .kutext, "ax"
+#define	KUTEXT	.section .kutext, "ax", @progbits
+
+#define	KUTEXT_PAGE_START	.pushsection .kutext.page, "a", @progbits
+#define	KTEXT_PAGE_START	.pushsection .ktext.page, "ax", @progbits
+#define	KUTEXT_PAGE_END		.popsection
+#define	KTEXT_PAGE_END		.popsection
 
 #define	IDTVEC(name) \
 	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
-#define	IDTVEC_NOALIGN(name) \
-	.globl X ## name; .type X ## name,@function; X ## name:
+#define	IDTVEC_NOALIGN(name)	_GENTRY(X ## name)
+#define	GENTRY(x)		_GENTRY(x)
 #define	KIDTVEC(name) \
 	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
 #define	KIDTVEC_FALLTHROUGH(name) \
 	_ALIGN_TEXT; IDTVEC_NOALIGN(name)
 #define KUENTRY(x) \
-	KUTEXT; _ALIGN_TRAPS; .globl x; .type x,@function; x:
+	KUTEXT; _ALIGN_TRAPS; _GENTRY(x)
 
 #endif /* _KERNEL */
 
