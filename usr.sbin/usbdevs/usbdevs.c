@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.28 2018/07/10 09:18:36 mpi Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.29 2018/07/12 07:58:23 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #define USBDEV "/dev/usb"
 
 int verbose = 0;
-int showdevs = 0;
 
 void usage(void);
 void usbdev(int f, uint8_t);
@@ -64,7 +63,7 @@ extern char *__progname;
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-dv] [-a addr] [-f dev]\n", __progname);
+	fprintf(stderr, "usage: %s [-v] [-a addr] [-d usbdev]\n", __progname);
 	exit(1);
 }
 
@@ -124,7 +123,7 @@ usbdev(int f, uint8_t addr)
 	}
 	printf("\n");
 
-	if (showdevs) {
+	if (verbose) {
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
 			if (di.udi_devnames[i][0])
 				printf("\t driver: %s\n", di.udi_devnames[i]);
@@ -238,7 +237,7 @@ main(int argc, char **argv)
 	int addr = 0;
 	int ncont;
 
-	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
+	while ((ch = getopt(argc, argv, "a:d:v?")) != -1) {
 		switch (ch) {
 		case 'a':
 			addr = strtonum(optarg, 1, USB_MAX_DEVICES, &errstr);
@@ -246,9 +245,6 @@ main(int argc, char **argv)
 				errx(1, "addr %s", errstr);
 			break;
 		case 'd':
-			showdevs = 1;
-			break;
-		case 'f':
 			dev = optarg;
 			break;
 		case 'v':
