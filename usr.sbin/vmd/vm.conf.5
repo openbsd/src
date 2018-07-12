@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.31 2018/06/26 11:34:25 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.32 2018/07/12 12:04:49 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: July 12 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -121,6 +121,16 @@ section starts with a declaration of the virtual machine
 The name can be any alphanumeric string along with '.', '-', and '_' characters.
 However, it cannot start with '.', '-', or '_'.
 Typically the name is a hostname.
+.It Ic vm Ar parent Ic instance Ar name Brq ...
+A virtual machine can be created as an instance of any other
+configured VM.
+The new instance will inherit settings from the VM
+.Ar parent ,
+except for exclusive options such as
+.Ic disk ,
+.Ic interface lladdr ,
+or
+.Ic interface name .
 .El
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
@@ -314,6 +324,14 @@ vm "vm2.example.com" {
 	disk "/home/joe/vm2-disk.img"
 	interface { switch "uplink" }
 	owner joe
+}
+.Ed
+.Pp
+Create a new VM as an instance from
+.Sq vm2.example.com :
+.Bd -literal -offset indent
+vm "vm2.example.com" instance "vm3.example.com" {
+	disk "/home/joe/vm3-disk.img"
 }
 .Ed
 .Pp

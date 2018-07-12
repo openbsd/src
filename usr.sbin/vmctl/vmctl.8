@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.42 2018/07/11 17:21:57 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.43 2018/07/12 12:04:49 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2018 $
+.Dd $Mdocdate: July 12 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -94,10 +94,11 @@ command.
 .Op Fl n Ar switch
 .Bk -words
 .Op Fl r Ar path
+.Op Fl t Ar name
 .Ek
 .Xc
 Starts a VM defined by the specified name and parameters:
-.Bl -tag -width "-i count"
+.Bl -tag -width "-I parent"
 .It Fl b Ar path
 Boot the VM with the specified kernel or BIOS image.
 If not specified, the default is to boot using the BIOS image in
@@ -139,6 +140,13 @@ This image file will be available in the
 selected VM as a SCSI CD-ROM device attached to a virtio SCSI adapter
 (e.g.\&
 .Xr vioscsi 4 ) .
+.It Fl t Ar name
+Use an existing VM with the specified
+.Ar name
+as a template to create a new VM instance.
+The instance will inherit settings from the parent VM,
+except for exclusive options such as disk, interface lladdr, or
+interface names.
 .El
 .Pp
 Note that the VM name supplied to the 'start' command can only consist of
@@ -285,6 +293,12 @@ Create a new VM with 1GB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
 # vmctl start "myvm" -m 1G -i 1 -b /bsd -d disk.img
+.Ed
+.Pp
+Start a new VM instance with the name 'myvm' from a pre-configured
+VM 'openbsd.4G':
+.Bd -literal -offset indent
+# vmctl start "myvm" -t "openbsd.4G" -d mydisk.img
 .Ed
 .Pp
 .Xr vmd 8

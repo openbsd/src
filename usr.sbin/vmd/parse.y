@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2018/07/11 16:43:24 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2018/07/12 12:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -93,7 +93,6 @@ int		 parse_disk(char *);
 static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
-static struct vmd_vm		*vm;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vcp_disable;
 static size_t			 vcp_nnics;
@@ -118,7 +117,7 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR
+%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INSTANCE INTERFACE LLADDR
 %token	LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET SWITCH
 %token	UP VM VMID
 %token	<v.number>	NUMBER
@@ -131,6 +130,7 @@ typedef struct {
 %type	<v.owner>	owner_id
 %type	<v.string>	optstring
 %type	<v.string>	string
+%type	<v.string>	vm_instance
 
 %%
 
@@ -279,22 +279,42 @@ switch_opts	: disable			{
 		}
 		;
 
-vm		: VM string			{
+vm		: VM string vm_instance		{
 			unsigned int	 i;
+			char		*name;
 
 			memset(&vmc, 0, sizeof(vmc));
 			vcp = &vmc.vmc_params;
 			vcp_disable = 0;
 			vcp_nnics = 0;
 
+			if ($3 != NULL) {
+				/* This is an instance of a pre-configured VM */
+				if (strlcpy(vmc.vmc_instance, $2,
+				    sizeof(vmc.vmc_instance)) >=
+				    sizeof(vmc.vmc_instance)) {
+					yyerror("vm %s name too long", $2);
+					free($2);
+					free($3);
+					YYERROR;
+				}
+				
+				free($2);
+				name = $3;
+				vmc.vmc_flags |= VMOP_CREATE_INSTANCE;
+			} else
+				name = $2;
+
 			for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
 				/* Set the interface to UP by default */
 				vmc.vmc_ifflags[i] |= IFF_UP;
 			}
 
-			if (strlcpy(vcp->vcp_name, $2, sizeof(vcp->vcp_name)) >=
-			    sizeof(vcp->vcp_name)) {
+			if (strlcpy(vcp->vcp_name, name,
+			    sizeof(vcp->vcp_name)) >= sizeof(vcp->vcp_name)) {
 				yyerror("vm name too long");
+				free($2);
+				free($3);
 				YYERROR;
 			}
 
@@ -302,7 +322,8 @@ vm		: VM string			{
 			vmc.vmc_uid = 0;
 			vmc.vmc_gid = -1;
 		} '{' optnl vm_opts_l '}'	{
-			int ret;
+			struct vmd_vm	*vm;
+			int		 ret;
 
 			/* configured interfaces vs. number of interfaces */
 			if (vcp_nnics > vcp->vcp_nnics)
@@ -318,9 +339,8 @@ vm		: VM string			{
 					    vcp->vcp_name, vm->vm_running ?
 					    "running" : "already exists");
 				} else if (ret == -1) {
-					log_warn("%s:%d: vm \"%s\" failed",
-					    file->name, yylval.lineno,
-					    vcp->vcp_name);
+					yyerror("vm \"%s\" failed: %s",
+					    vcp->vcp_name, strerror(errno));
 					YYERROR;
 				} else {
 					if (vcp_disable)
@@ -335,6 +355,10 @@ vm		: VM string			{
 				vm->vm_from_config = 1;
 			}
 		}
+		;
+
+vm_instance	: /* empty */			{ $$ = NULL; }
+		| INSTANCE string		{ $$ = $2; }
 		;
 
 vm_opts_l	: vm_opts_l vm_opts nl
@@ -673,6 +697,7 @@ lookup(char *s)
 		{ "group",		GROUP },
 		{ "id",			VMID },
 		{ "include",		INCLUDE },
+		{ "instance",		INSTANCE },
 		{ "interface",		INTERFACE },
 		{ "interfaces",		NIFS },
 		{ "lladdr",		LLADDR },
@@ -1163,12 +1188,19 @@ parse_size(char *word, int64_t val)
 int
 parse_disk(char *word)
 {
+	char	path[PATH_MAX];
+
 	if (vcp->vcp_ndisks >= VMM_MAX_DISKS_PER_VM) {
 		log_warnx("too many disks");
 		return (-1);
 	}
 
-	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], word,
+	if (realpath(word, path) == NULL) {
+		log_warn("disk %s", word);
+		return (-1);
+	}
+
+	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], path,
 	    VMM_MAX_PATH_DISK) >= VMM_MAX_PATH_DISK) {
 		log_warnx("disk path too long");
 		return (-1);

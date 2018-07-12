@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.53 2018/07/11 21:29:05 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.54 2018/07/12 12:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -62,6 +62,7 @@ int info_console;
  *  disks: disk image file names
  *  kernel: kernel image to load
  *  iso: iso image file
+ *  instance: create instance from vm
  *
  * Return:
  *  0 if the request to start the VM was sent successfully.
@@ -69,7 +70,8 @@ int info_console;
  */
 int
 vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
-    char **nics, int ndisks, char **disks, char *kernel, char *iso)
+    char **nics, int ndisks, char **disks, char *kernel, char *iso,
+    char *instance)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -87,7 +89,9 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 		flags |= VMOP_CREATE_KERNEL;
 	if (iso)
 		flags |= VMOP_CREATE_CDROM;
-	if (flags != 0) {
+	if (instance)
+		flags |= VMOP_CREATE_INSTANCE;
+	else if (flags != 0) {
 		if (memsize < 1)
 			memsize = VM_DEFAULT_MEMORY;
 		if (ndisks > VMM_MAX_DISKS_PER_VM)
@@ -172,6 +176,10 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 		if (strlcpy(vcp->vcp_cdrom, iso,
 		    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom))
 			errx(1, "cdrom name too long");
+	if (instance != NULL)
+		if (strlcpy(vmc->vmc_instance, instance,
+		    sizeof(vmc->vmc_instance)) >= sizeof(vmc->vmc_instance))
+			errx(1, "instance vm name too long");
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
 	    vmc, sizeof(struct vmop_create_params));
@@ -219,7 +227,7 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 				*ret = ENOENT;
 				break;
 			case VMD_DISK_MISSING:
-				warnx("could not open specified disk image(s)");
+				warnx("could not open disk image(s)");
 				*ret = ENOENT;
 				break;
 			case VMD_DISK_INVALID:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.86 2018/07/11 13:19:47 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.87 2018/07/12 12:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -284,7 +284,8 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		ret = vm_register(ps, &vmc, &vm, imsg->hdr.peerid, vmc.vmc_uid);
+		ret = vm_register(ps, &vmc, &vm,
+		    imsg->hdr.peerid, vmc.vmc_uid);
 		vm->vm_tty = imsg->fd;
 		vm->vm_received = 1;
 		break;

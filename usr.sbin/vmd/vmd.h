@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.74 2018/07/11 13:19:47 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.75 2018/07/12 12:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -141,6 +141,7 @@ struct vmop_create_params {
 #define VMOP_CREATE_NETWORK	0x04
 #define VMOP_CREATE_DISK	0x08
 #define VMOP_CREATE_CDROM	0x10
+#define VMOP_CREATE_INSTANCE	0x20
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
@@ -153,6 +154,7 @@ struct vmop_create_params {
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	unsigned int		 vmc_ifrdomain[VMM_MAX_NICS_PER_VM];
+	char			 vmc_instance[VMM_MAX_NAME_LEN];
 	uid_t			 vmc_uid;
 	int64_t			 vmc_gid;
 };

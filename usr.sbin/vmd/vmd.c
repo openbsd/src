@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.94 2018/07/11 16:37:31 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.95 2018/07/12 12:04:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -58,6 +58,9 @@ int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
 int	 vmd_check_vmh(struct vm_dump_header *);
 
+int	 vm_instance(struct privsep *, struct vmd_vm **,
+	    struct vmop_create_params *, uid_t);
+
 struct vmd	*env;
 
 static struct privsep_proc procs[] = {
@@ -70,6 +73,7 @@ static struct privsep_proc procs[] = {
 /* For the privileged process */
 static struct privsep_proc *proc_priv = &procs[0];
 static struct passwd proc_privpw;
+static const uint8_t zero_mac[ETHER_ADDR_LEN];
 
 int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
@@ -1140,13 +1144,16 @@ int
 vm_register(struct privsep *ps, struct vmop_create_params *vmc,
     struct vmd_vm **ret_vm, uint32_t id, uid_t uid)
 {
-	struct vmd_vm		*vm = NULL;
+	struct vmd_vm		*vm = NULL, *vm_parent = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
-	static const uint8_t	 zero_mac[ETHER_ADDR_LEN];
 	uint32_t		 rng;
 	unsigned int		 i;
 	struct vmd_switch	*sw;
 	char			*s;
+
+	/* Check if this is an instance of another VM */
+	if (vm_instance(ps, &vm_parent, vmc, uid) == -1)
+		return (-1);
 
 	errno = 0;
 	*ret_vm = NULL;
@@ -1162,16 +1169,14 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 	}
 
-	/*
-	 * non-root users can only start existing VMs
-	 * XXX there could be a mechanism to allow overriding some options
-	 */
-	if (vm_checkperm(NULL, uid) != 0) {
+	/* non-root users can only start existing VMs or instances */
+	if (vm_checkperm(vm_parent, uid) != 0) {
 		errno = EPERM;
 		goto fail;
 	}
 	if (vmc->vmc_flags == 0) {
-		errno = ENOENT;
+		log_warnx("invalid configuration, no devices");
+		errno = VMD_DISK_MISSING;
 		goto fail;
 	}
 	if (vcp->vcp_ncpus == 0)
@@ -1265,6 +1270,153 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	if (errno == 0)
 		errno = EINVAL;
 	return (-1);
+}
+
+int
+vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
+    struct vmop_create_params *vmc, uid_t uid)
+{
+	char			*name;
+	struct vm_create_params	*vcp = &vmc->vmc_params;
+	struct vmop_create_params *vmcp;
+	struct vm_create_params	*vcpp;
+	struct vmd_vm		*vm = NULL;
+	unsigned int		 i, j;
+	uint32_t		 id;
+
+	/* return without error if the parent is NULL (nothing to inherit) */
+	if ((vmc->vmc_flags & VMOP_CREATE_INSTANCE) == 0 ||
+	    (*vm_parent = vm_getbyname(vmc->vmc_instance)) == NULL)
+		return (0);
+
+	errno = 0;
+	vmcp = &(*vm_parent)->vm_params;
+	vcpp = &vmcp->vmc_params;
+
+	/*
+	 * Are we allowed to create an instance from this VM?
+	 *
+	 * XXX This is currently allowed for root but will check *vm_parent
+	 * XXX once we defined instance permissions and quota.
+	 */
+	if (vm_checkperm(NULL, uid) != 0) {
+		log_warnx("vm \"%s\" no permission to create vm instance",
+		    vcpp->vcp_name);
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
+
+	id = vcp->vcp_id;
+	name = vcp->vcp_name;
+
+	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||
+	    (vm = vm_getbyvmid(vcp->vcp_id)) != NULL) {
+		errno = EPROCLIM;
+		return (-1);
+	}
+
+	/* machine options */
+	if (vcp->vcp_ncpus == 0)
+		vcp->vcp_ncpus = vcpp->vcp_ncpus;
+	if (vcp->vcp_memranges[0].vmr_size == 0)
+		vcp->vcp_memranges[0].vmr_size =
+		    vcpp->vcp_memranges[0].vmr_size;
+
+	/* disks cannot be inherited */
+	for (i = 0; i < vcp->vcp_ndisks; i++) {
+		/* Check if this disk is already used in the parent */
+		for (j = 0; j < vcpp->vcp_ndisks; j++) {
+			if (strcmp(vcp->vcp_disks[i],
+			    vcpp->vcp_disks[j]) == 0) {
+				log_warnx("vm \"%s\" disk %s cannot be reused",
+				    name, vcp->vcp_disks[i]);
+				errno = EBUSY;
+				return (-1);
+			}
+		}
+	}
+
+	/* interfaces */
+	for (i = 0; i < vcpp->vcp_nnics; i++) {
+		/* Interface got overwritten */
+		if (i < vcp->vcp_nnics)
+			continue;
+
+		/* Copy interface from parent */
+		vmc->vmc_ifflags[i] = vmcp->vmc_ifflags[i];
+		(void)strlcpy(vmc->vmc_ifnames[i], vmcp->vmc_ifnames[i],
+		    sizeof(vmc->vmc_ifnames[i]));
+		(void)strlcpy(vmc->vmc_ifswitch[i], vmcp->vmc_ifswitch[i],
+		    sizeof(vmc->vmc_ifswitch[i]));
+		(void)strlcpy(vmc->vmc_ifgroup[i], vmcp->vmc_ifgroup[i],
+		    sizeof(vmc->vmc_ifgroup[i]));
+		memcpy(vcp->vcp_macs[i], vcpp->vcp_macs[i],
+		    sizeof(vcp->vcp_macs[i]));
+		vmc->vmc_ifrdomain[i] = vmcp->vmc_ifrdomain[i];
+		vcp->vcp_nnics++;
+	}
+	for (i = 0; i < vcp->vcp_nnics; i++) {
+		for (j = 0; j < vcpp->vcp_nnics; j++) {
+			if (memcmp(zero_mac, vcp->vcp_macs[i],
+			    sizeof(vcp->vcp_macs[i])) != 0 &&
+			    memcmp(vcpp->vcp_macs[i], vcp->vcp_macs[i],
+			    sizeof(vcp->vcp_macs[i])) != 0) {
+				log_warnx("vm \"%s\" lladdr cannot be reused",
+				    name);
+				errno = EBUSY;
+				return (-1);
+			}
+			if (strlen(vmc->vmc_ifnames[i]) &&
+			    strcmp(vmc->vmc_ifnames[i],
+			    vmcp->vmc_ifnames[j]) == 0) {
+				log_warnx("vm \"%s\" %s cannot be reused",
+				    vmc->vmc_ifnames[i], name);
+				errno = EBUSY;
+				return (-1);
+			}
+		}
+	}
+
+	/* kernel */
+	if (strlen(vcp->vcp_kernel) == 0 &&
+	    strlcpy(vcp->vcp_kernel, vcpp->vcp_kernel,
+	    sizeof(vcp->vcp_kernel)) >= sizeof(vcp->vcp_kernel)) {
+		log_warnx("vm \"%s\" kernel name too long", name);
+		errno = EINVAL;
+		return (-1);
+	}
+
+	/* cdrom */
+	if (strlen(vcp->vcp_cdrom) == 0 &&
+	    strlcpy(vcp->vcp_cdrom, vcpp->vcp_cdrom,
+	    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom)) {
+		log_warnx("vm \"%s\" cdrom name too long", name);
+		errno = EINVAL;
+		return (-1);
+	}
+
+	/* user */
+	if (vmc->vmc_uid == 0)
+		vmc->vmc_uid = vmcp->vmc_uid;
+	else if (vmc->vmc_uid != vmcp->vmc_uid) {
+		log_warnx("vm \"%s\" user mismatch", name);
+		errno = EPERM;
+		return (-1);
+	}
+
+	/* group */
+	if (vmc->vmc_gid == 0)
+		vmc->vmc_gid = vmcp->vmc_gid;
+	else if (vmc->vmc_gid != vmcp->vmc_gid) {
+		log_warnx("vm \"%s\" group mismatch", name);
+		errno = EPERM;
+		return (-1);
+	}
+
+	/* finished, remove instance flags */
+	vmc->vmc_flags &= ~VMOP_CREATE_INSTANCE;
+
+	return (0);
 }
 
 /*
