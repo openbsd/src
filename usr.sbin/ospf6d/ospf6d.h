@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.35 2018/02/08 00:18:20 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.36 2018/07/12 12:19:05 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -299,6 +299,7 @@ struct iface {
 
 	char			 name[IF_NAMESIZE];
 	char			 demote_group[IFNAMSIZ];
+	char			 dependon[IFNAMSIZ];
 	struct in6_addr		 addr;
 	struct in6_addr		 dst;
 	struct in_addr		 abr_id;
@@ -314,6 +315,7 @@ struct iface {
 	int			 fd;
 	int			 state;
 	int			 mtu;
+	int			 depend_ok;
 	u_int16_t		 flags;
 	u_int16_t		 transmit_delay;
 	u_int16_t		 hello_interval;
@@ -358,6 +360,7 @@ struct redistribute {
 	u_int16_t			label;
 	u_int16_t			type;
 	u_int8_t			prefixlen;
+	char				dependon[IFNAMSIZ];
 };
 
 struct ospfd_conf {
@@ -578,6 +581,7 @@ void	merge_config(struct ospfd_conf *, struct ospfd_conf *);
 void	imsg_event_add(struct imsgev *);
 int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
+int	ifstate_is_up(struct iface *iface);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);

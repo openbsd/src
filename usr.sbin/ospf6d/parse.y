@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2018/07/11 10:23:47 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2018/07/12 12:19:05 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -131,10 +131,11 @@ typedef struct {
 %token	DEMOTE
 %token	INCLUDE
 %token	ERROR
+%token	DEPEND ON
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno no optlist, optlist_l option demotecount
-%type	<v.string>	string
+%type	<v.string>	string dependon
 %type	<v.redist>	redistribute
 
 %%
@@ -259,7 +260,7 @@ conf_main	: ROUTERID STRING {
 		| defaults
 		;
 
-redistribute	: no REDISTRIBUTE STRING optlist {
+redistribute	: no REDISTRIBUTE STRING optlist dependon {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -282,10 +283,15 @@ redistribute	: no REDISTRIBUTE STRING optlist {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $4;
+			if ($5)
+				strlcpy(r->dependon, $5, sizeof(r->dependon));
+			else
+				r->dependon[0] = '\0';
 			free($3);
+			free($5);
 			$$ = r;
 		}
-		| no REDISTRIBUTE RTLABEL STRING optlist {
+		| no REDISTRIBUTE RTLABEL STRING optlist dependon {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -295,7 +301,12 @@ redistribute	: no REDISTRIBUTE STRING optlist {
 			if ($1)
 				r->type |= REDIST_NO;
 			r->metric = $5;
+			if ($6)
+				strlcpy(r->dependon, $6, sizeof(r->dependon));
+			else
+				r->dependon[0] = '\0';
 			free($4);
+			free($6);
 			$$ = r;
 		}
 		;
@@ -346,6 +357,22 @@ option		: METRIC NUMBER {
 				yyerror("only external type 1 and 2 allowed");
 				YYERROR;
 			}
+		}
+		;
+
+dependon	: /* empty */		{ $$ = NULL; }
+		| DEPEND ON STRING	{
+			if (strlen($3) >= IFNAMSIZ) {
+				yyerror("interface name %s too long", $3);
+				free($3);
+				YYERROR;
+			}
+			if ((if_findname($3)) == NULL) {
+				yyerror("unknown interface %s", $3);
+				free($3);
+				YYERROR;
+			}
+			$$ = $3;
 		}
 		;
 
@@ -524,6 +551,19 @@ interfaceoptsl	: PASSIVE		{ iface->cflags |= F_IFACE_PASSIVE; }
 				YYERROR;
 			}
 		}
+		| dependon {
+			struct iface	*depend_if = NULL;
+
+			if ($1) {
+				strlcpy(iface->dependon, $1,
+				        sizeof(iface->dependon));
+				depend_if = if_findname($1);
+				iface->depend_ok = ifstate_is_up(depend_if);
+			} else {
+				iface->dependon[0] = '\0';
+				iface->depend_ok = 1;
+			}
+		}
 		| defaults
 		;
 
@@ -563,6 +603,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{"area",		AREA},
 		{"demote",		DEMOTE},
+		{"depend",		DEPEND},
 		{"external-tag",	EXTTAG},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
@@ -570,6 +611,7 @@ lookup(char *s)
 		{"interface",		INTERFACE},
 		{"metric",		METRIC},
 		{"no",			NO},
+		{"on",			ON},
 		{"passive",		PASSIVE},
 		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},

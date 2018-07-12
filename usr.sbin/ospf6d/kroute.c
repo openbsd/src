@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.56 2018/07/10 12:17:38 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.57 2018/07/12 12:19:05 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -810,13 +810,9 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		return;
 	}
 
-	/* inform engine and rde about state change if interface is used */
-	if (iface->cflags & F_IFACE_CONFIGURED) {
-		main_imsg_compose_ospfe(IMSG_IFINFO, 0, iface,
-		    sizeof(struct iface));
-		main_imsg_compose_rde(IMSG_IFINFO, 0, iface,
-		    sizeof(struct iface));
-	}
+	/* inform engine and rde about state change */
+	main_imsg_compose_rde(IMSG_IFINFO, 0, iface, sizeof(struct iface));
+	main_imsg_compose_ospfe(IMSG_IFINFO, 0, iface, sizeof(struct iface));
 
 	isvalid = (iface->flags & IFF_UP) &&
 	    LINK_STATE_IS_UP(iface->linkstate);

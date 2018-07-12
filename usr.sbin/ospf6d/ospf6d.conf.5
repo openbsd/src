@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.14 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.15 2018/07/12 12:19:05 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: July 12 2018 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -109,14 +109,18 @@ option to ensure that no traffic tries to transit via this router.
 .Ic default Pc
 .Sm on
 .Op Ic set ...\&
+.Bk -words
+.Op Ic depend on Ar interface
 .Xc
 .It Xo
 .Op Ic no
 .Ic redistribute Ar prefix Op Ic set ...\&
+.Op Ic depend on Ar interface
 .Xc
 .It Xo
 .Op Ic no
 .Ic redistribute rtlabel Ar label Op Ic set ...\&
+.Op Ic depend on Ar interface
 .Xc
 If set to
 .Ic connected ,
@@ -147,6 +151,14 @@ The only exception is
 which will be set no matter what, and additionally
 .Ic no
 cannot be used together with it.
+.Pp
+With the
+.Ic depend on
+option, redistributed routes will have a metric of 65535 if the specified
+.Ar interface
+is down or in state backup.
+This is especially useful on a carp cluster to ensure all traffic goes to
+the carp master.
 .Pp
 It is possible to set the route
 .Ic metric
@@ -267,6 +279,9 @@ demotion counter by 1 on the given interface group, usually
 when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
+.It Ic depend on Ar interface
+A metric of 65535 is used if the specified interface is down or in status
+backup.
 .It Ic hello-interval Ar seconds
 Set the hello interval.
 The default value is 10; valid range is 1\-65535 seconds.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.52 2018/07/10 21:21:56 friehm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.53 2018/07/12 12:19:05 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -263,7 +263,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct area	*narea;
 	struct area		*area;
-	struct iface		*iface, *ifp;
+	struct iface		*iface, *ifp, *i;
 	struct ifaddrchange	*ifc;
 	struct iface_addr	*ia, *nia;
 	struct imsg		 imsg;
@@ -298,6 +298,24 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			ifp = imsg.data;
 
+			LIST_FOREACH(area, &oeconf->area_list, entry) {
+				LIST_FOREACH(i, &area->iface_list, entry) {
+					if (strcmp(i->dependon,
+					    ifp->name) == 0) {
+						log_warnx("interface %s"
+						    " changed state, %s"
+						    " depends on it",
+						    ifp->name, i->name);
+						i->depend_ok =
+						    ifstate_is_up(ifp);
+						if (ifstate_is_up(i))
+							orig_rtr_lsa(i);
+					}
+				}
+			}
+
+			if (!(ifp->cflags & F_IFACE_CONFIGURED))
+				break;
 			iface = if_find(ifp->ifindex);
 			if (iface == NULL)
 				fatalx("interface lost in ospfe");
@@ -837,7 +855,11 @@ orig_rtr_lsa_area(struct area *area)
 				log_debug("orig_rtr_lsa: point-to-point, "
 				    "interface %s", iface->name);
 				rtr_link.type = LINK_TYPE_POINTTOPOINT;
-				rtr_link.metric = htons(iface->metric);
+				if (iface->dependon[0] != '\0' &&
+				    iface->depend_ok == 0)
+					rtr_link.metric = MAX_METRIC;
+				else
+					rtr_link.metric = htons(iface->metric);
 				rtr_link.iface_id = htonl(iface->ifindex);
 				rtr_link.nbr_iface_id = htonl(nbr->iface_id);
 				rtr_link.nbr_rtr_id = nbr->id.s_addr;
@@ -862,7 +884,12 @@ orig_rtr_lsa_area(struct area *area)
 					    "interface %s", iface->name);
 
 					rtr_link.type = LINK_TYPE_TRANSIT_NET;
-					rtr_link.metric = htons(iface->metric);
+					if (iface->dependon[0] != '\0' &&
+					    iface->depend_ok == 0)
+						rtr_link.metric = MAX_METRIC;
+					else
+						rtr_link.metric =
+						    htons(iface->metric);
 					rtr_link.iface_id = htonl(iface->ifindex);
 					rtr_link.nbr_iface_id = htonl(iface->dr->iface_id);
 					rtr_link.nbr_rtr_id = iface->dr->id.s_addr;
@@ -922,7 +949,10 @@ orig_rtr_lsa_area(struct area *area)
 					/* RFC 3137: stub router support */
 					if (oe_nofib || oeconf->flags &
 					    OSPFD_FLAG_STUB_ROUTER)
-						rtr_link.metric = 0xffff;
+						rtr_link.metric = MAX_METRIC;
+					else if (iface->dependon[0] != '\0' &&
+						 iface->dependon_ok == 0)
+						rtr_link.metric = MAX_METRIC;
 					else
 						rtr_link.metric =
 						    htons(iface->metric);
