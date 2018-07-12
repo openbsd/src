@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.338 2018/07/07 09:59:34 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.339 2018/07/12 16:53:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1296,56 +1296,46 @@ int
 has_overlap(struct disklabel *lp)
 {
 	struct partition **spp;
-	int c, i, j;
-	char buf[BUFSIZ];
+	int i, p1, p2;
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
 
-	/* Get a sorted list of the in-use partitions. */
-	spp = sort_partitions(lp);
-
-	/* If there are less than two partitions in use, there is no overlap. */
-	if (spp[1] == NULL)
-		return (0);
-
-	/* Now that we have things sorted by starting sector check overlap */
-	for (i = 0; spp[i] != NULL; i++) {
-		for (j = i + 1; spp[j] != NULL; j++) {
-			/* `if last_sec_in_part + 1 > first_sec_in_next_part' */
+	for (;;) {
+		spp = sort_partitions(lp);
+		for (i = 0; spp[i+1] != NULL; i++) {
 			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) >
-			    DL_GETPOFFSET(spp[j])) {
-				/* Overlap!  Convert to real part numbers. */
-				i = ((char *)spp[i] - (char *)lp->d_partitions)
-				    / sizeof(**spp);
-				j = ((char *)spp[j] - (char *)lp->d_partitions)
-				    / sizeof(**spp);
-				printf("\nError, partitions %c and %c overlap:"
-				    "\n", 'a' + i, 'a' + j);
-				printf("#    %16.16s %16.16s  fstype "
-				    "[fsize bsize    cpg]\n", "size", "offset");
-				display_partition(stdout, lp, i, 0);
-				display_partition(stdout, lp, j, 0);
-
-				/* Get partition to disable or ^D */
-				do {
-					printf("Disable which one? "
-					    "(^D to abort) [%c %c] ",
-					    'a' + i, 'a' + j);
-					buf[0] = '\0';
-					if (!fgets(buf, sizeof(buf), stdin)) {
-						putchar('\n');
-						return (1);	/* ^D */
-					}
-					c = buf[0] - 'a';
-				} while (buf[1] != '\n' && buf[1] != '\0' &&
-				    c != i && c != j);
-
-				/* Mark the selected one as unused */
-				lp->d_partitions[c].p_fstype = FS_UNUSED;
-				return (has_overlap(lp));
-			}
+			    DL_GETPOFFSET(spp[i+1]))
+				break;
 		}
+		if (spp[i+1] == NULL) {
+			free(line);
+			return (0);
+		}
+
+		p1 = 'a' + (spp[i] - lp->d_partitions);
+		p2 = 'a' + (spp[i+1] - lp->d_partitions);
+		printf("\nError, partitions %c and %c overlap:\n", p1, p2);
+		printf("#    %16.16s %16.16s  fstype [fsize bsize    cpg]\n",
+		    "size", "offset");
+		display_partition(stdout, lp, p1 - 'a', 0);
+		display_partition(stdout, lp, p2 - 'a', 0);
+
+		for (;;) {
+			printf("Disable which one? (%c %c) ", p1, p2);
+			linelen = getline(&line, &linesize, stdin);
+			if (linelen == -1)
+				goto done;
+			if (linelen == 2 && (line[0] == p1 || line[0] == p2))
+				break;
+		}
+		lp->d_partitions[line[0] - 'a'].p_fstype = FS_UNUSED;
 	}
 
-	return (0);
+done:
+	putchar('\n');
+	free(line);
+	return (1);
 }
 
 void
@@ -1514,7 +1504,7 @@ sort_partitions(struct disklabel *lp)
 	 * This is safe because we guarantee no overlap.
 	 */
 	if (npartitions > 1)
-		if (heapsort((void *)spp, npartitions, sizeof(spp[0]),
+		if (mergesort((void *)spp, npartitions, sizeof(spp[0]),
 		    partition_cmp))
 			err(4, "failed to sort partition table");
 
