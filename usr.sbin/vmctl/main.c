@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2018/07/12 12:04:49 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2018/07/12 14:53:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,7 @@ struct ctl_command ctl_commands[] = {
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
 	    " [-Lc] [-b image] [-r image] [-m size]\n"
-	    "\t\t[-n switch] [-i count] [-d disk]* [-I name]" },
+	    "\t\t[-n switch] [-i count] [-d disk]* [-t name]" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id [-fw]" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
@@ -592,7 +592,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "b:r:cLm:n:d:I:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:r:cLm:n:d:i:t:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (res->path)
@@ -633,15 +633,15 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			if (parse_disk(res, path) != 0)
 				errx(1, "invalid disk: %s", optarg);
 			break;
-		case 'I':
-			if (parse_instance(res, optarg) == -1)
-				errx(1, "invalid name: %s", optarg);
-			break;
 		case 'i':
 			if (res->nifs != -1)
 				errx(1, "interfaces specified multiple times");
 			if (parse_ifs(res, optarg, 0) != 0)
 				errx(1, "invalid interface count: %s", optarg);
+			break;
+		case 't':
+			if (parse_instance(res, optarg) == -1)
+				errx(1, "invalid name: %s", optarg);
 			break;
 		default:
 			ctl_usage(res->ctl);
