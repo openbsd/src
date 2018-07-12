@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.218 2018/07/11 15:25:42 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.219 2018/07/12 16:08:02 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1226,7 +1226,8 @@ char *msgtypes[] = {
 	"RTM_DESYNC: route socket overflow",
 	"RTM_INVALIDATE: invalidate cache of L2 route",
 	"RTM_BFD: bidirectional forwarding detection",
-	"RTM_PROPOSAL: config proposal"
+	"RTM_PROPOSAL: config proposal",
+	"RTM_CHGADDRATTR: address attributes being changed"
 };
 
 char metricnames[] =
@@ -1297,6 +1298,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
+	case RTM_CHGADDRATTR:
 		ifam = (struct ifa_msghdr *)rtm;
 		printf(", metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
