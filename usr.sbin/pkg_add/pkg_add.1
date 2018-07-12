@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.154 2018/07/10 10:20:51 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.155 2018/07/12 06:22:20 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 10 2018 $
+.Dd $Mdocdate: July 12 2018 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -324,8 +324,6 @@ disables that behavior.
 Don't filter out package versions older than what's currently installed.
 .It Cm installed
 In update mode, reinstall an existing package with the same update signature.
-.It Cm libdepends
-Library specifications may not be fulfilled.
 .It Cm nonroot
 Install even if not running as root.
 .It Cm paranoid
