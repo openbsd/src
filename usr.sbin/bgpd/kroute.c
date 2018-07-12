@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.219 2018/07/11 14:08:46 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.220 2018/07/12 21:45:37 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2491,6 +2491,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
 	kif->k.if_type = ifd->ifi_type;
+	kif->k.rdomain = ifd->ifi_rdomain;
 	kif->k.baudrate = ifd->ifi_baudrate;
 
 	send_imsg_session(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
@@ -3057,6 +3058,7 @@ fetchifs(int ifindex)
 		kif->k.flags = ifm.ifm_flags;
 		kif->k.link_state = ifm.ifm_data.ifi_link_state;
 		kif->k.if_type = ifm.ifm_data.ifi_type;
+		kif->k.rdomain = ifm.ifm_data.ifi_rdomain;
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.nh_reachable = kif_validate(&kif->k);
 

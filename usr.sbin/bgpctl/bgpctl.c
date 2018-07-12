@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.204 2018/07/11 16:35:37 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.205 2018/07/12 21:45:37 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1140,7 +1140,7 @@ show_nexthop_msg(struct imsg *imsg)
 void
 show_interface_head(void)
 {
-	printf("%-15s%-15s%-15s%s\n", "Interface", "Nexthop state", "Flags",
+	printf("%-15s%-9s%-9s%-7s%s\n", "Interface", "rdomain", "Nexthop", "Flags",
 	    "Link state");
 }
 
@@ -1223,8 +1223,9 @@ show_interface_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_INTERFACE:
 		k = imsg->data;
 		printf("%-15s", k->ifname);
-		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
-		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
+		printf("%-9u", k->rdomain);
+		printf("%-9s", k->nh_reachable ? "ok" : "invalid");
+		printf("%-7s", k->flags & IFF_UP ? "UP" : "");
 
 		if ((ifms_type = ift2ifm(k->if_type)) != 0)
 			printf("%s, ", get_media_descr(ifms_type));
