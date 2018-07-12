@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.96 2018/07/01 15:52:12 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.97 2018/07/12 12:46:00 fcambus Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -108,7 +108,7 @@ file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 #
 # EFI Framebuffer
 #
-device efifb: wsemuldisplaydev, rasops32, rasops24, rasops16, rasops8, rasops4
+device efifb: wsemuldisplaydev, rasops32, rasops24, rasops16, rasops8
 attach efifb at mainbus
 file arch/amd64/amd64/efifb.c			efifb needs-flag
 
