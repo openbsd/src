@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.7 2018/07/12 11:42:33 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.8 2018/07/12 12:20:11 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -454,8 +454,17 @@ test_parent_dir(int do_uv)
 		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
 		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
 		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
+		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/poop", uv_dir1);
+		UV_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
+		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/link", uv_dir1);
+		UV_SHOULD_SUCCEED((symlink("../subdir1/poop", filename) == -1), "symlink");
 	}
 	sleep(1);
+	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/poop", uv_dir1);
+	UV_SHOULD_SUCCEED((access(filename, R_OK) == -1), "access");
+	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/link", uv_dir1);
+	UV_SHOULD_SUCCEED((access(filename, R_OK) == -1), "access");
+	return 0;
 	UV_SHOULD_SUCCEED((chdir(uv_dir1) == -1), "chdir");
 	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
 	UV_SHOULD_SUCCEED((chdir(filename) == -1), "chdir");
@@ -705,7 +714,6 @@ main (int argc, char *argv[])
 	close(fd2);
 
 
-	failures += runcompare(test_parent_dir);
 	failures += runcompare(test_open);
 	failures += runcompare(test_opendir);
 	failures += runcompare(test_noflags);
@@ -726,5 +734,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_exec);
 	failures += runcompare(test_exec2);
 	failures += runcompare(test_realpath);
+	failures += runcompare(test_parent_dir);
 	exit(failures);
 }
