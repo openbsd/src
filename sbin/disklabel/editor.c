@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.339 2018/07/12 16:53:09 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.340 2018/07/12 16:59:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1153,11 +1153,10 @@ u_int64_t
 getuint64(struct disklabel *lp, char *prompt, char *helpstring,
     u_int64_t oval, u_int64_t maxval, int *flags)
 {
-	char buf[BUFSIZ], *endptr, *p, operator = '\0';
+	char buf[21], *p, operator = '\0';
+	char *unit = NULL;
 	u_int64_t rval = oval;
-	int64_t mult = 1;
-	size_t n;
-	double d, percent = 1.0;
+	double d;
 	int rslt;
 
 	rslt = snprintf(buf, sizeof(buf), "%llu", oval);
@@ -1167,113 +1166,59 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 	p = getstring(prompt, helpstring, buf);
 	if (p == NULL)
 		return (CMD_ABORTED);
-	if (strlcpy(buf, p, sizeof(buf)) >= sizeof(buf))
-		goto invalid;
-	n = strlen(buf);
-
-	if (buf[0] == '*' && buf[1] == '\0') {
+	else if (p[0] == '\0')
+		rval = oval;
+	else if (p[0] == '*' && p[1] == '\0')
 		rval = maxval;
-	} else {
-		/* deal with units */
-		if (buf[0] != '\0' && n > 0) {
-			if (flags != NULL && (*flags & DO_CONVERSIONS)) {
-				switch (tolower((unsigned char)buf[n-1])) {
-
-				case 'c':
-					mult = lp->d_secpercyl;
-					buf[--n] = '\0';
-					break;
-				case 'b':
-					mult = -(int64_t)lp->d_secsize;
-					buf[--n] = '\0';
-					break;
-				case 'k':
-					if (lp->d_secsize > 1024)
-						mult = -(int64_t)lp->d_secsize /
-						    1024LL;
-					else
-						mult = 1024LL / lp->d_secsize;
-					buf[--n] = '\0';
-					break;
-				case 'm':
-					mult = (1024LL * 1024) / lp->d_secsize;
-					buf[--n] = '\0';
-					break;
-				case 'g':
-					mult = (1024LL * 1024 * 1024) /
-					    lp->d_secsize;
-					buf[--n] = '\0';
-					break;
-				case 't':
-					mult = (1024LL * 1024 * 1024 * 1024) /
-					    lp->d_secsize;
-					buf[--n] = '\0';
-					break;
-				case '%':
-					buf[--n] = '\0';
-					p = &buf[0];
-					if (*p == '+' || *p == '-')
-						operator = *p++;
-					percent = strtod(p, NULL) / 100.0;
-					snprintf(buf, sizeof(buf), "%llu",
-					    DL_GETDSIZE(lp));
-					break;
-				case '&':
-					buf[--n] = '\0';
-					p = &buf[0];
-					if (*p == '+' || *p == '-')
-						operator = *p++;
-					percent = strtod(p, NULL) / 100.0;
-					snprintf(buf, sizeof(buf), "%llu",
-					    maxval);
-					break;
-				}
-			}
-
-			/* Did they give us an operator? */
-			p = &buf[0];
-			if (*p == '+' || *p == '-')
-				operator = *p++;
-
-			endptr = p;
-			errno = 0;
-			d = strtod(p, &endptr);
-			if (errno == ERANGE || d < 0)
-				goto invalid;	/* too big/small */
-			else if (*endptr != '\0') {
-				goto invalid;	/* non-numbers in str */
-			} else {
-				if (mult > 0)
-					d = d * mult * percent;
-				else
-					d = d / (-mult) * percent;
-
-				if (d < CMD_ABORTED) {
-					rval = d;
-				} else {
+	else {
+		if (*p == '+' || *p == '-')
+			operator = *p++;
+		if (parse_sizespec(p, &d, &unit) == -1)
+			goto invalid;
+		if (unit == NULL)
+			rval = d;
+		else if (flags != NULL && (*flags & DO_CONVERSIONS) == 0)
+			goto invalid;
+		else {
+			switch (tolower((unsigned char)*unit)) {
+			case 'b':
+				rval = d / lp->d_secsize;
+				break;
+			case 'c':
+				rval = d * lp->d_secpercyl;
+				break;
+			case '%':
+				rval = DL_GETDSIZE(lp) * (d / 100.0);
+				break;
+			case '&':
+				rval = maxval * (d / 100.0);
+				break;
+			default:
+				if (apply_unit(d, *unit, &rval) == -1)
 					goto invalid;
-				}
+				rval = DL_BLKTOSEC(lp, rval);
+				break;
+			}
+		}
 
-				/* Range check then apply [+-] operator */
-				if (operator == '+') {
-					if (CMD_ABORTED - oval > rval)
-						rval += oval;
-					else {
-						goto invalid;
-					}
-				} else if (operator == '-') {
-					if (oval >= rval)
-						rval = oval - rval;
-					else {
-						goto invalid;
-					}
-				}
+		/* Range check then apply [+-] operator */
+		if (operator == '+') {
+			if (CMD_ABORTED - oval > rval)
+				rval += oval;
+			else {
+				goto invalid;
+			}
+		} else if (operator == '-') {
+			if (oval >= rval)
+				rval = oval - rval;
+			else {
+				goto invalid;
 			}
 		}
 	}
 
 	if (flags != NULL) {
-		if (mult != 1)
+		if (unit != NULL)
 			*flags |= DO_ROUNDING;
 #ifdef SUN_CYLCHECK
 		if (lp->d_flags & D_VENDOR)
