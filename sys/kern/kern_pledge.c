@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.234 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.235 2018/07/12 01:23:38 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -917,8 +917,8 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	if (miblen == 2 &&		/* setproctitle() */
 	    mib[0] == CTL_VM && mib[1] == VM_PSSTRINGS)
 		return (0);
-	if (miblen == 2 &&		/* hw.ncpu */
-	    mib[0] == CTL_HW && mib[1] == HW_NCPU)
+	if (miblen == 2 &&		/* hw.ncpu / hw.ncpuonline */
+	    mib[0] == CTL_HW && (mib[1] == HW_NCPU || mib[1] == HW_NCPUONLINE))
 		return (0);
 	if (miblen == 2 &&		/* vm.loadavg / getloadavg(3) */
 	    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)

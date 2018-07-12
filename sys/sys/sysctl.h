@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.178 2018/06/19 19:29:52 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.179 2018/07/12 01:23:38 cheloha Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -842,7 +842,7 @@ struct kinfo_file {
  */
 #define	HW_MACHINE		 1	/* string: machine class */
 #define	HW_MODEL		 2	/* string: specific machine model */
-#define	HW_NCPU			 3	/* int: number of cpus being used */
+#define	HW_NCPU			 3	/* int: number of configured cpus */
 #define	HW_BYTEORDER		 4	/* int: machine byte order */
 #define	HW_PHYSMEM		 5	/* int: total memory */
 #define	HW_USERMEM		 6	/* int: non-kernel memory */
@@ -860,11 +860,12 @@ struct kinfo_file {
 #define	HW_UUID			18	/* string: universal unique id */
 #define	HW_PHYSMEM64		19	/* quad: total memory */
 #define	HW_USERMEM64		20	/* quad: non-kernel memory */
-#define	HW_NCPUFOUND		21	/* int: number of cpus found*/
+#define	HW_NCPUFOUND		21	/* int: number of cpus found */
 #define	HW_ALLOWPOWERDOWN	22	/* allow power button shutdown */
 #define	HW_PERFPOLICY		23	/* set performance policy */
 #define	HW_SMT			24	/* int: enable SMT/HT/CMT */
-#define	HW_MAXID		25	/* number of valid hw ids */
+#define	HW_NCPUONLINE		25	/* int: number of cpus being used */
+#define	HW_MAXID		26	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -892,6 +893,7 @@ struct kinfo_file {
 	{ "allowpowerdown", CTLTYPE_INT }, \
 	{ "perfpolicy", CTLTYPE_STRING }, \
 	{ "smt", CTLTYPE_INT }, \
+	{ "ncpuonline", CTLTYPE_INT }, \
 }
 
 /*

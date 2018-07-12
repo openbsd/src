@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.345 2018/07/02 14:36:33 visa Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.346 2018/07/12 01:23:38 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -701,6 +701,9 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, ncpus));
 	case HW_NCPUFOUND:
 		return (sysctl_rdint(oldp, oldlenp, newp, ncpusfound));
+	case HW_NCPUONLINE:
+		return (sysctl_rdint(oldp, oldlenp, newp,
+		    sysctl_hwncpuonline()));
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:

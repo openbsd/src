@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.50 2018/07/07 15:19:25 visa Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.51 2018/07/12 01:23:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -810,6 +810,26 @@ cpuset_complement(struct cpuset *to, struct cpuset *a, struct cpuset *b)
 
 	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
 		to->cs_set[i] = b->cs_set[i] & ~a->cs_set[i];
+}
+
+int
+cpuset_cardinality(struct cpuset *cs)
+{
+	int cardinality, i, n;
+
+	cardinality = 0;
+
+	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
+		for (n = cs->cs_set[i]; n != 0; n &= n - 1)
+			cardinality++;
+
+	return (cardinality);
+}
+
+int
+sysctl_hwncpuonline(void)
+{
+	return cpuset_cardinality(&sched_all_cpus);
 }
 
 #ifdef __HAVE_CPU_TOPOLOGY

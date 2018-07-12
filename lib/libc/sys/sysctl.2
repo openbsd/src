@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.9 2018/06/21 20:28:36 jmc Exp $
+.\"	$OpenBSD: sysctl.2,v 1.10 2018/07/12 01:23:38 cheloha Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 21 2018 $
+.Dd $Mdocdate: July 12 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -286,6 +286,7 @@ privileges may change the value.
 .It Dv HW_MODEL Ta "string" Ta "no"
 .It Dv HW_NCPU Ta "integer" Ta "no"
 .It Dv HW_NCPUFOUND Ta "integer" Ta "no"
+.It Dv HW_NCPUONLINE Ta "integer" Ta "no"
 .It Dv HW_PAGESIZE Ta "integer" Ta "no"
 .It Dv HW_PERFPOLICY Ta "string" Ta "yes"
 .It Dv HW_PHYSMEM Ta "integer" Ta "no"
@@ -328,9 +329,11 @@ The machine class.
 .It Dv HW_MODEL Pq Va hw.model
 The machine model.
 .It Dv HW_NCPU Pq Va hw.ncpu
-The number of CPUs being used.
+The number of CPUs configured.
 .It Dv HW_NCPUFOUND Pq Va hw.ncpufound
 The number of CPUs found.
+.It Dv HW_NCPUONLINE Pq Va hw.ncpuonline
+The number of CPUs online.
 .It Dv HW_PAGESIZE Pq Va hw.pagesize
 The software page size.
 .It Dv HW_PERFPOLICY Pq Va hw.perfpolicy
