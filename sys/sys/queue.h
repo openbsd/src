@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.44 2016/09/09 20:31:46 millert Exp $	*/
+/*	$OpenBSD: queue.h,v 1.45 2018/07/12 14:22:54 sashan Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -82,7 +82,8 @@
  */
 
 #if defined(QUEUE_MACRO_DEBUG) || (defined(_KERNEL) && defined(DIAGNOSTIC))
-#define _Q_INVALIDATE(a) (a) = ((void *)-1)
+#define _Q_INVALID ((void *)-1)
+#define _Q_INVALIDATE(a) (a) = _Q_INVALID
 #else
 #define _Q_INVALIDATE(a)
 #endif
