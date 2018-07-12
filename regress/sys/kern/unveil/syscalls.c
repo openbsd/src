@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.6 2018/07/11 20:01:56 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.7 2018/07/12 11:42:33 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -247,8 +247,23 @@ test_opendir(int do_uv)
 	UV_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
 	(void) snprintf(filename, sizeof(filename), "/%s/subdir", uv_dir2);
 	UV_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
-	(void) snprintf(filename, sizeof(filename), "/%s/../../%s/subdir", uv_dir1, uv_dir2);
 	UV_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
+	(void) snprintf(filename, sizeof(filename), "%s/../..%s/subdir", uv_dir1, uv_dir2);
+	UV_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
+	return 0;
+}
+
+static int
+test_realpath(int do_uv)
+{
+	char buf[PATH_MAX];
+	if (do_uv) {
+		printf("testing realpath\n");
+		do_unveil();
+	}
+	UV_SHOULD_SUCCEED((realpath(uv_dir1, buf) == NULL), "realpath");
+	return 0;
+	UV_SHOULD_ENOENT((realpath(uv_dir2, buf) == NULL), "realpath");
 	return 0;
 }
 
@@ -507,9 +522,10 @@ test_access(int do_uv)
 
 	UV_SHOULD_SUCCEED((access(uv_file1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_file2, R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/etc/passwd", R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
-	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
+	UV_SHOULD_SUCCEED((access("/", R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
 
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
@@ -517,7 +533,7 @@ test_access(int do_uv)
 	UV_SHOULD_ENOENT((access(uv_file2, R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
-	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
+	UV_SHOULD_SUCCEED((access("/", R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
 
 	return 0;
@@ -547,12 +563,11 @@ test_stat(int do_uv)
 	}
 	struct stat sb;
 
-//	UV_SHOULD_SUCCEED((stat("/etc/fonts/conf.d/10-scale-bitmap-fonts.conf", &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((stat(uv_file1, &sb) == -1), "stat");
 	UV_SHOULD_ENOENT((stat(uv_file2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat(uv_dir1, &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat(uv_dir2, &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat(uv_dir2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
 
 	return 0;
@@ -710,5 +725,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_chmod);
 	failures += runcompare(test_exec);
 	failures += runcompare(test_exec2);
+	failures += runcompare(test_realpath);
 	exit(failures);
 }
