@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.171 2018/07/01 08:53:03 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.172 2018/07/12 16:07:35 florian Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -240,6 +240,7 @@ struct rt_msghdr {
 #define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 #define RTM_BFD		0x12	/* bidirectional forwarding detection */
 #define RTM_PROPOSAL	0x13	/* proposal for netconfigd */
+#define RTM_CHGADDRATTR	0x14	/* address attribute change */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
