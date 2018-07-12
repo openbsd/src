@@ -43,6 +43,7 @@ _ospf6d:*:90:90::0:0:OSPF6 Daemon:/var/empty:/sbin/nologin
 _snmpd:*:91:91::0:0:SNMP Daemon:/var/empty:/sbin/nologin
 _rtadvd:*:92:92::0:0:IPv6 Router Advertisement Daemon:/var/empty:/sbin/nologin
 _ypldap:*:93:93::0:0:YP to LDAP Daemon:/var/empty:/sbin/nologin
+_rad:*:94:94::0:0:IPv6 Router Advertisement Daemon:/var/empty:/sbin/nologin
 _smtpd:*:95:95::0:0:SMTP Daemon:/var/empty:/sbin/nologin
 _rwalld:*:96:96::0:0:rpc.rwalld:/var/empty:/sbin/nologin
 _nsd:*:97:97::0:0:NSD Daemon:/var/empty:/sbin/nologin
