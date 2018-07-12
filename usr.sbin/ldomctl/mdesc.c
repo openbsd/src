@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.9 2015/05/23 14:26:06 jsg Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.10 2018/07/12 14:46:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -312,6 +312,15 @@ md_find_delete_node(struct md *md, const char *name)
 
 	node = md_find_node(md, name);
 	if (node)
+		md_delete_node(md, node);
+}
+
+void
+md_find_delete_nodes(struct md *md, const char *name)
+{
+	struct md_node *node;
+
+	while ((node = md_find_node(md, name)))
 		md_delete_node(md, node);
 }
 
@@ -648,4 +657,21 @@ md_write(struct md *md, const char *path)
 		err(1, "fwrite");
 
 	fclose(fp);
+}
+
+uint32_t
+md_size(const char *path)
+{
+	uint32_t size;
+	FILE *fp;
+
+	fp = fopen(path, "r");
+	if (fp == NULL)
+		err(1, "fopen");
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fclose(fp);
+
+	return size;
 }
