@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2018/07/13 08:32:10 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2018/07/13 09:16:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1045,4 +1045,18 @@ route_receive(int fd, short events, void *arg)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
+	switch (rtm->rtm_type) {
+	case RTM_IFINFO:
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		/*
+		 * do the same thing as after a config reload when interfaces
+		 * change or IPv6 addresses show up / disappear
+		 */
+		merge_ra_interfaces();
+		break;
+	default:
+		log_debug("unexpected RTM: %d", rtm->rtm_type);
+		break;
+	}
 }
