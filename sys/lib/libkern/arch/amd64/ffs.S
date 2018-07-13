@@ -13,7 +13,7 @@ ENTRY(ffs)
 	incl	%eax			/* bits numbered from 1, not 0 */
 	jmp L2
 
-	_ALIGN_TEXT
+	_ALIGN_TRAPS
 L1:	xorl	%eax,%eax		/* clear result */
 L2:	RETGUARD_CHECK(ffs, r11)
 	ret

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.4 2018/07/03 23:22:48 mortimer Exp $	*/
+/*	$OpenBSD: strchr.S,v 1.5 2018/07/13 05:56:57 guenther Exp $	*/
 /*	$NetBSD: strchr.S,v 1.7 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ ENTRY(strchr)
 	jmp 12f
 
 /* End of string, check whether char is before NUL */
-	_ALIGN_TEXT		/* adds three byte nop */
+	_ALIGN_TRAPS
 10:
 	bsf	%rax,%rax	/* count to NUL */
 	andq	%rsi,%r11	/* check for char in last 8 bytes */
@@ -104,7 +104,7 @@ ENTRY(strchr)
 	ret
 
 /* Source misaligned: read aligned word and make low bytes invalid */
-/* I (dsl) think a _ALIGN_TEXT here will slow things down! */
+/* I (dsl) think aligning the text here will slow things down! */
 20:
 	xor	%rcx,%rcx
 	sub	%dil,%cl	/* Convert low address values 1..7 ... */
