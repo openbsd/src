@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.220 2018/07/13 09:06:58 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.221 2018/07/13 09:19:42 schwarze Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -763,15 +763,6 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 	else if (bits) {
 		addr = net;
 		mask = 0xffffffff << (32 - bits);
-	} else if (net < IN_CLASSA_MAX) {
-		addr = net << IN_CLASSA_NSHIFT;
-		mask = IN_CLASSA_NET;
-	} else if (net < IN_CLASSB_MAX) {
-		addr = net << IN_CLASSB_NSHIFT;
-		mask = IN_CLASSB_NET;
-	} else if (net < (1 << 24)) {
-		addr = net << IN_CLASSC_NSHIFT;
-		mask = IN_CLASSC_NET;
 	} else {
 		addr = net;
 		if ((addr & IN_CLASSA_HOST) == 0)
