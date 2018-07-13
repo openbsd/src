@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.309 2018/07/11 20:18:09 phessler Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.310 2018/07/13 05:22:34 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 11 2018 $
+.Dd $Mdocdate: July 13 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -895,9 +895,9 @@ will begin advertising as master.
 .Ar wireless-interface
 .Op Oo Fl Oc Ns Cm bssid Ar bssid
 .Op Oo Fl Oc Ns Cm chan Op Ar n
+.Op Oo Fl Oc Ns Cm join Op Ar id
 .Op Oo Fl Oc Ns Cm nwflag Ar flag
 .Op Oo Fl Oc Ns Cm nwid Ar id
-.Op Oo Fl Oc Ns Cm join Op Ar id
 .Op Oo Fl Oc Ns Cm nwkey Ar key
 .Op Oo Fl Oc Ns Cm powersave Op Ar duration
 .Op Cm scan
@@ -927,6 +927,30 @@ show the list of channels supported by the device.
 .It Cm -chan
 Unset the desired channel.
 It doesn't affect the channel to be created for IBSS or Host AP mode.
+.It Cm join Op Ar id
+Add the network with NWID/ESSID
+.Ar id
+to the list of auto-join networks.
+Information about such networks is retained,
+such that configured interfaces can automatically switch to such networks
+as necessary.
+If no
+.Ar id
+is specified, show the list of currently configured auto-join networks.
+.Pp
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+Any necessary
+.Cm wpakey
+or
+.Cm nwkey
+arguments should be specified on the same line.
+.It Cm -join Op Ar id
+Remove all networks from the list of auto-join networks,
+or the network with NWID
+.Ar id .
 .It Cm nwflag Ar flag
 Set specified flag.
 The flag name can be either
@@ -959,35 +983,15 @@ and
 .It Cm -nwflag Ar flag
 Remove specified flag.
 .It Cm nwid Ar id
-Configure network ID.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
+Connect to the network with NWID
+.Ar id .
+Unlike auto-join networks,
+information about the network is not retained.
 The empty string allows the interface to connect to any available
 access points.
-Note that network ID is synonymous with Extended Service Set ID (ESSID).
 .It Cm -nwid
-Set the network ID to the empty string to allow the interface to connect
+Set the NWID to the empty string to allow the interface to connect
 to any available access point.
-.It Cm join Op Ar id
-Configure network ID.
-The
-.Ar id
-will be used to auto-join wireless networks.
-The
-.Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
-Any necessary
-.Cm wpakey
-or
-.Cm nwkey
-arguments should be specified on the same line.
-.Pp
-If no
-.Ar id
-is specified, show the list of currently configured auto-join networks.
 .It Cm nwkey Ar key
 Enable WEP encryption using the specified
 .Ar key .
