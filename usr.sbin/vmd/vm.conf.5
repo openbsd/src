@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.34 2018/07/13 15:18:59 anton Exp $
+.\" $OpenBSD: vm.conf.5,v 1.35 2018/07/13 17:48:30 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -125,11 +125,10 @@ Typically the name is a hostname.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm allow instance Oc Op Brq ...
+.It Cm allow instance Op Brq ...
 Set the permissions to create VM instances.
 See
-.Sx VM INSTANCES
-for the supported options.
+.Sx VM INSTANCES .
 .It Cm boot Ar path
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
@@ -231,7 +230,7 @@ It is possible to use configured or running VMs as a template for
 additional instances of the VM.
 An instance is just like a normal
 .Ic vm
-and is configured with the following declaration of the virtual machine:
+and is configured with the following declaration of the virtual machine
 .Ar name :
 .Bl -tag -width Ds
 .It Ic vm Ar parent Ic instance Ar name Brq ...
@@ -253,37 +252,38 @@ The allowed instance options are configured in the
 .Ar parent
 VM:
 .Bl -tag -width Ds
-.It Cm allow instance Oc Op Brq ...
+.It Cm allow instance Op Brq ...
 Allow users to use this VM as a template for VM instances.
 By default, the root user can always create instances without
 restrictions and users or non-root owners cannot create instances.
 An instance will inherit the configuration from the VM and the user,
 if permitted, will be allowed to configure individual VM options.
+.El
 .Pp
 Valid options are:
 .Bl -tag -width Ds
 .It Cm boot
-Allow to configure the kernel or BIOS image.
+Allow user to configure the kernel or BIOS image.
 The user needs read access to the image.
 .It Cm cdrom
-Allow to configure the ISO file.
+Allow user to configure the ISO file.
 The user needs read access to the file.
 .It Cm disk
-Allow to configure the disk images.
+Allow user to configure the disk images.
 The user needs read and write access to image and instances are not
 allowed to reuse disks from the parent VM.
 .It Cm instance
-Allow to create additional instances from the instances.
+Allow user to create additional instances from the instances.
 .It Cm interface
-Allow to change network interface settings.
+Allow user to change network interface settings.
 .It Cm memory
-Allow to configure the memory size.
+Allow user to configure the memory size.
 .It Cm owner Ar user Ns Op : Ns Ar group
 Allow the specified user or group to create the instances.
-The owner will be allowed to create instances VMs, start or stop the
+The owner will be allowed to create VM instances, start or stop the
 instances, pause or unpause the instances, and open the instances'
 consoles.
-.It Cm owner Pf : Ar group
+.It Cm owner : Ns Ar group
 Set the owner to the specified group.
 .El
 .Sh SWITCH CONFIGURATION
