@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.6 2018/07/13 08:32:10 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.7 2018/07/13 09:16:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -303,6 +303,8 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath cpath sendfd", NULL) == -1)
 		fatal("pledge");
+
+	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 
 	event_dispatch();
 
