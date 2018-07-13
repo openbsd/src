@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2018/07/11 14:51:01 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 2018/07/13 08:39:33 krw Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -96,7 +96,6 @@ poke_daemon(unsigned char cookie)
 {
 	int sock = -1;
 	const char *cronsock = _PATH_CRON_SOCK;
-	struct stat sb;
 	struct sockaddr_un s_un;
 
 	bzero(&s_un, sizeof(s_un));
