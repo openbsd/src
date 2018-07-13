@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.8 2018/07/12 12:20:11 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.9 2018/07/13 08:59:02 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -695,6 +695,40 @@ test_exec2(int do_uv)
 	return 0;
 }
 
+static int
+test_slash(int do_uv)
+{
+	extern char **environ;
+	if (do_uv) {
+		if (unveil("/bin/sh", "x") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+	}
+	return 0;
+}
+
+static int
+test_fork(int do_uv)
+{
+	int status;
+	if (do_uv) {
+		if (unveil("/etc/passswd", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+	}
+	pid_t pid = fork();
+	if (pid == 0) {
+		printf ("testing child\n");
+		if (do_uv) {
+		if (open("/etc/hosts", O_RDONLY) != -1)
+			   err(1, "open /etc/hosts worked");
+		if (open("/etc/passwd", O_RDONLY) == -1)
+			   err(1, "open /etc/passwd failed");
+		}
+		exit(0);
+	}
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -735,5 +769,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_exec2);
 	failures += runcompare(test_realpath);
 	failures += runcompare(test_parent_dir);
+	failures += runcompare(test_slash);
+	failures += runcompare(test_fork);
 	exit(failures);
 }
