@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.19 2018/02/24 06:31:47 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.20 2018/07/13 08:41:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -923,7 +923,6 @@ bridge_rule(int targc, char **targv, int ln)
 	int argc = targc;
 	struct ifbrlreq rule;
 	struct ether_addr *ea, *dea;
-	struct in_addr *ia;
 
 	if (argc == 0) {
 		warnx("invalid rule");

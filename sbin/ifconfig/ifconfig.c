@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.368 2018/07/11 20:18:09 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.369 2018/07/13 08:41:32 krw Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2164,7 +2164,7 @@ print_cipherset(u_int32_t cipherset)
 void
 ieee80211_status(void)
 {
-	int len, i, nwkey_verbose, inwid, ijoin, inwkey, ipsk, ichan, ipwr;
+	int len, inwid, ijoin, inwkey, ipsk, ichan, ipwr;
 	int ibssid, iwpa;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_join join;
@@ -2176,7 +2176,6 @@ ieee80211_status(void)
 	struct ieee80211_wpaparams wpa;
 	struct ieee80211_nodereq nr;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
-	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 	struct ether_addr ea;
 
 	/* get current status via ioctls */
