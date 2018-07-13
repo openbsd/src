@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.164 2018/02/10 10:32:51 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.165 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 void	proc_finish_wait(struct proc *, struct proc *);
 void	process_zap(struct process *);
 void	proc_free(struct proc *);
+void	unveil_destroy(struct process *ps);
 
 /*
  * exit --
@@ -605,6 +606,8 @@ process_zap(struct process *pr)
 	 * Decrement the count of procs running with this uid.
 	 */
 	(void)chgproccnt(pr->ps_ucred->cr_ruid, -1);
+
+	unveil_destroy(pr);
 
 	/*
 	 * Release reference to text vnode

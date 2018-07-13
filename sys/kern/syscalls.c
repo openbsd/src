@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.195 2018/07/05 15:31:51 mpi Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.196 2018/07/13 09:25:23 beck Exp $	*/
 
 /*
  * System call names.
@@ -134,7 +134,7 @@ char *syscallnames[] = {
 	"sigsuspend",			/* 111 = sigsuspend */
 	"sendsyslog",			/* 112 = sendsyslog */
 	"#113 (unimplemented fktrace)",		/* 113 = unimplemented fktrace */
-	"#114 (obsolete osendmsg)",		/* 114 = obsolete osendmsg */
+	"unveil",			/* 114 = unveil */
 	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */
 	"#116 (obsolete t32_gettimeofday)",		/* 116 = obsolete t32_gettimeofday */
 	"#117 (obsolete t32_getrusage)",		/* 117 = obsolete t32_getrusage */

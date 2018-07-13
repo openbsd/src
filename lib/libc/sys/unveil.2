@@ -1,0 +1,158 @@
+.\" $OpenBSD: unveil.2,v 1.1 2018/07/13 09:25:22 beck Exp $
+.\"
+.\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 13 2018 $
+.Dt UNVEIL 2
+.Os
+.Sh NAME
+.Nm unveil
+.Nd unveil parts of a restricted filesystem view
+.Sh SYNOPSIS
+.In unistd.h
+.Ft int
+.Fn unveil "const char *path" "const char *flags"
+.Sh DESCRIPTION
+The first call to
+.Nm
+removes visibility of the envire filesystem from all other
+filesystem-related system calls (
+.Xr open 2 ,
+.Xr chmod 2 ,
+.Xe rename 2,
+etc).
+except for the specified
+.Ar path.
+Subequent calls to
+.Nm
+expose additional views of the filesystem.
+.Pp
+The
+.Nm
+call is treated specially and can continue to see the filesystem for
+subsequent calls.
+.Nm
+can be locked,
+preventing further filesytem exposure by calling
+.Nm
+with two
+.Ar NULL
+arguments.
+.Xr pledge 2
+may alternatively be used
+to remove the "unveil" permission.
+.Pp
+The
+.Fa flags
+argument points to a string consisting of the following characters. 
+.Pp
+.Bl -tag -width c -offset indent -compact
+.It Dv r
+.Ar path
+hould be made  be available for read operations corresponding to
+.Xr pledge 2
+promise
+.Ar rpath .
+.It Dv w
+.Ar path
+should be available for write operations corresponding to
+.Xr pledge 2
+promise
+.Ar wpath .
+.It Dv x
+.Ar path
+should be available for execute operations corresponding to 
+.Xr pledge 2
+promise
+.Ar wpath .
+.It Dv c
+.Ar path
+should be allowed to be created and removed, corresponding to 
+.Xr pledge 2
+promise
+.Ar cpath .
+.El
+.Pp
+A
+.Ar path
+that is a directory will enable all filesystem access underneath
+.Ar path
+using
+.Ar flags
+if and only if no more specific matching
+.Fn unveil
+exists at a lower level.
+.Pp
+Attempts to access paths not allowed by
+.Nm
+will result in an error of
+.Ar EACCES
+when the
+.Ar flags
+argument does not match the attempted operation.
+.Ar ENOENT
+is returned for paths for which no
+.Nm
+flags are present.
+.Pp
+As with
+.Xr pledge 2 ,
+the use of
+.Fn unveil
+in an application will require lots of study and understanding
+of the interfaces called.
+In most cases it is best practice to unveil the directories
+in which an application makes use of files.
+It is important to consider that directory results are remembered at
+the time of a call to
+.Fn unveil .
+This means that a directory that is removed and recreated after a call to
+.Fn unveil
+will appear to not exist.
+Non directories are remembered by name within their containing directory,
+and so may be created, removed, or re-created after a call to
+.Fn unveil
+and still appear to exist.
+.Sh RETURN VALUES
+.Fn unveil
+returns 0 on success or -1 on failure.
+.Sh ERRORS
+.Bl -tag -width Er
+.It E2BIG
+The addition of
+.Ar path
+would exceed the per-process limit for pledged paths.
+.It ENOENT
+A directory in
+.Ar path
+did not exist.
+.It EINVAL
+An invalid value of
+.Ar flags
+was used.
+.It EPERM
+An attempt to add permission to
+.Ar flags
+was made, or
+.Ar path
+was not accessible, or
+.Nm
+was called after it was locked
+.El
+.Sh HISTORY
+The
+.Fn unveil
+system call first appeared in
+.Ox 6.4 .

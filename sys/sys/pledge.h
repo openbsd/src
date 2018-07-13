@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.36 2018/06/16 15:37:00 florian Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.37 2018/07/13 09:25:23 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -61,12 +61,14 @@
 #define PLEDGE_BPF	0x0000000200000000ULL	/* bpf ioctl */
 #define PLEDGE_ERROR	0x0000000400000000ULL	/* ENOSYS instead of kill */
 #define PLEDGE_WROUTE	0x0000000800000000ULL	/* interface address ioctls */
+#define PLEDGE_UNVEIL	0x0000001000000000ULL	/* allow unveil() */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
  * to track program behaviours which have been observed.
  */
 #define PLEDGE_USERSET	0x0fffffffffffffffULL
+#define PLEDGE_STAT	0x2000000000000000ULL	/* XXX this is a stat */
 #define PLEDGE_STATLIE	0x4000000000000000ULL
 #define PLEDGE_YPACTIVE	0x8000000000000000ULL	/* YP use detected and allowed */
 
@@ -109,6 +111,7 @@ static struct {
 	{ PLEDGE_BPF,		"bpf" },
 	{ PLEDGE_ERROR,		"error" },
 	{ PLEDGE_WROUTE,	"wroute" },
+	{ PLEDGE_UNVEIL,	"unveil" },
 	{ 0, NULL },
 };
 #endif
@@ -137,6 +140,7 @@ int	pledge_fcntl(struct proc *p, int cmd);
 int	pledge_swapctl(struct proc *p);
 int	pledge_kill(struct proc *p, pid_t pid);
 int	pledge_protexec(struct proc *p, int prot);
+void	ppath_destroy(struct process *ps);
 
 #endif /* _KERNEL */
 

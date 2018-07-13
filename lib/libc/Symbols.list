@@ -231,6 +231,7 @@ _thread_sys_umask
 _thread_sys_unlink
 _thread_sys_unlinkat
 _thread_sys_unmount
+_thread_sys_unveil
 _thread_sys_utimensat
 _thread_sys_utimes
 _thread_sys_utrace
@@ -434,6 +435,7 @@ umask
 unlink
 unlinkat
 unmount
+unveil
 utimensat
 utimes
 utrace

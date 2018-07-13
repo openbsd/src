@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.235 2018/07/12 01:23:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.236 2018/07/13 09:25:23 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>
+#include <sys/pool.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
 #include <sys/mbuf.h>
@@ -87,6 +88,7 @@ uint64_t pledgereq_flags(const char *req);
 int	 parsepledges(struct proc *p, const char *kname,
 	    const char *promises, u_int64_t *fp);
 int	 canonpath(const char *input, char *buf, size_t bufsize);
+void	 unveil_destroy(struct process *ps);
 
 /* #define DEBUG_PLEDGE */
 #ifdef DEBUG_PLEDGE
@@ -287,6 +289,8 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setgroups] = PLEDGE_ID,
 	[SYS_setlogin] = PLEDGE_ID,
 
+	[SYS_unveil] = PLEDGE_UNVEIL,
+
 	[SYS_execve] = PLEDGE_EXEC,
 
 	[SYS_chdir] = PLEDGE_RPATH,
@@ -391,6 +395,7 @@ static const struct {
 	{ "tmppath",		PLEDGE_TMPPATH },
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
+	{ "unveil",		PLEDGE_UNVEIL },
 	{ "vminfo",		PLEDGE_VMINFO },
 	{ "vmm",		PLEDGE_VMM },
 	{ "wpath",		PLEDGE_WPATH },
@@ -477,6 +482,14 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, promises)) {
 		pr->ps_pledge = promises;
 		pr->ps_flags |= PS_PLEDGE;
+		/*
+		 * Kill off unveil and drop unveil vnode refs if we no
+		 * longer are holding any path-accessing pledge
+		 */
+		if ((pr->ps_pledge & (PLEDGE_RPATH | PLEDGE_WPATH |
+		    PLEDGE_CPATH | PLEDGE_DPATH | PLEDGE_TMPPATH | PLEDGE_EXEC |
+		    PLEDGE_UNIX | PLEDGE_UNVEIL)) == 0)
+			unveil_destroy(pr);
 	}
 	if (SCARG(uap, execpromises)) {
 		pr->ps_execpledge = execpromises;
@@ -558,6 +571,11 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if (!ni || (ni->ni_pledge == 0))
 		panic("ni_pledge");
 
+	/*
+	 * We set the BYPASSUNVEIL flag to skip unveil checks
+	 * as necessary
+	 */
+
 	/* Doing a permitted execve() */
 	if ((ni->ni_pledge & PLEDGE_EXEC) &&
 	    (p->p_p->ps_pledge & PLEDGE_EXEC))
@@ -572,6 +590,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	    (p->p_pledge_syscall == SYS_open) &&
 	    (ni->ni_pledge & PLEDGE_CPATH) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
+		ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 		return (0);
 	}
 
@@ -581,6 +600,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if ((p->p_p->ps_pledge & PLEDGE_TMPPATH) &&
 	    (p->p_pledge_syscall == SYS_unlink) &&
 	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
+		ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 		return (0);
 	}
 
@@ -589,22 +609,25 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	case SYS_access:
 		/* tzset() needs this. */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/localtime") == 0)
+		    strcmp(path, "/etc/localtime") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
+		}
 
 		/* when avoiding YP mode, getpw* functions touch this */
 		if (ni->ni_pledge == PLEDGE_RPATH &&
 		    strcmp(path, "/var/run/ypbind.lock") == 0) {
-			if (p->p_p->ps_pledge & PLEDGE_GETPW)
+			if (p->p_p->ps_pledge & PLEDGE_GETPW) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
-			else
+			} else
 				return (pledge_fail(p, error, PLEDGE_GETPW));
 		}
-		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
 		if ((ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/null") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
 
@@ -612,6 +635,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		if ((p->p_p->ps_pledge & PLEDGE_TTY) &&
 		    (ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
 		    strcmp(path, "/dev/tty") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
 
@@ -620,23 +644,35 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		    (p->p_p->ps_pledge & PLEDGE_GETPW)) {
 			if (strcmp(path, "/etc/spwd.db") == 0)
 				return (EPERM); /* don't call pledge_fail */
-			if (strcmp(path, "/etc/pwd.db") == 0)
+			if (strcmp(path, "/etc/pwd.db") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
-			if (strcmp(path, "/etc/group") == 0)
+			}
+			if (strcmp(path, "/etc/group") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
-			if (strcmp(path, "/etc/netid") == 0)
+			}
+			if (strcmp(path, "/etc/netid") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
+			}
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services}. */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS)) {
-			if (strcmp(path, "/etc/resolv.conf") == 0)
+			if (strcmp(path, "/etc/resolv.conf") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
-			if (strcmp(path, "/etc/hosts") == 0)
+			}
+			if (strcmp(path, "/etc/hosts") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
-			if (strcmp(path, "/etc/services") == 0)
+			}
+			if (strcmp(path, "/etc/services") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
+			}
 		}
 
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
@@ -651,37 +687,52 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				 * progress, needing a clever design.
 				 */
 				p->p_p->ps_pledge |= PLEDGE_YPACTIVE;
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			}
 			if (strncmp(path, "/var/yp/binding/",
-			    sizeof("/var/yp/binding/") - 1) == 0)
+			    sizeof("/var/yp/binding/") - 1) == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
+			}
 		}
 
 		/* tzset() needs these. */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
-		    sizeof("/usr/share/zoneinfo/") - 1) == 0)
+		    sizeof("/usr/share/zoneinfo/") - 1) == 0)  {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
+		}
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/localtime") == 0)
+		    strcmp(path, "/etc/localtime") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
+		}
 
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/malloc.conf") == 0)
+		    strcmp(path, "/etc/malloc.conf") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
+		}
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
-		    strcmp(path, "/etc/resolv.conf") == 0)
+		    strcmp(path, "/etc/resolv.conf") == 0) {
+			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
+		}
 		break;
 	}
+
+	/* Doing a stat */
+	if (ni->ni_pledge & PLEDGE_STAT)
+		return(0);
 
 	/*
 	 * Ensure each flag of p_pledgenote has counterpart allowing it in
@@ -690,6 +741,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if (ni->ni_pledge & ~p->p_p->ps_pledge)
 		return (pledge_fail(p, EPERM, (ni->ni_pledge & ~p->p_p->ps_pledge)));
 
+	/* continue, and check unveil if present */
 	return (0);
 }
 
@@ -716,7 +768,6 @@ pledge_recvfd(struct proc *p, struct file *fp)
 
 		if (vp->v_type != VDIR)
 			return (0);
-		break;
 	}
 	return pledge_fail(p, EINVAL, PLEDGE_RECVFD);
 }

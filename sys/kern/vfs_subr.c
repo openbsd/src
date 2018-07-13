@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.276 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.277 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -722,6 +722,7 @@ vput(struct vnode *vp)
 	}
 #endif
 	vp->v_usecount--;
+	KASSERT(vp->v_usecount > 0 || vp->v_uvcount == 0);
 	if (vp->v_usecount > 0) {
 		VOP_UNLOCK(vp);
 		return;
@@ -1066,6 +1067,8 @@ vgonel(struct vnode *vp, struct proc *p)
 {
 	struct vnode *vq;
 	struct vnode *vx;
+
+	KASSERT(vp->v_uvcount == 0);
 
 	/*
 	 * If a vgone (or vclean) is already in progress,

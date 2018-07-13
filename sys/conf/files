@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.663 2018/07/10 20:30:31 claudio Exp $
+#	$OpenBSD: files,v 1.664 2018/07/13 09:25:22 beck Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -683,6 +683,7 @@ file kern/kern_proc.c
 file kern/kern_prot.c
 file kern/kern_resource.c
 file kern/kern_pledge.c
+file kern/kern_unveil.c
 file kern/kern_sched.c
 file kern/kern_sensors.c
 file kern/kern_sig.c

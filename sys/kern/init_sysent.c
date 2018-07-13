@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.196 2018/07/05 15:31:51 mpi Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.197 2018/07/13 09:25:23 beck Exp $	*/
 
 /*
  * System call switch table.
@@ -260,8 +260,8 @@ struct sysent sysent[] = {
 	    sys_sendsyslog },			/* 112 = sendsyslog */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 113 = unimplemented fktrace */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 114 = obsolete osendmsg */
+	{ 2, s(struct sys_unveil_args), 0,
+	    sys_unveil },			/* 114 = unveil */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
 	{ 0, 0, 0,

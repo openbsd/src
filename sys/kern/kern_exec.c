@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.198 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.199 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -63,6 +63,8 @@
 
 #include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
+
+void	unveil_destroy(struct process *ps);
 
 const struct kmem_va_mode kv_exec = {
 	.kv_wait = 1,
@@ -532,6 +534,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	} else {
 		atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
 		pr->ps_pledge = 0;
+		/* XXX XXX XXX XXX */
+		/* Clear our unveil paths out so the child
+		 * starts afresh
+		 */
+		unveil_destroy(pr);
+		pr->ps_uvdone = 0;
 	}
 
 	/*

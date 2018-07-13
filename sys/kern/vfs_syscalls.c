@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.292 2018/07/03 20:40:25 kettenis Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.293 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -90,6 +90,8 @@ int doutimensat(struct proc *, int, const char *, struct timespec [2], int);
 int dovutimens(struct proc *, struct vnode *, struct timespec [2]);
 int dofutimens(struct proc *, int, struct timespec [2]);
 int dounmount_leaf(struct mount *, int, struct proc *);
+int unveil_add(struct proc *, struct nameidata *, const char *);
+void unveil_removevnode(struct vnode *vp);
 
 /*
  * Virtual File System System Calls
@@ -350,6 +352,9 @@ checkdirs(struct vnode *olddp)
 			vref(newdp);
 			fdp->fd_rdir = newdp;
 		}
+		pr->ps_uvpcwd = NULL;
+		/* XXX */
+		pr->ps_uvpcwdgone = 1;
 	}
 	if (rootvnode == olddp) {
 		free_count++;
@@ -483,6 +488,7 @@ int
 dounmount_leaf(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *coveredvp;
+	struct vnode *vp, *nvp;
 	int error;
 	int hadsyncer = 0;
 
@@ -493,6 +499,15 @@ dounmount_leaf(struct mount *mp, int flags, struct proc *p)
 		vgone(mp->mnt_syncer);
 		mp->mnt_syncer = NULL;
 	}
+
+	/*
+	 * Before calling file system unmount, make sure
+	 * all unveils to vnodes in here are dropped.
+	 */
+	LIST_FOREACH_SAFE(vp , &mp->mnt_vnodelist, v_mntvnodes, nvp) {
+		unveil_removevnode(vp);
+	}
+
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, 0, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
@@ -623,6 +638,7 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_cnd.cn_flags |= BYPASSUNVEIL;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -795,6 +811,8 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	nd.ni_pledge = PLEDGE_RPATH;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
+	p->p_p->ps_uvpcwd = nd.ni_unveil_match;
+	p->p_p->ps_uvpcwdgone = 0;
 	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = nd.ni_vp;
 	vrele(old_cdir);
@@ -857,6 +875,78 @@ change_dir(struct nameidata *ndp, struct proc *p)
 		vput(vp);
 	else
 		VOP_UNLOCK(vp);
+	return (error);
+}
+
+int
+sys_unveil(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_unveil_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) flags;
+	} */ *uap = v;
+	char pathname[MAXPATHLEN];
+	struct nameidata nd;
+	size_t pathlen;
+	char cflags[5];
+	int error;
+
+	if (SCARG(uap, path) == NULL && SCARG(uap, flags) == NULL) {
+		p->p_p->ps_uvdone = 1;
+		return (0);
+	}
+
+	if (p->p_p->ps_uvdone != 0)
+		return EINVAL;
+
+	error = copyinstr(SCARG(uap, flags), cflags, sizeof(cflags), NULL);
+	if (error)
+		return(error);
+	error = copyinstr(SCARG(uap, path), pathname, sizeof(pathname), &pathlen);
+	if (error)
+		return(error);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_STRUCT))
+		ktrstruct(p, "unveil", cflags, strlen(cflags));
+#endif
+	if (pathlen < 2)
+		return EINVAL;
+
+	/* XXX unveil is disabled for now */
+	return EPERM;
+
+	if (pathlen == 2 && pathname[0] == '/')
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME,
+		    UIO_SYSSPACE, pathname, p);
+	else
+		NDINIT(&nd, CREATE, FOLLOW | LOCKLEAF | LOCKPARENT | SAVENAME,
+		    UIO_SYSSPACE, pathname, p);
+
+	nd.ni_pledge = PLEDGE_UNVEIL;
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	/*
+	 * XXX Any access to the file or directory will allow us to
+	 * pledge path it
+	 */
+	if ((nd.ni_vp &&
+	    (VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, p) == 0 ||
+	    VOP_ACCESS(nd.ni_vp, VWRITE, p->p_ucred, p) == 0 ||
+	    VOP_ACCESS(nd.ni_vp, VEXEC, p->p_ucred, p) == 0)) ||
+	    VOP_ACCESS(nd.ni_dvp, VREAD, p->p_ucred, p) == 0 ||
+	    VOP_ACCESS(nd.ni_dvp, VWRITE, p->p_ucred, p) == 0 ||
+	    VOP_ACCESS(nd.ni_dvp, VEXEC, p->p_ucred, p) == 0)
+		error = unveil_add(p, &nd, cflags);
+	else
+		error = EPERM;
+
+	/* release vref and lock from namei, but not vref from ppath_add */
+	if (nd.ni_vp)
+		vput(nd.ni_vp);
+	if (nd.ni_dvp)
+		vput(nd.ni_dvp);
 	return (error);
 }
 
@@ -1706,7 +1796,7 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 	}
 
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
@@ -1776,7 +1866,7 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -1784,11 +1874,11 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	if (error)
 		return (error);
 	if (nd.ni_pledge & PLEDGE_STATLIE) {
-		if (S_ISDIR(sb.st_mode)) {
-			sb.st_mode &= ~ALLPERMS;
-			sb.st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
-			sb.st_uid = 0;
-			sb.st_gid = 0;
+		if (S_ISDIR(sb.st_mode) || S_ISLNK(sb.st_mode)) {
+			if (sb.st_uid >= 1000) {
+				sb.st_uid = p->p_ucred->cr_uid;
+				sb.st_gid = p->p_ucred->cr_gid;;
+			}
 			sb.st_gen = 0;
 		} else
 			return (ENOENT);
@@ -1883,7 +1973,7 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 	struct nameidata nd;
 
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

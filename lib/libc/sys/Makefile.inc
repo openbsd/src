@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.154 2018/01/12 04:36:12 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.155 2018/07/13 09:25:22 beck Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -73,7 +73,7 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	shmget.o shutdown.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
 	sysarch.o sysctl.o thrkill.o unlink.o unlinkat.o \
-	unmount.o utimensat.o utimes.o utrace.o
+	unmount.o unveil.o utimensat.o utimes.o utrace.o
 
 SRCS+=	${SRCS_${MACHINE_CPU}}
 .for i in ${SRCS_${MACHINE_CPU}}
@@ -195,4 +195,4 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	sigprocmask.2 sigreturn.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 \
 	sync.2 sysarch.2 syscall.2 sysctl.2 thrkill.2 truncate.2 \
-	umask.2 unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
+	umask.2 unlink.2 unveil.2 utimes.2 utrace.2 vfork.2 wait.2 write.2

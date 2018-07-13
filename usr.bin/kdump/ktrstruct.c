@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.24 2017/12/12 01:12:34 deraadt Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.25 2018/07/13 09:25:23 beck Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -653,6 +653,10 @@ ktrstruct(char *buf, size_t buflen)
 	} else if (strcmp(name, "pledgeexecreq") == 0) {
 		printf("execpromise=");
 		showbufc(basecol + sizeof("execpromise=") - 1,
+		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
+	} else if (strcmp(name, "unveil") == 0) {
+		printf("flags=");
+		showbufc(basecol + sizeof("flags=") - 1,
 		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
 	} else {
 		printf("unknown structure %s\n", name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.146 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.147 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct vnode {
 	enum	vtagtype v_tag;			/* type of underlying data */
 	u_int	v_flag;				/* vnode flags (see below) */
 	u_int   v_usecount;			/* reference count of users */
+	u_int   v_uvcount;			/* unveil references */
 	/* reference count of writers */
 	u_int   v_writecount;
 	/* Flags that can be read/written in interrupts */

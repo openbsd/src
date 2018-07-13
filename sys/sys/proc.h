@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.251 2018/07/12 01:23:38 cheloha Exp $	*/
+/*	$OpenBSD: proc.h,v 1.252 2018/07/13 09:25:23 beck Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -48,6 +48,8 @@
 #include <sys/event.h>			/* For struct klist */
 #include <sys/mutex.h>			/* For struct mutex */
 #include <sys/resource.h>		/* For struct rusage */
+#include <sys/rwlock.h>			/* For struct rwlock */
+#include <sys/tree.h>
 
 #ifdef _KERNEL
 #include <sys/atomic.h>
@@ -129,6 +131,15 @@ struct tusage {
 	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
 };
 
+struct unvname {
+	char 			*un_name;
+	size_t 			un_namesize;
+	uint64_t		un_flags;
+	RBT_ENTRY(unvnmae)	un_rbt;
+};
+
+RBT_HEAD(unvname_rbt, unvname);
+
 /*
  * Description of a process.
  *
@@ -142,6 +153,7 @@ struct tusage {
  * run-time information needed by threads.
  */
 #ifdef __need_process
+struct unveil;
 struct process {
 	/*
 	 * ps_mainproc is the original thread in the process.
@@ -190,6 +202,15 @@ struct process {
 	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
 
 	u_int64_t ps_wxcounter;
+
+	struct unveil *ps_uvpaths;	/* unveil vnodes and names */
+	struct unveil *ps_uvpcwd;	/* pointer to unveil of cwd, NULL if none */
+	size_t ps_uvvcount;		/* count of unveil vnodes held */
+	size_t ps_uvncount;		/* count of unveil names allocated */
+	int ps_uvshrink;		/* do we need to shrink vnode list */
+	int ps_uvactive;		/* is unveil active */
+	int ps_uvdone;			/* no more unveil is permitted */
+	int ps_uvpcwdgone;		/* need to reevaluate cwd unveil */
 
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy
@@ -403,6 +424,13 @@ struct proc {
 #define	THREAD_PID_OFFSET	100000
 
 #ifdef _KERNEL
+
+struct unveil {
+	struct vnode		*uv_vp;
+	struct unvname_rbt	uv_names;
+	struct rwlock		uv_lock;
+	u_int64_t		uv_flags;
+};
 
 struct uidinfo {
 	LIST_ENTRY(uidinfo) ui_hash;
