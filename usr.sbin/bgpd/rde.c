@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.392 2018/07/11 17:35:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.393 2018/07/13 08:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1464,8 +1464,11 @@ bad_flags:
 		if (rde_as4byte(peer)) {
 			npath = p;
 			nlen = attr_len;
-		} else
+		} else {
 			npath = aspath_inflate(p, attr_len, &nlen);
+			if (npath == NULL)
+				fatal("aspath_inflate");
+		}
 		a->flags |= F_ATTR_ASPATH;
 		a->aspath = aspath_get(npath, nlen);
 		if (npath != p)

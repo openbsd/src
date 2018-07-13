@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.104 2018/07/11 19:05:41 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.105 2018/07/13 08:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -456,64 +456,6 @@ SIPHASH_KEY astablekey;
 #define ASPATH_HASH(x)				\
 	&astable.hashtbl[(x) & astable.hashmask]
 
-int
-aspath_verify(void *data, u_int16_t len, int as4byte)
-{
-	u_int8_t	*seg = data;
-	u_int16_t	 seg_size, as_size = 2;
-	u_int8_t	 seg_len, seg_type;
-	int		 error = 0;
-
-	if (len & 1)
-		/* odd length aspath are invalid */
-		return (AS_ERR_BAD);
-
-	if (as4byte)
-		as_size = 4;
-
-	for (; len > 0; len -= seg_size, seg += seg_size) {
-		const u_char    *ptr;
-		int		 pos;
-
-		if (len < 2)	/* header length check */
-			return (AS_ERR_BAD);
-		seg_type = seg[0];
-		seg_len = seg[1];
-
-		/*
-		 * BGP confederations should not show up but consider them
-		 * as a soft error which invalidates the path but keeps the
-		 * bgp session running.
-		 */
-		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
-			error = AS_ERR_SOFT;
-		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
-		    seg_type != AS_CONFED_SEQUENCE && seg_type != AS_CONFED_SET)
-			return (AS_ERR_TYPE);
-
-		seg_size = 2 + as_size * seg_len;
-
-		if (seg_size > len)
-			return (AS_ERR_LEN);
-
-		if (seg_size == 0)
-			/* empty aspath segments are not allowed */
-			return (AS_ERR_BAD);
-
-		/* RFC 7607 - AS 0 is considered malformed */
-		ptr = seg + 2;
-		for (pos = 0; pos < seg_len; pos++) {
-			u_int32_t	 as = 0;
-
-			ptr += as_size;
-			memcpy(&as, ptr, as_size);
-			if (as == 0)
-				return (AS_ERR_SOFT);
-		}
-	}
-	return (error);	/* aspath is valid but probably not loop free */
-}
-
 void
 aspath_init(u_int32_t hashsize)
 {
@@ -621,46 +563,10 @@ aspath_put(struct aspath *aspath)
 	free(aspath);
 }
 
-u_char *
-aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
-{
-	u_int8_t	*seg, *nseg, *ndata;
-	u_int16_t	 seg_size, olen, nlen;
-	u_int8_t	 seg_len;
-
-	/* first calculate the length of the aspath */
-	seg = data;
-	nlen = 0;
-	for (olen = len; olen > 0; olen -= seg_size, seg += seg_size) {
-		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int16_t) * seg_len;
-		nlen += 2 + sizeof(u_int32_t) * seg_len;
-
-		if (seg_size > olen)
-			fatalx("aspath_inflate: would overflow");
-	}
-
-	*newlen = nlen;
-	if ((ndata = malloc(nlen)) == NULL)
-		fatal("aspath_inflate");
-
-	/* then copy the aspath */
-	seg = data;
-	for (nseg = ndata; nseg < ndata + nlen; ) {
-		*nseg++ = *seg++;
-		*nseg++ = seg_len = *seg++;
-		for (; seg_len > 0; seg_len--) {
-			*nseg++ = 0;
-			*nseg++ = 0;
-			*nseg++ = *seg++;
-			*nseg++ = *seg++;
-		}
-	}
-
-	return (ndata);
-}
-
-/* convert a 4 byte aspath to a 2byte one. data is freed by aspath_deflate */
+/*
+ * convert a 4 byte aspath to a 2 byte one.
+ * data is freed by aspath_deflate
+ */
 u_char *
 aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 {

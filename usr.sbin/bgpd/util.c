@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2017/05/31 10:44:00 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.26 2018/07/13 08:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -396,6 +397,111 @@ aspath_extract(const void *seg, int pos)
 	ptr += 2 + sizeof(u_int32_t) * pos;
 	memcpy(&as, ptr, sizeof(u_int32_t));
 	return (ntohl(as));
+}
+
+/*
+ * Verify that the aspath is correctly encoded.
+ */
+int
+aspath_verify(void *data, u_int16_t len, int as4byte)
+{
+	u_int8_t	*seg = data;
+	u_int16_t	 seg_size, as_size = 2;
+	u_int8_t	 seg_len, seg_type;
+	int		 error = 0;
+
+	if (len & 1)
+		/* odd length aspath are invalid */
+		return (AS_ERR_BAD);
+
+	if (as4byte)
+		as_size = 4;
+
+	for (; len > 0; len -= seg_size, seg += seg_size) {
+		const u_char    *ptr;
+		int		 pos;
+
+		if (len < 2)	/* header length check */
+			return (AS_ERR_BAD);
+		seg_type = seg[0];
+		seg_len = seg[1];
+
+		/*
+		 * BGP confederations should not show up but consider them
+		 * as a soft error which invalidates the path but keeps the
+		 * bgp session running.
+		 */
+		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
+			error = AS_ERR_SOFT;
+		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
+		    seg_type != AS_CONFED_SEQUENCE && seg_type != AS_CONFED_SET)
+			return (AS_ERR_TYPE);
+
+		seg_size = 2 + as_size * seg_len;
+
+		if (seg_size > len)
+			return (AS_ERR_LEN);
+
+		if (seg_size == 0)
+			/* empty aspath segments are not allowed */
+			return (AS_ERR_BAD);
+
+		/* RFC 7607 - AS 0 is considered malformed */
+		ptr = seg + 2;
+		for (pos = 0; pos < seg_len; pos++) {
+			u_int32_t	 as = 0;
+
+			ptr += as_size;
+			memcpy(&as, ptr, as_size);
+			if (as == 0)
+				return (AS_ERR_SOFT);
+		}
+	}
+	return (error);	/* aspath is valid but probably not loop free */
+}
+
+/*
+ * convert a 2 byte aspath to a 4 byte one.
+ */
+u_char *
+aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
+{
+	u_int8_t	*seg, *nseg, *ndata;
+	u_int16_t	 seg_size, olen, nlen;
+	u_int8_t	 seg_len;
+
+	/* first calculate the length of the aspath */
+	seg = data;
+	nlen = 0;
+	for (olen = len; olen > 0; olen -= seg_size, seg += seg_size) {
+		seg_len = seg[1];
+		seg_size = 2 + sizeof(u_int16_t) * seg_len;
+		nlen += 2 + sizeof(u_int32_t) * seg_len;
+
+		if (seg_size > olen) {
+			errno = ERANGE;
+			return (NULL);
+		}
+	}
+
+	*newlen = nlen;
+	if ((ndata = malloc(nlen)) == NULL)
+		return (NULL);
+
+	/* then copy the aspath */
+	seg = data;
+	for (nseg = ndata; nseg < ndata + nlen; ) {
+		*nseg++ = *seg++;
+		*nseg++ = seg_len = *seg++;
+		for (; seg_len > 0; seg_len--) {
+			*nseg++ = 0;
+			*nseg++ = 0;
+			*nseg++ = *seg++;
+			*nseg++ = *seg++;
+		}
+	}
+
+	return (ndata);
 }
 
 /*
