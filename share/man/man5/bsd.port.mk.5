@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.485 2018/07/09 11:36:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.486 2018/07/13 08:09:34 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: July 13 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1973,22 +1973,11 @@ See also
 .Ev CHECKSUMFILES .
 .It Ev MASTER_SITE_BACKUP
 User settings.
-List of sites to try after normal master sites, or before if
-.Ev MASTER_SITE_OVERRIDE
-is set to
-.Sq Yes .
+List of sites to try after normal master sites.
 Normally includes ${MASTER_SITE_OPENBSD} and ${MASTER_SITE_FREEBSD}.
 .It Ev MASTER_SITE_*
 Lists of standard sites to retrieve files from, refer to
 .Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
-.It Ev MASTER_SITE_OVERRIDE
-User settings.
-Set to
-.Sq Yes
-to retrieve distfiles and patchfiles preferentially from the
-${MASTER_SITE_BACKUP} sites.
-Defaults to
-.Sq \&No .
 .It Ev MASTER_SITES
 List of primary locations from which distribution files and patchfiles are
 retrieved.
