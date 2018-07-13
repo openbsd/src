@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.24 2018/03/30 09:25:06 tobias Exp $	*/
+/*	$OpenBSD: cut.c,v 1.25 2018/07/13 08:51:14 krw Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ char positions[_POSIX2_LINE_MAX + 1];
 int
 read_number(char **p)
 {
-	size_t pos;
 	int dash, n;
 	const char *errstr;
 	char *q;
