@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.6 2017/10/14 04:44:43 jsg Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.7 2018/07/13 08:30:34 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -17,6 +17,8 @@
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
+#include <machine/codepatch.h>
+#include <uvm/uvm_extern.h> /* round_page */
 
 #ifdef CODEPATCH_DEBUG
 #define DBGPRINT(fmt, args...)	printf("%s: " fmt "\n", __func__, ## args)
@@ -34,6 +36,8 @@ CTASSERT(sizeof(struct codepatch) % 8 == 0);
 
 extern struct codepatch codepatch_begin;
 extern struct codepatch codepatch_end;
+extern char __cptext_start[];
+extern char __cptext_end[];
 
 void
 codepatch_fill_nop(void *caddr, uint16_t len)
@@ -173,4 +177,15 @@ codepatch_call(uint16_t tag, void *func)
 	}
 	codepatch_unmaprw(rwmap);
 	DBGPRINT("patched %d places", i);
+}
+
+void
+codepatch_disable(void)
+{
+	size_t size = round_page(__cptext_end - __cptext_start);
+	/* If this assert fails, something is wrong with the cptext section */
+	KASSERT(size > 0);
+	pmap_kremove((vaddr_t)__cptext_start, size);
+	pmap_update(pmap_kernel());
+	DBGPRINT("%s: Unmapped %#zx bytes\n", __func__, size);
 }

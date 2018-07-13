@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.43 2018/04/25 00:46:28 jsg Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.44 2018/07/13 08:30:34 sf Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #include <machine/bus.h>
 #include <machine/specialreg.h>
+#include <machine/codepatch.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -259,6 +260,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &mba, mainbus_print);
 	}
 #endif
+	codepatch_disable();
 }
 
 #if NEFIFB > 0

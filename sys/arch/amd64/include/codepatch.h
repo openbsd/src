@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.6 2018/07/12 14:11:11 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.7 2018/07/13 08:30:34 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -22,12 +22,16 @@
 
 #ifndef _LOCORE
 
-void *codepatch_maprw(vaddr_t *nva, vaddr_t dest);
-void codepatch_unmaprw(vaddr_t nva);
-void codepatch_fill_nop(void *caddr, uint16_t len);
-void codepatch_nop(uint16_t tag);
-void codepatch_replace(uint16_t tag, void *code, size_t len);
-void codepatch_call(uint16_t tag, void *func);
+/* code in this section will be unmapped after boot */
+#define __cptext __attribute__((section(".cptext")))
+
+__cptext void *codepatch_maprw(vaddr_t *nva, vaddr_t dest);
+__cptext void codepatch_unmaprw(vaddr_t nva);
+__cptext void codepatch_fill_nop(void *caddr, uint16_t len);
+__cptext void codepatch_nop(uint16_t tag);
+__cptext void codepatch_replace(uint16_t tag, void *code, size_t len);
+__cptext void codepatch_call(uint16_t tag, void *func);
+void codepatch_disable(void);
 
 #endif /* !_LOCORE */
 

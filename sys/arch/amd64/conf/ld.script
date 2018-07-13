@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.13 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.14 2018/07/13 08:30:34 sf Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -64,6 +64,15 @@ SECTIONS
 		__kutext_start = ABSOLUTE(.);
 		*(.kutext)
 		__kutext_end = ABSOLUTE(.);
+	} :text =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_cptext_phys = . + __kernel_virt_to_phys;
+	.cptext : AT (__kernel_cptext_phys)
+	{
+		__cptext_start = ABSOLUTE(.);
+		*(.cptext)
+		__cptext_end = ABSOLUTE(.);
 	} :text =0xcccccccc
 
 	PROVIDE (etext = .);
