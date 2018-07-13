@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.4 2018/07/11 19:05:25 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.5 2018/07/13 08:31:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include <netinet/in.h>
 #include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet6/in6_var.h>
@@ -129,6 +130,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2engine[2];
 	int			 icmp6sock, on = 1;
+	int			 frontend_routesock, rtfilter;
 
 	conffile = CONF_FILE;
 	csock = RAD_SOCKET;
@@ -280,7 +282,18 @@ main(int argc, char *argv[])
 	    sizeof(filt)) == -1)
 		fatal("ICMP6_FILTER");
 
+	if ((frontend_routesock = socket(PF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
+	    AF_INET6)) < 0)
+		fatal("route socket");
+
+	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
+	    ROUTE_FILTER(RTM_DELADDR);
+	if (setsockopt(frontend_routesock, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) < 0)
+		fatal("setsockopt(ROUTE_MSGFILTER)");
+
 	main_imsg_compose_frontend_fd(IMSG_ICMP6SOCK, 0, icmp6sock);
+	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 
 	main_imsg_send_config(main_conf);
 
