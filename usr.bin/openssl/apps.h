@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.20 2017/12/05 15:02:06 jca Exp $ */
+/* $OpenBSD: apps.h,v 1.21 2018/07/13 18:36:56 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,10 +277,10 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 
 int app_isdir(const char *);
 
-#define TM_START	0
-#define TM_STOP		1
-double app_timer_real(int stop);
-double app_timer_user(int stop);
+#define TM_RESET	0
+#define TM_GET		1
+double app_timer_real(int);
+double app_timer_user(int);
 
 #define OPENSSL_NO_SSL_INTERN
 
