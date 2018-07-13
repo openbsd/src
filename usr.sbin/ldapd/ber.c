@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.22 2018/07/09 09:21:26 jca Exp $ */
+/*	$OpenBSD: ber.c,v 1.23 2018/07/13 08:30:10 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1032,12 +1032,11 @@ get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 			return -1;
 		t = (t << 7) | (u & ~BER_TAG_MORE);
 		i++;
+		if (i > sizeof(unsigned long)) {
+			errno = ERANGE;
+			return -1;
+		}
 	} while (u & BER_TAG_MORE);
-
-	if (i > sizeof(unsigned long)) {
-		errno = ERANGE;
-		return -1;
-	}
 
 	*tag = t;
 	return i + 1;
