@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.96 2018/07/13 08:42:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.97 2018/07/13 10:26:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1360,12 +1360,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 				return (-1);
 			}
 		}
-		if (vm_checkaccess(vcp->vcp_disks[i], uid, R_OK|W_OK) == -1) {
-			log_warnx("vm \"%s\" no read/write access to %s", name,
-			    vcp->vcp_disks[i]);
-			errno = EPERM;
-			return (-1);
-		}
+		vmc->vmc_checkaccess |= VMOP_CREATE_DISK;
 	}
 
 	/* interfaces */
@@ -1424,12 +1419,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 			errno = EPERM;
 			return (-1);
 		}
-		if (vm_checkaccess(vcp->vcp_kernel, uid, R_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to %s", name,
-			    vcp->vcp_kernel);
-			errno = EPERM;
-			return (-1);
-		}
+		vmc->vmc_checkaccess |= VMOP_CREATE_KERNEL;
 	} else if (strlcpy(vcp->vcp_kernel, vcpp->vcp_kernel,
 	    sizeof(vcp->vcp_kernel)) >= sizeof(vcp->vcp_kernel)) {
 		log_warnx("vm \"%s\" kernel name too long", name);
@@ -1444,12 +1434,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 			errno = EPERM;
 			return (-1);
 		}
-		if (vm_checkaccess(vcp->vcp_cdrom, uid, R_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to %s", name,
-			    vcp->vcp_cdrom);
-			errno = EPERM;
-			return (-1);
-		}
+		vmc->vmc_checkaccess |= VMOP_CREATE_CDROM;
 	} else if (strlcpy(vcp->vcp_cdrom, vcpp->vcp_cdrom,
 	    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom)) {
 		log_warnx("vm \"%s\" cdrom name too long", name);
@@ -1592,15 +1577,17 @@ vm_checkinsflag(struct vmop_create_params *vmc, unsigned int flag, uid_t uid)
  * access the file described by the 'path' parameter.
  *
  * Parameters:
- *  path: the path of a file
+ *  fd: the file descriptor of the opened file
+ *  uflag: check if the userid has access to the file
  *  uid: the user ID of the user making the request
+ *  amode: the access flags of R_OK and W_OK
  *
  * Return values:
  *   0: the permission should be granted
  *  -1: the permission check failed
  */
 int
-vm_checkaccess(const char *path, uid_t uid, int amode)
+vm_checkaccess(int fd, unsigned int uflag, uid_t uid, int amode)
 {
 	struct group	*gr;
 	struct passwd	*pw;
@@ -1608,35 +1595,34 @@ vm_checkaccess(const char *path, uid_t uid, int amode)
 	struct stat	 st;
 	mode_t		 mode;
 
-	/* root has no restrictions */
-	if (uid == 0)
-		return (0);
-
-	if (path == NULL || strlen(path) == 0)
+	if (fd == -1)
 		return (-1);
 
 	/*
 	 * File has to be accessible and a regular file
-	 * (symlinks would allow TOCTTOU-like attacks).
 	 */
-	if (stat(path, &st) == -1 && !S_ISREG(st.st_mode))
+	if (fstat(fd, &st) == -1 || !S_ISREG(st.st_mode))
 		return (-1);
 
+	/* root has no restrictions */
+	if (uid == 0 || uflag == 0)
+		return (0);
+
 	/* check other */
-	mode = amode == W_OK ? S_IWOTH : 0;
-	mode |= amode == R_OK ? S_IROTH : 0;
+	mode = amode & W_OK ? S_IWOTH : 0;
+	mode |= amode & R_OK ? S_IROTH : 0;
 	if ((st.st_mode & mode) == mode)
 		return (0);
 
 	/* check user */
-	mode = amode == W_OK ? S_IWUSR : 0;
-	mode |= amode == R_OK ? S_IRUSR : 0;
+	mode = amode & W_OK ? S_IWUSR : 0;
+	mode |= amode & R_OK ? S_IRUSR : 0;
 	if (uid == st.st_uid && (st.st_mode & mode) == mode)
 		return (0);
 
 	/* check groups */
-	mode = amode == W_OK ? S_IWGRP : 0;
-	mode |= amode == R_OK ? S_IRGRP : 0;
+	mode = amode & W_OK ? S_IWGRP : 0;
+	mode |= amode & R_OK ? S_IRGRP : 0;
 	if ((st.st_mode & mode) != mode)
 		return (-1);
 	if ((pw = getpwuid(uid)) == NULL)

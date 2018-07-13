@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.76 2018/07/13 08:42:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.77 2018/07/13 10:26:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -148,6 +148,9 @@ struct vmop_create_params {
 #define VMOP_CREATE_DISK	0x10
 #define VMOP_CREATE_CDROM	0x20
 #define VMOP_CREATE_INSTANCE	0x40
+
+	/* same flags; check for access to these resources */
+	unsigned int		 vmc_checkaccess;
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
@@ -321,7 +324,7 @@ void	 vm_remove(struct vmd_vm *, const char *);
 int	 vm_register(struct privsep *, struct vmop_create_params *,
 	    struct vmd_vm **, uint32_t, uid_t);
 int	 vm_checkperm(struct vmd_vm *, struct vmop_owner *, uid_t);
-int	 vm_checkaccess(const char *, uid_t, int);
+int	 vm_checkaccess(int, unsigned int, uid_t, int);
 int	 vm_opentty(struct vmd_vm *);
 void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
