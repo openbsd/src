@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cmd.c,v 1.11 2018/02/12 01:10:46 schwarze Exp $	*/
+/*	$OpenBSD: ex_cmd.c,v 1.12 2018/07/13 20:06:10 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -145,8 +145,8 @@ EXCMDLIST const cmds[] = {
 /* C_DISPLAY */
 	{"display",	ex_display,	0,
 	    "w1r",
-	    "display b[uffers] | c[onnections] | s[creens] | t[ags]",
-	    "display buffers, connections, screens or tags"},
+	    "display b[uffers] | s[creens] | t[ags]",
+	    "display buffers, screens or tags"},
 /* C_EDIT */
 	{"edit",	ex_edit,	E_NEWSCREEN,
 	    "f1o",
@@ -427,6 +427,6 @@ EXCMDLIST const cmds[] = {
 	{"~",		ex_subtilde,	E_ADDR2,
 	    "s",
 	    "[line [,line]] ~ [cgr] [count] [#lp]",
-	    "replace previous RE with previous replacement string,"},
+	    "replace previous RE with previous replacement string"},
 	{NULL},
 };
