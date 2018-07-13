@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.130 2018/07/11 20:18:09 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.131 2018/07/13 07:22:55 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -371,6 +371,30 @@ ieee80211_match_ess(struct ieee80211com *ic)
 			if (memcmp(ess->essid, ni->ni_essid,
 			    IEEE80211_NWID_LEN) != 0 ||
 			    ni->ni_fails != 0)
+				continue;
+
+			/* make sure encryptions match */
+			if (ess->flags &
+			    (IEEE80211_F_PSK | IEEE80211_F_RSNON)) {
+				if ((ni->ni_capinfo &
+				    IEEE80211_CAPINFO_PRIVACY) == 0)
+					continue;
+			} else {
+				if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
+					continue;
+			}
+
+			if (ess->rsnprotos != ni->ni_rsnprotos)
+				continue;
+			if (ess->rsnakms != ni->ni_rsnakms)
+				continue;
+			if (ess->rsngroupcipher != ni->ni_rsngroupcipher)
+				continue;
+			if (ess->rsnciphers != ni->ni_rsnciphers)
+				continue;
+
+			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
+			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
 				continue;
 
 			if (selni == NULL ||
