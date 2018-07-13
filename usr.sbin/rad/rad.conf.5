@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.1 2018/07/10 16:39:54 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.2 2018/07/13 05:25:29 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2018 $
+.Dd $Mdocdate: July 13 2018 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -65,43 +65,42 @@ Macros are not expanded inside quotes.
 The global configuration section sets defaults for router advertisement
 messages.
 These can be overwritten in interface blocks.
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Ic default router Pq Ic yes Ns | Ns Ic no
-act as a default router or not.
-Default is yes.
+Act as a default router or not.
+The default is yes.
 .It Ic hop limit Ar hops
-specifies the diameter of the internet.
-Default is 0 meaning unspecified by this router.
+Specify the diameter of the internet.
+The default is 0, meaning unspecified by this router.
 .It managed address configuration Pq Ic yes Ns | Ns Ic no
-if set to yes indicates that stateless address configuration prefixes are
+If set to yes, indicate that stateless address configuration prefixes are
 not available and hosts should consult DHCPv6.
-Default is no.
+The default is no.
 .It other configuration Pq Ic yes Ns | Ns Ic no
-if set to yes hosts should consult DHCPv6 for additional configuration
+If set to yes, hosts should consult DHCPv6 for additional configuration
 like NTP servers or DNS resolvers.
 .It Ic router lifetime Ar seconds
-number of seconds this router is a valid default router after receiving
+The number of seconds this router is a valid default router after receiving
 a router advertisement message.
-Default 1800 seconds.
+The default is 1800 seconds.
 .\" .It Ic reachable time Ar number
 .\" XXX
 .\" .It Ic retrans timer Ar number
 .\" XXX
 .El
 .Sh INTERFACES
-A list of interfaces to send advertisments on.
-.Bl -tag -width interface
-.It Ic interface Ar name Op { prefix list }
-.El
+A list of interfaces to send advertisments on:
+.Bd -unfilled -offset indent
+.Ic interface Ar name Op { prefix list }
+.Ed
 .Pp
 Options set in the global section can be overwritten inside an interface
 block.
 In addition an interface block can contain a list of prefixes:
-.Bl -tag -width prefix
-.It Oo Ic no Oc Ic auto prefix Op { prefix options }
-.It Ic prefix Ar prefix Op { prefix options }
-.El
+.Bd -unfilled -offset indent
+.Oo Ic no Oc Ic auto prefix Op { prefix options }
+.Ic prefix Ar prefix Op { prefix options }
+.Ed
 .Pp
 The default is to discover prefixes to announce by inspecting the IPv6
 addresses configured on an interface.
@@ -110,20 +109,19 @@ This can be disabled with
 .Pp
 .Ic prefix
 options are as follows:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Ic autonomous address-configuration Pq Ic yes Ns | Ns Ic no
-this prefix can be used to generate IPv6 addresses.
+This prefix can be used to generate IPv6 addresses.
 The default is yes.
 .It Ic on-link Pq Ic yes Ns | Ns Ic no
-this prefix shall be considered on-link.
+This prefix is considered on-link.
 The default is yes.
 .It Ic preferred lifetime Ar seconds
-preferred lifetime (pltime) in seconds for addresses generated from this
+The preferred lifetime (pltime) in seconds for addresses generated from this
 prefix.
 The default is 604800.
 .It Ic valid lifetime Ar seconds
-valid lifetime (vltime) in seconds for addresses generated from this
+The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
 The default is 2592000.
 .El
