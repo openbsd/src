@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.43 2018/07/11 13:57:53 kn Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.44 2018/07/13 08:43:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -894,7 +894,6 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 /*
  * Constant-time conditional swap of a and b.
  * a and b are swapped if condition is not 0.
- * The code assumes that at most one bit of condition is set. XXX add check?
  * nwords is the number of words to swap.
  */
 int
@@ -912,7 +911,8 @@ BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 		return 0;
 	}
 
-	condition = ((condition - 1) >> (BN_BITS2 - 1)) - 1;
+	/* Set condition to 0 (if it was zero) or all 1s otherwise. */
+	condition = ((~condition & (condition - 1)) >> (BN_BITS2 - 1)) - 1;
 
 	/* swap top field */
 	t = (a->top ^ b->top) & condition;
