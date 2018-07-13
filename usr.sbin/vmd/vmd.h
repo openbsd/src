@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.75 2018/07/12 12:04:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.76 2018/07/13 08:42:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -133,15 +133,21 @@ struct vmop_ifreq {
 	struct ifaliasreq	 vfr_ifra;
 };
 
+struct vmop_owner {
+	uid_t			 uid;
+	int64_t			 gid;
+};
+
 struct vmop_create_params {
 	struct vm_create_params	 vmc_params;
 	unsigned int		 vmc_flags;
-#define VMOP_CREATE_KERNEL	0x01
-#define VMOP_CREATE_MEMORY	0x02
-#define VMOP_CREATE_NETWORK	0x04
-#define VMOP_CREATE_DISK	0x08
-#define VMOP_CREATE_CDROM	0x10
-#define VMOP_CREATE_INSTANCE	0x20
+#define VMOP_CREATE_CPU		0x01
+#define VMOP_CREATE_KERNEL	0x02
+#define VMOP_CREATE_MEMORY	0x04
+#define VMOP_CREATE_NETWORK	0x08
+#define VMOP_CREATE_DISK	0x10
+#define VMOP_CREATE_CDROM	0x20
+#define VMOP_CREATE_INSTANCE	0x40
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
@@ -154,9 +160,12 @@ struct vmop_create_params {
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	unsigned int		 vmc_ifrdomain[VMM_MAX_NICS_PER_VM];
+	struct vmop_owner	 vmc_owner;
+
+	/* instance template params */
 	char			 vmc_instance[VMM_MAX_NAME_LEN];
-	uid_t			 vmc_uid;
-	int64_t			 vmc_gid;
+	struct vmop_owner	 vmc_insowner;
+	unsigned int		 vmc_insflags;
 };
 
 struct vm_dump_header_cpuid {
@@ -311,7 +320,8 @@ void	 vm_stop(struct vmd_vm *, int, const char *);
 void	 vm_remove(struct vmd_vm *, const char *);
 int	 vm_register(struct privsep *, struct vmop_create_params *,
 	    struct vmd_vm **, uint32_t, uid_t);
-int	 vm_checkperm(struct vmd_vm *, uid_t);
+int	 vm_checkperm(struct vmd_vm *, struct vmop_owner *, uid_t);
+int	 vm_checkaccess(const char *, uid_t, int);
 int	 vm_opentty(struct vmd_vm *);
 void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);

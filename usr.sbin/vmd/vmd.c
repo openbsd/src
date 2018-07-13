@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.95 2018/07/12 12:04:49 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.96 2018/07/13 08:42:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -60,6 +60,7 @@ int	 vmd_check_vmh(struct vm_dump_header *);
 
 int	 vm_instance(struct privsep *, struct vmd_vm **,
 	    struct vmop_create_params *, uid_t);
+int	 vm_checkinsflag(struct vmop_create_params *, unsigned int, uid_t);
 
 struct vmd	*env;
 
@@ -94,7 +95,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_uid);
+		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid);
 		if (vmc.vmc_flags == 0) {
 			/* start an existing VM with pre-configured options */
 			if (!(ret == -1 && errno == EALREADY &&
@@ -108,7 +109,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (res == 0 &&
 		    config_setvm(ps, vm,
-		    imsg->hdr.peerid, vm->vm_params.vmc_uid) == -1) {
+		    imsg->hdr.peerid, vm->vm_params.vmc_owner.uid) == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
@@ -140,7 +141,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 			break;
 		}
-		if (vm_checkperm(vm, vid.vid_uid) != 0) {
+		if (vm_checkperm(vm, &vm->vm_params.vmc_owner,
+		    vid.vid_uid) != 0) {
 			res = EPERM;
 			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 			break;
@@ -201,7 +203,8 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
 			break;
 		}
-		if (vm_checkperm(vm, vid.vid_uid) != 0) {
+		if (vm_checkperm(vm, &vm->vm_params.vmc_owner,
+		    vid.vid_uid) != 0) {
 			res = EPERM;
 			cmd = IMSG_VMDOP_PAUSE_VM_RESPONSE;
 			break;
@@ -270,14 +273,15 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    sizeof(vmc.vmc_params.vcp_name));
 		vmc.vmc_params.vcp_id = 0;
 
-		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_uid);
+		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid);
 		if (ret != 0) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			close(imsg->fd);
 		} else {
 			vm->vm_received = 1;
-			config_setvm(ps, vm, imsg->hdr.peerid, vmc.vmc_uid);
+			config_setvm(ps, vm, imsg->hdr.peerid,
+			    vmc.vmc_owner.uid);
 			log_debug("%s: sending fd to vmm", __func__);
 			proc_compose_imsg(ps, PROC_VMM, -1,
 			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, imsg->fd,
@@ -466,7 +470,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			}
 			/* get the user id who started the vm */
 			vir.vir_uid = vm->vm_uid;
-			vir.vir_gid = vm->vm_params.vmc_gid;
+			vir.vir_gid = vm->vm_params.vmc_owner.gid;
 		}
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
@@ -495,8 +499,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				vir.vir_info.vir_ncpus =
 				    vm->vm_params.vmc_params.vcp_ncpus;
 				/* get the configured user id for this vm */
-				vir.vir_uid = vm->vm_params.vmc_uid;
-				vir.vir_gid = vm->vm_params.vmc_gid;
+				vir.vir_uid = vm->vm_params.vmc_owner.uid;
+				vir.vir_gid = vm->vm_params.vmc_owner.gid;
 				if (proc_compose_imsg(ps, PROC_CONTROL, -1,
 				    IMSG_VMDOP_GET_INFO_VM_DATA,
 				    imsg->hdr.peerid, -1, &vir,
@@ -883,7 +887,7 @@ vmd_configure(void)
 			continue;
 		}
 		if (config_setvm(&env->vmd_ps, vm,
-		    -1, vm->vm_params.vmc_uid) == -1)
+		    -1, vm->vm_params.vmc_owner.uid) == -1)
 			return (-1);
 	}
 
@@ -961,7 +965,7 @@ vmd_reload(unsigned int reset, const char *filename)
 					continue;
 				}
 				if (config_setvm(&env->vmd_ps, vm,
-				    -1, vm->vm_params.vmc_uid) == -1)
+				    -1, vm->vm_params.vmc_owner.uid) == -1)
 					return (-1);
 			} else {
 				log_debug("%s: not creating vm \"%s\": "
@@ -1146,6 +1150,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 {
 	struct vmd_vm		*vm = NULL, *vm_parent = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
+	struct vmop_owner	*vmo = NULL;
 	uint32_t		 rng;
 	unsigned int		 i;
 	struct vmd_switch	*sw;
@@ -1160,7 +1165,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||
 	    (vm = vm_getbyvmid(vcp->vcp_id)) != NULL) {
-		if (vm_checkperm(vm, uid) != 0) {
+		if (vm_checkperm(vm, &vm->vm_params.vmc_owner,
+		    uid) != 0) {
 			errno = EPERM;
 			goto fail;
 		}
@@ -1169,8 +1175,12 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 	}
 
+	if (vm_parent != NULL)
+		vmo = &vm_parent->vm_params.vmc_insowner;
+
 	/* non-root users can only start existing VMs or instances */
-	if (vm_checkperm(vm_parent, uid) != 0) {
+	if (vm_checkperm(NULL, vmo, uid) != 0) {
+		log_warnx("permission denied");
 		errno = EPERM;
 		goto fail;
 	}
@@ -1293,13 +1303,8 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	vmcp = &(*vm_parent)->vm_params;
 	vcpp = &vmcp->vmc_params;
 
-	/*
-	 * Are we allowed to create an instance from this VM?
-	 *
-	 * XXX This is currently allowed for root but will check *vm_parent
-	 * XXX once we defined instance permissions and quota.
-	 */
-	if (vm_checkperm(NULL, uid) != 0) {
+	/* Are we allowed to create an instance from this VM? */
+	if (vm_checkperm(NULL, &vmcp->vmc_insowner, uid) != 0) {
 		log_warnx("vm \"%s\" no permission to create vm instance",
 		    vcpp->vcp_name);
 		errno = ENAMETOOLONG;
@@ -1315,14 +1320,35 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 		return (-1);
 	}
 
-	/* machine options */
+	/* CPU */
 	if (vcp->vcp_ncpus == 0)
 		vcp->vcp_ncpus = vcpp->vcp_ncpus;
+	if (vm_checkinsflag(vmcp, VMOP_CREATE_CPU, uid) != 0 &&
+	    vcp->vcp_ncpus != vcpp->vcp_ncpus) {
+		log_warnx("vm \"%s\" no permission to set cpus", name);
+		errno = EPERM;
+		return (-1);
+	}
+
+	/* memory */
 	if (vcp->vcp_memranges[0].vmr_size == 0)
 		vcp->vcp_memranges[0].vmr_size =
 		    vcpp->vcp_memranges[0].vmr_size;
+	if (vm_checkinsflag(vmcp, VMOP_CREATE_MEMORY, uid) != 0 &&
+	    vcp->vcp_memranges[0].vmr_size !=
+	    vcpp->vcp_memranges[0].vmr_size) {
+		log_warnx("vm \"%s\" no permission to set memory", name);
+		errno = EPERM;
+		return (-1);
+	}
 
 	/* disks cannot be inherited */
+	if (vm_checkinsflag(vmcp, VMOP_CREATE_DISK, uid) != 0 &&
+	    vcp->vcp_ndisks) {
+		log_warnx("vm \"%s\" no permission to set disks", name);
+		errno = EPERM;
+		return (-1);
+	}
 	for (i = 0; i < vcp->vcp_ndisks; i++) {
 		/* Check if this disk is already used in the parent */
 		for (j = 0; j < vcpp->vcp_ndisks; j++) {
@@ -1334,9 +1360,22 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 				return (-1);
 			}
 		}
+		if (vm_checkaccess(vcp->vcp_disks[i], uid, R_OK|W_OK) == -1) {
+			log_warnx("vm \"%s\" no read/write access to %s", name,
+			    vcp->vcp_disks[i]);
+			errno = EPERM;
+			return (-1);
+		}
 	}
 
 	/* interfaces */
+	if (vcp->vcp_nnics > 0 &&
+	    vm_checkinsflag(vmcp, VMOP_CREATE_NETWORK, uid) != 0 &&
+	    vcp->vcp_nnics != vcpp->vcp_nnics) {
+		log_warnx("vm \"%s\" no permission to set interfaces", name);
+		errno = EPERM;
+		return (-1);
+	}
 	for (i = 0; i < vcpp->vcp_nnics; i++) {
 		/* Interface got overwritten */
 		if (i < vcp->vcp_nnics)
@@ -1378,8 +1417,20 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* kernel */
-	if (strlen(vcp->vcp_kernel) == 0 &&
-	    strlcpy(vcp->vcp_kernel, vcpp->vcp_kernel,
+	if (strlen(vcp->vcp_kernel) > 0) {
+		if (vm_checkinsflag(vmcp, VMOP_CREATE_KERNEL, uid) != 0) {
+			log_warnx("vm \"%s\" no permission to set boot image",
+			    name);
+			errno = EPERM;
+			return (-1);
+		}
+		if (vm_checkaccess(vcp->vcp_kernel, uid, R_OK) == -1) {
+			log_warnx("vm \"%s\" no read access to %s", name,
+			    vcp->vcp_kernel);
+			errno = EPERM;
+			return (-1);
+		}
+	} else if (strlcpy(vcp->vcp_kernel, vcpp->vcp_kernel,
 	    sizeof(vcp->vcp_kernel)) >= sizeof(vcp->vcp_kernel)) {
 		log_warnx("vm \"%s\" kernel name too long", name);
 		errno = EINVAL;
@@ -1387,8 +1438,19 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* cdrom */
-	if (strlen(vcp->vcp_cdrom) == 0 &&
-	    strlcpy(vcp->vcp_cdrom, vcpp->vcp_cdrom,
+	if (strlen(vcp->vcp_cdrom) > 0) {
+		if (vm_checkinsflag(vmcp, VMOP_CREATE_CDROM, uid) != 0) {
+			log_warnx("vm \"%s\" no permission to set cdrom", name);
+			errno = EPERM;
+			return (-1);
+		}
+		if (vm_checkaccess(vcp->vcp_cdrom, uid, R_OK) == -1) {
+			log_warnx("vm \"%s\" no read access to %s", name,
+			    vcp->vcp_cdrom);
+			errno = EPERM;
+			return (-1);
+		}
+	} else if (strlcpy(vcp->vcp_cdrom, vcpp->vcp_cdrom,
 	    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom)) {
 		log_warnx("vm \"%s\" cdrom name too long", name);
 		errno = EINVAL;
@@ -1396,21 +1458,38 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* user */
-	if (vmc->vmc_uid == 0)
-		vmc->vmc_uid = vmcp->vmc_uid;
-	else if (vmc->vmc_uid != vmcp->vmc_uid) {
+	if (vmc->vmc_owner.uid == 0)
+		vmc->vmc_owner.uid = vmcp->vmc_owner.uid;
+	else if (vmc->vmc_owner.uid != uid &&
+	    vmc->vmc_owner.uid != vmcp->vmc_owner.uid) {
 		log_warnx("vm \"%s\" user mismatch", name);
 		errno = EPERM;
 		return (-1);
 	}
 
 	/* group */
-	if (vmc->vmc_gid == 0)
-		vmc->vmc_gid = vmcp->vmc_gid;
-	else if (vmc->vmc_gid != vmcp->vmc_gid) {
+	if (vmc->vmc_owner.gid == 0)
+		vmc->vmc_owner.gid = vmcp->vmc_owner.gid;
+	else if (vmc->vmc_owner.gid != vmcp->vmc_owner.gid) {
 		log_warnx("vm \"%s\" group mismatch", name);
 		errno = EPERM;
 		return (-1);
+	}
+
+	/* child instances */
+	if (vmc->vmc_insflags) {
+		log_warnx("vm \"%s\" cannot change instance permissions", name);
+		errno = EPERM;
+		return (-1);
+	}
+	if (vmcp->vmc_insflags & VMOP_CREATE_INSTANCE) {
+		vmc->vmc_insowner.gid = vmcp->vmc_insowner.gid;
+		vmc->vmc_insowner.uid = vmcp->vmc_insowner.gid;
+		vmc->vmc_insflags = vmcp->vmc_insflags;
+	} else {
+		vmc->vmc_insowner.gid = 0;
+		vmc->vmc_insowner.uid = 0;
+		vmc->vmc_insflags = 0;
 	}
 
 	/* finished, remove instance flags */
@@ -1428,6 +1507,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
  *
  * Parameters:
  *  vm: the VM whose permission is to be checked
+ *  vmo: the required uid/gid to be checked
  *  uid: the user ID of the user making the request
  *
  * Return values:
@@ -1435,7 +1515,7 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
  *  -1: the permission check failed (also returned if vm == null)
  */
 int
-vm_checkperm(struct vmd_vm *vm, uid_t uid)
+vm_checkperm(struct vmd_vm *vm, struct vmop_owner *vmo, uid_t uid)
 {
 	struct group	*gr;
 	struct passwd	*pw;
@@ -1445,22 +1525,129 @@ vm_checkperm(struct vmd_vm *vm, uid_t uid)
 	if (uid == 0)
 		return (0);
 
-	if (vm == NULL)
+	if (vmo == NULL)
 		return (-1);
 
-	/* check supplementary groups */
-	if (vm->vm_params.vmc_gid != -1 &&
-	    (pw = getpwuid(uid)) != NULL &&
-	    (gr = getgrgid(vm->vm_params.vmc_gid)) != NULL) {
+	/* check user */
+	if (vm == NULL) {
+		if  (vmo->uid == uid)
+			return (0);
+	} else {
+		/*
+		 * check user of running vm (the owner of a running vm can
+		 * be different to (or more specific than) the configured owner.
+		 */
+		if ((vm->vm_running && vm->vm_uid == uid) ||
+		    (!vm->vm_running && vmo->uid == uid))
+			return (0);
+	}
+
+	/* check groups */
+	if (vmo->gid != -1) {
+		if ((pw = getpwuid(uid)) == NULL)
+			return (-1);
+		if (pw->pw_gid == vmo->gid)
+			return (0);
+		if ((gr = getgrgid(vmo->gid)) != NULL) {
+			for (grmem = gr->gr_mem; *grmem; grmem++)
+				if (strcmp(*grmem, pw->pw_name) == 0)
+					return (0);
+		}
+	}
+
+	return (-1);
+}
+
+/*
+ * vm_checkinsflag
+ *
+ * Checks wheter the non-root user is allowed to set an instance option.
+ *
+ * Parameters:
+ *  vmc: the VM create parameters
+ *  flag: the flag to be checked
+ *  uid: the user ID of the user making the request
+ *
+ * Return values:
+ *   0: the permission should be granted
+ *  -1: the permission check failed (also returned if vm == null)
+ */
+int
+vm_checkinsflag(struct vmop_create_params *vmc, unsigned int flag, uid_t uid)
+{
+	/* root has no restrictions */
+	if (uid == 0)
+		return (0);
+
+	if ((vmc->vmc_insflags & flag) == 0)
+		return (-1);
+
+	return (0);
+}
+
+/*
+ * vm_checkaccess
+ *
+ * Checks if the user represented by the 'uid' parameter is allowed to
+ * access the file described by the 'path' parameter.
+ *
+ * Parameters:
+ *  path: the path of a file
+ *  uid: the user ID of the user making the request
+ *
+ * Return values:
+ *   0: the permission should be granted
+ *  -1: the permission check failed
+ */
+int
+vm_checkaccess(const char *path, uid_t uid, int amode)
+{
+	struct group	*gr;
+	struct passwd	*pw;
+	char		**grmem;
+	struct stat	 st;
+	mode_t		 mode;
+
+	/* root has no restrictions */
+	if (uid == 0)
+		return (0);
+
+	if (path == NULL || strlen(path) == 0)
+		return (-1);
+
+	/*
+	 * File has to be accessible and a regular file
+	 * (symlinks would allow TOCTTOU-like attacks).
+	 */
+	if (stat(path, &st) == -1 && !S_ISREG(st.st_mode))
+		return (-1);
+
+	/* check other */
+	mode = amode == W_OK ? S_IWOTH : 0;
+	mode |= amode == R_OK ? S_IROTH : 0;
+	if ((st.st_mode & mode) == mode)
+		return (0);
+
+	/* check user */
+	mode = amode == W_OK ? S_IWUSR : 0;
+	mode |= amode == R_OK ? S_IRUSR : 0;
+	if (uid == st.st_uid && (st.st_mode & mode) == mode)
+		return (0);
+
+	/* check groups */
+	mode = amode == W_OK ? S_IWGRP : 0;
+	mode |= amode == R_OK ? S_IRGRP : 0;
+	if ((st.st_mode & mode) != mode)
+		return (-1);
+	if ((pw = getpwuid(uid)) == NULL)
+		return (-1);
+	if (pw->pw_gid == st.st_gid)
+		return (0);
+	if ((gr = getgrgid(st.st_gid)) != NULL) {
 		for (grmem = gr->gr_mem; *grmem; grmem++)
 			if (strcmp(*grmem, pw->pw_name) == 0)
 				return (0);
 	}
-
-	/* check user */
-	if ((vm->vm_running && vm->vm_uid == uid) ||
-	    (!vm->vm_running && vm->vm_params.vmc_uid == uid))
-		return (0);
 
 	return (-1);
 }
@@ -1495,9 +1682,9 @@ vm_opentty(struct vmd_vm *vm)
 		goto fail;
 
 	uid = vm->vm_uid;
-	gid = vm->vm_params.vmc_gid;
+	gid = vm->vm_params.vmc_owner.gid;
 
-	if (vm->vm_params.vmc_gid != -1) {
+	if (vm->vm_params.vmc_owner.gid != -1) {
 		mode = 0660;
 	} else if ((gr = getgrnam("tty")) != NULL) {
 		gid = gr->gr_gid;

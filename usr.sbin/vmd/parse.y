@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2018/07/12 12:04:49 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2018/07/13 08:42:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -117,9 +117,9 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INSTANCE INTERFACE LLADDR
-%token	LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET SWITCH
-%token	UP VM VMID
+%token	ADD ALLOW BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INSTANCE INTERFACE
+%token	LLADDR LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET
+%token	SWITCH UP VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -319,8 +319,8 @@ vm		: VM string vm_instance		{
 			}
 
 			/* set default user/group permissions */
-			vmc.vmc_uid = 0;
-			vmc.vmc_gid = -1;
+			vmc.vmc_owner.uid = 0;
+			vmc.vmc_owner.gid = -1;
 		} '{' optnl vm_opts_l '}'	{
 			struct vmd_vm	*vm;
 			int		 ret;
@@ -486,8 +486,29 @@ vm_opts		: disable			{
 			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
 		}
 		| OWNER owner_id		{
-			vmc.vmc_uid = $2.uid;
-			vmc.vmc_gid = $2.gid;
+			vmc.vmc_owner.uid = $2.uid;
+			vmc.vmc_owner.gid = $2.gid;
+		}
+		| instance
+		;
+
+instance	: ALLOW INSTANCE '{' optnl instance_l '}'
+		| ALLOW INSTANCE instance_flags
+		;
+
+instance_l	: instance_flags optcommanl instance_l
+		| instance_flags optnl
+		;
+
+instance_flags	: BOOT		{ vmc.vmc_insflags |= VMOP_CREATE_KERNEL; }
+		| MEMORY	{ vmc.vmc_insflags |= VMOP_CREATE_MEMORY; }
+		| INTERFACE	{ vmc.vmc_insflags |= VMOP_CREATE_NETWORK; }
+		| DISK		{ vmc.vmc_insflags |= VMOP_CREATE_DISK; }
+		| CDROM		{ vmc.vmc_insflags |= VMOP_CREATE_CDROM; }
+		| INSTANCE	{ vmc.vmc_insflags |= VMOP_CREATE_INSTANCE; }
+		| OWNER owner_id {
+			vmc.vmc_insowner.uid = $2.uid;
+			vmc.vmc_insowner.gid = $2.gid;
 		}
 		;
 
@@ -650,6 +671,10 @@ optnl		: '\n' optnl
 		|
 		;
 
+optcommanl	: ',' optnl
+		| nl
+		;
+
 nl		: '\n' optnl
 		;
 
@@ -688,6 +713,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "add",		ADD },
+		{ "allow",		ALLOW },
 		{ "boot",		BOOT },
 		{ "cdrom",		CDROM },
 		{ "disable",		DISABLE },

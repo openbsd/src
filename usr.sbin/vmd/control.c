@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.27 2018/07/11 13:19:47 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.28 2018/07/13 08:42:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -400,8 +400,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
 				goto fail;
 			memcpy(&vmc, imsg.data, sizeof(vmc));
-			vmc.vmc_uid = c->peercred.uid;
-			vmc.vmc_gid = -1;
+			vmc.vmc_owner.uid = c->peercred.uid;
+			vmc.vmc_owner.gid = -1;
 
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
 			    imsg.hdr.type, fd, -1, &vmc, sizeof(vmc)) == -1) {
