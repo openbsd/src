@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.310 2018/07/13 05:22:34 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.311 2018/07/13 09:06:58 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1635,7 +1635,7 @@ for a complete list of the available protocols.
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
 .Op Oo Fl Oc Ns Cm tunnel Ar src_address dest_address
 .Op Oo Fl Oc Ns Cm tunneldf
-.Op Oo Fl Oc Ns Cm tunneldomain Ar tableid
+.Op Oo Fl Oc Ns Cm tunneldomain Ar rtable
 .Op Cm tunnelttl Ar ttl
 .Op Oo Fl Oc Ns Cm vnetflowid
 .Op Oo Fl Oc Ns Cm vnetid Ar network-id
@@ -1683,13 +1683,13 @@ Remove the source and destination tunnel addresses.
 Do not allow fragmentation of encapsulated packets.
 .It Cm -tunneldf
 Allow fragmentation of encapsulated packets.
-.It Cm tunneldomain Ar tableid
+.It Cm tunneldomain Ar rtable
 Use routing table
-.Ar tableid
+.Ar rtable
 instead of the default table.
 The tunnel does not need to terminate in the same routing domain as the
 interface itself.
-.Ar tableid
+.Ar rtable
 can be set to any valid routing table ID;
 the corresponding routing domain is derived from this table.
 .It Cm -tunneldomain

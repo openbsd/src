@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.82 2018/04/26 12:11:51 guenther Exp $
+.\"	$OpenBSD: netstat.1,v 1.83 2018/07/13 09:06:58 kn Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 26 2018 $
+.Dd $Mdocdate: July 13 2018 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@
 .Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Ek
 .Nm netstat
 .Op Fl bdhn
@@ -272,7 +272,7 @@ option, also print routing labels.
 .It Fl s
 Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.
-.It Fl T Ar tableid
+.It Fl T Ar rtable
 Select an alternate routing table to query.
 The default is to use the current routing table.
 .It Fl t

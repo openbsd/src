@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.219 2018/07/12 16:08:02 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.220 2018/07/13 09:06:58 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ usage(char *cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	fprintf(stderr,
-	    "usage: %s [-dnqtv] [-T tableid] command [[modifiers] args]\n",
+	    "usage: %s [-dnqtv] [-T rtable] command [[modifiers] args]\n",
 	    __progname);
 	fprintf(stderr,
 	    "commands: add, change, delete, exec, flush, get, monitor, show\n");
