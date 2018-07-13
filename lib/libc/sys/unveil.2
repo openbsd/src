@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.1 2018/07/13 09:25:22 beck Exp $
+.\" $OpenBSD: unveil.2,v 1.2 2018/07/13 17:18:34 mestre Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -27,15 +27,15 @@
 .Sh DESCRIPTION
 The first call to
 .Nm
-removes visibility of the envire filesystem from all other
-filesystem-related system calls (
+removes visibility of the entire filesystem from all other
+filesystem-related system calls (such as
 .Xr open 2 ,
-.Xr chmod 2 ,
-.Xe rename 2,
-etc).
+.Xr chmod 2
+and
+.Xr rename 2 ) ,
 except for the specified
-.Ar path.
-Subequent calls to
+.Ar path .
+Subsequent calls to
 .Nm
 expose additional views of the filesystem.
 .Pp
@@ -56,12 +56,12 @@ to remove the "unveil" permission.
 .Pp
 The
 .Fa flags
-argument points to a string consisting of the following characters. 
+argument points to a string consisting of the following characters.
 .Pp
 .Bl -tag -width c -offset indent -compact
 .It Dv r
 .Ar path
-hould be made  be available for read operations corresponding to
+should be made available for read operations corresponding to
 .Xr pledge 2
 promise
 .Ar rpath .
@@ -73,13 +73,13 @@ promise
 .Ar wpath .
 .It Dv x
 .Ar path
-should be available for execute operations corresponding to 
+should be available for execute operations corresponding to
 .Xr pledge 2
 promise
 .Ar wpath .
 .It Dv c
 .Ar path
-should be allowed to be created and removed, corresponding to 
+should be allowed to be created and removed, corresponding to
 .Xr pledge 2
 promise
 .Ar cpath .
