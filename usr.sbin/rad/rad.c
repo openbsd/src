@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.5 2018/07/13 08:31:34 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.6 2018/07/13 08:32:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -131,6 +131,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 icmp6sock, on = 1;
 	int			 frontend_routesock, rtfilter;
+	int			 control_fd;
 
 	conffile = CONF_FILE;
 	csock = RAD_SOCKET;
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	if (engine_flag)
 		engine(debug, cmd_opts & OPT_VERBOSE);
 	else if (frontend_flag)
-		frontend(debug, cmd_opts & OPT_VERBOSE, csock);
+		frontend(debug, cmd_opts & OPT_VERBOSE);
 
 	/* parse config file */
 	if ((main_conf = parse_config(conffile)) == NULL) {
@@ -292,9 +293,12 @@ main(int argc, char *argv[])
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
+	if ((control_fd = control_init(csock)) == -1)
+		fatalx("control socket setup failed");
+
 	main_imsg_compose_frontend_fd(IMSG_ICMP6SOCK, 0, icmp6sock);
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
-
+	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_send_config(main_conf);
 
 	if (pledge("stdio rpath cpath sendfd", NULL) == -1)

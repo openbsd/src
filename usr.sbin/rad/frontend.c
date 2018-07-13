@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2018/07/13 08:31:34 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2018/07/13 08:32:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -166,7 +166,7 @@ frontend_sig_handler(int sig, short event, void *bula)
 }
 
 void
-frontend(int debug, int verbose, char *sockname)
+frontend(int debug, int verbose)
 {
 	struct event		 ev_sigint, ev_sigterm;
 	struct passwd		*pw;
@@ -175,14 +175,10 @@ frontend(int debug, int verbose, char *sockname)
 	uint8_t			*sndcmsgbuf = NULL;
 
 	frontend_conf = config_new_empty();
+	control_state.fd = -1;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
-
-	/* XXX pass in from main */
-	/* Create rad control socket outside chroot. */
-	if (control_init(sockname) == -1)
-		fatalx("control socket setup failed");
 
 	if ((pw = getpwnam(RAD_USER)) == NULL)
 		fatal("getpwnam");
@@ -263,10 +259,6 @@ frontend(int debug, int verbose, char *sockname)
 	sndmhdr.msg_controllen = sndcmsgbuflen;
 
 	TAILQ_INIT(&ra_interfaces);
-
-	/* Listen on control socket. */
-	TAILQ_INIT(&ctl_conns);
-	control_listen();
 
 	event_dispatch();
 
@@ -425,6 +417,16 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (pledge("stdio inet unix route mcast", NULL) == -1)
 				fatal("pledge");
 			frontend_startup();
+			break;
+		case IMSG_CONTROLFD:
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg "
+				    "control fd but didn't receive any",
+				    __func__);
+			control_state.fd = fd;
+			/* Listen on control socket. */
+			TAILQ_INIT(&ctl_conns);
+			control_listen();
 			break;
 		case IMSG_SHUTDOWN:
 			frontend_imsg_compose_engine(IMSG_SHUTDOWN, 0, NULL, 0);
