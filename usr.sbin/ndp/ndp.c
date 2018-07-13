@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.89 2018/06/17 18:07:18 benno Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.90 2018/07/13 09:03:44 krw Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -136,13 +136,6 @@ void ifinfo(char *);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
 static int rdomain;
-
-static char *rtpref_str[] = {
-	"medium",		/* 00 */
-	"high",			/* 01 */
-	"rsv",			/* 10 */
-	"low"			/* 11 */
-};
 
 int
 main(int argc, char *argv[])
@@ -884,7 +877,7 @@ void
 ifinfo(char *ifname)
 {
 	struct in6_ndireq nd;
-	int i, s;
+	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		err(1, "socket");
