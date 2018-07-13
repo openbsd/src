@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.169 2018/03/02 16:57:41 bluhm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.170 2018/07/13 08:51:15 bluhm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -332,7 +332,8 @@ bpf_detachd(struct bpf_d *d)
 		mtx_enter(&d->bd_mtx);
 		bpf_put(d);
 
-		if (error && !(error == EINVAL || error == ENODEV))
+		if (error && !(error == EINVAL || error == ENODEV ||
+		    error == ENXIO))
 			/*
 			 * Something is really wrong if we were able to put
 			 * the driver into promiscuous mode, but can't
