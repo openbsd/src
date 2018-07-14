@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.120 2018/07/10 08:58:50 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.121 2018/07/14 10:21:48 jsg Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	u_long com = SCARG(uap, com);
 	int error = 0;
-	u_int size;
+	u_int size = 0;
 	caddr_t data, memp = NULL;
 	int tmp;
 #define STK_PARAMS	128
