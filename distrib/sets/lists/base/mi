@@ -2712,7 +2712,7 @@
 ./usr/share/relink/kernel.tgz
 ./usr/share/relink/usr
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.92.3.a
+./usr/share/relink/usr/lib/libc.so.92.4.a
 ./usr/share/relink/usr/lib/libcrypto.so.43.1.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a

@@ -1676,6 +1676,7 @@
 ./usr/share/man/man2/truncate.2
 ./usr/share/man/man2/umask.2
 ./usr/share/man/man2/unlink.2
+./usr/share/man/man2/unveil.2
 ./usr/share/man/man2/utimes.2
 ./usr/share/man/man2/utrace.2
 ./usr/share/man/man2/vfork.2

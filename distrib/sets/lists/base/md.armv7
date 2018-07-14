@@ -460,4 +460,5 @@
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg

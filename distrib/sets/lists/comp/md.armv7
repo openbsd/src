@@ -86,6 +86,7 @@
 ./usr/include/armv7/openpromio.h
 ./usr/include/armv7/param.h
 ./usr/include/armv7/pcb.h
+./usr/include/armv7/pci_machdep.h
 ./usr/include/armv7/pmap.h
 ./usr/include/armv7/proc.h
 ./usr/include/armv7/profile.h
