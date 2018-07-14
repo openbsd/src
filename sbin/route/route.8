@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.87 2018/07/13 09:06:58 kn Exp $
+.\"	$OpenBSD: route.8,v 1.88 2018/07/14 13:38:48 benno Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 13 2018 $
+.Dd $Mdocdate: July 14 2018 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -134,6 +134,7 @@ same address family as the destination are shown.
 .It Xo
 .Nm
 .Op Fl n
+.Op Fl T Ar rtable
 .Cm monitor
 .Op Ar modifiers
 .Xc
@@ -148,6 +149,9 @@ If the
 .Fl iface
 modifier is used only interface specific messages (link state changes)
 are shown.
+If a routing table is supplied with
+.Fl T ,
+only changes in that routing table will be displayed.
 .It Xo
 .Nm route
 .Op Fl nv
