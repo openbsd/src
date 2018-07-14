@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.116 2017/12/28 04:42:40 cheloha Exp $
+.\" $OpenBSD: ports.7,v 1.117 2018/07/14 07:07:26 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: December 28 2017 $
+.Dd $Mdocdate: July 14 2018 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -239,9 +239,7 @@ Fetch all of the files needed to build this port from the site(s)
 listed in
 .Ev MASTER_SITES .
 See
-.Ev FETCH_CMD
-and
-.Ev MASTER_SITE_OVERRIDE .
+.Ev FETCH_CMD .
 Use
 .Xr dpb 1
 with option
@@ -437,28 +435,6 @@ and same installation), and of multi-core machines.
 .Pp
 For more detailed information, see
 .Xr bulk 8 .
-.Sh NETWORK CONFIGURATION
-The variables pertaining to network access have been marshalled into
-.Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
-.Pp
-To customize that setup, copy that file into
-.Pa ${PORTSDIR}/infrastructure/db/network.conf
-and edit it.
-.Bl -tag -width MASTER_SITES
-.It Ev MASTER_SITE_OPENBSD
-If set to
-.Dv Yes ,
-include the master
-.Ox
-site when fetching files.
-.It Ev MASTER_SITE_FREEBSD
-If set to
-.Dv Yes ,
-include the master
-.Fx
-site when fetching files.
-.It Ev MASTER_SITE_OVERRIDE
-Go to this site first for all files.
 .El
 .Sh FLAVORS
 The
@@ -585,6 +561,13 @@ Variable names starting with
 are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
 .Bl -tag -width MASTER_SITES
+.It Ev PORTS_PRIVSEP
+If set to
+.Sq Yes ,
+all operations will happen as restricted users
+.Ar _pfetch
+and
+.Ar _pbuild .
 .It Ev PORTSDIR
 Location of the ports tree
 (usually
