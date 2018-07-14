@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.193 2018/07/10 12:40:41 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.194 2018/07/14 12:32:35 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -296,7 +296,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		}
 
 		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
-			if (kr_dispatch_msg() == -1)
+			if (kr_dispatch_msg(conf->default_tableid) == -1)
 				quit = 1;
 		}
 
@@ -351,7 +351,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 	control_cleanup(conf->csock);
 	control_cleanup(conf->rcsock);
 	carp_demote_shutdown();
-	kr_shutdown(conf->fib_priority);
+	kr_shutdown(conf->fib_priority, conf->default_tableid);
 	pftable_clear_all();
 
 	free_config(conf);

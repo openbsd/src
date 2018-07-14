@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.325 2018/07/12 21:45:37 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.326 2018/07/14 12:32:35 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1079,13 +1079,13 @@ void		 ktable_postload(u_int8_t);
 int		 ktable_exists(u_int, u_int *);
 int		 kr_change(u_int, struct kroute_full *,  u_int8_t);
 int		 kr_delete(u_int, struct kroute_full *, u_int8_t);
-void		 kr_shutdown(u_int8_t);
+void		 kr_shutdown(u_int8_t, u_int);
 void		 kr_fib_couple(u_int, u_int8_t);
 void		 kr_fib_couple_all(u_int8_t);
 void		 kr_fib_decouple(u_int, u_int8_t);
 void		 kr_fib_decouple_all(u_int8_t);
 void		 kr_fib_update_prio_all(u_int8_t);
-int		 kr_dispatch_msg(void);
+int		 kr_dispatch_msg(u_int rdomain);
 int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *,
 		    struct bgpd_config *);
 void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *,
