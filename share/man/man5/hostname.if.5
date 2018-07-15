@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.65 2017/03/10 18:28:11 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.66 2018/07/15 10:46:48 phessler Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 10 2017 $
+.Dd $Mdocdate: July 15 2018 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -67,12 +67,12 @@ inet 10.0.0.1 255.255.255.0 10.0.0.255 description "Bob's uplink"
 Each line is processed separately and in order.
 For example:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
+inet6 autoconf
 dhcp
 .Ed
 .Pp
-would run ifconfig to set the nwid of the interface, run it again to set the wpakey of the interface, and then start
+would run ifconfig to set the nwid and wpakey of the interface, run it again to set the AUTOCONF6 flag, and then start
 .Xr dhclient 8 .
 .Sh STATIC ADDRESS CONFIGURATION
 The following packed formats are valid for configuring network
@@ -112,7 +112,8 @@ Other network setup:
 A typical file contains only one line, but more extensive files are possible,
 for example:
 .Bd -literal -offset 1n
-inet 10.0.1.12 255.255.255.0 10.0.1.255 media 100baseTX description Uplink
+media 100baseTX description Uplink
+inet 10.0.1.12 255.255.255.0 10.0.1.255
 inet alias 10.0.1.13 255.255.255.255 10.0.1.13
 inet alias 10.0.1.14 255.255.255.255 NONE
 inet alias 10.0.1.15 255.255.255.255
