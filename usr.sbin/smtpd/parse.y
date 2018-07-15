@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.216 2018/07/11 07:39:22 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.217 2018/07/15 08:49:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -99,7 +99,6 @@ char		*symget(const char *);
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
 
-struct filter_conf	*filter = NULL;
 struct table		*table = NULL;
 struct mta_limits	*limits;
 static struct pki	*pki;
