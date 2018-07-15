@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.97 2018/07/13 10:26:57 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.98 2018/07/15 14:36:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
@@ -1090,6 +1091,9 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 	vm->vm_running = 0;
 	vm->vm_shutdown = 0;
 
+	user_inc(&vm->vm_params.vmc_params, vm->vm_user, 0);
+	user_put(vm->vm_user);
+
 	if (vm->vm_iev.ibuf.fd != -1) {
 		event_del(&vm->vm_iev.ev);
 		close(vm->vm_iev.ibuf.fd);
@@ -1140,6 +1144,7 @@ vm_remove(struct vmd_vm *vm, const char *caller)
 
 	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
 
+	user_put(vm->vm_user);
 	vm_stop(vm, 0, caller);
 	free(vm);
 }
@@ -1151,6 +1156,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	struct vmd_vm		*vm = NULL, *vm_parent = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	struct vmop_owner	*vmo = NULL;
+	struct vmd_user		*usr = NULL;
 	uint32_t		 rng;
 	unsigned int		 i;
 	struct vmd_switch	*sw;
@@ -1223,6 +1229,13 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		}
 	}
 
+	/* track active users */
+	if (uid != 0 && env->vmd_users != NULL &&
+	    (usr = user_get(uid)) == NULL) {
+		log_warnx("could not add user");
+		goto fail;
+	}
+
 	if ((vm = calloc(1, sizeof(*vm))) == NULL)
 		goto fail;
 
@@ -1233,6 +1246,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_tty = -1;
 	vm->vm_receive_fd = -1;
 	vm->vm_paused = 0;
+	vm->vm_user = usr;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)
 		vm->vm_disks[i] = -1;
@@ -1763,6 +1777,104 @@ switch_getbyname(const char *name)
 	}
 
 	return (NULL);
+}
+
+struct vmd_user *
+user_get(uid_t uid)
+{
+	struct vmd_user		*usr;
+
+	if (uid == 0)
+		return (NULL);
+
+	/* first try to find an existing user */
+	TAILQ_FOREACH(usr, env->vmd_users, usr_entry) {
+		if (usr->usr_id.uid == uid)
+			goto done;
+	}
+
+	if ((usr = calloc(1, sizeof(*usr))) == NULL) {
+		log_warn("could not allocate user");
+		return (NULL);
+	}
+
+	usr->usr_id.uid = uid;
+	usr->usr_id.gid = -1;
+	TAILQ_INSERT_TAIL(env->vmd_users, usr, usr_entry);
+
+ done:
+	DPRINTF("%s: uid %d #%d +",
+	    __func__, usr->usr_id.uid, usr->usr_refcnt + 1);
+	usr->usr_refcnt++;
+
+	return (usr);
+}
+
+void
+user_put(struct vmd_user *usr)
+{
+	if (usr == NULL)
+		return;
+
+	DPRINTF("%s: uid %d #%d -",
+	    __func__, usr->usr_id.uid, usr->usr_refcnt - 1);
+
+	if (--usr->usr_refcnt > 0)
+		return;
+
+	TAILQ_REMOVE(env->vmd_users, usr, usr_entry);
+	free(usr);
+}
+
+void
+user_inc(struct vm_create_params *vcp, struct vmd_user *usr, int inc)
+{
+	char	 mem[FMT_SCALED_STRSIZE];
+
+	if (usr == NULL)
+		return;
+
+	/* increment or decrement counters */
+	inc = inc ? 1 : -1;
+
+	usr->usr_maxcpu += vcp->vcp_ncpus * inc;
+	usr->usr_maxmem += vcp->vcp_memranges[0].vmr_size * inc;
+	usr->usr_maxifs += vcp->vcp_nnics * inc;
+
+	if (log_getverbose() > 1) {
+		(void)fmt_scaled(usr->usr_maxmem * 1024 * 1024, mem);
+		log_debug("%s: %c uid %d ref %d cpu %llu mem %s ifs %llu",
+		    __func__, inc == 1 ? '+' : '-',
+		    usr->usr_id.uid, usr->usr_refcnt,
+		    usr->usr_maxcpu, mem, usr->usr_maxifs);
+	}
+}
+
+int
+user_checklimit(struct vmd_user *usr, struct vm_create_params *vcp)
+{
+	const char	*limit = "";
+
+	/* XXX make the limits configurable */
+	if (usr->usr_maxcpu > VM_DEFAULT_USER_MAXCPU) {
+		limit = "cpu ";
+		goto fail;
+	}
+	if (usr->usr_maxcpu > VM_DEFAULT_USER_MAXMEM) {
+		limit = "memory ";
+		goto fail;
+	}
+	if (usr->usr_maxifs > VM_DEFAULT_USER_MAXIFS) {
+		limit = "interface ";
+		goto fail;
+	}
+
+	return (0);
+
+ fail:
+	log_warnx("%s: user %d %slimit reached", vcp->vcp_name,
+	    usr->usr_id.uid, limit);
+	return (-1);
 }
 
 char *

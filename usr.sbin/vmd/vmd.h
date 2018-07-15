@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.77 2018/07/13 10:26:57 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.78 2018/07/15 14:36:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -53,6 +53,11 @@
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
 #define VM_DEFAULT_MEMORY	512
+
+/* default user instance limits */
+#define VM_DEFAULT_USER_MAXCPU	4
+#define VM_DEFAULT_USER_MAXMEM	2048
+#define VM_DEFAULT_USER_MAXIFS	8
 
 /* vmd -> vmctl error codes */
 #define VMD_BIOS_MISSING	1001
@@ -243,10 +248,22 @@ struct vmd_vm {
 	int			 vm_received;
 	int			 vm_paused;
 	int			 vm_receive_fd;
+	struct vmd_user		*vm_user;
 
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
+
+struct vmd_user {
+	struct vmop_owner	 usr_id;
+	uint64_t		 usr_maxcpu;
+	uint64_t		 usr_maxmem;
+	uint64_t		 usr_maxifs;
+	int			 usr_refcnt;
+
+	TAILQ_ENTRY(vmd_user)	 usr_entry;
+};
+TAILQ_HEAD(userlist, vmd_user);
 
 struct address {
 	struct sockaddr_storage	 ss;
@@ -274,6 +291,7 @@ struct vmd {
 	struct vmlist		*vmd_vms;
 	uint32_t		 vmd_nswitches;
 	struct switchlist	*vmd_switches;
+	struct userlist		*vmd_users;
 
 	int			 vmd_fd;
 	int			 vmd_ptmfd;
@@ -329,6 +347,10 @@ int	 vm_opentty(struct vmd_vm *);
 void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
 struct vmd_switch *switch_getbyname(const char *);
+struct vmd_user *user_get(uid_t);
+void	 user_put(struct vmd_user *);
+void	 user_inc(struct vm_create_params *, struct vmd_user *, int);
+int	 user_checklimit(struct vmd_user *, struct vm_create_params *);
 char	*get_string(uint8_t *, size_t);
 uint32_t prefixlen2mask(uint8_t);
 
