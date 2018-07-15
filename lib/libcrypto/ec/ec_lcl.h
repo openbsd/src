@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.8 2018/07/10 21:55:49 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.9 2018/07/15 05:38:48 jsg Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -160,12 +160,10 @@ struct ec_method_st {
 	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 
-	/* used by EC_POINTs_mul, EC_POINT_mul, EC_POINT_precompute_mult, EC_POINT_have_precompute_mult */
-	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r, const BIGNUM *scalar, BN_CTX *);
-	int (*mul_single_ct)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-		const EC_POINT *point, BN_CTX *);
-	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
-		const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
+	/* used by EC_POINTs_mul, EC_POINT_mul, EC_POINT_precompute_mult, EC_POINT_have_precompute_mult
+	 * (default implementations are used if the 'mul' pointer is 0): */
+	int (*mul)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+		size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 	int (*precompute_mult)(EC_GROUP *group, BN_CTX *);
 	int (*have_precompute_mult)(const EC_GROUP *group);
 
@@ -339,11 +337,6 @@ int ec_GFp_simple_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
 int ec_GFp_simple_points_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
 int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-int ec_GFp_simple_mul_generator_ct(const EC_GROUP *, EC_POINT *r, const BIGNUM *scalar, BN_CTX *);
-int ec_GFp_simple_mul_single_ct(const EC_GROUP *, EC_POINT *r, const BIGNUM *scalar,
-	const EC_POINT *point, BN_CTX *);
-int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *g_scalar,
-	const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
 
 
 /* method functions in ecp_mont.c */

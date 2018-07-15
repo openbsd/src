@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.28 2018/07/10 22:06:14 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.29 2018/07/15 05:38:48 jsg Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -793,7 +793,7 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 
 	ok = 1;
 
- err:
+err:
 	BN_free(tmp);
 	return (ok);
 }
@@ -896,7 +896,7 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 
 	ok = 1;
 
- err:
+err:
 	free(buffer_1);
 	free(buffer_2);
 	BN_free(tmp_1);
@@ -988,8 +988,7 @@ ec_asn1_group2parameters(const EC_GROUP * group, ECPARAMETERS * param)
 	}
 	ok = 1;
 
- err:
-	if (!ok) {
+err:	if (!ok) {
 		if (ret && !param)
 			ECPARAMETERS_free(ret);
 		ret = NULL;
@@ -1245,8 +1244,7 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 	}
 	ok = 1;
 
- err:
-	if (!ok) {
+err:	if (!ok) {
 		EC_GROUP_clear_free(ret);
 		ret = NULL;
 	}
@@ -1314,7 +1312,7 @@ d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 		*a = group;
 	}
 
- err:
+err:
 	ECPKPARAMETERS_free(params);
 	return (group);
 }
@@ -1427,7 +1425,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		*a = ret;
 	return (ret);
 
- err:
+err:
 	if (a == NULL || *a != ret)
 		EC_KEY_free(ret);
 	if (priv_key)
@@ -1512,7 +1510,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 		goto err;
 	}
 	ok = 1;
- err:
+err:
 	free(buffer);
 	if (priv_key)
 		EC_PRIVATEKEY_free(priv_key);

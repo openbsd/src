@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.13 2018/07/10 22:06:14 tb Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.14 2018/07/15 05:38:48 jsg Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -102,9 +102,6 @@ EC_GFp_mont_method(void)
 		.point_cmp = ec_GFp_simple_cmp,
 		.make_affine = ec_GFp_simple_make_affine,
 		.points_make_affine = ec_GFp_simple_points_make_affine,
-		.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
-		.mul_single_ct = ec_GFp_simple_mul_single_ct,
-		.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
 		.field_mul = ec_GFp_mont_field_mul,
 		.field_sqr = ec_GFp_mont_field_sqr,
 		.field_encode = ec_GFp_mont_field_encode,
@@ -175,7 +172,7 @@ ec_GFp_mont_group_copy(EC_GROUP * dest, const EC_GROUP * src)
 	}
 	return 1;
 
- err:
+err:
 	if (dest->field_data1 != NULL) {
 		BN_MONT_CTX_free(dest->field_data1);
 		dest->field_data1 = NULL;
@@ -228,7 +225,7 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 		BN_free(group->field_data2);
 		group->field_data2 = NULL;
 	}
- err:
+err:
 	BN_CTX_free(new_ctx);
 	BN_MONT_CTX_free(mont);
 	BN_free(one);
