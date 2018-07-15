@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.58 2016/06/16 17:25:32 martijn Exp $
+.\" $OpenBSD: rum.4,v 1.59 2018/07/15 10:44:49 phessler Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2016 $
+.Dd $Mdocdate: July 15 2018 $
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -162,8 +162,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Pp
@@ -172,8 +171,7 @@ The following
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 mediaopt hostap
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh DIAGNOSTICS

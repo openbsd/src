@@ -1,4 +1,4 @@
-.\" $OpenBSD: rsu.4,v 1.19 2017/07/12 05:44:33 bentley Exp $
+.\" $OpenBSD: rsu.4,v 1.20 2018/07/15 10:44:49 phessler Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2017 $
+.Dd $Mdocdate: July 15 2018 $
 .Dt RSU 4
 .Os
 .Sh NAME
@@ -111,8 +111,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Sh DIAGNOSTICS

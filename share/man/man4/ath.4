@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.64 2016/04/05 15:12:11 mestre Exp $
+.\"	$OpenBSD: ath.4,v 1.65 2018/07/15 10:44:49 phessler Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: April 5 2016 $
+.Dd $Mdocdate: July 15 2018 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -202,8 +202,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Pp
@@ -212,8 +211,7 @@ The following
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 mediaopt hostap
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh DIAGNOSTICS
