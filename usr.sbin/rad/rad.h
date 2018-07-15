@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.9 2018/07/13 08:32:10 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.10 2018/07/15 09:25:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -26,7 +26,6 @@
 #define OPT_VERBOSE2	0x00000002
 #define OPT_NOACTION	0x00000004
 
-#define RAD_MAXTEXT		256
 
 enum {
 	PROC_MAIN,
