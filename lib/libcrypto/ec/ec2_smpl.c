@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.18 2018/07/15 05:38:48 jsg Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.19 2018/07/15 16:27:39 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -232,7 +232,7 @@ ec_GF2m_simple_group_set_curve(EC_GROUP * group,
 		group->b.d[i] = 0;
 
 	ret = 1;
-err:
+ err:
 	return ret;
 }
 
@@ -260,7 +260,7 @@ ec_GF2m_simple_group_get_curve(const EC_GROUP *group,
 	}
 	ret = 1;
 
-err:
+ err:
 	return ret;
 }
 
@@ -306,7 +306,7 @@ ec_GF2m_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 
 	ret = 1;
 
-err:
+ err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -398,7 +398,7 @@ ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * p
 	point->Z_is_one = 1;
 	ret = 1;
 
-err:
+ err:
 	return ret;
 }
 
@@ -432,7 +432,7 @@ ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 	}
 	ret = 1;
 
-err:
+ err:
 	return ret;
 }
 
@@ -549,7 +549,7 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -641,7 +641,7 @@ ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX 
 	if (!BN_GF2m_add(lh, lh, y2))
 		goto err;
 	ret = BN_is_zero(lh);
-err:
+ err:
 	if (ctx)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -693,7 +693,7 @@ ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 		goto err;
 	ret = ((BN_cmp(aX, bX) == 0) && BN_cmp(aY, bY) == 0) ? 0 : 1;
 
-err:
+ err:
 	if (ctx)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -734,7 +734,7 @@ ec_GF2m_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ct
 
 	ret = 1;
 
-err:
+ err:
 	if (ctx)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);

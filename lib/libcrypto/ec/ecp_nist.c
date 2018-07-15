@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.12 2018/07/15 05:38:48 jsg Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.13 2018/07/15 16:27:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -151,7 +151,7 @@ ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 
 	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -179,7 +179,7 @@ ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 		goto err;
 
 	ret = 1;
-err:
+ err:
 	BN_CTX_free(ctx_new);
 	return ret;
 }
@@ -206,7 +206,7 @@ ec_GFp_nist_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a,
 		goto err;
 
 	ret = 1;
-err:
+ err:
 	BN_CTX_free(ctx_new);
 	return ret;
 }

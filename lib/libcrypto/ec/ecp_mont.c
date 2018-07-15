@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.14 2018/07/15 05:38:48 jsg Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.15 2018/07/15 16:27:39 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -172,7 +172,7 @@ ec_GFp_mont_group_copy(EC_GROUP * dest, const EC_GROUP * src)
 	}
 	return 1;
 
-err:
+ err:
 	if (dest->field_data1 != NULL) {
 		BN_MONT_CTX_free(dest->field_data1);
 		dest->field_data1 = NULL;
@@ -225,7 +225,7 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 		BN_free(group->field_data2);
 		group->field_data2 = NULL;
 	}
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	BN_MONT_CTX_free(mont);
 	BN_free(one);

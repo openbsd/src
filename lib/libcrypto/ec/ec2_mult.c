@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.11 2018/07/15 05:38:48 jsg Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.12 2018/07/15 16:27:39 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -111,7 +111,7 @@ gf2m_Mdouble(const EC_GROUP *group, BIGNUM *x, BIGNUM *z, BN_CTX *ctx)
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -155,7 +155,7 @@ gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -243,7 +243,7 @@ gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1,
 
 	ret = 2;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -356,7 +356,7 @@ ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	return ret;
 }
@@ -424,7 +424,7 @@ ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	ret = 1;
 
-err:
+ err:
 	EC_POINT_free(p);
 	EC_POINT_free(acc);
 	BN_CTX_free(new_ctx);
