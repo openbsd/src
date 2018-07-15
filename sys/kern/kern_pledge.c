@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.236 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.237 2018/07/15 12:44:09 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -608,14 +608,14 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	switch (p->p_pledge_syscall) {
 	case SYS_access:
 		/* tzset() needs this. */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == (PLEDGE_RPATH | PLEDGE_STAT)) &&
 		    strcmp(path, "/etc/localtime") == 0) {
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
 
 		/* when avoiding YP mode, getpw* functions touch this */
-		if (ni->ni_pledge == PLEDGE_RPATH &&
+		if (ni->ni_pledge == (PLEDGE_RPATH | PLEDGE_STAT) &&
 		    strcmp(path, "/var/run/ypbind.lock") == 0) {
 			if (p->p_p->ps_pledge & PLEDGE_GETPW) {
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
@@ -713,7 +713,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		break;
 	case SYS_readlink:
 		/* Allow /etc/malloc.conf for malloc(3). */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == (PLEDGE_RPATH | PLEDGE_STAT)) &&
 		    strcmp(path, "/etc/malloc.conf") == 0) {
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
@@ -721,7 +721,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
+		if ((ni->ni_pledge == (PLEDGE_RPATH | PLEDGE_STAT)) &&
 		    (p->p_p->ps_pledge & PLEDGE_DNS) &&
 		    strcmp(path, "/etc/resolv.conf") == 0) {
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
@@ -730,15 +730,11 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 		break;
 	}
 
-	/* Doing a stat */
-	if (ni->ni_pledge & PLEDGE_STAT)
-		return(0);
-
 	/*
-	 * Ensure each flag of p_pledgenote has counterpart allowing it in
-	 * ps_pledge
+	 * Ensure each flag of ni_pledge has counterpart allowing it in
+	 * ps_pledge. discard PLEDGE_STAT as it is unveil(2) stuff.
 	 */
-	if (ni->ni_pledge & ~p->p_p->ps_pledge)
+	if ((ni->ni_pledge & ~PLEDGE_STAT) & ~p->p_p->ps_pledge)
 		return (pledge_fail(p, EPERM, (ni->ni_pledge & ~p->p_p->ps_pledge)));
 
 	/* continue, and check unveil if present */
