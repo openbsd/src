@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.8 2018/07/13 09:16:50 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.9 2018/07/15 09:26:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -129,8 +129,8 @@ void			 free_ra_iface(struct ra_iface *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 void			 get_interface_prefixes(struct ra_iface *,
 			     struct ra_prefix_conf *);
-void			 build_package(struct ra_iface *);
-void			 build_leaving_package(struct ra_iface *);
+void			 build_packet(struct ra_iface *);
+void			 build_leaving_packet(struct ra_iface *);
 void			 ra_output(struct ra_iface *, struct sockaddr_in6 *);
 void			 get_rtaddrs(int, struct sockaddr *,
 			     struct sockaddr **);
@@ -705,7 +705,7 @@ merge_ra_interfaces(void)
 
 		if (ra_iface->removed) {
 			log_debug("iface removed: %s", ra_iface->name);
-			build_leaving_package(ra_iface);
+			build_leaving_packet(ra_iface);
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
 			    &ra_iface->if_index, sizeof(ra_iface->if_index));
 			continue;
@@ -726,7 +726,7 @@ merge_ra_interfaces(void)
 			    &ra_prefix_conf->prefix,
 			    ra_prefix_conf->prefixlen, ra_prefix_conf);
 		}
-		build_package(ra_iface);
+		build_packet(ra_iface);
 	}
 }
 
@@ -859,7 +859,7 @@ add_new_prefix_to_ra_iface(struct ra_iface *ra_iface, struct in6_addr *addr,
 }
 
 void
-build_package(struct ra_iface *ra_iface)
+build_packet(struct ra_iface *ra_iface)
 {
 	struct nd_router_advert		*ra;
 	struct nd_opt_prefix_info	*ndopt_pi;
@@ -933,7 +933,7 @@ build_package(struct ra_iface *ra_iface)
 }
 
 void
-build_leaving_package(struct ra_iface *ra_iface)
+build_leaving_packet(struct ra_iface *ra_iface)
 {
 	struct nd_router_advert		 ra;
 	size_t				 len;
