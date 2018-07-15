@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.7 2018/07/13 09:16:15 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.8 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -594,6 +594,8 @@ main_imsg_send_config(struct rad_conf *xconf)
 {
 	struct ra_iface_conf	*ra_iface_conf;
 	struct ra_prefix_conf	*ra_prefix_conf;
+	struct ra_rdnss_conf	*ra_rdnss_conf;
+	struct ra_dnssl_conf	*ra_dnssl_conf;
 
 	/* Send fixed part of config to children. */
 	if (main_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
@@ -614,6 +616,22 @@ main_imsg_send_config(struct rad_conf *xconf)
 		    entry) {
 			if (main_sendboth(IMSG_RECONF_RA_PREFIX,
 			    ra_prefix_conf, sizeof(*ra_prefix_conf)) == -1)
+				return (-1);
+		}
+		if (main_sendboth(IMSG_RECONF_RA_RDNS_LIFETIME,
+		    &ra_iface_conf->rdns_lifetime,
+		    sizeof(ra_iface_conf->rdns_lifetime)) == -1)
+			return (-1);
+		SIMPLEQ_FOREACH(ra_rdnss_conf, &ra_iface_conf->ra_rdnss_list,
+		    entry) {
+			if (main_sendboth(IMSG_RECONF_RA_RDNSS, ra_rdnss_conf,
+			    sizeof(*ra_rdnss_conf)) == -1)
+				return (-1);
+		}
+		SIMPLEQ_FOREACH(ra_dnssl_conf, &ra_iface_conf->ra_dnssl_list,
+		    entry) {
+			if (main_sendboth(IMSG_RECONF_RA_DNSSL, ra_dnssl_conf,
+			    sizeof(*ra_dnssl_conf)) == -1)
 				return (-1);
 		}
 	}

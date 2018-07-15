@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.4 2018/07/15 09:27:02 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.5 2018/07/15 09:28:21 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -124,6 +124,26 @@ The default is 604800.
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
 The default is 2592000.
+.El
+.Pp
+Recursive resolvers are configured inside an interface block:
+.Bd -unfilled -offset indent
+.Ic dns Brq dns options
+.Ed
+.Pp
+.Ic dns
+options are as follows:
+.Bl -tag -width Ds
+.It Ic lifetime Ar seconds
+The number of seconds the dns options are valid after receiving a router
+advertisement message.
+The default is 900 seconds.
+.It Ic resolver Pq Ar IP Ns | Ns { resolver list }
+IPv6 address or list of IPv6 addresses of recursive dns resolvers.
+.It Ic search Pq Ar domain Ns | Ns { domain list }
+Domain or list of domains for the
+.Xr resolv.conf 5
+search list.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/rad.conf" -compact

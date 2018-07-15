@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2018/07/11 19:05:25 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.7 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -42,9 +42,6 @@
 #include "log.h"
 #include "rad.h"
 #include "engine.h"
-
-#define	MAX_RTR_ADV_INTERVAL		600
-#define	MIN_RTR_ADV_INTERVAL		200
 
 struct engine_iface {
 	TAILQ_ENTRY(engine_iface)	entry;
@@ -267,6 +264,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf;
 	struct ra_prefix_conf		*ra_prefix_conf;
+	struct ra_rdnss_conf		*ra_rdnss_conf;
+	struct ra_dnssl_conf		*ra_dnssl_conf;
 	ssize_t				 n;
 	int				 shut = 0;
 
@@ -335,6 +334,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct ra_iface_conf));
 			ra_iface_conf->autoprefix = NULL;
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_rdnss_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_dnssl_list);
 			SIMPLEQ_INSERT_TAIL(&nconf->ra_iface_list,
 			    ra_iface_conf, entry);
 			break;
@@ -353,6 +354,27 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    ra_prefix_conf));
 			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_prefix_list,
 			    ra_prefix_conf, entry);
+			break;
+		case IMSG_RECONF_RA_RDNS_LIFETIME:
+			ra_iface_conf->rdns_lifetime = *((uint32_t *)imsg.data);
+			break;
+		case IMSG_RECONF_RA_RDNSS:
+			if ((ra_rdnss_conf = malloc(sizeof(struct
+			    ra_rdnss_conf))) == NULL)
+				fatal(NULL);
+			memcpy(ra_rdnss_conf, imsg.data, sizeof(struct
+			    ra_rdnss_conf));
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			    ra_rdnss_conf, entry);
+			break;
+		case IMSG_RECONF_RA_DNSSL:
+			if ((ra_dnssl_conf = malloc(sizeof(struct
+			    ra_dnssl_conf))) == NULL)
+				fatal(NULL);
+			memcpy(ra_dnssl_conf, imsg.data, sizeof(struct
+			    ra_dnssl_conf));
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
 			merge_config(engine_conf, nconf);

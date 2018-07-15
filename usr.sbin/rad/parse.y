@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2018/07/11 08:47:03 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -115,7 +115,7 @@ typedef struct {
 %token	DEFAULT ROUTER HOP LIMIT MANAGED ADDRESS
 %token	CONFIGURATION OTHER LIFETIME REACHABLE TIME RETRANS TIMER
 %token	AUTO PREFIX VALID PREFERRED LIFETIME ONLINK AUTONOMOUS
-%token	ADDRESS_CONFIGURATION
+%token	ADDRESS_CONFIGURATION DNS RESOLVER SEARCH
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -265,6 +265,7 @@ ra_ifaceoptsl	: NO AUTO PREFIX {
 		} ra_prefix_block {
 			ra_prefix_conf = NULL;
 		}
+		| DNS dns_block
 		| ra_opt_block
 		;
 
@@ -290,7 +291,91 @@ ra_prefixoptsl	: VALID LIFETIME NUMBER {
 			ra_prefix_conf->aflag = $3;
 		}
 		;
+dns_block	: '{' optnl dnsopts_l '}'
+		| '{' optnl '}'
+		| /* empty */
+		;
 
+dnsopts_l	: dnsopts_l dnsoptsl nl
+		| dnsoptsl optnl
+		;
+
+dnsoptsl	: LIFETIME NUMBER {
+			ra_iface_conf->rdns_lifetime = $2;
+		}
+		| RESOLVER resolver_block
+		| SEARCH search_block
+		;
+resolver_block	: '{' optnl resolveropts_l '}'
+		| '{' optnl '}'
+		| resolveroptsl
+		| /* empty */
+		;
+
+resolveropts_l	: resolveropts_l resolveroptsl optnl
+		| resolveroptsl optnl
+		;
+
+resolveroptsl	: STRING {
+			struct ra_rdnss_conf	*ra_rdnss_conf;
+			struct in6_addr		 addr;
+
+			memset(&addr, 0, sizeof(addr));
+			if (inet_pton(AF_INET6, $1, &addr)
+			    != 1) {
+				yyerror("error parsing resolver address %s",
+				    $1);
+				free($1);
+				YYERROR;
+			}
+			if ((ra_rdnss_conf = calloc(1, sizeof(*ra_rdnss_conf)))
+			    == NULL)
+				err(1, "%s", __func__);
+			memcpy(&ra_rdnss_conf->rdnss, &addr, sizeof(addr));
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			    ra_rdnss_conf, entry);
+			ra_iface_conf->rdnss_count++;
+		}
+		;
+search_block	: '{' optnl searchopts_l '}'
+		| '{' optnl '}'
+		| searchoptsl
+		| /* empty */
+		;
+
+searchopts_l	: searchopts_l searchoptsl optnl
+		| searchoptsl optnl
+		;
+
+searchoptsl	: STRING {
+			struct ra_dnssl_conf	*ra_dnssl_conf;
+			size_t			 len;
+
+			if ((ra_dnssl_conf = calloc(1,
+			    sizeof(*ra_dnssl_conf))) == NULL)
+				err(1, "%s", __func__);
+
+			if ((len = strlcpy(ra_dnssl_conf->search, $1,
+			    sizeof(ra_dnssl_conf->search))) >
+			    sizeof(ra_dnssl_conf->search)) {
+				yyerror("search string too long");
+				free($1);
+				YYERROR;
+			}
+			if (ra_dnssl_conf->search[len] != '.') {
+				if ((len = strlcat(ra_dnssl_conf->search, ".",
+				    sizeof(ra_dnssl_conf->search))) >
+				    sizeof(ra_dnssl_conf->search)) {
+					yyerror("search string too long");
+					free($1);
+					YYERROR;
+				}
+			}
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			    ra_dnssl_conf, entry);
+			ra_iface_conf->dnssl_len += len + 1;
+		}
+		;
 %%
 
 struct keywords {
@@ -331,6 +416,7 @@ lookup(char *s)
 		{"autonomous",		AUTONOMOUS},
 		{"configuration",	CONFIGURATION},
 		{"default",		DEFAULT},
+		{"dns",			DNS},
 		{"hop",			HOP},
 		{"include",		INCLUDE},
 		{"interface",		RA_IFACE},
@@ -343,8 +429,10 @@ lookup(char *s)
 		{"preferred",		PREFERRED},
 		{"prefix",		PREFIX},
 		{"reachable",		REACHABLE},
+		{"resolver",		RESOLVER},
 		{"retrans",		RETRANS},
 		{"router",		ROUTER},
+		{"search",		SEARCH},
 		{"time",		TIME},
 		{"timer",		TIMER},
 		{"valid",		VALID},
@@ -870,7 +958,11 @@ conf_get_ra_iface(char *name)
 	/* Inherit attributes set in global section. */
 	iface->ra_options = conf->ra_options;
 
+	iface->rdns_lifetime = DEFAULT_RDNS_LIFETIME;
+
 	SIMPLEQ_INIT(&iface->ra_prefix_list);
+	SIMPLEQ_INIT(&iface->ra_rdnss_list);
+	SIMPLEQ_INIT(&iface->ra_dnssl_list);
 
 	SIMPLEQ_INSERT_TAIL(&conf->ra_iface_list, iface, entry);
 

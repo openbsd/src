@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.9 2018/07/15 09:26:26 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.10 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -308,6 +308,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf = &iev->ibuf;
 	struct ra_prefix_conf		*ra_prefix_conf;
+	struct ra_rdnss_conf		*ra_rdnss_conf;
+	struct ra_dnssl_conf		*ra_dnssl_conf;
 	int				 n, shut = 0;
 
 	if (event & EV_READ) {
@@ -374,6 +376,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    ra_iface_conf));
 			ra_iface_conf->autoprefix = NULL;
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_rdnss_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_dnssl_list);
 			SIMPLEQ_INSERT_TAIL(&nconf->ra_iface_list,
 			    ra_iface_conf, entry);
 			break;
@@ -392,6 +396,27 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct ra_prefix_conf));
 			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_prefix_list,
 			    ra_prefix_conf, entry);
+			break;
+		case IMSG_RECONF_RA_RDNS_LIFETIME:
+			ra_iface_conf->rdns_lifetime = *((uint32_t *)imsg.data);
+			break;
+		case IMSG_RECONF_RA_RDNSS:
+			if ((ra_rdnss_conf = malloc(sizeof(struct
+			    ra_rdnss_conf))) == NULL)
+				fatal(NULL);
+			memcpy(ra_rdnss_conf, imsg.data, sizeof(struct
+			    ra_rdnss_conf));
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			    ra_rdnss_conf, entry);
+			break;
+		case IMSG_RECONF_RA_DNSSL:
+			if ((ra_dnssl_conf = malloc(sizeof(struct
+			    ra_dnssl_conf))) == NULL)
+				fatal(NULL);
+			memcpy(ra_dnssl_conf, imsg.data, sizeof(struct
+			    ra_dnssl_conf));
+			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
 			merge_config(frontend_conf, nconf);
@@ -866,8 +891,13 @@ build_packet(struct ra_iface *ra_iface)
 	struct ra_iface_conf		*ra_iface_conf;
 	struct ra_options_conf		*ra_options_conf;
 	struct ra_prefix_conf		*ra_prefix_conf;
-	size_t				 len;
+	struct nd_opt_rdnss		*ndopt_rdnss;
+	struct nd_opt_dnssl		*ndopt_dnssl;
+	struct ra_rdnss_conf		*ra_rdnss;
+	struct ra_dnssl_conf		*ra_dnssl;
+	size_t				 len, label_len;
 	uint8_t				*p, buf[RA_MAX_SIZE];
+	char				*label_start, *label_end;
 
 	ra_iface_conf = find_ra_iface_conf(&frontend_conf->ra_iface_list,
 	    ra_iface->name);
@@ -875,6 +905,14 @@ build_packet(struct ra_iface *ra_iface)
 
 	len = sizeof(*ra);
 	len += sizeof(*ndopt_pi) * ra_iface->prefix_count;
+	if (ra_iface_conf->rdnss_count > 0)
+		len += sizeof(*ndopt_rdnss) + ra_iface_conf->rdnss_count *
+		    sizeof(struct in6_addr);
+
+	if (ra_iface_conf->dnssl_len > 0)
+		/* round up to 8 byte boundary */
+		len += sizeof(*ndopt_dnssl) + ((ra_iface_conf->dnssl_len + 7)
+		    & ~7);
 
 	if (len > sizeof(ra_iface->data))
 		fatal("%s: packet too big", __func__); /* XXX send multiple */
@@ -920,6 +958,50 @@ build_packet(struct ra_iface *ra_iface)
 		ndopt_pi->nd_opt_pi_prefix = ra_prefix_conf->prefix;
 
 		p += sizeof(*ndopt_pi);
+	}
+
+	if (ra_iface_conf->rdnss_count > 0) {
+		ndopt_rdnss = (struct nd_opt_rdnss *)p;
+		ndopt_rdnss->nd_opt_rdnss_type = ND_OPT_RDNSS;
+		ndopt_rdnss->nd_opt_rdnss_len = 1 +
+		    ra_iface_conf->rdnss_count * 2;
+		ndopt_rdnss->nd_opt_rdnss_reserved = 0;
+		ndopt_rdnss->nd_opt_rdnss_lifetime =
+		    htonl(ra_iface_conf->rdns_lifetime);
+		p += sizeof(struct nd_opt_rdnss);
+		SIMPLEQ_FOREACH(ra_rdnss, &ra_iface_conf->ra_rdnss_list, 
+		    entry) {
+			memcpy(p, &ra_rdnss->rdnss, sizeof(ra_rdnss->rdnss));
+			p += sizeof(ra_rdnss->rdnss);
+		}
+	}
+
+	if (ra_iface_conf->dnssl_len > 0) {
+		ndopt_dnssl = (struct nd_opt_dnssl *)p;
+		ndopt_dnssl->nd_opt_dnssl_type = ND_OPT_DNSSL;
+		/* round up to 8 byte boundary */
+		ndopt_dnssl->nd_opt_dnssl_len = 1 +
+		    ((ra_iface_conf->dnssl_len + 7) & ~7) / 8;
+		ndopt_dnssl->nd_opt_dnssl_reserved = 0;
+		ndopt_dnssl->nd_opt_dnssl_lifetime =
+		    htonl(ra_iface_conf->rdns_lifetime);
+		p += sizeof(struct nd_opt_dnssl);
+
+		SIMPLEQ_FOREACH(ra_dnssl, &ra_iface_conf->ra_dnssl_list,
+		    entry) {
+			label_start = ra_dnssl->search;
+			while ((label_end = strchr(label_start, '.')) != NULL) {
+				label_len = label_end - label_start;
+				*p++ = label_len;
+				memcpy(p, label_start, label_len);
+				p += label_len;
+				label_start = label_end + 1;
+			}
+			*p++ = '\0'; /* last dot */
+		}
+		/* zero pad */
+		while (((uintptr_t)p) % 8 != 0)
+			*p++ = '\0';
 	}
 
 	if (len != ra_iface->datalen || memcmp(buf, ra_iface->data, len)

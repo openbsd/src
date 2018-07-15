@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.10 2018/07/15 09:25:41 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.11 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -27,6 +27,11 @@
 #define OPT_NOACTION	0x00000004
 
 
+#define	MAX_RTR_ADV_INTERVAL		600
+#define	MIN_RTR_ADV_INTERVAL		200
+#define	MAX_SEARCH 1025 /* same as MAXDNAME in arpa/nameser.h */
+#define	DEFAULT_RDNS_LIFETIME		600 * 1.5
+
 enum {
 	PROC_MAIN,
 	PROC_ENGINE,
@@ -54,6 +59,9 @@ enum imsg_type {
 	IMSG_RECONF_RA_IFACE,
 	IMSG_RECONF_RA_AUTOPREFIX,
 	IMSG_RECONF_RA_PREFIX,
+	IMSG_RECONF_RA_RDNS_LIFETIME,
+	IMSG_RECONF_RA_RDNSS,
+	IMSG_RECONF_RA_DNSSL,
 	IMSG_RECONF_END,
 	IMSG_ICMP6SOCK,
 	IMSG_ROUTESOCK,
@@ -90,13 +98,28 @@ struct ra_prefix_conf {
 	int				 aflag;		/* autonom. addr flag */
 };
 
+/* RFC 8106 */
+struct ra_rdnss_conf {
+	SIMPLEQ_ENTRY(ra_rdnss_conf)	entry;
+	struct in6_addr			rdnss;
+};
+struct ra_dnssl_conf {
+	SIMPLEQ_ENTRY(ra_dnssl_conf)	entry;
+	char				search[MAX_SEARCH];
+};
+
 struct ra_iface_conf {
-	SIMPLEQ_ENTRY(ra_iface_conf)	 entry;
-	struct ra_options_conf		 ra_options;
-	struct ra_prefix_conf		*autoprefix;
+	SIMPLEQ_ENTRY(ra_iface_conf)		 entry;
+	struct ra_options_conf			 ra_options;
+	struct ra_prefix_conf			*autoprefix;
 	SIMPLEQ_HEAD(ra_prefix_conf_head,
-	    ra_prefix_conf)		 ra_prefix_list;
-	char				 name[IF_NAMESIZE];
+	    ra_prefix_conf)			 ra_prefix_list;
+	uint32_t				 rdns_lifetime;
+	SIMPLEQ_HEAD(, ra_rdnss_conf)		 ra_rdnss_list;
+	int					 rdnss_count;
+	SIMPLEQ_HEAD(, ra_dnssl_conf)		 ra_dnssl_list;
+	int					 dnssl_len;
+	char					 name[IF_NAMESIZE];
 };
 
 struct rad_conf {

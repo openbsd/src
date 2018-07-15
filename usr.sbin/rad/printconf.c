@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2018/07/10 16:39:54 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.2 2018/07/15 09:28:21 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -72,6 +72,8 @@ print_config(struct rad_conf *conf)
 {
 	struct ra_iface_conf	*iface;
 	struct ra_prefix_conf	*prefix;
+	struct ra_rdnss_conf	*ra_rdnss;
+	struct ra_dnssl_conf	*ra_dnssl;
 	char			 buf[INET6_ADDRSTRLEN], *bufp;
 
 	print_ra_options("", &conf->ra_options);
@@ -94,6 +96,30 @@ print_config(struct rad_conf *conf)
 			    prefix->prefixlen, buf, sizeof(buf));
 			printf("\tprefix %s {\n", bufp);
 			print_prefix_options("\t\t", prefix);
+			printf("\t}\n");
+		}
+
+		if (!SIMPLEQ_EMPTY(&iface->ra_rdnss_list) ||
+		    !SIMPLEQ_EMPTY(&iface->ra_dnssl_list)) {
+			printf("\tdns {\n");
+			printf("\t\tlifetime %u\n", iface->rdns_lifetime);
+			if (!SIMPLEQ_EMPTY(&iface->ra_rdnss_list)) {
+				printf("\t\tresolver {\n");
+				SIMPLEQ_FOREACH(ra_rdnss,
+				    &iface->ra_rdnss_list, entry) {
+					inet_ntop(AF_INET6, &ra_rdnss->rdnss,
+					    buf, sizeof(buf));
+					printf("\t\t\t%s\n", buf);
+				}
+				printf("\t\t}\n");
+			}
+			if (!SIMPLEQ_EMPTY(&iface->ra_dnssl_list)) {
+				printf("\t\tsearch {\n");
+				SIMPLEQ_FOREACH(ra_dnssl,
+				    &iface->ra_dnssl_list, entry)
+					printf("\t\t\t%s\n", ra_dnssl->search);
+				printf("\t\t}\n");
+			}
 			printf("\t}\n");
 		}
 
