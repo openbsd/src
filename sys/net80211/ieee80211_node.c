@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.131 2018/07/13 07:22:55 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.132 2018/07/16 12:34:14 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -200,6 +200,10 @@ ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
 {
 	struct ieee80211_ess *ess;
 	int i = 0, new = 0, ness = 0;
+
+	/* only valid for station (aka, client) mode */
+	if (ic->ic_opmode != IEEE80211_M_STA)
+		return (0);
 
 	/* Don't save an empty nwid */
 	if (strnlen(nwid, IEEE80211_NWID_LEN) == 0)
@@ -1094,7 +1098,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	}
 
 	/* Possibly switch which ssid we are associated with */
-	if (!bgscan)
+	if (!bgscan && ic->ic_opmode == IEEE80211_M_STA)
 		ieee80211_match_ess(ic);
 
 	for (; ni != NULL; ni = nextbs) {
