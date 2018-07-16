@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.20 2018/06/18 15:01:22 kettenis Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.21 2018/07/16 13:41:19 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1156,7 +1156,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 	swhdr = (struct bwfm_sdio_swhdr *)&hwhdr[1];
 	data = (char *)&swhdr[1];
 
-	do {
+	for (;;) {
 		/* If we know the next size, just read ahead. */
 		if (nextlen) {
 			if (bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
@@ -1249,7 +1249,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			printf("%s: unknown channel\n", DEVNAME(sc));
 			break;
 		}
-	} while (nextlen);
+	}
 }
 
 void
