@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.40 2018/07/05 15:34:25 mpi Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.41 2018/07/16 16:44:09 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -266,6 +266,7 @@ fusefs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
 int
 fusefs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
+	struct vattr vattr;
 	struct fusefs_mnt *fmp;
 	struct fusefs_node *ip;
 	struct vnode *nvp;
@@ -313,6 +314,17 @@ retry:
 
 	if (ino == FUSE_ROOTINO)
 		nvp->v_flag |= VROOT;
+
+	/*
+	 * Initialise the file size so that file size changes can be
+	 * detected during file operations.
+	 */
+	error = VOP_GETATTR(nvp, &vattr, curproc->p_ucred, curproc);
+	if (error) {
+		vrele(nvp);
+		return (error);
+	}
+	ip->filesize = vattr.va_size;
 
 	*vpp = nvp;
 

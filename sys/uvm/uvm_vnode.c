@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.102 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.103 2018/07/16 16:44:09 helg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1274,6 +1274,8 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
  *	then return "text busy"
  * nfs_open: seems to uncache any file opened with nfs
  * vn_writechk: if VTEXT vnode and can't uncache return "text busy"
+ * fusefs_open: uncaches any file that is opened
+ * fusefs_write: uncaches on every write
  */
 
 int
@@ -1341,8 +1343,10 @@ uvm_vnp_uncache(struct vnode *vp)
  *	us.
  *
  * called from:
- *  => truncate fns (ext2fs_truncate, ffs_truncate, detrunc[msdos])
- *  => "write" fns (ext2fs_write, WRITE [ufs/ufs], msdosfs_write, nfs_write)
+ *  => truncate fns (ext2fs_truncate, ffs_truncate, detrunc[msdos],
+ *     fusefs_setattr)
+ *  => "write" fns (ext2fs_write, WRITE [ufs/ufs], msdosfs_write, nfs_write
+ *     fusefs_write)
  *  => ffs_balloc [XXX: why? doesn't WRITE handle?]
  *  => NFS: nfs_loadattrcache, nfs_getattrcache, nfs_setattr
  *  => union fs: union_newsize
