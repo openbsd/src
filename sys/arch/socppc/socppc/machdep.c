@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2018/07/16 08:53:44 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -487,7 +487,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	    !sigonstack(tf->fixreg[1]) &&
 	    (psp->ps_sigonstack & sigmask(sig)))
 		fp = (struct sigframe *)
-		    trunc_page(vaddr_t)p->p_sigstk.ss_sp + pp->p_sigstk.ss_size);
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->fixreg[1];
 
