@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.63 2018/07/12 15:51:50 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.64 2018/07/16 07:49:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -195,6 +195,9 @@ ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen
 
 	NET_ASSERT_LOCKED();
 
+	skip = tc->tc_skip;
+	protoff = tc->tc_protoff;
+
 	/* update the counters */
 	tdb->tdb_cur_bytes += m->m_pkthdr.len - (skip + hlen);
 	ipcompstat_add(ipcomps_ibytes, m->m_pkthdr.len - (skip + hlen));
@@ -212,9 +215,6 @@ ipcomp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;	/* Turn off checking */
 	}
-
-	skip = tc->tc_skip;
-	protoff = tc->tc_protoff;
 
 	/* In case it's not done already, adjust the size of the mbuf chain */
 	m->m_pkthdr.len = clen + hlen + skip;
