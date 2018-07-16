@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.50 2018/07/06 12:30:36 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.51 2018/07/16 11:52:26 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1859,9 +1859,9 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct bwfm_event *e = mtod(m, struct bwfm_event *);
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211_node *ni;
+	struct bwfm_event *e;
 
 #ifdef __STRICT_ALIGNMENT
 	/* Remaining data is an ethernet packet, so align. */
@@ -1877,6 +1877,7 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	}
 #endif
 
+	e = mtod(m, struct bwfm_event *);
 	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
 	    memcmp(BWFM_BRCM_OUI, e->hdr.oui, sizeof(e->hdr.oui)) == 0 &&
