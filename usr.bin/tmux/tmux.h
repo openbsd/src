@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.828 2018/07/04 12:30:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.829 2018/07/16 08:48:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -135,6 +135,9 @@ enum {
 	/* Focus events. */
 	KEYC_FOCUS_IN = KEYC_BASE,
 	KEYC_FOCUS_OUT,
+
+	/* "Any" key, used if not found in key table. */
+	KEYC_ANY,
 
 	/* Paste brackets. */
 	KEYC_PASTE_START,
