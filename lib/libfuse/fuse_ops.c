@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.34 2018/06/08 23:43:40 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.35 2018/07/16 13:10:53 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -429,6 +429,42 @@ ifuse_ops_release(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 	fbuf->fb_err = f->op.release(realname, &ffi);
+	free(realname);
+
+	return (0);
+}
+
+static int
+ifuse_ops_fsync(struct fuse *f, struct fusebuf *fbuf)
+{
+	struct fuse_file_info ffi;
+	struct fuse_vnode *vn;
+	char *realname;
+	int datasync;
+
+	CHECK_OPT(fsync);
+
+	memset(&ffi, 0, sizeof(ffi));
+	ffi.fh = fbuf->fb_io_fd;
+
+	/*
+	 * fdatasync(2) is just a wrapper around fsync(2) so datasync
+	 * is always false.
+	 */
+	datasync = 0;
+
+	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
+	if (vn == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+
+	realname = build_realname(f, vn->ino);
+	if (realname == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+	fbuf->fb_err = f->op.fsync(realname, datasync, &ffi);
 	free(realname);
 
 	return (0);
@@ -1094,6 +1130,9 @@ ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
 		break;
 	case FBT_RELEASE:
 		ret = ifuse_ops_release(f, fbuf);
+		break;
+	case FBT_FSYNC:
+		ret = ifuse_ops_fsync(f, fbuf);
 		break;
 	case FBT_FLUSH:
 		ret = ifuse_ops_flush(f, fbuf);

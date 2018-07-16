@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_new.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
+.\" $OpenBSD: fuse_new.3,v 1.3 2018/07/16 13:10:53 helg Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2018 $
+.Dd $Mdocdate: July 16 2018 $
 .Dt FUSE_NEW 3
 .Os
 .Sh NAME
@@ -38,6 +38,13 @@ a negated errno value (-errno) on failure.
 .Pp
 All operations are optional but a functional file system will want to
 implement at least statfs, readdir, open, read and getattr.
+FUSE will return ENOSYS if any operation other than flush, fsync or
+fsyncdir is not implemented.
+.Pp
+The first parameter to each of these operations (except for init and
+terminate) is a NULL terminated string representing the full path to
+the file or directory, relative to the root of this file system, that
+is being operated on.
 .Bd -literal
 struct fuse_operations {
     int    (*getattr)(const char *, struct stat *);
@@ -123,6 +130,24 @@ creates and opens the file.
 There is no equivalent in the
 .Ox
 VFS.
+.It flush
+Called when the file is closed by the
+.Xr close 2
+system call.
+This is the only way for a file system to return an error on close.
+.It fsync
+Optional function that implements
+.Xr fsync 2
+and
+.Xr fdatasync 2 .
+The datasync parameter specifies whether the operation is as a result
+of a call to
+.Xr fdatasync 2
+and is currently always 0 (false).
+ffi.fh_id will contain the file handle returned by the file system when
+the file was opened.
+.It fsyncdir
+Not implemented.
 .It getattr
 Corresponds to the
 .Xr stat 2
@@ -131,19 +156,9 @@ Flags and extended attributes are ignored.
 This operation is mandatory.
 .It getxattr
 Not implemented.
-.It flush
-Called when the file is closed by the
-.Xr close 2
-system call.
-This is the only way for a file system to return an error on close.
 .It getdir
 Deprecated.
 File system should implement readdir instead.
-.It flush
-Called when the file is closed by the
-.Xr close 2
-system call.
-This is the only way for a file system to return an error on close.
 .It mknod
 Called on
 .Xr open 2
@@ -195,7 +210,9 @@ This is always set on
 Similar to use_ino but the file system's inode number is only reported
 for readdir.
 This is always set on
-.Ox .
+.Ox
+because it's required by
+.Xr getcwd 3 .
 .It uid=%u
 The UID that will be reported as the owner for all files by getattr.
 .It umask=%o

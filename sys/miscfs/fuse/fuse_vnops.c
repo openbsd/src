@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.49 2018/06/21 14:17:23 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.50 2018/07/16 13:10:53 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -66,6 +66,7 @@ int	fusefs_lock(void *);
 int	fusefs_unlock(void *);
 int	fusefs_islocked(void *);
 int	fusefs_advlock(void *);
+int	fusefs_fsync(void *);
 
 /* Prototypes for fusefs kqfilter */
 int	filt_fusefsread(struct knote *, long);
@@ -87,7 +88,7 @@ struct vops fusefs_vops = {
 	.vop_ioctl	= fusefs_ioctl,
 	.vop_poll	= fusefs_poll,
 	.vop_kqfilter	= fusefs_kqfilter,
-	.vop_fsync	= nullop,
+	.vop_fsync	= fusefs_fsync,
 	.vop_remove	= fusefs_remove,
 	.vop_link	= fusefs_link,
 	.vop_rename	= fusefs_rename,
@@ -1525,4 +1526,60 @@ fusefs_advlock(void *v)
 
 	return (lf_advlock(&ip->ufs_ino.i_lockf, ip->filesize, ap->a_id,
 	    ap->a_op, ap->a_fl, ap->a_flags));
+}
+
+int
+fusefs_fsync(void *v)
+{
+	struct vop_fsync_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct proc *p = ap->a_p;
+	struct fusefs_node *ip;
+	struct fusefs_mnt *fmp;
+	struct fusefs_filehandle *fufh;
+	struct fusebuf *fbuf;
+	int type, error = 0;
+
+	/*
+	 * Can't write to directory file handles so no need to fsync.
+	 * FUSE has fsyncdir but it doesn't make sense on OpenBSD.
+	 */
+	if (vp->v_type == VDIR)
+		return (0);
+
+	ip = VTOI(vp);
+	fmp = (struct fusefs_mnt *)ip->ufs_ino.i_ump;
+
+	if (!fmp->sess_init)
+		return (ENXIO);
+
+	/* Implementing fsync is optional so don't error. */
+	if (fmp->undef_op & UNDEF_FSYNC)
+		return (0);
+
+	/* Sync all writeable file descriptors. */
+	for (type = 0; type < FUFH_MAXTYPE; type++) {
+		fufh = &(ip->fufh[type]);
+		if (fufh->fh_type == FUFH_WRONLY ||
+		    fufh->fh_type == FUFH_RDWR) {
+
+			fbuf = fb_setup(0, ip->ufs_ino.i_number, FBT_FSYNC, p);
+			fbuf->fb_io_fd = fufh->fh_id;
+
+			/* Always behave as if ap->a_waitfor = MNT_WAIT. */
+			error = fb_queue(fmp->dev, fbuf);
+			fb_delete(fbuf);
+			if (error)
+				break;
+		}
+	}
+
+	if (error == ENOSYS) {
+		fmp->undef_op |= UNDEF_FSYNC;
+
+		/* Implementing fsync is optional so don't error. */
+		return (0);
+	}
+
+	return (error);
 }
