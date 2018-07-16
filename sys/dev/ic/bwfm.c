@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.51 2018/07/16 11:52:26 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.52 2018/07/16 13:46:17 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1089,6 +1089,7 @@ bwfm_chip_sr_capable(struct bwfm_softc *sc)
 		return 0;
 
 	switch (sc->sc_chip.ch_chip) {
+	case BRCM_CC_4345_CHIP_ID:
 	case BRCM_CC_4354_CHIP_ID:
 	case BRCM_CC_4356_CHIP_ID:
 		core = bwfm_chip_get_pmu(sc);
