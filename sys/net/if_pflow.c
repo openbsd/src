@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.88 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.89 2018/07/16 16:54:30 jasper Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -644,7 +644,8 @@ pflow_get_mbuf(struct pflow_softc *sc, u_int16_t set_id)
 	if (sc == NULL)		/* get only a new empty mbuf */
 		return (m);
 
-	if (sc->sc_version == PFLOW_PROTO_5) {
+	switch (sc->sc_version) {
+	case PFLOW_PROTO_5:
 		/* populate pflow_header */
 		h.reserved1 = 0;
 		h.reserved2 = 0;
@@ -657,11 +658,15 @@ pflow_get_mbuf(struct pflow_softc *sc, u_int16_t set_id)
 
 		sc->sc_count = 0;
 		timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
-	} else {
+		break;
+	case PFLOW_PROTO_10:
 		/* populate pflow_set_header */
 		set_hdr.set_length = 0;
 		set_hdr.set_id = htons(set_id);
 		m_copyback(m, 0, PFLOW_SET_HDRLEN, &set_hdr, M_NOWAIT);
+		break;
+	default: /* NOTREACHED */
+		break;
 	}
 
 	return (m);
