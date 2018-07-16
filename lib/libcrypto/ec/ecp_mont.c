@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.15 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.16 2018/07/16 17:32:39 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -102,6 +102,9 @@ EC_GFp_mont_method(void)
 		.point_cmp = ec_GFp_simple_cmp,
 		.make_affine = ec_GFp_simple_make_affine,
 		.points_make_affine = ec_GFp_simple_points_make_affine,
+		.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
+		.mul_single_ct = ec_GFp_simple_mul_single_ct,
+		.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
 		.field_mul = ec_GFp_mont_field_mul,
 		.field_sqr = ec_GFp_mont_field_sqr,
 		.field_encode = ec_GFp_mont_field_encode,
