@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.232 2018/05/26 10:16:14 ratchov Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.233 2018/07/16 17:05:15 jasper Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2308,12 +2308,7 @@ sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
  * Handle SysV semaphore info requests
  */
 int
-sysctl_seminfo(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_seminfo(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -2332,12 +2327,7 @@ sysctl_seminfo(string, bufpp, mib, flags, typep)
  * Handle SysV shared memory info requests
  */
 int
-sysctl_shminfo(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_shminfo(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
