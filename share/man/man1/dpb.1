@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.5 2018/07/09 18:27:58 jmc Exp $
+.\"	$OpenBSD: dpb.1,v 1.6 2018/07/16 13:14:06 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: July 16 2018 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -252,6 +252,13 @@ User for all fetch activities if possible
 .It Ar FETCH_TIMEOUT
 Timeout (in seconds) after which fetches that don't show
 any progress will be killed.
+This can be instead set in
+.Ar DEFAULT
+or
+.Ar localhost
+as the
+.Sq fetch_timeout
+property.
 .It Ar FTP_ONLY
 Don't fetch distfiles that are not allowed for ftp.
 .It Ar HISTORY_ONLY
@@ -407,6 +414,13 @@ value).
 Chroot to
 .Ar dir
 before building.
+.It fetch_timeout=s
+Timeout (in seconds) after which fetches that don't show
+any progress will be killed.
+Only makes sense for
+.Ar DEFAULT
+or
+.Ar localhost .
 .It jobs=n
 Number of jobs to run on that host, defaults to hw.ncpu.
 .It junk=n
