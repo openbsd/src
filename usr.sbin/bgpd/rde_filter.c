@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.95 2018/07/09 14:08:48 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.96 2018/07/16 09:09:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -639,7 +639,9 @@ rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp)
 {
 	memset(state, 0, sizeof(*state));
 
-	path_copy(path_prep(&state->aspath), asp);
+	path_prep(&state->aspath);
+	if (asp)
+		path_copy(&state->aspath, asp);
 }
 
 void

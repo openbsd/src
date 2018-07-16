@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.393 2018/07/13 08:18:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.394 2018/07/16 09:09:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,16 +51,16 @@ void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
-int		 rde_update_update(struct rde_peer *, struct rde_aspath *,
+int		 rde_update_update(struct rde_peer *, struct filterstate *,
 		     struct bgpd_addr *, u_int8_t);
 void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
 		     u_int8_t);
 int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
-		     struct rde_aspath *, struct mpattr *);
+		     struct filterstate *, struct mpattr *);
 int		 rde_attr_add(struct rde_aspath *, u_char *, u_int16_t);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
-		     struct rde_aspath *);
+		     struct filterstate *);
 int		 rde_update_extract_prefix(u_char *, u_int16_t, void *,
 		     u_int8_t, u_int8_t);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
@@ -950,7 +950,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 int
 rde_update_dispatch(struct imsg *imsg)
 {
-	struct rde_aspath	 asp;
+	struct filterstate	 state;
 	struct bgpd_addr	 prefix;
 	struct mpattr		 mpa;
 	struct rde_peer		*peer;
@@ -998,11 +998,11 @@ rde_update_dispatch(struct imsg *imsg)
 	    imsg->hdr.len - IMSG_HEADER_SIZE - 4 - withdrawn_len - attrpath_len;
 	bzero(&mpa, sizeof(mpa));
 
-	path_prep(&asp);
+	rde_filterstate_prep(&state, NULL);
 	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
 		/* parse path attributes */
 		while (len > 0) {
-			if ((pos = rde_attr_parse(p, len, peer, &asp,
+			if ((pos = rde_attr_parse(p, len, peer, &state,
 			    &mpa)) < 0)
 				goto done;
 			p += pos;
@@ -1010,19 +1010,19 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		/* check for missing but necessary attributes */
-		if ((subtype = rde_attr_missing(&asp, peer->conf.ebgp,
+		if ((subtype = rde_attr_missing(&state.aspath, peer->conf.ebgp,
 		    nlri_len))) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
 			    &subtype, sizeof(u_int8_t));
 			goto done;
 		}
 
-		rde_as4byte_fixup(peer, &asp);
+		rde_as4byte_fixup(peer, &state.aspath);
 
 		/* enforce remote AS if requested */
-		if (asp.flags & F_ATTR_ASPATH &&
+		if (state.aspath.flags & F_ATTR_ASPATH &&
 		    peer->conf.enforce_as == ENFORCE_AS_ON) {
-			fas = aspath_neighbor(asp.aspath);
+			fas = aspath_neighbor(state.aspath.aspath);
 			if (peer->conf.remote_as != fas) {
 			    log_peer_warnx(&peer->conf, "bad path, "
 				"starting with %s, "
@@ -1033,7 +1033,7 @@ rde_update_dispatch(struct imsg *imsg)
 			}
 		}
 
-		rde_reflector(peer, &asp);
+		rde_reflector(peer, &state.aspath);
 	}
 
 	p = imsg->data;
@@ -1108,7 +1108,8 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		if ((asp.flags & ~F_ATTR_MP_UNREACH) == 0 && mplen == 0) {
+		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0 &&
+		    mplen == 0) {
 			/* EoR marker */
 			peer_recv_eor(peer, aid);
 		}
@@ -1153,7 +1154,7 @@ rde_update_dispatch(struct imsg *imsg)
 			break;
 		}
 
-		if ((asp.flags & ~F_ATTR_MP_UNREACH) == 0) {
+		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0) {
 			error = 0;
 			goto done;
 		}
@@ -1165,8 +1166,8 @@ rde_update_dispatch(struct imsg *imsg)
 	/* aspath needs to be loop free nota bene this is not a hard error */
 	if (peer->conf.ebgp &&
 	    peer->conf.enforce_local_as == ENFORCE_AS_ON &&
-	    !aspath_loopfree(asp.aspath, peer->conf.local_as))
-		asp.flags |= F_ATTR_LOOP;
+	    !aspath_loopfree(state.aspath.aspath, peer->conf.local_as))
+		state.aspath.flags |= F_ATTR_LOOP;
 
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
@@ -1188,7 +1189,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		if (rde_update_update(peer, &asp, &prefix, prefixlen) == -1)
+		if (rde_update_update(peer, &state, &prefix, prefixlen) == -1)
 			goto done;
 
 	}
@@ -1224,11 +1225,11 @@ rde_update_dispatch(struct imsg *imsg)
 		 * this works because asp is not linked.
 		 * But first unlock the previously locked nexthop.
 		 */
-		if (asp.nexthop) {
-			(void)nexthop_put(asp.nexthop);
-			asp.nexthop = NULL;
+		if (state.aspath.nexthop) {
+			(void)nexthop_put(state.aspath.nexthop);
+			state.aspath.nexthop = NULL;
 		}
-		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &asp)) == -1) {
+		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &state)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    mpa.reach, mpa.reach_len);
@@ -1252,7 +1253,7 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				if (rde_update_update(peer, &asp, &prefix,
+				if (rde_update_update(peer, &state, &prefix,
 				    prefixlen) == -1)
 					goto done;
 			}
@@ -1271,7 +1272,7 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				if (rde_update_update(peer, &asp, &prefix,
+				if (rde_update_update(peer, &state, &prefix,
 				    prefixlen) == -1)
 					goto done;
 			}
@@ -1283,13 +1284,13 @@ rde_update_dispatch(struct imsg *imsg)
 	}
 
 done:
-	path_clean(&asp);
+	rde_filterstate_clean(&state);
 
 	return (error);
 }
 
 int
-rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
+rde_update_update(struct rde_peer *peer, struct filterstate *in,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	struct filterstate	 state;
@@ -1299,7 +1300,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, asp, prefix, prefixlen, 0))
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen, 0))
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1317,7 +1318,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		rde_filterstate_prep(&state, asp);
+		rde_filterstate_prep(&state, &in->aspath);
 		/* input filter */
 		action = rde_filter(ribs[i].in_rules, peer, p, &state);
 
@@ -1325,7 +1326,7 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 			rde_update_log("update", i, peer,
 			    &state.aspath.nexthop->exit_nexthop, prefix,
 			    prefixlen);
-			path_update(&ribs[i].rib, peer, &state.aspath, prefix,
+			path_update(&ribs[i].rib, peer, &state, prefix,
 			    prefixlen, 0);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
@@ -1378,9 +1379,10 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 
 int
 rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
-    struct rde_aspath *a, struct mpattr *mpa)
+    struct filterstate *state, struct mpattr *mpa)
 {
 	struct bgpd_addr nexthop;
+	struct rde_aspath *a = &state->aspath;
 	u_char		*op = p, *npath;
 	u_int32_t	 tmp32;
 	int		 error;
@@ -1770,7 +1772,7 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, u_int16_t nlrilen)
 
 int
 rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
-    struct rde_aspath *asp)
+    struct filterstate *state)
 {
 	struct bgpd_addr	nexthop;
 	u_int8_t		totlen, nhlen;
@@ -1830,7 +1832,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 		return (-1);
 	}
 
-	asp->nexthop = nexthop_get(&nexthop);
+	state->aspath.nexthop = nexthop_get(&nexthop);
 
 	/* ignore reserved (old SNPA) field as per RFC4760 */
 	totlen += nhlen + 1;
@@ -3009,7 +3011,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 
 		if (action == ACTION_ALLOW) {
 			/* update Local-RIB */
-			path_update(&rib->rib, peer, &state.aspath, &addr,
+			path_update(&rib->rib, peer, &state, &addr,
 			    pt->prefixlen, 0);
 		} else if (action == ACTION_DENY) {
 			/* remove from Local-RIB */
@@ -3565,7 +3567,7 @@ network_add(struct network_config *nc, int flagstatic)
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		path_update(&ribs[i].rib, peerself, asp, &nc->prefix,
+		path_update(&ribs[i].rib, peerself, &state, &nc->prefix,
 		    nc->prefixlen, 0);
 	}
 	rde_filterstate_clean(&state);
