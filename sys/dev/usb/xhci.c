@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.86 2018/05/13 06:58:42 visa Exp $ */
+/* $OpenBSD: xhci.c,v 1.87 2018/07/16 07:48:17 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -764,7 +764,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		 * If this is not the last TRB of a transfer, we should
 		 * theoretically clear the IOC at the end of the chain
 		 * but the HC might have already processed it before we
-		 * had a change to schedule the softinterrupt.
+		 * had a chance to schedule the softinterrupt.
 		 */
 		xx = (struct xhci_xfer *)xfer;
 		if (xx->index != trb_idx) {
@@ -1043,7 +1043,7 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 
 	/*
 	 * Our USBD Bus Interface is pipe-oriented but for most of the
-	 * operations we need to access a device context, so keep trace
+	 * operations we need to access a device context, so keep track
 	 * of the slot ID in every pipe.
 	 */
 	if (slot == 0)
@@ -1327,7 +1327,7 @@ xhci_pipe_init(struct xhci_softc *sc, struct usbd_pipe *pipe)
 		 * be in the ENABLED state.  Issue an "Address Device"
 		 * with BSR=1 to put the device in the DEFAULT state.
 		 * We cannot jump directly to the ADDRESSED state with
-		 * BSR=0 because some Low/Full speed devices wont accept
+		 * BSR=0 because some Low/Full speed devices won't accept
 		 * a SET_ADDRESS command before we've read their device
 		 * descriptor.
 		 */
@@ -2047,7 +2047,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 * At this stage the endpoint has been stopped, so update its
 	 * dequeue pointer past the last TRB of the transfer.
 	 *
-	 * Note: This assume that only one transfer per endpoint has
+	 * Note: This assumes that only one transfer per endpoint has
 	 *	 pending TRBs on the ring.
 	 */
 	xhci_cmd_set_tr_deq_async(sc, xp->slot, xp->dci,
