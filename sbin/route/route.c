@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.222 2018/07/14 13:37:44 benno Exp $	*/
+/*	$OpenBSD: route.c,v 1.223 2018/07/17 20:57:27 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -108,7 +108,6 @@ void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
 void	 mask_addr(union sockunion *, union sockunion *, int);
-int	 inet6_makenetandmask(struct sockaddr_in6 *, char *);
 int	 getaddr(int, int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
 int	 rtmsg(int, int, int, uint8_t);
@@ -793,52 +792,6 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 }
 
 /*
- * XXX the function may need more improvement...
- */
-int
-inet6_makenetandmask(struct sockaddr_in6 *sin6, char *plen)
-{
-	struct in6_addr in6;
-	const char *errstr;
-	int i, len, q, r;
-
-	if (NULL==plen) {
-		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
-		    sin6->sin6_scope_id == 0) {
-			plen = "0";
-		} else if ((sin6->sin6_addr.s6_addr[0] & 0xe0) == 0x20) {
-			/* aggregatable global unicast - RFC2374 */
-			memset(&in6, 0, sizeof(in6));
-			if (!memcmp(&sin6->sin6_addr.s6_addr[8],
-			    &in6.s6_addr[8], 8))
-				plen = "64";
-		}
-	}
-
-	if (!plen || strcmp(plen, "128") == 0)
-		return (1);
-	else {
-		rtm_addrs |= RTA_NETMASK;
-		prefixlen(AF_INET6, plen);
-
-		len = strtonum(plen, 0, 128, &errstr);
-		if (errstr)
-			errx(1, "prefixlen %s is %s", plen, errstr);
-
-		q = (128-len) >> 3;
-		r = (128-len) & 7;
-		i = 15;
-
-		while (q-- > 0)
-			sin6->sin6_addr.s6_addr[i--] = 0;
-		if (r > 0)
-			sin6->sin6_addr.s6_addr[i] &= 0xff << r;
-
-		return (0);
-	}
-}
-
-/*
  * Interpret an argument as a network address of some kind,
  * returning 1 if a host address, 0 if a network address.
  */
@@ -938,8 +891,13 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 			su->sin6.sin6_scope_id = 0;
 		}
 		if (hints.ai_flags == AI_NUMERICHOST) {
-			if (which == RTA_DST)
-				return (inet6_makenetandmask(&su->sin6, sep));
+			if (which == RTA_DST) {
+				if (sep == NULL && su->sin6.sin6_scope_id == 0 &&
+				    IN6_IS_ADDR_UNSPECIFIED(&su->sin6.sin6_addr))
+					sep = "0";
+				if (sep == NULL || prefixlen(AF_INET6, sep))
+					return (1);
+			}
 			return (0);
 		} else
 			return (1);
