@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.22 2018/07/16 13:46:17 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.23 2018/07/17 19:44:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -99,7 +99,8 @@ struct bwfm_sdio_softc {
 
 	uint8_t			  sc_tx_seq;
 	uint8_t			  sc_tx_max_seq;
-	struct mbuf_queue	  sc_txdata_queue;
+	struct mbuf_list	  sc_tx_queue;
+	int			  sc_tx_count;
 
 	struct task		  sc_task;
 };
@@ -147,15 +148,16 @@ void		 bwfm_sdio_buscore_activate(struct bwfm_softc *, uint32_t);
 
 struct mbuf *	 bwfm_sdio_newbuf(void);
 int		 bwfm_sdio_tx_ok(struct bwfm_sdio_softc *);
-void		 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *);
-void		 bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *);
+void		 bwfm_sdio_tx_frames(struct bwfm_sdio_softc *);
+void		 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *, struct mbuf *);
+void		 bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *, struct mbuf *);
 void		 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int,
 		    uint16_t *);
 
 int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
-int		 bwfm_sdio_txctl(struct bwfm_softc *);
+int		 bwfm_sdio_txctl(struct bwfm_softc *, void *);
 
 #ifdef BWFM_DEBUG
 void		 bwfm_sdio_debug_console(struct bwfm_sdio_softc *);
@@ -246,7 +248,7 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
-	mq_init(&sc->sc_txdata_queue, 16, IPL_SOFTNET);
+	ml_init(&sc->sc_tx_queue);
 	sc->sc_bounce_size = 64 * 1024;
 	sc->sc_bounce_buf = dma_alloc(sc->sc_bounce_size, PR_WAITOK);
 	sc->sc_tx_seq = 0xff;
@@ -684,12 +686,8 @@ bwfm_sdio_task(void *v)
 		bwfm_sdio_rx_frames(sc);
 	}
 
-	if (!TAILQ_EMPTY(&sc->sc_sc.sc_bcdc_txctlq)) {
-		bwfm_sdio_tx_ctrlframe(sc);
-	}
-
-	if (!mq_empty(&sc->sc_txdata_queue)) {
-		bwfm_sdio_tx_dataframe(sc);
+	if (!ml_empty(&sc->sc_tx_queue)) {
+		bwfm_sdio_tx_frames(sc);
 	}
 
 #ifdef BWFM_DEBUG
@@ -1034,61 +1032,9 @@ bwfm_sdio_tx_ok(struct bwfm_sdio_softc *sc)
 }
 
 void
-bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc)
-{
-	struct bwfm_sdio_hwhdr *hwhdr;
-	struct bwfm_sdio_swhdr *swhdr;
-	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
-	size_t len, roundto;
-
-	if (!bwfm_sdio_tx_ok(sc))
-		return;
-
-	TAILQ_FOREACH_SAFE(ctl, &sc->sc_sc.sc_bcdc_txctlq, next, tmp) {
-		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
-
-		len = sizeof(*hwhdr) + sizeof(*swhdr) + ctl->len;
-
-		/* Zero-pad to either block-size or 4-byte alignment. */
-		if (len > 512 && (len % 512) != 0)
-			roundto = 512;
-		else
-			roundto = 4;
-
-		KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
-
-		hwhdr = (void *)sc->sc_bounce_buf;
-		hwhdr->frmlen = htole16(len);
-		hwhdr->cksum = htole16(~len);
-
-		swhdr = (void *)&hwhdr[1];
-		swhdr->seqnr = sc->sc_tx_seq++;
-		swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_CONTROL;
-		swhdr->nextlen = 0;
-		swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
-		swhdr->maxseqnr = 0;
-
-		memcpy(&swhdr[1], ctl->buf, ctl->len);
-
-		if (roundup(len, roundto) != len)
-			memset(sc->sc_bounce_buf + len, 0,
-			    roundup(len, roundto) - len);
-
-		bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
-		    roundup(len, roundto), 1);
-
-		TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
-	}
-}
-
-void
-bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
+bwfm_sdio_tx_frames(struct bwfm_sdio_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
-	struct bwfm_sdio_hwhdr *hwhdr;
-	struct bwfm_sdio_swhdr *swhdr;
-	struct bwfm_proto_bcdc_hdr *bcdc;
-	size_t len, roundto;
 	struct mbuf *m;
 	int i;
 
@@ -1097,52 +1043,106 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc)
 
 	i = min((uint8_t)(sc->sc_tx_max_seq - sc->sc_tx_seq), 32);
 	while (i--) {
-		m = mq_dequeue(&sc->sc_txdata_queue);
+		m = ml_dequeue(&sc->sc_tx_queue);
 		if (m == NULL)
 			break;
 
-		len = sizeof(*hwhdr) + sizeof(*swhdr) + sizeof(*bcdc)
-		    + m->m_pkthdr.len;
-
-		/* Zero-pad to either block-size or 4-byte alignment. */
-		if (len > 512 && (len % 512) != 0)
-			roundto = 512;
+		if (m->m_type == MT_CONTROL)
+			bwfm_sdio_tx_ctrlframe(sc, m);
 		else
-			roundto = 4;
-
-		KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
-
-		hwhdr = (void *)sc->sc_bounce_buf;
-		hwhdr->frmlen = htole16(len);
-		hwhdr->cksum = htole16(~len);
-
-		swhdr = (void *)&hwhdr[1];
-		swhdr->seqnr = sc->sc_tx_seq++;
-		swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_DATA;
-		swhdr->nextlen = 0;
-		swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
-		swhdr->maxseqnr = 0;
-
-		bcdc = (void *)&swhdr[1];
-		bcdc->data_offset = 0;
-		bcdc->priority = ieee80211_classify(&sc->sc_sc.sc_ic, m);
-		bcdc->flags = BWFM_BCDC_FLAG_VER(BWFM_BCDC_FLAG_PROTO_VER);
-		bcdc->flags2 = 0;
-
-		m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&bcdc[1]);
-
-		if (roundup(len, roundto) != len)
-			memset(sc->sc_bounce_buf + len, 0,
-			    roundup(len, roundto) - len);
-
-		bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
-		    roundup(len, roundto), 1);
+			bwfm_sdio_tx_dataframe(sc, m);
 
 		m_freem(m);
 	}
 
-	if (!mq_full(&sc->sc_txdata_queue))
+	if (sc->sc_tx_count < 64)
 		ifq_restart(&ifp->if_snd);
+}
+
+void
+bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *sc, struct mbuf *m)
+{
+	struct bwfm_sdio_hwhdr *hwhdr;
+	struct bwfm_sdio_swhdr *swhdr;
+	size_t len, roundto;
+
+	len = sizeof(*hwhdr) + sizeof(*swhdr) + m->m_len;
+
+	/* Zero-pad to either block-size or 4-byte alignment. */
+	if (len > 512 && (len % 512) != 0)
+		roundto = 512;
+	else
+		roundto = 4;
+
+	KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
+
+	hwhdr = (void *)sc->sc_bounce_buf;
+	hwhdr->frmlen = htole16(len);
+	hwhdr->cksum = htole16(~len);
+
+	swhdr = (void *)&hwhdr[1];
+	swhdr->seqnr = sc->sc_tx_seq++;
+	swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_CONTROL;
+	swhdr->nextlen = 0;
+	swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
+	swhdr->maxseqnr = 0;
+
+	m_copydata(m, 0, m->m_len, (caddr_t)&swhdr[1]);
+
+	if (roundup(len, roundto) != len)
+		memset(sc->sc_bounce_buf + len, 0,
+		    roundup(len, roundto) - len);
+
+	bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
+	    roundup(len, roundto), 1);
+}
+
+void
+bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc, struct mbuf *m)
+{
+	struct bwfm_sdio_hwhdr *hwhdr;
+	struct bwfm_sdio_swhdr *swhdr;
+	struct bwfm_proto_bcdc_hdr *bcdc;
+	size_t len, roundto;
+
+	len = sizeof(*hwhdr) + sizeof(*swhdr) + sizeof(*bcdc)
+	    + m->m_pkthdr.len;
+
+	/* Zero-pad to either block-size or 4-byte alignment. */
+	if (len > 512 && (len % 512) != 0)
+		roundto = 512;
+	else
+		roundto = 4;
+
+	KASSERT(roundup(len, roundto) <= sc->sc_bounce_size);
+
+	hwhdr = (void *)sc->sc_bounce_buf;
+	hwhdr->frmlen = htole16(len);
+	hwhdr->cksum = htole16(~len);
+
+	swhdr = (void *)&hwhdr[1];
+	swhdr->seqnr = sc->sc_tx_seq++;
+	swhdr->chanflag = BWFM_SDIO_SWHDR_CHANNEL_DATA;
+	swhdr->nextlen = 0;
+	swhdr->dataoff = sizeof(*hwhdr) + sizeof(*swhdr);
+	swhdr->maxseqnr = 0;
+
+	bcdc = (void *)&swhdr[1];
+	bcdc->data_offset = 0;
+	bcdc->priority = ieee80211_classify(&sc->sc_sc.sc_ic, m);
+	bcdc->flags = BWFM_BCDC_FLAG_VER(BWFM_BCDC_FLAG_PROTO_VER);
+	bcdc->flags2 = 0;
+
+	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&bcdc[1]);
+
+	if (roundup(len, roundto) != len)
+		memset(sc->sc_bounce_buf + len, 0,
+		    roundup(len, roundto) - len);
+
+	bwfm_sdio_frame_read_write(sc, sc->sc_bounce_buf,
+	    roundup(len, roundto), 1);
+
+	sc->sc_tx_count--;
 }
 
 void
@@ -1372,7 +1372,7 @@ bwfm_sdio_txcheck(struct bwfm_softc *bwfm)
 {
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
 
-	if (mq_full(&sc->sc_txdata_queue))
+	if (sc->sc_tx_count >= 64)
 		return ENOBUFS;
 
 	return 0;
@@ -1383,18 +1383,33 @@ bwfm_sdio_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 {
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
 
-	if (mq_full(&sc->sc_txdata_queue))
+	if (sc->sc_tx_count >= 64)
 		return ENOBUFS;
 
-	mq_enqueue(&sc->sc_txdata_queue, m);
+	sc->sc_tx_count++;
+	ml_enqueue(&sc->sc_tx_queue, m);
 	task_add(systq, &sc->sc_task);
 	return 0;
 }
 
 int
-bwfm_sdio_txctl(struct bwfm_softc *bwfm)
+bwfm_sdio_txctl(struct bwfm_softc *bwfm, void *arg)
 {
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
+	struct bwfm_proto_bcdc_ctl *ctl = arg;
+	struct mbuf *m;
+
+	MGET(m, M_DONTWAIT, MT_CONTROL);
+	if (m == NULL || M_TRAILINGSPACE(m) < ctl->len) {
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
+	}
+	memcpy(mtod(m, char *), ctl->buf, ctl->len);
+	m->m_len = ctl->len;
+
+	TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
+	ml_enqueue(&sc->sc_tx_queue, m);
 	task_add(systq, &sc->sc_task);
 	return 0;
 }

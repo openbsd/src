@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.15 2018/05/23 14:15:06 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.16 2018/07/17 19:44:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -201,7 +201,7 @@ void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 int		 bwfm_usb_preinit(struct bwfm_softc *);
 int		 bwfm_usb_txcheck(struct bwfm_softc *);
 int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
-int		 bwfm_usb_txctl(struct bwfm_softc *);
+int		 bwfm_usb_txctl(struct bwfm_softc *, void *);
 void		 bwfm_usb_txctl_cb(struct usbd_xfer *, void *, usbd_status);
 
 struct mbuf *	 bwfm_usb_newbuf(void);
@@ -801,10 +801,10 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 }
 
 int
-bwfm_usb_txctl(struct bwfm_softc *bwfm)
+bwfm_usb_txctl(struct bwfm_softc *bwfm, void *arg)
 {
 	struct bwfm_usb_softc *sc = (void *)bwfm;
-	struct bwfm_proto_bcdc_ctl *ctl, *tmp;
+	struct bwfm_proto_bcdc_ctl *ctl = arg;
 	usb_device_request_t req;
 	struct usbd_xfer *xfer;
 	usbd_status error;
@@ -812,57 +812,53 @@ bwfm_usb_txctl(struct bwfm_softc *bwfm)
 
 	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
 
-	TAILQ_FOREACH_SAFE(ctl, &sc->sc_sc.sc_bcdc_txctlq, next, tmp) {
-		TAILQ_REMOVE(&sc->sc_sc.sc_bcdc_txctlq, ctl, next);
+	/* Send out control packet. */
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = 0;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, ctl->len);
 
-		/* Send out control packet. */
-		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-		req.bRequest = 0;
-		USETW(req.wValue, 0);
-		USETW(req.wIndex, sc->sc_ifaceno);
-		USETW(req.wLength, ctl->len);
-
-		error = usbd_do_request(sc->sc_udev, &req, ctl->buf);
-		if (error != 0) {
-			printf("%s: could not write ctl packet: %s\n",
-			    DEVNAME(sc), usbd_errstr(error));
-			free(ctl->buf, M_TEMP, ctl->len);
-			free(ctl, M_TEMP, sizeof(*ctl));
-			return 1;
-		}
-
-		/* Setup asynchronous receive. */
-		if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
-			free(ctl->buf, M_TEMP, ctl->len);
-			free(ctl, M_TEMP, sizeof(*ctl));
-			return 1;
-		}
-		if ((buf = usbd_alloc_buffer(xfer, ctl->len)) == NULL) {
-			free(ctl->buf, M_TEMP, ctl->len);
-			free(ctl, M_TEMP, sizeof(*ctl));
-			usbd_free_xfer(xfer);
-			return 1;
-		}
-
-		memset(buf, 0, ctl->len);
-		req.bmRequestType = UT_READ_CLASS_INTERFACE;
-		req.bRequest = 1;
-		USETW(req.wValue, 0);
-		USETW(req.wIndex, sc->sc_ifaceno);
-		USETW(req.wLength, ctl->len);
-
-		error = usbd_request_async(xfer, &req, sc, bwfm_usb_txctl_cb);
-		if (error != 0) {
-			printf("%s: could not read ctl packet: %s\n",
-			    DEVNAME(sc), usbd_errstr(error));
-			free(ctl->buf, M_TEMP, ctl->len);
-			free(ctl, M_TEMP, sizeof(*ctl));
-			usbd_free_xfer(xfer);
-			return 1;
-		}
-
-		TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
+	error = usbd_do_request(sc->sc_udev, &req, ctl->buf);
+	if (error != 0) {
+		printf("%s: could not write ctl packet: %s\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
 	}
+
+	/* Setup asynchronous receive. */
+	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
+	}
+	if ((buf = usbd_alloc_buffer(xfer, ctl->len)) == NULL) {
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		usbd_free_xfer(xfer);
+		return 1;
+	}
+
+	memset(buf, 0, ctl->len);
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = 1;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ifaceno);
+	USETW(req.wLength, ctl->len);
+
+	error = usbd_request_async(xfer, &req, sc, bwfm_usb_txctl_cb);
+	if (error != 0) {
+		printf("%s: could not read ctl packet: %s\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		usbd_free_xfer(xfer);
+		return 1;
+	}
+
+	TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.52 2018/07/16 13:46:17 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.53 2018/07/17 19:44:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -174,7 +174,6 @@ bwfm_attach(struct bwfm_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 
 	TAILQ_INIT(&sc->sc_bcdc_rxctlq);
-	TAILQ_INIT(&sc->sc_bcdc_txctlq);
 
 	/* Init host async commands ring. */
 	sc->sc_cmdq.cur = sc->sc_cmdq.next = sc->sc_cmdq.queued = 0;
@@ -1359,9 +1358,8 @@ bwfm_proto_bcdc_txctl(struct bwfm_softc *sc, int reqid, char *buf, size_t *len)
 	ctl->reqid = reqid;
 	ctl->buf = buf;
 	ctl->len = *len;
-	TAILQ_INSERT_TAIL(&sc->sc_bcdc_txctlq, ctl, next);
 
-	if (sc->sc_bus_ops->bs_txctl(sc)) {
+	if (sc->sc_bus_ops->bs_txctl(sc, ctl)) {
 		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
 		return 1;
 	}

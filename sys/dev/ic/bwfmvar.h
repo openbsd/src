@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.14 2018/05/23 11:32:14 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.15 2018/07/17 19:44:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -89,7 +89,7 @@ struct bwfm_bus_ops {
 	void (*bs_stop)(struct bwfm_softc *);
 	int (*bs_txcheck)(struct bwfm_softc *);
 	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
-	int (*bs_txctl)(struct bwfm_softc *);
+	int (*bs_txctl)(struct bwfm_softc *, void *);
 };
 
 struct bwfm_buscore_ops {
@@ -169,7 +169,6 @@ struct bwfm_softc {
 	struct task		 sc_task;
 
 	int			 sc_bcdc_reqid;
-	TAILQ_HEAD(, bwfm_proto_bcdc_ctl) sc_bcdc_txctlq;
 	TAILQ_HEAD(, bwfm_proto_bcdc_ctl) sc_bcdc_rxctlq;
 };
 
