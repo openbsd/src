@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.41 2018/07/16 16:44:09 helg Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.42 2018/07/17 13:12:08 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -157,8 +157,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = vflush(mp, NULLVP, flags)))
 		return (error);
 
-	if (fmp->sess_init) {
-		fmp->sess_init = 0;
+	if (fmp->sess_init && fmp->sess_init != PENDING) {
 		fbuf = fb_setup(0, 0, FBT_DESTROY, p);
 
 		error = fb_queue(fmp->dev, fbuf);
@@ -168,6 +167,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 		fb_delete(fbuf);
 	}
+	fmp->sess_init = 0;
 
 	fuse_device_cleanup(fmp->dev);
 	fuse_device_set_fmp(fmp, 0);
@@ -314,17 +314,18 @@ retry:
 
 	if (ino == FUSE_ROOTINO)
 		nvp->v_flag |= VROOT;
-
-	/*
-	 * Initialise the file size so that file size changes can be
-	 * detected during file operations.
-	 */
-	error = VOP_GETATTR(nvp, &vattr, curproc->p_ucred, curproc);
-	if (error) {
-		vrele(nvp);
-		return (error);
+	else {
+		/*
+		 * Initialise the file size so that file size changes can be
+		 * detected during file operations.
+		 */
+		error = VOP_GETATTR(nvp, &vattr, curproc->p_ucred, curproc);
+		if (error) {
+			vrele(nvp);
+			return (error);
+		}
+		ip->filesize = vattr.va_size;
 	}
-	ip->filesize = vattr.va_size;
 
 	*vpp = nvp;
 
