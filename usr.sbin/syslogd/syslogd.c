@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.254 2017/11/24 23:11:42 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.255 2018/07/17 13:51:47 djm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -98,6 +98,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <limits.h>
 #include <paths.h>
 #include <signal.h>
@@ -1823,9 +1824,9 @@ logline(int pri, int flags, char *from, char *msg)
 			continue;
 
 		/* skip messages with the incorrect program or hostname */
-		if (f->f_program && strcmp(prog, f->f_program) != 0)
+		if (f->f_program && fnmatch(f->f_program, prog, 0) != 0)
 			continue;
-		if (f->f_hostname && strcmp(from, f->f_hostname) != 0)
+		if (f->f_hostname && fnmatch(f->f_hostname, from, 0) != 0)
 			continue;
 
 		if (f->f_type == F_CONSOLE && (flags & IGN_CONS))
