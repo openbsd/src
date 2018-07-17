@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.84 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.85 2018/07/17 07:02:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -105,7 +105,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
 		incoming = 1;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
 	    pkglen, incoming) == -1)
 		return;
 
@@ -128,7 +128,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	if (peer->capa.neg.as4byte)
 		subtype = BGP4MP_STATE_CHANGE_AS4;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
 	    2 * sizeof(short), 0) == -1)
 		return;
 
@@ -684,17 +684,17 @@ int
 mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
     u_int16_t subtype, u_int32_t len, int swap)
 {
-	time_t		now;
+	struct timespec	time;
 
-	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
+	if ((*bp = ibuf_dynamic(MRT_ET_HEADER_SIZE, MRT_ET_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + len)) == NULL) {
 		log_warn("mrt_dump_hdr_se: ibuf_dynamic error");
 		return (-1);
 	}
 
-	now = time(NULL);
+	clock_gettime(CLOCK_REALTIME, &time);
 
-	DUMP_LONG(*bp, now);
+	DUMP_LONG(*bp, time.tv_sec);
 	DUMP_SHORT(*bp, type);
 	DUMP_SHORT(*bp, subtype);
 
@@ -702,16 +702,16 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	case AF_INET:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
-			len += MRT_BGP4MP_AS4_IPv4_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_AS4_IPv4_HEADER_SIZE;
 		else
-			len += MRT_BGP4MP_IPv4_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_IPv4_HEADER_SIZE;
 		break;
 	case AF_INET6:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
-			len += MRT_BGP4MP_AS4_IPv6_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_AS4_IPv6_HEADER_SIZE;
 		else
-			len += MRT_BGP4MP_IPv6_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_IPv6_HEADER_SIZE;
 		break;
 	case 0:
 		goto fail;
@@ -721,6 +721,8 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	}
 
 	DUMP_LONG(*bp, len);
+	/* milisecond field use by the _ET format */
+	DUMP_LONG(*bp, time.tv_nsec / 1000);
 
 	if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 	    subtype == BGP4MP_MESSAGE_AS4) {
