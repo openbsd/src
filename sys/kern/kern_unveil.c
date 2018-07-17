@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.2 2018/07/13 13:47:41 jsg Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.3 2018/07/17 07:43:34 krw Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -50,7 +50,7 @@ unvname_compare(const struct unvname *n1, const struct unvname *n2)
 }
 
 struct unvname *
-unvname_new(const char *name, size_t size, int flags)
+unvname_new(const char *name, size_t size, uint64_t flags)
 {
 	struct unvname *ret = malloc(sizeof(struct unvname), M_PROC, M_WAITOK);
 	ret->un_name = malloc(size, M_PROC, M_WAITOK);
