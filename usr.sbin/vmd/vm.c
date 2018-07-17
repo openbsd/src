@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.37 2018/07/12 10:15:44 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.38 2018/07/17 13:47:06 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -110,7 +110,7 @@ uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
 
 /*
  * Represents a standard register set for an OS to be booted
- * as a flat 32 bit address space, before paging is enabled.
+ * as a flat 64 bit address space.
  *
  * NOT set here are:
  *  RIP
@@ -123,7 +123,7 @@ uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
  * Note - CR3 and various bits in CR0 may be overridden by vmm(4) based on
  *        features of the CPU in use.
  */
-static const struct vcpu_reg_state vcpu_init_flat32 = {
+static const struct vcpu_reg_state vcpu_init_flat64 = {
 #ifdef __i386__
 	.vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_EIP] = 0x0,
@@ -136,7 +136,7 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
 	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
 	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
 	.vrs_crs[VCPU_REGS_CR4] = CR4_PAE | CR4_PSE,
-	.vrs_crs[VCPU_REGS_PDPTE0] = PML3_PAGE | PG_V,
+	.vrs_crs[VCPU_REGS_PDPTE0] = 0ULL,
 	.vrs_crs[VCPU_REGS_PDPTE1] = 0ULL,
 	.vrs_crs[VCPU_REGS_PDPTE2] = 0ULL,
 	.vrs_crs[VCPU_REGS_PDPTE3] = 0ULL,
@@ -319,10 +319,10 @@ start_vm(struct vmd_vm *vm, int fd)
 		vrs = vrp.vrwp_regs;
 	} else {
 		/*
-		 * Set up default "flat 32 bit" register state - RIP,
+		 * Set up default "flat 64 bit" register state - RIP,
 		 * RSP, and GDT info will be set in bootloader
 		 */
-		memcpy(&vrs, &vcpu_init_flat32, sizeof(vrs));
+		memcpy(&vrs, &vcpu_init_flat64, sizeof(vrs));
 
 		/* Find and open kernel image */
 		if ((fp = vmboot_open(vm->vm_kernel,
