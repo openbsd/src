@@ -1,4 +1,4 @@
-/*	$OpenBSD: bnaddsub.c,v 1.1 2018/07/10 16:57:50 tb Exp $	*/
+/*	$OpenBSD: bnaddsub.c,v 1.2 2018/07/17 14:27:22 inoguchi Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -215,8 +215,7 @@ main(int argc, char *argv[])
 	int failed = 0;
 
 	if ((bio_err = BIO_new_fp(stderr, BIO_NOCLOSE)) == NULL) {
-		fprintf(stderr, "%s: failed to initialize bio_err",
-		    getprogname());
+		fprintf(stderr, "%s: failed to initialize bio_err", argv[0]);
 		return 1;
 	}
 
