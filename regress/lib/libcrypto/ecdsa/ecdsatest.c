@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecdsatest.c */
+/*	$OpenBSD: ecdsatest.c,v 1.6 2018/07/17 17:10:04 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -88,7 +88,8 @@ int x9_62_test_internal(BIO *out, int nid, const char *r, const char *s);
 int test_builtin(BIO *);
 
 /* some tests from the X9.62 draft */
-int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
+int
+x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 {
 	int	ret = 0;
 	const char message[] = "abc";
@@ -137,7 +138,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 
 	BIO_printf(out, " ok\n");
 	ret = 1;
-x962_int_err:
+ x962_int_err:
 	if (!ret)
 		BIO_printf(out, " failed\n");
 	if (key)
@@ -152,10 +153,11 @@ x962_int_err:
 	return ret;
 }
 
-int test_builtin(BIO *out)
+int
+test_builtin(BIO *out)
 {
 	EC_builtin_curve *curves = NULL;
-	size_t		crv_len = 0, n = 0;
+	size_t		num_curves = 0, n = 0;
 	EC_KEY		*eckey = NULL, *wrong_eckey = NULL;
 	EC_GROUP	*group;
 	ECDSA_SIG	*ecdsa_sig = NULL;
@@ -176,22 +178,22 @@ int test_builtin(BIO *out)
 		"with some internal curves:\n");
 
 	/* get a list of all internal curves */
-	crv_len = EC_get_builtin_curves(NULL, 0);
+	num_curves = EC_get_builtin_curves(NULL, 0);
 
-	curves = reallocarray(NULL, sizeof(EC_builtin_curve), crv_len);
+	curves = reallocarray(NULL, sizeof(EC_builtin_curve), num_curves);
 
 	if (curves == NULL) {
-		BIO_printf(out, "malloc error\n");
+		BIO_printf(out, "reallocarray error\n");
 		goto builtin_err;
 	}
 
-	if (!EC_get_builtin_curves(curves, crv_len)) {
+	if (!EC_get_builtin_curves(curves, num_curves)) {
 		BIO_printf(out, "unable to get internal curves\n");
 		goto builtin_err;
 	}
 
 	/* now create and verify a signature for every curve */
-	for (n = 0; n < crv_len; n++) {
+	for (n = 0; n < num_curves; n++) {
 		unsigned char dirt, offset;
 
 		nid = curves[n].nid;
@@ -360,13 +362,10 @@ int test_builtin(BIO *out)
 	}
 
 	ret = 1;
-builtin_err:
-	if (eckey)
-		EC_KEY_free(eckey);
-	if (wrong_eckey)
-		EC_KEY_free(wrong_eckey);
-	if (ecdsa_sig)
-		ECDSA_SIG_free(ecdsa_sig);
+ builtin_err:
+	EC_KEY_free(eckey);
+	EC_KEY_free(wrong_eckey);
+	ECDSA_SIG_free(ecdsa_sig);
 	free(signature);
 	free(raw_buf);
 	free(curves);
@@ -374,7 +373,8 @@ builtin_err:
 	return ret;
 }
 
-int main(void)
+int
+main(void)
 {
 	int 	ret = 1;
 	BIO	*out;
@@ -388,7 +388,7 @@ int main(void)
 		goto err;
 
 	ret = 0;
-err:
+ err:
 	if (ret)
 		BIO_printf(out, "\nECDSA test failed\n");
 	else
