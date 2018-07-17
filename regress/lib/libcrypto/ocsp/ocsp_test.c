@@ -1,3 +1,5 @@
+/*	$OpenBSD: ocsp_test.c,v 1.5 2018/07/17 17:06:49 tb Exp $	*/
+
 #include <stdio.h>
 #include <netdb.h>
 #include <stdlib.h>

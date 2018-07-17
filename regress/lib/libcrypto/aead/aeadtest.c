@@ -1,3 +1,4 @@
+/*	$OpenBSD: aeadtest.c,v 1.11 2018/07/17 17:06:49 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *

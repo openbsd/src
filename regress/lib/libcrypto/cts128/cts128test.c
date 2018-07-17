@@ -1,3 +1,4 @@
+/*	$OpenBSD: cts128test.c,v 1.3 2018/07/17 17:06:49 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project. All rights reserved.
  *

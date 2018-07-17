@@ -1,3 +1,4 @@
+#	$OpenBSD: aeadtests.txt,v 1.7 2018/07/17 17:06:49 tb Exp $
 #
 # MACsec GCM-AES Test Vectors (bn-randall-test-vectors-0511-v1.pdf)
 #

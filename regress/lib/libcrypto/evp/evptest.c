@@ -1,3 +1,4 @@
+/*	$OpenBSD: evptest.c,v 1.7 2018/07/17 17:06:49 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.

@@ -1,4 +1,4 @@
-/* crypto/sha/sha1test.c */
+/*	$OpenBSD: sha1test.c,v 1.3 2018/07/17 17:06:50 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

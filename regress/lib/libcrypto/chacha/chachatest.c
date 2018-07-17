@@ -1,3 +1,4 @@
+/*	$OpenBSD: chachatest.c,v 1.5 2018/07/17 17:06:49 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *

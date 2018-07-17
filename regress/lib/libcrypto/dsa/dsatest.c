@@ -1,4 +1,4 @@
-/* crypto/dsa/dsatest.c */
+/*	$OpenBSD: dsatest.c,v 1.5 2018/07/17 17:06:49 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

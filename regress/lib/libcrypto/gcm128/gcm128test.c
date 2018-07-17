@@ -1,3 +1,4 @@
+/*	$OpenBSD: gcm128test.c,v 1.6 2018/07/17 17:06:49 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *

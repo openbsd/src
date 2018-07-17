@@ -1,4 +1,4 @@
-/* crypto/ecdh/ecdhtest.c */
+/*	$OpenBSD: ecdhtest.c,v 1.10 2018/07/17 17:06:49 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pbkdf2.c,v 1.2 2018/07/17 17:06:49 tb Exp $	*/
 /* Written by Christian Heimes, 2013 */
 /*
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.

@@ -1,4 +1,4 @@
-/* test/igetest.c -*- mode:C; c-file-style: "eay" -*- */
+/*	$OpenBSD: igetest.c,v 1.4 2018/07/17 17:06:49 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *

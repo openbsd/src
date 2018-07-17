@@ -1,4 +1,4 @@
-/* crypto/md5/md5test.c */
+/*	$OpenBSD: md5test.c,v 1.2 2018/07/17 17:06:49 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
