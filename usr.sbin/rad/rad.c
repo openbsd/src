@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.8 2018/07/15 09:28:21 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.9 2018/07/18 14:43:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 	char			*saved_argv0;
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2engine[2];
-	int			 icmp6sock, on = 1;
+	int			 icmp6sock, on = 1, off = 0;
 	int			 frontend_routesock, rtfilter;
 	int			 control_fd;
 
@@ -273,6 +273,10 @@ main(int argc, char *argv[])
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 	    sizeof(on)) < 0)
+		fatal("IPV6_RECVHOPLIMIT");
+
+	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &off,
+	    sizeof(off)) < 0)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	/* only router advertisements and solicitations */
