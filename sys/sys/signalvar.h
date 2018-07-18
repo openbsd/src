@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.32 2018/07/11 19:28:16 bluhm Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.33 2018/07/18 16:55:17 bluhm Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -68,9 +68,7 @@ struct	sigacts {
 /*
  * Check if process p has an unmasked signal pending.
  */
-#define	SIGPENDING(p)							\
-	(((p)->p_siglist | (p)->p_p->ps_mainproc->p_siglist) & 		\
-	    ~(p)->p_sigmask)
+#define	SIGPENDING(p)	(((p)->p_siglist & ~(p)->p_sigmask) != 0)
 
 /*
  * Determine signal that should be delivered to process p, the current
@@ -78,9 +76,10 @@ struct	sigacts {
  * action, the process stops in issignal().
  */
 #define	CURSIG(p)							\
-	(((((p)->p_siglist | (p)->p_p->ps_mainproc->p_siglist) == 0) ||	\
-	(((p)->p_p->ps_flags & PS_TRACED) == 0 && SIGPENDING(p) == 0))	\
-	    ? 0 : issignal(p))
+	(((p)->p_siglist == 0 ||					\
+	    (((p)->p_p->ps_flags & PS_TRACED) == 0 &&			\
+	    ((p)->p_siglist & ~(p)->p_sigmask) == 0)) ?			\
+	    0 : issignal(p))
 
 /*
  * Clear a pending signal from a process.
