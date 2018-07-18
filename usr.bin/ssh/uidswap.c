@@ -1,4 +1,4 @@
-/* $OpenBSD: uidswap.c,v 1.40 2018/06/15 07:01:11 djm Exp $ */
+/* $OpenBSD: uidswap.c,v 1.41 2018/07/18 11:34:04 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -126,12 +126,4 @@ permanently_set_uid(struct passwd *pw)
 		fatal("setresgid %u: %s", (u_int)pw->pw_gid, strerror(errno));
 	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
 		fatal("setresuid %u: %s", (u_int)pw->pw_uid, strerror(errno));
-}
-
-void
-permanently_drop_suid(uid_t uid)
-{
-	debug("permanently_drop_suid: %u", (u_int)uid);
-	if (setresuid(uid, uid, uid) != 0)
-		fatal("setresuid %u: %s", (u_int)uid, strerror(errno));
 }

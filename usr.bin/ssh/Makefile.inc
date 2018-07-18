@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.59 2018/07/09 21:56:06 markus Exp $
+#	$OpenBSD: Makefile.inc,v 1.60 2018/07/18 11:34:04 dtucker Exp $
 
 .include <bsd.own.mk>
 
@@ -110,7 +110,6 @@ SRCS_PROT+=	ttymodes.c
 
 SRCS_UTL+=	addrmatch.c
 SRCS_UTL+=	match.c
-SRCS_UTL+=	uidswap.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS_PKCS11+=	ssh-pkcs11.c
