@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.10 2018/07/15 09:28:21 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.11 2018/07/18 09:10:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -609,7 +609,7 @@ icmp6_receive(int fd, short events, void *arg)
 		return;
 	}
 
-	log_warnx("RA or RS with hop limit of %d from %s on %s",
+	log_debug("RA or RS with hop limit of %d from %s on %s",
 	    *hlimp, inet_ntop(AF_INET6, &icmp6ev.from.sin6_addr,
 	    ntopbuf, INET6_ADDRSTRLEN), if_indextoname(if_index,
 	    ifnamebuf));
