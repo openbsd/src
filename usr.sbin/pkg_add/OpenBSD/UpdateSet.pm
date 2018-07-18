@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.80 2018/06/26 09:40:33 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.81 2018/07/18 13:06:23 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -430,15 +430,17 @@ sub validate_plists
 	}
 	if (defined $state->{overflow}) {
 		$state->vstat->tally;
-		# okay, let's retry the other way around if we haven't yet
-		if (!defined $state->{delete_first}) {
-			if ($state->defines('deletefirst') ||
-			    $state->confirm_defaults_to_no(
-			    "Delete older packages first")) {
-				$state->{delete_first} = 1;
-				$state->vstat->drop_changes;
-				return $self->validate_plists($state);
-			}
+		$state->vstat->drop_changes;
+		# nothing to try if we don't have existing stuff to remove
+		return 0 if $self->older == 0;
+		# we already tried the other way around...
+		return 0 if $state->{delete_first};
+		if ($state->defines('deletefirst') ||
+		    $state->confirm_defaults_to_no(
+			"Delete older packages first")) {
+			# okay we recurse doing things the other way around
+			$state->{delete_first} = 1;
+			return $self->validate_plists($state);
 		}
 	}
 	if ($state->{problems}) {
