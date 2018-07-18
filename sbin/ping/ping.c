@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.225 2018/04/11 16:03:58 zhuk Exp $	*/
+/*	$OpenBSD: ping.c,v 1.226 2018/07/18 13:55:39 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -817,8 +817,25 @@ main(int argc, char *argv[])
 		}
 
 		if (options & F_FLOOD) {
-			(void)pinger(s);
-			timeout = 10;
+			if (pinger(s) != 0) {
+				(void)signal(SIGALRM, onsignal);
+				timeout = INFTIM;
+				if (nreceived) {
+					itimer.it_value.tv_sec = 2 * tmax /
+					    1000;
+					if (itimer.it_value.tv_sec == 0)
+						itimer.it_value.tv_sec = 1;
+				} else
+					itimer.it_value.tv_sec = maxwait;
+				itimer.it_interval.tv_sec = 0;
+				itimer.it_interval.tv_usec = 0;
+				itimer.it_value.tv_usec = 0;
+				(void)setitimer(ITIMER_REAL, &itimer, NULL);
+
+				/* When the alarm goes off we are done. */
+				seenint = 1;
+			} else
+				timeout = 10;
 		} else
 			timeout = INFTIM;
 
