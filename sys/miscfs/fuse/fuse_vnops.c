@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.51 2018/07/16 16:44:09 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.52 2018/07/18 10:47:02 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -400,7 +400,7 @@ fusefs_getattr(void *v)
 	 * for the root inode in this situation.
 	 */
 	if (!fmp->allow_other && cred->cr_uid != fmp->mp->mnt_stat.f_owner) {
-		VATTR_NULL(vap);
+		memset(vap, 0, sizeof(*vap));
 		vap->va_type = VNON;
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			vap->va_mode = S_IRUSR | S_IXUSR;
@@ -432,9 +432,9 @@ fusefs_getattr(void *v)
 		return (error);
 	}
 
-	VATTR_NULL(vap);
 	st = &fbuf->fb_attr;
 
+	memset(vap, 0, sizeof(*vap));
 	vap->va_type = IFTOVT(st->st_mode);
 	vap->va_mode = st->st_mode & ~S_IFMT;
 	vap->va_nlink = st->st_nlink;
