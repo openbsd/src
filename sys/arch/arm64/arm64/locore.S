@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.22 2018/01/28 13:17:45 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.23 2018/07/19 17:38:12 drahn Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -277,7 +277,9 @@ initstack:
 initstack_end:
 
 	.text
-ENTRY(sigcode)
+	.globl	_C_LABEL(sigcode)
+	.type	_C_LABEL(sigcode),@function
+_C_LABEL(sigcode):
 	sub	sp, sp, #17 * 32
 	mov	x3, sp
 	stp	q0, q1, [x3], #32

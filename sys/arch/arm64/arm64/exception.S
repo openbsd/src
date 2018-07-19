@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.6 2018/06/22 16:08:12 drahn Exp $ */
+/* $OpenBSD: exception.S,v 1.7 2018/07/19 17:38:12 drahn Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -167,6 +167,7 @@ handle_el1h_error:
 .endm
 
 	.globl handle_el0_sync
+	.type handle_el0_sync,@function
 handle_el0_sync:
 	save_registers 0
 	mov	x0, sp
@@ -177,6 +178,7 @@ handle_el0_sync:
 	return
 
 	.globl handle_el0_irq
+	.type handle_el0_irq,@function
 handle_el0_irq:
 	save_registers 0
 	bl	_C_LABEL(vfp_save)
@@ -188,6 +190,7 @@ handle_el0_irq:
 	return
 
 	.globl handle_el0_error
+	.type handle_el0_error,@function
 handle_el0_error:
 	save_registers 0
 	mov	x0, sp
