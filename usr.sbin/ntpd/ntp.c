@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.147 2018/07/12 19:31:05 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.148 2018/07/19 10:20:09 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -315,14 +315,6 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		    ((trial_cnt > 0 && sent_cnt == 0) ||
 		    (peer_cnt == 0 && sensors_cnt == 0)))
 			priv_settime(0);	/* no good peers, don't wait */
-
-		if (conf->status.synced && gettime() - conf->status.reftime >
-		    INTERVAL_QUERY_PATHETIC * QSCALE_OFF_MAX / QSCALE_OFF_MIN *
-		    1.2) {
-			/* no update seen for ~1h */
-			log_info("clock is now unsynced");
-			conf->status.synced = 0;
-		}
 
 		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
