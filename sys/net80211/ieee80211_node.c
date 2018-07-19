@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.133 2018/07/16 12:42:22 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.134 2018/07/19 09:16:17 florian Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -302,13 +302,14 @@ ieee80211_ess_is_better(struct ieee80211com *ic, struct ieee80211_node *nicur,
 {
 	uint8_t			 min_5ghz_rssi;
 
+	/* anything is better than nothing */
+	if (selni == NULL)
+		return 1;
+
 	if (ic->ic_max_rssi)
 		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
 	else
 		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
-
-	if (selni == NULL)
-		return 1;
 
 	/* First 5GHz with acceptable signal */
 	if ((IEEE80211_IS_CHAN_5GHZ(nicur->ni_chan) &&
@@ -399,8 +400,7 @@ ieee80211_match_ess(struct ieee80211com *ic)
 			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
 				continue;
 
-			if (selni == NULL ||
-			    ieee80211_ess_is_better(ic, ni, selni) > 1) {
+			if (ieee80211_ess_is_better(ic, ni, selni) > 0) {
 				seless = ess;
 				selni = ni;
 			}
