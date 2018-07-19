@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.137 2018/07/10 09:17:03 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.138 2018/07/19 12:35:14 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1321,6 +1321,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 	di->udi_config = dev->config;
 	di->udi_power = dev->self_powered ? 0 : dev->power;
 	di->udi_speed = dev->speed;
+	di->udi_port = dev->powersrc ? dev->powersrc->portno : 0;
 
 	if (dev->subdevs != NULL) {
 		for (i = 0; dev->subdevs[i] && i < USB_MAX_DEVNAMES; i++) {

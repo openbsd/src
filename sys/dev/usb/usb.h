@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.60 2018/07/10 09:17:03 mpi Exp $ */
+/*	$OpenBSD: usb.h,v 1.61 2018/07/19 12:35:14 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -737,6 +737,7 @@ struct usb_device_info {
 #define USB_SPEED_FULL	2
 #define USB_SPEED_HIGH	3
 #define USB_SPEED_SUPER	4
+	u_int8_t	udi_port;
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
