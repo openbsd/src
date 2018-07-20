@@ -691,7 +691,7 @@ handle_pragma_diagnostic(cpp_reader *ARG_UNUSED(dummy))
 
   if (cfun)
     {
-      error ("#pragma GCC diagnostic not allowed inside functions");
+      warning (OPT_Wpragmas, "#pragma GCC diagnostic ignored inside functions");
       return;
     }
 
