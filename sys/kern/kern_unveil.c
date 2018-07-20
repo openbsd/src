@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.3 2018/07/17 07:43:34 krw Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.4 2018/07/20 07:28:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -108,6 +108,9 @@ unveil_delete_names(struct unveil *uv)
 		ret++;
 	}
 	rw_exit_write(&uv->uv_lock);
+#ifdef DEBUG_UNVEIL
+	printf("deleted %d names\n", ret);
+#endif
 	return ret;
 }
 
@@ -121,7 +124,7 @@ unveil_add_name(struct unveil *uv, char *name, uint64_t flags)
 	RBT_INSERT(unvname_rbt, &uv->uv_names, unvn);
 	rw_exit_write(&uv->uv_lock);
 #ifdef DEBUG_UNVEIL
-	printf("added name %s\n", name);
+	printf("added name %s underneath vnode %p\n", name, uv->uv_vp);
 #endif
 }
 
@@ -188,39 +191,48 @@ unveil_destroy(struct process *ps)
 	ps->ps_uvpaths = NULL;
 }
 
-struct unveil *
-unveil_copy(struct process *ps, size_t *count)
+void
+unveil_copy(struct process *parent, struct process *child)
 {
-	struct unveil *ret;
 	size_t i;
 
-        ret = mallocarray(UNVEIL_MAX_VNODES, sizeof(struct unveil),
+	if (parent->ps_uvvcount == 0)
+		return;
+
+	child->ps_uvpaths = mallocarray(UNVEIL_MAX_VNODES, sizeof(struct unveil),
 	    M_PROC, M_WAITOK|M_ZERO);
 
-	*count = 0;
-	for (i = 0; ps->ps_uvpaths != NULL && i < ps->ps_uvvcount; i++) {
-		struct unveil *uv = ps->ps_uvpaths + i;
+	child->ps_uvncount = 0;
+	for (i = 0; parent->ps_uvpaths != NULL && i < parent->ps_uvvcount;
+	     i++) {
+		struct unveil *from = parent->ps_uvpaths + i;
+		struct unveil *to = child->ps_uvpaths + i;
 		struct unvname *unvn, *next;
 
-		ret[i].uv_vp = uv->uv_vp;
-		if (ret[i].uv_vp != NULL) {
-			vref(ret[i].uv_vp);
-			ret[i].uv_vp->v_uvcount++;
+		to->uv_vp = from->uv_vp;
+		if (to->uv_vp != NULL) {
+			vref(to->uv_vp);
+			to->uv_vp->v_uvcount++;
 		}
-		rw_init(&ret[i].uv_lock, "unveil");
-		RBT_INIT(unvname_rbt, &ret[i].uv_names);
-		rw_enter_read(&uv->uv_lock);
-		RBT_FOREACH_SAFE(unvn, unvname_rbt, &uv->uv_names, next) {
-			unveil_add_name(&ret[i], unvn->un_name, unvn->un_flags);
-			(*count)++;
+		rw_init(&to->uv_lock, "unveil");
+		RBT_INIT(unvname_rbt, &to->uv_names);
+		rw_enter_read(&from->uv_lock);
+		RBT_FOREACH_SAFE(unvn, unvname_rbt, &from->uv_names, next) {
+			unveil_add_name(&child->ps_uvpaths[i], unvn->un_name,
+			    unvn->un_flags);
+			child->ps_uvncount++;
 		}
-		printf("count now %ld\n", *count);
-		rw_exit_read(&uv->uv_lock);
-		ret[i].uv_flags = uv->uv_flags;
+		rw_exit_read(&from->uv_lock);
+		to->uv_flags = from->uv_flags;
 	}
-	return(ret);
+	child->ps_uvvcount = parent->ps_uvvcount;
+	if (parent->ps_uvpcwd)
+		child->ps_uvpcwd = child->ps_uvpaths +
+		    (parent->ps_uvpcwd - parent->ps_uvpaths);
+	child->ps_uvpcwdgone = parent->ps_uvpcwdgone;
+	child->ps_uvdone = parent->ps_uvdone;
+	child->ps_uvshrink = parent->ps_uvshrink;
 }
-
 
 struct unveil *
 unveil_lookup(struct vnode *vp, struct proc *p)
