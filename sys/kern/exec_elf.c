@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.144 2018/07/20 21:48:27 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.145 2018/07/20 21:57:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -147,8 +147,7 @@ struct emul emul_elf = {
 	coredump_elf,
 	sigcode,
 	esigcode,
-	sigcoderet,
-	EMUL_ENABLED | EMUL_NATIVE,
+	sigcoderet
 };
 
 /*

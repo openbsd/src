@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.199 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.200 2018/07/20 21:57:26 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -185,8 +185,6 @@ check_exec(struct proc *p, struct exec_package *epp)
 		if (execsw[i].es_check == NULL)
 			continue;
 		newerror = (*execsw[i].es_check)(p, epp);
-		if (!newerror && !(epp->ep_emul->e_flags & EMUL_ENABLED))
-			newerror = EPERM;
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;

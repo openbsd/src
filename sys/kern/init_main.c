@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.278 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.279 2018/07/20 21:57:26 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -174,8 +174,7 @@ struct emul emul_native = {
 	NULL,		/* coredump */
 	sigcode,
 	esigcode,
-	sigcoderet,
-	EMUL_ENABLED | EMUL_NATIVE,
+	sigcoderet
 };
 
 
