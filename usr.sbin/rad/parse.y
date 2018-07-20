@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2018/07/20 13:17:02 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2018/07/20 17:48:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -243,8 +243,9 @@ ra_ifaceoptsl	: NO AUTO PREFIX {
 		}
 		| AUTO PREFIX {
 			if (ra_iface_conf->autoprefix == NULL)
-				ra_iface_conf->autoprefix = 
-			ra_prefix_conf = conf_get_ra_prefix(NULL, 0);
+				ra_iface_conf->autoprefix =
+				    conf_get_ra_prefix(NULL, 0);
+			ra_prefix_conf = ra_iface_conf->autoprefix;
 		} ra_prefix_block {
 			ra_prefix_conf = NULL;
 		}
