@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.10 2018/07/19 06:40:22 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.11 2018/07/20 10:47:37 robert Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -450,6 +450,7 @@ test_chdir(int do_uv)
 
 	return 0;
 }
+
 static int
 test_parent_dir(int do_uv)
 {
@@ -738,6 +739,20 @@ test_slash(int do_uv)
 	return 0;
 }
 
+static int
+test_bypassunveil(int do_uv)
+{
+	if (do_uv) {
+		printf("testing BYPASSUNVEIL\n");
+		do_unveil2();
+	}
+
+	UV_SHOULD_SUCCEED((pledge("rpath stdio tmppath", NULL) == -1), "pledge");
+	UV_SHOULD_SUCCEED((chdir(uv_dir2) == -1), "chdir");
+
+	return 0;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -778,6 +793,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_realpath);
 	failures += runcompare(test_parent_dir);
 	failures += runcompare(test_slash);
+	failures += runcompare(test_bypassunveil);
 	failures += runcompare_internal(test_fork, 0);
 	exit(failures);
 }
