@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.12 2018/07/20 17:55:09 bket Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.13 2018/07/20 20:33:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -838,8 +838,8 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 
 		add_new_prefix_to_ra_iface(ra_iface, &sin6->sin6_addr,
 		    prefixlen, autoprefix);
-
 	}
+	freeifaddrs(ifap);
 }
 
 struct ra_prefix_conf*
