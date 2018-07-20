@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.206 2018/07/20 12:42:45 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.207 2018/07/20 12:49:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -2017,6 +2018,20 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	}
 }
 
+static const char *
+print_time(struct timespec *t)
+{
+	static char timebuf[32];
+	static struct timespec prevtime;
+	struct timespec temp;
+
+	timespecsub(t, &prevtime, &temp);
+	snprintf(timebuf, sizeof(timebuf), "%lld.%06ld",
+	    (long long)temp.tv_sec, temp.tv_nsec / 1000);
+	prevtime = *t;
+	return (timebuf);
+}
+
 void
 show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 {
@@ -2024,7 +2039,8 @@ show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 
 	mrt_to_bgpd_addr(&ms->src, &src);
 	mrt_to_bgpd_addr(&ms->dst, &dst);
-	printf("%s[%u] -> ", log_addr(&src), ms->src_as);
+	printf("%s %s[%u] -> ", print_time(&ms->time),
+	    log_addr(&src), ms->src_as);
 	printf("%s[%u]: %s -> %s\n", log_addr(&dst), ms->dst_as,
 	    statenames[ms->old_state], statenames[ms->new_state]);
 }
@@ -2036,7 +2052,8 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 
 	mrt_to_bgpd_addr(&mm->src, &src);
 	mrt_to_bgpd_addr(&mm->dst, &dst);
-	printf("%s[%u] -> ", log_addr(&src), mm->src_as);
+	printf("%s %s[%u] -> ", print_time(&mm->time),
+	    log_addr(&src), mm->src_as);
 	printf("%s[%u]: size %u\n", log_addr(&dst), mm->dst_as, mm->msg_len);
 }
 

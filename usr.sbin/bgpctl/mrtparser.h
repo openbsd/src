@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.h,v 1.1 2011/09/21 10:37:51 claudio Exp $ */
+/*	$OpenBSD: mrtparser.h,v 1.2 2018/07/20 12:49:49 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -77,6 +77,7 @@ struct mrt_rib {
 
 /* data structures for the BGP4MP MESSAGE and STATE types */
 struct mrt_bgp_state {
+	struct timespec	time;
 	union mrt_addr	src;
 	union mrt_addr	dst;
 	u_int32_t	src_as;
@@ -86,6 +87,7 @@ struct mrt_bgp_state {
 };
 
 struct mrt_bgp_msg {
+	struct timespec	 time;
 	union mrt_addr	 src;
 	union mrt_addr	 dst;
 	u_int32_t	 src_as;

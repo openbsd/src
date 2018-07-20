@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.8 2015/12/23 20:42:20 mmcc Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.9 2018/07/20 12:49:49 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "mrt.h"
@@ -990,14 +991,26 @@ mrt_extract_addr(void *msg, u_int len, union mrt_addr *addr, sa_family_t af)
 struct mrt_bgp_state *
 mrt_parse_state(struct mrt_hdr *hdr, void *msg)
 {
+	struct timespec		 t;
 	struct mrt_bgp_state	*s;
 	u_int8_t		*b = msg;
 	u_int			 len = ntohl(hdr->length);
-	u_int32_t		 sas, das;
+	u_int32_t		 sas, das, usec;
 	u_int16_t		 tmp16, afi;
 	int			 r;
 	sa_family_t		 af;
 	
+	t.tv_sec = ntohl(hdr->timestamp);
+	t.tv_nsec = 0;
+
+	/* handle the microsec field for _ET header */
+	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
+		memcpy(&usec, b, sizeof(usec));
+		b += sizeof(usec);
+		len -= sizeof(usec);
+		t.tv_nsec = ntohl(usec) * 1000;
+	}
+
 	switch (ntohs(hdr->subtype)) {
 	case BGP4MP_STATE_CHANGE:
 		if (len < 8)
@@ -1061,6 +1074,7 @@ mrt_parse_state(struct mrt_hdr *hdr, void *msg)
 
 	if ((s = calloc(1, sizeof(struct mrt_bgp_state))) == NULL)
 		err(1, "calloc");
+	s->time = t;
 	s->src_as = sas;
 	s->dst_as = das;
 
@@ -1093,14 +1107,26 @@ fail:
 struct mrt_bgp_msg *
 mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
 {
+	struct timespec		 t;
 	struct mrt_bgp_msg	*m;
 	u_int8_t		*b = msg;
 	u_int			 len = ntohl(hdr->length);
-	u_int32_t		 sas, das;
+	u_int32_t		 sas, das, usec;
 	u_int16_t		 tmp16, afi;
 	int			 r;
 	sa_family_t		 af;
 	
+	t.tv_sec = ntohl(hdr->timestamp);
+	t.tv_nsec = 0;
+
+	/* handle the microsec field for _ET header */
+	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
+		memcpy(&usec, b, sizeof(usec));
+		b += sizeof(usec);
+		len -= sizeof(usec);
+		t.tv_nsec = ntohl(usec) * 1000;
+	}
+
 	switch (ntohs(hdr->subtype)) {
 	case BGP4MP_MESSAGE:
 		if (len < 8)
@@ -1164,6 +1190,7 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
 
 	if ((m = calloc(1, sizeof(struct mrt_bgp_msg))) == NULL)
 		err(1, "calloc");
+	m->time = t;
 	m->src_as = sas;
 	m->dst_as = das;
 
