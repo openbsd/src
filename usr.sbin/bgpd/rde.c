@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.394 2018/07/16 09:09:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.395 2018/07/20 14:14:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,8 +61,6 @@ int		 rde_attr_add(struct rde_aspath *, u_char *, u_int16_t);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct filterstate *);
-int		 rde_update_extract_prefix(u_char *, u_int16_t, void *,
-		     u_int8_t, u_int8_t);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
@@ -1841,8 +1839,8 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 	return (totlen);
 }
 
-int
-rde_update_extract_prefix(u_char *p, u_int16_t len, void *va,
+static int
+extract_prefix(u_char *p, u_int16_t len, void *va,
     u_int8_t pfxlen, u_int8_t max)
 {
 	static u_char addrmask[] = {
@@ -1886,7 +1884,7 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 
 	if (pfxlen > 32)
 		return (-1);
-	if ((plen = rde_update_extract_prefix(p, len, &prefix->v4, pfxlen,
+	if ((plen = extract_prefix(p, len, &prefix->v4, pfxlen,
 	    sizeof(prefix->v4))) == -1)
 		return (-1);
 
@@ -1912,7 +1910,7 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 
 	if (pfxlen > 128)
 		return (-1);
-	if ((plen = rde_update_extract_prefix(p, len, &prefix->v6, pfxlen,
+	if ((plen = extract_prefix(p, len, &prefix->v6, pfxlen,
 	    sizeof(prefix->v6))) == -1)
 		return (-1);
 
@@ -1975,7 +1973,7 @@ rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 
 	if (pfxlen > 32)
 		return (-1);
-	if ((rv = rde_update_extract_prefix(p, len, &prefix->vpn4.addr,
+	if ((rv = extract_prefix(p, len, &prefix->vpn4.addr,
 	    pfxlen, sizeof(prefix->vpn4.addr))) == -1)
 		return (-1);
 
