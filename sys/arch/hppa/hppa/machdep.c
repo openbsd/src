@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.253 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.254 2018/07/20 01:30:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1224,7 +1224,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	sip = 0;
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = scp + sizeof(ksc);
-		sss += (sizeof(ksi) + 63) & ~63;
+		sss += (sizeof(*ksip) + 63) & ~63;
 	}
 
 	bzero(&ksc, sizeof(ksc));
