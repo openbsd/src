@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.355 2018/07/10 09:30:49 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.356 2018/07/20 11:16:55 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2491,7 +2491,7 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 		ch = *tblcmdopt;
-		mode = strchr("acdefkrz", ch) ? O_RDWR : O_RDONLY;
+		mode = strchr("st", ch) ? O_RDONLY : O_RDWR;
 	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);
 		usage();
