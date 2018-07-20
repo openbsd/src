@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.179 2018/07/16 09:09:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.180 2018/07/20 14:58:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -360,17 +360,11 @@ void		 attr_free(struct rde_aspath *, struct attr *);
 #define		 attr_optlen(x)	\
     ((x)->len > 255 ? (x)->len + 4 : (x)->len + 3)
 
-int		 aspath_verify(void *, u_int16_t, int);
-#define		 AS_ERR_LEN	-1
-#define		 AS_ERR_TYPE	-2
-#define		 AS_ERR_BAD	-3
-#define		 AS_ERR_SOFT	-4
 void		 aspath_init(u_int32_t);
 void		 aspath_shutdown(void);
 void		 aspath_hash_stats(struct rde_hashstats *);
 struct aspath	*aspath_get(void *, u_int16_t);
 void		 aspath_put(struct aspath *);
-u_char		*aspath_inflate(void *, u_int16_t, u_int16_t *);
 u_char		*aspath_deflate(u_char *, u_int16_t *, int *);
 void		 aspath_merge(struct rde_aspath *, struct attr *);
 u_char		*aspath_dump(struct aspath *);
