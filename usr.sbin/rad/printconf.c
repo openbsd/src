@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2018/07/15 09:28:21 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.3 2018/07/20 13:17:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -104,7 +104,7 @@ print_config(struct rad_conf *conf)
 			printf("\tdns {\n");
 			printf("\t\tlifetime %u\n", iface->rdns_lifetime);
 			if (!SIMPLEQ_EMPTY(&iface->ra_rdnss_list)) {
-				printf("\t\tresolver {\n");
+				printf("\t\tnameserver {\n");
 				SIMPLEQ_FOREACH(ra_rdnss,
 				    &iface->ra_rdnss_list, entry) {
 					inet_ntop(AF_INET6, &ra_rdnss->rdnss,

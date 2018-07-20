@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2018/07/15 09:28:21 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2018/07/20 13:17:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -115,7 +115,7 @@ typedef struct {
 %token	DEFAULT ROUTER HOP LIMIT MANAGED ADDRESS
 %token	CONFIGURATION OTHER LIFETIME REACHABLE TIME RETRANS TIMER
 %token	AUTO PREFIX VALID PREFERRED LIFETIME ONLINK AUTONOMOUS
-%token	ADDRESS_CONFIGURATION DNS RESOLVER SEARCH
+%token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -303,27 +303,27 @@ dnsopts_l	: dnsopts_l dnsoptsl nl
 dnsoptsl	: LIFETIME NUMBER {
 			ra_iface_conf->rdns_lifetime = $2;
 		}
-		| RESOLVER resolver_block
+		| NAMESERVER nserver_block
 		| SEARCH search_block
 		;
-resolver_block	: '{' optnl resolveropts_l '}'
-		| '{' optnl '}'
-		| resolveroptsl
-		| /* empty */
+nserver_block	: '{' optnl nserveropts_l '}'
+			| '{' optnl '}'
+			| nserveroptsl
+			| /* empty */
+			;
+
+nserveropts_l	: nserveropts_l nserveroptsl optnl
+		| nserveroptsl optnl
 		;
 
-resolveropts_l	: resolveropts_l resolveroptsl optnl
-		| resolveroptsl optnl
-		;
-
-resolveroptsl	: STRING {
+nserveroptsl	: STRING {
 			struct ra_rdnss_conf	*ra_rdnss_conf;
 			struct in6_addr		 addr;
 
 			memset(&addr, 0, sizeof(addr));
 			if (inet_pton(AF_INET6, $1, &addr)
 			    != 1) {
-				yyerror("error parsing resolver address %s",
+				yyerror("error parsing nameserver address %s",
 				    $1);
 				free($1);
 				YYERROR;
@@ -423,13 +423,13 @@ lookup(char *s)
 		{"lifetime",		LIFETIME},
 		{"limit",		LIMIT},
 		{"managed",		MANAGED},
+		{"nameserver",		NAMESERVER},
 		{"no",			NO},
 		{"on-link",		ONLINK},
 		{"other",		OTHER},
 		{"preferred",		PREFERRED},
 		{"prefix",		PREFIX},
 		{"reachable",		REACHABLE},
-		{"resolver",		RESOLVER},
 		{"retrans",		RETRANS},
 		{"router",		ROUTER},
 		{"search",		SEARCH},

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.6 2018/07/15 11:35:57 jmc Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.7 2018/07/20 13:17:02 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: July 20 2018 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ not available and hosts should consult DHCPv6.
 The default is no.
 .It Ic other configuration Pq Ic yes Ns | Ns Ic no
 If set to yes, hosts should consult DHCPv6 for additional configuration
-like NTP servers or DNS resolvers.
+like NTP servers or DNS name servers.
 .It Ic router lifetime Ar seconds
 The number of seconds this router is a valid default router after receiving
 a router advertisement message.
@@ -126,7 +126,7 @@ prefix.
 The default is 2592000.
 .El
 .Pp
-Recursive resolvers are configured inside an interface block:
+Name servers are configured inside an interface block:
 .Bd -unfilled -offset indent
 .Ic dns Brq dns options
 .Ed
@@ -138,8 +138,8 @@ options are as follows:
 The number of seconds the dns options are valid after receiving a router
 advertisement message.
 The default is 900 seconds.
-.It Ic resolver Pq Ar IP Ns | Ns { resolver list }
-IPv6 address or list of IPv6 addresses of recursive DNS resolvers.
+.It Ic nameserver Pq Ar IP Ns | Ns { nameserver list }
+IPv6 address or list of IPv6 addresses of DNS name servers.
 .It Ic search Pq Ar domain Ns | Ns { domain list }
 Domain or list of domains for the
 .Xr resolv.conf 5
