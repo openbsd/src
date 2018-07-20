@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.12 2018/07/20 17:55:09 bket Exp $	*/
+/*	$OpenBSD: rad.h,v 1.13 2018/07/20 20:34:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -154,8 +154,8 @@ int	imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
 
 struct rad_conf	*config_new_empty(void);
 void		 config_clear(struct rad_conf *);
-
-void	mask_prefix(struct in6_addr*, int len);
+void		 free_ra_iface_conf(struct ra_iface_conf *);
+void		 mask_prefix(struct in6_addr*, int len);
 const char	*sin6_to_str(struct sockaddr_in6 *);
 const char	*in6_to_str(struct in6_addr *);
 

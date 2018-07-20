@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.10 2018/07/20 17:55:09 bket Exp $	*/
+/*	$OpenBSD: rad.c,v 1.11 2018/07/20 20:34:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -67,7 +67,6 @@ static int	main_imsg_send_config(struct rad_conf *);
 int	main_reload(void);
 int	main_sendboth(enum imsg_type, void *, uint16_t);
 
-void	free_ra_iface_conf(struct ra_iface_conf *);
 void	in6_prefixlen2mask(struct in6_addr *, int len);
 
 struct rad_conf	*main_conf;
@@ -661,16 +660,30 @@ void
 free_ra_iface_conf(struct ra_iface_conf *ra_iface_conf)
 {
 	struct ra_prefix_conf	*prefix;
+	struct ra_rdnss_conf	*ra_rdnss;
+	struct ra_dnssl_conf	*ra_dnssl;
 
 	if (!ra_iface_conf)
 		return;
 
 	free(ra_iface_conf->autoprefix);
 
-	while ((prefix = SIMPLEQ_FIRST(&ra_iface_conf->ra_prefix_list))
-	    != NULL) {
+	while ((prefix = SIMPLEQ_FIRST(&ra_iface_conf->ra_prefix_list)) !=
+	    NULL) {
 		SIMPLEQ_REMOVE_HEAD(&ra_iface_conf->ra_prefix_list, entry);
 		free(prefix);
+	}
+
+	while ((ra_rdnss = SIMPLEQ_FIRST(&ra_iface_conf->ra_rdnss_list)) !=
+	    NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ra_iface_conf->ra_rdnss_list, entry);
+		free(ra_rdnss);
+	}
+
+	while ((ra_dnssl = SIMPLEQ_FIRST(&ra_iface_conf->ra_dnssl_list)) !=
+	    NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ra_iface_conf->ra_dnssl_list, entry);
+		free(ra_dnssl);
 	}
 
 	free(ra_iface_conf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2018/07/20 17:55:09 bket Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2018/07/20 20:34:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -981,7 +981,7 @@ clear_config(struct rad_conf *xconf)
 
 	while((iface = SIMPLEQ_FIRST(&xconf->ra_iface_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&xconf->ra_iface_list, entry);
-		free(iface);
+		free_ra_iface_conf(iface);
 	}
 
 	free(xconf);
