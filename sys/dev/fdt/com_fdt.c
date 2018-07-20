@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.1 2018/05/31 20:03:18 kettenis Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.2 2018/07/20 05:37:06 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -56,6 +56,7 @@ com_fdt_init_cons(void)
 
 	if ((node = fdt_find_cons("brcm,bcm2835-aux-uart")) == NULL &&
 	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL &&
+	    (node = fdt_find_cons("marvell,armada-38x-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap3-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap4-uart")) == NULL)
 			return;
@@ -87,6 +88,7 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "brcm,bcm2835-aux-uart") ||
 	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap4-uart"));
 }
@@ -121,7 +123,8 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_reg_width = OF_getpropint(faa->fa_node, "reg-io-width", 4);
 	sc->sc_reg_shift = OF_getpropint(faa->fa_node, "reg-shift", 2);
 
-	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart"))
+	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart"))
 		intr = com_fdt_intr_designware;
 
 	if (OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
