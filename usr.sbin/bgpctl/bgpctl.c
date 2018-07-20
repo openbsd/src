@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.205 2018/07/12 21:45:37 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.206 2018/07/20 12:42:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -157,18 +157,49 @@ main(int argc, char *argv[])
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
-	if (res->action == IRRFILTER) {
+	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
+	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
+	strlcpy(neighbor.shutcomm, res->shutcomm, sizeof(neighbor.shutcomm));
+
+	switch (res->action) {
+	case IRRFILTER:
 		if (!(res->flags & (F_IPV4|F_IPV6)))
 			res->flags |= (F_IPV4|F_IPV6);
 		irr_main(res->as.as, res->flags, res->irr_outdir);
+		break;
+	case SHOW_MRT:
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
+		bzero(&ribreq, sizeof(ribreq));
+		if (res->as.type != AS_NONE)
+			ribreq.as = res->as;
+		if (res->addr.aid) {
+			ribreq.prefix = res->addr;
+			ribreq.prefixlen = res->prefixlen;
+		}
+		if (res->community.as != COMMUNITY_UNSET &&
+		    res->community.type != COMMUNITY_UNSET)
+			ribreq.community = res->community;
+		if (res->large_community.as != COMMUNITY_UNSET &&
+		    res->large_community.ld1 != COMMUNITY_UNSET &&
+		    res->large_community.ld2 != COMMUNITY_UNSET)
+			ribreq.large_community = res->large_community;
+		/* XXX extended communities missing? */
+		ribreq.neighbor = neighbor;
+		ribreq.aid = res->aid;
+		ribreq.flags = res->flags;
+		show_mrt.arg = &ribreq;
+		if (!(res->flags & F_CTL_DETAIL))
+			show_rib_summary_head();
+		mrt_parse(res->mrtfd, &show_mrt, 1);
+		exit(0);
+	default:
+		break;
 	}
 
 	if (pledge("stdio rpath wpath unix", NULL) == -1)
 		err(1, "pledge");
-
-	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
-	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
-	strlcpy(neighbor.shutcomm, res->shutcomm, sizeof(neighbor.shutcomm));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "control_init: socket");
@@ -181,7 +212,7 @@ main(int argc, char *argv[])
 	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);
 
-	if (pledge("stdio rpath wpath", NULL) == -1)
+	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
@@ -192,6 +223,7 @@ main(int argc, char *argv[])
 	switch (res->action) {
 	case NONE:
 	case IRRFILTER:
+	case SHOW_MRT:
 		usage();
 		/* NOTREACHED */
 	case SHOW:
@@ -281,31 +313,6 @@ main(int argc, char *argv[])
 		if (!(res->flags & F_CTL_DETAIL))
 			show_rib_summary_head();
 		break;
-	case SHOW_MRT:
-		close(fd);
-		bzero(&ribreq, sizeof(ribreq));
-		if (res->as.type != AS_NONE)
-			ribreq.as = res->as;
-		if (res->addr.aid) {
-			ribreq.prefix = res->addr;
-			ribreq.prefixlen = res->prefixlen;
-		}
-		if (res->community.as != COMMUNITY_UNSET &&
-		    res->community.type != COMMUNITY_UNSET)
-			ribreq.community = res->community;
-		if (res->large_community.as != COMMUNITY_UNSET &&
-		    res->large_community.ld1 != COMMUNITY_UNSET &&
-		    res->large_community.ld2 != COMMUNITY_UNSET)
-			ribreq.large_community = res->large_community;
-		/* XXX extended communities missing? */
-		ribreq.neighbor = neighbor;
-		ribreq.aid = res->aid;
-		ribreq.flags = res->flags;
-		show_mrt.arg = &ribreq;
-		if (!(res->flags & F_CTL_DETAIL))
-			show_rib_summary_head();
-		mrt_parse(res->mrtfd, &show_mrt, 1);
-		exit(0);
 	case SHOW_RIB_MEM:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
 		break;
