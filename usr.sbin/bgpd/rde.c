@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.395 2018/07/20 14:14:43 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.396 2018/07/20 14:49:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,11 +61,11 @@ int		 rde_attr_add(struct rde_aspath *, u_char *, u_int16_t);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct filterstate *);
-int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
+int		 nlri_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
-int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
+int		 nlri_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
-int		 rde_update_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
+int		 nlri_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *, int);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
@@ -1039,7 +1039,7 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2;
 	/* withdraw prefix */
 	while (len > 0) {
-		if ((pos = rde_update_get_prefix(p, len, &prefix,
+		if ((pos = nlri_get_prefix(p, len, &prefix,
 		    &prefixlen)) == -1) {
 			/*
 			 * the RFC does not mention what we should do in
@@ -1115,7 +1115,7 @@ rde_update_dispatch(struct imsg *imsg)
 		switch (aid) {
 		case AID_INET6:
 			while (mplen > 0) {
-				if ((pos = rde_update_get_prefix6(mpp, mplen,
+				if ((pos = nlri_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad IPv6 withdraw prefix");
@@ -1132,7 +1132,7 @@ rde_update_dispatch(struct imsg *imsg)
 			break;
 		case AID_VPN_IPv4:
 			while (mplen > 0) {
-				if ((pos = rde_update_get_vpn4(mpp, mplen,
+				if ((pos = nlri_get_vpn4(mpp, mplen,
 				    &prefix, &prefixlen, 1)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 withdraw prefix");
@@ -1169,7 +1169,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 	/* parse nlri prefix */
 	while (nlri_len > 0) {
-		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
+		if ((pos = nlri_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
@@ -1239,7 +1239,7 @@ rde_update_dispatch(struct imsg *imsg)
 		switch (aid) {
 		case AID_INET6:
 			while (mplen > 0) {
-				if ((pos = rde_update_get_prefix6(mpp, mplen,
+				if ((pos = nlri_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad IPv6 nlri prefix");
@@ -1258,7 +1258,7 @@ rde_update_dispatch(struct imsg *imsg)
 			break;
 		case AID_VPN_IPv4:
 			while (mplen > 0) {
-				if ((pos = rde_update_get_vpn4(mpp, mplen,
+				if ((pos = nlri_get_vpn4(mpp, mplen,
 				    &prefix, &prefixlen, 0)) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 nlri prefix");
@@ -1866,7 +1866,7 @@ extract_prefix(u_char *p, u_int16_t len, void *va,
 }
 
 int
-rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+nlri_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen)
 {
 	u_int8_t	 pfxlen;
@@ -1892,7 +1892,7 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 }
 
 int
-rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+nlri_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen)
 {
 	int		plen;
@@ -1918,7 +1918,7 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 }
 
 int
-rde_update_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+nlri_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
     u_int8_t *prefixlen, int withdraw)
 {
 	int		 rv, done = 0;
