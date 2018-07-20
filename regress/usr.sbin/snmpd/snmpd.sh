@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.7 2018/06/30 17:37:59 rob Exp $
+# $OpenBSD: snmpd.sh,v 1.8 2018/07/20 21:59:53 claudio Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -63,10 +63,9 @@ echo "\nConfiguration: default community strings, trap receiver, trap handle\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (1) for snmpd regression testing
-listen_addr="127.0.0.1"
-
 # Restrict daemon to listen on localhost only
-listen on \$listen_addr
+listen on 127.0.0.1
+listen on ::1
 
 # Specify a number of trap receivers
 trap receiver localhost
@@ -167,10 +166,9 @@ echo "\nConfiguration: seclevel auth\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (2) for snmpd regression testing
-listen_addr="127.0.0.1"
-
 # Restrict daemon to listen on localhost only
-listen on \$listen_addr
+listen on 127.0.0.1
+listen on ::1
 
 seclevel auth
 
@@ -215,10 +213,9 @@ echo "\nConfiguration: seclevel enc\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (3) for snmpd regression testing
-listen_addr="127.0.0.1"
-
 # Restrict daemon to listen on localhost only
-listen on \$listen_addr
+listen on 127.0.0.1
+listen on ::1
 
 seclevel enc
 
@@ -252,10 +249,9 @@ echo "\nConfiguration: non-default community strings, custom oids\n"
 
 cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (4) for snmpd regression testing
-listen_addr="127.0.0.1"
-
 # Restrict daemon to listen on localhost only
-listen on \$listen_addr
+listen on 127.0.0.1
+listen on ::1
 
 read-only community non-default-ro
 
