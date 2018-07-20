@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse-opt-add-opt.c,v 1.3 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) Sylvestre Gallon <ccna.syl@gmail.com>
  *

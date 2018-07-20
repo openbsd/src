@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse-mount.c,v 1.2 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
  *

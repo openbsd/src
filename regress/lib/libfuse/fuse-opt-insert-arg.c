@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse-opt-insert-arg.c,v 1.4 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) Sylvestre Gallon <ccna.syl@gmail.com>
  *

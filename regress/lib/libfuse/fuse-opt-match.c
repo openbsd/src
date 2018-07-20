@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse-opt-match.c,v 1.5 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) 2017 Helg Bredow <xx404@msn.com>
  *
