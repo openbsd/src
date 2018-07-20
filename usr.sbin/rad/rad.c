@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.11 2018/07/20 20:34:18 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.12 2018/07/20 20:35:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -621,10 +621,6 @@ main_imsg_send_config(struct rad_conf *xconf)
 			    ra_prefix_conf, sizeof(*ra_prefix_conf)) == -1)
 				return (-1);
 		}
-		if (main_sendboth(IMSG_RECONF_RA_RDNS_LIFETIME,
-		    &ra_iface_conf->rdns_lifetime,
-		    sizeof(ra_iface_conf->rdns_lifetime)) == -1)
-			return (-1);
 		SIMPLEQ_FOREACH(ra_rdnss_conf, &ra_iface_conf->ra_rdnss_list,
 		    entry) {
 			if (main_sendboth(IMSG_RECONF_RA_RDNSS, ra_rdnss_conf,

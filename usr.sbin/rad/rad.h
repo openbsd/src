@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.13 2018/07/20 20:34:18 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.14 2018/07/20 20:35:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -59,7 +59,6 @@ enum imsg_type {
 	IMSG_RECONF_RA_IFACE,
 	IMSG_RECONF_RA_AUTOPREFIX,
 	IMSG_RECONF_RA_PREFIX,
-	IMSG_RECONF_RA_RDNS_LIFETIME,
 	IMSG_RECONF_RA_RDNSS,
 	IMSG_RECONF_RA_DNSSL,
 	IMSG_RECONF_END,

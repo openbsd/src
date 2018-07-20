@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2018/07/20 20:33:29 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2018/07/20 20:35:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -396,9 +396,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct ra_prefix_conf));
 			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_prefix_list,
 			    ra_prefix_conf, entry);
-			break;
-		case IMSG_RECONF_RA_RDNS_LIFETIME:
-			ra_iface_conf->rdns_lifetime = *((uint32_t *)imsg.data);
 			break;
 		case IMSG_RECONF_RA_RDNSS:
 			if ((ra_rdnss_conf = malloc(sizeof(struct
