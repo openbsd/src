@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2018/07/18 09:10:50 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2018/07/20 17:55:09 bket Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -887,6 +887,7 @@ void
 build_packet(struct ra_iface *ra_iface)
 {
 	struct nd_router_advert		*ra;
+	struct nd_opt_mtu		*ndopt_mtu;
 	struct nd_opt_prefix_info	*ndopt_pi;
 	struct ra_iface_conf		*ra_iface_conf;
 	struct ra_options_conf		*ra_options_conf;
@@ -904,6 +905,8 @@ build_packet(struct ra_iface *ra_iface)
 	ra_options_conf = &ra_iface_conf->ra_options;
 
 	len = sizeof(*ra);
+	if (ra_options_conf->mtu > 0)
+		len += sizeof(*ndopt_mtu);
 	len += sizeof(*ndopt_pi) * ra_iface->prefix_count;
 	if (ra_iface_conf->rdnss_count > 0)
 		len += sizeof(*ndopt_rdnss) + ra_iface_conf->rdnss_count *
@@ -939,6 +942,15 @@ build_packet(struct ra_iface *ra_iface)
 	ra->nd_ra_reachable = htonl(ra_options_conf->reachable_time);
 	ra->nd_ra_retransmit = htonl(ra_options_conf->retrans_timer);
 	p += sizeof(*ra);
+
+	if (ra_options_conf->mtu > 0) {
+		ndopt_mtu = (struct nd_opt_mtu *)p;
+		ndopt_mtu->nd_opt_mtu_type = ND_OPT_MTU;
+		ndopt_mtu->nd_opt_mtu_len = 1;
+		ndopt_mtu->nd_opt_mtu_reserved = 0;
+		ndopt_mtu->nd_opt_mtu_mtu = htonl(ra_options_conf->mtu);
+		p += sizeof(*ndopt_mtu);
+	}
 
 	SIMPLEQ_FOREACH(ra_prefix_conf, &ra_iface->prefixes, entry) {
 		ndopt_pi = (struct nd_opt_prefix_info *)p;

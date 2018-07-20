@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.7 2018/07/20 13:17:02 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.8 2018/07/20 17:55:09 bket Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -87,6 +87,11 @@ The default is 1800 seconds.
 .\" XXX
 .\" .It Ic retrans timer Ar number
 .\" XXX
+.It Ic mtu Ar bytes
+The MTU option is used in Router Advertisement messages to ensure that all
+nodes on a link use the same MTU value in those cases where the link MTU
+is not well known.
+The default is 0, meaning unspecified by this router.
 .El
 .Sh INTERFACES
 A list of interfaces to send advertisments on:

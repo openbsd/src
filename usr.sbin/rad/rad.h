@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.11 2018/07/15 09:28:21 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.12 2018/07/20 17:55:09 bket Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -76,7 +76,7 @@ enum imsg_type {
 	IMSG_SOCKET_IPC
 };
 
-/* RFC 4861 Section 4.2 */
+/* RFC 4861 Sections 4.2 and 4.6.4 */
 struct ra_options_conf {
 	int		dfr;			/* is default router? */
 	int		cur_hl;			/* current hop limit */
@@ -85,6 +85,7 @@ struct ra_options_conf {
 	int		router_lifetime;	/* default router lifetime */
 	uint32_t	reachable_time;
 	uint32_t	retrans_timer;
+	uint32_t	mtu;
 };
 
 /* RFC 4861 Section 4.6.2 */
