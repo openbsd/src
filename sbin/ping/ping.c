@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.227 2018/07/18 15:46:49 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.228 2018/07/21 07:27:54 claudio Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -179,7 +179,7 @@ char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
-int v6flag = 0;			/* are we ping6? */
+int v6flag;			/* are we ping6? */
 
 /* counters */
 int64_t npackets;		/* max packets to transmit */
@@ -190,13 +190,13 @@ int64_t nmissedmax = 1;		/* max value of ntransmitted - nreceived - 1 */
 struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
-int timing = 0;			/* flag to do timing */
-int timinginfo = 0;
+int timing;			/* flag to do timing */
+int timinginfo;
 unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 double tmin = 999999999.0;	/* minimum round trip time */
-double tmax = 0.0;		/* maximum round trip time */
-double tsum = 0.0;		/* sum of all times, for doing average */
-double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+double tmax;			/* maximum round trip time */
+double tsum;			/* sum of all times, for doing average */
+double tsumsq;			/* sum of all times squared, for std. dev. */
 
 struct tv64 tv64_offset;
 SIPHASH_KEY mac_key;
@@ -991,7 +991,7 @@ void
 retransmit(int s)
 {
 	struct itimerval itimer;
-	static int last_time = 0;
+	static int last_time;
 
 	if (last_time) {
 		seenint = 1;	/* break out of ping event loop */
