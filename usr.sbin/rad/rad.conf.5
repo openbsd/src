@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.8 2018/07/20 17:55:09 bket Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.9 2018/07/21 09:35:50 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2018 $
+.Dd $Mdocdate: July 21 2018 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -76,6 +76,11 @@ The default is 0, meaning unspecified by this router.
 If set to yes, indicate that stateless address configuration prefixes are
 not available and hosts should consult DHCPv6.
 The default is no.
+.It Ic mtu Ar bytes
+The MTU option is used in Router Advertisement messages to ensure that all
+nodes on a link use the same MTU value in those cases where the link MTU
+is not well known.
+The default is 0, meaning unspecified by this router.
 .It Ic other configuration Pq Ic yes Ns | Ns Ic no
 If set to yes, hosts should consult DHCPv6 for additional configuration
 like NTP servers or DNS name servers.
@@ -87,11 +92,6 @@ The default is 1800 seconds.
 .\" XXX
 .\" .It Ic retrans timer Ar number
 .\" XXX
-.It Ic mtu Ar bytes
-The MTU option is used in Router Advertisement messages to ensure that all
-nodes on a link use the same MTU value in those cases where the link MTU
-is not well known.
-The default is 0, meaning unspecified by this router.
 .El
 .Sh INTERFACES
 A list of interfaces to send advertisments on:
