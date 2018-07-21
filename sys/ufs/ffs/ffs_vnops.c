@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.91 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.92 2018/07/21 09:35:08 anton Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ ffs_write(void *v)
 			panic("ffs_write: nonsync dir write");
 		break;
 	default:
-		panic("ffs_write: type");
+		panic("ffs_write: type %d", vp->v_type);
 	}
 
 	fs = ip->i_fs;
