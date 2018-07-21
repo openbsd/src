@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.109 2017/10/11 00:09:32 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.110 2018/07/21 15:24:55 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -404,12 +404,18 @@ int
 parse_option_buffer(struct option_data *options, unsigned char *buffer,
     int length)
 {
-	unsigned char	*s, *t, *end = buffer + length;
+	unsigned char	*s, *t, *end;
 	char		*name, *fmt;
 	int		 len, code;
 
-	for (s = buffer; *s != DHO_END && s < end; ) {
+	s = buffer;
+	end = s + length;
+	while (s < end) {
 		code = s[0];
+
+		/* End options terminate processing. */
+		if (code == DHO_END)
+			break;
 
 		/* Pad options don't have a length - just skip them. */
 		if (code == DHO_PAD) {
