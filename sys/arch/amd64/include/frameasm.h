@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.18 2018/07/10 08:57:44 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.19 2018/07/21 02:19:54 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -60,20 +60,22 @@
 /* For real interrupt code paths, where we can come from userspace */
 #define INTRENTRY_LABEL(label)	X##label##_untramp
 #define	INTRENTRY(label) \
-	testq	$SEL_RPL,24(%rsp)	; \
+	testb	$SEL_RPL,24(%rsp)	; \
 	je	INTRENTRY_LABEL(label)	; \
 	swapgs				; \
 	movq	%rax,CPUVAR(SCRATCH)	; \
+	CODEPATCH_START			; \
 	movq	CPUVAR(KERN_CR3),%rax	; \
-	testq	%rax,%rax		; \
-	jz	98f			; \
 	movq	%rax,%cr3		; \
+	CODEPATCH_END(CPTAG_MELTDOWN_NOP);\
 	jmp	98f			; \
 	.text				; \
+	_ALIGN_TRAPS			; \
 	.global	INTRENTRY_LABEL(label)	; \
 INTRENTRY_LABEL(label):	/* from kernel */ \
 	INTR_ENTRY_KERN			; \
 	jmp	99f			; \
+	_ALIGN_TRAPS			; \
 98:	/* from userspace */		  \
 	INTR_ENTRY_USER			; \
 99:	INTR_SAVE_MOST_GPRS_NO_ADJ	; \

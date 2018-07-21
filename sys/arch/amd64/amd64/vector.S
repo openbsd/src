@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.73 2018/07/12 14:24:54 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.74 2018/07/21 02:19:54 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -472,9 +472,7 @@ KTEXT_PAGE_END
 /* XXX See comment in locore.s */
 #define	XINTR(name,num)		Xintr_##name##num
 
-	KUTEXT
-	.globl _C_LABEL(x2apic_eoi)
-_C_LABEL(x2apic_eoi):
+KUENTRY(x2apic_eoi)
 	pushq   %rax
 	pushq   %rcx
 	pushq   %rdx
