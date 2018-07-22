@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.111 2018/07/22 08:43:01 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.112 2018/07/22 08:59:56 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -447,8 +447,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		}
 
 		/*
-		 * Strip trailing NULs from ascii ('t') options. They
-		 * will be treated as DHO_PAD options. i.e. ignored. RFC 2132
+		 * Strip trailing NULs from ascii ('t') options. RFC 2132
 		 * says "Options containing NVT ASCII data SHOULD NOT include
 		 * a trailing NULL; however, the receiver of such options
 		 * MUST be prepared to delete trailing nulls if they exist."
