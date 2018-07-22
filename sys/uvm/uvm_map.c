@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.237 2018/04/18 16:05:21 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.238 2018/07/22 14:33:44 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3197,7 +3197,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 	first = uvm_map_entrybyaddr(&map->addr, start);
 	KDASSERT(first != NULL);
-	if (first->end < start)
+	if (first->end <= start)
 		first = RBT_NEXT(uvm_map_addr, first);
 
 	/* First, check for protection violations. */
