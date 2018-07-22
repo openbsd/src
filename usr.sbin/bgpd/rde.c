@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.397 2018/07/20 14:58:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.398 2018/07/22 06:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1222,7 +1222,7 @@ rde_update_dispatch(struct imsg *imsg)
 			state.aspath.nexthop = NULL;
 		}
 		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &state)) == -1) {
-			log_peer_warnx(&peer->conf, "bad nlri prefix");
+			log_peer_warnx(&peer->conf, "bad nlri nexthop");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    mpa.reach, mpa.reach_len);
 			goto done;
@@ -1815,9 +1815,9 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 			log_warnx("bad multiprotocol nexthop, bad size");
 			return (-1);
 		}
-		data += sizeof(u_int64_t);
 		nexthop.aid = AID_INET;
-		memcpy(&nexthop.v4, data, sizeof(nexthop.v4));
+		memcpy(&nexthop.v4, data + sizeof(u_int64_t),
+		    sizeof(nexthop.v4));
 		break;
 	default:
 		log_warnx("bad multiprotocol nexthop, bad AID");
