@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.208 2018/07/22 16:52:27 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.209 2018/07/22 17:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1358,15 +1358,112 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
 	    fmt_timeframe_core(now), EOL0(flag0));
 }
 
+static const char *
+print_attr(u_int8_t type, u_int8_t flags)
+{
+#define CHECK_FLAGS(s, t, m)	\
+	if (((s) & ~(ATTR_DEFMASK | (m))) != (t)) pflags = 1
+
+	static char cstr[48];
+	int pflags = 0;
+
+	switch (type) {
+	case ATTR_ORIGIN:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "Origin", sizeof(cstr));
+		break;
+	case ATTR_ASPATH:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "AS-Path", sizeof(cstr));
+		break;
+	case ATTR_AS4_PATH:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "AS4-Path", sizeof(cstr));
+		break;
+	case ATTR_NEXTHOP:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "Nexthop", sizeof(cstr));
+		break;
+	case ATTR_MED:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL, 0);
+		strlcpy(cstr, "Med", sizeof(cstr));
+		break;
+	case ATTR_LOCALPREF:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "Localpref", sizeof(cstr));
+		break;
+	case ATTR_ATOMIC_AGGREGATE:
+		CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0);
+		strlcpy(cstr, "Atomic Aggregate", sizeof(cstr));
+		break;
+	case ATTR_AGGREGATOR:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "Aggregator", sizeof(cstr));
+		break;
+	case ATTR_AS4_AGGREGATOR:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "AS4-Aggregator", sizeof(cstr));
+		break;
+	case ATTR_COMMUNITIES:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "Communities", sizeof(cstr));
+		break;
+	case ATTR_ORIGINATOR_ID:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL, 0);
+		strlcpy(cstr, "Originator Id", sizeof(cstr));
+		break;
+	case ATTR_CLUSTER_LIST:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL, 0);
+		strlcpy(cstr, "Cluster Id List", sizeof(cstr));
+		break;
+	case ATTR_MP_REACH_NLRI:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL, 0);
+		strlcpy(cstr, "MP Reach NLRI", sizeof(cstr));
+		break;
+	case ATTR_MP_UNREACH_NLRI:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL, 0);
+		strlcpy(cstr, "MP Unreach NLRI", sizeof(cstr));
+		break;
+	case ATTR_EXT_COMMUNITIES:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "Ext. Communities", sizeof(cstr));
+		break;
+	case ATTR_LARGE_COMMUNITIES:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "Large Communities", sizeof(cstr));
+		break;
+	default:
+		/* ignore unknown attributes */
+		snprintf(cstr, sizeof(cstr), "Unknown Attribute #%u", type);
+		pflags = 1;
+		break;
+	}
+	if (pflags) {
+		strlcat(cstr, " flags [", sizeof(cstr));
+		if (flags & ATTR_OPTIONAL)
+			strlcat(cstr, "O", sizeof(cstr));
+		if (flags & ATTR_TRANSITIVE)
+			strlcat(cstr, "T", sizeof(cstr));
+		if (flags & ATTR_PARTIAL)
+			strlcat(cstr, "P", sizeof(cstr));
+		strlcat(cstr, "]", sizeof(cstr));
+	}
+	return (cstr);
+
+#undef CHECK_FLAGS
+}
+
 void
 show_attr(void *b, u_int16_t len, int flag0)
 {
-	char		*data = b;
+	u_char		*data = b, *path;
 	struct in_addr	 id;
+	struct bgpd_addr prefix;
+	char		*aspath;
 	u_int32_t	 as;
-	u_int16_t	 alen, ioff;
-	u_int8_t	 flags, type;
-	int		 i;
+	u_int16_t	 alen, ioff, short_as, afi;
+	u_int8_t	 flags, type, safi, aid, prefixlen;
+	int		 i, pos, e2, e4;
 
 	if (len < 3)
 		errx(1, "show_attr: too short bgp attr");
@@ -1392,66 +1489,179 @@ show_attr(void *b, u_int16_t len, int flag0)
 	if (alen > len)
 		errx(1, "show_attr: bad length");
 
+	printf("    %s: ", print_attr(type, flags));
+
 	switch (type) {
-	case ATTR_COMMUNITIES:
-		printf("    Communities: ");
-		show_community(data, alen);
-		printf("%c", EOL0(flag0));
+	case ATTR_ORIGIN:
+		if (alen == 1)
+			printf("%u", *data);
+		else
+			printf("bad length");
 		break;
-	case ATTR_LARGE_COMMUNITIES:
-		printf("    Large Communities: ");
-		show_large_community(data, alen);
-		printf("%c", EOL0(flag0));
+	case ATTR_ASPATH:
+	case ATTR_AS4_PATH:
+		/* prefer 4-byte AS here */
+		e4 = aspath_verify(data, alen, 1);
+		e2 = aspath_verify(data, alen, 0);
+		if (e4 == 0 || e4 == AS_ERR_SOFT) {
+			path = data;
+		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
+			path = aspath_inflate(data, alen, &alen);
+			if (path == NULL)
+				errx(1, "aspath_inflate failed");
+		} else {
+			printf("bad AS-Path");
+			break;
+		}
+		if (aspath_asprint(&aspath, path, alen) == -1)
+			err(1, NULL);
+		printf("%s", aspath);
+		free(aspath);
+		if (path != data)
+			free(path);
+		break;
+	case ATTR_NEXTHOP:
+		if (alen == 4) {
+			memcpy(&id, data, sizeof(id));
+			printf("%s", inet_ntoa(id));
+		} else
+			printf("bad length");
+		break;
+	case ATTR_MED:
+	case ATTR_LOCALPREF:
+		if (alen == 4) {
+			u_int32_t val;
+			memcpy(&val, data, sizeof(val));
+			val = ntohl(val);
+			printf("%u", val);
+		} else
+			printf("bad length");
 		break;
 	case ATTR_AGGREGATOR:
-		memcpy(&as, data, sizeof(as));
-		memcpy(&id, data + sizeof(as), sizeof(id));
-		printf("    Aggregator: %s [%s]%c",
-		    log_as(ntohl(as)), inet_ntoa(id), EOL0(flag0));
+	case ATTR_AS4_AGGREGATOR:
+		if (alen == 8) {
+			memcpy(&as, data, sizeof(as));
+			memcpy(&id, data + sizeof(as), sizeof(id));
+			as = ntohl(as);
+		} else if (alen == 6) {
+			memcpy(&short_as, data, sizeof(short_as));
+			memcpy(&id, data + sizeof(short_as), sizeof(id));
+			as = ntohs(short_as);
+		} else {
+			printf("bad length");
+			break;
+		}
+		printf("%s [%s]", log_as(as), inet_ntoa(id));
+		break;
+	case ATTR_COMMUNITIES:
+		show_community(data, alen);
 		break;
 	case ATTR_ORIGINATOR_ID:
 		memcpy(&id, data, sizeof(id));
-		printf("    Originator Id: %s%c", inet_ntoa(id), EOL0(flag0));
+		printf("%s", inet_ntoa(id));
 		break;
 	case ATTR_CLUSTER_LIST:
-		printf("    Cluster ID List:");
 		for (ioff = 0; ioff + sizeof(id) <= alen;
 		    ioff += sizeof(id)) {
 			memcpy(&id, data + ioff, sizeof(id));
 			printf(" %s", inet_ntoa(id));
 		}
-		printf("%c", EOL0(flag0));
+		break;
+	case ATTR_MP_REACH_NLRI:
+	case ATTR_MP_UNREACH_NLRI:
+		if (alen < 3) {
+ bad_len:
+			printf("bad length");
+			break;
+		}
+		memcpy(&afi, data, 2);
+		data += 2;
+		alen -= 2;
+		afi = ntohs(afi);
+		safi = *data++;
+		alen--;
+
+		if (afi2aid(afi, safi, &aid) == -1) {
+			printf("bad AFI/SAFI pair");
+			break;
+		}
+		printf(" %s", aid2str(aid));
+
+		if (type == ATTR_MP_REACH_NLRI) {
+			struct bgpd_addr nexthop;
+			u_int8_t nhlen;
+			if (len == 0)
+				goto bad_len;
+			nhlen = *data++;
+			alen--;
+			if (nhlen > len)
+				goto bad_len;
+			bzero(&nexthop, sizeof(nexthop));
+			switch (aid) {
+			case AID_INET6:
+				nexthop.aid = aid;
+				if (nhlen != 16 && nhlen != 32)
+					goto bad_len;
+				memcpy(&nexthop.v6.s6_addr, data, 16);
+				break;
+			case AID_VPN_IPv4:
+				if (nhlen != 12)
+					goto bad_len;
+				nexthop.aid = AID_INET;
+				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
+				    sizeof(nexthop.v4));
+			default:
+				printf("unhandled AID #%u", aid);
+				goto done;
+			}
+			/* ignore reserved (old SNPA) field as per RFC4760 */
+			data += nhlen + 1;
+			alen -= nhlen + 1;
+
+			printf(" nexthop: %s", log_addr(&nexthop));
+		}
+
+		while (alen > 0) {
+			switch (aid) {
+			case AID_INET6:
+				pos = nlri_get_prefix6(data, alen, &prefix,
+				    &prefixlen);
+				break;
+			case AID_VPN_IPv4:
+				pos = nlri_get_vpn4(data, alen, &prefix,
+				    &prefixlen, 1);
+				break;
+			default:
+				printf("unhandled AID #%u", aid);
+				goto done;
+			}
+			if (pos == -1) {
+				printf("bad %s prefix", aid2str(aid));
+				break;
+			}
+			printf(" %s/%u", log_addr(&prefix), prefixlen);
+			data += pos;
+			alen -= pos;
+		}
 		break;
 	case ATTR_EXT_COMMUNITIES:
-		printf("    Ext. communities: ");
 		show_ext_community(data, alen);
-		printf("%c", EOL0(flag0));
+		break;
+	case ATTR_LARGE_COMMUNITIES:
+		show_large_community(data, alen);
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
-		/* ignore */
-		break;
 	default:
-		/* ignore unknown attributes */
-		printf("    Unknown Attribute #%u", type);
-		if (flags) {
-			printf(" flags [");
-			if (flags & ATTR_OPTIONAL)
-				printf("O");
-			if (flags & ATTR_TRANSITIVE)
-				printf("T");
-			if (flags & ATTR_PARTIAL)
-				printf("P");
-			printf("]");
-		}
 		printf(" len %u", alen);
 		if (alen) {
 			printf(":");
 			for (i=0; i < alen; i++)
-				printf(" %02x", *(data+i) & 0xFF);
+				printf(" %02x", *(data+i));
 		}
-		printf("%c", EOL0(flag0));
 		break;
 	}
+ done:
+	printf("%c", EOL0(flag0));
 }
 
 void
@@ -1969,16 +2179,457 @@ show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 	    statenames[ms->old_state], statenames[ms->new_state]);
 }
 
+static void
+print_afi(u_char *p, u_int8_t len)
+{
+	u_int16_t afi;
+	u_int8_t safi, aid;
+
+	if (len != 4) {
+		printf("bad length");
+		return;
+	}
+
+	/* afi, 2 byte */
+	memcpy(&afi, p, sizeof(afi));
+	afi = ntohs(afi);
+	p += 2;
+	/* reserved, 1 byte */
+	p += 1;
+	/* safi, 1 byte */
+	memcpy(&safi, p, sizeof(safi));
+	if (afi2aid(afi, safi, &aid) == -1)
+		printf("unkown afi %u safi %u", afi, safi);
+	else
+		printf("%s", aid2str(aid));
+}
+
+static void
+print_capability(u_int8_t capa_code, u_char *p, u_int8_t len)
+{
+	switch (capa_code) {
+	case CAPA_MP:
+		printf("multiprotocol capability: ");
+		print_afi(p, len);
+		break;
+	case CAPA_REFRESH:
+		printf("route refresh capability");
+		break;
+	case CAPA_RESTART:
+		printf("graceful restart capability");
+		/* XXX there is more needed here */
+		break;
+	case CAPA_AS4BYTE:
+		printf("4-byte AS num capability: ");
+		if (len == 4) {
+			u_int32_t as;
+			memcpy(&as, p, sizeof(as));
+			as = ntohl(as);
+			printf("AS %u", as);
+		} else
+			printf("bad length");
+		break;
+	default:
+		printf("unknown capability %u length %u", capa_code, len);
+		break;
+	}
+}
+
+static void
+print_notification(u_int8_t errcode, u_int8_t subcode)
+{
+	const char *suberrname = NULL;
+	int uk = 0;
+
+	switch (errcode) {
+	case ERR_HEADER:
+		if (subcode >= sizeof(suberr_header_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_header_names[subcode];
+		break;
+	case ERR_OPEN:
+		if (subcode >= sizeof(suberr_open_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_open_names[subcode];
+		break;
+	case ERR_UPDATE:
+		if (subcode >= sizeof(suberr_update_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_update_names[subcode];
+		break;
+	case ERR_CEASE:
+		if (subcode >= sizeof(suberr_cease_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_cease_names[subcode];
+		break;
+	case ERR_HOLDTIMEREXPIRED:
+		if (subcode != 0)
+			uk = 1;
+		break;
+	case ERR_FSM:
+		if (subcode >= sizeof(suberr_fsm_names)/sizeof(char *))
+			uk = 1;
+		else
+			suberrname = suberr_fsm_names[subcode];
+		break;
+	default:
+		printf("unknown errcode %u, subcode %u",
+		    errcode, subcode);
+		return;
+	}
+
+	if (uk)
+		printf("%s, unknown subcode %u", errnames[errcode], subcode);
+	else {
+		if (suberrname == NULL)
+			printf("%s", errnames[errcode]);
+		else
+			printf("%s, %s", errnames[errcode], suberrname);
+	}
+}
+
+static int
+show_mrt_capabilities(u_char *p, u_int16_t len)
+{
+	u_int16_t totlen = len;
+	u_int8_t capa_code, capa_len;
+
+	while (len > 2) {
+		memcpy(&capa_code, p, sizeof(capa_code));
+		p += sizeof(capa_code);
+		len -= sizeof(capa_code);
+		memcpy(&capa_len, p, sizeof(capa_len));
+		p += sizeof(capa_len);
+		len -= sizeof(capa_len);
+		if (len < capa_len) {
+			printf("capa_len %u exceeds remaining length",
+			    capa_len);
+			return (-1);
+		}
+		printf("\n        ");
+		print_capability(capa_code, p, capa_len);
+		p += capa_len;
+		len -= capa_len;
+	}
+	if (len != 0) {
+		printf("length missmatch while capability parsing");
+		return (-1);
+	}
+	return (totlen);
+}
+
+static void
+show_mrt_open(u_char *p, u_int16_t len)
+{
+	u_int8_t version, optparamlen;
+	u_int16_t short_as, holdtime;
+	struct in_addr bgpid;
+
+	/* length check up to optparamlen already happened */
+	memcpy(&version, p, sizeof(version));
+	p += sizeof(version);
+	len -= sizeof(version);
+	memcpy(&short_as, p, sizeof(short_as));
+	p += sizeof(short_as);
+	len -= sizeof(short_as);
+	short_as = ntohs(short_as);
+	memcpy(&holdtime, p, sizeof(holdtime));
+	holdtime = ntohs(holdtime);
+	p += sizeof(holdtime);
+	len -= sizeof(holdtime);
+	memcpy(&bgpid, p, sizeof(bgpid));
+	p += sizeof(bgpid);
+	len -= sizeof(bgpid);
+	memcpy(&optparamlen, p, sizeof(optparamlen));
+	p += sizeof(optparamlen);
+	len -= sizeof(optparamlen);
+
+	printf("\n    ");
+	printf("Version: %d AS: %u Holdtime: %u BGP Id: %s Paramlen: %u",
+	    version, short_as, holdtime, inet_ntoa(bgpid), optparamlen);
+	if (optparamlen != len) {
+		printf("optional parameter length mismatch");
+		return;
+	}
+	while (len > 2) {
+		u_int8_t op_type, op_len;
+		int r;
+
+		memcpy(&op_type, p, sizeof(op_type));
+		p += sizeof(op_type);
+		len -= sizeof(op_type);
+		memcpy(&op_len, p, sizeof(op_len));
+		p += sizeof(op_len);
+		len -= sizeof(op_len);
+
+		printf("\n    ");
+		switch (op_type) {
+		case OPT_PARAM_CAPABILITIES:
+			printf("Capabilities: size %u", op_len);
+			r = show_mrt_capabilities(p, op_len);
+			if (r == -1)
+				return;
+			p += r;
+			len -= r;
+			break;
+		case OPT_PARAM_AUTH:
+		default:
+			printf("unsupported optional parameter: type %u",
+			    op_type);
+			return;
+		}
+	}
+	if (len != 0) {
+		printf("optional parameter encoding error");
+		return;
+	}
+}
+
+static void
+show_mrt_notification(u_char *p, u_int16_t len)
+{
+	u_int16_t i;
+	u_int8_t errcode, subcode, shutcomm_len;
+	char shutcomm[SHUT_COMM_LEN];
+
+	memcpy(&errcode, p, sizeof(errcode));
+	p += sizeof(errcode);
+	len -= sizeof(errcode);
+
+	memcpy(&subcode, p, sizeof(subcode));
+	p += sizeof(subcode);
+	len -= sizeof(subcode);
+
+	printf("\n    ");
+	print_notification(errcode, subcode);
+
+	if (errcode == ERR_CEASE && (subcode == ERR_CEASE_ADMIN_DOWN ||
+	    subcode == ERR_CEASE_ADMIN_RESET)) {
+		if (len >= sizeof(shutcomm_len)) {
+			memcpy(&shutcomm_len, p, sizeof(shutcomm_len));
+			p += sizeof(shutcomm_len);
+			len -= sizeof(shutcomm_len);
+			if(len < shutcomm_len) {
+				printf("truncated shutdown reason");
+				return;
+			}
+			if (shutcomm_len > (SHUT_COMM_LEN-1)) {
+				printf("overly long shutdown reason");
+				return;
+			}
+			memcpy(shutcomm, p, shutcomm_len);
+			shutcomm[shutcomm_len] = '\0';
+			printf("shutdown reason: \"%s\"",
+			    log_shutcomm(shutcomm));
+			p += shutcomm_len;
+			len -= shutcomm_len;
+		}
+	}
+	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
+		int r;
+
+		r = show_mrt_capabilities(p, len);
+		if (r == -1)
+			return;
+		p += r;
+		len -= r;
+	}
+
+	if (len > 0) {
+		printf("\n    additional data %u bytes", len);
+		for (i = 0; i < len; i++) {
+			if (i % 16 == 0)
+				printf("\n    ");
+			if (i % 8 == 0)
+				printf("   ");
+			printf(" %02X", *p++);
+		}
+	}
+}
+
+static void
+show_mrt_update(u_char *p, u_int16_t len)
+{
+	struct bgpd_addr prefix;
+	int pos;
+	u_int16_t wlen, alen;
+	u_int8_t prefixlen;
+
+	if (len < sizeof(wlen)) {
+		printf("bad length");
+		return;
+	}
+	memcpy(&wlen, p, sizeof(wlen));
+	wlen = ntohs(wlen);
+	p += sizeof(wlen);
+	len -= sizeof(wlen);
+
+	if (len < wlen) {
+		printf("bad withdraw length");
+		return;
+	}
+	if (wlen > 0) {
+		printf("\n     Withdrawn prefixes:");
+		while (wlen > 0) {
+			if ((pos = nlri_get_prefix(p, wlen, &prefix,
+			    &prefixlen)) == -1) {
+				printf("bad withdraw prefix");
+				return;
+			}
+			printf(" %s/%u", log_addr(&prefix), prefixlen);
+			p += pos;
+			len -= pos;
+			wlen -= pos;
+		}
+	}
+
+	if (len < sizeof(alen)) {
+		printf("bad length");
+		return;
+	}
+	memcpy(&alen, p, sizeof(alen));
+	alen = ntohs(alen);
+	p += sizeof(alen);
+	len -= sizeof(alen);
+
+	if (len < alen) {
+		printf("bad attribute length");
+		return;
+	}
+	printf("\n");
+	/* alen attributes here */
+	while (alen > 3) {
+		u_int8_t flags, type;
+		u_int16_t attrlen;
+
+		flags = p[0];
+		type = p[1];
+
+		/* get the attribute length */
+		if (flags & ATTR_EXTLEN) {
+			if (len < sizeof(attrlen) + 2)
+				printf("bad attribute length");
+			memcpy(&attrlen, &p[2], sizeof(attrlen));
+			attrlen = ntohs(attrlen);
+			attrlen += sizeof(attrlen) + 2;
+		} else {
+			attrlen = p[2];
+			attrlen += 1 + 2;
+		}
+
+		show_attr(p, attrlen, 0);
+		p += attrlen;
+		alen -= attrlen;
+		len -= attrlen;
+	}
+
+	if (len > 0) {
+		printf("    NLRI prefixes:");
+		while (len > 0) {
+			if ((pos = nlri_get_prefix(p, len, &prefix,
+			    &prefixlen)) == -1) {
+				printf("bad withdraw prefix");
+				return;
+			}
+			printf(" %s/%u", log_addr(&prefix), prefixlen);
+			p += pos;
+			len -= pos;
+		}
+	}
+}
+
 void
 show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 {
+	static const u_int8_t marker[MSGSIZE_HEADER_MARKER] = {
+	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	struct bgpd_addr src, dst;
+	u_char *p;
+	u_int16_t len;
+	u_int8_t type;
 
 	mrt_to_bgpd_addr(&mm->src, &src);
 	mrt_to_bgpd_addr(&mm->dst, &dst);
 	printf("%s %s[%u] -> ", print_time(&mm->time),
 	    log_addr(&src), mm->src_as);
-	printf("%s[%u]: size %u\n", log_addr(&dst), mm->dst_as, mm->msg_len);
+	printf("%s[%u]: size %u ", log_addr(&dst), mm->dst_as, mm->msg_len);
+	p = mm->msg;
+	len = mm->msg_len;
+
+	if (len < MSGSIZE_HEADER) {
+		printf("illegal header length: %u byte\n", len);
+		return;
+	}
+
+	/* parse BGP message header */
+	if (memcmp(p, marker, sizeof(marker))) {
+		printf("incorrect marker in BGP message\n");
+		return;
+	}
+	p += MSGSIZE_HEADER_MARKER;
+
+	memcpy(&len, p, 2);
+	len = ntohs(len);
+	p += 2;
+	memcpy(&type, p, 1);
+	p += 1;
+
+	if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
+		printf("illegal header length: %u byte\n", len);
+		return;
+	}
+
+	switch (type) {
+	case OPEN:
+		printf("%s ", msgtypenames[type]);
+		if (len < MSGSIZE_OPEN_MIN) {
+			printf("illegal length: %u byte\n", len);
+			return;
+		}
+		show_mrt_open(p, len - MSGSIZE_HEADER);
+		break;
+	case NOTIFICATION:
+		printf("%s ", msgtypenames[type]);
+		if (len < MSGSIZE_NOTIFICATION_MIN) {
+			printf("illegal length: %u byte\n", len);
+			return;
+		}
+		show_mrt_notification(p, len - MSGSIZE_HEADER);
+		break;
+	case UPDATE:
+		printf("%s ", msgtypenames[type]);
+		if (len < MSGSIZE_UPDATE_MIN) {
+			printf("illegal length: %u byte\n", len);
+			return;
+		}
+		show_mrt_update(p, len - MSGSIZE_HEADER);
+		break;
+	case KEEPALIVE:
+		printf("%s ", msgtypenames[type]);
+		if (len != MSGSIZE_KEEPALIVE) {
+			printf("illegal length: %u byte\n", len);
+			return;
+		}
+		/* nothing */
+		break;
+	case RREFRESH:
+		printf("%s ", msgtypenames[type]);
+		if (len != MSGSIZE_RREFRESH) {
+			printf("illegal length: %u byte\n", len);
+			return;
+		}
+		print_afi(p, len);
+		break;
+	default:
+		printf("unknown type %u\n", type);
+		return;
+	}
+	printf("\n");
 }
 
 void
