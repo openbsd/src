@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.110 2018/07/21 15:24:55 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.111 2018/07/22 08:43:01 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -489,7 +489,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			free(options[code].data);
 			options[code].data = t;
 		}
-		s += len + 2;
+		s += s[1] + 2;
 	}
 
 	return 1;
