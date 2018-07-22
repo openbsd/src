@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.294 2018/07/13 09:36:00 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.295 2018/07/22 06:31:17 anton Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2345,13 +2345,14 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		return (error);
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		error = EROFS;
 	else {
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
-		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    (vp->v_mount &&
+		     (vp->v_mount->mnt_flag & MNT_NOPERM) == 0) &&
 		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
