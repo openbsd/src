@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.207 2018/07/20 12:49:49 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.208 2018/07/22 16:52:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -22,9 +22,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
-#include <net/if.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -73,10 +70,6 @@ int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
-uint64_t	 ift2ifm(uint8_t);
-const char *	 get_media_descr(uint64_t);
-const char *	 get_linkstate(uint8_t, int);
-const char *	 get_baudrate(u_int64_t, char *);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
@@ -1150,75 +1143,6 @@ show_interface_head(void)
 {
 	printf("%-15s%-9s%-9s%-7s%s\n", "Interface", "rdomain", "Nexthop", "Flags",
 	    "Link state");
-}
-
-const struct if_status_description
-		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
-const struct ifmedia_description
-		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
-
-uint64_t
-ift2ifm(uint8_t if_type)
-{
-	switch (if_type) {
-	case IFT_ETHER:
-		return (IFM_ETHER);
-	case IFT_FDDI:
-		return (IFM_FDDI);
-	case IFT_CARP:
-		return (IFM_CARP);
-	case IFT_IEEE80211:
-		return (IFM_IEEE80211);
-	default:
-		return (0);
-	}
-}
-
-const char *
-get_media_descr(uint64_t media_type)
-{
-	const struct ifmedia_description	*p;
-
-	for (p = ifm_type_descriptions; p->ifmt_string != NULL; p++)
-		if (media_type == p->ifmt_word)
-			return (p->ifmt_string);
-
-	return ("unknown media");
-}
-
-const char *
-get_linkstate(uint8_t if_type, int link_state)
-{
-	const struct if_status_description *p;
-	static char buf[8];
-
-	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
-			return (p->ifs_string);
-	}
-	snprintf(buf, sizeof(buf), "[#%d]", link_state);
-	return (buf);
-}
-
-const char *
-get_baudrate(u_int64_t baudrate, char *unit)
-{
-	static char bbuf[16];
-
-	if (baudrate > IF_Gbps(1))
-		snprintf(bbuf, sizeof(bbuf), "%llu G%s",
-		    baudrate / IF_Gbps(1), unit);
-	else if (baudrate > IF_Mbps(1))
-		snprintf(bbuf, sizeof(bbuf), "%llu M%s",
-		    baudrate / IF_Mbps(1), unit);
-	else if (baudrate > IF_Kbps(1))
-		snprintf(bbuf, sizeof(bbuf), "%llu K%s",
-		    baudrate / IF_Kbps(1), unit);
-	else
-		snprintf(bbuf, sizeof(bbuf), "%llu %s",
-		    baudrate, unit);
-
-	return (bbuf);
 }
 
 int
