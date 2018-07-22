@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.96 2018/07/16 09:09:20 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.97 2018/07/22 16:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,7 @@
 #include "log.h"
 
 int	rde_filter_match(struct filter_rule *, struct rde_peer *,
-	    struct rde_aspath *, struct prefix *);
+	    struct filterstate *, struct prefix *);
 int	rde_prefix_match(struct filter_prefix *, struct prefix *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
@@ -139,7 +139,7 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 		case ACTION_SET_NEXTHOP_NOMODIFY:
 		case ACTION_SET_NEXTHOP_SELF:
 			nexthop_modify(set->action.nh, set->type, aid,
-			    &state->aspath.nexthop, &state->aspath.flags);
+			    &state->nexthop, &state->nhflags);
 			break;
 		case ACTION_SET_COMMUNITY:
 			switch (set->action.community.as) {
@@ -338,12 +338,16 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
-    struct rde_aspath *asp, struct prefix *p)
+    struct filterstate *state, struct prefix *p)
 {
 	u_int32_t	pas;
 	int		cas, type;
 	int64_t		las, ld1, ld2;
-	struct prefixset_item *psi;
+	struct prefixset_item	*psi;
+	struct rde_aspath	*asp = NULL;
+
+	if (state != NULL)
+		asp = &state->aspath;
 
 	if (asp != NULL && f->match.as.type != AS_NONE) {
 		if (f->match.as.flags & AS_FLAG_NEIGHBORAS)
@@ -355,10 +359,10 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 			return (0);
 	}
 
-	if (asp != NULL && f->peer.ebgp && !peer->conf.ebgp)
-			return (0);
-	if (asp != NULL && f->peer.ibgp && peer->conf.ebgp)
-			return (0);
+	if (f->peer.ebgp && !peer->conf.ebgp)
+		return (0);
+	if (f->peer.ibgp && peer->conf.ebgp)
+		return (0);
 
 	if (asp != NULL && f->match.aslen.type != ASLEN_NONE)
 		if (aspath_lenmatch(asp->aspath, f->match.aslen.type,
@@ -450,12 +454,12 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 			return (0);
 	}
 
-	if (f->match.nexthop.flags != 0) {
+	if (state != NULL && f->match.nexthop.flags != 0) {
 		struct bgpd_addr *nexthop, *cmpaddr;
-		if (asp != NULL && asp->nexthop == NULL)
+		if (state->nexthop == NULL)
 			/* no nexthop, skip */
 			return (0);
-		nexthop = &asp->nexthop->exit_nexthop;
+		nexthop = &state->nexthop->exit_nexthop;
 		if (f->match.nexthop.flags == FILTER_NEXTHOP_ADDR)
 			cmpaddr = &f->match.nexthop.addr;
 		else
@@ -635,19 +639,26 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 }
 
 void
-rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp)
+rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
+    struct nexthop *nh)
 {
 	memset(state, 0, sizeof(*state));
 
 	path_prep(&state->aspath);
 	if (asp)
 		path_copy(&state->aspath, asp);
+	state->nexthop = nexthop_ref(nh);
+	/* XXX the flag handling needs improvement */
+	if (asp)
+		state->nhflags |= asp->flags & F_NEXTHOP_MASK;
 }
 
 void
 rde_filterstate_clean(struct filterstate *state)
 {
 	path_clean(&state->aspath);
+	nexthop_put(state->nexthop);
+	state->nexthop = NULL;
 }
 
 void
@@ -1007,10 +1018,9 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *p, struct filterstate *state)
 {
 	struct filter_rule	*f;
-	struct rde_aspath	*asp = prefix_aspath(p);
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
 
-	if (asp->flags & F_ATTR_PARSE_ERR)
+	if (state && state->aspath.flags & F_ATTR_PARSE_ERR)
 		/*
 	 	 * don't try to filter bad updates just deny them
 		 * so they act as implicit withdraws
@@ -1035,7 +1045,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->peer.peerid != peer->conf.id),
 		     f->skip[RDE_FILTER_SKIP_PEERID].ptr);
 
-		if (rde_filter_match(f, peer, asp, p)) {
+		if (rde_filter_match(f, peer, state, p)) {
 			if (state != NULL) {
 				rde_apply_set(&f->set, state,
 				    p->re->prefix->aid, prefix_peer(p), peer);

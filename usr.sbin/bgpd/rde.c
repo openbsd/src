@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.398 2018/07/22 06:03:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.399 2018/07/22 16:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -990,7 +990,7 @@ rde_update_dispatch(struct imsg *imsg)
 	    imsg->hdr.len - IMSG_HEADER_SIZE - 4 - withdrawn_len - attrpath_len;
 	bzero(&mpa, sizeof(mpa));
 
-	rde_filterstate_prep(&state, NULL);
+	rde_filterstate_prep(&state, NULL, NULL);
 	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
 		/* parse path attributes */
 		while (len > 0) {
@@ -1213,14 +1213,9 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		/*
-		 * this works because asp is not linked.
-		 * But first unlock the previously locked nexthop.
-		 */
-		if (state.aspath.nexthop) {
-			(void)nexthop_put(state.aspath.nexthop);
-			state.aspath.nexthop = NULL;
-		}
+		/* unlock the previously locked nexthop, it is no longer used */
+		(void)nexthop_put(state.nexthop);
+		state.nexthop = NULL;
 		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &state)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri nexthop");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
@@ -1310,13 +1305,13 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		rde_filterstate_prep(&state, &in->aspath);
+		rde_filterstate_prep(&state, &in->aspath, in->nexthop);
 		/* input filter */
 		action = rde_filter(ribs[i].in_rules, peer, p, &state);
 
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
-			    &state.aspath.nexthop->exit_nexthop, prefix,
+			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			path_update(&ribs[i].rib, peer, &state, prefix,
 			    prefixlen, 0);
@@ -1491,7 +1486,8 @@ bad_flags:
 			    op, len);
 			return (-1);
 		}
-		a->nexthop = nexthop_get(&nexthop);
+		nexthop_put(state->nexthop);	/* just to be sure */
+		state->nexthop = nexthop_get(&nexthop);
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
@@ -1824,7 +1820,8 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 		return (-1);
 	}
 
-	state->aspath.nexthop = nexthop_get(&nexthop);
+	nexthop_put(state->nexthop);	/* just to be sure */
+	state->nexthop = nexthop_get(&nexthop);
 
 	/* ignore reserved (old SNPA) field as per RFC4760 */
 	totlen += nhlen + 1;
@@ -2102,7 +2099,7 @@ rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	rde_filterstate_prep(&state, prefix_aspath(p));
+	rde_filterstate_prep(&state, prefix_aspath(p), prefix_nexthop(p));
 	a = rde_filter(out_rules, peer, p, &state);
 
 	if (a == ACTION_ALLOW)
@@ -2857,7 +2854,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		asp = prefix_aspath(p);
 		peer = asp->peer;
 
-		rde_filterstate_prep(&state, asp);
+		rde_filterstate_prep(&state, asp, prefix_nexthop(p));
 		action = rde_filter(rib->in_rules, peer, p, &state);
 
 		if (action == ACTION_ALLOW) {
@@ -2895,8 +2892,8 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	rde_filterstate_prep(&ostate, prefix_aspath(p));
-	rde_filterstate_prep(&nstate, prefix_aspath(p));
+	rde_filterstate_prep(&ostate, prefix_aspath(p), prefix_nexthop(p));
+	rde_filterstate_prep(&nstate, prefix_aspath(p), prefix_nexthop(p));
 	oa = rde_filter(out_rules_tmp, peer, p, &ostate);
 	na = rde_filter(out_rules, peer, p, &nstate);
 
@@ -2905,14 +2902,23 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 		/* nothing todo */
 	if (oa == ACTION_DENY && na == ACTION_ALLOW) {
 		/* send update */
-		up_generate(peer, &nstate.aspath, &addr, pt->prefixlen);
+		up_generate(peer, &nstate, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 		/* send withdraw */
 		up_generate(peer, NULL, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
+		/* XXX update nexthop for now, ugly but will go away */
+		nexthop_put(nstate.aspath.nexthop);
+		nstate.aspath.nexthop = nexthop_ref(nstate.nexthop);
+		nstate.aspath.flags = (nstate.aspath.flags & ~F_NEXTHOP_MASK) |
+		    (nstate.nhflags & F_NEXTHOP_MASK);
+		nexthop_put(ostate.aspath.nexthop);
+		ostate.aspath.nexthop = nexthop_ref(ostate.nexthop);
+		ostate.aspath.flags = (ostate.aspath.flags & ~F_NEXTHOP_MASK) |
+		    (ostate.nhflags & F_NEXTHOP_MASK);
 		/* send update if path attributes changed */
 		if (path_compare(&nstate.aspath, &ostate.aspath) != 0)
-			up_generate(peer, &nstate.aspath, &addr, pt->prefixlen);
+			up_generate(peer, &nstate, &addr, pt->prefixlen);
 	}
 
 	rde_filterstate_clean(&ostate);
@@ -2935,7 +2941,7 @@ rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 	if (up_test_update(peer, p) != 1)
 		return;
 
-	rde_filterstate_prep(&ostate, prefix_aspath(p));
+	rde_filterstate_prep(&ostate, prefix_aspath(p), prefix_nexthop(p));
 	if (rde_filter(out_rules_tmp, peer, p, &ostate) != ACTION_DENY) {
 		/* send withdraw */
 		up_generate(peer, NULL, &addr, pt->prefixlen);
@@ -3410,7 +3416,7 @@ network_add(struct network_config *nc, int flagstatic)
 	}
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
-	rde_filterstate_prep(&state, asp);
+	rde_filterstate_prep(&state, asp, NULL); /* nexthop is not set */
 	rde_apply_set(&nc->attrset, &state, nc->prefix.aid, peerself, peerself);
 	if (vpnset)
 		rde_apply_set(vpnset, &state, nc->prefix.aid, peerself,

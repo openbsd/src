@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.180 2018/07/20 14:58:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.181 2018/07/22 16:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -316,6 +316,8 @@ struct prefix {
 
 struct filterstate {
 	struct rde_aspath	aspath;
+	struct nexthop		*nexthop;
+	unsigned int		nhflags;
 };
 
 extern struct rde_memstats rdemem;
@@ -399,7 +401,7 @@ u_char		*community_ext_delete_non_trans(u_char *, u_int16_t,
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
-void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *);
+void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *,		    struct nexthop *);
 void		 rde_filterstate_clean(struct filterstate *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct filterstate *);
@@ -500,6 +502,12 @@ prefix_aspath(struct prefix *p)
 	return (p->aspath);
 }
 
+static inline struct nexthop *
+prefix_nexthop(struct prefix *p)
+{
+	return (p->aspath->nexthop);
+}
+
 static inline struct rde_peer *
 prefix_peer(struct prefix *p)
 {
@@ -522,7 +530,7 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
 int		 up_test_update(struct rde_peer *, struct prefix *);
-int		 up_generate(struct rde_peer *, struct rde_aspath *,
+int		 up_generate(struct rde_peer *, struct filterstate *,
 		     struct bgpd_addr *, u_int8_t);
 void		 up_generate_updates(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct prefix *);

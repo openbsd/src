@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.171 2018/07/16 09:09:20 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.172 2018/07/22 16:59:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -422,6 +422,11 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	struct rde_aspath	*asp, *nasp = &state->aspath;
 	struct prefix		*p;
 	int			 pflag = 0;
+
+	nexthop_put(nasp->nexthop);
+	nasp->nexthop = nexthop_ref(state->nexthop);
+	nasp->flags = (nasp->flags & ~F_NEXTHOP_MASK) |
+	    (state->nhflags & F_NEXTHOP_MASK);
 
 	if (nasp->pftableid) {
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
@@ -1467,4 +1472,3 @@ nexthop_hash(struct bgpd_addr *nexthop)
 	}
 	return (&nexthoptable.nexthop_hashtbl[h & nexthoptable.nexthop_hashmask]);
 }
-
