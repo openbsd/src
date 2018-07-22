@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1072 2018/07/12 14:28:07 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1073 2018/07/22 09:09:18 sf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1257,7 +1257,7 @@ pf_purge(void *xnloops)
 
 	/* purge other expired types every PFTM_INTERVAL seconds */
 	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
-		pf_purge_expired_src_nodes(0);
+		pf_purge_expired_src_nodes();
 		pf_purge_expired_rules();
 	}
 	PF_UNLOCK();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.335 2018/07/10 09:28:27 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.336 2018/07/22 09:09:18 sf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -794,7 +794,7 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	u_int32_t		 old_rcount;
 
 	/* Make sure any expired rules get removed from active rules first. */
-	pf_purge_expired_rules(1);
+	pf_purge_expired_rules();
 
 	rs = pf_find_ruleset(anchor);
 	if (rs == NULL || !rs->rules.inactive.open ||
@@ -2580,7 +2580,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_src_tree_remove_state(state);
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 			n->expire = 1;
-		pf_purge_expired_src_nodes(1);
+		pf_purge_expired_src_nodes();
 		PF_UNLOCK();
 		break;
 	}
@@ -2613,7 +2613,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (killed > 0)
-			pf_purge_expired_src_nodes(1);
+			pf_purge_expired_src_nodes();
 
 		psnk->psnk_killed = killed;
 		PF_UNLOCK();
