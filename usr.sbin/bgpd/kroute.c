@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.221 2018/07/14 12:32:35 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.222 2018/07/22 16:55:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2489,8 +2489,12 @@ if_change(u_short ifindex, int flags, struct if_data *ifd,
 		return;
 	}
 
-	log_info("%s: ifindex %u, ifi_rdomain %u", __func__, ifindex,
-	    ifd->ifi_rdomain);
+	log_info("%s: %s: rdomain %u %s, %s, %s, %s",
+	    __func__, kif->k.ifname, ifd->ifi_rdomain,
+	    flags & IFF_UP ? "UP" : "DOWN",
+	    get_media_descr(ift2ifm(ifd->ifi_type)),
+	    get_linkstate(ifd->ifi_type, ifd->ifi_link_state),
+	    get_baudrate(ifd->ifi_baudrate, "bps"));
 
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
