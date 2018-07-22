@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.112 2018/07/22 08:59:56 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.113 2018/07/22 21:32:04 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -406,7 +406,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 {
 	unsigned char	*s, *t, *end;
 	char		*name, *fmt;
-	int		 len, code;
+	int		 code, len, newlen;
 
 	s = buffer;
 	end = s + length;
@@ -458,36 +458,20 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		}
 
 		/*
-		 * If we haven't seen this option before, just make
-		 * space for it and copy it there.
+		 * Concatenate new data + NUL to existing option data.
+		 *
+		 * Note that the NUL is *not* counted in the len field!
 		 */
-		if (options[code].data == NULL) {
-			t = calloc(1, len + 1);
-			if (t == NULL)
-				fatal("option %s", name);
-			/*
-			 * Copy and NUL-terminate the option (in case
-			 * it's an ASCII string).
-			 */
-			memcpy(t, &s[2], len);
-			t[len] = 0;
-			options[code].len = len;
-			options[code].data = t;
-		} else {
-			/*
-			 * If it's a repeat, concatenate it to whatever
-			 * we last saw.
-			 */
-			t = calloc(1, len + options[code].len + 1);
-			if (t == NULL)
-				fatal("option %s concat", name);
-			memcpy(t, options[code].data, options[code].len);
-			memcpy(t + options[code].len, &s[2], len);
-			options[code].len += len;
-			t[options[code].len] = 0;
-			free(options[code].data);
-			options[code].data = t;
-		}
+		newlen = options[code].len + len;
+		if ((t = realloc(options[code].data, newlen + 1)) == NULL)
+			fatal("option %s", name);
+
+		memcpy(t + options[code].len, &s[2], len);
+		t[newlen] = 0;
+
+		options[code].len = newlen;
+		options[code].data = t;
+
 		s += s[1] + 2;
 	}
 
