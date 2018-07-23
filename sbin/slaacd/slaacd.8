@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.9 2018/06/07 09:41:14 jmc Exp $
+.\"	$OpenBSD: slaacd.8,v 1.10 2018/07/23 11:51:38 florian Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2018 $
+.Dd $Mdocdate: July 23 2018 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 is a stateless address autoconfiguration (SLAAC) daemon for clients.
 It listens for IPv6 router advertisement messages,
 for example those sent by
-.Xr rtadvd 8 ,
+.Xr rad 8 ,
 on interfaces with the
 .Sy AUTOCONF6
 flag set.
@@ -80,7 +80,7 @@ socket used for communication with
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
-.Xr rtadvd 8 ,
+.Xr rad 8 ,
 .Xr slaacctl 8
 .Sh STANDARDS
 .Rs
