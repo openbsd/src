@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.37 2018/07/17 13:51:47 djm Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.38 2018/07/23 19:02:49 kn Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: July 17 2018 $
+.Dd $Mdocdate: July 23 2018 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -102,7 +102,9 @@ Each block of lines is separated from the previous block by a tag.
 The tag is a line beginning with
 .Em !prog
 and each block will be associated with calls to syslog from that specific
-program (matched using shell globbing rules).
+program (matched using
+.Xr glob 7
+rules).
 When a message matches multiple blocks, the action of each matching
 block is taken.
 If no tag is specified at the beginning of the file,
