@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.26 2018/06/30 10:16:35 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.27 2018/07/23 17:54:04 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -289,7 +289,21 @@ static __inline void
 mwait(u_long extensions, u_int hints)
 {
 
-	__asm volatile("mwait" : : "a" (hints), "c" (extensions));
+	__asm volatile(
+		"	mwait			;"
+		"	mov	$8,%%rcx	;"
+		"	.align	16,0x90		;"
+		"3:	call	5f		;"
+		"4:	pause			;"
+		"	call	4b		;"
+		"	.align	16,0xcc		;"
+		"5:	call	7f		;"
+		"6:	pause			;"
+		"	call	6b		;"
+		"	.align	16,0xcc		;"
+		"7:	loop	3b		;"
+		"	add	$(16*8),%%rsp"
+	    : "=c" (extensions) : "a" (hints));
 }
 
 static __inline void

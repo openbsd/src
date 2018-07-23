@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.105 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.106 2018/07/23 17:54:04 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -585,6 +585,9 @@ IDTVEC_NOALIGN(syscall)
 	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(KERN_RSP),%rax
 	xchgq	%rax,%rsp
+	movq	%rcx,TF_RCX(%rsp)
+	movq	%rcx,TF_RIP(%rsp)
+	RET_STACK_REFILL_WITH_RCX
 	sti
 
 	/*
@@ -598,10 +601,8 @@ IDTVEC_NOALIGN(syscall)
 	movq	%rax,TF_RSP(%rsp)
 	movq	CPUVAR(SCRATCH),%rax
 	INTR_SAVE_MOST_GPRS_NO_ADJ
-	movq	%rcx,TF_RCX(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rcx,TF_RIP(%rsp)
 	movq	%rax,TF_ERR(%rsp)	/* stash syscall # for SPL check */
 	INTR_CLEAR_GPRS
 
@@ -641,6 +642,8 @@ IDTVEC_NOALIGN(syscall)
 	jz	.Lsyscall_restore_fsbase
 
 .Lsyscall_restore_registers:
+	RET_STACK_REFILL_WITH_RCX
+
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8
@@ -804,6 +807,8 @@ intr_user_exit_post_ast:
 	jz	.Lintr_restore_fsbase
 
 .Lintr_restore_registers:
+	RET_STACK_REFILL_WITH_RCX
+
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8

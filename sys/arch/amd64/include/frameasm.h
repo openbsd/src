@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.19 2018/07/21 02:19:54 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.20 2018/07/23 17:54:04 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -93,6 +93,7 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	movq	CPUVAR(KERN_RSP),%rax	; \
 	xchgq	%rax,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
+	RET_STACK_REFILL_WITH_RCX	; \
 	/* copy trapno+err to the trap frame */ \
 	movq	0(%rax),%rcx		; \
 	movq	%rcx,TF_TRAPNO(%rsp)	; \
