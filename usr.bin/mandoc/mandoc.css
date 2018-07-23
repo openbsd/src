@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.21 2018/06/25 13:01:14 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.22 2018/07/23 22:33:54 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -53,15 +53,15 @@ td.foot-os {	text-align: right; }
 div.manual-text {
 		margin-left: 3.8em; }
 .Nd {		display: inline; }
-.Sh {		margin-top: 2ex;
-		margin-bottom: 1ex;
+.Sh {		margin-top: 1.2em;
+		margin-bottom: 0.6em;
 		margin-left: -3.2em;
 		font-size: 110%; }
-.Ss {		margin-top: 2ex;
-		margin-bottom: 1ex;
+.Ss {		margin-top: 1.2em;
+		margin-bottom: 0.6em;
 		margin-left: -1.2em;
 		font-size: 105%; }
-.Pp {		margin: 1ex 0ex; }
+.Pp {		margin: 0.6em 0em; }
 .Sx { }
 .Xr { }
 
