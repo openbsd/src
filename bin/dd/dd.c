@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.24 2017/08/13 02:06:42 tedu Exp $	*/
+/*	$OpenBSD: dd.c,v 1.25 2018/07/23 23:09:37 cheloha Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -136,10 +136,14 @@ setup(void)
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
 			err(1, "input buffer");
 		out.db = in.db;
-	} else if ((in.db =
-	    malloc((u_int)(MAXIMUM(in.dbsz, cbsz) + cbsz))) == NULL ||
-	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, "output buffer");
+	} else {
+		in.db = malloc(MAXIMUM(in.dbsz, cbsz) + cbsz);
+		if (in.db == NULL)
+			err(1, "input buffer");
+		out.db = malloc(out.dbsz + cbsz);
+		if (out.db == NULL)
+			err(1, "output buffer");
+	}
 	in.dbp = in.db;
 	out.dbp = out.db;
 
