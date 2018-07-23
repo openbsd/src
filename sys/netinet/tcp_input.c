@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.357 2018/06/14 17:00:57 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.358 2018/07/23 21:14:00 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3492,7 +3492,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 
 #if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);
@@ -3557,7 +3557,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (tp->t_template == 0) {
 		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
 		so = NULL;
-		m_freem(m);
 		goto abort;
 	}
 	tp->sack_enable = sc->sc_flags & SCF_SACK_PERMIT;
@@ -3612,8 +3611,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 resetandabort:
 	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST,
 	    m->m_pkthdr.ph_rtableid);
-	m_freem(m);
 abort:
+	m_freem(m);
 	if (so != NULL)
 		(void) soabort(so);
 	syn_cache_put(sc);
