@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.22 2018/07/23 22:33:54 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.23 2018/07/23 22:51:24 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -14,7 +14,7 @@ ul, ol, dl {	margin-top: 0em;
 		margin-bottom: 0em; }
 li, dt {	margin-top: 1em; }
 
-a.permalink {	border-bottom: thin dotted;
+.permalink {	border-bottom: thin dotted;
 		color: inherit;
 		font: inherit;
 		text-decoration: inherit; }
@@ -50,7 +50,7 @@ td.foot-os {	text-align: right; }
 
 /* Sections and paragraphs. */
 
-div.manual-text {
+.manual-text {
 		margin-left: 3.8em; }
 .Nd {		display: inline; }
 .Sh {		margin-top: 1.2em;
@@ -70,64 +70,64 @@ div.manual-text {
 .Bd { }
 .Bd-indent {	margin-left: 3.8em; }
 
-ul.Bl-bullet {	list-style-type: disc;
+.Bl-bullet {	list-style-type: disc;
 		padding-left: 1em; }
-ul.Bl-bullet > li { }
-ul.Bl-dash {	list-style-type: none;
+.Bl-bullet > li { }
+.Bl-dash {	list-style-type: none;
 		padding-left: 0em; }
-ul.Bl-dash > li:before {
+.Bl-dash > li:before {
 		content: "\2014  "; }
-ul.Bl-item {	list-style-type: none;
+.Bl-item {	list-style-type: none;
 		padding-left: 0em; }
-ul.Bl-item > li { }
-ul.Bl-compact > li {
+.Bl-item > li { }
+.Bl-compact > li {
 		margin-top: 0em; }
 
-ol.Bl-enum {	padding-left: 2em; }
-ol.Bl-enum > li { }
-ol.Bl-compact > li {
+.Bl-enum {	padding-left: 2em; }
+.Bl-enum > li { }
+.Bl-compact > li {
 		margin-top: 0em; }
 
-dl.Bl-diag { }
-dl.Bl-diag > dt {
+.Bl-diag { }
+.Bl-diag > dt {
 		font-style: normal;
 		font-weight: bold; }
-dl.Bl-diag > dd {
+.Bl-diag > dd {
 		margin-left: 0em; }
-dl.Bl-hang { }
-dl.Bl-hang > dt { }
-dl.Bl-hang > dd {
+.Bl-hang { }
+.Bl-hang > dt { }
+.Bl-hang > dd {
 		margin-left: 5.5em; }
-dl.Bl-inset { }
-dl.Bl-inset > dt { }
-dl.Bl-inset > dd {
+.Bl-inset { }
+.Bl-inset > dt { }
+.Bl-inset > dd {
 		margin-left: 0em; }
-dl.Bl-ohang { }
-dl.Bl-ohang > dt { }
-dl.Bl-ohang > dd {
+.Bl-ohang { }
+.Bl-ohang > dt { }
+.Bl-ohang > dd {
 		margin-left: 0em; }
-dl.Bl-tag {	margin-left: 5.5em; }
-dl.Bl-tag > dt {
+.Bl-tag {	margin-left: 5.5em; }
+.Bl-tag > dt {
 		float: left;
 		margin-top: 0em;
 		margin-left: -5.5em;
 		padding-right: 1.2em;
 		vertical-align: top; }
-dl.Bl-tag > dd {
+.Bl-tag > dd {
 		clear: right;
 		width: 100%;
 		margin-top: 0em;
 		margin-left: 0em;
 		vertical-align: top;
 		overflow: auto; }
-dl.Bl-compact > dt {
+.Bl-compact > dt {
 		margin-top: 0em; }
 
-table.Bl-column { }
-table.Bl-column > tbody > tr { }
-table.Bl-column > tbody > tr > td {
+.Bl-column { }
+.Bl-column > tbody > tr { }
+.Bl-column > tbody > tr > td {
 		margin-top: 1em; }
-table.Bl-compact > tbody > tr > td {
+.Bl-compact > tbody > tr > td {
 		margin-top: 0em; }
 
 .Rs {		font-style: normal;
@@ -239,14 +239,14 @@ a.In { }
 /* Overrides to avoid excessive margins on small devices. */
 
 @media (max-width: 37.5em) {
-div.manual-text {
+.manual-text {
 		margin-left: 0.5em; }
 .Sh, .Ss {	margin-left: 0em; }
 .Bd-indent {	margin-left: 2em; }
-dl.Bl-hang > dd {
+.Bl-hang > dd {
 		margin-left: 2em; }
-dl.Bl-tag {	margin-left: 2em; }
-dl.Bl-tag > dt {
+.Bl-tag {	margin-left: 2em; }
+.Bl-tag > dt {
 		margin-left: -2em; }
 .HP {		margin-left: 2em;
 		text-indent: -2em; }
