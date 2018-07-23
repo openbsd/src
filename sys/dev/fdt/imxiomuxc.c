@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.3 2018/06/10 14:17:23 kettenis Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.4 2018/07/23 19:13:54 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -87,6 +87,7 @@ imxiomuxc_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: bus_space_map failed!", __func__);
 
 	pinctrl_register(faa->fa_node, imxiomuxc_pinctrl, sc);
+	pinctrl_byname(faa->fa_node, "default");
 	imxiomuxc_sc = sc;
 	printf("\n");
 }
