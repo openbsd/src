@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.44 2018/07/13 08:43:31 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.45 2018/07/23 18:14:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -897,16 +897,19 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
  * nwords is the number of words to swap.
  */
 int
-BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
+BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, size_t nwords)
 {
 	BN_ULONG t;
-	int i;
+	int i, words;
 
 	if (a == b)
 		return 1;
-	if (bn_wexpand(a, nwords) == NULL || bn_wexpand(b, nwords) == NULL)
+	if (nwords > INT_MAX)
 		return 0;
-	if (a->top > nwords || b->top > nwords) {
+	words = (int)nwords;
+	if (bn_wexpand(a, words) == NULL || bn_wexpand(b, words) == NULL)
+		return 0;
+	if (a->top > words || b->top > words) {
 		BNerror(BN_R_INVALID_LENGTH);
 		return 0;
 	}
@@ -930,7 +933,7 @@ BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 	b->flags ^= t;
 
 	/* swap the data */
-	for (i = 0; i < nwords; i++) {
+	for (i = 0; i < words; i++) {
 		t = (a->d[i] ^ b->d[i]) & condition;
 		a->d[i] ^= t;
 		b->d[i] ^= t;
