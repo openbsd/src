@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.18 2018/07/23 06:14:14 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.19 2018/07/23 17:25:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -55,6 +55,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL,
 	IMSG_CTL_END,
 	IMSG_UPDATE_ADDRESS,
+	IMSG_UPDATE_LINK_STATE,
 #endif	/* SMALL */
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_SOCKET_IPC,
@@ -167,6 +168,11 @@ struct imsg_addrinfo {
 	int			privacy;
 	uint32_t		vltime;
 	uint32_t		pltime;
+};
+
+struct imsg_link_state {
+	uint32_t	if_index;
+	int		link_state;
 };
 #endif	/* SMALL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.21 2018/07/23 06:14:14 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.22 2018/07/23 17:25:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -508,6 +508,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	struct ifaddrs		*ifap, *ifa;
 	struct in6_addrlifetime *lifetime;
 	struct sockaddr_in6	*sin6;
+	struct imsg_link_state	 imsg_link_state;
 	time_t			 t;
 	int			 xflags;
 
@@ -521,12 +522,20 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	get_lladdr(if_name, &imsg_addrinfo.hw_address,
 	    &imsg_addrinfo.ll_address);
 
+	memset(&imsg_link_state, 0, sizeof(imsg_link_state));
+	imsg_link_state.if_index = if_index;
+
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(if_name, ifa->ifa_name) != 0)
 			continue;
+
+		if (ifa->ifa_addr->sa_family == AF_LINK)
+			imsg_link_state.link_state =
+			    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
+
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
@@ -592,6 +601,12 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 
 	}
 	freeifaddrs(ifap);
+
+	log_debug("%s: %s link state down? %s", __func__, if_name,
+	    imsg_link_state.link_state == LINK_STATE_DOWN ? "yes" : "no");
+
+	frontend_imsg_compose_main(IMSG_UPDATE_LINK_STATE, 0, 
+	    &imsg_link_state, sizeof(imsg_link_state));
 }
 
 const char*

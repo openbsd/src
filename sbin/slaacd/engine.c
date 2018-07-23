@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.28 2018/07/23 06:14:14 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.29 2018/07/23 17:25:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -214,6 +214,7 @@ struct slaacd_iface {
 	struct ether_addr		 hw_address;
 	struct sockaddr_in6		 ll_address;
 	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
+	int				 link_state;
 	LIST_HEAD(, radv)		 radvs;
 	LIST_HEAD(, address_proposal)	 addr_proposals;
 	LIST_HEAD(, dfr_proposal)	 dfr_proposals;
@@ -230,6 +231,7 @@ void			 send_interface_info(struct slaacd_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
 int			 in6_mask2prefixlen(struct in6_addr *);
+void			 deprecate_all_proposals(struct slaacd_iface *);
 #endif	/* SMALL */
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
@@ -603,6 +605,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 	int			 shut = 0;
 #ifndef	SMALL
 	struct imsg_addrinfo	 imsg_addrinfo;
+	struct imsg_link_state	 imsg_link_state;
 	struct address_proposal	*addr_proposal = NULL;
 	size_t			 i;
 #endif	/* SMALL */
@@ -802,6 +805,27 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    addr_proposal, entries);
 
 			break;
+		case IMSG_UPDATE_LINK_STATE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(imsg_link_state))
+				fatal("%s: IMSG_UPDATE_LINK_STATE wrong "
+				    "length: %d", __func__, imsg.hdr.len);
+
+			memcpy(&imsg_link_state, imsg.data,
+			    sizeof(imsg_link_state));
+
+			iface = get_slaacd_iface_by_id(
+			    imsg_link_state.if_index);
+			if (iface == NULL)
+				break;
+			if (iface->link_state != imsg_link_state.link_state) {
+				iface->link_state = imsg_link_state.link_state;
+				if (iface->link_state == LINK_STATE_DOWN)
+					deprecate_all_proposals(iface);
+				else
+					start_probe(iface);
+			}
+			break;
 #endif	/* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -980,6 +1004,19 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 	default:
 		log_debug("%s: error handling imsg", __func__);
 		break;
+	}
+}
+void
+deprecate_all_proposals(struct slaacd_iface *iface)
+{
+	struct address_proposal	*addr_proposal;
+
+	log_debug("%s: iface: %d", __func__, iface->if_index);
+
+	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
+		addr_proposal->pltime = 0;
+		configure_address(addr_proposal);
+		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
 	}
 }
 #endif	/* SMALL */
