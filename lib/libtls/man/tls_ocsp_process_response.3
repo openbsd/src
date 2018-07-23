@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_ocsp_process_response.3,v 1.4 2017/01/29 18:00:21 beck Exp $
+.\" $OpenBSD: tls_ocsp_process_response.3,v 1.5 2018/07/23 18:30:29 tb Exp $
 .\"
 .\" Copyright (c) 2016 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2017 $
+.Dd $Mdocdate: July 23 2018 $
 .Dt TLS_OCSP_PROCESS_RESPONSE 3
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nm tls_peer_ocsp_crl_reason ,
 .Nm tls_peer_ocsp_next_update ,
 .Nm tls_peer_ocsp_response_status ,
-.Nm tls_peer_ocsp_result_msg ,
+.Nm tls_peer_ocsp_result ,
 .Nm tls_peer_ocsp_revocation_time ,
 .Nm tls_peer_ocsp_this_update ,
 .Nm tls_peer_ocsp_url
@@ -45,7 +45,7 @@
 .Ft int
 .Fn tls_peer_ocsp_response_status "struct tls *ctx"
 .Ft const char *
-.Fn tls_peer_ocsp_result_msg "struct tls *ctx"
+.Fn tls_peer_ocsp_result "struct tls *ctx"
 .Ft time_t
 .Fn tls_peer_ocsp_revocation_time "struct tls *ctx"
 .Ft time_t
@@ -86,7 +86,13 @@ returns the OCSP next update time.
 .Fn tls_peer_ocsp_response_status
 returns the OCSP response status as per RFC 6960 section 2.3.
 .Pp
-.\" XXX Fn tls_peer_ocsp_result_msg does what?
+.Fn tls_peer_ocsp_result
+returns a string indicating the OCSP status.
+If the OCSP response was valid and the certificate was not
+revoked, the string indicates the OCSP certificate status.
+Otherwise, the string indicates
+the OCSP certificate revocation reason or the OCSP error.
+.Pp
 .Fn tls_peer_ocsp_revocation_time
 returns the OCSP revocation time.
 .Pp
@@ -139,7 +145,7 @@ and
 .Fn tls_peer_ocsp_this_update
 return a time in epoch-seconds on success or -1 on error.
 .Pp
-.Fn tls_peer_ocsp_result_msg
+.Fn tls_peer_ocsp_result
 and
 .Fn tls_peer_ocsp_url
 return
