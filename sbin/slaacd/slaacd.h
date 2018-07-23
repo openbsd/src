@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.17 2018/07/09 07:41:15 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.18 2018/07/23 06:14:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -74,6 +74,7 @@ enum imsg_type {
 	IMSG_FAKE_ACK,
 	IMSG_CONFIGURE_DFR,
 	IMSG_WITHDRAW_DFR,
+	IMSG_DUP_ADDRESS,
 };
 
 enum {
@@ -200,6 +201,11 @@ struct imsg_ra {
 	struct sockaddr_in6	from;
 	ssize_t			len;
 	uint8_t			packet[1500];
+};
+
+struct imsg_dup_addr {
+	uint32_t		if_index;
+	struct sockaddr_in6	addr;
 };
 
 /* slaacd.c */

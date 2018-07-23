@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.20 2018/06/06 14:08:28 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.21 2018/07/23 06:14:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -73,6 +73,7 @@ void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 void		 send_solicitation(uint32_t);
 #ifndef	SMALL
 void		 update_autoconf_addresses(uint32_t, char*);
+const char	*flags_to_str(int);
 #endif	/* SMALL */
 
 struct imsgev			*iev_main;
@@ -592,6 +593,31 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	}
 	freeifaddrs(ifap);
 }
+
+const char*
+flags_to_str(int flags)
+{
+	static char	buf[sizeof(" anycast tentative duplicated detached "
+			    "deprecated autoconf autoconfprivacy")];
+
+	buf[0] = '\0';
+	if (flags & IN6_IFF_ANYCAST)
+		(void)strlcat(buf, " anycast", sizeof(buf));
+	if (flags & IN6_IFF_TENTATIVE)
+		(void)strlcat(buf, " tentative", sizeof(buf));
+	if (flags & IN6_IFF_DUPLICATED)
+		(void)strlcat(buf, " duplicated", sizeof(buf));
+	if (flags & IN6_IFF_DETACHED)
+		(void)strlcat(buf, " detached", sizeof(buf));
+	if (flags & IN6_IFF_DEPRECATED)
+		(void)strlcat(buf, " deprecated", sizeof(buf));
+	if (flags & IN6_IFF_AUTOCONF)
+		(void)strlcat(buf, " autoconf", sizeof(buf));
+	if (flags & IN6_IFF_PRIVACY)
+		(void)strlcat(buf, " autoconfprivacy", sizeof(buf));
+
+	return (buf);
+}
 #endif	/* SMALL */
 
 void
@@ -673,7 +699,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	struct imsg_proposal_ack	 proposal_ack;
 	struct imsg_del_addr		 del_addr;
 	struct imsg_del_route		 del_route;
+	struct imsg_dup_addr		 dup_addr;
 	struct sockaddr_rtlabel		*rl;
+	struct sockaddr_in6		*sin6;
+	struct in6_ifreq		 ifr6;
 	struct in6_addr			*in6;
 	int64_t				 id, pid;
 	int				 xflags, if_index;
@@ -726,6 +755,42 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				    0, 0, &del_addr, sizeof(del_addr));
 			log_debug("RTM_DELADDR: %s[%u]", if_name,
 			    ifm->ifm_index);
+		}
+		break;
+	case RTM_CHGADDRATTR:
+		ifm = (struct if_msghdr *)rtm;
+		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
+		    == AF_INET6) {
+			sin6 = (struct sockaddr_in6 *) rti_info[RTAX_IFA];
+
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				break;
+
+			memset(&ifr6, 0, sizeof(ifr6));
+			(void) strlcpy(ifr6.ifr_name, if_name,
+			    sizeof(ifr6.ifr_name));
+			memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+
+			if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6)
+			    < 0) {
+				log_warn("SIOCGIFAFLAG_IN6");
+				break;
+			}
+
+#ifndef	SMALL
+			log_debug("RTM_CHGADDRATTR: %s -%s",
+			    sin6_to_str(sin6),
+			    flags_to_str(ifr6.ifr_ifru.ifru_flags6));
+#endif	/* SMALL */
+
+			if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED) {
+				dup_addr.if_index = ifm->ifm_index;
+				dup_addr.addr = *sin6;
+				frontend_imsg_compose_engine(IMSG_DUP_ADDRESS,
+				    0, 0, &dup_addr, sizeof(dup_addr));
+			}
+
 		}
 		break;
 	case RTM_DELETE:

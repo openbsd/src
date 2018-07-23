@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.25 2018/07/09 07:41:15 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.26 2018/07/23 06:14:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL) |
-	    ROUTE_FILTER(RTM_DELETE);
+	    ROUTE_FILTER(RTM_DELETE) | ROUTE_FILTER(RTM_CHGADDRATTR);
 	if (setsockopt(frontend_routesock, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
