@@ -1,4 +1,4 @@
-
+/*	$OpenBSD: smi.c,v 1.21 2018/07/23 19:51:39 rob Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
