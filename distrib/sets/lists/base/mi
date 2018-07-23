@@ -183,7 +183,6 @@
 ./etc/rc.d/relayd
 ./etc/rc.d/ripd
 ./etc/rc.d/route6d
-./etc/rc.d/rtadvd
 ./etc/rc.d/sasyncd
 ./etc/rc.d/sensorsd
 ./etc/rc.d/slaacd
@@ -2482,7 +2481,6 @@
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
 ./usr/sbin/rpc.statd
-./usr/sbin/rtadvd
 ./usr/sbin/sa
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail
