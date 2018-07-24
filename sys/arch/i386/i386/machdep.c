@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.620 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.621 2018/07/24 17:31:23 brynet Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2021,6 +2021,26 @@ identifycpu(struct cpu_info *ci)
 			printf(",MELTDOWN");
 
 		printf("\n");
+	}
+
+	/*
+	 * "Mitigation G-2" per AMD's Whitepaper "Software Techniques
+	 * for Managing Speculation on AMD Processors"
+	 *
+	 * By setting MSR C001_1029[1]=1, LFENCE becomes a dispatch
+	 * serializing instruction.
+	 *
+	 * This MSR is available on all AMD families >= 10h, except 11h
+ 	 * where LFENCE is always serializing.
+	 */
+	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11) {
+			uint64_t msr;
+
+			msr = rdmsr(MSR_DE_CFG);
+			msr |= DE_CFG_SERIALIZE_LFENCE;
+			wrmsr(MSR_DE_CFG, msr);
+		}
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.66 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.67 2018/07/24 17:31:23 brynet Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -484,6 +484,7 @@
 
 #define MSR_DE_CFG	0xc0011029		/* Decode Configuration */
 #define	DE_CFG_721	0x00000001	/* errata 721 */
+#define	DE_CFG_SERIALIZE_LFENCE	(1 << 1)	/* Enable serializing lfence */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000
