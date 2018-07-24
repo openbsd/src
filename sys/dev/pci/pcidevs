@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1854 2018/07/08 17:34:07 thfr Exp $
+$OpenBSD: pcidevs,v 1.1855 2018/07/24 21:16:59 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -279,6 +279,7 @@ vendor	BLUESTEEL	0x15ab	Bluesteel
 vendor	VMWARE		0x15ad	VMware
 vendor	ZOLTRIX		0x15b0	Zoltrix
 vendor	MELLANOX	0x15b3	Mellanox
+vendor	SANDISK		0x15b7	SanDisk
 vendor	AGILENT		0x15bc	Agilent
 vendor	QUICKNET	0x15e2	Quicknet Technologies
 vendor	NDC		0x15e8	National Datacomm
@@ -6975,6 +6976,10 @@ product SANGOMA A10X		0x0300	A10x
 product DIGI NEO4		0x00b0	Neo-4
 product DIGI NEO8		0x00b1	Neo-8
 product DIGI NEO8_PCIE		0x00f0	Neo-8
+
+/* SanDisk (Western Digital) */
+product SANDISK WDSXXXG1X0C	0x5001	WD Black NVMe
+product SANDISK WDSXXXG2X0C	0x5002	WD Black NVMe
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH FDDI	0x4000	FDDI
