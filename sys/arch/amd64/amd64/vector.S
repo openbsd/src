@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.74 2018/07/21 02:19:54 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.75 2018/07/24 02:42:25 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -379,6 +379,7 @@ Xalltraps:
 	movq	CPUVAR(KERN_CR3),%rax
 	movq	%rax,%cr3
 0:	pause
+	lfence
 	jmp	0b
 KUTEXT_PAGE_END
 

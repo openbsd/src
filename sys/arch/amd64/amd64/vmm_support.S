@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.11 2018/07/03 23:21:15 mortimer Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.12 2018/07/24 02:42:25 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -294,6 +294,8 @@ do_resume:
 	movq	0x00(%rsi), %rsi
 	vmresume
 fail_launch_or_resume:
+	RET_STACK_REFILL_WITH_RCX
+
 	/* Failed launch/resume (fell through) */
 	jc fail_launch_invalid_vmcs	/* Invalid VMCS */
 	jz fail_launch_valid_vmcs	/* Valid VMCS, failed launch/resume */
@@ -348,6 +350,8 @@ vmx_exit_handler_asm:
 
 	/* %rdi = 0 means we took an exit */
 	xorq	%rdi, %rdi
+
+	RET_STACK_REFILL_WITH_RCX
 
 restore_host:
 	popq	%rbx

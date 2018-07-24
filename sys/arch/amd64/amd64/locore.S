@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.106 2018/07/23 17:54:04 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.107 2018/07/24 02:42:25 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -448,6 +448,15 @@ restore_saved:
 	movq	PCB_CR3(%r13),%rax
 	movq	%rax,%cr3			/* %rax used below too */
 
+	/*
+	 * If we switched from a userland thread with a shallow call stack
+	 * (e.g interrupt->ast->mi_ast->prempt->mi_switch->cpu_switchto)
+	 * then the RSB may have attacker controlled entries when we switch
+	 * to a deeper call stack in the new thread.  Refill the RSB with
+	 * entries safe to speculate into/through.
+	 */
+	RET_STACK_REFILL_WITH_RCX
+
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$P_SYSTEM,P_FLAG(%r12)
 	jnz	switch_restored
@@ -571,6 +580,7 @@ XUsyscall_meltdown:
 	movq	CPUVAR(KERN_CR3),%rax
 	movq	%rax,%cr3
 0:	pause
+	lfence
 	jmp	0b
 KUTEXT_PAGE_END
 
@@ -675,6 +685,7 @@ IDTVEC_NOALIGN(syscall)
 	movq	%rax,%cr3
 Xsyscall_trampback:
 0:	pause
+	lfence
 	jmp	0b
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
@@ -850,6 +861,7 @@ intr_user_exit_post_ast:
 	movq	%rax,%cr3
 Xiretq_trampback:
 0:	pause
+	lfence
 	jmp	0b
 	.space	5,0xcc		/* pad to match "movq CPUVAR(SCRATCH),%rax" */
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
