@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.64 2015/01/21 21:50:33 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.65 2018/07/24 09:48:04 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,31 +81,17 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 			printf("<%s>", addr->v.tblname);
 		return;
 	case PF_ADDR_RANGE: {
-		char buf[48];
-
-		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
-			printf("?");
-		else
-			printf("%s", buf);
-		if (inet_ntop(af, &addr->v.a.mask, buf, sizeof(buf)) == NULL)
-			printf(" - ?");
-		else
-			printf(" - %s", buf);
+		print_addr_str(af, &addr->v.a.addr);
+		printf(" - ");
+		print_addr_str(af, &addr->v.a.mask);
 		break;
 	}
 	case PF_ADDR_ADDRMASK:
 		if (PF_AZERO(&addr->v.a.addr, AF_INET6) &&
 		    PF_AZERO(&addr->v.a.mask, AF_INET6))
 			printf("any");
-		else {
-			char buf[48];
-
-			if (inet_ntop(af, &addr->v.a.addr, buf,
-			    sizeof(buf)) == NULL)
-				printf("?");
-			else
-				printf("%s", buf);
-		}
+		else
+			print_addr_str(af, &addr->v.a.addr);
 		break;
 	case PF_ADDR_NOROUTE:
 		printf("no-route");
@@ -130,6 +116,17 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 		if (bits < (af == AF_INET ? 32 : 128))
 			printf("/%d", bits);
 	}
+}
+
+void
+print_addr_str(sa_family_t af, struct pf_addr *addr)
+{
+	static char buf[48];
+
+	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
+		printf("?");
+	else
+		printf("%s", buf);
 }
 
 void

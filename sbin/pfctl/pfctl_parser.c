@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.322 2018/07/24 09:38:21 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.323 2018/07/24 09:48:04 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1092,14 +1092,8 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	case PF_DIVERT_NONE:
 		break;
 	case PF_DIVERT_TO: {
-		/* XXX cut&paste from print_addr */
-		char buf[48];
-
 		printf(" divert-to ");
-		if (inet_ntop(r->af, &r->divert.addr, buf, sizeof(buf)) == NULL)
-			printf("?");
-		else
-			printf("%s", buf);
+		print_addr_str(r->af, &r->divert.addr);
 		printf(" port %u", ntohs(r->divert.port));
 		break;
 	}
