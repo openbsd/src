@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.123 2018/05/28 00:14:54 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.124 2018/07/24 07:40:35 yasuoka Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1152,7 +1152,7 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	(*input)(ifp, m);
 	return (IPPROTO_DONE);
 decline:
-	mp = &m;
+	*mp = m;
 	return (-1);
 }
 
