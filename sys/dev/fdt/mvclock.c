@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.1 2018/03/17 18:50:23 kettenis Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.2 2018/07/24 21:52:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -112,11 +112,12 @@ ap806_get_frequency(void *cookie, uint32_t *cells)
 
 #define CP110_CORE_APLL		0
 #define CP110_CORE_PPV2		1
-#define CP110_CORE_EIP		2
+#define CP110_CORE_X2CORE	2
 #define CP110_CORE_CORE		3
 #define CP110_CORE_SDIO		5
 
 #define CP110_GATE_SDIO		4
+#define CP110_GATE_SLOW_IO	21
 
 uint32_t
 cp110_get_frequency(void *cookie, uint32_t *cells)
@@ -135,11 +136,11 @@ cp110_get_frequency(void *cookie, uint32_t *cells)
 		case CP110_CORE_PPV2:
 			/* PPv2 clock is APLL/3 */
 			return 333333333;
-		case CP110_CORE_EIP:
-			/* EIP clock is APLL/2 */
+		case CP110_CORE_X2CORE:
+			/* X2CORE clock is APLL/2 */
 			return 500000000;
 		case CP110_CORE_CORE:
-			/* Core clock is EIP/2 */
+			/* Core clock is X2CORE/2 */
 			return 250000000;
 		case CP110_CORE_SDIO:
 			/* SDIO clock is APLL/2.5 */
@@ -154,6 +155,9 @@ cp110_get_frequency(void *cookie, uint32_t *cells)
 		switch (idx) {
 		case CP110_GATE_SDIO:
 			parent[1] = CP110_CORE_SDIO;
+			break;
+		case CP110_GATE_SLOW_IO:
+			parent[1] = CP110_CORE_X2CORE;
 			break;
 		default:
 			break;
