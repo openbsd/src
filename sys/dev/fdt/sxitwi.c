@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.8 2018/07/24 16:11:33 patrick Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.9 2018/07/24 21:53:46 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -171,6 +171,7 @@ sxitwi_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-i2c") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-i2c") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-i2c") ||
+	    OF_is_compatible(faa->fa_node, "marvell,mv78230-i2c") ||
 	    OF_is_compatible(faa->fa_node, "marvell,mv78230-a0-i2c"));
 }
 
@@ -197,7 +198,8 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_regs[TWSI_CLOCK] = 0x14;
 	sc->sc_regs[TWSI_SOFTRESET] = 0x18;
 
-	if (OF_is_compatible(faa->fa_node, "marvell,mv78230-a0-i2c")) {
+	if (OF_is_compatible(faa->fa_node, "marvell,mv78230-i2c") ||
+	    OF_is_compatible(faa->fa_node, "marvell,mv78230-a0-i2c")) {
 		nbase = 2;
 		sc->sc_delay = 1;
 		sc->sc_regs[TWSI_SLAVEADDR] = 0x00;
