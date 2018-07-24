@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.4 2017/08/11 20:13:30 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.5 2018/07/24 09:27:44 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -93,7 +93,7 @@
 	"	sub	sp, sp, #8+8+(16*8)	\n" \
 	"	add	x1, sp, #4		\n" \
 	"					\n" \
-	"	adrp	x2, :got:_DYNAMIC	\n" \
+	"	adrp	x2, _DYNAMIC		\n" \
 	"	add	x2, x2, #:lo12:_DYNAMIC	\n" \
 	"					\n" \
 	"	bl	_dl_boot_bind		\n" \
