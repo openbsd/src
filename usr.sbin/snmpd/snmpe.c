@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.52 2018/04/15 11:57:29 mpf Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.53 2018/07/24 01:31:20 rob Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -45,8 +45,6 @@ int	 snmpe_parse(struct snmp_message *);
 void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
 void	 snmpe_response(struct snmp_message *);
-unsigned long
-	 snmpe_application(struct ber_element *);
 void	 snmpe_sig_handler(int sig, short, void *);
 int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_bind(struct address *);
