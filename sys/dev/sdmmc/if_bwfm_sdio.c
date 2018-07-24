@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.23 2018/07/17 19:44:38 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.24 2018/07/24 15:45:52 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -363,6 +363,19 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		name = "brcmfmac43340-sdio.bin";
 		nvname = "brcmfmac43340-sdio.nvram";
 		break;
+	case BRCM_CC_4335_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev < 2) {
+			name = "brcmfmac4335-sdio.bin";
+			nvname = "brcmfmac4335-sdio.nvram";
+		} else {
+			name = "brcmfmac4339-sdio.bin";
+			nvname = "brcmfmac4339-sdio.nvram";
+		}
+		break;
+	case BRCM_CC_4339_CHIP_ID:
+		name = "brcmfmac4339-sdio.bin";
+		nvname = "brcmfmac4339-sdio.nvram";
+		break;
 	case BRCM_CC_43430_CHIP_ID:
 		if (bwfm->sc_chip.ch_chiprev == 0) {
 			name = "brcmfmac43430a0-sdio.bin";
@@ -586,7 +599,7 @@ bwfm_sdio_htclk(struct bwfm_sdio_softc *sc, int on, int pendok)
 			bwfm_sdio_write_1(sc, BWFM_SDIO_DEVICE_CTL, devctl);
 		}
 
-		for (i = 0; i < 1000; i++) {
+		for (i = 0; i < 5000; i++) {
 			if (BWFM_SDIO_FUNC1_CHIPCLKCSR_CLKAV(clkctl,
 			    sc->sc_alp_only))
 				break;
@@ -934,12 +947,7 @@ uint32_t
 bwfm_sdio_buscore_read(struct bwfm_softc *bwfm, uint32_t reg)
 {
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
-	uint32_t val;
-
-	val = bwfm_sdio_read_4(sc, reg);
-	/* TODO: Workaround for 4335/4339 */
-
-	return val;
+	return bwfm_sdio_read_4(sc, reg);
 }
 
 void
