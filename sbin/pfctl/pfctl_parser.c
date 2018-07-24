@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.321 2018/07/10 09:30:49 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.322 2018/07/24 09:38:21 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1806,8 +1806,7 @@ host_dns(const char *s, int v4mask, int v6mask, int numeric)
 {
 	struct addrinfo		 hints, *res0, *res;
 	struct node_host	*n, *h = NULL;
-	int			 error, noalias = 0;
-	int			 got4 = 0, got6 = 0;
+	int			 noalias = 0, got4 = 0, got6 = 0;
 	char			*p, *ps;
 
 	if ((ps = strdup(s)) == NULL)
@@ -1821,11 +1820,8 @@ host_dns(const char *s, int v4mask, int v6mask, int numeric)
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
 	if (numeric)
 		hints.ai_flags = AI_NUMERICHOST;
-	error = getaddrinfo(ps, NULL, &hints, &res0);
-	if (error) {
-		free(ps);
-		return (h);
-	}
+	if (getaddrinfo(ps, NULL, &hints, &res0) != 0)
+		goto error;
 
 	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
@@ -1873,6 +1869,7 @@ host_dns(const char *s, int v4mask, int v6mask, int numeric)
 		}
 	}
 	freeaddrinfo(res0);
+error:
 	free(ps);
 
 	return (h);
