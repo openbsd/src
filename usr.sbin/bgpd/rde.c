@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.400 2018/07/24 10:10:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.401 2018/07/24 12:58:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2770,6 +2770,9 @@ rde_reload_done(void)
 		}
 		if (!rde_filter_equal(out_rules, out_rules_tmp, peer,
 		    conf->prefixsets)) {
+			char *p = log_fmt_peer(&peer->conf);
+			log_debug("out filter change: reloading peer %s", p);
+			free(p);
 			peer->reconf_out = 1;
 		}
 	}
@@ -2793,6 +2796,8 @@ rde_reload_done(void)
 			    ribs[rid].in_rules_tmp, NULL, conf->prefixsets))
 				/* rib is in sync */
 				break;
+			log_debug("in filter change: reloading RIB %s",
+			    ribs[rid].name);
 			ribs[rid].state = RECONF_RELOAD;
 			/* FALLTHROUGH */
 		case RECONF_REINIT:
