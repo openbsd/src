@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.68 2018/06/21 17:26:16 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.69 2018/07/24 10:10:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -136,9 +136,11 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (1);
 
 	/* 1. check if prefix is eligible a.k.a reachable */
-	if (asp2->nexthop != NULL && asp2->nexthop->state != NEXTHOP_REACH)
+	if (prefix_nexthop(p2) != NULL &&
+	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
 		return (1);
-	if (asp1->nexthop != NULL && asp1->nexthop->state != NEXTHOP_REACH)
+	if (prefix_nexthop(p1) != NULL &&
+	    prefix_nexthop(p1)->state != NEXTHOP_REACH)
 		return (-1);
 
 	/* 2. local preference of prefix, bigger is better */
@@ -274,8 +276,8 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 	if (xp != NULL) {
 		struct rde_aspath *xasp = prefix_aspath(xp);
 		if (xasp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR) ||
-		    (xasp->nexthop != NULL &&
-		    xasp->nexthop->state != NEXTHOP_REACH))
+		    (prefix_nexthop(xp) != NULL &&
+		    prefix_nexthop(xp)->state != NEXTHOP_REACH))
 			/* xp is ineligible */
 			xp = NULL;
 	}

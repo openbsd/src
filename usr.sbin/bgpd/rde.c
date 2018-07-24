@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.399 2018/07/22 16:59:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.400 2018/07/24 10:10:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2028,10 +2028,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	memcpy(&rib.remote_addr, &prefix_peer(p)->remote_addr,
 	    sizeof(rib.remote_addr));
 	rib.remote_id = prefix_peer(p)->remote_bgpid;
-	if (asp->nexthop != NULL) {
-		memcpy(&rib.true_nexthop, &asp->nexthop->true_nexthop,
+	if (prefix_nexthop(p) != NULL) {
+		memcpy(&rib.true_nexthop, &prefix_nexthop(p)->true_nexthop,
 		    sizeof(rib.true_nexthop));
-		memcpy(&rib.exit_nexthop, &asp->nexthop->exit_nexthop,
+		memcpy(&rib.exit_nexthop, &prefix_nexthop(p)->exit_nexthop,
 		    sizeof(rib.exit_nexthop));
 	} else {
 		/* announced network may have a NULL nexthop */
@@ -2050,7 +2050,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;
-	if (asp->nexthop == NULL || asp->nexthop->state == NEXTHOP_REACH)
+	if (prefix_nexthop(p) == NULL ||
+	    prefix_nexthop(p)->state == NEXTHOP_REACH)
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
@@ -2425,7 +2426,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 	if (asp->flags & F_NEXTHOP_BLACKHOLE)
 		kr.flags |= F_BLACKHOLE;
 	if (type == IMSG_KROUTE_CHANGE)
-		memcpy(&kr.nexthop, &asp->nexthop->true_nexthop,
+		memcpy(&kr.nexthop, &prefix_nexthop(p)->true_nexthop,
 		    sizeof(kr.nexthop));
 	strlcpy(kr.label, rtlabel_id2name(asp->rtlabelid), sizeof(kr.label));
 
@@ -2442,7 +2443,8 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			 * is chosen
 			 */
 			if (type == IMSG_KROUTE_CHANGE)
-				memcpy(&kr.nexthop, &asp->nexthop->exit_nexthop,
+				memcpy(&kr.nexthop,
+				    &prefix_nexthop(p)->exit_nexthop,
 				    sizeof(kr.nexthop));
 			if (imsg_compose(ibuf_main, type, rd->rtableid, 0, -1,
 			    &kr, sizeof(kr)) == -1)
@@ -3495,11 +3497,11 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 
 		bzero(&k, sizeof(k));
 		memcpy(&k.prefix, &addr, sizeof(k.prefix));
-		if (asp->nexthop == NULL ||
-		    asp->nexthop->state != NEXTHOP_REACH)
+		if (prefix_nexthop(p) == NULL ||
+		    prefix_nexthop(p)->state != NEXTHOP_REACH)
 			k.nexthop.aid = k.prefix.aid;
 		else
-			memcpy(&k.nexthop, &asp->nexthop->true_nexthop,
+			memcpy(&k.nexthop, &prefix_nexthop(p)->true_nexthop,
 			    sizeof(k.nexthop));
 		k.prefixlen = p->re->prefix->prefixlen;
 		k.flags = F_KERNEL;
