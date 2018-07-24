@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1854 2018/07/08 17:34:07 thfr Exp 
+ *	OpenBSD: pcidevs,v 1.1855 2018/07/24 21:16:59 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -284,6 +284,7 @@
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
 #define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox */
+#define	PCI_VENDOR_SANDISK	0x15b7		/* SanDisk */
 #define	PCI_VENDOR_AGILENT	0x15bc		/* Agilent */
 #define	PCI_VENDOR_QUICKNET	0x15e2		/* Quicknet Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
@@ -6980,6 +6981,10 @@
 #define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo-4 */
 #define	PCI_PRODUCT_DIGI_NEO8	0x00b1		/* Neo-8 */
 #define	PCI_PRODUCT_DIGI_NEO8_PCIE	0x00f0		/* Neo-8 */
+
+/* SanDisk (Western Digital) */
+#define	PCI_PRODUCT_SANDISK_WDSXXXG1X0C	0x5001		/* WD Black NVMe */
+#define	PCI_PRODUCT_SANDISK_WDSXXXG2X0C	0x5002		/* WD Black NVMe */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_FDDI	0x4000		/* FDDI */

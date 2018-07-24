@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1854 2018/07/08 17:34:07 thfr Exp 
+ *	OpenBSD: pcidevs,v 1.1855 2018/07/24 21:16:59 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -24536,6 +24536,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Neo-8",
 	},
 	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG1X0C,
+	    "WD Black NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG2X0C,
+	    "WD Black NVMe",
+	},
+	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_FDDI,
 	    "FDDI",
 	},
@@ -28582,6 +28590,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_MELLANOX,
 	    "Mellanox",
+	},
+	{
+	    PCI_VENDOR_SANDISK,
+	    "SanDisk",
 	},
 	{
 	    PCI_VENDOR_AGILENT,
