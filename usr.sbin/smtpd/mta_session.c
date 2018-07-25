@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.103 2018/07/08 13:06:37 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.104 2018/07/25 15:24:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -287,7 +287,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		if (s->ext & MTA_EXT_SIZE) {
+		if ((s->ext & MTA_EXT_SIZE) && s->ext_size != 0) {
 			if (fstat(imsg->fd, &sb) == -1) {
 				log_debug("debug: mta: failed to stat msg fd");
 				mta_flush_task(s, IMSG_MTA_DELIVERY_TEMPFAIL,
