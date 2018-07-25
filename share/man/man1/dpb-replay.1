@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb-replay.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: dpb-replay.1,v 1.2 2018/07/25 12:44:55 espie Exp $
 .\"
 .\" Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: July 25 2018 $
 .Dt DPB-REPLAY 1
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl c
+.Op Fl e Ar regexp
 .Op Fl s Ar speedup
 .Ar file
 .Sh DESCRIPTION
@@ -39,6 +40,12 @@ The options are as follows
 .Bl -tag -width keywordaaaa
 .It Fl c
 Color display.
+.It Fl e Ar regexp
+Start display only when information matches
+.Ar regexp ,
+which is a
+.Xr perl 1
+regexp.
 .It Fl s Ar speedup
 Sets the time acceleration to
 .Ar speedup
