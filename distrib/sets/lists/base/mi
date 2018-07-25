@@ -2222,6 +2222,7 @@
 ./usr/libexec/mail.lmtp
 ./usr/libexec/mail.local
 ./usr/libexec/mail.maildir
+./usr/libexec/mail.mboxfile
 ./usr/libexec/mail.mda
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd

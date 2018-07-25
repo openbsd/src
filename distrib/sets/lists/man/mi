@@ -2288,6 +2288,7 @@
 ./usr/share/man/man8/mail.lmtp.8
 ./usr/share/man/man8/mail.local.8
 ./usr/share/man/man8/mail.maildir.8
+./usr/share/man/man8/mail.mboxfile.8
 ./usr/share/man/man8/mail.mda.8
 ./usr/share/man/man8/mailwrapper.8
 ./usr/share/man/man8/makedbm.8
