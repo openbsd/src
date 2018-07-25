@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.53 2018/07/17 19:44:38 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.54 2018/07/25 20:37:11 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1925,7 +1925,6 @@ bwfm_rx_auth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_rxinfo rxi;
 	struct ieee80211_frame *wh;
-	struct ieee80211_node *ni;
 	struct mbuf *m;
 	uint32_t pktlen, ieslen;
 
@@ -1952,18 +1951,10 @@ bwfm_rx_auth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
 
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
-	ni = ieee80211_find_node(ic, wh->i_addr2);
-	if (ni == NULL)
-		ni = ieee80211_alloc_node(ic, wh->i_addr2);
-	if (ni == NULL) {
-		m_free(m);
-		return;
-	}
-	ni->ni_chan = &ic->ic_channels[0];
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = 0;
 	rxi.rxi_tstamp = 0;
-	ieee80211_input(ifp, m, ni, &rxi);
+	ieee80211_input(ifp, m, ic->ic_bss, &rxi);
 }
 
 void
@@ -2012,13 +2003,10 @@ bwfm_rx_assoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
 	ni = ieee80211_find_node(ic, wh->i_addr2);
-	if (ni == NULL)
-		ni = ieee80211_alloc_node(ic, wh->i_addr2);
 	if (ni == NULL) {
 		m_free(m);
 		return;
 	}
-	ni->ni_chan = &ic->ic_channels[0];
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = 0;
 	rxi.rxi_tstamp = 0;
