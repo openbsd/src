@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.68 2016/09/08 16:47:47 tedu Exp $
+.\"	$OpenBSD: top.1,v 1.69 2018/07/25 17:24:14 bluhm Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2016 $
+.Dd $Mdocdate: July 25 2018 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -388,7 +388,7 @@ the number of existing processes,
 the number of processes in each state
 (starting, running, idle, stopped, zombie, dead, and on processor),
 and a percentage of time spent in each of the processor states
-(user, nice, system, interrupt, and idle).
+(user, nice, system, spinning, interrupt, and idle).
 It also includes information about physical and virtual memory allocation.
 The load average numbers give the number of jobs in the run queue averaged
 over 1, 5, and 15 minutes.
