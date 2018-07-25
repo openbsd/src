@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.20 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: pony.c,v 1.21 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -56,6 +56,13 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 		pony_shutdown();
 
 	switch (imsg->hdr.type) {
+
+	case IMSG_GETADDRINFO:
+	case IMSG_GETADDRINFO_END:
+	case IMSG_GETNAMEINFO:
+		resolver_dispatch_result(p, imsg);
+		return;
+
 	case IMSG_CONF_START:
 		return;
 	case IMSG_CONF_END:
@@ -75,7 +82,6 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 
 	/* smtp imsg */
-	case IMSG_SMTP_DNS_PTR:
 	case IMSG_SMTP_CHECK_SENDER:
 	case IMSG_SMTP_EXPAND_RCPT:
 	case IMSG_SMTP_LOOKUP_HELO:
@@ -104,7 +110,6 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_MTA_DNS_HOST:
 	case IMSG_MTA_DNS_HOST_END:
 	case IMSG_MTA_DNS_MX_PREFERENCE:
-	case IMSG_MTA_DNS_PTR:
 	case IMSG_MTA_TLS_INIT:
 	case IMSG_MTA_TLS_VERIFY:
 	case IMSG_CTL_RESUME_ROUTE:

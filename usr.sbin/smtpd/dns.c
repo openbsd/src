@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.86 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.87 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,7 +58,6 @@ struct dns_session {
 
 static void dns_lookup_host(struct dns_session *, const char *, int);
 static void dns_dispatch_host(struct asr_result *, void *);
-static void dns_dispatch_ptr(struct asr_result *, void *);
 static void dns_dispatch_mx(struct asr_result *, void *);
 static void dns_dispatch_mx_preference(struct asr_result *, void *);
 
@@ -132,16 +131,6 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &host);
 		m_end(&m);
 		dns_lookup_host(s, host, -1);
-		return;
-
-	case IMSG_MTA_DNS_PTR:
-	case IMSG_SMTP_DNS_PTR:
-		sa = (struct sockaddr *)&ss;
-		m_get_sockaddr(&m, sa);
-		m_end(&m);
-		as = getnameinfo_async(sa, sa->sa_len, s->name, sizeof(s->name),
-		    NULL, 0, 0, NULL);
-		event_asr_run(as, dns_dispatch_ptr, s);
 		return;
 
 	case IMSG_MTA_DNS_MX:
@@ -236,21 +225,6 @@ dns_dispatch_host(struct asr_result *ar, void *arg)
 	m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 	m_add_id(s->p, s->reqid);
 	m_add_int(s->p, s->mxfound ? DNS_OK : DNS_ENOTFOUND);
-	m_close(s->p);
-	free(s);
-}
-
-static void
-dns_dispatch_ptr(struct asr_result *ar, void *arg)
-{
-	struct dns_session	*s = arg;
-
-	/* The error code could be more precise, but we don't currently care */
-	m_create(s->p,  s->type, 0, 0, -1);
-	m_add_id(s->p, s->reqid);
-	m_add_int(s->p, ar->ar_gai_errno ? DNS_ENOTFOUND : DNS_OK);
-	if (ar->ar_gai_errno == 0)
-		m_add_string(s->p, s->name);
 	m_close(s->p);
 	free(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.333 2018/07/08 13:06:37 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.334 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -158,6 +158,7 @@ struct smtp_session {
 static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
 static void smtp_session_init(void);
 static int smtp_lookup_servername(struct smtp_session *);
+static void smtp_getnameinfo_cb(void *, int, const char *, const char *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
 static void smtp_tls_verified(struct smtp_session *);
@@ -203,7 +204,6 @@ static struct { int code; const char *cmd; } commands[] = {
 	{ -1, NULL },
 };
 
-static struct tree wait_lka_ptr;
 static struct tree wait_lka_helo;
 static struct tree wait_lka_mail;
 static struct tree wait_lka_rcpt;
@@ -519,7 +519,6 @@ smtp_session_init(void)
 	static int	init = 0;
 
 	if (!init) {
-		tree_init(&wait_lka_ptr);
 		tree_init(&wait_lka_helo);
 		tree_init(&wait_lka_mail);
 		tree_init(&wait_lka_rcpt);
@@ -576,16 +575,27 @@ smtp_session(struct listener *listener, int sock,
 		if (smtp_lookup_servername(s))
 			smtp_connected(s);
 	} else {
-		m_create(p_lka,  IMSG_SMTP_DNS_PTR, 0, 0, -1);
-		m_add_id(p_lka, s->id);
-		m_add_sockaddr(p_lka, (struct sockaddr *)&s->ss);
-		m_close(p_lka);
-		tree_xset(&wait_lka_ptr, s->id, s);
+		resolver_getnameinfo((struct sockaddr *)&s->ss, 0,
+		    smtp_getnameinfo_cb, s);
 	}
 
 	/* session may have been freed by now */
 
 	return (0);
+}
+
+static void
+smtp_getnameinfo_cb(void *arg, int gaierrno, const char *host, const char *serv)
+{
+	struct smtp_session *s = arg;
+
+	if (gaierrno)
+		host = "<unknown>";
+
+	(void)strlcpy(s->hostname, host, sizeof(s->hostname));
+
+	if (smtp_lookup_servername(s))
+		smtp_connected(s);
 }
 
 void
@@ -601,24 +611,10 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 	const char			*line, *helo;
 	uint64_t			 reqid, evpid;
 	uint32_t			 msgid;
-	int				 status, success, dnserror;
+	int				 status, success;
 	void				*ssl_ctx;
 
 	switch (imsg->hdr.type) {
-	case IMSG_SMTP_DNS_PTR:
-		m_msg(&m, imsg);
-		m_get_id(&m, &reqid);
-		m_get_int(&m, &dnserror);
-		if (dnserror)
-			line = "<unknown>";
-		else
-			m_get_string(&m, &line);
-		m_end(&m);
-		s = tree_xpop(&wait_lka_ptr, reqid);
-		(void)strlcpy(s->hostname, line, sizeof s->hostname);
-		if (smtp_lookup_servername(s))
-			smtp_connected(s);
-		return;
 
 	case IMSG_SMTP_CHECK_SENDER:
 		m_msg(&m, imsg);

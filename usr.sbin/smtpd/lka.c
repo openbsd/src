@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.206 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.207 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -88,9 +88,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 
+	case IMSG_GETADDRINFO:
+	case IMSG_GETNAMEINFO:
+		resolver_dispatch_request(p, imsg);
+		return;
+
 	case IMSG_MTA_DNS_HOST:
-	case IMSG_MTA_DNS_PTR:
-	case IMSG_SMTP_DNS_PTR:
 	case IMSG_MTA_DNS_MX:
 	case IMSG_MTA_DNS_MX_PREFERENCE:
 		dns_imsg(p, imsg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.555 2018/06/18 18:19:14 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.556 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -23,6 +23,7 @@
 #endif
 
 #include <netinet/in.h>
+#include <netdb.h>
 #include <event.h>
 
 #include "smtpd-defines.h"
@@ -199,6 +200,10 @@ enum imsg_type {
 
 	IMSG_CTL_SMTP_SESSION,
 
+	IMSG_GETADDRINFO,
+	IMSG_GETADDRINFO_END,
+	IMSG_GETNAMEINFO,
+
 	IMSG_SETUP_KEY,
 	IMSG_SETUP_PEER,
 	IMSG_SETUP_DONE,
@@ -255,7 +260,6 @@ enum imsg_type {
 	IMSG_MTA_DELIVERY_HOLD,
 	IMSG_MTA_DNS_HOST,
 	IMSG_MTA_DNS_HOST_END,
-	IMSG_MTA_DNS_PTR,
 	IMSG_MTA_DNS_MX,
 	IMSG_MTA_DNS_MX_PREFERENCE,
 	IMSG_MTA_HOLDQ_RELEASE,
@@ -278,7 +282,6 @@ enum imsg_type {
 	IMSG_SCHED_ENVELOPE_TRANSFER,
 
 	IMSG_SMTP_AUTHENTICATE,
-	IMSG_SMTP_DNS_PTR,
 	IMSG_SMTP_MESSAGE_COMMIT,
 	IMSG_SMTP_MESSAGE_CREATE,
 	IMSG_SMTP_MESSAGE_ROLLBACK,
@@ -1360,6 +1363,15 @@ void scheduler_info(struct scheduler_info *, struct envelope *);
 /* pony.c */
 int pony(void);
 void pony_imsg(struct mproc *, struct imsg *);
+
+
+/* resolver.c */
+void resolver_getaddrinfo(const char *, const char *, const struct addrinfo *,
+    void(*)(void *, int, struct addrinfo*), void *);
+void resolver_getnameinfo(const struct sockaddr *, int,
+    void(*)(void *, int, const char *, const char *), void *);
+void resolver_dispatch_request(struct mproc *, struct imsg *);
+void resolver_dispatch_result(struct mproc *, struct imsg *);
 
 
 /* smtp.c */

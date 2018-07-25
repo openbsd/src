@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.104 2018/07/25 15:24:26 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.105 2018/07/25 16:00:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -141,6 +141,7 @@ static void mta_session_init(void);
 static void mta_start(int fd, short ev, void *arg);
 static void mta_io(struct io *, int, void *);
 static void mta_free(struct mta_session *);
+static void mta_getnameinfo_cb(void *, int, const char *, const char *);
 static void mta_on_ptr(void *, void *, void *);
 static void mta_on_timeout(struct runq *, void *);
 static void mta_connect(struct mta_session *);
@@ -242,12 +243,7 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 		evtimer_set(&s->ev, mta_start, s);
 		evtimer_add(&s->ev, &tv);
 	} else if (waitq_wait(&route->dst->ptrname, mta_on_ptr, s)) {
-		m_create(p_lka,  IMSG_MTA_DNS_PTR, 0, 0, -1);
-		m_add_id(p_lka, s->id);
-		m_add_sockaddr(p_lka, s->route->dst->sa);
-		m_close(p_lka);
-		tree_xset(&wait_ptr, s->id, s);
-		s->flags |= MTA_WAIT;
+		resolver_getnameinfo(s->route->dst->sa, 0, mta_getnameinfo_cb, s);
 	}
 }
 
@@ -257,12 +253,11 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 	struct ca_vrfy_resp_msg	*resp_ca_vrfy;
 	struct ca_cert_resp_msg	*resp_ca_cert;
 	struct mta_session	*s;
-	struct mta_host		*h;
 	struct msg		 m;
 	uint64_t		 reqid;
 	const char		*name;
 	void			*ssl;
-	int			 dnserror, status;
+	int			 status;
 	struct stat		 sb;
 	
 	switch (imsg->hdr.type) {
@@ -311,26 +306,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal("mta: fdopen");
 
 		mta_enter_state(s, MTA_MAIL);
-		return;
-
-	case IMSG_MTA_DNS_PTR:
-		m_msg(&m, imsg);
-		m_get_id(&m, &reqid);
-		m_get_int(&m, &dnserror);
-		if (dnserror)
-			name = NULL;
-		else
-			m_get_string(&m, &name);
-		m_end(&m);
-		s = mta_tree_pop(&wait_ptr, reqid);
-		if (s == NULL)
-			return;
-
-		h = s->route->dst;
-		h->lastptrquery = time(NULL);
-		if (name)
-			h->ptrname = xstrdup(name);
-		waitq_run(&h->ptrname, h->ptrname);
 		return;
 
 	case IMSG_MTA_TLS_INIT:
@@ -462,6 +437,19 @@ mta_free(struct mta_session *s)
 	free(s);
 	stat_decrement("mta.session", 1);
 	mta_route_collect(relay, route);
+}
+
+static void
+mta_getnameinfo_cb(void *arg, int gaierrno, const char *host, const char *serv)
+{
+	struct mta_session *s = arg;
+	struct mta_host *h;
+
+	h = s->route->dst;
+	h->lastptrquery = time(NULL);
+	if (host)
+		h->ptrname = xstrdup(host);
+	waitq_run(&h->ptrname, h->ptrname);
 }
 
 static void
