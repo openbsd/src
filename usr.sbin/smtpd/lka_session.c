@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.86 2018/07/08 13:10:49 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.87 2018/07/25 10:19:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -515,7 +515,7 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 				    "run with %s privileges", SMTPD_USER);
 
 			if (xn->type == EXPAND_FILENAME)
-				format = "/bin/cat - >> %s";
+				format = "/usr/libexec/mail.mboxfile -f %%{mbox.from} %s";
 			else if (xn->type == EXPAND_FILTER)
 				format = "%s";
 			(void)snprintf(ep->mda_exec, sizeof(ep->mda_exec),
