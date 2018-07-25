@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2018/07/18 11:34:05 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.15 2018/07/25 17:12:35 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -9,8 +9,7 @@ SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_PKT} \
 	${SRCS_UTL}
 PROG=	ssh-keysign
 BINOWN=	root
-
-BINMODE?=4555
+BINMODE=4555
 
 BINDIR=	/usr/libexec
 MAN=	ssh-keysign.8

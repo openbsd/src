@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.98 2018/07/18 11:34:05 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.99 2018/07/25 17:12:35 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -13,8 +13,6 @@ SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
 	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
 PROG=	sshd
-BINOWN=	root
-BINMODE=555
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
 
