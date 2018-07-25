@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.25 2018/07/06 12:36:53 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.26 2018/07/25 20:47:45 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -56,9 +56,11 @@
 #define BWFM_NUM_TX_MSGRINGS			2
 #define BWFM_NUM_RX_MSGRINGS			3
 
+#define BWFM_NUM_IOCTL_PKTIDS			8
 #define BWFM_NUM_TX_PKTIDS			2048
 #define BWFM_NUM_RX_PKTIDS			1024
 
+#define BWFM_NUM_IOCTL_DESCS			1
 #define BWFM_NUM_TX_DESCS			1
 #define BWFM_NUM_RX_DESCS			1
 
@@ -93,6 +95,14 @@ struct bwfm_pci_msgring {
 
 	int			 fifo;
 	uint8_t			 mac[ETHER_ADDR_LEN];
+};
+
+struct bwfm_pci_ioctl {
+	uint16_t		 transid;
+	uint16_t		 retlen;
+	int16_t			 status;
+	struct mbuf		*m;
+	TAILQ_ENTRY(bwfm_pci_ioctl) next;
 };
 
 struct bwfm_pci_buf {
@@ -158,17 +168,14 @@ struct bwfm_pci_softc {
 	struct bwfm_pci_dmamem	*sc_scratch_buf;
 	struct bwfm_pci_dmamem	*sc_ringupd_buf;
 
-	struct bwfm_pci_dmamem	*sc_ioctl_buf;
-	int			 sc_ioctl_reqid;
-	uint32_t		 sc_ioctl_resp_pktid;
-	uint32_t		 sc_ioctl_resp_ret_len;
-	uint32_t		 sc_ioctl_resp_status;
-	int			 sc_ioctl_poll;
+	TAILQ_HEAD(, bwfm_pci_ioctl) sc_ioctlq;
+	uint16_t		 sc_ioctl_transid;
 
 	struct if_rxring	 sc_ioctl_ring;
 	struct if_rxring	 sc_event_ring;
 	struct if_rxring	 sc_rxbuf_ring;
 
+	struct bwfm_pci_pkts	 sc_ioctl_pkts;
 	struct bwfm_pci_pkts	 sc_rx_pkts;
 	struct bwfm_pci_pkts	 sc_tx_pkts;
 	int			 sc_tx_pkts_full;
@@ -271,6 +278,8 @@ int		 bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t *);
 int		 bwfm_pci_msgbuf_set_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t);
+void		 bwfm_pci_msgbuf_rxioctl(struct bwfm_pci_softc *,
+		    struct msgbuf_ioctl_resp_hdr *);
 
 struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 	.bc_read = bwfm_pci_buscore_read,
@@ -632,10 +641,6 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	    sc->sc_shared_address + BWFM_SHARED_DMA_RINGUPD_LEN,
 	    BWFM_DMA_D2H_RINGUPD_BUF_LEN);
 
-	if ((sc->sc_ioctl_buf = bwfm_pci_dmamem_alloc(sc,
-	    BWFM_DMA_H2D_IOCTL_BUF_LEN, 8)) == NULL)
-		goto cleanup;
-
 	bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
 	bwfm_pci_intr_enable(sc);
 
@@ -657,6 +662,15 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		    BWFM_NUM_TX_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
 		    &sc->sc_tx_pkts.pkts[i].bb_map);
 
+	/* Maps IOCTL mbufs to a packet id and back. */
+	sc->sc_ioctl_pkts.npkt = BWFM_NUM_IOCTL_PKTIDS;
+	sc->sc_ioctl_pkts.pkts = malloc(BWFM_NUM_IOCTL_PKTIDS
+	    * sizeof(struct bwfm_pci_buf), M_DEVBUF, M_WAITOK | M_ZERO);
+	for (i = 0; i < BWFM_NUM_IOCTL_PKTIDS; i++)
+		bus_dmamap_create(sc->sc_dmat, MSGBUF_MAX_PKT_SIZE,
+		    BWFM_NUM_IOCTL_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
+		    &sc->sc_ioctl_pkts.pkts[i].bb_map);
+
 	/*
 	 * For whatever reason, could also be a bug somewhere in this
 	 * driver, the firmware needs a bunch of RX buffers otherwise
@@ -668,6 +682,8 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	if_rxr_init(&sc->sc_event_ring, 8, 8);
 	bwfm_pci_fill_rx_rings(sc);
 
+	TAILQ_INIT(&sc->sc_ioctlq);
+
 #ifdef BWFM_DEBUG
 	sc->sc_console_readidx = 0;
 	bwfm_pci_debug_console(sc);
@@ -677,8 +693,6 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	return 0;
 
 cleanup:
-	if (sc->sc_ioctl_buf)
-		bwfm_pci_dmamem_free(sc, sc->sc_ioctl_buf);
 	if (sc->sc_ringupd_buf)
 		bwfm_pci_dmamem_free(sc, sc->sc_ringupd_buf);
 	if (sc->sc_scratch_buf)
@@ -771,7 +785,6 @@ bwfm_pci_detach(struct device *self, int flags)
 	/* FIXME: free TX buffers */
 	/* FIXME: free more memory */
 
-	bwfm_pci_dmamem_free(sc, sc->sc_ioctl_buf);
 	bwfm_pci_dmamem_free(sc, sc->sc_ringupd_buf);
 	bwfm_pci_dmamem_free(sc, sc->sc_scratch_buf);
 	bwfm_pci_dmamem_free(sc, sc->sc_rx_complete.ring);
@@ -1335,15 +1348,17 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		ring->status = RING_CLOSED;
 		break;
 	case MSGBUF_TYPE_IOCTLPTR_REQ_ACK:
+		m = bwfm_pci_pktid_free(sc, &sc->sc_ioctl_pkts,
+		    letoh32(msg->request_id));
+		if (m == NULL)
+			break;
+		m_freem(m);
 		break;
 	case MSGBUF_TYPE_IOCTL_CMPLT:
 		resp = (struct msgbuf_ioctl_resp_hdr *)buf;
-		sc->sc_ioctl_resp_pktid = letoh32(resp->msg.request_id);
-		sc->sc_ioctl_resp_ret_len = letoh16(resp->resp_len);
-		sc->sc_ioctl_resp_status = letoh16(resp->compl_hdr.status);
+		bwfm_pci_msgbuf_rxioctl(sc, resp);
 		if_rxr_put(&sc->sc_ioctl_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
-		wakeup(&sc->sc_ioctl_buf);
 		break;
 	case MSGBUF_TYPE_WL_EVENT:
 		event = (struct msgbuf_rx_event *)buf;
@@ -1898,71 +1913,73 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct msgbuf_ioctl_req_hdr *req;
+	struct bwfm_pci_ioctl *ctl;
 	struct mbuf *m;
+	uint32_t pktid;
+	paddr_t paddr;
 	size_t buflen;
-	int s;
 
-	s = splnet();
-	sc->sc_ioctl_resp_pktid = -1;
+	buflen = min(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, buflen);
+	if (m == NULL)
+		return 1;
+	m->m_len = m->m_pkthdr.len = buflen;
+
+	if (buf)
+		memcpy(mtod(m, char *), buf, buflen);
+	else
+		memset(mtod(m, char *), 0, buflen);
+
 	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 	if (req == NULL) {
-		printf("%s: cannot reserve for write\n", DEVNAME(sc));
-		splx(s);
+		m_freem(m);
 		return 1;
 	}
+
+	if (bwfm_pci_pktid_new(sc, &sc->sc_ioctl_pkts, m, &pktid, &paddr)) {
+		bwfm_pci_ring_write_cancel(sc, &sc->sc_ctrl_submit, 1);
+		m_freem(m);
+		return 1;
+	}
+
+	ctl = malloc(sizeof(*ctl), M_TEMP, M_WAITOK|M_ZERO);
+	ctl->transid = sc->sc_ioctl_transid++;
+	TAILQ_INSERT_TAIL(&sc->sc_ioctlq, ctl, next);
+
 	req->msg.msgtype = MSGBUF_TYPE_IOCTLPTR_REQ;
 	req->msg.ifidx = 0;
 	req->msg.flags = 0;
-	req->msg.request_id = htole32(MSGBUF_IOCTL_REQ_PKTID);
+	req->msg.request_id = htole32(pktid);
 	req->cmd = htole32(cmd);
 	req->output_buf_len = htole16(*len);
-	req->trans_id = htole16(sc->sc_ioctl_reqid++);
+	req->trans_id = htole16(ctl->transid);
 
-	buflen = min(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
-	req->input_buf_len = htole16(buflen);
-	req->req_buf_addr.high_addr =
-	    htole32((uint64_t)BWFM_PCI_DMA_DVA(sc->sc_ioctl_buf) >> 32);
-	req->req_buf_addr.low_addr =
-	    htole32((uint64_t)BWFM_PCI_DMA_DVA(sc->sc_ioctl_buf) & 0xffffffff);
-	if (buf)
-		memcpy(BWFM_PCI_DMA_KVA(sc->sc_ioctl_buf), buf, buflen);
-	else
-		memset(BWFM_PCI_DMA_KVA(sc->sc_ioctl_buf), 0, buflen);
-
-	bus_dmamap_sync(sc->sc_dmat, BWFM_PCI_DMA_MAP(sc->sc_ioctl_buf),
-	    0, buflen, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	req->input_buf_len = htole16(m->m_len);
+	req->req_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
+	req->req_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
-	splx(s);
 
-	if (sc->sc_ioctl_poll) {
-		int i;
-		for (i = 0; i < 100; i++) {
-			if (sc->sc_ioctl_resp_pktid != -1)
-				break;
-			delay(10 * 1000);
-		}
-		if (i == 100) {
-			printf("%s: timeout waiting for ioctl response\n",
-			    DEVNAME(sc));
-			return 1;
-		}
-	} else if (tsleep(&sc->sc_ioctl_buf, PCATCH, "bwfm", hz)) {
-		printf("%s: timeout waiting for ioctl response\n",
-		    DEVNAME(sc));
+	tsleep(ctl, PWAIT, "bwfm", hz);
+	TAILQ_REMOVE(&sc->sc_ioctlq, ctl, next);
+
+	if (ctl->m == NULL) {
+		free(ctl, M_TEMP, sizeof(*ctl));
 		return 1;
 	}
 
-	m = bwfm_pci_pktid_free(sc, &sc->sc_rx_pkts, sc->sc_ioctl_resp_pktid);
-	if (m == NULL)
-		return 1;
-
-	*len = min(buflen, sc->sc_ioctl_resp_ret_len);
+	*len = min(ctl->retlen, m->m_len);
+	*len = min(*len, buflen);
 	if (buf)
-		memcpy(buf, mtod(m, char *), *len);
-	m_freem(m);
-	splx(s);
+		m_copydata(ctl->m, 0, *len, (caddr_t)buf);
+	m_freem(ctl->m);
 
+	if (ctl->status < 0) {
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
+	}
+
+	free(ctl, M_TEMP, sizeof(*ctl));
 	return 0;
 }
 
@@ -1971,4 +1988,27 @@ bwfm_pci_msgbuf_set_dcmd(struct bwfm_softc *bwfm, int ifidx,
     int cmd, char *buf, size_t len)
 {
 	return bwfm_pci_msgbuf_query_dcmd(bwfm, ifidx, cmd, buf, &len);
+}
+
+void
+bwfm_pci_msgbuf_rxioctl(struct bwfm_pci_softc *sc,
+    struct msgbuf_ioctl_resp_hdr *resp)
+{
+	struct bwfm_pci_ioctl *ctl, *tmp;
+	struct mbuf *m;
+
+	m = bwfm_pci_pktid_free(sc, &sc->sc_rx_pkts,
+	    letoh32(resp->msg.request_id));
+
+	TAILQ_FOREACH_SAFE(ctl, &sc->sc_ioctlq, next, tmp) {
+		if (ctl->transid != letoh16(resp->trans_id))
+			continue;
+		ctl->m = m;
+		ctl->retlen = letoh16(resp->resp_len);
+		ctl->status = letoh16(resp->compl_hdr.status);
+		wakeup(ctl);
+		return;
+	}
+
+	m_free(m);
 }
