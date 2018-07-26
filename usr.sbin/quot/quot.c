@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.30 2017/09/07 03:24:09 tedu Exp $	*/
+/*	$OpenBSD: quot.c,v 1.31 2018/07/26 13:37:40 mestre Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -572,6 +572,10 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+
+	if (pledge("stdio rpath getpw", NULL) == -1)
+		err(1, "pledge");
+
 	cnt = getmntinfo(&mp, MNT_NOWAIT);
 	if (all) {
 		for (; --cnt >= 0; mp++) {
