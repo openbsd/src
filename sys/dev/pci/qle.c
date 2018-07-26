@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.42 2018/07/26 04:26:30 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.43 2018/07/26 04:56:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -1070,7 +1070,6 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 			    "(handle %d, ccb %p, xs->io %p)", handle, ccb,
 			    xs->io);
 		}
-		qle_dump_iocb(sc, status);
 
 		if (xs->datalen > 0) {
 			if (ccb->ccb_dmamap->dm_nsegs >
