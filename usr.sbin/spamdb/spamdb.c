@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.34 2017/10/29 19:11:34 millert Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.35 2018/07/26 19:32:52 mestre Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -368,13 +368,8 @@ main(int argc, char **argv)
 		    action ? "writing" : "reading");
 	}
 
-	if (action == 0) {
-		if (pledge("stdio rpath", NULL) == -1)
-			err(1, "pledge");
-	} else {
-		if (pledge("stdio rpath wpath", NULL) == -1)
-			err(1, "pledge");
-	}
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	switch (action) {
 	case 0:
