@@ -711,6 +711,8 @@
 ./usr/include/dev/sdmmc/sdmmcvar.h
 ./usr/include/dev/softraidvar.h
 ./usr/include/dev/spdmemvar.h
+./usr/include/dev/spi
+./usr/include/dev/spi/spivar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/sunkbdreg.h
