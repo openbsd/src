@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.41 2018/07/03 07:07:17 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.42 2018/07/26 04:26:30 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -462,8 +462,6 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	if (qle_read_mbox(sc, 1) != 0x4953 ||
 	    qle_read_mbox(sc, 2) != 0x5020) {
 		/* try releasing the risc processor */
-		printf("%s: bad startup mboxes: %x %x\n", DEVNAME(sc),
-		    qle_read_mbox(sc, 1), qle_read_mbox(sc, 2));
 		qle_host_cmd(sc, QLE_HOST_CMD_RELEASE);
 	}
 
