@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.8 2018/06/17 19:46:48 kettenis Exp $ */
+/* $OpenBSD: imxccm.c,v 1.9 2018/07/26 10:55:26 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -91,6 +91,8 @@
 #define CCM_CSCDR1_USDHCx_CLK_SEL_MASK		0x1
 #define CCM_CSCDR1_USDHCx_PODF_MASK		0x7
 #define CCM_CSCDR1_UART_PODF_MASK		0x7
+#define CCM_CSCDR2_ECSPI_PODF_SHIFT		19
+#define CCM_CSCDR2_ECSPI_PODF_MASK		0x7
 #define CCM_CCGR1_ENET				(3 << 10)
 #define CCM_CCGR4_125M_PCIE			(3 << 0)
 #define CCM_CCGR5_100M_SATA			(3 << 4)
@@ -125,6 +127,7 @@
 #define  CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ	(1 << 10) /* i.MX7 */
 
 #define HCLK_FREQ				24000000
+#define PLL3_60M				60000000
 #define PLL3_80M				80000000
 
 #define HREAD4(sc, reg)							\
@@ -305,6 +308,18 @@ imxccm_armclk_set_parent(struct imxccm_softc *sc, enum imxanatop_clocks clock)
 	default:
 		panic("%s: parent not possible for arm clk", __func__);
 	}
+}
+
+uint32_t
+imxccm_get_ecspiclk(struct imxccm_softc *sc)
+{
+	uint32_t clkroot = PLL3_60M;
+	uint32_t podf = HREAD4(sc, CCM_CSCDR2);
+
+	podf >>= CCM_CSCDR2_ECSPI_PODF_SHIFT;
+	podf &= CCM_CSCDR2_ECSPI_PODF_MASK;
+
+	return clkroot / (podf + 1);
 }
 
 unsigned int
@@ -754,6 +769,7 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 			return;
 		case IMX6_CLK_IPG:
 		case IMX6_CLK_IPG_PER:
+		case IMX6_CLK_ECSPI_ROOT:
 			/* always on */
 			return;
 		default:
@@ -885,6 +901,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 			return imxccm_get_ipgclk(sc);
 		case IMX6_CLK_IPG_PER:
 			return imxccm_get_ipg_perclk(sc);
+		case IMX6_CLK_ECSPI_ROOT:
+			return imxccm_get_ecspiclk(sc);
 		case IMX6_CLK_UART_SERIAL:
 			return imxccm_get_uartclk(sc);
 		case IMX6_CLK_USDHC1:

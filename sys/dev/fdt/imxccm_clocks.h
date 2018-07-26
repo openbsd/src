@@ -6,8 +6,10 @@
 
 #define IMX6_CLK_IPG		0x3e
 #define IMX6_CLK_IPG_PER	0x3f
+#define IMX6_CLK_ECSPI_ROOT	0x47
 #define IMX6_CLK_ARM		0x68
 #define IMX6_CLK_AHB		0x69
+#define IMX6_CLK_ECSPI2		0x71
 #define IMX6_CLK_ENET		0x75
 #define IMX6_CLK_I2C1		0x7d
 #define IMX6_CLK_I2C2		0x7e
@@ -33,6 +35,7 @@
 #define IMX6_CLK_PLL7		0xe5
 
 struct imxccm_gate imx6_gates[] = {
+	[IMX6_CLK_ECSPI2] = { CCM_CCGR1, 1, IMX6_CLK_ECSPI_ROOT },
 	[IMX6_CLK_ENET] = { CCM_CCGR1, 5, IMX6_CLK_IPG },
 	[IMX6_CLK_I2C1] = { CCM_CCGR2, 3, IMX6_CLK_IPG_PER },
 	[IMX6_CLK_I2C2] = { CCM_CCGR2, 4, IMX6_CLK_IPG_PER },
