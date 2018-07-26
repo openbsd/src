@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2018/07/26 13:20:53 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,10 @@ MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 SUBDIRS+=	ld gas
 CONF_SUBDIRS+=	ld gas
 INST_SUBDIRS+=	ld gas
-MAN+=		gas/doc/as.1	ld/ld.1
+MAN+=		gas/doc/as.1	ld/ld.bfd.1
+.if ${LINKER_VERSION:L} == "bfd"
+MLINKS+=	ld.bfd.1 ld.1
+.endif
 .endif
 
 # Used by the GNU Makefile
@@ -96,8 +99,9 @@ do-config: .USE
 gas/doc/as.1: config.status
 	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
 
-ld/ld.1: config.status
+ld/ld.bfd.1: config.status
 	cd ${.OBJDIR}/ld && ${MAKE} ld.1
+	mv ld/ld.1 ld/ld.bfd.1
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE
@@ -120,6 +124,10 @@ install: maninstall
 	    INSTALL_DATA='${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
 	      install install-info
+.if ${LINKER_VERSION:L} == "bfd"
+	rm -f ${DESTDIR}${PREFIX}/bin/ld
+	ln ${DESTDIR}${PREFIX}/bin/ld.bfd ${DESTDIR}${PREFIX}/bin/ld
+.endif
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
