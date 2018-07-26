@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.488 2018/07/16 09:13:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.489 2018/07/26 20:36:10 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2018 $
+.Dd $Mdocdate: July 26 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3187,7 +3187,7 @@ or
 other files pertinent to the package.
 .It "Discovered old directory in ..."
 This message comes from
-.Xr make-plist 1 .
+.Xr update-plist 1 .
 A directory was found in the PLIST that used to be needed but is no longer,
 because it's now accounted for through dependencies.
 Indicates the old directory has been removed.
