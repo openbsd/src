@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.53 2017/06/29 01:25:59 dlg Exp $
+.\"	$OpenBSD: event.3,v 1.54 2018/07/26 12:50:04 rob Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 29 2017 $
+.Dd $Mdocdate: July 26 2018 $
 .Dt EVENT_INIT 3
 .Os
 .Sh NAME
@@ -67,7 +67,9 @@
 .Nm bufferevent_read ,
 .Nm bufferevent_enable ,
 .Nm bufferevent_disable ,
-.Nm bufferevent_settimeout
+.Nm bufferevent_settimeout ,
+.Nm EVBUFFER_INPUT ,
+.Nm EVBUFFER_OUTPUT
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .In sys/time.h
@@ -154,6 +156,10 @@
 .Fn "bufferevent_disable" "struct bufferevent *bufev" "short event"
 .Ft void
 .Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
+.Ft "struct evbuffer *"
+.Fn "EVBUFFER_INPUT" "struct bufferevent *bufev"
+.Ft "struct evbuffer *"
+.Fn "EVBUFFER_OUTPUT" "struct bufferevent *bufev"
 .Sh DESCRIPTION
 The
 .Nm event
@@ -507,6 +513,17 @@ If multiple bases are in use,
 .Fn bufferevent_base_set
 must be called before
 enabling the bufferevent for the first time.
+.Pp
+The
+.Fn EVBUFFER_INPUT
+and
+.Fn EVBUFFER_OUTPUT
+macros return a pointer to evbuffer
+.Fa input
+and
+.Fa output
+respectively for the specified bufferevent
+.Fa bufev .
 .Sh ADDITIONAL NOTES
 It is possible to disable support for
 .Va kqueue , poll
