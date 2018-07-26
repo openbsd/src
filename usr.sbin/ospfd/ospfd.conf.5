@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.52 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.53 2018/07/26 22:03:19 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: July 26 2018 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -183,6 +183,13 @@ is 100.
 Setting more than one option needs curly brackets:
 .Bd -literal -offset indent
 redistribute static set { metric 300 type 2 }
+.Ed
+.Pp
+The use of
+.Ic redistribute Ar prefix Ns | Ns Ar rtlabel
+can result in higher CPU usage, since
+.Xr ospfd 8
+will need to process more route updates.
 .Ed
 .Pp
 .It Xo
