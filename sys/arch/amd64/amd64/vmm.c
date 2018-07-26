@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.216 2018/07/12 10:16:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.217 2018/07/26 10:05:02 job Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5893,12 +5893,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 			DPRINTF("%s: can't obtain instruction length\n",
 			    __func__);
-			return (EINVAL);
-		}
-
-		if (insn_length != 2) {
-			DPRINTF("%s: CPUID with instruction length %lld not "
-			    "supported\n", __func__, insn_length);
 			return (EINVAL);
 		}
 
