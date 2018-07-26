@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.113 2018/07/09 18:50:38 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.114 2018/07/26 10:59:07 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,6 +59,7 @@ imxahci*	at fdt?			# AHCI/SATA
 imxehci*	at fdt?			# EHCI
 usb*		at imxehci?
 imxrtc*		at fdt?			# SNVS RTC
+imxspi*		at fdt?
 
 # OMAP3xxx/OMAP4xxx SoC
 omap0		at mainbus?
