@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.248 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.249 2018/07/27 21:11:31 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1705,7 +1705,7 @@ init_x86_64(paddr_t first_avail)
 
 	softintr_init();
 	splraise(IPL_IPI);
-	enable_intr();
+	intr_enable();
 
 #ifdef DDB
 	db_machine_init();
@@ -1718,8 +1718,7 @@ init_x86_64(paddr_t first_avail)
 void
 cpu_reset(void)
 {
-
-	disable_intr();
+	intr_disable();
 
 	if (cpuresetfn)
 		(*cpuresetfn)();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.217 2018/07/26 10:05:02 job Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.218 2018/07/27 21:11:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3905,6 +3905,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased, int_st;
 	uint16_t irq;
+	u_long s;
 
 	resume = 0;
 	irq = vrp->vrp_irq;
@@ -4099,9 +4100,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 #endif /* VMM_DEBUG */
 
 		/* Disable interrupts and save the current host FPU state. */
-		disable_intr();
+		s = intr_disable();
 		if ((ret = vmm_fpurestore(vcpu))) {
-			enable_intr();
+			intr_restore(s);
 			break;
 		}
 
@@ -4116,7 +4117,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 */
 		vmm_fpusave(vcpu);
 
-		enable_intr();
+		intr_restore(s);
 
 		exit_reason = VM_EXIT_NONE;
 		if (ret == 0) {

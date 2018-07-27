@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.125 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.126 2018/07/27 21:11:31 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -800,7 +800,7 @@ cpu_hatch(void *v)
 
 	s = splhigh();
 	lcr8(0);
-	enable_intr();
+	intr_enable();
 
 	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);

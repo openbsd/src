@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.89 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.90 2018/07/27 21:11:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -898,8 +898,8 @@ void flush_delayed_work(struct delayed_work *);
 typedef void *async_cookie_t;
 #define async_schedule(func, data)	(func)((data), NULL)
 
-#define local_irq_disable()	disable_intr()
-#define local_irq_enable()	enable_intr()
+#define local_irq_disable()	intr_disable()
+#define local_irq_enable()	intr_enable()
 
 #define setup_timer(x, y, z)	timeout_set((x), (void (*)(void *))(y), (void *)(z))
 #define mod_timer(x, y)		timeout_add((x), (y - jiffies))

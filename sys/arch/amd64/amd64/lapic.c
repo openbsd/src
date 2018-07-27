@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.51 2018/04/20 07:27:54 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.52 2018/07/27 21:11:31 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -174,13 +174,14 @@ lapic_cpu_number(void)
 void
 lapic_map(paddr_t lapic_base)
 {
-	int s;
 	pt_entry_t *pte;
 	vaddr_t va;
 	u_int64_t msr;
+	u_long s;
+	int tpr;
 
-	disable_intr();
-	s = lapic_tpr;
+	s = intr_disable();
+	tpr = lapic_tpr;
 
 	msr = rdmsr(MSR_APICBASE);
 
@@ -208,7 +209,7 @@ lapic_map(paddr_t lapic_base)
 		x2apic_enabled = 1;
 		codepatch_call(CPTAG_EOI, &x2apic_eoi);
 
-		lapic_writereg(LAPIC_TPRI, s);
+		lapic_writereg(LAPIC_TPRI, tpr);
 		va = (vaddr_t)&local_apic;
 	} else {
 		/*
@@ -226,7 +227,7 @@ lapic_map(paddr_t lapic_base)
 		*pte = lapic_base | PG_RW | PG_V | PG_N | PG_G | pg_nx;
 		invlpg(va);
 
-		lapic_tpr = s;
+		lapic_tpr = tpr;
 	}
 
 	/*
@@ -240,7 +241,7 @@ lapic_map(paddr_t lapic_base)
 	DPRINTF("%s: entered lapic page va 0x%llx pa 0x%llx\n", __func__,
 	    (uint64_t)va, (uint64_t)lapic_base);
 
-	enable_intr();
+	intr_restore(s);
 }
 
 /*
@@ -479,7 +480,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 {
 	unsigned int startapic, endapic;
 	u_int64_t dtick, dapic, tmp;
-	long rf = read_rflags();
+	u_long s;
 	int i;
 
 	if (mp_verbose)
@@ -493,7 +494,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	lapic_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
-	disable_intr();
+	s = intr_disable();
 
 	/* wait for current cycle to finish */
 	wait_next_cycle();
@@ -505,7 +506,8 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		wait_next_cycle();
 
 	endapic = lapic_gettick();
-	write_rflags(rf);
+
+	intr_restore(s);
 
 	dtick = hz * rtclock_tval;
 	dapic = startapic-endapic;
