@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.12 2018/07/27 01:38:02 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.13 2018/07/27 01:41:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -741,9 +741,22 @@ test_slash(int do_uv)
 {
 	extern char **environ;
 	if (do_uv) {
+		printf("testing unveil(\"/\")\n");
 		if (unveil("/bin/sh", "x") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 		if (unveil("/", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+	}
+	return 0;
+}
+
+static int
+test_dot(int do_uv)
+{
+	extern char **environ;
+	if (do_uv) {
+		printf("testing unveil(\".\")\n");
+		if (unveil(".", "rwxc") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	return 0;
@@ -804,6 +817,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_realpath);
 	failures += runcompare(test_parent_dir);
 	failures += runcompare(test_slash);
+	failures += runcompare(test_dot);
 	failures += runcompare(test_bypassunveil);
 	failures += runcompare_internal(test_fork, 0);
 	exit(failures);
