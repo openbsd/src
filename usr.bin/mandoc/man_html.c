@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.105 2018/06/25 13:32:59 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.106 2018/07/27 17:47:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,8 +32,6 @@
 #include "main.h"
 
 /* FIXME: have PD set the default vspace width. */
-
-#define	INDENT		  5
 
 #define	MAN_ARGS	  const struct roff_meta *man, \
 			  const struct roff_node *n, \

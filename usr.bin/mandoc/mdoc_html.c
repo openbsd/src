@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.184 2018/06/25 16:54:55 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.185 2018/07/27 17:47:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,8 +31,6 @@
 #include "out.h"
 #include "html.h"
 #include "main.h"
-
-#define	INDENT		 5
 
 #define	MDOC_ARGS	  const struct roff_meta *meta, \
 			  struct roff_node *n, \
