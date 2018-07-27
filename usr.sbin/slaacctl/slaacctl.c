@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.14 2018/04/27 10:02:15 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.15 2018/07/27 06:26:38 bket Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -228,6 +228,8 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t\tDefault Router Preference: %s\n", cei_ra->rpref);
 		printf("\t\tReachable Time: %9ums, Retrans Timer: %9ums\n",
 		    cei_ra->reachable_time, cei_ra->retrans_time);
+		if (cei_ra->mtu)
+			printf("\t\tMTU: %u bytes\n", cei_ra->mtu);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE_INFO_RA_PREFIX:
 		cei_ra_prefix = imsg->data;
