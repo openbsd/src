@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.11 2018/07/20 10:47:37 robert Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.12 2018/07/27 01:38:02 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -705,6 +705,11 @@ test_exec(int do_uv)
 		printf("testing execve with \"x\"\n");
 		if (unveil("/usr/bin/true", "x") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		/* dynamic linking requires this */
+		if (unveil("/usr/lib", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/usr/libexec/ld.so", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	UV_SHOULD_SUCCEED((pledge("unveil stdio fattr exec", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((execve(argv[0], argv, environ) == -1), "execve");
@@ -719,6 +724,11 @@ test_exec2(int do_uv)
 	if (do_uv) {
 		printf("testing execve with \"rw\"\n");
 		if (unveil("/usr/bin/true", "rw") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		/* dynamic linking requires this */
+		if (unveil("/usr/lib", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if (unveil("/usr/libexec/ld.so", "r") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	UV_SHOULD_SUCCEED((pledge("unveil stdio fattr exec", NULL) == -1), "pledge");
@@ -746,9 +756,10 @@ test_bypassunveil(int do_uv)
 		printf("testing BYPASSUNVEIL\n");
 		do_unveil2();
 	}
+	char filename3[] = "/tmp/nukeme.XXXXXX";
 
-	UV_SHOULD_SUCCEED((pledge("rpath stdio tmppath", NULL) == -1), "pledge");
-	UV_SHOULD_SUCCEED((chdir(uv_dir2) == -1), "chdir");
+	UV_SHOULD_SUCCEED((pledge("stdio tmppath", NULL) == -1), "pledge");
+	UV_SHOULD_SUCCEED((mkstemp(filename3) == -1), "mkstemp");
 
 	return 0;
 }
