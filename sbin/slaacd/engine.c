@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.30 2018/07/27 06:20:01 bket Exp $	*/
+/*	$OpenBSD: engine.c,v 1.31 2018/07/27 06:23:08 bket Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -888,6 +888,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		cei_ra.router_lifetime = ra->router_lifetime;
 		cei_ra.reachable_time = ra->reachable_time;
 		cei_ra.retrans_time = ra->retrans_time;
+		cei_ra.mtu = ra->mtu;
 		engine_imsg_compose_frontend(IMSG_CTL_SHOW_INTERFACE_INFO_RA,
 		    pid, &cei_ra, sizeof(cei_ra));
 
