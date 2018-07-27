@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.401 2018/07/24 12:58:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.402 2018/07/27 12:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -796,8 +796,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
 			if (r->match.prefixset.flags != 0) {
-				log_info("%s: retrieving prefixset %s for rule",
-				    __func__, r->match.prefixset.name);
+				log_debug("%s: retrieving prefixset %s for "
+				    "rule", __func__, r->match.prefixset.name);
 				r->match.prefixset.ps =
 				    find_prefixset(r->match.prefixset.name,
 					prefixsets_tmp);
