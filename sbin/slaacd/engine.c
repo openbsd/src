@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.29 2018/07/23 17:25:52 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.30 2018/07/27 06:20:01 bket Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -164,6 +164,7 @@ struct radv {
 	LIST_HEAD(, radv_rdns)		 rdns_servers;
 	uint32_t			 dnssl_lifetime;
 	LIST_HEAD(, radv_dnssl)		 dnssls;
+	uint32_t			 mtu;
 };
 
 struct address_proposal {
@@ -185,6 +186,7 @@ struct address_proposal {
 	uint32_t			 vltime;
 	uint32_t			 pltime;
 	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
+	uint32_t			 mtu;
 };
 
 struct dfr_proposal {
@@ -215,6 +217,7 @@ struct slaacd_iface {
 	struct sockaddr_in6		 ll_address;
 	uint8_t				 soiikey[SLAACD_SOIIKEY_LEN];
 	int				 link_state;
+	uint32_t			 cur_mtu;
 	LIST_HEAD(, radv)		 radvs;
 	LIST_HEAD(, address_proposal)	 addr_proposals;
 	LIST_HEAD(, dfr_proposal)	 dfr_proposals;
@@ -1193,6 +1196,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		struct nd_opt_prefix_info *prf;
 		struct nd_opt_rdnss *rdnss;
 		struct nd_opt_dnssl *dnssl;
+		struct nd_opt_mtu *mtu;
 		struct in6_addr *in6;
 		int i;
 		char *nssl;
@@ -1294,10 +1298,24 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			LIST_INSERT_HEAD(&radv->dnssls, ra_dnssl, entries);
 
 			break;
+		case ND_OPT_MTU:
+			if (nd_opt_hdr->nd_opt_len != 1) {
+				log_warnx("invalid ND_OPT_MTU: len != 1");
+				goto err;
+			}
+			mtu = (struct nd_opt_mtu*) nd_opt_hdr;
+			radv->mtu = ntohl(mtu->nd_opt_mtu_mtu);
+
+			/* path MTU cannot be less than IPV6_MMTU */
+			if (radv->mtu < IPV6_MMTU) {
+				radv->mtu = 0;
+				log_warnx("invalid advertised MTU");
+			}
+
+			break;
 		case ND_OPT_REDIRECTED_HEADER:
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_TARGET_LINKADDR:
-		case ND_OPT_MTU:
 		case ND_OPT_ROUTE_INFO:
 #if 0
 			log_debug("\tOption: %u (len: %u) not implemented",
@@ -1812,6 +1830,13 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					addr_proposal->vltime = TWO_HOURS;
 				addr_proposal->pltime = prefix->pltime;
 
+				if (ra->mtu == iface->cur_mtu)
+					addr_proposal->mtu = 0;
+				else {
+					addr_proposal->mtu = ra->mtu;
+					iface->cur_mtu = ra->mtu;
+				}
+
 				log_debug("%s, addr state: %s", __func__,
 				    proposal_state_name[addr_proposal->state]);
 
@@ -1902,6 +1927,7 @@ configure_address(struct address_proposal *addr_proposal)
 	address.vltime = addr_proposal->vltime;
 	address.pltime = addr_proposal->pltime;
 	address.privacy = addr_proposal->privacy;
+	address.mtu = addr_proposal->mtu;
 
 	engine_imsg_compose_main(IMSG_CONFIGURE_ADDRESS, 0, &address,
 	    sizeof(address));
@@ -1948,6 +1974,13 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	} else {
 		addr_proposal->vltime = prefix->vltime;
 		addr_proposal->pltime = prefix->pltime;
+	}
+
+	if (ra->mtu == iface->cur_mtu)
+		addr_proposal->mtu = 0;
+	else {
+		addr_proposal->mtu = ra->mtu;
+		iface->cur_mtu = ra->mtu;
 	}
 
 	gen_addr(iface, prefix, addr_proposal, privacy);

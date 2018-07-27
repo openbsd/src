@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.27 2018/07/23 17:25:52 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.28 2018/07/27 06:20:01 bket Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -761,6 +761,18 @@ configure_interface(struct imsg_configure_address *address)
 
 	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) < 0)
 		fatal("SIOCAIFADDR_IN6");
+
+	if (address->mtu) {
+		struct ifreq	 ifr;
+
+		(void)strlcpy(ifr.ifr_name, in6_addreq.ifra_name,
+		    sizeof(ifr.ifr_name));
+		ifr.ifr_mtu = address->mtu;
+		log_debug("Setting MTU to %d", ifr.ifr_mtu);
+
+		if (ioctl(ioctl_sock, SIOCSIFMTU, &ifr) < 0)
+		    log_warn("failed to set MTU");
+	}
 }
 
 void
