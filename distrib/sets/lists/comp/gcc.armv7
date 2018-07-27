@@ -618,3 +618,4 @@
 ./usr/share/info/gccint.info
 ./usr/share/man/man1/gcc.1
 ./usr/share/man/man1/gcov.1
+./usr/share/man/man1/ld.bfd.1
