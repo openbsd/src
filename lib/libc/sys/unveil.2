@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.5 2018/07/27 19:14:45 rob Exp $
+.\" $OpenBSD: unveil.2,v 1.6 2018/07/28 18:06:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2018 $
+.Dd $Mdocdate: July 28 2018 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -98,6 +98,16 @@ using
 if and only if no more specific matching
 .Fn unveil
 exists at a lower level.
+Directories are remembered at the time of a call to
+.Fn unveil .
+This means that a directory that is removed and recreated after a call to
+.Fn unveil
+will appear to not exist.
+.Pp
+Non directories are remembered by name within their containing directory,
+and so may be created, removed, or re-created after a call to
+.Fn unveil
+and still appear to exist.
 .Pp
 Attempts to access paths not allowed by
 .Nm
@@ -119,16 +129,6 @@ in an application will require lots of study and understanding
 of the interfaces called.
 In most cases it is best practice to unveil the directories
 in which an application makes use of files.
-It is important to consider that directory results are remembered at
-the time of a call to
-.Fn unveil .
-This means that a directory that is removed and recreated after a call to
-.Fn unveil
-will appear to not exist.
-Non directories are remembered by name within their containing directory,
-and so may be created, removed, or re-created after a call to
-.Fn unveil
-and still appear to exist.
 .Sh RETURN VALUES
 .Fn unveil
 returns 0 on success or -1 on failure.
@@ -137,7 +137,7 @@ returns 0 on success or -1 on failure.
 .It E2BIG
 The addition of
 .Ar path
-would exceed the per-process limit for pledged paths.
+would exceed the per-process limit for unveiled paths.
 .It ENOENT
 A directory in
 .Ar path
