@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.323 2018/07/24 09:48:04 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.324 2018/07/28 23:36:54 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1629,7 +1629,8 @@ host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
 	int			 mask = -1, v4mask = 32, v6mask = 128, cont = 1;
-	char			*p, *q, *r, *ps, *if_name;
+	char			*p, *r, *ps, *if_name;
+	const char		*errstr;
 
 	if ((ps = strdup(s)) == NULL)
 		err(1, "host: strdup");
@@ -1642,9 +1643,9 @@ host(const char *s, int opts)
 	if ((p = strrchr(ps, '/')) != NULL) {
 		if ((r = strdup(ps)) == NULL)
 			err(1, "host: strdup");
-		mask = strtol(p+1, &q, 0);
-		if (!q || *q || mask > 128 || q == (p+1)) {
-			fprintf(stderr, "invalid netmask '%s'\n", p);
+		mask = strtonum(p+1, 0, v6mask, &errstr);
+		if (errstr) {
+			fprintf(stderr, "netmask is %s: %s\n", errstr, p);
 			free(r);
 			free(ps);
 			return (NULL);
