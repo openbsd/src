@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.253 2018/07/20 21:57:26 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.254 2018/07/28 18:07:26 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -204,7 +204,6 @@ struct process {
 	size_t ps_uvvcount;		/* count of unveil vnodes held */
 	size_t ps_uvncount;		/* count of unveil names allocated */
 	int ps_uvshrink;		/* do we need to shrink vnode list */
-	int ps_uvactive;		/* is unveil active */
 	int ps_uvdone;			/* no more unveil is permitted */
 	int ps_uvpcwdgone;		/* need to reevaluate cwd unveil */
 
