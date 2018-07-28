@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mdoc.7,v 1.158 2017/10/23 13:52:33 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.159 2018/07/28 18:32:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2017 $
+.Dd $Mdocdate: July 28 2018 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1234,7 +1234,7 @@ The
 .Ar month
 is the full English month name, the
 .Ar day
-is an optionally zero-padded numeral, and the
+is an integer number, and the
 .Ar year
 is the full four-digit year.
 .Pp
@@ -1264,8 +1264,8 @@ If no date string is given, the current date is used.
 .Pp
 Examples:
 .Dl \&.Dd $\&Mdocdate$
-.Dl \&.Dd $\&Mdocdate: July 21 2007$
-.Dl \&.Dd July 21, 2007
+.Dl \&.Dd $\&Mdocdate: July 2 2018$
+.Dl \&.Dd July 2, 2018
 .Pp
 See also
 .Sx \&Dt
