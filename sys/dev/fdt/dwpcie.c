@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.6 2018/07/01 18:58:06 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.7 2018/07/28 13:59:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -324,6 +324,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
+	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -534,7 +535,8 @@ dwpcie_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pcitag_t tag = pa->pa_tag;
 	struct dwpcie_intr_handle *ih;
 
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
 		return -1;
 
 	ih = malloc(sizeof(struct dwpcie_intr_handle), M_DEVBUF, M_WAITOK);
