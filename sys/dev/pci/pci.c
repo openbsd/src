@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.111 2015/11/27 15:28:22 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.112 2018/07/28 15:28:51 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -657,6 +657,15 @@ pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	}
 
 	return (0);
+}
+
+uint16_t
+pci_requester_id(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	int bus, dev, func;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+	return ((bus << 8) | (dev << 3) | func);
 }
 
 int
