@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.71 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.72 2018/07/28 09:11:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -205,7 +205,8 @@ _aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 static int
 aucat_mkcookie(unsigned char *cookie)
 {
-#define COOKIE_SUFFIX	"/.aucat_cookie"
+#define COOKIE_DIR	"/.sndio"
+#define COOKIE_SUFFIX	"/.sndio/cookie"
 #define TEMPL_SUFFIX	".XXXXXXXX"
 	struct stat sb;
 	char *home, *path = NULL, *tmp = NULL;
@@ -264,11 +265,20 @@ bad_gen:
 	/*
 	 * try to save the cookie
 	 */
+
 	if (home == NULL)
 		goto done;
 	tmp = malloc(path_len + sizeof(TEMPL_SUFFIX));
 	if (tmp == NULL)
 		goto done;
+
+	/* create ~/.sndio directory */
+	memcpy(tmp, home, home_len);
+	memcpy(tmp + home_len, COOKIE_DIR, sizeof(COOKIE_DIR));
+	if (mkdir(tmp, 0755) < 0 && errno != EEXIST)
+		goto done;
+
+	/* create cookie file in it */
 	memcpy(tmp, path, path_len);
 	memcpy(tmp + path_len, TEMPL_SUFFIX, sizeof(TEMPL_SUFFIX));
 	fd = mkstemp(tmp);
