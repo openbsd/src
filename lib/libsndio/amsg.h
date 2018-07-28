@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.10 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.11 2018/07/28 09:07:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,11 +24,11 @@
  *
  * DIR [ '-' UID ] '/' FILE UNIT
  *
- * example: "/tmp/aucat-1000/aucat0"
+ * example: "/tmp/sndio-1000/sock0"
  *
  */
-#define SOCKPATH_DIR	"/tmp/aucat"
-#define SOCKPATH_FILE	"aucat"
+#define SOCKPATH_DIR	"/tmp/sndio"
+#define SOCKPATH_FILE	"sock"
 #define SOCKPATH_MAX	(1 +		\
 	sizeof(SOCKPATH_DIR) - 1 +	\
 	sizeof(char) +			\
