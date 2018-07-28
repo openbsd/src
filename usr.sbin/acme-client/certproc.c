@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.10 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: certproc.c,v 1.11 2018/07/28 15:25:23 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -231,10 +231,8 @@ certproc(int netsock, int filesock)
 out:
 	close(netsock);
 	close(filesock);
-	if (x != NULL)
-		X509_free(x);
-	if (chainx != NULL)
-		X509_free(chainx);
+	X509_free(x);
+	X509_free(chainx);
 	free(csr);
 	free(url);
 	free(chain);

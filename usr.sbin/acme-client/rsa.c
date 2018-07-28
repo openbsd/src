@@ -1,4 +1,4 @@
-/*	$Id: rsa.c,v 1.6 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: rsa.c,v 1.7 2018/07/28 15:25:23 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,12 +62,10 @@ rsa_key_create(FILE *f, const char *fname)
 
 	warnx("%s: PEM_write_PrivateKey", fname);
 err:
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_free(pkey);
 	pkey = NULL;
 out:
-	if (ctx != NULL)
-		EVP_PKEY_CTX_free(ctx);
+	EVP_PKEY_CTX_free(ctx);
 	return pkey;
 }
 

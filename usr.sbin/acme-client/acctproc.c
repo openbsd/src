@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.11 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: acctproc.c,v 1.12 2018/07/28 15:25:23 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -393,8 +393,7 @@ out:
 	close(netsock);
 	if (f != NULL)
 		fclose(f);
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_free(pkey);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
 	return rc;
