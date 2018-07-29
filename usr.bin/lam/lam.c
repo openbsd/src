@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.21 2018/07/11 11:42:17 schwarze Exp $	*/
+/*	$OpenBSD: lam.c,v 1.22 2018/07/29 11:27:14 schwarze Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 
 #include <ctype.h>
 #include <err.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,11 +49,13 @@
 
 struct	openfile {		/* open file structure */
 	FILE	*fp;		/* file pointer */
+	int	minwidth;	/* pad this column to this width */
+	int	maxwidth;	/* truncate this column */
 	short	eof;		/* eof flag */
 	short	pad;		/* pad flag for missing columns */
 	char	eol;		/* end of line character */
+	char	align;		/* '0' for zero fill, '-' for left align */
 	char	*sepstring;	/* string to print before each line */
-	char	*format;	/* printf(3) style string spec. */
 }	input[NOFILE_MAX + 1];	/* last one is for the last -s arg. */
 #define INPUTSIZE sizeof(input) / sizeof(*input)
 
@@ -60,6 +63,8 @@ int	numfiles;		/* number of open files */
 int	nofinalnl;		/* normally append \n to each output line */
 char	line[BIGBUFSIZ];
 char	*linep;
+
+int	 mbswidth_truncate(char *, int);  /* utf8.c */
 
 void	 usage(void);
 char	*gatherline(struct openfile *);
@@ -70,6 +75,8 @@ int
 main(int argc, char *argv[])
 {
 	int i;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -106,9 +113,9 @@ void
 getargs(int argc, char *argv[])
 {
 	struct openfile *ip = input;
-	char *p;
+	const char *errstr;
+	char *p, *q;
 	int ch, P, S, F, T;
-	size_t siz;
 
 	P = S = F = T = 0;		/* capitalized options */
 	while (optind < argc) {
@@ -120,17 +127,28 @@ getargs(int argc, char *argv[])
 		case 'F': case 'f':
 			F = (ch == 'F');
 			/* Validate format string argument. */
-			for (p = optarg; *p != '\0'; p++)
-				if (!isdigit((unsigned char)*p) &&
-				    *p != '.' && *p != '-')
-					errx(1, "%s: invalid width specified",
-					     optarg);
-			/* '%' + width + 's' + '\0' */
-			siz = p - optarg + 3;
-			if ((p = realloc(ip->format, siz)) == NULL)
-				err(1, NULL);
-			snprintf(p, siz, "%%%ss", optarg);
-			ip->format = p;
+			p = optarg;
+			if (*p == '0' || *p == '-')
+				ip->align = *p++;
+			else
+				ip->align = ' ';
+			if ((q = strchr(p, '.')) != NULL)
+				*q++ = '\0';
+			if (*p != '\0') {
+				ip->minwidth = strtonum(p, 1, INT_MAX,
+				    &errstr);
+				if (errstr != NULL)
+					errx(1, "minimum width is %s: %s",
+					    errstr, p);
+			}
+			if (q != NULL) {
+				ip->maxwidth = strtonum(q, 1, INT_MAX,
+				    &errstr);
+				if (errstr != NULL)
+					errx(1, "maximum width is %s: %s",
+					    errstr, q);
+			} else
+				ip->maxwidth = INT_MAX;
 			break;
 		case 'S': case 's':
 			S = (ch == 'S');
@@ -157,10 +175,16 @@ getargs(int argc, char *argv[])
 			ip->pad = P;
 			if (ip->sepstring == NULL)
 				ip->sepstring = S ? (ip-1)->sepstring : "";
-			if (ip->format == NULL)
-				ip->format = (P || F) ? (ip-1)->format : "%s";
 			if (ip->eol == '\0')
 				ip->eol = T ? (ip-1)->eol : '\n';
+			if (ip->align == '\0') {
+				if (F || P) {
+					ip->align = (ip-1)->align;
+					ip->minwidth = (ip-1)->minwidth;
+					ip->maxwidth = (ip-1)->maxwidth;
+				} else
+					ip->maxwidth = INT_MAX;
+			}
 			ip++;
 			optind++;
 			break;
@@ -179,14 +203,14 @@ pad(struct openfile *ip)
 {
 	size_t n;
 	char *lp = linep;
+	int i = 0;
 
 	n = strlcpy(lp, ip->sepstring,  line + sizeof(line) - lp);
 	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
-	if (ip->pad) {
-		n = snprintf(lp, line + sizeof(line) - lp, ip->format, "");
-		if (n > 0)
-			lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
-	}
+	if (ip->pad)
+		while (i++ < ip->minwidth && lp + 1 < line + sizeof(line))
+			*lp++ = ' ';
+	*lp = '\0';
 	return (lp);
 }
 
@@ -202,7 +226,7 @@ gatherline(struct openfile *ip)
 	char *p;
 	char *lp = linep;
 	char *end = s + BUFSIZ - 1;
-	int c;
+	int c, width;
 
 	if (ip->eof)
 		return (pad(ip));
@@ -220,9 +244,16 @@ gatherline(struct openfile *ip)
 	numfiles++;
 	n = strlcpy(lp, ip->sepstring, line + sizeof(line) - lp);
 	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
-	n = snprintf(lp, line + sizeof(line) - lp, ip->format, s);
-	if (n > 0)
-		lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
+	width = mbswidth_truncate(s, ip->maxwidth);
+	if (ip->align != '-')
+		while (width++ < ip->minwidth && lp + 1 < line + sizeof(line))
+			*lp++ = ip->align;
+	n = strlcpy(lp, s, line + sizeof(line) - lp);
+	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
+	if (ip->align == '-')
+		while (width++ < ip->minwidth && lp + 1 < line + sizeof(line))
+			*lp++ = ' ';
+	*lp = '\0';
 	return (lp);
 }
 

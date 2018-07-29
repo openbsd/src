@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lam.1,v 1.9 2016/01/04 23:21:28 schwarze Exp $
+.\"	$OpenBSD: lam.1,v 1.10 2018/07/29 11:27:14 schwarze Exp $
 .\"	$NetBSD: lam.1,v 1.4 2002/02/08 01:36:25 ross Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)lam.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 4 2016 $
+.Dd $Mdocdate: July 29 2018 $
 .Dt LAM 1
 .Os
 .Sh NAME
@@ -74,8 +74,8 @@ is the minimum field width and
 the maximum field width.
 If
 .Ar min
-begins with a zero, zeros will be added to make up the field width,
-and if it begins with a
+begins with a zero, zeros will be prepended to make up the field width
+instead of blanks, and if it begins with a
 .Sq \&- ,
 the fragment will be left-adjusted
 within the field.
@@ -98,6 +98,22 @@ The newline normally appended to each output line is omitted.
 .Pp
 To print files simultaneously for easy viewing use
 .Xr pr 1 .
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character encoding
+.Xr locale 1 .
+It determines the display widths of characters used by the
+.Fl f
+and
+.Fl p
+options.
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each byte is regarded as a character
+of display width 1.
+.El
 .Sh EXAMPLES
 Join four files together along each line:
 .Pp
