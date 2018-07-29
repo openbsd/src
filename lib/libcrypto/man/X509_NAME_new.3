@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_new.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_new.3,v 1.6 2018/07/29 20:29:32 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: July 29 2018 $
 .Dt X509_NAME_NEW 3
 .Os
 .Sh NAME
@@ -62,6 +62,11 @@ frees
 and all the
 .Vt X509_NAME_ENTRY
 objects contained in it.
+If
+.Fa name
+is a
+.Dv NULL
+pointer, no action occurs.
 .Sh RETURN VALUES
 .Fn X509_NAME_new
 returns a new
