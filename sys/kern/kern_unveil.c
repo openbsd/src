@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.5 2018/07/29 22:53:39 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.6 2018/07/29 23:11:02 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -355,6 +355,9 @@ unveil_add_vnode(struct process *pr, struct vnode *vp)
 {
 	struct unveil *uv = NULL;
 	ssize_t i;
+
+	KASSERT(pr->ps_uvvcount < UNVEIL_MAX_VNODES);
+
 	for (i = pr->ps_uvvcount;
 	     i > 0 && pr->ps_uvpaths[i - 1].uv_vp > vp;
 	     i--)
@@ -369,7 +372,7 @@ unveil_add_vnode(struct process *pr, struct vnode *vp)
 	return (uv);
 }
 
-void
+int
 unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 {
 	/*
@@ -409,7 +412,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *cflags)
 		    sizeof(struct unveil), M_PROC, M_WAITOK|M_ZERO);
 	}
 
-	if (pr->ps_uvvcount >= UNVEIL_MAX_VNODES ||
+	if ((pr->ps_uvvcount + ndp->ni_tvpend) >= UNVEIL_MAX_VNODES ||
 	    pr->ps_uvncount >= UNVEIL_MAX_NAMES) {
 		ret = E2BIG;
 		goto done;
