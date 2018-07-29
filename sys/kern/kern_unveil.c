@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.4 2018/07/20 07:28:36 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.5 2018/07/29 22:53:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -591,6 +591,7 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp )
 
 	if (ni->ni_pledge != PLEDGE_UNVEIL) {
 		if ((ni->ni_cnd.cn_flags & BYPASSUNVEIL) == 0 &&
+		    ! (ni->ni_cnd.cn_flags & ISDOTDOT) &&
 		    (uv = unveil_lookup(dp, p)) != NULL) {
 			/* if directory flags match, it's a match */
 			if (unveil_flagmatch(ni, uv->uv_flags)) {
