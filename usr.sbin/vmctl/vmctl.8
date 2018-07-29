@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.43 2018/07/12 12:04:49 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.44 2018/07/29 14:11:05 anton Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2018 $
+.Dd $Mdocdate: July 29 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -248,14 +248,17 @@ interface as both the default route and the (sole) nameserver.
 Guest VM traffic can optionally be NATed through the host
 with an entry in the host machine's
 .Pa /etc/pf.conf
-similar to the following (if desired):
+similar to the following:
 .Bd -literal -offset indent
 pass out on $ext_if from 100.64.0.0/10 to any nat-to $ext_if
 .Ed
 .Pp
-If NATing is desired, the net.inet.ip.forwarding sysctl must also be set to 1.
+If NAT is desired, the
+.Va net.inet.ip.forwarding
+.Xr sysctl 8
+must also be set to 1.
 .Pp
-If desired, DNS queries originating from Guest VMs can be redirected to a
+If desired, DNS queries originating from guest VMs can be redirected to a
 different DNS server with an entry in the host machine's
 .Pa /etc/pf.conf
 similar to the following:
