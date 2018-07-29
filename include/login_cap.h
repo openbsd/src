@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.15 2014/11/21 05:13:44 tedu Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.16 2018/07/29 19:40:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -42,6 +42,7 @@
 #define	LOGIN_DEFSERVICE	"login"
 #define	LOGIN_DEFUMASK		022
 #define	_PATH_LOGIN_CONF	"/etc/login.conf"
+#define	_PATH_AUTHPROGDIR	"/usr/libexec/auth"
 #define	_PATH_AUTHPROG		"/usr/libexec/auth/login_"
 
 #define	LOGIN_SETGROUP		0x0001	/* Set group */
