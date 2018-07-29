@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.89 2017/03/15 04:24:14 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.90 2018/07/29 13:34:26 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -412,6 +412,8 @@ main(int argc, char *argv[])
 	sigprocmask(SIG_BLOCK, &mask, &oldmask);
 	if (interactive)
 		init_screen();
+	if (pledge("stdio getpw tty proc ps vminfo", NULL) == -1)
+		err(1, "pledge");
 	(void) signal(SIGINT, leave);
 	siginterrupt(SIGINT, 1);
 	(void) signal(SIGQUIT, leave);
