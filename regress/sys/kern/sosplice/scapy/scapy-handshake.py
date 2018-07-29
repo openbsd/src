@@ -15,6 +15,10 @@ class Sniff1(threading.Thread):
 	filter = None
 	captured = None
 	packet = None
+	def __init__(self):
+		# clear packets buffered by scapy bpf
+		sniff(iface=LOCAL_IF, timeout=1)
+		super(Sniff1, self).__init__()
 	def run(self):
 		self.captured = sniff(iface=LOCAL_IF, filter=self.filter,
 		    count=1, timeout=5)
