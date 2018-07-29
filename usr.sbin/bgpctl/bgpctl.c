@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.209 2018/07/22 17:07:53 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.210 2018/07/29 13:02:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	if (pledge("stdio rpath wpath unix", NULL) == -1)
+	if (pledge("stdio unix", NULL) == -1)
 		err(1, "pledge");
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
