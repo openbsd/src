@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.13 2018/07/27 01:41:39 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.14 2018/07/29 22:30:32 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -777,6 +777,25 @@ test_bypassunveil(int do_uv)
 	return 0;
 }
 
+
+static int
+test_dotdotup(int do_uv)
+{
+	UV_SHOULD_SUCCEED((open("/tmp/hello", O_RDWR|O_CREAT) == -1), "open");
+	if (do_uv) {
+		printf("testing dotdotup\n");
+		do_unveil2();
+	}
+	if ((chdir(uv_dir1) == -1)) {
+		err(1, "chdir");
+	}
+	UV_SHOULD_SUCCEED((open("./derp", O_RDWR|O_CREAT) == -1), "open");
+	UV_SHOULD_SUCCEED((open("derp", O_RDWR|O_CREAT) == -1), "open");
+	UV_SHOULD_ENOENT((open("../hello", O_RDWR|O_CREAT) == -1), "open");
+	UV_SHOULD_ENOENT((open(".././hello", O_RDWR|O_CREAT) == -1), "open");
+	return 0;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -820,5 +839,6 @@ main (int argc, char *argv[])
 	failures += runcompare(test_dot);
 	failures += runcompare(test_bypassunveil);
 	failures += runcompare_internal(test_fork, 0);
+	failures += runcompare(test_dotdotup);
 	exit(failures);
 }
