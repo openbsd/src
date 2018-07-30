@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.39 2018/07/30 09:54:35 benno Exp $ */
+/*	$Id: main.c,v 1.40 2018/07/30 09:56:50 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 
 	/* parse config file */
 	if ((conf = parse_config(conffile, popts)) == NULL)
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 
 	argc -= optind;
 	argv += optind;
@@ -205,10 +205,10 @@ main(int argc, char *argv[])
 	}
 
 	if (ne > 0)
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 
 	if (popts & ACME_OPT_CHECK)
-		exit(EXIT_SUCCESS);
+		return EXIT_SUCCESS;
 
 	/* Set the zeroth altname as our domain. */
 	altsz = domain->altname_count + 1;
