@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.491 2018/07/30 12:47:12 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.492 2018/07/30 14:13:08 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -4316,7 +4316,7 @@ to remove bugs.
 New features have been carefully introduced, trying hard to avoid
 inconsistencies.
 .Pp
-FLAVORS, MULTI_PACKAGES and FAKE are
+FLAVORS, MULTI_PACKAGES SEPARATE_BUILD and FAKE are
 .Ox
 improvements.
 Most recent additions do not come from another
@@ -4326,9 +4326,10 @@ Most recent additions do not come from another
 .Sh BUGS AND LIMITATIONS
 .Ev LOCALBASE ,
 .Ev X11BASE ,
-.Ev SYSCONFDIR
+.Ev BASESYSCONFDIR ,
+.Ev VARBASE
 and
 .Ev PREFIX
 are not heeded consistently.
-Most of the ports tree will probably fall
-apart if one tries to build/use stuff elsewhere.
+Using anything but the default values has not been heavily tested.
+Some ports may not build if you change them.
