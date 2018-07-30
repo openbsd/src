@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.7 2018/07/30 00:30:15 beck Exp $
+.\" $OpenBSD: unveil.2,v 1.8 2018/07/30 05:23:00 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -155,18 +155,19 @@ was not accessible, or
 .Nm
 was called after it was locked.
 .El
-.Sh BUGS
-Filesystem lookups work today when they cross an
-.Fn unveil
-during
-.Xr namei 9 lookup in the kernel. A program that
-does relative operations below a higher
-.Fn unveil
-may currently not see the parts of the filesystem
-underneath the high level unveil. This is actively
-being worked on. 
 .Sh HISTORY
 The
 .Fn unveil
 system call first appeared in
 .Ox 6.4 .
+.Sh BUGS
+Filesystem lookups work today when they cross an
+.Fn unveil
+during
+.Xr namei 9
+lookup in the kernel.
+A program that does relative operations below a higher
+.Fn unveil
+may currently not see the parts of the filesystem
+underneath the high level unveil.
+This is actively being worked on.
