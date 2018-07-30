@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.36 2017/11/27 01:58:52 florian Exp $ */
+/*	$Id: main.c,v 1.37 2018/07/30 09:51:49 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,20 +56,23 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while ((c = getopt(argc, argv, "FADrvnf:")) != -1)
+	while ((c = getopt(argc, argv, "ADFnrvf:")) != -1)
 		switch (c) {
-		case 'f':
-			if ((conffile = strdup(optarg)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-			break;
-		case 'F':
-			force = 1;
-			break;
 		case 'A':
 			popts |= ACME_OPT_NEWACCT;
 			break;
 		case 'D':
 			popts |= ACME_OPT_NEWDKEY;
+			break;
+		case 'F':
+			force = 1;
+			break;
+		case 'f':
+			if ((conffile = strdup(optarg)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			break;
+		case 'n':
+			popts |= ACME_OPT_CHECK;
 			break;
 		case 'r':
 			revocate = 1;
@@ -77,9 +80,6 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = verbose ? 2 : 1;
 			popts |= ACME_OPT_VERBOSE;
-			break;
-		case 'n':
-			popts |= ACME_OPT_CHECK;
 			break;
 		default:
 			goto usage;
