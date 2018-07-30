@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.25 2018/07/05 19:25:38 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.26 2018/07/30 10:56:00 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -117,9 +117,11 @@ device	ampintcmsi
 attach	ampintcmsi at fdt
 file	arch/arm64/dev/ampintc.c		ampintc | ampintcmsi
 
-device	agintc
+device	agintc: fdt
 attach	agintc at fdt
-file	arch/arm64/dev/agintc.c			agintc
+device	agintcmsi
+attach	agintcmsi at fdt
+file	arch/arm64/dev/agintc.c			agintc | agintcmsi
 
 device	agtimer
 attach	agtimer at fdt

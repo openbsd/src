@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.3 2018/01/13 18:08:20 kettenis Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.4 2018/07/30 10:56:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -306,6 +306,7 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
+	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -478,6 +479,7 @@ struct rkpcie_intr_handle {
 	pci_chipset_tag_t	ih_pc;
 	pcitag_t		ih_tag;
 	int			ih_intrpin;
+	int			ih_msi;
 };
 
 int
@@ -496,6 +498,7 @@ rkpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	ih->ih_pc = pa->pa_pc;
 	ih->ih_tag = pa->pa_intrtag;
 	ih->ih_intrpin = pa->pa_intrpin;
+	ih->ih_msi = 0;
 	*ihp = (pci_intr_handle_t)ih;
 
 	return 0;
@@ -506,11 +509,20 @@ rkpcie_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
+	struct rkpcie_intr_handle *ih;
 
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
 		return -1;
 
-	return -1;
+	ih = malloc(sizeof(struct rkpcie_intr_handle), M_DEVBUF, M_WAITOK);
+	ih->ih_pc = pa->pa_pc;
+	ih->ih_tag = pa->pa_tag;
+	ih->ih_intrpin = pa->pa_intrpin;
+	ih->ih_msi = 1;
+	*ihp = (pci_intr_handle_t)ih;
+
+	return 0;
 }
 
 int
@@ -521,24 +533,69 @@ rkpcie_intr_map_msix(struct pci_attach_args *pa, int vec,
 }
 
 const char *
-rkpcie_intr_string(void *v, pci_intr_handle_t ih)
+rkpcie_intr_string(void *v, pci_intr_handle_t ihp)
 {
+	struct rkpcie_intr_handle *ih = (struct rkpcie_intr_handle *)ihp;
+
+	if (ih->ih_msi)
+		return "msi";
+
 	return "intx";
 }
 
 void *
-rkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
+rkpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct rkpcie_softc *sc = v;
+	struct rkpcie_intr_handle *ih = (struct rkpcie_intr_handle *)ihp;
+	void *cookie;
 
-	/* Unmask legacy interrupts. */
-	HWRITE4(sc, PCIE_CLIENT_INT_MASK,
-	    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
-	    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
+	if (ih->ih_msi) {
+		uint64_t addr, data;
+		pcireg_t reg;
+		int off;
 
-	return arm_intr_establish_fdt_idx(sc->sc_node, 1, level,
-	    func, arg, name);
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
+		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
+		    &data, level, func, arg, name);
+		if (cookie == NULL)
+			return NULL;
+
+		/* TODO: translate address to the PCI device's view */
+
+		if (pci_get_capability(ih->ih_pc, ih->ih_tag, PCI_CAP_MSI,
+		    &off, &reg) == 0)
+			panic("%s: no msi capability", __func__);
+
+		if (reg & PCI_MSI_MC_C64) {
+			pci_conf_write(ih->ih_pc, ih->ih_tag,
+			    off + PCI_MSI_MA, addr);
+			pci_conf_write(ih->ih_pc, ih->ih_tag,
+			    off + PCI_MSI_MAU32, addr >> 32);
+			pci_conf_write(ih->ih_pc, ih->ih_tag,
+			    off + PCI_MSI_MD64, data);
+		} else {
+			pci_conf_write(ih->ih_pc, ih->ih_tag,
+			    off + PCI_MSI_MA, addr);
+			pci_conf_write(ih->ih_pc, ih->ih_tag,
+			    off + PCI_MSI_MD32, data);
+		}
+		pci_conf_write(ih->ih_pc, ih->ih_tag,
+		    off, reg | PCI_MSI_MC_MSIE);
+	} else {
+		/* Unmask legacy interrupts. */
+		HWRITE4(sc, PCIE_CLIENT_INT_MASK,
+		    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
+		    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
+
+		cookie = arm_intr_establish_fdt_idx(sc->sc_node, 1, level,
+		    func, arg, name);
+	}
+
+	free(ih, M_DEVBUF, sizeof(struct rkpcie_intr_handle));
+	return cookie;
 }
 
 void
