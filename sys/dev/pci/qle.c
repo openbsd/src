@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.44 2018/07/30 07:30:54 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.45 2018/07/30 07:34:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
 #include <sys/task.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
@@ -192,6 +193,7 @@ struct qle_softc {
 
 	struct taskq		*sc_update_taskq;
 	struct task		sc_update_task;
+	struct timeout		sc_update_timeout;
 	int			sc_update;
 	int			sc_update_tasks;
 #define	QLE_UPDATE_TASK_CLEAR_ALL	0x00000001
@@ -305,8 +307,11 @@ int		qle_fabric_plogi(struct qle_softc *, struct qle_fc_port *);
 void		qle_fabric_plogo(struct qle_softc *, struct qle_fc_port *);
 
 void		qle_update_start(struct qle_softc *, int);
+void		qle_update_defer(struct qle_softc *, int);
+void		qle_update_cancel(struct qle_softc *);
 void		qle_update_done(struct qle_softc *, int);
 void		qle_do_update(void *);
+void		qle_deferred_update(void *);
 int		qle_async(struct qle_softc *, u_int16_t);
 
 int		qle_load_fwchunk(struct qle_softc *,
@@ -625,6 +630,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_update_taskq = taskq_create(DEVNAME(sc), 1, IPL_BIO, 0);
 	task_set(&sc->sc_update_task, qle_do_update, sc);
+	timeout_set(&sc->sc_update_timeout, qle_deferred_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */
 	for (i = 0; i < QLE_WAIT_FOR_LOOP * 1000; i++) {
@@ -1604,10 +1610,28 @@ qle_update_done(struct qle_softc *sc, int task)
 }
 
 void
+qle_update_cancel(struct qle_softc *sc)
+{
+	atomic_swap_uint(&sc->sc_update_tasks, 0);
+	timeout_del(&sc->sc_update_timeout);
+	task_del(sc->sc_update_taskq, &sc->sc_update_task);
+}
+
+void
 qle_update_start(struct qle_softc *sc, int task)
 {
 	atomic_setbits_int(&sc->sc_update_tasks, task);
-	task_add(sc->sc_update_taskq, &sc->sc_update_task);
+	if (!timeout_pending(&sc->sc_update_timeout))
+		task_add(sc->sc_update_taskq, &sc->sc_update_task);
+}
+
+void
+qle_update_defer(struct qle_softc *sc, int task)
+{
+	atomic_setbits_int(&sc->sc_update_tasks, task);
+	timeout_del(&sc->sc_update_timeout);
+	task_del(sc->sc_update_taskq, &sc->sc_update_task);
+	timeout_add_msec(&sc->sc_update_timeout, QLE_LOOP_SETTLE);
 }
 
 void
@@ -2079,6 +2103,13 @@ qle_fabric_plogo(struct qle_softc *sc, struct qle_fc_port *port)
 }
 
 void
+qle_deferred_update(void *xsc)
+{
+	struct qle_softc *sc = xsc;
+	task_add(sc->sc_update_taskq, &sc->sc_update_task);
+}
+
+void
 qle_do_update(void *xsc)
 {
 	struct qle_softc *sc = xsc;
@@ -2400,20 +2431,21 @@ qle_async(struct qle_softc *sc, u_int16_t info)
 		DPRINTF(QLE_D_PORT, "%s: loop up\n", DEVNAME(sc));
 		sc->sc_loop_up = 1;
 		sc->sc_marker_required = 1;
-		qle_update_start(sc, QLE_UPDATE_TASK_UPDATE_TOPO |
+		qle_update_defer(sc, QLE_UPDATE_TASK_UPDATE_TOPO |
 		    QLE_UPDATE_TASK_GET_PORT_LIST);
 		break;
 
 	case QLE_ASYNC_LOOP_DOWN:
 		DPRINTF(QLE_D_PORT, "%s: loop down\n", DEVNAME(sc));
 		sc->sc_loop_up = 0;
+		qle_update_cancel(sc);
 		qle_update_start(sc, QLE_UPDATE_TASK_CLEAR_ALL);
 		break;
 
 	case QLE_ASYNC_LIP_RESET:
 		DPRINTF(QLE_D_PORT, "%s: lip reset\n", DEVNAME(sc));
 		sc->sc_marker_required = 1;
-		qle_update_start(sc, QLE_UPDATE_TASK_FABRIC_RELOGIN);
+		qle_update_defer(sc, QLE_UPDATE_TASK_FABRIC_RELOGIN);
 		break;
 
 	case QLE_ASYNC_PORT_DB_CHANGE:
