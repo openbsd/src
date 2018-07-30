@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.38 2018/07/30 09:53:14 benno Exp $ */
+/*	$Id: main.c,v 1.39 2018/07/30 09:54:35 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -405,10 +405,8 @@ main(int argc, char *argv[])
 
 	/* Jail: sandbox, file-system, user. */
 
-	if (pledge("stdio", NULL) == -1) {
-		warn("pledge");
-		exit(EXIT_FAILURE);
-	}
+	if (pledge("stdio", NULL) == -1)
+		err(EXIT_FAILURE, "pledge");
 
 	/*
 	 * Collect our subprocesses.
