@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.130 2018/07/27 05:48:59 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.131 2018/07/30 11:51:42 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -314,8 +314,6 @@ const usb_interface_descriptor_t *uaudio_find_iface
 	(const char *, int, int *, int, int);
 
 void	uaudio_mixer_add_ctl(struct uaudio_softc *, struct mixerctl *);
-char	*uaudio_id_name
-	(struct uaudio_softc *, const struct io_terminal *, int);
 uByte	uaudio_get_cluster_nchan
 	(int, const struct io_terminal *);
 void	uaudio_add_input
@@ -672,14 +670,6 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 #endif
 }
 
-char *
-uaudio_id_name(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
-{
-	static char buf[32];
-	snprintf(buf, sizeof(buf), "i%d", id);
-	return (buf);
-}
-
 uByte
 uaudio_get_cluster_nchan(int id, const struct io_terminal *iot)
 {
@@ -805,9 +795,8 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 						mix.wValue[k++] =
 							MAKE(p+c+1, o+1);
 				}
-			snprintf(mix.ctlname, sizeof(mix.ctlname), "mix%d-%s",
-			    d->bUnitId, uaudio_id_name(sc, iot,
-			    d->baSourceId[i]));
+			snprintf(mix.ctlname, sizeof(mix.ctlname), "mix%d-i%d",
+			    d->bUnitId, d->baSourceId[i]);
 			mix.nchan = chs;
 			uaudio_mixer_add_ctl(sc, &mix);
 		} else {
