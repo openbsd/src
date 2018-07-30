@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.37 2018/07/30 09:51:49 benno Exp $ */
+/*	$Id: main.c,v 1.38 2018/07/30 09:53:14 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "basename");
 	}
 
-	if(domain->chain != NULL) {
+	if (domain->chain != NULL) {
 		if ((chainfile = basename(domain->chain)) != NULL) {
 			if ((chainfile = strdup(chainfile)) == NULL)
 				err(EXIT_FAILURE, "strdup");
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "basename");
 	}
 
-	if(domain->fullchain != NULL) {
+	if (domain->fullchain != NULL) {
 		if ((fullchainfile = basename(domain->fullchain)) != NULL) {
 			if ((fullchainfile = strdup(fullchainfile)) == NULL)
 				err(EXIT_FAILURE, "strdup");
@@ -185,7 +185,8 @@ main(int argc, char *argv[])
 	if (!(popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) == -1) {
 		warnx("%s: domain key file must exist", domain->key);
 		ne++;
-	} else if ((popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) != -1) {
+	} else if ((popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK)
+	    != -1) {
 		dodbg("%s: domain key exists (not creating)", domain->key);
 		popts &= ~ACME_OPT_NEWDKEY;
 	}
