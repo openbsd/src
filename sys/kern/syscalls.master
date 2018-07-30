@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.186 2018/07/13 09:25:23 beck Exp $
+;	$OpenBSD: syscalls.master,v 1.187 2018/07/30 15:16:27 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -240,7 +240,7 @@
 			    int flags); }
 113	UNIMPL		fktrace
 114	STD 		{ int sys_unveil(const char *path, \
-			    const char *flags); }
+			    const char *permissions); }
 115	OBSOL		vtrace
 116	OBSOL		t32_gettimeofday
 117	OBSOL		t32_getrusage

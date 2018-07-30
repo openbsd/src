@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.8 2018/07/30 00:34:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.9 2018/07/30 15:16:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -310,25 +310,25 @@ unveil_lookup(struct vnode *vp, struct proc *p)
 }
 
 int
-unveil_parseflags(const char *cflags, uint64_t *flags)
+unveil_parsepermissions(const char *permissions, uint64_t *perms)
 {
 	size_t i = 0;
 	char c;
 
-	*flags = 0;
-	while ((c = cflags[i++]) != '\0') {
+	*perms = 0;
+	while ((c = permissions[i++]) != '\0') {
 		switch (c) {
 		case 'r':
-			*flags |= PLEDGE_RPATH;
+			*perms |= PLEDGE_RPATH;
 			break;
 		case 'w':
-			*flags |= PLEDGE_WPATH;
+			*perms |= PLEDGE_WPATH;
 			break;
 		case 'x':
-			*flags |= PLEDGE_EXEC;
+			*perms |= PLEDGE_EXEC;
 			break;
 		case 'c':
-			*flags |= PLEDGE_CPATH;
+			*perms |= PLEDGE_CPATH;
 			break;
 		default:
 			return -1;
@@ -396,7 +396,7 @@ unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 }
 
 int
-unveil_add(struct proc *p, struct nameidata *ndp, const char *cflags)
+unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 {
 	struct process *pr = p->p_p;
 	struct vnode *vp;
@@ -407,7 +407,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *cflags)
 
 	KASSERT(ISSET(ndp->ni_cnd.cn_flags, HASBUF)); /* must have SAVENAME */
 
-	if (unveil_parseflags(cflags, &flags) == -1)
+	if (unveil_parsepermissions(permissions, &flags) == -1)
 		goto done;
 
 	if (pr->ps_uvpaths == NULL) {
