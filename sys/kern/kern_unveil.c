@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.7 2018/07/29 23:53:04 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.8 2018/07/30 00:34:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -61,9 +61,11 @@ unvname_new(const char *name, size_t size, uint64_t flags)
 }
 
 void
-unveil_free_traversed_vnodes(struct nameidata *ndp) {
+unveil_free_traversed_vnodes(struct nameidata *ndp)
+{
 	if (ndp->ni_tvpsize) {
 		size_t i;
+
 		for (i = 0; i < ndp->ni_tvpend; i++)
 			vrele(ndp->ni_tvp[i]); /* ref for being in list */
 		free(ndp->ni_tvp, M_PROC, ndp->ni_tvpsize * sizeof(struct vnode *));
@@ -73,7 +75,8 @@ unveil_free_traversed_vnodes(struct nameidata *ndp) {
 }
 
 void
-unveil_save_traversed_vnode(struct nameidata *ndp, struct vnode *vp) {
+unveil_save_traversed_vnode(struct nameidata *ndp, struct vnode *vp)
+{
 	if (ndp->ni_tvpsize == 0) {
 		ndp->ni_tvp = mallocarray(MAXPATHLEN, sizeof(struct vnode *),
 		    M_PROC, M_WAITOK);
@@ -249,6 +252,7 @@ unveil_lookup(struct vnode *vp, struct proc *p)
 	 */
 	if (pr->ps_uvshrink) {
 		size_t i = 0, j;
+
 		while (i < pr->ps_uvvcount) {
 			if (uv[i].uv_vp == NULL)  {
 				pr->ps_uvncount -= unveil_delete_names(&uv[i]);
@@ -278,11 +282,9 @@ unveil_lookup(struct vnode *vp, struct proc *p)
 		if (pr->ps_uvpcwd) {
 			printf("unveil: %s(%d): did not nuke cwd because %p != %p\n",
 			    p->p_p->ps_comm, p->p_p->ps_pid, vp, pr->ps_uvpcwd->uv_vp);
-		}
-		else
+		} else
 			printf("unveil: %s(%d): cwd is null\n",
  			    p->p_p->ps_comm, p->p_p->ps_pid);
-
 	}
 #endif
 
@@ -381,6 +383,7 @@ unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 	 */
 	if (ndp->ni_tvpsize) {
 		size_t i;
+
 		for (i = 0; i < ndp->ni_tvpend; i++) {
 			struct vnode *vp = ndp->ni_tvp[i];
 			if (unveil_lookup(vp, p) == NULL) {
@@ -422,9 +425,9 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *cflags)
 	directory_add = ndp->ni_vp != NULL && ndp->ni_vp->v_type == VDIR;
 
 	if (directory_add)
-		vp=ndp->ni_vp;
+		vp = ndp->ni_vp;
 	else
-		vp=ndp->ni_dvp;
+		vp = ndp->ni_dvp;
 
 	KASSERT(vp->v_type == VDIR);
 	vref(vp);
@@ -477,7 +480,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *cflags)
 			}
 		}
 
-	} else  {
+	} else {
 		/*
 		 * New unveil involving this directory vnode.
 		 */
@@ -588,7 +591,7 @@ unveil_flagmatch(struct nameidata *ni, uint64_t flags)
  * unveil checking - for component directories in a namei lookup.
  */
 void
-unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp )
+unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 {
 	struct unveil *uv = NULL;
 
@@ -609,8 +612,7 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp )
 				}
 			}
 		}
-	}
-	else
+	} else
 		unveil_save_traversed_vnode(ni, dp);
 }
 
@@ -691,8 +693,7 @@ done:
 		    ni->ni_unveil_match->uv_vp);
 #endif
 		return (0);
-	}
-	else if (p->p_p->ps_uvpcwd) {
+	} else if (p->p_p->ps_uvpcwd) {
 		ni->ni_unveil_match = p->p_p->ps_uvpcwd;
 #ifdef DEBUG_UNVEIL
 		printf("unveil: %s(%d): used cwd unveil vnode from vnode %p\n",
@@ -725,6 +726,7 @@ unveil_removevnode(struct vnode *vp)
 #endif
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		struct unveil * uv;
+
 		if ((uv = unveil_lookup(vp, pr->ps_mainproc)) != NULL) {
 			uv->uv_vp = NULL;
 			uv->uv_flags = 0;
