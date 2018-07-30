@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.1 2018/07/30 17:27:37 anton Exp $	*/
+/*	$OpenBSD: open.c,v 1.2 2018/07/30 20:53:42 anton Exp $	*/
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
  *
@@ -27,8 +27,9 @@ int
 main(void)
 {
 	const char *path = "/dev/bpf";
+	int fd;
 
-	int fd = open(path, O_WRONLY | O_TRUNC | O_SHLOCK);
+	fd = open(path, O_WRONLY | O_TRUNC | O_SHLOCK);
 	if (fd == -1)
 		err(1, "open: %s", path);
 	close(fd);
