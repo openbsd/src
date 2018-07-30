@@ -1,8 +1,23 @@
 #!/usr/local/bin/python2.7
 
 import os
+import threading
 from addr import *
 from scapy.all import *
+
+class Sniff1(threading.Thread):
+	filter = None
+	captured = None
+	packet = None
+	def __init__(self):
+		# clear packets buffered by scapy bpf
+		sniff(iface=LOCAL_IF, timeout=1)
+		super(Sniff1, self).__init__()
+	def run(self):
+		self.captured = sniff(iface=LOCAL_IF, filter=self.filter,
+		    count=1, timeout=3)
+		if self.captured:
+			self.packet = self.captured[0]
 
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
@@ -27,19 +42,22 @@ if data is None:
 print "Fill our receive buffer."
 time.sleep(1)
 
+# sr1 cannot be used, TCP data will not match outgoing ICMP packet
+sniffer = Sniff1()
+sniffer.filter = \
+    "ip and src %s and tcp port %u and dst %s and tcp port %u" % \
+    (ip.dst, syn.dport, ip.src, syn.sport)
+sniffer.start()
+time.sleep(1)
+
 print "Send ICMP fragmentation needed packet with MTU 1300."
 icmp=ICMP(type="dest-unreach", code="fragmentation-needed",
     nexthopmtu=1300)/data
-# sr1 cannot be used, TCP data will not match outgoing ICMP packet
-if os.fork() == 0:
-	time.sleep(1)
-	send(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/icmp, iface=LOCAL_IF)
-	os._exit(0)
+send(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/icmp, iface=LOCAL_IF)
 
 print "Path MTU discovery will resend first data with length 1300."
-ans=sniff(iface=LOCAL_IF, timeout=3, count=1, filter=
-    "ip and src %s and tcp port %u and dst %s and tcp port %u" %
-    (ip.dst, syn.dport, ip.src, syn.sport))
+sniffer.join(timeout=5)
+ans = sniffer.packet
 
 if len(ans) == 0:
 	print "ERROR: no data retransmit from chargen server received"
