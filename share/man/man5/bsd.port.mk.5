@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.490 2018/07/29 13:27:44 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.491 2018/07/30 12:47:12 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 29 2018 $
+.Dd $Mdocdate: July 30 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2002,9 +2002,11 @@ Read-only.
 .Xr mtree 8
 specification used during
 .Ar fake .
-Hardcoded as
-.Pa ${PORTSDIR}/infrastructure/db/fake.mtree
-now.
+Replaced by direct use of
+.Xr mkdir 1
+now that
+.Ar fake
+no longer happens as root.
 .It Ev MODGNU_CONFIG_GUESS_DIRS
 If a port uses config.guess outside WRKSRC, the directories
 containing the other copies must be set here.
@@ -3389,12 +3391,6 @@ at the end of
 Variables from
 .Ev SUBST_VARS
 will be expanded.
-.It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
-Specification used for populating ${WRKINST} at the start of
-.Cm fake .
-Use
-.Cm pre-fake
-if this is incomplete.
 .It Pa ${PORTSDIR}/packages/${MACHINE_ARCH}
 Default setup of ${PACKAGE_REPOSITORY}.
 .It Pa ${PACKAGE_REPOSITORY}/no-arch
@@ -3433,10 +3429,9 @@ Essentially,
 invokes a real install process after tweaking a few variables.
 .Pp
 .Cm fake
-first creates a skeleton tree under ${WRKINST}, using the
-.Xr mtree 8
-specification
-.Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
+first creates a skeleton tree under ${WRKINST}, using
+.Xr mkdir 1
+.Fl p .
 .Pp
 A
 .Cm pre-fake
