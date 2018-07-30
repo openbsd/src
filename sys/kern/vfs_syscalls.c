@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.298 2018/07/30 15:16:27 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.299 2018/07/30 17:21:37 anton Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1072,7 +1072,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	if (localtrunc) {
 		if ((fp->f_flag & FWRITE) == 0)
 			error = EACCES;
-		else if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		else if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_RDONLY))
 			error = EROFS;
 		else if (vp->v_type == VDIR)
 			error = EISDIR;
