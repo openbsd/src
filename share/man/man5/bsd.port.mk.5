@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.492 2018/07/30 14:13:08 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.493 2018/07/30 16:02:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -176,9 +176,9 @@ Clean work directory.
 Clean bulk cookie.
 .It Va build
 Clean the
-.Va WRKBUILD
+.Ev WRKBUILD
 directory (only useful if
-.Va SEPARATE_BUILD
+.Ev SEPARATE_BUILD
 is set).
 .It Va depends
 Recurse into dependencies.
@@ -214,7 +214,8 @@ Shorthand for
 Configure the port.
 By default,
 .Cm configure
-creates the ${WRKBUILD} directory (see SEPARATE_BUILD),
+creates the ${WRKBUILD} directory (see
+.Ev SEPARATE_BUILD ) ,
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
 .It Cm describe
@@ -1497,8 +1498,9 @@ will retrieve from url
 into
 .Sq minetest-${V}${EXTRACT_SUFX} .
 .Pp
-If ${DISTFILES} varies depending on FLAVORS or architecture,
-use
+If ${DISTFILES} varies depending on
+.Ev FLAVORS
+or architecture, use
 .Ev SUPDISTFILES
 to ensure distfiles mirroring and
 .Cm makesum
@@ -1709,7 +1711,9 @@ The port's current options.
 Set by the user, and tested by the port to activate wanted functionalities.
 .It Ev FLAVORS
 List of all flavors keywords a port may match.
-Used to sort FLAVOR into a canonical order to build the package name,
+Used to sort
+.Ev FLAVOR
+into a canonical order to build the package name,
 or to select the packing-list, and as a quick validity check.
 See also
 .Ev PSEUDO_FLAVORS .
@@ -3092,8 +3096,9 @@ to
 .Ev CXXFLAGS .
 .It Ev WRKBUILD
 Subdirectory of ${WRKDIR} where the actual build occurs.
-Defaults to ${WRKSRC}, unless SEPARATE_BUILD is involved, in which case
-it is set to an appropriate value.
+Defaults to ${WRKSRC}, unless
+.Ev SEPARATE_BUILD
+is involved, in which case it is set to an appropriate value.
 .It Ev WRKCONF
 Subdirectory of ${WRKDIR} where the actual configure set occurs.
 Defaults to ${WRKBUILD}.
@@ -3451,7 +3456,11 @@ ${DESTDIRNAME}=${WRKINST}
 .Ed
 .Pp
 Essentially, old install targets work transparently, except for a need to
-change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
+change
+.Ev PREFIX
+to
+.Ev TRUEPREFIX
+for symbolic links and similar path lookups.
 Specific traditional post install work can be simply removed, as it will
 be taken care of by the package itself (for instance, ldconfig, or
 texinfo's install-info).
@@ -3493,18 +3502,24 @@ section above for details).
 Starting with
 .Ox 2.7 ,
 each port can generate distinct packages through two orthogonal mechanisms:
-FLAVORS and MULTI_PACKAGES.
+.Ev FLAVORS
+and
+.Ev MULTI_PACKAGES .
 .Pp
-The current MULTI_PACKAGES mechanism was introduced after
+The current
+.Ev MULTI_PACKAGES
+mechanism was introduced after
 .Ox 4.0 .
 .Pp
 The arch-dependent part was refined after
 .Ox 5.0 .
 .Pp
 If a port can be compiled with several options, these options
-should be turned into FLAVORS.
-The port maintainer will set FLAVORS to be the list of possible options in
-the Makefile.
+should be turned into
+.Ev FLAVORS .
+The port maintainer will set
+.Ev FLAVORS
+to be the list of possible options in the Makefile.
 When building the port, the package builder will set
 .Li "FLAVOR='option1 option2...'"
 to build a specific flavor of the port.
@@ -3523,10 +3538,16 @@ FLAVOR?=
 takes care of a few details, such as generating a distinct work directory for
 each flavor, or creating a FULLPKGNAME by adding a dash separated list of
 flavors to the base package name.
-The order in which FLAVOR is specified does not matter: this dash separated
-list will be reordered to match the ordering of FLAVORS.
+The order in which
+.Ev FLAVOR
+is specified does not matter: this dash separated list will be
+reordered to match the ordering of
+.Ev FLAVORS .
 .Pp
-It is an error to specify an option in FLAVOR that does not appear in FLAVORS,
+It is an error to specify an option in
+.Ev FLAVOR
+that does not appear in
+.Ev FLAVORS ,
 to prevent misspellings.
 .Pp
 In bulk package building, flavors can be specified as a comma
@@ -3542,18 +3563,28 @@ COMMENT and COMMENT-option1-option2 are available, COMMENT-option1-option2 will
 be used.
 .Pp
 If one build of a port can generate several distinct packages, set
-MULTI_PACKAGES accordingly.
-Each extension of a MULTI_PACKAGES name should start with a dash, so that
-they cannot be confused with FLAVORS.
+.Ev MULTI_PACKAGES
+accordingly.
+Each extension of a
+.Ev MULTI_PACKAGES
+name should start with a dash, so that they cannot be confused with
+.Ev FLAVORS .
 In dependency checking and bulk builds, a subpackage can be
-specified after a comma, e.g., SUBDIR+=quake,-server.
-MULTI_PACKAGES only affects the actual package building step (and the
+specified after a comma, e.g.,
+.Li SUBDIR+=quake,-server .
+.Ev MULTI_PACKAGES
+only affects the actual package building step (and the
 .Cm describe
-step, since a MULTI_PACKAGES port will produce several descriptions).
+step, since a
+.Ev MULTI_PACKAGES
+port will produce several descriptions).
 .Pp
-If MULTI_PACKAGES is set, the packaging stage happens once for every
+If
+.Ev MULTI_PACKAGES
+is set, the packaging stage happens once for every
 subpackage, using subpackage-specific variables.
-For instance, if MULTI_PACKAGES=-main -lib -server,
+For instance, if
+.Li MULTI_PACKAGES=-main -lib -server ,
 .Ev PKG_ARCH-main ,
 .Ev PKG_ARCH-lib
 and
@@ -3730,7 +3761,11 @@ Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
 from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
 substituting the variables in ${SUBST_VARS}, and by substituting
 ${FLAVORS} with the canonical flavor extension for this port,
-e.g., if FLAVORS=no_map gfx qt2, if FLAVOR=gfx no_map, this is
+e.g., if
+.Li FLAVORS=no_map gfx qt2 ,
+if
+.Li FLAVOR=gfx no_map ,
+this is
 .Sq -no_map-gfx .
 .It
 Generate the actual PLIST from the template ${PLIST},
@@ -3745,7 +3780,9 @@ generation.
 To avoid substitution, variables can be escaped as follows:
 .Li "$\e{PREFIX}"
 .Pp
-If FLAVORS lists flv, then constructs such as the line
+If
+.Ev FLAVORS
+lists flv, then constructs such as the line
 .Li "%%flv%%"
 or
 .Li "!%%flv%%"
@@ -3813,10 +3850,13 @@ Since a package name must always be changed when the packing-list changes,
 any attempt to replace a packing-list of a given name with a different
 packing-list will be flagged as an error.
 .Pp
-In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
+In
+.Ev MULTI_PACKAGES
+mode, there must be separate COMMENT, DESCR, and PLIST
 templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE
 files in a similar way).
-This contrasts with the FLAVORS
+This contrasts with the
+.Ev FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh OBSOLETE TARGETS
@@ -4316,7 +4356,10 @@ to remove bugs.
 New features have been carefully introduced, trying hard to avoid
 inconsistencies.
 .Pp
-FLAVORS, MULTI_PACKAGES SEPARATE_BUILD and FAKE are
+.Ev FLAVORS ,
+.Ev MULTI_PACKAGES ,
+.Ev SEPARATE_BUILD
+and FAKE are
 .Ox
 improvements.
 Most recent additions do not come from another
