@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.4 2018/05/07 22:15:36 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.5 2018/07/30 15:57:04 jcs Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -61,6 +61,7 @@ static const int touchpad_types[] = {
 	WSMOUSE_TYPE_ALPS,		/* ALPS touchpad */
 	WSMOUSE_TYPE_ELANTECH,		/* Elantech touchpad */
 	WSMOUSE_TYPE_SYNAP_SBTN,	/* Synaptics soft buttons */
+	WSMOUSE_TYPE_TOUCHPAD,		/* Generic touchpad */
 };
 
 struct wsmouse_parameters cfg_tapping = {
