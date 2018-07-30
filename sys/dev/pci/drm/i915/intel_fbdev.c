@@ -220,8 +220,10 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	} else {
 		DRM_DEBUG_KMS("re-using BIOS fb\n");
 		prealloc = true;
+#ifdef __linux__
 		sizes->fb_width = intel_fb->base.width;
 		sizes->fb_height = intel_fb->base.height;
+#endif
 	}
 
 	obj = intel_fb->obj;
