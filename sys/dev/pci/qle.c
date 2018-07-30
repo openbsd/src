@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.43 2018/07/26 04:56:57 jmatthew Exp $ */
+/*	$OpenBSD: qle.c,v 1.44 2018/07/30 07:30:54 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -66,8 +66,8 @@ int qledebug = QLE_D_PORT;
 
 #define QLE_DEFAULT_PORT_NAME		0x400000007F000003ULL /* from isp(4) */
 
-#define QLE_WAIT_FOR_LOOP		10
-#define QLE_LOOP_SETTLE			10
+#define QLE_WAIT_FOR_LOOP		10	/* seconds */
+#define QLE_LOOP_SETTLE			200	/* ms */
 
 /* rounded up range of assignable handles */
 #define QLE_MAX_TARGETS			2048
@@ -627,22 +627,22 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_update_task, qle_do_update, sc);
 
 	/* wait a bit for link to come up so we can scan and attach devices */
-	loop_up = 0;
-	for (i = 0; i < QLE_WAIT_FOR_LOOP * 10000; i++) {
+	for (i = 0; i < QLE_WAIT_FOR_LOOP * 1000; i++) {
 		u_int16_t isr, info;
-
-		delay(100);
-
-		if (qle_read_isr(sc, &isr, &info) == 0)
-			continue;
-
-		qle_handle_intr(sc, isr, info);
 
 		if (sc->sc_loop_up) {
 			if (++loop_up == QLE_LOOP_SETTLE)
 				break;
 		} else
 			loop_up = 0;
+
+		delay(1000);
+
+		if (qle_read_isr(sc, &isr, &info) == 0)
+			continue;
+
+		qle_handle_intr(sc, isr, info);
+
 	}
 
 	if (sc->sc_loop_up) {
