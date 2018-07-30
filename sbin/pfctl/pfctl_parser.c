@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.324 2018/07/28 23:36:54 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.325 2018/07/30 08:28:40 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1628,7 +1628,7 @@ struct node_host *
 host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
-	int			 mask = -1, v4mask = 32, v6mask = 128, cont = 1;
+	int			 mask = -1, v4mask = 32, v6mask = 128;
 	char			*p, *r, *ps, *if_name;
 	const char		*errstr;
 
@@ -1646,48 +1646,34 @@ host(const char *s, int opts)
 		mask = strtonum(p+1, 0, v6mask, &errstr);
 		if (errstr) {
 			fprintf(stderr, "netmask is %s: %s\n", errstr, p);
-			free(r);
-			free(ps);
-			return (NULL);
+			goto error;
 		}
 		p[0] = '\0';
 		v4mask = v6mask = mask;
 	} else
 		r = ps;
 
-	/* interface with this name exists? */
-	if (cont && (h = host_if(ps, mask)) != NULL)
-		cont = 0;
-
-	/* IPv4 address? */
-	if (cont && (h = host_v4(r, mask)) != NULL)
-		cont = 0;
-	if (r != ps)
-		free(r);
-
-	/* IPv6 address? */
-	if (cont && (h = host_v6(ps, v6mask)) != NULL)
-		cont = 0;
-
-	/* dns lookup */
-	if (cont && (h = host_dns(ps, v4mask, v6mask,
-	    (opts & PF_OPT_NODNS))) != NULL)
-		cont = 0;
+	if ((h = host_if(ps, mask)) == NULL &&
+	    (h = host_v4(r, mask)) == NULL &&
+	    (h = host_v6(ps, v6mask)) == NULL &&
+	    (h = host_dns(ps, v4mask, v6mask, (opts & PF_OPT_NODNS))) == NULL) {
+		fprintf(stderr, "no IP address found for %s\n", s);
+		goto error;
+	}
 
 	if (if_name && if_name[0])
 		for (n = h; n != NULL; n = n->next)
 			if ((n->ifname = strdup(if_name)) == NULL)
 				err(1, "host: strdup");
-
-	free(ps);	/* after we copy the name out */
-	if (h == NULL || cont == 1) {
-		fprintf(stderr, "no IP address found for %s\n", s);
-		return (NULL);
-	}
 	for (n = h; n != NULL; n = n->next) {
 		n->addr.type = PF_ADDR_ADDRMASK;
 		n->weight = 0;
 	}	
+
+error:
+	if (r != ps)
+		free(r);
+	free(ps);
 	return (h);
 }
 
