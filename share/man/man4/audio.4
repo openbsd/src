@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.78 2018/07/22 19:11:44 schwarze Exp $
+.\"	$OpenBSD: audio.4,v 1.79 2018/07/30 17:24:24 jmc Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,11 +28,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 22 2018 $
+.Dd $Mdocdate: July 30 2018 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
 .Nm audio ,
+.Nm audioctl ,
 .Nm mixer
 .Nd device-independent audio driver layer
 .Sh SYNOPSIS
@@ -76,35 +77,27 @@ variable.
 This is the default.
 .El
 .Pp
-There are three device files available for audio operation:
-.Pa /dev/audio ,
-.Pa /dev/audioctl ,
+There are three types of device files available for audio operation:
+.Pa /dev/audio Ns Ar N ,
+.Pa /dev/audioctl Ns Ar N ,
 and
-.Pa /dev/mixer .
-.Pa /dev/audio
-is used for recording or playback of digital samples.
-.Pa /dev/mixer
-is used to manipulate volume, recording source, or other audio mixer
+.Pa /dev/mixer Ns Ar N .
+Audio devices are used for recording or playback of digital samples.
+Mixer devices are used to manipulate volume, recording source, or other audio mixer
 functions.
-.Pa /dev/audioctl
-accepts the same
+Audio control devices accept the same
 .Xr ioctl 2
-operations as
-.Pa /dev/audio ,
+operations as audio devices,
 but no other operations.
-In contrast to
-.Pa /dev/audio ,
-which has the exclusive open property,
-.Pa /dev/audioctl
-can be opened at any time and can be used to read the
+In contrast to audio devices,
+which have the exclusive open property,
+audioctl devices can be opened at any time and can be used to read the
 .Nm audio
 device variables while it is in use.
 .Sh SAMPLING DEVICES
-When
-.Pa /dev/audio
-is opened, it attempts to maintain the previous audio sample format and
-record/playback mode.
-In addition, if it is opened read-only
+When audio devices are opened,
+they attempt to maintain the previous audio sample format and record/playback mode.
+In addition, if one is opened read-only
 (write-only) the device is set to half-duplex record (play) mode with
 recording (playing) unpaused.
 .Pp
@@ -319,17 +312,13 @@ If set, indicates that the device is playing and/or recording.
 .El
 .El
 .Sh MIXER DEVICE
-The
-.Nm mixer
-device,
-.Pa /dev/mixer ,
-may be manipulated with
+Mixer devices may be manipulated with
 .Xr ioctl 2
-but does not support
+but do not support
 .Xr read 2
 or
 .Xr write 2 .
-It supports the following
+They support the following
 .Xr ioctl 2
 commands:
 .Pp
@@ -527,9 +516,9 @@ mixer controls because they use a name from one of the
 string values.
 .Sh FILES
 .Bl -tag -width /dev/audioctl -compact
-.It Pa /dev/audio
-.It Pa /dev/audioctl
-.It Pa /dev/mixer
+.It Pa /dev/audio Ns Ar N
+.It Pa /dev/audioctl Ns Ar N
+.It Pa /dev/mixer Ns Ar N
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
