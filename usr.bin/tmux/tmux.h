@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.829 2018/07/16 08:48:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.830 2018/07/30 11:24:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -734,28 +734,6 @@ struct window_mode {
 			     struct mouse_event *);
 };
 #define WINDOW_MODE_TIMEOUT 180
-
-/* Structures for choose mode. */
-struct window_choose_data {
-	struct client		*start_client;
-	struct session		*start_session;
-
-	u_int			 idx;
-	int			 type;
-#define TREE_OTHER 0x0
-#define TREE_WINDOW 0x1
-#define TREE_SESSION 0x2
-
-	struct session		*tree_session; /* session of items in tree */
-
-	struct winlink		*wl;
-	int			 pane_id;
-
-	char			*ft_template;
-	struct format_tree	*ft;
-
-	char			*command;
-};
 
 /* Child window structure. */
 struct window_pane {
