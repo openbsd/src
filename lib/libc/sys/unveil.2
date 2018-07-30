@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.8 2018/07/30 05:23:00 jmc Exp $
+.\" $OpenBSD: unveil.2,v 1.9 2018/07/30 15:21:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft int
-.Fn unveil "const char *path" "const char *flags"
+.Fn unveil "const char *path" "const char *permissions"
 .Sh DESCRIPTION
 The first call to
 .Nm
@@ -34,59 +34,63 @@ filesystem-related system calls (such as
 and
 .Xr rename 2 ) ,
 except for the specified
-.Ar path .
+.Ar path
+and
+.Ar permission .
 Subsequent calls to
 .Nm
-expose additional views of the filesystem.
+can expose additional paths with specified permissions in the filesystem.
 .Pp
 The
 .Nm
-call is treated specially and can continue to see the filesystem for
-subsequent calls.
+call itself is treated specially and can continue to see the
+filesystem for subsequent calls.
+.Pp
+Future calls to
 .Nm
-can be locked,
-preventing further filesytem exposure by calling
-.Nm
-with two
+can be blocked by passing two
 .Ar NULL
 arguments.
+If the veil is not yet active, this does not activate it.
+Alternatively,
 .Xr pledge 2
-may alternatively be used
-to remove the "unveil" permission.
+may be used to remove the
+.Va unveil
+promise.
 .Pp
 The
-.Fa flags
+.Fa permissions
 argument points to a string consisting of the following characters:
 .Pp
 .Bl -tag -width "XXXX" -offset indent -compact
 .It Dv r
-make
+Make
 .Ar path
 available for read operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar rpath
+.Ar rpath .
 .It Dv w
-make
+Make
 .Ar path
 available for write operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar wpath
+.Ar wpath .
 .It Dv x
-make
+Make
 .Ar path
 available for execute operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar exec
+.Ar exec .
 .It Dv c
-allow
+Allow
 .Ar path
 to be created and removed, corresponding to the
 .Xr pledge 2
 promise
-.Ar cpath
+.Ar cpath .
 .El
 .Pp
 A
@@ -94,7 +98,7 @@ A
 that is a directory will enable all filesystem access underneath
 .Ar path
 using
-.Ar flags
+.Ar permissions
 if and only if no more specific matching
 .Fn unveil
 exists at a lower level.
@@ -104,8 +108,8 @@ This means that a directory that is removed and recreated after a call to
 .Fn unveil
 will appear to not exist.
 .Pp
-Non directories are remembered by name within their containing directory,
-and so may be created, removed, or re-created after a call to
+Non-directories paths are remembered by name within their containing
+directory, and so may be created, removed, or re-created after a call to
 .Fn unveil
 and still appear to exist.
 .Pp
@@ -114,12 +118,12 @@ Attempts to access paths not allowed by
 will result in an error of
 .Ar EACCES
 when the
-.Ar flags
+.Ar permissions
 argument does not match the attempted operation.
 .Ar ENOENT
 is returned for paths for which no
 .Nm
-flags are present.
+permissions qualify.
 .Pp
 As with
 .Xr pledge 2 ,
@@ -144,16 +148,14 @@ A directory in
 did not exist.
 .It EINVAL
 An invalid value of
-.Ar flags
+.Ar permissions
 was used.
 .It EPERM
-An attempt to add permission to
-.Ar flags
-was made, or
+An attempt to increase permissions was made, or the
 .Ar path
 was not accessible, or
 .Nm
-was called after it was locked.
+was called after locking.
 .El
 .Sh HISTORY
 The
