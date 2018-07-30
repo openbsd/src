@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.187 2018/07/30 15:16:27 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.188 2018/07/30 19:09:51 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -88,11 +88,11 @@
 #else
 26	UNIMPL		ptrace
 #endif
-27	STD		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
+27	STD NOLOCK	{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
-28	STD		{ ssize_t sys_sendmsg(int s, \
+28	STD NOLOCK	{ ssize_t sys_sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-29	STD		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
+29	STD NOLOCK	{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
 			    socklen_t *fromlenaddr); }
 30	STD		{ int sys_accept(int s, struct sockaddr *name, \
@@ -262,7 +262,7 @@
 130	OBSOL		oftruncate
 131	STD		{ int sys_flock(int fd, int how); }
 132	STD		{ int sys_mkfifo(const char *path, mode_t mode); }
-133	STD		{ ssize_t sys_sendto(int s, const void *buf, \
+133	STD NOLOCK	{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    socklen_t tolen); }
 134	STD		{ int sys_shutdown(int s, int how); }
