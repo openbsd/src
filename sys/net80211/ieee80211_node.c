@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.134 2018/07/19 09:16:17 florian Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.135 2018/07/30 11:09:17 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -419,7 +419,6 @@ ieee80211_match_ess(struct ieee80211com *ic)
 void
 ieee80211_set_ess(struct ieee80211com *ic, char *nwid)
 {
-	struct ifnet		*ifp = &ic->ic_if;
 	struct ieee80211_ess	*ess;
 
 	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
@@ -462,14 +461,6 @@ ieee80211_set_ess(struct ieee80211com *ic, char *nwid)
 		ic->ic_def_txkey = ess->def_txkey;
 		ic->ic_flags |= IEEE80211_F_WEPON;
 	}
-
-	/* join the (new) ess station */
-	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
-		ieee80211_media_change(ifp);
-	}
-
-	return;
 }
 
 void
