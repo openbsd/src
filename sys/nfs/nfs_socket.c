@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.129 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.130 2018/07/30 12:22:14 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ nfs_disconnect(struct nfsmount *nmp)
 		so = nmp->nm_so;
 		nmp->nm_so = NULL;
 		soshutdown(so, SHUT_RDWR);
-		soclose(so);
+		soclose(so, 0);
 	}
 }
 

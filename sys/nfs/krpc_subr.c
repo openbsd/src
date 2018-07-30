@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.33 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.34 2018/07/30 12:22:14 mpi Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	m_freem(nam);
 	m_freem(mhead);
 	m_freem(from);
-	soclose(so);
+	soclose(so, 0);
 	return error;
 }
 

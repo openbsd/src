@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.225 2018/07/05 14:45:07 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.226 2018/07/30 12:22:14 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ sofree(struct socket *so, int s)
  * Free socket when disconnect complete.
  */
 int
-soclose(struct socket *so)
+soclose(struct socket *so, int flags)
 {
 	struct socket *so2;
 	int s, error = 0;
@@ -270,7 +270,7 @@ soclose(struct socket *so)
 		}
 		if (so->so_options & SO_LINGER) {
 			if ((so->so_state & SS_ISDISCONNECTING) &&
-			    (so->so_state & SS_NBIO))
+			    (flags & MSG_DONTWAIT))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
 				error = sosleep(so, &so->so_timeo,
@@ -469,7 +469,7 @@ restart:
 		if (space < clen ||
 		    (space - clen < resid &&
 		    (atomic || space < so->so_snd.sb_lowat))) {
-			if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT))
+			if (flags & MSG_DONTWAIT)
 				snderr(EWOULDBLOCK);
 			sbunlock(so, &so->so_snd);
 			error = sbwait(so, &so->so_snd);
@@ -664,8 +664,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = *flagsp &~ MSG_EOR;
 	else
 		flags = 0;
-	if (so->so_state & SS_NBIO)
-		flags |= MSG_DONTWAIT;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		s = solock(so);
@@ -748,7 +746,7 @@ restart:
 		}
 		if (uio->uio_resid == 0 && controlp == NULL)
 			goto release;
-		if ((so->so_state & SS_NBIO) || (flags & MSG_DONTWAIT)) {
+		if (flags & MSG_DONTWAIT) {
 			error = EWOULDBLOCK;
 			goto release;
 		}
@@ -1128,8 +1126,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
 		/* Lock receive buffer. */
-		if ((error = sblock(so, &so->so_rcv,
-		    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+		if ((error = sblock(so, &so->so_rcv, M_WAITOK)) != 0) {
 			return (error);
 		}
 		if (so->so_sp->ssp_socket)
@@ -1157,8 +1154,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
 	/* Lock both receive and send buffer. */
-	if ((error = sblock(so, &so->so_rcv,
-	    (so->so_state & SS_NBIO) ? M_NOWAIT : M_WAITOK)) != 0) {
+	if ((error = sblock(so, &so->so_rcv, M_WAITOK)) != 0) {
 		goto frele;
 	}
 	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {

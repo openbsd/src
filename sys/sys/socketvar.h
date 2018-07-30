@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.85 2018/07/10 10:02:14 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.86 2018/07/30 12:22:14 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -148,7 +148,6 @@ struct socket {
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
-#define	SS_NBIO			0x100	/* non-blocking ops */
 #define	SS_ASYNC		0x200	/* async i/o notify */
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
@@ -312,7 +311,7 @@ int	soaccept(struct socket *so, struct mbuf *nam);
 int	sobind(struct socket *so, struct mbuf *nam, struct proc *p);
 void	socantrcvmore(struct socket *so);
 void	socantsendmore(struct socket *so);
-int	soclose(struct socket *so);
+int	soclose(struct socket *, int);
 int	soconnect(struct socket *so, struct mbuf *nam);
 int	soconnect2(struct socket *so1, struct socket *so2);
 int	socreate(int dom, struct socket **aso, int type, int proto);

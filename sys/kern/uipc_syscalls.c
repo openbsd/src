@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.177 2018/06/20 10:52:49 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.178 2018/07/30 12:22:14 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -109,13 +109,11 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	error = falloc(p, &fp, &fd);
 	if (error) {
 		fdpunlock(fdp);
-		soclose(so);
+		soclose(so, MSG_DONTWAIT);
 	} else {
 		fp->f_flag = fflag;
 		fp->f_type = DTYPE_SOCKET;
 		fp->f_ops = &socketops;
-		if (nonblock)
-			so->so_state |= SS_NBIO;
 		so->so_state |= ss;
 		fp->f_data = so;
 		fdinsert(fdp, fd, cloexec, fp);
@@ -302,7 +300,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		error = EINVAL;
 		goto out;
 	}
-	if ((head->so_state & SS_NBIO) && head->so_qlen == 0) {
+	if ((headfp->f_flag & FNONBLOCK) && head->so_qlen == 0) {
 		if (head->so_state & SS_CANTRCVMORE)
 			error = ECONNABORTED;
 		else
@@ -347,10 +345,6 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		error = copyaddrout(p, nam, name, namelen, anamelen);
 out:
 	if (!error) {
-		if (nflag & FNONBLOCK)
-			so->so_state |= SS_NBIO;
-		else
-			so->so_state &= ~SS_NBIO;
 		sounlock(head, s);
 		fdplock(fdp);
 		fp->f_data = so;
@@ -416,7 +410,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if ((fp->f_flag & FNONBLOCK) && (so->so_state & SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}
@@ -503,12 +497,6 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrfds(p, sv, 2);
 #endif
-		if (nonblock) {
-			(*fp1->f_ops->fo_ioctl)(fp1, FIONBIO, (caddr_t)&type,
-			    p);
-			(*fp2->f_ops->fo_ioctl)(fp2, FIONBIO, (caddr_t)&type,
-			    p);
-		}
 		fdinsert(fdp, sv[0], cloexec, fp1);
 		fdinsert(fdp, sv[1], cloexec, fp2);
 		fdpunlock(fdp);
@@ -529,10 +517,10 @@ free3:
 	KERNEL_UNLOCK();
 free2:
 	if (so2 != NULL)
-		(void)soclose(so2);
+		(void)soclose(so2, 0);
 free1:
 	if (so1 != NULL)
-		(void)soclose(so1);
+		(void)soclose(so1, 0);
 	return (error);
 }
 
@@ -626,6 +614,8 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	if (fp->f_flag & FNONBLOCK)
+		flags |= MSG_DONTWAIT;
 
 	error = pledge_sendit(p, mp->msg_name);
 	if (error)
@@ -849,6 +839,8 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	}
 #endif
 	len = auio.uio_resid;
+	if (fp->f_flag & FNONBLOCK)
+		mp->msg_flags |= MSG_DONTWAIT;
 	error = soreceive(fp->f_data, &from, &auio, NULL,
 			  mp->msg_control ? &control : NULL,
 			  &mp->msg_flags,

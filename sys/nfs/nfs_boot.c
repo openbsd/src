@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.44 2017/11/14 16:01:55 tb Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.45 2018/07/30 12:22:14 mpi Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	if (error)
 		panic("nfs_boot: set if addr, error=%d", error);
 
-	soclose(so);
+	soclose(so, 0);
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)

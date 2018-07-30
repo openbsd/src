@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.71 2018/06/06 06:55:22 mpi Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.72 2018/07/30 12:22:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -250,14 +250,14 @@ bfd_clear_task(void *arg)
 	if (bfd->bc_so) {
 		/* remove upcall before calling soclose or it will be called */
 		bfd->bc_so->so_upcall = NULL;
-		soclose(bfd->bc_so);
+		soclose(bfd->bc_so, MSG_DONTWAIT);
 	}
 	if (bfd->bc_soecho) {
 		bfd->bc_soecho->so_upcall = NULL;
-		soclose(bfd->bc_soecho);
+		soclose(bfd->bc_soecho, MSG_DONTWAIT);
 	}
 	if (bfd->bc_sosend)
-		soclose(bfd->bc_sosend);
+		soclose(bfd->bc_sosend, MSG_DONTWAIT);
 
 	rtfree(bfd->bc_rt);
 	bfd->bc_rt = NULL;
@@ -495,7 +495,7 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 
  close:
 	m_free(m);
-	soclose(so);
+	soclose(so, MSG_DONTWAIT);
 
 	return (NULL);
 }
@@ -624,7 +624,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 
  close:
 	m_free(m);
-	soclose(so);
+	soclose(so, MSG_DONTWAIT);
 
 	return (NULL);
 }
