@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.54 2018/07/04 02:05:06 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.55 2018/07/30 14:19:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -387,13 +387,13 @@ hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 void
 hibernate_enable_intr_machdep(void)
 {
-	enable_intr();
+	intr_enable();
 }
 
 void
 hibernate_disable_intr_machdep(void)
 {
-	disable_intr();
+	intr_disable();
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.69 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: npx.c,v 1.70 2018/07/30 14:19:12 kettenis Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -275,7 +275,7 @@ npxprobe(struct device *parent, void *match, void *aux)
 	struct	isa_attach_args *ia = aux;
 	int	irq;
 	int	result;
-	u_long	save_eflags;
+	u_long	s;
 	unsigned save_imen;
 	struct	gate_descriptor save_idt_npxintr;
 	struct	gate_descriptor save_idt_npxtrap;
@@ -297,8 +297,7 @@ npxprobe(struct device *parent, void *match, void *aux)
 	 * won't need to do so much here.
 	 */
 	irq = NRSVIDT + ia->ia_irq;
-	save_eflags = read_eflags();
-	disable_intr();
+	s = intr_disable();
 	save_idt_npxintr = idt[irq];
 	save_idt_npxtrap = idt[16];
 	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL, GICODE_SEL);
@@ -320,16 +319,16 @@ npxprobe(struct device *parent, void *match, void *aux)
 	 * We have to turn off the CR0_EM bit temporarily while probing.
 	 */
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	enable_intr();
+	intr_restore(s);
 	result = npxprobe1(ia);
-	disable_intr();
+	s = intr_disable();
 	lcr0(rcr0() | (CR0_EM|CR0_TS));
 
 	imen = save_imen;
 	SET_ICUS();
 	idt[irq] = save_idt_npxintr;
 	idt[16] = save_idt_npxtrap;
-	write_eflags(save_eflags);
+	intr_restore(s);
 	return (result);
 }
 

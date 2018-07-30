@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.46 2017/05/04 15:19:01 bluhm Exp $	*/
+/*	$OpenBSD: gus.c,v 1.47 2018/07/30 14:19:12 kettenis Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -3198,6 +3198,7 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	int		i;
 	bus_space_tag_t iot;
 	unsigned char	c,d,m;
+	u_long		s;
 
 	iot = sc->sc_iot;
 
@@ -3244,7 +3245,7 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	 * The order of these operations is very magical.
 	 */
 
-	disable_intr();		/* XXX needed? */
+	s = intr_disable();		/* XXX needed? */
 
 	bus_space_write_1(iot, sc->sc_ioh1, GUS_REG_CONTROL, GUS_REG_IRQCTL);
 	bus_space_write_1(iot, sc->sc_ioh1, GUS_MIX_CONTROL, m);
@@ -3274,7 +3275,7 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	     (m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN));
 	bus_space_write_1(iot, sc->sc_ioh2, GUS_VOICE_SELECT, 0x00);
 
-	enable_intr();
+	intr_restore(s);
 
 	sc->sc_mixcontrol =
 		(m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN);

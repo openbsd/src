@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.42 2018/07/04 02:06:15 mlarkin Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.43 2018/07/30 14:19:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -154,6 +154,7 @@ k7_powernow_setperf(int level)
 	int cvid, cfid, vid = 0, fid = 0;
 	uint64_t status, ctl;
 	struct k7pnow_cpu_state * cstate;
+	u_long s;
 
 	cstate = k7pnow_current_state;
 
@@ -183,7 +184,7 @@ k7_powernow_setperf(int level)
 	ctl |= PN7_CTR_SGTC(cstate->sgtc);
 
 	if (cstate->flags & PN7_FLAG_ERRATA_A0)
-		disable_intr();
+		s = intr_disable();
 
 	if (k7pnow_fid_to_mult[fid] < k7pnow_fid_to_mult[cfid]) {
 		wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
@@ -196,7 +197,7 @@ k7_powernow_setperf(int level)
 	}
 
 	if (cstate->flags & PN7_FLAG_ERRATA_A0)
-		enable_intr();
+		intr_restore(s);
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cfid = PN7_STA_CFID(status);

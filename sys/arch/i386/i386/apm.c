@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.117 2017/08/17 19:44:27 tedu Exp $	*/
+/*	$OpenBSD: apm.c,v 1.118 2018/07/30 14:19:12 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -247,7 +247,7 @@ apm_suspend(int state)
 	bufq_quiesce();
 
 	s = splhigh();
-	disable_intr();
+	intr_disable();
 	cold = 2;
 	config_suspend_all(DVACT_SUSPEND);
 	suspend_randomness();
@@ -272,7 +272,7 @@ apm_suspend(int state)
 
 	config_suspend_all(DVACT_RESUME);
 	cold = 0;
-	enable_intr();
+	intr_enable();
 	splx(s);
 
 	resume_randomness(NULL, 0);	/* force RNG upper level reseed */

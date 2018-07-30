@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.29 2018/06/30 10:16:35 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.30 2018/07/30 14:19:12 kettenis Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -56,8 +56,6 @@ static __inline u_int rcr3(void);
 static __inline void lcr4(u_int);
 static __inline u_int rcr4(void);
 static __inline void tlbflush(void);
-static __inline void disable_intr(void);
-static __inline void enable_intr(void);
 static __inline u_int read_eflags(void);
 static __inline void write_eflags(u_int);
 static __inline void wbinvd(void);
@@ -156,18 +154,6 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 
 /* XXXX ought to be in psl.h with spl() functions */
 
-static __inline void
-disable_intr(void)
-{
-	__asm volatile("cli");
-}
-
-static __inline void
-enable_intr(void)
-{
-	__asm volatile("sti");
-}
-
 static __inline u_int
 read_eflags(void)
 {
@@ -186,7 +172,7 @@ write_eflags(u_int ef)
 static inline void
 intr_enable(void)
 {
-	enable_intr();
+	__asm volatile("sti");
 }
 
 static inline u_long
@@ -195,7 +181,7 @@ intr_disable(void)
 	u_long ef;
 
 	ef = read_eflags();
-	disable_intr();
+	__asm volatile("cli");
 	return (ef);
 }
 

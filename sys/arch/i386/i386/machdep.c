@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.621 2018/07/24 17:31:23 brynet Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.622 2018/07/30 14:19:12 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3418,7 +3418,7 @@ cpu_reset(void)
 {
 	struct region_descriptor region;
 
-	disable_intr();
+	intr_disable();
 
 	if (cpuresetfn)
 		(*cpuresetfn)();

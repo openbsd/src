@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.46 2018/04/20 07:27:54 mlarkin Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.47 2018/07/30 14:19:12 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -77,11 +77,12 @@ void	lapic_map(paddr_t);
 void
 lapic_map(paddr_t lapic_base)
 {
-	int s;
 	vaddr_t va = (vaddr_t)&local_apic;
+	u_long s;
+	int tpr;
 
-	disable_intr();
-	s = lapic_tpr;
+	s = intr_disable();
+	tpr = lapic_tpr;
 
 	/*
 	 * Map local apic.  If we have a local apic, it's safe to assume
@@ -103,8 +104,8 @@ lapic_map(paddr_t lapic_base)
 	cpu_init_first();
 #endif
 
-	lapic_tpr = s;
-	enable_intr();
+	lapic_tpr = tpr;
+	intr_restore(s);
 }
 
 /*
@@ -316,7 +317,8 @@ lapic_calibrate_timer(struct cpu_info *ci)
 {
 	unsigned int startapic, endapic;
 	u_int64_t dtick, dapic, tmp;
-	int i, ef = read_eflags();
+	u_long s;
+	int i;
 
 	if (mp_verbose)
 		printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
@@ -329,7 +331,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
-	disable_intr();
+	s = intr_disable();
 
 	/* wait for current cycle to finish */
 	wait_next_cycle();
@@ -341,7 +343,8 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		wait_next_cycle();
 
 	endapic = lapic_gettick();
-	write_eflags(ef);
+
+	intr_restore(s);
 
 	dtick = hz * TIMER_DIV(hz);
 	dapic = startapic-endapic;

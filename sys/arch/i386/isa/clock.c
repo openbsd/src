@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.52 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.53 2018/07/30 14:19:12 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -244,6 +244,7 @@ rtcintr(void *arg)
 int
 gettick(void)
 {
+	u_long s;
 
 	if (clock_broken_latch) {
 		int v1, v2, v3;
@@ -254,7 +255,7 @@ gettick(void)
 		 * CPUs don't do MP anyway.
 		 */
 
-		disable_intr();
+		s = intr_disable();
 
 		v1 = inb(IO_TIMER1 + TIMER_CNTR0);
 		v1 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
@@ -263,7 +264,7 @@ gettick(void)
 		v3 = inb(IO_TIMER1 + TIMER_CNTR0);
 		v3 |= inb(IO_TIMER1 + TIMER_CNTR0) << 8;
 
-		enable_intr();
+		intr_restore(s);
 
 		if (v1 >= v2 && v2 >= v3 && v1 - v3 < 0x200)
 			return (v2);
@@ -298,17 +299,15 @@ gettick(void)
 		return (v3);
 	} else {
 		u_char lo, hi;
-		u_long ef;
 
 		mtx_enter(&timer_mutex);
-		ef = read_eflags();
-		disable_intr();
+		s = intr_disable();
 		/* Select counter 0 and latch it. */
 		outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 		lo = inb(IO_TIMER1 + TIMER_CNTR0);
 		hi = inb(IO_TIMER1 + TIMER_CNTR0);
 
-		write_eflags(ef);
+		intr_restore(s);
 		mtx_leave(&timer_mutex);
 		return ((hi << 8) | lo);
 	}
@@ -750,10 +749,9 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_char hi, lo;
 	u_int count;
-	u_long ef;
+	u_long s;
 
-	ef = read_eflags();
-	disable_intr();
+	s = intr_disable();
 
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1 + TIMER_CNTR0);
@@ -767,7 +765,8 @@ i8254_get_timecount(struct timecounter *tc)
 	}
 	i8254_lastcount = count;
 	count += i8254_offset;
-	write_eflags(ef);
+
+	intr_restore(s);
 
 	return (count);
 }
