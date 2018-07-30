@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.296 2018/07/27 01:44:19 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.297 2018/07/30 00:11:04 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -912,9 +912,6 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 #endif
 	if (pathlen < 2)
 		return EINVAL;
-
-	/* XXX unveil is disabled but returns sucess for now */
-	return 0;
 
 	if (pathlen == 2 && pathname[0] == '/')
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME,
