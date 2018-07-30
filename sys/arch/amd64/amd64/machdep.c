@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.249 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.250 2018/07/30 09:04:52 jmatthew Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1481,6 +1481,16 @@ init_x86_64(paddr_t first_avail)
 		/* Nuke low pages */
 		if (s1 < avail_start) {
 			s1 = avail_start;
+			if (s1 > e1)
+				continue;
+		}
+
+		/*
+		 * The direct map is limited to 512GB of memory, so
+		 * discard anything above that.
+		 */
+		if (e1 >= (uint64_t)512*1024*1024*1024) {
+			e1 = (uint64_t)512*1024*1024*1024;
 			if (s1 > e1)
 				continue;
 		}
