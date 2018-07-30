@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.6 2017/10/10 20:31:50 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.7 2018/07/30 15:56:30 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -235,7 +235,7 @@ hidmt_configure(struct hidmt *mt)
 		return;
 
 	hw = wsmouse_get_hw(mt->sc_wsmousedev);
-	hw->type = WSMOUSE_TYPE_ELANTECH;	/* see hidmt_ioctl */
+	hw->type = WSMOUSE_TYPE_TOUCHPAD;
 	hw->hw_type = (mt->sc_clickpad
 	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
 	hw->x_min = mt->sc_minx;
@@ -468,13 +468,11 @@ hidmt_ioctl(struct hidmt *mt, u_long cmd, caddr_t data, int flag,
 	int wsmode;
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		/*
-		 * So we can specify our own finger/w values to the
-		 * xf86-input-synaptics driver like pms(4)
-		 */
-		*(u_int *)data = WSMOUSE_TYPE_ELANTECH;
+	case WSMOUSEIO_GTYPE: {
+		struct wsmousehw *hw = wsmouse_get_hw(mt->sc_wsmousedev);
+		*(u_int *)data = hw->type;
 		break;
+	}
 
 	case WSMOUSEIO_GCALIBCOORDS:
 		wsmc->minx = mt->sc_minx;

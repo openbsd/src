@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.88 2018/05/07 21:58:42 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.89 2018/07/30 15:56:30 jcs Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -238,6 +238,7 @@ struct wskbd_encoding_data {
 #define		WSMOUSE_TYPE_SGI	17	/* SGI serial mouse */
 #define		WSMOUSE_TYPE_ELANTECH	18	/* Elantech touchpad */
 #define		WSMOUSE_TYPE_SYNAP_SBTN	19	/* Synaptics soft buttons */
+#define		WSMOUSE_TYPE_TOUCHPAD	20	/* Generic touchpad */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)

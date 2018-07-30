@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.17 2017/06/06 21:53:07 bru Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.18 2018/07/30 15:56:30 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -521,7 +521,7 @@ ubcmtp_configure(struct ubcmtp_softc *sc)
 {
 	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
 
-	hw->type = WSMOUSE_TYPE_ELANTECH;	/* see ubcmtp_ioctl */
+	hw->type = WSMOUSE_TYPE_TOUCHPAD;
 	hw->hw_type = (IS_CLICKPAD(sc->dev_type->type)
 	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
 	hw->x_min = sc->dev_type->l_x.min;
@@ -601,11 +601,11 @@ ubcmtp_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 	    cmd);
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		/* so we can specify our own finger/w values to the
-		 * xf86-input-synaptics driver like pms(4) */
-		*(u_int *)data = WSMOUSE_TYPE_ELANTECH;
+	case WSMOUSEIO_GTYPE: {
+		struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+		*(u_int *)data = hw->type;
 		break;
+	}
 
 	case WSMOUSEIO_GCALIBCOORDS:
 		wsmc->minx = sc->dev_type->l_x.min;

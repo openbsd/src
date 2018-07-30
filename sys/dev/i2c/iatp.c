@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.5 2018/06/22 15:58:26 jcs Exp $ */
+/* $OpenBSD: iatp.c,v 1.6 2018/07/30 15:56:30 jcs Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -325,7 +325,7 @@ iatp_configure(struct iatp_softc *sc)
 
 	hw = wsmouse_get_hw(sc->sc_wsmousedev);
 	if (sc->sc_touchpad) {
-		hw->type = WSMOUSE_TYPE_SYNAPTICS;
+		hw->type = WSMOUSE_TYPE_TOUCHPAD;
 		hw->hw_type = WSMOUSEHW_CLICKPAD;
 	} else {
 		hw->type = WSMOUSE_TYPE_TPANEL;
@@ -415,12 +415,11 @@ iatp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wsmc->resy = sc->sc_tsscale.resy;
 		break;
 
-	case WSMOUSEIO_GTYPE:
-		if (sc->sc_touchpad)
-			*(u_int *)data = WSMOUSE_TYPE_SYNAPTICS;
-		else
-			*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+	case WSMOUSEIO_GTYPE: {
+		struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+		*(u_int *)data = hw->type;
 		break;
+	}
 
 	case WSMOUSEIO_SETMODE:
 		if (!sc->sc_touchpad)
