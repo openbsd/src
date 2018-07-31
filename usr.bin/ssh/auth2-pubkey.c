@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-pubkey.c,v 1.82 2018/07/11 18:55:11 markus Exp $ */
+/* $OpenBSD: auth2-pubkey.c,v 1.83 2018/07/31 03:10:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -86,19 +86,15 @@ userauth_pubkey(struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	struct passwd *pw = authctxt->pw;
-	struct sshbuf *b;
+	struct sshbuf *b = NULL;
 	struct sshkey *key = NULL;
-	char *pkalg, *userstyle = NULL, *key_s = NULL, *ca_s = NULL;
-	u_char *pkblob, *sig, have_sig;
+	char *pkalg = NULL, *userstyle = NULL, *key_s = NULL, *ca_s = NULL;
+	u_char *pkblob = NULL, *sig = NULL, have_sig;
 	size_t blen, slen;
 	int r, pktype;
 	int authenticated = 0;
 	struct sshauthopt *authopts = NULL;
 
-	if (!authctxt->valid) {
-		debug2("%s: disabled because of invalid user", __func__);
-		return 0;
-	}
 	if ((r = sshpkt_get_u8(ssh, &have_sig)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &pkalg, NULL)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &pkblob, &blen)) != 0)
@@ -164,6 +160,11 @@ userauth_pubkey(struct ssh *ssh)
 				fatal("%s: sshbuf_put_string session id: %s",
 				    __func__, ssh_err(r));
 		}
+		if (!authctxt->valid || authctxt->user == NULL) {
+			debug2("%s: disabled because of invalid user",
+			    __func__);
+			goto done;
+		}
 		/* reconstruct packet */
 		xasprintf(&userstyle, "%s%s%s", authctxt->user,
 		    authctxt->style ? ":" : "",
@@ -180,7 +181,6 @@ userauth_pubkey(struct ssh *ssh)
 #ifdef DEBUG_PK
 		sshbuf_dump(b, stderr);
 #endif
-
 		/* test for correct signature */
 		authenticated = 0;
 		if (PRIVSEP(user_key_allowed(ssh, pw, key, 1, &authopts)) &&
@@ -191,7 +191,6 @@ userauth_pubkey(struct ssh *ssh)
 			authenticated = 1;
 		}
 		sshbuf_free(b);
-		free(sig);
 		auth2_record_key(authctxt, authenticated, key);
 	} else {
 		debug("%s: test pkalg %s pkblob %s%s%s",
@@ -202,6 +201,11 @@ userauth_pubkey(struct ssh *ssh)
 		if ((r = sshpkt_get_end(ssh)) != 0)
 			fatal("%s: %s", __func__, ssh_err(r));
 
+		if (!authctxt->valid || authctxt->user == NULL) {
+			debug2("%s: disabled because of invalid user",
+			    __func__);
+			goto done;
+		}
 		/* XXX fake reply and always send PK_OK ? */
 		/*
 		 * XXX this allows testing whether a user is allowed
@@ -235,6 +239,7 @@ done:
 	free(pkblob);
 	free(key_s);
 	free(ca_s);
+	free(sig);
 	return authenticated;
 }
 
