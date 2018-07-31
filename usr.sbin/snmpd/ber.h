@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.11 2018/06/29 19:28:02 rob Exp $ */
+/*	$OpenBSD: ber.h,v 1.12 2018/07/31 11:01:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -22,8 +22,8 @@
 
 struct ber_element {
 	struct ber_element	*be_next;
-	unsigned long		 be_type;
-	unsigned long		 be_encoding;
+	unsigned int		 be_type;
+	unsigned int		 be_encoding;
 	size_t			 be_len;
 	off_t			 be_offs;
 	int			 be_free;
@@ -49,11 +49,11 @@ struct ber {
 	u_char	*br_rptr;
 	u_char	*br_rend;
 
-	unsigned long	(*br_application)(struct ber_element *);
+	unsigned int	(*br_application)(struct ber_element *);
 };
 
 /* well-known ber_element types */
-#define BER_TYPE_DEFAULT	((unsigned long)-1)
+#define BER_TYPE_DEFAULT	((unsigned int)-1)
 #define BER_TYPE_EOC		0
 #define BER_TYPE_BOOLEAN	1
 #define BER_TYPE_INTEGER	2
@@ -84,9 +84,9 @@ struct ber_oid {
 };
 
 __BEGIN_DECLS
-struct ber_element	*ber_get_element(unsigned long);
+struct ber_element	*ber_get_element(unsigned int);
 void			 ber_set_header(struct ber_element *, int,
-			    unsigned long);
+			    unsigned int);
 void			 ber_link_elements(struct ber_element *,
 			    struct ber_element *);
 struct ber_element	*ber_unlink_elements(struct ber_element *);
@@ -131,7 +131,7 @@ void			 ber_free_element(struct ber_element *);
 void			 ber_free_elements(struct ber_element *);
 size_t			 ber_calc_len(struct ber_element *);
 void			 ber_set_application(struct ber *,
-			    unsigned long (*)(struct ber_element *));
+			    unsigned int (*)(struct ber_element *));
 void			 ber_set_writecallback(struct ber_element *,
 			    void (*)(void *, size_t), void *);
 void			 ber_free(struct ber *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.43 2018/07/13 08:50:38 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.44 2018/07/31 11:01:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,7 @@ static int	ber_dump_element(struct ber *ber, struct ber_element *root);
 static void	ber_dump_header(struct ber *ber, struct ber_element *root);
 static void	ber_putc(struct ber *ber, u_char c);
 static void	ber_write(struct ber *ber, void *buf, size_t len);
-static ssize_t	get_id(struct ber *b, unsigned long *tag, int *class,
+static ssize_t	get_id(struct ber *b, unsigned int *tag, int *class,
     int *cstruct);
 static ssize_t	get_len(struct ber *b, ssize_t *len);
 static ssize_t	ber_read_element(struct ber *ber, struct ber_element *elm);
@@ -56,7 +56,7 @@ static ssize_t	ber_read(struct ber *ber, void *buf, size_t len);
 #endif
 
 struct ber_element *
-ber_get_element(unsigned long encoding)
+ber_get_element(unsigned int encoding)
 {
 	struct ber_element *elm;
 
@@ -70,7 +70,7 @@ ber_get_element(unsigned long encoding)
 }
 
 void
-ber_set_header(struct ber_element *elm, int class, unsigned long type)
+ber_set_header(struct ber_element *elm, int class, unsigned int type)
 {
 	elm->be_class = class & BER_CLASS_MASK;
 	if (type == BER_TYPE_DEFAULT)
@@ -521,7 +521,7 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 	va_list			 ap;
 	int			 d, class;
 	size_t			 len;
-	unsigned long		 type;
+	unsigned int		 type;
 	long long		 i;
 	char			*s;
 	void			*p;
@@ -578,7 +578,7 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 			break;
 		case 't':
 			class = va_arg(ap, int);
-			type = va_arg(ap, unsigned long);
+			type = va_arg(ap, unsigned int);
 			ber_set_header(ber, class, type);
 			break;
 		case 'x':
@@ -626,7 +626,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 #define _MAX_SEQ		 128
 	va_list			 ap;
 	int			*d, level = -1;
-	unsigned long		*t;
+	unsigned int		*t;
 	long long		*i, l;
 	void			**ptr;
 	size_t			*len, ret = 0, n = strlen(fmt);
@@ -694,7 +694,7 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			break;
 		case 't':
 			d = va_arg(ap, int *);
-			t = va_arg(ap, unsigned long *);
+			t = va_arg(ap, unsigned int *);
 			*d = ber->be_class;
 			*t = ber->be_type;
 			ret++;
@@ -867,7 +867,7 @@ ber_free_elements(struct ber_element *root)
 size_t
 ber_calc_len(struct ber_element *root)
 {
-	unsigned long t;
+	unsigned int t;
 	size_t s;
 	size_t size = 2;	/* minimum 1 byte head and 1 byte size */
 
@@ -945,8 +945,8 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 static void
 ber_dump_header(struct ber *ber, struct ber_element *root)
 {
-	u_char	id = 0, t, buf[8];
-	unsigned long type;
+	u_char	id = 0, t, buf[5];
+	unsigned int type;
 	size_t size;
 
 	/* class universal, type encoding depending on type value */
@@ -1010,11 +1010,11 @@ ber_write(struct ber *ber, void *buf, size_t len)
  * extract a BER encoded tag. There are two types, a short and long form.
  */
 static ssize_t
-get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
+get_id(struct ber *b, unsigned int *tag, int *class, int *cstruct)
 {
 	u_char u;
 	size_t i = 0;
-	unsigned long t = 0;
+	unsigned int t = 0;
 
 	if (ber_getc(b, &u) == -1)
 		return -1;
@@ -1032,7 +1032,7 @@ get_id(struct ber *b, unsigned long *tag, int *class, int *cstruct)
 			return -1;
 		t = (t << 7) | (u & ~BER_TAG_MORE);
 		i++;
-		if (i > sizeof(unsigned long)) {
+		if (i > sizeof(unsigned int)) {
 			errno = ERANGE;
 			return -1;
 		}
@@ -1093,7 +1093,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 {
 	long long val = 0;
 	struct ber_element *next;
-	unsigned long type;
+	unsigned int type;
 	int i, class, cstruct;
 	ssize_t len, r, totlen = 0;
 	u_char c;
@@ -1221,7 +1221,7 @@ ber_get_writebuf(struct ber *b, void **buf)
 }
 
 void
-ber_set_application(struct ber *b, unsigned long (*cb)(struct ber_element *))
+ber_set_application(struct ber *b, unsigned int (*cb)(struct ber_element *))
 {
 	b->br_application = cb;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.78 2018/04/15 11:57:29 mpf Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.79 2018/07/31 11:01:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -736,7 +736,7 @@ void		 smi_delete(struct oid *);
 int		 smi_insert(struct oid *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
 int		 smi_key_cmp(struct oid *, struct oid *);
-unsigned long	 smi_application(struct ber_element *);
+unsigned int	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
 char		*smi_print_element(struct ber_element *);
 

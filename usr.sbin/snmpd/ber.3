@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.16 2018/06/29 20:28:11 jmc Exp $
+.\" $OpenBSD: ber.3,v 1.17 2018/07/31 11:01:29 claudio Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 29 2018 $
+.Dd $Mdocdate: July 31 2018 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -65,9 +65,9 @@
 .Sh SYNOPSIS
 .Fd #include <ber.h>
 .Ft "struct ber_element *"
-.Fn "ber_get_element" "unsigned long encoding"
+.Fn "ber_get_element" "unsigned int encoding"
 .Ft "void"
-.Fn "ber_set_header" "struct ber_element *elm" "int class" "unsigned long type"
+.Fn "ber_set_header" "struct ber_element *elm" "int class" "unsigned int type"
 .Ft "void"
 .Fn "ber_link_elements" "struct ber_element *prev" "struct ber_element *elm"
 .Ft "struct ber_element *"
@@ -145,7 +145,7 @@
 .Ft "size_t"
 .Fn "ber_calc_len" "struct ber_element *root"
 .Ft "void"
-.Fn "ber_set_application" "struct ber *ber" "unsigned long (*cb)(struct ber_element *)"
+.Fn "ber_set_application" "struct ber *ber" "unsigned int (*cb)(struct ber_element *)"
 .Ft "void"
 .Fn "ber_set_writecallback" "struct ber_element *elm" "void (*cb)(void *arg, size_t offs)" "void *arg"
 .Ft "void"
