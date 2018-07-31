@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.134 2018/04/10 11:20:15 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.135 2018/07/31 10:32:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1188,6 +1188,7 @@ input_esc_dispatch(struct input_ctx *ictx)
 		window_pane_reset_palette(ictx->wp);
 		input_reset_cell(ictx);
 		screen_write_reset(sctx);
+		screen_write_clearhistory(sctx);
 		break;
 	case INPUT_ESC_IND:
 		screen_write_linefeed(sctx, 0, ictx->cell.cell.bg);
