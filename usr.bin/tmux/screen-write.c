@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.137 2018/07/04 09:44:07 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.138 2018/07/31 11:49:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1343,7 +1343,7 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 		collect = 0;
 	else if (s->mode & MODE_INSERT)
 		collect = 0;
-	else if (s->sel.flag)
+	else if (s->sel != NULL)
 		collect = 0;
 	if (!collect) {
 		screen_write_collect_end(ctx);
