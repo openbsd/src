@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.1 2018/06/02 12:19:26 kettenis Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.2 2018/07/31 10:07:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -70,7 +70,7 @@ struct cfdriver fanpwr_cd = {
 uint8_t	fanpwr_read(struct fanpwr_softc *, int);
 void	fanpwr_write(struct fanpwr_softc *, int, uint8_t);
 uint32_t fanpwr_get_voltage(void *);
-int	fanpwr_set_voltage(void *, uint32_t voltage);
+int	fanpwr_set_voltage(void *, uint32_t);
 
 int
 fanpwr_match(struct device *parent, void *match, void *aux)
@@ -236,7 +236,7 @@ fanpwr_set_voltage(void *cookie, uint32_t voltage)
 {
 	struct fanpwr_softc *sc = cookie;
 	uint32_t vmin = sc->sc_vbase;
-	uint32_t vmax = vmin + (FAN53555_VSEL_NSEL_MASK) * sc->sc_vstep;
+	uint32_t vmax = vmin + FAN53555_VSEL_NSEL_MASK * sc->sc_vstep;
 	uint8_t vsel;
 
 	if (voltage < vmin || voltage > vmax)
@@ -244,7 +244,7 @@ fanpwr_set_voltage(void *cookie, uint32_t voltage)
 
 	vsel = fanpwr_read(sc, sc->sc_vsel);
 	vsel &= ~FAN53555_VSEL_NSEL_MASK;
-	vsel |= (voltage - sc->sc_vbase) / sc->sc_vsel;
+	vsel |= (voltage - sc->sc_vbase) / sc->sc_vstep;
 	fanpwr_write(sc, sc->sc_vsel, vsel);
 
 	return 0;
