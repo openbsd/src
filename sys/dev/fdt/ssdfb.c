@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.1 2018/07/30 08:14:45 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.2 2018/07/31 12:41:57 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -302,7 +302,7 @@ ssdfb_update(void *v)
 			for (k = 0; k < 8; k++) {
 				off = ri->ri_stride * (i + k) + j / 8;
 				val = *(ri->ri_bits + off);
-				val &= (1 << (8 - (j % 8)));
+				val &= (1 << (j % 8));
 				*bit |= !!val << k;
 			}
 		}
