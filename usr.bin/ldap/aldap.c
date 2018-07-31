@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.2 2018/06/21 08:27:35 reyk Exp $ */
-/*	$OpenBSD: aldap.c,v 1.2 2018/06/21 08:27:35 reyk Exp $ */
+/*	$Id: aldap.c,v 1.3 2018/07/31 11:02:01 claudio Exp $ */
+/*	$OpenBSD: aldap.c,v 1.3 2018/07/31 11:02:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -47,7 +47,7 @@ int				aldap_create_page_control(struct ber_element *,
 				    int, struct aldap_page_control *);
 int				aldap_send(struct aldap *,
 				    struct ber_element *);
-unsigned long			aldap_application(struct ber_element *);
+unsigned int			aldap_application(struct ber_element *);
 
 #ifdef DEBUG
 void			 ldap_debug_elements(struct ber_element *);
@@ -61,7 +61,7 @@ void			 ldap_debug_elements(struct ber_element *);
 #define LDAP_DEBUG(x, y)	do { } while (0)
 #endif
 
-unsigned long
+unsigned int
 aldap_application(struct ber_element *elm)
 {
 	return BER_TYPE_OCTETSTRING;
@@ -168,8 +168,7 @@ aldap_req_starttls(struct aldap *ldap)
 		goto fail;
 
 	ber = ber_printf_elements(root, "d{tst", ++ldap->msgid, BER_CLASS_APP,
-	    (unsigned long) LDAP_REQ_EXTENDED, LDAP_STARTTLS_OID,
-	    BER_CLASS_CONTEXT, (unsigned long) 0);
+	    LDAP_REQ_EXTENDED, LDAP_STARTTLS_OID, BER_CLASS_CONTEXT, 0);
 	if (ber == NULL) {
 		ldap->err = ALDAP_ERR_OPERATION_FAILED;
 		goto fail;
@@ -201,8 +200,8 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 		goto fail;
 
 	elm = ber_printf_elements(root, "d{tdsst", ++ldap->msgid, BER_CLASS_APP,
-	    (unsigned long)LDAP_REQ_BIND, VERSION, binddn, bindcred,
-	    BER_CLASS_CONTEXT, (unsigned long)LDAP_AUTH_SIMPLE);
+	    LDAP_REQ_BIND, VERSION, binddn, bindcred, BER_CLASS_CONTEXT,
+	    LDAP_AUTH_SIMPLE);
 	if (elm == NULL)
 		goto fail;
 
@@ -261,7 +260,7 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 		goto fail;
 
 	ber = ber_printf_elements(root, "d{t", ++ldap->msgid, BER_CLASS_APP,
-	    (unsigned long) LDAP_REQ_SEARCH);
+	    LDAP_REQ_SEARCH);
 	if (ber == NULL) {
 		ldap->err = ALDAP_ERR_OPERATION_FAILED;
 		goto fail;
@@ -350,7 +349,7 @@ struct aldap_message *
 aldap_parse(struct aldap *ldap)
 {
 	int			 class;
-	unsigned long		 type;
+	unsigned int		 type;
 	long long		 msgid = 0;
 	struct aldap_message	*m;
 	struct ber_element	*a = NULL, *ep;
