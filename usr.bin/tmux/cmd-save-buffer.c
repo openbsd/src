@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.44 2018/07/11 08:29:21 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.45 2018/07/31 13:06:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -106,6 +106,8 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		flags = "ab";
 
 	file = server_client_get_path(c, path);
+	free(path);
+
 	f = fopen(file, flags);
 	if (f == NULL) {
 		cmdq_error(item, "%s: %s", file, strerror(errno));
@@ -122,7 +124,6 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 
 	fclose(f);
 	free(file);
-	free(path);
 
 	return (CMD_RETURN_NORMAL);
 
