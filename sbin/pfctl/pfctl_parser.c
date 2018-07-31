@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.325 2018/07/30 08:28:40 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.326 2018/07/31 22:48:04 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,7 +76,7 @@ struct node_host	*ifa_grouplookup(const char *, int);
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
-struct node_host	*host_dns(const char *, int, int, int);
+struct node_host	*host_dns(const char *, int, int);
 
 const char *tcpflags = "FSRPAUEW";
 
@@ -1628,7 +1628,7 @@ struct node_host *
 host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
-	int			 mask = -1, v4mask = 32, v6mask = 128;
+	int			 mask = -1;
 	char			*p, *r, *ps, *if_name;
 	const char		*errstr;
 
@@ -1643,20 +1643,19 @@ host(const char *s, int opts)
 	if ((p = strrchr(ps, '/')) != NULL) {
 		if ((r = strdup(ps)) == NULL)
 			err(1, "host: strdup");
-		mask = strtonum(p+1, 0, v6mask, &errstr);
+		mask = strtonum(p+1, 0, 128, &errstr);
 		if (errstr) {
 			fprintf(stderr, "netmask is %s: %s\n", errstr, p);
 			goto error;
 		}
 		p[0] = '\0';
-		v4mask = v6mask = mask;
 	} else
 		r = ps;
 
 	if ((h = host_if(ps, mask)) == NULL &&
 	    (h = host_v4(r, mask)) == NULL &&
-	    (h = host_v6(ps, v6mask)) == NULL &&
-	    (h = host_dns(ps, v4mask, v6mask, (opts & PF_OPT_NODNS))) == NULL) {
+	    (h = host_v6(ps, mask)) == NULL &&
+	    (h = host_dns(ps, mask, (opts & PF_OPT_NODNS))) == NULL) {
 		fprintf(stderr, "no IP address found for %s\n", s);
 		goto error;
 	}
@@ -1773,7 +1772,7 @@ host_v6(const char *s, int mask)
 		    sizeof(h->addr.v.a.addr));
 		h->ifindex =
 		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-		set_ipmask(h, mask);
+		set_ipmask(h, mask > -1 ? mask : 128);
 		freeaddrinfo(res);
 		h->next = NULL;
 		h->tail = h;
@@ -1783,7 +1782,7 @@ host_v6(const char *s, int mask)
 }
 
 struct node_host *
-host_dns(const char *s, int v4mask, int v6mask, int numeric)
+host_dns(const char *s, int mask, int numeric)
 {
 	struct addrinfo		 hints, *res0, *res;
 	struct node_host	*n, *h = NULL;
@@ -1829,7 +1828,7 @@ host_dns(const char *s, int v4mask, int v6mask, int numeric)
 			    &((struct sockaddr_in *)
 			    res->ai_addr)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
-			set_ipmask(n, v4mask);
+			set_ipmask(n, mask > -1 ? mask : 32);
 		} else {
 			memcpy(&n->addr.v.a.addr,
 			    &((struct sockaddr_in6 *)
@@ -1838,7 +1837,7 @@ host_dns(const char *s, int v4mask, int v6mask, int numeric)
 			n->ifindex =
 			    ((struct sockaddr_in6 *)
 			    res->ai_addr)->sin6_scope_id;
-			set_ipmask(n, v6mask);
+			set_ipmask(n, mask > -1 ? mask : 128);
 		}
 		n->next = NULL;
 		n->tail = n;
