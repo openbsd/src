@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.181 2018/07/22 16:59:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.182 2018/07/31 15:30:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -68,8 +68,9 @@ struct rde_peer {
 	struct uptree_attr		 up_attrs;
 	struct uplist_attr		 updates[AID_MAX];
 	struct uplist_prefix		 withdraws[AID_MAX];
-	struct capabilities		 capa;
 	time_t				 staletime[AID_MAX];
+	struct capabilities		 capa;
+	struct rib			*rib;
 	u_int64_t			 prefix_rcvd_update;
 	u_int64_t			 prefix_rcvd_withdraw;
 	u_int64_t			 prefix_rcvd_eor;
@@ -83,7 +84,6 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
-	struct rib			*rib;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
