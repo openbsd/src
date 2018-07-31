@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.5 2018/04/07 22:35:27 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.6 2018/07/31 10:09:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -156,6 +156,7 @@ struct rkpmic_regulator {
 };
 
 uint32_t rkpmic_get_voltage(void *);
+int	rkpmic_set_voltage(void *, uint32_t);
 
 void
 rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
@@ -185,6 +186,7 @@ rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
 	rr->rr_rd.rd_node = node;
 	rr->rr_rd.rd_cookie = rr;
 	rr->rr_rd.rd_get_voltage = rkpmic_get_voltage;
+	rr->rr_rd.rd_set_voltage = rkpmic_set_voltage;
 	regulator_register(&rr->rr_rd);
 }
 
@@ -192,10 +194,29 @@ uint32_t
 rkpmic_get_voltage(void *cookie)
 {
 	struct rkpmic_regulator *rr = cookie;
-	uint8_t value;
+	uint8_t vsel;
 	
-	value = rkpmic_reg_read(rr->rr_sc, rr->rr_reg);
-	return rr->rr_base + (value & rr->rr_mask) * rr->rr_delta;
+	vsel = rkpmic_reg_read(rr->rr_sc, rr->rr_reg);
+	return rr->rr_base + (vsel & rr->rr_mask) * rr->rr_delta;
+}
+
+int
+rkpmic_set_voltage(void *cookie, uint32_t voltage)
+{
+	struct rkpmic_regulator *rr = cookie;
+	uint32_t vmin = rr->rr_base;
+	uint32_t vmax = vmin + rr->rr_mask * rr->rr_delta;
+	uint8_t vsel;
+
+	if (voltage < vmin || voltage > vmax)
+		return EINVAL;
+
+	vsel = rkpmic_reg_read(rr->rr_sc, rr->rr_reg);
+	vsel &= ~rr->rr_mask;
+	vsel |= (voltage - rr->rr_base) / rr->rr_delta;
+	rkpmic_reg_write(rr->rr_sc, rr->rr_reg, vsel);
+
+	return 0;
 }
 
 int
