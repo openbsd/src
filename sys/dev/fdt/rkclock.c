@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.25 2018/06/02 13:00:25 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.26 2018/07/31 10:08:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -971,12 +971,12 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 
 	/* When ramping up, set clock dividers first. */
 	if (freq > old_freq) {
-		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(0),
+		HWRITE4(sc, clksel,
 		    RK3399_CRU_CLK_CORE_DIV_CON_MASK << 16 |
 		    0 << RK3399_CRU_CLK_CORE_DIV_CON_SHIFT |
 		    RK3399_CRU_ACLKM_CORE_DIV_CON_MASK << 16 |
 		    1 << RK3399_CRU_ACLKM_CORE_DIV_CON_SHIFT);
-		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(1),
+		HWRITE4(sc, clksel + 0x0004,
 		    RK3399_CRU_PCLK_DBG_DIV_CON_MASK << 16 |
 		    div << RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT |
 		    RK3399_CRU_ATCLK_CORE_DIV_CON_MASK << 16 |
@@ -987,12 +987,12 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 
 	/* When ramping dowm, set clock dividers last. */
 	if (freq < old_freq) {
-		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(0),
+		HWRITE4(sc, clksel,
 		    RK3399_CRU_CLK_CORE_DIV_CON_MASK << 16 |
 		    0 << RK3399_CRU_CLK_CORE_DIV_CON_SHIFT |
 		    RK3399_CRU_ACLKM_CORE_DIV_CON_MASK << 16 |
 		    1 << RK3399_CRU_ACLKM_CORE_DIV_CON_SHIFT);
-		HWRITE4(sc, RK3399_CRU_CLKSEL_CON(1),
+		HWRITE4(sc, clksel + 0x0004,
 		    RK3399_CRU_PCLK_DBG_DIV_CON_MASK << 16 |
 		    div << RK3399_CRU_PCLK_DBG_DIV_CON_SHIFT |
 		    RK3399_CRU_ATCLK_CORE_DIV_CON_MASK << 16 |
