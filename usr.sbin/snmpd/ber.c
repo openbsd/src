@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.45 2018/07/31 11:37:18 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.46 2018/07/31 19:38:09 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -430,6 +430,32 @@ ber_string2oid(const char *oidstr, struct ber_oid *o)
 	return (0);
 }
 
+int
+ber_oid_cmp(struct ber_oid *a, struct ber_oid *b)
+{
+	size_t	 i;
+	for (i = 0; i < BER_MAX_OID_LEN; i++) {
+		if (a->bo_id[i] != 0) {
+			if (a->bo_id[i] == b->bo_id[i])
+				continue;
+			else if (a->bo_id[i] < b->bo_id[i]) {
+				/* b is a successor of a */
+				return (1);
+			} else {
+				/* b is a predecessor of a */
+				return (-1);
+			}
+		} else if (b->bo_id[i] != 0) {
+			/* b is larger, but a child of a */
+			return (2);
+		} else
+			break;
+	}
+
+	/* b and a are identical */
+	return (0);
+}
+
 struct ber_element *
 ber_add_oid(struct ber_element *prev, struct ber_oid *o)
 {
@@ -756,6 +782,15 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 
 }
 
+ssize_t
+ber_get_writebuf(struct ber *b, void **buf)
+{
+	if (b->br_wbuf == NULL)
+		return -1;
+	*buf = b->br_wbuf;
+	return (b->br_wend - b->br_wbuf);
+}
+
 /*
  * write ber elements to the write buffer
  *
@@ -793,6 +828,13 @@ ber_write_elements(struct ber *ber, struct ber_element *root)
 		return -1;
 
 	return (len);
+}
+
+void
+ber_set_readbuf(struct ber *b, void *buf, size_t len)
+{
+	b->br_rbuf = b->br_rptr = buf;
+	b->br_rend = (u_int8_t *)buf + len;
 }
 
 /*
@@ -894,6 +936,26 @@ ber_calc_len(struct ber_element *root)
 		return (0);
 
 	return (root->be_len + size);
+}
+
+void
+ber_set_application(struct ber *b, unsigned int (*cb)(struct ber_element *))
+{
+	b->br_application = cb;
+}
+
+void
+ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
+    void *arg)
+{
+	elm->be_cb = cb;
+	elm->be_cbarg = arg;
+}
+
+void
+ber_free(struct ber *b)
+{
+	free(b->br_wbuf);
 }
 
 /*
@@ -1204,42 +1266,6 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	return totlen;
 }
 
-void
-ber_set_readbuf(struct ber *b, void *buf, size_t len)
-{
-	b->br_rbuf = b->br_rptr = buf;
-	b->br_rend = (u_int8_t *)buf + len;
-}
-
-ssize_t
-ber_get_writebuf(struct ber *b, void **buf)
-{
-	if (b->br_wbuf == NULL)
-		return -1;
-	*buf = b->br_wbuf;
-	return (b->br_wend - b->br_wbuf);
-}
-
-void
-ber_set_application(struct ber *b, unsigned int (*cb)(struct ber_element *))
-{
-	b->br_application = cb;
-}
-
-void
-ber_set_writecallback(struct ber_element *elm, void (*cb)(void *, size_t),
-    void *arg)
-{
-	elm->be_cb = cb;
-	elm->be_cbarg = arg;
-}
-
-void
-ber_free(struct ber *b)
-{
-	free(b->br_wbuf);
-}
-
 static ssize_t
 ber_getc(struct ber *b, u_char *c)
 {
@@ -1265,30 +1291,4 @@ ber_read(struct ber *ber, void *buf, size_t len)
 	ber->br_offs += len;
 
 	return len;
-}
-
-int
-ber_oid_cmp(struct ber_oid *a, struct ber_oid *b)
-{
-	size_t	 i;
-	for (i = 0; i < BER_MAX_OID_LEN; i++) {
-		if (a->bo_id[i] != 0) {
-			if (a->bo_id[i] == b->bo_id[i])
-				continue;
-			else if (a->bo_id[i] < b->bo_id[i]) {
-				/* b is a successor of a */
-				return (1);
-			} else {
-				/* b is a predecessor of a */
-				return (-1);
-			}
-		} else if (b->bo_id[i] != 0) {
-			/* b is larger, but a child of a */
-			return (2);
-		} else
-			break;
-	}
-
-	/* b and a are identical */
-	return (0);
 }
