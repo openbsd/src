@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.41 2018/07/31 11:00:12 claudio Exp $ */
-/*	$OpenBSD: aldap.c,v 1.41 2018/07/31 11:00:12 claudio Exp $ */
+/*	$Id: aldap.c,v 1.42 2018/07/31 11:37:18 rob Exp $ */
+/*	$OpenBSD: aldap.c,v 1.42 2018/07/31 11:37:18 rob Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -1217,7 +1217,7 @@ ldap_debug_elements(struct ber_element *root)
 		break;
 	case BER_CLASS_PRIVATE:
 		fprintf(stderr, "class: private(%u) type: ", root->be_class);
-		fprintf(stderr, "encoding (%lu) type: ", root->be_encoding);
+		fprintf(stderr, "encoding (%u) type: ", root->be_encoding);
 		break;
 	case BER_CLASS_CONTEXT:
 		/* XXX: this is not correct */
@@ -1232,7 +1232,7 @@ ldap_debug_elements(struct ber_element *root)
 		fprintf(stderr, "class: <INVALID>(%u) type: ", root->be_class);
 		break;
 	}
-	fprintf(stderr, "(%lu) encoding %lu ",
+	fprintf(stderr, "(%u) encoding %u ",
 	    root->be_type, root->be_encoding);
 
 	if (constructed)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.27 2018/07/31 11:00:12 claudio Exp $ */
+/*	$OpenBSD: ber.c,v 1.28 2018/07/31 11:37:18 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1100,7 +1100,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 
 	if ((r = get_id(ber, &type, &class, &cstruct)) == -1)
 		return -1;
-	DPRINTF("ber read got class %d type %lu, %s\n",
+	DPRINTF("ber read got class %d type %u, %s\n",
 	    class, type, cstruct ? "constructed" : "primitive");
 	totlen += r;
 	if ((r = get_len(ber, &len)) == -1)
