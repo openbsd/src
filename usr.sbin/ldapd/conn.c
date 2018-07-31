@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.16 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: conn.c,v 1.17 2018/07/31 11:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -28,11 +28,11 @@
 
 int			 conn_dispatch(struct conn *conn);
 int			 conn_tls_init(struct conn *);
-unsigned long		 ldap_application(struct ber_element *elm);
+unsigned int		 ldap_application(struct ber_element *elm);
 
 struct conn_list	 conn_list;
 
-unsigned long
+unsigned int
 ldap_application(struct ber_element *elm)
 {
 	return BER_TYPE_OCTETSTRING;
@@ -99,7 +99,7 @@ request_dispatch(struct request *req)
 {
 	unsigned long		 i;
 	struct {
-		unsigned long	 type;
+		unsigned int	 type;
 		int (*fn)(struct request *);
 	} requests[] = {
 		{ LDAP_REQ_SEARCH,	ldap_search },
@@ -132,7 +132,7 @@ request_dispatch(struct request *req)
 	}
 
 	if (requests[i].fn == NULL) {
-		log_warnx("unhandled request %lu (not implemented)", req->type);
+		log_warnx("unhandled request %u (not implemented)", req->type);
 		ldap_respond(req, LDAP_PROTOCOL_ERROR);
 	}
 }
@@ -183,7 +183,7 @@ conn_dispatch(struct conn *conn)
 	ldap_debug_elements(req->root, req->type,
 	    "received request on fd %d", conn->fd);
 
-	log_debug("got request type %lu, id %lld", req->type, req->msgid);
+	log_debug("got request type %u, id %lld", req->type, req->msgid);
 	request_dispatch(req);
 	return 0;
 }

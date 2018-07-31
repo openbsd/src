@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.28 2018/07/04 10:05:56 rob Exp $ */
+/*	$OpenBSD: ldape.c,v 1.29 2018/07/31 11:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,7 +42,7 @@ static void		 ldape_needfd(struct imsgev *iev);
 
 int			 ldap_starttls(struct request *req);
 void			 send_ldap_extended_response(struct conn *conn,
-				int msgid, unsigned long type,
+				int msgid, unsigned int type,
 				long long result_code,
 				const char *extended_oid);
 
@@ -69,14 +69,14 @@ ldape_sig_handler(int sig, short why, void *data)
 }
 
 void
-send_ldap_extended_response(struct conn *conn, int msgid, unsigned long type,
+send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
     long long result_code, const char *extended_oid)
 {
 	int			 rc;
 	struct ber_element	*root, *elm;
 	void			*buf;
 
-	log_debug("sending response %lu with result %lld", type, result_code);
+	log_debug("sending response %u with result %lld", type, result_code);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -116,7 +116,7 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	struct ber_element	*root, *elm, *ref_root = NULL;
 	struct referral		*ref;
 	long long		 result_code = LDAP_REFERRAL;
-	unsigned long		 type;
+	unsigned int		 type;
 	int			 rc;
 	void			*buf;
 	char			*url, *scope_str = NULL;
@@ -133,7 +133,7 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 			scope_str = "sub";
 	}
 
-	log_debug("sending referral in response %lu on msgid %lld",
+	log_debug("sending referral in response %u on msgid %lld",
 	    type, req->msgid);
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
@@ -189,7 +189,7 @@ fail:
 }
 
 void
-send_ldap_result(struct conn *conn, int msgid, unsigned long type,
+send_ldap_result(struct conn *conn, int msgid, unsigned int type,
     long long result_code)
 {
 	send_ldap_extended_response(conn, msgid, type, result_code, NULL);

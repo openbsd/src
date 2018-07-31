@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.22 2018/05/18 12:36:30 reyk Exp $ */
+/*	$OpenBSD: search.c,v 1.23 2018/07/31 11:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -140,7 +140,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	}
 
 	elm = ber_printf_elements(root, "i{txe", search->req->msgid,
-		BER_CLASS_APP, (unsigned long)LDAP_RES_SEARCH_ENTRY,
+		BER_CLASS_APP, LDAP_RES_SEARCH_ENTRY,
 		dn, dnlen, filtered_attrs);
 	if (elm == NULL)
 		goto fail;
@@ -678,7 +678,7 @@ static struct plan *
 search_planner(struct namespace *ns, struct ber_element *filter)
 {
 	int			 class;
-	unsigned long		 type;
+	unsigned int		 type;
 	char			*s, *attr;
 	struct ber_element	*elm;
 	struct index		*indx;
@@ -815,7 +815,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		break;
 
 	default:
-		log_warnx("filter type %lu not implemented", filter->be_type);
+		log_warnx("filter type %u not implemented", filter->be_type);
 		plan->undefined = 1;
 		break;
 	}

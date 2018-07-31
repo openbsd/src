@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.30 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.31 2018/07/31 11:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -82,7 +82,7 @@ SIMPLEQ_HEAD(acl, aci);
  */
 struct request {
 	TAILQ_ENTRY(request)	 next;
-	unsigned long		 type;
+	unsigned int		 type;
 	long long		 msgid;
 	struct ber_element	*root;
 	struct ber_element	*op;
@@ -365,7 +365,7 @@ int			 ldap_compare(struct request *req);
 int			 ldap_extended(struct request *req);
 
 void			 send_ldap_result(struct conn *conn, int msgid,
-				unsigned long type, long long result_code);
+				unsigned int type, long long result_code);
 int			 ldap_respond(struct request *req, int code);
 int			 ldap_refer(struct request *req, const char *basedn,
 			     struct search *search, struct referrals *refs);

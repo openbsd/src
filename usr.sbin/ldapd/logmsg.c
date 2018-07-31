@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.2 2018/05/15 11:19:21 reyk Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.3 2018/07/31 11:01:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -208,7 +208,7 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 		break;
 	case BER_CLASS_PRIVATE:
 		fprintf(stderr, "class: private(%u) type: ", root->be_class);
-		fprintf(stderr, "encoding (%lu) type: ", root->be_encoding);
+		fprintf(stderr, "encoding (%u) type: ", root->be_encoding);
 		break;
 	case BER_CLASS_CONTEXT:
 		fprintf(stderr, "class: context(%u) type: ", root->be_class);
@@ -257,7 +257,7 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 		fprintf(stderr, "class: <INVALID>(%u) type: ", root->be_class);
 		break;
 	}
-	fprintf(stderr, "(%lu) encoding %lu ",
+	fprintf(stderr, "(%u) encoding %u ",
 	    root->be_type, root->be_encoding);
 
 	if (constructed)
