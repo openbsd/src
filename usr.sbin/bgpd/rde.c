@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.402 2018/07/27 12:03:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.403 2018/07/31 08:04:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2843,7 +2843,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 {
 	struct filterstate	 state;
 	struct rib_desc		*rib = ptr;
-	struct prefix		*p, *np;
+	struct prefix		*p;
 	struct pt_entry		*pt;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
@@ -2852,12 +2852,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 
 	pt = re->prefix;
 	pt_getaddr(pt, &addr);
-	for (p = LIST_FIRST(&re->prefix_h); p != NULL; p = np) {
-		/*
-		 * prefix_remove() and path_update() may change the object
-		 * so cache the values.
-		 */
-		np = LIST_NEXT(p, rib_l);
+	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		asp = prefix_aspath(p);
 		peer = asp->peer;
 
