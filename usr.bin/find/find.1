@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.94 2018/08/01 06:37:33 tb Exp $
+.\"	$OpenBSD: find.1,v 1.95 2018/08/01 07:09:15 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -224,6 +224,9 @@ or a plus sign
 If terminated by a semicolon, the
 .Ar utility
 is executed once per path.
+This form of the primary evaluates to true if
+.Ar utility
+exits with a zero exit status.
 If the string
 .Qq {}
 appears anywhere in the utility name or the
@@ -235,6 +238,7 @@ primary is evaluated are aggregated into sets, and
 .Ar utility
 will be invoked once per set, similar to
 .Xr xargs 1 .
+This form of the primary always evaluates to true.
 If any invocation exits with a non-zero exit status, then
 .Nm
 will eventually do so as well, but this does not cause
@@ -520,9 +524,7 @@ This evaluates to true if the parenthesized expression evaluates to
 true.
 .Pp
 .It Cm \&! Ar expression
-This is the unary
-.Tn NOT
-operator.
+This is the unary NOT operator.
 It evaluates to true if the expression is false.
 .Pp
 .It Ar expression Cm -a Ar expression
