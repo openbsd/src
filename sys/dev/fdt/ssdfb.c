@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.2 2018/07/31 12:41:57 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.3 2018/08/01 12:34:36 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,9 +34,11 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#define SSDFB_SET_LOWER_COLUMN_START_ADRESS	0x00
-#define SSDFB_SET_HIGHER_COLUMN_START_ADRESS	0x10
-#define SSDFB_SET_MEMORY_ADRESSING_MODE		0x20
+#define SSDFB_SET_LOWER_COLUMN_START_ADDRESS	0x00
+#define SSDFB_SET_HIGHER_COLUMN_START_ADDRESS	0x10
+#define SSDFB_SET_MEMORY_ADDRESSING_MODE	0x20
+#define SSDFB_SET_COLUMN_RANGE			0x21
+#define SSDFB_SET_PAGE_RANGE			0x22
 #define SSDFB_SET_START_LINE			0x40
 #define SSDFB_SET_CONTRAST_CONTROL		0x81
 #define SSDFB_SET_COLUMN_DIRECTION_REVERSE	0xa1
@@ -52,7 +54,7 @@
 #define SSDFB_SET_PRE_CHARGE_PERIOD		0xd9
 #define SSDFB_SET_COM_PINS_HARD_CONF		0xda
 #define SSDFB_SET_VCOM_DESELECT_LEVEL		0xdb
-#define SSDFB_SET_PAGE_START_ADRESS		0xb0
+#define SSDFB_SET_PAGE_START_ADDRESS		0xb0
 
 #define SSDFB_WIDTH	128
 #define SSDFB_HEIGHT	64
@@ -71,6 +73,9 @@ struct ssdfb_softc {
 	size_t			 sc_fbsize;
 	struct rasops_info	 sc_rinfo;
 
+	uint8_t			 sc_column_range[2];
+	uint8_t			 sc_page_range[2];
+
 	struct task		 sc_task;
 	struct timeout		 sc_to;
 };
@@ -85,6 +90,11 @@ void	 ssdfb_write_data(struct ssdfb_softc *, char *, size_t);
 void	 ssdfb_init(struct ssdfb_softc *);
 void	 ssdfb_update(void *);
 void	 ssdfb_timeout(void *);
+
+void	 ssdfb_partial(struct ssdfb_softc *, uint32_t, uint32_t,
+	    uint32_t, uint32_t);
+void	 ssdfb_set_range(struct ssdfb_softc *, uint8_t, uint8_t,
+	    uint8_t, uint8_t);
 
 int	 ssdfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 ssdfb_mmap(void *, off_t, int);
@@ -228,6 +238,8 @@ ssdfb_detach(struct device *self, int flags)
 {
 	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
 	struct rasops_info *ri = &sc->sc_rinfo;
+	timeout_del(&sc->sc_to);
+	task_del(systq, &sc->sc_task);
 	free(ri->ri_bits, M_DEVBUF, sc->sc_fbsize);
 	free(sc->sc_fb, M_DEVBUF, sc->sc_fbsize);
 	free(sc->sc_gpio, M_DEVBUF, sc->sc_gpiolen);
@@ -242,11 +254,13 @@ ssdfb_init(struct ssdfb_softc *sc)
 	reg[0] = SSDFB_SET_DISPLAY_OFF;
 	ssdfb_write_command(sc, reg, 1);
 
-	reg[0] = SSDFB_SET_MEMORY_ADRESSING_MODE;
-	reg[1] = 0x10; /* Page Adressing Mode */
+	reg[0] = SSDFB_SET_MEMORY_ADDRESSING_MODE;
+	reg[1] = 0x00; /* Horizontal Addressing Mode */
 	ssdfb_write_command(sc, reg, 2);
-	reg[0] = SSDFB_SET_PAGE_START_ADRESS;
+	reg[0] = SSDFB_SET_PAGE_START_ADDRESS;
 	ssdfb_write_command(sc, reg, 1);
+	ssdfb_set_range(sc, 0, SSDFB_WIDTH - 1,
+	    0, (SSDFB_HEIGHT / 8) - 1);
 	reg[0] = SSDFB_SET_DISPLAY_CLOCK_DIVIDE_RATIO;
 	reg[1] = 0xa0;
 	ssdfb_write_command(sc, reg, 2);
@@ -286,30 +300,76 @@ ssdfb_init(struct ssdfb_softc *sc)
 }
 
 void
+ssdfb_set_range(struct ssdfb_softc *sc, uint8_t x1, uint8_t x2,
+    uint8_t y1, uint8_t y2)
+{
+	uint8_t reg[3];
+
+	if (sc->sc_column_range[0] != x1 || sc->sc_column_range[1] != x2) {
+		sc->sc_column_range[0] = x1;
+		sc->sc_column_range[1] = x2;
+		reg[0] = SSDFB_SET_COLUMN_RANGE;
+		reg[1] = sc->sc_column_range[0];
+		reg[2] = sc->sc_column_range[1];
+		ssdfb_write_command(sc, reg, 3);
+	}
+	if (sc->sc_page_range[0] != y1 || sc->sc_page_range[1] != y2) {
+		sc->sc_page_range[0] = y1;
+		sc->sc_page_range[1] = y2;
+		reg[0] = SSDFB_SET_PAGE_RANGE;
+		reg[1] = sc->sc_page_range[0];
+		reg[2] = sc->sc_page_range[1];
+		ssdfb_write_command(sc, reg, 3);
+	}
+}
+
+void
 ssdfb_update(void *v)
 {
 	struct ssdfb_softc *sc = v;
+
+	ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
+	timeout_add_msec(&sc->sc_to, 100);
+}
+
+void
+ssdfb_partial(struct ssdfb_softc *sc, uint32_t x1, uint32_t x2,
+    uint32_t y1, uint32_t y2)
+{
 	struct rasops_info *ri = &sc->sc_rinfo;
+	uint32_t off, width, height;
 	uint8_t *bit, val;
-	uint32_t off;
 	int i, j, k;
 
-	memset(sc->sc_fb, 0, sc->sc_fbsize);
+	if (x2 < x1 || y2 < y1)
+		return;
 
-	for (i = 0; i < ri->ri_height; i += 8) {
-		for (j = 0; j < ri->ri_width; j++) {
-			bit = &sc->sc_fb[(i / 8) * ri->ri_width + j];
+	if (x2 > SSDFB_WIDTH || y2 > SSDFB_HEIGHT)
+		return;
+
+	y1 = y1 & ~0x7;
+	y2 = roundup(y2, 8);
+
+	width = x2 - x1;
+	height = y2 - y1;
+
+	memset(sc->sc_fb, 0, (width * height) / 8);
+
+	for (i = 0; i < height; i += 8) {
+		for (j = 0; j < width; j++) {
+			bit = &sc->sc_fb[(i / 8) * width + j];
 			for (k = 0; k < 8; k++) {
-				off = ri->ri_stride * (i + k) + j / 8;
+				off = ri->ri_stride * (y1 + i + k);
+				off += (x1 + j) / 8;
 				val = *(ri->ri_bits + off);
-				val &= (1 << (j % 8));
+				val &= (1 << ((x1 + j) % 8));
 				*bit |= !!val << k;
 			}
 		}
 	}
 
-	ssdfb_write_data(sc, sc->sc_fb, sc->sc_fbsize);
-	timeout_add_msec(&sc->sc_to, 100);
+	ssdfb_set_range(sc, x1, x2 - 1, y1 / 8, (y2 / 8) - 1);
+	ssdfb_write_data(sc, sc->sc_fb, (width * height) / 8);
 }
 
 void
