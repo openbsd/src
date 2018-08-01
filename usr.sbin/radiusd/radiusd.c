@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.20 2017/06/13 05:40:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.21 2018/08/01 17:17:42 mestre Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -1066,8 +1066,10 @@ radiusd_module_stop(struct radiusd_module *module)
 {
 	module->stopped = true;
 
-	freezero(module->secret, strlen(module->secret));
-	module->secret = NULL;
+	if (module->secret != NULL) {
+		freezero(module->secret, strlen(module->secret));
+		module->secret = NULL;
+	}
 
 	if (module->fd >= 0) {
 		imsg_compose(&module->ibuf, IMSG_RADIUSD_MODULE_STOP, 0, 0, -1,
