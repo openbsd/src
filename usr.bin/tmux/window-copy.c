@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.192 2018/07/31 11:49:26 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.193 2018/08/01 15:22:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -214,6 +214,7 @@ window_copy_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
 
 	data->backing_written = 0;
 
+	data->lineflag = LINE_SEL_NONE;
 	data->rectflag = 0;
 	data->scroll_exit = 0;
 
