@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.103 2018/07/23 23:25:02 brynet Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.104 2018/08/01 20:33:53 brynet Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -656,8 +656,10 @@ identifycpu(struct cpu_info *ci)
 			uint64_t msr;
 
 			msr = rdmsr(MSR_DE_CFG);
-			msr |= DE_CFG_SERIALIZE_LFENCE;
-			wrmsr(MSR_DE_CFG, msr);
+			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
+				msr |= DE_CFG_SERIALIZE_LFENCE;
+				wrmsr(MSR_DE_CFG, msr);
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.622 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.623 2018/08/01 20:33:53 brynet Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2038,8 +2038,10 @@ identifycpu(struct cpu_info *ci)
 			uint64_t msr;
 
 			msr = rdmsr(MSR_DE_CFG);
-			msr |= DE_CFG_SERIALIZE_LFENCE;
-			wrmsr(MSR_DE_CFG, msr);
+			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
+				msr |= DE_CFG_SERIALIZE_LFENCE;
+				wrmsr(MSR_DE_CFG, msr);
+			}
 		}
 	}
 
