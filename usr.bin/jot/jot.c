@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.46 2018/06/24 18:39:57 schwarze Exp $	*/
+/*	$OpenBSD: jot.c,v 1.47 2018/08/01 13:13:53 cheloha Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -153,8 +153,10 @@ main(int argc, char *argv[])
 		}
 	case 1:
 		if (!is_default(argv[0])) {
-			if (!sscanf(argv[0], "%ld", &reps))
-				errx(1, "Bad reps value:  %s", argv[0]);
+			reps = strtonum(argv[0], 0, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "Bad reps value, %s: %s", errstr,
+				    argv[0]);
 			mask |= REPS;
 			if (reps == 0)
 				infinity = true;
