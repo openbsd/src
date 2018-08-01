@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.274 2018/08/01 13:44:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.275 2018/08/01 16:00:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -435,14 +435,13 @@ check_text_em(struct roff_man *mdoc, int ln, int pos, char *p)
 		     isalpha((unsigned char)cp[-3]) :
 		     np != NULL &&
 		     np->type == ROFFT_TEXT &&
-		     np->string != '\0' &&
+		     *np->string != '\0' &&
 		     isalpha((unsigned char)np->string[
 		       strlen(np->string) - 1])) ||
 		    (cp[1] != '\0' && cp[2] != '\0' ?
 		     isalpha((unsigned char)cp[2]) :
 		     nn != NULL &&
 		     nn->type == ROFFT_TEXT &&
-		     nn->string != '\0' &&
 		     isalpha((unsigned char)*nn->string))) {
 			mandoc_msg(MANDOCERR_DASHDASH, mdoc->parse,
 			    ln, pos + (int)(cp - p) - 1, NULL);
