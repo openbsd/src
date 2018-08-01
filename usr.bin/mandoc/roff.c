@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.200 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.201 2018/08/01 15:39:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -2843,6 +2843,7 @@ roff_TE(ROFF_ARGS)
 		free(buf->buf);
 		buf->buf = mandoc_strdup(".sp");
 		buf->sz = 4;
+		*offs = 0;
 		return ROFF_REPARSE;
 	}
 	r->tbl = NULL;
@@ -3362,6 +3363,7 @@ roff_userdef(ROFF_ARGS)
 			    ln, (int)(cp - n1), NULL);
 			free(buf->buf);
 			buf->buf = n1;
+			*offs = 0;
 			return ROFF_IGN;
 		}
 
@@ -3456,6 +3458,7 @@ roff_renamed(ROFF_ARGS)
 	    buf->buf[pos] == '\0' ? "" : " ", buf->buf + pos) + 1;
 	free(buf->buf);
 	buf->buf = nbuf;
+	*offs = 0;
 	return ROFF_CONT;
 }
 
