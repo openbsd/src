@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.3 2018/08/01 12:34:36 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.4 2018/08/02 14:09:32 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -24,6 +24,7 @@
 #include <sys/timeout.h>
 #include <sys/task.h>
 
+#include <dev/i2c/i2cvar.h>
 #include <dev/spi/spivar.h>
 
 #include <dev/ofw/openfirm.h>
@@ -56,18 +57,15 @@
 #define SSDFB_SET_VCOM_DESELECT_LEVEL		0xdb
 #define SSDFB_SET_PAGE_START_ADDRESS		0xb0
 
+#define SSDFB_I2C_COMMAND			0x00
+#define SSDFB_I2C_DATA				0x40
+
 #define SSDFB_WIDTH	128
 #define SSDFB_HEIGHT	64
 
 struct ssdfb_softc {
 	struct device		 sc_dev;
-	spi_tag_t		 sc_tag;
 	int			 sc_node;
-
-	struct spi_config	 sc_conf;
-	uint32_t		*sc_gpio;
-	size_t			 sc_gpiolen;
-	int			 sc_cd;
 
 	uint8_t			*sc_fb;
 	size_t			 sc_fbsize;
@@ -78,12 +76,39 @@ struct ssdfb_softc {
 
 	struct task		 sc_task;
 	struct timeout		 sc_to;
+
+	/* I2C */
+	i2c_tag_t		 sc_i2c_tag;
+	i2c_addr_t		 sc_i2c_addr;
+
+	/* SPI */
+	spi_tag_t		 sc_spi_tag;
+	struct spi_config	 sc_spi_conf;
+	uint32_t		*sc_gpio;
+	size_t			 sc_gpiolen;
+	int			 sc_cd;
+
+	void			 (*sc_write_command)(struct ssdfb_softc *,
+				   char *, size_t);
+	void			 (*sc_write_data)(struct ssdfb_softc *,
+				   char *, size_t);
+
 };
 
-int	 ssdfb_match(struct device *, void *, void *);
-void	 ssdfb_attach(struct device *, struct device *, void *);
-int	 ssdfb_detach(struct device *, int);
+int	 ssdfb_i2c_match(struct device *, void *, void *);
+void	 ssdfb_i2c_attach(struct device *, struct device *, void *);
+int	 ssdfb_i2c_detach(struct device *, int);
+void	 ssdfb_i2c_write_command(struct ssdfb_softc *, char *, size_t);
+void	 ssdfb_i2c_write_data(struct ssdfb_softc *, char *, size_t);
 
+int	 ssdfb_spi_match(struct device *, void *, void *);
+void	 ssdfb_spi_attach(struct device *, struct device *, void *);
+int	 ssdfb_spi_detach(struct device *, int);
+void	 ssdfb_spi_write_command(struct ssdfb_softc *, char *, size_t);
+void	 ssdfb_spi_write_data(struct ssdfb_softc *, char *, size_t);
+
+void	 ssdfb_attach(struct ssdfb_softc *);
+int	 ssdfb_detach(struct ssdfb_softc *, int);
 void	 ssdfb_write_command(struct ssdfb_softc *, char *, size_t);
 void	 ssdfb_write_data(struct ssdfb_softc *, char *, size_t);
 
@@ -106,11 +131,18 @@ int	 ssdfb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 int	 ssdfb_list_font(void *, struct wsdisplay_font *);
 int	 ssdfb_load_font(void *, void *, struct wsdisplay_font *);
 
-struct cfattach ssdfb_ca = {
+struct cfattach ssdfb_i2c_ca = {
 	sizeof(struct ssdfb_softc),
-	ssdfb_match,
-	ssdfb_attach,
-	ssdfb_detach,
+	ssdfb_i2c_match,
+	ssdfb_i2c_attach,
+	ssdfb_i2c_detach,
+};
+
+struct cfattach ssdfb_spi_ca = {
+	sizeof(struct ssdfb_softc),
+	ssdfb_spi_match,
+	ssdfb_spi_attach,
+	ssdfb_spi_detach,
 };
 
 struct cfdriver ssdfb_cd = {
@@ -139,7 +171,43 @@ struct wsdisplay_accessops ssdfb_accessops = {
 };
 
 int
-ssdfb_match(struct device *parent, void *match, void *aux)
+ssdfb_i2c_match(struct device *parent, void *match, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+
+	if (strcmp(ia->ia_name, "solomon,ssd1309fb-i2c") == 0)
+		return 1;
+
+	return 0;
+}
+
+void
+ssdfb_i2c_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
+	struct i2c_attach_args *ia = aux;
+
+	sc->sc_i2c_tag = ia->ia_tag;
+	sc->sc_i2c_addr = ia->ia_addr;
+	sc->sc_node = *(int *)ia->ia_cookie;
+
+	sc->sc_write_command = ssdfb_i2c_write_command;
+	sc->sc_write_data = ssdfb_i2c_write_data;
+
+	ssdfb_attach(sc);
+}
+
+int
+ssdfb_i2c_detach(struct device *self, int flags)
+{
+	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
+	ssdfb_detach(sc, flags);
+	free(sc->sc_gpio, M_DEVBUF, sc->sc_gpiolen);
+	return 0;
+}
+
+int
+ssdfb_spi_match(struct device *parent, void *match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
@@ -150,41 +218,24 @@ ssdfb_match(struct device *parent, void *match, void *aux)
 }
 
 void
-ssdfb_attach(struct device *parent, struct device *self, void *aux)
+ssdfb_spi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
 	struct spi_attach_args *sa = aux;
-	struct wsemuldisplaydev_attach_args aa;
-	struct rasops_info *ri;
-	size_t len;
+	ssize_t len;
 
-	sc->sc_tag = sa->sa_tag;
+	sc->sc_spi_tag = sa->sa_tag;
 	sc->sc_node = *(int *)sa->sa_cookie;
 
-	pinctrl_byname(sc->sc_node, "default");
-
-	sc->sc_conf.sc_bpw = 8;
-	sc->sc_conf.sc_freq = 1000 * 1000;
-	sc->sc_conf.sc_cs = OF_getpropint(sc->sc_node, "reg", 0);
+	sc->sc_spi_conf.sc_bpw = 8;
+	sc->sc_spi_conf.sc_freq = 1000 * 1000;
+	sc->sc_spi_conf.sc_cs = OF_getpropint(sc->sc_node, "reg", 0);
 	if (OF_getproplen(sc->sc_node, "spi-cpol") == 0)
-		sc->sc_conf.sc_flags |= SPI_CONFIG_CPOL;
+		sc->sc_spi_conf.sc_flags |= SPI_CONFIG_CPOL;
 	if (OF_getproplen(sc->sc_node, "spi-cpha") == 0)
-		sc->sc_conf.sc_flags |= SPI_CONFIG_CPHA;
+		sc->sc_spi_conf.sc_flags |= SPI_CONFIG_CPHA;
 	if (OF_getproplen(sc->sc_node, "spi-cs-high") == 0)
-		sc->sc_conf.sc_flags |= SPI_CONFIG_CS_HIGH;
-
-	len = OF_getproplen(sc->sc_node, "reset-gpio");
-	if (len > 0) {
-		sc->sc_gpio = malloc(len, M_DEVBUF, M_WAITOK);
-		OF_getpropintarray(sc->sc_node, "reset-gpio",
-		    sc->sc_gpio, len);
-		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_OUTPUT);
-		gpio_controller_set_pin(sc->sc_gpio, 1);
-		delay(100 * 1000);
-		gpio_controller_set_pin(sc->sc_gpio, 0);
-		delay(1000 * 1000);
-		free(sc->sc_gpio, M_DEVBUF, len);
-	}
+		sc->sc_spi_conf.sc_flags |= SPI_CONFIG_CS_HIGH;
 
 	len = OF_getproplen(sc->sc_node, "cd-gpio");
 	if (len <= 0)
@@ -195,6 +246,44 @@ ssdfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpiolen = len;
 	gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_OUTPUT);
 	gpio_controller_set_pin(sc->sc_gpio, 0);
+
+	sc->sc_write_command = ssdfb_spi_write_command;
+	sc->sc_write_data = ssdfb_spi_write_data;
+
+	ssdfb_attach(sc);
+}
+
+int
+ssdfb_spi_detach(struct device *self, int flags)
+{
+	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
+	ssdfb_detach(sc, flags);
+	free(sc->sc_gpio, M_DEVBUF, sc->sc_gpiolen);
+	return 0;
+}
+
+void
+ssdfb_attach(struct ssdfb_softc *sc)
+{
+	struct wsemuldisplaydev_attach_args aa;
+	struct rasops_info *ri;
+	uint32_t *gpio;
+	ssize_t len;
+
+	pinctrl_byname(sc->sc_node, "default");
+
+	len = OF_getproplen(sc->sc_node, "reset-gpio");
+	if (len > 0) {
+		gpio = malloc(len, M_DEVBUF, M_WAITOK);
+		OF_getpropintarray(sc->sc_node, "reset-gpio",
+		    gpio, len);
+		gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(gpio, 1);
+		delay(100 * 1000);
+		gpio_controller_set_pin(gpio, 0);
+		delay(1000 * 1000);
+		free(gpio, M_DEVBUF, len);
+	}
 
 	sc->sc_fbsize = (SSDFB_WIDTH * SSDFB_HEIGHT) / 8;
 	sc->sc_fb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK | M_ZERO);
@@ -228,21 +317,19 @@ ssdfb_attach(struct device *parent, struct device *self, void *aux)
 	aa.accesscookie = sc;
 	aa.defaultscreens = 0;
 
-	config_found_sm(self, &aa, wsemuldisplaydevprint,
+	config_found_sm(&sc->sc_dev, &aa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
 	ssdfb_init(sc);
 }
 
 int
-ssdfb_detach(struct device *self, int flags)
+ssdfb_detach(struct ssdfb_softc *sc, int flags)
 {
-	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
 	struct rasops_info *ri = &sc->sc_rinfo;
 	timeout_del(&sc->sc_to);
 	task_del(systq, &sc->sc_task);
 	free(ri->ri_bits, M_DEVBUF, sc->sc_fbsize);
 	free(sc->sc_fb, M_DEVBUF, sc->sc_fbsize);
-	free(sc->sc_gpio, M_DEVBUF, sc->sc_gpiolen);
 	return 0;
 }
 
@@ -382,21 +469,61 @@ ssdfb_timeout(void *v)
 void
 ssdfb_write_command(struct ssdfb_softc *sc, char *buf, size_t len)
 {
+	return sc->sc_write_command(sc, buf, len);
+}
+
+void
+ssdfb_write_data(struct ssdfb_softc *sc, char *buf, size_t len)
+{
+	return sc->sc_write_data(sc, buf, len);
+}
+
+void
+ssdfb_i2c_write_command(struct ssdfb_softc *sc, char *buf, size_t len)
+{
+	uint8_t type;
+
+	type = SSDFB_I2C_COMMAND;
+	iic_acquire_bus(sc->sc_i2c_tag, 0);
+	if (iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_i2c_addr, &type, sizeof(type), buf, len, 0)) {
+		printf("%s: cannot write\n", sc->sc_dev.dv_xname);
+	}
+	iic_release_bus(sc->sc_i2c_tag, 0);
+}
+
+void
+ssdfb_i2c_write_data(struct ssdfb_softc *sc, char *buf, size_t len)
+{
+	uint8_t type;
+
+	type = SSDFB_I2C_DATA;
+	iic_acquire_bus(sc->sc_i2c_tag, 0);
+	if (iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_i2c_addr, &type, sizeof(type), buf, len, 0)) {
+		printf("%s: cannot write\n", sc->sc_dev.dv_xname);
+	}
+	iic_release_bus(sc->sc_i2c_tag, 0);
+}
+
+void
+ssdfb_spi_write_command(struct ssdfb_softc *sc, char *buf, size_t len)
+{
 	if (sc->sc_cd != 0) {
 		gpio_controller_set_pin(sc->sc_gpio, 0);
 		sc->sc_cd = 0;
 		delay(1);
 	}
 
-	spi_acquire_bus(sc->sc_tag, 0);
-	spi_config(sc->sc_tag, &sc->sc_conf);
-	if (spi_write(sc->sc_tag, buf, len))
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	if (spi_write(sc->sc_spi_tag, buf, len))
 		printf("%s: cannot write\n", sc->sc_dev.dv_xname);
-	spi_release_bus(sc->sc_tag, 0);
+	spi_release_bus(sc->sc_spi_tag, 0);
 }
 
 void
-ssdfb_write_data(struct ssdfb_softc *sc, char *buf, size_t len)
+ssdfb_spi_write_data(struct ssdfb_softc *sc, char *buf, size_t len)
 {
 	if (sc->sc_cd != 1) {
 		gpio_controller_set_pin(sc->sc_gpio, 1);
@@ -404,11 +531,11 @@ ssdfb_write_data(struct ssdfb_softc *sc, char *buf, size_t len)
 		delay(1);
 	}
 
-	spi_acquire_bus(sc->sc_tag, 0);
-	spi_config(sc->sc_tag, &sc->sc_conf);
-	if (spi_write(sc->sc_tag, buf, len))
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	if (spi_write(sc->sc_spi_tag, buf, len))
 		printf("%s: cannot write\n", sc->sc_dev.dv_xname);
-	spi_release_bus(sc->sc_tag, 0);
+	spi_release_bus(sc->sc_spi_tag, 0);
 }
 
 int

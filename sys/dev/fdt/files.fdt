@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.67 2018/07/30 08:14:45 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.68 2018/08/02 14:09:32 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -262,5 +262,6 @@ attach	com at fdt with com_fdt
 file	dev/fdt/com_fdt.c		com_fdt
 
 device	ssdfb: wsemuldisplaydev, rasops1
-attach	ssdfb at spi
+attach	ssdfb at spi with ssdfb_spi
+attach	ssdfb at i2c with ssdfb_i2c
 file	dev/fdt/ssdfb.c			ssdfb
