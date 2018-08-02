@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.831 2018/07/31 11:49:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.832 2018/08/02 07:55:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1357,6 +1357,7 @@ struct client {
 	void		(*identify_callback)(struct client *,
 			     struct window_pane *);
 	void		*identify_callback_data;
+	struct cmdq_item *identify_callback_item;
 
 	char		*message_string;
 	struct event	 message_timer;
