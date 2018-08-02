@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.404 2018/08/02 09:46:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.405 2018/08/02 12:46:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2831,8 +2831,7 @@ rde_reload_done(void)
 		ribs[rid].state = RECONF_NONE;
 	}
 
-	if (prefixsets_old != NULL)
-		free_prefixsets(prefixsets_old);
+	free_prefixsets(prefixsets_old);
 	prefixsets_old = NULL;
 
 	log_info("RDE reconfigured");
