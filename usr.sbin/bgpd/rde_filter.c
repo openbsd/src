@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.97 2018/07/22 16:59:08 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.98 2018/08/02 14:41:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -549,6 +549,37 @@ rde_prefix_match(struct filter_prefix *fp, struct prefix *p)
 	return (0); /* should not be reached */
 }
 
+/* return true when the rule f can never match for this peer */
+static int
+rde_filter_skip_rule(struct rde_peer *peer, struct filter_rule *f)
+{
+	/* if any of the two is unset then rule can't be skipped */
+	if (peer == NULL || f == NULL)
+		return (0);
+
+	if (f->peer.groupid != 0 &&
+	    f->peer.groupid != peer->conf.groupid)
+		return (1);
+
+	if (f->peer.peerid != 0 &&
+	    f->peer.peerid != peer->conf.id)
+		return (1);
+
+	if (f->peer.remote_as != 0 &&
+	    f->peer.remote_as != peer->conf.remote_as)
+		return (1);
+
+	if (f->peer.ebgp != 0 &&
+	    f->peer.ebgp != peer->conf.ebgp)
+		return (1);
+
+	if (f->peer.ibgp != 0 &&
+	    f->peer.ibgp != !peer->conf.ebgp)
+		return (1);
+
+	return (0);
+}
+
 int
 rde_filter_equal(struct filter_head *a, struct filter_head *b,
     struct rde_peer *peer, struct prefixset_head *psh)
@@ -561,43 +592,12 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 
 	while (fa != NULL || fb != NULL) {
 		/* skip all rules with wrong peer */
-		if (peer != NULL && fa != NULL && fa->peer.groupid != 0 &&
-		    fa->peer.groupid != peer->conf.groupid) {
+		if (rde_filter_skip_rule(peer, fa)) {
 			fa = TAILQ_NEXT(fa, entry);
 			continue;
 		}
-		if (peer != NULL && fa != NULL && fa->peer.peerid != 0 &&
-		    fa->peer.peerid != peer->conf.id) {
-			fa = TAILQ_NEXT(fa, entry);
-			continue;
-		}
-
-		if (peer != NULL && fb != NULL && fb->peer.groupid != 0 &&
-		    fb->peer.groupid != peer->conf.groupid) {
+		if (rde_filter_skip_rule(peer, fb)) {
 			fb = TAILQ_NEXT(fb, entry);
-			continue;
-		}
-		if (peer != NULL && fb != NULL && fb->peer.peerid != 0 &&
-		    fb->peer.peerid != peer->conf.id) {
-			fb = TAILQ_NEXT(fb, entry);
-			continue;
-		}
-
-		if (peer != NULL && fa != NULL && fa->peer.remote_as != 0 &&
-		    fa->peer.remote_as != peer->conf.remote_as) {
-			fa = TAILQ_NEXT(fa, entry);
-			continue;
-		}
-
-		if (peer != NULL && fa != NULL && fa->peer.ebgp != 0 &&
-		    fa->peer.ebgp != peer->conf.ebgp) {
-			fa = TAILQ_NEXT(fa, entry);
-			continue;
-		}
-
-		if (peer != NULL && fa != NULL && fa->peer.ibgp != 0 &&
-		    fa->peer.ibgp != !peer->conf.ebgp) {
-			fa = TAILQ_NEXT(fa, entry);
 			continue;
 		}
 
