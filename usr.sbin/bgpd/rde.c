@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.403 2018/07/31 08:04:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.404 2018/08/02 09:46:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1336,10 +1336,9 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0)) {
+		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0))
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
-		}
 	}
 
 	/* remove original path form the Adj-RIB-In */
@@ -2724,6 +2723,9 @@ rde_reload_done(void)
 	peerself->remote_bgpid = ntohl(conf->bgpid);
 	peerself->conf.local_as = conf->as;
 	peerself->conf.remote_as = conf->as;
+	peerself->conf.remote_addr.aid = AID_INET;
+	peerself->conf.remote_addr.v4.s_addr = conf->bgpid;
+	peerself->conf.remote_masklen = 32;
 	peerself->short_as = conf->short_as;
 
 	/* apply new set of rdomain, sync will be done later */
@@ -3423,9 +3425,16 @@ network_add(struct network_config *nc, int flagstatic)
 	if (vpnset)
 		rde_apply_set(vpnset, &state, nc->prefix.aid, peerself,
 		    peerself);
+
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peerself, &state, &nc->prefix,
+		    nc->prefixlen, 0))
+		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
+		rde_update_log("announce", i, peerself,
+		    state.nexthop ? &state.nexthop->exit_nexthop : NULL,
+		    &nc->prefix, nc->prefixlen);
 		path_update(&ribs[i].rib, peerself, &state, &nc->prefix,
 		    nc->prefixlen, 0);
 	}
@@ -3475,9 +3484,15 @@ network_delete(struct network_config *nc, int flagstatic)
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (*ribs[i].name == '\0')
 			break;
-		prefix_remove(&ribs[i].rib, peerself, &nc->prefix,
-		    nc->prefixlen, flags);
+		if (prefix_remove(&ribs[i].rib, peerself, &nc->prefix,
+		    nc->prefixlen, flags))
+			rde_update_log("withdraw announce", i, peerself,
+			    NULL, &nc->prefix, nc->prefixlen);
+
 	}
+	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peerself, &nc->prefix,
+	    nc->prefixlen, flags))
+		peerself->prefix_cnt--;	
 }
 
 void
