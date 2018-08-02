@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.14 2018/07/29 22:30:32 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.15 2018/08/02 04:39:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -755,9 +755,16 @@ test_dot(int do_uv)
 {
 	extern char **environ;
 	if (do_uv) {
-		printf("testing unveil(\".\")\n");
+		printf("testing dot(\".\")\n");
 		if (unveil(".", "rwxc") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if ((unlink(".") == -1) && errno != EPERM)
+			err(1, "%s:%d - unlink", __FILE__, __LINE__);
+		printf("testing dot flags(\".\")\n");
+		if (unveil(".", "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+		if ((unlink(".") == -1) && errno != EACCES)
+			warn("%s:%d - unlink", __FILE__, __LINE__);
 	}
 	return 0;
 }
