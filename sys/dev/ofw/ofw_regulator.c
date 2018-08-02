@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.4 2017/12/18 09:13:47 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.5 2018/08/02 09:45:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -33,6 +33,9 @@ regulator_register(struct regulator_device *rd)
 	rd->rd_min = OF_getpropint(rd->rd_node, "regulator-min-microvolt", 0);
 	rd->rd_max = OF_getpropint(rd->rd_node, "regulator-max-microvolt", ~0);
 	KASSERT(rd->rd_min <= rd->rd_max);
+
+	rd->rd_ramp_delay =
+	    OF_getpropint(rd->rd_node, "regulator-ramp-delay", 0);
 
 	if (rd->rd_get_voltage && rd->rd_set_voltage) {
 		uint32_t voltage = rd->rd_get_voltage(rd->rd_cookie);
@@ -153,6 +156,8 @@ int
 regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 {
 	struct regulator_device *rd;
+	uint32_t old, delta;
+	int error;
 
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
 		if (rd->rd_phandle == phandle)
@@ -163,8 +168,15 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 	if (rd && (voltage < rd->rd_min || voltage > rd->rd_max))
 		return EINVAL;
 
-	if (rd && rd->rd_set_voltage)
-		return rd->rd_set_voltage(rd->rd_cookie, voltage);
+	if (rd && rd->rd_set_voltage) {
+		old = rd->rd_get_voltage(rd->rd_cookie);
+		error = rd->rd_set_voltage(rd->rd_cookie, voltage);
+		if (voltage > old && rd->rd_ramp_delay > 0) {
+			delta = voltage - old;
+			delay(howmany(delta, rd->rd_ramp_delay));
+		}
+		return error;
+	}
 
 	return ENODEV;
 }

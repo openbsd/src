@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.5 2017/12/18 09:13:47 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.6 2018/08/02 09:45:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -26,6 +26,7 @@ struct regulator_device {
 	int	(*rd_enable)(void *, int);
 
 	uint32_t rd_min, rd_max;
+	uint32_t rd_ramp_delay;
 
 	LIST_ENTRY(regulator_device) rd_list;
 	uint32_t rd_phandle;
