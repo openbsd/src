@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.835 2018/08/02 11:56:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.836 2018/08/02 18:35:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1760,6 +1760,7 @@ int		 cmd_find_from_mouse(struct cmd_find_state *,
 int		 cmd_find_from_nothing(struct cmd_find_state *, int);
 
 /* cmd.c */
+void		 cmd_log_argv(int, char **, const char *);
 int		 cmd_pack_argv(int, char **, char *, size_t);
 int		 cmd_unpack_argv(char *, size_t, int, char ***);
 char	       **cmd_copy_argv(int, char **);
