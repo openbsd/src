@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.24 2018/06/13 15:08:24 reyk Exp $
+.\"	$OpenBSD: acme-client.1,v 1.25 2018/08/02 14:37:32 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2018 $
+.Dd $Mdocdate: August 2 2018 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ Specify an alternative configuration file.
 .It Fl n
 No operation: check and print configuration.
 .It Fl r
-Revoke the X509 certificate found in the certificates.
+Revoke the X.509 certificate.
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
@@ -110,7 +110,7 @@ as above:
 .Pp
 A daily
 .Xr cron 8
-job can renew the certificates:
+job can renew the certificate:
 .Pp
 .Dl acme-client example.com && rcctl reload httpd
 .Sh SEE ALSO
