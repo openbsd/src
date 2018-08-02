@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.253 2018/07/17 18:02:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.254 2018/08/02 11:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,6 +43,8 @@ static void	server_client_check_redraw(struct client *);
 static void	server_client_set_title(struct client *);
 static void	server_client_reset_state(struct client *);
 static int	server_client_assume_paste(struct session *);
+static void	server_client_clear_identify(struct client *,
+		    struct window_pane *);
 
 static void	server_client_dispatch(struct imsg *, void *);
 static void	server_client_dispatch_command(struct client *, struct imsg *);
@@ -93,7 +95,7 @@ server_client_set_identify(struct client *c, u_int delay)
 }
 
 /* Clear identify mode on client. */
-void
+static void
 server_client_clear_identify(struct client *c, struct window_pane *wp)
 {
 	if (~c->flags & CLIENT_IDENTIFY)
@@ -815,7 +817,7 @@ server_client_handle_key(struct client *c, key_code key)
 	struct window_pane	*wp;
 	struct timeval		 tv;
 	struct key_table	*table, *first;
-	struct key_binding	 bd_find, *bd;
+	struct key_binding	*bd;
 	int			 xtimeout, flags;
 	struct cmd_find_state	 fs;
 	key_code		 key0;
@@ -928,8 +930,7 @@ table_changed:
 
 try_again:
 	/* Try to see if there is a key binding in the current table. */
-	bd_find.key = key0;
-	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
+	bd = key_bindings_get(table, key0);
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a

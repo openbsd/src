@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.23 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.24 2018/08/02 11:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -192,7 +192,7 @@ mode_tree_clear_tagged(struct mode_tree_list *mtl)
 	}
 }
 
-void
+static void
 mode_tree_up(struct mode_tree_data *mtd, int wrap)
 {
 	if (mtd->current == 0) {

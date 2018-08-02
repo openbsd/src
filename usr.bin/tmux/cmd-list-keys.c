@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.44 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.45 2018/08/02 11:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,10 +75,14 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 
 	repeat = 0;
 	tablewidth = keywidth = 0;
-	RB_FOREACH(table, key_tables, &key_tables) {
-		if (tablename != NULL && strcmp(table->name, tablename) != 0)
+	table = key_bindings_first_table ();
+	while (table != NULL) {
+		if (tablename != NULL && strcmp(table->name, tablename) != 0) {
+			table = key_bindings_next_table(table);
 			continue;
-		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
+		}
+		bd = key_bindings_first(table);
+		while (bd != NULL) {
 			key = key_string_lookup_key(bd->key);
 
 			if (bd->flags & KEY_BINDING_REPEAT)
@@ -90,13 +94,20 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			width = utf8_cstrwidth(key);
 			if (width > keywidth)
 				keywidth = width;
+
+			bd = key_bindings_next(table, bd);
 		}
+		table = key_bindings_next_table(table);
 	}
 
-	RB_FOREACH(table, key_tables, &key_tables) {
-		if (tablename != NULL && strcmp(table->name, tablename) != 0)
+	table = key_bindings_first_table ();
+	while (table != NULL) {
+		if (tablename != NULL && strcmp(table->name, tablename) != 0) {
+			table = key_bindings_next_table(table);
 			continue;
-		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
+		}
+		bd = key_bindings_first(table);
+		while (bd != NULL) {
 			key = key_string_lookup_key(bd->key);
 
 			if (!repeat)
@@ -122,7 +133,9 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			free(cp);
 
 			cmdq_print(item, "bind-key %s", tmp);
+			bd = key_bindings_next(table, bd);
 		}
+		table = key_bindings_next_table(table);
 	}
 
 	return (CMD_RETURN_NORMAL);

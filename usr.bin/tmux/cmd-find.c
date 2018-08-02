@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.66 2018/06/26 13:21:28 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.67 2018/08/02 11:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,6 +35,7 @@ static int	cmd_find_best_winlink_with_window(struct cmd_find_state *);
 
 static const char *cmd_find_map_table(const char *[][2], const char *);
 
+static void	cmd_find_log_state(const char *, struct cmd_find_state *);
 static int	cmd_find_get_session(struct cmd_find_state *, const char *);
 static int	cmd_find_get_window(struct cmd_find_state *, const char *, int);
 static int	cmd_find_get_window_with_session(struct cmd_find_state *,
@@ -716,7 +717,7 @@ cmd_find_copy_state(struct cmd_find_state *dst, struct cmd_find_state *src)
 }
 
 /* Log the result. */
-void
+static void
 cmd_find_log_state(const char *prefix, struct cmd_find_state *fs)
 {
 	if (fs->s != NULL)
