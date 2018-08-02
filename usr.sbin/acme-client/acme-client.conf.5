@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.13 2018/07/08 15:41:17 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.14 2018/08/02 14:40:38 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2018 $
+.Dd $Mdocdate: August 2 2018 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -120,6 +120,9 @@ plain domain name forms.
 The private key file for which the certificate will be obtained.
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
+This is optional if
+.Ar domain full chain certificate
+is specified.
 .It Ic domain chain certificate Ar file
 The filename in which to store the certificate chain
 that will be returned by the certificate authority.
@@ -137,6 +140,9 @@ This is a combination of the
 and the
 .Ar domain chain certificate
 in one file, and is required by most browsers.
+This is optional if
+.Ar domain certificate
+is specified.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
