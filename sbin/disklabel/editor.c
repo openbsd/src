@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.340 2018/07/12 16:59:59 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.341 2018/08/02 16:30:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -1228,7 +1228,6 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 	return (rval);
 
 invalid:
-	errno = EINVAL;
 	fputs("Invalid entry\n", stderr);
 	return (CMD_BADVALUE);
 }
