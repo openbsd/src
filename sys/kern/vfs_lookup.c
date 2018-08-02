@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.72 2018/07/30 00:16:59 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.73 2018/08/02 04:41:47 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -227,7 +227,8 @@ fail:
 			if ((error = unveil_check_final(p, ndp))) {
 				pool_put(&namei_pool, cnp->cn_pnbuf);
 				if ((cnp->cn_flags & LOCKPARENT) &&
-				    (cnp->cn_flags & ISLASTCN))
+				    (cnp->cn_flags & ISLASTCN) &&
+				    (ndp->ni_vp != ndp->ni_dvp))
 					VOP_UNLOCK(ndp->ni_dvp);
 				if (ndp->ni_vp) {
 					if ((cnp->cn_flags & LOCKLEAF))
