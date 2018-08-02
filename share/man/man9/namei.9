@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.19 2018/08/02 15:22:11 rob Exp $
+.\"	$OpenBSD: namei.9,v 1.20 2018/08/02 17:10:26 schwarze Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,18 +57,9 @@
 .Sh DESCRIPTION
 The
 .Fn namei
-function is used to convert pathnames to file system vnodes.
-The
-name of the function is actually a contraction of the words
-.Em name
-and
-.Em inode
-for name-to-inode conversion, in the days before the
-.Xr vfs 9
-interface was implemented.
-.Pp
-Arguments passed to these functions are encapsulated in the following
-structure:
+function converts a pathname to a
+.Xr vnode 9 .
+It uses the following structure:
 .Bd -literal
 struct nameidata {
         /*
@@ -307,6 +298,16 @@ The name lookup subsystem is implemented within the file
 .Xr vfs 9 ,
 .Xr vnode 9 ,
 .Xr VOP_LOOKUP 9
+.Sh HISTORY
+The
+.Fn namei
+function first appeared in
+.At v4 .
+Its name is an abbreviation for the name-to-inode conversion
+which it performed before the appearance of
+.Xr vfs 9
+in
+.Bx 4.3 Reno .
 .Sh BUGS
 It is unfortunate that much of the
 .Nm
