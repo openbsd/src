@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.180 2018/03/08 08:09:10 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.181 2018/08/02 11:56:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -202,7 +202,6 @@ server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);
 	RB_INIT(&sessions);
-	RB_INIT(&session_groups);
 	key_bindings_init();
 
 	gettimeofday(&start_time, NULL);
