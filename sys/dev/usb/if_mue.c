@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.2 2018/08/03 06:19:15 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -301,8 +301,6 @@ mue_miibus_statchg(struct device *dev)
 		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_10_T:
 		case IFM_100_TX:
-			sc->mue_link++;
-			break;
 		case IFM_1000_T:
 			sc->mue_link++;
 			break;
@@ -969,7 +967,6 @@ mue_iff(struct mue_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t h = 0, hashtbl[MUE_DP_SEL_VHF_HASH_LEN], reg, rxfilt;
-	int i;
 
 	if (usbd_is_dying(sc->mue_udev))
 		return;
@@ -992,8 +989,7 @@ mue_iff(struct mue_softc *sc)
 		rxfilt |= MUE_RFE_CTL_PERFECT | MUE_RFE_CTL_MULTICAST_HASH;
 
 		/* Clear hash table. */
-		for (i = 0; i < MUE_DP_SEL_VHF_HASH_LEN; i++)
-			hashtbl[i] = 0;
+		memset(hashtbl, 0, sizeof(hashtbl));
 
 		/* Now program new ones. */
 		ETHER_FIRST_MULTI(step, ac, enm);
