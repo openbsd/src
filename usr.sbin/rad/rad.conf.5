@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.9 2018/07/21 09:35:50 jmc Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.10 2018/08/03 13:14:46 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2018 $
+.Dd $Mdocdate: August 3 2018 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -92,6 +92,21 @@ The default is 1800 seconds.
 .\" XXX
 .\" .It Ic retrans timer Ar number
 .\" XXX
+.It Ic dns Brq dns options
+.Ic dns
+options are as follows:
+.Bl -tag -width Ds
+.It Ic lifetime Ar seconds
+The number of seconds the dns options are valid after receiving a router
+advertisement message.
+The default is 900 seconds.
+.It Ic nameserver Pq Ar IP Ns | Ns { nameserver list }
+IPv6 address or list of IPv6 addresses of DNS name servers.
+.It Ic search Pq Ar domain Ns | Ns { domain list }
+Domain or list of domains for the
+.Xr resolv.conf 5
+search list.
+.El
 .El
 .Sh INTERFACES
 A list of interfaces to send advertisments on:
@@ -129,26 +144,6 @@ The default is 604800.
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
 The default is 2592000.
-.El
-.Pp
-Name servers are configured inside an interface block:
-.Bd -unfilled -offset indent
-.Ic dns Brq dns options
-.Ed
-.Pp
-.Ic dns
-options are as follows:
-.Bl -tag -width Ds
-.It Ic lifetime Ar seconds
-The number of seconds the dns options are valid after receiving a router
-advertisement message.
-The default is 900 seconds.
-.It Ic nameserver Pq Ar IP Ns | Ns { nameserver list }
-IPv6 address or list of IPv6 addresses of DNS name servers.
-.It Ic search Pq Ar domain Ns | Ns { domain list }
-Domain or list of domains for the
-.Xr resolv.conf 5
-search list.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/rad.conf" -compact

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.14 2018/07/20 20:35:00 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.15 2018/08/03 13:14:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -304,6 +304,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 {
 	static struct rad_conf		*nconf;
 	static struct ra_iface_conf	*ra_iface_conf;
+	static struct ra_options_conf	*ra_options;
 	struct imsg			 imsg;
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf = &iev->ibuf;
@@ -367,6 +368,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct rad_conf));
 			SIMPLEQ_INIT(&nconf->ra_iface_list);
+			SIMPLEQ_INIT(&nconf->ra_options.ra_rdnss_list);
+			SIMPLEQ_INIT(&nconf->ra_options.ra_dnssl_list);
+			ra_options = &nconf->ra_options;
 			break;
 		case IMSG_RECONF_RA_IFACE:
 			if ((ra_iface_conf = malloc(sizeof(struct
@@ -376,10 +380,11 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    ra_iface_conf));
 			ra_iface_conf->autoprefix = NULL;
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
-			SIMPLEQ_INIT(&ra_iface_conf->ra_rdnss_list);
-			SIMPLEQ_INIT(&ra_iface_conf->ra_dnssl_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_rdnss_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_dnssl_list);
 			SIMPLEQ_INSERT_TAIL(&nconf->ra_iface_list,
 			    ra_iface_conf, entry);
+			ra_options = &ra_iface_conf->ra_options;
 			break;
 		case IMSG_RECONF_RA_AUTOPREFIX:
 			if ((ra_iface_conf->autoprefix = malloc(sizeof(struct
@@ -403,7 +408,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_rdnss_conf, imsg.data, sizeof(struct
 			    ra_rdnss_conf));
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_rdnss_list,
 			    ra_rdnss_conf, entry);
 			break;
 		case IMSG_RECONF_RA_DNSSL:
@@ -412,7 +417,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_dnssl_conf, imsg.data, sizeof(struct
 			    ra_dnssl_conf));
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_dnssl_list,
 			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
@@ -905,14 +910,15 @@ build_packet(struct ra_iface *ra_iface)
 	if (ra_options_conf->mtu > 0)
 		len += sizeof(*ndopt_mtu);
 	len += sizeof(*ndopt_pi) * ra_iface->prefix_count;
-	if (ra_iface_conf->rdnss_count > 0)
-		len += sizeof(*ndopt_rdnss) + ra_iface_conf->rdnss_count *
+	if (ra_iface_conf->ra_options.rdnss_count > 0)
+		len += sizeof(*ndopt_rdnss) +
+		    ra_iface_conf->ra_options.rdnss_count *
 		    sizeof(struct in6_addr);
 
-	if (ra_iface_conf->dnssl_len > 0)
+	if (ra_iface_conf->ra_options.dnssl_len > 0)
 		/* round up to 8 byte boundary */
-		len += sizeof(*ndopt_dnssl) + ((ra_iface_conf->dnssl_len + 7)
-		    & ~7);
+		len += sizeof(*ndopt_dnssl) +
+		    ((ra_iface_conf->ra_options.dnssl_len + 7) & ~7);
 
 	if (len > sizeof(ra_iface->data))
 		fatal("%s: packet too big", __func__); /* XXX send multiple */
@@ -969,35 +975,35 @@ build_packet(struct ra_iface *ra_iface)
 		p += sizeof(*ndopt_pi);
 	}
 
-	if (ra_iface_conf->rdnss_count > 0) {
+	if (ra_iface_conf->ra_options.rdnss_count > 0) {
 		ndopt_rdnss = (struct nd_opt_rdnss *)p;
 		ndopt_rdnss->nd_opt_rdnss_type = ND_OPT_RDNSS;
 		ndopt_rdnss->nd_opt_rdnss_len = 1 +
-		    ra_iface_conf->rdnss_count * 2;
+		    ra_iface_conf->ra_options.rdnss_count * 2;
 		ndopt_rdnss->nd_opt_rdnss_reserved = 0;
 		ndopt_rdnss->nd_opt_rdnss_lifetime =
-		    htonl(ra_iface_conf->rdns_lifetime);
+		    htonl(ra_iface_conf->ra_options.rdns_lifetime);
 		p += sizeof(struct nd_opt_rdnss);
-		SIMPLEQ_FOREACH(ra_rdnss, &ra_iface_conf->ra_rdnss_list, 
-		    entry) {
+		SIMPLEQ_FOREACH(ra_rdnss,
+		    &ra_iface_conf->ra_options.ra_rdnss_list, entry) {
 			memcpy(p, &ra_rdnss->rdnss, sizeof(ra_rdnss->rdnss));
 			p += sizeof(ra_rdnss->rdnss);
 		}
 	}
 
-	if (ra_iface_conf->dnssl_len > 0) {
+	if (ra_iface_conf->ra_options.dnssl_len > 0) {
 		ndopt_dnssl = (struct nd_opt_dnssl *)p;
 		ndopt_dnssl->nd_opt_dnssl_type = ND_OPT_DNSSL;
 		/* round up to 8 byte boundary */
 		ndopt_dnssl->nd_opt_dnssl_len = 1 +
-		    ((ra_iface_conf->dnssl_len + 7) & ~7) / 8;
+		    ((ra_iface_conf->ra_options.dnssl_len + 7) & ~7) / 8;
 		ndopt_dnssl->nd_opt_dnssl_reserved = 0;
 		ndopt_dnssl->nd_opt_dnssl_lifetime =
-		    htonl(ra_iface_conf->rdns_lifetime);
+		    htonl(ra_iface_conf->ra_options.rdns_lifetime);
 		p += sizeof(struct nd_opt_dnssl);
 
-		SIMPLEQ_FOREACH(ra_dnssl, &ra_iface_conf->ra_dnssl_list,
-		    entry) {
+		SIMPLEQ_FOREACH(ra_dnssl,
+		    &ra_iface_conf->ra_options.ra_dnssl_list, entry) {
 			label_start = ra_dnssl->search;
 			while ((label_end = strchr(label_start, '.')) != NULL) {
 				label_len = label_end - label_start;

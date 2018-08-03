@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2018/07/20 20:34:18 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2018/08/03 13:14:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -100,6 +100,8 @@ static struct ra_prefix_conf	*ra_prefix_conf;
 
 struct ra_prefix_conf	*conf_get_ra_prefix(struct in6_addr*, int);
 struct ra_iface_conf	*conf_get_ra_iface(char *);
+void			 copy_dns_options(const struct ra_options_conf *,
+			    struct ra_options_conf *);
 
 typedef struct {
 	union {
@@ -212,6 +214,7 @@ ra_opt_block	: DEFAULT ROUTER yesno {
 		| MTU NUMBER {
 			ra_options->mtu = $2;
 		}
+		| DNS dns_block
 		;
 
 optnl		: '\n' optnl		/* zero or more newlines */
@@ -228,6 +231,7 @@ ra_iface	: RA_IFACE STRING {
 			ra_options = &ra_iface_conf->ra_options;
 		} ra_iface_block {
 			ra_iface_conf = NULL;
+			ra_options = &conf->ra_options;
 		}
 		;
 
@@ -269,7 +273,6 @@ ra_ifaceoptsl	: NO AUTO PREFIX {
 		} ra_prefix_block {
 			ra_prefix_conf = NULL;
 		}
-		| DNS dns_block
 		| ra_opt_block
 		;
 
@@ -305,7 +308,7 @@ dnsopts_l	: dnsopts_l dnsoptsl nl
 		;
 
 dnsoptsl	: LIFETIME NUMBER {
-			ra_iface_conf->rdns_lifetime = $2;
+			ra_options->rdns_lifetime = $2;
 		}
 		| NAMESERVER nserver_block
 		| SEARCH search_block
@@ -336,9 +339,9 @@ nserveroptsl	: STRING {
 			    == NULL)
 				err(1, "%s", __func__);
 			memcpy(&ra_rdnss_conf->rdnss, &addr, sizeof(addr));
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_rdnss_list,
 			    ra_rdnss_conf, entry);
-			ra_iface_conf->rdnss_count++;
+			ra_options->rdnss_count++;
 		}
 		;
 search_block	: '{' optnl searchopts_l '}'
@@ -375,9 +378,9 @@ searchoptsl	: STRING {
 					YYERROR;
 				}
 			}
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_dnssl_list,
 			    ra_dnssl_conf, entry);
-			ra_iface_conf->dnssl_len += len + 1;
+			ra_options->dnssl_len += len + 1;
 		}
 		;
 %%
@@ -793,7 +796,8 @@ popfile(void)
 struct rad_conf *
 parse_config(char *filename)
 {
-	struct sym	*sym, *next;
+	struct sym		*sym, *next;
+	struct ra_iface_conf	*iface;
 
 	conf = config_new_empty();
 	ra_options = NULL;
@@ -827,7 +831,42 @@ parse_config(char *filename)
 		return (NULL);
 	}
 
+	if (!SIMPLEQ_EMPTY(&conf->ra_options.ra_rdnss_list) ||
+	    !SIMPLEQ_EMPTY(&conf->ra_options.ra_dnssl_list)) {
+		SIMPLEQ_FOREACH(iface, &conf->ra_iface_list, entry)
+			copy_dns_options(&conf->ra_options,
+			    &iface->ra_options);
+	}
+
 	return (conf);
+}
+
+void
+copy_dns_options(const struct ra_options_conf *src, struct ra_options_conf *dst)
+{
+	struct ra_rdnss_conf	*ra_rdnss, *nra_rdnss;
+	struct ra_dnssl_conf	*ra_dnssl, *nra_dnssl;
+
+	if (SIMPLEQ_EMPTY(&dst->ra_rdnss_list)) {
+		SIMPLEQ_FOREACH(ra_rdnss, &src->ra_rdnss_list, entry) {
+			if ((nra_rdnss = calloc(1, sizeof(*nra_rdnss))) == NULL)
+				errx(1, "%s", __func__);
+			memcpy(nra_rdnss, ra_rdnss, sizeof(*nra_rdnss));
+			SIMPLEQ_INSERT_TAIL(&dst->ra_rdnss_list, nra_rdnss,
+			    entry);
+		}
+		dst->rdnss_count = src->rdnss_count;
+	}
+	if (SIMPLEQ_EMPTY(&dst->ra_dnssl_list)) {
+		SIMPLEQ_FOREACH(ra_dnssl, &src->ra_dnssl_list, entry) {
+			if ((nra_dnssl = calloc(1, sizeof(*nra_dnssl))) == NULL)
+				errx(1, "%s", __func__);
+			memcpy(nra_dnssl, ra_dnssl, sizeof(*nra_dnssl));
+			SIMPLEQ_INSERT_TAIL(&dst->ra_dnssl_list, nra_dnssl,
+			    entry);
+		}
+		dst->dnssl_len = src->dnssl_len;
+	}
 }
 
 int
@@ -963,11 +1002,11 @@ conf_get_ra_iface(char *name)
 	/* Inherit attributes set in global section. */
 	iface->ra_options = conf->ra_options;
 
-	iface->rdns_lifetime = DEFAULT_RDNS_LIFETIME;
-
 	SIMPLEQ_INIT(&iface->ra_prefix_list);
-	SIMPLEQ_INIT(&iface->ra_rdnss_list);
-	SIMPLEQ_INIT(&iface->ra_dnssl_list);
+	SIMPLEQ_INIT(&iface->ra_options.ra_rdnss_list);
+	iface->ra_options.rdnss_count = 0;
+	SIMPLEQ_INIT(&iface->ra_options.ra_dnssl_list);
+	iface->ra_options.dnssl_len = 0;
 
 	SIMPLEQ_INSERT_TAIL(&conf->ra_iface_list, iface, entry);
 
@@ -978,6 +1017,8 @@ void
 clear_config(struct rad_conf *xconf)
 {
 	struct ra_iface_conf	*iface;
+
+	free_dns_options(&xconf->ra_options);
 
 	while((iface = SIMPLEQ_FIRST(&xconf->ra_iface_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&xconf->ra_iface_list, entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2018/07/20 17:55:09 bket Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.5 2018/08/03 13:14:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -46,6 +46,10 @@ yesno(int flag)
 void
 print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 {
+	struct ra_rdnss_conf	*ra_rdnss;
+	struct ra_dnssl_conf	*ra_dnssl;
+	char			 buf[INET6_ADDRSTRLEN];
+
 	printf("%sdefault router %s\n", indent, yesno(ra_options->dfr));
 	printf("%shop limit %d\n", indent, ra_options->cur_hl);
 	printf("%smanaged address configuration %s\n", indent,
@@ -56,6 +60,30 @@ print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 	printf("%sretrans timer %u\n", indent, ra_options->retrans_timer);
 	if (ra_options->mtu > 0)
 		printf("%smtu %u\n", indent, ra_options->mtu);
+
+	if (!SIMPLEQ_EMPTY(&ra_options->ra_rdnss_list) ||
+	    !SIMPLEQ_EMPTY(&ra_options->ra_dnssl_list)) {
+		printf("%sdns {\n", indent);
+		printf("%s\tlifetime %u\n", indent, ra_options->rdns_lifetime);
+		if (!SIMPLEQ_EMPTY(&ra_options->ra_rdnss_list)) {
+			printf("%s\tnameserver {\n", indent);
+			SIMPLEQ_FOREACH(ra_rdnss,
+			    &ra_options->ra_rdnss_list, entry) {
+				inet_ntop(AF_INET6, &ra_rdnss->rdnss,
+				    buf, sizeof(buf));
+				printf("%s\t\t%s\n", indent, buf);
+			}
+			printf("%s\t}\n", indent);
+		}
+		if (!SIMPLEQ_EMPTY(&ra_options->ra_dnssl_list)) {
+			printf("%s\tsearch {\n", indent);
+			SIMPLEQ_FOREACH(ra_dnssl,
+			    &ra_options->ra_dnssl_list, entry)
+				printf("%s\t\t%s\n", indent, ra_dnssl->search);
+			printf("%s\t}\n", indent);
+		}
+		printf("%s}\n", indent);
+	}
 }
 
 void
@@ -74,8 +102,6 @@ print_config(struct rad_conf *conf)
 {
 	struct ra_iface_conf	*iface;
 	struct ra_prefix_conf	*prefix;
-	struct ra_rdnss_conf	*ra_rdnss;
-	struct ra_dnssl_conf	*ra_dnssl;
 	char			 buf[INET6_ADDRSTRLEN], *bufp;
 
 	print_ra_options("", &conf->ra_options);
@@ -98,30 +124,6 @@ print_config(struct rad_conf *conf)
 			    prefix->prefixlen, buf, sizeof(buf));
 			printf("\tprefix %s {\n", bufp);
 			print_prefix_options("\t\t", prefix);
-			printf("\t}\n");
-		}
-
-		if (!SIMPLEQ_EMPTY(&iface->ra_rdnss_list) ||
-		    !SIMPLEQ_EMPTY(&iface->ra_dnssl_list)) {
-			printf("\tdns {\n");
-			printf("\t\tlifetime %u\n", iface->rdns_lifetime);
-			if (!SIMPLEQ_EMPTY(&iface->ra_rdnss_list)) {
-				printf("\t\tnameserver {\n");
-				SIMPLEQ_FOREACH(ra_rdnss,
-				    &iface->ra_rdnss_list, entry) {
-					inet_ntop(AF_INET6, &ra_rdnss->rdnss,
-					    buf, sizeof(buf));
-					printf("\t\t\t%s\n", buf);
-				}
-				printf("\t\t}\n");
-			}
-			if (!SIMPLEQ_EMPTY(&iface->ra_dnssl_list)) {
-				printf("\t\tsearch {\n");
-				SIMPLEQ_FOREACH(ra_dnssl,
-				    &iface->ra_dnssl_list, entry)
-					printf("\t\t\t%s\n", ra_dnssl->search);
-				printf("\t\t}\n");
-			}
 			printf("\t}\n");
 		}
 

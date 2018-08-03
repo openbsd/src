@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.14 2018/07/20 20:35:00 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.15 2018/08/03 13:14:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -75,6 +75,16 @@ enum imsg_type {
 	IMSG_SOCKET_IPC
 };
 
+/* RFC 8106 */
+struct ra_rdnss_conf {
+	SIMPLEQ_ENTRY(ra_rdnss_conf)	entry;
+	struct in6_addr			rdnss;
+};
+struct ra_dnssl_conf {
+	SIMPLEQ_ENTRY(ra_dnssl_conf)	entry;
+	char				search[MAX_SEARCH];
+};
+
 /* RFC 4861 Sections 4.2 and 4.6.4 */
 struct ra_options_conf {
 	int		dfr;			/* is default router? */
@@ -85,6 +95,11 @@ struct ra_options_conf {
 	uint32_t	reachable_time;
 	uint32_t	retrans_timer;
 	uint32_t	mtu;
+	uint32_t	rdns_lifetime;
+	SIMPLEQ_HEAD(, ra_rdnss_conf)		 ra_rdnss_list;
+	int		rdnss_count;
+	SIMPLEQ_HEAD(, ra_dnssl_conf)		 ra_dnssl_list;
+	int		dnssl_len;
 };
 
 /* RFC 4861 Section 4.6.2 */
@@ -98,27 +113,12 @@ struct ra_prefix_conf {
 	int				 aflag;		/* autonom. addr flag */
 };
 
-/* RFC 8106 */
-struct ra_rdnss_conf {
-	SIMPLEQ_ENTRY(ra_rdnss_conf)	entry;
-	struct in6_addr			rdnss;
-};
-struct ra_dnssl_conf {
-	SIMPLEQ_ENTRY(ra_dnssl_conf)	entry;
-	char				search[MAX_SEARCH];
-};
-
 struct ra_iface_conf {
 	SIMPLEQ_ENTRY(ra_iface_conf)		 entry;
 	struct ra_options_conf			 ra_options;
 	struct ra_prefix_conf			*autoprefix;
 	SIMPLEQ_HEAD(ra_prefix_conf_head,
 	    ra_prefix_conf)			 ra_prefix_list;
-	uint32_t				 rdns_lifetime;
-	SIMPLEQ_HEAD(, ra_rdnss_conf)		 ra_rdnss_list;
-	int					 rdnss_count;
-	SIMPLEQ_HEAD(, ra_dnssl_conf)		 ra_dnssl_list;
-	int					 dnssl_len;
 	char					 name[IF_NAMESIZE];
 };
 
@@ -154,6 +154,7 @@ int	imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
 struct rad_conf	*config_new_empty(void);
 void		 config_clear(struct rad_conf *);
 void		 free_ra_iface_conf(struct ra_iface_conf *);
+void		 free_dns_options(struct ra_options_conf *);
 void		 mask_prefix(struct in6_addr*, int len);
 const char	*sin6_to_str(struct sockaddr_in6 *);
 const char	*in6_to_str(struct in6_addr *);

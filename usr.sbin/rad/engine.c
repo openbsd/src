@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2018/07/20 20:35:00 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2018/08/03 13:14:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -260,6 +260,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 {
 	static struct rad_conf		*nconf;
 	static struct ra_iface_conf	*ra_iface_conf;
+	static struct ra_options_conf	*ra_options;
 	struct imsg			 imsg;
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf;
@@ -325,6 +326,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct rad_conf));
 			SIMPLEQ_INIT(&nconf->ra_iface_list);
+			SIMPLEQ_INIT(&nconf->ra_options.ra_rdnss_list);
+			SIMPLEQ_INIT(&nconf->ra_options.ra_dnssl_list);
+			ra_options = &nconf->ra_options;
 			break;
 		case IMSG_RECONF_RA_IFACE:
 			if ((ra_iface_conf = malloc(sizeof(struct
@@ -334,10 +338,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct ra_iface_conf));
 			ra_iface_conf->autoprefix = NULL;
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
-			SIMPLEQ_INIT(&ra_iface_conf->ra_rdnss_list);
-			SIMPLEQ_INIT(&ra_iface_conf->ra_dnssl_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_rdnss_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_dnssl_list);
 			SIMPLEQ_INSERT_TAIL(&nconf->ra_iface_list,
 			    ra_iface_conf, entry);
+			ra_options = &ra_iface_conf->ra_options;
 			break;
 		case IMSG_RECONF_RA_AUTOPREFIX:
 			if ((ra_iface_conf->autoprefix = malloc(sizeof(struct
@@ -361,7 +366,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_rdnss_conf, imsg.data, sizeof(struct
 			    ra_rdnss_conf));
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_rdnss_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_rdnss_list,
 			    ra_rdnss_conf, entry);
 			break;
 		case IMSG_RECONF_RA_DNSSL:
@@ -370,7 +375,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(ra_dnssl_conf, imsg.data, sizeof(struct
 			    ra_dnssl_conf));
-			SIMPLEQ_INSERT_TAIL(&ra_iface_conf->ra_dnssl_list,
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_dnssl_list,
 			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
