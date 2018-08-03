@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_acpi.c,v 1.1 2018/07/01 15:54:59 kettenis Exp $	*/
+/*	$OpenBSD: ahci_acpi.c,v 1.2 2018/08/03 22:18:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -49,21 +49,15 @@ struct cfattach ahci_acpi_ca = {
 	sizeof(struct ahci_acpi_softc), ahci_acpi_match, ahci_acpi_attach
 };
 
-const char *ahci_hids[] = {
-	"AMDI0600",
-	"LNRO001E",
-	NULL
-};
-
 int	ahci_acpi_parse_resources(int, union acpi_resource *, void *);
 
 int
 ahci_acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
-	struct cfdata *cf = match;
 
-	return acpi_matchhids(aaa, ahci_hids, cf->cf_driver->cd_name);
+	return acpi_matchcls(aaa, PCI_CLASS_MASS_STORAGE,
+	    PCI_SUBCLASS_MASS_STORAGE_SATA, PCI_INTERFACE_SATA_AHCI10);
 }
 
 void

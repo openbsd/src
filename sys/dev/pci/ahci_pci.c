@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.14 2018/01/03 20:10:40 kettenis Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.15 2018/08/03 22:18:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -43,7 +43,6 @@
 #define AHCI_PCI_BAR		0x24
 #define AHCI_PCI_ATI_SB600_MAGIC	0x40
 #define AHCI_PCI_ATI_SB600_LOCKED	0x01
-#define AHCI_PCI_INTERFACE	0x01
 
 struct ahci_pci_softc {
 	struct ahci_softc	psc_ahci;
@@ -232,7 +231,7 @@ ahci_ati_sb_idetoahci(struct ahci_softc *sc, struct pci_attach_args *pa)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG,
 		    PCI_CLASS_MASS_STORAGE << PCI_CLASS_SHIFT |
 		    PCI_SUBCLASS_MASS_STORAGE_SATA << PCI_SUBCLASS_SHIFT |
-		    AHCI_PCI_INTERFACE << PCI_INTERFACE_SHIFT |
+		    PCI_INTERFACE_SATA_AHCI10 << PCI_INTERFACE_SHIFT |
 		    PCI_REVISION(pa->pa_class) << PCI_REVISION_SHIFT);
 
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
@@ -310,7 +309,7 @@ ahci_pci_match(struct device *parent, void *match, void *aux)
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
-	    PCI_INTERFACE(pa->pa_class) == AHCI_PCI_INTERFACE)
+	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI10)
 		return (2);
 
 	return (0);

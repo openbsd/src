@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.355 2018/07/10 17:11:42 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.356 2018/08/03 22:18:13 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -122,9 +122,6 @@ void	acpi_create_thread(void *);
 #ifndef SMALL_KERNEL
 
 void	acpi_indicator(struct acpi_softc *, int);
-
-int	acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
-	    const char *driver);
 
 void	acpi_init_pm(struct acpi_softc *);
 
@@ -505,6 +502,33 @@ acpi_getminbus(int crsidx, union acpi_resource *crs, void *arg)
 		*bbn = crs->lr_word._min;
 	}
 	return 0;
+}
+
+int
+acpi_matchcls(struct acpi_attach_args *aaa, int class, int subclass,
+    int interface)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct aml_value res;
+
+	if (aaa->aaa_dev == NULL || aaa->aaa_node == NULL)
+		return (0);
+
+	if (aml_evalname(sc, aaa->aaa_node, "_CLS", 0, NULL, &res))
+		return (0);
+
+	if (res.type != AML_OBJTYPE_PACKAGE || res.length != 3 ||
+	    res.v_package[0]->type != AML_OBJTYPE_INTEGER ||
+	    res.v_package[1]->type != AML_OBJTYPE_INTEGER ||
+	    res.v_package[2]->type != AML_OBJTYPE_INTEGER)
+		return (0);
+
+	if (res.v_package[0]->v_integer == class &&
+	    res.v_package[1]->v_integer == subclass &&
+	    res.v_package[2]->v_integer == interface)
+		return (1);
+
+	return (0);
 }
 
 int
