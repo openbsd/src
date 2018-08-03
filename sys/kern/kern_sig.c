@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.223 2018/07/18 16:55:17 bluhm Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.224 2018/08/03 14:47:56 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1622,11 +1622,14 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		    IO_UNIT, io->io_cred, NULL, io->io_proc);
 		if (error) {
 			struct process *pr = io->io_proc->p_p;
+
 			if (error == ENOSPC)
-				log(LOG_ERR, "coredump of %s(%d) failed, filesystem full\n",
+				log(LOG_ERR,
+				    "coredump of %s(%d) failed, filesystem full\n",
 				    pr->ps_comm, pr->ps_pid);
 			else
-				log(LOG_ERR, "coredump of %s(%d), write failed: errno %d\n",
+				log(LOG_ERR,
+				    "coredump of %s(%d), write failed: errno %d\n",
 				    pr->ps_comm, pr->ps_pid, error);
 			return (error);
 		}
