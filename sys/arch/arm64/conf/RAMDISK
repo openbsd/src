@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.65 2018/07/30 10:56:00 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.66 2018/08/03 13:37:08 kevlo Exp $
 #
 # GENERIC machine description file
 #
@@ -206,6 +206,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
