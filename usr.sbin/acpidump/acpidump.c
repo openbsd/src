@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.19 2018/06/30 19:45:41 kettenis Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.20 2018/08/03 15:29:51 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <paths.h>
 
 
 #define vm_page_size sysconf(_SC_PAGESIZE)
@@ -601,8 +602,23 @@ asl_dump_from_devmem(void)
 
 	acpi_user_init();
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
-		err(1, "pledge");
+	/* Can only unveil if being dumped to a dir */
+	if (aml_dumpdir) {
+		if (unveil(aml_dumpfile, "wc") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_MEM, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KMEM, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KVMDB, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KSYMS, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_UNIX, "r") == -1)
+			err(1, "unveil");
+		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+			err(1, "pledge");
+	}
 
 	rp = acpi_find_rsd_ptr();
 	if (!rp)
