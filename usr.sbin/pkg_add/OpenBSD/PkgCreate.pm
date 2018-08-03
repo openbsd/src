@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.152 2018/08/03 06:39:12 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.153 2018/08/03 06:49:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1336,6 +1336,7 @@ sub add_elements
 
 	if (defined $state->opt('L')) {
 		OpenBSD::PackingElement::LocalBase->add($plist, $state->opt('L'));
+		$state->{groff} = $state->opt('L'). '/bin/groff';
 	}
 	$self->add_extra_info($plist, $state);
 	if ($state->{system_version}) {

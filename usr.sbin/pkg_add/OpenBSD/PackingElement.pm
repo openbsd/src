@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.266 2018/08/03 06:39:12 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.267 2018/08/03 06:49:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -643,7 +643,7 @@ sub format
 		    close $destfh;
 		    chdir($dir) or die "Can't chdir to $dir";
 		    },
-		    OpenBSD::Paths->groff,
+		    $state->{groff} // OpenBSD::Paths->groff,
 		    qw(-mandoc -mtty-char -E -Ww -Tascii -P -c),
 		    @extra, '--', $file);
 		if ($r != 0) {
