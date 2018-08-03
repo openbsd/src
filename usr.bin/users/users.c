@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.13 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: users.c,v 1.14 2018/08/03 16:02:53 deraadt Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -53,6 +53,8 @@ main(int argc, char *argv[])
 	struct utmp utmp;
 	int ch;
 
+	if (unveil(_PATH_UTMP, "r") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
