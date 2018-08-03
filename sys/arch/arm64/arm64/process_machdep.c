@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.4 2018/07/04 17:52:29 drahn Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.5 2018/08/03 18:36:01 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -87,7 +87,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_lr = regs->r_lr;
 	tf->tf_sp = regs->r_sp;
 	tf->tf_elr = regs->r_pc;
-	tf->tf_spsr = (0xff0f0000 & regs->r_spsr) | (tf->tf_spsr & 0x0000ffff);
+	tf->tf_spsr = (0xff0f0000 & regs->r_spsr) | (tf->tf_spsr & 0x0020ffff);
 	p->p_addr->u_pcb.pcb_tcb = (void *)regs->r_tpidr;
 	return(0);
 }
@@ -104,10 +104,14 @@ process_write_fpregs(struct proc *p,  struct fpreg *regs)
 int
 process_sstep(struct proc *p, int sstep)
 {
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
 	if (sstep) {
 		p->p_addr->u_pcb.pcb_flags |= PCB_SINGLESTEP;
+		tf->tf_spsr |= PSR_SS;
 	} else {
 		p->p_addr->u_pcb.pcb_flags &= ~(PCB_SINGLESTEP);
+		tf->tf_spsr &= ~PSR_SS;
 	}
 	return 0;
 }

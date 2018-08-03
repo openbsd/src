@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.7 2018/07/19 17:38:12 drahn Exp $ */
+/* $OpenBSD: exception.S,v 1.8 2018/08/03 18:36:01 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -30,6 +30,8 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z andrew $");
 #endif
+
+#include <machine/armreg.h>
 
 #include "assym.h"
 
@@ -141,6 +143,23 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 2:
 .endm
 
+.macro disable_ss
+	mrs	x2, mdscr_el1
+	and	x2, x2, #(~DBG_MDSCR_SS)
+	msr	mdscr_el1, x2
+.endm
+
+.macro allow_ss
+	mrs	x2, tpidr_el1
+	ldr	x2, [x2, #(CI_CURPCB)]
+	ldr	w2, [x2, #(PCB_FLAGS)]
+	tbz	w2, #1, 1f	/* PCB_SINGLESTEP bit */
+	mrs	x2, mdscr_el1
+	orr	x2, x2, #(DBG_MDSCR_SS)
+	msr	mdscr_el1, x2
+1:
+.endm
+
 handle_el1h_sync:
 	save_registers 1
 	mov	x0, sp
@@ -170,10 +189,12 @@ handle_el1h_error:
 	.type handle_el0_sync,@function
 handle_el0_sync:
 	save_registers 0
+	disable_ss
 	mov	x0, sp
 	bl	do_el0_sync
 	do_ast
 	bl	_C_LABEL(vfp_enable)
+	allow_ss
 	restore_registers 0
 	return
 
@@ -181,11 +202,13 @@ handle_el0_sync:
 	.type handle_el0_irq,@function
 handle_el0_irq:
 	save_registers 0
+	disable_ss
 	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
 	bl	arm_cpu_intr
 	do_ast
 	bl	_C_LABEL(vfp_enable)
+	allow_ss
 	restore_registers 0
 	return
 
@@ -193,6 +216,7 @@ handle_el0_irq:
 	.type handle_el0_error,@function
 handle_el0_error:
 	save_registers 0
+	disable_ss
 	mov	x0, sp
 	bl	do_el0_error
 	brk	0xf23

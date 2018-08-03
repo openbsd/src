@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.5 2017/08/06 20:05:24 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.6 2018/08/03 18:36:01 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -490,11 +490,9 @@
 #define	TCR_T0SZ(x)	((x) << TCR_T0SZ_SHIFT)
 #define	TCR_TxSZ(x)	(TCR_T1SZ(x) | TCR_T0SZ(x))
 
-/* Saved Program Status Register */
-#define	DBG_SPSR_SS	(0x1 << 21)
-
 /* Monitor Debug System Control Register */
 #define	DBG_MDSCR_SS	(0x1 << 0)
+#define	DBG_MDSCR_TDCC	(0x1 << 12)
 #define	DBG_MDSCR_KDE	(0x1 << 13)
 #define	DBG_MDSCR_MDE	(0x1 << 15)
 

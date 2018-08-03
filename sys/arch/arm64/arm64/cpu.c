@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2018/08/03 16:45:17 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.21 2018/08/03 18:36:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -296,6 +296,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 			cpu_node = ci->ci_node;
 			cpu_cpuspeed = cpu_clockspeed;
 		}
+
+		/* Initialize debug registers. */
+		WRITE_SPECIALREG(mdscr_el1, DBG_MDSCR_TDCC);
+		WRITE_SPECIALREG(oslar_el1, 0);
 #ifdef MULTIPROCESSOR
 	}
 #endif
@@ -444,6 +448,10 @@ cpu_start_secondary(struct cpu_info *ci)
 	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
 	tcr |= TCR_A1;
 	WRITE_SPECIALREG(tcr_el1, tcr);
+
+	/* Initialize debug registers. */
+	WRITE_SPECIALREG(mdscr_el1, DBG_MDSCR_TDCC);
+	WRITE_SPECIALREG(oslar_el1, 0);
 
 	s = splhigh();
 	arm_intr_cpu_enable();
