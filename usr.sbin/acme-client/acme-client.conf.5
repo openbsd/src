@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.15 2018/08/03 17:46:57 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.16 2018/08/03 17:48:34 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -148,6 +148,7 @@ is specified.
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
 section) to use.
+If this setting is absent, the first authority specified is used.
 .It Ic challengedir Ar path
 The directory in which the challenge file will be stored.
 If it is not specified, a default of
