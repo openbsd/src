@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.225 2018/07/11 21:18:23 nayden Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.226 2018/08/03 09:11:56 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -336,8 +336,10 @@ nd6_timer(void *arg)
 	secs = expire - time_uptime;
 	if (secs < 0)
 		secs = 0;
-	if (!TAILQ_EMPTY(&nd6_list))
+	if (!TAILQ_EMPTY(&nd6_list)) {
+		nd6_timer_next = time_uptime + secs;
 		timeout_add_sec(&nd6_timer_to, secs);
+	}
 
 	NET_UNLOCK();
 }
