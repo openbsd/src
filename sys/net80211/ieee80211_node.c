@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.135 2018/07/30 11:09:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.136 2018/08/03 10:52:45 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -388,13 +388,6 @@ ieee80211_match_ess(struct ieee80211com *ic)
 				if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
 					continue;
 			}
-
-			if ((ess->rsnprotos & ni->ni_rsnprotos) == 0)
-				continue;
-			if ((ess->rsnakms & ni->ni_rsnakms) == 0)
-				continue;
-			if ((ess->rsnciphers & ni->ni_rsnciphers) == 0)
-				continue;
 
 			if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
 			    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
