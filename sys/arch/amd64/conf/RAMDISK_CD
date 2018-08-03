@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.171 2018/04/26 16:13:13 phessler Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.172 2018/08/03 01:50:14 kevlo Exp $
 
 machine		amd64
 maxusers	4
@@ -111,6 +111,7 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
