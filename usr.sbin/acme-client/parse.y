@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2018/07/29 12:46:31 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2018/08/03 17:49:57 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -311,7 +311,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 		| DOMAIN FULL CHAIN CERT STRING {
 			char *s;
 			if (domain->fullchain != NULL) {
-				yyerror("duplicate chain");
+				yyerror("duplicate full chain");
 				YYERROR;
 			}
 			if ((s = strdup($5)) == NULL)
