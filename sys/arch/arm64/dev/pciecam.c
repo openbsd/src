@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.4 2018/07/28 13:59:08 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.5 2018/08/03 22:40:05 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -381,6 +381,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 		pcireg_t reg;
 		int off;
 
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
 		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, (void *)name);
 		if (cookie == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.7 2018/07/28 13:59:08 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.8 2018/08/03 22:40:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -580,6 +580,8 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		pcireg_t reg;
 		int off;
 
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
 		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, (void *)name);
 		if (cookie == NULL)

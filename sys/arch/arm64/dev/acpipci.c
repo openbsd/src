@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.3 2018/07/28 13:59:08 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.4 2018/08/03 22:40:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -453,6 +453,8 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		pcireg_t reg;
 		int off;
 
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
 		    &data, level, func, arg, name);
 		if (cookie == NULL)
