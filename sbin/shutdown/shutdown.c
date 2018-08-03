@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.51 2018/04/07 19:08:13 cheloha Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.52 2018/08/03 17:09:22 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -113,9 +113,6 @@ main(int argc, char *argv[])
 	int arglen, ch, len, readstdin = 0;
 	pid_t forkpid;
 
-	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
-		err(1, "pledge");
-
 #ifndef DEBUG
 	if (geteuid())
 		errx(1, "NOT super-user");
@@ -167,6 +164,30 @@ main(int argc, char *argv[])
 		warnx("incompatible switches -p and -r.");
 		usage();
 	}
+
+	if (unveil(_PATH_CONSOLE, "rw") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_RC, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_WALL, "x") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_FASTBOOT, "wc") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_NOLOGIN, "wc") == -1)
+		err(1, "unveil");
+	if (dohalt || dopower) {
+		if (unveil(_PATH_HALT, "x") == -1)
+			err(1, "unveil");
+	} else if (doreboot) {
+		if (unveil(_PATH_REBOOT, "x") == -1)
+			err(1, "unveil");
+	} else {
+		if (unveil(_PATH_BSHELL, "x") == -1)
+			err(1, "unveil");
+	}
+	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	getoffset(*argv++);
 
 	if (*argv) {
