@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.151 2018/06/26 09:42:18 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.152 2018/08/03 06:39:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -624,31 +624,37 @@ sub grab_manpages
 	push(@{$state->{manpages}}, $filename);
 }
 
-sub makesum_plist
+sub format_source_page
 {
 	my ($self, $state, $plist) = @_;
+
 	if ($state->{subst}->empty("USE_GROFF") || !$self->is_source) {
-		return $self->SUPER::makesum_plist($state, $plist);
+		return 0;
 	}
 	my $dest = $self->source_to_dest;
 	my $fullname = $self->cwd."/".$dest;
 	my $d = dirname($fullname);
 	$state->{mandir} //= OpenBSD::Temp::permanent_dir(
 	    $ENV{TMPDIR} // '/tmp', "manpage");
-	my $tempname = $state->{mandir}."/".$fullname;
+	my $tempname = $state->{mandir}.$fullname;
 	require File::Path;
-	File::Path::make_path($state->{mandir}."/".$d);
-	open my $fh, ">", $tempname or $state->error("can't create #1: #2",
-	    $tempname, $!);
+	File::Path::make_path($state->{mandir}.$d);
+	open my $fh, ">", $tempname;
+	if (!defined $fh) {
+	    $state->error("can't create #1: #2", $tempname, $!);
+	    return 0;
+    	}
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
 		undef $d;
 	}
-	$self->format($state, $tempname, $fh) or return;
+	if (!$self->format($state, $tempname, $fh)) {
+		return 0;
+	}
 	if (-z $tempname) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
-		return $self->SUPER::makesum_plist($state, $plist);
+		return 0;
 	}
 	if (defined $d && !$state->{known_dirs}->{$d}) {
 		$state->{known_dirs}->{$d} = 1;
@@ -657,7 +663,17 @@ sub makesum_plist
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->{wtempname} = $tempname;
 	$e->compute_checksum($e, $state, $state->{base});
+	return 1;
 }
+
+sub makesum_plist
+{
+	my ($self, $state, $plist) = @_;
+	if (!$self->format_source_page($state, $plist)) {
+		$self->SUPER::makesum_plist($state, $plist);
+	}
+}
+
 
 package OpenBSD::PackingElement::Depend;
 sub avert_duplicates_and_other_checks

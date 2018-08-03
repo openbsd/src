@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.265 2018/07/07 11:32:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.266 2018/08/03 06:39:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -637,7 +637,7 @@ sub format
 		mkdir($d);
 	}
 	if (my ($dir, $file) = $fname =~ m/^(.*)\/([^\/]+\/[^\/]+)$/) {
-		$state->system(sub {
+		my $r = $state->system(sub {
 		    open STDOUT, '>&', $destfh or
 			die "Can't write to $dest";
 		    close $destfh;
@@ -646,8 +646,13 @@ sub format
 		    OpenBSD::Paths->groff,
 		    qw(-mandoc -mtty-char -E -Ww -Tascii -P -c),
 		    @extra, '--', $file);
+		if ($r != 0) {
+			# system already displays an error message
+			return;
+		}
 	} else {
-		die "Can't parse source name $fname";
+		$state->error("Can't parse source name #1", $fname);
+		return;
 	}
 	return 1;
 }
