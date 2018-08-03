@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.14 2018/08/02 14:40:38 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.15 2018/08/03 17:46:57 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2018 $
+.Dd $Mdocdate: August 3 2018 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -129,6 +129,7 @@ that will be returned by the certificate authority.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
+This setting is optional.
 .It Ic domain full chain certificate Ar file
 The filename in which to store the full certificate chain
 that will be returned by the certificate authority.
