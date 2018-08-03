@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.172 2018/07/22 16:59:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.173 2018/08/03 16:31:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,9 +48,11 @@ struct rib_entry *rib_restart(struct rib_context *);
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
-int		 prefix_add(struct rib *, struct rde_aspath *,
-		    struct bgpd_addr *, int, int);
-void		 prefix_move(struct rde_aspath *, struct prefix *, int);
+int		 prefix_add(struct bgpd_addr *, int, struct rib *,
+		    struct rde_peer *, struct rde_aspath *,
+		    struct filterstate *, int);
+int		 prefix_move(struct prefix *, struct rde_peer *,
+		    struct rde_aspath *, struct filterstate *, int);
 
 static inline void
 re_lock(struct rib_entry *re)
@@ -423,11 +425,6 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	struct prefix		*p;
 	int			 pflag = 0;
 
-	nexthop_put(nasp->nexthop);
-	nasp->nexthop = nexthop_ref(state->nexthop);
-	nasp->flags = (nasp->flags & ~F_NEXTHOP_MASK) |
-	    (state->nhflags & F_NEXTHOP_MASK);
-
 	if (nasp->pftableid) {
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
 		rde_send_pftable_commit();
@@ -437,7 +434,9 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	 * First try to find a prefix in the specified RIB.
 	 */
 	if ((p = prefix_get(rib, peer, prefix, prefixlen, 0)) != NULL) {
-		if (path_compare(nasp, prefix_aspath(p)) == 0) {
+		if (path_compare(nasp, prefix_aspath(p)) == 0 &&
+		    prefix_nexthop(p) == state->nexthop &&
+		    prefix_nhflags(p) == state->nhflags) {
 			/* no change, update last change */
 			p->lastchange = time(NULL);
 			return (0);
@@ -457,10 +456,10 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 
 	/* If the prefix was found move it else add it to the aspath. */
 	if (p != NULL)
-		prefix_move(asp, p, pflag);
+		return (prefix_move(p, peer, asp, state, pflag));
 	else
-		return (prefix_add(rib, asp, prefix, prefixlen, pflag));
-	return (0);
+		return (prefix_add(prefix, prefixlen, rib, peer, asp,
+		    state, pflag));
 }
 
 int
@@ -506,8 +505,6 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 		return (-1);
 
 	r = aspath_compare(a->aspath, b->aspath);
-	if (r == 0)
-		r = nexthop_compare(a->nexthop, b->nexthop);
 	if (r > 0)
 		return (1);
 	if (r < 0)
@@ -658,7 +655,6 @@ path_destroy(struct rde_aspath *asp)
 	if (!TAILQ_EMPTY(&asp->prefixes) || !TAILQ_EMPTY(&asp->updates))
 		log_warnx("path_destroy: still has prefixes, leaking");
 
-	nexthop_unlink(asp);
 	LIST_REMOVE(asp, path_l);
 	TAILQ_REMOVE(&asp->peer->path_h, asp, peer_l);
 	asp->peer = NULL;
@@ -678,7 +674,6 @@ path_empty(struct rde_aspath *asp)
  * These are peer_l, path_l and nexthop_l.
  * peer_l: list of all aspaths that belong to that peer
  * path_l: hash list to find paths quickly
- * nexthop_l: list of all aspaths with an equal exit nexthop
  */
 static void
 path_link(struct rde_aspath *asp, struct rde_peer *peer)
@@ -692,7 +687,6 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 
 	LIST_INSERT_HEAD(head, asp, path_l);
 	TAILQ_INSERT_HEAD(&peer->path_h, asp, peer_l);
-	nexthop_link(asp);
 	asp->flags |= F_ATTR_LINKED;
 }
 
@@ -708,7 +702,6 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 		dst->aspath->refcnt++;
 		rdemem.aspath_refs++;
 	}
-	dst->nexthop = nexthop_ref(src->nexthop);
 	dst->hash = 0;
 	dst->med = src->med;
 	dst->lpref = src->lpref;
@@ -759,7 +752,6 @@ path_clean(struct rde_aspath *asp)
 	rtlabel_unref(asp->rtlabelid);
 	pftable_unref(asp->pftableid);
 	aspath_put(asp->aspath);
-	nexthop_put(asp->nexthop);
 	attr_freeall(asp);
 }
 
@@ -781,7 +773,8 @@ path_put(struct rde_aspath *asp)
 static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
 static void		 prefix_link(struct prefix *, struct rib_entry *,
-			     struct rde_aspath *, int);
+			     struct rde_peer *, struct rde_aspath *,
+			     struct filterstate *, int);
 static void		 prefix_unlink(struct prefix *);
 
 /*
@@ -803,9 +796,9 @@ prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
  * Adds or updates a prefix.
  */
 int
-prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
-    int prefixlen, int flag)
-
+prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
+    struct rde_peer *peer, struct rde_aspath *asp, struct filterstate *state,
+    int flag)
 {
 	struct prefix		*p;
 	struct rib_entry	*re;
@@ -817,14 +810,16 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
 	p = prefix_bypeer(re, asp->peer, asp->flags);
 	if (p == NULL) {
 		p = prefix_alloc();
-		prefix_link(p, re, asp, flag);
+		prefix_link(p, re, peer, asp, state, flag);
 		return (1);
 	} else {
-		if (prefix_aspath(p) != asp) {
-			/* prefix belongs to a different aspath so move */
-			prefix_move(asp, p, flag);
-		} else
-			p->lastchange = time(NULL);
+		if (prefix_aspath(p) != asp ||
+		    prefix_nexthop(p) != state->nexthop ||
+		    prefix_nhflags(p) != state->nhflags) {
+			/* prefix metadata changed therefor move */
+			return (prefix_move(p, peer, asp, state, flag));
+		} 
+		p->lastchange = time(NULL);
 		return (0);
 	}
 }
@@ -832,22 +827,25 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
 /*
  * Move the prefix to the specified as path, removes the old asp if needed.
  */
-void
-prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
+int
+prefix_move(struct prefix *p, struct rde_peer *peer,
+    struct rde_aspath *asp, struct filterstate *state, int flag)
 {
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
 
-	if (asp->peer != prefix_peer(p))
+	if (peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
 
-	/* create new prefix node */
 	np = prefix_alloc();
 	np->aspath = asp;
-	np->peer = asp->peer;
+	np->nexthop = nexthop_ref(state->nexthop);
+	nexthop_link(np);
+	np->peer = peer;
 	np->re = p->re;
 	np->lastchange = time(NULL);
 	np->flags = flag;
+	np->nhflags = state->nhflags;
 
 	/* add to new as path */
 	if (np->flags & F_PREFIX_USE_UPDATES)
@@ -882,11 +880,16 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, int flag)
 	p->aspath = NULL;
 	p->peer = NULL;
 	p->re = NULL;
+	nexthop_unlink(p);
+	nexthop_put(p->nexthop);
+	p->nexthop = NULL;
 	prefix_free(p);
 
 	/* destroy old path if empty */
 	if (path_empty(oasp))
 		path_destroy(oasp);
+
+	return (0);
 }
 
 /*
@@ -1020,47 +1023,43 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, u_int32_t flags)
 }
 
 void
-prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
+prefix_updateall(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
-	struct prefix	*p;
+	/*
+	 * Skip non local-RIBs or RIBs that are flagged as noeval.
+	 * There is no need to run over updates since that is only
+	 * used on the Adj-RIB-Out.
+	 */
+	if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
+		return;
 
-	TAILQ_FOREACH(p, &asp->prefixes, path_l) {
+	if (oldstate == state && state == NEXTHOP_REACH) {
 		/*
-		 * Skip non local-RIBs or RIBs that are flagged as noeval.
-		 * There is no need to run over updates since that is only
-		 * used on the Adj-RIB-Out.
+		 * The state of the nexthop did not change. The only
+		 * thing that may have changed is the true_nexthop
+		 * or other internal infos. This will not change
+		 * the routing decision so shortcut here.
 		 */
-		if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
-			continue;
-
-		if (oldstate == state && state == NEXTHOP_REACH) {
-			/*
-			 * The state of the nexthop did not change. The only
-			 * thing that may have changed is the true_nexthop
-			 * or other internal infos. This will not change
-			 * the routing decision so shortcut here.
-			 */
-			if ((re_rib(p->re)->flags & F_RIB_NOFIB) == 0 &&
-			    p == p->re->active)
-				rde_send_kroute(re_rib(p->re), p, NULL);
-			continue;
-		}
-
-		/* redo the route decision */
-		LIST_REMOVE(p, rib_l);
-		/*
-		 * If the prefix is the active one remove it first,
-		 * this has to be done because we can not detect when
-		 * the active prefix changes its state. In this case
-		 * we know that this is a withdrawal and so the second
-		 * prefix_evaluate() will generate no update because
-		 * the nexthop is unreachable or ineligible.
-		 */
-		if (p == p->re->active)
-			prefix_evaluate(NULL, p->re);
-		prefix_evaluate(p, p->re);
+		if ((re_rib(p->re)->flags & F_RIB_NOFIB) == 0 &&
+		    p == p->re->active)
+			rde_send_kroute(re_rib(p->re), p, NULL);
+		return;
 	}
+
+	/* redo the route decision */
+	LIST_REMOVE(p, rib_l);
+	/*
+	 * If the prefix is the active one remove it first,
+	 * this has to be done because we can not detect when
+	 * the active prefix changes its state. In this case
+	 * we know that this is a withdrawal and so the second
+	 * prefix_evaluate() will generate no update because
+	 * the nexthop is unreachable or ineligible.
+	 */
+	if (p == p->re->active)
+		prefix_evaluate(NULL, p->re);
+	prefix_evaluate(p, p->re);
 }
 
 /* kill a prefix. */
@@ -1107,8 +1106,8 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp,
-    int flag)
+prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_peer *peer,
+    struct rde_aspath *asp, struct filterstate *state, int flag)
 {
 	if (flag & F_PREFIX_USE_UPDATES)
 		TAILQ_INSERT_HEAD(&asp->updates, pref, path_l);
@@ -1116,10 +1115,13 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp,
 		TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
 
 	pref->aspath = asp;
-	pref->peer = asp->peer;
+	pref->peer = peer;
+	pref->nexthop = nexthop_ref(state->nexthop);
+	nexthop_link(pref);
 	pref->re = re;
 	pref->lastchange = time(NULL);
 	pref->flags = flag;
+	pref->nhflags = state->nhflags;
 
 	/* make route decision */
 	prefix_evaluate(pref, re);
@@ -1148,6 +1150,9 @@ prefix_unlink(struct prefix *pref)
 		rib_remove(re);
 
 	/* destroy all references to other objects */
+	nexthop_unlink(pref);
+	nexthop_put(pref->nexthop);
+	pref->nexthop = NULL;
 	pref->aspath = NULL;
 	pref->peer = NULL;
 	pref->re = NULL;
@@ -1248,7 +1253,7 @@ void
 nexthop_update(struct kroute_nexthop *msg)
 {
 	struct nexthop		*nh;
-	struct rde_aspath	*asp;
+	struct prefix		*p;
 	enum nexthop_state	 oldstate;
 
 	nh = nexthop_lookup(&msg->nexthop);
@@ -1289,28 +1294,27 @@ nexthop_update(struct kroute_nexthop *msg)
 		 */
 		return;
 
-	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
-		prefix_updateall(asp, nh->state, oldstate);
+	LIST_FOREACH(p, &nh->prefix_h, nexthop_l) {
+		prefix_updateall(p, nh->state, oldstate);
 	}
 }
 
 void
 nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
-    struct nexthop **nexthop, u_int32_t *flags)
+    struct nexthop **nexthop, u_int8_t *flags)
 {
-	*flags &= ~F_NEXTHOP_MASK;
 	switch (type) {
 	case ACTION_SET_NEXTHOP_REJECT:
-		*flags |= F_NEXTHOP_REJECT;
+		*flags = NEXTHOP_REJECT;
 		break;
 	case ACTION_SET_NEXTHOP_BLACKHOLE:
-		*flags |= F_NEXTHOP_BLACKHOLE;
+		*flags = NEXTHOP_BLACKHOLE;
 		break;
 	case ACTION_SET_NEXTHOP_NOMODIFY:
-		*flags |= F_NEXTHOP_NOMODIFY;
+		*flags = NEXTHOP_NOMODIFY;
 		break;
 	case ACTION_SET_NEXTHOP_SELF:
-		*flags |= F_NEXTHOP_SELF;
+		*flags = NEXTHOP_SELF;
 		break;
 	case ACTION_SET_NEXTHOP:
 		/*
@@ -1321,6 +1325,7 @@ nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
 			break;
 		nexthop_put(*nexthop);
 		*nexthop = nexthop_ref(setnh);
+		*flags = 0;
 		break;
 	default:
 		break;
@@ -1328,29 +1333,21 @@ nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
 }
 
 void
-nexthop_link(struct rde_aspath *asp)
+nexthop_link(struct prefix *p)
 {
-	if (asp->nexthop == NULL)
+	if (p->nexthop == NULL)
 		return;
 
-	LIST_INSERT_HEAD(&asp->nexthop->path_h, asp, nexthop_l);
+	LIST_INSERT_HEAD(&p->nexthop->prefix_h, p, nexthop_l);
 }
 
 void
-nexthop_unlink(struct rde_aspath *asp)
+nexthop_unlink(struct prefix *p)
 {
-	struct nexthop	*nh;
-
-	if (asp->nexthop == NULL)
+	if (p->nexthop == NULL)
 		return;
 
-	LIST_REMOVE(asp, nexthop_l);
-
-	/* remove reference to nexthop */
-	nh = asp->nexthop;
-	asp->nexthop = NULL;
-
-	(void)nexthop_put(nh);
+	LIST_REMOVE(p, nexthop_l);
 }
 
 struct nexthop *
@@ -1365,7 +1362,7 @@ nexthop_get(struct bgpd_addr *nexthop)
 			fatal("nexthop_alloc");
 		rdemem.nexthop_cnt++;
 
-		LIST_INIT(&nh->path_h);
+		LIST_INIT(&nh->prefix_h);
 		nh->state = NEXTHOP_LOOKUP;
 		nexthop_ref(nh);	/* take reference for lookup */
 		nh->exit_nexthop = *nexthop;
@@ -1396,7 +1393,7 @@ nexthop_put(struct nexthop *nh)
 		return (0);
 
 	/* sanity check */
-	if (!LIST_EMPTY(&nh->path_h) || nh->state == NEXTHOP_LOOKUP)
+	if (!LIST_EMPTY(&nh->prefix_h) || nh->state == NEXTHOP_LOOKUP)
 		fatalx("nexthop_put: refcnt error");
 
 	LIST_REMOVE(nh, nexthop_l);

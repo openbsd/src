@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.98 2018/08/02 14:41:42 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.99 2018/08/03 16:31:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -640,7 +640,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 
 void
 rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
-    struct nexthop *nh)
+    struct nexthop *nh, u_int8_t nhflags)
 {
 	memset(state, 0, sizeof(*state));
 
@@ -648,9 +648,7 @@ rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
 	if (asp)
 		path_copy(&state->aspath, asp);
 	state->nexthop = nexthop_ref(nh);
-	/* XXX the flag handling needs improvement */
-	if (asp)
-		state->nhflags |= asp->flags & F_NEXTHOP_MASK;
+	state->nhflags = nhflags;
 }
 
 void

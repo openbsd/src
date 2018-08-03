@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.95 2018/07/22 16:59:08 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.96 2018/08/03 16:31:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -426,7 +426,7 @@ withdraw:
 		}
 
 		rde_filterstate_prep(&state, prefix_aspath(new),
-		    prefix_nexthop(new));
+		    prefix_nexthop(new), prefix_nhflags(new));
 		if (rde_filter(rules, peer, new, &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
 			goto withdraw;
@@ -485,7 +485,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	p.flags = 0;
 
 	/* filter as usual */
-	rde_filterstate_prep(&state, asp, NULL);
+	rde_filterstate_prep(&state, asp, NULL, 0);
 	if (rde_filter(rules, peer, &p, &state) == ACTION_DENY) {
 		rde_filterstate_clean(&state);
 		return;
@@ -547,13 +547,13 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state)
 	in_addr_t	mask;
 
 	/* nexthop, already network byte order */
-	if (state->nhflags & F_NEXTHOP_NOMODIFY) {
+	if (state->nhflags & NEXTHOP_NOMODIFY) {
 		/* no modify flag set */
 		if (state->nexthop == NULL)
 			return (peer->local_v4_addr.v4.s_addr);
 		else
 			return (state->nexthop->exit_nexthop.v4.s_addr);
-	} else if (state->nhflags & F_NEXTHOP_SELF)
+	} else if (state->nhflags & NEXTHOP_SELF)
 		return (peer->local_v4_addr.v4.s_addr);
 	else if (!peer->conf.ebgp) {
 		/*
@@ -616,7 +616,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		upa->mpattr[20] = 0; /* Reserved must be 0 */
 
 		/* nexthop dance see also up_get_nexthop() */
-		if (state->nhflags & F_NEXTHOP_NOMODIFY) {
+		if (state->nhflags & NEXTHOP_NOMODIFY) {
 			/* no modify flag set */
 			if (state->nexthop == NULL)
 				memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
@@ -625,7 +625,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 				memcpy(&upa->mpattr[4],
 				    &state->nexthop->exit_nexthop.v6,
 				    sizeof(struct in6_addr));
-		} else if (state->nhflags & F_NEXTHOP_SELF)
+		} else if (state->nhflags & NEXTHOP_SELF)
 			memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
 			    sizeof(struct in6_addr));
 		else if (!peer->conf.ebgp) {
@@ -675,7 +675,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		upa->mpattr[3] = sizeof(u_int64_t) + sizeof(struct in_addr);
 
 		/* nexthop dance see also up_get_nexthop() */
-		if (state->nhflags & F_NEXTHOP_NOMODIFY) {
+		if (state->nhflags & NEXTHOP_NOMODIFY) {
 			/* no modify flag set */
 			if (state->nexthop == NULL)
 				memcpy(&upa->mpattr[12],
@@ -686,7 +686,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 				memcpy(&upa->mpattr[12],
 				    &state->nexthop->exit_nexthop.v4,
 				    sizeof(struct in_addr));
-		} else if (state->nhflags & F_NEXTHOP_SELF)
+		} else if (state->nhflags & NEXTHOP_SELF)
 			memcpy(&upa->mpattr[12], &peer->local_v4_addr.v4,
 			    sizeof(struct in_addr));
 		else if (!peer->conf.ebgp) {

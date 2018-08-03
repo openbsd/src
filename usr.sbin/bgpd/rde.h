@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.182 2018/07/31 15:30:04 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.183 2018/08/03 16:31:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -166,11 +166,6 @@ struct mpattr {
 #define	F_ATTR_LOOP		0x00200 /* path would cause a route loop */
 #define	F_PREFIX_ANNOUNCED	0x00400
 #define	F_ANN_DYNAMIC		0x00800
-#define	F_NEXTHOP_SELF		0x01000
-#define	F_NEXTHOP_REJECT	0x02000
-#define	F_NEXTHOP_BLACKHOLE	0x04000
-#define	F_NEXTHOP_NOMODIFY	0x08000
-#define	F_NEXTHOP_MASK		0x0f000
 #define	F_ATTR_PARSE_ERR	0x10000 /* parse error, not eligable */
 #define	F_ATTR_LINKED		0x20000 /* if set path is on various lists */
 #define	F_ATTR_UPDATE		0x20000 /* if set linked on update_l */
@@ -183,13 +178,12 @@ struct mpattr {
 #define DEFAULT_LPREF		100
 
 struct rde_aspath {
-	LIST_ENTRY(rde_aspath)		 path_l, nexthop_l;
+	LIST_ENTRY(rde_aspath)		 path_l;
 	TAILQ_ENTRY(rde_aspath)		 peer_l, update_l;
 	struct prefix_queue		 prefixes, updates;
 	struct attr			**others;
 	struct rde_peer			*peer;
 	struct aspath			*aspath;
-	struct nexthop			*nexthop;	/* may be NULL */
 	u_int64_t			 hash;
 	u_int32_t			 flags;		/* internally used */
 	u_int32_t			 med;		/* multi exit disc */
@@ -209,7 +203,7 @@ enum nexthop_state {
 
 struct nexthop {
 	LIST_ENTRY(nexthop)	nexthop_l;
-	struct aspath_head	path_h;
+	struct prefix_list	prefix_h;
 	struct bgpd_addr	exit_nexthop;
 	struct bgpd_addr	true_nexthop;
 	struct bgpd_addr	nexthop_net;
@@ -303,21 +297,28 @@ struct rib_desc {
 #define RIB_LOC_START	2
 
 struct prefix {
-	LIST_ENTRY(prefix)		 rib_l;
+	LIST_ENTRY(prefix)		 rib_l, nexthop_l;
 	TAILQ_ENTRY(prefix)		 path_l;
 	struct rib_entry		*re;
 	struct rde_aspath		*aspath;
 	struct rde_peer			*peer;
+	struct nexthop			*nexthop;	/* may be NULL */
 	time_t				 lastchange;
-	int				 flags;
+	u_int8_t			 flags;
+	u_int8_t			 nhflags;
 };
 
 #define F_PREFIX_USE_UPDATES	0x01	/* linked onto the updates list */
 
+#define	NEXTHOP_SELF		0x01
+#define	NEXTHOP_REJECT		0x02
+#define	NEXTHOP_BLACKHOLE	0x04
+#define	NEXTHOP_NOMODIFY	0x08
+
 struct filterstate {
-	struct rde_aspath	aspath;
+	struct rde_aspath	 aspath;
 	struct nexthop		*nexthop;
-	unsigned int		nhflags;
+	u_int8_t		 nhflags;
 };
 
 extern struct rde_memstats rdemem;
@@ -401,7 +402,8 @@ u_char		*community_ext_delete_non_trans(u_char *, u_int16_t,
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
-void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *,		    struct nexthop *);
+void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *,
+		     struct nexthop *, u_int8_t);
 void		 rde_filterstate_clean(struct filterstate *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct filterstate *);
@@ -490,11 +492,17 @@ int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t, int);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
 		     u_int32_t);
-void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,
+void		 prefix_updateall(struct prefix *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
 void		 prefix_network_clean(struct rde_peer *, time_t, u_int32_t);
 void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
+
+static inline struct rde_peer *
+prefix_peer(struct prefix *p)
+{
+	return (p->peer);
+}
 
 static inline struct rde_aspath *
 prefix_aspath(struct prefix *p)
@@ -505,21 +513,21 @@ prefix_aspath(struct prefix *p)
 static inline struct nexthop *
 prefix_nexthop(struct prefix *p)
 {
-	return (p->aspath->nexthop);
+	return (p->nexthop);
 }
 
-static inline struct rde_peer *
-prefix_peer(struct prefix *p)
+static inline u_int8_t
+prefix_nhflags(struct prefix *p)
 {
-	return (p->peer);
+	return (p->nhflags);
 }
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);
 void		 nexthop_modify(struct nexthop *, enum action_types, u_int8_t,
-		    struct nexthop **, u_int32_t *);
-void		 nexthop_link(struct rde_aspath *);
-void		 nexthop_unlink(struct rde_aspath *);
+		    struct nexthop **, u_int8_t *);
+void		 nexthop_link(struct prefix *);
+void		 nexthop_unlink(struct prefix *);
 void		 nexthop_update(struct kroute_nexthop *);
 struct nexthop	*nexthop_get(struct bgpd_addr *);
 struct nexthop	*nexthop_ref(struct nexthop *);
