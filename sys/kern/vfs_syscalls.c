@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.299 2018/07/30 17:21:37 anton Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.300 2018/08/03 02:36:11 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -991,7 +991,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
-	int ni_pledge = 0;
+	uint64_t ni_pledge = 0;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
 		error = pledge_flock(p);
