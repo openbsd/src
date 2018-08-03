@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.7 2018/07/31 11:00:12 claudio Exp $ */
+/*	$OpenBSD: ber.h,v 1.8 2018/08/03 01:51:28 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -75,8 +75,9 @@ struct ber {
 #define BER_CLASS_MASK		0x3
 
 /* common definitions */
-#define BER_MIN_OID_LEN		2	/* OBJECT */
-#define BER_MAX_OID_LEN		32	/* OBJECT */
+#define BER_MIN_OID_LEN		2		/* OBJECT */
+#define BER_MAX_OID_LEN		32		/* OBJECT */
+#define BER_MAX_SEQ_ELEMENTS	USHRT_MAX	/* 65535 */
 
 struct ber_oid {
 	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];

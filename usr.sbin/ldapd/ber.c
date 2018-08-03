@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.27 2018/07/31 19:38:09 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.28 2018/08/03 01:51:28 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1156,7 +1156,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	long long val = 0;
 	struct ber_element *next;
 	unsigned int type;
-	int i, class, cstruct;
+	int i, class, cstruct, elements = 0;
 	ssize_t len, r, totlen = 0;
 	u_char c;
 
@@ -1250,9 +1250,18 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 		}
 		next = elm->be_sub;
 		while (len > 0) {
+			/*
+			 * Prevent stack overflow from excessive recursion
+			 * depth in ber_free_elements().
+			 */
+			if (elements >= BER_MAX_SEQ_ELEMENTS) {
+				errno = ERANGE;
+				return -1;
+			}
 			r = ber_read_element(ber, next);
 			if (r == -1)
 				return -1;
+			elements++;
 			len -= r;
 			if (len > 0 && next->be_next == NULL) {
 				if ((next->be_next = ber_get_element(0)) ==
