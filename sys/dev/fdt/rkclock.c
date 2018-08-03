@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.27 2018/08/01 15:55:50 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.28 2018/08/03 16:45:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -762,36 +762,10 @@ struct rkclock_softc *rk3399_pmucru_sc;
 void
 rk3399_init(struct rkclock_softc *sc)
 {
-	int node;
 	int i;
 
 	/* PMUCRU instance should attach before us. */
 	KASSERT(rk3399_pmucru_sc != NULL);
-
-	/*
-	 * Since the hardware comes up with a really conservative CPU
-	 * clock frequency, and U-Boot doesn't set it to a more
-	 * reasonable default, try to do so here.  These defaults were
-	 * chosen assuming that the voltage for both clusters is at
-	 * least 1.0 V.  Only do this on the Firefly-RK3399 for now
-	 * where this is likely to be true given the default voltages
-	 * for the regulators on that board.
-	 */
-	node = OF_finddevice("/");
-	if (OF_is_compatible(node, "firefly,firefly-rk3399")) {
-		uint32_t idx;
-		
-		/* Run the "LITTLE" cluster at 1.2 GHz. */
-		idx = RK3399_ARMCLKL;
-		rk3399_set_frequency(sc, &idx, 1200000000);
-
-#ifdef MULTIPROCESSOR
-		/* Switch PLL of the "big" cluster into normal mode. */
-		HWRITE4(sc, RK3399_CRU_BPLL_CON(3),
-		    RK3399_CRU_PLL_PLL_WORK_MODE_MASK << 16 |
-		    RK3399_CRU_PLL_PLL_WORK_MODE_NORMAL);
-#endif
-	}
 
 	/*
 	 * The U-Boot shipped on the Theobroma Systems RK3399-Q7
