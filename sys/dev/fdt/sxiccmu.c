@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.20 2018/05/27 23:25:03 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.21 2018/08/03 21:28:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1038,10 +1038,19 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 
 /* Allwinner H3/H5 */
 #define H3_PLL_CPUX_CTRL_REG		0x0000
+#define H3_PLL_CPUX_LOCK		(1 << 28)
 #define H3_PLL_CPUX_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
+#define H3_PLL_CPUX_OUT_EXT_DIVP_MASK	(0x3 << 16)
+#define H3_PLL_CPUX_OUT_EXT_DIVP_SHIFT	16
 #define H3_PLL_CPUX_FACTOR_N(x)		(((x) >> 8) & 0x1f)
+#define H3_PLL_CPUX_FACTOR_N_MASK	(0x1f << 8)
+#define H3_PLL_CPUX_FACTOR_N_SHIFT	8
 #define H3_PLL_CPUX_FACTOR_K(x)		(((x) >> 4) & 0x3)
+#define H3_PLL_CPUX_FACTOR_K_MASK	(0x3 << 4)
+#define H3_PLL_CPUX_FACTOR_K_SHIFT	4
 #define H3_PLL_CPUX_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define H3_PLL_CPUX_FACTOR_M_MASK	(0x3 << 0)
+#define H3_PLL_CPUX_FACTOR_M_SHIFT	0
 #define H3_CPUX_AXI_CFG_REG		0x0050
 #define H3_CPUX_CLK_SRC_SEL		(0x3 << 16)
 #define H3_CPUX_CLK_SRC_SEL_LOSC	(0x0 << 16)
@@ -1333,8 +1342,48 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 {
 	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
+	uint32_t reg;
+	int k, n;
+	int error;
 
 	switch (idx) {
+	case H3_CLK_PLL_CPUX:
+		k = 1; n = 32;
+		while (k <= 4 && (24000000 * n * k) < freq)
+			k++;
+		while (n >= 1 && (24000000 * n * k) > freq)
+			n--;
+
+		reg = SXIREAD4(sc, H3_PLL_CPUX_CTRL_REG);
+		reg &= ~H3_PLL_CPUX_OUT_EXT_DIVP_MASK;
+		reg &= ~H3_PLL_CPUX_FACTOR_N_MASK;
+		reg &= ~H3_PLL_CPUX_FACTOR_K_MASK;
+		reg &= ~H3_PLL_CPUX_FACTOR_M_MASK;
+		reg |= ((n - 1) << H3_PLL_CPUX_FACTOR_N_SHIFT);
+		reg |= ((k - 1) << H3_PLL_CPUX_FACTOR_K_SHIFT);
+		SXIWRITE4(sc, H3_PLL_CPUX_CTRL_REG, reg);
+
+		/* Wait for PLL to lock. */
+		while ((SXIREAD4(sc, H3_PLL_CPUX_CTRL_REG) &
+		    H3_PLL_CPUX_LOCK) == 0)
+			delay(1);
+
+		return 0;
+	case H3_CLK_CPUX:
+		/* Switch to 24 MHz clock. */
+		reg = SXIREAD4(sc, H3_CPUX_AXI_CFG_REG);
+		reg &= ~H3_CPUX_CLK_SRC_SEL;
+		reg |= H3_CPUX_CLK_SRC_SEL_OSC24M;
+		SXIWRITE4(sc, H3_CPUX_AXI_CFG_REG, reg);
+
+		error = sxiccmu_h3_set_frequency(sc, H3_CLK_PLL_CPUX, freq);
+
+		/* Switch back to PLL. */
+		reg = SXIREAD4(sc, H3_CPUX_AXI_CFG_REG);
+		reg &= ~H3_CPUX_CLK_SRC_SEL;
+		reg |= H3_CPUX_CLK_SRC_SEL_PLL_CPUX;
+		SXIWRITE4(sc, H3_CPUX_AXI_CFG_REG, reg);
+		return error;
 	case H3_CLK_MMC0:
 	case H3_CLK_MMC1:
 	case H3_CLK_MMC2:
