@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.53 2018/07/11 09:54:49 espie Exp $
+# $OpenBSD: State.pm,v 1.54 2018/08/03 06:37:08 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -456,7 +456,6 @@ sub _system
 {
 	my $self = shift;
 	$self->sync_display;
-	my $r = fork;
 	my ($todo, $todo2);
 	if (ref $_[0] eq 'CODE') {
 		$todo = shift;
@@ -468,11 +467,13 @@ sub _system
 	} else {
 		$todo2 = sub {};
 	}
+	my $r = fork;
 	if (!defined $r) {
 		return 1;
 	} elsif ($r == 0) {
 		&$todo;
-		exec {$_[0]} @_ or return 1;
+		exec {$_[0]} @_;
+		exit 1;
 	} else {
 		&$todo2;
 		waitpid($r, 0);
@@ -491,7 +492,7 @@ sub system
 		if (ref $_[0] eq 'CODE') {
 			shift;
 		}
-		$self->say("system(#1) failed: #2",
+		$self->errsay("system(#1) failed: #2",
 		    join(", ", @_), $self->child_error);
 	}
 	return $r;
