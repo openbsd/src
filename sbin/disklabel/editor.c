@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.342 2018/08/04 15:36:41 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.343 2018/08/04 16:09:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -752,7 +752,7 @@ editor_resize(struct disklabel *lp, char *p)
 	if (lp->d_secpercyl & D_VENDOR) {
 		u_int64_t cylsecs;
 		cylsecs = lp->d_secpercyl;
-		secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+		ui = ((ui + cylsecs - 1) / cylsecs) * cylsecs;
 	}
 #endif
 	if (DL_GETPOFFSET(pp) + ui > ending_sector) {
