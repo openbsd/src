@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2018/08/03 18:36:01 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.22 2018/08/04 11:55:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -525,7 +525,8 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 {
 	struct opp_table *ot;
 	int count, node, child;
-	int i;
+	uint32_t values[3];
+	int i, len;
 
 	LIST_FOREACH(ot, &opp_tables, ot_list) {
 		if (ot->ot_phandle == phandle) {
@@ -562,8 +563,10 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 			continue;
 		ot->ot_opp[count].opp_hz =
 		    OF_getpropint64(child, "opp-hz", 0);
-		ot->ot_opp[count].opp_microvolt =
-		    OF_getpropint(child, "opp-microvolt", 0);
+		len = OF_getpropintarray(child, "opp-microvolt",
+		    values, sizeof(values));
+		if (len == sizeof(uint32_t) || len == 3 * sizeof(uint32_t))
+			ot->ot_opp[count].opp_microvolt = values[0];
 		count++;
 	}
 
