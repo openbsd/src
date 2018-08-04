@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.13 2018/08/03 13:14:46 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.14 2018/08/04 09:37:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,7 +56,7 @@ __dead void	main_shutdown(void);
 
 void	main_sig_handler(int, short, void *);
 
-static pid_t	start_child(int, char *, int, int, int, char *);
+static pid_t	start_child(int, char *, int, int, int);
 
 void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
@@ -73,7 +73,6 @@ struct rad_conf	*main_conf;
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_engine;
 char			*conffile;
-char			*csock;
 
 pid_t	 frontend_pid;
 pid_t	 engine_pid;
@@ -131,6 +130,7 @@ main(int argc, char *argv[])
 	int			 icmp6sock, on = 1, off = 0;
 	int			 frontend_routesock, rtfilter;
 	int			 control_fd;
+	char			*csock;
 
 	conffile = CONF_FILE;
 	csock = RAD_SOCKET;
@@ -220,9 +220,9 @@ main(int argc, char *argv[])
 
 	/* Start children. */
 	engine_pid = start_child(PROC_ENGINE, saved_argv0, pipe_main2engine[1],
-	    debug, cmd_opts & OPT_VERBOSE, NULL);
+	    debug, cmd_opts & OPT_VERBOSE);
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
-	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE, csock);
+	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE);
 
 	rad_process = PROC_MAIN;
 	log_procinit(log_procnames[rad_process]);
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_send_config(main_conf);
 
-	if (pledge("stdio rpath cpath sendfd", NULL) == -1)
+	if (pledge("stdio rpath sendfd", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
@@ -344,14 +344,12 @@ main_shutdown(void)
 	free(iev_frontend);
 	free(iev_engine);
 
-	control_cleanup(csock);
-
 	log_info("terminating");
 	exit(0);
 }
 
 static pid_t
-start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
+start_child(int p, char *argv0, int fd, int debug, int verbose)
 {
 	char	*argv[7];
 	int	 argc = 0;
@@ -385,10 +383,6 @@ start_child(int p, char *argv0, int fd, int debug, int verbose, char *sockname)
 		argv[argc++] = "-d";
 	if (verbose)
 		argv[argc++] = "-v";
-	if (sockname) {
-		argv[argc++] = "-s";
-		argv[argc++] = sockname;
-	}
 	argv[argc++] = NULL;
 
 	execvp(argv0, argv);
@@ -427,7 +421,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
-			if (pledge("stdio rpath cpath", NULL) == -1)
+			if (pledge("stdio rpath", NULL) == -1)
 				fatal("pledge");
 			break;
 		case IMSG_CTL_RELOAD:
