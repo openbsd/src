@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.28 2018/08/03 16:45:17 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.29 2018/08/04 20:23:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -44,6 +44,7 @@
 #define  RK3288_CRU_MODE_PLL_WORK_MODE_SLOW	0x0
 #define  RK3288_CRU_MODE_PLL_WORK_MODE_NORMAL	0x1
 #define RK3288_CRU_CLKSEL_CON(i)	(0x0060 + (i) * 4)
+#define RK3288_CRU_SOFTRST_CON(i)	(0x01b8 + (i) * 4)
 
 /* RK3328 registers */
 #define RK3328_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
@@ -524,6 +525,7 @@ rk3288_enable(void *cookie, uint32_t *cells, int on)
 
 	switch (idx) {
 	case RK3288_CLK_SDMMC:
+	case RK3288_CLK_TSADC:
 	case RK3288_CLK_UART0:
 	case RK3288_CLK_UART1:
 	case RK3288_CLK_UART2:
@@ -542,6 +544,7 @@ rk3288_enable(void *cookie, uint32_t *cells, int on)
 	case RK3288_PCLK_I2C3:
 	case RK3288_PCLK_I2C4:
 	case RK3288_PCLK_I2C5:
+	case RK3288_PCLK_TSADC:
 	case RK3288_HCLK_HOST0:
 	case RK3288_HCLK_SDMMC:
 		/* Enabled by default. */
@@ -555,9 +558,12 @@ rk3288_enable(void *cookie, uint32_t *cells, int on)
 void
 rk3288_reset(void *cookie, uint32_t *cells, int on)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t mask = (1 << (idx % 16));
 
-	printf("%s: 0x%08x\n", __func__, idx);
+	HWRITE4(sc, RK3288_CRU_SOFTRST_CON(idx / 16),
+	    mask << 16 | (on ? mask : 0));
 }
 
 /*
