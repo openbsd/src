@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.15 2018/08/02 04:39:58 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.16 2018/08/04 16:23:00 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -669,12 +669,17 @@ test_chmod(int do_uv)
 		printf("testing chmod\n");
 		do_unveil();
 	}
-	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
+	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath unveil", NULL) == -1), "pledge");
 	UV_SHOULD_SUCCEED((chmod(uv_file1, S_IRWXU) == -1), "chmod");
 	UV_SHOULD_ENOENT((chmod(uv_file2, S_IRWXU) == -1), "chmod");
 	UV_SHOULD_SUCCEED((chmod(uv_dir1, S_IRWXU) == -1), "chmod");
 	UV_SHOULD_ENOENT((chmod(uv_dir2, S_IRWXU) == -1), "chmod");
-
+	if (do_uv) {
+		printf("testing chmod should fail for read\n");
+		if (unveil(uv_file1, "r") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+	}
+	UV_SHOULD_EACCES((chmod(uv_file1, S_IRWXU) == -1), "chmod");
 	return 0;
 }
 
