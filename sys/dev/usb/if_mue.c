@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.2 2018/08/03 06:19:15 kevlo Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -330,6 +330,7 @@ mue_miibus_statchg(struct device *dev)
 		}
 	}
 
+	threshold = 0;
 	flow = 0;
 	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
 		if (IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) {
