@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.28 2018/07/27 06:20:01 bket Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.29 2018/08/04 09:36:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -80,11 +80,7 @@ struct imsgev		*iev_engine;
 pid_t	 frontend_pid;
 pid_t	 engine_pid;
 
-int	 routesock, ioctl_sock;
-
-char	*csock;
-
-int	 rtm_seq = 0;
+int	 routesock, ioctl_sock, rtm_seq = 0;
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -129,11 +125,10 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 icmp6sock, on = 1;
 	int			 frontend_routesock, rtfilter;
+	char			*csock = SLAACD_SOCKET;
 #ifndef SMALL
 	int			 control_fd;
 #endif /* SMALL */
-
-	csock = SLAACD_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
 	log_setverbose(1);
@@ -285,7 +280,7 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 #endif /* SMALL */
 
-	if (pledge("stdio cpath sendfd wroute", NULL) == -1)
+	if (pledge("stdio sendfd wroute", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend_fd(IMSG_ICMP6SOCK, 0, icmp6sock);
@@ -330,10 +325,6 @@ main_shutdown(void)
 
 	free(iev_frontend);
 	free(iev_engine);
-
-#ifndef	SMALL
-	control_cleanup(csock);
-#endif	/* SMALL */
 
 	log_info("terminating");
 	exit(0);
@@ -420,7 +411,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STARTUP_DONE:
-			if (pledge("stdio cpath wroute", NULL) == -1)
+			if (pledge("stdio wroute", NULL) == -1)
 				fatal("pledge");
 			break;
 #ifndef	SMALL

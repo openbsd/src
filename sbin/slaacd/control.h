@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.2 2017/07/06 15:02:53 florian Exp $	*/
+/*	$OpenBSD: control.h,v 1.3 2018/08/04 09:36:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,5 +33,4 @@ int	control_listen(void);
 void	control_accept(int, short, void *);
 void	control_dispatch_imsg(int, short, void *);
 int	control_imsg_relay(struct imsg *);
-void	control_cleanup(char *);
 #endif	/* SMALL */
