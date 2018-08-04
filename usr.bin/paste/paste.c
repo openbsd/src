@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.24 2018/08/04 16:14:03 schwarze Exp $	*/
+/*	$OpenBSD: paste.c,v 1.25 2018/08/04 16:47:05 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ char *delim;
 int delimcnt;
 
 int	tr(char *);
-void	usage(void);
+__dead void usage(void);
 void	parallel(char **);
 void	sequential(char **);
 
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	if (!delim) {
+	if (delim == NULL) {
 		delimcnt = 1;
 		delim = "\t";
 	}
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		sequential(argv);
 	else
 		parallel(argv);
-	exit(0);
+	return 0;
 }
 
 struct list {
@@ -110,13 +110,13 @@ parallel(char **argv)
 	int opencnt, output;
 	char ch;
 
-	for (cnt = 0; (p = *argv); ++argv, ++cnt) {
-		if (!(lp = malloc(sizeof(struct list))))
-			err(1, "malloc");
+	for (cnt = 0; (p = *argv) != NULL; ++argv, ++cnt) {
+		if ((lp = malloc(sizeof(*lp))) == NULL)
+			err(1, NULL);
 
-		if (p[0] == '-' && !p[1])
+		if (p[0] == '-' && p[1] == '\0')
 			lp->fp = stdin;
-		else if (!(lp->fp = fopen(p, "r")))
+		else if ((lp->fp = fopen(p, "r")) == NULL)
 			err(1, "%s", p);
 		lp->cnt = cnt;
 		lp->name = p;
@@ -129,7 +129,7 @@ parallel(char **argv)
 	for (opencnt = cnt; opencnt;) {
 		output = 0;
 		SIMPLEQ_FOREACH(lp, &head, entries) {
-			if (!lp->fp) {
+			if (lp->fp == NULL) {
 				if (output && lp->cnt &&
 				    (ch = delim[(lp->cnt - 1) % delimcnt]))
 					putchar(ch);
@@ -139,10 +139,10 @@ parallel(char **argv)
 				if (ferror(lp->fp))
 					err(1, "%s", lp->fp == stdin ?
 					    "getline" : lp->name);
-				if (!--opencnt)
+				if (--opencnt == 0)
 					break;
 				if (lp->fp != stdin)
-					(void)fclose(lp->fp);
+					fclose(lp->fp);
 				lp->fp = NULL;
 				if (output && lp->cnt &&
 				    (ch = delim[(lp->cnt - 1) % delimcnt]))
@@ -180,10 +180,10 @@ sequential(char **argv)
 
 	line = NULL;
 	linesize = 0;
-	for (; (p = *argv); ++argv) {
-		if (p[0] == '-' && !p[1])
+	for (; (p = *argv) != NULL; ++argv) {
+		if (p[0] == '-' && p[1] == '\0')
 			fp = stdin;
-		else if (!(fp = fopen(p, "r"))) {
+		else if ((fp = fopen(p, "r")) == NULL) {
 			warn("%s", p);
 			continue;
 		}
@@ -202,7 +202,7 @@ sequential(char **argv)
 		if (cnt >= 0)
 			putchar('\n');
 		if (fp != stdin)
-			(void)fclose(fp);
+			fclose(fp);
 	}
 	free(line);
 }
@@ -213,7 +213,7 @@ tr(char *arg)
 	int cnt;
 	char ch, *p;
 
-	for (p = arg, cnt = 0; (ch = *p++); ++arg, ++cnt) {
+	for (p = arg, cnt = 0; (ch = *p++) != '\0'; ++arg, ++cnt) {
 		if (ch == '\\') {
 			switch (ch = *p++) {
 			case 'n':
@@ -233,16 +233,15 @@ tr(char *arg)
 			*arg = ch;
 	}
 
-	if (!cnt)
+	if (cnt == 0)
 		errx(1, "no delimiters specified");
-	return (cnt);
+	return cnt;
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
-	(void)fprintf(stderr, "usage: %s [-s] [-d list] file ...\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-s] [-d list] file ...\n", __progname);
 	exit(1);
 }
