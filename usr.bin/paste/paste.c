@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.25 2018/08/04 16:47:05 schwarze Exp $	*/
+/*	$OpenBSD: paste.c,v 1.26 2018/08/04 19:19:37 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -105,7 +105,8 @@ parallel(char **argv)
 	SIMPLEQ_HEAD(, list) head = SIMPLEQ_HEAD_INITIALIZER(head);
 	struct list *lp;
 	char *line, *p;
-	size_t len, linesize;
+	size_t linesize;
+	ssize_t len;
 	int cnt;
 	int opencnt, output;
 	char ch;
@@ -175,7 +176,8 @@ sequential(char **argv)
 {
 	FILE *fp;
 	char *line, *p;
-	size_t len, linesize;
+	size_t linesize;
+	ssize_t len;
 	int cnt;
 
 	line = NULL;
