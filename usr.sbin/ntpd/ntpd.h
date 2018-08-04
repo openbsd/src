@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.135 2017/05/30 23:30:48 benno Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.136 2018/08/04 11:07:14 mestre Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -397,7 +397,6 @@ void			ntp_dns(struct ntpd_conf *, struct passwd *);
 int			 control_init(char *);
 int			 control_listen(int);
 void			 control_shutdown(int);
-void			 control_cleanup(const char *);
 int			 control_accept(int);
 struct ctl_conn		*control_connbyfd(int);
 int			 control_close(int);
