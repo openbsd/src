@@ -2311,6 +2311,8 @@
 ./usr/share/man/man3/fuse_chan_fd.3
 ./usr/share/man/man3/fuse_daemonize.3
 ./usr/share/man/man3/fuse_destroy.3
+./usr/share/man/man3/fuse_get_context.3
+./usr/share/man/man3/fuse_get_session.3
 ./usr/share/man/man3/fuse_loop.3
 ./usr/share/man/man3/fuse_main.3
 ./usr/share/man/man3/fuse_mount.3
