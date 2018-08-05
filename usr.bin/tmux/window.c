@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.211 2018/08/02 18:35:21 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.212 2018/08/05 08:59:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -894,7 +894,6 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 	char		*argv0, *cmd, **argvp;
 	const char	*ptr, *first, *home;
 	struct termios	 tio2;
-	int		 i;
 	sigset_t	 set, oldset;
 
 	if (wp->fd != -1) {

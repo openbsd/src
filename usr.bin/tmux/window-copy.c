@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.193 2018/08/01 15:22:40 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.194 2018/08/05 08:59:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -201,22 +201,10 @@ window_copy_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
 	struct window_copy_mode_data	*data;
 	struct screen			*s;
 
-	wp->modedata = data = xmalloc(sizeof *data);
-
-	data->oy = 0;
-	data->cx = 0;
-	data->cy = 0;
+	wp->modedata = data = xcalloc(1, sizeof *data);
 
 	data->cursordrag = CURSORDRAG_NONE;
-
-	data->lastcx = 0;
-	data->lastsx = 0;
-
-	data->backing_written = 0;
-
 	data->lineflag = LINE_SEL_NONE;
-	data->rectflag = 0;
-	data->scroll_exit = 0;
 
 	if (wp->searchstr != NULL) {
 		data->searchtype = WINDOW_COPY_SEARCHUP;
