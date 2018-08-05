@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.38 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: by_dir.c,v 1.39 2018/08/05 14:17:12 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,7 +103,7 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
 	.name = "Load certs from files in a directory",
 	.new_item = new_dir,
 	.free = free_dir,
-	.init = NULL, 
+	.init = NULL,
 	.shutdown = NULL,
 	.ctrl = dir_ctrl,
 	.get_by_subject = get_cert_by_subject,
@@ -316,7 +316,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			X509error(ERR_R_MALLOC_FAILURE);
 			goto finish;
 		}
-		if (type == X509_LU_CRL && ent->hashes) {
+		if (type == X509_LU_CRL) {
 			htmp.hash = h;
 			CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
 			idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
