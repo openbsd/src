@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.39 2016/03/07 12:07:55 mestre Exp $	*/
+/*	$OpenBSD: bs.c,v 1.40 2018/08/05 13:32:25 schwarze Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -254,7 +254,6 @@ intro(void)
 {
     char *tmpname;
 
-    (void) signal(SIGINT,uninitgame);
     (void) signal(SIGINT,uninitgame);
     if(signal(SIGQUIT,SIG_IGN) != SIG_IGN)
 	(void)signal(SIGQUIT,uninitgame);
