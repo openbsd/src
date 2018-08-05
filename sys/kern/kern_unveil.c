@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.9 2018/07/30 15:16:27 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.10 2018/08/05 13:59:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -717,28 +717,37 @@ void
 unveil_removevnode(struct vnode *vp)
 {
 	struct process *pr;
-	int count = 0;
 
 	if (vp->v_uvcount == 0)
 		return;
+
 #ifdef DEBUG_UNVEIL
-	printf("unveil_removevnode found vnode %p with count %d", vp, vp->v_uvcount);
+	printf("unveil_removevnode found vnode %p with count %d\n",
+	    vp, vp->v_uvcount);
 #endif
+	vref(vp); /* make sure it is held till we are done */
+
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		struct unveil * uv;
 
-		if ((uv = unveil_lookup(vp, pr->ps_mainproc)) != NULL) {
+		if ((uv = unveil_lookup(vp, pr->ps_mainproc)) != NULL &&
+		    uv->uv_vp != NULL) {
 			uv->uv_vp = NULL;
 			uv->uv_flags = 0;
 #ifdef DEBUG_UNVEIL
-	printf("unveil_removevnode vnode %p now count %d", vp, vp->v_uvcount);
+			printf("unveil_removevnode vnode %p now count %d\n",
+			    vp, vp->v_uvcount);
 #endif
 			pr->ps_uvshrink = 1;
-			count++;
+			if (vp->v_uvcount > 0) {
+				vrele(vp);
+				vp->v_uvcount--;
+			} else
+				panic("vp %p, v_uvcount of %d should be 0",
+				    vp, vp->v_uvcount);
 		}
 	}
-	KASSERT(vp->v_uvcount == count);
+	KASSERT(vp->v_uvcount == 0);
 
-	while (vp->v_uvcount--)
-		vrele(vp);
+	vrele(vp); /* release our ref */
 }
