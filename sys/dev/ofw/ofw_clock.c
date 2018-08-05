@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.10 2018/06/03 18:17:27 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.11 2018/08/05 21:05:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -311,7 +311,7 @@ clock_set_assigned(int node)
 	}
 
 	while (clock && clock < clocks + (clen / sizeof(uint32_t))) {
-		if (parent && parent < parent + (plen / sizeof(uint32_t)))
+		if (parent && parent < parents + (plen / sizeof(uint32_t)))
 			if (*parent != 0)
 				clock_set_parent_cells(clock, parent);
 
