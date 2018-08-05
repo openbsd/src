@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.103 2018/08/03 13:37:08 kevlo Exp $
+#	$OpenBSD: RAMDISK,v 1.104 2018/08/05 08:54:05 jsg Exp $
 
 machine		armv7 arm
 
@@ -30,6 +30,7 @@ config		bsd root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
+softraid0	at root
 simplebus*	at fdt?
 cpu0		at mainbus?
 
@@ -266,3 +267,4 @@ pseudo-device	openprom
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
+pseudo-device	bio 1
