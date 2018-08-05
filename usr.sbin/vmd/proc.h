@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.14 2018/07/15 14:36:54 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.15 2018/08/05 08:20:54 mestre Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -68,11 +68,6 @@ struct control_sock {
 	TAILQ_ENTRY(control_sock) cs_entry;
 };
 TAILQ_HEAD(control_socks, control_sock);
-
-struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
@@ -197,7 +192,6 @@ void	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_reset(struct control_sock *);
 int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
 
 /* log.c */
 void	log_init(int, int);
