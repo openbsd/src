@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.29 2018/08/04 09:36:49 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.30 2018/08/05 09:37:52 mestre Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -333,7 +333,7 @@ main_shutdown(void)
 static pid_t
 start_child(int p, char *argv0, int fd, int debug, int verbose)
 {
-	char	*argv[8];
+	char	*argv[7];
 	int	 argc = 0;
 	pid_t	 pid;
 
