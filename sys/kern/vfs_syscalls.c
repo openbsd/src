@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.300 2018/08/03 02:36:11 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.301 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -638,6 +638,7 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_READ;
 	nd.ni_cnd.cn_flags |= BYPASSUNVEIL;
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -809,6 +810,7 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_READ;
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
 	p->p_p->ps_uvpcwd = nd.ni_unveil_match;
@@ -992,6 +994,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct flock lf;
 	struct nameidata nd;
 	uint64_t ni_pledge = 0;
+	u_char ni_unveil = 0;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
 		error = pledge_flock(p);
@@ -1007,18 +1010,25 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	fdpunlock(fdp);
 
 	flags = FFLAGS(oflags);
-	if (flags & FREAD)
+	if (flags & FREAD) {
 		ni_pledge |= PLEDGE_RPATH;
-	if (flags & FWRITE)
+		ni_unveil |= UNVEIL_READ;
+	}
+	if (flags & FWRITE) {
 		ni_pledge |= PLEDGE_WPATH;
-	if (oflags & O_CREAT)
+		ni_unveil |= UNVEIL_WRITE;
+	}
+	if (oflags & O_CREAT) {
 		ni_pledge |= PLEDGE_CPATH;
+		ni_unveil |= UNVEIL_CREATE;
+	}
 
 	cmode = ((mode &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	if ((p->p_p->ps_flags & PS_PLEDGE))
 		cmode &= ACCESSPERMS;
 	NDINITAT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = ni_pledge;
+	nd.ni_unveil = ni_unveil;
 	p->p_dupfd = -1;			/* XXX check for fdopen */
 	if ((flags & O_TRUNC) && (flags & (O_EXLOCK | O_SHLOCK))) {
 		localtrunc = 1;
@@ -1383,6 +1393,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 		return (EINVAL);
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_DPATH;
+	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1519,6 +1530,7 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 	follow = (flag & AT_SYMLINK_FOLLOW) ? FOLLOW : NOFOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd1, path1, p);
 	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1530,6 +1542,7 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 
 	NDINITAT(&nd, CREATE, flags, UIO_USERSPACE, fd2, path2, p);
 	nd.ni_pledge = PLEDGE_CPATH;
+	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1589,6 +1602,7 @@ dosymlinkat(struct proc *p, const char *upath, int fd, const char *link)
 		goto out;
 	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd, link, p);
 	nd.ni_pledge = PLEDGE_CPATH;
+	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1648,6 +1662,7 @@ dounlinkat(struct proc *p, int fd, const char *path, int flag)
 	NDINITAT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
 	    fd, path, p);
 	nd.ni_pledge = PLEDGE_CPATH;
+	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -1795,6 +1810,7 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
+	nd.ni_unveil = 0; /* XXX fix this when we fix PLEDGE_STAT */
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
@@ -1865,6 +1881,7 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
+	nd.ni_unveil = 0;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -1923,6 +1940,7 @@ sys_pathconf(struct proc *p, void *v, register_t *retval)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = VOP_PATHCONF(nd.ni_vp, SCARG(uap, name), retval);
@@ -1972,6 +1990,7 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
+	nd.ni_unveil = 0;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2035,6 +2054,7 @@ dochflagsat(struct proc *p, int fd, const char *path, u_int flags, int atflags)
 	follow = (atflags & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	return (dovchflags(p, nd.ni_vp, flags));
@@ -2138,6 +2158,7 @@ dofchmodat(struct proc *p, int fd, const char *path, mode_t mode, int flag)
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2237,6 +2258,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_CHOWN | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2289,6 +2311,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_CHOWN | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2441,6 +2464,7 @@ doutimensat(struct proc *p, int fd, const char *path,
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2588,6 +2612,7 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_FATTR | PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_WRITE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2713,6 +2738,7 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 	NDINITAT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
 	    fromfd, from, p);
 	fromnd.ni_pledge = PLEDGE_RPATH | PLEDGE_CPATH;
+	fromnd.ni_unveil = UNVEIL_READ | UNVEIL_CREATE;
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	fvp = fromnd.ni_vp;
@@ -2726,6 +2752,7 @@ dorenameat(struct proc *p, int fromfd, const char *from, int tofd,
 
 	NDINITAT(&tond, RENAME, flags, UIO_USERSPACE, tofd, to, p);
 	tond.ni_pledge = PLEDGE_CPATH;
+	tond.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
@@ -2819,6 +2846,7 @@ domkdirat(struct proc *p, int fd, const char *path, mode_t mode)
 	NDINITAT(&nd, CREATE, LOCKPARENT | STRIPSLASHES, UIO_USERSPACE,
 	    fd, path, p);
 	nd.ni_pledge = PLEDGE_CPATH;
+	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2945,6 +2973,7 @@ sys_revoke(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_TTY;
+	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

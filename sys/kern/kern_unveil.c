@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.10 2018/08/05 13:59:38 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.11 2018/08/05 14:23:57 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -40,6 +40,11 @@
 #define UNVEIL_MAX_VNODES	128
 #define UNVEIL_MAX_NAMES	128
 
+#define	UNVEIL_READ	0x01
+#define	UNVEIL_WRITE	0x02
+#define	UNVEIL_CREATE	0x04
+#define	UNVEIL_EXEC	0x08
+
 static inline int
 unvname_compare(const struct unvname *n1, const struct unvname *n2)
 {
@@ -50,7 +55,7 @@ unvname_compare(const struct unvname *n1, const struct unvname *n2)
 }
 
 struct unvname *
-unvname_new(const char *name, size_t size, uint64_t flags)
+unvname_new(const char *name, size_t size, u_char flags)
 {
 	struct unvname *ret = malloc(sizeof(struct unvname), M_PROC, M_WAITOK);
 	ret->un_name = malloc(size, M_PROC, M_WAITOK);
@@ -118,7 +123,7 @@ unveil_delete_names(struct unveil *uv)
 }
 
 void
-unveil_add_name(struct unveil *uv, char *name, uint64_t flags)
+unveil_add_name(struct unveil *uv, char *name, u_char flags)
 {
 	struct unvname *unvn;
 
@@ -310,7 +315,7 @@ unveil_lookup(struct vnode *vp, struct proc *p)
 }
 
 int
-unveil_parsepermissions(const char *permissions, uint64_t *perms)
+unveil_parsepermissions(const char *permissions, u_char *perms)
 {
 	size_t i = 0;
 	char c;
@@ -319,16 +324,16 @@ unveil_parsepermissions(const char *permissions, uint64_t *perms)
 	while ((c = permissions[i++]) != '\0') {
 		switch (c) {
 		case 'r':
-			*perms |= PLEDGE_RPATH;
+			*perms |= UNVEIL_READ;
 			break;
 		case 'w':
-			*perms |= PLEDGE_WPATH;
+			*perms |= UNVEIL_WRITE;
 			break;
 		case 'x':
-			*perms |= PLEDGE_EXEC;
+			*perms |= UNVEIL_EXEC;
 			break;
 		case 'c':
-			*perms |= PLEDGE_CPATH;
+			*perms |= UNVEIL_CREATE;
 			break;
 		default:
 			return -1;
@@ -338,7 +343,7 @@ unveil_parsepermissions(const char *permissions, uint64_t *perms)
 }
 
 int
-unveil_setflags(uint64_t *flags, uint64_t nflags)
+unveil_setflags(u_char *flags, u_char nflags)
 {
 #if 0
 	if (((~(*flags)) & nflags) != 0) {
@@ -403,7 +408,7 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 	struct unveil *uv;
 	int directory_add;
 	int ret = EINVAL;
-	u_int64_t flags;
+	u_char flags;
 
 	KASSERT(ISSET(ndp->ni_cnd.cn_flags, HASBUF)); /* must have SAVENAME */
 
@@ -530,9 +535,10 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
  * XXX collapse down later once debug surely unneded
  */
 int
-unveil_flagmatch(struct nameidata *ni, uint64_t flags)
+unveil_flagmatch(struct nameidata *ni, u_char flags)
 {
 	if (flags == 0) {
+		/* XXX Fix this, you can do it better */
 		if (ni->ni_pledge & PLEDGE_STAT) {
 #ifdef DEBUG_UNVEIL
 			printf("allowing stat/accesss for 0 flags");
@@ -552,34 +558,34 @@ unveil_flagmatch(struct nameidata *ni, uint64_t flags)
 		CLR(ni->ni_pledge, PLEDGE_STATLIE);
 		return 1;
 	}
-	if (ni->ni_pledge & PLEDGE_RPATH) {
-		if ((flags & PLEDGE_RPATH) == 0) {
+	if (ni->ni_unveil & UNVEIL_READ) {
+		if ((flags & UNVEIL_READ) == 0) {
 #ifdef DEBUG_UNVEIL
-			printf("Pledge wants read but disallowed\n");
+			printf("unveil lacks UNVEIL_READ\n");
 #endif
 			return 0;
 		}
 	}
-	if (ni->ni_pledge & PLEDGE_WPATH) {
-		if ((flags & PLEDGE_WPATH) == 0) {
+	if (ni->ni_unveil & UNVEIL_WRITE) {
+		if ((flags & UNVEIL_WRITE) == 0) {
 #ifdef DEBUG_UNVEIL
-			printf("Pledge wants write but disallowed\n");
+			printf("unveil lacks UNVEIL_WRITE\n");
 #endif
 			return 0;
 		}
 	}
-	if (ni->ni_pledge & PLEDGE_EXEC) {
-		if ((flags & PLEDGE_EXEC) == 0) {
+	if (ni->ni_unveil & UNVEIL_EXEC) {
+		if ((flags & UNVEIL_EXEC) == 0) {
 #ifdef DEBUG_UNVEIL
-			printf("Pledge wants exec but disallowed\n");
+			printf("unveil lacks UNVEIL_EXEC\n");
 #endif
 			return 0;
 		}
 	}
-	if (ni->ni_pledge & PLEDGE_CPATH) {
-		if ((flags & PLEDGE_CPATH) == 0) {
+	if (ni->ni_unveil & UNVEIL_CREATE) {
+		if ((flags & UNVEIL_CREATE) == 0) {
 #ifdef DEBUG_UNVEIL
-			printf("Pledge wants cpath but disallowed\n");
+			printf("unveil lacks UNVEIL_CREATE\n");
 #endif
 			return 0;
 		}

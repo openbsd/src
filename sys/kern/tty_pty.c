@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.87 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.88 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1117,6 +1117,7 @@ retry:
 		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		snd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
+		snd.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 		if ((error = namei(&snd)) != 0)
 			goto bad;
 		if ((snd.ni_vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
@@ -1151,6 +1152,7 @@ retry:
 		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		snd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
+		snd.ni_unveil= UNVEIL_READ | UNVEIL_WRITE;
 		/* now open it */
 		if ((error = ptm_vn_open(&snd)) != 0)
 			goto bad;

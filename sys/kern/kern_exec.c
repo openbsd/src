@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.200 2018/07/20 21:57:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.201 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -275,6 +275,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nid.ni_pledge = PLEDGE_EXEC;
+	nid.ni_unveil = UNVEIL_EXEC;
 
 	/*
 	 * initialize the fields of the exec package.

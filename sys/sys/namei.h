@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.35 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.36 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ struct nameidata {
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	uint64_t ni_pledge;		/* expected pledge for namei */
+	u_char ni_unveil;		/* required unveil flags for namei */
 	/*
 	 * Results: returned from/manipulated by lookup
 	 */
@@ -250,4 +251,11 @@ struct	nchstats {
 	{ "ncs_dothits", CTLTYPE_QUAD },	\
 	{ "nch_dotdothits", CTLTYPE_QUAD },	\
 }
+
+/* Unveil flags for namei */
+#define	UNVEIL_READ	0x01
+#define	UNVEIL_WRITE	0x02
+#define	UNVEIL_CREATE	0x04
+#define	UNVEIL_EXEC	0x08
+
 #endif /* !_SYS_NAMEI_H_ */

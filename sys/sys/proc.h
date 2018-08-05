@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.254 2018/07/28 18:07:26 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.255 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ struct tusage {
 struct unvname {
 	char 			*un_name;
 	size_t 			un_namesize;
-	uint64_t		un_flags;
+	u_char			un_flags;
 	RBT_ENTRY(unvnmae)	un_rbt;
 };
 
@@ -424,7 +424,7 @@ struct unveil {
 	struct vnode		*uv_vp;
 	struct unvname_rbt	uv_names;
 	struct rwlock		uv_lock;
-	u_int64_t		uv_flags;
+	u_char			uv_flags;
 };
 
 struct uidinfo {

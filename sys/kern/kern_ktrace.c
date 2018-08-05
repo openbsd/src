@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.98 2018/06/20 10:48:55 mpi Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.99 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -513,6 +513,7 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 		cred = p->p_ucred;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
 		nd.ni_pledge = PLEDGE_CPATH | PLEDGE_WPATH;
+		nd.ni_unveil = UNVEIL_CREATE | UNVEIL_WRITE;
 		if ((error = vn_open(&nd, FWRITE|O_NOFOLLOW, 0)) != 0)
 			return error;
 		vp = nd.ni_vp;
