@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2017/01/17 22:10:56 krw Exp $	*/
+/*	$OpenBSD: control.c,v 1.9 2018/08/05 08:16:24 mestre Exp $	*/
 
 /*
  * Copyright (c) 2010-2016 Reyk Floeter <reyk@openbsd.org>
@@ -70,11 +70,10 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * pledge in the control process:
 	 * stdio - for malloc and basic I/O including events.
-	 * cpath - for managing the control socket.
 	 * unix - for the control socket.
 	 * recvfd - for the proc fd exchange.
 	 */
-	if (pledge("stdio cpath unix recvfd", NULL) == -1)
+	if (pledge("stdio unix recvfd", NULL) == -1)
 		fatal("pledge");
 }
 
@@ -194,16 +193,6 @@ control_listen(struct control_sock *cs)
 	evtimer_set(&cs->cs_evt, control_accept, cs);
 
 	return (0);
-}
-
-void
-control_cleanup(struct control_sock *cs)
-{
-	if (cs->cs_name == NULL)
-		return;
-	event_del(&cs->cs_ev);
-	event_del(&cs->cs_evt);
-	(void)unlink(cs->cs_name);
 }
 
 /* ARGSUSED */
