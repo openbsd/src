@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.24 2018/08/05 08:10:35 mestre Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.25 2018/08/05 08:41:28 mestre Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -36,7 +36,6 @@
 #include "eigrpe.h"
 #include "rde.h"
 #include "log.h"
-#include "control.h"
 
 static void		 main_sig_handler(int, short, void *);
 static __dead void	 usage(void);
