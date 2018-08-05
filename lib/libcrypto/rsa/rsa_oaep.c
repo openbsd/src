@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.26 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.27 2018/08/05 13:30:04 bcook Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -72,14 +72,18 @@ RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	}
 
 	if (MGF1(dbmask, emlen - SHA_DIGEST_LENGTH, seed,
-	    SHA_DIGEST_LENGTH) < 0)
+	    SHA_DIGEST_LENGTH) < 0) {
+		free(dbmask);
 		return 0;
+	}
 	for (i = 0; i < emlen - SHA_DIGEST_LENGTH; i++)
 		db[i] ^= dbmask[i];
 
 	if (MGF1(seedmask, SHA_DIGEST_LENGTH, db,
-	    emlen - SHA_DIGEST_LENGTH) < 0)
+	    emlen - SHA_DIGEST_LENGTH) < 0) {
+		free(dbmask);
 		return 0;
+	}
 	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 		seed[i] ^= seedmask[i];
 
