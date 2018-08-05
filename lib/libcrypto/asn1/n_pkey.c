@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.31 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.32 2018/08/05 13:35:45 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,11 +273,11 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 		goto err;
 	}
 
+	enckey->enckey->digest->data = zz;
 	if (!ASN1_STRING_set(enckey->os, "private-key", -1)) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	enckey->enckey->digest->data = zz;
 	i2d_NETSCAPE_PKEY(pkey, &zz);
 
 	/* Wipe the private key encoding */
