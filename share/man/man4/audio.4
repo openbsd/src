@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.79 2018/07/30 17:24:24 jmc Exp $
+.\"	$OpenBSD: audio.4,v 1.80 2018/08/05 10:31:49 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 30 2018 $
+.Dd $Mdocdate: August 5 2018 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -49,8 +49,6 @@ The
 driver provides support for various audio peripherals.
 It provides a uniform programming interface layer above different
 underlying audio hardware drivers.
-The audio layer provides full-duplex operation if the
-underlying hardware configuration supports it.
 .Pp
 In addition to hardware mixer controls like those
 documented in
@@ -98,17 +96,8 @@ device variables while it is in use.
 When audio devices are opened,
 they attempt to maintain the previous audio sample format and record/playback mode.
 In addition, if one is opened read-only
-(write-only) the device is set to half-duplex record (play) mode with
+(write-only) the device is set to record-only (play-only) mode with
 recording (playing) unpaused.
-.Pp
-Only one process may hold open a sampling device at a given time
-(although file descriptors may be shared between processes once the
-first open completes).
-.Pp
-On a half-duplex device, either reads or writes are allowed,
-but not both.
-On a full-duplex device, reads and writes may operate
-concurrently without interference.
 .Pp
 If a writing process does not call
 .Xr write 2
@@ -117,18 +106,6 @@ consumes them silence is inserted.
 If a reading process does not call
 .Xr read 2
 frequently enough, it will simply miss samples.
-.Pp
-The
-.Nm audio
-device is accessed with
-.Xr read 2
-or
-.Xr write 2 .
-.Pp
-The
-.Nm audio
-device, like most devices, can be used in
-.Xr poll 2 ,
 .Pp
 The following
 .Xr ioctl 2
@@ -312,13 +289,7 @@ If set, indicates that the device is playing and/or recording.
 .El
 .El
 .Sh MIXER DEVICE
-Mixer devices may be manipulated with
-.Xr ioctl 2
-but do not support
-.Xr read 2
-or
-.Xr write 2 .
-They support the following
+Mixer devices support the following
 .Xr ioctl 2
 commands:
 .Pp
