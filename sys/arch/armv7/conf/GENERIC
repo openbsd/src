@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.117 2018/08/03 13:37:08 kevlo Exp $
+#	$OpenBSD: GENERIC,v 1.118 2018/08/05 13:20:58 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -124,6 +124,7 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
+virtio*		at pci?
 pciecam*	at fdt?
 pci*		at pciecam?
 

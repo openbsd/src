@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.104 2018/08/05 08:54:05 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.105 2018/08/05 13:20:58 jsg Exp $
 
 machine		armv7 arm
 
@@ -115,6 +115,7 @@ sysreg*		at fdt?
 pluart*		at fdt?
 plrtc*		at fdt?
 virtio*		at fdt?
+virtio*		at pci?
 pciecam*	at fdt?
 pci*		at pciecam?
 
