@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.35 2018/08/02 06:28:35 mestre Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.36 2018/08/05 08:10:35 mestre Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -76,8 +76,7 @@ eigrpe(int debug, int verbose, char *sockname)
 	log_verbose(verbose);
 
 	/* create eigrpd control socket outside chroot */
-	global.csock = sockname;
-	if (control_init(global.csock) == -1)
+	if (control_init(sockname) == -1)
 		fatalx("control socket setup failed");
 
 	if (inet_pton(AF_INET, AllEIGRPRouters_v4, &global.mcast_addr_v4) != 1)
