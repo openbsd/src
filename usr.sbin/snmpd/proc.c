@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.24 2017/05/29 12:56:26 benno Exp $	*/
+/*	$OpenBSD: proc.c,v 1.25 2018/08/05 09:33:13 mestre Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -474,9 +474,6 @@ void
 proc_shutdown(struct privsep_proc *p)
 {
 	struct privsep	*ps = p->p_ps;
-
-	if (p->p_id == PROC_CONTROL && ps)
-		control_cleanup(&ps->ps_csock);
 
 	if (p->p_shutdown != NULL)
 		(*p->p_shutdown)();

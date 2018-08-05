@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.79 2018/07/31 11:01:29 claudio Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.80 2018/08/05 09:33:13 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -615,7 +615,6 @@ extern struct snmpd *snmpd_env;
 /* control.c */
 int		 control_init(struct privsep *, struct control_sock *);
 int		 control_listen(struct control_sock *);
-void		 control_cleanup(struct control_sock *);
 
 /* parse.y */
 struct snmpd	*parse_config(const char *, u_int);

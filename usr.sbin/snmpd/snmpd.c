@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.38 2018/04/15 11:57:29 mpf Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.39 2018/08/05 09:33:13 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 
 	proc_connect(ps);
 
-	if (pledge("stdio rpath cpath dns id proc sendfd exec", NULL) == -1)
+	if (pledge("stdio rpath dns sendfd proc exec id", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
@@ -269,9 +269,6 @@ void
 snmpd_shutdown(struct snmpd *env)
 {
 	proc_kill(&env->sc_ps);
-
-	if (env->sc_ps.ps_csock.cs_name != NULL)
-		(void)unlink(env->sc_ps.ps_csock.cs_name);
 
 	free(env);
 
