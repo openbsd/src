@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.81 2018/08/05 11:41:50 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.82 2018/08/05 11:46:31 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -286,11 +286,17 @@ If set, indicates that the device is playing and/or recording.
 .Sh CONTROL DEVICES
 Audio control devices accept the same
 .Xr ioctl 2
-operations as audio devices,
-but no other operations.
+except
+.Dv AUDIO_START
+and
+.Dv AUDIO_STOP .
 In contrast to audio devices,
 which have the exclusive open property,
 control devices can be opened at any time.
+.Pp
+While the audio device is open, audio parameters
+.Dv AUDIO_SETPAR
+may not be used.
 .Sh MIXER DEVICES
 Mixer devices support the following
 .Xr ioctl 2
