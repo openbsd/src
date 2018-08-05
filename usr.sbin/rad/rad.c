@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.14 2018/08/04 09:37:17 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.15 2018/08/05 09:37:05 mestre Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -351,7 +351,7 @@ main_shutdown(void)
 static pid_t
 start_child(int p, char *argv0, int fd, int debug, int verbose)
 {
-	char	*argv[7];
+	char	*argv[6];
 	int	 argc = 0;
 	pid_t	 pid;
 
