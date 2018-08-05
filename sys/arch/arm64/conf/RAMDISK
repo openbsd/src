@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.66 2018/08/03 13:37:08 kevlo Exp $
+# $OpenBSD: RAMDISK,v 1.67 2018/08/05 08:54:43 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -46,6 +46,7 @@ config		bsd	root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
+softraid0	at root
 cpu0		at mainbus?
 efi0		at mainbus?
 acpi0		at mainbus?
@@ -244,3 +245,4 @@ rkpmic*		at iic?			# RK808 PMIC
 pseudo-device	loop 1
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
+pseudo-device	bio 1
