@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.17 2017/12/10 07:34:38 jmc Exp $
+.\"	$OpenBSD: cu.1,v 1.18 2018/08/05 06:11:55 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2017 $
+.Dd $Mdocdate: August 5 2018 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -76,7 +76,19 @@ devices by default.
 Start
 .Nm
 in restricted mode.
-This prevents all local filesystem operations and command executions.
+This prevents all local filesystem operations
+.Po
+.Cm ~R ,
+.Cm ~X ,
+and
+.Cm ~>
+.Pc
+and command executions
+.Po
+.Cm ~C
+and
+.Cm ~$
+.Pc .
 .It Fl s Ar speed | Fl Ar speed
 Set the speed of the connection.
 The default is 9600.
@@ -108,7 +120,7 @@ following are recognized:
 .It Ic ~^D No or Ic ~.
 Drop the connection and exit.
 Only the connection is dropped \(en the login session is not terminated.
-.It Ic ~\*(Gt
+.It Ic ~>
 Copy file from local to remote.
 .Nm
 prompts for the name of a local file to transmit.
@@ -119,7 +131,6 @@ process to the remote host.
 The command string sent to the local
 .Ux
 system is processed by the shell.
-This command is not allowed in restricted mode.
 .It Ic ~#
 Send a
 .Dv BREAK
@@ -134,25 +145,20 @@ such as XMODEM.
 The child program will be run with the following arrangement of
 file descriptors:
 .Bd -literal -offset indent
-0 \*(Lt-\*(Gt remote tty in
-1 \*(Lt-\*(Gt remote tty out
-2 \*(Lt-\*(Gt local tty stderr
+0 <-> remote tty in
+1 <-> remote tty out
+2 <-> local tty stderr
 .Ed
-.Pp
-This command is not allowed in restricted mode.
 .It Ic ~D
 Deassert the data terminal ready (DTR) line briefly.
-This command is not allowed in restricted mode.
 .It Ic ~R
 Record all output from the remote system to a file.
 If the given file already exists, it is appended to.
 If no file is specified, any existing recording is stopped.
-This command is not allowed in restricted mode.
 .It Ic ~S
 Change the speed of the connection.
 .It Ic ~X
 Send a file with the XMODEM protocol.
-This command is not allowed in restricted mode.
 .It Ic ~?
 Get a summary of the tilde escapes.
 .El
