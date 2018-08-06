@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.86 2018/07/11 20:18:09 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.87 2018/08/06 11:28:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -451,7 +451,7 @@ enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		const struct ieee80211_channel *);
 void	ieee80211_disable_wep(struct ieee80211com *); 
 void	ieee80211_disable_rsn(struct ieee80211com *); 
-int	ieee80211_add_ess(struct ieee80211com *, char *, int, int);
+int	ieee80211_add_ess(struct ieee80211com *, int, int);
 void	ieee80211_del_ess(struct ieee80211com *, char *, int);
 void	ieee80211_set_ess(struct ieee80211com *, char *);
 

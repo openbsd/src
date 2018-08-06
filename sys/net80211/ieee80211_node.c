@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.137 2018/08/06 09:34:17 florian Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.138 2018/08/06 11:28:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -196,7 +196,7 @@ ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int all)
 }
 
 int
-ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
+ieee80211_add_ess(struct ieee80211com *ic, int wpa, int wep)
 {
 	struct ieee80211_ess *ess;
 	int i = 0, new = 0, ness = 0;
@@ -206,11 +206,12 @@ ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
 		return (0);
 
 	/* Don't save an empty nwid */
-	if (strnlen(nwid, IEEE80211_NWID_LEN) == 0)
+	if (ic->ic_des_esslen == 0)
 		return (0);
 
 	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
-		if (memcmp(ess->essid, nwid, IEEE80211_NWID_LEN) == 0)
+		if (ess->esslen == ic->ic_des_esslen &&
+		    memcmp(ess->essid, ic->ic_des_essid, ess->esslen) == 0)
 			break;
 		ness++;
 	}
@@ -229,7 +230,7 @@ ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
 		ess = malloc(sizeof(*ess), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ess == NULL)
 			return (ENOMEM);
-		memcpy(ess->essid, nwid, ic->ic_des_esslen);
+		memcpy(ess->essid, ic->ic_des_essid, ic->ic_des_esslen);
 		ess->esslen = ic->ic_des_esslen;
 	}
 
