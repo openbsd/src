@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.136 2018/08/03 10:52:45 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.137 2018/08/06 09:34:17 florian Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -229,10 +229,9 @@ ieee80211_add_ess(struct ieee80211com *ic, char *nwid, int wpa, int wep)
 		ess = malloc(sizeof(*ess), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ess == NULL)
 			return (ENOMEM);
+		memcpy(ess->essid, nwid, ic->ic_des_esslen);
+		ess->esslen = ic->ic_des_esslen;
 	}
-
-	memcpy(ess->essid, nwid, ic->ic_des_esslen);
-	ess->esslen = ic->ic_des_esslen;
 
 	if (wpa) {
 		if (ic->ic_flags & (IEEE80211_F_RSNON|IEEE80211_F_PSK)) {
