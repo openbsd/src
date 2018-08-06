@@ -7,7 +7,6 @@
  *
  */
 #include "config.h"
-#ifdef VI
 
 #include <sys/stat.h>		/* completion */
 
@@ -2226,4 +2225,3 @@ isu8cont(unsigned char c)
 {
 	return !Flag(FVISHOW8) && (c & (0x80 | 0x40)) == 0x80;
 }
-#endif	/* VI */

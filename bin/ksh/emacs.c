@@ -12,7 +12,6 @@
  */
 
 #include "config.h"
-#ifdef EMACS
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -2157,4 +2156,3 @@ x_lastcp(void)
 	return (xlp);
 }
 
-#endif /* EMACS */
