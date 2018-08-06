@@ -125,13 +125,9 @@ const struct option sh_options[] = {
 	{ "bgnice",	  0,		OF_ANY },
 	{ NULL,	'c',	    OF_CMDLINE },
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
-#ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
-#endif
 	{ "errexit",	'e',		OF_ANY },
-#ifdef EMACS
 	{ "gmacs",	  0,		OF_ANY },
-#endif
 	{ "ignoreeof",	  0,		OF_ANY },
 	{ "interactive",'i',	    OF_CMDLINE },
 	{ "keyword",	'k',		OF_ANY },
@@ -153,13 +149,11 @@ const struct option sh_options[] = {
 	{ "stdin",	's',	    OF_CMDLINE }, /* pseudo non-standard */
 	{ "trackall",	'h',		OF_ANY },
 	{ "verbose",	'v',		OF_ANY },
-#ifdef VI
 	{ "vi",		  0,		OF_ANY },
 	{ "viraw",	  0,		OF_ANY }, /* no effect */
 	{ "vi-show8",	  0,		OF_ANY }, /* non-standard */
 	{ "vi-tabcomplete",  0,		OF_ANY }, /* non-standard */
 	{ "vi-esccomplete",  0,		OF_ANY }, /* non-standard */
-#endif
 	{ "xtrace",	'x',		OF_ANY },
 	/* Anonymous flags: used internally by shell only
 	 * (not visible to user)
@@ -270,22 +264,10 @@ change_flag(enum sh_flag f,
 		if (what != OF_CMDLINE && newval != oldval)
 			j_change();
 	} else
-	if (0
-#ifdef VI
-	    || f == FVI
-#endif /* VI */
-#ifdef EMACS
-	    || f == FEMACS || f == FGMACS
-#endif /* EMACS */
-	   )
-	{
+	if (f == FVI || f == FEMACS || f == FGMACS) {
 		if (newval) {
-#ifdef VI
 			Flag(FVI) = 0;
-#endif /* VI */
-#ifdef EMACS
 			Flag(FEMACS) = Flag(FGMACS) = 0;
-#endif /* EMACS */
 			Flag(f) = newval;
 		}
 	} else

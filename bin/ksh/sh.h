@@ -136,13 +136,9 @@ enum sh_flag {
 	FBGNICE,	/* bgnice */
 	FCOMMAND,	/* -c: (invocation) execute specified command */
 	FCSHHISTORY,	/* csh-style history enabled */
-#ifdef EMACS
 	FEMACS,		/* emacs command editing */
-#endif
 	FERREXIT,	/* -e: quit on error */
-#ifdef EMACS
 	FGMACS,		/* gmacs command editing */
-#endif
 	FIGNOREEOF,	/* eof does not exit */
 	FTALKING,	/* -i: interactive */
 	FKEYWORD,	/* -k: name=value anywhere */
@@ -164,13 +160,11 @@ enum sh_flag {
 	FSTDIN,		/* -s: (invocation) parse stdin */
 	FTRACKALL,	/* -h: create tracked aliases for all commands */
 	FVERBOSE,	/* -v: echo input */
-#ifdef VI
 	FVI,		/* vi command editing */
 	FVIRAW,		/* always read in raw mode (ignored) */
 	FVISHOW8,	/* display chars with 8th bit set as is (versus M-) */
 	FVITABCOMPLETE,	/* enable tab as file name completion char */
 	FVIESCCOMPLETE,	/* enable ESC as file name completion in command mode */
-#endif
 	FXTRACE,	/* -x: execution trace */
 	FTALKING_I,	/* (internal): initial shell was interactive */
 	FNFLAGS /* (place holder: how many flags are there) */

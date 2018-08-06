@@ -21,8 +21,4 @@
  * End of configuration stuff for PD ksh.
  */
 
-#if !defined(EMACS) && !defined(VI)
-# error "Define either EMACS or VI."
-#endif
-
 #endif /* CONFIG_H */

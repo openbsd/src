@@ -1086,14 +1086,7 @@ getsc_line(Source *s)
 		ksh_tmout_state = TMOUT_READING;
 		alarm(ksh_tmout);
 	}
-	if (have_tty && (0
-#ifdef VI
-	    || Flag(FVI)
-#endif /* VI */
-#ifdef EMACS
-	    || Flag(FEMACS) || Flag(FGMACS)
-#endif /* EMACS */
-	    )) {
+	if (have_tty && (Flag(FVI) || Flag(FEMACS) || Flag(FGMACS))) {
 		int nread;
 
 		nread = x_read(xp, LINE);

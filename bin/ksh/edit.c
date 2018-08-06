@@ -47,10 +47,7 @@ x_init(void)
 		sigtraps[SIGWINCH].flags |= TF_SHELL_USES;
 	got_sigwinch = 1; /* force initial check */
 	check_sigwinch();
-
-#ifdef EMACS
 	x_init_emacs();
-#endif /* EMACS */
 }
 
 static void
@@ -97,17 +94,13 @@ x_read(char *buf, size_t len)
 	int	i;
 
 	x_mode(true);
-#ifdef EMACS
-	if (Flag(FEMACS) || Flag(FGMACS))
+	if (Flag(FEMACS) || Flag(FGMACS)) {
 		i = x_emacs(buf, len);
-	else
-#endif
-#ifdef VI
-	if (Flag(FVI))
+	} else if (Flag(FVI)) {
 		i = x_vi(buf, len);
-	else
-#endif
+	} else {
 		i = -1;		/* internal error */
+	}
 	x_mode(false);
 	check_sigwinch();
 	return i;
@@ -200,9 +193,7 @@ x_mode(bool onoff)
 		if (edchars.werase == _POSIX_VDISABLE)
 			edchars.werase = -1;
 		if (memcmp(&edchars, &oldchars, sizeof(edchars)) != 0) {
-#ifdef EMACS
 			x_emacs_keys(&edchars);
-#endif
 		}
 	} else {
 		tcsetattr(tty_fd, TCSADRAIN, &tty_state);
@@ -215,12 +206,7 @@ void
 set_editmode(const char *ed)
 {
 	static const enum sh_flag edit_flags[] = {
-#ifdef EMACS
-		FEMACS, FGMACS,
-#endif
-#ifdef VI
-		FVI,
-#endif
+		FEMACS, FGMACS, FVI,
 	};
 	char *rcp;
 	unsigned int ele;

@@ -1361,7 +1361,6 @@ c_getopts(char **wp)
 	return optc < 0 ? 1 : ret;
 }
 
-#ifdef EMACS
 int
 c_bind(char **wp)
 {
@@ -1394,7 +1393,6 @@ c_bind(char **wp)
 
 	return rv;
 }
-#endif
 
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
@@ -1421,8 +1419,6 @@ const struct builtin kshbuiltins [] = {
 	{"whence", c_whence},
 	{"+bg", c_fgbg},
 	{"+fg", c_fgbg},
-#ifdef EMACS
 	{"bind", c_bind},
-#endif
 	{NULL, NULL}
 };
