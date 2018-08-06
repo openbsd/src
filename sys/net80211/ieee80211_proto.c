@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.87 2018/05/23 19:52:03 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.88 2018/08/06 14:28:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -816,7 +816,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		if (status != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: open authentication failed "
-				    "(reason %d) for %s\n", ifp->if_xname,
+				    "(status %d) for %s\n", ifp->if_xname,
 				    status,
 				    ether_sprintf((u_int8_t *)wh->i_addr3));
 			if (ni != ic->ic_bss)
