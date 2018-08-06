@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.173 2018/08/03 16:31:22 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.174 2018/08/06 08:13:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -590,15 +590,13 @@ path_remove(struct rde_aspath *asp)
 /* remove all stale routes or if staletime is 0 remove all routes for
    a specified AID. */
 u_int32_t
-path_remove_stale(struct rde_aspath *asp, u_int8_t aid)
+path_remove_stale(struct rde_aspath *asp, u_int8_t aid, time_t staletime)
 {
 	struct prefix	*p, *np;
-	time_t		 staletime;
 	u_int32_t	 rprefixes;
 	int		 has_updates;
 
 	rprefixes=0;
-	staletime = asp->peer->staletime[aid];
 	/*
 	 * Same magic as in path_remove() but probably not needed here.
 	 * This is called when a session flapped and during that time

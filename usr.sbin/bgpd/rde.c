@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.409 2018/08/06 08:10:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.410 2018/08/06 08:13:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3273,7 +3273,7 @@ peer_flush(struct rde_peer *peer, u_int8_t aid)
 	/* walk through per peer RIB list and remove all stale prefixes. */
 	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
 		nasp = TAILQ_NEXT(asp, peer_l);
-		rprefixes += path_remove_stale(asp, aid);
+		rprefixes += path_remove_stale(asp, aid, peer->staletime[aid]);
 	}
 
 	/* Deletions are performed in path_remove() */
