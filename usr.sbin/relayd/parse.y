@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.226 2018/07/11 07:39:22 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.227 2018/08/06 17:31:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -176,7 +176,7 @@ typedef struct {
 %token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
 %token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
-%token	EDH TICKETS
+%token	EDH TICKETS CONNECTION CONNECTIONS ERRORS STATE CHANGES CHECKS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -433,8 +433,23 @@ main		: INTERVAL NUMBER	{
 trap		: /* nothing */		{ $$ = 0; }
 		| TRAP			{ $$ = 1; }
 
-loglevel	: UPDATES		{ $$ = RELAYD_OPT_LOGUPDATE; }
-		| ALL			{ $$ = RELAYD_OPT_LOGALL; }
+loglevel	: UPDATES		{ /* remove 6.4-current */
+					  $$ = RELAYD_OPT_LOGUPDATE;
+					  log_warnx("log updates deprecated, "
+					      "update configuration");
+					}
+		| STATE CHANGES		{ $$ = RELAYD_OPT_LOGUPDATE; }
+		| HOST CHECKS		{ $$ = RELAYD_OPT_LOGHOSTCHECK; }
+		| ALL			{ /* remove 6.4-current */
+					  $$ = (RELAYD_OPT_LOGHOSTCHECK|
+						RELAYD_OPT_LOGCON|
+						RELAYD_OPT_LOGCONERR);
+					  log_warnx("log all deprecated, "
+					      "update configuration");
+					}
+		| CONNECTION		{ $$ = (RELAYD_OPT_LOGCON |
+						RELAYD_OPT_LOGCONERR); }
+		| CONNECTION ERRORS	{ $$ = RELAYD_OPT_LOGCONERR; }
 		;
 
 rdr		: REDIRECT STRING	{
@@ -2223,9 +2238,12 @@ lookup(char *s)
 		{ "ca",			CA },
 		{ "cache",		CACHE },
 		{ "cert",		CERTIFICATE },
+		{ "changes",		CHANGES },
 		{ "check",		CHECK },
+		{ "checks",		CHECKS },
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
+		{ "connection",		CONNECTION },
 		{ "cookie",		COOKIE },
 		{ "demote",		DEMOTE },
 		{ "destination",	DESTINATION },
@@ -2234,6 +2252,7 @@ lookup(char *s)
 		{ "ecdhe",		ECDHE },
 		{ "edh",		EDH },
 		{ "error",		ERROR },
+		{ "errors",		ERRORS },
 		{ "expect",		EXPECT },
 		{ "external",		EXTERNAL },
 		{ "file",		FILENAME },
@@ -2302,6 +2321,7 @@ lookup(char *s)
 		{ "source-hash",	SRCHASH },
 		{ "splice",		SPLICE },
 		{ "ssl",		SSL },
+		{ "state",		STATE },
 		{ "sticky-address",	STICKYADDR },
 		{ "style",		STYLE },
 		{ "table",		TABLE },

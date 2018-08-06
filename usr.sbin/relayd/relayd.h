@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.249 2018/04/18 12:10:54 claudio Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.250 2018/08/06 17:31:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1107,8 +1107,9 @@ struct relayd {
 #define RELAYD_OPT_VERBOSE		0x01
 #define RELAYD_OPT_NOACTION		0x04
 #define RELAYD_OPT_LOGUPDATE		0x08
-#define RELAYD_OPT_LOGNOTIFY		0x10
-#define RELAYD_OPT_LOGALL		0x18
+#define RELAYD_OPT_LOGHOSTCHECK		0x10
+#define RELAYD_OPT_LOGCON		0x20
+#define RELAYD_OPT_LOGCONERR		0x40
 
 /* control.c */
 int	 control_init(struct privsep *, struct control_sock *);
@@ -1173,7 +1174,7 @@ void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
 char	*relay_load_fd(int, off_t *);
 int	 relay_load_certfiles(struct relay *);
-void	 relay_close(struct rsession *, const char *);
+void	 relay_close(struct rsession *, const char *, int);
 int	 relay_reset_event(struct ctl_relay_event *);
 void	 relay_natlook(int, short, void *);
 void	 relay_session(struct rsession *);

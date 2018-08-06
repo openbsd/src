@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.185 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.186 2018/08/06 17:31:31 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: August 6 2018 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -123,14 +123,14 @@ Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.
 .It Xo
 .Ic log
-.Pq Ic updates Ns | Ns Ic all
+.Pq Ic state changes Ns | Ns Ic host checks
 .Xc
-Log state notifications after completed host checks.
-Either only log the
-.Ic updates
-to new states or log
-.Ic all
-state notifications, even if the state didn't change.
+Log host checks:
+Either log only the
+.Ic state changes
+of hosts or log all
+.Ic host checks
+that were run, even if the state didn't change.
 The host state can be
 .Dq up
 (the health check completed successfully),
@@ -139,6 +139,12 @@ The host state can be
 or
 .Dq unknown
 (the host is disabled or has not been checked yet).
+.It Xo
+.Ic log connection Op Ic errors
+.Xc
+When using relays, log all TCP connections.
+Optionally log only
+.Ic connection errors.
 .It Ic prefork Ar number
 When using relays, run the specified number of processes to handle
 relayed connections.

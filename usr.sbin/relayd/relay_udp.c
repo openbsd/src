@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.48 2018/04/18 12:10:54 claudio Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.49 2018/08/06 17:31:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -204,7 +204,7 @@ relay_udp_response(int fd, short sig, void *arg)
 	    (priv = (*proto->validate)(con, rlay, &ss, buf, len)) == NULL)
 		return;
 
-	relay_close(con, "unknown response");
+	relay_close(con, "unknown response", 1);
 	free(priv);
 }
 
@@ -281,7 +281,7 @@ relay_udp_server(int fd, short sig, void *arg)
 	/* Pre-allocate output buffer */
 	con->se_out.output = evbuffer_new();
 	if (con->se_out.output == NULL) {
-		relay_close(con, "failed to allocate output buffer");
+		relay_close(con, "failed to allocate output buffer", 1);
 		return;
 	}
 
@@ -289,20 +289,20 @@ relay_udp_server(int fd, short sig, void *arg)
 	con->se_haslog = 0;
 	con->se_log = evbuffer_new();
 	if (con->se_log == NULL) {
-		relay_close(con, "failed to allocate log buffer");
+		relay_close(con, "failed to allocate log buffer", 1);
 		return;
 	}
 
 	if (rlay->rl_conf.flags & F_NATLOOK) {
 		if ((cnl = calloc(1, sizeof(*cnl))) == NULL) {
-			relay_close(con, "failed to allocate natlookup");
+			relay_close(con, "failed to allocate natlookup", 1);
 			return;
 		}
 	}
 
 	/* Save the received data */
 	if (evbuffer_add(con->se_out.output, buf, len) == -1) {
-		relay_close(con, "failed to store buffer");
+		relay_close(con, "failed to store buffer", 1);
 		free(cnl);
 		return;
 	}
@@ -337,7 +337,7 @@ relay_udp_timeout(int fd, short sig, void *arg)
 	if (sig != EV_TIMEOUT)
 		fatalx("invalid timeout event");
 
-	relay_close(con, "udp timeout");
+	relay_close(con, "udp timeout", 1);
 }
 
 /*
@@ -440,7 +440,7 @@ relay_dns_validate(struct rsession *con, struct relay *rlay,
 	} else {
 		priv = con->se_priv;
 		if (priv == NULL || key != priv->dp_inkey) {
-			relay_close(con, "invalid response");
+			relay_close(con, "invalid response", 1);
 			return (NULL);
 		}
 		relay_dns_result(con, buf, len);
@@ -531,11 +531,11 @@ relay_dns_result(struct rsession *con, u_int8_t *buf, size_t len)
 	slen = con->se_out.ss.ss_len;
 	if (sendto(rlay->rl_s, buf, len, 0,
 	    (struct sockaddr *)&con->se_in.ss, slen) == -1) {
-		relay_close(con, "response failed");
+		relay_close(con, "response failed", 1);
 		return;
 	}
 
-	relay_close(con, "session closed");
+	relay_close(con, "session closed", 0);
 }
 
 int

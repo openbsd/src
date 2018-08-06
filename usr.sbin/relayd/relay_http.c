@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.70 2017/11/27 16:25:50 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.71 2018/08/06 17:31:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -406,7 +406,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		action = relay_test(proto, cre);
 		switch (action) {
 		case RES_FAIL:
-			relay_close(con, "filter rule failed");
+			relay_close(con, "filter rule failed", 1);
 			return;
 		case RES_BAD:
 			relay_abort_http(con, 400, "Bad Request",
@@ -512,12 +512,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		}
 	}
 	if (con->se_done) {
-		relay_close(con, "last http read (done)");
+		relay_close(con, "last http read (done)", 0);
 		return;
 	}
 	switch (relay_splice(cre)) {
 	case -1:
-		relay_close(con, strerror(errno));
+		relay_close(con, strerror(errno), 1);
 	case 1:
 		return;
 	case 0:
@@ -589,10 +589,10 @@ relay_read_httpcontent(struct bufferevent *bev, void *arg)
 	/* The callback readcb() might have freed the session. */
 	return;
  done:
-	relay_close(con, "last http content read");
+	relay_close(con, "last http content read", 0);
 	return;
  fail:
-	relay_close(con, strerror(errno));
+	relay_close(con, strerror(errno), 1);
 }
 
 void
@@ -652,7 +652,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		 */
 		if (sscanf(line, "%llx", &llval) != 1 || llval < 0) {
 			free(line);
-			relay_close(con, "invalid chunk size");
+			relay_close(con, "invalid chunk size", 1);
 			return;
 		}
 
@@ -713,10 +713,10 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	return;
 
  done:
-	relay_close(con, "last http chunk read (done)");
+	relay_close(con, "last http chunk read (done)", 0);
 	return;
  fail:
-	relay_close(con, strerror(errno));
+	relay_close(con, strerror(errno), 1);
 }
 
 void
@@ -991,7 +991,7 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
 	/* In some cases this function may be called from generic places */
 	if (rlay->rl_proto->type != RELAY_PROTO_HTTP ||
 	    (rlay->rl_proto->flags & F_RETURN) == 0) {
-		relay_close(con, msg);
+		relay_close(con, msg, 0);
 		return;
 	}
 
@@ -1060,9 +1060,9 @@ relay_abort_http(struct rsession *con, u_int code, const char *msg,
  done:
 	free(body);
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1)
-		relay_close(con, msg);
+		relay_close(con, msg, 1);
 	else {
-		relay_close(con, httpmsg);
+		relay_close(con, httpmsg, 1);
 		free(httpmsg);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.171 2017/11/29 15:24:50 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.172 2018/08/06 17:31:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -558,7 +558,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	/* cleanup sessions */
 	while ((con =
 	    SPLAY_ROOT(&rlay->rl_sessions)) != NULL)
-		relay_close(con, NULL);
+		relay_close(con, NULL, 0);
 
 	/* cleanup relay */
 	if (rlay->rl_bev != NULL)
