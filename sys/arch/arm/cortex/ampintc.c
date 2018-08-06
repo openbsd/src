@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.21 2018/07/09 09:51:43 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.22 2018/08/06 18:39:13 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -153,6 +153,7 @@ struct intrhand {
 	int (*ih_func)(void *);		/* handler */
 	void *ih_arg;			/* arg for handler */
 	int ih_ipl;			/* IPL_* */
+	int ih_flags;
 	int ih_irq;			/* IRQ number */
 	struct evcount	ih_count;
 	char *ih_name;
@@ -540,6 +541,18 @@ ampintc_irq_handler(void *frame)
 	pri = sc->sc_ampintc_handler[irq].iq_irq;
 	s = ampintc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list, ih_list) {
+#ifdef MULTIPROCESSOR
+		int need_lock;
+
+		if (ih->ih_flags & IPL_MPSAFE)
+			need_lock = 0;
+		else
+			need_lock = s < IPL_SCHED;
+
+		if (need_lock)
+			KERNEL_LOCK();
+#endif
+
 		if (ih->ih_arg != 0)
 			arg = ih->ih_arg;
 		else
@@ -548,6 +561,10 @@ ampintc_irq_handler(void *frame)
 		if (ih->ih_func(arg)) 
 			ih->ih_count.ec_count++;
 
+#ifdef MULTIPROCESSOR
+		if (need_lock)
+			KERNEL_UNLOCK();
+#endif
 	}
 	ampintc_eoi(iack_val);
 

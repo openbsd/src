@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2018/06/30 15:23:35 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -33,12 +33,14 @@
  */
 
 #include "assym.h"
+
 #include <sys/syscall.h>
 #include <sys/errno.h>
+
 #include <machine/asm.h>
-#include <arm/sysreg.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
+#include <arm/armreg.h>
+#include <arm/sysreg.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048

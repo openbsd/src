@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.6 2018/06/03 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.7 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -40,8 +40,9 @@
  * Hand-optimised in_cksum() and in4_cksum() implementations for ARM/Xscale
  */
 
-#include <machine/asm.h>
 #include "assym.h"
+
+#include <machine/asm.h>
 
 .syntax unified
 

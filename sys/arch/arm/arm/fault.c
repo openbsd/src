@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.35 2018/06/22 18:50:42 guenther Exp $	*/
+/*	$OpenBSD: fault.c,v 1.36 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -340,7 +340,9 @@ data_abort_handler(trapframe_t *tf)
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
+	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, ftype);
+	KERNEL_UNLOCK();
 	pcb->pcb_onfault = onfault;
 
 #if 0
@@ -385,7 +387,9 @@ data_abort_handler(trapframe_t *tf)
 	sd.trap = fsr;
 do_trapsignal:
 	sv.sival_int = sd.addr;
+	KERNEL_LOCK();
 	trapsignal(p, sd.signo, sd.trap, sd.code, sv);
+	KERNEL_UNLOCK();
 out:
 	/* If returning to user mode, make sure to invoke userret() */
 	if (user)
@@ -595,7 +599,9 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
+	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
+	KERNEL_UNLOCK();
 	if (__predict_true(error == 0))
 		goto out;
 
@@ -604,9 +610,14 @@ prefetch_abort_handler(trapframe_t *tf)
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+		KERNEL_LOCK();
 		trapsignal(p, SIGKILL, 0, SEGV_MAPERR, sv);
-	} else
+		KERNEL_UNLOCK();
+	} else {
+		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, 0, SEGV_MAPERR, sv);
+		KERNEL_UNLOCK();
+	}
 
 out:
 	userret(p);

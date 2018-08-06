@@ -1,4 +1,4 @@
-/*	$OpenBSD: setstack.S,v 1.4 2018/06/30 15:23:35 deraadt Exp $	*/
+/*	$OpenBSD: setstack.S,v 1.5 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: setstack.S,v 1.2 2002/08/15 01:37:02 briggs Exp $	*/
 
 /*
@@ -48,8 +48,8 @@
  * Based of kate/display/setstack.s
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/armreg.h>
 
 /* To set the stack pointer for a particular mode we must switch
  * to that mode update the banked r13 and then switch back.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.54 2018/05/31 09:12:59 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.55 2018/08/06 18:39:13 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -256,7 +256,7 @@ haltsys:
 	config_suspend_all(DVACT_POWERDOWN);
 
 	/* Make sure IRQ's are disabled */
-	IRQdisable;
+	intr_disable();
 
 	if ((howto & RB_HALT) != 0) {
 		if ((howto & RB_POWERDOWN) != 0) {

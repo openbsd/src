@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopyinout.S,v 1.8 2018/06/03 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: bcopyinout.S,v 1.9 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: bcopyinout.S,v 1.13 2003/10/31 16:54:05 scw Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
  */
 
 #include "assym.h"
+
+#include <sys/errno.h>
 
 #include <machine/asm.h>
 #include <arm/sysreg.h>
@@ -264,6 +266,40 @@ ENTRY(copyin)
 	mov	pc, lr
 
 /*
+ * r0 = user space address
+ * r1 = kernel space address
+ *
+ * Atomically copies a 32-bit word from user space to kernel space
+ *
+ * We save/restore r4-r11:
+ * r4-r11 are scratch
+ */
+ENTRY(copyin32)
+	/* Quick exit if unaligned */	
+	tst	r0, #0x3
+	movne	r0, #EFAULT
+	movne	pc, lr
+
+	SAVE_REGS
+
+	/* Get curcpu from TPIDRPRW. */
+	mrc	CP15_TPIDRPRW(r4)
+	ldr	r4, [r4, #CI_CURPCB]
+
+	ldr	r5, [r4, #PCB_ONFAULT]
+	adr	r3, .Lcopyfault
+	str	r3, [r4, #PCB_ONFAULT]
+
+	ldr	r6, [r0]
+	str	r6, [r1]
+	mov	r0, #0
+
+	str	r5, [r4, #PCB_ONFAULT]
+	RESTORE_REGS
+
+	mov	pc, lr
+
+/*
  * r0 = kernel space address
  * r1 = user space address
  * r2 = length
@@ -273,7 +309,6 @@ ENTRY(copyin)
  * We save/restore r4-r11:
  * r4-r11 are scratch
  */
-
 ENTRY(copyout)
 	/* Quick exit if length is zero */	
 	teq	r2, #0

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2016/09/24 21:02:31 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2018/08/06 18:39:13 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -60,7 +60,6 @@ ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
 endif
 
-export	DOMAIN_CLIENT
 export	PMAP_DOMAIN_KERNEL
 
 ifdef PMAP_INCLUDE_PTE_SYNC
@@ -75,8 +74,7 @@ export	SONPROC
 
 struct	proc
 member	p_addr
-#member	p_priority
-#member	p_wchan
+member	p_cpu
 member	p_stat
 # XXX use PROC_SIZEOF in new code whenever possible
 define	PROCSIZE		sizeof(struct proc)

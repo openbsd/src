@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.4 2018/01/20 23:57:44 jsg Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.5 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -30,13 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
+
 #include <machine/asm.h>
 #include <arm/sysreg.h>
 #include <arm/armreg.h>
 #include <arm/pte.h>
-
-#undef	DOMAIN_CLIENT	/* XXX */
-#include "assym.h"
 
 #ifdef __clang__
 .arch_extension virt

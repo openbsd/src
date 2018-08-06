@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.8 2018/06/03 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: exception.S,v 1.9 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -46,10 +46,11 @@
  * Based on kate/display/abort.s
  */
 
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #include "assym.h"
+
+#include <machine/asm.h>
+#include <machine/frame.h>
+#include <arm/armreg.h>
 
 	.text	
 	.align	2

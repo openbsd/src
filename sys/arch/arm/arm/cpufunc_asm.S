@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm.S,v 1.5 2016/09/21 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc_asm.S,v 1.6 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: cpufunc_asm.S,v 1.12 2003/09/06 09:14:52 rearnsha Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  * Created      : 30/01/97
  */
  
-#include <machine/cpu.h>
 #include <machine/asm.h>
 #include <arm/sysreg.h>
 

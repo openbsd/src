@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy_page.S,v 1.2 2018/06/03 18:58:11 kettenis Exp $	*/
+/*	$OpenBSD: bcopy_page.S,v 1.3 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: bcopy_page.S,v 1.7 2003/10/13 21:03:13 scw Exp $	*/
 
 
@@ -40,9 +40,9 @@
  * Created      : 08/04/95
  */
 
-#include <machine/asm.h>
-
 #include "assym.h"
+
+#include <machine/asm.h>
 
 /* #define BIG_LOOPS */
 
