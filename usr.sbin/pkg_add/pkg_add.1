@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.155 2018/07/12 06:22:20 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.156 2018/08/06 18:20:47 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 12 2018 $
+.Dd $Mdocdate: August 6 2018 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -352,10 +352,10 @@ to expand to
 .Sq snapshots ,
 even on a release kernel.
 .It Cm unsigned
-Allow the installation of unsigned packages without warnings/errors
-(necessary for
-.Xr ports 7 ,
-automatically set by the build infrastructure).
+Allow the installation of unsigned packages without warnings/errors.
+But see
+.Ev TRUSTED_PKG_PATH ,
+which is more discriminating.
 .It Cm updatedepends
 Force update even if forward dependencies no longer match.
 .El
