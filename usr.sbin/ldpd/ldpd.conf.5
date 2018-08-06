@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.35 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.36 2018/08/06 17:25:11 mestre Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: August 6 2018 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -70,14 +70,14 @@ macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
 Macro names may not be reserved words (for example,
-.Ic password ) .
+.Ic neighbor ) .
 Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-secret="openbsd"
-neighbor 10.0.1.5 {
-	password $secret
+peer1="10.0.1.5"
+neighbor $peer1 {
+	password "openbsd"
 }
 .Ed
 .Sh GLOBAL CONFIGURATION
