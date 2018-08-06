@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.369 2018/07/13 08:41:32 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.370 2018/08/06 11:42:18 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -163,6 +163,7 @@ int	newaddr = 0;
 int	af = AF_INET;
 int	explicit_prefix = 0;
 int	Lflag = 1;
+int	show_join = 0;
 
 int	showmediaflag;
 int	showcapsflag;
@@ -633,6 +634,7 @@ void	in6_status(int);
 void	in6_getaddr(const char *, int);
 void	in6_getprefix(const char *, int);
 void	ieee80211_status(void);
+void	join_status(void);
 void	ieee80211_listchans(void);
 void	ieee80211_listnodes(void);
 void	ieee80211_printnode(struct ieee80211_nodereq *);
@@ -1656,7 +1658,7 @@ setifjoin(const char *val, int d)
 	int len;
 
 	if (val == NULL) {
-		/* TODO: display the list of join'd networks */
+		show_join = 1;
 		return;
 	}
 
@@ -2292,12 +2294,62 @@ ieee80211_status(void)
 		putchar(' ');
 		printb_status(ifr.ifr_flags, IEEE80211_F_USERBITS);
 	}
-
 	putchar('\n');
+	if (show_join)
+		join_status();
 	if (shownet80211chans)
 		ieee80211_listchans();
 	else if (shownet80211nodes)
 		ieee80211_listnodes();
+}
+
+void
+join_status(void)
+{
+	struct ieee80211_joinreq_all ja;
+	struct ieee80211_join *jn = NULL;
+	int jsz = 100;
+	int ojsz;
+	int i;
+	int r;
+
+	bzero(&ja, sizeof(ja));
+	jn = recallocarray(NULL, 0, jsz, sizeof(*jn));
+	if (jn == NULL)
+		err(1, "recallocarray");
+	ojsz = jsz;
+	while (1) {
+		ja.ja_node = jn;
+		ja.ja_size = jsz * sizeof(*jn);
+		strlcpy(ja.ja_ifname, name, sizeof(ja.ja_ifname));
+		
+		if ((r = ioctl(s, SIOCG80211JOINALL, &ja)) != 0) {
+			if (errno == E2BIG) {
+				jsz += 100;
+				jn = recallocarray(jn, ojsz, jsz, sizeof(*jn));
+				if (jn == NULL)
+					err(1, "recallocarray");
+				ojsz = jsz;
+				continue;
+			} else if (errno != ENOENT)
+				warn("SIOCG80211JOINALL");
+			return;
+		}
+		break;
+	}
+
+	if (!ja.ja_nodes)
+		return;
+
+	fputs("\tjoin:\t", stdout);
+	for (i = 0; i < ja.ja_nodes; i++) {
+		if (i > 0)
+			printf("\t\t");
+		if (jn[i].i_len > IEEE80211_NWID_LEN)
+			jn[i].i_len = IEEE80211_NWID_LEN;
+		print_string(jn[i].i_nwid, jn[i].i_len);
+		putchar('\n');
+	}
 }
 
 void

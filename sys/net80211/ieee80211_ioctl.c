@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.62 2018/08/06 11:28:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.63 2018/08/06 11:42:18 benno Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -391,8 +391,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int i, error = 0;
+	size_t len;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_join join;
+	struct ieee80211_joinreq_all *ja;
 	struct ieee80211_ess *ess;
 	struct ieee80211_wpapsk *psk;
 	struct ieee80211_keyavail *ka;
@@ -486,6 +488,25 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    sizeof(join));
 				break;
 			}
+		}
+		break;
+	case SIOCG80211JOINALL:
+		ja = (struct ieee80211_joinreq_all *)data;
+		ja->ja_nodes = len = 0;
+		TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+			if (len + sizeof(ja->ja_node[0]) >= ja->ja_size) {
+				error = E2BIG;
+				break;
+			}
+			memset(&join, 0, sizeof(join));
+			join.i_len = ess->esslen;
+			memcpy(&join.i_nwid, ess->essid, join.i_len);
+			error = copyout(&join, &ja->ja_node[ja->ja_nodes],
+			    sizeof(ja->ja_node[0]));
+			if (error)
+				break;
+			len += sizeof(join);
+			ja->ja_nodes++;
 		}
 		break;
 	case SIOCS80211NWKEY:
