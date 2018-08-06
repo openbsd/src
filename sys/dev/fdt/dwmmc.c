@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.15 2018/06/03 17:26:31 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.16 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -323,7 +323,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", div);
 	sc->sc_clkbase /= (div + 1);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    dwmmc_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");

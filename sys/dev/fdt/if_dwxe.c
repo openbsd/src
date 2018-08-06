@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.9 2018/05/28 08:22:41 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.10 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -456,7 +456,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	arm_intr_establish_fdt(faa->fa_node, IPL_NET, dwxe_intr, sc,
+	fdt_intr_establish(faa->fa_node, IPL_NET, dwxe_intr, sc,
 	    sc->sc_dev.dv_xname);
 }
 

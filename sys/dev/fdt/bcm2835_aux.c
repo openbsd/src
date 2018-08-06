@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_aux.c,v 1.2 2018/02/25 01:45:01 guenther Exp $	*/
+/*	$OpenBSD: bcm2835_aux.c,v 1.3 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -96,8 +96,8 @@ bcmaux_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = &sc->sc_ic;
 	sc->sc_ic.ic_establish = bcm_aux_intr_establish_fdt;
-	sc->sc_ic.ic_disestablish = arm_intr_disestablish_fdt;
-	arm_intr_register_fdt(&sc->sc_ic);
+	sc->sc_ic.ic_disestablish = fdt_intr_disestablish;
+	fdt_intr_register(&sc->sc_ic);
 }
 
 uint32_t
@@ -124,5 +124,5 @@ bcm_aux_intr_establish_fdt(void *cookie, int *cells, int level,
 	if (idx != BCMAUX_UART)
 		return NULL;
 
-	return arm_intr_establish_fdt(ic->ic_node, level, func, arg, name);
+	return fdt_intr_establish(ic->ic_node, level, func, arg, name);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.4 2018/05/27 18:03:22 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.5 2018/08/06 10:52:30 patrick Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -415,7 +415,7 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
 	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    sximmc_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't to establish interrupt\n");

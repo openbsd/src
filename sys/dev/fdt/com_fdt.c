@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.2 2018/07/20 05:37:06 jsg Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.3 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -148,7 +148,7 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	arm_intr_establish_fdt(faa->fa_node, IPL_TTY, intr,
+	fdt_intr_establish(faa->fa_node, IPL_TTY, intr,
 	    sc, sc->sc_dev.dv_xname);
 }
 

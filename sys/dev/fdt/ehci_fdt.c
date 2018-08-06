@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.3 2017/12/30 16:32:52 kettenis Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.4 2018/08/06 10:52:30 patrick Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -98,7 +98,7 @@ ehci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_USB,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
@@ -123,7 +123,7 @@ ehci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 disestablish_intr:
-	arm_intr_disestablish_fdt(sc->sc_ih);
+	fdt_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 unmap:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
@@ -143,7 +143,7 @@ ehci_fdt_detach(struct device *self, int flags)
 		return rv;
 
 	if (sc->sc_ih != NULL) {
-		arm_intr_disestablish_fdt(sc->sc_ih);
+		fdt_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.h,v 1.1 2016/12/08 16:24:51 visa Exp $	*/
+/*	$OpenBSD: fdt.h,v 1.2 2018/08/06 10:52:30 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -33,5 +33,8 @@ struct fdt_attach_args {
 	int			 fa_acells;
 	int			 fa_scells;
 };
+
+#define fdt_intr_establish octeon_intr_establish_fdt
+#define fdt_intr_disestablish octeon_intr_disestablish_fdt
 
 #endif /* __OCTEON_FDT_H__ */

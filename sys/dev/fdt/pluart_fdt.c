@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.1 2018/07/02 12:46:20 kettenis Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.2 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -68,7 +68,7 @@ pluart_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY, pluart_intr,
+	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY, pluart_intr,
 	    sc, sc->sc_dev.dv_xname);
 
 	sc->sc_iot = faa->fa_iot;

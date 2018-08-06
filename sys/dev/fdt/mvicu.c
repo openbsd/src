@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvicu.c,v 1.2 2018/03/29 18:11:55 kettenis Exp $	*/
+/*	$OpenBSD: mvicu.c,v 1.3 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -125,8 +125,8 @@ mvicu_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	extern uint32_t arm_intr_get_parent(int);
-	phandle = arm_intr_get_parent(node);
+	extern uint32_t fdt_intr_get_parent(int);
+	phandle = fdt_intr_get_parent(node);
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 		if (ic->ic_phandle == phandle)
@@ -138,7 +138,7 @@ mvicu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish = mvicu_intr_establish;
 	sc->sc_ic.ic_disestablish = mvicu_intr_disestablish;
-	arm_intr_register_fdt(&sc->sc_ic);
+	fdt_intr_register(&sc->sc_ic);
 }
 
 void *

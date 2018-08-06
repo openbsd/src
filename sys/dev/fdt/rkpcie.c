@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.4 2018/07/30 10:56:00 kettenis Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.5 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -558,7 +558,7 @@ rkpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
-		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
+		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
@@ -590,7 +590,7 @@ rkpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
 		    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
 
-		cookie = arm_intr_establish_fdt_idx(sc->sc_node, 1, level,
+		cookie = fdt_intr_establish_idx(sc->sc_node, 1, level,
 		    func, arg, name);
 	}
 

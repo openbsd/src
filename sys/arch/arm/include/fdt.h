@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.7 2018/05/07 14:13:54 kettenis Exp $ */
+/* $OpenBSD: fdt.h,v 1.8 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -39,5 +39,15 @@ extern int stdout_speed;
 extern bus_space_tag_t fdt_cons_bs_tag;
 
 void *fdt_find_cons(const char *);
+
+#define fdt_intr_establish arm_intr_establish_fdt
+#define fdt_intr_establish_idx arm_intr_establish_fdt_idx
+#define fdt_intr_establish_imap arm_intr_establish_fdt_imap
+#define fdt_intr_establish_msi arm_intr_establish_fdt_msi
+#define fdt_intr_disestablish arm_intr_disestablish_fdt
+#define fdt_intr_get_parent arm_intr_get_parent
+#define fdt_intr_parent_establish arm_intr_parent_establish_fdt
+#define fdt_intr_parent_disestablish arm_intr_parent_disestablish_fdt
+#define fdt_intr_register arm_intr_register_fdt
 
 #endif /* __ARM_FDT_H__ */

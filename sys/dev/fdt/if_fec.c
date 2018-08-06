@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.5 2018/06/17 17:20:23 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.6 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -345,11 +345,11 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	HWRITE4(sc, ENET_EIMR, 0);
 	HWRITE4(sc, ENET_EIR, 0xffffffff);
 
-	sc->sc_ih[0] = arm_intr_establish_fdt_idx(faa->fa_node, 0, IPL_NET,
+	sc->sc_ih[0] = fdt_intr_establish_idx(faa->fa_node, 0, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
-	sc->sc_ih[1] = arm_intr_establish_fdt_idx(faa->fa_node, 1, IPL_NET,
+	sc->sc_ih[1] = fdt_intr_establish_idx(faa->fa_node, 1, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
-	sc->sc_ih[2] = arm_intr_establish_fdt_idx(faa->fa_node, 2, IPL_NET,
+	sc->sc_ih[2] = fdt_intr_establish_idx(faa->fa_node, 2, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
 
 	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);

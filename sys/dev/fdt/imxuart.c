@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.3 2018/06/11 09:15:22 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.4 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -166,7 +166,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(faa->fa_node, "default");
 
-	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
+	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY,
 	    imxuart_intr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_node = faa->fa_node;

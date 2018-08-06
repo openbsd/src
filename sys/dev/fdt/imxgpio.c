@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.1 2018/03/30 19:38:00 patrick Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.2 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -131,7 +131,7 @@ imxgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish = imxgpio_intr_establish;
 	sc->sc_ic.ic_disestablish = imxgpio_intr_disestablish;
-	arm_intr_register_fdt(&sc->sc_ic);
+	fdt_intr_register(&sc->sc_ic);
 
 	printf("\n");
 
@@ -359,15 +359,15 @@ imxgpio_recalc_ipl(struct imxgpio_softc *sc)
 		sc->sc_ipl = max;
 
 		if (sc->sc_ih_l != NULL)
-			arm_intr_disestablish_fdt(sc->sc_ih_l);
+			fdt_intr_disestablish(sc->sc_ih_l);
 
 		if (sc->sc_ih_h != NULL)
-			arm_intr_disestablish_fdt(sc->sc_ih_h);
+			fdt_intr_disestablish(sc->sc_ih_h);
 
 		if (sc->sc_ipl != IPL_NONE) {
-			sc->sc_ih_l = arm_intr_establish_fdt_idx(sc->sc_node, 0,
+			sc->sc_ih_l = fdt_intr_establish_idx(sc->sc_node, 0,
 			    sc->sc_ipl, imxgpio_intr, sc, sc->sc_dev.dv_xname);
-			sc->sc_ih_h = arm_intr_establish_fdt_idx(sc->sc_node, 1,
+			sc->sc_ih_h = fdt_intr_establish_idx(sc->sc_node, 1,
 			    sc->sc_ipl, imxgpio_intr, sc, sc->sc_dev.dv_xname);
 		}
 	}

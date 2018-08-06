@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.5 2018/07/09 16:30:13 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.6 2018/08/06 10:52:30 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -584,7 +584,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	while (MVNETA_READ(sc, MVNETA_PMACC2) & MVNETA_PMACC2_PORTMACRESET)
 		;
 
-	arm_intr_establish_fdt(faa->fa_node, IPL_NET, mvneta_intr, sc,
+	fdt_intr_establish(faa->fa_node, IPL_NET, mvneta_intr, sc,
 	    sc->sc_dev.dv_xname);
 
 	ifp = &sc->sc_ac.ac_if;

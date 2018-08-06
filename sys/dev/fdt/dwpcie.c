@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.8 2018/08/03 22:40:05 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.9 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -379,7 +379,7 @@ dwpcie_armada8k_init(struct dwpcie_softc *sc)
 		delay(1000);
 	}
 
-	sc->sc_ih = arm_intr_establish_fdt(sc->sc_node, IPL_AUDIO | IPL_MPSAFE,
+	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_AUDIO | IPL_MPSAFE,
 	    dwpcie_armada8k_intr, sc, sc->sc_dev.dv_xname);
 
 	/* Unmask INTx interrupts. */
@@ -582,7 +582,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
-		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
+		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, (void *)name);
 		if (cookie == NULL)
 			return NULL;
@@ -618,7 +618,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		reg[1] = reg[2] = 0;
 		reg[3] = ih->ih_intrpin;
 
-		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
+		cookie = fdt_intr_establish_imap(sc->sc_node, reg,
 		    sizeof(reg), level, func, arg, name);
 	}
 

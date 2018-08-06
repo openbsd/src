@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.4 2018/06/10 09:25:50 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.5 2018/08/06 10:52:30 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -125,7 +125,7 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 		panic("imxiic_attach: bus_space_map failed!");
 
 #if 0
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    imxiic_intr, sc, sc->sc_dev.dv_xname);
 #endif
 
