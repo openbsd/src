@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.118 2018/03/16 12:31:09 mpi Exp $	*/
+/*	$OpenBSD: iked.h,v 1.119 2018/08/06 06:30:06 mestre Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -648,7 +648,6 @@ void	 parent_reload(struct iked *, int, const char *);
 pid_t	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
 
 /* config.c */
 struct iked_policy *
