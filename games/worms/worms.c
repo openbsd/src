@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.28 2016/03/05 07:47:15 tb Exp $	*/
+/*	$OpenBSD: worms.c,v 1.29 2018/08/06 06:27:32 mestre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -233,6 +233,10 @@ main(int argc, char *argv[])
 	if (!(worm = calloc(number, sizeof(struct worm))))
 		nomem();
 	initscr();
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
+
 	curs_set(0);
 	CO = COLS;
 	LI = LINES;
