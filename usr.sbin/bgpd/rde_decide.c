@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.69 2018/07/24 10:10:58 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.70 2018/08/06 08:06:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -122,6 +122,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	asp1 = prefix_aspath(p1);
 	asp2 = prefix_aspath(p2);
+	peer1 = prefix_peer(p1);
+	peer2 = prefix_peer(p2);
 
 	/* pathes with errors are not eligible */
 	if (asp1->flags & F_ATTR_PARSE_ERR)
@@ -167,10 +169,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
-	if (asp1->peer->conf.ebgp != asp2->peer->conf.ebgp) {
-		if (asp1->peer->conf.ebgp) /* p1 is EBGP other is lower */
+	if (peer1->conf.ebgp != peer2->conf.ebgp) {
+		if (peer1->conf.ebgp) /* peer1 is EBGP other is lower */
 			return 1;
-		else if (asp2->peer->conf.ebgp) /* p2 is EBGP */
+		else if (peer2->conf.ebgp) /* peer2 is EBGP */
 			return -1;
 	}
 
@@ -199,12 +201,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		memcpy(&p1id, a->data, sizeof(p1id));
 		p1id = ntohl(p1id);
 	} else
-		p1id = asp1->peer->remote_bgpid;
+		p1id = peer1->remote_bgpid;
 	if ((a = attr_optget(asp2, ATTR_ORIGINATOR_ID)) != NULL) {
 		memcpy(&p2id, a->data, sizeof(p2id));
 		p2id = ntohl(p2id);
 	} else
-		p2id = asp2->peer->remote_bgpid;
+		p2id = peer2->remote_bgpid;
 	if ((p2id - p1id) != 0)
 		return (p2id - p1id);
 
@@ -218,8 +220,6 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (p2cnt - p1cnt);
 
 	/* 12. lowest peer address wins (IPv4 is better than IPv6) */
-	peer1 = prefix_peer(p1);
-	peer2 = prefix_peer(p2);
 	if (memcmp(&peer1->remote_addr, &peer2->remote_addr,
 	    sizeof(peer1->remote_addr)) != 0)
 		return (-memcmp(&peer1->remote_addr, &peer2->remote_addr,
