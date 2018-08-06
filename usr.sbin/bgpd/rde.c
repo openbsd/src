@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.410 2018/08/06 08:13:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.411 2018/08/06 15:59:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -527,7 +527,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			default:
 badnet:
-				log_warnx("rde_dispatch: bad network");
+				log_warnx("request to insert invalid network");
 				break;
 			}
 			break;
@@ -539,7 +539,23 @@ badnet:
 			}
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
-			network_delete(&netconf_s, 0);
+
+			switch (netconf_s.prefix.aid) {
+			case AID_INET:
+				if (netconf_s.prefixlen > 32)
+					goto badnetdel;
+				network_delete(&netconf_s, 0);
+				break;
+			case AID_INET6:
+				if (netconf_s.prefixlen > 128)
+					goto badnetdel;
+				network_delete(&netconf_s, 0);
+				break;
+			default:
+badnetdel:
+				log_warnx("request to remove invalid network");
+				break;
+			}
 			break;
 		case IMSG_NETWORK_FLUSH:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
