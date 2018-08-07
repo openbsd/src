@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2018/07/15 14:36:54 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2018/08/07 11:28:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -259,7 +259,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if (vm_checkaccess(kernfd,
 		    vmc->vmc_checkaccess & VMOP_CREATE_KERNEL,
 		    uid, R_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to %s",
+			log_warnx("vm \"%s\" no read access to kernel %s",
 			    vcp->vcp_name, vcp->vcp_kernel);
 			errno = EPERM;
 			goto fail;
@@ -280,7 +280,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if (vm_checkaccess(cdromfd,
 		    vmc->vmc_checkaccess & VMOP_CREATE_CDROM,
 		    uid, R_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to %s",
+			log_warnx("vm \"%s\" no read access to cdrom %s",
 			    vcp->vcp_name, vcp->vcp_cdrom);
 			errno = EPERM;
 			goto fail;
@@ -301,8 +301,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		if (vm_checkaccess(diskfds[i],
 		    vmc->vmc_checkaccess & VMOP_CREATE_DISK,
 		    uid, R_OK|W_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to %s",
-			    vcp->vcp_name, vcp->vcp_kernel);
+			log_warnx("vm \"%s\" no read/write access to disk %s",
+			    vcp->vcp_name, vcp->vcp_disks[i]);
 			errno = EPERM;
 			goto fail;
 		}
