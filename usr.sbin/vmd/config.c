@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.49 2018/08/07 11:28:29 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.50 2018/08/07 14:49:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -256,7 +256,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			goto fail;
 		}
 
-		if (vm_checkaccess(kernfd,
+		if (!vmboot && vm_checkaccess(kernfd,
 		    vmc->vmc_checkaccess & VMOP_CREATE_KERNEL,
 		    uid, R_OK) == -1) {
 			log_warnx("vm \"%s\" no read access to kernel %s",
