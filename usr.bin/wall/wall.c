@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.32 2016/08/01 20:30:25 martijn Exp $	*/
+/*	$OpenBSD: wall.c,v 1.33 2018/08/07 18:28:05 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -115,6 +115,10 @@ main(int argc, char **argv)
 
 	makemsg(*argv);
 
+	if (unveil(_PATH_UTMP, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_DEV, "w") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath wpath getpw proc", NULL) == -1)
 		err(1, "pledge");
 
