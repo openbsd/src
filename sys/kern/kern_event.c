@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.94 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.95 2018/08/07 12:38:15 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -905,42 +905,13 @@ int
 kqueue_close(struct file *fp, struct proc *p)
 {
 	struct kqueue *kq = fp->f_data;
-	struct knote **knp, *kn, *kn0;
 	int i;
 
-	for (i = 0; i < kq->kq_knlistsize; i++) {
-		knp = &SLIST_FIRST(&kq->kq_knlist[i]);
-		kn = *knp;
-		while (kn != NULL) {
-			kn0 = SLIST_NEXT(kn, kn_link);
-			if (kq == kn->kn_kq) {
-				kn->kn_fop->f_detach(kn);
-				FRELE(kn->kn_fp, p);
-				knote_free(kn);
-				*knp = kn0;
-			} else {
-				knp = &SLIST_NEXT(kn, kn_link);
-			}
-			kn = kn0;
-		}
-	}
+	for (i = 0; i < kq->kq_knlistsize; i++)
+		knote_remove(p, &kq->kq_knlist[i]);
 	if (kq->kq_knhashmask != 0) {
-		for (i = 0; i < kq->kq_knhashmask + 1; i++) {
-			knp = &SLIST_FIRST(&kq->kq_knhash[i]);
-			kn = *knp;
-			while (kn != NULL) {
-				kn0 = SLIST_NEXT(kn, kn_link);
-				if (kq == kn->kn_kq) {
-					kn->kn_fop->f_detach(kn);
-		/* XXX non-fd release of kn->kn_ptr */
-					knote_free(kn);
-					*knp = kn0;
-				} else {
-					knp = &SLIST_NEXT(kn, kn_link);
-				}
-				kn = kn0;
-			}
-		}
+		for (i = 0; i < kq->kq_knhashmask + 1; i++)
+			knote_remove(p, &kq->kq_knhash[i]);
 	}
 	fp->f_data = NULL;
 
