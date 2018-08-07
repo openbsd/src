@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.74 2018/06/01 07:36:13 tb Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.75 2018/08/07 18:39:56 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -94,6 +94,10 @@ int	dflag = 0;		/* print debugging messages */
 int	fflag = 0;		/* don't fork */
 int	lflag = 0;		/* log all replies */
 int	tflag = 0;		/* tftpboot check */
+
+#ifndef TFTP_DIR
+#define TFTP_DIR "/tftpboot"
+#endif
 
 int
 main(int argc, char *argv[])
@@ -334,6 +338,10 @@ rarp_loop(void)
 
 	arptab_init();
 
+	if (unveil(TFTP_DIR, "r") == -1)
+		error("unveil");
+	if (unveil("/etc/ethers", "r") == -1)
+		error("unveil");
 	if (pledge("stdio rpath dns", NULL) == -1)
 		error("pledge");
 
@@ -387,10 +395,6 @@ rarp_loop(void)
 	}
 	free(pfd);
 }
-
-#ifndef TFTP_DIR
-#define TFTP_DIR "/tftpboot"
-#endif
 
 /*
  * True if this server can boot the host whose IP address is 'addr'.
