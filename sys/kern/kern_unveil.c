@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.11 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.12 2018/08/07 15:07:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -39,11 +39,6 @@
 
 #define UNVEIL_MAX_VNODES	128
 #define UNVEIL_MAX_NAMES	128
-
-#define	UNVEIL_READ	0x01
-#define	UNVEIL_WRITE	0x02
-#define	UNVEIL_CREATE	0x04
-#define	UNVEIL_EXEC	0x08
 
 static inline int
 unvname_compare(const struct unvname *n1, const struct unvname *n2)
