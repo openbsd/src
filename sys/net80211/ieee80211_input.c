@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.201 2018/05/05 06:58:05 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.202 2018/08/07 18:13:14 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1538,7 +1538,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
-	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1]))
+	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1], 1))
 		htop = NULL; /* invalid HTOP */
 
 	ni->ni_dtimcount = dtim_count;
@@ -2314,7 +2314,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop)
-		ieee80211_setup_htop(ni, htop + 2, htop[1]);
+		ieee80211_setup_htop(ni, htop + 2, htop[1], 0);
 	ieee80211_ht_negotiate(ic, ni);
 
 	/* Hop into 11n mode after associating to an HT AP in a non-11n mode. */

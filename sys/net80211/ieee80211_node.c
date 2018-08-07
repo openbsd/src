@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.138 2018/08/06 11:28:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.139 2018/08/07 18:13:14 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1929,7 +1929,7 @@ ieee80211_clear_htcaps(struct ieee80211_node *ni)
  */
 int
 ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
-    uint8_t len)
+    uint8_t len, int isprobe)
 {
 	if (len != 22)
 		return 0;
@@ -1940,7 +1940,8 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 	ni->ni_htop1 = (data[2] | (data[3] << 8));
 	ni->ni_htop2 = (data[3] | (data[4] << 8));
 
-	memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
+	if (isprobe)
+		memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
 
 	return 1;
 }
