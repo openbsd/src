@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.9 2018/02/24 09:45:10 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.10 2018/08/08 20:57:53 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -200,6 +200,13 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 		fa.fa_nintr = len / sizeof(uint32_t);
 
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
+	}
+
+	if (OF_getproplen(node, "dma-coherent") >= 0) {
+		fa.fa_dmat = malloc(sizeof(*sc->sc_dmat),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		memcpy(fa.fa_dmat, sc->sc_dmat, sizeof(*sc->sc_dmat));
+		fa.fa_dmat->_flags |= BUS_DMA_COHERENT;
 	}
 
 	if (submatch == NULL)
