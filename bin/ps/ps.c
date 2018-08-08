@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.71 2016/09/23 06:28:08 bentley Exp $	*/
+/*	$OpenBSD: ps.c,v 1.72 2018/08/08 14:38:31 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -276,6 +276,19 @@ main(int argc, char *argv[])
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
 
+	if (unveil(_PATH_DEVDB, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_DEV, "r") == -1)
+		err(1, "unveil");
+	if (swapf)
+		if (unveil(swapf, "r") == -1)
+			err(1, "unveil");
+	if (nlistf)
+		if (unveil(nlistf, "r") == -1)
+			err(1, "unveil");
+	if (memf)
+		if (unveil(memf, "r") == -1)
+			err(1, "unveil");
 	if (pledge("stdio rpath getpw ps", NULL) == -1)
 		err(1, "pledge");
 
