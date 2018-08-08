@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.328 2018/07/11 14:08:46 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.329 2018/08/08 13:52:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,9 +153,8 @@ void		 copy_filterset(struct filter_set_head *,
 void		 merge_filter_lists(struct filter_head *, struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
-int		 getcommunity(char *);
+int64_t		 getcommunity(char *, int);
 int		 parsecommunity(struct filter_community *, char *);
-int64_t 	 getlargecommunity(char *);
 int		 parselargecommunity(struct filter_largecommunity *, char *);
 int		 parsesubtype(char *, int *, int *);
 int		 parseextvalue(char *, u_int32_t *);
@@ -3177,10 +3176,11 @@ symget(const char *nam)
 	return (NULL);
 }
 
-int
-getcommunity(char *s)
+int64_t
+getcommunity(char *s, int large)
 {
-	int		 val;
+	int64_t		 max = USHRT_MAX;
+	u_int		 val;
 	const char	*errstr;
 
 	if (strcmp(s, "*") == 0)
@@ -3189,13 +3189,16 @@ getcommunity(char *s)
 		return (COMMUNITY_NEIGHBOR_AS);
 	if (strcmp(s, "local-as") == 0)
 		return (COMMUNITY_LOCAL_AS);
-	val = strtonum(s, 0, USHRT_MAX, &errstr);
+	if (large)
+		max = UINT_MAX;
+	val = strtonum(s, 0, UINT_MAX, &errstr);
 	if (errstr) {
-		yyerror("Community %s is %s (max: %u)", s, errstr, USHRT_MAX);
+		yyerror("Community %s is %s (max: %llu)", s, errstr, max);
 		return (COMMUNITY_ERROR);
 	}
 	return (val);
 }
+
 
 int
 parsecommunity(struct filter_community *c, char *s)
@@ -3236,37 +3239,16 @@ parsecommunity(struct filter_community *c, char *s)
 	}
 	*p++ = 0;
 
-	if ((i = getcommunity(s)) == COMMUNITY_ERROR)
+	if ((i = getcommunity(s, 0)) == COMMUNITY_ERROR)
 		return (-1);
 	as = i;
 
-	if ((i = getcommunity(p)) == COMMUNITY_ERROR)
+	if ((i = getcommunity(p, 0)) == COMMUNITY_ERROR)
 		return (-1);
 	c->as = as;
 	c->type = i;
 
 	return (0);
-}
-
-int64_t
-getlargecommunity(char *s)
-{
-	u_int		 val;
-	const char	*errstr;
-
-	if (strcmp(s, "*") == 0)
-		return (COMMUNITY_ANY);
-	if (strcmp(s, "neighbor-as") == 0)
-		return (COMMUNITY_NEIGHBOR_AS);
-	if (strcmp(s, "local-as") == 0)
-		return (COMMUNITY_LOCAL_AS);
-	val = strtonum(s, 0, UINT_MAX, &errstr);
-	if (errstr) {
-		yyerror("Large Community %s is %s (max: %u)",
-		    s, errstr, UINT_MAX);
-		return (COMMUNITY_ERROR);
-	}
-	return (val);
 }
 
 int
@@ -3287,13 +3269,13 @@ parselargecommunity(struct filter_largecommunity *c, char *s)
 	}
 	*q++ = 0;
 
-	if ((as = getlargecommunity(s)) == COMMUNITY_ERROR)
+	if ((as = getcommunity(s, 1)) == COMMUNITY_ERROR)
 		return (-1);
 
-	if ((ld1 = getlargecommunity(p)) == COMMUNITY_ERROR)
+	if ((ld1 = getcommunity(p, 1)) == COMMUNITY_ERROR)
 		return (-1);
 
-	if ((ld2 = getlargecommunity(q)) == COMMUNITY_ERROR)
+	if ((ld2 = getcommunity(q, 1)) == COMMUNITY_ERROR)
 		return (-1);
 
 	c->as = as;
