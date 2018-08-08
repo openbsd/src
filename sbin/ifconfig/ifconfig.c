@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.371 2018/08/08 15:30:29 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.372 2018/08/08 17:26:52 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -678,10 +678,15 @@ main(int argc, char *argv[])
 	int create = 0;
 	int Cflag = 0;
 	int gflag = 0;
+	int found_rulefile = 0;
 	int i;
 
 	/* If no args at all, print all interfaces.  */
 	if (argc < 2) {
+		if (unveil("/", "") == -1)
+			err(1, "unveil");
+		if (unveil(NULL, NULL) == -1)
+			err(1, "unveil");
 		aflag = 1;
 		printif(NULL, 0);
 		return (0);
@@ -723,6 +728,21 @@ main(int argc, char *argv[])
 	} else if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
 		errx(1, "interface name '%s' too long", *argv);
 	argc--, argv++;
+
+	for (i = 0; i < argc; i++) {
+		if (strcmp(argv[i], "rulefile") == 0) {
+			found_rulefile = 1;
+			break;
+		}
+	}
+
+	if (!found_rulefile) {
+		if (unveil("/", "") == -1)
+			err(1, "unveil");
+		if (unveil(NULL, NULL) == -1)
+			err(1, "unveil");
+	}
+
 	if (argc > 0) {
 		for (afp = rafp = afs; rafp->af_name; rafp++)
 			if (strcmp(rafp->af_name, *argv) == 0) {
