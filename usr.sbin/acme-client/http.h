@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.5 2017/01/25 13:52:53 inoguchi Exp $ */
+/*	$Id: http.h,v 1.6 2018/08/08 17:47:44 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,6 +61,7 @@ struct	httpget {
 	size_t		 bodypartsz; /* size of bodypart */
 };
 
+#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
 int		 http_init(void);
 
 /* Convenience functions. */
