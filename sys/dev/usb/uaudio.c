@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.131 2018/07/30 11:51:42 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.132 2018/08/08 14:25:50 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1069,15 +1069,19 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	const struct usb_audio_feature_unit *d = iot[id].d.fu;
 	uByte *ctls = (uByte *)d->bmaControls;
 	int ctlsize = d->bControlSize;
-	int nchan = (d->bLength - 7) / ctlsize;
 	u_int fumask, mmask, cmask;
 	struct mixerctl mix;
-	int chan, ctl, i, unit;
+	int chan, ctl, i, nchan, unit;
 	const char *mixername;
 
 #define GET(i) (ctls[(i)*ctlsize] | \
 		(ctlsize > 1 ? ctls[(i)*ctlsize+1] << 8 : 0))
 
+	if (ctlsize == 0) {
+		DPRINTF(("ignoring feature %d: bControlSize == 0\n", id));
+		return;
+	}
+	nchan = (d->bLength - 7) / ctlsize;
 	mmask = GET(0);
 	/* Figure out what we can control */
 	for (cmask = 0, chan = 1; chan < nchan; chan++) {
