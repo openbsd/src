@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.18 2015/11/24 00:19:29 deraadt Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.19 2018/08/08 22:59:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <paths.h>
 #include <stdlib.h>
 #include <poll.h>
 #include <err.h>
@@ -52,6 +53,8 @@ main(int argc, char *argv[])
 	char *from, c;
 	int holdfd;
 
+	if (unveil(_PATH_MAILDIR, "rwc") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath wpath getpw cpath fattr", NULL) == -1)
 		err(1, "pledge");
 
