@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.9 2018/07/30 10:56:00 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.10 2018/08/08 20:56:49 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -69,7 +69,7 @@
 #define  GICD_CTRL_ARE_NS		(1 << 4)
 #define GICD_TYPER		0x0004
 #define  GICD_TYPER_LPIS		(1 << 16)
-#define  GICD_TYPER_ITLINE_M		0xf
+#define  GICD_TYPER_ITLINE_M		0x1f
 #define GICD_IIDR		0x0008
 #define GICD_ISENABLER(i)	(0x0100 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ICENABLER(i)	(0x0180 + (IRQ_TO_REG32(i) * 4))
@@ -135,7 +135,7 @@
  * does support. It may make sense to move to dynamic allocation of these 3
  * fields in the future, eg when hardware with 96 cores are supported.
  */
-#define MAX_CORES	16
+#define MAX_CORES	24
 
 struct agintc_softc {
 	struct simplebus_softc	 sc_sbus;
