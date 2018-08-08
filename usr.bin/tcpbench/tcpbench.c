@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.56 2018/05/22 18:56:33 cheloha Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.57 2018/08/08 14:35:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -49,6 +49,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <paths.h>
 
 #include <kvm.h>
 #include <nlist.h>
@@ -1123,7 +1124,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pledge("stdio rpath dns inet unix id proc", NULL) == -1)
+	if (pledge("stdio unveil rpath dns inet unix id proc", NULL) == -1)
 		err(1, "pledge");
 
 	argv += optind;
@@ -1133,6 +1134,13 @@ main(int argc, char **argv)
 		usage();
 
 	if (ptb->kvars) {
+		if (unveil(_PATH_MEM, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KMEM, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KSYMS, "r") == -1)
+			err(1, "unveil");
+
 		if ((ptb->kvmh = kvm_openfiles(NULL, NULL, NULL,
 		    O_RDONLY, kerr)) == NULL)
 			errx(1, "kvm_open: %s", kerr);
@@ -1143,11 +1151,16 @@ main(int argc, char **argv)
 	} else
 		drop_gid();
 
+	if (!ptb->sflag || ptb->Uflag)
+		host = argv[0];
+
+	if (ptb->Uflag)
+		if (unveil(host, "rwc") == -1)
+			err(1, "unveil");
+
 	if (pledge("stdio id dns inet unix", NULL) == -1)
 		err(1, "pledge");
 
-	if (!ptb->sflag || ptb->Uflag)
-		host = argv[0];
 	/*
 	 * Rationale,
 	 * If TCP, use a big buffer with big reads/writes.
