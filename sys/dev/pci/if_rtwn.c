@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.30 2017/09/03 16:20:46 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.31 2018/08/08 09:16:57 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -201,7 +201,7 @@ extern int rtwn_debug;
 #define	RTWN_PCI_MMBA		0x18	/* memory mapped base */
 
 static const struct pci_matchid rtwn_pci_devices[] = {
-	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8188 },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8188CE },
 	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8192CE }
 };
 
