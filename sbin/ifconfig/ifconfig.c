@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.370 2018/08/06 11:42:18 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.371 2018/08/08 15:30:29 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2341,10 +2341,10 @@ join_status(void)
 	if (!ja.ja_nodes)
 		return;
 
-	fputs("\tjoin:\t", stdout);
+	fputs("\tjoin: ", stdout);
 	for (i = 0; i < ja.ja_nodes; i++) {
 		if (i > 0)
-			printf("\t\t");
+			printf("\t      ");
 		if (jn[i].i_len > IEEE80211_NWID_LEN)
 			jn[i].i_len = IEEE80211_NWID_LEN;
 		print_string(jn[i].i_nwid, jn[i].i_len);
