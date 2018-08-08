@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.328 2018/07/22 16:52:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.329 2018/08/08 14:29:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -680,12 +680,6 @@ struct filter_largecommunity {
 	int64_t		as;
 	int64_t		ld1;
 	int64_t		ld2;
-};
-
-struct wire_largecommunity {
-	uint32_t	as;
-	uint32_t	ld1;
-	uint32_t	ld2;
 };
 
 struct filter_extcommunity {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.106 2018/08/08 13:32:36 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.107 2018/08/08 14:29:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1336,6 +1336,12 @@ community_ext_matchone(struct filter_extcommunity *c, u_int16_t neighas,
 
 	return (0);
 }
+
+struct wire_largecommunity {
+	uint32_t	as;
+	uint32_t	ld1;
+	uint32_t	ld2;
+};
 
 int
 community_large_match(struct rde_aspath *asp, int64_t as, int64_t ld1,
