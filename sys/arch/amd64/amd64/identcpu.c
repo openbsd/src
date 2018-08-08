@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.104 2018/08/01 20:33:53 brynet Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.105 2018/08/08 05:07:46 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -210,6 +210,7 @@ const struct {
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
 	 /* SEFF0EDX_ARCH_CAP (not printed) */
+	{ SEFF0EDX_SSBD,	"SSBD" },
 }, cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.76 2018/07/23 23:25:03 brynet Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.77 2018/08/08 05:07:46 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -220,6 +220,7 @@
 #define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
 #define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
 #define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
+#define SEFF0EDX_SSBD		0x80000000 /* Spec Store Bypass Disable */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits

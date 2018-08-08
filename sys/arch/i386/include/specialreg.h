@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.67 2018/07/24 17:31:23 brynet Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.68 2018/08/08 05:07:46 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -172,6 +172,7 @@
 #define SEFF0EDX_IBRS	0x04000000	/* IBRS / IBPB Speculation Control */
 #define SEFF0EDX_STIBP	0x08000000	/* STIBP Speculation Control */
 #define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
+#define SEFF0EDX_SSBD	0x80000000	/* Spec Store Bypass Disable */
 
 /*
  * "Structured Extended Feature Flags Parameters" (CPUID function 0x7, leaf 0)
