@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.5 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: fdt.h,v 1.6 2018/08/08 11:06:33 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,10 +40,12 @@ extern bus_space_tag_t fdt_cons_bs_tag;
 
 void *fdt_find_cons(const char *);
 
+#define fdt_intr_enable arm_intr_enable
 #define fdt_intr_establish arm_intr_establish_fdt
 #define fdt_intr_establish_idx arm_intr_establish_fdt_idx
 #define fdt_intr_establish_imap arm_intr_establish_fdt_imap
 #define fdt_intr_establish_msi arm_intr_establish_fdt_msi
+#define fdt_intr_disable arm_intr_disable
 #define fdt_intr_disestablish arm_intr_disestablish_fdt
 #define fdt_intr_get_parent arm_intr_get_parent
 #define fdt_intr_parent_establish arm_intr_parent_establish_fdt
