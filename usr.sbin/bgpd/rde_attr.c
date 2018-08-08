@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.105 2018/07/13 08:18:11 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.106 2018/08/08 13:32:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1500,7 +1500,7 @@ community_ext_delete_non_trans(u_char *data, u_int16_t len, u_int16_t *newlen)
 
 	newdata = malloc(nlen);
 	if (newdata == NULL)
-		fatal("%s", __func__);;
+		fatal("%s", __func__);
 
 	for (l = 0, nlen = 0; l < len; l += sizeof(u_int64_t)) {
 		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE)) {
