@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.184 2018/08/06 08:13:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.185 2018/08/08 06:54:50 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -464,6 +464,14 @@ static inline struct rib *
 re_rib(struct rib_entry *re)
 {
 	return (struct rib *)((intptr_t)re->__rib & ~1);
+}
+
+static inline int
+rib_valid(u_int16_t rid)
+{
+	if (rid >= rib_size || *ribs[rid].name == '\0')
+		return 0;
+	return 1;
 }
 
 void		 path_init(u_int32_t);
