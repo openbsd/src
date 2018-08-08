@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.23 2014/11/16 12:30:59 deraadt Exp $	*/
+/*	$OpenBSD: emul.c,v 1.24 2018/08/08 08:42:49 kn Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -49,13 +49,9 @@
 
 #define GPR(tf, i)	((int32_t *)(u_long)&tf->tf_global)[i]
 #define IPR(tf, i)	((int32_t *)(u_long)tf->tf_out[6])[i - 16]
-#define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
-#define FPRSET(p, i, v)	p->p_md.md_fpstate->fs_regs[i] = (v)
 
 static __inline int readgpreg(struct trapframe64 *, int, void *);
-static __inline int readfpreg(struct proc *, int, void *);
 static __inline int writegpreg(struct trapframe64 *, int, const void *);
-static __inline int writefpreg(struct proc *, int, const void *);
 static __inline int decodeaddr(struct trapframe64 *, union instr *, void *);
 static int muldiv(struct trapframe64 *, union instr *, int32_t *, int32_t *,
     int32_t *);
@@ -81,7 +77,6 @@ readgpreg(tf, i, val)
 	return error;
 }
 
-		
 static __inline int
 writegpreg(tf, i, val)
 	struct trapframe64 *tf;
@@ -99,28 +94,6 @@ writegpreg(tf, i, val)
 		error = copyout((caddr_t) val, &IPR(tf, i), sizeof(int32_t));
 
 	return error;
-}
-	
-
-static __inline int
-readfpreg(p, i, val)
-	struct proc *p;
-	int i;
-	void *val;
-{
-	*(int32_t *) val = FPR(p, i);
-	return 0;
-}
-
-		
-static __inline int
-writefpreg(p, i, val)
-	struct proc *p;
-	int i;
-	const void *val;
-{
-	FPRSET(p, i, *(const int32_t *) val);
-	return 0;
 }
 
 static __inline int
