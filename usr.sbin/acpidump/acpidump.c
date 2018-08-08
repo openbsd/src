@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.20 2018/08/03 15:29:51 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.21 2018/08/08 18:46:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -606,19 +606,26 @@ asl_dump_from_devmem(void)
 	if (aml_dumpdir) {
 		if (unveil(aml_dumpfile, "wc") == -1)
 			err(1, "unveil");
-		if (unveil(_PATH_MEM, "r") == -1)
+	} else if (aml_dumpfile[0] == '/') {	/* admittedly pretty shitty */
+		if (unveil("/", "wc") == -1)
 			err(1, "unveil");
-		if (unveil(_PATH_KMEM, "r") == -1)
+	} else {
+		if (unveil(".", "wc") == -1)
 			err(1, "unveil");
-		if (unveil(_PATH_KVMDB, "r") == -1)
-			err(1, "unveil");
-		if (unveil(_PATH_KSYMS, "r") == -1)
-			err(1, "unveil");
-		if (unveil(_PATH_UNIX, "r") == -1)
-			err(1, "unveil");
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
-			err(1, "pledge");
 	}
+
+	if (unveil(_PATH_MEM, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KMEM, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KVMDB, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KSYMS, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_UNIX, "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		err(1, "pledge");
 
 	rp = acpi_find_rsd_ptr();
 	if (!rp)
