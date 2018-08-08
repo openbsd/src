@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.33 2018/03/15 18:09:00 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.34 2018/08/08 13:53:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 15 2018 $
+.Dd $Mdocdate: August 8 2018 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -63,9 +63,9 @@ names; instead, provide ASCII transcriptions of the names.
 .Ss Dashes and Hyphens
 In typography there are different types of dashes of various width:
 the hyphen (-),
-the minus sign (\(mi),
 the en-dash (\(en),
-and the em-dash (\(em).
+the em-dash (\(em),
+and the mathematical minus sign (\(mi).
 .Pp
 Hyphens are used for adjectives;
 to separate the two parts of a compound word;
@@ -100,14 +100,6 @@ Such automatic hyphenation is not supported by
 which only breaks the line at whitespace, and inside words only
 after existing hyphens.
 .Pp
-The mathematical minus sign is used for negative numbers or subtraction.
-It should be written as
-.Sq \e(mi :
-.Bd -unfilled -offset indent
-a = 3 \e(mi 1;
-b = \e(mi2;
-.Ed
-.Pp
 The en-dash is used to separate the two elements of a range,
 or can be used the same way as an em-dash.
 It should be written as
@@ -126,10 +118,23 @@ Three things \e(em apples, oranges, and bananas.
 This is not that \e(em rather, this is that.
 .Ed
 .Pp
-Note:
-hyphens, minus signs, and en-dashes look identical under normal ASCII output.
-Other formats, such as PostScript, render them correctly,
-with differing widths.
+In
+.Xr roff 7
+documents, the minus sign is normally written as
+.Sq \e- .
+In manual pages, some style guides recommend to also use
+.Sq \e-
+if an ASCII 0x2d
+.Dq hyphen-minus
+output glyph that can be copied and pasted is desired in output modes
+supporting it, for example in
+.Fl T Cm utf8
+and
+.Fl T Cm html .
+But currently, no practically relevant manual page formatter actually
+requires that subtlety, so in manual pages just write plain
+.Sq -
+to represent hyphen, minus, and hyphen-minus.
 .Ss Spaces
 To separate words in normal text, for indenting and alignment
 in literal context, and when none of the following special cases apply,
