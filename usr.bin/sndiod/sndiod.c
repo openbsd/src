@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.33 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.34 2018/08/08 22:31:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -340,9 +340,26 @@ mkopt(char *path, struct dev *d,
 	return o;
 }
 
+static void
+dounveil(char *name, char *prefix, char *path_prefix)
+{
+	size_t prefix_len;
+	char path[PATH_MAX];
+
+	prefix_len = strlen(prefix);
+
+	if (strncmp(name, prefix, prefix_len) != 0)
+		errx(1, "%s: unsupported device or port format", name);
+	snprintf(path, sizeof(path), "%s%s", path_prefix, name + prefix_len);
+	if (unveil(path, "rw") < 0)
+		err(1, "unveil");
+}
+
 static int
 start_helper(int background)
 {
+	struct dev *d;
+	struct port *p;
 	struct passwd *pw;
 	int s[2];
 	pid_t pid;
@@ -378,6 +395,10 @@ start_helper(int background)
 			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 				err(1, "cannot drop privileges");
 		}
+		for (d = dev_list; d != NULL; d = d->next)
+			dounveil(d->path, "rsnd/", "/dev/audio");
+		for (p = port_list; p != NULL; p = p->next)
+			dounveil(p->path, "rmidi/", "/dev/rmidi");
 		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
 			err(1, "pledge");
 		while (file_poll())
