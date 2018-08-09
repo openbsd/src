@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.4 2018/08/02 14:09:32 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.5 2018/08/09 14:43:17 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,8 +21,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/stdint.h>
-#include <sys/timeout.h>
-#include <sys/task.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/spi/spivar.h>
@@ -70,12 +68,11 @@ struct ssdfb_softc {
 	uint8_t			*sc_fb;
 	size_t			 sc_fbsize;
 	struct rasops_info	 sc_rinfo;
+	struct wsdisplay_emulops sc_riops;
+	int			 (*sc_ri_do_cursor)(struct rasops_info *);
 
 	uint8_t			 sc_column_range[2];
 	uint8_t			 sc_page_range[2];
-
-	struct task		 sc_task;
-	struct timeout		 sc_to;
 
 	/* I2C */
 	i2c_tag_t		 sc_i2c_tag;
@@ -114,7 +111,6 @@ void	 ssdfb_write_data(struct ssdfb_softc *, char *, size_t);
 
 void	 ssdfb_init(struct ssdfb_softc *);
 void	 ssdfb_update(void *);
-void	 ssdfb_timeout(void *);
 
 void	 ssdfb_partial(struct ssdfb_softc *, uint32_t, uint32_t,
 	    uint32_t, uint32_t);
@@ -130,6 +126,13 @@ int	 ssdfb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
 int	 ssdfb_list_font(void *, struct wsdisplay_font *);
 int	 ssdfb_load_font(void *, void *, struct wsdisplay_font *);
+
+int	 ssdfb_putchar(void *, int, int, u_int, long);
+int	 ssdfb_copycols(void *, int, int, int, int);
+int	 ssdfb_erasecols(void *, int, int, int, long);
+int	 ssdfb_copyrows(void *, int, int, int);
+int	 ssdfb_eraserows(void *, int, int, long);
+int	 ssdfb_do_cursor(struct rasops_info *);
 
 struct cfattach ssdfb_i2c_ca = {
 	sizeof(struct ssdfb_softc),
@@ -296,6 +299,7 @@ ssdfb_attach(struct ssdfb_softc *sc)
 	ri->ri_width = SSDFB_WIDTH;
 	ri->ri_height = SSDFB_HEIGHT;
 	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
+	ri->ri_hw = sc;
 
 	rasops_init(ri, SSDFB_HEIGHT, SSDFB_WIDTH);
 	ssdfb_std_descr.ncols = ri->ri_cols;
@@ -305,8 +309,19 @@ ssdfb_attach(struct ssdfb_softc *sc)
 	ssdfb_std_descr.fontheight = ri->ri_font->fontheight;
 	ssdfb_std_descr.capabilities = ri->ri_caps;
 
-	task_set(&sc->sc_task, ssdfb_update, sc);
-	timeout_set(&sc->sc_to, ssdfb_timeout, sc);
+	sc->sc_riops.putchar = ri->ri_putchar;
+	sc->sc_riops.copycols = ri->ri_copycols;
+	sc->sc_riops.erasecols = ri->ri_erasecols;
+	sc->sc_riops.copyrows = ri->ri_copyrows;
+	sc->sc_riops.eraserows = ri->ri_eraserows;
+	sc->sc_ri_do_cursor = ri->ri_do_cursor;
+
+	ri->ri_putchar = ssdfb_putchar;
+	ri->ri_copycols = ssdfb_copycols;
+	ri->ri_erasecols = ssdfb_erasecols;
+	ri->ri_copyrows = ssdfb_copyrows;
+	ri->ri_eraserows = ssdfb_eraserows;
+	ri->ri_do_cursor = ssdfb_do_cursor;
 
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
@@ -326,8 +341,6 @@ int
 ssdfb_detach(struct ssdfb_softc *sc, int flags)
 {
 	struct rasops_info *ri = &sc->sc_rinfo;
-	timeout_del(&sc->sc_to);
-	task_del(systq, &sc->sc_task);
 	free(ri->ri_bits, M_DEVBUF, sc->sc_fbsize);
 	free(sc->sc_fb, M_DEVBUF, sc->sc_fbsize);
 	return 0;
@@ -380,7 +393,7 @@ ssdfb_init(struct ssdfb_softc *sc)
 	reg[0] = SSDFB_SET_DISPLAY_MODE_NORMAL;
 	ssdfb_write_command(sc, reg, 1);
 
-	ssdfb_update(sc);
+	ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
 
 	reg[0] = SSDFB_SET_DISPLAY_ON;
 	ssdfb_write_command(sc, reg, 1);
@@ -408,15 +421,6 @@ ssdfb_set_range(struct ssdfb_softc *sc, uint8_t x1, uint8_t x2,
 		reg[2] = sc->sc_page_range[1];
 		ssdfb_write_command(sc, reg, 3);
 	}
-}
-
-void
-ssdfb_update(void *v)
-{
-	struct ssdfb_softc *sc = v;
-
-	ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
-	timeout_add_msec(&sc->sc_to, 100);
 }
 
 void
@@ -457,13 +461,6 @@ ssdfb_partial(struct ssdfb_softc *sc, uint32_t x1, uint32_t x2,
 
 	ssdfb_set_range(sc, x1, x2 - 1, y1 / 8, (y2 / 8) - 1);
 	ssdfb_write_data(sc, sc->sc_fb, (width * height) / 8);
-}
-
-void
-ssdfb_timeout(void *v)
-{
-	struct ssdfb_softc *sc = v;
-	task_add(systq, &sc->sc_task);
 }
 
 void
@@ -625,4 +622,104 @@ ssdfb_list_font(void *v, struct wsdisplay_font *font)
 	struct rasops_info	*ri = &sc->sc_rinfo;
 
 	return (rasops_list_font(ri, font));
+}
+
+int
+ssdfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct ssdfb_softc *sc = ri->ri_hw;
+
+	sc->sc_riops.putchar(cookie, row, col, uc, attr);
+	ssdfb_partial(sc,
+	    col * ri->ri_font->fontwidth,
+	    (col + 1) * ri->ri_font->fontwidth,
+	    row * ri->ri_font->fontheight,
+	    (row + 1) * ri->ri_font->fontheight);
+	return 0;
+}
+
+int
+ssdfb_copycols(void *cookie, int row, int src, int dst, int num)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct ssdfb_softc *sc = ri->ri_hw;
+
+	sc->sc_riops.copycols(cookie, row, src, dst, num);
+	ssdfb_partial(sc,
+	    dst * ri->ri_font->fontwidth,
+	    (dst + num) * ri->ri_font->fontwidth,
+	    row * ri->ri_font->fontheight,
+	    (row + 1) * ri->ri_font->fontheight);
+	return 0;
+}
+
+int
+ssdfb_erasecols(void *cookie, int row, int col, int num, long attr)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct ssdfb_softc *sc = ri->ri_hw;
+
+	sc->sc_riops.erasecols(cookie, row, col, num, attr);
+	ssdfb_partial(sc,
+	    col * ri->ri_font->fontwidth,
+	    (col + num) * ri->ri_font->fontwidth,
+	    row * ri->ri_font->fontheight,
+	    (row + 1) * ri->ri_font->fontheight);
+	return 0;
+}
+
+int
+ssdfb_copyrows(void *cookie, int src, int dst, int num)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct ssdfb_softc *sc = ri->ri_hw;
+
+	sc->sc_riops.copyrows(cookie, src, dst, num);
+	ssdfb_partial(sc, 0, SSDFB_WIDTH,
+	    dst * ri->ri_font->fontheight,
+	    (dst + num) * ri->ri_font->fontheight);
+	return 0;
+}
+
+int
+ssdfb_eraserows(void *cookie, int row, int num, long attr)
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct ssdfb_softc *sc = ri->ri_hw;
+
+	sc->sc_riops.eraserows(cookie, row, num, attr);
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0)
+		ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
+	else
+		ssdfb_partial(sc, 0, SSDFB_WIDTH,
+		    row * ri->ri_font->fontheight,
+		    (row + num) * ri->ri_font->fontheight);
+	return 0;
+}
+
+int
+ssdfb_do_cursor(struct rasops_info *ri)
+{
+	struct ssdfb_softc *sc = ri->ri_hw;
+	int orow, ocol, nrow, ncol;
+
+	orow = ri->ri_crow;
+	ocol = ri->ri_ccol;
+	sc->sc_ri_do_cursor(ri);
+	nrow = ri->ri_crow;
+	ncol = ri->ri_ccol;
+
+	ssdfb_partial(sc,
+	    ocol * ri->ri_font->fontwidth,
+	    (ocol + 1) * ri->ri_font->fontwidth,
+	    orow * ri->ri_font->fontheight,
+	    (orow + 1) * ri->ri_font->fontheight);
+	ssdfb_partial(sc,
+	    ncol * ri->ri_font->fontwidth,
+	    (ncol + 1) * ri->ri_font->fontwidth,
+	    nrow * ri->ri_font->fontheight,
+	    (nrow + 1) * ri->ri_font->fontheight);
+
+	return 0;
 }
