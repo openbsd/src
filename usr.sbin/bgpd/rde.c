@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.413 2018/08/08 13:08:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.414 2018/08/09 12:54:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -267,6 +267,8 @@ rde_main(int debug, int verbose)
 
 		if (rde_dump_pending() &&
 		    ibuf_se_ctl && ibuf_se_ctl->w.queued == 0)
+			timeout = 0;
+		if (softreconfig)
 			timeout = 0;
 
 		i = PFD_PIPE_COUNT;
