@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.15 2015/10/16 13:37:44 millert Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.16 2018/08/09 14:30:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	dirp = opendir(".");
 
 	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
-	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
+	(void)snprintf(dbname, sizeof(dbname), "%sdev.db", _PATH_VARRUN);
 	bzero(&info, sizeof(info));
 	info.bsize = 8192;
 	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
