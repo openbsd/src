@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.24 2018/07/24 15:45:52 kettenis Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.25 2018/08/09 14:23:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -27,6 +27,10 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/pool.h>
+
+#if defined(__HAVE_FDT)
+#include <machine/fdt.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -79,6 +83,8 @@ struct bwfm_sdio_softc {
 	struct sdmmc_function	**sc_sf;
 	struct rwlock		 *sc_lock;
 	void			 *sc_ih;
+	int			  sc_node;
+	int			  sc_oob;
 
 	int			  sc_initialized;
 
@@ -111,6 +117,7 @@ int		 bwfm_sdio_preinit(struct bwfm_softc *);
 int		 bwfm_sdio_detach(struct device *, int);
 
 int		 bwfm_sdio_intr(void *);
+int		 bwfm_sdio_oob_intr(void *);
 void		 bwfm_sdio_task(void *);
 int		 bwfm_sdio_load_microcode(struct bwfm_sdio_softc *,
 		    u_char *, size_t, u_char *, size_t);
@@ -246,6 +253,11 @@ bwfm_sdio_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t reg;
 
 	printf("\n");
+
+#if defined(__HAVE_FDT)
+	if (sf->cookie)
+		sc->sc_node = *(int *)sf->cookie;
+#endif
 
 	task_set(&sc->sc_task, bwfm_sdio_task, sc);
 	ml_init(&sc->sc_tx_queue);
@@ -454,6 +466,20 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_CHIPCLKCSR, clk);
 	}
 
+#if defined(__HAVE_FDT)
+	if (sc->sc_node) {
+		sc->sc_ih = fdt_intr_establish(sc->sc_node,
+		    IPL_NET, bwfm_sdio_oob_intr, sc, DEVNAME(sc));
+		if (sc->sc_ih != NULL) {
+			bwfm_sdio_write_1(sc, BWFM_SDIO_CCCR_SEPINT,
+			    BWFM_SDIO_CCCR_SEPINT_MASK |
+			    BWFM_SDIO_CCCR_SEPINT_OE |
+			    BWFM_SDIO_CCCR_SEPINT_ACT_HI);
+			sc->sc_oob = 1;
+		}
+	}
+	if (sc->sc_ih == NULL)
+#endif
 	sc->sc_ih = sdmmc_intr_establish(bwfm->sc_dev.dv_parent,
 	    bwfm_sdio_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
@@ -659,6 +685,19 @@ bwfm_sdio_intr(void *v)
 	return 1;
 }
 
+#if defined(__HAVE_FDT)
+int
+bwfm_sdio_oob_intr(void *v)
+{
+	struct bwfm_sdio_softc *sc = (void *)v;
+	if (!sc->sc_oob)
+		return 0;
+	fdt_intr_disable(sc->sc_ih);
+	task_add(systq, &sc->sc_task);
+	return 1;
+}
+#endif
+
 void
 bwfm_sdio_task(void *v)
 {
@@ -708,6 +747,11 @@ bwfm_sdio_task(void *v)
 #endif
 
 	rw_exit(sc->sc_lock);
+
+#if defined(__HAVE_FDT)
+	if (sc->sc_oob)
+		fdt_intr_enable(sc->sc_ih);
+#endif
 }
 
 int
