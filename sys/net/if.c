@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.558 2018/07/11 09:08:21 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.559 2018/08/09 03:35:19 akoshibe Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1743,6 +1743,10 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
 
+	if ((ifp->if_flags & IFF_LOOPBACK) &&
+	    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
+		return (EPERM);
+
 	/*
 	 * Create the routing table if it does not exist, including its
 	 * loopback interface with unit == rdomain.
@@ -1777,10 +1781,6 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 		return (EINVAL);
 
 	if (rdomain != ifp->if_rdomain) {
-		if ((ifp->if_flags & IFF_LOOPBACK) &&
-		    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
-			return (EPERM);
-
 		s = splnet();
 		/*
 		 * We are tearing down the world.
