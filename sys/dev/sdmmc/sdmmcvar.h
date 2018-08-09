@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.29 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.30 2018/08/09 13:52:36 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -146,6 +146,7 @@ struct sdmmc_function {
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
+	void *cookie;			/* pass extra info from bus to dev */
 	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
 	/* SD card I/O function members */
 	int number;			/* I/O function number or -1 */
@@ -213,6 +214,7 @@ struct sdmmc_softc {
 	void *sc_scsibus;		/* SCSI bus emulation softc */
 	TAILQ_HEAD(, sdmmc_intr_handler) sc_intrq; /* interrupt handlers */
 	long sc_max_xfer;		/* maximum transfer size */
+	void *sc_cookies[SDMMC_MAX_FUNCTIONS]; /* pass extra info from bus to dev */
 };
 
 /*

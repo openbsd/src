@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.11 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.12 2018/08/09 13:52:36 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -94,6 +94,8 @@ struct sdmmc_chip_functions {
 #define SDMMC_TIMING_HIGHSPEED	1
 #define SDMMC_TIMING_MMC_DDR52	2
 
+#define SDMMC_MAX_FUNCTIONS	8
+
 struct sdmmcbus_attach_args {
 	const char *saa_busname;
 	sdmmc_chipset_tag_t sct;
@@ -103,6 +105,7 @@ struct sdmmcbus_attach_args {
 	int	flags;
 	int	caps;
 	long	max_xfer;
+	void	*cookies[SDMMC_MAX_FUNCTIONS];
 };
 
 void	sdmmc_needs_discover(struct device *);

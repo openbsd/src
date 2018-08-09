@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.39 2018/06/17 17:10:17 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.40 2018/08/09 13:52:36 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -160,6 +160,7 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 		sf = sdmmc_function_alloc(sc);
 		sf->number = i;
 		sf->rca = sf0->rca;
+		sf->cookie = sc->sc_cookies[i];
 
 		SIMPLEQ_INSERT_TAIL(&sc->sf_head, sf, sf_list);
 	}
