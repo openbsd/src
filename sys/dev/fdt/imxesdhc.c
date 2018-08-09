@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.9 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.10 2018/08/09 13:53:30 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -182,6 +182,7 @@ struct imxesdhc_softc {
 	uint32_t		 sc_vmmc;
 	uint32_t		 sc_pwrseq;
 	uint32_t		 sc_vdd;
+	int			 sc_cookies[SDMMC_MAX_FUNCTIONS];
 	u_int sc_flags;
 
 	struct device		*sdmmc;		/* generic SD/MMC device */
@@ -295,7 +296,7 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	struct imxesdhc_softc *sc = (struct imxesdhc_softc *) self;
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
-	int error = 1;
+	int error = 1, node, reg;
 	uint32_t caps;
 	uint32_t width;
 
@@ -445,6 +446,14 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_8BIT_MODE;
 	if (width >= 4)
 		saa.caps |= SMC_CAPS_4BIT_MODE;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+		reg = OF_getpropint(node, "reg", -1);
+		if (reg < 0 || reg >= SDMMC_MAX_FUNCTIONS)
+			continue;
+		sc->sc_cookies[reg] = node;
+		saa.cookies[reg] = &sc->sc_cookies[reg];
+	}
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sdmmc == NULL) {
