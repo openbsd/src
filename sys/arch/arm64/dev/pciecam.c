@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.5 2018/08/03 22:40:05 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.6 2018/08/09 12:25:38 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -74,6 +74,8 @@ struct pciecam_softc {
 	bus_space_handle_t		 sc_ioh;
 	bus_dma_tag_t			 sc_dmat;
 
+	int				 sc_dw_quirk;
+
 	int				 sc_acells;
 	int				 sc_scells;
 	int				 sc_pacells;
@@ -119,7 +121,8 @@ pciecam_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "pci-host-ecam-generic");
+	return (OF_is_compatible(faa->fa_node, "pci-host-ecam-generic") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-pcie-ecam"));
 }
 
 void
@@ -134,6 +137,9 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
+
+	if (OF_is_compatible(faa->fa_node, "snps,dw-pcie-ecam"))
+		sc->sc_dw_quirk = 1;
 
 	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
 	    faa->fa_acells);
@@ -253,8 +259,13 @@ pciecam_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-pciecam_bus_maxdevs(void *sc, int busno) {
-	return (32);
+pciecam_bus_maxdevs(void *v, int bus)
+{
+	struct pciecam_softc *sc = (struct pciecam_softc *)v;
+
+	if (bus == 0 && sc->sc_dw_quirk)
+		return 1;
+	return 32;
 }
 
 #define BUS_SHIFT 24
