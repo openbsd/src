@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.10 2018/06/04 13:33:10 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.11 2018/08/09 13:50:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -55,7 +55,7 @@
 
 /* SD R4 response (IO OCR) */
 #define SD_IO_OCR_MEM_READY		(1<<31)
-#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x3)
+#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x7)
 /* XXX big fat memory present "flag" because we don't know better */
 #define SD_IO_OCR_MEM_PRESENT		(0xf<<24)
 #define SD_IO_OCR_MASK			0x00fffff0
