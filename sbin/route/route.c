@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.223 2018/07/17 20:57:27 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.224 2018/08/09 19:48:44 schwarze Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -759,28 +759,15 @@ show(int argc, char *argv[])
 void
 inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 {
-	u_int32_t addr, mask = 0;
+	u_int32_t mask;
 	char *cp;
 
 	rtm_addrs |= RTA_NETMASK;
-	if (net == 0 && bits == 0)
-		mask = addr = 0;
-	else if (bits) {
-		addr = net;
-		mask = 0xffffffff << (32 - bits);
-	} else {
-		addr = net;
-		if ((addr & IN_CLASSA_HOST) == 0)
-			mask = IN_CLASSA_NET;
-		else if ((addr & IN_CLASSB_HOST) == 0)
-			mask = IN_CLASSB_NET;
-		else if ((addr & IN_CLASSC_HOST) == 0)
-			mask = IN_CLASSC_NET;
-		else
-			mask = 0xffffffff;
-	}
-	addr &= mask;
-	sin->sin_addr.s_addr = htonl(addr);
+	if (bits == 0 && net != 0)
+		bits = 32;
+	mask = 0xffffffff << (32 - bits);
+	net &= mask;
+	sin->sin_addr.s_addr = htonl(net);
 	sin = &so_mask.sin;
 	sin->sin_addr.s_addr = htonl(mask);
 	sin->sin_len = 0;
@@ -800,8 +787,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 {
 	sup su = NULL;
 	struct hostent *hp;
-	int afamily, bits, irc;
-	in_addr_t addr;
+	int afamily, bits;
 
 	if (af == AF_UNSPEC) {
 		if (strchr(s, ':') != NULL) {
@@ -932,27 +918,12 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 			if (inet_pton(AF_INET, s, &su->sin.sin_addr) == 1)
 				return (1);
 		hp = gethostbyname(s);
-		if (hp != NULL) {
-			if (which == RTA_DST && !forcehost) {
-				addr = ((struct in_addr *)hp->h_addr)->s_addr;
-				if (addr != 0) {
-					inet_makenetandmask(ntohl(addr),
-					    &su->sin, 0);
-					irc = so_mask.sin.sin_addr.s_addr ==
-					    0xffffffff;
-					if (irc == 0 || !forcenet)
-						return (irc);
-				}
-				if (forcenet)
-					errx(1, "%s: not a network", s);
-			}
-			if (hpp != NULL)
-				*hpp = hp;
-			su->sin.sin_addr = *(struct in_addr *)hp->h_addr;
-			return (1);
-		}
-		errx(1, "%s: bad address", s);
-		/* NOTREACHED */
+		if (hp == NULL)
+			errx(1, "%s: bad address", s);
+		if (hpp != NULL)
+			*hpp = hp;
+		su->sin.sin_addr = *(struct in_addr *)hp->h_addr;
+		return (1);
 
 	default:
 		errx(1, "%d: bad address family", afamily);
