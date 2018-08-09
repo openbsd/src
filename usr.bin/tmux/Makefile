@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.90 2018/08/09 09:53:44 nicm Exp $
+# $OpenBSD: Makefile,v 1.91 2018/08/09 09:54:22 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -122,7 +122,7 @@ SRCS=	alerts.c \
 CDIAGFLAGS+= -Wno-long-long -Wall -W -Wnested-externs -Wformat=2
 CDIAGFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
 CDIAGFLAGS+= -Wwrite-strings -Wshadow -Wpointer-arith -Wsign-compare
-CDIAGFLAGS+= -Wundef -Wbad-function-cast -Winline -Wcast-align -Wunused
+CDIAGFLAGS+= -Wundef -Wbad-function-cast -Winline -Wcast-align
 
 LDADD=  -lutil -lcurses -levent
 DPADD=  ${LIBUTIL} ${LIBCURSES} ${LIBEVENT}
