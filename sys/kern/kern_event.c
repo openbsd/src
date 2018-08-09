@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.95 2018/08/07 12:38:15 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.96 2018/08/09 15:02:45 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -590,8 +590,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 		if (kev->ident < kq->kq_knlistsize) {
 			SLIST_FOREACH(kn, &kq->kq_knlist[kev->ident], kn_link) {
-				if (kq == kn->kn_kq &&
-				    kev->filter == kn->kn_filter)
+				if (kev->filter == kn->kn_filter)
 					break;
 			}
 		}
@@ -603,7 +602,6 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			    KN_HASH((u_long)kev->ident, kq->kq_knhashmask)];
 			SLIST_FOREACH(kn, list, kn_link) {
 				if (kev->ident == kn->kn_id &&
-				    kq == kn->kn_kq &&
 				    kev->filter == kn->kn_filter)
 					break;
 			}
