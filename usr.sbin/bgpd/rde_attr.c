@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.107 2018/08/08 14:29:05 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.108 2018/08/09 12:21:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -441,8 +441,8 @@ attr_put(struct attr *a)
 
 /* aspath specific functions */
 
-u_int16_t	 aspath_countlength(struct aspath *, u_int16_t, int);
-void		 aspath_countcopy(struct aspath *, u_int16_t, u_int8_t *,
+static u_int16_t aspath_countlength(struct aspath *, u_int16_t, int);
+static void	 aspath_countcopy(struct aspath *, u_int16_t, u_int8_t *,
 		     u_int16_t, int);
 struct aspath	*aspath_lookup(const void *, u_int16_t);
 
@@ -692,7 +692,7 @@ aspath_count(const void *data, u_int16_t len)
 	return (cnt);
 }
 
-u_int16_t
+static u_int16_t
 aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 {
 	const u_int8_t	*seg;
@@ -728,7 +728,7 @@ aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 	return (clen);
 }
 
-void
+static void
 aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
     u_int16_t size, int headcnt)
 {
