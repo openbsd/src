@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.329 2018/08/08 14:29:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.330 2018/08/09 21:12:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1156,8 +1156,6 @@ int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
 int		 aspath_match(void *, u_int16_t, struct filter_as *, u_int32_t);
-int		 as_compare(u_int8_t, u_int32_t, u_int32_t, u_int32_t,
-		    u_int32_t);
 u_int32_t	 aspath_extract(const void *, int);
 int		 aspath_verify(void *, u_int16_t, int);
 #define		 AS_ERR_LEN	-1
