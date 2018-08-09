@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.209 2018/05/14 14:09:48 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.210 2018/08/09 17:23:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -760,8 +760,14 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 					return 1;
 		}
 		if (res != NULL && *ressz == lastsz &&
-		    strchr(*argv, '/') == NULL)
-			warnx("No entry for %s in the manual.", *argv);
+		    strchr(*argv, '/') == NULL) {
+			if (cfg->sec == NULL)
+				warnx("No entry for %s in the manual.",
+				    *argv);
+			else
+				warnx("No entry for %s in section %s "
+				    "of the manual.", *argv, cfg->sec);
+		}
 		lastsz = *ressz;
 		argv++;
 		argc--;
