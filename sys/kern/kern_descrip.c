@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.177 2018/07/10 08:58:50 mpi Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.178 2018/08/10 15:53:49 jsing Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1143,8 +1143,11 @@ fdcopy(struct process *pr)
 			 * their internal consistency, so close them here.
 			 */
 			if (fp->f_count >= FDUP_MAX_COUNT ||
-			    fp->f_type == DTYPE_KQUEUE)
+			    fp->f_type == DTYPE_KQUEUE) {
+				if (i < newfdp->fd_freefile)
+					newfdp->fd_freefile = i;
 				continue;
+			}
 
 			FREF(fp);
 			newfdp->fd_ofiles[i] = fp;
