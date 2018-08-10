@@ -75,11 +75,11 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.3
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.3/4.2.1
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.3/4.2.1/collect2
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.3/4.2.1/libgcc.a
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.3/4.2.1/specs
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.4
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/collect2
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/libgcc.a
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/specs
 ./usr/lib/libc++.so.1.0
 ./usr/lib/libc++abi.so.0.0
 ./usr/lib/libcompiler_rt.a

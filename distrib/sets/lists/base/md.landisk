@@ -34,11 +34,11 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/sh-unknown-openbsd6.3
-./usr/lib/gcc-lib/sh-unknown-openbsd6.3/4.2.1
-./usr/lib/gcc-lib/sh-unknown-openbsd6.3/4.2.1/collect2
-./usr/lib/gcc-lib/sh-unknown-openbsd6.3/4.2.1/libgcc.a
-./usr/lib/gcc-lib/sh-unknown-openbsd6.3/4.2.1/specs
+./usr/lib/gcc-lib/sh-unknown-openbsd6.4
+./usr/lib/gcc-lib/sh-unknown-openbsd6.4/4.2.1
+./usr/lib/gcc-lib/sh-unknown-openbsd6.4/4.2.1/collect2
+./usr/lib/gcc-lib/sh-unknown-openbsd6.4/4.2.1/libgcc.a
+./usr/lib/gcc-lib/sh-unknown-openbsd6.4/4.2.1/specs
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/.packlist
