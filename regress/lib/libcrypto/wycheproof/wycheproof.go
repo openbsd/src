@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.2 2018/08/10 16:12:19 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.3 2018/08/10 16:14:40 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -44,7 +44,7 @@ import (
 
 const testVectorPath = "/usr/local/share/wycheproof/testvectors"
 
-type wycheproofTest struct {
+type wycheproofTestRSA struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Msg     string   `json:"msg"`
@@ -54,7 +54,7 @@ type wycheproofTest struct {
 	Flags   []string `json:"flags"`
 }
 
-type wycheproofTestGroup struct {
+type wycheproofTestGroupRSA struct {
 	E       string            `json:"e"`
 	KeyASN  string            `json:"keyAsn"`
 	KeyDER  string            `json:"keyDer"`
@@ -63,7 +63,7 @@ type wycheproofTestGroup struct {
 	N       string            `json:"n"`
 	SHA     string            `json:"sha"`
 	Type    string            `json:"type"`
-	Tests   []*wycheproofTest `json:"tests"`
+	Tests   []*wycheproofTestRSA `json:"tests"`
 }
 
 type wycheproofTestVectors struct {
@@ -72,7 +72,7 @@ type wycheproofTestVectors struct {
 	Notes            map[string]string `json:"notes"`
 	NumberOfTests    int               `json:"numberOfTests"`
 	// Header
-	TestGroups []*wycheproofTestGroup `json:"testGroups"`
+	TestGroups []json.RawMessage `json:"testGroups"`
 }
 
 var nids = map[string]int{
@@ -108,7 +108,7 @@ func hashFromString(hs string) (hash.Hash, error) {
 	}
 }
 
-func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTest) bool {
+func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
 		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
@@ -135,15 +135,15 @@ func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTest) bool {
 		(*C.uchar)(unsafe.Pointer(&sig[0])), C.uint(sigLen), rsa)
 
 	// XXX audit acceptable cases...
-	succeeded := true
+	success := true
 	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
-		fmt.Printf("FAIL: Test case %d - RSA_verify() = %d, want %v\n", wt.TCID, int(ret), wt.Result)
-		succeeded = false
+		fmt.Printf("FAIL: Test case %d (%q) - RSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
+		success = false
 	}
-	return succeeded
+	return success
 }
 
-func runRSATestGroup(wtg *wycheproofTestGroup) bool {
+func runRSATestGroup(wtg *wycheproofTestGroupRSA) bool {
 	fmt.Printf("Running RSA test group %v with key size %d and %v...\n", wtg.Type, wtg.KeySize, wtg.SHA)
 
 	rsa := C.RSA_new()
@@ -154,13 +154,13 @@ func runRSATestGroup(wtg *wycheproofTestGroup) bool {
 
 	e := C.CString(wtg.E)
 	if C.BN_hex2bn(&rsa.e, e) == 0 {
-		log.Fatalf("Failed to set RSA e")
+		log.Fatal("Failed to set RSA e")
 	}
 	C.free(unsafe.Pointer(e))
 
 	n := C.CString(wtg.N)
 	if C.BN_hex2bn(&rsa.n, n) == 0 {
-		log.Fatalf("Failed to set RSA n")
+		log.Fatal("Failed to set RSA n")
 	}
 	C.free(unsafe.Pointer(n))
 
@@ -173,16 +173,16 @@ func runRSATestGroup(wtg *wycheproofTestGroup) bool {
 		log.Fatalf("Failed to get hash: %v", err)
 	}
 
-	succeeded := true
+	success := true
 	for _, wt := range wtg.Tests {
 		if !runRSATest(rsa, nid, h, wt) {
-			succeeded = false
+			success = false
 		}
 	}
-	return succeeded
+	return success
 }
 
-func runRSATestVectors(path string) bool {
+func runTestVectors(path string) bool {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
@@ -191,15 +191,31 @@ func runRSATestVectors(path string) bool {
 	if err := json.Unmarshal(b, wtv); err != nil {
 		log.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
-	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests\n", wtv.Algorithm, wtv.NumberOfTests)
+	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
 
-	succeeded := true
-	for _, wtg := range wtv.TestGroups {
-		if !runRSATestGroup(wtg) {
-			succeeded = false
+	var wtg interface{}
+	switch wtv.Algorithm {
+	case "RSASig":
+		wtg = &wycheproofTestGroupRSA{}
+	default:
+		log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
+	}
+
+	success := true
+	for _, tg := range wtv.TestGroups {
+		if err := json.Unmarshal(tg, wtg); err != nil {
+			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
+		}
+		switch wtv.Algorithm {
+		case "RSASig":
+			if !runRSATestGroup(wtg.(*wycheproofTestGroupRSA)) {
+				success = false
+			}
+		default:
+			log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
 		}
 	}
-	return succeeded
+	return success
 }
 
 func main() {
@@ -209,24 +225,32 @@ func main() {
 		os.Exit(0)
 	}
 
-	tvs, err := filepath.Glob(filepath.Join(testVectorPath, "*.json"))
-	if err != nil || len(tvs) == 0 {
-		log.Fatalf("Failed to find test vectors at %q\n", testVectorPath)
+	// TODO: AES, Chacha20Poly1305, DSA, ECDH, ECDSA, X25519
+	tests := []struct{
+		name string
+		pattern string
+	}{
+		{"RSA signature", "rsa_signature_*test.json"},
 	}
 
-	succeeded := true
+	success := true
 
-	tvs, err = filepath.Glob(filepath.Join(testVectorPath, "rsa_signature_*test.json"))
-	if err != nil {
-		log.Fatalf("Failed to find RSA test vectors: %v", err)
-	}
-	for _, tv := range tvs {
-		if !runRSATestVectors(tv) {
-			succeeded = false
+	for _, test := range tests {
+		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
+		if err != nil {
+			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
+		}
+		if len(tvs) == 0 {
+			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
+		}
+		for _, tv := range tvs {
+			if !runTestVectors(tv) {
+				success = false
+			}
 		}
 	}
 
-	if !succeeded {
+	if !success {
 		os.Exit(1)
 	}
 }
