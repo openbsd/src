@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_term.c,v 1.14 2017/06/24 14:38:28 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.15 2018/08/10 20:40:43 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -111,7 +111,12 @@ roff_term_pre_ce(ROFF_TERM_ARGS)
 static void
 roff_term_pre_ft(ROFF_TERM_ARGS)
 {
-	switch (*n->child->string) {
+	const char	*cp;
+
+	if (*(cp = n->child->string) == 'C')
+		cp++;
+
+	switch (*cp) {
 	case '4':
 	case '3':
 	case 'B':

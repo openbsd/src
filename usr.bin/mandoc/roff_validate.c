@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_validate.c,v 1.9 2017/06/14 22:50:37 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.10 2018/08/10 20:40:43 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "mandoc.h"
 #include "roff.h"
@@ -58,7 +59,7 @@ roff_validate(struct roff_man *man)
 static void
 roff_valid_ft(ROFF_VALID_ARGS)
 {
-	char	*cp;
+	const char		*cp;
 
 	if (n->child == NULL) {
 		man->next = ROFF_NEXT_CHILD;
@@ -84,7 +85,8 @@ roff_valid_ft(ROFF_VALID_ARGS)
 			return;
 		break;
 	case 'C':
-		if (cp[1] == 'W' && cp[2] == '\0')
+		if (cp[1] != '\0' && cp[2] == '\0' &&
+		    strchr("BIRW", cp[1]) != NULL)
 			return;
 		break;
 	default:
