@@ -1,4 +1,4 @@
-.\" $OpenBSD: X25519.3,v 1.3 2018/03/30 18:38:22 schwarze Exp $
+.\" $OpenBSD: X25519.3,v 1.4 2018/08/10 17:28:48 jsing Exp $
 .\" contains some text from: BoringSSL curve25519.h, curve25519.c
 .\" content also checked up to: OpenSSL f929439f Mar 15 12:19:16 2018 +0000
 .\"
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2018 $
+.Dd $Mdocdate: August 10 2018 $
 .Dt X25519 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm X25519_keypair
 .Nd Elliptic Curve Diffie-Hellman primitive based on Curve25519
 .Sh SYNOPSIS
+.In openssl/curve25519.h
 .Ft int
 .Fo X25519
 .Fa "uint8_t out_shared_key[X25519_KEY_LENGTH]"
