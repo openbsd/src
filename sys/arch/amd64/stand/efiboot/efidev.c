@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.29 2018/06/18 15:37:47 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.30 2018/08/10 16:41:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -600,7 +600,7 @@ efiopen(struct open_file *f, ...)
 		}
 
 		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
-			if (sr_crypto_decrypt_keys(bv) != 0)
+			if (sr_crypto_unlock_volume(bv) != 0)
 				return EPERM;
 
 		if (bv->sbv_diskinfo == NULL) {

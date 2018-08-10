@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.96 2017/07/21 01:21:42 yasuoka Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.97 2018/08/10 16:41:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -530,7 +530,7 @@ biosopen(struct open_file *f, ...)
 		}
 
 		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
-			if (sr_crypto_decrypt_keys(bv) != 0)
+			if (sr_crypto_unlock_volume(bv) != 0)
 				return EPERM;
 
 		if (bv->sbv_diskinfo == NULL) {

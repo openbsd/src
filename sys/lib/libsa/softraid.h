@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.h,v 1.1 2016/09/11 17:49:36 jsing Exp $	*/
+/*	$OpenBSD: softraid.h,v 1.2 2018/08/10 16:41:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -34,6 +34,6 @@ extern struct sr_boot_volume_head sr_volumes;
 extern struct sr_boot_keydisk_head sr_keydisks;
 
 void	sr_clear_keys(void);
-int	sr_crypto_decrypt_keys(struct sr_boot_volume *);
+int	sr_crypto_unlock_volume(struct sr_boot_volume *);
 
 #endif /* _SOFTRAID_H */
