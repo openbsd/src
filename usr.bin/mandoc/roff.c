@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.201 2018/08/01 15:39:47 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.202 2018/08/10 04:41:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -195,6 +195,7 @@ static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
 static	void		 roff_man_alloc1(struct roff_man *);
 static	void		 roff_man_free1(struct roff_man *);
 static	enum rofferr	 roff_manyarg(ROFF_ARGS);
+static	enum rofferr	 roff_nop(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	enum rofferr	 roff_onearg(ROFF_ARGS);
 static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
@@ -488,7 +489,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* nhychar */
 	{ roff_unsupp, NULL, NULL, 0 },  /* nm */
 	{ roff_unsupp, NULL, NULL, 0 },  /* nn */
-	{ roff_unsupp, NULL, NULL, 0 },  /* nop */
+	{ roff_nop, NULL, NULL, 0 },  /* nop */
 	{ roff_nr, NULL, NULL, 0 },  /* nr */
 	{ roff_unsupp, NULL, NULL, 0 },  /* nrf */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* nroff */
@@ -3156,6 +3157,15 @@ roff_eo(ROFF_ARGS)
 		mandoc_vmsg(MANDOCERR_ARG_SKIP, r->parse,
 		    ln, pos, "eo %s", buf->buf + pos);
 	return ROFF_IGN;
+}
+
+static enum rofferr
+roff_nop(ROFF_ARGS)
+{
+	while (buf->buf[pos] == ' ')
+		pos++;
+	*offs = pos;
+	return ROFF_RERUN;
 }
 
 static enum rofferr

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.76 2018/04/10 00:52:21 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.77 2018/08/10 04:41:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2018 $
+.Dd $Mdocdate: August 10 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ Unescaped trailing spaces are stripped from text line input unless in a
 literal context.
 In general, trailing whitespace on any input line is discouraged for
 reasons of portability.
-In the rare case that a blank character is needed at the end of an
+In the rare case that a space character is needed at the end of an
 input line, it may be forced by
 .Sq \e\ \e& .
 .Pp
@@ -663,7 +663,7 @@ produces
 .Pp
 in the input stream, and thus in the output: \fI\^XtFree\^\fP.
 Each occurrence of \e\e$* is replaced with all the arguments,
-joined together with single blank characters.
+joined together with single space characters.
 .Pp
 Since macros and user-defined strings share a common string table,
 defining a macro
@@ -1344,8 +1344,11 @@ Currently unsupported.
 Temporarily turn off line numbering.
 Currently unsupported.
 .It Ic \&nop Ar body
-Execute the rest of the input line as a request or macro line.
-Currently unsupported.
+Execute the rest of the input line as a request, macro, or text line,
+skipping the
+.Ic \&nop
+request and any space characters immediately following it.
+This is mostly used to indent text lines inside macro definitions.
 .It Ic \&nr Ar register Oo Cm + Ns | Ns Cm - Oc Ns Ar expression Op Ar stepsize
 Define or change a register.
 A register is an arbitrary string value that defines some sort of state,
