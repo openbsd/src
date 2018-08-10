@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc_char.7,v 1.37 2018/08/08 14:29:42 schwarze Exp $
+.\"	$OpenBSD: mandoc_char.7,v 1.38 2018/08/10 22:12:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2018 $
+.Dd $Mdocdate: August 10 2018 $
 .Dt MANDOC_CHAR 7
 .Os
 .Sh NAME
@@ -761,14 +761,16 @@ For backward compatibility with existing manuals,
 .Xr mandoc 1
 also supports the
 .Pp
-.Dl \eN\(aq Ns Ar number Ns \(aq
+.Dl \eN\(aq Ns Ar number Ns \(aq and \e[ Ns Cm char Ns Ar number ]
 .Pp
-escape sequence, inserting the character
+escape sequences, inserting the character
 .Ar number
 from the current character set into the output.
 Of course, this is inherently non-portable and is already marked
-as deprecated in the Heirloom roff manual.
-For example, do not use \eN\(aq34\(aq, use \e(dq, or even the plain
+as deprecated in the Heirloom roff manual;
+on top of that, the second form is a GNU extension.
+For example, do not use \eN\(aq34\(aq or \e[char34], use \e(dq,
+or even the plain
 .Sq \(dq
 character where possible.
 .Sh COMPATIBILITY
