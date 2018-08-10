@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.35 2018/06/10 13:50:39 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.36 2018/08/10 17:44:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1504,13 +1504,10 @@ ssl3_send_server_key_exchange(SSL *s)
 	CBB cbb;
 	unsigned char *params = NULL;
 	size_t params_len;
-	unsigned char *q;
-	unsigned char md_buf[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
-	unsigned int u;
 	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;
 	unsigned char *p, *d;
-	int al, i, j, n, kn;
+	int al, i, n, kn;
 	unsigned long type;
 	BUF_MEM *buf;
 	EVP_MD_CTX md_ctx;
@@ -1570,68 +1567,43 @@ ssl3_send_server_key_exchange(SSL *s)
 		n = params_len;
 		p += params_len;
 
-		/* not anonymous */
+		/* Add signature unless anonymous. */
 		if (pkey != NULL) {
-			/*
-			 * n is the length of the params, they start at &(d[4])
-			 * and p points to the space at the end.
-			 */
-			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
-				q = md_buf;
-				j = 0;
-				if (!EVP_DigestInit_ex(&md_ctx, EVP_md5_sha1(),
-				    NULL))
-					goto err;
-				EVP_DigestUpdate(&md_ctx, s->s3->client_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_DigestUpdate(&md_ctx, s->s3->server_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_DigestUpdate(&md_ctx, d, n);
-				EVP_DigestFinal_ex(&md_ctx, q,
-				    (unsigned int *)&i);
-				q += i;
-				j += i;
-				if (RSA_sign(NID_md5_sha1, md_buf, j,
-				    &(p[2]), &u, pkey->pkey.rsa) <= 0) {
-					SSLerror(s, ERR_R_RSA_LIB);
-					goto err;
-				}
-				s2n(u, p);
-				n += u + 2;
-			} else if (md) {
-				/* Send signature algorithm. */
-				if (SSL_USE_SIGALGS(s)) {
-					if (!tls12_get_sigandhash(p, pkey, md)) {
-						/* Should never happen */
-						al = SSL_AD_INTERNAL_ERROR;
-						SSLerror(s, ERR_R_INTERNAL_ERROR);
-						goto f_err;
-					}
-					p += 2;
-				}
-				EVP_SignInit_ex(&md_ctx, md, NULL);
-				EVP_SignUpdate(&md_ctx,
-				    s->s3->client_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,
-				    s->s3->server_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx, d, n);
-				if (!EVP_SignFinal(&md_ctx, &p[2],
-					(unsigned int *)&i, pkey)) {
-					SSLerror(s, ERR_R_EVP_LIB);
-					goto err;
-				}
-				s2n(i, p);
-				n += i + 2;
-				if (SSL_USE_SIGALGS(s))
-					n += 2;
-			} else {
+			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s))
+				md = EVP_md5_sha1();
+		
+			if (md == NULL) {
 				/* Is this error check actually needed? */
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
 				goto f_err;
 			}
+
+			/* Send signature algorithm. */
+			if (SSL_USE_SIGALGS(s)) {
+				if (!tls12_get_sigandhash(p, pkey, md)) {
+					/* Should never happen */
+					al = SSL_AD_INTERNAL_ERROR;
+					SSLerror(s, ERR_R_INTERNAL_ERROR);
+					goto f_err;
+				}
+				p += 2;
+			}
+			EVP_SignInit_ex(&md_ctx, md, NULL);
+			EVP_SignUpdate(&md_ctx, s->s3->client_random,
+			    SSL3_RANDOM_SIZE);
+			EVP_SignUpdate(&md_ctx, s->s3->server_random,
+			    SSL3_RANDOM_SIZE);
+			EVP_SignUpdate(&md_ctx, d, n);
+			if (!EVP_SignFinal(&md_ctx, &p[2], (unsigned int *)&i,
+			    pkey)) {
+				SSLerror(s, ERR_R_EVP_LIB);
+				goto err;
+			}
+			s2n(i, p);
+			n += i + 2;
+			if (SSL_USE_SIGALGS(s))
+				n += 2;
 		}
 
 		ssl3_handshake_msg_finish(s, n);
