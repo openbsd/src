@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.191 2018/04/27 15:17:53 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.192 2018/08/10 17:15:22 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -363,6 +363,29 @@ main(int argc, char *argv[])
 		uport = argv[1];
 	} else
 		usage(1);
+
+	if (usetls) {
+		if (Cflag && unveil(Cflag, "r") == -1)
+			err(1, "unveil");
+		if (unveil(Rflag, "r") == -1)
+			err(1, "unveil");
+		if (Kflag && unveil(Kflag, "r") == -1)
+			err(1, "unveil");
+		if (oflag && unveil(oflag, "r") == -1)
+			err(1, "unveil");
+	} else {
+		if (family == AF_UNIX) {
+			if (unveil(host, "rwc") == -1)
+				err(1, "unveil");
+			if (uflag && !lflag) {
+				if (unveil(sflag ? sflag : "/tmp", "rwc") == -1)
+					err(1, "unveil");
+			}
+		} else {
+			if (unveil("/", "") == -1)
+				err(1, "unveil");
+		}
+	}
 
 	if (family == AF_UNIX) {
 		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
