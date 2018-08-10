@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.54 2015/04/24 21:13:56 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.55 2018/08/10 17:03:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -212,7 +212,7 @@ pw_edit(int notsetuid, const char *filename)
 {
 	int pstat;
 	char *p;
-	char * volatile editor;
+	char *editor;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 
 	if (!filename) {
