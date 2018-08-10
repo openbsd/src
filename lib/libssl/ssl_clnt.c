@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.26 2018/06/03 15:31:30 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.27 2018/08/10 17:52:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1439,7 +1439,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 int
 ssl3_get_server_key_exchange(SSL *s)
 {
-	unsigned char	*q, md_buf[EVP_MAX_MD_SIZE*2];
 	EVP_MD_CTX	 md_ctx;
 	unsigned char	*param, *p;
 	int		 al, i, j, param_len, ok;
@@ -1514,15 +1513,12 @@ ssl3_get_server_key_exchange(SSL *s)
 	if (pkey != NULL) {
 		if (SSL_USE_SIGALGS(s)) {
 			int sigalg = tls12_get_sigid(pkey);
-			/* Should never happen */
 			if (sigalg == -1) {
+				/* Should never happen */
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			/*
-			 * Check key type is consistent
-			 * with signature
-			 */
+			/* Check key type is consistent with signature. */
 			if (2 > n)
 				goto truncated;
 			if (sigalg != (int)p[1]) {
@@ -1538,8 +1534,11 @@ ssl3_get_server_key_exchange(SSL *s)
 			}
 			p += 2;
 			n -= 2;
-		} else
+		} else if (pkey->type == EVP_PKEY_RSA) {
+			md = EVP_md5_sha1();
+		} else {
 			md = EVP_sha1();
+		}
 
 		if (2 > n)
 			goto truncated;
@@ -1554,47 +1553,17 @@ ssl3_get_server_key_exchange(SSL *s)
 			goto f_err;
 		}
 
-		if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
-			j = 0;
-			q = md_buf;
-			if (!EVP_DigestInit_ex(&md_ctx, EVP_md5_sha1(), NULL)) {
-				al = SSL_AD_INTERNAL_ERROR;
-				goto f_err;
-			}
-			EVP_DigestUpdate(&md_ctx, s->s3->client_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_DigestUpdate(&md_ctx, s->s3->server_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_DigestUpdate(&md_ctx, param, param_len);
-			EVP_DigestFinal_ex(&md_ctx, q, (unsigned int *)&i);
-			q += i;
-			j += i;
-			i = RSA_verify(NID_md5_sha1, md_buf, j,
-			    p, n, pkey->pkey.rsa);
-			if (i < 0) {
-				al = SSL_AD_DECRYPT_ERROR;
-				SSLerror(s, SSL_R_BAD_RSA_DECRYPT);
-				goto f_err;
-			}
-			if (i == 0) {
-				/* bad signature */
-				al = SSL_AD_DECRYPT_ERROR;
-				SSLerror(s, SSL_R_BAD_SIGNATURE);
-				goto f_err;
-			}
-		} else {
-			EVP_VerifyInit_ex(&md_ctx, md, NULL);
-			EVP_VerifyUpdate(&md_ctx, s->s3->client_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_VerifyUpdate(&md_ctx, s->s3->server_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_VerifyUpdate(&md_ctx, param, param_len);
-			if (EVP_VerifyFinal(&md_ctx, p,(int)n, pkey) <= 0) {
-				/* bad signature */
-				al = SSL_AD_DECRYPT_ERROR;
-				SSLerror(s, SSL_R_BAD_SIGNATURE);
-				goto f_err;
-			}
+		EVP_VerifyInit_ex(&md_ctx, md, NULL);
+		EVP_VerifyUpdate(&md_ctx, s->s3->client_random,
+		    SSL3_RANDOM_SIZE);
+		EVP_VerifyUpdate(&md_ctx, s->s3->server_random,
+		    SSL3_RANDOM_SIZE);
+		EVP_VerifyUpdate(&md_ctx, param, param_len);
+		if (EVP_VerifyFinal(&md_ctx, p,(int)n, pkey) <= 0) {
+			/* bad signature */
+			al = SSL_AD_DECRYPT_ERROR;
+			SSLerror(s, SSL_R_BAD_SIGNATURE);
+			goto f_err;
 		}
 	} else {
 		/* aNULL does not need public keys. */
