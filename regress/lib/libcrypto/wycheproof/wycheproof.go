@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.3 2018/08/10 16:14:40 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.4 2018/08/10 16:18:55 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -22,12 +22,14 @@ package main
 #cgo LDFLAGS: -lcrypto
 
 #include <openssl/bn.h>
+#include <openssl/curve25519.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
 */
 import "C"
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
@@ -55,15 +57,31 @@ type wycheproofTestRSA struct {
 }
 
 type wycheproofTestGroupRSA struct {
-	E       string            `json:"e"`
-	KeyASN  string            `json:"keyAsn"`
-	KeyDER  string            `json:"keyDer"`
-	KeyPEM  string            `json:"keyPem"`
-	KeySize int               `json:"keysize"`
-	N       string            `json:"n"`
-	SHA     string            `json:"sha"`
-	Type    string            `json:"type"`
+	E       string               `json:"e"`
+	KeyASN  string               `json:"keyAsn"`
+	KeyDER  string               `json:"keyDer"`
+	KeyPEM  string               `json:"keyPem"`
+	KeySize int                  `json:"keysize"`
+	N       string               `json:"n"`
+	SHA     string               `json:"sha"`
+	Type    string               `json:"type"`
 	Tests   []*wycheproofTestRSA `json:"tests"`
+}
+
+type wycheproofTestX25519 struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Curve   string   `json:"curve"`
+	Public  string   `json:"public"`
+	Private string   `json:"private"`
+	Shared  string   `json:"shared"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupX25519 struct {
+	Curve string                  `json:"curve"`
+	Tests []*wycheproofTestX25519 `json:"tests"`
 }
 
 type wycheproofTestVectors struct {
@@ -76,7 +94,7 @@ type wycheproofTestVectors struct {
 }
 
 var nids = map[string]int{
-	"SHA-1": C.NID_sha1,
+	"SHA-1":   C.NID_sha1,
 	"SHA-224": C.NID_sha224,
 	"SHA-256": C.NID_sha256,
 	"SHA-384": C.NID_sha384,
@@ -182,6 +200,50 @@ func runRSATestGroup(wtg *wycheproofTestGroupRSA) bool {
 	return success
 }
 
+func runX25519Test(wt *wycheproofTestX25519) bool {
+	public, err := hex.DecodeString(wt.Public)
+	if err != nil {
+		log.Fatalf("Failed to decode public %q: %v", wt.Public, err)
+	}
+	private, err := hex.DecodeString(wt.Private)
+	if err != nil {
+		log.Fatalf("Failed to decode private %q: %v", wt.Private, err)
+	}
+	shared, err := hex.DecodeString(wt.Shared)
+	if err != nil {
+		log.Fatalf("Failed to decode shared %q: %v", wt.Shared, err)
+	}
+
+	got := make([]byte, C.X25519_KEY_LENGTH)
+	result := true
+
+	if C.X25519((*C.uint8_t)(unsafe.Pointer(&got[0])), (*C.uint8_t)(unsafe.Pointer(&private[0])), (*C.uint8_t)(unsafe.Pointer(&public[0]))) != 1 {
+		result = false
+	} else {
+		result = bytes.Equal(got, shared)
+	}
+
+	// XXX audit acceptable cases...
+	success := true
+	if result != (wt.Result == "valid") && wt.Result != "acceptable" {
+		fmt.Printf("FAIL: Test case %d (%q) - X25519(), want %v\n", wt.TCID, wt.Comment, wt.Result)
+		success = false
+	}
+	return success
+}
+
+func runX25519TestGroup(wtg *wycheproofTestGroupX25519) bool {
+	fmt.Printf("Running X25519 test group with curve %v...\n", wtg.Curve)
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runX25519Test(wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runTestVectors(path string) bool {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -197,6 +259,8 @@ func runTestVectors(path string) bool {
 	switch wtv.Algorithm {
 	case "RSASig":
 		wtg = &wycheproofTestGroupRSA{}
+	case "X25519":
+		wtg = &wycheproofTestGroupX25519{}
 	default:
 		log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
 	}
@@ -209,6 +273,10 @@ func runTestVectors(path string) bool {
 		switch wtv.Algorithm {
 		case "RSASig":
 			if !runRSATestGroup(wtg.(*wycheproofTestGroupRSA)) {
+				success = false
+			}
+		case "X25519":
+			if !runX25519TestGroup(wtg.(*wycheproofTestGroupX25519)) {
 				success = false
 			}
 		default:
@@ -225,12 +293,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	// TODO: AES, Chacha20Poly1305, DSA, ECDH, ECDSA, X25519
-	tests := []struct{
-		name string
+	// TODO: AES, Chacha20Poly1305, DSA, ECDH, ECDSA, RSA-PSS.
+	tests := []struct {
+		name    string
 		pattern string
 	}{
 		{"RSA signature", "rsa_signature_*test.json"},
+		{"X25519", "x25519_*test.json"},
 	}
 
 	success := true
