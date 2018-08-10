@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2018/08/09 21:12:33 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.30 2018/08/10 11:13:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -334,7 +334,7 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 	int		 final;
 	u_int16_t	 seg_size;
 	u_int8_t	 i, seg_len;
-	u_int32_t	 as = 0, preas;
+	u_int32_t	 as = 0;
 
 	if (f->type == AS_EMPTY) {
 		if (len == 0)
@@ -360,18 +360,18 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 
 		final = (len == seg_size);
 
-		/* just check the rightmost AS */
 		if (f->type == AS_SOURCE) {
-			/* keep previous AS in case an AS_SET is rightmost */
-			preas = as;
-			as = aspath_extract(seg, seg_len - 1);
+			/*
+			 * Just extract the rightmost AS
+			 * but if that segment is an AS_SET then the rightmost
+			 * AS of a previous non AS_SET segment should be used.
+			 * Because of that simply skip AS_SET segments.
+			 */
+			if (seg[0] != AS_SET)
+				as = aspath_extract(seg, seg_len - 1);
 			/* not yet in the final segment */
 			if (!final)
 				continue;
-			if (seg[0] == AS_SET)
-				/* use aggregator AS per rfc6472 */
-				if (preas)
-					as = preas;
 			if (as_compare(f, as, match))
 				return (1);
 			else
