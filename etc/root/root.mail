@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Sun Apr 15 06:30:00 MDT 2018
+From deraadt@do-not-reply.openbsd.org Sun Nov 1 06:30:00 MDT 2018
 Return-Path: root
-Date: Apr 15 06:30:00 MDT 2018
+Date: Nov 1 06:30:00 MDT 2018
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 6.3!
+Subject: Welcome to OpenBSD 6.4!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
