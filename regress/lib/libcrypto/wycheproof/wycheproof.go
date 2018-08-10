@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.1 2018/07/25 18:04:09 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.2 2018/08/10 16:12:19 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -75,21 +75,20 @@ type wycheproofTestVectors struct {
 	TestGroups []*wycheproofTestGroup `json:"testGroups"`
 }
 
+var nids = map[string]int{
+	"SHA-1": C.NID_sha1,
+	"SHA-224": C.NID_sha224,
+	"SHA-256": C.NID_sha256,
+	"SHA-384": C.NID_sha384,
+	"SHA-512": C.NID_sha512,
+}
+
 func nidFromString(ns string) (int, error) {
-	switch ns {
-	case "SHA-1":
-		return C.NID_sha1, nil
-	case "SHA-224":
-		return C.NID_sha224, nil
-	case "SHA-256":
-		return C.NID_sha256, nil
-	case "SHA-384":
-		return C.NID_sha384, nil
-	case "SHA-512":
-		return C.NID_sha512, nil
-	default:
-		return -1, fmt.Errorf("unknown NID %q", ns)
+	nid, ok := nids[ns]
+	if ok {
+		return nid, nil
 	}
+	return -1, fmt.Errorf("unknown NID %q", ns)
 }
 
 func hashFromString(hs string) (hash.Hash, error) {
