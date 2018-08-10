@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.108 2018/08/09 12:21:03 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.109 2018/08/10 11:15:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -922,7 +922,7 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 	u_int32_t	 as, lastas = 0;
 	u_int		 count = 0;
 	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_len;
+	u_int8_t	 i, seg_len, seg_type;
 
 	if (type == ASLEN_MAX) {
 		if (aslen < aspath_count(a->data, a->len))
@@ -934,15 +934,19 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 	/* type == ASLEN_SEQ */
 	seg = a->data;
 	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
 		seg_len = seg[1];
 		seg_size = 2 + sizeof(u_int32_t) * seg_len;
 
+			
 		for (i = 0; i < seg_len; i++) {
-			/* what should we do with AS_SET? */
 			as = aspath_extract(seg, i);
 			if (as == lastas) {
 				if (aslen < ++count)
 					return (1);
+			} else if (seg_type == AS_SET) {
+				/* AS path 3 { 4 3 7 } 3 will have count = 3 */
+				continue;
 			} else
 				count = 1;
 			lastas = as;
