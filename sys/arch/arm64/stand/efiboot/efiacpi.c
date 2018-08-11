@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.4 2018/07/10 13:06:55 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.5 2018/08/11 16:02:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -239,9 +239,9 @@ struct acpi_madt {
 #define ACPI_APIC_PCAT_COMPAT	0x00000001
 } __packed;
 
-struct acpi_madt_gic {
+struct acpi_madt_gicc {
 	uint8_t		apic_type;
-#define ACPI_MADT_GIC		11
+#define ACPI_MADT_GICC		11
 	uint8_t		length;
 	uint16_t	reserved1;
 	uint32_t	gic_id;
@@ -286,10 +286,31 @@ struct acpi_madt_gic_msi {
 	uint16_t	spi_base;
 } __packed;
 
+struct acpi_madt_gicr {
+	uint8_t		apic_type;
+#define ACPI_MADT_GICR		14
+	uint8_t		length;
+	uint16_t	reserved1;
+	uint64_t	discovery_base_address;
+	uint32_t	discovery_length;
+} __packed;
+
+struct acpi_madt_gic_its {
+	uint8_t		apic_type;
+#define ACPI_MADT_GIC_ITS	15
+	uint8_t		length;
+	uint16_t	reserved1;
+	uint32_t	gic_its_id;
+	uint64_t	base_address;
+	uint32_t	reserved2;
+} __packed;
+
 union acpi_madt_entry {
-	struct acpi_madt_gic		madt_gic;
+	struct acpi_madt_gicc		madt_gicc;
 	struct acpi_madt_gicd		madt_gicd;
 	struct acpi_madt_gic_msi	madt_gic_msi;
+	struct acpi_madt_gicr		madt_gicr;
+	struct acpi_madt_gic_its	madt_gic_its;
 } __packed;
 
 struct acpi_spcr {
@@ -382,11 +403,12 @@ static int gic_version;
 static uint64_t gicc_base;
 static uint64_t gicd_base;
 static uint64_t gicr_base;
+static uint32_t gicr_size;
 
 void
-efi_acpi_madt_gic(struct acpi_madt_gic *gic)
+efi_acpi_madt_gicc(struct acpi_madt_gicc *gicc)
 {
-	uint64_t mpidr = gic->mpidr;
+	uint64_t mpidr = gicc->mpidr;
 	void *node, *child;
 	uint64_t reg;
 	char name[32];
@@ -395,7 +417,7 @@ efi_acpi_madt_gic(struct acpi_madt_gic *gic)
 	 * MPIDR field was introduced in ACPI 5.1.  Fall back on the
 	 * ACPI Processor UID on ACPI 5.0.
 	 */
-	mpidr = (gic->length >= 76) ? gic->mpidr : gic->acpi_proc_uid;
+	mpidr = (gicc->length >= 76) ? gicc->mpidr : gicc->acpi_proc_uid;
 
 	snprintf(name, sizeof(name), "cpu@%llx", mpidr);
 	reg = htobe64(mpidr);
@@ -406,15 +428,13 @@ efi_acpi_madt_gic(struct acpi_madt_gic *gic)
 	fdt_node_add_string_property(child, "device_type", "cpu");
 	fdt_node_add_string_property(child, "compatible", "arm,armv8");
 	fdt_node_add_property(child, "reg", &reg, sizeof(reg));
-	if (gic->parking_protocol_version == 0 || psci)
+	if (gicc->parking_protocol_version == 0 || psci)
 		fdt_node_add_string_property(child, "enable-method", "psci");
-	if ((gic->flags & ACPI_PROC_ENABLE) == 0)
+	if ((gicc->flags & ACPI_PROC_ENABLE) == 0)
 		fdt_node_add_string_property(child, "status", "disabled");
 
 	/* Stash GIC information. */
-	gicc_base = gic->base_address;
-	if (gic->length >= 76)
-		gicr_base = gic->gicr_base_address;
+	gicc_base = gicc->base_address;
 }
 
 void
@@ -457,6 +477,36 @@ efi_acpi_madt_gic_msi(struct acpi_madt_gic_msi *msi)
 }
 
 void
+efi_acpi_madt_gicr(struct acpi_madt_gicr *gicr)
+{
+	/* Stash GIC information. */
+	gicr_base = gicr->discovery_base_address;
+	gicr_size = gicr->discovery_length;
+}
+
+void
+efi_acpi_madt_gic_its(struct acpi_madt_gic_its *its)
+{
+	static uint32_t phandle = 2;
+	void *node, *child;
+	uint64_t reg[2];
+	char name[32];
+
+	snprintf(name, sizeof(name), "gic-its@%llx", its->base_address);
+	reg[0] = htobe64(its->base_address);
+	reg[1] = htobe64(0x20000);
+
+	/* Create "gic-its" node. */
+	node = fdt_find_node("/interrupt-controller");
+	fdt_node_add_node(node, name, &child);
+	fdt_node_add_string_property(child, "compatible", "arm,gic-v3-its");
+	fdt_node_add_property(child, "msi-controller", NULL, 0);
+	fdt_node_add_property(child, "reg", reg, sizeof(reg));
+	fdt_node_add_property(child, "phandle", &phandle, sizeof(phandle));
+	phandle++;
+}
+
+void
 efi_acpi_madt(struct acpi_table_header *hdr)
 {
 	struct acpi_madt *madt = (struct acpi_madt *)hdr;
@@ -472,7 +522,7 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 	addr = (char *)(madt + 1);
 	while (addr < (char *)madt + madt->hdr.length) {
 		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
-		uint8_t length = entry->madt_gic.length;
+		uint8_t length = entry->madt_gicc.length;
 
 		if (length < 2)
 			return;
@@ -480,15 +530,21 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 		if (addr + length > (char *)madt + madt->hdr_length)
 			return;
 
-		switch (entry->madt_gic.apic_type) {
-		case ACPI_MADT_GIC:
-			efi_acpi_madt_gic(&entry->madt_gic);
+		switch (entry->madt_gicc.apic_type) {
+		case ACPI_MADT_GICC:
+			efi_acpi_madt_gicc(&entry->madt_gicc);
 			break;
 		case ACPI_MADT_GICD:
 			efi_acpi_madt_gicd(&entry->madt_gicd);
 			break;
 		case ACPI_MADT_GIC_MSI:
 			efi_acpi_madt_gic_msi(&entry->madt_gic_msi);
+			break;
+		case ACPI_MADT_GICR:
+			efi_acpi_madt_gicr(&entry->madt_gicr);
+			break;
+		case ACPI_MADT_GIC_ITS:
+			efi_acpi_madt_gic_its(&entry->madt_gic_its);
 			break;
 		}
 
@@ -517,7 +573,7 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 		reg[0] = htobe64(gicd_base);
 		reg[1] = htobe64(0x10000);
 		reg[2] = htobe64(gicr_base);
-		reg[3] = htobe64(0x10000);
+		reg[3] = htobe64(gicr_size);
 		break;
 	default:
 		return;
