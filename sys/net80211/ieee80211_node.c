@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.139 2018/08/07 18:13:14 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.140 2018/08/11 10:58:39 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1940,6 +1940,11 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 	ni->ni_htop1 = (data[2] | (data[3] << 8));
 	ni->ni_htop2 = (data[3] | (data[4] << 8));
 
+	/*
+	 * According to 802.11-2012 Table 8-130 the Basic MCS set is
+	 * only "present in Beacon, Probe Response, Mesh Peering Open
+	 * and Mesh Peering Confirm frames. Otherwise reserved."
+	 */
 	if (isprobe)
 		memcpy(ni->ni_basic_mcs, &data[6], sizeof(ni->ni_basic_mcs));
 
