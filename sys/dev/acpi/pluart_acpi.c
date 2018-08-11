@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_acpi.c,v 1.1 2018/07/02 12:46:20 kettenis Exp $	*/
+/*	$OpenBSD: pluart_acpi.c,v 1.2 2018/08/11 16:04:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -52,6 +52,7 @@ struct cfattach pluart_acpi_ca = {
 
 const char *pluart_hids[] = {
 	"AMDI0511",
+	"ARMH0011",
 	NULL
 };
 
