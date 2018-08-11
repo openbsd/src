@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.10 2018/08/08 20:56:49 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.11 2018/08/11 11:16:43 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/evcount.h>
 
 #include <machine/bus.h>
+#include <machine/cpufunc.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/fdt.h>
@@ -927,7 +928,6 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
     void *arg, char *name)
 {
 	struct agintc_softc	*sc = agintc_sc;
-	uint8_t			*prop = AGINTC_DMA_KVA(sc->sc_prop);
 	struct intrhand		*ih;
 	int			 psw;
 
@@ -961,9 +961,14 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
 	if (irqno < LPI_BASE) {
 		agintc_calc_irq(sc, irqno);
 	} else {
+		uint8_t *prop = AGINTC_DMA_KVA(sc->sc_prop);
+
 		prop[irqno - LPI_BASE] =
-		    0x80 | ((NIPL - level) << 3) | GICR_PROP_ENABLE;
-		__asm volatile("dsb sy");	/* make globally visible */
+		    0x80 | ((NIPL - ih->ih_ipl) << 3) | GICR_PROP_ENABLE;
+
+		/* Make globally visible. */
+		cpu_dcache_wb_range((vaddr_t)prop, 1);
+		__asm volatile("dsb sy");
 	}
 
 	restore_interrupts(psw);
@@ -1157,8 +1162,10 @@ struct agintc_msi_softc {
 	struct device			sc_dev;
 	bus_space_tag_t			sc_iot;
 	bus_space_handle_t		sc_ioh;
-	bus_addr_t			sc_addr;
 	bus_dma_tag_t			sc_dmat;
+
+	bus_addr_t			sc_msi_addr;
+	int				sc_msi_delta;
 
 	int				sc_nlpi;
 	void				**sc_lpi;
@@ -1198,6 +1205,7 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	struct agintc_msi_softc *sc = (struct agintc_msi_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct gits_cmd cmd;
+	uint32_t pre_its[2];
 	uint64_t typer;
 	int i;
 
@@ -1212,8 +1220,14 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
-	sc->sc_addr = faa->fa_reg[0].addr;
 	sc->sc_dmat = faa->fa_dmat;
+
+	sc->sc_msi_addr = faa->fa_reg[0].addr + GITS_TRANSLATER;
+	if (OF_getpropintarray(faa->fa_node, "socionext,synquacer-pre-its",
+	    pre_its, sizeof(pre_its)) == sizeof(pre_its)) {
+		sc->sc_msi_addr = pre_its[0];
+		sc->sc_msi_delta = 4;
+	}
 
 	typer = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_TYPER);
 	if ((typer & GITS_TYPER_PHYS) == 0 || typer & GITS_TYPER_PTA ||
@@ -1252,7 +1266,7 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 			printf(": can't alloc translation table\n");
 			goto unmap;
 		}
-		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(0),
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
 		    AGINTC_DMA_DVA(sc->sc_dtt) | GITS_BASER_IC_NORM_NC |
 		    (GITS_DTT_SIZE / PAGE_SIZE) - 1 | GITS_BASER_VALID);
 	}
@@ -1296,9 +1310,13 @@ agintc_msi_send_cmd(struct agintc_msi_softc *sc, struct gits_cmd *cmd)
 {
 	struct gits_cmd *queue = AGINTC_DMA_KVA(sc->sc_cmdq);
 
-	memcpy(&queue[sc->sc_cmdidx++], cmd, sizeof(*cmd));
+	memcpy(&queue[sc->sc_cmdidx], cmd, sizeof(*cmd));
+
+	/* Make globally visible. */
+	cpu_dcache_wb_range((vaddr_t)&queue[sc->sc_cmdidx], sizeof(*cmd));
 	__asm volatile("dsb sy");
 
+	sc->sc_cmdidx++;
 	sc->sc_cmdidx %= GITS_CMDQ_NENTRIES;
 	bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_CWRITER,
 	    sc->sc_cmdidx * sizeof(*cmd));
@@ -1399,7 +1417,7 @@ agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 		agintc_msi_send_cmd(sc, &cmd);
 		agintc_msi_wait_cmd(sc);
 
-		*addr = sc->sc_addr + GITS_TRANSLATER;
+		*addr = sc->sc_msi_addr + deviceid * sc->sc_msi_delta;
 		*data = eventid;
 		sc->sc_lpi[i] = cookie;
 		return &sc->sc_lpi[i];
@@ -1440,6 +1458,9 @@ agintc_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t align)
 	    nsegs, size, BUS_DMA_WAITOK) != 0)
 		goto unmap;
 
+	/* Make globally visible. */
+	cpu_dcache_wb_range((vaddr_t)adm->adm_kva, size);
+	__asm volatile("dsb sy");
 	return adm;
 
 unmap:
