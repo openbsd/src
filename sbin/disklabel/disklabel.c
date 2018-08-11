@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.229 2018/07/03 06:42:13 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.230 2018/08/11 18:37:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -517,7 +517,7 @@ scale(u_int64_t sz, char unit, struct disklabel *lp)
 void
 display_partition(FILE *f, struct disklabel *lp, int i, char unit)
 {
-	volatile struct partition *pp = &lp->d_partitions[i];
+	struct partition *pp = &lp->d_partitions[i];
 	double p_size;
 
 	p_size = scale(DL_GETPSIZE(pp), unit, lp);
