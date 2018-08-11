@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.24 2018/07/13 18:36:56 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.25 2018/08/11 16:07:36 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ extern int verify_depth;
 
 static void s_time_usage(void);
 static SSL *doConnection(SSL * scon);
+static int benchmark(int);
 
 static SSL_CTX *tm_ctx = NULL;
 static const SSL_METHOD *s_time_meth = NULL;
@@ -244,13 +245,7 @@ tm_Time_F(int op)
 int
 s_time_main(int argc, char **argv)
 {
-	double totalTime = 0.0;
-	int nConn = 0;
-	SSL *scon = NULL;
-	time_t finishtime;
 	int ret = 1;
-	char buf[1024 * 8];
-	int ver;
 
 	if (single_execution) {
 		if (pledge("stdio rpath inet dns", NULL) == -1) {
@@ -328,60 +323,8 @@ s_time_main(int argc, char **argv)
 
 	/* Loop and time how long it takes to make connections */
 
-	bytes_read = 0;
-	finishtime = time(NULL) + s_time_config.maxtime;
-	tm_Time_F(START);
-	for (;;) {
-		if (finishtime < time(NULL))
-			break;
-		if ((scon = doConnection(NULL)) == NULL)
-			goto end;
-
-		if (s_time_config.www_path != NULL) {
-			int i, retval = snprintf(buf, sizeof buf,
-			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
-			if ((size_t)retval >= sizeof buf) {
-				fprintf(stderr, "URL too long\n");
-				goto end;
-			}
-			SSL_write(scon, buf, strlen(buf));
-			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-				bytes_read += i;
-		}
-		if (s_time_config.no_shutdown)
-			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
-			    SSL_RECEIVED_SHUTDOWN);
-		else
-			SSL_shutdown(scon);
-
-		nConn += 1;
-		if (SSL_session_reused(scon))
-			ver = 'r';
-		else {
-			ver = SSL_version(scon);
-			if (ver == TLS1_VERSION)
-				ver = 't';
-			else if (ver == SSL3_VERSION)
-				ver = '3';
-			else if (ver == SSL2_VERSION)
-				ver = '2';
-			else
-				ver = '*';
-		}
-		fputc(ver, stdout);
-		fflush(stdout);
-
-		SSL_free(scon);
-		scon = NULL;
-	}
-	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
-
-	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
-	    nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
-	    nConn,
-	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
-	    bytes_read / nConn);
+	if (benchmark(0))
+		goto end;
 
 	/*
 	 * Now loop and time connections using the same session id over and
@@ -393,88 +336,11 @@ s_time_main(int argc, char **argv)
 		goto end;
 	printf("\n\nNow timing with session id reuse.\n");
 
-	/* Get an SSL object so we can reuse the session id */
-	if ((scon = doConnection(NULL)) == NULL) {
-		fprintf(stderr, "Unable to get connection\n");
+	if (benchmark(1))
 		goto end;
-	}
-	if (s_time_config.www_path != NULL) {
-		int retval = snprintf(buf, sizeof buf,
-		    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
-		if ((size_t)retval >= sizeof buf) {
-			fprintf(stderr, "URL too long\n");
-			goto end;
-		}
-		SSL_write(scon, buf, strlen(buf));
-		while (SSL_read(scon, buf, sizeof(buf)) > 0);
-	}
-	if (s_time_config.no_shutdown)
-		SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
-		    SSL_RECEIVED_SHUTDOWN);
-	else
-		SSL_shutdown(scon);
-
-	nConn = 0;
-	totalTime = 0.0;
-
-	finishtime = time(NULL) + s_time_config.maxtime;
-
-	printf("starting\n");
-	bytes_read = 0;
-	tm_Time_F(START);
-
-	for (;;) {
-		if (finishtime < time(NULL))
-			break;
-		if ((doConnection(scon)) == NULL)
-			goto end;
-
-		if (s_time_config.www_path) {
-			int i, retval = snprintf(buf, sizeof buf,
-			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
-			if ((size_t)retval >= sizeof buf) {
-				fprintf(stderr, "URL too long\n");
-				goto end;
-			}
-			SSL_write(scon, buf, strlen(buf));
-			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-				bytes_read += i;
-		}
-		if (s_time_config.no_shutdown)
-			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
-			    SSL_RECEIVED_SHUTDOWN);
-		else
-			SSL_shutdown(scon);
-
-		nConn += 1;
-		if (SSL_session_reused(scon))
-			ver = 'r';
-		else {
-			ver = SSL_version(scon);
-			if (ver == TLS1_VERSION)
-				ver = 't';
-			else if (ver == SSL3_VERSION)
-				ver = '3';
-			else if (ver == SSL2_VERSION)
-				ver = '2';
-			else
-				ver = '*';
-		}
-		fputc(ver, stdout);
-		fflush(stdout);
-	}
-	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
-
-	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n", nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
-	    nConn,
-	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
-	    bytes_read / nConn);
 
 	ret = 0;
  end:
-	SSL_free(scon);
-
 	if (tm_ctx != NULL) {
 		SSL_CTX_free(tm_ctx);
 		tm_ctx = NULL;
@@ -541,4 +407,107 @@ doConnection(SSL * scon)
 		return NULL;
 	}
 	return serverCon;
+}
+
+static int
+benchmark(int reuse_session)
+{
+	double totalTime = 0.0;
+	int nConn = 0;
+	SSL *scon = NULL;
+	time_t finishtime;
+	int ret = 1;
+	char buf[1024 * 8];
+	int ver;
+
+	if (reuse_session) {
+		/* Get an SSL object so we can reuse the session id */
+		if ((scon = doConnection(NULL)) == NULL) {
+			fprintf(stderr, "Unable to get connection\n");
+			goto end;
+		}
+		if (s_time_config.www_path != NULL) {
+			int retval = snprintf(buf, sizeof buf,
+			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
+			if ((size_t)retval >= sizeof buf) {
+				fprintf(stderr, "URL too long\n");
+				goto end;
+			}
+			SSL_write(scon, buf, strlen(buf));
+			while (SSL_read(scon, buf, sizeof(buf)) > 0);
+		}
+		if (s_time_config.no_shutdown)
+			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
+			    SSL_RECEIVED_SHUTDOWN);
+		else
+			SSL_shutdown(scon);
+		printf("starting\n");
+	}
+
+	nConn = 0;
+	totalTime = 0.0;
+
+	finishtime = time(NULL) + s_time_config.maxtime;
+
+	bytes_read = 0;
+	tm_Time_F(START);
+
+	for (;;) {
+		if (finishtime < time(NULL))
+			break;
+		if ((scon = doConnection(reuse_session ? scon : NULL)) == NULL)
+			goto end;
+
+		if (s_time_config.www_path != NULL) {
+			int i, retval = snprintf(buf, sizeof buf,
+			    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
+			if ((size_t)retval >= sizeof buf) {
+				fprintf(stderr, "URL too long\n");
+				goto end;
+			}
+			SSL_write(scon, buf, strlen(buf));
+			while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
+				bytes_read += i;
+		}
+		if (s_time_config.no_shutdown)
+			SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
+			    SSL_RECEIVED_SHUTDOWN);
+		else
+			SSL_shutdown(scon);
+
+		nConn += 1;
+		if (SSL_session_reused(scon))
+			ver = 'r';
+		else {
+			ver = SSL_version(scon);
+			if (ver == TLS1_VERSION)
+				ver = 't';
+			else if (ver == SSL3_VERSION)
+				ver = '3';
+			else if (ver == SSL2_VERSION)
+				ver = '2';
+			else
+				ver = '*';
+		}
+		fputc(ver, stdout);
+		fflush(stdout);
+
+		if (!reuse_session) {
+			SSL_free(scon);
+			scon = NULL;
+		}
+	}
+	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
+
+	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
+	    nConn, totalTime, ((double) nConn / totalTime), bytes_read);
+	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
+	    nConn,
+	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
+	    bytes_read / nConn);
+
+	ret = 0;
+ end:
+	SSL_free(scon);
+	return ret;
 }
