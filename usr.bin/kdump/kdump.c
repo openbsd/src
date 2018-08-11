@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.133 2017/11/28 15:35:02 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.134 2018/08/11 11:01:37 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -208,6 +208,8 @@ main(int argc, char *argv[])
 	if (argc > optind)
 		usage();
 
+	if (unveil(tracefile, "r") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath getpw", NULL) == -1)
 		err(1, "pledge");
 
