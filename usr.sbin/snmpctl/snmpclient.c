@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.16 2018/08/08 18:50:38 rob Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.17 2018/08/11 04:31:57 rob Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -407,7 +407,7 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 		erroridx = SNMPC_MAXREPETITIONS;
 
 	/* SNMP header */
-	sc->sc_msgid = arc4random();
+	sc->sc_msgid = arc4random() & 0x7fffffff;
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		return (-1);
 	if ((b = ber_printf_elements(root, "ds{tddd{{O0}}",
