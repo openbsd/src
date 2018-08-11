@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.301 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.302 2018/08/11 16:16:07 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1809,8 +1809,8 @@ dofaccessat(struct proc *p, int fd, const char *path, int amode, int flag)
 	}
 
 	NDINITAT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
-	nd.ni_unveil = 0; /* XXX fix this when we fix PLEDGE_STAT */
+	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_INSPECT;
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	vp = nd.ni_vp;
@@ -1880,8 +1880,8 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 
 	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
 	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
-	nd.ni_unveil = 0;
+	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_INSPECT;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
@@ -1989,8 +1989,8 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 	struct nameidata nd;
 
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
-	nd.ni_pledge = PLEDGE_RPATH | PLEDGE_STAT;
-	nd.ni_unveil = 0;
+	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_INSPECT;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
