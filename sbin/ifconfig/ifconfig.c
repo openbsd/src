@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.372 2018/08/08 17:26:52 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.373 2018/08/11 09:18:49 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -188,6 +188,7 @@ void	setifllprio(const char *, int);
 void	setifnwid(const char *, int);
 void	setifjoin(const char *, int);
 void	delifjoin(const char *, int);
+void	showjoin(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
 void	setifwpa(const char *, int);
@@ -376,8 +377,10 @@ const struct	cmd {
 	{ "mtu",	NEXTARG,	0,		setifmtu },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "-nwid",	-1,		0,		setifnwid },
-	{ "join",	NEXTARG0,	0,		setifjoin },
-	{ "-join",	NEXTARG0,	0,		delifjoin },
+	{ "join",	NEXTARG,	0,		setifjoin },
+	{ "-join",	NEXTARG,	0,		delifjoin },
+	{ "joinlist",	NEXTARG0,	0,		showjoin },
+	{ "-joinlist",	-1,		0,		delifjoin },
 	{ "bssid",	NEXTARG,	0,		setifbssid },
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
@@ -1677,11 +1680,6 @@ setifjoin(const char *val, int d)
 	struct ieee80211_join join;
 	int len;
 
-	if (val == NULL) {
-		show_join = 1;
-		return;
-	}
-
 	if (d != 0) {
 		/* no network id is especially desired */
 		memset(&join, 0, sizeof(join));
@@ -2321,6 +2319,13 @@ ieee80211_status(void)
 		ieee80211_listchans();
 	else if (shownet80211nodes)
 		ieee80211_listnodes();
+}
+
+void
+showjoin(const char *cmd, int val)
+{
+	show_join = 1;
+	return;
 }
 
 void
