@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.5 2018/08/11 20:46:48 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.6 2018/08/11 22:47:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -344,24 +344,51 @@ struct acpipci_intr_handle {
 };
 
 int
+acpipci_intr_swizzle(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	struct acpipci_intr_handle *ih;
+	int dev, swizpin;
+
+	if (pa->pa_bridgetag == NULL)
+		return -1;
+
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, NULL, &dev, NULL);
+	swizpin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin, dev);
+	if ((void *)pa->pa_bridgeih[swizpin - 1] == NULL)
+		return -1;
+
+	ih = malloc(sizeof(struct acpipci_intr_handle), M_DEVBUF, M_WAITOK);
+	memcpy(ih, (void *)pa->pa_bridgeih[swizpin - 1],
+	    sizeof(struct acpipci_intr_handle));
+	*ihp = (pci_intr_handle_t)ih;
+
+	return 0;
+}
+
+int
 acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct acpipci_softc *sc = pa->pa_pc->pc_intr_v;
-	struct aml_node *node;
+	struct aml_node *node = sc->sc_node;
 	struct aml_value res;
 	uint64_t addr, pin, source, index;
 	struct acpipci_intr_handle *ih;
 	int i;
 
-	if (pa->pa_bridgetag == NULL)
-		return -1;
-
-	node = acpi_find_pci(pa->pa_pc, *pa->pa_bridgetag);
-	if (node == NULL)
-		return -1;
+	/*
+	 * If we're behind a bridge, we need to look for a _PRT for
+	 * it.  If we don't find a _PRT, we need to swizzle.  If we're
+	 * not behind a bridge we need to look for a _PRT on the host
+	 * bridge node itself.
+	 */
+	if (pa->pa_bridgetag) {
+		node = acpi_find_pci(pa->pa_pc, *pa->pa_bridgetag);
+		if (node == NULL)
+			return acpipci_intr_swizzle(pa, ihp);
+	}
 
 	if (aml_evalname(sc->sc_acpi, node, "_PRT", 0, NULL, &res))
-		return -1;
+		return acpipci_intr_swizzle(pa, ihp);
 
 	if (res.type != AML_OBJTYPE_PACKAGE)
 		return -1;
