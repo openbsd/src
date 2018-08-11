@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.4 2018/08/03 22:40:05 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.5 2018/08/11 20:46:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -68,6 +68,7 @@ struct acpipci_softc {
 	char		sc_ioex_name[32];
 	char		sc_memex_name[32];
 	int		sc_bus;
+	uint32_t	sc_seg;
 };
 
 int	acpipci_match(struct device *, void *, void *);
@@ -108,6 +109,8 @@ void	*acpipci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	acpipci_intr_disestablish(void *, void *);
 
+uint32_t acpipci_iort_map_msi(pci_chipset_tag_t, pcitag_t);
+
 int
 acpipci_match(struct device *parent, void *match, void *aux)
 {
@@ -125,6 +128,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct aml_value res;
 	uint64_t bbn = 0;
+	uint64_t seg = 0;
 
 	/* Bail out early if we don't have a valid MCFG table. */
 	if (pci_mcfg_addr == 0 || pci_mcfg_max_bus <= pci_mcfg_min_bus) {
@@ -144,10 +148,17 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	aml_evalinteger(sc->sc_acpi, sc->sc_node, "_BBN", 0, NULL, &bbn);
 	sc->sc_bus = bbn;
 
+	aml_evalinteger(sc->sc_acpi, sc->sc_node, "_SEG", 0, NULL, &seg);
+	sc->sc_seg = seg;
+
 	sc->sc_iot = pci_mcfgt;
 	sc->sc_ioh = pci_mcfgh;
 
 	printf("\n");
+
+	/* XXX We only support segment 0 for now. */
+	if (seg != 0)
+		return;
 
 	/* Create extents for our address spaces. */
 	snprintf(sc->sc_busex_name, sizeof(sc->sc_busex_name),
@@ -453,8 +464,8 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 		pcireg_t reg;
 		int off;
 
-		/* Assume hardware passes Requester ID as sideband data. */
-		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
+		/* Map Requester ID through IORT to get sideband data. */
+		data = acpipci_iort_map_msi(ih->ih_pc, ih->ih_tag);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
 		    &data, level, func, arg, name);
 		if (cookie == NULL)
@@ -552,4 +563,119 @@ pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int min_bus, int max_bus)
 	pc->pc_conf_write = pci_mcfg_conf_write;
 
 	return pc;
+}
+
+/*
+ * IORT support.
+ */
+
+struct acpi_iort {
+	struct acpi_table_header	hdr;
+#define IORT_SIG	"IORT"
+	uint32_t	number_of_nodes;
+	uint32_t	offset;
+	uint32_t	reserved;
+} __packed;
+
+struct acpi_iort_node {
+	uint8_t		type;
+#define ACPI_IORT_ITS		0
+#define ACPI_IORT_ROOT_COMPLEX	2
+	uint16_t	length;
+	uint8_t		revision;
+	uint32_t	reserved1;
+	uint32_t	number_of_mappings;
+	uint32_t	mapping_offset;
+	uint64_t	memory_access_properties;
+	uint32_t	atf_attributes;
+	uint32_t	segment;
+	uint8_t		memory_address_size_limit;
+	uint8_t		reserved2[3];
+} __packed;
+
+struct acpi_iort_mapping {
+	uint32_t	input_base;
+	uint32_t	length;
+	uint32_t	output_base;
+	uint32_t	output_reference;
+	uint32_t	flags;
+#define ACPI_IORT_MAPPING_SINGLE	0x00000001
+} __packed;
+
+uint32_t
+acpipci_iort_map_node(struct acpi_iort_node *node, uint32_t id, uint32_t reference)
+{
+	struct acpi_iort_mapping *map =
+	    (struct acpi_iort_mapping *)((char *)node + node->mapping_offset);
+	int i;
+	
+	for (i = 0; i < node->number_of_mappings; i++) {
+		if (map[i].output_reference != reference)
+			continue;
+		
+		if (map[i].flags & ACPI_IORT_MAPPING_SINGLE)
+			return map[i].output_base;
+
+		if (map[i].input_base <= id &&
+		    id < map[i].input_base + map[i].length)
+			return map[i].output_base + (id - map[i].input_base);
+	}
+
+	return id;
+}
+
+uint32_t
+acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	struct acpipci_softc *sc = pc->pc_intr_v;
+	struct acpi_table_header *hdr;
+	struct acpi_iort *iort = NULL;
+	struct acpi_iort_node *node;
+	struct acpi_q *entry;
+	uint32_t rid, its = 0;
+	uint32_t offset;
+	int i;
+
+	rid = pci_requester_id(pc, tag);
+
+	/* Look for IORT table. */
+	SIMPLEQ_FOREACH(entry, &sc->sc_acpi->sc_tables, q_next) {
+		hdr = entry->q_table;
+		if (strncmp(hdr->signature, IORT_SIG,
+		    sizeof(hdr->signature)) == 0) {
+			iort = entry->q_table;
+			break;
+		}
+	}
+	if (iort == NULL)
+		return rid;
+
+	/* Find reference to ITS group. */
+	offset = iort->offset;
+	for (i = 0; i < iort->number_of_nodes; i++) {
+		node = (struct acpi_iort_node *)((char *)iort + offset);
+		switch (node->type) {
+		case ACPI_IORT_ITS:
+			its = offset;
+			break;
+		}
+		offset += node->length;
+	}
+	if (its == 0)
+		return rid;
+
+	/* Find our root complex and map. */
+	offset = iort->offset;
+	for (i = 0; i < iort->number_of_nodes; i++) {
+		node = (struct acpi_iort_node *)((char *)iort + offset);
+		switch (node->type) {
+		case ACPI_IORT_ROOT_COMPLEX:
+			if (node->segment == sc->sc_seg)
+				return acpipci_iort_map_node(node, rid, its);
+			break;
+		}
+		offset += node->length;
+	}
+
+	return rid;
 }
