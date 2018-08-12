@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2017/11/22 20:36:02 kettenis Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2018/08/12 17:15:10 mortimer Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ __curbrk:
  * Change the data segment size
  */
 ENTRY(sbrk)
+	RETGUARD_SETUP(sbrk, x15)
 #ifdef __PIC__
 	/* Setup the GOT */
 	adrp	x3, :got:__curbrk
@@ -71,6 +72,7 @@ ENTRY(sbrk)
 	str	x1, [x2]
 
 	/* Return old curbrk value */
+	RETGUARD_CHECK(sbrk, x15)
 	ret
 
 	.align	3

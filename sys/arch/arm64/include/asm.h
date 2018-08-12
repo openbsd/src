@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2018/08/12 17:15:10 mortimer Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -80,6 +80,44 @@
 	ldp	x29, x30, [sp], #16;
 #else
 # define _PROF_PROLOGUE
+#endif
+
+#if defined(_RET_PROTECTOR)
+# define RETGUARD_SETUP(x, reg) \
+	RETGUARD_SYMBOL(x); \
+	adrp    reg, __CONCAT(__retguard_, x); \
+	ldr     reg, [reg, :lo12:__CONCAT(__retguard_, x)]; \
+	eor     reg, reg, x30
+# define RETGUARD_CHECK(x, reg) \
+	eor     reg, reg, x30; \
+	adrp    x9, __CONCAT(__retguard_, x); \
+	ldr     x9, [x9, :lo12:__CONCAT(__retguard_, x)]; \
+	subs    reg, reg, x9; \
+	cbz     reg, 66f; \
+	brk     #0x1; \
+66:
+# define RETGUARD_PUSH(reg) \
+	str     reg, [sp, #-16]!
+# define RETGUARD_POP(reg) \
+	ldr     reg, [sp, #16]!
+# define RETGUARD_SYMBOL(x) \
+	.ifndef __CONCAT(__retguard_, x); \
+	.hidden __CONCAT(__retguard_, x); \
+	.type   __CONCAT(__retguard_, x),@object; \
+	.pushsection .openbsd.randomdata.retguard,"aw",@progbits; \
+	.weak   __CONCAT(__retguard_, x); \
+	.p2align 3; \
+	__CONCAT(__retguard_, x): ; \
+	.xword 0; \
+	.size __CONCAT(__retguard_, x), 8; \
+	.popsection; \
+	.endif
+#else
+# define RETGUARD_SETUP(x, reg)
+# define RETGUARD_CHECK(x, reg)
+# define RETGUARD_PUSH(reg)
+# define RETGUARD_POP(reg)
+# define RETGUARD_SYMBOL(x)
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE

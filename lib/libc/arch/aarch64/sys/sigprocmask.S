@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.2 2017/02/22 22:18:51 patrick Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.3 2018/08/12 17:15:10 mortimer Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #include "SYS.h"
 
 SYSENTRY_HIDDEN(sigprocmask)
+	RETGUARD_SETUP(sigprocmask, x15)
 	cbz	x1, 1f
 	ldr	w1, [x1]
 	b	2f
@@ -49,5 +50,6 @@ SYSENTRY_HIDDEN(sigprocmask)
 	str	w0, [x2]
 1:
 	mov	x0, #0x00000000
+	RETGUARD_CHECK(sigprocmask, x15)
 	ret
 SYSCALL_END_HIDDEN(sigprocmask)

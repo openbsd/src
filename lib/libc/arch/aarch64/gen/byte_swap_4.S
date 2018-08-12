@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_4.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: byte_swap_4.S,v 1.2 2018/08/12 17:15:10 mortimer Exp $	*/
 /*	$NetBSD: byte_swap_4.S,v 1.2 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -36,5 +36,7 @@ _ENTRY(_C_LABEL(__bswap32))
 _ENTRY(_C_LABEL(ntohl))
 _ENTRY(_C_LABEL(htonl))
 _PROF_PROLOGUE
+	RETGUARD_SETUP(__bswap32, x15)
 	rev	w0, w0
+	RETGUARD_CHECK(__bswap32, x15)
 	ret

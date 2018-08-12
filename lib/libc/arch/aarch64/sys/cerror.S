@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.4 2017/03/19 00:29:02 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.5 2018/08/12 17:15:10 mortimer Exp $	*/
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -32,8 +32,10 @@
 #define TCB_OFFSET_ERRNO	(-12)
 
 _ENTRY(CERROR)
+	RETGUARD_SETUP(CERROR, x15)
 	mrs	x1, tpidr_el0
 	str	w0, [x1, #TCB_OFFSET_ERRNO]
 	movn	x0, #0
+	RETGUARD_CHECK(CERROR, x15)
 	ret
 END(CERROR)

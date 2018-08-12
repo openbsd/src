@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.4 2017/12/30 10:20:34 kettenis Exp $ */
+/* $OpenBSD: copy.S,v 1.5 2018/08/12 17:15:10 mortimer Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -34,8 +34,10 @@
  * XXX should this assert that address spaces are correct for each address?
  */
 ENTRY(copyin)
+	RETGUARD_SETUP(copy, x15)
 	cbnz	x2, 1f
 	mov	x0, 0
+	RETGUARD_CHECK(copy, x15)
 	ret
 1:
 	mrs	x3, tpidr_el1			// load cpuinfo
@@ -53,11 +55,13 @@ ENTRY(copyin)
 
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
+	RETGUARD_CHECK(copy, x15)
 	ret
 
 .Lcopyfault:
 	mov	x0, #EFAULT
 	ldr	x4, [x3, #(PCB_ONFAULT)]
+	RETGUARD_CHECK(copy, x15)
 	ret
 
 /*
@@ -69,6 +73,7 @@ ENTRY(copyin)
  * XXX should this assert that address spaces are correct for each address?
  */
 ENTRY(copyin32)
+	RETGUARD_SETUP(copy, x15)
 	mrs	x3, tpidr_el1			// load cpuinfo
 	ldr	x3, [x3, #(CI_CURPCB)]
 	ldr	x4, [x3, #(PCB_ONFAULT)]
@@ -80,6 +85,7 @@ ENTRY(copyin32)
 
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
+	RETGUARD_CHECK(copy, x15)
 	ret
 
 /*
@@ -93,8 +99,10 @@ ENTRY(copyin32)
  */
 
 ENTRY(copyout)
+	RETGUARD_SETUP(copy, x15)
 	cbnz	x2, 1f
 	mov	x0, 0
+	RETGUARD_CHECK(copy, x15)
 	ret
 1:
 	mrs	x3, tpidr_el1			// load cpuinfo
@@ -112,6 +120,7 @@ ENTRY(copyout)
 
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
+	RETGUARD_CHECK(copy, x15)
 	ret
 
 /*
@@ -123,8 +132,10 @@ ENTRY(copyout)
  */
 
 ENTRY(kcopy)
+	RETGUARD_SETUP(copy, x15)
 	cbnz	x2, 1f
 	mov	x0, 0
+	RETGUARD_CHECK(copy, x15)
 	ret
 1:
 	mrs	x3, tpidr_el1			// load cpuinfo
@@ -141,4 +152,5 @@ ENTRY(kcopy)
 
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
+	RETGUARD_CHECK(copy, x15)
 	ret
