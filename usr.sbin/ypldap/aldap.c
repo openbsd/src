@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.42 2018/07/31 11:37:18 rob Exp $ */
-/*	$OpenBSD: aldap.c,v 1.42 2018/07/31 11:37:18 rob Exp $ */
+/*	$Id: aldap.c,v 1.43 2018/08/12 22:04:09 rob Exp $ */
+/*	$OpenBSD: aldap.c,v 1.43 2018/08/12 22:04:09 rob Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -126,10 +126,10 @@ aldap_tls(struct aldap *ldap, struct tls_config *cfg, const char *name)
 int
 aldap_send(struct aldap *ldap, struct ber_element *root)
 {
-	int error, wrote;
 	void *ptr;
 	char *data;
 	size_t len, done;
+	ssize_t	error, wrote;
 
 	len = ber_calc_len(root);
 	error = ber_write_elements(&ldap->ber, root);
@@ -311,7 +311,7 @@ int
 aldap_create_page_control(struct ber_element *elm, int size,
     struct aldap_page_control *page)
 {
-	int len;
+	ssize_t len;
 	struct ber c;
 	struct ber_element *ber = NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.18 2018/08/03 01:51:28 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.19 2018/08/12 22:04:09 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -802,7 +802,7 @@ ber_get_writebuf(struct ber *b, void **buf)
  *	>=0	number of bytes written
  *	-1	on failure and sets errno
  */
-int
+ssize_t
 ber_write_elements(struct ber *ber, struct ber_element *root)
 {
 	size_t len;

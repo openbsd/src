@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.8 2018/08/03 01:51:28 rob Exp $ */
+/*	$OpenBSD: ber.h,v 1.9 2018/08/12 22:04:09 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -124,7 +124,7 @@ int			 ber_string2oid(const char *, struct ber_oid *);
 struct ber_element	*ber_printf_elements(struct ber_element *, char *, ...);
 int			 ber_scanf_elements(struct ber_element *, char *, ...);
 ssize_t			 ber_get_writebuf(struct ber *, void **);
-int			 ber_write_elements(struct ber *, struct ber_element *);
+ssize_t			 ber_write_elements(struct ber *, struct ber_element *);
 void			 ber_set_readbuf(struct ber *, void *, size_t);
 struct ber_element	*ber_read_elements(struct ber *, struct ber_element *);
 off_t			 ber_getpos(struct ber_element *);

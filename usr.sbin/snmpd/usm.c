@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.12 2018/02/08 18:02:06 jca Exp $	*/
+/*	$OpenBSD: usm.c,v 1.13 2018/08/12 22:04:09 rob Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -336,7 +336,8 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 	struct ber_element	*usm, *a, *res = NULL;
 	void			*ptr;
 	char			 digest[SNMP_USM_DIGESTLEN];
-	size_t			 digestlen, saltlen, len;
+	size_t			 digestlen, saltlen;
+	ssize_t			 len;
 
 	msg->sm_digest_offs = 0;
 	bzero(&ber, sizeof(ber));
@@ -414,8 +415,7 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 	struct ber		 ber;
 	struct ber_element	*encrpdu = NULL;
 	void			*ptr;
-	int			 len;
-	ssize_t			 elen;
+	ssize_t			 elen, len;
 	u_char			 encbuf[READ_BUF_SIZE];
 
 	if (!MSG_HAS_PRIV(msg))

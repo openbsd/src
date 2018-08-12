@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.29 2018/07/31 11:01:00 claudio Exp $ */
+/*	$OpenBSD: ldape.c,v 1.30 2018/08/12 22:04:09 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -72,7 +72,7 @@ void
 send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
     long long result_code, const char *extended_oid)
 {
-	int			 rc;
+	ssize_t			 rc;
 	struct ber_element	*root, *elm;
 	void			*buf;
 
@@ -117,7 +117,7 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	struct referral		*ref;
 	long long		 result_code = LDAP_REFERRAL;
 	unsigned int		 type;
-	int			 rc;
+	ssize_t			 rc;
 	void			*buf;
 	char			*url, *scope_str = NULL;
 
