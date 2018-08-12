@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.1 2018/07/02 12:46:20 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.2 2018/08/12 18:32:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -779,7 +779,7 @@ pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
 
 	cn_tab = &pluartcons;
 	cn_tab->cn_dev = makedev(maj, 0);
-	cdevsw[12] = pluartdev;		/* KLUDGE */
+	cdevsw[maj] = pluartdev;	/* KLUDGE */
 
 	pluartconsiot = iot;
 	pluartconsaddr = iobase;
