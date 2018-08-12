@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.29 2017/01/24 10:08:30 krw Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.30 2018/08/12 23:50:31 ccardenas Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -58,14 +58,6 @@
 #include <net/bpf.h>
 #endif
 
-/*
- * actor system priority and port priority.
- * XXX should be configurable.
- */
-#define	LACP_SYSTEM_PRIO	0x8000
-#define	LACP_PORT_PRIO		0x8000
-#define	LACP_IFQ_PRIO		6
-
 const u_int8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 
@@ -93,6 +85,8 @@ const struct tlv_template marker_response_tlv_template[] = {
 
 typedef void (*lacp_timer_func_t)(struct lacp_port *);
 
+void		lacp_default_partner(struct lacp_softc *,
+		    struct lacp_peerinfo *);
 void		lacp_fill_actorinfo(struct lacp_port *, struct lacp_peerinfo *);
 void		lacp_fill_markerinfo(struct lacp_port *,
 		    struct lacp_markerinfo *);
@@ -197,30 +191,21 @@ void		lacp_dprintf(const struct lacp_port *, const char *, ...)
 #define LACP_DPRINTF(a) /* nothing */
 #endif
 
-/*
- * partner administration variables.
- * XXX should be configurable.
- */
-
-const struct lacp_peerinfo lacp_partner_admin = {
-	{ 0xffff },	/* lip_systemid.lsi_prio */
-	0,		/* lip_key */
-	{ 0xffff },	/* lip_portid.lpi_prio */
-#if 1
-	/* optimistic lip_state */
-	LACP_STATE_SYNC | LACP_STATE_AGGREGATION |
-	    LACP_STATE_COLLECTING | LACP_STATE_DISTRIBUTING
-#else
-	/* pessimistic lip_state */
-	0
-#endif
-};
-
 const lacp_timer_func_t lacp_timer_funcs[LACP_NTIMER] = {
 	[LACP_TIMER_CURRENT_WHILE] = lacp_sm_rx_timer,
 	[LACP_TIMER_PERIODIC] = lacp_sm_ptx_timer,
 	[LACP_TIMER_WAIT_WHILE] = lacp_sm_mux_timer,
 };
+
+void
+lacp_default_partner(struct lacp_softc *lsc, struct lacp_peerinfo *peer)
+{
+	peer->lip_systemid.lsi_prio = lsc->lsc_sys_prio;
+	peer->lip_key = 0;
+	peer->lip_portid.lpi_prio = lsc->lsc_port_prio;
+	peer->lip_state = LACP_STATE_SYNC | LACP_STATE_AGGREGATION |
+	    LACP_STATE_COLLECTING | LACP_STATE_DISTRIBUTING;
+}
 
 int
 lacp_input(struct trunk_port *tp, struct mbuf *m)
@@ -351,13 +336,14 @@ bad:
 void
 lacp_fill_actorinfo(struct lacp_port *lp, struct lacp_peerinfo *info)
 {
+	struct lacp_softc *lsc = lp->lp_lsc;
 	struct trunk_port *tp = lp->lp_trunk;
 	struct trunk_softc *sc = tp->tp_trunk;
 
-	info->lip_systemid.lsi_prio = htons(LACP_SYSTEM_PRIO);
+	info->lip_systemid.lsi_prio = htons(lsc->lsc_sys_prio);
 	memcpy(&info->lip_systemid.lsi_mac,
 	    sc->tr_ac.ac_enaddr, ETHER_ADDR_LEN);
-	info->lip_portid.lpi_prio = htons(LACP_PORT_PRIO);
+	info->lip_portid.lpi_prio = htons(lsc->lsc_port_prio);
 	info->lip_portid.lpi_portno = htons(lp->lp_ifp->if_index);
 	info->lip_state = lp->lp_state;
 }
@@ -376,6 +362,7 @@ lacp_fill_markerinfo(struct lacp_port *lp, struct lacp_markerinfo *info)
 int
 lacp_xmit_lacpdu(struct lacp_port *lp)
 {
+	struct lacp_softc *lsc = lp->lp_lsc;
 	struct trunk_port *tp = lp->lp_trunk;
 	struct mbuf *m;
 	struct lacpdu *du;
@@ -385,7 +372,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	if (m == NULL)
 		return (ENOMEM);
 	m->m_len = m->m_pkthdr.len = sizeof(*du);
-	m->m_pkthdr.pf.prio = LACP_IFQ_PRIO;
+	m->m_pkthdr.pf.prio = lsc->lsc_ifq_prio;
 
 	du = mtod(m, struct lacpdu *);
 	memset(du, 0, sizeof(*du));
@@ -427,6 +414,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 int
 lacp_xmit_marker(struct lacp_port *lp)
 {
+	struct lacp_softc *lsc = lp->lp_lsc;
 	struct trunk_port *tp = lp->lp_trunk;
 	struct mbuf *m;
 	struct markerdu *mdu;
@@ -436,7 +424,7 @@ lacp_xmit_marker(struct lacp_port *lp)
 	if (m == NULL)
 		return (ENOMEM);
 	m->m_len = m->m_pkthdr.len = sizeof(*mdu);
-	m->m_pkthdr.pf.prio = LACP_IFQ_PRIO;
+	m->m_pkthdr.pf.prio = lsc->lsc_ifq_prio;
 
 	mdu = mtod(m, struct markerdu *);
 	memset(mdu, 0, sizeof(*mdu));
@@ -522,9 +510,6 @@ lacp_port_create(struct trunk_port *tp)
 	struct ifreq ifr;
 	int error;
 
-	int active = 1; /* XXX should be configurable */
-	int fast = 0; /* XXX should be configurable */
-
 	bzero(&ifr, sizeof(ifr));
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
@@ -554,8 +539,8 @@ lacp_port_create(struct trunk_port *tp)
 	lacp_fill_actorinfo(lp, &lp->lp_actor);
 	lacp_fill_markerinfo(lp, &lp->lp_marker);
 	lp->lp_state =
-	    (active ? LACP_STATE_ACTIVITY : 0) |
-	    (fast ? LACP_STATE_TIMEOUT : 0);
+	    (lsc->lsc_mode ? LACP_STATE_ACTIVITY : 0) |
+	    (lsc->lsc_timeout ? LACP_STATE_TIMEOUT : 0);
 	lp->lp_aggregator = NULL;
 	lacp_sm_rx_set_expired(lp);
 
@@ -763,6 +748,13 @@ lacp_attach(struct trunk_softc *sc)
 	lsc->lsc_active_aggregator = NULL;
 	TAILQ_INIT(&lsc->lsc_aggregators);
 	LIST_INIT(&lsc->lsc_ports);
+
+	/* set default admin values */
+	lsc->lsc_mode = LACP_DEFAULT_MODE;
+	lsc->lsc_timeout = LACP_DEFAULT_TIMEOUT;
+	lsc->lsc_sys_prio = LACP_DEFAULT_SYSTEM_PRIO;
+	lsc->lsc_port_prio = LACP_DEFAULT_PORT_PRIO;
+	lsc->lsc_ifq_prio = LACP_DEFAULT_IFQ_PRIO;
 
 	timeout_set(&lsc->lsc_transit_callout, lacp_transit_expire, lsc);
 	timeout_set(&lsc->lsc_callout, lacp_tick, lsc);
@@ -1555,12 +1547,15 @@ lacp_sm_rx_update_ntt(struct lacp_port *lp, const struct lacpdu *du)
 void
 lacp_sm_rx_record_default(struct lacp_port *lp)
 {
+	struct lacp_softc *lsc;
 	u_int8_t oldpstate;
+
+	lsc = lp->lp_lsc;
 
 	/* LACP_DPRINTF((lp, "%s\n", __func__)); */
 
 	oldpstate = lp->lp_partner.lip_state;
-	lp->lp_partner = lacp_partner_admin;
+	lacp_default_partner(lsc, &(lp->lp_partner));
 	lp->lp_state |= LACP_STATE_DEFAULTED;
 	lacp_sm_ptx_update_timeout(lp, oldpstate);
 }
@@ -1590,9 +1585,14 @@ lacp_sm_rx_update_selected(struct lacp_port *lp, const struct lacpdu *du)
 void
 lacp_sm_rx_update_default_selected(struct lacp_port *lp)
 {
+	struct lacp_softc *lsc;
+	struct lacp_peerinfo peer;
+
+	lsc = lp->lp_lsc;
+	lacp_default_partner(lsc, &peer);
 	/* LACP_DPRINTF((lp, "%s\n", __func__)); */
 
-	lacp_sm_rx_update_selected_from_peerinfo(lp, &lacp_partner_admin);
+	lacp_sm_rx_update_selected_from_peerinfo(lp, &peer);
 }
 
 /* transmit machine */

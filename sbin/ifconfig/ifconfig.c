@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.374 2018/08/12 18:33:55 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.375 2018/08/12 23:50:31 ccardenas Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -171,7 +171,12 @@ int	shownet80211chans;
 int	shownet80211nodes;
 int	showclasses;
 
-struct ifencap;
+struct	ifencap;
+
+const	char *lacpmodeactive = "active";
+const	char *lacpmodepassive = "passive";
+const	char *lacptimeoutfast = "fast";
+const	char *lacptimeoutslow = "slow";
 
 void	notealias(const char *, int);
 void	setifaddr(const char *, int);
@@ -254,6 +259,8 @@ void	setautoconf(const char *, int);
 void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
+void	settrunklacpmode(const char *, int);
+void	settrunklacptimeout(const char *, int);
 void	trunk_status(void);
 void	list_cloners(void);
 
@@ -412,6 +419,8 @@ const struct	cmd {
 	{ "trunkport",	NEXTARG,	0,		settrunkport },
 	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
 	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
+	{ "lacpmode",	NEXTARG,	0,		settrunklacpmode },
+	{ "lacptimeout", NEXTARG,	0,		settrunklacptimeout },
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "tentative",	IN6_IFF_TENTATIVE,	0,	setia6flags },
@@ -4060,6 +4069,72 @@ settrunkproto(const char *val, int d)
 	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
 	if (ioctl(s, SIOCSTRUNK, &ra) != 0)
 		err(1, "SIOCSTRUNK");
+}
+
+void
+settrunklacpmode(const char *val, int d)
+{
+	struct trunk_reqall ra;
+	struct trunk_opts tops;
+
+	bzero(&ra, sizeof(ra));
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+
+	if (ioctl(s, SIOCGTRUNK, &ra) != 0)
+		err(1, "SIOCGTRUNK");
+
+	if (ra.ra_proto != TRUNK_PROTO_LACP)
+		errx(1, "Invalid option for trunk: %s", name);
+
+	if (strcmp(val, lacpmodeactive) != 0 &&
+	    strcmp(val, lacpmodepassive) != 0)
+		errx(1, "Invalid lacpmode option for trunk: %s", name);
+
+	bzero(&tops, sizeof(tops));
+	strlcpy(tops.to_ifname, name, sizeof(tops.to_ifname));
+	tops.to_proto = TRUNK_PROTO_LACP;
+	tops.to_opts |= TRUNK_OPT_LACP_MODE;
+
+	if (strcmp(val, lacpmodeactive) == 0)
+		tops.to_lacpopts.lacp_mode = 1;
+	else
+		tops.to_lacpopts.lacp_mode = 0;
+
+	if (ioctl(s, SIOCSTRUNKOPTS, &tops) != 0)
+		err(1, "SIOCSTRUNKOPTS");
+}
+
+void
+settrunklacptimeout(const char *val, int d)
+{
+	struct trunk_reqall ra;
+	struct trunk_opts tops;
+
+	bzero(&ra, sizeof(ra));
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+
+	if (ioctl(s, SIOCGTRUNK, &ra) != 0)
+		err(1, "SIOCGTRUNK");
+
+	if (ra.ra_proto != TRUNK_PROTO_LACP)
+		errx(1, "Invalid option for trunk: %s", name);
+
+	if (strcmp(val, lacptimeoutfast) != 0 &&
+	    strcmp(val, lacptimeoutslow) != 0)
+		errx(1, "Invalid lacptimeout option for trunk: %s", name);
+
+	bzero(&tops, sizeof(tops));
+	strlcpy(tops.to_ifname, name, sizeof(tops.to_ifname));
+	tops.to_proto = TRUNK_PROTO_LACP;
+	tops.to_opts |= TRUNK_OPT_LACP_TIMEOUT;
+
+	if (strcmp(val, lacptimeoutfast) == 0)
+		tops.to_lacpopts.lacp_timeout = 1;
+	else
+		tops.to_lacpopts.lacp_timeout = 0;
+
+	if (ioctl(s, SIOCSTRUNKOPTS, &tops) != 0)
+		err(1, "SIOCSTRUNKOPTS");
 }
 
 void

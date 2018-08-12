@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.13 2018/05/12 02:02:34 ccardenas Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.14 2018/08/12 23:50:31 ccardenas Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -38,6 +38,19 @@
  */
 #define	SLOWPROTOCOLS_SUBTYPE_LACP	1
 #define	SLOWPROTOCOLS_SUBTYPE_MARKER	2
+
+/*
+ * default administrative values
+ */
+#define	LACP_DEFAULT_MODE		1 /* Active Mode */
+#define	LACP_DEFAULT_TIMEOUT		0 /* Slow Timeout */
+#define	LACP_DEFAULT_SYSTEM_PRIO	0x8000 /* Medium Priority */
+#define	LACP_LOW_SYSTEM_PRIO		0xffff
+#define	LACP_HIGH_SYSTEM_PRIO		0x0001
+#define	LACP_DEFAULT_PORT_PRIO		0x8000 /* Medium Priority */
+#define	LACP_LOW_PORT_PRIO		0xffff
+#define	LACP_HIGH_PORT_PRIO		0x0001
+#define	LACP_DEFAULT_IFQ_PRIO		6
 
 struct slowprothdr {
 	u_int8_t		sph_subtype;
@@ -221,6 +234,14 @@ struct lacp_aggregator {
 	int			la_pending; /* number of ports in wait_while */
 };
 
+struct lacp_admin_def {
+	u_int8_t		lad_mode; /* active or passive */
+	u_int8_t		lad_timeout; /* fast or slow */
+	u_int16_t		lad_prio; /* system priority */
+	u_int16_t		lad_portprio; /* port priority */
+	u_int8_t		lad_ifqprio; /* ifq priority */
+};
+
 struct lacp_softc {
 	struct trunk_softc	*lsc_softc;
 	struct lacp_aggregator	*lsc_active_aggregator;
@@ -233,6 +254,12 @@ struct lacp_softc {
 	volatile u_int		lsc_activemap;
 	SIPHASH_KEY		lsc_hashkey;
 	struct task		lsc_input;
+	struct lacp_admin_def	lsc_admin_defaults;
+#define lsc_mode		lsc_admin_defaults.lad_mode
+#define lsc_timeout		lsc_admin_defaults.lad_timeout
+#define lsc_sys_prio	lsc_admin_defaults.lad_prio
+#define lsc_port_prio	lsc_admin_defaults.lad_portprio
+#define lsc_ifq_prio	lsc_admin_defaults.lad_ifqprio
 };
 
 #define	LACP_TYPE_ACTORINFO	1

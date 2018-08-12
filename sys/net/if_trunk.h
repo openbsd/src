@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.25 2015/09/23 12:40:12 mikeb Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.26 2018/08/12 23:50:31 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -120,6 +120,36 @@ struct trunk_reqall {
 
 #define SIOCGTRUNK		_IOWR('i', 143, struct trunk_reqall)
 #define SIOCSTRUNK		 _IOW('i', 144, struct trunk_reqall)
+
+/* LACP administrative options */
+struct lacp_adminopts {
+	u_int8_t		lacp_mode;		/* active or passive */
+	u_int8_t		lacp_timeout;		/* fast or slow */
+	u_int16_t		lacp_prio;		/* system priority */
+	u_int16_t		lacp_portprio;		/* port priority */
+	u_int8_t		lacp_ifqprio;		/* ifq priority */
+};
+
+/* Trunk administrative options */
+struct trunk_opts {
+	char			to_ifname[IFNAMSIZ];	/* name of the trunk */
+	u_int			to_proto;		/* trunk protocol */
+	int			to_opts;		/* option bitmap */
+#define TRUNK_OPT_NONE			0x00
+#define TRUNK_OPT_LACP_MODE		0x01		/* set active bit */
+#define TRUNK_OPT_LACP_TIMEOUT		0x02		/* set timeout bit */
+#define TRUNK_OPT_LACP_SYS_PRIO		0x04		/* set sys_prio bit */
+#define TRUNK_OPT_LACP_PORT_PRIO	0x08		/* set port_prio bit */
+#define TRUNK_OPT_LACP_IFQ_PRIO		0x10		/* set ifq_prio bit */
+
+	union {
+		struct lacp_adminopts rpsc_lacp;
+	} to_psc;
+#define to_lacpopts	to_psc.rpsc_lacp
+};
+
+#define SIOCGTRUNKOPTS		_IOWR('i', 145, struct trunk_opts)
+#define SIOCSTRUNKOPTS		 _IOW('i', 146, struct trunk_opts)
 
 #ifdef _KERNEL
 /*
