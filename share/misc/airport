@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.66 2017/08/05 13:22:57 fcambus Exp $
+#	$OpenBSD: airport,v 1.67 2018/08/12 02:55:45 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -134,7 +134,6 @@ AYQ:Connellan, Ayers Rock, Northern Territory, Australia
 AYT:Antalya, Antalya, Turkey
 AZO:Kalamazoo/Battle Creek International, Kalamazoo, Michigan, USA
 BAH:Bahrain International, Bahrain, Bahrain
-BAK:Heydar Aliyev, Baku, Azerbaijan
 BAL:Batman, Batman, Turkey
 BAQ:Ernesto Cortissoz International, Barranquilla, Colombia
 BAX:Barnaul, Russia
@@ -642,6 +641,7 @@ GWD:Gwadar, Pakistan
 GWT:Westerland, Germany
 GWY:Carnmore, Galway, Ireland
 GXQ:Teniente Vidal, Coyhaique, Chile
+GYD:Heydar Aliyev, Baku, Azerbaijan
 GYE:Simon Bolivar, Guayaquil, Ecuador
 GYM:Guaymas, Sonora, Mexico
 GYY:Gary, Indiana, USA
