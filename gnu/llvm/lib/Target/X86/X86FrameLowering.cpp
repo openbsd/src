@@ -15,6 +15,7 @@
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
+#include "X86ReturnProtectorLowering.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/SmallSet.h"
@@ -39,7 +40,7 @@ X86FrameLowering::X86FrameLowering(const X86Subtarget &STI,
                                    unsigned StackAlignOverride)
     : TargetFrameLowering(StackGrowsDown, StackAlignOverride,
                           STI.is64Bit() ? -8 : -4),
-      STI(STI), TII(*STI.getInstrInfo()), TRI(STI.getRegisterInfo()) {
+      STI(STI), TII(*STI.getInstrInfo()), TRI(STI.getRegisterInfo()), RPL() {
   // Cache a bunch of frame-related predicates for this subtarget.
   SlotSize = TRI->getSlotSize();
   Is64Bit = STI.is64Bit();
@@ -3060,199 +3061,6 @@ void X86FrameLowering::processFunctionBeforeFrameFinalized(
       .addImm(-2);
 }
 
-static void markUsedRegsInSuccessors(MachineBasicBlock &MBB,
-                              SmallSet<unsigned, 16> &Used,
-                              SmallSet<int, 24> &Visited) {
-  int BBNum = MBB.getNumber();
-  if (Visited.count(BBNum))
-    return;
-
-  // Mark all the registers used
-  for (auto &MBBI : MBB.instrs())
-    for (auto &MBBIOp : MBBI.operands())
-      if (MBBIOp.isReg())
-        Used.insert(MBBIOp.getReg());
-  // Mark this MBB as visited
-  Visited.insert(BBNum);
-  // Recurse over all successors
-  for (auto &SuccMBB : MBB.successors())
-    markUsedRegsInSuccessors(*SuccMBB, Used, Visited);
-}
-
-static inline bool opcodeIsRealReturn(unsigned opcode) {
-  switch (opcode) {
-    case X86::RET:
-    case X86::RETL:
-    case X86::RETQ:
-    case X86::RETW:
-    case X86::RETIL:
-    case X86::RETIQ:
-    case X86::RETIW:
-    case X86::LRETL:
-    case X86::LRETQ:
-    case X86::LRETW:
-    case X86::LRETIL:
-    case X86::LRETIQ:
-    case X86::LRETIW:
-      return true;
-    default:
-      return false;
-  }
-}
-static inline bool needsReturnProtector(MachineFunction &MF) {
-  for (auto &MBB : MF)
-    for (auto &T : MBB.terminators())
-      if (opcodeIsRealReturn(T.getOpcode()))
-        return true;
-  return false;
-}
-
-bool X86FrameLowering::determineReturnProtectorTempRegister(MachineFunction &MF,
-                          const SmallVector<MachineBasicBlock *, 4> &SaveBlocks,
-                          const SmallVector<MachineBasicBlock *, 4> &RestoreBlocks) const {
-
-  MachineFrameInfo &MFI = MF.getFrameInfo();
-
-  if (!MFI.hasReturnProtector() || !needsReturnProtector(MF))
-    return true;
-
-  // CSR spills happen at the beginning of this block
-  std::vector<unsigned> TempRegs;
-  SmallSet<unsigned, 16> Used;
-  SmallSet<int, 24> Visited;
-  const Function &F = MF.getFunction();
-
-  TempRegs = {X86::R11, X86::R10};
-  if (!F.isVarArg()) {
-      // We can use any of the caller saved unused arg registers
-      switch (F.arg_size()) {
-          case 0: TempRegs.push_back(X86::RDI);
-          case 1: TempRegs.push_back(X86::RSI);
-          case 2: // RDX is the 2nd return register
-          case 3: TempRegs.push_back(X86::RCX);
-          case 4: TempRegs.push_back(X86::R8);
-          case 5: TempRegs.push_back(X86::R9);
-          default: break;
-      }
-  }
-
-  // so we can mark it as visited because anything past it is safe
-  for(auto &SB : SaveBlocks)
-    Visited.insert(SB->getNumber());
-
-  // CSR Restores happen at the end of restore blocks, before any terminators,
-  // so we need to search restores for MBB terminators, and any successor BBs.
-  for (auto &RB : RestoreBlocks) {
-    for (auto &RBI : RB->terminators())
-      for (auto &RBIOp : RBI.operands())
-        if (RBIOp.isReg())
-          Used.insert(RBIOp.getReg());
-    for (auto &SuccMBB : RB->successors())
-      markUsedRegsInSuccessors(*SuccMBB, Used, Visited);
-  }
-
-  // Now we iterate from the front to find code paths that
-  // bypass save blocks and land on return blocks
-  markUsedRegsInSuccessors(MF.front(), Used, Visited);
-
-  // Now we have gathered all the regs used outside the frame save / restore,
-  // so we can see if we have a free reg to use for the retguard cookie.
-  for (unsigned Reg : TempRegs) {
-    bool canUse = true;
-    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
-      if (Used.count(*AI)) {
-        // Reg is used somewhere, so we cannot use it
-        canUse = false;
-        break;
-      }
-    }
-    if (canUse) {
-      MFI.setReturnProtectorTempRegister(Reg);
-      break;
-    }
-  }
-
-  // return whether or not we set a register
-  return MFI.hasReturnProtectorTempRegister();
-}
-
-void X86FrameLowering::insertReturnProtectorPrologue(MachineFunction &MF,
-    MachineBasicBlock &MBB) const
-{
-
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-
-  if (!MFI.hasReturnProtector() || !MFI.hasReturnProtectorTempRegister())
-    return;
-
-  MachineBasicBlock::instr_iterator MBBI = MBB.instr_begin();
-  DebugLoc MBBDL = MBB.findDebugLoc(MBBI);
-  const Function &Fn = MF.getFunction();
-  const Module *M = Fn.getParent();
-  GlobalVariable *cookie;
-  unsigned XORRM, MOVRM, SP, REG, IP;
-
-  XORRM = X86::XOR64rm;
-  MOVRM = X86::MOV64rm;
-  SP    = X86::RSP;
-  REG   = MFI.getReturnProtectorTempRegister();
-  IP    = X86::RIP;
-
-  cookie = dyn_cast_or_null<GlobalVariable>(M->getGlobalVariable(
-        Fn.getFnAttribute("ret-protector-cookie").getValueAsString(),
-        Type::getInt8PtrTy(M->getContext())));
-  MBB.addLiveIn(REG);
-  BuildMI(MBB, MBBI, MBBDL, TII.get(MOVRM), REG)
-    .addReg(IP)
-    .addImm(0)
-    .addReg(0)
-    .addGlobalAddress(cookie)
-    .addReg(0);
-  addDirectMem(BuildMI(MBB, MBBI, MBBDL, TII.get(XORRM), REG).addReg(REG), SP);
-}
-
-bool X86FrameLowering::insertReturnProtectorEpilogue(MachineFunction &MF,
-    MachineBasicBlock &MBB) const
-{
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-
-  if (!MFI.hasReturnProtector() || !MFI.hasReturnProtectorTempRegister())
-    return false;
-
-  const Function &Fn = MF.getFunction();
-  const Module *M = Fn.getParent();
-  std::vector<MachineInstr *> returns;
-  GlobalVariable *cookie;
-  unsigned XORRM, CMPRM, SP, REG, IP;
-
-  XORRM = X86::XOR64rm;
-  CMPRM = X86::CMP64rm;
-  SP    = X86::RSP;
-  REG   = MFI.getReturnProtectorTempRegister();
-  IP    = X86::RIP;
-
-  for (auto &MI : MBB.terminators())
-    if (opcodeIsRealReturn(MI.getOpcode()))
-      returns.push_back(&MI);
-
-  if (returns.empty())
-    return false;
-
-  for (auto &MI : returns) {
-    const DebugLoc &DL = MI->getDebugLoc();
-    cookie = dyn_cast_or_null<GlobalVariable>(M->getGlobalVariable(
-          Fn.getFnAttribute("ret-protector-cookie").getValueAsString(),
-          Type::getInt8PtrTy(M->getContext())));
-    MBB.addLiveIn(REG);
-    addDirectMem(BuildMI(MBB, MI, DL, TII.get(XORRM), REG).addReg(REG), SP);
-    BuildMI(MBB, MI, DL, TII.get(CMPRM))
-      .addReg(REG)
-      .addReg(IP)
-      .addImm(0)
-      .addReg(0)
-      .addGlobalAddress(cookie)
-      .addReg(0);
-    BuildMI(MBB, MI, DL, TII.get(X86::RETGUARD_JMP_TRAP));
-  }
-  return true;
+const ReturnProtectorLowering *X86FrameLowering::getReturnProtector() const {
+  return &RPL;
 }

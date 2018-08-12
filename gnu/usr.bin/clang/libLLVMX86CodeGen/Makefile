@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2018/04/28 23:00:28 mortimer Exp $
+# $OpenBSD: Makefile,v 1.10 2018/08/12 16:59:31 mortimer Exp $
 
 LIB=	LLVMX86CodeGen
 NOPIC=
@@ -36,6 +36,7 @@ SRCS=	X86AsmPrinter.cpp \
 	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
 	X86RetpolineThunks.cpp \
+	X86ReturnProtectorLowering.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
 	X86Subtarget.cpp \

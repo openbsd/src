@@ -237,10 +237,12 @@ class MachineFrameInfo {
   /// The frame index for the stack protector.
   int StackProtectorIdx = -1;
 
-  /// The register to use for the return protector temp register
-  unsigned ReturnProtectorTempRegister = 0;
-  /// Set to true if using return protectors
-  bool ReturnProtector = false;
+  struct ReturnProtector {
+    /// The register to use for return protector calculations
+    unsigned Register = 0;
+    /// Set to true if this function needs return protectors
+    bool Needed = false;
+  } RPI;
 
   /// The frame index for the function context. Used for SjLj exceptions.
   int FunctionContextIdx = -1;
@@ -319,13 +321,13 @@ public:
   void setStackProtectorIndex(int I) { StackProtectorIdx = I; }
   bool hasStackProtectorIndex() const { return StackProtectorIdx != -1; }
 
-  /// Return the temporary register for the return protector cookie calculation
-  int getReturnProtectorTempRegister() const { return ReturnProtectorTempRegister; }
-  void setReturnProtectorTempRegister(unsigned I) { ReturnProtectorTempRegister = I; }
-  bool hasReturnProtectorTempRegister() const { return ReturnProtectorTempRegister != 0; }
-  /// Return the return protector level
-  void setReturnProtector(bool I) { ReturnProtector = I; }
-  bool hasReturnProtector() const { return ReturnProtector; }
+  /// Get / Set return protector calculation register
+  unsigned getReturnProtectorRegister() const { return RPI.Register; }
+  void setReturnProtectorRegister(unsigned I) { RPI.Register = I; }
+  bool hasReturnProtectorRegister() const { return RPI.Register != 0; }
+  /// Get / Set if this frame needs a return protector
+  void setReturnProtectorNeeded(bool I) { RPI.Needed = I; }
+  bool getReturnProtectorNeeded() const { return RPI.Needed; }
 
   /// Return the index for the function context object.
   /// This object is used for SjLj exceptions.

@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
 #define LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
 
+#include "X86ReturnProtectorLowering.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 
 namespace llvm {
@@ -23,6 +24,7 @@ class MCCFIInstruction;
 class X86InstrInfo;
 class X86Subtarget;
 class X86RegisterInfo;
+class X86ReturnProtectorLowering;
 
 class X86FrameLowering : public TargetFrameLowering {
 public:
@@ -33,6 +35,7 @@ public:
   const X86Subtarget &STI;
   const X86InstrInfo &TII;
   const X86RegisterInfo *TRI;
+  const X86ReturnProtectorLowering RPL;
 
   unsigned SlotSize;
 
@@ -68,18 +71,7 @@ public:
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
-  /// determineReturnProtectorTempRegister - find a free register for the
-  /// return protector cookie calculation.
-  virtual bool determineReturnProtectorTempRegister(MachineFunction &MF,
-                  const SmallVector<MachineBasicBlock *, 4> &SaveBlocks,
-                  const SmallVector<MachineBasicBlock *, 4> &RestoreBlocks) const override;
-
-
-  /// Insert Return Protector instrumentation prologue / epilogue
-  void insertReturnProtectorPrologue(MachineFunction &MF,
-                                     MachineBasicBlock &MBB) const override;
-  bool insertReturnProtectorEpilogue(MachineFunction &MF,
-                                     MachineBasicBlock &MBB) const override;
+  const ReturnProtectorLowering *getReturnProtector() const override;
 
   void adjustForSegmentedStacks(MachineFunction &MF,
                                 MachineBasicBlock &PrologueMBB) const override;

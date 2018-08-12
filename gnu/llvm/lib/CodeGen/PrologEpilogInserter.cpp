@@ -174,10 +174,10 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const Function &F = Fn.getFunction();
   const TargetRegisterInfo *TRI = Fn.getSubtarget().getRegisterInfo();
   const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
+  const ReturnProtectorLowering *RPL = TFI->getReturnProtector();
 
-  // Set Return Protector in the frame
-  if (F.hasFnAttribute("ret-protector"))
-    Fn.getFrameInfo().setReturnProtector(true);
+  if (RPL)
+      RPL->setupReturnProtector(Fn);
 
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : nullptr;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
@@ -214,17 +214,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
     insertPrologEpilogCode(Fn);
 
   // Add Return Protectors if using them
-  if (Fn.getFrameInfo().hasReturnProtector()) {
-    std::vector<MachineBasicBlock *> ReturnBlocks;
-    bool insertedGuard = false;
-    for (auto &MBB: Fn)
-      if (MBB.isReturnBlock())
-        ReturnBlocks.push_back(&MBB);
-    for (MachineBasicBlock *MBB: ReturnBlocks)
-      insertedGuard |= TFI->insertReturnProtectorEpilogue(Fn, *MBB);
-    if (insertedGuard)
-      TFI->insertReturnProtectorPrologue(Fn, Fn.front());
-  }
+  if (RPL)
+      RPL->insertReturnProtectors(Fn);
 
   // Replace all MO_FrameIndex operands with physical register references
   // and actual offsets.
@@ -312,6 +303,7 @@ void PEI::calculateCallFrameInfo(MachineFunction &Fn) {
 void PEI::calculateSaveRestoreBlocks(MachineFunction &Fn) {
   MachineFrameInfo &MFI = Fn.getFrameInfo();
   const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
+  const ReturnProtectorLowering *RPL = TFI->getReturnProtector();
 
   // Even when we do not change any CSR, we still want to insert the
   // prologue and epilogue of the function.
@@ -329,8 +321,8 @@ void PEI::calculateSaveRestoreBlocks(MachineFunction &Fn) {
       RestoreBlocks.push_back(RestoreBlock);
 
     // If we are adding return protectors ensure we can find a free register
-    if (MFI.hasReturnProtector() &&
-        !TFI->determineReturnProtectorTempRegister(Fn, SaveBlocks, RestoreBlocks)) {
+    if (RPL &&
+       !RPL->determineReturnProtectorRegister(Fn, SaveBlocks, RestoreBlocks)) {
       // Shrinkwrapping will prevent finding a free register
       SaveBlocks.clear();
       RestoreBlocks.clear();
@@ -350,8 +342,8 @@ void PEI::calculateSaveRestoreBlocks(MachineFunction &Fn) {
       RestoreBlocks.push_back(&MBB);
   }
 
-  if (MFI.hasReturnProtector())
-    TFI->determineReturnProtectorTempRegister(Fn, SaveBlocks, RestoreBlocks);
+  if (RPL)
+    RPL->determineReturnProtectorRegister(Fn, SaveBlocks, RestoreBlocks);
 }
 
 static void assignCalleeSavedSpillSlots(MachineFunction &F,
@@ -374,8 +366,8 @@ static void assignCalleeSavedSpillSlots(MachineFunction &F,
   const TargetFrameLowering *TFI = F.getSubtarget().getFrameLowering();
   MachineFrameInfo &MFI = F.getFrameInfo();
 
-  if (MFI.hasReturnProtectorTempRegister())
-      CSI.push_back(CalleeSavedInfo(MFI.getReturnProtectorTempRegister()));
+  if (TFI->getReturnProtector())
+      TFI->getReturnProtector()->saveReturnProtectorRegister(F, CSI);
 
   if (!TFI->assignCalleeSavedSpillSlots(F, RegInfo, CSI)) {
     // If target doesn't implement this, use generic code.
