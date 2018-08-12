@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.373 2018/08/11 09:18:49 benno Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.374 2018/08/12 18:33:55 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1707,23 +1707,16 @@ delifjoin(const char *val, int d)
 	len = 0;
 	join.i_flags |= IEEE80211_JOIN_DEL;
 
-	if (val == NULL) {
+	if (d == -1) {
 		ifr.ifr_data = (caddr_t)&join;
 		if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
 			warn("SIOCS80211JOIN");
 		return;
 	}
 
-	if (d != 0) {
-		/* no network id is especially desired */
-		memset(&join, 0, sizeof(join));
-		len = 0;
-	} else {
-		len = sizeof(join.i_nwid);
-		if (val != NULL &&
-		    get_string(val, NULL, join.i_nwid, &len) == NULL)
-			return;
-	}
+	len = sizeof(join.i_nwid);
+	if (get_string(val, NULL, join.i_nwid, &len) == NULL)
+		return;
 	join.i_len = len;
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&join;
