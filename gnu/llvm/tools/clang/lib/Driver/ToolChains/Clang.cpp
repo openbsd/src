@@ -3979,7 +3979,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       RetProtector = 1;
   }
   if (RetProtector &&
-      (getToolChain().getArch() == llvm::Triple::x86_64) &&
+      ((getToolChain().getArch() == llvm::Triple::x86_64) ||
+       (getToolChain().getArch() == llvm::Triple::aarch64)) &&
       !Args.hasArg(options::OPT_fno_stack_protector) &&
       !Args.hasArg(options::OPT_pg)) {
     CmdArgs.push_back(Args.MakeArgString("-D_RET_PROTECTOR"));

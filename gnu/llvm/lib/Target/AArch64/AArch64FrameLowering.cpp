@@ -95,6 +95,7 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64MachineFunctionInfo.h"
 #include "AArch64RegisterInfo.h"
+#include "AArch64ReturnProtectorLowering.h"
 #include "AArch64Subtarget.h"
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
@@ -1235,6 +1236,12 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
     if (produceCompactUnwindFrame(MF) && !SavedRegs.test(PairedReg))
       SpillEstimate++;
   }
+
+  if (MFI.hasReturnProtectorRegister()) {
+    SavedRegs.set(MFI.getReturnProtectorRegister());
+    SpillEstimate++;
+  }
+
   SpillEstimate += 2; // Conservatively include FP+LR in the estimate
   unsigned StackEstimate = MFI.estimateStackSize(MF) + 8 * SpillEstimate;
 
@@ -1336,4 +1343,8 @@ bool AArch64FrameLowering::enableStackSlotScavenging(
     const MachineFunction &MF) const {
   const AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   return AFI->hasCalleeSaveStackFreeSpace();
+}
+
+const ReturnProtectorLowering *AArch64FrameLowering::getReturnProtector() const {
+  return &RPL;
 }

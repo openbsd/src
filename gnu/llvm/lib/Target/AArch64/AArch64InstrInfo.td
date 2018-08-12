@@ -399,6 +399,12 @@ def MOVaddrEXT
 
 } // isReMaterializable, isCodeGenOnly
 
+//===----------------------------------------------------------------------===//
+// Pseudo instruction used by retguard
+let isCodeGenOnly = 1, hasNoSchedulingInfo = 1 in {
+    def RETGUARD_JMP_TRAP: Pseudo<(outs), (ins GPR64:$reg), []>;
+}
+
 def : Pat<(AArch64LOADgot tglobaltlsaddr:$addr),
           (LOADgot tglobaltlsaddr:$addr)>;
 
