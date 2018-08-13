@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.240 2018/08/11 16:16:07 beck Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.241 2018/08/13 20:31:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -568,8 +568,8 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	    (p->p_p->ps_flags & PS_COREDUMP))
 		return (0);
 
-	if (!ni || (ni->ni_pledge == 0))
-		panic("ni_pledge");
+	if (ni->ni_pledge == 0)
+		panic("pledge_namei: ni_pledge");
 
 	/*
 	 * We set the BYPASSUNVEIL flag to skip unveil checks
