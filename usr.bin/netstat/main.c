@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.112 2017/08/12 03:21:02 benno Exp $	*/
+/*	$OpenBSD: main.c,v 1.113 2018/08/13 14:36:54 mpi Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct protox {
 	{ ipip_stats,	"ipencap", 0 },
 	{ tcp_stats,	"tcp",	IPPROTO_TCP },
 	{ udp_stats,	"udp",	IPPROTO_UDP },
+	{ ipsec_stats,	"ipsec", 0 },
 	{ esp_stats,	"esp", 0 },
 	{ ah_stats,	"ah", 0 },
 	{ etherip_stats,"etherip", 0 },

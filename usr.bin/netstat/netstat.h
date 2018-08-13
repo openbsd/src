@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.71 2017/08/12 03:21:02 benno Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.72 2018/08/13 14:36:54 mpi Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ void	icmp_stats(char *);
 void	igmp_stats(char *);
 void	pim_stats(char *);
 void	ah_stats(char *);
+void	ipsec_stats(char *);
 void	esp_stats(char *);
 void	ipip_stats(char *);
 void	carp_stats (char *);
