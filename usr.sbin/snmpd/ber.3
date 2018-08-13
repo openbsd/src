@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.19 2018/08/13 15:22:39 rob Exp $
+.\" $OpenBSD: ber.3,v 1.20 2018/08/13 16:37:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -63,7 +63,7 @@
 .Nm ber_free
 .Nd encode and decode ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
-.Fd #include <ber.h>
+.In ber.h
 .Ft "struct ber_element *"
 .Fn "ber_get_element" "unsigned int encoding"
 .Ft "void"
@@ -93,13 +93,21 @@
 .Ft "struct ber_element *"
 .Fn "ber_add_string" "struct ber_element *prev" "const char *string"
 .Ft "struct ber_element *"
-.Fn "ber_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
+.Fo "ber_add_nstring"
+.Fa "struct ber_element *prev"
+.Fa "const char *string"
+.Fa "size_t size"
+.Fc
 .Ft "int"
 .Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
 .Ft "int"
 .Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "struct ber_element *"
-.Fn "ber_add_bitstring" "struct ber_element *prev" "const void *buf" "size_t size"
+.Fo "ber_add_bitstring"
+.Fa "struct ber_element *prev"
+.Fa "const void *buf"
+.Fa "size_t size"
+.Fc
 .Ft "int"
 .Fn "ber_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
 .Ft "struct ber_element *"
@@ -134,8 +142,8 @@
 .Fn "ber_write_elements" "struct ber *ber" "struct ber_element *root"
 .Ft "void"
 .Fn "ber_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
-.Ft "struct"
-.Fn "ber_element *ber_read_elements" "struct ber *ber" "struct ber_element *root"
+.Ft "struct ber_element *"
+.Fn "ber_read_elements" "struct ber *ber" "struct ber_element *root"
 .Ft off_t
 .Fn "ber_getpos" "struct ber_element *elm"
 .Ft "void"
@@ -145,9 +153,16 @@
 .Ft "size_t"
 .Fn "ber_calc_len" "struct ber_element *root"
 .Ft "void"
-.Fn "ber_set_application" "struct ber *ber" "unsigned int (*cb)(struct ber_element *)"
+.Fo "ber_set_application"
+.Fa "struct ber *ber"
+.Fa "unsigned int (*cb)(struct ber_element *)"
+.Fc
 .Ft "void"
-.Fn "ber_set_writecallback" "struct ber_element *elm" "void (*cb)(void *arg, size_t offs)" "void *arg"
+.Fo "ber_set_writecallback"
+.Fa "struct ber_element *elm"
+.Fa "void (*cb)(void *arg, size_t offs)"
+.Fa "void *arg"
+.Fc
 .Ft "void"
 .Fn "ber_free" "struct ber *ber"
 .Sh DESCRIPTION
@@ -227,14 +242,16 @@ application, commonly obtained by
 .Xr read 2 ,
 .Xr recv 2 ,
 or
-.Xr tls_read 2 .
+.Xr tls_read 3 .
 .Fn ber_read_elements
 may then be called to parse, validate, and store the data stream into its
 consituent parts for subsequent processing.
 .Fn ber_read_elements
 returns a pointer to a fully populated list of one or more
 .Vt ber_element ,
-or NULL on a type mismatch or read error.
+or
+.Dv NULL
+on a type mismatch or read error.
 .Pp
 The calling application must have explicit knowledge of the expected data
 types in order for correct decoding.
@@ -261,7 +278,9 @@ and
 .Fn ber_printf_elements
 functions, each of which return a pointer to
 .Vt ber_element
-on success or NULL on failure.
+on success or
+.Dv NULL
+on failure.
 .Pp
 Once
 .Vt ber_element
@@ -279,8 +298,7 @@ byte stream for subsequent use by the calling application, most commonly using
 .Xr send 2 ,
 .Xr write 2 ,
 or
-.Xr tls_write 2 .
-.Pp
+.Xr tls_write 3 .
 .Sh I/O OPERATIONS
 .Fn ber_get_writebuf ,
 .Fn ber_write_elements ,
@@ -325,7 +343,7 @@ or
 Object Identifiers are commonly used in ASN.1-based protocols.
 These functions provide an interface to parse OIDs.
 For internal representation of OIDs, the following structure
-.Ft struct ber_oid
+.Vt struct ber_oid
 is being used:
 .Bd -literal
 #define BER_MIN_OID_LEN		2
@@ -363,15 +381,15 @@ return 0, while
 returns the number of bytes written.
 Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
-.Sh STANDARDS
-ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
-Information technology - ASN.1 encoding rules.
 .Sh SEE ALSO
 .Xr read 2 ,
 .Xr recv 2 ,
 .Xr send 2 ,
 .Xr write 2 ,
-.Xr tls_read 2
+.Xr tls_read 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules.
 .Sh HISTORY
 The
 .Nm ber
