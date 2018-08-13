@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.230 2018/05/23 17:49:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.231 2018/08/13 15:05:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3438,6 +3438,7 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m)
 	struct iwm_rx_phy_info *phy_info;
 	int device_timestamp;
 	int rssi, chanidx;
+	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
 
 	phy_info = &sc->sc_last_phy_info;
 	if (__predict_false(phy_info->cfg_phy_cnt > 20))
@@ -3465,6 +3466,7 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m)
 		 * Record the current channel so we can restore it later.
 		 */
 		bss_chan = ni->ni_chan;
+		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
 	}
 	ni->ni_chan = &ic->ic_channels[chanidx];
 
@@ -3529,7 +3531,11 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m)
 	}
 #endif
 	ieee80211_input(IC2IFP(ic), m, ni, &rxi);
-	if (ni == ic->ic_bss)
+	/*
+	 * ieee80211_input() might have changed our BSS.
+	 * Restore ic_bss's channel if we are still in the same BSS.
+	 */
+	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
 		ni->ni_chan = bss_chan;
 	ieee80211_release_node(ic, ni);
 
