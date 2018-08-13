@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.690 2018/07/19 17:33:26 sthen Exp $
+$OpenBSD: usbdevs,v 1.691 2018/08/13 14:24:49 mpi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3862,6 +3862,7 @@ product SIERRA AC881U		0x6856	881U
 product SIERRA AC885U		0x6880	885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	USB305
+product SIERRA MC7304		0x68c0	MC7304
 product SIERRA MC8355		0x9013	MC8355
 product SIERRA AIRCARD_340U	0x9051	Aircard 340U
 product SIERRA AIRCARD_770S	0x9053	Aircard 770S
