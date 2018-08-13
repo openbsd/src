@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.302 2018/08/11 16:16:07 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.303 2018/08/13 20:36:35 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -636,10 +636,10 @@ sys_statfs(struct proc *p, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW | BYPASSUNVEIL, UIO_USERSPACE,
+	    SCARG(uap, path), p);
 	nd.ni_pledge = PLEDGE_RPATH;
 	nd.ni_unveil = UNVEIL_READ;
-	nd.ni_cnd.cn_flags |= BYPASSUNVEIL;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
