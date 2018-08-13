@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.52 2017/07/04 12:48:36 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.53 2018/08/13 16:54:50 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -256,7 +256,8 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d] [-p path] [-s socket] [-u user]\n",
+	fprintf(stderr,
+	    "usage: %s [-d] [-p path] [-s socket] [-U user] [-u user]\n",
 	    __progname);
 	exit(1);
 }
@@ -276,6 +277,7 @@ main(int argc, char *argv[])
 	struct stat	 sb;
 	int		 c, fd;
 	const char	*chrootpath = NULL;
+	const char	*sock_user = SLOWCGI_USER;
 	const char	*slowcgi_user = SLOWCGI_USER;
 
 	/*
@@ -295,7 +297,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dp:s:u:")) != -1) {
+	while ((c = getopt(argc, argv, "dp:s:U:u:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -305,6 +307,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			fcgi_socket = optarg;
+			break;
+		case 'U':
+			sock_user = optarg;
 			break;
 		case 'u':
 			slowcgi_user = optarg;
@@ -326,13 +331,14 @@ main(int argc, char *argv[])
 		logger = &syslogger;
 	}
 
-	pw = getpwnam(SLOWCGI_USER);
+	ldebug("sock_user: %s", sock_user);
+	pw = getpwnam(sock_user);
 	if (pw == NULL)
-		lerrx(1, "no %s user", SLOWCGI_USER);
+		lerrx(1, "no %s user", sock_user);
 
 	fd = slowcgi_listen(fcgi_socket, pw);
 
-	lwarnx("slowcgi_user: %s", slowcgi_user);
+	ldebug("slowcgi_user: %s", slowcgi_user);
 	pw = getpwnam(slowcgi_user);
 	if (pw == NULL)
 		lerrx(1, "no %s user", slowcgi_user);
