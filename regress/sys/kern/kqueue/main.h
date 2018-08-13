@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.3 2018/06/17 08:30:20 anton Exp $	*/
+/*	$OpenBSD: main.h,v 1.4 2018/08/13 06:36:29 anton Exp $	*/
 /*
  *	Written by Alexaner Bluhm <bluhm@openbsd.org> 2016 Public Domain
  */
@@ -23,7 +23,7 @@ int do_pipe(void);
 int do_process(void);
 int do_pty(void);
 int do_random(void);
-int do_regress(void);
+int do_regress(int);
 int do_signal(void);
 int do_timer(void);
 int do_tun(void);
