@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.82 2018/07/10 08:58:50 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.83 2018/08/13 14:35:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -91,8 +91,8 @@ struct filterops pipe_wfiltops =
  * Limit the number of "big" pipes
  */
 #define LIMITBIGPIPES	32
-int nbigpipe;
-static int amountpipekva;
+unsigned int nbigpipe;
+static unsigned int amountpipekva;
 
 struct pool pipe_pool;
 
@@ -214,7 +214,9 @@ pipespace(struct pipe *cpipe, u_int size)
 {
 	caddr_t buffer;
 
+	KERNEL_LOCK();
 	buffer = km_alloc(size, &kv_any, &kp_pageable, &kd_waitok);
+	KERNEL_UNLOCK();
 	if (buffer == NULL) {
 		return (ENOMEM);
 	}
@@ -227,7 +229,7 @@ pipespace(struct pipe *cpipe, u_int size)
 	cpipe->pipe_buffer.out = 0;
 	cpipe->pipe_buffer.cnt = 0;
 
-	amountpipekva += cpipe->pipe_buffer.size;
+	atomic_add_int(&amountpipekva, cpipe->pipe_buffer.size);
 
 	return (0);
 }
@@ -444,15 +446,18 @@ pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	 * so.
 	 */
 	if ((uio->uio_resid > PIPE_SIZE) &&
-	    (nbigpipe < LIMITBIGPIPES) &&
 	    (wpipe->pipe_buffer.size <= PIPE_SIZE) &&
 	    (wpipe->pipe_buffer.cnt == 0)) {
+	    	unsigned int npipe;
 
-		if ((error = pipelock(wpipe)) == 0) {
-			if (pipespace(wpipe, BIG_PIPE_SIZE) == 0)
-				nbigpipe++;
+		npipe = atomic_inc_int_nv(&nbigpipe);
+		if ((npipe <= LIMITBIGPIPES) &&
+		    (error = pipelock(wpipe)) == 0) {
+			if (pipespace(wpipe, BIG_PIPE_SIZE) != 0)
+				atomic_dec_int(&nbigpipe);
 			pipeunlock(wpipe);
-		}
+		} else
+			atomic_dec_int(&nbigpipe);
 	}
 
 	/*
@@ -759,13 +764,16 @@ pipe_close(struct file *fp, struct proc *p)
 void
 pipe_free_kmem(struct pipe *cpipe)
 {
+	u_int size = cpipe->pipe_buffer.size;
+
 	if (cpipe->pipe_buffer.buffer != NULL) {
-		if (cpipe->pipe_buffer.size > PIPE_SIZE)
-			--nbigpipe;
-		amountpipekva -= cpipe->pipe_buffer.size;
-		km_free(cpipe->pipe_buffer.buffer, cpipe->pipe_buffer.size,
-		    &kv_any, &kp_pageable);
+		KERNEL_LOCK();
+		km_free(cpipe->pipe_buffer.buffer, size, &kv_any, &kp_pageable);
+		KERNEL_UNLOCK();
+		atomic_sub_int(&amountpipekva, size);
 		cpipe->pipe_buffer.buffer = NULL;
+		if (size > PIPE_SIZE)
+			atomic_dec_int(&nbigpipe);
 	}
 }
 
@@ -777,7 +785,6 @@ pipeclose(struct pipe *cpipe)
 {
 	struct pipe *ppipe;
 	if (cpipe) {
-		
 		pipeselwakeup(cpipe);
 
 		/*
@@ -889,7 +896,7 @@ filt_pipewrite(struct knote *kn, long hint)
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_NONE, PR_WAITOK,
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_MPFLOOR, PR_WAITOK,
 	    "pipepl", NULL);
 }
 
