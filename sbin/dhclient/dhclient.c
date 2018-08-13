@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.575 2018/06/20 12:10:46 sthen Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.576 2018/08/13 14:10:26 patrick Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1230,7 +1230,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	 */
 	for (i = 0; i < config->required_option_count; i++) {
 		if (lease->options[config->required_options[i]].len == 0) {
-			name = code_to_name(i);
+			name = code_to_name(config->required_options[i]);
 			log_warnx("%s: %s required but missing", log_procname,
 			    name);
 			goto decline;
