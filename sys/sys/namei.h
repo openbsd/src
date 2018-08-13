@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.37 2018/08/11 16:16:07 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.38 2018/08/13 23:11:44 deraadt Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ struct nameidata {
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
 #define PDIRUNLOCK	0x200000      /* vfs_lookup() unlocked parent dir */
 #define BYPASSUNVEIL	0x400000      /* bypass pledgepath check */
+#define KERNELPATH	0x800000      /* access file as kernel, not process */
 
 /*
  * Initialization of an nameidata structure.

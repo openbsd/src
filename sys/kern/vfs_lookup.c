@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.73 2018/08/02 04:41:47 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.74 2018/08/13 23:11:44 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -171,12 +171,17 @@ fail:
 	/*
 	 * Get starting point for the translation.
 	 */
-	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL)
+	if ((ndp->ni_rootdir = fdp->fd_rdir) == NULL ||
+	    (ndp->ni_cnd.cn_flags & KERNELPATH))
 		ndp->ni_rootdir = rootvnode;
 
-	error = pledge_namei(p, ndp, cnp->cn_pnbuf);
-	if (error)
-		goto fail;
+	if (ndp->ni_cnd.cn_flags & KERNELPATH) {
+		ndp->ni_cnd.cn_flags |= BYPASSUNVEIL;
+	} else {
+		error = pledge_namei(p, ndp, cnp->cn_pnbuf);
+		if (error)
+			goto fail;
+	}
 
 	/*
 	 * Check if starting from root directory or current directory.
