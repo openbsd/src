@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.279 2018/07/20 21:57:26 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.280 2018/08/13 15:26:17 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -137,9 +137,6 @@ long	__guard_local __attribute__((section(".openbsd.randomdata")));
 int	main(void *);
 void	check_console(struct proc *);
 void	start_init(void *);
-void	start_cleaner(void *);
-void	start_update(void *);
-void	start_reaper(void *);
 void	crypto_init(void);
 void	db_ctf_init(void);
 void	prof_init(void);
@@ -524,15 +521,15 @@ main(void *framep)
 		panic("fork pagedaemon");
 
 	/* Create the reaper daemon kernel thread. */
-	if (kthread_create(start_reaper, NULL, &reaperproc, "reaper"))
+	if (kthread_create(reaper, NULL, &reaperproc, "reaper"))
 		panic("fork reaper");
 
 	/* Create the cleaner daemon kernel thread. */
-	if (kthread_create(start_cleaner, NULL, NULL, "cleaner"))
+	if (kthread_create(buf_daemon, NULL, &cleanerproc, "cleaner"))
 		panic("fork cleaner");
 
 	/* Create the update daemon kernel thread. */
-	if (kthread_create(start_update, NULL, NULL, "update"))
+	if (kthread_create(syncer_thread, NULL, &syncerproc, "update"))
 		panic("fork update");
 
 	/* Create the aiodone daemon kernel thread. */ 
@@ -744,25 +741,4 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
-}
-
-void
-start_update(void *arg)
-{
-	sched_sync(curproc);
-	/* NOTREACHED */
-}
-
-void
-start_cleaner(void *arg)
-{
-	buf_daemon(curproc);
-	/* NOTREACHED */
-}
-
-void
-start_reaper(void *arg)
-{
-	reaper();
-	/* NOTREACHED */
 }

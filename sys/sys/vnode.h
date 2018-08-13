@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.147 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.148 2018/08/13 15:26:17 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ int	vn_ioctl(struct file *, u_long, caddr_t, struct proc *);
 void	vn_marktext(struct vnode *);
 
 /* vfs_sync.c */
-void	sched_sync(struct proc *);
+void	syncer_thread(void *);
 void	vn_initialize_syncerd(void);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 

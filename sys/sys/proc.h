@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.255 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: proc.h,v 1.256 2018/08/13 15:26:17 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -535,7 +535,7 @@ void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
 void	endtsleep(void *);
 void	unsleep(struct proc *);
-void	reaper(void);
+void	reaper(void *);
 void	exit1(struct proc *, int, int);
 void	exit2(struct proc *);
 int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.106 2017/04/16 14:25:42 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.107 2018/08/13 15:26:17 visa Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ void  reassignbuf(struct buf *);
 void  bgetvp(struct vnode *, struct buf *);
 
 void  buf_replacevnode(struct buf *, struct vnode *);
-void  buf_daemon(struct proc *);
+void  buf_daemon(void *);
 void  buf_replacevnode(struct buf *, struct vnode *);
 int bread_cluster(struct vnode *, daddr_t, int, struct buf **);
 

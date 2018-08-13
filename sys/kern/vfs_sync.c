@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.59 2018/05/27 06:02:14 visa Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.60 2018/08/13 15:26:17 visa Exp $  */
 
 /*
  *  Portions of this code are:
@@ -133,14 +133,13 @@ vn_syncer_add_to_worklist(struct vnode *vp, int delay)
  * System filesystem synchronizer daemon.
  */
 void
-sched_sync(struct proc *p)
+syncer_thread(void *arg)
 {
+	struct proc *p = curproc;
 	struct synclist *slp;
 	struct vnode *vp;
 	time_t starttime;
 	int s;
-
-	syncerproc = curproc;
 
 	for (;;) {
 		starttime = time_second;
@@ -183,7 +182,7 @@ sched_sync(struct proc *p)
 					if (vp->v_mount != NULL)
 						printf("mounted on: %s\n",
 						    vp->v_mount->mnt_stat.f_mntonname);
-					panic("sched_sync: fsync failed");
+					panic("%s: fsync failed", __func__);
 				}
 #endif /* DIAGNOSTIC */
 				/*
