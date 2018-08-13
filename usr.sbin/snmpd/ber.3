@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.18 2018/08/12 22:04:09 rob Exp $
+.\" $OpenBSD: ber.3,v 1.19 2018/08/13 15:22:39 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2018 $
+.Dd $Mdocdate: August 13 2018 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@
 .Nm ber_set_application ,
 .Nm ber_set_writecallback ,
 .Nm ber_free
-.Nd parse ASN.1 with Basic Encoding Rules
+.Nd encode and decode ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
 .Fd #include <ber.h>
 .Ft "struct ber_element *"
@@ -153,9 +153,145 @@
 .Sh DESCRIPTION
 The
 .Nm ber
-API provides a mechanism to read and write ASN.1 streams and buffers
-using the
-.Ic Basic Encoding Rules .
+API provides a mechanism to read and write ASN.1 streams and buffers using the
+Basic Encoding Rules.
+.Pp
+Encoded
+.Nm ber
+is stored in the following structure:
+.Bd -literal
+struct ber {
+	off_t	 br_offs;
+	u_char	*br_wbuf;
+	u_char	*br_wptr;
+	u_char	*br_wend;
+	u_char	*br_rbuf;
+	u_char	*br_rptr;
+	u_char	*br_rend;
+
+	unsigned int (*br_application)(struct ber_element *);
+};
+.Ed
+.Pp
+.Fa br_rbuf
+and
+.Fa br_wbuf
+are the read and write buffers for a
+.Nm ber
+stream.
+These buffers are used when reading an existing byte stream (e.g. received from
+a TLS connection), or when writing a new byte stream in preparation for
+subsequent operations performed by the calling application (e.g. network
+transmission or export to a file).
+.Pp
+Intermediary storage of ber elements during decoding and encoding uses the
+following structure:
+.Bd -literal
+struct ber_element {
+	struct ber_element	*be_next;
+	unsigned int		 be_type;
+	unsigned int		 be_encoding;
+	size_t			 be_len;
+	off_t			 be_offs;
+	int			 be_free;
+	u_int8_t		 be_class;
+	void			(*be_cb)(void *, size_t);
+	void			*be_cbarg;
+	union {
+		struct ber_element	*bv_sub;
+		void			*bv_val;
+		long long		 bv_numeric;
+	} be_union;
+#define be_sub		be_union.bv_sub
+#define be_val		be_union.bv_val
+#define be_numeric	be_union.bv_numeric
+};
+.Ed
+.Pp
+A linked list containing one or more
+.Vt ber_element
+is created during the decoding and encoding of
+.Vt ber .
+.Pp
+Once the
+.Vt ber
+and
+.Vt ber_element
+data structures have been declared,
+.Fn ber_set_readbuf
+may be called to initialize
+.Fa br_rbuf
+in preparation for decoding.
+It is assumed that a pointer to a ber byte stream is already available to the
+application, commonly obtained by
+.Xr read 2 ,
+.Xr recv 2 ,
+or
+.Xr tls_read 2 .
+.Fn ber_read_elements
+may then be called to parse, validate, and store the data stream into its
+consituent parts for subsequent processing.
+.Fn ber_read_elements
+returns a pointer to a fully populated list of one or more
+.Vt ber_element ,
+or NULL on a type mismatch or read error.
+.Pp
+The calling application must have explicit knowledge of the expected data
+types in order for correct decoding.
+.Fn ber_scanf_elements
+may be called to extract
+.Vt ber_element
+content into local variables.
+The
+.Fn ber_get_*
+functions extract the value of a single
+.Vt ber_element
+instance.
+.Fn ber_scanf_elements
+and the
+.Fn ber_get_*
+functions return 0 on success and -1 on failure.
+.Pp
+The first step when creating new ber is to populate
+.Vt ber_element
+with the desired content.
+This may be achieved using the
+.Fn ber_add_*
+and
+.Fn ber_printf_elements
+functions, each of which return a pointer to
+.Vt ber_element
+on success or NULL on failure.
+.Pp
+Once
+.Vt ber_element
+has been fully populated,
+.Fn ber_get_writebuf
+may be used to initialize
+.Fa br_wbuf
+for writing.
+.Fn ber_write_elements
+encodes
+.Vt ber_element
+into a compliant
+.Nm ber
+byte stream for subsequent use by the calling application, most commonly using
+.Xr send 2 ,
+.Xr write 2 ,
+or
+.Xr tls_write 2 .
+.Pp
+.Sh I/O OPERATIONS
+.Fn ber_get_writebuf ,
+.Fn ber_write_elements ,
+.Fn ber_set_readbuf ,
+.Fn ber_read_elements ,
+.Fn ber_getpos ,
+.Fn ber_free_element ,
+.Fn ber_free_elements ,
+.Fn ber_set_application ,
+.Fn ber_set_writecallback ,
+.Fn ber_free
 .Sh BER ELEMENTS
 .Fn ber_get_element ,
 .Fn ber_set_header ,
@@ -182,6 +318,9 @@ using the
 .Fn ber_get_null ,
 .Fn ber_add_eoc ,
 .Fn ber_get_eoc
+.Sh FORMAT STRINGS
+.Fn ber_printf_elements ,
+.Fn ber_scanf_elements
 .Sh OBJECT IDS
 Object Identifiers are commonly used in ASN.1-based protocols.
 These functions provide an interface to parse OIDs.
@@ -205,20 +344,6 @@ struct ber_oid {
 .Fn ber_oid2ber ,
 .Fn ber_string2oid
 .Fn ber_oid_cmp ,
-.Sh FORMAT STRINGS
-.Fn ber_printf_elements ,
-.Fn ber_scanf_elements
-.Sh I/O OPERATIONS
-.Fn ber_get_writebuf ,
-.Fn ber_write_elements ,
-.Fn ber_set_readbuf ,
-.Fn ber_read_elements ,
-.Fn ber_getpos ,
-.Fn ber_free_element ,
-.Fn ber_free_elements ,
-.Fn ber_set_application ,
-.Fn ber_set_writecallback ,
-.Fn ber_free
 .Sh RETURN VALUES
 Upon successful completion
 .Fn ber_get_integer ,
@@ -238,11 +363,15 @@ return 0, while
 returns the number of bytes written.
 Otherwise, \-1 is returned and the global variable errno is
 set to indicate the error.
-.Sh SEE ALSO
-.Xr socket 2
 .Sh STANDARDS
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
 Information technology - ASN.1 encoding rules.
+.Sh SEE ALSO
+.Xr read 2 ,
+.Xr recv 2 ,
+.Xr send 2 ,
+.Xr write 2 ,
+.Xr tls_read 2
 .Sh HISTORY
 The
 .Nm ber
@@ -258,12 +387,41 @@ library was written by
 and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh CAVEATS
-Only the subset of
+The
 .Nm ber
-data types specified above are supported.
+API is subject to the following restrictions which are common to the
+Distinguished Encoding Rules as defined by X.690:
 .Pp
-Indefinite length
+.Bl -enum -compact
+.It
+Only the definite form of length encoding shall be used, encoded in the
+minimum number of octets.
+.It
+For bitstring, octetstring and restricted character string types, the
+constructed form of encoding shall not be used.
+.It
+If a boolean encoding represents the boolean value TRUE, its single contents
+octet shall have all eight bits set to one.
+.It
+Each unused bit in the final octet of the encoding of a bit string value shall
+be set to zero.
+.It
+If a bitstring value has no 1 bits, then an encoder shall encode the value with
+a length of 1 and an initial octet set to 0.
+.El
+.Pp
+In addition, set and sequence values are limited to a maximum of 65535 elements.
+No alternative encodings are permitted.
+.Pp
+.Do
+Whereas the basic encoding rules give the sender of an encoding various choices
+as to how data values may be encoded, the canonical and distinguished encoding
+rules select just one encoding from those allowed by the basic encoding rules.
+.Dc
+.Bq X.690
+.Pp
+The restrictions placed on this API avoid the ambiguity inherent in
 .Nm ber
-encoding is not supported.
+encoded ASN.1 thereby acting as a security mitigation.
 .Sh BUGS
 This manpage is a stub.
