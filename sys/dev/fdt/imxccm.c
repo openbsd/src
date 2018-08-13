@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.9 2018/07/26 10:55:26 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.10 2018/08/13 15:15:02 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,6 +32,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/imxanatopvar.h>
@@ -125,6 +126,32 @@
 #define  CCM_ANALOG_PLL_ENET_ENABLE		(1 << 13) /* i.MX6 */
 #define  CCM_ANALOG_PLL_ENET_POWERDOWN		(1 << 12) /* i.MX6 */
 #define  CCM_ANALOG_PLL_ENET_ENABLE_CLK_125MHZ	(1 << 10) /* i.MX7 */
+
+/* Frac PLL */
+#define CCM_FRAC_IMX8M_ARM_PLL0			0x28
+#define CCM_FRAC_IMX8M_ARM_PLL1			0x2c
+#define  CCM_FRAC_PLL_LOCK				(1 << 31)
+#define  CCM_FRAC_PLL_ENABLE				(1 << 21)
+#define  CCM_FRAC_PLL_POWERDOWN				(1 << 19)
+#define  CCM_FRAC_PLL_REFCLK_SEL_SHIFT			16
+#define  CCM_FRAC_PLL_REFCLK_SEL_MASK			0x3
+#define  CCM_FRAC_PLL_LOCK_SEL				(1 << 15)
+#define  CCM_FRAC_PLL_BYPASS				(1 << 14)
+#define  CCM_FRAC_PLL_COUNTCLK_SEL			(1 << 13)
+#define  CCM_FRAC_PLL_NEWDIV_VAL			(1 << 12)
+#define  CCM_FRAC_PLL_NEWDIV_ACK			(1 << 11)
+#define  CCM_FRAC_PLL_REFCLK_DIV_VAL_SHIFT		5
+#define  CCM_FRAC_PLL_REFCLK_DIV_VAL_MASK		0x3f
+#define  CCM_FRAC_PLL_OUTPUT_DIV_VAL_SHIFT		0
+#define  CCM_FRAC_PLL_OUTPUT_DIV_VAL_MASK		0x1f
+#define  CCM_FRAC_PLL_FRAC_DIV_CTL_SHIFT		7
+#define  CCM_FRAC_PLL_FRAC_DIV_CTL_MASK			0x1ffffff
+#define  CCM_FRAC_PLL_INT_DIV_CTL_SHIFT			0
+#define  CCM_FRAC_PLL_INT_DIV_CTL_MASK			0x7f
+#define  CCM_FRAC_PLL_DENOM				(1 << 24)
+#define CCM_FRAC_IMX8M_PLLOUT_DIV_CFG		0x78
+#define  CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_SHIFT	20
+#define  CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_MASK		0x7
 
 #define HCLK_FREQ				24000000
 #define PLL3_60M				60000000
@@ -237,6 +264,8 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_phandle = OF_getpropint(sc->sc_node, "phandle", 0);
 
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mq-ccm")) {
+		sc->sc_anatop = regmap_bycompatible("fsl,imx8mq-anatop");
+		KASSERT(sc->sc_anatop != NULL);
 		sc->sc_gates = imx8mq_gates;
 		sc->sc_ngates = nitems(imx8mq_gates);
 		sc->sc_divs = imx8mq_divs;
@@ -679,6 +708,156 @@ imxccm_imx8mq_usb(struct imxccm_softc *sc, uint32_t idx)
 	}
 }
 
+uint32_t
+imxccm_imx8mq_get_pll(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t divr_val, divq_val, divf_val;
+	uint32_t divff, divfi;
+	uint32_t pllout_div;
+	uint32_t pll0, pll1;
+	uint32_t freq;
+	uint32_t mux;
+
+	pllout_div = regmap_read_4(sc->sc_anatop, CCM_FRAC_IMX8M_PLLOUT_DIV_CFG);
+
+	switch (idx) {
+	case IMX8MQ_ARM_PLL:
+		pll0 = regmap_read_4(sc->sc_anatop, CCM_FRAC_IMX8M_ARM_PLL0);
+		pll1 = regmap_read_4(sc->sc_anatop, CCM_FRAC_IMX8M_ARM_PLL1);
+		pllout_div >>= CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_SHIFT;
+		pllout_div &= CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_MASK;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return 0;
+	}
+
+	if (pll0 & CCM_FRAC_PLL_POWERDOWN)
+		return 0;
+
+	if ((pll0 & CCM_FRAC_PLL_ENABLE) == 0)
+		return 0;
+
+	mux = (pll0 >> CCM_FRAC_PLL_REFCLK_SEL_SHIFT) &
+	    CCM_FRAC_PLL_REFCLK_SEL_MASK;
+	switch (mux) {
+	case 0:
+		freq = clock_get_frequency(sc->sc_node, "osc_25m");
+		break;
+	case 1:
+	case 2:
+		freq = clock_get_frequency(sc->sc_node, "osc_27m");
+		break;
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+
+	if (pll0 & CCM_FRAC_PLL_BYPASS)
+		return freq;
+
+	divr_val = (pll0 >> CCM_FRAC_PLL_REFCLK_DIV_VAL_SHIFT) &
+	    CCM_FRAC_PLL_REFCLK_DIV_VAL_MASK;
+	divq_val = pll0 & CCM_FRAC_PLL_OUTPUT_DIV_VAL_MASK;
+	divff = (pll1 >> CCM_FRAC_PLL_FRAC_DIV_CTL_SHIFT) &
+	    CCM_FRAC_PLL_FRAC_DIV_CTL_MASK;
+	divfi = pll1 & CCM_FRAC_PLL_INT_DIV_CTL_MASK;
+	divf_val = 1 + divfi + divff / CCM_FRAC_PLL_DENOM;
+
+	freq = freq / (divr_val + 1) * 8 * divf_val / ((divq_val + 1) * 2);
+	return freq / (pllout_div + 1);
+}
+
+int
+imxccm_imx8mq_set_pll(struct imxccm_softc *sc, uint32_t idx, uint64_t freq)
+{
+	uint64_t divff, divfi, divr;
+	uint32_t pllout_div;
+	uint32_t pll0, pll1;
+	uint32_t mux, reg;
+	uint64_t pfreq;
+	int i;
+
+	pllout_div = regmap_read_4(sc->sc_anatop, CCM_FRAC_IMX8M_PLLOUT_DIV_CFG);
+
+	switch (idx) {
+	case IMX8MQ_ARM_PLL:
+		pll0 = CCM_FRAC_IMX8M_ARM_PLL0;
+		pll1 = CCM_FRAC_IMX8M_ARM_PLL1;
+		pllout_div >>= CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_SHIFT;
+		pllout_div &= CCM_FRAC_IMX8M_PLLOUT_DIV_CFG_ARM_MASK;
+		/* XXX: Assume fixed divider to ease math. */
+		KASSERT(pllout_div == 0);
+		divr = 5;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return -1;
+	}
+
+	reg = regmap_read_4(sc->sc_anatop, pll0);
+	mux = (reg >> CCM_FRAC_PLL_REFCLK_SEL_SHIFT) &
+	    CCM_FRAC_PLL_REFCLK_SEL_MASK;
+	switch (mux) {
+	case 0:
+		pfreq = clock_get_frequency(sc->sc_node, "osc_25m");
+		break;
+	case 1:
+	case 2:
+		pfreq = clock_get_frequency(sc->sc_node, "osc_27m");
+		break;
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return -1;
+	}
+
+	/* Frac divider follows the PLL */
+	freq *= divr;
+
+	/* PLL calculation */
+	freq *= 2;
+	pfreq *= 8;
+	divfi = freq / pfreq;
+	divff = (uint64_t)(freq - divfi * pfreq);
+	divff = (divff * CCM_FRAC_PLL_DENOM) / pfreq;
+
+	reg = regmap_read_4(sc->sc_anatop, pll1);
+	reg &= ~(CCM_FRAC_PLL_FRAC_DIV_CTL_MASK << CCM_FRAC_PLL_FRAC_DIV_CTL_SHIFT);
+	reg |= divff << CCM_FRAC_PLL_FRAC_DIV_CTL_SHIFT;
+	reg &= ~(CCM_FRAC_PLL_INT_DIV_CTL_MASK << CCM_FRAC_PLL_INT_DIV_CTL_SHIFT);
+	reg |= (divfi - 1) << CCM_FRAC_PLL_INT_DIV_CTL_SHIFT;
+	regmap_write_4(sc->sc_anatop, pll1, reg);
+
+	reg = regmap_read_4(sc->sc_anatop, pll0);
+	reg &= ~CCM_FRAC_PLL_OUTPUT_DIV_VAL_MASK;
+	reg &= ~(CCM_FRAC_PLL_REFCLK_DIV_VAL_MASK << CCM_FRAC_PLL_REFCLK_DIV_VAL_SHIFT);
+	reg |= (divr - 1) << CCM_FRAC_PLL_REFCLK_DIV_VAL_SHIFT;
+	regmap_write_4(sc->sc_anatop, pll0, reg);
+
+	reg = regmap_read_4(sc->sc_anatop, pll0);
+	reg |= CCM_FRAC_PLL_NEWDIV_VAL;
+	regmap_write_4(sc->sc_anatop, pll0, reg);
+
+	for (i = 0; i < 5000; i++) {
+		reg = regmap_read_4(sc->sc_anatop, pll0);
+		if (reg & CCM_FRAC_PLL_BYPASS)
+			break;
+		if (reg & CCM_FRAC_PLL_POWERDOWN)
+			break;
+		if (reg & CCM_FRAC_PLL_NEWDIV_ACK)
+			break;
+		delay(10);
+	}
+	if (i == 5000)
+		printf("%s: timeout\n", __func__);
+
+	reg = regmap_read_4(sc->sc_anatop, pll0);
+	reg &= ~CCM_FRAC_PLL_NEWDIV_VAL;
+	regmap_write_4(sc->sc_anatop, pll0, reg);
+
+	return 0;
+}
+
 void
 imxccm_enable_parent(struct imxccm_softc *sc, uint32_t parent, int on)
 {
@@ -833,8 +1012,11 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 
 	if (sc->sc_gates == imx8mq_gates) {
 		switch (idx) {
+		case IMX8MQ_ARM_PLL:
+			return imxccm_imx8mq_get_pll(sc, idx);
 		case IMX8MQ_CLK_A53_SRC:
-			return 1000 * 1000 * 1000; /* arm_pll */
+			parent = IMX8MQ_ARM_PLL;
+			return imxccm_get_frequency(sc, &parent);
 		case IMX8MQ_CLK_ENET_AXI_SRC:
 			return imxccm_imx8mq_enet(sc, idx);
 		case IMX8MQ_CLK_I2C1_SRC:
@@ -923,9 +1105,25 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0];
 	uint32_t reg, div, parent, parent_freq;
+	uint32_t pcells[2];
+	int ret;
 
 	if (sc->sc_divs == imx8mq_divs) {
 		switch (idx) {
+		case IMX8MQ_CLK_A53_DIV:
+			parent = IMX8MQ_CLK_A53_SRC;
+			return imxccm_set_frequency(cookie, &parent, freq);
+		case IMX8MQ_CLK_A53_SRC:
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MQ_SYS1_PLL_800M;
+			ret = imxccm_set_parent(cookie, &idx, pcells);
+			if (ret)
+				return ret;
+			ret = imxccm_imx8mq_set_pll(sc, IMX8MQ_ARM_PLL, freq);
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MQ_ARM_PLL_OUT;
+			imxccm_set_parent(cookie, &idx, pcells);
+			return ret;
 		case IMX8MQ_CLK_USB_BUS_SRC:
 		case IMX8MQ_CLK_USB_CORE_REF_SRC:
 		case IMX8MQ_CLK_USB_PHY_REF_SRC:
@@ -987,6 +1185,18 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 
 	if (sc->sc_muxs == imx8mq_muxs) {
 		switch (idx) {
+		case IMX8MQ_CLK_A53_SRC:
+			if (pidx != IMX8MQ_ARM_PLL_OUT &&
+			    pidx != IMX8MQ_SYS1_PLL_800M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			if (pidx == IMX8MQ_ARM_PLL_OUT)
+				mux |= (0x1 << sc->sc_muxs[idx].shift);
+			if (pidx == IMX8MQ_SYS1_PLL_800M)
+				mux |= (0x4 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
 		case IMX8MQ_CLK_USB_BUS_SRC:
 			if (pidx != IMX8MQ_SYS2_PLL_500M)
 				break;

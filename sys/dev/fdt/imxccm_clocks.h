@@ -291,9 +291,12 @@ struct imxccm_mux imx7d_muxs[] = {
  * i.MX8MQ clocks.
  */
 
+#define IMX8MQ_ARM_PLL			0x0a
+#define IMX8MQ_ARM_PLL_OUT		0x0c
 #define IMX8MQ_SYS1_PLL_100M		0x48
 #define IMX8MQ_SYS1_PLL_266M		0x4c
 #define IMX8MQ_SYS1_PLL_400M		0x4d
+#define IMX8MQ_SYS1_PLL_800M		0x4e
 #define IMX8MQ_SYS2_PLL_500M		0x56
 #define IMX8MQ_CLK_A53_SRC		0x58
 #define IMX8MQ_CLK_A53_CG		0x59
