@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.88 2018/08/06 14:28:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.89 2018/08/13 15:19:52 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -734,6 +734,47 @@ ieee80211_auth_open_confirm(struct ieee80211com *ic,
 #endif
 
 void
+ieee80211_try_another_bss(struct ieee80211com *ic)
+{
+	struct ieee80211_node *curbs, *selbs;
+	struct ifnet *ifp = &ic->ic_if;
+
+	/* Don't select our current AP again. */
+	curbs = ieee80211_find_node(ic, ic->ic_bss->ni_macaddr);
+	if (curbs) {
+		curbs->ni_fails++;
+		ieee80211_node_newstate(curbs, IEEE80211_STA_CACHE);
+	}
+
+	/* Try a different AP from the same ESS if available. */
+	if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
+		/* 
+		 * Make sure we will consider APs on all bands during
+		 * access point selection in ieee80211_node_choose_bss().
+		 * During multi-band scans, our previous AP may be trying
+		 * to steer us onto another band by denying authentication.
+		 */
+		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
+	}
+	selbs = ieee80211_node_choose_bss(ic, 0, NULL);
+	if (selbs == NULL)
+		return;
+
+	/* Should not happen but seriously, don't try the same AP again. */
+	if (memcmp(selbs->ni_macaddr, ic->ic_bss->ni_macaddr,
+	    IEEE80211_NWID_LEN) == 0)
+		return;
+
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: trying AP %s on channel %d instead\n",
+		    ifp->if_xname, ether_sprintf(selbs->ni_macaddr),
+		    ieee80211_chan2ieee(ic, selbs->ni_chan));
+
+	/* Triggers an AUTH->AUTH transition, avoiding another SCAN. */
+	ieee80211_node_join_bss(ic, selbs);
+}
+
+void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, u_int16_t seq,
     u_int16_t status)
@@ -821,6 +862,8 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 				    ether_sprintf((u_int8_t *)wh->i_addr3));
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
+			else
+				ieee80211_try_another_bss(ic);
 			ic->ic_stats.is_rx_auth_fail++;
 			return;
 		}
@@ -1025,9 +1068,11 @@ justcleanup:
 		case IEEE80211_S_ASSOC:
 			switch (mgt) {
 			case IEEE80211_FC0_SUBTYPE_AUTH:
-				/* ??? */
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_AUTH, 2);
+				if (ic->ic_opmode == IEEE80211_M_STA) {
+					IEEE80211_SEND_MGMT(ic, ni,
+					    IEEE80211_FC0_SUBTYPE_AUTH,
+					    IEEE80211_AUTH_OPEN_REQUEST);
+				}
 				break;
 			case IEEE80211_FC0_SUBTYPE_DEAUTH:
 				/* ignore and retry scan on timeout */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.140 2018/08/11 10:58:39 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.141 2018/08/13 15:19:52 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -76,7 +76,6 @@ void ieee80211_ba_del(struct ieee80211_node *);
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_switch_bss(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_node_join_bss(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
 void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
@@ -978,6 +977,9 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 		int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
 		    ic->ic_opmode == IEEE80211_M_STA &&
 		    ic->ic_state == IEEE80211_S_RUN);
+		int auth_next = (ic->ic_opmode == IEEE80211_M_STA &&
+		    ic->ic_state == IEEE80211_S_AUTH);
+		int mgt = -1;
 
 		timeout_del(&ic->ic_bgscan_timeout);
 		ic->ic_flags &= ~IEEE80211_F_BGSCAN;
@@ -988,9 +990,80 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 		 * ieee80211_new_state() try to re-auth and thus send
 		 * an AUTH frame to our newly selected AP.
 		 */
-		ieee80211_new_state(ic, IEEE80211_S_AUTH,
-		    bgscan ? IEEE80211_FC0_SUBTYPE_DEAUTH : -1);
+		if (bgscan)
+			mgt = IEEE80211_FC0_SUBTYPE_DEAUTH;
+		/*
+		 * If we are trying another AP after the previous one
+		 * failed (state transition AUTH->AUTH), ensure that
+		 * ieee80211_new_state() tries to send another auth frame.
+		 */
+		else if (auth_next)
+			mgt = IEEE80211_FC0_SUBTYPE_AUTH;
+
+		ieee80211_new_state(ic, IEEE80211_S_AUTH, mgt);
 	}
+}
+
+struct ieee80211_node *
+ieee80211_node_choose_bss(struct ieee80211com *ic, int bgscan,
+    struct ieee80211_node **curbs)
+{
+	struct ieee80211_node *ni, *nextbs, *selbs = NULL, 
+	    *selbs2 = NULL, *selbs5 = NULL;
+	uint8_t min_5ghz_rssi;
+
+	ni = RBT_MIN(ieee80211_tree, &ic->ic_tree);
+
+	for (; ni != NULL; ni = nextbs) {
+		nextbs = RBT_NEXT(ieee80211_tree, ni);
+		if (ni->ni_fails) {
+			/*
+			 * The configuration of the access points may change
+			 * during my scan.  So delete the entry for the AP
+			 * and retry to associate if there is another beacon.
+			 */
+			if (ni->ni_fails++ > 2)
+				ieee80211_free_node(ic, ni);
+			continue;
+		}
+
+		if (curbs && ieee80211_node_cmp(ic->ic_bss, ni) == 0)
+			*curbs = ni;
+
+		if (ieee80211_match_bss(ic, ni) != 0)
+			continue;
+
+		if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
+			if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
+			    (selbs2 == NULL || ni->ni_rssi > selbs2->ni_rssi))
+				selbs2 = ni;
+			else if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) &&
+			    (selbs5 == NULL || ni->ni_rssi > selbs5->ni_rssi))
+				selbs5 = ni;
+		} else if (selbs == NULL || ni->ni_rssi > selbs->ni_rssi)
+			selbs = ni;
+	}
+
+	if (ic->ic_max_rssi)
+		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
+	else
+		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
+
+	/*
+	 * Prefer a 5Ghz AP even if its RSSI is weaker than the best 2Ghz AP
+	 * (as long as it meets the minimum RSSI threshold) since the 5Ghz band
+	 * is usually less saturated.
+	 */
+	if (selbs5 && selbs5->ni_rssi > min_5ghz_rssi)
+		selbs = selbs5;
+	else if (selbs5 && selbs2)
+		selbs = (selbs5->ni_rssi >= selbs2->ni_rssi ? selbs5 : selbs2);
+	else if (selbs2)
+		selbs = selbs2;
+	else if (selbs5)
+		selbs = selbs5;
+
+	return selbs;
 }
 
 /*
@@ -1000,12 +1073,10 @@ void
 ieee80211_end_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_node *ni, *nextbs, *selbs = NULL, *curbs = NULL,
-	    *selbs2 = NULL, *selbs5 = NULL;
+	struct ieee80211_node *ni, *selbs = NULL, *curbs = NULL;
 	int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
 	    ic->ic_opmode == IEEE80211_M_STA &&
 	    ic->ic_state == IEEE80211_S_RUN);
-	uint8_t min_5ghz_rssi;
 
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: end %s scan\n", ifp->if_xname,
@@ -1083,55 +1154,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 	if (!bgscan && ic->ic_opmode == IEEE80211_M_STA)
 		ieee80211_match_ess(ic);
 
-	for (; ni != NULL; ni = nextbs) {
-		nextbs = RBT_NEXT(ieee80211_tree, ni);
-		if (ni->ni_fails) {
-			/*
-			 * The configuration of the access points may change
-			 * during my scan.  So delete the entry for the AP
-			 * and retry to associate if there is another beacon.
-			 */
-			if (ni->ni_fails++ > 2)
-				ieee80211_free_node(ic, ni);
-			continue;
-		}
-
-		if (bgscan && ieee80211_node_cmp(ic->ic_bss, ni) == 0)
-			curbs = ni;
-
-		if (ieee80211_match_bss(ic, ni) != 0)
-			continue;
-
-		if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
-			if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
-			    (selbs2 == NULL || ni->ni_rssi > selbs2->ni_rssi))
-				selbs2 = ni;
-			else if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) &&
-			    (selbs5 == NULL || ni->ni_rssi > selbs5->ni_rssi))
-				selbs5 = ni;
-		} else if (selbs == NULL || ni->ni_rssi > selbs->ni_rssi)
-			selbs = ni;
-	}
-
-	if (ic->ic_max_rssi)
-		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
-	else
-		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
-
-	/*
-	 * Prefer a 5Ghz AP even if its RSSI is weaker than the best 2Ghz AP
-	 * (as long as it meets the minimum RSSI threshold) since the 5Ghz band
-	 * is usually less saturated.
-	 */
-	if (selbs5 && selbs5->ni_rssi > min_5ghz_rssi)
-		selbs = selbs5;
-	else if (selbs5 && selbs2)
-		selbs = (selbs5->ni_rssi >= selbs2->ni_rssi ? selbs5 : selbs2);
-	else if (selbs2)
-		selbs = selbs2;
-	else if (selbs5)
-		selbs = selbs5;
-
+	selbs = ieee80211_node_choose_bss(ic, bgscan, &curbs);
 	if (bgscan) {
 		struct ieee80211_node_switch_bss_arg *arg;
 
