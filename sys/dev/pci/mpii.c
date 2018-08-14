@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.114 2018/06/19 10:32:41 jmatthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -3279,7 +3279,7 @@ mpii_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		break;
 	default:
 		DNPRINTF(MPII_D_IOCTL, " invalid ioctl\n");
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	return (error);

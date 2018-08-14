@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.168 2017/09/08 05:36:52 deraadt Exp $ */
+/* $OpenBSD: mfi.c,v 1.169 2018/08/14 05:22:21 jmatthew Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1571,7 +1571,7 @@ mfi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		DNPRINTF(MFI_D_IOCTL, " invalid ioctl\n");
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	rw_exit_write(&sc->sc_lock);

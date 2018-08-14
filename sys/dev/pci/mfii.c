@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.57 2018/06/08 07:14:02 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -2737,7 +2737,7 @@ mfii_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		DNPRINTF(MFII_D_IOCTL, " invalid ioctl\n");
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	rw_exit_write(&sc->sc_lock);

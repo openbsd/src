@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.205 2016/08/17 01:02:31 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.206 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -3190,7 +3190,7 @@ mpi_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		DNPRINTF(MPI_D_IOCTL, " invalid ioctl\n");
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	rw_exit_write(&sc->sc_lock);
