@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.36 2018/08/10 17:44:16 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.37 2018/08/14 16:19:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1589,12 +1589,16 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 				p += 2;
 			}
-			EVP_SignInit_ex(&md_ctx, md, NULL);
-			EVP_SignUpdate(&md_ctx, s->s3->client_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_SignUpdate(&md_ctx, s->s3->server_random,
-			    SSL3_RANDOM_SIZE);
-			EVP_SignUpdate(&md_ctx, d, n);
+			if (!EVP_SignInit_ex(&md_ctx, md, NULL))
+				goto err;
+			if (!EVP_SignUpdate(&md_ctx, s->s3->client_random,
+			    SSL3_RANDOM_SIZE))
+				goto err;
+			if (!EVP_SignUpdate(&md_ctx, s->s3->server_random,
+			    SSL3_RANDOM_SIZE))
+				goto err;
+			if (!EVP_SignUpdate(&md_ctx, d, n))
+				goto err;
 			if (!EVP_SignFinal(&md_ctx, &p[2], (unsigned int *)&i,
 			    pkey)) {
 				SSLerror(s, ERR_R_EVP_LIB);

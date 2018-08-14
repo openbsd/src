@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.27 2018/08/10 17:52:35 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.28 2018/08/14 16:19:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1553,13 +1553,17 @@ ssl3_get_server_key_exchange(SSL *s)
 			goto f_err;
 		}
 
-		EVP_VerifyInit_ex(&md_ctx, md, NULL);
-		EVP_VerifyUpdate(&md_ctx, s->s3->client_random,
-		    SSL3_RANDOM_SIZE);
-		EVP_VerifyUpdate(&md_ctx, s->s3->server_random,
-		    SSL3_RANDOM_SIZE);
-		EVP_VerifyUpdate(&md_ctx, param, param_len);
-		if (EVP_VerifyFinal(&md_ctx, p,(int)n, pkey) <= 0) {
+		if (!EVP_VerifyInit_ex(&md_ctx, md, NULL))
+			goto err;
+		if (!EVP_VerifyUpdate(&md_ctx, s->s3->client_random,
+		    SSL3_RANDOM_SIZE))
+			goto err;
+		if (!EVP_VerifyUpdate(&md_ctx, s->s3->server_random,
+		    SSL3_RANDOM_SIZE))
+			goto err;
+		if (!EVP_VerifyUpdate(&md_ctx, param, param_len))
+			goto err;
+		if (EVP_VerifyFinal(&md_ctx, p, (int)n, pkey) <= 0) {
 			/* bad signature */
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_SIGNATURE);
