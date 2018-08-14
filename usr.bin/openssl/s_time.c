@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.25 2018/08/11 16:07:36 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.26 2018/08/14 15:25:04 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -316,29 +316,22 @@ s_time_main(int argc, char **argv)
 		/* goto end; */
 	}
 
-	if (!(s_time_config.perform & 1))
-		goto next;
-	printf("Collecting connection statistics for %lld seconds\n",
-	    (long long)s_time_config.maxtime);
-
 	/* Loop and time how long it takes to make connections */
-
-	if (benchmark(0))
-		goto end;
-
+	if (s_time_config.perform & 1) {
+		printf("Collecting connection statistics for %lld seconds\n",
+		    (long long)s_time_config.maxtime);
+		if (benchmark(0))
+			goto end;
+	}
 	/*
 	 * Now loop and time connections using the same session id over and
 	 * over
 	 */
-
- next:
-	if (!(s_time_config.perform & 2))
-		goto end;
-	printf("\n\nNow timing with session id reuse.\n");
-
-	if (benchmark(1))
-		goto end;
-
+	if (s_time_config.perform & 2) {
+		printf("\n\nNow timing with session id reuse.\n");
+		if (benchmark(1))
+			goto end;
+	}
 	ret = 0;
  end:
 	if (tm_ctx != NULL) {
