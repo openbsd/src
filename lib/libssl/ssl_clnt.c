@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.28 2018/08/14 16:19:06 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.29 2018/08/14 16:31:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1445,7 +1445,6 @@ ssl3_get_server_key_exchange(SSL *s)
 	long		 n, alg_k, alg_a;
 	EVP_PKEY	*pkey = NULL;
 	const		 EVP_MD *md = NULL;
-	RSA		*rsa = NULL;
 
 	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
@@ -1598,7 +1597,6 @@ ssl3_get_server_key_exchange(SSL *s)
 
  err:
 	EVP_PKEY_free(pkey);
-	RSA_free(rsa);
 	EVP_MD_CTX_cleanup(&md_ctx);
 
 	return (-1);
