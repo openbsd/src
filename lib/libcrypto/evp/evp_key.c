@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.25 2018/08/14 17:51:36 tb Exp $ */
+/* $OpenBSD: evp_key.c,v 1.26 2018/08/14 17:59:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,7 @@ EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
 
 	if (len > BUFSIZ)
 		len = BUFSIZ;
+	/* Ensure that 0 <= min <= len - 1. In particular, 1 <= len. */
 	if (min < 0 || len - 1 < min)
 		return -1;
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
