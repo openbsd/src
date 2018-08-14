@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.45 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.46 2018/08/14 01:26:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -287,6 +287,8 @@ print_man(const struct roff_node *n, int indent)
 		if (NODE_LINE & n->flags)
 			putchar('*');
 		printf("%d:%d", n->line, n->pos + 1);
+		if (NODE_DELIMC & n->flags)
+			putchar(')');
 		if (NODE_EOS & n->flags)
 			putchar('.');
 		putchar('\n');

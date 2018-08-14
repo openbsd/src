@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.164 2018/06/10 15:12:32 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.165 2018/08/14 01:26:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -882,6 +882,8 @@ print_man_node(DECL_ARGS)
 		} else if (*n->string == ' ' && n->flags & NODE_LINE &&
 		    (p->flags & TERMP_NONEWLINE) == 0)
 			term_newln(p);
+		else if (n->flags & NODE_DELIMC)
+			p->flags |= TERMP_NOSPACE;
 
 		term_word(p, n->string);
 		goto out;

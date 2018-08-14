@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_macro.c,v 1.85 2017/06/25 07:23:53 bentley Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.86 2018/08/14 01:26:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -187,10 +187,10 @@ rew_scope(struct roff_man *man, enum roff_tok tok)
 void
 blk_close(MACRO_PROT_ARGS)
 {
-	enum roff_tok		 ntok;
+	enum roff_tok		 ctok, ntok;
 	const struct roff_node	*nn;
 	char			*p;
-	int			 nrew, target;
+	int			 cline, cpos, nrew, target;
 
 	nrew = 1;
 	switch (tok) {
@@ -232,22 +232,29 @@ blk_close(MACRO_PROT_ARGS)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
 		    line, ppos, roff_name[tok]);
 		rew_scope(man, MAN_PP);
-	} else {
-		line = man->last->line;
-		ppos = man->last->pos;
-		ntok = man->last->tok;
-		man_unscope(man, nn);
+		return;
+	}
 
-		if (tok == MAN_RE && nn->head->aux > 0)
-			roff_setreg(man->roff, "an-margin",
-			    nn->head->aux, '-');
+	cline = man->last->line;
+	cpos = man->last->pos;
+	ctok = man->last->tok;
+	man_unscope(man, nn);
 
-		/* Move a trailing paragraph behind the block. */
+	if (tok == MAN_RE && nn->head->aux > 0)
+		roff_setreg(man->roff, "an-margin", nn->head->aux, '-');
 
-		if (ntok == MAN_LP || ntok == MAN_PP || ntok == MAN_P) {
-			*pos = strlen(buf);
-			blk_imp(man, ntok, line, ppos, pos, buf);
-		}
+	/* Trailing text. */
+
+	if (buf[*pos] != '\0') {
+		roff_word_alloc(man, line, ppos, buf + *pos);
+		man->last->flags |= NODE_DELIMC;
+	}
+
+	/* Move a trailing paragraph behind the block. */
+
+	if (ctok == MAN_LP || ctok == MAN_PP || ctok == MAN_P) {
+		*pos = strlen(buf);
+		blk_imp(man, ctok, line, ppos, pos, buf);
 	}
 }
 
