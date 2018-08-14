@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.44 2018/07/03 23:21:15 mortimer Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.45 2018/08/14 16:43:02 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -156,7 +156,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	/*
 	 * Force CPU into protected mode by making an intersegment jump (to
 	 * ourselves, just a few lines down from here). We rely on the kernel
-	 * to fixup the jump target addres previously.
+	 * to fixup the jump target address previously.
 	 */
 	ljmpl	$0x8, $.Lacpi_protected_mode_trampoline
 
