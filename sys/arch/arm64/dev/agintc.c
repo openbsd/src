@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.12 2018/08/15 20:27:56 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.13 2018/08/15 21:46:29 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -80,6 +80,7 @@
 #define GICD_ICACTIVER(i)	(0x0380 + (IRQ_TO_REG32(i) * 4))
 #define GICD_IPRIORITYR(i)	(0x0400 + (i))
 #define GICD_ICFGR(i)		(0x0c00 + (IRQ_TO_REG16(i) * 4))
+#define GICD_NSACR(i)		(0x0e00 + (IRQ_TO_REG16(i) * 4))
 #define GICD_IROUTER(i)		(0x6000 + ((i) * 8))
 
 /* redistributor registers */
@@ -114,7 +115,8 @@
 #define GICR_ICFGR1		0x10c04
 
 #define GICR_PROP_SIZE		(64 * 1024)
-#define GICR_PROP_ENABLE	(1 << 0)
+#define  GICR_PROP_GROUP1	(1 << 1)
+#define  GICR_PROP_ENABLE	(1 << 0)
 #define GICR_PEND_SIZE		(64 * 1024)
 
 #define PPI_BASE		16
@@ -151,6 +153,7 @@ struct agintc_softc {
 	int			 sc_cpuremap[MAXCPUS];
 	int			 sc_nintr;
 	int			 sc_nlpi;
+	int			 sc_rk3399_quirk;
 	struct evcount		 sc_spur;
 	int			 sc_ncells;
 	int			 sc_num_redist;
@@ -269,10 +272,11 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	struct agintc_softc	*sc = (struct agintc_softc *)self;
 	struct fdt_attach_args	*faa = aux;
 	uint32_t		 typer;
+	uint32_t		 nsacr, oldnsacr;
+	uint32_t		 ctrl, bits;
 	int			 i, j, nintr;
 	int			 psw;
 	int			 offset, nredist;
-	int			 grp1enable;
 #ifdef MULTIPROCESSOR
 	int			 nipi, ipiirq[2];
 #endif
@@ -312,6 +316,31 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Minimum number of LPIs supported by any implementation. */
 		sc->sc_nlpi = 8192;
+	}
+
+	/*
+	 * The Rockchip RK3399 is busted.  Its GIC-500 treats all
+	 * access to its memory mapped registers as "secure".  As a
+	 * result, several registers don't behave as expected.  For
+	 * example, the GICD_IPRIORITYRn and GICR_IPRIORITYRn
+	 * registers expose the full priority range available to
+	 * secure interrupts.  We need to be aware of this and write
+	 * an adjusted priority value into these registers.  We also
+	 * need to be careful not to touch any bits that shouldn't be
+	 * writable in non-secure mode.
+	 *
+	 * We check whether we have secure mode access to these
+	 * registers by attempting to write to the GICD_NSACR register
+	 * and check whether its contents actually change.
+	 */
+	oldnsacr = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32));
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32),
+	    oldnsacr ^ 0xffffffff);
+	nsacr = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32));
+	if (nsacr != oldnsacr) {
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32),
+		    oldnsacr);
+		sc->sc_rk3399_quirk = 1;
 	}
 
 	evcount_attach(&sc->sc_spur, "irq1023/spur", NULL);
@@ -416,13 +445,17 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	    agintc_setipl, agintc_irq_handler);
 
 	/* enable interrupts */
-	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR,
-	   GICD_CTRL_ARE_NS|GICD_CTRL_EnableGrp1A|GICD_CTRL_EnableGrp1);
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR);
+	bits = GICD_CTRL_ARE_NS | GICD_CTRL_EnableGrp1A | GICD_CTRL_EnableGrp1;
+	if (sc->sc_rk3399_quirk) {
+		bits &= ~GICD_CTRL_EnableGrp1A;
+		bits <<= 1;
+	}
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR, ctrl | bits);
 
-	grp1enable = 1;
 	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
 	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
-	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(grp1enable));
+	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(1));
 
 #ifdef MULTIPROCESSOR
 	/* setup IPI interrupts */
@@ -587,14 +620,15 @@ agintc_set_priority(struct agintc_softc *sc, int irq, int pri)
 	uint32_t	 prival;
 
 	/*
-	 * The interrupt priority registers expose the full range of
-	 * priorities available in secure mode, and at least bit 3-7
-	 * must be implemented.  For non-secure interrupts the top bit
-	 * must be one.  We only use 16 (13 really) interrupt
-	 * priorities, so shift into bits 3-6.
-	 * also low values are higher priority thus NIPL - pri
+	 * The interrupt priority registers only expose the priorities
+	 * available in non-secure mode, so the top bit is hidden.  So
+	 * here we shift into bits 4-7.
+	 * Also low values are higher priority thus NIPL - pri
 	 */
-	prival = 0x80 | ((NIPL - pri) << 3);
+	prival = ((NIPL - pri) << 4);
+	if (sc->sc_rk3399_quirk)
+		prival = 0x80 | (prival >> 1);
+
 	if (irq >= SPI_BASE) {
 		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh,
 		    GICD_IPRIORITYR(irq), prival);
@@ -617,15 +651,17 @@ agintc_setipl(int new)
 	ci->ci_cpl = new;
 
 	/*
-	 * The priority mask register only exposes the priorities
-	 * available in non-secure mode, so the top bit is hidden.  So
-	 * here we shift into bits 4-7.
-	 * low values are higher priority thus NIPL - pri
+	 * The priority mask register exposes the full range of
+	 * priorities available in secure mode, and at least bit 3-7
+	 * must be implemented.  For non-secure interrupts the top bit
+	 * must be one.  We only use 16 (13 really) interrupt
+	 * priorities, so shift into bits 3-6.
+	 * Low values are higher priority thus NIPL - pri
 	 */
 	if (new == IPL_NONE)
 		prival = 0xff;		/* minimum priority */
 	else
-		prival = ((NIPL - new) << 4);
+		prival = 0x80 | ((NIPL - new) << 3);
 
 	__asm volatile("msr "STR(ICC_PMR)", %x0" : : "r" (prival));
 	__isb();
@@ -639,7 +675,6 @@ agintc_intr_enable(struct agintc_softc *sc, int irq)
 	struct cpu_info	*ci = curcpu();
 	int hwcpu = sc->sc_cpuremap[ci->ci_cpuid];
 	int bit = 1 << IRQ_TO_REG32BIT(irq);
-	uint32_t enable;
 
 	if (irq >= 32) {
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
@@ -647,12 +682,6 @@ agintc_intr_enable(struct agintc_softc *sc, int irq)
 	} else {
 		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_ISENABLE0, bit);
-		/* enable group1 as well */
-		bus_space_read_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
-		    GICR_IGROUP0);
-		enable |= 1 << IRQ_TO_REG32BIT(irq);
-		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
-		    GICR_IGROUP0, enable);
 	}
 }
 
@@ -960,8 +989,8 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
 	} else {
 		uint8_t *prop = AGINTC_DMA_KVA(sc->sc_prop);
 
-		prop[irqno - LPI_BASE] =
-		    0x80 | ((NIPL - ih->ih_ipl) << 3) | GICR_PROP_ENABLE;
+		prop[irqno - LPI_BASE] = ((NIPL - ih->ih_ipl) << 4) |
+		    GICR_PROP_GROUP1 | GICR_PROP_ENABLE;
 
 		/* Make globally visible. */
 		cpu_dcache_wb_range((vaddr_t)prop, 1);
