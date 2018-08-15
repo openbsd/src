@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.15 2018/08/03 13:14:46 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.16 2018/08/15 16:48:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -828,7 +828,7 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 		
 		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) < 0)
-			fatal("SIOCGIFNETMASK_IN6");
+			continue; /* addr got deleted while we were looking */
 
 		prefixlen = in6_mask2prefixlen(&((struct sockaddr_in6 *)
 		    &ifr6.ifr_addr)->sin6_addr);
