@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.83 2018/08/13 14:35:29 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.84 2018/08/15 13:19:06 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -757,7 +757,9 @@ pipe_close(struct file *fp, struct proc *p)
 
 	fp->f_ops = NULL;
 	fp->f_data = NULL;
+	KERNEL_LOCK();
 	pipeclose(cpipe);
+	KERNEL_UNLOCK();
 	return (0);
 }
 

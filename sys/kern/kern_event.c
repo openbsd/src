@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.96 2018/08/09 15:02:45 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.97 2018/08/15 13:19:06 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -905,6 +905,8 @@ kqueue_close(struct file *fp, struct proc *p)
 	struct kqueue *kq = fp->f_data;
 	int i;
 
+	KERNEL_LOCK();
+
 	for (i = 0; i < kq->kq_knlistsize; i++)
 		knote_remove(p, &kq->kq_knlist[i]);
 	if (kq->kq_knhashmask != 0) {
@@ -916,6 +918,8 @@ kqueue_close(struct file *fp, struct proc *p)
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
 	KQRELE(kq);
+
+	KERNEL_UNLOCK();
 
 	return (0);
 }

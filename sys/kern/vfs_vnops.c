@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.95 2018/07/03 20:40:25 kettenis Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.96 2018/08/15 13:19:06 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -545,7 +545,9 @@ vn_closefile(struct file *fp, struct proc *p)
 {
 	struct vnode *vp = fp->f_data;
 	struct flock lf;
+	int error;
 
+	KERNEL_LOCK();
 	if ((fp->f_iflags & FIF_HASLOCK)) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -553,8 +555,9 @@ vn_closefile(struct file *fp, struct proc *p)
 		lf.l_type = F_UNLCK;
 		(void) VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
 	}
-
-	return (vn_close(vp, fp->f_flag, fp->f_cred, p));
+	error = vn_close(vp, fp->f_flag, fp->f_cred, p);
+	KERNEL_UNLOCK();
+	return (error);
 }
 
 int
