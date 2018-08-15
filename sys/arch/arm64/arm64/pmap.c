@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.54 2018/06/01 23:10:59 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.55 2018/08/15 20:18:31 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2169,7 +2169,7 @@ pmap_map_early(paddr_t spa, psize_t len)
  */
 
 #define NUM_ASID (1 << 16)
-uint64_t pmap_asid[NUM_ASID / 64];
+uint32_t pmap_asid[NUM_ASID / 32];
 
 void
 pmap_allocate_asid(pmap_t pm)
@@ -2178,10 +2178,10 @@ pmap_allocate_asid(pmap_t pm)
 
 	do {
 		asid = arc4random() & (NUM_ASID - 2);
-		bit = (asid & (64 - 1));
-	} while (asid == 0 || (pmap_asid[asid / 64] & (3ULL << bit)));
+		bit = (asid & (32 - 1));
+	} while (asid == 0 || (pmap_asid[asid / 32] & (3U << bit)));
 
-	pmap_asid[asid / 64] |= (3ULL << bit);
+	atomic_setbits_int(&pmap_asid[asid / 32], 3U << bit);
 	pm->pm_asid = asid;
 }
 
@@ -2194,8 +2194,8 @@ pmap_free_asid(pmap_t pm)
 	cpu_tlb_flush_asid_all((uint64_t)pm->pm_asid << 48);
 	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
 
-	bit = (pm->pm_asid & (64 - 1));
-	pmap_asid[pm->pm_asid / 64] &= ~(3ULL << bit);
+	bit = (pm->pm_asid & (32 - 1));
+	atomic_clearbits_int(&pmap_asid[pm->pm_asid / 32], 3U << bit);
 }
 
 void
