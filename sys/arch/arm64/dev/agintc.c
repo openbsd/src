@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.11 2018/08/11 11:16:43 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.12 2018/08/15 20:27:56 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -148,7 +148,7 @@ struct agintc_softc {
 	bus_space_handle_t	 sc_redist_base;
 	bus_dma_tag_t		 sc_dmat;
 	uint64_t		 sc_affinity[MAX_CORES];
-	int			 sc_cpuremap[MAX_CORES]; /* bsd to redist */
+	int			 sc_cpuremap[MAXCPUS];
 	int			 sc_nintr;
 	int			 sc_nlpi;
 	struct evcount		 sc_spur;
@@ -158,7 +158,7 @@ struct agintc_softc {
 	struct agintc_dmamem	*sc_pend;
 	struct interrupt_controller sc_ic;
 	int			 sc_ipi_num[2]; /* id for NOP and DDB ipi */
-	int			 sc_ipi_reason[MAX_CORES]; /* NOP or DDB caused */
+	int			 sc_ipi_reason[MAXCPUS]; /* NOP or DDB caused */
 	void			*sc_ipi_irq[2]; /* irqhandle for each ipi */
 };
 struct agintc_softc *agintc_sc;
@@ -788,18 +788,15 @@ agintc_route_irq(void *v, int enable, struct cpu_info *ci)
 void
 agintc_route(struct agintc_softc *sc, int irq, int enable, struct cpu_info *ci)
 {
-	uint64_t  val;
-
 	/* XXX does not yet support 'participating node' */
 	if (irq >= 32) {
-		val = ((sc->sc_affinity[ci->ci_cpuid] & 0x00ffffff) |
-		    ((sc->sc_affinity[ci->ci_cpuid] & 0xff000000) << 8));
 #ifdef DEBUG_AGINTC
-		printf("router %x irq %d val %016llx\n", GICD_IROUTER(irq),irq,
+		printf("router %x irq %d val %016llx\n", GICD_IROUTER(irq),
+		    irq, ci->ci_mpidr & MPIDR_AFF);
 		    val);
 #endif
 		bus_space_write_8(sc->sc_iot, sc->sc_d_ioh,
-		    GICD_IROUTER(irq), val);
+		    GICD_IROUTER(irq), ci->ci_mpidr & MPIDR_AFF);
 	}
 }
 
@@ -1087,9 +1084,10 @@ agintc_send_ipi(struct cpu_info *ci, int id)
 		sc->sc_ipi_reason[ci->ci_cpuid] = id;
 
 	/* will only send 1 cpu */
-	sendmask = (sc->sc_affinity[ci->ci_cpuid]  & 0xff000000) << 48;
-	sendmask |= (sc->sc_affinity[ci->ci_cpuid] & 0x00ffff00) << 8;
-	sendmask |= 1 << (sc->sc_affinity[ci->ci_cpuid] & 0x0000000f);
+	sendmask = (ci->ci_mpidr & MPIDR_AFF3) << 16;
+	sendmask |= (ci->ci_mpidr & MPIDR_AFF2) << 16;
+	sendmask |= (ci->ci_mpidr & MPIDR_AFF1) << 8;
+	sendmask |= 1 << (ci->ci_mpidr & 0x0f);
 	sendmask |= (sc->sc_ipi_num[id] << 24);
 
 	__asm volatile ("msr " STR(ICC_SGI1R)", %x0" ::"r"(sendmask));
