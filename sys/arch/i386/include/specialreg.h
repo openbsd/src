@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.68 2018/08/08 05:07:46 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.69 2018/08/15 02:07:35 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -168,11 +168,6 @@
 #define	CPUIDECX_F16C	0x20000000	/* 16bit fp conversion  */
 #define	CPUIDECX_RDRAND	0x40000000	/* RDRAND instruction  */
 #define	CPUIDECX_HV	0x80000000	/* Running on hypervisor */
-/* SEFF EDX bits */
-#define SEFF0EDX_IBRS	0x04000000	/* IBRS / IBPB Speculation Control */
-#define SEFF0EDX_STIBP	0x08000000	/* STIBP Speculation Control */
-#define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
-#define SEFF0EDX_SSBD	0x80000000	/* Spec Store Bypass Disable */
 
 /*
  * "Structured Extended Feature Flags Parameters" (CPUID function 0x7, leaf 0)
@@ -211,6 +206,14 @@
 #define SEFF0ECX_AVX512VBMI	0x00000002 /* AVX-512 vector bit inst */
 #define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
+/* SEFF EDX bits */
+#define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
+#define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
+#define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
+#define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
+#define SEFF0EDX_L1DF		0x10000000 /* L1D_FLUSH */
+#define SEFF0EDX_ARCH_CAP	0x20000000 /* Has IA32_ARCH_CAPABILITIES MSR */
+#define SEFF0EDX_SSBD		0x80000000 /* Spec Store Bypass Disable */
 
 /*
  * Thermal and Power Management (CPUID function 0x6) EAX bits
@@ -320,6 +323,12 @@
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* Pentium 4 only */
 #define	MSR_TEST_CTL		0x033
 #define MSR_IA32_FEATURE_CONTROL 0x03a
+#define MSR_SPEC_CTRL		0x048	/* Speculation Control IBRS / STIBP */
+#define SPEC_CTRL_IBRS		(1ULL << 0)
+#define SPEC_CTRL_STIBP		(1ULL << 1)
+#define SPEC_CTRL_SSBD		(1ULL << 2)
+#define MSR_PRED_CMD		0x049	/* Speculation Control IBPB */
+#define PRED_CMD_IBPB		(1ULL << 0)
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define	MSR_BBL_CR_D0		0x088	/* PII+ only */
 #define	MSR_BBL_CR_D1		0x089	/* PII+ only */
@@ -336,6 +345,12 @@
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
 #define MSR_ARCH_CAPABILITIES	0x10a
 #define ARCH_CAPABILITIES_RDCL_NO	(1 << 0)	/* Meltdown safe */
+#define ARCH_CAPABILITIES_IBRS_ALL	(1 << 1)	/* enhanced IBRS */
+#define ARCH_CAPABILITIES_RSBA		(1 << 2)	/* RSB Alternate */
+#define ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY	(1 << 3)
+#define ARCH_CAPABILITIES_SSB_NO	(1 << 4)	/* Spec St Byp safe */
+#define MSR_FLUSH_CMD		0x10b
+#define FLUSH_CMD_L1D_FLUSH	(1ULL << 0)
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */

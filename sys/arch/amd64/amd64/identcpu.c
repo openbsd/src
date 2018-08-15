@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.105 2018/08/08 05:07:46 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.106 2018/08/15 02:07:35 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ const struct {
 	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
+	{ SEFF0EDX_L1DF,	"L1DF" },
 	 /* SEFF0EDX_ARCH_CAP (not printed) */
 	{ SEFF0EDX_SSBD,	"SSBD" },
 }, cpu_tpm_eaxfeatures[] = {
