@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
+/*	$OpenBSD: if_muereg.h,v 1.2 2018/08/15 07:13:51 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -25,6 +25,7 @@
 /*
  * Offset of MAC address inside EEPROM.
  */
+#define	MUE_EE_IND_OFFSET	0x00
 #define	MUE_EE_MAC_OFFSET	0x01
 #define	MUE_EE_LTM_OFFSET	0x3f
 
@@ -167,6 +168,8 @@
 #define MUE_MAX_BUFSZ		18944
 #define MUE_MIN_BUFSZ		8256
 
+#define MUE_EEPROM_INDICATOR	0xa5
+
 /*
  * The interrupt endpoint is currently unused by the Moschip part.
  */
@@ -246,4 +249,5 @@ struct mue_softc {
 	int			mue_phyno;
 	int			mue_bufsz;
 	int			mue_link;
+	int			mue_eeprom_present;
 };

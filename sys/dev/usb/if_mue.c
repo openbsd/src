@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.4 2018/08/15 07:13:51 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -138,6 +138,39 @@ void		mue_tick_task(void *);
 
 #define MUE_CLRBIT(sc, reg, x)	\
 	mue_csr_write(sc, reg, mue_csr_read(sc, reg) & ~(x))
+
+#if defined(__arm__) || defined(__arm64__)
+
+#include <dev/ofw/openfirm.h>
+
+void
+mue_enaddr_OF(struct mue_softc *sc)
+{
+	char *device = "/axi/usb/hub/ethernet";
+	char prop[64];
+	int node;
+
+	if (sc->mue_dev.dv_unit != 0)
+		return;
+
+	/* Get the Raspberry Pi MAC address from FDT. */
+	if ((node = OF_finddevice("/aliases")) == -1)
+		return;
+	if (OF_getprop(node, "ethernet0", prop, sizeof(prop)) > 0 ||
+	    OF_getprop(node, "ethernet", prop, sizeof(prop)) > 0)
+		device = prop;
+
+	if ((node = OF_finddevice(device)) == -1)
+		return;
+	if (OF_getprop(node, "local-mac-address", sc->arpcom.ac_enaddr,
+	    sizeof(sc->arpcom.ac_enaddr)) != sizeof(sc->arpcom.ac_enaddr)) {
+		OF_getprop(node, "mac-address", sc->arpcom.ac_enaddr,
+		    sizeof(sc->arpcom.ac_enaddr));
+	}
+}
+#else
+#define mue_enaddr_OF(x) do {} while(0)
+#endif
 
 uint32_t
 mue_csr_read(struct mue_softc *sc, uint32_t reg)
@@ -605,7 +638,7 @@ mue_chip_init(struct mue_softc *sc)
 	if (sc->mue_product == USB_PRODUCT_SMC2_LAN7801)
 		MUE_CLRBIT(sc, MUE_MAC_CR, MUE_MAC_CR_GMII_EN);
 
-	if (sc->mue_flags & LAN7500) {
+	if (sc->mue_flags & LAN7500 || !sc->mue_eeprom_present) {
 		/* Allow MAC to detect speed and duplex from PHY. */
 		MUE_SETBIT(sc, MUE_MAC_CR, MUE_MAC_CR_AUTO_SPEED |
 		    MUE_MAC_CR_AUTO_DUPLEX);
@@ -712,6 +745,10 @@ mue_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mue_phyno = 1;
 
+	/* Check if the EEPROM programmed indicator is present. */
+	mue_read_eeprom(sc, (caddr_t)&i, MUE_EE_IND_OFFSET, 1);
+	sc->mue_eeprom_present = (i == MUE_EEPROM_INDICATOR) ? 1 : 0;
+
 	if (mue_chip_init(sc) != 0) {
 		printf("%s: chip initialization failed\n",
 		    sc->mue_dev.dv_xname);
@@ -720,13 +757,16 @@ mue_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Get station address from the EEPROM. */
-	if (mue_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
-	    MUE_EE_MAC_OFFSET, ETHER_ADDR_LEN)) {
-		printf("%s: failed to read station address\n",
-		    sc->mue_dev.dv_xname);
-		splx(s);
-		return;
-	}
+	if (sc->mue_eeprom_present) {
+		if (mue_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+		    MUE_EE_MAC_OFFSET, ETHER_ADDR_LEN)) {
+			printf("%s: failed to read station address\n",
+			    sc->mue_dev.dv_xname);
+			splx(s);
+			return;
+		}
+	} else
+		mue_enaddr_OF(sc);
 
 	/* A Microchip chip was detected.  Inform the world. */
 	printf("%s:", sc->mue_dev.dv_xname);
