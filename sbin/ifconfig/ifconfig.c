@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.375 2018/08/12 23:50:31 ccardenas Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.376 2018/08/15 14:43:30 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -749,7 +749,11 @@ main(int argc, char *argv[])
 	}
 
 	if (!found_rulefile) {
-		if (unveil("/", "") == -1)
+		if (unveil("/etc/resolv.conf", "r") == -1)
+			err(1, "unveil");
+		if (unveil("/etc/hosts", "r") == -1)
+			err(1, "unveil");
+		if (unveil("/etc/services", "r") == -1)
 			err(1, "unveil");
 		if (unveil(NULL, NULL) == -1)
 			err(1, "unveil");
