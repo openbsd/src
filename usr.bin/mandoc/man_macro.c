@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.86 2018/08/14 01:26:12 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.87 2018/08/15 15:36:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -254,7 +254,7 @@ blk_close(MACRO_PROT_ARGS)
 
 	if (ctok == MAN_LP || ctok == MAN_PP || ctok == MAN_P) {
 		*pos = strlen(buf);
-		blk_imp(man, ctok, line, ppos, pos, buf);
+		blk_imp(man, ctok, cline, cpos, pos, buf);
 	}
 }
 
