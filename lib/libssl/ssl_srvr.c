@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.38 2018/08/16 17:49:48 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.39 2018/08/16 18:13:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1509,8 +1509,8 @@ ssl3_send_server_key_exchange(SSL *s)
 	const EVP_MD *md = NULL;
 	unsigned long type;
 	EVP_MD_CTX md_ctx;
-	int al, key_len;
 	EVP_PKEY *pkey;
+	int al;
 
 	memset(&cbb, 0, sizeof(cbb));
 	memset(&cbb_params, 0, sizeof(cbb_params));
@@ -1545,20 +1545,14 @@ ssl3_send_server_key_exchange(SSL *s)
 		if (!CBB_add_bytes(&server_kex, params, params_len))
 			goto err;
 
+		/* Add signature unless anonymous. */
 		if (!(S3I(s)->hs.new_cipher->algorithm_auth & SSL_aNULL)) {
-			if ((pkey = ssl_get_sign_pkey(
-			    s, S3I(s)->hs.new_cipher, &md)) == NULL) {
+			if ((pkey = ssl_get_sign_pkey(s, S3I(s)->hs.new_cipher,
+			    &md)) == NULL) {
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			key_len = EVP_PKEY_size(pkey);
-		} else {
-			pkey = NULL;
-			key_len = 0;
-		}
 
-		/* Add signature unless anonymous. */
-		if (pkey != NULL) {
 			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s))
 				md = EVP_md5_sha1();
 		
@@ -1571,7 +1565,8 @@ ssl3_send_server_key_exchange(SSL *s)
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
-				if (!tls12_get_sigandhash_cbb(&server_kex, pkey, md)) {
+				if (!tls12_get_sigandhash_cbb(&server_kex, pkey,
+				    md)) {
 					/* Should never happen */
 					al = SSL_AD_INTERNAL_ERROR;
 					SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -1579,7 +1574,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 			}
 
-			if ((signature = calloc(1, key_len)) == NULL)
+			if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 				goto err;
 
 			if (!EVP_SignInit_ex(&md_ctx, md, NULL))
