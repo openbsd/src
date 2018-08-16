@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.302 2018/04/04 14:21:26 jsg Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.303 2018/08/16 17:40:54 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -579,18 +579,18 @@ usr
         ..
 
         # ./usr/share/zoneinfo
-        zoneinfo		gname=bin uname=root mode=0555
-            Australia		gname=bin uname=root mode=0555
+        zoneinfo		gname=bin uname=root mode=0755
+            Australia		gname=bin uname=root mode=0755
             ..
-            Brazil		gname=bin uname=root mode=0555
+            Brazil		gname=bin uname=root mode=0755
             ..
-            Canada		gname=bin uname=root mode=0555
+            Canada		gname=bin uname=root mode=0755
             ..
-            Chile		gname=bin uname=root mode=0555
+            Chile		gname=bin uname=root mode=0755
             ..
-            Mexico		gname=bin uname=root mode=0555
+            Mexico		gname=bin uname=root mode=0755
             ..
-            US			gname=bin uname=root mode=0555
+            US			gname=bin uname=root mode=0755
             ..
         ..
    ..
