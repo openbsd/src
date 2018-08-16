@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.275 2018/08/01 16:00:54 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.276 2018/08/16 15:04:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,7 +114,7 @@ static	void	 post_useless(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
 static	void	 post_xx(POST_ARGS);
 
-static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
+static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_dd,	/* Dd */
 	post_dt,	/* Dt */
 	post_os,	/* Os */
@@ -236,7 +236,6 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* %U */
 	NULL,		/* Ta */
 };
-static	const v_post *const mdoc_valids = __mdoc_valids - MDOC_Dd;
 
 #define	RSORD_MAX 14 /* Number of `Rs' blocks. */
 
@@ -355,7 +354,7 @@ mdoc_node_validate(struct roff_man *mdoc)
 		}
 
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
-		p = mdoc_valids + n->tok;
+		p = mdoc_valids + (n->tok - MDOC_Dd);
 		if (*p)
 			(*p)(mdoc);
 		if (mdoc->last == n)
