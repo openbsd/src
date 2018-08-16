@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.135 2018/07/31 10:32:19 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.136 2018/08/16 14:04:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2235,7 +2235,7 @@ bad:
 	free(copy);
 }
 
-/* Handle the OSC 10 sequence for setting background colour. */
+/* Handle the OSC 10 sequence for setting foreground colour. */
 static void
 input_osc_10(struct window_pane *wp, const char *p)
 {
