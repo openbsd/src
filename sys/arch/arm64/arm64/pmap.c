@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.55 2018/08/15 20:18:31 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.56 2018/08/16 15:36:04 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2174,20 +2174,27 @@ uint32_t pmap_asid[NUM_ASID / 32];
 void
 pmap_allocate_asid(pmap_t pm)
 {
+	uint32_t bits;
 	int asid, bit;
 
-	do {
-		asid = arc4random() & (NUM_ASID - 2);
-		bit = (asid & (32 - 1));
-	} while (asid == 0 || (pmap_asid[asid / 32] & (3U << bit)));
+	for (;;) {
+		do {
+			asid = arc4random() & (NUM_ASID - 2);
+			bit = (asid & (32 - 1));
+			bits = pmap_asid[asid / 32];
+		} while (asid == 0 || (bits & (3U << bit)));
 
-	atomic_setbits_int(&pmap_asid[asid / 32], 3U << bit);
+		if (atomic_cas_uint(&pmap_asid[asid / 32], bits,
+		    bits | (3U << bit)) == bits)
+			break;
+	}
 	pm->pm_asid = asid;
 }
 
 void
 pmap_free_asid(pmap_t pm)
 {
+	uint32_t bits;
 	int bit;
 
 	KASSERT(pm != curcpu()->ci_curpm);
@@ -2195,7 +2202,12 @@ pmap_free_asid(pmap_t pm)
 	cpu_tlb_flush_asid_all((uint64_t)(pm->pm_asid | ASID_USER) << 48);
 
 	bit = (pm->pm_asid & (32 - 1));
-	atomic_clearbits_int(&pmap_asid[pm->pm_asid / 32], 3U << bit);
+	for (;;) {
+		bits = pmap_asid[pm->pm_asid / 32];
+		if (atomic_cas_uint(&pmap_asid[pm->pm_asid / 32], bits,
+		    bits & ~(3U << bit)) == bits)
+			break;
+	}
 }
 
 void
