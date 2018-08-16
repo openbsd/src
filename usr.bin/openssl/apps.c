@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.48 2018/08/16 10:26:34 rob Exp $ */
+/* $OpenBSD: apps.c,v 1.49 2018/08/16 16:56:51 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2050,10 +2050,12 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 {
 	X509_POLICY_TREE *tree;
 	int explicit_policy;
+	int free_out = 0;
 
-	if (out == NULL)
+	if (out == NULL) {
 		out = BIO_new_fp(stderr, BIO_NOCLOSE);
-
+		free_out = 1;
+	}
 	tree = X509_STORE_CTX_get0_policy_tree(ctx);
 	explicit_policy = X509_STORE_CTX_get_explicit_policy(ctx);
 
@@ -2063,7 +2065,8 @@ policies_print(BIO *out, X509_STORE_CTX *ctx)
 	nodes_print(out, "Authority", X509_policy_tree_get0_policies(tree));
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
 
-	BIO_free(out);
+	if (free_out)
+		BIO_free(out);
 }
 
 /*
