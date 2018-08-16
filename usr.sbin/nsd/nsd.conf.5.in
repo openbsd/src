@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jun 11, 2018" "NLnet Labs" "nsd 4.1.22"
+.TH "nsd.conf" "5" "Aug 13, 2018" "NLnet Labs" "nsd 4.1.24"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -188,6 +188,10 @@ Default is no. Same as commandline option
 If set to yes it does not fork and stays in the foreground, which can
 be helpful for commandline debugging, but is also used by certain
 server supervisor processes to ascertain that the server is running.
+.TP
+.B use\-systemd: \fI<yes or no>
+Enable or disable systemd readiness signalling.
+Default is no.
 .TP
 .B do\-ip4:\fR <yes or no>
 If yes, NSD listens to IPv4 connections.  Default yes.
@@ -457,6 +461,13 @@ NSD will bind to the listed addresses to service control requests
 Use 0.0.0.0 and ::0 to service the wildcard interface.  If none are given
 NSD listens to the localhost 127.0.0.1 and ::1 interfaces for control,
 if control is enabled with control\-enable.
+.IP
+With an absolute path, a unix local named pipe is used for control.  The
+file is created with user and group that is configured and access bits
+are set to allow members of the group access.  Further access can be
+controlled by setting permissions on the directory containing the control
+socket file.  The key and cert files are not used when control is via the
+named pipe, because access control is via file and directory permission.
 .TP
 .B control\-port:\fR <number>
 The port number for remote control service. 8952 by default.

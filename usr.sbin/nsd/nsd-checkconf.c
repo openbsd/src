@@ -364,6 +364,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(do_ip4, o);
 		SERV_GET_BIN(do_ip6, o);
 		SERV_GET_BIN(reuseport, o);
+		SERV_GET_BIN(use_systemd, o);
 		SERV_GET_BIN(hide_version, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
@@ -480,6 +481,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tip-transparent: %s\n", opt->ip_transparent?"yes":"no");
 	printf("\tip-freebind: %s\n", opt->ip_freebind?"yes":"no");
 	printf("\treuseport: %s\n", opt->reuseport?"yes":"no");
+	printf("\tuse-systemd: %s\n", opt->use_systemd?"yes":"no");
 	printf("\tdo-ip4: %s\n", opt->do_ip4?"yes":"no");
 	printf("\tdo-ip6: %s\n", opt->do_ip6?"yes":"no");
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");

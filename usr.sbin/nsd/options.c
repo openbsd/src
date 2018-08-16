@@ -78,6 +78,7 @@ nsd_options_create(region_type* region)
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
 	opt->reuseport = 0;
+	opt->use_systemd = 0;
 	opt->statistics = 0;
 	opt->chroot = 0;
 	opt->username = USER;
@@ -2049,4 +2050,16 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 	(void)opt; (void)zopt;
 	return 0;
 #endif /* USE_ZONE_STATS */
+}
+
+/** check if config turns on IP-address interface with certificates or a
+ * named pipe without certificates. */
+int
+options_remote_is_address(struct nsd_options* cfg)
+{
+	if(!cfg->control_enable) return 0;
+	if(!cfg->control_interface) return 1;
+	if(!cfg->control_interface->address) return 1;
+	if(cfg->control_interface->address[0] == 0) return 1;
+	return (cfg->control_interface->address[0] != '/');
 }

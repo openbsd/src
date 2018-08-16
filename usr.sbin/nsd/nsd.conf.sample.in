@@ -36,6 +36,9 @@ server:
 	# enable debug mode, does not fork daemon process into the background.
 	# debug-mode: no
 
+	# use systemd for readiness signalling.
+	# use-systemd: no
+
 	# listen on IPv4 connections
 	# do-ip4: yes
 
@@ -184,6 +187,8 @@ remote-control:
 	# control-enable: no
 
 	# what interfaces are listened to for control, default is on localhost.
+	# with an absolute path, a unix local named pipe is used for control
+	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
 

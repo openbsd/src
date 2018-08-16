@@ -72,6 +72,7 @@ extern config_parser_state_type* cfg_parser;
 %token VAR_MAX_REFRESH_TIME VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME VAR_MIN_RETRY_TIME
 %token VAR_MULTI_MASTER_CHECK VAR_MINIMAL_RESPONSES VAR_REFUSE_ANY
+%token VAR_USE_SYSTEMD
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -103,7 +104,7 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
 	server_zonefiles_write | server_log_time_ascii | server_round_robin |
 	server_reuseport | server_version | server_ip_freebind |
-	server_minimal_responses | server_refuse_any;
+	server_minimal_responses | server_refuse_any | server_use_systemd;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -148,6 +149,14 @@ server_debug_mode: VAR_DEBUG_MODE STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->debug_mode = (strcmp($2, "yes")==0);
+	}
+	;
+server_use_systemd: VAR_USE_SYSTEMD STRING 
+	{ 
+		OUTYY(("P(server_use_systemd:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->use_systemd = (strcmp($2, "yes")==0);
 	}
 	;
 server_verbosity: VAR_VERBOSITY STRING 
@@ -550,11 +559,18 @@ rc_control_port: VAR_CONTROL_PORT STRING
 	;
 rc_control_interface: VAR_CONTROL_INTERFACE STRING
 	{
+		ip_address_option_type* last = NULL;
 		ip_address_option_type* o = (ip_address_option_type*)region_alloc(
 			cfg_parser->opt->region, sizeof(ip_address_option_type));
 		OUTYY(("P(control_interface:%s)\n", $2));
-		o->next = cfg_parser->opt->control_interface;
-		cfg_parser->opt->control_interface = o;
+		/* append at end */
+		last = cfg_parser->opt->control_interface;
+		while(last && last->next)
+			last = last->next;
+		if(last == NULL)
+			cfg_parser->opt->control_interface = o;
+		else	last->next = o;
+		o->next = NULL;
 		o->address = region_strdup(cfg_parser->opt->region, $2);
 	}
 	;

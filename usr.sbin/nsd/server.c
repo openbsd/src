@@ -769,7 +769,8 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 #endif /* SO_BINDANY */
 		}
 
-		if (bind(nsd->udp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
+		if (
+			bind(nsd->udp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind udp socket: %s", strerror(errno));
 			return -1;
 		}
@@ -905,7 +906,8 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 #endif /* SO_BINDANY */
 		}
 
-		if (bind(nsd->tcp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
+		if(
+			bind(nsd->tcp[i].s, (struct sockaddr *) addr->ai_addr, addr->ai_addrlen) != 0) {
 			log_msg(LOG_ERR, "can't bind tcp socket: %s", strerror(errno));
 			return -1;
 		}

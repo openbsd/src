@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_OPENPGPKEY T_CSYNC T_AVC
+%token <type> T_OPENPGPKEY T_CSYNC T_AVC T_SMIMEA
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -617,6 +617,8 @@ type_and_rdata:
     |	T_DNSKEY sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_TLSA sp rdata_tlsa
     |	T_TLSA sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_SMIMEA sp rdata_smimea
+    |	T_SMIMEA sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_NID sp rdata_nid
     |	T_NID sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_L32 sp rdata_l32
@@ -943,6 +945,15 @@ rdata_tlsa:	STR sp STR sp STR sp str_sp_seq trail
     }
     ;
 
+rdata_smimea:	STR sp STR sp STR sp str_sp_seq trail
+    {
+	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* usage */
+	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* selector */
+	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $5.str)); /* matching type */
+	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, $7.str, $7.len)); /* ca data */
+    }
+    ;
+
 rdata_dnskey:	STR sp STR sp STR sp str_sp_seq trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* flags */
@@ -1040,7 +1051,7 @@ rdata_eui64:	STR trail
     ;
 
 /* RFC7553 */
-rdata_uri:	STR sp STR sp STR trail
+rdata_uri:	STR sp STR sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $1.str)); /* priority */
 	    zadd_rdata_wireformat(zparser_conv_short(parser->region, $3.str)); /* weight */
@@ -1049,7 +1060,7 @@ rdata_uri:	STR sp STR sp STR trail
     ;
 
 /* RFC 6844 */
-rdata_caa:	STR sp STR sp STR trail
+rdata_caa:	STR sp STR sp dotted_str trail
     {
 	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $1.str)); /* Flags */
 	    zadd_rdata_wireformat(zparser_conv_tag(parser->region, $3.str, $3.len)); /* Tag */

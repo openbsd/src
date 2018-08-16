@@ -92,7 +92,7 @@ int nsec3_condition_hash(struct domain* d, struct zone* z);
 int nsec3_condition_dshash(struct domain* d, struct zone* z);
 /* set nsec3param for this zone or NULL if no NSEC3 available */
 void nsec3_find_zone_param(struct namedb* db, struct zone* zone,
-	struct udb_ptr* z, struct rr* avoid_rr);
+	struct udb_ptr* z, struct rr* avoid_rr, int checkchain);
 /* hash domain and wcchild, and lookup nsec3 in tree, and precompile */
 void nsec3_precompile_domain(struct namedb* db, struct domain* domain,
 	struct zone* zone, struct region* tmpregion);

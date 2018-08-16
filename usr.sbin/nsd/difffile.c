@@ -462,7 +462,7 @@ nsec3_delete_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		/* clear trees, wipe hashes, wipe precompile */
 		nsec3_clear_precompile(db, zone);
 		/* pick up new nsec3param (from udb, or avoid deleted rr) */
-		nsec3_find_zone_param(db, zone, udbz, rr);
+		nsec3_find_zone_param(db, zone, udbz, rr, 0);
 		/* if no more NSEC3, done */
 		if(!zone->nsec3_param)
 			return;
@@ -568,7 +568,7 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		prehash_add(db->domains, rr->owner);
 	} else if(!zone->nsec3_param && rr->type == TYPE_NSEC3PARAM) {
 		/* see if this means NSEC3 chain can be used */
-		nsec3_find_zone_param(db, zone, udbz, NULL);
+		nsec3_find_zone_param(db, zone, udbz, NULL, 0);
 		if(!zone->nsec3_param)
 			return;
 		nsec3_zone_trees_create(db->region, zone);
