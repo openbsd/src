@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.108 2018/06/25 16:54:55 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.109 2018/08/16 13:49:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -431,6 +431,9 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 			if (c <= 0)
 				continue;
 			break;
+		case ESCAPE_DEVICE:
+			print_word(h, "html");
+			continue;
 		case ESCAPE_BREAK:
 			breakline = 1;
 			continue;

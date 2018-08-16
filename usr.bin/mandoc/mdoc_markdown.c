@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.24 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.25 2018/08/16 13:49:40 schwarze Exp $ */
 /*
- * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -580,6 +580,9 @@ md_word(const char *s)
 			case ESCAPE_SPECIAL:
 				uc = mchars_spec2cp(seq, sz);
 				break;
+			case ESCAPE_DEVICE:
+				md_rawword("markdown");
+				continue;
 			case ESCAPE_FONTBOLD:
 				nextfont = "**";
 				break;

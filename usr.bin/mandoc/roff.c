@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.202 2018/08/10 04:41:21 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.203 2018/08/16 13:49:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1365,6 +1365,19 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			if (arg_complete) {
 				deftype = ROFFDEF_USER | ROFFDEF_PRE;
 				res = roff_getstrn(r, stnam, naml, &deftype);
+
+				/*
+				 * If not overriden, let \*(.T
+				 * through to the formatters.
+				 */
+
+				if (res == NULL && naml == 2 &&
+				    stnam[0] == '.' && stnam[1] == 'T') {
+					roff_setstrn(&r->strtab,
+					    ".T", 2, NULL, 0, 0);
+					stesc--;
+					continue;
+				}
 			}
 			break;
 		case 'B':

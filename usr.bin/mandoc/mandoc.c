@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.73 2018/08/10 22:12:40 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.74 2018/08/16 13:49:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -136,6 +136,13 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			*sz = 1;
 			break;
 		}
+		break;
+	case '*':
+		if (strncmp(*start, "(.T", 3) != 0)
+			abort();
+		gly = ESCAPE_DEVICE;
+		*start = ++*end;
+		*sz = 2;
 		break;
 
 	/*

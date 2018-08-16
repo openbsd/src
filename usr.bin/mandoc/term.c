@@ -1,7 +1,7 @@
-/*	$OpenBSD: term.c,v 1.134 2017/07/28 14:24:17 florian Exp $ */
+/*	$OpenBSD: term.c,v 1.135 2018/08/16 13:49:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -523,6 +523,16 @@ term_word(struct termp *p, const char *word)
 			else if (*word == '\0')
 				p->flags |= (TERMP_NOSPACE | TERMP_NONEWLINE);
 			continue;
+		case ESCAPE_DEVICE:
+			if (p->type == TERMTYPE_PDF)
+				encode(p, "pdf", 3);
+			else if (p->type == TERMTYPE_PS)
+				encode(p, "ps", 2);
+			else if (p->enc == TERMENC_ASCII)
+				encode(p, "ascii", 5);
+			else
+				encode(p, "utf8", 4);
+			continue;
 		case ESCAPE_HORIZ:
 			if (*seq == '|') {
 				seq++;
@@ -858,6 +868,21 @@ term_strlen(const struct termp *p, const char *cp)
 						sz += cond_width(p, uc, &skip);
 				}
 				continue;
+			case ESCAPE_DEVICE:
+				if (p->type == TERMTYPE_PDF) {
+					rhs = "pdf";
+					rsz = 3;
+				} else if (p->type == TERMTYPE_PS) {
+					rhs = "ps";
+					rsz = 2;
+				} else if (p->enc == TERMENC_ASCII) {
+					rhs = "ascii";
+					rsz = 5;
+				} else {
+					rhs = "utf8";
+					rsz = 4;
+				}
+				break;
 			case ESCAPE_SKIPCHAR:
 				skip = 1;
 				continue;

@@ -1,0 +1,7 @@
+BEGINTEST
+<div class="Pp"></div>
+We are using the html device.
+<div class="Pp"></div>
+The device name can be overridden.
+<div class="Pp"></div>
+ENDTEST
