@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.141 2018/02/08 11:30:30 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.142 2018/08/16 17:49:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1116,20 +1116,41 @@ tls12_find_id(int nid, tls12_lookup *table, size_t tlen)
 }
 
 int
+tls12_get_sigandhash_cbb(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md)
+{
+	unsigned char p[2];
+
+	if (!tls12_get_sigandhash(p, pk, md))
+		return 0;
+
+	if (!CBB_add_u8(cbb, p[0]))
+		return 0;
+	if (!CBB_add_u8(cbb, p[1]))
+		return 0;
+
+	return 1;
+}
+
+int
 tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)
 {
 	int sig_id, md_id;
-	if (!md)
+
+	if (md == NULL)
 		return 0;
+
 	md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
 	    sizeof(tls12_md) / sizeof(tls12_lookup));
 	if (md_id == -1)
 		return 0;
+
 	sig_id = tls12_get_sigid(pk);
 	if (sig_id == -1)
 		return 0;
+
 	p[0] = (unsigned char)md_id;
 	p[1] = (unsigned char)sig_id;
+
 	return 1;
 }
 

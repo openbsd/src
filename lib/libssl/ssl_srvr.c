@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.37 2018/08/14 16:19:06 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.38 2018/08/16 17:49:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1501,33 +1501,37 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 int
 ssl3_send_server_key_exchange(SSL *s)
 {
-	CBB cbb;
+	CBB cbb, cbb_params, cbb_signature, server_kex;
+	unsigned char *signature = NULL;
+	unsigned int signature_len;
 	unsigned char *params = NULL;
 	size_t params_len;
-	EVP_PKEY *pkey;
 	const EVP_MD *md = NULL;
-	unsigned char *p, *d;
-	int al, i, n, kn;
 	unsigned long type;
-	BUF_MEM *buf;
 	EVP_MD_CTX md_ctx;
+	int al, key_len;
+	EVP_PKEY *pkey;
 
 	memset(&cbb, 0, sizeof(cbb));
+	memset(&cbb_params, 0, sizeof(cbb_params));
 
 	EVP_MD_CTX_init(&md_ctx);
+
 	if (S3I(s)->hs.state == SSL3_ST_SW_KEY_EXCH_A) {
-		type = S3I(s)->hs.new_cipher->algorithm_mkey;
 
-		buf = s->internal->init_buf;
-
-		if (!CBB_init(&cbb, 0))
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_kex,
+		    SSL3_MT_SERVER_KEY_EXCHANGE))
 			goto err;
 
+		if (!CBB_init(&cbb_params, 0))
+			goto err;
+
+		type = S3I(s)->hs.new_cipher->algorithm_mkey;
 		if (type & SSL_kDHE) {
-			if (ssl3_send_server_kex_dhe(s, &cbb) != 1)
+			if (ssl3_send_server_kex_dhe(s, &cbb_params) != 1)
 				goto err;
 		} else if (type & SSL_kECDHE) {
-			if (ssl3_send_server_kex_ecdhe(s, &cbb) != 1)
+			if (ssl3_send_server_kex_ecdhe(s, &cbb_params) != 1)
 				goto err;
 		} else {
 			al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1535,7 +1539,10 @@ ssl3_send_server_key_exchange(SSL *s)
 			goto f_err;
 		}
 
-		if (!CBB_finish(&cbb, &params, &params_len))
+		if (!CBB_finish(&cbb_params, &params, &params_len))
+			goto err;
+
+		if (!CBB_add_bytes(&server_kex, params, params_len))
 			goto err;
 
 		if (!(S3I(s)->hs.new_cipher->algorithm_auth & SSL_aNULL)) {
@@ -1544,28 +1551,11 @@ ssl3_send_server_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			kn = EVP_PKEY_size(pkey);
+			key_len = EVP_PKEY_size(pkey);
 		} else {
 			pkey = NULL;
-			kn = 0;
+			key_len = 0;
 		}
-
-		if (!BUF_MEM_grow_clean(buf, ssl3_handshake_msg_hdr_len(s) +
-		    params_len + kn)) {
-			SSLerror(s, ERR_LIB_BUF);
-			goto err;
-		}
-
-		d = p = ssl3_handshake_msg_start(s,
-		    SSL3_MT_SERVER_KEY_EXCHANGE);
-
-		memcpy(p, params, params_len);
-
-		free(params);
-		params = NULL;
-
-		n = params_len;
-		p += params_len;
 
 		/* Add signature unless anonymous. */
 		if (pkey != NULL) {
@@ -1581,14 +1571,17 @@ ssl3_send_server_key_exchange(SSL *s)
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
-				if (!tls12_get_sigandhash(p, pkey, md)) {
+				if (!tls12_get_sigandhash_cbb(&server_kex, pkey, md)) {
 					/* Should never happen */
 					al = SSL_AD_INTERNAL_ERROR;
 					SSLerror(s, ERR_R_INTERNAL_ERROR);
 					goto f_err;
 				}
-				p += 2;
 			}
+
+			if ((signature = calloc(1, key_len)) == NULL)
+				goto err;
+
 			if (!EVP_SignInit_ex(&md_ctx, md, NULL))
 				goto err;
 			if (!EVP_SignUpdate(&md_ctx, s->s3->client_random,
@@ -1597,34 +1590,42 @@ ssl3_send_server_key_exchange(SSL *s)
 			if (!EVP_SignUpdate(&md_ctx, s->s3->server_random,
 			    SSL3_RANDOM_SIZE))
 				goto err;
-			if (!EVP_SignUpdate(&md_ctx, d, n))
+			if (!EVP_SignUpdate(&md_ctx, params, params_len))
 				goto err;
-			if (!EVP_SignFinal(&md_ctx, &p[2], (unsigned int *)&i,
+			if (!EVP_SignFinal(&md_ctx, signature, &signature_len,
 			    pkey)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
-			s2n(i, p);
-			n += i + 2;
-			if (SSL_USE_SIGALGS(s))
-				n += 2;
+
+			if (!CBB_add_u16_length_prefixed(&server_kex,
+			    &cbb_signature))
+				goto err;
+			if (!CBB_add_bytes(&cbb_signature, signature,
+			    signature_len))
+				goto err;
 		}
 
-		ssl3_handshake_msg_finish(s, n);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
+
+		S3I(s)->hs.state = SSL3_ST_SW_KEY_EXCH_B;
 	}
 
-	S3I(s)->hs.state = SSL3_ST_SW_KEY_EXCH_B;
-
 	EVP_MD_CTX_cleanup(&md_ctx);
+	free(params);
+	free(signature);
 
 	return (ssl3_handshake_write(s));
 	
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	free(params);
-	EVP_MD_CTX_cleanup(&md_ctx);
+	CBB_cleanup(&cbb_params);
 	CBB_cleanup(&cbb);
+	EVP_MD_CTX_cleanup(&md_ctx);
+	free(params);
+	free(signature);
 
 	return (-1);
 }
