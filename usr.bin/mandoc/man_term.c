@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.165 2018/08/14 01:26:12 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.166 2018/08/16 23:40:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,6 +96,7 @@ static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ pre_SH, post_SH, 0 }, /* SH */
 	{ pre_SS, post_SS, 0 }, /* SS */
 	{ pre_TP, post_TP, 0 }, /* TP */
+	{ pre_TP, post_TP, 0 }, /* TQ */
 	{ pre_PP, NULL, 0 }, /* LP */
 	{ pre_PP, NULL, 0 }, /* PP */
 	{ pre_PP, NULL, 0 }, /* P */
@@ -582,7 +583,8 @@ pre_TP(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 		break;
 	case ROFFT_BLOCK:
-		print_bvspace(p, n, mt->pardist);
+		if (n->tok == MAN_TP)
+			print_bvspace(p, n, mt->pardist);
 		/* FALLTHROUGH */
 	default:
 		return 1;

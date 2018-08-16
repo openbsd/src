@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.203 2018/08/16 13:49:40 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.204 2018/08/16 23:40:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -325,6 +325,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"Dx",		"%Q",		"%U",		"Ta",
 	NULL,
 	"TH",		"SH",		"SS",		"TP",
+	"TQ",
 	"LP",		"PP",		"P",		"IP",
 	"HP",		"SM",		"SB",		"BI",
 	"IB",		"BR",		"RB",		"R",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.106 2018/07/27 17:47:05 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.107 2018/08/16 23:40:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -73,6 +73,7 @@ static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ man_SH_pre, NULL }, /* SH */
 	{ man_SS_pre, NULL }, /* SS */
 	{ man_IP_pre, NULL }, /* TP */
+	{ man_IP_pre, NULL }, /* TQ */
 	{ man_PP_pre, NULL }, /* LP */
 	{ man_PP_pre, NULL }, /* PP */
 	{ man_PP_pre, NULL }, /* P */
@@ -516,25 +517,25 @@ man_IP_pre(MAN_ARGS)
 		return 1;
 	}
 
-	/* FIXME: width specification. */
-
 	print_otag(h, TAG_DT, "");
 
-	/* For IP, only print the first header element. */
-
-	if (MAN_IP == n->tok && n->child)
-		print_man_node(man, n->child, h);
-
-	/* For TP, only print next-line header elements. */
-
-	if (MAN_TP == n->tok) {
+	switch(n->tok) {
+	case MAN_IP:  /* Only print the first header element. */
+		if (n->child != NULL)
+			print_man_node(man, n->child, h);
+		break;
+	case MAN_TP:  /* Only print next-line header elements. */
+	case MAN_TQ:
 		nn = n->child;
-		while (NULL != nn && 0 == (NODE_LINE & nn->flags))
+		while (nn != NULL && (NODE_LINE & nn->flags) == 0)
 			nn = nn->next;
-		while (NULL != nn) {
+		while (nn != NULL) {
 			print_man_node(man, nn, h);
 			nn = nn->next;
 		}
+		break;
+	default:
+		abort();
 	}
 
 	return 0;
