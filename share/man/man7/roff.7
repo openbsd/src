@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.78 2018/08/10 20:40:43 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.79 2018/08/16 14:01:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2018 $
+.Dd $Mdocdate: August 16 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -86,13 +86,9 @@ character, and, in certain circumstances, the tab character.
 The backslash character
 .Sq \e
 indicates the start of an escape sequence, used for example for
-.Sx Comments ,
-.Sx Special Characters ,
-.Sx Predefined Strings ,
+.Sx Comments
 and
-user-defined strings defined using the
-.Sx ds
-request.
+.Sx Special Characters .
 For a listing of escape sequences, consult the
 .Sx ESCAPE SEQUENCE REFERENCE
 below.
@@ -167,34 +163,6 @@ Text decoration is
 recommended for
 .Xr mdoc 7 ,
 which encourages semantic annotation.
-.Ss Predefined Strings
-Predefined strings, like
-.Sx Special Characters ,
-mark special output glyphs.
-Predefined strings are escaped with the slash-asterisk,
-.Sq \e* :
-single-character
-.Sq \e*X ,
-two-character
-.Sq \e*(XX ,
-and N-character
-.Sq \e* Ns Bq N .
-.Pp
-Examples:
-.Bl -tag -width Ds -offset indent -compact
-.It Li \e*(Am
-Two-letter ampersand predefined string.
-.It Li \e*q
-One-letter double-quote predefined string.
-.El
-.Pp
-Predefined strings are not recommended for use,
-as they differ across implementations.
-Those supported by
-.Xr mandoc 1
-are listed in
-.Xr mandoc_char 7 .
-Manuals using these predefined strings are almost certainly not portable.
 .Ss Whitespace
 Whitespace consists of the space character.
 In text lines, whitespace is preserved within a line.
@@ -1865,15 +1833,30 @@ with two-letter names, see
 .Xr mandoc_char 7 .
 .Ss \e* Ns Bq Ar name
 Interpolate the string with the
-.Ar name ;
-see
-.Sx Predefined Strings
-and
-.Sx ds .
+.Ar name .
 For short names, there are variants
 .No \e* Ns Ar c
 and
 .No \e*( Ns Ar cc .
+.Pp
+One string is predefined on the
+.Nm
+language level: \e*(.T expands to the name of the output device,
+for example ascii, utf8, ps, pdf, html, or markdown.
+.Pp
+Macro sets traditionally predefine additional strings which are not
+portable and differ across implementations.
+Those supported by
+.Xr mandoc 1
+are listed in
+.Xr mandoc_char 7 .
+.Pp
+Strings can be defined, changed, and deleted with the
+.Ic \&ds ,
+.Ic \&as ,
+and
+.Ic \&rm
+requests.
 .Ss \e,
 Left italic correction (groff extension); ignored by
 .Xr mandoc 1 .
