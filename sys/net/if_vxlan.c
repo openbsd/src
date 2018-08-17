@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.67 2018/02/20 01:20:37 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.68 2018/08/17 01:53:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -928,9 +928,6 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	if (brtag != NULL)
 		bridge_tunneluntag(m);
 #endif
-
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
 
 	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
