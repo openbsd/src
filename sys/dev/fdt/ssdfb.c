@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.6 2018/08/17 14:20:15 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.7 2018/08/17 21:00:17 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -276,10 +276,10 @@ ssdfb_attach(struct ssdfb_softc *sc)
 
 	pinctrl_byname(sc->sc_node, "default");
 
-	len = OF_getproplen(sc->sc_node, "reset-gpio");
+	len = OF_getproplen(sc->sc_node, "reset-gpios");
 	if (len > 0) {
 		gpio = malloc(len, M_DEVBUF, M_WAITOK);
-		OF_getpropintarray(sc->sc_node, "reset-gpio",
+		OF_getpropintarray(sc->sc_node, "reset-gpios",
 		    gpio, len);
 		gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
 		gpio_controller_set_pin(gpio, 1);
