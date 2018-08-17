@@ -1,7 +1,7 @@
-/*	$OpenBSD: libman.h,v 1.56 2017/04/29 12:43:55 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.57 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,8 +32,7 @@ struct	man_macro {
 #define	MAN_JOIN	 (1 << 3)  /* Join arguments together. */
 };
 
-extern	const struct man_macro *const man_macros;
-
+const struct man_macro *man_macro(enum roff_tok);
 
 void		  man_node_validate(struct roff_man *);
 void		  man_state(struct roff_man *, struct roff_node *);

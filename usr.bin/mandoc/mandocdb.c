@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.207 2018/02/23 18:24:41 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.208 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -170,7 +170,7 @@ static	struct ohash	 names; /* table of all names */
 static	struct ohash	 strings; /* table of all strings */
 static	uint64_t	 name_mask;
 
-static	const struct mdoc_handler __mdocs[MDOC_MAX - MDOC_Dd] = {
+static	const struct mdoc_handler mdoc_handlers[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, 0, NODE_NOPRT },  /* Dd */
 	{ NULL, 0, NODE_NOPRT },  /* Dt */
 	{ NULL, 0, NODE_NOPRT },  /* Os */
@@ -292,7 +292,6 @@ static	const struct mdoc_handler __mdocs[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, 0, 0 },  /* %U */
 	{ NULL, 0, 0 },  /* Ta */
 };
-static	const struct mdoc_handler *const mdocs = __mdocs - MDOC_Dd;
 
 
 int
@@ -1508,25 +1507,28 @@ static void
 parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 	const struct roff_node *n)
 {
+	const struct mdoc_handler *handler;
 
 	for (n = n->child; n != NULL; n = n->next) {
-		if (n->tok == TOKEN_NONE ||
-		    n->tok < ROFF_MAX ||
-		    n->flags & mdocs[n->tok].taboo)
+		if (n->tok == TOKEN_NONE || n->tok < ROFF_MAX)
 			continue;
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
+		handler = mdoc_handlers + (n->tok - MDOC_Dd);
+		if (n->flags & handler->taboo)
+			continue;
+
 		switch (n->type) {
 		case ROFFT_ELEM:
 		case ROFFT_BLOCK:
 		case ROFFT_HEAD:
 		case ROFFT_BODY:
 		case ROFFT_TAIL:
-			if (mdocs[n->tok].fp != NULL &&
-			    (*mdocs[n->tok].fp)(mpage, meta, n) == 0)
+			if (handler->fp != NULL &&
+			    (*handler->fp)(mpage, meta, n) == 0)
 				break;
-			if (mdocs[n->tok].mask)
+			if (handler->mask)
 				putmdockey(mpage, n->child,
-				    mdocs[n->tok].mask, mdocs[n->tok].taboo);
+				    handler->mask, handler->taboo);
 			break;
 		default:
 			continue;

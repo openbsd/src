@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc.c,v 1.157 2017/08/11 16:55:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.158 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,13 +75,6 @@ mdoc_parseln(struct roff_man *mdoc, int ln, char *buf, int offs)
 	return roff_getcontrol(mdoc->roff, buf, &offs) ?
 	    mdoc_pmacro(mdoc, ln, buf, offs) :
 	    mdoc_ptext(mdoc, ln, buf, offs);
-}
-
-void
-mdoc_macro(MACRO_PROT_ARGS)
-{
-	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
-	(*mdoc_macros[tok].fp)(mdoc, tok, line, ppos, pos, buf);
 }
 
 void
@@ -194,7 +187,8 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	    (n->parent != NULL && n->parent->tok == MDOC_Bl &&
 	     n->parent->norm->Bl.type == LIST_column)) {
 		mdoc->flags |= MDOC_FREECOL;
-		mdoc_macro(mdoc, MDOC_It, line, offs, &offs, buf);
+		(*mdoc_macro(MDOC_It)->fp)(mdoc, MDOC_It,
+		    line, offs, &offs, buf);
 		return 1;
 	}
 
@@ -376,7 +370,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 
 	n = mdoc->last;
 	if (n == NULL || tok == MDOC_It || tok == MDOC_El) {
-		mdoc_macro(mdoc, tok, ln, sv, &offs, buf);
+		(*mdoc_macro(tok)->fp)(mdoc, tok, ln, sv, &offs, buf);
 		return 1;
 	}
 
@@ -392,13 +386,13 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 	    (n->parent != NULL && n->parent->tok == MDOC_Bl &&
 	     n->parent->norm->Bl.type == LIST_column)) {
 		mdoc->flags |= MDOC_FREECOL;
-		mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf);
+		(*mdoc_macro(MDOC_It)->fp)(mdoc, MDOC_It, ln, sv, &sv, buf);
 		return 1;
 	}
 
 	/* Normal processing of a macro. */
 
-	mdoc_macro(mdoc, tok, ln, sv, &offs, buf);
+	(*mdoc_macro(tok)->fp)(mdoc, tok, ln, sv, &offs, buf);
 
 	/* In quick mode (for mandocdb), abort after the NAME section. */
 

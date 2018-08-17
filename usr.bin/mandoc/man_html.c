@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.107 2018/08/16 23:40:19 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.108 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,7 +37,7 @@
 			  const struct roff_node *n, \
 			  struct html *h
 
-struct	htmlman {
+struct	man_html_act {
 	int		(*pre)(MAN_ARGS);
 	int		(*post)(MAN_ARGS);
 };
@@ -68,7 +68,7 @@ static	void		  man_root_post(const struct roff_meta *,
 static	void		  man_root_pre(const struct roff_meta *,
 				struct html *);
 
-static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
+static	const struct man_html_act man_html_acts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
 	{ man_SH_pre, NULL }, /* SH */
 	{ man_SS_pre, NULL }, /* SS */
@@ -107,7 +107,6 @@ static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ man_UR_pre, NULL }, /* MT */
 	{ NULL, NULL }, /* ME */
 };
-static	const struct htmlman *const mans = __mans - MAN_TH;
 
 
 /*
@@ -316,8 +315,9 @@ print_man_node(MAN_ARGS)
 		}
 
 		assert(n->tok >= MAN_TH && n->tok < MAN_MAX);
-		if (mans[n->tok].pre)
-			child = (*mans[n->tok].pre)(man, n, h);
+		if (man_html_acts[n->tok - MAN_TH].pre != NULL)
+			child = (*man_html_acts[n->tok - MAN_TH].pre)(man,
+			    n, h);
 
 		/* Some block macros resume .nf in the body. */
 		if (save_fillmode && n->type == ROFFT_BODY)

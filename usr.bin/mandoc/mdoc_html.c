@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.185 2018/07/27 17:47:05 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.186 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,7 +40,7 @@
 #define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
 #endif
 
-struct	htmlmdoc {
+struct	mdoc_html_act {
 	int		(*pre)(MDOC_ARGS);
 	void		(*post)(MDOC_ARGS);
 };
@@ -117,7 +117,7 @@ static	int		  mdoc_vt_pre(MDOC_ARGS);
 static	int		  mdoc_xr_pre(MDOC_ARGS);
 static	int		  mdoc_xx_pre(MDOC_ARGS);
 
-static	const struct htmlmdoc __mdocs[MDOC_MAX - MDOC_Dd] = {
+static const struct mdoc_html_act mdoc_html_acts[MDOC_MAX - MDOC_Dd] = {
 	{NULL, NULL}, /* Dd */
 	{NULL, NULL}, /* Dt */
 	{NULL, NULL}, /* Os */
@@ -239,7 +239,6 @@ static	const struct htmlmdoc __mdocs[MDOC_MAX - MDOC_Dd] = {
 	{mdoc__x_pre, mdoc__x_post}, /* %U */
 	{NULL, NULL}, /* Ta */
 };
-static	const struct htmlmdoc *const mdocs = __mdocs - MDOC_Dd;
 
 
 /*
@@ -400,9 +399,10 @@ print_mdoc_node(MDOC_ARGS)
 			break;
 		}
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
-		if (mdocs[n->tok].pre != NULL &&
+		if (mdoc_html_acts[n->tok - MDOC_Dd].pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
-			child = (*mdocs[n->tok].pre)(meta, n, h);
+			child = (*mdoc_html_acts[n->tok - MDOC_Dd].pre)(meta,
+			    n, h);
 		break;
 	}
 
@@ -421,10 +421,10 @@ print_mdoc_node(MDOC_ARGS)
 		break;
 	default:
 		if (n->tok < ROFF_MAX ||
-		    mdocs[n->tok].post == NULL ||
+		    mdoc_html_acts[n->tok - MDOC_Dd].post == NULL ||
 		    n->flags & NODE_ENDED)
 			break;
-		(*mdocs[n->tok].post)(meta, n, h);
+		(*mdoc_html_acts[n->tok - MDOC_Dd].post)(meta, n, h);
 		if (n->end != ENDBODY_NOT)
 			n->body->flags |= NODE_ENDED;
 		break;

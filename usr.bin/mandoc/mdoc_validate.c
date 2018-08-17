@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.276 2018/08/16 15:04:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.277 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1975,7 +1975,7 @@ post_root(POST_ARGS)
 	while (n != NULL &&
 	    (n->type == ROFFT_COMMENT ||
 	     (n->tok >= MDOC_Dd &&
-	      mdoc_macros[n->tok].flags & MDOC_PROLOGUE)))
+	      mdoc_macro(n->tok)->flags & MDOC_PROLOGUE)))
 		n = n->next;
 
 	if (n == NULL)

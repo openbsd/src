@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.181 2017/05/30 16:21:07 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.182 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@ static	void		rew_last(struct roff_man *, const struct roff_node *);
 static	void		rew_pending(struct roff_man *,
 				const struct roff_node *);
 
-const	struct mdoc_macro __mdoc_macros[MDOC_MAX - MDOC_Dd] = {
+static const struct mdoc_macro mdoc_macros[MDOC_MAX - MDOC_Dd] = {
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dd */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dt */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Os */
@@ -199,8 +199,14 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX - MDOC_Dd] = {
 	{ in_line_eoln, 0 }, /* %U */
 	{ phrase_ta, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ta */
 };
-const	struct mdoc_macro *const mdoc_macros = __mdoc_macros - MDOC_Dd;
 
+
+const struct mdoc_macro *
+mdoc_macro(enum roff_tok tok)
+{
+	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
+	return mdoc_macros + (tok - MDOC_Dd);
+}
 
 /*
  * This is called at the end of parsing.  It must traverse up the tree,
@@ -219,7 +225,7 @@ mdoc_endparse(struct roff_man *mdoc)
 
 	for ( ; n; n = n->parent)
 		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT)
+		    mdoc_macro(n->tok)->flags & MDOC_EXPLICIT)
 			mandoc_msg(MANDOCERR_BLK_NOEND, mdoc->parse,
 			    n->line, n->pos, roff_name[n->tok]);
 
@@ -242,10 +248,10 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 		mdoc->flags &= ~MDOC_PHRASEQF;
 		return TOKEN_NONE;
 	}
-	if (from == TOKEN_NONE || mdoc_macros[from].flags & MDOC_PARSED) {
+	if (from == TOKEN_NONE || mdoc_macro(from)->flags & MDOC_PARSED) {
 		res = roffhash_find(mdoc->mdocmac, p, 0);
 		if (res != TOKEN_NONE) {
-			if (mdoc_macros[res].flags & MDOC_CALLABLE)
+			if (mdoc_macro(res)->flags & MDOC_CALLABLE)
 				return res;
 			mandoc_msg(MANDOCERR_MACRO_CALL,
 			    mdoc->parse, line, ppos, p);
@@ -407,7 +413,7 @@ find_pending(struct roff_man *mdoc, enum roff_tok tok, int line, int ppos,
 		if (n->flags & NODE_ENDED)
 			continue;
 		if (n->type == ROFFT_BLOCK &&
-		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
+		    mdoc_macro(n->tok)->flags & MDOC_EXPLICIT) {
 			irc = 1;
 			break_intermediate(mdoc->last, target);
 			if (target->type == ROFFT_HEAD)
@@ -516,13 +522,13 @@ macro_or_word(MACRO_PROT_ARGS, int parsed)
 
 	if (ntok == TOKEN_NONE) {
 		dword(mdoc, line, ppos, p, DELIM_MAX, tok == TOKEN_NONE ||
-		    mdoc_macros[tok].flags & MDOC_JOIN);
+		    mdoc_macro(tok)->flags & MDOC_JOIN);
 		return 0;
 	} else {
 		if (tok != TOKEN_NONE &&
-		    mdoc_macros[tok].fp == in_line_eoln)
+		    mdoc_macro(tok)->fp == in_line_eoln)
 			rew_elem(mdoc, tok);
-		mdoc_macro(mdoc, ntok, line, ppos, pos, buf);
+		(*mdoc_macro(ntok)->fp)(mdoc, ntok, line, ppos, pos, buf);
 		if (tok == TOKEN_NONE)
 			append_delims(mdoc, line, pos, buf);
 		return 1;
@@ -686,7 +692,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			mdoc_tail_alloc(mdoc, line, ppos, atok);
 	}
 
-	if ( ! (mdoc_macros[tok].flags & MDOC_PARSED)) {
+	if ((mdoc_macro(tok)->flags & MDOC_PARSED) == 0) {
 		if (buf[*pos] != '\0')
 			mandoc_vmsg(MANDOCERR_ARG_SKIP,
 			    mdoc->parse, line, ppos,
@@ -715,14 +721,14 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 		if (ntok == TOKEN_NONE) {
 			dword(mdoc, line, lastarg, p, DELIM_MAX,
-			    MDOC_JOIN & mdoc_macros[tok].flags);
+			    mdoc_macro(tok)->flags & MDOC_JOIN);
 			continue;
 		}
 
 		if (n != NULL)
 			rew_last(mdoc, n);
 		mdoc->flags &= ~MDOC_NEWLINE;
-		mdoc_macro(mdoc, ntok, line, lastarg, pos, buf);
+		(*mdoc_macro(ntok)->fp)(mdoc, ntok, line, lastarg, pos, buf);
 		break;
 	}
 
@@ -829,7 +835,8 @@ in_line(MACRO_PROT_ARGS)
 				    mdoc->parse, line, ppos,
 				    roff_name[tok]);
 			}
-			mdoc_macro(mdoc, ntok, line, la, pos, buf);
+			(*mdoc_macro(ntok)->fp)(mdoc, ntok,
+			    line, la, pos, buf);
 			if (nl)
 				append_delims(mdoc, line, pos, buf);
 			return;
@@ -873,7 +880,7 @@ in_line(MACRO_PROT_ARGS)
 		}
 
 		dword(mdoc, line, la, p, d,
-		    mdoc_macros[tok].flags & MDOC_JOIN);
+		    mdoc_macro(tok)->flags & MDOC_JOIN);
 
 		/*
 		 * If the first argument is a closing delimiter,
@@ -942,7 +949,7 @@ blk_full(MACRO_PROT_ARGS)
 		return;
 	}
 
-	if ( ! (mdoc_macros[tok].flags & MDOC_EXPLICIT)) {
+	if ((mdoc_macro(tok)->flags & MDOC_EXPLICIT) == 0) {
 
 		/* Here, tok is one of Sh Ss Nm Nd It. */
 
@@ -967,7 +974,7 @@ blk_full(MACRO_PROT_ARGS)
 				break;
 			}
 
-			if (mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
+			if (mdoc_macro(n->tok)->flags & MDOC_EXPLICIT) {
 				switch (tok) {
 				case MDOC_Sh:
 				case MDOC_Ss:
@@ -1337,7 +1344,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		ac = mdoc_args(mdoc, line, pos, buf, tok, &p);
 
 		if (ac == ARGS_WORD && state == -1 &&
-		    ! (mdoc_macros[tok].flags & MDOC_IGNDELIM) &&
+		    (mdoc_macro(tok)->flags & MDOC_IGNDELIM) == 0 &&
 		    mdoc_isdelim(p) == DELIM_OPEN) {
 			dword(mdoc, line, la, p, DELIM_OPEN, 0);
 			continue;
@@ -1370,11 +1377,12 @@ in_line_argn(MACRO_PROT_ARGS)
 				rew_elem(mdoc, tok);
 				state = -2;
 			}
-			mdoc_macro(mdoc, ntok, line, la, pos, buf);
+			(*mdoc_macro(ntok)->fp)(mdoc, ntok,
+			    line, la, pos, buf);
 			break;
 		}
 
-		if (mdoc_macros[tok].flags & MDOC_IGNDELIM ||
+		if (mdoc_macro(tok)->flags & MDOC_IGNDELIM ||
 		    mdoc_isdelim(p) == DELIM_NONE) {
 			if (state == -1) {
 				mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
@@ -1387,7 +1395,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		}
 
 		dword(mdoc, line, la, p, DELIM_MAX,
-		    mdoc_macros[tok].flags & MDOC_JOIN);
+		    mdoc_macro(tok)->flags & MDOC_JOIN);
 	}
 
 	if (state == -1) {

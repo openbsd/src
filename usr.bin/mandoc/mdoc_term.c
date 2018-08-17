@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.266 2018/04/11 17:10:35 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.267 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,7 +45,7 @@ struct	termpair {
 		  const struct roff_meta *meta, \
 		  struct roff_node *n
 
-struct	termact {
+struct	mdoc_term_act {
 	int	(*pre)(DECL_ARGS);
 	void	(*post)(DECL_ARGS);
 };
@@ -122,7 +122,7 @@ static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
 static	int	  termp_xx_pre(DECL_ARGS);
 
-static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
+static const struct mdoc_term_act mdoc_term_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL }, /* Dd */
 	{ NULL, NULL }, /* Dt */
 	{ NULL, NULL }, /* Os */
@@ -244,7 +244,6 @@ static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, termp____post }, /* %U */
 	{ NULL, NULL }, /* Ta */
 };
-static	const struct termact *const termacts = __termacts - MDOC_Dd;
 
 static	int	 fn_prio;
 
@@ -308,9 +307,10 @@ print_mdoc_nodelist(DECL_ARGS)
 static void
 print_mdoc_node(DECL_ARGS)
 {
-	int		 chld;
+	const struct mdoc_term_act *act;
 	struct termpair	 npair;
 	size_t		 offset, rmargin;
+	int		 chld;
 
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
@@ -368,10 +368,10 @@ print_mdoc_node(DECL_ARGS)
 			return;
 		}
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
-		if (termacts[n->tok].pre != NULL &&
+		act = mdoc_term_acts + (n->tok - MDOC_Dd);
+		if (act->pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
-			chld = (*termacts[n->tok].pre)
-				(p, &npair, meta, n);
+			chld = (*act->pre)(p, &npair, meta, n);
 		break;
 	}
 
@@ -389,9 +389,9 @@ print_mdoc_node(DECL_ARGS)
 	case ROFFT_EQN:
 		break;
 	default:
-		if (termacts[n->tok].post == NULL || n->flags & NODE_ENDED)
+		if (act->post == NULL || n->flags & NODE_ENDED)
 			break;
-		(void)(*termacts[n->tok].post)(p, &npair, meta, n);
+		(void)(*act->post)(p, &npair, meta, n);
 
 		/*
 		 * Explicit end tokens not only call the post

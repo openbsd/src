@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.25 2018/08/16 13:49:40 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.26 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -103,7 +103,7 @@ static	void	 md_post_Pf(struct roff_node *);
 static	void	 md_post_Vt(struct roff_node *);
 static	void	 md_post__T(struct roff_node *);
 
-static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
+static	const struct md_act md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dd */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Os */
@@ -225,7 +225,7 @@ static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 };
-static	const struct md_act *const md_acts = __md_acts - MDOC_Dd;
+static const struct md_act *md_act(enum roff_tok);
 
 static	int	 outflags;
 #define	MD_spc		 (1 << 0)  /* Blank character before next word. */
@@ -249,6 +249,14 @@ static	int	 escflags; /* Escape in generated markdown code: */
 
 static	int	 code_blocks, quote_blocks, list_blocks;
 static	int	 outcount;
+
+
+static const struct md_act *
+md_act(enum roff_tok tok)
+{
+	assert(tok >= MDOC_Dd && tok <= MDOC_MAX);
+	return md_acts + (tok - MDOC_Dd);
+}
 
 void
 markdown_mdoc(void *arg, const struct roff_man *mdoc)
@@ -330,8 +338,7 @@ md_node(struct roff_node *n)
 			break;
 		}
 	} else {
-		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
-		act = md_acts + n->tok;
+		act = md_act(n->tok);
 		cond = act->cond == NULL || (*act->cond)(n);
 		if (cond && act->pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
@@ -719,7 +726,7 @@ md_pre_raw(struct roff_node *n)
 {
 	const char	*prefix;
 
-	if ((prefix = md_acts[n->tok].prefix) != NULL) {
+	if ((prefix = md_act(n->tok)->prefix) != NULL) {
 		md_rawword(prefix);
 		outflags &= ~MD_spc;
 		if (*prefix == '`')
@@ -733,7 +740,7 @@ md_post_raw(struct roff_node *n)
 {
 	const char	*suffix;
 
-	if ((suffix = md_acts[n->tok].suffix) != NULL) {
+	if ((suffix = md_act(n->tok)->suffix) != NULL) {
 		outflags &= ~(MD_spc | MD_nl);
 		md_rawword(suffix);
 		if (*suffix == '`')
@@ -746,7 +753,7 @@ md_pre_word(struct roff_node *n)
 {
 	const char	*prefix;
 
-	if ((prefix = md_acts[n->tok].prefix) != NULL) {
+	if ((prefix = md_act(n->tok)->prefix) != NULL) {
 		md_word(prefix);
 		outflags &= ~MD_spc;
 	}
@@ -758,7 +765,7 @@ md_post_word(struct roff_node *n)
 {
 	const char	*suffix;
 
-	if ((suffix = md_acts[n->tok].suffix) != NULL) {
+	if ((suffix = md_act(n->tok)->suffix) != NULL) {
 		outflags &= ~(MD_spc | MD_nl);
 		md_word(suffix);
 	}

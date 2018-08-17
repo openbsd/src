@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.166 2018/08/16 23:40:19 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.167 2018/08/17 20:31:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,7 +49,7 @@ struct	mtermp {
 			  struct roff_node *n, \
 			  const struct roff_meta *meta
 
-struct	termact {
+struct	man_term_act {
 	int		(*pre)(DECL_ARGS);
 	void		(*post)(DECL_ARGS);
 	int		  flags;
@@ -91,7 +91,7 @@ static	void		  post_SS(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
 static	void		  post_UR(DECL_ARGS);
 
-static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
+static const struct man_term_act man_term_acts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL, 0 }, /* TH */
 	{ pre_SH, post_SH, 0 }, /* SH */
 	{ pre_SS, post_SS, 0 }, /* SS */
@@ -130,8 +130,15 @@ static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ pre_UR, post_UR, 0 }, /* MT */
 	{ NULL, NULL, 0 }, /* ME */
 };
-static	const struct termact *termacts = __termacts - MAN_TH;
+static const struct man_term_act *man_term_act(enum roff_tok);
 
+
+static const struct man_term_act *
+man_term_act(enum roff_tok tok)
+{
+	assert(tok >= MAN_TH && tok <= MAN_MAX);
+	return man_term_acts + (tok - MAN_TH);
+}
 
 void
 terminal_man(void *arg, const struct roff_man *man)
@@ -674,7 +681,7 @@ pre_SS(DECL_ARGS)
 		do {
 			n = n->prev;
 		} while (n != NULL && n->tok >= MAN_TH &&
-		    termacts[n->tok].flags & MAN_NOTEXT);
+		    man_term_act(n->tok)->flags & MAN_NOTEXT);
 		if (n == NULL || n->type == ROFFT_COMMENT ||
 		    (n->tok == MAN_SS && n->body->child == NULL))
 			break;
@@ -737,7 +744,7 @@ pre_SH(DECL_ARGS)
 		do {
 			n = n->prev;
 		} while (n != NULL && n->tok >= MAN_TH &&
-		    termacts[n->tok].flags & MAN_NOTEXT);
+		    man_term_act(n->tok)->flags & MAN_NOTEXT);
 		if (n == NULL || n->type == ROFFT_COMMENT ||
 		    (n->tok == MAN_SH && n->body->child == NULL))
 			break;
@@ -866,7 +873,8 @@ post_UR(DECL_ARGS)
 static void
 print_man_node(DECL_ARGS)
 {
-	int		 c;
+	const struct man_term_act *act;
+	int c;
 
 	switch (n->type) {
 	case ROFFT_TEXT:
@@ -912,20 +920,20 @@ print_man_node(DECL_ARGS)
 		return;
 	}
 
-	assert(n->tok >= MAN_TH && n->tok <= MAN_MAX);
-	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+	act = man_term_act(n->tok);
+	if ((act->flags & MAN_NOTEXT) == 0)
 		term_fontrepl(p, TERMFONT_NONE);
 
 	c = 1;
-	if (termacts[n->tok].pre)
-		c = (*termacts[n->tok].pre)(p, mt, n, meta);
+	if (act->pre != NULL)
+		c = (*act->pre)(p, mt, n, meta);
 
 	if (c && n->child)
 		print_man_nodelist(p, mt, n->child, meta);
 
-	if (termacts[n->tok].post)
-		(*termacts[n->tok].post)(p, mt, n, meta);
-	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+	if (act->post != NULL)
+		(*act->post)(p, mt, n, meta);
+	if ((act->flags & MAN_NOTEXT) == 0)
 		term_fontrepl(p, TERMFONT_NONE);
 
 out:
