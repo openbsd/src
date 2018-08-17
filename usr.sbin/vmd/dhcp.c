@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.4 2017/11/05 20:01:09 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.5 2018/08/17 07:12:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -188,11 +188,6 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 		memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
 		o += sizeof(server_addr);
 	}
-
-	resp.options[o++] = DHO_DOMAIN_NAME_SERVERS;
-	resp.options[o++] = sizeof(server_addr);
-	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
-	o += sizeof(server_addr);
 
 	resp.options[o++] = DHO_SUBNET_MASK;
 	resp.options[o++] = sizeof(mask);
