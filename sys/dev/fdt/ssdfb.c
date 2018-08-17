@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.5 2018/08/09 14:43:17 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.6 2018/08/17 14:20:15 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,9 +40,11 @@
 #define SSDFB_SET_PAGE_RANGE			0x22
 #define SSDFB_SET_START_LINE			0x40
 #define SSDFB_SET_CONTRAST_CONTROL		0x81
+#define SSDFB_SET_COLUMN_DIRECTION_NORMAL	0xa0
 #define SSDFB_SET_COLUMN_DIRECTION_REVERSE	0xa1
 #define SSDFB_SET_MULTIPLEX_RATIO		0xa8
-#define SSDFB_SET_COM_OUTPUT_DIRECTION		0xc0
+#define SSDFB_SET_COM_OUTPUT_DIRECTION_NORMAL	0xc0
+#define SSDFB_SET_COM_OUTPUT_DIRECTION_REMAP	0xc8
 #define SSDFB_ENTIRE_DISPLAY_ON			0xa4
 #define SSDFB_SET_DISPLAY_MODE_NORMAL		0xa6
 #define SSDFB_SET_DISPLAY_MODE_INVERS		0xa7
@@ -58,12 +60,12 @@
 #define SSDFB_I2C_COMMAND			0x00
 #define SSDFB_I2C_DATA				0x40
 
-#define SSDFB_WIDTH	128
-#define SSDFB_HEIGHT	64
-
 struct ssdfb_softc {
 	struct device		 sc_dev;
 	int			 sc_node;
+	int			 sc_width;
+	int			 sc_height;
+	int			 sc_pgoff;
 
 	uint8_t			*sc_fb;
 	size_t			 sc_fbsize;
@@ -153,7 +155,6 @@ struct cfdriver ssdfb_cd = {
 };
 
 struct wsscreen_descr ssdfb_std_descr = { "std" };
-struct wsdisplay_charcell ssdfb_bs[SSDFB_WIDTH * SSDFB_HEIGHT];
 
 const struct wsscreen_descr *ssdfb_descrs[] = {
 	&ssdfb_std_descr
@@ -288,20 +289,25 @@ ssdfb_attach(struct ssdfb_softc *sc)
 		free(gpio, M_DEVBUF, len);
 	}
 
-	sc->sc_fbsize = (SSDFB_WIDTH * SSDFB_HEIGHT) / 8;
+	sc->sc_width = OF_getpropint(sc->sc_node, "solomon,width", 96);
+	sc->sc_height = OF_getpropint(sc->sc_node, "solomon,height", 16);
+	sc->sc_pgoff = OF_getpropint(sc->sc_node, "solomon,page-offset", 1);
+
+	sc->sc_fbsize = (sc->sc_width * sc->sc_height) / 8;
 	sc->sc_fb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ri = &sc->sc_rinfo;
 	ri->ri_bits = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK | M_ZERO);
-	ri->ri_bs = ssdfb_bs;
+	ri->ri_bs = mallocarray(sc->sc_width * sc->sc_height,
+	    sizeof(struct wsdisplay_charcell), M_DEVBUF, M_WAITOK | M_ZERO);
 	ri->ri_flg = RI_CLEAR | RI_VCONS;
 	ri->ri_depth = 1;
-	ri->ri_width = SSDFB_WIDTH;
-	ri->ri_height = SSDFB_HEIGHT;
+	ri->ri_width = sc->sc_width;
+	ri->ri_height = sc->sc_height;
 	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
 	ri->ri_hw = sc;
 
-	rasops_init(ri, SSDFB_HEIGHT, SSDFB_WIDTH);
+	rasops_init(ri, sc->sc_height, sc->sc_width);
 	ssdfb_std_descr.ncols = ri->ri_cols;
 	ssdfb_std_descr.nrows = ri->ri_rows;
 	ssdfb_std_descr.textops = &ri->ri_ops;
@@ -341,6 +347,8 @@ int
 ssdfb_detach(struct ssdfb_softc *sc, int flags)
 {
 	struct rasops_info *ri = &sc->sc_rinfo;
+	free(ri->ri_bs, M_DEVBUF, sc->sc_width * sc->sc_height *
+	    sizeof(struct wsdisplay_charcell));
 	free(ri->ri_bits, M_DEVBUF, sc->sc_fbsize);
 	free(sc->sc_fb, M_DEVBUF, sc->sc_fbsize);
 	return 0;
@@ -359,41 +367,56 @@ ssdfb_init(struct ssdfb_softc *sc)
 	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_SET_PAGE_START_ADDRESS;
 	ssdfb_write_command(sc, reg, 1);
-	ssdfb_set_range(sc, 0, SSDFB_WIDTH - 1,
-	    0, (SSDFB_HEIGHT / 8) - 1);
-	reg[0] = SSDFB_SET_DISPLAY_CLOCK_DIVIDE_RATIO;
-	reg[1] = 0xa0;
-	ssdfb_write_command(sc, reg, 2);
+	ssdfb_set_range(sc, 0, sc->sc_width - 1,
+	    0, (sc->sc_height / 8) - 1);
+	if (OF_is_compatible(sc->sc_node, "solomon,ssd1309fb-i2c") ||
+	    OF_is_compatible(sc->sc_node, "solomon,ssd1309fb-spi")) {
+		reg[0] = SSDFB_SET_DISPLAY_CLOCK_DIVIDE_RATIO;
+		reg[1] = 0xa0;
+		ssdfb_write_command(sc, reg, 2);
+	}
 	reg[0] = SSDFB_SET_MULTIPLEX_RATIO;
 	reg[1] = 0x3f;
 	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_SET_DISPLAY_OFFSET;
-	reg[1] = 0x00;
+	reg[1] = OF_getpropint(sc->sc_node, "solomon,com-offset", 0);
 	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_SET_START_LINE | 0x00;
 	ssdfb_write_command(sc, reg, 1);
-	reg[0] = SSDFB_SET_COLUMN_DIRECTION_REVERSE;
+	reg[0] = SSDFB_SET_COLUMN_DIRECTION_NORMAL;
+	if (OF_getproplen(sc->sc_node, "solomon,com-invdir") == 0)
+		reg[0] = SSDFB_SET_COLUMN_DIRECTION_REVERSE;
 	ssdfb_write_command(sc, reg, 1);
-	reg[0] = SSDFB_SET_COM_OUTPUT_DIRECTION | 0x08;
+	reg[0] = SSDFB_SET_COM_OUTPUT_DIRECTION_REMAP;
+	if (OF_getproplen(sc->sc_node, "solomon,segment-no-remap") == 0)
+		reg[0] = SSDFB_SET_COM_OUTPUT_DIRECTION_NORMAL;
 	ssdfb_write_command(sc, reg, 1);
 	reg[0] = SSDFB_SET_COM_PINS_HARD_CONF;
 	reg[1] = 0x12;
+	if (OF_getproplen(sc->sc_node, "solomon,com-seq") == 0)
+		reg[1] &= ~(1 << 4);
+	if (OF_getproplen(sc->sc_node, "solomon,com-lrremap") == 0)
+		reg[1] |= 1 << 5;
 	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_SET_CONTRAST_CONTROL;
 	reg[1] = 223;
 	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_SET_PRE_CHARGE_PERIOD;
-	reg[1] = 0x82;
+	reg[1] = (OF_getpropint(sc->sc_node, "solomon,prechargep1", 2) & 0xf) << 0;
+	reg[1] |= (OF_getpropint(sc->sc_node, "solomon,prechargep2", 2) & 0xf) << 4;
 	ssdfb_write_command(sc, reg, 2);
-	reg[0] = SSDFB_SET_VCOM_DESELECT_LEVEL;
-	reg[1] = 0x34;
-	ssdfb_write_command(sc, reg, 2);
+	if (OF_is_compatible(sc->sc_node, "solomon,ssd1309fb-i2c") ||
+	    OF_is_compatible(sc->sc_node, "solomon,ssd1309fb-spi")) {
+		reg[0] = SSDFB_SET_VCOM_DESELECT_LEVEL;
+		reg[1] = 0x34;
+		ssdfb_write_command(sc, reg, 2);
+	}
 	reg[0] = SSDFB_ENTIRE_DISPLAY_ON;
 	ssdfb_write_command(sc, reg, 1);
 	reg[0] = SSDFB_SET_DISPLAY_MODE_NORMAL;
 	ssdfb_write_command(sc, reg, 1);
 
-	ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
+	ssdfb_partial(sc, 0, sc->sc_width, 0, sc->sc_height);
 
 	reg[0] = SSDFB_SET_DISPLAY_ON;
 	ssdfb_write_command(sc, reg, 1);
@@ -404,6 +427,9 @@ ssdfb_set_range(struct ssdfb_softc *sc, uint8_t x1, uint8_t x2,
     uint8_t y1, uint8_t y2)
 {
 	uint8_t reg[3];
+
+	y1 += sc->sc_pgoff;
+	y2 += sc->sc_pgoff;
 
 	if (sc->sc_column_range[0] != x1 || sc->sc_column_range[1] != x2) {
 		sc->sc_column_range[0] = x1;
@@ -435,7 +461,7 @@ ssdfb_partial(struct ssdfb_softc *sc, uint32_t x1, uint32_t x2,
 	if (x2 < x1 || y2 < y1)
 		return;
 
-	if (x2 > SSDFB_WIDTH || y2 > SSDFB_HEIGHT)
+	if (x2 > sc->sc_width || y2 > sc->sc_height)
 		return;
 
 	y1 = y1 & ~0x7;
@@ -676,7 +702,7 @@ ssdfb_copyrows(void *cookie, int src, int dst, int num)
 	struct ssdfb_softc *sc = ri->ri_hw;
 
 	sc->sc_riops.copyrows(cookie, src, dst, num);
-	ssdfb_partial(sc, 0, SSDFB_WIDTH,
+	ssdfb_partial(sc, 0, sc->sc_width,
 	    dst * ri->ri_font->fontheight,
 	    (dst + num) * ri->ri_font->fontheight);
 	return 0;
@@ -690,9 +716,9 @@ ssdfb_eraserows(void *cookie, int row, int num, long attr)
 
 	sc->sc_riops.eraserows(cookie, row, num, attr);
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0)
-		ssdfb_partial(sc, 0, SSDFB_WIDTH, 0, SSDFB_HEIGHT);
+		ssdfb_partial(sc, 0, sc->sc_width, 0, sc->sc_height);
 	else
-		ssdfb_partial(sc, 0, SSDFB_WIDTH,
+		ssdfb_partial(sc, 0, sc->sc_width,
 		    row * ri->ri_font->fontheight,
 		    (row + num) * ri->ri_font->fontheight);
 	return 0;
