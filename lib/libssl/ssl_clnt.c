@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.30 2018/08/16 17:39:50 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.31 2018/08/17 16:28:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2362,19 +2362,25 @@ err:
 int
 ssl3_send_client_verify(SSL *s)
 {
-	unsigned char	*p;
-	unsigned char	 data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
-	EVP_PKEY	*pkey;
-	EVP_PKEY_CTX	*pctx = NULL;
-	EVP_MD_CTX	 mctx;
-	unsigned	 u = 0;
-	unsigned long	 n;
-	int		 j;
+	CBB cbb, cert_verify, cbb_signature;
+	unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
+	unsigned char *signature = NULL;
+	unsigned int signature_len;
+	EVP_PKEY_CTX *pctx = NULL;
+	EVP_PKEY *pkey;
+	EVP_MD_CTX mctx;
+	const EVP_MD *md;
+	long hdatalen;
+	void *hdata;
 
 	EVP_MD_CTX_init(&mctx);
 
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (S3I(s)->hs.state == SSL3_ST_CW_CERT_VRFY_A) {
-		p = ssl3_handshake_msg_start(s, SSL3_MT_CERTIFICATE_VERIFY);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &cert_verify,
+		    SSL3_MT_CERTIFICATE_VERIFY))
+			goto err;
 
 		/*
 		 * Create context from key and test if sha1 is allowed as
@@ -2387,6 +2393,9 @@ ssl3_send_client_verify(SSL *s)
 		/* XXX - is this needed? */
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) <= 0)
 			ERR_clear_error();
+
+		if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
+			goto err;
 
 		if (!SSL_USE_SIGALGS(s)) {
 			if (S3I(s)->handshake_buffer) {
@@ -2403,55 +2412,44 @@ ssl3_send_client_verify(SSL *s)
 		 * using agreed digest and cached handshake records.
 		 */
 		if (SSL_USE_SIGALGS(s)) {
-			long hdatalen = 0;
-			void *hdata;
-			const EVP_MD *md = s->cert->key->digest;
 			hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer,
 			    &hdata);
+			md = s->cert->key->digest;
 			if (hdatalen <= 0 ||
-			    !tls12_get_sigandhash(p, pkey, md)) {
+			    !tls12_get_sigandhash_cbb(&cert_verify, pkey, md)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
-			p += 2;
 			if (!EVP_SignInit_ex(&mctx, md, NULL) ||
 			    !EVP_SignUpdate(&mctx, hdata, hdatalen) ||
-			    !EVP_SignFinal(&mctx, p + 2, &u, pkey)) {
+			    !EVP_SignFinal(&mctx, signature, &signature_len,
+				pkey)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
-			s2n(u, p);
-			n = u + 4;
 			if (!tls1_digest_cached_records(s))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
 			if (RSA_sign(NID_md5_sha1, data,
-			    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, &(p[2]),
-			    &u, pkey->pkey.rsa) <= 0 ) {
+			    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, signature,
+			    &signature_len, pkey->pkey.rsa) <= 0 ) {
 				SSLerror(s, ERR_R_RSA_LIB);
 				goto err;
 			}
-			s2n(u, p);
-			n = u + 2;
 		} else if (pkey->type == EVP_PKEY_EC) {
 			if (!ECDSA_sign(pkey->save_type,
-			    &(data[MD5_DIGEST_LENGTH]),
-			    SHA_DIGEST_LENGTH, &(p[2]),
-			    (unsigned int *)&j, pkey->pkey.ec)) {
+			    &data[MD5_DIGEST_LENGTH], SHA_DIGEST_LENGTH,
+			    signature, &signature_len, pkey->pkey.ec)) {
 				SSLerror(s, ERR_R_ECDSA_LIB);
 				goto err;
 			}
-			s2n(j, p);
-			n = j + 2;
 #ifndef OPENSSL_NO_GOST
 		} else if (pkey->type == NID_id_GostR3410_94 ||
-			   pkey->type == NID_id_GostR3410_2001) {
+		    pkey->type == NID_id_GostR3410_2001) {
 			unsigned char signbuf[128];
-			long hdatalen = 0;
-			void *hdata;
-			const EVP_MD *md;
-			int nid;
+			unsigned int u;
 			size_t sigsize;
+			int nid;
 
 			hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
 			if (hdatalen <= 0) {
@@ -2468,38 +2466,47 @@ ssl3_send_client_verify(SSL *s)
 			    !EVP_DigestFinal(&mctx, signbuf, &u) ||
 			    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
 			    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
-					       EVP_PKEY_CTRL_GOST_SIG_FORMAT,
-					       GOST_SIG_FORMAT_RS_LE,
-					       NULL) <= 0) ||
-			    (EVP_PKEY_sign(pctx, &(p[2]), &sigsize,
-					   signbuf, u) <= 0)) {
+				EVP_PKEY_CTRL_GOST_SIG_FORMAT,
+				GOST_SIG_FORMAT_RS_LE, NULL) <= 0) ||
+			    (EVP_PKEY_sign(pctx, signature, &sigsize,
+				signbuf, u) <= 0)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
+			if (sigsize > UINT_MAX)
+				goto err;
+			signature_len = sigsize;
 			if (!tls1_digest_cached_records(s))
 				goto err;
-			j = sigsize;
-			s2n(j, p);
-			n = j + 2;
 #endif
 		} else {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
 
-		S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_B;
+		if (!CBB_add_u16_length_prefixed(&cert_verify, &cbb_signature))
+			goto err;
+		if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
+			goto err;
 
-		ssl3_handshake_msg_finish(s, n);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
+
+		S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_B;
 	}
 
 	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
+	free(signature);
 
 	return (ssl3_handshake_write(s));
 
-err:
+ err:
+	CBB_cleanup(&cbb);
 	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
+	free(signature);
+
 	return (-1);
 }
 
