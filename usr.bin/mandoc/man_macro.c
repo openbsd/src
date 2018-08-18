@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.92 2018/08/18 15:12:09 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.93 2018/08/18 17:32:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -244,6 +244,12 @@ blk_close(MACRO_PROT_ARGS)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, man->parse,
 		    line, ppos, roff_name[tok]);
 		rew_scope(man, MAN_PP);
+		if (tok == MAN_RE) {
+			roff_elem_alloc(man, line, ppos, ROFF_br);
+			man->last->flags |= NODE_LINE |
+			    NODE_VALID | NODE_ENDED;
+			man->next = ROFF_NEXT_SIBLING;
+		}
 		return;
 	}
 
