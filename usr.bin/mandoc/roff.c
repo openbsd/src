@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.205 2018/08/18 02:03:41 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.206 2018/08/18 21:36:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1203,7 +1203,14 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			r->man->next = ROFF_NEXT_SIBLING;
 		}
 
-		/* Discard comments. */
+		/* Line continuation with comment. */
+
+		if (stesc[1] == '#') {
+			*stesc = '\0';
+			return ROFF_APPEND;
+		}
+
+		/* Discard normal comments. */
 
 		while (stesc > start && stesc[-1] == ' ')
 			stesc--;

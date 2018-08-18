@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.79 2018/08/16 14:01:35 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.80 2018/08/18 21:36:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2018 $
+.Dd $Mdocdate: August 18 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1817,6 +1817,12 @@ is an unpaddable space-sized non-breaking space character; see
 .Ss \e\(dq
 The rest of the input line is treated as
 .Sx Comments .
+.Ss \e#
+Line continuation with comment.
+Discard the rest of the physical input line and continue the logical
+input line on the next physical input line, joining the text on
+both lines together as if it were on a single input line.
+This is a groff extension.
 .Ss \e%
 Hyphenation allowed at this point of the word; ignored by
 .Xr mandoc 1 .
