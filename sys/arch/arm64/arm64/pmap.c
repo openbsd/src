@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.56 2018/08/16 15:36:04 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.57 2018/08/18 15:42:19 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1537,9 +1537,43 @@ pmap_init(void)
 void
 pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	/* We only need to do anything if it is the current process. */
-	if (pr == curproc->p_p)
+	struct pmap *pm = vm_map_pmap(&pr->ps_vmspace->vm_map);
+	vaddr_t kva = zero_page + cpu_number() * PAGE_SIZE;
+	paddr_t pa;
+	vsize_t clen;
+	vsize_t off;
+
+	/*
+	 * If we're caled for the current processes, we can simply
+	 * flush the data cache to the point of unification and
+	 * invalidate the instruction cache.
+	 */
+	if (pr == curproc->p_p) {
 		cpu_icache_sync_range(va, len);
+		return;
+	}
+
+	/*
+	 * Flush and invalidate through an aliased mapping.  This
+	 * assumes the instruction cache is PIPT.  That is only true
+	 * for some of the hardware we run on.
+	 */
+	while (len > 0) {
+		/* add one to always round up to the next page */
+		clen = round_page(va + 1) - va;
+		if (clen > len)
+			clen = len;
+
+		off = va - trunc_page(va);
+		if (pmap_extract(pm, trunc_page(va), &pa)) {
+			pmap_kenter_pa(kva, pa, PROT_READ|PROT_WRITE);
+			cpu_icache_sync_range(kva + off, clen);
+			pmap_kremove_pg(kva);
+		}
+
+		len -= clen;
+		va += clen;
+	}
 }
 
 void
