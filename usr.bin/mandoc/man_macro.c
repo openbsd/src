@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.90 2018/08/18 02:03:41 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.91 2018/08/18 14:02:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -69,7 +69,7 @@ static const struct man_macro man_macros[MAN_MAX - MAN_TH] = {
 	{ in_line_eoln, MAN_NSCOPED }, /* PD */
 	{ in_line_eoln, 0 }, /* AT */
 	{ in_line_eoln, MAN_NSCOPED }, /* in */
-	{ blk_exp, MAN_BSCOPE }, /* SY */
+	{ blk_imp, MAN_BSCOPE }, /* SY */
 	{ blk_close, MAN_BSCOPE }, /* YS */
 	{ in_line_eoln, 0 }, /* OP */
 	{ in_line_eoln, MAN_BSCOPE }, /* EX */
@@ -267,6 +267,13 @@ blk_close(MACRO_PROT_ARGS)
 	if (ctok == MAN_LP || ctok == MAN_PP || ctok == MAN_P) {
 		*pos = strlen(buf);
 		blk_imp(man, ctok, cline, cpos, pos, buf);
+	}
+
+	/* Synopsis blocks need an explicit end marker for spacing. */
+
+	if (tok == MAN_YS && man->last == nn) {
+		roff_elem_alloc(man, line, ppos, tok);
+		man_unscope(man, man->last);
 	}
 }
 

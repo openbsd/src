@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.169 2018/08/18 13:04:48 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.170 2018/08/18 14:02:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -859,7 +859,8 @@ pre_SY(DECL_ARGS)
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
-		print_bvspace(p, n, mt->pardist);
+		if (n->prev == NULL || n->prev->tok != MAN_SY)
+			print_bvspace(p, n, mt->pardist);
 		return 1;
 	case ROFFT_HEAD:
 	case ROFFT_BODY:
