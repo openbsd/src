@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.26 2018/08/14 15:25:04 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.27 2018/08/18 16:51:33 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,7 +90,7 @@
 extern int verify_depth;
 
 static void s_time_usage(void);
-static SSL *doConnection(SSL * scon);
+static int doConnection(SSL *);
 static int benchmark(int);
 
 static SSL_CTX *tm_ctx = NULL;
@@ -345,42 +345,28 @@ s_time_main(int argc, char **argv)
 /***********************************************************************
  * doConnection - make a connection
  * Args:
- *		scon	= earlier ssl connection for session id, or NULL
+ *		scon	= SSL connection
  * Returns:
- *		SSL *	= the connection pointer.
+ *		1 on success, 0 on error
  */
-static SSL *
-doConnection(SSL * scon)
+static int
+doConnection(SSL *scon)
 {
 	struct pollfd pfd[1];
-	SSL *serverCon;
 	BIO *conn;
 	long verify_error;
 	int i;
 
 	if ((conn = BIO_new(BIO_s_connect())) == NULL)
-		return (NULL);
-
-/*	BIO_set_conn_port(conn,port);*/
+		return 0;
 	BIO_set_conn_hostname(conn, s_time_config.host);
-
-	if (scon == NULL)
-		serverCon = SSL_new(tm_ctx);
-	else {
-		serverCon = scon;
-		SSL_set_connect_state(serverCon);
-	}
-
-	SSL_set_bio(serverCon, conn, conn);
-
-	/* ok, lets connect */
+	SSL_set_connect_state(scon);
+	SSL_set_bio(scon, conn, conn);
 	for (;;) {
-		i = SSL_connect(serverCon);
+		i = SSL_connect(scon);
 		if (BIO_sock_should_retry(i)) {
 			BIO_printf(bio_err, "DELAY\n");
-
-			i = SSL_get_fd(serverCon);
-			pfd[0].fd = i;
+			pfd[0].fd = SSL_get_fd(scon);
 			pfd[0].events = POLLIN;
 			poll(pfd, 1, -1);
 			continue;
@@ -389,17 +375,15 @@ doConnection(SSL * scon)
 	}
 	if (i <= 0) {
 		BIO_printf(bio_err, "ERROR\n");
-		verify_error = SSL_get_verify_result(serverCon);
+		verify_error = SSL_get_verify_result(scon);
 		if (verify_error != X509_V_OK)
 			BIO_printf(bio_err, "verify error:%s\n",
 			    X509_verify_cert_error_string(verify_error));
 		else
 			ERR_print_errors(bio_err);
-		if (scon == NULL)
-			SSL_free(serverCon);
-		return NULL;
+		return 0;
 	}
-	return serverCon;
+	return 1;
 }
 
 static int
@@ -415,7 +399,9 @@ benchmark(int reuse_session)
 
 	if (reuse_session) {
 		/* Get an SSL object so we can reuse the session id */
-		if ((scon = doConnection(NULL)) == NULL) {
+		if ((scon = SSL_new(tm_ctx)) == NULL)
+			goto end;
+		if (!doConnection(scon)) {
 			fprintf(stderr, "Unable to get connection\n");
 			goto end;
 		}
@@ -448,7 +434,11 @@ benchmark(int reuse_session)
 	for (;;) {
 		if (finishtime < time(NULL))
 			break;
-		if ((scon = doConnection(reuse_session ? scon : NULL)) == NULL)
+		if (scon == NULL) {
+			if ((scon = SSL_new(tm_ctx)) == NULL)
+				goto end;
+		}
+		if (!doConnection(scon))
 			goto end;
 
 		if (s_time_config.www_path != NULL) {
