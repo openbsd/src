@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.171 2018/08/18 14:25:55 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.172 2018/08/18 17:06:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -870,7 +870,7 @@ pre_SY(DECL_ARGS)
 	}
 
 	nn = n->parent->head->child;
-	len = nn == NULL ? 0 : term_strlen(p, nn->string) + 1;
+	len = nn == NULL ? 1 : term_strlen(p, nn->string) + 1;
 
 	switch (n->type) {
 	case ROFFT_HEAD:
