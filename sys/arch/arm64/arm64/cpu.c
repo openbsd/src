@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2018/08/04 11:55:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2018/08/18 11:34:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -211,10 +211,14 @@ int
 cpu_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
 	char buf[32];
 
-	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "cpu") == 0)
+	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "cpu") != 0)
+		return 0;
+
+	if (ncpus < MAXCPUS || faa->fa_reg[0].addr == (mpidr & MPIDR_AFF))
 		return 1;
 
 	return 0;
@@ -243,6 +247,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ci->ci_flags |= CPUF_AP;
+		ncpus++;
 	}
 #endif
 
@@ -429,7 +434,6 @@ cpu_start_secondary(struct cpu_info *ci)
 	uint64_t tcr;
 	int s;
 
-	ncpus++;
 	ci->ci_flags |= CPUF_PRESENT;
 	__asm volatile("dsb sy");
 
