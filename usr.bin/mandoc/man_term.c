@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.170 2018/08/18 14:02:52 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.171 2018/08/18 14:25:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,8 +115,8 @@ static const struct man_term_act man_term_acts[MAN_MAX - MAN_TH] = {
 	{ pre_I, NULL, 0 }, /* I */
 	{ pre_alternate, NULL, 0 }, /* IR */
 	{ pre_alternate, NULL, 0 }, /* RI */
-	{ pre_literal, NULL, 0 }, /* nf */
-	{ pre_literal, NULL, 0 }, /* fi */
+	{ pre_literal, NULL, MAN_NOTEXT }, /* nf */
+	{ pre_literal, NULL, MAN_NOTEXT }, /* fi */
 	{ NULL, NULL, 0 }, /* RE */
 	{ pre_RS, post_RS, 0 }, /* RS */
 	{ pre_DT, NULL, 0 }, /* DT */
