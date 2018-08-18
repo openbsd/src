@@ -1,7 +1,8 @@
-.\"	$OpenBSD: man.7,v 1.50 2018/08/16 23:40:19 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.51 2018/08/18 02:03:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017 Anthony Bentley <bentley@openbsd.org>
 .\" Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 16 2018 $
+.Dd $Mdocdate: August 18 2018 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -630,6 +631,18 @@ Begin a sub-section.
 The scope of a sub-section is closed by a subsequent sub-section,
 section, or end of file.
 The paragraph left-margin width is reset to the default.
+.Ss \&SY
+Begin a synopsis block with the following syntax:
+.Bd -unfilled -offset indent
+.Pf \. Sx \&SY Ar command
+.Ar arguments
+.Pf \. Sx \&YS
+.Ed
+.Pp
+This is a non-standard GNU extension
+and very rarely used even in GNU manual pages.
+Formatting is similar to
+.Sx \&IP .
 .Ss \&TH
 Sets the title of the manual page for use in the page header
 and footer with the following syntax:
@@ -718,6 +731,10 @@ It has the following syntax:
 link description to be shown
 .Pf \. Sx UE
 .Ed
+.Ss \&YS
+End a synopsis block started by
+.Pf \. Sx SY .
+This is a non-standard GNU extension.
 .Ss \&fi
 End literal mode begun by
 .Sx \&nf .

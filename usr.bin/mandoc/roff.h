@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.42 2018/08/16 23:40:19 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.43 2018/08/18 02:03:41 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -464,6 +464,8 @@ enum	roff_tok {
 	MAN_PD,
 	MAN_AT,
 	MAN_in,
+	MAN_SY,
+	MAN_YS,
 	MAN_OP,
 	MAN_EX,
 	MAN_EE,
