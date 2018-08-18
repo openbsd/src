@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.91 2018/08/18 14:02:52 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.92 2018/08/18 15:12:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -260,6 +260,8 @@ blk_close(MACRO_PROT_ARGS)
 	if (buf[*pos] != '\0') {
 		roff_word_alloc(man, line, ppos, buf + *pos);
 		man->last->flags |= NODE_DELIMC;
+		if (mandoc_eos(man->last->string, strlen(man->last->string)))
+			man->last->flags |= NODE_EOS;
 	}
 
 	/* Move a trailing paragraph behind the block. */
