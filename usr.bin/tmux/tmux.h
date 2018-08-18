@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.838 2018/08/18 16:14:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.839 2018/08/18 20:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -938,9 +938,8 @@ struct session {
 	struct hooks	*hooks;
 	struct options	*options;
 
-#define SESSION_UNATTACHED 0x1	/* not attached to any clients */
-#define SESSION_PASTING 0x2
-#define SESSION_ALERTED 0x4
+#define SESSION_PASTING 0x1
+#define SESSION_ALERTED 0x2
 	int		 flags;
 
 	u_int		 attached;

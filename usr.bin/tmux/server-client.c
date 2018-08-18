@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.254 2018/08/02 11:44:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.255 2018/08/18 20:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1173,7 +1173,7 @@ server_client_check_focus(struct window_pane *wp)
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session == NULL || !(c->flags & CLIENT_FOCUSED))
 			continue;
-		if (c->session->flags & SESSION_UNATTACHED)
+		if (c->session->attached == 0)
 			continue;
 
 		if (c->session->curw->window == wp->window)

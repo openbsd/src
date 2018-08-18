@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.181 2018/08/02 11:56:12 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.182 2018/08/18 20:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -319,7 +319,7 @@ server_update_socket(void)
 
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {
-		if (!(s->flags & SESSION_UNATTACHED)) {
+		if (s->attached != 0) {
 			n++;
 			break;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.114 2018/04/10 10:48:44 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.115 2018/08/18 20:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -430,7 +430,7 @@ server_check_unattached(void)
 	 * set, collect them.
 	 */
 	RB_FOREACH(s, sessions, &sessions) {
-		if (!(s->flags & SESSION_UNATTACHED))
+		if (s->attached != 0)
 			continue;
 		if (options_get_number (s->options, "destroy-unattached"))
 			session_destroy(s, __func__);

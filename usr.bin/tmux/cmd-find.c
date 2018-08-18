@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.67 2018/08/02 11:44:07 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.68 2018/08/18 20:08:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,7 +136,7 @@ cmd_find_best_client(struct session *s)
 {
 	struct client	*c_loop, *c;
 
-	if (s->flags & SESSION_UNATTACHED)
+	if (s->attached == 0)
 		s = NULL;
 
 	c = NULL;
@@ -160,10 +160,10 @@ cmd_find_session_better(struct session *s, struct session *than, int flags)
 	if (than == NULL)
 		return (1);
 	if (flags & CMD_FIND_PREFER_UNATTACHED) {
-		attached = (~than->flags & SESSION_UNATTACHED);
-		if (attached && (s->flags & SESSION_UNATTACHED))
+		attached = (than->attached != 0);
+		if (attached && s->attached == 0)
 			return (1);
-		else if (!attached && (~s->flags & SESSION_UNATTACHED))
+		else if (!attached && s->attached != 0)
 			return (0);
 	}
 	return (timercmp(&s->activity_time, &than->activity_time, >));
