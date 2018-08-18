@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.13 2018/08/15 21:46:29 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.14 2018/08/18 10:10:19 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -132,24 +132,16 @@
 #define IRQ_ENABLE	1
 #define IRQ_DISABLE	0
 
-/*
- * This is not a true hard limit, but until bigger machines are supported
- * there is no need for this to be 96+, which the interrupt controller
- * does support. It may make sense to move to dynamic allocation of these 3
- * fields in the future, eg when hardware with 96 cores are supported.
- */
-#define MAX_CORES	24
-
 struct agintc_softc {
 	struct simplebus_softc	 sc_sbus;
 	struct intrq		*sc_handler;
 	struct intrhand		**sc_lpi_handler;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh;
-	bus_space_handle_t	 sc_r_ioh[MAX_CORES];
+	bus_space_handle_t	*sc_r_ioh;
 	bus_space_handle_t	 sc_redist_base;
 	bus_dma_tag_t		 sc_dmat;
-	uint64_t		 sc_affinity[MAX_CORES];
+	uint64_t		*sc_affinity;
 	int			 sc_cpuremap[MAXCPUS];
 	int			 sc_nintr;
 	int			 sc_nlpi;
@@ -354,9 +346,40 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	agintc_sc = sc; /* save this for global access */
 
-	/* find and submap the redistributors. */
+	/* find the redistributors. */
 	offset = 0;
 	for (nredist = 0; ; nredist++) {
+		int32_t sz = (64 * 1024 * 2);
+		uint64_t typer;
+
+		typer = bus_space_read_8(sc->sc_iot, sc->sc_redist_base,
+		    offset + GICR_TYPER);
+
+		if (typer & GICR_TYPER_VLPIS)
+			sz += (64 * 1024 * 2);
+
+#ifdef DEBUG_AGINTC
+		printf("probing redistributor %d %x\n", nredist, offset);
+#endif
+
+		offset += sz;
+
+		if (typer & GICR_TYPER_LAST) {
+			sc->sc_num_redist = nredist + 1;
+			break;
+		}
+	}
+
+	printf(" nirq %d, nredist %d", nintr, sc->sc_num_redist);
+	
+	sc->sc_r_ioh = mallocarray(sc->sc_num_redist,
+	    sizeof(*sc->sc_r_ioh), M_DEVBUF, M_WAITOK);
+	sc->sc_affinity = mallocarray(sc->sc_num_redist,
+	    sizeof(*sc->sc_affinity), M_DEVBUF, M_WAITOK);
+
+	/* submap and configure the redistributors. */
+	offset = 0;
+	for (nredist = 0; nredist < sc->sc_num_redist; nredist++) {
 		int32_t sz = (64 * 1024 * 2);
 		uint64_t typer;
 
@@ -371,11 +394,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 		bus_space_subregion(sc->sc_iot, sc->sc_redist_base,
 		    offset, sz, &sc->sc_r_ioh[nredist]);
-
-#ifdef DEBUG_AGINTC
-		printf("probing redistributor %d %x %p\n", nredist, offset,
-		    sc->sc_r_ioh[nredist]);
-#endif
 
 		if (sc->sc_nlpi > 0) {
 			bus_space_write_8(sc->sc_iot, sc->sc_redist_base,
@@ -393,14 +411,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		offset += sz;
-
-		if (typer & GICR_TYPER_LAST) {
-			sc->sc_num_redist = nredist + 1;
-			break;
-		}
 	}
-
-	printf(" nirq %d, nredist %d", nintr, sc->sc_num_redist);
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 1; i < nintr / 32; i++) {
@@ -535,6 +546,15 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 unmap:
+	if (sc->sc_r_ioh) {
+		free(sc->sc_r_ioh, M_DEVBUF,
+		    sc->sc_num_redist * sizeof(*sc->sc_r_ioh));
+	}
+	if (sc->sc_affinity) {
+		free(sc->sc_affinity, M_DEVBUF,
+		     sc->sc_num_redist * sizeof(*sc->sc_affinity));
+	}
+
 	if (sc->sc_pend)
 		agintc_dmamem_free(sc->sc_dmat, sc->sc_pend);
 	if (sc->sc_prop)
