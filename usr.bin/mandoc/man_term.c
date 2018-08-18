@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.168 2018/08/18 02:03:41 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.169 2018/08/18 13:04:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -344,7 +344,7 @@ pre_OP(DECL_ARGS)
 {
 
 	term_word(p, "[");
-	p->flags |= TERMP_NOSPACE;
+	p->flags |= TERMP_KEEP | TERMP_NOSPACE;
 
 	if (NULL != (n = n->child)) {
 		term_fontrepl(p, TERMFONT_BOLD);
@@ -356,6 +356,7 @@ pre_OP(DECL_ARGS)
 	}
 
 	term_fontrepl(p, TERMFONT_NONE);
+	p->flags &= ~TERMP_KEEP;
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "]");
 	return 0;
