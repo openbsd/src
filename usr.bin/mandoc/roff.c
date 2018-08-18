@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.206 2018/08/18 21:36:53 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.207 2018/08/18 22:04:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1212,7 +1212,8 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 
 		/* Discard normal comments. */
 
-		while (stesc > start && stesc[-1] == ' ')
+		while (stesc > start && stesc[-1] == ' ' &&
+		    (stesc == start + 1 || stesc[-2] != '\\'))
 			stesc--;
 		*stesc = '\0';
 		break;
