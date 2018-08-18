@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.837 2018/08/09 09:53:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.838 2018/08/18 16:14:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1638,6 +1638,7 @@ struct environ *environ_for_session(struct session *, int);
 
 /* tty.c */
 void	tty_create_log(void);
+u_int	tty_status_lines(struct client *);
 void	tty_raw(struct tty *, const char *);
 void	tty_attributes(struct tty *, const struct grid_cell *,
 	    const struct window_pane *);
