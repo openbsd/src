@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.10 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.11 2018/08/18 15:25:20 mestre Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -81,6 +81,9 @@ rfc868time_client(const char *hostname, int family, struct timeval *new,
 		errx(1, "%s: %s", hostname, gai_strerror(error));
 		/*NOTREACHED*/
 	}
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {

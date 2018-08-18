@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.33 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.34 2018/08/18 15:25:20 mestre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -135,6 +135,9 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 		errx(1, "%s: %s", hostname, gai_strerror(ierror));
 		/*NOTREACHED*/
 	}
+
+	if (pledge("stdio inet", NULL) == -1)
+		err(1, "pledge");
 
 	corrleaps = leapflag;
 	if (corrleaps)
