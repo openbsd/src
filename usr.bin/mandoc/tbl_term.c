@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.46 2018/08/18 16:44:52 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.47 2018/08/19 19:32:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -458,13 +458,11 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 	const struct tbl_cell *cp, *cpn, *cpp;
 	const struct roffcol *col;
 	int	 vert;
-	char	 line, cross;
+	char	 cross, line, stdcross, stdline;
 
-	line = (kind < 2 && TBL_SPAN_DHORIZ == sp->pos) ? '=' : '-';
-	cross = (kind < 3) ? '+' : '-';
+	stdline = (kind < 2 && TBL_SPAN_DHORIZ == sp->pos) ? '=' : '-';
+	stdcross = (kind < 3) ? '+' : '-';
 
-	if (kind)
-		term_word(tp, "+");
 	cp = sp->layout->first;
 	cpp = kind || sp->prev == NULL ? NULL : sp->prev->layout->first;
 	if (cpp == cp)
@@ -472,8 +470,18 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 	cpn = kind > 1 || sp->next == NULL ? NULL : sp->next->layout->first;
 	if (cpn == cp)
 		cpn = NULL;
+	if (kind)
+		term_word(tp,
+		    cpn == NULL || cpn->pos != TBL_CELL_DOWN ? "+" : "|");
 	for (;;) {
 		col = tp->tbl.cols + cp->col;
+		if (cpn == NULL || cpn->pos != TBL_CELL_DOWN) {
+			line = stdline;
+			cross = stdcross;
+		} else {
+			line = ' ';
+			cross = (kind < 3) ? '|' : ' ';
+		}
 		tbl_char(tp, line, col->width + col->spacing / 2);
 		vert = cp->vert;
 		if ((cp = cp->next) == NULL)
@@ -488,6 +496,11 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 				vert = cpn->vert;
 			cpn = cpn->next;
 		}
+		if (cpn == NULL || cpn->pos != TBL_CELL_DOWN) {
+			line = stdline;
+			cross = stdcross;
+		} else
+			line = ' ';
 		if (sp->opts->opts & TBL_OPT_ALLBOX && !vert)
 			vert = 1;
 		if (col->spacing)
@@ -498,7 +511,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 			tbl_char(tp, line, (col->spacing - 3) / 2);
 	}
 	if (kind) {
-		term_word(tp, "+");
+		term_word(tp,
+		    cpn == NULL || cpn->pos != TBL_CELL_DOWN ? "+" : "|");
 		term_flushln(tp);
 	}
 }
