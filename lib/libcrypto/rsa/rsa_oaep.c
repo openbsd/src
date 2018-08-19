@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.28 2018/08/19 20:15:30 tb Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.29 2018/08/19 20:17:20 tb Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -223,7 +223,7 @@ PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
 		}
 	}
 	rv = 0;
-err:
+ err:
 	EVP_MD_CTX_cleanup(&c);
 	return rv;
 }
