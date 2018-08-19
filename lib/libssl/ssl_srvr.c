@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.40 2018/08/19 15:29:26 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.41 2018/08/19 15:38:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1565,8 +1565,7 @@ ssl3_send_server_key_exchange(SSL *s)
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
-				if (!tls12_get_sigandhash_cbb(&server_kex, pkey,
-				    md)) {
+				if (!tls12_get_hashandsig(&server_kex, pkey, md)) {
 					/* Should never happen */
 					al = SSL_AD_INTERNAL_ERROR;
 					SSLerror(s, ERR_R_INTERNAL_ERROR);

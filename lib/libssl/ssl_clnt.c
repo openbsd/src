@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.31 2018/08/17 16:28:21 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.32 2018/08/19 15:38:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2416,7 +2416,7 @@ ssl3_send_client_verify(SSL *s)
 			    &hdata);
 			md = s->cert->key->digest;
 			if (hdatalen <= 0 ||
-			    !tls12_get_sigandhash_cbb(&cert_verify, pkey, md)) {
+			    !tls12_get_hashandsig(&cert_verify, pkey, md)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}

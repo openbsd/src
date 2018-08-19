@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.142 2018/08/16 17:49:48 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.143 2018/08/19 15:38:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1116,49 +1116,41 @@ tls12_find_id(int nid, tls12_lookup *table, size_t tlen)
 }
 
 int
-tls12_get_sigandhash_cbb(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md)
+tls12_get_hashid(const EVP_MD *md)
 {
-	unsigned char p[2];
-
-	if (!tls12_get_sigandhash(p, pk, md))
-		return 0;
-
-	if (!CBB_add_u8(cbb, p[0]))
-		return 0;
-	if (!CBB_add_u8(cbb, p[1]))
-		return 0;
-
-	return 1;
-}
-
-int
-tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)
-{
-	int sig_id, md_id;
-
 	if (md == NULL)
-		return 0;
+		return -1;
 
-	md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
+	return tls12_find_id(EVP_MD_type(md), tls12_md,
 	    sizeof(tls12_md) / sizeof(tls12_lookup));
-	if (md_id == -1)
-		return 0;
-
-	sig_id = tls12_get_sigid(pk);
-	if (sig_id == -1)
-		return 0;
-
-	p[0] = (unsigned char)md_id;
-	p[1] = (unsigned char)sig_id;
-
-	return 1;
 }
 
 int
 tls12_get_sigid(const EVP_PKEY *pk)
 {
+	if (pk == NULL)
+		return -1;
+
 	return tls12_find_id(pk->type, tls12_sig,
 	    sizeof(tls12_sig) / sizeof(tls12_lookup));
+}
+
+int
+tls12_get_hashandsig(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md)
+{
+	int hash_id, sig_id;
+
+	if ((hash_id = tls12_get_hashid(md)) == -1)
+		return 0;
+	if ((sig_id = tls12_get_sigid(pk)) == -1)
+		return 0;
+
+	if (!CBB_add_u8(cbb, hash_id))
+		return 0;
+	if (!CBB_add_u8(cbb, sig_id))
+		return 0;
+
+	return 1;
 }
 
 const EVP_MD *

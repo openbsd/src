@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.206 2018/08/16 17:49:48 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.207 2018/08/19 15:38:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1282,11 +1282,9 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #define tlsext_tick_md	EVP_sha256
 int tls1_process_ticket(SSL *s, const unsigned char *session_id, int len,
     const unsigned char *limit, SSL_SESSION **ret);
-int tls12_get_sigandhash_cbb(CBB *cbb, const EVP_PKEY *pk,
-    const EVP_MD *md);
-int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
-    const EVP_MD *md);
+int tls12_get_hashid(const EVP_MD *md);
 int tls12_get_sigid(const EVP_PKEY *pk);
+int tls12_get_hashandsig(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
