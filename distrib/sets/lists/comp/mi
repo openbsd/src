@@ -1280,6 +1280,7 @@
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
+./usr/include/sys/kcov.h
 ./usr/include/sys/kernel.h
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
