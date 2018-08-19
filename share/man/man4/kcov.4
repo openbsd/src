@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.1 2018/08/19 11:42:33 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.2 2018/08/19 17:17:44 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -39,7 +39,7 @@ By default,
 .Nm
 is not enabled but requires the compile-time configuration
 .Cd option KCOV
-to be present,
+to be present;
 see
 .Xr options 4 .
 .Pp
@@ -51,7 +51,7 @@ calls are provided:
 Allocate a coverage buffer with a capacity of
 .Fa nentries .
 The buffer can be accessed using
-.Xr mmap 2
+.Xr mmap 2 ,
 whereas the returned pointer must be interpreted as an array of
 .Vt unsigned long
 entries.
@@ -71,7 +71,7 @@ Default device node.
 In the following example,
 the
 .Xr read 2
-syscall is traced and the coverage displayed which in turn can be passed to
+syscall is traced and the coverage displayed, which in turn can be passed to
 .Xr addr2line 1
 in order to translate the kernel program counter into the file name and line
 number it corresponds to.
