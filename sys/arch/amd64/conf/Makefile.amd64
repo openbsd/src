@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.99 2018/08/19 11:42:33 anton Exp $
+#	$OpenBSD: Makefile.amd64,v 1.100 2018/08/19 18:09:49 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -143,7 +143,6 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 kcov.o: $S/dev/kcov.c
 	${NORMAL_C} -fno-sanitize-coverage=trace-pc
 .endif
-
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
