@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.61 2018/08/19 11:42:33 anton Exp $	*/
+/*	$OpenBSD: conf.c,v 1.62 2018/08/19 18:01:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -176,6 +176,7 @@ cdev_decl(kcov);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#include "kcov.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -214,7 +215,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_notdef(),			/* 18: was: concatenated disk driver */
-	cdev_kcov_init(1,kcov),		/* 19: kcov */
+	cdev_kcov_init(NKCOV,kcov),	/* 19: kcov */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
