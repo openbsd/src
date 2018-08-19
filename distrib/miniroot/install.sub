@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1098 2018/07/10 14:22:36 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1099 2018/08/19 20:01:38 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2712,8 +2712,9 @@ finish_up() {
 	fi
 
 	# Create /etc/installurl if it does not yet exist.
-	if [[ -n $INSTALL_URL && ! -f /mnt/etc/installurl ]]; then
-		echo "$INSTALL_URL" >/mnt/etc/installurl
+	if [[ ! -f /mnt/etc/installurl ]]; then
+		echo "${INSTALL_URL:-https://cdn.openbsd.org/pub/OpenBSD}" \
+			>/mnt/etc/installurl
 	fi
 
 	echo -n "Making all device nodes..."
