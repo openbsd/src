@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.70 2018/04/08 16:57:57 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.71 2018/08/19 20:19:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,9 +496,10 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 			ctx->current_cert = x;
 		} else {
 			if (!sk_X509_push(ctx->chain, chain_ss)) {
-				X509_free(chain_ss);
 				X509error(ERR_R_MALLOC_FAILURE);
-				return 0;
+				ctx->error = X509_V_ERR_OUT_OF_MEM;
+				ok = 0;
+				goto end;
 			}
 			num++;
 			ctx->last_untrusted = num;
@@ -548,8 +549,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ok = ctx->check_policy(ctx);
 
  end:
-	if (sktmp != NULL)
-		sk_X509_free(sktmp);
+	sk_X509_free(sktmp);
 	X509_free(chain_ss);
 
 	/* Safety net, error returns must set ctx->error */
