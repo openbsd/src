@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.29 2018/07/04 20:46:22 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.30 2018/08/19 08:23:47 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,8 @@ void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
 pcireg_t	pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
 
-pci_chipset_tag_t pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int);
+void		pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
+pci_chipset_tag_t pci_lookup_segment(int);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,

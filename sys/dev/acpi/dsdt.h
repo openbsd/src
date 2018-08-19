@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.76 2018/07/05 19:25:38 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.77 2018/08/19 08:23:47 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -339,8 +339,9 @@ union amlpci_t {
 	struct {
 		uint16_t reg;
 		uint16_t fun;
-		uint16_t dev;
-		uint16_t bus;
+		uint8_t dev;
+		uint8_t bus;
+		uint16_t seg;
 	};
 };
 int			aml_rdpciaddr(struct aml_node *pcidev,

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.242 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.243 2018/08/19 08:23:47 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2303,14 +2303,21 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 {
 	int64_t res;
 
+	addr->bus = 0;
+	addr->seg = 0;
 	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
 		addr->fun = res & 0xFFFF;
 		addr->dev = res >> 16;
 	}
 	while (pcidev != NULL) {
-		/* HID device (PCI or PCIE root): eval _BBN */
+		/* HID device (PCI or PCIE root): eval _SEG and _BBN */
 		if (__aml_search(pcidev, "_HID", 0)) {
-			if (aml_evalinteger(acpi_softc, pcidev, "_BBN", 0, NULL, &res) == 0) {
+			if (aml_evalinteger(acpi_softc, pcidev, "_SEG",
+			        0, NULL, &res) == 0) {
+				addr->seg = res;
+			}
+			if (aml_evalinteger(acpi_softc, pcidev, "_BBN",
+			        0, NULL, &res) == 0) {
 				addr->bus = res;
 				break;
 			}

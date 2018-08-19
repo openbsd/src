@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimcfg.c,v 1.3 2018/07/04 20:46:22 kettenis Exp $ */
+/* $OpenBSD: acpimcfg.c,v 1.4 2018/08/19 08:23:47 kettenis Exp $ */
 /*
  * Copyright (c) 2010 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -59,20 +59,20 @@ acpimcfg_match(struct device *parent, void *match, void *aux)
 void
 acpimcfg_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpi_softc *sc = (struct acpi_softc *)parent;
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_mcfg *mcfg = (struct acpi_mcfg *)aaa->aaa_table;
+	caddr_t addr = (caddr_t)(mcfg + 1);
 
-	printf(" addr 0x%llx, bus %d-%d\n", mcfg->base_address,
-	    mcfg->min_bus_number, mcfg->max_bus_number);
+	printf("\n");
 
-	/*
-	 * Some (broken?) BIOSen have an MCFG table for an empty bus
-	 * range.  Ignore those tables.
-	 */
-	if (mcfg->min_bus_number == mcfg->max_bus_number)
-		return;
+	while (addr < (caddr_t)mcfg + mcfg->hdr.length) {
+		struct acpi_mcfg_entry *entry = (struct acpi_mcfg_entry *)addr;
 
-	sc->sc_pc = pci_mcfg_init(aaa->aaa_memt, mcfg->base_address,
-	    mcfg->min_bus_number, mcfg->max_bus_number);
+		printf("%s: addr 0x%llx, bus %d-%d\n", self->dv_xname,
+		    entry->base_address, entry->min_bus_number, entry->max_bus_number);
+
+		pci_mcfg_init(aaa->aaa_memt, entry->base_address,
+		     entry->segment, entry->min_bus_number, entry->max_bus_number);
+		addr += sizeof(struct acpi_mcfg_entry);
+	}
 }

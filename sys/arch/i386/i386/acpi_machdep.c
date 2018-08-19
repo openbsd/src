@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.68 2018/07/04 20:46:22 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.69 2018/08/19 08:23:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -107,7 +107,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_memt = ba->ba_memt;
 	sc->sc_dmat = &pci_bus_dma_tag;
-	sc->sc_pc = NULL;	/* Legacy 0xcf8/0xcfc access mechanism */
 
 	acpi_attach_common(sc, ba->ba_acpipbase);
 }

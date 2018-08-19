@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.6 2018/08/11 22:47:27 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.7 2018/08/19 08:23:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -34,10 +34,18 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
 
-bus_addr_t pci_mcfg_addr;
-int pci_mcfg_min_bus, pci_mcfg_max_bus;
-bus_space_tag_t pci_mcfgt;
-bus_space_handle_t pci_mcfgh;
+struct acpipci_mcfg {
+	SLIST_ENTRY(acpipci_mcfg) am_list;
+
+	uint16_t	am_segment;
+	uint8_t		am_min_bus;
+	uint8_t		am_max_bus;
+
+	bus_space_tag_t	am_iot;
+	bus_space_handle_t am_ioh;
+
+	struct arm64_pci_chipset am_pc;
+};
 
 struct acpipci_trans {
 	struct acpipci_trans *at_next;
@@ -51,16 +59,14 @@ struct acpipci_softc {
 	struct device	sc_dev;
 	struct acpi_softc *sc_acpi;
 	struct aml_node *sc_node;
-
 	bus_space_tag_t	sc_iot;
-	bus_space_handle_t sc_ioh;
+	pci_chipset_tag_t sc_pc;
 
 	struct bus_space sc_bus_iot;
 	struct bus_space sc_bus_memt;
 	struct acpipci_trans *sc_io_trans;
 	struct acpipci_trans *sc_mem_trans;
 
-	struct arm64_pci_chipset sc_pc;
 	struct extent	*sc_busex;
 	struct extent	*sc_memex;
 	struct extent	*sc_ioex;
@@ -130,12 +136,6 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	uint64_t bbn = 0;
 	uint64_t seg = 0;
 
-	/* Bail out early if we don't have a valid MCFG table. */
-	if (pci_mcfg_addr == 0 || pci_mcfg_max_bus <= pci_mcfg_min_bus) {
-		printf(": no registers\n");
-		return;
-	}
-
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
@@ -151,14 +151,9 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	aml_evalinteger(sc->sc_acpi, sc->sc_node, "_SEG", 0, NULL, &seg);
 	sc->sc_seg = seg;
 
-	sc->sc_iot = pci_mcfgt;
-	sc->sc_ioh = pci_mcfgh;
-
+	sc->sc_iot = aaa->aaa_memt;
+	
 	printf("\n");
-
-	/* XXX We only support segment 0 for now. */
-	if (seg != 0)
-		return;
 
 	/* Create extents for our address spaces. */
 	snprintf(sc->sc_busex_name, sizeof(sc->sc_busex_name),
@@ -183,29 +178,23 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_memt.bus_private = sc->sc_mem_trans;
 	sc->sc_bus_memt._space_map = acpipci_bs_map;
 
-	sc->sc_pc.pc_conf_v = sc;
-	sc->sc_pc.pc_attach_hook = acpipci_attach_hook;
-	sc->sc_pc.pc_bus_maxdevs = acpipci_bus_maxdevs;
-	sc->sc_pc.pc_make_tag = acpipci_make_tag;
-	sc->sc_pc.pc_decompose_tag = acpipci_decompose_tag;
-	sc->sc_pc.pc_conf_size = acpipci_conf_size;
-	sc->sc_pc.pc_conf_read = acpipci_conf_read;
-	sc->sc_pc.pc_conf_write = acpipci_conf_write;
+	sc->sc_pc = pci_lookup_segment(seg);
+	KASSERT(sc->sc_pc->pc_intr_v == NULL);
 
-	sc->sc_pc.pc_intr_v = sc;
-	sc->sc_pc.pc_intr_map = acpipci_intr_map;
-	sc->sc_pc.pc_intr_map_msi = acpipci_intr_map_msi;
-	sc->sc_pc.pc_intr_map_msix = acpipci_intr_map_msix;
-	sc->sc_pc.pc_intr_string = acpipci_intr_string;
-	sc->sc_pc.pc_intr_establish = acpipci_intr_establish;
-	sc->sc_pc.pc_intr_disestablish = acpipci_intr_disestablish;
+	sc->sc_pc->pc_intr_v = sc;
+	sc->sc_pc->pc_intr_map = acpipci_intr_map;
+	sc->sc_pc->pc_intr_map_msi = acpipci_intr_map_msi;
+	sc->sc_pc->pc_intr_map_msix = acpipci_intr_map_msix;
+	sc->sc_pc->pc_intr_string = acpipci_intr_string;
+	sc->sc_pc->pc_intr_establish = acpipci_intr_establish;
+	sc->sc_pc->pc_intr_disestablish = acpipci_intr_disestablish;
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_bus_iot;
 	pba.pba_memt = &sc->sc_bus_memt;
 	pba.pba_dmat = aaa->aaa_dmat;
-	pba.pba_pc = &sc->sc_pc;
+	pba.pba_pc = sc->sc_pc;
 	pba.pba_busex = sc->sc_busex;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
@@ -323,17 +312,25 @@ acpipci_conf_size(void *v, pcitag_t tag)
 pcireg_t
 acpipci_conf_read(void *v, pcitag_t tag, int reg)
 {
-	struct acpipci_softc *sc = v;
+	struct acpipci_mcfg *am = v;
 
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, tag | reg);
+	if (tag < (am->am_min_bus << 20) ||
+	    tag >= ((am->am_max_bus + 1) << 20))
+		return 0xffffffff;
+
+	return bus_space_read_4(am->am_iot, am->am_ioh, tag | reg);
 }
 
 void
 acpipci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
-	struct acpipci_softc *sc = v;
+	struct acpipci_mcfg *am = v;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, tag | reg, data);
+	if (tag < (am->am_min_bus << 20) ||
+	    tag >= ((am->am_max_bus + 1) << 20))
+		return;
+
+	bus_space_write_4(am->am_iot, am->am_ioh, tag | reg, data);
 }
 
 struct acpipci_intr_handle {
@@ -553,43 +550,67 @@ acpipci_bs_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	return ENXIO;
 }
 
-struct arm64_pci_chipset pci_mcfg_chipset;
+SLIST_HEAD(,acpipci_mcfg) acpipci_mcfgs =
+    SLIST_HEAD_INITIALIZER(acpipci_mcfgs);
+
+void
+pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int segment,
+    int min_bus, int max_bus)
+{
+	struct acpipci_mcfg *am;
+
+	am = malloc(sizeof(struct acpipci_mcfg), M_DEVBUF, M_WAITOK | M_ZERO);
+	am->am_segment = segment;
+	am->am_min_bus = min_bus;
+	am->am_max_bus = max_bus;
+
+	am->am_iot = iot;
+	if (bus_space_map(iot, addr, (max_bus + 1) << 20, 0, &am->am_ioh))
+		panic("%s: can't map config space", __func__);
+
+	am->am_pc.pc_conf_v = am;
+	am->am_pc.pc_attach_hook = acpipci_attach_hook;
+	am->am_pc.pc_bus_maxdevs = acpipci_bus_maxdevs;
+	am->am_pc.pc_make_tag = acpipci_make_tag;
+	am->am_pc.pc_decompose_tag = acpipci_decompose_tag;
+	am->am_pc.pc_conf_size = acpipci_conf_size;
+	am->am_pc.pc_conf_read = acpipci_conf_read;
+	am->am_pc.pc_conf_write = acpipci_conf_write;
+	SLIST_INSERT_HEAD(&acpipci_mcfgs, am, am_list);
+}
 
 pcireg_t
-pci_mcfg_conf_read(void *v, pcitag_t tag, int reg)
+acpipci_dummy_conf_read(void *v, pcitag_t tag, int reg)
 {
-	return bus_space_read_4(pci_mcfgt, pci_mcfgh, tag | reg);
+	return 0xffffffff;
 }
 
 void
-pci_mcfg_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
+acpipci_dummy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
-	bus_space_write_4(pci_mcfgt, pci_mcfgh, tag | reg, data);
 }
 
+struct arm64_pci_chipset acpipci_dummy_chipset = {
+	.pc_attach_hook = acpipci_attach_hook,
+	.pc_bus_maxdevs = acpipci_bus_maxdevs,
+	.pc_make_tag = acpipci_make_tag,
+	.pc_decompose_tag = acpipci_decompose_tag,
+	.pc_conf_size = acpipci_conf_size,
+	.pc_conf_read = acpipci_dummy_conf_read,
+	.pc_conf_write = acpipci_dummy_conf_write,
+};
+
 pci_chipset_tag_t
-pci_mcfg_init(bus_space_tag_t iot, bus_addr_t addr, int min_bus, int max_bus)
+pci_lookup_segment(int segment)
 {
-	pci_chipset_tag_t pc = &pci_mcfg_chipset;
+	struct acpipci_mcfg *am;
 
-	pci_mcfgt = iot;
-	pci_mcfg_addr = addr;
-	pci_mcfg_min_bus = min_bus;
-	pci_mcfg_max_bus = max_bus;
+	SLIST_FOREACH(am, &acpipci_mcfgs, am_list) {
+		if (am->am_segment == segment)
+			return &am->am_pc;
+	}
 
-	if (bus_space_map(iot, addr, (pci_mcfg_max_bus + 1) << 20, 0,
-	    &pci_mcfgh))
-		panic("%s: can't map config space", __func__);
-
-	memset(pc, 0, sizeof(*pc));
-	pc->pc_bus_maxdevs = acpipci_bus_maxdevs;
-	pc->pc_make_tag = acpipci_make_tag;
-	pc->pc_decompose_tag = acpipci_decompose_tag;
-	pc->pc_conf_size = acpipci_conf_size;
-	pc->pc_conf_read = pci_mcfg_conf_read;
-	pc->pc_conf_write = pci_mcfg_conf_write;
-
-	return pc;
+	return &acpipci_dummy_chipset;
 }
 
 /*

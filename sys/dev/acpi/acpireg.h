@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.42 2018/07/01 10:26:17 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.43 2018/08/19 08:23:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -410,6 +410,9 @@ struct acpi_mcfg {
 	struct acpi_table_header	hdr;
 #define MCFG_SIG	"MCFG"
 	uint8_t		reserved[8];
+} __packed;
+
+struct acpi_mcfg_entry {
 	uint64_t	base_address;
 	uint16_t	segment;
 	uint8_t		min_bus_number;
@@ -671,11 +674,12 @@ struct acpi_ivrs {
  */
 #define ACPI_ADR_PCIDEV(addr)	(uint16_t)(addr >> 16)
 #define ACPI_ADR_PCIFUN(addr)	(uint16_t)(addr & 0xFFFF)
-#define ACPI_PCI_BUS(addr) (uint16_t)((addr) >> 48)
-#define ACPI_PCI_DEV(addr) (uint16_t)((addr) >> 32)
+
+#define ACPI_PCI_SEG(addr) (uint16_t)((addr) >> 48)
+#define ACPI_PCI_BUS(addr) (uint8_t)((addr) >> 40)
+#define ACPI_PCI_DEV(addr) (uint8_t)((addr) >> 32)
 #define ACPI_PCI_FN(addr)  (uint16_t)((addr) >> 16)
 #define ACPI_PCI_REG(addr) (uint16_t)(addr)
-#define ACPI_PCI_ADDR(b,d,f,r) ((uint64_t)(b)<<48LL | (uint64_t)(d)<<32LL | (f)<<16LL | (r))
 
 /*
  * PM1 Status Registers Fixed Hardware Feature Status Bits
