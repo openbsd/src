@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.840 2018/08/19 16:45:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.841 2018/08/19 20:13:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1350,8 +1350,12 @@ struct client {
 #define CLIENT_TRIPLECLICK 0x200000
 #define CLIENT_SIZECHANGED 0x400000
 #define CLIENT_STATUSOFF 0x800000
+#define CLIENT_REDRAWSTATUSALWAYS 0x1000000
 #define CLIENT_ALLREDRAWFLAGS \
-	(CLIENT_REDRAWWINDOW|CLIENT_REDRAWSTATUS|CLIENT_REDRAWBORDERS)
+	(CLIENT_REDRAWWINDOW| \
+	 CLIENT_REDRAWSTATUS| \
+	 CLIENT_REDRAWSTATUSALWAYS| \
+	 CLIENT_REDRAWBORDERS)
 	int		 flags;
 	struct key_table *keytable;
 

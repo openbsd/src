@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.256 2018/08/19 16:45:03 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.257 2018/08/19 20:13:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1319,6 +1319,12 @@ server_client_check_redraw(struct client *c)
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
 		return;
+	if (c->flags & CLIENT_ALLREDRAWFLAGS) {
+		log_debug("%s: redraw%s%s%s", c->name,
+		    (c->flags & CLIENT_REDRAWWINDOW) ? " window" : "",
+		    (c->flags & CLIENT_REDRAWSTATUS) ? " status" : "",
+		    (c->flags & CLIENT_REDRAWBORDERS) ? " borders" : "");
+	}
 
 	/*
 	 * If there is outstanding data, defer the redraw until it has been
