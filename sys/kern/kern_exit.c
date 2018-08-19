@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.166 2018/08/13 15:26:17 visa Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.167 2018/08/19 11:42:33 anton Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
+#include <sys/kcov.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
@@ -187,6 +188,10 @@ exit1(struct proc *p, int rv, int flags)
 		killjobc(pr);
 #ifdef ACCOUNTING
 		acct_process(p);
+#endif
+
+#ifdef KCOV
+		kcov_exit(p);
 #endif
 
 #ifdef KTRACE

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.97 2018/07/12 12:46:00 fcambus Exp $
+#	$OpenBSD: files.amd64,v 1.98 2018/08/19 11:42:33 anton Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -243,6 +243,12 @@ device vmm {}
 attach vmm at mainbus
 file	arch/amd64/amd64/vmm.c			vmm		needs-flag
 file	arch/amd64/amd64/vmm_support.S		vmm
+
+#
+# KCOV
+#
+pseudo-device kcov
+file	dev/kcov.c				kcov
 
 #
 # Machine-independent SD/MMC drivers
