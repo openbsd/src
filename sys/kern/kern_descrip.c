@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.178 2018/08/10 15:53:49 jsing Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.179 2018/08/19 02:22:40 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1021,12 +1021,6 @@ fnew(struct proc *p)
 		return (NULL);
 	}
 
-	/*
-	 * Allocate a new file descriptor.
-	 * If the process has file descriptor zero open, add to the list
-	 * of open files at that point, otherwise put it at the front of
-	 * the list of open files.
-	 */
 	fp = pool_get(&file_pool, PR_WAITOK|PR_ZERO);
 	/*
 	 * We need to block interrupts as long as `f_mtx' is being taken
