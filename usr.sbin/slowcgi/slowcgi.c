@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.53 2018/08/13 16:54:50 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.54 2018/08/19 12:31:41 florian Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 	if (geteuid() != 0)
 		errx(1, "need root privileges");
 
-	if (!debug && daemon(1, 0) == -1)
+	if (!debug && daemon(0, 0) == -1)
 		err(1, "daemon");
 
 	if (!debug) {
