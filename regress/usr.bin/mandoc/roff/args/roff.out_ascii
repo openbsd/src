@@ -10,7 +10,6 @@ DDEESSCCRRIIPPTTIIOONN
        standard unquoted: (one) (two)
        escaped blanks: (one one) (two two)
        escaped 'e' character: (one\one) (two)
-       escaped backslash before blank: (one) (two)
        escaped backslash before 'e' character: (one\) (two)
        double inter-argument space: (one) (two)
        triple inter-argument space: (one) (two)
