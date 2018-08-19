@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.138 2018/06/20 16:43:05 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.139 2018/08/19 18:03:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -60,7 +60,7 @@
 #define HTTPD_LOGVIS		VIS_NL|VIS_TAB|VIS_CSTYLE
 #define HTTPD_TLS_CERT		"/etc/ssl/server.crt"
 #define HTTPD_TLS_KEY		"/etc/ssl/private/server.key"
-#define HTTPD_TLS_CONFIG_MAX	255
+#define HTTPD_TLS_CONFIG_MAX	511
 #define HTTPD_TLS_CIPHERS	"compat"
 #define HTTPD_TLS_DHE_PARAMS	"none"
 #define HTTPD_TLS_ECDHE_CURVES	"default"
