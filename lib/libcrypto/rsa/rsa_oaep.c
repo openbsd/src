@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.27 2018/08/05 13:30:04 bcook Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.28 2018/08/19 20:15:30 tb Exp $ */
 /* Written by Ulf Moeller. This software is distributed on an "AS IS"
    basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. */
 
@@ -126,8 +126,7 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	}
 
 	dblen = num - SHA_DIGEST_LENGTH;
-	db = malloc(dblen + num);
-	if (db == NULL) {
+	if ((db = malloc(dblen + num)) == NULL) {
 		RSAerror(ERR_R_MALLOC_FAILURE);
 		return -1;
 	}
@@ -143,17 +142,17 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	maskeddb = padded_from + SHA_DIGEST_LENGTH;
 
 	if (MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen))
-		return -1;
+		goto err;
 	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
 		seed[i] ^= padded_from[i];
 
 	if (MGF1(db, dblen, seed, SHA_DIGEST_LENGTH))
-		return -1;
+		goto err;
 	for (i = 0; i < dblen; i++)
 		db[i] ^= maskeddb[i];
 
 	if (!EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1(), NULL))
-		return -1;
+		goto err;
 
 	if (timingsafe_memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
 		goto decoding_err;
@@ -177,12 +176,13 @@ RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	free(db);
 	return mlen;
 
-decoding_err:
+ decoding_err:
 	/*
 	 * To avoid chosen ciphertext attacks, the error message should not
 	 * reveal which kind of decoding error happened
 	 */
 	RSAerror(RSA_R_OAEP_DECODING_ERROR);
+ err:
 	free(db);
 	return -1;
 }
