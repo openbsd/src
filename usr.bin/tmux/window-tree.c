@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.30 2018/04/10 10:48:44 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.31 2018/08/19 19:03:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -460,7 +460,6 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 		break;
 	}
 }
-
 
 static void
 window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,

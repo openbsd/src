@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.29 2017/06/14 07:42:41 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.30 2018/08/19 19:03:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,6 +52,22 @@ static void
 cmd_string_ungetc(size_t *p)
 {
 	(*p)--;
+}
+
+static int
+cmd_string_unicode(wchar_t *wc, const char *s, size_t *p, char ch)
+{
+	int	size = (ch == 'u') ? 4 : 8;
+	u_int	tmp;
+
+	if (size == 4 && sscanf(s + *p, "%4x", &tmp) != 1)
+		return (-1);
+	if (size == 8 && sscanf(s + *p, "%8x", &tmp) != 1)
+		return (-1);
+	*p += size;
+
+	*wc = (wchar_t)tmp;
+	return (0);
 }
 
 int
@@ -191,12 +207,11 @@ cmd_string_copy(char **dst, char *src, size_t *len)
 static char *
 cmd_string_string(const char *s, size_t *p, char endch, int esc)
 {
-	int	ch;
-	char   *buf, *t;
-	size_t	len;
-
-	buf = NULL;
-	len = 0;
+	int			ch;
+	wchar_t			wc;
+	struct utf8_data	ud;
+	char		       *buf = NULL, *t;
+	size_t			len = 0;
 
 	while ((ch = cmd_string_getc(s, p)) != endch) {
 		switch (ch) {
@@ -220,6 +235,18 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
 			case 't':
 				ch = '\t';
 				break;
+			case 'u':
+			case 'U':
+				if (cmd_string_unicode(&wc, s, p, ch) != 0)
+					goto error;
+				if (utf8_split(wc, &ud) != UTF8_DONE)
+					goto error;
+				if (len >= SIZE_MAX - ud.size - 1)
+					goto error;
+				buf = xrealloc(buf, len + ud.size);
+				memcpy(buf + len, ud.data, ud.size);
+				len += ud.size;
+				continue;
 			}
 			break;
 		case '$':
