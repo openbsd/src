@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.115 2018/08/18 20:08:52 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.116 2018/08/19 16:45:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,13 +35,13 @@ static void		 server_destroy_session_group(struct session *);
 void
 server_redraw_client(struct client *c)
 {
-	c->flags |= CLIENT_REDRAW;
+	c->flags |= CLIENT_ALLREDRAWFLAGS;
 }
 
 void
 server_status_client(struct client *c)
 {
-	c->flags |= CLIENT_STATUS;
+	c->flags |= CLIENT_REDRAWSTATUS;
 }
 
 void
@@ -110,7 +110,7 @@ server_redraw_window_borders(struct window *w)
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session != NULL && c->session->curw->window == w)
-			c->flags |= CLIENT_BORDERS;
+			c->flags |= CLIENT_REDRAWBORDERS;
 	}
 }
 
