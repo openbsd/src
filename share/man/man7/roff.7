@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.80 2018/08/18 21:36:53 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.81 2018/08/19 17:43:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2018 $
+.Dd $Mdocdate: August 19 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1003,13 +1003,13 @@ is
 or
 .Sq o
 .Pq odd page ,
-it evaluates to true.
+it evaluates to true, and the
+.Ar body
+starts with the next character.
 .It
 If the first character of
 .Ar condition
 is
-.Sq c
-.Pq character available ,
 .Sq e
 .Pq even page ,
 .Sq t
@@ -1017,7 +1017,20 @@ is
 or
 .Sq v
 .Pq vroff mode ,
-it evaluates to false.
+it evaluates to false, and the
+.Ar body
+starts with the next character.
+.It
+If the first character of
+.Ar condition
+is
+.Sq c
+.Pq character available ,
+it evaluates to true if the following character is an ASCII character
+or a valid character escape sequence, or to false otherwise.
+The
+.Ar body
+starts with the character following that next character.
 .It
 If the first character of
 .Ar condition
