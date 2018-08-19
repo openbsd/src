@@ -1,11 +1,11 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.107 2017/06/06 08:12:01 tb Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.108 2018/08/19 11:51:04 anton Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.83 2016/09/11 19:59:53 deraadt Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp 
-.\"	OpenBSD: MAKEDEV.man,v 1.8 2016/03/12 17:59:27 espie Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.84 2018/08/19 11:42:33 anton Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.100 2018/08/19 11:42:33 anton Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2017 $
+.Dd $Mdocdate: August 19 2018 $
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -233,6 +233,9 @@ IPMI BMC access, see
 .It Ar joy*
 Joystick driver, see
 .Xr joy 4 .
+.It Ar kcov
+Kernel code coverage tracing, see
+.Xr kcov 4 .
 .It Ar nvram
 NVRAM access, see
 .Xr nvram 4 .
