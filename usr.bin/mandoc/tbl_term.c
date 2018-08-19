@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.47 2018/08/19 19:32:17 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.48 2018/08/19 23:10:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -631,42 +632,66 @@ tbl_number(struct termp *tp, const struct tbl_opts *opts,
 		const struct tbl_dat *dp,
 		const struct roffcol *col)
 {
-	char		*cp;
+	const char	*cp, *lastdigit, *lastpoint;
+	size_t		 intsz, padl, totsz;
 	char		 buf[2];
-	size_t		 sz, ssz, d, padl;
-	int		 i;
 
 	/*
-	 * See calc_data_number().  Left-pad by taking the offset of our
-	 * and the maximum decimal; right-pad by the remaining amount.
+	 * Almost the same code as in tblcalc_number():
+	 * First find the position of the decimal point.
 	 */
 
 	assert(dp->string);
+	lastdigit = lastpoint = NULL;
+	for (cp = dp->string; cp[0] != '\0'; cp++) {
+		if (cp[0] == '\\' && cp[1] == '&') {
+			lastdigit = lastpoint = cp;
+			break;
+		} else if (cp[0] == opts->decimal &&
+		    (isdigit((unsigned char)cp[1]) ||
+		     (cp > dp->string && isdigit((unsigned char)cp[-1]))))
+			lastpoint = cp;
+		else if (isdigit((unsigned char)cp[0]))
+			lastdigit = cp;
+	}
 
-	sz = term_strlen(tp, dp->string);
+	/* Then measure both widths. */
 
-	buf[0] = opts->decimal;
-	buf[1] = '\0';
-
-	if ((cp = strrchr(dp->string, opts->decimal)) != NULL) {
-		for (ssz = 0, i = 0; cp != &dp->string[i]; i++) {
-			buf[0] = dp->string[i];
-			ssz += term_strlen(tp, buf);
+	padl = 0;
+	totsz = term_strlen(tp, dp->string);
+	if (lastdigit != NULL) {
+		if (lastpoint == NULL)
+			lastpoint = lastdigit + 1;
+		intsz = 0;
+		buf[1] = '\0';
+		for (cp = dp->string; cp < lastpoint; cp++) {
+			buf[0] = cp[0];
+			intsz += term_strlen(tp, buf);
 		}
-		d = ssz;
-	} else
-		d = sz;
 
-	if (col->decimal > d && col->width > sz) {
-		padl = col->decimal - d;
-		if (padl + sz > col->width)
-			padl = col->width - sz;
-		tbl_char(tp, ASCII_NBRSP, padl);
-	} else
-		padl = 0;
+		/*
+		 * Pad left to match the decimal position,
+		 * but avoid exceeding the total column width.
+		 */
+
+		if (col->decimal > intsz && col->width > totsz) {
+			padl = col->decimal - intsz;
+			if (padl + totsz > col->width)
+				padl = col->width - totsz;
+		}
+
+	/* If it is not a number, simply center the string. */
+
+	} else if (col->width > totsz)
+		padl = (col->width - totsz) / 2;
+
+	tbl_char(tp, ASCII_NBRSP, padl);
 	tbl_word(tp, dp);
-	if (col->width > sz + padl)
-		tbl_char(tp, ASCII_NBRSP, col->width - sz - padl);
+
+	/* Pad right to fill the column.  */
+
+	if (col->width > padl + totsz)
+		tbl_char(tp, ASCII_NBRSP, col->width - padl - totsz);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.44 2018/08/18 20:17:58 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.45 2018/08/19 23:10:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -322,49 +323,66 @@ static void
 tblcalc_number(struct rofftbl *tbl, struct roffcol *col,
 		const struct tbl_opts *opts, const struct tbl_dat *dp)
 {
-	int		 i;
-	size_t		 sz, ssz, d;
-	const char	*str;
-	char		*cp;
+	const char	*cp, *lastdigit, *lastpoint;
+	size_t		 intsz, totsz;
 	char		 buf[2];
 
+	if (dp->string == NULL || *dp->string == '\0')
+		return;
+
 	/*
-	 * First calculate number width and decimal place (last + 1 for
-	 * non-decimal numbers).  If the stored decimal is subsequent to
-	 * ours, make our size longer by that difference
-	 * (right-"shifting"); similarly, if ours is subsequent the
-	 * stored, then extend the stored size by the difference.
-	 * Finally, re-assign the stored values.
+	 * Find the last digit and
+	 * the last decimal point that is adjacent to a digit.
+	 * The alignment indicator "\&" overrides everything.
 	 */
 
-	str = dp->string ? dp->string : "";
-	sz = (*tbl->slen)(str, tbl->arg);
+	lastdigit = lastpoint = NULL;
+	for (cp = dp->string; cp[0] != '\0'; cp++) {
+		if (cp[0] == '\\' && cp[1] == '&') {
+			lastdigit = lastpoint = cp;
+			break;
+		} else if (cp[0] == opts->decimal &&
+		    (isdigit((unsigned char)cp[1]) ||
+		     (cp > dp->string && isdigit((unsigned char)cp[-1]))))
+			lastpoint = cp;
+		else if (isdigit((unsigned char)cp[0]))
+			lastdigit = cp;
+	}
 
-	/* FIXME: TBL_DATA_HORIZ et al.? */
+	/* Not a number, treat as a literal string. */
 
-	buf[0] = opts->decimal;
+	totsz = (*tbl->slen)(dp->string, tbl->arg);
+	if (lastdigit == NULL) {
+		if (col->width < totsz)
+			col->width = totsz;
+		return;
+	}
+
+	/* Measure the width of the integer part. */
+
+	if (lastpoint == NULL)
+		lastpoint = lastdigit + 1;
+	intsz = 0;
 	buf[1] = '\0';
+	for (cp = dp->string; cp < lastpoint; cp++) {
+		buf[0] = cp[0];
+		intsz += (*tbl->slen)(buf, tbl->arg);
+	}
 
-	if (NULL != (cp = strrchr(str, opts->decimal))) {
-		buf[1] = '\0';
-		for (ssz = 0, i = 0; cp != &str[i]; i++) {
-			buf[0] = str[i];
-			ssz += (*tbl->slen)(buf, tbl->arg);
-		}
-		d = ssz;
+	/*
+         * If this number has more integer digits than all numbers
+         * seen on earlier lines, shift them all to the right.
+	 * If it has fewer, shift this number to the right.
+	 */
+
+	if (intsz > col->decimal) {
+		col->nwidth += intsz - col->decimal;
+		col->decimal = intsz;
 	} else
-		d = sz;
+		totsz += col->decimal - intsz;
 
-	/* Adjust the settings for this column. */
+	/* Update the maximum total width seen so far. */
 
-	if (col->decimal > d) {
-		sz += col->decimal - d;
-		d = col->decimal;
-	} else
-		col->nwidth += d - col->decimal;
-
-	if (sz > col->nwidth)
-		col->nwidth = sz;
-	if (d > col->decimal)
-		col->decimal = d;
+	if (totsz > col->nwidth)
+		col->nwidth = totsz;
 }
