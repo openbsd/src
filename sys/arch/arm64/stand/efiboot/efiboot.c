@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.18 2018/07/10 13:05:37 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.19 2018/08/19 14:09:41 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <dev/cons.h>
 #include <sys/disklabel.h>
 
@@ -359,6 +360,7 @@ efi_framebuffer(void)
 }
 
 int acpi = 0;
+void *fdt = NULL;
 char *bootmac = NULL;
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 
@@ -367,7 +369,6 @@ static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 void *
 efi_makebootargs(char *bootargs)
 {
-	void *fdt = NULL;
 	u_char bootduid[8];
 	u_char zero[8] = { 0 };
 	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
@@ -375,10 +376,12 @@ efi_makebootargs(char *bootargs)
 	size_t len;
 	int i;
 
-	for (i = 0; i < ST->NumberOfTableEntries; i++) {
-		if (efi_guidcmp(&fdt_guid,
-		    &ST->ConfigurationTable[i].VendorGuid) == 0)
-			fdt = ST->ConfigurationTable[i].VendorTable;
+	if (fdt == NULL) {
+		for (i = 0; i < ST->NumberOfTableEntries; i++) {
+			if (efi_guidcmp(&fdt_guid,
+			    &ST->ConfigurationTable[i].VendorGuid) == 0)
+				fdt = ST->ConfigurationTable[i].VendorTable;
+		}
 	}
 
 	if (fdt == NULL || acpi)
@@ -741,11 +744,13 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
  */
 
 int Xacpi_efi(void);
+int Xdtb_efi(void);
 int Xexit_efi(void);
 int Xpoweroff_efi(void);
 
 const struct cmd_table cmd_machine[] = {
 	{ "acpi",	CMDT_CMD, Xacpi_efi },
+	{ "dtb",	CMDT_CMD, Xdtb_efi },
 	{ "exit",	CMDT_CMD, Xexit_efi },
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 	{ NULL, 0 }
@@ -755,6 +760,40 @@ int
 Xacpi_efi(void)
 {
 	acpi = 1;
+	return (0);
+}
+
+int
+Xdtb_efi(void)
+{
+	EFI_PHYSICAL_ADDRESS addr;
+	char path[MAXPATHLEN];
+	struct stat sb;
+	int fd;
+
+#define O_RDONLY	0
+
+	if (cmd.argc != 2)
+		return (1);
+
+	snprintf(path, sizeof(path), "%s:%s", cmd.bootdev, cmd.argv[1]);
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0 || fstat(fd, &sb) == -1) {
+		printf("cannot open %s\n", path);
+		return (1);
+	}
+	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
+	    0x1000, &addr) != EFI_SUCCESS) {
+		printf("cannot allocate memory for %s\n", path);
+		return (1);
+	}
+	if (read(fd, (void *)addr, sb.st_size) != sb.st_size) {
+		printf("cannot read from %s\n", path);
+		return (1);
+	}
+
+	fdt = (void *)addr;
 	return (0);
 }
 
