@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.39 2018/08/16 18:13:15 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.40 2018/08/19 15:29:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2527,10 +2527,14 @@ ssl3_send_server_certificate(SSL *s)
 int
 ssl3_send_newsession_ticket(SSL *s)
 {
-	unsigned char *d, *p, *macstart;
+	CBB cbb, session_ticket, ticket;
+	unsigned char *enc_ticket = NULL;
 	unsigned char *senc = NULL;
 	const unsigned char *const_p;
-	int len, slen_full, slen;
+	unsigned char *p, *hmac;
+	size_t hmac_len;
+	int enc_ticket_len, slen;
+	int slen_full = 0;
 	SSL_SESSION *sess;
 	unsigned int hlen;
 	EVP_CIPHER_CTX ctx;
@@ -2539,7 +2543,16 @@ ssl3_send_newsession_ticket(SSL *s)
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 	unsigned char key_name[16];
 
+	EVP_CIPHER_CTX_init(&ctx);
+	HMAC_CTX_init(&hctx);
+
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (S3I(s)->hs.state == SSL3_ST_SW_SESSION_TICKET_A) {
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &session_ticket,
+		    SSL3_MT_NEWSESSION_TICKET))
+			goto err;
+
 		/* get session encoding length */
 		slen_full = i2d_SSL_SESSION(s->session, NULL);
 		/*
@@ -2576,24 +2589,6 @@ ssl3_send_newsession_ticket(SSL *s)
 		SSL_SESSION_free(sess);
 
 		/*
-		 * Grow buffer if need be: the length calculation is as
- 		 * follows 1 (size of message name) + 3 (message length
- 		 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
- 		 * 16 (key name) + max_iv_len (iv length) +
- 		 * session_length + max_enc_block_size (max encrypted session
- 		 * length) + max_md_size (HMAC).
- 		 */
-		if (!BUF_MEM_grow(s->internal->init_buf, ssl3_handshake_msg_hdr_len(s) +
-		    22 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
-		    EVP_MAX_MD_SIZE + slen))
-			goto err;
-
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_NEWSESSION_TICKET);
-
-		EVP_CIPHER_CTX_init(&ctx);
-		HMAC_CTX_init(&hctx);
-
-		/*
 		 * Initialize HMAC and cipher contexts. If callback present
 		 * it does all the work otherwise use generated values
 		 * from parent ctx.
@@ -2613,55 +2608,69 @@ ssl3_send_newsession_ticket(SSL *s)
 			memcpy(key_name, tctx->internal->tlsext_tick_key_name, 16);
 		}
 
+		/* Encrypt the session ticket. */
+		if ((enc_ticket = calloc(1, slen + EVP_MAX_BLOCK_LENGTH)) == NULL)
+			goto err;
+		if (!EVP_EncryptUpdate(&ctx, enc_ticket, &enc_ticket_len, senc, slen))
+			goto err;
+		if (!EVP_EncryptFinal_ex(&ctx, enc_ticket, &enc_ticket_len))
+			goto err;
+
+		/* Generate the HMAC. */
+		if (!HMAC_Update(&hctx, key_name, sizeof(key_name)))
+			goto err;
+		if (!HMAC_Update(&hctx, iv, EVP_CIPHER_CTX_iv_length(&ctx)))
+			goto err;
+		if (!HMAC_Update(&hctx, enc_ticket, enc_ticket_len))
+			goto err;
+
+		if ((hmac_len = HMAC_size(&hctx)) <= 0)
+			goto err;
+
 		/*
 		 * Ticket lifetime hint (advisory only):
 		 * We leave this unspecified for resumed session
 		 * (for simplicity), and guess that tickets for new
 		 * sessions will live as long as their sessions.
 		 */
-		l2n(s->internal->hit ? 0 : s->session->timeout, p);
+		if (!CBB_add_u32(&session_ticket,
+		    s->internal->hit ? 0 : s->session->timeout))
+			goto err;
 
-		/* Skip ticket length for now */
-		p += 2;
-		/* Output key name */
-		macstart = p;
-		memcpy(p, key_name, 16);
-		p += 16;
-		/* output IV */
-		memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
-		p += EVP_CIPHER_CTX_iv_length(&ctx);
-		/* Encrypt session data */
-		EVP_EncryptUpdate(&ctx, p, &len, senc, slen);
-		p += len;
-		EVP_EncryptFinal_ex(&ctx, p, &len);
-		p += len;
-		EVP_CIPHER_CTX_cleanup(&ctx);
+		if (!CBB_add_u16_length_prefixed(&session_ticket, &ticket))
+			goto err;
+		if (!CBB_add_bytes(&ticket, key_name, sizeof(key_name)))
+			goto err;
+		if (!CBB_add_bytes(&ticket, iv, EVP_CIPHER_CTX_iv_length(&ctx)))
+			goto err;
+		if (!CBB_add_bytes(&ticket, enc_ticket, enc_ticket_len))
+			goto err;
+		if (!CBB_add_space(&ticket, &hmac, hmac_len))
+			goto err;
 
-		HMAC_Update(&hctx, macstart, p - macstart);
-		HMAC_Final(&hctx, p, &hlen);
-		HMAC_CTX_cleanup(&hctx);
-		p += hlen;
+		if (!HMAC_Final(&hctx, hmac, &hlen))
+			goto err;
 
-		/* Now write out lengths: p points to end of data written */
-		/* Total length */
-		len = p - d;
-
-		/* Skip ticket lifetime hint. */
-		p = d + 4;
-		s2n(len - 6, p); /* Message length */
-
-		ssl3_handshake_msg_finish(s, len);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_SESSION_TICKET_B;
-
-		freezero(senc, slen_full);
 	}
+
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	HMAC_CTX_cleanup(&hctx);
+	freezero(senc, slen_full);
+	free(enc_ticket);
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
 	return (ssl3_handshake_write(s));
 
  err:
+	CBB_cleanup(&cbb);
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	HMAC_CTX_cleanup(&hctx);
 	freezero(senc, slen_full);
+	free(enc_ticket);
 
 	return (-1);
 }
