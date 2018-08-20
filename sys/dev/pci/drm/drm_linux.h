@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.90 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.91 2018/08/20 19:33:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -2119,6 +2119,26 @@ capable(int cap)
 typedef int pgprot_t;
 #define pgprot_val(v)	(v)
 #define PAGE_KERNEL	0
+
+static inline pgprot_t
+pgprot_writecombine(pgprot_t prot)
+{
+#ifdef PMAP_WC
+	return prot | PMAP_WC;
+#else
+	return prot | PMAP_NOCACHE;
+#endif
+}
+
+static inline pgprot_t
+pgprot_noncached(pgprot_t prot)
+{
+#ifdef PMAP_DEVICE
+	return prot | PMAP_DEVICE;
+#else
+	return prot | PMAP_NOCACHE;
+#endif
+}
 
 void	*kmap(struct vm_page *);
 void	 kunmap(void *addr);
