@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.179 2018/08/19 02:22:40 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.180 2018/08/20 14:59:02 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1002,6 +1002,7 @@ restart:
 		return (ENFILE);
 	}
 
+	FREF(fp);
 	*resultfp = fp;
 	*resultfd = i;
 
@@ -1030,8 +1031,6 @@ fnew(struct proc *p)
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
-
-	FREF(fp);
 
 	return (fp);
 }

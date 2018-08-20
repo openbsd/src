@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.28 2018/08/15 13:19:06 visa Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.29 2018/08/20 14:59:02 visa Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -914,7 +914,6 @@ dma_buf_export(const struct dma_buf_export_info *info)
 	dmabuf->size = info->size;
 	dmabuf->file = fp;
 	fp->f_data = dmabuf;
-	FRELE(fp, p);
 	return dmabuf;
 }
 
