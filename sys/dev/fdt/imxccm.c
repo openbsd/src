@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.10 2018/08/13 15:15:02 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.11 2018/08/20 16:48:03 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -225,6 +225,8 @@ uint32_t imxccm_get_ahbclk(struct imxccm_softc *);
 uint32_t imxccm_get_ipgclk(struct imxccm_softc *);
 uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
+uint32_t imxccm_imx8mq_ecspi(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mq_enet(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_i2c(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_uart(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_usdhc(struct imxccm_softc *sc, uint32_t);
@@ -585,6 +587,29 @@ imxccm_imx7d_usdhc(struct imxccm_softc *sc, uint32_t idx)
 		return clock_get_frequency(sc->sc_node, "osc");
 	case 1:
 		return 392000000; /* pll_sys_pfd0_392m_clk */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_ecspi(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	case 1:
+		return 200 * 1000 * 1000; /* sys2_pll_200m */
 	default:
 		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
 		return 0;
@@ -1036,6 +1061,10 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 		case IMX8MQ_CLK_USB_CORE_REF_SRC:
 		case IMX8MQ_CLK_USB_PHY_REF_SRC:
 			return imxccm_imx8mq_usb(sc, idx);
+		case IMX8MQ_CLK_ECSPI1_SRC:
+		case IMX8MQ_CLK_ECSPI2_SRC:
+		case IMX8MQ_CLK_ECSPI3_SRC:
+			return imxccm_imx8mq_ecspi(sc, idx);
 		}
 	} else if (sc->sc_gates == imx7d_gates) {
 		switch (idx) {
