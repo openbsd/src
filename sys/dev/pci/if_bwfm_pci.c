@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.26 2018/07/25 20:47:45 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.27 2018/08/20 18:58:06 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -316,6 +316,7 @@ static const struct pci_matchid bwfm_pci_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4350 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4356 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43602 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4371 },
 };
 
 int
@@ -430,6 +431,10 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	case BRCM_CC_43602_CHIP_ID:
 		name = "brcmfmac43602-pcie.bin";
 		nvname = "brcmfmac43602-pcie.nvram";
+		break;
+	case BRCM_CC_4371_CHIP_ID:
+		name = "brcmfmac4371-pcie.bin";
+		nvname = "brcmfmac4371-pcie.nvram";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
