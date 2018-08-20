@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.6 2018/08/20 17:06:18 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.7 2018/08/20 18:17:52 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -201,21 +201,9 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
 	}
-	if key_len != len(key) {
-		log.Fatalf("Key length mismatch: got %d, want %d", len(key), key_len)
-	}
-
-	var ctx C.EVP_AEAD_CTX
-	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
-		log.Fatalf("Failed to initialize AEAD context")
-	}
-
 	iv, err := hex.DecodeString(wt.IV)
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.IV, err)
-	}
-	if iv_len != len(iv) {
-		log.Fatalf("IV length mismatch: got %d, want %d", len(iv), iv_len)
 	}
 	aad, err := hex.DecodeString(wt.AAD)
 	if err != nil {
@@ -225,8 +213,27 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	if err != nil {
 		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
 	}
+	ct, err := hex.DecodeString(wt.CT)
+	if err != nil {
+		log.Fatalf("Failed to decode ct %q: %v", wt.CT, err)
+	}
+	tag, err := hex.DecodeString(wt.Tag)
+	if err != nil {
+		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
+	}
 
-	ivLen, aadLen, msgLen := len(iv), len(aad), len(msg)
+	keyLen, ivLen, aadLen, tagLen := len(key), len(iv), len(aad), len(tag)
+	if key_len != keyLen || iv_len != ivLen || tag_len != tagLen {
+		fmt.Printf("FAIL: Test case %d (%q) - length mismatch; key: got %d, want %d; IV: got %d, want %d; tag: got %d, want %d\n", wt.TCID, wt.Comment, keyLen, key_len, ivLen, iv_len, tagLen, tag_len)
+		return false
+	}
+
+	msgLen, ctLen := len(msg), len(ct)
+	if msgLen != ctLen {
+		fmt.Printf("FAIL: Test case %d (%q) - length mismatch: msgLen = %d, ctLen = %d\n", wt.TCID, wt.Comment, msgLen, ctLen)
+		return false
+	}
+
 	if ivLen == 0 {
 		iv = append(iv, 0)
 	}
@@ -240,6 +247,11 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	maxOutLen := msgLen + tag_len
 	out := make([]byte, maxOutLen)
 	var outLen C.size_t
+
+	var ctx C.EVP_AEAD_CTX
+	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
+		log.Fatalf("Failed to initialize AEAD context")
+	}
 
 	ret := C.EVP_AEAD_CTX_seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), (*C.uint8_t)(unsafe.Pointer(&out[0])), (*C.size_t)(unsafe.Pointer(&outLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
 
@@ -258,17 +270,9 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	outCt := out[0:msgLen]
 	outTag := out[msgLen: maxOutLen]
 
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode ct %q: %v", wt.CT, err)
-	}
 	if len(ct) != msgLen {
 		fmt.Printf("FAIL: Test case %d (%q) - msg length %d doesn't match ct length %d", wt.TCID, wt.Comment, msgLen, len(ct))
 		return false
-	}
-	tag, err := hex.DecodeString(wt.Tag)
-	if err != nil {
-		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
 	}
 	if len(tag) != tag_len {
 		fmt.Printf("FAIL: Test case %d (%q) tag length: got %d, want %d", wt.TCID, wt.Comment, len(tag), tag_len)
