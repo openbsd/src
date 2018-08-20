@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.8 2018/08/20 18:26:35 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.9 2018/08/20 18:47:20 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -270,15 +270,6 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	
 	sealedCt := sealed[0:msgLen]
 	sealedTag := sealed[msgLen: maxOutLen]
-
-	if len(ct) != msgLen {
-		fmt.Printf("FAIL: Test case %d (%q) - msg length %d doesn't match ct length %d", wt.TCID, wt.Comment, msgLen, len(ct))
-		return false
-	}
-	if len(tag) != tag_len {
-		fmt.Printf("FAIL: Test case %d (%q) tag length: got %d, want %d", wt.TCID, wt.Comment, len(tag), tag_len)
-		return false
-	}
 
 	success := false
 	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag)) || wt.Result == "invalid" {
