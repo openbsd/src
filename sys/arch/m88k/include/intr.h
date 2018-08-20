@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2016/06/13 23:51:59 dlg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2018/08/20 15:02:07 visa Exp $	*/
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
@@ -102,8 +102,6 @@ void splassert_check(int, const char *);
 #define	splsched()		splraise(IPL_SCHED)
 #define splvm()			splraise(IPL_VM)
 #define splhigh()		setipl(IPL_HIGH)
-
-#define	spllock()		splhigh()
 
 #define splx(x)			((x) ? setipl((x)) : spl0())
 

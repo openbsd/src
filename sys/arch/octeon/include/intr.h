@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2018/08/06 10:52:30 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.18 2018/08/20 15:02:07 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -126,7 +126,6 @@ void	 softintr_schedule(void *);
 #define splsoftnet()	splsoft()
 #define splstatclock()	splhigh()
 
-#define spllock()	splhigh()
 #define spl0()		spllower(0)
 
 void	splinit(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2018/08/08 11:06:33 patrick Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2018/08/20 15:02:07 visa Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ extern struct arm_intr_func arm_intr_func;
 #define	spl0()		spllower(IPL_NONE)
 
 #define	splsched()	splhigh()
-#define	spllock()	splhigh()
 
 void	intr_barrier(void *);
 
