@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.7 2018/08/20 18:17:52 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.8 2018/08/20 18:26:35 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -245,30 +245,31 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	}
 
 	maxOutLen := msgLen + tag_len
-	out := make([]byte, maxOutLen)
-	var outLen C.size_t
+
+	sealed := make([]byte, maxOutLen)
+	var sealedLen C.size_t
 
 	var ctx C.EVP_AEAD_CTX
 	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
 		log.Fatalf("Failed to initialize AEAD context")
 	}
 
-	ret := C.EVP_AEAD_CTX_seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), (*C.uint8_t)(unsafe.Pointer(&out[0])), (*C.size_t)(unsafe.Pointer(&outLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+	sealRet := C.EVP_AEAD_CTX_seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), (*C.uint8_t)(unsafe.Pointer(&sealed[0])), (*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
 
 	C.EVP_AEAD_CTX_cleanup((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)))
 
-	if ret != 1 && wt.Result == "invalid" {
-		fmt.Printf("INFO: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
+	if sealRet != 1 && wt.Result == "invalid" {
+		fmt.Printf("INFO: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), wt.Result)
 		return true
 	}
 
-	if (outLen != C.size_t(maxOutLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - ChaCha output length mismatch: got %d, want %d", wt.TCID, wt.Comment, outLen, maxOutLen)
+	if (sealedLen != C.size_t(maxOutLen)) {
+		fmt.Printf("FAIL: Test case %d (%q) - ChaCha output length mismatch: got %d, want %d", wt.TCID, wt.Comment, sealedLen, maxOutLen)
 		return false
 	}
 	
-	outCt := out[0:msgLen]
-	outTag := out[msgLen: maxOutLen]
+	sealedCt := sealed[0:msgLen]
+	sealedTag := sealed[msgLen: maxOutLen]
 
 	if len(ct) != msgLen {
 		fmt.Printf("FAIL: Test case %d (%q) - msg length %d doesn't match ct length %d", wt.TCID, wt.Comment, msgLen, len(ct))
@@ -280,10 +281,10 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	}
 
 	success := false
-	if (bytes.Equal(outCt, ct) && bytes.Equal(outTag, tag)) || wt.Result == "invalid" {
+	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag)) || wt.Result == "invalid" {
 		success = true
 	} else {
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n", wt.TCID, wt.Comment, int(ret), bytes.Equal(outCt, ct), bytes.Equal(outTag, tag), wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n", wt.TCID, wt.Comment, int(sealRet), bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), wt.Result)
 	}
 
 	return success
