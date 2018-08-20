@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.10 2018/08/20 20:46:51 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.11 2018/08/20 21:18:03 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -273,11 +273,11 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	}
 
 	if (sealedLen != C.size_t(maxOutLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - seal length mismatch: got %d, want %d", wt.TCID, wt.Comment, sealedLen, maxOutLen)
+		fmt.Printf("FAIL: Test case %d (%q) - seal length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, sealedLen, maxOutLen)
 		return false
 	}
 	if (openedLen != C.size_t(msgLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d", wt.TCID, wt.Comment, openedLen, msgLen)
+		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, openedLen, msgLen)
 		return false
 	}
 	
