@@ -514,6 +514,9 @@ EXPORT_SYMBOL(ttm_io_prot);
 
 pgprot_t ttm_io_prot(uint32_t caching_flags, pgprot_t tmp)
 {
+	/* Cached mappings need no adjustment */
+	if (caching_flags & TTM_PL_FLAG_CACHED)
+		return tmp;
 #ifdef PMAP_WC
 	if (caching_flags & TTM_PL_FLAG_WC)
 		return PMAP_WC;
