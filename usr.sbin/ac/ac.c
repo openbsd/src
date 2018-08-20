@@ -410,6 +410,8 @@ ac(FILE	*fp)
 		prev = usr.ut_time;
 		if (Flags & AC_D) {
 			ltm = localtime(&usr.ut_time);
+			if (ltm == NULL)
+				err(1, "localtime");
 			if (day >= 0 && day != ltm->tm_yday) {
 				day = ltm->tm_yday;
 				/*
@@ -461,6 +463,8 @@ ac(FILE	*fp)
 
 	if (Flags & AC_D) {
 		ltm = localtime(&usr.ut_time);
+		if (ltm == NULL)
+			err(1, "localtime");
 		if (day >= 0 && day != ltm->tm_yday) {
 			/*
 			 * print yesterday's total
