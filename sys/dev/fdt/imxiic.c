@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.5 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.6 2018/08/20 16:48:47 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -131,7 +131,7 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/* set iomux pins */
+	clock_enable(faa->fa_node, NULL);
 	pinctrl_byname(faa->fa_node, "default");
 
 	/* set speed */
