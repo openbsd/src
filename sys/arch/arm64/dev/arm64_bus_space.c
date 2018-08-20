@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_bus_space.c,v 1.6 2018/05/15 11:12:35 kettenis Exp $ */
+/*	$OpenBSD: arm64_bus_space.c,v 1.7 2018/08/20 19:38:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,7 +56,8 @@ bus_space_t arm64_bs_tag = {
 	._space_map =		generic_space_map,
 	._space_unmap =		generic_space_unmap,
 	._space_subregion =	generic_space_region,
-	._space_vaddr =		generic_space_vaddr
+	._space_vaddr =		generic_space_vaddr,
+	._space_mmap =		generic_space_mmap
 };
 bus_space_t *fdt_cons_bs_tag = &arm64_bs_tag;
 
@@ -235,4 +236,11 @@ void *
 generic_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 {
 	return (void *)h;
+}
+
+paddr_t
+generic_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off,
+    int prot, int flags)
+{
+	return (addr + off);
 }
