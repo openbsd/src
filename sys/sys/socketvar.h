@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.86 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.87 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -275,15 +275,12 @@ struct knote;
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *fp, off_t *, struct uio *uio, 
-	    struct ucred *cred);
-int	soo_write(struct file *fp, off_t *, struct uio *uio,
-	    struct ucred *cred);
-int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data,
-	    struct proc *p);
-int	soo_poll(struct file *fp, int events, struct proc *p);
-int	soo_kqfilter(struct file *fp, struct knote *kn);
-int 	soo_close(struct file *fp, struct proc *p);
+int	soo_read(struct file *, struct uio *, int);
+int	soo_write(struct file *, struct uio *, int);
+int	soo_ioctl(struct file *, u_long, caddr_t, struct proc *);
+int	soo_poll(struct file *, int events, struct proc *);
+int	soo_kqfilter(struct file *, struct knote *);
+int 	soo_close(struct file *, struct proc *);
 int	soo_stat(struct file *, struct stat *, struct proc *);
 void	sbappend(struct socket *, struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct socket *, struct sockbuf *, struct mbuf *);

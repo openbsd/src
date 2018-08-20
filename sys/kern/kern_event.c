@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.97 2018/08/15 13:19:06 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.98 2018/08/20 16:00:22 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -58,10 +58,8 @@ int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
 		    struct proc *p, int *retval);
 
-int	kqueue_read(struct file *fp, off_t *poff, struct uio *uio,
-		    struct ucred *cred);
-int	kqueue_write(struct file *fp, off_t *poff, struct uio *uio,
-		    struct ucred *cred);
+int	kqueue_read(struct file *, struct uio *, int);
+int	kqueue_write(struct file *, struct uio *, int);
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
 int	kqueue_poll(struct file *fp, int events, struct proc *p);
@@ -850,14 +848,13 @@ done:
  * This could be expanded to call kqueue_scan, if desired.
  */
 int
-kqueue_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+kqueue_read(struct file *fp, struct uio *uio, int fflags)
 {
 	return (ENXIO);
 }
 
 int
-kqueue_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
-
+kqueue_write(struct file *fp, struct uio *uio, int fflags)
 {
 	return (ENXIO);
 }

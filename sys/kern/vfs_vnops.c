@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.96 2018/08/15 13:19:06 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.97 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -59,8 +59,8 @@
 #include <sys/specdev.h>
 #include <sys/unistd.h>
 
-int vn_read(struct file *, off_t *, struct uio *, struct ucred *);
-int vn_write(struct file *, off_t *, struct uio *, struct ucred *);
+int vn_read(struct file *, struct uio *, int);
+int vn_write(struct file *, struct uio *, int);
 int vn_poll(struct file *, int, struct proc *);
 int vn_kqfilter(struct file *, struct knote *);
 int vn_closefile(struct file *, struct proc *);
@@ -335,24 +335,37 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
  * File table vnode read routine.
  */
 int
-vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+vn_read(struct file *fp, struct uio *uio, int fflags)
 {
 	struct vnode *vp = fp->f_data;
-	int error;
+	struct ucred *cred = fp->f_cred;
 	size_t count = uio->uio_resid;
+	off_t offset;
+	int error;
+
+	/*
+	 * Check below can race.  We can block on the vnode lock
+	 * and resume with a different `fp->f_offset' value.
+	 */
+	if ((fflags & FO_POSITION) == 0)
+		offset = fp->f_offset;
+	else
+		offset = uio->uio_offset;
 
 	/* no wrap around of offsets except on character devices */
-	if (vp->v_type != VCHR && count > LLONG_MAX - *poff)
+	if (vp->v_type != VCHR && count > LLONG_MAX - offset)
 		return (EINVAL);
 
 	if (vp->v_type == VDIR)
 		return (EISDIR);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	uio->uio_offset = *poff;
+	if ((fflags & FO_POSITION) == 0)
+		uio->uio_offset = fp->f_offset;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
-	*poff += count - uio->uio_resid;
+	if ((fflags & FO_POSITION) == 0)
+		fp->f_offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp);
 	return (error);
 }
@@ -361,15 +374,16 @@ vn_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
  * File table vnode write routine.
  */
 int
-vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+vn_write(struct file *fp, struct uio *uio, int fflags)
 {
 	struct vnode *vp = fp->f_data;
+	struct ucred *cred = fp->f_cred;
 	int error, ioflag = IO_UNIT;
 	size_t count;
 
 	/* note: pwrite/pwritev are unaffected by O_APPEND */
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND) &&
-	    poff == &fp->f_offset)
+	    (fflags & FO_POSITION) == 0)
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
@@ -377,13 +391,16 @@ vn_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	uio->uio_offset = *poff;
+	if ((fflags & FO_POSITION) == 0)
+		uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
-	if (ioflag & IO_APPEND)
-		*poff = uio->uio_offset;
-	else
-		*poff += count - uio->uio_resid;
+	if ((fflags & FO_POSITION) == 0) {
+		if (ioflag & IO_APPEND)
+			fp->f_offset = uio->uio_offset;
+		else
+			fp->f_offset += count - uio->uio_resid;
+	}
 	VOP_UNLOCK(vp);
 	return (error);
 }

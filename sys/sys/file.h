@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.52 2018/07/03 20:40:25 kettenis Exp $	*/
+/*	$OpenBSD: file.h,v 1.53 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -47,18 +47,17 @@ struct file;
 struct ucred;
 
 struct	fileops {
-	int	(*fo_read)(struct file *, off_t *, struct uio *,
-		    struct ucred *);
-	int	(*fo_write)(struct file *, off_t *, struct uio *,
-		    struct ucred *);
-	int	(*fo_ioctl)(struct file *, u_long, caddr_t,
-		    struct proc *);
+	int	(*fo_read)(struct file *, struct uio *, int);
+	int	(*fo_write)(struct file *, struct uio *, int);
+	int	(*fo_ioctl)(struct file *, u_long, caddr_t, struct proc *);
 	int	(*fo_poll)(struct file *, int, struct proc *);
 	int	(*fo_kqfilter)(struct file *, struct knote *);
 	int	(*fo_stat)(struct file *, struct stat *, struct proc *);
 	int	(*fo_close)(struct file *, struct proc *);
 	int	(*fo_seek)(struct file *, off_t *, int, struct proc *);
 };
+#define FO_POSITION 0x01	/* positioned read/write */
+
 
 /*
  * Kernel descriptor table.

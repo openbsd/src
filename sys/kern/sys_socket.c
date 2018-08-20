@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.40 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.41 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct	fileops socketops = {
 };
 
 int
-soo_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+soo_read(struct file *fp, struct uio *uio, int fflags)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	int flags = 0;
@@ -71,7 +71,7 @@ soo_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 }
 
 int
-soo_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+soo_write(struct file *fp, struct uio *uio, int fflags)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	int flags = 0;

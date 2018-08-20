@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.84 2018/08/15 13:19:06 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.85 2018/08/20 16:00:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -52,8 +52,8 @@
 /*
  * interfaces to the outside world
  */
-int	pipe_read(struct file *, off_t *, struct uio *, struct ucred *);
-int	pipe_write(struct file *, off_t *, struct uio *, struct ucred *);
+int	pipe_read(struct file *, struct uio *, int);
+int	pipe_write(struct file *, struct uio *, int);
 int	pipe_close(struct file *, struct proc *);
 int	pipe_poll(struct file *, int events, struct proc *);
 int	pipe_kqfilter(struct file *fp, struct knote *kn);
@@ -308,7 +308,7 @@ pipeselwakeup(struct pipe *cpipe)
 }
 
 int
-pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+pipe_read(struct file *fp, struct uio *uio, int fflags)
 {
 	struct pipe *rpipe = fp->f_data;
 	int error;
@@ -424,7 +424,7 @@ unlocked_error:
 }
 
 int
-pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+pipe_write(struct file *fp, struct uio *uio, int fflags)
 {
 	int error = 0;
 	size_t orig_resid;
