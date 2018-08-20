@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.208 2018/08/19 17:43:39 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.209 2018/08/20 17:31:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -105,7 +105,6 @@ struct	roff {
 	int		 rstacksz; /* current size limit of rstack */
 	int		 rstackpos; /* position in rstack */
 	int		 format; /* current file in mdoc or man format */
-	int		 argc; /* number of args of the last macro */
 	char		 control; /* control character */
 	char		 escape; /* escape character */
 };
@@ -2661,7 +2660,7 @@ roff_getregro(const struct roff *r, const char *name)
 
 	switch (*name) {
 	case '$':  /* Number of arguments of the last macro evaluated. */
-		return r->argc;
+		return 0;
 	case 'A':  /* ASCII approximation mode is always off. */
 		return 0;
 	case 'g':  /* Groff compatibility mode is always on. */
@@ -3379,22 +3378,22 @@ roff_userdef(ROFF_ARGS)
 {
 	const char	 *arg[16], *ap;
 	char		 *cp, *n1, *n2;
-	int		  expand_count, i, ib, ie;
-	size_t		  asz, rsz;
+	int		  argc, expand_count, i, ib, ie;
+	size_t		  asz, esz, rsz;
 
 	/*
 	 * Collect pointers to macro argument strings
 	 * and NUL-terminate them.
 	 */
 
-	r->argc = 0;
+	argc = 0;
 	cp = buf->buf + pos;
 	for (i = 0; i < 16; i++) {
 		if (*cp == '\0')
 			arg[i] = "";
 		else {
 			arg[i] = mandoc_getarg(r->parse, &cp, ln, &pos);
-			r->argc = i + 1;
+			argc = i + 1;
 		}
 	}
 
@@ -3416,7 +3415,7 @@ roff_userdef(ROFF_ARGS)
 			continue;
 		if (*cp == '*') {  /* \\$* inserts all arguments */
 			ib = 0;
-			ie = r->argc - 1;
+			ie = argc - 1;
 		} else {  /* \\$1 .. \\$9 insert one argument */
 			ib = ie = *cp - '1';
 			if (ib < 0 || ib > 8)
@@ -3502,6 +3501,34 @@ roff_userdef(ROFF_ARGS)
 			if (i < ie)
 				*n2++ = ' ';
 		}
+	}
+
+	/*
+	 * Expand the number of arguments, if it is used.
+	 * This never makes the expanded macro longer.
+	 */
+
+	for (cp = n1; *cp != '\0'; cp++) {
+		if (cp[0] != '\\')
+			continue;
+		if (cp[1] == '\\') {
+			cp++;
+			continue;
+		}
+		if (strncmp(cp + 1, "n(.$", 4) == 0)
+			esz = 5;
+		else if (strncmp(cp + 1, "n[.$]", 5) == 0)
+			esz = 6;
+		else
+			continue;
+		asz = snprintf(cp, esz, "%d", argc);
+		assert(asz < esz);
+		rsz = buf->sz - (cp - n1) - esz;
+		memmove(cp + asz, cp + esz, rsz);
+		buf->sz -= esz - asz;
+		n2 = mandoc_realloc(n1, buf->sz);
+		cp = n2 + (cp - n1) + asz;
+		n1 = n2;
 	}
 
 	/*
