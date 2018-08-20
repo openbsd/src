@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.218 2018/06/25 22:29:16 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.219 2018/08/20 19:36:04 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -158,6 +158,10 @@ extern struct cfdriver drm_cd;
 #define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
 #define DRM_MEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%rsp)" : : : "memory");
+#elif defined(__aarch64__)
+#define DRM_READMEMORYBARRIER()		__membar("dsb ld")
+#define DRM_WRITEMEMORYBARRIER()	__membar("dsb st")
+#define DRM_MEMORYBARRIER()		__membar("dsb sy")
 #elif defined(__mips64__)
 #define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
 #define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
