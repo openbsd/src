@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.2 2018/08/19 17:17:44 jmc Exp $
+.\"	$OpenBSD: kcov.4,v 1.3 2018/08/21 18:09:34 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2018 $
+.Dd $Mdocdate: August 21 2018 $
 .Dt KCOV 4
 .Os
 .Sh NAME
 .Nm kcov
 .Nd kernel code coverage tracing
 .Sh SYNOPSIS
-.Cd option KCOV
+.Cd pseudo-device kcov 1
 .Pp
 .In sys/kcov.h
 .Sh DESCRIPTION
@@ -37,11 +37,11 @@ using
 .Pp
 By default,
 .Nm
-is not enabled but requires the compile-time configuration
-.Cd option KCOV
-to be present;
-see
-.Xr options 4 .
+is not enabled but instead requires the following line to be present in the
+kernel configuration:
+.Bd -literal -offset indent
+pseudo-device kcov 1
+.Ed
 .Pp
 The following
 .Xr ioctl 2
@@ -121,7 +121,7 @@ main(void)
 }
 .Ed
 .Sh SEE ALSO
-.Xr options 4
+.Xr files.conf 5
 .Sh HISTORY
 The
 .Nm
