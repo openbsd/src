@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.9 2017/10/08 06:56:36 jmc Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.10 2018/08/21 00:35:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2017 $
+.Dd $Mdocdate: August 21 2018 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@
 .Ft int
 .Fo tls_config_set_ocsp_staple_file
 .Fa "struct tls_config *config"
-.Fa "const uint8_t *staple_file"
+.Fa "const char *staple_file"
 .Fc
 .Ft int
 .Fo tls_config_set_keypair_file
