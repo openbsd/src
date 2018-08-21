@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.69 2018/08/15 02:07:35 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.70 2018/08/21 12:44:13 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -252,6 +252,7 @@
 #define	CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define	CPUID_FFXSR	0x02000000	/* fast FP/MMX save/restore */
 #define	CPUID_PAGE1GB	0x04000000	/* 1-GByte pages */
+#define	CPUID_RDTSCP	0x08000000	/* RDTSCP / IA32_TSC_AUX available */
 #define	CPUID_LONG	0x20000000	/* long mode */
 #define	CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define	CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
@@ -291,6 +292,19 @@
  */
 
 #define CPUIDEDX_ITSC		(1 << 8)	/* Invariant TSC */
+
+/*
+ * AMD CPUID function 0x80000008 EBX bits
+ */
+#define CPUIDEBX_IBPB		(1ULL << 12)	/* Speculation Control IBPB */
+#define CPUIDEBX_IBRS		(1ULL << 14)	/* Speculation Control IBRS */
+#define CPUIDEBX_STIBP		(1ULL << 15)	/* Speculation Control STIBP */
+#define CPUIDEBX_IBRS_ALWAYSON	(1ULL << 16)	/* IBRS always on mode */
+#define CPUIDEBX_STIBP_ALWAYSON	(1ULL << 17)	/* STIBP always on mode */
+#define CPUIDEBX_IBRS_PREF	(1ULL << 18)	/* IBRS preferred */
+#define CPUIDEBX_SSBD		(1ULL << 24)	/* Speculation Control SSBD */
+#define CPUIDEBX_VIRT_SSBD	(1ULL << 25)	/* Virt Spec Control SSBD */
+#define CPUIDEBX_SSBD_NOTREQ	(1ULL << 26)	/* SSBD not required */
 
 #define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
@@ -1225,3 +1239,10 @@
 #define PAT_WB          0x6UL
 #define PAT_UCMINUS     0x7UL
 
+/*
+ * XSAVE subfeatures (cpuid 0xd, leaf 1)
+ */
+#define XSAVE_XSAVEOPT		0x1UL
+#define XSAVE_XSAVEC		0x2UL
+#define XSAVE_XGETBV1		0x4UL
+#define XSAVE_XSAVES		0x8UL

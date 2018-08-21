@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.624 2018/08/21 06:03:34 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.625 2018/08/21 12:44:13 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -989,6 +989,7 @@ const struct cpu_cpuid_feature i386_ecpuid_features[] = {
 	{ CPUID_MMXX,		"MMXX" },
 	{ CPUID_FFXSR,		"FFXSR" },
 	{ CPUID_PAGE1GB,	"PAGE1GB" },
+	{ CPUID_RDTSCP,		"RDTSCP" },
 	{ CPUID_LONG,		"LONG" },
 	{ CPUID_3DNOW2,		"3DNOW2" },
 	{ CPUID_3DNOW,		"3DNOW" }
@@ -1115,6 +1116,13 @@ const struct cpu_cpuid_feature i386_cpuid_eaxperf[] = {
 
 const struct cpu_cpuid_feature i386_cpuid_edxapmi[] = {
 	{ CPUIDEDX_ITSC,	"ITSC" },
+};
+
+const struct cpu_cpuid_feature cpu_xsave_extfeatures[] = {
+	{ XSAVE_XSAVEOPT,	"XSAVEOPT" },
+	{ XSAVE_XSAVEC,		"XSAVEC" },
+	{ XSAVE_XGETBV1,	"XGETBV1" },
+	{ XSAVE_XSAVES,		"XSAVES" },
 };
 
 void
@@ -1950,14 +1958,6 @@ identifycpu(struct cpu_info *ci)
 				numbits++;
 			}
 		}
-		for (i = 0; i < nitems(i386_ecpuid_features); i++) {
-			if (ecpu_feature &
-			    i386_ecpuid_features[i].feature_bit) {
-				printf("%s%s", (numbits == 0 ? "" : ","),
-				    i386_ecpuid_features[i].feature_name);
-				numbits++;
-			}
-		}
 		max = sizeof(i386_cpuid_ecxfeatures)
 			/ sizeof(i386_cpuid_ecxfeatures[0]);
 		for (i = 0; i < max; i++) {
@@ -1965,6 +1965,14 @@ identifycpu(struct cpu_info *ci)
 			    i386_cpuid_ecxfeatures[i].feature_bit) {
 				printf("%s%s", (numbits == 0 ? "" : ","),
 				    i386_cpuid_ecxfeatures[i].feature_name);
+				numbits++;
+			}
+		}
+		for (i = 0; i < nitems(i386_ecpuid_features); i++) {
+			if (ecpu_feature &
+			    i386_ecpuid_features[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_ecpuid_features[i].feature_name);
 				numbits++;
 			}
 		}
@@ -2032,6 +2040,17 @@ identifycpu(struct cpu_info *ci)
 				if (ci->ci_feature_tpmflags &
 				    cpu_tpm_eaxfeatures[i].feature_bit)
 					printf(",%s", cpu_tpm_eaxfeatures[i].feature_name);
+		}
+
+		/* xsave subfeatures */
+		if (cpuid_level >= 0xd) {
+			uint32_t dummy, val;
+
+			CPUID_LEAF(0xd, 1, val, dummy, dummy, dummy);
+			for (i = 0; i < nitems(cpu_xsave_extfeatures); i++)
+				if (val & cpu_xsave_extfeatures[i].feature_bit)
+					printf(",%s",
+					    cpu_xsave_extfeatures[i].feature_name);
 		}
 
 		if (cpu_meltdown)
