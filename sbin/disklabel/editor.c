@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.343 2018/08/04 16:09:00 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.344 2018/08/21 16:34:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -53,6 +53,7 @@
 #define	ROUND_OFFSET_DOWN	0x00000002
 #define	ROUND_SIZE_UP		0x00000004
 #define	ROUND_SIZE_DOWN		0x00000008
+#define	ROUND_SIZE_OVERLAP	0x00000010
 
 /* Special return values for getnumber and getuint64() */
 #define	CMD_ABORTED	(ULLONG_MAX - 1)
@@ -2046,8 +2047,8 @@ align:
 	if (DL_GETPOFFSET(pp) != starting_sector)
 		offsetalign = sizealign;
 
-	if (alignpartition(lp, partno, offsetalign, sizealign, ROUND_SIZE_DOWN)
-	    == 1) {
+	if (alignpartition(lp, partno, offsetalign, sizealign, ROUND_OFFSET_UP |
+	    ROUND_SIZE_DOWN | ROUND_SIZE_OVERLAP) == 1) {
 		*pp = opp;
 		return (1);
 	}
@@ -2506,7 +2507,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 	else if ((flags & ROUND_SIZE_DOWN) == ROUND_SIZE_DOWN)
 		stop = (stop / stopalign) * stopalign;
 
-	if (stop  > maxstop)
+	if (((flags & ROUND_SIZE_OVERLAP) == 0) && stop  > maxstop)
 		stop = maxstop;
 
 	if (start != DL_GETPOFFSET(pp))
