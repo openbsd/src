@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.226 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.227 2018/08/21 12:34:11 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -462,10 +462,14 @@ restart:
 		space = sbspace(so, &so->so_snd);
 		if (flags & MSG_OOB)
 			space += 1024;
-		if ((atomic && resid > so->so_snd.sb_hiwat) ||
-		    (so->so_proto->pr_domain->dom_family != AF_UNIX &&
-		    clen > so->so_snd.sb_hiwat))
-			snderr(EMSGSIZE);
+		if (so->so_proto->pr_domain->dom_family == AF_UNIX) {
+			if (atomic && resid > so->so_snd.sb_hiwat)
+				snderr(EMSGSIZE);
+		} else {
+			if (clen > so->so_snd.sb_hiwat ||
+			    (atomic && resid > so->so_snd.sb_hiwat - clen))
+				snderr(EMSGSIZE);
+		}
 		if (space < clen ||
 		    (space - clen < resid &&
 		    (atomic || space < so->so_snd.sb_lowat))) {
