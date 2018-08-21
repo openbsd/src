@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.12 2018/08/21 16:23:21 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.13 2018/08/21 16:25:11 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -236,12 +236,7 @@ func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 	sealRet := C.EVP_AEAD_CTX_seal(ctx, (*C.uint8_t)(unsafe.Pointer(&sealed[0])), (*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
 
 	if sealRet != 1 {
-		if wt.Result == "invalid" {
-			fmt.Printf("INFO: ")
-		} else {
-			fmt.Printf("FAIL: ")
-		}
-		fmt.Printf("Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), wt.Result)
 		return wt.Result == "invalid"
 	}
 
