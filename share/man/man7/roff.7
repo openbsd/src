@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.81 2018/08/19 17:43:39 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.82 2018/08/21 18:15:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2018 $
+.Dd $Mdocdate: August 21 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -632,6 +632,8 @@ produces
 in the input stream, and thus in the output: \fI\^XtFree\^\fP.
 Each occurrence of \e\e$* is replaced with all the arguments,
 joined together with single space characters.
+The variant \e\e$@ is similar, except that each argument is
+individually quoted.
 .Pp
 Since macros and user-defined strings share a common string table,
 defining a macro
@@ -1836,6 +1838,9 @@ Discard the rest of the physical input line and continue the logical
 input line on the next physical input line, joining the text on
 both lines together as if it were on a single input line.
 This is a groff extension.
+.Ss \e$ Ns Ar arg
+Macro argument expansion, see
+.Sx de .
 .Ss \e%
 Hyphenation allowed at this point of the word; ignored by
 .Xr mandoc 1 .

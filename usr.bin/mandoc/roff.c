@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.209 2018/08/20 17:31:44 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.210 2018/08/21 18:15:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -3154,7 +3154,7 @@ roff_als(ROFF_ARGS)
 	if (oldsz == 0)
 		return ROFF_IGN;
 
-	valsz = mandoc_asprintf(&value, ".%.*s \\$*\\\"\n",
+	valsz = mandoc_asprintf(&value, ".%.*s \\$@\\\"\n",
 	    (int)oldsz, oldn);
 	roff_setstrn(&r->strtab, newn, newsz, value, valsz, 0);
 	roff_setstrn(&r->rentab, newn, newsz, NULL, 0, 0);
@@ -3378,7 +3378,7 @@ roff_userdef(ROFF_ARGS)
 {
 	const char	 *arg[16], *ap;
 	char		 *cp, *n1, *n2;
-	int		  argc, expand_count, i, ib, ie;
+	int		  argc, expand_count, i, ib, ie, quote_args;
 	size_t		  asz, esz, rsz;
 
 	/*
@@ -3413,13 +3413,21 @@ roff_userdef(ROFF_ARGS)
 			continue;
 		if (*cp++ != '$')
 			continue;
-		if (*cp == '*') {  /* \\$* inserts all arguments */
+
+		quote_args = 0;
+		switch (*cp) {
+		case '@':  /* \\$@ inserts all arguments, quoted */
+			quote_args = 1;
+			/* FALLTHROUGH */
+		case '*':  /* \\$* inserts all arguments, unquoted */
 			ib = 0;
 			ie = argc - 1;
-		} else {  /* \\$1 .. \\$9 insert one argument */
+			break;
+		default:  /* \\$1 .. \\$9 insert one argument */
 			ib = ie = *cp - '1';
 			if (ib < 0 || ib > 8)
 				continue;
+			break;
 		}
 		cp -= 2;
 
@@ -3445,6 +3453,8 @@ roff_userdef(ROFF_ARGS)
 
 		asz = ie > ib ? ie - ib : 0;  /* for blanks */
 		for (i = ib; i <= ie; i++) {
+			if (quote_args)
+				asz += 2;
 			for (ap = arg[i]; *ap != '\0'; ap++) {
 				asz++;
 				if (*ap == '"')
@@ -3491,6 +3501,8 @@ roff_userdef(ROFF_ARGS)
 
 		n2 = cp;
 		for (i = ib; i <= ie; i++) {
+			if (quote_args)
+				*n2++ = '"';
 			for (ap = arg[i]; *ap != '\0'; ap++) {
 				if (*ap == '"') {
 					memcpy(n2, "\\(dq", 4);
@@ -3498,6 +3510,8 @@ roff_userdef(ROFF_ARGS)
 				} else
 					*n2++ = *ap;
 			}
+			if (quote_args)
+				*n2++ = '"';
 			if (i < ie)
 				*n2++ = ' ';
 		}
