@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.70 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.71 2018/08/21 16:40:23 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -2455,12 +2455,12 @@ swofp_ox_match_put_uint32(struct ofp_match *om, uint8_t type, uint32_t val)
 	int	 off = ntohs(om->om_length);
 	struct ofp_ox_match *oxm;
 
+	val = htonl(val);
 	oxm = (struct ofp_ox_match *)((caddr_t)om + off);
 	oxm->oxm_class = htons(OFP_OXM_C_OPENFLOW_BASIC);
 	OFP_OXM_SET_FIELD(oxm, type);
 	oxm->oxm_length = sizeof(uint32_t);
-	*(uint32_t *)oxm->oxm_value = htonl(val);
-
+	memcpy(oxm->oxm_value, &val, sizeof(val));
 	om->om_length = htons(ntohs(om->om_length) +
 	    sizeof(*oxm) + sizeof(uint32_t));
 
@@ -2473,12 +2473,12 @@ swofp_ox_match_put_uint64(struct ofp_match *om, uint8_t type, uint64_t val)
 	struct ofp_ox_match	*oxm;
 	int			 off = ntohs(om->om_length);
 
+	val = htobe64(val);
 	oxm = (struct ofp_ox_match *)((caddr_t)om + off);
 	oxm->oxm_class = htons(OFP_OXM_C_OPENFLOW_BASIC);
 	OFP_OXM_SET_FIELD(oxm, type);
 	oxm->oxm_length = sizeof(uint64_t);
-	*(uint64_t *)oxm->oxm_value = htobe64(val);
-
+	memcpy(oxm->oxm_value, &val, sizeof(val));
 	om->om_length = htons(ntohs(om->om_length) +
 	    sizeof(*oxm) + sizeof(uint64_t));
 
