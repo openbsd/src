@@ -11,7 +11,6 @@ DDEESSCCRRIIPPTTIIOONN
        .. DOT ABOVE
        -- OVERLINE
        /h/h/h PLANCK CONSTANT OVER TWO PI
-       PP SCRIPT CAPITAL P
        ^v^v UP DOWN ARROW
        ^=v^=v UP DOWN DOUBLE ARROW
        <product><product> N-ARY PRODUCT
@@ -47,4 +46,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        October 27, 2014       CHAR-UNICODE-NAMEDIFF(1)
+OpenBSD                         August 21, 2018       CHAR-UNICODE-NAMEDIFF(1)

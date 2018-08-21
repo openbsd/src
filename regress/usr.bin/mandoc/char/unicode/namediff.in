@@ -1,5 +1,5 @@
-.\" $OpenBSD: namediff.in,v 1.7 2017/08/23 10:59:53 schwarze Exp $
-.TH CHAR-UNICODE-NAMEDIFF 1 "October 27, 2014"
+.\" $OpenBSD: namediff.in,v 1.8 2018/08/21 01:56:26 schwarze Exp $
+.TH CHAR-UNICODE-NAMEDIFF 1 "August 21, 2018"
 .SH NAME
 char-unicode-namediff \- Unicode characters having named escapes
 .SH DESCRIPTION
@@ -9,7 +9,6 @@ BEGINTEST
 \[u02D9]\(a. DOT ABOVE
 \[u203E]\(rn OVERLINE
 \[u210F]\[hbar]\(-h PLANCK CONSTANT OVER TWO PI
-\[u2118]\(wp SCRIPT CAPITAL P
 \[u2195]\(va UP DOWN ARROW
 \[u21D5]\(vA UP DOWN DOUBLE ARROW
 \[u220F]\[product] N-ARY PRODUCT

@@ -93,6 +93,7 @@ DDEESSCCRRIIPPTTIIOONN
        ⁄⁄   FRACTION SLASH
        €€€  EURO SIGN
        ℑℑ   BLACK-LETTER CAPITAL I
+       ℘℘   SCRIPT CAPITAL P
        ℜℜ   BLACK-LETTER CAPITAL R
        ™™   TRADE MARK SIGN
        ℵℵ   ALEF SYMBOL
@@ -167,4 +168,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        October 27, 2014          CHAR-UNICODE-NAMED(1)
+OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)

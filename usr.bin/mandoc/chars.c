@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.44 2018/08/19 23:47:43 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.45 2018/08/21 01:56:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -239,7 +239,7 @@ static struct ln lines[] = {
 	{ "Ah",			"<Aleph>",	0x2135	},
 	{ "Im",			"<Im>",		0x2111	},
 	{ "Re",			"<Re>",		0x211c	},
-	{ "wp",			"P",		0x2118	},
+	{ "wp",			"p",		0x2118	},
 	{ "pd",			"<del>",	0x2202	},
 	{ "-h",			"/h",		0x210f	},
 	{ "hbar",		"/h",		0x210f	},
@@ -286,6 +286,7 @@ static struct ln lines[] = {
 	{ "ho",			",",		0x02db	},
 	{ "ha",			"^",		0x005e	},
 	{ "ti",			"~",		0x007e	},
+	{ "u02DC",		"~",		0x02dc	},
 
 	/* Accented letters. */
 	{ "'A",			"'\bA",		0x00c1	},
@@ -293,11 +294,13 @@ static struct ln lines[] = {
 	{ "'I",			"'\bI",		0x00cd	},
 	{ "'O",			"'\bO",		0x00d3	},
 	{ "'U",			"'\bU",		0x00da	},
+	{ "'Y",			"'\bY",		0x00dd	},
 	{ "'a",			"'\ba",		0x00e1	},
 	{ "'e",			"'\be",		0x00e9	},
 	{ "'i",			"'\bi",		0x00ed	},
 	{ "'o",			"'\bo",		0x00f3	},
 	{ "'u",			"'\bu",		0x00fa	},
+	{ "'y",			"'\by",		0x00fd	},
 	{ "`A",			"`\bA",		0x00c0	},
 	{ "`E",			"`\bE",		0x00c8	},
 	{ "`I",			"`\bI",		0x00cc	},

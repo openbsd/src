@@ -93,6 +93,7 @@ DDEESSCCRRIIPPTTIIOONN
        //   FRACTION SLASH
        EUREUREUR EURO SIGN
        <Im><Im>  BLACK-LETTER CAPITAL I
+       pp   SCRIPT CAPITAL P
        <Re><Re>  BLACK-LETTER CAPITAL R
        tmtm TRADE MARK SIGN
        <Aleph><Aleph> ALEF SYMBOL
@@ -167,4 +168,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        October 27, 2014          CHAR-UNICODE-NAMED(1)
+OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)
