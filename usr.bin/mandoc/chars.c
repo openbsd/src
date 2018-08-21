@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.45 2018/08/21 01:56:26 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.46 2018/08/21 16:01:38 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,10 +81,10 @@ static struct ln lines[] = {
 	{ "sh",			"#",		0x0023	},
 	{ "CR",			"<cr>",		0x21b5	},
 	{ "OK",			"\\/",		0x2713	},
-	{ "CL",			"<club>",	0x2663	},
-	{ "SP",			"<spade>",	0x2660	},
-	{ "HE",			"<heart>",	0x2665	},
-	{ "DI",			"<diamond>",	0x2666	},
+	{ "CL",			"C",		0x2663	},
+	{ "SP",			"S",		0x2660	},
+	{ "HE",			"H",		0x2665	},
+	{ "DI",			"D",		0x2666	},
 
 	/* Legal symbols. */
 	{ "co",			"(C)",		0x00a9	},
@@ -361,7 +361,7 @@ static struct ln lines[] = {
 	{ "Eu",			"EUR",		0x20ac	},
 	{ "eu",			"EUR",		0x20ac	},
 	{ "Ye",			"=\bY",		0x00a5	},
-	{ "Po",			"GBP",		0x00a3	},
+	{ "Po",			"-\bL",		0x00a3	},
 	{ "Cs",			"o\bx",		0x00a4	},
 	{ "Fn",			",\bf",		0x0192	},
 

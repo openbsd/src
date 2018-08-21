@@ -7,15 +7,9 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        BEGINTEST
-       !!   INVERTED EXCLAMATION MARK
-       GBPGBP    POUND SIGN
        --   MACRON
-       ??   INVERTED QUESTION MARK
-       ThTh LATIN CAPITAL LETTER THORN
-       ssss LATIN SMALL LETTER SHARP S
-       thth LATIN SMALL LETTER THORN
        ENDTEST
 
 
 
-OpenBSD                        October 27, 2014     CHAR-UNICODE-LATIN1DIFF(1)
+OpenBSD                         August 21, 2018     CHAR-UNICODE-LATIN1DIFF(1)
