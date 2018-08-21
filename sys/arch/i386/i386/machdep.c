@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.623 2018/08/01 20:33:53 brynet Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.624 2018/08/21 06:03:34 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1094,6 +1094,16 @@ const struct cpu_cpuid_feature cpu_seff0_ecxfeatures[] = {
 	{ SEFF0ECX_PKU,		"PKU" },
 };
 
+const struct cpu_cpuid_feature cpu_seff0_edxfeatures[] = {
+	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
+	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
+	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
+	{ SEFF0EDX_STIBP,	"STIBP" },
+	{ SEFF0EDX_L1DF,	"L1DF" },
+	 /* SEFF0EDX_ARCH_CAP (not printed) */
+	{ SEFF0EDX_SSBD,	"SSBD" },
+};
+
 const struct cpu_cpuid_feature cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },
@@ -1989,7 +1999,8 @@ identifycpu(struct cpu_info *ci)
 			/* "Structured Extended Feature Flags" */
 			CPUID_LEAF(0x7, 0, dummy,
 			    ci->ci_feature_sefflags_ebx,
-			    ci->ci_feature_sefflags_ecx, dummy);
+			    ci->ci_feature_sefflags_ecx,
+			    ci->ci_feature_sefflags_edx);
 			for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
 				if (ci->ci_feature_sefflags_ebx &
 				    cpu_seff0_ebxfeatures[i].feature_bit)
@@ -2002,6 +2013,12 @@ identifycpu(struct cpu_info *ci)
 					printf("%s%s",
 					    (numbits == 0 ? "" : ","),
 					    cpu_seff0_ecxfeatures[i].feature_name);
+			for (i = 0; i < nitems(cpu_seff0_edxfeatures); i++)
+				if (ci->ci_feature_sefflags_edx &
+				    cpu_seff0_edxfeatures[i].feature_bit)
+					printf("%s%s",
+					    (numbits == 0 ? "" : ","),
+					    cpu_seff0_edxfeatures[i].feature_name);
 		}
 
 		if (!strcmp(cpu_vendor, "GenuineIntel") &&
