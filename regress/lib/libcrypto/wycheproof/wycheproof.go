@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.11 2018/08/20 21:18:03 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.12 2018/08/21 16:23:21 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -191,6 +191,77 @@ func hashFromString(hs string) (hash.Hash, error) {
 	}
 }
 
+func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestChaCha20Poly1305) bool {
+	maxOutLen := ctLen + tagLen
+
+	opened := make([]byte, maxOutLen)
+	var openedMsgLen C.size_t
+
+	catCtTag := append(ct, tag...)
+	openRet := C.EVP_AEAD_CTX_open(ctx, (*C.uint8_t)(unsafe.Pointer(&opened[0])), (*C.size_t)(unsafe.Pointer(&openedMsgLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&catCtTag[0])), C.size_t(len(catCtTag)), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+
+	if openRet != 1 {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_open() = %d, want %v\n", wt.TCID, wt.Comment, int(openRet), wt.Result)
+		return wt.Result == "invalid"
+	}
+
+	if (openedMsgLen != C.size_t(msgLen)) {
+		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, openedMsgLen, msgLen)
+		return false
+	}
+	
+	openedMsg := opened[0:openedMsgLen]
+	if (msgLen == 0) {
+		msg = nil
+	}
+
+	success := false
+	if (bytes.Equal(openedMsg, msg)) || wt.Result == "invalid" {
+		success = true
+	} else {
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_open() = %d, msg match: %t; want %v\n", wt.TCID, wt.Comment, int(openRet), bytes.Equal(openedMsg, msg), wt.Result)
+	}
+	return success
+}
+
+func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestChaCha20Poly1305) bool {
+	maxOutLen := msgLen + tagLen
+
+	sealed := make([]byte, maxOutLen)
+	var sealedLen C.size_t
+
+	sealRet := C.EVP_AEAD_CTX_seal(ctx, (*C.uint8_t)(unsafe.Pointer(&sealed[0])), (*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+
+	if sealRet != 1 {
+		if wt.Result == "invalid" {
+			fmt.Printf("INFO: ")
+		} else {
+			fmt.Printf("FAIL: ")
+		}
+		fmt.Printf("Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), wt.Result)
+		return wt.Result == "invalid"
+	}
+
+	if (sealedLen != C.size_t(maxOutLen)) {
+		fmt.Printf("FAIL: Test case %d (%q) - seal length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, sealedLen, maxOutLen)
+		return false
+	}
+
+	sealedCt := sealed[0:msgLen]
+	sealedTag := sealed[msgLen: maxOutLen]
+
+	success := false
+	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag)) || wt.Result == "invalid" {
+		success = true
+	} else {
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n", wt.TCID, wt.Comment, int(sealRet), bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), wt.Result)
+	}
+	return success
+}
+
 func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproofTestChaCha20Poly1305) bool {
 	aead := C.EVP_aead_chacha20_poly1305()
 	if aead == nil {
@@ -244,59 +315,16 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 		msg = append(msg, 0)
 	}
 
-	maxOutLen := msgLen + tag_len
-
-	sealed := make([]byte, maxOutLen)
-	var sealedLen C.size_t
-
-	opened := make([]byte, maxOutLen)
-	var openedLen C.size_t
-
 	var ctx C.EVP_AEAD_CTX
 	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
 		log.Fatalf("Failed to initialize AEAD context")
 	}
+	defer C.EVP_AEAD_CTX_cleanup((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)))
 
-	sealRet := C.EVP_AEAD_CTX_seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), (*C.uint8_t)(unsafe.Pointer(&sealed[0])), (*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+	openSuccess := checkChaCha20Poly1305Open((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	sealSuccess := checkChaCha20Poly1305Seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
-	concat := append(ct, tag...)
-	openRet := C.EVP_AEAD_CTX_open((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), (*C.uint8_t)(unsafe.Pointer(&opened[0])), (*C.size_t)(unsafe.Pointer(&openedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&concat[0])), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
-
-	C.EVP_AEAD_CTX_cleanup((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)))
-
-	if sealRet != 1 && wt.Result == "invalid" {
-		fmt.Printf("INFO: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, EVP_AEAD_CTX_open() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), int(openRet), wt.Result)
-		return true
-	}
-	if openRet != 1 && wt.Result == "invalid" {
-		return true
-	}
-
-	if (sealedLen != C.size_t(maxOutLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - seal length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, sealedLen, maxOutLen)
-		return false
-	}
-	if (openedLen != C.size_t(msgLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, openedLen, msgLen)
-		return false
-	}
-	
-	sealedCt := sealed[0:msgLen]
-	sealedTag := sealed[msgLen: maxOutLen]
-
-	openedMsg := opened[0:openedLen]
-	if (msgLen == 0) {
-		msg = nil
-	}
-
-	success := false
-	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag) && bytes.Equal(openedMsg, msg)) || wt.Result == "invalid" {
-		success = true
-	} else {
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; msg match: %t; want %v\n", wt.TCID, wt.Comment, int(sealRet), bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), bytes.Equal(openedMsg, msg), wt.Result)
-	}
-
-	return success
+	return openSuccess && sealSuccess
 }
 
 func runChaCha20Poly1305TestGroup(wtg *wycheproofTestGroupChaCha20Poly1305) bool {
