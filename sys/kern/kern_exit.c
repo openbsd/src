@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.167 2018/08/19 11:42:33 anton Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.168 2018/08/21 18:06:12 anton Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
-#include <sys/kcov.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
@@ -70,6 +69,11 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "kcov.h"
+#if NKCOV > 0
+#include <sys/kcov.h>
+#endif
 
 void	proc_finish_wait(struct proc *, struct proc *);
 void	process_zap(struct process *);
@@ -190,7 +194,7 @@ exit1(struct proc *p, int rv, int flags)
 		acct_process(p);
 #endif
 
-#ifdef KCOV
+#if NKCOV > 0
 		kcov_exit(p);
 #endif
 

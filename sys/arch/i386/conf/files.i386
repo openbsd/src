@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.241 2018/08/19 18:01:05 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.242 2018/08/21 18:06:12 anton Exp $
 #
 # new style config file for i386 architecture
 #
@@ -397,12 +397,6 @@ device vmm {}
 attach vmm at mainbus
 file	arch/i386/i386/vmm.c			vmm needs-flag
 file	arch/i386/i386/vmm_support.S		vmm
-
-#
-# KCOV
-#
-pseudo-device	kcov
-file		dev/kcov.c			kcov needs-flag
 
 #
 # IPMI

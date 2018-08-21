@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.100 2018/08/19 18:09:49 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.101 2018/08/21 18:06:12 anton Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,10 +42,6 @@ CMACHFLAGS+=	-msave-args
 SORTR=		cat
 .else
 CMACHFLAGS+=	-mretpoline
-.endif
-.if ${IDENT:M-DKCOV} && ${COMPILER_VERSION:Mclang}
-CMACHFLAGS+=	-fno-ret-protector
-PROF=		-fsanitize-coverage=trace-pc
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
@@ -97,6 +93,11 @@ SYSTEM_LD_TAIL+=; umask 007; \
 LINKFLAGS+=	-S
 .endif
 
+.if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
+CMACHFLAGS+=	-fno-ret-protector
+PROF=		-fsanitize-coverage=trace-pc
+.endif
+
 %LOAD
 
 # cc's -MD puts the source and output paths in the dependency file;
@@ -139,7 +140,7 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-.if ${IDENT:M-DKCOV} && ${COMPILER_VERSION:Mclang}
+.if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
 kcov.o: $S/dev/kcov.c
 	${NORMAL_C} -fno-sanitize-coverage=trace-pc
 .endif

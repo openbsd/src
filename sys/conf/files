@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.664 2018/07/13 09:25:22 beck Exp $
+#	$OpenBSD: files,v 1.665 2018/08/21 18:06:12 anton Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -608,6 +608,9 @@ file	dev/hotplug.c			hotplug	needs-flag
 
 pseudo-device pppoe: ifnet, ether, sppp
 file 	net/if_pppoe.c			pppoe	needs-flag
+
+pseudo-device kcov
+file	dev/kcov.c			kcov	needs-flag
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 

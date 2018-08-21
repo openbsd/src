@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.1 2018/08/19 11:42:33 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.2 2018/08/21 18:06:12 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -108,7 +108,6 @@ kcovattach(int count)
 int
 kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-#ifdef KCOV
 	struct kd *kd;
 
 	if (kd_lookup(minor(dev)) != NULL)
@@ -120,9 +119,6 @@ kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 	kd->kd_unit = minor(dev);
 	TAILQ_INSERT_TAIL(&kd_list, kd, kd_entry);
 	return (0);
-#else
-	return (ENXIO);
-#endif
 }
 
 int
