@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.126 2018/07/11 20:07:55 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.127 2018/08/21 19:04:40 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ struct vmx {
 	uint32_t	vmx_msr_table_size;
 	uint32_t	vmx_cr3_tgt_count;
 	uint64_t	vmx_vm_func;
+	uint8_t		vmx_has_l1_flush_msr;
 };
 
 /*

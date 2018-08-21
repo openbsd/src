@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.12 2018/07/24 02:42:25 guenther Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.13 2018/08/21 19:04:38 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include "assym.h"
+#include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/specialreg.h>
@@ -163,6 +164,7 @@ _C_LABEL(invept):
 _C_LABEL(vmx_enter_guest):
 	RETGUARD_SETUP(vmx_enter_guest, r11)
 	movq	%rdx, %r8	/* resume flag */
+	movq	%rcx, %r9	/* L1DF MSR support */
 	testq	%r8, %r8
 	jnz skip_init
 
@@ -249,6 +251,62 @@ skip_init:
 	movq	%rsp, %rax
 	vmwrite	%rax, %rdi	/* Host RSP */
 
+	/*
+	 * Intel L1TF vulnerability fix
+	 *
+	 * Certain Intel CPUs are broken and allow guest VMs to bypass
+	 * EPT entirely as their address harvesting logic treats guest
+	 * PTEs as host physical addresses. Flush L1 Dcache to prevent
+	 * information leakage by command MSR or manually reading a
+	 * bunch of junk in order to fill sizeof(L1 Dcache)*2.
+	 *
+	 * %r9 (inherited from parameter 4 in %rcx earlier)
+	 * determines the flushing requirements
+	 *  0 - use manual "junk read" flush
+	 *  1 - use MSR command
+	 *  2 (VMX_SKIP_L1D_FLUSH) - no flush required on this CPU
+	 */
+	cmpq	$VMX_SKIP_L1D_FLUSH, %r9
+	je	done_flush
+
+	testq	%r9, %r9
+	jz	no_l1df_msr
+
+	/* CPU has command MSR */
+	movq	$MSR_FLUSH_CMD, %rcx
+	xorq	%rdx, %rdx
+	movq	$FLUSH_CMD_L1D_FLUSH, %rax
+	wrmsr
+	jmp	done_flush
+
+no_l1df_msr:
+	xorq	%r9, %r9
+l1df_tlb_loop:
+	/* XXX get the right L1 size from cpuid */
+	cmpq	$VMX_L1D_FLUSH_SIZE, %r9
+	je	l1df_tlb_done
+	movb	l1tf_flush_region(%r9), %al
+	addq	$PAGE_SIZE, %r9
+	jmp	l1df_tlb_loop
+
+l1df_tlb_done:
+	/*
+	 * Serialize: ensure previous TLB loads don't pull PTDs
+	 * or other PA-containing data into the L1D.
+	 */
+	xorq	%rax, %rax
+	cpuid
+
+	xorq	%r9, %r9
+l1df_load_cache:
+	movb	l1tf_flush_region(%r9), %al
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r9
+	cmpq	$VMX_L1D_FLUSH_SIZE, %r9
+	jne	l1df_load_cache	
+	lfence
+	
+done_flush:
 	testq	%r8, %r8
 	jnz	do_resume
 
@@ -262,6 +320,10 @@ skip_init:
 	movq	0x50(%rsi), %r11
 	movq	0x48(%rsi), %r10
 	movq	0x40(%rsi), %r9
+	movq	%rsi, %r8
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r8
+	clflush	(%r8)
 	movq	0x38(%rsi), %r8
 	movq	0x30(%rsi), %rbp
 	movq	0x28(%rsi), %rdi
@@ -269,6 +331,7 @@ skip_init:
 	movq	0x18(%rsi), %rcx
 	movq	0x10(%rsi), %rbx
 	movq	0x08(%rsi), %rax
+	clflush	(%rsi)
 	movq	0x00(%rsi), %rsi
 
 	vmlaunch
@@ -284,6 +347,10 @@ do_resume:
 	movq	0x50(%rsi), %r11
 	movq	0x48(%rsi), %r10
 	movq	0x40(%rsi), %r9
+	movq	%rsi, %r8
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r8
+	clflush	(%r8)
 	movq	0x38(%rsi), %r8
 	movq	0x30(%rsi), %rbp
 	movq	0x28(%rsi), %rdi
@@ -291,7 +358,9 @@ do_resume:
 	movq	0x18(%rsi), %rcx
 	movq	0x10(%rsi), %rbx
 	movq	0x08(%rsi), %rax
+	clflush	(%rsi)
 	movq	0x00(%rsi), %rsi
+
 	vmresume
 fail_launch_or_resume:
 	RET_STACK_REFILL_WITH_RCX

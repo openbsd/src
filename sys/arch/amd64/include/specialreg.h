@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.78 2018/08/15 02:07:35 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.79 2018/08/21 19:04:40 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1234,6 +1234,9 @@
 
 #define IA32_VMX_MSR_LIST_SIZE_MASK	(7ULL << 25)
 #define IA32_VMX_CR3_TGT_SIZE_MASK	(0x1FFULL << 16)
+
+#define VMX_SKIP_L1D_FLUSH		2
+#define VMX_L1D_FLUSH_SIZE		(64 * 1024)
 
 /*
  * SVM
