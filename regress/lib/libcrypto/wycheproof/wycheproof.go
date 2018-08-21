@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.14 2018/08/21 16:31:16 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.15 2018/08/21 16:34:40 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -237,7 +237,7 @@ func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 
 	if sealRet != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, want %v\n", wt.TCID, wt.Comment, int(sealRet), wt.Result)
-		return wt.Result == "invalid"
+		return false
 	}
 
 	if (sealedLen != C.size_t(maxOutLen)) {
@@ -312,7 +312,7 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 
 	var ctx C.EVP_AEAD_CTX
 	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
-		log.Fatalf("Failed to initialize AEAD context")
+		log.Fatal("Failed to initialize AEAD context")
 	}
 	defer C.EVP_AEAD_CTX_cleanup((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)))
 
