@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.41 2018/08/19 15:38:03 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.42 2018/08/22 17:46:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2532,7 +2532,7 @@ ssl3_send_newsession_ticket(SSL *s)
 	const unsigned char *const_p;
 	unsigned char *p, *hmac;
 	size_t hmac_len;
-	int enc_ticket_len, slen;
+	int enc_ticket_len, len, slen;
 	int slen_full = 0;
 	SSL_SESSION *sess;
 	unsigned int hlen;
@@ -2610,9 +2610,16 @@ ssl3_send_newsession_ticket(SSL *s)
 		/* Encrypt the session ticket. */
 		if ((enc_ticket = calloc(1, slen + EVP_MAX_BLOCK_LENGTH)) == NULL)
 			goto err;
-		if (!EVP_EncryptUpdate(&ctx, enc_ticket, &enc_ticket_len, senc, slen))
+		enc_ticket_len = 0;
+		if (!EVP_EncryptUpdate(&ctx, enc_ticket, &len, senc, slen))
 			goto err;
-		if (!EVP_EncryptFinal_ex(&ctx, enc_ticket, &enc_ticket_len))
+		enc_ticket_len += len;
+		if (!EVP_EncryptFinal_ex(&ctx, enc_ticket + enc_ticket_len, &len))
+			goto err;
+		enc_ticket_len += len;
+
+		if (enc_ticket_len < 0 ||
+		    enc_ticket_len > slen + EVP_MAX_BLOCK_LENGTH)
 			goto err;
 
 		/* Generate the HMAC. */
