@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.307 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.308 2018/08/22 15:38:46 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -193,6 +193,8 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
+uscom*	at uhub?		# Simple USB serial adapters
+ucom*	at uscom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 uipaq*	at uhub?		# iPAQ serial adapter
