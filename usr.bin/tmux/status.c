@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.178 2018/08/20 20:41:58 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.179 2018/08/22 20:06:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -510,6 +510,10 @@ draw:
 	screen_write_cursormove(&ctx, wloffset, 0);
 	screen_write_fast_copy(&ctx, &window_list, wlstart, 0, wlwidth, 1);
 	screen_free(&window_list);
+
+	/* Save left and right size. */
+	c->status.left_size = llen;
+	c->status.right_size = rlen;
 
 	screen_write_stop(&ctx);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.48 2018/07/16 08:48:22 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.49 2018/08/22 20:06:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -271,6 +271,10 @@ key_string_lookup_key(key_code key)
 		return ("MouseMovePane");
 	if (key == KEYC_MOUSEMOVE_STATUS)
 		return ("MouseMoveStatus");
+	if (key == KEYC_MOUSEMOVE_STATUS_LEFT)
+		return ("MouseMoveStatusLeft");
+	if (key == KEYC_MOUSEMOVE_STATUS_RIGHT)
+		return ("MouseMoveStatusRight");
 	if (key == KEYC_MOUSEMOVE_BORDER)
 		return ("MouseMoveBorder");
 	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.608 2018/08/20 15:00:42 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.609 2018/08/22 20:06:14 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2018 $
+.Dd $Mdocdate: August 22 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3504,7 +3504,10 @@ and a location suffix (one of
 for the contents of a pane,
 .Ql Border
 for a pane border or
-.Ql Status
+.Ql Status ,
+.Ql StatusLeft ,
+or
+.Ql StatusRight
 for the status line).
 The following mouse events are available:
 .Bl -column "MouseDown1" "MouseDrag1" "WheelDown" -offset indent
