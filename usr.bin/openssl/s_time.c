@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.28 2018/08/21 15:56:39 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.29 2018/08/22 20:36:24 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,18 +227,6 @@ s_time_usage(void)
 }
 
 /***********************************************************************
- * TIME - time functions
- */
-#define START	TM_RESET
-#define STOP	TM_GET
-
-static double
-tm_Time_F(int op)
-{
-	return app_timer_user(op);
-}
-
-/***********************************************************************
  * MAIN - main processing area for client
  *			real name depends on MONOLITH
  */
@@ -407,10 +395,9 @@ run_test(SSL *scon)
 static int
 benchmark(int reuse_session)
 {
-	double totalTime = 0.0;
+	double elapsed, totalTime;
 	int nConn = 0;
 	SSL *scon = NULL;
-	time_t finishtime;
 	int ret = 1;
 	int ver;
 
@@ -426,15 +413,13 @@ benchmark(int reuse_session)
 	}
 
 	nConn = 0;
-	totalTime = 0.0;
-
-	finishtime = time(NULL) + s_time_config.maxtime;
-
 	bytes_read = 0;
-	tm_Time_F(START);
 
+	app_timer_real(TM_RESET);
+	app_timer_user(TM_RESET);
 	for (;;) {
-		if (finishtime < time(NULL))
+		elapsed = app_timer_real(TM_GET);
+		if (elapsed > s_time_config.maxtime)
 			break;
 		if (scon == NULL) {
 			if ((scon = SSL_new(tm_ctx)) == NULL)
@@ -464,13 +449,13 @@ benchmark(int reuse_session)
 			scon = NULL;
 		}
 	}
-	totalTime += tm_Time_F(STOP);	/* Add the time for this iteration */
+	totalTime = app_timer_user(TM_GET);
 
 	printf("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
 	    nConn, totalTime, ((double) nConn / totalTime), bytes_read);
-	printf("%d connections in %lld real seconds, %ld bytes read per connection\n",
+	printf("%d connections in %.0f real seconds, %ld bytes read per connection\n",
 	    nConn,
-	    (long long)(time(NULL) - finishtime + s_time_config.maxtime),
+	    elapsed,
 	    bytes_read / nConn);
 
 	ret = 0;
