@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.10 2018/08/21 22:16:42 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.11 2018/08/22 21:15:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -104,18 +105,12 @@ struct dwpcie_softc {
 	int			sc_pacells;
 	int			sc_pscells;
 	struct dwpcie_range	*sc_ranges;
-	int			sc_rangeslen;
+	int			sc_nranges;
 
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
 
 	struct arm64_pci_chipset sc_pc;
-	struct extent		*sc_busex;
-	struct extent		*sc_memex;
-	struct extent		*sc_ioex;
-	char			sc_busex_name[32];
-	char			sc_ioex_name[32];
-	char			sc_memex_name[32];
 	int			sc_bus;
 
 	void			*sc_ih;
@@ -176,9 +171,12 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct dwpcie_softc *sc = (struct dwpcie_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
+	bus_addr_t iobase, iolimit;
+	bus_addr_t membase, memlimit;
 	uint32_t bus_range[2];
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
+	pcireg_t bir, blr, csr;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -211,9 +209,9 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	    (sc->sc_acells + sc->sc_pacells + sc->sc_scells);
 	sc->sc_ranges = mallocarray(nranges,
 	    sizeof(struct dwpcie_range), M_TEMP, M_WAITOK);
-	sc->sc_rangeslen = nranges;
+	sc->sc_nranges = nranges;
 
-	for (i = 0, j = 0; i < nranges; i++) {
+	for (i = 0, j = 0; i < sc->sc_nranges; i++) {
 		sc->sc_ranges[i].flags = ranges[j++];
 		sc->sc_ranges[i].pci_base = ranges[j++];
 		if (sc->sc_acells - 1 == 2) {
@@ -273,20 +271,6 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	/* Make sure read-only bits are write-protected. */
 	HCLR4(sc, MISC_CONTROL_1, MISC_CONTROL_1_DBI_RO_WR_EN);
 
-	/* Create extents for our address spaces. */
-	snprintf(sc->sc_busex_name, sizeof(sc->sc_busex_name),
-	    "%s pcibus", sc->sc_dev.dv_xname);
-	snprintf(sc->sc_ioex_name, sizeof(sc->sc_ioex_name),
-	    "%s pciio", sc->sc_dev.dv_xname);
-	snprintf(sc->sc_memex_name, sizeof(sc->sc_memex_name),
-	    "%s pcimem", sc->sc_dev.dv_xname);
-	sc->sc_busex = extent_create(sc->sc_busex_name, 0, 255,
-	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
-	sc->sc_ioex = extent_create(sc->sc_ioex_name, 0, 0xffffffff,
-	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
-	sc->sc_memex = extent_create(sc->sc_memex_name, 0, (u_long)-1,
-	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
-
 	/* Set up bus range. */
 	if (OF_getpropintarray(sc->sc_node, "bus-range", bus_range,
 	    sizeof(bus_range)) != sizeof(bus_range) ||
@@ -295,18 +279,53 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 		bus_range[1] = 31;
 	}
 	sc->sc_bus = bus_range[0];
-	extent_free(sc->sc_busex, bus_range[0],
-	    bus_range[1] - bus_range[0] + 1, EX_WAITOK);
+
+	/* Initialize bus range. */
+	bir = bus_range[0];
+	bir |= ((bus_range[0] + 1) << 8);
+	bir |= (bus_range[1] << 16);
+	HWRITE4(sc, PPB_REG_BUSINFO, bir);
 
 	/* Set up I/O and memory mapped I/O ranges. */
-	for (i = 0; i < nranges; i++) {
-		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x01000000)
-			extent_free(sc->sc_ioex, sc->sc_ranges[i].pci_base,
-			    sc->sc_ranges[i].size, EX_WAITOK);
-		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000)
-			extent_free(sc->sc_memex, sc->sc_ranges[i].pci_base,
-			    sc->sc_ranges[i].size, EX_WAITOK);
+	iobase = 0xffff; iolimit = 0;
+	membase = 0xffffffff; memlimit = 0;
+	for (i = 0; i < sc->sc_nranges; i++) {
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x01000000 &&
+		    sc->sc_ranges[i].size > 0) {
+			iobase = sc->sc_ranges[i].pci_base;
+			iolimit = iobase + sc->sc_ranges[i].size - 1;
+		}
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000 &&
+		    sc->sc_ranges[i].size > 0) {
+			membase = sc->sc_ranges[i].pci_base;
+			memlimit = membase + sc->sc_ranges[i].size - 1;
+		}
 	}
+
+	/* Initialize I/O window. */
+	blr = iolimit & PPB_IO_MASK;
+	blr |= (iobase >> PPB_IO_SHIFT);
+	HWRITE4(sc, PPB_REG_IOSTATUS, blr);
+	blr = (iobase & 0xffff0000) >> 16;
+	blr |= iolimit & 0xffff0000;
+	HWRITE4(sc, PPB_REG_IO_HI, blr);
+
+	/* Initialize memory mapped I/O window. */
+	blr = memlimit & PPB_MEM_MASK;
+	blr |= (membase >> PPB_MEM_SHIFT);
+	HWRITE4(sc, PPB_REG_MEM, blr);
+
+	/* Reset prefetchable memory mapped I/O window. */
+	HWRITE4(sc, PPB_REG_PREFMEM, 0x0000ffff);
+	HWRITE4(sc, PPB_REG_PREFBASE_HI32, 0);
+	HWRITE4(sc, PPB_REG_PREFLIM_HI32, 0);
+
+	csr = PCI_COMMAND_MASTER_ENABLE;
+	if (iolimit > iobase)
+		csr |= PCI_COMMAND_IO_ENABLE;
+	if (memlimit > membase)
+		csr |= PCI_COMMAND_MEM_ENABLE;
+	HWRITE4(sc, PCI_COMMAND_STATUS_REG, csr);
 
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
 	sc->sc_bus_iot.bus_private = sc;
@@ -338,9 +357,6 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_bus_memt;
 	pba.pba_dmat = faa->fa_dmat;
 	pba.pba_pc = &sc->sc_pc;
-	pba.pba_busex = sc->sc_busex;
-	pba.pba_memex = sc->sc_memex;
-	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
 	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
@@ -387,7 +403,7 @@ dwpcie_armada8k_init(struct dwpcie_softc *sc)
 	HWRITE4(sc, IATU_REGION_CTRL_2, IATU_REGION_CTRL_2_REGION_EN);
 
 	/* Set up address translation for I/O space. */
-	for (i = 0; i < sc->sc_rangeslen; i++) {
+	for (i = 0; i < sc->sc_nranges; i++) {
 		if ((sc->sc_ranges[i].flags & 0x03000000) != 0x01000000)
 			continue;
 		HWRITE4(sc, IATU_VIEWPORT, viewport++);
@@ -677,7 +693,7 @@ dwpcie_bs_iomap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	struct dwpcie_softc *sc = t->bus_private;
 	int i;
 
-	for (i = 0; i < sc->sc_rangeslen; i++) {
+	for (i = 0; i < sc->sc_nranges; i++) {
 		uint64_t pci_start = sc->sc_ranges[i].pci_base;
 		uint64_t pci_end = pci_start + sc->sc_ranges[i].size;
 		uint64_t phys_start = sc->sc_ranges[i].phys_base;
@@ -699,7 +715,7 @@ dwpcie_bs_memmap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	struct dwpcie_softc *sc = t->bus_private;
 	int i;
 
-	for (i = 0; i < sc->sc_rangeslen; i++) {
+	for (i = 0; i < sc->sc_nranges; i++) {
 		uint64_t pci_start = sc->sc_ranges[i].pci_base;
 		uint64_t pci_end = pci_start + sc->sc_ranges[i].size;
 		uint64_t phys_start = sc->sc_ranges[i].phys_base;
