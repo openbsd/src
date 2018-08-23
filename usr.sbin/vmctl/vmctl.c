@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.54 2018/07/12 12:04:49 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.55 2018/08/23 06:04:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -98,8 +98,8 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 			errx(1, "too many disks");
 		else if (ndisks == 0)
 			warnx("starting without disks");
-		if (kernel == NULL && ndisks == 0)
-			errx(1, "no kernel or disk specified");
+		if (kernel == NULL && ndisks == 0 && !iso)
+			errx(1, "no kernel or disk/cdrom specified");
 		if (nnics == -1)
 			nnics = 0;
 		if (nnics > VMM_MAX_NICS_PER_VM)
