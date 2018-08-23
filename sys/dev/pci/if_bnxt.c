@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.5 2018/08/23 00:22:53 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.6 2018/08/23 01:06:06 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1036,7 +1036,7 @@ bnxt_start(struct ifqueue *ifq)
 	struct bnxt_slot *bs;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	u_int idx, free, used;
+	u_int idx, free, used, laststart;
 	uint16_t txflags;
 	int i;
 
@@ -1086,7 +1086,9 @@ bnxt_start(struct ifqueue *ifq)
 			txflags = TX_BD_SHORT_FLAGS_LHINT_GTE2K;
 
 		txflags |= TX_BD_SHORT_TYPE_TX_BD_SHORT |
+		    TX_BD_SHORT_FLAGS_NO_CMPL |
 		    (map->dm_nsegs << TX_BD_SHORT_FLAGS_BD_CNT_SFT);
+		laststart = idx;
 
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txring[idx].flags_type = htole16(txflags);
@@ -1108,6 +1110,12 @@ bnxt_start(struct ifqueue *ifq)
 
 		if (++sc->sc_tx_prod >= sc->sc_tx_ring.ring_size)
 			sc->sc_tx_prod = 0;
+	}
+
+	/* unset NO_CMPL on the first bd of the last packet */
+	if (used != 0) {
+		txring[laststart].flags_type &=
+		    ~htole16(TX_BD_SHORT_FLAGS_NO_CMPL);
 	}
 
 	bnxt_write_tx_doorbell(sc, &sc->sc_tx_ring, idx);
@@ -1784,30 +1792,33 @@ bnxt_txeof(struct bnxt_softc *sc, struct cmpl_base *cmpl)
 	struct tx_cmpl *txcmpl = (struct tx_cmpl *)cmpl;
 	struct bnxt_slot *bs;
 	bus_dmamap_t map;
-	u_int idx, freed;
+	u_int idx, freed, segs, last;
 
-	if (txcmpl->opaque != sc->sc_tx_cons)
-		printf("%s: txeof for %d, expected %d?\n",
-		    DEVNAME(sc), txcmpl->opaque, sc->sc_tx_cons);
 	idx = sc->sc_tx_ring_cons;
+	last = sc->sc_tx_cons;
+	freed = 0;
+	do {
+		bs = &sc->sc_tx_slots[sc->sc_tx_cons];
+		map = bs->bs_map;
 
-	bs = &sc->sc_tx_slots[sc->sc_tx_cons];
-	map = bs->bs_map;
+		segs = map->dm_nsegs;
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, map);
+		m_freem(bs->bs_m);
+		bs->bs_m = NULL;
 
-	freed = map->dm_nsegs;
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, map);
-	m_freem(bs->bs_m);
-	bs->bs_m = NULL;
+		idx += segs;
+		freed += segs;
+		if (idx >= sc->sc_tx_ring.ring_size)
+			idx -= sc->sc_tx_ring.ring_size;
 
-	idx += freed;
-	if (idx >= sc->sc_tx_ring.ring_size)
-		idx -= sc->sc_tx_ring.ring_size;
+		last = sc->sc_tx_cons;
+		if (++sc->sc_tx_cons >= sc->sc_tx_ring.ring_size)
+			sc->sc_tx_cons = 0;
+
+	} while (last != txcmpl->opaque);
 	sc->sc_tx_ring_cons = idx;
-
-	if (++sc->sc_tx_cons >= sc->sc_tx_ring.ring_size)
-		sc->sc_tx_cons = 0;
 
 	return (freed);
 }
