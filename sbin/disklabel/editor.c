@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.344 2018/08/21 16:34:27 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.345 2018/08/23 13:21:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -685,9 +685,13 @@ again:
 			pp->p_fstype = FS_SWAP;
 		else {
 			pp->p_fstype = FS_BSDFFS;
-			get_fsize(lp, partno);
-			get_bsize(lp, partno);
-			get_cpg(lp, partno);
+			pp->p_fragblock = 0;
+			if (get_fsize(lp, partno) == 1 ||
+			    get_bsize(lp, partno) == 1 ||
+			    get_cpg(lp, partno) == 1) {
+				free(alloc);
+				return 1;
+			}
 			free(*partmp);
 			if ((*partmp = strdup(ap->mp)) == NULL)
 				errx(4, "out of memory");
@@ -762,9 +766,11 @@ editor_resize(struct disklabel *lp, char *p)
 	}
 
 	DL_SETPSIZE(pp, ui);
-	get_fsize(&label, partno);
-	get_bsize(&label, partno);
-	get_cpg(&label, partno);
+	pp->p_fragblock = 0;
+	if (get_fsize(&label, partno) == 1 ||
+	    get_bsize(&label, partno) == 1 ||
+	    get_cpg(&label, partno) == 1)
+		return;
 
 	/*
 	 * Pack partitions above the resized partition, leaving unused
@@ -787,12 +793,14 @@ editor_resize(struct disklabel *lp, char *p)
 			DL_SETPOFFSET(pp, off);
 			if (off + DL_GETPSIZE(pp) > ending_sector) {
 				DL_SETPSIZE(pp, ending_sector - off);
+				pp->p_fragblock = 0;
+				if (get_fsize(&label, partno) == 1 ||
+				    get_bsize(&label, partno) == 1 ||
+				    get_cpg(&label, partno) == 1)
+					return;
 				fprintf(stderr,
 				    "Partition %c shrunk to make room\n",
 				    i + 'a');
-				get_fsize(&label, i);
-				get_bsize(&label, i);
-				get_cpg(&label, i);
 			}
 		} else {
 			fputs("No room left for all partitions\n", stderr);
