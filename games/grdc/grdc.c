@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.28 2017/12/11 23:33:44 tb Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.29 2018/08/23 06:25:01 mestre Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -96,6 +96,9 @@ main(int argc, char *argv[])
 	}
 
 	initscr();
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
 
 	signal(SIGINT,sighndl);
 	signal(SIGTERM,sighndl);
