@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.70 2015/10/30 19:45:03 miod Exp $	*/
+/*	$OpenBSD: su.c,v 1.71 2018/08/23 16:52:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -73,7 +73,7 @@ main(int argc, char **argv)
 	uid_t ruid;
 	u_int flags;
 
-	if (pledge("stdio rpath getpw proc exec id", NULL) == -1)
+	if (pledge("stdio unveil rpath getpw proc exec id", NULL) == -1)
 		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "a:c:fKLlms:-")) != -1)
@@ -160,6 +160,11 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
+		err(1, "unveil");
+
 	for (;;) {
 		/* get target user, default to root unless in -L mode */
 		if (*argv) {
@@ -215,7 +220,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "Login incorrect\n");
 	}
 
-	if (pledge("stdio rpath getpw exec id", NULL) == -1)
+	if (pledge("stdio unveil rpath getpw exec id", NULL) == -1)
 		err(1, "pledge");
 
 	if (!altshell) {
@@ -232,6 +237,11 @@ main(int argc, char **argv)
 			iscsh = NO;
 		}
 	}
+
+	if (unveil(shell, "x") == -1)
+		err(1, "unveil");
+	if (unveil(pwd->pw_dir, "r") == -1)
+		err(1, "unveil");
 
 	if ((p = strrchr(shell, '/')))
 		avshell = p+1;
@@ -260,6 +270,8 @@ main(int argc, char **argv)
 				if (login_getcapbool(lc, "requirehome", 0)) {
 					auth_err(as, 1, "%s", pwd->pw_dir);
 				} else {
+					if (unveil("/", "r") == -1)
+						err(1, "unveil");
 					printf("No home directory %s!\n", pwd->pw_dir);
 					printf("Logging in with home = \"/\".\n");
 					if (chdir("/") < 0)
@@ -285,6 +297,8 @@ main(int argc, char **argv)
 		if (setenv("SHELL", shell, 1) == -1)
 			auth_err(as, 1, "unable to set environment");
 	}
+	if (pledge("stdio rpath getpw exec id", NULL) == -1)
+		err(1, "pledge");
 
 	np = *argv ? argv : argv - 1;
 	if (iscsh == YES) {
