@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.15 2018/08/21 16:34:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.16 2018/08/23 19:46:59 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -23,10 +23,12 @@ package main
 
 #include <openssl/bn.h>
 #include <openssl/curve25519.h>
+#include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/x509.h>
 #include <openssl/rsa.h>
 */
 import "C"
@@ -68,6 +70,33 @@ type wycheproofTestChaCha20Poly1305 struct {
 	Tag     string   `json:"tag"`
 	Result	string	 `json:"result"`
 	Flags   []string `json:"flags"`
+}
+
+type wycheproofDSAKey struct {
+	G       string `json:"g"`
+	KeySize int    `json:"keySize"`
+	P       string `json:"p"` 
+	Q       string `json:"q"`
+	Type    string `json:"type"`
+	Y       string `json:"y"` 
+}
+
+type wycheproofTestDSA struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Msg     string   `json:"msg"`
+	Sig     string   `json:"sig"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupDSA struct {
+	Key    *wycheproofDSAKey    `json:"key"`
+	KeyDER string               `json:"keyDer"`
+	KeyPEM string               `json:"keyPem"`
+	SHA    string               `json:"sha"`
+	Type   string               `json:"type"`
+	Tests  []*wycheproofTestDSA `json:"tests"`
 }
 
 type wycheproofECDSAKey struct {
@@ -339,6 +368,98 @@ func runChaCha20Poly1305TestGroup(wtg *wycheproofTestGroupChaCha20Poly1305) bool
 	return success
 }
 
+func runDSATest(dsa *C.DSA, h hash.Hash, wt *wycheproofTestDSA) bool {
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
+	}
+
+	h.Reset()
+	h.Write(msg)
+	msg = h.Sum(nil)
+
+	sig, err := hex.DecodeString(wt.Sig)
+	if err != nil {
+		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
+	}
+
+	msgLen, sigLen := len(msg), len(sig)
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+	if sigLen == 0 {
+		sig = append(msg, 0)
+	}
+
+	ret := C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+		(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), dsa)
+
+	success := true
+	if (ret == 1) != (wt.Result == "valid") {
+		fmt.Printf("FAIL: Test case %d (%q) - DSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		success = false
+	}
+	return success
+}
+
+func runDSATestGroup(wtg *wycheproofTestGroupDSA) bool {
+	fmt.Printf("Running DSA test group %v, key size %d and %v...\n", wtg.Type, wtg.Key.KeySize, wtg.SHA)
+
+	dsa := C.DSA_new()
+	if dsa == nil {
+		log.Fatal("DSA_new failed")
+	}
+	defer C.DSA_free(dsa)
+
+	var bnG *C.BIGNUM
+	wg := C.CString(wtg.Key.G)
+	if C.BN_hex2bn(&bnG, wg) == 0 {
+		log.Fatal("Failed to decode g")
+	}
+
+	var bnP *C.BIGNUM
+	wp := C.CString(wtg.Key.P)
+	if C.BN_hex2bn(&bnP, wp) == 0 {
+		log.Fatal("Failed to decode p")
+	}
+
+	var bnQ *C.BIGNUM
+	wq := C.CString(wtg.Key.Q)
+	if C.BN_hex2bn(&bnQ, wq) == 0 {
+		log.Fatal("Failed to decode q")
+	}
+
+	ret := C.DSA_set0_pqg(dsa, bnP, bnQ, bnG)
+	if ret != 1 {
+		log.Fatalf("DSA_set0_pqg returned %d", ret)
+	}
+
+	var bnY *C.BIGNUM
+	wy := C.CString(wtg.Key.Y)
+	if C.BN_hex2bn(&bnY, wy) == 0 {
+		log.Fatal("Failed to decode y")
+	}
+
+	ret = C.DSA_set0_key(dsa, bnY, nil)
+	if ret != 1 {
+		log.Fatalf("DSA_set0_key returned %d", ret)
+	}
+
+	h, err := hashFromString(wtg.SHA)
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	/// XXX audit acceptable cases
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runDSATest(dsa, h, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -562,6 +683,8 @@ func runTestVectors(path string) bool {
 	switch wtv.Algorithm {
 	case "CHACHA20-POLY1305":
 		wtg = &wycheproofTestGroupChaCha20Poly1305{}
+	case "DSA":
+		wtg = &wycheproofTestGroupDSA{}
 	case "ECDSA":
 		wtg = &wycheproofTestGroupECDSA{}
 	case "RSASig":
@@ -580,6 +703,10 @@ func runTestVectors(path string) bool {
 		switch wtv.Algorithm {
 		case "CHACHA20-POLY1305":
 			if !runChaCha20Poly1305TestGroup(wtg.(*wycheproofTestGroupChaCha20Poly1305)) {
+				success = false
+			}
+		case "DSA":
+			if !runDSATestGroup(wtg.(*wycheproofTestGroupDSA)) {
 				success = false
 			}
 		case "ECDSA":
@@ -614,6 +741,7 @@ func main() {
 		pattern string
 	}{
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
+		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
 		{"RSA signature", "rsa_signature_*test.json"},
 		{"X25519", "x25519_*test.json"},
