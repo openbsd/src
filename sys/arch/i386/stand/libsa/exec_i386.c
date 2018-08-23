@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.44 2016/09/11 17:52:47 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.45 2018/08/23 14:47:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -33,8 +33,10 @@
 #include <dev/cons.h>
 #include <lib/libsa/loadfile.h>
 #include <machine/biosvar.h>
+#include <machine/specialreg.h>
 #include <stand/boot/bootarg.h>
 
+#include "cmd.h"
 #include "disk.h"
 #include "libsa.h"
 
@@ -50,6 +52,9 @@
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
+
+void ucode_load(void);
+extern struct cmd_state cmd;
 
 char *bootmac = NULL;
 
@@ -99,6 +104,8 @@ run_loadfile(u_long *marks, int howto)
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
 
+	ucode_load();
+
 #ifdef SOFTRAID
 	if (bootdev_dip->sr_vol != NULL) {
 		bv = bootdev_dip->sr_vol;
@@ -143,4 +150,59 @@ run_loadfile(u_long *marks, int howto)
 	    extmem, cnvmem, ac, (int)av);
 	/* not reached */
 #endif
+}
+
+void
+ucode_load(void)
+{
+	uint32_t model, family, stepping;
+	uint32_t dummy, signature;
+	uint32_t vendor[4];
+	bios_ucode_t uc;
+	struct stat sb;
+	char path[128];
+	size_t buflen;
+	char *buf;
+	int fd;
+
+	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);
+	vendor[3] = 0; /* NULL-terminate */
+	if (strcmp((char *)vendor, "GenuineIntel") != 0)
+		return;
+
+	CPUID(1, signature, dummy, dummy, dummy);
+	family = (signature >> 8) & 0x0f;
+	model = (signature >> 4) & 0x0f;
+	if (family == 0x6 || family == 0xf) {
+		family += (signature >> 20) & 0xff;
+		model += ((signature >> 16) & 0x0f) << 4;
+	}
+	stepping = (signature >> 0) & 0x0f;
+
+	snprintf(path, sizeof(path), "%s:/etc/firmware/intel/%02x-%02x-%02x",
+	    cmd.bootdev, family, model, stepping);
+
+	fd = open(path, 0);
+	if (fd == -1)
+		return;
+
+	if (fstat(fd, &sb) == -1)
+		return;
+
+	buflen = sb.st_size;
+	if (buflen > 128*1024) {
+		printf("ucode too large\n");
+		return;
+	}
+
+	buf = (char *)(1*1024*1024);
+
+	if (read(fd, buf, buflen) != buflen) {
+		free(buf, buflen);
+		return;
+	}
+
+	uc.uc_addr = (uint64_t)buf;
+	uc.uc_size = (uint64_t)buflen;
+	addbootarg(BOOTARG_UCODE, sizeof(uc), &uc);
 }

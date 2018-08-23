@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.118 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: bios.c,v 1.119 2018/08/23 14:47:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -122,6 +122,7 @@ bios_bootmac_t	*bios_bootmac;
 #ifdef DDB
 extern int	db_console;
 #endif
+bios_ucode_t	*bios_ucode;
 
 void		smbios_info(char*);
 
@@ -606,6 +607,10 @@ bios_getopt(void)
 			    sizeof(sr_bootkey));
 #endif
 			explicit_bzero(bios_bootsr, sizeof(bios_bootsr_t));
+			break;
+
+		case BOOTARG_UCODE:
+			bios_ucode = (bios_ucode_t *)q->ba_arg;
 			break;
 
 		default:

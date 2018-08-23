@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.94 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.95 2018/08/23 14:47:52 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -317,6 +317,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+#ifndef SMALL_KERNEL
+		cpu_ucode_apply(ci);
+#endif
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
@@ -328,6 +331,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	case CPU_ROLE_BP:
 		printf("apid %d (boot processor)\n", caa->cpu_apicid);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+#ifndef SMALL_KERNEL
+		cpu_ucode_apply(ci);
+#endif
 		identifycpu(ci);
 #ifdef MTRR
 		mem_range_attach();
@@ -356,6 +362,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MULTIPROCESSOR
 		gdt_alloc_cpu(ci);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_AP;
+#ifndef SMALL_KERNEL
+		cpu_ucode_apply(ci);
+#endif
 		identifycpu(ci);
 		sched_init_cpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;

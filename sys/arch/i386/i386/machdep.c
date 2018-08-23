@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.625 2018/08/21 12:44:13 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.626 2018/08/23 14:47:52 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -421,6 +421,10 @@ cpu_startup(void)
 #endif
 	}
 	ioport_malloc_safe = 1;
+
+#ifndef SMALL_KERNEL
+	cpu_ucode_setup();
+#endif
 
 	/* enter the IDT and trampoline code in the u-k maps */
 	enter_shared_special_pages();

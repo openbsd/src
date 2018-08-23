@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.70 2018/08/21 12:44:13 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.71 2018/08/23 14:47:52 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -329,6 +329,7 @@
 #define	P5MSR_CTRSEL		0x011	/* P5 only (trap on P6) */
 #define	P5MSR_CTR0		0x012	/* P5 only (trap on P6) */
 #define	P5MSR_CTR1		0x013	/* P5 only (trap on P6) */
+#define MSR_PLATFORM_ID		0x017	/* Platform ID for microcode */
 #define MSR_APICBASE		0x01b
 #define	APICBASE_BSP		0x100
 #define APICBASE_ENABLE_X2APIC	0x400
