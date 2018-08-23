@@ -1,7 +1,7 @@
-/*	$OpenBSD: libmandoc.h,v 1.56 2018/04/09 22:26:25 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.57 2018/08/23 14:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,8 @@ enum	rofferr {
 	ROFF_RERUN, /* re-run roff interpreter with offset */
 	ROFF_APPEND, /* re-run main parser, appending next line */
 	ROFF_REPARSE, /* re-run main parser on the result */
+	ROFF_USERCALL, /* dto., calling a user-defined macro */
+	ROFF_USERRET, /* abort parsing of user-defined macro */
 	ROFF_SO, /* include another file */
 	ROFF_IGN, /* ignore current line */
 };
@@ -64,6 +66,7 @@ struct roff_man	*roff_man_alloc(struct roff *, struct mparse *,
 			const char *, int);
 void		 roff_man_reset(struct roff_man *);
 enum rofferr	 roff_parseln(struct roff *, int, struct buf *, int *);
+void		 roff_userret(struct roff *);
 void		 roff_endparse(struct roff *);
 void		 roff_setreg(struct roff *, const char *, int, char sign);
 int		 roff_getreg(struct roff *, const char *);

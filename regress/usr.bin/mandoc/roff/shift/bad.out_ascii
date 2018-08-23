@@ -1,0 +1,25 @@
+SHIFT_BAD(1)                General Commands Manual               SHIFT_BAD(1)
+
+
+
+NNAAMMEE
+       sshhiifftt--bbaadd - wrong usage of macro arguments
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+
+       argument used before call: ""
+
+       in macro: "argument"
+
+       invalid argument number 'x': ""
+
+       argument used after call: ""
+
+       after shift badarg: "arg2" after excessive shift: 0 ""
+
+       final text
+
+
+
+OpenBSD                         August 23, 2018                   SHIFT_BAD(1)

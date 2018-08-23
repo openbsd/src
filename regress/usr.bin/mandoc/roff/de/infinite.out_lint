@@ -1,2 +1,3 @@
-mandoc: infinite.in:14:5: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:13:9: ERROR: using macro argument outside macro: \$1
+mandoc: infinite.in:14:6: ERROR: using macro argument outside macro: \$1
 mandoc: infinite.in:20:5: ERROR: input stack limit exceeded, infinite loop?

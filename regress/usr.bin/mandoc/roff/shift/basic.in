@@ -1,0 +1,35 @@
+.\" $OpenBSD: basic.in,v 1.1 2018/08/23 14:16:12 schwarze Exp $
+.TH SHIFT_BASIC 1 "August 23, 2018"
+.SH NAME
+.B shift-basic
+\(en the shift request
+.SH DESCRIPTION
+.de showargs
+original arguments:
+.BI \\$@
+.PP
+.shift 2
+after shift 2:
+.BI \\$@
+.PP
+.shift
+after shift without argument:
+.BI \\$@
+.PP
+.shift 0
+after shift 0:
+.BI \\$@
+..
+.de useargs
+<\\$*>
+..
+.showargs one two three four five
+.PP
+expand to less than three bytes:
+.useargs 1
+.PP
+expand to exactly three bytes:
+.useargs x y
+.PP
+expand to more than three bytes:
+.useargs "a longer argument..." "and another"

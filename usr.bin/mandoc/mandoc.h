@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.191 2018/08/16 13:49:40 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.192 2018/08/23 14:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -195,6 +195,7 @@ enum	mandocerr {
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
 	MANDOCERR_CHAR_BAD, /* skipping bad character: number */
 	MANDOCERR_MACRO, /* skipping unknown macro: macro */
+	MANDOCERR_REQ_NOMAC, /* skipping request outside macro: ... */
 	MANDOCERR_REQ_INSEC, /* skipping insecure request: request */
 	MANDOCERR_IT_STRAY, /* skipping item outside list: It ... */
 	MANDOCERR_TA_STRAY, /* skipping column outside column list: Ta */
@@ -205,6 +206,8 @@ enum	mandocerr {
 
 	/* related to request and macro arguments */
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name: name */
+	MANDOCERR_ARG_UNDEF, /* using macro argument outside macro */
+	MANDOCERR_ARG_NONUM, /* argument number is not numeric */
 	MANDOCERR_BD_FILE, /* NOT IMPLEMENTED: Bd -file */
 	MANDOCERR_BD_NOARG, /* skipping display without arguments: Bd */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item: Bl */
@@ -213,6 +216,7 @@ enum	mandocerr {
 	MANDOCERR_OS_UNAME, /* uname(3) system call failed, using UNKNOWN */
 	MANDOCERR_ST_BAD, /* unknown standard specifier: St standard */
 	MANDOCERR_IT_NONUM, /* skipping request without numeric argument */
+	MANDOCERR_SHIFT, /* excessive shift: ..., but max is ... */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_SO_FAIL, /* .so request failed */
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */

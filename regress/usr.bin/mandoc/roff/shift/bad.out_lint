@@ -1,0 +1,7 @@
+mandoc: bad.in:14:29: ERROR: using macro argument outside macro: \$1
+mandoc: bad.in:15:2: ERROR: ignoring request outside macro: shift
+mandoc: bad.in:17:31: ERROR: argument number is not numeric: \$x
+mandoc: bad.in:19:28: ERROR: using macro argument outside macro: \$1
+mandoc: bad.in:20:2: ERROR: ignoring request outside macro: shift
+mandoc: bad.in:28:8: ERROR: argument is not numeric, using 1: shift badarg
+mandoc: bad.in:28:9: ERROR: excessive shift: 2, but max is 1

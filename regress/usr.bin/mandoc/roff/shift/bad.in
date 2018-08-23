@@ -1,0 +1,30 @@
+.\" $OpenBSD: bad.in,v 1.1 2018/08/23 14:16:12 schwarze Exp $
+.TH SHIFT_BAD 1 "August 23, 2018"
+.SH NAME
+.B shift-bad
+\(en wrong usage of macro arguments
+.SH DESCRIPTION
+initial text
+.de mym
+in macro: "\\$1"
+.PP
+invalid argument number 'x': "\\$x"
+..
+.PP
+argument used before call: "\$1"
+.shift
+.PP
+.mym argument
+.PP
+argument used after call: "\$1"
+.shift 2
+.PP
+.de mym
+.shift badarg
+after shift badarg: "\\$1"
+.shift 2
+after excessive shift: \\n(.$ "\\$1"
+..
+.mym arg1 arg2
+.PP
+final text

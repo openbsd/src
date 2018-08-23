@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.150 2018/07/28 18:32:30 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.151 2018/08/23 14:16:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2018 $
+.Dd $Mdocdate: August 23 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1807,6 +1807,13 @@ or
 macro.
 It may be mistyped or unsupported.
 The request or macro is discarded including its arguments.
+.It Sy "skipping request outside macro"
+.Pq roff
+A
+.Ic shift
+or
+.Ic return
+request occurs outside any macro definition and has no effect.
 .It Sy "skipping insecure request"
 .Pq roff
 An input file attempted to run a shell command
@@ -1916,6 +1923,14 @@ When parsing for a request or a user-defined macro name to be called,
 only the escape sequence is discarded.
 The characters preceding it are used as the request or macro name,
 the characters following it are used as the arguments to the request or macro.
+.It Sy "using macro argument outside macro"
+.Pq roff
+The escape sequence \e$ occurs outside any macro definition
+and expands to the empty string.
+.It Sy "argument number is not numeric"
+.Pq roff
+The argument of the escape sequence \e$ is not a digit;
+the escape sequence expands to the empty string.
 .It Sy "NOT IMPLEMENTED: Bd -file"
 .Pq mdoc
 For security reasons, the
@@ -1978,6 +1993,13 @@ or
 .Ic \&gsize
 statement has a non-numeric or negative argument or no argument at all.
 The invalid request or statement is ignored.
+.It Sy "excessive shift"
+.Pq roff
+The argument of a
+.Ic shift
+request is larger than the number of arguments of the macro that is
+currently being executed.
+All macro arguments are deleted and \en(.$ is set to zero.
 .It Sy "NOT IMPLEMENTED: .so with absolute path or \(dq..\(dq"
 .Pq roff
 For security reasons,

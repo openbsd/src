@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.168 2018/07/28 18:32:30 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.169 2018/08/23 14:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -60,7 +60,7 @@ struct	mparse {
 
 static	void	  choose_parser(struct mparse *);
 static	void	  resize_buf(struct buf *, size_t);
-static	int	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
+static	enum rofferr mparse_buf_r(struct mparse *, struct buf, size_t, int);
 static	int	  read_whole_file(struct mparse *, const char *, int,
 				struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
@@ -231,6 +231,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"input stack limit exceeded, infinite loop?",
 	"skipping bad character",
 	"skipping unknown macro",
+	"ignoring request outside macro",
 	"skipping insecure request",
 	"skipping item outside list",
 	"skipping column outside column list",
@@ -241,6 +242,8 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	/* related to request and macro arguments */
 	"escaped character not allowed in a name",
+	"using macro argument outside macro",
+	"argument number is not numeric",
 	"NOT IMPLEMENTED: Bd -file",
 	"skipping display without arguments",
 	"missing list type, using -item",
@@ -249,6 +252,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"uname(3) system call failed, using UNKNOWN",
 	"unknown standard specifier",
 	"skipping request without numeric argument",
+	"excessive shift",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
 	".so request failed",
 	"skipping all arguments",
@@ -336,14 +340,14 @@ choose_parser(struct mparse *curp)
  * macros, inline equations, and input line traps)
  * and indirectly (for .so file inclusion).
  */
-static int
+static enum rofferr
 mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 {
 	struct buf	 ln;
 	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
-	enum rofferr	 rr;
+	enum rofferr	 line_result, sub_result;
 	int		 of;
 	int		 lnn; /* line number in the real file */
 	int		 fd;
@@ -466,20 +470,36 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 				[curp->secondary->sz] = '\0';
 		}
 rerun:
-		rr = roff_parseln(curp->roff, curp->line, &ln, &of);
+		line_result = roff_parseln(curp->roff, curp->line, &ln, &of);
 
-		switch (rr) {
+		switch (line_result) {
 		case ROFF_REPARSE:
-			if (++curp->reparse_count > REPARSE_LIMIT)
+		case ROFF_USERCALL:
+			if (++curp->reparse_count > REPARSE_LIMIT) {
+				sub_result = ROFF_IGN;
 				mandoc_msg(MANDOCERR_ROFFLOOP, curp,
 				    curp->line, pos, NULL);
-			else if (mparse_buf_r(curp, ln, of, 0) == 1 ||
-			    start == 1) {
+			} else {
+				sub_result = mparse_buf_r(curp, ln, of, 0);
+				if (line_result == ROFF_USERCALL) {
+					if (sub_result == ROFF_USERRET)
+						sub_result = ROFF_CONT;
+					roff_userret(curp->roff);
+				}
+				if (start || sub_result == ROFF_CONT) {
+					pos = 0;
+					continue;
+				}
+			}
+			free(ln.buf);
+			return sub_result;
+		case ROFF_USERRET:
+			if (start) {
 				pos = 0;
 				continue;
 			}
 			free(ln.buf);
-			return 0;
+			return ROFF_USERRET;
 		case ROFF_APPEND:
 			pos = strlen(ln.buf);
 			continue;
@@ -493,7 +513,7 @@ rerun:
 			    (i >= blk.sz || blk.buf[i] == '\0')) {
 				curp->sodest = mandoc_strdup(ln.buf + of);
 				free(ln.buf);
-				return 1;
+				return ROFF_CONT;
 			}
 			/*
 			 * We remove `so' clauses from our lookaside
@@ -545,7 +565,7 @@ rerun:
 	}
 
 	free(ln.buf);
-	return 1;
+	return ROFF_CONT;
 }
 
 static int

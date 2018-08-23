@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.210 2018/08/21 18:15:16 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.211 2018/08/23 14:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -83,10 +83,21 @@ struct	roffreq {
 	char		 name[];
 };
 
+/*
+ * A macro processing context.
+ * More than one is needed when macro calls are nested.
+ */
+struct	mctx {
+	char		**argv;
+	int		 argc;
+	int		 argsz;
+};
+
 struct	roff {
 	struct mparse	*parse; /* parse point */
 	struct roff_man	*man; /* mdoc or man parser */
 	struct roffnode	*last; /* leaf of stack */
+	struct mctx	*mstack; /* stack of macro contexts */
 	int		*rstack; /* stack of inverted `ie' values */
 	struct ohash	*reqtab; /* request lookup table */
 	struct roffreg	*regtab; /* number registers */
@@ -102,6 +113,8 @@ struct	roff {
 	struct eqn_node	*eqn; /* active equation parser */
 	int		 eqn_inline; /* current equation is inline */
 	int		 options; /* parse options */
+	int		 mstacksz; /* current size of mstack */
+	int		 mstackpos; /* position in mstack */
 	int		 rstacksz; /* current size limit of rstack */
 	int		 rstackpos; /* position in rstack */
 	int		 format; /* current file in mdoc or man format */
@@ -203,6 +216,7 @@ static	enum rofferr	 roff_parsetext(struct roff *, struct buf *,
 				int, int *);
 static	enum rofferr	 roff_renamed(ROFF_ARGS);
 static	enum rofferr	 roff_res(struct roff *, struct buf *, int, int);
+static	enum rofferr	 roff_return(ROFF_ARGS);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
 static	enum rofferr	 roff_rn(ROFF_ARGS);
 static	enum rofferr	 roff_rr(ROFF_ARGS);
@@ -212,6 +226,7 @@ static	void		 roff_setstr(struct roff *,
 				const char *, const char *, int);
 static	void		 roff_setstrn(struct roffkv **, const char *,
 				size_t, const char *, size_t, int);
+static	enum rofferr	 roff_shift(ROFF_ARGS);
 static	enum rofferr	 roff_so(ROFF_ARGS);
 static	enum rofferr	 roff_tr(ROFF_ARGS);
 static	enum rofferr	 roff_Dd(ROFF_ARGS);
@@ -519,7 +534,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_unsupp, NULL, NULL, 0 },  /* rchar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rd */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* recursionlimit */
-	{ roff_unsupp, NULL, NULL, 0 },  /* return */
+	{ roff_return, NULL, NULL, 0 },  /* return */
 	{ roff_unsupp, NULL, NULL, 0 },  /* rfschar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rhang */
 	{ roff_rm, NULL, NULL, 0 },  /* rm */
@@ -531,7 +546,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_unsupp, NULL, NULL, 0 },  /* schar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* sentchar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* shc */
-	{ roff_unsupp, NULL, NULL, 0 },  /* shift */
+	{ roff_shift, NULL, NULL, 0 },  /* shift */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* sizes */
 	{ roff_so, NULL, NULL, 0 },  /* so */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* spacewidth */
@@ -711,6 +726,9 @@ roff_free1(struct roff *r)
 		eqn_free(r->last_eqn);
 	r->last_eqn = r->eqn = NULL;
 
+	while (r->mstackpos >= 0)
+		roff_userret(r);
+
 	while (r->last)
 		roffnode_pop(r);
 
@@ -750,7 +768,12 @@ roff_reset(struct roff *r)
 void
 roff_free(struct roff *r)
 {
+	int	 	 i;
+
 	roff_free1(r);
+	for (i = 0; i < r->mstacksz; i++)
+		free(r->mstack[i].argv);
+	free(r->mstack);
 	roffhash_free(r->reqtab);
 	free(r);
 }
@@ -765,6 +788,7 @@ roff_alloc(struct mparse *parse, int options)
 	r->reqtab = roffhash_alloc(0, ROFF_RENAMED);
 	r->options = options;
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
+	r->mstackpos = -1;
 	r->rstackpos = -1;
 	r->escape = '\\';
 	return r;
@@ -1121,6 +1145,7 @@ deroff(char **dest, const struct roff_node *n)
 static enum rofferr
 roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 {
+	struct mctx	*ctx;	/* current macro call context */
 	char		 ubuf[24]; /* buffer to print the number */
 	struct roff_node *n;	/* used for header comments */
 	const char	*start;	/* start of the string to process */
@@ -1132,11 +1157,14 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	char		*nbuf;	/* new buffer to copy buf->buf to */
 	size_t		 maxl;  /* expected length of the escape name */
 	size_t		 naml;	/* actual length of the escape name */
+	size_t		 asz;	/* length of the replacement */
+	size_t		 rsz;	/* length of the rest of the string */
 	enum mandoc_esc	 esc;	/* type of the escape sequence */
 	int		 inaml;	/* length returned from mandoc_escape() */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
 	int		 arg_complete; /* argument not interrupted by eol */
+	int		 quote_args; /* true for \\$@, false for \\$* */
 	int		 done;	/* no more input available */
 	int		 deftype; /* type of definition to paste */
 	int		 rcsid;	/* kind of RCS id seen */
@@ -1273,6 +1301,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		cp = stesc + 1;
 		switch (*cp) {
 		case '*':
+		case '$':
 			res = NULL;
 			break;
 		case 'B':
@@ -1389,6 +1418,62 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 				}
 			}
 			break;
+		case '$':
+			if (r->mstackpos < 0) {
+				mandoc_vmsg(MANDOCERR_ARG_UNDEF,
+				    r->parse, ln, (int)(stesc - buf->buf),
+				    "%.3s", stesc);
+				break;
+			}
+			ctx = r->mstack + r->mstackpos;
+			npos = stesc[2] - '1';
+			if (npos >= 0 && npos <= 8) {
+				res = npos < ctx->argc ?
+				    ctx->argv[npos] : "";
+				break;
+			}
+			if (stesc[2] == '*')
+				quote_args = 0;
+			else if (stesc[2] == '@')
+				quote_args = 1;
+			else {
+				mandoc_vmsg(MANDOCERR_ARG_NONUM,
+				    r->parse, ln, (int)(stesc - buf->buf),
+				    "%.3s", stesc);
+				break;
+			}
+			asz = 0;
+			for (npos = 0; npos < ctx->argc; npos++) {
+				if (npos)
+					asz++;  /* blank */
+				if (quote_args)
+					asz += 2;  /* quotes */
+				asz += strlen(ctx->argv[npos]);
+			}
+			if (asz != 3) {
+				rsz = buf->sz - (stesc - buf->buf) - 3;
+				if (asz < 3)
+					memmove(stesc + asz, stesc + 3, rsz);
+				buf->sz += asz - 3;
+				nbuf = mandoc_realloc(buf->buf, buf->sz);
+				start = nbuf + pos;
+				stesc = nbuf + (stesc - buf->buf);
+				buf->buf = nbuf;
+				if (asz > 3)
+					memmove(stesc + asz, stesc + 3, rsz);
+			}
+			for (npos = 0; npos < ctx->argc; npos++) {
+				if (npos)
+					*stesc++ = ' ';
+				if (quote_args)
+					*stesc++ = '"';
+				cp = ctx->argv[npos];
+				while (*cp != '\0')
+					*stesc++ = *cp++;
+				if (quote_args)
+					*stesc++ = '"';
+			}
+			continue;
 		case 'B':
 			npos = 0;
 			ubuf[0] = arg_complete &&
@@ -1412,9 +1497,10 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		}
 
 		if (res == NULL) {
-			mandoc_vmsg(MANDOCERR_STR_UNDEF,
-			    r->parse, ln, (int)(stesc - buf->buf),
-			    "%.*s", (int)naml, stnam);
+			if (stesc[1] == '*')
+				mandoc_vmsg(MANDOCERR_STR_UNDEF,
+				    r->parse, ln, (int)(stesc - buf->buf),
+				    "%.*s", (int)naml, stnam);
 			res = "";
 		} else if (buf->sz + strlen(res) > SHRT_MAX) {
 			mandoc_msg(MANDOCERR_ROFFLOOP, r->parse,
@@ -1630,6 +1716,25 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	/* Execute a roff request or a user defined macro. */
 
 	return (*roffs[t].proc)(r, t, buf, ln, spos, pos, offs);
+}
+
+/*
+ * Internal interface function to tell the roff parser that execution
+ * of the current macro ended.  This is required because macro
+ * definitions usually do not end with a .return request.
+ */
+void
+roff_userret(struct roff *r)
+{
+	struct mctx	*ctx;
+	int		 i;
+
+	assert(r->mstackpos >= 0);
+	ctx = r->mstack + r->mstackpos;
+	for (i = 0; i < ctx->argc; i++)
+		free(ctx->argv[i]);
+	ctx->argc = 0;
+	r->mstackpos--;
 }
 
 void
@@ -2660,7 +2765,7 @@ roff_getregro(const struct roff *r, const char *name)
 
 	switch (*name) {
 	case '$':  /* Number of arguments of the last macro evaluated. */
-		return 0;
+		return r->mstackpos < 0 ? 0 : r->mstack[r->mstackpos].argc;
 	case 'A':  /* ASCII approximation mode is always off. */
 		return 0;
 	case 'g':  /* Groff compatibility mode is always on. */
@@ -3291,6 +3396,22 @@ roff_tr(ROFF_ARGS)
 	return ROFF_IGN;
 }
 
+/*
+ * Implementation of the .return request.
+ * There is no need to call roff_userret() from here.
+ * The read module will call that after rewinding the reader stack
+ * to the place from where the current macro was called.
+ */
+static enum rofferr
+roff_return(ROFF_ARGS)
+{
+	if (r->mstackpos >= 0)
+		return ROFF_USERRET;
+
+	mandoc_msg(MANDOCERR_REQ_NOMAC, r->parse, ln, ppos, "return");
+	return ROFF_IGN;
+}
+
 static enum rofferr
 roff_rn(ROFF_ARGS)
 {
@@ -3342,6 +3463,39 @@ roff_rn(ROFF_ARGS)
 }
 
 static enum rofferr
+roff_shift(ROFF_ARGS)
+{
+	struct mctx	*ctx;
+	int		 levels, i;
+
+	levels = 1;
+	if (buf->buf[pos] != '\0' &&
+	    roff_evalnum(r, ln, buf->buf, &pos, &levels, 0) == 0) {
+		mandoc_vmsg(MANDOCERR_CE_NONUM, r->parse,
+		    ln, pos, "shift %s", buf->buf + pos);
+		levels = 1;
+	}
+	if (r->mstackpos < 0) {
+		mandoc_msg(MANDOCERR_REQ_NOMAC, r->parse, ln, ppos, "shift");
+		return ROFF_IGN;
+	}
+	ctx = r->mstack + r->mstackpos;
+	if (levels > ctx->argc) {
+		mandoc_vmsg(MANDOCERR_SHIFT, r->parse,
+		    ln, pos, "%d, but max is %d", levels, ctx->argc);
+		levels = ctx->argc;
+	}
+	if (levels == 0)
+		return ROFF_IGN;
+	for (i = 0; i < levels; i++)
+		free(ctx->argv[i]);
+	ctx->argc -= levels;
+	for (i = 0; i < ctx->argc; i++)
+		ctx->argv[i] = ctx->argv[i + levels];
+	return ROFF_IGN;
+}
+
+static enum rofferr
 roff_so(ROFF_ARGS)
 {
 	char *name, *cp;
@@ -3376,186 +3530,58 @@ roff_so(ROFF_ARGS)
 static enum rofferr
 roff_userdef(ROFF_ARGS)
 {
-	const char	 *arg[16], *ap;
-	char		 *cp, *n1, *n2;
-	int		  argc, expand_count, i, ib, ie, quote_args;
-	size_t		  asz, esz, rsz;
+	struct mctx	 *ctx;
+	char		 *arg, *ap, *dst, *src;
+	size_t		  sz;
+
+	/* Initialize a new macro stack context. */
+
+	if (++r->mstackpos == r->mstacksz) {
+		r->mstack = mandoc_recallocarray(r->mstack,
+		    r->mstacksz, r->mstacksz + 8, sizeof(*r->mstack));
+		r->mstacksz += 8;
+	}
+	ctx = r->mstack + r->mstackpos;
+	ctx->argsz = 0;
+	ctx->argc = 0;
+	ctx->argv = NULL;
 
 	/*
-	 * Collect pointers to macro argument strings
-	 * and NUL-terminate them.
+	 * Collect pointers to macro argument strings,
+	 * NUL-terminating them and escaping quotes.
 	 */
 
-	argc = 0;
-	cp = buf->buf + pos;
-	for (i = 0; i < 16; i++) {
-		if (*cp == '\0')
-			arg[i] = "";
-		else {
-			arg[i] = mandoc_getarg(r->parse, &cp, ln, &pos);
-			argc = i + 1;
+	src = buf->buf + pos;
+	while (*src != '\0') {
+		if (ctx->argc == ctx->argsz) {
+			ctx->argsz += 8;
+			ctx->argv = mandoc_reallocarray(ctx->argv,
+			    ctx->argsz, sizeof(*ctx->argv));
 		}
+		arg = mandoc_getarg(r->parse, &src, ln, &pos);
+		sz = 1;  /* For the terminating NUL. */
+		for (ap = arg; *ap != '\0'; ap++)
+			sz += *ap == '"' ? 4 : 1;
+		ctx->argv[ctx->argc++] = dst = mandoc_malloc(sz);
+		for (ap = arg; *ap != '\0'; ap++) {
+			if (*ap == '"') {
+				memcpy(dst, "\\(dq", 4);
+				dst += 4;
+			} else
+				*dst++ = *ap;
+		}
+		*dst = '\0';
 	}
 
-	/*
-	 * Expand macro arguments.
-	 */
-
-	buf->sz = strlen(r->current_string) + 1;
-	n1 = n2 = cp = mandoc_malloc(buf->sz);
-	memcpy(n1, r->current_string, buf->sz);
-	expand_count = 0;
-	while (*cp != '\0') {
-
-		/* Scan ahead for the next argument invocation. */
-
-		if (*cp++ != '\\')
-			continue;
-		if (*cp++ != '$')
-			continue;
-
-		quote_args = 0;
-		switch (*cp) {
-		case '@':  /* \\$@ inserts all arguments, quoted */
-			quote_args = 1;
-			/* FALLTHROUGH */
-		case '*':  /* \\$* inserts all arguments, unquoted */
-			ib = 0;
-			ie = argc - 1;
-			break;
-		default:  /* \\$1 .. \\$9 insert one argument */
-			ib = ie = *cp - '1';
-			if (ib < 0 || ib > 8)
-				continue;
-			break;
-		}
-		cp -= 2;
-
-		/*
-		 * Prevent infinite recursion.
-		 */
-
-		if (cp >= n2)
-			expand_count = 1;
-		else if (++expand_count > EXPAND_LIMIT) {
-			mandoc_msg(MANDOCERR_ROFFLOOP, r->parse,
-			    ln, (int)(cp - n1), NULL);
-			free(buf->buf);
-			buf->buf = n1;
-			*offs = 0;
-			return ROFF_IGN;
-		}
-
-		/*
-		 * Determine the size of the expanded argument,
-		 * taking escaping of quotes into account.
-		 */
-
-		asz = ie > ib ? ie - ib : 0;  /* for blanks */
-		for (i = ib; i <= ie; i++) {
-			if (quote_args)
-				asz += 2;
-			for (ap = arg[i]; *ap != '\0'; ap++) {
-				asz++;
-				if (*ap == '"')
-					asz += 3;
-			}
-		}
-		if (asz != 3) {
-
-			/*
-			 * Determine the size of the rest of the
-			 * unexpanded macro, including the NUL.
-			 */
-
-			rsz = buf->sz - (cp - n1) - 3;
-
-			/*
-			 * When shrinking, move before
-			 * releasing the storage.
-			 */
-
-			if (asz < 3)
-				memmove(cp + asz, cp + 3, rsz);
-
-			/*
-			 * Resize the storage for the macro
-			 * and readjust the parse pointer.
-			 */
-
-			buf->sz += asz - 3;
-			n2 = mandoc_realloc(n1, buf->sz);
-			cp = n2 + (cp - n1);
-			n1 = n2;
-
-			/*
-			 * When growing, make room
-			 * for the expanded argument.
-			 */
-
-			if (asz > 3)
-				memmove(cp + asz, cp + 3, rsz);
-		}
-
-		/* Copy the expanded argument, escaping quotes. */
-
-		n2 = cp;
-		for (i = ib; i <= ie; i++) {
-			if (quote_args)
-				*n2++ = '"';
-			for (ap = arg[i]; *ap != '\0'; ap++) {
-				if (*ap == '"') {
-					memcpy(n2, "\\(dq", 4);
-					n2 += 4;
-				} else
-					*n2++ = *ap;
-			}
-			if (quote_args)
-				*n2++ = '"';
-			if (i < ie)
-				*n2++ = ' ';
-		}
-	}
-
-	/*
-	 * Expand the number of arguments, if it is used.
-	 * This never makes the expanded macro longer.
-	 */
-
-	for (cp = n1; *cp != '\0'; cp++) {
-		if (cp[0] != '\\')
-			continue;
-		if (cp[1] == '\\') {
-			cp++;
-			continue;
-		}
-		if (strncmp(cp + 1, "n(.$", 4) == 0)
-			esz = 5;
-		else if (strncmp(cp + 1, "n[.$]", 5) == 0)
-			esz = 6;
-		else
-			continue;
-		asz = snprintf(cp, esz, "%d", argc);
-		assert(asz < esz);
-		rsz = buf->sz - (cp - n1) - esz;
-		memmove(cp + asz, cp + esz, rsz);
-		buf->sz -= esz - asz;
-		n2 = mandoc_realloc(n1, buf->sz);
-		cp = n2 + (cp - n1) + asz;
-		n1 = n2;
-	}
-
-	/*
-	 * Replace the macro invocation
-	 * by the expanded macro.
-	 */
+	/* Replace the macro invocation by the macro definition. */
 
 	free(buf->buf);
-	buf->buf = n1;
+	buf->buf = mandoc_strdup(r->current_string);
+	buf->sz = strlen(buf->buf) + 1;
 	*offs = 0;
 
 	return buf->sz > 1 && buf->buf[buf->sz - 2] == '\n' ?
-	   ROFF_REPARSE : ROFF_APPEND;
+	   ROFF_USERCALL : ROFF_APPEND;
 }
 
 /*
