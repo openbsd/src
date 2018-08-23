@@ -187,7 +187,8 @@ update_user(struct user_list *head, char *name, time_t secs)
 	if ((up = malloc(sizeof(struct user_list))) == NULL)
 		err(1, "malloc");
 	up->next = head;
-	strlcpy(up->name, name, sizeof (up->name));
+	strncpy(up->name, name, sizeof(up->name) - 1);
+	up->name[sizeof(up->name) - 1] = '\0';
 	up->secs = secs;
 	Total += secs;
 	return up;
