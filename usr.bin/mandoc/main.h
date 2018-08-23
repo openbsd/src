@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.22 2017/03/03 14:21:41 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.23 2018/08/23 19:32:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,7 +35,6 @@ void		  tree_mdoc(void *, const struct roff_man *);
 void		  tree_man(void *, const struct roff_man *);
 
 void		  man_mdoc(void *, const struct roff_man *);
-void		  man_man(void *, const struct roff_man *);
 
 void		 *locale_alloc(const struct manoutput *);
 void		 *utf8_alloc(const struct manoutput *);

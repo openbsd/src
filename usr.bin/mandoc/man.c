@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.125 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.126 2018/08/23 19:32:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -335,14 +335,6 @@ man_breakscope(struct roff_man *man, int tok)
 		roff_node_delete(man, n);
 		man->flags &= ~MAN_BLINE;
 	}
-}
-
-const struct mparse *
-man_mparse(const struct roff_man *man)
-{
-
-	assert(man && man->parse);
-	return man->parse;
 }
 
 void

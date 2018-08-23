@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.57 2018/08/23 14:16:12 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.58 2018/08/23 19:32:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,8 +28,9 @@ enum	rofferr {
 };
 
 struct	buf {
-	char	*buf;
-	size_t	 sz;
+	char		*buf;
+	size_t		 sz;
+	struct buf	*next;
 };
 
 
