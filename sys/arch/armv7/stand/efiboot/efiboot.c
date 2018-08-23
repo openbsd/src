@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.21 2018/03/31 18:19:12 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.22 2018/08/23 15:31:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -70,6 +70,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	ST = systab;
 	BS = ST->BootServices;
+	RS = ST->RuntimeServices;
 	IH = image;
 
 	/* disable reset by watchdog after 5 minutes */
