@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.50 2018/08/23 15:45:05 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.51 2018/08/23 18:39:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,6 +37,7 @@ static void	job_read_callback(struct bufferevent *, void *);
 static void	job_write_callback(struct bufferevent *, void *);
 static void	job_error_callback(struct bufferevent *, short, void *);
 
+/* A single job. */
 struct job {
 	enum {
 		JOB_RUNNING,
@@ -62,7 +63,7 @@ struct job {
 };
 
 /* All jobs list. */
-LIST_HEAD(joblist, job) all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
+static LIST_HEAD(joblist, job) all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 
 /* Start a job running, if it isn't already. */
 struct job *
