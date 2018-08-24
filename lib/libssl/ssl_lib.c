@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.185 2018/04/25 07:10:39 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.186 2018/08/24 20:30:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -853,22 +853,21 @@ SSL_get_peer_cert_chain(const SSL *s)
  * Now in theory, since the calling process own 't' it should be safe to
  * modify.  We need to be able to read f without being hassled
  */
-void
+int
 SSL_copy_session_id(SSL *t, const SSL *f)
 {
 	CERT	*tmp;
 
-	/* Do we need to to SSL locking? */
-	SSL_set_session(t, SSL_get_session(f));
+	/* Do we need to do SSL locking? */
+	if (!SSL_set_session(t, SSL_get_session(f)))
+		return 0;
 
-	/*
-	 * What if we are setup as SSLv2 but want to talk SSLv3 or
-	 * vice-versa.
-	 */
+	/* What if we are set up for one protocol but want to talk another? */
 	if (t->method != f->method) {
-		t->method->internal->ssl_free(t);	/* cleanup current */
-		t->method = f->method;	/* change method */
-		t->method->internal->ssl_new(t);	/* setup new */
+		t->method->internal->ssl_free(t);
+		t->method = f->method;
+		if (!t->method->internal->ssl_new(t))
+			return 0;
 	}
 
 	tmp = t->cert;
@@ -878,7 +877,11 @@ SSL_copy_session_id(SSL *t, const SSL *f)
 	} else
 		t->cert = NULL;
 	ssl_cert_free(tmp);
-	SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length);
+
+	if (!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length))
+		return 0;
+
+	return 1;
 }
 
 /* Fix this so it checks all the valid key/cert options */
@@ -2500,15 +2503,15 @@ SSL_dup(SSL *s)
 	int i;
 
 	if ((ret = SSL_new(SSL_get_SSL_CTX(s))) == NULL)
-		return (NULL);
+		goto err;
 
 	ret->version = s->version;
 	ret->internal->type = s->internal->type;
 	ret->method = s->method;
 
 	if (s->session != NULL) {
-		/* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
-		SSL_copy_session_id(ret, s);
+		if (!SSL_copy_session_id(ret, s))
+			goto err;
 	} else {
 		/*
 		 * No session has been established yet, so we have to expect
@@ -2528,8 +2531,9 @@ SSL_dup(SSL *s)
 				goto err;
 		}
 
-		SSL_set_session_id_context(ret,
-		s->sid_ctx, s->sid_ctx_length);
+		if (!SSL_set_session_id_context(ret, s->sid_ctx,
+		    s->sid_ctx_length))
+			goto err;
 	}
 
 	ret->internal->options = s->internal->options;
@@ -2612,13 +2616,10 @@ SSL_dup(SSL *s)
 		}
 	}
 
-	if (0) {
-err:
-		if (ret != NULL)
-			SSL_free(ret);
-		ret = NULL;
-	}
-	return (ret);
+	return ret;
+ err:
+	SSL_free(ret);
+	return NULL;
 }
 
 void
