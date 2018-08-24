@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.181 2018/08/21 13:50:31 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.182 2018/08/24 12:45:27 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1169,6 +1169,7 @@ fdfree(struct proc *p)
 		fp = fdp->fd_ofiles[fd];
 		if (fp != NULL) {
 			fdp->fd_ofiles[fd] = NULL;
+			knote_fdclose(p, fd);
 			 /* closef() expects a refcount of 2 */
 			FREF(fp);
 			(void) closef(fp, p);
