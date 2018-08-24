@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.16 2018/02/22 17:09:28 jsing Exp $ */
+/* $OpenBSD: x509_set.c,v 1.17 2018/08/24 19:55:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,6 +85,12 @@ X509_set_version(X509 *x, long version)
 			return (0);
 	}
 	return (ASN1_INTEGER_set(x->cert_info->version, version));
+}
+
+long
+X509_get_version(const X509 *x)
+{
+	return ASN1_INTEGER_get(x->cert_info->version);
 }
 
 int
@@ -203,4 +209,10 @@ X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 	if ((x == NULL) || (x->cert_info == NULL))
 		return (0);
 	return (X509_PUBKEY_set(&(x->cert_info->key), pkey));
+}
+
+int
+X509_get_signature_type(const X509 *x)
+{
+	return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg->algorithm));
 }

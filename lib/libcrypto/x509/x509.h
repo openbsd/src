@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.69 2018/05/30 15:59:33 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.70 2018/08/24 19:55:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -589,29 +589,21 @@ extern "C" {
 #define X509_EXT_PACK_UNKNOWN	1
 #define X509_EXT_PACK_STRING	2
 
-#define		X509_get_version(x) ASN1_INTEGER_get((x)->cert_info->version)
-/* #define	X509_get_serialNumber(x) ((x)->cert_info->serialNumber) */
-#define		X509_get_notBefore(x) ((x)->cert_info->validity->notBefore)
-#define		X509_get_notAfter(x) ((x)->cert_info->validity->notAfter)
 #define		X509_extract_key(x)	X509_get_pubkey(x) /*****/
-#define		X509_REQ_get_version(x) ASN1_INTEGER_get((x)->req_info->version)
-#define		X509_REQ_get_subject_name(x) ((x)->req_info->subject)
 #define		X509_REQ_extract_key(a)	X509_REQ_get_pubkey(a)
 #define		X509_name_cmp(a,b)	X509_NAME_cmp((a),(b))
-#define		X509_get_signature_type(x) EVP_PKEY_type(OBJ_obj2nid((x)->sig_alg->algorithm))
-
-#define		X509_CRL_get_version(x) ASN1_INTEGER_get((x)->crl->version)
-#define 	X509_CRL_get_lastUpdate(x) ((x)->crl->lastUpdate)
-#define 	X509_CRL_get_nextUpdate(x) ((x)->crl->nextUpdate)
-#define		X509_CRL_get_issuer(x) ((x)->crl->issuer)
-#define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
 
 int X509_CRL_up_ref(X509_CRL *x);
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
+long X509_CRL_get_version(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
+ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl);
+ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl);
+X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
+STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);
 
@@ -984,6 +976,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 int 		X509_set_version(X509 *x, long version);
+long		X509_get_version(const X509 *x);
 int 		X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *	X509_get_serialNumber(X509 *x);
 int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
@@ -1003,9 +996,15 @@ EVP_PKEY *	X509_get_pubkey(X509 *x);
 EVP_PKEY *	X509_get0_pubkey(const X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int		X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
+int		X509_get_signature_type(const X509 *x);
+
+#define X509_get_notBefore	X509_getm_notBefore
+#define X509_get_notAfter	X509_getm_notAfter
 
 int		X509_REQ_set_version(X509_REQ *x,long version);
-int		X509_REQ_set_subject_name(X509_REQ *req,X509_NAME *name);
+long		X509_REQ_get_version(const X509_REQ *x);
+int		X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
+X509_NAME	*X509_REQ_get_subject_name(const X509_REQ *x);
 int		X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
 int		X509_REQ_extension_nid(int nid);

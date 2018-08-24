@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.32 2018/04/23 13:10:19 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.33 2018/08/24 19:55:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -706,8 +706,20 @@ X509_CRL_get0_extensions(const X509_CRL *crl)
 	return crl->crl->extensions;
 }
 
+long
+X509_CRL_get_version(const X509_CRL *crl)
+{
+	return ASN1_INTEGER_get(crl->crl->version);
+}
+
 const ASN1_TIME *
 X509_CRL_get0_lastUpdate(const X509_CRL *crl)
+{
+	return crl->crl->lastUpdate;
+}
+
+ASN1_TIME *
+X509_CRL_get_lastUpdate(X509_CRL *crl)
 {
 	return crl->crl->lastUpdate;
 }
@@ -716,6 +728,24 @@ const ASN1_TIME *
 X509_CRL_get0_nextUpdate(const X509_CRL *crl)
 {
 	return crl->crl->nextUpdate;
+}
+
+ASN1_TIME *
+X509_CRL_get_nextUpdate(X509_CRL *crl)
+{
+	return crl->crl->nextUpdate;
+}
+
+X509_NAME *
+X509_CRL_get_issuer(const X509_CRL *crl)
+{
+	return crl->crl->issuer;
+}
+
+STACK_OF(X509_REVOKED) *
+X509_CRL_get_REVOKED(X509_CRL *crl)
+{
+	return crl->crl->revoked;
 }
 
 void
