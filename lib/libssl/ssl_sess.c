@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.80 2018/04/25 07:10:39 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.81 2018/08/24 18:10:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,8 +420,8 @@ sess_id_done:
  *   session_id: points at the session ID in the ClientHello. This code will
  *       read past the end of this in order to parse out the session ticket
  *       extension, if any.
- *   len: the length of the session ID.
- *   limit: a pointer to the first byte after the ClientHello.
+ *   session_id_len: the length of the session ID.
+ *   ext_block: a CBS for the ClientHello extensions block.
  *
  * Returns:
  *   -1: error
@@ -435,8 +435,8 @@ sess_id_done:
  *     to 1 if the server should issue a new session ticket (to 0 otherwise).
  */
 int
-ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
-    const unsigned char *limit)
+ssl_get_prev_session(SSL *s, const unsigned char *session_id,
+    int session_id_len, CBS *ext_block)
 {
 	SSL_SESSION *ret = NULL;
 	int fatal = 0;
@@ -445,14 +445,14 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
 	/* This is used only by servers. */
 
-	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
+	if (session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		goto err;
 
-	if (len == 0)
+	if (session_id_len == 0)
 		try_session_cache = 0;
 
 	/* Sets s->internal->tlsext_ticket_expected. */
-	r = tls1_process_ticket(s, session_id, len, limit, &ret);
+	r = tls1_process_ticket(s, session_id, session_id_len, ext_block, &ret);
 	switch (r) {
 	case -1: /* Error during processing */
 		fatal = 1;
@@ -473,8 +473,8 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	     SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
 		SSL_SESSION data;
 		data.ssl_version = s->version;
-		data.session_id_length = len;
-		memcpy(data.session_id, session_id, len);
+		data.session_id_length = session_id_len;
+		memcpy(data.session_id, session_id, session_id_len);
 
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		ret = lh_SSL_SESSION_retrieve(s->session_ctx->internal->sessions, &data);
@@ -494,7 +494,7 @@ ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		int copy = 1;
 
 		if ((ret = s->session_ctx->internal->get_session_cb(s,
-		    session_id, len, &copy))) {
+		    session_id, session_id_len, &copy))) {
 			s->session_ctx->internal->stats.sess_cb_hit++;
 
 			/*

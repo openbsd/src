@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.208 2018/08/24 17:30:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.209 2018/08/24 18:10:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1056,10 +1056,11 @@ void ssl_cert_free(CERT *c);
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_get_new_session(SSL *s, int session);
-int ssl_get_prev_session(SSL *s, unsigned char *session, int len,
-    const unsigned char *limit);
+int ssl_get_prev_session(SSL *s, const unsigned char *session_id,
+    int session_id_len, CBS *ext_block);
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
-SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num);
+SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base,
+    int num);
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
     const SSL_CIPHER * const *bp);
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb);
@@ -1278,8 +1279,8 @@ int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 
 #define tlsext_tick_md	EVP_sha256
-int tls1_process_ticket(SSL *s, const unsigned char *session_id, int len,
-    const unsigned char *limit, SSL_SESSION **ret);
+int tls1_process_ticket(SSL *s, const unsigned char *session_id,
+    int session_id_len, CBS *ext_block, SSL_SESSION **ret);
 int tls12_get_hashid(const EVP_MD *md);
 int tls12_get_sigid(const EVP_PKEY *pk);
 int tls12_get_hashandsig(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md);

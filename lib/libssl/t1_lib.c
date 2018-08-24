@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.143 2018/08/19 15:38:03 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.144 2018/08/24 18:10:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -815,11 +815,9 @@ ssl_check_serverhello_tlsext(SSL *s)
  * ClientHello, and other operations depend on the result, we need to handle
  * any TLS session ticket extension at the same time.
  *
- *   session_id: points at the session ID in the ClientHello. This code will
- *       read past the end of this in order to parse out the session ticket
- *       extension, if any.
- *   len: the length of the session ID.
- *   limit: a pointer to the first byte after the ClientHello.
+ *   session_id: points at the session ID in the ClientHello.
+ *   session_id_len: the length of the session ID.
+ *   ext_block: a CBS for the ClientHello extensions block.
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
@@ -845,55 +843,34 @@ ssl_check_serverhello_tlsext(SSL *s)
  *   Otherwise, s->internal->tlsext_ticket_expected is set to 0.
  */
 int
-tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
-    const unsigned char *limit, SSL_SESSION **ret)
+tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
+    CBS *ext_block, SSL_SESSION **ret)
 {
-	/* Point after session ID in client hello */
-	CBS session_id, cookie, cipher_list, compress_algo, extensions;
+	CBS extensions;
 
-	*ret = NULL;
 	s->internal->tlsext_ticket_expected = 0;
+	*ret = NULL;
 
-	/* If tickets disabled behave as if no ticket present
-	 * to permit stateful resumption.
+	/*
+	 * If tickets disabled behave as if no ticket present to permit stateful
+	 * resumption.
 	 */
 	if (SSL_get_options(s) & SSL_OP_NO_TICKET)
 		return 0;
-	if (!limit)
+
+	/*
+	 * An empty extensions block is valid, but obviously does not contain
+	 * a session ticket.
+	 */
+	if (CBS_len(ext_block) == 0)
 		return 0;
 
-	if (limit < session)
-		return -1;
-
-	CBS_init(&session_id, session, limit - session);
-
-	/* Skip past the session id */
-	if (!CBS_skip(&session_id, session_len))
-		return -1;
-
-	/* Skip past DTLS cookie */
-	if (SSL_IS_DTLS(s)) {
-		if (!CBS_get_u8_length_prefixed(&session_id, &cookie))
-			return -1;
-	}
-
-	/* Skip past cipher list */
-	if (!CBS_get_u16_length_prefixed(&session_id, &cipher_list))
-		return -1;
-
-	/* Skip past compression algorithm list */
-	if (!CBS_get_u8_length_prefixed(&session_id, &compress_algo))
-		return -1;
-
-	/* Now at start of extensions */
-	if (CBS_len(&session_id) == 0)
-		return 0;
-	if (!CBS_get_u16_length_prefixed(&session_id, &extensions))
+	if (!CBS_get_u16_length_prefixed(ext_block, &extensions))
 		return -1;
 
 	while (CBS_len(&extensions) > 0) {
-		CBS ext_data;
 		uint16_t ext_type;
+		CBS ext_data;
 
 		if (!CBS_get_u16(&extensions, &ext_type) ||
 		    !CBS_get_u16_length_prefixed(&extensions, &ext_data))
@@ -907,7 +884,7 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 				s->internal->tlsext_ticket_expected = 1;
 				return 1;
 			}
-			if (s->internal->tls_session_secret_cb) {
+			if (s->internal->tls_session_secret_cb != NULL) {
 				/* Indicate that the ticket couldn't be
 				 * decrypted rather than generating the session
 				 * from ticket now, trigger abbreviated
@@ -917,7 +894,7 @@ tls1_process_ticket(SSL *s, const unsigned char *session, int session_len,
 			}
 
 			r = tls_decrypt_ticket(s, CBS_data(&ext_data),
-			    CBS_len(&ext_data), session, session_len, ret);
+			    CBS_len(&ext_data), session_id, session_id_len, ret);
 
 			switch (r) {
 			case 2: /* ticket couldn't be decrypted */

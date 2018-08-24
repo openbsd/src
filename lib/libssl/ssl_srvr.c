@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.44 2018/08/24 17:44:22 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.45 2018/08/24 18:10:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -818,7 +818,6 @@ ssl3_get_client_hello(SSL *s)
 	unsigned long alg_k;
 	const SSL_METHOD *method;
 	uint16_t shared_version;
-	unsigned char *end;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -841,8 +840,6 @@ ssl3_get_client_hello(SSL *s)
 
 	if (n < 0)
 		goto err;
-
-	end = (unsigned char *)s->internal->init_msg + n;
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
@@ -928,10 +925,12 @@ ssl3_get_client_hello(SSL *s)
 		if (!ssl_get_new_session(s, 1))
 			goto err;
 	} else {
-		/* XXX - pass CBS through instead... */
-		i = ssl_get_prev_session(s,
-		    (unsigned char *)CBS_data(&session_id),
-		    CBS_len(&session_id), end);
+		CBS ext_block;
+
+		CBS_dup(&cbs, &ext_block);
+
+		i = ssl_get_prev_session(s, CBS_data(&session_id),
+		    CBS_len(&session_id), &ext_block);
 		if (i == 1) { /* previous session */
 			s->internal->hit = 1;
 		} else if (i == -1)
