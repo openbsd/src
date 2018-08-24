@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2018/08/13 06:36:29 anton Exp $
+#	$OpenBSD: Makefile,v 1.23 2018/08/24 12:46:39 visa Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
@@ -38,9 +38,12 @@ kq-regress-1: ${PROG}
 	./${PROG} -R1
 kq-regress-2: ${PROG}
 	./${PROG} -R2
+kq-regress-3: ${PROG}
+	./${PROG} -R3
 
 REGRESS_TARGETS=kq-pipe kq-fork kq-process kq-random kq-pty kq-signal \
-	kq-fdpass kq-flock kq-timer kq-invalid-timer kq-regress-1 kq-regress-2
+	kq-fdpass kq-flock kq-timer kq-invalid-timer kq-regress-1 \
+	kq-regress-2 kq-regress-3
 # kq-tun broke at some point, apparently from a change in tun routing
 REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 .PHONY: ${REGRESS_TARGETS}
