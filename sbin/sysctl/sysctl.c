@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.233 2018/07/16 17:05:15 jasper Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.234 2018/08/24 06:43:22 jsg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -671,6 +671,10 @@ parse(char *string, int flags)
 #ifdef CPU_CONSDEV
 		if (mib[1] == CPU_CONSDEV)
 			special |= CHRDEV;
+#endif
+#ifdef CPU_CPUID
+		if (mib[1] == CPU_CPUID)
+			special |= HEX;
 #endif
 #ifdef CPU_CPUFEATURE
 		if (mib[1] == CPU_CPUFEATURE)
