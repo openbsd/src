@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.17 2018/08/24 17:34:46 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.18 2018/08/24 17:35:52 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -761,7 +761,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	// AES, DSA, ECDH
+	// AES, ECDH, RSA-PSS
 	tests := []struct {
 		name    string
 		pattern string
