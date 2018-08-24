@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_sign.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pem_sign.c,v 1.14 2018/08/24 19:51:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,17 +64,17 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-void
+int
 PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 {
-	EVP_DigestInit_ex(ctx, type, NULL);
+	return EVP_DigestInit_ex(ctx, type, NULL);
 }
 
-void
+int
 PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data,
     unsigned int count)
 {
-	EVP_DigestUpdate(ctx, data, count);
+	return EVP_DigestUpdate(ctx, data, count);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.18 2018/05/13 10:47:54 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.19 2018/08/24 19:51:31 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -421,8 +421,8 @@ void	PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
 int	PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 	    unsigned char *out, int *outl, EVP_PKEY *priv);
 
-void    PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
-void    PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *d, unsigned int cnt);
+int    PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
+int    PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *d, unsigned int cnt);
 int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 	    unsigned int *siglen, EVP_PKEY *pkey);
 
