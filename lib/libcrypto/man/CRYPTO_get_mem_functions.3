@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.6 2018/08/24 19:17:38 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: August 24 2018 $
 .Dt CRYPTO_GET_MEM_FUNCTIONS 3
 .Os
 .Sh NAME
@@ -43,15 +43,15 @@
 .Fo CRYPTO_mem_ctrl
 .Fa "int mode"
 .Fc
-.Ft void
+.Ft int
 .Fo CRYPTO_mem_leaks
 .Fa "BIO *b"
 .Fc
-.Ft void
+.Ft int
 .Fo CRYPTO_mem_leaks_fp
 .Fa "FILE *fp"
 .Fc
-.Ft typedef void *
+.Ft typedef int *
 .Fo CRYPTO_MEM_LEAK_CB
 .Fa "unsigned long"
 .Fa "const char *"
@@ -59,7 +59,7 @@
 .Fa int
 .Fa "void *"
 .Fc
-.Ft void
+.Ft int
 .Fo CRYPTO_mem_leaks_cb
 .Fa "CRYPTO_MEM_LEAK_CB *cb"
 .Fc
@@ -90,6 +90,12 @@ always returns 0.
 .Fn CRYPTO_mem_ctrl
 always returns
 .Dv CRYPTO_MEM_CHECK_OFF .
+.Pp
+.Fn CRYPTO_mem_leaks ,
+.Fn CRYPTO_mem_leaks_fp ,
+and
+.Fn CRYPTO_mem_leaks_cb
+always return -1.
 .Sh HISTORY
 .Fn CRYPTO_mem_ctrl ,
 .Fn CRYPTO_mem_leaks ,
