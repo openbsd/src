@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.13 2017/06/14 10:25:40 mikeb Exp $
+#	$OpenBSD: files.pv,v 1.14 2018/08/24 16:07:01 visa Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -48,7 +48,7 @@ file	dev/pv/hvs.c			hvs
 # VirtIO
 file	dev/pv/virtio.c			virtio
 
-device	vio
+device	vio: ether, ifnet, ifmedia
 attach	vio at virtio
 file	dev/pv/if_vio.c			vio
 
