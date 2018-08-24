@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.83 2018/08/23 14:16:11 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.84 2018/08/24 22:56:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2018 $
+.Dd $Mdocdate: August 24 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1200,7 +1200,7 @@ While evaluating the
 the unit suffixes described below
 .Sx Scaling Widths
 are ignored.
-.It Ic \&it Ar expression macro
+.It Ic \&itc Ar expression macro
 Set an input line trap, not counting lines ending with \ec.
 Currently unsupported.
 .It Ic \&IX Ar class keystring
@@ -1713,8 +1713,12 @@ This is a Heirloom extension and currently ignored.
 Set a page location trap.
 Currently unsupported.
 .It Ic \&while Ar condition body
-Repeated execution while a condition is true.
-Currently unsupported.
+Repeated execution while a
+.Ar condition
+is true, with syntax similar to
+.Ic \&if .
+Currently implemented with two restrictions: cannot nest,
+and each loop must start and end in the same scope.
 .It Ic \&write Oo \(dq Oc Ns Ar string
 Write to an open file.
 Ignored because insecure.
@@ -2147,10 +2151,6 @@ macro control character does not suppress output line breaks.
 .It
 Diversions are not implemented,
 and support for traps is very incomplete.
-.It
-While recursion is supported,
-.Sx \&while
-loops are not.
 .El
 .Pp
 The special semantics of the

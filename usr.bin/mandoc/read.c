@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.170 2018/08/23 19:32:03 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.171 2018/08/24 22:56:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,6 +47,7 @@ struct	mparse {
 	const char	 *file; /* filename of current input file */
 	struct buf	 *primary; /* buffer currently being parsed */
 	struct buf	 *secondary; /* copy of top level input */
+	struct buf	 *loop; /* open .while request line */
 	const char	 *os_s; /* default operating system */
 	mandocmsg	  mmsg; /* warning/error message handler */
 	enum mandoclevel  file_status; /* status of current parse */
@@ -61,7 +62,7 @@ struct	mparse {
 static	void	  choose_parser(struct mparse *);
 static	void	  free_buf_list(struct buf *);
 static	void	  resize_buf(struct buf *, size_t);
-static	enum rofferr mparse_buf_r(struct mparse *, struct buf, size_t, int);
+static	int	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
 static	int	  read_whole_file(struct mparse *, const char *, int,
 				struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
@@ -264,6 +265,10 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"input too large",
 	"unsupported control character",
 	"unsupported roff request",
+	"nested .while loops",
+	"end of scope with open .while loop",
+	"end of .while loop in inner scope",
+	"cannot continue this .while loop",
 	"eqn delim option in tbl",
 	"unsupported tbl layout modifier",
 	"ignoring macro in table",
@@ -354,32 +359,31 @@ choose_parser(struct mparse *curp)
  * macros, inline equations, and input line traps)
  * and indirectly (for .so file inclusion).
  */
-static enum rofferr
+static int
 mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 {
 	struct buf	 ln;
-	struct buf	*firstln, *lastln, *thisln;
+	struct buf	*firstln, *lastln, *thisln, *loop;
 	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
-	enum rofferr	 line_result, result;
+	int		 line_result, result;
 	int		 of;
 	int		 lnn; /* line number in the real file */
 	int		 fd;
+	int		 inloop; /* Saw .while on this level. */
 	unsigned char	 c;
 
 	ln.sz = 256;
 	ln.buf = mandoc_malloc(ln.sz);
 	ln.next = NULL;
-	firstln = NULL;
+	firstln = loop = NULL;
 	lnn = curp->line;
 	pos = 0;
+	inloop = 0;
 	result = ROFF_CONT;
 
-	while (i < blk.sz) {
-		if (0 == pos && '\0' == blk.buf[i])
-			break;
-
+	while (i < blk.sz && (blk.buf[i] != '\0' || pos != 0)) {
 		if (start) {
 			curp->line = lnn;
 			curp->reparse_count = 0;
@@ -488,41 +492,95 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 rerun:
 		line_result = roff_parseln(curp->roff, curp->line, &ln, &of);
 
-		switch (line_result) {
+		/* Process options. */
+
+		if (line_result & ROFF_APPEND)
+			assert(line_result == (ROFF_IGN | ROFF_APPEND));
+
+		if (line_result & ROFF_USERCALL)
+			assert((line_result & ROFF_MASK) == ROFF_REPARSE);
+
+		if (line_result & ROFF_USERRET) {
+			assert(line_result == (ROFF_IGN | ROFF_USERRET));
+			if (start == 0) {
+				/* Return from the current macro. */
+				result = ROFF_USERRET;
+				goto out;
+			}
+		}
+
+		switch (line_result & ROFF_LOOPMASK) {
+		case ROFF_IGN:
+			break;
+		case ROFF_WHILE:
+			if (curp->loop != NULL) {
+				if (loop == curp->loop)
+					break;
+				mandoc_msg(MANDOCERR_WHILE_NEST,
+				    curp, curp->line, pos, NULL);
+			}
+			curp->loop = thisln;
+			loop = NULL;
+			inloop = 1;
+			break;
+		case ROFF_LOOPCONT:
+		case ROFF_LOOPEXIT:
+			if (curp->loop == NULL) {
+				mandoc_msg(MANDOCERR_WHILE_FAIL,
+				    curp, curp->line, pos, NULL);
+				break;
+			}
+			if (inloop == 0) {
+				mandoc_msg(MANDOCERR_WHILE_INTO,
+				    curp, curp->line, pos, NULL);
+				curp->loop = loop = NULL;
+				break;
+			}
+			if (line_result & ROFF_LOOPCONT)
+				loop = curp->loop;
+			else {
+				curp->loop = loop = NULL;
+				inloop = 0;
+			}
+			break;
+		default:
+			abort();
+		}
+
+		/* Process the main instruction from the roff parser. */
+
+		switch (line_result & ROFF_MASK) {
+		case ROFF_IGN:
+			break;
+		case ROFF_CONT:
+			if (curp->man->macroset == MACROSET_NONE)
+				choose_parser(curp);
+			if ((curp->man->macroset == MACROSET_MDOC ?
+			     mdoc_parseln(curp->man, curp->line, ln.buf, of) :
+			     man_parseln(curp->man, curp->line, ln.buf, of)
+			    ) == 2)
+				goto out;
+			break;
+		case ROFF_RERUN:
+			goto rerun;
 		case ROFF_REPARSE:
-		case ROFF_USERCALL:
 			if (++curp->reparse_count > REPARSE_LIMIT) {
+				/* Abort and return to the top level. */
 				result = ROFF_IGN;
 				mandoc_msg(MANDOCERR_ROFFLOOP, curp,
 				    curp->line, pos, NULL);
-			} else {
-				result = mparse_buf_r(curp, ln, of, 0);
-				if (line_result == ROFF_USERCALL) {
-					if (result == ROFF_USERRET)
-						result = ROFF_CONT;
-					roff_userret(curp->roff);
-				}
-				if (start || result == ROFF_CONT) {
-					pos = 0;
-					continue;
-				}
+				goto out;
 			}
-			goto out;
-		case ROFF_USERRET:
-			if (start) {
-				pos = 0;
-				continue;
+			result = mparse_buf_r(curp, ln, of, 0);
+			if (line_result & ROFF_USERCALL) {
+				roff_userret(curp->roff);
+				/* Continue normally. */
+				if (result & ROFF_USERRET)
+					result = ROFF_CONT;
 			}
-			result = ROFF_USERRET;
-			goto out;
-		case ROFF_APPEND:
-			pos = strlen(ln.buf);
-			continue;
-		case ROFF_RERUN:
-			goto rerun;
-		case ROFF_IGN:
-			pos = 0;
-			continue;
+			if (start == 0 && result != ROFF_CONT)
+				goto out;
+			break;
 		case ROFF_SO:
 			if ( ! (curp->options & MPARSE_SO) &&
 			    (i >= blk.sz || blk.buf[i] == '\0')) {
@@ -547,30 +605,36 @@ rerun:
 				of = 0;
 				mparse_buf_r(curp, ln, of, 0);
 			}
-			pos = 0;
-			continue;
+			break;
 		default:
-			break;
+			abort();
 		}
-
-		if (curp->man->macroset == MACROSET_NONE)
-			choose_parser(curp);
-
-		if ((curp->man->macroset == MACROSET_MDOC ?
-		    mdoc_parseln(curp->man, curp->line, ln.buf, of) :
-		    man_parseln(curp->man, curp->line, ln.buf, of)) == 2)
-				break;
-
-		/* Temporary buffers typically are not full. */
-
-		if (0 == start && '\0' == blk.buf[i])
-			break;
 
 		/* Start the next input line. */
 
-		pos = 0;
+		if (loop != NULL &&
+		    (line_result & ROFF_LOOPMASK) == ROFF_IGN)
+			loop = loop->next;
+
+		if (loop != NULL) {
+			if ((line_result & ROFF_APPEND) == 0)
+				*ln.buf = '\0';
+			if (ln.sz < loop->sz)
+				resize_buf(&ln, loop->sz);
+			(void)strlcat(ln.buf, loop->buf, ln.sz);
+			of = 0;
+			goto rerun;
+		}
+
+		pos = (line_result & ROFF_APPEND) ? strlen(ln.buf) : 0;
 	}
 out:
+	if (inloop) {
+		if (result != ROFF_USERRET)
+			mandoc_msg(MANDOCERR_WHILE_OUTOF, curp,
+			    curp->line, pos, NULL);
+		curp->loop = NULL;
+	}
 	free(ln.buf);
 	if (firstln != curp->secondary)
 		free_buf_list(firstln);

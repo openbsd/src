@@ -1,0 +1,2 @@
+mandoc: into.in:17:5: UNSUPP: end of .while loop in inner scope
+mandoc: into.in:20:1: UNSUPP: end of scope with open .while loop

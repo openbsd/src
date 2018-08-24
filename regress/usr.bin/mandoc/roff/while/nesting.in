@@ -1,0 +1,19 @@
+.\" $OpenBSD: nesting.in,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+.Dd $Mdocdate: August 24 2018 $
+.Dt WHILE-NESTING 1
+.Os
+.Sh NAME
+.Nm while-nesting
+.Nd nested while requests
+.Sh DESCRIPTION
+initial text
+.nr c1 3
+.while \n(c1 \{\
+.  nr c2 3
+.  while \n(c2 \{\
+.    nop \n(c1\n(c2
+.    nr c2 -1
+.  \}
+.  nr c1 -1
+.\}
+final text
