@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.67 2018/01/31 15:57:44 cheloha Exp $	*/
+/*	$OpenBSD: init.c,v 1.68 2018/08/24 18:36:56 cheloha Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@ void stall(char *, ...);
 void warning(char *, ...);
 void emergency(char *, ...);
 void disaster(int);
-void badsys(int);
 
 typedef enum {
 	invalid_state,
@@ -261,9 +260,8 @@ main(int argc, char *argv[])
 	 * We catch or block signals rather than ignore them,
 	 * so that they get reset on exec.
 	 */
-	handle(badsys, SIGSYS, 0);
 	handle(disaster, SIGABRT, SIGFPE, SIGILL, SIGSEGV,
-	    SIGBUS, SIGXCPU, SIGXFSZ, 0);
+	    SIGBUS, SIGSYS, SIGXCPU, SIGXFSZ, 0);
 	handle(transition_handler, SIGHUP, SIGINT, SIGTERM, SIGTSTP,
             SIGUSR1, SIGUSR2, 0);
 	handle(alrm_handler, SIGALRM, 0);
@@ -377,22 +375,6 @@ emergency(char *message, ...)
 	va_start(ap, message);
 	vsyslog_r(LOG_EMERG, &sdata, message, ap);
 	va_end(ap);
-}
-
-/*
- * Catch a SIGSYS signal.
- *
- * These may arise if a system does not support sysctl.
- * We tolerate up to 25 of these, then throw in the towel.
- */
-void
-badsys(int sig)
-{
-	static int badcount = 0;
-
-	if (badcount++ < 25)
-		return;
-	disaster(sig);
 }
 
 /*
