@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.93 2018/04/10 22:07:30 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.94 2018/08/24 20:12:24 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: April 10 2018 $
+.Dd $Mdocdate: August 24 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2326,13 +2326,10 @@ Print certificate details in full rather than just subject and issuer names.
 .Sh PKCS8
 .nr nS 1
 .Nm "openssl pkcs8"
-.Op Fl embed
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
 .Op Fl nocrypt
 .Op Fl noiter
-.Op Fl nooct
-.Op Fl nsdb
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem
 .Op Fl passin Ar arg
@@ -2354,13 +2351,6 @@ are more secure.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl embed
-Generate DSA keys in a broken format.
-The DSA parameters are embedded inside the PrivateKey structure.
-In this form the OCTET STRING contains an ASN.1 SEQUENCE consisting of
-two structures:
-a SEQUENCE containing the parameters and an ASN.1 INTEGER containing
-the private key.
 .It Fl in Ar file
 The input file to read from,
 or standard input if not specified.
@@ -2376,16 +2366,6 @@ Use an iteration count of 1.
 See the
 .Sx PKCS12
 section below for a detailed explanation of this option.
-.It Fl nooct
-Generate RSA private keys in a broken format that some software uses.
-Specifically the private key should be enclosed in an OCTET STRING,
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
-.It Fl nsdb
-Generate DSA keys in a broken format compatible with Netscape
-private key databases.
-The PrivateKey contains a SEQUENCE
-consisting of the public and private keys, respectively.
 .It Fl out Ar file
 The output file to write to,
 or standard output if none is specified.
