@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.28 2016/09/11 14:21:18 tb Exp $	*/
+/*	$OpenBSD: snake.c,v 1.29 2018/08/24 11:14:49 mestre Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -140,9 +140,6 @@ main(int argc, char *argv[])
 	struct	sigaction sa;
 	int	ch, i;
 
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 #ifdef LOGGING
 	const char	*home;
 
@@ -182,6 +179,10 @@ main(int argc, char *argv[])
 	readscores(1);
 	penalty = loot = 0;
 	initscr();
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
+
 #ifdef KEY_LEFT
 	keypad(stdscr, TRUE);
 #endif

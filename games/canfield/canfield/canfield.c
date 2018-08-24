@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.27 2016/09/11 14:21:17 tb Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.28 2018/08/24 11:14:49 mestre Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1732,9 +1732,6 @@ askquit(int dummy)
 int
 main(int argc, char *argv[])
 {
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
-		err(1, "pledge");
-
 	signal(SIGINT, askquit);
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
@@ -1742,6 +1739,9 @@ main(int argc, char *argv[])
 	raw();
 	noecho();
 	initall();
+
+	if (pledge("stdio tty", NULL) == -1)
+		err(1, "pledge");
 
 	instruct();
 	makeboard();
