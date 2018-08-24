@@ -1,4 +1,4 @@
-/* $OpenBSD: mem_dbg.c,v 1.22 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: mem_dbg.c,v 1.23 2018/08/24 19:16:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,21 +181,21 @@ CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 	abort();
 }
 
-void
+int
 CRYPTO_mem_leaks(BIO *b)
 {
-	return;
+	return -1;
 }
 
-void
+int
 CRYPTO_mem_leaks_fp(FILE *fp)
 {
-	return;
+	return -1;
 }
 
 
-void
+int
 CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 {
-	return;
+	return -1;
 }

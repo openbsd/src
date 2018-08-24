@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.46 2018/05/13 13:48:08 jsing Exp $ */
+/* $OpenBSD: crypto.h,v 1.47 2018/08/24 19:16:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -495,11 +495,11 @@ long CRYPTO_dbg_get_options(void)
 	__attribute__ ((deprecated));
 
 
-void CRYPTO_mem_leaks_fp(FILE *);
-void CRYPTO_mem_leaks(struct bio_st *bio);
+int CRYPTO_mem_leaks_fp(FILE *);
+int CRYPTO_mem_leaks(struct bio_st *bio);
 /* unsigned long order, char *file, int line, int num_bytes, char *addr */
-typedef void *CRYPTO_MEM_LEAK_CB(unsigned long, const char *, int, int, void *);
-void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
+typedef int *CRYPTO_MEM_LEAK_CB(unsigned long, const char *, int, int, void *);
+int CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
 /* die if we have to */
 void OpenSSLDie(const char *file, int line, const char *assertion);
