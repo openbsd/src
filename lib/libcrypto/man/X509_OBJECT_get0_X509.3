@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.7 2018/04/02 01:22:03 schwarze Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.8 2018/08/24 19:23:07 tb Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2018 $
+.Dd $Mdocdate: August 24 2018 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Fo X509_OBJECT_get_type
 .Fa "const X509_OBJECT *obj"
 .Fc
-.Ft void
+.Ft int
 .Fo X509_OBJECT_up_ref_count
 .Fa "X509_OBJECT *obj"
 .Fc
@@ -160,6 +160,9 @@ contains a certificate,
 .Dv X509_LU_CRL
 if it contains a certificate revocation list,
 or 0 if an error occurs.
+.Pp
+.Fn X509_OBJECT_up_ref_count
+returns 1 on success and 0 on failure.
 .Pp
 .Fn X509_OBJECT_get0_X509
 returns an internal pointer to the certificate contained in
