@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.23 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.24 2018/08/24 20:17:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -238,7 +238,7 @@ eckey_priv_decode(EVP_PKEY * pkey, PKCS8_PRIV_KEY_INFO * p8)
 	const void *pval;
 	int ptype, pklen;
 	EC_KEY *eckey = NULL;
-	X509_ALGOR *palg;
+	const X509_ALGOR *palg;
 
 	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
 		return 0;

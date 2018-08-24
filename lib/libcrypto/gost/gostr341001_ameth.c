@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.13 2018/06/10 14:39:49 jsing Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.14 2018/08/24 20:17:33 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -400,8 +400,8 @@ priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 	int priv_len = 0;
 	BIGNUM *pk_num = NULL;
 	int ret = 0;
-	X509_ALGOR *palg = NULL;
-	ASN1_OBJECT *palg_obj = NULL;
+	const X509_ALGOR *palg = NULL;
+	const ASN1_OBJECT *palg_obj = NULL;
 	ASN1_INTEGER *priv_key = NULL;
 	GOST_KEY *ec;
 	int ptype = V_ASN1_UNDEF;

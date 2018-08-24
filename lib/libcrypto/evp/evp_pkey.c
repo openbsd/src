@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.21 2018/08/24 20:07:41 tb Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.22 2018/08/24 20:17:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,7 +70,7 @@ EVP_PKEY *
 EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 {
 	EVP_PKEY *pkey = NULL;
-	ASN1_OBJECT *algoid;
+	const ASN1_OBJECT *algoid;
 	char obj_tmp[80];
 
 	if (!PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8))

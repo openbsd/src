@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.72 2018/08/24 20:07:42 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.73 2018/08/24 20:17:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1290,13 +1290,10 @@ extern const ASN1_ITEM PKCS8_PRIV_KEY_INFO_it;
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
 
-int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
-			int version, int ptype, void *pval,
-				unsigned char *penc, int penclen);
-int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
-		const unsigned char **pk, int *ppklen,
-		X509_ALGOR **pa,
-		PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj, int version,
+    int ptype, void *pval, unsigned char *penc, int penclen);
+int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg, const unsigned char **pk,
+    int *ppklen, const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
 
 const STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);
 int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
