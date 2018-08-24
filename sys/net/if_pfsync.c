@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.257 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.258 2018/08/24 12:29:33 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1464,13 +1464,13 @@ pfsync_drop(struct pfsync_softc *sc)
 		if (TAILQ_EMPTY(&sc->sc_qs[q]))
 			continue;
 
-		TAILQ_FOREACH(st, &sc->sc_qs[q], sync_list) {
+		while ((st = TAILQ_FIRST(&sc->sc_qs[q])) != NULL) {
+			TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
 #ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
 #endif
 			st->sync_state = PFSYNC_S_NONE;
 		}
-		TAILQ_INIT(&sc->sc_qs[q]);
 	}
 
 	while ((ur = TAILQ_FIRST(&sc->sc_upd_req_list)) != NULL) {
@@ -1480,11 +1480,9 @@ pfsync_drop(struct pfsync_softc *sc)
 
 	sc->sc_plus = NULL;
 
-	if (!TAILQ_EMPTY(&sc->sc_tdb_q)) {
-		TAILQ_FOREACH(t, &sc->sc_tdb_q, tdb_sync_entry)
-			CLR(t->tdb_flags, TDBF_PFSYNC);
-
-		TAILQ_INIT(&sc->sc_tdb_q);
+	while ((t = TAILQ_FIRST(&sc->sc_tdb_q)) != NULL) {
+		TAILQ_REMOVE(&sc->sc_tdb_q, t, tdb_sync_entry);
+		CLR(t->tdb_flags, TDBF_PFSYNC);
 	}
 
 	sc->sc_len = PFSYNC_MINPKT;
@@ -1595,14 +1593,13 @@ pfsync_sendout(void)
 		offset += sizeof(*subh);
 
 		count = 0;
-		TAILQ_FOREACH(t, &sc->sc_tdb_q, tdb_sync_entry) {
+		while ((t = TAILQ_FIRST(&sc->sc_tdb_q)) != NULL) {
+			TAILQ_REMOVE(&sc->sc_tdb_q, t, tdb_sync_entry);
 			pfsync_out_tdb(t, m->m_data + offset);
 			offset += sizeof(struct pfsync_tdb);
 			CLR(t->tdb_flags, TDBF_PFSYNC);
-
 			count++;
 		}
-		TAILQ_INIT(&sc->sc_tdb_q);
 
 		bzero(subh, sizeof(*subh));
 		subh->action = PFSYNC_ACT_TDB;
@@ -1619,7 +1616,8 @@ pfsync_sendout(void)
 		offset += sizeof(*subh);
 
 		count = 0;
-		TAILQ_FOREACH(st, &sc->sc_qs[q], sync_list) {
+		while ((st = TAILQ_FIRST(&sc->sc_qs[q])) != NULL) {
+			TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
 #ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
 #endif
@@ -1629,7 +1627,6 @@ pfsync_sendout(void)
 			st->sync_state = PFSYNC_S_NONE;
 			count++;
 		}
-		TAILQ_INIT(&sc->sc_qs[q]);
 
 		bzero(subh, sizeof(*subh));
 		subh->action = pfsync_qs[q].action;
