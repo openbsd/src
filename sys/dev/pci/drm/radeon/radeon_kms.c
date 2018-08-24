@@ -485,6 +485,26 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		printf(": can't get frambuffer info\n");
 		return;
 	}
+#if !defined(__sparc64__)
+	if (rdev->fb_aper_offset == 0) {
+		bus_size_t start, end;
+		bus_addr_t base;
+
+		start = max(PCI_MEM_START, pa->pa_memex->ex_start);
+		end = min(PCI_MEM_END, pa->pa_memex->ex_end);
+		if (pa->pa_memex == NULL ||
+		    extent_alloc_subregion(pa->pa_memex, start, end,
+		    rdev->fb_aper_size, rdev->fb_aper_size, 0, 0, 0, &base)) {
+			printf(": can't reserve framebuffer space\n");
+			return;
+		}
+		pci_conf_write(pa->pa_pc, pa->pa_tag, RADEON_PCI_MEM, base);
+		if (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    RADEON_PCI_MEM + 4, (uint64_t)base >> 32);
+		rdev->fb_aper_offset = base;
+	}
+#endif
 
 	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END ; i+= 4) {
 		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
