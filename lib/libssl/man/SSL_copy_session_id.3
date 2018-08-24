@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_copy_session_id.3,v 1.5 2018/08/24 20:31:32 tb Exp $
+.\"	$OpenBSD: SSL_copy_session_id.3,v 1.6 2018/08/24 21:29:51 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -56,7 +56,7 @@ This function is used internally by
 and by
 .Xr BIO_ssl_copy_session_id 3 .
 .Sh RETURN VALUES
-.Fn
+.Fn SSL_copy_session_id
 returns 1 on success and 0 on error.
 .Sh SEE ALSO
 .Xr BIO_ssl_copy_session_id 3 ,
@@ -72,7 +72,7 @@ appeared in SSLeay 0.4 or earlier and has been available since
 .Ox 2.4 .
 .Sh BUGS
 Failures of
-.Xr CRYPTO_add 3 ,
+.Xr CRYPTO_add 3
 are silently ignored and may leave
 .Fa to
 in an invalid or inconsistent state.
