@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.626 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.627 2018/08/24 06:25:40 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1742,8 +1742,6 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_model = model;
 		step = ci->ci_signature & 15;
 #ifdef CPUDEBUG
-		printf("%s: family %x model %x step %x\n", cpu_device, family,
-		    model, step);
 		printf("%s: cpuid level %d cache eax %x ebx %x ecx %x edx %x\n",
 		    cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
 		    cpu_cache_ecx, cpu_cache_edx);
@@ -1946,6 +1944,11 @@ identifycpu(struct cpu_info *ci)
 			printf(" %d MHz", cpuspeed);
 		}
 	}
+
+	if (cpuid_level != -1)
+		printf(", %02x-%02x-%02x", ci->ci_family, ci->ci_model,
+		    step);
+
 	printf("\n");
 
 	if (ci->ci_feature_flags) {
