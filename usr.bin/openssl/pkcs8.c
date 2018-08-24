@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.12 2018/08/24 20:09:56 tb Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.13 2018/08/24 22:56:45 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -113,8 +113,8 @@ static struct option pkcs8_options[] = {
 	},
 	{
 		.name = "inform",
-		.argname = "format",
-		.desc = "Input format (DER or PEM (default))",
+		.argname = "der | pem",
+		.desc = "Input format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
 		.opt.value = &pkcs8_config.informat,
 	},
@@ -140,8 +140,8 @@ static struct option pkcs8_options[] = {
 	},
 	{
 		.name = "outform",
-		.argname = "format",
-		.desc = "Output format (DER or PEM (default))",
+		.argname = "der | pem",
+		.desc = "Output format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
 		.opt.value = &pkcs8_config.outformat,
 	},
@@ -186,11 +186,10 @@ static struct option pkcs8_options[] = {
 static void
 pkcs8_usage()
 {
-	fprintf(stderr, "usage: pkcs8 [-embed] [-in file] "
-	    "[-inform fmt] [-nocrypt]\n"
-	    "    [-noiter] [-nooct] [-nsdb] [-out file] [-outform fmt] "
-	    "[-passin src]\n"
-	    "    [-passout src] [-topk8] [-v1 alg] [-v2 alg]\n\n");
+	fprintf(stderr, "usage: pkcs8 [-in file] [inform der | pem] "
+	    "[-nocrypt] [-noiter]\n"
+	    "    [-out file] [-outform der | pem] [-passin arg]\n"
+	    "    [-passout arg] [-topk8] [-v1 alg] [-v2 alg]\n\n");
 	options_usage(pkcs8_options);
 }
 
