@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.33 2018/05/18 19:24:08 tb Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.34 2018/08/24 19:59:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,6 +172,12 @@ X509_get_subject_name(const X509 *a)
 
 ASN1_INTEGER *
 X509_get_serialNumber(X509 *a)
+{
+	return (a->cert_info->serialNumber);
+}
+
+const ASN1_INTEGER *
+X509_get0_serialNumber(const X509 *a)
 {
 	return (a->cert_info->serialNumber);
 }
