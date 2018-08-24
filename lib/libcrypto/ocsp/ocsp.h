@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.h,v 1.15 2018/05/13 10:42:03 tb Exp $ */
+/* $OpenBSD: ocsp.h,v 1.16 2018/08/24 20:03:21 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -392,7 +392,8 @@ int	OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
 int	OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx, const char *name,
 	    const char *value);
 
-OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
+OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
+	    const X509 *issuer);
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst, const X509_NAME *issuerName,
 	    const ASN1_BIT_STRING *issuerKey, const ASN1_INTEGER *serialNumber);
