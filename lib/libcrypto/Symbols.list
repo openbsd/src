@@ -1350,7 +1350,6 @@ EVP_PBE_cleanup
 EVP_PBE_find
 EVP_PKCS82PKEY
 EVP_PKEY2PKCS8
-EVP_PKEY2PKCS8_broken
 EVP_PKEY_CTX_ctrl
 EVP_PKEY_CTX_ctrl_str
 EVP_PKEY_CTX_dup
@@ -2193,9 +2192,10 @@ PKCS8_PRIV_KEY_INFO_new
 PKCS8_add_keyusage
 PKCS8_decrypt
 PKCS8_encrypt
+PKCS8_pkey_add1_attr_by_NID
 PKCS8_pkey_get0
+PKCS8_pkey_get0_attrs
 PKCS8_pkey_set0
-PKCS8_set_broken
 PKEY_USAGE_PERIOD_free
 PKEY_USAGE_PERIOD_it
 PKEY_USAGE_PERIOD_new

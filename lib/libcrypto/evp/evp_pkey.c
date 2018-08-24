@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.20 2018/05/13 06:48:00 tb Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.21 2018/08/24 20:07:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -105,16 +105,10 @@ error:
 	return NULL;
 }
 
-PKCS8_PRIV_KEY_INFO *
-EVP_PKEY2PKCS8(EVP_PKEY *pkey)
-{
-	return EVP_PKEY2PKCS8_broken(pkey, PKCS8_OK);
-}
-
 /* Turn a private key into a PKCS8 structure */
 
 PKCS8_PRIV_KEY_INFO *
-EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
+EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 
@@ -122,7 +116,6 @@ EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	p8->broken = broken;
 
 	if (pkey->ameth) {
 		if (pkey->ameth->priv_encode) {
@@ -143,27 +136,6 @@ EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 error:
 	PKCS8_PRIV_KEY_INFO_free(p8);
 	return NULL;
-}
-
-PKCS8_PRIV_KEY_INFO *
-PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken)
-{
-	switch (broken) {
-	case PKCS8_OK:
-		p8->broken = PKCS8_OK;
-		return p8;
-		break;
-
-	case PKCS8_NO_OCTET:
-		p8->broken = PKCS8_NO_OCTET;
-		p8->pkey->type = V_ASN1_SEQUENCE;
-		return p8;
-		break;
-
-	default:
-		EVPerror(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE);
-		return NULL;
-	}
 }
 
 /* EVP_PKEY attribute functions */

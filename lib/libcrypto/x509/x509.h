@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.71 2018/08/24 19:59:32 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.72 2018/08/24 20:07:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -561,19 +561,12 @@ X509_ALGOR *prf;
 
 /* PKCS#8 private key info structure */
 
-struct pkcs8_priv_key_info_st
-        {
-        int broken;     /* Flag for various broken formats */
-#define PKCS8_OK		0
-#define PKCS8_NO_OCTET		1
-#define PKCS8_EMBEDDED_PARAM	2
-#define PKCS8_NS_DB		3
-#define PKCS8_NEG_PRIVKEY	4
+struct pkcs8_priv_key_info_st {
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
-        ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
+        ASN1_OCTET_STRING *pkey;
         STACK_OF(X509_ATTRIBUTE) *attributes;
-        };
+};
 
 #ifdef  __cplusplus
 }
@@ -1296,8 +1289,6 @@ extern const ASN1_ITEM PKCS8_PRIV_KEY_INFO_it;
 
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken);
-PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 			int version, int ptype, void *pval,
@@ -1306,6 +1297,10 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
 		const unsigned char **pk, int *ppklen,
 		X509_ALGOR **pa,
 		PKCS8_PRIV_KEY_INFO *p8);
+
+const STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
+    const unsigned char *bytes, int len);
 
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
 					int ptype, void *pval,
