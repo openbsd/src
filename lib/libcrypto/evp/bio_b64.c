@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_b64.c,v 1.21 2018/05/02 15:51:41 tb Exp $ */
+/* $OpenBSD: bio_b64.c,v 1.22 2018/08/24 19:47:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -430,9 +430,10 @@ b64_write(BIO *b, const char *in, int inl)
 				ret += n;
 			}
 		} else {
-			EVP_EncodeUpdate(&(ctx->base64),
+			if (!EVP_EncodeUpdate(&(ctx->base64),
 			    (unsigned char *)ctx->buf, &ctx->buf_len,
-			    (unsigned char *)in, n);
+			    (unsigned char *)in, n))
+				return ((ret == 0) ? -1 : ret);
 			OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
 			OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
 			ret += n;
