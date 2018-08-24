@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.63 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.64 2018/08/24 19:35:05 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -825,14 +825,6 @@ start:
             /* XDTLS:  In a pathalogical case, the Client Hello
              *  may be fragmented--don't always expect dest_maxlen bytes */
 			if (rr->length < dest_maxlen) {
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-				/*
-				 * for normal alerts rr->length is 2, while
-				 * dest_maxlen is 7 if we were to handle this
-				 * non-existing alert...
-				 */
-				FIX ME
-#endif
 				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->length = 0;
 				goto start;
@@ -1396,23 +1388,12 @@ dtls1_dispatch_alert(SSL *s)
 	*ptr++ = s->s3->send_alert[0];
 	*ptr++ = s->s3->send_alert[1];
 
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
-		s2n(D1I(s)->handshake_read_seq, ptr);
-		l2n3(D1I(s)->r_msg_hdr.frag_off, ptr);
-	}
-#endif
-
 	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf));
 	if (i <= 0) {
 		s->s3->alert_dispatch = 1;
 		/* fprintf( stderr, "not done with alert\n" ); */
 	} else {
-		if (s->s3->send_alert[0] == SSL3_AL_FATAL
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-		|| s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-#endif
-		)
+		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
 
 		if (s->internal->msg_callback)
