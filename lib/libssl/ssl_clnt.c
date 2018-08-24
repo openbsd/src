@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.32 2018/08/19 15:38:03 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.33 2018/08/24 17:30:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -683,7 +683,7 @@ ssl3_send_client_hello(SSL *s)
 		if (!SSL_IS_DTLS(s) || D1I(s)->send_cookie == 0)
 			arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &client_hello,
+		if (!ssl3_handshake_msg_start(s, &cbb, &client_hello,
 		    SSL3_MT_CLIENT_HELLO))
 			goto err;
 
@@ -775,7 +775,7 @@ ssl3_send_client_hello(SSL *s)
 			goto err;
 		}
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_B;
@@ -2321,7 +2321,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 		}
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &kex,
+		if (!ssl3_handshake_msg_start(s, &cbb, &kex,
 		    SSL3_MT_CLIENT_KEY_EXCHANGE))
 			goto err;
 
@@ -2344,7 +2344,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 		}
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_KEY_EXCH_B;
@@ -2378,7 +2378,7 @@ ssl3_send_client_verify(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_CW_CERT_VRFY_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &cert_verify,
+		if (!ssl3_handshake_msg_start(s, &cbb, &cert_verify,
 		    SSL3_MT_CERTIFICATE_VERIFY))
 			goto err;
 
@@ -2489,7 +2489,7 @@ ssl3_send_client_verify(SSL *s)
 		if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
 			goto err;
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_B;
@@ -2561,13 +2561,13 @@ ssl3_send_client_certificate(SSL *s)
 	}
 
 	if (S3I(s)->hs.state == SSL3_ST_CW_CERT_C) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &client_cert,
+		if (!ssl3_handshake_msg_start(s, &cbb, &client_cert,
 		    SSL3_MT_CERTIFICATE))
 			goto err;
 		if (!ssl3_output_cert_chain(s, &client_cert,
 		    (S3I(s)->tmp.cert_req == 2) ? NULL : s->cert->key->x509))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_CW_CERT_D;

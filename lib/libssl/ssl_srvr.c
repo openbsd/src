@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.42 2018/08/22 17:46:29 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.43 2018/08/24 17:30:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -784,10 +784,10 @@ ssl3_send_hello_request(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_HELLO_REQ_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &hello,
+		if (!ssl3_handshake_msg_start(s, &cbb, &hello,
 		    SSL3_MT_HELLO_REQUEST))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_HELLO_REQ_B;
@@ -1175,7 +1175,7 @@ ssl3_send_server_hello(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_SRVR_HELLO_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_hello,
+		if (!ssl3_handshake_msg_start(s, &cbb, &server_hello,
 		    SSL3_MT_SERVER_HELLO))
 			goto err;
 
@@ -1232,7 +1232,7 @@ ssl3_send_server_hello(SSL *s)
 			goto err;
 		}
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 	}
 
@@ -1253,10 +1253,10 @@ ssl3_send_server_done(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_SRVR_DONE_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &done,
+		if (!ssl3_handshake_msg_start(s, &cbb, &done,
 		    SSL3_MT_SERVER_DONE))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_SRVR_DONE_B;
@@ -1519,7 +1519,7 @@ ssl3_send_server_key_exchange(SSL *s)
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_KEY_EXCH_A) {
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_kex,
+		if (!ssl3_handshake_msg_start(s, &cbb, &server_kex,
 		    SSL3_MT_SERVER_KEY_EXCHANGE))
 			goto err;
 
@@ -1600,7 +1600,7 @@ ssl3_send_server_key_exchange(SSL *s)
 				goto err;
 		}
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_KEY_EXCH_B;
@@ -1639,7 +1639,7 @@ ssl3_send_certificate_request(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_CERT_REQ_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &cert_request,
+		if (!ssl3_handshake_msg_start(s, &cbb, &cert_request,
 		    SSL3_MT_CERTIFICATE_REQUEST))
 			goto err;
 
@@ -1679,7 +1679,7 @@ ssl3_send_certificate_request(SSL *s)
 				goto err;
 		}
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_CERT_REQ_B;
@@ -2502,12 +2502,12 @@ ssl3_send_server_certificate(SSL *s)
 			return (0);
 		}
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &server_cert,
+		if (!ssl3_handshake_msg_start(s, &cbb, &server_cert,
 		    SSL3_MT_CERTIFICATE))
 			goto err;
 		if (!ssl3_output_cert_chain(s, &server_cert, x))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_CERT_B;
@@ -2548,7 +2548,7 @@ ssl3_send_newsession_ticket(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_SESSION_TICKET_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &session_ticket,
+		if (!ssl3_handshake_msg_start(s, &cbb, &session_ticket,
 		    SSL3_MT_NEWSESSION_TICKET))
 			goto err;
 
@@ -2657,7 +2657,7 @@ ssl3_send_newsession_ticket(SSL *s)
 		if (!HMAC_Final(&hctx, hmac, &hlen))
 			goto err;
 
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_SESSION_TICKET_B;
@@ -2689,7 +2689,7 @@ ssl3_send_cert_status(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_CERT_STATUS_A) {
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &certstatus,
+		if (!ssl3_handshake_msg_start(s, &cbb, &certstatus,
 		    SSL3_MT_CERTIFICATE_STATUS))
 			goto err;
 		if (!CBB_add_u8(&certstatus, s->tlsext_status_type))
@@ -2699,7 +2699,7 @@ ssl3_send_cert_status(SSL *s)
 		if (!CBB_add_bytes(&ocspresp, s->internal->tlsext_ocsp_resp,
 		    s->internal->tlsext_ocsp_resplen))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = SSL3_ST_SW_CERT_STATUS_B;

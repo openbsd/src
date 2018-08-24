@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.11 2017/10/08 16:24:02 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.12 2018/08/24 17:30:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,12 +191,12 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			S3I(s)->previous_server_finished_len = md_len;
 		}
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &finished,
+		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
 		    SSL3_MT_FINISHED))
                         goto err;
 		if (!CBB_add_bytes(&finished, S3I(s)->tmp.finish_md, md_len))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = b;

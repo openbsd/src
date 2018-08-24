@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.207 2018/08/19 15:38:03 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.208 2018/08/24 17:30:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1137,11 +1137,9 @@ long	ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp)(void));
 int	ssl3_pending(const SSL *s);
 
 int ssl3_handshake_msg_hdr_len(SSL *s);
-unsigned char *ssl3_handshake_msg_start(SSL *s, uint8_t htype);
-void ssl3_handshake_msg_finish(SSL *s, unsigned int len);
-int ssl3_handshake_msg_start_cbb(SSL *s, CBB *handshake, CBB *body,
+int ssl3_handshake_msg_start(SSL *s, CBB *handshake, CBB *body,
     uint8_t msg_type);
-int ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake);
+int ssl3_handshake_msg_finish(SSL *s, CBB *handshake);
 int ssl3_handshake_write(SSL *s);
 int ssl3_record_write(SSL *s, int type);
 
