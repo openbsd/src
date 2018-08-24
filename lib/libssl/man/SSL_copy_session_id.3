@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_copy_session_id.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_copy_session_id.3,v 1.5 2018/08/24 20:31:32 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: August 24 2018 $
 .Dt SSL_COPY_SESSION_ID 3
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd copy session details between SSL objects
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Ft void
+.Ft int
 .Fo SSL_copy_session_id
 .Fa "SSL *to"
 .Fa "const SSL *from"
@@ -55,6 +55,9 @@ This function is used internally by
 .Xr SSL_dup 3
 and by
 .Xr BIO_ssl_copy_session_id 3 .
+.Sh RETURN VALUES
+.Fn
+returns 1 on success and 0 on error.
 .Sh SEE ALSO
 .Xr BIO_ssl_copy_session_id 3 ,
 .Xr SSL_dup 3 ,
@@ -69,11 +72,7 @@ appeared in SSLeay 0.4 or earlier and has been available since
 .Ox 2.4 .
 .Sh BUGS
 Failures of
-.Xr SSL_set_session 3 ,
-.Xr SSL_set_session_id_context 3 ,
 .Xr CRYPTO_add 3 ,
-and reinitialization of protocol-specific data are silently ignored
-and may leave
+are silently ignored and may leave
 .Fa to
 in an invalid or inconsistent state.
-An improved version reporting failure is available in OpenSSL 1.1.0.
