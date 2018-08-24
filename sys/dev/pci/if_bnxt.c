@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.8 2018/08/24 02:26:31 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.9 2018/08/24 12:35:10 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -151,9 +151,6 @@ struct bnxt_vnic_info {
 	uint16_t		lb_rule;
 	uint16_t		mru;
 
-	uint32_t		rx_mask;
-	/* multicast things */
-
 	uint32_t		flags;
 #define BNXT_VNIC_FLAG_DEFAULT		0x01
 #define BNXT_VNIC_FLAG_BD_STALL		0x02
@@ -164,8 +161,6 @@ struct bnxt_vnic_info {
 
 	uint16_t		rss_id;
 	/* rss things */
-
-	/* vlan things */
 };
 
 struct bnxt_slot {
@@ -222,6 +217,7 @@ struct bnxt_softc {
 
 	/* rx */
 	struct bnxt_dmamem	*sc_rx_ring_mem;	/* rx and ag */
+	struct bnxt_dmamem	*sc_rx_mcast;
 	struct bnxt_ring	sc_rx_ring;
 	/* struct bnxt_ring	sc_rx_ag_ring; */
 	struct bnxt_grp_info	sc_ring_group;
@@ -326,7 +322,7 @@ int		bnxt_hwrm_vnic_alloc(struct bnxt_softc *,
 int		bnxt_hwrm_vnic_free(struct bnxt_softc *,
 		    struct bnxt_vnic_info *);
 int		bnxt_hwrm_cfa_l2_set_rx_mask(struct bnxt_softc *,
-		    struct bnxt_vnic_info *vnic);
+		    uint32_t, uint32_t, uint64_t, uint32_t);
 int		bnxt_hwrm_set_filter(struct bnxt_softc *,
 		    struct bnxt_vnic_info *);
 int		bnxt_hwrm_free_filter(struct bnxt_softc *,
@@ -655,10 +651,17 @@ bnxt_up(struct bnxt_softc *sc)
 		goto free_tx;
 	}
 
+	sc->sc_rx_mcast = bnxt_dmamem_alloc(sc, PAGE_SIZE);
+	if (sc->sc_rx_mcast == NULL) {
+		printf("%s: failed to allocate multicast address table\n",
+		    DEVNAME(sc));
+		goto free_rx;
+	}
+
 	if (bnxt_hwrm_stat_ctx_alloc(sc, &sc->sc_cp_ring,
 	    BNXT_DMA_DVA(sc->sc_stats_ctx_mem)) != 0) {
 		printf("%s: failed to set up stats context\n", DEVNAME(sc));
-		goto free_rx;
+		goto free_mc;
 	}
 
 	sc->sc_tx_ring.phys_id = HWRM_NA_SIGNATURE;
@@ -730,9 +733,6 @@ bnxt_up(struct bnxt_softc *sc)
 	sc->sc_vnic.mru = MCLBYTES;
 	sc->sc_vnic.cos_rule = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.lb_rule = (uint16_t)HWRM_NA_SIGNATURE;
-	sc->sc_vnic.rx_mask = HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_BCAST
-	     | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN;
-	/* sc->sc_vnic.mc_list_count = 0; */
 	sc->sc_vnic.flags = BNXT_VNIC_FLAG_DEFAULT;
 	if (bnxt_hwrm_vnic_alloc(sc, &sc->sc_vnic) != 0) {
 		printf("%s: failed to allocate vnic\n", DEVNAME(sc));
@@ -837,6 +837,9 @@ dealloc_rx:
 	    &sc->sc_rx_ring);
 dealloc_stats:
 	bnxt_hwrm_stat_ctx_free(sc, &sc->sc_cp_ring);
+free_mc:
+	bnxt_dmamem_free(sc, sc->sc_rx_mcast);
+	sc->sc_rx_mcast = NULL;
 free_rx:
 	bnxt_dmamem_free(sc, sc->sc_rx_ring_mem);
 	sc->sc_rx_ring_mem = NULL;
@@ -883,6 +886,9 @@ bnxt_down(struct bnxt_softc *sc)
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
 	    &sc->sc_rx_ring);
 
+	bnxt_dmamem_free(sc, sc->sc_rx_mcast);
+	sc->sc_rx_mcast = NULL;
+
 	bnxt_dmamem_free(sc, sc->sc_rx_ring_mem);
 	sc->sc_rx_ring_mem = NULL;
 
@@ -897,22 +903,39 @@ void
 bnxt_iff(struct bnxt_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	char *mc_list;
+	uint32_t rx_mask, mc_count;
 
-	if (ifp->if_flags & IFF_ALLMULTI)
-		sc->sc_vnic.rx_mask |=
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ALL_MCAST;
-	else
-		sc->sc_vnic.rx_mask &=
-		    ~HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ALL_MCAST;
+	rx_mask = HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_BCAST
+	    | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_MCAST
+	    | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN;
 
-	if (ifp->if_flags & IFF_PROMISC)
-		sc->sc_vnic.rx_mask |=
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS;
-	else
-		sc->sc_vnic.rx_mask &=
-		    (~HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS);
+	mc_list = BNXT_DMA_KVA(sc->sc_rx_mcast);
+	mc_count = 0;
 
-	bnxt_hwrm_cfa_l2_set_rx_mask(sc, &sc->sc_vnic);
+	if (ifp->if_flags & IFF_PROMISC) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		rx_mask |= HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS;
+	} else if ((sc->sc_ac.ac_multirangecnt > 0) ||
+	    (sc->sc_ac.ac_multicnt > (PAGE_SIZE / ETHER_ADDR_LEN))) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
+		rx_mask |= HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ALL_MCAST;
+	} else {
+		CLR(ifp->if_flags, IFF_ALLMULTI);
+		ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+		while (enm != NULL) {
+			memcpy(mc_list, enm->enm_addrlo, ETHER_ADDR_LEN);
+			mc_list += ETHER_ADDR_LEN;
+			mc_count++;
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	bnxt_hwrm_cfa_l2_set_rx_mask(sc, sc->sc_vnic.id, rx_mask,
+	    BNXT_DMA_DVA(sc->sc_rx_mcast), mc_count);
 }
 
 int
@@ -2570,57 +2593,16 @@ bnxt_hwrm_port_qstats(struct bnxt_softc *softc)
 
 int
 bnxt_hwrm_cfa_l2_set_rx_mask(struct bnxt_softc *softc,
-    struct bnxt_vnic_info *vnic)
+    uint32_t vnic_id, uint32_t rx_mask, uint64_t mc_addr, uint32_t mc_count)
 {
 	struct hwrm_cfa_l2_set_rx_mask_input req = {0};
-	uint32_t mask = vnic->rx_mask;
 
-#if 0
-	struct bnxt_vlan_tag *tag;
-	uint32_t *tags;
-	uint32_t num_vlan_tags = 0;;
-	uint32_t i;
-	int rc;
-
-	SLIST_FOREACH(tag, &vnic->vlan_tags, next)
-		num_vlan_tags++;
-
-	if (num_vlan_tags) {
-		if (!(mask &
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN)) {
-			if (!vnic->vlan_only)
-				mask |= HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_VLAN_NONVLAN;
-			else
-				mask |=
-				    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_VLANONLY;
-		}
-		if (vnic->vlan_tag_list.idi_vaddr) {
-			iflib_dma_free(&vnic->vlan_tag_list);
-			vnic->vlan_tag_list.idi_vaddr = NULL;
-		}
-		rc = iflib_dma_alloc(softc->ctx, 4 * num_vlan_tags,
-		    &vnic->vlan_tag_list, BUS_DMA_NOWAIT);
-		if (rc)
-			return rc;
-		tags = (uint32_t *)vnic->vlan_tag_list.idi_vaddr;
-
-		i = 0;
-		SLIST_FOREACH(tag, &vnic->vlan_tags, next) {
-			tags[i] = htole32((tag->tpid << 16) | tag->tag);
-			i++;
-		}
-	}
-#endif
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_CFA_L2_SET_RX_MASK);
 
-	req.vnic_id = htole32(vnic->id);
-	req.mask = htole32(mask);
-#if 0
-	req.mc_tbl_addr = htole64(vnic->mc_list.idi_paddr);
-	req.num_mc_entries = htole32(vnic->mc_list_count);
-	req.vlan_tag_tbl_addr = htole64(vnic->vlan_tag_list.idi_paddr);
-	req.num_vlan_tags = htole32(num_vlan_tags);
-#endif
+	req.vnic_id = htole32(vnic_id);
+	req.mask = htole32(rx_mask);
+	req.mc_tbl_addr = htole64(mc_addr);
+	req.num_mc_entries = htole32(mc_count);
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
 
