@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.7 2018/08/23 01:40:26 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.8 2018/08/24 02:26:31 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -730,7 +730,8 @@ bnxt_up(struct bnxt_softc *sc)
 	sc->sc_vnic.mru = MCLBYTES;
 	sc->sc_vnic.cos_rule = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.lb_rule = (uint16_t)HWRM_NA_SIGNATURE;
-	sc->sc_vnic.rx_mask = HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_BCAST;
+	sc->sc_vnic.rx_mask = HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_BCAST
+	     | HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN;
 	/* sc->sc_vnic.mc_list_count = 0; */
 	sc->sc_vnic.flags = BNXT_VNIC_FLAG_DEFAULT;
 	if (bnxt_hwrm_vnic_alloc(sc, &sc->sc_vnic) != 0) {
@@ -906,12 +907,10 @@ bnxt_iff(struct bnxt_softc *sc)
 
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->sc_vnic.rx_mask |=
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS |
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN;
+		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS;
 	else
 		sc->sc_vnic.rx_mask &=
-		    ~(HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS |
-		    HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_ANYVLAN_NONVLAN);
+		    (~HWRM_CFA_L2_SET_RX_MASK_INPUT_MASK_PROMISCUOUS);
 
 	bnxt_hwrm_cfa_l2_set_rx_mask(sc, &sc->sc_vnic);
 }
