@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.18 2018/05/24 07:49:46 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.19 2018/08/24 20:22:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -396,7 +396,7 @@ EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
 
 void
 EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf),
+    int (*priv_decode)(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf),
     int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk),
     int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 	ASN1_PCTX *pctx))

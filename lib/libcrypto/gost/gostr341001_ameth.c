@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.14 2018/08/24 20:17:33 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.15 2018/08/24 20:22:15 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -394,7 +394,7 @@ priv_print_gost01(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx)
 }
 
 static int
-priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
+priv_decode_gost01(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
 	const unsigned char *pkey_buf = NULL, *p = NULL;
 	int priv_len = 0;
