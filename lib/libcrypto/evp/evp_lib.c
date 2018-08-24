@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.16 2018/08/24 19:36:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,6 +205,12 @@ const EVP_CIPHER *
 EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher;
+}
+
+int
+EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->encrypt;
 }
 
 unsigned long

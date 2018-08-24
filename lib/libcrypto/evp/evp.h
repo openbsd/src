@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.65 2018/08/24 19:30:24 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.66 2018/08/24 19:36:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -491,6 +491,7 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_mode(e)		(EVP_CIPHER_flags(e) & EVP_CIPH_MODE)
 
 const EVP_CIPHER * EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
