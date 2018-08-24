@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.43 2018/08/24 17:30:32 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.44 2018/08/24 17:44:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -846,13 +846,26 @@ ssl3_get_client_hello(SSL *s)
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
+	/* Parse client hello up until the extensions (if any). */
+	if (!CBS_get_u16(&cbs, &client_version))
+		goto truncated;
+	if (!CBS_get_bytes(&cbs, &client_random, SSL3_RANDOM_SIZE))
+		goto truncated;
+	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
+		goto truncated;
+	if (SSL_IS_DTLS(s)) {
+		if (!CBS_get_u8_length_prefixed(&cbs, &cookie))
+			goto truncated;
+	}
+	if (!CBS_get_u16_length_prefixed(&cbs, &cipher_suites))
+		goto truncated;
+	if (!CBS_get_u8_length_prefixed(&cbs, &compression_methods))
+		goto truncated;
+
 	/*
 	 * Use version from inside client hello, not from record header.
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
-	if (!CBS_get_u16(&cbs, &client_version))
-		goto truncated;
-
 	if (ssl_max_shared_version(s, client_version, &shared_version) != 1) {
 		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
@@ -877,19 +890,12 @@ ssl3_get_client_hello(SSL *s)
 	}
 	s->method = method;
 
-	if (!CBS_get_bytes(&cbs, &client_random, SSL3_RANDOM_SIZE))
-		goto truncated;
-	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
-		goto truncated;
-
 	/*
-	 * If we require cookies (DTLS) and this ClientHello doesn't
-	 * contain one, just return since we do not want to
-	 * allocate any memory yet. So check cookie length...
+	 * If we require cookies (DTLS) and this ClientHello does not contain
+	 * one, just return since we do not want to allocate any memory yet.
+	 * So check cookie length...
 	 */
 	if (SSL_IS_DTLS(s)) {
-		if (!CBS_get_u8_length_prefixed(&cbs, &cookie))
-			goto truncated;
 		if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
 			if (CBS_len(&cookie) == 0)
 				return (1);
@@ -979,9 +985,6 @@ ssl3_get_client_hello(SSL *s)
 		}
 	}
 
-	if (!CBS_get_u16_length_prefixed(&cbs, &cipher_suites))
-		goto truncated;
-
 	/* XXX - This logic seems wrong... */
 	if (CBS_len(&cipher_suites) == 0 && CBS_len(&session_id) != 0) {
 		/* we need a cipher if we are not resuming a session */
@@ -1019,9 +1022,6 @@ ssl3_get_client_hello(SSL *s)
 			goto f_err;
 		}
 	}
-
-	if (!CBS_get_u8_length_prefixed(&cbs, &compression_methods))
-		goto truncated;
 
 	comp_null = 0;
 	while (CBS_len(&compression_methods) > 0) {
