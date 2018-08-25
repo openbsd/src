@@ -1,15 +1,18 @@
-.\" $OpenBSD: c_man.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
-.TH ESC-C_MAN 1 "December 2, 2014"
+.\" $OpenBSD: c_man.in,v 1.4 2018/08/25 12:28:52 schwarze Exp $
+.TH ESC-C_MAN 1 "August 25, 2018"
 .SH NAME
 esc-c_man \- the roff escape c sequence: remove trailing space
 .SH DESCRIPTION
 No space between "one" and "word":
 one\c
 word
+.PP
+The same in no-fill mode:
 .nf
 one\c
 word
 .fi
+.PP
 Blank line after \ec:
 one\c
 
@@ -19,4 +22,16 @@ one\c
 
 word
 .fi
+.PP
+In next-line element scope:
+.B
+one\c
+word
+.PP
+In next-line block scope:
+.TP
+one\c
+word
+list body
+.PP
 final text
