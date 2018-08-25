@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.3 2018/08/21 18:09:34 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.4 2018/08/25 15:41:05 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 21 2018 $
+.Dd $Mdocdate: August 25 2018 $
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -28,9 +28,9 @@
 The
 .Nm
 driver implements collection of code coverage inside the kernel.
-It can be enabled on a per process basis from userland,
+It can be enabled on a per thread basis from userland,
 allowing the kernel program counter to be collected during syscalls triggered by
-the same process.
+the same thread.
 The collected coverage can be accessed by mapping the device
 using
 .Xr mmap 2 .
@@ -58,9 +58,9 @@ entries.
 The first entry contains the number of entries in the array,
 excluding the first entry.
 .It Dv KIOENABLE Fa void
-Enable code coverage tracing for the current process.
+Enable code coverage tracing for the current thread.
 .It Dv KIODISABLE Fa void
-Disable code coverage tracing for the current process.
+Disable code coverage tracing for the current thread.
 .El
 .Sh FILES
 .Bl -tag -width /dev/kcov -compact
