@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1858 2018/08/20 18:56:39 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1859 2018/08/25 17:38:28 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1925,6 +1925,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD5470_HDA	0xaa68		/* Radeon HD 5470 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD6670_HDA	0xaa90		/* Radeon HD 6670 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD6400_HDA	0xaa98		/* Radeon HD 6400 Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD7700_HDA	0xaab0		/* Radeon HD 7700 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_PRO_HDA	0xaae0		/* Radeon Pro Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
