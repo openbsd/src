@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.168 2018/08/21 18:06:12 anton Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.169 2018/08/25 15:38:07 anton Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -181,6 +181,10 @@ exit1(struct proc *p, int rv, int flags)
 	}
 	p->p_siglist = 0;
 
+#if NKCOV > 0
+	kcov_exit(p);
+#endif
+
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* close open files and release open-file table */
 		fdfree(p);
@@ -192,10 +196,6 @@ exit1(struct proc *p, int rv, int flags)
 		killjobc(pr);
 #ifdef ACCOUNTING
 		acct_process(p);
-#endif
-
-#if NKCOV > 0
-		kcov_exit(p);
 #endif
 
 #ifdef KTRACE

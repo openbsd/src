@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.205 2018/07/20 07:28:36 beck Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.206 2018/08/25 15:38:07 anton Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 
 #include <uvm/uvm.h>
 #include <machine/tcb.h>
+
+#include "kcov.h"
 
 int	nprocesses = 1;		/* process 0 */
 int	nthreads = 1;		/* proc 0 */
@@ -176,6 +178,10 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 
 #ifdef WITNESS
 	p->p_sleeplocks = NULL;
+#endif
+
+#if NKCOV > 0
+	p->p_kd = NULL;
 #endif
 
 	return p;

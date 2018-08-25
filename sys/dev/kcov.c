@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.2 2018/08/21 18:06:12 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.3 2018/08/25 15:38:07 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -39,9 +39,9 @@ struct kd {
 		KCOV_MODE_DISABLED,
 		KCOV_MODE_INIT,
 		KCOV_MODE_TRACE_PC,
+		KCOV_MODE_DYING,
 	}		 kd_mode;
 	int		 kd_unit;	/* device minor */
-	pid_t		 kd_pid;	/* process being traced */
 	uintptr_t	*kd_buf;	/* traced coverage */
 	size_t		 kd_nmemb;
 	size_t		 kd_size;
@@ -52,9 +52,9 @@ struct kd {
 void kcovattach(int);
 
 int kd_alloc(struct kd *, unsigned long);
+void kd_free(struct kd *);
 struct kd *kd_lookup(int);
 
-static inline struct kd *kd_lookup_pid(pid_t);
 static inline int inintr(void);
 
 TAILQ_HEAD(, kd) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
@@ -69,8 +69,8 @@ int kcov_debug = 1;
  * each block instructions that maps to a single line in the original source
  * code.
  *
- * If kcov is enabled for the current process, the executed address will be
- * stored in the corresponding coverage buffer.
+ * If kcov is enabled for the current thread, the kernel program counter will
+ * be stored in its corresponding coverage buffer.
  * The first element in the coverage buffer holds the index of next available
  * element.
  */
@@ -89,8 +89,8 @@ __sanitizer_cov_trace_pc(void)
 	if (inintr())
 		return;
 
-	kd = kd_lookup_pid(curproc->p_p->ps_pid);
-	if (kd == NULL)
+	kd = curproc->p_kd;
+	if (kd == NULL || kd->kd_mode != KCOV_MODE_TRACE_PC)
 		return;
 
 	idx = kd->kd_buf[0];
@@ -132,9 +132,11 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	DPRINTF("%s: unit=%d\n", __func__, minor(dev));
 
-	TAILQ_REMOVE(&kd_list, kd, kd_entry);
-	free(kd->kd_buf, M_SUBPROC, kd->kd_size);
-	free(kd, M_SUBPROC, sizeof(struct kd));
+	if (kd->kd_mode == KCOV_MODE_TRACE_PC)
+		kd->kd_mode = KCOV_MODE_DYING;
+	else
+		kd_free(kd);
+
 	return (0);
 }
 
@@ -159,30 +161,30 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			kd->kd_mode = KCOV_MODE_INIT;
 		break;
 	case KIOENABLE:
-		if (kd->kd_mode != KCOV_MODE_INIT) {
+		/* Only one kcov descriptor can be enabled per thread. */
+		if (p->p_kd != NULL || kd->kd_mode != KCOV_MODE_INIT) {
 			error = EBUSY;
 			break;
 		}
 		kd->kd_mode = KCOV_MODE_TRACE_PC;
-		kd->kd_pid = p->p_p->ps_pid;
+		p->p_kd = kd;
 		break;
 	case KIODISABLE:
-		/* Only the enabled process may disable itself. */
-		if (kd->kd_pid != p->p_p->ps_pid ||
-		    kd->kd_mode != KCOV_MODE_TRACE_PC) {
+		/* Only the enabled thread may disable itself. */
+		if (p->p_kd != kd || kd->kd_mode != KCOV_MODE_TRACE_PC) {
 			error = EBUSY;
 			break;
 		}
 		kd->kd_mode = KCOV_MODE_INIT;
-		kd->kd_pid = 0;
+		p->p_kd = NULL;
 		break;
 	default:
 		error = EINVAL;
 		DPRINTF("%s: %lu: unknown command\n", __func__, cmd);
 	}
 
-	DPRINTF("%s: unit=%d, mode=%d, pid=%d, error=%d\n",
-		    __func__, kd->kd_unit, kd->kd_mode, kd->kd_pid, error);
+	DPRINTF("%s: unit=%d, mode=%d, error=%d\n",
+	    __func__, kd->kd_unit, kd->kd_mode, error);
 
 	return (error);
 }
@@ -212,12 +214,17 @@ kcov_exit(struct proc *p)
 {
 	struct kd *kd;
 
-	kd = kd_lookup_pid(p->p_p->ps_pid);
+	kd = p->p_kd;
 	if (kd == NULL)
 		return;
 
-	kd->kd_mode = KCOV_MODE_INIT;
-	kd->kd_pid = 0;
+	DPRINTF("%s: unit=%d\n", __func__, kd->kd_unit);
+
+	if (kd->kd_mode == KCOV_MODE_DYING)
+		kd_free(kd);
+	else
+		kd->kd_mode = KCOV_MODE_INIT;
+	p->p_kd = NULL;
 }
 
 struct kd *
@@ -250,16 +257,14 @@ kd_alloc(struct kd *kd, unsigned long nmemb)
 	return (0);
 }
 
-static inline struct kd *
-kd_lookup_pid(pid_t pid)
+void
+kd_free(struct kd *kd)
 {
-	struct kd *kd;
+	DPRINTF("%s: unit=%d mode=%d\n", __func__, kd->kd_unit, kd->kd_mode);
 
-	TAILQ_FOREACH(kd, &kd_list, kd_entry) {
-		if (kd->kd_pid == pid && kd->kd_mode == KCOV_MODE_TRACE_PC)
-			return (kd);
-	}
-	return (NULL);
+	TAILQ_REMOVE(&kd_list, kd, kd_entry);
+	free(kd->kd_buf, M_SUBPROC, kd->kd_size);
+	free(kd, M_SUBPROC, sizeof(struct kd));
 }
 
 static inline int
