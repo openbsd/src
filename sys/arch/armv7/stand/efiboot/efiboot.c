@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.22 2018/08/23 15:31:12 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.23 2018/08/25 00:12:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -126,7 +126,7 @@ efi_cons_getc(dev_t dev)
 	}
 
 	status = conin->ReadKeyStroke(conin, &key);
-	while (status == EFI_NOT_READY) {
+	while (status == EFI_NOT_READY || key.UnicodeChar == 0) {
 		if (dev & 0x80)
 			return (0);
 		/*
