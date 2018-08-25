@@ -1,0 +1,6 @@
+mandoc: badarg.in:6:6: ERROR: argument is not a character: char 
+mandoc: badarg.in:7:7: ERROR: argument is not a character: char \fR myval
+mandoc: badarg.in:8:7: WARNING: invalid escape sequence: \[myc]
+mandoc: badarg.in:8:7: ERROR: argument is not a character: char \[myc]x myval
+mandoc: badarg.in:9:7: ERROR: argument is not a character: char xy myval
+mandoc: badarg.in:10:7: WARNING: invalid escape sequence: \[myc]

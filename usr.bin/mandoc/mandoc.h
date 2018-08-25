@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.194 2018/08/24 22:56:37 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.195 2018/08/25 16:43:52 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -158,6 +158,7 @@ enum	mandocerr {
 	MANDOCERR_LB_BAD, /* unknown library name: Lb ... */
 	MANDOCERR_RS_BAD, /* invalid content in Rs block: macro */
 	MANDOCERR_SM_BAD, /* invalid Boolean argument: macro arg */
+	MANDOCERR_CHAR_FONT, /* argument contains two font escapes */
 	MANDOCERR_FT_BAD, /* unknown font, skipping request: ft font */
 	MANDOCERR_TR_ODD, /* odd number of characters in request: tr char */
 
@@ -212,6 +213,7 @@ enum	mandocerr {
 	MANDOCERR_BD_NOARG, /* skipping display without arguments: Bd */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item: Bl */
 	MANDOCERR_CE_NONUM, /* argument is not numeric, using 1: ce ... */
+	MANDOCERR_CHAR_ARG, /* argument is not a character: char ... */
 	MANDOCERR_NM_NONAME, /* missing manual name, using "": Nm */
 	MANDOCERR_OS_UNAME, /* uname(3) system call failed, using UNKNOWN */
 	MANDOCERR_ST_BAD, /* unknown standard specifier: St standard */

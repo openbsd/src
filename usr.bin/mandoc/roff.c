@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.212 2018/08/24 22:56:37 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.213 2018/08/25 16:43:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -174,6 +174,7 @@ static	int		 roff_br(ROFF_ARGS);
 static	int		 roff_cblock(ROFF_ARGS);
 static	int		 roff_cc(ROFF_ARGS);
 static	int		 roff_ccond(struct roff *, int, int);
+static	int		 roff_char(ROFF_ARGS);
 static	int		 roff_cond(ROFF_ARGS);
 static	int		 roff_cond_text(ROFF_ARGS);
 static	int		 roff_cond_sub(ROFF_ARGS);
@@ -395,7 +396,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_insec, NULL, NULL, 0 },  /* cf */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* cflags */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ch */
-	{ roff_unsupp, NULL, NULL, 0 },  /* char */
+	{ roff_char, NULL, NULL, 0 },  /* char */
 	{ roff_unsupp, NULL, NULL, 0 },  /* chop */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* class */
 	{ roff_insec, NULL, NULL, 0 },  /* close */
@@ -3316,6 +3317,76 @@ roff_cc(ROFF_ARGS)
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS, r->parse,
 		    ln, p - buf->buf, "cc ... %s", p);
 
+	return ROFF_IGN;
+}
+
+static int
+roff_char(ROFF_ARGS)
+{
+	const char	*p, *kp, *vp;
+	size_t		 ksz, vsz;
+	int		 font;
+
+	/* Parse the character to be replaced. */
+
+	kp = buf->buf + pos;
+	p = kp + 1;
+	if (*kp == '\0' || (*kp == '\\' &&
+	     mandoc_escape(&p, NULL, NULL) != ESCAPE_SPECIAL) ||
+	    (*p != ' ' && *p != '\0')) {
+		mandoc_vmsg(MANDOCERR_CHAR_ARG, r->parse,
+		    ln, pos, "char %s", kp);
+		return ROFF_IGN;
+	}
+	ksz = p - kp;
+	while (*p == ' ')
+		p++;
+
+	/*
+	 * If the replacement string contains a font escape sequence,
+	 * we have to restore the font at the end.
+	 */
+
+	vp = p;
+	vsz = strlen(p);
+	font = 0;
+	while (*p != '\0') {
+		if (*p++ != '\\')
+			continue;
+		switch (mandoc_escape(&p, NULL, NULL)) {
+		case ESCAPE_FONT:
+		case ESCAPE_FONTROMAN:
+		case ESCAPE_FONTITALIC:
+		case ESCAPE_FONTBOLD:
+		case ESCAPE_FONTBI:
+		case ESCAPE_FONTPREV:
+			font++;
+			break;
+		default:
+			break;
+		}
+	}
+	if (font > 1)
+		mandoc_msg(MANDOCERR_CHAR_FONT, r->parse,
+		    ln, vp - buf->buf, vp);
+
+	/*
+	 * Approximate the effect of .char using the .tr tables.
+	 * XXX In groff, .char and .tr interact differently.
+	 */
+
+	if (ksz == 1) {
+		if (r->xtab == NULL)
+			r->xtab = mandoc_calloc(128, sizeof(*r->xtab));
+		assert((unsigned int)*kp < 128);
+		free(r->xtab[(int)*kp].p);
+		r->xtab[(int)*kp].sz = mandoc_asprintf(&r->xtab[(int)*kp].p,
+		    "%s%s", vp, font ? "\fP" : "");
+	} else {
+		roff_setstrn(&r->xmbtab, kp, ksz, vp, vsz, 0);
+		if (font)
+			roff_setstrn(&r->xmbtab, kp, ksz, "\\fP", 3, 1);
+	}
 	return ROFF_IGN;
 }
 

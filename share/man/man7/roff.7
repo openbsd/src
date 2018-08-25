@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.84 2018/08/24 22:56:37 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.85 2018/08/25 16:43:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: August 25 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -505,9 +505,16 @@ This is a groff extension and currently ignored.
 .It Ic \&ch Ar macroname Op Ar dist
 Change a trap location.
 Currently ignored.
-.It Ic \&char Ar glyphname Op Ar string
-Define a new glyph.
-Currently unsupported.
+.It Ic \&char Ar glyph Op Ar string
+Define or redefine the ASCII character or character escape sequence
+.Ar glyph
+to be rendered as
+.Ar string ,
+which can be empty.
+Only partially supported in
+.Xr mandoc 1 ;
+may interact incorrectly with
+.Ic \&tr .
 .It Ic \&chop Ar stringname
 Remove the last character from a macro, string, or diversion.
 Currently unsupported.

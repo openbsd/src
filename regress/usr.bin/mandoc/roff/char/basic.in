@@ -1,0 +1,11 @@
+.\" $OpenBSD: basic.in,v 1.1 2018/08/25 16:43:52 schwarze Exp $
+.TH CHAR-BASIC 1 "August 25, 2018"
+.SH NAME
+char-basic \(en the char request
+.SH DESCRIPTION
+initial text
+.char \[myc] myval
+.char x y
+.char \[boldX] \fBX
+\[boldX] \[myc]
+final text

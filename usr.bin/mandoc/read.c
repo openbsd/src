@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.171 2018/08/24 22:56:37 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.172 2018/08/25 16:43:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -196,6 +196,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown library name",
 	"invalid content in Rs block",
 	"invalid Boolean argument",
+	"argument contains two font escapes",
 	"unknown font, skipping request",
 	"odd number of characters in request",
 
@@ -250,6 +251,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"skipping display without arguments",
 	"missing list type, using -item",
 	"argument is not numeric, using 1",
+	"argument is not a character",
 	"missing manual name, using \"\"",
 	"uname(3) system call failed, using UNKNOWN",
 	"unknown standard specifier",

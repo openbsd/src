@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.151 2018/08/23 14:16:12 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.152 2018/08/25 16:43:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2018 $
+.Dd $Mdocdate: August 25 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1606,6 +1606,12 @@ or
 .Cm off .
 The invalid argument is moved out of the macro, which leaves the macro
 empty, causing it to toggle the spacing mode.
+.It Sy "argument contains two font escapes"
+.Pq roff
+The second argument of a
+.Ic char
+request contains more than one font escape sequence.
+A wrong font may remain active after using the character.
 .It Sy "unknown font, skipping request"
 .Pq man , tbl
 A
@@ -1959,6 +1965,13 @@ macro fails to specify the list type.
 The argument of a
 .Ic \&ce
 request is not a number.
+.It Sy "argument is not a character"
+.Pq roff
+The first argument of a
+.Ic char
+request is neither a single ASCII character
+nor a single character escape sequence.
+The request is ignored including all its arguments.
 .It Sy "missing manual name, using \(dq\(dq"
 .Pq mdoc
 The first call to
