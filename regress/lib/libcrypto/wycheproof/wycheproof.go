@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.19 2018/08/24 17:37:25 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.20 2018/08/25 10:07:16 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -24,6 +24,7 @@ package main
 
 #include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/curve25519.h>
 #include <openssl/dsa.h>
@@ -31,6 +32,7 @@ package main
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
 */
@@ -453,6 +455,7 @@ func runDSATestGroup(wtg *wycheproofTestGroupDSA) bool {
 		log.Fatalf("Failed to get hash: %v", err)
 	}
 
+
 	der, err := hex.DecodeString(wtg.KeyDER)
 	if err != nil {
 		log.Fatalf("Failed to decode DER encoded key: %v", err)
@@ -474,13 +477,30 @@ func runDSATestGroup(wtg *wycheproofTestGroupDSA) bool {
 	defer C.DSA_free(dsaDER)
 	C.free(unsafe.Pointer(Cder))
 
-	/// XXX audit acceptable cases
+
+	keyPEM := C.CString(wtg.KeyPEM);
+	bio := C.BIO_new_mem_buf(unsafe.Pointer(keyPEM), C.int(len(wtg.KeyPEM)))
+	if bio == nil {
+		log.Fatal("BIO_new_mem_buf failed")
+	}
+	defer C.BIO_free(bio)
+
+	dsaPEM := C.PEM_read_bio_DSA_PUBKEY(bio, nil, nil, nil)
+	if dsaPEM == nil {
+		log.Fatal("PEM_read_bio_DSA_PUBKEY failed")
+	}
+	defer C.DSA_free(dsaPEM)
+
+
 	success := true
 	for _, wt := range wtg.Tests {
 		if !runDSATest(dsa, h, wt) {
 			success = false
 		}
 		if !runDSATest(dsaDER, h, wt) {
+			success = false
+		}
+		if !runDSATest(dsaPEM, h, wt) {
 			success = false
 		}
 	}
