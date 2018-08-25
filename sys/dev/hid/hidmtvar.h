@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmtvar.h,v 1.5 2017/10/10 20:31:50 jcs Exp $ */
+/* $OpenBSD: hidmtvar.h,v 1.6 2018/08/25 18:32:05 jcs Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -39,6 +39,7 @@ struct hidmt {
 #define HIDMT_REVY	0x0001	/* Y-axis is reversed ("natural" scrolling) */
 
 	struct device	*sc_device;
+	int		(*hidev_report_type_conv)(int);
 	int		(*hidev_get_report)(struct device *, int, int, void *,
 			    int);
 	int		(*hidev_set_report)(struct device *, int, int, void *,

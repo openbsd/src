@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.16 2018/01/12 08:11:47 mlarkin Exp $ */
+/* $OpenBSD: ihidev.c,v 1.17 2018/08/25 18:32:05 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -787,7 +787,6 @@ ihidev_get_report_desc(struct ihidev_softc *sc, void **desc, int *size)
 	*size = sc->sc_reportlen;
 }
 
-/* convert hid_* constants used throughout HID code to i2c HID equivalents */
 int
 ihidev_report_type_conv(int hid_type_id)
 {
@@ -808,12 +807,8 @@ ihidev_get_report(struct device *dev, int type, int id, void *data, int len)
 {
 	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
 	struct i2c_hid_report_request rreq;
-	int ctype;
 
-	if ((ctype = ihidev_report_type_conv(type)) < 0)
-		return (1);
-
-	rreq.type = ctype;
+	rreq.type = type;
 	rreq.id = id;
 	rreq.data = data;
 	rreq.len = len;
@@ -831,12 +826,8 @@ ihidev_set_report(struct device *dev, int type, int id, void *data, int len)
 {
 	struct ihidev_softc *sc = (struct ihidev_softc *)dev;
 	struct i2c_hid_report_request rreq;
-	int ctype;
 
-	if ((ctype = ihidev_report_type_conv(type)) < 0)
-		return (1);
-
-	rreq.type = ctype;
+	rreq.type = type;
 	rreq.id = id;
 	rreq.data = data;
 	rreq.len = len;
