@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.357 2018/08/19 08:23:47 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.358 2018/08/25 09:39:20 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -541,8 +541,13 @@ acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 {
 	if (aa->aaa_dev == NULL || aa->aaa_node == NULL)
 		return (0);
+
 	if (_acpi_matchhids(aa->aaa_dev, hids)) {
 		dnprintf(5, "driver %s matches at least one hid\n", driver);
+		return (2);
+	}
+	if (aa->aaa_cdev && _acpi_matchhids(aa->aaa_cdev, hids)) {
+		dnprintf(5, "driver %s matches at least one cid\n", driver);
 		return (1);
 	}
 
@@ -2977,8 +2982,8 @@ const char *acpi_skip_hids[] = {
 	"PNP0200",	/* PC-class DMA Controller */
 	"PNP0201",	/* EISA DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
-	"PNP0A03",	/* PCI Bus */
 #if defined(__amd64__) || defined(__i386__)
+	"PNP0A03",	/* PCI Bus */
 	"PNP0A08",	/* PCI Express Bus */
 #endif
 	"PNP0C01",	/* System Board */
@@ -3058,6 +3063,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_dmat = sc->sc_dmat;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
+	aaa.aaa_cdev = cdev;
 
 	if (acpi_matchhids(&aaa, acpi_skip_hids, "none") ||
 	    acpi_matchhids(&aaa, acpi_isa_hids, "none"))
@@ -3152,6 +3158,7 @@ acpi_foundsbs(struct aml_node *node, void *arg)
 	aaa.aaa_memt = sc->sc_memt;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
+	aaa.aaa_cdev = cdev;
 
 	config_found(self, &aaa, acpi_print);
 	node->parent->attached = 1;
