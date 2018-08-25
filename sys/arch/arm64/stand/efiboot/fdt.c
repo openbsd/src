@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.3 2017/08/23 18:03:54 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.4 2018/08/25 10:41:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -308,6 +308,10 @@ fdt_node_add_node(void *node, char *name, void **child)
 
 	ptr = skip_node_name(ptr + 1);
 	ptr = skip_props(ptr);
+
+	/* skip children */
+	while (betoh32(*ptr) == FDT_NODE_BEGIN)
+		ptr = skip_node(ptr);
 
 	memmove((char *)ptr + len, ptr, tree.end - (char *)ptr);
 	tree.struct_size += len;
