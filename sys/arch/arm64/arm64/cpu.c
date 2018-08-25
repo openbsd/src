@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.23 2018/08/18 11:34:08 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.24 2018/08/25 20:45:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -130,8 +130,12 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 	uint64_t midr, impl, part;
-	char *impl_name = NULL;
-	char *part_name = NULL;
+	uint64_t clidr;
+	uint32_t ctr, ccsidr, sets, ways, line;
+	const char *impl_name = NULL;
+	const char *part_name = NULL;
+	const char *il1p_name = NULL;
+	const char *sep;
 	struct cpu_cores *coreselecter = cpu_cores_none;
 	int i;
 
@@ -167,6 +171,62 @@ cpu_identify(struct cpu_info *ci)
 
 		if (CPU_IS_PRIMARY(ci))
 			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
+	}
+
+	/* Print cache information. */
+
+	ctr = READ_SPECIALREG(ctr_el0);
+	switch (ctr & CTR_IL1P_MASK) {
+	case CTR_IL1P_AIVIVT:
+		il1p_name = "AIVIVT ";
+		break;
+	case CTR_IL1P_VIPT:
+		il1p_name = "VIPT ";
+		break;
+	case CTR_IL1P_PIPT:
+		il1p_name = "PIPT ";
+		break;
+	}
+
+	clidr = READ_SPECIALREG(clidr_el1);
+	for (i = 0; i < 7; i++) {
+		if ((clidr & CLIDR_CTYPE_MASK) == 0)
+			break;
+		printf("\n%s:", ci->ci_dev->dv_xname);
+		sep = "";
+		if (clidr & CLIDR_CTYPE_INSN) {
+			WRITE_SPECIALREG(csselr_el1,
+			    i << CSSELR_LEVEL_SHIFT | CSSELR_IND);
+			ccsidr = READ_SPECIALREG(ccsidr_el1);
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d %sI-cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1),
+			    il1p_name);
+			il1p_name = "";
+			sep = ",";
+		}
+		if (clidr & CLIDR_CTYPE_DATA) {
+			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
+			ccsidr = READ_SPECIALREG(ccsidr_el1);
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d D-cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1));
+			sep = ",";
+		}
+		if (clidr & CLIDR_CTYPE_UNIFIED) {
+			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
+			ccsidr = READ_SPECIALREG(ccsidr_el1);
+			sets = CCSIDR_SETS(ccsidr);
+			ways = CCSIDR_WAYS(ccsidr);
+			line = CCSIDR_LINE_SIZE(ccsidr);
+			printf("%s %dKB %db/line %d-way L%d cache", sep,
+			    (sets * ways * line) / 1024, line, ways, (i + 1));
+		}
+		clidr >>= 3;
 	}
 
 	/*

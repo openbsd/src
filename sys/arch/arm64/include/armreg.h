@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.6 2018/08/03 18:36:01 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.7 2018/08/25 20:45:28 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -44,7 +44,25 @@
 #define	WRITE_SPECIALREG(reg, val)					\
 	__asm __volatile("msr	" __STRING(reg) ", %0" : : "r"((uint64_t)val))
 
-/* CNTHCTL_EL2 - Counter-timer Hypervisor Control register */
+/* CCSIDR_EL1 - Current Cache Size ID Register */
+#define	CCSIDR_SETS_MASK	0x0fffe000
+#define	CCSIDR_SETS_SHIFT	13
+#define	CCSIDR_SETS(reg)	\
+    ((((reg) & CCSIDR_SETS_MASK) >> CCSIDR_SETS_SHIFT) + 1)
+#define	CCSIDR_WAYS_MASK	0x00001ff8
+#define	CCSIDR_WAYS_SHIFT	3
+#define	CCSIDR_WAYS(reg)	\
+    ((((reg) & CCSIDR_WAYS_MASK) >> CCSIDR_WAYS_SHIFT) + 1)
+#define	CCSIDR_LINE_MASK	0x00000007
+#define	CCSIDR_LINE_SIZE(reg)	(1 << (((reg) & CCSIDR_LINE_MASK) + 4))
+
+/* CLIDR_EL1 - Cache Level ID Register */
+#define	CLIDR_CTYPE_MASK	0x7
+#define	CLIDR_CTYPE_INSN	0x1
+#define	CLIDR_CTYPE_DATA	0x2
+#define	CLIDR_CTYPE_UNIFIED	0x4
+
+/* CNTHCTL_EL2 - Counter-timer Hypervisor Control Register */
 #define	CNTHCTL_EVNTI_MASK	(0xf << 4) /* Bit to trigger event stream */
 #define	CNTHCTL_EVNTDIR		(1 << 3) /* Control transition trigger bit */
 #define	CNTHCTL_EVNTEN		(1 << 2) /* Enable event stream */
@@ -59,10 +77,19 @@
 #define	 CPACR_FPEN_TRAP_NONE	(0x3 << 20) /* No traps */
 #define	CPACR_TTA		(0x1 << 28)
 
+/* CSSELR_EL1 - Cache Size Selection Register */
+#define	CSSELR_IND		(1 << 0)
+#define	CSSELR_LEVEL_SHIFT	1
+
 /* CTR_EL0 - Cache Type Register */
 #define	CTR_DLINE_SHIFT		16
 #define	CTR_DLINE_MASK		(0xf << CTR_DLINE_SHIFT)
 #define	CTR_DLINE_SIZE(reg)	(((reg) & CTR_DLINE_MASK) >> CTR_DLINE_SHIFT)
+#define	CTR_IL1P_SHIFT		14
+#define	CTR_IL1P_MASK		(0x3 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_AIVIVT		(0x1 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_VIPT		(0x2 << CTR_IL1P_SHIFT)
+#define	CTR_IL1P_PIPT		(0x3 << CTR_IL1P_SHIFT)
 #define	CTR_ILINE_SHIFT		0
 #define	CTR_ILINE_MASK		(0xf << CTR_ILINE_SHIFT)
 #define	CTR_ILINE_SIZE(reg)	(((reg) & CTR_ILINE_MASK) >> CTR_ILINE_SHIFT)
