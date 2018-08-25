@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.26 2018/07/09 08:43:09 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.27 2018/08/25 04:16:09 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -59,6 +59,13 @@ struct virtio_io_cfg {
 	uint16_t queue_notify;
 	uint8_t device_status;
 	uint8_t isr_status;
+};
+
+struct virtio_backing {
+	void  *p;
+	ssize_t  (*pread)(void *p, char *buf, size_t len, off_t off);
+	ssize_t  (*pwrite)(void *p, char *buf, size_t len, off_t off);
+	void (*close)(void *p);
 };
 
 /*
@@ -147,8 +154,8 @@ struct vioblk_dev {
 	struct virtio_io_cfg cfg;
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
+	struct virtio_backing file;
 
-	int fd;
 	uint64_t sz;
 	uint32_t max_xfer;
 
@@ -168,9 +175,10 @@ struct vioscsi_dev {
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
+	struct virtio_backing file;
+
 	/* is the device locked */
 	int locked;
-	int fd;
 	/* size of iso file in bytes */
 	uint64_t sz;
 	/* last block address read */
@@ -241,10 +249,10 @@ struct vmmci_dev {
 };
 
 struct ioinfo {
+	struct virtio_backing *file;
 	uint8_t *buf;
 	ssize_t len;
 	off_t offset;
-	int fd;
 	int error;
 };
 
@@ -260,6 +268,8 @@ int viornd_restore(int, struct vm_create_params *);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
+
+int virtio_init_raw(struct virtio_backing *dev, off_t *sz, int fd);
 
 int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vioblk_dump(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.10 2018/07/15 20:25:52 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.11 2018/08/25 04:16:09 ccardenas Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -197,7 +197,7 @@ vioscsi_start_read(struct vioscsi_dev *dev, off_t block, ssize_t n_blocks)
 		goto nomem;
 	info->len = n_blocks * VIOSCSI_BLOCK_SIZE_CDROM;
 	info->offset = block * VIOSCSI_BLOCK_SIZE_CDROM;
-	info->fd = dev->fd;
+	info->file = &dev->file;
 
 	return info;
 
@@ -210,7 +210,10 @@ nomem:
 static const uint8_t *
 vioscsi_finish_read(struct ioinfo *info)
 {
-	if (pread(info->fd, info->buf, info->len, info->offset) != info->len) {
+	struct virtio_backing *f;
+
+	f = info->file;
+	if (f->pread(f->p, info->buf, info->len, info->offset) != info->len) {
 		info->error = errno;
 		log_warn("vioscsi read error");
 		return NULL;

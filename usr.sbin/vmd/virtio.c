@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.63 2018/07/09 16:11:37 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.64 2018/08/25 04:16:09 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -361,7 +361,7 @@ vioblk_start_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 		goto nomem;
 	info->len = sz;
 	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->fd = dev->fd;
+	info->file = &dev->file;
 
 	return info;
 
@@ -375,7 +375,10 @@ nomem:
 static const uint8_t *
 vioblk_finish_read(struct ioinfo *info)
 {
-	if (pread(info->fd, info->buf, info->len, info->offset) != info->len) {
+	struct virtio_backing *file;
+
+	file = info->file;
+	if (file->pread(file->p, info->buf, info->len, info->offset) != info->len) {
 		info->error = errno;
 		log_warn("vioblk read error");
 		return NULL;
@@ -398,7 +401,7 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector,
 		goto nomem;
 	info->len = len;
 	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->fd = dev->fd;
+	info->file = &dev->file;
 
 	if (read_mem(addr, info->buf, len)) {
 		vioblk_free_info(info);
@@ -416,7 +419,10 @@ nomem:
 static int
 vioblk_finish_write(struct ioinfo *info)
 {
-	if (pwrite(info->fd, info->buf, info->len, info->offset) != info->len) {
+	struct virtio_backing *file;
+
+	file = info->file;
+	if (file->pwrite(file->p, info->buf, info->len, info->offset) != info->len) {
 		log_warn("vioblk write error");
 		return EIO;
 	}
@@ -1739,6 +1745,16 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	return (0);
 }
 
+static int
+virtio_init_disk(struct virtio_backing *file, off_t *sz, int fd)
+{
+	/* 
+	 * This is where we slot in disk type selection.
+	 *  Right now, there's only raw.
+	 */
+	return virtio_init_raw(file, sz, fd);
+}
+
 void
 virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
     int *child_taps)
@@ -1748,7 +1764,6 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 	uint8_t id;
 	uint8_t i;
 	int ret;
-	off_t sz;
 
 	/* Virtio entropy device */
 	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
@@ -1789,9 +1804,6 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 
 		/* One virtio block device for each disk defined in vcp */
 		for (i = 0; i < vcp->vcp_ndisks; i++) {
-			if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
-				continue;
-
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
 			    PCI_CLASS_MASS_STORAGE,
@@ -1815,13 +1827,15 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
 			vioblk[i].vq[0].last_avail = 0;
-			vioblk[i].fd = child_disks[i];
-			vioblk[i].sz = sz / 512;
 			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
 			vioblk[i].max_xfer = 1048576;
 			vioblk[i].pci_id = id;
 			vioblk[i].vm_id = vcp->vcp_id;
 			vioblk[i].irq = pci_get_dev_irq(id);
+			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
+			    child_disks[i]) == -1)
+				continue;
+			vioblk[i].sz /= 512;
 		}
 	}
 
@@ -1944,12 +1958,12 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			    + sizeof(uint16_t) * (2 + VIOSCSI_QUEUE_SIZE));
 			vioscsi->vq[i].last_avail = 0;
 		}
-		sz = lseek(child_cdrom, 0, SEEK_END);
-		vioscsi->fd = child_cdrom;
+		if (virtio_init_disk(&vioscsi->file, &vioscsi->sz,
+		    child_cdrom) == -1)
+			return;
 		vioscsi->locked = 0;
 		vioscsi->lba = 0;
-		vioscsi->sz = sz;
-		vioscsi->n_blocks = sz >> 11; /* num of 2048 blocks in file */
+		vioscsi->n_blocks = vioscsi->sz >> 11; /* num of 2048 blocks in file */
 		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->pci_id = id;
 		vioscsi->vm_id = vcp->vcp_id;
@@ -2087,7 +2101,6 @@ int
 vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 {
 	uint8_t i;
-	off_t sz;
 
 	nr_vioblk = vcp->vcp_ndisks;
 	vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
@@ -2103,16 +2116,15 @@ vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 		return (-1);
 	}
 	for (i = 0; i < vcp->vcp_ndisks; i++) {
-		if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
-			continue;
-
 		if (pci_set_bar_fn(vioblk[i].pci_id, 0, virtio_blk_io,
 		    &vioblk[i])) {
 			log_warnx("%s: can't set bar fn for virtio block "
 			    "device", __progname);
 			return (-1);
 		}
-		vioblk[i].fd = child_disks[i];
+		if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
+		     child_disks[i]) == -1)
+			continue;
 	}
 	return (0);
 }
@@ -2120,8 +2132,6 @@ vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
 int
 vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 {
-	off_t sz;
-
 	if (!strlen(vcp->vcp_cdrom))
 		return (0);
 
@@ -2139,15 +2149,13 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 		return (-1);
 	}
 
-	sz = lseek(child_cdrom, 0, SEEK_END);
-
 	if (pci_set_bar_fn(vioscsi->pci_id, 0, vioscsi_io, vioscsi)) {
 		log_warnx("%s: can't set bar fn for vmm control device",
 		    __progname);
 		return (-1);
 	}
 
-	vioscsi->fd = child_cdrom;
+	virtio_init_disk(&vioscsi->file, &vioscsi->sz, child_cdrom);
 
 	return (0);
 }
