@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.460 2018/08/22 15:38:46 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.461 2018/08/25 20:31:31 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -257,6 +257,8 @@ wsmouse* at ubcmtp? mux 0
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
+umt*	at uhidev?		# USB multitouch touchpad
+wsmouse* at umt? mux 0
 uts*	at uhub?		# USB touchscreen
 wsmouse* at uts? mux 0
 uwacom*	at uhidev?		# USB Wacom tablet

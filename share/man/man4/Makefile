@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.690 2018/08/19 11:42:33 anton Exp $
+#	$OpenBSD: Makefile,v 1.691 2018/08/25 20:31:31 jcs Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -75,8 +75,8 @@ MAN=	aac.4 ac97.4 acphy.4 acrtc.4 \
 	uftdi.4 ugen.4 ugl.4 ugold.4 uguru.4 uhci.4 uhid.4 uhidev.4 uipaq.4 \
 	uk.4 ukbd.4 \
 	ukphy.4 ulpt.4 umass.4 umb.4 umbg.4 umcs.4 umct.4 umidi.4 umodem.4 \
-	ums.4 umsm.4 unix.4 uonerng.4 uow.4 uoaklux.4 uoakrh.4 uoakv.4 upd.4 \
-	upgt.4 upl.4 uplcom.4 ural.4 ure.4 url.4 urlphy.4 \
+	ums.4 umsm.4 umt.4 unix.4 uonerng.4 uow.4 uoaklux.4 uoakrh.4 uoakv.4 \
+	upd.4 upgt.4 upl.4 uplcom.4 ural.4 ure.4 url.4 urlphy.4 \
 	urndis.4 urng.4 urtw.4 urtwn.4 usb.4 uscom.4 uslcom.4 usps.4 \
 	uthum.4 uticom.4 utpms.4 utwitch.4 utrh.4 uts.4 utvfu.4 uvideo.4 \
 	uvisor.4 uvscom.4 uwacom.4 \

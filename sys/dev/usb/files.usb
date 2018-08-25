@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.135 2018/08/03 01:50:15 kevlo Exp $
+#	$OpenBSD: files.usb,v 1.136 2018/08/25 20:31:31 jcs Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -86,6 +86,11 @@ file	dev/usb/ukbd.c			ukbd			needs-flag
 device	ums: hid, hidms, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# HID Multitouch Trackpad
+device	umt: hid, hidmt, wsmousedev
+attach	umt at uhidbus
+file	dev/usb/umt.c			umt
 
 # USB Touchscreen
 device	uts: wsmousedev

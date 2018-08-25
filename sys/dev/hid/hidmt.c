@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.8 2018/08/25 18:32:05 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.9 2018/08/25 20:31:31 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -221,7 +221,7 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 		return 1;
 	}
 
-	if (hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT)) {
+	if (hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT_TOUCHPAD)) {
 		printf("\n%s: switch to multitouch mode failed\n",
 		    self->dv_xname);
 		return 1;
