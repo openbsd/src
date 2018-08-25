@@ -33,11 +33,14 @@
 #if defined(__amd64__) || defined(__i386__)
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include "acpi.h"
 #endif
 
 #if defined (__loongson__)
 #include <machine/autoconf.h>
+#endif
+
+#ifdef __HAVE_ACPI
+#include "acpi.h"
 #endif
 
 /*

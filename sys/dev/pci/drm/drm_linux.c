@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.30 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.31 2018/08/25 18:42:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -729,7 +729,7 @@ vga_put(struct pci_dev *pdev, int rsrc)
  * ACPI types and interfaces.
  */
 
-#if defined(__amd64__) || defined(__i386__)
+#ifdef __HAVE_ACPI
 #include "acpi.h"
 #endif
 
