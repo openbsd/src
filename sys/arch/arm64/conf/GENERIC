@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.83 2018/08/22 15:38:46 mpi Exp $
+# $OpenBSD: GENERIC,v 1.84 2018/08/26 16:52:16 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -77,9 +77,10 @@ ccp*		at fdt?		# AMD Cryptographic Co-processor
 # NS16550 compatible serial ports
 com*		at fdt?
 
-# Virt on-chip devices
-pluart*		at fdt?		# onboard uarts
+# Generic devices
+plgpio*		at fdt? early 1
 plrtc*		at fdt?
+pluart*		at fdt?
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.68 2018/08/02 14:09:32 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.69 2018/08/26 16:52:16 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -72,6 +72,11 @@ file	dev/fdt/bcm2835_temp.c		bcmtemp
 device	exrtc
 attach	exrtc at fdt
 file	dev/fdt/exrtc.c			exrtc
+
+# ARM PrimeCell PL061 General Purpose Input/Output
+device	plgpio
+attach	plgpio at fdt
+file	dev/fdt/plgpio.c		plgpio
 
 # ARM PrimeCell PL031 Real-time clock
 device	plrtc

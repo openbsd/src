@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.67 2018/08/05 08:54:43 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.68 2018/08/26 16:52:16 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -86,9 +86,10 @@ xhci*		at fdt?
 # NS16550 compatible serial ports
 com*		at fdt?
 
-# Virt on-chip devices
-pluart*		at fdt?		# onboard uarts
+# Generic devices
+plgpio*		at fdt? early 1
 plrtc*		at fdt?
+pluart*		at fdt?
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
 
