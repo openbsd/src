@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.h,v 1.1 2017/04/30 09:03:58 mpi Exp $ */
+/*	$OpenBSD: futex.h,v 1.2 2018/08/26 06:50:30 visa Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -16,39 +16,23 @@
  */
 
 static inline int
-futex_wake(volatile uint32_t *p, int n)
+futex_wake(volatile uint32_t *p, int n, int priv)
 {
-	return futex(p, FUTEX_WAKE, n, NULL, NULL);
+	return futex(p, FUTEX_WAKE | priv, n, NULL, NULL);
 }
 
 static inline void
-futex_wait(volatile uint32_t *p, int val)
+futex_wait(volatile uint32_t *p, int val, int priv)
 {
 	while (*p != (uint32_t)val)
-		futex(p, FUTEX_WAIT, val, NULL, NULL);
+		futex(p, FUTEX_WAIT | priv, val, NULL, NULL);
 }
 
 static inline int
 futex_twait(volatile uint32_t *p, int val, clockid_t clockid,
-    const struct timespec *abs)
+    const struct timespec *timeout, int priv)
 {
-	struct timespec rel;
-
-	if (abs == NULL)
-		return futex(p, FUTEX_WAIT, val, NULL, NULL);
-
-	if (abs->tv_nsec >= 1000000000 || clock_gettime(clockid, &rel))
-		return (EINVAL);
-
-	rel.tv_sec = abs->tv_sec - rel.tv_sec;
-	if ((rel.tv_nsec = abs->tv_nsec - rel.tv_nsec) < 0) {
-		rel.tv_sec--;
-		rel.tv_nsec += 1000000000;
-	}
-	if (rel.tv_sec < 0)
-		return (ETIMEDOUT);
-
-	return futex(p, FUTEX_WAIT, val, &rel, NULL);
+	return futex(p, FUTEX_WAIT | priv, val, timeout, NULL);
 }
 
 static inline int
