@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.68 2018/08/26 16:52:16 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.69 2018/08/26 19:50:08 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -87,6 +87,7 @@ xhci*		at fdt?
 com*		at fdt?
 
 # Generic devices
+pinctrl*	at fdt? early 1
 plgpio*		at fdt? early 1
 plrtc*		at fdt?
 pluart*		at fdt?

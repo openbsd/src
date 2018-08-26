@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.84 2018/08/26 16:52:16 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.85 2018/08/26 19:50:08 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -78,6 +78,7 @@ ccp*		at fdt?		# AMD Cryptographic Co-processor
 com*		at fdt?
 
 # Generic devices
+pinctrl*	at fdt? early 1
 plgpio*		at fdt? early 1
 plrtc*		at fdt?
 pluart*		at fdt?
