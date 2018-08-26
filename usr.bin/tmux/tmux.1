@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.609 2018/08/22 20:06:14 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.610 2018/08/26 09:28:42 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2018 $
+.Dd $Mdocdate: August 26 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3676,6 +3676,10 @@ prefixes are
 and
 .Xr dirname 3
 of the variable respectively.
+.Ql q:
+will escape
+.Xr sh 1
+special characters.
 A prefix of the form
 .Ql s/foo/bar/:
 will substitute
