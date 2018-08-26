@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.23 2018/08/26 17:38:16 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.24 2018/08/26 17:43:39 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -244,12 +244,15 @@ func hashFromString(hs string) (hash.Hash, error) {
 }
 
 func checkAesCbcPkcs5Open(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
-	C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 0)
+	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 0)
+	if ret != 1 {
+		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
+	}
 
 	out := make([]byte, ctLen)
 	var outlen C.int
 
-	ret := C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&ct[0])), C.int(ctLen))
+	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&ct[0])), C.int(ctLen))
 	if ret != 1 {
 		if wt.Result == "invalid" {
 			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
@@ -290,12 +293,15 @@ func checkAesCbcPkcs5Open(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []by
 }
 
 func checkAesCbcPkcs5Seal(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
-	C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 1)
+	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 1)
+	if ret != 1 {
+		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
+	}
 
 	out := make([]byte, msgLen + C.EVP_MAX_BLOCK_LENGTH)
 	var outlen C.int
 
-	ret := C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen))
+	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen))
 	if ret != 1 {
 		if wt.Result == "invalid" {
 			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
@@ -395,7 +401,10 @@ func runAesCbcPkcs5TestGroup(wtg *wycheproofTestGroupAesCbcPkcs5) bool {
 	}
 	defer C.EVP_CIPHER_CTX_free(ctx)
 
-	C.EVP_CipherInit_ex(ctx, cipher, nil, nil, nil, 0)
+	ret := C.EVP_CipherInit_ex(ctx, cipher, nil, nil, nil, 0)
+	if ret != 1 {
+		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
+	}
 
 	success := true
 	for _, wt := range wtg.Tests {
