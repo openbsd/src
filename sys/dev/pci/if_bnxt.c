@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.9 2018/08/24 12:35:10 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.10 2018/08/26 06:40:03 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1147,7 +1147,7 @@ bnxt_intr(void *xsc)
 	uint32_t cons, last_cons;
 	int v_bit, last_v_bit;
 	uint16_t type;
-	int rxfree, txfree;
+	int rxfree, txfree, rv;
 
 	cons = cpr->cons;
 	v_bit = cpr->v_bit;
@@ -1155,6 +1155,7 @@ bnxt_intr(void *xsc)
 	bnxt_write_cp_doorbell(sc, &cpr->ring, 0);
 	rxfree = 0;
 	txfree = 0;
+	rv = -1;
 	for (;;) {
 		last_cons = cons;
 		last_v_bit = v_bit;
@@ -1184,6 +1185,7 @@ bnxt_intr(void *xsc)
 			printf("%s: unexpected completion type %u\n",
 			    DEVNAME(sc), type);
 		}
+		rv = 1;
 	}
 
 	cpr->cons = last_cons;
@@ -1213,7 +1215,7 @@ bnxt_intr(void *xsc)
 		if (ifq_is_oactive(&ifp->if_snd))
 			ifq_restart(&ifp->if_snd);
 	}
-	return (1);
+	return (rv);
 }
 
 void
