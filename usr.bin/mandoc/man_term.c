@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.172 2018/08/18 17:06:58 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.173 2018/08/26 16:18:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -983,7 +983,7 @@ print_man_node(DECL_ARGS)
 	}
 
 	act = man_term_act(n->tok);
-	if ((act->flags & MAN_NOTEXT) == 0)
+	if ((act->flags & MAN_NOTEXT) == 0 && n->tok != MAN_SM)
 		term_fontrepl(p, TERMFONT_NONE);
 
 	c = 1;
@@ -995,7 +995,7 @@ print_man_node(DECL_ARGS)
 
 	if (act->post != NULL)
 		(*act->post)(p, mt, n, meta);
-	if ((act->flags & MAN_NOTEXT) == 0)
+	if ((act->flags & MAN_NOTEXT) == 0 && n->tok != MAN_SM)
 		term_fontrepl(p, TERMFONT_NONE);
 
 out:
