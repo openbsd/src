@@ -1635,6 +1635,7 @@
 ./usr/share/man/man4/pfsync.4
 ./usr/share/man/man4/pgt.4
 ./usr/share/man/man4/piixpm.4
+./usr/share/man/man4/pinctrl.4
 ./usr/share/man/man4/pipex.4
 ./usr/share/man/man4/plgpio.4
 ./usr/share/man/man4/plrtc.4
