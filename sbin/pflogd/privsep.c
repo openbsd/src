@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.31 2018/08/26 18:24:46 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.32 2018/08/26 18:26:51 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -130,6 +130,19 @@ priv_init(int Pflag, int argc, char *argv[])
 	signal(SIGQUIT, sig_pass_to_chld);
 
 	setproctitle("[priv]");
+
+	if (unveil("/etc/resolv.conf", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/etc/hosts", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/etc/services", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/dev/bpf", "r") == -1)
+		err(1, "unveil");
+	if (unveil(filename, "rwc") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 #if 0
 	/* This needs to do bpf ioctl */
