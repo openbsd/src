@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.22 2018/08/26 17:35:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.23 2018/08/26 17:38:16 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -55,6 +55,24 @@ import (
 )
 
 const testVectorPath = "/usr/local/share/wycheproof/testvectors"
+
+type wycheproofTestGroupAesCbcPkcs5 struct {
+	IVSize  int                          `json:"ivSize"`
+	KeySize int                          `json:"keySize"`
+	Type    string                       `json:"type"`
+	Tests   []*wycheproofTestAesCbcPkcs5 `json:"tests"`
+}
+
+type wycheproofTestAesCbcPkcs5 struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Key     string   `json:"key"`
+	IV      string   `json:"iv"`
+	Msg     string   `json:"msg"`
+	CT      string   `json:"ct"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
 
 type wycheproofTestGroupChaCha20Poly1305 struct {
 	IVSize  int                               `json:"ivSize"`
@@ -223,6 +241,169 @@ func hashFromString(hs string) (hash.Hash, error) {
 	default:
 		return nil, fmt.Errorf("unknown hash %q", hs)
 	}
+}
+
+func checkAesCbcPkcs5Open(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
+	C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 0)
+
+	out := make([]byte, ctLen)
+	var outlen C.int
+
+	ret := C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&ct[0])), C.int(ctLen))
+	if ret != 1 {
+		if wt.Result == "invalid" {
+			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	var finallen C.int
+	ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&out[outlen])), &finallen)
+	if ret != 1 {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	outlen += finallen
+	if (outlen != C.int(msgLen)) {
+		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, outlen, msgLen)
+		return false
+	}
+
+	openedMsg := out[0:outlen]
+	if (msgLen == 0) {
+		msg = nil
+	}
+
+	success := false
+	if (bytes.Equal(openedMsg, msg)) || wt.Result == "invalid" {
+		success = true
+	} else {
+		fmt.Printf("FAIL: Test case %d (%q) - msg match: %t; want %v\n", wt.TCID, wt.Comment, bytes.Equal(openedMsg, msg), wt.Result)
+	}
+	return success
+}
+
+func checkAesCbcPkcs5Seal(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
+	C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 1)
+
+	out := make([]byte, msgLen + C.EVP_MAX_BLOCK_LENGTH)
+	var outlen C.int
+
+	ret := C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen))
+	if ret != 1 {
+		if wt.Result == "invalid" {
+			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	var finallen C.int
+	ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&out[outlen])), &finallen)
+	if ret != 1 {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	outlen += finallen
+	if (outlen != C.int(ctLen) && wt.Result != "invalid") {
+		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d; result: %v\n", wt.TCID, wt.Comment, outlen, msgLen, wt.Result)
+		return false
+	}
+
+	sealedMsg := out[0:outlen]
+	if (ctLen == 0) {
+		ct = nil
+	}
+
+	success := false
+	if (bytes.Equal(sealedMsg, ct)) || wt.Result == "invalid" {
+		success = true
+	} else {
+		fmt.Printf("FAIL: Test case %d (%q) - msg match: %t; want %v\n", wt.TCID, wt.Comment, bytes.Equal(sealedMsg, ct), wt.Result)
+	}
+	return success
+}
+
+func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bool {
+	key, err := hex.DecodeString(wt.Key)
+	if err != nil {
+		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
+	}
+	iv, err := hex.DecodeString(wt.IV)
+	if err != nil {
+		log.Fatalf("Failed to decode IV %q: %v", wt.IV, err)
+	}
+	ct, err := hex.DecodeString(wt.CT)
+	if err != nil {
+		log.Fatalf("Failed to decode CT %q: %v", wt.CT, err)
+	}
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
+	}
+
+	keyLen, ivLen, ctLen, msgLen := len(key), len(iv), len(ct), len(msg)
+	
+	if (keyLen == 0) {
+		key = append(key, 0)
+	}
+	if (ivLen == 0) {
+		iv = append(iv, 0)
+	}
+	if (ctLen == 0) {
+		ct = append(ct, 0)
+	}
+	if (msgLen == 0) {
+		msg = append(msg, 0)
+	}
+
+	openSuccess := checkAesCbcPkcs5Open(ctx, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
+	sealSuccess := checkAesCbcPkcs5Seal(ctx, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
+
+	return openSuccess && sealSuccess
+}
+
+func runAesCbcPkcs5TestGroup(wtg *wycheproofTestGroupAesCbcPkcs5) bool {
+	fmt.Printf("Running AES-CBC-PKCS5 test group %v with IV size %d and key size %d\n", wtg.Type, wtg.IVSize, wtg.KeySize)
+
+	var cipher *C.EVP_CIPHER
+	switch wtg.KeySize {
+	case 128:
+		cipher = C.EVP_aes_128_cbc()
+	case 192:
+		cipher = C.EVP_aes_192_cbc()
+	case 256:
+		cipher = C.EVP_aes_256_cbc()
+	default:
+		log.Fatalf("Unsupported key size: %d", wtg.KeySize)
+	}
+
+	ctx := C.EVP_CIPHER_CTX_new()
+	if ctx == nil {
+		log.Fatal("EVP_CIPHER_CTX_new() failed")
+	}
+	defer C.EVP_CIPHER_CTX_free(ctx)
+
+	C.EVP_CipherInit_ex(ctx, cipher, nil, nil, nil, 0)
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runAesCbcPkcs5Test(ctx, wt) {
+			success = false
+		}
+	}
+	return success
 }
 
 func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestChaCha20Poly1305) bool {
@@ -728,6 +909,8 @@ func runTestVectors(path string) bool {
 
 	var wtg interface{}
 	switch wtv.Algorithm {
+	case "AES-CBC-PKCS5":
+		wtg = &wycheproofTestGroupAesCbcPkcs5{}
 	case "CHACHA20-POLY1305":
 		wtg = &wycheproofTestGroupChaCha20Poly1305{}
 	case "DSA":
@@ -748,6 +931,10 @@ func runTestVectors(path string) bool {
 			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
 		}
 		switch wtv.Algorithm {
+		case "AES-CBC-PKCS5":
+			if !runAesCbcPkcs5TestGroup(wtg.(*wycheproofTestGroupAesCbcPkcs5)) {
+				success = false
+			}
 		case "CHACHA20-POLY1305":
 			if !runChaCha20Poly1305TestGroup(wtg.(*wycheproofTestGroupChaCha20Poly1305)) {
 				success = false
@@ -787,6 +974,7 @@ func main() {
 		name    string
 		pattern string
 	}{
+		{"AES", "aes_cbc*test.json"},
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
