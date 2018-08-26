@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.20 2018/08/25 10:07:16 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.21 2018/08/26 17:34:40 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -239,7 +239,7 @@ func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_open() = %d, want %v\n", wt.TCID, wt.Comment, int(openRet), wt.Result)
-		return wt.Result == "invalid"
+		return false
 	}
 
 	if (openedMsgLen != C.size_t(msgLen)) {
