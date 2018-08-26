@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.109 2018/07/10 20:44:39 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.110 2018/08/26 22:30:00 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -391,9 +391,13 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 int
 in6_ifattach_loopback(struct ifnet *ifp)
 {
+	struct in6_addr in6 = in6addr_loopback;
 	struct in6_aliasreq ifra;
 
 	KASSERT(ifp->if_flags & IFF_LOOPBACK);
+
+	if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
+		return (0);
 
 	bzero(&ifra, sizeof(ifra));
 	strncpy(ifra.ifra_name, ifp->if_xname, sizeof(ifra.ifra_name));
@@ -503,13 +507,13 @@ in6_ifattach(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_MULTICAST) == 0)
 		return (EINVAL);
 
-	/* Assign loopback address, if there's none. */
-	if (ifp->if_flags & IFF_LOOPBACK) {
-		struct in6_addr in6 = in6addr_loopback;
+	/*
+	 * Assign loopback address if this lo(4) interface is the
+	 * default for its rdomain.
+	 */
+	if ((ifp->if_flags & IFF_LOOPBACK) &&
+	    (ifp->if_index == rtable_loindex(ifp->if_rdomain))) {
 		int error;
-
-		if (in6ifa_ifpwithaddr(ifp, &in6) != NULL)
-			return (0);
 
 		error = in6_ifattach_loopback(ifp);
 		if (error)
