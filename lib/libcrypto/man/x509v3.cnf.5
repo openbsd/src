@@ -1,4 +1,4 @@
-.\" $OpenBSD: x509v3.cnf.5,v 1.4 2018/02/16 18:48:55 schwarze Exp $
+.\" $OpenBSD: x509v3.cnf.5,v 1.5 2018/08/26 18:04:54 jmc Exp $
 .\" full merge up to:
 .\" OpenSSL man5/x509v3_config a41815f0 Mar 17 18:43:53 2017 -0700
 .\" selective merge up to: OpenSSL 36cf10cf Oct 4 02:11:08 2017 -0400
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 16 2018 $
+.Dd $Mdocdate: August 26 2018 $
 .Dt X509V3.CNF 5
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ is
 .Cm TRUE ,
 then an optional
 .Ic pathlen
-name followed by an non-negative value can be included.
+name followed by a non-negative value can be included.
 For example:
 .Bd -literal -offset indent
 basicConstraints=CA:TRUE
