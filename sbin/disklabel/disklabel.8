@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.124 2017/12/18 09:09:53 ajacoutot Exp $
+.\"	$OpenBSD: disklabel.8,v 1.125 2018/08/26 17:47:54 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 18 2017 $
+.Dd $Mdocdate: August 26 2018 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -457,11 +457,6 @@ Comments are delimited by
 .Ar #
 and newline.
 Any existing bootstrap code will be unaffected.
-.Pp
-The final three forms of
-.Nm
-are used to install bootstrap code on machines where the bootstrap is
-part of the label.
 .Pp
 Note that when a disk has no real
 .Bx
