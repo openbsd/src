@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.7 2018/08/23 15:16:21 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.8 2018/08/26 13:28:13 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -45,9 +45,20 @@ function start_message {
     echo "[TEST] $1"
 }
 
+function stop_s_server {
+    if [ ! -z "$s_server_pid" ] ; then
+        echo ":-| stop s_server [ $s_server_pid ]"
+        sleep 1
+        kill -TERM $s_server_pid
+        wait $s_server_pid
+        s_server_pid=
+    fi
+}
+
 function check_exit_status {
     status=$1
     if [ $status -ne 0 ] ; then
+        stop_s_server
         echo ":-< error occurs, exit status = [ $status ]"
         exit $status
     else
@@ -994,9 +1005,7 @@ start_message "sess_id"
 $openssl_bin sess_id -in $sess_dat -text -out $sess_dat.out
 check_exit_status $?
 
-sleep 1
-kill -TERM $s_server_pid
-wait $s_server_pid
+stop_s_server
 
 #---------#---------#---------#---------#---------#---------#---------#---------
 
