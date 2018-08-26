@@ -1,4 +1,4 @@
-# $OpenBSD: Exec.pm,v 1.4 2012/07/11 12:54:07 espie Exp $
+# $OpenBSD: Exec.pm,v 1.5 2018/08/26 19:09:55 naddy Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -93,7 +93,7 @@ sub command_run
 	}
 	tsay { "@l" };
 	my $pid = fork();
-	if ($pid == -1) {
+	if (!defined $pid) {
 		die "Couldn't fork while running @l\n";
 	}
 	if ($pid == 0) {
