@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.13 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.14 2018/08/26 17:03:32 tb Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: August 26 2018 $
 .Dt D2I_DSAPUBLICKEY 3
 .Os
 .Sh NAME
@@ -69,6 +69,10 @@
 .Nm i2d_DSAPrivateKey_fp ,
 .Nm d2i_DSAparams ,
 .Nm i2d_DSAparams ,
+.Nm d2i_DSAparams_bio ,
+.Nm i2d_DSAparams_bio ,
+.Nm d2i_DSAparams_fp ,
+.Nm i2d_DSAparams_fp ,
 .Nm DSAparams_dup ,
 .Nm d2i_DSA_SIG ,
 .Nm i2d_DSA_SIG
@@ -86,6 +90,7 @@
 .Fa "const DSA *val_in"
 .Fa "unsigned char **der_out"
 .Fc
+.In openssl/x509.h
 .Ft DSA *
 .Fo d2i_DSA_PUBKEY
 .Fa "DSA **val_out"
@@ -117,6 +122,7 @@
 .Fa "FILE *out_fp"
 .Fa "DSA *val_in"
 .Fc
+.In openssl/dsa.h
 .Ft DSA *
 .Fo d2i_DSAPrivateKey
 .Fa "DSA **val_out"
@@ -128,6 +134,7 @@
 .Fa "const DSA *val_in"
 .Fa "unsigned char **der_out"
 .Fc
+.In openssl/x509.h
 .Ft DSA *
 .Fo d2i_DSAPrivateKey_bio
 .Fa "BIO *in_bio"
@@ -148,6 +155,7 @@
 .Fa "FILE *out_fp"
 .Fa "DSA *val_in"
 .Fc
+.In openssl/dsa.h
 .Ft DSA *
 .Fo d2i_DSAparams
 .Fa "DSA **val_out"
@@ -158,6 +166,26 @@
 .Fo i2d_DSAparams
 .Fa "const DSA *val_in"
 .Fa "unsigned char **der_out"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAparams_bio
+.Fa "BIO *in_bio"
+.Fa "DSA **val_out"
+.Fc
+.Ft int
+.Fo i2d_DSAparams_bio
+.Fa "BIO *out_bio"
+.Fa "DSA *val_in"
+.Fc
+.Ft DSA *
+.Fo d2i_DSAparams_fp
+.Fa "FILE *in_fp"
+.Fa "DSA **val_out"
+.Fc
+.Ft int
+.Fo i2d_DSAparams_fp
+.Fa FILE *out_fp
+.Fa "DSA *val_in"
 .Fc
 .Ft DSA *
 .Fo DSAparams_dup
@@ -246,7 +274,6 @@ For private key security when writing private keys to files,
 consider using
 .Xr PEM_write_DSAPrivateKey 3
 instead.
-The
 .Fn d2i_DSAPrivateKey_bio ,
 .Fn d2i_DSAPrivateKey_fp ,
 .Fn i2d_DSAPrivateKey_bio ,
@@ -267,6 +294,15 @@ structure defined in RFC 3279 section 2.3.2
 and used for the parameters field of the ASN.1
 .Vt AlgorithmIdentifier
 structure defined in RFC 5280 section 4.1.1.2.
+.Fn d2i_DSAparams_bio ,
+.Fn i2d_DSAparams_bio ,
+.Fn d2i_DSAparams_fp ,
+.Fn i2d_DSAparams_fp
+are similar except that they decode or encode using a
+.Vt BIO
+or
+.Vt FILE
+pointer.
 .Pp
 .Fn DSAparams_dup
 allocates and initializes an empty
@@ -299,6 +335,8 @@ structure described in RFC 5280 sections 4.1.1.3 and 5.1.1.3.
 .Fn d2i_DSAPrivateKey_bio ,
 .Fn d2i_DSAPrivateKey_fp ,
 .Fn d2i_DSAparams ,
+.Fn d2i_DSAparams_bio ,
+.Fn d2i_DSAparams_fp ,
 and
 .Fn DSAparams_dup
 return a valid
@@ -347,6 +385,10 @@ first appeared in SSLeay 0.6.0.
 .Fn i2d_DSAPrivateKey_fp ,
 .Fn d2i_DSAparams ,
 .Fn i2d_DSAparams ,
+.Fn d2i_DSAparams_bio ,
+.Fn i2d_DSAparams_bio ,
+.Fn d2i_DSAparams_fp ,
+.Fn i2d_DSAparams_fp ,
 and
 .Fn DSAparams_dup
 first appeared in SSLeay 0.8.0.
