@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.125 2018/08/26 17:47:54 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.126 2018/08/26 22:06:50 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -564,10 +564,6 @@ swap		80M-256M 10%
 .Bl -tag -width Pa -compact
 .It Pa /etc/disktab
 Disk description file.
-.It Pa /usr/mdec/ Ns Em xx Ns boot
-Primary bootstrap.
-.It Pa /usr/mdec/boot Ns Em xx
-Secondary bootstrap.
 .El
 .Sh EXAMPLES
 Display the in-core label for sd0 as obtained via
