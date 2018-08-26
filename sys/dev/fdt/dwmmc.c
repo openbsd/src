@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.16 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.17 2018/08/26 14:12:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -101,6 +101,7 @@
 #define SDMMC_FIFOTH		0x004c
 #define  SDMMC_FIFOTH_MSIZE_SHIFT	28
 #define  SDMMC_FIFOTH_RXWM_SHIFT	16
+#define  SDMMC_FIFOTH_RXWM(x)		(((x) >> 16) & 0xfff)
 #define  SDMMC_FIFOTH_TXWM_SHIFT	0
 #define SDMMC_CDETECT		0x0050
 #define  SDMMC_CDETECT_CARD_DETECT_0	(1 << 0)
@@ -250,7 +251,9 @@ dwmmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") ||
+	return (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"));
 }
 
@@ -262,6 +265,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct sdmmcbus_attach_args saa;
 	uint32_t freq, div = 0;
 	uint32_t hcon, width;
+	uint32_t fifoth;
 	int error, timeout;
 
 	if (faa->fa_nreg < 1) {
@@ -307,8 +311,8 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_fifo_depth = OF_getpropint(faa->fa_node, "fifo-depth", 0);
 	if (sc->sc_fifo_depth == 0) {
-		printf(": unsupported FIFO depth\n");
-		return;
+		fifoth = HREAD4(sc, SDMMC_FIFOTH);
+		sc->sc_fifo_depth = SDMMC_FIFOTH_RXWM(fifoth) + 1;
 	}
 
 	/* Some Rockchip variants pre-divide the clock. */
