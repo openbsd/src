@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.87 2018/08/27 13:56:11 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.88 2018/08/27 15:56:22 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -134,6 +134,7 @@ usb*		at dwctwo?
 
 # HiSilicon SoCs
 hidwusb*	at fdt?
+hireset*	at fdt?
 
 # Marvell SoCs
 mvclock*	at fdt? early 1
