@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.210 2018/08/27 16:42:48 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.211 2018/08/27 17:11:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,14 +181,8 @@ __BEGIN_HIDDEN_DECLS
 			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
 			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
-#define n2s(c,s)	((s=(((unsigned int)(c[0]))<< 8)| \
-			    (((unsigned int)(c[1]))    )),c+=2)
 #define s2n(s,c)	((c[0]=(unsigned char)(((s)>> 8)&0xff), \
 			  c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
-
-#define l2n3(l,c)	((c[0]=(unsigned char)(((l)>>16)&0xff), \
-			  c[1]=(unsigned char)(((l)>> 8)&0xff), \
-			  c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
 
 /* LOCAL STUFF */
 
