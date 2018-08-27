@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.17 2018/08/26 14:12:47 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.18 2018/08/27 06:43:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -315,9 +315,12 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fifo_depth = SDMMC_FIFOTH_RXWM(fifoth) + 1;
 	}
 
-	/* Some Rockchip variants pre-divide the clock. */
+	/* Some SoCs pre-divide the clock. */
 	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc"))
 		div = 1;
+	if (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc"))
+		div = 7;
 
 	freq = OF_getpropint(faa->fa_node, "clock-frequency", 0);
 	if (freq > 0)
