@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.26 2018/08/27 21:02:25 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.27 2018/08/27 21:24:13 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -264,100 +264,58 @@ func hashFromString(hs string) (hash.Hash, error) {
 	}
 }
 
-func checkAesCbcPkcs5Open(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
-	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 0)
+func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, in []byte, inLen int, out []byte, outLen int, wt *wycheproofTestAesCbcPkcs5) bool {
+	var action string
+	if doEncrypt == 1 {
+		action = "encrypting"
+	} else {
+		action = "decrypting"
+	}
+
+	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
 	if ret != 1 {
 		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
 	}
 
-	out := make([]byte, ctLen)
-	var outlen C.int
+	cipherOut := make([]byte, inLen + C.EVP_MAX_BLOCK_LENGTH)
+	var cipherOutLen C.int
 
-	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&ct[0])), C.int(ctLen))
+	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen, (*C.uchar)(unsafe.Pointer(&in[0])), C.int(inLen))
 	if ret != 1 {
 		if wt.Result == "invalid" {
-			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+			fmt.Printf("INFO: Test case %d (%q) [%v] - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
 	var finallen C.int
-	ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&out[outlen])), &finallen)
+	ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[cipherOutLen])), &finallen)
 	if ret != 1 {
 		if wt.Result == "invalid" {
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
-	outlen += finallen
-	if (outlen != C.int(msgLen)) {
-		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, outlen, msgLen)
+	cipherOutLen += finallen
+	if cipherOutLen != C.int(outLen) && wt.Result != "invalid" {
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, action, cipherOutLen, outLen)
 		return false
 	}
 
-	openedMsg := out[0:outlen]
-	if (msgLen == 0) {
-		msg = nil
+	openedMsg := out[0:cipherOutLen]
+	if outLen == 0 {
+		out = nil
 	}
 
 	success := false
-	if (bytes.Equal(openedMsg, msg)) || wt.Result == "invalid" {
+	if bytes.Equal(openedMsg, out) || wt.Result == "invalid" {
 		success = true
 	} else {
-		fmt.Printf("FAIL: Test case %d (%q) - msg match: %t; want %v\n", wt.TCID, wt.Comment, bytes.Equal(openedMsg, msg), wt.Result)
-	}
-	return success
-}
-
-func checkAesCbcPkcs5Seal(ctx *C.EVP_CIPHER_CTX, key []byte, keyLen int, iv []byte, ivLen int, ct []byte, ctLen int, msg []byte, msgLen int, wt *wycheproofTestAesCbcPkcs5) bool {
-	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), 1)
-	if ret != 1 {
-		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
-	}
-
-	out := make([]byte, msgLen + C.EVP_MAX_BLOCK_LENGTH)
-	var outlen C.int
-
-	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&out[0])), &outlen, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen))
-	if ret != 1 {
-		if wt.Result == "invalid" {
-			fmt.Printf("INFO: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
-			return true
-		}
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
-		return false
-	}
-
-	var finallen C.int
-	ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&out[outlen])), &finallen)
-	if ret != 1 {
-		if wt.Result == "invalid" {
-			return true
-		}
-		fmt.Printf("FAIL: Test case %d (%q) - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
-		return false
-	}
-
-	outlen += finallen
-	if (outlen != C.int(ctLen) && wt.Result != "invalid") {
-		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d; result: %v\n", wt.TCID, wt.Comment, outlen, msgLen, wt.Result)
-		return false
-	}
-
-	sealedMsg := out[0:outlen]
-	if (ctLen == 0) {
-		ct = nil
-	}
-
-	success := false
-	if (bytes.Equal(sealedMsg, ct)) || wt.Result == "invalid" {
-		success = true
-	} else {
-		fmt.Printf("FAIL: Test case %d (%q) - msg match: %t; want %v\n", wt.TCID, wt.Comment, bytes.Equal(sealedMsg, ct), wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - msg match: %t; want %v\n", wt.TCID, wt.Comment, action, bytes.Equal(openedMsg, out), wt.Result)
 	}
 	return success
 }
@@ -395,8 +353,8 @@ func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bo
 		msg = append(msg, 0)
 	}
 
-	openSuccess := checkAesCbcPkcs5Open(ctx, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
-	sealSuccess := checkAesCbcPkcs5Seal(ctx, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
+	openSuccess := checkAesCbcPkcs5(ctx, 0, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
+	sealSuccess := checkAesCbcPkcs5(ctx, 1, key, keyLen, iv, ivLen, msg, msgLen, ct, ctLen, wt)
 
 	return openSuccess && sealSuccess
 }
