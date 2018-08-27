@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.836 2018/08/22 15:38:46 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.837 2018/08/27 19:32:48 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -471,7 +471,6 @@ uha*	at eisa?		# UltraStor 24f SCSI controllers
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 vmwpvs*	at pci?			# VMware ParaVirtual SCSI
-bwfm*	at pci?			# Broadcom FullMAC
 
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
@@ -628,6 +627,7 @@ malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
 malo*	at pcmcia?			# Marvell 88W8385
 mbg*	at pci?				# Meinberg Funkuhren radio clocks
+bwfm*	at pci?				# Broadcom FullMAC
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs

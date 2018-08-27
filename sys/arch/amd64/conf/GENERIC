@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.461 2018/08/25 20:31:31 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.462 2018/08/27 19:32:48 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -419,7 +419,6 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
 vmwpvs*	at pci?				# VMware ParaVirtual SCSI
 nvme*	at pci?				# NVMe controllers
-bwfm*	at pci?				# Broadcom FullMAC
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives
@@ -546,6 +545,7 @@ pgt*	at cardbus?			# Prism54 (only full-mac varients)
 malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
 malo*	at pcmcia?			# Marvell 88W8385
+bwfm*	at pci?				# Broadcom FullMAC
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
