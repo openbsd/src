@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.161 2018/08/26 09:28:42 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.162 2018/08/27 11:03:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1086,8 +1086,10 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 				found = xstrdup("");
 			}
 		}
-		if (format_choose(ptr + 1, &left, &right) != 0)
+		if (format_choose(ptr + 1, &left, &right) != 0) {
+			free(found);
 			goto fail;
+		}
 
 		if (format_true(found))
 			value = format_expand(ft, left);

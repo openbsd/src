@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.53 2018/07/31 13:06:44 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.54 2018/08/27 11:03:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -87,6 +87,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		if (error != 0) {
 			cmdq_error(item, "-: %s", cause);
 			free(cause);
+			free(cdata);
 			return (CMD_RETURN_ERROR);
 		}
 		return (CMD_RETURN_WAIT);
