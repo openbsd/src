@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.45 2018/08/24 18:10:25 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.46 2018/08/27 16:42:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2526,20 +2526,21 @@ int
 ssl3_send_newsession_ticket(SSL *s)
 {
 	CBB cbb, session_ticket, ticket;
-	unsigned char *enc_ticket = NULL;
-	unsigned char *senc = NULL;
-	const unsigned char *const_p;
-	unsigned char *p, *hmac;
-	size_t hmac_len;
-	int enc_ticket_len, len, slen;
-	int slen_full = 0;
-	SSL_SESSION *sess;
+	SSL_CTX *tctx = s->initial_ctx;
+	size_t enc_session_len, enc_session_max_len, hmac_len;
+	size_t session_len = 0;
+	unsigned char *enc_session = NULL, *session = NULL;
+	unsigned char iv[EVP_MAX_IV_LENGTH];
+	unsigned char key_name[16];
+	unsigned char *hmac;
 	unsigned int hlen;
 	EVP_CIPHER_CTX ctx;
 	HMAC_CTX hctx;
-	SSL_CTX *tctx = s->initial_ctx;
-	unsigned char iv[EVP_MAX_IV_LENGTH];
-	unsigned char key_name[16];
+	int len;
+
+	/*
+	 * New Session Ticket - RFC 5077, section 3.3.
+	 */
 
 	EVP_CIPHER_CTX_init(&ctx);
 	HMAC_CTX_init(&hctx);
@@ -2551,47 +2552,17 @@ ssl3_send_newsession_ticket(SSL *s)
 		    SSL3_MT_NEWSESSION_TICKET))
 			goto err;
 
-		/* get session encoding length */
-		slen_full = i2d_SSL_SESSION(s->session, NULL);
-		/*
-		 * Some length values are 16 bits, so forget it if session is
- 		 * too long
- 		 */
-		if (slen_full > 0xFF00)
+		if (!SSL_SESSION_ticket(s->session, &session, &session_len))
 			goto err;
-		senc = malloc(slen_full);
-		if (!senc)
+		if (session_len > 0xffff)
 			goto err;
-		p = senc;
-		i2d_SSL_SESSION(s->session, &p);
 
 		/*
-		 * Create a fresh copy (not shared with other threads) to
-		 * clean up
+		 * Initialize HMAC and cipher contexts. If callback is present
+		 * it does all the work, otherwise use generated values from
+		 * parent context.
 		 */
-		const_p = senc;
-		sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
-		if (sess == NULL)
-			goto err;
-
-		/* ID is irrelevant for the ticket */
-		sess->session_id_length = 0;
-
-		slen = i2d_SSL_SESSION(sess, NULL);
-		if (slen > slen_full) {
-			/* shouldn't ever happen */
-			goto err;
-		}
-		p = senc;
-		i2d_SSL_SESSION(sess, &p);
-		SSL_SESSION_free(sess);
-
-		/*
-		 * Initialize HMAC and cipher contexts. If callback present
-		 * it does all the work otherwise use generated values
-		 * from parent ctx.
-		 */
-		if (tctx->internal->tlsext_ticket_key_cb) {
+		if (tctx->internal->tlsext_ticket_key_cb != NULL) {
 			if (tctx->internal->tlsext_ticket_key_cb(s,
 			    key_name, iv, &ctx, &hctx, 1) < 0) {
 				EVP_CIPHER_CTX_cleanup(&ctx);
@@ -2606,19 +2577,21 @@ ssl3_send_newsession_ticket(SSL *s)
 			memcpy(key_name, tctx->internal->tlsext_tick_key_name, 16);
 		}
 
-		/* Encrypt the session ticket. */
-		if ((enc_ticket = calloc(1, slen + EVP_MAX_BLOCK_LENGTH)) == NULL)
+		/* Encrypt the session state. */
+		enc_session_max_len = session_len + EVP_MAX_BLOCK_LENGTH;
+		if ((enc_session = calloc(1, enc_session_max_len)) == NULL)
 			goto err;
-		enc_ticket_len = 0;
-		if (!EVP_EncryptUpdate(&ctx, enc_ticket, &len, senc, slen))
+		enc_session_len = 0;
+		if (!EVP_EncryptUpdate(&ctx, enc_session, &len, session,
+		    session_len))
 			goto err;
-		enc_ticket_len += len;
-		if (!EVP_EncryptFinal_ex(&ctx, enc_ticket + enc_ticket_len, &len))
+		enc_session_len += len;
+		if (!EVP_EncryptFinal_ex(&ctx, enc_session + enc_session_len,
+		    &len))
 			goto err;
-		enc_ticket_len += len;
+		enc_session_len += len;
 
-		if (enc_ticket_len < 0 ||
-		    enc_ticket_len > slen + EVP_MAX_BLOCK_LENGTH)
+		if (enc_session_len > enc_session_max_len)
 			goto err;
 
 		/* Generate the HMAC. */
@@ -2626,7 +2599,7 @@ ssl3_send_newsession_ticket(SSL *s)
 			goto err;
 		if (!HMAC_Update(&hctx, iv, EVP_CIPHER_CTX_iv_length(&ctx)))
 			goto err;
-		if (!HMAC_Update(&hctx, enc_ticket, enc_ticket_len))
+		if (!HMAC_Update(&hctx, enc_session, enc_session_len))
 			goto err;
 
 		if ((hmac_len = HMAC_size(&hctx)) <= 0)
@@ -2648,12 +2621,14 @@ ssl3_send_newsession_ticket(SSL *s)
 			goto err;
 		if (!CBB_add_bytes(&ticket, iv, EVP_CIPHER_CTX_iv_length(&ctx)))
 			goto err;
-		if (!CBB_add_bytes(&ticket, enc_ticket, enc_ticket_len))
+		if (!CBB_add_bytes(&ticket, enc_session, enc_session_len))
 			goto err;
 		if (!CBB_add_space(&ticket, &hmac, hmac_len))
 			goto err;
 
 		if (!HMAC_Final(&hctx, hmac, &hlen))
+			goto err;
+		if (hlen != hmac_len)
 			goto err;
 
 		if (!ssl3_handshake_msg_finish(s, &cbb))
@@ -2664,8 +2639,8 @@ ssl3_send_newsession_ticket(SSL *s)
 
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	HMAC_CTX_cleanup(&hctx);
-	freezero(senc, slen_full);
-	free(enc_ticket);
+	freezero(session, session_len);
+	free(enc_session);
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
 	return (ssl3_handshake_write(s));
@@ -2674,8 +2649,8 @@ ssl3_send_newsession_ticket(SSL *s)
 	CBB_cleanup(&cbb);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	HMAC_CTX_cleanup(&hctx);
-	freezero(senc, slen_full);
-	free(enc_ticket);
+	freezero(session, session_len);
+	free(enc_session);
 
 	return (-1);
 }
