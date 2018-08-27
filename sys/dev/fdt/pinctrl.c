@@ -1,4 +1,4 @@
-/*	$OpenBSD: pinctrl.c,v 1.1 2018/08/26 19:50:08 kettenis Exp $	*/
+/*	$OpenBSD: pinctrl.c,v 1.2 2018/08/27 10:03:35 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,10 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
+#define HREAD2(sc, reg)							\
+	(bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+#define HWRITE2(sc, reg, val)						\
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -77,7 +81,8 @@ pinctrl_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reg_width = OF_getpropint(faa->fa_node,
 	    "pinctrl-single,register-width", 0);
-	if (sc->sc_reg_width != 32) {
+	if (sc->sc_reg_width != 16 &&
+	    sc->sc_reg_width != 32) {
 		printf(": unsupported register width\n");
 		return;
 	}
@@ -120,12 +125,21 @@ pinctrl_pinctrl(uint32_t phandle, void *cookie)
 	OF_getpropintarray(node, "pinctrl-single,pins", pins, len);
 
 	for (i = 0; i < len / sizeof(uint32_t); i += 2) {
-		uint32_t reg = pins[i];
-		uint32_t func = pins[i + 1];
-		uint32_t val;
+		if (sc->sc_reg_width == 16) {
+			uint16_t reg = pins[i];
+			uint16_t func = pins[i + 1];
+			uint16_t val;
 
-		switch (sc->sc_reg_width) {
-		case 32:
+			val = HREAD2(sc, reg);
+			val &= ~sc->sc_func_mask;
+			val |= (func & sc->sc_func_mask);
+			HWRITE2(sc, reg, val);
+			break;
+		} else if (sc->sc_reg_width == 32) {
+			uint32_t reg = pins[i];
+			uint32_t func = pins[i + 1];
+			uint32_t val;
+
 			val = HREAD4(sc, reg);
 			val &= ~sc->sc_func_mask;
 			val |= (func & sc->sc_func_mask);
