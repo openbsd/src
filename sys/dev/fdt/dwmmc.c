@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.18 2018/08/27 06:43:28 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.19 2018/08/27 20:13:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -93,7 +93,7 @@
 #define  SDMMC_RINTSTS_RE		(1 << 1)
 #define  SDMMC_RINTSTS_CDT		(1 << 0)
 #define  SDMMC_RINTSTS_DATA_ERR	(SDMMC_RINTSTS_EBE | SDMMC_RINTSTS_SBE | \
-     SDMMC_RINTSTS_HLE | SDMMC_RINTSTS_FRUN | SDMMC_RINTSTS_DCRC)
+    SDMMC_RINTSTS_HLE | SDMMC_RINTSTS_FRUN | SDMMC_RINTSTS_DCRC)
 #define  SDMMC_RINTSTS_DATA_TO	(SDMMC_RINTSTS_HTO | SDMMC_RINTSTS_DRTO)
 #define SDMMC_STATUS		0x0048
 #define SDMMC_STATUS_FIFO_COUNT(x)	(((x) >> 17) & 0x1fff)
@@ -113,6 +113,7 @@
 #define SDMMC_VERID		0x006c
 #define SDMMC_HCON		0x0070
 #define  SDMMC_HCON_DATA_WIDTH(x)	(((x) >> 7) & 0x7)
+#define  SDMMC_HCON_DMA64		(1 << 27)
 #define SDMMC_UHS_REG		0x0074
 #define SDMMC_RST_n		0x0078
 #define SDMMC_BMOD		0x0080
@@ -121,11 +122,11 @@
 #define  SDMMC_BMOD_SWR			(1 << 0)
 #define SDMMC_PLDMND		0x0084
 #define SDMMC_DBADDR		0x0088
-#define SDMMC_IDSTS		0x008c
+#define SDMMC_IDSTS32		0x008c
 #define  SDMMC_IDSTS_NIS		(1 << 8)
 #define  SDMMC_IDSTS_RI			(1 << 1)
 #define  SDMMC_IDSTS_TI			(1 << 0)
-#define SDMMC_IDINTEN		0x0090
+#define SDMMC_IDINTEN32		0x0090
 #define  SDMMC_IDINTEN_NI		(1 << 8)
 #define  SDMMC_IDINTEN_RI		(1 << 1)
 #define  SDMMC_IDINTEN_TI		(1 << 0)
@@ -139,20 +140,36 @@
 #define SDMMC_EMMC_DDR_REG	0x0108
 #define SDMMC_FIFO_BASE		0x0200
 
-#define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
-#define HWRITE4(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
-#define HSET4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
-#define HCLR4(sc, reg, bits)						\
-	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
+#define SDMMC_DBADDRL		0x0088
+#define SDMMC_DBADDRH		0x008c
+#define SDMMC_IDSTS64		0x0090
+#define SDMMC_IDINTEN64		0x0094
+#define SDMMC_DSCADDRL		0x0098
+#define SDMMC_DSCADDRH		0x009c
+#define SDMMC_BUFADDRL		0x00a0
+#define SDMMC_BUFADDRH		0x00a4
 
-struct dwmmc_desc {
+#define SDMMC_IDSTS(sc) \
+    ((sc)->sc_dma64 ? SDMMC_IDSTS64 : SDMMC_IDSTS32)
+
+#define HREAD4(sc, reg)							\
+    (bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+#define HWRITE4(sc, reg, val)						\
+    bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+    HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+    HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
+
+struct dwmmc_desc32 {
 	uint32_t des[4];
 };
 
-#define DWMMC_NDESC	(PAGE_SIZE / sizeof(struct dwmmc_desc))
+struct dwmmc_desc64 {
+	uint32_t des[8];
+};
+
+#define DWMMC_NDESC	(PAGE_SIZE / sizeof(struct dwmmc_desc64))
 #define DWMMC_MAXSEGSZ	0x1000
 
 #define DES0_OWN	(1U << 31)
@@ -165,6 +182,8 @@ struct dwmmc_desc {
 
 #define DES1_BS2(sz)	(((sz) & 0x1fff) << 13)
 #define DES1_BS1(sz)	(((sz) & 0x1fff) << 0)
+#define DES2_BS2(sz)	DES1_BS2(sz)
+#define DES2_BS1(sz)	DES1_BS1(sz)
 
 struct dwmmc_softc {
 	struct device		sc_dev;
@@ -187,6 +206,7 @@ struct dwmmc_softc {
 	bus_dmamap_t		sc_desc_map;
 	bus_dma_segment_t	sc_desc_segs[1];
 	caddr_t			sc_desc;
+	int			sc_dma64;
 	int			sc_dmamode;
 	uint32_t		sc_idsts;
 
@@ -315,6 +335,9 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fifo_depth = SDMMC_FIFOTH_RXWM(fifoth) + 1;
 	}
 
+	if (hcon & SDMMC_HCON_DMA64)
+		sc->sc_dma64 = 1;
+
 	/* Some SoCs pre-divide the clock. */
 	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc"))
 		div = 1;
@@ -396,7 +419,9 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_4BIT_MODE;
 
 	/* XXX DMA doesn't work on all variants yet. */
-	if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-dw-mshc") ||
+	if (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"))
 		saa.caps |= SMC_CAPS_DMA;
@@ -445,16 +470,16 @@ dwmmc_alloc_descriptors(struct dwmmc_softc *sc)
 }
 
 void
-dwmmc_init_descriptors(struct dwmmc_softc *sc)
+dwmmc_init_descriptors32(struct dwmmc_softc *sc)
 {
-	struct dwmmc_desc *desc;
+	struct dwmmc_desc32 *desc;
 	bus_addr_t addr;
 	int i;
 
 	desc = (void *)sc->sc_desc;
 	addr = sc->sc_desc_map->dm_segs[0].ds_addr;
 	for (i = 0; i < DWMMC_NDESC; i++) {
-		addr += sizeof(struct dwmmc_desc);
+		addr += sizeof(struct dwmmc_desc32);
 		desc[i].des[3] = addr;
 	}
 	desc[DWMMC_NDESC - 1].des[3] = sc->sc_desc_map->dm_segs[0].ds_addr;
@@ -462,10 +487,48 @@ dwmmc_init_descriptors(struct dwmmc_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
 	    PAGE_SIZE, BUS_DMASYNC_PREWRITE);
 
-	HWRITE4(sc, SDMMC_IDSTS, 0xffffffff);
-	HWRITE4(sc, SDMMC_IDINTEN,
+	HWRITE4(sc, SDMMC_IDSTS32, 0xffffffff);
+	HWRITE4(sc, SDMMC_IDINTEN32,
 	    SDMMC_IDINTEN_NI | SDMMC_IDINTEN_RI | SDMMC_IDINTEN_TI);
 	HWRITE4(sc, SDMMC_DBADDR, sc->sc_desc_map->dm_segs[0].ds_addr);
+}
+
+void
+dwmmc_init_descriptors64(struct dwmmc_softc *sc)
+{
+	struct dwmmc_desc64 *desc;
+	bus_addr_t addr;
+	int i;
+
+	desc = (void *)sc->sc_desc;
+	addr = sc->sc_desc_map->dm_segs[0].ds_addr;
+	for (i = 0; i < DWMMC_NDESC; i++) {
+		addr += sizeof(struct dwmmc_desc64);
+		desc[i].des[6] = addr;
+		desc[i].des[7] = (uint64_t)addr >> 32;
+	}
+	desc[DWMMC_NDESC - 1].des[6] = sc->sc_desc_map->dm_segs[0].ds_addr;
+	desc[DWMMC_NDESC - 1].des[7] =
+	    (uint64_t)sc->sc_desc_map->dm_segs[0].ds_addr >> 32;
+	desc[DWMMC_NDESC - 1].des[0] = DES0_ER;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0,
+	    PAGE_SIZE, BUS_DMASYNC_PREWRITE);
+
+	HWRITE4(sc, SDMMC_IDSTS64, 0xffffffff);
+	HWRITE4(sc, SDMMC_IDINTEN64,
+	    SDMMC_IDINTEN_NI | SDMMC_IDINTEN_RI | SDMMC_IDINTEN_TI);
+	HWRITE4(sc, SDMMC_DBADDRL, sc->sc_desc_map->dm_segs[0].ds_addr);
+	HWRITE4(sc, SDMMC_DBADDRH,
+	    (uint64_t)sc->sc_desc_map->dm_segs[0].ds_addr >> 32);
+}
+
+void
+dwmmc_init_descriptors(struct dwmmc_softc *sc)
+{
+	if (sc->sc_dma64)
+		dwmmc_init_descriptors64(sc);
+	else
+		dwmmc_init_descriptors32(sc);
 }
 
 int
@@ -475,9 +538,9 @@ dwmmc_intr(void *arg)
 	uint32_t stat;
 	int handled = 0;
 
-	stat = HREAD4(sc, SDMMC_IDSTS);
+	stat = HREAD4(sc, SDMMC_IDSTS(sc));
 	if (stat) {
-		HWRITE4(sc, SDMMC_IDSTS, stat);
+		HWRITE4(sc, SDMMC_IDSTS(sc), stat);
 		sc->sc_idsts |= stat;
 		wakeup(&sc->sc_idsts);
 		handled = 1;
@@ -698,9 +761,9 @@ dwmmc_dma_mode(struct dwmmc_softc *sc)
 }
 
 void
-dwmmc_dma_setup(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
+dwmmc_dma_setup32(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 {
-	struct dwmmc_desc *desc = (void *)sc->sc_desc;
+	struct dwmmc_desc32 *desc = (void *)sc->sc_desc;
 	uint32_t flags;
 	int seg;
 
@@ -720,6 +783,41 @@ dwmmc_dma_setup(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 		desc[seg].des[2] = addr;
 		flags &= ~DES0_FS;
 	}
+}
+
+void
+dwmmc_dma_setup64(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	struct dwmmc_desc64 *desc = (void *)sc->sc_desc;
+	uint32_t flags;
+	int seg;
+
+	flags = DES0_OWN | DES0_FS | DES0_CH | DES0_DIC;
+	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+		bus_addr_t addr = cmd->c_dmamap->dm_segs[seg].ds_addr;
+		bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
+
+		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
+			flags |= DES0_LD;
+			flags &= ~DES0_DIC;
+		}
+
+		KASSERT((desc[seg].des[0] & DES0_OWN) == 0);
+		desc[seg].des[0] = flags;
+		desc[seg].des[2] = DES2_BS1(len);
+		desc[seg].des[4] = addr;
+		desc[seg].des[5] = (uint64_t)addr >> 32;
+		flags &= ~DES0_FS;
+	}
+}
+
+void
+dwmmc_dma_setup(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	if (sc->sc_dma64)
+		dwmmc_dma_setup64(sc, cmd);
+	else
+		dwmmc_dma_setup32(sc, cmd);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_desc_map, 0, PAGE_SIZE,
 	    BUS_DMASYNC_PREWRITE);
