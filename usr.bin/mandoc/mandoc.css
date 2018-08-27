@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.23 2018/07/23 22:51:24 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.24 2018/08/27 23:12:57 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -111,7 +111,7 @@ td.foot-os {	text-align: right; }
 		float: left;
 		margin-top: 0em;
 		margin-left: -5.5em;
-		padding-right: 1.2em;
+		padding-right: 0.5em;
 		vertical-align: top; }
 .Bl-tag > dd {
 		clear: right;
