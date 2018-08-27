@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.7 2018/08/27 11:43:36 claudio Exp $ */
+/*	$OpenBSD: filter.c,v 1.8 2018/08/27 12:15:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -37,7 +37,9 @@ ldap_filt_eq(struct ber_element *root, struct plan *plan)
 	char			*vs;
 	struct ber_element	*a, *vals, *v;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
@@ -116,7 +118,9 @@ ldap_filt_subs(struct ber_element *root, struct plan *plan)
 	const char		*attr;
 	struct ber_element	*a, *v;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
@@ -188,7 +192,9 @@ ldap_filt_presence(struct ber_element *root, struct plan *plan)
 {
 	struct ber_element	*a;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
