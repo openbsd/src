@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.27 2018/08/27 21:24:13 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.28 2018/08/27 21:27:39 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -415,7 +415,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		if (wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size") {
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: setting IV len to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ivLen, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting IV len to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ivLen, ret, wt.Result)
 		return false
 	}
 
@@ -424,26 +424,26 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		if (wt.Comment == "Invalid tag size") {
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: setting tag length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, tagLen, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting tag length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, tagLen, ret, wt.Result)
 		return false
 	}
 
 	ret = C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: setting key and IV failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting key and IV failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
 	var cipherOutLen C.int
 	ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, nil, C.int(inLen))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: setting input length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, inLen, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting input length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, inLen, ret, wt.Result)
 		return false
 	}
 
 	ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, (*C.uchar)(unsafe.Pointer(&aad[0])), C.int(aadLen))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: processing AAD failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - processing AAD failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
@@ -458,18 +458,18 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		if wt.Result == "invalid" {
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: EVP_CipherUpdate failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherUpdate failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
 	if cipherOutLen != C.int(outLen) {
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: cipherOutLen %d != outLen %d. Result %v\n", wt.TCID, wt.Comment, cipherOutLen, action, outLen, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - cipherOutLen %d != outLen %d. Result %v\n", wt.TCID, wt.Comment, cipherOutLen, action, outLen, wt.Result)
 		return false
 	}
 
 	success := true
 	if !bytes.Equal(cipherOut, out) {
-		fmt.Printf("FAIL: Test case %d (%q) [%v]: expected and computed output do not match. Result.%v\n", wt.TCID, wt.Comment, action, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed output do not match. Result.%v\n", wt.TCID, wt.Comment, action, wt.Result)
 		success = false
 	}
 	return success
