@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_SSL_SESSION.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: d2i_SSL_SESSION.3,v 1.6 2018/08/27 15:42:39 jsing Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: August 27 2018 $
 .Dt D2I_SSL_SESSION 3
 .Os
 .Sh NAME
@@ -131,31 +131,29 @@ the memory location pointed to by
 .Fa pp
 must be large enough to hold the binary representation of the session.
 There is no known limit on the size of the created ASN1 representation,
-so the necessary amount of space should be obtained by first calling
+so call
 .Fn i2d_SSL_SESSION
-with
-.Fa pp Ns
-= Ns
-.Dv NULL ,
-and obtain the size needed, then allocate the memory and call
+first with
+.Fa pp Ns = Ns Dv NULL
+to obtain the encoded size, before allocating the required amount of memory and
+calling
 .Fn i2d_SSL_SESSION
 again.
 Note that this will advance the value contained in
 .Fa *pp
 so it is necessary to save a copy of the original allocation.
 For example:
-.Bd -literal
-int i, j;
+.Bd -literal -offset indent
+char	*p, *pp;
+int	 elen, len;
 
-char *p, *temp;
-
- i = i2d_SSL_SESSION(sess, NULL);
- p = temp = malloc(i);
- if (temp != NULL) {
-	j = i2d_SSL_SESSION(sess, &temp);
-	assert(i == j);
-	assert(p + i == temp);
- }
+elen = i2d_SSL_SESSION(sess, NULL);
+p = pp = malloc(elen);
+if (p != NULL) {
+	len = i2d_SSL_SESSION(sess, &pp);
+	assert(elen == len);
+	assert(p + len == pp);
+}
 .Ed
 .Sh RETURN VALUES
 .Fn d2i_SSL_SESSION
