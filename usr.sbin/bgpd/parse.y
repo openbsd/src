@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.329 2018/08/08 13:52:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.330 2018/08/27 09:49:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3999,12 +3999,9 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				break;
 			case ACTION_SET_LARGE_COMMUNITY:
 			case ACTION_DEL_LARGE_COMMUNITY:
-				if (s->action.large_community.as <
-				    t->action.large_community.as ||
-				    (s->action.large_community.as ==
-				    t->action.large_community.as &&
-				    s->action.large_community.ld1 <
-				    t->action.large_community.ld2 )) {
+				if (memcmp(&s->action.large_community,
+				    &t->action.large_community,
+				    sizeof(s->action.large_community)) < 0) {
 					TAILQ_INSERT_BEFORE(t, s, entry);
 					return (0);
 				}
