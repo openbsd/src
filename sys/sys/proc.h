@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.257 2018/08/25 15:38:07 anton Exp $	*/
+/*	$OpenBSD: proc.h,v 1.258 2018/08/27 15:57:39 anton Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -288,7 +288,7 @@ struct process {
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" )
 
 
-struct kd;
+struct kcov_dev;
 struct lock_list_entry;
 
 struct proc {
@@ -376,7 +376,7 @@ struct proc {
 
 	struct	lock_list_entry *p_sleeplocks;
 
-	struct	kd *p_kd;	/* kcov descriptor */
+	struct	kcov_dev *p_kd;
 };
 
 /* Status values. */

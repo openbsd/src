@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.3 2018/08/25 15:38:07 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.4 2018/08/27 15:57:39 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -33,8 +33,7 @@
 #define DPRINTF(x...)
 #endif
 
-/* kcov descriptor */
-struct kd {
+struct kcov_dev {
 	enum {
 		KCOV_MODE_DISABLED,
 		KCOV_MODE_INIT,
@@ -46,18 +45,18 @@ struct kd {
 	size_t		 kd_nmemb;
 	size_t		 kd_size;
 
-	TAILQ_ENTRY(kd)	 kd_entry;
+	TAILQ_ENTRY(kcov_dev)	kd_entry;
 };
 
 void kcovattach(int);
 
-int kd_alloc(struct kd *, unsigned long);
-void kd_free(struct kd *);
-struct kd *kd_lookup(int);
+int kd_alloc(struct kcov_dev *, unsigned long);
+void kd_free(struct kcov_dev *);
+struct kcov_dev *kd_lookup(int);
 
 static inline int inintr(void);
 
-TAILQ_HEAD(, kd) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
+TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 
 #ifdef KCOV_DEBUG
 int kcov_debug = 1;
@@ -78,7 +77,7 @@ void
 __sanitizer_cov_trace_pc(void)
 {
 	extern int cold;
-	struct kd *kd;
+	struct kcov_dev *kd;
 	uint64_t idx;
 
 	/* Do not trace during boot. */
@@ -108,7 +107,7 @@ kcovattach(int count)
 int
 kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 
 	if (kd_lookup(minor(dev)) != NULL)
 		return (EBUSY);
@@ -124,7 +123,7 @@ kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 int
 kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 
 	kd = kd_lookup(minor(dev));
 	if (kd == NULL)
@@ -143,7 +142,7 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 	int error = 0;
 
 	kd = kd_lookup(minor(dev));
@@ -192,7 +191,7 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 kcovmmap(dev_t dev, off_t offset, int prot)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 	paddr_t pa;
 	vaddr_t va;
 
@@ -212,7 +211,7 @@ kcovmmap(dev_t dev, off_t offset, int prot)
 void
 kcov_exit(struct proc *p)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 
 	kd = p->p_kd;
 	if (kd == NULL)
@@ -227,10 +226,10 @@ kcov_exit(struct proc *p)
 	p->p_kd = NULL;
 }
 
-struct kd *
+struct kcov_dev *
 kd_lookup(int unit)
 {
-	struct kd *kd;
+	struct kcov_dev *kd;
 
 	TAILQ_FOREACH(kd, &kd_list, kd_entry) {
 		if (kd->kd_unit == unit)
@@ -240,7 +239,7 @@ kd_lookup(int unit)
 }
 
 int
-kd_alloc(struct kd *kd, unsigned long nmemb)
+kd_alloc(struct kcov_dev *kd, unsigned long nmemb)
 {
 	size_t size;
 
@@ -258,13 +257,13 @@ kd_alloc(struct kd *kd, unsigned long nmemb)
 }
 
 void
-kd_free(struct kd *kd)
+kd_free(struct kcov_dev *kd)
 {
 	DPRINTF("%s: unit=%d mode=%d\n", __func__, kd->kd_unit, kd->kd_mode);
 
 	TAILQ_REMOVE(&kd_list, kd, kd_entry);
 	free(kd->kd_buf, M_SUBPROC, kd->kd_size);
-	free(kd, M_SUBPROC, sizeof(struct kd));
+	free(kd, M_SUBPROC, sizeof(*kd));
 }
 
 static inline int
