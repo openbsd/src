@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.22 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.omap,v 1.23 2018/08/27 10:17:35 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -25,10 +25,6 @@ device sitaracm
 attach sitaracm at omap
 file	arch/armv7/omap/am335x_cm_padconf.c	sitaracm
 file	arch/armv7/omap/sitara_cm.c		sitaracm
-
-device ompinmux
-attach ompinmux at fdt
-file	arch/armv7/omap/ompinmux.c		ompinmux
 
 device omgpio: gpiobus
 attach omgpio at fdt
