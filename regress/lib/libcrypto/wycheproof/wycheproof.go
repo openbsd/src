@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.25 2018/08/27 20:58:02 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.26 2018/08/27 21:02:25 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -402,7 +402,7 @@ func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bo
 }
 
 func runAesCbcPkcs5TestGroup(wtg *wycheproofTestGroupAesCbcPkcs5) bool {
-	fmt.Printf("Running AES-CBC-PKCS5 test group %v with IV size %d and key size %d\n", wtg.Type, wtg.IVSize, wtg.KeySize)
+	fmt.Printf("Running AES-CBC-PKCS5 test group %v with IV size %d and key size %d...\n", wtg.Type, wtg.IVSize, wtg.KeySize)
 
 	var cipher *C.EVP_CIPHER
 	switch wtg.KeySize {
@@ -576,7 +576,7 @@ func runAesCcmTest(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcm) bool {
 }
 
 func runAesCcmTestGroup(wtg *wycheproofTestGroupAesCcm) bool {
-	fmt.Printf("Running AES-CCM test group %v with IV size %d, key size %d and tag size %d\n", wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
+	fmt.Printf("Running AES-CCM test group %v with IV size %d, key size %d and tag size %d...\n", wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
 	var cipher *C.EVP_CIPHER
 	switch wtg.KeySize {
