@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.330 2018/08/27 09:49:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.331 2018/08/27 19:32:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3191,7 +3191,7 @@ getcommunity(char *s, int large)
 		return (COMMUNITY_LOCAL_AS);
 	if (large)
 		max = UINT_MAX;
-	val = strtonum(s, 0, UINT_MAX, &errstr);
+	val = strtonum(s, 0, max, &errstr);
 	if (errstr) {
 		yyerror("Community %s is %s (max: %llu)", s, errstr, max);
 		return (COMMUNITY_ERROR);
