@@ -435,6 +435,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	pcireg_t		 type;
 	int			 i;
 	uint8_t			 rmmio_bar;
+	paddr_t			 fb_aper;
 #if !defined(__sparc64__)
 	pcireg_t		 addr, mask;
 	int			 s;
@@ -659,6 +660,10 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		fbwscons_console_init(&rdev->sf, -1);
 }
 #endif
+
+	fb_aper = bus_space_mmap(rdev->memt, rdev->fb_aper_offset, 0, 0, 0);
+	if (fb_aper != -1)
+		rasops_claim_framebuffer(fb_aper, rdev->fb_aper_size, self);
 
 	rdev->shutdown = true;
 	config_mountroot(self, radeondrm_attachhook);

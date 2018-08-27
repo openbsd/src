@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.55 2018/08/25 12:23:45 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.56 2018/08/27 09:30:07 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1967,4 +1967,40 @@ rasops_scrollback(void *v, void *cookie, int lines)
 
 	if (scr->rs_crow != -1 && scr->rs_visibleoffset == scr->rs_dispoffset)
 		rasops_cursor(ri, 1, scr->rs_crow, scr->rs_ccol);
+}
+
+struct rasops_framebuffer {
+	SLIST_ENTRY(rasops_framebuffer)	rf_list;
+	paddr_t		rf_base;
+	psize_t		rf_size;
+	struct device	*rf_dev;
+};
+
+SLIST_HEAD(, rasops_framebuffer) rasops_framebuffers =
+    SLIST_HEAD_INITIALIZER(&rasops_framebuffers);
+
+void
+rasops_claim_framebuffer(paddr_t base, psize_t size, struct device *dev)
+{
+	struct rasops_framebuffer *rf;
+
+	rf = malloc(sizeof(*rf), M_DEVBUF, M_WAITOK);
+	rf->rf_base = base;
+	rf->rf_size = size;
+	rf->rf_dev = dev;
+
+	SLIST_INSERT_HEAD(&rasops_framebuffers, rf, rf_list);
+}
+
+int
+rasops_check_framebuffer(paddr_t base)
+{
+	struct rasops_framebuffer *rf;
+
+	SLIST_FOREACH(rf, &rasops_framebuffers, rf_list) {
+		if (base >= rf->rf_base && base < rf->rf_base + rf->rf_size)
+			return 1;
+	}
+
+	return 0;
 }
