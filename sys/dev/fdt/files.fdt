@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.71 2018/08/27 13:56:11 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.72 2018/08/27 14:12:59 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -122,6 +122,10 @@ file	dev/fdt/syscon.c		syscon
 device	hidwusb: fdt
 attach	hidwusb at fdt
 file	dev/fdt/hidwusb.c		hidwusb
+
+device	hireset
+attach	hireset at fdt
+file	dev/fdt/hireset.c		hireset
 
 device	rkclock
 attach	rkclock at fdt
