@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.46 2018/08/27 16:42:48 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.47 2018/08/27 16:48:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1270,7 +1270,7 @@ ssl3_send_server_done(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 {
 	CBB dh_p, dh_g, dh_Ys;

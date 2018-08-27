@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.168 2018/08/24 17:30:32 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.169 2018/08/27 16:48:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2082,14 +2082,14 @@ _SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *cert)
 	return 1;
 }
 
-int
+static int
 _SSL_CTX_get_extra_chain_certs(SSL_CTX *ctx, STACK_OF(X509) **certs)
 {
 	*certs = ctx->extra_certs;
 	return 1;
 }
 
-int
+static int
 _SSL_CTX_clear_extra_chain_certs(SSL_CTX *ctx)
 {
 	sk_X509_pop_free(ctx->extra_certs, X509_free);
