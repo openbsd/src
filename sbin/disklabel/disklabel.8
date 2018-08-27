@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.126 2018/08/26 22:06:50 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.127 2018/08/27 13:09:51 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 26 2018 $
+.Dd $Mdocdate: August 27 2018 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -230,7 +230,7 @@ The optional argument is a pack
 identification string, up to 16 characters long.
 The pack ID must be quoted if it contains blanks.
 The existing label will be updated via the in-core
-copy and any bootstrap code will be unaffected.
+copy.
 .Pp
 In the third form of the command
 .Pq edit ,
@@ -243,7 +243,6 @@ environment variable,
 is used.
 When the editor terminates, the formatted label is reread and
 used to rewrite the disk label.
-Existing bootstrap code is unchanged.
 .Pp
 The built-in label editor
 .Pq fourth form
@@ -456,7 +455,6 @@ as that produced when reading or editing a label.
 Comments are delimited by
 .Ar #
 and newline.
-Any existing bootstrap code will be unaffected.
 .Pp
 Note that when a disk has no real
 .Bx
@@ -575,19 +573,16 @@ Create a label for sd0 based on information for
 .Dq sd2212
 found in
 .Pa /etc/disktab .
-Any existing bootstrap code will be clobbered.
 .Pp
 .Dl # disklabel -w /dev/rsd0c sd2212 foo
 .Pp
 Read the on-disk label from a disk with DUID 3eb7f9da875cb9ee,
 edit it and reinstall in-core as well as on-disk.
-Existing bootstrap code is unaffected.
 .Pp
 .Dl # disklabel -E 3eb7f9da875cb9ee
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
 .Pa mylabel .
-Existing bootstrap code is unaffected.
 .Pp
 .Dl # disklabel -R sd0 mylabel
 .Sh DIAGNOSTICS
@@ -604,34 +599,10 @@ the first one creating at least one other partition, and the second
 setting the label on the new partition while shrinking the
 .Sq a
 partition.
-.Pp
-On some machines the bootstrap code may not fit entirely in the
-area allocated for it by some filesystems.
-As a result, it may
-not be possible to have filesystems on some partitions of a
-.Dq bootable
-disk.
-When installing bootstrap code,
-.Nm
-checks for these cases.
-If the installed boot code would overlap a partition of type
-.Dv FS_UNUSED
-it is marked as type
-.Dv FS_BOOT .
-The
-.Xr newfs 8
-utility will disallow creation of filesystems on
-.Dv FS_BOOT
-partitions.
-Conversely, if a partition has a type other than
-.Dv FS_UNUSED
-or
-.Dv FS_BOOT ,
-.Nm
-will not install bootstrap code that overlaps it.
 .Sh SEE ALSO
 .Xr disklabel 5 ,
 .Xr disktab 5 ,
+.Xr installboot 8 ,
 .Xr scan_ffs 8
 .Sh CAVEATS
 The maximum disk and partition size is 64PB.
