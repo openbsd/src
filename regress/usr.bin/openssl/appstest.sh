@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.8 2018/08/26 13:28:13 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.9 2018/08/27 06:50:13 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -940,22 +940,18 @@ check_exit_status $?
 
 #---------#---------#---------#---------#---------#---------#---------#---------
 
-# --- client/server operations ---
-section_message "client/server operations"
+# --- client/server operations (TLS) ---
+section_message "client/server operations (TLS)"
 
 host="localhost"
 port=4433
 sess_dat=$user1_dir/s_client_sess.dat
-s_server_out=$server_dir/s_server.out
-s_client_1_out=$user1_dir/s_client_1.out
-s_client_2_out=$user1_dir/s_client_2.out
-s_client_3_out=$user1_dir/s_client_3.out
+s_server_out=$server_dir/s_server_tls.out
 
 start_message "s_server ... start SSL/TLS test server"
 $openssl_bin s_server -accept $port -CAfile $ca_cert \
     -cert $server_cert -key $server_key -pass pass:$server_pass \
-    -context "appstest.sh" -id_prefix "APPSTEST.SH" \
-    -crl_check -no_ssl2 -no_ssl3 -no_tls1 \
+    -context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
     -nextprotoneg "http/1.1,spdy/3" -alpn "http/1.1,spdy/3" -www \
     -msg -tlsextdebug > $s_server_out 2>&1 &
 check_exit_status $?
@@ -963,44 +959,118 @@ s_server_pid=$!
 echo "s_server pid = [ $s_server_pid ]"
 sleep 1
 
-start_message "s_client ... connect to SSL/TLS test server"
+# protocol = TLSv1
+
+s_client_out=$user1_dir/s_client_tls_1_0.out
+
+start_message "s_client ... connect to SSL/TLS test server by TLSv1"
+$openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
+    -tls1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+check_exit_status $?
+
+grep 'Protocol  : TLSv1$' $s_client_out > /dev/null
+check_exit_status $?
+
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+check_exit_status $?
+
+# protocol = TLSv1.1
+
+s_client_out=$user1_dir/s_client_tls_1_1.out
+
+start_message "s_client ... connect to SSL/TLS test server by TLSv1.1"
+$openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
+    -tls1_1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+check_exit_status $?
+
+grep 'Protocol  : TLSv1\.1$' $s_client_out > /dev/null
+check_exit_status $?
+
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+check_exit_status $?
+
+# protocol = TLSv1.2
+
+s_client_out=$user1_dir/s_client_tls_1_2.out
+
+start_message "s_client ... connect to SSL/TLS test server by TLSv1.2"
+$openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
+    -tls1_2 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+check_exit_status $?
+
+grep 'Protocol  : TLSv1\.2$' $s_client_out > /dev/null
+check_exit_status $?
+
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+check_exit_status $?
+
+# cipher = CHACHA20
+
+s_client_out=$user1_dir/s_client_tls_chacha20.out
+
+start_message "s_client ... connect to SSL/TLS test server with CHACHA20"
+$openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
+    -cipher 'CHACHA20' -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+check_exit_status $?
+
+grep 'Cipher    : .*-CHACHA20-.*' $s_client_out > /dev/null
+check_exit_status $?
+
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+check_exit_status $?
+
+# Get session ticket to reuse
+
+s_client_out=$user1_dir/s_client_tls_reuse_1.out
+
+start_message "s_client ... connect to SSL/TLS test server to get session id"
 $openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
     -nextprotoneg "spdy/3,http/1.1" -alpn "spdy/3,http/1.1" \
     -sess_out $sess_dat \
-    -msg -tlsextdebug < /dev/null > $s_client_1_out 2>&1
+    -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 check_exit_status $?
 
-grep 'New, TLSv1/SSLv3' $s_client_1_out > /dev/null
+grep 'New, TLSv1/SSLv3' $s_client_out > /dev/null
 check_exit_status $?
 
-grep 'Verify return code: 0 (ok)' $s_client_1_out > /dev/null
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 check_exit_status $?
+
+# Reuse session ticket
+
+s_client_out=$user1_dir/s_client_tls_reuse_2.out
 
 start_message "s_client ... connect to SSL/TLS test server reusing session id"
 $openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
     -sess_in $sess_dat \
-    -msg -tlsextdebug < /dev/null > $s_client_2_out 2>&1
+    -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 check_exit_status $?
 
-grep 'Reused, TLSv1/SSLv3' $s_client_2_out > /dev/null
+grep 'Reused, TLSv1/SSLv3' $s_client_out > /dev/null
 check_exit_status $?
 
-grep 'Verify return code: 0 (ok)' $s_client_2_out > /dev/null
+grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 check_exit_status $?
+
+# invalid verification pattern
+
+s_client_out=$user1_dir/s_client_tls_invalid.out
 
 start_message "s_client ... connect to SSL/TLS test server but verify error"
 $openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
     -showcerts -crl_check -issuer_checks -policy_check \
-    -msg -tlsextdebug < /dev/null > $s_client_3_out 2>&1
+    -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 check_exit_status $?
 
-grep 'Verify return code: 24 (invalid CA certificate)' $s_client_3_out > /dev/null
+grep 'Verify return code: 24 (invalid CA certificate)' $s_client_out > /dev/null
 check_exit_status $?
 
+# s_time
 start_message "s_time ... connect to SSL/TLS test server"
 $openssl_bin s_time -connect $host:$port -CAfile $ca_cert -time 2
 check_exit_status $?
 
+# sess_id
 start_message "sess_id"
 $openssl_bin sess_id -in $sess_dat -text -out $sess_dat.out
 check_exit_status $?
