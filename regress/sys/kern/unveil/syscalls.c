@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.16 2018/08/04 16:23:00 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.17 2018/08/28 02:49:47 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -594,6 +594,25 @@ test_stat(int do_uv)
 }
 
 static int
+test_stat2(int do_uv)
+{
+	if (do_uv) {
+		printf("testing stat components to nonexistant \"rw\"\n");
+		if (unveil("/usr/share/man/nonexistant", "rw") == -1)
+			err(1, "%s:%d - unveil", __FILE__, __LINE__);
+	}
+	struct stat sb;
+
+	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
+	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat("/usr", &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat("/usr/share", &sb) == -1), "stat");
+	UV_SHOULD_SUCCEED((stat("/usr/share/man", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/usr/share/man/nonexistant", &sb) == -1), "stat");
+	return 0;
+}
+
+static int
 test_statfs(int do_uv)
 {
 	if (do_uv) {
@@ -840,6 +859,7 @@ main (int argc, char *argv[])
 	failures += runcompare(test_access);
 	failures += runcompare(test_chflags);
 	failures += runcompare(test_stat);
+	failures += runcompare(test_stat2);
 	failures += runcompare(test_statfs);
 	failures += runcompare(test_symlink);
 	failures += runcompare(test_chmod);
