@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.29 2018/08/28 17:45:50 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.30 2018/08/28 18:25:33 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -104,7 +104,7 @@ type wycheproofTestGroupChaCha20Poly1305 struct {
 }
 
 type wycheproofTestChaCha20Poly1305 struct {
-	TCID	int      `json:"tcId"`
+	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Key     string   `json:"key"`
 	IV      string   `json:"iv"`
@@ -112,7 +112,7 @@ type wycheproofTestChaCha20Poly1305 struct {
 	Msg     string   `json:"msg"`
 	CT      string   `json:"ct"`
 	Tag     string   `json:"tag"`
-	Result	string	 `json:"result"`
+	Result  string   `json:"result"`
 	Flags   []string `json:"flags"`
 }
 
@@ -340,16 +340,16 @@ func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bo
 
 	keyLen, ivLen, ctLen, msgLen := len(key), len(iv), len(ct), len(msg)
 
-	if (keyLen == 0) {
+	if keyLen == 0 {
 		key = append(key, 0)
 	}
-	if (ivLen == 0) {
+	if ivLen == 0 {
 		iv = append(iv, 0)
 	}
-	if (ctLen == 0) {
+	if ctLen == 0 {
 		ct = append(ct, 0)
 	}
-	if (msgLen == 0) {
+	if msgLen == 0 {
 		msg = append(msg, 0)
 	}
 
@@ -412,7 +412,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 
 	ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_SET_IVLEN, C.int(ivLen), nil)
 	if ret != 1 {
-		if (wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size") {
+		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting IV len to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ivLen, ret, wt.Result)
@@ -421,7 +421,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 
 	ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_SET_TAG, C.int(tagLen), setTag)
 	if ret != 1 {
-		if (wt.Comment == "Invalid tag size") {
+		if wt.Comment == "Invalid tag size" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting tag length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, tagLen, ret, wt.Result)
@@ -582,18 +582,18 @@ func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 		return false
 	}
 
-	if (openedMsgLen != C.size_t(msgLen)) {
+	if openedMsgLen != C.size_t(msgLen) {
 		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, openedMsgLen, msgLen)
 		return false
 	}
 
 	openedMsg := opened[0:openedMsgLen]
-	if (msgLen == 0) {
+	if msgLen == 0 {
 		msg = nil
 	}
 
 	success := false
-	if (bytes.Equal(openedMsg, msg)) || wt.Result == "invalid" {
+	if bytes.Equal(openedMsg, msg) || wt.Result == "invalid" {
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) - msg match: %t; want %v\n", wt.TCID, wt.Comment, bytes.Equal(openedMsg, msg), wt.Result)
@@ -614,16 +614,16 @@ func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 		return false
 	}
 
-	if (sealedLen != C.size_t(maxOutLen)) {
+	if sealedLen != C.size_t(maxOutLen) {
 		fmt.Printf("FAIL: Test case %d (%q) - seal length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, sealedLen, maxOutLen)
 		return false
 	}
 
 	sealedCt := sealed[0:msgLen]
-	sealedTag := sealed[msgLen: maxOutLen]
+	sealedTag := sealed[msgLen:maxOutLen]
 
 	success := false
-	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag)) || wt.Result == "invalid" {
+	if bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag) || wt.Result == "invalid" {
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n", wt.TCID, wt.Comment, int(sealRet), bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), wt.Result)
@@ -806,7 +806,7 @@ func runDSATestGroup(wtg *wycheproofTestGroupDSA) bool {
 		der = append(der, 0)
 	}
 
-	Cder := (*C.uchar)(C.malloc((C.ulong)(derLen)))
+	Cder := (*C.uchar)(C.malloc(C.ulong(derLen)))
 	if Cder == nil {
 		log.Fatal("malloc failed")
 	}
@@ -818,7 +818,7 @@ func runDSATestGroup(wtg *wycheproofTestGroupDSA) bool {
 	C.free(unsafe.Pointer(Cder))
 
 
-	keyPEM := C.CString(wtg.KeyPEM);
+	keyPEM := C.CString(wtg.KeyPEM)
 	bio := C.BIO_new_mem_buf(unsafe.Pointer(keyPEM), C.int(len(wtg.KeyPEM)))
 	if bio == nil {
 		log.Fatal("BIO_new_mem_buf failed")
