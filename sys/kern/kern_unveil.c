@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.13 2018/08/11 16:16:07 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.14 2018/08/28 02:51:55 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -369,7 +369,14 @@ unveil_add_vnode(struct process *pr, struct vnode *vp)
 	rw_init(&uv->uv_lock, "unveil");
 	RBT_INIT(unvname_rbt, &uv->uv_names);
 	uv->uv_vp = vp;
-	uv->uv_flags = 0;
+	/*
+	 * Added vnodes are added with the UNVEIL_INSPECT flag
+	 * to allow operations such as access and stat. This lets
+	 * TOCTOU fans that call access on all components of
+	 * an unveil'ed path before the final operations
+	 * work.
+	 */
+	uv->uv_flags = UNVEIL_INSPECT;
 	pr->ps_uvvcount++;
 	return (uv);
 }
@@ -377,14 +384,6 @@ unveil_add_vnode(struct process *pr, struct vnode *vp)
 void
 unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 {
-	/*
-	 * Add the traversed vnodes with the UNVEIL_INSPECT flag
-	 * if they are not already present to allow traversal
-	 * operations such as access and stat. This lets
-	 * TOCTOU fans that call access on all components of
-	 * an unveil'ed path before the final operation
-	 * work.
-	 */
 	struct unveil *uv;
 
 	if (ndp->ni_tvpsize) {
@@ -396,7 +395,6 @@ unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 				vref(vp);
 				vp->v_uvcount++;
 				uv = unveil_add_vnode(p->p_p, vp);
-				uv->uv_flags = UNVEIL_INSPECT;
 			}
 		}
 	}
