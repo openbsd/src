@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.30 2018/08/28 02:14:22 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.31 2018/08/28 14:30:48 cheloha Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,7 +242,7 @@ s_time_main(int argc, char **argv)
 		}
 	}
 
-	s_time_meth = SSLv23_client_method();
+	s_time_meth = TLS_client_method();
 
 	verify_depth = 0;
 
@@ -435,10 +435,6 @@ benchmark(int reuse_session)
 			ver = SSL_version(scon);
 			if (ver == TLS1_VERSION)
 				ver = 't';
-			else if (ver == SSL3_VERSION)
-				ver = '3';
-			else if (ver == SSL2_VERSION)
-				ver = '2';
 			else
 				ver = '*';
 		}
