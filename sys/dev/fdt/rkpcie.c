@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.5 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.6 2018/08/28 09:33:18 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -314,7 +314,7 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 void
 rkpcie_atr_init(struct rkpcie_softc *sc)
 {
-	uint32_t *ranges;
+	uint32_t *ranges = NULL;
 	struct extent *ex;
 	bus_addr_t addr;
 	bus_size_t size, offset;
