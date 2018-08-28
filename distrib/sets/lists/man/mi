@@ -1194,7 +1194,6 @@
 ./usr/share/man/man4/armv7/omdog.4
 ./usr/share/man/man4/armv7/omgpio.4
 ./usr/share/man/man4/armv7/ommmc.4
-./usr/share/man/man4/armv7/ompinmux.4
 ./usr/share/man/man4/armv7/omwugen.4
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sitaracm.4
@@ -1332,11 +1331,15 @@
 ./usr/share/man/man4/gre.4
 ./usr/share/man/man4/gscsio.4
 ./usr/share/man/man4/hds.4
+./usr/share/man/man4/hiclock.4
+./usr/share/man/man4/hidwusb.4
 ./usr/share/man/man4/hifn.4
 ./usr/share/man/man4/hil.4
 ./usr/share/man/man4/hilid.4
 ./usr/share/man/man4/hilkbd.4
 ./usr/share/man/man4/hilms.4
+./usr/share/man/man4/hireset.4
+./usr/share/man/man4/hitemp.4
 ./usr/share/man/man4/hme.4
 ./usr/share/man/man4/hotplug.4
 ./usr/share/man/man4/hppa/asp.4
@@ -1665,6 +1668,7 @@
 ./usr/share/man/man4/rgephy.4
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/rkclock.4
+./usr/share/man/man4/rkdwusb.4
 ./usr/share/man/man4/rkgpio.4
 ./usr/share/man/man4/rkgrf.4
 ./usr/share/man/man4/rkiic.4
