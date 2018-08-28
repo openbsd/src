@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.345 2018/08/23 13:21:27 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.346 2018/08/28 12:40:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -712,7 +712,7 @@ editor_resize(struct disklabel *lp, char *p)
 	struct disklabel label;
 	struct partition *pp, *prev;
 	u_int64_t ui, sz, off;
-	int partno, i, flags;
+	int partno, i, flags, shrunk;
 
 	label = *lp;
 
@@ -776,6 +776,7 @@ editor_resize(struct disklabel *lp, char *p)
 	 * Pack partitions above the resized partition, leaving unused
 	 * partitions alone.
 	 */
+	shrunk = -1;
 	prev = pp;
 	for (i = partno + 1; i < MAXPARTITIONS; i++) {
 		if (i == RAW_PART)
@@ -798,16 +799,19 @@ editor_resize(struct disklabel *lp, char *p)
 				    get_bsize(&label, partno) == 1 ||
 				    get_cpg(&label, partno) == 1)
 					return;
-				fprintf(stderr,
-				    "Partition %c shrunk to make room\n",
-				    i + 'a');
+				shrunk = i;
 			}
 		} else {
-			fputs("No room left for all partitions\n", stderr);
+			fputs("Amount too big\n", stderr);
 			return;
 		}
 		prev = pp;
 	}
+
+	if (shrunk != -1)
+		fprintf(stderr, "Partition %c shrunk to %llu sectors to make "
+		    "room\n", 'a' + shrunk,
+		    DL_GETPSIZE(&label.d_partitions[shrunk]));
 	*lp = label;
 }
 
