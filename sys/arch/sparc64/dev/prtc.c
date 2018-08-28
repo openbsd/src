@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtc.c,v 1.3 2014/05/10 12:36:22 kettenis Exp $	*/
+/*	$OpenBSD: prtc.c,v 1.4 2018/08/28 00:00:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -49,6 +49,9 @@ struct cfdriver prtc_cd = {
 int	prtc_gettime(todr_chip_handle_t, struct timeval *);
 int	prtc_settime(todr_chip_handle_t, struct timeval *);
 
+int	prtc_opl_gettime(todr_chip_handle_t, struct timeval *);
+int	prtc_opl_settime(todr_chip_handle_t, struct timeval *);
+
 int
 prtc_match(struct device *parent, void *match, void *aux)
 {
@@ -64,6 +67,14 @@ void
 prtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	todr_chip_handle_t handle;
+	char buf[32];
+	int opl;
+
+	opl = OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "SUNW,SPARC-Enterprise") == 0;
+
+	if (opl)
+		printf(": OPL");
 
 	printf("\n");
 
@@ -72,26 +83,25 @@ prtc_attach(struct device *parent, struct device *self, void *aux)
 		panic("couldn't allocate todr_handle");
 
 	handle->cookie = self;
-	handle->todr_gettime = prtc_gettime;
-	handle->todr_settime = prtc_settime;
+	if (opl) {
+		handle->todr_gettime = prtc_opl_gettime;
+		handle->todr_settime = prtc_opl_settime;
+	} else {
+		handle->todr_gettime = prtc_gettime;
+		handle->todr_settime = prtc_settime;
+	}
 
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
+
 	todr_handle = handle;
 }
 
 int
 prtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	u_int32_t tod = 0;
 	char buf[32];
-
-	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "SUNW,SPARC-Enterprise") == 0) {
-		tv->tv_sec = prom_opl_get_tod();
-		tv->tv_usec = 0;
-		return (0);
-	}
+	u_int32_t tod = 0;
 
 	snprintf(buf, sizeof(buf), "h# %08lx unix-gettod", (long)&tod);
 	OF_interpret(buf, 0);
@@ -105,4 +115,56 @@ int
 prtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	return (0);
-}		
+}
+
+int
+prtc_opl_gettime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct {
+		cell_t	name;
+		cell_t	nargs;
+		cell_t	nrets;
+		cell_t	stick;
+		cell_t	time;
+	} args = {
+		.name	= ADR2CELL("FJSV,get-tod"),
+		.nargs	= 0,
+		.nrets	= 2,
+	};
+
+	if (openfirmware(&args) == -1)
+		return (-1);
+
+	tv->tv_sec = args.time;
+	tv->tv_usec = 0;
+
+	return (0);
+}
+
+int
+prtc_opl_settime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct timeval otv;
+	struct {
+		cell_t	name;
+		cell_t	nargs;
+		cell_t	nrets;
+		cell_t	diff;
+	} args = {
+		.name	= ADR2CELL("FJSV,set-domain-time"),
+		.nargs	= 1,
+		.nrets	= 0,
+	};
+
+	if (prtc_opl_gettime(handle, &otv) == -1)
+		return (-1);
+
+	args.diff = tv->tv_sec - otv.tv_sec;
+	if (args.diff == 0)
+		return (0);
+
+	if (openfirmware(&args) == -1)
+		return (-1);
+
+	return (0);
+}
