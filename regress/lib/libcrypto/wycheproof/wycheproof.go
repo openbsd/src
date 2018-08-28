@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.30 2018/08/28 18:25:33 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.31 2018/08/28 18:28:30 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -26,6 +26,7 @@ package main
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
+#include <openssl/cmac.h>
 #include <openssl/curve25519.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
@@ -90,6 +91,23 @@ type wycheproofTestAesCcm struct {
 	AAD     string   `json:"aad"`
 	Msg     string   `json:"msg"`
 	CT      string   `json:"ct"`
+	Tag     string   `json:"tag"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupAesCmac struct {
+	KeySize int                      `json:"keySize"`
+	TagSize int                      `json:"tagSize"`
+	Type    string                   `json:"type"`
+	Tests   []*wycheproofTestAesCmac `json:"tests"`
+}
+
+type wycheproofTestAesCmac struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Key     string   `json:"key"`
+	Msg     string   `json:"msg"`
 	Tag     string   `json:"tag"`
 	Result  string   `json:"result"`
 	Flags   []string `json:"flags"`
@@ -559,6 +577,96 @@ func runAesCcmTestGroup(wtg *wycheproofTestGroupAesCcm) bool {
 	success := true
 	for _, wt := range wtg.Tests {
 		if !runAesCcmTest(ctx, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
+func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
+	key, err := hex.DecodeString(wt.Key)
+	if err != nil {
+		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
+	}
+
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
+	}
+
+	tag, err := hex.DecodeString(wt.Tag)
+	if err != nil {
+		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
+	}
+
+	keyLen, msgLen, tagLen := len(key), len(msg), len(tag)
+
+	if keyLen == 0 {
+		key = append(key, 0)
+	}
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+	if tagLen == 0 {
+		tag = append(tag, 0)
+	}
+
+	ctx := C.CMAC_CTX_new()
+	if ctx == nil {
+		log.Fatal("CMAC_CTX_new failed")
+	}
+	defer C.CMAC_CTX_free(ctx)
+
+	ret := C.CMAC_Init(ctx, unsafe.Pointer(&key[0]), C.size_t(keyLen), cipher, nil)
+	if ret != 1 {
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Init() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	ret = C.CMAC_Update(ctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
+	if ret != 1 {
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Update() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	var outLen C.size_t
+	outTag := make([]byte, 16)
+
+	ret = C.CMAC_Final(ctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
+	if ret != 1 {
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Final() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	outTag = outTag[0:tagLen]
+
+	success := true
+	if bytes.Equal(tag, outTag) != (wt.Result == "valid") {
+		fmt.Printf("FAIL: Test case %d (%q) - want %v\n", wt.TCID, wt.Comment, wt.Result)
+		success = false
+	}
+	return success
+}
+
+func runAesCmacTestGroup(wtg *wycheproofTestGroupAesCmac) bool {
+	fmt.Printf("Running AES-CMAC test group %v with key size %d and tag size %d...\n", wtg.Type, wtg.KeySize, wtg.TagSize)
+	var cipher *C.EVP_CIPHER
+
+	switch wtg.KeySize {
+	case 128:
+		cipher = C.EVP_aes_128_cbc()
+	case 192:
+		cipher = C.EVP_aes_192_cbc()
+	case 256:
+		cipher = C.EVP_aes_256_cbc()
+	default:
+		fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
+		return true
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runAesCmacTest(cipher, wt) {
 			success = false
 		}
 	}
@@ -1072,6 +1180,8 @@ func runTestVectors(path string) bool {
 		wtg = &wycheproofTestGroupAesCbcPkcs5{}
 	case "AES-CCM":
 		wtg = &wycheproofTestGroupAesCcm{}
+	case "AES-CMAC":
+		wtg = &wycheproofTestGroupAesCmac{}
 	case "CHACHA20-POLY1305":
 		wtg = &wycheproofTestGroupChaCha20Poly1305{}
 	case "DSA":
@@ -1098,6 +1208,10 @@ func runTestVectors(path string) bool {
 			}
 		case "AES-CCM":
 			if !runAesCcmTestGroup(wtg.(*wycheproofTestGroupAesCcm)) {
+				success = false
+			}
+		case "AES-CMAC":
+			if !runAesCmacTestGroup(wtg.(*wycheproofTestGroupAesCmac)) {
 				success = false
 			}
 		case "CHACHA20-POLY1305":
@@ -1139,7 +1253,7 @@ func main() {
 		name    string
 		pattern string
 	}{
-		{"AES", "aes_c[bc]*test.json"},
+		{"AES", "aes_c*test.json"},
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
