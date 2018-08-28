@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.142 2018/07/12 15:51:50 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.143 2018/08/28 15:15:02 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -529,6 +529,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	u_int32_t btsx, esn;
 	u_int8_t hl;
 	int error, rplen;
+	u_int64_t ibytes;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
@@ -605,9 +606,10 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Update the counters. */
-	tdb->tdb_cur_bytes +=
-	    (m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
-	ahstat_add(ahs_ibytes, m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
+	ibytes = (m->m_pkthdr.len - skip - hl * sizeof(u_int32_t));
+	tdb->tdb_cur_bytes += ibytes;
+	tdb->tdb_ibytes += ibytes;
+	ahstat_add(ahs_ibytes, ibytes);
 
 	/* Hard expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&

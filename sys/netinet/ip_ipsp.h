@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.192 2018/07/12 15:51:50 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.193 2018/08/28 15:15:02 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -122,6 +122,8 @@ struct sockaddr_encap {
 #define	IPSP_DIRECTION_OUT	0x2
 
 struct ipsecstat {
+	uint64_t	ipsec_tunnels;		/* Number of active tunnels */
+	uint64_t	ipsec_prevtunnels;	/* Past number of tunnels */
 	uint64_t	ipsec_ipackets;		/* Input IPsec packets */
 	uint64_t	ipsec_opackets;		/* Output IPsec packets */
 	uint64_t	ipsec_ibytes;		/* Input bytes */
@@ -135,6 +137,17 @@ struct ipsecstat {
 	uint64_t	ipsec_noxform;		/* Crypto error */
 };
 
+struct tdb_data {
+	uint64_t	tdd_ipackets;		/* Input IPsec packets */
+	uint64_t	tdd_opackets;		/* Output IPsec packets */
+	uint64_t	tdd_ibytes;		/* Input bytes */
+	uint64_t	tdd_obytes;		/* Output bytes */
+	uint64_t	tdd_idrops;		/* Dropped on input */
+	uint64_t	tdd_odrops;		/* Dropped on output */
+	uint64_t	tdd_idecompbytes;	/* Input bytes, decompressed */
+	uint64_t	tdd_ouncompbytes;	/* Output bytes, uncompressed */
+};
+
 #ifdef _KERNEL
 
 #include <sys/timeout.h>
@@ -144,6 +157,8 @@ struct ipsecstat {
 #include <sys/percpu.h>
 
 enum ipsec_counters {
+	ipsec_tunnels,
+	ipsec_prevtunnels,
 	ipsec_ipackets,
 	ipsec_opackets,
 	ipsec_ibytes,
@@ -164,6 +179,12 @@ static inline void
 ipsecstat_inc(enum ipsec_counters c)
 {
 	counters_inc(ipseccounters, c);
+}
+
+static inline void
+ipsecstat_dec(enum ipsec_counters c)
+{
+	counters_dec(ipseccounters, c);
 }
 
 static inline void
@@ -350,6 +371,7 @@ struct tdb {				/* tunnel descriptor block */
 	u_int64_t	tdb_last_used;	/* When was this SA last used */
 	u_int64_t	tdb_last_marked;/* Last SKIPCRYPTO status change */
 
+	struct tdb_data	tdb_data;	/* stats about this TDB */
 	u_int64_t	tdb_cryptoid;	/* Crypto session ID */
 
 	u_int32_t	tdb_spi;	/* SPI */
@@ -394,6 +416,14 @@ struct tdb {				/* tunnel descriptor block */
 	TAILQ_HEAD(tdb_policy_head, ipsec_policy)	tdb_policy_head;
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
+#define tdb_ipackets		tdb_data.tdd_ipackets
+#define tdb_opackets		tdb_data.tdd_opackets
+#define tdb_ibytes		tdb_data.tdd_ibytes
+#define tdb_obytes		tdb_data.tdd_obytes
+#define tdb_idrops		tdb_data.tdd_idrops
+#define tdb_odrops		tdb_data.tdd_odrops
+#define tdb_idecompbytes	tdb_data.tdd_idecompbytes
+#define tdb_ouncompbytes	tdb_data.tdd_ouncompbytes
 
 
 struct tdb_ident {

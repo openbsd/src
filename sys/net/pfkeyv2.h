@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.79 2017/11/20 10:56:51 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.80 2018/08/28 15:15:02 mpi Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -218,6 +218,19 @@ struct sadb_x_tap {
 	u_int32_t sadb_x_tap_unit;
 };
 
+struct sadb_x_counter {
+	uint16_t  sadb_x_counter_len;
+	uint16_t  sadb_x_counter_exttype;
+	uint64_t  sadb_x_counter_ipackets;	/* Input IPsec packets */
+	uint64_t  sadb_x_counter_opackets;	/* Output IPsec packets */
+	uint64_t  sadb_x_counter_ibytes;	/* Input bytes */
+	uint64_t  sadb_x_counter_obytes;	/* Output bytes */
+	uint64_t  sadb_x_counter_idrops;	/* Dropped on input */
+	uint64_t  sadb_x_counter_odrops;	/* Dropped on output */
+	uint64_t  sadb_x_counter_idecompbytes;	/* Input bytes, decompressed */
+	uint64_t  sadb_x_counter_ouncompbytes;	/* Output bytes, uncompressed */
+};
+
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
@@ -262,7 +275,8 @@ struct sadb_x_tap {
 #define SADB_X_EXT_TAG                33
 #define SADB_X_EXT_TAP                34
 #define SADB_X_EXT_SATYPE2            35
-#define SADB_EXT_MAX                  35
+#define SADB_X_EXT_COUNTER            36
+#define SADB_EXT_MAX                  36
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -396,6 +410,7 @@ void export_udpencap(void **, struct tdb *);
 void export_tag(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
 void export_satype(void **, struct tdb *);
+void export_counter(void **, struct tdb *);
 
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identities(struct ipsec_ids **, int, struct sadb_ident *,

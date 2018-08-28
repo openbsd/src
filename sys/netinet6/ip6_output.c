@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.238 2018/07/12 15:51:50 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.239 2018/08/28 15:15:02 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2788,8 +2788,10 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
 
 	/* Callee frees mbuf */
 	error = ipsp_process_packet(m, tdb, AF_INET6, tunalready);
-	if (error)
+	if (error) {
 		ipsecstat_inc(ipsec_odrops);
+		tdb->tdb_odrops++;
+	}
 	return error;
 }
 #endif /* IPSEC */

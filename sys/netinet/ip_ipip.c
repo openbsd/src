@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.87 2017/10/09 08:35:38 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.88 2018/08/28 15:15:02 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -331,11 +331,9 @@ int
 ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
     int dummy2)
 {
-	u_int8_t tp, otos;
-
-	u_int8_t itos;
+	u_int8_t tp, otos, itos;
+	u_int64_t obytes;
 	struct ip *ipo;
-
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
@@ -525,21 +523,20 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 	*mp = m;
 
 	if (tdb->tdb_dst.sa.sa_family == AF_INET) {
+		obytes = m->m_pkthdr.len - sizeof(struct ip);
 		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes +=
-			    m->m_pkthdr.len - sizeof(struct ip);
+			tdb->tdb_cur_bytes += obytes;
 
-		ipipstat_add(ipips_obytes, m->m_pkthdr.len - sizeof(struct ip));
+		ipipstat_add(ipips_obytes, obytes);
 	}
 
 #ifdef INET6
 	if (tdb->tdb_dst.sa.sa_family == AF_INET6) {
+		obytes = m->m_pkthdr.len - sizeof(struct ip6_hdr);
 		if (tdb->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes +=
-			    m->m_pkthdr.len - sizeof(struct ip6_hdr);
+			tdb->tdb_cur_bytes += obytes;
 
-		ipipstat_add(ipips_obytes,
-		    m->m_pkthdr.len - sizeof(struct ip6_hdr));
+		ipipstat_add(ipips_obytes, obytes);
 	}
 #endif /* INET6 */
 

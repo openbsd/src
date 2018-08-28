@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.231 2018/05/19 12:34:35 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.232 2018/08/28 15:15:02 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -708,6 +708,8 @@ puttdb(struct tdb *tdbp)
 	tdbsrc[hashval] = tdbp;
 
 	tdb_count++;
+	if ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_TUNNELING)) == TDBF_TUNNELING)
+		ipsecstat_inc(ipsec_tunnels);
 
 	ipsec_last_added = time_second;
 }
@@ -775,6 +777,11 @@ tdb_unlink(struct tdb *tdbp)
 
 	tdbp->tdb_snext = NULL;
 	tdb_count--;
+	if ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_TUNNELING)) ==
+	    TDBF_TUNNELING) {
+		ipsecstat_dec(ipsec_tunnels);
+		ipsecstat_inc(ipsec_prevtunnels);
+	}
 }
 
 void
