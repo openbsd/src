@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.28 2018/08/27 21:27:39 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.29 2018/08/28 17:45:50 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -119,10 +119,10 @@ type wycheproofTestChaCha20Poly1305 struct {
 type wycheproofDSAKey struct {
 	G       string `json:"g"`
 	KeySize int    `json:"keySize"`
-	P       string `json:"p"` 
+	P       string `json:"p"`
 	Q       string `json:"q"`
 	Type    string `json:"type"`
-	Y       string `json:"y"` 
+	Y       string `json:"y"`
 }
 
 type wycheproofTestDSA struct {
@@ -339,7 +339,7 @@ func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bo
 	}
 
 	keyLen, ivLen, ctLen, msgLen := len(key), len(iv), len(ct), len(msg)
-	
+
 	if (keyLen == 0) {
 		key = append(key, 0)
 	}
@@ -404,7 +404,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		action = "decrypting"
 		setTag = unsafe.Pointer(&tag[0])
 	}
-	
+
 	ret := C.EVP_CipherInit_ex(ctx, nil, nil, nil, nil, C.int(doEncrypt))
 	if ret != 1 {
 		log.Fatalf("[%v] cipher init failed", action)
@@ -495,7 +495,7 @@ func runAesCcmTest(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcm) bool {
 	if err != nil {
 		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
 	}
-	
+
 	ct, err := hex.DecodeString(wt.CT)
 	if err != nil {
 		log.Fatalf("Failed to decode CT %q: %v", wt.CT, err)
@@ -586,7 +586,7 @@ func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 		fmt.Printf("FAIL: Test case %d (%q) - open length mismatch: got %d, want %d\n", wt.TCID, wt.Comment, openedMsgLen, msgLen)
 		return false
 	}
-	
+
 	openedMsg := opened[0:openedMsgLen]
 	if (msgLen == 0) {
 		msg = nil
