@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.210 2018/07/29 13:02:01 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.211 2018/08/29 19:52:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1181,8 +1181,8 @@ show_interface_msg(struct imsg *imsg)
 void
 show_rib_summary_head(void)
 {
-	printf("flags: * = Valid, > = Selected, I = via IBGP, A = Announced, "
-	    "S = Stale\n");
+	printf("flags: * = Valid, > = Selected, I = via IBGP, A = Announced,\n"
+	    "       S = Stale, E = Error\n");
 	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
 	printf("%-5s %-20s %-15s  %5s %5s %s\n", "flags", "destination",
 	    "gateway", "lpref", "med", "aspath origin");
@@ -1222,6 +1222,8 @@ print_flags(u_int8_t flags, int sum)
 	char	*p = flagstr;
 
 	if (sum) {
+		if (flags & F_PREF_INVALID)
+			*p++ = 'E';
 		if (flags & F_PREF_ANNOUNCE)
 			*p++ = 'A';
 		if (flags & F_PREF_INTERNAL)

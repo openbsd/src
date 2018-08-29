@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.79 2017/10/15 20:44:21 deraadt Exp $
+.\" $OpenBSD: bgpctl.8,v 1.80 2018/08/29 19:52:23 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2017 $
+.Dd $Mdocdate: August 29 2018 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -363,6 +363,8 @@ are defined:
 .It Cm best
 Alias for
 .Ic selected .
+.It Cm error
+Show only prefixes which are marked invalid and are treated as withdraw.
 .It Cm selected
 Show only selected routes.
 .It Cm ssv
@@ -376,9 +378,6 @@ Show more detailed output for matching routes.
 Limit the output to the given address family.
 .It Cm in
 Show routes from the unfiltered Adj-RIB-In.
-This is only possible if
-.Em softreconfig in
-is enabled for the neighbor.
 The
 .Cm neighbor
 needs to be specified.

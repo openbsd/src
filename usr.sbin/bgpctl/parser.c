@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.82 2018/07/10 13:03:06 benno Exp $ */
+/*	$OpenBSD: parser.c,v 1.83 2018/08/29 19:52:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -177,6 +177,7 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"best",		F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"selected",	F_CTL_ACTIVE,	t_show_rib},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
+	{ FLAG,		"error",	F_CTL_INVALID,	t_show_rib},
 	{ FLAG,		"ssv"	,	F_CTL_SSV,	t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
