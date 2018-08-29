@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.70 2018/08/06 08:06:49 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.71 2018/08/29 08:51:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -137,7 +137,11 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	if (asp2->flags & F_ATTR_LOOP)
 		return (1);
 
-	/* 1. check if prefix is eligible a.k.a reachable */
+	/*
+	 * 1. check if prefix is eligible a.k.a reachable
+	 *    A NULL nexthop is eligible since it is used for locally
+	 *    announced networks.
+	 */
 	if (prefix_nexthop(p2) != NULL &&
 	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
 		return (1);
