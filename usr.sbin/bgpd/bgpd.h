@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.330 2018/08/09 21:12:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.331 2018/08/29 19:47:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,6 +87,7 @@
 #define	F_CTL_ACTIVE		0x8000
 #define	F_RTLABEL		0x10000
 #define	F_CTL_SSV		0x20000	/* only used by bgpctl */
+#define	F_CTL_INVALID		0x40000 /* only used by bgpctl */
 
 /*
  * Limit the number of messages queued in the session engine.
@@ -612,6 +613,7 @@ struct ctl_neighbor {
 #define	F_PREF_INTERNAL	0x04
 #define	F_PREF_ANNOUNCE	0x08
 #define	F_PREF_STALE	0x10
+#define	F_PREF_INVALID	0x20
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;
@@ -712,8 +714,8 @@ struct ctl_show_rib_request {
 	struct filter_extcommunity extcommunity;
 	struct filter_largecommunity large_community;
 	u_int32_t		peerid;
+	u_int32_t		flags;
 	pid_t			pid;
-	u_int16_t		flags;
 	enum imsg_type		type;
 	u_int8_t		prefixlen;
 	u_int8_t		aid;

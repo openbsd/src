@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.415 2018/08/29 11:46:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.416 2018/08/29 19:47:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2085,6 +2085,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
+	if (asp->flags & F_ATTR_PARSE_ERR)
+		rib.flags |= F_PREF_INVALID;
 	staletime = prefix_peer(p)->staletime[p->re->prefix->aid];
 	if (staletime && p->lastchange <= staletime)
 		rib.flags |= F_PREF_STALE;
@@ -2146,10 +2148,23 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
 
-	if (req->flags & F_CTL_ADJ_IN ||
-	    !(req->flags & (F_CTL_ADJ_IN|F_CTL_ADJ_OUT))) {
+	if (req->flags & F_CTL_ADJ_OUT) {
+		if (p->re->active != p)
+			/* only consider active prefix */
+			return;
+		if (req->peerid) {
+			if ((peer = peer_get(req->peerid)) != NULL)
+				rde_dump_filterout(peer, p, req);
+			return;
+		}
+	} else {
 		asp = prefix_aspath(p);
 		if (req->peerid && req->peerid != prefix_peer(p)->conf.id)
+			return;
+		if ((req->flags & F_CTL_ACTIVE) && p->re->active != p)
+			return;
+		if ((req->flags & F_CTL_INVALID) &&
+		    (asp->flags & F_ATTR_PARSE_ERR) == 0)
 			return;
 		if (req->type == IMSG_CTL_SHOW_RIB_AS &&
 		    !aspath_match(asp->aspath->data, asp->aspath->len,
@@ -2166,18 +2181,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 		    !community_large_match(asp, req->large_community.as,
 		    req->large_community.ld1, req->large_community.ld2))
 			return;
-		if ((req->flags & F_CTL_ACTIVE) && p->re->active != p)
-			return;
 		rde_dump_rib_as(p, asp, req->pid, req->flags);
-	} else if (req->flags & F_CTL_ADJ_OUT) {
-		if (p->re->active != p)
-			/* only consider active prefix */
-			return;
-		if (req->peerid) {
-			if ((peer = peer_get(req->peerid)) != NULL)
-				rde_dump_filterout(peer, p, req);
-			return;
-		}
 	}
 }
 
@@ -2227,7 +2231,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		    sizeof(error));
 		return;
 	}
-	if ((rib = rib_find(req->rib)) == NULL) {
+	if (req->flags & (F_CTL_ADJ_IN | F_CTL_INVALID)) {
+		rib = &ribs[RIB_ADJ_IN].rib;
+	} else if ((rib = rib_find(req->rib)) == NULL) {
 		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
 		error = CTL_RES_NOSUCHPEER;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
