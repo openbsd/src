@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.34 2018/08/29 19:00:41 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.35 2018/08/29 19:18:20 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -75,15 +75,15 @@ type wycheproofTestAesCbcPkcs5 struct {
 	Flags   []string `json:"flags"`
 }
 
-type wycheproofTestGroupAesCcm struct {
-	IVSize  int                     `json:"ivSize"`
-	KeySize int                     `json:"keySize"`
-	TagSize int                     `json:"tagSize"`
-	Type    string                  `json:"type"`
-	Tests   []*wycheproofTestAesCcm `json:"tests"`
+type wycheproofTestGroupAesCcmOrGcm struct {
+	IVSize  int                          `json:"ivSize"`
+	KeySize int                          `json:"keySize"`
+	TagSize int                          `json:"tagSize"`
+	Type    string                       `json:"type"`
+	Tests   []*wycheproofTestAesCcmOrGcm `json:"tests"`
 }
 
-type wycheproofTestAesCcm struct {
+type wycheproofTestAesCcmOrGcm struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Key     string   `json:"key"`
@@ -412,7 +412,22 @@ func runAesCbcPkcs5TestGroup(wtg *wycheproofTestGroupAesCbcPkcs5) bool {
 	return success
 }
 
-func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAesCcm) bool {
+func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAesCcmOrGcm) bool {
+	var ctrlSetIVLen C.int
+	var ctrlSetTag C.int
+	var ctrlGetTag C.int
+
+	switch algorithm {
+	case "AES-CCM":
+		ctrlSetIVLen = C.EVP_CTRL_CCM_SET_IVLEN
+		ctrlSetTag = C.EVP_CTRL_CCM_SET_TAG
+		ctrlGetTag = C.EVP_CTRL_CCM_GET_TAG
+	case "AES-GCM":
+		ctrlSetIVLen = C.EVP_CTRL_GCM_SET_IVLEN
+		ctrlSetTag = C.EVP_CTRL_GCM_SET_TAG
+		ctrlGetTag = C.EVP_CTRL_GCM_GET_TAG
+	}
+
 	setTag := unsafe.Pointer(nil)
 	var action string
 
@@ -428,22 +443,24 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		log.Fatalf("[%v] cipher init failed", action)
 	}
 
-	ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_SET_IVLEN, C.int(ivLen), nil)
+	ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlSetIVLen, C.int(ivLen), nil)
 	if ret != 1 {
-		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" {
+		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" || wt.Comment == "0 size IV is not valid" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting IV len to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, ivLen, ret, wt.Result)
 		return false
 	}
 
-	ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_SET_TAG, C.int(tagLen), setTag)
-	if ret != 1 {
-		if wt.Comment == "Invalid tag size" {
-			return true
+	if doEncrypt == 0 || algorithm == "AES-CCM" {
+		ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlSetTag, C.int(tagLen), setTag)
+		if ret != 1 {
+			if wt.Comment == "Invalid tag size" {
+				return true
+			}
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - setting tag length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, tagLen, ret, wt.Result)
+			return false
 		}
-		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting tag length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, tagLen, ret, wt.Result)
-		return false
 	}
 
 	ret = C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
@@ -453,10 +470,12 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 	}
 
 	var cipherOutLen C.int
-	ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, nil, C.int(inLen))
-	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) [%v] - setting input length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, inLen, ret, wt.Result)
-		return false
+	if algorithm == "AES-CCM" {
+		ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, nil, C.int(inLen))
+		if ret != 1 {
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - setting input length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, inLen, ret, wt.Result)
+			return false
+		}
 	}
 
 	ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, (*C.uchar)(unsafe.Pointer(&aad[0])), C.int(aadLen))
@@ -504,12 +523,13 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 	}
 	if doEncrypt == 1 {
 		tagOut := make([]byte, tagLen)
-		ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_GET_TAG, C.int(tagLen), unsafe.Pointer(&tagOut[0]))
+		ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlGetTag, C.int(tagLen), unsafe.Pointer(&tagOut[0]))
 		if ret != 1 {
 			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CIPHER_CTX_ctrl() failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			return false
 		}
-		if bytes.Equal(tagOut, tag) != (wt.Result == "valid") {
+		// XXX audit acceptable cases...
+		if bytes.Equal(tagOut, tag) != (wt.Result == "valid" || wt.Result == "acceptable") {
 			fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed tag do not match. Result: %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			success = false
 		}
@@ -517,7 +537,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 	return success
 }
 
-func runAesCcmTest(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcm) bool {
+func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcmOrGcm) bool {
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
@@ -569,26 +589,41 @@ func runAesCcmTest(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcm) bool {
 		tag = append(tag, 0)
 	}
 
-	openSuccess := checkAesCcm(ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
-	sealSuccess := checkAesCcm(ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	openSuccess := checkAesCcmOrGcm(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
+	sealSuccess := checkAesCcmOrGcm(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
 	return openSuccess && sealSuccess
 }
 
-func runAesCcmTestGroup(wtg *wycheproofTestGroupAesCcm) bool {
-	fmt.Printf("Running AES-CCM test group %v with IV size %d, key size %d and tag size %d...\n", wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
+func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAesCcmOrGcm) bool {
+	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
 	var cipher *C.EVP_CIPHER
-	switch wtg.KeySize {
-	case 128:
-		cipher = C.EVP_aes_128_ccm()
-	case 192:
-		cipher = C.EVP_aes_192_ccm()
-	case 256:
-		cipher = C.EVP_aes_256_ccm()
-	default:
-		fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
-		return true
+	switch algorithm {
+	case "AES-CCM":
+		switch wtg.KeySize {
+		case 128:
+			cipher = C.EVP_aes_128_ccm()
+		case 192:
+			cipher = C.EVP_aes_192_ccm()
+		case 256:
+			cipher = C.EVP_aes_256_ccm()
+		default:
+			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
+			return true
+		}
+	case "AES-GCM":
+		switch wtg.KeySize {
+		case 128:
+			cipher = C.EVP_aes_128_gcm()
+		case 192:
+			cipher = C.EVP_aes_192_gcm()
+		case 256:
+			cipher = C.EVP_aes_256_gcm()
+		default:
+			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
+			return true
+		}
 	}
 
 	ctx := C.EVP_CIPHER_CTX_new()
@@ -601,7 +636,7 @@ func runAesCcmTestGroup(wtg *wycheproofTestGroupAesCcm) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runAesCcmTest(ctx, wt) {
+		if !runAesCcmOrGcmTest(algorithm, ctx, wt) {
 			success = false
 		}
 	}
@@ -1204,9 +1239,11 @@ func runTestVectors(path string) bool {
 	case "AES-CBC-PKCS5":
 		wtg = &wycheproofTestGroupAesCbcPkcs5{}
 	case "AES-CCM":
-		wtg = &wycheproofTestGroupAesCcm{}
+		wtg = &wycheproofTestGroupAesCcmOrGcm{}
 	case "AES-CMAC":
 		wtg = &wycheproofTestGroupAesCmac{}
+	case "AES-GCM":
+		wtg = &wycheproofTestGroupAesCcmOrGcm{}
 	case "CHACHA20-POLY1305":
 		wtg = &wycheproofTestGroupChaCha20Poly1305{}
 	case "DSA":
@@ -1232,11 +1269,15 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "AES-CCM":
-			if !runAesCcmTestGroup(wtg.(*wycheproofTestGroupAesCcm)) {
+			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCcmOrGcm)) {
 				success = false
 			}
 		case "AES-CMAC":
 			if !runAesCmacTestGroup(wtg.(*wycheproofTestGroupAesCmac)) {
+				success = false
+			}
+		case "AES-GCM":
+			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCcmOrGcm)) {
 				success = false
 			}
 		case "CHACHA20-POLY1305":
@@ -1278,7 +1319,7 @@ func main() {
 		name    string
 		pattern string
 	}{
-		{"AES", "aes_c*test.json"},
+		{"AES", "aes_[cg]*[^xv]_test.json"},	// Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
