@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.106 2017/12/11 07:27:07 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.107 2018/08/29 07:50:16 reyk Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 11 2017 $
+.Dd $Mdocdate: August 29 2018 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -845,6 +845,9 @@ Currently only affects fill-paragraph.
 .It set-case-fold-search
 Set case-fold searching, causing case not to matter
 in regular expression searches.
+This is the default.
+.It set-case-replace
+Preserve the case of the replaced string.
 This is the default.
 .It set-default-mode
 Append the supplied mode to the list of default modes

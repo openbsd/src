@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.60 2018/07/12 12:38:56 florian Exp $	*/
+/*	$OpenBSD: line.c,v 1.61 2018/08/29 07:50:16 reyk Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -26,6 +26,22 @@
 #include <string.h>
 
 #include "def.h"
+
+int	casereplace = TRUE;
+
+/*
+ * Preserve the case of the replaced string.
+ */
+int
+setcasereplace(int f, int n)
+{
+	if (f & FFARG)
+		casereplace = n > 0;
+	else
+		casereplace = !casereplace;
+	ewprintf("Case-replace is %sabled", casereplace ? "en" : "dis");
+	return (TRUE);
+}
 
 /*
  * Allocate a new line of size `used'.  lrealloc() can be called if the line
@@ -516,7 +532,7 @@ lreplace(RSIZE plen, char *st)
 	RSIZE n;
 	int s, doto, is_query_capitalised = 0, is_query_allcaps = 0;
 	int is_replace_alllower = 0;
-	char *repl;
+	char *repl = NULL;
 
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
@@ -531,10 +547,13 @@ lreplace(RSIZE plen, char *st)
 		ewprintf("out of memory");
 		return (FALSE);
 	}
+	rlen = strlen(repl);
 
 	undo_boundary_enable(FFRAND, 0);
-
 	(void)backchar(FFARG | FFRAND, (int)plen);
+
+	if (casereplace != TRUE)
+		goto done;
 
 	lp = curwp->w_dotp;
 	doto = curwp->w_doto;
@@ -556,9 +575,6 @@ lreplace(RSIZE plen, char *st)
 		}
 	}
 
-	(void)ldelete(plen, KNONE);
-
-	rlen = strlen(repl);
 	for (n = 0, is_replace_alllower = 1; n < rlen && is_replace_alllower;
 	    n++)
 		is_replace_alllower = !isupper((unsigned char)repl[n]);
@@ -572,6 +588,8 @@ lreplace(RSIZE plen, char *st)
 		}
 	}
 
+ done:
+	(void)ldelete(plen, KNONE);
 	region_put_data(repl, rlen);
 	lchange(WFFULL);
 
