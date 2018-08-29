@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.196 2018/08/23 15:45:05 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.197 2018/08/29 18:54:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1810,6 +1810,7 @@ window_copy_clear_selection(struct window_pane *wp)
 	screen_clear_selection(&data->screen);
 
 	data->cursordrag = CURSORDRAG_NONE;
+	data->lineflag = LINE_SEL_NONE;
 
 	py = screen_hsize(data->backing) + data->cy - data->oy;
 	px = window_copy_find_length(wp, py);
