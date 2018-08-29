@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.36 2018/08/29 19:20:22 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.37 2018/08/29 19:22:32 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1314,12 +1314,12 @@ func main() {
 		os.Exit(0)
 	}
 
-	// AES, ECDH, RSA-PSS
+	// ECDH, RSA-PSS
 	tests := []struct {
 		name    string
 		pattern string
 	}{
-		{"AES", "aes_[cg]*[^xv]_test.json"},	// Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
+		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
