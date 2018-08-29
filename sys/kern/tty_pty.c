@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.88 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.89 2018/08/29 06:04:46 anton Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -161,9 +161,10 @@ ptyarralloc(int nelem)
  * are properly allocated.
  */
 int
-check_pty(int minor)
+check_pty(int dev)
 {
 	struct pt_softc *pti;
+	int minor = minor(dev);
 
 	rw_enter_write(&pt_softc_lock);
 	if (minor >= npty) {
@@ -195,6 +196,7 @@ check_pty(int minor)
 		pti = malloc(sizeof(struct pt_softc), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
 		pti->pt_tty = ttymalloc(1000000);
+		pti->pt_tty->t_dev = dev;
 		ptydevname(minor, pti);
 		pt_softc[minor] = pti;
 	}
@@ -231,12 +233,13 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 	struct tty *tp;
 	int error;
 
-	if ((error = check_pty(minor(dev))))
+	if ((error = check_pty(dev)))
 		return (error);
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc(1000000);
+		tp->t_dev = dev;
 	} else
 		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -408,12 +411,13 @@ ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 	struct tty *tp;
 	int error;
 
-	if ((error = check_pty(minor(dev))))
+	if ((error = check_pty(dev)))
 		return (error);
 
 	pti = pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc(1000000);
+		tp->t_dev = dev;
 	} else
 		tp = pti->pt_tty;
 	if (tp->t_oproc)
@@ -1084,7 +1088,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 retry:
 		/* Find and open a free master pty. */
 		newdev = pty_getfree();
-		if ((error = check_pty(minor(newdev))))
+		if ((error = check_pty(newdev)))
 			goto bad;
 		pti = pt_softc[minor(newdev)];
 		NDINIT(&cnd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
