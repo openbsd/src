@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.258 2018/08/22 20:06:14 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.259 2018/08/29 09:50:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -302,6 +302,7 @@ server_client_lost(struct client *c)
 		free(msg);
 	}
 
+	free(c->prompt_saved);
 	free(c->prompt_string);
 	free(c->prompt_buffer);
 

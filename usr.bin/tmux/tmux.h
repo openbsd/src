@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.844 2018/08/23 15:45:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.845 2018/08/29 09:50:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1358,6 +1358,7 @@ struct client {
 	void		*prompt_data;
 	u_int		 prompt_hindex;
 	enum { PROMPT_ENTRY, PROMPT_COMMAND } prompt_mode;
+	struct utf8_data *prompt_saved;
 
 #define PROMPT_SINGLE 0x1
 #define PROMPT_NUMERIC 0x2
