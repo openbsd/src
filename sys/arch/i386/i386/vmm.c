@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.41 2018/07/12 15:48:02 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.42 2018/08/29 04:51:12 pd Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -97,6 +97,10 @@ struct vmm_softc {
 	struct rwlock		vm_lock;
 	size_t			vm_ct;		/* number of in-memory VMs */
 	size_t			vm_idx;		/* next unique VM index */
+
+	struct rwlock		vpid_lock;
+	uint16_t		max_vpid;
+	uint8_t			vpids[512];	/* bitmap of used VPID/ASIDs */
 };
 
 int vmm_enabled(void);
@@ -143,13 +147,19 @@ void vm_teardown(struct vm *);
 int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint32_t *, uint32_t *);
+int vmx_load_pdptes(struct vcpu *);
 int vmx_handle_exit(struct vcpu *);
 int vmm_handle_cpuid(struct vcpu *);
 int vmx_handle_rdmsr(struct vcpu *);
 int vmx_handle_wrmsr(struct vcpu *);
+int vmx_handle_cr0_write(struct vcpu *, uint32_t);
+int vmx_handle_cr4_write(struct vcpu *, uint32_t);
 int vmx_handle_cr(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
+int vmm_inject_ud(struct vcpu *);
+int vmm_inject_gp(struct vcpu *);
+int vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
@@ -159,6 +169,8 @@ int svm_get_guest_faulttype(void);
 int vmx_get_exit_qualification(uint32_t *);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
+int vmm_alloc_vpid(uint16_t *);
+void vmm_free_vpid(uint16_t);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
@@ -363,6 +375,15 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unknown\n");
 		sc->mode = VMM_MODE_UNKNOWN;
 	}
+
+	if (sc->mode == VMM_MODE_SVM || sc->mode == VMM_MODE_RVI) {
+		/* XXX SVM not supported */
+	} else {
+		sc->max_vpid = 0xFFF;
+	}
+
+	bzero(&sc->vpids, sizeof(sc->vpids));
+	rw_init(&sc->vpid_lock, "vpidlock");
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
 	    "vmpool", NULL);
@@ -621,13 +642,14 @@ vm_intr_pending(struct vm_intr_params *vip)
  *
  * Parameters:
  *   vrwp: Describes the VM and VCPU to get/set the registers from. The
- *   register values are returned here as well.
+ *    register values are returned here as well.
  *   dir: 0 for reading, 1 for writing
  *
  * Return values:
  *  0: if successful
  *  ENOENT: if the VM/VCPU defined by 'vgp' cannot be found
  *  EINVAL: if an error occured reading the registers of the guest
+ *  EPERM: if the vm cannot be accessed from the calling process
  */
 int
 vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
@@ -668,8 +690,10 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		return (dir == 0) ?
 		    vcpu_readregs_svm(vcpu, vrwp->vrwp_mask, vrs) :
 		    vcpu_writeregs_svm(vcpu, vrwp->vrwp_mask, vrs);
-	else
-		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
+	else {
+		DPRINTF("%s: unknown vmm mode", __func__);
+		return (EINVAL);
+	}
 }
 
 /*
@@ -912,7 +936,7 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 }
 
 /*
- * vm_create_check_mem_ranges:
+ * vm_create_check_mem_ranges
  *
  * Make sure that the guest physical memory ranges given by the user process
  * do not overlap and are in ascending order.
@@ -927,7 +951,6 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 size_t
 vm_create_check_mem_ranges(struct vm_create_params *vcp)
 {
-	int disjunct_range;
 	size_t i, memsize = 0;
 	struct vm_mem_range *vmr, *pvmr;
 	const paddr_t maxgpa = (uint32_t)VMM_MAX_VM_MEM_SIZE * 1024 * 1024;
@@ -960,10 +983,21 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 		    vmr->vmr_size >= VM_MAXUSER_ADDRESS - vmr->vmr_va)
 			return (0);
 
-		/* Specifying ranges within the PCI MMIO space is forbidden */
-		disjunct_range = (vmr->vmr_gpa > VMM_PCI_MMIO_BAR_END) ||
-		    (vmr->vmr_gpa + vmr->vmr_size <= VMM_PCI_MMIO_BAR_BASE);
-		if (!disjunct_range)
+		/*
+		 * Specifying ranges within the PCI MMIO space is forbidden.
+		 * Disallow ranges that start inside the MMIO space:
+		 * [VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
+		 */
+		if (vmr->vmr_gpa >= VMM_PCI_MMIO_BAR_BASE &&
+		    vmr->vmr_gpa <= VMM_PCI_MMIO_BAR_END)
+			return (0);
+
+		/*
+		 * ... and disallow ranges that end inside the MMIO space:
+		 * (VMM_PCI_MMIO_BAR_BASE .. VMM_PCI_MMIO_BAR_END]
+		 */
+		if (vmr->vmr_gpa + vmr->vmr_size > VMM_PCI_MMIO_BAR_BASE &&
+		    vmr->vmr_gpa + vmr->vmr_size <= VMM_PCI_MMIO_BAR_END)
 			return (0);
 
 		/*
@@ -1225,6 +1259,14 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
  * vm_impl_init
  *
  * Calls the architecture-specific VM init routine
+ *
+ * Parameters:
+ *  vm: the VM being initialized
+ *   p: vmd process owning the VM
+ *
+ * Return values (from architecture-specific init routines):
+ *  0: the initialization was successful
+ *  ENOMEM: the initialization failed (lack of resources)
  */
 int
 vm_impl_init(struct vm *vm, struct proc *p)
@@ -1367,7 +1409,7 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 			if (vmread(vmm_vmx_sreg_vmcs_fields[i].arid, &ar))
 				goto errout;
 			if (vmread(vmm_vmx_sreg_vmcs_fields[i].baseid,
-			   &sregs[i].vsi_base))
+			    &sregs[i].vsi_base))
 				goto errout;
 
 			sregs[i].vsi_sel = sel;
@@ -1396,6 +1438,14 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 		if (vmread(VMCS_GUEST_IA32_CR3, &crs[VCPU_REGS_CR3]))
 			goto errout;
 		if (vmread(VMCS_GUEST_IA32_CR4, &crs[VCPU_REGS_CR4]))
+			goto errout;
+		if (vmread(VMCS_GUEST_PDPTE0, &crs[VCPU_REGS_PDPTE0]))
+			goto errout;
+		if (vmread(VMCS_GUEST_PDPTE1, &crs[VCPU_REGS_PDPTE1]))
+			goto errout;
+		if (vmread(VMCS_GUEST_PDPTE2, &crs[VCPU_REGS_PDPTE2]))
+			goto errout;
+		if (vmread(VMCS_GUEST_PDPTE3, &crs[VCPU_REGS_PDPTE3]))
 			goto errout;
 	}
 
@@ -1432,7 +1482,7 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
 /*
  * vcpu_writeregs_vmx
  *
- * Writes 'vcpu's registers
+ * Writes VCPU registers
  *
  * Parameters:
  *  vcpu: the vcpu that has to get its registers written to
@@ -1514,6 +1564,14 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 		if (vmwrite(VMCS_GUEST_IA32_CR3, crs[VCPU_REGS_CR3]))
 			goto errout;
 		if (vmwrite(VMCS_GUEST_IA32_CR4, crs[VCPU_REGS_CR4]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_PDPTE0, crs[VCPU_REGS_PDPTE0]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_PDPTE1, crs[VCPU_REGS_PDPTE1]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_PDPTE2, crs[VCPU_REGS_PDPTE2]))
+			goto errout;
+		if (vmwrite(VMCS_GUEST_PDPTE3, crs[VCPU_REGS_PDPTE3]))
 			goto errout;
 	}
 
@@ -1926,14 +1984,18 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
 	uint64_t msr, ctrlval, eptp, cr3;
-	uint16_t ctrl;
+	uint16_t ctrl, vpid;
 	struct vmx_msr_store *msr_store;
 
 	ret = 0;
 	ug = 0;
 
-	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
+	cr0 = vrs->vrs_crs[VCPU_REGS_CR0];
+
+	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa)) {
+		DPRINTF("%s: error reloading VMCS\n", __func__);
 		return (EINVAL);
+	}
 
 	/* Compute Basic Entry / Exit Controls */
 	vcpu->vc_vmx_basic = rdmsr(IA32_VMX_BASIC);
@@ -1977,11 +2039,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &pinbased)) {
+		DPRINTF("%s: error computing pinbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PINBASED_CTLS, pinbased)) {
+		DPRINTF("%s: error setting pinbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -1997,6 +2061,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * IA32_VMX_CR8_LOAD_EXITING - guest TPR access
 	 * IA32_VMX_CR8_STORE_EXITING - guest TPR access
 	 * IA32_VMX_USE_TPR_SHADOW - guest TPR access (shadow)
+	 * IA32_VMX_MONITOR_EXITING - exit on MONITOR instruction
 	 *
 	 * If we have EPT, we must be able to clear the following
 	 * IA32_VMX_CR3_LOAD_EXITING - don't care about guest CR3 accesses
@@ -2008,6 +2073,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_USE_MSR_BITMAPS |
 	    IA32_VMX_CR8_LOAD_EXITING |
 	    IA32_VMX_CR8_STORE_EXITING |
+	    IA32_VMX_MONITOR_EXITING |
 	    IA32_VMX_USE_TPR_SHADOW;
 	want0 = 0;
 
@@ -2026,11 +2092,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &procbased)) {
+		DPRINTF("%s: error computing procbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
+		DPRINTF("%s: error setting procbased controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2046,7 +2114,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 *
 	 * If we have unrestricted guest capability, we must be able to set
 	 * the following:
-	 * IA32_VMX_UNRESTRICTED_GUEST - enable unrestricted guest
+	 * IA32_VMX_UNRESTRICTED_GUEST - enable unrestricted guest (if caller
+	 *     specified CR0_PG | CR0_PE in %cr0 in the 'vrs' parameter)
 	 */
 	want1 = 0;
 
@@ -2065,8 +2134,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_UNRESTRICTED_GUEST, 1)) {
-			want1 |= IA32_VMX_UNRESTRICTED_GUEST;
-			ug = 1;
+			if ((cr0 & (CR0_PE | CR0_PG)) == 0) {
+				want1 |= IA32_VMX_UNRESTRICTED_GUEST;
+				ug = 1;
+			}
 		}
 	}
 
@@ -2075,11 +2146,15 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	ctrl = IA32_VMX_PROCBASED2_CTLS;
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &procbased2)) {
+		DPRINTF("%s: error computing secondary procbased controls\n",
+		     __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_PROCBASED2_CTLS, procbased2)) {
+		DPRINTF("%s: error setting secondary procbased controls\n",
+		     __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2103,11 +2178,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	}
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &exit)) {
+		DPRINTF("%s: error computing exit controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_CTLS, exit)) {
+		DPRINTF("%s: error setting exit controls\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2115,6 +2192,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/*
 	 * Entry ctrls
 	 *
+	 * We must be able to set the following:
+	 * IA32_VMX_IA32E_MODE_GUEST (if no unrestricted guest)
 	 * We must be able to clear the following:
 	 * IA32_VMX_ENTRY_TO_SMM - enter to SMM
 	 * IA32_VMX_DEACTIVATE_DUAL_MONITOR_TREATMENT
@@ -2177,13 +2256,24 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_ENABLE_VPID, 1))
-			if (vmwrite(VMCS_GUEST_VPID,
-			    (uint16_t)vcpu->vc_parent->vm_id)) {
+		    IA32_VMX_ENABLE_VPID, 1)) {
+			if (vmm_alloc_vpid(&vpid)) {
+				DPRINTF("%s: could not allocate VPID\n",
+				    __func__);
 				ret = EINVAL;
 				goto exit;
 			}
+			if (vmwrite(VMCS_GUEST_VPID, vpid)) {
+				DPRINTF("%s: error setting guest VPID\n",
+				    __func__);
+				ret = EINVAL;
+				goto exit;
+			}
+
+			vcpu->vc_vpid = vpid;
+		}
 	}
+
 
 	/*
 	 * Determine which bits in CR0 have to be set to a fixed
@@ -2203,12 +2293,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * any value for CR0_PG and CR0_PE in vrs->vrs_crs[VCPU_REGS_CR0] if
 	 * the CPU has the unrestricted guest capability.
 	 */
-	cr0 = vrs->vrs_crs[VCPU_REGS_CR0];
-
 	if (ug) {
 		want1 &= ~(CR0_PG | CR0_PE);
 		want0 &= ~(CR0_PG | CR0_PE);
-		cr0 &= ~(CR0_PG | CR0_PE);
 	}
 
 	/*
@@ -2227,23 +2314,60 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		goto exit;
 	}
 
-	if (ug)
-		cr3 = 0;
-	else
-		cr3 = vrs->vrs_crs[VCPU_REGS_CR3];
-
 	/*
-	 * Determine default CR4 as per Intel SDM A.8
-	 * All flexible bits are set to 0
+	 * Determine which bits in CR4 have to be set to a fixed
+	 * value as per Intel SDM A.8.
+	 * CR4 bits in the vrs parameter must match these, except
+	 * CR4_VMXE - we add that here since it must always be set.
 	 */
-	cr4 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
+	want1 = (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
 	    (curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
+	want0 = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0) &
+	    ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
 
-	if (ug == 0)
-		cr4 |= CR4_PSE;
+	cr4 = vrs->vrs_crs[VCPU_REGS_CR4] | CR4_VMXE;
+
+	if ((cr4 & want1) != want1) {
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if ((~cr4 & want0) != want0) {
+		ret = EINVAL;
+		goto exit;
+	}
+
+	cr3 = vrs->vrs_crs[VCPU_REGS_CR3];
+
+	/* Restore PDPTEs if 32-bit PAE paging is being used */
+	if (cr3 && (cr4 & CR4_PAE) &&
+	    !(vrs->vrs_msrs[VCPU_REGS_EFER] & EFER_LMA)) {
+		if (vmwrite(VMCS_GUEST_PDPTE0,
+		    vrs->vrs_crs[VCPU_REGS_PDPTE0])) {
+			ret = EINVAL;
+			goto exit;
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE1,
+		    vrs->vrs_crs[VCPU_REGS_PDPTE1])) {
+			ret = EINVAL;
+			goto exit;
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE2,
+		    vrs->vrs_crs[VCPU_REGS_PDPTE2])) {
+			ret = EINVAL;
+			goto exit;
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE3,
+		    vrs->vrs_crs[VCPU_REGS_PDPTE3])) {
+			ret = EINVAL;
+			goto exit;
+		}
+	}
 
 	vrs->vrs_crs[VCPU_REGS_CR0] = cr0;
-	vrs->vrs_crs[VCPU_REGS_CR3] = cr3;
 	vrs->vrs_crs[VCPU_REGS_CR4] = cr4;
 
 	/*
@@ -2252,73 +2376,137 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_load_va;
 	msr_store[0].vms_index = MSR_EFER;
 	msr_store[0].vms_data = rdmsr(MSR_EFER);
+	msr_store[1].vms_index = MSR_STAR;
+	msr_store[1].vms_data = rdmsr(MSR_STAR);
+	msr_store[2].vms_index = MSR_LSTAR;
+	msr_store[2].vms_data = rdmsr(MSR_LSTAR);
+	msr_store[3].vms_index = MSR_CSTAR;
+	msr_store[3].vms_data = rdmsr(MSR_CSTAR);
+	msr_store[4].vms_index = MSR_SFMASK;
+	msr_store[4].vms_data = rdmsr(MSR_SFMASK);
+	msr_store[5].vms_index = MSR_KERNELGSBASE;
+	msr_store[5].vms_data = rdmsr(MSR_KERNELGSBASE);
+	msr_store[6].vms_index = MSR_MISC_ENABLE;
+	msr_store[6].vms_data = rdmsr(MSR_MISC_ENABLE);
 
 	/*
 	 * Select guest MSRs to be loaded on entry / saved on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
-	msr_store[0].vms_index = MSR_EFER;
+	msr_store[VCPU_REGS_EFER].vms_index = MSR_EFER;
+	msr_store[VCPU_REGS_STAR].vms_index = MSR_STAR;
+	msr_store[VCPU_REGS_LSTAR].vms_index = MSR_LSTAR;
+	msr_store[VCPU_REGS_CSTAR].vms_index = MSR_CSTAR;
+	msr_store[VCPU_REGS_SFMASK].vms_index = MSR_SFMASK;
+	msr_store[VCPU_REGS_KGSBASE].vms_index = MSR_KERNELGSBASE;
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_index = MSR_MISC_ENABLE;
+
+	/*
+	 * Initialize MSR_MISC_ENABLE as it can't be read and populated from vmd
+	 * and some of the content is based on the host.
+	 */
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = rdmsr(MSR_MISC_ENABLE);
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data &= 
+	    ~(MISC_ENABLE_TCC | MISC_ENABLE_PERF_MON_AVAILABLE |
+	      MISC_ENABLE_EIST_ENABLED | MISC_ENABLE_ENABLE_MONITOR_FSM |
+	      MISC_ENABLE_xTPR_MESSAGE_DISABLE);
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data |= 
+	      MISC_ENABLE_BTS_UNAVAILABLE | MISC_ENABLE_PEBS_UNAVAILABLE;
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores
 	 * but this is not an architectural requirement.
 	 */
 	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR exit store count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR exit load count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+		DPRINTF("%s: error setting guest MSR entry load count\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_STORE_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_save_pa)) {
+		DPRINTF("%s: error setting guest MSR exit store address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_STORE_MSR_ADDRESS_HI, 0)) {
+		DPRINTF("%s: error setting guest MSR exit store address HI\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_LOAD_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_load_pa)) {
+		DPRINTF("%s: error setting guest MSR exit load address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_EXIT_LOAD_MSR_ADDRESS_HI, 0)) {
+		DPRINTF("%s: error setting guest MSR exit load address HI\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_ENTRY_LOAD_MSR_ADDRESS,
 	    vcpu->vc_vmx_msr_exit_save_pa)) {
+		DPRINTF("%s: error setting guest MSR entry load address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_ENTRY_LOAD_MSR_ADDRESS_HI, 0)) {
+		DPRINTF("%s: error setting guest MSR entry load address HI\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_MSR_BITMAP_ADDRESS,
 	    vcpu->vc_msr_bitmap_pa)) {
+		DPRINTF("%s: error setting guest MSR bitmap address\n",
+		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_MSR_BITMAP_ADDRESS_HI, 0)) {
+		DPRINTF("%s: error setting guest MSR bitmap address HI\n",
+		    __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_CR4_MASK, CR4_VMXE)) {
+		DPRINTF("%s: error setting guest CR4 mask\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_CR0_MASK, CR0_NE)) {
+		DPRINTF("%s: error setting guest CR0 mask\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2346,12 +2534,14 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+	vmx_setmsrbr(vcpu, MSR_MISC_ENABLE);
 
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
 
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
+		DPRINTF("%s: vmclear failed\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2475,8 +2665,9 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Host CR0 */
-	cr0 = rcr0();
+	cr0 = rcr0() & ~CR0_TS;
 	if (vmwrite(VMCS_HOST_IA32_CR0, cr0)) {
+		DPRINTF("%s: error writing host CR0\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2484,59 +2675,70 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	/* Host CR4 */
 	cr4 = rcr4();
 	if (vmwrite(VMCS_HOST_IA32_CR4, cr4)) {
+		DPRINTF("%s: error writing host CR4\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* Host Segment Selectors */
 	if (vmwrite(VMCS_HOST_IA32_CS_SEL, GSEL(GCODE_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host CS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_DS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host DS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_ES_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host ES selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_FS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host FS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_GS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host GS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_SS_SEL, GSEL(GDATA_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host SS selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_HOST_IA32_TR_SEL, GSEL(GTSS_SEL, SEL_KPL))) {
+		DPRINTF("%s: error writing host TR selector\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* Host IDTR base */
 	if (vmwrite(VMCS_HOST_IA32_IDTR_BASE, (uint32_t)idt)) {
+		DPRINTF("%s: error writing host IDTR base\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	/* VMCS link */
 	if (vmwrite(VMCS_LINK_POINTER, 0xFFFFFFFF)) {
+		DPRINTF("%s: error writing VMCS link pointer\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
 	if (vmwrite(VMCS_LINK_POINTER_HI, 0xFFFFFFFF)) {
+		DPRINTF("%s: error writing VMCS link pointer HI\n", __func__);
 		ret = EINVAL;
 		goto exit;
 	}
@@ -2559,8 +2761,10 @@ exit:
 			km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 			    PAGE_SIZE, &kv_page, &kp_zero);
 	} else {
-		if (vmclear(&vcpu->vc_control_pa))
+		if (vmclear(&vcpu->vc_control_pa)) {
+			DPRINTF("%s: vmclear failed\n", __func__);
 			ret = EINVAL;
+		}
 	}
 
 	return (ret);
@@ -2730,6 +2934,7 @@ vcpu_init(struct vcpu *vcpu)
 
 	vcpu->vc_virt_mode = vmm_softc->mode;
 	vcpu->vc_state = VCPU_STATE_STOPPED;
+	vcpu->vc_vpid = 0;
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
@@ -2765,6 +2970,9 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 	if (vcpu->vc_vmx_msr_entry_load_va)
 		km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
+
+	if (vcpu->vc_vmx_vpid_enabled)
+		vmm_free_vpid(vcpu->vc_vpid);
 }
 
 /*
@@ -3095,7 +3303,20 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
 /*
  * vm_get_info
  *
- * Returns information about the VM indicated by 'vip'.
+ * Returns information about the VM indicated by 'vip'. The 'vip_size' field
+ * in the 'vip' parameter is used to indicate the size of the caller's buffer.
+ * If insufficient space exists in that buffer, the required size needed is
+ * returned in vip_size and the number of VM information structures returned
+ * in vip_info_count is set to 0. The caller should then try the ioctl again
+ * after allocating a sufficiently large buffer.
+ *
+ * Parameters:
+ *  vip: information structure identifying the VM to queery
+ *
+ * Return values:
+ *  0: the operation succeeded
+ *  ENOMEM: memory allocation error during processng
+ *  EFAULT: error copying data to user process
  */
 int
 vm_get_info(struct vm_info_params *vip)
@@ -3159,6 +3380,13 @@ vm_get_info(struct vm_info_params *vip)
  * vm_terminate
  *
  * Terminates the VM indicated by 'vtp'.
+ *
+ * Parameters:
+ *  vtp: structure defining the VM to terminate
+ *
+ * Return values:
+ *  0: the VM was terminated
+ *  !0: the VM could not be located
  */
 int
 vm_terminate(struct vm_terminate_params *vtp)
@@ -3171,7 +3399,7 @@ vm_terminate(struct vm_terminate_params *vtp)
 	/*
 	 * Find desired VM
 	 */
-	rw_enter_read(&vmm_softc->vm_lock);
+	rw_enter_write(&vmm_softc->vm_lock);
 	error = vm_find(vtp->vtp_vm_id, &vm);
 
 	if (error == 0) {
@@ -3189,18 +3417,16 @@ vm_terminate(struct vm_terminate_params *vtp)
 			    old, next));
 		}
 		rw_exit_read(&vm->vm_vcpu_lock);
-	}
-	rw_exit_read(&vmm_softc->vm_lock);
-
-	if (error != 0)
+	} else {
+		rw_exit_write(&vmm_softc->vm_lock);
 		return (error);
+	}
 
-	/* XXX possible race here two threads terminating the same vm? */
-	rw_enter_write(&vmm_softc->vm_lock);
 	SLIST_REMOVE(&vmm_softc->vm_list, vm, vm, vm_link);
-	rw_exit_write(&vmm_softc->vm_lock);
 	if (vm->vm_vcpus_running == 0)
 		vm_teardown(vm);
+
+	rw_exit_write(&vmm_softc->vm_lock);
 
 	return (0);
 }
@@ -3209,6 +3435,18 @@ vm_terminate(struct vm_terminate_params *vtp)
  * vm_run
  *
  * Run the vm / vcpu specified by 'vrp'
+ *
+ * Parameters:
+ *  vrp: structure defining the VM to run
+ *
+ * Return value:
+ *  ENOENT: the VM defined in 'vrp' could not be located
+ *  EBUSY: the VM defined in 'vrp' is already running
+ *  EFAULT: error copying data from userspace (vmd) on return from previous
+ *      exit.
+ *  EAGAIN: help is needed from vmd(8) (device I/O or exit vmm(4) cannot
+ *      handle in-kernel.)
+ *  0: the run loop exited and no help is needed from vmd(8)
  */
 int
 vm_run(struct vm_run_params *vrp)
@@ -3359,7 +3597,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	uint32_t insn_error, exit_reason;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
-	uint32_t eii, procbased;
+	uint32_t eii, procbased, int_st;
 	uint16_t irq;
 
 	resume = 0;
@@ -3374,8 +3612,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	if (vrp->vrp_continue) {
 		switch (vcpu->vc_gueststate.vg_exit_reason) {
 		case VMX_EXIT_IO:
-			vcpu->vc_gueststate.vg_eax =
-			    vcpu->vc_exit.vei.vei_data;
+			if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
+				vcpu->vc_gueststate.vg_eax =
+				    vcpu->vc_exit.vei.vei_data;
 			break;
 		case VMX_EXIT_HLT:
 			break;
@@ -3384,6 +3623,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		case VMX_EXIT_EXTINT:
 			break;
 		case VMX_EXIT_EPT_VIOLATION:
+			break;
+		case VMX_EXIT_CPUID:
+			break;
+		case VMX_EXIT_XSETBV:
 			break;
 #ifdef VMM_DEBUG
 		case VMX_EXIT_TRIPLE_FAULT:
@@ -3462,24 +3705,27 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF) {
-			if (!vcpu->vc_irqready) {
-				printf("%s: error - irq injected while not "
-				    "ready\n", __func__);
-				ret = EINVAL;
-				break;
-			}
-
-			eii = (irq & 0xFF);
-			eii |= (1ULL << 31);	/* Valid */
-			eii |= (0ULL << 8);	/* Hardware Interrupt */
-			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
-				printf("%s: can't vector interrupt to guest\n",
+			if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
+				printf("%s: can't get interruptibility state\n",
 				    __func__);
 				ret = EINVAL;
 				break;
 			}
 
-			irq = 0xFFFF;
+			/* Interruptbility state 0x3 covers NMIs and STI */
+			if (!(int_st & 0x3) && vcpu->vc_irqready) {
+				eii = (irq & 0xFF);
+				eii |= (1ULL << 31);	/* Valid */
+				eii |= (0ULL << 8);	/* Hardware Interrupt */
+				if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+					printf("vcpu_run_vmx: can't vector "
+					    "interrupt to guest\n");
+					ret = EINVAL;
+					break;
+				}
+
+				irq = 0xFFFF;
+			}
 		} else if (!vcpu->vc_intr) {
 			/*
 			 * Disable window exiting
@@ -3500,13 +3746,52 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			}
 		}
 
-		/* Invalidate old TLB mappings */
-		vid.vid_vpid = (uint64_t)vcpu->vc_parent->vm_id;
-		vid.vid_addr = 0ULL;
-		invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+		/* Inject event if present */
+		if (vcpu->vc_event != 0) {
+			eii = (vcpu->vc_event & 0xFF);
+			eii |= (1ULL << 31);	/* Valid */
+
+			/* Set the "Send error code" flag for certain vectors */
+			switch (vcpu->vc_event & 0xFF) {
+				case VMM_EX_DF:
+				case VMM_EX_TS:
+				case VMM_EX_NP:
+				case VMM_EX_SS:
+				case VMM_EX_GP:
+				case VMM_EX_PF:
+				case VMM_EX_AC:
+					eii |= (1ULL << 11);
+			}
+
+			eii |= (3ULL << 8);	/* Hardware Exception */
+			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+				printf("%s: can't vector event to guest\n",
+				    __func__);
+				ret = EINVAL;
+				break;
+			}
+
+			if (vmwrite(VMCS_ENTRY_EXCEPTION_ERROR_CODE, 0)) {
+				printf("%s: can't write error code to guest\n",
+				    __func__);
+				ret = EINVAL;
+				break;
+			}
+
+			vcpu->vc_event = 0;
+		}
+
+		if (vcpu->vc_vmx_vpid_enabled) {
+			/* Invalidate old TLB mappings */
+			vid.vid_vpid = vcpu->vc_parent->vm_id;
+			vid.vid_addr = 0;
+			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+		}
 
 		/* Start / resume the VCPU */
+#ifdef VMM_DEBUG
 		KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 		KERNEL_UNLOCK();
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate, resume, gdt.rd_base);
@@ -3540,12 +3825,16 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			resume = 1;
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
 				printf("%s: cannot read guest rip\n", __func__);
+				if (!locked)
+					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
 
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
 				printf("%s: cant read exit reason\n", __func__);
+				if (!locked)
+					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
@@ -3659,6 +3948,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 	}
 
+	/* Copy the VCPU register state to the exit structure */
+	if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
+		ret = EINVAL;
+
 	/*
 	 * We are heading back to userspace (vmd), either because we need help
 	 * handling an exit, a guest interrupt is pending, or we failed in some
@@ -3672,6 +3965,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	} else
 		ret = EINVAL;
 
+#ifdef VMM_DEBUG
+	KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 	return (ret);
 }
 
@@ -3706,15 +4002,32 @@ vmx_handle_intr(struct vcpu *vcpu)
 /*
  * vmx_handle_hlt
  *
- * Handle HLT exits
+ * Handle HLT exits. HLTing the CPU with interrupts disabled will terminate
+ * the guest (no NMIs handled) by returning EIO to vmd.
+ *
+ * Paramters:
+ *  vcpu: The VCPU that executed the HLT instruction
+ *
+ * Return Values:
+ *  EINVAL: An error occurred extracting information from the VMCS, or an
+ *   invalid HLT instruction was encountered
+ *  EIO: The guest halted with interrupts disabled
+ *  EAGAIN: Normal return to vmd - vmd should halt scheduling this VCPU
+ *   until a virtual interrupt is ready to inject
+ *
  */
 int
 vmx_handle_hlt(struct vcpu *vcpu)
 {
-	uint32_t insn_length;
+	uint32_t insn_length, eflags;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
+		return (EINVAL);
+	}
+
+	if (vmread(VMCS_GUEST_IA32_RFLAGS, &eflags)) {
+		printf("%s: can't obtain guest eflags\n", __func__);
 		return (EINVAL);
 	}
 
@@ -3722,6 +4035,12 @@ vmx_handle_hlt(struct vcpu *vcpu)
 		DPRINTF("%s: HLT with instruction length %d not supported\n",
 		    __func__, insn_length);
 		return (EINVAL);
+	}
+
+	if (!(eflags & PSL_I)) {
+		DPRINTF("%s: guest halted with interrupts disabled\n",
+		    __func__);
+		return (EIO);
 	}
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
@@ -3758,7 +4077,7 @@ int
 vmx_handle_exit(struct vcpu *vcpu)
 {
 	uint64_t exit_reason;
-	uint32_t eflags;
+	uint32_t eflags, istate;
 	int update_rip, ret = 0;
 
 	update_rip = 0;
@@ -3808,6 +4127,24 @@ vmx_handle_exit(struct vcpu *vcpu)
 		ret = vmx_handle_wrmsr(vcpu);
 		update_rip = 1;
 		break;
+	case VMX_EXIT_MWAIT:
+	case VMX_EXIT_MONITOR:
+	case VMX_EXIT_VMXON:
+	case VMX_EXIT_VMWRITE:
+	case VMX_EXIT_VMREAD:
+	case VMX_EXIT_VMLAUNCH:
+	case VMX_EXIT_VMRESUME:
+	case VMX_EXIT_VMPTRLD:
+	case VMX_EXIT_VMPTRST:
+	case VMX_EXIT_VMCLEAR:
+	case VMX_EXIT_VMCALL:
+	case VMX_EXIT_VMFUNC:
+	case VMX_EXIT_VMXOFF:
+	case VMX_EXIT_INVVPID:
+	case VMX_EXIT_INVEPT:
+		ret = vmm_inject_ud(vcpu);
+		update_rip = 0;
+		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 #ifdef VMM_DEBUG
 		DPRINTF("%s: vm %d vcpu %d triple fault\n", __func__,
@@ -3831,9 +4168,97 @@ vmx_handle_exit(struct vcpu *vcpu)
 			printf("%s: can't advance rip\n", __func__);
 			return (EINVAL);
 		}
+
+		if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST,
+		    &istate)) {
+			printf("%s: can't read interruptibility state\n",
+			    __func__);
+			return (EINVAL);
+		}
+
+		/* Interruptibilty state 0x3 covers NMIs and STI */
+		istate &= ~0x3;
+
+		if (vmwrite(VMCS_GUEST_INTERRUPTIBILITY_ST,
+		    istate)) {
+			printf("%s: can't write interruptibility state\n",
+			    __func__);
+			return (EINVAL);
+		}
+
+		if (eflags & PSL_T) {
+			if (vmm_inject_db(vcpu)) {
+				printf("%s: can't inject #DB exception to "
+				    "guest", __func__);
+				return (EINVAL);
+			}
+		}
 	}
 
 	return (ret);
+}
+
+/*
+ * vmm_inject_gp
+ *
+ * Injects an #GP exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_gp(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #GP at guest %%eip 0x%x\n", __func__,
+	    vcpu->vc_gueststate.vg_eip);
+	vcpu->vc_event = VMM_EX_GP;
+	
+	return (0);
+}
+
+/*
+ * vmm_inject_ud
+ *
+ * Injects an #UD exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_ud(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #UD at guest %%eip 0x%x\n", __func__,
+	    vcpu->vc_gueststate.vg_eip);
+	vcpu->vc_event = VMM_EX_UD;
+	
+	return (0);
+}
+
+/*
+ * vmm_inject_db
+ *
+ * Injects a #DB exception into the guest VCPU.
+ *
+ * Parameters:
+ *  vcpu: vcpu to inject into
+ *
+ * Return values:
+ *  Always 0
+ */
+int
+vmm_inject_db(struct vcpu *vcpu)
+{
+	DPRINTF("%s: injecting #DB at guest %%eip 0x%x\n", __func__,
+	    vcpu->vc_gueststate.vg_eip);
+	vcpu->vc_event = VMM_EX_DB;
+	
+	return (0);
 }
 
 /*
@@ -3961,8 +4386,10 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
+
 	if (ret)
-		printf("%s: uvm_fault returns %d\n", __func__, ret);
+		printf("%s: uvm_fault returns %d, GPA=0x%llx, eip=0x%x\n",
+		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_eip);
 
 	return (ret);
 }
@@ -4061,22 +4488,281 @@ vmx_handle_inout(struct vcpu *vcpu)
 	switch (vcpu->vc_exit.vei.vei_port) {
 	case IO_ICU1 ... IO_ICU1 + 1:
 	case 0x40 ... 0x43:
+	case PCKBC_AUX:
 	case IO_RTC ... IO_RTC + 1:
 	case IO_ICU2 ... IO_ICU2 + 1:
 	case 0x3f8 ... 0x3ff:
+	case ELCR0 ... ELCR1:
 	case 0xcf8:
-	case 0xcfc:
+	case 0xcfc ... 0xcff:
+	case 0x500 ... 0x50f:
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		ret = EAGAIN;
 		break;
 	default:
 		/* Read from unsupported ports returns FFs */
-		if (vcpu->vc_exit.vei.vei_dir == 1)
-			vcpu->vc_gueststate.vg_eax = 0xFFFFFFFF;
+		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
+			if (vcpu->vc_exit.vei.vei_size == 4)
+				vcpu->vc_gueststate.vg_eax |= 0xFFFFFFFF;
+			else if (vcpu->vc_exit.vei.vei_size == 2)
+				vcpu->vc_gueststate.vg_eax |= 0xFFFF;
+			else if (vcpu->vc_exit.vei.vei_size == 1)
+				vcpu->vc_gueststate.vg_eax |= 0xFF;
+		}
 		ret = 0;
 	}
 
 	return (ret);
+}
+
+/*
+ * vmx_load_pdptes
+ *
+ * Update the PDPTEs in the VMCS with the values currently indicated by the
+ * guest CR3. This is used for 32-bit PAE guests when enabling paging.
+ *
+ * Parameters
+ *  vcpu: The vcpu whose PDPTEs should be loaded
+ *
+ * Return values:
+ *  0: if successful
+ *  EINVAL: if the PDPTEs could not be loaded
+ *  ENOMEM: memory allocation failure
+ */
+int
+vmx_load_pdptes(struct vcpu *vcpu)
+{
+	uint32_t cr3, cr3_host_phys;
+	vaddr_t cr3_host_virt;
+	pd_entry_t *pdptes;
+	int ret;
+
+	if (vmread(VMCS_GUEST_IA32_CR3, &cr3)) {
+		printf("%s: can't read guest cr3\n", __func__);
+		return (EINVAL);
+	}
+
+	if (!pmap_extract(vcpu->vc_parent->vm_map->pmap, (vaddr_t)cr3,
+	    (paddr_t *)&cr3_host_phys)) {
+		DPRINTF("%s: nonmapped guest CR3, setting PDPTEs to 0\n",
+		    __func__);
+		if (vmwrite(VMCS_GUEST_PDPTE0, 0)) {
+			printf("%s: can't write guest PDPTE0\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE1, 0)) {
+			printf("%s: can't write guest PDPTE1\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE2, 0)) {
+			printf("%s: can't write guest PDPTE2\n", __func__);
+			return (EINVAL);
+		}
+
+		if (vmwrite(VMCS_GUEST_PDPTE3, 0)) {
+			printf("%s: can't write guest PDPTE3\n", __func__);
+			return (EINVAL);
+		}
+		return (0);
+	}
+
+	ret = 0;
+
+	cr3_host_virt = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+	if (!cr3_host_virt) {
+		printf("%s: can't allocate address for guest CR3 mapping\n",
+		    __func__);
+		return (ENOMEM);
+	}
+
+	pmap_kenter_pa(cr3_host_virt, cr3_host_phys, PROT_READ);
+
+	pdptes = (pd_entry_t *)cr3_host_virt;
+	if (vmwrite(VMCS_GUEST_PDPTE0, pdptes[0])) {
+		printf("%s: can't write guest PDPTE0\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE1, pdptes[1])) {
+		printf("%s: can't write guest PDPTE1\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE2, pdptes[2])) {
+		printf("%s: can't write guest PDPTE2\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_GUEST_PDPTE3, pdptes[3])) {
+		printf("%s: can't write guest PDPTE3\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+exit:
+	pmap_kremove(cr3_host_virt, PAGE_SIZE);
+	km_free((void *)cr3_host_virt, PAGE_SIZE, &kv_any, &kp_none);
+	return (ret);
+}
+
+/*
+ * vmx_handle_cr0_write
+ *
+ * Write handler for CR0. This function ensures valid values are written into
+ * CR0 for the cpu/vmm mode in use (cr0 must-be-0 and must-be-1 bits, etc).
+ *
+ * Parameters
+ *  vcpu: The vcpu taking the cr0 write exit
+ *     r: The guest's desired (incoming) cr0 value
+ *
+ * Return values:
+ *  0: if succesful
+ *  EINVAL: if an error occurred
+ */ 
+int
+vmx_handle_cr0_write(struct vcpu *vcpu, uint32_t r)
+{
+	struct vmx_msr_store *msr_store;
+	uint32_t ectls, oldcr0, cr4, mask;
+	int ret;
+
+	/* Check must-be-0 bits */
+	mask = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
+	if (r & mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr0. Zeros "
+		    "mask=0x%llx, data=0x%x\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	/* Check must-be-1 bits */
+	mask = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0;
+	if ((r & mask) != mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr0. Ones "
+		    "mask=0x%llx, data=0x%x\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	if (vmread(VMCS_GUEST_IA32_CR0, &oldcr0)) {
+		printf("%s: can't read guest cr0\n", __func__);
+		return (EINVAL);
+	}
+
+	if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
+		printf("%s: can't read guest cr4\n", __func__);
+		return (EINVAL);
+	}
+
+	/* CR0 must always have NE set */
+	r |= CR0_NE;
+
+	if (vmwrite(VMCS_GUEST_IA32_CR0, r)) {
+		printf("%s: can't write guest cr0\n", __func__);
+		return (EINVAL);
+	}
+
+	/* If the guest hasn't enabled paging, nothing more to do. */
+	if (!(r & CR0_PG))
+		return (0);
+
+	/*
+	 * Since the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
+	 * control must be set to the same as EFER_LME.
+	 */
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
+		printf("%s: can't read entry controls", __func__);
+		return (EINVAL);
+	}
+
+	if (msr_store[VCPU_REGS_EFER].vms_data & EFER_LME)
+		ectls |= IA32_VMX_IA32E_MODE_GUEST;
+	else
+		ectls &= ~IA32_VMX_IA32E_MODE_GUEST;
+
+	if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
+		printf("%s: can't write entry controls", __func__);
+		return (EINVAL);
+	}
+
+	/* Load PDPTEs if PAE guest enabling paging */
+	if (!(oldcr0 & CR0_PG) && (r & CR0_PG) && (cr4 & CR4_PAE)) {
+		ret = vmx_load_pdptes(vcpu);
+
+		if (ret) {
+			printf("%s: updating PDPTEs failed\n", __func__);
+			return (ret);
+		}
+	}
+
+	return (0);
+}
+
+/*
+ * vmx_handle_cr4_write
+ *
+ * Write handler for CR4. This function ensures valid values are written into
+ * CR4 for the cpu/vmm mode in use (cr4 must-be-0 and must-be-1 bits, etc).
+ *
+ * Parameters
+ *  vcpu: The vcpu taking the cr4 write exit
+ *     r: The guest's desired (incoming) cr4 value
+ *
+ * Return values:
+ *  0: if succesful
+ *  EINVAL: if an error occurred
+ */ 
+int
+vmx_handle_cr4_write(struct vcpu *vcpu, uint32_t r)
+{
+	uint64_t mask;
+
+	/* Check must-be-0 bits */
+	mask = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1);
+	if (r & mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr4. Zeros "
+		    "mask=0x%llx, data=0x%x\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	/* Check must-be-1 bits */
+	mask = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0;
+	if ((r & mask) != mask) {
+		/* Inject #GP, let the guest handle it */
+		DPRINTF("%s: guest set invalid bits in %%cr4. Ones "
+		    "mask=0x%llx, data=0x%x\n", __func__,
+		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0,
+		    r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	/* CR4_VMXE must always be enabled */
+	r |= CR4_VMXE;
+
+	if (vmwrite(VMCS_GUEST_IA32_CR4, r)) {
+		printf("%s: can't write guest cr4\n", __func__);
+		return (EINVAL);
+	}
+
+	return (0);
 }
 
 /*
@@ -4087,8 +4773,8 @@ vmx_handle_inout(struct vcpu *vcpu)
 int
 vmx_handle_cr(struct vcpu *vcpu)
 {
-	uint32_t insn_length, exit_qual;
-	uint8_t crnum, dir;
+	uint32_t insn_length, exit_qual, r;
+	uint8_t crnum, dir, reg;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -4103,12 +4789,43 @@ vmx_handle_cr(struct vcpu *vcpu)
 	/* Low 4 bits of exit_qual represent the CR number */
 	crnum = exit_qual & 0xf;
 
+	/*
+	 * Bits 5:4 indicate the direction of operation (or special CR-modifying
+	 * instruction
+	 */
 	dir = (exit_qual & 0x30) >> 4;
+
+	/* Bits 11:8 encode the source/target register */
+	reg = (exit_qual & 0xf00) >> 8;
 
 	switch (dir) {
 	case CR_WRITE:
-		DPRINTF("%s: mov to cr%d @ %x\n", __func__,
-	    	    crnum, vcpu->vc_gueststate.vg_eip);
+		if (crnum == 0 || crnum == 4) {
+			switch (reg) {
+			case 0: r = vcpu->vc_gueststate.vg_eax; break;
+			case 1: r = vcpu->vc_gueststate.vg_ecx; break;
+			case 2: r = vcpu->vc_gueststate.vg_edx; break;
+			case 3: r = vcpu->vc_gueststate.vg_ebx; break;
+			case 4: if (vmread(VMCS_GUEST_IA32_RSP, &r)) {
+					printf("%s: unable to read guest "
+					    "RSP\n", __func__);
+					return (EINVAL);
+				}
+				break;
+			case 5: r = vcpu->vc_gueststate.vg_ebp; break;
+			case 6: r = vcpu->vc_gueststate.vg_esi; break;
+			case 7: r = vcpu->vc_gueststate.vg_edi; break;
+			}
+			DPRINTF("%s: mov to cr%d @ %x, data=0x%x\n",
+			    __func__, crnum, vcpu->vc_gueststate.vg_eip, r);
+		}
+
+		if (crnum == 0)
+			vmx_handle_cr0_write(vcpu, r);
+			
+		if (crnum == 4)
+			vmx_handle_cr4_write(vcpu, r);
+
 		break;
 	case CR_READ:
 		DPRINTF("%s: mov from cr%d @ %x\n", __func__,
@@ -4138,21 +4855,24 @@ vmx_handle_cr(struct vcpu *vcpu)
  * Handler for rdmsr instructions. Bitmap MSRs are allowed implicit access
  * and won't end up here. This handler is primarily intended to catch otherwise
  * unknown MSR access for possible later inclusion in the bitmap list. For
- * each MSR access that ends up here, we log the access.
+ * each MSR access that ends up here, we log the access (when VMM_DEBUG is
+ * enabled)
  *
  * Parameters:
  *  vcpu: vcpu structure containing instruction info causing the exit
  *
  * Return value:
  *  0: The operation was successful
- *  1: An error occurred
+ *  EINVAL: An error occurred
  */
 int
 vmx_handle_rdmsr(struct vcpu *vcpu)
 {
 	uint32_t insn_length;
-	uint64_t msr;
-	uint32_t *eax, *ecx, *edx;
+	uint32_t *eax, *edx;
+#ifdef VMM_DEBUG
+	uint32_t *ecx;
+#endif /* VMM_DEBUG */
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -4166,16 +4886,17 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
-	ecx = &vcpu->vc_gueststate.vg_ecx;
 	edx = &vcpu->vc_gueststate.vg_edx;
 
-	msr = rdmsr(*ecx);
-	*eax = msr & 0xFFFFFFFFULL;
-	*edx = msr >> 32;
+	*eax = 0;
+	*edx = 0;
 
-	/* XXX log the access for now, to be able to identify unknown MSRs */
-	printf("%s: rdmsr exit, msr=0x%x, data returned to "
+#ifdef VMM_DEBUG
+	/* Log the access, to be able to identify unknown MSRs */
+	ecx = &vcpu->vc_gueststate.vg_ecx;
+	DPRINTF("%s: rdmsr exit, msr=0x%x, data returned to "
 	    "guest=0x%x:0x%x\n", __func__, *ecx, *edx, *eax);
+#endif /* VMM_DEBUG */
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
 
@@ -4183,11 +4904,39 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 }
 
 /*
+ * vmx_handle_misc_enable_msr
+ *
+ * Handler for writes to the MSR_MISC_ENABLE (0x1a0) MSR on Intel CPUs. We
+ * limit what the guest can write to this MSR (certain hardware-related
+ * settings like speedstep, etc).
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing information about the wrmsr causing this
+ *   exit
+ */
+void
+vmx_handle_misc_enable_msr(struct vcpu *vcpu)
+{
+	uint32_t *eax, *edx;
+	struct vmx_msr_store *msr_store;
+
+	eax = &vcpu->vc_gueststate.vg_eax;
+	edx = &vcpu->vc_gueststate.vg_edx;
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	/* Filter out guest writes to TCC, EIST, and xTPR */
+	*eax &= ~(MISC_ENABLE_TCC | MISC_ENABLE_EIST_ENABLED |
+	    MISC_ENABLE_xTPR_MESSAGE_DISABLE);
+	
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = *eax | (((uint64_t) *edx << 32));
+}
+
+/*
  * vmx_handle_wrmsr
  *
  * Handler for wrmsr instructions. This handler logs the access, and discards
- * the written data. Any valid wrmsr will not end up here (it will be
- * whitelisted in the MSR bitmap).
+ * the written data (when VMM_DEBUG is enabled). Any valid wrmsr will not end
+ * up here (it will be whitelisted in the MSR bitmap).
  *
  * Parameters:
  *  vcpu: vcpu structure containing instruction info causing the exit
@@ -4217,9 +4966,20 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	ecx = &vcpu->vc_gueststate.vg_ecx;
 	edx = &vcpu->vc_gueststate.vg_edx;
 
-	/* XXX log the access for now, to be able to identify unknown MSRs */
-	printf("%s: wrmsr exit, msr=0x%x, discarding data written from "
-	    "guest=0x%x:0x%x\n", __func__, *ecx, *edx, *eax);
+	switch (*ecx) {
+		case MSR_MISC_ENABLE:
+			vmx_handle_misc_enable_msr(vcpu);
+			break;
+#ifdef VMM_DEBUG
+		default:
+			/*
+			 * Log the access, to be able to identify unknown MSRs
+			 */
+			DPRINTF("%s: wrmsr exit, msr=0x%x, discarding data "
+			    "written from guest=0x%x:0x%x\n", __func__,
+			    *ecx, *edx, *eax);
+#endif /* VMM_DEBUG */
+	}
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
 
@@ -4242,7 +5002,9 @@ int
 vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint32_t insn_length;
-	uint32_t *eax, *ebx, *ecx, *edx;
+	uint32_t *eax, *ebx, *ecx, *edx, cpuid_limit;
+	uint32_t new_eax, new_ebx, new_ecx, new_edx;
+	struct vmx_msr_store *msr_store;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT) {
@@ -4252,17 +5014,30 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		if (insn_length != 2) {
-			DPRINTF("%s: CPUID with instruction length %d not "
-			    "supported\n", __func__, insn_length);
-			return (EINVAL);
-		}
+		eax = &vcpu->vc_gueststate.vg_eax;
+		msr_store =
+		    (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+		cpuid_limit = msr_store[VCPU_REGS_MISC_ENABLE].vms_data &
+		    MISC_ENABLE_LIMIT_CPUID_MAXVAL;
 	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ebx = &vcpu->vc_gueststate.vg_ebx;
 	ecx = &vcpu->vc_gueststate.vg_ecx;
 	edx = &vcpu->vc_gueststate.vg_edx;
+
+	/*
+	 * "CPUID leaves above 02H and below 80000000H are only visible when
+	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0"
+	 */
+	if ((vmm_softc->mode == VMM_MODE_VMX || vmm_softc->mode == VMM_MODE_EPT)
+	    && cpuid_limit && (*eax > 0x02 && *eax < 0x80000000)) {
+		*eax = 0;
+		*ebx = 0;
+		*ecx = 0;
+		*edx = 0;
+		return (0);
+	}
 
 	switch (*eax) {
 	case 0x00:	/* Max level and vendor ID */
@@ -4298,12 +5073,19 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*edx = 0;
 		break;
 	case 0x04:
-		DPRINTF("%s: function 0x04 (deterministic cache info) not "
-		    "supported\n", __func__);
-		*eax = 0;
-		*ebx = 0;
-		*ecx = 0;
-		*edx = 0;
+		if (*ecx == 0) {
+			CPUID_LEAF(*eax, 0, new_eax, new_ebx, new_ecx, new_edx);
+			*eax = new_eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
+			*ebx = new_ebx;
+			*ecx = new_ecx;
+			*edx = new_edx;
+		} else {
+			CPUID_LEAF(*eax, *ecx, new_eax, new_ebx, new_ecx, new_edx);
+			*eax = new_eax & VMM_CPUID4_CACHE_TOPOLOGY_MASK;
+			*ebx = new_ebx;
+			*ecx = new_ecx;
+			*edx = new_edx;
+		}
 		break;
 	case 0x05:	/* MONITOR/MWAIT (not supported) */
 		DPRINTF("%s: function 0x05 (monitor/mwait) not supported\n",
@@ -4487,6 +5269,72 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	/* XXX removed due to rot */
 	return (0);
+}
+
+/*
+ * vmm_alloc_vpid
+ *
+ * Sets the memory location pointed to by "vpid" to the next available VPID
+ * or ASID.
+ *
+ * Parameters:
+ *  vpid: Pointer to location to receive the next VPID/ASID
+ *
+ * Return Values:
+ *  0: The operation completed successfully
+ *  ENOMEM: No VPIDs/ASIDs were available. Content of 'vpid' is unchanged.
+ */
+int
+vmm_alloc_vpid(uint16_t *vpid)
+{
+	uint16_t i;
+	uint8_t idx, bit;
+	struct vmm_softc *sc = vmm_softc;
+
+	rw_enter_write(&vmm_softc->vpid_lock);	
+	for (i = 1; i <= sc->max_vpid; i++) {
+		idx = i / 8;
+		bit = i - (idx * 8);
+
+		if (!(sc->vpids[idx] & (1 << bit))) {
+			sc->vpids[idx] |= (1 << bit);
+			*vpid = i;
+			DPRINTF("%s: allocated VPID/ASID %d\n", __func__,
+			    i);
+			rw_exit_write(&vmm_softc->vpid_lock);	
+			return 0;
+		}
+	}
+
+	printf("%s: no available %ss\n", __func__,
+	    (sc->mode == VMM_MODE_EPT || sc->mode == VMM_MODE_VMX) ? "VPID" :
+	    "ASID");
+
+	rw_exit_write(&vmm_softc->vpid_lock);	
+	return ENOMEM;
+}
+
+/*
+ * vmm_free_vpid
+ *
+ * Frees the VPID/ASID id supplied in "vpid".
+ *
+ * Parameters:
+ *  vpid: VPID/ASID to free.
+ */
+void
+vmm_free_vpid(uint16_t vpid)
+{
+	uint8_t idx, bit;
+	struct vmm_softc *sc = vmm_softc;
+
+	rw_enter_write(&vmm_softc->vpid_lock);
+	idx = vpid / 8;
+	bit = vpid - (idx * 8);
+	sc->vpids[idx] &= ~(1 << bit);
+
+	DPRINTF("%s: freed VPID/ASID %d\n", __func__, vpid);
+	rw_exit_write(&vmm_softc->vpid_lock);
 }
 
 /*
