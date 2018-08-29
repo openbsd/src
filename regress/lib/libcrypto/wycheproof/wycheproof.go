@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.31 2018/08/28 18:28:30 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.32 2018/08/29 18:58:46 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -563,7 +563,8 @@ func runAesCcmTestGroup(wtg *wycheproofTestGroupAesCcm) bool {
 	case 256:
 		cipher = C.EVP_aes_256_ccm()
 	default:
-		log.Fatalf("Unsupported key size: %d", wtg.KeySize)
+		fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
+		return true
 	}
 
 	ctx := C.EVP_CIPHER_CTX_new()
