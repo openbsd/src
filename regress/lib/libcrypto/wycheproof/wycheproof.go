@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.33 2018/08/29 18:59:22 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.34 2018/08/29 19:00:41 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -480,6 +480,18 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 		return false
 	}
 
+	if doEncrypt == 1 {
+		var tmpLen C.int
+		dummyOut := make([]byte, 16)
+
+		ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&dummyOut[0])), &tmpLen)
+		if ret != 1 {
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherFinal_ex() failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			return false
+		}
+		cipherOutLen += tmpLen
+	}
+
 	if cipherOutLen != C.int(outLen) {
 		fmt.Printf("FAIL: Test case %d (%q) [%v] - cipherOutLen %d != outLen %d. Result %v\n", wt.TCID, wt.Comment, cipherOutLen, action, outLen, wt.Result)
 		return false
@@ -489,6 +501,18 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 	if !bytes.Equal(cipherOut, out) {
 		fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed output do not match. Result: %v\n", wt.TCID, wt.Comment, action, wt.Result)
 		success = false
+	}
+	if doEncrypt == 1 {
+		tagOut := make([]byte, tagLen)
+		ret = C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_CCM_GET_TAG, C.int(tagLen), unsafe.Pointer(&tagOut[0]))
+		if ret != 1 {
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CIPHER_CTX_ctrl() failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			return false
+		}
+		if bytes.Equal(tagOut, tag) != (wt.Result == "valid") {
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed tag do not match. Result: %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			success = false
+		}
 	}
 	return success
 }
