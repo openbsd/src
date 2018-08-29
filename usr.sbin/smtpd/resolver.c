@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.1 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.2 2018/08/29 17:56:17 eric Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -207,8 +207,6 @@ resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 		m_create(proc, IMSG_GETNAMEINFO, reqid, 0, -1);
 		m_add_int(proc, EAI_SYSTEM);
 		m_add_int(proc, save_errno);
-		m_add_string(proc, "");
-		m_add_string(proc, "");
 		m_close(proc);
 		break;
 
@@ -286,13 +284,15 @@ resolver_dispatch_result(struct mproc *proc, struct imsg *imsg)
 	case IMSG_GETNAMEINFO:
 		m_get_int(&m, &gai_errno);
 		m_get_int(&m, &errno);
-		m_get_string(&m, &host);
-		m_get_string(&m, &serv);
+		if (gai_errno == 0) {
+			m_get_string(&m, &host);
+			m_get_string(&m, &serv);
+		}
 		m_end(&m);
 
 		SPLAY_REMOVE(reqtree, &reqs, req);
-		req->cb_ni(req->arg, gai_errno, host[0] ? host : NULL,
-		    serv[0] ? serv : NULL);
+		req->cb_ni(req->arg, gai_errno, gai_errno ? NULL : host,
+		    gai_errno ? NULL : serv);
 		free(req);
 		break;
 	}
@@ -344,8 +344,10 @@ resolver_getnameinfo_cb(struct asr_result *ar, void *arg)
 	m_create(s->proc, IMSG_GETNAMEINFO, s->reqid, 0, -1);
 	m_add_int(s->proc, ar->ar_gai_errno);
 	m_add_int(s->proc, ar->ar_errno);
-	m_add_string(s->proc, s->host ? s->host : "");
-	m_add_string(s->proc, s->serv ? s->serv : "");
+	if (ar->ar_gai_errno == 0) {
+		m_add_string(s->proc, s->host);
+		m_add_string(s->proc, s->serv);
+	}
 	m_close(s->proc);
 
 	free(s->host);
