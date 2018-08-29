@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2017/05/29 13:30:35 tedu Exp $
+#	$OpenBSD: Makefile,v 1.35 2018/08/29 17:47:07 anton Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -39,6 +39,7 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	    ${SYS_DIR}/sys/dkio.h \
 	    ${SYS_DIR}/sys/filio.h \
 	    ${SYS_DIR}/sys/gpio.h \
+	    ${SYS_DIR}/sys/kcov.h \
 	    ${SYS_DIR}/sys/memrange.h \
 	    ${SYS_DIR}/sys/mtio.h \
 	    ${SYS_DIR}/sys/pciio.h \
