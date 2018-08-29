@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1101 2018/08/22 16:53:36 tb Exp $
+#	$OpenBSD: install.sub,v 1.1102 2018/08/29 11:30:48 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2311,7 +2311,7 @@ parse_hn_line() {
 		;;
 	dhcp)	! $_has_dhclient && return
 		_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up;dhclient $_if"
 		V4_DHCPCONF=true
 		;;
 	'!'*|bridge)
