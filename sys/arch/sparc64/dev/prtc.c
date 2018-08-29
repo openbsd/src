@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtc.c,v 1.4 2018/08/28 00:00:42 dlg Exp $	*/
+/*	$OpenBSD: prtc.c,v 1.5 2018/08/29 02:03:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -35,11 +35,17 @@
 
 extern todr_chip_handle_t todr_handle;
 
+struct prtc_softc {
+	struct device	sc_dev;
+	struct todr_chip_handle
+			sc_todr_chip;
+};
+
 int	prtc_match(struct device *, void *, void *);
 void	prtc_attach(struct device *, struct device *, void *);
 
 struct cfattach prtc_ca = {
-	sizeof(struct device), prtc_match, prtc_attach
+	sizeof(struct prtc_softc), prtc_match, prtc_attach
 };
 
 struct cfdriver prtc_cd = {
@@ -66,7 +72,8 @@ prtc_match(struct device *parent, void *match, void *aux)
 void
 prtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	todr_chip_handle_t handle;
+	struct prtc_softc *sc = (struct prtc_softc *)self;
+	todr_chip_handle_t handle = &sc->sc_todr_chip;
 	char buf[32];
 	int opl;
 
@@ -78,11 +85,7 @@ prtc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	handle = malloc(sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
-	if (handle == NULL)
-		panic("couldn't allocate todr_handle");
-
-	handle->cookie = self;
+	handle->cookie = sc;
 	if (opl) {
 		handle->todr_gettime = prtc_opl_gettime;
 		handle->todr_settime = prtc_opl_settime;
