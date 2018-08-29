@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.101 2018/06/25 22:16:53 remi Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.102 2018/08/29 08:43:17 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -101,6 +101,7 @@ enum imsg_type {
 	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
 	IMSG_CTL_LOG_VERBOSE,
+	IMSG_CONTROLFD,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_IFINFO,
@@ -605,6 +606,7 @@ void		 rtlabel_tag(u_int16_t, u_int32_t);
 
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
+void	main_imsg_compose_ospfe_fd(int, pid_t, int);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 int	ospf_redistribute(struct kroute *, u_int32_t *);
 void	merge_config(struct ospfd_conf *, struct ospfd_conf *);

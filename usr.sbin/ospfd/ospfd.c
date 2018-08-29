@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.99 2018/07/11 12:09:34 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.100 2018/08/29 08:43:17 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -116,6 +116,7 @@ main(int argc, char *argv[])
 	int			 mib[4];
 	size_t			 len;
 	char			*sockname = NULL;
+	int			 control_fd;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
@@ -213,6 +214,9 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
 
+	if ((control_check(ospfd_conf->csock)) == -1)
+		fatalx("control socket check failed");
+
 	if (!debug)
 		daemon(1, 0);
 
@@ -269,6 +273,10 @@ main(int argc, char *argv[])
 	event_set(&iev_rde->ev, iev_rde->ibuf.fd, iev_rde->events,
 	    iev_rde->handler, iev_rde);
 	event_add(&iev_rde->ev, NULL);
+
+	if ((control_fd = control_init(ospfd_conf->csock)) == -1)
+		fatalx("control socket setup failed");
+	main_imsg_compose_ospfe_fd(IMSG_CONTROLFD, 0, control_fd);
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
 	    ospfd_conf->rdomain, ospfd_conf->redist_label_or_prefix) == -1)
@@ -483,6 +491,13 @@ main_imsg_compose_ospfe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	if (iev_ospfe)
 		imsg_compose_event(iev_ospfe, type, 0, pid, -1, data, datalen);
+}
+
+void
+main_imsg_compose_ospfe_fd(int type, pid_t pid, int fd)
+{
+	if (iev_ospfe)
+		imsg_compose_event(iev_ospfe, type, 0, pid, fd, NULL, 0);
 }
 
 void
