@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.414 2018/08/09 12:54:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.415 2018/08/29 11:46:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1310,6 +1310,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	struct prefix		*p;
 	enum filter_actions	 action;
 	u_int16_t		 i;
+	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
@@ -1323,6 +1324,9 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 		rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX, NULL, 0);
 		return (-1);
 	}
+
+	if (in->aspath.flags & F_ATTR_PARSE_ERR)
+		wmsg = "path invalid, withdraw";
 
 	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0);
 	if (p == NULL)
@@ -1344,7 +1348,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 			    prefixlen, 0);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
 		    0)) {
-			rde_update_log("filtered withdraw", i, peer,
+			rde_update_log(wmsg, i, peer,
 			    NULL, prefix, prefixlen);
 		}
 
