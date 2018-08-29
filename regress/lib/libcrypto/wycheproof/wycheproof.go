@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.32 2018/08/29 18:58:46 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.33 2018/08/29 18:59:22 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -487,7 +487,7 @@ func checkAesCcm(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, i
 
 	success := true
 	if !bytes.Equal(cipherOut, out) {
-		fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed output do not match. Result.%v\n", wt.TCID, wt.Comment, action, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed output do not match. Result: %v\n", wt.TCID, wt.Comment, action, wt.Result)
 		success = false
 	}
 	return success
