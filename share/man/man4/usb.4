@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.189 2018/08/25 20:31:31 jcs Exp $
+.\"	$OpenBSD: usb.4,v 1.190 2018/08/30 03:26:08 jcs Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2018 $
+.Dd $Mdocdate: August 30 2018 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -387,11 +387,6 @@ and defines:
 The
 .Pa /dev/usbN
 device can be opened and a few operations can be performed on it.
-The
-.Xr poll 2
-system call will say that I/O is possible on the controller device
-when a USB device has been connected or disconnected to the bus.
-.Pp
 The following
 .Xr ioctl 2
 commands are supported on the controller device:
