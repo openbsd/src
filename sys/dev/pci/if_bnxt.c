@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.10 2018/08/26 06:40:03 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.11 2018/08/30 11:18:21 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -84,6 +84,9 @@
 
 #define BNXT_MAX_QUEUE		8
 #define BNXT_MAX_MTU		9000
+#define BNXT_AG_BUFFER_SIZE	8192
+
+#define BNXT_CP_PAGES		4
 
 #define BNXT_MAX_TX_SEGS	32	/* a bit much? */
 
@@ -131,9 +134,10 @@ struct bnxt_cp_ring {
 	struct bnxt_softc	*softc;
 	uint32_t		cons;
 	int			v_bit;
+	uint32_t		commit_cons;
+	int			commit_v_bit;
 	struct ctx_hw_stats	*stats;
 	uint32_t		stats_ctx_id;
-	uint32_t		last_idx;
 };
 
 struct bnxt_grp_info {
@@ -219,12 +223,15 @@ struct bnxt_softc {
 	struct bnxt_dmamem	*sc_rx_ring_mem;	/* rx and ag */
 	struct bnxt_dmamem	*sc_rx_mcast;
 	struct bnxt_ring	sc_rx_ring;
-	/* struct bnxt_ring	sc_rx_ag_ring; */
+	struct bnxt_ring	sc_rx_ag_ring;
 	struct bnxt_grp_info	sc_ring_group;
-	struct if_rxring	sc_rxr;
+	struct if_rxring	sc_rxr[2];
 	struct bnxt_slot	*sc_rx_slots;
+	struct bnxt_slot	*sc_rx_ag_slots;
 	int			sc_rx_prod;
 	int			sc_rx_cons;
+	int			sc_rx_ag_prod;
+	int			sc_rx_ag_cons;
 	struct timeout		sc_rx_refill;
 
 	/* tx */
@@ -271,6 +278,10 @@ void		bnxt_watchdog(struct ifnet *);
 void		bnxt_media_status(struct ifnet *, struct ifmediareq *);
 int		bnxt_media_change(struct ifnet *);
 
+struct cmpl_base *bnxt_cpr_next_cmpl(struct bnxt_softc *, struct bnxt_cp_ring *);
+void		bnxt_cpr_commit(struct bnxt_softc *, struct bnxt_cp_ring *);
+void		bnxt_cpr_rollback(struct bnxt_softc *, struct bnxt_cp_ring *);
+
 void		bnxt_mark_cpr_invalid(struct bnxt_cp_ring *);
 void		bnxt_write_cp_doorbell(struct bnxt_softc *, struct bnxt_ring *,
 		    int);
@@ -282,12 +293,13 @@ void		bnxt_write_tx_doorbell(struct bnxt_softc *, struct bnxt_ring *,
 		    int);
 
 int		bnxt_rx_fill(struct bnxt_softc *);
-u_int		bnxt_rx_fill_slots(struct bnxt_softc *, u_int);
+u_int		bnxt_rx_fill_slots(struct bnxt_softc *, struct bnxt_ring *, void *,
+		    struct bnxt_slot *, uint *, int, uint16_t, u_int);
 void		bnxt_refill(void *);
-void		bnxt_rx(struct bnxt_softc *, struct mbuf_list *, int *,
-		    struct cmpl_base *, struct cmpl_base *);
+int		bnxt_rx(struct bnxt_softc *, struct bnxt_cp_ring *,
+		    struct mbuf_list *, int *, int *, struct cmpl_base *);
 
-int		bnxt_txeof(struct bnxt_softc *, struct cmpl_base *);
+void		bnxt_txeof(struct bnxt_softc *, int *, struct cmpl_base *);
 
 int		_hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
 int		hwrm_send_message(struct bnxt_softc *, void *, uint32_t);
@@ -309,6 +321,8 @@ int		bnxt_hwrm_vnic_ctx_alloc(struct bnxt_softc *, uint16_t *);
 int		bnxt_hwrm_vnic_ctx_free(struct bnxt_softc *, uint16_t *);
 int		bnxt_hwrm_vnic_cfg(struct bnxt_softc *,
 		    struct bnxt_vnic_info *);
+int		bnxt_hwrm_vnic_cfg_placement(struct bnxt_softc *,
+		    struct bnxt_vnic_info *vnic);
 int		bnxt_hwrm_stat_ctx_alloc(struct bnxt_softc *,
 		    struct bnxt_cp_ring *, uint64_t);
 int		bnxt_hwrm_stat_ctx_free(struct bnxt_softc *,
@@ -528,8 +542,9 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cp_ring.softc = sc;
 	sc->sc_cp_ring.ring.id = 0;
 	sc->sc_cp_ring.ring.doorbell = sc->sc_cp_ring.ring.id * 0x80;
-	sc->sc_cp_ring.ring.ring_size = PAGE_SIZE / sizeof(struct cmpl_base);
-	sc->sc_cp_ring_mem = bnxt_dmamem_alloc(sc, PAGE_SIZE);
+	sc->sc_cp_ring.ring.ring_size = (PAGE_SIZE * BNXT_CP_PAGES) /
+	    sizeof(struct cmpl_base);
+	sc->sc_cp_ring_mem = bnxt_dmamem_alloc(sc, PAGE_SIZE * BNXT_CP_PAGES);
 	if (sc->sc_cp_ring_mem == NULL) {
 		printf("%s: failed to allocate completion queue memory\n",
 		    DEVNAME(sc));
@@ -694,10 +709,9 @@ bnxt_up(struct bnxt_softc *sc)
 	}
 	bnxt_write_rx_doorbell(sc, &sc->sc_rx_ring, 0);
 
-#if 0
 	sc->sc_rx_ag_ring.phys_id = HWRM_NA_SIGNATURE;
 	sc->sc_rx_ag_ring.id = BNXT_AG_RING_ID;
-	sc->sc_rx_ag_ring.doorbell = sc->sc_rx_ring.id * 0x80;
+	sc->sc_rx_ag_ring.doorbell = sc->sc_rx_ag_ring.id * 0x80;
 	sc->sc_rx_ag_ring.ring_size = PAGE_SIZE / sizeof(struct rx_prod_pkt_bd);
 	sc->sc_rx_ag_ring.vaddr = BNXT_DMA_KVA(sc->sc_rx_ring_mem) + PAGE_SIZE;
 	sc->sc_rx_ag_ring.paddr = BNXT_DMA_DVA(sc->sc_rx_ring_mem) + PAGE_SIZE;
@@ -708,17 +722,17 @@ bnxt_up(struct bnxt_softc *sc)
 		    DEVNAME(sc));
 		goto dealloc_rx;
 	}
-#endif
+	bnxt_write_rx_doorbell(sc, &sc->sc_rx_ag_ring, 0);
 
 	sc->sc_ring_group.grp_id = HWRM_NA_SIGNATURE;
 	sc->sc_ring_group.stats_ctx = sc->sc_cp_ring.stats_ctx_id;
 	sc->sc_ring_group.rx_ring_id = sc->sc_rx_ring.phys_id;
-	sc->sc_ring_group.ag_ring_id = HWRM_NA_SIGNATURE;
+	sc->sc_ring_group.ag_ring_id = sc->sc_rx_ag_ring.phys_id;
 	sc->sc_ring_group.cp_ring_id = sc->sc_cp_ring.ring.phys_id;
 	if (bnxt_hwrm_ring_grp_alloc(sc, &sc->sc_ring_group) != 0) {
 		printf("%s: failed to allocate ring group\n",
 		    DEVNAME(sc));
-		goto dealloc_rx;
+		goto dealloc_ag;
 	}
 
 	sc->sc_vnic.rss_id = HWRM_NA_SIGNATURE;
@@ -730,7 +744,7 @@ bnxt_up(struct bnxt_softc *sc)
 
 	sc->sc_vnic.id = HWRM_NA_SIGNATURE;
 	sc->sc_vnic.def_ring_grp = sc->sc_ring_group.grp_id;
-	sc->sc_vnic.mru = MCLBYTES;
+	sc->sc_vnic.mru = BNXT_MAX_MTU;
 	sc->sc_vnic.cos_rule = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.lb_rule = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.flags = BNXT_VNIC_FLAG_DEFAULT;
@@ -741,6 +755,12 @@ bnxt_up(struct bnxt_softc *sc)
 
 	if (bnxt_hwrm_vnic_cfg(sc, &sc->sc_vnic) != 0) {
 		printf("%s: failed to configure vnic\n", DEVNAME(sc));
+		goto dealloc_vnic;
+	}
+
+	if (bnxt_hwrm_vnic_cfg_placement(sc, &sc->sc_vnic) != 0) {
+		printf("%s: failed to configure vnic placement mode\n",
+		    DEVNAME(sc));
 		goto dealloc_vnic;
 	}
 
@@ -769,17 +789,35 @@ bnxt_up(struct bnxt_softc *sc)
 		}
 	}
 
+	sc->sc_rx_ag_slots = mallocarray(sizeof(*bs), sc->sc_rx_ag_ring.ring_size,
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	if (sc->sc_rx_ag_slots == NULL) {
+		printf("%s: failed to allocate rx ag slots\n", DEVNAME(sc));
+		goto destroy_rx_slots;
+	}
+
+	for (i = 0; i < sc->sc_rx_ag_ring.ring_size; i++) {
+		bs = &sc->sc_rx_ag_slots[i];
+		if (bus_dmamap_create(sc->sc_dmat, BNXT_AG_BUFFER_SIZE, 1,
+		    BNXT_AG_BUFFER_SIZE, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &bs->bs_map) != 0) {
+			printf("%s: failed to allocate rx ag dma maps\n",
+			    DEVNAME(sc));
+			goto destroy_rx_ag_slots;
+		}
+	}
+
 	sc->sc_tx_slots = mallocarray(sizeof(*bs), sc->sc_tx_ring.ring_size,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	if (sc->sc_tx_slots == NULL) {
 		printf("%s: failed to allocate tx slots\n", DEVNAME(sc));
-		goto destroy_rx_slots;
+		goto destroy_rx_ag_slots;
 	}
 
 	for (i = 0; i < sc->sc_tx_ring.ring_size; i++) {
 		bs = &sc->sc_tx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, BNXT_MAX_TX_SEGS,
-		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(sc->sc_dmat, BNXT_MAX_MTU, BNXT_MAX_TX_SEGS,
+		    BNXT_MAX_MTU, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &bs->bs_map) != 0) {
 			printf("%s: failed to allocate tx dma maps\n",
 			    DEVNAME(sc));
@@ -796,9 +834,12 @@ bnxt_up(struct bnxt_softc *sc)
 	 * once the whole ring has been used once, we should be able to back off
 	 * to 2 or so slots, but we currently don't have a way of doing that.
 	 */
-	if_rxr_init(&sc->sc_rxr, 32, sc->sc_rx_ring.ring_size - 1);
+	if_rxr_init(&sc->sc_rxr[0], 32, sc->sc_rx_ring.ring_size - 1);
+	if_rxr_init(&sc->sc_rxr[1], 32, sc->sc_rx_ag_ring.ring_size - 1);
 	sc->sc_rx_prod = 0;
 	sc->sc_rx_cons = 0;
+	sc->sc_rx_ag_prod = 0;
+	sc->sc_rx_ag_cons = 0;
 	bnxt_rx_fill(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -816,6 +857,11 @@ destroy_tx_slots:
 	bnxt_free_slots(sc, sc->sc_tx_slots, i, sc->sc_tx_ring.ring_size);
 	sc->sc_tx_slots = NULL;
 
+	i = sc->sc_rx_ag_ring.ring_size;
+destroy_rx_ag_slots:
+	bnxt_free_slots(sc, sc->sc_rx_ag_slots, i, sc->sc_rx_ag_ring.ring_size);
+	sc->sc_rx_ag_slots = NULL;
+
 	i = sc->sc_rx_ring.ring_size;
 destroy_rx_slots:
 	bnxt_free_slots(sc, sc->sc_rx_slots, i, sc->sc_rx_ring.ring_size);
@@ -828,7 +874,9 @@ dealloc_vnic_ctx:
 	bnxt_hwrm_vnic_ctx_free(sc, &sc->sc_vnic.rss_id);
 dealloc_ring_group:
 	bnxt_hwrm_ring_grp_free(sc, &sc->sc_ring_group);
-/* dealloc_ag: */
+dealloc_ag:
+	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
+	    &sc->sc_rx_ag_ring);
 dealloc_tx:
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_TX,
 	    &sc->sc_tx_ring);
@@ -869,6 +917,10 @@ bnxt_down(struct bnxt_softc *sc)
 	    sc->sc_tx_ring.ring_size);
 	sc->sc_tx_slots = NULL;
 
+	bnxt_free_slots(sc, sc->sc_rx_ag_slots, sc->sc_rx_ag_ring.ring_size,
+	    sc->sc_rx_ag_ring.ring_size);
+	sc->sc_rx_ag_slots = NULL;
+
 	bnxt_free_slots(sc, sc->sc_rx_slots, sc->sc_rx_ring.ring_size,
 	    sc->sc_rx_ring.ring_size);
 	sc->sc_rx_slots = NULL;
@@ -883,6 +935,8 @@ bnxt_down(struct bnxt_softc *sc)
 
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_TX,
 	    &sc->sc_tx_ring);
+	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
+	    &sc->sc_rx_ag_ring);
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
 	    &sc->sc_rx_ring);
 
@@ -991,13 +1045,16 @@ bnxt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 bnxt_rxrinfo(struct bnxt_softc *sc, struct if_rxrinfo *ifri)
 {
-	struct if_rxring_info ifr;
+	struct if_rxring_info ifr[2];
 
 	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_size = MCLBYTES;
-	ifr.ifr_info = sc->sc_rxr;
+	ifr[0].ifr_size = MCLBYTES;
+	ifr[0].ifr_info = sc->sc_rxr[0];
 
-	return (if_rxr_info_ioctl(ifri, 1, &ifr));
+	ifr[1].ifr_size = BNXT_AG_BUFFER_SIZE;
+	ifr[1].ifr_info = sc->sc_rxr[1];
+
+	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
 }
 
 int
@@ -1136,18 +1193,56 @@ bnxt_handle_async_event(struct bnxt_softc *sc, struct cmpl_base *cmpl)
 	}
 }
 
+struct cmpl_base *
+bnxt_cpr_next_cmpl(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr)
+{
+	struct cmpl_base *cmpl;
+	uint32_t cons;
+	int v_bit;
+
+	cons = cpr->cons + 1;
+	v_bit = cpr->v_bit;
+	if (cons == cpr->ring.ring_size) {
+		cons = 0;
+		v_bit = !v_bit;
+	}
+	cmpl = &((struct cmpl_base *)cpr->ring.vaddr)[cons];
+
+	if ((!!(cmpl->info3_v & htole32(CMPL_BASE_V))) != (!!v_bit))
+		return (NULL);
+
+	cpr->cons = cons;
+	cpr->v_bit = v_bit;
+	return (cmpl);
+}
+
+void
+bnxt_cpr_commit(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr)
+{
+	cpr->commit_cons = cpr->cons;
+	cpr->commit_v_bit = cpr->v_bit;
+}
+
+void
+bnxt_cpr_rollback(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr)
+{
+	cpr->cons = cpr->commit_cons;
+	cpr->v_bit = cpr->commit_v_bit;
+}
+
+
 int
 bnxt_intr(void *xsc)
 {
 	struct bnxt_softc *sc = (struct bnxt_softc *)xsc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct bnxt_cp_ring *cpr = &sc->sc_cp_ring;
-	struct cmpl_base *cmpl, *cmpl2;
+	struct cmpl_base *cmpl;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	uint32_t cons, last_cons;
-	int v_bit, last_v_bit;
+	uint32_t cons;
+	int v_bit;
 	uint16_t type;
-	int rxfree, txfree, rv;
+	int rxfree, txfree, agfree, rv, rollback;
 
 	cons = cpr->cons;
 	v_bit = cpr->v_bit;
@@ -1155,58 +1250,58 @@ bnxt_intr(void *xsc)
 	bnxt_write_cp_doorbell(sc, &cpr->ring, 0);
 	rxfree = 0;
 	txfree = 0;
+	agfree = 0;
 	rv = -1;
-	for (;;) {
-		last_cons = cons;
-		last_v_bit = v_bit;
-		NEXT_CP_CONS_V(&cpr->ring, cons, v_bit);
-		cmpl = &((struct cmpl_base *)cpr->ring.vaddr)[cons];
-
-		if ((!!(cmpl->info3_v & htole32(CMPL_BASE_V))) != (!!v_bit))
-			break;
-
+	cmpl = bnxt_cpr_next_cmpl(sc, cpr);
+	while (cmpl != NULL) {
 		type = le16toh(cmpl->type) & CMPL_BASE_TYPE_MASK;
+		rollback = 0;
 		switch (type) {
 		case CMPL_BASE_TYPE_HWRM_ASYNC_EVENT:
 			bnxt_handle_async_event(sc, cmpl);
 			break;
 		case CMPL_BASE_TYPE_RX_L2:
-			/* rx takes two slots */
-			last_cons = cons;
-			last_v_bit = v_bit;
-			NEXT_CP_CONS_V(&cpr->ring, cons, v_bit);
-			cmpl2 = &((struct cmpl_base *)cpr->ring.vaddr)[cons];
-			bnxt_rx(sc, &ml, &rxfree, cmpl, cmpl2);
+			rollback = bnxt_rx(sc, cpr, &ml, &rxfree, &agfree, cmpl);
 			break;
 		case CMPL_BASE_TYPE_TX_L2:
-			txfree += bnxt_txeof(sc, cmpl);
+			bnxt_txeof(sc, &txfree, cmpl);
 			break;
 		default:
 			printf("%s: unexpected completion type %u\n",
 			    DEVNAME(sc), type);
 		}
-		rv = 1;
-	}
 
-	cpr->cons = last_cons;
-	cpr->v_bit = last_v_bit;
+		if (rollback) {
+			bnxt_cpr_rollback(sc, cpr);
+			break;
+		}
+		rv = 1;
+		bnxt_cpr_commit(sc, cpr);
+		cmpl = bnxt_cpr_next_cmpl(sc, cpr);
+	}
 
 	/*
 	 * comments in bnxtreg.h suggest we should be writing cpr->cons here,
 	 * but writing cpr->cons + 1 makes it stop interrupting.
 	 */
 	bnxt_write_cp_doorbell_index(sc, &cpr->ring,
-	    (cpr->cons+1) % cpr->ring.ring_size, 1);
+	    (cpr->commit_cons+1) % cpr->ring.ring_size, 1);
 
 	if (rxfree != 0) {
 		sc->sc_rx_cons += rxfree;
 		if (sc->sc_rx_cons >= sc->sc_rx_ring.ring_size)
 			sc->sc_rx_cons -= sc->sc_rx_ring.ring_size;
 
-		if_rxr_put(&sc->sc_rxr, rxfree);
+		sc->sc_rx_ag_cons += agfree;
+		if (sc->sc_rx_ag_cons >= sc->sc_rx_ag_ring.ring_size)
+			sc->sc_rx_ag_cons -= sc->sc_rx_ag_ring.ring_size;
+
+		if_rxr_put(&sc->sc_rxr[0], rxfree);
+		if_rxr_put(&sc->sc_rxr[1], agfree);
 
 		bnxt_rx_fill(sc);
-		if (sc->sc_rx_cons == sc->sc_rx_prod)
+		if ((sc->sc_rx_cons == sc->sc_rx_prod) ||
+		    (sc->sc_rx_ag_cons == sc->sc_rx_ag_prod))
 			timeout_add(&sc->sc_rx_refill, 0);
 
 		if_input(&sc->sc_ac.ac_if, &ml);
@@ -1693,25 +1788,24 @@ bnxt_write_tx_doorbell(struct bnxt_softc *sc, struct bnxt_ring *ring, int index)
 }
 
 u_int
-bnxt_rx_fill_slots(struct bnxt_softc *sc, u_int slots)
+bnxt_rx_fill_slots(struct bnxt_softc *sc, struct bnxt_ring *ring, void *ring_mem,
+    struct bnxt_slot *slots, uint *prod, int bufsize, uint16_t bdtype,
+    u_int nslots)
 {
 	struct rx_prod_pkt_bd *rxring;
 	struct bnxt_slot *bs;
 	struct mbuf *m;
 	uint p, fills;
-	uint16_t type;
 
-	type = RX_PROD_PKT_BD_TYPE_RX_PROD_PKT;
-
-	rxring = (struct rx_prod_pkt_bd *)BNXT_DMA_KVA(sc->sc_rx_ring_mem);
-	p = sc->sc_rx_prod;
-	for (fills = 0; fills < slots; fills++) {
-		bs = &sc->sc_rx_slots[p];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	rxring = (struct rx_prod_pkt_bd *)ring_mem;
+	p = *prod;
+	for (fills = 0; fills < nslots; fills++) {
+		bs = &slots[p];
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize);
 		if (m == NULL)
 			break;
 
-		m->m_len = m->m_pkthdr.len = MCLBYTES;
+		m->m_len = m->m_pkthdr.len = bufsize;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, bs->bs_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m);
@@ -1719,35 +1813,50 @@ bnxt_rx_fill_slots(struct bnxt_softc *sc, u_int slots)
 		}
 		bs->bs_m = m;
 
-		rxring[p].flags_type = htole16(type);
-		rxring[p].len = htole16(MCLBYTES);
+		rxring[p].flags_type = htole16(bdtype);
+		rxring[p].len = htole16(bufsize);
 		rxring[p].opaque = p;
 		rxring[p].addr = htole64(bs->bs_map->dm_segs[0].ds_addr);
 
-		if (++p >= sc->sc_rx_ring.ring_size)
+		if (++p >= ring->ring_size)
 			p = 0;
 	}
 
 	if (fills != 0)
-		bnxt_write_rx_doorbell(sc, &sc->sc_rx_ring, p);
-	sc->sc_rx_prod = p;
+		bnxt_write_rx_doorbell(sc, ring, p);
+	*prod = p;
 
-	return (slots - fills);
+	return (nslots - fills);
 }
 
 int
 bnxt_rx_fill(struct bnxt_softc *sc)
 {
 	u_int slots;
+	int rv = 0;
 
-	slots = if_rxr_get(&sc->sc_rxr, sc->sc_rx_ring.ring_size);
-	if (slots == 0)
-		return (1);
+	slots = if_rxr_get(&sc->sc_rxr[0], sc->sc_rx_ring.ring_size);
+	if (slots > 0) {
+		slots = bnxt_rx_fill_slots(sc, &sc->sc_rx_ring,
+		    BNXT_DMA_KVA(sc->sc_rx_ring_mem), sc->sc_rx_slots,
+		    &sc->sc_rx_prod, MCLBYTES,
+		    RX_PROD_PKT_BD_TYPE_RX_PROD_PKT, slots);
+		if_rxr_put(&sc->sc_rxr[0], slots);
+	} else
+		rv = 1;
 
-	slots = bnxt_rx_fill_slots(sc, slots);
-	if_rxr_put(&sc->sc_rxr, slots);
+	slots = if_rxr_get(&sc->sc_rxr[1],  sc->sc_rx_ag_ring.ring_size);
+	if (slots > 0) {
+		slots = bnxt_rx_fill_slots(sc, &sc->sc_rx_ag_ring,
+		    BNXT_DMA_KVA(sc->sc_rx_ring_mem) + PAGE_SIZE,
+		    sc->sc_rx_ag_slots, &sc->sc_rx_ag_prod,
+		    BNXT_AG_BUFFER_SIZE,
+		    RX_PROD_AGG_BD_TYPE_RX_PROD_AGG, slots);
+		if_rxr_put(&sc->sc_rxr[1], slots);
+	} else
+		rv = 1;
 
-	return (0);
+	return (rv);
 }
 
 void
@@ -1761,17 +1870,32 @@ bnxt_refill(void *xsc)
 		timeout_add(&sc->sc_rx_refill, 1);
 }
 
-void
-bnxt_rx(struct bnxt_softc *sc, struct mbuf_list *ml, int *slots,
-    struct cmpl_base *cmpl, struct cmpl_base *cmpl2)
+int
+bnxt_rx(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr, struct mbuf_list *ml,
+    int *slots, int *agslots, struct cmpl_base *cmpl)
 {
-	struct mbuf *m;
+	struct mbuf *m, *am;
 	struct bnxt_slot *bs;
 	struct rx_pkt_cmpl *rx = (struct rx_pkt_cmpl *)cmpl;
-	/* struct rx_pkt_cmpl_hi *rxhi = (struct rx_pkt_cmpl_hi *)cmpl2; */
+	struct rx_pkt_cmpl_hi *rxhi;
+	struct rx_abuf_cmpl *ag;
+
+	/* second part of the rx completion */
+	rxhi = (struct rx_pkt_cmpl_hi *)bnxt_cpr_next_cmpl(sc, cpr);
+	if (rxhi == NULL) {
+		return (1);
+	}
+
+	/* packets over 2k in size use an aggregation buffer completion too */
+	ag = NULL;
+	if ((rx->agg_bufs_v1 >> RX_PKT_CMPL_AGG_BUFS_SFT) != 0) {
+		ag = (struct rx_abuf_cmpl *)bnxt_cpr_next_cmpl(sc, cpr);
+		if (ag == NULL) {
+			return (1);
+		}
+	}
 
 	bs = &sc->sc_rx_slots[rx->opaque];
-
 	bus_dmamap_sync(sc->sc_dmat, bs->bs_map, 0, bs->bs_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat, bs->bs_map);
@@ -1779,21 +1903,36 @@ bnxt_rx(struct bnxt_softc *sc, struct mbuf_list *ml, int *slots,
 	m = bs->bs_m;
 	bs->bs_m = NULL;
 	m->m_pkthdr.len = m->m_len = letoh16(rx->len);
-	ml_enqueue(ml, m);
 	(*slots)++;
+
+	if (ag != NULL) {
+		bs = &sc->sc_rx_ag_slots[ag->opaque];
+		bus_dmamap_sync(sc->sc_dmat, bs->bs_map, 0,
+		    bs->bs_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, bs->bs_map);
+
+		am = bs->bs_m;
+		bs->bs_m = NULL;
+		am->m_len = letoh16(ag->len);
+		m->m_next = am;
+		m->m_pkthdr.len += am->m_len;
+		(*agslots)++;
+	}
+
+	ml_enqueue(ml, m);
+	return (0);
 }
 
-int
-bnxt_txeof(struct bnxt_softc *sc, struct cmpl_base *cmpl)
+void
+bnxt_txeof(struct bnxt_softc *sc, int *txfree, struct cmpl_base *cmpl)
 {
 	struct tx_cmpl *txcmpl = (struct tx_cmpl *)cmpl;
 	struct bnxt_slot *bs;
 	bus_dmamap_t map;
-	u_int idx, freed, segs, last;
+	u_int idx, segs, last;
 
 	idx = sc->sc_tx_ring_cons;
 	last = sc->sc_tx_cons;
-	freed = 0;
 	do {
 		bs = &sc->sc_tx_slots[sc->sc_tx_cons];
 		map = bs->bs_map;
@@ -1806,7 +1945,7 @@ bnxt_txeof(struct bnxt_softc *sc, struct cmpl_base *cmpl)
 		bs->bs_m = NULL;
 
 		idx += segs;
-		freed += segs;
+		(*txfree) += segs;
 		if (idx >= sc->sc_tx_ring.ring_size)
 			idx -= sc->sc_tx_ring.ring_size;
 
@@ -1816,8 +1955,6 @@ bnxt_txeof(struct bnxt_softc *sc, struct cmpl_base *cmpl)
 
 	} while (last != txcmpl->opaque);
 	sc->sc_tx_ring_cons = idx;
-
-	return (freed);
 }
 
 /* bnxt_hwrm.c */
@@ -2246,6 +2383,24 @@ bnxt_hwrm_func_reset(struct bnxt_softc *softc)
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_FUNC_RESET);
 	req.enables = 0;
+
+	return hwrm_send_message(softc, &req, sizeof(req));
+}
+
+int
+bnxt_hwrm_vnic_cfg_placement(struct bnxt_softc *softc,
+    struct bnxt_vnic_info *vnic)
+{
+	struct hwrm_vnic_plcmodes_cfg_input req = {0};
+
+	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_VNIC_PLCMODES_CFG);
+
+	req.flags = htole32(
+	    HWRM_VNIC_PLCMODES_CFG_INPUT_FLAGS_JUMBO_PLACEMENT);
+	req.enables = htole32(
+	    HWRM_VNIC_PLCMODES_CFG_INPUT_ENABLES_JUMBO_THRESH_VALID);
+	req.vnic_id = htole16(vnic->id);
+	req.jumbo_thresh = htole16(MCLBYTES);
 
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
