@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.358 2018/08/25 09:39:20 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.359 2018/08/30 10:11:34 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3065,10 +3065,6 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_dev = dev;
 	aaa.aaa_cdev = cdev;
 
-	if (acpi_matchhids(&aaa, acpi_skip_hids, "none") ||
-	    acpi_matchhids(&aaa, acpi_isa_hids, "none"))
-		return (0);
-
 #ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
 		for (i = 0; i < nitems(sbtn_pnp); i++) {
@@ -3079,6 +3075,10 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		}
 	}
 #endif
+
+	if (acpi_matchhids(&aaa, acpi_skip_hids, "none") ||
+	    acpi_matchhids(&aaa, acpi_isa_hids, "none"))
+		return (0);
 
 	if (!node->parent->attached) {
 		node->parent->attached = 1;
