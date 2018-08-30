@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.347 2018/08/30 12:30:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.348 2018/08/30 13:07:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -572,6 +572,7 @@ editor_allocspace(struct disklabel *lp_org)
 	index = -1;
 again:
 	free(alloc);
+	alloc = NULL;
 	index++;
 	if (index >= alloc_table_nitems)
 		return 1;
