@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.5 2018/06/09 10:01:17 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.6 2018/08/30 11:58:01 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -209,13 +209,13 @@ smtp_client_free(struct smtp_client *proto)
 	if (proto->mail)
 		fatalx("current task should have been deleted already");
 
+	smtp_closed(proto->tag, proto);
+
 	if (proto->io)
 		io_free(proto->io);
 
 	free(proto->reply);
 	free(proto);
-
-	smtp_closed(proto->tag, proto);
 }
 
 /*
