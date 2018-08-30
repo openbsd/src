@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.8 2018/06/03 15:09:26 kettenis Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.9 2018/08/30 03:30:25 visa Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -50,7 +50,6 @@ struct futex {
 	TAILQ_HEAD(, proc)	 ft_threads;	/* sleeping queue */
 	struct uvm_object	*ft_obj;	/* UVM object */
 	voff_t			 ft_off;	/* UVM offset */
-	pid_t			 ft_pid;	/* process identifier */
 	unsigned int		 ft_refcnt;	/* # of references */
 };
 
@@ -67,12 +66,12 @@ struct futex *futex_get(uint32_t *, int);
 void	 futex_put(struct futex *);
 
 /*
- * The global futex lock serialize futex(2) calls such that no wakeup
- * event are lost, protect the global list of all futexes and their
- * states.
+ * The global futex lock serializes futex(2) calls so that no wakeup
+ * event is lost, and protects all futex lists and futex states.
  */
 struct rwlock			ftlock = RWLOCK_INITIALIZER("futex");
-static LIST_HEAD(, futex)	ftlist;
+static struct futex_list	ftlist_shared =
+				    LIST_HEAD_INITIALIZER(ftlist_shared);
 struct pool			ftpool;
 
 
@@ -145,8 +144,8 @@ futex_get(uint32_t *uaddr, int flags)
 	vm_map_entry_t entry;
 	struct uvm_object *obj = NULL;
 	voff_t off = (vaddr_t)uaddr;
-	pid_t pid = p->p_p->ps_pid;
 	struct futex *f;
+	struct futex_list *ftlist = &p->p_p->ps_ftlist;
 
 	rw_assert_wrlock(&ftlock);
 
@@ -155,15 +154,15 @@ futex_get(uint32_t *uaddr, int flags)
 		if (uvm_map_lookup_entry(map, (vaddr_t)uaddr, &entry) &&
 		    UVM_ET_ISOBJ(entry) && entry->object.uvm_obj &&
 		    entry->inheritance == MAP_INHERIT_SHARE) {
+			ftlist = &ftlist_shared;
 			obj = entry->object.uvm_obj;
 			off = entry->offset + ((vaddr_t)uaddr - entry->start);
-			pid = 0;
 		}
 		vm_map_unlock_read(map);
 	}
 
-	LIST_FOREACH(f, &ftlist, ft_list) {
-		if (f->ft_obj == obj && f->ft_off == off && f->ft_pid == pid) {
+	LIST_FOREACH(f, ftlist, ft_list) {
+		if (f->ft_obj == obj && f->ft_off == off) {
 			f->ft_refcnt++;
 			break;
 		}
@@ -178,9 +177,8 @@ futex_get(uint32_t *uaddr, int flags)
 		TAILQ_INIT(&f->ft_threads);
 		f->ft_obj = obj;
 		f->ft_off = off;
-		f->ft_pid = pid;
 		f->ft_refcnt = 1;
-		LIST_INSERT_HEAD(&ftlist, f, ft_list);
+		LIST_INSERT_HEAD(ftlist, f, ft_list);
 	}
 
 	return f;
