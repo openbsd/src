@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.89 2018/08/29 06:04:46 anton Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.90 2018/08/30 06:16:30 anton Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -237,11 +237,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		return (error);
 
 	pti = pt_softc[minor(dev)];
-	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc(1000000);
-		tp->t_dev = dev;
-	} else
-		tp = pti->pt_tty;
+	tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);		/* Set up default chars */
@@ -415,11 +411,7 @@ ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 		return (error);
 
 	pti = pt_softc[minor(dev)];
-	if (!pti->pt_tty) {
-		tp = pti->pt_tty = ttymalloc(1000000);
-		tp->t_dev = dev;
-	} else
-		tp = pti->pt_tty;
+	tp = pti->pt_tty;
 	if (tp->t_oproc)
 		return (EIO);
 	tp->t_oproc = ptsstart;
