@@ -1,4 +1,4 @@
-/* $OpenBSD: ldscript.arm64,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: ldscript.arm64,v 1.2 2018/08/30 14:39:46 patrick Exp $ */
 /*
 OUTPUT_FORMAT("elf64-aarch64-freebsd", "elf64-aarch64-freebsd", "elf64-aarch64-freebsd")
 */
@@ -77,9 +77,9 @@ SECTIONS
   .reloc	: { *(.reloc) }
   . = ALIGN(16);
   .dynsym	: { *(.dynsym) }
+  .dynstr	: { *(.dynstr) }
   _edata = .;
 
   /* Unused sections */
-  .dynstr	: { *(.dynstr) }
   .hash		: { *(.hash) }
 }
