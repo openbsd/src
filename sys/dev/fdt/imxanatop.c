@@ -1,4 +1,4 @@
-/* $OpenBSD: imxanatop.c,v 1.4 2018/06/28 10:07:35 kettenis Exp $ */
+/* $OpenBSD: imxanatop.c,v 1.5 2018/08/30 12:14:30 jsg Exp $ */
 /*
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -196,8 +196,10 @@ imxanatop_attach_regulator(struct imxanatop_softc *sc, int node)
 	ir->ir_max_voltage = OF_getpropint(node, "anatop-max-voltage", -1);
 	if (ir->ir_reg_offset == -1 || ir->ir_vol_bit_shift == -1 ||
 	    ir->ir_vol_bit_width == -1 || ir->ir_min_bit_val == -1 ||
-	    ir->ir_min_voltage == -1 || ir->ir_max_voltage == -1)
+	    ir->ir_min_voltage == -1 || ir->ir_max_voltage == -1) {
+		free(ir, M_DEVBUF, sizeof(*ir));
 		return;
+	}
 
 	ir->ir_delay_reg_offset =
 	    OF_getpropint(node, "anatop-delay-reg-offset", 0);
