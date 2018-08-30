@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.346 2018/08/28 12:40:54 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.347 2018/08/30 12:30:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -942,15 +942,6 @@ editor_name(struct disklabel *lp, char *p)
 
 	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
 		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
-		return;
-	}
-
-	/* Not all fstypes can be named */
-	if (pp->p_fstype == FS_UNUSED || pp->p_fstype == FS_SWAP ||
-	    pp->p_fstype == FS_BOOT || pp->p_fstype == FS_OTHER ||
-	    pp->p_fstype == FS_RAID) {
-		fprintf(stderr, "You cannot name a filesystem of type %s.\n",
-		    fstypenames[lp->d_partitions[partno].p_fstype]);
 		return;
 	}
 
@@ -2124,39 +2115,46 @@ get_mp(struct disklabel *lp, int partno)
 	char *p;
 	int i;
 
-	if (fstabfile && pp->p_fstype != FS_UNUSED &&
-	    pp->p_fstype != FS_SWAP && pp->p_fstype != FS_BOOT &&
-	    pp->p_fstype != FS_OTHER) {
-		for (;;) {
-			p = getstring("mount point",
-			    "Where to mount this filesystem (ie: / /var /usr)",
-			    mountpoints[partno] ? mountpoints[partno] : "none");
-			if (p == NULL)
-				return (1);
-			if (strcasecmp(p, "none") == 0) {
-				free(mountpoints[partno]);
-				mountpoints[partno] = NULL;
-				break;
-			}
-			for (i = 0; i < MAXPARTITIONS; i++)
-				if (mountpoints[i] != NULL && i != partno &&
-				    strcmp(p, mountpoints[i]) == 0)
-					break;
-			if (i < MAXPARTITIONS) {
-				fprintf(stderr, "'%c' already being mounted at "
-				    "'%s'\n", 'a'+i, p);
-				break;
-			}
-			if (*p == '/') {
-				/* XXX - might as well realloc */
-				free(mountpoints[partno]);
-				if ((mountpoints[partno] = strdup(p)) == NULL)
-					errx(4, "out of memory");
-				break;
-			}
-			fputs("Mount points must start with '/'\n", stderr);
-		}
+	if (fstabfile == NULL ||
+	    pp->p_fstype == FS_UNUSED ||
+	    pp->p_fstype == FS_SWAP ||
+	    pp->p_fstype == FS_BOOT ||
+	    pp->p_fstype == FS_OTHER ||
+	    pp->p_fstype == FS_RAID) {
+		/* No fstabfile, no names. Not all fstypes can be named */
+		return 0;
 	}
+
+	for (;;) {
+		p = getstring("mount point",
+		    "Where to mount this filesystem (ie: / /var /usr)",
+		    mountpoints[partno] ? mountpoints[partno] : "none");
+		if (p == NULL)
+			return (1);
+		if (strcasecmp(p, "none") == 0) {
+			free(mountpoints[partno]);
+			mountpoints[partno] = NULL;
+			break;
+		}
+		for (i = 0; i < MAXPARTITIONS; i++)
+			if (mountpoints[i] != NULL && i != partno &&
+			    strcmp(p, mountpoints[i]) == 0)
+				break;
+		if (i < MAXPARTITIONS) {
+			fprintf(stderr, "'%c' already being mounted at "
+			    "'%s'\n", 'a'+i, p);
+			break;
+		}
+		if (*p == '/') {
+			/* XXX - might as well realloc */
+			free(mountpoints[partno]);
+			if ((mountpoints[partno] = strdup(p)) == NULL)
+				errx(4, "out of memory");
+			break;
+		}
+		fputs("Mount points must start with '/'\n", stderr);
+	}
+
 	return (0);
 }
 
