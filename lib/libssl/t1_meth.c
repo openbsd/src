@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_meth.c,v 1.24 2018/04/07 17:02:34 jsing Exp $ */
+/* $OpenBSD: t1_meth.c,v 1.25 2018/08/30 16:56:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,8 +73,6 @@ static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl3_accept,
 	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_pending = ssl3_pending,
 	.get_ssl_method = tls1_get_method,
 	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,
@@ -104,8 +102,6 @@ static const SSL_METHOD_INTERNAL TLSv1_method_internal_data = {
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl3_accept,
 	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_pending = ssl3_pending,
 	.get_ssl_method = tls1_get_method,
 	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,
@@ -135,8 +131,6 @@ static const SSL_METHOD_INTERNAL TLSv1_1_method_internal_data = {
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl3_accept,
 	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_pending = ssl3_pending,
 	.get_ssl_method = tls1_get_method,
 	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,
@@ -166,8 +160,6 @@ static const SSL_METHOD_INTERNAL TLSv1_2_method_internal_data = {
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl3_accept,
 	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_pending = ssl3_pending,
 	.get_ssl_method = tls1_get_method,
 	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,

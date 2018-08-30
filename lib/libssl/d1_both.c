@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.53 2018/08/27 16:56:46 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.54 2018/08/30 16:56:16 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1252,13 +1252,4 @@ dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
 	memset(ccs_hdr, 0x00, sizeof(struct ccs_header_st));
 
 	ccs_hdr->type = *(data++);
-}
-
-int
-dtls1_shutdown(SSL *s)
-{
-	int ret;
-
-	ret = ssl3_shutdown(s);
-	return ret;
 }

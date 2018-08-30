@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.186 2018/08/24 20:30:21 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.187 2018/08/30 16:56:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -809,7 +809,7 @@ SSL_pending(const SSL *s)
 	 * (Note that SSL_pending() is often used as a boolean value,
 	 * so we'd better not return -1.)
 	 */
-	return (s->method->internal->ssl_pending(s));
+	return (ssl3_pending(s));
 }
 
 X509 *
@@ -1015,10 +1015,10 @@ SSL_shutdown(SSL *s)
 		return (-1);
 	}
 
-	if ((s != NULL) && !SSL_in_init(s))
-		return (s->method->internal->ssl_shutdown(s));
-	else
-		return (1);
+	if (s != NULL && !SSL_in_init(s))
+		return (ssl3_shutdown(s));
+
+	return (1);
 }
 
 int

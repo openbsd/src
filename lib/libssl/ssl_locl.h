@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.211 2018/08/27 17:11:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.212 2018/08/30 16:56:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -379,7 +379,6 @@ typedef struct ssl_method_internal_st {
 
 	int (*ssl_accept)(SSL *s);
 	int (*ssl_connect)(SSL *s);
-	int (*ssl_shutdown)(SSL *s);
 
 	int (*ssl_renegotiate)(SSL *s);
 	int (*ssl_renegotiate_check)(SSL *s);
@@ -390,7 +389,6 @@ typedef struct ssl_method_internal_st {
 	    int len, int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
-	int (*ssl_pending)(const SSL *s);
 	const struct ssl_method_st *(*get_ssl_method)(int version);
 
 	long (*get_timeout)(void);
@@ -1221,7 +1219,6 @@ int dtls1_new(SSL *s);
 void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
-int dtls1_shutdown(SSL *s);
 
 long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int dtls1_get_record(SSL *s);
