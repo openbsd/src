@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.92 2018/07/25 16:00:48 eric Exp $
+#	$OpenBSD: Makefile,v 1.93 2018/08/31 07:28:27 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -36,6 +36,7 @@ SRCS+=	pony.c
 SRCS+=	queue.c
 SRCS+=	queue_backend.c
 SRCS+=	resolver.c
+SRCS+=	rfc5322.c
 SRCS+=	ruleset.c
 SRCS+=	runq.c
 SRCS+=	scheduler.c
@@ -52,9 +53,6 @@ SRCS+=	to.c
 SRCS+=	tree.c
 SRCS+=	util.c
 SRCS+=	waitq.c
-
-# RFC parsers
-SRCS+=		rfc2822.c
 
 # backends
 SRCS+=		compress_gzip.c

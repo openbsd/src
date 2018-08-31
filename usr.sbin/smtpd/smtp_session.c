@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.334 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.335 2018/08/31 07:28:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -44,6 +44,7 @@
 #include "smtpd.h"
 #include "log.h"
 #include "ssl.h"
+#include "rfc5322.h"
 
 #define	SMTP_LINE_MAX			16384
 #define	DATA_HIWAT			65535
@@ -79,7 +80,8 @@ enum {
 	TX_ERROR_IO,
 	TX_ERROR_LOOP,
 	TX_ERROR_MALFORMED,
-	TX_ERROR_RESOURCES
+	TX_ERROR_RESOURCES,
+	TX_ERROR_INTERNAL,
 };
 
 enum smtp_command {
@@ -117,10 +119,10 @@ struct smtp_tx {
 	size_t			 datain;
 	size_t			 odatalen;
 	FILE			*ofile;
-	int			 hdrdone;
+	struct rfc5322_parser	*parser;
 	int			 rcvcount;
-	int			 skiphdr;
-	struct rfc2822_parser	 rfc2822_parser;
+	int			 has_date;
+	int			 has_message_id;
 };
 
 struct smtp_session {
@@ -213,33 +215,6 @@ static struct tree wait_queue_fd;
 static struct tree wait_queue_commit;
 static struct tree wait_ssl_init;
 static struct tree wait_ssl_verify;
-
-static void
-header_default_callback(const struct rfc2822_header *hdr, void *arg)
-{
-	struct smtp_tx         *tx = arg;
-	struct rfc2822_line    *l;
-
-	if (smtp_message_printf(tx, "%s:", hdr->name) == -1)
-		return;
-
-	TAILQ_FOREACH(l, &hdr->lines, next)
-		if (smtp_message_printf(tx, "%s\n", l->buffer) == -1)
-			return;
-}
-
-static void
-dataline_callback(const char *line, void *arg)
-{
-	struct smtp_tx *tx = arg;
-
-	smtp_message_printf(tx, "%s\n", line);
-}
-
-static void
-header_bcc_callback(const struct rfc2822_header *hdr, void *arg)
-{
-}
 
 static void
 header_append_domain_buffer(char *buffer, char *domain, size_t len)
@@ -404,45 +379,50 @@ header_address_rewrite_buffer(char *buffer, const char *address, size_t len)
 }
 
 static void
-header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
+header_domain_append_callback(struct smtp_tx *tx, const char *hdr,
+    const char *val)
 {
-	struct smtp_session    *s;
-	struct smtp_tx         *tx = arg;
-	struct rfc2822_line    *l;
-	size_t			i, j;
+	size_t			i, j, linelen;
 	int			escape, quote, comment, skip;
 	char			buffer[APPEND_DOMAIN_BUFFER_SIZE];
+	const char *line, *end;
 
-	s = tx->session;
-
-	if (smtp_message_printf(tx, "%s:", hdr->name) == -1)
+	if (smtp_message_printf(tx, "%s:", hdr) == -1)
 		return;
 
 	j = 0;
 	escape = quote = comment = skip = 0;
 	memset(buffer, 0, sizeof buffer);
 
-	TAILQ_FOREACH(l, &hdr->lines, next) {
-		for (i = 0; i < strlen(l->buffer); ++i) {
-			if (l->buffer[i] == '(' && !escape && !quote)
+	for (line = val; line; line = end) {
+		end = strchr(line, '\n');
+		if (end) {
+			linelen = end - line;
+			end++;
+		}
+		else
+			linelen = strlen(line);
+
+		for (i = 0; i < linelen; ++i) {
+			if (line[i] == '(' && !escape && !quote)
 				comment++;
-			if (l->buffer[i] == '"' && !escape && !comment)
+			if (line[i] == '"' && !escape && !comment)
 				quote = !quote;
-			if (l->buffer[i] == ')' && !escape && !quote && comment)
+			if (line[i] == ')' && !escape && !quote && comment)
 				comment--;
-			if (l->buffer[i] == '\\' && !escape && !comment && !quote)
+			if (line[i] == '\\' && !escape && !comment && !quote)
 				escape = 1;
 			else
 				escape = 0;
 
 			/* found a separator, buffer contains a full address */
-			if (l->buffer[i] == ',' && !escape && !quote && !comment) {
-				if (!skip && j + strlen(s->listener->hostname) + 1 < sizeof buffer) {
-					header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-					if (s->flags & SF_AUTHENTICATED &&
-					    s->listener->sendertable[0] &&
-					    s->listener->flags & F_MASQUERADE &&
-					    !(strcasecmp(hdr->name, "From")))
+			if (line[i] == ',' && !escape && !quote && !comment) {
+				if (!skip && j + strlen(tx->session->listener->hostname) + 1 < sizeof buffer) {
+					header_append_domain_buffer(buffer, tx->session->listener->hostname, sizeof buffer);
+					if (tx->session->flags & SF_AUTHENTICATED &&
+					    tx->session->listener->sendertable[0] &&
+					    tx->session->listener->flags & F_MASQUERADE &&
+					    !(strcasecmp(hdr, "From")))
 						header_address_rewrite_buffer(buffer, mailaddr_to_text(&tx->evp.sender),
 						    sizeof buffer);
 				}
@@ -454,11 +434,11 @@ header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 			}
 			else {
 				if (skip) {
-					if (smtp_message_printf(tx, "%c", l->buffer[i]) == -1)
+					if (smtp_message_printf(tx, "%c", line[i]) == -1)
 						return;
 				}
 				else {
-					buffer[j++] = l->buffer[i];
+					buffer[j++] = line[i];
 					if (j == sizeof (buffer) - 1) {
 						if (smtp_message_printf(tx, "%s", buffer) == -1)
 							return;
@@ -487,30 +467,17 @@ header_domain_append_callback(const struct rfc2822_header *hdr, void *arg)
 
 	/* end of header, if buffer is not empty we'll process it */
 	if (buffer[0]) {
-		if (j + strlen(s->listener->hostname) + 1 < sizeof buffer) {
-			header_append_domain_buffer(buffer, s->listener->hostname, sizeof buffer);
-			if (s->flags & SF_AUTHENTICATED &&
-			    s->listener->sendertable[0] &&
-			    s->listener->flags & F_MASQUERADE &&
-			    !(strcasecmp(hdr->name, "From")))
+		if (j + strlen(tx->session->listener->hostname) + 1 < sizeof buffer) {
+			header_append_domain_buffer(buffer, tx->session->listener->hostname, sizeof buffer);
+			if (tx->session->flags & SF_AUTHENTICATED &&
+			    tx->session->listener->sendertable[0] &&
+			    tx->session->listener->flags & F_MASQUERADE &&
+			    !(strcasecmp(hdr, "From")))
 				header_address_rewrite_buffer(buffer, mailaddr_to_text(&tx->evp.sender),
 				    sizeof buffer);
 		}
 		smtp_message_printf(tx, "%s", buffer);
 	}
-}
-
-static void
-header_missing_callback(const char *header, void *arg)
-{
-	struct smtp_tx *tx = arg;
-
-	if (strcasecmp(header, "message-id") == 0)
-		smtp_message_printf(tx, "Message-Id: <%016"PRIx64"@%s>\n",
-		    generate_uid(), tx->session->listener->hostname);
-
-	if (strcasecmp(header, "date") == 0)
-		smtp_message_printf(tx, "Date: %s\n", time_to_text(tx->time));
 }
 
 static void
@@ -1848,26 +1815,9 @@ smtp_tx(struct smtp_session *s)
 	if (s->flags & SF_AUTHENTICATED)
 		tx->evp.flags |= EF_AUTHENTICATED;
 
-	/* Setup parser and callbacks */
-	rfc2822_parser_init(&tx->rfc2822_parser);
-	rfc2822_header_default_callback(&tx->rfc2822_parser,
-	    header_default_callback, tx);
-	rfc2822_header_callback(&tx->rfc2822_parser, "bcc",
-	    header_bcc_callback, tx);
-	rfc2822_header_callback(&tx->rfc2822_parser, "from",
-	    header_domain_append_callback, tx);
-	rfc2822_header_callback(&tx->rfc2822_parser, "to",
-	    header_domain_append_callback, tx);
-	rfc2822_header_callback(&tx->rfc2822_parser, "cc",
-	    header_domain_append_callback, tx);
-	rfc2822_body_callback(&tx->rfc2822_parser,
-	    dataline_callback, tx);
-
-	if (s->listener->local || s->listener->port == htons(587)) {
-		rfc2822_missing_header_callback(&tx->rfc2822_parser, "date",
-		    header_missing_callback, tx);
-		rfc2822_missing_header_callback(&tx->rfc2822_parser, "message-id",
-		    header_missing_callback, tx);
+	if ((tx->parser = rfc5322_parser_new()) == NULL) {
+		free(tx);
+		return 0;
 	}
 
 	return 1;
@@ -1878,7 +1828,7 @@ smtp_tx_free(struct smtp_tx *tx)
 {
 	struct smtp_rcpt *rcpt;
 
-	rfc2822_parser_release(&tx->rfc2822_parser);
+	rfc5322_free(tx->parser);
 
 	while ((rcpt = TAILQ_FIRST(&tx->rcpts))) {
 		TAILQ_REMOVE(&tx->rcpts, rcpt, entry);
@@ -2066,66 +2016,133 @@ smtp_tx_rollback(struct smtp_tx *tx)
 static int
 smtp_tx_dataline(struct smtp_tx *tx, const char *line)
 {
-	int	ret;
+	struct rfc5322_result res;
+	int r;
 
 	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 
 	if (!strcmp(line, ".")) {
 		log_trace(TRACE_SMTP, "<<< [EOM]");
-		if (!tx->error)
-			rfc2822_parser_flush(&tx->rfc2822_parser);
-		return 1;
+		if (tx->error)
+			return 1;
+		line = NULL;
 	}
-
-	/* ignore data line if an error is set */
-	if (tx->error)
-		return 0;
-
-	/* escape lines starting with a '.' */
-	if (line[0] == '.')
-		line += 1;
-
-	/* account for newline */
-	tx->datain += strlen(line) + 1;
-	if (tx->datain > env->sc_maxsize) {
-		tx->error = TX_ERROR_SIZE;
-		return 0;
-	}
-
-	if (!tx->hdrdone) {
-
-		/* folded header that must be skipped */
-		if (isspace((unsigned char)line[0]) && tx->skiphdr)
+	else {
+		/* ignore data line if an error is set */
+		if (tx->error)
 			return 0;
-		tx->skiphdr = 0;
 
-		/* BCC should be stripped from headers */
-		if (strncasecmp("bcc:", line, 4) == 0) {
-			tx->skiphdr = 1;
+		/* escape lines starting with a '.' */
+		if (line[0] == '.')
+			line += 1;
+
+		/* account for newline */
+		tx->datain += strlen(line) + 1;
+		if (tx->datain > env->sc_maxsize) {
+			tx->error = TX_ERROR_SIZE;
 			return 0;
 		}
-
-		/* check for loop */
-		if (strncasecmp("Received: ", line, 10) == 0)
-			tx->rcvcount++;
-		if (tx->rcvcount == MAX_HOPS_COUNT) {
-			tx->error = TX_ERROR_LOOP;
-			log_warnx("warn: loop detected");
-			return 0;
-		}
-
-		if (line[0] == '\0')
-			tx->hdrdone = 1;
 	}
 
-	ret = rfc2822_parser_feed(&tx->rfc2822_parser, line);
-	if (ret == -1)
-		tx->error = TX_ERROR_RESOURCES;
+	if (rfc5322_push(tx->parser, line) == -1) {
+		log_warnx("failed to push dataline");
+		tx->error = TX_ERROR_INTERNAL;
+		return 0;
+	}
 
-	if (ret == 0)
-		tx->error = TX_ERROR_MALFORMED;
+	for(;;) {
+		r = rfc5322_next(tx->parser, &res);
+		switch (r) {
+		case -1:
+			if (errno == ENOMEM)
+				tx->error = TX_ERROR_INTERNAL;
+			else
+				tx->error = TX_ERROR_MALFORMED;
+			return 0;
 
-	return 0;
+		case RFC5322_NONE:
+			/* Need more data */
+			return 0;
+
+		case RFC5322_HEADER_START:
+			/* ignore bcc */
+			if (!strcasecmp("Bcc", res.hdr))
+				continue;
+
+			if (!strcasecmp("To", res.hdr) ||
+			    !strcasecmp("Cc", res.hdr) ||
+			    !strcasecmp("From", res.hdr)) {
+				rfc5322_unfold_header(tx->parser);
+				continue;
+			}
+
+			if (!strcasecmp("Received", res.hdr)) {
+				if (++tx->rcvcount >= MAX_HOPS_COUNT) {
+					log_warnx("warn: loop detected");
+					tx->error = TX_ERROR_LOOP;
+					return 0;
+				}
+			}
+			else if (!tx->has_date && !strcasecmp("Date", res.hdr))
+				tx->has_date = 1;
+			else if (!tx->has_message_id &&
+			    !strcasecmp("Message-Id", res.hdr))
+				tx->has_message_id = 1;
+
+			smtp_message_printf(tx, "%s:%s\n", res.hdr, res.value);
+			break;
+
+		case RFC5322_HEADER_CONT:
+
+			if (!strcasecmp("Bcc", res.hdr) ||
+			    !strcasecmp("To", res.hdr) ||
+			    !strcasecmp("Cc", res.hdr) ||
+			    !strcasecmp("From", res.hdr))
+				continue;
+
+			smtp_message_printf(tx, "%s\n", res.value);
+			break;
+
+		case RFC5322_HEADER_END:
+			if (!strcasecmp("To", res.hdr) ||
+			    !strcasecmp("Cc", res.hdr) ||
+			    !strcasecmp("From", res.hdr))
+				header_domain_append_callback(tx, res.hdr,
+				    res.value);
+			break;
+
+		case RFC5322_END_OF_HEADERS:
+			if (tx->session->listener->local ||
+			    tx->session->listener->port == 587) {
+
+				if (!tx->has_date) {
+					log_debug("debug: %p: adding Date", tx);
+					smtp_message_printf(tx, "Date: %s\n",
+					    time_to_text(tx->time));
+				}
+
+				if (!tx->has_message_id) {
+					log_debug("debug: %p: adding Message-ID", tx);
+					smtp_message_printf(tx,
+					    "Message-ID: <%016"PRIx64"@%s>\n",
+					    generate_uid(),
+					    tx->session->listener->hostname);
+				}
+			}
+			break;
+
+		case RFC5322_BODY_START:
+		case RFC5322_BODY:
+			smtp_message_printf(tx, "%s\n", res.value);
+			break;
+
+		case RFC5322_END_OF_MESSAGE:
+			return 1;
+
+		default:
+			fatalx("%s", __func__);
+		}
+	}
 }
 
 static void

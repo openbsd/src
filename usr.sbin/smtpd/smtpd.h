@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.556 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.557 2018/08/31 07:28:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -29,8 +29,6 @@
 #include "smtpd-defines.h"
 #include "smtpd-api.h"
 #include "ioev.h"
-
-#include "rfc2822.h"
 
 #define CHECK_IMSG_DATA_SIZE(imsg, expected_sz) do {			\
 	if ((imsg)->hdr.len - IMSG_HEADER_SIZE != (expected_sz))	\
