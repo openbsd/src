@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.socppc/MAKEDEV.md,v 1.31 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.98 2017/11/14 20:21:29 naddy Exp 
+#	OpenBSD: MAKEDEV.common,v 1.101 2018/08/31 02:32:29 jcs Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -307,8 +307,8 @@ ttyU[0-9a-zA-Z])
 
 uall)
 	R ttyU0 ttyU1 ttyU2 ttyU3 ugen0 ugen1 ugen2 ugen3 ugen4 ugen5
-	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 usb0 usb1
-	R usb2 usb3 usb4 usb5 usb6 usb7
+	R ugen6 ugen7 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3 uhid4 uhid5
+	R uhid6 uhid7 usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
 	;;
 
 wsmouse[0-9]*)
