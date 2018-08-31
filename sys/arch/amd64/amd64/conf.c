@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.62 2018/08/19 18:01:04 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.63 2018/08/31 04:20:37 visa Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -112,13 +112,6 @@ int	nblkdev = nitems(bdevsw);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl, mmap */
-#define cdev_kcov_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_init(c,n,mmap)), 0, D_CLONE }
-
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -170,7 +163,6 @@ cdev_decl(nvram);
 cdev_decl(drm);
 #include "viocon.h"
 cdev_decl(viocon);
-cdev_decl(kcov);
 
 #include "wsdisplay.h"
 #include "wskbd.h"
