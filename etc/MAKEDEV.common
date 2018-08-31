@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.100 2018/08/19 11:42:33 anton Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.101 2018/08/31 02:32:29 jcs Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -177,7 +177,7 @@ dnl XXX some arches use ramd, others ramdisk - needs to be fixed eventually
 __devitem(ramdisk, ramdisk, Ramdisk kernel devices,nothing)dnl
 dnl
 target(usb, usb, 0, 1, 2, 3, 4, 5, 6, 7)dnl
-target(usb, uhid, 0, 1, 2, 3)dnl
+target(usb, uhid, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, ttyU, 0, 1, 2, 3)dnl
