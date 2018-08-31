@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.172 2018/08/03 01:50:14 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.173 2018/08/31 00:09:13 jmatthew Exp $
 
 machine		amd64
 maxusers	4
@@ -237,6 +237,7 @@ alc*		at pci?			# Attansic L1C/L1D/L2C Ethernet
 ale*		at pci?			# Attansic L1E Ethernet
 lii*		at pci?			# Attansic L2 Ethernet
 jme*		at pci?			# JMicron JMC250/JMC260 Ethernet
+bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 
 acx*		at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*		at cardbus?		# TI ACX100/ACX111 (802.11b/g)
