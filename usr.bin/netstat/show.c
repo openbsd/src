@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.54 2018/06/04 19:17:37 kn Exp $	*/
+/*	$OpenBSD: show.c,v 1.55 2018/08/31 15:18:02 yasuoka Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -490,8 +490,6 @@ routename4(in_addr_t in)
 	struct in_addr	 ina;
 	struct hostent	*hp;
 
-	if (in == INADDR_ANY)
-		cp = "default";
 	if (!cp && !nflag) {
 		if ((hp = gethostbyaddr((char *)&in,
 		    sizeof(in), AF_INET)) != NULL) {
