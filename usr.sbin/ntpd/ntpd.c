@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.116 2018/08/08 22:56:42 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.117 2018/08/31 18:45:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,6 +219,9 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
 	    pipe_chld) == -1)
 		fatal("socketpair");
+
+	if (chdir("/") == -1)
+		fatal("chdir(\"/\")");
 
 	signal(SIGCHLD, sighdlr);
 
