@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.132 2018/08/08 14:25:50 ratchov Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.133 2018/08/31 07:18:18 miko Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -750,17 +750,21 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 {
 	const struct usb_audio_mixer_unit *d = iot[id].d.mu;
 	struct usb_audio_mixer_unit_1 *d1;
-	int c, chs, ichs, ochs, i, o, bno, p, mo, mc, k;
+	int c, chs, ochs, i, o, bno, p, mo, mc, k;
+#ifdef UAUDIO_DEBUG
+	int ichs = 0;
+#endif
 	uByte *bm;
 	struct mixerctl mix;
 
 	DPRINTFN(2,("%s: bUnitId=%d bNrInPins=%d\n", __func__,
 		    d->bUnitId, d->bNrInPins));
 
+#ifdef UAUDIO_DEBUG
 	/* Compute the number of input channels */
-	ichs = 0;
 	for (i = 0; i < d->bNrInPins; i++)
 		ichs += uaudio_get_cluster_nchan(d->baSourceId[i], iot);
+#endif
 
 	/* and the number of output channels */
 	d1 = (struct usb_audio_mixer_unit_1 *)&d->baSourceId[d->bNrInPins];
