@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.190 2018/08/28 15:15:02 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.191 2018/08/31 12:55:46 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -787,7 +787,7 @@ ret:
  * Get all the information contained in an SA to a PFKEYV2 message.
  */
 int
-pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
+pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 {
 	int rval, i;
 	void *p;
@@ -796,36 +796,36 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	i = sizeof(struct sadb_sa) + sizeof(struct sadb_lifetime) +
 	    sizeof(struct sadb_x_counter);
 
-	if (sa->tdb_soft_allocations || sa->tdb_soft_bytes ||
-	    sa->tdb_soft_timeout || sa->tdb_soft_first_use)
+	if (tdb->tdb_soft_allocations || tdb->tdb_soft_bytes ||
+	    tdb->tdb_soft_timeout || tdb->tdb_soft_first_use)
 		i += sizeof(struct sadb_lifetime);
 
-	if (sa->tdb_exp_allocations || sa->tdb_exp_bytes ||
-	    sa->tdb_exp_timeout || sa->tdb_exp_first_use)
+	if (tdb->tdb_exp_allocations || tdb->tdb_exp_bytes ||
+	    tdb->tdb_exp_timeout || tdb->tdb_exp_first_use)
 		i += sizeof(struct sadb_lifetime);
 
-	if (sa->tdb_last_used)
+	if (tdb->tdb_last_used)
 		i += sizeof(struct sadb_lifetime);
 
-	i += sizeof(struct sadb_address) + PADUP(sa->tdb_src.sa.sa_len);
-	i += sizeof(struct sadb_address) + PADUP(sa->tdb_dst.sa.sa_len);
+	i += sizeof(struct sadb_address) + PADUP(tdb->tdb_src.sa.sa_len);
+	i += sizeof(struct sadb_address) + PADUP(tdb->tdb_dst.sa.sa_len);
 
-	if (sa->tdb_ids) {
-		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_ids->id_local->len);
-		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_ids->id_remote->len);
+	if (tdb->tdb_ids) {
+		i += sizeof(struct sadb_ident) + PADUP(tdb->tdb_ids->id_local->len);
+		i += sizeof(struct sadb_ident) + PADUP(tdb->tdb_ids->id_remote->len);
 	}
 
-	if (sa->tdb_amxkey)
-		i += sizeof(struct sadb_key) + PADUP(sa->tdb_amxkeylen);
+	if (tdb->tdb_amxkey)
+		i += sizeof(struct sadb_key) + PADUP(tdb->tdb_amxkeylen);
 
-	if (sa->tdb_emxkey)
-		i += sizeof(struct sadb_key) + PADUP(sa->tdb_emxkeylen);
+	if (tdb->tdb_emxkey)
+		i += sizeof(struct sadb_key) + PADUP(tdb->tdb_emxkeylen);
 
-	if (sa->tdb_filter.sen_type) {
+	if (tdb->tdb_filter.sen_type) {
 		i += 2 * sizeof(struct sadb_protocol);
 
 		/* We'll need four of them: src, src mask, dst, dst mask. */
-		switch (sa->tdb_filter.sen_type) {
+		switch (tdb->tdb_filter.sen_type) {
 		case SENT_IP4:
 			i += 4 * PADUP(sizeof(struct sockaddr_in));
 			i += 4 * sizeof(struct sadb_address);
@@ -842,20 +842,20 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 		}
 	}
 
-	if (sa->tdb_onext) {
+	if (tdb->tdb_onext) {
 		i += sizeof(struct sadb_sa);
 		i += sizeof(struct sadb_address) +
-		    PADUP(sa->tdb_onext->tdb_dst.sa.sa_len);
+		    PADUP(tdb->tdb_onext->tdb_dst.sa.sa_len);
 		i += sizeof(struct sadb_protocol);
 	}
 
-	if (sa->tdb_udpencap_port)
+	if (tdb->tdb_udpencap_port)
 		i += sizeof(struct sadb_x_udpencap);
 
 #if NPF > 0
-	if (sa->tdb_tag)
+	if (tdb->tdb_tag)
 		i += sizeof(struct sadb_x_tag) + PADUP(PF_TAG_NAME_SIZE);
-	if (sa->tdb_tap)
+	if (tdb->tdb_tap)
 		i += sizeof(struct sadb_x_tap);
 #endif
 
@@ -875,89 +875,89 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 
 	headers[SADB_EXT_SA] = p;
 
-	export_sa(&p, sa);  /* Export SA information (mostly flags) */
+	export_sa(&p, tdb);  /* Export SA information (mostly flags) */
 
 	/* Export lifetimes where applicable */
 	headers[SADB_EXT_LIFETIME_CURRENT] = p;
-	export_lifetime(&p, sa, PFKEYV2_LIFETIME_CURRENT);
+	export_lifetime(&p, tdb, PFKEYV2_LIFETIME_CURRENT);
 
-	if (sa->tdb_soft_allocations || sa->tdb_soft_bytes ||
-	    sa->tdb_soft_first_use || sa->tdb_soft_timeout) {
+	if (tdb->tdb_soft_allocations || tdb->tdb_soft_bytes ||
+	    tdb->tdb_soft_first_use || tdb->tdb_soft_timeout) {
 		headers[SADB_EXT_LIFETIME_SOFT] = p;
-		export_lifetime(&p, sa, PFKEYV2_LIFETIME_SOFT);
+		export_lifetime(&p, tdb, PFKEYV2_LIFETIME_SOFT);
 	}
 
-	if (sa->tdb_exp_allocations || sa->tdb_exp_bytes ||
-	    sa->tdb_exp_first_use || sa->tdb_exp_timeout) {
+	if (tdb->tdb_exp_allocations || tdb->tdb_exp_bytes ||
+	    tdb->tdb_exp_first_use || tdb->tdb_exp_timeout) {
 		headers[SADB_EXT_LIFETIME_HARD] = p;
-		export_lifetime(&p, sa, PFKEYV2_LIFETIME_HARD);
+		export_lifetime(&p, tdb, PFKEYV2_LIFETIME_HARD);
 	}
 
-	if (sa->tdb_last_used) {
+	if (tdb->tdb_last_used) {
 		headers[SADB_X_EXT_LIFETIME_LASTUSE] = p;
-		export_lifetime(&p, sa, PFKEYV2_LIFETIME_LASTUSE);
+		export_lifetime(&p, tdb, PFKEYV2_LIFETIME_LASTUSE);
 	}
 
 	/* Export TDB source address */
 	headers[SADB_EXT_ADDRESS_SRC] = p;
-	export_address(&p, &sa->tdb_src.sa);
+	export_address(&p, &tdb->tdb_src.sa);
 
 	/* Export TDB destination address */
 	headers[SADB_EXT_ADDRESS_DST] = p;
-	export_address(&p, &sa->tdb_dst.sa);
+	export_address(&p, &tdb->tdb_dst.sa);
 
 	/* Export source/destination identities, if present */
-	if (sa->tdb_ids)
-		export_identities(&p, sa->tdb_ids, sa->tdb_ids_swapped, headers);
+	if (tdb->tdb_ids)
+		export_identities(&p, tdb->tdb_ids, tdb->tdb_ids_swapped, headers);
 
 	/* Export authentication key, if present */
-	if (sa->tdb_amxkey) {
+	if (tdb->tdb_amxkey) {
 		headers[SADB_EXT_KEY_AUTH] = p;
-		export_key(&p, sa, PFKEYV2_AUTHENTICATION_KEY);
+		export_key(&p, tdb, PFKEYV2_AUTHENTICATION_KEY);
 	}
 
 	/* Export encryption key, if present */
-	if (sa->tdb_emxkey) {
+	if (tdb->tdb_emxkey) {
 		headers[SADB_EXT_KEY_ENCRYPT] = p;
-		export_key(&p, sa, PFKEYV2_ENCRYPTION_KEY);
+		export_key(&p, tdb, PFKEYV2_ENCRYPTION_KEY);
 	}
 
 	/* Export flow/filter, if present */
-	if (sa->tdb_filter.sen_type)
-		export_flow(&p, IPSP_IPSEC_USE, &sa->tdb_filter,
-		    &sa->tdb_filtermask, headers);
+	if (tdb->tdb_filter.sen_type)
+		export_flow(&p, IPSP_IPSEC_USE, &tdb->tdb_filter,
+		    &tdb->tdb_filtermask, headers);
 
-	if (sa->tdb_onext) {
+	if (tdb->tdb_onext) {
 		headers[SADB_X_EXT_SA2] = p;
-		export_sa(&p, sa->tdb_onext);
+		export_sa(&p, tdb->tdb_onext);
 		headers[SADB_X_EXT_DST2] = p;
-		export_address(&p, &sa->tdb_onext->tdb_dst.sa);
+		export_address(&p, &tdb->tdb_onext->tdb_dst.sa);
 		headers[SADB_X_EXT_SATYPE2] = p;
-		export_satype(&p, sa->tdb_onext);
+		export_satype(&p, tdb->tdb_onext);
 	}
 
 	/* Export UDP encapsulation port, if present */
-	if (sa->tdb_udpencap_port) {
+	if (tdb->tdb_udpencap_port) {
 		headers[SADB_X_EXT_UDPENCAP] = p;
-		export_udpencap(&p, sa);
+		export_udpencap(&p, tdb);
 	}
 
 #if NPF > 0
 	/* Export tag information, if present */
-	if (sa->tdb_tag) {
+	if (tdb->tdb_tag) {
 		headers[SADB_X_EXT_TAG] = p;
-		export_tag(&p, sa);
+		export_tag(&p, tdb);
 	}
 
 	/* Export tap enc(4) device information, if present */
-	if (sa->tdb_tap) {
+	if (tdb->tdb_tap) {
 		headers[SADB_X_EXT_TAP] = p;
-		export_tap(&p, sa);
+		export_tap(&p, tdb);
 	}
 #endif
 
 	headers[SADB_X_EXT_COUNTER] = p;
-	export_counter(&p, sa);
+	export_counter(&p, tdb);
 
 	rval = 0;
 
@@ -969,7 +969,7 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
  * Dump a TDB.
  */
 int
-pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
+pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 {
 	struct dump_state *dump_state = (struct dump_state *) state;
 	void *headers[SADB_EXT_MAX+1], *buffer;
@@ -977,12 +977,12 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 
 	/* If not satype was specified, dump all TDBs */
 	if (!dump_state->sadb_msg->sadb_msg_satype ||
-	    (sa->tdb_satype == dump_state->sadb_msg->sadb_msg_satype)) {
+	    (tdb->tdb_satype == dump_state->sadb_msg->sadb_msg_satype)) {
 		bzero(headers, sizeof(headers));
 		headers[0] = (void *) dump_state->sadb_msg;
 
 		/* Get the information from the TDB to a PFKEYv2 message */
-		if ((rval = pfkeyv2_get(sa, headers, &buffer, NULL)) != 0)
+		if ((rval = pfkeyv2_get(tdb, headers, &buffer, NULL)) != 0)
 			return (rval);
 
 		if (last)
@@ -991,7 +991,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 		/* Send the message to the specified socket */
 		rval = pfkeyv2_sendmessage(headers,
 		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0,
-		    sa->tdb_rdomain);
+		    tdb->tdb_rdomain);
 
 		free(buffer, M_PFKEY, 0);
 		if (rval)
@@ -1005,11 +1005,11 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
  * Delete an SA.
  */
 int
-pfkeyv2_sa_flush(struct tdb *sa, void *satype_vp, int last)
+pfkeyv2_sa_flush(struct tdb *tdb, void *satype_vp, int last)
 {
 	if (!(*((u_int8_t *) satype_vp)) ||
-	    sa->tdb_satype == *((u_int8_t *) satype_vp))
-		tdb_delete(sa);
+	    tdb->tdb_satype == *((u_int8_t *) satype_vp))
+		tdb_delete(tdb);
 	return (0);
 }
 
@@ -2284,14 +2284,14 @@ ret:
  * specifies the type of expiration (soft or hard).
  */
 int
-pfkeyv2_expire(struct tdb *sa, u_int16_t type)
+pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
 {
 	void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
 	struct sadb_msg *smsg;
 	int rval = 0;
 	int i;
 
-	switch (sa->tdb_sproto) {
+	switch (tdb->tdb_sproto) {
 	case IPPROTO_AH:
 	case IPPROTO_ESP:
 	case IPPROTO_IPIP:
@@ -2308,8 +2308,8 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 
 	i = sizeof(struct sadb_msg) + sizeof(struct sadb_sa) +
 	    2 * sizeof(struct sadb_lifetime) +
-	    sizeof(struct sadb_address) + PADUP(sa->tdb_src.sa.sa_len) +
-	    sizeof(struct sadb_address) + PADUP(sa->tdb_dst.sa.sa_len);
+	    sizeof(struct sadb_address) + PADUP(tdb->tdb_src.sa.sa_len) +
+	    sizeof(struct sadb_address) + PADUP(tdb->tdb_dst.sa.sa_len);
 
 	if (!(p = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
 		rval = ENOMEM;
@@ -2326,7 +2326,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	smsg = (struct sadb_msg *) headers[0];
 	smsg->sadb_msg_version = PF_KEY_V2;
 	smsg->sadb_msg_type = SADB_EXPIRE;
-	smsg->sadb_msg_satype = sa->tdb_satype;
+	smsg->sadb_msg_satype = tdb->tdb_satype;
 	smsg->sadb_msg_len = i / sizeof(uint64_t);
 
 	mtx_enter(&pfkeyv2_mtx);
@@ -2334,23 +2334,23 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	mtx_leave(&pfkeyv2_mtx);
 
 	headers[SADB_EXT_SA] = p;
-	export_sa(&p, sa);
+	export_sa(&p, tdb);
 
 	headers[SADB_EXT_LIFETIME_CURRENT] = p;
-	export_lifetime(&p, sa, 2);
+	export_lifetime(&p, tdb, 2);
 
 	headers[type] = p;
-	export_lifetime(&p, sa, type == SADB_EXT_LIFETIME_SOFT ?
+	export_lifetime(&p, tdb, type == SADB_EXT_LIFETIME_SOFT ?
 	    PFKEYV2_LIFETIME_SOFT : PFKEYV2_LIFETIME_HARD);
 
 	headers[SADB_EXT_ADDRESS_SRC] = p;
-	export_address(&p, &sa->tdb_src.sa);
+	export_address(&p, &tdb->tdb_src.sa);
 
 	headers[SADB_EXT_ADDRESS_DST] = p;
-	export_address(&p, &sa->tdb_dst.sa);
+	export_address(&p, &tdb->tdb_dst.sa);
 
 	if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_BROADCAST,
-	    NULL, 0, 0, sa->tdb_rdomain)) != 0)
+	    NULL, 0, 0, tdb->tdb_rdomain)) != 0)
 		goto ret;
 
 	rval = 0;
@@ -2372,7 +2372,7 @@ struct pfkeyv2_sysctl_walk {
 };
 
 int
-pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
+pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 {
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
 	void *buffer = NULL;
@@ -2380,7 +2380,7 @@ pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
 	int buflen, i;
 
 	if (w->w_satype != SADB_SATYPE_UNSPEC &&
-	    w->w_satype != sa->tdb_satype)
+	    w->w_satype != tdb->tdb_satype)
 		return (0);
 
 	if (w->w_where) {
@@ -2388,7 +2388,7 @@ pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
 		struct sadb_msg msg;
 
 		bzero(headers, sizeof(headers));
-		if ((error = pfkeyv2_get(sa, headers, &buffer, &buflen)) != 0)
+		if ((error = pfkeyv2_get(tdb, headers, &buffer, &buflen)) != 0)
 			goto done;
 		if (w->w_len < sizeof(msg) + buflen) {
 			error = ENOMEM;
@@ -2397,7 +2397,7 @@ pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
 		/* prepend header */
 		bzero(&msg, sizeof(msg));
 		msg.sadb_msg_version = PF_KEY_V2;
-		msg.sadb_msg_satype = sa->tdb_satype;
+		msg.sadb_msg_satype = tdb->tdb_satype;
 		msg.sadb_msg_type = SADB_DUMP;
 		msg.sadb_msg_len = (sizeof(msg) + buflen) / sizeof(uint64_t);
 		if ((error = copyout(&msg, w->w_where, sizeof(msg))) != 0)
@@ -2414,7 +2414,7 @@ pfkeyv2_sysctl_walker(struct tdb *sa, void *arg, int last)
 		w->w_where += buflen;
 		w->w_len -= buflen;
 	} else {
-		if ((error = pfkeyv2_get(sa, NULL, NULL, &buflen)) != 0)
+		if ((error = pfkeyv2_get(tdb, NULL, NULL, &buflen)) != 0)
 			return (error);
 		w->w_len += buflen;
 		w->w_len += sizeof(struct sadb_msg);
