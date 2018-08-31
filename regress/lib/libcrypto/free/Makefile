@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2018/07/10 20:53:30 tb Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/08/31 17:35:21 tb Exp $
 
 TESTS = \
 	freenull
+
+PROG = ${TESTS}
 
 REGRESS_TARGETS= all_tests
 
@@ -10,7 +12,7 @@ DPADD=		${LIBCRYPTO} ${LIBSSL}
 LDFLAGS+=	-lcrypto
 CFLAGS+=	-DLIBRESSL_INTERNAL
 
-CLEANFILES+= ${TESTS} ${TESTS}.d freenull.c freenull.c.body freenull.c.tmp
+CLEANFILES+= freenull.c freenull.c.body freenull.c.tmp
 
 freenull.c: freenull.awk ../../../../lib/libcrypto/Symbols.list
 	awk -f ${.CURDIR}/freenull.awk \
