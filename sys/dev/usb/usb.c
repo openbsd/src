@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.119 2018/05/01 18:14:46 landry Exp $	*/
+/*	$OpenBSD: usb.c,v 1.120 2018/08/31 16:32:31 miko Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -623,7 +623,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		void *ptr = NULL;
 		int addr = ur->ucr_addr;
 		usbd_status err;
-		int error = 0;
 
 		if (!(flag & FWRITE))
 			return (EBADF);
@@ -777,7 +776,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		struct iovec iov;
 		struct uio uio;
 		size_t len;
-		int error;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
