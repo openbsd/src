@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.304 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.305 2018/09/01 17:02:12 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -899,7 +899,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	}
 
 	if (p->p_p->ps_uvdone != 0)
-		return EINVAL;
+		return EPERM;
 
 	error = copyinstr(SCARG(uap, permissions), permissions,
 	    sizeof(permissions), NULL);
