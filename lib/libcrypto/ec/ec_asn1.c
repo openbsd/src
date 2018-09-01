@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.30 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.31 2018/09/01 16:23:15 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1564,10 +1564,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 	EC_KEY *ret = NULL;
 
 	if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
-		/*
-		 * sorry, but a EC_GROUP-structur is necessary to set the
-		 * public key
-		 */
+		/* An EC_GROUP structure is necessary to set the public key. */
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
