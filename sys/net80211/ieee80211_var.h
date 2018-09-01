@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.87 2018/08/06 11:28:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.88 2018/09/01 08:20:56 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -392,7 +392,8 @@ struct ieee80211_ess {
 #define	IEEE80211_F_HTON	0x02000000	/* CONF: HT enabled */
 #define	IEEE80211_F_PBAR	0x04000000	/* CONF: PBAC required */
 #define	IEEE80211_F_BGSCAN	0x08000000	/* STATUS: background scan */
-#define IEEE80211_F_USERMASK	0xf0000000	/* CONF: ioctl flag mask */
+#define IEEE80211_F_AUTO_JOIN	0x10000000	/* CONF: auto-join active */
+#define IEEE80211_F_USERMASK	0xe0000000	/* CONF: ioctl flag mask */
 
 /* ic_xflags */
 #define	IEEE80211_F_TX_MGMT_ONLY 0x00000001	/* leave data frames on ifq */

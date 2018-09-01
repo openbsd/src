@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.63 2018/08/06 11:42:18 benno Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.64 2018/09/01 08:20:56 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -429,6 +429,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
 		ic->ic_des_esslen = nwid.i_len;
 		memcpy(ic->ic_des_essid, nwid.i_nwid, nwid.i_len);
+		if (ic->ic_des_esslen > 0) {
+			/* 'nwid' disables auto-join magic */
+			ic->ic_flags &= ~IEEE80211_F_AUTO_JOIN;
+		} else {
+			/* '-nwid' re-enables auto-join */
+			ic->ic_flags |= IEEE80211_F_AUTO_JOIN;
+		}
 		/* disable WPA/WEP */
 		ieee80211_disable_rsn(ic);
 		ieee80211_disable_wep(ic);
@@ -467,8 +474,10 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ieee80211_disable_rsn(ic);
 		ieee80211_disable_wep(ic);
 		/* save nwid for auto-join */
-		if (!(join.i_flags & IEEE80211_JOIN_DEL))
-			ieee80211_add_ess(ic, 0, 0);
+		if (!(join.i_flags & IEEE80211_JOIN_DEL)) {
+			if (ieee80211_add_ess(ic, 0, 0) == 0)
+				ic->ic_flags |= IEEE80211_F_AUTO_JOIN;
+		}
 		ieee80211_set_ess(ic, ic->ic_des_essid);
 		error = ENETRESET;
 		break;
@@ -483,7 +492,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				join.i_len = ic->ic_bss->ni_esslen;
 				memcpy(join.i_nwid, ic->ic_bss->ni_essid,
 				    join.i_len);
-				join.i_flags = IEEE80211_JOIN_FOUND;
+				if (ic->ic_flags & IEEE80211_F_AUTO_JOIN)
+					join.i_flags = IEEE80211_JOIN_FOUND;
 				error = copyout(&join, ifr->ifr_data,
 				    sizeof(join));
 				break;

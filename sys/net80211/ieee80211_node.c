@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.142 2018/08/15 18:45:43 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.143 2018/09/01 08:20:56 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -484,6 +484,20 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 		}
 		if (ess == NULL)
 			continue;
+
+		/*
+		 * Operate only on ic_des_essid if auto-join is disabled.
+		 * We might have a password stored for this network.
+		 */
+		if (!ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN)) {
+			if (ic->ic_des_esslen == ess->esslen &&
+			    memcmp(ic->ic_des_essid, ess->essid,
+			    ess->esslen) == 0) {
+				ieee80211_set_ess(ic, ess->essid);
+				return;
+			}
+			continue;
+		}
 
 		if (selni == NULL) {
 			seless = ess;
