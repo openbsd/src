@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.37 2018/08/29 19:22:32 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.38 2018/09/01 05:56:24 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -210,6 +210,30 @@ type wycheproofTestGroupRSA struct {
 	Tests   []*wycheproofTestRSA `json:"tests"`
 }
 
+type wycheproofTestRSASSA struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Msg     string   `json:"msg"`
+	Sig     string   `json:"sig"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupRSASSA struct {
+	E       string                  `json:"e"`
+	KeyASN  string                  `json:"keyAsn"`
+	KeyDER  string                  `json:"keyDer"`
+	KeyPEM  string                  `json:"keyPem"`
+	KeySize int                     `json:"keysize"`
+	MGF     string                  `json:"mgf"`
+	MGFSHA  string                  `json:"mgfSha"`
+	N       string                  `json:"n"`
+	SLen    int                     `json:"sLen"`
+	SHA     string                  `json:"sha"`
+	Type    string                  `json:"type"`
+	Tests   []*wycheproofTestRSASSA `json:"tests"`
+}
+
 type wycheproofTestX25519 struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
@@ -277,6 +301,23 @@ func hashFromString(hs string) (hash.Hash, error) {
 		return sha512.New384(), nil
 	case "SHA-512":
 		return sha512.New(), nil
+	default:
+		return nil, fmt.Errorf("unknown hash %q", hs)
+	}
+}
+
+func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
+	switch hs {
+	case "SHA-1":
+		return C.EVP_sha1(), nil
+	case "SHA-224":
+		return C.EVP_sha224(), nil
+	case "SHA-256":
+		return C.EVP_sha256(), nil
+	case "SHA-384":
+		return C.EVP_sha384(), nil
+	case "SHA-512":
+		return C.EVP_sha512(), nil
 	default:
 		return nil, fmt.Errorf("unknown hash %q", hs)
 	}
@@ -1105,6 +1146,101 @@ func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
 	return success
 }
 
+func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wycheproofTestRSASSA) bool {
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
+	}
+
+	h.Reset()
+	h.Write(msg)
+	msg = h.Sum(nil)
+
+	sig, err := hex.DecodeString(wt.Sig)
+	if err != nil {
+		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
+	}
+
+	msgLen, sigLen := len(msg), len(sig)
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+	if sigLen == 0 {
+		sig = append(sig, 0)
+	}
+
+	sigOut := make([]byte, sigLen)
+	if sigLen == 0 {
+		sigOut = append(sigOut, 0)
+	}
+
+	ret := C.RSA_public_decrypt(C.int(sigLen), (*C.uchar)(unsafe.Pointer(&sig[0])), (*C.uchar)(unsafe.Pointer(&sigOut[0])), rsa, C.RSA_NO_PADDING)
+	if ret == -1 {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - RSA_public_decrypt() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
+		return false
+	}
+
+	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha, (*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
+
+	// XXX: audit acceptable cases...
+	success := false
+	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
+		success = true
+	} else if ret == 0 && (wt.Result == "invalid" || wt.Result == "acceptable") {
+		success = true
+	} else {
+		fmt.Printf("FAIL: Test case %d (%q) - RSA_verify_PKCS1_PSS_mgf1() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
+	}
+	return success
+}
+
+func runRSASSATestGroup(algorithm string, wtg *wycheproofTestGroupRSASSA) bool {
+	fmt.Printf("Running %v test group %v with key size %d and %v...\n", algorithm, wtg.Type, wtg.KeySize, wtg.SHA)
+	rsa := C.RSA_new()
+	if rsa == nil {
+		log.Fatal("RSA_new failed")
+	}
+	defer C.RSA_free(rsa)
+
+	e := C.CString(wtg.E)
+	if C.BN_hex2bn(&rsa.e, e) == 0 {
+		log.Fatal("Failed to set RSA e")
+	}
+	C.free(unsafe.Pointer(e))
+
+	n := C.CString(wtg.N)
+	if C.BN_hex2bn(&rsa.n, n) == 0 {
+		log.Fatal("Failed to set RSA n")
+	}
+	C.free(unsafe.Pointer(n))
+
+	h, err := hashFromString(wtg.SHA)
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	sha, err := hashEvpMdFromString(wtg.SHA)
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	mgfSha, err := hashEvpMdFromString(wtg.MGFSHA)
+	if err != nil {
+		log.Fatalf("Failed to get MGF hash: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runRSASSATest(rsa, h, sha, mgfSha, wtg.SLen, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -1250,6 +1386,8 @@ func runTestVectors(path string) bool {
 		wtg = &wycheproofTestGroupDSA{}
 	case "ECDSA":
 		wtg = &wycheproofTestGroupECDSA{}
+	case "RSASSA-PSS":
+		wtg = &wycheproofTestGroupRSASSA{}
 	case "RSASig":
 		wtg = &wycheproofTestGroupRSA{}
 	case "X25519":
@@ -1292,6 +1430,10 @@ func runTestVectors(path string) bool {
 			if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
 				success = false
 			}
+		case "RSASSA-PSS":
+			if !runRSASSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSASSA)) {
+				success = false
+			}
 		case "RSASig":
 			if !runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA)) {
 				success = false
@@ -1323,7 +1465,7 @@ func main() {
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
-		{"RSA signature", "rsa_signature_*test.json"},
+		{"RSA", "rsa_*test.json"},
 		{"X25519", "x25519_*test.json"},
 	}
 
