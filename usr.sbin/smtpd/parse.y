@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.218 2018/08/25 19:05:23 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.219 2018/09/01 21:20:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -611,11 +611,11 @@ MBOX {
 } dispatcher_local_options
 | LMTP STRING {
 	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{user.username}", $2);
+	    "/usr/libexec/mail.lmtp -f %%{mbox.from} -d %s %%{user.username}", $2);
 } dispatcher_local_options
 | LMTP STRING RCPT_TO {
 	asprintf(&dispatcher->u.local.command,
-	    "/usr/libexec/mail.lmtp -f \"%%{sender}\" -d %s %%{dest}", $2);
+	    "/usr/libexec/mail.lmtp -f %%{mbox.from} -d %s %%{dest}", $2);
 } dispatcher_local_options
 | MDA STRING {
 	asprintf(&dispatcher->u.local.command,
