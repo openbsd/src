@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.54 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.55 2018/09/01 19:21:10 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -88,10 +88,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		return (pid);
 	}
 
-	/* create ospfd control socket outside chroot */
-	if (control_init(xconf->csock) == -1)
-		fatalx("control socket setup failed");
-
 	/* create the raw ip socket */
 	if ((xconf->ospf_socket = socket(AF_INET6,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_OSPF)) == -1)
@@ -133,7 +129,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio inet mcast", NULL) == -1)
+	if (pledge("stdio inet mcast recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -444,6 +440,17 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
+			break;
+		case IMSG_CONTROLFD:
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg control"
+				    "fd but didn't receive any", __func__);
+			control_state.fd = fd;
+			/* Listen on control socket. */
+			TAILQ_INIT(&ctl_conns);
+			control_listen();
+			if (pledge("stdio inet mcast", NULL) == -1)
+				fatal("pledge");
 			break;
 		default:
 			log_debug("ospfe_dispatch_main: error handling imsg %d",
