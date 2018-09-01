@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.198 2018/07/05 14:56:26 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.199 2018/09/01 19:56:28 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 5 2018 $
+.Dd $Mdocdate: September 1 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -116,7 +116,8 @@ in an aliases or
 .Pa .forward
 file.
 .It Cm forward\-only
-Only accept the message if the recipient results in a remote address.
+Only accept the message if the recipient results in a remote address
+after the processing of aliases or forward file.
 .It Cm lmtp Ar destination Op Ar rcpt-to
 Deliver the message to an LMTP server at
 .Ar destination .
