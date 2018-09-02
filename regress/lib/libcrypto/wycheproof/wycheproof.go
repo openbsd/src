@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.44 2018/09/02 17:29:17 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.45 2018/09/02 20:09:29 bluhm Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1596,7 +1596,7 @@ func runTestVectors(path string) bool {
 func main() {
 	if _, err := os.Stat(testVectorPath); os.IsNotExist(err) {
 		fmt.Printf("package wycheproof-testvectors is required for this regress\n")
-		fmt.Printf("SKIPPING\n")
+		fmt.Printf("SKIPPED\n")
 		os.Exit(0)
 	}
 
