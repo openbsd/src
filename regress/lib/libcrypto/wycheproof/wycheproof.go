@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.42 2018/09/02 17:24:02 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.43 2018/09/02 17:28:01 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -555,7 +555,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 		if wt.Result == "invalid" {
 			return true
 		}
-		fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherUpdate failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherUpdate() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 		return false
 	}
 
@@ -565,7 +565,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 
 		ret = C.EVP_CipherFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&dummyOut[0])), &tmpLen)
 		if ret != 1 {
-			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherFinal_ex() failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CipherFinal_ex() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			return false
 		}
 		cipherOutLen += tmpLen
@@ -585,7 +585,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 		tagOut := make([]byte, tagLen)
 		ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlGetTag, C.int(tagLen), unsafe.Pointer(&tagOut[0]))
 		if ret != 1 {
-			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CIPHER_CTX_ctrl() failed: got %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CIPHER_CTX_ctrl() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			return false
 		}
 		// XXX audit acceptable cases...
@@ -739,13 +739,13 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 
 	ret := C.CMAC_Init(ctx, unsafe.Pointer(&key[0]), C.size_t(keyLen), cipher, nil)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Init() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Init() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
 		return false
 	}
 
 	ret = C.CMAC_Update(ctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Update() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Update() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
 		return false
 	}
 
@@ -754,7 +754,7 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 
 	ret = C.CMAC_Final(ctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Final() failed. got %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - CMAC_Final() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
 		return false
 	}
 
@@ -1092,7 +1092,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 
 	ret := C.EC_KEY_set_private_key(privKey, bnPriv)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) - EC_KEY_set_private_key failed: got %d want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) - EC_KEY_set_private_key() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
 		return false
 	}
 
