@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -27,52 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include "bool.h"
-
-struct place;
-
-#if defined(__CLANG__) || defined(__GNUC__)
-#define PF(a, b) __attribute__((__format__(__printf__, a, b)))
-#define DEAD __attribute__((__noreturn__))
-#define UNUSED __attribute__((__unused__))
+#if defined(__clang__) || defined(__GNUC__) || __STDC__ > 201101
+#define UN
+#undef NEED_UNION_ACCESSORS
 #else
-#define PF(a, b)
-#define DEAD
-#define UNUSED
+#define UN un
+#define NEED_UNION_ACCESSORS
 #endif
-
-#define HOWMANY(arr) (sizeof(arr)/sizeof((arr)[0]))
-
-extern const char ws[];
-extern const char alnum[];
-
-
-void *domalloc(size_t len);
-void *dorealloc(void *ptr, size_t oldlen, size_t newlen);
-void dofree(void *ptr, size_t len);
-
-char *dostrdup(const char *s);
-char *dostrdup2(const char *s, const char *t);
-char *dostrdup3(const char *s, const char *t, const char *u);
-char *dostrndup(const char *s, size_t len);
-void dostrfree(char *s);
-
-size_t notrailingws(char *buf, size_t len);
-bool is_identifier(const char *str);
-
-/* in place.c */
-void complain_init(const char *progname);
-PF(2, 3) void complain(const struct place *, const char *fmt, ...);
-void complain_fail(void);
-bool complain_failed(void);
-
-void debuglog_open(const struct place *p, /*const*/ char *file);
-void debuglog_close(void);
-PF(2, 3) void debuglog(const struct place *p, const char *fmt, ...);
-PF(3, 4) void debuglog2(const struct place *p, const struct place *p2,
-			const char *fmt, ...);
-
-/* in main.c */
-void freestringlater(char *s);
-DEAD void die(void);

@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
 #include <stddef.h>
+#include "bool.h"
 
 struct place;
 
@@ -40,10 +40,12 @@ void macro_define_plain(struct place *, const char *macro,
 void macro_define_params(struct place *, const char *macro,
 			 struct place *, const char *params,
 			 struct place *, const char *expansion);
+void macro_define_magic(struct place *, const char *macro);
 void macro_undef(const char *macro);
 bool macro_isdefined(const char *macro);
 
-char *macroexpand(struct place *, char *buf, size_t len, bool honordefined);
+char *macroexpand(struct place *, const char *buf, size_t len,
+		  bool honordefined);
 
-void macro_sendline(struct place *, char *buf, size_t len);
+void macro_sendline(struct place *, const char *buf, size_t len);
 void macro_sendeof(struct place *);

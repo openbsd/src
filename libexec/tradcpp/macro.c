@@ -28,9 +28,11 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "union.h"
 #include "array.h"
 #include "mode.h"
 #include "place.h"
@@ -38,14 +40,20 @@
 #include "output.h"
 
 struct expansionitem {
-	bool isstring;
+	enum { EI_STRING, EI_PARAM, EI_FILE, EI_LINE } itemtype;
 	union {
-		char *string;
-		unsigned param;
-	};
+		char *ei_string;		/* for EI_STRING */
+		unsigned ei_param;		/* for EI_PARAM */
+	} UN;
 };
 DECLARRAY(expansionitem, static UNUSED);
 DEFARRAY(expansionitem, static);
+
+#ifdef NEED_UNION_ACCESSORS
+#define ei_string un.ei_string
+#define ei_param un.ei_param
+#endif
+
 
 struct macro {
 	struct place defplace;
@@ -76,8 +84,8 @@ expansionitem_create_string(const char *string)
 	struct expansionitem *ei;
 
 	ei = domalloc(sizeof(*ei));
-	ei->isstring = true;
-	ei->string = dostrdup(string);
+	ei->itemtype = EI_STRING;
+	ei->ei_string = dostrdup(string);
 	return ei;
 }
 
@@ -88,8 +96,8 @@ expansionitem_create_stringlen(const char *string, size_t len)
 	struct expansionitem *ei;
 
 	ei = domalloc(sizeof(*ei));
-	ei->isstring = true;
-	ei->string = dostrndup(string, len);
+	ei->itemtype = EI_STRING;
+	ei->ei_string = dostrndup(string, len);
 	return ei;
 }
 
@@ -100,8 +108,30 @@ expansionitem_create_param(unsigned param)
 	struct expansionitem *ei;
 
 	ei = domalloc(sizeof(*ei));
-	ei->isstring = false;
-	ei->param = param;
+	ei->itemtype = EI_PARAM;
+	ei->ei_param = param;
+	return ei;
+}
+
+static
+struct expansionitem *
+expansionitem_create_file(void)
+{
+	struct expansionitem *ei;
+
+	ei = domalloc(sizeof(*ei));
+	ei->itemtype = EI_FILE;
+	return ei;
+}
+
+static
+struct expansionitem *
+expansionitem_create_line(void)
+{
+	struct expansionitem *ei;
+
+	ei = domalloc(sizeof(*ei));
+	ei->itemtype = EI_LINE;
 	return ei;
 }
 
@@ -109,8 +139,14 @@ static
 void
 expansionitem_destroy(struct expansionitem *ei)
 {
-	if (ei->isstring) {
-		dostrfree(ei->string);
+	switch (ei->itemtype) {
+	    case EI_STRING:
+		dostrfree(ei->ei_string);
+		break;
+	    case EI_PARAM:
+	    case EI_FILE:
+	    case EI_LINE:
+		break;
 	}
 	dofree(ei, sizeof(*ei));
 }
@@ -120,17 +156,23 @@ bool
 expansionitem_eq(const struct expansionitem *ei1,
 		 const struct expansionitem *ei2)
 {
-	if (ei1->isstring != ei2->isstring) {
+	if (ei1->itemtype != ei2->itemtype) {
 		return false;
 	}
-	if (ei1->isstring) {
-		if (strcmp(ei1->string, ei2->string) != 0) {
+	switch (ei1->itemtype) {
+	    case EI_STRING:
+		if (strcmp(ei1->ei_string, ei2->ei_string) != 0) {
 			return false;
 		}
-	} else {
-		if (ei1->param != ei2->param) {
+		break;
+	    case EI_PARAM:
+		if (ei1->ei_param != ei2->ei_param) {
 			return false;
 		}
+		break;
+	    case EI_FILE:
+	    case EI_LINE:
+		break;
 	}
 	return true;
 }
@@ -298,7 +340,7 @@ macrotable_cleanup(void)
 
 static
 struct macro *
-macrotable_findlen(const char *name, size_t len, bool remove)
+macrotable_findlen(const char *name, size_t len, bool remove_it)
 {
 	unsigned hash;
 	struct macroarray *bucket;
@@ -319,7 +361,7 @@ macrotable_findlen(const char *name, size_t len, bool remove)
 		}
 		mlen = strlen(m->name);
 		if (len == mlen && !memcmp(name, m->name, len)) {
-			if (remove) {
+			if (remove_it) {
 				if (i < num-1) {
 					m2 = macroarray_get(bucket, num-1);
 					macroarray_set(bucket, i, m2);
@@ -335,9 +377,9 @@ macrotable_findlen(const char *name, size_t len, bool remove)
 
 static
 struct macro *
-macrotable_find(const char *name, bool remove)
+macrotable_find(const char *name, bool remove_it)
 {
-	return macrotable_findlen(name, strlen(name), remove);
+	return macrotable_findlen(name, strlen(name), remove_it);
 }
 
 static
@@ -587,6 +629,24 @@ macro_define_params(struct place *p1, const char *macro,
 }
 
 void
+macro_define_magic(struct place *p, const char *macro)
+{
+	struct macro *m;
+	struct expansionitem *ei;
+
+	m = macro_define_common_start(p, macro, p);
+	if (!strcmp(macro, "__FILE__")) {
+		ei = expansionitem_create_file();
+	}
+	else {
+		assert(!strcmp(macro, "__LINE__"));
+		ei = expansionitem_create_line();
+	}
+	expansionitemarray_add(&m->expansion, ei, NULL);
+	macro_define_common_end(m);
+}
+
+void
 macro_undef(const char *macro)
 {
 	struct macro *m;
@@ -624,7 +684,7 @@ struct expstate {
 static struct expstate mainstate;
 
 static void doexpand(struct expstate *es, struct place *p,
-		     char *buf, size_t len);
+		     const char *buf, size_t len);
 
 static
 void
@@ -705,7 +765,7 @@ expand_send_eof(struct expstate *es, struct place *p)
 
 static
 void
-expand_newarg(struct expstate *es, char *buf, size_t len)
+expand_newarg(struct expstate *es, const char *buf, size_t len)
 {
 	char *text;
 
@@ -715,7 +775,7 @@ expand_newarg(struct expstate *es, char *buf, size_t len)
 
 static
 void
-expand_appendarg(struct expstate *es, char *buf, size_t len)
+expand_appendarg(struct expstate *es, const char *buf, size_t len)
 {
 	unsigned num;
 	char *text;
@@ -742,6 +802,7 @@ expand_substitute(struct place *p, struct expstate *es)
 	char *arg;
 	char *ret;
 	unsigned numargs, numparams;
+	char numbuf[64];
 
 	numargs = stringarray_num(&es->args);
 	numparams = stringarray_num(&es->curmacro->params);
@@ -766,11 +827,20 @@ expand_substitute(struct place *p, struct expstate *es)
 	num = expansionitemarray_num(&es->curmacro->expansion);
 	for (i=0; i<num; i++) {
 		ei = expansionitemarray_get(&es->curmacro->expansion, i);
-		if (ei->isstring) {
-			len += strlen(ei->string);
-		} else {
-			arg = stringarray_get(&es->args, ei->param);
+		switch (ei->itemtype) {
+		    case EI_STRING:
+			len += strlen(ei->ei_string);
+			break;
+		    case EI_PARAM:
+			arg = stringarray_get(&es->args, ei->ei_param);
 			len += strlen(arg);
+			break;
+		    case EI_FILE:
+			len += strlen(place_getname(p)) + 2;
+			break;
+		    case EI_LINE:
+			len += snprintf(numbuf, sizeof(numbuf), "%u", p->line);
+			break;
 		}
 	}
 
@@ -778,11 +848,23 @@ expand_substitute(struct place *p, struct expstate *es)
 	*ret = '\0';
 	for (i=0; i<num; i++) {
 		ei = expansionitemarray_get(&es->curmacro->expansion, i);
-		if (ei->isstring) {
-			strlcat(ret, ei->string, len+1);
-		} else {
-			arg = stringarray_get(&es->args, ei->param);
-			strlcat(ret, arg, len+1);
+		switch (ei->itemtype) {
+		    case EI_STRING:
+			strlcat(ret, ei->ei_string, len + 1);
+			break;
+		    case EI_PARAM:
+			arg = stringarray_get(&es->args, ei->ei_param);
+			strlcat(ret, arg, len + 1);
+			break;
+		    case EI_FILE:
+			strlcat(ret, "\"", len + 1);
+			strlcat(ret, place_getname(p), len + 1);
+			strlcat(ret, "\"", len + 1);
+			break;
+		    case EI_LINE:
+			snprintf(numbuf, sizeof(numbuf), "%u", p->line);
+			strlcat(ret, numbuf, len + 1);
+			break;
 		}
 	}
 
@@ -794,6 +876,7 @@ void
 expand_domacro(struct expstate *es, struct place *p)
 {
 	struct macro *m;
+	const char *name, *val;
 	char *newbuf, *newbuf2;
 
 	if (es->curmacro == NULL) {
@@ -804,23 +887,32 @@ expand_domacro(struct expstate *es, struct place *p)
 			expand_send(es, p, "0", 1);
 			return;
 		}
-		m = macrotable_find(stringarray_get(&es->args, 0), false);
-		expand_send(es, p, (m != NULL) ? "1" : "0", 1);
+		name = stringarray_get(&es->args, 0);
+		m = macrotable_find(name, false);
+		val = (m != NULL) ? "1" : "0";
+		debuglog(p, "defined(%s): %s", name, val); 
+		expand_send(es, p, val, 1);
 		expstate_destroyargs(es);
 		return;
 	}
 
-	assert(es->curmacro->inuse == false);
-	es->curmacro->inuse = true;
+	m = es->curmacro;
+	assert(m->inuse == false);
+	m->inuse = true;
 
+	debuglog(p, "Expanding macro %s", m->name);
 	newbuf = expand_substitute(p, es);
+	debuglog(p, "Substituting for %s: %s", m->name, newbuf);
+
 	newbuf2 = macroexpand(p, newbuf, strlen(newbuf), false);
 	dostrfree(newbuf);
 	expstate_destroyargs(es);
+	debuglog(p, "Complete expansion for %s: %s", m->name, newbuf2);
+
 	doexpand(es, p, newbuf2, strlen(newbuf2));
 	dostrfree(newbuf2);
 
-	es->curmacro->inuse = false;
+	m->inuse = false;
 }
 
 /*
@@ -846,13 +938,16 @@ expand_missingargs(struct expstate *es, struct place *p, bool needspace)
 
 static
 void
-expand_got_ws(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_ws(struct expstate *es, struct place *p,
+	      const char *buf, size_t len)
 {
 	switch (es->state) {
 	    case ES_NORMAL:
 		expand_send(es, p, buf, len);
 		break;
 	    case ES_WANTLPAREN:
+		/* XXX notyet */
+		//expand_send(es, p, buf, len);
 		break;
 	    case ES_NOARG:
 		expand_newarg(es, buf, len);
@@ -866,11 +961,10 @@ expand_got_ws(struct expstate *es, struct place *p, char *buf, size_t len)
 
 static
 void
-expand_got_word(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_word(struct expstate *es, struct place *p,
+		const char *buf, size_t len)
 {
 	struct macro *m;
-	struct expansionitem *ei;
-	char *newbuf;
 
 	switch (es->state) {
 	    case ES_NORMAL:
@@ -884,15 +978,8 @@ expand_got_word(struct expstate *es, struct place *p, char *buf, size_t len)
 		if (m == NULL || m->inuse) {
 			expand_send(es, p, buf, len);
 		} else if (!m->hasparams) {
-			m->inuse = true;
-			assert(expansionitemarray_num(&m->expansion) == 1);
-			ei = expansionitemarray_get(&m->expansion, 0);
-			assert(ei->isstring);
-			newbuf = macroexpand(p, ei->string,
-					     strlen(ei->string), false);
-			doexpand(es, p, newbuf, strlen(newbuf));
-			dostrfree(newbuf);
-			m->inuse = false;
+			es->curmacro = m;
+			expand_domacro(es, p);
 		} else {
 			es->curmacro = m;
 			es->state = ES_WANTLPAREN;
@@ -923,7 +1010,8 @@ expand_got_word(struct expstate *es, struct place *p, char *buf, size_t len)
 
 static
 void
-expand_got_lparen(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_lparen(struct expstate *es, struct place *p,
+		  const char *buf, size_t len)
 {
 	switch (es->state) {
 	    case ES_NORMAL:
@@ -946,7 +1034,8 @@ expand_got_lparen(struct expstate *es, struct place *p, char *buf, size_t len)
 
 static
 void
-expand_got_rparen(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_rparen(struct expstate *es, struct place *p,
+		  const char *buf, size_t len)
 {
 	switch (es->state) {
 	    case ES_NORMAL:
@@ -981,7 +1070,8 @@ expand_got_rparen(struct expstate *es, struct place *p, char *buf, size_t len)
 
 static
 void
-expand_got_comma(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_comma(struct expstate *es, struct place *p,
+		 const char *buf, size_t len)
 {
 	switch (es->state) {
 	    case ES_NORMAL:
@@ -1009,7 +1099,8 @@ expand_got_comma(struct expstate *es, struct place *p, char *buf, size_t len)
 
 static
 void
-expand_got_other(struct expstate *es, struct place *p, char *buf, size_t len)
+expand_got_other(struct expstate *es, struct place *p,
+		 const char *buf, size_t len)
 {
 	switch (es->state) {
 	    case ES_NORMAL:
@@ -1061,7 +1152,7 @@ expand_got_eof(struct expstate *es, struct place *p)
 
 static
 void
-doexpand(struct expstate *es, struct place *p, char *buf, size_t len)
+doexpand(struct expstate *es, struct place *p, const char *buf, size_t len)
 {
 	char *s;
 	size_t x;
@@ -1150,7 +1241,7 @@ doexpand(struct expstate *es, struct place *p, char *buf, size_t len)
 }
 
 char *
-macroexpand(struct place *p, char *buf, size_t len, bool honordefined)
+macroexpand(struct place *p, const char *buf, size_t len, bool honordefined)
 {
 	struct expstate es;
 	char *ret;
@@ -1172,10 +1263,30 @@ macroexpand(struct place *p, char *buf, size_t len, bool honordefined)
 }
 
 void
-macro_sendline(struct place *p, char *buf, size_t len)
+macro_sendline(struct place *p, const char *buf, size_t len)
 {
 	doexpand(&mainstate, p, buf, len);
-	output(p, "\n", 1);
+	switch (mainstate.state) {
+	    case ES_NORMAL:
+		/*
+		 * If we were sent a blank line, don't emit a newline
+		 * for it. This matches the prior behavior of tradcpp.
+		 */
+		if (len > 0) {
+			output(p, "\n", 1);
+		}
+		break;
+	    case ES_WANTLPAREN:
+	    case ES_NOARG:
+	    case ES_HAVEARG:
+		/*
+		 * Apparently to match gcc's -traditional behavior we
+		 * need to emit a space for each newline that appears
+		 * while processing macro args.
+		 */
+		expand_got_ws(&mainstate, p, " ", 1);
+		break;
+	}
 }
 
 void

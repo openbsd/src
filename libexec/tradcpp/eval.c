@@ -642,6 +642,7 @@ wordval(struct place *p, char *word)
 			complain_fail();
 		}
 	}
+	debuglog(p, "Undefined symbol %s; substituting 0", word);
 	return 0;
 }
 
@@ -744,6 +745,7 @@ eval(struct place *p, char *expr)
 #ifdef DEBUG
 	fprintf(stderr, "eval: %s\n", expr);
 #endif
+	debuglog(p, "eval: %s", expr);
 
 	tokenarray_init(&tokens);
 	tokenize(p, expr);
