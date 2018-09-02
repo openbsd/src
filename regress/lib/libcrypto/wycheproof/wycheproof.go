@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.41 2018/09/02 17:12:01 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.42 2018/09/02 17:24:02 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1134,19 +1134,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 		return false
 	}
 
-	pubGroup := C.EC_KEY_get0_group(pubKey)
 	privGroup := C.EC_KEY_get0_group(privKey)
-
- 	ret = C.EC_GROUP_cmp(pubGroup, privGroup, nil)
- 	if ret != 0 {
- 		fmt.Printf("INFO: Test case %d (%q) - EC_GROUP_cmp() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
- 	}
- 	
-	pubPoint := C.EC_KEY_get0_public_key(pubKey)
-	ret = C.EC_POINT_is_on_curve(privGroup, pubPoint, nil)
-	if ret != 1 {
-		fmt.Printf("INFO: Test case %d (%q) - EC_POINT_is_on_curve failed: got %d want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
-	}
 
  	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
 
@@ -1154,6 +1142,8 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	if secLen == 0 {
 		secret = append(secret, 0)
 	}
+
+	pubPoint := C.EC_KEY_get0_public_key(pubKey)
 
 	ret = C.ECDH_compute_key(unsafe.Pointer(&secret[0]), C.ulong(secLen), pubPoint, privKey, nil)
 	if ret != C.int(secLen) {
