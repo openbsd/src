@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.40 2018/09/02 17:05:51 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.41 2018/09/02 17:12:01 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -159,6 +159,23 @@ type wycheproofTestGroupDSA struct {
 	SHA    string               `json:"sha"`
 	Type   string               `json:"type"`
 	Tests  []*wycheproofTestDSA `json:"tests"`
+}
+
+type wycheproofTestECDH struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Public  string   `json:"public"`
+	Private string   `json:"private"`
+	Shared  string   `json:"shared"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupECDH struct {
+	Curve    string                `json:"curve"`
+	Encoding string                `json:"encoding"`
+	Type     string                `json:"type"`
+	Tests    []*wycheproofTestECDH `json:"tests"`
 }
 
 type wycheproofECDSAKey struct {
@@ -1058,6 +1075,135 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	return success
 }
 
+func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
+	privKey := C.EC_KEY_new_by_curve_name(C.int(nid))
+	if privKey == nil {
+		log.Fatalf("EC_KEY_new_by_curve_name failed")
+	}
+	defer C.EC_KEY_free(privKey)
+
+	var bnPriv *C.BIGNUM
+	wPriv := C.CString(wt.Private)
+	if C.BN_hex2bn(&bnPriv, wPriv) == 0 {
+		log.Fatal("Failed to decode wPriv")
+	}
+	C.free(unsafe.Pointer(wPriv))
+	defer C.BN_free(bnPriv)
+
+	ret := C.EC_KEY_set_private_key(privKey, bnPriv)
+	if ret != 1 {
+		fmt.Printf("FAIL: Test case %d (%q) - EC_KEY_set_private_key failed: got %d want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+		return false
+	}
+
+	pub, err := hex.DecodeString(wt.Public)
+	if err != nil {
+		log.Fatalf("Failed to decode public key: %v", err)
+	}
+
+	pubLen := len(pub)
+	if pubLen == 0 {
+		pub = append(pub, 0)
+	}
+
+	Cpub := (*C.uchar)(C.malloc(C.ulong(pubLen)))
+	if Cpub == nil {
+		log.Fatal("malloc failed")
+	}
+	C.memcpy(unsafe.Pointer(Cpub), unsafe.Pointer(&pub[0]), C.ulong(pubLen))
+
+	p := (*C.uchar)(Cpub)
+	var pubKey *C.EC_KEY
+	if (doECpoint) {
+		pubKey = C.EC_KEY_new_by_curve_name(C.int(nid))
+		if pubKey == nil {
+			log.Fatal("EC_KEY_new_by_curve_name failed")
+		}
+		pubKey = C.o2i_ECPublicKey(&pubKey, (**C.uchar)(&p), C.long(pubLen))
+	} else {
+		pubKey = C.d2i_EC_PUBKEY(nil, (**C.uchar)(&p), C.long(pubLen))
+	}
+	defer C.EC_KEY_free(pubKey)
+	C.free(unsafe.Pointer(Cpub))
+
+	if pubKey == nil {
+		if wt.Result == "invalid" || wt.Result == "acceptable" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - ASN decoding failed: want %v\n", wt.TCID, wt.Comment, wt.Result)
+		return false
+	}
+
+	pubGroup := C.EC_KEY_get0_group(pubKey)
+	privGroup := C.EC_KEY_get0_group(privKey)
+
+ 	ret = C.EC_GROUP_cmp(pubGroup, privGroup, nil)
+ 	if ret != 0 {
+ 		fmt.Printf("INFO: Test case %d (%q) - EC_GROUP_cmp() = %d, want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+ 	}
+ 	
+	pubPoint := C.EC_KEY_get0_public_key(pubKey)
+	ret = C.EC_POINT_is_on_curve(privGroup, pubPoint, nil)
+	if ret != 1 {
+		fmt.Printf("INFO: Test case %d (%q) - EC_POINT_is_on_curve failed: got %d want %v\n", wt.TCID, wt.Comment, ret, wt.Result)
+	}
+
+ 	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
+
+	secret := make([]byte, secLen)
+	if secLen == 0 {
+		secret = append(secret, 0)
+	}
+
+	ret = C.ECDH_compute_key(unsafe.Pointer(&secret[0]), C.ulong(secLen), pubPoint, privKey, nil)
+	if ret != C.int(secLen) {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) - ECDH_compute_key() = %d, want %d, result: %v\n", wt.TCID, wt.Comment, ret, int(secLen), wt.Result)
+		return false
+	}
+
+	shared, err := hex.DecodeString(wt.Shared)
+	if err != nil{
+		log.Fatalf("Failed to decode shared secret: %v", err)
+	}
+
+	success := true
+	if !bytes.Equal(shared, secret) {
+		fmt.Printf("FAIL: Test case %d (%q) - expected and computed shared secret do not match, want %v\n", wt.TCID, wt.Comment, wt.Result)
+		success = false
+	}
+	return success
+}
+
+func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
+	// No secp256r1 support.
+	if wtg.Curve == "secp256r1" {
+		return true
+	}
+
+	doECpoint := false
+	if wtg.Encoding == "ecpoint" {
+		doECpoint = true
+	}
+
+	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
+
+	nid, err := nidFromString(wtg.Curve)
+	if err != nil {
+		log.Fatalf("Failed to get nid for curve: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runECDHTest(nid, doECpoint, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -1386,6 +1532,8 @@ func runTestVectors(path string) bool {
 		wtg = &wycheproofTestGroupChaCha20Poly1305{}
 	case "DSA":
 		wtg = &wycheproofTestGroupDSA{}
+	case "ECDH":
+		wtg = &wycheproofTestGroupECDH{}
 	case "ECDSA":
 		wtg = &wycheproofTestGroupECDSA{}
 	case "RSASSA-PSS":
@@ -1428,6 +1576,10 @@ func runTestVectors(path string) bool {
 			if !runDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupDSA)) {
 				success = false
 			}
+		case "ECDH":
+			if !runECDHTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDH)) {
+				success = false
+			}
 		case "ECDSA":
 			if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
 				success = false
@@ -1466,6 +1618,7 @@ func main() {
 		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
+		{"ECDH", "ecdh_[^w]*test.json"}, // Skip ecdh_webcrypto_test.json for now.
 		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
 		{"RSA", "rsa_*test.json"},
 		{"X25519", "x25519_*test.json"},
