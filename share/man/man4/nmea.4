@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.25 2015/01/15 00:48:10 deraadt Exp $
+.\"	$OpenBSD: nmea.4,v 1.26 2018/09/02 08:14:25 landry Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2015 $
+.Dd $Mdocdate: September 2 2018 $
 .Dt NMEA 4
 .Os
 .Sh NAME
@@ -41,21 +41,34 @@ information and the local time), and position (calculated
 latitude and longitude in degrees) can be accessed through the
 .Xr sysctl 8
 interface.
-.Sh NMEA SENTENCES
+.Pp
 The
 .Nm
-line discipline decodes the following NMEA 0183 sentences:
-.Bl -tag -width "GPRMCXX"
-.It GPRMC
-Recommended Minimum Specific GPS/TRANSIT Data.
+line discipline decodes NMEA 0183
+Recommended Minimum Specific GPS/TRANSIT Data sentences.
 The time and date information and position are extracted.
 The warning indication is used to provide the sensor status (see below).
-If the attached device sends the GPRMC message in the 13-field format,
+If the attached device sends the RMC message in the 13-field format,
 the operation mode of the GPS device is reported in the sensor description.
 The sensor timestamp is copied from the tty timestamp if a device with PPS
 is being used and tty timestamping has been turned on.
 Otherwise the sensor timestamp is taken when the initial `$' character of
 a message block is received from the NMEA device.
+.Pp
+RMC messages source are recognised by the first two characters of the
+sentence according to the following prefixes:
+.Pp
+.Bl -tag -width "XXXXX" -offset indent -compact
+.It GP
+GPS
+.It GA
+Galileo
+.It BD
+BeiDou
+.It GL
+Glonass
+.It GN
+Generic GNSS
 .El
 .Sh SENSOR STATES
 The quality of the timedelta is reported as the sensor status:
