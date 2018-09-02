@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.58 2018/04/08 18:57:39 guenther Exp $
+.\"	$OpenBSD: syslogd.8,v 1.59 2018/09/02 14:32:12 bluhm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
 .\"
-.Dd $Mdocdate: April 8 2018 $
+.Dd $Mdocdate: September 2 2018 $
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -159,15 +159,18 @@ syntax.
 Create a UDP socket for receiving messages and bind it to the
 specified address.
 This can be used, for example, with a pf divert-to rule to receive
-packets when syslogd is bound to localhost.
+packets when
+.Nm
+is bound to localhost.
 A port number may be specified using the
 .Ar host : Ns Ar port
 syntax.
 .It Fl u
 Select the historical
 .Dq insecure
-mode, in which syslogd will
-accept input from the UDP port.
+mode, in which
+.Nm
+will accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
 .It Fl V
@@ -185,18 +188,18 @@ and
 .Fl U
 can be given more than once to specify multiple input sources.
 .Pp
+When starting up,
 .Nm
 reads its configuration file,
 .Xr syslog.conf 5 ,
-when it starts up and whenever it
-receives a
+and opens the configured logfiles and TCP and TLS connections.
+The logfiles already have to exist with the correct permissions.
+When receiving a
 .Dv SIGHUP
-signal.
-It creates the file
-.Pa /var/run/syslog.pid
-and stores its process ID there.
-The PID can be used to kill or reconfigure
-.Nm .
+signal, it closes all open logfiles and outgoing TCP and TLS
+connections and re-runs this initialization sequence.
+Sending this signal is required both after editing the configuration
+file and after log rotation.
 .Pp
 .Nm
 opens a UDP socket, as specified
