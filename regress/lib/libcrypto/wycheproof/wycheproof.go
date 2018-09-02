@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.45 2018/09/02 20:09:29 bluhm Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.46 2018/09/02 20:29:01 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -913,13 +913,13 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	}
 
 	var ctx C.EVP_AEAD_CTX
-	if C.EVP_AEAD_CTX_init((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
+	if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
 		log.Fatal("Failed to initialize AEAD context")
 	}
-	defer C.EVP_AEAD_CTX_cleanup((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)))
+	defer C.EVP_AEAD_CTX_cleanup(&ctx)
 
-	openSuccess := checkChaCha20Poly1305Open((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
-	sealSuccess := checkChaCha20Poly1305Seal((*C.EVP_AEAD_CTX)(unsafe.Pointer(&ctx)), iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	openSuccess := checkChaCha20Poly1305Open(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	sealSuccess := checkChaCha20Poly1305Seal(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
 	return openSuccess && sealSuccess
 }
