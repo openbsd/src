@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.39 2018/09/01 05:57:23 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.40 2018/09/02 17:05:51 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -458,8 +458,10 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 	var ctrlSetTag C.int
 	var ctrlGetTag C.int
 
+	doCCM := false
 	switch algorithm {
 	case "AES-CCM":
+		doCCM = true
 		ctrlSetIVLen = C.EVP_CTRL_CCM_SET_IVLEN
 		ctrlSetTag = C.EVP_CTRL_CCM_SET_TAG
 		ctrlGetTag = C.EVP_CTRL_CCM_GET_TAG
@@ -493,7 +495,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 		return false
 	}
 
-	if doEncrypt == 0 || algorithm == "AES-CCM" {
+	if doEncrypt == 0 || doCCM {
 		ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlSetTag, C.int(tagLen), setTag)
 		if ret != 1 {
 			if wt.Comment == "Invalid tag size" {
@@ -511,7 +513,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 	}
 
 	var cipherOutLen C.int
-	if algorithm == "AES-CCM" {
+	if doCCM {
 		ret = C.EVP_CipherUpdate(ctx, nil, &cipherOutLen, nil, C.int(inLen))
 		if ret != 1 {
 			fmt.Printf("FAIL: Test case %d (%q) [%v] - setting input length to %d failed. got %d, want %v\n", wt.TCID, wt.Comment, action, inLen, ret, wt.Result)
