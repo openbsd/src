@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.43 2018/09/02 17:28:01 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.44 2018/09/02 17:29:17 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1600,7 +1600,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	// ECDH
 	tests := []struct {
 		name    string
 		pattern string
