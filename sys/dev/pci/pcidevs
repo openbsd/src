@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1859 2018/08/25 17:38:28 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1860 2018/09/03 19:51:48 jcs Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7344,6 +7344,7 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM
 product TOSHIBA	R4X00		0x102f	R4x00 PCI
 
 /* Toshiba(2) products */
+product TOSHIBA2 BG3_NVME	0x0113	BG3 NVMe
 product TOSHIBA2 NVME		0x0115	NVMe
 product TOSHIBA2 THB		0x0601	PCI
 product TOSHIBA2 ISA		0x0602	ISA
