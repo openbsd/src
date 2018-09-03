@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1859 2018/08/25 17:38:28 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1860 2018/09/03 19:51:48 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7349,6 +7349,7 @@
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 PCI */
 
 /* Toshiba(2) products */
+#define	PCI_PRODUCT_TOSHIBA2_BG3_NVME	0x0113		/* BG3 NVMe */
 #define	PCI_PRODUCT_TOSHIBA2_NVME	0x0115		/* NVMe */
 #define	PCI_PRODUCT_TOSHIBA2_THB	0x0601		/* PCI */
 #define	PCI_PRODUCT_TOSHIBA2_ISA	0x0602		/* ISA */
