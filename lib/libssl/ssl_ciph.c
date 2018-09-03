@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.100 2018/09/03 17:41:13 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.101 2018/09/03 17:45:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,12 +158,10 @@
 #define SSL_ENC_CAMELLIA128_IDX	5
 #define SSL_ENC_CAMELLIA256_IDX	6
 #define SSL_ENC_GOST89_IDX	7
-#define SSL_ENC_AES128GCM_IDX	8
-#define SSL_ENC_AES256GCM_IDX	9
-#define SSL_ENC_NUM_IDX		10
+#define SSL_ENC_NUM_IDX		8
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
 #define SSL_MD_MD5_IDX	0
@@ -465,11 +463,6 @@ ssl_load_ciphers(void)
 	ssl_cipher_methods[SSL_ENC_GOST89_IDX] =
 	    EVP_get_cipherbyname(SN_gost89_cnt);
 
-	ssl_cipher_methods[SSL_ENC_AES128GCM_IDX] =
-	    EVP_get_cipherbyname(SN_aes_128_gcm);
-	ssl_cipher_methods[SSL_ENC_AES256GCM_IDX] =
-	    EVP_get_cipherbyname(SN_aes_256_gcm);
-
 	ssl_digest_methods[SSL_MD_MD5_IDX] =
 	    EVP_get_digestbyname(SN_md5);
 	ssl_mac_secret_size[SSL_MD_MD5_IDX] =
@@ -552,12 +545,6 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		break;
 	case SSL_eGOST2814789CNT:
 		i = SSL_ENC_GOST89_IDX;
-		break;
-	case SSL_AES128GCM:
-		i = SSL_ENC_AES128GCM_IDX;
-		break;
-	case SSL_AES256GCM:
-		i = SSL_ENC_AES256GCM_IDX;
 		break;
 	default:
 		i = -1;
@@ -659,14 +646,12 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
 		return 0;
 
 	switch (c->algorithm_enc) {
-#ifndef OPENSSL_NO_AES
 	case SSL_AES128GCM:
 		*aead = EVP_aead_aes_128_gcm();
 		return 1;
 	case SSL_AES256GCM:
 		*aead = EVP_aead_aes_256_gcm();
 		return 1;
-#endif
 	case SSL_CHACHA20POLY1305:
 		*aead = EVP_aead_chacha20_poly1305();
 		return 1;
@@ -771,8 +756,6 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	*enc |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES128 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES256_IDX] == NULL) ? SSL_AES256 : 0;
-	*enc |= (ssl_cipher_methods[SSL_ENC_AES128GCM_IDX] == NULL) ? SSL_AES128GCM : 0;
-	*enc |= (ssl_cipher_methods[SSL_ENC_AES256GCM_IDX] == NULL) ? SSL_AES256GCM : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA128 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] == NULL) ? SSL_CAMELLIA256 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_GOST89_IDX] == NULL) ? SSL_eGOST2814789CNT : 0;
