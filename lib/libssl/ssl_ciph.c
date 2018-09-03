@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.101 2018/09/03 17:45:24 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.102 2018/09/03 18:00:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -603,30 +603,12 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 			*mac_secret_size = ssl_mac_secret_size[i];
 	}
 
-	if ((*enc != NULL) &&
-	    (*md != NULL || (EVP_CIPHER_flags(*enc)&EVP_CIPH_FLAG_AEAD_CIPHER)) &&
-	    (!mac_pkey_type || *mac_pkey_type != NID_undef)) {
-		const EVP_CIPHER *evp;
+	if (*enc != NULL &&
+	    (*md != NULL || (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER)) &&
+	    (!mac_pkey_type || *mac_pkey_type != NID_undef))
+		return 1;
 
-		if (s->ssl_version >> 8 != TLS1_VERSION_MAJOR ||
-		    s->ssl_version < TLS1_VERSION)
-			return 1;
-
-		if (c->algorithm_enc == SSL_RC4 &&
-		    c->algorithm_mac == SSL_MD5 &&
-		    (evp = EVP_get_cipherbyname("RC4-HMAC-MD5")))
-			*enc = evp, *md = NULL;
-		else if (c->algorithm_enc == SSL_AES128 &&
-		    c->algorithm_mac == SSL_SHA1 &&
-		    (evp = EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
-			*enc = evp, *md = NULL;
-		else if (c->algorithm_enc == SSL_AES256 &&
-		    c->algorithm_mac == SSL_SHA1 &&
-		    (evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
-			*enc = evp, *md = NULL;
-		return (1);
-	} else
-		return (0);
+	return 0;
 }
 
 /*
