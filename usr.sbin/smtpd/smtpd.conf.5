@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.199 2018/09/01 19:56:28 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.200 2018/09/03 11:30:14 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 1 2018 $
+.Dd $Mdocdate: September 3 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -228,7 +228,38 @@ to advertise during the HELO phase.
 .It Cm host Ar relay-url
 Do not perform MX lookups but relay messages to the relay host described by
 .Ar relay-url .
-If the URL uses TLS, the certificate will be verified by default.
+The format for 
+.Ar relay-url
+is
+.Sm off
+.Op Ar proto No :// Op Ar label No @
+.Ar host Op : Ar port .
+.Sm on
+The following protocols are available:
+.Pp
+.Bl -tag -width "smtp+notls" -compact
+.It smtp
+Normal SMTP session with opportunistic STARTTLS.
+.It smtp+tls
+Normal SMTP session with mandatory STARTTLS.
+.It smtp+notls
+Plain text SMTP session without TLS.
+.It lmtp
+LMTP session.
+.It smtps
+SMTP session with forced TLS on connection.
+.El
+.Pp
+If not specified, the
+.Dq smtp
+protocol is used.
+.Pp
+Specifying an auth label toggles authentication.
+An auth table must also be defined for this action.
+The protocol must explicitely require TLS.
+.Pp
+If TLS is explicitely required, the server certificate
+will be verified by default.
 .It Cm tls no-verify
 Do not require a valid certificate for the specified host.
 .It Cm auth Pf < Ar table Ns >
@@ -774,7 +805,7 @@ table secrets file:/etc/mail/secrets
 listen on lo0
 
 action "local" mbox alias <aliases>
-action "relay" relay host tls+auth://label@smtp.example.com \e
+action "relay" relay host smtp+tls://label@smtp.example.com \e
 	auth <secrets>
 
 match for local action "local"
