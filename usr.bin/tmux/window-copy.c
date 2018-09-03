@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.197 2018/08/29 18:54:23 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.198 2018/09/03 08:47:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2082,7 +2082,7 @@ window_copy_cursor_up(struct window_pane *wp, int scroll_only)
 		}
 	}
 
-	if (data->screen.sel != NULL || !data->rectflag) {
+	if (data->screen.sel == NULL || !data->rectflag) {
 		py = screen_hsize(data->backing) + data->cy - data->oy;
 		px = window_copy_find_length(wp, py);
 		if ((data->cx >= data->lastsx && data->cx != px) ||
