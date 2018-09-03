@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.105 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.106 2018/09/03 11:48:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -487,7 +487,7 @@ mta_connect(struct mta_session *s)
 	struct sockaddr_storage	 ss;
 	struct sockaddr		*sa;
 	int			 portno;
-	const char		*schema = "smtp+tls://";
+	const char		*schema;
 
 	if (s->helo == NULL) {
 		if (s->relay->helotable && s->route->src->sa) {
@@ -528,7 +528,7 @@ mta_connect(struct mta_session *s)
 			break;
 		}
 		else if (s->flags & MTA_DOWNGRADE_PLAIN) {
-			/* smtp+tls, with tls failure */
+			/* smtp, with tls failure */
 			break;
 		}
 	default:
@@ -551,15 +551,15 @@ mta_connect(struct mta_session *s)
 
 	s->attempt += 1;
 	if (s->use_smtp_tls)
-		schema = "smtp+tls://";
+		schema = "smtp://";
 	else if (s->use_starttls)
-		schema = "tls://";
+		schema = "smtp+tls://";
 	else if (s->use_smtps)
 		schema = "smtps://";
 	else if (s->flags & MTA_LMTP)
 		schema = "lmtp://";
 	else
-		schema = "smtp://";
+		schema = "smtp+notls://";
 
 	log_info("%016"PRIx64" mta "
 	    "connecting address=%s%s:%d host=%s",
