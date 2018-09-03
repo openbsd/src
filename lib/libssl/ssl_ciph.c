@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.99 2018/04/25 07:10:39 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.100 2018/09/03 17:41:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,23 +150,20 @@
 
 #include "ssl_locl.h"
 
-#define SSL_ENC_DES_IDX		0
-#define SSL_ENC_3DES_IDX	1
-#define SSL_ENC_RC4_IDX		2
-#define SSL_ENC_IDEA_IDX	3
-#define SSL_ENC_NULL_IDX	4
-#define SSL_ENC_AES128_IDX	5
-#define SSL_ENC_AES256_IDX	6
-#define SSL_ENC_CAMELLIA128_IDX	7
-#define SSL_ENC_CAMELLIA256_IDX	8
-#define SSL_ENC_GOST89_IDX	9
-#define SSL_ENC_AES128GCM_IDX	10
-#define SSL_ENC_AES256GCM_IDX	11
-#define SSL_ENC_NUM_IDX		12
-
+#define SSL_ENC_3DES_IDX	0
+#define SSL_ENC_RC4_IDX		1
+#define SSL_ENC_NULL_IDX	2
+#define SSL_ENC_AES128_IDX	3
+#define SSL_ENC_AES256_IDX	4
+#define SSL_ENC_CAMELLIA128_IDX	5
+#define SSL_ENC_CAMELLIA256_IDX	6
+#define SSL_ENC_GOST89_IDX	7
+#define SSL_ENC_AES128GCM_IDX	8
+#define SSL_ENC_AES256GCM_IDX	9
+#define SSL_ENC_NUM_IDX		10
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 #define SSL_MD_MD5_IDX	0
@@ -339,20 +336,12 @@ static const SSL_CIPHER cipher_aliases[] = {
 
 	/* symmetric encryption aliases */
 	{
-		.name = SSL_TXT_DES,
-		.algorithm_enc = SSL_DES,
-	},
-	{
 		.name = SSL_TXT_3DES,
 		.algorithm_enc = SSL_3DES,
 	},
 	{
 		.name = SSL_TXT_RC4,
 		.algorithm_enc = SSL_RC4,
-	},
-	{
-		.name = SSL_TXT_IDEA,
-		.algorithm_enc = SSL_IDEA,
 	},
 	{
 		.name = SSL_TXT_eNULL,
@@ -461,13 +450,10 @@ static const SSL_CIPHER cipher_aliases[] = {
 void
 ssl_load_ciphers(void)
 {
-	ssl_cipher_methods[SSL_ENC_DES_IDX] =
-	    EVP_get_cipherbyname(SN_des_cbc);
 	ssl_cipher_methods[SSL_ENC_3DES_IDX] =
 	    EVP_get_cipherbyname(SN_des_ede3_cbc);
 	ssl_cipher_methods[SSL_ENC_RC4_IDX] =
 	    EVP_get_cipherbyname(SN_rc4);
-	ssl_cipher_methods[SSL_ENC_IDEA_IDX] = NULL;
 	ssl_cipher_methods[SSL_ENC_AES128_IDX] =
 	    EVP_get_cipherbyname(SN_aes_128_cbc);
 	ssl_cipher_methods[SSL_ENC_AES256_IDX] =
@@ -543,17 +529,11 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		return (0);
 
 	switch (c->algorithm_enc) {
-	case SSL_DES:
-		i = SSL_ENC_DES_IDX;
-		break;
 	case SSL_3DES:
 		i = SSL_ENC_3DES_IDX;
 		break;
 	case SSL_RC4:
 		i = SSL_ENC_RC4_IDX;
-		break;
-	case SSL_IDEA:
-		i = SSL_ENC_IDEA_IDX;
 		break;
 	case SSL_eNULL:
 		i = SSL_ENC_NULL_IDX;
@@ -787,10 +767,8 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	*enc |= SSL_eNULL;
 #endif
 
-	*enc |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 : 0;
-	*enc |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES128 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES256_IDX] == NULL) ? SSL_AES256 : 0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES128GCM_IDX] == NULL) ? SSL_AES128GCM : 0;
@@ -1585,17 +1563,11 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	}
 
 	switch (alg_enc) {
-	case SSL_DES:
-		enc = "DES(56)";
-		break;
 	case SSL_3DES:
 		enc = "3DES(168)";
 		break;
 	case SSL_RC4:
 		enc = alg2 & SSL2_CF_8_BYTE_ENC ? "RC4(64)" : "RC4(128)";
-		break;
-	case SSL_IDEA:
-		enc = "IDEA(128)";
 		break;
 	case SSL_eNULL:
 		enc = "None";
