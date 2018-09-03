@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.72 2018/03/17 13:35:12 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.73 2018/09/03 05:37:32 miko Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -102,7 +102,6 @@ void envy_freem(void *, void *, int);
 int envy_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
 int envy_round_blocksize(void *, int);
-size_t envy_round_buffersize(void *, int, size_t);
 int envy_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 int envy_trigger_input(void *, void *, void *, int,
@@ -196,7 +195,7 @@ struct audio_hw_if envy_hw_if = {
 	envy_query_devinfo,	/* query_devinfo */
 	envy_allocm,		/* malloc */
 	envy_freem,		/* free */
-	envy_round_buffersize,	/* round_buffersize */
+	NULL,			/* round_buffersize */
 	envy_get_props,		/* get_props */
 	envy_trigger_output,	/* trigger_output */
 	envy_trigger_input	/* trigger_input */
@@ -1885,12 +1884,6 @@ int
 envy_round_blocksize(void *self, int blksz)
 {
 	return (blksz + 0x1f) & ~0x1f;
-}
-
-size_t
-envy_round_buffersize(void *self, int dir, size_t bufsz)
-{
-	return bufsz;
 }
 
 #ifdef ENVY_DEBUG
