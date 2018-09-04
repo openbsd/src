@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.107 2018/09/04 10:08:22 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.108 2018/09/04 17:19:00 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -80,7 +80,6 @@ enum mta_state {
 #define MTA_FORCE_TLS     	0x0004
 #define MTA_FORCE_PLAIN		0x0008
 #define MTA_WANT_SECURE		0x0010
-#define MTA_USE_AUTH		0x0020
 #define MTA_DOWNGRADE_PLAIN    	0x0080
 
 #define MTA_TLS			0x0100
@@ -198,8 +197,6 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 	s->relay = relay;
 	s->route = route;
 
-	if (relay->flags & RELAY_SSL && relay->flags & RELAY_AUTH)
-		s->flags |= MTA_USE_AUTH;
 	if (relay->flags & RELAY_LMTP)
 		s->flags |= MTA_LMTP;
 	switch (relay->flags & (RELAY_SSL|RELAY_TLS_OPTIONAL)) {
@@ -899,7 +896,7 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_EHLO:
 		if (line[0] != '2') {
 			/* rejected at ehlo state */
-			if ((s->flags & MTA_USE_AUTH) ||
+			if ((s->relay->flags & RELAY_AUTH) ||
 			    (s->flags & MTA_WANT_SECURE)) {
 				mta_error(s, "EHLO rejected: %s", line);
 				s->flags |= MTA_FREE;
