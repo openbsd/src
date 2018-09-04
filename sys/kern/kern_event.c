@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.98 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.99 2018/09/04 02:38:25 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -694,8 +694,7 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	const struct timespec *tsp, struct proc *p, int *retval)
 {
 	struct kevent *kevp;
-	struct timespec ats;
-	struct timeval atv, rtv, ttv;
+	struct timespec ats, rts, tts;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
 	struct kevent kev[KQ_NEVENTS];
@@ -706,39 +705,36 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 
 	if (tsp != NULL) {
 		ats = *tsp;
-		if (timespecfix(&ats)) {
-			error = EINVAL;
-			goto done;
-		}
-		TIMESPEC_TO_TIMEVAL(&atv, &ats);
-		if (atv.tv_sec == 0 && atv.tv_usec == 0) {
+		if (!timespecisset(&ats)) {
 			/* No timeout, just poll */
 			timeout = -1;
 			goto start;
 		}
-		itimerround(&atv);
+		if (timespecfix(&ats)) {
+			error = EINVAL;
+			goto done;
+		}
 
-		timeout = atv.tv_sec > 24 * 60 * 60 ?
-		    24 * 60 * 60 * hz : tvtohz(&atv);
+		timeout = ats.tv_sec > 24 * 60 * 60 ?
+		    24 * 60 * 60 * hz : tstohz(&ats);
 
-		getmicrouptime(&rtv);
-		timeradd(&atv, &rtv, &atv);
+		getnanouptime(&rts);
+		timespecadd(&ats, &rts, &ats);
 	} else {
-		atv.tv_sec = 0;
-		atv.tv_usec = 0;
+		timespecclear(&ats);
 		timeout = 0;
 	}
 	goto start;
 
 retry:
-	if (atv.tv_sec || atv.tv_usec) {
-		getmicrouptime(&rtv);
-		if (timercmp(&rtv, &atv, >=))
+	if (timespecisset(&ats)) {
+		getnanouptime(&rts);
+		if (timespeccmp(&rts, &ats, >=))
 			goto done;
-		ttv = atv;
-		timersub(&ttv, &rtv, &ttv);
-		timeout = ttv.tv_sec > 24 * 60 * 60 ?
-		    24 * 60 * 60 * hz : tvtohz(&ttv);
+		tts = ats;
+		timespecsub(&tts, &rts, &tts);
+		timeout = tts.tv_sec > 24 * 60 * 60 ?
+		    24 * 60 * 60 * hz : tstohz(&tts);
 	}
 
 start:
