@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.70 2018/08/02 12:46:02 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.71 2018/09/04 10:48:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -353,10 +353,9 @@ host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 int
 host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
-	struct in_addr		 ina;
+	struct in_addr		 ina = { 0 };
 	int			 bits = 32;
 
-	bzero(&ina, sizeof(struct in_addr));
 	if (strrchr(s, '/') != NULL) {
 		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
 			return (0);
