@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.302 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.303 2018/09/04 13:04:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,6 +46,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -336,7 +337,9 @@ parent_sig_handler(int sig, short event, void *p)
 	case SIGCHLD:
 		do {
 			int len;
-
+			enum mda_resp_status mda_status;
+			int mda_sysexit;
+			
 			pid = waitpid(-1, &status, WNOHANG);
 			if (pid <= 0)
 				continue;
@@ -346,13 +349,24 @@ parent_sig_handler(int sig, short event, void *p)
 				fail = 1;
 				len = asprintf(&cause, "terminated; signal %d",
 				    WTERMSIG(status));
+				mda_status = MDA_TEMPFAIL;
+				mda_sysexit = 0;
 			} else if (WIFEXITED(status)) {
 				if (WEXITSTATUS(status) != 0) {
 					fail = 1;
 					len = asprintf(&cause,
 					    "exited abnormally");
-				} else
+					mda_sysexit = WEXITSTATUS(status);
+					if (mda_sysexit == EX_OSERR ||
+					    mda_sysexit == EX_TEMPFAIL)
+						mda_status = MDA_TEMPFAIL;
+					else
+						mda_status = MDA_PERMFAIL;
+				} else {
 					len = asprintf(&cause, "exited okay");
+					mda_status = MDA_OK;
+					mda_sysexit = 0;
+				}
 			} else
 				/* WIFSTOPPED or WIFCONTINUED */
 				continue;
@@ -395,12 +409,15 @@ parent_sig_handler(int sig, short event, void *p)
 				log_debug("debug: smtpd: mda process done "
 				    "for session %016"PRIx64 ": %s",
 				    child->mda_id, cause);
+
 				m_create(p_pony, IMSG_MDA_DONE, 0, 0,
 				    child->mda_out);
 				m_add_id(p_pony, child->mda_id);
+				m_add_int(p_pony, mda_status);
+				m_add_int(p_pony, mda_sysexit);
 				m_add_string(p_pony, cause);
 				m_close(p_pony);
-				/* free(cause); */
+
 				break;
 
 			case CHILD_ENQUEUE_OFFLINE:
@@ -1238,6 +1255,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 			    dsp->u.local.user);
 			m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 			m_add_id(p_pony, id);
+			m_add_int(p_pony, MDA_PERMFAIL);
+			m_add_int(p_pony, EX_NOUSER);
 			m_add_string(p_pony, ebuf);
 			m_close(p_pony);
 			return;
@@ -1266,6 +1285,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		    deliver->userinfo.username);
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
+		m_add_int(p_pony, MDA_PERMFAIL);
+		m_add_int(p_pony, EX_NOPERM);
 		m_add_string(p_pony, ebuf);
 		m_close(p_pony);
 		return;
@@ -1275,6 +1296,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		(void)snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
+		m_add_int(p_pony, MDA_TEMPFAIL);
+		m_add_int(p_pony, EX_OSERR);
 		m_add_string(p_pony, ebuf);
 		m_close(p_pony);
 		return;
@@ -1287,6 +1310,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		(void)snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
+		m_add_int(p_pony, MDA_TEMPFAIL);
+		m_add_int(p_pony, EX_OSERR);
 		m_add_string(p_pony, ebuf);
 		m_close(p_pony);
 		close(pipefd[0]);
@@ -1300,6 +1325,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		(void)snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
+		m_add_int(p_pony, MDA_TEMPFAIL);
+		m_add_int(p_pony, EX_OSERR);
 		m_add_string(p_pony, ebuf);
 		m_close(p_pony);
 		close(pipefd[0]);

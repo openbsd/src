@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.557 2018/08/31 07:28:27 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.558 2018/09/04 13:04:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -979,6 +979,12 @@ enum lka_resp_status {
 enum ca_resp_status {
 	CA_OK,
 	CA_FAIL
+};
+
+enum mda_resp_status {
+	MDA_OK,
+	MDA_TEMPFAIL,
+	MDA_PERMFAIL
 };
 
 struct ca_cert_req_msg {
