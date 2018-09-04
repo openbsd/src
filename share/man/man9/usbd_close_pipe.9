@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_close_pipe.9,v 1.1 2015/05/04 10:12:34 mpi Exp $
+.\" $OpenBSD: usbd_close_pipe.9,v 1.2 2018/09/04 12:46:32 mpi Exp $
 .\"
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2015 $
+.Dd $Mdocdate: September 4 2018 $
 .Dt USBD_CLOSE_PIPE 9
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .In dev/usb/usbdi.h
 .Ft usbd_status
 .Fn usbd_close_pipe "struct usbd_pipe *pipe"
-.Ft usbd_status
+.Ft void
 .Fn usbd_abort_pipe "struct usbd_pipe *pipe"
 .Sh DESCRIPTION
 The
