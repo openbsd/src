@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.106 2018/09/03 11:48:27 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.107 2018/09/04 10:08:22 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -81,10 +81,7 @@ enum mta_state {
 #define MTA_FORCE_PLAIN		0x0008
 #define MTA_WANT_SECURE		0x0010
 #define MTA_USE_AUTH		0x0020
-#define MTA_USE_CERT		0x0040
 #define MTA_DOWNGRADE_PLAIN    	0x0080
-
-#define MTA_TLS_TRIED		0x0080
 
 #define MTA_TLS			0x0100
 #define MTA_VERIFIED   		0x0200
@@ -203,8 +200,6 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 
 	if (relay->flags & RELAY_SSL && relay->flags & RELAY_AUTH)
 		s->flags |= MTA_USE_AUTH;
-	if (relay->pki_name)
-		s->flags |= MTA_USE_CERT;
 	if (relay->flags & RELAY_LMTP)
 		s->flags |= MTA_LMTP;
 	switch (relay->flags & (RELAY_SSL|RELAY_TLS_OPTIONAL)) {
