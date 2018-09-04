@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2018/08/29 11:43:15 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.32 2018/09/04 12:00:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -729,6 +729,15 @@ prefixlen2mask(u_int8_t prefixlen)
 		return (0);
 
 	return (0xffffffff << (32 - prefixlen));
+}
+
+void
+inet4applymask(struct in_addr *dest, const struct in_addr *src, int prefixlen)
+{
+	struct in_addr mask;
+
+	mask.s_addr = htonl(prefixlen2mask(prefixlen));
+	dest->s_addr = src->s_addr & mask.s_addr;
 }
 
 void

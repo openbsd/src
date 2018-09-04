@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.33 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.34 2018/09/04 12:00:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -101,7 +101,6 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 	static struct pt_entry4		pte4;
 	static struct pt_entry6		pte6;
 	static struct pt_entry_vpn4	pte_vpn4;
-	in_addr_t			addr_hbo;
 
 	switch (prefix->aid) {
 	case AID_INET:
@@ -109,9 +108,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
-		addr_hbo = ntohl(prefix->v4.s_addr);
-		pte4.prefix4.s_addr = htonl(addr_hbo &
-		    prefixlen2mask(prefixlen));
+		inet4applymask(&pte4.prefix4, &prefix->v4, prefixlen);
 		pte4.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte4);
 	case AID_INET6:
@@ -119,17 +116,16 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_get: bad IPv6 prefixlen");
-		pte6.prefixlen = prefixlen;
 		inet6applymask(&pte6.prefix6, &prefix->v6, prefixlen);
+		pte6.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte6);
 	case AID_VPN_IPv4:
 		bzero(&pte_vpn4, sizeof(pte_vpn4));
 		pte_vpn4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
-		addr_hbo = ntohl(prefix->vpn4.addr.s_addr);
-		pte_vpn4.prefix4.s_addr = htonl(addr_hbo &
-		    prefixlen2mask(prefixlen));
+		inet4applymask(&pte_vpn4.prefix4, &prefix->vpn4.addr,
+		    prefixlen);
 		pte_vpn4.prefixlen = prefixlen;
 		pte_vpn4.rd = prefix->vpn4.rd;
 		pte_vpn4.labellen = prefix->vpn4.labellen;

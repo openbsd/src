@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.331 2018/08/29 19:47:47 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.332 2018/09/04 12:00:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1174,6 +1174,7 @@ int		 nlri_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
 in_addr_t	 prefixlen2mask(u_int8_t);
+void		 inet4applymask(struct in_addr *, const struct in_addr *, int);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
 const char	*aid2str(u_int8_t);
