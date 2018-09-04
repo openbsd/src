@@ -1,9 +1,9 @@
-/*	$OpenBSD: pf_norm.c,v 1.210 2018/06/18 11:00:31 procter Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.211 2018/09/04 19:09:39 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * Copyright 2009 Henning Brauer <henning@openbsd.org>
- * Copyright 2011 Alexander Bluhm <bluhm@openbsd.org>
+ * Copyright 2011-2018 Alexander Bluhm <bluhm@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,6 +99,7 @@ struct pf_fragment {
 	int32_t		fr_timeout;
 	u_int32_t	fr_gen;		/* generation number (per pf_frnode) */
 	u_int16_t	fr_maxlen;	/* maximum length of single fragment */
+	u_int16_t	fr_holes;	/* number of holes in the queue */
 	struct pf_frnode *fr_node;	/* ip src/dst/proto/af for fragments */
 };
 
@@ -126,9 +127,9 @@ void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct pf_frnode *, u_int32_t);
 struct pf_frent		*pf_create_fragment(u_short *);
+int			 pf_fragment_holes(struct pf_frent *);
 struct pf_fragment	*pf_fillup_fragment(struct pf_frnode *, u_int32_t,
 			    struct pf_frent *, u_short *);
-int			 pf_isfull_fragment(struct pf_fragment *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
 int			 pf_reassemble(struct mbuf **, int, u_short *);
 #ifdef INET6
@@ -328,6 +329,39 @@ pf_create_fragment(u_short *reason)
 	return (frent);
 }
 
+/*
+ * Calculate the additional holes that were created in the fragment
+ * queue by inserting this fragment.  A fragment in the middle
+ * creates one more hole by splitting.  For each connected side,
+ * it loses one hole.
+ * Fragment entry must be in the queue when calling this function.
+ */
+int
+pf_frent_holes(struct pf_frent *frent)
+{
+	struct pf_frent *prev = TAILQ_PREV(frent, pf_fragq, fr_next);
+	struct pf_frent *next = TAILQ_NEXT(frent, fr_next);
+	int holes = 1;
+
+	if (prev == NULL) {
+		if (frent->fe_off == 0)
+			holes--;
+	} else {
+		KASSERT(frent->fe_off != 0);
+		if (frent->fe_off == prev->fe_off + prev->fe_len)
+			holes--;
+	}
+	if (next == NULL) {
+		if (!frent->fe_mff)
+			holes--;
+	} else {
+		KASSERT(frent->fe_mff);
+		if (next->fe_off == frent->fe_off + frent->fe_len)
+			holes--;
+	}
+	return holes;
+}
+
 struct pf_fragment *
 pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
     struct pf_frent *frent, u_short *reason)
@@ -396,6 +430,7 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 		frag->fr_timeout = time_uptime;
 		frag->fr_gen = frnode->fn_gen++;
 		frag->fr_maxlen = frent->fe_len;
+		frag->fr_holes = 1;
 		frag->fr_id = id;
 		frag->fr_node = frnode;
 		/* RB_INSERT cannot fail as pf_find_fragment() found nothing */
@@ -407,6 +442,7 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 
 		/* We do not have a previous fragment */
 		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
+		frag->fr_holes += pf_frent_holes(frent);
 
 		return (frag);
 	}
@@ -486,6 +522,7 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 		/* This fragment is completely overlapped, lose it */
 		DPFPRINTF(LOG_NOTICE, "old frag overlapped");
 		next = TAILQ_NEXT(after, fr_next);
+		frag->fr_holes -= pf_frent_holes(after);
 		TAILQ_REMOVE(&frag->fr_queue, after, fr_next);
 		m_freem(after->fe_m);
 		pool_put(&pf_frent_pl, after);
@@ -496,6 +533,7 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
 	else
 		TAILQ_INSERT_AFTER(&frag->fr_queue, prev, frent, fr_next);
+	frag->fr_holes += pf_frent_holes(frent);
 
 	return (frag);
 
@@ -519,42 +557,6 @@ drop_fragment:
 	pool_put(&pf_frent_pl, frent);
 	pf_nfrents--;
 	return (NULL);
-}
-
-int
-pf_isfull_fragment(struct pf_fragment *frag)
-{
-	struct pf_frent		*frent, *next;
-	u_int16_t		 off, total;
-
-	KASSERT(!TAILQ_EMPTY(&frag->fr_queue));
-
-	/* Check if we are completely reassembled */
-	if (TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_mff)
-		return (0);
-
-	/* Maximum data we have seen already */
-	total = TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_off +
-	    TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_len;
-
-	/* Check if we have all the data */
-	off = 0;
-	for (frent = TAILQ_FIRST(&frag->fr_queue); frent; frent = next) {
-		next = TAILQ_NEXT(frent, fr_next);
-		off += frent->fe_len;
-		if (off < total && (next == NULL || next->fe_off != off)) {
-			DPFPRINTF(LOG_NOTICE,
-			    "missing fragment at %d, next %d, total %d",
-			    off, next == NULL ? -1 : next->fe_off, total);
-			return (0);
-		}
-	}
-	DPFPRINTF(LOG_INFO, "%d < %d?", off, total);
-	if (off < total)
-		return (0);
-	KASSERT(off == total);
-
-	return (1);
 }
 
 struct mbuf *
@@ -633,7 +635,9 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag)) {
+	if (frag->fr_holes) {
+		DPFPRINTF(LOG_INFO, "frag %d, holes %d",
+		    frag->fr_id, frag->fr_holes);
 		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
@@ -717,7 +721,9 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag)) {
+	if (frag->fr_holes) {
+		DPFPRINTF(LOG_INFO, "frag %d, holes %d",
+		    frag->fr_id, frag->fr_holes);
 		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
