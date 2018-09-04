@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.176 2018/06/22 13:58:55 espie Exp $
+# $OpenBSD: Add.pm,v 1.177 2018/09/04 14:46:12 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -150,6 +150,11 @@ sub perform_extraction
 			    $file->name);
 		}
 		delete $wanted->{$file->name};
+		my $fullname = $e->fullname;
+		if ($fullname =~ m,^$state->{localbase}/share/doc/pkg-readmes/,) {
+			push(@{$state->{readmes}}, $fullname);
+	}
+
 		$e->prepare_to_extract($state, $file);
 		$e->extract($state, $file);
 		$p->advance($e);
@@ -541,10 +546,6 @@ sub install
 	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
-	if ($fullname =~ m,^$state->{localbase}/share/doc/pkg-readmes/,) {
-		$state->{readmes}++;
-	}
-
 	if ($state->{not}) {
 		$state->say("moving tempfile -> #1",
 		    $destdir.$fullname) if $state->verbose >= 5;
