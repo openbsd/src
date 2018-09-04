@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.211 2018/09/04 19:09:39 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.212 2018/09/04 20:34:10 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -127,7 +127,7 @@ void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct pf_frnode *, u_int32_t);
 struct pf_frent		*pf_create_fragment(u_short *);
-int			 pf_fragment_holes(struct pf_frent *);
+int			 pf_frent_holes(struct pf_frent *);
 struct pf_fragment	*pf_fillup_fragment(struct pf_frnode *, u_int32_t,
 			    struct pf_frent *, u_short *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
