@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.79 2018/08/21 19:04:40 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.80 2018/09/05 04:23:18 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -72,8 +72,11 @@
 /*
  * bits in CR3
  */
+#define CR3_PCID	0xfffULL
 #define CR3_PWT		(1ULL << 3)
 #define CR3_PCD		(1ULL << 4)
+#define CR3_REUSE_PCID	(1ULL << 63)
+#define CR3_PADDR	0x7ffffffffffff000ULL
 
 /*
  * bits in the pentiums %cr4 register:
