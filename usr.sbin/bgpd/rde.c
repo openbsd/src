@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.416 2018/08/29 19:47:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.417 2018/09/05 07:31:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1583,6 +1583,9 @@ bad_flags:
 		/* 4-byte ready server take the default route */
 		goto optattr;
 	case ATTR_COMMUNITIES:
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
+			goto bad_flags;
 		if (attr_len == 0 || attr_len % 4 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
@@ -1591,12 +1594,13 @@ bad_flags:
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
+			break;
 		}
+		goto optattr;
+	case ATTR_LARGE_COMMUNITIES:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		goto optattr;
-	case ATTR_LARGE_COMMUNITIES:
 		if (attr_len == 0 || attr_len % 12 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
@@ -1605,12 +1609,13 @@ bad_flags:
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad LARGE COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
+			break;
 		}
+		goto optattr;
+	case ATTR_EXT_COMMUNITIES:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		goto optattr;
-	case ATTR_EXT_COMMUNITIES:
 		if (attr_len == 0 || attr_len % 8 != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
@@ -1619,10 +1624,8 @@ bad_flags:
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad EXT_COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
+			break;
 		}
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-		    ATTR_PARTIAL))
-			goto bad_flags;
 		goto optattr;
 	case ATTR_ORIGINATOR_ID:
 		if (attr_len != 4)
