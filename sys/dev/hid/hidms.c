@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.4 2018/09/01 20:48:00 jcs Exp $ */
+/*	$OpenBSD: hidms.c,v 1.5 2018/09/05 16:34:58 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -241,15 +241,13 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 			h.usage, h.logical_minimum, h.logical_maximum));
 		switch (HID_GET_USAGE(h.usage)) {
 		case HUG_X:
-			if (ms->sc_flags & HIDMS_ABSX &&
-			    !ms->sc_tsscale.minx && !ms->sc_tsscale.maxy) {
+			if (ms->sc_flags & HIDMS_ABSX) {
 				ms->sc_tsscale.minx = h.logical_minimum;
 				ms->sc_tsscale.maxx = h.logical_maximum;
 			}
 			break;
 		case HUG_Y:
-			if (ms->sc_flags & HIDMS_ABSY &&
-			    !ms->sc_tsscale.miny && !ms->sc_tsscale.maxy) {
+			if (ms->sc_flags & HIDMS_ABSY) {
 				ms->sc_tsscale.miny = h.logical_minimum;
 				ms->sc_tsscale.maxy = h.logical_maximum;
 			}
