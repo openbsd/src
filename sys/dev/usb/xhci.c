@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.87 2018/07/16 07:48:17 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.88 2018/09/05 14:03:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -25,6 +25,7 @@
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/endian.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -344,6 +345,7 @@ xhci_init(struct xhci_softc *sc)
 		return (ENOMEM);
 
 	/* Setup command ring. */
+	rw_init(&sc->sc_cmd_lock, "xhcicmd");
 	error = xhci_ring_alloc(sc, &sc->sc_cmd_ring, XHCI_MAX_CMDS,
 	    XHCI_CMDS_RING_ALIGN);
 	if (error) {
@@ -1663,7 +1665,7 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 		return (0);
 	}
 
-	assertwaitok();
+	rw_assert_wrlock(&sc->sc_cmd_lock);
 
 	s = splusb();
 	sc->sc_cmd_trb = trb;
@@ -1729,6 +1731,7 @@ int
 xhci_cmd_configure_ep(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s dev %u\n", DEVNAME(sc), __func__, slot));
 
@@ -1738,13 +1741,17 @@ xhci_cmd_configure_ep(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_CONFIG_EP
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	return (error);
 }
 
 int
 xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s dev %u dci %u\n", DEVNAME(sc), __func__, slot, dci));
 
@@ -1754,7 +1761,10 @@ xhci_cmd_stop_ep(struct xhci_softc *sc, uint8_t slot, uint8_t dci)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_TRB_SET_EP(dci) | XHCI_CMD_STOP_EP
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	return (error);
 }
 
 void
@@ -1794,6 +1804,7 @@ int
 xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
 
@@ -1806,7 +1817,10 @@ xhci_cmd_slot_control(struct xhci_softc *sc, uint8_t *slotp, int enable)
 			XHCI_TRB_SET_SLOT(*slotp) | XHCI_CMD_DISABLE_SLOT
 		);
 
-	if (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT))
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	if (error != 0)
 		return (EIO);
 
 	if (enable)
@@ -1820,6 +1834,7 @@ xhci_cmd_set_address(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
     uint32_t bsr)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s BSR=%u\n", DEVNAME(sc), __func__, bsr ? 1 : 0));
 
@@ -1829,13 +1844,17 @@ xhci_cmd_set_address(struct xhci_softc *sc, uint8_t slot, uint64_t addr,
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_ADDRESS_DEVICE | bsr
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	return (error);
 }
 
 int
 xhci_cmd_evaluate_ctx(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s dev %u\n", DEVNAME(sc), __func__, slot));
 
@@ -1845,7 +1864,10 @@ xhci_cmd_evaluate_ctx(struct xhci_softc *sc, uint8_t slot, uint64_t addr)
 	    XHCI_TRB_SET_SLOT(slot) | XHCI_CMD_EVAL_CTX
 	);
 
-	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	return (error);
 }
 
 #ifdef XHCI_DEBUG
@@ -1853,6 +1875,7 @@ int
 xhci_cmd_noop(struct xhci_softc *sc)
 {
 	struct xhci_trb trb;
+	int error;
 
 	DPRINTF(("%s: %s\n", DEVNAME(sc), __func__));
 
@@ -1860,7 +1883,10 @@ xhci_cmd_noop(struct xhci_softc *sc)
 	trb.trb_status = 0;
 	trb.trb_flags = htole32(XHCI_CMD_NOOP);
 
-	return (xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT));
+	rw_enter_write(&sc->sc_cmd_lock);
+	error = xhci_command_submit(sc, &trb, XHCI_CMD_TIMEOUT);
+	rw_exit_write(&sc->sc_cmd_lock);
+	return (error);
 }
 #endif
 

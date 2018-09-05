@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcivar.h,v 1.9 2018/05/08 13:41:52 mpi Exp $ */
+/* $OpenBSD: xhcivar.h,v 1.10 2018/09/05 14:03:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 Martin Pieuchot
@@ -102,6 +102,7 @@ struct xhci_softc {
 
 	struct xhci_devctx	 sc_dcbaa;	/* Device context base addr. */
 	struct xhci_ring	 sc_cmd_ring;	/* Command ring */
+	struct rwlock		 sc_cmd_lock;	/* Serialize commands */
 
 	struct xhci_erst	 sc_erst;	/* Event ring segment table */
 	struct xhci_ring	 sc_evt_ring;	/* Event ring */
