@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.30 2018/07/23 17:37:17 tb Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.31 2018/09/05 00:55:33 djm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,7 +214,8 @@ int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 				RSAerror(RSA_R_INVALID_MESSAGE_LENGTH);
 				goto err;
 			}
-			if (memcmp(decrypt_buf, m, SSL_SIG_LENGTH) != 0) {
+			if (timingsafe_bcmp(decrypt_buf,
+			    m, SSL_SIG_LENGTH) != 0) {
 				RSAerror(RSA_R_BAD_SIGNATURE);
 				goto err;
 			}
@@ -244,7 +245,7 @@ int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 			goto err;
 
 		if (encoded_len != decrypt_len ||
-		    memcmp(encoded, decrypt_buf, encoded_len) != 0) {
+		    timingsafe_bcmp(encoded, decrypt_buf, encoded_len) != 0) {
 			RSAerror(RSA_R_BAD_SIGNATURE);
 			goto err;
 		}

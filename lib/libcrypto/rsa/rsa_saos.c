@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_saos.c,v 1.23 2017/05/02 03:59:45 deraadt Exp $ */
+/* $OpenBSD: rsa_saos.c,v 1.24 2018/09/05 00:55:33 djm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,7 +130,7 @@ RSA_verify_ASN1_OCTET_STRING(int dtype, const unsigned char *m,
 		goto err;
 
 	if ((unsigned int)sig->length != m_len ||
-	    memcmp(m, sig->data, m_len) != 0) {
+	    timingsafe_bcmp(m, sig->data, m_len) != 0) {
 		RSAerror(RSA_R_BAD_SIGNATURE);
 	} else
 		ret = 1;
