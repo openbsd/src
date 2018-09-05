@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.331 2018/08/27 19:32:37 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.332 2018/09/05 09:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1902,7 +1902,7 @@ filter_as	: as4number_any		{
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
 			    NULL)
 				fatal(NULL);
-			$$->a.as = $1;
+			$$->a.as_min = $1;
 			$$->a.op = OP_EQ;
 		}
 		| NEIGHBORAS		{
@@ -1916,7 +1916,7 @@ filter_as	: as4number_any		{
 			    NULL)
 				fatal(NULL);
 			$$->a.op = $1;
-			$$->a.as = $2;
+			$$->a.as_min = $2;
 		}
 		| as4number_any binaryop as4number_any {
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==

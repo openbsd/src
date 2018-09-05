@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.417 2018/09/05 07:31:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.418 2018/09/05 09:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2171,7 +2171,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 			return;
 		if (req->type == IMSG_CTL_SHOW_RIB_AS &&
 		    !aspath_match(asp->aspath->data, asp->aspath->len,
-		    &req->as, req->as.as))
+		    &req->as, 0))
 			return;
 		if (req->type == IMSG_CTL_SHOW_RIB_COMMUNITY &&
 		    !community_match(asp, req->community.as,
@@ -3782,5 +3782,4 @@ rde_mark_prefixsets_dirty(struct prefixset_head *psold,
 			}
 		}
 	}
-	return;
 }

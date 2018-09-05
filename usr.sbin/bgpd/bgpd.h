@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.332 2018/09/04 12:00:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.333 2018/09/05 09:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -649,7 +649,6 @@ enum aslen_spec {
 };
 
 struct filter_as {
-	u_int32_t	as;
 	u_int16_t	flags;
 	enum as_spec	type;
 	u_int8_t	op;

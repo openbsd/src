@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.99 2018/08/03 16:31:22 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.100 2018/09/05 09:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -340,7 +340,6 @@ int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
     struct filterstate *state, struct prefix *p)
 {
-	u_int32_t	pas;
 	int		cas, type;
 	int64_t		las, ld1, ld2;
 	struct prefixset_item	*psi;
@@ -349,20 +348,16 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	if (state != NULL)
 		asp = &state->aspath;
 
-	if (asp != NULL && f->match.as.type != AS_NONE) {
-		if (f->match.as.flags & AS_FLAG_NEIGHBORAS)
-			pas = peer->conf.remote_as;
-		else
-			pas = f->match.as.as;
-		if (aspath_match(asp->aspath->data, asp->aspath->len,
-		    &f->match.as, pas) == 0)
-			return (0);
-	}
-
 	if (f->peer.ebgp && !peer->conf.ebgp)
 		return (0);
 	if (f->peer.ibgp && peer->conf.ebgp)
 		return (0);
+
+	if (asp != NULL && f->match.as.type != AS_NONE) {
+		if (aspath_match(asp->aspath->data, asp->aspath->len,
+		    &f->match.as, peer->conf.remote_as) == 0)
+			return (0);
+	}
 
 	if (asp != NULL && f->match.aslen.type != ASLEN_NONE)
 		if (aspath_lenmatch(asp->aspath, f->match.aslen.type,

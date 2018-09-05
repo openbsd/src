@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.109 2018/07/11 14:08:46 benno Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.110 2018/09/05 09:49:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -619,10 +619,10 @@ void print_as(struct filter_rule *r)
 		printf("%s ", log_as(r->match.as.as_max));
 		break;
 	case OP_NE:
-		printf("!= %s ", log_as(r->match.as.as));
+		printf("!= %s ", log_as(r->match.as.as_min));
 		break;
 	default:
-		printf("%s ", log_as(r->match.as.as));
+		printf("%s ", log_as(r->match.as.as_min));
 		break;
 	}
 }

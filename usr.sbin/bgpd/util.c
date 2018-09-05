@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2018/09/04 12:00:29 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.33 2018/09/05 09:49:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -313,22 +313,40 @@ aspath_strlen(void *data, u_int16_t len)
 }
 
 static int
-as_compare(struct filter_as *f, u_int32_t as, u_int32_t match)
+as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
 {
-	if ((f->op == OP_NONE || f->op == OP_EQ) && as == match)
-		return (1);
-	else if (f->op == OP_NE && as != match)
-		return (1);
-	else if (f->op == OP_RANGE && as >= f->as_min && as <= f->as_max)
-		return (1);
-	else if (f->op == OP_XRANGE && (as < f->as_min || as > f->as_max))
-		return (1);
+	u_int32_t match;
+
+	if (f->flags & AS_FLAG_NEIGHBORAS)
+		match = neighas;
+	else
+		match = f->as_min;
+
+	switch (f->op) {
+	case OP_NONE:
+	case OP_EQ:
+		if (as == match)
+			return (1);
+		break;
+	case OP_NE:
+		if (as != match)
+			return (1);
+		break;
+	case OP_RANGE:
+	    	if (as >= f->as_min && as <= f->as_max)
+			return (1);
+		break;
+	case OP_XRANGE:
+	    	if (as < f->as_min || as > f->as_max)
+			return (1);
+		break;
+	}
 	return (0);
 }
 
 /* we need to be able to search more than one as */
 int
-aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
+aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t neighas)
 {
 	u_int8_t	*seg;
 	int		 final;
@@ -348,7 +366,7 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 	/* just check the leftmost AS */
 	if (f->type == AS_PEER && len >= 6) {
 		as = aspath_extract(seg, 0);
-		if (as_compare(f, as, match))
+		if (as_compare(f, as, neighas))
 			return (1);
 		else
 			return (0);
@@ -372,7 +390,7 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 			/* not yet in the final segment */
 			if (!final)
 				continue;
-			if (as_compare(f, as, match))
+			if (as_compare(f, as, neighas))
 				return (1);
 			else
 				return (0);
@@ -386,7 +404,7 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t match)
 			if (final && i == seg_len - 1 && f->type == AS_TRANSIT)
 				return (0);
 			as = aspath_extract(seg, i);
-			if (as_compare(f, as, match))
+			if (as_compare(f, as, neighas))
 				return (1);
 		}
 	}
