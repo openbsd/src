@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.108 2018/09/04 17:19:00 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.109 2018/09/05 10:15:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -83,7 +83,7 @@ enum mta_state {
 #define MTA_DOWNGRADE_PLAIN    	0x0080
 
 #define MTA_TLS			0x0100
-#define MTA_VERIFIED   		0x0200
+#define MTA_TLS_VERIFIED	0x0200
 
 #define MTA_FREE		0x0400
 #define MTA_LMTP		0x0800
@@ -343,7 +343,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 
 		if (resp_ca_vrfy->status == CA_OK)
-			s->flags |= MTA_VERIFIED;
+			s->flags |= MTA_TLS_VERIFIED;
 		else if (s->relay->flags & RELAY_TLS_VERIFY) {
 			errno = 0;
 			mta_error(s, "SSL certificate check failed");
@@ -1668,7 +1668,7 @@ mta_tls_verified(struct mta_session *s)
 	if (x) {
 		log_info("smtp-out: Server certificate verification %s "
 		    "on session %016"PRIx64,
-		    (s->flags & MTA_VERIFIED) ? "succeeded" : "failed",
+		    (s->flags & MTA_TLS_VERIFIED) ? "succeeded" : "failed",
 		    s->id);
 		X509_free(x);
 	}
