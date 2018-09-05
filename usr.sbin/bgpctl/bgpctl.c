@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.211 2018/08/29 19:52:23 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.212 2018/09/05 09:50:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 	case IRRFILTER:
 		if (!(res->flags & (F_IPV4|F_IPV6)))
 			res->flags |= (F_IPV4|F_IPV6);
-		irr_main(res->as.as, res->flags, res->irr_outdir);
+		irr_main(res->as.as_min, res->flags, res->irr_outdir);
 		break;
 	case SHOW_MRT:
 		if (pledge("stdio", NULL) == -1)
@@ -2058,7 +2058,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by AS */
 		if (req->as.type != AS_NONE &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
-		   &req->as, req->as.as))
+		   &req->as, 0))
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
@@ -2124,7 +2124,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by AS */
 		if (req->as.type != AS_NONE &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
-		   &req->as, req->as.as))
+		   &req->as, 0))
 			continue;
 
 		bzero(&net, sizeof(net));

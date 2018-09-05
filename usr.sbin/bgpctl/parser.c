@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.83 2018/08/29 19:52:23 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.84 2018/09/05 09:50:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -615,7 +615,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case ASNUM:
-			if (parse_asnum(word, wordlen, &res.as.as)) {
+			if (parse_asnum(word, wordlen, &res.as.as_min)) {
 				match++;
 				t = &table[i];
 			}
