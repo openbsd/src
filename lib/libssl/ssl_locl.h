@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.212 2018/08/30 16:56:16 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.213 2018/09/05 16:48:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1039,7 +1039,9 @@ extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_2_enc_data;
 
-void ssl_clear_cipher_ctx(SSL *s);
+void ssl_clear_cipher_state(SSL *s);
+void ssl_clear_cipher_read_state(SSL *s);
+void ssl_clear_cipher_write_state(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
@@ -1279,7 +1281,6 @@ int tls12_get_sigid(const EVP_PKEY *pk);
 int tls12_get_hashandsig(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 long ssl_get_algorithm2(SSL *s);
 int tls1_process_sigalgs(SSL *s, CBS *cbs);
 void tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs,
