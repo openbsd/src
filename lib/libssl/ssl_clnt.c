@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.33 2018/08/24 17:30:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.34 2018/09/05 16:58:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2243,7 +2243,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	/*
 	 * Compute shared IV and store it in algorithm-specific context data.
 	 */
-	ukm_hash = EVP_MD_CTX_create();
+	ukm_hash = EVP_MD_CTX_new();
 	if (ukm_hash == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -2258,7 +2258,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	EVP_DigestUpdate(ukm_hash, s->s3->client_random, SSL3_RANDOM_SIZE);
 	EVP_DigestUpdate(ukm_hash, s->s3->server_random, SSL3_RANDOM_SIZE);
 	EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
-	EVP_MD_CTX_destroy(ukm_hash);
+	EVP_MD_CTX_free(ukm_hash);
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
 	    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
 		SSLerror(s, SSL_R_LIBRARY_BUG);

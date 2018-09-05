@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_hash.c,v 1.2 2017/05/06 16:18:36 jsing Exp $ */
+/* $OpenBSD: t1_hash.c,v 1.3 2018/09/05 16:58:59 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -33,7 +33,7 @@ tls1_handshake_hash_init(SSL *s)
 		goto err;
 	}
 
-	if ((S3I(s)->handshake_hash = EVP_MD_CTX_create()) == NULL) {
+	if ((S3I(s)->handshake_hash = EVP_MD_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -80,7 +80,7 @@ tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
 	if (EVP_MD_CTX_size(S3I(s)->handshake_hash) > len)
 		goto err;
 
-	if ((mdctx = EVP_MD_CTX_create()) == NULL) {
+	if ((mdctx = EVP_MD_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -98,7 +98,7 @@ tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
 	ret = 1;
 
  err:
-	EVP_MD_CTX_destroy(mdctx);
+	EVP_MD_CTX_free(mdctx);
 
 	return (ret);
 }
@@ -106,6 +106,6 @@ tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
 void
 tls1_handshake_hash_free(SSL *s)
 {
-	EVP_MD_CTX_destroy(S3I(s)->handshake_hash);
+	EVP_MD_CTX_free(S3I(s)->handshake_hash);
 	S3I(s)->handshake_hash = NULL;
 }

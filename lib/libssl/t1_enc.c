@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.111 2018/09/05 16:48:11 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.112 2018/09/05 16:58:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -476,7 +476,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
 		s->enc_read_ctx = cipher_ctx;
-		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
+		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
 			goto err;
 		s->read_hash = mac_ctx;
 	} else {
@@ -498,7 +498,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
 		s->internal->enc_write_ctx = cipher_ctx;
-		if ((mac_ctx = EVP_MD_CTX_create()) == NULL)
+		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
 			goto err;
 		s->internal->write_hash = mac_ctx;
 	}

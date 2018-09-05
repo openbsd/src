@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.188 2018/09/05 16:48:11 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.189 2018/09/05 16:58:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2624,7 +2624,7 @@ ssl_clear_cipher_read_state(SSL *s)
 {
 	EVP_CIPHER_CTX_free(s->enc_read_ctx);
 	s->enc_read_ctx = NULL;
-	EVP_MD_CTX_destroy(s->read_hash);
+	EVP_MD_CTX_free(s->read_hash);
 	s->read_hash = NULL;
 
 	if (s->internal->aead_read_ctx != NULL) {
@@ -2639,7 +2639,7 @@ ssl_clear_cipher_write_state(SSL *s)
 {
 	EVP_CIPHER_CTX_free(s->internal->enc_write_ctx);
 	s->internal->enc_write_ctx = NULL;
-	EVP_MD_CTX_destroy(s->internal->write_hash);
+	EVP_MD_CTX_free(s->internal->write_hash);
 	s->internal->write_hash = NULL;
 
 	if (s->internal->aead_write_ctx != NULL) {
