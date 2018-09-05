@@ -1,7 +1,7 @@
-/*	$OpenBSD: resolver.c,v 1.1.1.1 2018/04/27 16:14:37 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
 
 /*
- * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,13 +18,17 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
+#include <sys/queue.h>
 #include <netinet/in.h>
 
 #include <asr.h>
 #include <ctype.h>
 #include <errno.h>
+#include <imsg.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,6 +37,8 @@
 
 #include "log.h"
 #include "proc.h"
+
+#define p_resolver p_engine
 
 struct request {
 	SPLAY_ENTRY(request)	 entry;
@@ -83,14 +89,14 @@ resolver_getaddrinfo(const char *hostname, const char *servname,
 
 	SPLAY_INSERT(reqtree, &reqs, req);
 
-	m_create(p_engine, IMSG_RES_GETADDRINFO, req->id, 0, -1);
-	m_add_int(p_engine, hints ? hints->ai_flags : 0);
-	m_add_int(p_engine, hints ? hints->ai_family : 0);
-	m_add_int(p_engine, hints ? hints->ai_socktype : 0);
-	m_add_int(p_engine, hints ? hints->ai_protocol : 0);
-	m_add_string(p_engine, hostname);
-	m_add_string(p_engine, servname ? servname : "");
-	m_close(p_engine);
+	m_create(p_resolver, IMSG_GETADDRINFO, req->id, 0, -1);
+	m_add_int(p_resolver, hints ? hints->ai_flags : 0);
+	m_add_int(p_resolver, hints ? hints->ai_family : 0);
+	m_add_int(p_resolver, hints ? hints->ai_socktype : 0);
+	m_add_int(p_resolver, hints ? hints->ai_protocol : 0);
+	m_add_string(p_resolver, hostname);
+	m_add_string(p_resolver, servname ? servname : "");
+	m_close(p_resolver);
 }
 
 void
@@ -112,10 +118,12 @@ resolver_getnameinfo(const struct sockaddr *sa, int flags,
 	req->cb_ni = cb;
 	req->arg = arg;
 
-	m_create(p_engine, IMSG_RES_GETNAMEINFO, req->id, 0, -1);
-	m_add_sockaddr(p_engine, sa);
-	m_add_int(p_engine, flags);
-	m_close(p_engine);
+	SPLAY_INSERT(reqtree, &reqs, req);
+
+	m_create(p_resolver, IMSG_GETNAMEINFO, req->id, 0, -1);
+	m_add_sockaddr(p_resolver, sa);
+	m_add_int(p_resolver, flags);
+	m_close(p_resolver);
 }
 
 void
@@ -134,7 +142,7 @@ resolver_dispatch_request(struct imsgproc *proc, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 
-	case IMSG_RES_GETADDRINFO:
+	case IMSG_GETADDRINFO:
 		servname = NULL;
 		memset(&hints, 0 , sizeof(hints));
 		m_get_int(proc, &hints.ai_flags);
@@ -162,13 +170,13 @@ resolver_dispatch_request(struct imsgproc *proc, struct imsg *imsg)
 		if (s)
 			free(s);
 
-		m_create(proc, IMSG_RES_GETADDRINFO_END, reqid, 0, -1);
+		m_create(proc, IMSG_GETADDRINFO_END, reqid, 0, -1);
 		m_add_int(proc, EAI_SYSTEM);
 		m_add_int(proc, save_errno);
 		m_close(proc);
 		break;
 
-	case IMSG_RES_GETNAMEINFO:
+	case IMSG_GETNAMEINFO:
 		sa = (struct sockaddr*)&ss;
 		m_get_sockaddr(proc, sa);
 		m_get_int(proc, &flags);
@@ -196,11 +204,9 @@ resolver_dispatch_request(struct imsgproc *proc, struct imsg *imsg)
 			free(s);
 		}
 
-		m_create(proc, IMSG_RES_GETNAMEINFO, reqid, 0, -1);
+		m_create(proc, IMSG_GETNAMEINFO, reqid, 0, -1);
 		m_add_int(proc, EAI_SYSTEM);
 		m_add_int(proc, save_errno);
-		m_add_string(proc, "");
-		m_add_string(proc, "");
 		m_close(proc);
 		break;
 
@@ -225,7 +231,7 @@ resolver_dispatch_result(struct imsgproc *proc, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 
-	case IMSG_RES_GETADDRINFO:
+	case IMSG_GETADDRINFO:
 		ai = calloc(1, sizeof(*ai));
 		if (ai == NULL) {
 			log_warn("%s: calloc", __func__);
@@ -262,7 +268,7 @@ resolver_dispatch_result(struct imsgproc *proc, struct imsg *imsg)
 		req->ai = ai;
 		break;
 
-	case IMSG_RES_GETADDRINFO_END:
+	case IMSG_GETADDRINFO_END:
 		m_get_int(proc, &gai_errno);
 		m_get_int(proc, &errno);
 		m_end(proc);
@@ -272,16 +278,18 @@ resolver_dispatch_result(struct imsgproc *proc, struct imsg *imsg)
 		free(req);
 		break;
 
-	case IMSG_RES_GETNAMEINFO:
+	case IMSG_GETNAMEINFO:
 		m_get_int(proc, &gai_errno);
 		m_get_int(proc, &errno);
-		m_get_string(proc, &host);
-		m_get_string(proc, &serv);
+		if (gai_errno == 0) {
+			m_get_string(proc, &host);
+			m_get_string(proc, &serv);
+		}
 		m_end(proc);
 
 		SPLAY_REMOVE(reqtree, &reqs, req);
-		req->cb_ni(req->arg, gai_errno, host[0] ? host : NULL,
-		    serv[0] ? serv : NULL);
+		req->cb_ni(req->arg, gai_errno, gai_errno ? NULL : host,
+		    gai_errno ? NULL : serv);
 		free(req);
 		break;
 	}
@@ -305,7 +313,7 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 	struct addrinfo *ai;
 
 	for (ai = ar->ar_addrinfo; ai; ai = ai->ai_next) {
-		m_create(s->proc, IMSG_RES_GETADDRINFO, s->reqid, 0, -1);
+		m_create(s->proc, IMSG_GETADDRINFO, s->reqid, 0, -1);
 		m_add_int(s->proc, ai->ai_flags);
 		m_add_int(s->proc, ai->ai_family);
 		m_add_int(s->proc, ai->ai_socktype);
@@ -316,7 +324,7 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 		m_close(s->proc);
 	}
 
-	m_create(s->proc, IMSG_RES_GETADDRINFO_END, s->reqid, 0, -1);
+	m_create(s->proc, IMSG_GETADDRINFO_END, s->reqid, 0, -1);
 	m_add_int(s->proc, ar->ar_gai_errno);
 	m_add_int(s->proc, ar->ar_errno);
 	m_close(s->proc);
@@ -330,11 +338,13 @@ resolver_getnameinfo_cb(struct asr_result *ar, void *arg)
 {
 	struct session *s = arg;
 
-	m_create(s->proc, IMSG_RES_GETNAMEINFO, s->reqid, 0, -1);
+	m_create(s->proc, IMSG_GETNAMEINFO, s->reqid, 0, -1);
 	m_add_int(s->proc, ar->ar_gai_errno);
 	m_add_int(s->proc, ar->ar_errno);
-	m_add_string(s->proc, s->host ? s->host : "");
-	m_add_string(s->proc, s->serv ? s->serv : "");
+	if (ar->ar_gai_errno == 0) {
+		m_add_string(s->proc, s->host);
+		m_add_string(s->proc, s->serv);
+	}
 	m_close(s->proc);
 
 	free(s->host);
@@ -346,10 +356,10 @@ static int
 request_cmp(struct request *a, struct request *b)
 {
 	if (a->id < b->id)
-		return (-1);
+		return -1;
 	if (a->id > b->id)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 SPLAY_GENERATE(reqtree, request, entry, request_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.h,v 1.1.1.1 2018/04/27 16:14:37 eric Exp $	*/
+/*	$OpenBSD: lpd.h,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -51,9 +51,9 @@ enum {
 	IMSG_CONF_LISTENER,
 	IMSG_CONF_END,
 
-	IMSG_RES_GETADDRINFO,
-	IMSG_RES_GETADDRINFO_END,
-	IMSG_RES_GETNAMEINFO,
+	IMSG_GETADDRINFO,
+	IMSG_GETADDRINFO_END,
+	IMSG_GETNAMEINFO,
 
 	IMSG_LPR_ALLOWEDHOST,
 	IMSG_LPR_DISPLAYQ,

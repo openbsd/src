@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.1.1.1 2018/04/27 16:14:36 eric Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -57,12 +57,12 @@ log_fmt_imsgtype(int type)
 		return "IMSG_CONF_LISTENER";
 	case IMSG_CONF_END:
 		return "IMSG_CONF_END";
-	case IMSG_RES_GETADDRINFO:
-		return "IMSG_RES_GETADDRINFO";
-	case IMSG_RES_GETADDRINFO_END:
-		return "IMSG_RES_GETADDRINFO_END";
-	case IMSG_RES_GETNAMEINFO:
-		return "IMSG_RES_GETNAMEINFO";
+	case IMSG_GETADDRINFO:
+		return "IMSG_GETADDRINFO";
+	case IMSG_GETADDRINFO_END:
+		return "IMSG_GETADDRINFO_END";
+	case IMSG_GETNAMEINFO:
+		return "IMSG_GETNAMEINFO";
 	case IMSG_LPR_ALLOWEDHOST:
 		return "IMSG_LPR_ALLOWEDHOST";
 	case IMSG_LPR_DISPLAYQ:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1.1.1 2018/04/27 16:14:35 eric Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -148,8 +148,8 @@ engine_dispatch_frontend(struct imsgproc *proc, struct imsg *imsg, void *arg)
 		log_imsg(proc, imsg);
 
 	switch (imsg->hdr.type) {
-	case IMSG_RES_GETADDRINFO:
-	case IMSG_RES_GETNAMEINFO:
+	case IMSG_GETADDRINFO:
+	case IMSG_GETNAMEINFO:
 		resolver_dispatch_request(proc, imsg);
 		break;
 
