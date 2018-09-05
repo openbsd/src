@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.201 2018/09/03 13:27:43 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.202 2018/09/05 05:58:49 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 3 2018 $
+.Dd $Mdocdate: September 5 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -242,7 +242,8 @@ The following protocols are available:
 .Pp
 .Bl -tag -width "smtp+notls" -compact
 .It smtp
-Normal SMTP session with opportunistic STARTTLS.
+Normal SMTP session with opportunistic STARTTLS
+(the default).
 .It smtp+tls
 Normal SMTP session with mandatory STARTTLS.
 .It smtp+notls
@@ -253,16 +254,17 @@ LMTP session.
 SMTP session with forced TLS on connection.
 .El
 .Pp
-If not specified, the
-.Dq smtp
-protocol is used.
-.Pp
-Specifying an auth label toggles authentication.
-An auth table must also be defined for this action.
-The protocol must explicitly require TLS.
-.Pp
-If TLS is explicitly required, the server certificate
-will be verified by default.
+The
+.Ar label
+corresponds to an entry in a credentials table,
+as documented in
+.Xr table 5 .
+It is used with the
+.Dq smtp+tls
+and
+.Dq smtps
+protocols for authentication.
+Server certificates for those protocols are verified by default.
 .It Cm tls no-verify
 Do not require a valid certificate for the specified host.
 .It Cm auth Pf < Ar table Ns >
