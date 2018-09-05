@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.332 2018/09/05 09:49:57 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.333 2018/09/05 17:32:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2086,21 +2086,49 @@ filter_elm	: filter_prefix_h	{
 prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 		| LONGER				{
 			bzero(&$$, sizeof($$));
-			$$.op = OP_GE;
+			$$.op = OP_RANGE;
 			$$.len_min = -1;
+			$$.len_max = -1;
 		}
 		| PREFIXLEN unaryop NUMBER		{
+			int min, max;
+
 			bzero(&$$, sizeof($$));
 			if ($3 < 0 || $3 > 128) {
 				yyerror("prefixlen must be >= 0 and <= 128");
 				YYERROR;
 			}
-			if ($2 == OP_GT && $3 == 0) {
-				yyerror("prefixlen must be > 0");
-				YYERROR;
+			/*
+			 * convert the unary operation into the equivalent
+			 * range check
+			 */
+			$$.op = OP_RANGE;
+
+			switch ($2) {
+			case OP_EQ:
+			case OP_NE:
+				min = max = $3;
+				$$.op = $2;
+				break;
+			case OP_LT:
+				if ($3 == 0) {
+					yyerror("prefixlen must be > 0");
+					YYERROR;
+				}
+				$3 -= 1;
+			case OP_LE:
+				min = -1;
+				max = $3;
+				break;
+			case OP_GT:
+				$3 += 1;
+			case OP_GE:
+				min = $3;
+				max = -1;
+				break;
 			}
-			$$.op = $2;
-			$$.len_min = $3;
+			$$.len_min = min;
+			$$.len_max = max;
 		}
 		| PREFIXLEN NUMBER binaryop NUMBER	{
 			bzero(&$$, sizeof($$));
@@ -2108,7 +2136,7 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 				yyerror("prefixlen must be < 128");
 				YYERROR;
 			}
-			if ($2 >= $4) {
+			if ($2 > $4) {
 				yyerror("start prefixlen is bigger than end");
 				YYERROR;
 			}
@@ -3696,60 +3724,35 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 		break;
 	}
 
-	switch (pl->op) {
-	case OP_NONE:
+	if (pl->op == OP_NONE) {
+		p->p.len_min = p->p.len_max = p->p.len;
 		return (0);
-	case OP_RANGE:
-	case OP_XRANGE:
-		if (pl->len_min > max_len || pl->len_max > max_len) {
-			yyerror("prefixlen %d too big for AF, limit %d",
-			    pl->len_min > max_len ? pl->len_min : pl->len_max,
-			    max_len);
-			return (-1);
-		}
-		if (pl->len_min < p->p.len) {
-			yyerror("prefixlen %d smaller than prefix, limit %d",
-			    pl->len_min, p->p.len);
-			return (-1);
-		}
-		p->p.len_max = pl->len_max;
-		break;
-	case OP_GE:
-		/* fix up the "or-longer" case */
-		if (pl->len_min == -1)
-			pl->len_min = p->p.len;
-		/* FALLTHROUGH */
-	case OP_EQ:
-	case OP_NE:
-	case OP_LE:
-	case OP_GT:
-		if (pl->len_min > max_len) {
-			yyerror("prefixlen %d too big for AF, limit %d",
-			    pl->len_min, max_len);
-			return (-1);
-		}
-		if (pl->len_min < p->p.len) {
-			yyerror("prefixlen %d smaller than prefix, limit %d",
-			    pl->len_min, p->p.len);
-			return (-1);
-		}
-		break;
-	case OP_LT:
-		if (pl->len_min > max_len - 1) {
-			yyerror("prefixlen %d too big for AF, limit %d",
-			    pl->len_min, max_len - 1);
-			return (-1);
-		}
-		if (pl->len_min < p->p.len + 1) {
-			yyerror("prefixlen %d too small for prefix, limit %d",
-			    pl->len_min, p->p.len + 1);
-			return (-1);
-		}
-		break;
+	}
+
+	if (pl->len_min == -1)
+		pl->len_min = p->p.len;
+	if (pl->len_max == -1)
+		pl->len_max = max_len;
+
+	if (pl->len_max > max_len) {
+		yyerror("prefixlen %d too big, limit %d",
+		    pl->len_max, max_len);
+		return (-1);
+	}
+	if (pl->len_min > pl->len_max) {
+		yyerror("prefixlen %d too big, limit %d",
+		    pl->len_min, pl->len_max);
+		return (-1);
+	}
+	if (pl->len_min < p->p.len) {
+		yyerror("prefixlen %d smaller than prefix, limit %d",
+		    pl->len_min, p->p.len);
+		return (-1);
 	}
 
 	p->p.op = pl->op;
 	p->p.len_min = pl->len_min;
+	p->p.len_max = pl->len_max;
 	return (0);
 }
 

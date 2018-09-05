@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.110 2018/09/05 09:49:57 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.111 2018/09/05 17:32:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,7 +29,7 @@
 #include "rde.h"
 #include "log.h"
 
-void		 print_op(enum comp_ops);
+void		 print_prefix(struct filter_prefix *p, const char *);
 void		 print_community(int, int);
 void		 print_largecommunity(int64_t, int64_t, int64_t);
 void		 print_extcommunity(struct filter_extcommunity *);
@@ -55,35 +55,47 @@ void		 print_groups(struct bgpd_config *, struct peer *);
 int		 peer_compare(const void *, const void *);
 
 void
-print_op(enum comp_ops op)
+print_prefix(struct filter_prefix *p, const char *s)
 {
-	switch (op) {
-	case OP_RANGE:
-		printf("-");
+	u_int8_t max_len = 0;
+
+	switch (p->addr.aid) {
+	case AID_INET:
+	case AID_VPN_IPv4:
+		max_len = 32;
 		break;
-	case OP_XRANGE:
-		printf("><");
+	case AID_INET6:
+		max_len = 128;
+		break;
+	case AID_UNSPEC:
+		/* no prefix to print */
+		return;
+	}
+
+	printf("%s%s/%u ", s, log_addr(&p->addr), p->len);
+
+	switch (p->op) {
+	case OP_NONE:
 		break;
 	case OP_EQ:
-		printf("=");
+		printf("prefixlen = %u ", p->len_min);
 		break;
 	case OP_NE:
-		printf("!=");
+		printf("prefixlen != %u ", p->len_min);
 		break;
-	case OP_LE:
-		printf("<=");
+	case OP_XRANGE:
+		printf("prefixlen %u >< %u ", p->len_min, p->len_max);
 		break;
-	case OP_LT:
-		printf("<");
-		break;
-	case OP_GE:
-		printf(">=");
-		break;
-	case OP_GT:
-		printf(">");
+	case OP_RANGE:
+		if (p->len == p->len_min && p->len_max == max_len)
+			printf("or-longer ");
+		else if (p->len_max == max_len)
+			printf("prefixlen >= %u ", p->len_min);
+		else
+			printf("prefixlen %u - %u ", p->len_min, p->len_max);
 		break;
 	default:
-		printf("?");
+		printf("prefixlen %u ??? %u ", p->len_min, p->len_max);
 		break;
 	}
 }
@@ -433,23 +445,8 @@ print_prefixsets(struct prefixset_head *psh)
 
 	SIMPLEQ_FOREACH(ps, psh, entry) {
 		printf("prefix-set \"%s\" { ", ps->name);
-		SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
-			if (psi->p.addr.aid)
-				printf("%s/%u ", log_addr(&psi->p.addr),
-				    psi->p.len);
-			if (psi->p.op) {
-				if (psi->p.op == OP_RANGE ||
-				    psi->p.op == OP_XRANGE) {
-					printf("prefixlen %u ", psi->p.len_min);
-					print_op(psi->p.op);
-					printf(" %u ", psi->p.len_max);
-				} else {
-					printf("prefixlen ");
-					print_op(psi->p.op);
-					printf(" %u ", psi->p.len_min);
-				}
-			}
-		}
+		SIMPLEQ_FOREACH(psi, &ps->psitems, entry)
+			print_prefix(&psi->p, "");
 		printf(" }\n");
 	}
 }
@@ -676,22 +673,7 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	} else
 		printf("any ");
 
-	if (r->match.prefix.addr.aid)
-		printf("prefix %s/%u ", log_addr(&r->match.prefix.addr),
-		    r->match.prefix.len);
-
-	if (r->match.prefix.op) {
-		if (r->match.prefix.op == OP_RANGE ||
-		    r->match.prefix.op == OP_XRANGE) {
-			printf("prefixlen %u ", r->match.prefix.len_min);
-			print_op(r->match.prefix.op);
-			printf(" %u ", r->match.prefix.len_max);
-		} else {
-			printf("prefixlen ");
-			print_op(r->match.prefix.op);
-			printf(" %u ", r->match.prefix.len_min);
-		}
-	}
+	print_prefix(&r->match.prefix, "prefix ");
 
 	if (r->match.prefixset.flags & PREFIXSET_FLAG_FILTER)
 		printf("prefix-set \"%s\" ", r->match.prefixset.name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.100 2018/09/05 09:49:57 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.101 2018/09/05 17:32:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -532,16 +532,10 @@ rde_prefix_match(struct filter_prefix *fp, struct prefix *p)
 	case OP_XRANGE:
 		return ((plen < fp->len_min) ||
 		    (plen > fp->len_max));
-	case OP_LE:
-		return (plen <= fp->len_min);
-	case OP_LT:
-		return (plen < fp->len_min);
-	case OP_GE:
-		return (plen >= fp->len_min);
-	case OP_GT:
-		return (plen > fp->len_min);
+	default:
+		log_warnx("%s: unsupported prefix operation", __func__);
+		return (0);
 	}
-	return (0); /* should not be reached */
 }
 
 /* return true when the rule f can never match for this peer */
