@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.9 2018/05/24 20:40:21 schwarze Exp $
+.\"	$OpenBSD: table.5,v 1.10 2018/09/05 07:19:35 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 24 2018 $
+.Dd $Mdocdate: September 5 2018 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -174,14 +174,10 @@ ipv6:::1
 192.168.1.0/24
 .Ed
 .Ss Userinfo tables
-User info tables are used to described virtual system users.
-They are used in rule context to specify an alternate user base, mapping
-virtual users to local system UID, GID and home directory.
+User info tables are used in rule context to specify an alternate user base,
+mapping virtual users to local system users by UID, GID and home directory.
 .Pp
 .D1 Ic action Ar name method Cm userbase Pf < Ar table Ns >
-.Pp
-The userinfo table is a mapping from virtual user names to a set of system user
-ID, group ID and path to home directory.
 .Pp
 A userinfo table looks as follows:
 .Bd -literal -offset indent
@@ -194,6 +190,14 @@ system user with UID 1000 and GID 100, but different home directories.
 These directories may contain a
 .Xr forward 5
 file.
+This can be used in conjunction with an alias table
+that maps an email address or the domain part to the desired virtual
+username.
+For example:
+.Bd -literal -offset indent
+joe@example.org     joe
+jack@example.com    jack
+.Ed
 .Ss Source tables
 Source tables are lists of IPv4 and IPv6 addresses.
 They can only be used in the following context:
