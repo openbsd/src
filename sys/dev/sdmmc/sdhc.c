@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.60 2018/05/30 13:32:40 patrick Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.61 2018/09/06 10:15:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -61,6 +61,7 @@ struct sdhc_host {
 
 /* flag values */
 #define SHF_USE_DMA		0x0001
+#define SHF_USE_DMA64		0x0002
 
 #define HREAD1(hp, reg)							\
 	(bus_space_read_1((hp)->iot, (hp)->ioh, (reg)))
@@ -190,8 +191,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		caps = HREAD4(hp, SDHC_CAPABILITIES);
 
 	/* Use DMA if the host system and the controller support it. */
-	if (usedma && ISSET(caps, SDHC_ADMA2_SUPP))
+	if (usedma && ISSET(caps, SDHC_ADMA2_SUPP)) {
 		SET(hp->flags, SHF_USE_DMA);
+		if (ISSET(caps, SDHC_64BIT_DMA_SUPP))
+			SET(hp->flags, SHF_USE_DMA64);
+	}
 
 	/*
 	 * Determine the base clock frequency. (2.2.24)
@@ -804,7 +808,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 int
 sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
-	struct sdhc_adma2_descriptor32 *desc = (void *)hp->adma2;
+	struct sdhc_adma2_descriptor32 *desc32 = (void *)hp->adma2;
+	struct sdhc_adma2_descriptor64 *desc64 = (void *)hp->adma2;
 	struct sdhc_softc *sc = hp->sc;
 	u_int16_t blksize = 0;
 	u_int16_t blkcount = 0;
@@ -903,18 +908,33 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			if (seg == cmd->c_dmamap->dm_nsegs - 1)
 				attr |= SDHC_ADMA2_END;
 
-			desc[seg].attribute = htole16(attr);
-			desc[seg].length = htole16(len);
-			desc[seg].address = htole32(paddr);
+			if (ISSET(hp->flags, SHF_USE_DMA64)) {
+				desc64[seg].attribute = htole16(attr);
+				desc64[seg].length = htole16(len);
+				desc64[seg].address_lo =
+				    htole32((uint64_t)paddr & 0xffffffff);
+				desc64[seg].address_hi =
+				    htole32((uint64_t)paddr >> 32);
+			} else {
+				desc32[seg].attribute = htole16(attr);
+				desc32[seg].length = htole16(len);
+				desc32[seg].address = htole32(paddr);
+			}
 		}
 
-		desc[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+		if (ISSET(hp->flags, SHF_USE_DMA64))
+			desc64[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
+		else
+			desc32[cmd->c_dmamap->dm_nsegs].attribute = htole16(0);
 
 		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
-		HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
+		if (ISSET(hp->flags, SHF_USE_DMA64))
+			HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA64);
+		else
+			HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA32);
 
 		HWRITE4(hp, SDHC_ADMA_SYSTEM_ADDR,
 		    hp->adma_map->dm_segs[0].ds_addr);
