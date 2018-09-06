@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.212 2018/09/05 09:50:43 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.213 2018/09/06 18:38:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1958,53 +1958,48 @@ network_bulk(struct parse_result *res)
 	struct network_config net;
 	struct filter_set *s = NULL;
 	struct bgpd_addr h;
-	char *b, *buf, *lbuf;
-	size_t slen;
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
 	u_int8_t len;
 	FILE *f;
 
-	if ((f = fdopen(STDIN_FILENO, "r")) != NULL) {
-		while ((buf = fgetln(f, &slen))) {
-			lbuf = NULL;
-			if (buf[slen - 1] == '\n')
-				buf[slen - 1] = '\0';
-			else {
-				if ((lbuf = malloc(slen + 1)) == NULL)
-					err(1, NULL);
-				memcpy(lbuf, buf, slen);
-				lbuf[slen] = '\0';
-				buf = lbuf;
-			}
-
-			while ((b = strsep(&buf, " \t")) != NULL) {
-				/* Don't process commented entries */
-				if (strchr(b, '#') != NULL)
-					break;
-				bzero(&net, sizeof(net));
-				parse_prefix(b, strlen(b), &h, &len);
-				net.prefix = h;
-				net.prefixlen = len;
-
-				if (res->action == NETWORK_BULK_ADD) {
-					imsg_compose(ibuf, IMSG_NETWORK_ADD,
-					    0, 0, -1, &net, sizeof(net));
-					TAILQ_FOREACH(s, &res->set, entry) {
-						imsg_compose(ibuf,
-						    IMSG_FILTER_SET,
-						    0, 0, -1, s, sizeof(*s));
-					}
-					imsg_compose(ibuf, IMSG_NETWORK_DONE,
-					    0, 0, -1, NULL, 0);
-				} else
-					imsg_compose(ibuf, IMSG_NETWORK_REMOVE,
-					     0, 0, -1, &net, sizeof(net));
-			}
-			free(lbuf);
-		}
-		fclose(f);
-	} else {
+	if ((f = fdopen(STDIN_FILENO, "r")) == NULL)
 		err(1, "Failed to open stdin\n");
+
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		char *b, *buf = line;
+		while ((b = strsep(&buf, " \t\n")) != NULL) {
+			if (*b == '\0')	/* skip empty tokens */
+				continue;
+			/* Stop processing after a comment */
+			if (*b == '#')
+				break;
+			bzero(&net, sizeof(net));
+			if (parse_prefix(b, strlen(b), &h, &len) != 1)
+				errx(1, "bad prefix: %s", b);
+			net.prefix = h;
+			net.prefixlen = len;
+
+			if (res->action == NETWORK_BULK_ADD) {
+				imsg_compose(ibuf, IMSG_NETWORK_ADD,
+				    0, 0, -1, &net, sizeof(net));
+				TAILQ_FOREACH(s, &res->set, entry) {
+					imsg_compose(ibuf,
+					    IMSG_FILTER_SET,
+					    0, 0, -1, s, sizeof(*s));
+				}
+				imsg_compose(ibuf, IMSG_NETWORK_DONE,
+				    0, 0, -1, NULL, 0);
+			} else
+				imsg_compose(ibuf, IMSG_NETWORK_REMOVE,
+				     0, 0, -1, &net, sizeof(net));
+		}
 	}
+	free(line);
+	if (ferror(f))
+		err(1, "getline");
+	fclose(f);
 }
 
 void
