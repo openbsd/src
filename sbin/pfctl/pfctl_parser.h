@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.111 2018/09/05 21:16:26 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.112 2018/09/06 15:07:34 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -285,7 +285,7 @@ extern const struct pf_timeout pf_timeouts[];
 
 void			 set_ipmask(struct node_host *, int);
 int			 check_netmask(struct node_host *, sa_family_t);
-int			 unmask(struct pf_addr *, sa_family_t);
+int			 unmask(struct pf_addr *);
 struct node_host	*gen_dynnode(struct node_host *, sa_family_t);
 void			 ifa_load(void);
 unsigned int		 ifa_nametoindex(const char *);

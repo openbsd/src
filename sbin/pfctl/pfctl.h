@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.56 2018/07/24 09:48:04 kn Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.57 2018/09/06 15:07:33 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -96,7 +96,6 @@ void	 print_addr_str(sa_family_t, struct pf_addr *);
 void	 print_host(struct pf_addr *, u_int16_t p, sa_family_t, u_int16_t, const char *, int);
 void	 print_seq(struct pfsync_state_peer *);
 void	 print_state(struct pfsync_state *, int);
-int	 unmask(struct pf_addr *, sa_family_t);
 
 int	 pfctl_cmdline_symset(char *);
 int	 pfctl_add_trans(struct pfr_buffer *, int, const char *);
