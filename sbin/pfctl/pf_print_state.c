@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.65 2018/07/24 09:48:04 kn Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.66 2018/09/06 14:46:36 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -166,8 +166,9 @@ void
 print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, u_int16_t rdom,
     const char *proto, int opts)
 {
-	struct servent	*s = NULL;
-	char		ps[6];
+	struct pf_addr_wrap	 aw;
+	struct servent		*s = NULL;
+	char			 ps[6];
 
 	if (rdom)
 		printf("(%u) ", ntohs(rdom));
@@ -175,16 +176,9 @@ print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, u_int16_t rdom,
 	if (opts & PF_OPT_USEDNS)
 		print_name(addr, af);
 	else {
-		struct pf_addr_wrap aw;
-
 		memset(&aw, 0, sizeof(aw));
 		aw.v.a.addr = *addr;
-		if (af == AF_INET)
-			aw.v.a.mask.addr32[0] = 0xffffffff;
-		else {
-			memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
-			af = AF_INET6;
-		}
+		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
 		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
