@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.112 2018/09/05 16:58:59 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.113 2018/09/06 16:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -661,7 +661,7 @@ tls1_setup_key_block(SSL *s)
 		return (1);
 
 	if (s->session->cipher &&
-	    (s->session->cipher->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD)) {
+	    (s->session->cipher->algorithm_mac & SSL_AEAD)) {
 		if (!ssl_cipher_get_evp_aead(s->session, &aead)) {
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);

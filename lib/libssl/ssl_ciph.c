@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.102 2018/09/03 18:00:50 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.103 2018/09/06 16:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -515,7 +515,7 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	 * This function does not handle EVP_AEAD.
 	 * See ssl_cipher_get_aead_evp instead.
 	 */
-	if (c->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD)
+	if (c->algorithm_mac & SSL_AEAD)
 		return(0);
 
 	if ((enc == NULL) || (md == NULL))
@@ -593,8 +593,6 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 			*mac_pkey_type = NID_undef;
 		if (mac_secret_size != NULL)
 			*mac_secret_size = 0;
-		if (c->algorithm_mac == SSL_AEAD)
-			mac_pkey_type = NULL;
 	} else {
 		*md = ssl_digest_methods[i];
 		if (mac_pkey_type != NULL)
@@ -624,7 +622,7 @@ ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead)
 
 	if (c == NULL)
 		return 0;
-	if ((c->algorithm2 & SSL_CIPHER_ALGORITHM2_AEAD) == 0)
+	if ((c->algorithm_mac & SSL_AEAD) == 0)
 		return 0;
 
 	switch (c->algorithm_enc) {

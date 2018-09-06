@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.169 2018/08/27 16:48:12 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.170 2018/09/06 16:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -674,7 +674,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 128,
 		.alg_bits = 128,
@@ -692,7 +692,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 256,
 		.alg_bits = 256,
@@ -710,7 +710,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 128,
 		.alg_bits = 128,
@@ -728,7 +728,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 256,
 		.alg_bits = 256,
@@ -746,7 +746,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 128,
 		.alg_bits = 128,
@@ -764,7 +764,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 256,
 		.alg_bits = 256,
@@ -1191,7 +1191,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 128,
 		.alg_bits = 128,
@@ -1209,7 +1209,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 256,
 		.alg_bits = 256,
@@ -1227,7 +1227,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 128,
 		.alg_bits = 128,
@@ -1245,7 +1245,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(4)|
+		    FIXED_NONCE_LEN(4)|
 		    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD,
 		.strength_bits = 256,
 		.alg_bits = 256,
@@ -1263,7 +1263,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(12),
+		    FIXED_NONCE_LEN(12),
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
@@ -1280,7 +1280,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(12),
+		    FIXED_NONCE_LEN(12),
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
@@ -1297,7 +1297,7 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm_ssl = SSL_TLSV1_2,
 		.algo_strength = SSL_HIGH,
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256|
-		    SSL_CIPHER_ALGORITHM2_AEAD|FIXED_NONCE_LEN(12),
+		    FIXED_NONCE_LEN(12),
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},

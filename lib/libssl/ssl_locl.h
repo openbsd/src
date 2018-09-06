@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.213 2018/09/05 16:48:11 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.214 2018/09/06 16:40:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,8 +282,10 @@ __BEGIN_HIDDEN_DECLS
 #define TLS1_PRF_STREEBOG256 (SSL_HANDSHAKE_MAC_STREEBOG256 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 
-/* Stream MAC for GOST ciphersuites from cryptopro draft
- * (currently this also goes into algorithm2) */
+/*
+ * Stream MAC for GOST ciphersuites from cryptopro draft
+ * (currently this also goes into algorithm2).
+ */
 #define TLS1_STREAM_MAC 0x04
 
 /*
@@ -294,14 +296,8 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD (1 << 22)
 
 /*
- * SSL_CIPHER_ALGORITHM2_AEAD is an algorithm2 flag that indicates the cipher
- * is implemented via an EVP_AEAD.
- */
-#define SSL_CIPHER_ALGORITHM2_AEAD (1 << 23)
-
-/*
  * SSL_CIPHER_AEAD_FIXED_NONCE_LEN returns the number of bytes of fixed nonce
- * for an SSL_CIPHER with the SSL_CIPHER_ALGORITHM2_AEAD flag.
+ * for an SSL_CIPHER with an algorithm_mac of SSL_AEAD.
  */
 #define SSL_CIPHER_AEAD_FIXED_NONCE_LEN(ssl_cipher) \
 	(((ssl_cipher->algorithm2 >> 24) & 0xf) * 2)
