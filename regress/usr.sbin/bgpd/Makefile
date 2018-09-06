@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2018/09/06 15:16:01 benno Exp $
+# $OpenBSD: Makefile,v 1.3 2018/09/06 15:55:30 benno Exp $
 
 BGPDTESTS=1 2
 
@@ -28,8 +28,8 @@ bgpd-example:
 
 # check that the output of bgpd -nvv is parseable
 bgpd-printconf:
-	bgpd -nvf ${.CURDIR}/bgpd.conf.printconf > bgpd.conf.printconf.test
-	bgpd -nf bgpd.conf.printconf.test
+	bgpd -nvf ${.CURDIR}/bgpd.conf.printconf | \
+	    bgpd -nf /dev/stdin
 
 clean:
 	rm -f bgpd.conf.printconf.test
