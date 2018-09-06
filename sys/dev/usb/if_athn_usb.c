@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.50 2018/02/05 09:52:03 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.51 2018/09/06 11:50:54 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1144,7 +1144,7 @@ athn_usb_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 {
- 	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
 	struct ieee80211_node *ni = *(void **)arg;
 	struct athn_node *an = (struct athn_node *)ni;
 	int s;
@@ -1152,7 +1152,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
- 	s = splnet();
+	s = splnet();
 	/* NB: Node may have left before we got scheduled. */
 	if (an->sta_index != 0)
 		(void)athn_usb_node_set_rates(usc, ni);

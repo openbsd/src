@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.38 2018/01/11 15:49:34 visa Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.39 2018/09/06 11:50:54 jsg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -258,8 +258,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
- 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
- 		    NULL, flags, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {

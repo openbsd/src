@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.142 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: tty.c,v 1.143 2018/09/06 11:50:54 jsg Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1610,10 +1610,10 @@ read:
 		/*
 		 * Give user character.
 		 */
- 		error = ureadc(c, uio);
+		error = ureadc(c, uio);
 		if (error)
 			break;
- 		if (uio->uio_resid == 0)
+		if (uio->uio_resid == 0)
 			break;
 		/*
 		 * In canonical mode check for a "break character"

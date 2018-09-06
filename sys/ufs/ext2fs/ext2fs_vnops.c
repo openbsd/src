@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.84 2018/06/21 14:17:23 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.85 2018/09/06 11:50:54 jsg Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -594,15 +594,15 @@ abortit:
 		goto abortit;
 	}
 	if ((ip->i_e2fs_mode & IFMT) == IFDIR) {
-        	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-        	if (!error && tvp)
-                	error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
+		error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
+		if (!error && tvp)
+			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred,
 			    tcnp->cn_proc);
-        	if (error) {
-                	VOP_UNLOCK(fvp);
-                	error = EACCES;
-                	goto abortit;
-        	}
+		if (error) {
+			VOP_UNLOCK(fvp);
+			error = EACCES;
+			goto abortit;
+		}
 		/*
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
@@ -758,7 +758,7 @@ abortit:
 		 * decrement the link count on the parent
 		 * of the target directory.
 		 */
-		 if (doingdirectory && !newparent) {
+		if (doingdirectory && !newparent) {
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 		}
@@ -966,11 +966,11 @@ ext2fs_mkdir(void *v)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
 		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
-  	        if (error) {
-  	        	dp->i_e2fs_nlink--;
-  	        	dp->i_flag |= IN_CHANGE;
-  	        	goto bad;
-  	        }
+		if (error) {
+			dp->i_e2fs_nlink--;
+			dp->i_flag |= IN_CHANGE;
+			goto bad;
+		}
 		ip->i_flag |= IN_CHANGE;
 	}
 

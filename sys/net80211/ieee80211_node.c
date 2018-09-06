@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.143 2018/09/01 08:20:56 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.144 2018/09/06 11:50:54 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2250,7 +2250,7 @@ ieee80211_count_pssta(void *arg, struct ieee80211_node *ni)
 	if (ni->ni_associd == 0 || ni->ni_state == IEEE80211_STA_COLLECT)
 		return;
 
- 	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
+	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
 		(*pssta)++;
 }
 
