@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.46 2017/06/27 21:49:47 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.47 2018/09/07 07:11:16 martijn Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ copy(char *argv[], enum op type, int fts_options)
 	struct stat to_stat;
 	FTS *ftsp;
 	FTSENT *curr;
-	int base, nlen, rval;
+	int base, cval, nlen, rval;
 	char *p, *target_mid;
 	base = 0;
 
@@ -434,32 +434,35 @@ copy(char *argv[], enum op type, int fts_options)
 				    !fts_dne(curr)))
 					rval = 1;
 			} else
-				if (copy_file(curr, fts_dne(curr)))
+				if ((cval = copy_file(curr, fts_dne(curr))) == 1)
 					rval = 1;
-			if (!rval && vflag)
+			if (!cval && vflag)
 				(void)fprintf(stdout, "%s -> %s\n",
 				    curr->fts_path, to.p_path);
+			cval = 0;
 			break;
 		case S_IFIFO:
 			if (Rflag) {
 				if (copy_fifo(curr->fts_statp, !fts_dne(curr)))
 					rval = 1;
 			} else
-				if (copy_file(curr, fts_dne(curr)))
+				if ((cval = copy_file(curr, fts_dne(curr))) == 1)
 					rval = 1;
-			if (!rval && vflag)
+			if (!cval && vflag)
 				(void)fprintf(stdout, "%s -> %s\n",
 				    curr->fts_path, to.p_path);
+			cval = 0;
 			break;
 		case S_IFSOCK:
 			warnc(EOPNOTSUPP, "%s", curr->fts_path);
 			break;
 		default:
-			if (copy_file(curr, fts_dne(curr)))
+			if ((cval = copy_file(curr, fts_dne(curr))) == 1)
 				rval = 1;
-			else if (vflag)
+			if (!cval && vflag)
 				(void)fprintf(stdout, "%s -> %s\n",
 				    curr->fts_path, to.p_path);
+			cval = 0;
 			break;
 		}
 	}

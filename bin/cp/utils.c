@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.40 2017/06/27 21:43:46 tedu Exp $	*/
+/*	$OpenBSD: utils.c,v 1.41 2018/09/07 07:11:16 martijn Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ copy_file(FTSENT *entp, int dne)
 				ch = getchar();
 			if (checkch != 'y' && checkch != 'Y') {
 				(void)close(from_fd);
-				return (0);
+				return (2);
 			}
 		}
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
