@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2018/07/11 07:39:22 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2018/09/07 07:35:30 miko Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1094,17 +1094,12 @@ cmdline_symset(char *s)
 {
 	char	*sym, *val;
 	int	ret;
-	size_t	len;
 
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
-
-	len = strlen(s) - strlen(val) + 1;
-	if ((sym = malloc(len)) == NULL)
-		errx(1, "cmdline_symset: malloc");
-
-	strlcpy(sym, s, len);
-
+	sym = strndup(s, val - s);
+	if (sym == NULL)
+		errx(1, "%s: strndup", __func__);
 	ret = symset(sym, val + 1, 1);
 	free(sym);
 
