@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets_test.c,v 1.1 2018/09/07 08:40:00 claudio Exp $ */
+/*	$OpenBSD: rde_sets_test.c,v 1.2 2018/09/07 09:31:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -26,34 +26,37 @@
 u_int32_t va[] = { 19, 14, 32, 76, 125 };
 u_int32_t vaa[] = { 125, 14, 76, 32, 19 };
 u_int32_t vb[] = { 256, 1024, 512, 4096, 2048, 512 };
+u_int32_t vc[] = { 42 };
+
+static struct as_set *
+build_set(const char *name, u_int32_t *mem, size_t nmemb, size_t initial)
+{
+	struct as_set *a;
+
+	a = as_set_new(name, initial);
+	if (a == NULL)
+		err(1, "as_set_new %s", name);
+	if (as_set_add(a, mem, nmemb) != 0)
+		err(1, "as_set_add %s", name);
+	as_set_prep(a);
+
+	return a;
+}
 
 int
 main(int argc, char **argv)
 {
-	struct as_set *a, *aa, *b;
+	struct as_set *a, *aa, *b, *c;
 	size_t i;
 
-	a = as_set_new("a", sizeof(va) / sizeof(va[0]));
-	if (a == NULL)
-		err(1, "as_set_new a");
-	if (as_set_add(a, va, sizeof(va) / sizeof(va[0])) != 0)
-		err(1, "as_set_add a");
+	a = build_set("a", va, sizeof(va) / sizeof(va[0]),
+	    sizeof(va) / sizeof(va[0]));
 
-	aa = as_set_new("aa", 0);
-	if (aa == NULL)
-		err(1, "as_set_new aa");
-	if (as_set_add(aa, vaa, sizeof(vaa) / sizeof(vaa[0])) != 0)
-		err(1, "as_set_add aa");
+	aa = build_set("aa", vaa, sizeof(vaa) / sizeof(vaa[0]), 0);
 
-	b = as_set_new("b", 0);
-	if (b == NULL)
-		err(1, "as_set_new b");
-	if (as_set_add(b, vb, sizeof(vb) / sizeof(vb[0])) != 0)
-		err(1, "as_set_add b");
+	b = build_set("b", vb, sizeof(vb) / sizeof(vb[0]), 1);
 
-	as_set_prep(a);
-	as_set_prep(aa);
-	as_set_prep(b);
+	c = build_set("c", vc, sizeof(vc) / sizeof(vc[0]), 1);
 
 	if (!as_set_equal(a, aa))
 		errx(1, "as_set_equal(a, aa) non equal");
@@ -65,8 +68,12 @@ main(int argc, char **argv)
 			errx(1, "as_set_match(a, %u) failed to match", va[i]);
 	for (i = 0; i < sizeof(vb) / sizeof(vb[0]); i++)
 		if (as_set_match(a, vb[i]))
-			errx(1, "as_set_match(a, %u) matched but shouldn't",
+			errx(1, "as_set_match(a, %u) matched but should not",
 			    vb[i]);
+	if (!as_set_match(c, 42))
+		errx(1, "as_set_match(c, %u) failed to match", 42);
+	if (as_set_match(c, 7))
+		errx(1, "as_set_match(c, %u) matched but should not", 7);
 	
 	printf("OK\n");
 	return 0;
