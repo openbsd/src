@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.103 2018/09/07 10:49:22 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.104 2018/09/07 16:45:23 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -573,6 +573,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 	struct filter_rule	*fa, *fb;
 	struct rde_prefixset	*psa, *psb;
 	struct as_set		*asa, *asb;
+	int			 r;
 
 	fa = a ? TAILQ_FIRST(a) : NULL;
 	fb = b ? TAILQ_FIRST(b) : NULL;
@@ -605,13 +606,14 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		asb = fb->match.as.aset;
 		fa->match.prefixset.ps = fb->match.prefixset.ps = NULL;
 		fa->match.as.aset = fb->match.as.aset = NULL;
-		if (memcmp(&fa->match, &fb->match, sizeof(fa->match)))
-			return (0);
+		r = memcmp(&fa->match, &fb->match, sizeof(fa->match));
+		/* fixup the struct again */
 		fa->match.prefixset.ps = psa;
 		fb->match.prefixset.ps = psb;
 		fa->match.as.aset = asa;
 		fb->match.as.aset = asb;
-
+		if (r != 0)
+			return (0);
 		if (fa->match.prefixset.flags != 0 &&
 		    fa->match.prefixset.ps != NULL &&
 		    fa->match.prefixset.ps->dirty) {
