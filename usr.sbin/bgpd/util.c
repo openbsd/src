@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.33 2018/09/05 09:49:57 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.34 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -316,6 +316,11 @@ static int
 as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
 {
 	u_int32_t match;
+
+	if (f->flags & AS_FLAG_AS_SET_NAME)	/* should not happen */
+		return (0);
+	if (f->flags & AS_FLAG_AS_SET)
+		return (as_set_match(f->aset, as));
 
 	if (f->flags & AS_FLAG_NEIGHBORAS)
 		match = neighas;
@@ -955,4 +960,3 @@ get_baudrate(u_int64_t baudrate, char *unit)
 
 	return (bbuf);
 }
-

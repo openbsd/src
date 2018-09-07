@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.333 2018/09/05 09:49:57 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.334 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,7 @@
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
-#define	PREFIXSET_NAME_LEN		32
+#define	SET_NAME_LEN			64
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
@@ -213,6 +213,9 @@ TAILQ_HEAD(network_head, network);
 struct prefixset;
 SIMPLEQ_HEAD(prefixset_head, prefixset);
 
+struct as_set;
+SIMPLEQ_HEAD(as_set_head, as_set);
+
 struct filter_rule;
 TAILQ_HEAD(filter_head, filter_rule);
 
@@ -223,6 +226,7 @@ struct bgpd_config {
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
 	struct prefixset_head			*prefixsets;
+	struct as_set_head			*as_sets;
 	char					*csock;
 	char					*rcsock;
 	int					 flags;
@@ -404,8 +408,6 @@ enum imsg_type {
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,
 	IMSG_FILTER_SET,
-	IMSG_RECONF_PREFIXSET,
-	IMSG_RECONF_PREFIXSETITEM,
 	IMSG_SOCKET_CONN,
 	IMSG_SOCKET_CONN_CTL,
 	IMSG_RECONF_CONF,
@@ -418,6 +420,11 @@ enum imsg_type {
 	IMSG_RECONF_RDOMAIN_EXPORT,
 	IMSG_RECONF_RDOMAIN_IMPORT,
 	IMSG_RECONF_RDOMAIN_DONE,
+	IMSG_RECONF_PREFIXSET,
+	IMSG_RECONF_PREFIXSETITEM,
+	IMSG_RECONF_AS_SET,
+	IMSG_RECONF_AS_SET_ITEMS,
+	IMSG_RECONF_AS_SET_DONE,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
 	IMSG_UPDATE_ERR,
@@ -648,12 +655,18 @@ enum aslen_spec {
 	ASLEN_SEQ
 };
 
+#define AS_FLAG_NEIGHBORAS	0x01
+#define AS_FLAG_AS_SET_NAME	0x02
+#define AS_FLAG_AS_SET		0x04
+
 struct filter_as {
-	u_int16_t	flags;
-	enum as_spec	type;
-	u_int8_t	op;
-	u_int32_t	as_min;
-	u_int32_t	as_max;
+	char		 name[SET_NAME_LEN];
+	struct as_set	*aset;
+	u_int32_t	 as_min;
+	u_int32_t	 as_max;
+	enum as_spec	 type;
+	u_int8_t	 flags;
+	u_int8_t	 op;
 };
 
 struct filter_aslen {
@@ -666,11 +679,9 @@ struct filter_aslen {
 
 struct filter_prefixset {
 	int			 flags;
-	char			 name[PREFIXSET_NAME_LEN];
+	char			 name[SET_NAME_LEN];
 	struct prefixset	*ps;
 };
-
-#define AS_FLAG_NEIGHBORAS	0x01
 
 struct filter_community {
 	int		as;
@@ -942,7 +953,7 @@ SIMPLEQ_HEAD(prefixset_items_h, prefixset_item);
 
 struct prefixset {
 	int				 sflags;
-	char				 name[PREFIXSET_NAME_LEN];
+	char				 name[SET_NAME_LEN];
 	struct prefixset_items_h	 psitems;
 	SIMPLEQ_ENTRY(prefixset)	 entry;
 };
@@ -1144,6 +1155,21 @@ int		 filterset_cmp(struct filter_set *, struct filter_set *);
 void		 filterset_move(struct filter_set_head *,
 		    struct filter_set_head *);
 const char	*filterset_name(enum action_types);
+
+/* rde_sets.c */
+void		 as_sets_insert(struct as_set_head *, struct as_set *);
+struct as_set	*as_sets_lookup(struct as_set_head *, const char *);
+void		 as_sets_free(struct as_set_head *);
+void		 print_as_sets(struct as_set_head *);
+int		 as_sets_send(struct imsgbuf *, struct as_set_head *);
+void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
+
+struct as_set	*as_set_new(const char *, size_t);
+int		 as_set_add(struct as_set *, u_int32_t *, size_t);
+void		 as_set_prep(struct as_set *);
+int		 as_set_match(const struct as_set *, u_int32_t);
+int		 as_set_equal(const struct as_set *, const struct as_set *);
+int		 as_set_dirty(const struct as_set *);
 
 /* util.c */
 const char	*log_addr(const struct bgpd_addr *);

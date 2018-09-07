@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.418 2018/09/05 09:49:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.419 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,6 +129,7 @@ time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
 struct prefixset_head	*prefixsets_tmp, *prefixsets_old;
+struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rdomain_head	*rdomains_l, *newdomains;
 struct imsgbuf		*ibuf_se;
@@ -687,6 +688,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	static struct rdomain	*rd;
 	static struct prefixset	*last_prefixset;
+	static struct as_set	*last_as_set;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
@@ -697,6 +699,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct rib		*rib;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi;
+	char			*name;
+	size_t			 nmemb;
 	int			 n, fd;
 	u_int16_t		 rid;
 
@@ -769,6 +773,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (prefixsets_tmp == NULL)
 				fatal(NULL);
 			SIMPLEQ_INIT(prefixsets_tmp);
+			as_sets_tmp = calloc(1,
+			    sizeof(struct as_set_head));
+			if (as_sets_tmp == NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(as_sets_tmp);
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
@@ -822,14 +831,25 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
 			if (r->match.prefixset.flags != 0) {
-				log_debug("%s: retrieving prefixset %s for "
-				    "rule", __func__, r->match.prefixset.name);
 				r->match.prefixset.ps =
 				    find_prefixset(r->match.prefixset.name,
 					prefixsets_tmp);
 				if (r->match.prefixset.ps == NULL)
 					log_warnx("%s: no prefixset for %s",
 					    __func__, r->match.prefixset.name);
+			}
+			if (r->match.as.flags & AS_FLAG_AS_SET_NAME) {
+				struct as_set * aset;
+
+				aset = as_sets_lookup(as_sets_tmp,
+				    r->match.as.name);
+				if (aset == NULL) {
+					log_warnx("%s: no as-set for %s",
+					    __func__, r->match.as.name);
+				} else {
+					r->match.as.flags = AS_FLAG_AS_SET;
+					r->match.as.aset = aset;
+				}
 			}
 			TAILQ_INIT(&r->set);
 			if ((rib = rib_find(r->rib)) == NULL) {
@@ -878,6 +898,27 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
 			SIMPLEQ_INSERT_TAIL(&last_prefixset->psitems, psi, entry);
+			break;
+		case IMSG_RECONF_AS_SET:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(nmemb) + SET_NAME_LEN)
+				fatalx("IMSG_RECONF_AS_SET bad len");
+			memcpy(&nmemb, imsg.data, sizeof(nmemb));
+			name = (char *)imsg.data + sizeof(nmemb);
+			if (as_sets_lookup(as_sets_tmp, name) != NULL)
+				fatalx("duplicate as-set %s", name);
+			last_as_set = as_set_new(name, nmemb);
+			break;
+		case IMSG_RECONF_AS_SET_ITEMS:
+			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
+			nmemb /= sizeof(u_int32_t);
+			if (as_set_add(last_as_set, imsg.data, nmemb) != 0)
+				fatal(NULL);
+			break;
+		case IMSG_RECONF_AS_SET_DONE:
+			as_set_prep(last_as_set);
+			as_sets_insert(as_sets_tmp, last_as_set);
+			last_as_set = NULL;
 			break;
 		case IMSG_RECONF_RDOMAIN:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2753,6 +2794,7 @@ rde_reload_done(void)
 	}
 
 	prefixsets_old = conf->prefixsets;
+	as_sets_old = conf->as_sets;
 
 	memcpy(conf, nconf, sizeof(struct bgpd_config));
 	conf->listen_addrs = NULL;
@@ -2782,9 +2824,14 @@ rde_reload_done(void)
 	/* XXX WHERE IS THE SYNC ??? */
 
 	rde_mark_prefixsets_dirty(prefixsets_old, prefixsets_tmp);
+	as_sets_mark_dirty(as_sets_old, as_sets_tmp);
+
 	/* swap the prefixsets */
 	conf->prefixsets = prefixsets_tmp;
 	prefixsets_tmp = NULL;
+	/* and the as_sets */
+	conf->as_sets = as_sets_tmp;
+	as_sets_tmp = NULL;
 
 	/*
 	 * make the new filter rules the active one but keep the old for
@@ -2812,8 +2859,7 @@ rde_reload_done(void)
 			peer->reconf_rib = 1;
 			continue;
 		}
-		if (!rde_filter_equal(out_rules, out_rules_tmp, peer,
-		    conf->prefixsets)) {
+		if (!rde_filter_equal(out_rules, out_rules_tmp, peer)) {
 			char *p = log_fmt_peer(&peer->conf);
 			log_debug("out filter change: reloading peer %s", p);
 			free(p);
@@ -2837,7 +2883,7 @@ rde_reload_done(void)
 			break;
 		case RECONF_KEEP:
 			if (rde_filter_equal(ribs[rid].in_rules,
-			    ribs[rid].in_rules_tmp, NULL, conf->prefixsets))
+			    ribs[rid].in_rules_tmp, NULL))
 				/* rib is in sync */
 				break;
 			log_debug("in filter change: reloading RIB %s",
@@ -2974,6 +3020,8 @@ rde_softreconfig_done(void)
 
 	free_prefixsets(prefixsets_old);
 	prefixsets_old = NULL;
+	as_sets_free(as_sets_old);
+	as_sets_old = NULL;
 
 	log_info("RDE soft reconfiguration done");
 	imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.111 2018/09/05 17:32:43 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.112 2018/09/07 05:43:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -606,6 +606,10 @@ print_announce(struct peer_config *p, const char *c)
 
 void print_as(struct filter_rule *r)
 {
+	if (r->match.as.flags & AS_FLAG_AS_SET_NAME) {
+		printf("as-set \"%s\" ", r->match.as.name);
+		return;
+	}
 	switch(r->match.as.op) {
 	case OP_RANGE:
 		printf("%s - ", log_as(r->match.as.as_min));
@@ -862,7 +866,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	}
 	printf("\n");
 	print_prefixsets(conf->prefixsets);
-	printf("\n");
+	print_as_sets(conf->as_sets);
 	print_mrt(conf, 0, 0, "", "");
 	printf("\n");
 	print_groups(conf, peer_l);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.194 2018/07/14 12:32:35 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.195 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -518,6 +518,12 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		}
 		free(ps);
 	}
+
+	/* as-sets for filters in the RDE */
+	if (as_sets_send(ibuf_rde, conf->as_sets) == -1)
+		return (-1);
+	as_sets_free(conf->as_sets);
+	conf->as_sets = NULL;
 
 	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(conf->filters)) != NULL) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.171 2018/07/11 14:08:46 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.172 2018/09/07 05:43:33 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2018 $
+.Dd $Mdocdate: September 7 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -143,6 +143,20 @@ or as a large number (ASPLAIN format), for example:
 .Bd -literal -offset indent
 AS 196618
 .Ed
+.Pp
+.Pp
+.It Xo
+.Ic as-set Ar name
+.Ic { Ar as-number ... Ic }
+.Xc
+An
+.Ic as-set
+holds a collection of AS numbers and can be used with the AS specific
+parameter in
+.Sx FILTER
+rules.
+Lookups against as-sets are more efficient than a large number of rules
+which differ only in the AS number.
 .Pp
 .It Ic connect-retry Ar seconds
 Set the number of seconds before retrying to open a connection.
@@ -1111,21 +1125,25 @@ If a parameter is specified, the rule only applies to packets with
 matching attributes.
 .Pp
 .Bl -tag -width Ds -compact
-.It Xo
+.It Xo 
 .Ar as-type Op Ar operator
 .Ar as-number
 .Xc
+.It Ar as-type Ic as-set Ar name
 This rule applies only to
 .Em UPDATES
 where the
 .Em AS path
 matches.
 The
-.Ar as-number
-is matched against a part of the
+part of the
 .Em AS path
 specified by the
-.Ar as-type :
+.Ar as-type
+is matched against the
+.Ar as-number
+or the
+.Ic as-set Ar name :
 .Pp
 .Bl -tag -width transmit-as -compact
 .It Ic AS
@@ -1146,6 +1164,10 @@ It may be set to
 which is expanded to the current neighbor remote AS number, or
 .Ic local-as ,
 which is expanded to the locally assigned AS number.
+.Pp
+When specifying an
+.Ic as-set Ar name
+the AS path will instead be matched against all the AS numbers in the set.
 .Pp
 The
 .Ar operator

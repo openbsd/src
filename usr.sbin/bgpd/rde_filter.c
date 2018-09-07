@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.101 2018/09/05 17:32:43 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.102 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -571,10 +571,11 @@ rde_filter_skip_rule(struct rde_peer *peer, struct filter_rule *f)
 
 int
 rde_filter_equal(struct filter_head *a, struct filter_head *b,
-    struct rde_peer *peer, struct prefixset_head *psh)
+    struct rde_peer *peer)
 {
 	struct filter_rule	*fa, *fb;
 	struct prefixset	*psa, *psb;
+	struct as_set		*asa, *asb;
 
 	fa = a ? TAILQ_FIRST(a) : NULL;
 	fb = b ? TAILQ_FIRST(b) : NULL;
@@ -603,11 +604,16 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		/* compare filter_rule.match without the prefixset pointer */
 		psa = fa->match.prefixset.ps;
 		psb = fb->match.prefixset.ps;
+		asa = fa->match.as.aset;
+		asb = fb->match.as.aset;
 		fa->match.prefixset.ps = fb->match.prefixset.ps = NULL;
+		fa->match.as.aset = fb->match.as.aset = NULL;
 		if (memcmp(&fa->match, &fb->match, sizeof(fa->match)))
 			return (0);
 		fa->match.prefixset.ps = psa;
 		fb->match.prefixset.ps = psb;
+		fa->match.as.aset = asa;
+		fb->match.as.aset = asb;
 
 		if ((fa->match.prefixset.flags != 0) &&
 		    (fa->match.prefixset.ps != NULL) &&
@@ -615,6 +621,13 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		    & PREFIXSET_FLAG_DIRTY) != 0)) {
 			log_debug("%s: prefixset %s has changed",
 			    __func__, fa->match.prefixset.name);
+			return (0);
+		}
+
+		if ((fa->match.as.flags & AS_FLAG_AS_SET) &&
+		    as_set_dirty(fa->match.as.aset)) {
+			log_debug("%s: as-set %s has changed",
+			    __func__, fa->match.as.name);
 			return (0);
 		}
 

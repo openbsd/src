@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.32 2017/08/21 14:43:33 phessler Exp $
+#	$OpenBSD: Makefile,v 1.33 2018/09/07 05:43:33 claudio Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c session.c log.c logmsg.c parse.y config.c \
 	rde.c rde_rib.c rde_decide.c rde_prefix.c mrt.c kroute.c \
 	control.c pfkey.c rde_update.c rde_attr.c printconf.c \
-	rde_filter.c pftable.c name2id.c util.c carp.c timer.c
+	rde_filter.c rde_sets.c pftable.c name2id.c util.c carp.c timer.c
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.333 2018/09/05 17:32:43 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.334 2018/09/07 05:43:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -160,6 +160,9 @@ int		 parsesubtype(char *, int *, int *);
 int		 parseextvalue(char *, u_int32_t *);
 int		 parseextcommunity(struct filter_extcommunity *, char *,
 		    char *);
+int		 asset_new(char *);
+void		 asset_add(u_int32_t);
+void		 asset_done(void);
 
 typedef struct {
 	union {
@@ -207,9 +210,10 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	CONNECTED STATIC
-%token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY
-%token	PREFIX PREFIXLEN PREFIXSET SOURCEAS TRANSITAS PEERAS DELETE MAXASLEN
-%token	MAXASSEQ SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
+%token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
+%token	PREFIX PREFIXLEN PREFIXSET
+%token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
+%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
 %token	ERROR INCLUDE
 %token	IPSEC ESP AH SPI IKE
@@ -242,9 +246,10 @@ typedef struct {
 
 grammar		: /* empty */
 		| grammar '\n'
-		| grammar include '\n'
-		| grammar conf_main '\n'
 		| grammar varset '\n'
+		| grammar include '\n'
+		| grammar asset '\n'
+		| grammar conf_main '\n'
 		| grammar rdomain '\n'
 		| grammar neighbor '\n'
 		| grammar group '\n'
@@ -395,6 +400,17 @@ include		: INCLUDE STRING		{
 			lungetc('\n');
 		}
 		;
+
+asset		: ASSET STRING '{' optnl	{
+			if (asset_new($2) != 0)
+				YYERROR;
+			free($2);
+		} asset_l optnl '}' {
+			asset_done();
+		}
+
+asset_l		: as4number			{ asset_add($1); }
+		| asset_l optnl as4number	{ asset_add($3); }
 
 conf_main	: AS as4number		{
 			conf->as = $2;
@@ -1874,6 +1890,27 @@ filter_as_t	: filter_as_type filter_as			{
 			for (a = $$; a != NULL; a = a->next)
 				a->a.type = $1;
 		}
+		| filter_as_type ASSET STRING {
+			if (as_sets_lookup(conf->as_sets, $3) == NULL) {
+				yyerror("as-set \"%s\" not defined", $3);
+				free($3);
+				YYERROR;
+			}
+			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->a.type = $1;
+			$$->a.flags = AS_FLAG_AS_SET_NAME;
+			if (strlcpy($$->a.name, $3, sizeof($$->a.name)) >=
+			    sizeof($$->a.name)) {
+				yyerror("as-set name \"%s\" too long: "
+				    "max %zu", $3, sizeof($$->a.name) - 1);
+				free($3);
+				free($$);
+				YYERROR;
+			}
+			free($3);
+		}
 		;
 
 filter_as_l_h	: filter_as_l
@@ -1903,6 +1940,7 @@ filter_as	: as4number_any		{
 			    NULL)
 				fatal(NULL);
 			$$->a.as_min = $1;
+			$$->a.as_max = $1;
 			$$->a.op = OP_EQ;
 		}
 		| NEIGHBORAS		{
@@ -1917,6 +1955,7 @@ filter_as	: as4number_any		{
 				fatal(NULL);
 			$$->a.op = $1;
 			$$->a.as_min = $2;
+			$$->a.as_max = $2;
 		}
 		| as4number_any binaryop as4number_any {
 			if (($$ = calloc(1, sizeof(struct filter_as_l))) ==
@@ -2559,6 +2598,7 @@ lookup(char *s)
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
 		{ "as-4byte",		AS4BYTE },
+		{ "as-set",		ASSET },
 		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
@@ -4098,4 +4138,43 @@ get_rule(enum action_types type)
 		}
 	}
 	return (r);
+}
+
+struct as_set *curasset;
+int
+asset_new(char *name)
+{
+	struct as_set *aset;
+
+	if (curasset)
+		fatalx("%s: bad mojo jojo", __func__);
+
+	if (as_sets_lookup(conf->as_sets, name) != NULL) {
+		yyerror("as-set \"%s\" already exists", name);
+		return -1;
+	}
+
+	aset = as_set_new(name, 0);
+	if (aset == NULL)
+		fatal(NULL);
+	as_sets_insert(conf->as_sets, aset);
+
+	curasset = aset;
+	return 0;
+}
+
+void
+asset_add(u_int32_t as)
+{
+	if (curasset == NULL)
+		fatalx("%s: bad mojo jojo", __func__);
+
+	if (as_set_add(curasset, &as, 1) != 0)
+		fatal(NULL);
+}
+
+void
+asset_done(void)
+{
+	curasset = NULL;
 }
