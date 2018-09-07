@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.122 2018/06/20 16:43:05 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.123 2018/09/07 09:31:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -846,6 +846,7 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	const char		*httperr = NULL, *style;
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128], *hstsheader = NULL;
+	char			*clenheader = NULL;
 	char			 buf[IBUF_READ_SIZE];
 	char			*escapedmsg = NULL;
 	int			 bodylen;
@@ -961,6 +962,16 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		}
 	}
 
+	if ((code >= 100 && code < 200) || code == 204)
+		clenheader = NULL;
+	else {
+		if (asprintf(&clenheader,
+		    "Content-Length: %d\r\n", bodylen) == -1) {
+			clenheader = NULL;
+			goto done;
+		}
+	}
+
 	/* Add basic HTTP headers */
 	if (asprintf(&httpmsg,
 	    "HTTP/1.0 %03d %s\r\n"
@@ -968,15 +979,17 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "Server: %s\r\n"
 	    "Connection: close\r\n"
 	    "Content-Type: text/html\r\n"
-	    "Content-Length: %d\r\n"
+	    "%s"
 	    "%s"
 	    "%s"
 	    "\r\n"
 	    "%s",
-	    code, httperr, tmbuf, HTTPD_SERVERNAME, bodylen,
+	    code, httperr, tmbuf, HTTPD_SERVERNAME,
+	    clenheader == NULL ? "" : clenheader,
 	    extraheader == NULL ? "" : extraheader,
 	    hstsheader == NULL ? "" : hstsheader,
-	    desc->http_method == HTTP_METHOD_HEAD ? "" : body) == -1)
+	    desc->http_method == HTTP_METHOD_HEAD || clenheader == NULL ?
+	    "" : body) == -1)
 		goto done;
 
 	/* Dump the message without checking for success */
@@ -987,6 +1000,7 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	free(body);
 	free(extraheader);
 	free(hstsheader);
+	free(clenheader);
 	if (msg == NULL)
 		msg = "\"\"";
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
