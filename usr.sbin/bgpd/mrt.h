@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.32 2018/07/17 07:02:11 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.33 2018/09/07 10:59:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -200,7 +200,7 @@ enum MRT_DUMP_V2_SUBTYPES {
  * The format of a peer_entry is the following:
  *
  * +--------+
- * |  type  |    
+ * |  type  |
  * +--------+--------+--------+--------+
  * |            peer_bgp_id            |
  * +--------+--------+--------+--------+
@@ -219,7 +219,7 @@ enum MRT_DUMP_V2_SUBTYPES {
 
 /*
  * AFI/SAFI specific RIB Subtypes are special to save a few bytes.
- * 
+ *
  * +--------+--------+--------+--------+
  * |              seq_num              |
  * +--------+--------+--------+--------+
