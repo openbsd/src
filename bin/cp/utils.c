@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.41 2018/09/07 07:11:16 martijn Exp $	*/
+/*	$OpenBSD: utils.c,v 1.42 2018/09/07 07:14:25 martijn Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -47,13 +47,15 @@
 
 #include "extern.h"
 
+int copy_overwrite(void);
+
 int
 copy_file(FTSENT *entp, int dne)
 {
 	static char *buf;
 	static char *zeroes;
 	struct stat to_stat, *fs;
-	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
+	int from_fd, rcount, rval, to_fd, wcount;
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
 #endif
@@ -84,7 +86,6 @@ copy_file(FTSENT *entp, int dne)
 		(void)unlink(to.p_path);
 
 	/*
-	 * If the file exists and we're interactive, verify with the user.
 	 * If the file DNE, set the mode to be the from file, minus setuid
 	 * bits, modified by the umask; arguably wrong, but it makes copying
 	 * executables work right and it's been that way forever.  (The
@@ -92,16 +93,10 @@ copy_file(FTSENT *entp, int dne)
 	 * modified by the umask.)
 	 */
 	if (!dne && !fflag) {
-		if (iflag) {
-			(void)fprintf(stderr, "overwrite %s? ", to.p_path);
-			checkch = ch = getchar();
-			while (ch != '\n' && ch != EOF)
-				ch = getchar();
-			if (checkch != 'y' && checkch != 'Y') {
-				(void)close(from_fd);
-				return (2);
-			}
-		}
+		if (!copy_overwrite()) {
+			(void)close(from_fd);
+			return 2;
+ 		}
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
@@ -248,6 +243,24 @@ copy_special(struct stat *from_stat, int exists)
 	return (pflag ? setfile(from_stat, -1) : 0);
 }
 
+/*
+ * If the file exists and we're interactive, verify with the user.
+ */
+int
+copy_overwrite(void)
+{
+	int ch, checkch;
+
+	if (iflag) {
+		(void)fprintf(stderr, "overwrite %s? ", to.p_path);
+		checkch = ch = getchar();
+		while (ch != '\n' && ch != EOF)
+			ch = getchar();
+		if (checkch != 'y' && checkch != 'Y')
+			return (0);
+	}
+	return 1;
+}
 
 int
 setfile(struct stat *fs, int fd)
