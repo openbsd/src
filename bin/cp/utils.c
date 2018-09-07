@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.45 2018/09/07 11:01:22 stsp Exp $	*/
+/*	$OpenBSD: utils.c,v 1.46 2018/09/07 13:46:33 martijn Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -47,13 +47,15 @@
 
 #include "extern.h"
 
+int copy_overwrite(void);
+
 int
-copy_file(FTSENT *entp, int dne)
+copy_file(FTSENT *entp, int exists)
 {
 	static char *buf;
 	static char *zeroes;
 	struct stat to_stat, *fs;
-	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
+	int from_fd, rcount, rval, to_fd, wcount;
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
 #endif
@@ -80,28 +82,21 @@ copy_file(FTSENT *entp, int dne)
 	 * In -f (force) mode, we always unlink the destination first
 	 * if it exists.  Note that -i and -f are mutually exclusive.
 	 */
-	if (!dne && fflag)
+	if (exists && fflag)
 		(void)unlink(to.p_path);
 
 	/*
-	 * If the file exists and we're interactive, verify with the user.
 	 * If the file DNE, set the mode to be the from file, minus setuid
 	 * bits, modified by the umask; arguably wrong, but it makes copying
 	 * executables work right and it's been that way forever.  (The
 	 * other choice is 666 or'ed with the execute bits on the from file
 	 * modified by the umask.)
 	 */
-	if (!dne && !fflag) {
-		if (iflag) {
-			(void)fprintf(stderr, "overwrite %s? ", to.p_path);
-			checkch = ch = getchar();
-			while (ch != '\n' && ch != EOF)
-				ch = getchar();
-			if (checkch != 'y' && checkch != 'Y') {
-				(void)close(from_fd);
-				return (0);
-			}
-		}
+	if (exists && !fflag) {
+		if (!copy_overwrite()) {
+			(void)close(from_fd);
+			return 2;
+ 		}
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
@@ -179,7 +174,7 @@ copy_file(FTSENT *entp, int dne)
 	 */
 #define	RETAINBITS \
 	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	if (!pflag && dne &&
+	if (!pflag && !exists &&
 	    fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
 		if (fstat(to_fd, &to_stat)) {
 			warn("%s", to.p_path);
@@ -204,6 +199,8 @@ copy_link(FTSENT *p, int exists)
 	int len;
 	char name[PATH_MAX];
 
+	if (exists && !copy_overwrite())
+		return (2);
 	if ((len = readlink(p->fts_path, name, sizeof(name)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
@@ -223,6 +220,8 @@ copy_link(FTSENT *p, int exists)
 int
 copy_fifo(struct stat *from_stat, int exists)
 {
+	if (exists && !copy_overwrite())
+		return (2);
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);
@@ -237,6 +236,8 @@ copy_fifo(struct stat *from_stat, int exists)
 int
 copy_special(struct stat *from_stat, int exists)
 {
+	if (exists && !copy_overwrite())
+		return (2);
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);
@@ -248,6 +249,24 @@ copy_special(struct stat *from_stat, int exists)
 	return (pflag ? setfile(from_stat, -1) : 0);
 }
 
+/*
+ * If the file exists and we're interactive, verify with the user.
+ */
+int
+copy_overwrite(void)
+{
+	int ch, checkch;
+
+	if (iflag) {
+		(void)fprintf(stderr, "overwrite %s? ", to.p_path);
+		checkch = ch = getchar();
+		while (ch != '\n' && ch != EOF)
+			ch = getchar();
+		if (checkch != 'y' && checkch != 'Y')
+			return (0);
+	}
+	return 1;
+}
 
 int
 setfile(struct stat *fs, int fd)
