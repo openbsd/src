@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.240 2018/07/11 13:08:00 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.241 2018/09/07 10:55:35 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1157,6 +1157,14 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 			    __func__, divert->type, m, divert);
 		}
 	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
+		/*
+		 * Redirected connections should not be treated the same
+		 * as connections directed to 127.0.0.0/8 since localhost
+		 * can only be accessed from the host itself.
+		 * For example portmap(8) grants more permissions for
+		 * connections to the socket bound to 127.0.0.1 than
+		 * to the * socket.
+		 */
 		key1 = &zeroin_addr;
 		key2 = &laddr;
 	}
@@ -1238,6 +1246,11 @@ in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
 			    __func__, divert->type, m, divert);
 		}
 	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
+		/*
+		 * Redirected connections should not be treated the same
+		 * as connections directed to ::1 since localhost
+		 * can only be accessed from the host itself.
+		 */
 		key1 = &zeroin6_addr;
 		key2 = laddr;
 	}
