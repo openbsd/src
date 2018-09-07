@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.47 2018/09/06 09:48:23 miko Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.48 2018/09/07 03:54:12 miko Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -387,6 +387,8 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	struct umidi_endpoint *ep;
 	int i;
 
+	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
+
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_FIXED_EP))
 		err = alloc_all_endpoints_fixed_ep(sc);
 	else if (UMQ_ISTYPE(sc, UMQ_TYPE_YAMAHA))
@@ -436,8 +438,6 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	fp = umidi_get_quirk_data_from_type(sc->sc_quirk,
 					    UMQ_TYPE_FIXED_EP);
-	sc->sc_out_num_jacks = 0;
-	sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = fp->num_out_ep;
 	sc->sc_in_num_endpoints = fp->num_in_ep;
 	sc->sc_endpoints = mallocarray(sc->sc_out_num_endpoints +
@@ -521,7 +521,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	int out_addr, in_addr, in_packetsize, i, dir;
 	size_t remain, descsize;
 
-	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	out_addr = in_addr = 0;
 
 	/* detect endpoints */
@@ -627,7 +626,6 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 	if (!p)
 		return USBD_NOMEM;
 
-	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = sc->sc_in_num_endpoints = 0;
 	epaddr = -1;
 
@@ -780,6 +778,7 @@ free_all_jacks(struct umidi_softc *sc)
 	if (sc->sc_out_jacks) {
 		free(sc->sc_jacks, M_USBDEV, jacks * sizeof(*sc->sc_out_jacks));
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
+		sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	}
 	splx(s);
 }
