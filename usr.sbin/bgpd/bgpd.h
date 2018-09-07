@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.335 2018/09/07 10:49:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.336 2018/09/07 11:50:32 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1141,8 +1141,6 @@ u_int16_t	 pftable_ref(u_int16_t);
 /* parse.y */
 int		 cmdline_symset(char *);
 struct prefixset *find_prefixset(char *, struct prefixset_head *);
-struct prefixset_item *find_prefixsetitem(struct prefixset_item *i,
-				struct prefixset_items_h *psitems);
 
 /* pftable.c */
 int	pftable_exists(const char *);
