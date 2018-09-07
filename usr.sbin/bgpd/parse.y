@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.335 2018/09/07 07:35:30 miko Exp $ */
+/*	$OpenBSD: parse.y,v 1.336 2018/09/07 09:38:04 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -409,8 +409,8 @@ asset		: ASSET STRING '{' optnl	{
 			asset_done();
 		}
 
-asset_l		: as4number			{ asset_add($1); }
-		| asset_l optnl as4number	{ asset_add($3); }
+asset_l		: as4number_any			{ asset_add($1); }
+		| asset_l optnl as4number_any	{ asset_add($3); }
 
 conf_main	: AS as4number		{
 			conf->as = $2;
