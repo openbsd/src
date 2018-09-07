@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.330 2018/09/06 15:07:33 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.331 2018/09/07 14:16:22 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1583,15 +1583,8 @@ ifa_lookup(const char *ifa_name, int flags)
 			    sizeof(struct pf_addr));
 		if (flags & PFI_AFLAG_NETWORK)
 			set_ipmask(n, unmask(&p->addr.v.a.mask));
-		else {
-			if (n->af == AF_INET &&
-			    p->ifa_flags & IFF_LOOPBACK &&
-			    p->ifa_flags & IFF_LINK1)
-				memcpy(&n->addr.v.a.mask, &p->addr.v.a.mask,
-				    sizeof(struct pf_addr));
-			else
-				set_ipmask(n, -1);
-		}
+		else
+			set_ipmask(n, -1);
 		n->ifindex = p->ifindex;
 
 		n->next = NULL;
