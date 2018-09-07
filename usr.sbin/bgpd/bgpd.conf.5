@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.172 2018/09/07 05:43:33 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.173 2018/09/07 06:33:05 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,7 +143,6 @@ or as a large number (ASPLAIN format), for example:
 .Bd -literal -offset indent
 AS 196618
 .Ed
-.Pp
 .Pp
 .It Xo
 .Ic as-set Ar name
@@ -1125,7 +1124,7 @@ If a parameter is specified, the rule only applies to packets with
 matching attributes.
 .Pp
 .Bl -tag -width Ds -compact
-.It Xo 
+.It Xo
 .Ar as-type Op Ar operator
 .Ar as-number
 .Xc
