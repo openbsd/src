@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.2 2018/09/07 13:25:36 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.3 2018/09/07 20:26:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -545,10 +545,10 @@ trie_dump_v4(struct tentry_v4 *n)
 	if (n == NULL)
 		return;
 	if (n->node)
-		printf("%s/%u plenmask %08x\n", inet_ntoa(n->addr), n->plen,
-		    n->plenmask.s_addr);
+		fprintf(stderr, "%s/%u plenmask %08x\n", inet_ntoa(n->addr),
+		    n->plen, n->plenmask.s_addr);
 	else
-		printf("   %s/%u\n", inet_ntoa(n->addr), n->plen);
+		fprintf(stderr, "   %s/%u\n", inet_ntoa(n->addr), n->plen);
 
 	trie_dump_v4(n->trie[0]);
 	trie_dump_v4(n->trie[1]);
@@ -563,13 +563,13 @@ trie_dump_v6(struct tentry_v6 *n)
 	if (n == NULL)
 		return;
 	if (n->node) {
-		printf("%s/%u plenmask ",
+		fprintf(stderr, "%s/%u plenmask ",
 		    inet_ntop(AF_INET6, &n->addr, buf, sizeof(buf)), n->plen);
 		for (i = 0; i < sizeof(n->plenmask); i++)
-			printf("%02x", n->plenmask.s6_addr[i]);
-		printf("\n");
+			fprintf(stderr, "%02x", n->plenmask.s6_addr[i]);
+		fprintf(stderr, "\n");
 	} else
-		printf("   %s/%u\n",
+		fprintf(stderr, "   %s/%u\n",
 		    inet_ntop(AF_INET6, &n->addr, buf, sizeof(buf)), n->plen);
 
 	trie_dump_v6(n->trie[0]);
@@ -580,9 +580,9 @@ void
 trie_dump(struct trie_head *th)
 {
 	if (th->match_default_v4)
-		printf("0.0.0.0/0 plenmask %08x\n", 0);
+		fprintf(stderr, "0.0.0.0/0 plenmask %08x\n", 0);
 	trie_dump_v4(th->root_v4);
 	if (th->match_default_v6)
-		printf("::/0 plenmask 0\n");
+		fprintf(stderr, "::/0 plenmask 0\n");
 	trie_dump_v6(th->root_v6);
 }
