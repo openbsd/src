@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.11 2018/08/30 11:18:21 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.12 2018/09/07 13:18:06 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -125,7 +125,6 @@ struct bnxt_ring {
 	uint32_t		ring_size;
 	uint16_t		id;
 	uint16_t		phys_id;
-	struct bnxt_full_tpa_start *tpa_start;
 };
 
 struct bnxt_cp_ring {
@@ -1239,13 +1238,8 @@ bnxt_intr(void *xsc)
 	struct bnxt_cp_ring *cpr = &sc->sc_cp_ring;
 	struct cmpl_base *cmpl;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	uint32_t cons;
-	int v_bit;
 	uint16_t type;
 	int rxfree, txfree, agfree, rv, rollback;
-
-	cons = cpr->cons;
-	v_bit = cpr->v_bit;
 
 	bnxt_write_cp_doorbell(sc, &cpr->ring, 0);
 	rxfree = 0;
@@ -2007,7 +2001,6 @@ _hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 	struct hwrm_err_output *resp = BNXT_DMA_KVA(softc->sc_cmd_resp);
 	uint32_t *data = msg;
 	int i;
-	uint16_t cp_ring_id;
 	uint8_t *valid;
 	uint16_t err;
 	uint16_t max_req_len = HWRM_MAX_REQ_LEN;
@@ -2016,7 +2009,6 @@ _hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 	/* TODO: DMASYNC in here. */
 	req->seq_id = htole16(softc->sc_cmd_seq++);
 	memset(resp, 0, PAGE_SIZE);
-	cp_ring_id = le16toh(req->cmpl_ring);
 
 	if (softc->sc_flags & BNXT_FLAG_SHORT_CMD) {
 		void *short_cmd_req = BNXT_DMA_KVA(softc->sc_cmd_resp);
@@ -2123,7 +2115,7 @@ bnxt_hwrm_queue_qportcfg(struct bnxt_softc *softc)
 	struct hwrm_queue_qportcfg_output *resp =
 	    BNXT_DMA_KVA(softc->sc_cmd_resp);
 
-	int	rc = 0;
+	int	i, rc = 0;
 	uint8_t	*qptr;
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_QUEUE_QPORTCFG);
@@ -2142,7 +2134,7 @@ bnxt_hwrm_queue_qportcfg(struct bnxt_softc *softc)
 		softc->sc_max_tc = BNXT_MAX_QUEUE;
 
 	qptr = &resp->queue_id0;
-	for (int i = 0; i < softc->sc_max_tc; i++) {
+	for (i = 0; i < softc->sc_max_tc; i++) {
 		softc->sc_q_info[i].id = *qptr++;
 		softc->sc_q_info[i].profile = *qptr++;
 	}
