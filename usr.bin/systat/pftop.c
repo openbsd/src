@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.41 2018/02/08 07:00:33 martijn Exp $	 */
+/* $OpenBSD: pftop.c,v 1.42 2018/09/07 12:43:30 kn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -694,20 +694,16 @@ read_states(void)
 }
 
 int
-unmask(struct pf_addr * m, u_int8_t af)
+unmask(struct pf_addr * m)
 {
-	int i = 31, j = 0, b = 0, msize;
+	int i = 31, j = 0, b = 0;
 	u_int32_t tmp;
 
-	if (af == AF_INET)
-		msize = 1;
-	else
-		msize = 4;
-	while (j < msize && m->addr32[j] == 0xffffffff) {
+	while (j < 4 && m->addr32[j] == 0xffffffff) {
 		b += 32;
 		j++;
 	}
-	if (j < msize) {
+	if (j < 4) {
 		tmp = ntohl(m->addr32[j]);
 		for (i = 31; tmp & (1 << i); --i)
 			b++;
@@ -733,7 +729,7 @@ tb_print_addr(struct pf_addr * addr, struct pf_addr * mask, int af)
 
 	if (mask != NULL) {
 		if (!PF_AZERO(mask, af))
-			tbprintf("/%u", unmask(mask, af));
+			tbprintf("/%u", unmask(mask));
 	}
 }
 
