@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.1 2018/09/07 10:49:22 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.2 2018/09/07 13:25:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -134,7 +134,7 @@ static void
 inet4setbit(struct in_addr *addr, u_int8_t bit)
 {
 	/* bit 0 sets the MSB and 31 sets the LSB */
-	addr->s_addr |= (1 << (31 - bit));
+	addr->s_addr |= htonl(1 << (31 - bit));
 }
 
 static void
