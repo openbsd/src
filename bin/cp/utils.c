@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.42 2018/09/07 07:14:25 martijn Exp $	*/
+/*	$OpenBSD: utils.c,v 1.43 2018/09/07 07:17:14 martijn Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -199,6 +199,8 @@ copy_link(FTSENT *p, int exists)
 	int len;
 	char name[PATH_MAX];
 
+	if (exists && !copy_overwrite())
+		return (2);
 	if ((len = readlink(p->fts_path, name, sizeof(name)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
@@ -218,6 +220,8 @@ copy_link(FTSENT *p, int exists)
 int
 copy_fifo(struct stat *from_stat, int exists)
 {
+	if (exists && !copy_overwrite())
+		return (2);
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);
@@ -232,6 +236,8 @@ copy_fifo(struct stat *from_stat, int exists)
 int
 copy_special(struct stat *from_stat, int exists)
 {
+	if (exists && !copy_overwrite())
+		return (2);
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
 		return (1);

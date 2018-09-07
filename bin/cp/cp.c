@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.47 2018/09/07 07:11:16 martijn Exp $	*/
+/*	$OpenBSD: cp.c,v 1.48 2018/09/07 07:17:14 martijn Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -395,9 +395,9 @@ copy(char *argv[], enum op type, int fts_options)
 
 		switch (curr->fts_statp->st_mode & S_IFMT) {
 		case S_IFLNK:
-			if (copy_link(curr, !fts_dne(curr)))
+			if ((cval = copy_link(curr, !fts_dne(curr))) == 1)
 				rval = 1;
-			else if (vflag)
+			if (!cval && vflag)
 				(void)fprintf(stdout, "%s -> %s\n",
 				    curr->fts_path, to.p_path);
 			break;
@@ -430,8 +430,8 @@ copy(char *argv[], enum op type, int fts_options)
 		case S_IFBLK:
 		case S_IFCHR:
 			if (Rflag) {
-				if (copy_special(curr->fts_statp,
-				    !fts_dne(curr)))
+				if ((cval = copy_special(curr->fts_statp,
+				    !fts_dne(curr))) == 1)
 					rval = 1;
 			} else
 				if ((cval = copy_file(curr, fts_dne(curr))) == 1)
@@ -443,7 +443,8 @@ copy(char *argv[], enum op type, int fts_options)
 			break;
 		case S_IFIFO:
 			if (Rflag) {
-				if (copy_fifo(curr->fts_statp, !fts_dne(curr)))
+				if ((cval = copy_fifo(curr->fts_statp,
+				    !fts_dne(curr))) == 1)
 					rval = 1;
 			} else
 				if ((cval = copy_file(curr, fts_dne(curr))) == 1)
