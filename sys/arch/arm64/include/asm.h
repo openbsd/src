@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2018/08/12 17:15:10 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2018/09/07 01:32:01 mortimer Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -83,23 +83,32 @@
 #endif
 
 #if defined(_RET_PROTECTOR)
+# define RETGUARD_CALC_COOKIE(reg) \
+	eor     reg, reg, x30
+
+# define RETGUARD_LOAD_RANDOM(x, reg) \
+	adrp    reg, __CONCAT(__retguard_, x); \
+	ldr     reg, [reg, :lo12:__CONCAT(__retguard_, x)]
+
 # define RETGUARD_SETUP(x, reg) \
 	RETGUARD_SYMBOL(x); \
-	adrp    reg, __CONCAT(__retguard_, x); \
-	ldr     reg, [reg, :lo12:__CONCAT(__retguard_, x)]; \
-	eor     reg, reg, x30
+	RETGUARD_LOAD_RANDOM(x, reg); \
+	RETGUARD_CALC_COOKIE(reg)
+
 # define RETGUARD_CHECK(x, reg) \
-	eor     reg, reg, x30; \
-	adrp    x9, __CONCAT(__retguard_, x); \
-	ldr     x9, [x9, :lo12:__CONCAT(__retguard_, x)]; \
+	RETGUARD_CALC_COOKIE(reg); \
+	RETGUARD_LOAD_RANDOM(x, x9); \
 	subs    reg, reg, x9; \
 	cbz     reg, 66f; \
 	brk     #0x1; \
 66:
+
 # define RETGUARD_PUSH(reg) \
 	str     reg, [sp, #-16]!
+
 # define RETGUARD_POP(reg) \
 	ldr     reg, [sp, #16]!
+
 # define RETGUARD_SYMBOL(x) \
 	.ifndef __CONCAT(__retguard_, x); \
 	.hidden __CONCAT(__retguard_, x); \
@@ -113,6 +122,8 @@
 	.popsection; \
 	.endif
 #else
+# define RETGUARD_CALC_COOKIE(reg)
+# define RETGUARD_LOAD_RANDOM(x, reg)
 # define RETGUARD_SETUP(x, reg)
 # define RETGUARD_CHECK(x, reg)
 # define RETGUARD_PUSH(reg)

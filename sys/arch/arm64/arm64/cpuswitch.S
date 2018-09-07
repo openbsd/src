@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.3 2018/03/29 19:25:39 patrick Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.4 2018/09/07 01:32:01 mortimer Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -59,6 +59,8 @@ ENTRY(cpu_switchto)
 
 	mov	x1, x19
 1:
+	RETGUARD_SYMBOL(cpu_switchto)
+	RETGUARD_LOAD_RANDOM(cpu_switchto, x20)
 
 	mrs	x2, tpidr_el1			// load curcpu
 	mov	w5, #SONPROC
@@ -75,6 +77,7 @@ ENTRY(cpu_switchto)
 	mov	x0, x1
 	bl	pmap_setttb
 	mov	x3, x19
+	mov	x15, x20
 
 	mov	sp, x3
 
@@ -84,7 +87,9 @@ ENTRY(cpu_switchto)
 	ldp	x25, x26,  [x3, #(SF_X25)]
 	ldp	x27, x28,  [x3, #(SF_X27)]
 	ldp	x29, x30,  [x3, #(SF_X29)]
+	RETGUARD_CALC_COOKIE(x15)
 	add	sp, sp, #(SWITCHFRAME_SZ)
+	RETGUARD_CHECK(cpu_switchto, x15)
 	ret
 
 ENTRY(proc_trampoline)

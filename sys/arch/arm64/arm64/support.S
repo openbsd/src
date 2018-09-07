@@ -1,4 +1,4 @@
-/* $OpenBSD: support.S,v 1.7 2018/08/12 17:15:10 mortimer Exp $ */
+/* $OpenBSD: support.S,v 1.8 2018/09/07 01:32:01 mortimer Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014-2015 The FreeBSD Foundation
@@ -43,6 +43,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z a
 
 #ifdef DDB
 ENTRY(setjmp)
+	RETGUARD_SETUP(setjmp, x15)
 	/* Store the stack pointer */
 	mov	x8, sp
 	str	x8, [x0], #8
@@ -57,10 +58,13 @@ ENTRY(setjmp)
 
 	/* Return zero */
 	mov	x0, #0
+	RETGUARD_CHECK(setjmp, x15)
 	ret
 END(setjmp)
 
 ENTRY(longjmp)
+	RETGUARD_SYMBOL(longjmp)
+	RETGUARD_LOAD_RANDOM(longjmp, x15)
 	/* Restore the stack pointer */
 	ldr	x8, [x0], #8
 	mov	sp, x8
@@ -72,9 +76,11 @@ ENTRY(longjmp)
 	ldp	x25, x26, [x0], #16
 	ldp	x27, x28, [x0], #16
 	ldp	x29, lr, [x0], #16
+	RETGUARD_CALC_COOKIE(x15)
 
 	/* Return nonzero */
 	mov	x0, #1
+	RETGUARD_CHECK(longjmp, x15)
 	ret
 END(longjmp)
 #endif
