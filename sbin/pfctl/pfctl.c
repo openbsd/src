@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.356 2018/07/20 11:16:55 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.357 2018/09/07 19:56:07 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1612,19 +1612,17 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	rs->anchor = pf.anchor;
 	if (strlcpy(pf.anchor->path, anchorname,
 	    sizeof(pf.anchor->path)) >= sizeof(pf.anchor->path))
-		errx(1, "pfctl_add_rule: strlcpy");
+		errx(1, "%s: strlcpy", __func__);
 
 	if ((p = strrchr(anchorname, '/')) != NULL) {
 		if (strlen(p) == 1)
-			errx(1, "pfctl_add_rule: bad anchor name %s",
-			    anchorname);
+			errx(1, "%s: bad anchor name %s", __func__, anchorname);
 	} else
 		p = anchorname;
 
 	if (strlcpy(pf.anchor->name, p,
 	    sizeof(pf.anchor->name)) >= sizeof(pf.anchor->name))
-		errx(1, "pfctl_add_rule: strlcpy");
-
+		errx(1, "%s: strlcpy", __func__);
 
 	pf.astack[0] = pf.anchor;
 	pf.asd = 0;
