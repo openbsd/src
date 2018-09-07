@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.9 2018/08/27 06:50:13 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.10 2018/09/07 14:11:39 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1004,20 +1004,23 @@ check_exit_status $?
 grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 check_exit_status $?
 
-# cipher = CHACHA20
+# all available TLSv1.2 ciphers
 
-s_client_out=$user1_dir/s_client_tls_chacha20.out
+ciphers=`$openssl_bin ciphers TLSv1.2:-ECDSA:-ADH:-NULL | sed 's/:/ /g'`
+for c in $ciphers ; do
+    s_client_out=$user1_dir/s_client_tls_$c.out
 
-start_message "s_client ... connect to SSL/TLS test server with CHACHA20"
-$openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
-    -cipher 'CHACHA20' -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-check_exit_status $?
+    start_message "s_client ... connect to SSL/TLS test server with $c"
+    $openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
+        -cipher $c -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+    check_exit_status $?
 
-grep 'Cipher    : .*-CHACHA20-.*' $s_client_out > /dev/null
-check_exit_status $?
+    grep "Cipher    : $c" $s_client_out > /dev/null
+    check_exit_status $?
 
-grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-check_exit_status $?
+    grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+    check_exit_status $?
+done
 
 # Get session ticket to reuse
 
