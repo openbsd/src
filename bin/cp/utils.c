@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.43 2018/09/07 07:17:14 martijn Exp $	*/
+/*	$OpenBSD: utils.c,v 1.44 2018/09/07 07:44:15 martijn Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 int copy_overwrite(void);
 
 int
-copy_file(FTSENT *entp, int dne)
+copy_file(FTSENT *entp, int exists)
 {
 	static char *buf;
 	static char *zeroes;
@@ -82,7 +82,7 @@ copy_file(FTSENT *entp, int dne)
 	 * In -f (force) mode, we always unlink the destination first
 	 * if it exists.  Note that -i and -f are mutually exclusive.
 	 */
-	if (!dne && fflag)
+	if (exists && fflag)
 		(void)unlink(to.p_path);
 
 	/*
@@ -92,7 +92,7 @@ copy_file(FTSENT *entp, int dne)
 	 * other choice is 666 or'ed with the execute bits on the from file
 	 * modified by the umask.)
 	 */
-	if (!dne && !fflag) {
+	if (exists && !fflag) {
 		if (!copy_overwrite()) {
 			(void)close(from_fd);
 			return 2;
@@ -174,7 +174,7 @@ copy_file(FTSENT *entp, int dne)
 	 */
 #define	RETAINBITS \
 	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	if (!pflag && dne &&
+	if (!pflag && !exists &&
 	    fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
 		if (fstat(to_fd, &to_stat)) {
 			warn("%s", to.p_path);
