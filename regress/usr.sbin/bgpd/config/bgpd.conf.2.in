@@ -1,4 +1,4 @@
-# $OpenBSD: bgpd.conf.2.in,v 1.1 2017/10/05 08:19:24 phessler Exp $
+# $OpenBSD: bgpd.conf.2.in,v 1.1 2018/09/07 08:38:35 claudio Exp $
 # Test various community related filter parsing
 
 AS 1

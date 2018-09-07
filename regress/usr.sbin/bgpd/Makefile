@@ -1,37 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2018/09/06 15:55:30 benno Exp $
+# $OpenBSD: Makefile,v 1.4 2018/09/07 08:38:35 claudio Exp $
 
-BGPDTESTS=1 2
+SUBDIR += config
+#SUBDIR += unittests
 
-REGRESS_TARGETS = config
-
-.for n in ${BGPDTESTS}
-BGPD_TARGETS+=bgpd${n}
-BGPD_UPDATES+=bgpd${n}-update
-
-bgpd${n}:
-	bgpd -nv -f /dev/stdin < ${.CURDIR}/bgpd.conf.${n}.in | \
-	    sed 's/router-id .*/router-id 127.0.0.1/' | \
-	    diff -u ${.CURDIR}/bgpd.conf.${n}.ok /dev/stdin
-
-bgpd${n}-update:
-	bgpd -nv -f /dev/stdin < ${.CURDIR}/bgpd.conf.${n}.in | \
-	    sed 's/router-id .*/router-id 127.0.0.1/' > \
-	    ${.CURDIR}/bgpd.conf.${n}.ok
-.endfor
-
-config: bgpd-example bgpd-printconf ${BGPD_TARGETS}
-bgpd-update: ${BGPD_UPDATES}
-
-# check that the example configuration file we ship is ok
-bgpd-example:
-	bgpd -nf ${.CURDIR}/../../../etc/examples/bgpd.conf
-
-# check that the output of bgpd -nvv is parseable
-bgpd-printconf:
-	bgpd -nvf ${.CURDIR}/bgpd.conf.printconf | \
-	    bgpd -nf /dev/stdin
-
-clean:
-	rm -f bgpd.conf.printconf.test
-
-.include <bsd.regress.mk>
+.include <bsd.subdir.mk>
