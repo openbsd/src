@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.48 2018/09/07 03:54:12 miko Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.49 2018/09/07 04:03:30 miko Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -430,7 +430,6 @@ free_all_endpoints(struct umidi_softc *sc)
 static usbd_status
 alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 {
-	usbd_status err;
 	struct umq_fixed_ep_desc *fp;
 	struct umidi_endpoint *ep;
 	usb_endpoint_descriptor_t *epd;
@@ -458,14 +457,12 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(out:%d)\n",
 			       sc->sc_dev.dv_xname, fp->out_ep[i].ep));
-			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_OUT) {
 			printf("%s: illegal endpoint(out:%d)\n",
 			       sc->sc_dev.dv_xname, fp->out_ep[i].ep);
-			err = USBD_INVAL;
 			goto error;
 		}
 		ep->sc = sc;
@@ -485,14 +482,12 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(in:%d)\n",
 			       sc->sc_dev.dv_xname, fp->in_ep[i].ep));
-			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_IN) {
 			printf("%s: illegal endpoint(in:%d)\n",
 			       sc->sc_dev.dv_xname, fp->in_ep[i].ep);
-			err = USBD_INVAL;
 			goto error;
 		}
 		ep->sc = sc;
@@ -509,7 +504,7 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 error:
 	free(sc->sc_endpoints, M_USBDEV, 0);
 	sc->sc_endpoints = NULL;
-	return err;
+	return USBD_INVAL;
 }
 
 static usbd_status
