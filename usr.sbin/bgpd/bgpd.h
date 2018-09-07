@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.334 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.335 2018/09/07 10:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -212,6 +212,8 @@ TAILQ_HEAD(network_head, network);
 
 struct prefixset;
 SIMPLEQ_HEAD(prefixset_head, prefixset);
+struct rde_prefixset_head;
+struct rde_prefixset;
 
 struct as_set;
 SIMPLEQ_HEAD(as_set_head, as_set);
@@ -226,6 +228,7 @@ struct bgpd_config {
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
 	struct prefixset_head			*prefixsets;
+	struct rde_prefixset_head		*rde_prefixsets;
 	struct as_set_head			*as_sets;
 	char					*csock;
 	char					*rcsock;
@@ -680,7 +683,7 @@ struct filter_aslen {
 struct filter_prefixset {
 	int			 flags;
 	char			 name[SET_NAME_LEN];
-	struct prefixset	*ps;
+	struct rde_prefixset	*ps;
 };
 
 struct filter_community {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.195 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.196 2018/09/07 10:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -507,7 +507,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	while ((ps = SIMPLEQ_FIRST(conf->prefixsets)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(conf->prefixsets, entry);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSET, 0, 0, -1,
-		    ps, sizeof(*ps)) == -1)
+		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
 		while ((psi = SIMPLEQ_FIRST(&ps->psitems)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&ps->psitems, entry);

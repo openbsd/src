@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.102 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.103 2018/09/07 10:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -342,7 +342,6 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 {
 	int		cas, type;
 	int64_t		las, ld1, ld2;
-	struct prefixset_item	*psi;
 	struct rde_aspath	*asp = NULL;
 
 	if (state != NULL)
@@ -483,17 +482,15 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	 * prefixset and prefix filter rules are mutual exclusive
 	 */
 	if (f->match.prefixset.flags != 0) {
-		log_debug("%s: processing filter for prefixset %s",
-		    __func__, f->match.prefixset.name);
-		SIMPLEQ_FOREACH(psi, &f->match.prefixset.ps->psitems, entry) {
-			if (rde_prefix_match(&psi->p, p)) {
-				log_debug("%s: prefixset %s matched %s",
-				    __func__, f->match.prefixset.ps->name,
-				    log_addr(&psi->p.addr));
-				return (1);
-			}
-		}
-		return (0);
+		struct bgpd_addr addr, *prefix = &addr;
+		u_int8_t plen;
+
+		pt_getaddr(p->re->prefix, prefix);
+		plen = p->re->prefix->prefixlen;
+
+		if (f->match.prefixset.ps == NULL ||
+		    !trie_match(&f->match.prefixset.ps->th, prefix, plen))
+			return (0);
 	} else if (f->match.prefix.addr.aid != 0)
 		return (rde_prefix_match(&f->match.prefix, p));
 
@@ -574,7 +571,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
     struct rde_peer *peer)
 {
 	struct filter_rule	*fa, *fb;
-	struct prefixset	*psa, *psb;
+	struct rde_prefixset	*psa, *psb;
 	struct as_set		*asa, *asb;
 
 	fa = a ? TAILQ_FIRST(a) : NULL;
@@ -615,10 +612,9 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		fa->match.as.aset = asa;
 		fb->match.as.aset = asb;
 
-		if ((fa->match.prefixset.flags != 0) &&
-		    (fa->match.prefixset.ps != NULL) &&
-		    ((fa->match.prefixset.ps->sflags
-		    & PREFIXSET_FLAG_DIRTY) != 0)) {
+		if (fa->match.prefixset.flags != 0 &&
+		    fa->match.prefixset.ps != NULL &&
+		    fa->match.prefixset.ps->dirty) {
 			log_debug("%s: prefixset %s has changed",
 			    __func__, fa->match.prefixset.name);
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.187 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.188 2018/09/07 10:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -323,6 +323,23 @@ struct filterstate {
 	u_int8_t		 nhflags;
 };
 
+struct tentry_v4;
+struct tentry_v6;
+struct trie_head {
+	struct tentry_v4	*root_v4;
+	struct tentry_v6	*root_v6;
+	int			 match_default_v4;
+	int			 match_default_v6;
+};
+
+struct rde_prefixset {
+	char				name[SET_NAME_LEN];
+	struct trie_head		th;
+	SIMPLEQ_ENTRY(rde_prefixset)	entry;
+	int			 dirty;
+};
+SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
+
 extern struct rde_memstats rdemem;
 
 /* prototypes */
@@ -562,5 +579,13 @@ u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
 int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
+
+/* rde_trie.c */
+int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t,
+	    u_int8_t, u_int8_t);
+void	trie_free(struct trie_head *);
+int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t);
+void	trie_dump(struct trie_head *);
+int	trie_equal(struct trie_head *, struct trie_head *);
 
 #endif /* __RDE_H__ */

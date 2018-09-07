@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.419 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.420 2018/09/07 10:49:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,8 +100,10 @@ static void	 rde_softreconfig_unload_peer(struct rib_entry *, void *);
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
-void		 rde_mark_prefixsets_dirty(struct prefixset_head *,
-						struct prefixset_head *);
+struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
+void		 rde_free_prefixsets(struct rde_prefixset_head *);
+void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
+			struct rde_prefixset_head *);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -128,7 +130,7 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
-struct prefixset_head	*prefixsets_tmp, *prefixsets_old;
+struct rde_prefixset_head *prefixsets_tmp, *prefixsets_old;
 struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rdomain_head	*rdomains_l, *newdomains;
@@ -686,9 +688,9 @@ badnetdel:
 void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
-	static struct rdomain	*rd;
-	static struct prefixset	*last_prefixset;
+	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
+	static struct rdomain	*rd;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
@@ -697,8 +699,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct rib		*rib;
-	struct prefixset	*ps;
-	struct prefixset_item	*psi;
+	struct rde_prefixset	*ps;
+	struct prefixset_item	 psi;
 	char			*name;
 	size_t			 nmemb;
 	int			 n, fd;
@@ -769,7 +771,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatalx("IMSG_RECONF_CONF bad len");
 			reloadtime = time(NULL);
 			prefixsets_tmp = calloc(1,
-			    sizeof(struct prefixset_head));
+			    sizeof(struct rde_prefixset_head));
 			if (prefixsets_tmp == NULL)
 				fatal(NULL);
 			SIMPLEQ_INIT(prefixsets_tmp);
@@ -832,7 +834,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
 			if (r->match.prefixset.flags != 0) {
 				r->match.prefixset.ps =
-				    find_prefixset(r->match.prefixset.name,
+				    rde_find_prefixset(r->match.prefixset.name,
 					prefixsets_tmp);
 				if (r->match.prefixset.ps == NULL)
 					log_warnx("%s: no prefixset for %s",
@@ -877,27 +879,27 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_RECONF_PREFIXSET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct prefixset))
+			    sizeof(ps->name))
 				fatalx("IMSG_RECONF_PREFIXSET bad len");
-			ps = malloc(sizeof(struct prefixset));
+			ps = calloc(1, sizeof(struct rde_prefixset));
 			if (ps == NULL)
 				fatal(NULL);
-			memcpy(ps, imsg.data, sizeof(struct prefixset));
-			SIMPLEQ_INIT(&ps->psitems);
+			memcpy(ps->name, imsg.data, sizeof(ps->name));
 			SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
 			last_prefixset = ps;
 			break;
 		case IMSG_RECONF_PREFIXSETITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct prefixset_item))
+			    sizeof(psi))
 				fatalx("IMSG_RECONF_PREFIXSETITEM bad len");
-			psi = malloc(sizeof(struct prefixset_item));
-			if (psi == NULL)
-				fatal(NULL);
-			memcpy(psi, imsg.data, sizeof(struct prefixset_item));
+			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
-			SIMPLEQ_INSERT_TAIL(&last_prefixset->psitems, psi, entry);
+			if (trie_add(&last_prefixset->th, &psi.p.addr,
+			    psi.p.len, psi.p.len_min, psi.p.len_max) == -1)
+				log_warnx("trie_add(%s) %s/%u, %u-%u) failed",
+				    last_prefixset->name, log_addr(&psi.p.addr),
+				    psi.p.len, psi.p.len_min, psi.p.len_max);
 			break;
 		case IMSG_RECONF_AS_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2793,13 +2795,14 @@ rde_reload_done(void)
 			nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 	}
 
-	prefixsets_old = conf->prefixsets;
+	prefixsets_old = conf->rde_prefixsets;
 	as_sets_old = conf->as_sets;
 
 	memcpy(conf, nconf, sizeof(struct bgpd_config));
 	conf->listen_addrs = NULL;
 	conf->csock = NULL;
 	conf->rcsock = NULL;
+	conf->prefixsets = NULL;
 	free(nconf);
 	nconf = NULL;
 
@@ -2827,7 +2830,7 @@ rde_reload_done(void)
 	as_sets_mark_dirty(as_sets_old, as_sets_tmp);
 
 	/* swap the prefixsets */
-	conf->prefixsets = prefixsets_tmp;
+	conf->rde_prefixsets = prefixsets_tmp;
 	prefixsets_tmp = NULL;
 	/* and the as_sets */
 	conf->as_sets = as_sets_tmp;
@@ -3018,7 +3021,7 @@ rde_softreconfig_done(void)
 		ribs[rid].state = RECONF_NONE;
 	}
 
-	free_prefixsets(prefixsets_old);
+	rde_free_prefixsets(prefixsets_old);
 	prefixsets_old = NULL;
 	as_sets_free(as_sets_old);
 	as_sets_old = NULL;
@@ -3809,25 +3812,47 @@ sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
 	return (0);
 }
 
-void
-rde_mark_prefixsets_dirty(struct prefixset_head *psold,
-    struct prefixset_head *psnew)
+struct rde_prefixset *
+rde_find_prefixset(char *name, struct rde_prefixset_head *p)
 {
-	struct prefixset *new, *fps;
-	struct prefixset_item *item;
+	struct rde_prefixset *ps;
+
+	SIMPLEQ_FOREACH(ps, p, entry) {
+		if (!strcmp(ps->name, name))
+			return (ps);
+	}
+	return (NULL);
+}
+
+void
+rde_free_prefixsets(struct rde_prefixset_head *psh)
+{
+	struct rde_prefixset	*ps;
+
+	if (psh == NULL)
+		return;
+
+	while (!SIMPLEQ_EMPTY(psh)) {
+		ps = SIMPLEQ_FIRST(psh);
+		trie_free(&ps->th);
+		SIMPLEQ_REMOVE_HEAD(psh, entry);
+		free(ps);
+	}
+}
+
+void
+rde_mark_prefixsets_dirty(struct rde_prefixset_head *psold,
+    struct rde_prefixset_head *psnew)
+{
+	struct rde_prefixset *new, *old;
 
 	SIMPLEQ_FOREACH(new, psnew, entry) {
 		if ((psold == NULL) ||
-		    (fps = find_prefixset(new->name, psold)) == NULL) {
-			new->sflags |= PREFIXSET_FLAG_DIRTY;
+		    (old = rde_find_prefixset(new->name, psold)) == NULL) {
+			new->dirty = 1;
 		} else {
-			SIMPLEQ_FOREACH(item, &new->psitems, entry) {
-				if (find_prefixsetitem(item, &fps->psitems)
-				    == NULL) {
-					new->sflags |= PREFIXSET_FLAG_DIRTY;
-					break;
-				}
-			}
+			if (trie_equal(&new->th, &old->th) == 0)
+				new->dirty = 1;
 		}
 	}
 }
