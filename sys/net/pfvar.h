@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.482 2018/07/22 09:09:18 sf Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.483 2018/09/08 13:16:58 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -118,6 +118,12 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
  * Otherwise older fragments are considered stale and are dropped.
  */
 #define PF_FRAG_STALE			200
+
+/*
+ * Limit the length of the fragment queue traversal.  Remember
+ * search entry points based on the fragment offset.
+ */
+#define PF_FRAG_ENTRY_POINTS		16
 
 enum	{ PF_NOPFROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
