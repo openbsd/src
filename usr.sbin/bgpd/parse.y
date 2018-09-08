@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.339 2018/09/08 12:18:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.340 2018/09/08 12:29:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1073,14 +1073,17 @@ rdomainopts	: RD STRING {
 		| network
 		| DEPEND ON STRING	{
 			/* XXX this is a hack */
-			if (if_nametoindex($3) == 0) {
+			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
+			    if_nametoindex($3) == 0) {
 				yyerror("interface %s does not exist", $3);
 				free($3);
 				YYERROR;
 			}
 			strlcpy(currdom->ifmpe, $3, IFNAMSIZ);
 			free($3);
-			if (get_mpe_label(currdom)) {
+			/* XXX this is in the wrong place */
+			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
+			    get_mpe_label(currdom)) {
 				yyerror("failed to get mpls label from %s",
 				    currdom->ifmpe);
 				YYERROR;
