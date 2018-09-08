@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.338 2018/09/08 09:33:54 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.339 2018/09/08 12:18:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -956,7 +956,8 @@ rdomain		: RDOMAIN NUMBER optnl '{' optnl	{
 				    RT_TABLEID_MAX);
 				YYERROR;
 			}
-			if (ktable_exists($2, NULL) != 1) {
+			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
+			    ktable_exists($2, NULL) != 1) {
 				yyerror("rdomain %lld does not exist", $2);
 				YYERROR;
 			}
