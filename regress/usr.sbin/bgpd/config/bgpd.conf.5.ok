@@ -1,0 +1,48 @@
+AS 1
+router-id 127.0.0.1
+socket "/var/run/bgpd.sock.0"
+holdtime min 3
+fib-priority 48
+
+rdomain 1 {
+	descr "a rdomain"
+	fib-update yes
+	depend on mpe0
+	network 192.0.2.0/24
+
+	rd 65002:1
+	export-target rt 65002:42 
+	import-target rt 65002:42 
+}
+rdomain 2 {
+	fib-update yes
+	depend on 
+
+	rd 1:2
+}
+rdomain 3 {
+	descr "test-rdomain"
+	fib-update yes
+	depend on 
+
+	rd 1:3
+}
+rdomain 4 {
+	descr "test-full"
+	fib-update no
+	depend on mpe1
+	network 192.0.2.32/27
+
+	rd 192.0.2.4:1
+	export-target rt 65002:42 
+	export-target rt 192.0.2.3:42 
+	import-target rt 65002:21 
+	import-target rt 192.0.2.3:21 
+}
+
+rde rib Adj-RIB-In no evaluate
+rde rib Adj-RIB-Out no evaluate
+rde rib Loc-RIB rtable 0 fib-update yes
+
+
+
