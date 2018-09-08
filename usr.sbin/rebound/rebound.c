@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.98 2018/05/01 15:14:43 anton Exp $ */
+/* $OpenBSD: rebound.c,v 1.99 2018/09/08 13:17:19 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -630,12 +630,12 @@ encodename(const char *name, unsigned char *buf)
 	return totlen;
 }
 
-static void
+static int
 preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 {
-	struct dnspacket *req, *resp;
+	struct dnspacket *req = NULL, *resp = NULL;
 	size_t reqlen, resplen;
-	struct dnscache *ent;
+	struct dnscache *ent = NULL;
 	unsigned char *p;
 	uint16_t len, class;
 	uint32_t ttl;
@@ -643,6 +643,8 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	/* header + len + name + type + class */
 	reqlen = sizeof(*req) + 1 + strlen(name) + 2 + 2;
 	req = malloc(reqlen);
+	if (req == NULL)
+		goto fail;
 
 	req->id = 0;
 	req->flags = htons(0x100);
@@ -661,6 +663,8 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	/* req + name (compressed) + type + class + ttl + len + data */
 	resplen = reqlen + 2 + 2 + 2 + 4 + 2 + rdatalen;
 	resp = malloc(resplen);
+	if (resp == NULL)
+		goto fail;
 	memcpy(resp, req, reqlen);
 	resp->flags = htons(0x100 | 0x8000);	/* response */
 	resp->ancount = htons(1);
@@ -682,6 +686,8 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	memcpy(p, rdata, rdatalen);
 
 	ent = calloc(1, sizeof(*ent));
+	if (ent == NULL)
+		goto fail;
 	ent->req = req;
 	ent->reqlen = reqlen;
 	ent->resp = resp;
@@ -689,7 +695,13 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	ent->permanent = 1;
 
 	RB_INSERT(cachetree, &cachetree, ent);
+	return 0;
 
+fail:
+	free(req);
+	free(resp);
+	free(ent);
+	return -1;
 }
 
 static void
@@ -699,7 +711,8 @@ preloadA(const char *name, const char *ip)
 
 	inet_aton(ip, &in);
 
-	preloadcache(name, htons(1), &in, 4);
+	if (preloadcache(name, htons(1), &in, 4) == -1)
+		logerr("failed to add cache entry for %s", name);
 }
 
 static void
@@ -715,7 +728,8 @@ preloadPTR(const char *ip, const char *name)
 
 	encodename(name, namebuf);
 
-	preloadcache(ipbuf, htons(12), namebuf, 1 + strlen(namebuf));
+	if (preloadcache(ipbuf, htons(12), namebuf, 1 + strlen(namebuf)) == -1)
+		logerr("failed to add cache entry for %s", ip);
 }
 
 static int
