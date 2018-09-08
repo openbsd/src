@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.22 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: glob.c,v 1.23 2018/09/08 01:28:39 miko Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -578,9 +578,7 @@ dobackp(Char *cp, bool literal)
     Char *lp, *rp;
     Char   *ep, word[PATH_MAX];
 
-    if (pargv) {
-	blkfree(pargv);
-    }
+    blkfree(pargv);
     pargsiz = GLOBSPACE;
     pargv = xreallocarray(NULL, pargsiz, sizeof(Char *));
     pargv[0] = NULL;

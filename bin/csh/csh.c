@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.43 2017/12/16 10:27:21 anton Exp $	*/
+/*	$OpenBSD: csh.c,v 1.44 2018/09/08 01:28:39 miko Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -885,7 +885,6 @@ pintr(int notused)
 void
 pintr1(bool wantnl)
 {
-    Char **v;
     sigset_t sigset, osigset;
 
     sigemptyset(&sigset);
@@ -914,10 +913,10 @@ pintr1(bool wantnl)
     if (gointr) {
 	gotolab(gointr);
 	timflg = 0;
-	if ((v = pargv) != NULL)
-	    pargv = 0, blkfree(v);
-	if ((v = gargv) != NULL)
-	    gargv = 0, blkfree(v);
+	blkfree(pargv);
+	pargv = NULL;
+	blkfree(gargv);
+	gargv = NULL;
 	reset();
     }
     else if (intty && wantnl) {

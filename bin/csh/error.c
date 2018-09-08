@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.13 2017/12/16 10:27:21 anton Exp $	*/
+/*	$OpenBSD: error.c,v 1.14 2018/09/08 01:28:39 miko Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -315,7 +315,6 @@ void
 stderror(int id, ...)
 {
     va_list va;
-    Char **v;
     int     flags = id & ERR_FLAGS;
 
     id &= ~ERR_FLAGS;
@@ -349,10 +348,10 @@ stderror(int id, ...)
     free(seterr);
     seterr = NULL;
 
-    if ((v = pargv) != NULL)
-	pargv = 0, blkfree(v);
-    if ((v = gargv) != NULL)
-	gargv = 0, blkfree(v);
+    blkfree(pargv);
+    pargv = NULL;
+    blkfree(gargv);
+    gargv = NULL;
 
     (void) fflush(cshout);
     (void) fflush(csherr);
