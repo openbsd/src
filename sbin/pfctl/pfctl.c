@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.358 2018/09/08 14:12:57 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.359 2018/09/08 14:45:55 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2496,8 +2496,6 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
-	if ((path = calloc(1, PATH_MAX)) == NULL)
-		errx(1, "pfctl: calloc");
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {
 		if (mode == O_RDONLY && showopt == NULL) {
@@ -2540,6 +2538,9 @@ main(int argc, char *argv[])
 	if (opts & PF_OPT_DISABLE)
 		if (pfctl_disable(dev, opts))
 			error = 1;
+
+	if ((path = calloc(1, PATH_MAX)) == NULL)
+		errx(1, "%s: calloc", __func__);
 
 	if (showopt != NULL) {
 		switch (*showopt) {
