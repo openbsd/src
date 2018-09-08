@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.10 2018/09/07 14:11:39 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.11 2018/09/08 03:39:51 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -953,6 +953,7 @@ $openssl_bin s_server -accept $port -CAfile $ca_cert \
     -cert $server_cert -key $server_key -pass pass:$server_pass \
     -context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
     -nextprotoneg "http/1.1,spdy/3" -alpn "http/1.1,spdy/3" -www \
+    -cipher ALL \
     -msg -tlsextdebug > $s_server_out 2>&1 &
 check_exit_status $?
 s_server_pid=$!
@@ -1004,13 +1005,16 @@ check_exit_status $?
 grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 check_exit_status $?
 
-# all available TLSv1.2 ciphers
+# all available ciphers with random order
 
-ciphers=`$openssl_bin ciphers TLSv1.2:-ECDSA:-ADH:-NULL | sed 's/:/ /g'`
+ciphers=`$openssl_bin ciphers -v ALL:!ECDSA:!kGOST | awk '{print $1}' | sort -R`
+cnum=0
 for c in $ciphers ; do
-    s_client_out=$user1_dir/s_client_tls_$c.out
+    cnum=`expr $cnum + 1`
+    cnstr=`printf %03d $cnum`
+    s_client_out=$user1_dir/s_client_tls_${cnstr}_${c}.out
 
-    start_message "s_client ... connect to SSL/TLS test server with $c"
+    start_message "s_client ... connect to SSL/TLS test server with [ $cnstr ] $c"
     $openssl_bin s_client -connect $host:$port -CAfile $ca_cert -pause -prexit \
         -cipher $c -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
     check_exit_status $?
