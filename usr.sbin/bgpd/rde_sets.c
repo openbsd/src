@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.1 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.2 2018/09/08 09:29:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -81,15 +81,17 @@ print_as_sets(struct as_set_head *as_sets)
 {
 	struct as_set *aset;
 	size_t i;
-	int len = 0;;
+	int len;
 
 	if (as_sets == NULL)
 		return;
 	SIMPLEQ_FOREACH(aset, as_sets, entry) {
-		printf("as-set \"%s\" {", aset->name);
-		for (i = 0; i < aset->nmemb; i++) {
-			if (len == 0 || len > 72)
-				len = printf("\n\t");
+		printf("as-set \"%s\" {\n\t", aset->name);
+		for (i = 0, len = 8; i < aset->nmemb; i++) {
+			if (len > 72) {
+				printf("\n\t");
+				len = 8;
+			}
 			len += printf("%u ", aset->set[i]);
 		}
 		printf("\n}\n\n");
