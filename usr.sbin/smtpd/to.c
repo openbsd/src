@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.32 2018/09/03 11:30:14 eric Exp $	*/
+/*	$OpenBSD: to.c,v 1.33 2018/09/08 10:05:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -304,17 +304,18 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 {
 	static const struct schema {
 		const char	*name;
-		uint16_t       	 flags;
+		int		 tls;
+		uint16_t	 flags;
 	} schemas [] = {
 		/*
 		 * new schemas should be *appended* otherwise the default
 		 * schema index needs to be updated later in this function.
 		 */
-		{ "smtp://",		RELAY_TLS_OPTIONAL		},
-		{ "smtp+tls://",       	RELAY_STARTTLS			},
-		{ "smtp+notls://",      0				},
-		{ "lmtp://",		RELAY_LMTP			},
-		{ "smtps://",		RELAY_SMTPS			}
+		{ "smtp://",		RELAY_TLS_OPPORTUNISTIC, 0		},
+		{ "smtp+tls://",       	RELAY_TLS_STARTTLS,	 0		},
+		{ "smtp+notls://",      RELAY_TLS_NO,		 0		},
+		{ "lmtp://",		RELAY_TLS_NO,		 RELAY_LMTP	},
+		{ "smtps://",		RELAY_TLS_SMTPS, 	 0		}
 	};
 	const char     *errstr = NULL;
 	char	       *p, *q;
@@ -344,6 +345,7 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	else
 		p = buffer + strlen(schemas[i].name);
 
+	relay->tls = schemas[i].tls;
 	relay->flags = schemas[i].flags;
 
 	/* need to specify an explicit port for LMTP */
@@ -395,7 +397,8 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 		return 0;
 	if (relay->authlabel[0]) {
 		/* disallow auth on non-tls scheme. */
-		if (!(relay->flags & (RELAY_STARTTLS | RELAY_SMTPS)))
+		if (relay->tls != RELAY_TLS_STARTTLS &&
+		    relay->tls != RELAY_TLS_SMTPS)
 			return 0;
 		relay->flags |= RELAY_AUTH;
 	}

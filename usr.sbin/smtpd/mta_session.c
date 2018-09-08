@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.109 2018/09/05 10:15:41 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.110 2018/09/08 10:05:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -199,24 +199,23 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 
 	if (relay->flags & RELAY_LMTP)
 		s->flags |= MTA_LMTP;
-	switch (relay->flags & (RELAY_SSL|RELAY_TLS_OPTIONAL)) {
-		case RELAY_SSL:
-			s->flags |= MTA_FORCE_ANYSSL;
-			s->flags |= MTA_WANT_SECURE;
-			break;
-		case RELAY_SMTPS:
+	switch (relay->tls) {
+		case RELAY_TLS_SMTPS:
 			s->flags |= MTA_FORCE_SMTPS;
 			s->flags |= MTA_WANT_SECURE;
 			break;
-		case RELAY_STARTTLS:
+		case RELAY_TLS_STARTTLS:
 			s->flags |= MTA_FORCE_TLS;
 			s->flags |= MTA_WANT_SECURE;
 			break;
-		case RELAY_TLS_OPTIONAL:
+		case RELAY_TLS_OPPORTUNISTIC:
 			/* do not force anything, try tls then smtp */
 			break;
-		default:
+		case RELAY_TLS_NO:
 			s->flags |= MTA_FORCE_PLAIN;
+			break;
+		default:
+			fatalx("bad value for relay->tls: %d", relay->tls);
 	}
 
 	if (relay->flags & RELAY_BACKUP)

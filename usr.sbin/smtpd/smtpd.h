@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.558 2018/09/04 13:04:42 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.559 2018/09/08 10:05:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -84,11 +84,11 @@
 #define	F_RECEIVEDAUTH		0x800
 #define	F_MASQUERADE		0x1000
 
+#define RELAY_TLS_OPPORTUNISTIC	0
+#define RELAY_TLS_STARTTLS	1
+#define RELAY_TLS_SMTPS		2
+#define RELAY_TLS_NO		3
 
-#define RELAY_STARTTLS		0x01
-#define RELAY_SMTPS		0x02
-#define	RELAY_TLS_OPTIONAL     	0x04
-#define RELAY_SSL		(RELAY_STARTTLS | RELAY_SMTPS)
 #define RELAY_AUTH		0x08
 #define RELAY_BACKUP		0x10
 #define RELAY_MX		0x20
@@ -115,6 +115,7 @@ struct netaddr {
 
 struct relayhost {
 	uint16_t flags;
+	int tls;
 	char hostname[HOST_NAME_MAX+1];
 	uint16_t port;
 	char authlabel[PATH_MAX];
@@ -732,6 +733,7 @@ struct mta_relay {
 	struct dispatcher	*dispatcher;
 	struct mta_domain	*domain;
 	struct mta_limits	*limits;
+	int			 tls;
 	int			 flags;
 	char			*backupname;
 	int			 backuppref;
