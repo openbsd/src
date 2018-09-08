@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.40 2018/09/08 10:31:24 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.41 2018/09/08 13:49:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -333,7 +333,7 @@ OBJ_add_object(const ASN1_OBJECT *obj)
  err:
 	for (i = ADDED_DATA; i <= ADDED_NID; i++)
 		free(ao[i]);
-	free(o);
+	ASN1_OBJECT_free(o);
 	return (NID_undef);
 }
 
