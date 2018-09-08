@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.12 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.13 2018/09/08 14:39:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -739,6 +739,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	p += 2;
 
 	/* Explicit IV length. */
+	eivlen = 0;
 	if (s->internal->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
 		int mode = EVP_CIPHER_CTX_mode(s->internal->enc_write_ctx);
 		if (mode == EVP_CIPH_CBC_MODE) {
@@ -746,16 +747,10 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			if (eivlen <= 1)
 				eivlen = 0;
 		}
-		/* Need explicit part of IV for GCM mode */
-		else if (mode == EVP_CIPH_GCM_MODE)
-			eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
-		else
-			eivlen = 0;
 	} else if (s->internal->aead_write_ctx != NULL &&
 	    s->internal->aead_write_ctx->variable_nonce_in_record) {
 		eivlen = s->internal->aead_write_ctx->variable_nonce_len;
-	} else
-		eivlen = 0;
+	}
 
 	/* lets setup the record stuff. */
 	wr->data = p + eivlen;

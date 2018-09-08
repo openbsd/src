@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.113 2018/09/06 16:40:45 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.114 2018/09/08 14:39:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -458,6 +458,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 	EVP_CIPHER_CTX *cipher_ctx;
 	const EVP_CIPHER *cipher;
 	EVP_MD_CTX *mac_ctx;
+	EVP_PKEY *mac_key;
 	const EVP_MD *mac;
 	int mac_type;
 
@@ -503,26 +504,13 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		s->internal->write_hash = mac_ctx;
 	}
 
-	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE) {
-		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, NULL,
-		    !is_read);
-		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
-		    iv_len, (unsigned char *)iv);
-	} else
-		EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
+	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
 
-	if (!(EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-		EVP_PKEY *mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-		    mac_secret, mac_secret_size);
-		if (mac_key == NULL)
-			goto err;
-		EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
-		EVP_PKEY_free(mac_key);
-	} else if (mac_secret_size > 0) {
-		/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_AEAD_SET_MAC_KEY,
-		    mac_secret_size, (unsigned char *)mac_secret);
-	}
+	if ((mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
+	    mac_secret_size)) == NULL)
+		goto err;
+	EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
+	EVP_PKEY_free(mac_key);
 
 	if (S3I(s)->hs.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
 		int nid;
@@ -589,10 +577,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	} else {
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
-
-		/* If GCM mode only part of IV comes from PRF. */
-		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
-			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
 	}
 
 	mac_secret_size = s->s3->tmp.new_mac_secret_size;
@@ -676,10 +660,6 @@ tls1_setup_key_block(SSL *s)
 		}
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
-
-		/* If GCM mode only part of IV comes from PRF. */
-		if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE)
-			iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
 	}
 
 	S3I(s)->tmp.new_aead = aead;
@@ -951,28 +931,7 @@ tls1_enc(SSL *s, int send)
 		l = rec->length;
 		bs = EVP_CIPHER_block_size(ds->cipher);
 
-		if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
-			unsigned char buf[13];
-
-			if (SSL_IS_DTLS(s)) {
-				dtls1_build_sequence_number(buf, seq,
-				    send ? D1I(s)->w_epoch : D1I(s)->r_epoch);
-			} else {
-				memcpy(buf, seq, SSL3_SEQUENCE_SIZE);
-				tls1_record_sequence_increment(seq);
-			}
-
-			buf[8] = rec->type;
-			buf[9] = (unsigned char)(s->version >> 8);
-			buf[10] = (unsigned char)(s->version);
-			buf[11] = rec->length >> 8;
-			buf[12] = rec->length & 0xff;
-			pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD, 13, buf);
-			if (send) {
-				l += pad;
-				rec->length += pad;
-			}
-		} else if ((bs != 1) && send) {
+		if (bs != 1 && send) {
 			i = bs - ((int)l % bs);
 
 			/* Add weird padding of upto 256 bytes */
@@ -994,11 +953,6 @@ tls1_enc(SSL *s, int send)
 		if ((EVP_CIPHER_flags(ds->cipher) &
 		    EVP_CIPH_FLAG_CUSTOM_CIPHER) ? (i < 0) : (i == 0))
 			return -1;	/* AEAD can fail to verify MAC */
-		if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE && !send) {
-			rec->data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-			rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-			rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
-		}
 
 		ret = 1;
 		if (EVP_MD_CTX_md(s->read_hash) != NULL)

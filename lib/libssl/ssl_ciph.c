@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.104 2018/09/08 14:29:52 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.105 2018/09/08 14:39:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -598,12 +598,20 @@ ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 			*mac_secret_size = ssl_mac_secret_size[i];
 	}
 
-	if (*enc != NULL &&
-	    (*md != NULL || (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER)) &&
-	    (!mac_pkey_type || *mac_pkey_type != NID_undef))
-		return 1;
+	if (*enc == NULL || *md == NULL ||
+	    (mac_pkey_type != NULL && *mac_pkey_type == NID_undef))
+		return 0;
 
-	return 0;
+	/*
+	 * EVP_CIPH_FLAG_AEAD_CIPHER and EVP_CIPH_GCM_MODE ciphers are not
+	 * supported via EVP_CIPHER (they should be using EVP_AEAD instead).
+	 */
+	if (EVP_CIPHER_flags(*enc) & EVP_CIPH_FLAG_AEAD_CIPHER)
+		return 0;
+	if (EVP_CIPHER_mode(*enc) == EVP_CIPH_GCM_MODE)
+		return 0;
+
+	return 1;
 }
 
 /*
