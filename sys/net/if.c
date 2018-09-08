@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.559 2018/08/09 03:35:19 akoshibe Exp $	*/
+/*	$OpenBSD: if.c,v 1.560 2018/09/08 01:03:59 yasuoka Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1743,7 +1743,8 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
 
-	if ((ifp->if_flags & IFF_LOOPBACK) &&
+	if (rdomain != ifp->if_rdomain &&
+	    (ifp->if_flags & IFF_LOOPBACK) &&
 	    (ifp->if_index == rtable_loindex(ifp->if_rdomain)))
 		return (EPERM);
 
