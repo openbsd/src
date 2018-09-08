@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.214 2018/09/06 16:40:45 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.215 2018/09/08 14:29:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -263,10 +263,6 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_HANDSHAKE_MAC_SHA384	0x100
 #define SSL_HANDSHAKE_MAC_STREEBOG256	0x200
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
-
-/* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
- * make sure to update this constant too */
-#define SSL_MAX_DIGEST 7
 
 #define SSL3_CK_ID		0x03000000
 #define SSL3_CK_VALUE_MASK	0x0000ffff
