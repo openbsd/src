@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.337 2018/09/07 11:50:32 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.338 2018/09/08 09:33:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,7 @@ static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct rdomain		*currdom;
+static struct prefixset		*curpset;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -140,7 +141,7 @@ int		 add_mrtconfig(enum mrt_type, char *, int, struct peer *,
 int		 add_rib(char *, u_int, u_int16_t);
 struct rde_rib	*find_rib(char *);
 int		 get_id(struct peer *);
-int		 merge_prefixspec(struct filter_prefix_l *,
+int		 merge_prefixspec(struct filter_prefix *,
 		    struct filter_prefixlen *);
 int		 expand_rule(struct filter_rule *, struct filter_rib_l *,
 		    struct filter_peers_l *, struct filter_match_l *,
@@ -183,7 +184,7 @@ typedef struct {
 			u_int8_t		len;
 		}			prefix;
 		struct filter_prefixlen	prefixlen;
-		struct prefixset	*prefixset;
+		struct prefixset_item	*prefixset_item;
 		struct {
 			u_int8_t		enc_alg;
 			char			enc_key[IPSEC_ENC_KEY_LEN];
@@ -228,7 +229,7 @@ typedef struct {
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
-%type	<v.prefixset>		prefixset
+%type	<v.prefixset_item>	prefixset_item
 %type	<v.u8>			action quick direction delete
 %type	<v.filter_rib>		filter_rib_h filter_rib_l filter_rib
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
@@ -249,6 +250,7 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar include '\n'
 		| grammar asset '\n'
+		| grammar prefixset '\n'
 		| grammar conf_main '\n'
 		| grammar rdomain '\n'
 		| grammar neighbor '\n'
@@ -412,6 +414,48 @@ asset		: ASSET STRING '{' optnl	{
 asset_l		: as4number_any			{ asset_add($1); }
 		| asset_l optnl as4number_any	{ asset_add($3); }
 
+prefixset	: PREFIXSET STRING '{' optnl		{
+			if (find_prefixset($2, conf->prefixsets) != NULL)  {
+				yyerror("duplicate prefixset %s", $2);
+				free($2);
+				YYERROR;
+			}
+			if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
+				fatal("prefixset");
+			if (strlcpy(curpset->name, $2, sizeof(curpset->name)) >=
+			    sizeof(curpset->name)) {
+				yyerror("prefix-set \"%s\" too long: max %zu",
+				    $2, sizeof(curpset->name) - 1);
+				free($2);
+				YYERROR;
+			}
+			SIMPLEQ_INIT(&curpset->psitems);
+		} prefixset_l optnl '}'			{
+			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
+			curpset = NULL;
+		}
+
+prefixset_l	: prefixset_item			{
+			SIMPLEQ_INSERT_TAIL(&curpset->psitems, $1, entry);
+		}
+		| prefixset_l optnl prefixset_item	{
+			SIMPLEQ_INSERT_TAIL(&curpset->psitems, $3, entry);
+		}
+		;
+
+prefixset_item	: prefix prefixlenop			{
+			if (($$ = calloc(1, sizeof(*$$))) == NULL)
+				fatal(NULL);
+			memcpy(&$$->p.addr, &$1.prefix, sizeof($$->p.addr));
+			$$->p.len = $1.len;
+
+			if (merge_prefixspec(&$$->p, &$2) == -1) {
+				free($$);
+				YYERROR;
+			}
+		}
+		;
+
 conf_main	: AS as4number		{
 			conf->as = $2;
 			if ($2 > USHRT_MAX)
@@ -544,9 +588,6 @@ conf_main	: AS as4number		{
 			free($2);
 		}
 		| network
-		| prefixset		{
-			SIMPLEQ_INSERT_TAIL(conf->prefixsets, $1, entry);
-		}
 		| DUMP STRING STRING optnumber		{
 			int action;
 
@@ -723,38 +764,6 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 		}
 		;
 
-prefixset	: PREFIXSET STRING '{' filter_prefix_l '}'	{
-			struct filter_prefix_l	*n, *p;
-			struct prefixset_item	*pi;
-			if (find_prefixset($2, conf->prefixsets) != NULL)  {
-				yyerror("duplicate prefixset %s", $2);
-				free($2);
-				YYERROR;
-			}
-			if (($$ = calloc(1, sizeof(*$$)))
-			    == NULL)
-				fatal("prefixset");
-			if (strlcpy($$->name, $2,
-			    sizeof($$->name)) >=
-			    sizeof($$->name)) {
-				yyerror("prefix-set \"%s\" too long: max %zu",
-				    $2, sizeof($$->name) - 1);
-				free($2);
-				YYERROR;
-			}
-			SIMPLEQ_INIT(&$$->psitems);
-			n = $4;
-			while (n != NULL) {
-				if ((pi = calloc(1, sizeof(*pi))) == NULL)
-					fatal("prefixset item");
-				pi->p = n->p;
-				SIMPLEQ_INSERT_TAIL(&$$->psitems, pi, entry);
-				p = n;
-				n = n->next;
-				free(p);
-			}
-		}
-
 network		: NETWORK prefix filter_set	{
 			struct network	*n, *m;
 
@@ -777,7 +786,7 @@ network		: NETWORK prefix filter_set	{
 		}
 		| NETWORK PREFIXSET STRING filter_set	{
 			if ((find_prefixset($3, conf->prefixsets)) == NULL) {
-				yyerror("prefix-set not defined");
+				yyerror("prefix-set %s not defined", $3);
 				free($3);
 				free($4);
 				YYERROR;
@@ -1805,7 +1814,7 @@ filter_prefix_h	: IPV4 prefixlenop			 {
 			    NULL)
 				fatal(NULL);
 			$$->p.addr.aid = AID_INET;
-			if (merge_prefixspec($$, &$2) == -1) {
+			if (merge_prefixspec(&$$->p, &$2) == -1) {
 				free($$);
 				YYERROR;
 			}
@@ -1817,7 +1826,7 @@ filter_prefix_h	: IPV4 prefixlenop			 {
 			    NULL)
 				fatal(NULL);
 			$$->p.addr.aid = AID_INET6;
-			if (merge_prefixspec($$, &$2) == -1) {
+			if (merge_prefixspec(&$$->p, &$2) == -1) {
 				free($$);
 				YYERROR;
 			}
@@ -1855,7 +1864,7 @@ filter_prefix	: prefix prefixlenop			{
 			    sizeof($$->p.addr));
 			$$->p.len = $1.len;
 
-			if (merge_prefixspec($$, &$2) == -1) {
+			if (merge_prefixspec(&$$->p, &$2) == -1) {
 				free($$);
 				YYERROR;
 			}
@@ -3732,11 +3741,11 @@ get_id(struct peer *newpeer)
 }
 
 int
-merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
+merge_prefixspec(struct filter_prefix *p, struct filter_prefixlen *pl)
 {
 	u_int8_t max_len = 0;
 
-	switch (p->p.addr.aid) {
+	switch (p->addr.aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:
 		max_len = 32;
@@ -3747,12 +3756,12 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 	}
 
 	if (pl->op == OP_NONE) {
-		p->p.len_min = p->p.len_max = p->p.len;
+		p->len_min = p->len_max = p->len;
 		return (0);
 	}
 
 	if (pl->len_min == -1)
-		pl->len_min = p->p.len;
+		pl->len_min = p->len;
 	if (pl->len_max == -1)
 		pl->len_max = max_len;
 
@@ -3766,15 +3775,15 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 		    pl->len_min, pl->len_max);
 		return (-1);
 	}
-	if (pl->len_min < p->p.len) {
+	if (pl->len_min < p->len) {
 		yyerror("prefixlen %d smaller than prefix, limit %d",
-		    pl->len_min, p->p.len);
+		    pl->len_min, p->len);
 		return (-1);
 	}
 
-	p->p.op = pl->op;
-	p->p.len_min = pl->len_min;
-	p->p.len_max = pl->len_max;
+	p->op = pl->op;
+	p->len_min = pl->len_min;
+	p->len_max = pl->len_max;
 	return (0);
 }
 
