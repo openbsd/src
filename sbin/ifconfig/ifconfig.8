@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.318 2018/08/29 13:47:19 jca Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.319 2018/09/08 15:21:03 phessler Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 29 2018 $
+.Dd $Mdocdate: September 8 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -945,6 +945,8 @@ Any necessary
 or
 .Cm nwkey
 arguments should be specified on the same line.
+May not be used with
+.Cm nwid .
 .It Cm -join Ar id
 Remove the network with NWID
 .Ar id ,
@@ -991,6 +993,8 @@ Unlike auto-join networks,
 information about the network is not retained.
 The empty string allows the interface to connect to any available
 access points.
+May not be used with
+.Cm join .
 .It Cm -nwid
 Set the NWID to the empty string to allow the interface to connect
 to any available access point.

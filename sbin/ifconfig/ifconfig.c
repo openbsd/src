@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.376 2018/08/15 14:43:30 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.377 2018/09/08 15:21:03 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1670,6 +1670,10 @@ setifnwid(const char *val, int d)
 	struct ieee80211_nwid nwid;
 	int len;
 
+	if (strlen(joinname) != 0) {
+		errx(1, "nwid and join may not be used at the same time");
+	}
+
 	if (d != 0) {
 		/* no network id is especially desired */
 		memset(&nwid, 0, sizeof(nwid));
@@ -1692,6 +1696,10 @@ setifjoin(const char *val, int d)
 {
 	struct ieee80211_join join;
 	int len;
+
+	if (strlen(nwidname) != 0) {
+		errx(1, "nwid and join may not be used at the same time");
+	}
 
 	if (d != 0) {
 		/* no network id is especially desired */
