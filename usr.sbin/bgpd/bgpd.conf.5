@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.174 2018/09/07 10:59:16 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.175 2018/09/08 15:25:27 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2018 $
+.Dd $Mdocdate: September 8 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -291,12 +291,6 @@ Log received and sent updates.
 .Pq Ic inet Ns | Ns Ic inet6
 .Ic priority Ar number Op Ic set ...\&
 .Xc
-.\" NOT IMPLEMENTED. DO WE WANT THIS?
-.\" .It Xo
-.\" .Ic network prefix-set
-.\" .Ar name
-.\" .Op Ic set ...\&
-.\" .Xc
 Announce the specified network as belonging to our AS.
 If set to
 .Ic connected ,
@@ -1447,11 +1441,18 @@ is a shorthand for:
 .Ic prefix Ar address Ns Li / Ns Ar len Ic prexiflen Ic >= Ar len
 .Ed
 .Pp
-.It Ic prefix-set Ar name
+.It Ic prefix-set Ar name Op Ic or-longer
 This rule applies only to
 .Em UPDATES
 that match the given prefix-set
 .Ar name .
+With
+.Ic or-longer ,
+the
+.Em UPDATES
+will match any prefix in the prefix-set where
+.Bd -literal -offset indent
+.Ic address Ns Li / Ns Ar len Ic prexiflen Ic >= Ar len
 .Pp
 .It Ic quick
 If an

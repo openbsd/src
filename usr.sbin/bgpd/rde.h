@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.188 2018/09/07 10:49:22 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.189 2018/09/08 15:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -581,10 +581,10 @@ int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
 		     u_int8_t);
 
 /* rde_trie.c */
-int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t,
-	    u_int8_t, u_int8_t);
+int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,
+	    u_int8_t);
 void	trie_free(struct trie_head *);
-int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t);
+int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t, int);
 void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
 

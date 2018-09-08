@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.3 2018/09/07 20:26:30 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.4 2018/09/08 15:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -397,7 +397,8 @@ trie_free(struct trie_head *th)
 }
 
 static int
-trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
+trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
+    int orlonger)
 {
 	struct tentry_v4 *n;
 
@@ -417,6 +418,10 @@ trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 		if (n->addr.s_addr !=  mp.s_addr)
 			break;	/* off path, no match possible */
 
+		/* the match covers all larger prefixlens */
+		if (n->node && orlonger)
+			return 1;
+
 		/* plen is from 1 - 32 but the bitmask starts with 0 */
 		if (n->node && inet4isset(&n->plenmask, plen - 1))
 			return 1;	/* prefixlen allowed, match */
@@ -433,7 +438,8 @@ trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 }
 
 static int
-trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
+trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
+    int orlonger)
 {
 	struct tentry_v6 *n;
 
@@ -453,6 +459,10 @@ trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 		if (memcmp(&n->addr, &mp, sizeof(mp)) != 0)
 			break;	/* off path, no match possible */
 
+		/* the match covers all larger prefixlens */
+		if (n->node && orlonger)
+			return 1;
+
 		/* plen is from 1 - 128 but the bitmask starts with 0 */
 		if (n->node && inet6isset(&n->plenmask, plen - 1))
 			return 1;	/* prefixlen allowed, match */
@@ -469,13 +479,14 @@ trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 
 /* find first matching element in the trie for prefix "prefix/plen" */
 int
-trie_match(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen)
+trie_match(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
+    int orlonger)
 {
 	switch (prefix->aid) {
 	case AID_INET:
-		return trie_match_v4(th, &prefix->v4, plen);
+		return trie_match_v4(th, &prefix->v4, plen, orlonger);
 	case AID_INET6:
-		return trie_match_v6(th, &prefix->v6, plen);
+		return trie_match_v6(th, &prefix->v6, plen, orlonger);
 	default:
 		/* anything else is no match */
 		return 0;

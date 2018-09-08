@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.336 2018/09/07 11:50:32 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.337 2018/09/08 15:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,7 +353,7 @@ enum network_type {
 	NETWORK_CONNECTED,
 	NETWORK_RTLABEL,
 	NETWORK_MRTCLONE,
-	NETWORK_PRIORITY
+	NETWORK_PRIORITY,
 };
 
 struct network_config {
@@ -679,6 +679,8 @@ struct filter_aslen {
 
 #define PREFIXSET_FLAG_FILTER	0x01
 #define PREFIXSET_FLAG_DIRTY	0x02	/* prefix-set changed at reload */
+#define PREFIXSET_FLAG_OPS	0x04	/* indiv. prefixes have prefixlenops */
+#define PREFIXSET_FLAG_LONGER	0x08	/* filter all prefixes with or-longer */
 
 struct filter_prefixset {
 	int			 flags;

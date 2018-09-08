@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.104 2018/09/07 16:45:23 benno Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.105 2018/09/08 15:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -478,7 +478,6 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	}
 
 	/*
-	 * XXX must be second to last because we unconditionally return here.
 	 * prefixset and prefix filter rules are mutual exclusive
 	 */
 	if (f->match.prefixset.flags != 0) {
@@ -487,9 +486,9 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 
 		pt_getaddr(p->re->prefix, prefix);
 		plen = p->re->prefix->prefixlen;
-
 		if (f->match.prefixset.ps == NULL ||
-		    !trie_match(&f->match.prefixset.ps->th, prefix, plen))
+		    !trie_match(&f->match.prefixset.ps->th, prefix, plen,
+		    (f->match.prefixset.flags & PREFIXSET_FLAG_LONGER)))
 			return (0);
 	} else if (f->match.prefix.addr.aid != 0)
 		return (rde_prefix_match(&f->match.prefix, p));

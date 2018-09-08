@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.340 2018/09/08 12:29:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.341 2018/09/08 15:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2104,7 +2104,8 @@ filter_elm	: filter_prefix_h	{
 			}
 			fmopts.m.nexthop.flags = FILTER_NEXTHOP_NEIGHBOR;
 		}
-		| PREFIXSET STRING	{
+		| PREFIXSET STRING prefixlenop {
+			struct prefixset *ps;
 			if (fmopts.prefix_l != NULL) {
 				yyerror("\"prefix\" already specified, cannot "
 				    "be used with \"prefix-set\" in the same "
@@ -2117,7 +2118,8 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
-			if ((find_prefixset($2, conf->prefixsets)) == NULL) {
+			if ((ps = find_prefixset($2, conf->prefixsets))
+			    == NULL) {
 				yyerror("prefix-set not defined");
 				free($2);
 				YYERROR;
@@ -2129,6 +2131,25 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
+			if (!($3.op == OP_NONE ||
+			    ($3.op == OP_RANGE &&
+			     $3.len_min == -1 && $3.len_max == -1))) {
+				yyerror("prefix-sets can only use option "
+				    "or-longer");
+				free($2);
+				YYERROR;
+			}
+			if ($3.op == OP_RANGE && ps->sflags & PREFIXSET_FLAG_OPS) {
+				yyerror("prefix-set %s contains prefixlen "
+				    "operators and cannot be used in with a "
+				    "or-longer filter", ps->name);
+				free($2);
+				YYERROR;
+			}
+			if ($3.op == OP_RANGE && $3.len_min == -1 &&
+			    $3.len_min == -1)
+				fmopts.m.prefixset.flags |=
+				    PREFIXSET_FLAG_LONGER;
 			fmopts.m.prefixset.flags |= PREFIXSET_FLAG_FILTER;
 			fmopts.m.prefixset.ps = NULL;
 			free($2);
