@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.19 2016/12/02 14:39:46 rzalamena Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.20 2018/09/09 14:21:32 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -393,7 +393,8 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 		 * silently drop looping packet
 		 * (don't use OFP10_PORT_INPUT here)
 		 */
-		dstport = OFP10_PORT_ANY;
+		ret = 0;
+		goto done;
 	} else {
 		addflow = 1;
 	}
