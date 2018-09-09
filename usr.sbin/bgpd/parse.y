@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.348 2018/09/09 15:04:36 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.349 2018/09/09 20:39:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -408,6 +408,11 @@ as_set		: ASSET STRING '{' optnl	{
 		} as_set_l optnl '}' {
 			done_as_set();
 		}
+		| ASSET STRING '{' optnl '}'	{
+			if (new_as_set($2) != 0)
+				YYERROR;
+			free($2);
+		}
 
 as_set_l	: as4number_any			{ add_as_set($1); }
 		| as_set_l comma as4number_any	{ add_as_set($3); }
@@ -429,6 +434,25 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 			}
 			SIMPLEQ_INIT(&curpset->psitems);
 		} prefixset_l optnl '}'			{
+			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
+			curpset = NULL;
+		}
+		| PREFIXSET STRING '{' optnl '}'	{
+			if (find_prefixset($2, conf->prefixsets) != NULL)  {
+				yyerror("duplicate prefixset %s", $2);
+				free($2);
+				YYERROR;
+			}
+			if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
+				fatal("prefixset");
+			if (strlcpy(curpset->name, $2, sizeof(curpset->name)) >=
+			    sizeof(curpset->name)) {
+				yyerror("prefix-set \"%s\" too long: max %zu",
+				    $2, sizeof(curpset->name) - 1);
+				free($2);
+				YYERROR;
+			}
+			SIMPLEQ_INIT(&curpset->psitems);
 			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
 			curpset = NULL;
 		}
