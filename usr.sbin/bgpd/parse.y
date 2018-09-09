@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.346 2018/09/09 13:44:54 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.347 2018/09/09 14:27:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -409,8 +409,7 @@ as_set		: ASSET STRING '{' optnl	{
 			done_as_set();
 		}
 
-as_set_l	: /* empty */
-		| as4number_any			{ add_as_set($1); }
+as_set_l	: as4number_any			{ add_as_set($1); }
 		| as_set_l comma as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
@@ -434,8 +433,7 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 			curpset = NULL;
 		}
 
-prefixset_l	: /* empty */
-		| prefixset_item			{
+prefixset_l	: prefixset_item			{
 			SIMPLEQ_INSERT_TAIL(&curpset->psitems, $1, entry);
 		}
 		| prefixset_l comma prefixset_item	{
