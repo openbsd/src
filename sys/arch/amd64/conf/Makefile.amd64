@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.101 2018/08/21 18:06:12 anton Exp $
+#	$OpenBSD: Makefile.amd64,v 1.102 2018/09/09 22:09:36 guenther Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -125,6 +125,12 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
+locore.o: assym.h
+	${NORMAL_S}
+	@[[ -n `objdump -D $@ | grep -A1 doreti_iret | sort | uniq -d` ]] || \
+	 { rm -f $@; echo "ERROR: overlaid iretq instructions don't line up"; \
+	   echo "#GP-on-iretq fault handling would be broken"; exit 1; }
+
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
@@ -155,7 +161,7 @@ cleandir: clean
 depend obj:
 
 locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
-locore.o mutex.o vector.o copy.o spl.o: assym.h
+mutex.o vector.o copy.o spl.o: assym.h
 mptramp.o acpi_wakecode.o vmm_support.o: assym.h
 
 hardlink-obsd:

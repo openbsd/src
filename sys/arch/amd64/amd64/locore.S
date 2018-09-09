@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.107 2018/07/24 02:42:25 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.108 2018/09/09 22:09:36 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -860,10 +860,31 @@ intr_user_exit_post_ast:
 	movq	CPUVAR(USER_CR3),%rax
 	movq	%rax,%cr3
 Xiretq_trampback:
+KTEXT_PAGE_END
+/* the movq %cr3 switches to this "KUTEXT" page */
+KUTEXT_PAGE_START
+	.space	(Xiretq_trampback - Xsyscall_meltdown) - \
+		(. - XUsyscall_meltdown), 0xcc
+	movq	CPUVAR(SCRATCH),%rax
+.Liretq_swapgs:
+	swapgs
+doreti_iret_meltdown:
+	iretq
+KUTEXT_PAGE_END
+/*
+ * Back to the "KTEXT" page to fill in the speculation trap and the
+ * swapgs+iretq used for non-Meltdown kernels.  This switching back
+ * and forth between segments is so that we can do the .space
+ * calculation below to guarantee the iretq's above and below line
+ * up, so the 'doreti_iret' label lines up with the iretq whether
+ * the CPU is affected by Meltdown or not.
+ */
+KTEXT_PAGE_START
 0:	pause
 	lfence
 	jmp	0b
-	.space	5,0xcc		/* pad to match "movq CPUVAR(SCRATCH),%rax" */
+	.space	(.Liretq_swapgs - XUsyscall_meltdown) - \
+		(. - Xsyscall_meltdown), 0xcc
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
 
@@ -871,14 +892,6 @@ Xiretq_trampback:
 _C_LABEL(doreti_iret):
 	iretq
 KTEXT_PAGE_END
-
-KUTEXT_PAGE_START
-	.space	(Xiretq_trampback - Xsyscall_meltdown) - \
-		(. - XUsyscall_meltdown), 0xcc
-	movq	CPUVAR(SCRATCH),%rax
-	swapgs
-	iretq
-KUTEXT_PAGE_END
 
 	.text
 	_ALIGN_TRAPS
