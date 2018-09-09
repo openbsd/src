@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.342 2018/09/09 11:00:51 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.343 2018/09/09 13:06:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,9 +159,9 @@ int		 parsesubtype(char *, int *, int *);
 int		 parseextvalue(char *, u_int32_t *);
 int		 parseextcommunity(struct filter_extcommunity *, char *,
 		    char *);
-int		 asset_new(char *);
-void		 asset_add(u_int32_t);
-void		 asset_done(void);
+static int	 new_as_set(char *);
+static void	 add_as_set(u_int32_t);
+static void	 done_as_set(void);
 
 typedef struct {
 	union {
@@ -247,7 +247,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar varset '\n'
 		| grammar include '\n'
-		| grammar asset '\n'
+		| grammar as_set '\n'
 		| grammar prefixset '\n'
 		| grammar conf_main '\n'
 		| grammar rdomain '\n'
@@ -401,16 +401,16 @@ include		: INCLUDE STRING		{
 		}
 		;
 
-asset		: ASSET STRING '{' optnl	{
-			if (asset_new($2) != 0)
+as_set		: ASSET STRING '{' optnl	{
+			if (new_as_set($2) != 0)
 				YYERROR;
 			free($2);
-		} asset_l optnl '}' {
-			asset_done();
+		} as_set_l optnl '}' {
+			done_as_set();
 		}
 
-asset_l		: as4number_any			{ asset_add($1); }
-		| asset_l optnl as4number_any	{ asset_add($3); }
+as_set_l	: as4number_any			{ add_as_set($1); }
+		| as_set_l optnl as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
 			if (find_prefixset($2, conf->prefixsets) != NULL)  {
@@ -4154,14 +4154,11 @@ get_rule(enum action_types type)
 	return (r);
 }
 
-struct as_set *curasset;
-int
-asset_new(char *name)
+struct as_set *curaset;
+static int
+new_as_set(char *name)
 {
 	struct as_set *aset;
-
-	if (curasset)
-		fatalx("%s: bad mojo jojo", __func__);
 
 	if (as_sets_lookup(conf->as_sets, name) != NULL) {
 		yyerror("as-set \"%s\" already exists", name);
@@ -4173,22 +4170,22 @@ asset_new(char *name)
 		fatal(NULL);
 	as_sets_insert(conf->as_sets, aset);
 
-	curasset = aset;
+	curaset = aset;
 	return 0;
 }
 
-void
-asset_add(u_int32_t as)
+static void
+add_as_set(u_int32_t as)
 {
-	if (curasset == NULL)
+	if (curaset == NULL)
 		fatalx("%s: bad mojo jojo", __func__);
 
-	if (as_set_add(curasset, &as, 1) != 0)
+	if (as_set_add(curaset, &as, 1) != 0)
 		fatal(NULL);
 }
 
-void
-asset_done(void)
+static void
+done_as_set(void)
 {
-	curasset = NULL;
+	curaset = NULL;
 }
