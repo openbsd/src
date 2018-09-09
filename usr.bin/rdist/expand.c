@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.15 2015/01/20 09:00:16 guenther Exp $	*/
+/*	$OpenBSD: expand.c,v 1.16 2018/09/09 13:53:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -260,6 +260,8 @@ expstr(u_char *s)
 		return;
 	}
 	if (*s == '~') {
+		struct passwd *pw;
+
 		cp = ++s;
 		if (*cp == CNULL || *cp == '/') {
 			tilde = "~";
@@ -271,8 +273,7 @@ expstr(u_char *s)
 				*cp1++ = *cp++;
 			while (*cp && *cp != '/');
 			*cp1 = CNULL;
-			if (pw == NULL || strcmp(pw->pw_name, 
-						 (char *)ebuf+1) != 0) {
+			if (strcmp(locuser, (char *)ebuf+1) != 0) {
 				if ((pw = getpwnam((char *)ebuf+1)) == NULL) {
 					strlcat((char *)ebuf, 
 					        ": unknown user name",
@@ -280,8 +281,10 @@ expstr(u_char *s)
 					yyerror((char *)ebuf+1);
 					return;
 				}
+				cp1 = (u_char *)pw->pw_dir;
+			} else {
+				cp1 = (u_char *)homedir;
 			}
-			cp1 = (u_char *)pw->pw_dir;
 			s = cp;
 		}
 		for (cp = (u_char *)path; (*cp++ = *cp1++) != '\0'; )

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.37 2015/12/22 08:48:39 mmcc Exp $	*/
+/*	$OpenBSD: common.c,v 1.38 2018/09/09 13:53:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -65,7 +65,6 @@ char		       *currenthost = NULL;	/* Current client hostname */
 char		       *progname = NULL;	/* Name of this program */
 int			rem_r = -1;		/* Client file descriptor */
 int			rem_w = -1;		/* Client file descriptor */
-struct passwd	       *pw = NULL;		/* Local user's pwd entry */
 volatile sig_atomic_t 	contimedout = FALSE;	/* Connection timed out */
 int			rtimeout = RTIMEOUT;	/* Response time out */
 jmp_buf			finish_jmpbuf;		/* Finish() jmp buffer */
@@ -107,6 +106,7 @@ xwrite(int fd, void *buf, size_t len)
 int
 init(int argc, char **argv, char **envp)
 {
+	struct passwd *pw;
 	int i;
 
 	/*
@@ -572,6 +572,7 @@ response(void)
 char *
 exptilde(char *ebuf, char *file, size_t ebufsize)
 {
+	struct passwd *pw;
 	char *pw_dir, *rest;
 	size_t len;
 
@@ -580,11 +581,10 @@ notilde:
 		(void) strlcpy(ebuf, file, ebufsize);
 		return(ebuf);
 	}
+	pw_dir = homedir;
 	if (*++file == CNULL) {
-		pw_dir = homedir;
 		rest = NULL;
 	} else if (*file == '/') {
-		pw_dir = homedir;
 		rest = file;
 	} else {
 		rest = file;
@@ -594,17 +594,17 @@ notilde:
 			*rest = CNULL;
 		else
 			rest = NULL;
-		if (pw == NULL || strcmp(pw->pw_name, file) != 0) {
+		if (strcmp(locuser, file) != 0) {
 			if ((pw = getpwnam(file)) == NULL) {
 				error("%s: unknown user name", file);
 				if (rest != NULL)
 					*rest = '/';
 				return(NULL);
 			}
+			pw_dir = pw->pw_dir;
 		}
 		if (rest != NULL)
 			*rest = '/';
-		pw_dir = pw->pw_dir;
 	}
 	if ((len = strlcpy(ebuf, pw_dir, ebufsize)) >= ebufsize)
 		goto notilde;

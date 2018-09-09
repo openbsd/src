@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.43 2017/08/30 07:43:52 otto Exp $	*/
+/*	$OpenBSD: server.c,v 1.44 2018/09/09 13:53:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -188,7 +188,9 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 	if (userid == 0) {	/* running as root; take anything */
 		if (*owner == ':') {
 			uid = (uid_t) atoi(owner + 1);
-		} else if (pw == NULL || strcmp(owner, pw->pw_name) != 0) {
+		} else if (strcmp(owner, locuser) != 0) {
+			struct passwd *pw;
+
 			if ((pw = getpwnam(owner)) == NULL) {
 				if (mode != -1 && IS_ON(mode, S_ISUID)) {
 					message(MT_NOTICE,
@@ -203,8 +205,8 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 			} else
 				uid = pw->pw_uid;
 		} else {
-			uid = pw->pw_uid;
-			primegid = pw->pw_gid;
+			uid = userid;
+			primegid = groupid;
 		}
 		if (*group == ':') {
 			gid = (gid_t)atoi(group + 1);

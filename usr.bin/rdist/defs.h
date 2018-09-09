@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.36 2015/01/21 03:05:03 guenther Exp $	*/
+/*	$OpenBSD: defs.h,v 1.37 2018/09/09 13:53:11 millert Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -166,8 +166,8 @@ extern int		rem_r;		/* Remote file descriptor, reading */
 extern int		rem_w;		/* Remote file descriptor, writing */
 extern int		rtimeout;	/* Response time out in seconds */
 extern uid_t		userid;		/* User ID of rdist user */
+extern gid_t		groupid;	/* Group ID of rdist user */
 extern jmp_buf		finish_jmpbuf;	/* Setjmp buffer for finish() */
-extern struct passwd   *pw;	/* pointer to static area used by getpwent */
 extern char defowner[64];		/* Default owner */
 extern char defgroup[64];		/* Default group */
 extern volatile sig_atomic_t contimedout; /* Connection timed out */
