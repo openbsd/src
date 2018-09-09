@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.23 2018/07/19 17:38:12 drahn Exp $ */
+/* $OpenBSD: locore.S,v 1.24 2018/09/09 16:41:43 mortimer Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -42,10 +42,12 @@
  */
 	.globl drop_to_el1
 drop_to_el1:
+	RETGUARD_SETUP(drop_to_el1, x15)
 	mrs	x1, CurrentEL
 	lsr	x1, x1, #2
 	cmp	x1, #0x2
 	b.eq	1f
+	RETGUARD_CHECK(drop_to_el1, x15)
 	ret
 1:
 	/* Configure the Hypervisor */
@@ -144,6 +146,7 @@ hyp_vectors:
  */
 	.globl get_virt_delta
 get_virt_delta:
+	RETGUARD_SETUP(get_virt_delta, x15)
 	/* Load the physical address of virt_map */
 	adr	x28, virt_map
 	/* Load the virtual address of virt_map stored in virt_map */
@@ -157,6 +160,7 @@ get_virt_delta:
 	sub	x28, x28, x27
 	and	x28, x28, #~0x001fffff
 
+	RETGUARD_CHECK(get_virt_delta, x15)
 	ret
 
 	.align 3
@@ -166,6 +170,7 @@ virt_map:
 
 	.globl start_mmu
 start_mmu:
+	RETGUARD_SETUP(start_mmu, x15)
 	dsb	sy
 
 	/* Load the exception vectors */
@@ -206,16 +211,19 @@ start_mmu:
 	msr	sctlr_el1, x1
 	isb
 
+	RETGUARD_CHECK(start_mmu, x15)
 	ret
 
 	.globl switch_mmu_kernel
 switch_mmu_kernel:
+	RETGUARD_SETUP(switch_mmu_kernel, x15)
 	dsb	sy
 	/* Invalidate the TLB */
 	tlbi	vmalle1is
 	/* Load ttbr1 (kernel) */
 	msr	ttbr1_el1, x0
 	isb
+	RETGUARD_CHECK(switch_mmu_kernel, x15)
 	ret
 
 	.align 3
