@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.81 2018/08/30 08:30:05 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.82 2018/09/09 12:53:00 benno Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2018 $
+.Dd $Mdocdate: September 9 2018 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -148,6 +148,8 @@ may be the neighbor's address or description.
 Add the specified prefix to the list of announced networks.
 It is possible to set various path attributes with additional
 .Ar arguments .
+Adding a prefix will replace an existing equal prefix, including
+prefixes loaded from the configuration.
 .It Xo
 .Cm network bulk
 .Op Ar arguments
@@ -170,7 +172,9 @@ Prefixes should be sent via stdin.
 .It Cm network delete Ar prefix
 Remove the specified prefix from the list of announced networks.
 .It Cm network flush
-Remove all dynamically added prefixes from the list of announced networks.
+Remove all dynamically (i.e. with
+.Nm Cm network add )
+added prefixes from the list of announced networks.
 .It Cm network mrt file Ar file filter
 Import networks from an MRT table dump for debugging purposes.
 .Ar filter
