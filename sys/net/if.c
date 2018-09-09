@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.560 2018/09/08 01:03:59 yasuoka Exp $	*/
+/*	$OpenBSD: if.c,v 1.561 2018/09/09 10:09:06 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1738,7 +1738,7 @@ int
 if_setrdomain(struct ifnet *ifp, int rdomain)
 {
 	struct ifreq ifr;
-	int error, up = 0, s;
+	int error, createerr, up = 0, s;
 
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
@@ -1752,28 +1752,29 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	 * Create the routing table if it does not exist, including its
 	 * loopback interface with unit == rdomain.
 	 */
-	if (!rtable_exists(rdomain)) {
+	if (!rtable_exists(rdomain) || rtable_empty(rdomain)) {
 		struct ifnet *loifp;
 		char loifname[IFNAMSIZ];
 		unsigned int unit = rdomain;
 
 		snprintf(loifname, sizeof(loifname), "lo%u", unit);
-		error = if_clone_create(loifname, 0);
+		createerr = if_clone_create(loifname, 0);
+		if (createerr && createerr != EEXIST)
+			return (createerr);
 
 		if ((loifp = ifunit(loifname)) == NULL)
 			return (ENXIO);
 
-		/* Do not error out if creating the default lo(4) interface */
-		if (error && (ifp != loifp || error != EEXIST))
-			return (error);
-
-		if ((error = rtable_add(rdomain)) == 0)
-			rtable_l2set(rdomain, rdomain, loifp->if_index);
-		if (error) {
-			if_clone_destroy(loifname);
-			return (error);
+		if (!rtable_exists(rdomain)) {
+			error = rtable_add(rdomain);
+			if (error) {
+				if (createerr != EEXIST)
+					if_clone_destroy(loifname);
+				return (error);
+			}
 		}
 
+		rtable_l2set(rdomain, rdomain, loifp->if_index);
 		loifp->if_rdomain = rdomain;
 	}
 
