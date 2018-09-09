@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2018/07/12 14:11:11 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.117 2018/09/09 22:41:57 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -336,8 +336,7 @@ static __inline boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
 	return((pmap == pmap_kernel()) ||
-	       (pmap->pm_pdirpa == (paddr_t) rcr3()) ||
-	       (pmap->pm_pdirpa_intel == (paddr_t) rcr3()));
+	       (pmap->pm_pdirpa == (paddr_t) rcr3()));
 }
 
 /*
