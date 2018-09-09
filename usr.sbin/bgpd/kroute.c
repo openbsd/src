@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.222 2018/07/22 16:55:01 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.223 2018/09/09 11:00:51 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1131,6 +1131,11 @@ kr_net_match(struct ktable *kt, struct kroute *kr)
 			if (kr->priority == xn->net.priority)
 				return (xn);
 			break;
+		case NETWORK_PREFIXSET:
+			/* must not happen */
+			log_warnx("%s: found a NETWORK_PREFIXSET, "
+			    "please send a bug report", __func__);
+			break;
 		}
 	}
 	return (NULL);
@@ -1171,6 +1176,11 @@ kr_net_match6(struct ktable *kt, struct kroute6 *kr6)
 			if (kr6->priority == xn->net.priority)
 				return (xn);
 			break;
+		case NETWORK_PREFIXSET:
+			/* must not happen */
+			log_warnx("%s: found a NETWORK_PREFIXSET, "
+			    "please send a bug report", __func__);
+			break;
 		}
 	}
 	return (NULL);
@@ -1208,6 +1218,8 @@ kr_net_reload(u_int rtableid, struct network_head *nh)
 		n->net.old = 1;
 
 	while ((n = TAILQ_FIRST(nh)) != NULL) {
+		log_debug("%s: processing %s/%u", __func__,
+		    log_addr(&n->net.prefix), n->net.prefixlen);
 		TAILQ_REMOVE(nh, n, entry);
 		n->net.old = 0;
 		n->net.rtableid = rtableid;

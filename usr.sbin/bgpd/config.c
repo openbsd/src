@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.72 2018/09/07 05:43:33 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.73 2018/09/09 11:00:51 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -496,4 +496,53 @@ get_mpe_label(struct rdomain *r)
 	close(s);
 	r->label = shim.shim_label;
 	return (0);
+}
+
+void
+copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
+{
+	struct filter_set	*s, *t;
+
+	if (source == NULL)
+		return;
+
+	TAILQ_FOREACH(s, source, entry) {
+		if ((t = malloc(sizeof(struct filter_set))) == NULL)
+			fatal(NULL);
+		memcpy(t, s, sizeof(struct filter_set));
+		TAILQ_INSERT_TAIL(dest, t, entry);
+	}
+}
+
+void
+expand_networks(struct bgpd_config *c)
+{
+	struct network		*n, *m, *tmp;
+	struct network_head	*nw = &c->networks;
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
+
+	TAILQ_FOREACH_SAFE(n, nw, entry, tmp) {
+		if (n->net.type == NETWORK_PREFIXSET) {
+			TAILQ_REMOVE(nw, n, entry);
+			if ((ps = find_prefixset(n->net.psname, c->prefixsets))
+			    == NULL)
+				fatal("%s: prefixset %s not found", __func__,
+				    n->net.psname);
+			SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
+				if ((m = calloc(1, sizeof(struct network)))
+				    == NULL)
+					fatal(NULL);
+				memcpy(&m->net.prefix, &psi->p.addr,
+				    sizeof(m->net.prefix));
+				m->net.prefixlen = psi->p.len;
+				TAILQ_INIT(&m->net.attrset);
+				copy_filterset(&n->net.attrset,
+				    &m->net.attrset);
+				TAILQ_INSERT_TAIL(nw, m, entry);
+			}
+			filterset_free(&n->net.attrset);
+			free(n);
+		}
+	}
 }

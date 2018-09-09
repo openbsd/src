@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.337 2018/09/08 15:25:27 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.338 2018/09/09 11:00:51 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -354,12 +354,14 @@ enum network_type {
 	NETWORK_RTLABEL,
 	NETWORK_MRTCLONE,
 	NETWORK_PRIORITY,
+	NETWORK_PREFIXSET,
 };
 
 struct network_config {
 	struct bgpd_addr	 prefix;
 	struct filter_set_head	 attrset;
 	struct rde_aspath	*asp;
+	char			 psname[SET_NAME_LEN];
 	u_int			 rtableid;
 	u_int16_t		 rtlabel;
 	enum network_type	 type;
@@ -1081,6 +1083,8 @@ void			 free_config(struct bgpd_config *);
 void	free_prefixsets(struct prefixset_head *);
 void	filterlist_free(struct filter_head *);
 int	host(const char *, struct bgpd_addr *, u_int8_t *);
+void	copy_filterset(struct filter_set_head *, struct filter_set_head *);
+void	expand_networks(struct bgpd_config *);
 
 /* kroute.c */
 int		 kr_init(void);

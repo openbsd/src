@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.341 2018/09/08 15:25:27 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.342 2018/09/09 11:00:51 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -149,8 +149,6 @@ int		 expand_rule(struct filter_rule *, struct filter_rib_l *,
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
 int		 merge_filterset(struct filter_set_head *, struct filter_set *);
-void		 copy_filterset(struct filter_set_head *,
-		    struct filter_set_head *);
 void		 merge_filter_lists(struct filter_head *, struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
@@ -448,7 +446,8 @@ prefixset_item	: prefix prefixlenop			{
 				fatal(NULL);
 			memcpy(&$$->p.addr, &$1.prefix, sizeof($$->p.addr));
 			$$->p.len = $1.len;
-
+			if ($2.op != OP_NONE)
+				curpset->sflags |= PREFIXSET_FLAG_OPS;
 			if (merge_prefixspec(&$$->p, &$2) == -1) {
 				free($$);
 				YYERROR;
@@ -785,19 +784,34 @@ network		: NETWORK prefix filter_set	{
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
 		| NETWORK PREFIXSET STRING filter_set	{
-			if ((find_prefixset($3, conf->prefixsets)) == NULL) {
-				yyerror("prefix-set %s not defined", $3);
+			struct prefixset *ps;
+			struct network	*n;
+			if ((ps = find_prefixset($3, conf->prefixsets))
+			    == NULL) {
+				yyerror("prefix-set %s not defined", ps->name);
 				free($3);
+				filterset_free($4);
 				free($4);
 				YYERROR;
 			}
-			/*
-			 * XXX not implemented
-			 */
-			yyerror("network prefix-set not implemented.");
+			if (ps->sflags & PREFIXSET_FLAG_OPS) {
+				yyerror("prefix-set %s has prefixlen operators "
+				    "and cannot be used in network statements.",
+				    ps->name);
+				free($3);
+				filterset_free($4);
+				free($4);
+				YYERROR;
+			}
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			strlcpy(n->net.psname, ps->name, sizeof(n->net.psname));
+			TAILQ_INIT(&n->net.attrset);
+			TAILQ_CONCAT(&n->net.attrset, $4, entry);
+			n->net.type = NETWORK_PREFIXSET;
+			TAILQ_INSERT_TAIL(netconf, n, entry);
 			free($3);
 			free($4);
-			YYERROR;
 		}
 		| NETWORK family RTLABEL STRING filter_set	{
 			struct network	*n;
@@ -2141,7 +2155,7 @@ filter_elm	: filter_prefix_h	{
 			}
 			if ($3.op == OP_RANGE && ps->sflags & PREFIXSET_FLAG_OPS) {
 				yyerror("prefix-set %s contains prefixlen "
-				    "operators and cannot be used in with a "
+				    "operators and cannot be used with an "
 				    "or-longer filter", ps->name);
 				free($2);
 				YYERROR;
@@ -4088,22 +4102,6 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 
 	TAILQ_INSERT_TAIL(sh, s, entry);
 	return (0);
-}
-
-void
-copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
-{
-	struct filter_set	*s, *t;
-
-	if (source == NULL)
-		return;
-
-	TAILQ_FOREACH(s, source, entry) {
-		if ((t = malloc(sizeof(struct filter_set))) == NULL)
-			fatal(NULL);
-		memcpy(t, s, sizeof(struct filter_set));
-		TAILQ_INSERT_TAIL(dest, t, entry);
-	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.114 2018/09/08 15:25:27 benno Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.115 2018/09/09 11:00:51 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -425,6 +425,9 @@ print_network(struct network_config *n, const char *c)
 	case NETWORK_PRIORITY:
 		printf("%snetwork %s priority %d", c,
 		    print_af(n->prefix.aid), n->priority);
+		break;
+	case NETWORK_PREFIXSET:
+		printf("%snetwork prefix-set %s", c, n->psname);
 		break;
 	default:
 		printf("%snetwork %s/%u", c, log_addr(&n->prefix),
@@ -854,6 +857,9 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 
 	print_mainconf(conf);
 	printf("\n");
+	print_prefixsets(conf->prefixsets);
+	print_as_sets(conf->as_sets);
+	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net, "");
 	printf("\n");
@@ -871,8 +877,6 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 			    "no" : "yes");
 	}
 	printf("\n");
-	print_prefixsets(conf->prefixsets);
-	print_as_sets(conf->as_sets);
 	print_mrt(conf, 0, 0, "", "");
 	printf("\n");
 	print_groups(conf, peer_l);
