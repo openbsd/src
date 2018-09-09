@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.45 2018/09/09 04:09:32 ccardenas Exp $
+.\"	$OpenBSD: vmctl.8,v 1.46 2018/09/09 06:36:43 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -55,11 +55,12 @@ Creates a VM disk image file with the specified
 .Ar path
 and
 .Ar size ,
-rounded to megabytes. The disk
+rounded to megabytes.
+The disk
 .Ar format
 may be specified as either
 .Ar raw
-or 
+or
 .Ar qcow2 ,
 defaulting to
 .Ar raw
@@ -117,11 +118,12 @@ Automatically connect to the VM console.
 Disk image file (may be specified multiple times to add multiple disk images).
 The disk
 .Ar path
-may be prefixed with a format prefix (
-.Pa raw:
+may be prefixed with a format prefix
+.Pf ( Pa raw:
 or
-.Pa qcow2:
-) in order to specify the disk format. If left unspecified, the default format is
+.Pa qcow2: )
+in order to specify the disk format.
+If left unspecified, the default format is
 .Pa raw .
 .It Fl i Ar count
 Number of network interfaces to add to the VM.
