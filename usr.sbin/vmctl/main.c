@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2018/07/12 14:53:37 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2018/09/09 04:09:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -205,8 +205,8 @@ vmmaction(struct parse_result *res)
 	switch (res->action) {
 	case CMD_START:
 		ret = vm_start(res->id, res->name, res->size, res->nifs,
-		    res->nets, res->ndisks, res->disks, res->path,
-		    res->isopath, res->instance);
+		    res->nets, res->ndisks, res->disks, res->disktypes,
+		    res->path, res->isopath, res->instance);
 		if (ret) {
 			errno = ret;
 			err(1, "start VM operation failed");
@@ -334,6 +334,7 @@ parse_free(struct parse_result *res)
 	for (i = 0; i < res->ndisks; i++)
 		free(res->disks[i]);
 	free(res->disks);
+	free(res->disktypes);
 	memset(res, 0, sizeof(*res));
 }
 
@@ -398,10 +399,29 @@ parse_size(struct parse_result *res, char *word, long long val)
 	return (0);
 }
 
+#define RAW_FMT_PREFIX		"raw:"
+#define QCOW2_FMT_PREFIX	"qcow2:"
+
 int
-parse_disk(struct parse_result *res, char *word)
+parse_disktype(char *s, char **ret)
+{
+	*ret = s;
+	if (strstr(s, RAW_FMT_PREFIX) == s) {
+		*ret = s + strlen(RAW_FMT_PREFIX);
+		return VMDF_RAW;
+	}
+	if (strstr(s, QCOW2_FMT_PREFIX) == s) {
+		*ret = s + strlen(QCOW2_FMT_PREFIX);
+		return VMDF_QCOW2;
+	}
+	return VMDF_RAW;
+}
+
+int
+parse_disk(struct parse_result *res, char *word, int type)
 {
 	char		**disks;
+	int		*disktypes;
 	char		*s;
 
 	if ((disks = reallocarray(res->disks, res->ndisks + 1,
@@ -409,12 +429,19 @@ parse_disk(struct parse_result *res, char *word)
 		warn("reallocarray");
 		return (-1);
 	}
+	if ((disktypes = reallocarray(res->disktypes, res->ndisks + 1,
+	    sizeof(int))) == NULL) {
+		warn("reallocarray");
+		return -1;
+	}
 	if ((s = strdup(word)) == NULL) {
 		warn("strdup");
 		return (-1);
 	}
 	disks[res->ndisks] = s;
+	disktypes[res->ndisks] = type;
 	res->disks = disks;
+	res->disktypes = disktypes;
 	res->ndisks++;
 
 	return (0);
@@ -580,8 +607,8 @@ ctl_reset(struct parse_result *res, int argc, char *argv[])
 int
 ctl_start(struct parse_result *res, int argc, char *argv[])
 {
-	int		 ch, i;
-	char		 path[PATH_MAX];
+	int		 ch, i, type;
+	char		 path[PATH_MAX], *s;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
@@ -628,9 +655,10 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 				errx(1, "invalid network: %s", optarg);
 			break;
 		case 'd':
-			if (realpath(optarg, path) == NULL)
+			type = parse_disktype(optarg, &s);
+			if (realpath(s, path) == NULL)
 				err(1, "invalid disk path");
-			if (parse_disk(res, path) != 0)
+			if (parse_disk(res, path, type) != 0)
 				errx(1, "invalid disk: %s", optarg);
 			break;
 		case 'i':

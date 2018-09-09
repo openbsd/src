@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2018/09/07 07:35:31 miko Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2018/09/09 04:09:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -88,7 +88,7 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 ssize_t		 parse_size(char *, int64_t);
-int		 parse_disk(char *);
+int		 parse_disk(char *, int);
 
 static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
@@ -117,13 +117,14 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD ALLOW BOOT CDROM DISABLE DISK DOWN ENABLE GROUP INSTANCE INTERFACE
-%token	LLADDR LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SOCKET
-%token	SWITCH UP VM VMID
+%token	ADD ALLOW BOOT CDROM DISABLE DISK DOWN ENABLE FORMAT GROUP INSTANCE
+%token	INTERFACE LLADDR LOCAL LOCKED MEMORY NIFS OWNER PATH PREFIX RDOMAIN
+%token	SIZE SOCKET SWITCH UP VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
 %type	<v.number>	disable
+%type	<v.number>	image_format
 %type	<v.number>	local
 %type	<v.number>	locked
 %type	<v.number>	updown
@@ -368,8 +369,8 @@ vm_opts_l	: vm_opts_l vm_opts nl
 vm_opts		: disable			{
 			vcp_disable = $1;
 		}
-		| DISK string			{
-			if (parse_disk($2) != 0) {
+		| DISK string image_format	{
+			if (parse_disk($2, $3) != 0) {
 				yyerror("failed to parse disks: %s", $2);
 				free($2);
 				YYERROR;
@@ -559,6 +560,22 @@ owner_id	: /* none */		{
 		}
 		;
 
+image_format	: /* none 	*/	{
+			$$ = VMDF_RAW;
+		}
+	     	| FORMAT string		{
+			if (strcmp($2, "raw") == 0)
+				$$ = VMDF_RAW;
+			else if (strcmp($2, "qcow2") == 0)
+				$$ = VMDF_QCOW2;
+			else {
+				yyerror("unrecognized disk format %s", $2);
+				free($2);
+				YYERROR;
+			}
+		}
+		;
+
 iface_opts_o	: '{' optnl iface_opts_l '}'
 		| iface_opts_c
 		| /* empty */
@@ -720,6 +737,7 @@ lookup(char *s)
 		{ "disk",		DISK },
 		{ "down",		DOWN },
 		{ "enable",		ENABLE },
+		{ "format",		FORMAT },
 		{ "group",		GROUP },
 		{ "id",			VMID },
 		{ "include",		INCLUDE },
@@ -1207,7 +1225,7 @@ parse_size(char *word, int64_t val)
 }
 
 int
-parse_disk(char *word)
+parse_disk(char *word, int type)
 {
 	char	path[PATH_MAX];
 
@@ -1226,6 +1244,7 @@ parse_disk(char *word)
 		log_warnx("disk path too long");
 		return (-1);
 	}
+	vmc.vmc_disktypes[vcp->vcp_ndisks] = type;
 
 	vcp->vcp_ndisks++;
 

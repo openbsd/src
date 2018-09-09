@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.44 2018/07/29 14:11:05 anton Exp $
+.\"	$OpenBSD: vmctl.8,v 1.45 2018/09/09 04:09:32 ccardenas Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2018 $
+.Dd $Mdocdate: September 9 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -55,7 +55,15 @@ Creates a VM disk image file with the specified
 .Ar path
 and
 .Ar size ,
-rounded to megabytes.
+rounded to megabytes. The disk
+.Ar format
+may be specified as either
+.Ar raw
+or 
+.Ar qcow2 ,
+defaulting to
+.Ar raw
+if left unspecified.
 .It Cm load Ar filename
 Load additional configuration from the specified file.
 .It Cm log brief
@@ -107,6 +115,14 @@ If not specified, the default is to boot using the BIOS image in
 Automatically connect to the VM console.
 .It Fl d Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
+The disk
+.Ar path
+may be prefixed with a format prefix (
+.Pa raw:
+or
+.Pa qcow2:
+) in order to specify the disk format. If left unspecified, the default format is
+.Pa raw .
 .It Fl i Ar count
 Number of network interfaces to add to the VM.
 .It Fl L

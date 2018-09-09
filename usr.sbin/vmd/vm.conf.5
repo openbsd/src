@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.35 2018/07/13 17:48:30 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.36 2018/09/09 04:09:32 ccardenas Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2018 $
+.Dd $Mdocdate: September 9 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -144,8 +144,15 @@ nor
 is specified.
 .It Cm disable
 Do not start this VM.
-.It Cm disk Ar path
+.It Cm disk Ar path Op Cm format Ar fmt
 Disk image file (may be specified multiple times to add multiple disk images).
+The format may be specified as either
+.Ar qcow2
+or
+.Ar raw ,
+defaulting to
+.Ar raw
+if left unspecified.
 .It Oo Cm local Oc Cm interface Oo name Oc Op Brq ...
 Network interface to add to the VM.
 The optional

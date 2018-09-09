@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.78 2018/07/15 14:36:54 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.79 2018/09/09 04:09:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -164,6 +164,11 @@ struct vmop_create_params {
 #define VMIFF_LOCAL		0x04
 #define VMIFF_RDOMAIN		0x08
 #define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
+
+	unsigned int		 vmc_disktypes[VMM_MAX_DISKS_PER_VM];
+#define VMDF_RAW		0x01
+#define VMDF_QCOW2		0x02
+
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];

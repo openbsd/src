@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.55 2018/08/23 06:04:53 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.56 2018/09/09 04:09:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -70,8 +70,8 @@ int info_console;
  */
 int
 vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
-    char **nics, int ndisks, char **disks, char *kernel, char *iso,
-    char *instance)
+    char **nics, int ndisks, char **disks, int *disktypes, char *kernel,
+    char *iso, char *instance)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -128,11 +128,13 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 	vcp->vcp_nnics = nnics;
 	vcp->vcp_id = start_id;
 
-	for (i = 0 ; i < ndisks; i++)
+	for (i = 0 ; i < ndisks; i++) {
 		if (strlcpy(vcp->vcp_disks[i], disks[i],
 		    sizeof(vcp->vcp_disks[i])) >=
 		    sizeof(vcp->vcp_disks[i]))
 			errx(1, "disk path too long");
+		vmc->vmc_disktypes[i] = disktypes[i];
+	}
 	for (i = 0 ; i < nnics; i++) {
 		vmc->vmc_ifflags[i] = VMIFF_UP;
 
