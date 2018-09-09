@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.420 2018/09/07 10:49:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.421 2018/09/09 12:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -574,8 +574,7 @@ badnetdel:
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			prefix_network_clean(peerself, time(NULL),
-			    F_ANN_DYNAMIC);
+			prefix_network_clean(peerself);
 			break;
 		case IMSG_FILTER_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -1357,7 +1356,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
-	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen, 0))
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen))
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1371,7 +1370,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	if (in->aspath.flags & F_ATTR_PARSE_ERR)
 		wmsg = "path invalid, withdraw";
 
-	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0);
+	p = prefix_get(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen);
 	if (p == NULL)
 		fatalx("rde_update_update: no prefix in Adj-RIB-In");
 
@@ -1388,9 +1387,9 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			path_update(&ribs[i].rib, peer, &state, prefix,
-			    prefixlen, 0);
-		} else if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen,
-		    0)) {
+			    prefixlen);
+		} else if (prefix_remove(&ribs[i].rib, peer, prefix,
+		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
 			    NULL, prefix, prefixlen);
 		}
@@ -1410,13 +1409,13 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
 			break;
-		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen, 0))
+		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen))
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
 	}
 
 	/* remove original path form the Adj-RIB-In */
-	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen, 0))
+	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peer, prefix, prefixlen))
 		peer->prefix_cnt--;
 
 	peer->prefix_rcvd_withdraw++;
@@ -3068,11 +3067,11 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				path_update(&rib->rib, peer, &state, &addr,
-				    pt->prefixlen, 0);
+				    pt->prefixlen);
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_remove(&rib->rib, peer, &addr,
-				    pt->prefixlen, 0);
+				    pt->prefixlen);
 			}
 
 			rde_filterstate_clean(&state);
@@ -3637,7 +3636,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    peerself);
 
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peerself, &state, &nc->prefix,
-		    nc->prefixlen, 0))
+		    nc->prefixlen))
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
@@ -3646,7 +3645,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    state.nexthop ? &state.nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
 		path_update(&ribs[i].rib, peerself, &state, &nc->prefix,
-		    nc->prefixlen, 0);
+		    nc->prefixlen);
 	}
 	rde_filterstate_clean(&state);
 	path_put(asp);
@@ -3695,13 +3694,13 @@ network_delete(struct network_config *nc, int flagstatic)
 		if (!rib_valid(i))
 			break;
 		if (prefix_remove(&ribs[i].rib, peerself, &nc->prefix,
-		    nc->prefixlen, flags))
+		    nc->prefixlen))
 			rde_update_log("withdraw announce", i, peerself,
 			    NULL, &nc->prefix, nc->prefixlen);
 
 	}
 	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peerself, &nc->prefix,
-	    nc->prefixlen, flags))
+	    nc->prefixlen))
 		peerself->prefix_cnt--;	
 }
 

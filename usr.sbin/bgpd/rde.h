@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.189 2018/09/08 15:25:27 benno Exp $ */
+/*	$OpenBSD: rde.h,v 1.190 2018/09/09 12:33:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -168,7 +168,6 @@ struct mpattr {
 #define	F_ANN_DYNAMIC		0x00800
 #define	F_ATTR_PARSE_ERR	0x10000 /* parse error, not eligable */
 #define	F_ATTR_LINKED		0x20000 /* if set path is on various lists */
-#define	F_ATTR_UPDATE		0x20000 /* if set linked on update_l */
 
 
 #define ORIGIN_IGP		0
@@ -179,8 +178,8 @@ struct mpattr {
 
 struct rde_aspath {
 	LIST_ENTRY(rde_aspath)		 path_l;
-	TAILQ_ENTRY(rde_aspath)		 peer_l, update_l;
-	struct prefix_queue		 prefixes, updates;
+	TAILQ_ENTRY(rde_aspath)		 peer_l;
+	struct prefix_queue		 prefixes;
 	struct attr			**others;
 	struct rde_peer			*peer;
 	struct aspath			*aspath;
@@ -306,11 +305,8 @@ struct prefix {
 	struct rde_peer			*peer;
 	struct nexthop			*nexthop;	/* may be NULL */
 	time_t				 lastchange;
-	u_int8_t			 flags;
 	u_int8_t			 nhflags;
 };
-
-#define F_PREFIX_USE_UPDATES	0x01	/* linked onto the updates list */
 
 #define	NEXTHOP_SELF		0x01
 #define	NEXTHOP_REJECT		0x02
@@ -498,7 +494,7 @@ void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 void		 path_hash_stats(struct rde_hashstats *);
 int		 path_update(struct rib *, struct rde_peer *,
-		     struct filterstate *, struct bgpd_addr *, int, int);
+		     struct filterstate *, struct bgpd_addr *, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 void		 path_remove(struct rde_aspath *);
 u_int32_t	 path_remove_stale(struct rde_aspath *, u_int8_t, time_t);
@@ -512,17 +508,16 @@ void		 path_put(struct rde_aspath *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 struct prefix	*prefix_get(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int, u_int32_t);
+		    struct bgpd_addr *, int);
 int		 prefix_remove(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int, u_int32_t);
+		    struct bgpd_addr *, int);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t, int);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
-struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
-		     u_int32_t);
+struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *);
 void		 prefix_updateall(struct prefix *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
-void		 prefix_network_clean(struct rde_peer *, time_t, u_int32_t);
+void		 prefix_network_clean(struct rde_peer *);
 void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
 
 static inline struct rde_peer *
