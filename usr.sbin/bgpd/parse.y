@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.343 2018/09/09 13:06:42 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.344 2018/09/09 13:22:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -409,7 +409,8 @@ as_set		: ASSET STRING '{' optnl	{
 			done_as_set();
 		}
 
-as_set_l	: as4number_any			{ add_as_set($1); }
+as_set_l	: /* empty */
+		| as4number_any			{ add_as_set($1); }
 		| as_set_l optnl as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
@@ -433,10 +434,11 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 			curpset = NULL;
 		}
 
-prefixset_l	: prefixset_item			{
+prefixset_l	: /* empty */
+		| prefixset_item			{
 			SIMPLEQ_INSERT_TAIL(&curpset->psitems, $1, entry);
 		}
-		| prefixset_l optnl prefixset_item	{
+		| prefixset_l comma prefixset_item	{
 			SIMPLEQ_INSERT_TAIL(&curpset->psitems, $3, entry);
 		}
 		;
@@ -953,18 +955,11 @@ addrspec	: address	{
 		| prefix
 		;
 
-optnl		: '\n' optnl
-		|
-		;
-
-nl		: '\n' optnl		/* one newline or more */
-		;
-
 optnumber	: /* empty */		{ $$ = 0; }
 		| NUMBER
 		;
 
-rdomain		: RDOMAIN NUMBER optnl '{' optnl	{
+rdomain		: RDOMAIN NUMBER			{
 			if ($2 > RT_TABLEID_MAX) {
 				yyerror("rtable %llu too big: max %u", $2,
 				    RT_TABLEID_MAX);
@@ -982,19 +977,18 @@ rdomain		: RDOMAIN NUMBER optnl '{' optnl	{
 			TAILQ_INIT(&currdom->export);
 			TAILQ_INIT(&currdom->net_l);
 			netconf = &currdom->net_l;
-		}
-		    rdomainopts_l '}' {
+		} '{' rdomainopts_l '}'	{
 			/* insert into list */
 			SIMPLEQ_INSERT_TAIL(&conf->rdomains, currdom, entry);
 			currdom = NULL;
 			netconf = &conf->networks;
 		}
-
-rdomainopts_l	: rdomainopts_l rdomainoptsl
-		| rdomainoptsl
 		;
 
-rdomainoptsl	: rdomainopts nl
+rdomainopts_l	: /* empty */
+		| rdomainopts_l '\n'
+		| rdomainopts_l rdomainopts '\n'
+		| rdomainopts_l error '\n'
 		;
 
 rdomainopts	: RD STRING {
@@ -1140,7 +1134,7 @@ neighbor	: {	curpeer = new_peer(); }
 		}
 		;
 
-group		: GROUP string optnl '{' optnl {
+group		: GROUP string 			{
 			curgroup = curpeer = new_group();
 			if (strlcpy(curgroup->conf.group, $2,
 			    sizeof(curgroup->conf.group)) >=
@@ -1155,8 +1149,7 @@ group		: GROUP string optnl '{' optnl {
 				yyerror("get_id failed");
 				YYERROR;
 			}
-		}
-		    groupopts_l '}' {
+		} '{' groupopts_l '}'		{
 			if (curgroup_filter[0] != NULL)
 				TAILQ_INSERT_TAIL(groupfilter_l,
 				    curgroup_filter[0], entry);
@@ -1171,24 +1164,22 @@ group		: GROUP string optnl '{' optnl {
 		}
 		;
 
-groupopts_l	: groupopts_l groupoptsl
-		| groupoptsl
+groupopts_l	: /* empty */
+		| groupopts_l '\n'
+		| groupopts_l peeropts '\n'
+		| groupopts_l neighbor '\n'
+		| groupopts_l error '\n'
 		;
 
-groupoptsl	: peeropts nl
-		| neighbor nl
-		| error nl
-		;
-
-peeropts_h	: '{' optnl peeropts_l '}'
+peeropts_h	: '{' '\n' peeropts_l '}'
+		| '{' peeropts '}'
 		| /* empty */
 		;
 
-peeropts_l	: peeropts_l peeroptsl
-		| peeroptsl
-		;
-
-peeroptsl	: peeropts nl
+peeropts_l	: /* empty */
+		| peeropts_l '\n'
+		| peeropts_l peeropts '\n'
+		| peeropts_l error '\n'
 		;
 
 peeropts	: REMOTEAS as4number	{
@@ -1525,17 +1516,17 @@ peeropts	: REMOTEAS as4number	{
 			if (merge_filterset(&r->set, $2) == -1)
 				YYERROR;
 		}
-		| SET optnl "{" optnl filter_set_l optnl "}"	{
+		| SET "{" optnl filter_set_l optnl "}"	{
 			struct filter_rule	*r;
 			struct filter_set	*s;
 
-			while ((s = TAILQ_FIRST($5)) != NULL) {
-				TAILQ_REMOVE($5, s, entry);
+			while ((s = TAILQ_FIRST($4)) != NULL) {
+				TAILQ_REMOVE($4, s, entry);
 				r = get_rule(s->type);
 				if (merge_filterset(&r->set, s) == -1)
 					YYERROR;
 			}
-			free($5);
+			free($4);
 		}
 		| mrtdump
 		| REFLECTOR		{
@@ -1714,7 +1705,7 @@ direction	: FROM		{ $$ = DIR_IN; }
 
 filter_rib_h	: /* empty */			{ $$ = NULL; }
 		| RIB filter_rib		{ $$ = $2; }
-		| RIB '{' filter_rib_l '}'	{ $$ = $3; }
+		| RIB '{' optnl filter_rib_l optnl '}'	{ $$ = $4; }
 
 filter_rib_l	: filter_rib			{ $$ = $1; }
 		| filter_rib_l comma filter_rib	{
@@ -1746,7 +1737,7 @@ filter_rib	: STRING	{
 		;
 
 filter_peer_h	: filter_peer
-		| '{' filter_peer_l '}'		{ $$ = $2; }
+		| '{' optnl filter_peer_l optnl '}'	{ $$ = $3; }
 		;
 
 filter_peer_l	: filter_peer				{ $$ = $1; }
@@ -2584,8 +2575,14 @@ origincode	: string {
 			free($1);
 		};
 
-comma		: ","
-		| /* empty */
+optnl		: /* empty */
+		| '\n' optnl
+		;
+
+comma		: /* empty */
+		| ','
+		| '\n' optnl
+		| ',' '\n' optnl
 		;
 
 unaryop		: '='		{ $$ = OP_EQ; }

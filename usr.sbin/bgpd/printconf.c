@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.115 2018/09/09 11:00:51 benno Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.116 2018/09/09 13:22:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,7 +29,7 @@
 #include "rde.h"
 #include "log.h"
 
-void		 print_prefix(struct filter_prefix *p, const char *);
+void		 print_prefix(struct filter_prefix *p);
 void		 print_community(int, int);
 void		 print_largecommunity(int64_t, int64_t, int64_t);
 void		 print_extcommunity(struct filter_extcommunity *);
@@ -55,7 +55,7 @@ void		 print_groups(struct bgpd_config *, struct peer *);
 int		 peer_compare(const void *, const void *);
 
 void
-print_prefix(struct filter_prefix *p, const char *s)
+print_prefix(struct filter_prefix *p)
 {
 	u_int8_t max_len = 0;
 
@@ -72,30 +72,30 @@ print_prefix(struct filter_prefix *p, const char *s)
 		return;
 	}
 
-	printf("%s%s/%u ", s, log_addr(&p->addr), p->len);
+	printf("%s/%u", log_addr(&p->addr), p->len);
 
 	switch (p->op) {
 	case OP_NONE:
 		break;
 	case OP_EQ:
-		printf("prefixlen = %u ", p->len_min);
+		printf(" prefixlen = %u", p->len_min);
 		break;
 	case OP_NE:
-		printf("prefixlen != %u ", p->len_min);
+		printf(" prefixlen != %u", p->len_min);
 		break;
 	case OP_XRANGE:
-		printf("prefixlen %u >< %u ", p->len_min, p->len_max);
+		printf(" prefixlen %u >< %u ", p->len_min, p->len_max);
 		break;
 	case OP_RANGE:
 		if (p->len == p->len_min && p->len_max == max_len)
-			printf("or-longer ");
+			printf(" or-longer");
 		else if (p->len_max == max_len)
-			printf("prefixlen >= %u ", p->len_min);
+			printf(" prefixlen >= %u", p->len_min);
 		else
-			printf("prefixlen %u - %u ", p->len_min, p->len_max);
+			printf(" prefixlen %u - %u", p->len_min, p->len_max);
 		break;
 	default:
-		printf("prefixlen %u ??? %u ", p->len_min, p->len_max);
+		printf(" prefixlen %u ??? %u", p->len_min, p->len_max);
 		break;
 	}
 }
@@ -448,11 +448,13 @@ print_prefixsets(struct prefixset_head *psh)
 
 	SIMPLEQ_FOREACH(ps, psh, entry) {
 		int count = 0;
-		printf("prefix-set \"%s\" {\n", ps->name);
+		printf("prefix-set \"%s\" {", ps->name);
 		SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
-			print_prefix(&psi->p, "\t");
-			if (count++ & 0x1)
-				printf("\n");
+			if (count++ % 2 == 0)
+				printf("\n\t");
+			else
+				printf(", ");
+			print_prefix(&psi->p);
 		}
 		printf("\n}\n\n");
 	}
@@ -684,7 +686,11 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	} else
 		printf("any ");
 
-	print_prefix(&r->match.prefix, "prefix ");
+	if (r->match.prefix.addr.aid != AID_UNSPEC) {
+		printf("prefix ");
+		print_prefix(&r->match.prefix);
+		printf(" ");
+	}
 
 	if (r->match.prefixset.flags & PREFIXSET_FLAG_FILTER)
 		printf("prefix-set \"%s\" ", r->match.prefixset.name);
