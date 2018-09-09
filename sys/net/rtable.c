@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.63 2017/09/05 11:15:39 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.64 2018/09/09 10:07:38 henning Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -276,6 +276,27 @@ rtable_exists(unsigned int rtableid)
 	}
 
 	return (0);
+}
+
+int
+rtable_empty(unsigned int rtableid)
+{
+	struct domain	*dp;
+	int		 i;
+	struct art_root	*tbl;
+
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
+		if (dp->dom_rtoffset == 0)
+			continue;
+
+		tbl = rtable_get(rtableid, dp->dom_family);
+		if (tbl == NULL)
+			continue;
+		if (tbl->ar_root.ref != NULL)
+			return (0);
+	}
+
+	return (1);
 }
 
 unsigned int

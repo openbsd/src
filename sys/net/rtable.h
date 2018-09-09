@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.20 2017/08/02 08:38:28 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.21 2018/09/09 10:07:38 henning Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -49,6 +49,7 @@ int		 rtable_satoplen(sa_family_t, struct sockaddr *);
 
 void		 rtable_init(void);
 int		 rtable_exists(unsigned int);
+int		 rtable_empty(unsigned int);
 int		 rtable_add(unsigned int);
 unsigned int	 rtable_l2(unsigned int);
 unsigned int	 rtable_loindex(unsigned int);
