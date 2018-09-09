@@ -1,14 +1,6 @@
-13 March 2018: Wouter
-	- Fix typo in documentation.
-	- Fix #3736: Fix 0 TTL domains stuck on SERVFAIL unless manually
-	  flushed with serve-expired on.
-
 12 March 2018: Wouter
 	- Added documentation for aggressive-nsec: yes.
 	- tag 1.7.0rc3.
-	- Fix #3727: Protocol name is TLS, options have been renamed but
-	  documentation is not consistent.
-	- Check IXFR start serial.
 
 9 March 2018: Wouter
 	- Fix #3598: Fix swig build issue on rhel6 based system.
@@ -137,6 +129,8 @@
 	- trunk has 1.6.9 with fix and previous commits.
 	- patch for CVE-2017-15105: vulnerability in the processing of
 	  wildcard synthesized NSEC records.
+	- iana port update.
+	- make depend: code dependencies updated in Makefile.
 
 4 January 2018: Ralph
 	- Copy query and correctly set flags on REFUSED answers when cache
@@ -207,7 +201,6 @@
 	  fail.
 	- lexer output.
 	- iana port update.
-	- make depend: code dependencies updated in Makefile.
 
 25 October 2017: Ralph
 	- Fixed libunbound manual typo.
@@ -263,7 +256,7 @@
 	- Fix param unused warning for windows exportsymbol compile.
 
 25 September 2017: Ralph
-	-  Fix #1450: Generate again patch contrib/aaaa-filter-iterator.patch
+	- Fix #1450: Generate again patch contrib/aaaa-filter-iterator.patch
 	   (by Danilo G. Baio).
 
 21 September 2017: Ralph
