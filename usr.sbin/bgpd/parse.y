@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.347 2018/09/09 14:27:24 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.348 2018/09/09 15:04:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2202,6 +2202,9 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 				min = $3;
 				max = -1;
 				break;
+			default:
+				yyerror("unknown prefixlen operation");
+				YYERROR;
 			}
 			$$.len_min = min;
 			$$.len_max = max;
