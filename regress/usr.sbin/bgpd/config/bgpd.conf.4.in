@@ -1,4 +1,4 @@
-# $OpenBSD: bgpd.conf.4.in,v 1.1 2018/09/08 12:32:01 claudio Exp $
+# $OpenBSD: bgpd.conf.4.in,v 1.2 2018/09/09 13:31:10 claudio Exp $
 # test neighbor and group statements
 
 AS 1
@@ -6,7 +6,7 @@ AS 1
 neighbor 192.0.2.1 {
 	remote-as	64496
 }
-#notyet neighbor 192.0.2.2 { remote-as	64496 }
+neighbor 192.0.2.2 { remote-as	64496 }
 
 neighbor 192.0.2.3 {
 	# test comment
@@ -18,18 +18,18 @@ group testing {
 	remote-as	64496
 
 	neighbor 192.0.2.4
-	#notyet neighbor 192.0.2.5 { descr "test2-peer" }
+	neighbor 192.0.2.5 { descr "test2-peer" }
 	neighbor 192.0.2.6 {
 		remote-as 64497
 		descr "test2-peer"
 
 
 	}
-	#notyet neighbor 192.0.2.7 {
+	neighbor 192.0.2.7 {
 		# comment
 
 		# another comment
-	#notyet }
+	}
 	neighbor 192.0.2.8
 }
 
@@ -37,5 +37,5 @@ group test2 {
 	remote-as 64497
 
 	neighbor 192.0.2.10
-	#notyet neighbor 192.0.2.11 { descr "test3-peer" }
+	neighbor 192.0.2.11 { descr "test3-peer" }
 }

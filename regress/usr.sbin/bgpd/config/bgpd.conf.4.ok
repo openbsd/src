@@ -11,8 +11,7 @@ rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 
 
-neighbor 192.0.2.3 {
-	descr "test-peer"
+neighbor 192.0.2.2 {
 	remote-as 64496
 	enforce neighbor-as yes
 	enforce local-as yes
@@ -24,13 +23,14 @@ neighbor 192.0.2.1 {
 	enforce local-as yes
 	announce IPv4 unicast
 }
+neighbor 192.0.2.3 {
+	descr "test-peer"
+	remote-as 64496
+	enforce neighbor-as yes
+	enforce local-as yes
+	announce IPv4 unicast
+}
 group "testing" {
-	neighbor 192.0.2.8 {
-		remote-as 64496
-		enforce neighbor-as yes
-		enforce local-as yes
-		announce IPv4 unicast
-	}
 	neighbor 192.0.2.6 {
 		descr "test2-peer"
 		remote-as 64497
@@ -44,9 +44,35 @@ group "testing" {
 		enforce local-as yes
 		announce IPv4 unicast
 	}
+	neighbor 192.0.2.5 {
+		descr "test2-peer"
+		remote-as 64496
+		enforce neighbor-as yes
+		enforce local-as yes
+		announce IPv4 unicast
+	}
+	neighbor 192.0.2.8 {
+		remote-as 64496
+		enforce neighbor-as yes
+		enforce local-as yes
+		announce IPv4 unicast
+	}
+	neighbor 192.0.2.7 {
+		remote-as 64496
+		enforce neighbor-as yes
+		enforce local-as yes
+		announce IPv4 unicast
+	}
 }
 
 group "test2" {
+	neighbor 192.0.2.11 {
+		descr "test3-peer"
+		remote-as 64497
+		enforce neighbor-as yes
+		enforce local-as yes
+		announce IPv4 unicast
+	}
 	neighbor 192.0.2.10 {
 		remote-as 64497
 		enforce neighbor-as yes
