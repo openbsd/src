@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.33 2018/08/06 11:42:18 benno Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.34 2018/09/09 20:32:55 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -285,8 +285,9 @@ struct ieee80211_join {
 	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
 	u_int32_t	i_flags;
 
-	struct ieee80211_wpapsk	i_wpapsk;
-	struct ieee80211_nwkey	i_nwkey;
+	struct ieee80211_wpaparams	 i_wpaparams;
+	struct ieee80211_wpapsk		 i_wpapsk;
+	struct ieee80211_nwkey		 i_nwkey;
 };
 
 struct ieee80211_joinreq_all {
@@ -302,6 +303,7 @@ struct ieee80211_joinreq_all {
 #define IEEE80211_JOIN_DEL	0x04
 #define IEEE80211_JOIN_NWKEY	0x08
 #define IEEE80211_JOIN_WPA	0x10
+#define IEEE80211_JOIN_WPAPSK	0x20
 
 /* node and requests */
 struct ieee80211_nodereq {

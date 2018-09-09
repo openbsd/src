@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.377 2018/09/08 15:21:03 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.378 2018/09/09 20:32:55 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -172,6 +172,8 @@ int	shownet80211nodes;
 int	showclasses;
 
 struct	ifencap;
+
+struct ieee80211_join join;
 
 const	char *lacpmodeactive = "active";
 const	char *lacpmodepassive = "passive";
@@ -353,6 +355,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
 #define	A_MEDIAMODE	0x0010		/* mode command */
+#define	A_JOIN		0x0020		/* join */
 #define A_SILENT	0x8000000	/* doing operation, do not print */
 
 #define	NEXTARG0	0xffffff
@@ -384,7 +387,7 @@ const struct	cmd {
 	{ "mtu",	NEXTARG,	0,		setifmtu },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "-nwid",	-1,		0,		setifnwid },
-	{ "join",	NEXTARG,	0,		setifjoin },
+	{ "join",	NEXTARG,	A_JOIN,		setifjoin },
 	{ "-join",	NEXTARG,	0,		delifjoin },
 	{ "joinlist",	NEXTARG0,	0,		showjoin },
 	{ "-joinlist",	-1,		0,		delifjoin },
@@ -635,6 +638,8 @@ void	print_media_word(uint64_t, int, int);
 void	process_media_commands(void);
 void	init_current_media(void);
 
+void	process_join_commands(void);
+
 unsigned long get_ts_map(int, int, int);
 
 void	in_status(int);
@@ -873,6 +878,8 @@ nextarg:
 		printif(ifr.ifr_name, aflag ? ifaliases : 1);
 		return (0);
 	}
+
+	process_join_commands();
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands();
@@ -1691,10 +1698,23 @@ setifnwid(const char *val, int d)
 		warn("SIOCS80211NWID");
 }
 
+
+void
+process_join_commands(void)
+{
+	int len;
+
+	if (!(actions & A_JOIN))
+		return;
+
+	ifr.ifr_data = (caddr_t)&join;
+	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
+		warn("SIOCS80211JOIN");
+}
+
 void
 setifjoin(const char *val, int d)
 {
-	struct ieee80211_join join;
 	int len;
 
 	if (strlen(nwidname) != 0) {
@@ -1713,9 +1733,8 @@ setifjoin(const char *val, int d)
 	join.i_len = len;
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	(void)strlcpy(joinname, join.i_nwid, sizeof(joinname));
-	ifr.ifr_data = (caddr_t)&join;
-	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-		warn("SIOCS80211JOIN");
+
+	actions |= A_JOIN;
 }
 
 void
@@ -1857,6 +1876,13 @@ setifnwkey(const char *val, int d)
 		}
 	}
 	(void)strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_nwkey, &nwkey, sizeof(join.i_nwkey));
+		join.i_flags |= IEEE80211_JOIN_NWKEY;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
 		warn("SIOCS80211NWKEY");
 }
@@ -1871,6 +1897,13 @@ setifwpa(const char *val, int d)
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	/* Don't read current values. The kernel will set defaults. */
 	wpa.i_enabled = d;
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
@@ -1905,6 +1938,13 @@ setifwpaprotos(const char *val, int d)
 	/* Let the kernel set up the appropriate default ciphers. */
 	wpa.i_ciphers = 0;
 	wpa.i_groupcipher = 0;
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
@@ -1938,6 +1978,13 @@ setifwpaakms(const char *val, int d)
 	wpa.i_akms = rval;
 	/* Enable WPA for 802.1x here. PSK case is handled in setifwpakey(). */
 	wpa.i_enabled = ((rval & IEEE80211_WPA_AKM_8021X) != 0);
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
@@ -1990,6 +2037,13 @@ setifwpaciphers(const char *val, int d)
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_ciphers = rval;
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
@@ -2010,6 +2064,13 @@ setifwpagroupcipher(const char *val, int d)
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_groupcipher = cipher;
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
 }
@@ -2066,6 +2127,15 @@ setifwpakey(const char *val, int d)
 		psk.i_enabled = 0;
 
 	(void)strlcpy(psk.i_name, name, sizeof(psk.i_name));
+
+	if (actions & A_JOIN) {
+		memcpy(&join.i_wpapsk, &psk, sizeof(join.i_wpapsk));
+		join.i_flags |= IEEE80211_JOIN_WPAPSK;
+		if (!join.i_wpaparams.i_enabled)
+			setifwpa(NULL, join.i_wpapsk.i_enabled);
+		return;
+	}
+
 	if (ioctl(s, SIOCS80211WPAPSK, (caddr_t)&psk) < 0)
 		err(1, "SIOCS80211WPAPSK");
 

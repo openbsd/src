@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.144 2018/09/06 11:50:54 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.145 2018/09/09 20:32:55 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -176,6 +176,20 @@ ieee80211_print_ess_list(struct ieee80211com *ic)
 	}
 }
 
+struct ieee80211_ess *
+ieee80211_get_ess(struct ieee80211com *ic, const char *nwid, int len)
+{
+	struct ieee80211_ess	*ess;
+
+	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
+		if (len == ess->esslen &&
+		    memcmp(ess->essid, nwid, ess->esslen) == 0)
+			return ess;
+	}
+
+	return NULL;
+}
+
 void
 ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int all)
 {
@@ -193,8 +207,118 @@ ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int all)
 	}
 }
 
+/* Keep in sync with ieee80211_ioctl.c:ieee80211_ioctl_setnwkeys() */
+static int
+ieee80211_ess_setnwkeys(struct ieee80211_ess *ess,
+    const struct ieee80211_nwkey *nwkey)
+{
+	struct ieee80211_key *k;
+	int i;
+
+	if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN) {
+		if (!(ess->flags & IEEE80211_F_WEPON))
+			return 0;
+		ess->flags &= ~IEEE80211_F_WEPON;
+		return ENETRESET;
+	}
+	if (nwkey->i_defkid < 1 || nwkey->i_defkid > IEEE80211_WEP_NKID)
+		return EINVAL;
+
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keylen == 0 ||
+		    nwkey->i_key[i].i_keydat == NULL)
+			continue;	/* entry not set */
+		if (nwkey->i_key[i].i_keylen > IEEE80211_KEYBUF_SIZE)
+			return EINVAL;
+
+		/* map wep key to ieee80211_key */
+		k = &ess->nw_keys[i];
+		memset(k, 0, sizeof(*k));
+		if (nwkey->i_key[i].i_keylen <= 5)
+			k->k_cipher = IEEE80211_CIPHER_WEP40;
+		else
+			k->k_cipher = IEEE80211_CIPHER_WEP104;
+		k->k_len = ieee80211_cipher_keylen(k->k_cipher);
+		k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
+	}
+	ess->def_txkey = nwkey->i_defkid - 1;
+	ess->flags |= IEEE80211_F_WEPON;
+
+	return ENETRESET;
+}
+
+
+/* Keep in sync with ieee80211_ioctl.c:ieee80211_ioctl_setwpaparms() */
+static int
+ieee80211_ess_setwpaparms(struct ieee80211_ess *ess,
+    const struct ieee80211_wpaparams *wpa)
+{
+	if (!wpa->i_enabled) {
+		if (!(ess->flags & IEEE80211_F_RSNON))
+			return 0;
+		ess->flags &= ~IEEE80211_F_RSNON;
+		ess->rsnprotos = 0;
+		ess->rsnakms = 0;
+		ess->rsngroupcipher = 0;
+		ess->rsnciphers = 0;
+		return ENETRESET;
+	}
+
+	ess->rsnprotos = 0;
+	if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA1)
+		ess->rsnprotos |= IEEE80211_PROTO_WPA;
+	if (wpa->i_protos & IEEE80211_WPA_PROTO_WPA2)
+		ess->rsnprotos |= IEEE80211_PROTO_RSN;
+	if (ess->rsnprotos == 0)	/* set to default (RSN) */
+		ess->rsnprotos = IEEE80211_PROTO_RSN;
+
+	ess->rsnakms = 0;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_PSK)
+		ess->rsnakms |= IEEE80211_AKM_PSK;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_SHA256_PSK)
+		ess->rsnakms |= IEEE80211_AKM_SHA256_PSK;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_8021X)
+		ess->rsnakms |= IEEE80211_AKM_8021X;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_SHA256_8021X)
+		ess->rsnakms |= IEEE80211_AKM_SHA256_8021X;
+	if (ess->rsnakms == 0)	/* set to default (PSK) */
+		ess->rsnakms = IEEE80211_AKM_PSK;
+
+	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
+		ess->rsngroupcipher = IEEE80211_CIPHER_WEP40;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_TKIP)
+		ess->rsngroupcipher = IEEE80211_CIPHER_TKIP;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_CCMP)
+		ess->rsngroupcipher = IEEE80211_CIPHER_CCMP;
+	else if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP104)
+		ess->rsngroupcipher = IEEE80211_CIPHER_WEP104;
+	else  {	/* set to default */
+		if (ess->rsnprotos & IEEE80211_PROTO_WPA)
+			ess->rsngroupcipher = IEEE80211_CIPHER_TKIP;
+		else
+			ess->rsngroupcipher = IEEE80211_CIPHER_CCMP;
+	}
+
+	ess->rsnciphers = 0;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_TKIP)
+		ess->rsnciphers |= IEEE80211_CIPHER_TKIP;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_CCMP)
+		ess->rsnciphers |= IEEE80211_CIPHER_CCMP;
+	if (wpa->i_ciphers & IEEE80211_WPA_CIPHER_USEGROUP)
+		ess->rsnciphers = IEEE80211_CIPHER_USEGROUP;
+	if (ess->rsnciphers == 0) { /* set to default (CCMP, TKIP if WPA1) */
+		ess->rsnciphers = IEEE80211_CIPHER_CCMP;
+		if (ess->rsnprotos & IEEE80211_PROTO_WPA)
+			ess->rsnciphers |= IEEE80211_CIPHER_TKIP;
+	}
+
+	ess->flags |= IEEE80211_F_RSNON;
+
+	return ENETRESET;
+}
+
 int
-ieee80211_add_ess(struct ieee80211com *ic, int wpa, int wep)
+ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 {
 	struct ieee80211_ess *ess;
 	int i = 0, new = 0, ness = 0;
@@ -204,23 +328,21 @@ ieee80211_add_ess(struct ieee80211com *ic, int wpa, int wep)
 		return (0);
 
 	/* Don't save an empty nwid */
-	if (ic->ic_des_esslen == 0)
+	if (join->i_len == 0)
 		return (0);
 
 	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
-		if (ess->esslen == ic->ic_des_esslen &&
-		    memcmp(ess->essid, ic->ic_des_essid, ess->esslen) == 0)
+		if (ess->esslen == join->i_len &&
+		    memcmp(ess->essid, join->i_nwid, ess->esslen) == 0)
 			break;
 		ness++;
 	}
 
-	KASSERTMSG(wpa == 0 || wep == 0,
-	    "%s: both wpa and wep are configured", __func__);
-
 	if (ess == NULL) {
 		/* if not found, and wpa/wep are set, then return */
-		if (wpa != 0 || wep != 0) {
-			return (ENOENT);
+		if ((join->i_flags & IEEE80211_JOIN_WPA) &&
+		    (join->i_flags & IEEE80211_JOIN_NWKEY)) {
+			return (EINVAL);
 		}
 		if (ness > IEEE80211_CACHE_SIZE)
 			return (ERANGE);
@@ -228,22 +350,23 @@ ieee80211_add_ess(struct ieee80211com *ic, int wpa, int wep)
 		ess = malloc(sizeof(*ess), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ess == NULL)
 			return (ENOMEM);
-		memcpy(ess->essid, ic->ic_des_essid, ic->ic_des_esslen);
-		ess->esslen = ic->ic_des_esslen;
+		memcpy(ess->essid, join->i_nwid, join->i_len);
+		ess->esslen = join->i_len;
 	}
 
-	if (wpa) {
-		if (ic->ic_flags & (IEEE80211_F_RSNON|IEEE80211_F_PSK)) {
-			ess->flags = IEEE80211_F_RSNON;
-			if (ic->ic_flags & IEEE80211_F_PSK)
-				ess->flags |= IEEE80211_F_PSK;
-			explicit_bzero(ess->psk, sizeof(ess->psk));
-			memcpy(ess->psk, ic->ic_psk, IEEE80211_PMK_LEN);
-			ess->rsnprotos = ic->ic_rsnprotos;
-			ess->rsnakms = ic->ic_rsnakms;
-			ess->rsngroupcipher = ic->ic_rsngroupcipher;
-			ess->rsnciphers = ic->ic_rsnciphers;
+	if (join->i_flags & IEEE80211_JOIN_WPA) {
+		if (join->i_wpaparams.i_enabled) {
+			if (!(ic->ic_caps & IEEE80211_C_RSN))
+				return ENODEV;
 
+			ieee80211_ess_setwpaparms(ess,
+			    &join->i_wpaparams);
+			if (join->i_flags & IEEE80211_JOIN_WPAPSK) {
+				ess->flags |= IEEE80211_F_PSK;
+				explicit_bzero(ess->psk, sizeof(ess->psk));
+				memcpy(ess->psk, &join->i_wpapsk.i_psk,
+				    sizeof(ess->psk));
+			}
 			/* Disable WEP */
 			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 				explicit_bzero(&ess->nw_keys[i],
@@ -258,19 +381,12 @@ ieee80211_add_ess(struct ieee80211com *ic, int wpa, int wep)
 			explicit_bzero(ess->psk, sizeof(ess->psk));
 			ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
 		}
-	} else if (wep) {
-		if (ic->ic_flags & IEEE80211_F_WEPON) {
-			struct ieee80211_key	*k;
-			int i;
+	} else if (join->i_flags & IEEE80211_JOIN_NWKEY) {
+		if (join->i_nwkey.i_wepon) {
+			if (!(ic->ic_caps & IEEE80211_C_WEP))
+				return ENODEV;
 
-			ess->flags = IEEE80211_F_WEPON;
-			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-				memcpy(&ess->nw_keys[i], &ic->ic_nw_keys[i],
-				    sizeof(struct ieee80211_key));
-				k = &ic->ic_nw_keys[i];
-				k->k_priv = NULL;
-			}
-			ess->def_txkey = ic->ic_def_txkey;
+			ieee80211_ess_setnwkeys(ess, &join->i_nwkey);
 
 			/* Disable WPA */
 			ess->rsnprotos = ess->rsnakms =
