@@ -4,6 +4,7 @@ socket "/var/run/bgpd.sock.0"
 holdtime min 3
 fib-priority 48
 
+
 rdomain 1 {
 	descr "a rdomain"
 	fib-update yes

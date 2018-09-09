@@ -1,7 +1,9 @@
-# $OpenBSD: bgpd.conf.6.in,v 1.1 2018/09/08 13:10:55 claudio Exp $
+# $OpenBSD: bgpd.conf.6.in,v 1.2 2018/09/09 12:58:04 claudio Exp $
 # test as-set blocks
 
 AS 1
+
+#notyet as-set empty { }
 
 as-set "test1" { 1 2 3 4 }
 #notyet as-set "test2" { 1, 2, 3, 4 }

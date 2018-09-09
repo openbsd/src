@@ -3,12 +3,6 @@ router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
 holdtime min 3
 fib-priority 48
-
-
-rde rib Adj-RIB-In no evaluate
-rde rib Adj-RIB-Out no evaluate
-rde rib Loc-RIB rtable 0 fib-update yes
-
 prefix-set "test1" {
 	1.2.3.0/24 
 }
@@ -50,6 +44,13 @@ prefix-set "bogons" {
 	fe80::/10 or-longer 	fec0::/10 or-longer 
 	ff00::/8 or-longer 
 }
+
+
+
+
+rde rib Adj-RIB-In no evaluate
+rde rib Adj-RIB-Out no evaluate
+rde rib Loc-RIB rtable 0 fib-update yes
 
 
 
