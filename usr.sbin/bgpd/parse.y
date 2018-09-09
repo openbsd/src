@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.345 2018/09/09 13:32:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.346 2018/09/09 13:44:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2238,7 +2238,7 @@ filter_set	: /* empty */					{ $$ = NULL; }
 			TAILQ_INIT($$);
 			TAILQ_INSERT_TAIL($$, $2, entry);
 		}
-		| SET optnl "{" optnl filter_set_l optnl "}"	{ $$ = $5; }
+		| SET "{" optnl filter_set_l optnl "}"	{ $$ = $4; }
 		;
 
 filter_set_l	: filter_set_l comma filter_set_opt	{
