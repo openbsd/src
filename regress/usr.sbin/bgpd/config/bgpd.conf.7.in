@@ -1,11 +1,17 @@
-# $OpenBSD: bgpd.conf.7.in,v 1.4 2018/09/09 14:28:50 claudio Exp $
+# $OpenBSD: bgpd.conf.7.in,v 1.5 2018/09/09 20:41:01 claudio Exp $
 # test prefix-set blocks
 
 AS 1
 
-#prefix-set empty { }
-
-prefix-set test1 { 1.2.3/24 }
+prefix-set empty1 { }
+prefix-set empty2 {
+	# comment
+}
+prefix-set one1 { 1.2.3/24 }
+prefix-set one2 {
+	# comment
+	1.2.3/24
+}
 prefix-set test2 { 1.2.3/24 1.2.8.0/22 prefixlen = 24 }
 
 prefix-set "test3_prefixes" { \

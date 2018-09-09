@@ -3,7 +3,17 @@ router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
 holdtime min 3
 fib-priority 48
-prefix-set "test1" {
+prefix-set "empty1" {
+}
+
+prefix-set "empty2" {
+}
+
+prefix-set "one1" {
+	1.2.3.0/24
+}
+
+prefix-set "one2" {
 	1.2.3.0/24
 }
 

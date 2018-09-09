@@ -1,10 +1,16 @@
-# $OpenBSD: bgpd.conf.6.in,v 1.4 2018/09/09 14:28:50 claudio Exp $
+# $OpenBSD: bgpd.conf.6.in,v 1.5 2018/09/09 20:41:01 claudio Exp $
 # test as-set blocks
 
 AS 1
 
-#as-set empty { }
-as-set one { 1 }
+as-set empty1 { }
+as-set empty2 {
+	# nothing
+}
+as-set one1 { 1 }
+as-set one2 {
+	1
+}
 
 as-set "test1" { 1 2 3 4 }
 as-set "test2" { 1, 2, 3, 4 }
