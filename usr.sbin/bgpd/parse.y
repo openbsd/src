@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.344 2018/09/09 13:22:41 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.345 2018/09/09 13:32:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -411,7 +411,7 @@ as_set		: ASSET STRING '{' optnl	{
 
 as_set_l	: /* empty */
 		| as4number_any			{ add_as_set($1); }
-		| as_set_l optnl as4number_any	{ add_as_set($3); }
+		| as_set_l comma as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
 			if (find_prefixset($2, conf->prefixsets) != NULL)  {
