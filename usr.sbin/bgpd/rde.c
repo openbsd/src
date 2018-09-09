@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.421 2018/09/09 12:33:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.422 2018/09/09 15:02:26 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2931,7 +2931,7 @@ rde_reload_runner(void)
 	u_int16_t	rid;
 
 	for (rid = 0; rid < rib_size; rid++) {
-		if (*ribs[rid].name == '\0')
+		if (!rib_valid(rid))
 			continue;
 		if (ribs[rid].dumping)
 			rib_dump_r(&ribs[rid].ribctx);
@@ -2951,7 +2951,7 @@ rde_softreconfig_in_done(void *arg)
 
 	/* now do the Adj-RIB-Out sync */
 	for (rid = 0; rid < rib_size; rid++) {
-		if (*ribs[rid].name == '\0')
+		if (!rib_valid(rid))
 			continue;
 		ribs[rid].state = RECONF_NONE;
 	}
@@ -2965,7 +2965,7 @@ rde_softreconfig_in_done(void *arg)
 	}
 
 	for (rid = 0; rid < rib_size; rid++) {
-		if (*ribs[rid].name == '\0')
+		if (!rib_valid(rid))
 			continue;
 		if (ribs[rid].state == RECONF_RELOAD) {
 			struct rib_context	*ctx;
