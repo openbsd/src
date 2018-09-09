@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.250 2018/08/06 17:31:31 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.251 2018/09/09 21:06:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1383,7 +1383,7 @@ __dead void fatalx(const char *, ...)
 enum privsep_procid
 	    proc_getid(struct privsep_proc *, unsigned int, const char *);
 int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *);
