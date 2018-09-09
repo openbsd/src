@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.1 2018/09/07 16:10:42 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.2 2018/09/09 12:39:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -173,7 +173,7 @@ test_file(FILE *in, struct trie_head *th)
 		if (!host_l(line, &prefix, &plen))
 			errx(1, "could not parse prefix \"%s\"", line);
 		printf("%s ", line);
-		if (trie_match(th, &prefix, plen))
+		if (trie_match(th, &prefix, plen, 0))
 			printf("MATCH\n");
 		else
 			printf("miss\n");
