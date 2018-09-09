@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.117 2018/09/09 22:41:57 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.118 2018/09/09 22:46:54 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1187,6 +1187,14 @@ pmap_activate(struct proc *p)
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
 	if (p == curproc) {
 		lcr3(pcb->pcb_cr3);
+
+		/* in case we return to userspace without context switching */
+		if (cpu_meltdown) {
+			struct cpu_info *self = curcpu();
+
+			self->ci_kern_cr3 = pcb->pcb_cr3;
+			self->ci_user_cr3 = pmap->pm_pdirpa_intel;
+		}
 
 		/*
 		 * mark the pmap in use by this processor.
