@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.13 2018/09/10 04:52:23 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.14 2018/09/10 04:56:13 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1323,6 +1323,7 @@ uint64_t
 bnxt_get_media_type(uint64_t speed, int phy_type)
 {
 	switch (phy_type) {
+	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_UNKNOWN:
 	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_BASECR:
 	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASECR_CA_L:
 	case HWRM_PORT_PHY_QCFG_OUTPUT_PHY_TYPE_25G_BASECR_CA_S:
