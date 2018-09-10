@@ -5,11 +5,9 @@ holdtime min 3
 fib-priority 48
 
 
-
 rde rib Adj-RIB-In no evaluate
 rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
-
 
 neighbor 192.0.2.2 {
 	remote-as 64496
@@ -80,5 +78,4 @@ group "test2" {
 		announce IPv4 unicast
 	}
 }
-
 

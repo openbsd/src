@@ -3,6 +3,7 @@ router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
 holdtime min 3
 fib-priority 48
+
 as-set "empty1" {
 	
 }
@@ -54,11 +55,7 @@ as-set "AS_SET_AS_PCH2" {
 }
 
 
-
-
 rde rib Adj-RIB-In no evaluate
 rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
-
-
 
