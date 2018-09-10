@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.15 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.16 2018/09/10 13:21:39 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 		ps->ps_title[proc_id] = title;
 
 	/* Only the parent returns. */
-	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
 
 	if (!debug && daemon(0, 0) == -1)
 		fatal("failed to daemonize");
