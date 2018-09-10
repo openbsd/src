@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.12 2018/09/07 13:18:06 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.13 2018/09/10 04:52:23 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1508,7 +1508,7 @@ bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
 	struct hwrm_port_phy_qcfg_output *resp =
 	    BNXT_DMA_KVA(softc->sc_cmd_resp);
 	int link_state = LINK_STATE_DOWN;
-	int speeds[] = {
+	uint64_t speeds[] = {
 		IF_Gbps(1), IF_Gbps(2), IF_Mbps(2500), IF_Gbps(10), IF_Gbps(20),
 		IF_Gbps(25), IF_Gbps(40), IF_Gbps(50), IF_Gbps(100)
 	};
