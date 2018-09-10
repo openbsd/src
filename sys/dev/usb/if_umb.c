@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.19 2018/04/30 19:07:44 tb Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -905,13 +905,7 @@ umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
 
-	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
-		/*
-		 * Query the registration state until we're with the home
-		 * network again.
-		 */
-		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
-	} else
+	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
 		printf("%s: state change timeout\n",DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task);
 }
@@ -943,6 +937,15 @@ umb_state_task(void *arg)
 	struct in_aliasreq ifra;
 	int	 s;
 	int	 state;
+
+	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
+		/*
+		 * Query the registration state until we're with the home
+		 * network again.
+		 */
+		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
+		return;
+	}
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP)
