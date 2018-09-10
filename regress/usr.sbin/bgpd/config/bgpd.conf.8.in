@@ -1,0 +1,12 @@
+# $OpenBSD: bgpd.conf.8.in,v 1.1 2018/09/10 14:20:25 benno Exp $
+# test network prefix-set
+
+AS 64512
+
+prefix-set mynetworks {
+	192.0.2.0/24
+	2001:db8:abcd::/48
+}
+
+network prefix-set mynetworks
+network prefix-set mynetworks set { community 64512:3000 }

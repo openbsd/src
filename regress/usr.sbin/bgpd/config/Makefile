@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2018/09/08 13:10:55 claudio Exp $
+# $OpenBSD: Makefile,v 1.5 2018/09/10 14:20:25 benno Exp $
 
-BGPDTESTS=1 2 3 4 5 6 7
+BGPDTESTS=1 2 3 4 5 6 7 8
 
 REGRESS_TARGETS = config
 
