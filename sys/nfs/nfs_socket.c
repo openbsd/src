@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.130 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.131 2018/09/10 16:14:08 bluhm Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -855,7 +855,6 @@ nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 	int t1, i, error = 0;
 	int trylater_delay;
 	struct nfsreq *rep;
-	int mrest_len;
 	struct nfsm_info info;
 
 	rep = pool_get(&nfsreqpl, PR_WAITOK);
@@ -864,17 +863,11 @@ nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 	rep->r_procp = infop->nmi_procp;
 	rep->r_procnum = procnum;
 
-	mrest_len = 0;
-	m = infop->nmi_mreq;
-	while (m) {
-		mrest_len += m->m_len;
-		m = m->m_next;
-	}
-
 	/* empty mbuf for AUTH_UNIX header */
 	rep->r_mreq = m_gethdr(M_WAIT, MT_DATA);
 	rep->r_mreq->m_next = infop->nmi_mreq;
-	rep->r_mreq->m_pkthdr.len = mrest_len;
+	rep->r_mreq->m_len = 0;
+	m_calchdrlen(rep->r_mreq);
 
 	trylater_delay = NFS_MINTIMEO;
 

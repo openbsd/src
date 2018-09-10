@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.84 2018/09/10 12:47:02 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.85 2018/09/10 16:14:08 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -431,14 +431,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	pool_put(&ip6q_pool, q6);
 
-	{
-		int plen = 0;
-
-		KASSERT(m->m_flags & M_PKTHDR);
-		for (t = m; t; t = t->m_next)
-			plen += t->m_len;
-		m->m_pkthdr.len = plen;
-	}
+	m_calchdrlen(m);
 
 	/*
 	 * Restore NXT to the original.

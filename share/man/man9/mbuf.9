@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.113 2018/09/10 13:52:37 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.114 2018/09/10 16:14:07 bluhm Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nm m_gethdr ,
 .Nm m_removehdr ,
 .Nm m_resethdr ,
+.Nm m_calchdrlen ,
 .Nm MGETHDR ,
 .Nm m_prepend ,
 .Nm M_PREPEND ,
@@ -83,6 +84,8 @@
 .Fn m_removehdr "struct mbuf *m"
 .Ft void
 .Fn m_resethdr "struct mbuf *m"
+.Ft void
+.Fn m_calchdrlen "struct mbuf *m"
 .Ft struct mbuf *
 .Fn m_gethdr "int how" "int type"
 .Fn MGETHDR "struct mbuf *m" "int how" "int type"
@@ -502,6 +505,9 @@ Delete all
 data and all tags attached to an
 .Fa mbuf .
 Keep the data and mbuf chain, initialize the packet header.
+.It Fn m_calchdrlen "struct mbuf *m"
+Set the packet header length to the sum of all length values in the
+mbuf chain.
 .It Fn m_gethdr "int how" "int type"
 Return a pointer to an mbuf of the type specified after initializing
 it to contain a packet header.

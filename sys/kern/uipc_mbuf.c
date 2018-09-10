@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.257 2018/09/10 12:47:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.258 2018/09/10 16:14:07 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -325,6 +325,18 @@ m_resethdr(struct mbuf *m)
 	m->m_pkthdr.pf.prio = IFQ_DEFPRIO;
 	m->m_pkthdr.len = len;
 	m->m_pkthdr.ph_loopcnt = loopcnt;
+}
+
+void
+m_calchdrlen(struct mbuf *m)
+{
+	struct mbuf *n;
+	int plen = 0;
+
+	KASSERT(m->m_flags & M_PKTHDR);
+	for (n = m; n; n = n->m_next)
+		plen += n->m_len;
+	m->m_pkthdr.len = plen;
 }
 
 struct mbuf *
