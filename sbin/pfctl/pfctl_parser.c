@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.333 2018/09/10 16:17:48 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.334 2018/09/10 20:53:53 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,8 +75,7 @@ int		 ifa_skip_if(const char *filter, struct node_host *p);
 
 struct node_host	*ifa_grouplookup(const char *, int);
 struct node_host	*host_if(const char *, int);
-struct node_host	*host_v4(const char *, int);
-struct node_host	*host_v6(const char *, int);
+struct node_host	*host_ip(const char *, int);
 struct node_host	*host_dns(const char *, int, int);
 
 const char *tcpflags = "FSRPAUEW";
@@ -1637,8 +1636,7 @@ host(const char *s, int opts)
 		r = ps;
 
 	if ((h = host_if(ps, mask)) == NULL &&
-	    (h = host_v4(r, mask)) == NULL &&
-	    (h = host_v6(ps, mask)) == NULL &&
+	    (h = host_ip(ps, mask)) == NULL &&
 	    (h = host_dns(ps, mask, (opts & PF_OPT_NODNS))) == NULL) {
 		fprintf(stderr, "no IP address found for %s\n", s);
 		goto error;
@@ -1705,57 +1703,42 @@ error:
 }
 
 struct node_host *
-host_v4(const char *s, int mask)
-{
-	struct node_host	*h = NULL;
-	struct in_addr		 ina;
-
-	memset(&ina, 0, sizeof(ina));
-	if (mask > -1) {
-		if (inet_net_pton(AF_INET, s, &ina, sizeof(ina)) == -1)
-			return (NULL);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (NULL);
-	}
-
-	h = calloc(1, sizeof(struct node_host));
-	if (h == NULL)
-		err(1, "address: calloc");
-	h->ifname = NULL;
-	h->af = AF_INET;
-	h->addr.v.a.addr.addr32[0] = ina.s_addr;
-	set_ipmask(h, mask);
-	h->next = NULL;
-	h->tail = h;
-
-	return (h);
-}
-
-struct node_host *
-host_v6(const char *s, int mask)
+host_ip(const char *s, int mask)
 {
 	struct addrinfo		 hints, *res;
 	struct node_host	*h = NULL;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET6;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(s, "0", &hints, &res) == 0) {
-		h = calloc(1, sizeof(struct node_host));
+	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
+		h = calloc(1, sizeof(*h));
 		if (h == NULL)
-			err(1, "address: calloc");
-		h->ifname = NULL;
-		h->af = AF_INET6;
+			err(1, "%s: calloc", __func__);
+		h->af = res->ai_family;
 		copy_satopfaddr(&h->addr.v.a.addr, res->ai_addr);
-		h->ifindex =
-		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-		set_ipmask(h, mask);
+		if (h->af == AF_INET6)
+			h->ifindex =
+			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 		freeaddrinfo(res);
-		h->next = NULL;
-		h->tail = h;
+	} else {	/* ie. for 10/8 parsing */
+		if (mask == -1)
+			return (NULL);
+		h = calloc(1, sizeof(*h));
+		if (h == NULL)
+			err(1, "%s: calloc", __func__);
+		h->af = AF_INET;
+		if (inet_net_pton(AF_INET, s, &h->addr.v.a.addr.v4,
+		    sizeof(h->addr.v.a.addr.v4)) == -1) {
+			free(h);
+			return (NULL);
+		}
 	}
+	set_ipmask(h, mask);
+	h->ifname = NULL;
+	h->next = NULL;
+	h->tail = h;
 
 	return (h);
 }
