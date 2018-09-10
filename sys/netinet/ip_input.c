@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.338 2018/07/10 11:34:12 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.339 2018/09/10 12:47:02 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -947,6 +947,7 @@ insert:
 		nq = LIST_NEXT(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 		ip_frags--;
+		m_removehdr(t);
 		m_cat(m, t);
 	}
 
@@ -963,9 +964,10 @@ insert:
 	pool_put(&ipq_pool, fp);
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
-	/* some debugging cruft by sklower, below, will go away soon */
-	if (m->m_flags & M_PKTHDR) { /* XXX this should be done elsewhere */
+	{
 		int plen = 0;
+
+		KASSERT(m->m_flags & M_PKTHDR);
 		for (t = m; t; t = t->m_next)
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;

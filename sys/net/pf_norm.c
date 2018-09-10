@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.214 2018/09/10 11:37:26 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.215 2018/09/10 12:47:02 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -743,6 +743,7 @@ pf_join_fragment(struct pf_fragment *frag)
 			m_adj(m2, frent->fe_len - m2->m_pkthdr.len);
 		pool_put(&pf_frent_pl, frent);
 		pf_nfrents--;
+		m_removehdr(m2);
 		m_cat(m, m2);
 	}
 
@@ -805,8 +806,10 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	m = *m0 = pf_join_fragment(frag);
 	frag = NULL;
 
-	if (m->m_flags & M_PKTHDR) {
+	{
 		int plen = 0;
+
+		KASSERT(m->m_flags & M_PKTHDR);
 		for (m = *m0; m; m = m->m_next)
 			plen += m->m_len;
 		m = *m0;
@@ -904,8 +907,10 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	if (frag6_deletefraghdr(m, hdrlen) != 0)
 		goto fail;
 
-	if (m->m_flags & M_PKTHDR) {
+	{
 		int plen = 0;
+
+		KASSERT(m->m_flags & M_PKTHDR);
 		for (m = *m0; m; m = m->m_next)
 			plen += m->m_len;
 		m = *m0;
