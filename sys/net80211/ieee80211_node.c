@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.146 2018/09/10 08:26:39 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.147 2018/09/10 09:13:53 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -317,11 +317,34 @@ ieee80211_ess_setwpaparms(struct ieee80211_ess *ess,
 	return ENETRESET;
 }
 
+static void
+ieee80211_ess_clear_wep(struct ieee80211_ess *ess)
+{
+	int i;
+
+	/* Disable WEP */
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		explicit_bzero(&ess->nw_keys[i], sizeof(ess->nw_keys[0]));
+	}
+	ess->def_txkey = 0;
+	ess->flags &= ~IEEE80211_F_WEPON;
+}
+
+static void
+ieee80211_ess_clear_wpa(struct ieee80211_ess *ess)
+{
+	/* Disable WPA */
+	ess->rsnprotos = ess->rsnakms = ess->rsngroupcipher =
+	    ess->rsnciphers = 0;
+	explicit_bzero(ess->psk, sizeof(ess->psk));
+	ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+}
+
 int
 ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 {
 	struct ieee80211_ess *ess;
-	int i = 0, new = 0, ness = 0;
+	int new = 0, ness = 0;
 
 	/* only valid for station (aka, client) mode */
 	if (ic->ic_opmode != IEEE80211_M_STA)
@@ -358,7 +381,6 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 		if (join->i_wpaparams.i_enabled) {
 			if (!(ic->ic_caps & IEEE80211_C_RSN))
 				return ENODEV;
-
 			ieee80211_ess_setwpaparms(ess,
 			    &join->i_wpaparams);
 			if (join->i_flags & IEEE80211_JOIN_WPAPSK) {
@@ -367,40 +389,18 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 				memcpy(ess->psk, &join->i_wpapsk.i_psk,
 				    sizeof(ess->psk));
 			}
-			/* Disable WEP */
-			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-				explicit_bzero(&ess->nw_keys[i],
-				    sizeof(ess->nw_keys[0]));
-			}
-			ess->def_txkey = 0;
-			ess->flags &= ~IEEE80211_F_WEPON;
+			ieee80211_ess_clear_wep(ess);
 		} else {
-			/* Disable WPA */
-			ess->rsnprotos = ess->rsnakms =
-			    ess->rsngroupcipher = ess->rsnciphers = 0;
-			explicit_bzero(ess->psk, sizeof(ess->psk));
-			ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+			ieee80211_ess_clear_wpa(ess);
 		}
 	} else if (join->i_flags & IEEE80211_JOIN_NWKEY) {
 		if (join->i_nwkey.i_wepon) {
 			if (!(ic->ic_caps & IEEE80211_C_WEP))
 				return ENODEV;
-
 			ieee80211_ess_setnwkeys(ess, &join->i_nwkey);
-
-			/* Disable WPA */
-			ess->rsnprotos = ess->rsnakms =
-			    ess->rsngroupcipher = ess->rsnciphers = 0;
-			explicit_bzero(ess->psk, sizeof(ess->psk));
-			ess->flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+			ieee80211_ess_clear_wpa(ess);
 		} else {
-			/* Disable WEP */
-			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-				explicit_bzero(&ess->nw_keys[i],
-				    sizeof(ess->nw_keys[0]));
-			}
-			ess->def_txkey = 0;
-			ess->flags &= ~IEEE80211_F_WEPON;
+			ieee80211_ess_clear_wep(ess);
 		}
 	}
 
