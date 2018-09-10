@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.65 2018/09/09 20:32:55 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.66 2018/09/10 08:27:13 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -475,7 +475,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ieee80211_add_ess(ic, &join) == 0)
 				ic->ic_flags |= IEEE80211_F_AUTO_JOIN;
 		}
-		ieee80211_set_ess(ic, ic->ic_des_essid);
+		ieee80211_set_ess(ic, join.i_nwid, join.i_len);
 		error = ENETRESET;
 		break;
 	case SIOCG80211JOIN:
