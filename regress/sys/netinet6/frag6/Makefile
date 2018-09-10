@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2017/11/14 15:30:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.24 2018/09/10 13:00:58 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -96,6 +96,11 @@ stamp-pf: addr.py pf.conf
 
 REGRESS_TARGETS =
 FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
+
+run-regress-stack-frag6_queuelimit.py:
+	@echo '\n======== $@ ========'
+	# the stack does not limit the amount of fragments during reassembly
+	@echo DISABLED
 
 .for sp in stack pf
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2018/08/30 19:34:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2018/09/10 13:00:58 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -110,6 +110,11 @@ run-regress-stack-frag_mf0short.py:
 run-regress-stack-frag_mf1end.py:
 	@echo '\n======== $@ ========'
 	# the stack allows fragments with MF together with fragments without MF
+	@echo DISABLED
+
+run-regress-stack-frag_queuelimit.py:
+	@echo '\n======== $@ ========'
+	# the stack does not limit the amount of fragments during reassembly
 	@echo DISABLED
 
 .for sp in stack pf
