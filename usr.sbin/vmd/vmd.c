@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.98 2018/07/15 14:36:54 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.99 2018/09/10 10:36:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -792,7 +792,8 @@ main(int argc, char **argv)
 		ps->ps_title[proc_id] = title;
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
+	    proc_id);
 
 	log_procinit("parent");
 	if (!env->vmd_debug && daemon(0, 0) == -1)
