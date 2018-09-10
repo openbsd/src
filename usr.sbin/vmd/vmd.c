@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.99 2018/09/10 10:36:01 bluhm Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.100 2018/09/10 10:39:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1249,11 +1249,11 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_paused = 0;
 	vm->vm_user = usr;
 
-	for (i = 0; i < vcp->vcp_ndisks; i++)
+	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++)
 		vm->vm_disks[i] = -1;
-	for (i = 0; i < vcp->vcp_nnics; i++) {
+	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
 		vm->vm_ifs[i].vif_fd = -1;
-
+	for (i = 0; i < vcp->vcp_nnics; i++) {
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
 			/* inherit per-interface flags from the switch */
 			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.88 2018/07/13 08:42:49 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.89 2018/09/10 10:39:26 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -646,20 +646,22 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 			close(vm->vm_disks[i]);
 			vm->vm_disks[i] = -1;
 		}
-
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
 			close(vm->vm_ifs[i].vif_fd);
 			vm->vm_ifs[i].vif_fd = -1;
 		}
-
-		close(vm->vm_kernel);
-		vm->vm_kernel = -1;
-
-		close(vm->vm_cdrom);
-		vm->vm_cdrom = -1;
-
-		close(vm->vm_tty);
-		vm->vm_tty = -1;
+		if (vm->vm_kernel != -1) {
+			close(vm->vm_kernel);
+			vm->vm_kernel = -1;
+		}
+		if (vm->vm_cdrom != -1) {
+			close(vm->vm_cdrom);
+			vm->vm_cdrom = -1;
+		}
+		if (vm->vm_tty != -1) {
+			close(vm->vm_tty);
+			vm->vm_tty = -1;
+		}
 
 		/* read back the kernel-generated vm id from the child */
 		if (read(fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
