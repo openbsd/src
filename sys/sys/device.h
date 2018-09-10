@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.54 2015/12/11 16:07:02 mpi Exp $	*/
+/*	$OpenBSD: device.h,v 1.55 2018/09/10 16:18:34 sashan Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -164,6 +164,11 @@ struct pdevinit {
 };
 
 #ifdef _KERNEL
+
+#ifdef DIAGNOSTIC
+extern int pdevinit_done;
+#endif
+
 extern struct devicelist alldevs;	/* list of all devices */
 
 extern int autoconf_verbose;

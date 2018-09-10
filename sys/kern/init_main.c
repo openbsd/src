@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.280 2018/08/13 15:26:17 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.281 2018/09/10 16:18:34 sashan Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -174,6 +174,9 @@ struct emul emul_native = {
 	sigcoderet
 };
 
+#ifdef DIAGNOSTIC
+int pdevinit_done = 0;
+#endif
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -401,6 +404,9 @@ main(void *framep)
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
 		if (pdev->pdev_count > 0)
 			(*pdev->pdev_attach)(pdev->pdev_count);
+#ifdef DIAGNOSTIC
+	pdevinit_done = 1;
+#endif
 
 #ifdef CRYPTO
 	crypto_init();
