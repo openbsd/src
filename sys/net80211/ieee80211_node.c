@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.147 2018/09/10 09:13:53 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.148 2018/09/10 10:11:18 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -636,7 +636,7 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			printf("\n");
 
 		}
-		ieee80211_set_ess(ic, seless->essid, ess->esslen);
+		ieee80211_set_ess(ic, seless->essid, seless->esslen);
 	}
 }
 
