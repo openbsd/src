@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.2 2018/09/09 12:39:51 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.3 2018/09/10 20:51:59 benno Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@
 
 
 static int
-host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
+host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 {
 	struct in_addr ina = { 0 };
 	int bits = 32;
@@ -52,13 +52,14 @@ host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
 }
 
 static int
-host_v6(char *s, struct bgpd_addr *h, u_int8_t *len)
+host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 {
 	struct addrinfo hints, *res;
 	const char *errstr;
 	char *p;
 	int mask = 128;
 
+	memset(h, 0, sizeof(*h));
 	if ((p = strrchr(s, '/')) != NULL) {
 		mask = strtonum(p + 1, 0, 128, &errstr);
 		if (errstr)
@@ -84,11 +85,21 @@ host_v6(char *s, struct bgpd_addr *h, u_int8_t *len)
 }
 
 static int
-host_l(char *s, struct bgpd_addr *h, u_int8_t *len)
+host_l(char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 {
-	if (host_v4(s, h, len))
+	char *c, *t;
+
+	*orl = 0;
+	if ((c = strchr(s, '\t')) != NULL) {
+		if (c[1] == '1') {
+			*orl = 1;
+		}
+		*c = '\0';
+	}
+
+	if (host_v4(s, h, len, orl))
 		return (1);
-	if (host_v6(s, h, len))
+	if (host_v6(s, h, len, orl))
 		return (1);
 	return (0);
 }
@@ -117,7 +128,7 @@ parse_file(FILE *in, struct trie_head *th)
 	char *line, *s;
 	struct bgpd_addr prefix;
 	u_int8_t plen, min, max, maskmax;
-
+	int foo;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
 		int state = 0;
@@ -126,7 +137,7 @@ parse_file(FILE *in, struct trie_head *th)
 				break;
 			switch (state) {
 			case 0:
-				if (!host_l(s, &prefix, &plen))
+				if (!host_l(s, &prefix, &plen, &foo))
 					errx(1, "could not parse prefix \"%s\"",
 					    s);
 				break;
@@ -168,15 +179,16 @@ test_file(FILE *in, struct trie_head *th)
 	char *line;
 	struct bgpd_addr prefix;
 	u_int8_t plen;
+	int orlonger;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
-		if (!host_l(line, &prefix, &plen))
+		if (!host_l(line, &prefix, &plen, &orlonger))
 			errx(1, "could not parse prefix \"%s\"", line);
 		printf("%s ", line);
-		if (trie_match(th, &prefix, plen, 0))
-			printf("MATCH\n");
+		if (trie_match(th, &prefix, plen, orlonger))
+			printf("MATCH %i\n", orlonger);
 		else
-			printf("miss\n");
+			printf("miss %i\n", orlonger);
 		free(line);
 	}
 }
