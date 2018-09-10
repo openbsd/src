@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.203 2018/09/05 07:16:08 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.204 2018/09/10 12:42:17 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 5 2018 $
+.Dd $Mdocdate: September 10 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -690,17 +690,15 @@ to the file must be absolute.
 Instead of using a separate file, declare a list table
 containing the given static
 .Ar value Ns s .
-The table must contain at least one value and may declare many values as a
-list of comma-separated strings.
+The table must contain at least one value and may declare multiple values as a
+comma-separated (whitespace optional) list.
 .It Ic table Ar name Brq Ar key Ns = Ns Ar value Op , Ar ...
 Instead of using a separate file, declare a mapping table
 containing the given static
 .Ar key Ns - Ns Ar value
 pairs.
 The table must contain at least one key-value pair and may declare
-many pairs as a list of comma-separated
-.Ar key Ns = Ns Ar value
-descriptions.
+multiple pairs as a comma-separated (whitespace optional) list.
 .El
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
