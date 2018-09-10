@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.349 2018/09/09 20:39:09 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.350 2018/09/10 11:09:25 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -830,8 +830,7 @@ network		: NETWORK prefix filter_set	{
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
 			strlcpy(n->net.psname, ps->name, sizeof(n->net.psname));
-			TAILQ_INIT(&n->net.attrset);
-			TAILQ_CONCAT(&n->net.attrset, $4, entry);
+			filterset_move($4, &n->net.attrset);
 			n->net.type = NETWORK_PREFIXSET;
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 			free($3);
