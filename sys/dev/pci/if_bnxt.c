@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.14 2018/09/10 04:56:13 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.15 2018/09/10 04:59:32 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -276,6 +276,7 @@ int		bnxt_intr(void *);
 void		bnxt_watchdog(struct ifnet *);
 void		bnxt_media_status(struct ifnet *, struct ifmediareq *);
 int		bnxt_media_change(struct ifnet *);
+int		bnxt_media_autonegotiate(struct bnxt_softc *);
 
 struct cmpl_base *bnxt_cpr_next_cmpl(struct bnxt_softc *, struct bnxt_cp_ring *);
 void		bnxt_cpr_commit(struct bnxt_softc *, struct bnxt_cp_ring *);
@@ -607,6 +608,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_rx_refill, bnxt_refill, sc);
 
+	bnxt_media_autonegotiate(sc);
 	bnxt_hwrm_port_phy_qcfg(sc, NULL);
 	return;
 
@@ -1707,6 +1709,24 @@ bnxt_media_change(struct ifnet *ifp)
 
 	return hwrm_send_message(sc, &req, sizeof(req));
 }
+
+int
+bnxt_media_autonegotiate(struct bnxt_softc *sc)
+{
+	struct hwrm_port_phy_cfg_input req = {0};
+
+	if (sc->sc_flags & BNXT_FLAG_NPAR)
+		return ENODEV;
+
+	bnxt_hwrm_cmd_hdr_init(sc, &req, HWRM_PORT_PHY_CFG);
+	req.auto_mode |= HWRM_PORT_PHY_CFG_INPUT_AUTO_MODE_ALL_SPEEDS;
+	req.enables |= htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_MODE);
+	req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESTART_AUTONEG);
+	req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESET_PHY);
+
+	return hwrm_send_message(sc, &req, sizeof(req));
+}
+
 
 void
 bnxt_mark_cpr_invalid(struct bnxt_cp_ring *cpr)
