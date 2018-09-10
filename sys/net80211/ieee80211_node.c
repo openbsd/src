@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.145 2018/09/09 20:32:55 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.146 2018/09/10 08:26:39 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -609,7 +609,7 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			if (ic->ic_des_esslen == ess->esslen &&
 			    memcmp(ic->ic_des_essid, ess->essid,
 			    ess->esslen) == 0) {
-				ieee80211_set_ess(ic, ess->essid);
+				ieee80211_set_ess(ic, ess->essid, ess->esslen);
 				return;
 			}
 			continue;
@@ -636,20 +636,16 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			printf("\n");
 
 		}
-		ieee80211_set_ess(ic, seless->essid);
+		ieee80211_set_ess(ic, seless->essid, ess->esslen);
 	}
 }
 
 void
-ieee80211_set_ess(struct ieee80211com *ic, char *nwid)
+ieee80211_set_ess(struct ieee80211com *ic, char *nwid, int len)
 {
 	struct ieee80211_ess	*ess;
 
-	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
-		if (memcmp(ess->essid, nwid, IEEE80211_NWID_LEN) == 0)
-			break;
-	}
-
+	ess = ieee80211_get_ess(ic, nwid, len);
 	if (ess == NULL)
 		return;
 
