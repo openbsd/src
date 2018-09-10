@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.338 2018/09/09 11:00:51 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.339 2018/09/10 11:01:15 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1167,7 +1167,7 @@ const char	*filterset_name(enum action_types);
 void		 as_sets_insert(struct as_set_head *, struct as_set *);
 struct as_set	*as_sets_lookup(struct as_set_head *, const char *);
 void		 as_sets_free(struct as_set_head *);
-void		 print_as_sets(struct as_set_head *);
+void		 as_sets_print(struct as_set_head *);
 int		 as_sets_send(struct imsgbuf *, struct as_set_head *);
 void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.2 2018/09/08 09:29:25 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.3 2018/09/10 11:01:15 benno Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -77,7 +77,7 @@ as_sets_free(struct as_set_head *as_sets)
 }
 
 void
-print_as_sets(struct as_set_head *as_sets)
+as_sets_print(struct as_set_head *as_sets)
 {
 	struct as_set *aset;
 	size_t i;

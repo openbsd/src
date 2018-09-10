@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.116 2018/09/09 13:22:41 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.117 2018/09/10 11:01:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -355,6 +355,7 @@ print_mainconf(struct bgpd_config *conf)
 	if (conf->flags & BGPD_FLAG_NEXTHOP_DEFAULT)
 		printf("nexthop qualify via default\n");
 	printf("fib-priority %hhu", conf->fib_priority);
+	printf("\n\n");
 }
 
 void
@@ -790,6 +791,8 @@ print_mrt(struct bgpd_config *conf, u_int32_t pid, u_int32_t gid,
 			else
 				printf(" %d\n", MRT2MC(m)->ReopenTimerInterval);
 		}
+	if (!LIST_EMPTY(conf->mrt))
+		printf("\n");
 }
 
 void
@@ -862,13 +865,12 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	struct rdomain		*rd;
 
 	print_mainconf(conf);
-	printf("\n");
 	print_prefixsets(conf->prefixsets);
-	print_as_sets(conf->as_sets);
-	printf("\n");
+	as_sets_print(conf->as_sets);
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net, "");
-	printf("\n");
+	if (!SIMPLEQ_EMPTY(rdom_l))
+		printf("\n");
 	SIMPLEQ_FOREACH(rd, rdom_l, entry)
 		print_rdomain(rd);
 	printf("\n");
@@ -884,9 +886,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	}
 	printf("\n");
 	print_mrt(conf, 0, 0, "", "");
-	printf("\n");
 	print_groups(conf, peer_l);
-	printf("\n");
 	TAILQ_FOREACH(r, rules_l, entry)
 		print_rule(peer_l, r);
 }
