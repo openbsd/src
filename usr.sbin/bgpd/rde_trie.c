@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.4 2018/09/08 15:25:27 benno Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.5 2018/09/10 13:15:50 denis Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -51,9 +51,9 @@
  * min & max values then the masks of both nodes are merged with a binary OR.
  * The match function returns true the moment the first node is found which
  * covers the looked up prefix and where the prefixlen mask matches for the
- * looked up prefixlen. The moment the plen of a node is bigger is bigger than
- * the prefixlen of the looked up prefix the search can be stopped since there
- * will be no match.
+ * looked up prefixlen. The moment the plen of a node is bigger than the
+ * prefixlen of the looked up prefix the search can be stopped since
+ * there will be no match.
  */
 struct tentry_v4 {
 	struct tentry_v4	*trie[2];
@@ -319,7 +319,7 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 			return 0;
 		}
 
-		/* no need to check for n->plen == 32 because of above if */
+		/* no need to check for n->plen == 128 because of above if */
 		if (inet6isset(&p, n->plen))
 			prev = &n->trie[1];
 		else
@@ -535,7 +535,7 @@ trie_equal_v6(struct tentry_v6 *a, struct tentry_v6 *b)
 	return 1;
 }
 
-/* Compare two tires and return 1 if they are the same else 0. */
+/* Compare two tries and return 1 if they are the same else 0. */
 int
 trie_equal(struct trie_head *a, struct trie_head *b)
 {
@@ -591,7 +591,7 @@ void
 trie_dump(struct trie_head *th)
 {
 	if (th->match_default_v4)
-		fprintf(stderr, "0.0.0.0/0 plenmask %08x\n", 0);
+		fprintf(stderr, "0.0.0.0/0 plenmask 0\n");
 	trie_dump_v4(th->root_v4);
 	if (th->match_default_v6)
 		fprintf(stderr, "::/0 plenmask 0\n");
