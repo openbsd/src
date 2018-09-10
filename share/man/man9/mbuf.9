@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.112 2018/09/10 12:47:02 bluhm Exp $
+.\"     $OpenBSD: mbuf.9,v 1.113 2018/09/10 13:52:37 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -490,16 +490,16 @@ See
 for a description of
 .Fa how .
 .It Fn m_removehdr "struct mbuf *m"
-Convert a mbuf with packet header to one without.
+Convert an mbuf with packet header to one without.
 Delete all
 .Xr pf 4
-data and all tags attached to a
+data and all tags attached to an
 .Fa mbuf .
 Keep the data and mbuf chain, clear the packet header.
 .It Fn m_resethdr "struct mbuf *m"
 Delete all
 .Xr pf 4
-data and all tags attached to a
+data and all tags attached to an
 .Fa mbuf .
 Keep the data and mbuf chain, initialize the packet header.
 .It Fn m_gethdr "int how" "int type"
