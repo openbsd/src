@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.105 2018/09/11 14:34:49 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.106 2018/09/11 21:04:03 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -119,31 +119,7 @@
 
 #include <netinet6/in6_var.h>
 
-/*
- * External globals
- */
-
-/*
- * Globals
- */
-
 const struct in6_addr zeroin6_addr;
-
-/*
- * Keep separate inet6ctlerrmap, because I may remap some of these.
- * I also put it here, because, quite frankly, it belongs here, not in
- * ip{v6,}_input().
- */
-#if 0
-u_char inet6ctlerrmap[PRC_NCMDS] = {
-	0,		0,		0,		0,
-	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
-	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	EHOSTUNREACH,	0,		0,
-	0,		0,		0,		0,
-	ENOPROTOOPT
-};
-#endif
 
 struct inpcbhead *
 in6_pcbhash(struct inpcbtable *table, int rdom,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.131 2018/07/10 11:34:12 mpi Exp $	*/
+/*	$OpenBSD: in.h,v 1.132 2018/09/11 21:04:03 bluhm Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -795,8 +795,8 @@ __END_DECLS
 #endif /* !_KERNEL */
 
 #ifdef _KERNEL
-extern	   const int inetctlerrmap[];
-extern	   const struct in_addr zeroin_addr;
+extern const u_char inetctlerrmap[];
+extern const struct in_addr zeroin_addr;
 
 struct mbuf;
 struct sockaddr;
