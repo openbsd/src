@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2018/09/11 18:12:06 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2018/09/11 18:32:56 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,7 @@ SRCS+=		abort_message.cpp \
 		UnwindRegistersSave.S \
 		libunwind.cpp
 
-CPPFLAGS+=	-I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
+CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
 CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CFLAGS+=	-nostdlib -funwind-tables
 CXXFLAGS+=	-nostdlib -nostdinc++ -funwind-tables
