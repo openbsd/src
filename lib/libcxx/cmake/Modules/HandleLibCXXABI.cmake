@@ -10,11 +10,15 @@
 #   abidefines: A list of defines needed to compile libc++ with the ABI library
 #   abilib    : The ABI library to link against.
 #   abifiles  : A list of files (which may be relative paths) to copy into the
-#               libc++ build tree for the build.  These files will also be
+#               libc++ build tree for the build.  These files will be copied
+#               twice: once into include/, so the libc++ build itself can find
+#               them, and once into include/c++/v1, so that a clang built into
+#               the same build area will find them.  These files will also be
 #               installed alongside the libc++ headers.
 #   abidirs   : A list of relative paths to create under an include directory
 #               in the libc++ build directory.
 #
+
 macro(setup_abi_lib abidefines abilib abifiles abidirs)
   list(APPEND LIBCXX_COMPILE_FLAGS ${abidefines})
   set(LIBCXX_CXX_ABI_INCLUDE_PATHS "${LIBCXX_CXX_ABI_INCLUDE_PATHS}"
@@ -28,9 +32,12 @@ macro(setup_abi_lib abidefines abilib abifiles abidirs)
   set(LIBCXX_CXX_ABI_LIBRARY ${abilib})
   set(LIBCXX_ABILIB_FILES ${abifiles})
 
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
+  # The place in the build tree where we store out-of-source headers.
+  file(MAKE_DIRECTORY "${LIBCXX_BUILD_HEADERS_ROOT}")
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/c++/v1")
   foreach(_d ${abidirs})
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/${_d}")
+    file(MAKE_DIRECTORY "${LIBCXX_BINARY_INCLUDE_DIR}/${_d}")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/c++/v1/${_d}")
   endforeach()
 
   foreach(fpath ${LIBCXX_ABILIB_FILES})
@@ -41,16 +48,19 @@ macro(setup_abi_lib abidefines abilib abifiles abidirs)
         get_filename_component(dstdir ${fpath} PATH)
         get_filename_component(ifile ${fpath} NAME)
         file(COPY "${incpath}/${fpath}"
-          DESTINATION "${CMAKE_BINARY_DIR}/include/${dstdir}"
+          DESTINATION "${LIBCXX_BINARY_INCLUDE_DIR}/${dstdir}"
+          )
+        file(COPY "${incpath}/${fpath}"
+          DESTINATION "${CMAKE_BINARY_DIR}/include/c++/v1/${dstdir}"
           )
         if (LIBCXX_INSTALL_HEADERS)
-          install(FILES "${CMAKE_BINARY_DIR}/include/${fpath}"
-            DESTINATION include/c++/v1/${dstdir}
-            COMPONENT libcxx
+          install(FILES "${LIBCXX_BINARY_INCLUDE_DIR}/${fpath}"
+            DESTINATION ${LIBCXX_INSTALL_PREFIX}include/c++/v1/${dstdir}
+            COMPONENT cxx-headers
             PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
             )
         endif()
-        list(APPEND abilib_headers "${CMAKE_BINARY_DIR}/include/${fpath}")
+        list(APPEND abilib_headers "${LIBCXX_BINARY_INCLUDE_DIR}/${fpath}")
       endif()
     endforeach()
     if (NOT found)
@@ -58,9 +68,7 @@ macro(setup_abi_lib abidefines abilib abifiles abidirs)
     endif()
   endforeach()
 
-  add_custom_target(LIBCXX_CXX_ABI_DEPS DEPENDS ${abilib_headers})
-  include_directories("${CMAKE_BINARY_DIR}/include")
-
+  include_directories("${LIBCXX_BINARY_INCLUDE_DIR}")
 endmacro()
 
 
@@ -95,16 +103,25 @@ elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi")
     # Assume c++abi is installed in the system, rely on -lc++abi link flag.
     set(CXXABI_LIBNAME "c++abi")
   endif()
-  setup_abi_lib("-DLIBCXX_BUILDING_LIBCXXABI"
-    ${CXXABI_LIBNAME} "cxxabi.h;__cxxabi_config.h" ""
-    )
+  set(HEADERS "cxxabi.h;__cxxabi_config.h")
+  if (LIBCXX_CXX_ABI_SYSTEM)
+    set(HEADERS "")
+  endif()
+  setup_abi_lib("-DLIBCXX_BUILDING_LIBCXXABI" ${CXXABI_LIBNAME} "${HEADERS}" "")
 elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxrt")
   setup_abi_lib("-DLIBCXXRT"
     "cxxrt" "cxxabi.h;unwind.h;unwind-arm.h;unwind-itanium.h" ""
     )
-elseif (NOT "${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "none")
+elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "vcruntime")
+ # Nothing TODO
+elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "none")
+  list(APPEND LIBCXX_COMPILE_FLAGS "-D_LIBCPP_BUILDING_HAS_NO_ABI_LIBRARY")
+elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "default")
+  # Nothing TODO
+else()
   message(FATAL_ERROR
-    "Currently libstdc++, libsupc++, libcxxabi, libcxxrt and none are "
-    "supported for c++ abi."
+    "Unsupported c++ abi: '${LIBCXX_CXX_ABI_LIBNAME}'. \
+     Currently libstdc++, libsupc++, libcxxabi, libcxxrt, default and none are
+     supported for c++ abi."
     )
 endif ()

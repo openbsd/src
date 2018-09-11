@@ -15,6 +15,8 @@
 #include "cstdlib"
 #include "climits"
 
+#include "filesystem_time_helper.h"
+
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -35,12 +37,9 @@ namespace detail { namespace  {
 using value_type = path::value_type;
 using string_type = path::string_type;
 
-
-
 inline std::error_code capture_errno() {
-    _LIBCPP_ASSERT(errno, "Expected errno to be non-zero");
-    std::error_code m_ec(errno, std::generic_category());
-    return m_ec;
+  _LIBCPP_ASSERT(errno, "Expected errno to be non-zero");
+  return std::error_code(errno, std::generic_category());
 }
 
 void set_or_throw(std::error_code const& m_ec, std::error_code* ec,
@@ -51,7 +50,7 @@ void set_or_throw(std::error_code const& m_ec, std::error_code* ec,
     } else {
         string msg_s("std::experimental::filesystem::");
         msg_s += msg;
-        __libcpp_throw(filesystem_error(msg_s, p, p2, m_ec));
+        __throw_filesystem_error(msg_s, p, p2, m_ec);
     }
 }
 
@@ -183,20 +182,20 @@ void __copy(const path& from, const path& to, copy_options options,
     const bool sym_status2 = bool(options &
         copy_options::copy_symlinks);
 
-    std::error_code m_ec;
+    std::error_code m_ec1;
     struct ::stat f_st = {};
     const file_status f = sym_status || sym_status2
-                                     ? detail::posix_lstat(from, f_st, &m_ec)
-                                     : detail::posix_stat(from,  f_st, &m_ec);
-    if (m_ec)
-        return set_or_throw(m_ec, ec, "copy", from, to);
+                                     ? detail::posix_lstat(from, f_st, &m_ec1)
+                                     : detail::posix_stat(from,  f_st, &m_ec1);
+    if (m_ec1)
+        return set_or_throw(m_ec1, ec, "copy", from, to);
 
     struct ::stat t_st = {};
-    const file_status t = sym_status ? detail::posix_lstat(to, t_st, &m_ec)
-                                     : detail::posix_stat(to, t_st, &m_ec);
+    const file_status t = sym_status ? detail::posix_lstat(to, t_st, &m_ec1)
+                                     : detail::posix_stat(to, t_st, &m_ec1);
 
     if (not status_known(t))
-        return set_or_throw(m_ec, ec, "copy", from, to);
+        return set_or_throw(m_ec1, ec, "copy", from, to);
 
     if (!exists(f) || is_other(f) || is_other(t)
         || (is_directory(f) && is_regular_file(t))
@@ -236,12 +235,11 @@ void __copy(const path& from, const path& to, copy_options options,
         }
         return;
     }
-    else if (is_directory(f)) {
-        if (not bool(copy_options::recursive & options) &&
-            bool(copy_options::__in_recursive_copy & options))
-        {
-            return;
-        }
+    else if (is_directory(f) && bool(copy_options::create_symlinks & options)) {
+        return set_or_throw(make_error_code(errc::is_a_directory), ec, "copy");
+    }
+    else if (is_directory(f) && (bool(copy_options::recursive & options) ||
+             copy_options::none == options)) {
 
         if (!exists(t)) {
             // create directory to with attributes from 'from'.
@@ -251,9 +249,9 @@ void __copy(const path& from, const path& to, copy_options options,
         directory_iterator it = ec ? directory_iterator(from, *ec)
                                    : directory_iterator(from);
         if (ec && *ec) { return; }
-        std::error_code m_ec;
-        for (; it != directory_iterator(); it.increment(m_ec)) {
-            if (m_ec) return set_or_throw(m_ec, ec, "copy", from, to);
+        std::error_code m_ec2;
+        for (; it != directory_iterator(); it.increment(m_ec2)) {
+            if (m_ec2) return set_or_throw(m_ec2, ec, "copy", from, to);
             __copy(it->path(), to / it->path().filename(),
                    options | copy_options::__in_recursive_copy, ec);
             if (ec && *ec) { return; }
@@ -283,6 +281,10 @@ bool __copy_file(const path& from, const path& to, copy_options options,
     }
 
     const bool to_exists = exists(to_st);
+    if (to_exists && !is_regular_file(to_st)) {
+        set_or_throw(make_error_code(errc::not_supported), ec, "copy_file", from, to);
+        return false;
+    }
     if (to_exists && bool(copy_options::skip_existing & options)) {
         return false;
     }
@@ -303,6 +305,8 @@ bool __copy_file(const path& from, const path& to, copy_options options,
         set_or_throw(make_error_code(errc::file_exists), ec, "copy", from, to);
         return false;
     }
+
+    _LIBCPP_UNREACHABLE();
 }
 
 void __copy_symlink(const path& existing_symlink, const path& new_symlink,
@@ -424,17 +428,20 @@ void __current_path(const path& p, std::error_code *ec) {
 
 bool __equivalent(const path& p1, const path& p2, std::error_code *ec)
 {
+    auto make_unsupported_error = [&]() {
+      set_or_throw(make_error_code(errc::not_supported), ec,
+                     "equivalent", p1, p2);
+      return false;
+    };
     std::error_code ec1, ec2;
     struct ::stat st1 = {};
     struct ::stat st2 = {};
     auto s1 = detail::posix_stat(p1.native(), st1, &ec1);
+    if (!exists(s1))
+      return make_unsupported_error();
     auto s2 = detail::posix_stat(p2.native(), st2, &ec2);
-
-    if ((!exists(s1) && !exists(s2)) || (is_other(s1) && is_other(s2))) {
-        set_or_throw(make_error_code(errc::not_supported), ec,
-                     "equivalent", p1, p2);
-        return false;
-    }
+    if (!exists(s2))
+      return make_unsupported_error();
     if (ec) ec->clear();
     return (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino);
 }
@@ -476,55 +483,50 @@ bool __fs_is_empty(const path& p, std::error_code *ec)
     std::error_code m_ec;
     struct ::stat pst;
     auto st = detail::posix_stat(p, pst, &m_ec);
-    if (is_directory(st))
-        return directory_iterator(p) == directory_iterator{};
+    if (m_ec) {
+        set_or_throw(m_ec, ec, "is_empty", p);
+        return false;
+    }
+    else if (!is_directory(st) && !is_regular_file(st)) {
+        m_ec = make_error_code(errc::not_supported);
+        set_or_throw(m_ec, ec, "is_empty");
+        return false;
+    }
+    else if (is_directory(st)) {
+        auto it = ec ? directory_iterator(p, *ec) : directory_iterator(p);
+        if (ec && *ec)
+            return false;
+        return it == directory_iterator{};
+    }
     else if (is_regular_file(st))
         return static_cast<std::uintmax_t>(pst.st_size) == 0;
-    // else
-    set_or_throw(m_ec, ec, "is_empty", p);
-    return false;
+
+    _LIBCPP_UNREACHABLE();
 }
 
 
 namespace detail { namespace {
 
-template <class CType, class ChronoType>
-bool checked_set(CType* out, ChronoType time) {
-    using Lim = numeric_limits<CType>;
-    if (time > Lim::max() || time < Lim::min())
-        return false;
-    *out = static_cast<CType>(time);
-    return true;
-}
+using TimeSpec = struct timespec;
+using StatT =  struct stat;
 
-constexpr long long min_seconds = file_time_type::duration::min().count()
-    / file_time_type::period::den;
-
-template <class SubSecDurT, class SubSecT>
-bool set_times_checked(time_t* sec_out, SubSecT* subsec_out, file_time_type tp) {
-    using namespace chrono;
-    auto dur = tp.time_since_epoch();
-    auto sec_dur = duration_cast<seconds>(dur);
-    auto subsec_dur = duration_cast<SubSecDurT>(dur - sec_dur);
-    // The tv_nsec and tv_usec fields must not be negative so adjust accordingly
-    if (subsec_dur.count() < 0) {
-        if (sec_dur.count() > min_seconds) {
-
-            sec_dur -= seconds(1);
-            subsec_dur += seconds(1);
-        } else {
-            subsec_dur = SubSecDurT::zero();
-        }
-    }
-    return checked_set(sec_out, sec_dur.count())
-        && checked_set(subsec_out, subsec_dur.count());
-}
+#if defined(__APPLE__)
+TimeSpec extract_mtime(StatT const& st) { return st.st_mtimespec; }
+__attribute__((unused)) // Suppress warning
+TimeSpec extract_atime(StatT const& st) { return st.st_atimespec; }
+#else
+TimeSpec extract_mtime(StatT const& st) { return st.st_mtim; }
+__attribute__((unused)) // Suppress warning
+TimeSpec extract_atime(StatT const& st) { return st.st_atim; }
+#endif
 
 }} // end namespace detail
 
+using FSTime = fs_time_util<file_time_type, time_t, struct timespec>;
 
 file_time_type __last_write_time(const path& p, std::error_code *ec)
 {
+    using namespace ::std::chrono;
     std::error_code m_ec;
     struct ::stat st;
     detail::posix_stat(p, st, &m_ec);
@@ -533,7 +535,13 @@ file_time_type __last_write_time(const path& p, std::error_code *ec)
         return file_time_type::min();
     }
     if (ec) ec->clear();
-    return file_time_type::clock::from_time_t(st.st_mtime);
+    auto ts = detail::extract_mtime(st);
+    if (!FSTime::is_representable(ts)) {
+        set_or_throw(error_code(EOVERFLOW, generic_category()), ec,
+                     "last_write_time", p);
+        return file_time_type::min();
+    }
+    return FSTime::convert_timespec(ts);
 }
 
 void __last_write_time(const path& p, file_time_type new_time,
@@ -554,10 +562,11 @@ void __last_write_time(const path& p, file_time_type new_time,
         set_or_throw(m_ec, ec, "last_write_time", p);
         return;
     }
+    auto atime = detail::extract_atime(st);
     struct ::timeval tbuf[2];
-    tbuf[0].tv_sec = st.st_atime;
-    tbuf[0].tv_usec = 0;
-    const bool overflowed = !detail::set_times_checked<microseconds>(
+    tbuf[0].tv_sec = atime.tv_sec;
+    tbuf[0].tv_usec = duration_cast<microseconds>(nanoseconds(atime.tv_nsec)).count();
+    const bool overflowed = !FSTime::set_times_checked<microseconds>(
         &tbuf[1].tv_sec, &tbuf[1].tv_usec, new_time);
 
     if (overflowed) {
@@ -573,7 +582,7 @@ void __last_write_time(const path& p, file_time_type new_time,
     tbuf[0].tv_sec = 0;
     tbuf[0].tv_nsec = UTIME_OMIT;
 
-    const bool overflowed = !detail::set_times_checked<nanoseconds>(
+    const bool overflowed = !FSTime::set_times_checked<nanoseconds>(
         &tbuf[1].tv_sec, &tbuf[1].tv_nsec, new_time);
     if (overflowed) {
         set_or_throw(make_error_code(errc::invalid_argument),
@@ -701,7 +710,7 @@ void __rename(const path& from, const path& to, std::error_code *ec) {
 }
 
 void __resize_file(const path& p, std::uintmax_t size, std::error_code *ec) {
-    if (::truncate(p.c_str(), static_cast<long>(size)) == -1)
+    if (::truncate(p.c_str(), static_cast<::off_t>(size)) == -1)
         set_or_throw(ec, "resize_file", p);
     else if (ec)
         ec->clear();
@@ -720,7 +729,7 @@ space_info __space(const path& p, std::error_code *ec) {
     // Multiply with overflow checking.
     auto do_mult = [&](std::uintmax_t& out, std::uintmax_t other) {
       out = other * m_svfs.f_frsize;
-      if (out / other != m_svfs.f_frsize || other == 0)
+      if (other == 0 || out / other != m_svfs.f_frsize)
           out = static_cast<std::uintmax_t>(-1);
     };
     do_mult(si.capacity, m_svfs.f_blocks);
@@ -742,23 +751,28 @@ path __system_complete(const path& p, std::error_code *ec) {
     return absolute(p, current_path());
 }
 
-path __temp_directory_path(std::error_code *ec) {
-    const char* env_paths[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
-    const char* ret = nullptr;
-    for (auto & ep : env_paths)  {
-        if ((ret = std::getenv(ep)))
-            break;
-    }
-    path p(ret ? ret : "/tmp");
-    std::error_code m_ec;
-    if (is_directory(p, m_ec)) {
-        if (ec) ec->clear();
-        return p;
-    }
+path __temp_directory_path(std::error_code* ec) {
+  const char* env_paths[] = {"TMPDIR", "TMP", "TEMP", "TEMPDIR"};
+  const char* ret = nullptr;
+
+  for (auto& ep : env_paths)
+    if ((ret = std::getenv(ep)))
+      break;
+  if (ret == nullptr)
+    ret = "/tmp";
+
+  path p(ret);
+  std::error_code m_ec;
+  if (!exists(p, m_ec) || !is_directory(p, m_ec)) {
     if (!m_ec || m_ec == make_error_code(errc::no_such_file_or_directory))
-        m_ec = make_error_code(errc::not_a_directory);
+      m_ec = make_error_code(errc::not_a_directory);
     set_or_throw(m_ec, ec, "temp_directory_path");
     return {};
+  }
+
+  if (ec)
+    ec->clear();
+  return p;
 }
 
 // An absolute path is composed according to the table in [fs.op.absolute].

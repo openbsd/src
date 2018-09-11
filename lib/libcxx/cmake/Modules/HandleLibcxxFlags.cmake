@@ -26,6 +26,10 @@ endmacro()
 # or added in other parts of LLVM's cmake configuration.
 macro(remove_flags)
   foreach(var ${ARGN})
+    string(REPLACE "${var}" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "${var}" "" CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL}")
+    string(REPLACE "${var}" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "${var}" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     string(REPLACE "${var}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     string(REPLACE "${var}" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
     string(REPLACE "${var}" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
@@ -186,6 +190,14 @@ macro(add_library_flags_if condition)
   if(${condition})
     add_library_flags(${ARGN})
   endif()
+endmacro()
+
+# Add a list of libraries or link flags to 'LIBCXX_LIBRARIES'.
+macro(add_interface_library)
+  foreach(lib ${ARGN})
+    list(APPEND LIBCXX_LIBRARIES ${lib})
+    list(APPEND LIBCXX_INTERFACE_LIBRARIES ${lib})
+  endforeach()
 endmacro()
 
 # Turn a comma separated CMake list into a space separated string.
