@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.109 2018/06/03 21:00:15 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.110 2018/09/11 14:34:49 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ struct baddynamicports {
 extern struct inpcbtable rawcbtable, rawin6pcbtable;
 extern struct baddynamicports baddynamicports;
 extern struct baddynamicports rootonlyports;
+extern int in_pcbnotifymiss;
 
 #define sotopf(so)  (so->so_proto->pr_domain->dom_family)
 
@@ -267,6 +268,9 @@ struct inpcb *
 	 in_pcblookup_listen(struct inpcbtable *, struct in_addr, u_int,
 	    struct mbuf *, u_int);
 #ifdef INET6
+struct inpcbhead *
+	 in6_pcbhash(struct inpcbtable *, int, const struct in6_addr *,
+	    u_short, const struct in6_addr *, u_short);
 struct inpcb *
 	 in6_pcbhashlookup(struct inpcbtable *, const struct in6_addr *,
 			       u_int, const struct in6_addr *, u_int, u_int);

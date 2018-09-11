@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.242 2018/09/10 22:21:39 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.243 2018/09/11 14:34:49 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -76,30 +76,21 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/proc.h>
-#include <sys/pledge.h>
 #include <sys/domain.h>
+#include <sys/mount.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
+#include <net/pfvar.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
+#include <netinet/ip.h>
 #include <netinet/ip_var.h>
-
-#include <net/pfvar.h>
-
-#include <sys/mount.h>
-#include <nfs/nfsproto.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet6/ip6_var.h>
-#endif /* INET6 */
+#include <netinet/in_pcb.h>
 #ifdef IPSEC
 #include <netinet/ip_esp.h>
 #endif /* IPSEC */
@@ -131,32 +122,12 @@ int in_pcbresize (struct inpcbtable *, int);
 
 struct inpcbhead *in_pcbhash(struct inpcbtable *, int,
     const struct in_addr *, u_short, const struct in_addr *, u_short);
-struct inpcbhead *in6_pcbhash(struct inpcbtable *, int,
-    const struct in6_addr *, u_short, const struct in6_addr *, u_short);
 struct inpcbhead *in_pcblhash(struct inpcbtable *, int, u_short);
 
 struct inpcbhead *
 in_pcbhash(struct inpcbtable *table, int rdom,
     const struct in_addr *faddr, u_short fport,
     const struct in_addr *laddr, u_short lport)
-{
-	SIPHASH_CTX ctx;
-	u_int32_t nrdom = htonl(rdom);
-
-	SipHash24_Init(&ctx, &table->inpt_key);
-	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
-	SipHash24_Update(&ctx, faddr, sizeof(*faddr));
-	SipHash24_Update(&ctx, &fport, sizeof(fport));
-	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
-	SipHash24_Update(&ctx, &lport, sizeof(lport));
-
-	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_mask]);
-}
-
-struct inpcbhead *
-in6_pcbhash(struct inpcbtable *table, int rdom,
-    const struct in6_addr *faddr, u_short fport,
-    const struct in6_addr *laddr, u_short lport)
 {
 	SIPHASH_CTX ctx;
 	u_int32_t nrdom = htonl(rdom);
@@ -1070,48 +1041,6 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 	return (inp);
 }
 
-#ifdef INET6
-struct inpcb *
-in6_pcbhashlookup(struct inpcbtable *table, const struct in6_addr *faddr,
-    u_int fport_arg, const struct in6_addr *laddr, u_int lport_arg,
-    u_int rtable)
-{
-	struct inpcbhead *head;
-	struct inpcb *inp;
-	u_int16_t fport = fport_arg, lport = lport_arg;
-	u_int rdomain;
-
-	rdomain = rtable_l2(rtable);
-	head = in6_pcbhash(table, rdomain, faddr, fport, laddr, lport);
-	LIST_FOREACH(inp, head, inp_hash) {
-		if (!(inp->inp_flags & INP_IPV6))
-			continue;
-		if (IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) &&
-		    inp->inp_fport == fport && inp->inp_lport == lport &&
-		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr) &&
-		    rtable_l2(inp->inp_rtableid) == rdomain) {
-			/*
-			 * Move this PCB to the head of hash chain so that
-			 * repeated accesses are quicker.  This is analogous to
-			 * the historic single-entry PCB cache.
-			 */
-			if (inp != LIST_FIRST(head)) {
-				LIST_REMOVE(inp, inp_hash);
-				LIST_INSERT_HEAD(head, inp, inp_hash);
-			}
-			break;
-		}
-	}
-#ifdef DIAGNOSTIC
-	if (inp == NULL && in_pcbnotifymiss) {
-		printf("%s: faddr= fport=%d laddr= lport=%d rdom=%u\n",
-		    __func__, ntohs(fport), ntohs(lport), rdomain);
-	}
-#endif
-	return (inp);
-}
-#endif /* INET6 */
-
 /*
  * The in(6)_pcblookup_listen functions are used to locate listening
  * sockets quickly.  This are sockets with unspecified foreign address
@@ -1207,87 +1136,3 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 #endif
 	return (inp);
 }
-
-#ifdef INET6
-struct inpcb *
-in6_pcblookup_listen(struct inpcbtable *table, struct in6_addr *laddr,
-    u_int lport_arg, struct mbuf *m, u_int rtable)
-{
-	struct inpcbhead *head;
-	const struct in6_addr *key1, *key2;
-	struct inpcb *inp;
-	u_int16_t lport = lport_arg;
-	u_int rdomain;
-
-	key1 = laddr;
-	key2 = &zeroin6_addr;
-#if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-		struct pf_divert *divert;
-
-		divert = pf_find_divert(m);
-		KASSERT(divert != NULL);
-		switch (divert->type) {
-		case PF_DIVERT_TO:
-			key1 = key2 = &divert->addr.v6;
-			lport = divert->port;
-			break;
-		case PF_DIVERT_REPLY:
-			return (NULL);
-		default:
-			panic("%s: unknown divert type %d, mbuf %p, divert %p",
-			    __func__, divert->type, m, divert);
-		}
-	} else if (m && m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST) {
-		/*
-		 * Redirected connections should not be treated the same
-		 * as connections directed to ::1 since localhost
-		 * can only be accessed from the host itself.
-		 */
-		key1 = &zeroin6_addr;
-		key2 = laddr;
-	}
-#endif
-
-	rdomain = rtable_l2(rtable);
-	head = in6_pcbhash(table, rdomain, &zeroin6_addr, 0, key1, lport);
-	LIST_FOREACH(inp, head, inp_hash) {
-		if (!(inp->inp_flags & INP_IPV6))
-			continue;
-		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key1) &&
-		    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-		    rtable_l2(inp->inp_rtableid) == rdomain)
-			break;
-	}
-	if (inp == NULL && ! IN6_ARE_ADDR_EQUAL(key1, key2)) {
-		head = in6_pcbhash(table, rdomain,
-		    &zeroin6_addr, 0, key2, lport);
-		LIST_FOREACH(inp, head, inp_hash) {
-			if (!(inp->inp_flags & INP_IPV6))
-				continue;
-			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
-			    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, key2) &&
-			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) &&
-			    rtable_l2(inp->inp_rtableid) == rdomain)
-				break;
-		}
-	}
-	/*
-	 * Move this PCB to the head of hash chain so that
-	 * repeated accesses are quicker.  This is analogous to
-	 * the historic single-entry PCB cache.
-	 */
-	if (inp != NULL && inp != LIST_FIRST(head)) {
-		LIST_REMOVE(inp, inp_hash);
-		LIST_INSERT_HEAD(head, inp, inp_hash);
-	}
-#ifdef DIAGNOSTIC
-	if (inp == NULL && in_pcbnotifymiss) {
-		printf("%s: laddr= lport=%d rdom=%u\n",
-		    __func__, ntohs(lport), rdomain);
-	}
-#endif
-	return (inp);
-}
-#endif /* INET6 */
