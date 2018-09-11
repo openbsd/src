@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.90 2018/08/27 21:09:47 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.91 2018/09/11 13:54:28 ccardenas Exp $
 #
 # GENERIC machine description file
 #
@@ -180,6 +180,7 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 
 # PCI Ethernet
+bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
 mskc*		at pci?			# Marvell Yukon-2
