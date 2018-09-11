@@ -22,7 +22,7 @@ TARGET_ARCH=	powerpc
 .elif	(${TARGET} == "landisk")
 TARGET_ARCH=	sh
 .else
-TARGET_ARCH=	${TARGET}
+TARGET_ARCH=amd64
 .endif
 TARGET_CPU?=	${TARGET_ARCH}
 
@@ -43,9 +43,9 @@ MACHINE_IS_LP64 =
 
 #CROSSCPPFLAGS?=	-nostdinc -I${CROSSDIR}/usr/include
 #CROSSLDFLAGS?=	-nostdlib -L${CROSSDIR}/usr/lib -static
-CROSSCFLAGS?=	${CROSSCPPFLAGS} -O2 ${PIPE} ${DEBUG}
+CROSSCFLAGS?=	${CROSSCPPFLAGS} -OS ${PIPE} ${DEBUG}
 CROSSCXXFLAGS?=	${CROSSCPPFLAGS}
-#LDSTATIC?=	-static
+LDSTATIC?=	-static
 
 CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/${TARGET_CANON}/bin/ar \
