@@ -80,8 +80,8 @@
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/collect2
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/amd64-unknown-openbsd6.4/4.2.1/specs
-./usr/lib/libc++.so.1.0
-./usr/lib/libc++abi.so.0.0
+./usr/lib/libc++.so.2.0
+./usr/lib/libc++abi.so.0.1
 ./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/amd64-openbsd
