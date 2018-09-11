@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.148 2018/09/10 10:11:18 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.149 2018/09/11 10:21:29 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -410,58 +410,6 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 	return (0);
 }
 
-int
-ieee80211_ess_cmp_crypto(struct ieee80211_node *nicur,
-    struct ieee80211_node *nican)
-{
-	if ((nican->ni_rsnprotos & IEEE80211_PROTO_RSN) &&
-	    (nicur->ni_rsnprotos & IEEE80211_PROTO_RSN) == 0)
-		return 1;
-	if ((nican->ni_rsnprotos & IEEE80211_PROTO_RSN) == 0 &&
-	    (nicur->ni_rsnprotos & IEEE80211_PROTO_RSN))
-		return -1;
-
-	if ((nican->ni_rsnprotos & IEEE80211_PROTO_WPA) &&
-	    (nicur->ni_rsnprotos & IEEE80211_PROTO_WPA) == 0)
-		return 1;
-	if ((nican->ni_rsnprotos & IEEE80211_PROTO_WPA) == 0 &&
-	    (nicur->ni_rsnprotos & IEEE80211_PROTO_WPA))
-		return -1;
-
-	if ((nican->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) &&
-	    (nicur->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
-		return 1;
-	if ((nican->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0 &&
-	    (nicur->ni_capinfo & IEEE80211_CAPINFO_PRIVACY))
-		return -1;
-
-	return 0;
-}
-
-int
-ieee80211_ess_cmp_band(struct ieee80211com *ic,
-    struct ieee80211_node *nicur, struct ieee80211_node *nican)
-{
-	uint8_t	min_5ghz_rssi;
-
-	if (ic->ic_max_rssi)
-		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
-	else
-		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
-
-	if (IEEE80211_IS_CHAN_5GHZ(nican->ni_chan) &&
-	    IEEE80211_IS_CHAN_2GHZ(nicur->ni_chan) &&
-	    nican->ni_rssi > min_5ghz_rssi)
-		return 1;
-
-	if (IEEE80211_IS_CHAN_5GHZ(nicur->ni_chan) &&
-	    IEEE80211_IS_CHAN_5GHZ(nican->ni_chan) &&
-	    nicur->ni_rssi > min_5ghz_rssi)
-		return -1;
-
-	return 0;
-}
-
 uint8_t
 ieee80211_ess_adjust_rssi(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
@@ -486,18 +434,31 @@ ieee80211_ess_adjust_rssi(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 int
-ieee80211_ess_cmp_rssi(struct ieee80211com *ic,
-    struct ieee80211_node *nicur, struct ieee80211_node *nican)
+ieee80211_ess_calculate_score(struct ieee80211com *ic,
+    struct ieee80211_node *ni)
 {
-	uint8_t cur_rssi = ieee80211_ess_adjust_rssi(ic, nicur);
-	uint8_t can_rssi = ieee80211_ess_adjust_rssi(ic, nican);
+	int score = 0;
+	uint8_t	min_5ghz_rssi;
 
-	if (can_rssi > cur_rssi)
-		return 1;
-	if (cur_rssi > can_rssi)
-		return -1;
+	if (ic->ic_max_rssi)
+		min_5ghz_rssi = IEEE80211_RSSI_THRES_RATIO_5GHZ;
+	else
+		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
 
-	return 0;
+	/* Calculate the crypto score */
+	if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
+		score += 16;
+	if (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)
+		score += 8;
+	if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
+		score += 4;
+
+	/* 5GHz with a good signal */
+	if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) &&
+	    ni->ni_rssi > min_5ghz_rssi)
+		score += 2;
+
+	return score;
 }
 
 /*
@@ -515,39 +476,24 @@ int
 ieee80211_ess_is_better(struct ieee80211com *ic,
     struct ieee80211_node *nicur, struct ieee80211_node *nican)
 {
-	int score_cur = 0, score_can = 0;
+	struct ifnet		*ifp = &ic->ic_if;
+	int			 score_cur = 0, score_can = 0;
+	int			 cur_rssi, can_rssi;
 
-	switch (ieee80211_ess_cmp_crypto(nicur, nican)) {
-	case 1:
-		score_can += 4;
-		break;
-	case -1:
-		score_cur += 4;
-		break;
-	default:
-		break;
-	}
-		
-	switch (ieee80211_ess_cmp_band(ic, nicur, nican)) {
-	case 1:
-		score_can += 2;
-		break;
-	case -1:
-		score_cur += 2;
-		break;
-	default:
-		break;
-	}
+	score_cur = ieee80211_ess_calculate_score(ic, nicur);
+	score_can = ieee80211_ess_calculate_score(ic, nican);
 
-	switch (ieee80211_ess_cmp_rssi(ic, nicur, nican)) {
-	case 1:
-		score_can += 1;
-		break;
-	case -1:
-		score_cur += 1;
-		break;
-	default:
-		break;
+	cur_rssi = ieee80211_ess_adjust_rssi(ic, nicur);
+	can_rssi = ieee80211_ess_adjust_rssi(ic, nican);
+
+	if (can_rssi > cur_rssi)
+		score_can++;
+
+	if ((ifp->if_flags & IFF_DEBUG) && (score_can <= score_cur)) {
+		printf("%s: AP %s ", ifp->if_xname,
+		    ether_sprintf(nican->ni_bssid));
+		ieee80211_print_essid(nican->ni_essid, nican->ni_esslen);
+		printf(" score %u\n", score_can);
 	}
 
 	return score_can > score_cur;
@@ -631,6 +577,12 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 	    (memcmp(ic->ic_des_essid, seless->essid,
 	     IEEE80211_NWID_LEN) == 0))) {
 		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: best AP %s ", ifp->if_xname,
+			    ether_sprintf(selni->ni_bssid));
+			ieee80211_print_essid(selni->ni_essid,
+			    selni->ni_esslen);
+			printf(" score %u\n",
+			    ieee80211_ess_calculate_score(ic, selni));
 			printf("%s: switching to network ", ifp->if_xname);
 			ieee80211_print_essid(seless->essid, seless->esslen);
 			printf("\n");
