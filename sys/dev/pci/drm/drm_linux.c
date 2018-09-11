@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.31 2018/08/25 18:42:43 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.32 2018/09/11 20:25:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -746,6 +746,9 @@ acpi_get_table_with_size(const char *sig, int instance,
 	struct acpi_q *entry;
 
 	KASSERT(instance == 1);
+
+	if (sc == NULL)
+		return AE_NOT_FOUND;
 
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		if (memcmp(entry->q_table, sig, strlen(sig)) == 0) {
