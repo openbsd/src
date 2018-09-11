@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.71 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.72 2018/09/11 07:13:23 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -494,6 +494,7 @@
 /*
  * AMD K8 (Opteron) MSRs.
  */
+#define	MSR_PATCH_LEVEL	0x0000008b
 #define	MSR_SYSCFG	0xc0000010
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
@@ -511,6 +512,7 @@
 #define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
 #define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
 #define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
+#define MSR_PATCH_LOADER 0xc0010020
 #define MSR_INT_PEN_MSG	0xc0010055		/* Interrupt pending message */
 
 #define MSR_DE_CFG	0xc0011029		/* Decode Configuration */
