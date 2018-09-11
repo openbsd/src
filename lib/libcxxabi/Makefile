@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2017/04/17 15:53:21 kettenis Exp $
+# $OpenBSD: Makefile,v 1.9 2018/09/11 18:12:06 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -19,30 +19,32 @@ CXXINCLUDEDIR=	/usr/include/c++/v1
 
 LIB=		c++abi
 
-SRCS+=		abort_message.cpp\
-		cxa_aux_runtime.cpp\
-		cxa_default_handlers.cpp\
-		cxa_demangle.cpp\
-		cxa_exception.cpp\
-		cxa_exception_storage.cpp\
-		cxa_guard.cpp\
-		cxa_handlers.cpp\
-		cxa_new_delete.cpp\
-		cxa_personality.cpp\
-		cxa_thread_atexit.cpp\
-		cxa_unexpected.cpp\
-		cxa_vector.cpp\
-		cxa_virtual.cpp\
-		exception.cpp\
-		private_typeinfo.cpp\
-		stdexcept.cpp\
-		typeinfo.cpp\
-		Unwind-EHABI.cpp\
-		Unwind-sjlj.c\
-		UnwindLevel1-gcc-ext.c\
-		UnwindLevel1.c\
-		UnwindRegistersRestore.S\
-		UnwindRegistersSave.S\
+
+SRCS+=		abort_message.cpp \
+		cxa_aux_runtime.cpp \
+		cxa_default_handlers.cpp \
+		cxa_demangle.cpp \
+		cxa_exception.cpp \
+		cxa_exception_storage.cpp \
+		cxa_guard.cpp \
+		cxa_handlers.cpp \
+		cxa_personality.cpp \
+		cxa_thread_atexit.cpp \
+		cxa_unexpected.cpp \
+		cxa_vector.cpp \
+		cxa_virtual.cpp \
+		fallback_malloc.cpp \
+		private_typeinfo.cpp \
+		stdlib_exception.cpp \
+		stdlib_new_delete.cpp \
+		stdlib_stdexcept.cpp \
+		stdlib_typeinfo.cpp \
+		Unwind-EHABI.cpp \
+		Unwind-sjlj.c \
+		UnwindLevel1-gcc-ext.c \
+		UnwindLevel1.c \
+		UnwindRegistersRestore.S \
+		UnwindRegistersSave.S \
 		libunwind.cpp
 
 CPPFLAGS+=	-I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
