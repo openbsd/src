@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.149 2018/09/11 10:21:29 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.150 2018/09/11 19:25:54 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -493,7 +493,7 @@ ieee80211_ess_is_better(struct ieee80211com *ic,
 		printf("%s: AP %s ", ifp->if_xname,
 		    ether_sprintf(nican->ni_bssid));
 		ieee80211_print_essid(nican->ni_essid, nican->ni_esslen);
-		printf(" score %u\n", score_can);
+		printf(" score %d\n", score_can);
 	}
 
 	return score_can > score_cur;
@@ -581,7 +581,7 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			    ether_sprintf(selni->ni_bssid));
 			ieee80211_print_essid(selni->ni_essid,
 			    selni->ni_esslen);
-			printf(" score %u\n",
+			printf(" score %d\n",
 			    ieee80211_ess_calculate_score(ic, selni));
 			printf("%s: switching to network ", ifp->if_xname);
 			ieee80211_print_essid(seless->essid, seless->esslen);
