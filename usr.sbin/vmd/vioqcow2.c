@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.1 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.2 2018/09/11 04:06:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -127,7 +127,7 @@ virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int fd)
 	if (diskp == NULL)
 		return -1;
 	if (qc2_open(diskp, fd) == -1) {
-		log_warnx("could not open qcow2 disk");
+		log_warnx("%s: could not open qcow2 disk", __func__);
 		free(diskp);
 		return -1;
 	}
@@ -162,11 +162,11 @@ qc2_open(struct qcdisk *disk, int fd)
 	int version;
 
 	if (pread(fd, &header, sizeof header, 0) != sizeof header) {
-		log_warn("short read on header");
+		log_warn("%s: short read on header", __func__);
 		return -1;
 	}
 	if (strncmp(header.magic, "QFI\xfb", 4) != 0) {
-		log_warn("invalid magic numbers");
+		log_warn("%s: invalid magic numbers", __func__);
 		return -1;
 	}
 	pthread_rwlock_init(&disk->lock, NULL);
@@ -196,7 +196,7 @@ qc2_open(struct qcdisk *disk, int fd)
 	 * We only know about the dirty or corrupt bits here.
 	 */
 	if (disk->incompatfeatures & ~(QCOW2_DIRTY|QCOW2_CORRUPT)) {
-		log_warn("%s: unsupported features %llx", __progname,
+		log_warn("%s: unsupported features %llx", __func__,
 		    disk->incompatfeatures & ~(QCOW2_DIRTY|QCOW2_CORRUPT));
 		return -1;
 	}
@@ -211,7 +211,7 @@ qc2_open(struct qcdisk *disk, int fd)
 		disk->l1[i] = be64toh(disk->l1[i]);
 	version = be32toh(header.version);
 	if (version != 2 && version != 3) {
-		log_warn("%s: unknown qcow2 version %d", __progname, version);
+		log_warn("%s: unknown qcow2 version %d", __func__, version);
 		return -1;
 	}
 
@@ -222,16 +222,16 @@ qc2_open(struct qcdisk *disk, int fd)
 		 * FIXME: we need to figure out a way of opening these things,
 		 * otherwise we just crash with a pledge violation.
 		 */
-		log_warn("unsupported external snapshot images");
+		log_warn("%s: unsupported external snapshot images", __func__);
 		return -1;
 
 		if (backingsz >= sizeof basepath - 1) {
-			log_warn("%s: snapshot path too long", __progname);
+			log_warn("%s: snapshot path too long", __func__);
 			return -1;
 		}
 		if (pread(fd, basepath, backingsz, backingoff) != backingsz) {
 			log_warn("%s: could not read snapshot base name",
-			    __progname);
+			    __func__);
 			return -1;
 		}
 		basepath[backingsz] = 0;
@@ -243,7 +243,7 @@ qc2_open(struct qcdisk *disk, int fd)
 		}
 		if (disk->base->clustersz != disk->clustersz) {
 			log_warn("%s: all disks must share clustersize",
-			    __progname);
+			    __func__);
 			free(disk->base);
 			return -1;
 		}
@@ -414,7 +414,7 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 	if (inplace)
 		*inplace = !!(cluster & QCOW2_INPLACE);
 	if (cluster & QCOW2_COMPRESSED) {
-		log_warn("%s: compressed clusters unsupported", __progname);
+		log_warn("%s: compressed clusters unsupported", __func__);
 		goto err;
 	}
 	pthread_rwlock_unlock(&disk->lock);
@@ -556,7 +556,7 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 		l2cluster = disk->end;
 		disk->end += disk->clustersz;
 		if (ftruncate(disk->fd, disk->end) < 0) {
-			log_warn("refs block grow fail ");
+			log_warn("%s: refs block grow fail", __func__);
 			return -1;
 		}
 		buf = htobe64(l2cluster);
@@ -573,7 +573,8 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 	}
 	refs = htobe16(refs);
 	if (pwrite(disk->fd, &refs, sizeof refs, l2cluster + 2*l2idx) != 2) {
-		log_warn("could not write ref block");
+		log_warn("%s: could not write ref block", __func__);
+		return -1;
 	}
 	return 0;
 }

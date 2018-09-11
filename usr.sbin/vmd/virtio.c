@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.65 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.66 2018/09/11 04:06:32 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1756,7 +1756,7 @@ virtio_init_disk(struct virtio_backing *file, off_t *sz, int fd, int type)
 	case VMDF_RAW:		return virtio_init_raw(file, sz, fd);
 	case VMDF_QCOW2:	return virtio_init_qcow2(file, sz, fd);
 	}
-	log_warnx("%s: invalid disk format", __progname);
+	log_warnx("%s: invalid disk format", __func__);
 	return -1;
 }
 
@@ -1838,8 +1838,11 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioblk[i].vm_id = vcp->vcp_id;
 			vioblk[i].irq = pci_get_dev_irq(id);
 			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-			    child_disks[i], vmc->vmc_disktypes[i]) == -1)
-				continue;
+			    child_disks[i], vmc->vmc_disktypes[i]) == -1) {
+				log_warnx("%s: unable to determine disk fmt",
+				    __func__);
+				return;
+			}
 			vioblk[i].sz /= 512;
 		}
 	}
@@ -1964,8 +1967,10 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioscsi->vq[i].last_avail = 0;
 		}
 		if (virtio_init_disk(&vioscsi->file, &vioscsi->sz,
-		    child_cdrom, VMDF_RAW) == -1)
+		    child_cdrom, VMDF_RAW) == -1) {
+			log_warnx("%s: unable to determine iso fmt", __func__);
 			return;
+		}
 		vioscsi->locked = 0;
 		vioscsi->lba = 0;
 		vioscsi->n_blocks = vioscsi->sz >> 11; /* num of 2048 blocks in file */
@@ -2129,8 +2134,11 @@ vioblk_restore(int fd, struct vmop_create_params *vmc, int *child_disks)
 			return (-1);
 		}
 		if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-		     child_disks[i], vmc->vmc_disktypes[i]) == -1)
-			continue;
+		    child_disks[i], vmc->vmc_disktypes[i]) == -1)  {
+			log_warnx("%s: unable to determine disk fmt",
+			    __func__);
+			return (-1);
+		}
 	}
 	return (0);
 }
@@ -2161,7 +2169,11 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 		return (-1);
 	}
 
-	virtio_init_disk(&vioscsi->file, &vioscsi->sz, child_cdrom, VMDF_RAW);
+	if (virtio_init_disk(&vioscsi->file, &vioscsi->sz, child_cdrom,
+	    VMDF_RAW) == -1) {
+		log_warnx("%s: unable to determine iso fmt", __func__);
+		return (-1);
+	}
 
 	return (0);
 }
