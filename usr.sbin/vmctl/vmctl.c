@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.56 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.57 2018/09/11 04:03:16 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -737,7 +737,7 @@ vm_console(struct vmop_info_result *list, size_t ct)
 }
 
 /*
- * create_imagefile
+ * create_raw_imagefile
  *
  * Create an empty imagefile with the specified path and size.
  *
@@ -751,7 +751,7 @@ vm_console(struct vmop_info_result *list, size_t ct)
  *  Exxxx : Various other Exxxx errno codes due to other I/O errors
  */
 int
-create_imagefile(const char *imgfile_path, long imgsize)
+create_raw_imagefile(const char *imgfile_path, long imgsize)
 {
 	int fd, ret;
 
@@ -771,4 +771,124 @@ create_imagefile(const char *imgfile_path, long imgsize)
 
 	ret = close(fd);
 	return (ret);
+}
+
+/*
+ * create_imagefile
+ *
+ * Create an empty qcow2 imagefile with the specified path and size.
+ *
+ * Parameters:
+ *  imgfile_path: path to the image file to create
+ *  imgsize     : size of the image file to create (in MB)
+ *
+ * Return:
+ *  EEXIST: The requested image file already exists
+ *  0     : Image file successfully created
+ *  Exxxx : Various other Exxxx errno codes due to other I/O errors
+ */
+#define ALIGN(sz, align) \
+	((sz + align - 1) & ~(align - 1))
+int
+create_qc2_imagefile(const char *imgfile_path, long imgsize)
+{
+	struct qcheader {
+		char magic[4];
+		uint32_t version;
+		uint64_t backingoff;
+		uint32_t backingsz;
+		uint32_t clustershift;
+		uint64_t disksz;
+		uint32_t cryptmethod;
+		uint32_t l1sz;
+		uint64_t l1off;
+		uint64_t refoff;
+		uint32_t refsz;
+		uint32_t snapcount;
+		uint64_t snapsz;
+		/* v3 additions */
+		uint64_t incompatfeatures;
+		uint64_t compatfeatures;
+		uint64_t autoclearfeatures;
+		uint32_t reforder;
+		uint32_t headersz;
+	} __packed hdr;
+	int fd, ret;
+	uint64_t l1sz, refsz, disksz, initsz, clustersz;
+	uint64_t l1off, refoff, v, i;
+	uint16_t refs;
+
+	disksz = 1024*1024*imgsize;
+	clustersz = (1<<16);
+	l1off = ALIGN(sizeof hdr, clustersz);
+	l1sz = disksz / (clustersz*clustersz/8);
+	if (l1sz == 0)
+		l1sz = 1;
+
+	refoff = ALIGN(l1off + 8*l1sz, clustersz);
+	refsz = disksz / (clustersz*clustersz*clustersz/2);
+	if (refsz == 0)
+		refsz = 1;
+
+	initsz = ALIGN(refoff + refsz*clustersz, clustersz);
+
+	memcpy(hdr.magic, "QFI\xfb", 4);
+	hdr.version		= htobe32(3);
+	hdr.backingoff		= htobe64(0);
+	hdr.backingsz		= htobe32(0);
+	hdr.clustershift	= htobe32(16);
+	hdr.disksz		= htobe64(disksz);
+	hdr.cryptmethod		= htobe32(0);
+	hdr.l1sz		= htobe32(l1sz);
+	hdr.l1off		= htobe64(l1off);
+	hdr.refoff		= htobe64(refoff);
+	hdr.refsz		= htobe32(refsz);
+	hdr.snapcount		= htobe32(0);
+	hdr.snapsz		= htobe64(0);
+	hdr.incompatfeatures	= htobe64(0);
+	hdr.compatfeatures	= htobe64(0);
+	hdr.autoclearfeatures	= htobe64(0);
+	hdr.reforder		= htobe32(4);
+	hdr.headersz		= htobe32(sizeof hdr);
+
+	/* Refuse to overwrite an existing image */
+	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
+	    S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (errno);
+
+	/* Write out the header */
+	if (write(fd, &hdr, sizeof hdr) != sizeof hdr)
+		goto error;
+
+	/* Extend to desired size, and add one refcount cluster */
+	if (ftruncate(fd, (off_t)initsz + clustersz) == -1)
+		goto error;
+
+	/* 
+	 * Paranoia: if our disk image takes more than one cluster
+	 * to refcount the initial image, fail.
+	 */
+	if (initsz/clustersz > clustersz/2) {
+		errno = ERANGE;
+		goto error;
+	}
+
+	/* Add a refcount block, and refcount ourselves. */
+	v = htobe64(initsz);
+	if (pwrite(fd, &v, 8, refoff) != 8)
+		goto error;
+	for (i = 0; i < initsz/clustersz + 1; i++) {
+		refs = htobe16(1);
+		if (pwrite(fd, &refs, 2, initsz + 2*i) != 2)
+			goto error;
+	}
+
+	ret = close(fd);
+	return (ret);
+error:
+	ret = errno;
+	close(fd);
+	unlink(imgfile_path);
+	return (errno);
 }

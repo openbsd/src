@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2018/09/11 04:03:16 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,8 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
-	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
+	{ "create",	CMD_CREATE,	ctl_create,	
+		"\"path\" -s size [-f fmt]", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
 	{ "log",	CMD_LOG,	ctl_log,	"(verbose|brief)" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
@@ -497,23 +498,27 @@ int
 ctl_create(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, ret;
-	const char	*paths[2];
+	const char	*paths[2], *format;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
 	paths[0] = argv[1];
 	paths[1] = NULL;
+	format = "raw";
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	while ((ch = getopt(argc, argv, "s:f:")) != -1) {
 		switch (ch) {
 		case 's':
 			if (parse_size(res, optarg, 0) != 0)
 				errx(1, "invalid size: %s", optarg);
+			break;
+		case 'f':
+			format = optarg;
 			break;
 		default:
 			ctl_usage(res->ctl);
@@ -525,7 +530,12 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 		fprintf(stderr, "missing size argument\n");
 		ctl_usage(res->ctl);
 	}
-	ret = create_imagefile(paths[0], res->size);
+	if (strcmp(format, "raw") == 0)
+		ret = create_raw_imagefile(paths[0], res->size);
+	else if (strcmp(format, "qcow2") == 0)
+		ret = create_qc2_imagefile(paths[0], res->size);
+	else
+		errx(1, "unknown image format %s", format);
 	if (ret != 0) {
 		errno = ret;
 		err(1, "create imagefile operation failed");

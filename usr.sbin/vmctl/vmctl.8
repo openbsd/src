@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.46 2018/09/09 06:36:43 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.47 2018/09/11 04:03:16 ccardenas Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2018 $
+.Dd $Mdocdate: September 11 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ Using
 .Xr cu 1
 connect to the console of the VM with the specified
 .Ar id .
-.It Cm create Ar path Fl s Ar size
+.It Cm create Ar path Fl s Ar size Op Fl f Ar format
 Creates a VM disk image file with the specified
 .Ar path
 and
