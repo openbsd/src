@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.334 2018/09/10 20:53:53 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.335 2018/09/11 09:02:27 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1612,11 +1612,11 @@ host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
 	int			 mask = -1;
-	char			*p, *r, *ps, *if_name;
+	char			*p, *ps, *if_name;
 	const char		*errstr;
 
 	if ((ps = strdup(s)) == NULL)
-		err(1, "host: strdup");
+		err(1, "%s: strdup", __func__);
 
 	if ((if_name = strrchr(ps, '@')) != NULL) {
 		if_name[0] = '\0';
@@ -1624,16 +1624,13 @@ host(const char *s, int opts)
 	}
 
 	if ((p = strrchr(ps, '/')) != NULL) {
-		if ((r = strdup(ps)) == NULL)
-			err(1, "host: strdup");
 		mask = strtonum(p+1, 0, 128, &errstr);
 		if (errstr) {
 			fprintf(stderr, "netmask is %s: %s\n", errstr, p);
 			goto error;
 		}
 		p[0] = '\0';
-	} else
-		r = ps;
+	}
 
 	if ((h = host_if(ps, mask)) == NULL &&
 	    (h = host_ip(ps, mask)) == NULL &&
@@ -1645,15 +1642,13 @@ host(const char *s, int opts)
 	if (if_name && if_name[0])
 		for (n = h; n != NULL; n = n->next)
 			if ((n->ifname = strdup(if_name)) == NULL)
-				err(1, "host: strdup");
+				err(1, "%s: strdup", __func__);
 	for (n = h; n != NULL; n = n->next) {
 		n->addr.type = PF_ADDR_ADDRMASK;
 		n->weight = 0;
 	}	
 
 error:
-	if (r != ps)
-		free(r);
 	free(ps);
 	return (h);
 }
