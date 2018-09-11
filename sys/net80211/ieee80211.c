@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.69 2018/07/11 21:18:23 nayden Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.70 2018/09/11 18:16:26 krw Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -64,9 +64,6 @@ int	ieee80211_debug = 0;
 #endif
 
 int ieee80211_cache_size = IEEE80211_CACHE_SIZE;
-
-struct ieee80211com_head ieee80211com_head =
-    LIST_HEAD_INITIALIZER(ieee80211com_head);
 
 void ieee80211_setbasicrates(struct ieee80211com *);
 int ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
@@ -184,7 +181,6 @@ ieee80211_ifattach(struct ifnet *ifp)
 	ic->ic_bmissthres = 7;	/* default 7 beacons */
 	ic->ic_dtim_period = 1;	/* all TIMs are DTIMs */
 
-	LIST_INSERT_HEAD(&ieee80211com_head, ic, ic_list);
 	ieee80211_node_attach(ifp);
 	ieee80211_proto_attach(ifp);
 
@@ -205,7 +201,6 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	ieee80211_proto_detach(ifp);
 	ieee80211_crypto_detach(ifp);
 	ieee80211_node_detach(ifp);
-	LIST_REMOVE(ic, ic_list);
 	ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 }

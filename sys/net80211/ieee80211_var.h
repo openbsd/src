@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.90 2018/09/10 08:26:39 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.91 2018/09/11 18:16:26 krw Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -338,9 +338,6 @@ struct ieee80211com {
 };
 #define	ic_if		ic_ac.ac_if
 #define	ic_softc	ic_if.if_softc
-
-LIST_HEAD(ieee80211com_head, ieee80211com);
-extern struct ieee80211com_head ieee80211com_head;
 
 /* list of APs we want to automatically use */
 /* all data is copied from struct ieee80211com */
