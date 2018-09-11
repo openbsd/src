@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.305 2018/08/19 16:45:03 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.306 2018/09/11 17:31:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1401,13 +1401,12 @@ tty_cmd_alignmenttest(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 {
-	if (ctx->xoff + ctx->ocx > tty->sx - 1 && ctx->ocy == ctx->orlower) {
-		if (tty_pane_full_width(tty, ctx))
-			tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
-		else
-			tty_margin_off(tty);
-	}
+	if (ctx->xoff + ctx->ocx > tty->sx - 1 &&
+	    ctx->ocy == ctx->orlower &&
+	    tty_pane_full_width(tty, ctx))
+		tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
 
+	tty_margin_off(tty);
 	tty_cursor_pane_unless_wrap(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_cell(tty, ctx->cell, ctx->wp);
@@ -1416,6 +1415,7 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_cells(struct tty *tty, const struct tty_ctx *ctx)
 {
+	tty_margin_off(tty);
 	tty_cursor_pane_unless_wrap(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_attributes(tty, ctx->cell, ctx->wp);
