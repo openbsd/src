@@ -55,12 +55,7 @@
 #include <string.h>
 #endif
 
-namespace __cxxabiv1
-{
-
-#pragma GCC visibility push(hidden)
-
-inline
+static inline
 bool
 is_equal(const std::type_info* x, const std::type_info* y, bool use_strcmp)
 {
@@ -73,6 +68,8 @@ is_equal(const std::type_info* x, const std::type_info* y, bool use_strcmp)
 #endif
 }
 
+namespace __cxxabiv1
+{
 
 // __shim_type_info
 
@@ -171,8 +168,12 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 // catch (D2& d2) : adjustedPtr == &d2  (d2 is base class of thrown object)
 // catch (D2* d2) : adjustedPtr == d2
 // catch (D2*& d2) : adjustedPtr == d2
-// 
+//
 // catch (...) : adjustedPtr == & of the exception
+//
+// If the thrown type is nullptr_t and the caught type is a pointer to
+// member type, adjustedPtr points to a statically-allocated null pointer
+// representation of that type.
 
 // Handles bullet 1
 bool
@@ -228,7 +229,7 @@ __class_type_info::can_catch(const __shim_type_info* thrown_type,
     if (thrown_class_type == 0)
         return false;
     // bullet 2
-    __dynamic_cast_info info = {thrown_class_type, 0, this, -1, 0};
+    __dynamic_cast_info info = {thrown_class_type, 0, this, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
     info.number_of_dst_type = 1;
     thrown_class_type->has_unambiguous_public_base(&info, adjustedPtr, public_path);
     if (info.path_dst_ptr_to_static_ptr == public_path)
@@ -337,12 +338,11 @@ __vmi_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
     }
 }
 
-// Handles bullets 1 and 4 for both pointers and member pointers
+// Handles bullet 1 for both pointers and member pointers
 bool
 __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
                              void*&) const
 {
-    if (is_equal(thrown_type, &typeid(std::nullptr_t), false)) return true;
     bool use_strcmp = this->__flags & (__incomplete_class_mask |
                                        __incomplete_mask);
     if (!use_strcmp) {
@@ -367,7 +367,13 @@ bool
 __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
                                void*& adjustedPtr) const
 {
-    // bullets 1 and 4
+    // bullet 4
+    if (is_equal(thrown_type, &typeid(std::nullptr_t), false)) {
+      adjustedPtr = nullptr;
+      return true;
+    }
+
+    // bullet 1
     if (__pbase_type_info::can_catch(thrown_type, adjustedPtr)) {
         if (adjustedPtr != NULL)
             adjustedPtr = *static_cast<void**>(adjustedPtr);
@@ -381,8 +387,10 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     // Do the dereference adjustment
     if (adjustedPtr != NULL)
         adjustedPtr = *static_cast<void**>(adjustedPtr);
-    // bullet 3B
-    if (thrown_pointer_type->__flags & ~__flags)
+    // bullet 3B and 3C
+    if (thrown_pointer_type->__flags & ~__flags & __no_remove_flags_mask)
+        return false;
+    if (__flags & ~thrown_pointer_type->__flags & __no_add_flags_mask)
         return false;
     if (is_equal(__pointee, thrown_pointer_type->__pointee, false))
         return true;
@@ -419,7 +427,7 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
         dynamic_cast<const __class_type_info*>(thrown_pointer_type->__pointee);
     if (thrown_class_type == 0)
         return false;
-    __dynamic_cast_info info = {thrown_class_type, 0, catch_class_type, -1, 0};
+    __dynamic_cast_info info = {thrown_class_type, 0, catch_class_type, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
     info.number_of_dst_type = 1;
     thrown_class_type->has_unambiguous_public_base(&info, adjustedPtr, public_path);
     if (info.path_dst_ptr_to_static_ptr == public_path)
@@ -468,7 +476,22 @@ bool __pointer_type_info::can_catch_nested(
 
 bool __pointer_to_member_type_info::can_catch(
     const __shim_type_info* thrown_type, void*& adjustedPtr) const {
-    // bullets 1 and 4
+    // bullet 4
+    if (is_equal(thrown_type, &typeid(std::nullptr_t), false)) {
+      // We assume that the pointer to member representation is the same for
+      // all pointers to data members and for all pointers to member functions.
+      struct X {};
+      if (dynamic_cast<const __function_type_info*>(__pointee)) {
+        static int (X::*const null_ptr_rep)() = nullptr;
+        adjustedPtr = const_cast<int (X::**)()>(&null_ptr_rep);
+      } else {
+        static int X::*const null_ptr_rep = nullptr;
+        adjustedPtr = const_cast<int X::**>(&null_ptr_rep);
+      }
+      return true;
+    }
+
+    // bullet 1
     if (__pbase_type_info::can_catch(thrown_type, adjustedPtr))
         return true;
 
@@ -476,7 +499,9 @@ bool __pointer_to_member_type_info::can_catch(
         dynamic_cast<const __pointer_to_member_type_info*>(thrown_type);
     if (thrown_pointer_type == 0)
         return false;
-    if (thrown_pointer_type->__flags & ~__flags)
+    if (thrown_pointer_type->__flags & ~__flags & __no_remove_flags_mask)
+        return false;
+    if (__flags & ~thrown_pointer_type->__flags & __no_add_flags_mask)
         return false;
     if (!is_equal(__pointee, thrown_pointer_type->__pointee, false))
         return false;
@@ -509,9 +534,6 @@ bool __pointer_to_member_type_info::can_catch_nested(
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-
-#pragma GCC visibility pop
-#pragma GCC visibility push(default)
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -592,13 +614,11 @@ bool __pointer_to_member_type_info::can_catch_nested(
 // If there is a public path from (dynamic_ptr, dynamic_type) to
 //    (static_ptr, static_type), then return dynamic_ptr.
 // Else return nullptr.
-extern "C"
-void*
-__dynamic_cast(const void* static_ptr,
-               const __class_type_info* static_type,
-               const __class_type_info* dst_type,
-               std::ptrdiff_t src2dst_offset)
-{
+
+extern "C" _LIBCXXABI_FUNC_VIS void *
+__dynamic_cast(const void *static_ptr, const __class_type_info *static_type,
+               const __class_type_info *dst_type,
+               std::ptrdiff_t src2dst_offset) {
     // Possible future optimization:  Take advantage of src2dst_offset
     // Currently clang always sets src2dst_offset to -1 (no hint).
 
@@ -613,7 +633,7 @@ __dynamic_cast(const void* static_ptr,
     //    be returned.
     const void* dst_ptr = 0;
     // Initialize info struct for this search.
-    __dynamic_cast_info info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
+    __dynamic_cast_info info = {dst_type, static_ptr, static_type, src2dst_offset, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
 
     // Find out if we can use a giant short cut in the search
     if (is_equal(dynamic_type, dst_type, false))
@@ -653,8 +673,8 @@ __dynamic_cast(const void* static_ptr,
             info.path_dynamic_ptr_to_static_ptr == unknown)
         {
             syslog(LOG_ERR, "dynamic_cast error 2: One or more of the following type_info's "
-                            " has hidden visibility.  They should all have public visibility.  "
-                            " %s, %s, %s.\n", static_type->name(), dynamic_type->name(),
+                            "has hidden visibility.  They should all have public visibility.  "
+                            "%s, %s, %s.\n", static_type->name(), dynamic_type->name(),
                     dst_type->name());
             // Redo the search comparing type_info's using strcmp
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
@@ -688,9 +708,6 @@ __dynamic_cast(const void* static_ptr,
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-
-#pragma GCC visibility pop
-#pragma GCC visibility push(hidden)
 
 // Call this function when you hit a static_type which is a base (above) a dst_type.
 // Let caller know you hit a static_type.  But only start recording details if
@@ -1273,7 +1290,5 @@ __base_class_type_info::search_below_dst(__dynamic_cast_info* info,
                                       not_public_path,
                                   use_strcmp);
 }
-
-#pragma GCC visibility pop
 
 }  // __cxxabiv1
