@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1073 2018/07/22 09:09:18 sf Exp $ */
+/*	$OpenBSD: pf.c,v 1.1074 2018/09/11 07:53:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1250,11 +1250,17 @@ pf_purge(void *xnloops)
 	KERNEL_LOCK();
 	NET_LOCK();
 
-	PF_LOCK();
-	/* process a fraction of the state table every second */
+	/*
+	 * process a fraction of the state table every second
+	 * Note:
+	 * 	we no longer need PF_LOCK() here, because
+	 * 	pf_purge_expired_states() uses pf_state_lock to maintain
+	 * 	consistency.
+	 */
 	pf_purge_expired_states(1 + (pf_status.states
 	    / pf_default_rule.timeout[PFTM_INTERVAL]));
 
+	PF_LOCK();
 	/* purge other expired types every PFTM_INTERVAL seconds */
 	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
 		pf_purge_expired_src_nodes();
@@ -1430,7 +1436,7 @@ pf_free_state(struct pf_state *cur)
 	TAILQ_REMOVE(&state_list, cur, entry_list);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
-	pool_put(&pf_state_pl, cur);
+	pf_state_unref(cur);
 	pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 	pf_status.states--;
 }
@@ -1440,13 +1446,16 @@ pf_purge_expired_states(u_int32_t maxcheck)
 {
 	static struct pf_state	*cur = NULL;
 	struct pf_state		*next;
+	SLIST_HEAD(pf_state_gcl, pf_state) gcl;
 
-	PF_ASSERT_LOCKED();
+	PF_ASSERT_UNLOCKED();
+	SLIST_INIT(&gcl);
 
+	PF_STATE_ENTER_READ();
 	while (maxcheck--) {
 		/* wrap to start of list when we hit the end */
 		if (cur == NULL) {
-			cur = TAILQ_FIRST(&state_list);
+			cur = pf_state_ref(TAILQ_FIRST(&state_list));
 			if (cur == NULL)
 				break;	/* list empty */
 		}
@@ -1454,16 +1463,31 @@ pf_purge_expired_states(u_int32_t maxcheck)
 		/* get next state, as cur may get deleted */
 		next = TAILQ_NEXT(cur, entry_list);
 
-		if (cur->timeout == PFTM_UNLINKED) {
-			/* free removed state */
-			pf_free_state(cur);
-		} else if (pf_state_expires(cur) <= time_uptime) {
-			/* remove and free expired state */
-			pf_remove_state(cur);
-			pf_free_state(cur);
-		}
-		cur = next;
+		if ((cur->timeout == PFTM_UNLINKED) ||
+		    (pf_state_expires(cur) <= time_uptime))
+			SLIST_INSERT_HEAD(&gcl, cur, gc_list);
+		else
+			pf_state_unref(cur);
+
+		cur = pf_state_ref(next);
 	}
+	PF_STATE_EXIT_READ();
+
+	PF_LOCK();
+	PF_STATE_ENTER_WRITE();
+	while ((next = SLIST_FIRST(&gcl)) != NULL) {
+		SLIST_REMOVE_HEAD(&gcl, gc_list);
+		if (next->timeout == PFTM_UNLINKED)
+			pf_free_state(next);
+		else if (pf_state_expires(next) <= time_uptime) {
+			pf_remove_state(next);
+			pf_free_state(next);
+		}
+
+		pf_state_unref(next);
+	}
+	PF_STATE_EXIT_WRITE();
+	PF_UNLOCK();
 }
 
 int
@@ -3973,6 +3997,11 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	s->set_prio[1] = act->set_prio[1];
 	s->delay = act->delay;
 	SLIST_INIT(&s->src_nodes);
+	/*
+	 * must initialize refcnt, before pf_state_insert() gets called.
+	 * pf_state_inserts() grabs reference for pfsync!
+	 */
+	refcnt_init(&s->refcnt);
 
 	switch (pd->proto) {
 	case IPPROTO_TCP:
@@ -4774,7 +4803,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 					addlog("\n");
 				}
 				/* XXX make sure it's the same direction ?? */
-				pf_remove_state(*state);
+				(*state)->timeout = PFTM_PURGE;
 				*state = NULL;
 				pd->m->m_pkthdr.pf.inp = inp;
 				return (PF_DROP);
@@ -6770,6 +6799,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	struct pf_pdesc		 pd;
 	int			 dir = (fwdir == PF_FWD) ? PF_OUT : fwdir;
 	u_int32_t		 qid, pqid = 0;
+	int			 have_pf_lock = 0;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -6859,9 +6889,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		pd.lookup.pid = NO_PID;
 	}
 
-	/* lock the lookup/write section of pf_test() */
-	PF_LOCK();
-
 	switch (pd.virtual_proto) {
 
 	case PF_VPROTO_FRAGMENT: {
@@ -6869,7 +6896,10 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		 * handle fragments that aren't reassembled by
 		 * normalization
 		 */
+		PF_LOCK();
+		have_pf_lock = 1;
 		action = pf_test_rule(&pd, &r, &s, &a, &ruleset, &reason);
+		s = pf_state_ref(s);
 		if (action != PF_PASS)
 			REASON_SET(&reason, PFRES_FRAG);
 		break;
@@ -6883,19 +6913,26 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			    "dropping IPv6 packet with ICMPv4 payload");
 			break;
 		}
+		PF_STATE_ENTER_READ();
 		action = pf_test_state_icmp(&pd, &s, &reason);
+		s = pf_state_ref(s);
+		PF_STATE_EXIT_READ();
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s);
+			pfsync_update_state(s, &have_pf_lock);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 #if NPFLOG > 0
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
-		} else if (s == NULL)
+		} else if (s == NULL) {
+			PF_LOCK();
+			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
 			    &reason);
+			s = pf_state_ref(s);
+		}
 		break;
 	}
 
@@ -6908,19 +6945,26 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			    "dropping IPv4 packet with ICMPv6 payload");
 			break;
 		}
+		PF_STATE_ENTER_READ();
 		action = pf_test_state_icmp(&pd, &s, &reason);
+		s = pf_state_ref(s);
+		PF_STATE_EXIT_READ();
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s);
+			pfsync_update_state(s, &have_pf_lock);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 #if NPFLOG > 0
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
-		} else if (s == NULL)
+		} else if (s == NULL) {
+			PF_LOCK();
+			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
 			    &reason);
+			s = pf_state_ref(s);
+		}
 		break;
 	}
 #endif /* INET6 */
@@ -6930,6 +6974,8 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			if (pd.dir == PF_IN && (pd.hdr.tcp.th_flags &
 			    (TH_SYN|TH_ACK)) == TH_SYN &&
 			    pf_synflood_check(&pd)) {
+				PF_LOCK();
+				have_pf_lock = 1;
 				pf_syncookie_send(&pd);
 				action = PF_DROP;
 				break;
@@ -6940,7 +6986,10 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			if (action == PF_DROP)
 				break;
 		}
+		PF_STATE_ENTER_READ();
 		action = pf_test_state(&pd, &s, &reason, 0);
+		s = pf_state_ref(s);
+		PF_STATE_EXIT_READ();
 		if (s == NULL && action != PF_PASS && action != PF_AFRT &&
 		    pd.dir == PF_IN && pd.virtual_proto == IPPROTO_TCP &&
 		    (pd.hdr.tcp.th_flags & (TH_SYN|TH_ACK|TH_RST)) == TH_ACK &&
@@ -6948,25 +6997,27 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			struct mbuf	*msyn;
 			msyn = pf_syncookie_recreate_syn(&pd);
 			if (msyn) {
-				PF_UNLOCK();
 				action = pf_test(af, fwdir, ifp, &msyn);
-				PF_LOCK();
 				m_freem(msyn);
 				if (action == PF_PASS || action == PF_AFRT) {
+					PF_STATE_ENTER_READ();
 					pf_test_state(&pd, &s, &reason, 1);
-					if (s == NULL) {
-						PF_UNLOCK();
+					s = pf_state_ref(s);
+					PF_STATE_EXIT_READ();
+					if (s == NULL)
 						return (PF_DROP);
-					}
 					s->src.seqhi =
 					    ntohl(pd.hdr.tcp.th_ack) - 1;
 					s->src.seqlo =
 					    ntohl(pd.hdr.tcp.th_seq) - 1;
 					pf_set_protostate(s, PF_PEER_SRC,
 					    PF_TCPS_PROXY_DST);
+					PF_LOCK();
+					have_pf_lock = 1;
 					action = pf_synproxy(&pd, &s, &reason);
 					if (action != PF_PASS) {
 						PF_UNLOCK();
+						pf_state_unref(s);
 						return (action);
 					}
 				}
@@ -6974,19 +7025,22 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 				action = PF_DROP;
 		}
 
-
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s);
+			pfsync_update_state(s, &have_pf_lock);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 #if NPFLOG > 0
 			pd.pflog |= s->log;
 #endif	/* NPFLOG > 0 */
-		} else if (s == NULL)
+		} else if (s == NULL) {
+			PF_LOCK();
+			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &s, &a, &ruleset,
 			    &reason);
+			s = pf_state_ref(s);
+		}
 
 		if (pd.virtual_proto == IPPROTO_TCP) {
 			if (s) {
@@ -6999,12 +7053,13 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		break;
 	}
 
-	PF_UNLOCK();
+	if (have_pf_lock != 0)
+		PF_UNLOCK();
 
 	/*
 	 * At the moment, we rely on NET_LOCK() to prevent removal of items
-	 * we've collected above ('s', 'r', 'anchor' and 'ruleset').  They'll
-	 * have to be refcounted when NET_LOCK() is gone.
+	 * we've collected above ('r', 'anchor' and 'ruleset').  They'll have
+	 * to be refcounted when NET_LOCK() is gone.
 	 */
 
 done:
@@ -7200,6 +7255,8 @@ done:
 	}
 
 	*m0 = pd.m;
+
+	pf_state_unref(s);
 
 	return (action);
 }
@@ -7398,6 +7455,33 @@ pf_state_key_unlink_reverse(struct pf_state_key *sk)
 		skrev->reverse = NULL;
 		pf_state_key_unref(skrev);
 		pf_state_key_unref(sk);
+	}
+}
+
+struct pf_state *
+pf_state_ref(struct pf_state *s)
+{
+	if (s != NULL)
+		PF_REF_TAKE(s->refcnt);
+	return (s);
+}
+
+void
+pf_state_unref(struct pf_state *s)
+{
+	if ((s != NULL) && PF_REF_RELE(s->refcnt)) {
+		/* never inserted or removed */
+#if NPFSYNC > 0
+		KASSERT((TAILQ_NEXT(s, sync_list) == NULL) ||
+		    ((TAILQ_NEXT(s, sync_list) == _Q_INVALID) &&
+		    (s->sync_state == PFSYNC_S_NONE)));
+#endif	/* NPFSYNC */
+		KASSERT((TAILQ_NEXT(s, entry_list) == NULL) ||
+		    (TAILQ_NEXT(s, entry_list) == _Q_INVALID));
+		KASSERT((s->key[PF_SK_WIRE] == NULL) &&
+		    (s->key[PF_SK_STACK] == NULL));
+
+		pool_put(&pf_state_pl, s);
 	}
 }
 

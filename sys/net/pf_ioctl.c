@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.336 2018/07/22 09:09:18 sf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.337 2018/09/11 07:53:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -132,7 +132,21 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
 
 #ifdef WITH_PF_LOCK
+/*
+ * pf_lock protects consistency of PF data structures, which don't have
+ * their dedicated lock yet. The pf_lock currently protects:
+ *	- rules,
+ *	- radix tables,
+ *	- source nodes
+ * All callers must grab pf_lock exclusively.
+ *
+ * pf_state_lock protects consistency of state table. Packets, which do state
+ * look up grab the lock as readers. If packet must create state, then it must
+ * grab the lock as writer. Whenever packet creates state it grabs pf_lock
+ * first then it locks pf_state_lock as the writer.
+ */
 struct rwlock		 pf_lock = RWLOCK_INITIALIZER("pf_lock");
+struct rwlock		 pf_state_lock = RWLOCK_INITIALIZER("pf_state_lock");
 #endif /* WITH_PF_LOCK */
 
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
@@ -1501,6 +1515,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int			 killed = 0;
 
 		PF_LOCK();
+		PF_STATE_ENTER_WRITE();
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s; s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
 
@@ -1514,6 +1529,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				killed++;
 			}
 		}
+		PF_STATE_EXIT_WRITE();
 		psk->psk_killed = killed;
 #if NPFSYNC > 0
 		pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
@@ -1537,10 +1553,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (psk->psk_pfcmp.creatorid == 0)
 				psk->psk_pfcmp.creatorid = pf_status.hostid;
 			PF_LOCK();
+			PF_STATE_ENTER_WRITE();
 			if ((s = pf_find_state_byid(&psk->psk_pfcmp))) {
 				pf_remove_state(s);
 				psk->psk_killed = 1;
 			}
+			PF_STATE_EXIT_WRITE();
 			PF_UNLOCK();
 			break;
 		}
@@ -1554,6 +1572,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			key.rdomain = psk->psk_rdomain;
 
 			PF_LOCK();
+			PF_STATE_ENTER_WRITE();
 			for (i = 0; i < nitems(dirs); i++) {
 				if (dirs[i] == PF_IN) {
 					sidx = 0;
@@ -1594,11 +1613,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if (killed)
 				psk->psk_killed = killed;
+			PF_STATE_EXIT_WRITE();
 			PF_UNLOCK();
 			break;
 		}
 
 		PF_LOCK();
+		PF_STATE_ENTER_WRITE();
 		for (s = RB_MIN(pf_state_tree_id, &tree_id); s;
 		    s = nexts) {
 			nexts = RB_NEXT(pf_state_tree_id, &tree_id, s);
@@ -1644,6 +1665,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 		psk->psk_killed = killed;
+		PF_STATE_EXIT_WRITE();
 		PF_UNLOCK();
 		break;
 	}
@@ -1658,7 +1680,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		PF_LOCK();
+		PF_STATE_ENTER_WRITE();
 		error = pfsync_state_import(sp, PFSYNC_SI_IOCTL);
+		PF_STATE_EXIT_WRITE();
 		PF_UNLOCK();
 		break;
 	}
@@ -1673,16 +1697,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		id_key.id = ps->state.id;
 		id_key.creatorid = ps->state.creatorid;
 
-		PF_LOCK();
+		PF_STATE_ENTER_READ();
 		s = pf_find_state_byid(&id_key);
+		s = pf_state_ref(s);
+		PF_STATE_EXIT_READ();
 		if (s == NULL) {
 			error = ENOENT;
-			PF_UNLOCK();
 			break;
 		}
 
 		pf_state_export(&ps->state, s);
-		PF_UNLOCK();
+		pf_state_unref(s);
 		break;
 	}
 
@@ -1702,7 +1727,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		p = ps->ps_states;
 
-		PF_LOCK();
+		PF_STATE_ENTER_READ();
 		state = TAILQ_FIRST(&state_list);
 		while (state) {
 			if (state->timeout != PFTM_UNLINKED) {
@@ -1712,7 +1737,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
 					free(pstore, M_TEMP, sizeof(*pstore));
-					PF_UNLOCK();
+					PF_STATE_EXIT_READ();
 					goto fail;
 				}
 				p++;
@@ -1720,7 +1745,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			state = TAILQ_NEXT(state, entry_list);
 		}
-		PF_UNLOCK();
+		PF_STATE_EXIT_READ();
 
 		ps->ps_len = sizeof(struct pfsync_state) * nr;
 
@@ -1801,8 +1826,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_ACPY(&key.addr[didx], &pnl->daddr, pnl->af);
 			key.port[didx] = pnl->dport;
 
-			PF_LOCK();
+			PF_STATE_ENTER_READ();
 			state = pf_find_state_all(&key, direction, &m);
+			state = pf_state_ref(state);
+			PF_STATE_EXIT_READ();
 
 			if (m > 1)
 				error = E2BIG;	/* more than one state */
@@ -1815,7 +1842,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pnl->rrdomain = sk->rdomain;
 			} else
 				error = ENOENT;
-			PF_UNLOCK();
+			pf_state_unref(state);
 		}
 		break;
 	}
@@ -2576,8 +2603,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*state;
 
 		PF_LOCK();
+		PF_STATE_ENTER_WRITE();
 		RB_FOREACH(state, pf_state_tree_id, &tree_id)
 			pf_src_tree_remove_state(state);
+		PF_STATE_EXIT_WRITE();
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 			n->expire = 1;
 		pf_purge_expired_src_nodes();
@@ -2603,10 +2632,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				&psnk->psnk_dst.addr.v.a.mask,
 				&sn->raddr, sn->af)) {
 				/* Handle state to src_node linkage */
-				if (sn->states != 0)
+				if (sn->states != 0) {
+					PF_ASSERT_LOCKED();
+					PF_STATE_ENTER_WRITE();
 					RB_FOREACH(s, pf_state_tree_id,
 					   &tree_id)
 						pf_state_rm_src_node(s, sn);
+					PF_STATE_EXIT_WRITE();
+				}
 				sn->expire = 1;
 				killed++;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.258 2018/08/24 12:29:33 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.259 2018/09/11 07:53:38 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -113,6 +113,8 @@ int	pfsync_in_upd(caddr_t, int, int, int);
 int	pfsync_in_eof(caddr_t, int, int, int);
 
 int	pfsync_in_error(caddr_t, int, int, int);
+
+void	pfsync_update_state_locked(struct pf_state *);
 
 struct {
 	int	(*in)(caddr_t, int, int, int);
@@ -602,6 +604,8 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->pfsync_time = time_uptime;
 	st->sync_state = PFSYNC_S_NONE;
 
+	refcnt_init(&st->refcnt);
+
 	/* XXX when we have anchors, use STATE_INC_COUNTERS */
 	r->states_cur++;
 	r->states_tot++;
@@ -609,6 +613,10 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	if (!ISSET(flags, PFSYNC_SI_IOCTL))
 		SET(st->state_flags, PFSTATE_NOSYNC);
 
+	/*
+	 * We just set PFSTATE_NOSYNC bit, which prevents
+	 * pfsync_insert_state() to insert state to pfsync.
+	 */
 	if (pf_state_insert(kif, &skw, &sks, st) != 0) {
 		/* XXX when we have anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
@@ -941,7 +949,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (sync) {
 			pfsyncstat_inc(pfsyncs_stale);
 
-			pfsync_update_state(st);
+			pfsync_update_state_locked(st);
 			schednetisr(NETISR_PFSYNC);
 		}
 	}
@@ -1015,7 +1023,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 		if (sync) {
 			pfsyncstat_inc(pfsyncs_stale);
 
-			pfsync_update_state(st);
+			pfsync_update_state_locked(st);
 			schednetisr(NETISR_PFSYNC);
 		}
 	}
@@ -1470,6 +1478,7 @@ pfsync_drop(struct pfsync_softc *sc)
 			KASSERT(st->sync_state == q);
 #endif
 			st->sync_state = PFSYNC_S_NONE;
+			pf_state_unref(st);
 		}
 	}
 
@@ -1618,13 +1627,14 @@ pfsync_sendout(void)
 		count = 0;
 		while ((st = TAILQ_FIRST(&sc->sc_qs[q])) != NULL) {
 			TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
+			st->sync_state = PFSYNC_S_NONE;
 #ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
 #endif
 			pfsync_qs[q].write(st, m->m_data + offset);
 			offset += pfsync_qs[q].len;
 
-			st->sync_state = PFSYNC_S_NONE;
+			pf_state_unref(st);
 			count++;
 		}
 
@@ -1720,7 +1730,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	SET(st->state_flags, PFSTATE_ACK);
 
-	pd->pd_st = st;
+	pd->pd_st = pf_state_ref(st);
 	pd->pd_m = m;
 
 	sc->sc_deferred++;
@@ -1768,6 +1778,8 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 				    pd->pd_st->rule.ptr, pd->pd_st);
 				break;
 #endif /* INET6 */
+			default:
+				unhandled_af(pd->pd_st->key[PF_SK_WIRE]->af);
 			}
 			pd->pd_m = pdesc.m;
 		} else {
@@ -1782,10 +1794,13 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 				    NULL, NULL);
 				break;
 #endif /* INET6 */
+			default:
+				unhandled_af(pd->pd_st->key[PF_SK_WIRE]->af);
 			}
 		}
 	}
  out:
+	pf_state_unref(pd->pd_st);
 	pool_put(&sc->sc_pool, pd);
 }
 
@@ -1817,12 +1832,13 @@ pfsync_deferred(struct pf_state *st, int drop)
 }
 
 void
-pfsync_update_state(struct pf_state *st)
+pfsync_update_state_locked(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	int sync = 0;
 
 	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
@@ -1865,6 +1881,22 @@ pfsync_update_state(struct pf_state *st)
 
 	if (sync || (time_uptime - st->pfsync_time) < 2)
 		schednetisr(NETISR_PFSYNC);
+}
+
+void
+pfsync_update_state(struct pf_state *st, int *have_pf_lock)
+{
+	struct pfsync_softc *sc = pfsyncif;
+
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
+		return;
+
+	if (*have_pf_lock == 0) {
+		PF_LOCK();
+		*have_pf_lock = 1;
+	}
+
+	pfsync_update_state_locked(st);
 }
 
 void
@@ -2017,9 +2049,22 @@ pfsync_delete_state(struct pf_state *st)
 	case PFSYNC_S_UPD:
 	case PFSYNC_S_IACK:
 		pfsync_q_del(st);
-		/* FALLTHROUGH to putting it on the del list */
+		/*
+		 * FALLTHROUGH to putting it on the del list
+		 * Note on refence count bookeeping:
+		 *	pfsync_q_del() drops reference for queue
+		 *	ownership. But the st entry survives, because
+		 *	our caller still holds a reference.
+		 */
 
 	case PFSYNC_S_NONE:
+		/*
+		 * We either fall through here, or there is no reference to
+		 * st owned by pfsync queues at this point.
+		 *
+		 * Calling pfsync_q_ins() puts st to del queue. The pfsync_q_ins()
+		 * grabs a reference for delete queue.
+		 */
 		pfsync_q_ins(st, PFSYNC_S_DEL);
 		return;
 
@@ -2077,6 +2122,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 	}
 
 	sc->sc_len += nlen;
+	pf_state_ref(st);
 	TAILQ_INSERT_TAIL(&sc->sc_qs[q], st, sync_list);
 	st->sync_state = q;
 }
@@ -2092,6 +2138,7 @@ pfsync_q_del(struct pf_state *st)
 	sc->sc_len -= pfsync_qs[q].len;
 	TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
 	st->sync_state = PFSYNC_S_NONE;
+	pf_state_unref(st);
 
 	if (TAILQ_EMPTY(&sc->sc_qs[q]))
 		sc->sc_len -= sizeof(struct pfsync_subheader);
