@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.126 2018/08/21 18:06:12 anton Exp $
+#	$OpenBSD: Makefile.i386,v 1.127 2018/09/12 04:34:59 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,6 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
-		-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=
@@ -36,11 +35,12 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-.else
+.elif ${COMPILER_VERSION:Mclang}
 CMACHFLAGS+=	-mretpoline
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g

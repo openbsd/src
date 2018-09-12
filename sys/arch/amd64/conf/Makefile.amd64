@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.103 2018/09/11 15:52:00 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.104 2018/09/12 04:34:59 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,6 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
-		-Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-mcmodel=kernel -mno-red-zone -mno-sse2 -mno-sse -mno-3dnow \
@@ -45,7 +44,7 @@ CMACHFLAGS+=	-mretpoline
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
-CWARNFLAGS+=	-Wno-constant-conversion
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g

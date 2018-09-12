@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.40 2018/02/10 06:52:47 patrick Exp $
+#	$OpenBSD: Makefile.armv7,v 1.41 2018/09/12 04:34:59 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -25,7 +25,6 @@ INCLUDES=	-nostdinc -I$S -I. -I$S/arch
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
-		-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-msoft-float
@@ -44,6 +43,7 @@ SORTR=		cat
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g
