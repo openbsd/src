@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2018/09/12 06:09:39 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.120 2018/09/12 07:00:51 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -189,9 +189,9 @@
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	call uvm_pagealloc()
- * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages, let pmap_enter()
+ *	call uvm_pagealloc()
+ *		=> success: zero page, add to pm_pdir
+ *		=> failure: we are out of free vm_pages, let pmap_enter()
  *		   tell UVM about it.
  *
  * note: for kernel PTPs, we start with NKPTP of them.   as we map
@@ -384,10 +384,10 @@ pmap_map_ptes(struct pmap *pmap)
 		return 0;
 
 	/*
-	* Lock the target map before switching to its page tables to
-	* guarantee other CPUs have finished changing the tables before
-	* we potentially start caching table and TLB entries.
-	*/
+	 * Lock the target map before switching to its page tables to
+	 * guarantee other CPUs have finished changing the tables before
+	 * we potentially start caching table and TLB entries.
+	 */
 	mtx_enter(&pmap->pm_mtx);
 
 	cr3 = rcr3();
@@ -1142,7 +1142,7 @@ pmap_destroy(struct pmap *pmap)
 
 			pg->wire_count = 0;
 			pmap->pm_stats.resident_count--;
-			
+
 			uvm_pagefree(pg);
 		}
 	}
@@ -1151,7 +1151,7 @@ pmap_destroy(struct pmap *pmap)
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 
 	if (pmap->pm_pdir_intel) {
-		pmap->pm_stats.resident_count--;	
+		pmap->pm_stats.resident_count--;
 		pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
 	}
 
@@ -1998,7 +1998,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (!pmap->pm_pdir_intel)
 		pmap->pm_pdir_intel = pool_get(&pmap_pdp_pool,
 		    PR_WAITOK | PR_ZERO);
-	
+
 	l4idx = (va & L4_MASK) >> L4_SHIFT; /* PML4E idx */
 	l3idx = (va & L3_MASK) >> L3_SHIFT; /* PDPTE idx */
 	l2idx = (va & L2_MASK) >> L2_SHIFT; /* PDE idx */
@@ -2095,7 +2095,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/*
 	 * Look up the corresponding U+K entry.  If we're installing the
-	 * same PA into the U-K map then set the PG_G bit on both 
+	 * same PA into the U-K map then set the PG_G bit on both
 	 */
 	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
 	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
@@ -2356,7 +2356,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	} else {
 		/* XXX flush ept */
 	}
-	
+
 	pd[l1idx] = npte;
 
 	return 0;
@@ -2820,7 +2820,7 @@ pmap_convert(struct pmap *pmap, int mode)
 		}
 	}
 
-	return (0);	
+	return (0);
 }
 
 #ifdef MULTIPROCESSOR

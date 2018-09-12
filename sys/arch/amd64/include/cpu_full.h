@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_full.h,v 1.3 2018/03/29 01:21:02 guenther Exp $	*/
+/*	$OpenBSD: cpu_full.h,v 1.4 2018/09/12 07:00:51 guenther Exp $	*/
 /*
  * Copyright (c) Philip Guenther <guenther@openbsd.org>
  *
@@ -52,9 +52,9 @@ struct cpu_info_full {
 } __aligned(PAGE_SIZE);
 
 /* tss, align shim, and gdt must fit in a page */
-CTASSERT(_ALIGN(sizeof(struct x86_64_tss)) + 
+CTASSERT(_ALIGN(sizeof(struct x86_64_tss)) +
 	 sizeof(struct mem_segment_descriptor) * (NGDT_MEM + 2*NGDT_SYS)
-	 < PAGE_SIZE); 
+	 < PAGE_SIZE);
 
 /* verify expected alignment */
 CTASSERT(offsetof(struct cpu_info_full, cif_cpu.ci_PAGEALIGN) % PAGE_SIZE == 0);
