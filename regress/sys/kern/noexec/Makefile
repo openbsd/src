@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2018/05/23 19:23:45 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.18 2018/09/12 11:59:40 kettenis Exp $
 
 PROG=		noexec
 SRCS=		noexec.c testfly.S
@@ -64,6 +64,7 @@ nxmmap-mprotect: ${PROG}
 
 .if ${MACHINE} != "alpha" && \
     ${MACHINE} != "amd64" && \
+    ${MACHINE} != "arm64" && \
     ${MACHINE} != "armv7" && \
     ${MACHINE} != "hppa" && \
     ${MACHINE} != "i386" && \
