@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_meth.c,v 1.1 2018/03/17 15:12:56 tb Exp $	*/
+/*	$OpenBSD: rsa_meth.c,v 1.2 2018/09/12 06:35:38 djm Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -60,6 +60,24 @@ RSA_meth_dup(const RSA_METHOD *meth)
 	}
 
 	return copy;
+}
+
+int
+RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
+{
+	char *copy;
+
+	if ((copy = strdup(name)) == NULL)
+		return 0;
+	free((char *)meth->name);
+	meth->name = copy;
+	return 1;
+}
+
+int
+(*RSA_meth_get_finish(const RSA_METHOD *meth))(RSA *rsa)
+{
+	return meth->finish;
 }
 
 int

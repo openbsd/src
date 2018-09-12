@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.38 2018/03/17 15:12:56 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.39 2018/09/12 06:35:38 djm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -433,10 +433,12 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 RSA_METHOD *RSA_meth_new(const char *name, int flags);
 void RSA_meth_free(RSA_METHOD *meth);
 RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
+int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
 int RSA_meth_set_priv_enc(RSA_METHOD *meth, int (*priv_enc)(int flen,
     const unsigned char *from, unsigned char *to, RSA *rsa, int padding));
 int RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(int flen,
     const unsigned char *from, unsigned char *to, RSA *rsa, int padding));
+int (*RSA_meth_get_finish(const RSA_METHOD *meth))(RSA *rsa);
 int RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa));
 
 /* BEGIN ERROR CODES */

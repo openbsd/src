@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.68 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.69 2018/09/12 06:35:38 djm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,6 +496,10 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx,
+    unsigned char *iv, size_t len);
+int EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx,
+    const unsigned char *iv, size_t len);
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void * EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);

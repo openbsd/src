@@ -1262,6 +1262,7 @@ EVP_CIPHER_CTX_encrypting
 EVP_CIPHER_CTX_flags
 EVP_CIPHER_CTX_free
 EVP_CIPHER_CTX_get_app_data
+EVP_CIPHER_CTX_get_iv
 EVP_CIPHER_CTX_init
 EVP_CIPHER_CTX_iv_length
 EVP_CIPHER_CTX_key_length
@@ -1271,6 +1272,7 @@ EVP_CIPHER_CTX_rand_key
 EVP_CIPHER_CTX_reset
 EVP_CIPHER_CTX_set_app_data
 EVP_CIPHER_CTX_set_flags
+EVP_CIPHER_CTX_set_iv
 EVP_CIPHER_CTX_set_key_length
 EVP_CIPHER_CTX_set_padding
 EVP_CIPHER_CTX_test_flags
@@ -2274,7 +2276,9 @@ RSA_get_ex_new_index
 RSA_get_method
 RSA_meth_dup
 RSA_meth_free
+RSA_meth_get_finish
 RSA_meth_new
+RSA_meth_set1_name
 RSA_meth_set_finish
 RSA_meth_set_priv_dec
 RSA_meth_set_priv_enc
