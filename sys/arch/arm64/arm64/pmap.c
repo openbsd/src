@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.57 2018/08/18 15:42:19 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.58 2018/09/12 11:58:28 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1424,6 +1424,10 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pted->pted_va &= ~PROT_WRITE;
 	pted->pted_pte &= ~PROT_WRITE;
+	if ((prot & PROT_EXEC) == 0) {
+		pted->pted_va &= ~PROT_EXEC;
+		pted->pted_pte &= ~PROT_EXEC;
+	}
 	pmap_pte_update(pted, pl3);
 
 	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
@@ -1496,7 +1500,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (prot & (PROT_READ | PROT_EXEC)) {
 		pmap_lock(pm);
 		while (sva < eva) {
-			pmap_page_ro(pm, sva, 0);
+			pmap_page_ro(pm, sva, prot);
 			sva += PAGE_SIZE;
 		}
 		pmap_unlock(pm);
