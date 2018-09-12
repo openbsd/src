@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.24 2018/09/12 06:35:38 djm Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.25 2018/09/12 15:09:22 jmc Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
@@ -668,7 +668,7 @@ is the maximum IV length for all ciphers.
 .Fn EVP_CIPHER_CTX_get_iv
 and
 .Fn EVP_CIPHER_CTX_set_iv
-will respectively retrieve and set the IV for a
+will respectively retrieve and set the IV for an
 .Vt EVP_CIPHER_CTX .
 In both cases, the specified IV length must exactly equal the expected
 IV length for the context as returned by
