@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.108 2018/09/09 22:09:36 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.109 2018/09/12 06:12:59 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -445,9 +445,15 @@ restore_saved:
 	/* Stack pivot done, setup RETGUARD */
 	RETGUARD_SETUP_OFF(cpu_switchto, r11, 6*8)
 
-	movq	PCB_CR3(%r13),%rax
+	/* don't switch cr3 to the same thing it already was */
+	movq	%cr3,%rax
+	cmpq	PCB_CR3(%r13),%rax
+	movq	PCB_CR3(%r13),%rax	/* flags from cmpq unchanged */
+	jz	.Lsame_cr3
+
 	movq	%rax,%cr3			/* %rax used below too */
 
+.Lsame_cr3:
 	/*
 	 * If we switched from a userland thread with a shallow call stack
 	 * (e.g interrupt->ast->mi_ast->prempt->mi_switch->cpu_switchto)
