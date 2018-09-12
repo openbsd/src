@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.118 2018/09/09 22:46:54 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.119 2018/09/12 06:09:39 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -375,27 +375,27 @@ pmap_sync_flags_pte(struct vm_page *pg, u_long pte)
 paddr_t
 pmap_map_ptes(struct pmap *pmap)
 {
-	paddr_t cr3 = rcr3();
+	paddr_t cr3;
 
 	KASSERT(pmap->pm_type != PMAP_TYPE_EPT);
 
 	/* the kernel's pmap is always accessible */
-	if (pmap == pmap_kernel() || pmap->pm_pdirpa == cr3) {
-		cr3 = 0;
-	} else {
-		/*
-		 * Not sure if we need this, but better be safe.
-		 * We don't have the current pmap in order to unset its
-		 * active bit, but this just means that we may receive
-		 * an unneccessary cross-CPU TLB flush now and then.
-		 */
-		x86_atomic_setbits_u64(&pmap->pm_cpus, (1ULL << cpu_number()));
+	if (pmap == pmap_kernel())
+		return 0;
 
+	/*
+	* Lock the target map before switching to its page tables to
+	* guarantee other CPUs have finished changing the tables before
+	* we potentially start caching table and TLB entries.
+	*/
+	mtx_enter(&pmap->pm_mtx);
+
+	cr3 = rcr3();
+	if (pmap->pm_pdirpa == cr3)
+		cr3 = 0;
+	else {
 		lcr3(pmap->pm_pdirpa);
 	}
-
-	if (pmap != pmap_kernel())
-		mtx_enter(&pmap->pm_mtx);
 
 	return cr3;
 }
@@ -406,10 +406,8 @@ pmap_unmap_ptes(struct pmap *pmap, paddr_t save_cr3)
 	if (pmap != pmap_kernel())
 		mtx_leave(&pmap->pm_mtx);
 
-	if (save_cr3 != 0) {
-		x86_atomic_clearbits_u64(&pmap->pm_cpus, (1ULL << cpu_number()));
+	if (save_cr3 != 0)
 		lcr3(save_cr3);
-	}
 }
 
 int
@@ -2864,10 +2862,12 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 	CPU_INFO_ITERATOR cii;
 	long wait = 0;
 	u_int64_t mask = 0;
+	int is_kva = va >= VM_MIN_KERNEL_ADDRESS;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
-		    !(ci->ci_flags & CPUF_RUNNING))
+		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
+			continue;
+		if (!is_kva && !pmap_is_active(pm, ci->ci_cpuid))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
@@ -2913,11 +2913,13 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 	CPU_INFO_ITERATOR cii;
 	long wait = 0;
 	u_int64_t mask = 0;
+	int is_kva = sva >= VM_MIN_KERNEL_ADDRESS;
 	vaddr_t va;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
-		    !(ci->ci_flags & CPUF_RUNNING))
+		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
+			continue;
+		if (!is_kva && !pmap_is_active(pm, ci->ci_cpuid))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
@@ -2965,6 +2967,8 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 	CPU_INFO_ITERATOR cii;
 	long wait = 0;
 	u_int64_t mask = 0;
+
+	KASSERT(pm != pmap_kernel());
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
