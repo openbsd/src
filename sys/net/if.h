@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.194 2018/05/30 22:20:41 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.195 2018/09/12 09:20:34 krw Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ struct if_announcemsghdr {
 	u_short	ifan_msglen;	/* to skip over non-understood messages */
 	u_char	ifan_version;	/* future binary compatibility */
 	u_char	ifan_type;	/* message type */
-	u_short ifan_hdrlen;	/* sizeof(ifa_msghdr) to skip over the header */
+	u_short ifan_hdrlen;	/* sizeof(if_announcemsghdr) to skip header */
 	u_short	ifan_index;	/* index for associated ifp */
 	u_short	ifan_what;	/* what type of announcement */
 	char	ifan_name[IFNAMSIZ];	/* if name, e.g. "en0" */
