@@ -1317,8 +1317,21 @@ void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe)
 	int ret;
 	u32 last;
 
-	if (WARN_ON(pipe >= dev->num_crtcs) || cold)
+	if (WARN_ON(pipe >= dev->num_crtcs))
 		return;
+
+#ifdef __OpenBSD__
+	/*
+	 * If we're cold, vblank interrupts won't happen even if
+	 * they're turned on by the driver.  Just stall long enough
+	 * for a vblank to pass.  This assumes a vrefresh of at least
+	 * 25 Hz.
+	 */
+	if (cold) {
+		delay(40000);
+		return;
+	}
+#endif
 
 	ret = drm_vblank_get(dev, pipe);
 	if (WARN(ret, "vblank not available on crtc %i, ret=%i\n", pipe, ret))
