@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.118 2018/09/13 11:16:21 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.119 2018/09/13 11:25:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,8 +84,8 @@ print_prefix(struct filter_prefix *p)
 		printf(" prefixlen %u >< %u ", p->len_min, p->len_max);
 		break;
 	case OP_RANGE:
-		if (p->len == p->len_min && p->len == p->len_max)
-			printf(" prefixlen = %u", p->len);
+		if (p->len_min == p->len_max)
+			printf(" prefixlen = %u", p->len_min);
 		else if (p->len == p->len_min && p->len_max == max_len)
 			printf(" or-longer");
 		else if (p->len == p->len_min)
