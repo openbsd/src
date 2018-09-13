@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.36 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.37 2018/09/13 09:28:07 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -442,9 +442,11 @@ rtwn_rf_read(struct rtwn_softc *sc, int chain, uint8_t addr)
 	    R92C_HSSI_PARAM2_READ_EDGE);
 	DELAY(1000);
 
-	rtwn_bb_write(sc, R92C_HSSI_PARAM2(0),
-	    reg[0] | R92C_HSSI_PARAM2_READ_EDGE);
-	DELAY(1000);
+	if (!(sc->chip & RTWN_CHIP_88E)) {
+		rtwn_bb_write(sc, R92C_HSSI_PARAM2(0),
+		    reg[0] | R92C_HSSI_PARAM2_READ_EDGE);
+		DELAY(1000);
+	}
 
 	if (rtwn_bb_read(sc, R92C_HSSI_PARAM1(chain)) & R92C_HSSI_PARAM1_PI)
 		val = rtwn_bb_read(sc, R92C_HSPI_READBACK(chain));

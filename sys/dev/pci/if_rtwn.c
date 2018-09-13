@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.31 2018/08/08 09:16:57 kevlo Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.32 2018/09/13 09:28:07 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1436,7 +1436,6 @@ rtwn_power_on(void *cookie)
 	}
 
 	/* Initialize MAC. */
-	reg = rtwn_pci_read_1(sc, R92C_APSD_CTRL);
 	rtwn_pci_write_1(sc, R92C_APSD_CTRL,
 	    rtwn_pci_read_1(sc, R92C_APSD_CTRL) & ~R92C_APSD_CTRL_OFF);
 	for (ntries = 0; ntries < 200; ntries++) {
@@ -1501,7 +1500,7 @@ rtwn_dma_init(void *cookie)
 	rtwn_pci_write_2(sc, R92C_TRXDMA_CTRL, reg);
 
 	rtwn_pci_write_4(sc, R92C_TCR,
-	    R92C_TCR_CFENDFORM | (1 << 12) | (1 << 13));
+	    R92C_TCR_CFENDFORM | R92C_TCR_ERRSTEN0 | R92C_TCR_ERRSTEN1);
 
 	/* Configure Tx DMA. */
 	rtwn_pci_write_4(sc, R92C_BKQ_DESA,
@@ -1680,8 +1679,7 @@ rtwn_bb_init(void *cookie)
 		DELAY(1);
 	}
 
-	if (rtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) &
-	    R92C_HSSI_PARAM2_CCK_HIPWR)
+	if (rtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) & R92C_HSSI_PARAM2_CCK_HIPWR)
 		sc->sc_sc.sc_flags |= RTWN_FLAG_CCK_HIPWR;
 }
 

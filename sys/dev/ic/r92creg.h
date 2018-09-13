@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.16 2017/09/22 13:41:56 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.17 2018/09/13 09:28:07 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -580,6 +580,10 @@
 #define R92C_TCR_ACRC		0x00000100
 #define R92C_TCR_CFENDFORM	0x00000200
 #define R92C_TCR_ICV		0x00000400
+#define R92C_TCR_ERRSTEN0	0x00001000
+#define R92C_TCR_ERRSTEN1	0x00002000
+#define R92C_TCR_ERRSTEN2	0x00004000
+#define R92C_TCR_ERRSTEN3	0x00008000
 
 /* Bits for R92C_RCR. */
 #define R92C_RCR_AAP		0x00000001
@@ -1041,7 +1045,7 @@ struct r92c_fw_cmd_macid_cfg {
  * RTL8192CU ROM image.
  */
 struct r92c_rom {
-	uint16_t	id;		/* 0x8192 */
+	uint16_t	id;		/* 0x8129 */
 	uint8_t		reserved1[5];
 	uint8_t		dbg_sel;
 	uint16_t	reserved2;
@@ -1099,7 +1103,8 @@ struct r88e_tx_pwr {
  * RTL8188EU ROM image.
  */
 struct r88e_rom {
-	uint8_t			reserved1[16];
+	uint16_t		id;
+	uint8_t			reserved1[14];
 	struct r88e_tx_pwr	txpwr;
 	uint8_t			reserved2[156];
 	uint8_t			channel_plan;
@@ -1980,7 +1985,7 @@ static const uint32_t rtl8188eu_agc_vals[] = {
 	0x403c0001, 0x403d0001, 0x403e0001, 0x403f0001, 0xfb400001,
 	0xfb410001, 0xfb420001, 0xfb430001, 0xfb440001, 0xfb450001,
 	0xfb460001, 0xfb470001, 0xfb480001, 0xfa490001, 0xf94a0001,
-	0xf84B0001, 0xf74c0001, 0xf64d0001, 0xf54e0001, 0xf44f0001,
+	0xf84b0001, 0xf74c0001, 0xf64d0001, 0xf54e0001, 0xf44f0001,
 	0xf3500001, 0xf2510001, 0xf1520001, 0xf0530001, 0xef540001,
 	0xee550001, 0xed560001, 0xec570001, 0xeb580001, 0xea590001,
 	0xe95a0001, 0xe85b0001, 0xe75c0001, 0xe65d0001, 0xe55e0001,
