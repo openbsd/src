@@ -2777,7 +2777,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 	TAILQ_FOREACH(page, &plist, pageq) {
 		st->nents++;
 		sg_dma_address(sg) = VM_PAGE_TO_PHYS(page);
-		sg_dma_len(sg) = sg->length = PAGE_SIZE;
+		sg_dma_len(sg) = PAGE_SIZE;
 		sg++;
 		i++;
 	}
