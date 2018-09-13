@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.54 2018/04/11 04:48:31 ratchov Exp $ */
+/*      $OpenBSD: eap.c,v 1.55 2018/09/13 04:07:20 miko Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -273,18 +273,15 @@ int
 eap_activate(struct device *self, int act)
 {
 	struct eap_softc *sc = (struct eap_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_RESUME:
 		eap_resume(sc);
-		rv = config_activate_children(self, act);
 		break;
 	default:
-		rv = config_activate_children(self, act);
 		break;
 	}
-	return (rv);
+	return (config_activate_children(self, act));
 }
 
 void
