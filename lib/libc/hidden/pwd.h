@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.3 2015/11/24 22:03:33 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.4 2018/09/13 12:31:15 millert Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -40,6 +40,7 @@ PROTO_NORMAL(getpwuid_shadow);
 PROTO_NORMAL(pw_dup);
 PROTO_NORMAL(setpassent);
 PROTO_DEPRECATED(setpwent);
+PROTO_DEPRECATED(uid_from_user);
 PROTO_DEPRECATED(user_from_uid);
 
 #endif /* !_LIBC_PWD_H_ */

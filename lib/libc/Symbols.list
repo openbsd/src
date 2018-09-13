@@ -663,6 +663,7 @@ getpwuid_shadow
 getttyent
 getttynam
 getusershell
+gid_from_group
 glob
 globfree
 group_from_gid
@@ -798,6 +799,7 @@ ttyname
 ttyname_r
 ttyslot
 ualarm
+uid_from_user
 uname
 unvis
 user_from_uid
