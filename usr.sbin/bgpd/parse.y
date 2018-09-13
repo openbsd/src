@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.351 2018/09/13 11:16:21 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.352 2018/09/13 11:18:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,6 +162,7 @@ int		 parseextcommunity(struct filter_extcommunity *, char *,
 static int	 new_as_set(char *);
 static void	 add_as_set(u_int32_t);
 static void	 done_as_set(void);
+static int	 new_prefix_set(char *);
 
 typedef struct {
 	union {
@@ -418,41 +419,21 @@ as_set_l	: as4number_any			{ add_as_set($1); }
 		| as_set_l comma as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
-			if (find_prefixset($2, conf->prefixsets) != NULL)  {
-				yyerror("duplicate prefixset %s", $2);
+			if (new_prefix_set($2) != 0) {
 				free($2);
 				YYERROR;
 			}
-			if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
-				fatal("prefixset");
-			if (strlcpy(curpset->name, $2, sizeof(curpset->name)) >=
-			    sizeof(curpset->name)) {
-				yyerror("prefix-set \"%s\" too long: max %zu",
-				    $2, sizeof(curpset->name) - 1);
-				free($2);
-				YYERROR;
-			}
-			SIMPLEQ_INIT(&curpset->psitems);
+			free($2);
 		} prefixset_l optnl '}'			{
 			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
 			curpset = NULL;
 		}
 		| PREFIXSET STRING '{' optnl '}'	{
-			if (find_prefixset($2, conf->prefixsets) != NULL)  {
-				yyerror("duplicate prefixset %s", $2);
+			if (new_prefix_set($2) != 0) {
 				free($2);
 				YYERROR;
 			}
-			if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
-				fatal("prefixset");
-			if (strlcpy(curpset->name, $2, sizeof(curpset->name)) >=
-			    sizeof(curpset->name)) {
-				yyerror("prefix-set \"%s\" too long: max %zu",
-				    $2, sizeof(curpset->name) - 1);
-				free($2);
-				YYERROR;
-			}
-			SIMPLEQ_INIT(&curpset->psitems);
+			free($2);
 			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
 			curpset = NULL;
 		}
@@ -4221,4 +4202,23 @@ static void
 done_as_set(void)
 {
 	curaset = NULL;
+}
+
+static int
+new_prefix_set(char *name)
+{
+	if (find_prefixset(name, conf->prefixsets) != NULL)  {
+		yyerror("prefix-set \"%s\" already exists", name);
+		return -1;
+	}
+	if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
+		fatal("prefixset");
+	if (strlcpy(curpset->name, name, sizeof(curpset->name)) >=
+	    sizeof(curpset->name)) {
+		yyerror("prefix-set \"%s\" too long: max %zu",
+		    name, sizeof(curpset->name) - 1);
+			return -1;
+	}
+	SIMPLEQ_INIT(&curpset->psitems);
+	return 0;
 }
