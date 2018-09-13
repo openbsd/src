@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.67 2018/09/11 13:45:29 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.68 2018/09/13 04:23:36 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -2024,6 +2024,7 @@ vmmci_restore(int fd, uint32_t vm_id)
 		return (-1);
 	}
 	vmmci.vm_id = vm_id;
+	vmmci.irq = pci_get_dev_irq(vmmci.pci_id);
 	memset(&vmmci.timeout, 0, sizeof(struct event));
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
 	return (0);
@@ -2043,6 +2044,7 @@ viornd_restore(int fd, struct vm_create_params *vcp)
 		return (-1);
 	}
 	viornd.vm_id = vcp->vcp_id;
+	viornd.irq = pci_get_dev_irq(viornd.pci_id);
 
 	return (0);
 }
@@ -2094,6 +2096,7 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
 			vionet[i].vm_vmid = vm->vm_vmid;
+			vionet[i].irq = pci_get_dev_irq(vionet[i].pci_id);
 
 			memset(&vionet[i].event, 0, sizeof(struct event));
 			event_set(&vionet[i].event, vionet[i].fd,
@@ -2140,6 +2143,8 @@ vioblk_restore(int fd, struct vmop_create_params *vmc, int *child_disks)
 			    __func__);
 			return (-1);
 		}
+		vioblk[i].vm_id = vcp->vcp_id;
+		vioblk[i].irq = pci_get_dev_irq(vioblk[i].pci_id);
 	}
 	return (0);
 }
@@ -2175,6 +2180,8 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 		log_warnx("%s: unable to determine iso format", __func__);
 		return (-1);
 	}
+	vioscsi->vm_id = vcp->vcp_id;
+	vioscsi->irq = pci_get_dev_irq(vioscsi->pci_id);
 
 	return (0);
 }
