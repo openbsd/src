@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.120 2017/05/24 09:18:15 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.121 2018/09/13 15:23:32 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -507,7 +507,7 @@ append_group(char *user, int ngroups, const char **groups)
 	char		buf[LINE_MAX];
 	char		f[MaxFileNameLen];
 	char		*colon;
-	char		*ugid = NULL;
+	const char	*ugid = NULL;
 	int		fd;
 	int		cc;
 	int		i;
