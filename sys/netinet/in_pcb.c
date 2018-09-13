@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.243 2018/09/11 14:34:49 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.244 2018/09/13 19:53:58 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -227,6 +227,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 		return (ENOBUFS);
 	inp->inp_table = table;
 	inp->inp_socket = so;
+	refcnt_init(&inp->inp_refcnt);
 	inp->inp_seclevel[SL_AUTH] = IPSEC_AUTH_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_ESP_TRANS] = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
@@ -577,7 +578,29 @@ in_pcbdetach(struct inpcb *inp)
 	LIST_REMOVE(inp, inp_hash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	inp->inp_table->inpt_count--;
-	pool_put(&inpcb_pool, inp);
+	in_pcbunref(inp);
+}
+
+struct inpcb *
+in_pcbref(struct inpcb *inp)
+{
+	if (inp != NULL)
+		refcnt_take(&inp->inp_refcnt);
+	return inp;
+}
+
+void
+in_pcbunref(struct inpcb *inp)
+{
+	if (refcnt_rele(&inp->inp_refcnt)) {
+		KASSERT((LIST_NEXT(inp, inp_hash) == NULL) ||
+		    (LIST_NEXT(inp, inp_hash) == _Q_INVALID));
+		KASSERT((LIST_NEXT(inp, inp_lhash) == NULL) ||
+		    (LIST_NEXT(inp, inp_lhash) == _Q_INVALID));
+		KASSERT((TAILQ_NEXT(inp, inp_queue) == NULL) ||
+		    (TAILQ_NEXT(inp, inp_queue) == _Q_INVALID));
+		pool_put(&inpcb_pool, inp);
+	}
 }
 
 void

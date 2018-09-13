@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.55 2017/08/11 19:53:02 bluhm Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.56 2018/09/13 19:53:58 bluhm Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -74,6 +74,9 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/route.h>
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
@@ -227,7 +230,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 #if NPF > 0
 	if (in6p->inp_socket->so_state & SS_ISCONNECTED)
-		m->m_pkthdr.pf.inp = in6p;
+		pf_mbuf_link_inpcb(m, in6p);
 #endif
 
 	error = ip6_output(m, optp, &in6p->inp_route6,

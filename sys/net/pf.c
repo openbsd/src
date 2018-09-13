@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1074 2018/09/11 07:53:38 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1075 2018/09/13 19:53:58 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4805,7 +4805,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 				/* XXX make sure it's the same direction ?? */
 				(*state)->timeout = PFTM_PURGE;
 				*state = NULL;
-				pd->m->m_pkthdr.pf.inp = inp;
+				pf_mbuf_link_inpcb(pd->m, inp);
 				return (PF_DROP);
 			} else if (dst->state >= TCPS_ESTABLISHED &&
 			    src->state >= TCPS_ESTABLISHED) {
@@ -7286,7 +7286,7 @@ void
 pf_pkt_addr_changed(struct mbuf *m)
 {
 	pf_mbuf_unlink_state_key(m);
-	m->m_pkthdr.pf.inp = NULL;
+	pf_mbuf_unlink_inpcb(m);
 }
 
 struct inpcb *
@@ -7391,6 +7391,13 @@ pf_state_key_isvalid(struct pf_state_key *sk)
 }
 
 void
+pf_mbuf_link_state_key(struct mbuf *m, struct pf_state_key *sk)
+{
+	KASSERT(m->m_pkthdr.pf.statekey == NULL);
+	m->m_pkthdr.pf.statekey = pf_state_key_ref(sk);
+}
+
+void
 pf_mbuf_unlink_state_key(struct mbuf *m)
 {
 	struct pf_state_key *sk = m->m_pkthdr.pf.statekey;
@@ -7402,17 +7409,28 @@ pf_mbuf_unlink_state_key(struct mbuf *m)
 }
 
 void
-pf_mbuf_link_state_key(struct mbuf *m, struct pf_state_key *sk)
+pf_mbuf_link_inpcb(struct mbuf *m, struct inpcb *inp)
 {
-	KASSERT(m->m_pkthdr.pf.statekey == NULL);
-	m->m_pkthdr.pf.statekey = pf_state_key_ref(sk);
+	KASSERT(m->m_pkthdr.pf.inp == NULL);
+	m->m_pkthdr.pf.inp = in_pcbref(inp);
+}
+
+void
+pf_mbuf_unlink_inpcb(struct mbuf *m)
+{
+	struct inpcb *inp = m->m_pkthdr.pf.inp;
+
+	if (inp != NULL) {
+		m->m_pkthdr.pf.inp = NULL;
+		in_pcbunref(inp);
+	}
 }
 
 void
 pf_state_key_link_inpcb(struct pf_state_key *sk, struct inpcb *inp)
 {
 	KASSERT(sk->inp == NULL);
-	sk->inp = inp;
+	sk->inp = in_pcbref(inp);
 	KASSERT(inp->inp_pf_sk == NULL);
 	inp->inp_pf_sk = pf_state_key_ref(sk);
 }
@@ -7427,6 +7445,7 @@ pf_inpcb_unlink_state_key(struct inpcb *inp)
 		sk->inp = NULL;
 		inp->inp_pf_sk = NULL;
 		pf_state_key_unref(sk);
+		in_pcbunref(inp);
 	}
 }
 
@@ -7440,6 +7459,7 @@ pf_state_key_unlink_inpcb(struct pf_state_key *sk)
 		sk->inp = NULL;
 		inp->inp_pf_sk = NULL;
 		pf_state_key_unref(sk);
+		in_pcbunref(inp);
 	}
 }
 

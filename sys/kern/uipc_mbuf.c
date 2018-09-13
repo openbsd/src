@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.258 2018/09/10 16:14:07 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.259 2018/09/13 19:53:58 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -296,9 +296,9 @@ m_clearhdr(struct mbuf *m)
 {
 	/* delete all mbuf tags to reset the state */
 	m_tag_delete_chain(m);
-
 #if NPF > 0
 	pf_mbuf_unlink_state_key(m);
+	pf_mbuf_unlink_inpcb(m);
 #endif	/* NPF > 0 */
 
 	memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
@@ -430,6 +430,7 @@ m_free(struct mbuf *m)
 		m_tag_delete_chain(m);
 #if NPF > 0
 		pf_mbuf_unlink_state_key(m);
+		pf_mbuf_unlink_inpcb(m);
 #endif	/* NPF > 0 */
 	}
 	if (m->m_flags & M_EXT)
@@ -1350,6 +1351,8 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 #if NPF > 0
 	to->m_pkthdr.pf.statekey = NULL;
 	pf_mbuf_link_state_key(to, from->m_pkthdr.pf.statekey);
+	to->m_pkthdr.pf.inp = NULL;
+	pf_mbuf_link_inpcb(to, from->m_pkthdr.pf.inp);
 #endif	/* NPF > 0 */
 
 	SLIST_INIT(&to->m_pkthdr.ph_tags);

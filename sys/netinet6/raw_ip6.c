@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.129 2018/07/05 21:16:52 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.130 2018/09/13 19:53:58 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 #if NPF > 0
 	if (in6p->inp_socket->so_state & SS_ISCONNECTED &&
 	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
-		m->m_pkthdr.pf.inp = in6p;
+		pf_mbuf_link_inpcb(m, in6p);
 #endif
 
 	error = ip6_output(m, optp, &in6p->inp_route6, flags,

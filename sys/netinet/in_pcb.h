@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.110 2018/09/11 14:34:49 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.111 2018/09/13 19:53:58 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ struct inpcb {
 	} inp_ru;
 #define	inp_route	inp_ru.ru_route
 #define	inp_route6	inp_ru.ru_route6
+	struct    refcnt inp_refcnt;	/* refcount PCB, delay memory free */
 	int	  inp_flags;		/* generic IP/datagram flags */
 	union {				/* Header prototype. */
 		struct ip hu_ip;
@@ -260,6 +261,9 @@ int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
 	    struct proc *);
 int	 in_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in_pcbdetach(struct inpcb *);
+struct inpcb *
+	 in_pcbref(struct inpcb *);
+void	 in_pcbunref(struct inpcb *);
 void	 in_pcbdisconnect(struct inpcb *);
 struct inpcb *
 	 in_pcbhashlookup(struct inpcbtable *, struct in_addr,
