@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.26 2016/08/26 04:20:38 guenther Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.27 2018/09/13 12:33:43 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -133,7 +133,6 @@ usr_add(char *str)
 {
 	u_int indx;
 	USRT *pt;
-	struct passwd *pw;
 	uid_t uid;
 
 	/*
@@ -156,11 +155,10 @@ usr_add(char *str)
 		 */
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
-		if ((pw = getpwnam(str)) == NULL) {
+		if (uid_from_user(str, &uid) < 0) {
 			paxwarn(1, "Unable to find uid for user: %s", str);
 			return(-1);
 		}
-		uid = (uid_t)pw->pw_uid;
 	} else
 		uid = (uid_t)strtoul(str+1, NULL, 10);
 	endpwent();
@@ -230,7 +228,6 @@ grp_add(char *str)
 {
 	u_int indx;
 	GRPT *pt;
-	struct group *gr;
 	gid_t gid;
 
 	/*
@@ -245,7 +242,7 @@ grp_add(char *str)
 	}
 
 	/*
-	 * figure out user spec
+	 * figure out group spec
 	 */
 	if (str[0] != '#') {
 		/*
@@ -253,11 +250,10 @@ grp_add(char *str)
 		 */
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
-		if ((gr = getgrnam(str)) == NULL) {
+		if (gid_from_group(str, &gid) < 0) {
 			paxwarn(1,"Cannot determine gid for group name: %s", str);
 			return(-1);
 		}
-		gid = (gid_t)gr->gr_gid;
 	} else
 		gid = (gid_t)strtoul(str+1, NULL, 10);
 	endgrent();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.51 2017/12/08 17:04:14 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.52 2018/09/13 12:33:43 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -44,7 +44,9 @@
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 
 #include "pax.h"
@@ -248,6 +250,12 @@ main(int argc, char **argv)
 		memcpy(tempfile, tmpdir, tdlen);
 	tempbase = tempfile + tdlen;
 	*tempbase++ = '/';
+
+	/*
+	 * keep passwd and group files open for faster lookups.
+	 */
+	setpassent(1);
+	setgroupent(1);
 
 	/*
 	 * parse options, determine operational mode, general init
