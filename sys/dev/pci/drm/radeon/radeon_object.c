@@ -447,6 +447,12 @@ int radeon_bo_init(struct radeon_device *rdev)
 {
 	paddr_t start, end;
 
+#ifdef __linux__
+	/* reserve PAT memory space to WC for VRAM */
+	arch_io_reserve_memtype_wc(rdev->mc.aper_base,
+				   rdev->mc.aper_size);
+#endif
+
 	/* Add an MTRR for the VRAM */
 	if (!rdev->fastfb_working) {
 #ifdef __linux__
@@ -476,6 +482,7 @@ void radeon_bo_fini(struct radeon_device *rdev)
 	radeon_ttm_fini(rdev);
 #ifdef __linux__
 	arch_phys_wc_del(rdev->mc.vram_mtrr);
+	arch_io_free_memtype_wc(rdev->mc.aper_base, rdev->mc.aper_size);
 #else
 	drm_mtrr_del(0, rdev->mc.aper_base, rdev->mc.aper_size, DRM_MTRR_WC);
 #endif
