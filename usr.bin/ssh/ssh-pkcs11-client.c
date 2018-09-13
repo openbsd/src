@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.10 2018/07/09 21:59:10 markus Exp $ */
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.11 2018/09/13 02:08:33 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -150,12 +150,14 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 static int
 wrap_key(RSA *rsa)
 {
-	static RSA_METHOD helper_rsa;
+	static RSA_METHOD *helper_rsa;
 
-	memcpy(&helper_rsa, RSA_get_default_method(), sizeof(helper_rsa));
-	helper_rsa.name = "ssh-pkcs11-helper";
-	helper_rsa.rsa_priv_enc = pkcs11_rsa_private_encrypt;
-	RSA_set_method(rsa, &helper_rsa);
+	if ((helper_rsa = RSA_meth_dup(RSA_get_default_method())) == NULL)
+		fatal("%s: RSA_meth_dup failed", __func__);
+	if (!RSA_meth_set1_name(helper_rsa, "ssh-pkcs11-helper") ||
+	    !RSA_meth_set_priv_enc(helper_rsa, pkcs11_rsa_private_encrypt))
+		fatal("%s: failed to prepare method", __func__);
+	RSA_set_method(rsa, helper_rsa);
 	return (0);
 }
 

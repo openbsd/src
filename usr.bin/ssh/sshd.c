@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.514 2018/08/13 02:41:05 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.515 2018/09/13 02:08:33 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -469,8 +469,8 @@ demote_sensitive_data(void)
 
 	for (i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
-			if ((r = sshkey_demote(sensitive_data.host_keys[i],
-			    &tmp)) != 0)
+			if ((r = sshkey_from_private(
+			    sensitive_data.host_keys[i], &tmp)) != 0)
 				fatal("could not demote host %s key: %s",
 				    sshkey_type(sensitive_data.host_keys[i]),
 				    ssh_err(r));
@@ -1642,7 +1642,7 @@ main(int ac, char **av)
 			error("Error loading host key \"%s\": %s",
 			    options.host_key_files[i], ssh_err(r));
 		if (pubkey == NULL && key != NULL)
-			if ((r = sshkey_demote(key, &pubkey)) != 0)
+			if ((r = sshkey_from_private(key, &pubkey)) != 0)
 				fatal("Could not demote key: \"%s\": %s",
 				    options.host_key_files[i], ssh_err(r));
 		sensitive_data.host_keys[i] = key;

@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.186 2018/07/20 03:46:34 djm Exp $ */
+/* $OpenBSD: monitor.c,v 1.187 2018/09/13 02:08:33 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -504,6 +504,7 @@ int
 mm_answer_moduli(int sock, struct sshbuf *m)
 {
 	DH *dh;
+	const BIGNUM *dh_p, *dh_g;
 	int r;
 	u_int min, want, max;
 
@@ -528,9 +529,10 @@ mm_answer_moduli(int sock, struct sshbuf *m)
 		return (0);
 	} else {
 		/* Send first bignum */
+		DH_get0_pqg(dh, &dh_p, NULL, &dh_g);
 		if ((r = sshbuf_put_u8(m, 1)) != 0 ||
-		    (r = sshbuf_put_bignum2(m, dh->p)) != 0 ||
-		    (r = sshbuf_put_bignum2(m, dh->g)) != 0)
+		    (r = sshbuf_put_bignum2(m, dh_p)) != 0 ||
+		    (r = sshbuf_put_bignum2(m, dh_g)) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
 		DH_free(dh);

@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.h,v 1.28 2018/09/12 01:32:54 djm Exp $ */
+/* $OpenBSD: sshkey.h,v 1.29 2018/09/13 02:08:33 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #else /* OPENSSL */
+#define BIGNUM		void
 #define RSA		void
 #define DSA		void
 #define EC_KEY		void
@@ -121,10 +122,8 @@ struct sshkey {
 #define	ED25519_PK_SZ	crypto_sign_ed25519_PUBLICKEYBYTES
 
 struct sshkey	*sshkey_new(int);
-int		 sshkey_add_private(struct sshkey *);
-struct sshkey	*sshkey_new_private(int);
+struct sshkey	*sshkey_new_private(int); /* XXX garbage collect */
 void		 sshkey_free(struct sshkey *);
-int		 sshkey_demote(const struct sshkey *, struct sshkey **);
 int		 sshkey_equal_public(const struct sshkey *,
     const struct sshkey *);
 int		 sshkey_equal(const struct sshkey *, const struct sshkey *);
@@ -214,7 +213,7 @@ int	sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
     const char *passphrase, struct sshkey **keyp, char **commentp);
 
 /* XXX should be internal, but used by ssh-keygen */
-int ssh_rsa_generate_additional_parameters(struct sshkey *);
+int ssh_rsa_complete_crt_parameters(struct sshkey *, const BIGNUM *);
 
 /* stateful keys (e.g. XMSS) */
 typedef void sshkey_printfn(const char *, ...) __attribute__((format(printf, 1, 2)));
