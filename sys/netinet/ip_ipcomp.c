@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.65 2018/08/28 15:15:02 mpi Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.66 2018/09/13 12:29:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -503,7 +503,7 @@ ipcomp_output_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m,
 	rlen = ilen - skip;
 
 	/* Check sizes. */
-	if (rlen < olen) {
+	if (rlen <= olen + IPCOMP_HLENGTH) {
 		/* Compression was useless, we have lost time. */
 		ipcompstat_inc(ipcomps_minlen); /* misnomer, but like to count */
 		goto skiphdr;
