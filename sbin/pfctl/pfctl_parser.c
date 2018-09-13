@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.336 2018/09/11 10:42:10 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.337 2018/09/13 06:03:27 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1321,7 +1321,6 @@ struct node_host *
 gen_dynnode(struct node_host *h, sa_family_t af)
 {
 	struct node_host	*n;
-	struct pf_addr		*m;
 
 	if (h->addr.type != PF_ADDR_DYNIFTL)
 		return (NULL);
@@ -1334,8 +1333,7 @@ gen_dynnode(struct node_host *h, sa_family_t af)
 	n->tail = NULL;
 
 	/* fix up netmask */
-	m = &n->addr.v.a.mask;
-	if (af == AF_INET && unmask(m) > 32)
+	if (af == AF_INET && unmask(&n->addr.v.a.mask) > 32)
 		set_ipmask(n, 32);
 
 	return (n);
