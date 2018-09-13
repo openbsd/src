@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.242 2018/08/20 10:00:04 kettenis Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.243 2018/09/13 07:49:33 mestre Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -623,6 +623,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			} else
 				return (pledge_fail(p, error, PLEDGE_GETPW));
 		}
+		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
 		if ((ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
