@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.350 2018/09/10 11:09:25 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.351 2018/09/13 11:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -218,7 +218,7 @@ typedef struct {
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
 %token	QUALIFY VIA
-%token	NE LE GE XRANGE LONGER
+%token	NE LE GE XRANGE LONGER MAXLEN
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
@@ -2189,6 +2189,17 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			$$.len_min = -1;
 			$$.len_max = -1;
 		}
+		| MAXLEN NUMBER				{
+			bzero(&$$, sizeof($$));
+			if ($2 < 0 || $2 > 128) {
+				yyerror("prefixlen must be >= 0 and <= 128");
+				YYERROR;
+			}
+
+			$$.op = OP_RANGE;
+			$$.len_min = -1;
+			$$.len_max = $2;
+		}
 		| PREFIXLEN unaryop NUMBER		{
 			int min, max;
 
@@ -2204,10 +2215,10 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			$$.op = OP_RANGE;
 
 			switch ($2) {
-			case OP_EQ:
 			case OP_NE:
-				min = max = $3;
 				$$.op = $2;
+			case OP_EQ:
+				min = max = $3;
 				break;
 			case OP_LT:
 				if ($3 == 0) {
@@ -2713,6 +2724,7 @@ lookup(char *s)
 		{ "max-as-len",		MAXASLEN},
 		{ "max-as-seq",		MAXASSEQ},
 		{ "max-prefix",		MAXPREFIX},
+		{ "maxlen",		MAXLEN},
 		{ "md5sig",		MD5SIG},
 		{ "med",		MED},
 		{ "metric",		METRIC},
