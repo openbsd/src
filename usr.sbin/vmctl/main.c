@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2018/09/11 04:03:16 ccardenas Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2018/09/13 03:53:33 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -161,7 +161,7 @@ parse(int argc, char *argv[])
 
 	if (!ctl->has_pledge) {
 		/* pledge(2) default if command doesn't have its own pledge */
-		if (pledge("stdio rpath exec unix getpw", NULL) == -1)
+		if (pledge("stdio rpath exec unix getpw unveil", NULL) == -1)
 			err(1, "pledge");
 	}
 	if (ctl->main(&res, argc, argv) != 0)
@@ -186,6 +186,8 @@ vmmaction(struct parse_result *res)
 	unsigned int		 flags;
 
 	if (ctl_sock == -1) {
+		if (unveil(SOCKET_NAME, "r") == -1)
+			err(1, "unveil");
 		if ((ctl_sock = socket(AF_UNIX,
 		    SOCK_STREAM|SOCK_CLOEXEC, 0)) == -1)
 			err(1, "socket");
@@ -506,6 +508,10 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 	paths[0] = argv[1];
 	paths[1] = NULL;
 	format = "raw";
+
+	if (unveil(paths[0], "rwc") == -1)
+		err(1, "unveil");
+
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 	argc--;
@@ -768,7 +774,7 @@ ctl_unpause(struct parse_result *res, int argc, char *argv[])
 int
 ctl_send(struct parse_result *res, int argc, char *argv[])
 {
-	if (pledge("stdio unix sendfd", NULL) == -1)
+	if (pledge("stdio unix sendfd unveil", NULL) == -1)
 		err(1, "pledge");
 	if (argc == 2) {
 		if (parse_vmid(res, argv[1], 0) == -1)
@@ -782,7 +788,7 @@ ctl_send(struct parse_result *res, int argc, char *argv[])
 int
 ctl_receive(struct parse_result *res, int argc, char *argv[])
 {
-	if (pledge("stdio unix sendfd", NULL) == -1)
+	if (pledge("stdio unix sendfd unveil", NULL) == -1)
 		err(1, "pledge");
 	if (argc == 2) {
 		if (parse_vmid(res, argv[1], 1) == -1)
@@ -797,6 +803,8 @@ __dead void
 ctl_openconsole(const char *name)
 {
 	closefrom(STDERR_FILENO + 1);
+	if (unveil(VMCTL_CU, "x") == -1)
+		err(1, "unveil");
 	execl(VMCTL_CU, VMCTL_CU, "-l", name, "-s", "115200", (char *)NULL);
 	err(1, "failed to open the console");
 }
