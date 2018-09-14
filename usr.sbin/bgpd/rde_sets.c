@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.3 2018/09/10 11:01:15 benno Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.4 2018/09/14 10:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -29,9 +29,10 @@
 
 struct as_set {
 	char			 name[SET_NAME_LEN];
-	u_int32_t		*set;
+	void			*set;
 	SIMPLEQ_ENTRY(as_set)	 entry;
 	size_t			 nmemb;
+	size_t			 size;
 	size_t			 max;
 	int			 dirty;
 };
@@ -54,12 +55,6 @@ as_sets_lookup(struct as_set_head *as_sets, const char *name)
 	return NULL;
 }
 
-static void
-as_set_free(struct as_set *aset)
-{
-	free(aset->set);
-	free(aset);
-}
 
 void
 as_sets_free(struct as_set_head *as_sets)
@@ -92,7 +87,8 @@ as_sets_print(struct as_set_head *as_sets)
 				printf("\n\t");
 				len = 8;
 			}
-			len += printf("%u ", aset->set[i]);
+			len += printf("%u ", *(u_int32_t *)
+			    ((u_int8_t *)aset->set + i * aset->size));
 		}
 		printf("\n}\n\n");
 	}
@@ -120,7 +116,8 @@ as_sets_send(struct imsgbuf *ibuf, struct as_set_head *as_sets)
 			l = (aset->nmemb - i > 1024 ? 1024 : aset->nmemb - i);
 
 			if (imsg_compose(ibuf, IMSG_RECONF_AS_SET_ITEMS, 0, 0,
-			    -1, aset->set + i, l * sizeof(*aset->set)) == -1)
+			    -1, (u_int8_t *)aset->set + i * aset->size,
+			    l * aset->size) == -1)
 				return -1;
 		}
 
@@ -144,7 +141,7 @@ as_sets_mark_dirty(struct as_set_head *old, struct as_set_head *new)
 }
 
 struct as_set *
-as_set_new(const char *name, size_t nmemb)
+as_set_new(const char *name, size_t nmemb, size_t size)
 {
 	struct as_set *aset;
 	size_t len;
@@ -157,10 +154,11 @@ as_set_new(const char *name, size_t nmemb)
 	assert(len < sizeof(aset->name));
 
 	if (nmemb == 0)
-		nmemb = 16;
+		nmemb = 4;
 
+	aset->size = size;
 	aset->max = nmemb;
-	aset->set = calloc(nmemb, sizeof(*aset->set));
+	aset->set = calloc(nmemb, aset->size);
 	if (aset->set == NULL) {
 		free(aset);
 		return NULL;
@@ -169,8 +167,17 @@ as_set_new(const char *name, size_t nmemb)
 	return aset;
 }
 
+void
+as_set_free(struct as_set *aset)
+{
+	if (aset == NULL)
+		return;
+	free(aset->set);
+	free(aset);
+}
+
 int
-as_set_add(struct as_set *aset, u_int32_t *elms, size_t nelms)
+as_set_add(struct as_set *aset, void *elms, size_t nelms)
 {
 	if (aset->max < nelms || aset->max - nelms < aset->nmemb) {
 		u_int32_t *s;
@@ -183,14 +190,15 @@ as_set_add(struct as_set *aset, u_int32_t *elms, size_t nelms)
 		for (new_size = aset->max; new_size < aset->nmemb + nelms; )
 		     new_size += (new_size < 4096 ? new_size : 4096);
 
-		s = reallocarray(aset->set, new_size, sizeof(*aset->set));
+		s = reallocarray(aset->set, new_size, aset->size);
 		if (s == NULL)
 			return -1;
 		aset->set = s;
 		aset->max = new_size;
 	}
 
-	memcpy(aset->set + aset->nmemb, elms, nelms * sizeof(*elms));
+	memcpy((u_int8_t *)aset->set + aset->nmemb * aset->size, elms,
+	    nelms * aset->size);
 	aset->nmemb += nelms;
 
 	return 0;
@@ -212,16 +220,17 @@ as_set_cmp(const void *ap, const void *bp)
 void
 as_set_prep(struct as_set *aset)
 {
-	qsort(aset->set, aset->nmemb, sizeof(*aset->set), as_set_cmp);
+	if (aset == NULL)
+		return;
+	qsort(aset->set, aset->nmemb, aset->size, as_set_cmp);
 }
 
-int
+void *
 as_set_match(const struct as_set *a, u_int32_t asnum)
 {
-	if (bsearch(&asnum, a->set, a->nmemb, sizeof(asnum), as_set_cmp))
-		return 1;
-	else
-		return 0;
+	if (a == NULL)
+		return NULL;
+	return bsearch(&asnum, a->set, a->nmemb, a->size, as_set_cmp);
 }
 
 int
@@ -229,7 +238,7 @@ as_set_equal(const struct as_set *a, const struct as_set *b)
 {
 	if (a->nmemb != b->nmemb)
 		return 0;
-	if (memcmp(a->set, b->set, a->nmemb * sizeof(*a->set)) != 0)
+	if (memcmp(a->set, b->set, a->nmemb * a->size) != 0)
 		return 0;
 	return 1;
 }

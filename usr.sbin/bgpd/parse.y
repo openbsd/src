@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.352 2018/09/13 11:18:18 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.353 2018/09/14 10:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -403,15 +403,19 @@ include		: INCLUDE STRING		{
 		;
 
 as_set		: ASSET STRING '{' optnl	{
-			if (new_as_set($2) != 0)
+			if (new_as_set($2) != 0) {
+				free($2);
 				YYERROR;
+			}
 			free($2);
 		} as_set_l optnl '}' {
 			done_as_set();
 		}
 		| ASSET STRING '{' optnl '}'	{
-			if (new_as_set($2) != 0)
+			if (new_as_set($2) != 0) {
+				free($2);
 				YYERROR;
+			}
 			free($2);
 		}
 
@@ -4179,7 +4183,7 @@ new_as_set(char *name)
 		return -1;
 	}
 
-	aset = as_set_new(name, 0);
+	aset = as_set_new(name, 0, sizeof(u_int32_t));
 	if (aset == NULL)
 		fatal(NULL);
 	as_sets_insert(conf->as_sets, aset);

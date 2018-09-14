@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.339 2018/09/10 11:01:15 benno Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.340 2018/09/14 10:22:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1171,10 +1171,11 @@ void		 as_sets_print(struct as_set_head *);
 int		 as_sets_send(struct imsgbuf *, struct as_set_head *);
 void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
 
-struct as_set	*as_set_new(const char *, size_t);
-int		 as_set_add(struct as_set *, u_int32_t *, size_t);
+struct as_set	*as_set_new(const char *, size_t, size_t);
+void		 as_set_free(struct as_set *);
+int		 as_set_add(struct as_set *, void *, size_t);
 void		 as_set_prep(struct as_set *);
-int		 as_set_match(const struct as_set *, u_int32_t);
+void		*as_set_match(const struct as_set *, u_int32_t);
 int		 as_set_equal(const struct as_set *, const struct as_set *);
 int		 as_set_dirty(const struct as_set *);
 
