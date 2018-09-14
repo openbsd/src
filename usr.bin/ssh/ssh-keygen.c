@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.321 2018/09/13 02:08:33 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.322 2018/09/14 04:17:44 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -480,8 +480,8 @@ do_convert_private_ssh2_from_blob(u_char *blob, u_int blen)
 		free(type);
 		return NULL;
 	}
-	if ((key = sshkey_new_private(ktype)) == NULL)
-		fatal("sshkey_new_private failed");
+	if ((key = sshkey_new(ktype)) == NULL)
+		fatal("sshkey_new failed");
 	free(type);
 
 	switch (key->type) {

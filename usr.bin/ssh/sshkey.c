@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.69 2018/09/13 02:08:33 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.70 2018/09/14 04:17:44 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -524,17 +524,6 @@ sshkey_new(int type)
 		}
 	}
 
-	return k;
-}
-
-/* XXX garbage-collect this API */
-struct sshkey *
-sshkey_new_private(int type)
-{
-	struct sshkey *k = sshkey_new(type);
-
-	if (k == NULL)
-		return NULL;
 	return k;
 }
 
@@ -2890,7 +2879,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	switch (type) {
 #ifdef WITH_OPENSSL
 	case KEY_DSA:
-		if ((k = sshkey_new_private(type)) == NULL) {
+		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2934,7 +2923,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		dsa_priv_key = NULL; /* transferred */
 		break;
 	case KEY_ECDSA:
-		if ((k = sshkey_new_private(type)) == NULL) {
+		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2983,7 +2972,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 			goto out;
 		break;
 	case KEY_RSA:
-		if ((k = sshkey_new_private(type)) == NULL) {
+		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3049,7 +3038,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 #endif /* WITH_OPENSSL */
 	case KEY_ED25519:
-		if ((k = sshkey_new_private(type)) == NULL) {
+		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3079,7 +3068,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
-		if ((k = sshkey_new_private(type)) == NULL) {
+		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
