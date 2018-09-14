@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.244 2018/09/13 19:53:58 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.245 2018/09/14 12:55:17 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ in_pcblhash(struct inpcbtable *table, int rdom, u_short lport)
 	SIPHASH_CTX ctx;
 	u_int32_t nrdom = htonl(rdom);
 
-	SipHash24_Init(&ctx, &table->inpt_key);
+	SipHash24_Init(&ctx, &table->inpt_lkey);
 	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
 
@@ -171,6 +171,7 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 	table->inpt_count = 0;
 	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
+	arc4random_buf(&table->inpt_lkey, sizeof(table->inpt_lkey));
 }
 
 /*
@@ -999,6 +1000,7 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	table->inpt_lmask = nlmask;
 	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
+	arc4random_buf(&table->inpt_lkey, sizeof(table->inpt_lkey));
 
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 		in_pcbrehash(inp);

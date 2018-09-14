@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.112 2018/09/14 07:25:02 jsg Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.113 2018/09/14 12:55:17 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -91,10 +91,10 @@ union inpaddru {
  * control block.
  */
 struct inpcb {
-	LIST_ENTRY(inpcb) inp_hash;
-	LIST_ENTRY(inpcb) inp_lhash;		/* extra hash for lport */
-	TAILQ_ENTRY(inpcb) inp_queue;
-	struct	  inpcbtable *inp_table;
+	LIST_ENTRY(inpcb) inp_hash;		/* local and foreign hash */
+	LIST_ENTRY(inpcb) inp_lhash;		/* local port hash */
+	TAILQ_ENTRY(inpcb) inp_queue;		/* inet PCB queue */
+	struct	  inpcbtable *inp_table;	/* inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* Foreign address. */
 	union	  inpaddru inp_laddru;		/* Local address. */
 #define	inp_faddr	inp_faddru.iau_a4u.inaddr
@@ -150,11 +150,12 @@ struct inpcb {
 LIST_HEAD(inpcbhead, inpcb);
 
 struct inpcbtable {
-	TAILQ_HEAD(inpthead, inpcb) inpt_queue;
-	struct inpcbhead *inpt_hashtbl, *inpt_lhashtbl;
-	SIPHASH_KEY inpt_key;
-	u_long	  inpt_mask, inpt_lmask;
-	int	  inpt_count, inpt_size;
+	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* inet PCB queue */
+	struct	inpcbhead *inpt_hashtbl;	/* local and foreign hash */
+	struct	inpcbhead *inpt_lhashtbl;	/* local port hash */
+	SIPHASH_KEY inpt_key, inpt_lkey;	/* secrets for hashes */
+	u_long	inpt_mask, inpt_lmask;		/* hash masks */
+	int	inpt_count, inpt_size;		/* queue count, hash size */
 };
 
 /* flags in inp_flags: */
