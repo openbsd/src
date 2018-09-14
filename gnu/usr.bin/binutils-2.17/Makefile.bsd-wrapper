@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2018/07/26 13:20:53 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2018/09/14 13:37:52 naddy Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
 
 CFLAGS+=	${PIE_DEFAULT}
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 
 # testing purposes
 PREFIX=/usr
@@ -64,8 +65,7 @@ CONFIGTARGET+=--without-gnu-as
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
-	  ${MAKE} CC="${CC}" \
-	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
+	  ${MAKE} ${XCFLAGS} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    MAKEINFO='makeinfo --no-split' \
@@ -86,6 +86,7 @@ CF=
 do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	MAKEINFO='makeinfo --no-split' \
+	${XCFLAGS} \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
 	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
@@ -94,6 +95,7 @@ do-config: .USE
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
+	    ${XCFLAGS} \
 	    ${MAKE} ${CONFIGURE_MODULES}
 
 gas/doc/as.1: config.status

@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.86 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.87 2018/09/14 13:37:52 naddy Exp $
 
 .include <bsd.own.mk>
 
 CFLAGS+=	${PIE_DEFAULT}
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 
 # testing purposes
 PREFIX=/usr
@@ -34,8 +35,7 @@ CONFIGTARGET=
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
-	  ${MAKE} CC="${CC}" \
-	    CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
+	  ${MAKE} ${XCFLAGS} \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    MAKEINFO='makeinfo --no-split' \
@@ -56,6 +56,7 @@ CF=
 do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	MAKEINFO='makeinfo --no-split' \
+	${XCFLAGS} \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
 	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
@@ -64,6 +65,7 @@ do-config: .USE
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
+	    ${XCFLAGS} \
 	    ${MAKE} ${CONFIGURE_MODULES}
 
 config: do-config
