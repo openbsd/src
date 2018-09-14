@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.166 2018/08/28 15:15:02 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.167 2018/09/14 23:40:10 mestre Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -162,7 +162,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 } while (0)
 
 	union sockaddr_union dst_address;
-	struct tdb *tdbp;
+	struct tdb *tdbp = NULL;
 	struct ifnet *encif;
 	u_int32_t spi;
 	u_int16_t cpi;
@@ -352,7 +352,7 @@ ipsec_input_cb(struct cryptop *crp)
 {
 	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
 	struct mbuf *m = (struct mbuf *) crp->crp_buf;
-	struct tdb *tdb;
+	struct tdb *tdb = NULL;
 	int clen, error;
 
 	if (m == NULL) {
