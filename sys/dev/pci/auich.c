@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.108 2018/09/14 08:37:34 miko Exp $	*/
+/*	$OpenBSD: auich.c,v 1.109 2018/09/14 08:45:46 miko Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -1166,26 +1166,20 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 }
 
 int
-auich_trigger_input(v, start, end, blksize, intr, arg, param)
-	void *v;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+auich_trigger_input(void *v, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
 	size_t size;
 
-#ifdef AUICH_DEBUG
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p) sts=%b\n",
 		start, end, blksize, intr, arg, param,
 		bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + sc->sc_sts_reg),
 		AUICH_ISTS_BITS));
-#endif
+
 	if (sc->sc_rdma->addr == start)
 		p = sc->sc_rdma;
 	else
