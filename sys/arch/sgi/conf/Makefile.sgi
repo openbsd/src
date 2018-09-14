@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.94 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.sgi,v 1.95 2018/09/14 13:49:01 naddy Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -138,7 +138,7 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
-	    gap.link ld.script lorder makegap.sh param.c
+	    gap.link gapdummy.c ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
