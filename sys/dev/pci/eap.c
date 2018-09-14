@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.55 2018/09/13 04:07:20 miko Exp $ */
+/*      $OpenBSD: eap.c,v 1.56 2018/09/14 08:37:34 miko Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -167,7 +167,7 @@ int	eap_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	eap_halt_output(void *);
 int	eap_halt_input(void *);
-int	eap_resume(struct eap_softc *);
+void	eap_resume(struct eap_softc *);
 void    eap1370_write_codec(struct eap_softc *, int, int);
 int	eap1370_mixer_set_port(void *, mixer_ctrl_t *);
 int	eap1370_mixer_get_port(void *, mixer_ctrl_t *);
@@ -594,7 +594,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-int
+void
 eap_resume(struct eap_softc *sc)
 {
 	int i;
@@ -650,8 +650,6 @@ eap_resume(struct eap_softc *sc)
 		/* Interrupt enable */
 		EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
 	}
-
-	return (0);
 }
 
 

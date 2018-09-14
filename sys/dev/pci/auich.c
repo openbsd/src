@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.107 2018/09/13 04:07:20 miko Exp $	*/
+/*	$OpenBSD: auich.c,v 1.108 2018/09/14 08:37:34 miko Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -313,7 +313,7 @@ int auich_alloc_cdata(struct auich_softc *);
 int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
 int auich_freemem(struct auich_softc *, struct auich_dma *);
 
-int auich_resume(struct auich_softc *);
+void auich_resume(struct auich_softc *);
 
 struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -1336,7 +1336,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return error;
 }
 
-int
+void
 auich_resume(struct auich_softc *sc)
 {
 	/* SiS 7012 needs special handling */
@@ -1349,8 +1349,6 @@ auich_resume(struct auich_softc *sc)
 	}
 
 	ac97_resume(&sc->host_if, sc->codec_if);
-
-	return (0);
 }
 
 /* -------------------------------------------------------------------- */

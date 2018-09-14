@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.44 2018/09/13 04:07:20 miko Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.45 2018/09/14 08:37:34 miko Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ void cmpci_set_mixer_gain(struct cmpci_softc *, int);
 void cmpci_set_out_ports(struct cmpci_softc *);
 int cmpci_set_in_ports(struct cmpci_softc *);
 
-int cmpci_resume(struct cmpci_softc *);
+void cmpci_resume(struct cmpci_softc *);
 
 /*
  * autoconf interface
@@ -522,11 +522,10 @@ cmpci_activate(struct device *self, int act)
 	return (config_activate_children(self, act));
 }
 
-int
+void
 cmpci_resume(struct cmpci_softc *sc)
 {
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_RESET, 0);
-	return 0;
 }
 
 int
