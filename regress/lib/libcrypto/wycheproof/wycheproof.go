@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.46 2018/09/02 20:29:01 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.47 2018/09/15 16:05:17 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -590,7 +590,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 		}
 		// XXX audit acceptable cases...
 		if bytes.Equal(tagOut, tag) != (wt.Result == "valid" || wt.Result == "acceptable") {
-			fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed tag do not match. Result: %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
+			fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed tag do not match - ret: %d, Result: %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			success = false
 		}
 	}
