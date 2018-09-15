@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.52 2018/09/15 22:07:52 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.53 2018/09/15 22:09:08 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -570,7 +570,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 
 		// There are no acceptable CCM cases. All acceptable GCM tests
 		// pass. They have len(IV) <= 48. NIST SP 800-38D, 5.2.1.1, p.8,
-		// allows 1 <= len(IV) 2^64-1, but notes:
+		// allows 1 <= len(IV) <= 2^64-1, but notes:
 		//   "For IVs it is recommended that implementations restrict
 		//    support to the length of 96 bits, to promote
 		//    interoperability, efficiency and simplicity of design."
