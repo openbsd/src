@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.49 2018/09/15 19:09:07 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.50 2018/09/15 19:12:31 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -576,7 +576,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 	return success
 }
 
-func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAead) bool {
+func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, wt *wycheproofTestAead) bool {
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
@@ -628,16 +628,34 @@ func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofT
 		tag = append(tag, 0)
 	}
 
-	openSuccess := checkAesCcmOrGcm(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
-	sealSuccess := checkAesCcmOrGcm(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	openEvp := checkAesCcmOrGcm(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
+	sealEvp := checkAesCcmOrGcm(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
-	return openSuccess && sealSuccess
+	openAead, sealAead := true, true
+	if aead != nil {
+		var ctx C.EVP_AEAD_CTX
+		if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
+			log.Fatal("Failed to initialize AEAD context")
+		}
+		defer C.EVP_AEAD_CTX_cleanup(&ctx)
+
+		// Make sure we don't accidentally prepend or compare against a 0.
+		if ctLen == 0 {
+			ct = nil
+		}
+
+		openAead = checkAeadOpen(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+		sealAead = checkAeadSeal(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	}
+
+	return openEvp && sealEvp && openAead && sealAead
 }
 
 func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
 	var cipher *C.EVP_CIPHER
+	var aead *C.EVP_AEAD
 	switch algorithm {
 	case "AES-CCM":
 		switch wtg.KeySize {
@@ -655,10 +673,12 @@ func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) boo
 		switch wtg.KeySize {
 		case 128:
 			cipher = C.EVP_aes_128_gcm()
+			aead = C.EVP_aead_aes_128_gcm()
 		case 192:
 			cipher = C.EVP_aes_192_gcm()
 		case 256:
 			cipher = C.EVP_aes_256_gcm()
+			aead = C.EVP_aead_aes_256_gcm()
 		default:
 			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
 			return true
@@ -675,7 +695,7 @@ func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) boo
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runAesCcmOrGcmTest(algorithm, ctx, wt) {
+		if !runAesCcmOrGcmTest(algorithm, ctx, aead, wt) {
 			success = false
 		}
 	}
