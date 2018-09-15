@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.7 2014/09/13 16:06:37 doug Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.8 2018/09/15 13:20:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "ds.h"
 #include "mdesc.h"
@@ -29,10 +30,15 @@
 #include "ldomctl.h"
 
 void	mdstore_start(struct ldc_conn *, uint64_t);
+void	mdstore_start_v2(struct ldc_conn *, uint64_t);
 void	mdstore_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
 
 struct ds_service mdstore_service = {
 	"mdstore", 1, 0, mdstore_start, mdstore_rx_data
+};
+
+struct ds_service mdstore_service_v2 = {
+	"mdstore", 2, 0, mdstore_start_v2, mdstore_rx_data
 };
 
 #define MDSET_BEGIN_REQUEST	0x0001
@@ -58,6 +64,19 @@ struct mdstore_begin_end_req {
 	uint64_t	reqnum;
 	uint16_t	command;
 	uint16_t	nmds;
+	uint32_t	namelen;
+	char		name[1];
+} __packed;
+
+struct mdstore_begin_req_v2 {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint64_t	reqnum;
+	uint16_t	command;
+	uint16_t	nmds;
+	uint32_t	config_size;
+  	uint64_t	timestamp;
 	uint32_t	namelen;
 	char		name[1];
 } __packed;
@@ -119,6 +138,14 @@ struct mdstore_list_resp {
 struct mdstore_set_head mdstore_sets = TAILQ_HEAD_INITIALIZER(mdstore_sets);
 uint64_t mdstore_reqnum;
 uint64_t mdstore_command;
+uint16_t mdstore_major;
+
+void
+mdstore_register(struct ds_conn *dc)
+{
+	ds_conn_register_service(dc, &mdstore_service);
+	ds_conn_register_service(dc, &mdstore_service_v2);
+}
 
 void
 mdstore_start(struct ldc_conn *lc, uint64_t svc_handle)
@@ -132,6 +159,13 @@ mdstore_start(struct ldc_conn *lc, uint64_t svc_handle)
 	mm.reqnum = mdstore_reqnum++;
 	mm.command = mdstore_command = MDSET_LIST_REQUEST;
 	ds_send_msg(lc, &mm, sizeof(mm));
+}
+
+void
+mdstore_start_v2(struct ldc_conn *lc, uint64_t svc_handle)
+{
+	mdstore_major = 2;
+	mdstore_start(lc, svc_handle);
 }
 
 void
@@ -165,6 +199,8 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 			set->boot_set = (idx == mr->boot_set);
 			TAILQ_INSERT_TAIL(&mdstore_sets, set, link);
 			len += strlen(&mr->sets[len]) + 1;
+			if (mdstore_major == 2)
+				len += sizeof(uint64_t); /* skip timestamp */
 		}
 		break;
 	}
@@ -173,7 +209,7 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 }
 
 void
-mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+mdstore_begin_v1(struct ds_conn *dc, uint64_t svc_handle, const char *name,
     int nmds)
 {
 	struct mdstore_begin_end_req *mr;
@@ -194,6 +230,42 @@ mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name,
 
 	while (mdstore_command == MDSET_BEGIN_REQUEST)
 		ds_conn_handle(dc);
+}
+
+void
+mdstore_begin_v2(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+    int nmds, uint32_t config_size)
+{
+	struct mdstore_begin_req_v2 *mr;
+	size_t len = sizeof(*mr) + strlen(name);
+
+	mr = xzalloc(len);
+	mr->msg_type = DS_DATA;
+	mr->payload_len = len - 8;
+	mr->svc_handle = svc_handle;
+	mr->reqnum = mdstore_reqnum++;
+	mr->command = mdstore_command = MDSET_BEGIN_REQUEST;
+	mr->config_size = config_size;
+	mr->timestamp = time(NULL);
+	mr->nmds = nmds;
+	mr->namelen = strlen(name);
+	memcpy(mr->name, name, strlen(name));
+
+	ds_send_msg(&dc->lc, mr, len);
+	free(mr);
+
+	while (mdstore_command == MDSET_BEGIN_REQUEST)
+		ds_conn_handle(dc);
+}
+
+void
+mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+    int nmds, uint32_t config_size)
+{
+	if (mdstore_major == 2)
+	  mdstore_begin_v2(dc, svc_handle, name, nmds, config_size);
+	else
+	  mdstore_begin_v1(dc, svc_handle, name, nmds);
 }
 
 void
@@ -330,6 +402,7 @@ mdstore_download(struct ds_conn *dc, const char *name)
 	struct guest *guest;
 	int nmds = 2;
 	char *path;
+	uint32_t total_size = 0;
 	uint16_t type;
 
 	TAILQ_FOREACH(dcs, &dc->services, link)
@@ -358,7 +431,19 @@ mdstore_download(struct ds_conn *dc, const char *name)
 	frag_init();
 	hv_mdpa = alloc_frag();
 
-	mdstore_begin(dc, dcs->svc_handle, name, nmds);
+	TAILQ_FOREACH(guest, &guest_list, link) {
+		if (asprintf(&path, "%s/%s.md", name, guest->name) == -1)
+			err(1, "asprintf");
+		total_size += md_size(path);
+	}
+	if (asprintf(&path, "%s/hv.md", name) == -1)
+		err(1, "asprintf");
+	total_size += md_size(path);
+	if (asprintf(&path, "%s/pri", name) == -1)
+		err(1, "asprintf");
+	total_size += md_size(path);
+
+	mdstore_begin(dc, dcs->svc_handle, name, nmds, total_size);
 	TAILQ_FOREACH(guest, &guest_list, link) {
 		if (asprintf(&path, "%s/%s.md", name, guest->name) == -1)
 			err(1, "asprintf");
