@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2017/06/20 16:44:06 anton Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2018/09/15 12:15:32 miko Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -53,18 +54,16 @@ any(char *s, int c)
 }
 
 char   *
-strsave(char *s)
+xstrdup(const char *s)
 {
-    char   *n;
-    char *p;
+    char *n;
 
     if (s == NULL)
 	s = "";
-    for (p = s; *p++;)
-	continue;
-    n = p = xreallocarray(NULL, (p - s), sizeof(char));
-    while ((*p++ = *s++) != '\0')
-	continue;
+    if ((n = strdup(s)) == NULL) {
+	child++;
+	stderror(ERR_NOMEM);
+    }
     return (n);
 }
 
