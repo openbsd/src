@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.47 2018/09/15 16:05:17 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.48 2018/09/15 19:06:47 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -75,15 +75,15 @@ type wycheproofTestAesCbcPkcs5 struct {
 	Flags   []string `json:"flags"`
 }
 
-type wycheproofTestGroupAesCcmOrGcm struct {
-	IVSize  int                          `json:"ivSize"`
-	KeySize int                          `json:"keySize"`
-	TagSize int                          `json:"tagSize"`
-	Type    string                       `json:"type"`
-	Tests   []*wycheproofTestAesCcmOrGcm `json:"tests"`
+type wycheproofTestGroupAead struct {
+	IVSize  int                   `json:"ivSize"`
+	KeySize int                   `json:"keySize"`
+	TagSize int                   `json:"tagSize"`
+	Type    string                `json:"type"`
+	Tests   []*wycheproofTestAead `json:"tests"`
 }
 
-type wycheproofTestAesCcmOrGcm struct {
+type wycheproofTestAead struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
 	Key     string   `json:"key"`
@@ -108,27 +108,6 @@ type wycheproofTestAesCmac struct {
 	Comment string   `json:"comment"`
 	Key     string   `json:"key"`
 	Msg     string   `json:"msg"`
-	Tag     string   `json:"tag"`
-	Result  string   `json:"result"`
-	Flags   []string `json:"flags"`
-}
-
-type wycheproofTestGroupChaCha20Poly1305 struct {
-	IVSize  int                               `json:"ivSize"`
-	KeySize int                               `json:"keySize"`
-	TagSize int                               `json:"tagSize"`
-	Type    string                            `json:"type"`
-	Tests   []*wycheproofTestChaCha20Poly1305 `json:"tests"`
-}
-
-type wycheproofTestChaCha20Poly1305 struct {
-	TCID    int      `json:"tcId"`
-	Comment string   `json:"comment"`
-	Key     string   `json:"key"`
-	IV      string   `json:"iv"`
-	AAD     string   `json:"aad"`
-	Msg     string   `json:"msg"`
-	CT      string   `json:"ct"`
 	Tag     string   `json:"tag"`
 	Result  string   `json:"result"`
 	Flags   []string `json:"flags"`
@@ -470,7 +449,7 @@ func runAesCbcPkcs5TestGroup(algorithm string, wtg *wycheproofTestGroupAesCbcPkc
 	return success
 }
 
-func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAesCcmOrGcm) bool {
+func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	var ctrlSetIVLen C.int
 	var ctrlSetTag C.int
 	var ctrlGetTag C.int
@@ -597,7 +576,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 	return success
 }
 
-func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCcmOrGcm) bool {
+func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAead) bool {
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
@@ -655,7 +634,7 @@ func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, wt *wycheproofT
 	return openSuccess && sealSuccess
 }
 
-func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAesCcmOrGcm) bool {
+func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
 	var cipher *C.EVP_CIPHER
@@ -793,7 +772,7 @@ func runAesCmacTestGroup(algorithm string, wtg *wycheproofTestGroupAesCmac) bool
 	return success
 }
 
-func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestChaCha20Poly1305) bool {
+func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	maxOutLen := ctLen + tagLen
 
 	opened := make([]byte, maxOutLen)
@@ -829,7 +808,7 @@ func checkChaCha20Poly1305Open(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 	return success
 }
 
-func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestChaCha20Poly1305) bool {
+func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	maxOutLen := msgLen + tagLen
 
 	sealed := make([]byte, maxOutLen)
@@ -859,7 +838,7 @@ func checkChaCha20Poly1305Seal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []
 	return success
 }
 
-func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproofTestChaCha20Poly1305) bool {
+func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproofTestAead) bool {
 	aead := C.EVP_aead_chacha20_poly1305()
 	if aead == nil {
 		log.Fatal("EVP_aead_chacha20_poly1305 failed")
@@ -924,7 +903,7 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	return openSuccess && sealSuccess
 }
 
-func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupChaCha20Poly1305) bool {
+func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
 	// We currently only support nonces of length 12 (96 bits)
 	if wtg.IVSize != 96 {
 		return true
@@ -1513,13 +1492,13 @@ func runTestVectors(path string) bool {
 	case "AES-CBC-PKCS5":
 		wtg = &wycheproofTestGroupAesCbcPkcs5{}
 	case "AES-CCM":
-		wtg = &wycheproofTestGroupAesCcmOrGcm{}
+		wtg = &wycheproofTestGroupAead{}
 	case "AES-CMAC":
 		wtg = &wycheproofTestGroupAesCmac{}
 	case "AES-GCM":
-		wtg = &wycheproofTestGroupAesCcmOrGcm{}
+		wtg = &wycheproofTestGroupAead{}
 	case "CHACHA20-POLY1305":
-		wtg = &wycheproofTestGroupChaCha20Poly1305{}
+		wtg = &wycheproofTestGroupAead{}
 	case "DSA":
 		wtg = &wycheproofTestGroupDSA{}
 	case "ECDH":
@@ -1547,7 +1526,7 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "AES-CCM":
-			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCcmOrGcm)) {
+			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
 		case "AES-CMAC":
@@ -1555,11 +1534,11 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "AES-GCM":
-			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCcmOrGcm)) {
+			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
 		case "CHACHA20-POLY1305":
-			if !runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupChaCha20Poly1305)) {
+			if !runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
 		case "DSA":
