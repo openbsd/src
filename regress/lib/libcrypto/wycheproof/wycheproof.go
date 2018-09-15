@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.50 2018/09/15 19:12:31 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.51 2018/09/15 22:03:28 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -567,7 +567,13 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 			fmt.Printf("FAIL: Test case %d (%q) [%v] - EVP_CIPHER_CTX_ctrl() = %d, want %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			return false
 		}
-		// XXX audit acceptable cases...
+
+		// There are no acceptable CCM cases. All acceptable GCM test
+		// pass. They have len(IV) <= 48. NIST SP 800-38D, 5.2.1.1, p.8,
+		// allows 1 <= len(IV) 2^64-1, but notes:
+		//   "For IVs it is recommended that implementations restrict
+		//    support to the length of 96 bits, to promote
+		//    interoperability, efficiency and simplicity of design."
 		if bytes.Equal(tagOut, tag) != (wt.Result == "valid" || wt.Result == "acceptable") {
 			fmt.Printf("FAIL: Test case %d (%q) [%v] - expected and computed tag do not match - ret: %d, Result: %v\n", wt.TCID, wt.Comment, action, ret, wt.Result)
 			success = false
