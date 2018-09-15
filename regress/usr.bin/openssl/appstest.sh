@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.14 2018/09/14 13:54:57 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.15 2018/09/15 13:26:13 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -58,7 +58,7 @@ function check_exit_status {
 }
 
 function usage {
-	echo "usage: appstest.sh [-q]"
+	echo "usage: appstest.sh [-iq]"
 }
 
 function test_usage_lists_others {
@@ -933,6 +933,8 @@ function test_server_client {
 	c_id="$2"
 	sc="$1$2"
 
+	test_pause_sec=0.2
+
 	if [ $s_id = "0" ] ; then
 		s_bin=$openssl_bin
 	else
@@ -952,13 +954,20 @@ function test_server_client {
 	port=4433
 	sess_dat=$user1_dir/s_client_${sc}_sess.dat
 	s_server_out=$server_dir/s_server_${sc}_tls.out
+
+	$s_bin version | grep 'OpenSSL 1.1.1' > /dev/null
+	if [ $? -eq 0 ] ; then
+		extra_opts="-4"
+	else
+		extra_opts=""
+	fi
 	
 	start_message "s_server ... start TLS/SSL test server"
 	$s_bin s_server -accept $port -CAfile $ca_cert \
 		-cert $server_cert -key $server_key -pass pass:$server_pass \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-nextprotoneg "http/1.1,spdy/3" -alpn "http/1.1,spdy/3" -www \
-		-cipher ALL \
+		-cipher ALL $extra_opts \
 		-msg -tlsextdebug > $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
@@ -970,8 +979,8 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_1_0.out
 	
 	start_message "s_client ... connect to TLS/SSL test server by TLSv1"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit \
 		-tls1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -986,8 +995,8 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_1_1.out
 	
 	start_message "s_client ... connect to TLS/SSL test server by TLSv1.1"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit \
 		-tls1_1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -1002,8 +1011,8 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_1_2.out
 	
 	start_message "s_client ... connect to TLS/SSL test server by TLSv1.2"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit \
 		-tls1_2 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -1039,8 +1048,9 @@ function test_server_client {
 		s_client_out=$user1_dir/s_client_${sc}_tls_${cnstr}_${c}.out
 	
 		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $c"
+		sleep $test_pause_sec
 		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-			-pause -prexit -cipher $c \
+			-cipher $c \
 			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 		check_exit_status $?
 	
@@ -1056,14 +1066,14 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_1.out
 	
 	start_message "s_client ... connect to TLS/SSL test server to get session id"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit \
 		-nextprotoneg "spdy/3,http/1.1" -alpn "spdy/3,http/1.1" \
 		-sess_out $sess_dat \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
-	grep 'New, TLSv1/SSLv3' $s_client_out > /dev/null
+	grep '^New, TLS.*$' $s_client_out > /dev/null
 	check_exit_status $?
 	
 	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
@@ -1074,12 +1084,13 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_2.out
 	
 	start_message "s_client ... connect to TLS/SSL test server reusing session id"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit -sess_in $sess_dat \
+		-sess_in $sess_dat \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
-	grep 'Reused, TLSv1/SSLv3' $s_client_out > /dev/null
+	grep '^Reused, TLS.*$' $s_client_out > /dev/null
 	check_exit_status $?
 	
 	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
@@ -1090,19 +1101,22 @@ function test_server_client {
 	s_client_out=$user1_dir/s_client_${sc}_tls_invalid.out
 	
 	start_message "s_client ... connect to TLS/SSL test server but verify error"
+	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-pause -prexit \
 		-showcerts -crl_check -issuer_checks -policy_check \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
-	grep 'Verify return code: 24 (invalid CA certificate)' $s_client_out \
-		> /dev/null
-	check_exit_status $?
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	if [ $? -eq 0 ] ; then
+		check_exit_status 1
+	else
+		check_exit_status 0
+	fi
 	
 	# s_time
 	start_message "s_time ... connect to TLS/SSL test server"
-	$c_bin s_time -connect $host:$port -CAfile $ca_cert -time 2
+	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 2
 	check_exit_status $?
 	
 	# sess_id
@@ -1155,6 +1169,16 @@ while [ "$1" != "" ]; do
 					exit 1
 	esac
 done
+
+if [ ! -x $openssl_bin ] ; then
+	echo ":-< \$OPENSSL [$openssl_bin]  is not executable."
+	exit 1
+fi
+
+if [ $interop_tests = 1 -a ! -x $other_openssl_bin ] ; then
+	echo ":-< \$OTHER_OPENSSL [$other_openssl_bin] is not executable."
+	exit 1
+fi
 
 #
 # create ssldir, and all files generated by this script goes under this dir.
