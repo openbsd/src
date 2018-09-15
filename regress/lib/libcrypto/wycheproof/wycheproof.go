@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.51 2018/09/15 22:03:28 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.52 2018/09/15 22:07:52 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -568,7 +568,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 			return false
 		}
 
-		// There are no acceptable CCM cases. All acceptable GCM test
+		// There are no acceptable CCM cases. All acceptable GCM tests
 		// pass. They have len(IV) <= 48. NIST SP 800-38D, 5.2.1.1, p.8,
 		// allows 1 <= len(IV) 2^64-1, but notes:
 		//   "For IVs it is recommended that implementations restrict
@@ -1328,7 +1328,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 
 	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha, (*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
 
-	// XXX: audit acceptable cases...
+	// XX: audit acceptable cases...
 	success := false
 	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
 		success = true
