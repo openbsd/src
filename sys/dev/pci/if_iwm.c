@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.231 2018/08/13 15:05:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.232 2018/09/16 19:41:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7111,7 +7111,7 @@ iwm_rx_mpdu(struct iwm_softc *sc, struct mbuf *m, size_t maxlen)
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_rx_packet *pkt;
 	struct iwm_rx_mpdu_res_start *rx_res;
-	uint32_t len;
+	uint16_t len;
 	uint32_t rx_pkt_status;
 	int rxfail;
 
@@ -7124,14 +7124,16 @@ iwm_rx_mpdu(struct iwm_softc *sc, struct mbuf *m, size_t maxlen)
 		m_freem(m);
 		return;
 	}
-	if (len > maxlen) {
+	if (len + sizeof(*rx_res) + sizeof(rx_pkt_status) > maxlen ||
+	    len > IEEE80211_MAX_LEN) {
 		IC2IFP(ic)->if_ierrors++;
 		m_freem(m);
 		return;
 	}
 
-	rx_pkt_status = le32toh(*(uint32_t *)(pkt->data +
-	    sizeof(*rx_res) + len));
+	memcpy(&rx_pkt_status, pkt->data + sizeof(*rx_res) + len,
+	    sizeof(rx_pkt_status));
+	rx_pkt_status = le32toh(rx_pkt_status);
 	rxfail = ((rx_pkt_status & IWM_RX_MPDU_RES_STATUS_CRC_OK) == 0 ||
 	    (rx_pkt_status & IWM_RX_MPDU_RES_STATUS_OVERRUN_OK) == 0);
 	if (rxfail) {
@@ -7156,7 +7158,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 	struct iwm_rx_packet *pkt;
 	uint32_t offset = 0, nmpdu = 0, len;
 	struct mbuf *m0;
-	const uint32_t minsz = sizeof(uint32_t) + sizeof(struct iwm_cmd_header);
+	const size_t minsz = sizeof(pkt->len_n_flags) + sizeof(pkt->hdr);
 	int qid, idx, code;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
@@ -7175,11 +7177,10 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 			break;
 		}
 
-		len = le32toh(pkt->len_n_flags) & IWM_FH_RSCSR_FRAME_SIZE_MSK;
-		if (len < sizeof(struct iwm_cmd_header) ||
-		    len > (IWM_RBUF_SIZE - offset))
+		len = iwm_rx_packet_len(pkt);
+		if (len < sizeof(pkt->hdr) ||
+		    len > (IWM_RBUF_SIZE - offset - minsz))
 			break;
-		len += sizeof(uint32_t); /* account for status word */
 
 		if (code == IWM_REPLY_RX_MPDU_CMD && ++nmpdu == 1) {
 			/* Take mbuf m0 off the RX ring. */
@@ -7207,7 +7208,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 			}
 			m_adj(m, offset);
 
-			iwm_rx_mpdu(sc, m, IWM_RBUF_SIZE - offset);
+			iwm_rx_mpdu(sc, m, IWM_RBUF_SIZE - offset - minsz);
  			break;
 		}
 
@@ -7452,6 +7453,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 			iwm_cmd_done(sc, pkt);
 		}
 
+		len += sizeof(pkt->len_n_flags);
 		offset += roundup(len, IWM_FH_RSCSR_FRAME_ALIGN);
 	}
 
