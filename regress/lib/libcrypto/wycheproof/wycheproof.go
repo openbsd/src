@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.54 2018/09/16 11:45:08 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.55 2018/09/16 18:44:33 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -866,9 +866,6 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 
 func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproofTestAead) bool {
 	aead := C.EVP_aead_chacha20_poly1305()
-	if aead == nil {
-		log.Fatal("EVP_aead_chacha20_poly1305 failed")
-	}
 
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
