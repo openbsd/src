@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.28 2016/08/16 16:41:46 krw Exp $	*/
+/*	$OpenBSD: spec.c,v 1.29 2018/09/16 02:41:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -169,8 +169,6 @@ set(char *t, NODE *ip)
 {
 	int type;
 	char *kw, *val = NULL;
-	struct group *gr;
-	struct passwd *pw;
 	void *m;
 	int value;
 	u_int32_t fset, fclr;
@@ -207,9 +205,8 @@ set(char *t, NODE *ip)
 				error("invalid gid %s", val);
 			break;
 		case F_GNAME:
-			if ((gr = getgrnam(val)) == NULL)
+			if (gid_from_group(val, &ip->st_gid) == -1)
 			    error("unknown group %s", val);
-			ip->st_gid = gr->gr_gid;
 			break;
 		case F_IGN:
 			/* just set flag bit */
@@ -302,9 +299,8 @@ set(char *t, NODE *ip)
 				error("invalid uid %s", val);
 			break;
 		case F_UNAME:
-			if ((pw = getpwnam(val)) == NULL)
+			if (uid_from_user(val, &ip->st_uid) == -1)
 			    error("unknown user %s", val);
-			ip->st_uid = pw->pw_uid;
 			break;
 		}
 	}

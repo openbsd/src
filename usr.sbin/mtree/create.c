@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.32 2016/08/16 16:41:46 krw Exp $	*/
+/*	$OpenBSD: create.c,v 1.33 2018/09/16 02:41:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -127,11 +127,10 @@ cwalk(void)
 static void
 statf(int indent, FTSENT *p)
 {
-	struct group *gr;
-	struct passwd *pw;
 	u_int32_t len, val;
 	int fd, offset;
-	char *name, *escaped_name;
+	const char *name;
+	char *escaped_name;
 	size_t esc_len;
 
 	esc_len = p->fts_namelen * 4 + 1;
@@ -157,8 +156,9 @@ statf(int indent, FTSENT *p)
 		output(indent, &offset, "type=%s", inotype(p->fts_statp->st_mode));
 	if (p->fts_statp->st_uid != uid) {
 		if (keys & F_UNAME) {
-			if ((pw = getpwuid(p->fts_statp->st_uid)) != NULL) {
-				output(indent, &offset, "uname=%s", pw->pw_name);
+			name = user_from_uid(p->fts_statp->st_uid, 1);
+			if (name != NULL) {
+				output(indent, &offset, "uname=%s", name);
 			} else {
 				error("could not get uname for uid=%u",
 				    p->fts_statp->st_uid);
@@ -169,8 +169,9 @@ statf(int indent, FTSENT *p)
 	}
 	if (p->fts_statp->st_gid != gid) {
 		if (keys & F_GNAME) {
-			if ((gr = getgrgid(p->fts_statp->st_gid)) != NULL) {
-				output(indent, &offset, "gname=%s", gr->gr_name);
+			name = group_from_gid(p->fts_statp->st_gid, 1);
+			if (name != NULL) {
+				output(indent, &offset, "gname=%s", name);
 			} else {
 				error("could not get gname for gid=%u",
 				    p->fts_statp->st_gid);
@@ -270,8 +271,6 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode)
 	gid_t sgid;
 	uid_t suid;
 	mode_t smode;
-	struct group *gr;
-	struct passwd *pw;
 	gid_t savegid = *pgid;
 	uid_t saveuid = *puid;
 	mode_t savemode = *pmode;
@@ -281,6 +280,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode)
 	gid_t g[MAXGID];
 	uid_t u[MAXUID];
 	mode_t m[MAXMODE];
+	const char *name;
 	static int first = 1;
 
 	if ((p = fts_children(t, 0)) == NULL) {
@@ -327,16 +327,16 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode)
 		else
 			(void)printf("/set type=file");
 		if (keys & F_UNAME) {
-			if ((pw = getpwuid(saveuid)) != NULL)
-				(void)printf(" uname=%s", pw->pw_name);
+			if ((name = user_from_uid(saveuid, 1)) != NULL)
+				(void)printf(" uname=%s", name);
 			else
 				error("could not get uname for uid=%u", saveuid);
 		}
 		if (keys & F_UID)
 			(void)printf(" uid=%u", saveuid);
 		if (keys & F_GNAME) {
-			if ((gr = getgrgid(savegid)) != NULL)
-				(void)printf(" gname=%s", gr->gr_name);
+			if ((name = group_from_gid(savegid, 1)) != NULL)
+				(void)printf(" gname=%s", name);
 			else
 				error("could not get gname for gid=%u", savegid);
 		}
