@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.55 2018/09/16 18:44:33 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.56 2018/09/16 19:22:50 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -689,6 +689,8 @@ func runAesAeadTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
 			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
 			return true
 		}
+	default:
+		log.Fatalf("runAesAeadTestGroup() - unhandled algorithm: %v", algorithm)
 	}
 
 	ctx := C.EVP_CIPHER_CTX_new()
