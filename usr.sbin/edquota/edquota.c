@@ -191,14 +191,11 @@ main(int argc, char *argv[])
 int
 getentry(char *name, int quotatype, u_int *idp)
 {
-	struct passwd *pw;
-	struct group *gr;
 	u_int id;
 
 	switch(quotatype) {
 	case USRQUOTA:
-		if ((pw = getpwnam(name))) {
-			*idp = pw->pw_uid;
+		if (uid_from_user(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
 			if ((id = strtoul(name, NULL, 10)) <= UID_MAX) {
@@ -209,8 +206,7 @@ getentry(char *name, int quotatype, u_int *idp)
 		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
-		if ((gr = getgrnam(name))) {
-			*idp = gr->gr_gid;
+		if (gid_from_group(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
 			if ((id = strtoul(name, NULL, 10)) <= GID_MAX) {

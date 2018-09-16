@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.45 2017/01/03 21:31:16 tedu Exp $	*/
+/*	$OpenBSD: function.c,v 1.46 2018/09/16 02:44:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -933,20 +933,17 @@ PLAN *
 c_group(char *gname, char ***ignored, int unused)
 {
 	PLAN *new;
-	struct group *g;
 	gid_t gid;
     
 	ftsoptions &= ~FTS_NOSTAT;
 
-	g = getgrnam(gname);
-	if (g == NULL) {
+	if (gid_from_group(gname, &gid) == -1) {
 		const char *errstr;
 
 		gid = strtonum(gname, 0, GID_MAX, &errstr);
 		if (errstr)
 			errx(1, "-group: %s: no such group", gname);
-	} else
-		gid = g->gr_gid;
+	}
     
 	new = palloc(N_GROUP, f_group);
 	new->g_data = gid;
@@ -1543,20 +1540,17 @@ PLAN *
 c_user(char *username, char ***ignored, int unused)
 {
 	PLAN *new;
-	struct passwd *p;
 	uid_t uid;
     
 	ftsoptions &= ~FTS_NOSTAT;
 
-	p = getpwnam(username);
-	if (p == NULL) {
+	if (uid_from_user(username, &uid) == -1) {
 		const char *errstr;
 
 		uid = strtonum(username, 0, UID_MAX, &errstr);
 		if (errstr)
 			errx(1, "-user: %s: no such user", username);
-	} else
-		uid = p->pw_uid;
+	}
 
 	new = palloc(N_USER, f_user);
 	new->u_data = uid;

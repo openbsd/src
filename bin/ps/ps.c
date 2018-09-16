@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.72 2018/08/08 14:38:31 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.73 2018/09/16 02:44:06 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -92,7 +92,6 @@ main(int argc, char *argv[])
 	struct kinfo_proc *kp, **kinfo;
 	struct varent *vent;
 	struct winsize ws;
-	struct passwd *pwd;
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
@@ -217,11 +216,8 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'U':
-			pwd = getpwnam(optarg);
-			if (pwd == NULL)
+			if (uid_from_user(optarg, &uid) == -1)
 				errx(1, "%s: no such user", optarg);
-			uid = pwd->pw_uid;
-			endpwent();
 			Uflag = xflg = 1;
 			break;
 		case 'u':

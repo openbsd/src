@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.66 2017/08/21 21:41:13 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.67 2018/09/16 02:44:07 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -60,14 +60,12 @@
 #define NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 #define BACKUP_SUFFIX	".old"
 
-struct passwd *pp;
-struct group *gp;
 int dobackup, docompare, dodest, dodir, dopreserve, dostrip, safecopy;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[PATH_MAX], tempfile[PATH_MAX];
 char *suffix = BACKUP_SUFFIX;
-uid_t uid;
-gid_t gid;
+uid_t uid = (uid_t)-1;
+gid_t gid = (gid_t)-1;
 
 void	copy(int, char *, int, char *, off_t, int);
 int	compare(int, const char *, off_t, int, const char *, off_t);
@@ -89,6 +87,7 @@ main(int argc, char *argv[])
 	u_int iflags;
 	int ch, no_target;
 	char *flags, *to_name, *group = NULL, *owner = NULL;
+	const char *errstr;
 
 	iflags = 0;
 	while ((ch = getopt(argc, argv, "B:bCcDdFf:g:m:o:pSs")) != -1)
@@ -161,12 +160,16 @@ main(int argc, char *argv[])
 		safecopy = 1;
 
 	/* get group and owner id's */
-	if (group && !(gp = getgrnam(group)) && !isdigit((unsigned char)*group))
-		errx(1, "unknown group %s", group);
-	gid = (group) ? ((gp) ? gp->gr_gid : (gid_t)strtoul(group, NULL, 10)) : (gid_t)-1;
-	if (owner && !(pp = getpwnam(owner)) && !isdigit((unsigned char)*owner))
-		errx(1, "unknown user %s", owner);
-	uid = (owner) ? ((pp) ? pp->pw_uid : (uid_t)strtoul(owner, NULL, 10)) : (uid_t)-1;
+	if (group != NULL && gid_from_group(group, &gid) == -1) {
+		gid = strtonum(group, 0, GID_MAX, &errstr);
+		if (errstr != NULL)
+			errx(1, "unknown group %s", group);
+	}
+	if (owner != NULL && uid_from_user(owner, &uid) == -1) {
+		uid = strtonum(owner, 0, UID_MAX, &errstr);
+		if (errstr != NULL)
+			errx(1, "unknown user %s", owner);
+	}
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)

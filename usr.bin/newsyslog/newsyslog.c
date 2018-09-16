@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.108 2017/07/24 12:57:01 jca Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.109 2018/09/16 02:44:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -190,6 +190,10 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&config);
 	TAILQ_INIT(&runlist);
+
+	/* Keep passwd and group files open for faster lookups. */
+	setpassent(1);
+	setgroupent(1);
 
 	ret = parse_file(&config, &listlen);
 	if (argc == 0)
@@ -468,8 +472,6 @@ parse_file(struct entrylist *list, int *nentries)
 {
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
 	struct conf_entry *working;
-	struct passwd *pwd;
-	struct group *grp;
 	struct stat sb;
 	int lineno = 0;
 	int ret = 0;
@@ -510,36 +512,28 @@ nextline:
 		if ((group = strchr(q, ':')) != NULL ||
 		    (group = strrchr(q, '.')) != NULL)  {
 			*group++ = '\0';
-			if (*q) {
-				if (!(isnumberstr(q))) {
-					if ((pwd = getpwnam(q)) == NULL) {
-						warnx("%s:%d: unknown user"
-						    " %s --> skipping",
-						    conf, lineno, q);
-						ret = 1;
-						goto nextline;
-					}
-					working->uid = pwd->pw_uid;
-				} else
-					working->uid = atoi(q);
-			} else
+			if (*q == '\0') {
 				working->uid = (uid_t)-1;
+			} else if (isnumberstr(q)) {
+				working->uid = atoi(q);
+			} else if (uid_from_user(q, &working->uid) == -1) {
+				warnx("%s:%d: unknown user %s --> skipping",
+				    conf, lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 
 			q = group;
-			if (*q) {
-				if (!(isnumberstr(q))) {
-					if ((grp = getgrnam(q)) == NULL) {
-						warnx("%s:%d: unknown group"
-						    " %s --> skipping",
-						    conf, lineno, q);
-						ret = 1;
-						goto nextline;
-					}
-					working->gid = grp->gr_gid;
-				} else
-					working->gid = atoi(q);
-			} else
+			if (*q == '\0') {
 				working->gid = (gid_t)-1;
+			} else if (isnumberstr(q)) {
+				working->gid = atoi(q);
+			} else if (gid_from_group(q, &working->gid) == -1) {
+				warnx("%s:%d: unknown group %s --> skipping",
+				    conf, lineno, q);
+				ret = 1;
+				goto nextline;
+			}
 
 			q = parse = missing_field(sob(++parse), errline, lineno);
 			*(parse = son(parse)) = '\0';

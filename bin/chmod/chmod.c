@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.42 2017/05/28 08:03:36 awolk Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.43 2018/09/16 02:44:06 millert Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -293,7 +293,6 @@ done:
 uid_t
 a_uid(const char *s, int silent)
 {
-	struct passwd *pw;
 	const char *errstr;
 	uid_t uid;
 
@@ -301,8 +300,8 @@ a_uid(const char *s, int silent)
 		return ((uid_t)-1);
 
 	/* User name was given. */
-	if ((pw = getpwnam(s)) != NULL)
-		return (pw->pw_uid);
+	if (uid_from_user(s, &uid) != -1)
+		return (uid);
 
 	/* UID was given. */
 	uid = (uid_t)strtonum(s, 0, UID_MAX, &errstr);
@@ -323,7 +322,6 @@ a_uid(const char *s, int silent)
 gid_t
 a_gid(const char *s)
 {
-	struct group *gr;
 	const char *errstr;
 	gid_t gid;
 
@@ -331,8 +329,8 @@ a_gid(const char *s)
 		return ((gid_t)-1);
 
 	/* Group name was given. */
-	if ((gr = getgrnam(s)) != NULL)
-		return (gr->gr_gid);
+	if (gid_from_group(s, &gid) != -1)
+		return (gid);
 
 	/* GID was given. */
 	gid = (gid_t)strtonum(s, 0, GID_MAX, &errstr);
