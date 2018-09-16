@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.29 2015/10/16 17:56:07 mmcc Exp $	*/
+/*	$OpenBSD: aux.c,v 1.30 2018/09/16 02:38:57 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char *save2str(char *, char *);
  * Return a pointer to a dynamic copy of the argument.
  */
 char *
-savestr(char *str)
+savestr(const char *str)
 {
 	char *new;
 	int size = strlen(str) + 1;

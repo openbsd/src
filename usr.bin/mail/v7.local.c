@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.17 2016/07/19 06:43:27 deraadt Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.18 2018/09/16 02:38:57 millert Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include "rcv.h"
 #include <stdlib.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include "extern.h"
 
 /*
@@ -48,7 +49,7 @@
  * mail is queued).
  */
 void
-findmail(char *user, char *buf, int buflen)
+findmail(const char *user, char *buf, int buflen)
 {
 	char *mbox;
 	struct stat sb;
@@ -82,20 +83,20 @@ demail(void)
 /*
  * Discover user login name.
  */
-char *
+const char *
 username(void)
 {
-	char *np;
+	const char *np;
 	uid_t uid;
 
 	if ((np = getenv("USER")) != NULL)
 		return(np);
 	if ((np = getenv("LOGNAME")) != NULL)
 		return(np);
-	if ((np = getname(uid = getuid())) != NULL)
+	if ((np = user_from_uid(uid = getuid(), 1)) != NULL)
 		return(np);
 	if ((np = getlogin()) != NULL)
 		return(np);
-	printf("Cannot associate a name with uid %u\n", (unsigned)uid);
+	printf("Cannot associate a name with uid %u\n", uid);
 	return(NULL);
 }

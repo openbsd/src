@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.29 2018/09/16 02:38:57 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,12 +30,12 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.28 2015/01/20 16:59:07 millert Exp $
+ *	$OpenBSD: extern.h,v 1.29 2018/09/16 02:38:57 millert Exp $
  */
 
 struct name;
 struct name *cat(struct name *, struct name *);
-struct name *delname(struct name *, char *);
+struct name *delname(struct name *, const char *);
 struct name *elide(struct name *);
 struct name *extract(char *, int);
 struct grouphead;
@@ -55,7 +55,6 @@ char	*copyin(char *, char **);
 char	*detract(struct name *, int);
 char	*expand(char *);
 char	*getdeadletter(void);
-char	*getname(uid_t);
 struct message;
 char	*hfield(char *, struct message *);
 FILE	*infix(struct header *, FILE *);
@@ -67,12 +66,13 @@ char	*readtty(char *, char *);
 char 	*reedit(char *);
 FILE	*run_editor(FILE *, off_t, int, int);
 char	*salloc(int);
-char	*savestr(char *);
+char	*savestr(const char *);
 FILE	*setinput(struct message *);
 char	*skin(char *);
 char	*skip_comment(char *);
 char	*snarf(char *, int *);
-char	*username(void);
+const char
+	*username(void);
 char	*value(char *);
 char	*vcopy(char *);
 char	*yankword(char *, char *);
@@ -119,7 +119,7 @@ void	 fail(char *, char *);
 int	 file(void *);
 struct grouphead *
 	 findgroup(char *);
-void	 findmail(char *, char *, int);
+void	 findmail(const char *, char *, int);
 void	 fioint(int);
 int	 first(int, int);
 void	 fixhead(struct header *, struct name *);
@@ -134,7 +134,6 @@ int	 gethfield(FILE *, char *, int, char **);
 int	 gethfromtty(struct header *, int);
 int	 getmsglist(char *, int *, int);
 int	 getrawlist(char *, char **, int);
-uid_t	 getuserid(char *);
 int	 grabh(struct header *, int);
 int	 group(void *);
 int	 hash(char *);
