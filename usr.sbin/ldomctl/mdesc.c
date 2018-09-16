@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.10 2018/07/12 14:46:45 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.11 2018/09/16 12:17:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -117,6 +117,21 @@ md_find_node(struct md *md, const char *name)
 	TAILQ_FOREACH(node, &md->node_list, link) {
 		if (strcmp(node->name->str, name) == 0)
 			return node;
+	}
+
+	return NULL;
+}
+
+struct md_node *
+md_find_subnode(struct md *md, struct md_node *node, const char *name)
+{
+	struct md_prop *prop;
+
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0 &&
+		    strcmp(prop->d.arc.node->name->str, name) == 0)
+			return prop->d.arc.node;
 	}
 
 	return NULL;
@@ -312,15 +327,6 @@ md_find_delete_node(struct md *md, const char *name)
 
 	node = md_find_node(md, name);
 	if (node)
-		md_delete_node(md, node);
-}
-
-void
-md_find_delete_nodes(struct md *md, const char *name)
-{
-	struct md_node *node;
-
-	while ((node = md_find_node(md, name)))
 		md_delete_node(md, node);
 }
 

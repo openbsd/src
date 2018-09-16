@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.5 2012/12/01 10:39:38 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.6 2018/09/16 12:17:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -22,6 +22,7 @@ struct guest;
 struct console {
 	uint64_t ino;
 	uint64_t resource_id;
+	uint64_t uartbase;
 
 	struct guest *guest;
 	struct ldc_endpoint *client_endpoint;
@@ -44,6 +45,7 @@ struct device {
 	uint64_t gid;
 	uint64_t cfghandle;
 	uint64_t resource_id;
+	uint64_t rcid;
 
 	struct guest *guest;
 	struct md_node *hv_node;
