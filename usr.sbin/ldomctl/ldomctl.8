@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.10 2018/04/09 10:15:15 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.11 2018/09/16 14:27:32 kettenis Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2018 $
+.Dd $Mdocdate: September 16 2018 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -72,6 +72,8 @@ Declares the number of virtual CPUs assigned to a domain.
 Declares the amount of memory assigned to a domain, in bytes.
 Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
 can be used.
+.It Ic variable Ar name Ic = Ar value
+Sets the specified NVRAM variable for the domain.
 .It Ic vdisk Ar file
 The specified file is used to back a virtual disk of the guest
 domain.
@@ -79,7 +81,7 @@ domain.
 can be a block device node or a disk image file created with
 .Xr dd 1 .
 This keyword can be used multiple times.
-.It Ic vnet Op Ic \&{ Ar keyword value ... Ic \&}
+.It Ic vnet Op Ic \&{ Ar keyword Ic = Ar value ... Ic \&}
 Assign a
 .Xr vnet 4
 network interface to the guest domain.

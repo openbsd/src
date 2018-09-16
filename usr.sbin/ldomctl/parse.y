@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2018/07/09 12:05:11 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2018/09/16 14:27:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -82,7 +82,7 @@ typedef struct {
 %}
 
 %token	DOMAIN
-%token	VCPU MEMORY VDISK VNET
+%token	VCPU MEMORY VDISK VNET VARIABLE
 %token	MAC_ADDR MTU
 %token	ERROR
 %token	<v.string>		STRING
@@ -104,6 +104,7 @@ domain		: DOMAIN STRING optnl '{' optnl	{
 			domain->name = $2;
 			SIMPLEQ_INIT(&domain->vdisk_list);
 			SIMPLEQ_INIT(&domain->vnet_list);
+			SIMPLEQ_INIT(&domain->var_list);
 		}
 		    domainopts_l '}' {
 			/* domain names need to be unique. */
@@ -141,6 +142,12 @@ domainopts	: VCPU NUMBER {
 			vnet->mac_addr = $2.mac_addr;
 			vnet->mtu = $2.mtu;
 			SIMPLEQ_INSERT_TAIL(&domain->vnet_list, vnet, entry);
+		}
+		| VARIABLE STRING '=' STRING {
+			struct var *var = xmalloc(sizeof(struct var));
+			var->name = $2;
+			var->str = $4;
+			SIMPLEQ_INSERT_TAIL(&domain->var_list, var, entry);
 		}
 		;
 
@@ -253,6 +260,7 @@ lookup(char *s)
 		{ "mac-addr",		MAC_ADDR},
 		{ "memory",		MEMORY},
 		{ "mtu",		MTU},
+		{ "variable",		VARIABLE},
 		{ "vcpu",		VCPU},
 		{ "vdisk",		VDISK},
 		{ "vnet",		VNET}

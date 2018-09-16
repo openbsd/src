@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.23 2018/09/16 12:17:05 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.24 2018/09/16 14:27:32 kettenis Exp $	*/
 
 /*
- * Copyright (c) 2012 Mark Kettenis
+ * Copyright (c) 2012, 2018 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2206,6 +2206,25 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 	free(devpath);
 }
 
+void
+guest_add_variable(struct guest *guest, const char *name, const char *str)
+{
+	struct md *md = guest->md;
+	struct md_node *parent;
+	struct md_node *node;
+
+	node = md_find_node(md, "variables");
+	if (node == NULL) {
+		parent = md_find_node(md, "root");
+		assert(parent);
+
+		node = md_add_node(md, "variables");
+		md_link_node(md, parent, node);
+	}
+
+	md_add_prop_str(md, node, name, str);
+}
+
 struct cpu *
 guest_find_cpu(struct guest *guest, uint64_t pid)
 {
@@ -2318,6 +2337,7 @@ build_config(const char *filename)
 	struct domain *domain;
 	struct vdisk *vdisk;
 	struct vnet *vnet;
+	struct var *var;
 	uint64_t num_cpus, primary_num_cpus;
 	uint64_t memory, primary_memory;
 
@@ -2374,6 +2394,13 @@ build_config(const char *filename)
 	guest_add_memory(primary, -1, primary_memory);
 
 	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
+		if (strcmp(domain->name, "primary") != 0)
+			continue;
+		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
+			guest_add_variable(primary, var->name, var->str);
+	}
+
+	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
 		if (strcmp(domain->name, "primary") == 0)
 			continue;
 		guest = guest_create(domain->name);
@@ -2387,6 +2414,8 @@ build_config(const char *filename)
 		SIMPLEQ_FOREACH(vnet, &domain->vnet_list, entry)
 			guest_add_vnetwork(guest, i++, vnet->mac_addr,
 			    vnet->mtu);
+		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
+			guest_add_variable(guest, var->name, var->str);
 
 		guest_finalize(guest);
 	}
