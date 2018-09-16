@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.27 2016/12/16 17:44:59 krw Exp $	*/
+/*	$OpenBSD: inode.c,v 1.28 2018/09/16 02:43:11 millert Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -559,10 +559,7 @@ void
 pinode(ino_t ino)
 {
 	struct ext2fs_dinode *dp;
-	char *p;
-#ifndef SMALL
-	struct passwd *pw;
-#endif
+	const char *p;
 	time_t t;
 	u_int32_t uid;
 
@@ -573,11 +570,11 @@ pinode(ino_t ino)
 	printf(" OWNER=");
 	uid = letoh16(dp->e2di_uid_low) | (letoh16(dp->e2di_uid_high) << 16);
 #ifndef SMALL
-	if ((pw = getpwuid((int)uid)) != 0)
-		printf("%s ", pw->pw_name);
+	if ((p = user_from_uid(uid, 1)) != NULL)
+		printf("%s ", p);
 	else
 #endif
-		printf("%u ", (unsigned)uid);
+		printf("%u ", uid);
 	printf("MODE=%o\n", letoh16(dp->e2di_mode));
 	if (preen)
 		printf("%s: ", cdevname());

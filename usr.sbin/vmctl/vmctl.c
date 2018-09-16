@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.57 2018/09/11 04:03:16 ccardenas Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.58 2018/09/16 02:43:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -631,8 +631,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	char curmem[FMT_SCALED_STRSIZE];
 	char maxmem[FMT_SCALED_STRSIZE];
 	char user[16], group[16];
-	struct passwd *pw;
-	struct group *gr;
+	const char *name;
 
 	printf("%5s %5s %5s %7s %7s %7s %12s %s\n", "ID", "PID", "VCPUS",
 	    "MAXMEM", "CURMEM", "TTY", "OWNER", "NAME");
@@ -642,22 +641,23 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 		vir = &vmi->vir_info;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
 			/* get user name */
-			if ((pw = getpwuid(vmi->vir_uid)) == NULL)
+			name = user_from_uid(vmi->vir_uid, 1);
+			if (name == NULL)
 				(void)snprintf(user, sizeof(user),
 				    "%d", vmi->vir_uid);
 			else
-				(void)strlcpy(user, pw->pw_name,
-				    sizeof(user));
+				(void)strlcpy(user, name, sizeof(user));
 			/* get group name */
 			if (vmi->vir_gid != -1) {
 				if (vmi->vir_uid == 0)
 					*user = '\0';
-				if ((gr = getgrgid(vmi->vir_gid)) == NULL)
+				name = group_from_gid(vmi->vir_gid, 1);
+				if (name == NULL)
 					(void)snprintf(group, sizeof(group),
 					    ":%lld", vmi->vir_gid);
 				else
 					(void)snprintf(group, sizeof(group),
-					    ":%s", gr->gr_name);
+					    ":%s", name);
 				(void)strlcat(user, group, sizeof(user));
 			}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.18 2017/07/29 21:14:56 fcambus Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.19 2018/09/16 02:43:11 millert Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -83,8 +83,7 @@ argcount(struct cmdtable *cmdp, int argc, char *argv[])
 void
 printstat(const char *cp, ino_t inum, union dinode *dp)
 {
-	struct group *grp;
-	struct passwd *pw;
+	const char *name;
 	time_t t;
 	char *p;
 
@@ -139,12 +138,12 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	    DIP(dp, di_atimensec));
 
-	if ((pw = getpwuid(DIP(dp, di_uid))))
-		printf("OWNER=%s ", pw->pw_name);
+	if ((name = user_from_uid(DIP(dp, di_uid), 1)) != NULL)
+		printf("OWNER=%s ", name);
 	else
 		printf("OWNUID=%u ", DIP(dp, di_uid));
-	if ((grp = getgrgid(DIP(dp, di_gid))))
-		printf("GRP=%s ", grp->gr_name);
+	if ((name = group_from_gid(DIP(dp, di_gid), 1)) != NULL)
+		printf("GRP=%s ", name);
 	else
 		printf("GID=%u ", DIP(dp, di_gid));
 
