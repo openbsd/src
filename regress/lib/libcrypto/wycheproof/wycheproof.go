@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.53 2018/09/15 22:09:08 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.54 2018/09/16 11:45:08 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -449,7 +449,7 @@ func runAesCbcPkcs5TestGroup(algorithm string, wtg *wycheproofTestGroupAesCbcPkc
 	return success
 }
 
-func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
+func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	var ctrlSetIVLen C.int
 	var ctrlSetTag C.int
 	var ctrlGetTag C.int
@@ -582,7 +582,7 @@ func checkAesCcmOrGcm(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, ke
 	return success
 }
 
-func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, wt *wycheproofTestAead) bool {
+func runAesAeadTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, wt *wycheproofTestAead) bool {
 	key, err := hex.DecodeString(wt.Key)
 	if err != nil {
 		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
@@ -634,8 +634,8 @@ func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEA
 		tag = append(tag, 0)
 	}
 
-	openEvp := checkAesCcmOrGcm(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
-	sealEvp := checkAesCcmOrGcm(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	openEvp := checkAesAead(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
+	sealEvp := checkAesAead(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
 	openAead, sealAead := true, true
 	if aead != nil {
@@ -657,7 +657,7 @@ func runAesCcmOrGcmTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEA
 	return openEvp && sealEvp && openAead && sealAead
 }
 
-func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
+func runAesAeadTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
 	var cipher *C.EVP_CIPHER
@@ -701,7 +701,7 @@ func runAesCcmOrGcmTestGroup(algorithm string, wtg *wycheproofTestGroupAead) boo
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runAesCcmOrGcmTest(algorithm, ctx, aead, wt) {
+		if !runAesAeadTest(algorithm, ctx, aead, wt) {
 			success = false
 		}
 	}
@@ -1552,7 +1552,7 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "AES-CCM":
-			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
+			if !runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
 		case "AES-CMAC":
@@ -1560,7 +1560,7 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "AES-GCM":
-			if !runAesCcmOrGcmTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
+			if !runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
 				success = false
 			}
 		case "CHACHA20-POLY1305":
