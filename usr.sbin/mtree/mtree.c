@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.25 2018/09/16 02:41:16 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.26 2018/09/16 12:43:40 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <fts.h>
+#include <grp.h>
+#include <pwd.h>
 #include "mtree.h"
 #include "extern.h"
 
