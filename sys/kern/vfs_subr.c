@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.277 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.278 2018/09/16 11:41:44 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -229,9 +229,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	struct vfsconf *vfsp;
 	struct mount *mp;
 
-	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-		if (!strcmp(vfsp->vfc_name, fstypename))
-			break;
+	vfsp = vfs_byname(fstypename);
 	if (vfsp == NULL)
 		return (ENODEV);
 	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
@@ -1307,10 +1305,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);		/* overloaded */
 
 	if (name[0] != VFS_GENERIC) {
-		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-			if (vfsp->vfc_typenum == name[0])
-				break;
-
+		vfsp = vfs_bytypenum(name[0]);
 		if (vfsp == NULL || vfsp->vfc_vfsops->vfs_sysctl == NULL)
 			return (EOPNOTSUPP);
 
@@ -1326,10 +1321,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (namelen < 3)
 			return (ENOTDIR);	/* overloaded */
 
-		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-			if (vfsp->vfc_typenum == name[2])
-				break;
-
+		vfsp = vfs_bytypenum(name[2]);
 		if (vfsp == NULL)
 			return (EOPNOTSUPP);
 

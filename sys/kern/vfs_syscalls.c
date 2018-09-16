@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.305 2018/09/01 17:02:12 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.306 2018/09/16 11:41:44 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -194,11 +194,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 		vput(vp);
 		goto fail;
 	}
-	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
-		if (!strcmp(vfsp->vfc_name, fstypename))
-			break;
-	}
-
+	vfsp = vfs_byname(fstypename);
 	if (vfsp == NULL) {
 		vput(vp);
 		error = EOPNOTSUPP;

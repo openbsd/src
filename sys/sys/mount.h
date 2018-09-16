@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.138 2018/06/19 13:01:34 helg Exp $	*/
+/*	$OpenBSD: mount.h,v 1.139 2018/09/16 11:41:44 visa Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -602,6 +602,8 @@ int	dounmount(struct mount *, int, struct proc *);
 void	vfsinit(void);
 int	vfs_register(struct vfsconf *);
 int	vfs_unregister(struct vfsconf *);
+struct	vfsconf *vfs_byname(const char *);
+struct	vfsconf *vfs_bytypenum(int);
 #else /* _KERNEL */
 __BEGIN_DECLS
 int	fstatfs(int, struct statfs *);

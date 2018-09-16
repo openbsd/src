@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.39 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.40 2018/09/16 11:41:44 visa Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -178,4 +179,28 @@ vfsinit(void)
 
 	for (i = 0; i < vfsconflistlen; i++)
 		vfs_register(&vfsconflist[i]);
+}
+
+struct vfsconf *
+vfs_byname(const char *name)
+{
+	struct vfsconf *vfsp;
+
+	for (vfsp = vfsconf; vfsp != NULL; vfsp = vfsp->vfc_next) {
+		if (strcmp(vfsp->vfc_name, name) == 0)
+			break;
+	}
+	return vfsp;
+}
+
+struct vfsconf *
+vfs_bytypenum(int typenum)
+{
+	struct vfsconf *vfsp;
+
+	for (vfsp = vfsconf; vfsp != NULL; vfsp = vfsp->vfc_next) {
+		if (vfsp->vfc_typenum == typenum)
+			break;
+	}
+	return vfsp;
 }
