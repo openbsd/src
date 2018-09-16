@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.15 2018/08/05 09:37:05 mestre Exp $	*/
+/*	$OpenBSD: rad.c,v 1.16 2018/09/16 08:53:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -778,7 +778,8 @@ config_clear(struct rad_conf *conf)
 	free(conf);
 }
 
-void mask_prefix(struct in6_addr* in6, int len)
+void
+mask_prefix(struct in6_addr* in6, int len)
 {
 	uint8_t	bitmask[8] = {0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe};
 	int	i, skip;
@@ -788,7 +789,8 @@ void mask_prefix(struct in6_addr* in6, int len)
 
 	skip = len / 8;
 
-	in6->s6_addr[skip] &= bitmask[len % 8];
+	if (skip < 16)
+		in6->s6_addr[skip] &= bitmask[len % 8];
 
 	for (i = skip + 1; i < 16; i++)
 		in6->s6_addr[i] = 0;
