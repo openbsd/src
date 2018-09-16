@@ -657,7 +657,7 @@ bool CFI_Parser<A>::parseInstructions(A &addressSpace, pint_t instructions,
          results->savedRegisters[reg].location = kRegisterInCFA;
        results->savedRegisters[reg].value = (reg - 16) * sizeof(pint_t);
       }
-      _LIBUNWIND_LOG0("DW_CGA_GNU_window_save");
+      _LIBUNWIND_TRACE_DWARF("DW_CFA_GNU_window_save");
       break;
     case DW_CFA_GNU_args_size:
       length = addressSpace.getULEB128(p, instructionsEnd);
