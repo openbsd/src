@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.110 2018/09/08 10:05:07 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.111 2018/09/17 12:16:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -217,9 +217,6 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 		default:
 			fatalx("bad value for relay->tls: %d", relay->tls);
 	}
-
-	if (relay->flags & RELAY_BACKUP)
-		s->flags &= ~MTA_FORCE_PLAIN;
 
 	log_debug("debug: mta: %p: spawned for relay %s", s,
 	    mta_relay_to_text(relay));

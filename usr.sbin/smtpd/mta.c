@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.223 2018/09/08 10:05:07 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.224 2018/09/17 12:16:27 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1720,17 +1720,17 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 	key.helotable = dispatcher->u.remote.helo_source;
 	key.heloname = dispatcher->u.remote.helo;
 
-	if (dispatcher->u.remote.backup) {
-		key.backupname = dispatcher->u.remote.backupmx;
-		if (key.backupname == NULL)
-			key.backupname = e->smtpname;
-		key.domain = mta_domain(e->dest.domain, 0);
-		key.flags |= RELAY_BACKUP;
-	} else if (relayh->hostname[0]) {
+	if (relayh->hostname[0]) {
 		key.domain = mta_domain(relayh->hostname, 1);
 		key.flags |= RELAY_MX;
-	} else {
+	}
+	else {
 		key.domain = mta_domain(e->dest.domain, 0);
+		if (dispatcher->u.remote.backup) {
+			key.backupname = dispatcher->u.remote.backupmx;
+			if (key.backupname == NULL)
+				key.backupname = e->smtpname;
+		}
 	}
 
 	key.tls = relayh->tls;
