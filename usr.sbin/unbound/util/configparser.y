@@ -142,6 +142,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_VIEW_FIRST VAR_SERVE_EXPIRED VAR_FAKE_DSA VAR_FAKE_SHA1
 %token VAR_LOG_IDENTITY VAR_HIDE_TRUSTANCHOR VAR_TRUST_ANCHOR_SIGNALING
 %token VAR_AGGRESSIVE_NSEC VAR_USE_SYSTEMD VAR_SHM_ENABLE VAR_SHM_KEY
+%token VAR_ROOT_KEY_SENTINEL
 %token VAR_DNSCRYPT VAR_DNSCRYPT_ENABLE VAR_DNSCRYPT_PORT VAR_DNSCRYPT_PROVIDER
 %token VAR_DNSCRYPT_SECRET_KEY VAR_DNSCRYPT_PROVIDER_CERT
 %token VAR_DNSCRYPT_PROVIDER_CERT_ROTATED
@@ -152,9 +153,11 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_IPSECMOD_ENABLED VAR_IPSECMOD_HOOK VAR_IPSECMOD_IGNORE_BOGUS
 %token VAR_IPSECMOD_MAX_TTL VAR_IPSECMOD_WHITELIST VAR_IPSECMOD_STRICT
 %token VAR_CACHEDB VAR_CACHEDB_BACKEND VAR_CACHEDB_SECRETSEED
+%token VAR_CACHEDB_REDISHOST VAR_CACHEDB_REDISPORT VAR_CACHEDB_REDISTIMEOUT
 %token VAR_UDP_UPSTREAM_WITHOUT_DOWNSTREAM VAR_FOR_UPSTREAM
 %token VAR_AUTH_ZONE VAR_ZONEFILE VAR_MASTER VAR_URL VAR_FOR_DOWNSTREAM
-%token VAR_FALLBACK_ENABLED
+%token VAR_FALLBACK_ENABLED VAR_TLS_ADDITIONAL_PORT VAR_LOW_RTT VAR_LOW_RTT_PERMIL
+%token VAR_ALLOW_NOTIFY VAR_TLS_WIN_CERT
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -240,11 +243,13 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_response_ip_tag | server_response_ip | server_response_ip_data |
 	server_shm_enable | server_shm_key | server_fake_sha1 |
 	server_hide_trustanchor | server_trust_anchor_signaling |
+	server_root_key_sentinel |
 	server_ipsecmod_enabled | server_ipsecmod_hook |
 	server_ipsecmod_ignore_bogus | server_ipsecmod_max_ttl |
 	server_ipsecmod_whitelist | server_ipsecmod_strict |
 	server_udp_upstream_without_downstream | server_aggressive_nsec |
-	server_tls_cert_bundle
+	server_tls_cert_bundle | server_tls_additional_port | server_low_rtt |
+	server_low_rtt_permil | server_tls_win_cert
 	;
 stubstart: VAR_STUB_ZONE
 	{
@@ -318,7 +323,8 @@ authstart: VAR_AUTH_ZONE
 contents_auth: contents_auth content_auth 
 	| ;
 content_auth: auth_name | auth_zonefile | auth_master | auth_url |
-	auth_for_downstream | auth_for_upstream | auth_fallback_enabled
+	auth_for_downstream | auth_for_upstream | auth_fallback_enabled |
+	auth_allow_notify
 	;
 server_num_threads: VAR_NUM_THREADS STRING_ARG 
 	{ 
@@ -682,6 +688,23 @@ server_tls_cert_bundle: VAR_TLS_CERT_BUNDLE STRING_ARG
 		cfg_parser->cfg->tls_cert_bundle = $2;
 	}
 	;
+server_tls_win_cert: VAR_TLS_WIN_CERT STRING_ARG
+	{
+		OUTYY(("P(server_tls_win_cert:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->cfg->tls_win_cert = (strcmp($2, "yes")==0);
+		free($2);
+	}
+	;
+server_tls_additional_port: VAR_TLS_ADDITIONAL_PORT STRING_ARG
+	{
+		OUTYY(("P(server_tls_additional_port:%s)\n", $2));
+		if(!cfg_strlist_insert(&cfg_parser->cfg->tls_additional_port,
+			$2))
+			yyerror("out of memory");
+	}
+	;
 server_use_systemd: VAR_USE_SYSTEMD STRING_ARG
 	{
 		OUTYY(("P(server_use_systemd:%s)\n", $2));
@@ -855,6 +878,17 @@ server_trust_anchor_signaling: VAR_TRUST_ANCHOR_SIGNALING STRING_ARG
 			yyerror("expected yes or no.");
 		else
 			cfg_parser->cfg->trust_anchor_signaling =
+				(strcmp($2, "yes")==0);
+		free($2);
+	}
+	;
+server_root_key_sentinel: VAR_ROOT_KEY_SENTINEL STRING_ARG
+	{
+		OUTYY(("P(server_root_key_sentinel:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else
+			cfg_parser->cfg->root_key_sentinel =
 				(strcmp($2, "yes")==0);
 		free($2);
 	}
@@ -1280,11 +1314,12 @@ server_access_control: VAR_ACCESS_CONTROL STRING_ARG STRING_ARG
 		if(strcmp($3, "deny")!=0 && strcmp($3, "refuse")!=0 &&
 			strcmp($3, "deny_non_local")!=0 &&
 			strcmp($3, "refuse_non_local")!=0 &&
+			strcmp($3, "allow_setrd")!=0 && 
 			strcmp($3, "allow")!=0 && 
 			strcmp($3, "allow_snoop")!=0) {
 			yyerror("expected deny, refuse, deny_non_local, "
-				"refuse_non_local, allow or allow_snoop "
-				"in access control action");
+				"refuse_non_local, allow, allow_setrd or "
+				"allow_snoop in access control action");
 		} else {
 			if(!cfg_str2list_insert(&cfg_parser->cfg->acls, $2, $3))
 				fatal_exit("out of memory adding acl");
@@ -1851,6 +1886,24 @@ server_ratelimit_factor: VAR_RATELIMIT_FACTOR STRING_ARG
 		free($2);
 	}
 	;
+server_low_rtt: VAR_LOW_RTT STRING_ARG 
+	{ 
+		OUTYY(("P(server_low_rtt:%s)\n", $2)); 
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("number expected");
+		else cfg_parser->cfg->low_rtt = atoi($2);
+		free($2);
+	}
+	;
+server_low_rtt_permil: VAR_LOW_RTT_PERMIL STRING_ARG 
+	{ 
+		OUTYY(("P(server_low_rtt_permil:%s)\n", $2)); 
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("number expected");
+		else cfg_parser->cfg->low_rtt_permil = atoi($2);
+		free($2);
+	}
+	;
 server_qname_minimisation: VAR_QNAME_MINIMISATION STRING_ARG
 	{
 		OUTYY(("P(server_qname_minimisation:%s)\n", $2));
@@ -2072,6 +2125,14 @@ auth_url: VAR_URL STRING_ARG
 			yyerror("out of memory");
 	}
 	;
+auth_allow_notify: VAR_ALLOW_NOTIFY STRING_ARG
+	{
+		OUTYY(("P(allow-notify:%s)\n", $2));
+		if(!cfg_strlist_insert(&cfg_parser->cfg->auths->allow_notify,
+			$2))
+			yyerror("out of memory");
+	}
+	;
 auth_for_downstream: VAR_FOR_DOWNSTREAM STRING_ARG
 	{
 		OUTYY(("P(for-downstream:%s)\n", $2));
@@ -2226,17 +2287,14 @@ rc_control_port: VAR_CONTROL_PORT STRING_ARG
 rc_control_interface: VAR_CONTROL_INTERFACE STRING_ARG
 	{
 		OUTYY(("P(control_interface:%s)\n", $2));
-		if(!cfg_strlist_insert(&cfg_parser->cfg->control_ifs, $2))
+		if(!cfg_strlist_append(&cfg_parser->cfg->control_ifs, $2))
 			yyerror("out of memory");
 	}
 	;
 rc_control_use_cert: VAR_CONTROL_USE_CERT STRING_ARG
 	{
 		OUTYY(("P(control_use_cert:%s)\n", $2));
-		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
-			yyerror("expected yes or no.");
-		else cfg_parser->cfg->remote_control_use_cert =
-			(strcmp($2, "yes")==0);
+		cfg_parser->cfg->control_use_cert = (strcmp($2, "yes")==0);
 		free($2);
 	}
 	;
@@ -2551,7 +2609,8 @@ cachedbstart: VAR_CACHEDB
 	;
 contents_cachedb: contents_cachedb content_cachedb
 	| ;
-content_cachedb: cachedb_backend_name | cachedb_secret_seed
+content_cachedb: cachedb_backend_name | cachedb_secret_seed |
+	redis_server_host | redis_server_port | redis_timeout
 	;
 cachedb_backend_name: VAR_CACHEDB_BACKEND STRING_ARG
 	{
@@ -2580,6 +2639,46 @@ cachedb_secret_seed: VAR_CACHEDB_SECRETSEED STRING_ARG
 		OUTYY(("P(Compiled without cachedb, ignoring)\n"));
 		free($2);
 	#endif
+	}
+	;
+redis_server_host: VAR_CACHEDB_REDISHOST STRING_ARG
+	{
+	#if defined(USE_CACHEDB) && defined(USE_REDIS)
+		OUTYY(("P(redis_server_host:%s)\n", $2));
+		free(cfg_parser->cfg->redis_server_host);
+		cfg_parser->cfg->redis_server_host = $2;
+	#else
+		OUTYY(("P(Compiled without cachedb or redis, ignoring)\n"));
+		free($2);
+	#endif
+	}
+	;
+redis_server_port: VAR_CACHEDB_REDISPORT STRING_ARG
+	{
+	#if defined(USE_CACHEDB) && defined(USE_REDIS)
+		int port;
+		OUTYY(("P(redis_server_port:%s)\n", $2));
+		port = atoi($2);
+		if(port == 0 || port < 0 || port > 65535)
+			yyerror("valid redis server port number expected");
+		else cfg_parser->cfg->redis_server_port = port;
+	#else
+		OUTYY(("P(Compiled without cachedb or redis, ignoring)\n"));
+	#endif
+		free($2);
+	}
+	;
+redis_timeout: VAR_CACHEDB_REDISTIMEOUT STRING_ARG
+	{
+	#if defined(USE_CACHEDB) && defined(USE_REDIS)
+		OUTYY(("P(redis_timeout:%s)\n", $2));
+		if(atoi($2) == 0)
+			yyerror("redis timeout value expected");
+		else cfg_parser->cfg->redis_timeout = atoi($2);
+	#else
+		OUTYY(("P(Compiled without cachedb or redis, ignoring)\n"));
+	#endif
+		free($2);
 	}
 	;
 %%

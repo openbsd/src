@@ -158,9 +158,9 @@ libworker_setup(struct ub_ctx* ctx, int is_bg, struct ub_event_base* eb)
 		hints_delete(w->env->hints);
 		w->env->hints = NULL;
 	}
-	if(cfg->ssl_upstream) {
+	if(cfg->ssl_upstream || (cfg->tls_cert_bundle && cfg->tls_cert_bundle[0]) || cfg->tls_win_cert) {
 		w->sslctx = connect_sslctx_create(NULL, NULL,
-			cfg->tls_cert_bundle);
+			cfg->tls_cert_bundle, cfg->tls_win_cert);
 		if(!w->sslctx) {
 			/* to make the setup fail after unlock */
 			hints_delete(w->env->hints);
@@ -365,6 +365,7 @@ libworker_dobg(void* arg)
 
 	/* cleanup */
 	m = UB_LIBCMD_QUIT;
+	w->want_quit = 1;
 	tube_remove_bg_listen(w->ctx->qq_pipe);
 	tube_remove_bg_write(w->ctx->rr_pipe);
 	libworker_delete(w);
@@ -512,7 +513,8 @@ libworker_enter_result(struct ub_result* res, sldns_buffer* buf,
 		res->nxdomain = 1;
 	if(msg_security == sec_status_secure)
 		res->secure = 1;
-	if(msg_security == sec_status_bogus)
+	if(msg_security == sec_status_bogus ||
+		msg_security == sec_status_secure_sentinel_fail)
 		res->bogus = 1;
 }
 
@@ -635,7 +637,7 @@ libworker_event_done_cb(void* arg, int rcode, sldns_buffer* buf,
 	enum sec_status s, char* why_bogus)
 {
 	struct ctx_query* q = (struct ctx_query*)arg;
-	ub_event_callback_type cb = (ub_event_callback_type)q->cb;
+	ub_event_callback_type cb = q->cb_event;
 	void* cb_arg = q->cb_arg;
 	int cancelled = q->cancelled;
 
@@ -713,6 +715,10 @@ add_bg_result(struct libworker* w, struct ctx_query* q, sldns_buffer* pkt,
 	uint8_t* msg = NULL;
 	uint32_t len = 0;
 
+	if(w->want_quit) {
+		context_query_delete(q);
+		return;
+	}
 	/* serialize and delete unneeded q */
 	if(w->is_bg_thread) {
 		lock_basic_lock(&w->ctx->cfglock);
@@ -841,7 +847,8 @@ void libworker_alloc_cleanup(void* arg)
 struct outbound_entry* libworker_send_query(struct query_info* qinfo,
 	uint16_t flags, int dnssec, int want_dnssec, int nocaps,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen, int ssl_upstream, struct module_qstate* q)
+	size_t zonelen, int ssl_upstream, char* tls_auth_name,
+	struct module_qstate* q)
 {
 	struct libworker* w = (struct libworker*)q->env->worker;
 	struct outbound_entry* e = (struct outbound_entry*)regional_alloc(
@@ -851,8 +858,8 @@ struct outbound_entry* libworker_send_query(struct query_info* qinfo,
 	e->qstate = q;
 	e->qsent = outnet_serviced_query(w->back, qinfo, flags, dnssec,
 		want_dnssec, nocaps, q->env->cfg->tcp_upstream, ssl_upstream,
-		addr, addrlen, zone, zonelen, q, libworker_handle_service_reply,
-		e, w->back->udp_buff, q->env);
+		tls_auth_name, addr, addrlen, zone, zonelen, q,
+		libworker_handle_service_reply, e, w->back->udp_buff, q->env);
 	if(!e->qsent) {
 		return NULL;
 	}
@@ -972,7 +979,8 @@ struct outbound_entry* worker_send_query(struct query_info* ATTR_UNUSED(qinfo),
 	int ATTR_UNUSED(want_dnssec), int ATTR_UNUSED(nocaps),
 	struct sockaddr_storage* ATTR_UNUSED(addr), socklen_t ATTR_UNUSED(addrlen),
 	uint8_t* ATTR_UNUSED(zone), size_t ATTR_UNUSED(zonelen),
-	int ATTR_UNUSED(ssl_upstream), struct module_qstate* ATTR_UNUSED(q))
+	int ATTR_UNUSED(ssl_upstream), char* ATTR_UNUSED(tls_auth_name),
+	struct module_qstate* ATTR_UNUSED(q))
 {
 	log_assert(0);
 	return 0;

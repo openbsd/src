@@ -86,13 +86,21 @@
 #define AUTH_HTTP_PORT 80
 /* auth https port number */
 #define AUTH_HTTPS_PORT 443
+/* max depth for nested $INCLUDEs */
+#define MAX_INCLUDE_DEPTH 10
 
 /** pick up nextprobe task to start waiting to perform transfer actions */
 static void xfr_set_timeout(struct auth_xfer* xfr, struct module_env* env,
-	int failure);
+	int failure, int lookup_only);
 /** move to sending the probe packets, next if fails. task_probe */
 static void xfr_probe_send_or_end(struct auth_xfer* xfr,
 	struct module_env* env);
+/** pick up probe task with specified(or NULL) destination first,
+ * or transfer task if nothing to probe, or false if already in progress */
+static int xfr_start_probe(struct auth_xfer* xfr, struct module_env* env,
+	struct auth_master* spec);
+/** delete xfer structure (not its tree entry) */
+void auth_xfer_delete(struct auth_xfer* xfr);
 
 /** create new dns_msg */
 static struct dns_msg*
@@ -1437,11 +1445,13 @@ az_remove_rr_decompress(struct auth_zone* z, uint8_t* pkt, size_t pktlen,
  * @param state: parse state with $ORIGIN, $TTL and 'prev-dname' and so on,
  *	that is kept between includes.
  *	The lineno is set at 1 and then increased by the function.
+ * @param fname: file name.
+ * @param depth: recursion depth for includes
  * returns false on failure, has printed an error message
  */
 static int
 az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
-	struct sldns_file_parse_state* state)
+	struct sldns_file_parse_state* state, char* fname, int depth)
 {
 	size_t rr_len, dname_len;
 	int status;
@@ -1459,6 +1469,11 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 				FILE* inc;
 				int lineno_orig = state->lineno;
 				char* incfile = (char*)rr + 8;
+				if(depth > MAX_INCLUDE_DEPTH) {
+					log_err("%s:%d max include depth"
+					  "exceeded", fname, state->lineno);
+					return 0;
+				}
 				/* skip spaces */
 				while(*incfile == ' ' || *incfile == '\t')
 					incfile++;
@@ -1480,11 +1495,12 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 				}
 				/* recurse read that file now */
 				if(!az_parse_file(z, inc, rr, rrbuflen,
-					state)) {
+					state, incfile, depth+1)) {
 					log_err("%s:%d cannot parse include "
-						"file %s", z->zonefile,
+						"file %s", fname,
 						lineno_orig, incfile);
 					fclose(inc);
+					free(incfile);
 					return 0;
 				}
 				fclose(inc);
@@ -1496,7 +1512,7 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 			continue;
 		}
 		if(status != 0) {
-			log_err("parse error %s %d:%d: %s", z->zonefile,
+			log_err("parse error %s %d:%d: %s", fname,
 				state->lineno, LDNS_WIREPARSE_OFFSET(status),
 				sldns_get_errorstr_parse(status));
 			return 0;
@@ -1511,7 +1527,7 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 			sldns_wire2str_type_buf(sldns_wirerr_get_type(rr,
 				rr_len, dname_len), buf, sizeof(buf));
 			log_err("%s:%d cannot insert RR of type %s",
-				z->zonefile, state->lineno, buf);
+				fname, state->lineno, buf);
 			return 0;
 		}
 	}
@@ -1546,6 +1562,11 @@ auth_zone_read_zonefile(struct auth_zone* z)
 		free(n);
 		return 0;
 	}
+
+	/* clear the data tree */
+	traverse_postorder(&z->data, auth_data_del, NULL);
+	rbtree_init(&z->data, &auth_data_cmp);
+
 	memset(&state, 0, sizeof(state));
 	/* default TTL to 3600 */
 	state.default_ttl = 3600;
@@ -1555,7 +1576,7 @@ auth_zone_read_zonefile(struct auth_zone* z)
 		state.origin_len = z->namelen;
 	}
 	/* parse the (toplevel) file */
-	if(!az_parse_file(z, in, rr, sizeof(rr), &state)) {
+	if(!az_parse_file(z, in, rr, sizeof(rr), &state, z->zonefile, 0)) {
 		char* n = sldns_wire2str_dname(z->name, z->namelen);
 		log_err("error parsing zonefile %s for %s",
 			z->zonefile, n?n:"error");
@@ -1569,9 +1590,9 @@ auth_zone_read_zonefile(struct auth_zone* z)
 
 /** write buffer to file and check return codes */
 static int
-write_out(FILE* out, const char* str)
+write_out(FILE* out, const char* str, size_t len)
 {
-	size_t r, len = strlen(str);
+	size_t r;
 	if(len == 0)
 		return 1;
 	r = fwrite(str, 1, len, out);
@@ -1634,7 +1655,7 @@ auth_zone_write_rrset(struct auth_zone* z, struct auth_data* node,
 			verbose(VERB_ALGO, "failed to rr2str rr %d", (int)i);
 			continue;
 		}
-		if(!write_out(out, buf))
+		if(!write_out(out, buf, strlen(buf)))
 			return 0;
 	}
 	return 1;
@@ -1700,6 +1721,24 @@ auth_zones_read_zones(struct auth_zones* az)
 		lock_rw_unlock(&z->lock);
 	}
 	lock_rw_unlock(&az->lock);
+	return 1;
+}
+
+/** find serial number of zone or false if none */
+int
+auth_zone_get_serial(struct auth_zone* z, uint32_t* serial)
+{
+	struct auth_data* apex;
+	struct auth_rrset* soa;
+	struct packed_rrset_data* d;
+	apex = az_find_name(z, z->name, z->namelen);
+	if(!apex) return 0;
+	soa = az_domain_rrset(apex, LDNS_RR_TYPE_SOA);
+	if(!soa || soa->data->count==0)
+		return 0; /* no RRset or no RRs in rrset */
+	if(soa->data->rr_len[0] < 2+4*5) return 0; /* SOA too short */
+	d = soa->data;
+	*serial = sldns_read_uint32(d->rr_data[0]+(d->rr_len[0]-20));
 	return 1;
 }
 
@@ -1808,6 +1847,7 @@ auth_zones_cfg(struct auth_zones* az, struct config_auth* c)
 	lock_rw_unlock(&az->lock);
 
 	/* set options */
+	z->zone_deleted = 0;
 	if(!auth_zone_set_zonefile(z, c->zonefile)) {
 		if(x) {
 			lock_basic_unlock(&x->lock);
@@ -1840,10 +1880,65 @@ auth_zones_cfg(struct auth_zones* az, struct config_auth* c)
 	return 1;
 }
 
+/** set all auth zones deleted, then in auth_zones_cfg, it marks them
+ * as nondeleted (if they are still in the config), and then later
+ * we can find deleted zones */
+static void
+az_setall_deleted(struct auth_zones* az)
+{
+	struct auth_zone* z;
+	lock_rw_wrlock(&az->lock);
+	RBTREE_FOR(z, struct auth_zone*, &az->ztree) {
+		lock_rw_wrlock(&z->lock);
+		z->zone_deleted = 1;
+		lock_rw_unlock(&z->lock);
+	}
+	lock_rw_unlock(&az->lock);
+}
+
+/** find zones that are marked deleted and delete them.
+ * This is called from apply_cfg, and there are no threads and no
+ * workers, so the xfr can just be deleted. */
+static void
+az_delete_deleted_zones(struct auth_zones* az)
+{
+	struct auth_zone* z;
+	struct auth_zone* delete_list = NULL, *next;
+	struct auth_xfer* xfr;
+	lock_rw_wrlock(&az->lock);
+	RBTREE_FOR(z, struct auth_zone*, &az->ztree) {
+		lock_rw_wrlock(&z->lock);
+		if(z->zone_deleted) {
+			/* we cannot alter the rbtree right now, but
+			 * we can put it on a linked list and then
+			 * delete it */
+			z->delete_next = delete_list;
+			delete_list = z;
+		}
+		lock_rw_unlock(&z->lock);
+	}
+	/* now we are out of the tree loop and we can loop and delete
+	 * the zones */
+	z = delete_list;
+	while(z) {
+		next = z->delete_next;
+		xfr = auth_xfer_find(az, z->name, z->namelen, z->dclass);
+		if(xfr) {
+			(void)rbtree_delete(&az->xtree, &xfr->node);
+			auth_xfer_delete(xfr);
+		}
+		(void)rbtree_delete(&az->ztree, &z->node);
+		auth_zone_delete(z);
+		z = next;
+	}
+	lock_rw_unlock(&az->lock);
+}
+
 int auth_zones_apply_cfg(struct auth_zones* az, struct config_file* cfg,
 	int setup)
 {
 	struct config_auth* p;
+	az_setall_deleted(az);
 	for(p = cfg->auths; p; p = p->next) {
 		if(!p->name || p->name[0] == 0) {
 			log_warn("auth-zone without a name, skipped");
@@ -1854,6 +1949,7 @@ int auth_zones_apply_cfg(struct auth_zones* az, struct config_file* cfg,
 			return 0;
 		}
 	}
+	az_delete_deleted_zones(az);
 	if(!auth_zones_read_zones(az))
 		return 0;
 	if(setup) {
@@ -1937,6 +2033,7 @@ auth_xfer_delete(struct auth_xfer* xfr)
 		}
 		free(xfr->task_transfer);
 	}
+	auth_free_masters(xfr->allow_notify_list);
 	free(xfr);
 }
 
@@ -3153,10 +3250,13 @@ int auth_zones_answer(struct auth_zones* az, struct module_env* env,
 	/* answer it from zone z */
 	r = auth_zone_generate_answer(z, qinfo, temp, &msg, &fallback);
 	lock_rw_unlock(&z->lock);
-	if(fallback) {
+	if(!r && fallback) {
 		/* fallback to regular answering (recursive) */
 		return 0;
 	}
+	lock_rw_wrlock(&az->lock);
+	az->num_query_down++;
+	lock_rw_unlock(&az->lock);
 
 	/* encode answer */
 	if(!r)
@@ -3184,6 +3284,190 @@ int auth_zones_can_fallback(struct auth_zones* az, uint8_t* nm, size_t nmlen,
 	r = z->fallback_enabled || (!z->for_upstream);
 	lock_rw_unlock(&z->lock);
 	return r;
+}
+
+int
+auth_zone_parse_notify_serial(sldns_buffer* pkt, uint32_t *serial)
+{
+	struct query_info q;
+	uint16_t rdlen;
+	memset(&q, 0, sizeof(q));
+	sldns_buffer_set_position(pkt, 0);
+	if(!query_info_parse(&q, pkt)) return 0;
+	if(LDNS_ANCOUNT(sldns_buffer_begin(pkt)) == 0) return 0;
+	/* skip name of RR in answer section */
+	if(sldns_buffer_remaining(pkt) < 1) return 0;
+	if(pkt_dname_len(pkt) == 0) return 0;
+	/* check type */
+	if(sldns_buffer_remaining(pkt) < 10 /* type,class,ttl,rdatalen*/)
+		return 0;
+	if(sldns_buffer_read_u16(pkt) != LDNS_RR_TYPE_SOA) return 0;
+	sldns_buffer_skip(pkt, 2); /* class */
+	sldns_buffer_skip(pkt, 4); /* ttl */
+	rdlen = sldns_buffer_read_u16(pkt); /* rdatalen */
+	if(sldns_buffer_remaining(pkt) < rdlen) return 0;
+	if(rdlen < 22) return 0; /* bad soa length */
+	sldns_buffer_skip(pkt, (ssize_t)(rdlen-20));
+	*serial = sldns_buffer_read_u32(pkt);
+	/* return true when has serial in answer section */
+	return 1;
+}
+
+/** see if addr appears in the list */
+static int
+addr_in_list(struct auth_addr* list, struct sockaddr_storage* addr,
+	socklen_t addrlen)
+{
+	struct auth_addr* p;
+	for(p=list; p; p=p->next) {
+		if(sockaddr_cmp_addr(addr, addrlen, &p->addr, p->addrlen)==0)
+			return 1;
+	}
+	return 0;
+}
+
+/** check if an address matches a master specification (or one of its
+ * addresses in the addr list) */
+static int
+addr_matches_master(struct auth_master* master, struct sockaddr_storage* addr,
+	socklen_t addrlen, struct auth_master** fromhost)
+{
+	struct sockaddr_storage a;
+	socklen_t alen = 0;
+	int net = 0;
+	if(addr_in_list(master->list, addr, addrlen)) {
+		*fromhost = master;
+		return 1;	
+	}
+	/* compare address (but not port number, that is the destination
+	 * port of the master, the port number of the received notify is
+	 * allowed to by any port on that master) */
+	if(extstrtoaddr(master->host, &a, &alen) &&
+		sockaddr_cmp_addr(addr, addrlen, &a, alen)==0) {
+		*fromhost = master;
+		return 1;
+	}
+	/* prefixes, addr/len, like 10.0.0.0/8 */
+	/* not http and has a / and there is one / */
+	if(master->allow_notify && !master->http &&
+		strchr(master->host, '/') != NULL &&
+		strchr(master->host, '/') == strrchr(master->host, '/') &&
+		netblockstrtoaddr(master->host, UNBOUND_DNS_PORT, &a, &alen,
+		&net) && alen == addrlen) {
+		if(addr_in_common(addr, (addr_is_ip6(addr, addrlen)?128:32),
+			&a, net, alen) >= net) {
+			*fromhost = NULL; /* prefix does not have destination
+				to send the probe or transfer with */
+			return 1; /* matches the netblock */
+		}
+	}
+	return 0;
+}
+
+/** check access list for notifies */
+static int
+az_xfr_allowed_notify(struct auth_xfer* xfr, struct sockaddr_storage* addr,
+	socklen_t addrlen, struct auth_master** fromhost)
+{
+	struct auth_master* p;
+	for(p=xfr->allow_notify_list; p; p=p->next) {
+		if(addr_matches_master(p, addr, addrlen, fromhost)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/** see if the serial means the zone has to be updated, i.e. the serial
+ * is newer than the zone serial, or we have no zone */
+static int
+xfr_serial_means_update(struct auth_xfer* xfr, uint32_t serial)
+{
+	if(!xfr->have_zone)
+		return 1; /* no zone, anything is better */
+	if(xfr->zone_expired)
+		return 1; /* expired, the sent serial is better than expired
+			data */
+	if(compare_serial(xfr->serial, serial) < 0)
+		return 1; /* our serial is smaller than the sent serial,
+			the data is newer, fetch it */
+	return 0;
+}
+
+/** note notify serial, updates the notify information in the xfr struct */
+static void
+xfr_note_notify_serial(struct auth_xfer* xfr, int has_serial, uint32_t serial)
+{
+	if(xfr->notify_received && xfr->notify_has_serial && has_serial) {
+		/* see if this serial is newer */
+		if(compare_serial(xfr->notify_serial, serial) < 0)
+			xfr->notify_serial = serial;
+	} else if(xfr->notify_received && xfr->notify_has_serial &&
+		!has_serial) {
+		/* remove serial, we have notify without serial */
+		xfr->notify_has_serial = 0;
+		xfr->notify_serial = 0;
+	} else if(xfr->notify_received && !xfr->notify_has_serial) {
+		/* we already have notify without serial, keep it
+		 * that way; no serial check when current operation
+		 * is done */
+	} else {
+		xfr->notify_received = 1;
+		xfr->notify_has_serial = has_serial;
+		xfr->notify_serial = serial;
+	}
+}
+
+/** process a notify serial, start new probe or note serial. xfr is locked */
+static void
+xfr_process_notify(struct auth_xfer* xfr, struct module_env* env,
+	int has_serial, uint32_t serial, struct auth_master* fromhost)
+{
+	/* if the serial of notify is older than we have, don't fetch
+	 * a zone, we already have it */
+	if(has_serial && !xfr_serial_means_update(xfr, serial)) {
+		lock_basic_unlock(&xfr->lock);
+		return;
+	}
+	/* start new probe with this addr src, or note serial */
+	if(!xfr_start_probe(xfr, env, fromhost)) {
+		/* not started because already in progress, note the serial */
+		xfr_note_notify_serial(xfr, has_serial, serial);
+		lock_basic_unlock(&xfr->lock);
+	}
+	/* successful end of start_probe unlocked xfr->lock */
+}
+
+int auth_zones_notify(struct auth_zones* az, struct module_env* env,
+	uint8_t* nm, size_t nmlen, uint16_t dclass,
+	struct sockaddr_storage* addr, socklen_t addrlen, int has_serial,
+	uint32_t serial, int* refused)
+{
+	struct auth_xfer* xfr;
+	struct auth_master* fromhost = NULL;
+	/* see which zone this is */
+	lock_rw_rdlock(&az->lock);
+	xfr = auth_xfer_find(az, nm, nmlen, dclass);
+	if(!xfr) {
+		lock_rw_unlock(&az->lock);
+		/* no such zone, refuse the notify */
+		*refused = 1;
+		return 0;
+	}
+	lock_basic_lock(&xfr->lock);
+	lock_rw_unlock(&az->lock);
+	
+	/* check access list for notifies */
+	if(!az_xfr_allowed_notify(xfr, addr, addrlen, &fromhost)) {
+		lock_basic_unlock(&xfr->lock);
+		/* notify not allowed, refuse the notify */
+		*refused = 1;
+		return 0;
+	}
+
+	/* process the notify */
+	xfr_process_notify(xfr, env, has_serial, serial, fromhost);
+	return 1;
 }
 
 /** set a zone expired */
@@ -3237,6 +3521,93 @@ xfr_masterlist_free_addrs(struct auth_master* list)
 			m->list = NULL;
 		}
 	}
+}
+
+/** copy a list of auth_addrs */
+static struct auth_addr*
+auth_addr_list_copy(struct auth_addr* source)
+{
+	struct auth_addr* list = NULL, *last = NULL;
+	struct auth_addr* p;
+	for(p=source; p; p=p->next) {
+		struct auth_addr* a = (struct auth_addr*)memdup(p, sizeof(*p));
+		if(!a) {
+			log_err("malloc failure");
+			auth_free_master_addrs(list);
+			return NULL;
+		}
+		a->next = NULL;
+		if(last) last->next = a;
+		if(!list) list = a;
+		last = a;
+	}
+	return list;
+}
+
+/** copy a master to a new structure, NULL on alloc failure */
+static struct auth_master*
+auth_master_copy(struct auth_master* o)
+{
+	struct auth_master* m;
+	if(!o) return NULL;
+	m = (struct auth_master*)memdup(o, sizeof(*o));
+	if(!m) {
+		log_err("malloc failure");
+		return NULL;
+	}
+	m->next = NULL;
+	if(m->host) {
+		m->host = strdup(m->host);
+		if(!m->host) {
+			free(m);
+			log_err("malloc failure");
+			return NULL;
+		}
+	}
+	if(m->file) {
+		m->file = strdup(m->file);
+		if(!m->file) {
+			free(m->host);
+			free(m);
+			log_err("malloc failure");
+			return NULL;
+		}
+	}
+	if(m->list) {
+		m->list = auth_addr_list_copy(m->list);
+		if(!m->list) {
+			free(m->file);
+			free(m->host);
+			free(m);
+			return NULL;
+		}
+	}
+	return m;
+}
+
+/** copy the master addresses from the task_probe lookups to the allow_notify
+ * list of masters */
+static void
+probe_copy_masters_for_allow_notify(struct auth_xfer* xfr)
+{
+	struct auth_master* list = NULL, *last = NULL;
+	struct auth_master* p;
+	/* build up new list with copies */
+	for(p = xfr->task_probe->masters; p; p=p->next) {
+		struct auth_master* m = auth_master_copy(p);
+		if(!m) {
+			auth_free_masters(list);
+			/* failed because of malloc failure, use old list */
+			return;
+		}
+		m->next = NULL;
+		if(last) last->next = m;
+		if(!list) list = m;
+		last = m;
+	}
+	/* success, replace list */
+	auth_free_masters(xfr->allow_notify_list);
+	xfr->allow_notify_list = list;
 }
 
 /** start the lookups for task_transfer */
@@ -3400,11 +3771,19 @@ xfr_transfer_nextmaster(struct auth_xfer* xfr)
 	if(xfr->task_transfer->scan_specific) {
 		xfr->task_transfer->scan_specific = NULL;
 		xfr->task_transfer->scan_target = xfr->task_transfer->masters;
+		if(xfr->task_transfer->scan_target && xfr->task_transfer->
+			scan_target->list)
+			xfr->task_transfer->scan_addr =
+				xfr->task_transfer->scan_target->list;
 		return;
 	}
 	if(!xfr->task_transfer->scan_target)
 		return;
 	xfr->task_transfer->scan_target = xfr->task_transfer->scan_target->next;
+	if(xfr->task_transfer->scan_target && xfr->task_transfer->
+		scan_target->list)
+		xfr->task_transfer->scan_addr =
+			xfr->task_transfer->scan_target->list;
 	return;
 }
 
@@ -3422,11 +3801,19 @@ xfr_probe_nextmaster(struct auth_xfer* xfr)
 	if(xfr->task_probe->scan_specific) {
 		xfr->task_probe->scan_specific = NULL;
 		xfr->task_probe->scan_target = xfr->task_probe->masters;
+		if(xfr->task_probe->scan_target && xfr->task_probe->
+			scan_target->list)
+			xfr->task_probe->scan_addr =
+				xfr->task_probe->scan_target->list;
 		return;
 	}
 	if(!xfr->task_probe->scan_target)
 		return;
 	xfr->task_probe->scan_target = xfr->task_probe->scan_target->next;
+	if(xfr->task_probe->scan_target && xfr->task_probe->
+		scan_target->list)
+		xfr->task_probe->scan_addr =
+			xfr->task_probe->scan_target->list;
 	return;
 }
 
@@ -3579,22 +3966,6 @@ check_packet_ok(sldns_buffer* pkt, uint16_t qtype, struct auth_xfer* xfr,
 		*serial = sldns_buffer_read_u32(pkt);
 	}
 	return 1;
-}
-
-/** see if the serial means the zone has to be updated, i.e. the serial
- * is newer than the zone serial, or we have no zone */
-static int
-xfr_serial_means_update(struct auth_xfer* xfr, uint32_t serial)
-{
-	if(!xfr->have_zone)
-		return 1; /* no zone, anything is better */
-	if(xfr->zone_expired)
-		return 1; /* expired, the sent serial is better than expired
-			data */
-	if(compare_serial(xfr->serial, serial) < 0)
-		return 1; /* our serial is smaller than the sent serial,
-			the data is newer, fetch it */
-	return 0;
 }
 
 /** read one line from chunks into buffer at current position */
@@ -3793,8 +4164,8 @@ chunkline_non_comment_RR(struct auth_chunk** chunk, size_t* chunk_pos,
 	return 0;
 }
 
-/** check syntax of chunklist zonefile, parse SOA RR, return false on
- * failure and return a string in the scratch buffer (SOA RR string)
+/** check syntax of chunklist zonefile, parse first RR, return false on
+ * failure and return a string in the scratch buffer (first RR string)
  * on failure. */
 static int
 http_zonefile_syntax_check(struct auth_xfer* xfr, sldns_buffer* buf)
@@ -3822,24 +4193,9 @@ http_zonefile_syntax_check(struct auth_xfer* xfr, sldns_buffer* buf)
 		pstate.origin_len?pstate.origin:NULL, pstate.origin_len,
 		pstate.prev_rr_len?pstate.prev_rr:NULL, pstate.prev_rr_len);
 	if(e != 0) {
-		log_err("parse failure on SOA RR[%d]: %s",
+		log_err("parse failure on first RR[%d]: %s",
 			LDNS_WIREPARSE_OFFSET(e),
 			sldns_get_errorstr_parse(LDNS_WIREPARSE_ERROR(e)));
-		return 0;
-	}
-	/* check that name is correct */
-	if(query_dname_compare(rr, xfr->name) != 0) {
-		char nm[255+1], zname[255+1];
-		dname_str(rr, nm);
-		dname_str(xfr->name, zname);
-		log_err("parse failure for %s, SOA RR for %s found instead",
-			zname, nm);
-		return 0;
-	}
-	/* check that type is SOA */
-	if(sldns_wirerr_get_type(rr, rr_len, dname_len) != LDNS_RR_TYPE_SOA) {
-		log_err("parse failure: first record in downloaded zonefile "
-			"not of type SOA");
 		return 0;
 	}
 	/* check that class is correct */
@@ -3870,6 +4226,11 @@ chunkline_newline_removal(sldns_buffer* buf)
 	size_t i, end=sldns_buffer_limit(buf);
 	for(i=0; i<end; i++) {
 		char c = (char)sldns_buffer_read_u8_at(buf, i);
+		if(c == '\n' && i==end-1) {
+			sldns_buffer_write_u8_at(buf, i, 0);
+			sldns_buffer_set_limit(buf, end-1);
+			return;
+		}
 		if(c == '\n')
 			sldns_buffer_write_u8_at(buf, i, (uint8_t)' ');
 	}
@@ -4365,6 +4726,28 @@ apply_http(struct auth_xfer* xfr, struct auth_zone* z,
 	return 1;
 }
 
+/** write http chunks to zonefile to create downloaded file */
+static int
+auth_zone_write_chunks(struct auth_xfer* xfr, const char* fname)
+{
+	FILE* out;
+	struct auth_chunk* p;
+	out = fopen(fname, "w");
+	if(!out) {
+		log_err("could not open %s: %s", fname, strerror(errno));
+		return 0;
+	}
+	for(p = xfr->task_transfer->chunks_first; p ; p = p->next) {
+		if(!write_out(out, (char*)p->data, p->len)) {
+			log_err("could not write http download to %s", fname);
+			fclose(out);
+			return 0;
+		}
+	}
+	fclose(out);
+	return 1;
+}
+
 /** write to zonefile after zone has been updated */
 static void
 xfr_write_after_update(struct auth_xfer* xfr, struct module_env* env)
@@ -4403,7 +4786,13 @@ xfr_write_after_update(struct auth_xfer* xfr, struct module_env* env)
 	}
 	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp%u", z->zonefile,
 		(unsigned)getpid());
-	if(!auth_zone_write_file(z, tmpfile)) {
+	if(xfr->task_transfer->master->http) {
+		/* use the stored chunk list to write them */
+		if(!auth_zone_write_chunks(xfr, tmpfile)) {
+			unlink(tmpfile);
+			lock_rw_unlock(&z->lock);
+		}
+	} else if(!auth_zone_write_file(z, tmpfile)) {
 		unlink(tmpfile);
 		lock_rw_unlock(&z->lock);
 		return;
@@ -4522,6 +4911,9 @@ xfr_transfer_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 		/* not needed, host is in IP addr format */
 		return 0;
 	}
+	if(master->allow_notify)
+		return 0; /* allow-notifies are not transferred from, no
+		lookup is needed */
 
 	/* use mesh_new_callback to probe for non-addr hosts,
 	 * and then wait for them to be looked up (in cache, or query) */
@@ -4576,6 +4968,7 @@ xfr_transfer_init_fetch(struct auth_xfer* xfr, struct module_env* env)
 	socklen_t addrlen = 0;
 	struct auth_master* master = xfr->task_transfer->master;
 	if(!master) return 0;
+	if(master->allow_notify) return 0; /* only for notify */
 
 	/* get master addr */
 	if(xfr->task_transfer->scan_addr) {
@@ -4680,7 +5073,7 @@ xfr_transfer_nexttarget_or_end(struct auth_xfer* xfr, struct module_env* env)
 	xfr_transfer_disown(xfr);
 
 	/* pick up the nextprobe task and wait */
-	xfr_set_timeout(xfr, env, 1);
+	xfr_set_timeout(xfr, env, 1, 0);
 	lock_basic_unlock(&xfr->lock);
 }
 
@@ -4692,6 +5085,8 @@ xfr_master_add_addrs(struct auth_master* m, struct ub_packed_rrset_key* rrset,
 	size_t i;
 	struct packed_rrset_data* data;
 	if(!m || !rrset) return;
+	if(rrtype != LDNS_RR_TYPE_A && rrtype != LDNS_RR_TYPE_AAAA)
+		return;
 	data = (struct packed_rrset_data*)rrset->entry.data;
 	for(i=0; i<data->count; i++) {
 		struct auth_addr* a;
@@ -5113,8 +5508,30 @@ process_list_end_transfer(struct auth_xfer* xfr, struct module_env* env)
 		/* we fetched the zone, move to wait task */
 		xfr_transfer_disown(xfr);
 
-		/* pick up the nextprobe task and wait (normail wait time) */
-		xfr_set_timeout(xfr, env, 0);
+		if(xfr->notify_received && (!xfr->notify_has_serial ||
+			(xfr->notify_has_serial && 
+			xfr_serial_means_update(xfr, xfr->notify_serial)))) {
+			uint32_t sr = xfr->notify_serial;
+			int has_sr = xfr->notify_has_serial;
+			/* we received a notify while probe/transfer was
+			 * in progress.  start a new probe and transfer */
+			xfr->notify_received = 0;
+			xfr->notify_has_serial = 0;
+			xfr->notify_serial = 0;
+			if(!xfr_start_probe(xfr, env, NULL)) {
+				/* if we couldn't start it, already in
+				 * progress; restore notify serial,
+				 * while xfr still locked */
+				xfr->notify_received = 1;
+				xfr->notify_has_serial = has_sr;
+				xfr->notify_serial = sr;
+				lock_basic_unlock(&xfr->lock);
+			}
+			return;
+		} else {
+			/* pick up the nextprobe task and wait (normail wait time) */
+			xfr_set_timeout(xfr, env, 0, 0);
+		}
 		lock_basic_unlock(&xfr->lock);
 		return;
 	}
@@ -5305,6 +5722,9 @@ xfr_probe_send_probe(struct auth_xfer* xfr, struct module_env* env,
 	/* pick master */
 	struct auth_master* master = xfr_probe_current_master(xfr);
 	if(!master) return 0;
+	if(master->allow_notify) return 0; /* only for notify */
+	if(master->http) return 0; /* only masters get SOA UDP probe,
+		not urls, if those are in this list */
 
 	/* get master addr */
 	if(xfr->task_probe->scan_addr) {
@@ -5457,7 +5877,7 @@ auth_xfer_probe_udp_callback(struct comm_point* c, void* arg, int err,
 				if(xfr->have_zone)
 					xfr->lease_time = *env->now;
 				if(xfr->task_nextprobe->worker == NULL)
-					xfr_set_timeout(xfr, env, 0);
+					xfr_set_timeout(xfr, env, 0, 0);
 			}
 			/* other tasks are running, we don't do this anymore */
 			xfr_probe_disown(xfr);
@@ -5501,6 +5921,11 @@ xfr_probe_lookup_host(struct auth_xfer* xfr, struct module_env* env)
 	if(extstrtoaddr(master->host, &addr, &addrlen)) {
 		/* not needed, host is in IP addr format */
 		return 0;
+	}
+	if(master->allow_notify && !master->http &&
+		strchr(master->host, '/') != NULL &&
+		strchr(master->host, '/') == strrchr(master->host, '/')) {
+		return 0; /* is IP/prefix format, not something to look up */
 	}
 
 	/* use mesh_new_callback to probe for non-addr hosts,
@@ -5564,6 +5989,17 @@ xfr_probe_send_or_end(struct auth_xfer* xfr, struct module_env* env)
 		}
 		xfr_probe_move_to_next_lookup(xfr, env);
 	}
+	/* probe of list has ended.  Create or refresh the list of of
+	 * allow_notify addrs */
+	probe_copy_masters_for_allow_notify(xfr);
+	if(xfr->task_probe->only_lookup) {
+		/* only wanted lookups for copy, stop probe and start wait */
+		xfr->task_probe->only_lookup = 0;
+		xfr_probe_disown(xfr);
+		xfr_set_timeout(xfr, env, 0, 0);
+		lock_basic_unlock(&xfr->lock);
+		return;
+	}
 
 	/* send probe packets */
 	while(!xfr_probe_end_of_list(xfr)) {
@@ -5581,7 +6017,7 @@ xfr_probe_send_or_end(struct auth_xfer* xfr, struct module_env* env)
 	xfr_probe_disown(xfr);
 
 	/* pick up the nextprobe task and wait */
-	xfr_set_timeout(xfr, env, 1);
+	xfr_set_timeout(xfr, env, 1, 0);
 	lock_basic_unlock(&xfr->lock);
 }
 
@@ -5668,19 +6104,45 @@ auth_xfer_timer(void* arg)
 
 	xfr_nextprobe_disown(xfr);
 
+	if(!xfr_start_probe(xfr, env, NULL)) {
+		/* not started because already in progress */
+		lock_basic_unlock(&xfr->lock);
+	}
+}
+
+/** return true if there are probe (SOA UDP query) targets in the master list*/
+static int
+have_probe_targets(struct auth_master* list)
+{
+	struct auth_master* p;
+	for(p=list; p; p = p->next) {
+		if(!p->allow_notify && p->host)
+			return 1;
+	}
+	return 0;
+}
+
+/** start task_probe if possible, if no masters for probe start task_transfer
+ * returns true if task has been started, and false if the task is already
+ * in progress. */
+static int
+xfr_start_probe(struct auth_xfer* xfr, struct module_env* env,
+	struct auth_master* spec)
+{
 	/* see if we need to start a probe (or maybe it is already in
 	 * progress (due to notify)) */
 	if(xfr->task_probe->worker == NULL) {
-		if(xfr->task_probe->masters == NULL) {
+		if(!have_probe_targets(xfr->task_probe->masters) &&
+			!(xfr->task_probe->only_lookup &&
+			xfr->task_probe->masters != NULL)) {
 			/* useless to pick up task_probe, no masters to
 			 * probe. Instead attempt to pick up task transfer */
 			if(xfr->task_transfer->worker == NULL) {
-				xfr_start_transfer(xfr, env, NULL);
-			} else {
-				/* task transfer already in progress */
-				lock_basic_unlock(&xfr->lock);
+				xfr_start_transfer(xfr, env, spec);
+				return 1;
 			}
-			return;
+			/* task transfer already in progress */
+			return 0;
 		}
 
 		/* pick up the probe task ourselves */
@@ -5689,15 +6151,17 @@ auth_xfer_timer(void* arg)
 		xfr->task_probe->cp = NULL;
 
 		/* start the task */
-		/* this was a timeout, so no specific first master to scan */
-		xfr_probe_start_list(xfr, NULL);
+		/* if this was a timeout, no specific first master to scan */
+		/* otherwise, spec is nonNULL the notified master, scan
+		 * first and also transfer first from it */
+		xfr_probe_start_list(xfr, spec);
 		/* setup to start the lookup of hostnames of masters afresh */
 		xfr_probe_start_lookups(xfr);
 		/* send the probe packet or next send, or end task */
 		xfr_probe_send_or_end(xfr, env);
-	} else {
-		lock_basic_unlock(&xfr->lock);
+		return 1;
 	}
+	return 0;
 }
 
 /** for task_nextprobe.
@@ -5705,10 +6169,11 @@ auth_xfer_timer(void* arg)
  * @param xfr: task structure
  * @param env: module environment, with worker and time.
  * @param failure: set true if timer should be set for failure retry.
+ * @param lookup_only: only perform lookups when timer done, 0 sec timeout
  */
 static void
 xfr_set_timeout(struct auth_xfer* xfr, struct module_env* env,
-	int failure)
+	int failure, int lookup_only)
 {
 	struct timeval tv;
 	log_assert(xfr->task_nextprobe != NULL);
@@ -5718,7 +6183,7 @@ xfr_set_timeout(struct auth_xfer* xfr, struct module_env* env,
 	 * but if expiry is sooner, use that one.
 	 * after a failure, use the retry timer instead. */
 	xfr->task_nextprobe->next_probe = *env->now;
-	if(xfr->lease_time)
+	if(xfr->lease_time && !failure)
 		xfr->task_nextprobe->next_probe = xfr->lease_time;
 	
 	if(!failure) {
@@ -5741,6 +6206,12 @@ xfr_set_timeout(struct auth_xfer* xfr, struct module_env* env,
 		if(failure)
 			xfr->task_nextprobe->next_probe +=
 				xfr->task_nextprobe->backoff;
+		/* put the timer exactly on expiry, if possible */
+		if(xfr->lease_time && xfr->lease_time+xfr->expiry <
+			xfr->task_nextprobe->next_probe &&
+			xfr->lease_time+xfr->expiry > *env->now)
+			xfr->task_nextprobe->next_probe =
+				xfr->lease_time+xfr->expiry;
 	} else {
 		xfr->task_nextprobe->next_probe +=
 			xfr->task_nextprobe->backoff;
@@ -5765,6 +6236,13 @@ xfr_set_timeout(struct auth_xfer* xfr, struct module_env* env,
 		tv.tv_sec = xfr->task_nextprobe->next_probe - 
 			*(xfr->task_nextprobe->env->now);
 	else	tv.tv_sec = 0;
+	if(tv.tv_sec != 0 && lookup_only && xfr->task_probe->masters) {
+		/* don't lookup_only, if lookup timeout is 0 anyway,
+		 * or if we don't have masters to lookup */
+		tv.tv_sec = 0;
+		if(xfr->task_probe && xfr->task_probe->worker == NULL)
+			xfr->task_probe->only_lookup = 1;
+	}
 	if(verbosity >= VERB_ALGO) {
 		char zname[255+1];
 		dname_str(xfr->name, zname);
@@ -5788,8 +6266,9 @@ auth_xfer_pickup_initial(struct auth_zones* az, struct module_env* env)
 		 * notes the start time when the data was acquired */
 		if(x->have_zone)
 			x->lease_time = *env->now;
-		if(x->task_nextprobe && x->task_nextprobe->worker == NULL)
-			xfr_set_timeout(x, env, 0);
+		if(x->task_nextprobe && x->task_nextprobe->worker == NULL) {
+			xfr_set_timeout(x, env, 0, 1);
+		}
 		lock_basic_unlock(&x->lock);
 	}
 	lock_rw_unlock(&az->lock);
@@ -6057,6 +6536,15 @@ xfer_set_masters(struct auth_master** list, struct config_auth* c,
 	for(p = c->masters; p; p = p->next) {
 		m = auth_master_new(&list);
 		m->ixfr = 1; /* this flag is not configurable */
+		m->host = strdup(p->str);
+		if(!m->host) {
+			log_err("malloc failure");
+			return 0;
+		}
+	}
+	for(p = c->allow_notify; p; p = p->next) {
+		m = auth_master_new(&list);
+		m->allow_notify = 1;
 		m->host = strdup(p->str);
 		if(!m->host) {
 			log_err("malloc failure");

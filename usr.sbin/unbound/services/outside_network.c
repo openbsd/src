@@ -364,6 +364,20 @@ outnet_tcp_take_into_use(struct waiting_tcp* w, uint8_t* pkt, size_t pkt_len)
 		comm_point_tcp_win_bio_cb(pend->c, pend->c->ssl);
 #endif
 		pend->c->ssl_shake_state = comm_ssl_shake_write;
+#ifdef HAVE_SSL_SET1_HOST
+		if(w->tls_auth_name) {
+			SSL_set_verify(pend->c->ssl, SSL_VERIFY_PEER, NULL);
+			/* setting the hostname makes openssl verify the
+                         * host name in the x509 certificate in the
+                         * SSL connection*/
+                        if(!SSL_set1_host(pend->c->ssl, w->tls_auth_name)) {
+                                log_err("SSL_set1_host failed");
+				pend->c->fd = s;
+				comm_point_close(pend->c);
+				return 0;
+			}
+		}
+#endif /* HAVE_SSL_SET1_HOST */
 	}
 	w->pkt = NULL;
 	w->next_waiting = (void*)pend;
@@ -851,6 +865,7 @@ serviced_node_del(rbnode_type* node, void* ATTR_UNUSED(arg))
 	struct service_callback* p = sq->cblist, *np;
 	free(sq->qbuf);
 	free(sq->zone);
+	free(sq->tls_auth_name);
 	edns_opt_list_free(sq->opt_list);
 	while(p) {
 		np = p->next;
@@ -1284,9 +1299,10 @@ pending_tcp_query(struct serviced_query* sq, sldns_buffer* packet,
 	w->cb = callback;
 	w->cb_arg = callback_arg;
 	w->ssl_upstream = sq->ssl_upstream;
+	w->tls_auth_name = sq->tls_auth_name;
 #ifndef S_SPLINT_S
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
+	tv.tv_sec = timeout/1000;
+	tv.tv_usec = (timeout%1000)*1000;
 #endif
 	comm_timer_set(w->timer, &tv);
 	if(pend) {
@@ -1357,8 +1373,8 @@ lookup_serviced(struct outside_network* outnet, sldns_buffer* buff, int dnssec,
 static struct serviced_query*
 serviced_create(struct outside_network* outnet, sldns_buffer* buff, int dnssec,
 	int want_dnssec, int nocaps, int tcp_upstream, int ssl_upstream,
-	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen, int qtype, struct edns_option* opt_list)
+	char* tls_auth_name, struct sockaddr_storage* addr, socklen_t addrlen,
+	uint8_t* zone, size_t zonelen, int qtype, struct edns_option* opt_list)
 {
 	struct serviced_query* sq = (struct serviced_query*)malloc(sizeof(*sq));
 #ifdef UNBOUND_DEBUG
@@ -1386,12 +1402,24 @@ serviced_create(struct outside_network* outnet, sldns_buffer* buff, int dnssec,
 	sq->nocaps = nocaps;
 	sq->tcp_upstream = tcp_upstream;
 	sq->ssl_upstream = ssl_upstream;
+	if(tls_auth_name) {
+		sq->tls_auth_name = strdup(tls_auth_name);
+		if(!sq->tls_auth_name) {
+			free(sq->zone);
+			free(sq->qbuf);
+			free(sq);
+			return NULL;
+		}
+	} else {
+		sq->tls_auth_name = NULL;
+	}
 	memcpy(&sq->addr, addr, addrlen);
 	sq->addrlen = addrlen;
 	sq->opt_list = NULL;
 	if(opt_list) {
 		sq->opt_list = edns_opt_copy_alloc(opt_list);
 		if(!sq->opt_list) {
+			free(sq->tls_auth_name);
 			free(sq->zone);
 			free(sq->qbuf);
 			free(sq);
@@ -1784,7 +1812,12 @@ serviced_tcp_callback(struct comm_point* c, void* arg, int error,
 	}
 	if(sq->tcp_upstream || sq->ssl_upstream) {
 	    struct timeval now = *sq->outnet->now_tv;
-	    if(now.tv_sec > sq->last_sent_time.tv_sec ||
+	    if(error!=NETEVENT_NOERROR) {
+	        if(!infra_rtt_update(sq->outnet->infra, &sq->addr,
+		    sq->addrlen, sq->zone, sq->zonelen, sq->qtype,
+		    -1, sq->last_rtt, (time_t)now.tv_sec))
+		    log_err("out of memory in TCP exponential backoff.");
+	    } else if(now.tv_sec > sq->last_sent_time.tv_sec ||
 		(now.tv_sec == sq->last_sent_time.tv_sec &&
 		now.tv_usec > sq->last_sent_time.tv_usec)) {
 		/* convert from microseconds to milliseconds */
@@ -1794,7 +1827,7 @@ serviced_tcp_callback(struct comm_point* c, void* arg, int error,
 		log_assert(roundtime >= 0);
 		/* only store if less then AUTH_TIMEOUT seconds, it could be
 		 * huge due to system-hibernated and we woke up */
-		if(roundtime < TCP_AUTH_QUERY_TIMEOUT*1000) {
+		if(roundtime < 60000) {
 		    if(!infra_rtt_update(sq->outnet->infra, &sq->addr,
 			sq->addrlen, sq->zone, sq->zonelen, sq->qtype,
 			roundtime, sq->last_rtt, (time_t)now.tv_sec))
@@ -1835,18 +1868,26 @@ serviced_tcp_initiate(struct serviced_query* sq, sldns_buffer* buff)
 static int
 serviced_tcp_send(struct serviced_query* sq, sldns_buffer* buff)
 {
-	int vs, rtt;
+	int vs, rtt, timeout;
 	uint8_t edns_lame_known;
 	if(!infra_host(sq->outnet->infra, &sq->addr, sq->addrlen, sq->zone,
 		sq->zonelen, *sq->outnet->now_secs, &vs, &edns_lame_known,
 		&rtt))
 		return 0;
+	sq->last_rtt = rtt;
 	if(vs != -1)
 		sq->status = serviced_query_TCP_EDNS;
 	else 	sq->status = serviced_query_TCP;
 	serviced_encode(sq, buff, sq->status == serviced_query_TCP_EDNS);
 	sq->last_sent_time = *sq->outnet->now_tv;
-	sq->pending = pending_tcp_query(sq, buff, TCP_AUTH_QUERY_TIMEOUT,
+	if(sq->tcp_upstream || sq->ssl_upstream) {
+		timeout = rtt;
+		if(rtt >= 376 && rtt < TCP_AUTH_QUERY_TIMEOUT)
+			timeout = TCP_AUTH_QUERY_TIMEOUT;
+	} else {
+		timeout = TCP_AUTH_QUERY_TIMEOUT;
+	}
+	sq->pending = pending_tcp_query(sq, buff, timeout,
 		serviced_tcp_callback, sq);
 	return sq->pending != NULL;
 }
@@ -2055,7 +2096,7 @@ serviced_udp_callback(struct comm_point* c, void* arg, int error,
 struct serviced_query* 
 outnet_serviced_query(struct outside_network* outnet,
 	struct query_info* qinfo, uint16_t flags, int dnssec, int want_dnssec,
-	int nocaps, int tcp_upstream, int ssl_upstream,
+	int nocaps, int tcp_upstream, int ssl_upstream, char* tls_auth_name,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
 	size_t zonelen, struct module_qstate* qstate,
 	comm_point_callback_type* callback, void* callback_arg, sldns_buffer* buff,
@@ -2078,8 +2119,9 @@ outnet_serviced_query(struct outside_network* outnet,
 	if(!sq) {
 		/* make new serviced query entry */
 		sq = serviced_create(outnet, buff, dnssec, want_dnssec, nocaps,
-			tcp_upstream, ssl_upstream, addr, addrlen, zone,
-			zonelen, (int)qinfo->qtype, qstate->edns_opts_back_out);
+			tcp_upstream, ssl_upstream, tls_auth_name, addr,
+			addrlen, zone, zonelen, (int)qinfo->qtype,
+			qstate->edns_opts_back_out);
 		if(!sq) {
 			free(cb);
 			return NULL;

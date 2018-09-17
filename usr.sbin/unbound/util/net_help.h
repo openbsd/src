@@ -73,10 +73,10 @@ struct regional;
 /** set RCODE bits in uint16 flags */
 #define FLAGS_SET_RCODE(f, r) (f = (((f) & 0xfff0) | (r)))
 
-/** timeout in seconds for UDP queries to auth servers. */
-#define UDP_AUTH_QUERY_TIMEOUT 4
-/** timeout in seconds for TCP queries to auth servers. */
-#define TCP_AUTH_QUERY_TIMEOUT 30
+/** timeout in milliseconds for UDP queries to auth servers. */
+#define UDP_AUTH_QUERY_TIMEOUT 3000
+/** timeout in milliseconds for TCP queries to auth servers. */
+#define TCP_AUTH_QUERY_TIMEOUT 3000
 /** Advertised version of EDNS capabilities */
 #define EDNS_ADVERTISED_VERSION         0
 /** Advertised size of EDNS capabilities */
@@ -190,7 +190,7 @@ int ipstrtoaddr(const char* ip, int port, struct sockaddr_storage* addr,
 
 /**
  * Convert ip netblock (ip/netsize) string and port to sockaddr.
- * *SLOW*, does a malloc internally to avoid writing over 'ip' string.
+ * performs a copy internally to avoid writing over 'ip' string.
  * @param ip: ip4 or ip6 address string.
  * @param port: port number, host format.
  * @param addr: where to store sockaddr.
@@ -200,6 +200,20 @@ int ipstrtoaddr(const char* ip, int port, struct sockaddr_storage* addr,
  */
 int netblockstrtoaddr(const char* ip, int port, struct sockaddr_storage* addr,
 	socklen_t* addrlen, int* net);
+
+/**
+ * Convert address string, with "@port" appendix, to sockaddr.
+ * It can also have an "#tls-auth-name" appendix (after the port).
+ * The returned tls-auth-name string is a pointer into the input string.
+ * Uses DNS port by default.
+ * @param str: the string
+ * @param addr: where to store sockaddr.
+ * @param addrlen: length of stored sockaddr is returned.
+ * @param auth_name: returned pointer to tls_auth_name, or NULL if none.
+ * @return 0 on error.
+ */
+int authextstrtoaddr(char* str, struct sockaddr_storage* addr, 
+	socklen_t* addrlen, char** auth_name);
 
 /**
  * Store port number into sockaddr structure
@@ -381,9 +395,11 @@ void* listen_sslctx_create(char* key, char* pem, char* verifypem);
  * @param key: if nonNULL (also pem nonNULL), the client private key.
  * @param pem: client public key (or NULL if key is NULL).
  * @param verifypem: if nonNULL used for verifylocation file.
+ * @param wincert: add system certificate store to ctx (add to verifypem ca
+ * 	certs).
  * @return SSL_CTX* or NULL on failure (logged).
  */
-void* connect_sslctx_create(char* key, char* pem, char* verifypem);
+void* connect_sslctx_create(char* key, char* pem, char* verifypem, int wincert);
 
 /**
  * accept a new fd and wrap it in a BIO in SSL

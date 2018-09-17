@@ -704,11 +704,14 @@ daemon_cleanup(struct daemon* daemon)
 	free(daemon->workers);
 	daemon->workers = NULL;
 	daemon->num = 0;
+	alloc_clear_special(&daemon->superalloc);
 #ifdef USE_DNSTAP
 	dt_delete(daemon->dtenv);
+	daemon->dtenv = NULL;
 #endif
 #ifdef USE_DNSCRYPT
 	dnsc_delete(daemon->dnscenv);
+	daemon->dnscenv = NULL;
 #endif
 	daemon->cfg = NULL;
 }
