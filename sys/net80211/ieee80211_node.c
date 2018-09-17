@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.150 2018/09/11 19:25:54 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.151 2018/09/17 02:34:16 jsg Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -379,8 +379,10 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 
 	if (join->i_flags & IEEE80211_JOIN_WPA) {
 		if (join->i_wpaparams.i_enabled) {
-			if (!(ic->ic_caps & IEEE80211_C_RSN))
+			if (!(ic->ic_caps & IEEE80211_C_RSN)) {
+				free(ess, M_DEVBUF, sizeof(*ess));
 				return ENODEV;
+			}
 			ieee80211_ess_setwpaparms(ess,
 			    &join->i_wpaparams);
 			if (join->i_flags & IEEE80211_JOIN_WPAPSK) {
@@ -395,8 +397,10 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 		}
 	} else if (join->i_flags & IEEE80211_JOIN_NWKEY) {
 		if (join->i_nwkey.i_wepon) {
-			if (!(ic->ic_caps & IEEE80211_C_WEP))
+			if (!(ic->ic_caps & IEEE80211_C_WEP)) {
+				free(ess, M_DEVBUF, sizeof(*ess));
 				return ENODEV;
+			}
 			ieee80211_ess_setnwkeys(ess, &join->i_nwkey);
 			ieee80211_ess_clear_wpa(ess);
 		} else {
