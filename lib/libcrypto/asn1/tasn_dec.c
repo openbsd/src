@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.35 2018/03/29 02:29:24 inoguchi Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.36 2018/09/17 18:18:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -164,7 +164,7 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	const ASN1_TEMPLATE *tt, *errtt = NULL;
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
-	ASN1_aux_cb *asn1_cb;
+	ASN1_aux_cb *asn1_cb = NULL;
 	const unsigned char *p = NULL, *q;
 	unsigned char oclass;
 	char seq_eoc, seq_nolen, cst, isopt;
@@ -183,8 +183,6 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	if (aux && aux->asn1_cb)
 		asn1_cb = aux->asn1_cb;
-	else
-		asn1_cb = 0;
 
 	if (++depth > ASN1_MAX_CONSTRUCTED_NEST) {
 		ASN1error(ASN1_R_NESTED_TOO_DEEP);
