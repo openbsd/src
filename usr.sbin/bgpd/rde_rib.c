@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.176 2018/09/09 12:33:51 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.177 2018/09/17 17:06:33 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -823,7 +823,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	 * afterwards run the route decision for new prefix node.
 	 * Because of this only one update is generated if the prefix
 	 * was active.
-	 * This is save because we create a new prefix and so the change
+	 * This is safe because we create a new prefix and so the change
 	 * is noticed by prefix_evaluate().
 	 */
 	LIST_REMOVE(p, rib_l);
