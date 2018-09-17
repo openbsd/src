@@ -1,14 +1,16 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
-# $OpenBSD: recover,v 1.12 2018/02/03 15:44:36 millert Exp $
+# $OpenBSD: recover,v 1.13 2018/09/17 15:41:17 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
 
+use warnings;
+use strict;
 use Fcntl;
 
-$recoverdir = $ARGV[0] || "/tmp/vi.recover";
-$sendmail = "/usr/sbin/sendmail";
+my $recoverdir = $ARGV[0] || "/tmp/vi.recover";
+my $sendmail = "/usr/sbin/sendmail";
 
 die "Sorry, $0 must be run as root\n" if $>;
 
@@ -38,7 +40,7 @@ if (((stat(_))[2] & 07777) != 01777) {
 
 # Check editor backup files.
 opendir(RECDIR, ".") || die "$0: can't open $recoverdir: $!\n";
-foreach $file (readdir(RECDIR)) {
+foreach my $file (readdir(RECDIR)) {
 	next unless $file =~ /^vi\./;
 
 	#
@@ -57,7 +59,7 @@ foreach $file (readdir(RECDIR)) {
 # at the right time.
 #
 rewinddir(RECDIR);
-foreach $file (readdir(RECDIR)) {
+foreach my $file (readdir(RECDIR)) {
 	next unless $file =~ /^recover\./;
 
 	if (!sysopen(RECFILE, $file, O_RDONLY|O_NOFOLLOW|O_NONBLOCK)) {
@@ -79,7 +81,7 @@ foreach $file (readdir(RECDIR)) {
 		close(RECFILE);
 		next;
 	}
-	$owner = (stat(_))[4];
+	my $owner = (stat(_))[4];
 	if (! -f _ || ! -s _) {
 		unlink($file) unless -d _;
 		close(RECFILE);
@@ -90,14 +92,14 @@ foreach $file (readdir(RECDIR)) {
 	# Slurp in the recover.* file and search for X-vi-recover-path
 	# (which should point to an existing vi.* file).
 	#
-	@recfile = <RECFILE>;
+	my @recfile = <RECFILE>;
 	close(RECFILE);
 
 	#
 	# Delete any recovery files that have no (or more than one)
 	# corresponding backup file.
 	#
-	@backups = grep(m#^X-vi-recover-path:\s*\Q$recoverdir\E/+#, @recfile);
+	my @backups = grep(m#^X-vi-recover-path:\s*\Q$recoverdir\E/+#, @recfile);
 	if (@backups != 1) {
 		unlink($file);
 		next;
@@ -109,7 +111,7 @@ foreach $file (readdir(RECDIR)) {
 	# references to data in @recfile which we pipe to sendmail.
 	#
 	$backups[0] =~ m#^X-vi-recover-path:\s*\Q$recoverdir\E/+(.*)[\r\n]*$#;
-	$backup = $1;
+	my $backup = $1;
 
 	#
 	# If backup file is not rooted in the recover dir, ignore it.
