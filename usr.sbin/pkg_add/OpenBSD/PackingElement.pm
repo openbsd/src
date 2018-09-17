@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.268 2018/09/04 14:46:12 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.269 2018/09/17 12:39:46 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -475,8 +475,8 @@ sub add_object
 	my ($self, $plist) = @_;
 
 	$self->destate($plist->{state});
-	my $j = is_info_name($self->fullname);
-	if ($j) {
+	my $j = is_info_name($self->name);
+	if ($j && $self->cwd eq '.') {
 		bless $self, "OpenBSD::PackingElement::$j";
 		$self->add_object($plist);
 	} else {
