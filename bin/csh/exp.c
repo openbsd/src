@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.16 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: exp.c,v 1.17 2018/09/17 16:00:19 martijn Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -238,7 +239,7 @@ exp3a(Char ***vp, bool ignore)
 
     p1 = exp4(vp, ignore);
     op = **vp;
-    if (op && any("<>", op[0]) && op[0] == op[1]) {
+    if (op && strchr("<>", op[0]) && op[0] == op[1]) {
 	(*vp)++;
 	p2 = exp3a(vp, ignore);
 	if (op[0] == '<')
@@ -392,7 +393,7 @@ exp6(Char ***vp, bool ignore)
     if (isa(**vp, ANYOP))
 	return (Strsave(STRNULL));
     cp = *(*vp)++;
-    if (*cp == '-' && any("erwxfdzopls", cp[1])) {
+    if (*cp == '-' && strchr("erwxfdzopls", cp[1])) {
 	struct stat stb;
 
 	if (cp[2] != '\0')

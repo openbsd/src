@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.27 2018/09/15 12:15:32 miko Exp $	*/
+/*	$OpenBSD: extern.h,v 1.28 2018/09/17 16:00:19 martijn Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -181,7 +181,6 @@ void	 unreadc(int);
 /*
  * misc.c
  */
-int	  any(char *, int);
 Char	**blkcat(Char **, Char **);
 Char	**blkcpy(Char **, Char **);
 Char	**blkend(Char **);

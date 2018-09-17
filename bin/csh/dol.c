@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.22 2018/09/08 01:28:39 miko Exp $	*/
+/*	$OpenBSD: dol.c,v 1.23 2018/09/17 16:00:19 martijn Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -541,7 +541,7 @@ Dgetdol(void)
 
 	    for (i = 0; Isdigit(*np); i = i * 10 + *np++ - '0')
 		continue;
-	    if ((i < 0 || i > upb) && !any("-*", *np)) {
+	    if ((i < 0 || i > upb) && !strchr("-*", *np)) {
 		dolerror(vp->v_name);
 		return;
 	    }
@@ -642,7 +642,7 @@ fixDolMod(void)
 		dolmod[dolnmod++] = delim;
 
 		if (!delim || letter(delim)
-		    || Isdigit(delim) || any(" \t\n", delim)) {
+		    || Isdigit(delim) || strchr(" \t\n", delim)) {
 		    seterror(ERR_BADSUBST);
 		    break;
 		}
@@ -657,7 +657,7 @@ fixDolMod(void)
 		}
 		continue;
 	    }
-	    if (!any("htrqxes", c))
+	    if (!strchr("htrqxes", c))
 		stderror(ERR_BADMOD, c);
 	    dolmod[dolnmod++] = c;
 	    if (c == 'q')
@@ -691,7 +691,7 @@ setDolp(Char *cp)
 
 	    delim = dolmod[++i];
 	    if (!delim || letter(delim)
-		|| Isdigit(delim) || any(" \t\n", delim)) {
+		|| Isdigit(delim) || strchr(" \t\n", delim)) {
 		seterror(ERR_BADSUBST);
 		break;
 	    }
@@ -901,7 +901,7 @@ heredoc(Char *term)
 	    /* \ quotes \ $ ` here */
 	    if (c == '\\') {
 		c = DgetC(0);
-		if (!any("$\\`", c))
+		if (!strchr("$\\`", c))
 		    unDgetC(c | QUOTE), c = '\\';
 		else
 		    c |= QUOTE;
@@ -918,7 +918,7 @@ heredoc(Char *term)
 	 * If any ` in line do command substitution
 	 */
 	mbp = mbuf;
-	if (any(short2str(mbp), '`')) {
+	if (strchr(short2str(mbp), '`')) {
 	    /*
 	     * 1 arg to dobackp causes substitution to be literal. Words are
 	     * broken only at newlines so that all blanks and tabs are

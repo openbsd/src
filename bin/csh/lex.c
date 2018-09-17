@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.25 2017/08/30 07:54:54 anton Exp $	*/
+/*	$OpenBSD: lex.c,v 1.26 2018/09/17 16:00:19 martijn Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -406,7 +406,7 @@ getdol(void)
 
     np = name, *np++ = '$';
     c = sc = getC(DOEXCL);
-    if (any("\t \n", c)) {
+    if (strchr("\t \n", c)) {
 	ungetD(c);
 	ungetC('$' | QUOTE);
 	return;
@@ -550,7 +550,7 @@ getdol(void)
 		*np++ = delim;
 
 		if (!delim || letter(delim)
-		    || Isdigit(delim) || any(" \t\n", delim)) {
+		    || Isdigit(delim) || strchr(" \t\n", delim)) {
 		    seterror(ERR_BADSUBST);
 		    break;
 		}
@@ -565,7 +565,7 @@ getdol(void)
 		}
 		c = 's';
 	    }
-	    if (!any("htrqxes", c)) {
+	    if (!strchr("htrqxes", c)) {
 		if ((amodflag || gmodflag) && c == '\n')
 		    stderror(ERR_VARSYN);	/* strike */
 		seterror(ERR_VARMOD, c);
@@ -651,7 +651,7 @@ getexcl(int sc)
 	goto subst;
     }
     c = getC(0);
-    if (!any(":^$*-%", c))
+    if (!strchr(":^$*-%", c))
 	goto subst;
     left = right = -1;
     if (c == ':') {
@@ -744,7 +744,7 @@ getsub(struct wordent *en)
 
 	case 's':
 	    delim = getC(0);
-	    if (letter(delim) || Isdigit(delim) || any(" \t\n", delim)) {
+	    if (letter(delim) || Isdigit(delim) || strchr(" \t\n", delim)) {
 		unreadc(delim);
 		lhsb[0] = 0;
 		seterror(ERR_BADSUBST);
@@ -957,7 +957,7 @@ domod(Char *cp, int type)
 
     case 'h':
     case 't':
-	if (!any(short2str(cp), '/'))
+	if (!strchr(short2str(cp), '/'))
 	    return (type == 't' ? Strsave(cp) : 0);
 	wp = Strend(cp);
 	while (*--wp != '/')
@@ -1067,7 +1067,7 @@ getsel(int *al, int *ar, int dol)
     if (first) {
 	c = getC(0);
 	unreadc(c);
-	if (any("-$*", c))
+	if (strchr("-$*", c))
 	    return (1);
     }
     if (*al > *ar || *ar > dol) {
@@ -1122,14 +1122,14 @@ gethent(int sc)
 	    /* FALLSTHROUGH */
 
 	default:
-	    if (any("(=~", c)) {
+	    if (strchr("(=~", c)) {
 		unreadc(c);
 		ungetC(HIST);
 		return (0);
 	    }
 	    np = lhsb;
 	    event = 0;
-	    while (!cmap(c, _ESC | _META | _QF | _QB) && !any("${}:", c)) {
+	    while (!cmap(c, _ESC | _META | _QF | _QB) && !strchr("${}:", c)) {
 		if (event != -1 && Isdigit(c))
 		    event = event * 10 + c - '0';
 		else

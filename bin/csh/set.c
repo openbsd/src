@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.19 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: set.c,v 1.20 2018/09/17 16:00:19 martijn Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -243,13 +244,13 @@ dolet(Char **v, struct command *t)
 	}
 	else {
 	    c = *p++;
-	    if (any("+-", c)) {
+	    if (strchr("+-", c)) {
 		if (c != op || *p)
 		    stderror(ERR_NAME | ERR_UNKNOWNOP);
 		p = Strsave(STR1);
 	    }
 	    else {
-		if (any("<>", op)) {
+		if (strchr("<>", op)) {
 		    if (c != op)
 			stderror(ERR_NAME | ERR_UNKNOWNOP);
 		    c = *p++;
