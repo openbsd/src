@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_output.c,v 1.20 2015/11/18 16:47:04 mmcc Exp $ */
+/*	$OpenBSD: irr_output.c,v 1.21 2018/09/17 13:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -126,7 +126,7 @@ policy_prettyprint(FILE *fh, struct policy_item *pi)
 void
 policy_torule(FILE *fh, struct policy_item *pi)
 {
-	struct as_set		*ass;
+	struct irr_as_set	*ass;
 	struct prefix_set	*pfxs;
 	char			*srcas;
 	u_int			 i, j;
