@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.139 2018/09/16 11:41:44 visa Exp $	*/
+/*	$OpenBSD: mount.h,v 1.140 2018/09/17 14:56:37 visa Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -456,7 +456,6 @@ struct vfsconf {
 	int	vfc_typenum;		/* historic filesystem type number */
 	int	vfc_refcount;		/* number mounted of this type */
 	int	vfc_flags;		/* permanent flags */
-	struct	vfsconf *vfc_next;	/* next in list */
 	size_t	vfc_datasize;		/* size of data args */
 };
 
@@ -500,7 +499,6 @@ struct nameidata;
 struct mbuf;
 
 extern int maxvfsconf;		/* highest defined filesystem type */
-extern struct vfsconf *vfsconf;	/* head of list of filesystem types */
 
 struct vfsops {
 	int	(*vfs_mount)(struct mount *mp, const char *path,
@@ -600,8 +598,6 @@ int	vfs_syncwait(struct proc *, int);   /* sync and wait for complete */
 void	vfs_shutdown(struct proc *);	    /* unmount and sync file systems */
 int	dounmount(struct mount *, int, struct proc *);
 void	vfsinit(void);
-int	vfs_register(struct vfsconf *);
-int	vfs_unregister(struct vfsconf *);
 struct	vfsconf *vfs_byname(const char *);
 struct	vfsconf *vfs_bytypenum(int);
 #else /* _KERNEL */

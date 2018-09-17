@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.40 2018/09/16 11:41:44 visa Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.41 2018/09/17 14:56:37 visa Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -93,52 +93,52 @@ extern  const struct vfsops tmpfs_vfsops;
 /* Set up the filesystem operations for vnodes. */
 static struct vfsconf vfsconflist[] = {
 #ifdef FFS
-        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, NULL,
+        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL,
 	    sizeof(struct ufs_args) },
 #endif
 
 #ifdef MFS
-        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, NULL,
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL,
 	    sizeof(struct mfs_args) },
 #endif
 
 #ifdef EXT2FS
-	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL, NULL,
+	{ &ext2fs_vfsops, MOUNT_EXT2FS, 17, 0, MNT_LOCAL,
 	    sizeof(struct ufs_args) },
 #endif
 
 #ifdef CD9660
-        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, NULL,
+        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL,
 	    sizeof(struct iso_args) },
 #endif
 
 #ifdef MSDOSFS
-        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL,
+        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL,
 	    sizeof(struct msdosfs_args) },
 #endif
 
 #ifdef NFSCLIENT
-        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL,
+        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0,
 	    sizeof(struct nfs_args) },
 #endif
 
 #ifdef NTFS
-	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL, NULL,
+	{ &ntfs_vfsops, MOUNT_NTFS, 6, 0, MNT_LOCAL,
 	    sizeof(struct ntfs_args) },
 #endif
 
 #ifdef UDF
-	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL, NULL,
+	{ &udf_vfsops, MOUNT_UDF, 13, 0, MNT_LOCAL,
 	    sizeof(struct iso_args) },
 #endif
 
 #ifdef FUSE
-	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL, NULL,
+	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL,
 	    sizeof(struct fusefs_args) },
 #endif
 
 #ifdef TMPFS
-	{ &tmpfs_vfsops, MOUNT_TMPFS, 19, 0, MNT_LOCAL, NULL,
+	{ &tmpfs_vfsops, MOUNT_TMPFS, 19, 0, MNT_LOCAL,
 	    sizeof(struct tmpfs_args) },
 #endif
 };
@@ -149,15 +149,13 @@ static struct vfsconf vfsconflist[] = {
  * to the highest defined type number.
  */
 int maxvfsconf = sizeof(vfsconflist) / sizeof(struct vfsconf);
-struct vfsconf *vfsconf = vfsconflist;
 
 /* Initialize the vnode structures and initialize each file system type. */
 void
 vfsinit(void)
 {
+	struct vfsconf *vfsp;
 	int i;
-	struct vfsconf *vfsconflist;
-	int vfsconflistlen;
 
 	pool_init(&namei_pool, MAXPATHLEN, 0, IPL_NONE, PR_WAITOK, "namei",
 	    NULL);
@@ -168,39 +166,36 @@ vfsinit(void)
 	/* Initialize the vnode name cache. */
 	nchinit();
 
-	/*
-	 * Stop using vfsconf and maxvfsconf as a temporary storage,
-	 * set them to their correct values now.
-	 */
-	vfsconflist = vfsconf;
-	vfsconflistlen = maxvfsconf;
-	vfsconf = NULL;
 	maxvfsconf = 0;
-
-	for (i = 0; i < vfsconflistlen; i++)
-		vfs_register(&vfsconflist[i]);
+	for (i = 0; i < nitems(vfsconflist); i++) {
+		vfsp = &vfsconflist[i];
+		if (vfsp->vfc_typenum > maxvfsconf)
+			maxvfsconf = vfsp->vfc_typenum;
+		if (vfsp->vfc_vfsops->vfs_init != NULL)
+			(*vfsp->vfc_vfsops->vfs_init)(vfsp);
+	}
 }
 
 struct vfsconf *
 vfs_byname(const char *name)
 {
-	struct vfsconf *vfsp;
+	int i;
 
-	for (vfsp = vfsconf; vfsp != NULL; vfsp = vfsp->vfc_next) {
-		if (strcmp(vfsp->vfc_name, name) == 0)
-			break;
+	for (i = 0; i < nitems(vfsconflist); i++) {
+		if (strcmp(vfsconflist[i].vfc_name, name) == 0)
+			return &vfsconflist[i];
 	}
-	return vfsp;
+	return NULL;
 }
 
 struct vfsconf *
 vfs_bytypenum(int typenum)
 {
-	struct vfsconf *vfsp;
+	int i;
 
-	for (vfsp = vfsconf; vfsp != NULL; vfsp = vfsp->vfc_next) {
-		if (vfsp->vfc_typenum == typenum)
-			break;
+	for (i = 0; i < nitems(vfsconflist); i++) {
+		if (vfsconflist[i].vfc_typenum == typenum)
+			return &vfsconflist[i];
 	}
-	return vfsp;
+	return NULL;
 }
