@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.358 2018/07/23 21:14:00 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.359 2018/09/17 14:07:48 friehm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1270,7 +1270,9 @@ trimthenstep6:
 		} else {
 			tcpstat_pkt(tcps_rcvduppack, tcps_rcvdupbyte, tlen);
 			tcpstat_inc(tcps_pawsdrop);
-			goto dropafterack;
+			if (tlen)
+				goto dropafterack;
+			goto drop;
 		}
 	}
 
