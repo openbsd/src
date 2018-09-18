@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.33 2016/02/05 19:00:39 martijn Exp $	*/
+/*	$OpenBSD: write.c,v 1.34 2018/09/18 03:10:53 millert Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -224,20 +224,16 @@ term_chk(char *tty, int *msgsokP, time_t *atimeP, int showerror)
 void
 do_write(char *tty, char *mytty, uid_t myuid)
 {
-	char *login, *nows;
-	struct passwd *pwd;
+	const char *login;
+	char *nows;
 	time_t now;
 	char path[PATH_MAX], host[HOST_NAME_MAX+1], line[512];
 	gid_t gid;
 	int fd;
 
 	/* Determine our login name before the we reopen() stdout */
-	if ((login = getlogin()) == NULL) {
-		if ((pwd = getpwuid(myuid)))
-			login = pwd->pw_name;
-		else
-			login = "???";
-	}
+	if ((login = getlogin()) == NULL)
+		login = user_from_uid(myuid, 0);
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
 	fd = open(path, O_WRONLY, 0666);
