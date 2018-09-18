@@ -2602,7 +2602,8 @@ c++filt @var{option} @var{symbol}
 
 @smallexample
 @c man begin SYNOPSIS addr2line
-addr2line [@option{-b} @var{bfdname}|@option{--target=}@var{bfdname}]
+addr2line [@option{-a}|@option{--addresses}]
+          [@option{-b} @var{bfdname}|@option{--target=}@var{bfdname}]
           [@option{-C}|@option{--demangle}[=@var{style}]]
           [@option{-e} @var{filename}|@option{--exe=}@var{filename}]
           [@option{-f}|@option{--functions}] [@option{-s}|@option{--basename}]
@@ -2653,6 +2654,11 @@ The long and short forms of options, shown here as alternatives, are
 equivalent.
 
 @table @env
+@item -a
+@itemx --addresses
+Display the address before the function name, file and line number information.
+The address is printed with a @samp{0x} prefix to easily identify it.
+
 @item -b @var{bfdname}
 @itemx --target=@var{bfdname}
 @cindex object code format

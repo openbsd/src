@@ -40,6 +40,7 @@
 #include "budemang.h"
 
 static bfd_boolean unwind_inlines;	/* -i, unwind inlined functions. */
+static bfd_boolean with_addresses;	/* -a, show addresses.  */
 static bfd_boolean with_functions;	/* -f, show function names.  */
 static bfd_boolean do_demangle;		/* -C, demangle names.  */
 static bfd_boolean base_names;		/* -s, strip directory names.  */
@@ -51,6 +52,7 @@ static asymbol **syms;		/* Symbol table.  */
 
 static struct option long_options[] =
 {
+  {"addresses", no_argument, NULL, 'a'},
   {"basenames", no_argument, NULL, 's'},
   {"demangle", optional_argument, NULL, 'C'},
   {"exe", required_argument, NULL, 'e'},
@@ -80,6 +82,7 @@ usage (FILE *stream, int status)
   fprintf (stream, _(" If no addresses are specified on the command line, they will be read from stdin\n"));
   fprintf (stream, _(" The options are:\n\
   @<file>                Read options from <file>\n\
+  -a --addresses         Show addresses\n\
   -b --target=<bfdname>  Set the binary file format\n\
   -e --exe=<executable>  Set the input file name (default is a.out)\n\
   -i --inlines           Unwind inlined functions\n\
@@ -199,6 +202,13 @@ translate_addresses (bfd *abfd, asection *section)
 	  --naddr;
 	  pc = bfd_scan_vma (*addr++, NULL, 16);
 	}
+
+      if (with_addresses)
+        {
+	  printf ("0x");
+	  bfd_printf_vma (abfd, pc);
+	  printf ("\n");
+        }
 
       found = FALSE;
       if (section)
@@ -345,13 +355,16 @@ main (int argc, char **argv)
   file_name = NULL;
   section_name = NULL;
   target = NULL;
-  while ((c = getopt_long (argc, argv, "b:Ce:sfHhij:Vv", long_options, (int *) 0))
+  while ((c = getopt_long (argc, argv, "ab:Ce:sfHhij:Vv", long_options, (int *) 0))
 	 != EOF)
     {
       switch (c)
 	{
 	case 0:
 	  break;		/* We've been given a long option.  */
+	case 'a':
+	  with_addresses = TRUE;
+	  break;
 	case 'b':
 	  target = optarg;
 	  break;
