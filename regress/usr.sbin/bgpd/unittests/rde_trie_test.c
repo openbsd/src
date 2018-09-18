@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.4 2018/09/18 13:55:28 denis Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.5 2018/09/18 15:15:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 
 #include <err.h>
+#include <limits.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
@@ -30,9 +31,11 @@
 #include "bgpd.h"
 #include "rde.h"
 
+int roa;
+int orlonger;
 
 static int
-host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
+host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
 	struct in_addr ina = { 0 };
 	int bits = 32;
@@ -52,7 +55,7 @@ host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 }
 
 static int
-host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
+host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
 	struct addrinfo hints, *res;
 	const char *errstr;
@@ -87,21 +90,11 @@ host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 }
 
 static int
-host_l(char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
+host_l(char *s, struct bgpd_addr *h, u_int8_t *len)
 {
-	char *c, *t;
-
-	*orl = 0;
-	if ((c = strchr(s, '\t')) != NULL) {
-		if (c[1] == '1') {
-			*orl = 1;
-		}
-		*c = '\0';
-	}
-
-	if (host_v4(s, h, len, orl))
+	if (host_v4(s, h, len))
 		return (1);
-	if (host_v6(s, h, len, orl))
+	if (host_v6(s, h, len))
 		return (1);
 	return (0);
 }
@@ -129,34 +122,31 @@ parse_file(FILE *in, struct trie_head *th)
 	const char *errstr;
 	char *line, *s;
 	struct bgpd_addr prefix;
-	u_int8_t plen, min, max, maskmax;
-	int foo;
+	u_int8_t plen;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
 		int state = 0;
-		while ((s = strsep(&line, " \t"))) {
+		u_int8_t min = 255, max = 255, maskmax = 0;
+
+		while ((s = strsep(&line, " \t\n"))) {
 			if (*s == '\0')
-				break;
+				continue;
 			switch (state) {
 			case 0:
-				if (!host_l(s, &prefix, &plen, &foo))
-					errx(1, "could not parse prefix \"%s\"",
-					    s);
-				break;
-			case 1:	
+				if (!host_l(s, &prefix, &plen))
+					errx(1, "%s: could not parse "
+					    "prefix \"%s\"", __func__, s);
 				if (prefix.aid == AID_INET6)
 					maskmax = 128;
 				else
 					maskmax = 32;
+				break;
+			case 1:	
 				min = strtonum(s, 0, maskmax, &errstr);
 				if (errstr != NULL)
 					errx(1, "min is %s: %s", errstr, s);
 				break;
 			case 2:
-				if (prefix.aid == AID_INET6)
-					maskmax = 128;
-				else
-					maskmax = 32;
 				max = strtonum(s, 0, maskmax, &errstr);
 				if (errstr != NULL)
 					errx(1, "max is %s: %s", errstr, s);
@@ -166,10 +156,90 @@ parse_file(FILE *in, struct trie_head *th)
 			}
 			state++;
 		}
+		if (state == 0)
+			continue;
+		if (max == 255)
+			max = maskmax;
+		if (min == 255)
+			min = plen;
 
 		if (trie_add(th, &prefix, plen, min, max) != 0)
 			errx(1, "trie_add(%s, %u, %u, %u) failed",
 			    print_prefix(&prefix), plen, min, max);
+
+		free(line);
+	}
+}
+
+static void
+parse_roa_file(FILE *in, struct trie_head *th)
+{
+	const char *errstr;
+	char *line, *s;
+	struct as_set *aset = NULL;
+	struct roa_set rs;
+	struct bgpd_addr prefix;
+	u_int8_t plen;
+
+	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
+		int state = 0;
+		u_int32_t as;
+		u_int8_t max = 0;
+
+		while ((s = strsep(&line, " \t\n"))) {
+			if (*s == '\0')
+				continue;
+			if (strcmp(s, "source-as") == 0) {
+				state = 4;
+				continue;
+			}
+			if (strcmp(s, "maxlen") == 0) {
+				state = 2;
+				continue;
+			}
+			if (strcmp(s, "prefix") == 0) {
+				state = 0;
+				continue;
+			}
+			switch (state) {
+			case 0:
+				if (!host_l(s, &prefix, &plen))
+					errx(1, "%s: could not parse "
+					    "prefix \"%s\"", __func__, s);
+				break;
+			case 2:
+				max = strtonum(s, 0, 128, &errstr);
+				if (errstr != NULL)
+					errx(1, "max is %s: %s", errstr, s);
+				break;
+			case 4:
+				as = strtonum(s, 0, UINT_MAX, &errstr);
+				if (errstr != NULL)
+					errx(1, "source-as is %s: %s", errstr,
+					    s);
+				break;
+			default:
+				errx(1, "could not parse \"%s\", confused", s);
+			}
+		}
+
+		if (state == 0) {
+			as_set_prep(aset);
+			if (trie_roa_add(th, &prefix, plen, aset) != 0)
+				errx(1, "trie_roa_add(%s, %u) failed",
+				    print_prefix(&prefix), plen);
+			aset = NULL;
+		} else {
+			if (aset == NULL) {
+				if ((aset = as_set_new("", 1, sizeof(rs))) ==
+				    NULL)
+					err(1, "as_set_new");
+			}
+			rs.as = as;
+			rs.maxlen = max;
+			if (as_set_add(aset, &rs, 1) != 0)
+				err(1, "as_set_add");
+		}
 
 		free(line);
 	}
@@ -181,16 +251,63 @@ test_file(FILE *in, struct trie_head *th)
 	char *line;
 	struct bgpd_addr prefix;
 	u_int8_t plen;
-	int orlonger;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
-		if (!host_l(line, &prefix, &plen, &orlonger))
-			errx(1, "could not parse prefix \"%s\"", line);
-		printf("%s ", line);
+		if (!host_l(line, &prefix, &plen))
+			errx(1, "%s: could not parse prefix \"%s\"",
+			    __func__, line);
+		printf("%s/%u ", print_prefix(&prefix), plen);
 		if (trie_match(th, &prefix, plen, orlonger))
-			printf("MATCH %i\n", orlonger);
+			printf("MATCH\n");
 		else
-			printf("miss %i\n", orlonger);
+			printf("miss\n");
+		free(line);
+	}
+}
+
+static void
+test_roa_file(FILE *in, struct trie_head *th)
+{
+	const char *errstr;
+	char *line, *s;
+	struct bgpd_addr prefix;
+	u_int8_t plen;
+	u_int32_t as;
+	int r;
+
+	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
+		s = strchr(line, ' ');
+		if (s)
+			*s++ = '\0';
+		if (!host_l(line, &prefix, &plen))
+			errx(1, "%s: could not parse prefix \"%s\"",
+			    __func__, line);
+		if (s)
+			s = strstr(s, "source-as");
+		if (s) {
+			s += strlen("source-as");
+			as = strtonum(s, 0, UINT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "source-as is %s: %s", errstr, s);
+		} else
+			as = 0;
+		printf("%s/%u source-as %u is ",
+		    print_prefix(&prefix), plen, as);
+		r = trie_roa_check(th, &prefix, plen, as);
+		switch (r) {
+		case ROA_UNKNOWN:
+			printf("not found\n");
+			break;
+		case ROA_VALID:
+			printf("VALID\n");
+			break;
+		case ROA_INVALID:
+			printf("invalid\n");
+			break;
+		default:
+			printf("UNEXPECTED %d\n", r);
+			break;
+		}
 		free(line);
 	}
 }
@@ -199,7 +316,7 @@ static void
 usage(void)
 {
         extern char *__progname;
-	fprintf(stderr, "usage: %s prefixfile testfile\n", __progname);
+	fprintf(stderr, "usage: %s [-or] prefixfile testfile\n", __progname);
 	exit(1);
 }
 
@@ -210,21 +327,43 @@ main(int argc, char **argv)
 	FILE *in, *tin;
 	int ch;
 
-	if (argc != 3)
+	while ((ch = getopt(argc, argv, "or")) != -1) {
+		switch (ch) {
+		case 'o':
+			orlonger = 1;
+			break;
+		case 'r':
+			roa = 1;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2)
 		usage();
 
-	in = fopen(argv[1], "r");
+	in = fopen(argv[0], "r");
 	if (in == NULL)
 		err(1, "fopen(%s)", argv[0]);
-	tin = fopen(argv[2], "r");
+	tin = fopen(argv[1], "r");
 	if (tin == NULL)
 		err(1, "fopen(%s)", argv[1]);
 
-	parse_file(in, &th);
+	if (roa)
+		parse_roa_file(in, &th);
+	else
+		parse_file(in, &th);
 	/* trie_dump(&th); */
 	if (trie_equal(&th, &th) == 0)
 		errx(1, "trie_equal failure");
-	test_file(tin, &th);
+	if (roa)
+		test_roa_file(tin, &th);
+	else
+		test_file(tin, &th);
 
 	trie_free(&th);
 }
