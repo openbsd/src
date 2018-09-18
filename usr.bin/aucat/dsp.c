@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.11 2016/09/30 08:43:23 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.12 2018/09/18 04:29:58 miko Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <string.h>
 #include "dsp.h"
 #include "utils.h"
 
@@ -403,7 +404,7 @@ void
 resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
-	unsigned int i, g;
+	unsigned int g;
 
 	/*
 	 * reduce iblksz/oblksz fraction
@@ -425,8 +426,7 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 	p->diff = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
-	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
-		p->ctx[i] = 0;
+	memset(p->ctx, 0, sizeof(p->ctx));
 #ifdef DEBUG
 	if (log_level >= 3) {
 		log_puts("resamp: ");
