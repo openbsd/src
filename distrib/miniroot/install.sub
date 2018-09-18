@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1102 2018/08/29 11:30:48 krw Exp $
+#	$OpenBSD: install.sub,v 1.1103 2018/09/18 17:43:40 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -261,6 +261,11 @@ lease_value() {
 			-e '/^"(.*)"$/{s//\1/;s/\\(.)/\1/g;};q' "$_lf" \
 			| grep ^ && return
 	done
+}
+
+# Extract one boot's worth of dmesg.
+dmesgtail() {
+	dmesg | sed -n 'H;/^OpenBSD/h;${g;p;}'
 }
 
 # ------------------------------------------------------------------------------
@@ -546,8 +551,8 @@ start_dmesg_listener() {
 		# the update file and sends a signal to the parent process (that
 		# is the installer script) if the dmesg output differs from the
 		# contents of that file.
-		if [[ -e $_update && "$(dmesg)" != "$(<$_update)" ]]; then
-			dmesg >$_update
+		if [[ -e $_update && "$(dmesgtail)" != "$(<$_update)" ]]; then
+			dmesgtail >$_update
 			kill -TERM 2>/dev/null $$ || exit 1
 		fi
 		unlock
@@ -708,7 +713,7 @@ _autorespond() {
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
 
-	lock; dmesg >/tmp/i/update; unlock
+	lock; dmesgtail >/tmp/i/update; unlock
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
 	_autorespond "$_q" "$_def" && echo "$resp" && return
 	trap "_int=1" INT
@@ -3267,8 +3272,8 @@ V4_DHCPCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
 
-# Extract and save one boot's worth of dmesg.
-dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
+# Save one boot's worth of dmesg.
+dmesgtail >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
