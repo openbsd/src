@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.16 2018/09/18 06:56:09 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.17 2018/09/18 17:48:22 millert Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ seterror(int id, ...)
 	vsnprintf(berr, sizeof(berr), errorlist[id], va);
 	va_end(va);
 
-	seterr = strsave(berr);
+	seterr = xstrdup(berr);
     }
 }
 

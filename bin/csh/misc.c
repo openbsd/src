@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.23 2018/09/18 06:56:09 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.24 2018/09/18 17:48:22 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -50,22 +50,6 @@ any(char *s, int c)
 	if (*s++ == c)
 	    return (1);
     return (0);
-}
-
-char   *
-strsave(char *s)
-{
-    char   *n;
-    char *p;
-
-    if (s == NULL)
-	s = "";
-    for (p = s; *p++;)
-	continue;
-    n = p = xreallocarray(NULL, (p - s), sizeof(char));
-    while ((*p++ = *s++) != '\0')
-	continue;
-    return (n);
 }
 
 Char  **

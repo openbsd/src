@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.21 2018/09/18 06:56:09 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.22 2018/09/18 17:48:22 millert Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ short2blk(Char **src)
     sdst = dst = xreallocarray(NULL, n + 1, sizeof(char *));
 
     for (; *src != NULL; src++)
-	*dst++ = strsave(short2str(*src));
+	*dst++ = xstrdup(short2str(*src));
     *dst = NULL;
     return (sdst);
 }
