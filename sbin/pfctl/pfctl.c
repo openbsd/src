@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.359 2018/09/08 14:45:55 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.360 2018/09/18 12:55:19 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2498,11 +2498,11 @@ main(int argc, char *argv[])
 
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {
-		if (mode == O_RDONLY && showopt == NULL) {
-			warnx("anchors apply to -f, -F and -s only");
+		if (mode == O_RDONLY && showopt == NULL && tblcmdopt == NULL) {
+			warnx("anchors apply to -f, -F, -s, and -T only");
 			usage();
 		}
-		if (mode == O_RDWR &&
+		if (mode == O_RDWR && tblcmdopt == NULL &&
 		    (anchoropt[0] == '_' || strstr(anchoropt, "/_") != NULL))
 			errx(1, "anchor names beginning with '_' cannot "
 			    "be modified from the command line");
