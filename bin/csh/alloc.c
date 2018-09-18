@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.18 2018/09/18 02:29:10 miko Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.19 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #include "extern.h"
 
 void *
-xmalloc(size_t n)
+Malloc(size_t n)
 {
     void *ptr;
 
@@ -51,7 +51,7 @@ xmalloc(size_t n)
 }
 
 void *
-xreallocarray(void * p, size_t c, size_t n)
+Reallocarray(void * p, size_t c, size_t n)
 {
     void *ptr;
 
@@ -63,7 +63,7 @@ xreallocarray(void * p, size_t c, size_t n)
 }
 
 void *
-xcalloc(size_t s, size_t n)
+Calloc(size_t s, size_t n)
 {
     void *ptr;
 

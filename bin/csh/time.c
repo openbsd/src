@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.16 2018/09/17 16:00:19 martijn Exp $	*/
+/*	$OpenBSD: time.c,v 1.17 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
-#include <string.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -84,7 +83,7 @@ donice(Char **v, struct command *t)
     v++, cp = *v++;
     if (cp == 0)
 	nval = 4;
-    else if (*v == 0 && strchr("+-", cp[0]))
+    else if (*v == 0 && any("+-", cp[0]))
 	nval = getn(cp);
     (void) setpriority(PRIO_PROCESS, 0, nval);
 }

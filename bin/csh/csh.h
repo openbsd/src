@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.31 2018/09/18 02:29:10 miko Exp $	*/
+/*	$OpenBSD: csh.h,v 1.32 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -68,6 +68,10 @@ typedef void *ioctl_t;		/* Third arg of ioctl */
 #include "const.h"
 #include "char.h"
 #include "error.h"
+
+#define xmalloc(i)	Malloc(i)
+#define xreallocarray(p, i, j)	Reallocarray(p, i, j)
+#define xcalloc(n, s)	Calloc(n, s)
 
 #include <stdio.h>
 FILE *cshin, *cshout, *csherr;
