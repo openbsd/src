@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.15 2018/09/10 04:59:32 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.16 2018/09/18 07:21:49 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -538,7 +538,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_cp_ring.stats_ctx_id = HWRM_NA_SIGNATURE;
-	sc->sc_cp_ring.ring.phys_id = HWRM_NA_SIGNATURE;
+	sc->sc_cp_ring.ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_cp_ring.softc = sc;
 	sc->sc_cp_ring.ring.id = 0;
 	sc->sc_cp_ring.ring.doorbell = sc->sc_cp_ring.ring.id * 0x80;
@@ -680,7 +680,7 @@ bnxt_up(struct bnxt_softc *sc)
 		goto free_mc;
 	}
 
-	sc->sc_tx_ring.phys_id = HWRM_NA_SIGNATURE;
+	sc->sc_tx_ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_tx_ring.id = BNXT_TX_RING_ID;
 	sc->sc_tx_ring.doorbell = sc->sc_tx_ring.id * 0x80;
 	sc->sc_tx_ring.ring_size = PAGE_SIZE / sizeof(struct tx_bd_short);
@@ -695,7 +695,7 @@ bnxt_up(struct bnxt_softc *sc)
 	}
 	bnxt_write_tx_doorbell(sc, &sc->sc_tx_ring, 0);
 
-	sc->sc_rx_ring.phys_id = HWRM_NA_SIGNATURE;
+	sc->sc_rx_ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_rx_ring.id = BNXT_RX_RING_ID;
 	sc->sc_rx_ring.doorbell = sc->sc_rx_ring.id * 0x80;
 	sc->sc_rx_ring.ring_size = PAGE_SIZE / sizeof(struct rx_prod_pkt_bd);
@@ -710,7 +710,7 @@ bnxt_up(struct bnxt_softc *sc)
 	}
 	bnxt_write_rx_doorbell(sc, &sc->sc_rx_ring, 0);
 
-	sc->sc_rx_ag_ring.phys_id = HWRM_NA_SIGNATURE;
+	sc->sc_rx_ag_ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_rx_ag_ring.id = BNXT_AG_RING_ID;
 	sc->sc_rx_ag_ring.doorbell = sc->sc_rx_ag_ring.id * 0x80;
 	sc->sc_rx_ag_ring.ring_size = PAGE_SIZE / sizeof(struct rx_prod_pkt_bd);
@@ -736,14 +736,14 @@ bnxt_up(struct bnxt_softc *sc)
 		goto dealloc_ag;
 	}
 
-	sc->sc_vnic.rss_id = HWRM_NA_SIGNATURE;
+	sc->sc_vnic.rss_id = (uint16_t)HWRM_NA_SIGNATURE;
 	if (bnxt_hwrm_vnic_ctx_alloc(sc, &sc->sc_vnic.rss_id) != 0) {
 		printf("%s: failed to allocate vnic rss context\n",
 		    DEVNAME(sc));
 		goto dealloc_ring_group;
 	}
 
-	sc->sc_vnic.id = HWRM_NA_SIGNATURE;
+	sc->sc_vnic.id = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.def_ring_grp = sc->sc_ring_group.grp_id;
 	sc->sc_vnic.mru = BNXT_MAX_MTU;
 	sc->sc_vnic.cos_rule = (uint16_t)HWRM_NA_SIGNATURE;
