@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.6 2018/07/16 13:14:06 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.7 2018/09/18 12:49:10 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2018 $
+.Dd $Mdocdate: September 18 2018 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -459,6 +459,10 @@ Run big ports on several cores.
 See
 .Fl p
 option.
+.It parallel2=p
+Run largest ports on many cores.
+Defaults to the same value as the parallel option, but can be increased for,
+say, chromium.
 .It repair=0/1
 Defaults to 1.
 Run
@@ -850,6 +854,10 @@ from running while port is building.
 Port that can be built in parallel, uses
 .Ev MAKE_JOBS
 and several build slots.
+.It Ar parallel2
+Very large port that should be built in parallel, uses
+.Ev MAKE_JOBS
+and lots of build slots.
 .It Ar tag:kde3
 kde3 port that conflicts with kde4 ports.
 Prevent scheduling ports with
