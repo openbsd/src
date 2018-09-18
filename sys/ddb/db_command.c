@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.83 2018/01/05 11:10:25 pirofti Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.84 2018/09/18 18:36:27 anton Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -878,7 +878,7 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  */
 /*ARGSUSED*/
 void
-db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
+db_write_cmd(db_expr_t address, boolean_t have_addr, db_expr_t count,
     char *modif)
 {
 	db_addr_t	addr;
