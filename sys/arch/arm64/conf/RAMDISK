@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.73 2018/09/11 13:54:29 ccardenas Exp $
+# $OpenBSD: RAMDISK,v 1.74 2018/09/18 13:45:09 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -30,7 +30,7 @@ option		NO_PROPOLICE
 option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=15360
+option		MINIROOTSIZE=16384
 
 option		FFS
 option		FFS2
