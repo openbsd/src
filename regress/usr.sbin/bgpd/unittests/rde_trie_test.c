@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.3 2018/09/10 20:51:59 benno Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.4 2018/09/18 13:55:28 denis Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -76,10 +76,12 @@ host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len, int *orl)
 		memcpy(&h->v6, &res->ai_addr->sa_data[6], sizeof(h->v6));
                 freeaddrinfo(res);
 		*len = mask;
-		*p = '/';
+		if (p)
+			*p = '/';
                 return (1);
         }
-	*p = '/';
+	if (p)
+		*p = '/';
 
         return (0);
 }
