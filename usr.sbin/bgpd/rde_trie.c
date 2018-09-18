@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.5 2018/09/10 13:15:50 denis Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.6 2018/09/18 15:14:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -57,22 +57,20 @@
  */
 struct tentry_v4 {
 	struct tentry_v4	*trie[2];
+	struct as_set		*aset;	/* for roa source-as set */
 	struct in_addr		 addr;
 	struct in_addr		 plenmask;
 	u_int8_t		 plen;
 	u_int8_t		 node;
-
-	/* roa source-as list pointer */
 };
 
 struct tentry_v6 {
 	struct tentry_v6	*trie[2];
+	struct as_set		*aset;	/* for roa source-as set */
 	struct in6_addr		 addr;
 	struct in6_addr		 plenmask;
 	u_int8_t		 plen;
 	u_int8_t		 node;
-
-	/* roa source-as list pointer */
 };
 
 /*
@@ -143,36 +141,13 @@ inet6setbit(struct in6_addr *addr, u_int8_t bit)
 	addr->s6_addr[bit / 8] |= (0x80 >> (bit % 8));
 }
 
-static int
-trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
-    u_int8_t min, u_int8_t max)
+static struct tentry_v4 *
+trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 {
 	struct tentry_v4 *n, *new, *b, **prev;
-	struct in_addr p, plenmask;
-	u_int8_t i;
-
-	/*
-	 * check for default route, this is special cased since prefixlen 0
-	 * can't be checked in the prefixlen mask plenmask. Also there is only
-	 * one default route so using a flag for this works.
-	 */
-	if (min == 0) {
-		th->match_default_v4 = 1;
-		if (max == 0)	/* just the default route */
-			return 0;
-		min = 1;
-	}
+	struct in_addr p;
 
 	inet4applymask(&p, prefix, plen);
-
-	/*
-	 * The prefixlen mask goes from 1 to 32 but the bitmask
-	 * starts at 0 and so all bits are set with an offset of 1.
-	 * The default /0 route is handled specially above.
-	 */
-	memset(&plenmask, 0, sizeof(plenmask));
-	for (i = min; i <= max; i++)
-		inet4setbit(&plenmask, i - 1);
 
 	/* walk tree finding spot to insert */
 	prev = &th->root_v4;
@@ -189,7 +164,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 			 * np and n, then insert n and new node there
 			 */
 			if ((b = calloc(1, sizeof(*b))) == NULL)
-				return -1;
+				return NULL;
 			b->plen = inet4findmsb(&n->addr, &mp);
 			inet4applymask(&b->addr, &n->addr, b->plen);
 
@@ -213,8 +188,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 		if (n->plen == plen) {
 			/* matching node, adjust */
 			n->node = 1;
-			n->plenmask.s_addr |= plenmask.s_addr;
-			return 0;
+			return n;
 		}
 
 		/* no need to check for n->plen == 32 because of above if */
@@ -227,10 +201,9 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
-		return -1;
+		return NULL;
 	new->addr = p;
 	new->plen = plen;
-	new->plenmask = plenmask;
 	new->node = 1;
 
 	/* link node */
@@ -241,39 +214,16 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 		else
 			new->trie[0] = n;
 	}
-	return 0;
+	return new;
 }
 
-static int
-trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
-    u_int8_t min, u_int8_t max)
+static struct tentry_v6 *
+trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 {
 	struct tentry_v6 *n, *new, *b, **prev;
-	struct in6_addr p, plenmask;
-	u_int8_t i;
-
-	/*
-	 * check for default route, this is special cased since prefixlen 0
-	 * can't be checked in the prefixlen mask plenmask. Also there is only
-	 * one default route so using a flag for this works.
-	 */
-	if (min == 0) {
-		th->match_default_v6 = 1;
-		if (max == 0)	/* just the default route */
-			return 0;
-		min = 1;
-	}
+	struct in6_addr p;
 
 	inet6applymask(&p, prefix, plen);
-
-	/*
-	 * The prefixlen mask goes from 1 to 128 but the bitmask
-	 * starts at 0 and so all bits are set with an offset of 1.
-	 * The default /0 route is handled specially above.
-	 */
-	memset(&plenmask, 0, sizeof(plenmask));
-	for (i = min; i <= max; i++)
-		inet6setbit(&plenmask, i - 1);
 
 	/* walk tree finding spot to insert */
 	prev = &th->root_v6;
@@ -290,7 +240,7 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 			 * np and n, then insert n and new node there
 			 */
 			if ((b = calloc(1, sizeof(*b))) == NULL)
-				return -1;
+				return NULL;
 			b->plen = inet6findmsb(&n->addr, &mp);
 			inet6applymask(&b->addr, &n->addr, b->plen);
 
@@ -314,9 +264,7 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 		if (n->plen == plen) {
 			/* matching node, adjust */
 			n->node = 1;
-			for (i = 0; i < sizeof(plenmask); i++)
-				n->plenmask.s6_addr[i] |= plenmask.s6_addr[i];
-			return 0;
+			return n;
 		}
 
 		/* no need to check for n->plen == 128 because of above if */
@@ -329,10 +277,9 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
-		return -1;
+		return NULL;
 	new->addr = p;
 	new->plen = plen;
-	new->plenmask = plenmask;
 	new->node = 1;
 
 	/* link node */
@@ -343,30 +290,125 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 		else
 			new->trie[0] = n;
 	}
-	return 0;
+	return new;
 }
 
+/*
+ * Insert prefix/plen into the trie with a prefixlen mask covering min - max.
+ * If plen == min == max then only the prefix/plen will match and no longer
+ * match is possible. Else all prefixes under prefix/plen with a prefixlen
+ * between min and max will match.
+ */
 int
 trie_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
     u_int8_t min, u_int8_t max)
 {
+	struct tentry_v4 *n4;
+	struct tentry_v6 *n6;
+	u_int8_t i;
+
 	/* precondition plen <= min <= max */
 	if (plen > min || min > max)
 		return -1;
+	if (prefix->aid != AID_INET && prefix->aid != AID_INET6)
+		return -1;
+
+	/*
+	 * Check for default route, this is special cased since prefixlen 0
+	 * can't be checked in the prefixlen mask plenmask.  Also there is
+	 * only one default route so using a flag for this works.
+	 */
+	if (min == 0) {
+		if (prefix->aid == AID_INET)
+			th->match_default_v4 = 1;
+		else
+			th->match_default_v6 = 1;
+
+		if (max == 0)	/* just the default route */
+			return 0;
+		min = 1;
+	}
 
 	switch (prefix->aid) {
 	case AID_INET:
 		if (max > 32)
 			return -1;
-		return trie_add_v4(th, &prefix->v4, plen, min, max);
+
+		n4 = trie_add_v4(th, &prefix->v4, plen);
+		if (n4 == NULL)
+			return -1;
+		/*
+		 * The prefixlen min - max goes from 1 to 32 but the bitmask
+		 * starts at 0 and so all bits are set with an offset of -1.
+		 * The default /0 route is handled specially above.
+		 */
+		for (i = min; i <= max; i++)
+			inet4setbit(&n4->plenmask, i - 1);
+		break;
 	case AID_INET6:
 		if (max > 128)
 			return -1;
-		return trie_add_v6(th, &prefix->v6, plen, min, max);
+
+		n6 = trie_add_v6(th, &prefix->v6, plen);
+		if (n6 == NULL)
+			return -1;
+
+		/* See above for the - 1 reason. */
+		for (i = min; i <= max; i++)
+			inet6setbit(&n6->plenmask, i - 1);
+		break;
+	}
+	return 0;
+}
+
+/*
+ * Insert a ROA entry for prefix/plen. The prefix will insert an as_set with
+ * source_as and the maxlen as data. This makes it possible to validate if a
+ * prefix is matching this ROA record. It is possible to insert prefixes with
+ * source_as = 0. These entries will never return ROA_VALID on check and can
+ * be used to cover a large prefix as ROA_INVALID unless a more specific route
+ * is a match.
+ */
+int
+trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
+    struct as_set *aset)
+{
+	struct tentry_v4 *n4;
+	struct tentry_v6 *n6;
+	struct as_set **ap;
+
+	/* ignore possible default route since it does not make sense */
+
+	switch (prefix->aid) {
+	case AID_INET:
+		if (plen > 32)
+			return -1;
+
+		n4 = trie_add_v4(th, &prefix->v4, plen);
+		if (n4 == NULL)
+			return -1;
+		ap = &n4->aset;
+		break;
+	case AID_INET6:
+		if (plen > 128)
+			return -1;
+
+		n6 = trie_add_v6(th, &prefix->v6, plen);
+		if (n6 == NULL)
+			return -1;
+		ap = &n6->aset;
+		break;
 	default:
 		/* anything else fails */
 		return -1;
 	}
+
+	/* aset already set, error out */
+	if (*ap != NULL)
+		return -1;
+	*ap = aset;
+
+	return 0;
 }
 
 static void
@@ -376,6 +418,7 @@ trie_free_v4(struct tentry_v4 *n)
 		return;
 	trie_free_v4(n->trie[0]);
 	trie_free_v4(n->trie[1]);
+	as_set_free(n->aset);
 	free(n);
 }
 
@@ -386,6 +429,7 @@ trie_free_v6(struct tentry_v6 *n)
 		return;
 	trie_free_v6(n->trie[0]);
 	trie_free_v6(n->trie[1]);
+	as_set_free(n->aset);
 	free(n);
 }
 
@@ -490,6 +534,123 @@ trie_match(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 	default:
 		/* anything else is no match */
 		return 0;
+	}
+}
+
+static int
+trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
+    u_int32_t as)
+{
+	struct tentry_v4 *n;
+	struct roa_set *rs;
+	int validity = ROA_UNKNOWN;
+
+	/* ignore possible default route since it does not make sense */
+
+	n = th->root_v4;
+	while (n) {
+		struct in_addr mp;
+
+		if (n->plen > plen)
+			break;	/* too specific, no match possible */
+
+		inet4applymask(&mp, prefix, n->plen);
+		if (n->addr.s_addr !=  mp.s_addr)
+			break;	/* off path, no other match possible */
+
+		if (n->node) {
+			/*
+			 * The prefix is covered by this roa node
+			 * therefor invalid unless roa_set matches.
+			 */
+			validity = ROA_INVALID;
+
+			/* Treat AS 0 as NONE which can never be matched */
+			if (as != 0) {
+				rs = as_set_match(n->aset, as);
+				if (rs && plen <= rs->maxlen)
+					return ROA_VALID;
+			}
+		}
+
+		if (n->plen == 32)
+			break;	/* can't go deeper */
+		if (inet4isset(prefix, n->plen))
+			n = n->trie[1];
+		else
+			n = n->trie[0];
+	}
+
+	return validity;
+}
+
+static int
+trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
+    u_int32_t as)
+{
+	struct tentry_v6 *n;
+	struct roa_set *rs;
+	int validity = ROA_UNKNOWN;
+
+	/* ignore possible default route since it does not make sense */
+
+	n = th->root_v6;
+	while (n) {
+		struct in6_addr mp;
+
+		if (n->plen > plen)
+			break;	/* too specific, no match possible */
+
+		inet6applymask(&mp, prefix, n->plen);
+		if (memcmp(&n->addr, &mp, sizeof(mp)) != 0)
+			break;	/* off path, no other match possible */
+
+		if (n->node) {
+			/*
+			 * This prefix is covered by this roa node.
+			 * Therefor invalid unless proven otherwise.
+			 */
+			validity = ROA_INVALID;
+
+			/* Treat AS 0 as NONE which can never be matched */
+			if (as != 0) {
+				if ((rs = as_set_match(n->aset, as)) != NULL)
+				    if (plen == n->plen || plen <= rs->maxlen)
+					return ROA_VALID;
+			}
+		}
+
+		if (n->plen == 128)
+			break;	/* can't go deeper */
+		if (inet6isset(prefix, n->plen))
+			n = n->trie[1];
+		else
+			n = n->trie[0];
+	}
+
+	return validity;
+}
+
+/*
+ * Do a ROA (Route Origin Validation) check.  Look for elements in the trie
+ * which cover prefix "prefix/plen" and match the source-as as.
+ * AS 0 is treated here like AS NONE and should be used when the source-as
+ * is unknown (e.g. AS_SET). In other words the check will then only return
+ * ROA_UNKNOWN or ROA_INVALID depending if the prefix is covered by the ROA.
+ */
+int
+trie_roa_check(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
+    u_int32_t as)
+{
+	/* valid, invalid, unknown */
+	switch (prefix->aid) {
+	case AID_INET:
+		return trie_roa_check_v4(th, &prefix->v4, plen, as);
+	case AID_INET6:
+		return trie_roa_check_v6(th, &prefix->v6, plen, as);
+	default:
+		/* anything else is unknown */
+		return ROA_UNKNOWN;
 	}
 }
 

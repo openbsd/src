@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.190 2018/09/09 12:33:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.191 2018/09/18 15:14:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -34,6 +34,12 @@ enum peer_state {
 	PEER_DOWN,
 	PEER_UP,
 	PEER_ERR	/* error occurred going to PEER_DOWN state */
+};
+
+enum roa_state {
+	ROA_UNKNOWN,
+	ROA_INVALID,
+	ROA_VALID
 };
 
 /*
@@ -332,7 +338,8 @@ struct rde_prefixset {
 	char				name[SET_NAME_LEN];
 	struct trie_head		th;
 	SIMPLEQ_ENTRY(rde_prefixset)	entry;
-	int			 dirty;
+	int				dirty;
+	int				roa;
 };
 SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
 
@@ -578,8 +585,12 @@ int		 up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *,
 /* rde_trie.c */
 int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,
 	    u_int8_t);
+int	trie_roa_add(struct trie_head *, struct bgpd_addr *, u_int8_t,
+	    struct as_set *);
 void	trie_free(struct trie_head *);
 int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t, int);
+int	trie_roa_check(struct trie_head *, struct bgpd_addr *, u_int8_t,
+	    u_int32_t);
 void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
 

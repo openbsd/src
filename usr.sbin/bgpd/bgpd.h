@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.340 2018/09/14 10:22:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.341 2018/09/18 15:14:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -950,6 +950,11 @@ struct filter_set {
 		u_int8_t			 origin;
 	} action;
 	enum action_types		type;
+};
+
+struct roa_set {
+	u_int32_t	as;	/* must be first */
+	u_int32_t	maxlen;	/* change type for better struct layout */
 };
 
 struct prefixset_item {
