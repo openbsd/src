@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.240 2018/08/06 17:31:31 benno Exp $	*/
+/*	$OpenBSD: relay.c,v 1.241 2018/09/19 11:28:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1910,6 +1910,14 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 relay_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
+	switch (imsg->hdr.type) {
+	case IMSG_CA_PRIVENC:
+	case IMSG_CA_PRIVDEC:
+		log_warnx("%s: priv%s result after timeout", __func__,
+		    imsg->hdr.type == IMSG_CA_PRIVENC ? "enc" : "dec");
+		return (0);
+	}
+
 	return (-1);
 }
 
