@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.4 2018/08/15 07:13:51 kevlo Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.5 2018/09/19 07:47:54 mestre Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -1016,6 +1016,7 @@ mue_iff(struct mue_softc *sc)
 	rxfilt = mue_csr_read(sc, reg);
 	rxfilt &= ~(MUE_RFE_CTL_PERFECT | MUE_RFE_CTL_MULTICAST_HASH |
 	    MUE_RFE_CTL_UNICAST | MUE_RFE_CTL_MULTICAST);
+	memset(hashtbl, 0, sizeof(hashtbl));
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* Always accept broadcast frames. */
@@ -1028,9 +1029,6 @@ mue_iff(struct mue_softc *sc)
 			rxfilt |= MUE_RFE_CTL_UNICAST | MUE_RFE_CTL_MULTICAST;
 	} else {
 		rxfilt |= MUE_RFE_CTL_PERFECT | MUE_RFE_CTL_MULTICAST_HASH;
-
-		/* Clear hash table. */
-		memset(hashtbl, 0, sizeof(hashtbl));
 
 		/* Now program new ones. */
 		ETHER_FIRST_MULTI(step, ac, enm);
