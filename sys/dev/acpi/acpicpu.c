@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.82 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.83 2018/09/19 05:23:16 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -401,11 +401,11 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 		if (grd->grd_gas.register_bit_width == 0) {
 			method = CST_METH_HALT;
 			addr = 0;
-		} else if (grd->grd_gas.register_bit_width == 1 ||
-		           grd->grd_gas.register_bit_width == 8) {
+		} else {
 			/*
-			 * vendor 1 == Intel
-			 * vendor 8 == "AML author used the bitwidth"
+			 * In theory we should only do this for
+			 * vendor 1 == Intel but other values crop up,
+			 * presumably due to the normal ACPI spec confusion.
 			 */
 			switch (grd->grd_gas.register_bit_offset) {
 			case 0x1:
@@ -431,10 +431,6 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 				    state, grd->grd_gas.register_bit_offset);
 				return;
 			}
-		} else {
-			printf(": C%d (unknown FFH vendor %d)",
-			    state, grd->grd_gas.register_bit_width);
-			return;
 		}
 		break;
 
