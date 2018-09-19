@@ -42,18 +42,20 @@ D="\
 "
 
 for i in $D; do
-	vnconfig -u vnd0 > /dev/null 2>&1
-	echo "${i}MB disk"
-	rm -f /tmp/image f
-	dd if=/dev/zero of=/tmp/image bs=1m count=1 seek=${i} > /dev/null 2>&1
-	ls -lh /tmp/image
-	vnconfig vnd0 /tmp/image
-	fdisk -iy vnd0 > /dev/null
+	vnconfig -u vnd0
+	rm -f image
+	echo "===== Start ${i}MB disk ====="
+	dd if=/dev/zero of=image bs=1m count=1 seek=${i} > /dev/null 2>&1
+	vnconfig vnd0 image
+	fdisk -iy vnd0
+	echo
 	(disklabel -A -p g vnd0; \
-	 disklabel -Aw -f f vnd0; \
-	 disklabel vnd0) | grep '^  [a-p]: ' \
-	    | egrep -v "unused" | sort; cat f
-	vnconfig -u vnd0 > /dev/null 2>&1
-	read
-done
+	 disklabel -Aw -f disklabel-A-f vnd0; \
+	 disklabel vnd0) | grep '^  [a-p]: ' | egrep -v "unused" | sort
+	echo
+	cat disklabel-A-f
+	echo "===== End ${i}MB disk ====="
+	echo
+done > disklabel-A-output
+
 vnconfig -u vnd0 > /dev/null 2>&1
