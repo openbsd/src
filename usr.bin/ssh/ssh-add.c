@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-add.c,v 1.135 2018/02/23 15:58:37 markus Exp $ */
+/* $OpenBSD: ssh-add.c,v 1.136 2018/09/19 02:03:02 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -158,7 +158,7 @@ delete_file(int agent_fd, const char *filename, int key_only, int qflag)
 
 /* Send a request to remove all identities. */
 static int
-delete_all(int agent_fd)
+delete_all(int agent_fd, int qflag)
 {
 	int ret = -1;
 
@@ -172,10 +172,10 @@ delete_all(int agent_fd)
 	/* ignore error-code for ssh1 */
 	ssh_remove_all_identities(agent_fd, 1);
 
-	if (ret == 0)
-		fprintf(stderr, "All identities removed.\n");
-	else
+	if (ret != 0)
 		fprintf(stderr, "Failed to remove all identities.\n");
+	else if (!qflag)
+		fprintf(stderr, "All identities removed.\n");
 
 	return ret;
 }
@@ -302,14 +302,19 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag)
 
 	if ((r = ssh_add_identity_constrained(agent_fd, private, comment,
 	    lifetime, confirm, maxsign)) == 0) {
-		fprintf(stderr, "Identity added: %s (%s)\n", filename, comment);
 		ret = 0;
-		if (lifetime != 0)
-			fprintf(stderr,
-			    "Lifetime set to %d seconds\n", lifetime);
-		if (confirm != 0)
-			fprintf(stderr,
-			    "The user must confirm each use of the key\n");
+		if (!qflag) {
+			fprintf(stderr, "Identity added: %s (%s)\n",
+			    filename, comment);
+			if (lifetime != 0) {
+				fprintf(stderr,
+				    "Lifetime set to %d seconds\n", lifetime);
+			}
+			if (confirm != 0) {
+				fprintf(stderr, "The user must confirm "
+				    "each use of the key\n");
+			}
+		}
 	} else {
 		fprintf(stderr, "Could not add identity \"%s\": %s\n",
 		    filename, ssh_err(r));
@@ -354,12 +359,20 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag)
 		    private->cert->key_id, ssh_err(r));
 		goto out;
 	}
-	fprintf(stderr, "Certificate added: %s (%s)\n", certpath,
-	    private->cert->key_id);
-	if (lifetime != 0)
-		fprintf(stderr, "Lifetime set to %d seconds\n", lifetime);
-	if (confirm != 0)
-		fprintf(stderr, "The user must confirm each use of the key\n");
+	/* success */
+	if (!qflag) {
+		fprintf(stderr, "Certificate added: %s (%s)\n", certpath,
+		    private->cert->key_id);
+		if (lifetime != 0) {
+			fprintf(stderr, "Lifetime set to %d seconds\n",
+			    lifetime);
+		}
+		if (confirm != 0) {
+			fprintf(stderr, "The user must confirm each use "
+			    "of the key\n");
+		}
+	}
+
  out:
 	free(certpath);
 	free(comment);
@@ -369,7 +382,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag)
 }
 
 static int
-update_card(int agent_fd, int add, const char *id)
+update_card(int agent_fd, int add, const char *id, int qflag)
 {
 	char *pin = NULL;
 	int r, ret = -1;
@@ -382,9 +395,11 @@ update_card(int agent_fd, int add, const char *id)
 
 	if ((r = ssh_update_card(agent_fd, add, id, pin == NULL ? "" : pin,
 	    lifetime, confirm)) == 0) {
-		fprintf(stderr, "Card %s: %s\n",
-		    add ? "added" : "removed", id);
 		ret = 0;
+		if (!qflag) {
+			fprintf(stderr, "Card %s: %s\n",
+			    add ? "added" : "removed", id);
+		}
 	} else {
 		fprintf(stderr, "Could not %s card \"%s\": %s\n",
 		    add ? "add" : "remove", id, ssh_err(r));
@@ -617,7 +632,7 @@ main(int argc, char **argv)
 			ret = 1;
 		goto done;
 	} else if (Dflag) {
-		if (delete_all(agent_fd) == -1)
+		if (delete_all(agent_fd, qflag) == -1)
 			ret = 1;
 		goto done;
 	}
@@ -625,7 +640,8 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	if (pkcs11provider != NULL) {
-		if (update_card(agent_fd, !deleting, pkcs11provider) == -1)
+		if (update_card(agent_fd, !deleting, pkcs11provider,
+		    qflag) == -1)
 			ret = 1;
 		goto done;
 	}
