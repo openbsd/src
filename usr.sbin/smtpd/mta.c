@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.224 2018/09/17 12:16:27 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.225 2018/09/19 05:31:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -848,7 +848,7 @@ mta_query_mx(struct mta_relay *relay)
 	if (waitq_wait(&relay->domain->mxs, mta_on_mx, relay)) {
 		id = generate_uid();
 		tree_xset(&wait_mx, id, relay->domain);
-		if (relay->domain->flags)
+		if (relay->domain->as_host)
 			m_create(p_lka,  IMSG_MTA_DNS_HOST, 0, 0, -1);
 		else
 			m_create(p_lka,  IMSG_MTA_DNS_MX, 0, 0, -1);
@@ -1722,7 +1722,6 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 
 	if (relayh->hostname[0]) {
 		key.domain = mta_domain(relayh->hostname, 1);
-		key.flags |= RELAY_MX;
 	}
 	else {
 		key.domain = mta_domain(e->dest.domain, 0);
@@ -1870,7 +1869,7 @@ mta_relay_to_text(struct mta_relay *relay)
 		(void)strlcat(buf, relay->pki_name, sizeof buf);
 	}
 
-	if (relay->flags & RELAY_MX) {
+	if (relay->domain->as_host) {
 		(void)strlcat(buf, sep, sizeof buf);
 		(void)strlcat(buf, "mx", sizeof buf);
 	}
@@ -2138,18 +2137,18 @@ mta_host_cmp(const struct mta_host *a, const struct mta_host *b)
 SPLAY_GENERATE(mta_host_tree, mta_host, entry, mta_host_cmp);
 
 static struct mta_domain *
-mta_domain(char *name, int flags)
+mta_domain(char *name, int as_host)
 {
 	struct mta_domain	key, *d;
 
 	key.name = name;
-	key.flags = flags;
+	key.as_host = as_host;
 	d = SPLAY_FIND(mta_domain_tree, &domains, &key);
 
 	if (d == NULL) {
 		d = xcalloc(1, sizeof(*d));
 		d->name = xstrdup(name);
-		d->flags = flags;
+		d->as_host = as_host;
 		TAILQ_INIT(&d->mxs);
 		SPLAY_INSERT(mta_domain_tree, &domains, d);
 		stat_increment("mta.domain", 1);
@@ -2190,9 +2189,9 @@ mta_domain_unref(struct mta_domain *d)
 static int
 mta_domain_cmp(const struct mta_domain *a, const struct mta_domain *b)
 {
-	if (a->flags < b->flags)
+	if (a->as_host < b->as_host)
 		return (-1);
-	if (a->flags > b->flags)
+	if (a->as_host > b->as_host)
 		return (1);
 	return (strcasecmp(a->name, b->name));
 }

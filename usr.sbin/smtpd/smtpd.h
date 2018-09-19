@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.560 2018/09/17 12:16:27 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.561 2018/09/19 05:31:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -90,7 +90,6 @@
 #define RELAY_TLS_NO		3
 
 #define RELAY_AUTH		0x08
-#define RELAY_MX		0x20
 #define RELAY_LMTP		0x80
 #define	RELAY_TLS_VERIFY	0x200
 
@@ -627,7 +626,7 @@ struct mta_mx {
 struct mta_domain {
 	SPLAY_ENTRY(mta_domain)	 entry;
 	char			*name;
-	int			 flags;
+	int			 as_host;
 	TAILQ_HEAD(, mta_mx)	 mxs;
 	int			 mxstatus;
 	int			 refcount;
