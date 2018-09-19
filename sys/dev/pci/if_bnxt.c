@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.16 2018/09/18 07:21:49 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.17 2018/09/19 10:26:17 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -209,6 +209,7 @@ struct bnxt_softc {
 
 	void			*sc_ih;
 
+	int			sc_hwrm_ver;
 	int			sc_max_tc;
 	struct bnxt_cos_queue	sc_q_info[BNXT_MAX_QUEUE];
 
@@ -1516,6 +1517,7 @@ bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
 		IF_Gbps(25), IF_Gbps(40), IF_Gbps(50), IF_Gbps(100)
 	};
 	uint64_t media_type;
+	int duplex;
 	int rc = 0;
 	int i;
 
@@ -1528,8 +1530,13 @@ bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
 		goto exit;
 	}
 
+	if (softc->sc_hwrm_ver > 0x10800)
+		duplex = resp->duplex_state;
+	else
+		duplex = resp->duplex_cfg;
+
 	if (resp->link == HWRM_PORT_PHY_QCFG_OUTPUT_LINK_LINK) {
-		if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
+		if (duplex == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
 			link_state = LINK_STATE_HALF_DUPLEX;
 		else
 			link_state = LINK_STATE_FULL_DUPLEX;
@@ -1590,7 +1597,7 @@ bnxt_hwrm_port_phy_qcfg(struct bnxt_softc *softc, struct ifmediareq *ifmr)
 				ifmr->ifm_active |= IFM_ETH_TXPAUSE;
 			if (resp->pause & HWRM_PORT_PHY_QCFG_OUTPUT_PAUSE_RX)
 				ifmr->ifm_active |= IFM_ETH_RXPAUSE;
-			if (resp->duplex_state == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
+			if (duplex == HWRM_PORT_PHY_QCFG_OUTPUT_DUPLEX_STATE_HALF)
 				ifmr->ifm_active |= IFM_HDX;
 			else
 				ifmr->ifm_active |= IFM_FDX;
@@ -1694,6 +1701,8 @@ bnxt_media_change(struct ifnet *ifp)
 		link_speed = 0;
 	}
 
+	req.enables |= htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_DUPLEX);
+	req.auto_duplex = HWRM_PORT_PHY_CFG_INPUT_AUTO_DUPLEX_BOTH;
 	if (link_speed == 0) {
 		req.auto_mode |=
 		    HWRM_PORT_PHY_CFG_INPUT_AUTO_MODE_ALL_SPEEDS;
@@ -1720,7 +1729,9 @@ bnxt_media_autonegotiate(struct bnxt_softc *sc)
 
 	bnxt_hwrm_cmd_hdr_init(sc, &req, HWRM_PORT_PHY_CFG);
 	req.auto_mode |= HWRM_PORT_PHY_CFG_INPUT_AUTO_MODE_ALL_SPEEDS;
-	req.enables |= htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_MODE);
+	req.auto_duplex = HWRM_PORT_PHY_CFG_INPUT_AUTO_DUPLEX_BOTH;
+	req.enables |= htole32(HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_MODE |
+	    HWRM_PORT_PHY_CFG_INPUT_ENABLES_AUTO_DUPLEX);
 	req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESTART_AUTONEG);
 	req.flags |= htole32(HWRM_PORT_PHY_CFG_INPUT_FLAGS_RESET_PHY);
 
@@ -2193,6 +2204,9 @@ bnxt_hwrm_ver_get(struct bnxt_softc *softc)
 
 	printf(": fw ver %d.%d.%d, ", resp->hwrm_fw_maj, resp->hwrm_fw_min,
 	    resp->hwrm_fw_bld);
+
+	softc->sc_hwrm_ver = (resp->hwrm_intf_maj << 16) |
+	    (resp->hwrm_intf_min << 8) | resp->hwrm_intf_upd;
 #if 0
 	snprintf(softc->ver_info->hwrm_if_ver, BNXT_VERSTR_SIZE, "%d.%d.%d",
 	    resp->hwrm_intf_maj, resp->hwrm_intf_min, resp->hwrm_intf_upd);
