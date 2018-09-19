@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.68 2018/09/13 04:23:36 pd Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.69 2018/09/19 04:29:21 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -2007,6 +2007,17 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 	vmmci.pci_id = id;
 
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+}
+
+void
+virtio_shutdown(struct vmd_vm *vm)
+{
+	int i;
+
+	/* ensure that our disks are synced */
+	vioscsi->file.close(vioscsi->file.p);
+	for (i = 0; i < nr_vioblk; i++)
+		vioblk[i].file.close(vioblk[i].file.p);
 }
 
 int

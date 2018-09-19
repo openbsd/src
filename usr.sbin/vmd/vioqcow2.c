@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.2 2018/09/11 04:06:32 ccardenas Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.3 2018/09/19 04:29:21 ccardenas Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -77,7 +77,6 @@ struct qcdisk {
 
 	int       fd;
 	uint64_t *l1;
-	char     *scratch;
 	off_t     end;
 	uint32_t  clustersz;
 	off_t	  disksz; /* In bytes */
@@ -161,17 +160,19 @@ qc2_open(struct qcdisk *disk, int fd)
 	size_t i;
 	int version;
 
-	if (pread(fd, &header, sizeof header, 0) != sizeof header) {
-		log_warn("%s: short read on header", __func__);
-		return -1;
-	}
-	if (strncmp(header.magic, "QFI\xfb", 4) != 0) {
-		log_warn("%s: invalid magic numbers", __func__);
-		return -1;
-	}
 	pthread_rwlock_init(&disk->lock, NULL);
 	disk->fd = fd;
 	disk->base = NULL;
+	disk->l1 = NULL;
+
+	if (pread(fd, &header, sizeof header, 0) != sizeof header) {
+		log_warn("%s: short read on header", __func__);
+		goto error;
+	}
+	if (strncmp(header.magic, "QFI\xfb", 4) != 0) {
+		log_warn("%s: invalid magic numbers", __func__);
+		goto error;
+	}
 
 	disk->clustersz		= (1ull << be32toh(header.clustershift));
 	disk->disksz		= be64toh(header.disksz);
@@ -182,6 +183,7 @@ qc2_open(struct qcdisk *disk, int fd)
 	disk->refoff		= be64toh(header.refoff);
 	disk->nsnap		= be32toh(header.snapcount);
 	disk->snapoff		= be64toh(header.snapsz);
+
 	/*
 	 * The additional features here are defined as 0 in the v2 format,
 	 * so as long as we clear the buffer before parsing, we don't need
@@ -196,23 +198,25 @@ qc2_open(struct qcdisk *disk, int fd)
 	 * We only know about the dirty or corrupt bits here.
 	 */
 	if (disk->incompatfeatures & ~(QCOW2_DIRTY|QCOW2_CORRUPT)) {
-		log_warn("%s: unsupported features %llx", __func__,
+		log_warnx("%s: unsupported features %llx", __func__,
 		    disk->incompatfeatures & ~(QCOW2_DIRTY|QCOW2_CORRUPT));
-		return -1;
+		goto error;
 	}
 
 	disk->l1 = calloc(disk->l1sz, sizeof *disk->l1);
-	if (pread(disk->fd, (char*)disk->l1, 8*disk->l1sz, disk->l1off)
+	if (!disk->l1)
+		goto error;
+	if (pread(disk->fd, disk->l1, 8*disk->l1sz, disk->l1off)
 	    != 8*disk->l1sz) {
-		free(disk->l1);
-		return -1;
+		log_warn("%s: unable to read qcow2 L1 table", __func__);
+		goto error;
 	}
 	for (i = 0; i < disk->l1sz; i++)
 		disk->l1[i] = be64toh(disk->l1[i]);
 	version = be32toh(header.version);
 	if (version != 2 && version != 3) {
 		log_warn("%s: unknown qcow2 version %d", __func__, version);
-		return -1;
+		goto error;
 	}
 
 	backingoff = be64toh(header.backingoff);
@@ -223,34 +227,47 @@ qc2_open(struct qcdisk *disk, int fd)
 		 * otherwise we just crash with a pledge violation.
 		 */
 		log_warn("%s: unsupported external snapshot images", __func__);
-		return -1;
+		goto error;
 
 		if (backingsz >= sizeof basepath - 1) {
 			log_warn("%s: snapshot path too long", __func__);
-			return -1;
+			goto error;
 		}
 		if (pread(fd, basepath, backingsz, backingoff) != backingsz) {
 			log_warn("%s: could not read snapshot base name",
 			    __func__);
-			return -1;
+			goto error;
 		}
 		basepath[backingsz] = 0;
 
 		disk->base = calloc(1, sizeof(struct qcdisk));
+		if (!disk->base)
+			goto error;
 		if (qc2_openpath(disk->base, basepath, O_RDONLY) == -1) {
-			free(disk->base);
-			return -1;
+			log_warn("%s: could not open %s", basepath, __func__);
+			goto error;
 		}
 		if (disk->base->clustersz != disk->clustersz) {
 			log_warn("%s: all disks must share clustersize",
 			    __func__);
-			free(disk->base);
-			return -1;
+			goto error;
 		}
 	}
-	fstat(fd, &st);
+	if (fstat(fd, &st) == -1) {
+		log_warn("%s: unable to stat disk", __func__);
+		goto error;
+	}
+
 	disk->end = st.st_size;
+
+	log_debug("opened qcow2 disk version %d:", version);
+	log_debug("size:\t%lld", disk->disksz);
+	log_debug("end:\t%lld", disk->end);
+	log_debug("nsnap:\t%d", disk->nsnap);
 	return 0;
+error:
+	qc2_close(disk);
+	return -1;
 }
 
 static ssize_t
@@ -362,8 +379,10 @@ qc2_close(void *p)
 	struct qcdisk *disk;
 
 	disk = p;
-	pwrite(disk->fd, disk->l1, disk->l1sz, disk->l1off);
+	if (disk->base)
+		qc2_close(disk->base);
 	close(disk->fd);
+	free(disk->l1);
 	free(disk);
 }
 
