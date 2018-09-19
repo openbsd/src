@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.26 2016/04/07 06:30:13 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.27 2018/09/19 14:01:52 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>

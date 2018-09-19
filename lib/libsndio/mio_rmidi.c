@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.25 2017/11/04 09:35:56 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.26 2018/09/19 14:01:52 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
