@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.7 2017/10/25 14:34:22 kettenis Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.8 2018/09/19 08:12:39 claudio Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -219,6 +219,8 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
+	free(edid_buf, M_DEVBUF, EDID_LENGTH);
+
 #ifdef LCD_DEBUG
 	edid_print(&sc->sc_edid);
 #endif
@@ -246,7 +248,6 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	/* configure DMA framebuffer */
 	if (amdisplay_setup_dma(sc)) {
 		printf("%s: couldn't allocate DMA framebuffer\n", DEVNAME(sc));
-		free(edid_buf, M_DEVBUF, EDID_LENGTH);
 		amdisplay_detach(self, 0);
 		return;
 	}
