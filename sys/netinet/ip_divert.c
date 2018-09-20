@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.57 2018/04/24 15:40:55 pirofti Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.58 2018/09/20 18:59:10 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -186,10 +186,12 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		return (0);
 	}
 
+	mtx_enter(&inpcbtable_mtx);
 	TAILQ_FOREACH(inp, &divbtable.inpt_queue, inp_queue) {
 		if (inp->inp_lport == divert_port)
 			break;
 	}
+	mtx_leave(&inpcbtable_mtx);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;

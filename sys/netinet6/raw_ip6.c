@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.130 2018/09/13 19:53:58 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.131 2018/09/20 18:59:10 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 #endif
 	NET_ASSERT_LOCKED();
+	mtx_enter(&inpcbtable_mtx);
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -177,8 +178,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 			IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, *offp,
 			    sizeof(*icmp6));
-			if (icmp6 == NULL)
+			if (icmp6 == NULL) {
+				mtx_leave(&inpcbtable_mtx);
 				return IPPROTO_DONE;
+			}
 			if (ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
 			    in6p->inp_icmp6filt))
 				continue;
@@ -212,6 +215,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		last = in6p;
 	}
+	mtx_leave(&inpcbtable_mtx);
+
 	if (last) {
 		if (last->inp_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, m, &opts);
