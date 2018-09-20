@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.17 2018/08/25 18:32:05 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.18 2018/09/20 01:19:56 jsg Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -361,6 +361,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 			DPRINTF(("%s: response report id %d != %d\n",
 			    sc->sc_dev.dv_xname, d, rreq->id));
 			iic_release_bus(sc->sc_tag, 0);
+			free(tmprep, M_DEVBUF, report_len);
 			return (1);
 		}
 
