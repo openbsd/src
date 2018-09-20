@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.110 2018/05/14 13:54:39 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.111 2018/09/20 15:19:38 deraadt Exp $
 
 machine		hppa
 maxusers	4
@@ -10,7 +10,7 @@ option		NO_PROPOLICE
 option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=7200
+option		MINIROOTSIZE=7920
 
 option		SCSITERSE
 option		PCIVERBOSE
