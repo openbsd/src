@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.191 2018/09/18 15:14:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.192 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -295,7 +295,7 @@ struct rib_desc {
 	struct rib_context	ribctx;
 	struct filter_head	*in_rules;
 	struct filter_head	*in_rules_tmp;
-	enum reconf_action 	state;
+	enum reconf_action	state;
 	u_int8_t		dumping;
 };
 

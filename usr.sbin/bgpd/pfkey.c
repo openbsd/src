@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.51 2017/08/21 14:43:33 phessler Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.52 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -458,7 +458,8 @@ pfkey_reply(int sd, u_int32_t *spi)
 			return (-1);
 		}
 	}
-	if ((data = reallocarray(NULL, hdr.sadb_msg_len, PFKEY2_CHUNK)) == NULL) {
+	if ((data = reallocarray(NULL, hdr.sadb_msg_len, PFKEY2_CHUNK))
+	    == NULL) {
 		log_warn("pfkey malloc");
 		return (-1);
 	}

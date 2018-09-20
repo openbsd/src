@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.106 2018/09/09 14:08:11 benno Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.107 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -98,8 +98,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			break;
 		case ACTION_SET_RELATIVE_WEIGHT:
 			if (set->action.relative > 0) {
-				if (set->action.relative + state->aspath.weight <
-				    state->aspath.weight)
+				if (set->action.relative + state->aspath.weight
+				    < state->aspath.weight)
 					state->aspath.weight = UINT_MAX;
 				else
 					state->aspath.weight +=
@@ -145,7 +145,7 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			switch (set->action.community.as) {
 			case COMMUNITY_ERROR:
 			case COMMUNITY_ANY:
-				fatalx("rde_apply_set bad community string");
+				fatalx("%s: bad community string", __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				as = peer->conf.remote_as;
 				break;
@@ -160,7 +160,7 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			switch (set->action.community.type) {
 			case COMMUNITY_ERROR:
 			case COMMUNITY_ANY:
-				fatalx("rde_apply_set bad community string");
+				fatalx("%s: bad community string", __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				type = peer->conf.remote_as;
 				break;
@@ -177,7 +177,7 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 		case ACTION_DEL_COMMUNITY:
 			switch (set->action.community.as) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad community string");
+				fatalx("%s: bad community string", __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				as = peer->conf.remote_as;
 				break;
@@ -192,7 +192,7 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 			switch (set->action.community.type) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad community string");
+				fatalx("%s: bad community string", __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				type = peer->conf.remote_as;
 				break;
@@ -210,7 +210,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 		case ACTION_SET_LARGE_COMMUNITY:
 			switch (set->action.large_community.as) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				las = peer->conf.remote_as;
 				break;
@@ -225,7 +226,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 			switch (set->action.large_community.ld1) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				ld1 = peer->conf.remote_as;
 				break;
@@ -240,7 +242,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 			switch (set->action.large_community.ld2) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				ld2 = peer->conf.remote_as;
 				break;
@@ -258,7 +261,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 		case ACTION_DEL_LARGE_COMMUNITY:
 			switch (set->action.large_community.as) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				las = peer->conf.remote_as;
 				break;
@@ -273,7 +277,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 			switch (set->action.large_community.ld1) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				ld1 = peer->conf.remote_as;
 				break;
@@ -288,7 +293,8 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 
 			switch (set->action.large_community.ld2) {
 			case COMMUNITY_ERROR:
-				fatalx("rde_apply_set bad large community string");
+				fatalx("%s: bad large community string",
+				    __func__);
 			case COMMUNITY_NEIGHBOR_AS:
 				ld2 = peer->conf.remote_as;
 				break;
@@ -325,11 +331,13 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			state->aspath.origin = set->action.origin;
 			break;
 		case ACTION_SET_EXT_COMMUNITY:
-			community_ext_set(&state->aspath, &set->action.ext_community,
+			community_ext_set(&state->aspath,
+			    &set->action.ext_community,
 			    peer->conf.remote_as);
 			break;
 		case ACTION_DEL_EXT_COMMUNITY:
-			community_ext_delete(&state->aspath, &set->action.ext_community,
+			community_ext_delete(&state->aspath,
+			    &set->action.ext_community,
 			    peer->conf.remote_as);
 			break;
 		}
@@ -1012,7 +1020,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 
 	if (state && state->aspath.flags & F_ATTR_PARSE_ERR)
 		/*
-	 	 * don't try to filter bad updates just deny them
+		 * don't try to filter bad updates just deny them
 		 * so they act as implicit withdraws
 		 */
 		return (ACTION_DENY);

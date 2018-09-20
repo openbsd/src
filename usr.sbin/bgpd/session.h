@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.123 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.124 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -296,7 +296,7 @@ struct peer	*getpeerbyaddr(struct bgpd_addr *);
 struct peer	*getpeerbydesc(const char *);
 int		 imsg_ctl_parent(int, u_int32_t, pid_t, void *, u_int16_t);
 int		 imsg_ctl_rde(int, pid_t, void *, u_int16_t);
-void	 	 session_stop(struct peer *, u_int8_t);
+void		 session_stop(struct peer *, u_int8_t);
 
 /* timer.c */
 time_t			 getmonotime(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.367 2018/09/19 13:09:30 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.368 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2487,8 +2487,8 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			if (*as == 0) {
 				log_peer_warnx(&peer->conf,
 				    "peer requests unacceptable AS %u", *as);
-				session_notification(peer, ERR_OPEN, ERR_OPEN_AS,
-				    NULL, 0);
+				session_notification(peer, ERR_OPEN,
+				    ERR_OPEN_AS, NULL, 0);
 				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 				return (-1);
 			}
@@ -2670,7 +2670,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 						    np->conf.id, &np->conf,
 						    sizeof(struct peer_config))
 						    == -1)
-							fatalx("imsg_compose error");
+							fatalx("imsg_compose"
+							    " error");
 					}
 				}
 			}
@@ -3272,7 +3273,8 @@ session_stop(struct peer *peer, u_int8_t subcode)
 
 	communication = peer->conf.shutcomm;
 
-	if ((subcode == ERR_CEASE_ADMIN_DOWN || subcode == ERR_CEASE_ADMIN_RESET)
+	if ((subcode == ERR_CEASE_ADMIN_DOWN ||
+	    subcode == ERR_CEASE_ADMIN_RESET)
 	    && communication && *communication) {
 		shutcomm_len = strlen(communication);
 		if(shutcomm_len < SHUT_COMM_LEN) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.423 2018/09/14 10:22:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.424 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3702,7 +3702,7 @@ network_delete(struct network_config *nc, int flagstatic)
 	}
 	if (prefix_remove(&ribs[RIB_ADJ_IN].rib, peerself, &nc->prefix,
 	    nc->prefixlen))
-		peerself->prefix_cnt--;	
+		peerself->prefix_cnt--;
 }
 
 void

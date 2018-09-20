@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.10 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: pftable.c,v 1.11 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -258,4 +258,3 @@ pftable_commit(void)
 
 	return (ret);
 }
-

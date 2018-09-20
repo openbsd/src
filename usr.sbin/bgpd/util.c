@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.37 2018/09/20 07:41:25 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.38 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -338,11 +338,11 @@ as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
 			return (1);
 		break;
 	case OP_RANGE:
-	    	if (as >= f->as_min && as <= f->as_max)
+		if (as >= f->as_min && as <= f->as_max)
 			return (1);
 		break;
 	case OP_XRANGE:
-	    	if (as < f->as_min || as > f->as_max)
+		if (as < f->as_min || as > f->as_max)
 			return (1);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.177 2018/09/17 17:06:33 sthen Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.178 2018/09/20 11:06:04 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -242,7 +242,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 	re->prefix = pte;
 	re->__rib = rib;
 
-        if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
+	if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
 		log_warnx("rib_add: insert failed");
 		free(re);
 		return (NULL);
@@ -400,7 +400,7 @@ path_hash_stats(struct rde_hashstats *hs)
 	int64_t			n;
 
 	memset(hs, 0, sizeof(*hs));
-	strlcpy(hs->name, "path hash", sizeof(hs->name)); 
+	strlcpy(hs->name, "path hash", sizeof(hs->name));
 	hs->min = LLONG_MAX;
 	hs->num = pathtable.path_hashmask + 1;
 
@@ -782,7 +782,7 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 		    prefix_nhflags(p) != state->nhflags) {
 			/* prefix metadata changed therefor move */
 			return (prefix_move(p, peer, asp, state));
-		} 
+		}
 		p->lastchange = time(NULL);
 		return (0);
 	}
