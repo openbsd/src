@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.77 2017/11/08 13:33:49 patrick Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.78 2018/09/20 11:49:55 jsg Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -1381,7 +1381,7 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 			if (str) {
 				if (!strcmp(str, "ANY"))
 					rv = 0;
-				else
+				else {
 					dur = (len == 4) ? decode_32(value) :
 					    decode_16(value);
 					if ((rv = !conf_match_num(vs->life,
@@ -1391,6 +1391,7 @@ attribute_unacceptable(u_int16_t type, u_int8_t *value, u_int16_t len,
 						    "LIFE_DURATION: got %d, "
 						    " expected %s", dur, str);
 					}
+				}
 			} else {
 				log_print("attribute_unacceptable: "
 				    "section [%s] has no LIFE_DURATION",
