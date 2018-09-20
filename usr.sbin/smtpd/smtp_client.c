@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.7 2018/09/01 12:03:31 miko Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.8 2018/09/20 11:42:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -251,7 +251,8 @@ smtp_client_state(struct smtp_client *proto, int newstate)
 {
 	struct smtp_rcpt *rcpt;
 	char ibuf[LINE_MAX], obuf[LINE_MAX];
-	int oldstate, offset;
+	size_t n;
+	int oldstate;
 
 	if (proto->reply)
 		proto->reply[0] = '\0';
@@ -297,7 +298,7 @@ smtp_client_state(struct smtp_client *proto, int newstate)
 		break;
 
 	case STATE_AUTH:
-		if (!proto->params.auth)
+		if (!proto->params.auth_user)
 			smtp_client_state(proto, STATE_READY);
 		else if ((proto->flags & FLAG_TLS) == 0)
 			smtp_client_cancel(proto, FAIL_IMPL,
@@ -315,7 +316,32 @@ smtp_client_state(struct smtp_client *proto, int newstate)
 		break;
 
 	case STATE_AUTH_PLAIN:
-		smtp_client_sendcmd(proto, "AUTH PLAIN %s", proto->params.auth);
+		(void)strlcpy(ibuf, "-", sizeof(ibuf));
+		(void)strlcat(ibuf, proto->params.auth_user, sizeof(ibuf));
+		if (strlcat(ibuf, ":", sizeof(ibuf)) >= sizeof(ibuf)) {
+			errno = EMSGSIZE;
+			smtp_client_cancel(proto, FAIL_INTERNAL,
+			    "credentials too large");
+			break;
+		}
+		n = strlcat(ibuf, proto->params.auth_pass, sizeof(ibuf));
+		if (n >= sizeof(ibuf)) {
+			errno = EMSGSIZE;
+			smtp_client_cancel(proto, FAIL_INTERNAL,
+			    "credentials too large");
+			break;
+		}
+		*strchr(ibuf, ':') = '\0';
+		ibuf[0] = '\0';
+		if (base64_encode(ibuf, n, obuf, sizeof(obuf)) == -1) {
+			errno = EMSGSIZE;
+			smtp_client_cancel(proto, FAIL_INTERNAL,
+			    "credentials too large");
+			break;
+		}
+		smtp_client_sendcmd(proto, "AUTH PLAIN %s", obuf);
+		explicit_bzero(ibuf, sizeof ibuf);
+		explicit_bzero(obuf, sizeof obuf);
 		break;
 
 	case STATE_AUTH_LOGIN:
@@ -323,39 +349,28 @@ smtp_client_state(struct smtp_client *proto, int newstate)
 		break;
 
 	case STATE_AUTH_LOGIN_USER:
-		memset(ibuf, 0, sizeof ibuf);
-		if (base64_decode(proto->params.auth, (unsigned char *)ibuf,
-				  sizeof(ibuf)-1) == -1) {
-			errno = EOVERFLOW;
+		if (base64_encode(proto->params.auth_user,
+		    strlen(proto->params.auth_user), obuf,
+		    sizeof(obuf)) == -1) {
+			errno = EMSGSIZE;
 			smtp_client_cancel(proto, FAIL_INTERNAL,
-			    "Credentials too large");
+			    "credentials too large");
 			break;
 		}
-
-		memset(obuf, 0, sizeof obuf);
-		base64_encode((unsigned char *)ibuf + 1, strlen(ibuf + 1),
-		    obuf, sizeof obuf);
 		smtp_client_sendcmd(proto, "%s", obuf);
-		explicit_bzero(ibuf, sizeof ibuf);
 		explicit_bzero(obuf, sizeof obuf);
 		break;
 
 	case STATE_AUTH_LOGIN_PASS:
-		memset(ibuf, 0, sizeof ibuf);
-		if (base64_decode(proto->params.auth, (unsigned char *)ibuf,
-				  sizeof(ibuf)-1) == -1) {
-			errno = EOVERFLOW;
+		if (base64_encode(proto->params.auth_pass,
+		    strlen(proto->params.auth_pass), obuf,
+		    sizeof(obuf)) == -1) {
+			errno = EMSGSIZE;
 			smtp_client_cancel(proto, FAIL_INTERNAL,
-			    "Credentials too large");
+			    "credentials too large");
 			break;
 		}
-
-		offset = strlen(ibuf+1)+2;
-		memset(obuf, 0, sizeof obuf);
-		base64_encode((unsigned char *)ibuf + offset,
-		    strlen(ibuf + offset), obuf, sizeof obuf);
 		smtp_client_sendcmd(proto, "%s", obuf);
-		explicit_bzero(ibuf, sizeof ibuf);
 		explicit_bzero(obuf, sizeof obuf);
 		break;
 
@@ -452,7 +467,7 @@ smtp_client_response(struct smtp_client *proto, const char *line)
 			 * Otherwise, fallback to using HELO.
 			 */
 			if ((proto->params.tls_req == TLS_FORCE) ||
-			    (proto->params.auth))
+			    (proto->params.auth_user))
 				smtp_client_cancel(proto, FAIL_RESP, line);
 			else
 				smtp_client_state(proto, STATE_HELO);
@@ -478,7 +493,7 @@ smtp_client_response(struct smtp_client *proto, const char *line)
 	case STATE_STARTTLS:
 		if (line[0] != '2') {
 			if ((proto->params.tls_req == TLS_FORCE) ||
-			    (proto->params.auth)) {
+			    (proto->params.auth_user)) {
 				smtp_client_cancel(proto, FAIL_RESP, line);
 				break;
 			}

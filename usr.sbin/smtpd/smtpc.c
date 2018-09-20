@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.3 2018/05/21 21:25:37 krw Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.4 2018/09/20 11:42:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -204,7 +204,15 @@ parse_server(char *server)
 	if (port && port[0] == '\0')
 		port = NULL;
 
-	params.auth = creds;
+	if (creds) {
+		p = strchr(creds, ':');
+		if (p == NULL)
+			fatalx("invalid credentials");
+		*p = '\0';
+
+		params.auth_user = creds;
+		params.auth_pass = p + 1;
+	}
 	params.tls_req = TLS_YES;
 
 	if (!strcmp(scheme, "lmtp")) {
