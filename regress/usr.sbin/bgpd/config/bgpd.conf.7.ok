@@ -23,18 +23,18 @@ prefix-set "test2" {
 }
 
 prefix-set "test3_prefixes" {
-	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 	0.0.0.0/0 or-longer, 192.0.160.0/19 prefixlen >= 22
+	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 }
 
 prefix-set "test4_prefixes" {
-	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 	0.0.0.0/0 or-longer, 192.0.160.0/19 prefixlen >= 22
+	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 }
 
 prefix-set "test5_prefixes" {
-	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 	0.0.0.0/0 or-longer, 192.0.160.0/19 prefixlen >= 22
+	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
 }
 
 prefix-set "mynetworks" {
