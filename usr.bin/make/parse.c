@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.120 2017/12/19 20:44:53 zhuk Exp $	*/
+/*	$OpenBSD: parse.c,v 1.121 2018/09/20 11:41:28 jsg Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1381,7 +1381,7 @@ handle_bsd_command(Buffer linebuf, Buffer copy, const char *line)
 			if (line != NULL) {
 				while (ISSPACE(*line))
 					line++;
-					stripped = strip_comments(copy, line);
+				stripped = strip_comments(copy, line);
 			}
 		} while (line != NULL && Cond_Eval(stripped) != COND_PARSE);
 		/* FALLTHROUGH */
