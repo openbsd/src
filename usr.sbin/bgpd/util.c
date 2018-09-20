@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2018/09/14 10:22:11 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.36 2018/09/20 07:37:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -451,7 +451,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		as_size = 4;
 
 	for (; len > 0; len -= seg_size, seg += seg_size) {
-		const u_char    *ptr;
+		const u_int8_t	*ptr;
 		int		 pos;
 
 		if (len < 2)	/* header length check */
@@ -482,12 +482,12 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		/* RFC 7607 - AS 0 is considered malformed */
 		ptr = seg + 2;
 		for (pos = 0; pos < seg_len; pos++) {
-			u_int32_t	 as = 0;
+			u_int32_t as;
 
-			ptr += as_size;
 			memcpy(&as, ptr, as_size);
 			if (as == 0)
 				error = AS_ERR_SOFT;
+			ptr += as_size;
 		}
 	}
 	return (error);	/* aspath is valid but probably not loop free */
