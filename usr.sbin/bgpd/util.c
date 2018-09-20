@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.36 2018/09/20 07:37:06 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.37 2018/09/20 07:41:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -459,6 +459,10 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		seg_type = seg[0];
 		seg_len = seg[1];
 
+		if (seg_len == 0)
+			/* empty aspath segments are not allowed */
+			return (AS_ERR_BAD);
+
 		/*
 		 * BGP confederations should not show up but consider them
 		 * as a soft error which invalidates the path but keeps the
@@ -474,10 +478,6 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 
 		if (seg_size > len)
 			return (AS_ERR_LEN);
-
-		if (seg_size == 0)
-			/* empty aspath segments are not allowed */
-			return (AS_ERR_BAD);
 
 		/* RFC 7607 - AS 0 is considered malformed */
 		ptr = seg + 2;
