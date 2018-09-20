@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.341 2018/09/18 15:14:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.342 2018/09/20 07:46:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -958,15 +958,15 @@ struct roa_set {
 };
 
 struct prefixset_item {
-	struct filter_prefix		 p;
-	SIMPLEQ_ENTRY(prefixset_item)	 entry;
+	struct filter_prefix		p;
+	RB_ENTRY(prefixset_item)	entry;
 };
-SIMPLEQ_HEAD(prefixset_items_h, prefixset_item);
+RB_HEAD(prefixset_tree, prefixset_item);
 
 struct prefixset {
 	int				 sflags;
 	char				 name[SET_NAME_LEN];
-	struct prefixset_items_h	 psitems;
+	struct prefixset_tree		 psitems;
 	SIMPLEQ_ENTRY(prefixset)	 entry;
 };
 
@@ -1090,6 +1090,8 @@ void	filterlist_free(struct filter_head *);
 int	host(const char *, struct bgpd_addr *, u_int8_t *);
 void	copy_filterset(struct filter_set_head *, struct filter_set_head *);
 void	expand_networks(struct bgpd_config *);
+int	prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
+RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 
 /* kroute.c */
 int		 kr_init(void);

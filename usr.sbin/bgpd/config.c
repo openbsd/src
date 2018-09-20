@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.73 2018/09/09 11:00:51 benno Exp $ */
+/*	$OpenBSD: config.c,v 1.74 2018/09/20 07:46:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -120,16 +120,15 @@ void
 free_prefixsets(struct prefixset_head *psh)
 {
 	struct prefixset	*ps;
-	struct prefixset_item	*psi;
+	struct prefixset_item	*psi, *npsi;
 
 	if (psh == NULL)
 		return;
 
 	while (!SIMPLEQ_EMPTY(psh)) {
 		ps = SIMPLEQ_FIRST(psh);
-		while (!SIMPLEQ_EMPTY(&ps->psitems)) {
-			psi = SIMPLEQ_FIRST(&ps->psitems);
-			SIMPLEQ_REMOVE_HEAD(&ps->psitems, entry);
+		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
+			RB_REMOVE(prefixset_tree, &ps->psitems, psi);
 			free(psi);
 		}
 		SIMPLEQ_REMOVE_HEAD(psh, entry);
@@ -529,7 +528,7 @@ expand_networks(struct bgpd_config *c)
 			    == NULL)
 				fatal("%s: prefixset %s not found", __func__,
 				    n->net.psname);
-			SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
+			RB_FOREACH(psi, prefixset_tree, &ps->psitems) {
 				if ((m = calloc(1, sizeof(struct network)))
 				    == NULL)
 					fatal(NULL);
@@ -546,3 +545,48 @@ expand_networks(struct bgpd_config *c)
 		}
 	}
 }
+
+int
+prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
+{
+	int i;
+
+	if (a->p.addr.aid < b->p.addr.aid)
+		return (-1);
+	if (a->p.addr.aid > b->p.addr.aid)
+		return (1);
+
+	switch (a->p.addr.aid) {
+	case AID_INET:
+		if (ntohl(a->p.addr.v4.s_addr) < ntohl(b->p.addr.v4.s_addr))
+			return (-1);
+		if (ntohl(a->p.addr.v4.s_addr) > ntohl(b->p.addr.v4.s_addr))
+			return (1);
+		break;
+	case AID_INET6:
+		i = memcmp(&a->p.addr.v6, &b->p.addr.v6,
+		    sizeof(struct in6_addr));
+		if (i > 0)
+			return (1);
+		if (i < 0)
+			return (-1);
+		break;
+	default:
+		fatalx("%s: unknown af", __func__);
+	}
+	if (a->p.len < b->p.len)
+		return (-1);
+	if (a->p.len > b->p.len)
+		return (1);
+	if (a->p.len_min < b->p.len_min)
+		return (-1);
+	if (a->p.len_min > b->p.len_min)
+		return (1);
+	if (a->p.len_max < b->p.len_max)
+		return (-1);
+	if (a->p.len_max > b->p.len_max)
+		return (1);
+	return (0);
+}
+
+RB_GENERATE(prefixset_tree, prefixset_item, entry, prefixset_cmp);

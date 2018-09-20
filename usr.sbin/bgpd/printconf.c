@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.119 2018/09/13 11:25:41 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.120 2018/09/20 07:46:39 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -451,7 +451,7 @@ print_prefixsets(struct prefixset_head *psh)
 	SIMPLEQ_FOREACH(ps, psh, entry) {
 		int count = 0;
 		printf("prefix-set \"%s\" {", ps->name);
-		SIMPLEQ_FOREACH(psi, &ps->psitems, entry) {
+		RB_FOREACH(psi, prefixset_tree, &ps->psitems) {
 			if (count++ % 2 == 0)
 				printf("\n\t");
 			else
