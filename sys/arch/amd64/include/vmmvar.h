@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.58 2018/08/21 19:04:40 deraadt Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.59 2018/09/20 14:32:59 brynet Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -548,8 +548,8 @@ struct vm_rwregs_params {
 /*
  * clone host capabilities minus:
  *  debug store (CPUIDECX_DTES64, CPUIDECX_DSCPL, CPUID_DS)
- *  monitor/mwait (CPUIDECX_MWAIT)
- *  vmx (CPUIDECX_VMX)
+ *  monitor/mwait (CPUIDECX_MWAIT, CPUIDECX_MWAITX)
+ *  vmx/svm (CPUIDECX_VMX, CPUIDECX_SVM)
  *  smx (CPUIDECX_SMX)
  *  speedstep (CPUIDECX_EST)
  *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
@@ -573,6 +573,7 @@ struct vm_rwregs_params {
     CPUIDECX_DSCPL | CPUIDECX_SMX | CPUIDECX_CNXTID | \
     CPUIDECX_SDBG | CPUIDECX_XTPR | CPUIDECX_PCID | \
     CPUIDECX_DCA | CPUIDECX_X2APIC | CPUIDECX_DEADLINE)
+#define VMM_ECPUIDECX_MASK ~(CPUIDECX_SVM | CPUIDECX_MWAITX)
 #define VMM_CPUIDEDX_MASK ~(CPUID_ACPI | CPUID_TM | \
     CPUID_HTT | CPUID_DS | CPUID_APIC | \
     CPUID_PSN | CPUID_SS | CPUID_PBE | \
