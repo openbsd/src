@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.4 2018/09/14 10:22:11 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.5 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -27,20 +27,35 @@
 
 #include "rde.h"
 
-struct as_set {
-	char			 name[SET_NAME_LEN];
+struct set_table {
 	void			*set;
-	SIMPLEQ_ENTRY(as_set)	 entry;
 	size_t			 nmemb;
 	size_t			 size;
 	size_t			 max;
-	int			 dirty;
 };
 
-void
-as_sets_insert(struct as_set_head *as_sets, struct as_set *aset)
+struct as_set *
+as_sets_new(struct as_set_head *as_sets, const char *name, size_t nmemb,
+    size_t size)
 {
+	struct as_set *aset;
+	size_t len;
+
+	aset = calloc(1, sizeof(*aset));
+	if (aset == NULL)
+		return NULL;
+
+	len = strlcpy(aset->name, name, sizeof(aset->name));
+	assert(len < sizeof(aset->name));
+
+	aset->set = set_new(nmemb, size);
+	if (aset->set == NULL) {
+		free(aset);
+		return NULL;
+	}
+
 	SIMPLEQ_INSERT_TAIL(as_sets, aset, entry);
+	return aset;
 }
 
 struct as_set *
@@ -66,66 +81,10 @@ as_sets_free(struct as_set_head *as_sets)
 	while (!SIMPLEQ_EMPTY(as_sets)) {
 		aset = SIMPLEQ_FIRST(as_sets);
 		SIMPLEQ_REMOVE_HEAD(as_sets, entry);
-		as_set_free(aset);
+		set_free(aset->set);
+		free(aset);
 	}
 	free(as_sets);
-}
-
-void
-as_sets_print(struct as_set_head *as_sets)
-{
-	struct as_set *aset;
-	size_t i;
-	int len;
-
-	if (as_sets == NULL)
-		return;
-	SIMPLEQ_FOREACH(aset, as_sets, entry) {
-		printf("as-set \"%s\" {\n\t", aset->name);
-		for (i = 0, len = 8; i < aset->nmemb; i++) {
-			if (len > 72) {
-				printf("\n\t");
-				len = 8;
-			}
-			len += printf("%u ", *(u_int32_t *)
-			    ((u_int8_t *)aset->set + i * aset->size));
-		}
-		printf("\n}\n\n");
-	}
-}
-
-int
-as_sets_send(struct imsgbuf *ibuf, struct as_set_head *as_sets)
-{
-	struct as_set *aset;
-	struct ibuf *wbuf;
-	size_t i, l;
-
-	if (as_sets == NULL)
-		return 0;
-	SIMPLEQ_FOREACH(aset, as_sets, entry) {
-		if ((wbuf = imsg_create(ibuf, IMSG_RECONF_AS_SET, 0, 0,
-		    sizeof(aset->nmemb) + sizeof(aset->name))) == NULL)
-			return -1;
-		if (imsg_add(wbuf, &aset->nmemb, sizeof(aset->nmemb)) == -1 ||
-		    imsg_add(wbuf, aset->name, sizeof(aset->name)) == -1)
-			return -1;
-		imsg_close(ibuf, wbuf);
-
-		for (i = 0; i < aset->nmemb; i += l) {
-			l = (aset->nmemb - i > 1024 ? 1024 : aset->nmemb - i);
-
-			if (imsg_compose(ibuf, IMSG_RECONF_AS_SET_ITEMS, 0, 0,
-			    -1, (u_int8_t *)aset->set + i * aset->size,
-			    l * aset->size) == -1)
-				return -1;
-		}
-
-		if (imsg_compose(ibuf, IMSG_RECONF_AS_SET_DONE, 0, 0, -1,
-		    NULL, 0) == -1)
-			return -1;
-	}
-	return 0;
 }
 
 void
@@ -135,77 +94,86 @@ as_sets_mark_dirty(struct as_set_head *old, struct as_set_head *new)
 
 	SIMPLEQ_FOREACH(n, new, entry) {
 		if (old == NULL || (o = as_sets_lookup(old, n->name)) == NULL ||
-		    !as_set_equal(n, o))
+		    !set_equal(n->set, o->set))
 			n->dirty = 1;
 	}
 }
 
-struct as_set *
-as_set_new(const char *name, size_t nmemb, size_t size)
+int
+as_set_match(const struct as_set *aset, u_int32_t asnum)
 {
-	struct as_set *aset;
-	size_t len;
+	return set_match(aset->set, asnum) != NULL;
+}
 
-	aset = calloc(1, sizeof(*aset));
-	if (aset == NULL)
+struct set_table *
+set_new(size_t nmemb, size_t size)
+{
+	struct set_table *set;
+
+	set = calloc(1, sizeof(*set));
+	if (set == NULL)
 		return NULL;
-
-	len = strlcpy(aset->name, name, sizeof(aset->name));
-	assert(len < sizeof(aset->name));
 
 	if (nmemb == 0)
 		nmemb = 4;
 
-	aset->size = size;
-	aset->max = nmemb;
-	aset->set = calloc(nmemb, aset->size);
-	if (aset->set == NULL) {
-		free(aset);
+	set->size = size;
+	set->max = nmemb;
+	set->set = calloc(nmemb, set->size);
+	if (set->set == NULL) {
+		free(set);
 		return NULL;
 	}
 
-	return aset;
+	return set;
 }
 
 void
-as_set_free(struct as_set *aset)
+set_free(struct set_table *set)
 {
-	if (aset == NULL)
+	if (set == NULL)
 		return;
-	free(aset->set);
-	free(aset);
+	free(set->set);
+	free(set);
 }
 
 int
-as_set_add(struct as_set *aset, void *elms, size_t nelms)
+set_add(struct set_table *set, void *elms, size_t nelms)
 {
-	if (aset->max < nelms || aset->max - nelms < aset->nmemb) {
+	if (set->max < nelms || set->max - nelms < set->nmemb) {
 		u_int32_t *s;
 		size_t new_size;
 
-		if (aset->nmemb >= SIZE_T_MAX - 4096 - nelms) {
+		if (set->nmemb >= SIZE_T_MAX - 4096 - nelms) {
 			errno = ENOMEM;
 			return -1;
 		}
-		for (new_size = aset->max; new_size < aset->nmemb + nelms; )
+		for (new_size = set->max; new_size < set->nmemb + nelms; )
 		     new_size += (new_size < 4096 ? new_size : 4096);
 
-		s = reallocarray(aset->set, new_size, aset->size);
+		s = reallocarray(set->set, new_size, set->size);
 		if (s == NULL)
 			return -1;
-		aset->set = s;
-		aset->max = new_size;
+		set->set = s;
+		set->max = new_size;
 	}
 
-	memcpy((u_int8_t *)aset->set + aset->nmemb * aset->size, elms,
-	    nelms * aset->size);
-	aset->nmemb += nelms;
+	memcpy((u_int8_t *)set->set + set->nmemb * set->size, elms,
+	    nelms * set->size);
+	set->nmemb += nelms;
 
 	return 0;
 }
 
+void *
+set_get(struct set_table *set, size_t *nelms)
+{
+	*nelms = set->nmemb;
+	return set->set;
+}
+
 static int
-as_set_cmp(const void *ap, const void *bp)
+set_cmp(const void *ap, const void *bp)
 {
 	const u_int32_t *a = ap;
 	const u_int32_t *b = bp;
@@ -218,33 +186,33 @@ as_set_cmp(const void *ap, const void *bp)
 }
 
 void
-as_set_prep(struct as_set *aset)
+set_prep(struct set_table *set)
 {
-	if (aset == NULL)
+	if (set == NULL)
 		return;
-	qsort(aset->set, aset->nmemb, aset->size, as_set_cmp);
+	qsort(set->set, set->nmemb, set->size, set_cmp);
 }
 
 void *
-as_set_match(const struct as_set *a, u_int32_t asnum)
+set_match(const struct set_table *a, u_int32_t asnum)
 {
 	if (a == NULL)
 		return NULL;
-	return bsearch(&asnum, a->set, a->nmemb, a->size, as_set_cmp);
+	return bsearch(&asnum, a->set, a->nmemb, a->size, set_cmp);
 }
 
 int
-as_set_equal(const struct as_set *a, const struct as_set *b)
+set_equal(const struct set_table *a, const struct set_table *b)
 {
+	/* allow NULL pointers to be passed */
+	if (a == NULL && b == NULL)
+		return 1;
+	if (a == NULL || b == NULL)
+		return 0;
+
 	if (a->nmemb != b->nmemb)
 		return 0;
 	if (memcmp(a->set, b->set, a->nmemb * a->size) != 0)
 		return 0;
 	return 1;
-}
-
-int
-as_set_dirty(const struct as_set *a)
-{
-	return (a->dirty);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.354 2018/09/20 07:46:39 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.355 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4195,7 +4195,7 @@ get_rule(enum action_types type)
 	return (r);
 }
 
-struct as_set *curaset;
+struct set_table *curset;
 static int
 new_as_set(char *name)
 {
@@ -4206,29 +4206,28 @@ new_as_set(char *name)
 		return -1;
 	}
 
-	aset = as_set_new(name, 0, sizeof(u_int32_t));
+	aset = as_sets_new(conf->as_sets, name, 0, sizeof(u_int32_t));
 	if (aset == NULL)
 		fatal(NULL);
-	as_sets_insert(conf->as_sets, aset);
 
-	curaset = aset;
+	curset = aset->set;
 	return 0;
 }
 
 static void
 add_as_set(u_int32_t as)
 {
-	if (curaset == NULL)
+	if (curset == NULL)
 		fatalx("%s: bad mojo jojo", __func__);
 
-	if (as_set_add(curaset, &as, 1) != 0)
+	if (set_add(curset, &as, 1) != 0)
 		fatal(NULL);
 }
 
 static void
 done_as_set(void)
 {
-	curaset = NULL;
+	curset = NULL;
 }
 
 static int

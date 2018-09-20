@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.424 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.425 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -908,18 +908,17 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			name = (char *)imsg.data + sizeof(nmemb);
 			if (as_sets_lookup(as_sets_tmp, name) != NULL)
 				fatalx("duplicate as-set %s", name);
-			last_as_set = as_set_new(name, nmemb,
+			last_as_set = as_sets_new(as_sets_tmp, name, nmemb,
 			    sizeof(u_int32_t));
 			break;
 		case IMSG_RECONF_AS_SET_ITEMS:
 			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
 			nmemb /= sizeof(u_int32_t);
-			if (as_set_add(last_as_set, imsg.data, nmemb) != 0)
+			if (set_add(last_as_set->set, imsg.data, nmemb) != 0)
 				fatal(NULL);
 			break;
 		case IMSG_RECONF_AS_SET_DONE:
-			as_set_prep(last_as_set);
-			as_sets_insert(as_sets_tmp, last_as_set);
+			set_prep(last_as_set->set);
 			last_as_set = NULL;
 			break;
 		case IMSG_RECONF_RDOMAIN:

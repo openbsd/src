@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: util.c,v 1.39 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -320,7 +320,7 @@ as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
 	if (f->flags & AS_FLAG_AS_SET_NAME)	/* should not happen */
 		return (0);
 	if (f->flags & AS_FLAG_AS_SET)
-		return (as_set_match(f->aset, as) != NULL);
+		return (as_set_match(f->aset, as));
 
 	if (f->flags & AS_FLAG_NEIGHBORAS)
 		match = neighas;

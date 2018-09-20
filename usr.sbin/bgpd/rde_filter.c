@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.107 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.108 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -630,7 +630,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		}
 
 		if ((fa->match.as.flags & AS_FLAG_AS_SET) &&
-		    as_set_dirty(fa->match.as.aset)) {
+		    fa->match.as.aset->dirty) {
 			log_debug("%s: as-set %s has changed",
 			    __func__, fa->match.as.name);
 			return (0);

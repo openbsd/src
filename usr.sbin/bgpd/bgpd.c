@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.199 2018/09/20 07:46:39 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.200 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -436,6 +436,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	struct listen_addr	*la;
 	struct rde_rib		*rr;
 	struct rdomain		*rd;
+	struct as_set		*aset;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi, *npsi;
 
@@ -521,10 +522,36 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	}
 
 	/* as-sets for filters in the RDE */
-	if (as_sets_send(ibuf_rde, conf->as_sets) == -1)
-		return (-1);
-	as_sets_free(conf->as_sets);
-	conf->as_sets = NULL;
+	while ((aset = SIMPLEQ_FIRST(conf->as_sets)) != NULL) {
+		struct ibuf *wbuf;
+		u_int32_t *as;
+		size_t i, l, n;
+
+		SIMPLEQ_REMOVE_HEAD(conf->as_sets, entry);
+
+		as = set_get(aset->set, &n);
+		if ((wbuf = imsg_create(ibuf_rde, IMSG_RECONF_AS_SET, 0, 0,
+		    sizeof(n) + sizeof(aset->name))) == NULL)
+			return -1;
+		if (imsg_add(wbuf, &n, sizeof(n)) == -1 ||
+		    imsg_add(wbuf, aset->name, sizeof(aset->name)) == -1)
+			return -1;
+		imsg_close(ibuf_rde, wbuf);
+
+		for (i = 0; i < n; i += l) {
+			l = (n - i > 1024 ? 1024 : n - i);
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_AS_SET_ITEMS,
+			    0, 0, -1, as + i, l) == -1)
+				return -1;
+		}
+
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_AS_SET_DONE, 0, 0, -1,
+		    NULL, 0) == -1)
+			return -1;
+		
+		set_free(aset->set);
+		free(aset);
+	}
 
 	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(conf->filters)) != NULL) {

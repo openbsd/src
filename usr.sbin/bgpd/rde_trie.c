@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.6 2018/09/18 15:14:07 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.7 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -57,7 +57,7 @@
  */
 struct tentry_v4 {
 	struct tentry_v4	*trie[2];
-	struct as_set		*aset;	/* for roa source-as set */
+	struct set_table	*set;	/* for roa source-as set */
 	struct in_addr		 addr;
 	struct in_addr		 plenmask;
 	u_int8_t		 plen;
@@ -66,7 +66,7 @@ struct tentry_v4 {
 
 struct tentry_v6 {
 	struct tentry_v6	*trie[2];
-	struct as_set		*aset;	/* for roa source-as set */
+	struct set_table	*set;	/* for roa source-as set */
 	struct in6_addr		 addr;
 	struct in6_addr		 plenmask;
 	u_int8_t		 plen;
@@ -362,7 +362,7 @@ trie_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 }
 
 /*
- * Insert a ROA entry for prefix/plen. The prefix will insert an as_set with
+ * Insert a ROA entry for prefix/plen. The prefix will insert a set with
  * source_as and the maxlen as data. This makes it possible to validate if a
  * prefix is matching this ROA record. It is possible to insert prefixes with
  * source_as = 0. These entries will never return ROA_VALID on check and can
@@ -371,11 +371,11 @@ trie_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
  */
 int
 trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
-    struct as_set *aset)
+    struct set_table *set)
 {
 	struct tentry_v4 *n4;
 	struct tentry_v6 *n6;
-	struct as_set **ap;
+	struct set_table **stp;
 
 	/* ignore possible default route since it does not make sense */
 
@@ -387,7 +387,7 @@ trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 		n4 = trie_add_v4(th, &prefix->v4, plen);
 		if (n4 == NULL)
 			return -1;
-		ap = &n4->aset;
+		stp = &n4->set;
 		break;
 	case AID_INET6:
 		if (plen > 128)
@@ -396,17 +396,17 @@ trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 		n6 = trie_add_v6(th, &prefix->v6, plen);
 		if (n6 == NULL)
 			return -1;
-		ap = &n6->aset;
+		stp = &n6->set;
 		break;
 	default:
 		/* anything else fails */
 		return -1;
 	}
 
-	/* aset already set, error out */
-	if (*ap != NULL)
+	/* set_table already set, error out */
+	if (*stp != NULL)
 		return -1;
-	*ap = aset;
+	*stp = set;
 
 	return 0;
 }
@@ -418,7 +418,7 @@ trie_free_v4(struct tentry_v4 *n)
 		return;
 	trie_free_v4(n->trie[0]);
 	trie_free_v4(n->trie[1]);
-	as_set_free(n->aset);
+	set_free(n->set);
 	free(n);
 }
 
@@ -429,7 +429,7 @@ trie_free_v6(struct tentry_v6 *n)
 		return;
 	trie_free_v6(n->trie[0]);
 	trie_free_v6(n->trie[1]);
-	as_set_free(n->aset);
+	set_free(n->set);
 	free(n);
 }
 
@@ -567,7 +567,7 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 
 			/* Treat AS 0 as NONE which can never be matched */
 			if (as != 0) {
-				rs = as_set_match(n->aset, as);
+				rs = set_match(n->set, as);
 				if (rs && plen <= rs->maxlen)
 					return ROA_VALID;
 			}
@@ -614,7 +614,7 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 
 			/* Treat AS 0 as NONE which can never be matched */
 			if (as != 0) {
-				if ((rs = as_set_match(n->aset, as)) != NULL)
+				if ((rs = set_match(n->set, as)) != NULL)
 				    if (plen == n->plen || plen <= rs->maxlen)
 					return ROA_VALID;
 			}
@@ -668,6 +668,9 @@ trie_equal_v4(struct tentry_v4 *a, struct tentry_v4 *b)
 	    a->plenmask.s_addr != b->plenmask.s_addr)
 		return 0;
 
+	if (set_equal(a->set, b->set) == 0)
+		return 0;
+
 	if (trie_equal_v4(a->trie[0], b->trie[0]) == 0 ||
 	    trie_equal_v4(a->trie[1], b->trie[1]) == 0)
 		return 0;
@@ -687,6 +690,9 @@ trie_equal_v6(struct tentry_v6 *a, struct tentry_v6 *b)
 	    a->plen != b->plen ||
 	    a->node != b->node ||
 	    memcmp(&a->plenmask, &b->plenmask, sizeof(a->plenmask)) != 0)
+		return 0;
+
+	if (set_equal(a->set, b->set) == 0)
 		return 0;
 
 	if (trie_equal_v6(a->trie[0], b->trie[0]) == 0 ||

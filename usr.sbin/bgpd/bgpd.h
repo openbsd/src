@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.342 2018/09/20 07:46:39 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.343 2018/09/20 11:45:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,6 +215,7 @@ SIMPLEQ_HEAD(prefixset_head, prefixset);
 struct rde_prefixset_head;
 struct rde_prefixset;
 
+struct set_table;
 struct as_set;
 SIMPLEQ_HEAD(as_set_head, as_set);
 
@@ -970,6 +971,13 @@ struct prefixset {
 	SIMPLEQ_ENTRY(prefixset)	 entry;
 };
 
+struct as_set {
+	char				 name[SET_NAME_LEN];
+	SIMPLEQ_ENTRY(as_set)		 entry;
+	struct set_table		*set;
+	int				 dirty;
+};
+
 struct rdomain {
 	SIMPLEQ_ENTRY(rdomain)		entry;
 	char				descr[PEER_DESCR_LEN];
@@ -1171,20 +1179,21 @@ void		 filterset_move(struct filter_set_head *,
 const char	*filterset_name(enum action_types);
 
 /* rde_sets.c */
-void		 as_sets_insert(struct as_set_head *, struct as_set *);
 struct as_set	*as_sets_lookup(struct as_set_head *, const char *);
+struct as_set	*as_sets_new(struct as_set_head *, const char *, size_t,
+		    size_t);
 void		 as_sets_free(struct as_set_head *);
-void		 as_sets_print(struct as_set_head *);
-int		 as_sets_send(struct imsgbuf *, struct as_set_head *);
 void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
+int		 as_set_match(const struct as_set *, u_int32_t);
 
-struct as_set	*as_set_new(const char *, size_t, size_t);
-void		 as_set_free(struct as_set *);
-int		 as_set_add(struct as_set *, void *, size_t);
-void		 as_set_prep(struct as_set *);
-void		*as_set_match(const struct as_set *, u_int32_t);
-int		 as_set_equal(const struct as_set *, const struct as_set *);
-int		 as_set_dirty(const struct as_set *);
+struct set_table	*set_new(size_t, size_t);
+void		 	 set_free(struct set_table *);
+int			 set_add(struct set_table *, void *, size_t);
+void			*set_get(struct set_table *, size_t *);
+void			 set_prep(struct set_table *);
+void			*set_match(const struct set_table *, u_int32_t);
+int			 set_equal(const struct set_table *,
+			    const struct set_table *);
 
 /* util.c */
 const char	*log_addr(const struct bgpd_addr *);
