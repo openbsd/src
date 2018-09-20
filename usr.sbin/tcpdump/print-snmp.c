@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.22 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.23 2018/09/20 12:23:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -856,11 +856,12 @@ varbind_print(u_char pduid, const u_char *np, u_int length, int error)
 				fputs("[objVal!=NULL]", stdout);
 				asn1_print(&elem);
 			}
-		} else
+		} else {
 			if (error && ind == error && elem.type != BE_NULL)
 				fputs("[err objVal!=NULL]", stdout);
 			if (!error || ind == error)
 				asn1_print(&elem);
+		}
 
 		length = vblength;
 		np = vbend;
