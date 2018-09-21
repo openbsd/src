@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.357 2018/09/21 05:13:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.358 2018/09/21 08:15:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1405,7 +1405,7 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.export_type =
 				    EXPORT_DEFAULT_ROUTE;
 			} else {
-				yyerror("syntax error");
+				yyerror("syntax error: unknown '%s'", $2);
 				free($2);
 				YYERROR;
 			}
@@ -2194,7 +2194,7 @@ filter_elm	: filter_prefix_h	{
 				YYERROR;
 			}
 			if (fmopts.m.prefixset.name[0] != '\0') {
-				yyerror("prefix-set filters already specified");
+				yyerror("prefix-set filter already specified");
 				free($2);
 				YYERROR;
 			}
@@ -3023,7 +3023,7 @@ top:
 				*p = '\0';
 				break;
 			} else if (c == '\0') {
-				yyerror("syntax error");
+				yyerror("syntax error: unterminated quote");
 				return (findeol());
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
