@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.75 2018/09/21 04:55:27 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.76 2018/09/21 20:45:50 kn Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -37,8 +37,7 @@
 #include "log.h"
 
 u_int32_t	get_bgpid(void);
-int		host_v4(const char *, struct bgpd_addr *, u_int8_t *);
-int		host_v6(const char *, struct bgpd_addr *);
+int		host_ip(const char *, struct bgpd_addr *, u_int8_t *);
 void		free_networks(struct network_head *);
 void		free_rdomains(struct rdomain_head *);
 
@@ -326,80 +325,58 @@ get_bgpid(void)
 int
 host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
-	int			 done = 0;
-	int			 mask;
+	int			 mask = 128;
 	char			*p, *ps;
 	const char		*errstr;
 
-	if ((p = strrchr(s, '/')) != NULL) {
-		mask = strtonum(p + 1, 0, 128, &errstr);
+	if ((ps = strdup(s)) == NULL)
+		fatal("%s: strdup", __func__);
+
+	if ((p = strrchr(ps, '/')) != NULL) {
+		mask = strtonum(p+1, 0, 128, &errstr);
 		if (errstr) {
-			log_warnx("prefixlen is %s: %s", errstr, p + 1);
+			log_warnx("prefixlen is %s: %s", errstr, p);
 			return (0);
 		}
-		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			fatal("host: malloc");
-		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
-	} else {
-		if ((ps = strdup(s)) == NULL)
-			fatal("host: strdup");
-		mask = 128;
+		p[0] = '\0';
 	}
 
-	bzero(h, sizeof(struct bgpd_addr));
+	bzero(h, sizeof(*h));
 
-	/* IPv4 address? */
-	if (!done)
-		done = host_v4(s, h, len);
+	if (host_ip(ps, h, len) == 0) {
+		free(ps);
+		return (0);
+	}
 
-	/* IPv6 address? */
-	if (!done) {
-		done = host_v6(ps, h);
+	if (p != NULL)
 		*len = mask;
-	}
 
 	free(ps);
-
-	return (done);
-}
-
-int
-host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
-{
-	struct in_addr		 ina = { 0 };
-	int			 bits = 32;
-
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
-			return (0);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (0);
-	}
-
-	h->aid = AID_INET;
-	h->v4.s_addr = ina.s_addr;
-	*len = bits;
-
 	return (1);
 }
 
 int
-host_v6(const char *s, struct bgpd_addr *h)
+host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
 	struct addrinfo		 hints, *res;
+	int			 bits;
 
 	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
+	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
+		*len = res->ai_family == AF_INET6 ? 128 : 32;
 		sa2addr(res->ai_addr, h);
 		freeaddrinfo(res);
-		return (1);
+	} else {	/* ie. for 10/8 parsing */
+		if ((bits = inet_net_pton(AF_INET, s, &h->v4, sizeof(h->v4))) == -1)
+			return (0);
+		*len = bits;
+		h->aid = AID_INET;
 	}
 
-	return (0);
+	return (1);
 }
 
 void
