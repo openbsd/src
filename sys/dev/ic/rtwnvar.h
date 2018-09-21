@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.10 2017/07/08 14:26:23 kevlo Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.11 2018/09/21 01:45:53 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -48,10 +48,14 @@ struct rtwn_ops {
 #define RTWN_LED_LINK	0
 #define RTWN_LED_DATA	1
 
-#define RTWN_INT_ENABLE	(R92C_IMR_ROK | R92C_IMR_VODOK | R92C_IMR_VIDOK | \
+#define RTWN_92C_INT_ENABLE (R92C_IMR_ROK | R92C_IMR_VODOK | R92C_IMR_VIDOK | \
 			R92C_IMR_BEDOK | R92C_IMR_BKDOK | R92C_IMR_MGNTDOK | \
 			R92C_IMR_HIGHDOK | R92C_IMR_BDOK | R92C_IMR_RDU | \
 			R92C_IMR_RXFOVW)
+#define RTWN_88E_INT_ENABLE (R88E_HIMR_PSTIMEOUT | R88E_HIMR_HSISR_IND_ON_INT | \
+			R88E_HIMR_C2HCMD | R88E_HIMR_ROK | R88E_HIMR_VODOK | \
+			R88E_HIMR_VIDOK | R88E_HIMR_BEDOK | R88E_HIMR_BKDOK | \
+			R88E_HIMR_MGNTDOK | R88E_HIMR_HIGHDOK | R88E_HIMR_RDU)
 
 struct rtwn_softc {
 	/* sc_ops must be initialized by the attachment driver! */
@@ -95,10 +99,18 @@ struct rtwn_softc {
 	int				fwcur;
 	union {
 		struct r92c_rom		r92c_rom;
-		struct r88e_rom		r88e_rom;
+		struct {
+			struct r88e_rom	r88e_rom;
+			union {
+				struct r88e_pci_rom pci;
+				struct r88e_usb_rom usb;
+			} u;
+		} __packed _88e;
 	} u;
 #define sc_r92c_rom	u.r92c_rom
-#define sc_r88e_rom	u.r88e_rom
+#define sc_r88e_rom	u._88e.r88e_rom
+#define sc_r88e_pci_rom	u._88e.u.pci
+#define sc_r88e_usb_rom	u._88e.u.usb
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
