@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.121 2018/09/20 11:45:59 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.122 2018/09/21 04:55:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@ const char	*print_af(u_int8_t);
 void		 print_network(struct network_config *, const char *);
 void		 print_as_sets(struct as_set_head *);
 void		 print_prefixsets(struct prefixset_head *);
+void		 print_roasets(struct prefixset_head *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
@@ -486,6 +487,35 @@ print_prefixsets(struct prefixset_head *psh)
 }
 
 void
+print_roasets(struct prefixset_head *psh)
+{
+	struct prefixset	*ps;
+	struct prefixset_item	*psi;
+	struct roa_set		*rs;
+	size_t			 i, n;
+
+	SIMPLEQ_FOREACH(ps, psh, entry) {
+		int count = 0;
+		printf("roa-set \"%s\" {", ps->name);
+		RB_FOREACH(psi, prefixset_tree, &ps->psitems) {
+			rs = set_get(psi->set, &n);
+			for (i = 0; i < n; i++) {
+				if (count++ % 2 == 0)
+					printf("\n\t");
+				else
+					printf(", ");
+
+				print_prefix(&psi->p);
+				if (psi->p.len != rs[i].maxlen)
+					printf(" maxlen %u", rs[i].maxlen);
+				printf(" source-as %u", rs[i].as);
+			}
+		}
+		printf("\n}\n\n");
+	}
+}
+
+void
 print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 {
 	char		*method;
@@ -891,6 +921,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	print_mainconf(conf);
 	print_prefixsets(conf->prefixsets);
 	print_as_sets(conf->as_sets);
+	print_roasets(conf->roasets);
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net, "");
 	if (!SIMPLEQ_EMPTY(rdom_l))

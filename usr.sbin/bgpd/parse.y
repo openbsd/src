@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.355 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.356 2018/09/21 04:55:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,6 +93,7 @@ static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct rdomain		*currdom;
 static struct prefixset		*curpset;
+static struct prefixset		*curroaset;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -162,7 +163,8 @@ int		 parseextcommunity(struct filter_extcommunity *, char *,
 static int	 new_as_set(char *);
 static void	 add_as_set(u_int32_t);
 static void	 done_as_set(void);
-static int	 new_prefix_set(char *);
+static struct prefixset	*new_prefix_set(char *, int);
+static void	 add_roa_set(struct prefixset_item *, u_int32_t, u_int8_t);
 
 typedef struct {
 	union {
@@ -211,7 +213,7 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
-%token	PREFIX PREFIXLEN PREFIXSET
+%token	PREFIX PREFIXLEN PREFIXSET ROASET
 %token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
@@ -250,6 +252,7 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar as_set '\n'
 		| grammar prefixset '\n'
+		| grammar roa_set '\n'
 		| grammar conf_main '\n'
 		| grammar rdomain '\n'
 		| grammar neighbor '\n'
@@ -423,7 +426,7 @@ as_set_l	: as4number_any			{ add_as_set($1); }
 		| as_set_l comma as4number_any	{ add_as_set($3); }
 
 prefixset	: PREFIXSET STRING '{' optnl		{
-			if (new_prefix_set($2) != 0) {
+			if ((curpset = new_prefix_set($2, 0)) == NULL) {
 				free($2);
 				YYERROR;
 			}
@@ -433,7 +436,7 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 			curpset = NULL;
 		}
 		| PREFIXSET STRING '{' optnl '}'	{
-			if (new_prefix_set($2) != 0) {
+			if ((curpset = new_prefix_set($2, 0)) == NULL) {
 				free($2);
 				YYERROR;
 			}
@@ -484,6 +487,47 @@ prefixset_item	: prefix prefixlenop			{
 				free($$);
 				YYERROR;
 			}
+		}
+		;
+
+roa_set		: ROASET STRING '{' optnl		{
+			if ((curroaset = new_prefix_set($2, 1)) == NULL) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		} roa_set_l optnl '}'			{
+			SIMPLEQ_INSERT_TAIL(conf->roasets, curroaset, entry);
+			curroaset = NULL;
+		}
+		| ROASET STRING '{' optnl '}'		{
+			if ((curroaset = new_prefix_set($2, 1)) == NULL) {
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			SIMPLEQ_INSERT_TAIL(conf->roasets, curroaset, entry);
+			curroaset = NULL;
+		}
+		;
+
+roa_set_l	: prefixset_item SOURCEAS as4number_any			{
+			if ($1->p.len_min != $1->p.len) {
+				yyerror("unsupported prefixlen operation in "
+				    "roa-set");
+				free($1);
+				YYERROR;
+			}
+			add_roa_set($1, $3, $1->p.len_max);
+		}
+		| roa_set_l comma prefixset_item SOURCEAS as4number_any	{
+			if ($3->p.len_min != $3->p.len) {
+				yyerror("unsupported prefixlen operation in "
+				    "roa-set");
+				free($3);
+				YYERROR;
+			}
+			add_roa_set($3, $5, $3->p.len_max);
 		}
 		;
 
@@ -2768,6 +2812,7 @@ lookup(char *s)
 		{ "restart",		RESTART},
 		{ "restricted",		RESTRICTED},
 		{ "rib",		RIB},
+		{ "roa-set",		ROASET },
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
@@ -4230,21 +4275,52 @@ done_as_set(void)
 	curset = NULL;
 }
 
-static int
-new_prefix_set(char *name)
+static struct prefixset *
+new_prefix_set(char *name, int is_roa)
 {
-	if (find_prefixset(name, conf->prefixsets) != NULL)  {
-		yyerror("prefix-set \"%s\" already exists", name);
-		return -1;
+	const char *type = "prefix-set";
+	struct prefixset_head *sets = conf->prefixsets;
+	struct prefixset *pset;
+
+	if (is_roa) {
+		type = "roa-set";
+		sets = conf->roasets;
 	}
-	if ((curpset = calloc(1, sizeof(*curpset))) == NULL)
+
+	if (find_prefixset(name, sets) != NULL)  {
+		yyerror("%s \"%s\" already exists", type, name);
+		return NULL;
+	}
+	if ((pset = calloc(1, sizeof(*pset))) == NULL)
 		fatal("prefixset");
-	if (strlcpy(curpset->name, name, sizeof(curpset->name)) >=
-	    sizeof(curpset->name)) {
-		yyerror("prefix-set \"%s\" too long: max %zu",
-		    name, sizeof(curpset->name) - 1);
-			return -1;
+	if (strlcpy(pset->name, name, sizeof(pset->name)) >=
+	    sizeof(pset->name)) {
+		yyerror("%s \"%s\" too long: max %zu", type,
+		    name, sizeof(pset->name) - 1);
+		free(pset);
+		return NULL;
 	}
-	RB_INIT(&curpset->psitems);
-	return 0;
+	RB_INIT(&pset->psitems);
+	return pset;
+}
+
+static void
+add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
+{
+	struct prefixset_item	*psi;
+	struct roa_set rs;
+
+	/* no prefixlen option on this tree */
+	npsi->p.len_max = npsi->p.len_min = npsi->p.len;
+	psi = RB_INSERT(prefixset_tree, &curroaset->psitems, npsi);
+	if (psi == NULL)
+		psi = npsi;
+
+	if (psi->set == NULL)
+		if ((psi->set = set_new(1, sizeof(rs))) == NULL)
+			fatal("set_new");
+	rs.as = as;
+	rs.maxlen = max;
+	if (set_add(psi->set, &rs, 1) != 0)
+		fatal("as_set_new");
 }

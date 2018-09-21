@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.200 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.201 2018/09/21 04:55:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -516,6 +516,34 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
 			    0, -1, psi, sizeof(*psi)) == -1)
 				return (-1);
+			set_free(psi->set);
+			free(psi);
+		}
+		free(ps);
+	}
+
+	/* roasets for filters in the RDE */
+	while ((ps = SIMPLEQ_FIRST(conf->roasets)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(conf->roasets, entry);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1,
+		    ps->name, sizeof(ps->name)) == -1)
+			return (-1);
+		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
+			u_int32_t *as;
+			size_t i, l, n;
+			RB_REMOVE(prefixset_tree, &ps->psitems, psi);
+			as = set_get(psi->set, &n);
+			for (i = 0; i < n; i += l) {
+				l = (n - i > 1024 ? 1024 : n - i);
+				if (imsg_compose(ibuf_rde,
+				    IMSG_RECONF_ROA_AS_SET_ITEMS,
+				    0, 0, -1, as + i, l) == -1)
+					return -1;
+			}
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
+			    0, -1, psi, sizeof(*psi)) == -1)
+				return (-1);
+			set_free(psi->set);
 			free(psi);
 		}
 		free(ps);

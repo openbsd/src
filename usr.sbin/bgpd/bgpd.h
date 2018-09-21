@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.343 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.344 2018/09/21 04:55:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -229,7 +229,9 @@ struct bgpd_config {
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
 	struct prefixset_head			*prefixsets;
+	struct prefixset_head			*roasets;
 	struct rde_prefixset_head		*rde_prefixsets;
+	struct rde_prefixset_head		*rde_roasets;
 	struct as_set_head			*as_sets;
 	char					*csock;
 	char					*rcsock;
@@ -431,6 +433,8 @@ enum imsg_type {
 	IMSG_RECONF_AS_SET,
 	IMSG_RECONF_AS_SET_ITEMS,
 	IMSG_RECONF_AS_SET_DONE,
+	IMSG_RECONF_ROA_SET,
+	IMSG_RECONF_ROA_AS_SET_ITEMS,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
 	IMSG_UPDATE_ERR,
@@ -961,6 +965,7 @@ struct roa_set {
 struct prefixset_item {
 	struct filter_prefix		p;
 	RB_ENTRY(prefixset_item)	entry;
+	struct set_table		*set;
 };
 RB_HEAD(prefixset_tree, prefixset_item);
 

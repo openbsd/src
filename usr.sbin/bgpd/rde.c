@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.425 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.426 2018/09/21 04:55:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -131,6 +131,7 @@ time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
 struct rde_prefixset_head *prefixsets_tmp, *prefixsets_old;
+struct rde_prefixset_head *roasets_tmp, *roasets_old;
 struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rdomain_head	*rdomains_l, *newdomains;
@@ -689,6 +690,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
+	static struct set_table	*last_set;
 	static struct rdomain	*rd;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
@@ -702,7 +704,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct prefixset_item	 psi;
 	char			*name;
 	size_t			 nmemb;
-	int			 n, fd;
+	int			 n, fd, rv;
 	u_int16_t		 rid;
 
 	while (ibuf) {
@@ -774,6 +776,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (prefixsets_tmp == NULL)
 				fatal(NULL);
 			SIMPLEQ_INIT(prefixsets_tmp);
+			roasets_tmp = calloc(1,
+			    sizeof(struct rde_prefixset_head));
+			if (roasets_tmp == NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT(roasets_tmp);
 			as_sets_tmp = calloc(1,
 			    sizeof(struct as_set_head));
 			if (as_sets_tmp == NULL)
@@ -877,6 +884,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				TAILQ_INSERT_TAIL(out_rules_tmp, r, entry);
 			break;
 		case IMSG_RECONF_PREFIXSET:
+		case IMSG_RECONF_ROA_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(ps->name))
 				fatalx("IMSG_RECONF_PREFIXSET bad len");
@@ -884,8 +892,21 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (ps == NULL)
 				fatal(NULL);
 			memcpy(ps->name, imsg.data, sizeof(ps->name));
-			SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
+			if (imsg.hdr.type == IMSG_RECONF_ROA_SET) {
+				SIMPLEQ_INSERT_TAIL(roasets_tmp, ps, entry);
+				ps->roa = 1;
+				last_set = set_new(1, sizeof(struct roa_set));
+				if (last_set == NULL)
+					fatal(NULL);
+			} else
+				SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
 			last_prefixset = ps;
+			break;
+		case IMSG_RECONF_ROA_AS_SET_ITEMS:
+			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
+			nmemb /= sizeof(struct roa_set);
+			if (set_add(last_set, imsg.data, nmemb) != 0)
+				fatal(NULL);
 			break;
 		case IMSG_RECONF_PREFIXSETITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -894,11 +915,19 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
-			if (trie_add(&last_prefixset->th, &psi.p.addr,
-			    psi.p.len, psi.p.len_min, psi.p.len_max) == -1)
-				log_warnx("trie_add(%s) %s/%u, %u-%u) failed",
+			if (last_prefixset->roa) {
+				set_prep(last_set);
+				rv = trie_roa_add(&last_prefixset->th,
+				    &psi.p.addr, psi.p.len, last_set);
+			} else {
+				rv = trie_add(&last_prefixset->th,
+				    &psi.p.addr, psi.p.len,
+				    psi.p.len_min, psi.p.len_max);
+			}
+			if (rv == -1)
+				log_warnx("trie_add(%s) %s/%u) failed",
 				    last_prefixset->name, log_addr(&psi.p.addr),
-				    psi.p.len, psi.p.len_min, psi.p.len_max);
+				    psi.p.len);
 			break;
 		case IMSG_RECONF_AS_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2795,6 +2824,7 @@ rde_reload_done(void)
 	}
 
 	prefixsets_old = conf->rde_prefixsets;
+	roasets_old = conf->rde_roasets;
 	as_sets_old = conf->as_sets;
 
 	memcpy(conf, nconf, sizeof(struct bgpd_config));
@@ -2802,6 +2832,7 @@ rde_reload_done(void)
 	conf->csock = NULL;
 	conf->rcsock = NULL;
 	conf->prefixsets = NULL;
+	conf->roasets = NULL;
 	free(nconf);
 	nconf = NULL;
 
@@ -2826,11 +2857,15 @@ rde_reload_done(void)
 	/* XXX WHERE IS THE SYNC ??? */
 
 	rde_mark_prefixsets_dirty(prefixsets_old, prefixsets_tmp);
+	rde_mark_prefixsets_dirty(roasets_old, roasets_tmp);
 	as_sets_mark_dirty(as_sets_old, as_sets_tmp);
 
 	/* swap the prefixsets */
 	conf->rde_prefixsets = prefixsets_tmp;
 	prefixsets_tmp = NULL;
+	/* the roa-sets */
+	conf->rde_roasets = roasets_tmp;
+	roasets_tmp = NULL;
 	/* and the as_sets */
 	conf->as_sets = as_sets_tmp;
 	as_sets_tmp = NULL;
@@ -3022,6 +3057,8 @@ rde_softreconfig_done(void)
 
 	rde_free_prefixsets(prefixsets_old);
 	prefixsets_old = NULL;
+	rde_free_prefixsets(roasets_old);
+	roasets_old = NULL;
 	as_sets_free(as_sets_old);
 	as_sets_old = NULL;
 
