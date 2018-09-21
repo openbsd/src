@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.356 2018/09/21 04:55:27 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.357 2018/09/21 05:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -447,6 +447,8 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 
 prefixset_l	: prefixset_item			{
 			struct prefixset_item	*psi;
+			if ($1->p.op != OP_NONE)
+				curpset->sflags |= PREFIXSET_FLAG_OPS;
 			psi = RB_INSERT(prefixset_tree, &curpset->psitems, $1);
 			if (psi != NULL) {
 				if (cmd_opts & BGPD_OPT_VERBOSE2)
@@ -459,6 +461,8 @@ prefixset_l	: prefixset_item			{
 		}
 		| prefixset_l comma prefixset_item	{
 			struct prefixset_item	*psi;
+			if ($3->p.op != OP_NONE)
+				curpset->sflags |= PREFIXSET_FLAG_OPS;
 			psi = RB_INSERT(prefixset_tree, &curpset->psitems, $3);
 			if (psi != NULL) {
 				if (cmd_opts & BGPD_OPT_VERBOSE2)
@@ -481,8 +485,6 @@ prefixset_item	: prefix prefixlenop			{
 				fatal(NULL);
 			memcpy(&$$->p.addr, &$1.prefix, sizeof($$->p.addr));
 			$$->p.len = $1.len;
-			if ($2.op != OP_NONE)
-				curpset->sflags |= PREFIXSET_FLAG_OPS;
 			if (merge_prefixspec(&$$->p, &$2) == -1) {
 				free($$);
 				YYERROR;
@@ -4310,7 +4312,8 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	struct prefixset_item	*psi;
 	struct roa_set rs;
 
-	/* no prefixlen option on this tree */
+	/* no prefixlen option in this tree */
+	npsi->p.op = OP_NONE;
 	npsi->p.len_max = npsi->p.len_min = npsi->p.len;
 	psi = RB_INSERT(prefixset_tree, &curroaset->psitems, npsi);
 	if (psi == NULL)
