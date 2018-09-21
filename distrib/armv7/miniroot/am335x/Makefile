@@ -4,6 +4,7 @@ UBOOT=	am335x_boneblack
 DTBS=\
 	am335x-bone.dtb \
 	am335x-boneblack.dtb \
+	am335x-pocketbeagle.dtb \
 	am335x-boneblack-wireless.dtb \
 	am335x-bonegreen.dtb \
 	am335x-bonegreen-wireless.dtb \
