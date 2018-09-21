@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.37 2018/09/09 13:53:11 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.38 2018/09/21 19:00:45 millert Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -167,6 +167,8 @@ extern int		rem_w;		/* Remote file descriptor, writing */
 extern int		rtimeout;	/* Response time out in seconds */
 extern uid_t		userid;		/* User ID of rdist user */
 extern gid_t		groupid;	/* Group ID of rdist user */
+extern gid_t	        gidset[];	/* List of group IDs of rdist user */
+extern int		gidsetlen;	/* Number of group IDs in list */
 extern jmp_buf		finish_jmpbuf;	/* Setjmp buffer for finish() */
 extern char defowner[64];		/* Default owner */
 extern char defgroup[64];		/* Default group */

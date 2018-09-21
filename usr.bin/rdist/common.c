@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.38 2018/09/09 13:53:11 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.39 2018/09/21 19:00:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -56,6 +56,8 @@
 char			host[HOST_NAME_MAX+1];	/* Name of this host */
 uid_t			userid = (uid_t)-1;	/* User's UID */
 gid_t			groupid = (gid_t)-1;	/* User's GID */
+gid_t		        gidset[NGROUPS_MAX];	/* User's GID list */
+int			gidsetlen = 0;		/* Number of GIDS in list */
 char		       *homedir = NULL;		/* User's $HOME */
 char		       *locuser = NULL;		/* Local User's name */
 int			isserver = FALSE;	/* We're the server */
@@ -129,6 +131,7 @@ init(int argc, char **argv, char **envp)
 	homedir = xstrdup(pw->pw_dir);
 	locuser = xstrdup(pw->pw_name);
 	groupid = pw->pw_gid;
+	gidsetlen = getgroups(NGROUPS_MAX, gidset);
 	gethostname(host, sizeof(host));
 #if 0
 	if ((cp = strchr(host, '.')) != NULL)
@@ -436,7 +439,7 @@ getusername(uid_t uid, char *file, opt_t opts)
 {
 	static char buf[100];
 	static uid_t lastuid = (uid_t)-1;
-	struct passwd *pwd = NULL;
+	const char *name;
 
 	/*
 	 * The value of opts may have changed so we always
@@ -448,14 +451,14 @@ getusername(uid_t uid, char *file, opt_t opts)
   	}
 
 	/*
-	 * Try to avoid getpwuid() call.
+	 * Try to avoid passwd lookup.
 	 */
 	if (lastuid == uid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastuid = uid;
 
-	if ((pwd = getpwuid(uid)) == NULL) {
+	if ((name = user_from_uid(uid, 1)) == NULL) {
 		if (IS_ON(opts, DO_DEFOWNER) && !isserver) 
 			(void) strlcpy(buf, defowner, sizeof(buf));
 		else {
@@ -464,7 +467,7 @@ getusername(uid_t uid, char *file, opt_t opts)
 			(void) snprintf(buf, sizeof(buf), ":%u", uid);
 		}
 	} else {
-		(void) strlcpy(buf, pwd->pw_name, sizeof(buf));
+		(void) strlcpy(buf, name, sizeof(buf));
 	}
 
 	return(buf);
@@ -478,7 +481,7 @@ getgroupname(gid_t gid, char *file, opt_t opts)
 {
 	static char buf[100];
 	static gid_t lastgid = (gid_t)-1;
-	struct group *grp = NULL;
+	const char *name;
 
 	/*
 	 * The value of opts may have changed so we always
@@ -490,14 +493,14 @@ getgroupname(gid_t gid, char *file, opt_t opts)
   	}
 
 	/*
-	 * Try to avoid getgrgid() call.
+	 * Try to avoid group lookup.
 	 */
 	if (lastgid == gid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastgid = gid;
 
-	if ((grp = (struct group *)getgrgid(gid)) == NULL) {
+	if ((name = group_from_gid(gid, 1)) == NULL) {
 		if (IS_ON(opts, DO_DEFGROUP) && !isserver) 
 			(void) strlcpy(buf, defgroup, sizeof(buf));
 		else {
@@ -506,7 +509,7 @@ getgroupname(gid_t gid, char *file, opt_t opts)
 			(void) snprintf(buf, sizeof(buf), ":%u", gid);
 		}
 	} else
-		(void) strlcpy(buf, grp->gr_name, sizeof(buf));
+		(void) strlcpy(buf, name, sizeof(buf));
 
 	return(buf);
 }
@@ -574,6 +577,8 @@ exptilde(char *ebuf, char *file, size_t ebufsize)
 {
 	struct passwd *pw;
 	char *pw_dir, *rest;
+	static char lastuser[_PW_NAME_LEN + 1];
+	static char lastdir[PATH_MAX];
 	size_t len;
 
 	if (*file != '~') {
@@ -595,13 +600,17 @@ notilde:
 		else
 			rest = NULL;
 		if (strcmp(locuser, file) != 0) {
-			if ((pw = getpwnam(file)) == NULL) {
-				error("%s: unknown user name", file);
-				if (rest != NULL)
-					*rest = '/';
-				return(NULL);
+			if (strcmp(lastuser, file) != 0) {
+				if ((pw = getpwnam(file)) == NULL) {
+					error("%s: unknown user name", file);
+					if (rest != NULL)
+						*rest = '/';
+					return(NULL);
+				}
+				strlcpy(lastuser, pw->pw_name, sizeof(lastuser));
+				strlcpy(lastdir, pw->pw_dir, sizeof(lastdir));
 			}
-			pw_dir = pw->pw_dir;
+			pw_dir = lastdir;
 		}
 		if (rest != NULL)
 			*rest = '/';
