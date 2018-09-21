@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.26 2015/05/22 01:30:27 jsg Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.27 2018/09/21 01:33:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -403,9 +403,10 @@ srt_check_route(struct route_report *rr, int connected)
 				srt_set_upstream(rn, ifindex);
 				flash_update(rn);
 			} else if (nbr_report == nbr_ip &&
-			    adj_metric == rn->old_cost)
+			    adj_metric == rn->old_cost) {
 				rt_update(rn);
 				flash_update_ds(rn);
+			}
 		}
 		/* Update forwarder of current interface if necessary and
 		 * refresh the route */
