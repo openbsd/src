@@ -34,7 +34,13 @@ prefix-set "test4_prefixes" {
 
 prefix-set "test5_prefixes" {
 	0.0.0.0/0 or-longer, 192.0.160.0/19 prefixlen >= 22
-	192.0.211.0/24 or-longer, 2222:69:c000::/48 maxlen 64
+	192.0.160.0/19 prefixlen = 32, 192.0.211.0/24 or-longer
+	2222:69:c000::/48 maxlen 64
+}
+
+prefix-set "test6_prefixes" {
+	192.0.211.0/24, 192.0.211.0/24 prefixlen 25 - 31
+	192.0.211.0/24 prefixlen 28 - 31
 }
 
 prefix-set "mynetworks" {
