@@ -1,0 +1,41 @@
+AS 1
+router-id 127.0.0.1
+socket "/var/run/bgpd.sock.0"
+holdtime min 3
+fib-priority 48
+
+roa-set "empty1" {
+}
+
+roa-set "empty2" {
+}
+
+roa-set "one1" {
+	1.2.3.0/24 source-as 0
+}
+
+roa-set "one2" {
+	1.2.3.0/24 source-as 42
+}
+
+roa-set "test2" {
+	1.2.3.0/24 source-as 1, 1.2.8.0/22 source-as 3
+}
+
+roa-set "test3" {
+	10.0.0.0/8 source-as 1, 10.0.0.0/8 source-as 2
+	10.0.0.0/8 source-as 3, 10.0.0.0/8 source-as 4
+	10.0.0.0/8 maxlen 24 source-as 3, 10.0.0.0/8 maxlen 24 source-as 4
+	10.0.0.0/8 maxlen 24 source-as 5
+}
+
+roa-set "test4" {
+	10.1.0.0/16 source-as 1, 10.2.0.0/16 maxlen 24 source-as 1
+	10.3.0.0/16 maxlen 24 source-as 1, 10.4.0.0/16 maxlen 23 source-as 1
+}
+
+
+rde rib Adj-RIB-In no evaluate
+rde rib Adj-RIB-Out no evaluate
+rde rib Loc-RIB rtable 0 fib-update yes
+
