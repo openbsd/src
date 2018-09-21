@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtwn.4,v 1.5 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: rtwn.4,v 1.6 2018/09/21 02:14:37 jmatthew Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
@@ -15,22 +15,23 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: September 21 2018 $
 .Dt RTWN 4
 .Os
 .Sh NAME
 .Nm rtwn
-.Nd Realtek RTL8188CE/RTL8192CE PCIe IEEE 802.11b/g/n wireless network device
+.Nd Realtek RTL8188CE/RTL8188EE/RTL8192CE PCIe IEEE 802.11b/g/n wireless
+network device
 .Sh SYNOPSIS
 .Cd "rtwn* at pci? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports PCIe wireless network devices based on the Realtek
-RTL8188CE and RTL8192CE chipsets.
+RTL8188CE, RTL8188EE and RTL8192CE chipsets.
 .Pp
-The RTL8188CE is a highly integrated 802.11n adapter that combines a MAC,
-a 1T1R capable baseband and an RF in a single chip.
+The RTL8188CE and RTL8188EE are highly integrated 802.11n adapters that
+combine a MAC, a 1T1R capable baseband and an RF in a single chip.
 .Pp
 The RTL8192CE is a highly integrated multiple-in, multiple-out (MIMO)
 802.11n adapter that combines a MAC, a 2T2R capable baseband and an
@@ -78,6 +79,7 @@ The driver needs at least version 1.0 of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/rtwn-rtl8188efw
 .It Pa /etc/firmware/rtwn-rtl8192cfwU
 .It Pa /etc/firmware/rtwn-rtl8192cfwU_B
 .El
