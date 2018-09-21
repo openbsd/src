@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.47 2018/09/11 04:03:16 ccardenas Exp $
+.\"	$OpenBSD: vmctl.8,v 1.48 2018/09/21 14:04:37 solene Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2018 $
+.Dd $Mdocdate: September 21 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -90,6 +90,13 @@ Reset and terminate all VMs.
 Send a VM with the specified
 .Ar id
 to standard output and terminate it.
+The VM is paused during send processing.
+Data sent to standard output contains the VM parameters and its memory,
+not the disk image.
+.Pp
+In order to move a VM from one host to another, disk files must be
+synced between the send and the receive processes and must be located
+under the same path.
 .It Cm show Op Ar id
 An alias for the
 .Cm status
