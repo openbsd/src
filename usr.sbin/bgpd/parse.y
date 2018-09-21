@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.358 2018/09/21 08:15:33 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.359 2018/09/21 08:17:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,17 +297,17 @@ as4number	: STRING			{
 				free($1);
 				YYERROR;
 			}
-			if (uvalh == 0 && uval == AS_TRANS) {
+			if (uvalh == 0 && (uval == AS_TRANS || uval == 0)) {
 				yyerror("AS %u is reserved and may not be used",
-				    AS_TRANS);
+				    uval);
 				YYERROR;
 			}
 			$$ = uval | (uvalh << 16);
 		}
 		| asnumber {
-			if ($1 == AS_TRANS) {
+			if ($1 == AS_TRANS || $1 == 0) {
 				yyerror("AS %u is reserved and may not be used",
-				    AS_TRANS);
+				    (u_int32_t)$1);
 				YYERROR;
 			}
 			$$ = $1;
