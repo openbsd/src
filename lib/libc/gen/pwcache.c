@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwcache.c,v 1.14 2018/09/13 12:31:15 millert Exp $	*/
+/*	$OpenBSD: pwcache.c,v 1.15 2018/09/22 02:47:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -196,7 +196,7 @@ grptb_start(void)
  *	caches the name (if any) for the uid. If noname clear, we always
  *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
- * Return
+ * Return:
  *	Pointer to stored name (or a empty string)
  */
 const char *
@@ -257,7 +257,7 @@ user_from_uid(uid_t uid, int noname)
  *	caches the name (if any) for the gid. If noname clear, we always
  *	return the stored name (if valid or invalid match).
  *	We use a simple hash table.
- * Return
+ * Return:
  *	Pointer to stored name (or a empty string)
  */
 const char *
@@ -316,8 +316,8 @@ group_from_gid(gid_t gid, int noname)
 /*
  * uid_from_user()
  *	caches the uid for a given user name. We use a simple hash table.
- * Return
- *	the uid (if any) for a user name, or a -1 if no match can be found
+ * Return:
+ *	0 if the user name is found (filling in uid), -1 otherwise
  */
 int
 uid_from_user(const char *name, uid_t *uid)
@@ -377,8 +377,8 @@ uid_from_user(const char *name, uid_t *uid)
 /*
  * gid_from_group()
  *	caches the gid for a given group name. We use a simple hash table.
- * Return
- *	the gid (if any) for a group name, or a -1 if no match can be found
+ * Return:
+ *	0 if the group name is found (filling in gid), -1 otherwise
  */
 int
 gid_from_group(const char *name, gid_t *gid)
