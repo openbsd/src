@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.63 2018/09/22 11:00:25 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.64 2018/09/22 13:42:46 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -919,7 +919,7 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 	return success
 }
 
-func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproofTestAead) bool {
+func runChaCha20Poly1305Test(wt *wycheproofTestAead) bool {
 	aead := C.EVP_aead_chacha20_poly1305()
 
 	key, err := hex.DecodeString(wt.Key)
@@ -947,17 +947,7 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
 	}
 
-	keyLen, ivLen, aadLen, tagLen := len(key), len(iv), len(aad), len(tag)
-	if key_len != keyLen || iv_len != ivLen || tag_len != tagLen {
-		fmt.Printf("FAIL: Test case %d (%q) %v - length mismatch; key: got %d, want %d; IV: got %d, want %d; tag: got %d, want %d\n", wt.TCID, wt.Comment, wt.Flags,  keyLen, key_len, ivLen, iv_len, tagLen, tag_len)
-		return false
-	}
-
-	msgLen, ctLen := len(msg), len(ct)
-	if msgLen != ctLen {
-		fmt.Printf("FAIL: Test case %d (%q) %v - length mismatch: msgLen = %d, ctLen = %d\n", wt.TCID, wt.Comment, wt.Flags,  msgLen, ctLen)
-		return false
-	}
+	keyLen, ivLen, aadLen, msgLen, ctLen, tagLen := len(key), len(iv), len(aad), len(msg), len(ct), len(tag)
 
 	if ivLen == 0 {
 		iv = append(iv, 0)
@@ -970,7 +960,7 @@ func runChaCha20Poly1305Test(iv_len int, key_len int, tag_len int, wt *wycheproo
 	}
 
 	var ctx C.EVP_AEAD_CTX
-	if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(key_len), C.size_t(tag_len), nil) != 1 {
+	if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
 		log.Fatal("Failed to initialize AEAD context")
 	}
 	defer C.EVP_AEAD_CTX_cleanup(&ctx)
@@ -991,7 +981,7 @@ func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupAead
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runChaCha20Poly1305Test(wtg.IVSize / 8, wtg.KeySize / 8, wtg.TagSize / 8, wt) {
+		if !runChaCha20Poly1305Test(wt) {
 			success = false
 		}
 	}
