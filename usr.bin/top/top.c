@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.91 2018/09/13 15:23:32 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.92 2018/09/22 16:50:35 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <string.h>
 #include <poll.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
@@ -150,12 +151,12 @@ parseargs(int ac, char **av)
 
 		case 'U':	/* display only username's processes */
 			if (optarg[0] == '-') {
-				if ((ps.huid = userid(optarg+1)) == (uid_t)-1)
-					new_message(MT_delayed, "%s: unknown user",
-					    optarg);
+				if (uid_from_user(optarg+1, &ps.huid) == -1)
+					new_message(MT_delayed,
+					    "%s: unknown user", optarg);
 				else
 					ps.uid = (uid_t)-1;
-			} else if ((ps.uid = userid(optarg)) == (uid_t)-1)
+			} else if (uid_from_user(optarg, &ps.uid) == -1)
 				new_message(MT_delayed, "%s: unknown user",
 				    optarg);
 			else
@@ -279,7 +280,7 @@ int
 main(int argc, char *argv[])
 {
 	char *uname_field = "USERNAME", *header_text, *env_top;
-	const char *(*get_userid)(uid_t) = username;
+	const char *(*get_userid)(uid_t, int) = user_from_uid;
 	char **preset_argv = NULL, **av = argv;
 	int preset_argc = 0, ac = argc, active_procs, i;
 	sigset_t mask, oldmask;
@@ -562,7 +563,6 @@ rundisplay(void)
 	char ch, *iptr;
 	int change, i;
 	struct pollfd pfd[1];
-	uid_t uid, huid;
 	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P1";
 
 	/*
@@ -803,20 +803,18 @@ rundisplay(void)
 					ps.uid = (uid_t)-1;
 					ps.huid = (uid_t)-1;
 				} else if (tempbuf[0] == '-') {
-					if ((huid = userid(tempbuf+1)) == (uid_t)-1) {
+					if (uid_from_user(tempbuf+1, &ps.huid) == -1) {
 						new_message(MT_standout,
 						    " %s: unknown user", tempbuf+1);
 						no_command = Yes;
 					} else {
-						ps.huid = huid;
 						ps.uid = (uid_t)-1;
 					}
-				} else if ((uid = userid(tempbuf)) == (uid_t)-1) {
+				} else if (uid_from_user(tempbuf, &ps.uid) == -1) {
 						new_message(MT_standout,
 						    " %s: unknown user", tempbuf);
 						no_command = Yes;
 				} else {
-					ps.uid = uid;
 					ps.huid = (uid_t)-1;
 				}
 				putr();

@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.27 2018/09/13 15:23:32 millert Exp $	 */
+/* $OpenBSD: utils.c,v 1.28 2018/09/22 16:50:35 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -89,7 +89,7 @@ itoa(int val)
  * justified in a 6 character field to match uname_field in top.c.
  */
 const char *
-format_uid(uid_t uid)
+format_uid(uid_t uid, int nouser)
 {
 	static char buffer[16];	/* result is built here */
 

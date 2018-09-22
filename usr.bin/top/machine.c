@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.91 2018/09/13 15:23:32 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.92 2018/09/22 16:50:35 millert Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -545,8 +545,8 @@ format_comm(struct kinfo_proc *kp)
 }
 
 char *
-format_next_process(caddr_t hndl, const char *(*get_userid)(uid_t), pid_t *pid,
-    int show_threads)
+format_next_process(caddr_t hndl, const char *(*get_userid)(uid_t, int),
+    pid_t *pid, int show_threads)
 {
 	char *p_wait;
 	struct kinfo_proc *pp;
@@ -573,7 +573,7 @@ format_next_process(caddr_t hndl, const char *(*get_userid)(uid_t), pid_t *pid,
 	if (show_threads)
 		snprintf(buf, sizeof(buf), "%8d", pp->p_tid);
 	else
-		snprintf(buf, sizeof(buf), "%s", (*get_userid)(pp->p_ruid));
+		snprintf(buf, sizeof(buf), "%s", (*get_userid)(pp->p_ruid, 0));
 
 	/* format this entry */
 	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, buf,
