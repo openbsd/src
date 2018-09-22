@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.235 2018/09/21 14:31:29 visa Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.236 2018/09/22 02:20:44 visa Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -195,7 +195,8 @@ int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_mpls(char *, char **, int *, int, int *);
 int sysctl_pipex(char *, char **, int *, int, int *);
 int sysctl_fs(char *, char **, int *, int, int *);
-int sysctl_vfs(char *, char **, int[], int, int *);
+static int sysctl_vfs(char *, char **, int[], int, int *);
+static int sysctl_vfsgen(char *, char **, int[], int, int *);
 int sysctl_bios(char *, char **, int *, int, int *);
 int sysctl_swpenc(char *, char **, int *, int, int *);
 int sysctl_forkstat(char *, char **, int *, int, int *);
@@ -730,7 +731,10 @@ parse(char *string, int flags)
 		return;
 
 	case CTL_VFS:
-		len = sysctl_vfs(string, &bufp, mib, flags, &type);
+		if (mib[1])
+			len = sysctl_vfs(string, &bufp, mib, flags, &type);
+		else
+			len = sysctl_vfsgen(string, &bufp, mib, flags, &type);
 		if (len >= 0) {
 			if (type == CTLTYPE_STRUCT) {
 				if (flags)
@@ -1182,6 +1186,7 @@ struct ctlname ffsname[] = FFS_NAMES;
 struct ctlname nfsname[] = FS_NFS_NAMES;
 struct ctlname fusefsname[] = FUSEFS_NAMES;
 struct list *vfsvars;
+int *vfs_typenums;
 
 /*
  * Initialize the set of filesystem names
@@ -1201,24 +1206,33 @@ vfsinit(void)
 	buflen = 4;
 	if (sysctl(mib, 3, &maxtypenum, &buflen, NULL, 0) < 0)
 		return;
-	/* We need to do 0..maxtypenum so add one. */
-	maxtypenum++;
-	if ((vfsvars = calloc(maxtypenum, sizeof(*vfsvars))) == NULL)
+	/*
+         * We need to do 0..maxtypenum so add one, and then we offset them
+	 * all by (another) one by inserting VFS_GENERIC entries at zero
+	 */
+	maxtypenum += 2;
+	if ((vfs_typenums = calloc(maxtypenum, sizeof(int))) == NULL)
 		return;
+	if ((vfsvars = calloc(maxtypenum, sizeof(*vfsvars))) == NULL) {
+		free(vfs_typenums);
+		return;
+	}
 	if ((vfsname = calloc(maxtypenum, sizeof(*vfsname))) == NULL) {
+		free(vfs_typenums);
 		free(vfsvars);
 		return;
 	}
 	mib[2] = VFS_CONF;
 	buflen = sizeof vfc;
-	for (loc = lastused, cnt = 0; cnt < maxtypenum; cnt++) {
-		mib[3] = cnt;
+	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {
+		mib[3] = cnt - 1;
 		if (sysctl(mib, 4, &vfc, &buflen, NULL, 0) < 0) {
 			if (errno == EOPNOTSUPP)
 				continue;
 			warn("vfsinit");
 			free(vfsname);
 			free(vfsvars);
+			free(vfs_typenums);
 			return;
 		}
 		if (!strcmp(vfc.vfc_name, MOUNT_FFS)) {
@@ -1233,6 +1247,7 @@ vfsinit(void)
 			vfsvars[cnt].list = fusefsname;
 			vfsvars[cnt].size = FUSEFS_MAXID;
 		}
+		vfs_typenums[cnt] = vfc.vfc_typenum;
 		strlcat(&names[loc], vfc.vfc_name, sizeof names - loc);
 		vfsname[cnt].ctl_name = &names[loc];
 		vfsname[cnt].ctl_type = CTLTYPE_NODE;
@@ -1241,9 +1256,50 @@ vfsinit(void)
 	}
 	lastused = loc;
 
+	vfsname[0].ctl_name = "mounts";
+	vfsname[0].ctl_type = CTLTYPE_NODE;
+	vfsvars[0].list = vfsname + 1;
+	vfsvars[0].size = maxtypenum - 1;
+
 	secondlevel[CTL_VFS].list = vfsname;
 	secondlevel[CTL_VFS].size = maxtypenum;
 	return;
+}
+
+int
+sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+	size_t size;
+	struct vfsconf vfc;
+
+	if (*bufpp == NULL) {
+		listall(string, vfsvars);
+		return (-1);
+	}
+
+	if ((indx = findname(string, "third", bufpp, vfsvars)) == -1)
+		return (-1);
+
+	mib[1] = VFS_GENERIC;
+	mib[2] = VFS_CONF;
+	mib[3] = indx;
+	size = sizeof vfc;
+	if (sysctl(mib, 4, &vfc, &size, NULL, 0) < 0) {
+		if (errno != EOPNOTSUPP)
+			warn("vfs print");
+		return -1;
+	}
+	if (flags == 0 && vfc.vfc_refcount == 0)
+		return -1;
+	if (!nflag)
+		fprintf(stdout, "%s has %d mounted instance%s\n",
+		    string, vfc.vfc_refcount,
+		    vfc.vfc_refcount != 1 ? "s" : "");
+	else
+		fprintf(stdout, "%d\n", vfc.vfc_refcount);
+
+	return -1;
 }
 
 int
@@ -1264,6 +1320,7 @@ sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 	if ((indx = findname(string, "third", bufpp, lp)) == -1)
 		return (-1);
 
+	mib[1] = vfs_typenums[mib[1]];
 	mib[2] = indx;
 	*typep = lp->list[indx].ctl_type;
 	return (3);
