@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.62 2018/09/22 06:06:36 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.63 2018/09/22 11:00:25 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -53,11 +53,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"unsafe"
 )
 
 const testVectorPath = "/usr/local/share/wycheproof/testvectors"
+
 var acceptableAudit = false
+var acceptableComments map[string]int
+var acceptableFlags map[string]int
 
 type wycheproofTestGroupAesCbcPkcs5 struct {
 	IVSize  int                          `json:"ivSize"`
@@ -279,6 +283,47 @@ var nids = map[string]int{
 	"SHA-512":         C.NID_sha512,
 }
 
+func gatherAcceptableStatistics(testcase int, comment string, flags []string) {
+	fmt.Printf("AUDIT: Test case %d (%q) %v\n", testcase, comment, flags)
+
+	if comment == "" {
+		acceptableComments["No comment"]++
+	} else {
+		acceptableComments[comment]++
+	}
+
+	if len(flags) == 0 {
+		acceptableFlags["NoFlag"]++
+	} else {
+		for _, flag := range flags {
+			acceptableFlags[flag]++
+		}
+	}
+}
+
+func printAcceptableStatistics() {
+	fmt.Printf("\nComment statistics:\n")
+
+	var comments []string
+	for comment := range acceptableComments {
+		comments = append(comments, comment)
+	}
+	sort.Strings(comments)
+	for _, comment := range comments {
+		fmt.Printf("%-45v %5d\n", comment, acceptableComments[comment])
+	}
+
+	fmt.Printf("\nFlag statistics:\n")
+	var flags []string
+	for flag := range acceptableFlags {
+		flags = append(flags, flag)
+	}
+	sort.Strings(flags)
+	for _, flag := range flags {
+		fmt.Printf("%-45v %5d\n", flag, acceptableFlags[flag])
+	}
+}
+
 func nidFromString(ns string) (int, error) {
 	nid, ok := nids[ns]
 	if ok {
@@ -372,7 +417,7 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 	if bytes.Equal(openedMsg, out) || wt.Result == "invalid" {
 		success = true
 		if acceptableAudit && wt.Result == "acceptable" {
-			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) [%v] %v - msg match: %t; want %v\n", wt.TCID, wt.Comment, action, wt.Flags, bytes.Equal(openedMsg, out), wt.Result)
@@ -584,7 +629,7 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 			success = false
 		}
 		if acceptableAudit && bytes.Equal(tagOut, tag) && wt.Result == "acceptable" {
-			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
 	}
 	return success
@@ -1144,7 +1189,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 		}
 		if wt.Result == "acceptable" {
 			if acceptableAudit {
-				fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+				gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 			}
 			return true
 		}
@@ -1244,7 +1289,7 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA
 		success = false
 	}
 	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
-		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
@@ -1348,7 +1393,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 	success := false
 	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
 		if acceptableAudit && wt.Result == "acceptable" {
-			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
 		success = true
 	} else if ret == 0 && (wt.Result == "invalid" || wt.Result == "acceptable") {
@@ -1436,7 +1481,7 @@ func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 		success = false
 	}
 	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
-		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
@@ -1510,7 +1555,7 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 		success = false
 	}
 	if acceptableAudit && result && wt.Result == "acceptable" {
-		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
@@ -1632,6 +1677,9 @@ func main() {
 
 	flag.BoolVar(&acceptableAudit, "v", false, "audit acceptable cases")
 	flag.Parse()
+	
+	acceptableComments = make(map[string]int)
+	acceptableFlags = make(map[string]int)
 
 	tests := []struct {
 		name    string
@@ -1661,6 +1709,10 @@ func main() {
 				success = false
 			}
 		}
+	}
+
+	if acceptableAudit {
+		printAcceptableStatistics()
 	}
 
 	if !success {
