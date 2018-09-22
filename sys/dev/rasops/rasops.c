@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.56 2018/08/27 09:30:07 kettenis Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.57 2018/09/22 17:40:57 kettenis Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -309,10 +309,12 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_ops.eraserows = rasops_wronly_eraserows;
 		ri->ri_do_cursor = rasops_wronly_do_cursor;
 
-		ri->ri_alloc_attr(ri, 0, 0, 0, &attr);
-		for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
-			ri->ri_bs[i].uc = ' ';
-			ri->ri_bs[i].attr = attr;
+		if (ri->ri_flg & RI_CLEAR) {
+			ri->ri_alloc_attr(ri, 0, 0, 0, &attr);
+			for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
+				ri->ri_bs[i].uc = ' ';
+				ri->ri_bs[i].attr = attr;
+			}
 		}
 	}
 
