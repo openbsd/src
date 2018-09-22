@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.10 2018/09/22 16:50:35 millert Exp $	*/
+/*	$OpenBSD: utils.h,v 1.11 2018/09/22 17:10:28 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -33,7 +33,6 @@
 int atoiwi(char *);
 char *itoa(int);
 const char *format_uid(uid_t, int);
-int digits(int);
 int string_index(char *, char **);
 char **argparse(char *, int *);
 int percentages(int, int64_t *, int64_t *, int64_t *, int64_t *);
