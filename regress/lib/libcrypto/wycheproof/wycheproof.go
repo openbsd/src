@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.58 2018/09/21 23:16:16 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.59 2018/09/22 00:10:18 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -46,6 +46,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"hash"
 	"io/ioutil"
@@ -56,6 +57,7 @@ import (
 )
 
 const testVectorPath = "/usr/local/share/wycheproof/testvectors"
+var acceptableAudit = false
 
 type wycheproofTestGroupAesCbcPkcs5 struct {
 	IVSize  int                          `json:"ivSize"`
@@ -369,6 +371,9 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 	success := false
 	if bytes.Equal(openedMsg, out) || wt.Result == "invalid" {
 		success = true
+		if acceptableAudit && wt.Result == "acceptable" {
+			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+		}
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) [%v] %v - msg match: %t; want %v\n", wt.TCID, wt.Comment, wt.Flags, action, bytes.Equal(openedMsg, out), wt.Result)
 	}
@@ -577,6 +582,9 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 		if bytes.Equal(tagOut, tag) != (wt.Result == "valid" || wt.Result == "acceptable") {
 			fmt.Printf("FAIL: Test case %d (%q) [%v] %v - expected and computed tag do not match - ret: %d, Result: %v\n", wt.TCID, wt.Comment, wt.Flags, action, ret, wt.Result)
 			success = false
+		}
+		if success && acceptableAudit && wt.Result == "acceptable" {
+			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 		}
 	}
 	return success
@@ -1131,7 +1139,13 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	C.free(unsafe.Pointer(Cpub))
 
 	if pubKey == nil {
-		if wt.Result == "invalid" || wt.Result == "acceptable" {
+		if wt.Result == "invalid" {
+			return true
+		}
+		if wt.Result == "acceptable" {
+			if acceptableAudit {
+				fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+			}
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) - ASN decoding failed: want %v\n", wt.TCID, wt.Comment, wt.Result)
@@ -1228,6 +1242,9 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA
 	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: Test case %d (%q) - ECDSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
 		success = false
+	}
+	if success && acceptableAudit && wt.Result == "acceptable" {
+		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
@@ -1327,9 +1344,12 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 
 	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha, (*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
 
-	// XX: audit acceptable cases...
+	// XXX: audit acceptable cases...
 	success := false
 	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
+		if acceptableAudit && wt.Result == "acceptable" {
+			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+		}
 		success = true
 	} else if ret == 0 && (wt.Result == "invalid" || wt.Result == "acceptable") {
 		success = true
@@ -1415,6 +1435,9 @@ func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 		fmt.Printf("FAIL: Test case %d (%q) - RSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
 		success = false
 	}
+	if success && acceptableAudit && wt.Result == "acceptable" {
+		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
+	}
 	return success
 }
 
@@ -1485,6 +1508,9 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 	if result != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: Test case %d (%q) - X25519(), want %v\n", wt.TCID, wt.Comment, wt.Result)
 		success = false
+	}
+	if success && acceptableAudit && wt.Result == "acceptable" {
+		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
@@ -1603,6 +1629,9 @@ func main() {
 		fmt.Printf("SKIPPED\n")
 		os.Exit(0)
 	}
+
+	flag.BoolVar(&acceptableAudit, "v", false, "audit acceptable cases")
+	flag.Parse()
 
 	tests := []struct {
 		name    string
