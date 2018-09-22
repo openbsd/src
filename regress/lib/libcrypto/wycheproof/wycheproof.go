@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.60 2018/09/22 00:14:37 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.61 2018/09/22 00:29:13 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -583,7 +583,7 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 			fmt.Printf("FAIL: Test case %d (%q) [%v] %v - expected and computed tag do not match - ret: %d, Result: %v\n", wt.TCID, wt.Comment, action, wt.Flags, ret, wt.Result)
 			success = false
 		}
-		if success && acceptableAudit && wt.Result == "acceptable" {
+		if acceptableAudit && bytes.Equal(tagOut, tag) && wt.Result == "acceptable" {
 			fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 		}
 	}
@@ -1243,7 +1243,7 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA
 		fmt.Printf("FAIL: Test case %d (%q) - ECDSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
 		success = false
 	}
-	if success && acceptableAudit && wt.Result == "acceptable" {
+	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
 		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
@@ -1435,7 +1435,7 @@ func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 		fmt.Printf("FAIL: Test case %d (%q) - RSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, int(ret), wt.Result)
 		success = false
 	}
-	if success && acceptableAudit && wt.Result == "acceptable" {
+	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
 		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
@@ -1509,7 +1509,7 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 		fmt.Printf("FAIL: Test case %d (%q) - X25519(), want %v\n", wt.TCID, wt.Comment, wt.Result)
 		success = false
 	}
-	if success && acceptableAudit && wt.Result == "acceptable" {
+	if acceptableAudit && result && wt.Result == "acceptable" {
 		fmt.Printf("AUDIT: Test case %d (%q) %v\n", wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
