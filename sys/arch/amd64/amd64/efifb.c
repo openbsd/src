@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.17 2018/07/12 12:47:57 fcambus Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.18 2018/09/22 17:41:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -215,11 +215,6 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
 
-		if (bus_space_map(iot, fb->paddr, fb->psize,
-		    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
-		    &ioh) == 0)
-			ri->ri_origbits = bus_space_vaddr(iot, ioh);
-
 		efifb_rasops_preinit(fb);
 		ri->ri_flg &= ~RI_CLEAR;
 		ri->ri_flg |= RI_VCONS | RI_WRONLY;
@@ -428,6 +423,7 @@ efifb_efiinfo_init(struct efifb *fb)
 	fb->psize = bios_efiinfo->fb_height *
 	    bios_efiinfo->fb_pixpsl * (fb->depth / 8);
 }
+
 void
 efifb_cnattach_common(void)
 {
@@ -450,6 +446,28 @@ efifb_cnattach_common(void)
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
+}
+
+void
+efifb_cnremap(void)
+{
+	struct efifb		*fb = &efifb_console;
+	struct rasops_info	*ri = &fb->rinfo;
+	bus_space_tag_t		 iot = X86_BUS_SPACE_MEM;
+	bus_space_handle_t	 ioh;
+
+	if (fb->paddr == 0)
+		return;
+
+	if (_bus_space_map(iot, fb->paddr, fb->psize,
+	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &ioh) == 0)
+		ri->ri_origbits = bus_space_vaddr(iot, ioh);
+
+	efifb_rasops_preinit(fb);
+	ri->ri_flg &= ~RI_CLEAR;
+	ri->ri_flg |= RI_CENTER | RI_WRONLY;
+
+	rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
 }
 
 int
