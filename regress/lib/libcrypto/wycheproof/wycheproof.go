@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.65 2018/09/22 14:12:47 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.66 2018/09/22 15:53:38 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1385,9 +1385,10 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 
 	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha, (*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
 
-	// XXX: audit acceptable cases...
 	success := false
 	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
+		// All acceptable cases that pass use SHA-1 and are flagged:
+		// "WeakHash" : "The key for this test vector uses a weak hash function."
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
