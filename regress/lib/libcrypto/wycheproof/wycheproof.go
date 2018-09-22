@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.64 2018/09/22 13:42:46 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.65 2018/09/22 14:12:47 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -882,6 +882,9 @@ func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 
 	success := false
 	if bytes.Equal(openedMsg, msg) || wt.Result == "invalid" {
+		if acceptableAudit && wt.Result == "acceptable" {
+			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
+		}
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) %v - msg match: %t; want %v\n", wt.TCID, wt.Comment, wt.Flags,  bytes.Equal(openedMsg, msg), wt.Result)
@@ -912,6 +915,9 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 
 	success := false
 	if bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag) || wt.Result == "invalid" {
+		if acceptableAudit && wt.Result == "acceptable" {
+			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
+		}
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n", wt.TCID, wt.Comment, wt.Flags,  int(sealRet), bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), wt.Result)
