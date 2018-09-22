@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.279 2018/09/17 14:56:37 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.280 2018/09/22 09:12:36 fcambus Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1682,7 +1682,7 @@ vfs_shutdown(struct proc *p)
 	acct_shutdown();
 #endif
 
-	printf("syncing disks... ");
+	printf("syncing disks...");
 
 	if (panicstr == 0) {
 		/* Sync before unmount, in case we hang on something. */
@@ -1695,9 +1695,9 @@ vfs_shutdown(struct proc *p)
 #endif
 
 	if (vfs_syncwait(p, 1))
-		printf("giving up\n");
+		printf(" giving up\n");
 	else
-		printf("done\n");
+		printf(" done\n");
 }
 
 /*
