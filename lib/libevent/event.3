@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.54 2018/07/26 12:50:04 rob Exp $
+.\"	$OpenBSD: event.3,v 1.55 2018/09/23 08:56:19 anton Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 26 2018 $
+.Dd $Mdocdate: September 23 2018 $
 .Dt EVENT_INIT 3
 .Os
 .Sh NAME
@@ -68,6 +68,7 @@
 .Nm bufferevent_enable ,
 .Nm bufferevent_disable ,
 .Nm bufferevent_settimeout ,
+.Nm bufferevent_setwatermark ,
 .Nm EVBUFFER_INPUT ,
 .Nm EVBUFFER_OUTPUT
 .Nd execute a function when a specific event occurs
@@ -156,6 +157,8 @@
 .Fn "bufferevent_disable" "struct bufferevent *bufev" "short event"
 .Ft void
 .Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
+.Ft void
+.Fn "bufferevent_setwatermark" "struct bufferevent *bufev" "short events" "size_t lowmark" "size_t highmark"
 .Ft "struct evbuffer *"
 .Fn "EVBUFFER_INPUT" "struct bufferevent *bufev"
 .Ft "struct evbuffer *"
@@ -496,6 +499,31 @@ whenever the output buffer is drained below the write low watermark,
 which is
 .Va 0
 by default.
+.Pp
+The
+.Fn bufferevent_setwatermark
+function can set the low and high watermarks
+for read and write events.
+The
+.Fa events
+can be either
+.Va EV_READ ,
+.Va EV_WRITE
+or both.
+When used with
+.Va EV_READ ,
+a bufferevent does not invoke the user read callback
+unless there is at least
+.Fa lowmark
+data in the buffer.
+If the read buffer is beyond
+.Fa highmark ,
+the bufferevent stops reading from the file descriptor.
+When used with
+.Va EV_WRITE ,
+the user write callback is invoked whenever the buffered data
+falls below
+.Fa lowmark .
 .Pp
 The
 .Fn bufferevent_write
