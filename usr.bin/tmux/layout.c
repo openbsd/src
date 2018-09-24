@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.36 2018/06/08 20:54:22 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.37 2018/09/24 15:29:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -236,7 +236,7 @@ layout_need_status(struct layout_cell *lc, int at_top)
 {
 	struct layout_cell	*first_lc;
 
-	if (lc->parent) {
+	if (lc->parent != NULL) {
 		if (lc->parent->type == LAYOUT_LEFTRIGHT)
 			return (layout_need_status(lc->parent, at_top));
 
@@ -349,7 +349,9 @@ layout_resize_check(struct window *w, struct layout_cell *lc,
 {
 	struct layout_cell	*lcchild;
 	u_int			 available, minimum;
+	int			 status;
 
+	status = options_get_number(w->options, "pane-border-status");
 	if (lc->type == LAYOUT_WINDOWPANE) {
 		/* Space available in this cell only. */
 		minimum = PANE_MINIMUM;
@@ -357,9 +359,8 @@ layout_resize_check(struct window *w, struct layout_cell *lc,
 			available = lc->sx;
 		else {
 			available = lc->sy;
-			minimum += layout_need_status(lc,
-			    options_get_number(w->options,
-			    "pane-border-status") == 1);
+			if (status != 0)
+				minimum += layout_need_status(lc, status == 1);
 		}
 		if (available > minimum)
 			available -= minimum;
