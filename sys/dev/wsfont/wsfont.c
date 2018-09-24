@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.52 2017/09/08 05:36:53 deraadt Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.53 2018/09/24 11:10:34 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -42,6 +42,11 @@
 #include "wsfont_glue.h"	/* NRASOPS_ROTATION */
 
 #undef HAVE_FONT
+
+#ifdef FONT_SPLEEN5x8
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen5x8.h>
+#endif
 
 #ifdef FONT_BOLD8x16
 #define HAVE_FONT 1
@@ -105,6 +110,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_GALLANT12x22
 	BUILTIN_FONT(gallant12x22, 3),
+#endif
+#ifdef FONT_SPLEEN5x8
+	BUILTIN_FONT(spleen5x8, 4),
 #endif
 #undef BUILTIN_FONT
 };
