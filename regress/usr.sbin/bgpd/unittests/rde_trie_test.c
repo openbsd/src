@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.6 2018/09/20 11:47:50 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.7 2018/09/24 18:14:39 denis Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -34,70 +34,63 @@
 int roa;
 int orlonger;
 
-static int
-host_v4(const char *s, struct bgpd_addr *h, u_int8_t *len)
+int
+host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
-	struct in_addr ina = { 0 };
-	int bits = 32;
+	struct addrinfo	hints, *res;
+	int		bits;
 
-	memset(h, 0, sizeof(*h));
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
+		*len = res->ai_family == AF_INET6 ? 128 : 32;
+		sa2addr(res->ai_addr, h);
+		freeaddrinfo(res);
+	} else {        /* ie. for 10/8 parsing */
+		if ((bits = inet_net_pton(AF_INET, s, &h->v4, sizeof(h->v4))) == -1)
 			return (0);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (0);
+		*len = bits;
+		h->aid = AID_INET;
 	}
-	h->aid = AID_INET;
-	h->v4.s_addr = ina.s_addr;
-	*len = bits;
+
 	return (1);
 }
 
-static int
-host_v6(const char *s, struct bgpd_addr *h, u_int8_t *len)
+int
+host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 {
-	struct addrinfo hints, *res;
-	const char *errstr;
-	char *p;
-	int mask = 128;
+	int		 mask = 128;
+	char		*p, *ps;
+	const char	*errstr;
 
-	memset(h, 0, sizeof(*h));
-	if ((p = strrchr(s, '/')) != NULL) {
-		mask = strtonum(p + 1, 0, 128, &errstr);
-		if (errstr)
+	if ((ps = strdup(s)) == NULL)
+		errx(1, "%s: strdup", __func__);
+
+	if ((p = strrchr(ps, '/')) != NULL) {
+		mask = strtonum(p+1, 0, 128, &errstr);
+		if (errstr) {
+			warnx("prefixlen is %s: %s", errstr, p+1);
 			return (0);
-		*p = '\0';
+		}
+		p[0] = '\0';
 	}
 
-        bzero(&hints, sizeof(hints));
-        hints.ai_family = AF_INET6;
-        hints.ai_socktype = SOCK_DGRAM; /*dummy*/
-        hints.ai_flags = AI_NUMERICHOST;
-        if (getaddrinfo(s, "0", &hints, &res) == 0) {
-		h->aid = AID_INET6;
-		memcpy(&h->v6, &res->ai_addr->sa_data[6], sizeof(h->v6));
-                freeaddrinfo(res);
+	bzero(h, sizeof(*h));
+
+	if (host_ip(ps, h, len) == 0) {
+		free(ps);
+		return (0);
+	}
+
+	if (p != NULL)
 		*len = mask;
-		if (p)
-			*p = '/';
-                return (1);
-        }
-	if (p)
-		*p = '/';
 
-        return (0);
+	free(ps);
+	return (1);
 }
 
-static int
-host_l(char *s, struct bgpd_addr *h, u_int8_t *len)
-{
-	if (host_v4(s, h, len))
-		return (1);
-	if (host_v6(s, h, len))
-		return (1);
-	return (0);
-}
 
 static const char *
 print_prefix(struct bgpd_addr *p)
@@ -133,7 +126,7 @@ parse_file(FILE *in, struct trie_head *th)
 				continue;
 			switch (state) {
 			case 0:
-				if (!host_l(s, &prefix, &plen))
+				if (!host(s, &prefix, &plen))
 					errx(1, "%s: could not parse "
 					    "prefix \"%s\"", __func__, s);
 				if (prefix.aid == AID_INET6)
@@ -203,7 +196,7 @@ parse_roa_file(FILE *in, struct trie_head *th)
 			}
 			switch (state) {
 			case 0:
-				if (!host_l(s, &prefix, &plen))
+				if (!host(s, &prefix, &plen))
 					errx(1, "%s: could not parse "
 					    "prefix \"%s\"", __func__, s);
 				break;
@@ -252,7 +245,7 @@ test_file(FILE *in, struct trie_head *th)
 	u_int8_t plen;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
-		if (!host_l(line, &prefix, &plen))
+		if (!host(line, &prefix, &plen))
 			errx(1, "%s: could not parse prefix \"%s\"",
 			    __func__, line);
 		printf("%s/%u ", print_prefix(&prefix), plen);
@@ -278,7 +271,7 @@ test_roa_file(FILE *in, struct trie_head *th)
 		s = strchr(line, ' ');
 		if (s)
 			*s++ = '\0';
-		if (!host_l(line, &prefix, &plen))
+		if (!host(line, &prefix, &plen))
 			errx(1, "%s: could not parse prefix \"%s\"",
 			    __func__, line);
 		if (s)
