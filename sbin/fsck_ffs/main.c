@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2018/01/05 09:33:47 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2018/09/24 21:26:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,8 @@ main(int argc, char *argv[])
 {
 	int ch;
 	int ret = 0;
+
+	checkroot();
 
 	sync();
 	skipclean = 1;

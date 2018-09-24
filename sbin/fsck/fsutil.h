@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.h,v 1.7 2014/10/08 16:27:53 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.h,v 1.8 2018/09/24 21:26:00 deraadt Exp $	*/
 /*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 char *rawname(char *);
 char *unrawname(char *);
+void checkroot(void);
 char *blockcheck(char *);
 const char *cdevname(void);
 void setcdevname(const char *, const char *, int);

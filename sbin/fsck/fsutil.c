@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.22 2015/09/27 05:25:00 guenther Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.23 2018/09/24 21:26:00 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -52,6 +52,17 @@ static int preen = 0;
 extern char *__progname;
 
 static void vmsg(int, const char *, va_list);
+
+struct stat stslash;
+
+void
+checkroot(void)
+{
+	if (stat("/", &stslash) < 0) {
+		xperror("/");
+		printf("Can't stat root\n");
+	}
+}
 
 void
 setcdevname(const char *cd, const char *ocd, int pr)
@@ -182,17 +193,12 @@ rawname(char *name)
 char *
 blockcheck(char *origname)
 {
-	struct stat stslash, stblock, stchar;
+	struct stat stblock, stchar;
 	char *newname, *raw;
 	struct fstab *fsp;
 	int retried = 0;
 
 	hot = 0;
-	if (stat("/", &stslash) < 0) {
-		xperror("/");
-		printf("Can't stat root\n");
-		return (origname);
-	}
 	newname = origname;
 retry:
 	if (stat(newname, &stblock) < 0)
