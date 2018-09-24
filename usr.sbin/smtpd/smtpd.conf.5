@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.204 2018/09/10 12:42:17 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.205 2018/09/24 16:14:34 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 10 2018 $
+.Dd $Mdocdate: September 24 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -265,8 +265,13 @@ and
 .Dq smtps
 protocols for authentication.
 Server certificates for those protocols are verified by default.
-.It Cm tls no-verify
-Do not require a valid certificate for the specified host.
+.It Cm tls Op no-verify
+Require TLS to be used when relaying, using mandatory STARTTLS by default.
+When used with a smarthost, the protocol must not be
+.Dq smtp+notls:// .
+If 
+.Op no-verify
+is specified, do not require a valid certificate.
 .It Cm auth Pf < Ar table Ns >
 Use the mapping
 .Ar table

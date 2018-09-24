@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.225 2018/09/19 05:31:12 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.226 2018/09/24 16:14:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -655,6 +655,23 @@ mta_handle_envelope(struct envelope *evp, const char *smarthost)
 		m_add_int(p_queue, ESC_OTHER_STATUS);
 		m_close(p_queue);
 		return;
+	}
+
+	if (dispatcher->u.remote.tls_required) {
+		/* Reject relay if smtp+notls:// is requested */
+		if (relayh.tls == RELAY_TLS_NO) {
+			log_warnx("warn: TLS required for action \"%s\"",
+			    evp->dispatcher);
+			m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+			m_add_evpid(p_queue, evp->id);
+			m_add_string(p_queue, "TLS required for relaying");
+			m_add_int(p_queue, ESC_OTHER_STATUS);
+			m_close(p_queue);
+			return;
+		}
+		/* Update smtp:// to smtp+tls:// */
+		if (relayh.tls == RELAY_TLS_OPPORTUNISTIC)
+			relayh.tls = RELAY_TLS_STARTTLS;
 	}
 
 	relay = mta_relay(evp, &relayh);
@@ -1739,7 +1756,7 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 	if (!key.authlabel[0])
 		key.authlabel = NULL;
 
-	if (dispatcher->u.remote.smarthost &&
+	if ((key.tls == RELAY_TLS_STARTTLS || key.tls == RELAY_TLS_SMTPS) &&
 	    dispatcher->u.remote.tls_noverify == 0)
 		key.flags |= RELAY_TLS_VERIFY;
 

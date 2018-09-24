@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.561 2018/09/19 05:31:12 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.562 2018/09/24 16:14:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1063,6 +1063,7 @@ struct dispatcher_remote {
 
 	char	*smarthost;
 	char	*auth;
+	int	 tls_required;
 	int	 tls_noverify;
 
 	int	 backup;

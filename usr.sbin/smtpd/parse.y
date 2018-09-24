@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.221 2018/09/07 07:35:31 miko Exp $	*/
+/*	$OpenBSD: parse.y,v 1.222 2018/09/24 16:14:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -739,17 +739,21 @@ HELO STRING {
 
 	dispatcher->u.remote.smarthost = strdup(t->t_name);
 }
+| TLS {
+	if (dispatcher->u.remote.tls_required == 1) {
+		yyerror("tls already specified for this dispatcher");
+		YYERROR;
+	}
+
+	dispatcher->u.remote.tls_required = 1;
+}
 | TLS NO_VERIFY {
-	if (dispatcher->u.remote.smarthost == NULL) {
-		yyerror("tls no-verify may not be specified without host on a dispatcher");
+	if (dispatcher->u.remote.tls_required == 1) {
+		yyerror("tls already specified for this dispatcher");
 		YYERROR;
 	}
 
-	if (dispatcher->u.remote.tls_noverify == 1) {
-		yyerror("tls no-verify already specified for this dispatcher");
-		YYERROR;
-	}
-
+	dispatcher->u.remote.tls_required = 1;
 	dispatcher->u.remote.tls_noverify = 1;
 }
 | AUTH tables {
