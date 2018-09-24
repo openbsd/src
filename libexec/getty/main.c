@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2017/05/29 04:40:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2018/09/24 21:30:00 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -168,6 +168,19 @@ main(int argc, char *argv[])
 	(void)setrlimit(RLIMIT_CPU, &limit);
 
 	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
+
+	if (unveil("/usr/bin/login", "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	if (unveil(_PATH_GETTYTAB, "r") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	if (unveil("/dev", "rw") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
 
 	/*
 	 * The following is a work around for vhangup interactions
