@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.333 2018/07/10 11:22:54 friehm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.334 2018/09/24 12:25:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -259,6 +259,7 @@ void	carp_update_lsmask(struct carp_softc *);
 int	carp_new_vhost(struct carp_softc *, int, int);
 void	carp_destroy_vhosts(struct carp_softc *);
 void	carp_del_all_timeouts(struct carp_softc *);
+int	carp_vhe_match(struct carp_softc *, uint8_t *);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -1340,29 +1341,27 @@ carp_iamatch(struct ifnet *ifp)
 }
 
 int
-carp_ourether(struct ifnet *ifp, u_int8_t *ena)
+carp_ourether(struct ifnet *ifp, uint8_t *ena)
 {
 	struct srpl *cif = &ifp->if_carp;
-	struct carp_softc *vh;
-
-	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
-
-	if (SRPL_EMPTY_LOCKED(cif))
-		return (0);
+	struct carp_softc *sc;
+	struct srp_ref sr;
+	int match = 0;
 
 	KASSERT(ifp->if_type == IFT_ETHER);
 
-	SRPL_FOREACH_LOCKED(vh, cif, sc_list) {
-		struct carp_vhost_entry *vhe;
-		if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	SRPL_FOREACH(sc, &sr, cif, sc_list) {
+		if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
-		vhe = SRPL_FIRST_LOCKED(&vh->carp_vhosts);
-		if ((vhe->state == MASTER || vh->sc_balancing >= CARP_BAL_IP) &&
-		    !memcmp(ena, vh->sc_ac.ac_enaddr, ETHER_ADDR_LEN))
-			return (1);
+		if (carp_vhe_match(sc, ena)) {
+			match = 1;
+			break;
+		}
 	}
-	return (0);
+	SRPL_LEAVE(&sr);
+
+	return (match);
 }
 
 int
