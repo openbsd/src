@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.14 2016/02/01 19:57:28 jca Exp $	*/
+/*	$OpenBSD: getent.c,v 1.15 2018/09/25 06:43:20 mestre Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -94,9 +94,6 @@ int
 main(int argc, char *argv[])
 {
 	struct getentdb	*curdb;
-
-	if (pledge("stdio dns rpath getpw", NULL) == -1)
-		err(1, "pledge");
 
 	if (argc < 2)
 		usage();
