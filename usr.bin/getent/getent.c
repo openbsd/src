@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.15 2018/09/25 06:43:20 mestre Exp $	*/
+/*	$OpenBSD: getent.c,v 1.16 2018/09/25 06:48:48 mestre Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -77,15 +77,16 @@ static struct getentdb {
 	const char	*name;
 	int		(*fn)(int, char *[]);
 	const char	*pledge;
+	const char	*unveil;
 } databases[] = {
-	{	"ethers",	ethers,		"stdio rpath"	},
-	{	"group",	group,		"stdio getpw"	},
-	{	"hosts",	hosts,		"stdio dns"	},
-	{	"passwd",	passwd,		"stdio getpw"	},
-	{	"protocols",	protocols,	"stdio rpath"	},
-	{	"rpc",		rpc,		"stdio rpath"	},
-	{	"services",	services,	"stdio rpath"	},
-	{	"shells",	shells,		"stdio rpath"	},
+	{	"ethers",	ethers,		"stdio rpath",	"/etc/ethers"	},
+	{	"group",	group,		"stdio getpw",	NULL	},
+	{	"hosts",	hosts,		"stdio dns",	NULL	},
+	{	"passwd",	passwd,		"stdio getpw",	NULL	},
+	{	"protocols",	protocols,	"stdio rpath",	"/etc/protocols"	},
+	{	"rpc",		rpc,		"stdio rpath",	"/etc/rpc"	},
+	{	"services",	services,	"stdio rpath",	"/etc/services"	},
+	{	"shells",	shells,		"stdio rpath",	"/etc/shells"	},
 
 	{	NULL,		NULL,				},
 };
@@ -99,6 +100,10 @@ main(int argc, char *argv[])
 		usage();
 	for (curdb = databases; curdb->name != NULL; curdb++) {
 		if (strcmp(curdb->name, argv[1]) == 0) {
+			if (curdb->unveil != NULL) {
+				if (unveil(curdb->unveil, "r") == -1)
+					err(1, "unveil");
+			}
 			if (pledge(curdb->pledge, NULL) == -1)
 				err(1, "pledge");
 
