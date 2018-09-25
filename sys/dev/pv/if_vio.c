@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.5 2018/02/27 08:44:58 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.6 2018/09/25 13:46:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1270,14 +1270,28 @@ out:
 	return r;
 }
 
+/*
+ * XXXSMP As long as some per-ifp ioctl(2)s are executed with the
+ * NET_LOCK() deadlocks are possible.  So release it here.
+ */
+static inline int
+vio_sleep(struct vio_softc *sc, const char *wmesg)
+{
+	int status = rw_status(&netlock);
+
+	if (status != RW_WRITE && status != RW_READ)
+		return tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, wmesg, 0);
+
+	return rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH, wmesg, 0);
+}
+
 int
 vio_wait_ctrl(struct vio_softc *sc)
 {
 	int r = 0;
 
 	while (sc->sc_ctrl_inuse != FREE) {
-		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
-		    "viowait", 0);
+		r = vio_sleep(sc, "viowait");
 		if (r == EINTR)
 			return r;
 	}
@@ -1296,8 +1310,7 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 			r = 1;
 			break;
 		}
-		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
-		    "viodone", 0);
+		r = vio_sleep(sc, "viodone");
 		if (r == EINTR)
 			break;
 	}
