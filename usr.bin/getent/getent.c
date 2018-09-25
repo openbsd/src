@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.16 2018/09/25 06:48:48 mestre Exp $	*/
+/*	$OpenBSD: getent.c,v 1.17 2018/09/25 19:48:14 kn Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
 
 #include <rpc/rpc.h>
 
-static int	usage(void);
+static void	usage(void);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
@@ -115,12 +115,11 @@ main(int argc, char *argv[])
 	return RV_USAGE;
 }
 
-static int
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s database [key ...]\n", __progname);
 	exit(RV_USAGE);
-	/* NOTREACHED */
 }
 
 /*
