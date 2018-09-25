@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.426 2018/09/21 04:55:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.427 2018/09/25 08:08:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -895,16 +895,19 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (imsg.hdr.type == IMSG_RECONF_ROA_SET) {
 				SIMPLEQ_INSERT_TAIL(roasets_tmp, ps, entry);
 				ps->roa = 1;
-				last_set = set_new(1, sizeof(struct roa_set));
-				if (last_set == NULL)
-					fatal(NULL);
 			} else
 				SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
 			last_prefixset = ps;
+			last_set = NULL;
 			break;
 		case IMSG_RECONF_ROA_AS_SET_ITEMS:
 			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
 			nmemb /= sizeof(struct roa_set);
+			if (last_set == NULL) {
+				last_set = set_new(1, sizeof(struct roa_set));
+				if (last_set == NULL)
+					fatal(NULL);
+			}
 			if (set_add(last_set, imsg.data, nmemb) != 0)
 				fatal(NULL);
 			break;
@@ -919,6 +922,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				set_prep(last_set);
 				rv = trie_roa_add(&last_prefixset->th,
 				    &psi.p.addr, psi.p.len, last_set);
+				last_set = NULL;
 			} else {
 				rv = trie_add(&last_prefixset->th,
 				    &psi.p.addr, psi.p.len,
