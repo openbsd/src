@@ -49,9 +49,9 @@ for i in $D; do
 	vnconfig vnd0 image
 	fdisk -iy vnd0
 	echo
-	(disklabel -A -p g vnd0; \
-	 disklabel -Aw -f disklabel-A-f vnd0; \
-	 disklabel vnd0) | grep '^  [a-p]: ' | egrep -v "unused" | sort
+	(./disklabel -A -p g vnd0; \
+	 ./disklabel -Aw -f disklabel-A-f vnd0; \
+	 ./disklabel vnd0) | grep '^  [a-p]: ' | egrep -v "unused" | sort
 	echo
 	cat disklabel-A-f
 	echo "===== End ${i}MB disk ====="
