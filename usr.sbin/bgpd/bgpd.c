@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.201 2018/09/21 04:55:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.202 2018/09/25 07:58:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -529,15 +529,15 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
 		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
-			u_int32_t *as;
+			struct roa_set *rs;
 			size_t i, l, n;
 			RB_REMOVE(prefixset_tree, &ps->psitems, psi);
-			as = set_get(psi->set, &n);
+			rs = set_get(psi->set, &n);
 			for (i = 0; i < n; i += l) {
 				l = (n - i > 1024 ? 1024 : n - i);
 				if (imsg_compose(ibuf_rde,
 				    IMSG_RECONF_ROA_AS_SET_ITEMS,
-				    0, 0, -1, as + i, l) == -1)
+				    0, 0, -1, rs + i, l * sizeof(*rs)) == -1)
 					return -1;
 			}
 			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
@@ -569,7 +569,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		for (i = 0; i < n; i += l) {
 			l = (n - i > 1024 ? 1024 : n - i);
 			if (imsg_compose(ibuf_rde, IMSG_RECONF_AS_SET_ITEMS,
-			    0, 0, -1, as + i, l) == -1)
+			    0, 0, -1, as + i, l * sizeof(*as)) == -1)
 				return -1;
 		}
 
