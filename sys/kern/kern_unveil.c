@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.14 2018/08/28 02:51:55 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.15 2018/09/25 19:24:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -614,7 +614,7 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 
 /*
  * unveil checking - only done after namei lookup has succeeded on
- * the last compoent of a namei lookup.
+ * the last component of a namei lookup.
  */
 int
 unveil_check_final(struct proc *p, struct nameidata *ni)
