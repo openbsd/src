@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.845 2018/08/29 09:50:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.846 2018/09/25 14:27:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,11 +59,8 @@ struct tmuxproc;
 /* Default global configuration file. */
 #define TMUX_CONF "/etc/tmux.conf"
 
-/*
- * Minimum layout cell size, NOT including separator line. The scroll region
- * cannot be one line in height so this must be at least two.
- */
-#define PANE_MINIMUM 2
+/* Minimum layout cell size, NOT including border lines. */
+#define PANE_MINIMUM 1
 
 /* Automatic name refresh interval, in microseconds. Must be < 1 second. */
 #define NAME_INTERVAL 500000
