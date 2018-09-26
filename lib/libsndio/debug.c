@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.4 2015/10/02 09:48:22 ratchov Exp $	*/
+/*	$OpenBSD: debug.c,v 1.5 2018/09/26 08:33:22 miko Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,13 +67,17 @@ _sndio_parsenum(const char *str, unsigned int *num, unsigned int max)
 		dig = *p - '0';
 		if (dig >= 10)
 			break;
-		if (val > maxq || (val == maxq && dig > maxr))
+		if (val > maxq || (val == maxq && dig > maxr)) {
+			DPRINTF("%s: number too large\n", str);
 			return NULL;
+		}
 		val = val * 10 + dig;
 		p++;
 	}
-	if (p == str)
+	if (p == str) {
+		DPRINTF("%s: number expected\n", str);
 		return NULL;
+	}
 	*num = val;
 	return p;
 }

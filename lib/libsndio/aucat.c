@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.72 2018/07/28 09:11:55 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.73 2018/09/26 08:33:22 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -388,27 +388,6 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 }
 
 static const char *
-parsedev(const char *str, unsigned int *rval)
-{
-	const char *p = str;
-	unsigned int val;
-
-	for (val = 0; *p >= '0' && *p <= '9'; p++) {
-		val = 10 * val + (*p - '0');
-		if (val >= 16) {
-			DPRINTF("%s: number too large\n", str);
-			return NULL;
-		}
-	}
-	if (p == str) {
-		DPRINTF("%s: number expected\n", str);
-		return NULL;
-	}
-	*rval = val;
-	return p;
-}
-
-static const char *
 parsestr(const char *str, char *rstr, unsigned int max)
 {
 	const char *p = str;
@@ -454,7 +433,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 	} else
 		*host = '\0';
 	if (*p == ',') {
-		p = parsedev(++p, &unit);
+		p = _sndio_parsenum(++p, &unit, 15);
 		if (p == NULL)
 			return 0;
 	} else
@@ -463,7 +442,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 		DPRINTF("%s: '/' expected\n", str);
 		return 0;
 	}
-	p = parsedev(++p, &devnum);
+	p = _sndio_parsenum(++p, &devnum, 15);
 	if (p == NULL)
 		return 0;
 	if (*p == '.') {
