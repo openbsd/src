@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.39 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.40 2018/09/26 14:38:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -387,10 +387,10 @@ aspath_match(void *data, u_int16_t len, struct filter_as *f, u_int32_t neighas)
 			/*
 			 * Just extract the rightmost AS
 			 * but if that segment is an AS_SET then the rightmost
-			 * AS of a previous non AS_SET segment should be used.
-			 * Because of that simply skip AS_SET segments.
+			 * AS of a previous AS_SEQUENCE segment should be used.
+			 * Because of that just look at AS_SEQUENCE segments.
 			 */
-			if (seg[0] != AS_SET)
+			if (seg[0] == AS_SEQUENCE)
 				as = aspath_extract(seg, seg_len - 1);
 			/* not yet in the final segment */
 			if (!final)
