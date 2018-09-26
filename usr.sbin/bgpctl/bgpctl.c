@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.217 2018/09/20 11:46:40 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.218 2018/09/26 15:48:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 			err(1, "pledge");
 
 		bzero(&ribreq, sizeof(ribreq));
-		if (res->as.type != AS_NONE)
+		if (res->as.type != AS_UNDEF)
 			ribreq.as = res->as;
 		if (res->addr.aid) {
 			ribreq.prefix = res->addr;
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	case SHOW_RIB:
 		bzero(&ribreq, sizeof(ribreq));
 		type = IMSG_CTL_SHOW_RIB;
-		if (res->as.type != AS_NONE) {
+		if (res->as.type != AS_UNDEF) {
 			ribreq.as = res->as;
 			type = IMSG_CTL_SHOW_RIB_AS;
 		}
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 		break;
 	case NETWORK_MRT:
 		bzero(&ribreq, sizeof(ribreq));
-		if (res->as.type != AS_NONE)
+		if (res->as.type != AS_UNDEF)
 			ribreq.as = res->as;
 		if (res->addr.aid) {
 			ribreq.prefix = res->addr;
@@ -2051,7 +2051,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 				return;
 		}
 		/* filter by AS */
-		if (req->as.type != AS_NONE &&
+		if (req->as.type != AS_UNDEF &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
 		   &req->as, 0))
 			continue;
@@ -2117,7 +2117,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 				return;
 		}
 		/* filter by AS */
-		if (req->as.type != AS_NONE &&
+		if (req->as.type != AS_UNDEF &&
 		   !aspath_match(mre->aspath, mre->aspath_len,
 		   &req->as, 0))
 			continue;
