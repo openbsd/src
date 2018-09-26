@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.25 2018/08/05 08:41:28 mestre Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.26 2018/09/26 14:53:34 mestre Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -641,25 +641,6 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 	conf->fib_priority_external = xconf->fib_priority_external;
 	conf->fib_priority_summary = xconf->fib_priority_summary;
 
-	/* merge interfaces */
-	TAILQ_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
-		/* find deleted ifaces */
-		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
-			TAILQ_REMOVE(&conf->iface_list, iface, entry);
-			free(iface);
-		}
-	}
-	TAILQ_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
-		/* find new ifaces */
-		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
-			TAILQ_REMOVE(&xconf->iface_list, xi, entry);
-			TAILQ_INSERT_TAIL(&conf->iface_list, xi, entry);
-			continue;
-		}
-
-		/* TODO update existing ifaces */
-	}
-
 	/* merge instances */
 	TAILQ_FOREACH_SAFE(eigrp, &conf->instances, entry, etmp) {
 		/* find deleted instances */
@@ -701,6 +682,25 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 		/* update existing instances */
 		merge_instances(conf, eigrp, xe);
 	}
+
+	/* merge interfaces */
+	TAILQ_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
+		/* find deleted ifaces */
+		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
+			TAILQ_REMOVE(&conf->iface_list, iface, entry);
+			free(iface);
+		}
+	}
+	TAILQ_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
+		/* find new ifaces */
+		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
+			TAILQ_REMOVE(&xconf->iface_list, xi, entry);
+			TAILQ_INSERT_TAIL(&conf->iface_list, xi, entry);
+			continue;
+		}
+
+		/* TODO update existing ifaces */
+	}	
 
 	/* resend addresses to activate new interfaces */
 	if (eigrpd_process == PROC_MAIN)
