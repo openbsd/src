@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.108 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.109 2018/09/26 13:26:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -993,7 +993,7 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_GROUPID);
 		if (cur->peer.remote_as != prev->peer.remote_as)
 			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_REMOTE_AS);
-		 if (cur->peer.peerid != prev->peer.peerid)
+		if (cur->peer.peerid != prev->peer.peerid)
 			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_PEERID);
 		prev = cur;
 		cur = TAILQ_NEXT(cur, entry);
