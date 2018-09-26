@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.7 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.8 2018/09/26 14:47:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -567,9 +567,10 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 
 			/* Treat AS 0 as NONE which can never be matched */
 			if (as != 0) {
-				rs = set_match(n->set, as);
-				if (rs && plen <= rs->maxlen)
+				if ((rs = set_match(n->set, as)) != NULL) {
+				    if (plen == n->plen || plen <= rs->maxlen)
 					return ROA_VALID;
+				}
 			}
 		}
 
