@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.564 2018/09/11 10:23:40 krw Exp $	*/
+/*	$OpenBSD: if.c,v 1.565 2018/09/26 11:50:42 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -692,12 +692,8 @@ if_enqueue(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 #if NBRIDGE > 0
-	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0) {
-		KERNEL_LOCK();
-		error = bridge_output(ifp, m, NULL, NULL);
-		KERNEL_UNLOCK();
-		return (error);
-	}
+	if (ifp->if_bridgeport && (m->m_flags & M_PROTO1) == 0)
+		return (bridge_output(ifp, m, NULL, NULL));
 #endif
 
 #if NPF > 0
@@ -963,11 +959,8 @@ if_netisr(void *unused)
 		}
 #endif
 #if NBRIDGE > 0
-		if (n & (1 << NETISR_BRIDGE)) {
-			KERNEL_LOCK();
+		if (n & (1 << NETISR_BRIDGE))
 			bridgeintr();
-			KERNEL_UNLOCK();
-		}
 #endif
 #if NSWITCH > 0
 		if (n & (1 << NETISR_SWITCH)) {

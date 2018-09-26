@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.309 2018/09/19 13:17:21 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.310 2018/09/26 11:50:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -726,7 +726,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct bridge_softc *sc;
 	struct bridge_tunneltag *brtag;
 	struct bridge_iflist *ifl;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 	int error;
+
+	NET_ASSERT_LOCKED();
 
 	/* ifp must be a member interface of the bridge. */
 	if (ifp->if_bridgeport == NULL) {
@@ -754,8 +759,9 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
+	if_bpf = sc->sc_if.if_bpf;
+	if (if_bpf)
+		bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
@@ -1085,6 +1091,11 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	struct bridge_iflist *srcifl;
 	struct ether_header *eh;
 	struct mbuf *mc;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	NET_ASSERT_LOCKED();
 
 	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
 	if (ifl == NULL)
@@ -1107,8 +1118,9 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 #if NBPFILTER > 0
-	if (sc->sc_if.if_bpf)
-		bpf_mtap_ether(sc->sc_if.if_bpf, m, BPF_DIRECTION_IN);
+	if_bpf = sc->sc_if.if_bpf;
+	if (if_bpf)
+		bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	bridge_span(sc, m);
