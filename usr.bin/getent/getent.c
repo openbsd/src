@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.19 2018/09/26 16:26:37 kn Exp $	*/
+/*	$OpenBSD: getent.c,v 1.20 2018/09/26 16:39:19 kn Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -190,8 +190,10 @@ ethers(int argc, char *argv[])
 static int
 group(int argc, char *argv[])
 {
-	int		i, rv = RV_OK;
 	struct group	*gr;
+	const char	*err;
+	gid_t		gid;
+	int		i, rv = RV_OK;
 
 	setgroupent(1);
 	if (argc == 2) {
@@ -199,11 +201,9 @@ group(int argc, char *argv[])
 			GROUPPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			const char	*err;
-			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
-
+			gid = strtonum(argv[i], 0, GID_MAX, &err);
 			if (!err)
-				gr = getgrgid((gid_t)id);
+				gr = getgrgid(gid);
 			else
 				gr = getgrnam(argv[i]);
 			if (gr != NULL)
@@ -291,8 +291,10 @@ hosts(int argc, char *argv[])
 static int
 passwd(int argc, char *argv[])
 {
-	int		i, rv = RV_OK;
 	struct passwd	*pw;
+	const char	*err;
+	uid_t		uid;
+	int		i, rv = RV_OK;
 
 	setpassent(1);
 	if (argc == 2) {
@@ -300,11 +302,9 @@ passwd(int argc, char *argv[])
 			PASSWDPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			const char	*err;
-			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
-
+			uid = strtonum(argv[i], 0, UID_MAX, &err);
 			if (!err)
-				pw = getpwuid((uid_t)id);
+				pw = getpwuid(uid);
 			else
 				pw = getpwnam(argv[i]);
 			if (pw != NULL)
@@ -327,6 +327,8 @@ static int
 protocols(int argc, char *argv[])
 {
 	struct protoent	*pe;
+	const char	*err;
+	int		proto;
 	int		i, rv = RV_OK;
 
 	setprotoent(1);
@@ -335,11 +337,9 @@ protocols(int argc, char *argv[])
 			PROTOCOLSPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			const char	*err;
-			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
-
+			proto = strtonum(argv[i], 0, INT_MAX, &err);
 			if (!err)
-				pe = getprotobynumber((int)id);
+				pe = getprotobynumber(proto);
 			else
 				pe = getprotobyname(argv[i]);
 			if (pe != NULL)
@@ -362,6 +362,8 @@ static int
 rpc(int argc, char *argv[])
 {
 	struct rpcent	*re;
+	const char	*err;
+	int		rpc;
 	int		i, rv = RV_OK;
 
 	setrpcent(1);
@@ -370,11 +372,9 @@ rpc(int argc, char *argv[])
 			RPCPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			const char	*err;
-			long long id = strtonum(argv[i], 0, UINT_MAX, &err);
-
+			rpc = strtonum(argv[i], 0, INT_MAX, &err);
 			if (!err)
-				re = getrpcbynumber((int)id);
+				re = getrpcbynumber(rpc);
 			else
 				re = getrpcbyname(argv[i]);
 			if (re != NULL)
@@ -397,6 +397,9 @@ static int
 services(int argc, char *argv[])
 {
 	struct servent	*se;
+	const char	*err;
+	char		*proto;
+	in_port_t	port;
 	int		i, rv = RV_OK;
 
 	setservent(1);
@@ -405,15 +408,11 @@ services(int argc, char *argv[])
 			SERVICESPRINT;
 	} else {
 		for (i = 2; i < argc; i++) {
-			const char	*err;
-			long long	id;
-			char *proto = strchr(argv[i], '/');
-
-			if (proto != NULL)
+			if ((proto = strchr(argv[i], '/')) != NULL)
 				*proto++ = '\0';
-			id = strtonum(argv[i], 0, UINT_MAX, &err);
+			port = strtonum(argv[i], 0, IPPORT_HILASTAUTO, &err);
 			if (!err)
-				se = getservbyport(htons((u_short)id), proto);
+				se = getservbyport(htons(port), proto);
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)
