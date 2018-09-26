@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.9 2018/07/30 15:21:36 deraadt Exp $
+.\" $OpenBSD: unveil.2,v 1.10 2018/09/26 02:54:34 miko Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2018 $
+.Dd $Mdocdate: September 26 2018 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -134,8 +134,7 @@ of the interfaces called.
 In most cases it is best practice to unveil the directories
 in which an application makes use of files.
 .Sh RETURN VALUES
-.Fn unveil
-returns 0 on success or -1 on failure.
+.Rv -std
 .Sh ERRORS
 .Bl -tag -width Er
 .It E2BIG
