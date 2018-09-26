@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.109 2018/09/26 13:26:32 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.110 2018/09/26 15:01:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1017,6 +1017,9 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
+
+	if (state == NULL) /* withdraw should be accepted by default */
+		action = ACTION_ALLOW;
 
 	if (state && state->aspath.flags & F_ATTR_PARSE_ERR)
 		/*
