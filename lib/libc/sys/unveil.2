@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.10 2018/09/26 02:54:34 miko Exp $
+.\" $OpenBSD: unveil.2,v 1.11 2018/09/26 07:25:53 miko Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -108,7 +108,7 @@ This means that a directory that is removed and recreated after a call to
 .Fn unveil
 will appear to not exist.
 .Pp
-Non-directories paths are remembered by name within their containing
+Non-directory paths are remembered by name within their containing
 directory, and so may be created, removed, or re-created after a call to
 .Fn unveil
 and still appear to exist.
