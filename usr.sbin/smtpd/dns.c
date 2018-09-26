@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.87 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.88 2018/09/26 16:28:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -240,7 +240,8 @@ dns_dispatch_mx(struct asr_result *ar, void *arg)
 	char			 buf[512];
 	size_t			 found;
 
-	if (ar->ar_h_errno && ar->ar_h_errno != NO_DATA) {
+	if (ar->ar_h_errno && ar->ar_h_errno != NO_DATA &&
+	    ar->ar_h_errno != NOTIMP) {
 
 		m_create(s->p,  IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 		m_add_id(s->p, s->reqid);
