@@ -1,4 +1,4 @@
-/*	$OpenBSD: getent.c,v 1.18 2018/09/25 19:51:39 kn Exp $	*/
+/*	$OpenBSD: getent.c,v 1.19 2018/09/26 16:26:37 kn Exp $	*/
 /*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ hostsprint(const struct hostent *he)
 
 	if (inet_ntop(he->h_addrtype, he->h_addr, buf, sizeof(buf)) == NULL)
 		strlcpy(buf, "# unknown", sizeof(buf));
-	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
+	printfmtstrings(he->h_aliases, "  ", " ", "%-39s %s", buf, he->h_name);
 }
 static int
 hostsaddrinfo(const char *name)
