@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.121 2018/09/13 15:23:32 millert Exp $ */
+/* $OpenBSD: user.c,v 1.122 2018/09/26 14:54:58 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1369,6 +1369,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	int		ptmpfd;
 	int		rval;
 	int		i;
+	uid_t	uid;
 
 	if (!valid_login(newlogin)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login_name);
@@ -1427,7 +1428,8 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	if (up != NULL) {
 		if (up->u_flags & F_USERNAME) {
 			/* if changing name, check new name isn't already in use */
-			if (strcmp(login_name, newlogin) != 0 && getpwnam(newlogin) != NULL) {
+			if (strcmp(login_name, newlogin) != 0 &&
+			    uid_from_user(newlogin, &uid) != -1) {
 				close(ptmpfd);
 				pw_abort();
 				errx(EXIT_FAILURE, "already a `%s' user", newlogin);
