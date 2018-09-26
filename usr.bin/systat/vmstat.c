@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.86 2018/06/22 14:22:06 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.87 2018/09/26 17:23:13 cheloha Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ static	time_t t;
 static	double etime;
 static	float hertz;
 static	int nintr;
+static	int ncpu;
 static	long *intrloc;
 static	char **intrname;
 static	int ipktsrow;
@@ -199,6 +200,12 @@ initvmstat(void)
 		if (intrname[i] == NULL)
 			return (-1);
 	}
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
+		return (-1);
 
 	allocinfo(&s);
 	allocinfo(&s1);
@@ -592,11 +599,12 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 static void
 getinfo(struct Info *si)
 {
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
+	static int cp_time2_mib[3] = { CTL_KERN, KERN_CPTIME2, 0 };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
 	static int uvmexp_mib[2] = { CTL_VM, VM_UVMEXP };
 	static int vmtotal_mib[2] = { CTL_VM, VM_METER };
-	int mib[4], i;
+	int mib[4], cpu, i;
+	long cpu_time[CPUSTATES];
 	size_t size;
 
 	dkreadstats();
@@ -612,10 +620,21 @@ getinfo(struct Info *si)
 		}
 	}
 
-	size = sizeof(si->time);
-	if (sysctl(cp_time_mib, 2, &si->time, &size, NULL, 0) < 0) {
-		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
-		memset(&si->time, 0, sizeof(si->time));
+	memset(&si->time, 0, sizeof(si->time));
+	for (cpu = 0; cpu < ncpu; cpu++) {
+		cp_time2_mib[2] = cpu;
+		size = sizeof(cpu_time);
+		if (sysctl(cp_time2_mib, 3, &cpu_time, &size, NULL, 0) < 0) {
+			if (errno != ENODEV) {
+				error("Can't get KERN_CPTIME2: %s\n",
+				    strerror(errno));
+				memset(&si->time, 0, sizeof(si->time));
+				break;
+			}
+			continue;	/* ignore offline CPUs */
+		}
+		for (i = 0; i < nitems(si->time); i++)
+			si->time[i] += cpu_time[i];
 	}
 
 	size = sizeof(si->nchstats);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.51 2018/07/12 01:23:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.52 2018/09/26 17:23:13 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -830,6 +830,12 @@ int
 sysctl_hwncpuonline(void)
 {
 	return cpuset_cardinality(&sched_all_cpus);
+}
+
+int
+cpu_is_online(struct cpu_info *ci)
+{
+	return cpuset_isset(&sched_all_cpus, ci);
 }
 
 #ifdef __HAVE_CPU_TOPOLOGY

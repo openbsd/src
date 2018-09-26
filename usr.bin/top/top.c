@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.92 2018/09/22 16:50:35 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.93 2018/09/26 17:23:13 cheloha Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -251,7 +251,7 @@ parseargs(int ac, char **av)
 		}
 	}
 
-	i = getncpu();
+	i = getncpuonline();
 	if (i == -1)
 		err(1, NULL);
 
@@ -467,7 +467,7 @@ restart:
 		    ps.threads);
 
 		/* display the cpu state percentage breakdown */
-		i_cpustates(system_info.cpustates);
+		i_cpustates(system_info.cpustates, system_info.cpuonline);
 
 		/* display memory stats */
 		i_memory(system_info.memory);

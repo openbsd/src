@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.6 2018/05/14 12:31:21 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.7 2018/09/26 17:23:13 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -99,6 +100,7 @@ field_view views_cpu[] = {
 };
 
 int	  cpu_count;
+int	 *cpu_online;
 int64_t	 *cpu_states;
 int64_t	**cpu_tm;
 int64_t	**cpu_old;
@@ -156,8 +158,13 @@ cpu_info(void)
 	for (i = 0; i < cpu_count; i++) {
 		cpu_time_mib[2] = i;
 		tmpstate = cpu_states + (CPUSTATES * i);
-		if (sysctl(cpu_time_mib, 3, cpu_tm[i], &size, NULL, 0) < 0)
-			error("sysctl KERN_CPTIME2");
+		if (sysctl(cpu_time_mib, 3, cpu_tm[i], &size, NULL, 0) < 0) {
+			if (errno != ENODEV)
+				error("sysctl KERN_CPTIME2");
+			cpu_online[i] = 0;
+			continue;
+		}
+		cpu_online[i] = 1;
 		percentages(CPUSTATES, tmpstate, cpu_tm[i],
 		    cpu_old[i], cpu_diff[i]);
 	}
@@ -199,6 +206,8 @@ initcpu(void)
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
 	if (sysctl(mib, 2, &cpu_count, &size, NULL, 0) == -1)
+		return (-1);
+	if ((cpu_online = calloc(cpu_count, sizeof(*cpu_online))) == NULL)
 		return (-1);
 	if ((cpu_states = calloc(cpu_count,
 	    CPUSTATES * sizeof(int64_t))) == NULL)
@@ -246,6 +255,21 @@ initcpu(void)
 			return;						\
 	} while (0)
 
+#define ADD_OFFLINE_CPU(v) do {						\
+	if (cur >= dispstart && cur < end) { 				\
+		print_fld_size(FLD_CPU_CPU, (v));			\
+		print_fld_str(FLD_CPU_USR, "-");			\
+		print_fld_str(FLD_CPU_NIC, "-");			\
+		print_fld_str(FLD_CPU_SYS, "-");			\
+		print_fld_str(FLD_CPU_SPIN, "-");			\
+		print_fld_str(FLD_CPU_INT, "-");			\
+		print_fld_str(FLD_CPU_IDLE, "-");			\
+		end_line();						\
+	}								\
+	if (++cur >= end)						\
+		return;							\
+} while (0)
+
 void
 print_cpu(void)
 {
@@ -258,6 +282,10 @@ print_cpu(void)
 		end = num_disp;
 
 	for (c = 0; c < cpu_count; c++) {
+		if (!cpu_online[c]) {
+			ADD_OFFLINE_CPU(c);
+			continue;
+		}
 		states = cpu_states + (CPUSTATES * c);
 
 		for (i = 0; i < CPUSTATES; i++)
