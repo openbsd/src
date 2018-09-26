@@ -1,0 +1,17 @@
+===== Start 3500MB disk =====
+Writing MBR at offset 0.
+
+  a:             0.9G              128  4.2BSD   2048 16384     1 # /
+  a:          1788384              128  4.2BSD   2048 16384     1 
+  b:             0.2G          1788512    swap                    
+  b:           463850          1788512    swap                    
+  d:             2.0G          2252384  4.2BSD   2048 16384     1 # /usr
+  d:          4183232          2252384  4.2BSD   2048 16384     1 
+  e:             0.4G          6435616  4.2BSD   2048 16384     1 # /home
+  e:           734368          6435616  4.2BSD   2048 16384     1 
+
+/dev/vnd0a / ffs rw 1 1
+/dev/vnd0e /home ffs rw 1 2
+/dev/vnd0d /usr ffs rw 1 2
+/dev/vnd0b none swap sw
+===== End 3500MB disk =====

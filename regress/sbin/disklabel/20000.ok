@@ -1,0 +1,35 @@
+===== Start 20000MB disk =====
+Writing MBR at offset 0.
+
+  a:             0.6G              128  4.2BSD   2048 16384     1 # /
+  a:          1312640              128  4.2BSD   2048 16384     1 
+  b:             1.0G          1312768    swap                    
+  b:          2174750          1312768    swap                    
+  d:             0.9G          3487520  4.2BSD   2048 16384     1 # /tmp
+  d:          1854464          3487520  4.2BSD   2048 16384     1 
+  e:             1.3G          5341984  4.2BSD   2048 16384     1 # /var
+  e:          2778016          5341984  4.2BSD   2048 16384     1 
+  f:             1.4G          8120000  4.2BSD   2048 16384     1 # /usr
+  f:          2848640          8120000  4.2BSD   2048 16384     1 
+  g:             0.7G         10968640  4.2BSD   2048 16384     1 # /usr/X11R6
+  g:          1389696         10968640  4.2BSD   2048 16384     1 
+  h:             2.4G         12358336  4.2BSD   2048 16384     1 # /usr/local
+  h:          5113504         12358336  4.2BSD   2048 16384     1 
+  i:             1.5G         17471840  4.2BSD   2048 16384     1 # /usr/src
+  i:          3064576         17471840  4.2BSD   2048 16384     1 
+  j:             5.4G         20536416  4.2BSD   2048 16384     1 # /usr/obj
+  j:         11290112         20536416  4.2BSD   2048 16384     1 
+  k:             4.4G         31826528  4.2BSD   2048 16384     1 # /home
+  k:          9135456         31826528  4.2BSD   2048 16384     1 
+
+/dev/vnd0a / ffs rw 1 1
+/dev/vnd0k /home ffs rw 1 2
+/dev/vnd0d /tmp ffs rw 1 2
+/dev/vnd0f /usr ffs rw 1 2
+/dev/vnd0g /usr/X11R6 ffs rw 1 2
+/dev/vnd0h /usr/local ffs rw 1 2
+/dev/vnd0j /usr/obj ffs rw 1 2
+/dev/vnd0i /usr/src ffs rw 1 2
+/dev/vnd0e /var ffs rw 1 2
+/dev/vnd0b none swap sw
+===== End 20000MB disk =====

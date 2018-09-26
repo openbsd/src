@@ -1,0 +1,17 @@
+===== Start 2200MB disk =====
+Writing MBR at offset 0.
+
+  a:             0.8G              128  4.2BSD   2048 16384     1 # /
+  a:          1655264              128  4.2BSD   2048 16384     1 
+  b:             0.1G          1655392    swap                    
+  b:           197610          1655392    swap                    
+  d:             1.0G          1853024  4.2BSD   2048 16384     1 # /usr
+  d:          2106560          1853024  4.2BSD   2048 16384     1 
+  e:             0.3G          3959584  4.2BSD   2048 16384     1 # /home
+  e:           548000          3959584  4.2BSD   2048 16384     1 
+
+/dev/vnd0a / ffs rw 1 1
+/dev/vnd0e /home ffs rw 1 2
+/dev/vnd0d /usr ffs rw 1 2
+/dev/vnd0b none swap sw
+===== End 2200MB disk =====
