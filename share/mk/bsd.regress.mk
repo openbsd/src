@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.14 2018/01/15 20:38:47 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.15 2018/09/26 09:34:23 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -65,7 +65,13 @@ REGRESS_SKIP_TARGETS+=${REGRESS_ROOT_TARGETS}
 .  if !empty(ERRORS:M"Fatal\:*") || !empty(ERRORS:M'Fatal\:*')
 	@exit 1
 .  endif
-.endif 
+.endif
+
+REGRESS_SETUP?=
+REGRESS_CLEANUP?=
+.if !empty(REGRESS_SETUP)
+${REGRESS_TARGETS}: ${REGRESS_SETUP}
+.endif
 
 regress: .SILENT
 .if ! ${REGRESS_LOG:M/*}
@@ -75,7 +81,7 @@ regress: .SILENT
 	echo =========================================================
 	exit 1
 .endif
-.for RT in ${REGRESS_TARGETS} 
+.for RT in ${REGRESS_TARGETS} ${REGRESS_CLEANUP}
 .  if ${REGRESS_SKIP_TARGETS:M${RT}}
 	@echo -n "SKIP " ${_REGRESS_OUT}
 .  else
