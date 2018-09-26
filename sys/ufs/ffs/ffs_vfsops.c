@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.178 2018/07/11 17:44:57 kn Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.179 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -177,9 +177,8 @@ ffs_mountroot(void)
 	}
 
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
-		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, sizeof(*mp));
+		vfs_mount_free(mp);
 		vrele(swapdev_vp);
 		vrele(rootvp);
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.90 2018/05/02 02:24:55 visa Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.91 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -107,9 +107,8 @@ cd9660_mountroot(void)
 		return (error);
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
-		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-                free(mp, M_MOUNT, 0);
+		vfs_mount_free(mp);
                 return (error);
         }
 

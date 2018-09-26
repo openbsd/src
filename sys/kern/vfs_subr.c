@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.280 2018/09/22 09:12:36 fcambus Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.281 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -163,6 +163,42 @@ vntblinit(void)
 }
 
 /*
+ * Allocate a mount point.
+ *
+ * The returned mount point is marked as busy.
+ */
+struct mount *
+vfs_mount_alloc(struct vnode *vp, struct vfsconf *vfsp)
+{
+	struct mount *mp;
+
+	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
+	rw_init_flags(&mp->mnt_lock, "vfslock", RWL_IS_VNODE);
+	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
+
+	LIST_INIT(&mp->mnt_vnodelist);
+	mp->mnt_vnodecovered = vp;
+
+	vfsp->vfc_refcount++;
+	mp->mnt_vfc = vfsp;
+	mp->mnt_op = vfsp->vfc_vfsops;
+	mp->mnt_flag = vfsp->vfc_flags & MNT_VISFLAGMASK;
+	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
+
+	return (mp);
+}
+
+/*
+ * Release a mount point.
+ */
+void
+vfs_mount_free(struct mount *mp)
+{
+	mp->mnt_vfc->vfc_refcount--;
+	free(mp, M_MOUNT, sizeof(*mp));
+}
+
+/*
  * Mark a mount point as busy. Used to synchronize access and to delay
  * unmounting.
  *
@@ -173,10 +209,6 @@ int
 vfs_busy(struct mount *mp, int flags)
 {
 	int rwflags = 0;
-
-	/* new mountpoints need their lock initialised */
-	if (mp->mnt_lock.rwl_name == NULL)
-		rw_init_flags(&mp->mnt_lock, "vfslock", RWL_IS_VNODE);
 
 	if (flags & VB_WRITE)
 		rwflags |= RW_WRITE;
@@ -232,16 +264,8 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	vfsp = vfs_byname(fstypename);
 	if (vfsp == NULL)
 		return (ENODEV);
-	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
-	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
-	LIST_INIT(&mp->mnt_vnodelist);
-	mp->mnt_vfc = vfsp;
-	mp->mnt_op = vfsp->vfc_vfsops;
-	mp->mnt_flag = MNT_RDONLY;
-	mp->mnt_vnodecovered = NULLVP;
-	vfsp->vfc_refcount++;
-	mp->mnt_flag |= vfsp->vfc_flags & MNT_VISFLAGMASK;
-	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
+	mp = vfs_mount_alloc(NULLVP, vfsp);
+	mp->mnt_flag |= MNT_RDONLY;
 	mp->mnt_stat.f_mntonname[0] = '/';
 	copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN, 0);
 	copystr(devname, mp->mnt_stat.f_mntfromspec, MNAMELEN, 0);

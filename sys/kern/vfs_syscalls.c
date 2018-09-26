@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.306 2018/09/16 11:41:44 visa Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.307 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -217,13 +217,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 	/*
 	 * Allocate and initialize the file system.
 	 */
-	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
-	(void) vfs_busy(mp, VB_READ|VB_NOWAIT);
-	mp->mnt_op = vfsp->vfc_vfsops;
-	mp->mnt_vfc = vfsp;
-	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
-	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
-	mp->mnt_vnodecovered = vp;
+	mp = vfs_mount_alloc(vp, vfsp);
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 
 update:
@@ -235,7 +229,7 @@ update:
 			vfs_unbusy(mp);
 		} else {
 			vfs_unbusy(mp);
-			free(mp, M_MOUNT, sizeof(*mp));
+			vfs_mount_free(mp);
 		}
 		vput(vp);
 		goto fail;
@@ -291,7 +285,6 @@ update:
 	 */
 	cache_purge(vp);
 	if (!error) {
-		vfsp->vfc_refcount++;
 		TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		checkdirs(vp);
 		vfs_unbusy(vp->v_mount);
@@ -305,7 +298,7 @@ update:
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = NULL;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, sizeof(*mp));
+		vfs_mount_free(mp);
 		vfs_unbusy(vp->v_mount);
 		vput(vp);
 	}
@@ -522,13 +515,11 @@ dounmount_leaf(struct mount *mp, int flags, struct proc *p)
 		vrele(coveredvp);
 	}
 
-	mp->mnt_vfc->vfc_refcount--;
-
 	if (!LIST_EMPTY(&mp->mnt_vnodelist))
 		panic("unmount: dangling vnode");
 
 	vfs_unbusy(mp);
-	free(mp, M_MOUNT, sizeof(*mp));
+	vfs_mount_free(mp);
 
 	return (0);
 }

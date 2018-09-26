@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.109 2018/05/29 14:29:52 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.110 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -129,9 +129,8 @@ ext2fs_mountroot(void)
 	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
-		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, sizeof *mp);
+		vfs_mount_free(mp);
 		vrele(rootvp);
 		return (error);
 	}
