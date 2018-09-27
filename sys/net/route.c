@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.377 2018/07/11 19:52:19 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.378 2018/09/27 12:36:57 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -395,11 +395,8 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 	if (nhrt->rt_ifidx != rt->rt_ifidx) {
 		struct sockaddr_in6	sa_mask;
 
-		/*
-		 * If we found a non-L2 entry on a different interface
-		 * there's nothing we can do.
-		 */
-		if (!ISSET(nhrt->rt_flags, RTF_LLINFO)) {
+		if (!ISSET(nhrt->rt_flags, RTF_LLINFO) ||
+		    !ISSET(nhrt->rt_flags, RTF_CLONED)) {
 			rtfree(nhrt);
 			return (EHOSTUNREACH);
 		}
