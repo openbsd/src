@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.8 2018/02/05 05:06:51 henning Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.9 2018/09/27 12:39:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -538,7 +538,7 @@ int
 bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 {
 	struct ifnet *ifp;
-	struct bridge_iflist *ifl;
+	struct bridge_iflist *bif;
 	struct brl_node *n;
 	struct ifbrlreq req;
 	int error = 0;
@@ -547,14 +547,14 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 	ifp = ifunit(bc->ifbrl_ifsname);
 	if (ifp == NULL)
 		return (ENOENT);
-	ifl = (struct bridge_iflist *)ifp->if_bridgeport;
-	if (ifl == NULL || ifl->bridge_sc != sc)
+	bif = (struct bridge_iflist *)ifp->if_bridgeport;
+	if (bif == NULL || bif->bridge_sc != sc)
 		return (ESRCH);
 
-	SIMPLEQ_FOREACH(n, &ifl->bif_brlin, brl_next) {
+	SIMPLEQ_FOREACH(n, &bif->bif_brlin, brl_next) {
 		total++;
 	}
-	SIMPLEQ_FOREACH(n, &ifl->bif_brlout, brl_next) {
+	SIMPLEQ_FOREACH(n, &bif->bif_brlout, brl_next) {
 		total++;
 	}
 
@@ -563,12 +563,12 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		goto done;
 	}
 
-	SIMPLEQ_FOREACH(n, &ifl->bif_brlin, brl_next) {
+	SIMPLEQ_FOREACH(n, &bif->bif_brlin, brl_next) {
 		bzero(&req, sizeof req);
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
 		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
-		strlcpy(req.ifbr_ifsname, ifl->ifp->if_xname, IFNAMSIZ);
+		strlcpy(req.ifbr_ifsname, bif->ifp->if_xname, IFNAMSIZ);
 		req.ifbr_action = n->brl_action;
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
@@ -587,12 +587,12 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 		bc->ifbrl_len -= sizeof(req);
 	}
 
-	SIMPLEQ_FOREACH(n, &ifl->bif_brlout, brl_next) {
+	SIMPLEQ_FOREACH(n, &bif->bif_brlout, brl_next) {
 		bzero(&req, sizeof req);
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
 		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
-		strlcpy(req.ifbr_ifsname, ifl->ifp->if_xname, IFNAMSIZ);
+		strlcpy(req.ifbr_ifsname, bif->ifp->if_xname, IFNAMSIZ);
 		req.ifbr_action = n->brl_action;
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
