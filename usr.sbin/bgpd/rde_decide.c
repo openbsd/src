@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.71 2018/08/29 08:51:49 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.72 2018/09/27 15:53:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -264,7 +264,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		if (LIST_EMPTY(&re->prefix_h))
 			LIST_INSERT_HEAD(&re->prefix_h, p, rib_l);
 		else {
-			LIST_FOREACH(xp, &re->prefix_h, rib_l)
+			LIST_FOREACH(xp, &re->prefix_h, rib_l) {
 				if (prefix_cmp(p, xp) > 0) {
 					LIST_INSERT_BEFORE(xp, p, rib_l);
 					break;
@@ -273,6 +273,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 					LIST_INSERT_AFTER(xp, p, rib_l);
 					break;
 				}
+			}
 		}
 	}
 
