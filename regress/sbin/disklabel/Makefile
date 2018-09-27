@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2018/09/26 15:39:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2018/09/27 09:11:09 bluhm Exp $
 #
 # Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
 # Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -43,7 +43,7 @@ DISK_SIZES =	  18000 \
 		 300000 \
 		 900000
 
-DISKLABEL ?=	./disklabel
+DISKLABEL ?=	${.OBJDIR}/disklabel
 
 CLEANFILES +=	*.out *.dl *.fstab diskimage disklabel.c manual.c
 
