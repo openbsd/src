@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2018/09/13 03:53:33 ccardenas Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2018/09/27 17:15:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -66,7 +66,7 @@ struct ctl_command ctl_commands[] = {
 	{ "create",	CMD_CREATE,	ctl_create,	
 		"\"path\" -s size [-f fmt]", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
-	{ "log",	CMD_LOG,	ctl_log,	"(verbose|brief)" },
+	{ "log",	CMD_LOG,	ctl_log,	"[verbose|brief]" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
@@ -74,7 +74,7 @@ struct ctl_command ctl_commands[] = {
 	    " [-Lc] [-b image] [-r image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]* [-t name]" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "stop",	CMD_STOP,	ctl_stop,	"id [-fw]" },
+	{ "stop",	CMD_STOP,	ctl_stop,	"[id|-a] [-fw]" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
@@ -219,10 +219,9 @@ vmmaction(struct parse_result *res)
 		terminate_vm(res->id, res->name, res->flags);
 		break;
 	case CMD_STATUS:
-		get_info_vm(res->id, res->name, 0);
-		break;
 	case CMD_CONSOLE:
-		get_info_vm(res->id, res->name, 1);
+	case CMD_STOPALL:
+		get_info_vm(res->id, res->name, res->action, res->flags);
 		break;
 	case CMD_LOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_LOAD, 0, 0, -1,
@@ -302,6 +301,7 @@ vmmaction(struct parse_result *res)
 				break;
 			case CMD_CONSOLE:
 			case CMD_STATUS:
+			case CMD_STOPALL:
 				done = add_info(&imsg, &ret);
 				break;
 			case CMD_PAUSE:
@@ -458,6 +458,10 @@ parse_vmid(struct parse_result *res, char *word, int needname)
 
 	if (word == NULL) {
 		warnx("missing vmid argument");
+		return (-1);
+	}
+	if (*word == '-') {
+		/* don't print a warning to allow command line options */
 		return (-1);
 	}
 	id = strtonum(word, 0, UINT32_MAX, &error);
@@ -707,18 +711,17 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
-	int		 ch;
+	int		 ch, ret;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
-	if (parse_vmid(res, argv[1], 0) == -1)
-		errx(1, "invalid id: %s", argv[1]);
+	if ((ret = parse_vmid(res, argv[1], 0)) == 0) {
+		argc--;
+		argv++;
+	}
 
-	argc--;
-	argv++;
-
-	while ((ch = getopt(argc, argv, "fw")) != -1) {
+	while ((ch = getopt(argc, argv, "afw")) != -1) {
 		switch (ch) {
 		case 'f':
 			res->flags |= VMOP_FORCE;
@@ -726,11 +729,19 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 		case 'w':
 			res->flags |= VMOP_WAIT;
 			break;
+		case 'a':
+			res->action = CMD_STOPALL;
+			break;
 		default:
 			ctl_usage(res->ctl);
 			/* NOTREACHED */
 		}
 	}
+
+	/* VM id is only expected without the -a flag */
+	if ((res->action != CMD_STOPALL && ret == -1) ||
+	    (res->action == CMD_STOPALL && ret != -1))
+		errx(1, "invalid id: %s", argv[1]);
 
 	return (vmmaction(res));
 }

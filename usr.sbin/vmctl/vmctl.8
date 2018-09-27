@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.48 2018/09/21 14:04:37 solene Exp $
+.\"	$OpenBSD: vmctl.8,v 1.49 2018/09/27 17:15:36 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2018 $
+.Dd $Mdocdate: September 27 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -197,6 +197,8 @@ Forcefully stop the VM without attempting a graceful shutdown.
 .It Fl w
 Wait until the VM has been terminated.
 .El
+.It Cm stop Fl a Op Fl fw
+Stop all running VMs.
 .It Cm unpause Ar id
 Unpause (resume from a paused state) a VM with the specified
 .Ar id .

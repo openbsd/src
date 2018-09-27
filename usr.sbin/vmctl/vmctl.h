@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.23 2018/09/11 04:03:16 ccardenas Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.24 2018/09/27 17:15:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -32,6 +32,7 @@ enum actions {
 	CMD_START,
 	CMD_STATUS,
 	CMD_STOP,
+	CMD_STOPALL,
 	CMD_PAUSE,
 	CMD_UNPAUSE,
 	CMD_SEND,
@@ -100,9 +101,10 @@ void	 send_vm(uint32_t, const char *);
 void	 vm_receive(uint32_t, const char *);
 int	 receive_vm_complete(struct imsg *, int *);
 int	 check_info_id(const char *, uint32_t);
-void	 get_info_vm(uint32_t, const char *, int);
+void	 get_info_vm(uint32_t, const char *, enum actions, unsigned int);
 int	 add_info(struct imsg *, int *);
 void	 print_vm_info(struct vmop_info_result *, size_t);
+void	 terminate_all(struct vmop_info_result *, size_t, unsigned int);
 __dead void
 	 vm_console(struct vmop_info_result *, size_t);
 

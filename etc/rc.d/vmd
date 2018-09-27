@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: vmd,v 1.8 2018/07/11 13:19:47 reyk Exp $
+# $OpenBSD: vmd,v 1.9 2018/09/27 17:15:36 reyk Exp $
 
 daemon="/usr/sbin/vmd"
 
@@ -11,15 +11,8 @@ rc_pre() {
 	${daemon} -n ${daemon_flags}
 }
 
-list_running() {
-	vmctl status | awk '$2 ~ "[0-9]" {print $8}'
-}
-
 rc_stop() {
-	for vm in $(list_running); do
-		_rc_do vmctl stop "$vm" -w
-	done
-
+	_rc_do vmctl stop -a -w
 	pkill -T "${daemon_rtable}" -xf "${pexp}"
 }
 

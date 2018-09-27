@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.58 2018/09/16 02:43:11 millert Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.59 2018/09/27 17:15:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -45,7 +45,8 @@
 extern char *__progname;
 uint32_t info_id;
 char info_name[VMM_MAX_NAME_LEN];
-int info_console;
+enum actions info_action;
+unsigned int info_flags;
 
 /*
  * vm_start
@@ -440,8 +441,12 @@ terminate_vm(uint32_t terminate_id, const char *name, unsigned int flags)
 
 	memset(&vid, 0, sizeof(vid));
 	vid.vid_id = terminate_id;
-	if (name != NULL)
+	if (name != NULL) {
 		(void)strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
+		fprintf(stderr, "stopping vm %s: ", name);
+	} else {
+		fprintf(stderr, "stopping vm: ");
+	}
 
 	vid.vid_flags = flags & (VMOP_FORCE|VMOP_WAIT);
 
@@ -482,33 +487,75 @@ terminate_vm_complete(struct imsg *imsg, int *ret, unsigned int flags)
 		if (res) {
 			switch (res) {
 			case VMD_VM_STOP_INVALID:
-				warnx("cannot stop vm that is not running");
+				fprintf(stderr,
+				    "cannot stop vm that is not running\n");
 				*ret = EINVAL;
 				break;
 			case ENOENT:
-				warnx("vm not found");
+				fprintf(stderr, "vm not found\n");
 				*ret = EIO;
 				break;
 			default:
 				errno = res;
-				warn("terminate vm command failed");
+				fprintf(stderr, "failed: %s\n",
+				    strerror(res));
 				*ret = EIO;
 			}
 		} else if (flags & VMOP_WAIT) {
-			warnx("terminated vm %d", vmr->vmr_id);
+			fprintf(stderr, "terminated vm %d\n", vmr->vmr_id);
 		} else if (flags & VMOP_FORCE) {
-			warnx("requested to terminate vm %d", vmr->vmr_id);
+			fprintf(stderr, "forced to terminate vm %d\n",
+			    vmr->vmr_id);
 		} else {
-			warnx("requested to shutdown vm %d", vmr->vmr_id);
+			fprintf(stderr, "requested to shutdown vm %d\n",
+			    vmr->vmr_id);
 			*ret = 0;
 		}
 	} else {
-		warnx("unexpected response received from vmd");
+		fprintf(stderr, "unexpected response received from vmd\n");
 		*ret = EINVAL;
 	}
 	errno = *ret;
 
 	return (1);
+}
+
+/*
+ * terminate_all
+ *
+ * Request to stop all VMs gracefully
+ *
+ * Parameters
+ *  list: the vm information (consolidated) returned from vmd via imsg
+ *  ct  : the size (number of elements in 'list') of the result
+ *  flags: VMOP_FORCE or VMOP_WAIT flags
+ */
+void
+terminate_all(struct vmop_info_result *list, size_t ct, unsigned int flags)
+{
+	struct vm_info_result *vir;
+	struct vmop_info_result *vmi;
+	struct parse_result res;
+	size_t i;
+
+	for (i = 0; i < ct; i++) {
+		vmi = &list[i];
+		vir = &vmi->vir_info;
+
+		/* The VM is already stopped */
+		if (vir->vir_creator_pid == 0 || vir->vir_id == 0)
+			continue;
+
+		memset(&res, 0, sizeof(res));
+		res.action = CMD_STOP;
+		res.id = 0;
+		res.flags = info_flags;
+
+		if ((res.name = strdup(vir->vir_name)) == NULL)
+			errx(1, "strdup");
+
+		vmmaction(&res);
+	}
 }
 
 /*
@@ -519,17 +566,20 @@ terminate_vm_complete(struct imsg *imsg, int *ret, unsigned int flags)
  * Parameters:
  *  id: optional ID of a VM to list
  *  name: optional name of a VM to list
- *  console: if true, open the console of the selected VM (by name or ID)
+ *  action: if CMD_CONSOLE or CMD_STOP open a console or terminate the VM.
+ *  flags: optional flags used by the CMD_STOP action.
  *
  * Request a list of running VMs from vmd
  */
 void
-get_info_vm(uint32_t id, const char *name, int console)
+get_info_vm(uint32_t id, const char *name, enum actions action,
+    unsigned int flags)
 {
 	info_id = id;
 	if (name != NULL)
 		(void)strlcpy(info_name, name, sizeof(info_name));
-	info_console = console;
+	info_action = action;
+	info_flags = flags;
 	imsg_compose(ibuf, IMSG_VMDOP_GET_INFO_VM_REQUEST, 0, 0, -1, NULL, 0);
 }
 
@@ -574,7 +624,7 @@ check_info_id(const char *name, uint32_t id)
  *          to the "list vm" data. The caller should check the value of
  *          'ret' to determine which case occurred.
  *
- * This function does not return if a VM is found and info_console is set.
+ * This function does not return if a VM is found and info_action is CMD_CONSOLE
  *
  *  The function also sets 'ret' to the error code as follows:
  *   0     : Message successfully processed
@@ -599,10 +649,17 @@ add_info(struct imsg *imsg, int *ret)
 		*ret = 0;
 		return (0);
 	} else if (imsg->hdr.type == IMSG_VMDOP_GET_INFO_VM_END_DATA) {
-		if (info_console)
+		switch (info_action) {
+		case CMD_CONSOLE:
 			vm_console(vir, ct);
-		else
+			break;
+		case CMD_STOPALL:
+			terminate_all(vir, ct, info_flags);
+			break;
+		default:
 			print_vm_info(vir, ct);
+			break;
+		}
 		free(vir);
 		*ret = 0;
 		return (1);
