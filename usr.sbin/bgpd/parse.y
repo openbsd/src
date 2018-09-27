@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.359 2018/09/21 08:17:15 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.360 2018/09/27 13:48:00 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1892,8 +1892,11 @@ filter_peer	: ANY		{
 		;
 
 filter_prefix_h	: IPV4 prefixlenop			 {
-			if ($2.op == OP_NONE)
-				$2.op = OP_GE;
+			if ($2.op == OP_NONE) {
+				$2.op = OP_RANGE;
+				$2.len_min = 0;
+				$2.len_max = -1;
+			}
 			if (($$ = calloc(1, sizeof(struct filter_prefix_l))) ==
 			    NULL)
 				fatal(NULL);
@@ -1904,8 +1907,11 @@ filter_prefix_h	: IPV4 prefixlenop			 {
 			}
 		}
 		| IPV6 prefixlenop			{
-			if ($2.op == OP_NONE)
-				$2.op = OP_GE;
+			if ($2.op == OP_NONE) {
+				$2.op = OP_RANGE;
+				$2.len_min = 0;
+				$2.len_max = -1;
+			}
 			if (($$ = calloc(1, sizeof(struct filter_prefix_l))) ==
 			    NULL)
 				fatal(NULL);
