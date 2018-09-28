@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2018/05/28 20:59:28 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.24 2018/09/28 18:57:37 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -215,6 +215,7 @@ stamp-reflect: nonxt-reflect
 	@echo '\n======== $@ ========'
 	ssh ${IPS_SSH} make -C ${.CURDIR} nonxt-reflect
 	ssh ${IPS_SSH} ${SUDO} rcctl start inetd nonxt_reflect
+	-ssh ${ECO_SSH} make -C ${.CURDIR} nonxt-reflect
 	ssh ${ECO_SSH} ${SUDO} rcctl start inetd nonxt_reflect
 	@date >$@
 
