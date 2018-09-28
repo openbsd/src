@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.3 2018/09/19 04:29:21 ccardenas Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.4 2018/09/28 08:29:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -260,10 +260,13 @@ qc2_open(struct qcdisk *disk, int fd)
 
 	disk->end = st.st_size;
 
-	log_debug("opened qcow2 disk version %d:", version);
-	log_debug("size:\t%lld", disk->disksz);
-	log_debug("end:\t%lld", disk->end);
-	log_debug("nsnap:\t%d", disk->nsnap);
+	log_debug("%s: qcow2 disk version %d size %lld end %lld snap %d",
+	    __func__,
+	    version,
+	    disk->disksz,
+	    disk->end,
+	    disk->nsnap);
+
 	return 0;
 error:
 	qc2_close(disk);
