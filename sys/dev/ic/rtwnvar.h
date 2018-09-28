@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.11 2018/09/21 01:45:53 jmatthew Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.12 2018/09/28 02:38:38 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -99,18 +99,10 @@ struct rtwn_softc {
 	int				fwcur;
 	union {
 		struct r92c_rom		r92c_rom;
-		struct {
-			struct r88e_rom	r88e_rom;
-			union {
-				struct r88e_pci_rom pci;
-				struct r88e_usb_rom usb;
-			} u;
-		} __packed _88e;
+		struct r88e_rom		r88e_rom;
 	} u;
 #define sc_r92c_rom	u.r92c_rom
-#define sc_r88e_rom	u._88e.r88e_rom
-#define sc_r88e_pci_rom	u._88e.u.pci
-#define sc_r88e_usb_rom	u._88e.u.usb
+#define sc_r88e_rom	u.r88e_rom
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };

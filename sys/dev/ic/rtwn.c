@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.38 2018/09/21 01:45:53 jmatthew Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.39 2018/09/28 02:38:38 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -637,18 +637,10 @@ rtwn_r88e_read_rom(struct rtwn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct r88e_rom *rom = &sc->sc_r88e_rom;
-	struct r88e_pci_rom *pcirom = &sc->sc_r88e_pci_rom;
-	struct r88e_usb_rom *usbrom = &sc->sc_r88e_usb_rom;
-	int romsize;
-
-	if (sc->chip & RTWN_CHIP_PCI)
-		romsize = sizeof(struct r88e_pci_rom);
-	else
-		romsize = sizeof(struct r88e_usb_rom);
 
 	/* Read full ROM image. */
 	rtwn_efuse_read(sc, (uint8_t *)&sc->sc_r88e_rom,
-	    sizeof(sc->sc_r88e_rom) + romsize);
+	    sizeof(sc->sc_r88e_rom));
 
 	sc->crystal_cap = (sc->chip & RTWN_CHIP_PCI) ? 0x20 : rom->xtal;
 	DPRINTF(("Crystal cap=0x%x\n", sc->crystal_cap));
@@ -657,9 +649,9 @@ rtwn_r88e_read_rom(struct rtwn_softc *sc)
 	DPRINTF(("regulatory type=%d\n", sc->regulatory));
 
 	if (sc->chip & RTWN_CHIP_PCI)
-		IEEE80211_ADDR_COPY(ic->ic_myaddr, pcirom->macaddr);
+		IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->r88ee_rom.macaddr);
 	else
-		IEEE80211_ADDR_COPY(ic->ic_myaddr, usbrom->macaddr);
+		IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->r88eu_rom.macaddr);
 }
 
 int
@@ -1742,8 +1734,9 @@ rtwn_rf_init(struct rtwn_softc *sc)
 
 	/* magic value for HP 8188EEs */
 	if (sc->chip == (RTWN_CHIP_88E | RTWN_CHIP_PCI)) {
-		struct r88e_pci_rom *pcirom = &sc->sc_r88e_pci_rom;
-		if ((pcirom->svid == 0x103c) && (pcirom->smid == 0x197d))
+		struct r88e_rom *rom = &sc->sc_r88e_rom;
+		if (rom->r88ee_rom.svid == 0x103c &&
+		    rom->r88ee_rom.smid == 0x197d)
 			rtwn_rf_write(sc, 0, 0x52, 0x7e4bd);
 	}
 

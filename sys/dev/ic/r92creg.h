@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.18 2018/09/21 01:45:53 jmatthew Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.19 2018/09/28 02:38:38 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1155,26 +1155,29 @@ struct r88e_rom {
 	uint8_t			reserved4[3];
 	uint8_t			rf_ant_opt;
 	uint8_t			reserved5[6];
-} __packed;
+	union {
+#define r88ee_rom	u.r88ee
+		struct {
+			uint8_t		macaddr[IEEE80211_ADDR_LEN];
+			uint16_t	vid;
+			uint16_t	did;
+			uint16_t	svid;
+			uint16_t	smid;
+			uint8_t		reserved6[290];
+		} __packed r88ee;
 
-struct r88e_pci_rom {
-	uint8_t			macaddr[IEEE80211_ADDR_LEN];
-	uint16_t 		vid;
-	uint16_t 		did;
-	uint16_t 		svid;
-	uint16_t 		smid;
-	uint8_t			reserved[290];
-} __packed;
-
-struct r88e_usb_rom {
-	uint16_t		vid;
-	uint16_t		pid;
-	uint8_t			usb_opt;
-	uint8_t			reserved6[2];
-	uint8_t			macaddr[IEEE80211_ADDR_LEN];
-	uint8_t			reserved7[2];
-	uint8_t			string[33];	/* "Realtek" */
-	uint8_t			reserved8[256];
+#define r88eu_rom	u.r88eu
+		struct {
+			uint16_t	vid;
+			uint16_t	pid;
+			uint8_t		usb_opt;
+			uint8_t		reserved6[2];
+			uint8_t		macaddr[IEEE80211_ADDR_LEN];
+			uint8_t		reserved7[2];
+			uint8_t		string[33];	/* "Realtek" */
+			uint8_t		reserved8[256];
+		} __packed r88eu;
+	} u;
 } __packed;
 
 /* Rx PHY descriptor. */
