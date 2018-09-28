@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.100 2018/09/10 10:39:26 bluhm Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.101 2018/09/28 08:23:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1861,7 +1861,7 @@ user_checklimit(struct vmd_user *usr, struct vm_create_params *vcp)
 		limit = "cpu ";
 		goto fail;
 	}
-	if (usr->usr_maxcpu > VM_DEFAULT_USER_MAXMEM) {
+	if (usr->usr_maxmem > VM_DEFAULT_USER_MAXMEM) {
 		limit = "memory ";
 		goto fail;
 	}
