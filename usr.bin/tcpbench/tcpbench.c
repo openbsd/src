@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.58 2018/09/28 18:21:26 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.59 2018/09/28 19:01:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -280,6 +280,9 @@ static void
 print_tcp_header(void)
 {
 	char **kv;
+
+	if (ptb->rflag == 0)
+		return;
 
 	printf("%12s %14s %12s %8s ", "elapsed_ms", "bytes", "mbps",
 	    "bwidth");
