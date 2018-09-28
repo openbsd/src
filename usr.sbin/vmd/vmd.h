@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.79 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.80 2018/09/28 12:35:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -205,7 +205,9 @@ struct vmboot_params {
 	char			 vbp_image[PATH_MAX];
 	uint32_t		 vbp_bootdev;
 	uint32_t		 vbp_howto;
-	char			*vbp_arg;
+	unsigned int		 vbp_type;
+	void			*vbp_arg;
+	char			*vbp_buf;
 };
 
 struct vmd_if {
@@ -402,7 +404,7 @@ int	 config_getif(struct privsep *, struct imsg *);
 int	 config_getcdrom(struct privsep *, struct imsg *);
 
 /* vmboot.c */
-FILE	*vmboot_open(int, int, struct vmboot_params *);
+FILE	*vmboot_open(int, int, unsigned int, struct vmboot_params *);
 void	 vmboot_close(FILE *, struct vmboot_params *);
 
 /* parse.y */

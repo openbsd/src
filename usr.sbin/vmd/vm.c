@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.39 2018/09/19 04:29:21 ccardenas Exp $	*/
+/*	$OpenBSD: vm.c,v 1.40 2018/09/28 12:35:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -266,7 +266,8 @@ loadfile_bios(FILE *fp, struct vcpu_reg_state *vrs)
 int
 start_vm(struct vmd_vm *vm, int fd)
 {
-	struct vm_create_params	*vcp = &vm->vm_params.vmc_params;
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params	*vcp = &vmc->vmc_params;
 	struct vcpu_reg_state	 vrs;
 	int			 nicfds[VMM_MAX_NICS_PER_VM];
 	int			 ret;
@@ -326,7 +327,7 @@ start_vm(struct vmd_vm *vm, int fd)
 
 		/* Find and open kernel image */
 		if ((fp = vmboot_open(vm->vm_kernel,
-		    vm->vm_disks[0], &vmboot)) == NULL)
+		    vm->vm_disks[0], vmc->vmc_disktypes[0], &vmboot)) == NULL)
 			fatalx("failed to open kernel - exiting");
 
 		/* Load kernel image */
