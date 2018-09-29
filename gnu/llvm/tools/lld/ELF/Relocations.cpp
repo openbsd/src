@@ -630,7 +630,8 @@ static RelExpr adjustExpr(Symbol &Sym, RelExpr Expr, RelType Type,
   if (!Sym.isShared() || Config->Shared)
     return Expr;
 
-  if (Sym.getVisibility() != STV_DEFAULT) {
+  if (Sym.getVisibility() != STV_DEFAULT &&
+      (Sym.getVisibility() != STV_PROTECTED || !Sym.isFunc())) {
     error("cannot preempt symbol: " + toString(Sym) +
           getLocation(S, Sym, RelOff));
     return Expr;
