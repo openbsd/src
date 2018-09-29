@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.7 2018/07/09 00:23:55 anton Exp $
+#	$OpenBSD: obsd-regress.t,v 1.8 2018/09/29 16:24:13 anton Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -484,4 +484,15 @@ stdin:
 expected-exit: e == 1
 expected-stderr-pattern:
 	/: 1: parameter not set$/
+---
+
+name: pwd
+description:
+	PWD and OLDPWD must be exported
+stdin:
+	d=$(printenv PWD)
+	: ${d:?"PWD not exported"}
+	cd .
+	d=$(printenv OLDPWD)
+	: ${d:?"OLDPWD not exported"}
 ---
