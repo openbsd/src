@@ -983,8 +983,10 @@ rdata_ipsec_base: STR sp STR sp STR sp dotted_str
 			/* convert and insert the dname */
 			if(strlen($7.str) == 0)
 				zc_error_prev_line("IPSECKEY must specify gateway name");
-			if(!(name = dname_parse(parser->region, $7.str)))
+			if(!(name = dname_parse(parser->region, $7.str))) {
 				zc_error_prev_line("IPSECKEY bad gateway dname %s", $7.str);
+				break;
+			}
 			if($7.str[strlen($7.str)-1] != '.') {
 				if(parser->origin == error_domain) {
 		    			zc_error("cannot concatenate origin to domain name, because origin failed to parse");

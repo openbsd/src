@@ -20,6 +20,7 @@
 
 extern char *optarg;
 extern int optind;
+static void usage(void) ATTR_NORETURN;
 
 #define ZONE_GET_ACL(NAME, VAR, PATTERN) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
@@ -364,7 +365,6 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(do_ip4, o);
 		SERV_GET_BIN(do_ip6, o);
 		SERV_GET_BIN(reuseport, o);
-		SERV_GET_BIN(use_systemd, o);
 		SERV_GET_BIN(hide_version, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
@@ -481,7 +481,6 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tip-transparent: %s\n", opt->ip_transparent?"yes":"no");
 	printf("\tip-freebind: %s\n", opt->ip_freebind?"yes":"no");
 	printf("\treuseport: %s\n", opt->reuseport?"yes":"no");
-	printf("\tuse-systemd: %s\n", opt->use_systemd?"yes":"no");
 	printf("\tdo-ip4: %s\n", opt->do_ip4?"yes":"no");
 	printf("\tdo-ip6: %s\n", opt->do_ip6?"yes":"no");
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
@@ -563,26 +562,6 @@ config_test_print_server(nsd_options_type* opt)
 
 }
 
-static void
-append_trailing_slash(const char** dirname, region_type* region)
-{
-	int l = strlen(*dirname);
-	if (l>0 && (*dirname)[l-1] != '/' && l < 0xffffff) {
-		char *dirname_slash = region_alloc(region, l+2);
-		memcpy(dirname_slash, *dirname, l+1);
-		strlcat(dirname_slash, "/", l+2);
-		*dirname = dirname_slash;
-	}
-}
-
-static int
-file_inside_chroot(const char* fname, const char* chr)
-{
-	/* true if filename starts with chroot or is not absolute */
-	return ((fname && fname[0] && strncmp(fname, chr, strlen(chr)) == 0) ||
-		(fname && fname[0] != '/'));
-}
-
 static int
 additional_checks(nsd_options_type* opt, const char* filename)
 {
@@ -595,6 +574,7 @@ additional_checks(nsd_options_type* opt, const char* filename)
 		if(!dname) {
 			fprintf(stderr, "%s: cannot parse zone name syntax for zone %s.\n", filename, zone->name);
 			errors ++;
+			continue;
 		}
 #ifndef ROOT_SERVER
 		/* Is it a root zone? Are we a root server then? Idiot proof. */
@@ -755,9 +735,9 @@ main(int argc, char* argv[])
 			usage();
 		};
 	}
-        argc -= optind;
-        argv += optind;
-        if (argc == 0 || argc>=2) {
+	argc -= optind;
+	argv += optind;
+	if (argc == 0 || argc>=2) {
 		usage();
 	}
 	configfile = argv[0];

@@ -2026,7 +2026,7 @@ server_child(struct nsd *nsd)
 		server_close_all_sockets(nsd->udp, nsd->ifs);
 	}
 
-	if (nsd->this_child && nsd->this_child->parent_fd != -1) {
+	if (nsd->this_child->parent_fd != -1) {
 		struct event *handler;
 		struct ipc_handler_conn_data* user_data =
 			(struct ipc_handler_conn_data*)region_alloc(

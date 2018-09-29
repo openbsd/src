@@ -30,6 +30,7 @@ static void xfrd_send_reload_req(xfrd_state_type* xfrd);
 static void xfrd_send_quit_req(xfrd_state_type* xfrd);
 /* perform read part of handle ipc for xfrd */
 static void xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd);
+static void ipc_child_quit(struct nsd* nsd) ATTR_NORETURN;
 
 static void
 ipc_child_quit(struct nsd* nsd)

@@ -63,6 +63,10 @@
 #include "tsig.h"
 #include "options.h"
 
+static void usage() ATTR_NORETURN;
+static void ssl_err(const char* s) ATTR_NORETURN;
+static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+
 /** Give nsd-control usage, and exit (1). */
 static void
 usage()
@@ -107,6 +111,22 @@ static void ssl_err(const char* s)
 	exit(1);
 }
 
+/** exit with ssl error related to a file path */
+static void ssl_path_err(const char* s, const char *path)
+{
+	unsigned long err;
+	err = ERR_peek_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
+		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
+		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+		fprintf(stderr, "error: %s\n%s: %s\n",
+			s, path, ERR_reason_error_string(err));
+		exit(1);
+	} else {
+		ssl_err(s);
+	}
+}
+
 /** setup SSL context */
 static SSL_CTX*
 setup_ctx(struct nsd_options* cfg)
@@ -124,7 +144,8 @@ setup_ctx(struct nsd_options* cfg)
 	if (cfg->zonesdir && cfg->zonesdir[0] &&
 		(s_cert[0] != '/' || c_key[0] != '/' || c_cert[0] != '/')) {
 		if(chdir(cfg->zonesdir))
-			ssl_err("could not chdir to zonesdir");
+			error("could not chdir to zonesdir: %s %s",
+				cfg->zonesdir, strerror(errno));
 	}
 
         ctx = SSL_CTX_new(SSLv23_client_method());
@@ -136,12 +157,15 @@ setup_ctx(struct nsd_options* cfg)
         if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
-	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM) ||
-		!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM)
-		|| !SSL_CTX_check_private_key(ctx))
-		ssl_err("Error setting up SSL_CTX client key and cert");
+	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
+	if(!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client key", c_key);
+	if(!SSL_CTX_check_private_key(ctx))
+		ssl_err("Error setting up SSL_CTX client key");
 	if (SSL_CTX_load_verify_locations(ctx, s_cert, NULL) != 1)
-		ssl_err("Error setting up SSL_CTX verify, server cert");
+		ssl_path_err("Error setting up SSL_CTX verify, server cert",
+			s_cert);
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 	return ctx;

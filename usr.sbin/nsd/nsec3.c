@@ -88,14 +88,6 @@ void nsec3_zone_trees_create(struct region* region, zone_type* zone)
 		zone->dshashtree = rbtree_create(region, cmp_dshash_tree);
 }
 
-void nsec3_hash_tree_clear(struct zone* zone)
-{
-	hash_tree_clear(zone->nsec3tree);
-	hash_tree_clear(zone->hashtree);
-	hash_tree_clear(zone->wchashtree);
-	hash_tree_clear(zone->dshashtree);
-}
-
 static void
 detect_nsec3_params(rr_type* nsec3_apex,
 	const unsigned char** salt, int* salt_len, int* iter)
@@ -675,6 +667,7 @@ prehash_zone_complete(struct namedb* db, struct zone* zone)
 	/* find zone settings */
 
 	assert(db && zone);
+	udbz.data = 0;
 	if(db->udb) {
 		if(!udb_zone_search(db->udb, &udbz, dname_name(domain_dname(
 			zone->apex)), domain_dname(zone->apex)->name_size)) {
@@ -685,11 +678,11 @@ prehash_zone_complete(struct namedb* db, struct zone* zone)
 	if(!zone->nsec3_param || !check_apex_soa(db, zone, 0)) {
 		zone->nsec3_param = NULL;
 		zone->nsec3_last = NULL;
-		if(db->udb)
+		if(udbz.data)
 			udb_ptr_unlink(&udbz, db->udb);
 		return;
 	}
-	if(db->udb)
+	if(udbz.data)
 		udb_ptr_unlink(&udbz, db->udb);
 	nsec3_precompile_newparam(db, zone);
 }

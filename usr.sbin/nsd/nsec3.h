@@ -109,8 +109,6 @@ const struct dname* nsec3_b32_create(struct region* region, struct zone* zone,
 	unsigned char* hash);
 /* create trees for nsec3 updates and lookups in zone */
 void nsec3_zone_trees_create(struct region* region, struct zone* zone);
-/* clear trees for nsec3 in zone */
-void nsec3_hash_tree_clear(struct zone* zone);
 /* lookup zone that contains domain's nsec3 trees */
 struct zone* nsec3_tree_zone(struct namedb* db, struct domain* domain);
 /* lookup zone that contains domain's ds tree */

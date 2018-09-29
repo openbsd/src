@@ -227,8 +227,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd startup"));
 #ifdef HAVE_SYSTEMD
-	if(xfrd->nsd->options->use_systemd)
-		sd_notify(0, "READY=1");
+	sd_notify(0, "READY=1");
 #endif
 	xfrd_main();
 }
@@ -333,8 +332,7 @@ xfrd_shutdown()
 
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown"));
 #ifdef HAVE_SYSTEMD
-	if(xfrd->nsd->options->use_systemd)
-		sd_notify(0, "STOPPING=1");
+	sd_notify(0, "STOPPING=1");
 #endif
 	event_del(&xfrd->ipc_handler);
 	close(xfrd->ipc_handler.ev_fd); /* notifies parent we stop */
@@ -2516,16 +2514,14 @@ void xfrd_process_task_result(xfrd_state_type* xfrd, struct udb_base* taskudb)
 	 * the taskudbs are swapped */
 	task_clear(taskudb);
 #ifdef HAVE_SYSTEMD
-	if(xfrd->nsd->options->use_systemd)
-		sd_notify(0, "READY=1");
+	sd_notify(0, "READY=1");
 #endif
 }
 
 void xfrd_set_reload_now(xfrd_state_type* xfrd)
 {
 #ifdef HAVE_SYSTEMD
-	if(xfrd->nsd->options->use_systemd)
-		sd_notify(0, "RELOADING=1");
+	sd_notify(0, "RELOADING=1");
 #endif
 	xfrd->need_to_send_reload = 1;
 	if(!(xfrd->ipc_handler_flags&EV_WRITE)) {

@@ -1138,15 +1138,12 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 		if(*rr_count == 1 && type != TYPE_SOA) {
 			/* second RR: if not SOA: this is an AXFR; delete all zone contents */
 #ifdef NSEC3
-			nsec3_hash_tree_clear(zone_db);
+			nsec3_clear_precompile(db, zone_db);
+			zone_db->nsec3_param = NULL;
 #endif
 			delete_zone_rrs(db, zone_db);
 			if(db->udb)
 				udb_zone_clear(db->udb, udbz);
-#ifdef NSEC3
-			nsec3_clear_precompile(db, zone_db);
-			zone_db->nsec3_param = NULL;
-#endif /* NSEC3 */
 			/* add everything else (incl end SOA) */
 			*delete_mode = 0;
 			*is_axfr = 1;
@@ -1169,15 +1166,12 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			if(thisserial == serialno) {
 				/* AXFR */
 #ifdef NSEC3
-				nsec3_hash_tree_clear(zone_db);
+				nsec3_clear_precompile(db, zone_db);
+				zone_db->nsec3_param = NULL;
 #endif
 				delete_zone_rrs(db, zone_db);
 				if(db->udb)
 					udb_zone_clear(db->udb, udbz);
-#ifdef NSEC3
-				nsec3_clear_precompile(db, zone_db);
-				zone_db->nsec3_param = NULL;
-#endif /* NSEC3 */
 				*delete_mode = 0;
 				*is_axfr = 1;
 			}
@@ -1913,7 +1907,8 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 		return;
 
 #ifdef NSEC3
-	nsec3_hash_tree_clear(zone);
+	nsec3_clear_precompile(nsd->db, zone);
+	zone->nsec3_param = NULL;
 #endif
 	delete_zone_rrs(nsd->db, zone);
 	if(nsd->db->udb) {
@@ -1924,10 +1919,6 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 			udb_ptr_unlink(&udbz, nsd->db->udb);
 		}
 	}
-#ifdef NSEC3
-	nsec3_clear_precompile(nsd->db, zone);
-	zone->nsec3_param = NULL;
-#endif /* NSEC3 */
 
 	/* remove from zonetree, apex, soa */
 	zopt = zone->opts;

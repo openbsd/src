@@ -25,7 +25,6 @@
 #include "udbzone.h"
 #include "util.h"
 
-static void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
 struct nsd nsd;
 
 /*
@@ -38,20 +37,6 @@ usage (void)
 	fprintf(stderr, "Usage: nsd-mem [-c configfile]\n");
 	fprintf(stderr, "Version %s. Report bugs to <%s>.\n",
 		PACKAGE_VERSION, PACKAGE_BUGREPORT);
-}
-
-/*
- * Something went wrong, give error messages and exit.
- *
- */
-static void
-error(const char *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	log_vmsg(LOG_ERR, format, args);
-	va_end(args);
-	exit(1);
 }
 
 /* zone memory structure */

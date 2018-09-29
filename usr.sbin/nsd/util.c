@@ -1085,3 +1085,38 @@ addr2str(
 		str, len))
 		strlcpy(str, "[unknown ip4, inet_ntop failed]", len);
 }
+
+void
+append_trailing_slash(const char** dirname, region_type* region)
+{
+	int l = strlen(*dirname);
+	if (l>0 && (*dirname)[l-1] != '/' && l < 0xffffff) {
+		char *dirname_slash = region_alloc(region, l+2);
+		memcpy(dirname_slash, *dirname, l+1);
+		strlcat(dirname_slash, "/", l+2);
+		/* old dirname is leaked, this is only used for chroot, once */
+		*dirname = dirname_slash;
+	}
+}
+
+int
+file_inside_chroot(const char* fname, const char* chr)
+{
+	/* true if filename starts with chroot or is not absolute */
+	return ((fname && fname[0] && strncmp(fname, chr, strlen(chr)) == 0) ||
+		(fname && fname[0] != '/'));
+}
+
+/*
+ * Something went wrong, give error messages and exit.
+ */
+void
+error(const char *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	log_vmsg(LOG_ERR, format, args);
+	va_end(args);
+	exit(1);
+}
+

@@ -96,7 +96,6 @@ struct nsd_options {
 	int minimal_responses;
 	int refuse_any;
 	int reuseport;
-	int use_systemd;
 
         /** remote control section. enable toggle. */
 	int control_enable;

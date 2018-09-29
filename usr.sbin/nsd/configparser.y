@@ -154,9 +154,6 @@ server_debug_mode: VAR_DEBUG_MODE STRING
 server_use_systemd: VAR_USE_SYSTEMD STRING 
 	{ 
 		OUTYY(("P(server_use_systemd:%s)\n", $2)); 
-		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
-			yyerror("expected yes or no.");
-		else cfg_parser->opt->use_systemd = (strcmp($2, "yes")==0);
 	}
 	;
 server_verbosity: VAR_VERBOSITY STRING 
