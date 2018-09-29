@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.223 2018/09/09 11:00:51 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.224 2018/09/29 19:25:32 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3177,11 +3177,13 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 	struct sockaddr		*sa;
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
+	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct kroute6_node	*kr6;
 	struct bgpd_addr	 prefix;
 	int			 flags, oflags, mpath = 0, changed = 0;
-	u_int16_t		 ifindex;
+	int			 rtlabel_changed = 0;
+	u_int16_t		 ifindex, new_labelid;
 	u_int8_t		 prefixlen;
 	u_int8_t		 prio;
 
@@ -3209,6 +3211,8 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 #endif
 
 	prio = rtm->rtm_priority;
+	label = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
+
 	switch (sa->sa_family) {
 	case AF_INET:
 		prefix.aid = AID_INET;
@@ -3340,10 +3344,40 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 
 				if (kr->r.flags & F_NEXTHOP)
 					flags |= F_NEXTHOP;
+
+				if (label != NULL) {
+					new_labelid =
+					    rtlabel_name2id(label->sr_label);
+					if (kr->r.labelid != new_labelid) {
+						rtlabel_unref(kr->r.labelid);
+						kr->r.labelid = 0;
+						flags |= F_RTLABEL;
+						kr->r.labelid = new_labelid;
+						rtlabel_changed = 1;
+					}
+				} else if (kr->r.labelid && label == NULL) {
+					rtlabel_unref(kr->r.labelid);
+					kr->r.labelid = 0;
+					flags &= ~F_RTLABEL;
+					rtlabel_changed = 1;
+				}
+
 				oflags = kr->r.flags;
 				if (flags != oflags)
 					changed = 1;
 				kr->r.flags = flags;
+
+				if (rtlabel_changed) {
+					if (oflags & F_REDISTRIBUTED) {
+						kr->r.flags |= F_REDISTRIBUTED;
+						kr_redistribute(
+						    IMSG_NETWORK_REMOVE, kt,
+						    &kr->r);
+					}
+					kr_redistribute(IMSG_NETWORK_ADD,
+					    kt, &kr->r);
+				}
+
 				if ((oflags & F_CONNECTED) &&
 				    !(flags & F_CONNECTED)) {
 					kif_kr_remove(kr);
@@ -3380,6 +3414,11 @@ add4:
 			kr->r.ifindex = ifindex;
 			kr->r.priority = prio;
 
+			if (label) {
+				kr->r.flags |= F_RTLABEL;
+				kr->r.labelid =
+				    rtlabel_name2id(label->sr_label);
+			}
 			kroute_insert(kt, kr);
 		}
 		break;
@@ -3418,10 +3457,40 @@ add4:
 
 				if (kr6->r.flags & F_NEXTHOP)
 					flags |= F_NEXTHOP;
+
+				if (label != NULL) {
+					new_labelid =
+					    rtlabel_name2id(label->sr_label);
+					if (kr6->r.labelid != new_labelid) {
+						rtlabel_unref(kr6->r.labelid);
+						kr6->r.labelid = 0;
+						flags |= F_RTLABEL;
+						kr6->r.labelid = new_labelid;
+						rtlabel_changed = 1;
+					}
+				} else if (kr6->r.labelid && label == NULL) {
+					rtlabel_unref(kr6->r.labelid);
+					kr6->r.labelid = 0;
+					flags &= ~F_RTLABEL;
+					rtlabel_changed = 1;
+				}
+
 				oflags = kr6->r.flags;
 				if (flags != oflags)
 					changed = 1;
 				kr6->r.flags = flags;
+
+				if (rtlabel_changed) {
+					if (oflags & F_REDISTRIBUTED) {
+						kr6->r.flags |= F_REDISTRIBUTED;
+						kr_redistribute6(
+						    IMSG_NETWORK_REMOVE, kt,
+						    &kr6->r);
+					}
+					kr_redistribute6(IMSG_NETWORK_ADD,
+					    kt, &kr6->r);
+				}
+
 				if ((oflags & F_CONNECTED) &&
 				    !(flags & F_CONNECTED)) {
 					kif_kr6_remove(kr6);
@@ -3434,6 +3503,7 @@ add4:
 					kr_redistribute6(IMSG_NETWORK_ADD,
 					    kt, &kr6->r);
 				}
+
 				if (kr6->r.flags & F_NEXTHOP && changed)
 					knexthop_track(kt, kr6);
 			}
@@ -3461,6 +3531,11 @@ add6:
 			kr6->r.ifindex = ifindex;
 			kr6->r.priority = prio;
 
+			if (label) {
+				kr6->r.flags |= F_RTLABEL;
+				kr6->r.labelid =
+				    rtlabel_name2id(label->sr_label);
+			}
 			kroute6_insert(kt, kr6);
 		}
 		break;
