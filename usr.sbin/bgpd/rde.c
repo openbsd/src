@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.427 2018/09/25 08:08:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.428 2018/09/29 07:43:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3147,9 +3147,11 @@ rde_softreconfig_out_peer(struct rib_entry *re, struct rde_peer *peer)
 		/* nothing todo */
 	if (oa == ACTION_DENY && na == ACTION_ALLOW) {
 		/* send update */
+		up_rib_add(peer, re);
 		up_generate(peer, &nstate, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 		/* send withdraw */
+		up_rib_remove(peer, re);
 		up_generate(peer, NULL, &addr, pt->prefixlen);
 	} else if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
 		/* send update if anything changed */
@@ -3197,6 +3199,7 @@ rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
 	    prefix_nhflags(p));
 	if (rde_filter(out_rules_tmp, peer, p, &ostate) != ACTION_DENY) {
 		/* send withdraw */
+		up_rib_remove(peer, re);
 		up_generate(peer, NULL, &addr, pt->prefixlen);
 	}
 	rde_filterstate_clean(&ostate);

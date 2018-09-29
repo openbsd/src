@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.99 2018/09/18 16:54:01 sthen Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.100 2018/09/29 07:43:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -53,9 +53,15 @@ struct update_attr {
 	u_int16_t			 mpattr_len;
 };
 
+struct update_rib {
+	RB_ENTRY(update_rib)		 entry;
+	struct rib_entry		*re;
+};
+
 void	up_clear(struct uplist_attr *, struct uplist_prefix *);
 int	up_prefix_cmp(struct update_prefix *, struct update_prefix *);
 int	up_attr_cmp(struct update_attr *, struct update_attr *);
+int	up_rib_cmp(struct update_rib *, struct update_rib *);
 int	up_add(struct rde_peer *, struct update_prefix *, struct update_attr *);
 
 RB_PROTOTYPE(uptree_prefix, update_prefix, entry, up_prefix_cmp)
@@ -63,6 +69,9 @@ RB_GENERATE(uptree_prefix, update_prefix, entry, up_prefix_cmp)
 
 RB_PROTOTYPE(uptree_attr, update_attr, entry, up_attr_cmp)
 RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp)
+
+RB_PROTOTYPE(uptree_rib, update_rib, entry, up_rib_cmp)
+RB_GENERATE(uptree_rib, update_rib, entry, up_rib_cmp)
 
 SIPHASH_KEY uptree_key;
 
@@ -77,6 +86,7 @@ up_init(struct rde_peer *peer)
 	}
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
+	RB_INIT(&peer->up_rib);
 	peer->up_pcnt = 0;
 	peer->up_acnt = 0;
 	peer->up_nlricnt = 0;
@@ -110,13 +120,18 @@ up_clear(struct uplist_attr *updates, struct uplist_prefix *withdraws)
 void
 up_down(struct rde_peer *peer)
 {
-	u_int8_t	i;
+	struct update_rib	*ur, *nur;
+	u_int8_t		i;
 
 	for (i = 0; i < AID_MAX; i++)
 		up_clear(&peer->updates[i], &peer->withdraws[i]);
 
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
+	RB_FOREACH_SAFE(ur, uptree_rib, &peer->up_rib, nur) {
+		RB_REMOVE(uptree_rib, &peer->up_rib, ur);
+		free(ur);
+	}
 
 	peer->up_pcnt = 0;
 	peer->up_acnt = 0;
@@ -192,6 +207,42 @@ up_attr_cmp(struct update_attr *a, struct update_attr *b)
 	if ((r = memcmp(a->mpattr, b->mpattr, a->mpattr_len)) != 0)
 		return (r);
 	return (memcmp(a->attr, b->attr, a->attr_len));
+}
+
+int
+up_rib_cmp(struct update_rib *a, struct update_rib *b)
+{
+	if (a->re != b->re)
+		return (a->re > b->re ? 1 : -1);
+	return 0;
+}
+
+int
+up_rib_remove(struct rde_peer *peer, struct rib_entry *re)
+{
+	struct update_rib *ur, u;
+	u.re = re;
+
+	ur = RB_FIND(uptree_rib, &peer->up_rib, &u);
+	if (ur != NULL) {
+		RB_REMOVE(uptree_rib, &peer->up_rib, ur);
+		free(ur);
+		return 1;
+	} else
+		return 0;
+}
+
+void
+up_rib_add(struct rde_peer *peer, struct rib_entry *re)
+{
+	struct update_rib *ur;
+
+	if ((ur = calloc(1, sizeof(*ur))) == NULL)
+		fatal("%s", __func__);
+	ur->re = re;
+
+	if (RB_INSERT(uptree_rib, &peer->up_rib, ur) != NULL)
+		free(ur);
 }
 
 int
@@ -409,11 +460,11 @@ withdraw:
 		if (up_test_update(peer, old) != 1)
 			return;
 
-		pt_getaddr(old->re->prefix, &addr);
-		if (rde_filter(rules, peer, old, NULL) == ACTION_DENY)
+		if (!up_rib_remove(peer, old->re))
 			return;
 
 		/* withdraw prefix */
+		pt_getaddr(old->re->prefix, &addr);
 		up_generate(peer, NULL, &addr, old->re->prefix->prefixlen);
 	} else {
 		switch (up_test_update(peer, new)) {
@@ -433,8 +484,8 @@ withdraw:
 		}
 
 		pt_getaddr(new->re->prefix, &addr);
-		up_generate(peer, &state, &addr,
-		    new->re->prefix->prefixlen);
+		up_generate(peer, &state, &addr, new->re->prefix->prefixlen);
+		up_rib_add(peer, new->re);
 
 		rde_filterstate_clean(&state);
 	}
