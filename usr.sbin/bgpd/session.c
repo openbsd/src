@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.368 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.369 2018/09/29 07:58:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2732,6 +2732,12 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				control_shutdown(csock);
 				csock = imsg.fd;
 			}
+			break;
+		case IMSG_RECONF_DRAIN:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("reconf request not from parent");
+			imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,
+			    -1, NULL, 0);
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)

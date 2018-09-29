@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.428 2018/09/29 07:43:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.429 2018/09/29 07:58:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -983,6 +983,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_RECONF_RDOMAIN_DONE:
 			parent_set = NULL;
+			break;
+		case IMSG_RECONF_DRAIN:
+			imsg_compose(ibuf_main, IMSG_RECONF_DRAIN, 0, 0,
+			    -1, NULL, 0);
 			break;
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
