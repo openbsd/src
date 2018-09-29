@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.281 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.282 2018/09/29 04:29:48 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <sys/pool.h>
 #include <sys/tree.h>
 #include <sys/specdev.h>
+#include <sys/atomic.h>
 
 #include <netinet/in.h>
 
@@ -179,7 +180,7 @@ vfs_mount_alloc(struct vnode *vp, struct vfsconf *vfsp)
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vnodecovered = vp;
 
-	vfsp->vfc_refcount++;
+	atomic_inc_int(&vfsp->vfc_refcount);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_flag = vfsp->vfc_flags & MNT_VISFLAGMASK;
@@ -194,7 +195,7 @@ vfs_mount_alloc(struct vnode *vp, struct vfsconf *vfsp)
 void
 vfs_mount_free(struct mount *mp)
 {
-	mp->mnt_vfc->vfc_refcount--;
+	atomic_dec_int(&mp->mnt_vfc->vfc_refcount);
 	free(mp, M_MOUNT, sizeof(*mp));
 }
 
@@ -2227,7 +2228,7 @@ vfs_mount_print(struct mount *mp, int full,
 	    mp->mnt_flag, MNT_BITS,
 	    mp->mnt_vnodecovered, mp->mnt_syncer, mp->mnt_data);
 
-	(*pr)("vfsconf: ops %p name \"%s\" num %d ref %d flags 0x%x\n",
+	(*pr)("vfsconf: ops %p name \"%s\" num %d ref %u flags 0x%x\n",
             vfc->vfc_vfsops, vfc->vfc_name, vfc->vfc_typenum,
 	    vfc->vfc_refcount, vfc->vfc_flags);
 

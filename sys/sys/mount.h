@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.141 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: mount.h,v 1.142 2018/09/29 04:29:48 visa Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ struct vfsconf {
 	const struct vfsops *vfc_vfsops; /* filesystem operations vector */
 	char	vfc_name[MFSNAMELEN];	/* filesystem type name */
 	int	vfc_typenum;		/* historic filesystem type number */
-	int	vfc_refcount;		/* number mounted of this type */
+	u_int	vfc_refcount;		/* number mounted of this type */
 	int	vfc_flags;		/* permanent flags */
 	size_t	vfc_datasize;		/* size of data args */
 };

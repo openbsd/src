@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.236 2018/09/22 02:20:44 visa Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.237 2018/09/29 04:29:48 visa Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1293,11 +1293,11 @@ sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 	if (flags == 0 && vfc.vfc_refcount == 0)
 		return -1;
 	if (!nflag)
-		fprintf(stdout, "%s has %d mounted instance%s\n",
+		fprintf(stdout, "%s has %u mounted instance%s\n",
 		    string, vfc.vfc_refcount,
 		    vfc.vfc_refcount != 1 ? "s" : "");
 	else
-		fprintf(stdout, "%d\n", vfc.vfc_refcount);
+		fprintf(stdout, "%u\n", vfc.vfc_refcount);
 
 	return -1;
 }
