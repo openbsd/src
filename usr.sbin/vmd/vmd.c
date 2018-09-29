@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.101 2018/09/28 08:23:43 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.102 2018/09/29 22:33:09 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -419,10 +419,27 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vmr, imsg->data, sizeof(vmr));
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
-		if (!vmr.vmr_result)
+		if (!vmr.vmr_result) {
 			log_info("%s: sent vm %d successfully.",
 			    vm->vm_params.vmc_params.vcp_name,
 			    vm->vm_vmid);
+			if (vm->vm_from_config)
+				vm_stop(vm, 0, __func__);
+			else
+				vm_remove(vm, __func__);
+		}
+
+		/* Send a response if a control client is waiting for it */
+		if (imsg->hdr.peerid != (uint32_t)-1) {
+			/* the error is meaningless for deferred responses */
+			vmr.vmr_result = 0;
+
+			if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+			    IMSG_VMDOP_SEND_VM_RESPONSE,
+			    imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
+				return (-1);
+		}
+		break;
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
