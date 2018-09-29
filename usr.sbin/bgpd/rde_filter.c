@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.111 2018/09/26 15:48:01 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.112 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -360,6 +360,11 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	if (f->peer.ibgp && peer->conf.ebgp)
 		return (0);
 
+	if (f->match.ovs.is_set) {
+		if (prefix_vstate(p) != f->match.ovs.validity)
+			return (0);
+	}
+
 	if (asp != NULL && f->match.as.type != AS_UNDEF) {
 		if (aspath_match(asp->aspath->data, asp->aspath->len,
 		    &f->match.as, peer->conf.remote_as) == 0)
@@ -408,8 +413,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		if (community_ext_match(asp, &f->match.ext_community,
 		    peer->conf.remote_as) == 0)
 			return (0);
-	if (asp != NULL && f->match.large_community.as !=
-	    COMMUNITY_UNSET) {
+	if (asp != NULL && f->match.large_community.as != COMMUNITY_UNSET) {
 		switch (f->match.large_community.as) {
 		case COMMUNITY_ERROR:
 			fatalx("rde_filter_match bad community string");
@@ -483,6 +487,18 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		default:
 			fatalx("King Bula lost in address space");
 		}
+	}
+
+	/* origin-set lookups match only on ROA_VALID */
+	if (asp != NULL && f->match.originset.ps != NULL) {
+		struct bgpd_addr addr, *prefix = &addr;
+		u_int8_t plen;
+
+		pt_getaddr(p->re->prefix, prefix);
+		plen = p->re->prefix->prefixlen;
+		if (trie_roa_check(&f->match.originset.ps->th, prefix, plen,
+		    asp->source_as) != ROA_VALID)
+			return (0);
 	}
 
 	/*
@@ -578,7 +594,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
     struct rde_peer *peer)
 {
 	struct filter_rule	*fa, *fb;
-	struct rde_prefixset	*psa, *psb;
+	struct rde_prefixset	*psa, *psb, *osa, *osb;
 	struct as_set		*asa, *asb;
 	int			 r;
 
@@ -609,26 +625,35 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 		/* compare filter_rule.match without the prefixset pointer */
 		psa = fa->match.prefixset.ps;
 		psb = fb->match.prefixset.ps;
+		osa = fa->match.originset.ps;
+		osb = fb->match.originset.ps;
 		asa = fa->match.as.aset;
 		asb = fb->match.as.aset;
 		fa->match.prefixset.ps = fb->match.prefixset.ps = NULL;
+		fa->match.originset.ps = fb->match.originset.ps = NULL;
 		fa->match.as.aset = fb->match.as.aset = NULL;
 		r = memcmp(&fa->match, &fb->match, sizeof(fa->match));
 		/* fixup the struct again */
 		fa->match.prefixset.ps = psa;
 		fb->match.prefixset.ps = psb;
+		fa->match.originset.ps = osa;
+		fb->match.originset.ps = osb;
 		fa->match.as.aset = asa;
 		fb->match.as.aset = asb;
 		if (r != 0)
 			return (0);
-		if (fa->match.prefixset.flags != 0 &&
-		    fa->match.prefixset.ps != NULL &&
+		if (fa->match.prefixset.ps != NULL &&
 		    fa->match.prefixset.ps->dirty) {
 			log_debug("%s: prefixset %s has changed",
 			    __func__, fa->match.prefixset.name);
 			return (0);
 		}
-
+		if (fa->match.originset.ps != NULL &&
+		    fa->match.originset.ps->dirty) {
+			log_debug("%s: originset %s has changed",
+			    __func__, fa->match.originset.name);
+			return (0);
+		}
 		if ((fa->match.as.flags & AS_FLAG_AS_SET) &&
 		    fa->match.as.aset->dirty) {
 			log_debug("%s: as-set %s has changed",

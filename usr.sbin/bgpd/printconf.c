@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.122 2018/09/21 04:55:27 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.123 2018/09/29 08:11:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,8 @@ const char	*print_af(u_int8_t);
 void		 print_network(struct network_config *, const char *);
 void		 print_as_sets(struct as_set_head *);
 void		 print_prefixsets(struct prefixset_head *);
-void		 print_roasets(struct prefixset_head *);
+void		 print_originsets(struct prefixset_head *);
+void		 print_roa(struct prefixset_tree *p);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
@@ -86,11 +87,11 @@ print_prefix(struct filter_prefix *p)
 		printf(" prefixlen %u >< %u ", p->len_min, p->len_max);
 		break;
 	case OP_RANGE:
-		if (p->len_min == p->len_max)
+		if (p->len_min == p->len_max && p->len != p->len_min)
 			printf(" prefixlen = %u", p->len_min);
 		else if (p->len == p->len_min && p->len_max == max_len)
 			printf(" or-longer");
-		else if (p->len == p->len_min)
+		else if (p->len == p->len_min && p->len != p->len_max)
 			printf(" maxlen %u", p->len_max);
 		else if (p->len_max == max_len)
 			printf(" prefixlen >= %u", p->len_min);
@@ -487,7 +488,7 @@ print_prefixsets(struct prefixset_head *psh)
 }
 
 void
-print_roasets(struct prefixset_head *psh)
+print_originsets(struct prefixset_head *psh)
 {
 	struct prefixset	*ps;
 	struct prefixset_item	*psi;
@@ -495,16 +496,11 @@ print_roasets(struct prefixset_head *psh)
 	size_t			 i, n;
 
 	SIMPLEQ_FOREACH(ps, psh, entry) {
-		int count = 0;
-		printf("roa-set \"%s\" {", ps->name);
+		printf("origin-set \"%s\" {", ps->name);
 		RB_FOREACH(psi, prefixset_tree, &ps->psitems) {
 			rs = set_get(psi->set, &n);
 			for (i = 0; i < n; i++) {
-				if (count++ % 2 == 0)
-					printf("\n\t");
-				else
-					printf(", ");
-
+				printf("\n\t");
 				print_prefix(&psi->p);
 				if (psi->p.len != rs[i].maxlen)
 					printf(" maxlen %u", rs[i].maxlen);
@@ -513,6 +509,30 @@ print_roasets(struct prefixset_head *psh)
 		}
 		printf("\n}\n\n");
 	}
+}
+
+void
+print_roa(struct prefixset_tree *p)
+{
+	struct prefixset_item	*psi;
+	struct roa_set		*rs;
+	size_t			 i, n;
+
+	if (RB_EMPTY(p))
+		return;
+
+	printf("roa-set {");
+	RB_FOREACH(psi, prefixset_tree, p) {
+		rs = set_get(psi->set, &n);
+		for (i = 0; i < n; i++) {
+			printf("\n\t");
+			print_prefix(&psi->p);
+			if (psi->p.len != rs[i].maxlen)
+				printf(" maxlen %u", rs[i].maxlen);
+			printf(" source-as %u", rs[i].as);
+		}
+	}
+	printf("\n}\n\n");
 }
 
 void
@@ -741,16 +761,35 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	} else
 		printf("any ");
 
+	if (r->match.ovs.is_set) {
+		switch (r->match.ovs.validity) {
+		case ROA_VALID:
+			printf("ovs valid ");
+			break;
+		case ROA_INVALID:
+			printf("ovs invalid ");
+			break;
+		case ROA_NOTFOUND:
+			printf("ovs not-found ");
+			break;
+		default:
+			printf("ovs ??? %d ??? ", r->match.ovs.validity);
+		}
+	}
+
 	if (r->match.prefix.addr.aid != AID_UNSPEC) {
 		printf("prefix ");
 		print_prefix(&r->match.prefix);
 		printf(" ");
 	}
 
-	if (r->match.prefixset.flags & PREFIXSET_FLAG_FILTER)
+	if (r->match.prefixset.name[0] != '\0')
 		printf("prefix-set \"%s\" ", r->match.prefixset.name);
 	if (r->match.prefixset.flags & PREFIXSET_FLAG_LONGER)
 		printf("or-longer ");
+
+	if (r->match.originset.name[0] != '\0')
+		printf("origin-set \"%s\" ", r->match.originset.name);
 
 	if (r->match.nexthop.flags) {
 		if (r->match.nexthop.flags == FILTER_NEXTHOP_NEIGHBOR)
@@ -919,9 +958,10 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	struct rdomain		*rd;
 
 	print_mainconf(conf);
-	print_prefixsets(conf->prefixsets);
+	print_roa(&conf->roa);
 	print_as_sets(conf->as_sets);
-	print_roasets(conf->roasets);
+	print_prefixsets(&conf->prefixsets);
+	print_originsets(&conf->originsets);
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net, "");
 	if (!SIMPLEQ_EMPTY(rdom_l))

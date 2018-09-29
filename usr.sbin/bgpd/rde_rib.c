@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.178 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.179 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,11 +48,11 @@ struct rib_entry *rib_restart(struct rib_context *);
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
-int		 prefix_add(struct bgpd_addr *, int, struct rib *,
+static int	 prefix_add(struct bgpd_addr *, int, struct rib *,
 		    struct rde_peer *, struct rde_aspath *,
-		    struct filterstate *);
-int		 prefix_move(struct prefix *, struct rde_peer *,
-		    struct rde_aspath *, struct filterstate *);
+		    struct filterstate *, u_int8_t);
+static int	 prefix_move(struct prefix *, struct rde_peer *,
+		    struct rde_aspath *, struct filterstate *, u_int8_t);
 
 static inline void
 re_lock(struct rib_entry *re)
@@ -419,7 +419,7 @@ path_hash_stats(struct rde_hashstats *hs)
 
 int
 path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
-    struct bgpd_addr *prefix, int prefixlen)
+    struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
 {
 	struct rde_aspath	*asp, *nasp = &state->aspath;
 	struct prefix		*p;
@@ -438,6 +438,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 		    prefix_nhflags(p) == state->nhflags) {
 			/* no change, update last change */
 			p->lastchange = time(NULL);
+			p->validation_state = vstate;
 			return (0);
 		}
 	}
@@ -455,10 +456,10 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 
 	/* If the prefix was found move it else add it to the aspath. */
 	if (p != NULL)
-		return (prefix_move(p, peer, asp, state));
+		return (prefix_move(p, peer, asp, state, vstate));
 	else
 		return (prefix_add(prefix, prefixlen, rib, peer, asp,
-		    state));
+		    state, vstate));
 }
 
 int
@@ -499,6 +500,10 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	if (a->pftableid > b->pftableid)
 		return (1);
 	if (a->pftableid < b->pftableid)
+		return (-1);
+	if (a->source_as > b->source_as)
+		return (1);
+	if (a->source_as < b->source_as)
 		return (-1);
 
 	r = aspath_compare(a->aspath, b->aspath);
@@ -673,6 +678,7 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 	dst->lpref = src->lpref;
 	dst->weight = src->weight;
 	dst->origin = src->origin;
+	dst->source_as = src->source_as;
 	dst->rtlabelid = rtlabel_ref(src->rtlabelid);
 	dst->pftableid = pftable_ref(src->pftableid);
 
@@ -739,7 +745,7 @@ static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
 static void		 prefix_link(struct prefix *, struct rib_entry *,
 			     struct rde_peer *, struct rde_aspath *,
-			     struct filterstate *);
+			     struct filterstate *, u_int8_t);
 static void		 prefix_unlink(struct prefix *);
 
 /*
@@ -760,9 +766,10 @@ prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 /*
  * Adds or updates a prefix.
  */
-int
+static int
 prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
-    struct rde_peer *peer, struct rde_aspath *asp, struct filterstate *state)
+    struct rde_peer *peer, struct rde_aspath *asp, struct filterstate *state,
+    u_int8_t vstate)
 {
 	struct prefix		*p;
 	struct rib_entry	*re;
@@ -774,16 +781,17 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 	p = prefix_bypeer(re, asp->peer);
 	if (p == NULL) {
 		p = prefix_alloc();
-		prefix_link(p, re, peer, asp, state);
+		prefix_link(p, re, peer, asp, state, vstate);
 		return (1);
 	} else {
 		if (prefix_aspath(p) != asp ||
 		    prefix_nexthop(p) != state->nexthop ||
 		    prefix_nhflags(p) != state->nhflags) {
 			/* prefix metadata changed therefor move */
-			return (prefix_move(p, peer, asp, state));
+			return (prefix_move(p, peer, asp, state, vstate));
 		}
 		p->lastchange = time(NULL);
+		p->validation_state = vstate;
 		return (0);
 	}
 }
@@ -791,9 +799,9 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 /*
  * Move the prefix to the specified as path, removes the old asp if needed.
  */
-int
+static int
 prefix_move(struct prefix *p, struct rde_peer *peer,
-    struct rde_aspath *asp, struct filterstate *state)
+    struct rde_aspath *asp, struct filterstate *state, u_int8_t vstate)
 {
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
@@ -809,6 +817,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->re = p->re;
 	np->lastchange = time(NULL);
 	np->nhflags = state->nhflags;
+	np->validation_state = vstate;
 
 	/* add to new as path */
 	TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
@@ -1057,7 +1066,7 @@ prefix_network_clean(struct rde_peer *peer)
  */
 static void
 prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_peer *peer,
-    struct rde_aspath *asp, struct filterstate *state)
+    struct rde_aspath *asp, struct filterstate *state, u_int8_t vstate)
 {
 	TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
 
@@ -1068,6 +1077,7 @@ prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_peer *peer,
 	pref->re = re;
 	pref->lastchange = time(NULL);
 	pref->nhflags = state->nhflags;
+	pref->validation_state = vstate;
 
 	/* make route decision */
 	prefix_evaluate(pref, re);

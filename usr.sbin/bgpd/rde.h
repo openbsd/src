@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.194 2018/09/29 07:43:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.195 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -36,11 +36,10 @@ enum peer_state {
 	PEER_ERR	/* error occurred going to PEER_DOWN state */
 };
 
-enum roa_state {
-	ROA_UNKNOWN,
-	ROA_INVALID,
-	ROA_VALID
-};
+#define	ROA_NOTFOUND	0x0	/* default */
+#define	ROA_INVALID	0x1
+#define	ROA_VALID	0x2
+#define	ROA_MASK	0x3
 
 /*
  * How do we identify peers between the session handler and the rde?
@@ -193,6 +192,7 @@ struct rde_aspath {
 	struct aspath			*aspath;
 	u_int64_t			 hash;
 	u_int32_t			 flags;		/* internally used */
+	u_int32_t			 source_as;	/* cached source_as */
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int32_t			 weight;	/* low prio lpref */
@@ -313,6 +313,7 @@ struct prefix {
 	struct rde_peer			*peer;
 	struct nexthop			*nexthop;	/* may be NULL */
 	time_t				 lastchange;
+	u_int8_t			 validation_state;
 	u_int8_t			 nhflags;
 };
 
@@ -326,24 +327,6 @@ struct filterstate {
 	struct nexthop		*nexthop;
 	u_int8_t		 nhflags;
 };
-
-struct tentry_v4;
-struct tentry_v6;
-struct trie_head {
-	struct tentry_v4	*root_v4;
-	struct tentry_v6	*root_v6;
-	int			 match_default_v4;
-	int			 match_default_v6;
-};
-
-struct rde_prefixset {
-	char				name[SET_NAME_LEN];
-	struct trie_head		th;
-	SIMPLEQ_ENTRY(rde_prefixset)	entry;
-	int				dirty;
-	int				roa;
-};
-SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
 
 extern struct rde_memstats rdemem;
 
@@ -398,6 +381,7 @@ u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(const void *, u_int16_t);
 u_int32_t	 aspath_neighbor(struct aspath *);
+u_int32_t	 aspath_origin(struct aspath *);
 int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
@@ -503,7 +487,7 @@ void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 void		 path_hash_stats(struct rde_hashstats *);
 int		 path_update(struct rib *, struct rde_peer *,
-		     struct filterstate *, struct bgpd_addr *, int);
+		     struct filterstate *, struct bgpd_addr *, int, u_int8_t);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 void		 path_remove(struct rde_aspath *);
 u_int32_t	 path_remove_stale(struct rde_aspath *, u_int8_t, time_t);
@@ -551,6 +535,12 @@ static inline u_int8_t
 prefix_nhflags(struct prefix *p)
 {
 	return (p->nhflags);
+}
+
+static inline u_int8_t
+prefix_vstate(struct prefix *p)
+{
+	return (p->validation_state & ROA_MASK);
 }
 
 void		 nexthop_init(u_int32_t);

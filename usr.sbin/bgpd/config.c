@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.76 2018/09/21 20:45:50 kn Exp $ */
+/*	$OpenBSD: config.c,v 1.77 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -63,11 +63,6 @@ new_config(void)
 	    conf->default_tableid) == -1)
 		fatal(NULL);
 
-	if ((conf->prefixsets = calloc(1, sizeof(struct prefixset_head)))
-	    == NULL)
-		fatal(NULL);
-	if ((conf->roasets = calloc(1, sizeof(struct prefixset_head))) == NULL)
-		fatal(NULL);
 	if ((conf->as_sets = calloc(1, sizeof(struct as_set_head))) == NULL)
 		fatal(NULL);
 	if ((conf->filters = calloc(1, sizeof(struct filter_head))) == NULL)
@@ -81,8 +76,9 @@ new_config(void)
 	/* init the various list for later */
 	TAILQ_INIT(&conf->networks);
 	SIMPLEQ_INIT(&conf->rdomains);
-	SIMPLEQ_INIT(conf->prefixsets);
-	SIMPLEQ_INIT(conf->roasets);
+	SIMPLEQ_INIT(&conf->prefixsets);
+	SIMPLEQ_INIT(&conf->originsets);
+	RB_INIT(&conf->roa);
 	SIMPLEQ_INIT(conf->as_sets);
 
 	TAILQ_INIT(conf->filters);
@@ -122,22 +118,25 @@ void
 free_prefixsets(struct prefixset_head *psh)
 {
 	struct prefixset	*ps;
-	struct prefixset_item	*psi, *npsi;
-
-	if (psh == NULL)
-		return;
 
 	while (!SIMPLEQ_EMPTY(psh)) {
 		ps = SIMPLEQ_FIRST(psh);
-		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
-			RB_REMOVE(prefixset_tree, &ps->psitems, psi);
-			set_free(psi->set);
-			free(psi);
-		}
+		free_prefixtree(&ps->psitems);
 		SIMPLEQ_REMOVE_HEAD(psh, entry);
 		free(ps);
 	}
-	free(psh);
+}
+
+void
+free_prefixtree(struct prefixset_tree *p)
+{
+	struct prefixset_item	*psi, *npsi;
+
+	RB_FOREACH_SAFE(psi, prefixset_tree, p, npsi) {
+		RB_REMOVE(prefixset_tree, p, psi);
+		set_free(psi->set);
+		free(psi);
+	}
 }
 
 void
@@ -149,8 +148,9 @@ free_config(struct bgpd_config *conf)
 	free_rdomains(&conf->rdomains);
 	free_networks(&conf->networks);
 	filterlist_free(conf->filters);
-	free_prefixsets(conf->prefixsets);
-	free_prefixsets(conf->roasets);
+	free_prefixsets(&conf->prefixsets);
+	free_prefixsets(&conf->originsets);
+	free_prefixtree(&conf->roa);
 	as_sets_free(conf->as_sets);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
@@ -224,15 +224,19 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	xconf->filters = conf->filters;
 	conf->filters = NULL;
 
-	/* switch the prefixsets, first remove the old ones */
-	free_prefixsets(xconf->prefixsets);
-	xconf->prefixsets = conf->prefixsets;
-	conf->prefixsets = NULL;
+	/* switch the roa, first remove the old one */
+	free_prefixtree(&xconf->roa);
+	/* then move the RB tree root */
+	RB_ROOT(&xconf->roa) = RB_ROOT(&conf->roa);
+	RB_ROOT(&conf->roa) = NULL;
 
-	/* switch the roasets, first remove the old ones */
-	free_prefixsets(xconf->roasets);
-	xconf->roasets = conf->roasets;
-	conf->roasets = NULL;
+	/* switch the prefixsets, first remove the old ones */
+	free_prefixsets(&xconf->prefixsets);
+	SIMPLEQ_CONCAT(&xconf->prefixsets, &conf->prefixsets);
+
+	/* switch the originsets, first remove the old ones */
+	free_prefixsets(&xconf->originsets);
+	SIMPLEQ_CONCAT(&xconf->originsets, &conf->originsets);
 
 	/* switch the as_sets, first remove the old ones */
 	as_sets_free(xconf->as_sets);
@@ -511,7 +515,7 @@ expand_networks(struct bgpd_config *c)
 	TAILQ_FOREACH_SAFE(n, nw, entry, tmp) {
 		if (n->net.type == NETWORK_PREFIXSET) {
 			TAILQ_REMOVE(nw, n, entry);
-			if ((ps = find_prefixset(n->net.psname, c->prefixsets))
+			if ((ps = find_prefixset(n->net.psname, &c->prefixsets))
 			    == NULL)
 				fatal("%s: prefixset %s not found", __func__,
 				    n->net.psname);

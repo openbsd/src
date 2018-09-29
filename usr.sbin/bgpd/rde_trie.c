@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.8 2018/09/26 14:47:20 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.9 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -543,7 +543,7 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 {
 	struct tentry_v4 *n;
 	struct roa_set *rs;
-	int validity = ROA_UNKNOWN;
+	int validity = ROA_NOTFOUND;
 
 	/* ignore possible default route since it does not make sense */
 
@@ -565,8 +565,8 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 			 */
 			validity = ROA_INVALID;
 
-			/* Treat AS 0 as NONE which can never be matched */
-			if (as != 0) {
+			/* AS_NONE can never match, so don't try */
+			if (as != AS_NONE) {
 				if ((rs = set_match(n->set, as)) != NULL) {
 				    if (plen == n->plen || plen <= rs->maxlen)
 					return ROA_VALID;
@@ -591,7 +591,7 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 {
 	struct tentry_v6 *n;
 	struct roa_set *rs;
-	int validity = ROA_UNKNOWN;
+	int validity = ROA_NOTFOUND;
 
 	/* ignore possible default route since it does not make sense */
 
@@ -613,8 +613,8 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 			 */
 			validity = ROA_INVALID;
 
-			/* Treat AS 0 as NONE which can never be matched */
-			if (as != 0) {
+			/* AS_NONE can never match, so don't try */
+			if (as != AS_NONE) {
 				if ((rs = set_match(n->set, as)) != NULL)
 				    if (plen == n->plen || plen <= rs->maxlen)
 					return ROA_VALID;
@@ -635,9 +635,9 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 /*
  * Do a ROA (Route Origin Validation) check.  Look for elements in the trie
  * which cover prefix "prefix/plen" and match the source-as as.
- * AS 0 is treated here like AS NONE and should be used when the source-as
- * is unknown (e.g. AS_SET). In other words the check will then only return
- * ROA_UNKNOWN or ROA_INVALID depending if the prefix is covered by the ROA.
+ * AS_NONE can be used when the source-as is unknown (e.g. AS_SET).
+ * The check will then only return ROA_NOTFOUND or ROA_INVALID depending if
+ * the prefix is covered by the ROA.
  */
 int
 trie_roa_check(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
@@ -650,8 +650,8 @@ trie_roa_check(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 	case AID_INET6:
 		return trie_roa_check_v6(th, &prefix->v6, plen, as);
 	default:
-		/* anything else is unknown */
-		return ROA_UNKNOWN;
+		/* anything else is not-found */
+		return ROA_NOTFOUND;
 	}
 }
 

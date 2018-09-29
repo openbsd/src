@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.360 2018/09/27 13:48:00 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.361 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,8 +92,8 @@ static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct rdomain		*currdom;
-static struct prefixset		*curpset;
-static struct prefixset		*curroaset;
+static struct prefixset		*curpset, *curoset;
+static struct prefixset_tree	*curpsitree;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -213,7 +213,8 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
-%token	PREFIX PREFIXLEN PREFIXSET ROASET
+%token	PREFIX PREFIXLEN PREFIXSET
+%token	ROASET ORIGINSET OVS
 %token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
@@ -226,7 +227,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family restart origincode nettype
-%type	<v.number>		yesno inout restricted
+%type	<v.number>		yesno inout restricted validity
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -253,6 +254,7 @@ grammar		: /* empty */
 		| grammar as_set '\n'
 		| grammar prefixset '\n'
 		| grammar roa_set '\n'
+		| grammar origin_set '\n'
 		| grammar conf_main '\n'
 		| grammar rdomain '\n'
 		| grammar neighbor '\n'
@@ -432,7 +434,7 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 			}
 			free($2);
 		} prefixset_l optnl '}'			{
-			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
+			SIMPLEQ_INSERT_TAIL(&conf->prefixsets, curpset, entry);
 			curpset = NULL;
 		}
 		| PREFIXSET STRING '{' optnl '}'	{
@@ -441,7 +443,7 @@ prefixset	: PREFIXSET STRING '{' optnl		{
 				YYERROR;
 			}
 			free($2);
-			SIMPLEQ_INSERT_TAIL(conf->prefixsets, curpset, entry);
+			SIMPLEQ_INSERT_TAIL(&conf->prefixsets, curpset, entry);
 			curpset = NULL;
 		}
 
@@ -492,24 +494,35 @@ prefixset_item	: prefix prefixlenop			{
 		}
 		;
 
-roa_set		: ROASET STRING '{' optnl		{
-			if ((curroaset = new_prefix_set($2, 1)) == NULL) {
+roa_set		: ROASET '{' optnl		{
+			curpsitree = &conf->roa;
+		} roa_set_l optnl '}'			{
+			curpsitree = NULL;
+		}
+		| ROASET '{' optnl '}'		/* nothing */
+		;
+
+origin_set	: ORIGINSET STRING '{' optnl		{
+			if ((curoset = new_prefix_set($2, 1)) == NULL) {
 				free($2);
 				YYERROR;
 			}
+			curpsitree = &curoset->psitems;
 			free($2);
 		} roa_set_l optnl '}'			{
-			SIMPLEQ_INSERT_TAIL(conf->roasets, curroaset, entry);
-			curroaset = NULL;
+			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
+			curoset = NULL;
+			curpsitree = NULL;
 		}
-		| ROASET STRING '{' optnl '}'		{
-			if ((curroaset = new_prefix_set($2, 1)) == NULL) {
+		| ORIGINSET STRING '{' optnl '}'		{
+			if ((curoset = new_prefix_set($2, 1)) == NULL) {
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			SIMPLEQ_INSERT_TAIL(conf->roasets, curroaset, entry);
-			curroaset = NULL;
+			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
+			curoset = NULL;
+			curpsitree = NULL;
 		}
 		;
 
@@ -864,7 +877,7 @@ network		: NETWORK prefix filter_set	{
 		| NETWORK PREFIXSET STRING filter_set	{
 			struct prefixset *ps;
 			struct network	*n;
-			if ((ps = find_prefixset($3, conf->prefixsets))
+			if ((ps = find_prefixset($3, &conf->prefixsets))
 			    == NULL) {
 				yyerror("prefix-set %s not defined", ps->name);
 				free($3);
@@ -2175,6 +2188,21 @@ filter_elm	: filter_prefix_h	{
 			free($2);
 			free($3);
 		}
+		| EXTCOMMUNITY OVS STRING {
+			if (fmopts.m.ext_community.flags &
+			    EXT_COMMUNITY_FLAG_VALID) {
+				yyerror("\"ext-community\" already specified");
+				free($3);
+				YYERROR;
+			}
+
+			if (parseextcommunity(&fmopts.m.ext_community,
+			    "ovs", $3) == -1) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
 		| NEXTHOP address 	{
 			if (fmopts.m.nexthop.flags) {
 				yyerror("nexthop already specified");
@@ -2204,9 +2232,9 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
-			if ((ps = find_prefixset($2, conf->prefixsets))
+			if ((ps = find_prefixset($2, &conf->prefixsets))
 			    == NULL) {
-				yyerror("prefix-set not defined");
+				yyerror("prefix-set '%s' not defined", $2);
 				free($2);
 				YYERROR;
 			}
@@ -2228,7 +2256,7 @@ filter_elm	: filter_prefix_h	{
 			if ($3.op == OP_RANGE && ps->sflags & PREFIXSET_FLAG_OPS) {
 				yyerror("prefix-set %s contains prefixlen "
 				    "operators and cannot be used with an "
-				    "or-longer filter", ps->name);
+				    "or-longer filter", $2);
 				free($2);
 				YYERROR;
 			}
@@ -2237,8 +2265,35 @@ filter_elm	: filter_prefix_h	{
 				fmopts.m.prefixset.flags |=
 				    PREFIXSET_FLAG_LONGER;
 			fmopts.m.prefixset.flags |= PREFIXSET_FLAG_FILTER;
-			fmopts.m.prefixset.ps = NULL;
 			free($2);
+		}
+		| ORIGINSET STRING {
+			if (fmopts.m.originset.name[0] != '\0') {
+				yyerror("origin-set filter already specified");
+				free($2);
+				YYERROR;
+			}
+			if (find_prefixset($2, &conf->originsets) == NULL) {
+				yyerror("origin-set '%s' not defined", $2);
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(fmopts.m.originset.name, $2,
+			    sizeof(fmopts.m.originset.name)) >=
+			    sizeof(fmopts.m.originset.name)) {
+				yyerror("origin-set name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| OVS validity		{
+			if (fmopts.m.ovs.is_set) {
+				yyerror("ovs filter already specified");
+				YYERROR;
+			}
+			fmopts.m.ovs.validity = $2;
+			fmopts.m.ovs.is_set = 1;
 		}
 		;
 
@@ -2647,6 +2702,22 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			free($3);
 			free($4);
 		}
+		| EXTCOMMUNITY delete OVS STRING {
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			if ($2)
+				$$->type = ACTION_DEL_EXT_COMMUNITY;
+			else
+				$$->type = ACTION_SET_EXT_COMMUNITY;
+
+			if (parseextcommunity(&$$->action.ext_community,
+			    "ovs", $4) == -1) {
+				free($4);
+				free($$);
+				YYERROR;
+			}
+			free($4);
+		}
 		| ORIGIN origincode {
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -2655,7 +2726,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 		}
 		;
 
-origincode	: string {
+origincode	: STRING	{
 			if (!strcmp($1, "egp"))
 				$$ = ORIGIN_EGP;
 			else if (!strcmp($1, "igp"))
@@ -2664,6 +2735,21 @@ origincode	: string {
 				$$ = ORIGIN_INCOMPLETE;
 			else {
 				yyerror("unknown origin \"%s\"", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		};
+
+validity	: STRING	{
+			if (!strcmp($1, "not-found"))
+				$$ = ROA_NOTFOUND;
+			else if (!strcmp($1, "invalid"))
+				$$ = ROA_INVALID;
+			else if (!strcmp($1, "valid"))
+				$$ = ROA_VALID;
+			else {
+				yyerror("unknown validity \"%s\"", $1);
 				free($1);
 				YYERROR;
 			}
@@ -2798,7 +2884,9 @@ lookup(char *s)
 		{ "on",			ON},
 		{ "or-longer",		LONGER},
 		{ "origin",		ORIGIN},
+		{ "origin-set",		ORIGINSET},
 		{ "out",		OUT},
+		{ "ovs",		OVS},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},
 		{ "peer-as",		PEERAS},
@@ -4287,12 +4375,12 @@ static struct prefixset *
 new_prefix_set(char *name, int is_roa)
 {
 	const char *type = "prefix-set";
-	struct prefixset_head *sets = conf->prefixsets;
+	struct prefixset_head *sets = &conf->prefixsets;
 	struct prefixset *pset;
 
 	if (is_roa) {
 		type = "roa-set";
-		sets = conf->roasets;
+		sets = &conf->originsets;
 	}
 
 	if (find_prefixset(name, sets) != NULL)  {
@@ -4321,7 +4409,7 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	/* no prefixlen option in this tree */
 	npsi->p.op = OP_NONE;
 	npsi->p.len_max = npsi->p.len_min = npsi->p.len;
-	psi = RB_INSERT(prefixset_tree, &curroaset->psitems, npsi);
+	psi = RB_INSERT(prefixset_tree, curpsitree, npsi);
 	if (psi == NULL)
 		psi = npsi;
 

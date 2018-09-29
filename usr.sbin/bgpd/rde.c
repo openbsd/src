@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.429 2018/09/29 07:58:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.430 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,9 @@ void		 rde_update6_queue_runner(u_int8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
 void		 rde_free_prefixsets(struct rde_prefixset_head *);
 void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
-			struct rde_prefixset_head *);
+		     struct rde_prefixset_head *);
+u_int8_t	 rde_roa_validity(struct rde_prefixset *,
+		     struct bgpd_addr *, u_int8_t, u_int32_t);
 
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
@@ -130,8 +132,9 @@ struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
-struct rde_prefixset_head *prefixsets_tmp, *prefixsets_old;
-struct rde_prefixset_head *roasets_tmp, *roasets_old;
+struct rde_prefixset_head prefixsets_old;
+struct rde_prefixset_head originsets_old;
+struct rde_prefixset	 roa_old;
 struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct rdomain_head	*rdomains_l, *newdomains;
@@ -500,6 +503,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			asp->origin = csr.origin;
 			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
 			asp->aspath = aspath_get(asdata, csr.aspath_len);
+			asp->source_as = aspath_origin(asp->aspath);
 			netconf_s.asp = asp;
 			break;
 		case IMSG_NETWORK_ATTR:
@@ -771,16 +775,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    sizeof(struct bgpd_config))
 				fatalx("IMSG_RECONF_CONF bad len");
 			reloadtime = time(NULL);
-			prefixsets_tmp = calloc(1,
-			    sizeof(struct rde_prefixset_head));
-			if (prefixsets_tmp == NULL)
-				fatal(NULL);
-			SIMPLEQ_INIT(prefixsets_tmp);
-			roasets_tmp = calloc(1,
-			    sizeof(struct rde_prefixset_head));
-			if (roasets_tmp == NULL)
-				fatal(NULL);
-			SIMPLEQ_INIT(roasets_tmp);
 			as_sets_tmp = calloc(1,
 			    sizeof(struct as_set_head));
 			if (as_sets_tmp == NULL)
@@ -803,6 +797,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					break;
 				ribs[rid].state = RECONF_DELETE;
 			}
+			SIMPLEQ_INIT(&nconf->rde_prefixsets);
+			SIMPLEQ_INIT(&nconf->rde_originsets);
+			memset(&nconf->rde_roa, 0, sizeof(nconf->rde_roa));
 			break;
 		case IMSG_RECONF_RIB:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -838,13 +835,21 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
-			if (r->match.prefixset.flags != 0) {
+			if (r->match.prefixset.name[0] != '\0') {
 				r->match.prefixset.ps =
 				    rde_find_prefixset(r->match.prefixset.name,
-					prefixsets_tmp);
+					&nconf->rde_prefixsets);
 				if (r->match.prefixset.ps == NULL)
 					log_warnx("%s: no prefixset for %s",
 					    __func__, r->match.prefixset.name);
+			}
+			if (r->match.originset.name[0] != '\0') {
+				r->match.originset.ps =
+				    rde_find_prefixset(r->match.originset.name,
+					&nconf->rde_originsets);
+				if (r->match.originset.ps == NULL)
+					log_warnx("%s: no origin-set for %s",
+					    __func__, r->match.originset.name);
 			}
 			if (r->match.as.flags & AS_FLAG_AS_SET_NAME) {
 				struct as_set * aset;
@@ -883,24 +888,32 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			} else
 				TAILQ_INSERT_TAIL(out_rules_tmp, r, entry);
 			break;
-		case IMSG_RECONF_PREFIXSET:
-		case IMSG_RECONF_ROA_SET:
+		case IMSG_RECONF_PREFIX_SET:
+		case IMSG_RECONF_ORIGIN_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(ps->name))
-				fatalx("IMSG_RECONF_PREFIXSET bad len");
+				fatalx("IMSG_RECONF_PREFIX_SET bad len");
 			ps = calloc(1, sizeof(struct rde_prefixset));
 			if (ps == NULL)
 				fatal(NULL);
 			memcpy(ps->name, imsg.data, sizeof(ps->name));
-			if (imsg.hdr.type == IMSG_RECONF_ROA_SET) {
-				SIMPLEQ_INSERT_TAIL(roasets_tmp, ps, entry);
-				ps->roa = 1;
-			} else
-				SIMPLEQ_INSERT_TAIL(prefixsets_tmp, ps, entry);
+			if (imsg.hdr.type == IMSG_RECONF_ORIGIN_SET) {
+				SIMPLEQ_INSERT_TAIL(&nconf->rde_originsets, ps,
+				    entry);
+			} else {
+				SIMPLEQ_INSERT_TAIL(&nconf->rde_prefixsets, ps,
+				    entry);
+			}
 			last_prefixset = ps;
 			last_set = NULL;
 			break;
-		case IMSG_RECONF_ROA_AS_SET_ITEMS:
+		case IMSG_RECONF_ROA_SET:
+			strlcpy(nconf->rde_roa.name, "RPKI ROA",
+			    sizeof(nconf->rde_roa.name));
+			last_prefixset = &nconf->rde_roa;
+			last_set = NULL;
+			break;
+		case IMSG_RECONF_ROA_SET_ITEMS:
 			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
 			nmemb /= sizeof(struct roa_set);
 			if (last_set == NULL) {
@@ -911,14 +924,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (set_add(last_set, imsg.data, nmemb) != 0)
 				fatal(NULL);
 			break;
-		case IMSG_RECONF_PREFIXSETITEM:
+		case IMSG_RECONF_PREFIX_SET_ITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(psi))
-				fatalx("IMSG_RECONF_PREFIXSETITEM bad len");
+				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
 			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
-			if (last_prefixset->roa) {
+			if (last_set) {
 				set_prep(last_set);
 				rv = trie_roa_add(&last_prefixset->th,
 				    &psi.p.addr, psi.p.len, last_set);
@@ -1129,6 +1142,10 @@ rde_update_dispatch(struct imsg *imsg)
 			    goto done;
 			}
 		}
+
+		if (state.aspath.flags & F_ATTR_ASPATH)
+			state.aspath.source_as =
+			    aspath_origin(state.aspath.aspath);
 
 		rde_reflector(peer, &state.aspath);
 	}
@@ -1388,12 +1405,17 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	struct filterstate	 state;
 	struct prefix		*p;
 	enum filter_actions	 action;
+	u_int8_t		 vstate;
 	u_int16_t		 i;
 	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
+	vstate = rde_roa_validity(&conf->rde_roa, prefix, prefixlen,
+	    in->aspath.source_as);
+
 	/* add original path to the Adj-RIB-In */
-	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen))
+	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen,
+	    vstate))
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1424,7 +1446,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			path_update(&ribs[i].rib, peer, &state, prefix,
-			    prefixlen);
+			    prefixlen, vstate);
 		} else if (prefix_remove(&ribs[i].rib, peer, prefix,
 		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
@@ -2831,16 +2853,21 @@ rde_reload_done(void)
 			nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 	}
 
-	prefixsets_old = conf->rde_prefixsets;
-	roasets_old = conf->rde_roasets;
+	SIMPLEQ_INIT(&prefixsets_old);
+	SIMPLEQ_INIT(&originsets_old);
+	SIMPLEQ_CONCAT(&prefixsets_old, &conf->rde_prefixsets);
+	SIMPLEQ_CONCAT(&originsets_old, &conf->rde_originsets);
+	roa_old = conf->rde_roa;
 	as_sets_old = conf->as_sets;
 
 	memcpy(conf, nconf, sizeof(struct bgpd_config));
 	conf->listen_addrs = NULL;
 	conf->csock = NULL;
 	conf->rcsock = NULL;
-	conf->prefixsets = NULL;
-	conf->roasets = NULL;
+	SIMPLEQ_INIT(&conf->rde_prefixsets);
+	SIMPLEQ_INIT(&conf->rde_originsets);
+	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
+	SIMPLEQ_CONCAT(&conf->rde_originsets, &nconf->rde_originsets);
 	free(nconf);
 	nconf = NULL;
 
@@ -2864,17 +2891,19 @@ rde_reload_done(void)
 	rdomains_l = newdomains;
 	/* XXX WHERE IS THE SYNC ??? */
 
-	rde_mark_prefixsets_dirty(prefixsets_old, prefixsets_tmp);
-	rde_mark_prefixsets_dirty(roasets_old, roasets_tmp);
+	/* check if roa changed */
+	if (trie_equal(&conf->rde_roa.th, &roa_old.th) == 0) {
+		log_debug("roa change: reloading Adj-RIB-In");
+		conf->rde_roa.dirty = 1;
+		reload++;	/* run softreconf in */
+	}
+	trie_free(&roa_old.th);	/* old roa no longer needed */
+
+	rde_mark_prefixsets_dirty(&prefixsets_old, &conf->rde_prefixsets);
+	rde_mark_prefixsets_dirty(&originsets_old, &conf->rde_originsets);
 	as_sets_mark_dirty(as_sets_old, as_sets_tmp);
 
-	/* swap the prefixsets */
-	conf->rde_prefixsets = prefixsets_tmp;
-	prefixsets_tmp = NULL;
-	/* the roa-sets */
-	conf->rde_roasets = roasets_tmp;
-	roasets_tmp = NULL;
-	/* and the as_sets */
+	/* swap the as_sets */
 	conf->as_sets = as_sets_tmp;
 	as_sets_tmp = NULL;
 
@@ -3063,10 +3092,8 @@ rde_softreconfig_done(void)
 		ribs[rid].state = RECONF_NONE;
 	}
 
-	rde_free_prefixsets(prefixsets_old);
-	prefixsets_old = NULL;
-	rde_free_prefixsets(roasets_old);
-	roasets_old = NULL;
+	rde_free_prefixsets(&prefixsets_old);
+	rde_free_prefixsets(&originsets_old);
 	as_sets_free(as_sets_old);
 	as_sets_old = NULL;
 
@@ -3085,25 +3112,39 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
 	enum filter_actions	 action;
-	struct bgpd_addr	 addr;
+	struct bgpd_addr	 prefix;
+	int			 force_eval;
+	u_int8_t		 vstate;
 	u_int16_t		 i;
 
 	pt = re->prefix;
-	pt_getaddr(pt, &addr);
+	pt_getaddr(pt, &prefix);
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		asp = prefix_aspath(p);
 		peer = prefix_peer(p);
+		force_eval = 0;
+
+		if (conf->rde_roa.dirty) {
+			/* ROA validation state update */
+			vstate = rde_roa_validity(&conf->rde_roa,
+			    &prefix, pt->prefixlen, asp->source_as);
+			if (vstate != p->validation_state) {
+				force_eval = 1;
+				p->validation_state = vstate;
+			}
+		}
 
 		/* skip announced networks, they are never filtered */
 		if (asp->flags & F_PREFIX_ANNOUNCED)
 			continue;
 
 		for (i = RIB_LOC_START; i < rib_size; i++) {
-			rib = &ribs[i];
-			if (rib->state != RECONF_RELOAD)
-				continue;
 			if (!rib_valid(i))
-				break;
+				continue;
+
+			rib = &ribs[i];
+			if (rib->state != RECONF_RELOAD && !force_eval)
+				continue;
 
 			rde_filterstate_prep(&state, asp, prefix_nexthop(p),
 			    prefix_nhflags(p));
@@ -3111,11 +3152,11 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
-				path_update(&rib->rib, peer, &state, &addr,
-				    pt->prefixlen);
+				path_update(&rib->rib, peer, &state, &prefix,
+				    pt->prefixlen, vstate);
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
-				prefix_remove(&rib->rib, peer, &addr,
+				prefix_remove(&rib->rib, peer, &prefix,
 				    pt->prefixlen);
 			}
 
@@ -3627,6 +3668,7 @@ network_add(struct network_config *nc, int flagstatic)
 	struct rde_aspath	*asp;
 	struct filter_set_head	*vpnset = NULL;
 	in_addr_t		 prefix4;
+	u_int8_t		 vstate;
 	u_int16_t		 i;
 
 	if (nc->rtableid != conf->default_tableid) {
@@ -3671,6 +3713,7 @@ network_add(struct network_config *nc, int flagstatic)
 		asp = path_get();
 		asp->aspath = aspath_get(NULL, 0);
 		asp->origin = ORIGIN_IGP;
+		asp->source_as = aspath_origin(asp->aspath);
 		asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
 		    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 		/* the nexthop is unset unless a default set overrides it */
@@ -3683,8 +3726,10 @@ network_add(struct network_config *nc, int flagstatic)
 		rde_apply_set(vpnset, &state, nc->prefix.aid, peerself,
 		    peerself);
 
+	vstate = rde_roa_validity(&conf->rde_roa, &nc->prefix,
+	    nc->prefixlen, asp->source_as);
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peerself, &state, &nc->prefix,
-		    nc->prefixlen))
+		    nc->prefixlen, vstate))
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
@@ -3693,7 +3738,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    state.nexthop ? &state.nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
 		path_update(&ribs[i].rib, peerself, &state, &nc->prefix,
-		    nc->prefixlen);
+		    nc->prefixlen, vstate);
 	}
 	rde_filterstate_clean(&state);
 	path_put(asp);
@@ -3902,4 +3947,14 @@ rde_mark_prefixsets_dirty(struct rde_prefixset_head *psold,
 				new->dirty = 1;
 		}
 	}
+}
+
+u_int8_t
+rde_roa_validity(struct rde_prefixset *ps, struct bgpd_addr *prefix,
+    u_int8_t plen, u_int32_t as)
+{
+	int r;
+
+	r = trie_roa_check(&ps->th, prefix, plen, as);
+	return (r & ROA_MASK);
 }

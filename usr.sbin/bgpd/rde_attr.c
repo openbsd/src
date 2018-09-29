@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.110 2018/09/20 11:06:04 benno Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.111 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -586,7 +586,7 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 		nlen += 2 + sizeof(u_int16_t) * seg_len;
 
 		if (seg_size > olen)
-			fatalx("aspath_deflate: would overflow");
+			fatalx("%s: would overflow", __func__);
 	}
 
 	if ((ndata = malloc(nlen)) == NULL)
@@ -687,7 +687,7 @@ aspath_count(const void *data, u_int16_t len)
 			cnt += seg_len;
 
 		if (seg_size > len)
-			fatalx("aspath_count: would overflow");
+			fatalx("%s: would overflow", __func__);
 	}
 	return (cnt);
 }
@@ -719,7 +719,7 @@ aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 		clen += seg_size;
 
 		if (seg_size > len)
-			fatalx("aspath_countlength: would overflow");
+			fatalx("%s: would overflow", __func__);
 	}
 	if (headcnt > 0 && seg_type == AS_SEQUENCE && headcnt + seg_len < 256)
 		/* no need for additional header from the new aspath. */
@@ -766,7 +766,7 @@ aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
 		buf[1] = seg_len;
 		buf += seg_size;
 		if (size < seg_size)
-			fatalx("aspath_countlength: would overflow");
+			fatalx("%s: would overflow", __func__);
 		size -= seg_size;
 	}
 }
@@ -778,6 +778,41 @@ aspath_neighbor(struct aspath *aspath)
 	if (aspath->len == 0)
 		return (rde_local_as());
 	return (aspath_extract(aspath->data, 0));
+}
+
+/*
+ * The origin AS number derived from a Route as follows:
+ * o  the rightmost AS in the final segment of the AS_PATH attribute
+ *    in the Route if that segment is of type AS_SEQUENCE, or
+ * o  the BGP speaker's own AS number if that segment is of type
+ *    AS_CONFED_SEQUENCE or AS_CONFED_SET or if the AS_PATH is empty,
+ * o  the distinguished value "NONE" if the final segment of the
+ *   AS_PATH attribute is of any other type.
+ */
+u_int32_t
+aspath_origin(struct aspath *aspath)
+{
+	u_int8_t	*seg;
+	u_int32_t	 as = AS_NONE;
+	u_int16_t	 len, seg_size;
+	u_int8_t	 seg_len;
+
+	/* AS_PATH is empty */
+	if (aspath->len == 0)
+		return (rde_local_as());
+
+	seg = aspath->data;
+	for (len = aspath->len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_len = seg[1];
+		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+
+		if (len == seg_size && seg[0] == AS_SEQUENCE) {
+			as = aspath_extract(seg, seg_len - 1);
+		}
+		if (seg_size > len)
+			fatalx("%s: would overflow", __func__);
+	}
+	return (as);
 }
 
 int
@@ -798,7 +833,7 @@ aspath_loopfree(struct aspath *aspath, u_int32_t myAS)
 		}
 
 		if (seg_size > len)
-			fatalx("aspath_loopfree: would overflow");
+			fatalx("%s: would overflow", __func__);
 	}
 	return (1);
 }

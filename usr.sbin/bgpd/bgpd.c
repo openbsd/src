@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.203 2018/09/29 07:58:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.204 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -506,15 +506,15 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		return (-1);
 
 	/* prefixsets for filters in the RDE */
-	while ((ps = SIMPLEQ_FIRST(conf->prefixsets)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(conf->prefixsets, entry);
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSET, 0, 0, -1,
+	while ((ps = SIMPLEQ_FIRST(&conf->prefixsets)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->prefixsets, entry);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIX_SET, 0, 0, -1,
 		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
 		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
 			RB_REMOVE(prefixset_tree, &ps->psitems, psi);
-			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
-			    0, -1, psi, sizeof(*psi)) == -1)
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIX_SET_ITEM,
+			    0, 0, -1, psi, sizeof(*psi)) == -1)
 				return (-1);
 			set_free(psi->set);
 			free(psi);
@@ -522,10 +522,10 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		free(ps);
 	}
 
-	/* roasets for filters in the RDE */
-	while ((ps = SIMPLEQ_FIRST(conf->roasets)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(conf->roasets, entry);
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1,
+	/* originsets for filters in the RDE */
+	while ((ps = SIMPLEQ_FIRST(&conf->originsets)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->originsets, entry);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_ORIGIN_SET, 0, 0, -1,
 		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
 		RB_FOREACH_SAFE(psi, prefixset_tree, &ps->psitems, npsi) {
@@ -536,17 +536,41 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 			for (i = 0; i < n; i += l) {
 				l = (n - i > 1024 ? 1024 : n - i);
 				if (imsg_compose(ibuf_rde,
-				    IMSG_RECONF_ROA_AS_SET_ITEMS,
+				    IMSG_RECONF_ROA_SET_ITEMS,
 				    0, 0, -1, rs + i, l * sizeof(*rs)) == -1)
 					return -1;
 			}
-			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIXSETITEM, 0,
-			    0, -1, psi, sizeof(*psi)) == -1)
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIX_SET_ITEM,
+			    0, 0, -1, psi, sizeof(*psi)) == -1)
 				return (-1);
 			set_free(psi->set);
 			free(psi);
 		}
 		free(ps);
+	}
+
+	if (!RB_EMPTY(&conf->roa)) {
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1,
+		    NULL, 0) == -1)
+			return (-1);
+		RB_FOREACH_SAFE(psi, prefixset_tree, &conf->roa, npsi) {
+			struct roa_set *rs;
+			size_t i, l, n;
+			RB_REMOVE(prefixset_tree, &conf->roa, psi);
+			rs = set_get(psi->set, &n);
+			for (i = 0; i < n; i += l) {
+				l = (n - i > 1024 ? 1024 : n - i);
+				if (imsg_compose(ibuf_rde,
+				    IMSG_RECONF_ROA_SET_ITEMS,
+				    0, 0, -1, rs + i, l * sizeof(*rs)) == -1)
+					return -1;
+			}
+			if (imsg_compose(ibuf_rde, IMSG_RECONF_PREFIX_SET_ITEM,
+			    0, 0, -1, psi, sizeof(*psi)) == -1)
+				return (-1);
+			set_free(psi->set);
+			free(psi);
+		}
 	}
 
 	/* as-sets for filters in the RDE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.346 2018/09/29 07:58:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.347 2018/09/29 08:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -212,8 +212,25 @@ TAILQ_HEAD(network_head, network);
 
 struct prefixset;
 SIMPLEQ_HEAD(prefixset_head, prefixset);
-struct rde_prefixset_head;
-struct rde_prefixset;
+struct prefixset_item;
+RB_HEAD(prefixset_tree, prefixset_item);
+
+struct tentry_v4;
+struct tentry_v6;
+struct trie_head {
+	struct tentry_v4	*root_v4;
+	struct tentry_v6	*root_v6;
+	int			 match_default_v4;
+	int			 match_default_v6;
+};
+
+struct rde_prefixset {
+	char				name[SET_NAME_LEN];
+	struct trie_head		th;
+	SIMPLEQ_ENTRY(rde_prefixset)	entry;
+	int				dirty;
+};
+SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
 
 struct set_table;
 struct as_set;
@@ -228,10 +245,12 @@ struct bgpd_config {
 	struct filter_head			*filters;
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
-	struct prefixset_head			*prefixsets;
-	struct prefixset_head			*roasets;
-	struct rde_prefixset_head		*rde_prefixsets;
-	struct rde_prefixset_head		*rde_roasets;
+	struct prefixset_head			 prefixsets;
+	struct prefixset_head			 originsets;
+	struct prefixset_tree			 roa;
+	struct rde_prefixset_head		 rde_prefixsets;
+	struct rde_prefixset_head		 rde_originsets;
+	struct rde_prefixset			 rde_roa;
 	struct as_set_head			*as_sets;
 	char					*csock;
 	char					*rcsock;
@@ -428,13 +447,14 @@ enum imsg_type {
 	IMSG_RECONF_RDOMAIN_EXPORT,
 	IMSG_RECONF_RDOMAIN_IMPORT,
 	IMSG_RECONF_RDOMAIN_DONE,
-	IMSG_RECONF_PREFIXSET,
-	IMSG_RECONF_PREFIXSETITEM,
+	IMSG_RECONF_PREFIX_SET,
+	IMSG_RECONF_PREFIX_SET_ITEM,
 	IMSG_RECONF_AS_SET,
 	IMSG_RECONF_AS_SET_ITEMS,
 	IMSG_RECONF_AS_SET_DONE,
+	IMSG_RECONF_ORIGIN_SET,
 	IMSG_RECONF_ROA_SET,
-	IMSG_RECONF_ROA_AS_SET_ITEMS,
+	IMSG_RECONF_ROA_SET_ITEMS,
 	IMSG_RECONF_DRAIN,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
@@ -696,6 +716,16 @@ struct filter_prefixset {
 	struct rde_prefixset	*ps;
 };
 
+struct filter_originset {
+	char			 name[SET_NAME_LEN];
+	struct rde_prefixset	*ps;
+};
+
+struct filter_ovs {
+	u_int8_t		 validity;
+	u_int8_t		 is_set;
+};
+
 struct filter_community {
 	int		as;
 	int		type;
@@ -887,6 +917,8 @@ struct filter_match {
 	struct filter_largecommunity	large_community;
 	struct filter_extcommunity	ext_community;
 	struct filter_prefixset		prefixset;
+	struct filter_originset		originset;
+	struct filter_ovs		ovs;
 };
 
 union filter_rule_ptr {
@@ -968,7 +1000,6 @@ struct prefixset_item {
 	RB_ENTRY(prefixset_item)	entry;
 	struct set_table		*set;
 };
-RB_HEAD(prefixset_tree, prefixset_item);
 
 struct prefixset {
 	int				 sflags;
@@ -1016,6 +1047,8 @@ extern struct rib_names ribnames;
 
 /* 4-byte magic AS number */
 #define AS_TRANS	23456
+/* AS_NONE for origin validation */
+#define AS_NONE		0
 
 struct rde_memstats {
 	int64_t		path_cnt;
@@ -1100,6 +1133,7 @@ int	control_imsg_relay(struct imsg *);
 struct bgpd_config	*new_config(void);
 void			 free_config(struct bgpd_config *);
 void	free_prefixsets(struct prefixset_head *);
+void	free_prefixtree(struct prefixset_tree *);
 void	filterlist_free(struct filter_head *);
 int	host(const char *, struct bgpd_addr *, u_int8_t *);
 void	copy_filterset(struct filter_set_head *, struct filter_set_head *);
