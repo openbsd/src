@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.22 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: wc.c,v 1.23 2018/09/29 16:17:35 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -209,7 +209,8 @@ cnt(char *file)
 		gotsp = 1;
 		while ((len = getline(&buf, &bufsz, stream)) > 0) {
 			if (multibyte) {
-				for (C = buf; *C != '\0'; C += len) {
+				const char *end = buf + len;
+				for (C = buf; C < end; C += len) {
 					++charct;
 					len = mbtowc(&wc, C, MB_CUR_MAX);
 					if (len == -1) {
@@ -229,7 +230,7 @@ cnt(char *file)
 				}
 			} else {
 				charct += len;
-				for (C = buf; *C != '\0'; ++C) {
+				for (C = buf; len--; ++C) {
 					if (isspace((unsigned char)*C)) {
 						gotsp = 1;
 						if (*C == '\n')
