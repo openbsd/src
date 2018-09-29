@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.26 2018/02/10 10:00:32 dlg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.27 2018/09/29 15:53:07 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -224,19 +224,10 @@ ip6_print(const u_char *bp, u_int length)
  end:
 
 	flow = ntohl(ip6->ip6_flow);
-#if 0
-	/* rfc1883 */
-	if (flow & 0x0f000000)
-		(void)printf(" [pri 0x%x]", (flow & 0x0f000000) >> 24);
-	if (flow & 0x00ffffff)
-		(void)printf(" [flowlabel 0x%x]", flow & 0x00ffffff);
-#else
-	/* RFC 2460 */
 	if (flow & 0x0ff00000)
 		(void)printf(" [class 0x%x]", (flow & 0x0ff00000) >> 20);
 	if (flow & 0x000fffff)
 		(void)printf(" [flowlabel 0x%x]", flow & 0x000fffff);
-#endif
 
 	if (ip6->ip6_hlim <= 1)
 		(void)printf(" [hlim %d]", (int)ip6->ip6_hlim);
