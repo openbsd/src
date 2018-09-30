@@ -65,7 +65,7 @@ test_wc "a\0354\0277\0277b\n" "       1       1       4" \
 	"       1       1       6"
 
 # invalid bytes
-test_wc "a\0377\0277c\n" "       1       2       5" "       1       1       5"
+test_wc "a\0377\0277c\n" "       1       1       5"
 
 # edge cases
 test_wc "" "       0       0       0"
