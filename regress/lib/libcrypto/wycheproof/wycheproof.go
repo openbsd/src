@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.66 2018/09/22 15:53:38 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.67 2018/09/30 10:56:46 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1180,13 +1180,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	C.free(unsafe.Pointer(Cpub))
 
 	if pubKey == nil {
-		if wt.Result == "invalid" {
-			return true
-		}
-		if wt.Result == "acceptable" {
-			if acceptableAudit {
-				gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
-			}
+		if wt.Result == "invalid" || wt.Result == "acceptable" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - ASN decoding failed: want %v\n", wt.TCID, wt.Comment, wt.Flags,  wt.Result)
@@ -1222,6 +1216,9 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	if !bytes.Equal(shared, secret) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed shared secret do not match, want %v\n", wt.TCID, wt.Comment, wt.Flags,  wt.Result)
 		success = false
+	}
+	if acceptableAudit && success && wt.Result == "acceptable" {
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 	}
 	return success
 }
