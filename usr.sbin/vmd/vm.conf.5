@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.36 2018/09/09 04:09:32 ccardenas Exp $
+.\" $OpenBSD: vm.conf.5,v 1.37 2018/09/30 19:13:55 solene Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2018 $
+.Dd $Mdocdate: September 30 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -175,7 +175,9 @@ For example, this can be used to write
 rules for several VM interfaces in the same group.
 The
 .Ar group-name
-must not end with a digit.
+must not be longer than 15 characters or end with a digit,
+as described in
+.Xr ifconfig 8 .
 .It Oo Cm locked Oc Cm lladdr Op Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
@@ -354,7 +356,9 @@ For example, this can be used to write
 rules for several VM interfaces in the same group.
 The
 .Ar group-name
-must not end with a digit.
+must not be longer than 15 characters or end with a digit,
+as described in
+.Xr ifconfig 8 .
 .It Cm interface Ar name
 Set the
 .Xr switch 4
