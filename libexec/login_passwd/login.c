@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.18 2018/06/13 15:02:09 reyk Exp $	*/
+/*	$OpenBSD: login.c,v 1.19 2018/09/30 13:29:24 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -45,12 +45,8 @@ main(int argc, char **argv)
 	char *username, *password = NULL;
 	char pbuf[1024];
 	char response[1024];
-	int arg_login = 0, arg_notickets = 0;
-	char invokinguser[LOGIN_NAME_MAX];
 	char *wheel = NULL, *class = NULL;
 	struct passwd *pwd;
-
-	invokinguser[0] = '\0';
 
 	setpriority(PRIO_PROCESS, 0, 0);
 
@@ -78,13 +74,6 @@ main(int argc, char **argv)
 				wheel = optarg + 6;
 			else if (strncmp(optarg, "lastchance=", 11) == 0)
 				lastchance = (strcmp(optarg + 11, "yes") == 0);
-			else if (strcmp(optarg, "login=yes") == 0)
-				arg_login = 1;
-			else if (strcmp(optarg, "notickets=yes") == 0)
-				arg_notickets = 1;
-			else if (strncmp(optarg, "invokinguser=", 13) == 0)
-				snprintf(invokinguser, sizeof(invokinguser),
-				    "%s", &optarg[13]);
 			/* Silently ignore unsupported variables */
 			break;
 		default:
