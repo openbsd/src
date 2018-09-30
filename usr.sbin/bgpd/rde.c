@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.430 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.431 2018/09/30 10:56:47 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3153,7 +3153,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				path_update(&rib->rib, peer, &state, &prefix,
-				    pt->prefixlen, vstate);
+				    pt->prefixlen, p->validation_state);
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_remove(&rib->rib, peer, &prefix,
