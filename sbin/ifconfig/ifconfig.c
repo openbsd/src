@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.378 2018/09/09 20:32:55 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.379 2018/09/30 18:19:24 denis Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5760,6 +5760,9 @@ in_getaddr(const char *s, int which)
 		else
 			errx(1, "%s: bad value", s);
 	}
+	if (which == MASK && (ntohl(sin->sin_addr.s_addr) &
+	    (~ntohl(sin->sin_addr.s_addr) >> 1)))
+		errx(1, "%s: non-contiguous mask", s);
 }
 
 /* ARGSUSED */
