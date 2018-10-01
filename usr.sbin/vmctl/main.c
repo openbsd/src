@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2018/09/27 17:15:36 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2018/10/01 09:31:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -31,12 +31,16 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <util.h>
 #include <imsg.h>
 
 #include "vmd.h"
 #include "proc.h"
 #include "vmctl.h"
+
+#define RAW_FMT		"raw"
+#define QCOW2_FMT	"qcow2"
 
 static const char	*socket_name = SOCKET_NAME;
 static int		 ctl_sock = -1;
@@ -63,8 +67,7 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
-	{ "create",	CMD_CREATE,	ctl_create,	
-		"\"path\" -s size [-f fmt]", 1 },
+	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
 	{ "log",	CMD_LOG,	ctl_log,	"[verbose|brief]" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
@@ -402,22 +405,53 @@ parse_size(struct parse_result *res, char *word, long long val)
 	return (0);
 }
 
-#define RAW_FMT_PREFIX		"raw:"
-#define QCOW2_FMT_PREFIX	"qcow2:"
-
 int
-parse_disktype(char *s, char **ret)
+parse_disktype(const char *s, const char **ret)
 {
+	char		 buf[BUFSIZ];
+	const char	*ext;
+	int		 fd;
+	ssize_t		 len;
+
 	*ret = s;
-	if (strstr(s, RAW_FMT_PREFIX) == s) {
-		*ret = s + strlen(RAW_FMT_PREFIX);
-		return VMDF_RAW;
+
+	/* Try to parse the explicit format (qcow2:disk.qc2) */
+	if (strstr(s, RAW_FMT) == s && *(s + strlen(RAW_FMT)) == ':') {
+		*ret = s + strlen(RAW_FMT) + 1;
+		return (VMDF_RAW);
 	}
-	if (strstr(s, QCOW2_FMT_PREFIX) == s) {
-		*ret = s + strlen(QCOW2_FMT_PREFIX);
-		return VMDF_QCOW2;
+	if (strstr(s, QCOW2_FMT) == s && *(s + strlen(QCOW2_FMT)) == ':') {
+		*ret = s + strlen(QCOW2_FMT) + 1;
+		return (VMDF_QCOW2);
 	}
-	return VMDF_RAW;
+
+	/* Or try to derive the format from the file signature */
+	if ((fd = open(s, O_RDONLY)) != -1) {
+		len = read(fd, buf, sizeof(buf));
+		close(fd);
+
+		if (len >= (ssize_t)strlen(VM_MAGIC_QCOW) &&
+		    strncmp(buf, VM_MAGIC_QCOW,
+		    strlen(VM_MAGIC_QCOW)) == 0) {
+			/* Return qcow2, the version will be checked later */
+			return (VMDF_QCOW2);
+		}
+	}
+
+	/*
+	 * Use the extension as a last option.  This is needed for
+	 * 'vmctl create' as the file, and the signature, doesn't
+	 * exist yet.
+	 */
+	if ((ext = strrchr(s, '.')) != NULL && *(++ext) != '\0') {
+		if (strcasecmp(ext, RAW_FMT) == 0)
+			return (VMDF_RAW);
+		else if (strcasecmp(ext, QCOW2_FMT) == 0)
+			return (VMDF_QCOW2);
+	}
+
+	/* Fallback to raw */
+	return (VMDF_RAW);
 }
 
 int
@@ -503,15 +537,16 @@ parse_instance(struct parse_result *res, char *word)
 int
 ctl_create(struct parse_result *res, int argc, char *argv[])
 {
-	int		 ch, ret;
-	const char	*paths[2], *format;
+	int		 ch, ret, type;
+	const char	*paths[2], *disk, *format;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
-	paths[0] = argv[1];
+	type = parse_disktype(argv[1], &disk);
+
+	paths[0] = disk;
 	paths[1] = NULL;
-	format = "raw";
 
 	if (unveil(paths[0], "rwc") == -1)
 		err(1, "unveil");
@@ -521,14 +556,11 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "s:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':
 			if (parse_size(res, optarg, 0) != 0)
 				errx(1, "invalid size: %s", optarg);
-			break;
-		case 'f':
-			format = optarg;
 			break;
 		default:
 			ctl_usage(res->ctl);
@@ -540,17 +572,21 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 		fprintf(stderr, "missing size argument\n");
 		ctl_usage(res->ctl);
 	}
-	if (strcmp(format, "raw") == 0)
-		ret = create_raw_imagefile(paths[0], res->size);
-	else if (strcmp(format, "qcow2") == 0)
+
+	if (type == VMDF_QCOW2) {
+		format = "qcow2";
 		ret = create_qc2_imagefile(paths[0], res->size);
-	else
-		errx(1, "unknown image format %s", format);
+	} else {
+		format = "raw";
+		ret = create_raw_imagefile(paths[0], res->size);
+	}
+
 	if (ret != 0) {
 		errno = ret;
 		err(1, "create imagefile operation failed");
 	} else
-		warnx("imagefile created");
+		warnx("%s imagefile created", format);
+
 	return (0);
 }
 
@@ -628,7 +664,8 @@ int
 ctl_start(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, i, type;
-	char		 path[PATH_MAX], *s;
+	char		 path[PATH_MAX];
+	const char	*s;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);

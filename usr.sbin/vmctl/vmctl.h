@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.24 2018/09/27 17:15:36 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.25 2018/10/01 09:31:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,7 @@ int	 vmmaction(struct parse_result *);
 int	 parse_ifs(struct parse_result *, char *, int);
 int	 parse_network(struct parse_result *, char *);
 int	 parse_size(struct parse_result *, char *, long long);
-int	 parse_disktype(char *, char **);
+int	 parse_disktype(const char *, const char **);
 int	 parse_disk(struct parse_result *, char *, int);
 int	 parse_vmid(struct parse_result *, char *, int);
 int	 parse_instance(struct parse_result *, char *);

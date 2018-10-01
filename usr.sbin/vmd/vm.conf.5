@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.37 2018/09/30 19:13:55 solene Exp $
+.\" $OpenBSD: vm.conf.5,v 1.38 2018/10/01 09:31:15 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2018 $
+.Dd $Mdocdate: October 1 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -149,10 +149,10 @@ Disk image file (may be specified multiple times to add multiple disk images).
 The format may be specified as either
 .Ar qcow2
 or
-.Ar raw ,
-defaulting to
-.Ar raw
-if left unspecified.
+.Ar raw .
+If left unspecified, the format defaults to
+.Pa raw
+if it cannot be derived automatically.
 .It Oo Cm local Oc Cm interface Oo name Oc Op Brq ...
 Network interface to add to the VM.
 The optional

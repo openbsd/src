@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.80 2018/09/28 12:35:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.81 2018/10/01 09:31:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -66,6 +66,9 @@
 #define VMD_VM_STOP_INVALID	1004
 #define VMD_CDROM_MISSING	1005
 #define VMD_CDROM_INVALID	1006
+
+/* Image file signatures */
+#define VM_MAGIC_QCOW		"QFI\xfb"
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
 #define VMD_DHCP_PREFIX		"100.64.0.0/10"

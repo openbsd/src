@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2018/09/09 04:09:32 ccardenas Exp $	*/
+/*	$OpenBSD: parse.y,v 1.45 2018/10/01 09:31:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,11 +39,13 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <netdb.h>
 #include <util.h>
 #include <errno.h>
 #include <err.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
 
@@ -89,6 +91,7 @@ char		*symget(const char *);
 
 ssize_t		 parse_size(char *, int64_t);
 int		 parse_disk(char *, int);
+unsigned int	 parse_format(const char *);
 
 static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
@@ -561,14 +564,10 @@ owner_id	: /* none */		{
 		;
 
 image_format	: /* none 	*/	{
-			$$ = VMDF_RAW;
+			$$ = 0;
 		}
 	     	| FORMAT string		{
-			if (strcmp($2, "raw") == 0)
-				$$ = VMDF_RAW;
-			else if (strcmp($2, "qcow2") == 0)
-				$$ = VMDF_QCOW2;
-			else {
+			if (($$ = parse_format($2)) == 0) {
 				yyerror("unrecognized disk format %s", $2);
 				free($2);
 				YYERROR;
@@ -1227,7 +1226,9 @@ parse_size(char *word, int64_t val)
 int
 parse_disk(char *word, int type)
 {
-	char	path[PATH_MAX];
+	char	 buf[BUFSIZ], path[PATH_MAX];
+	int	 fd;
+	ssize_t	 len;
 
 	if (vcp->vcp_ndisks >= VMM_MAX_DISKS_PER_VM) {
 		log_warnx("too many disks");
@@ -1239,6 +1240,23 @@ parse_disk(char *word, int type)
 		return (-1);
 	}
 
+	if (!type) {
+		/* Use raw as the default format */
+		type = VMDF_RAW;
+
+		/* Try to derive the format from the file signature */
+		if ((fd = open(path, O_RDONLY)) != -1) {
+			len = read(fd, buf, sizeof(buf));
+			close(fd);
+			if (len >= (ssize_t)strlen(VM_MAGIC_QCOW) &&
+			    strncmp(buf, VM_MAGIC_QCOW,
+			    strlen(VM_MAGIC_QCOW)) == 0) {
+				/* The qcow version will be checked later */
+				type = VMDF_QCOW2;
+			}
+		}
+	}
+
 	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], path,
 	    VMM_MAX_PATH_DISK) >= VMM_MAX_PATH_DISK) {
 		log_warnx("disk path too long");
@@ -1248,6 +1266,16 @@ parse_disk(char *word, int type)
 
 	vcp->vcp_ndisks++;
 
+	return (0);
+}
+
+unsigned int
+parse_format(const char *word)
+{
+	if (strcasecmp(word, "raw") == 0)
+		return (VMDF_RAW);
+	else if (strcasecmp(word, "qcow2") == 0)
+		return (VMDF_QCOW2);
 	return (0);
 }
 

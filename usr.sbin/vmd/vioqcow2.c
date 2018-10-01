@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.5 2018/09/28 12:35:32 reyk Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.6 2018/10/01 09:31:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -169,7 +169,8 @@ qc2_open(struct qcdisk *disk, int fd)
 		log_warn("%s: short read on header", __func__);
 		goto error;
 	}
-	if (strncmp(header.magic, "QFI\xfb", 4) != 0) {
+	if (strncmp(header.magic,
+	    VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0) {
 		log_warn("%s: invalid magic numbers", __func__);
 		goto error;
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.49 2018/09/27 17:15:36 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.50 2018/10/01 09:31:15 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2018 $
+.Dd $Mdocdate: October 1 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -50,21 +50,22 @@ Using
 .Xr cu 1
 connect to the console of the VM with the specified
 .Ar id .
-.It Cm create Ar path Fl s Ar size Op Fl f Ar format
+.It Cm create Ar path Fl s Ar size
 Creates a VM disk image file with the specified
 .Ar path
 and
 .Ar size ,
 rounded to megabytes.
 The disk
-.Ar format
-may be specified as either
-.Ar raw
+.Ar path
+may be prefixed with a format prefix
+.Pf ( Pa raw:
 or
-.Ar qcow2 ,
-defaulting to
-.Ar raw
-if left unspecified.
+.Pa qcow2: )
+in order to specify the disk format.
+If left unspecified, the format defaults to
+.Pa raw
+if it cannot be derived automatically.
 .It Cm load Ar filename
 Load additional configuration from the specified file.
 .It Cm log brief
@@ -130,8 +131,9 @@ may be prefixed with a format prefix
 or
 .Pa qcow2: )
 in order to specify the disk format.
-If left unspecified, the default format is
-.Pa raw .
+If left unspecified, the format defaults to
+.Pa raw
+if it cannot be derived automatically.
 .It Fl i Ar count
 Number of network interfaces to add to the VM.
 .It Fl L
