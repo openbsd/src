@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2018/07/24 09:27:44 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.7 2018/10/01 22:53:48 mortimer Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -105,5 +105,7 @@ ENTRY(_dl_bind_start)
 	br	x17
 
 ENTRY(_rtld_tlsdesc)
+	RETGUARD_SETUP(_rtld_tlsdesc, x15)
 	ldr	x0, [x0, #8]
+	RETGUARD_CHECK(_rtld_tlsdesc, x15)
 	ret

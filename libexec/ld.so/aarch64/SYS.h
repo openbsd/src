@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2018/05/15 20:37:48 kettenis Exp $ */
+/*	$OpenBSD: SYS.h,v 1.3 2018/10/01 22:53:48 mortimer Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -37,10 +37,8 @@
 	.global		__CONCAT(_dl_,n)		;\
 	.type		__CONCAT(_dl_,n)%function	;\
 __CONCAT(_dl_,n):					;\
+	RETGUARD_SETUP(__CONCAT(_dl_,n), x15)		;\
 	SYSTRAP(n)					;\
-	bcs	.L_cerr					;\
-	ret
-
-.L_cerr:
-	neg	x0, x0		/* r0 = -errno */
+	cneg	x0, x0, cs	/* r0 = -errno */	;\
+	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)	 	;\
 	ret
