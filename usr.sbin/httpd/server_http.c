@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.123 2018/09/07 09:31:13 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.124 2018/10/01 19:24:09 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -88,6 +88,7 @@ server_httpdesc_init(struct client *clt)
 	}
 	RB_INIT(&desc->http_headers);
 	clt->clt_descresp = desc;
+	clt->clt_toread = TOREAD_HTTP_INIT;
 
 	return (0);
 }
@@ -211,6 +212,10 @@ server_read_http(struct bufferevent *bev, void *arg)
 	size = EVBUFFER_LENGTH(src);
 	DPRINTF("%s: session %d: size %lu, to read %lld",
 	    __func__, clt->clt_id, size, clt->clt_toread);
+
+	if (clt->clt_toread == TOREAD_HTTP_INIT)
+		clt->clt_toread = TOREAD_HTTP_HEADER;
+
 	if (!size) {
 		clt->clt_toread = TOREAD_HTTP_HEADER;
 		goto done;
@@ -734,6 +739,7 @@ server_reset_http(struct client *clt)
 	server_httpdesc_free(clt->clt_descresp);
 	clt->clt_headerlen = 0;
 	clt->clt_headersdone = 0;
+	clt->clt_toread = TOREAD_HTTP_INIT;
 	clt->clt_done = 0;
 	clt->clt_line = 0;
 	clt->clt_chunk = 0;
