@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.195 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.196 2018/10/01 23:09:53 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -35,11 +35,6 @@ enum peer_state {
 	PEER_UP,
 	PEER_ERR	/* error occurred going to PEER_DOWN state */
 };
-
-#define	ROA_NOTFOUND	0x0	/* default */
-#define	ROA_INVALID	0x1
-#define	ROA_VALID	0x2
-#define	ROA_MASK	0x3
 
 /*
  * How do we identify peers between the session handler and the rde?

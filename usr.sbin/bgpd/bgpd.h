@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.347 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.348 2018/10/01 23:09:53 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -88,6 +88,15 @@
 #define	F_RTLABEL		0x10000
 #define	F_CTL_SSV		0x20000	/* only used by bgpctl */
 #define	F_CTL_INVALID		0x40000 /* only used by bgpctl */
+
+/*
+ * Note that these numeric assignments differ from the numbers commonly
+ * used in route origin validation context.
+ */
+#define	ROA_NOTFOUND		0x0	/* default */
+#define	ROA_INVALID		0x1
+#define	ROA_VALID		0x2
+#define	ROA_MASK		0x3
 
 /*
  * Limit the number of messages queued in the session engine.
@@ -668,6 +677,7 @@ struct ctl_show_rib {
 	u_int16_t		aspath_len;
 	u_int8_t		prefixlen;
 	u_int8_t		origin;
+	u_int8_t		validation_state;
 	/* plus a aspath_len bytes long aspath */
 };
 
@@ -768,6 +778,7 @@ struct ctl_show_rib_request {
 	struct filter_largecommunity large_community;
 	u_int32_t		peerid;
 	u_int32_t		flags;
+	u_int8_t		validation_state;
 	pid_t			pid;
 	enum imsg_type		type;
 	u_int8_t		prefixlen;

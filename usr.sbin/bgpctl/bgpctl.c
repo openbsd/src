@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.218 2018/09/26 15:48:47 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.219 2018/10/01 23:09:53 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -72,8 +72,9 @@ int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
-void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
+void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
+const char *	 print_ovs(u_int8_t, int);
 void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 int		 show_rib_detail_msg(struct imsg *, int, int);
@@ -183,6 +184,7 @@ main(int argc, char *argv[])
 		ribreq.neighbor = neighbor;
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
+		ribreq.validation_state = res->validation_state;
 		show_mrt.arg = &ribreq;
 		if (!(res->flags & F_CTL_DETAIL))
 			show_rib_summary_head();
@@ -1183,17 +1185,20 @@ show_rib_summary_head(void)
 {
 	printf("flags: * = Valid, > = Selected, I = via IBGP, A = Announced,\n"
 	    "       S = Stale, E = Error\n");
+	printf("origin validation state: N = not-found, V = valid, ! = invalid\n");
 	printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
-	printf("%-5s %-20s %-15s  %5s %5s %s\n", "flags", "destination",
+	printf("%-5s %3s %-20s %-15s  %5s %5s %s\n", "flags", "ovs", "destination",
 	    "gateway", "lpref", "med", "aspath origin");
 }
 
 void
-print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags)
+print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags,
+    u_int8_t ovs)
 {
 	char			*p;
 
 	print_flags(flags, 1);
+	printf("%3s ", print_ovs(ovs, 1));
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		err(1, NULL);
 	printf("%-20s", p);
@@ -1249,6 +1254,19 @@ print_flags(u_int8_t flags, int sum)
 			printf(", best");
 		if (flags & F_PREF_ANNOUNCE)
 			printf(", announced");
+	}
+}
+
+const char *
+print_ovs(u_int8_t validation_state, int sum)
+{
+	switch (validation_state) {
+	case ROA_INVALID:
+		return (sum ? "!" : "invalid");
+	case ROA_VALID:
+		return (sum ? "V" : "valid");
+	default:
+		return (sum ? "N" : "not-found");
 	}
 }
 
@@ -1309,7 +1327,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata)
 {
 	char			*aspath;
 
-	print_prefix(&r->prefix, r->prefixlen, r->flags);
+	print_prefix(&r->prefix, r->prefixlen, r->flags, r->validation_state);
 	printf(" %-15s ", log_addr(&r->exit_nexthop));
 	printf(" %5u %5u ", r->local_pref, r->med);
 
@@ -1346,8 +1364,9 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
 	id.s_addr = htonl(r->remote_id);
 	printf("%s)%c", inet_ntoa(id), EOL0(flag0));
 
-	printf("    Origin %s, metric %u, localpref %u, weight %u, ",
-	    print_origin(r->origin, 0), r->med, r->local_pref, r->weight);
+	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
+	    print_origin(r->origin, 0), r->med, r->local_pref, r->weight,
+	    print_ovs(r->validation_state, 0));
 	print_flags(r->flags, 0);
 
 	now = time(NULL);

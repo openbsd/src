@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.431 2018/09/30 10:56:47 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.432 2018/10/01 23:09:53 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2177,6 +2177,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	pt_getaddr(p->re->prefix, &rib.prefix);
 	rib.prefixlen = p->re->prefix->prefixlen;
 	rib.origin = asp->origin;
+	rib.validation_state = p->validation_state;
 	rib.flags = 0;
 	if (p->re->active == p)
 		rib.flags |= F_PREF_ACTIVE;
