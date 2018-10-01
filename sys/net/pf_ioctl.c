@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.337 2018/09/11 07:53:38 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.338 2018/10/01 19:47:30 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -951,6 +951,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRADDADDRS:
 		case DIOCRDELADDRS:
 		case DIOCRSETADDRS:
+		case DIOCRGETADDRS:
 		case DIOCRGETASTATS:
 		case DIOCRCLRASTATS:
 		case DIOCRTSTADDRS:
