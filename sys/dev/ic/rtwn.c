@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.39 2018/09/28 02:38:38 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.40 2018/10/01 22:36:08 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -118,6 +118,7 @@ int		rtwn_read_chipid(struct rtwn_softc *);
 void		rtwn_read_rom(struct rtwn_softc *);
 void		rtwn_r92c_read_rom(struct rtwn_softc *);
 void		rtwn_r88e_read_rom(struct rtwn_softc *);
+void		rtwn_r23a_read_rom(struct rtwn_softc *);
 int		rtwn_media_change(struct ifnet *);
 int		rtwn_ra_init(struct rtwn_softc *);
 int		rtwn_r92c_ra_init(struct rtwn_softc *, u_int8_t, u_int32_t,
@@ -215,7 +216,10 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 		printf("%s: MAC/BB RTL%s, RF 6052 %dT%dR, address %s\n",
 		    sc->sc_pdev->dv_xname,
 		    (sc->chip & RTWN_CHIP_92C) ? "8192CE" :
-		    (sc->chip & RTWN_CHIP_88E) ? "8188EE" : "8188CE",
+		    (sc->chip & RTWN_CHIP_88E) ? "8188EE" :
+		    (sc->chip & RTWN_CHIP_92E) ? "8192EE" :
+		    (sc->chip & RTWN_CHIP_23A) ? "8723AE" :
+		    (sc->chip & RTWN_CHIP_23B) ? "8723BE" : "8188CE",
 		    sc->ntxchains, sc->nrxchains,
 		    ether_sprintf(ic->ic_myaddr));
 	} else if (sc->chip & RTWN_CHIP_USB) {
@@ -595,6 +599,12 @@ rtwn_read_chipid(struct rtwn_softc *sc)
 		}
 
 		return (0);
+	} else if (sc->chip & RTWN_CHIP_23A) {
+		sc->sc_flags |= RTWN_FLAG_EXT_HDR;
+
+		if ((reg & 0xf000) == 0)
+			sc->chip |= RTWN_CHIP_UMC_A_CUT;
+		return (0);
 	}
 
 	return (ENXIO); /* unsupported chip */
@@ -605,6 +615,8 @@ rtwn_read_rom(struct rtwn_softc *sc)
 {
 	if (sc->chip & RTWN_CHIP_88E)
 		rtwn_r88e_read_rom(sc);
+	else if (sc->chip & RTWN_CHIP_23A)
+		rtwn_r23a_read_rom(sc);
 	else
 		rtwn_r92c_read_rom(sc);
 }
@@ -652,6 +664,19 @@ rtwn_r88e_read_rom(struct rtwn_softc *sc)
 		IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->r88ee_rom.macaddr);
 	else
 		IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->r88eu_rom.macaddr);
+}
+
+void
+rtwn_r23a_read_rom(struct rtwn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct r23a_rom *rom = &sc->sc_r23a_rom;
+
+	/* Read full ROM image. */
+	rtwn_efuse_read(sc, (uint8_t *)&sc->sc_r23a_rom,
+	    sizeof(sc->sc_r23a_rom));
+
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->macaddr);
 }
 
 int
@@ -1571,7 +1596,8 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 	ptr = fw;
 	hdr = (const struct r92c_fw_hdr *)ptr;
 	/* Check if there is a valid FW header and skip it. */
-	if ((letoh16(hdr->signature) >> 4) == 0x88c ||
+	if ((letoh16(hdr->signature) >> 4) == 0x230 ||
+	    (letoh16(hdr->signature) >> 4) == 0x88c ||
 	    (letoh16(hdr->signature) >> 4) == 0x88e ||
 	    (letoh16(hdr->signature) >> 4) == 0x92c) {
 		DPRINTF(("FW V%d.%d %02d-%02d %02d:%02d\n",
@@ -1641,7 +1667,7 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 		    reg & ~R92C_SYS_FUNC_EN_CPUEN);
 		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
 		    reg | R92C_SYS_FUNC_EN_CPUEN);
-	} else
+	} else if (!(sc->chip & RTWN_CHIP_23A))
 		rtwn_fw_reset(sc);
 	/* Wait for firmware readiness. */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -1744,6 +1770,13 @@ rtwn_rf_init(struct rtwn_softc *sc)
 	    RTWN_CHIP_UMC_A_CUT) {
 		rtwn_rf_write(sc, 0, R92C_RF_RX_G1, 0x30255);
 		rtwn_rf_write(sc, 0, R92C_RF_RX_G2, 0x50a00);
+	} else if (sc->chip & RTWN_CHIP_23A) {
+		rtwn_rf_write(sc, 0, 0x0C, 0x894ae);
+		rtwn_rf_write(sc, 0, 0x0A, 0x1af31);
+		rtwn_rf_write(sc, 0, R92C_RF_IPA, 0x8f425);
+		rtwn_rf_write(sc, 0, R92C_RF_SYN_G(1), 0x4f200);
+		rtwn_rf_write(sc, 0, R92C_RF_RCK1, 0x44053);
+		rtwn_rf_write(sc, 0, R92C_RF_RCK2, 0x80201);
 	}
 }
 

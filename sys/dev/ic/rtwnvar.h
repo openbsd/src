@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.12 2018/09/28 02:38:38 kevlo Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.13 2018/10/01 22:36:08 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,6 +80,9 @@ struct rtwn_softc {
 #define RTWN_CHIP_UMC_A_CUT	0x00000008
 #define RTWN_CHIP_88C		0x00000010
 #define RTWN_CHIP_88E		0x00000020
+#define RTWN_CHIP_92E		0x00000040
+#define RTWN_CHIP_23A		0x00000080
+#define RTWN_CHIP_23B		0x00000100
 
 #define RTWN_CHIP_PCI		0x40000000
 #define RTWN_CHIP_USB		0x80000000
@@ -100,9 +103,11 @@ struct rtwn_softc {
 	union {
 		struct r92c_rom		r92c_rom;
 		struct r88e_rom		r88e_rom;
+		struct r23a_rom		r23a_rom;
 	} u;
 #define sc_r92c_rom	u.r92c_rom
 #define sc_r88e_rom	u.r88e_rom
+#define sc_r23a_rom	u.r23a_rom
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
