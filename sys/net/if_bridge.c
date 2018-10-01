@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.311 2018/09/27 12:39:36 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.312 2018/10/01 12:38:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -730,7 +730,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 #endif
 	int error;
 
-	NET_ASSERT_LOCKED();
+	KERNEL_ASSERT_LOCKED();
 
 	/* ifp must be a member interface of the bridge. */
 	if (ifp->if_bridgeport == NULL) {
@@ -861,6 +861,7 @@ bridgeintr(void)
 	if (ml_empty(&ml))
 		return;
 
+	KERNEL_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 
 		ifp = if_get(m->m_pkthdr.ph_ifidx);
@@ -873,6 +874,7 @@ bridgeintr(void)
 
 		if_put(ifp);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*
@@ -1093,7 +1095,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	caddr_t if_bpf;
 #endif
 
-	NET_ASSERT_LOCKED();
+	KERNEL_ASSERT_LOCKED();
 
 	bif = (struct bridge_iflist *)ifp->if_bridgeport;
 	if (bif == NULL)
