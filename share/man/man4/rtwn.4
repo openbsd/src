@@ -1,4 +1,4 @@
-.\" $OpenBSD: rtwn.4,v 1.6 2018/09/21 02:14:37 jmatthew Exp $
+.\" $OpenBSD: rtwn.4,v 1.7 2018/10/01 22:37:18 jmatthew Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\" Copyright (c) 2015 Stefan Sperling <stsp@openbsd.org>
@@ -15,23 +15,24 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2018 $
+.Dd $Mdocdate: October 1 2018 $
 .Dt RTWN 4
 .Os
 .Sh NAME
 .Nm rtwn
-.Nd Realtek RTL8188CE/RTL8188EE/RTL8192CE PCIe IEEE 802.11b/g/n wireless
-network device
+.Nd Realtek RTL8188CE/RTL8188EE/RTL8192CE/RTL8723AE PCIe IEEE 802.11b/g/n
+wireless network device
 .Sh SYNOPSIS
 .Cd "rtwn* at pci? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports PCIe wireless network devices based on the Realtek
-RTL8188CE, RTL8188EE and RTL8192CE chipsets.
+RTL8188CE, RTL8188EE, RTL8192CE and RTL8723AE chipsets.
 .Pp
-The RTL8188CE and RTL8188EE are highly integrated 802.11n adapters that
-combine a MAC, a 1T1R capable baseband and an RF in a single chip.
+The RTL8188CE, RTL8188EE and RTL8723AE are highly integrated 802.11n adapters
+that combine a MAC, a 1T1R capable baseband and an RF in a single chip.
+The RTL8723AE also includes a Bluetooth 2.1/3.0/4.0 controller.
 .Pp
 The RTL8192CE is a highly integrated multiple-in, multiple-out (MIMO)
 802.11n adapter that combines a MAC, a 2T2R capable baseband and an
@@ -82,6 +83,8 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/rtwn-rtl8188efw
 .It Pa /etc/firmware/rtwn-rtl8192cfwU
 .It Pa /etc/firmware/rtwn-rtl8192cfwU_B
+.It Pa /etc/firmware/rtwn-rtl8723fw
+.It Pa /etc/firmware/rtwn-rtl8723fw_B
 .El
 .Pp
 A prepackaged version of the firmware can be installed using
