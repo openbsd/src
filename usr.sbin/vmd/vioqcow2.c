@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.6 2018/10/01 09:31:15 reyk Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.7 2018/10/01 17:34:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -127,7 +127,6 @@ virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int fd)
 		return -1;
 	if (qc2_open(diskp, fd) == -1) {
 		log_warnx("%s: could not open qcow2 disk", __func__);
-		free(diskp);
 		return -1;
 	}
 	file->p = diskp;
