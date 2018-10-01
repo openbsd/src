@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.78 2018/07/19 17:34:22 sthen Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.79 2018/10/01 11:03:46 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1424,12 +1424,12 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 0));
 	}
 	/* Set sequence number (already little endian). */
-	txd->txdseq |= *(uint16_t *)wh->i_seq;
+	txd->txdseq |= (*(uint16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
 
 	if (!hasqos) {
 		/* Use HW sequence numbering for non-QoS frames. */
 		txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
-		txd->txdseq |= htole16(0x8000);		/* WTF? */
+		txd->txdseq |= htole16(R92C_TXDW3_HWSEQEN);
 	} else
 		txd->txdw4 |= htole32(R92C_TXDW4_QOS);
 

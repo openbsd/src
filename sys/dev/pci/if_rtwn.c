@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.33 2018/09/21 01:45:53 jmatthew Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.34 2018/10/01 11:03:46 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1102,12 +1102,12 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 0));
 	}
 	/* Set sequence number (already little endian). */
-	txd->txdseq = *(uint16_t *)wh->i_seq;
+	txd->txdseq = (*(uint16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
 
 	if (!hasqos) {
 		/* Use HW sequence numbering for non-QoS frames. */
 		txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
-		txd->txdseq |= htole16(0x8000);		/* WTF? */
+		txd->txdseq |= htole16(R92C_TXDW3_HWSEQEN);
 	} else
 		txd->txdw4 |= htole32(R92C_TXDW4_QOS);
 
@@ -1335,7 +1335,8 @@ rtwn_pci_88e_stop(struct rtwn_pci_softc *sc)
 	rtwn_pci_write_1(sc, R92C_RSV_CTRL + 1,
 	    rtwn_pci_read_1(sc, R92C_RSV_CTRL + 1) | 0x08);
 
-	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0x0e);
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, R92C_RSV_CTRL_WLOCK_00 |
+	    R92C_RSV_CTRL_WLOCK_04 | R92C_RSV_CTRL_WLOCK_08);
 
 	for (i = 0; i < RTWN_NTXQUEUES; i++)
 		rtwn_reset_tx_list(sc, i);
@@ -1381,7 +1382,8 @@ rtwn_pci_stop(void *cookie)
 	rtwn_pci_write_2(sc, R92C_AFE_PLL_CTRL, 0x80); /* linux magic number */
 	rtwn_pci_write_1(sc, R92C_SPS0_CTRL, 0x23); /* ditto */
 	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL, 0x0e); /* differs in btcoex */
-	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0x0e);
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, R92C_RSV_CTRL_WLOCK_00 |
+	    R92C_RSV_CTRL_WLOCK_04 | R92C_RSV_CTRL_WLOCK_08);
 	rtwn_pci_write_1(sc, R92C_APS_FSMCO, R92C_APS_FSMCO_PDN_EN);
 
 	for (i = 0; i < RTWN_NTXQUEUES; i++)
