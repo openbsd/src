@@ -44,6 +44,7 @@
 ./etc/firmware/ral-rt2561s
 ./etc/firmware/ral-rt2661
 ./etc/firmware/ral-rt2860
+./etc/firmware/ral-rt3290
 ./etc/firmware/rum-license
 ./etc/firmware/rum-rt2573
 ./etc/firmware/run-license
