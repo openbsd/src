@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuid.3,v 1.5 2015/11/20 21:05:52 tim Exp $
+.\"	$OpenBSD: uuid.3,v 1.6 2018/10/02 10:55:39 jmc Exp $
 .\"	$NetBSD: uuid.3,v 1.7 2008/05/02 18:11:05 martin Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/uuid/uuid.3,v 1.4 2003/08/08 19:12:28 marcel Exp $
 .\"
-.Dd $Mdocdate: November 20 2015 $
+.Dd $Mdocdate: October 2 2018 $
 .Dt UUID_COMPARE 3
 .Os
 .Sh NAME
@@ -204,3 +204,7 @@ The
 and
 .Fn uuid_to_string
 functions are compatible with the DCE 1.1 RPC specification.
+.Pp
+.Fn uuid_create
+generates version 4 UUIDs,
+specified by section 4.4 of RCF 4122.
