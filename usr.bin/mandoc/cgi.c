@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgi.c,v 1.97 2018/10/01 08:05:25 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.98 2018/10/02 19:40:05 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -863,6 +863,7 @@ resp_format(const struct req *req, const char *file)
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
 	conf.style = mandoc_strdup(CSS_DIR "/mandoc.css");
+	conf.toc = 1;
 	usepath = strcmp(req->q.manpath, req->p[0]);
 	mandoc_asprintf(&conf.man, "/%s%s%s%s%%N.%%S",
 	    scriptname, *scriptname == '\0' ? "" : "/",
