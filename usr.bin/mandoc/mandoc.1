@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.153 2018/10/02 12:32:55 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.154 2018/10/02 14:56:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -371,6 +371,9 @@ The file
 is used for an external style-sheet.
 This must be a valid absolute or
 relative URI.
+.It Cm toc
+If an input file contains at least two non-standard sections,
+print a table of contents near the beginning of the output.
 .El
 .Ss Locale Output
 By default,

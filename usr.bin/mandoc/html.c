@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.110 2018/10/02 12:32:55 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.111 2018/10/02 14:56:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,6 +134,8 @@ html_alloc(const struct manoutput *outopts)
 	h->base_includes = outopts->includes;
 	if (outopts->fragment)
 		h->oflags |= HTML_FRAGMENT;
+	if (outopts->toc)
+		h->oflags |= HTML_TOC;
 
 	mandoc_ohash_init(&id_unique, 4, 0);
 

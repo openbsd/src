@@ -1,4 +1,4 @@
-/*	$OpenBSD: manconf.h,v 1.5 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: manconf.h,v 1.6 2018/10/02 14:56:36 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -34,8 +34,9 @@ struct	manoutput {
 	size_t	  width;
 	int	  fragment;
 	int	  mdoc;
-	int	  synopsisonly;
 	int	  noval;
+	int	  synopsisonly;
+	int	  toc;
 };
 
 struct	manconf {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.187 2018/10/02 12:32:55 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.188 2018/10/02 14:56:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -505,9 +505,39 @@ cond_id(const struct roff_node *n)
 static int
 mdoc_sh_pre(MDOC_ARGS)
 {
-	char	*id;
+	struct roff_node	*sn;
+	struct tag		*t, *tt;
+	char			*id;
+	int			 sc;
 
 	switch (n->type) {
+	case ROFFT_BLOCK:
+		if ((h->oflags & HTML_TOC) == 0 ||
+		    h->flags & HTML_TOCDONE ||
+		    n->sec <= SEC_SYNOPSIS)
+			break;
+		h->flags |= HTML_TOCDONE;
+		sc = 0;
+		for (sn = n->next; sn != NULL; sn = sn->next)
+			if (sn->sec == SEC_CUSTOM)
+				if (++sc == 2)
+					break;
+		if (sc < 2)
+			break;
+		t = print_otag(h, TAG_H1, "c", "Sh");
+		print_text(h, "TABLE OF CONTENTS");
+		print_tagq(h, t);
+		t = print_otag(h, TAG_UL, "c", "Bl-compact");
+		for (sn = n->next; sn != NULL; sn = sn->next) {
+			id = html_make_id(sn->head, 0);
+			tt = print_otag(h, TAG_LI, "");
+			print_otag(h, TAG_A, "hR", id);
+			print_mdoc_nodelist(meta, sn->head->child, h);
+			print_tagq(h, tt);
+			free(id);
+		}
+		print_tagq(h, t);
+		break;
 	case ROFFT_HEAD:
 		id = html_make_id(n, 1);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);

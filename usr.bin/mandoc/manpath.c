@@ -1,6 +1,6 @@
-/*	$OpenBSD: manpath.c,v 1.22 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.23 2018/10/02 14:56:36 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -233,7 +233,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 {
 	const char *const toks[] = {
 	    "includes", "man", "paper", "style",
-	    "indent", "width", "fragment", "mdoc", "noval"
+	    "indent", "width", "fragment", "mdoc", "noval", "toc"
 	};
 
 	const char	*errstr;
@@ -319,6 +319,9 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		return 0;
 	case 8:
 		conf->noval = 1;
+		return 0;
+	case 9:
+		conf->toc = 1;
 		return 0;
 	default:
 		if (fromfile)
