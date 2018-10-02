@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.259 2018/09/11 07:53:38 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.260 2018/10/02 23:44:39 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -276,6 +276,14 @@ void	pfsync_bulk_start(void);
 void	pfsync_bulk_status(u_int8_t);
 void	pfsync_bulk_update(void *);
 void	pfsync_bulk_fail(void *);
+#ifdef WITH_PF_LOCK
+void	pfsync_send_dispatch(void *);
+void	pfsync_send_pkt(struct mbuf *);
+
+static struct mbuf_queue	pfsync_mq;
+static struct task	pfsync_task =
+    TASK_INITIALIZER(pfsync_send_dispatch, &pfsync_mq);
+#endif	/* WITH_PF_LOCK */
 
 #define PFSYNC_MAX_BULKTRIES	12
 int	pfsync_sync_ok;
@@ -288,6 +296,9 @@ pfsyncattach(int npfsync)
 {
 	if_clone_attach(&pfsync_cloner);
 	pfsynccounters = counters_alloc(pfsyncs_ncounters);
+#ifdef WITH_PF_LOCK
+	mq_init(&pfsync_mq, 4096, IPL_SOFTNET);
+#endif	/* WITH_PF_LOCK */
 }
 
 int
@@ -1497,6 +1508,53 @@ pfsync_drop(struct pfsync_softc *sc)
 	sc->sc_len = PFSYNC_MINPKT;
 }
 
+#ifdef WITH_PF_LOCK
+void
+pfsync_send_dispatch(void *xmq)
+{
+	struct mbuf_queue *mq = xmq;
+	struct pfsync_softc *sc;
+	struct mbuf *m;
+	struct mbuf_list ml;
+	int error;
+
+	mq_delist(mq, &ml);
+	if (ml_empty(&ml))
+		return;
+
+	NET_RLOCK();
+	sc = pfsyncif;
+	if (sc == NULL) {
+		ml_purge(&ml);
+		goto done;
+	}
+
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		if ((error = ip_output(m, NULL, NULL, IP_RAWOUTPUT,
+		    &sc->sc_imo, NULL, 0)) == 0)
+			pfsyncstat_inc(pfsyncs_opackets);
+		else {
+			DPFPRINTF(LOG_DEBUG,
+			    "ip_output() @ %s failed (%d)\n", __func__, error);
+			pfsyncstat_inc(pfsyncs_oerrors);
+		}
+	}
+done:
+	NET_RUNLOCK();
+}
+
+void
+pfsync_send_pkt(struct mbuf *m)
+{
+	if (mq_enqueue(&pfsync_mq, m) != 0) {
+		pfsyncstat_inc(pfsyncs_oerrors);
+		DPFPRINTF(LOG_DEBUG, "mq_enqueue() @ %s failed, queue full\n",
+		    __func__);
+	} else
+		task_add(net_tq(0), &pfsync_task);
+}
+#endif	/* WITH_PF_LOCK */
+
 void
 pfsync_sendout(void)
 {
@@ -1669,10 +1727,14 @@ pfsync_sendout(void)
 
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
+#ifdef WITH_PF_LOCK
+	pfsync_send_pkt(m);
+#else	/* !WITH_PF_LOCK */
 	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL, 0) == 0)
 		pfsyncstat_inc(pfsyncs_opackets);
 	else
 		pfsyncstat_inc(pfsyncs_oerrors);
+#endif	/* WITH_PF_LOCK */
 }
 
 void
