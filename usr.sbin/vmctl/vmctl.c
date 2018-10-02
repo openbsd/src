@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.59 2018/09/27 17:15:36 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.60 2018/10/02 16:42:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -872,20 +872,19 @@ create_qc2_imagefile(const char *imgfile_path, long imgsize)
 	} __packed hdr;
 	int fd, ret;
 	uint64_t l1sz, refsz, disksz, initsz, clustersz;
-	uint64_t l1off, refoff, v, i;
+	uint64_t l1off, refoff, v, i, l1entrysz, refentrysz;
 	uint16_t refs;
 
 	disksz = 1024*1024*imgsize;
 	clustersz = (1<<16);
 	l1off = ALIGN(sizeof hdr, clustersz);
-	l1sz = disksz / (clustersz*clustersz/8);
-	if (l1sz == 0)
-		l1sz = 1;
+
+	l1entrysz = clustersz * clustersz / 8;
+	l1sz = (disksz + l1entrysz - 1) / l1entrysz;
 
 	refoff = ALIGN(l1off + 8*l1sz, clustersz);
-	refsz = disksz / (clustersz*clustersz*clustersz/2);
-	if (refsz == 0)
-		refsz = 1;
+	refentrysz = clustersz * clustersz * clustersz / 2;
+	refsz = (disksz + refentrysz - 1) / refentrysz;
 
 	initsz = ALIGN(refoff + refsz*clustersz, clustersz);
 
