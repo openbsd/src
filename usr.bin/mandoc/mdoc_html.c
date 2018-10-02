@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.186 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.187 2018/10/02 12:32:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -609,7 +609,7 @@ mdoc_xr_pre(MDOC_ARGS)
 	if (NULL == n->child)
 		return 0;
 
-	if (h->base_man)
+	if (h->base_man1)
 		print_otag(h, TAG_A, "cThM", "Xr",
 		    n->child->string, n->child->next == NULL ?
 		    NULL : n->child->next->string);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.152 2018/08/25 16:43:52 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.153 2018/10/02 12:32:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2018 $
+.Dd $Mdocdate: October 2 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -345,7 +345,7 @@ Instances of
 are replaced with the include filename.
 The default is not to present a
 hyperlink.
-.It Cm man Ns = Ns Ar fmt
+.It Cm man Ns = Ns Ar fmt Ns Op ; Ns Ar fmt
 The string
 .Ar fmt ,
 for example,
@@ -361,6 +361,10 @@ are replaced with the linked manual's name and section, respectively.
 If no section is included, section 1 is assumed.
 The default is not to
 present a hyperlink.
+If two formats are given and a file
+.Ar %N.%S
+exists in the current directory, the first format is used;
+otherwise, the second format is used.
 .It Cm style Ns = Ns Ar style.css
 The file
 .Ar style.css
