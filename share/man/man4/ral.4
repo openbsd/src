@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.112 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: ral.4,v 1.113 2018/10/02 02:05:34 kevlo Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: October 2 2018 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -65,7 +65,10 @@ The RT3090 chipset is the first generation of single-chip 802.11n adapters
 from Ralink.
 .Pp
 The RT3900E chipset is a single-chip 802.11n adapter from Ralink.
-The MAC/Baseband Processor can be an RT5390 or RT5392.
+The MAC/Baseband Processor can be an RT3290, RT5390 or RT5392.
+The RT3290 is a combo 802.11n and Bluetooth chip.
+It operates in the 2 Ghz spectrum and supports one transmit path and on one
+receiver path (1T1R).
 The RT5390 chip operates in the 2GHz spectrum and supports one transmit path
 and one receiver path (1T1R).
 The RT5392 chip operates in the 2GHz spectrum and supports up to two transmit
@@ -139,6 +142,7 @@ files to be loaded when an interface is brought up:
 .It /etc/firmware/ral-rt2561s
 .It /etc/firmware/ral-rt2661
 .It /etc/firmware/ral-rt2860
+.It /etc/firmware/ral-rt3290
 .El
 .Pp
 The RT2500 chipset does not require a firmware file to operate.
