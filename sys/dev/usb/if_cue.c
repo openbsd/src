@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.77 2017/01/22 10:17:39 dlg Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.78 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1033,7 +1033,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->cue_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

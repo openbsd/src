@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.80 2018/07/03 14:33:43 kevlo Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.81 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1134,7 +1134,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

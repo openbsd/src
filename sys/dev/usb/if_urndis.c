@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.67 2017/07/19 16:31:56 mikeb Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.68 2018/10/02 19:49:10 stsp Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1010,7 +1010,7 @@ urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			 s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.83 2018/07/03 14:33:43 kevlo Exp $ */
+/*	$OpenBSD: if_url.c,v 1.84 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -995,7 +995,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

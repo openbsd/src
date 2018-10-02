@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.108 2018/07/03 14:33:43 kevlo Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.109 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1428,7 +1428,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->aue_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

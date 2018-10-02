@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.88 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.89 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -998,7 +998,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	DPRINTFN(5,("%s: %s: enter\n", sc->kue_dev.dv_xname,__func__));
 
 	if (usbd_is_dying(sc->kue_udev))
-		return (EIO);
+		return ENXIO;
 
 #ifdef DIAGNOSTIC
 	if (!curproc) {
