@@ -4,7 +4,7 @@ NNAAMMEE
      uunnaarryy--ssqqrrtt - square root
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text _r = sqrt(_x^2 + _y^2) + sqrt(_a + _b) + sqrt(_x^) + sqrt() + sqrt
-     final text
+     initial text _r = <sqrt>(_x^2 + _y^2) + <sqrt>(_a + _b) + <sqrt>(_x^) +
+     <sqrt>() + <sqrt> final text
 
 OpenBSD                          July 6, 2017                          OpenBSD
