@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.82 2018/09/09 12:53:00 benno Exp $
+.\" $OpenBSD: bgpctl.8,v 1.83 2018/10/03 11:36:39 denis Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2018 $
+.Dd $Mdocdate: October 3 2018 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -357,6 +357,8 @@ Show only entries from the specified RIB table.
 Show all entries with
 .Ar as
 anywhere but rightmost.
+.It Cm ovs Pq Ic valid | not-found | invalid                                                                                                            
+Show all entries with matching Origin Validation State (OVS).
 .El
 .Pp
 Additionally, the following

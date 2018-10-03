@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.348 2018/10/01 23:09:53 job Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.349 2018/10/03 11:36:39 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -88,6 +88,9 @@
 #define	F_RTLABEL		0x10000
 #define	F_CTL_SSV		0x20000	/* only used by bgpctl */
 #define	F_CTL_INVALID		0x40000 /* only used by bgpctl */
+#define	F_CTL_OVS_VALID		0x80000
+#define	F_CTL_OVS_INVALID	0x100000
+#define	F_CTL_OVS_NOTFOUND	0x200000
 
 /*
  * Note that these numeric assignments differ from the numbers commonly
