@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.178 2018/09/09 17:11:26 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.179 2018/10/03 06:57:36 denis Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2018 $
+.Dd $Mdocdate: October 3 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -443,6 +443,21 @@ more stable, route.
 In this case the decision process is no longer deterministic.
 The default is
 .Ic ignore .
+.Pp
+.It Xo
+.Ic roa-set
+.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar len Ic source-as Ar asn ... Ic }
+.Xc
+An
+.Ic roa-set
+holds a collection of Validated ROA Payloads (VRP).
+Each received prefix is checked against the
+.Ic roa-set
+and the Origin Validation State (OVS) is set.
+.Bd -literal -offset indent
+roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
+          203.0.113.0/24 source-as 64496 }
+.Ed
 .Pp
 .It Xo
 .Ic route-collector
@@ -1386,6 +1401,14 @@ can be set to
 in which case the nexthop is compared against the address of the neighbor.
 Nexthop filtering is not supported on locally announced networks and one must
 take into consideration previous rules overwriting nexthops.
+.Pp
+.It Xo
+.Ic ovs
+.Pq Ic valid | not-found | invalid
+.Xc
+This rule applies only to
+.Em UPDATES
+where the Origin Validation State (OVS) matches.
 .Pp
 .It Ic prefix Ar address Ns Li / Ns Ar len
 .It Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ar range
