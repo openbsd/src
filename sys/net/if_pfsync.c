@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.260 2018/10/02 23:44:39 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.261 2018/10/03 01:24:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -344,9 +344,9 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hdrlen = sizeof(struct pfsync_header);
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_xflags = IFXF_CLONED;
-	timeout_set_proc(&sc->sc_tmo, pfsync_timeout, sc);
-	timeout_set_proc(&sc->sc_bulk_tmo, pfsync_bulk_update, sc);
-	timeout_set_proc(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, sc);
+	timeout_set_proc(&sc->sc_tmo, pfsync_timeout, NULL);
+	timeout_set_proc(&sc->sc_bulk_tmo, pfsync_bulk_update, NULL);
+	timeout_set_proc(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, NULL);
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -370,9 +370,8 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	struct pfsync_softc *sc = ifp->if_softc;
 	struct pfsync_deferral *pd;
 
-	timeout_del(&sc->sc_bulkfail_tmo);
-	timeout_del(&sc->sc_bulk_tmo);
-	timeout_del(&sc->sc_tmo);
+	NET_LOCK();
+
 #if NCARP > 0
 	if (!pfsync_sync_ok)
 		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
@@ -386,7 +385,11 @@ pfsync_clone_destroy(struct ifnet *ifp)
 		hook_disestablish(sc->sc_sync_if->if_detachhooks,
 		    sc->sc_dhcookie);
 	}
+
+	/* XXXSMP breaks atomicity */
+	NET_UNLOCK();
 	if_detach(ifp);
+	NET_LOCK();
 
 	pfsync_drop(sc);
 
@@ -396,11 +399,16 @@ pfsync_clone_destroy(struct ifnet *ifp)
 		pfsync_undefer(pd, 0);
 	}
 
+	pfsyncif = NULL;
+	timeout_del(&sc->sc_bulkfail_tmo);
+	timeout_del(&sc->sc_bulk_tmo);
+	timeout_del(&sc->sc_tmo);
+
+	NET_UNLOCK();
+
 	pool_destroy(&sc->sc_pool);
 	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
 	free(sc, M_DEVBUF, sizeof(*sc));
-
-	pfsyncif = NULL;
 
 	return (0);
 }
@@ -1814,6 +1822,9 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 
 	NET_ASSERT_LOCKED();
 
+	if (sc == NULL)
+		return;
+
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
 
@@ -2314,11 +2325,14 @@ pfsync_bulk_start(void)
 void
 pfsync_bulk_update(void *arg)
 {
-	struct pfsync_softc *sc = arg;
+	struct pfsync_softc *sc;
 	struct pf_state *st;
 	int i = 0;
 
 	NET_LOCK();
+	sc = pfsyncif;
+	if (sc == NULL)
+		goto out;
 	st = sc->sc_bulk_next;
 
 	for (;;) {
@@ -2349,6 +2363,7 @@ pfsync_bulk_update(void *arg)
 			break;
 		}
 	}
+ out:
 	NET_UNLOCK();
 }
 
@@ -2378,9 +2393,12 @@ pfsync_bulk_status(u_int8_t status)
 void
 pfsync_bulk_fail(void *arg)
 {
-	struct pfsync_softc *sc = arg;
+	struct pfsync_softc *sc;
 
 	NET_LOCK();
+	sc = pfsyncif;
+	if (sc == NULL)
+		goto out;
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again */
 		timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
@@ -2405,6 +2423,7 @@ pfsync_bulk_fail(void *arg)
 		sc->sc_link_demoted = 0;
 		DPFPRINTF(LOG_ERR, "failed to receive bulk update");
 	}
+ out:
 	NET_UNLOCK();
 }
 
