@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.189 2018/10/02 19:43:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.190 2018/10/04 13:22:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -539,11 +539,13 @@ mdoc_sh_pre(MDOC_ARGS)
 			    subn = subn->next) {
 				if (subn->tok != MDOC_Ss)
 					continue;
+				id = html_make_id(subn->head, 0);
+				if (id == NULL)
+					continue;
 				if (tsub == NULL)
 					print_otag(h, TAG_UL,
 					    "c", "Bl-compact");
 				tsub = print_otag(h, TAG_LI, "");
-				id = html_make_id(subn->head, 0);
 				print_otag(h, TAG_A, "hR", id);
 				free(id);
 				print_mdoc_nodelist(meta,
