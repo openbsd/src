@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.85 2018/08/25 16:43:52 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.86 2018/10/04 15:16:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2018 $
+.Dd $Mdocdate: October 4 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -307,7 +307,7 @@ Macros are provided by the
 and
 .Xr man 7
 languages and can be defined by the
-.Sx \&de
+.Ic \&de
 request.
 When called, they follow the same syntax as requests, except that
 macro arguments may optionally be quoted by enclosing them
@@ -413,7 +413,7 @@ compatibility mode at all, it handles this request as an alias for
 .It Ic \&as Ar stringname Op Ar string
 Append to a user-defined string.
 The syntax of this request is the same as that of
-.Sx \&ds .
+.Ic \&ds .
 If a user-defined string with the specified name does not yet exist,
 it is set to the empty string before appending.
 .It Ic \&as1 Ar stringname Op Ar string
@@ -1596,7 +1596,7 @@ Ignored because insecure.
 Re-start a table layout, retaining the options of the prior table
 invocation.
 See
-.Sx \&TS .
+.Ic \&TS .
 .It Ic \&ta Op Ar width ... Op Cm T Ar width ...
 Set tab stops.
 Each
@@ -1617,7 +1617,7 @@ Currently unsupported.
 .It Ic \&TE
 End a table context.
 See
-.Sx \&TS .
+.Ic \&TS .
 .It Ic \&ti Oo Cm + Ns | Ns Cm - Oc Ns Ar width
 Break the output line and indent the next output line by
 .Ar width .
@@ -1741,10 +1741,10 @@ This is a Heirloom extension and currently ignored.
 .El
 .Ss Numerical expressions
 The
-.Sx \&nr ,
-.Sx \&if ,
+.Ic \&nr ,
+.Ic \&if ,
 and
-.Sx \&ie
+.Ic \&ie
 requests accept integer numerical expressions as arguments.
 These are always evaluated using the C
 .Vt int
@@ -1832,54 +1832,59 @@ described in the
 .Sx LANGUAGE SYNTAX
 section above.
 .Pp
-A backslash followed by any character not listed here
+In
+.Xr mandoc 1 ,
+a backslash followed by any character not listed here
 simply prints that character itself.
-.Ss \e<newline>
+.Bl -tag -width Ds
+.It Ic \e<newline>
 A backslash at the end of an input line can be used to continue the
 logical input line on the next physical input line, joining the text
 on both lines together as if it were on a single input line.
-.Ss \e<space>
+.It Ic \e<space>
 The escape sequence backslash-space
 .Pq Sq \e\ \&
 is an unpaddable space-sized non-breaking space character; see
 .Sx Whitespace .
-.Ss \e\(dq
+.It Ic \e\(dq
 The rest of the input line is treated as
 .Sx Comments .
-.Ss \e#
+.It Ic \e#
 Line continuation with comment.
 Discard the rest of the physical input line and continue the logical
 input line on the next physical input line, joining the text on
 both lines together as if it were on a single input line.
 This is a groff extension.
-.Ss \e$ Ns Ar arg
+.It Ic \e$ Ns Ar arg
 Macro argument expansion, see
-.Sx de .
-.Ss \e%
+.Ic \&de .
+.It Ic \e%
 Hyphenation allowed at this point of the word; ignored by
 .Xr mandoc 1 .
-.Ss \e&
+.It Ic \e&
 Non-printing zero-width character; see
 .Sx Whitespace .
-.Ss \e\(aq
+.It Ic \e\(aq
 Acute accent special character; use
-.Sq \e(aa
+.Ic \e(aa
 instead.
-.Ss \e( Ns Ar cc
+.It Ic \e( Ns Ar cc
 .Sx Special Characters
 with two-letter names, see
 .Xr mandoc_char 7 .
-.Ss \e* Ns Bq Ar name
+.It Ic \e*[ Ns Ar name Ns Ic \&]
 Interpolate the string with the
 .Ar name .
 For short names, there are variants
-.No \e* Ns Ar c
+.Ic \e* Ns Ar c
 and
-.No \e*( Ns Ar cc .
+.Ic \e*( Ns Ar cc .
 .Pp
 One string is predefined on the
 .Nm
-language level: \e*(.T expands to the name of the output device,
+language level:
+.Ic \e*(.T
+expands to the name of the output device,
 for example ascii, utf8, ps, pdf, html, or markdown.
 .Pp
 Macro sets traditionally predefine additional strings which are not
@@ -1895,43 +1900,43 @@ Strings can be defined, changed, and deleted with the
 and
 .Ic \&rm
 requests.
-.Ss \e,
+.It Ic \e,
 Left italic correction (groff extension); ignored by
 .Xr mandoc 1 .
-.Ss \e-
+.It Ic \e-
 Special character
 .Dq mathematical minus sign .
-.Ss \e/
+.It Ic \e/
 Right italic correction (groff extension); ignored by
 .Xr mandoc 1 .
-.Ss \e Ns Bq Ar name
+.It Ic \e[ Ns Ar name Ns Ic \&]
 .Sx Special Characters
 with names of arbitrary length, see
 .Xr mandoc_char 7 .
-.Ss \e^
+.It Ic \e^
 One-twelfth em half-narrow space character, effectively zero-width in
 .Xr mandoc 1 .
-.Ss \e`
+.It Ic \e`
 Grave accent special character; use
-.Sq \e(ga
+.Ic \e(ga
 instead.
-.Ss \e{
+.It Ic \e{
 Begin conditional input; see
-.Sx if .
-.Ss \e\(ba
+.Ic \&if .
+.It Ic \e\(ba
 One-sixth em narrow space character, effectively zero-width in
 .Xr mandoc 1 .
-.Ss \e}
+.It Ic \e}
 End conditional input; see
-.Sx if .
-.Ss \e~
+.Ic \&if .
+.It Ic \e~
 Paddable non-breaking space character.
-.Ss \e0
+.It Ic \e0
 Digit width space character.
-.Ss \eA\(aq Ns Ar string Ns \(aq
+.It Ic \eA\(aq Ns Ar string Ns Ic \(aq
 Anchor definition; ignored by
 .Xr mandoc 1 .
-.Ss \eB\(aq Ns Ar string Ns \(aq
+.It Ic \eB\(aq Ns Ar string Ns Ic \(aq
 Interpolate
 .Sq 1
 if
@@ -1941,145 +1946,145 @@ conforms to the syntax of
 explained above and
 .Sq 0
 otherwise.
-.Ss \eb\(aq Ns Ar string Ns \(aq
+.It Ic \eb\(aq Ns Ar string Ns Ic \(aq
 Bracket building function; ignored by
 .Xr mandoc 1 .
-.Ss \eC\(aq Ns Ar name Ns \(aq
+.It Ic \eC\(aq Ns Ar name Ns Ic \(aq
 .Sx Special Characters
 with names of arbitrary length.
-.Ss \ec
+.It Ic \ec
 When encountered at the end of an input text line,
 the next input text line is considered to continue that line,
 even if there are request or macro lines in between.
 No whitespace is inserted.
-.Ss \eD\(aq Ns Ar string Ns \(aq
+.It Ic \eD\(aq Ns Ar string Ns Ic \(aq
 Draw graphics function; ignored by
 .Xr mandoc 1 .
-.Ss \ed
+.It Ic \ed
 Move down by half a line; ignored by
 .Xr mandoc 1 .
-.Ss \ee
+.It Ic \ee
 Backslash special character.
-.Ss \eF Ns Bq Ar name
+.It Ic \eF[ Ns Ar name Ns Ic \&]
 Switch font family (groff extension); ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \eF Ns Ar c
+.Ic \eF Ns Ar c
 and
-.No \eF( Ns Ar cc .
-.Ss \ef Ns Bq Ar name
+.Ic \eF( Ns Ar cc .
+.It Ic \ef[ Ns Ar name Ns Ic \&]
 Switch to the font
 .Ar name ,
 see
 .Sx Text Decoration .
 For short names, there are variants
-.No \ef Ns Ar c
+.Ic \ef Ns Ar c
 and
-.No \ef( Ns Ar cc .
-.Ss \eg Ns Bq Ar name
+.Ic \ef( Ns Ar cc .
+.It Ic \eg[ Ns Ar name Ns Ic \&]
 Interpolate the format of a number register; ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \eg Ns Ar c
+.Ic \eg Ns Ar c
 and
-.No \eg( Ns Ar cc .
-.Ss \eH\(aq Ns Oo +|- Oc Ns Ar number Ns \(aq
+.Ic \eg( Ns Ar cc .
+.It Ic \eH\(aq Ns Oo +|- Oc Ns Ar number Ns Ic \(aq
 Set the height of the current font; ignored by
 .Xr mandoc 1 .
-.Ss \eh\(aq Ns Oo Cm \&| Oc Ns Ar width Ns \(aq
+.It Ic \eh\(aq Ns Oo Cm \&| Oc Ns Ar width Ns Ic \(aq
 Horizontal motion.
 If the vertical bar is given, the motion is relative to the current
 indentation.
 Otherwise, it is relative to the current position.
 The default scaling unit is
 .Cm m .
-.Ss \ek Ns Bq Ar name
+.It Ic \ek[ Ns Ar name Ns Ic \&]
 Mark horizontal input place in register; ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \ek Ns Ar c
+.Ic \ek Ns Ar c
 and
-.No \ek( Ns Ar cc .
-.Ss \eL\(aq Ns Ar number Ns Oo Ar c Oc Ns \(aq
+.Ic \ek( Ns Ar cc .
+.It Ic \eL\(aq Ns Ar number Ns Oo Ar c Oc Ns Ic \(aq
 Vertical line drawing function; ignored by
 .Xr mandoc 1 .
-.Ss \el\(aq Ns Ar width Ns Oo Ar c Oc Ns \(aq
+.It Ic \el\(aq Ns Ar width Ns Oo Ar c Oc Ns Ic \(aq
 Draw a horizontal line of
 .Ar width
 using the glyph
 .Ar c .
-.Ss \eM Ns Bq Ar name
+.It Ic \eM[ Ns Ar name Ns Ic \&]
 Set fill (background) color (groff extension); ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \eM Ns Ar c
+.Ic \eM Ns Ar c
 and
-.No \eM( Ns Ar cc .
-.Ss \em Ns Bq Ar name
+.Ic \eM( Ns Ar cc .
+.It Ic \em[ Ns Ar name Ns Ic \&]
 Set glyph drawing color (groff extension); ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \em Ns Ar c
+.Ic \em Ns Ar c
 and
-.No \em( Ns Ar cc .
-.Ss \eN\(aq Ns Ar number Ns \(aq
+.Ic \em( Ns Ar cc .
+.It Ic \eN\(aq Ns Ar number Ns Ic \(aq
 Character
 .Ar number
 on the current font.
-.Ss \en Ns Oo +|- Oc Ns Bq Ar name
+.It Ic \en Ns Oo +|- Oc Ns Ic \&[ Ns Ar name Ns Ic \&]
 Interpolate the number register
 .Ar name .
 For short names, there are variants
-.No \en Ns Ar c
+.Ic \en Ns Ar c
 and
-.No \en( Ns Ar cc .
+.Ic \en( Ns Ar cc .
 If the optional sign is specified,
 the register is first incremented or decremented by the
 .Ar stepsize
 that was specified in the relevant
 .Ic \&nr
 request, and the changed value is interpolated.
-.Ss \eo\(aq Ns Ar string Ns \(aq
+.It Ic \eo\(aq Ns Ar string Ns Ic \(aq
 Overstrike, writing all the characters contained in the
 .Ar string
 to the same output position.
 In terminal and HTML output modes,
 only the last one of the characters is visible.
-.Ss \ep
+.It Ic \ep
 Break the output line at the end of the current word.
-.Ss \eR\(aq Ns Ar name Oo +|- Oc Ns Ar number Ns \(aq
+.It Ic \eR\(aq Ns Ar name Oo +|- Oc Ns Ar number Ns Ic \(aq
 Set number register; ignored by
 .Xr mandoc 1 .
-.Ss \eS\(aq Ns Ar number Ns \(aq
+.It Ic \eS\(aq Ns Ar number Ns Ic \(aq
 Slant output; ignored by
 .Xr mandoc 1 .
-.Ss \es\(aq Ns Oo +|- Oc Ns Ar number Ns \(aq
+.It Ic \es\(aq Ns Oo +|- Oc Ns Ar number Ns Ic \(aq
 Change point size; ignored by
 .Xr mandoc 1 .
 Alternative forms
-.No \es Ns Oo +|- Oc Ns Ar n ,
-.No \es Ns Oo +|- Oc Ns \(aq Ns Ar number Ns \(aq ,
-.No \es Ns Bq Oo +|- Oc Ns Ar number ,
+.Ic \es Ns Oo +|- Oc Ns Ar n ,
+.Ic \es Ns Oo +|- Oc Ns Ic \(aq Ns Ar number Ns Ic \(aq ,
+.Ic \es[ Ns Oo +|- Oc Ns Ar number Ns Ic \&] ,
 and
-.No \es Ns Oo +|- Oc Ns Bq Ar number
+.Ic \es Ns Oo +|- Oc Ns Ic \&[ Ns Ar number Ns Ic \&]
 are also parsed and ignored.
-.Ss \et
+.It Ic \et
 Horizontal tab; ignored by
 .Xr mandoc 1 .
-.Ss \eu
+.It Ic \eu
 Move up by half a line; ignored by
 .Xr mandoc 1 .
-.Ss \eV Ns Bq Ar name
+.It Ic \eV[ Ns Ar name Ns Ic \&]
 Interpolate an environment variable; ignored by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \eV Ns Ar c
+.Ic \eV Ns Ar c
 and
-.No \eV( Ns Ar cc .
-.Ss \ev\(aq Ns Ar number Ns \(aq
+.Ic \eV( Ns Ar cc .
+.It Ic \ev\(aq Ns Ar number Ns Ic \(aq
 Vertical motion; ignored by
 .Xr mandoc 1 .
-.Ss \ew\(aq Ns Ar string Ns \(aq
+.It Ic \ew\(aq Ns Ar string Ns Ic \(aq
 Interpolate the width of the
 .Ar string .
 The
@@ -2088,28 +2093,29 @@ implementation assumes that after expansion of user-defined strings, the
 .Ar string
 only contains normal characters, no escape sequences, and that each
 character has a width of 24 basic units.
-.Ss \eX\(aq Ns Ar string Ns \(aq
+.It Ic \eX\(aq Ns Ar string Ns Ic \(aq
 Output
 .Ar string
 as device control function; ignored in nroff mode and by
 .Xr mandoc 1 .
-.Ss \ex\(aq Ns Ar number Ns \(aq
+.It Ic \ex\(aq Ns Ar number Ns Ic \(aq
 Extra line space function; ignored by
 .Xr mandoc 1 .
-.Ss \eY Ns Bq Ar name
+.It Ic \eY[ Ns Ar name Ns Ic \&]
 Output a string as a device control function; ignored in nroff mode and by
 .Xr mandoc 1 .
 For short names, there are variants
-.No \eY Ns Ar c
+.Ic \eY Ns Ar c
 and
-.No \eY( Ns Ar cc .
-.Ss \eZ\(aq Ns Ar string Ns \(aq
+.Ic \eY( Ns Ar cc .
+.It Ic \eZ\(aq Ns Ar string Ns Ic \(aq
 Print
 .Ar string
 with zero width and height; ignored by
 .Xr mandoc 1 .
-.Ss \ez
+.It Ic \ez
 Output the next character without advancing the cursor position.
+.El
 .Sh COMPATIBILITY
 The
 .Xr mandoc 1
@@ -2123,7 +2129,7 @@ Unimplemented features include:
 For security reasons,
 .Xr mandoc 1
 never reads or writes external files except via
-.Sx \&so
+.Ic \&so
 requests with safe relative paths.
 .It
 There is no automatic hyphenation, no adjustment to the right margin,
