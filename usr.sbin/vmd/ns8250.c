@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.18 2018/10/03 20:13:33 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.19 2018/10/04 16:21:59 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -237,9 +237,10 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 
 		if (com1_dev.regs.ier & IER_ETXRDY) {
 			/* Limit output rate if needed */
-			if (com1_dev.pause_ct > 0) {
-				if (com1_dev.byte_out % com1_dev.pause_ct == 0)
-					evtimer_add(&com1_dev.rate, &com1_dev.rate_tv);
+			if (com1_dev.pause_ct > 0 &&
+			    com1_dev.byte_out % com1_dev.pause_ct == 0) {
+					evtimer_add(&com1_dev.rate,
+					    &com1_dev.rate_tv);
 			} else {
 				/* Set TXRDY and clear "no pending interrupt" */
 				com1_dev.regs.iir |= IIR_TXRDY;
