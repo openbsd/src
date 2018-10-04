@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.108 2018/08/24 06:25:40 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.109 2018/10/04 05:00:40 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -639,11 +639,10 @@ identifycpu(struct cpu_info *ci)
 
 	if (cpu_meltdown)
 		printf(",MELTDOWN");
-	else
-		replacemeltdown();
 
 	printf("\n");
 
+	replacemeltdown();
 	x86_print_cacheinfo(ci);
 
 	/*

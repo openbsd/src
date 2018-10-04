@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.52 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.53 2018/10/04 05:00:40 guenther Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -361,11 +361,17 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
 	idt_allocmap[LAPIC_IPI_INVLTLB] = 1;
-	idt_vec_set(LAPIC_IPI_INVLTLB, Xipi_invltlb);
 	idt_allocmap[LAPIC_IPI_INVLPG] = 1;
-	idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg);
 	idt_allocmap[LAPIC_IPI_INVLRANGE] = 1;
-	idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange);
+	if (!pmap_use_pcid) {
+		idt_vec_set(LAPIC_IPI_INVLTLB, Xipi_invltlb);
+		idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg);
+		idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange);
+	} else {
+		idt_vec_set(LAPIC_IPI_INVLTLB, Xipi_invltlb_pcid);
+		idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg_pcid);
+		idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange_pcid);
+	}
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);

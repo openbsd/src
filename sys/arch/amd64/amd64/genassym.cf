@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.38 2018/07/10 08:57:44 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.39 2018/10/04 05:00:40 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -178,3 +178,6 @@ export	NBPD_L2
 export	NPDPG
 
 export	PDIR_SLOT_DIRECT
+export	PCID_PROC
+export	PCID_PROC_INTEL
+export	INVPCID_PCID

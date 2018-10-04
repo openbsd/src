@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.45 2018/08/14 16:43:02 deraadt Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.46 2018/10/04 05:00:40 guenther Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -404,6 +404,11 @@ _ACPI_TRMP_LABEL(.Lhibernate_resume_vector_2)
 _ACPI_TRMP_OFFSET(.Lhibernate_resume_vector_3)
 	.code16
 
+	/* must clear CR4.PCIDE before clearing CR0.PG */
+	movl	%cr4, %eax
+	andl	$(~CR4_PCIDE), %eax
+	movl	%eax, %cr4
+
 	movl	%cr0, %eax
 	/* Disable CR0.PG - no paging */
 	andl	$(~CR0_PG), %eax
@@ -440,6 +445,11 @@ _ACPI_TRMP_LABEL(.Lhibernate_resume_vector_2b)
 
 _ACPI_TRMP_OFFSET(.Lhibernate_resume_vector_3b)
 	.code16
+
+	/* must clear CR4.PCIDE before clearing CR0.PG */
+	movl	%cr4, %eax
+	andl	$(~CR4_PCIDE), %eax
+	movl	%eax, %cr4
 
 	movl	%cr0, %eax
 	/* Disable CR0.PG - no paging */

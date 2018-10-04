@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.109 2018/09/12 06:12:59 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.110 2018/10/04 05:00:40 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -480,6 +480,8 @@ restore_saved:
 	 * interrupt trampolines.
 	 */
 	movq	PM_PDIRPA_INTEL(%rcx),%rdx
+	orq	cr3_reuse_pcid,%rax
+	orq	cr3_pcid_proc_intel,%rdx
 	movq	%rax,CPUVAR(KERN_CR3)
 	movq	%rdx,CPUVAR(USER_CR3)
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
@@ -688,6 +690,7 @@ IDTVEC_NOALIGN(syscall)
 	CODEPATCH_START
 	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(USER_CR3),%rax
+	PCID_SET_REUSE_NOP
 	movq	%rax,%cr3
 Xsyscall_trampback:
 0:	pause
@@ -864,6 +867,7 @@ intr_user_exit_post_ast:
 	CODEPATCH_START
 	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(USER_CR3),%rax
+	PCID_SET_REUSE_NOP
 	movq	%rax,%cr3
 Xiretq_trampback:
 KTEXT_PAGE_END
@@ -1098,6 +1102,10 @@ _C_LABEL(_xsave):
 	.globl	_C_LABEL(_xsaveopt)
 _C_LABEL(_xsaveopt):
 	.byte 0x48; xsaveopt	(%rdi)		/* really xsaveopt64 */
+
+	.globl	_C_LABEL(_pcid_set_reuse)
+_C_LABEL(_pcid_set_reuse):
+	orl	$(CR3_REUSE_PCID >> 32),CPUVAR(USER_CR3 + 4)
 
 ENTRY(pagezero)
 	RETGUARD_SETUP(pagezero, r11)

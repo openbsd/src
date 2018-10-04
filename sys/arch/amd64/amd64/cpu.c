@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.128 2018/09/26 03:05:53 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.129 2018/10/04 05:00:40 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -174,7 +174,14 @@ replacemeltdown(void)
 	replacedone = 1;
 
 	s = splhigh();
-	codepatch_nop(CPTAG_MELTDOWN_NOP);
+	if (!cpu_meltdown)
+		codepatch_nop(CPTAG_MELTDOWN_NOP);
+	else if (pmap_use_pcid) {
+		extern long _pcid_set_reuse;
+		DPRINTF("%s: codepatching PCID use", __func__);
+		codepatch_replace(CPTAG_PCID_SET_REUSE, &_pcid_set_reuse,
+		    PCID_SET_REUSE_SIZE);
+	}
 	splx(s);
 }
 
@@ -563,6 +570,8 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_UMIP;
 	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd)
 		cr4 |= CR4_OSXSAVE;
+	if (pmap_use_pcid)
+		cr4 |= CR4_PCIDE;
 	lcr4(cr4);
 
 	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd) {

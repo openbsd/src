@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.75 2018/07/24 02:42:25 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.76 2018/10/04 05:00:40 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -519,6 +519,11 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
 
+/*
+ * "Fast" IPI handlers.  These are the IPIs which are handled without
+ * unblocking interrupts, so no need for 'recurse' or 'resume' entry points
+ */
+/* invalidate the entire TLB, no PCIDs version */
 IDTVEC(ipi_invltlb)
 	pushq	%rax
 
@@ -533,6 +538,7 @@ IDTVEC(ipi_invltlb)
 	popq	%rax
 	iretq
 
+/* invalidate a single page, no PCIDs version */
 IDTVEC(ipi_invlpg)
 	pushq	%rax
 
@@ -547,6 +553,7 @@ IDTVEC(ipi_invlpg)
 	popq	%rax
 	iretq
 
+/* invalidate a range of pages, no PCIDs version */
 IDTVEC(ipi_invlrange)
 	pushq	%rax
 	pushq	%rdx
@@ -563,6 +570,117 @@ IDTVEC(ipi_invlrange)
 	lock
 	decq	tlb_shoot_wait
 
+	popq	%rdx
+	popq	%rax
+	iretq
+
+/*
+ * Invalidate the userspace PCIDs.
+ */
+IDTVEC(ipi_invltlb_pcid)
+	pushq	%rax
+
+	ioapic_asm_ack()
+
+	/* set the type */
+	movl	$INVPCID_PCID,%eax
+
+	/* finish getting space for the INVPCID descriptor */
+#if INVPCID_PCID == PCID_PROC
+	pushq	%rax
+#else
+	pushq	$PCID_PROC
+#endif
+
+	invpcid	(%rsp),%rax
+
+	/* bump the pcid in the descriptor and invpcid again */
+	movl	$PCID_PROC_INTEL,(%rsp)
+	invpcid	(%rsp),%rax
+
+	lock
+	decq	tlb_shoot_wait
+
+	/* restore the stack */
+	popq	%rax
+	popq	%rax
+	iretq
+
+/*
+ * Invalidate a VA in two PCIDs.  Kernel VAs are present in PCIDs 0 and 1,
+ * while userspace VAs are present in PCIDs 1 and 2.
+ */
+IDTVEC(ipi_invlpg_pcid)
+	pushq	%rax
+
+	ioapic_asm_ack()
+
+	/* space for the INVPCID descriptor */
+	subq	$16,%rsp
+
+	/* set the PCID in the descriptor */
+	movl	tlb_shoot_first_pcid,%eax
+	movq	%rax,(%rsp)
+
+	/* set the address in the descriptor */
+	movq	tlb_shoot_addr1,%rax
+	movq	%rax,8(%rsp)
+
+	/* set the type to zero, and invpcid */
+	xorl	%eax,%eax
+	invpcid	(%rsp),%rax
+
+	/* bump the pcid in the descriptor and invpcid again */
+	addl	$1,(%rsp)
+	invpcid	(%rsp),%rax
+
+	lock
+	decq	tlb_shoot_wait
+
+	/* restore the stack */
+	addq	$16,%rsp
+	popq	%rax
+	iretq
+
+/*
+ * Invalidate a range of VA in two PCIDs.  Kernel VAs are present in
+ * PCIDs 0 and 1, while userspace VAs are present in PCIDs 1 and 2.
+ */
+IDTVEC(ipi_invlrange_pcid)
+	pushq	%rax
+	pushq	%rdx
+	pushq	%rcx
+
+	ioapic_asm_ack()
+
+	/* space for the INVPCID descriptor */
+	subq	$16,%rsp
+
+	/* set the PCID in the descriptor */
+	movl	tlb_shoot_first_pcid,%eax
+	movq	%rax,(%rsp)
+
+	/* set up for the loop: load the limit and set the type to zero */
+	movq	tlb_shoot_addr2,%rdx
+	xorl	%ecx,%ecx
+
+	/* set the address in the descriptor and loop the invalidate */
+	movq	tlb_shoot_addr1,%rax
+1:	movq	%rax,8(%rsp)
+	invpcid	(%rsp),%rcx
+	addl	$1,(%rsp)
+	invpcid	(%rsp),%rcx
+	subl	$1,(%rsp)
+	addq	$PAGE_SIZE,%rax
+	cmpq	%rdx,%rax
+	jb	1b
+
+	lock
+	decq	tlb_shoot_wait
+
+	/* restore the stack */
+	addq	$16,%rsp
+	popq	%rcx
 	popq	%rdx
 	popq	%rax
 	iretq

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.30 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.31 2018/10/04 05:00:40 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -144,6 +144,17 @@ tlbflush(void)
 	__asm volatile("movq %%cr3,%0" : "=r" (val));
 	__asm volatile("movq %0,%%cr3" : : "r" (val));
 }
+
+static inline void
+invpcid(uint64_t type, paddr_t pcid, paddr_t addr)
+{
+	uint64_t desc[2] = { pcid, addr };
+	asm volatile("invpcid %0,%1" : : "m"(desc[0]), "r"(type));
+}
+#define INVPCID_ADDR		0
+#define INVPCID_PCID		1
+#define INVPCID_ALL		2
+#define INVPCID_NON_GLOBAL	3
 
 #ifdef notyet
 void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);

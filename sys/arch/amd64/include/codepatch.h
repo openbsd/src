@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.7 2018/07/13 08:30:34 sf Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.8 2018/10/04 05:00:40 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -42,14 +42,15 @@ void codepatch_disable(void);
 /*
  * Mark the end of some code to be patched, and assign the given tag.
  */
-#define	CODEPATCH_END(tag)			 \
+#define	CODEPATCH_END2(startnum,tag)		 \
 	999:					 \
 	.section .codepatch, "a"		;\
-	.quad 998b				;\
-	.short (999b - 998b)			;\
+	.quad startnum##b			;\
+	.short (999b - startnum##b)		;\
 	.short tag				;\
 	.int 0					;\
 	.previous
+#define	CODEPATCH_END(tag)	CODEPATCH_END2(998,tag)
 
 #define CPTAG_STAC		1
 #define CPTAG_CLAC		2
@@ -57,6 +58,7 @@ void codepatch_disable(void);
 #define CPTAG_XRSTOR		4
 #define CPTAG_XSAVE		5
 #define CPTAG_MELTDOWN_NOP	6
+#define CPTAG_PCID_SET_REUSE	7
 
 /*
  * As stac/clac SMAP instructions are 3 bytes, we want the fastest
@@ -74,5 +76,12 @@ void codepatch_disable(void);
 #define SMAP_CLAC	CODEPATCH_START			;\
 			SMAP_NOP			;\
 			CODEPATCH_END(CPTAG_CLAC)
+
+#define	PCID_SET_REUSE_SIZE	12
+#define	PCID_SET_REUSE_NOP					\
+	997:							;\
+	.byte	0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00	;\
+	.byte	0x0f, 0x1f, 0x40, 0x00				;\
+	CODEPATCH_END2(997, CPTAG_PCID_SET_REUSE)
 
 #endif /* _MACHINE_CODEPATCH_H_ */
