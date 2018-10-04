@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.179 2018/10/03 06:57:36 denis Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.180 2018/10/04 08:52:04 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2018 $
+.Dd $Mdocdate: October 4 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -38,6 +38,12 @@ configuration file.
 .It Sy Global Configuration
 Global settings for
 .Xr bgpd 8 .
+.It Sy Set Configuration
+Various lookup tables are defined in this section.
+.It Sy Network Announcements
+Networks which should be announced by
+.Xr bgpd 8
+are set in this section.
 .It Sy MPLS VPN Configuration
 The definition and properties for BGP MPLS VPNs are set in this section.
 .It Sy Neighbors and Groups
@@ -143,19 +149,6 @@ or as a large number (ASPLAIN format), for example:
 .Bd -literal -offset indent
 AS 196618
 .Ed
-.Pp
-.It Xo
-.Ic as-set Ar name
-.Ic { Ar as-number ... Ic }
-.Xc
-An
-.Ic as-set
-holds a collection of AS numbers and can be used with the AS specific
-parameter in
-.Sx FILTER
-rules.
-Lookups against as-sets are more efficient than a large number of rules
-which differ only in the AS number.
 .Pp
 .It Ic connect-retry Ar seconds
 Set the number of seconds before retrying to open a connection.
@@ -267,73 +260,6 @@ listen on 127.0.0.1
 Log received and sent updates.
 .Pp
 .It Xo
-.Ic network
-.Ar address Ns Li / Ns Ar prefix
-.Op Ic set ...\&
-.Xc
-.It Xo
-.Ic network
-.Pq Ic inet Ns | Ns Ic inet6
-.Ic static Op Ic set ...\&
-.Xc
-.It Xo
-.Ic network
-.Pq Ic inet Ns | Ns Ic inet6
-.Ic connected Op Ic set ...\&
-.Xc
-.It Xo
-.Ic network
-.Pq Ic inet Ns | Ns Ic inet6
-.Ic rtlabel Ar label Op Ic set ...\&
-.Xc
-.It Xo
-.Ic network
-.Pq Ic inet Ns | Ns Ic inet6
-.Ic priority Ar number Op Ic set ...\&
-.Xc
-.It Xo
-.Ic network prefix-set
-.Ar name
-.Op Ic set ...\&
-.Xc
-Announce the specified network as belonging to our AS.
-If set to
-.Ic connected ,
-routes to directly attached networks will be announced.
-If set to
-.Ic static ,
-all static routes will be announced.
-If set to
-.Ic rtlabel ,
-routes with the specified
-.Ar label
-will be announced.
-If set to
-.Ic priority ,
-routes with the specified
-.Ar priority
-will be announced.
-If a prefix-set
-.Ar name
-is specified, all networks in the prefix-set will be announced.
-.Bd -literal -offset indent
-network 192.168.7.0/24
-.Ed
-.Pp
-It is possible to set default
-.Em AS path attributes
-per
-.Ic network
-statement:
-.Bd -literal -offset indent
-network 192.168.7.0/24 set localpref 220
-.Ed
-.Pp
-See also the
-.Sx ATTRIBUTE SET
-section.
-.Pp
-.It Xo
 .Ic nexthop
 .Ic qualify
 .Ic via
@@ -349,42 +275,6 @@ bgpd may use the default route to verify nexthops.
 By default bgpd will only use static routes or routes added by other routing
 daemons like
 .Xr ospfd 8 .
-.Pp
-.It Xo
-.Ic prefix-set Ar name
-.Ic { Ar address Ns Li / Ns Ar len ... Ic }
-.Xc
-A
-.Ic prefix-set
-holds a collection of prefixes and can be used in place
-of the
-.Ic prefix
-parameter in
-.Sx FILTER
-rules.
-.\" XXX not implemented
-.\" and
-.\".Ic network
-.\" statements.
-Lookups against prefix-sets are more efficient than a large number of rules
-which differ only in prefix.
-.Pp
-A prefix can be followed by the prefixlen operators listed for the
-.Ic prefix
-parameter in the
-.Sx PARAMETERS
-section.
-.Pp
-The first example creates a set of prefixes called
-.Dq private ,
-to hold a number of RFC 1918 private network blocks.
-The second example shows the use of prefixlen operators.
-.Bd -literal -offset indent
-prefix-set private { 10.0.0.0/8, 172.16.0.0/12,
-			192.168.0.0/16, fc00::/7 }
-prefix-set as64496set { 192.0.2.0/24 prefixlen >= 26,
-			2001:db8::/32 or-longer }
-.Ed
 .Pp
 .It Xo
 .Ic rde
@@ -445,21 +335,6 @@ The default is
 .Ic ignore .
 .Pp
 .It Xo
-.Ic roa-set
-.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar len Ic source-as Ar asn ... Ic }
-.Xc
-An
-.Ic roa-set
-holds a collection of Validated ROA Payloads (VRP).
-Each received prefix is checked against the
-.Ic roa-set
-and the Origin Validation State (OVS) is set.
-.Bd -literal -offset indent
-roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
-          203.0.113.0/24 source-as 64496 }
-.Ed
-.Pp
-.It Xo
 .Ic route-collector
 .Pq Ic yes Ns | Ns Ic no
 .Xc
@@ -516,6 +391,171 @@ to EBGP neighbors are not prepended with the local AS.
 The default is
 .Ic no .
 .El
+.Sh SET CONFIGURATION
+.Xr bgpd 8
+supports sets for looking up collections in an efficent way.
+.Ic as-set ,
+.Ic prefix-set ,
+and
+.Ic origin-set
+are used to lookup AS numbers, prefixes and prefixes/source-as pairs
+respectively.
+See also the
+.Sx FILTER
+section on how these sets are used in filters.
+One single
+.Ic roa-set
+can be defined which will be used to validate the origin of each prefix
+against.
+The set collections can span multiple lines and an optional comma is allowed
+between elements.
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic as-set Ar name
+.Ic { Ar as-number ... Ic }
+.Xc
+An
+.Ic as-set
+holds a collection of AS numbers and can be used with the AS specific
+parameter in
+.Sx FILTER
+rules.
+Lookups against as-sets are more efficient than a large number of rules
+which differ only in the AS number.
+.Pp
+.It Xo
+.Ic origin-set Ar name
+.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar mlen Ic source-as Ar asn ... Ic }
+.Xc
+An
+.Ic origin-set
+holds a collection of prefix/source-as pairs and can be used in place
+where a rules filter for source-as and prefix at the same time.
+.Bd -literal -offset indent
+origin-set private { 10.0.0.0/8 maxlen 24 source-as 64511
+          203.0.113.0/24 source-as 64496 }
+.Ed
+.Pp
+.It Xo
+.Ic prefix-set Ar name
+.Ic { Ar address Ns Li / Ns Ar len ... Ic }
+.Xc
+A
+.Ic prefix-set
+holds a collection of prefixes and can be used in place
+of the
+.Ic prefix
+parameter in
+.Sx FILTER
+rules and
+.Ic network
+statements.
+Lookups against prefix-sets are more efficient than a large number of rules
+which differ only in prefix.
+.Pp
+A prefix can be followed by the prefixlen operators listed for the
+.Ic prefix
+parameter in the
+.Sx PARAMETERS
+section.
+.Pp
+The first example creates a set of prefixes called
+.Dq private ,
+to hold a number of RFC 1918 private network blocks.
+The second example shows the use of prefixlen operators.
+.Bd -literal -offset indent
+prefix-set private { 10.0.0.0/8, 172.16.0.0/12,
+			192.168.0.0/16, fc00::/7 }
+prefix-set as64496set { 192.0.2.0/24 prefixlen >= 26,
+			2001:db8::/32 or-longer }
+.Ed
+.Pp
+.It Xo
+.Ic roa-set
+.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar mlen Ic source-as Ar asn ... Ic }
+.Xc
+An
+.Ic roa-set
+holds a collection of Validated ROA Payloads (VRP).
+Each received prefix is checked against the
+.Ic roa-set
+and the Origin Validation State (OVS) is set.
+.Bd -literal -offset indent
+roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
+          203.0.113.0/24 source-as 64496 }
+.Ed
+.El
+.Sh NETWORK ANNOUNCEMENTS
+To announce a specific network as belonging to our AS, a
+.Ic network
+statement is used.
+By default
+.Xr bgpd 8
+will not announce anything.
+Filter rules need to be in place to allow announcement of the right prefixes
+to each neighbor.
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic network
+.Ar address Ns Li / Ns Ar prefix
+.Op Ic set ...\&
+.Xc
+Announce the specified prefix as belonging to our AS.
+.Pp
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic connected Op Ic set ...\&
+.Xc
+Announce routes to directly attached networks.
+.Ar priority .
+.Pp
+.It Xo
+.Ic network prefix-set
+.Ar name
+.Op Ic set ...\&
+.Xc
+All networks in the prefix-set
+.Ar name
+will be announced.
+.Pp
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic priority Ar number Op Ic set ...\&
+.Xc
+Announce routes with the specified
+.Pp
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic rtlabel Ar label Op Ic set ...\&
+.Xc
+Announce routes with the specified
+.Ar label .
+.Pp
+.It Xo
+.Ic network
+.Pq Ic inet Ns | Ns Ic inet6
+.Ic static Op Ic set ...\&
+.Xc
+Announce all static routes.
+.El
+.Pp
+It is possible to set default
+.Em AS path attributes
+per
+.Ic network
+statement:
+.Bd -literal -offset indent
+network 192.168.7.0/24 set localpref 220
+.Ed
+.Pp
+See also the
+.Sx ATTRIBUTE SET
+section.
 .Sh MPLS VPN CONFIGURATION
 .Xr bgpd 8
 supports the setup and distribution of Virtual Private Networks.
@@ -1402,6 +1442,12 @@ in which case the nexthop is compared against the address of the neighbor.
 Nexthop filtering is not supported on locally announced networks and one must
 take into consideration previous rules overwriting nexthops.
 .Pp
+.It Ic origin-set Ar name
+This rule applies only to
+.Em UPDATES
+that match the given origin-set
+.Ar name .
+.Pp
 .It Xo
 .Ic ovs
 .Pq Ic valid | not-found | invalid
@@ -1413,6 +1459,7 @@ where the Origin Validation State (OVS) matches.
 .It Ic prefix Ar address Ns Li / Ns Ar len
 .It Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ar range
 .It Ic prefix Ar address Ns Li / Ns Ar len Ic or-longer
+.It Ic prefix Ar address Ns Li / Ns Ar len Ic maxlen Ar mlen
 This rule applies only to
 .Em UPDATES
 for the specified prefix.
@@ -1469,7 +1516,13 @@ prefix 10.0.0.0/8 prefixlen > 16
 .Ic or-longer
 is a shorthand for:
 .Bd -literal -offset indent
-.Ic prefix Ar address Ns Li / Ns Ar len Ic prexiflen Ic >= Ar len
+.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ic >= Ar len
+.Ed
+.Pp
+.Ic maxlen Ar mlen
+is a shorthand for:
+.Bd -literal -offset indent
+.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ic <= Ar mlen
 .Ed
 .Pp
 .It Ic prefix-set Ar name Op Ic or-longer
@@ -1483,7 +1536,7 @@ the
 .Em UPDATES
 will match any prefix in the prefix-set where
 .Bd -literal -offset indent
-.Ic address Ns Li / Ns Ar len Ic prexiflen Ic >= Ar len
+.Ic address Ns Li / Ns Ar len Ic prefixlen Ic >= Ar len
 .Ed
 .Pp
 .It Ic quick
