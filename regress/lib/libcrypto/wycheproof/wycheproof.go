@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.68 2018/10/04 18:25:50 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.69 2018/10/04 18:37:07 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -274,7 +274,7 @@ var nids = map[string]int{
 	"brainpoolP512t1": C.NID_brainpoolP512t1,
 	"secp224r1":       C.NID_secp224r1,
 	"secp256k1":       C.NID_secp256k1,
-	"secp256r1":       C.NID_X9_62_prime256v1, // RFC 4492, Table 6, p.32
+	"secp256r1":       C.NID_X9_62_prime256v1, // RFC 8422, Table 4, p.32
 	"secp384r1":       C.NID_secp384r1,
 	"secp521r1":       C.NID_secp521r1,
 	"SHA-1":           C.NID_sha1,
