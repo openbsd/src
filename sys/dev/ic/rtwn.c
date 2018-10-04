@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.40 2018/10/01 22:36:08 jmatthew Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.41 2018/10/04 01:14:30 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1661,13 +1661,13 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 	reg = rtwn_read_4(sc, R92C_MCUFWDL);
 	reg = (reg & ~R92C_MCUFWDL_WINTINI_RDY) | R92C_MCUFWDL_RDY;
 	rtwn_write_4(sc, R92C_MCUFWDL, reg);
-	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C)) {
+	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C | RTWN_CHIP_23A)) {
 		reg = rtwn_read_2(sc, R92C_SYS_FUNC_EN);
 		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
 		    reg & ~R92C_SYS_FUNC_EN_CPUEN);
 		rtwn_write_2(sc, R92C_SYS_FUNC_EN,
 		    reg | R92C_SYS_FUNC_EN_CPUEN);
-	} else if (!(sc->chip & RTWN_CHIP_23A))
+	} else
 		rtwn_fw_reset(sc);
 	/* Wait for firmware readiness. */
 	for (ntries = 0; ntries < 1000; ntries++) {
