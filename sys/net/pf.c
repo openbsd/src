@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1075 2018/09/13 19:53:58 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1076 2018/10/04 20:25:59 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3128,6 +3128,12 @@ pf_step_into_anchor(struct pf_test_ctx *ctx, struct pf_rule *r)
 		}
 	} else {
 		rv = pf_match_rule(ctx, &r->anchor->ruleset);
+		/*
+		 * Unless there was an error inside the anchor,
+		 * retain its quick state.
+		 */
+		if (rv != PF_TEST_FAIL && r->quick == PF_TEST_QUICK)
+			rv = PF_TEST_QUICK;
 	}
 
 	ctx->depth--;
