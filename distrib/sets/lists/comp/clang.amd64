@@ -1,4 +1,5 @@
 ./usr/bin/ld.lld
+./usr/bin/lldb
 ./usr/include/c++
 ./usr/include/c++/v1
 ./usr/include/c++/v1/__bit_reference
@@ -265,3 +266,4 @@
 ./usr/share/man/man1/clang-cpp.1
 ./usr/share/man/man1/clang.1
 ./usr/share/man/man1/ld.lld.1
+./usr/share/man/man1/lldb.1
