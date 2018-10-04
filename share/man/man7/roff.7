@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.86 2018/10/04 15:16:07 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.87 2018/10/04 15:31:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,17 +39,14 @@ or
 code.
 To properly format such manuals, the
 .Xr mandoc 1
-utility supports a tiny subset of
+utility supports a subset of
 .Nm
 requests and escapes.
-Only these requests and escapes supported by
+Even though this manual page lists all
+.Nm
+requests, it only has partial information about requests not supported by
 .Xr mandoc 1
-are documented in the present manual,
-together with the basic language syntax shared by
-.Nm ,
-.Xr mdoc 7 ,
-and
-.Xr man 7 .
+and about language features that do not matter for manual pages.
 For complete
 .Nm
 manuals, consult the
@@ -191,7 +188,6 @@ Many requests and macros support scaled widths for their arguments.
 The syntax for a scaled width is
 .Sq Li [+-]?[0-9]*.[0-9]*[:unit:] ,
 where a decimal must be preceded or followed by at least one digit.
-Negative numbers, while accepted, are truncated to zero.
 .Pp
 The following scaling units are accepted:
 .Pp
@@ -2121,8 +2117,8 @@ The
 .Xr mandoc 1
 implementation of the
 .Nm
-language is intentionally incomplete.
-Unimplemented features include:
+language is incomplete.
+Major unimplemented features include:
 .Pp
 .Bl -dash -compact
 .It
@@ -2133,10 +2129,9 @@ never reads or writes external files except via
 requests with safe relative paths.
 .It
 There is no automatic hyphenation, no adjustment to the right margin,
-and no centering; the output is always set flush-left.
+and very limited support for centering; the output is always set flush-left.
 .It
-Support for setting tabulator positions
-and tabulator and leader characters is missing,
+Support for setting tabulator and leader characters is missing,
 and support for manually changing indentation is limited.
 .It
 The
@@ -2147,14 +2142,14 @@ output media.
 .It
 Width measurements are implemented in a crude way
 and often yield wrong results.
-Explicit movement requests and escapes are ignored.
+Support for explicit movement requests and escapes is limited.
 .It
 There is no concept of output pages, no support for floats,
 graphics drawing, and picture inclusion;
 terminal output is always continuous.
 .It
-Requests regarding color, font families, and glyph manipulation
-are ignored.
+Requests regarding color, font families, font sizes,
+and glyph manipulation are ignored.
 Font support is very limited.
 Kerning is not implemented, and no ligatures are produced.
 .It
@@ -2162,8 +2157,12 @@ The
 .Qq \(aq
 macro control character does not suppress output line breaks.
 .It
-Diversions are not implemented,
+Diversions and environments are not implemented,
 and support for traps is very incomplete.
+.It
+Use of macros is not supported inside
+.Xr tbl 7
+code.
 .El
 .Pp
 The special semantics of the
