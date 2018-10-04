@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.57 2018/09/20 18:59:10 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.58 2018/10/04 17:33:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -190,12 +190,10 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		return (0);
 	}
 
-	mtx_enter(&inpcbtable_mtx);
 	TAILQ_FOREACH(inp, &divb6table.inpt_queue, inp_queue) {
 		if (inp->inp_lport == divert_port)
 			break;
 	}
-	mtx_leave(&inpcbtable_mtx);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;

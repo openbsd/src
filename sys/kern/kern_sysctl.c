@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.348 2018/09/26 17:23:13 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.349 2018/10/04 17:33:40 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1179,8 +1179,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_rtableid = inpcb->inp_rtableid;
 			if (so->so_type == SOCK_RAW)
 				kf->inp_proto = inpcb->inp_ip.ip_p;
-			if (so->so_proto->pr_protocol == IPPROTO_TCP &&
-			    inpcb->inp_ppcb != NULL) {
+			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
 				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
 				kf->t_rcv_wnd = tcpcb->rcv_wnd;
 				kf->t_snd_wnd = tcpcb->snd_wnd;
@@ -1207,8 +1206,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 			kf->inp_rtableid = inpcb->inp_rtableid;
 			if (so->so_type == SOCK_RAW)
 				kf->inp_proto = inpcb->inp_ipv6.ip6_nxt;
-			if (so->so_proto->pr_protocol == IPPROTO_TCP &&
-			    inpcb->inp_ppcb != NULL) {
+			if (so->so_proto->pr_protocol == IPPROTO_TCP) {
 				struct tcpcb *tcpcb = (void *)inpcb->inp_ppcb;
 				kf->t_rcv_wnd = tcpcb->rcv_wnd;
 				kf->t_snd_wnd = tcpcb->snd_wnd;
@@ -1322,16 +1320,10 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 	}								\
 	needed += elem_size;						\
 } while (0)
-
 #define FILLIT(fp, fdp, i, vp, pr) \
 	FILLIT2(fp, fdp, i, vp, pr, NULL)
-
-#define FILLINPCB(inp) do {						\
-	mtx_enter(&inp->inp_mtx);					\
-	if (inp->inp_socket != NULL)					\
-		FILLIT2(NULL, NULL, 0, NULL, NULL, inp->inp_socket);	\
-	mtx_leave(&inp->inp_mtx);					\
-} while (0)
+#define FILLSO(so) \
+	FILLIT2(NULL, NULL, 0, NULL, NULL, so)
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
@@ -1339,26 +1331,19 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 		if (arg == DTYPE_SOCKET) {
 			struct inpcb *inp;
 
-			/*
-			 * The inpcb and socket fields are accessed and read
-			 * without net lock.  This may result in inconsistent
-			 * data provided to userland.  The fix will be to
-			 * protect the socket fields with the inpcb mutex.
-			 * XXXSMP
-			 */
-			mtx_enter(&inpcbtable_mtx);
+			NET_LOCK();
 			TAILQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue)
-				FILLINPCB(inp);
+				FILLSO(inp->inp_socket);
 			TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue)
-				FILLINPCB(inp);
+				FILLSO(inp->inp_socket);
 			TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue)
-				FILLINPCB(inp);
+				FILLSO(inp->inp_socket);
 #ifdef INET6
 			TAILQ_FOREACH(inp, &rawin6pcbtable.inpt_queue,
 			    inp_queue)
-				FILLINPCB(inp);
+				FILLSO(inp->inp_socket);
 #endif
-			mtx_leave(&inpcbtable_mtx);
+			NET_UNLOCK();
 		}
 		fp = NULL;
 		while ((fp = fd_iterfile(fp, p)) != NULL) {
