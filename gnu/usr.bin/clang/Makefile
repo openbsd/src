@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2018/10/04 11:43:29 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,8 @@ SUBDIR+=libLLVMCoverage
 SUBDIR+=libLLVMDebugInfoCodeView
 SUBDIR+=libLLVMDebugInfoDWARF
 SUBDIR+=libLLVMDebugInfoMSF
+SUBDIR+=libLLVMDebugInfoPDB
+SUBDIR+=libLLVMExecutionEngine
 SUBDIR+=libLLVMGlobalISel
 SUBDIR+=libLLVMLTO
 SUBDIR+=libLLVMPasses
@@ -85,6 +87,45 @@ SUBDIR+=liblldCore
 SUBDIR+=liblldELF
 
 SUBDIR+=lld
+
+SUBDIR+=liblldbABI
+SUBDIR+=liblldbAPI
+SUBDIR+=liblldbBreakpoint
+SUBDIR+=liblldbCommands
+SUBDIR+=liblldbCore
+SUBDIR+=liblldbDataFormatters
+SUBDIR+=liblldbExpression
+SUBDIR+=liblldbHostCommon
+SUBDIR+=liblldbHostOpenBSD
+SUBDIR+=liblldbHostPOSIX
+SUBDIR+=liblldbInitialization
+SUBDIR+=liblldbInterpreter
+SUBDIR+=liblldbPluginArchitecture
+SUBDIR+=liblldbPluginDisassembler
+SUBDIR+=liblldbPluginDynamicLoader
+SUBDIR+=liblldbPluginExpressionParser
+SUBDIR+=liblldbPluginInstruction
+SUBDIR+=liblldbPluginInstrumentationRuntime
+SUBDIR+=liblldbPluginJITLoader
+SUBDIR+=liblldbPluginLanguage
+SUBDIR+=liblldbPluginLanguageRuntime
+SUBDIR+=liblldbPluginMemoryHistory
+SUBDIR+=liblldbPluginObjectContainer
+SUBDIR+=liblldbPluginObjectFile
+SUBDIR+=liblldbPluginOperatingSystem
+SUBDIR+=liblldbPluginPlatform
+SUBDIR+=liblldbPluginProcess
+SUBDIR+=liblldbPluginScriptInterpreter
+SUBDIR+=liblldbPluginStructuredData
+SUBDIR+=liblldbPluginSymbolFile
+SUBDIR+=liblldbPluginSymbolVendor
+SUBDIR+=liblldbPluginSystemRuntime
+SUBDIR+=liblldbPluginUnwindAssembly
+SUBDIR+=liblldbSymbol
+SUBDIR+=liblldbTarget
+SUBDIR+=liblldbUtility
+
+SUBDIR+=lldb
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
