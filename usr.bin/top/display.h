@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.13 2018/09/26 17:23:13 cheloha Exp $	*/
+/*	$OpenBSD: display.h,v 1.14 2018/10/05 18:56:57 cheloha Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -40,7 +40,7 @@ void u_loadave(int, double *);
 void i_timeofday(time_t *);
 void i_procstates(int, int *, int);
 void u_procstates(int, int *);
-void i_cpustates(int64_t *, int *);
+void i_cpustates(int64_t *);
 void u_cpustates(int64_t *);
 void i_memory(int *);
 void u_memory(int *);

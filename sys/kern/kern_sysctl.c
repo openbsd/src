@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.349 2018/10/04 17:33:40 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.350 2018/10/05 18:56:57 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2382,8 +2382,6 @@ sysctl_cptime2(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	if (!found)
 		return (ENOENT);
-	if (!cpu_is_online(ci))
-		return (ENODEV);
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &ci->ci_schedstate.spc_cp_time,

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.55 2018/09/26 17:23:13 cheloha Exp $	 */
+/* $OpenBSD: display.c,v 1.56 2018/10/05 18:56:57 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -125,10 +125,8 @@ static int (*standendp)(void);
 int
 display_resize(void)
 {
-	int cpu_lines, display_lines, ncpuonline;
-
-	ncpuonline = getncpuonline();
-	cpu_lines = (combine_cpus ? 1 : ncpuonline);
+	int display_lines;
+	int cpu_lines = (combine_cpus ? 1 : ncpu);
 
 	y_mem = 2 + cpu_lines;
 	y_header = 4 + cpu_lines;
@@ -138,7 +136,7 @@ display_resize(void)
 	/* if operating in "dumb" mode, we only need one line */
 	display_lines = smart_terminal ? screen_length - y_procs : 1;
 
-	y_idlecursor = y_message = 3 + cpu_lines;
+	y_idlecursor = y_message = 3 + (combine_cpus ? 1 : ncpu);
 	if (screen_length <= y_message)
 		y_idlecursor = y_message = screen_length - 1;
 
@@ -379,18 +377,12 @@ cpustates_tag(int cpu)
 }
 
 void
-i_cpustates(int64_t *ostates, int *online)
+i_cpustates(int64_t *ostates)
 {
-	int i, first, cpu, ncpuonline;
+	int i, first, cpu;
 	double value;
 	int64_t *states;
 	char **names, *thisname;
-
-	ncpuonline = 0;
-	for (i = 0; i < ncpu; i++) {
-		if (online[i])
-			ncpuonline++;
-	}
 
 	if (combine_cpus) {
 		static double *values;
@@ -401,8 +393,6 @@ i_cpustates(int64_t *ostates, int *online)
 		}
 		memset(values, 0, num_cpustates * sizeof(*values));
 		for (cpu = 0; cpu < ncpu; cpu++) {
-			if (!online[cpu])
-				continue;
 			names = cpustate_names;
 			states = ostates + (CPUSTATES * cpu);
 			i = 0;
@@ -419,11 +409,11 @@ i_cpustates(int64_t *ostates, int *online)
 			first = 0;
 			move(2, 0);
 			clrtoeol();
-			printwp("%-3d CPUs: ", ncpuonline);
+			printwp("%-3d CPUs: ", ncpu);
 
 			while ((thisname = *names++) != NULL) {
 				if (*thisname != '\0') {
-					value = values[i++] / ncpuonline;
+					value = values[i++] / ncpu;
 					/* if percentage is >= 1000, print it as 100% */
 					printwp((value >= 1000 ? "%s%4.0f%% %s" :
 					    "%s%4.1f%% %s"), first++ == 0 ? "" : ", ",
@@ -440,20 +430,13 @@ i_cpustates(int64_t *ostates, int *online)
 		first = 0;
 		states = ostates + (CPUSTATES * cpu);
 
-		if ((screen_length > 2 + cpu && 2 + cpu < y_mem) ||
-		    !smart_terminal) {
+		if (screen_length > 2 + cpu || !smart_terminal) {
 			move(2 + cpu, 0);
 			clrtoeol();
 			addstrp(cpustates_tag(cpu));
 
 			while ((thisname = *names++) != NULL) {
 				if (*thisname != '\0') {
-					if (!online[cpu]) {
-						printwp("%s%5s %s",
-						    first++ == 0 ? "" : ", ",
-						    "-", thisname);
-						continue;
-					}
 					/* retrieve the value and remember it */
 					value = *states++;
 

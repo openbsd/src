@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.93 2018/09/26 17:23:13 cheloha Exp $	 */
+/* $OpenBSD: machine.c,v 1.94 2018/10/05 18:56:57 cheloha Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -111,9 +111,6 @@ char *cpustatenames[] = {
 	"user", "nice", "sys", "spin", "intr", "idle", NULL
 };
 
-/* this tracks which cpus are online */
-int *cpu_online;
-
 /* these are for detailing the memory statistics */
 int memory_stats[10];
 char *memorynames[] = {
@@ -173,20 +170,6 @@ getncpu(void)
 }
 
 int
-getncpuonline(void)
-{
-	int mib[] = { CTL_HW, HW_NCPUONLINE };
-	int numcpu;
-	size_t size = sizeof(numcpu);
-
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &numcpu, &size, NULL, 0) == -1)
-		return (-1);
-
-	return (numcpu);
-}
-
-int
 machine_init(struct statics *statics)
 {
 	int pagesize, cpu;
@@ -198,9 +181,6 @@ machine_init(struct statics *statics)
 		return (-1);
 	cpu_states = calloc(ncpu, CPUSTATES * sizeof(int64_t));
 	if (cpu_states == NULL)
-		err(1, NULL);
-	cpu_online = calloc(ncpu, sizeof(*cpu_online));
-	if (cpu_online == NULL)
 		err(1, NULL);
 	cp_time = calloc(ncpu, sizeof(int64_t *));
 	cp_old  = calloc(ncpu, sizeof(int64_t *));
@@ -263,7 +243,6 @@ format_header(char *second_field, int show_threads)
 void
 get_system_info(struct system_info *si)
 {
-	static int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, /*fillme*/0};
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 	static int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
@@ -275,20 +254,31 @@ get_system_info(struct system_info *si)
 	int i;
 	int64_t *tmpstate;
 
-	size = CPUSTATES * sizeof(int64_t);
-	for (i = 0; i < ncpu; i++) {
-		cp_time_mib[2] = i;
-		tmpstate = cpu_states + (CPUSTATES * i);
-		if (sysctl(cp_time_mib, 3, cp_time[i], &size, NULL, 0) < 0) {
-			if (errno != ENODEV)
+	if (ncpu > 1) {
+		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME2, /*fillme*/0};
+
+		size = CPUSTATES * sizeof(int64_t);
+		for (i = 0; i < ncpu; i++) {
+			cp_time_mib[2] = i;
+			tmpstate = cpu_states + (CPUSTATES * i);
+			if (sysctl(cp_time_mib, 3, cp_time[i], &size, NULL, 0) < 0)
 				warn("sysctl kern.cp_time2 failed");
-			cpu_online[i] = 0;
-			continue;
+			/* convert cp_time2 counts to percentages */
+			(void) percentages(CPUSTATES, tmpstate, cp_time[i],
+			    cp_old[i], cp_diff[i]);
 		}
-		cpu_online[i] = 1;
-		/* convert cp_time2 counts to percentages */
-		(void) percentages(CPUSTATES, tmpstate, cp_time[i],
-		    cp_old[i], cp_diff[i]);
+	} else {
+		int cp_time_mib[] = {CTL_KERN, KERN_CPTIME};
+		long cp_time_tmp[CPUSTATES];
+
+		size = sizeof(cp_time_tmp);
+		if (sysctl(cp_time_mib, 2, cp_time_tmp, &size, NULL, 0) < 0)
+			warn("sysctl kern.cp_time failed");
+		for (i = 0; i < CPUSTATES; i++)
+			cp_time[0][i] = cp_time_tmp[i];
+		/* convert cp_time counts to percentages */
+		(void) percentages(CPUSTATES, cpu_states, cp_time[0],
+		    cp_old[0], cp_diff[0]);
 	}
 
 	size = sizeof(sysload);
@@ -327,7 +317,6 @@ get_system_info(struct system_info *si)
 
 	/* set arrays and strings */
 	si->cpustates = cpu_states;
-	si->cpuonline = cpu_online;
 	si->memory = memory_stats;
 	si->last_pid = -1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.48 2018/09/26 17:23:13 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.49 2018/10/05 18:56:57 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -154,8 +154,6 @@ int sysctl_hwsetperf(void *, size_t *, void *, size_t);
 int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);
 int sysctl_hwsmt(void *, size_t *, void *, size_t);
 int sysctl_hwncpuonline(void);
-
-int cpu_is_online(struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 void sched_start_secondary_cpus(void);
