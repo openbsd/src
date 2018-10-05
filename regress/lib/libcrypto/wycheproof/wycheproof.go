@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.69 2018/10/04 18:37:07 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.70 2018/10/05 21:12:43 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -45,6 +45,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -62,6 +63,14 @@ const testVectorPath = "/usr/local/share/wycheproof/testvectors"
 var acceptableAudit = false
 var acceptableComments map[string]int
 var acceptableFlags map[string]int
+
+type wycheproofJWKPublic struct {
+	Crv string `json:"crv"`
+	KID string `json:"kid"`
+	KTY string `json:"kty"`
+	X   string `json:"x"`
+	Y   string `json:"y"`
+}
 
 type wycheproofTestGroupAesCbcPkcs5 struct {
 	IVSize  int                          `json:"ivSize"`
@@ -190,6 +199,16 @@ type wycheproofTestGroupECDSA struct {
 	Tests  []*wycheproofTestECDSA `json:"tests"`
 }
 
+type wycheproofTestGroupECDSAWebCrypto struct {
+	JWK    *wycheproofJWKPublic   `json:"jwk"`
+	Key    *wycheproofECDSAKey    `json:"key"`
+	KeyDER string                 `json:"keyDer"`
+	KeyPEM string                 `json:"keyPem"`
+	SHA    string                 `json:"sha"`
+	Type   string                 `json:"type"`
+	Tests  []*wycheproofTestECDSA `json:"tests"`
+}
+
 type wycheproofTestRSA struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
@@ -274,9 +293,13 @@ var nids = map[string]int{
 	"brainpoolP512t1": C.NID_brainpoolP512t1,
 	"secp224r1":       C.NID_secp224r1,
 	"secp256k1":       C.NID_secp256k1,
+	"P-256K":          C.NID_secp256k1,
 	"secp256r1":       C.NID_X9_62_prime256v1, // RFC 8422, Table 4, p.32
+	"P-256":           C.NID_X9_62_prime256v1,
 	"secp384r1":       C.NID_secp384r1,
+	"P-384":           C.NID_secp384r1,
 	"secp521r1":       C.NID_secp521r1,
+	"P-521":           C.NID_secp521r1,
 	"SHA-1":           C.NID_sha1,
 	"SHA-224":         C.NID_sha224,
 	"SHA-256":         C.NID_sha256,
@@ -1334,6 +1357,129 @@ func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
 	return success
 }
 
+func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
+	}
+
+	h.Reset()
+	h.Write(msg)
+	msg = h.Sum(nil)
+
+	msgLen := len(msg)
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+
+	// DER encode the signature (so that ECDSA_verify() can decode and encode it again...)
+	sigLen := len(wt.Sig)
+	r := C.CString(wt.Sig[:sigLen/2])
+	s := C.CString(wt.Sig[sigLen/2:])
+
+	cSig := C.ECDSA_SIG_new()
+	defer C.ECDSA_SIG_free(cSig)
+
+	if cSig == nil {
+		log.Fatal("ECDSA_SIG_new() failed")
+	}
+	if C.BN_hex2bn(&cSig.r, r) == 0 {
+		log.Fatal("Failed to set ECDSA r")
+	}
+	if C.BN_hex2bn(&cSig.s, s) == 0 {
+		log.Fatal("Failed to set ECDSA s")
+	}
+	C.free(unsafe.Pointer(r))
+	C.free(unsafe.Pointer(s))
+
+	derLen := C.i2d_ECDSA_SIG(cSig, nil)
+	if derLen == 0 {
+		log.Fatal("i2d_ECDSA_SIG(cSig, nil) failed")
+	}
+
+	cDer := (*C.uchar)(C.malloc(C.ulong(derLen)))
+	if cDer == nil {
+		log.Fatal("malloc failed")
+	}
+	p := cDer
+	defer C.free(unsafe.Pointer(cDer))
+	ret := C.i2d_ECDSA_SIG(cSig, (**C.uchar)(&p))
+	if ret == 0 || ret != derLen {
+		log.Fatalf("i2d_ECDSA_SIG(cSig, nil) failed, got %d, want %d", ret, derLen)
+	}
+
+	ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+		(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), ecKey)
+
+	// XXX audit acceptable cases...
+	success := true
+	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
+		fmt.Printf("FAIL: Test case %d (%q) %v - ECDSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
+		success = false
+	}
+	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
+	}
+	return success
+}
+
+func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAWebCrypto) bool {
+	fmt.Printf("Running %v test group %v with curve %v, key size %d and %v...\n", algorithm, wtg.Type, wtg.Key.Curve, wtg.Key.KeySize, wtg.SHA)
+
+	nid, err := nidFromString(wtg.JWK.Crv)
+	if err != nil {
+		log.Fatalf("Failed to get nid for curve: %v", err)
+	}
+	ecKey := C.EC_KEY_new_by_curve_name(C.int(nid))
+	if ecKey == nil {
+		log.Fatal("EC_KEY_new_by_curve_name failed")
+	}
+	defer C.EC_KEY_free(ecKey)
+
+	x, err := base64.RawURLEncoding.DecodeString(wtg.JWK.X)
+	if err != nil {
+		log.Fatalf("Failed to base64 decode X: %v", err)
+	}
+	var bnX *C.BIGNUM
+	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), (C.int)(len(x)), nil)
+	if bnX == nil {
+		log.Fatal("Failed to decode X")
+	}
+	defer C.BN_free(bnX)
+
+	y, err := base64.RawURLEncoding.DecodeString(wtg.JWK.Y)
+	if err != nil {
+		log.Fatalf("Failed to base64 decode Y: %v", err)
+	}
+	var bnY *C.BIGNUM
+	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), (C.int)(len(y)), nil)
+	if bnY == nil {
+		log.Fatal("Failed to decode Y")
+	}
+	defer C.BN_free(bnY)
+
+	if C.EC_KEY_set_public_key_affine_coordinates(ecKey, bnX, bnY) != 1 {
+		log.Fatal("Failed to set EC public key")
+	}
+
+	nid, err = nidFromString(wtg.SHA)
+	if err != nil {
+		log.Fatalf("Failed to get MD NID: %v", err)
+	}
+	h, err := hashFromString(wtg.SHA)
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runECDSAWebCryptoTest(ecKey, nid, h, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wycheproofTestRSASSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -1557,7 +1703,7 @@ func runX25519TestGroup(algorithm string, wtg *wycheproofTestGroupX25519) bool {
 	return success
 }
 
-func runTestVectors(path string) bool {
+func runTestVectors(path string, webcrypto bool) bool {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
@@ -1585,7 +1731,12 @@ func runTestVectors(path string) bool {
 	case "ECDH":
 		wtg = &wycheproofTestGroupECDH{}
 	case "ECDSA":
-		wtg = &wycheproofTestGroupECDSA{}
+		if webcrypto {
+			wtg = &wycheproofTestGroupECDSAWebCrypto{}
+		} else {
+			wtg = &wycheproofTestGroupECDSA{}
+		}
+			
 	case "RSASSA-PSS":
 		wtg = &wycheproofTestGroupRSASSA{}
 	case "RSASig":
@@ -1631,8 +1782,14 @@ func runTestVectors(path string) bool {
 				success = false
 			}
 		case "ECDSA":
-			if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
-				success = false
+			if webcrypto {
+				if !runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto)) {
+					success = false
+				}
+			} else {
+				if !runECDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSA)) {
+					success = false
+				}
 			}
 		case "RSASSA-PSS":
 			if !runRSASSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSASSA)) {
@@ -1674,7 +1831,8 @@ func main() {
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
 		{"ECDH", "ecdh_[^w]*test.json"}, // Skip ecdh_webcrypto_test.json for now.
-		{"ECDSA", "ecdsa_[^w]*test.json"}, // Skip ecdsa_webcrypto_test.json for now.
+		{"ECDSA", "ecdsa_[^w]*test.json"},
+		{"ECDSAWebCrypto", "ecdsa_w*_test.json"},
 		{"RSA", "rsa_*test.json"},
 		{"X25519", "x25519_*test.json"},
 	}
@@ -1682,6 +1840,7 @@ func main() {
 	success := true
 
 	for _, test := range tests {
+		webcrypto := (test.name == "ECDSAWebCrypto")
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
@@ -1690,7 +1849,7 @@ func main() {
 			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
 		}
 		for _, tv := range tvs {
-			if !runTestVectors(tv) {
+			if !runTestVectors(tv, webcrypto) {
 				success = false
 			}
 		}
