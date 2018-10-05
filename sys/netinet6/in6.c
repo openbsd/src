@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.227 2018/05/12 09:43:02 tb Exp $	*/
+/*	$OpenBSD: in6.c,v 1.228 2018/10/05 07:06:09 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -807,19 +807,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (!imm)
 			goto cleanup;
 		LIST_INSERT_HEAD(&ia6->ia6_memberships, imm, i6mm_chain);
-
-		/*
-		 * join node information group address
-		 */
-		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (!imm) {
-				/* XXX not very fatal, go on... */
-			} else {
-				LIST_INSERT_HEAD(&ia6->ia6_memberships,
-				    imm, i6mm_chain);
-			}
-		}
 
 		/*
 		 * join interface-local all-nodes address.

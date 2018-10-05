@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.110 2018/08/26 22:30:00 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.111 2018/10/05 07:06:09 florian Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -426,57 +426,6 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 * NULL to the 3rd arg.
 	 */
 	return (in6_update_ifa(ifp, &ifra, NULL));
-}
-
-/*
- * compute NI group address, based on the current hostname setting.
- * see draft-ietf-ipngwg-icmp-name-lookup-* (04 and later).
- *
- * when ifp == NULL, the caller is responsible for filling scopeid.
- */
-int
-in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
-    struct sockaddr_in6 *sa6)
-{
-	const char *p;
-	u_int8_t *q;
-	SHA2_CTX ctx;
-	u_int8_t digest[SHA512_DIGEST_LENGTH];
-	u_int8_t l;
-	u_int8_t n[64];	/* a single label must not exceed 63 chars */
-
-	if (!namelen || !name)
-		return -1;
-
-	p = name;
-	while (p && *p && *p != '.' && p - name < namelen)
-		p++;
-	if (p - name > sizeof(n) - 1)
-		return -1;	/* label too long */
-	l = p - name;
-	strncpy((char *)n, name, l);
-	n[(int)l] = '\0';
-	for (q = n; *q; q++) {
-		if ('A' <= *q && *q <= 'Z')
-			*q = *q - 'A' + 'a';
-	}
-
-	/* generate 8 bytes of pseudo-random value. */
-	SHA512Init(&ctx);
-	SHA512Update(&ctx, &l, sizeof(l));
-	SHA512Update(&ctx, n, l);
-	SHA512Final(digest, &ctx);
-
-	bzero(sa6, sizeof(*sa6));
-	sa6->sin6_family = AF_INET6;
-	sa6->sin6_len = sizeof(*sa6);
-	sa6->sin6_addr.s6_addr16[0] = htons(0xff02);
-	sa6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	sa6->sin6_addr.s6_addr8[11] = 2;
-	memcpy(&sa6->sin6_addr.s6_addr32[3], digest,
-	    sizeof(sa6->sin6_addr.s6_addr32[3]));
-
-	return 0;
 }
 
 /*
