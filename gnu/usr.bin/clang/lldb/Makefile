@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2018/10/05 03:47:59 deraadt Exp $
 
 .include <bsd.own.mk>
 
-PROG=	lldb
+NOPROG=	lldb
 BINDIR=	/usr/bin
 LIBEXECDIR=/usr/libexec
 SRCS=	Driver.cpp \
