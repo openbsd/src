@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.16 2018/09/26 09:34:23 bluhm Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.17 2018/10/05 11:15:29 bluhm Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 26 2018 $
+.Dd $Mdocdate: October 5 2018 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -92,11 +92,12 @@ See also
 .Ev SUDO .
 .It Ev REGRESS_SETUP
 If this variable is set, it contains a target that is executed
-before all regress targets.
-The other regress targets depend on this one to enforce setup before
-running each test.
-It is recommended to implement this target with a stamp file to
-execute it only once.
+before each regress target.
+Regress targets depend on this one to enforce setup.
+.It Ev REGRESS_SETUP_ONCE
+If this variable is set, it contains a target that is executed
+once before all regress targets.
+Regress targets depend on a stamp file generated during setup.
 .It Ev REGRESS_SKIP_SLOW
 If this variable is not empty, skip over all the regression
 tests which have been marked as being 'slow' using the
