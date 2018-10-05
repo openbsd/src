@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 2018/10/02 21:30:44 naddy Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 2018/10/05 15:13:55 naddy Exp $	*/
 /*	$NetBSD: endian.h,v 1.4 2000/03/17 00:09:25 mycroft Exp $	*/
 
 /* Written by Manuel Bouyer. Public domain */
@@ -31,7 +31,16 @@ __swap32md(__uint32_t _x)
 	return (_rv);
 }
 
-#define	__swap64md	__swap64gen
+static __inline __uint64_t
+__swap64md(__uint64_t _x)
+{
+	__uint64_t _rv;
+
+	_rv = (__uint64_t)__swap32md(_x >> 32) |
+	    (__uint64_t)__swap32md(_x) << 32;
+
+	return (_rv);
+}
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
 #define __HAVE_MD_SWAP
