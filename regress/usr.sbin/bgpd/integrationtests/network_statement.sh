@@ -1,15 +1,16 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.1 2018/10/01 20:58:59 benno Exp $
+#	$OpenBSD: network_statement.sh,v 1.2 2018/10/05 08:57:51 benno Exp $
 
 set -e
 
-BGPD=/usr/sbin/bgpd
+BGPD=$1
+BGPDCONFIGDIR=$2
+RDOMAIN1=$3
+RDOMAIN2=$4
+PAIR1=$5
+PAIR2=$6
 
-RDOMAIN1=11
-RDOMAIN2=12
 RDOMAINS="${RDOMAIN1} ${RDOMAIN2}"
-PAIR1="pair11"
-PAIR2="pair12"
 PAIRS="${PAIR1} ${PAIR2}"
 PAIR1IP=10.12.57.1
 PAIR2IP=10.12.57.2
@@ -69,8 +70,10 @@ route -T ${RDOMAIN2} add -label PAIR2RTABLE ${PAIR2RTABLE} \
 	${PAIR1IP}
 route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
-route -T ${RDOMAIN1} exec ${BGPD} -f bgpd.network_statement.rdomain1.conf
-route -T ${RDOMAIN2} exec ${BGPD} -f bgpd.network_statement.rdomain2.conf
+route -T ${RDOMAIN1} exec ${BGPD} \
+	-f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain1.conf
+route -T ${RDOMAIN2} exec ${BGPD} \
+	-f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
 
 sleep 2
 
