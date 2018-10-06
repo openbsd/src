@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2018/04/11 19:00:54 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.24 2018/10/06 10:52:24 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -36,7 +36,7 @@ TARGETS ?=		${ARGS}
 .else
 TARGETS ?=		${ARGS:Nargs-rsyslog*}
 .endif
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
+REGRESS_TARGETS =	${TARGETS:S/^/run-/}
 LDFLAGS +=		-lutil
 CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-*
 CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog *.ph */*.ph
@@ -44,15 +44,16 @@ CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig diskimage
 
 .MAIN: all
 
-.if make (regress) || make (all)
-.BEGIN:
-	@echo
+REGRESS_SETUP_ONCE +=	setup
+setup:
+	@echo '\n======== $@ ========'
 	[ -z "${SUDO}" ] || ${SUDO} true
 	${SUDO} /etc/rc.d/syslogd stop
-.END:
-	@echo
-	${SUDO} /etc/rc.d/syslogd restart
-.endif
+
+REGRESS_CLEANUP +=	cleanup
+cleanup:
+	@echo '\n======== $@ ========'
+	-${SUDO} /etc/rc.d/syslogd restart
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -69,7 +70,7 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of client, syslogd, server.
 
 .for a in ${ARGS}
-run-regress-$a: $a
+run-$a: $a
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} SYSLOGD=${SYSLOGD} perl ${PERLINC} ${PERLPATH}syslogd.pl ${PERLPATH}$a
 .endfor
@@ -124,7 +125,6 @@ unconfig:
 	-umount -f /dev/vnd0c 2>/dev/null || true
 	-rmdir /mnt/regress-syslogd 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
-	-rm -f stamp-filesystem
 
 stamp-filesystem:
 	@echo '\n======== $@ ========'
@@ -132,11 +132,12 @@ stamp-filesystem:
 	${SUDO} chmod 1777 /mnt/regress-syslogd
 	date >$@
 
-REGRESS_TARGETS +=	cleanup-filesystem
+REGRESS_CLEANUP +=	cleanup-filesystem
 cleanup-filesystem:
 	@echo '\n======== $@ ========'
-	${SUDO} umount /mnt/regress-syslogd
-	${SUDO} ${.MAKE} -C ${.CURDIR} unconfig
+	rm -f stamp-filesystem
+	-${SUDO} umount /mnt/regress-syslogd
+	-${SUDO} ${.MAKE} -C ${.CURDIR} unconfig
 
 ${REGRESS_TARGETS:M*filesystem*}: stamp-filesystem
 ${REGRESS_TARGETS:M*tls*}: client.crt server.crt 127.0.0.1.crt

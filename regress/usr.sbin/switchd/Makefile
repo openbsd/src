@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/06/25 21:59:59 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2018/10/06 10:52:24 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -23,8 +23,6 @@ regress:
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pm
-TARGETS ?=		${ARGS}
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		stamp-* *.h *.ph *.conf *.log ktrace.out
 
 SRC_PATH =		${.CURDIR}/../../../usr.sbin/switchd
@@ -47,16 +45,17 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of switch, switchd.
 
 .for a in ${ARGS}
-run-regress-$a: $a
+REGRESS_TARGETS +=	run-$a
+run-$a: $a
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} SWITCHD=${SWITCHD} perl ${PERLINC} ${PERLPATH}run.pl ${PERLPATH}$a
 .endfor
 
 ${OFP_HEADERS}:
-	@-mkdir -p ${.OBJDIR}/net
-	@-for i in ${SRC_PATH}/$@ ${SYS_PATH}/$@; do \
-		test -s $$i && grep -v '^#include' $$i > ${.OBJDIR}/$@; \
-	done
+	@echo '\n======== setup-$@ ========'
+.for p in ${SRC_PATH} ${SYS_PATH}
+	! test -s $p/$@ || grep -v '^#include' $p/$@ >$@
+.endfor
 
 .SUFFIXES: .h .ph
 .h.ph:

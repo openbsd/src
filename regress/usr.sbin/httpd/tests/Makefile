@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2018/05/19 13:57:43 jsing Exp $
+#	$OpenBSD: Makefile,v 1.11 2018/10/06 10:52:24 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -23,8 +23,6 @@ regress:
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
-TARGETS ?=		${ARGS}
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log httpd.conf ktrace.out stamp-*
 CLEANFILES +=		*.pem *.req *.crt *.key *.srl md5-*
 
@@ -48,7 +46,8 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of client, httpd, server.
 
 .for a in ${ARGS}
-run-regress-$a: $a ${HTDOCS_MD5}
+REGRESS_TARGETS +=	run-$a
+run-$a: $a ${HTDOCS_MD5}
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} HTTPD=${HTTPD} perl ${PERLINC} ${PERLPATH}httpd.pl ${.OBJDIR} ${PERLPATH}$a
 .endfor

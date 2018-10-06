@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/02/09 22:43:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2018/10/06 10:52:24 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -30,8 +30,6 @@ RTRID ?=		10.188.0.17
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
-TARGETS ?=		${ARGS}
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log ospfd.conf ktrace.out stamp-* opentap
 PERLHEADER !=		perl -MConfig -e 'print "$$Config{archlib}/CORE"'
 CLEANFILES +=		PassFd.c PassFd.o PassFd.so
@@ -39,13 +37,17 @@ CFLAGS =		-Wall
 
 .MAIN: all
 
-.if make (regress) || make (all)
-.BEGIN:
-	@echo
+REGRESS_SETUP_ONCE +=	setup
+setup:
+	@echo '\n======== $@ ========'
 	[ -c /dev/tap${TAPNUM} ]
 	[ -z "${SUDO}" ] || ${SUDO} -C 4 true
 	${SUDO} ifconfig tap${TAPNUM} ${TAPIP} netmask 255.255.255.0
-.endif
+
+REGRESS_CLEANUP +=	cleanup
+cleanup:
+	@echo '\n======== $@ ========'
+	-${SUDO} ifconfig tap${TAPNUM} destroy
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -62,7 +64,8 @@ PERLPATH =	${.CURDIR}/
 # test parameters.
 
 .for a in ${ARGS}
-run-regress-$a: $a opentap PassFd.so
+REGRESS_TARGETS +=	run-$a
+run-$a: $a opentap PassFd.so
 	@echo '\n======== $@ ========'
 	time TAPNUM=${TAPNUM} TAPIP=${TAPIP} RTRID=${RTRID} SUDO=${SUDO} KTRACE=${KTRACE} OSPFD=${OSPFD} perl ${PERLINC} ${PERLPATH}ospfd.pl ${PERLPATH}$a
 .endfor

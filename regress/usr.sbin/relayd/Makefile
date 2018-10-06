@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2016/09/23 20:04:21 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2018/10/06 10:52:24 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -20,13 +20,13 @@ regress:
 	@echo SKIPPED
 .endif
 
-.if make (regress) || make (all)
-.BEGIN:
+REGRESS_SETUP_ONCE +=	setup
+setup:
+	@echo '\n======== $@ ========'
 .if empty (REMOTE_SSH)
 	${SUDO} true
 .else
 	ssh -t ${REMOTE_SSH} ${SUDO} true
-.endif
 .endif
 
 # Fill out these variables if you want to test relayd with
@@ -42,8 +42,6 @@ REMOTE_SSH ?=
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
-TARGETS ?=		${ARGS}
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		*.log relayd.conf ktrace.out stamp-*
 CLEANFILES +=		*.pem *.req *.crt *.key *.srl
 
@@ -62,7 +60,8 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of client, relayd, server.
 
 .for a in ${ARGS}
-run-regress-$a: $a
+REGRESS_TARGETS +=	run-$a
+run-$a: $a
 	@echo '\n======== $@ ========'
 .if empty (REMOTE_SSH)
 	time SUDO=${SUDO} KTRACE=${KTRACE} RELAYD=${RELAYD} perl ${PERLINC} ${PERLPATH}relayd.pl copy ${PERLPATH}$a
