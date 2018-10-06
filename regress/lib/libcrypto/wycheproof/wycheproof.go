@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.73 2018/10/06 08:16:48 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.74 2018/10/06 09:27:40 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -66,6 +66,15 @@ var acceptableFlags map[string]int
 
 type wycheproofJWKPublic struct {
 	Crv string `json:"crv"`
+	KID string `json:"kid"`
+	KTY string `json:"kty"`
+	X   string `json:"x"`
+	Y   string `json:"y"`
+}
+
+type wycheproofJWKPrivate struct {
+	Crv string `json:"crv"`
+	D   string `json:"d"`
 	KID string `json:"kid"`
 	KTY string `json:"kty"`
 	X   string `json:"x"`
@@ -170,6 +179,23 @@ type wycheproofTestGroupECDH struct {
 	Encoding string                `json:"encoding"`
 	Type     string                `json:"type"`
 	Tests    []*wycheproofTestECDH `json:"tests"`
+}
+
+type wycheproofTestECDHWebCrypto struct {
+	TCID    int                   `json:"tcId"`
+	Comment string                `json:"comment"`
+	Public  *wycheproofJWKPublic  `json:"public"`
+	Private *wycheproofJWKPrivate `json:"private"`
+	Shared  string                `json:"shared"`
+	Result  string                `json:"result"`
+	Flags   []string              `json:"flags"`
+}
+
+type wycheproofTestGroupECDHWebCrypto struct {
+	Curve    string                         `json:"curve"`
+	Encoding string                         `json:"encoding"`
+	Type     string                         `json:"type"`
+	Tests    []*wycheproofTestECDHWebCrypto `json:"tests"`
 }
 
 type wycheproofECDSAKey struct {
@@ -1269,6 +1295,117 @@ func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
 	return success
 }
 
+func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
+	privKey := C.EC_KEY_new_by_curve_name(C.int(nid))
+	if privKey == nil {
+		log.Fatalf("EC_KEY_new_by_curve_name failed")
+	}
+	defer C.EC_KEY_free(privKey)
+
+	var bnD *C.BIGNUM
+	d, err := base64.RawURLEncoding.DecodeString(wt.Private.D)
+	if err != nil {
+		log.Fatalf("Failed to base64 decode d: %v", err)
+	}
+	bnD = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&d[0])), (C.int)(len(d)), nil)
+	if bnD == nil {
+		log.Fatal("Failed to decode D")
+	}
+	defer C.BN_free(bnD)
+
+	ret := C.EC_KEY_set_private_key(privKey, bnD)
+	if ret != 1 {
+		fmt.Printf("FAIL: Test case %d (%q) %v - EC_KEY_set_private_key() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+		return false
+	}
+
+	group := C.EC_GROUP_new_by_curve_name(C.int(nid))
+	if group == nil {
+		log.Fatal("Failed to get EC_GROUP")
+	}
+	pubPoint := C.EC_POINT_new(group)
+	if pubPoint == nil {
+		log.Fatal("Failed to create EC_POINT")
+	}
+
+	var bnX *C.BIGNUM
+	x, err := base64.RawURLEncoding.DecodeString(wt.Public.X)
+	if err != nil {
+		log.Fatalf("Failed to base64 decode x: %v", err)
+	}
+	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), (C.int)(len(x)), nil)
+	if bnX == nil {
+		log.Fatal("Failed to decode X")
+	}
+	defer C.BN_free(bnX)
+
+	var bnY *C.BIGNUM
+	y, err := base64.RawURLEncoding.DecodeString(wt.Public.Y)
+	if err != nil {
+		log.Fatalf("Failed to base64 decode y: %v", err)
+	}
+	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), (C.int)(len(y)), nil)
+	if bnY == nil {
+		log.Fatal("Failed to decode Y")
+	}
+	defer C.BN_free(bnY)
+
+	ret = C.EC_POINT_set_affine_coordinates_GFp(group, pubPoint, bnX, bnY, nil)
+	if ret != 1 {
+		log.Fatal("Failed to set public key")
+	}
+
+	privGroup := C.EC_KEY_get0_group(privKey)
+
+ 	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
+
+	secret := make([]byte, secLen)
+	if secLen == 0 {
+		secret = append(secret, 0)
+	}
+
+	ret = C.ECDH_compute_key(unsafe.Pointer(&secret[0]), C.ulong(secLen), pubPoint, privKey, nil)
+	if ret != C.int(secLen) {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) %v - ECDH_compute_key() = %d, want %d, result: %v\n", wt.TCID, wt.Comment, wt.Flags,  ret, int(secLen), wt.Result)
+		return false
+	}
+
+	shared, err := hex.DecodeString(wt.Shared)
+	if err != nil{
+		log.Fatalf("Failed to decode shared secret: %v", err)
+	}
+
+	success := true
+	if !bytes.Equal(shared, secret) {
+		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed shared secret do not match, want %v\n", wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+		success = false
+	}
+	if acceptableAudit && success && wt.Result == "acceptable" {
+		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
+	}
+	return success
+}
+
+func runECDHWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDHWebCrypto) bool {
+	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
+
+	nid, err := nidFromString(wtg.Curve)
+	if err != nil {
+		log.Fatalf("Failed to get nid for curve: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runECDHWebCryptoTest(nid, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -1717,7 +1854,11 @@ func runTestVectors(path string, webcrypto bool) bool {
 	case "DSA":
 		wtg = &wycheproofTestGroupDSA{}
 	case "ECDH":
-		wtg = &wycheproofTestGroupECDH{}
+		if webcrypto {
+			wtg = &wycheproofTestGroupECDHWebCrypto{}
+		} else {
+			wtg = &wycheproofTestGroupECDH{}
+		}
 	case "ECDSA":
 		if webcrypto {
 			wtg = &wycheproofTestGroupECDSAWebCrypto{}
@@ -1766,9 +1907,16 @@ func runTestVectors(path string, webcrypto bool) bool {
 				success = false
 			}
 		case "ECDH":
-			if !runECDHTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDH)) {
-				success = false
+			if webcrypto {
+				if !runECDHWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDHWebCrypto)) {
+					success = false
+				}
+			} else {
+				if !runECDHTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDH)) {
+					success = false
+				}
 			}
+
 		case "ECDSA":
 			if webcrypto {
 				if !runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto)) {
@@ -1818,7 +1966,8 @@ func main() {
 		{"AES", "aes_[cg]*[^xv]_test.json"}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json"},
 		{"DSA", "dsa_test.json"},
-		{"ECDH", "ecdh_[^w]*test.json"}, // Skip ecdh_webcrypto_test.json for now.
+		{"ECDH", "ecdh_[^w]*test.json"},
+		{"ECDHWebCrypto", "ecdh_w*_test.json"},
 		{"ECDSA", "ecdsa_[^w]*test.json"},
 		{"ECDSAWebCrypto", "ecdsa_w*_test.json"},
 		{"RSA", "rsa_*test.json"},
@@ -1828,7 +1977,7 @@ func main() {
 	success := true
 
 	for _, test := range tests {
-		webcrypto := (test.name == "ECDSAWebCrypto")
+		webcrypto := (test.name == "ECDSAWebCrypto") || test.name == "ECDHWebCrypto"
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
