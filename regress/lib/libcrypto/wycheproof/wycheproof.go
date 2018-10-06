@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.77 2018/10/06 10:58:57 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.78 2018/10/06 11:05:00 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -416,7 +416,9 @@ func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
 	}
 }
 
-func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, in []byte, inLen int, out []byte, outLen int, wt *wycheproofTestAesCbcPkcs5) bool {
+func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int,
+	iv []byte, ivLen int, in []byte, inLen int, out []byte, outLen int,
+	wt *wycheproofTestAesCbcPkcs5) bool {
 	var action string
 	if doEncrypt == 1 {
 		action = "encrypting"
@@ -424,7 +426,8 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 		action = "decrypting"
 	}
 
-	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
+	ret := C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])),
+		(*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
 	if ret != 1 {
 		log.Fatalf("EVP_CipherInit_ex failed: %d", ret)
 	}
@@ -432,7 +435,8 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 	cipherOut := make([]byte, inLen + C.EVP_MAX_BLOCK_LENGTH)
 	var cipherOutLen C.int
 
-	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen, (*C.uchar)(unsafe.Pointer(&in[0])), C.int(inLen))
+	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen,
+		(*C.uchar)(unsafe.Pointer(&in[0])), C.int(inLen))
 	if ret != 1 {
 		if wt.Result == "invalid" {
 			fmt.Printf("INFO: Test case %d (%q) [%v] %v - EVP_CipherUpdate() = %d, want %v\n",
@@ -555,7 +559,10 @@ func runAesCbcPkcs5TestGroup(algorithm string, wtg *wycheproofTestGroupAesCbcPkc
 	return success
 }
 
-func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int, in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
+func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int,
+	key []byte, keyLen int, iv []byte, ivLen int, aad []byte, aadLen int,
+	in []byte, inLen int, out []byte, outLen int, tag []byte, tagLen int,
+	wt *wycheproofTestAead) bool {
 	var ctrlSetIVLen C.int
 	var ctrlSetTag C.int
 	var ctrlGetTag C.int
@@ -590,7 +597,8 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 
 	ret = C.EVP_CIPHER_CTX_ctrl(ctx, ctrlSetIVLen, C.int(ivLen), nil)
 	if ret != 1 {
-		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" || wt.Comment == "0 size IV is not valid" {
+		if wt.Comment == "Nonce is too long" || wt.Comment == "Invalid nonce size" ||
+			wt.Comment == "0 size IV is not valid" {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) [%v] %v - setting IV len to %d failed. got %d, want %v\n",
@@ -610,7 +618,8 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 		}
 	}
 
-	ret = C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), (*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
+	ret = C.EVP_CipherInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])),
+		(*C.uchar)(unsafe.Pointer(&iv[0])), C.int(doEncrypt))
 	if ret != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) [%v] %v - setting key and IV failed. got %d, want %v\n",
 			wt.TCID, wt.Comment, action, wt.Flags, ret, wt.Result)
@@ -640,7 +649,8 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []
 		cipherOut = append(cipherOut, 0)
 	}
 
-	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen, (*C.uchar)(unsafe.Pointer(&in[0])), C.int(inLen))
+	ret = C.EVP_CipherUpdate(ctx, (*C.uchar)(unsafe.Pointer(&cipherOut[0])), &cipherOutLen,
+		(*C.uchar)(unsafe.Pointer(&in[0])), C.int(inLen))
 	if ret != 1 {
 		if wt.Result == "invalid" {
 			return true
@@ -926,14 +936,19 @@ func runAesCmacTestGroup(algorithm string, wtg *wycheproofTestGroupAesCmac) bool
 	return success
 }
 
-func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
+func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int,
+	ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	maxOutLen := ctLen + tagLen
 
 	opened := make([]byte, maxOutLen)
 	var openedMsgLen C.size_t
 
 	catCtTag := append(ct, tag...)
-	openRet := C.EVP_AEAD_CTX_open(ctx, (*C.uint8_t)(unsafe.Pointer(&opened[0])), (*C.size_t)(unsafe.Pointer(&openedMsgLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&catCtTag[0])), C.size_t(len(catCtTag)), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+	openRet := C.EVP_AEAD_CTX_open(ctx, (*C.uint8_t)(unsafe.Pointer(&opened[0])),
+		(*C.size_t)(unsafe.Pointer(&openedMsgLen)), C.size_t(maxOutLen),
+		(*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen),
+		(*C.uint8_t)(unsafe.Pointer(&catCtTag[0])), C.size_t(len(catCtTag)),
+		(*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
 
 	if openRet != 1 {
 		if wt.Result == "invalid" {
@@ -968,13 +983,18 @@ func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 	return success
 }
 
-func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte, msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
+func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen int, msg []byte,
+	msgLen int, ct []byte, ctLen int, tag []byte, tagLen int, wt *wycheproofTestAead) bool {
 	maxOutLen := msgLen + tagLen
 
 	sealed := make([]byte, maxOutLen)
 	var sealedLen C.size_t
 
-	sealRet := C.EVP_AEAD_CTX_seal(ctx, (*C.uint8_t)(unsafe.Pointer(&sealed[0])), (*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen), (*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen), (*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen), (*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
+	sealRet := C.EVP_AEAD_CTX_seal(ctx, (*C.uint8_t)(unsafe.Pointer(&sealed[0])),
+		(*C.size_t)(unsafe.Pointer(&sealedLen)), C.size_t(maxOutLen),
+		(*C.uint8_t)(unsafe.Pointer(&iv[0])), C.size_t(ivLen),
+		(*C.uint8_t)(unsafe.Pointer(&msg[0])), C.size_t(msgLen),
+		(*C.uint8_t)(unsafe.Pointer(&aad[0])), C.size_t(aadLen))
 
 	if sealRet != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_AEAD_CTX_seal() = %d, want %v\n",
@@ -1681,7 +1701,8 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 		sigOut = append(sigOut, 0)
 	}
 
-	ret := C.RSA_public_decrypt(C.int(sigLen), (*C.uchar)(unsafe.Pointer(&sig[0])), (*C.uchar)(unsafe.Pointer(&sigOut[0])), rsa, C.RSA_NO_PADDING)
+	ret := C.RSA_public_decrypt(C.int(sigLen), (*C.uchar)(unsafe.Pointer(&sig[0])),
+		(*C.uchar)(unsafe.Pointer(&sigOut[0])), rsa, C.RSA_NO_PADDING)
 	if ret == -1 {
 		if wt.Result == "invalid" {
 			return true
@@ -1691,7 +1712,8 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 		return false
 	}
 
-	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha, (*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
+	ret = C.RSA_verify_PKCS1_PSS_mgf1(rsa, (*C.uchar)(unsafe.Pointer(&msg[0])), sha, mgfSha,
+		(*C.uchar)(unsafe.Pointer(&sigOut[0])), C.int(sLen))
 
 	success := false
 	if ret == 1 && (wt.Result == "valid" || wt.Result == "acceptable") {
