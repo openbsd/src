@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.25 2018/02/26 13:43:51 mpi Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.26 2018/10/06 21:12:23 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -352,6 +352,13 @@ lf_setlock(struct lockf *lock)
 			 * Check for common starting point and different types.
 			 */
 			if (overlap->lf_type == lock->lf_type) {
+				/*
+				 * If the lock about to be freed already is in
+				 * the list, update the previous lock to point
+				 * to the lock after the freed one.
+				 */
+				if (!needtolink)
+					*prev = lock->lf_next;
 				lf_free(lock);
 				lock = overlap; /* for debug output below */
 				break;
@@ -401,7 +408,7 @@ lf_setlock(struct lockf *lock)
 			lock->lf_next = overlap->lf_next;
 			overlap->lf_next = lock;
 			overlap->lf_end = lock->lf_start - 1;
-			prev = &lock->lf_next;
+			prev = &overlap->lf_next;
 			lf_wakelock(overlap);
 			needtolink = 0;
 			continue;
