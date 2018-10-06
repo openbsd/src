@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.79 2018/10/06 14:23:08 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.80 2018/10/06 18:31:47 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1145,18 +1145,21 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	if C.BN_hex2bn(&bnG, wg) == 0 {
 		log.Fatal("Failed to decode g")
 	}
+	C.free(unsafe.Pointer(wg))
 
 	var bnP *C.BIGNUM
 	wp := C.CString(wtg.Key.P)
 	if C.BN_hex2bn(&bnP, wp) == 0 {
 		log.Fatal("Failed to decode p")
 	}
+	C.free(unsafe.Pointer(wp))
 
 	var bnQ *C.BIGNUM
 	wq := C.CString(wtg.Key.Q)
 	if C.BN_hex2bn(&bnQ, wq) == 0 {
 		log.Fatal("Failed to decode q")
 	}
+	C.free(unsafe.Pointer(wq))
 
 	ret := C.DSA_set0_pqg(dsa, bnP, bnQ, bnG)
 	if ret != 1 {
@@ -1168,6 +1171,7 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	if C.BN_hex2bn(&bnY, wy) == 0 {
 		log.Fatal("Failed to decode y")
 	}
+	C.free(unsafe.Pointer(wy))
 
 	ret = C.DSA_set0_key(dsa, bnY, nil)
 	if ret != 1 {
@@ -1588,14 +1592,14 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	sigLen := len(wtSig)
 	r := C.CString(wtSig[:sigLen/2])
 	s := C.CString(wtSig[sigLen/2:])
+	defer C.free(unsafe.Pointer(r))
+	defer C.free(unsafe.Pointer(s))
 	if C.BN_hex2bn(&cSig.r, r) == 0 {
 		return nil, 0
 	}
 	if C.BN_hex2bn(&cSig.s, s) == 0 {
 		return nil, 0
 	}
-	C.free(unsafe.Pointer(r))
-	C.free(unsafe.Pointer(s))
 
 	derLen := C.i2d_ECDSA_SIG(cSig, nil)
 	if derLen == 0 {
