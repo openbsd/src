@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.72 2018/10/06 05:02:21 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.73 2018/10/06 08:16:48 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1269,7 +1269,7 @@ func runECDHTestGroup(algorithm string, wtg *wycheproofTestGroupECDH) bool {
 	return success
 }
 
-func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
+func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
 		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
@@ -1279,20 +1279,35 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA
 	h.Write(msg)
 	msg = h.Sum(nil)
 
-	sig, err := hex.DecodeString(wt.Sig)
-	if err != nil {
-		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-	}
-
-	msgLen, sigLen := len(msg), len(sig)
+	msgLen := len(msg)
 	if msgLen == 0 {
 		msg = append(msg, 0)
 	}
-	if sigLen == 0 {
-		sig = append(sig, 0)
+
+	var ret C.int
+	if webcrypto {
+		cDer, derLen := encodeECDSAWebCryptoSig(wt.Sig)
+		if cDer == nil {
+			fmt.Print("FAIL: unable to decode signature")
+			return false
+		}
+		defer C.free(unsafe.Pointer(cDer))
+
+		ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+			(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), ecKey)
+	} else {
+		sig, err := hex.DecodeString(wt.Sig)
+		if err != nil {
+			log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
+		}
+
+		sigLen := len(sig)
+		if sigLen == 0 {
+			sig = append(sig, 0)
+		}
+		ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+			(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), ecKey)
 	}
-	ret := C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
-		(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), ecKey)
 
 	// XXX audit acceptable cases...
 	success := true
@@ -1350,7 +1365,7 @@ func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runECDSATest(ecKey, nid, h, wt) {
+		if !runECDSATest(ecKey, nid, h, false, wt) {
 			success = false
 		}
 	}
@@ -1369,10 +1384,10 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	r := C.CString(wtSig[:sigLen/2])
 	s := C.CString(wtSig[sigLen/2:])
 	if C.BN_hex2bn(&cSig.r, r) == 0 {
-		log.Fatal("Failed to set ECDSA r")
+		return nil, 0
 	}
 	if C.BN_hex2bn(&cSig.s, s) == 0 {
-		log.Fatal("Failed to set ECDSA s")
+		return nil, 0
 	}
 	C.free(unsafe.Pointer(r))
 	C.free(unsafe.Pointer(s))
@@ -1394,43 +1409,6 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	}
 
 	return cDer, derLen
-}
-
-func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	h.Reset()
-	h.Write(msg)
-	msg = h.Sum(nil)
-
-	msgLen := len(msg)
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
-
-	cDer, derLen := encodeECDSAWebCryptoSig(wt.Sig)
-	if cDer == nil {
-		fmt.Print("FAIL: unable to decode signature")
-		return false
-	}
-	defer C.free(unsafe.Pointer(cDer))
-
-	ret := C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
-		(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), ecKey)
-
-	// XXX audit acceptable cases...
-	success := true
-	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
-		fmt.Printf("FAIL: Test case %d (%q) %v - ECDSA_verify() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
-		success = false
-	}
-	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
-		gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
-	}
-	return success
 }
 
 func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAWebCrypto) bool {
@@ -1483,7 +1461,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 
 	success := true
 	for _, wt := range wtg.Tests {
-		if !runECDSAWebCryptoTest(ecKey, nid, h, wt) {
+		if !runECDSATest(ecKey, nid, h, true, wt) {
 			success = false
 		}
 	}
