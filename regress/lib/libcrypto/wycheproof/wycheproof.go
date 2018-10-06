@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.71 2018/10/06 04:35:54 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.72 2018/10/06 05:02:21 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1357,6 +1357,45 @@ func runECDSATestGroup(algorithm string, wtg *wycheproofTestGroupECDSA) bool {
 	return success
 }
 
+// DER encode the signature (so that ECDSA_verify() can decode and encode it again...)
+func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
+	cSig := C.ECDSA_SIG_new()
+	if cSig == nil {
+		log.Fatal("ECDSA_SIG_new() failed")
+	}
+	defer C.ECDSA_SIG_free(cSig)
+
+	sigLen := len(wtSig)
+	r := C.CString(wtSig[:sigLen/2])
+	s := C.CString(wtSig[sigLen/2:])
+	if C.BN_hex2bn(&cSig.r, r) == 0 {
+		log.Fatal("Failed to set ECDSA r")
+	}
+	if C.BN_hex2bn(&cSig.s, s) == 0 {
+		log.Fatal("Failed to set ECDSA s")
+	}
+	C.free(unsafe.Pointer(r))
+	C.free(unsafe.Pointer(s))
+
+	derLen := C.i2d_ECDSA_SIG(cSig, nil)
+	if derLen == 0 {
+		return nil, 0
+	}
+	cDer := (*C.uchar)(C.malloc(C.ulong(derLen)))
+	if cDer == nil {
+		log.Fatal("malloc failed")
+	}
+
+	p := cDer
+	ret := C.i2d_ECDSA_SIG(cSig, (**C.uchar)(&p))
+	if ret == 0 || ret != derLen {
+		C.free(unsafe.Pointer(cDer))
+		return nil, 0
+	}
+
+	return cDer, derLen
+}
+
 func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproofTestECDSA) bool {
 	msg, err := hex.DecodeString(wt.Msg)
 	if err != nil {
@@ -1372,42 +1411,14 @@ func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproof
 		msg = append(msg, 0)
 	}
 
-	// DER encode the signature (so that ECDSA_verify() can decode and encode it again...)
-	cSig := C.ECDSA_SIG_new()
-	if cSig == nil {
-		log.Fatal("ECDSA_SIG_new() failed")
-	}
-	defer C.ECDSA_SIG_free(cSig)
-
-	sigLen := len(wt.Sig)
-	r := C.CString(wt.Sig[:sigLen/2])
-	s := C.CString(wt.Sig[sigLen/2:])
-	if C.BN_hex2bn(&cSig.r, r) == 0 {
-		log.Fatal("Failed to set ECDSA r")
-	}
-	if C.BN_hex2bn(&cSig.s, s) == 0 {
-		log.Fatal("Failed to set ECDSA s")
-	}
-	C.free(unsafe.Pointer(r))
-	C.free(unsafe.Pointer(s))
-
-	derLen := C.i2d_ECDSA_SIG(cSig, nil)
-	if derLen == 0 {
-		log.Fatal("i2d_ECDSA_SIG(cSig, nil) failed")
-	}
-	cDer := (*C.uchar)(C.malloc(C.ulong(derLen)))
+	cDer, derLen := encodeECDSAWebCryptoSig(wt.Sig)
 	if cDer == nil {
-		log.Fatal("malloc failed")
+		fmt.Print("FAIL: unable to decode signature")
+		return false
 	}
 	defer C.free(unsafe.Pointer(cDer))
 
-	p := cDer
-	ret := C.i2d_ECDSA_SIG(cSig, (**C.uchar)(&p))
-	if ret == 0 || ret != derLen {
-		log.Fatalf("i2d_ECDSA_SIG(cSig, nil) failed, got %d, want %d", ret, derLen)
-	}
-
-	ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
+	ret := C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
 		(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), ecKey)
 
 	// XXX audit acceptable cases...
