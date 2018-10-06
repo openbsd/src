@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.74 2018/10/06 09:27:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.75 2018/10/06 10:21:56 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1323,10 +1323,13 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	if group == nil {
 		log.Fatal("Failed to get EC_GROUP")
 	}
+	defer C.EC_GROUP_free(group)
+
 	pubPoint := C.EC_POINT_new(group)
 	if pubPoint == nil {
 		log.Fatal("Failed to create EC_POINT")
 	}
+	defer C.EC_POINT_free(pubPoint)
 
 	var bnX *C.BIGNUM
 	x, err := base64.RawURLEncoding.DecodeString(wt.Public.X)
