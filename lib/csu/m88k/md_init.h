@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.6 2018/06/16 16:06:03 guenther Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.7 2018/10/06 23:30:25 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -46,8 +46,12 @@
  *
  * Our start code starts with two nops because execution may skip up to
  * two instructions; see setregs() in the kernel for details.
+ *
+ * The definitions of environ and __progname prevent the creation
+ * of COPY relocations for WEAK symbols.
  */
 #define	MD_CRT0_START					\
+	char **environ, *__progname;			\
 	__asm(						\
 	"	.text					\n" \
 	"	.align 3				\n" \
