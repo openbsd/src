@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.75 2018/10/06 10:21:56 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.76 2018/10/06 10:43:47 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1315,21 +1315,9 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 
 	ret := C.EC_KEY_set_private_key(privKey, bnD)
 	if ret != 1 {
-		fmt.Printf("FAIL: Test case %d (%q) %v - EC_KEY_set_private_key() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) %v - EC_KEY_set_private_key() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
-
-	group := C.EC_GROUP_new_by_curve_name(C.int(nid))
-	if group == nil {
-		log.Fatal("Failed to get EC_GROUP")
-	}
-	defer C.EC_GROUP_free(group)
-
-	pubPoint := C.EC_POINT_new(group)
-	if pubPoint == nil {
-		log.Fatal("Failed to create EC_POINT")
-	}
-	defer C.EC_POINT_free(pubPoint)
 
 	var bnX *C.BIGNUM
 	x, err := base64.RawURLEncoding.DecodeString(wt.Public.X)
@@ -1353,10 +1341,21 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	}
 	defer C.BN_free(bnY)
 
-	ret = C.EC_POINT_set_affine_coordinates_GFp(group, pubPoint, bnX, bnY, nil)
-	if ret != 1 {
-		log.Fatal("Failed to set public key")
+	pubKey := C.EC_KEY_new_by_curve_name(C.int(nid))
+	if pubKey == nil {
+		log.Fatal("Failed to create EC_KEY")
 	}
+	defer C.EC_KEY_free(pubKey)
+
+	ret = C.EC_KEY_set_public_key_affine_coordinates(pubKey, bnX, bnY)
+	if ret != 1 {
+		if wt.Result == "invalid" {
+			return true
+		}
+		fmt.Printf("FAIL: Test case %d (%q) %v - EC_KEY_set_public_key_affine_coordinates() = %d, want %v\n", wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
+		return false
+	}
+	pubPoint := C.EC_KEY_get0_public_key(pubKey)
 
 	privGroup := C.EC_KEY_get0_group(privKey)
 
