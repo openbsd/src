@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.180 2018/10/04 08:52:04 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.181 2018/10/06 13:59:32 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2018 $
+.Dd $Mdocdate: October 6 2018 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -398,7 +398,7 @@ supports sets for looking up collections in an efficent way.
 .Ic prefix-set ,
 and
 .Ic origin-set
-are used to lookup AS numbers, prefixes and prefixes/source-as pairs
+are used to look up AS numbers, prefixes and prefixes/source-as pairs
 respectively.
 See also the
 .Sx FILTER
@@ -510,7 +510,6 @@ Announce the specified prefix as belonging to our AS.
 .Ic connected Op Ic set ...\&
 .Xc
 Announce routes to directly attached networks.
-.Ar priority .
 .Pp
 .It Xo
 .Ic network prefix-set
@@ -527,6 +526,7 @@ will be announced.
 .Ic priority Ar number Op Ic set ...\&
 .Xc
 Announce routes with the specified
+.Ar priority .
 .Pp
 .It Xo
 .Ic network
@@ -1595,7 +1595,7 @@ where
 .Ar as-number
 is an AS number and
 .Ar local
-is a locally-significant number between zero and
+is a locally significant number between zero and
 .Li 65535 .
 Alternately, well-known communities may be specified by name:
 .Ic GRACEFUL_SHUTDOWN ,
@@ -1631,7 +1631,7 @@ where
 .Ar as-number
 is an AS number and
 .Ar local
-is a locally-significant number between zero and
+is a locally significant number between zero and
 .Li 4294967295 .
 For
 .Cm delete ,
