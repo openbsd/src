@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.70 2018/10/05 21:12:43 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.71 2018/10/06 04:35:54 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1373,16 +1373,15 @@ func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproof
 	}
 
 	// DER encode the signature (so that ECDSA_verify() can decode and encode it again...)
-	sigLen := len(wt.Sig)
-	r := C.CString(wt.Sig[:sigLen/2])
-	s := C.CString(wt.Sig[sigLen/2:])
-
 	cSig := C.ECDSA_SIG_new()
-	defer C.ECDSA_SIG_free(cSig)
-
 	if cSig == nil {
 		log.Fatal("ECDSA_SIG_new() failed")
 	}
+	defer C.ECDSA_SIG_free(cSig)
+
+	sigLen := len(wt.Sig)
+	r := C.CString(wt.Sig[:sigLen/2])
+	s := C.CString(wt.Sig[sigLen/2:])
 	if C.BN_hex2bn(&cSig.r, r) == 0 {
 		log.Fatal("Failed to set ECDSA r")
 	}
@@ -1396,13 +1395,13 @@ func runECDSAWebCryptoTest(ecKey *C.EC_KEY, nid int, h hash.Hash, wt *wycheproof
 	if derLen == 0 {
 		log.Fatal("i2d_ECDSA_SIG(cSig, nil) failed")
 	}
-
 	cDer := (*C.uchar)(C.malloc(C.ulong(derLen)))
 	if cDer == nil {
 		log.Fatal("malloc failed")
 	}
-	p := cDer
 	defer C.free(unsafe.Pointer(cDer))
+
+	p := cDer
 	ret := C.i2d_ECDSA_SIG(cSig, (**C.uchar)(&p))
 	if ret == 0 || ret != derLen {
 		log.Fatalf("i2d_ECDSA_SIG(cSig, nil) failed, got %d, want %d", ret, derLen)
