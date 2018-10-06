@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.78 2018/10/06 11:05:00 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.79 2018/10/06 14:23:08 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1207,6 +1207,7 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	if bio == nil {
 		log.Fatal("BIO_new_mem_buf failed")
 	}
+	defer C.free(unsafe.Pointer(keyPEM))
 	defer C.BIO_free(bio)
 
 	dsaPEM := C.PEM_read_bio_DSA_PUBKEY(bio, nil, nil, nil)
