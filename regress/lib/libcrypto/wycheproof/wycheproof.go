@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.80 2018/10/06 18:31:47 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.81 2018/10/07 04:40:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -44,8 +44,8 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
-	"encoding/hex"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -878,14 +878,14 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 	ret := C.CMAC_Init(ctx, unsafe.Pointer(&key[0]), C.size_t(keyLen), cipher, nil)
 	if ret != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Init() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
 
 	ret = C.CMAC_Update(ctx, unsafe.Pointer(&msg[0]), C.size_t(msgLen))
 	if ret != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Update() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
 
@@ -895,7 +895,7 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 	ret = C.CMAC_Final(ctx, (*C.uchar)(unsafe.Pointer(&outTag[0])), &outLen)
 	if ret != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - CMAC_Final() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
 
@@ -904,7 +904,7 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 	success := true
 	if bytes.Equal(tag, outTag) != (wt.Result == "valid") {
 		fmt.Printf("FAIL: Test case %d (%q) %v - want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, wt.Result)
 		success = false
 	}
 	return success
@@ -955,13 +955,13 @@ func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_AEAD_CTX_open() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(openRet), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(openRet), wt.Result)
 		return false
 	}
 
 	if openedMsgLen != C.size_t(msgLen) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - open length mismatch: got %d, want %d\n",
-			wt.TCID, wt.Comment, wt.Flags,  openedMsgLen, msgLen)
+			wt.TCID, wt.Comment, wt.Flags, openedMsgLen, msgLen)
 		return false
 	}
 
@@ -978,7 +978,7 @@ func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) %v - msg match: %t; want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  bytes.Equal(openedMsg, msg), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, bytes.Equal(openedMsg, msg), wt.Result)
 	}
 	return success
 }
@@ -998,13 +998,13 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 
 	if sealRet != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_AEAD_CTX_seal() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(sealRet), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(sealRet), wt.Result)
 		return false
 	}
 
 	if sealedLen != C.size_t(maxOutLen) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - seal length mismatch: got %d, want %d\n",
-			wt.TCID, wt.Comment, wt.Flags,  sealedLen, maxOutLen)
+			wt.TCID, wt.Comment, wt.Flags, sealedLen, maxOutLen)
 		return false
 	}
 
@@ -1019,7 +1019,7 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_AEAD_CTX_seal() = %d, ct match: %t, tag match: %t; want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(sealRet),
+			wt.TCID, wt.Comment, wt.Flags, int(sealRet),
 			bytes.Equal(sealedCt, ct), bytes.Equal(sealedTag, tag), wt.Result)
 	}
 	return success
@@ -1122,9 +1122,9 @@ func runDSATest(dsa *C.DSA, h hash.Hash, wt *wycheproofTestDSA) bool {
 		(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), dsa)
 
 	success := true
-	if (ret == 1) != (wt.Result == "valid") {
+	if ret == 1 != (wt.Result == "valid") {
 		fmt.Printf("FAIL: Test case %d (%q) %v - DSA_verify() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		success = false
 	}
 	return success
@@ -1183,7 +1183,6 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 		log.Fatalf("Failed to get hash: %v", err)
 	}
 
-
 	der, err := hex.DecodeString(wtg.KeyDER)
 	if err != nil {
 		log.Fatalf("Failed to decode DER encoded key: %v", err)
@@ -1205,7 +1204,6 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 	defer C.DSA_free(dsaDER)
 	C.free(unsafe.Pointer(Cder))
 
-
 	keyPEM := C.CString(wtg.KeyPEM)
 	bio := C.BIO_new_mem_buf(unsafe.Pointer(keyPEM), C.int(len(wtg.KeyPEM)))
 	if bio == nil {
@@ -1219,7 +1217,6 @@ func runDSATestGroup(algorithm string, wtg *wycheproofTestGroupDSA) bool {
 		log.Fatal("PEM_read_bio_DSA_PUBKEY failed")
 	}
 	defer C.DSA_free(dsaPEM)
-
 
 	success := true
 	for _, wt := range wtg.Tests {
@@ -1254,7 +1251,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 	ret := C.EC_KEY_set_private_key(privKey, bnPriv)
 	if ret != 1 {
 		fmt.Printf("FAIL: Test case %d (%q) %v - EC_KEY_set_private_key() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
 		return false
 	}
 
@@ -1276,7 +1273,7 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 
 	p := (*C.uchar)(Cpub)
 	var pubKey *C.EC_KEY
-	if (doECpoint) {
+	if doECpoint {
 		pubKey = C.EC_KEY_new_by_curve_name(C.int(nid))
 		if pubKey == nil {
 			log.Fatal("EC_KEY_new_by_curve_name failed")
@@ -1293,13 +1290,13 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - ASN decoding failed: want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, wt.Result)
 		return false
 	}
 
 	privGroup := C.EC_KEY_get0_group(privKey)
 
- 	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
+	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
 
 	secret := make([]byte, secLen)
 	if secLen == 0 {
@@ -1314,19 +1311,19 @@ func runECDHTest(nid int, doECpoint bool, wt *wycheproofTestECDH) bool {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - ECDH_compute_key() = %d, want %d, result: %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, int(secLen), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, int(secLen), wt.Result)
 		return false
 	}
 
 	shared, err := hex.DecodeString(wt.Shared)
-	if err != nil{
+	if err != nil {
 		log.Fatalf("Failed to decode shared secret: %v", err)
 	}
 
 	success := true
 	if !bytes.Equal(shared, secret) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed shared secret do not match, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, wt.Result)
 		success = false
 	}
 	if acceptableAudit && success && wt.Result == "acceptable" {
@@ -1370,7 +1367,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	if err != nil {
 		log.Fatalf("Failed to base64 decode d: %v", err)
 	}
-	bnD = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&d[0])), (C.int)(len(d)), nil)
+	bnD = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&d[0])), C.int(len(d)), nil)
 	if bnD == nil {
 		log.Fatal("Failed to decode D")
 	}
@@ -1388,7 +1385,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	if err != nil {
 		log.Fatalf("Failed to base64 decode x: %v", err)
 	}
-	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), (C.int)(len(x)), nil)
+	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
 	if bnX == nil {
 		log.Fatal("Failed to decode X")
 	}
@@ -1399,7 +1396,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	if err != nil {
 		log.Fatalf("Failed to base64 decode y: %v", err)
 	}
-	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), (C.int)(len(y)), nil)
+	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
 	if bnY == nil {
 		log.Fatal("Failed to decode Y")
 	}
@@ -1424,7 +1421,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 
 	privGroup := C.EC_KEY_get0_group(privKey)
 
- 	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
+	secLen := (C.EC_GROUP_get_degree(privGroup) + 7) / 8
 
 	secret := make([]byte, secLen)
 	if secLen == 0 {
@@ -1437,19 +1434,19 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - ECDH_compute_key() = %d, want %d, result: %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  ret, int(secLen), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, ret, int(secLen), wt.Result)
 		return false
 	}
 
 	shared, err := hex.DecodeString(wt.Shared)
-	if err != nil{
+	if err != nil {
 		log.Fatalf("Failed to decode shared secret: %v", err)
 	}
 
 	success := true
 	if !bytes.Equal(shared, secret) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed shared secret do not match, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, wt.Result)
 		success = false
 	}
 	if acceptableAudit && success && wt.Result == "acceptable" {
@@ -1518,9 +1515,9 @@ func runECDSATest(ecKey *C.EC_KEY, nid int, h hash.Hash, webcrypto bool, wt *wyc
 
 	// XXX audit acceptable cases...
 	success := true
-	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
+	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: Test case %d (%q) %v - ECDSA_verify() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(ret), wt.Result)
 		success = false
 	}
 	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
@@ -1639,7 +1636,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 		log.Fatalf("Failed to base64 decode X: %v", err)
 	}
 	var bnX *C.BIGNUM
-	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), (C.int)(len(x)), nil)
+	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
 	if bnX == nil {
 		log.Fatal("Failed to decode X")
 	}
@@ -1650,7 +1647,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 		log.Fatalf("Failed to base64 decode Y: %v", err)
 	}
 	var bnY *C.BIGNUM
-	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), (C.int)(len(y)), nil)
+	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
 	if bnY == nil {
 		log.Fatal("Failed to decode Y")
 	}
@@ -1713,7 +1710,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 			return true
 		}
 		fmt.Printf("FAIL: Test case %d (%q) %v - RSA_public_decrypt() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(ret), wt.Result)
 		return false
 	}
 
@@ -1732,7 +1729,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 		success = true
 	} else {
 		fmt.Printf("FAIL: Test case %d (%q) %v - RSA_verify_PKCS1_PSS_mgf1() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(ret), wt.Result)
 	}
 	return success
 }
@@ -1810,9 +1807,9 @@ func runRSATest(rsa *C.RSA, nid int, h hash.Hash, wt *wycheproofTestRSA) bool {
 
 	// XXX audit acceptable cases...
 	success := true
-	if (ret == 1) != (wt.Result == "valid") && wt.Result != "acceptable" {
+	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: Test case %d (%q) %v - RSA_verify() = %d, want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  int(ret), wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, int(ret), wt.Result)
 		success = false
 	}
 	if acceptableAudit && ret == 1 && wt.Result == "acceptable" {
@@ -1888,7 +1885,7 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 	success := true
 	if result != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: Test case %d (%q) %v - X25519(), want %v\n",
-			wt.TCID, wt.Comment, wt.Flags,  wt.Result)
+			wt.TCID, wt.Comment, wt.Flags, wt.Result)
 		success = false
 	}
 	if acceptableAudit && result && wt.Result == "acceptable" {
@@ -1947,7 +1944,6 @@ func runTestVectors(path string, webcrypto bool) bool {
 		} else {
 			wtg = &wycheproofTestGroupECDSA{}
 		}
-			
 	case "RSASSA-PSS":
 		wtg = &wycheproofTestGroupRSASSA{}
 	case "RSASig":
@@ -1998,7 +1994,6 @@ func runTestVectors(path string, webcrypto bool) bool {
 					success = false
 				}
 			}
-
 		case "ECDSA":
 			if webcrypto {
 				if !runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto)) {
@@ -2037,7 +2032,7 @@ func main() {
 
 	flag.BoolVar(&acceptableAudit, "v", false, "audit acceptable cases")
 	flag.Parse()
-	
+
 	acceptableComments = make(map[string]int)
 	acceptableFlags = make(map[string]int)
 
@@ -2059,7 +2054,7 @@ func main() {
 	success := true
 
 	for _, test := range tests {
-		webcrypto := (test.name == "ECDSAWebCrypto") || test.name == "ECDHWebCrypto"
+		webcrypto := test.name == "ECDSAWebCrypto" || test.name == "ECDHWebCrypto"
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
