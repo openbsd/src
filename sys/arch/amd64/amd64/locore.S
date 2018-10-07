@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.110 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.111 2018/10/07 22:43:06 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1038,6 +1038,8 @@ warn_once:
  *		save current state, but retain it in the FPU
  *	void fpusavereset(sfp)
  *		save current state and reset FPU to initial/kernel state
+ *	int xsetbv_user(reg, mask)
+ *		load specifed %xcr# register, returns 0/1 if okay/it trapped
  */
 
 ENTRY(xrstor_user)
@@ -1089,6 +1091,24 @@ ENTRY(fpusavereset)
 	RETGUARD_CHECK(fpusavereset, r11)
 	ret
 END(fpusavereset)
+
+ENTRY(xsetbv_user)
+	RETGUARD_SETUP(xsetbv_user, r11)
+	movl	%edi, %ecx
+	movq	%rsi, %rdx
+	movl	%esi, %eax
+	shrq	$32, %rdx
+	.globl	xsetbv_fault
+xsetbv_fault:
+	xsetbv
+	xorl	%eax, %eax
+	RETGUARD_CHECK(xsetbv_user, r11)
+	ret
+NENTRY(xsetbv_resume)
+	movl	$1, %eax
+	RETGUARD_CHECK(xsetbv_user, r11)
+	ret
+END(xsetbv_user)
 
 	.section .rodata
 	.globl	_C_LABEL(_xrstor)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.76 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.77 2018/10/07 22:43:06 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -284,6 +284,9 @@ IDTVEC(trap0d)
 	leaq	xrstor_fault(%rip),%rcx
 	cmpq	%rcx,%rdx
 	je	.Lhandle_xrstor
+	leaq	xsetbv_fault(%rip),%rcx
+	cmpq	%rcx,%rdx
+	je	.Lhandle_xsetbv
 	popq	%rcx
 	popq	%rdx
 	TRAP(T_PROTFLT)
@@ -291,6 +294,11 @@ IDTVEC(trap0d)
 .Lhandle_xrstor:
 	/* xrstor faulted; just resume in xrstor_resume */
 	leaq	xrstor_resume(%rip),%rcx
+	jmp	1f
+
+.Lhandle_xsetbv:
+	/* xsetbv faulted; just resume in xsetbv_resume */
+	leaq	xsetbv_resume(%rip),%rcx
 	jmp	1f
 
 .Lhandle_doreti:

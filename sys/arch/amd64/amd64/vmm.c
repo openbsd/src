@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.220 2018/09/20 14:32:59 brynet Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.221 2018/10/07 22:43:06 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3851,14 +3851,6 @@ vmm_fpurestore(struct vcpu *vcpu)
 	}
 
 	if (vcpu->vc_fpuinited) {
-		/* Restore guest XCR0 and FPU context */
-		if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
-			DPRINTF("%s: guest attempted to set invalid bits in "
-			    "xcr0 (guest %%xcr0=0x%llx, host mask=0x%llx)\n",
-			    __func__, vcpu->vc_gueststate.vg_xcr0, ~xsave_mask);
-			return EINVAL;
-		}
-
 		if (xrstor_user(&vcpu->vc_g_fpu, xsave_mask)) {
 			DPRINTF("%s: guest attempted to set invalid %s\n",
 			    __func__, "xsave/xrstor state");
@@ -3868,7 +3860,12 @@ vmm_fpurestore(struct vcpu *vcpu)
 
 	if (xsave_mask) {
 		/* Restore guest %xcr0 */
-		xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
+		if (xsetbv_user(0, vcpu->vc_gueststate.vg_xcr0)) {
+			DPRINTF("%s: guest attempted to set invalid bits in "
+			    "xcr0 (guest %%xcr0=0x%llx, host %%xcr0=0x%llx)\n",
+			    __func__, vcpu->vc_gueststate.vg_xcr0, xsave_mask);
+			return EINVAL;
+		}
 	}
 
 	return 0;
@@ -5741,18 +5738,7 @@ vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 		return (EINVAL);
 	}
 
-	/*
-	 * No bits in %edx are currently supported. Check this, and validate
-	 * against the host mask.
-	 */
-	if (*rdx != 0 || (*rax & ~xsave_mask)) {
-		DPRINTF("%s: guest specified invalid xcr0 content "
-		    "(0x%llx:0x%llx)\n", __func__, *rdx, *rax);
-		/* XXX this should #GP(0) instead of killing the guest */
-		return (EINVAL);
-	}
-
-	vcpu->vc_gueststate.vg_xcr0 = *rax;
+	vcpu->vc_gueststate.vg_xcr0 = *rax + (*rdx << 32);
 
 	return (0);
 }
