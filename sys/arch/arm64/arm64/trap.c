@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.20 2018/08/03 18:36:01 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.21 2018/10/08 15:57:53 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -90,6 +90,19 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 	if (va >= VM_MAXUSER_ADDRESS)
 		curcpu()->ci_flush_bp();
 
+	if (lower) {
+		switch (esr & ISS_DATA_DFSC_MASK) {
+		case ISS_DATA_DFSC_ALIGN:
+			sv.sival_ptr = (void *)far;
+			KERNEL_LOCK();
+			trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+			KERNEL_UNLOCK();
+			return;
+		default:
+			break;
+		}
+	}
+
 	if (lower)
 		map = &p->p_vmspace->vm_map;
 	else {
@@ -141,7 +154,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 				sig = SIGSEGV;
 				code = SEGV_MAPERR;
 			}
-			sv.sival_ptr = (u_int64_t *)far;
+			sv.sival_ptr = (void *)far;
 
 			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
