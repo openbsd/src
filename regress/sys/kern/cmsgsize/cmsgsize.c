@@ -1,6 +1,7 @@
-/*	$Id: cmsgsize.c,v 1.1 2018/09/30 08:26:40 vgross Exp $ */
+/*	$OpenBSD: cmsgsize.c,v 1.2 2018/10/08 20:42:14 bluhm Exp $ */
 /*
  * Copyright (c) 2017 Alexander Markert <alexander.markert@siemens.com>
+ * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,109 +18,109 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#define CFG_SOURCE_ADDRESS		"192.168.88.135"
-#define CFG_DESTINATION_ADDRESS		"192.168.57.44"
 #define CFG_PORT			5000
 #define CFG_SO_MAX_SEND_BUFFER		1024
 
-char payload[CFG_SO_MAX_SEND_BUFFER] = {0};
+char payload[CFG_SO_MAX_SEND_BUFFER];
 
-int test_cmsgsize(int, struct in_addr *, unsigned int, unsigned int, int);
+int test_cmsgsize(int, struct in_addr *, struct in_addr *,
+    unsigned int, unsigned int);
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int so, bytes;
-	struct in_addr src_ia;
+	struct in_addr src, dst;
 
-	if (argc < 2)
-		errx(-1, "not enough parameters: %s <source_address>", argv[0]);
+	if (argc != 3)
+		errx(2, "usage: %s <source_address> <destination_address>",
+		    argv[0]);
 
-	if (inet_pton(AF_INET, argv[1], &src_ia) != 1)
-		err(-1, "unable to parse source address");
+	if (inet_pton(AF_INET, argv[1], &src) != 1)
+		err(1, "unable to parse source address");
+	if (inet_pton(AF_INET, argv[2], &dst) != 1)
+		err(1, "unable to parse destination address");
 
-	/* !blocking, cmsg + payload > sndbufsize => EMSGSIZE */
-	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	/* 1: !blocking, cmsg + payload > sndbufsize => EMSGSIZE */
+	so = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP);
 	if (so < 0)
-		err(-1, "opening socket failed");
-	if ((bytes = test_cmsgsize(so, &src_ia, CFG_SO_MAX_SEND_BUFFER, CFG_SO_MAX_SEND_BUFFER, 0)) < 0) {
-		if (errno != EMSGSIZE)
-			err(-1, "incorrect errno");
-	} else {
-		err(-1, "%d bytes sent\n", bytes);
-	}
+		err(1, "1: socket");
+	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
+	    CFG_SO_MAX_SEND_BUFFER);
+	if (bytes >= 0)
+		errx(1, "1: %d bytes sent\n", bytes);
+	if (errno != EMSGSIZE)
+		err(-1, "1: incorrect errno");
 	close(so);
 
-	/* blocking, cmsg + payload > sndbufsize => EMSGSIZE */
+	/* 2: blocking, cmsg + payload > sndbufsize => EMSGSIZE */
 	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (so < 0)
-		err(-1, "opening socket failed");
-	if ((bytes = test_cmsgsize(so, &src_ia, CFG_SO_MAX_SEND_BUFFER, CFG_SO_MAX_SEND_BUFFER, 1)) < 0) {
-		if (errno != EMSGSIZE)
-			err(-1, "incorrect errno");
-	} else {
-		err(-1, "%d bytes sent\n", bytes);
-	}
+		err(1, "2: socket");
+	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
+	    CFG_SO_MAX_SEND_BUFFER);
+	if (bytes >= 0)
+		errx(1, "2: %d bytes sent\n", bytes);
+	if (errno != EMSGSIZE)
+		err(-1, "2: incorrect errno");
 	close(so);
 
-	/* !blocking, cmsg + payload < sndbufsize => OK */
-	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	/* 3: !blocking, cmsg + payload < sndbufsize => OK */
+	so = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP);
 	if (so < 0)
-		err(-1, "opening socket failed");
-	if ((bytes = test_cmsgsize(so, &src_ia, CFG_SO_MAX_SEND_BUFFER, CFG_SO_MAX_SEND_BUFFER/2, 0)) < 0) {
-		err(-1, "got errno");
-	}
+		err(1, "3: socket 3");
+	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
+	    CFG_SO_MAX_SEND_BUFFER/2);
+	if (bytes < 0)
+		err(1, "3: got errno");
 	close(so);
 
-	/* blocking, cmsg + payload < sndbufsize => OK */
+	/* 4: blocking, cmsg + payload < sndbufsize => OK */
 	so = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (so < 0)
-		err(-1, "opening socket failed");
-	if ((bytes = test_cmsgsize(so, &src_ia, CFG_SO_MAX_SEND_BUFFER, CFG_SO_MAX_SEND_BUFFER/2, 1)) < 0) {
-		err(-1, "got errno");
-	}
+		err(1, "4: socket");
+	bytes = test_cmsgsize(so, &src, &dst, CFG_SO_MAX_SEND_BUFFER,
+	    CFG_SO_MAX_SEND_BUFFER/2);
+	if (bytes < 0)
+		err(4, "3: got errno");
 	close(so);
 
 	return 0;
 }
 
-int test_cmsgsize(int so, struct in_addr *ia, unsigned int sndbuf_size, unsigned int payload_size, int blocking)
+int
+test_cmsgsize(int so, struct in_addr *src, struct in_addr *dst,
+    unsigned int sndbuf_size, unsigned int payload_size)
 {
 	char cmsgbuf[CMSG_SPACE(sizeof(struct in_addr))];;
 	struct sockaddr_in to;
-	unsigned int size = CFG_SO_MAX_SEND_BUFFER;
 	struct in_addr *source_address;
 	struct msghdr msg;
 	struct cmsghdr *cmsg;
 	struct iovec iov;
 
-	if (setsockopt(so, SOL_SOCKET, SO_SNDBUF, &sndbuf_size, sizeof(sndbuf_size)) < 0)
-		err(-1, "adjusting socket send buffer failed");
-
-	if (!blocking) {
-		unsigned long on = 1;
-
-		if (ioctl(so, FIONBIO, &on) < 0)
-			err(-1, "enabling non-blocking IO failed");
-	}
+	if (setsockopt(so, SOL_SOCKET, SO_SNDBUF, &sndbuf_size,
+	    sizeof(sndbuf_size)) < 0)
+		err(1, "setsockopt send buffer");
 
 	/* setup remote address */
 	memset(&to, 0, sizeof(to));
 	to.sin_family = AF_INET;
-	to.sin_addr.s_addr = inet_addr(CFG_DESTINATION_ADDRESS);
+	to.sin_addr = *dst;
 	to.sin_port = htons(CFG_PORT);
 
 	/* setup buffer to be sent */
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_name = &to;
 	msg.msg_namelen = sizeof(to);
 	iov.iov_base = payload;
@@ -136,8 +137,7 @@ int test_cmsgsize(int so, struct in_addr *ia, unsigned int sndbuf_size, unsigned
 	cmsg->cmsg_type = IP_SENDSRCADDR;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_addr));
 	source_address = (struct in_addr *)(CMSG_DATA(cmsg));
-	memcpy(source_address, ia, sizeof(struct in_addr));
-/*	source_address->s_addr = inet_addr(CFG_SOURCE_ADDRESS); */
+	memcpy(source_address, src, sizeof(struct in_addr));
 
 	return sendmsg(so, &msg, 0);
 }
