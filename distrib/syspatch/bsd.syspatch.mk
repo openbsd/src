@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.21 2018/06/25 16:29:00 deraadt Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.22 2018/10/08 20:38:32 tb Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -110,14 +110,15 @@ ${_FAKE_COOKIE}:
 	@su ${BUILDUSER} -c 'touch $@'
 .endif
 
-${ERRATA}/${ERRATA}.patch:
+${ERRATA}/${ERRATA}.patch.sig:
 	@su ${BUILDUSER} -c '${INSTALL} -d -m 755 ${ERRATA}' && \
-	echo '>> Fetching & Verifying ${MIRROR}/${.TARGET:T}.sig'; \
-	if su ${BUILDUSER} -c '${FETCH} -o ${ERRATA}/${.TARGET:T}.sig \
-		${MIRROR}/${.TARGET:T}.sig'; then \
-		su ${BUILDUSER} -c '/usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
-			${ERRATA}/${.TARGET:T}.sig -m ${.TARGET}' && exit 0; \
-	fi; exit 1
+	echo '>> Fetching & Verifying ${MIRROR}/${.TARGET:T}'; \
+	su ${BUILDUSER} -c '${FETCH} -o ${ERRATA}/${.TARGET:T} \
+		${MIRROR}/${.TARGET:T}'
+
+${ERRATA}/${ERRATA}.patch: ${ERRATA}/${ERRATA}.patch.sig
+	@su ${BUILDUSER} -c '/usr/bin/signify -Vep ${SIGNIFY_KEY} -x \
+		${ERRATA}/${.TARGET:T}.sig -m ${.TARGET}'
 
 ${_PATCH_COOKIE}: ${ERRATA}/${ERRATA}.patch
 	@echo '>> Applying ${ERRATA}.patch'; \
