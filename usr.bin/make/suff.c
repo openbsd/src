@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.93 2018/10/06 14:00:30 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.94 2018/10/08 19:52:53 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ static Suff *add_suffixi(const char *, const char *);
 
 static void SuffInsert(Lst, Suff *);
 static void SuffAddSrc(void *, void *);
-static bool SuffRemoveSrc(Lst);
+static int SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
 static Src *SuffFindThem(Lst, Lst);
 static Src *SuffFindCmds(Src *, Lst);
@@ -730,16 +730,21 @@ SuffAddLevel(
 /*-
  *----------------------------------------------------------------------
  * SuffRemoveSrc --
- *	Free Src structure with a zero reference count in a list
+ *	Free all src structures in list that don't have a reference count
  *
- *	returns true if a src was removed
+ * Results:
+ *	Ture if an src was removed
+ *
+ * Side Effects:
+ *	The memory is free'd.
  *----------------------------------------------------------------------
  */
-static bool
+static int
 SuffRemoveSrc(Lst l)
 {
 	LstNode ln;
 	Src *s;
+	int t = 0;
 
 #ifdef DEBUG_SRC
 	printf("cleaning %lx: ", (unsigned long)l);
@@ -768,6 +773,7 @@ SuffRemoveSrc(Lst l)
 #endif
 			Lst_Remove(l, ln);
 			free(s);
+			t |= 1;
 			return true;
 		}
 #ifdef DEBUG_SRC
@@ -779,7 +785,7 @@ SuffRemoveSrc(Lst l)
 #endif
 	}
 
-	return false;
+	return t;
 }
 
 /*-
@@ -1379,9 +1385,7 @@ SuffFindNormalDeps(
 	Src *src;	/* General Src pointer */
 	char *prefix;	/* Prefix to use */
 	Src *targ;	/* General Src target pointer */
-	bool phony;
 
-	phony = (gn->type & OP_PHONY) == OP_PHONY;
 
 	Lst_Init(&srcs);
 	Lst_Init(&targs);
@@ -1404,10 +1408,9 @@ SuffFindNormalDeps(
 	 * Should we find one, we discard the one we found before.	*/
 
 
-	if (!phony)
-		record_possible_suffixes(gn, &srcs, &targs);
+	record_possible_suffixes(gn, &srcs, &targs);
 	/* Handle target of unknown suffix...  */
-	if (!phony && Lst_IsEmpty(&srcs)) {
+	if (Lst_IsEmpty(&srcs)) {
 		if (DEBUG(SUFF))
 			printf("\tNo known suffix on %s. Using empty suffix\n",
 			    gn->name);
@@ -1425,7 +1428,7 @@ SuffFindNormalDeps(
 
 		/* Only use the default suffix rules if we don't have commands
 		 * or dependencies defined for this gnode.  */
-		if (Lst_IsEmpty(&gn->commands))
+		if (Lst_IsEmpty(&gn->commands) && Lst_IsEmpty(&gn->children))
 			SuffAddLevel(&srcs, targ);
 		else {
 			if (DEBUG(SUFF))
