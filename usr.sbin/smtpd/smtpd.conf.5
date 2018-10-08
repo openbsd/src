@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.205 2018/09/24 16:14:34 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.206 2018/10/08 06:10:17 miko Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 24 2018 $
+.Dd $Mdocdate: October 8 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -336,7 +336,7 @@ for incoming connections, using the same syntax as for
 The
 .Ar interface
 parameter may also be an interface group, an IP address, or a domain name.
-Listening can optionally be resticted to a specific address
+Listening can optionally be restricted to a specific address
 .Ar family ,
 which can be either
 .Cm inet4
