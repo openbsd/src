@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2018/09/09 04:25:32 ccardenas Exp $
+#	$OpenBSD: Makefile,v 1.2 2018/10/08 16:32:01 reyk Exp $
 
 # This regression test creates a raw disk image and a
 # qcow disk image, and scribbles the same data to both
@@ -11,7 +11,7 @@
 VMD_DIR=$(BSDSRCDIR)/usr.sbin/vmd/
 
 PROG=vioscribble
-SRCS=vioscribble.c $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c
+SRCS=vioscribble.c vioqcow2.c vioraw.c
 CFLAGS+=-I$(VMD_DIR) -pthread
 LDFLAGS+=-pthread
 
@@ -26,3 +26,6 @@ scribble-images:
 .PHONY: ${REGRESS_TARGETS} scribble-images
 
 .include <bsd.regress.mk>
+
+vioqcow2.c vioraw.c: $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c
+	cp $(VMD_DIR)/vioqcow2.c $(VMD_DIR)/vioraw.c .

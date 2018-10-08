@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.81 2018/10/01 09:31:15 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.82 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -48,6 +48,7 @@
 #define VM_DEFAULT_DEVICE	"hd0a"
 #define VM_BOOT_CONF		"/etc/boot.conf"
 #define VM_NAME_MAX		64
+#define VM_MAX_BASE_PER_DISK	4
 #define VM_TTYNAME_MAX		16
 #define MAX_TAP			256
 #define NR_BACKLOG		5
@@ -169,6 +170,7 @@ struct vmop_create_params {
 #define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 
 	unsigned int		 vmc_disktypes[VMM_MAX_DISKS_PER_VM];
+	unsigned int		 vmc_diskbases[VMM_MAX_DISKS_PER_VM];
 #define VMDF_RAW		0x01
 #define VMDF_QCOW2		0x02
 
@@ -202,7 +204,6 @@ struct vm_dump_header {
 } __packed;
 
 struct vmboot_params {
-	int			 vbp_fd;
 	off_t			 vbp_partoff;
 	char			 vbp_device[PATH_MAX];
 	char			 vbp_image[PATH_MAX];
@@ -241,7 +242,7 @@ struct vmd_vm {
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_cdrom;
-	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
+	int			 vm_disks[VMM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		 vm_ifs[VMM_MAX_NICS_PER_VM];
 	char			*vm_ttyname;
 	int			 vm_tty;
@@ -407,12 +408,15 @@ int	 config_getif(struct privsep *, struct imsg *);
 int	 config_getcdrom(struct privsep *, struct imsg *);
 
 /* vmboot.c */
-FILE	*vmboot_open(int, int, unsigned int, struct vmboot_params *);
+FILE	*vmboot_open(int, int *, int, unsigned int, struct vmboot_params *);
 void	 vmboot_close(FILE *, struct vmboot_params *);
 
 /* parse.y */
 int	 parse_config(const char *);
 int	 cmdline_symset(char *);
 int	 host(const char *, struct address *);
+
+/* virtio.c */
+int	 virtio_get_base(int, char *, size_t, int);
 
 #endif /* VMD_H */

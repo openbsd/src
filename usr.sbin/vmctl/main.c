@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2018/10/05 12:54:57 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,8 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
-	{ "create",	CMD_CREATE,	ctl_create,	"\"path\" -s size", 1 },
+	{ "create",	CMD_CREATE,	ctl_create,
+		"\"path\" [-s size] [-b base]", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
 	{ "log",	CMD_LOG,	ctl_log,	"[verbose|brief]" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
@@ -539,47 +540,55 @@ int
 ctl_create(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, ret, type;
-	const char	*paths[2], *disk, *format;
+	const char	*disk, *format, *base;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
+	base = NULL;
 	type = parse_disktype(argv[1], &disk);
 
-	paths[0] = disk;
-	paths[1] = NULL;
-
-	if (unveil(paths[0], "rwc") == -1)
+	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1)
+		err(1, "pledge");
+	if (unveil(disk, "rwc") == -1)
 		err(1, "unveil");
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
-		err(1, "pledge");
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "s:")) != -1) {
+	while ((ch = getopt(argc, argv, "s:b:")) != -1) {
 		switch (ch) {
 		case 's':
 			if (parse_size(res, optarg, 0) != 0)
 				errx(1, "invalid size: %s", optarg);
+			break;
+		case 'b':
+			base = optarg;
+			if (unveil(base, "r") == -1)
+				err(1, "unveil");
 			break;
 		default:
 			ctl_usage(res->ctl);
 			/* NOTREACHED */
 		}
 	}
+	if (unveil(NULL, NULL))
+		err(1, "unveil");
 
-	if (res->size == 0) {
-		fprintf(stderr, "missing size argument\n");
+	if (base && type != VMDF_QCOW2)
+		errx(1, "base images require qcow2 disk format");
+	if (res->size == 0 && !base) {
+		fprintf(stderr, "could not create %s: missing size argument\n",
+		    disk);
 		ctl_usage(res->ctl);
 	}
 
 	if (type == VMDF_QCOW2) {
 		format = "qcow2";
-		ret = create_qc2_imagefile(paths[0], res->size);
+		ret = create_qc2_imagefile(disk, base, res->size);
 	} else {
 		format = "raw";
-		ret = create_raw_imagefile(paths[0], res->size);
+		ret = create_raw_imagefile(disk, res->size);
 	}
 
 	if (ret != 0) {

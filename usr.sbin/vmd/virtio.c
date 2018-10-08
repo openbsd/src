@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.71 2018/10/03 20:35:32 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.72 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1745,24 +1745,43 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	return (0);
 }
 
+int
+virtio_get_base(int fd, char *path, size_t npath ,int type)
+{
+	switch (type) {
+	case VMDF_RAW:
+		return 0;
+	case VMDF_QCOW2:
+		return virtio_qcow2_get_base(fd, path, npath);
+	}
+	log_warnx("%s: invalid disk format", __func__);
+	return -1;
+}
+
+/*
+ * Initializes a struct virtio_backing using the list of fds.
+ */
 static int
-virtio_init_disk(struct virtio_backing *file, off_t *sz, int fd, int type)
+virtio_init_disk(struct virtio_backing *file, off_t *sz,
+    int *fd, size_t nfd, int type)
 {
 	/* 
 	 * probe disk types in order of preference, first one to work wins.
 	 * TODO: provide a way of specifying the type and options.
 	 */
 	switch (type) {
-	case VMDF_RAW:		return virtio_init_raw(file, sz, fd);
-	case VMDF_QCOW2:	return virtio_init_qcow2(file, sz, fd);
+	case VMDF_RAW:
+		return virtio_init_raw(file, sz, fd, nfd);
+	case VMDF_QCOW2:
+		return virtio_init_qcow2(file, sz, fd, nfd);
 	}
 	log_warnx("%s: invalid disk format", __func__);
 	return -1;
 }
 
 void
-virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
-    int *child_taps)
+virtio_init(struct vmd_vm *vm, int child_cdrom,
+    int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
@@ -1838,7 +1857,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioblk[i].vm_id = vcp->vcp_id;
 			vioblk[i].irq = pci_get_dev_irq(id);
 			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-			    child_disks[i], vmc->vmc_disktypes[i]) == -1) {
+			    child_disks[i], vmc->vmc_diskbases[i],
+			    vmc->vmc_disktypes[i]) == -1) {
 				log_warnx("%s: unable to determine disk format",
 				    __func__);
 				return;
@@ -1967,7 +1987,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom, int *child_disks,
 			vioscsi->vq[i].last_avail = 0;
 		}
 		if (virtio_init_disk(&vioscsi->file, &vioscsi->sz,
-		    child_cdrom, VMDF_RAW) == -1) {
+		    &child_cdrom, 1, VMDF_RAW) == -1) {
 			log_warnx("%s: unable to determine iso format",
 			    __func__);
 			return;
@@ -2125,7 +2145,8 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 }
 
 int
-vioblk_restore(int fd, struct vmop_create_params *vmc, int *child_disks)
+vioblk_restore(int fd, struct vmop_create_params *vmc,
+    int child_disks[][VM_MAX_BASE_PER_DISK])
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t i;
@@ -2151,7 +2172,8 @@ vioblk_restore(int fd, struct vmop_create_params *vmc, int *child_disks)
 			return (-1);
 		}
 		if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-		    child_disks[i], vmc->vmc_disktypes[i]) == -1)  {
+		    child_disks[i], vmc->vmc_diskbases[i],
+		    vmc->vmc_disktypes[i]) == -1)  {
 			log_warnx("%s: unable to determine disk format",
 			    __func__);
 			return (-1);
@@ -2188,7 +2210,7 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 		return (-1);
 	}
 
-	if (virtio_init_disk(&vioscsi->file, &vioscsi->sz, child_cdrom,
+	if (virtio_init_disk(&vioscsi->file, &vioscsi->sz, &child_cdrom, 1,
 	    VMDF_RAW) == -1) {
 		log_warnx("%s: unable to determine iso format", __func__);
 		return (-1);
@@ -2200,8 +2222,8 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 }
 
 int
-virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom, int *child_disks,
-    int *child_taps)
+virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom,
+    int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;

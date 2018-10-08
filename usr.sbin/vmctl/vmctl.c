@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.60 2018/10/02 16:42:38 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.61 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -847,7 +847,8 @@ create_raw_imagefile(const char *imgfile_path, long imgsize)
 #define ALIGN(sz, align) \
 	((sz + align - 1) & ~(align - 1))
 int
-create_qc2_imagefile(const char *imgfile_path, long imgsize)
+create_qc2_imagefile(const char *imgfile_path,
+    const char *base_path, long imgsize)
 {
 	struct qcheader {
 		char magic[4];
@@ -869,15 +870,33 @@ create_qc2_imagefile(const char *imgfile_path, long imgsize)
 		uint64_t autoclearfeatures;
 		uint32_t reforder;
 		uint32_t headersz;
-	} __packed hdr;
+	} __packed hdr, basehdr;
 	int fd, ret;
+	ssize_t base_len;
 	uint64_t l1sz, refsz, disksz, initsz, clustersz;
 	uint64_t l1off, refoff, v, i, l1entrysz, refentrysz;
 	uint16_t refs;
 
-	disksz = 1024*1024*imgsize;
+	disksz = 1024 * 1024 * imgsize;
+
+	if (base_path) {
+		fd = open(base_path, O_RDONLY);
+		if (read(fd, &basehdr, sizeof(basehdr)) != sizeof(basehdr))
+			err(1, "failure to read base image header");
+		close(fd);
+		if (strncmp(basehdr.magic,
+		    VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0)
+			errx(1, "base image is not a qcow2 file");
+		if (!disksz)
+			disksz = betoh64(basehdr.disksz);
+		else if (disksz != betoh64(basehdr.disksz))
+			errx(1, "base size does not match requested size");
+	}
+	if (!base_path && !disksz)
+		errx(1, "missing disk size");
+
 	clustersz = (1<<16);
-	l1off = ALIGN(sizeof hdr, clustersz);
+	l1off = ALIGN(sizeof(hdr), clustersz);
 
 	l1entrysz = clustersz * clustersz / 8;
 	l1sz = (disksz + l1entrysz - 1) / l1entrysz;
@@ -887,11 +906,12 @@ create_qc2_imagefile(const char *imgfile_path, long imgsize)
 	refsz = (disksz + refentrysz - 1) / refentrysz;
 
 	initsz = ALIGN(refoff + refsz*clustersz, clustersz);
+	base_len = base_path ? strlen(base_path) : 0;
 
-	memcpy(hdr.magic, "QFI\xfb", 4);
+	memcpy(hdr.magic, VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW));
 	hdr.version		= htobe32(3);
-	hdr.backingoff		= htobe64(0);
-	hdr.backingsz		= htobe32(0);
+	hdr.backingoff		= htobe64(base_path ? sizeof(hdr) : 0);
+	hdr.backingsz		= htobe32(base_len);
 	hdr.clustershift	= htobe32(16);
 	hdr.disksz		= htobe64(disksz);
 	hdr.cryptmethod		= htobe32(0);
@@ -905,7 +925,7 @@ create_qc2_imagefile(const char *imgfile_path, long imgsize)
 	hdr.compatfeatures	= htobe64(0);
 	hdr.autoclearfeatures	= htobe64(0);
 	hdr.reforder		= htobe32(4);
-	hdr.headersz		= htobe32(sizeof hdr);
+	hdr.headersz		= htobe32(sizeof(hdr));
 
 	/* Refuse to overwrite an existing image */
 	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
@@ -914,7 +934,11 @@ create_qc2_imagefile(const char *imgfile_path, long imgsize)
 		return (errno);
 
 	/* Write out the header */
-	if (write(fd, &hdr, sizeof hdr) != sizeof hdr)
+	if (write(fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+		goto error;
+
+	/* Add the base image */
+	if (base_path && write(fd, base_path, base_len) != base_len)
 		goto error;
 
 	/* Extend to desired size, and add one refcount cluster */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.50 2018/10/01 09:31:15 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.51 2018/10/08 16:32:01 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2018 $
+.Dd $Mdocdate: October 8 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ Using
 .Xr cu 1
 connect to the console of the VM with the specified
 .Ar id .
-.It Cm create Ar path Fl s Ar size
+.It Cm create Ar path Fl s Op Ar size Op Fl b Ar base
 Creates a VM disk image file with the specified
 .Ar path
 and
@@ -59,13 +59,22 @@ rounded to megabytes.
 The disk
 .Ar path
 may be prefixed with a format prefix
-.Pf ( Pa raw:
+.Pf ( Pa raw :
 or
-.Pa qcow2: )
+.Pa qcow2 : )
 in order to specify the disk format.
 If left unspecified, the format defaults to
 .Pa raw
 if it cannot be derived automatically.
+For qcow2, a
+.Ar base
+image may be specified.
+The base image is not modified.
+The derived image contains only the changes written by the VM.
+When creating a derived image, the
+.Ar size
+may be omitted, and probed from the base image.
+If it is provided, it must match the base image size.
 .It Cm load Ar filename
 Load additional configuration from the specified file.
 .It Cm log brief
@@ -127,9 +136,9 @@ Disk image file (may be specified multiple times to add multiple disk images).
 The disk
 .Ar path
 may be prefixed with a format prefix
-.Pf ( Pa raw:
+.Pf ( Pa raw :
 or
-.Pa qcow2: )
+.Pa qcow2 : )
 in order to specify the disk format.
 If left unspecified, the format defaults to
 .Pa raw

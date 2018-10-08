@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.7 2018/10/01 17:34:56 reyk Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.8 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -104,8 +104,7 @@ static off_t xlate(struct qcdisk *, off_t, int *);
 static int copy_cluster(struct qcdisk *, struct qcdisk *, off_t, off_t);
 static off_t mkcluster(struct qcdisk *, struct qcdisk *, off_t, off_t);
 static int inc_refs(struct qcdisk *, off_t, int);
-static int qc2_openpath(struct qcdisk *, char *, int);
-static int qc2_open(struct qcdisk *, int);
+static int qc2_open(struct qcdisk *, int *, size_t);
 static ssize_t qc2_pread(void *, char *, size_t, off_t);
 static ssize_t qc2_pwrite(void *, char *, size_t, off_t);
 static void qc2_close(void *, int);
@@ -118,14 +117,14 @@ static void qc2_close(void *, int);
  * May open snapshot base images.
  */
 int
-virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int fd)
+virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 {
 	struct qcdisk *diskp;
 
 	diskp = malloc(sizeof(struct qcdisk));
 	if (diskp == NULL)
 		return -1;
-	if (qc2_open(diskp, fd) == -1) {
+	if (qc2_open(diskp, fd, nfd) == -1) {
 		log_warnx("%s: could not open qcow2 disk", __func__);
 		return -1;
 	}
@@ -137,19 +136,40 @@ virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int fd)
 	return 0;
 }
 
-static int
-qc2_openpath(struct qcdisk *disk, char *path, int flags)
+ssize_t
+virtio_qcow2_get_base(int fd, char *path, size_t npath)
 {
-	int fd;
+	struct qcheader header;
+	uint64_t backingoff;
+	uint32_t backingsz;
 
-	fd = open(path, flags);
-	if (fd < 0)
+	if (pread(fd, &header, sizeof(header), 0) != sizeof(header)) {
+		log_warnx("%s: short read on header", __func__);
 		return -1;
-	return qc2_open(disk, fd);
+	}
+	if (strncmp(header.magic, VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0) {
+		log_warn("%s: invalid magic numbers", __func__);
+		return -1;
+	}
+	backingoff = be64toh(header.backingoff);
+	backingsz = be32toh(header.backingsz);
+	if (backingsz != 0) {
+		if (backingsz >= npath - 1) {
+			log_warn("%s: snapshot path too long", __func__);
+			return -1;
+		}
+		if (pread(fd, path, backingsz, backingoff) != backingsz) {
+			log_warnx("%s: could not read snapshot base name",
+			    __func__);
+			return -1;
+		}
+		path[backingsz] = '\0';
+	}
+	return backingsz;
 }
 
 static int
-qc2_open(struct qcdisk *disk, int fd)
+qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 {
 	char basepath[PATH_MAX];
 	struct stat st;
@@ -157,14 +177,15 @@ qc2_open(struct qcdisk *disk, int fd)
 	uint64_t backingoff;
 	uint32_t backingsz;
 	size_t i;
-	int version;
+	int version, fd;
 
 	pthread_rwlock_init(&disk->lock, NULL);
+	fd = fds[0];
 	disk->fd = fd;
 	disk->base = NULL;
 	disk->l1 = NULL;
 
-	if (pread(fd, &header, sizeof header, 0) != sizeof header) {
+	if (pread(fd, &header, sizeof(header), 0) != sizeof(header)) {
 		log_warn("%s: short read on header", __func__);
 		goto error;
 	}
@@ -203,11 +224,11 @@ qc2_open(struct qcdisk *disk, int fd)
 		goto error;
 	}
 
-	disk->l1 = calloc(disk->l1sz, sizeof *disk->l1);
+	disk->l1 = calloc(disk->l1sz, sizeof(*disk->l1));
 	if (!disk->l1)
 		goto error;
-	if (pread(disk->fd, disk->l1, 8*disk->l1sz, disk->l1off)
-	    != 8*disk->l1sz) {
+	if (pread(disk->fd, disk->l1, 8 * disk->l1sz, disk->l1off)
+	    != 8 * disk->l1sz) {
 		log_warn("%s: unable to read qcow2 L1 table", __func__);
 		goto error;
 	}
@@ -222,14 +243,7 @@ qc2_open(struct qcdisk *disk, int fd)
 	backingoff = be64toh(header.backingoff);
 	backingsz = be32toh(header.backingsz);
 	if (backingsz != 0) {
-		/*
-		 * FIXME: we need to figure out a way of opening these things,
-		 * otherwise we just crash with a pledge violation.
-		 */
-		log_warn("%s: unsupported external snapshot images", __func__);
-		goto error;
-
-		if (backingsz >= sizeof basepath - 1) {
+		if (backingsz >= sizeof(basepath) - 1) {
 			log_warn("%s: snapshot path too long", __func__);
 			goto error;
 		}
@@ -239,11 +253,17 @@ qc2_open(struct qcdisk *disk, int fd)
 			goto error;
 		}
 		basepath[backingsz] = 0;
+		if (nfd <= 1) {
+			log_warnx("%s: missing base image %s", __func__,
+			    basepath);
+			goto error;
+		}
+
 
 		disk->base = calloc(1, sizeof(struct qcdisk));
 		if (!disk->base)
 			goto error;
-		if (qc2_openpath(disk->base, basepath, O_RDONLY) == -1) {
+		if (qc2_open(disk->base, fds + 1, nfd - 1) == -1) {
 			log_warn("%s: could not open %s", basepath, __func__);
 			goto error;
 		}
@@ -428,7 +448,7 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 		return 0;
 	}
 	l2off = (off / disk->clustersz) % l2sz;
-	pread(disk->fd, &buf, sizeof(buf), l2tab + l2off*8);
+	pread(disk->fd, &buf, sizeof(buf), l2tab + l2off * 8);
 	cluster = be64toh(buf);
 	/*
 	 * cluster may be 0, but all future operations don't affect
@@ -521,12 +541,12 @@ mkcluster(struct qcdisk *disk, struct qcdisk *base, off_t off, off_t src_phys)
 	cluster = disk->end;
 	disk->end += disk->clustersz;
 	buf = htobe64(cluster | QCOW2_INPLACE);
-	if (pwrite(disk->fd, &buf, sizeof buf, l2tab + l2off*8) != sizeof(buf))
+	if (pwrite(disk->fd, &buf, sizeof(buf), l2tab + l2off * 8) != 8)
 		goto fail;
 
 	/* TODO: lazily sync: currently VMD doesn't close things */
 	buf = htobe64(disk->l1[l1off]);
-	if (pwrite(disk->fd, &buf, sizeof buf, disk->l1off + 8*l1off) != 8)
+	if (pwrite(disk->fd, &buf, sizeof(buf), disk->l1off + 8 * l1off) != 8)
 		goto fail;
 	if (inc_refs(disk, cluster, 1) == -1)
 		goto fail;
@@ -570,8 +590,8 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 	nper = disk->clustersz / 2;
 	l1idx = (off / disk->clustersz) / nper;
 	l2idx = (off / disk->clustersz) % nper;
-	l1off = disk->refoff + 8*l1idx;
-	if (pread(disk->fd, &buf, sizeof buf, l1off) != 8)
+	l1off = disk->refoff + 8 * l1idx;
+	if (pread(disk->fd, &buf, sizeof(buf), l1off) != 8)
 		return -1;
 
 	l2cluster = be64toh(buf);
@@ -583,19 +603,20 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 			return -1;
 		}
 		buf = htobe64(l2cluster);
-		if (pwrite(disk->fd, &buf, sizeof buf, l1off) != 8) {
+		if (pwrite(disk->fd, &buf, sizeof(buf), l1off) != 8) {
 			return -1;
 		}
 	}
 
 	refs = 1;
 	if (!newcluster) {
-		if (pread(disk->fd, &refs, sizeof refs, l2cluster+2*l2idx) != 2)
+		if (pread(disk->fd, &refs, sizeof(refs),
+		    l2cluster + 2 * l2idx) != 2)
 			return -1;
 		refs = be16toh(refs) + 1;
 	}
 	refs = htobe16(refs);
-	if (pwrite(disk->fd, &refs, sizeof refs, l2cluster + 2*l2idx) != 2) {
+	if (pwrite(disk->fd, &refs, sizeof(refs), l2cluster + 2 * l2idx) != 2) {
 		log_warn("%s: could not write ref block", __func__);
 		return -1;
 	}

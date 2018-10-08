@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscribble.c,v 1.1 2018/09/09 04:25:32 ccardenas Exp $	*/
+/*	$OpenBSD: vioscribble.c,v 1.2 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -122,16 +122,18 @@ main(int argc, char **argv)
 	verbose = !!getenv("VERBOSE");
 	qcfd = open("scribble.qc2", O_RDWR);
 	rawfd = open("scribble.raw", O_RDWR);
-	if (qcfd == -1 || virtio_init_qcow2(&qcowfile, &qcsz, qcfd) == -1)
+	if (qcfd == -1)
 		err(1, "unable to open qcow");
-	if (rawfd == -1 || virtio_init_raw(&rawfile, &rawsz, rawfd) == -1)
+	if (virtio_init_qcow2(&qcowfile, &qcsz, &qcfd, 1) == -1)
+		err(1, "unable to init qcow");
+	if (rawfd == -1 || virtio_init_raw(&rawfile, &rawsz, &rawfd, 1) == -1)
 		err(1, "unable to open raw");
 
 	srandom_deterministic(123);
 
 	/* scribble to both disks */
 	printf("scribbling...\n");
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < 1024*16; i++) {
 		off = (random() % DISKSZ);
 		len = random() % sizeof buf + 1;
 		fill(off, buf, sizeof buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.40 2018/09/28 12:35:32 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.41 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -65,8 +65,8 @@
 
 io_fn_t ioports_map[MAX_PORTS];
 
-int run_vm(int, int *, int *, struct vmop_create_params *,
-    struct vcpu_reg_state *);
+int run_vm(int, int[][VM_MAX_BASE_PER_DISK], int *,
+    struct vmop_create_params *, struct vcpu_reg_state *);
 void vm_dispatch_vmm(int, short, void *);
 void *event_thread(void *);
 void *vcpu_run_loop(void *);
@@ -75,8 +75,10 @@ int vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void create_memory_map(struct vm_create_params *);
 int alloc_guest_mem(struct vm_create_params *);
 int vmm_create_vm(struct vm_create_params *);
-void init_emulated_hw(struct vmop_create_params *, int, int *, int *);
-void restore_emulated_hw(struct vm_create_params *, int, int *, int *,int);
+void init_emulated_hw(struct vmop_create_params *, int,
+    int[][VM_MAX_BASE_PER_DISK], int *);
+void restore_emulated_hw(struct vm_create_params *, int, int *,
+    int[][VM_MAX_BASE_PER_DISK],int);
 void vcpu_exit_inout(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
@@ -327,7 +329,8 @@ start_vm(struct vmd_vm *vm, int fd)
 
 		/* Find and open kernel image */
 		if ((fp = vmboot_open(vm->vm_kernel,
-		    vm->vm_disks[0], vmc->vmc_disktypes[0], &vmboot)) == NULL)
+		    vm->vm_disks[0], vmc->vmc_diskbases[0],
+		    vmc->vmc_disktypes[0], &vmboot)) == NULL)
 			fatalx("failed to open kernel - exiting");
 
 		/* Load kernel image */
@@ -903,7 +906,7 @@ vmm_create_vm(struct vm_create_params *vcp)
  */
 void
 init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
-    int *child_disks, int *child_taps)
+    int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	int i;
@@ -968,7 +971,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
  */
 void
 restore_emulated_hw(struct vm_create_params *vcp, int fd,
-    int *child_taps, int *child_disks, int child_cdrom)
+    int *child_taps, int child_disks[][VM_MAX_BASE_PER_DISK], int child_cdrom)
 {
 	/* struct vm_create_params *vcp = &vmc->vmc_params; */
 	int i;
@@ -1029,8 +1032,9 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
  *  !0 : the VM exited abnormally or failed to start
  */
 int
-run_vm(int child_cdrom, int *child_disks, int *child_taps,
-    struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
+run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
+    int *child_taps, struct vmop_create_params *vmc,
+    struct vcpu_reg_state *vrs)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	struct vm_rwregs_params vregsp;

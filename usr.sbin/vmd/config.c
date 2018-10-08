@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.50 2018/08/07 14:49:05 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.51 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 #include <util.h>
 #include <errno.h>
 #include <imsg.h>
+#include <libgen.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -176,16 +177,21 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 int
 config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 {
+	int diskfds[VMM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		*vif;
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
-	unsigned int		 i;
+	unsigned int		 i, j;
 	int			 fd = -1, vmboot = 0;
-	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
+	int			 kernfd = -1;
+	int			*tapfds = NULL;
 	int			 cdromfd = -1;
 	int			 saved_errno = 0;
+	int			 n = 0, aflags, oflags;
 	char			 ifname[IF_NAMESIZE], *s;
 	char			 path[PATH_MAX];
+	char			 base[PATH_MAX];
+	char 			 expanded[PATH_MAX];
 	unsigned int		 unit;
 
 	errno = 0;
@@ -205,13 +211,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		}
 	}
 
-	diskfds = reallocarray(NULL, vcp->vcp_ndisks, sizeof(*diskfds));
-	if (diskfds == NULL) {
-		log_warn("%s: can't allocate disk fds", __func__);
-		goto fail;
-	}
-	for (i = 0; i < vcp->vcp_ndisks; i++)
-		diskfds[i] = -1;
+	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++)
+		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
+			diskfds[i][j] = -1;
 
 	tapfds = reallocarray(NULL, vcp->vcp_nnics, sizeof(*tapfds));
 	if (tapfds == NULL) {
@@ -289,22 +291,71 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	/* Open disk images for child */
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
-                /* Stat disk[i] to ensure it is a regular file */
-		if ((diskfds[i] = open(vcp->vcp_disks[i],
-		    O_RDWR|O_EXLOCK|O_NONBLOCK)) == -1) {
-			log_warn("%s: can't open disk %s", __func__,
-			    vcp->vcp_disks[i]);
-			errno = VMD_DISK_MISSING;
-			goto fail;
-		}
+		if (strlcpy(path, vcp->vcp_disks[i], sizeof(path))
+		   >= sizeof(path))
+			log_warnx("%s, disk path too long", __func__);
+		memset(vmc->vmc_diskbases, 0, sizeof(vmc->vmc_diskbases));
+		oflags = O_RDWR|O_EXLOCK|O_NONBLOCK;
+		aflags = R_OK|W_OK;
+		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
+			/* Stat disk[i] to ensure it is a regular file */
+			if ((diskfds[i][j] = open(path, oflags)) == -1) {
+				log_warn("%s: can't open disk %s", __func__,
+				    vcp->vcp_disks[i]);
+				errno = VMD_DISK_MISSING;
+				goto fail;
+			}
 
-		if (vm_checkaccess(diskfds[i],
-		    vmc->vmc_checkaccess & VMOP_CREATE_DISK,
-		    uid, R_OK|W_OK) == -1) {
-			log_warnx("vm \"%s\" no read/write access to disk %s",
-			    vcp->vcp_name, vcp->vcp_disks[i]);
-			errno = EPERM;
-			goto fail;
+			if (vm_checkaccess(diskfds[i][j],
+			    vmc->vmc_checkaccess & VMOP_CREATE_DISK,
+			    uid, aflags) == -1) {
+				log_warnx("vm \"%s\" unable to access "
+				    "disk %s", vcp->vcp_name, path);
+				errno = EPERM;
+				goto fail;
+			}
+
+			/*
+			 * Clear the write and exclusive flags for base images.
+			 * All writes should go to the top image, allowing them
+			 * to be shared.
+			 */
+			oflags = O_RDONLY|O_NONBLOCK;
+			aflags = R_OK;
+			n = virtio_get_base(diskfds[i][j], base, sizeof base,
+			    vmc->vmc_disktypes[i]);
+			if (n == 0)
+				break;
+			if (n == -1) {
+				log_warnx("vm \"%s\" unable to read "
+				    "base %s for disk %s", vcp->vcp_name,
+				    base, vcp->vcp_disks[i]);
+				goto fail;
+			}
+			/*
+			 * Relative paths should be interpreted relative
+			 * to the disk image, rather than relative to the
+			 * directory vmd happens to be running in, since
+			 * this is the only userful interpretation.
+			 */
+			if (base[0] == '/') {
+				if (realpath(base, path) == NULL) {
+					log_warn("unable to resolve %s", base);
+					goto fail;
+				}
+			} else {
+				s = dirname(path);
+				if (snprintf(expanded, sizeof(expanded),
+				    "%s/%s", s, base) >= (int)sizeof(expanded)) {
+					log_warn("path too long: %s/%s",
+					    s, base);
+					goto fail;
+				}
+				if (realpath(expanded, path) == NULL) {
+					log_warn("unable to resolve %s", base);
+					goto fail;
+				}
+			}
 		}
 	}
 
@@ -402,9 +453,13 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    NULL, 0);
 
 	for (i = 0; i < vcp->vcp_ndisks; i++) {
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid, diskfds[i],
-		    &i, sizeof(i));
+		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
+			if (diskfds[i][j] == -1)
+				break;
+			proc_compose_imsg(ps, PROC_VMM, -1,
+			    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid,
+			    diskfds[i][j], &i, sizeof(i));
+		}
 	}
 	for (i = 0; i < vcp->vcp_nnics; i++) {
 		proc_compose_imsg(ps, PROC_VMM, -1,
@@ -416,7 +471,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
 
-	free(diskfds);
 	free(tapfds);
 
 	vm->vm_running = 1;
@@ -430,11 +484,10 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		close(kernfd);
 	if (cdromfd != -1)
 		close(cdromfd);
-	if (diskfds != NULL) {
-		for (i = 0; i < vcp->vcp_ndisks; i++)
-			close(diskfds[i]);
-		free(diskfds);
-	}
+	for (i = 0; i < vcp->vcp_ndisks; i++)
+		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
+			if (diskfds[i][j] != -1)
+				close(diskfds[i][j]);
 	if (tapfds != NULL) {
 		for (i = 0; i < vcp->vcp_nnics; i++)
 			close(tapfds[i]);
@@ -489,7 +542,7 @@ int
 config_getdisk(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
-	unsigned int	 n;
+	unsigned int	 n, idx;
 
 	errno = 0;
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -500,14 +553,18 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
 
-	if (n >= vm->vm_params.vmc_params.vcp_ndisks ||
-	    vm->vm_disks[n] != -1 || imsg->fd == -1) {
+	if (n >= vm->vm_params.vmc_params.vcp_ndisks || imsg->fd == -1) {
 		log_warnx("invalid disk id");
 		errno = EINVAL;
 		return (-1);
 	}
-	vm->vm_disks[n] = imsg->fd;
-
+	idx = vm->vm_params.vmc_diskbases[n]++;
+	if (idx >= VM_MAX_BASE_PER_DISK) {
+		log_warnx("too many bases for disk");
+		errno = EINVAL;
+		return (-1);
+	}
+	vm->vm_disks[n][idx] = imsg->fd;
 	return (0);
 }
 

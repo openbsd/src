@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.3 2018/09/28 12:35:32 reyk Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.4 2018/10/08 16:32:01 reyk Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -53,19 +53,21 @@ raw_close(void *file, int stayopen)
  * returning -1 for error, 0 for success.
  */
 int
-virtio_init_raw(struct virtio_backing *file, off_t *szp, int fd)
+virtio_init_raw(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 {
 	off_t sz;
 	int *fdp;
 
-	sz = lseek(fd, 0, SEEK_END);
+	if (nfd != 1)
+		return -1;
+	sz = lseek(fd[0], 0, SEEK_END);
 	if (sz == -1)
 		return -1;
 
 	fdp = malloc(sizeof(int));
 	if (!fdp)
 		return -1;
-	*fdp = fd;
+	*fdp = fd[0];
 	file->p = fdp;
 	file->pread = raw_pread;
 	file->pwrite = raw_pwrite;

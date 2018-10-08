@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.c,v 1.5 2018/09/28 12:35:32 reyk Exp $	*/
+/*	$OpenBSD: vmboot.c,v 1.6 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -385,7 +385,7 @@ vmboot_loadfile(struct open_file *f, char *file, size_t *size)
 }
 
 FILE *
-vmboot_open(int kernel_fd, int disk_fd, unsigned int disk_type,
+vmboot_open(int kernel_fd, int *disk_fd, int nfd, unsigned int disk_type,
     struct vmboot_params *vmboot)
 {
 	char			 file[PATH_MAX];
@@ -404,7 +404,7 @@ vmboot_open(int kernel_fd, int disk_fd, unsigned int disk_type,
 	if (kernel_fd != -1)
 		return (fdopen(kernel_fd, "r"));
 
-	if (disk_fd == -1)
+	if (disk_fd == NULL || nfd < 1)
 		return (NULL);
 
 	if ((vfp = calloc(1, sizeof(*vfp))) == NULL)
@@ -414,20 +414,19 @@ vmboot_open(int kernel_fd, int disk_fd, unsigned int disk_type,
 
 	switch (vmboot->vbp_type) {
 	case VMDF_RAW:
-		if (virtio_init_raw(vfp, &sz, disk_fd) == -1) {
+		if (virtio_init_raw(vfp, &sz, disk_fd, nfd) == -1) {
 			log_debug("%s: could not open raw disk", __func__);
 			goto fail;
 		}
 		break;
 	case VMDF_QCOW2:
-		if (virtio_init_qcow2(vfp, &sz, disk_fd) == -1) {
+		if (virtio_init_qcow2(vfp, &sz, disk_fd, nfd) == -1) {
 			log_debug("%s: could not open qcow2 disk", __func__);
 			goto fail;
 		}
 		break;
 	}
 
-	vmboot->vbp_fd = disk_fd;
 	vmboot_file.f_devdata = vmboot;
 
 	if ((vmboot->vbp_partoff =

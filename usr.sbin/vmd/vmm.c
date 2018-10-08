@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.89 2018/09/10 10:39:26 bluhm Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.90 2018/10/08 16:32:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -608,7 +608,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	struct vmd_vm		*vm;
 	int			 ret = EINVAL;
 	int			 fds[2];
-	size_t			 i;
+	size_t			 i, j;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warnx("%s: can't find vm", __func__);
@@ -643,8 +643,11 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		close(fds[1]);
 
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
-			close(vm->vm_disks[i]);
-			vm->vm_disks[i] = -1;
+			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
+				if (vm->vm_disks[i][j] != -1)
+					close(vm->vm_disks[i][j]);
+				vm->vm_disks[i][j] = -1;
+			}
 		}
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
 			close(vm->vm_ifs[i].vif_fd);
