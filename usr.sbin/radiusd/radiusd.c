@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.21 2018/08/01 17:17:42 mestre Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.22 2018/10/09 03:35:44 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -739,7 +739,7 @@ radius_code_string(int code)
 	    { RADIUS_CODE_ACCOUNTING_RESPONSE,	"Accounting-Response" },
 	    { RADIUS_CODE_ACCESS_CHALLENGE,	"Access-Challenge" },
 	    { RADIUS_CODE_STATUS_SERVER,	"Status-Server" },
-	    { RADIUS_CODE_STATUS_CLIENT,	"Status-Clinet" },
+	    { RADIUS_CODE_STATUS_CLIENT,	"Status-Client" },
 	    { -1,				NULL }
 	};
 
