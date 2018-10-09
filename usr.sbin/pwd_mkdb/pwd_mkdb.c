@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.54 2018/09/18 03:05:42 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.55 2018/10/09 12:33:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -191,10 +191,6 @@ main(int argc, char **argv)
 	/* Estimate number of elements based on a 128-byte average entry. */
 	if (st.st_size / 128 * 3 > openinfo.nelem)
 		openinfo.nelem = st.st_size / 128 * 3;
-
-	/* Use optimal filesystem block size. */
-	if (st.st_blksize > openinfo.bsize)
-		openinfo.bsize = st.st_blksize;
 
 	/* If only updating a single record, stash the old uid */
 	if (username) {
