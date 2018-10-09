@@ -1,14 +1,16 @@
-# $OpenBSD: Makefile,v 1.2 2018/05/21 19:58:16 anton Exp $
+# $OpenBSD: Makefile,v 1.3 2018/10/09 07:15:24 anton Exp $
 
 REBOUND=	/usr/sbin/rebound
 
 PROG=		rebound-ns
 CFLAGS+=	-Wall -Wextra
 
+TESTS=	cache localhost record reload
+
 # IP address prefix.
 PREFIX=		172.16.0
 # IP address suffixes.
-IFS=		100 102 103
+IFS=		100 101 102
 
 .if ! (make(clean) || make(cleandir) || make(obj) || make(rebound-ns))
 PREREQ1!=	for v in ${IFS}; do \
@@ -25,29 +27,33 @@ regress:
 regress:
 	@echo "rebound: already running"
 	@echo "SKIPPED"
-.  else
-.BEGIN:
-.    for i in ${IFS}
-	-${SUDO} ifconfig lo${i} create
-	-${SUDO} ifconfig lo${i} inet ${PREFIX}.${i} netmask 255.255.255.0
-.    endfor
-
-.END:
-.    for i in ${IFS}
-	-${SUDO} ifconfig lo${i} destroy
-.    endfor
 .  endif
 .endif
 
-REGRESS_TARGETS+=	cache localhost record reload
-
-.SUFFIXES: .sh
-
-.sh: rebound-ns
+REGRESS_SETUP_ONCE=	setup
+setup: rebound-ns
 	@echo '\n======== ${@} ========'
+.for i in ${IFS}
+	${SUDO} ifconfig lo${i} create
+	${SUDO} ifconfig lo${i} inet ${PREFIX}.${i} netmask 255.255.255.0
+.endfor
+
+REGRESS_CLEANUP=	cleanup
+cleanup:
+.for i in ${IFS}
+	-${SUDO} ifconfig lo${i} destroy
+.endfor
+
+.for t in ${TESTS}
+REGRESS_TARGETS+=	$t
+${t}:
+	@echo '\n======== $t ========'
 	${SUDO} sh ${.CURDIR}/run.sh \
-		-n ${.OBJDIR}/rebound-ns -r ${REBOUND} \
+		-n ${.OBJDIR}/rebound-ns \
+		-r ${REBOUND} \
 		${IFS:C/^/-a ${PREFIX}./} \
-		-- ${.CURDIR}/${@}.sh
+		-- ${.CURDIR}/$t.sh
+.endfor
+
 
 .include <bsd.regress.mk>
