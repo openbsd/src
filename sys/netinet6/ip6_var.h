@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.83 2018/02/10 05:52:08 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.84 2018/10/10 11:46:59 reyk Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -279,7 +279,7 @@ extern int	ip6_mcast_pmtu;		/* path MTU discovery for multicast */
 extern int	ip6_neighborgcthresh; /* Threshold # of NDP entries for GC */
 extern int	ip6_maxdynroutes; /* Max # of routes created via redirect */
 
-extern struct socket *ip6_mrouter[RT_TABLEID_MAX]; /* multicast routing daemon */
+extern struct socket *ip6_mrouter[RT_TABLEID_MAX + 1]; /* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */

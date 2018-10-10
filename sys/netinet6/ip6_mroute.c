@@ -128,8 +128,8 @@ void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *);
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
  * except for netstat or debugging purposes.
  */
-struct socket  *ip6_mrouter[RT_TABLEID_MAX];
-struct rttimer_queue *mrouter6q[RT_TABLEID_MAX];
+struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
+struct rttimer_queue *mrouter6q[RT_TABLEID_MAX + 1];
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
@@ -451,7 +451,7 @@ mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
 	msa.ms6a_len = *oldlenp;
 	msa.ms6a_needed = 0;
 
-	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++)
+	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++)
 		rtable_walk(rtableid, AF_INET6, mrt6_rtwalk_mf6csysctl, &msa);
 
 	if (msa.ms6a_minfos != NULL && msa.ms6a_needed > 0 &&
