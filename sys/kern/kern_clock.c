@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.95 2018/06/04 18:16:43 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.96 2018/10/10 00:04:54 bluhm Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -378,9 +378,11 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (spc->spc_spinning)
+		if (spc->spc_spinning) {
+			if (p != NULL && p != spc->spc_idleproc)
+				p->p_sticks++;
 			spc->spc_cp_time[CP_SPIN]++;
-		else if (CLKF_INTR(frame)) {
+		} else if (CLKF_INTR(frame)) {
 			if (p != NULL)
 				p->p_iticks++;
 			spc->spc_cp_time[CP_INTR]++;
