@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.111 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.112 2018/10/10 06:21:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1431,7 +1431,8 @@ community_large_set(struct rde_aspath *asp, int64_t as, int64_t ld1,
 	/* first check if the community is not already set */
 	for (i = 0; i < ncommunities; i++) {
 		bar = (struct wire_largecommunity *)p;
-		if (bar->as == as && bar->ld1 == ld1 && bar->ld2 == ld2)
+		if (bar->as == htobe32(as) && bar->ld1 == htobe32(ld1) &&
+		    bar->ld2 == htobe32(ld2))
 			/* already present, nothing todo */
 			return (1);
 		p += 12;
