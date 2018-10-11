@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.115 2018/10/01 19:24:09 benno Exp $	*/
+/*	$OpenBSD: server.c,v 1.116 2018/10/11 09:52:22 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -901,6 +901,7 @@ server_input(struct client *clt)
 		return;
 	}
 
+	clt->clt_toread = TOREAD_HTTP_HEADER;
 	inrd = server_read_http;
 
 	slen = sizeof(clt->clt_sndbufsiz);
@@ -1018,10 +1019,7 @@ server_error(struct bufferevent *bev, short error, void *arg)
 	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
-		if (clt->clt_toread != TOREAD_HTTP_INIT)
-			server_abort_http(clt, 408, "timeout");
-		else
-			server_abort_http(clt, 0, "timeout");
+		server_abort_http(clt, 408, "timeout");
 		return;
 	}
 	if (error & EVBUFFER_ERROR) {
