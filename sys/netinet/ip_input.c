@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.341 2018/09/11 21:04:03 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.342 2018/10/13 18:36:01 florian Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ struct cpumem *ipcounters;
 int ip_sysctl_ipstat(void *, size_t *, void *);
 
 static struct mbuf_queue	ipsend_mq;
+
+extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
 int	ip_local(struct mbuf **, int *, int, int);
@@ -1579,7 +1581,8 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 
 	/* Almost all sysctl names at this level are terminal. */
-	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
+	if (namelen != 1 && name[0] != IPCTL_IFQUEUE &&
+	    name[0] != IPCTL_ARPQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
@@ -1639,6 +1642,9 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
+	case IPCTL_ARPQUEUE:
+		return (sysctl_niq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &arpinq));
 	case IPCTL_STATS:
 		return (ip_sysctl_ipstat(oldp, oldlenp, newp));
 #ifdef MROUTING
