@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.12 2017/11/25 19:02:07 patrick Exp $
+#	$OpenBSD: Makefile.common,v 1.13 2018/10/13 19:56:56 kettenis Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -62,7 +62,7 @@ CLEANFILES+=	${PROG.so} ${PROG.so}.tmp
 
 ${PROG}: ${PROG.so}
 	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
-	    -j .rel.* -j .rela -j .rela.* -j .reloc \
+	    -j .rel.dyn -j .rela -j .rela.dyn -j .reloc \
 	    --target=${OBJFMT} ${PROG.so} ${.TARGET}
 
 .include <bsd.prog.mk>

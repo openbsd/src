@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2015/12/02 11:51:22 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/10/13 19:56:56 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -15,3 +15,4 @@ COPTS=		-I${EFIDIR}/include/i386
 
 CFLAGS+=	-m32
 AFLAGS+=	-m32
+LDFLAGS+=	-N
