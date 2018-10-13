@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2018/09/11 18:32:56 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2018/10/13 19:19:21 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -57,6 +57,8 @@ CXXFLAGS+=	-nostdlib -nostdinc++
 .if empty(CXXFLAGS:M-std=*)
 CXXFLAGS+=	-std=c++11
 .endif
+
+LDADD+=		-L${BSDOBJDIR}/lib/libcxxabi -lc++abi
 
 
 STD_HEADERS=	__bit_reference \
