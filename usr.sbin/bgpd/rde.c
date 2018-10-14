@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.433 2018/10/03 11:36:39 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.434 2018/10/14 10:21:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -282,6 +282,11 @@ rde_main(int debug, int verbose)
 		i = PFD_PIPE_COUNT;
 		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
 			xmctx = LIST_NEXT(mctx, entry);
+
+			if (mctx->mrt.state != MRT_STATE_REMOVE &&
+			    mctx->mrt.wbuf.queued == 0)
+				rib_dump_r(&mctx->ribctx);
+
 			if (mctx->mrt.wbuf.queued) {
 				pfd[i].fd = mctx->mrt.wbuf.fd;
 				pfd[i].events = POLLOUT;
