@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.128 2018/03/28 10:56:18 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.129 2018/10/15 21:15:35 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -741,7 +741,7 @@ pfr_validate_addr(struct pfr_addr *ad)
 			return (-1);
 	if (ad->pfra_not && ad->pfra_not != 1)
 		return (-1);
-	if (ad->pfra_fback)
+	if (ad->pfra_fback != PFR_FB_NONE)
 		return (-1);
 	if (ad->pfra_type >= PFRKE_MAX)
 		return (-1);
