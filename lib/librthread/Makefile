@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2018/09/24 11:25:09 jsg Exp $
+#	$OpenBSD: Makefile,v 1.52 2018/10/15 13:03:11 visa Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -39,7 +39,7 @@ SRCS=	rthread.c \
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "amd64" || \
     ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc64"
 SRCS+=	rthread_sem.c
 .else
 SRCS+=	rthread_sem_compat.c
