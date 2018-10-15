@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.379 2018/09/30 18:19:24 denis Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.380 2018/10/15 11:25:55 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3542,10 +3542,6 @@ settunnel(const char *src, const char *dst)
 		errx(1,
 		    "source and destination address families do not match");
 
-	if (srcres->ai_addrlen > sizeof(req.addr) ||
-	    dstres->ai_addrlen > sizeof(req.dstaddr))
-		errx(1, "invalid sockaddr");
-
 	memset(&req, 0, sizeof(req));
 	(void) strlcpy(req.iflr_name, name, sizeof(req.iflr_name));
 	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
@@ -5879,8 +5875,6 @@ in6_getaddr(const char *s, int which)
 	error = getaddrinfo(s, "0", &hints, &res);
 	if (error)
 		errx(1, "%s: %s", s, gai_strerror(error));
-	if (res->ai_addrlen != sizeof(struct sockaddr_in6))
-		errx(1, "%s: bad value", s);
 	memcpy(sin6, res->ai_addr, res->ai_addrlen);
 #ifdef __KAME__
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
