@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.125 2018/10/11 09:52:22 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.126 2018/10/15 08:16:17 bentley Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -950,7 +950,8 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		goto done;
 	}
 
-	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
+	if (srv_conf->flags & SRVFLAG_SERVER_HSTS &&
+	    srv_conf->flags & SRVFLAG_TLS) {
 		if (asprintf(&hstsheader, "Strict-Transport-Security: "
 		    "max-age=%d%s%s\r\n", srv_conf->hsts_max_age,
 		    srv_conf->hsts_flags & HSTSFLAG_SUBDOMAINS ?
@@ -1452,7 +1453,8 @@ server_response_http(struct client *clt, unsigned int code,
 		return (-1);
 
 	/* HSTS header */
-	if (srv_conf->flags & SRVFLAG_SERVER_HSTS) {
+	if (srv_conf->flags & SRVFLAG_SERVER_HSTS &&
+	    srv_conf->flags & SRVFLAG_TLS) {
 		if ((cl =
 		    kv_add(&resp->http_headers, "Strict-Transport-Security",
 		    NULL)) == NULL ||
