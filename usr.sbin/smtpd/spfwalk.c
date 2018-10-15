@@ -192,6 +192,7 @@ dispatch_txt(struct dns_rr *rr)
 		}
 		if (strncasecmp("a:", *ap, 2) == 0) {
 			lookup_record(T_A, *(ap) + 2, dispatch_a);
+			lookup_record(T_AAAA, *(ap) + 2, dispatch_aaaa);
 			continue;
 		}
 		if (strncasecmp("exists:", *ap, 7) == 0) {
