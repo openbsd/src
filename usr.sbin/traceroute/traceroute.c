@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.155 2017/05/28 10:06:13 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.156 2018/10/15 11:31:11 florian Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -588,16 +588,10 @@ main(int argc, char *argv[])
 
 	switch (res->ai_family) {
 	case AF_INET:
-		if (res->ai_addrlen != sizeof(to4))
-		    errx(1, "size of sockaddr mismatch");
-
 		to = (struct sockaddr *)&to4;
 		from = (struct sockaddr *)&from4;
 		break;
 	case AF_INET6:
-		if (res->ai_addrlen != sizeof(to6))
-			errx(1, "size of sockaddr mismatch");
-
 		to = (struct sockaddr *)&to6;
 		from = (struct sockaddr *)&from6;
 		break;
@@ -779,8 +773,6 @@ main(int argc, char *argv[])
 			    &res)))
 				errx(1, "%s: %s", conf->source,
 				    gai_strerror(error));
-			if (res->ai_addrlen != sizeof(from6))
-				errx(1, "size of sockaddr mismatch");
 			memcpy(&from6, res->ai_addr, res->ai_addrlen);
 			freeaddrinfo(res);
 		} else {
