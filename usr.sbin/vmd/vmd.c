@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.103 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.104 2018/10/15 10:35:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1920,4 +1920,15 @@ prefixlen2mask(uint8_t prefixlen)
 		prefixlen = 32;
 
 	return (htonl(0xffffffff << (32 - prefixlen)));
+}
+
+void
+getmonotime(struct timeval *tv)
+{
+	struct timespec	 ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts))
+		fatal("clock_gettime");
+
+	TIMESPEC_TO_TIMEVAL(tv, &ts);
 }

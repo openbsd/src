@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.82 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.83 2018/10/15 10:35:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -54,6 +54,10 @@
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
 #define VM_DEFAULT_MEMORY	512
+
+/* Rate-limit fast reboots */
+#define VM_START_RATE_SEC	6	/* min. seconds since last reboot */
+#define VM_START_RATE_LIMIT	3	/* max. number of fast reboots */
 
 /* default user instance limits */
 #define VM_DEFAULT_USER_MAXCPU	4
@@ -261,6 +265,10 @@ struct vmd_vm {
 	int			 vm_receive_fd;
 	struct vmd_user		*vm_user;
 
+	/* For rate-limiting */
+	struct timeval		 vm_start_tv;
+	int			 vm_start_limit;
+
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
@@ -364,6 +372,7 @@ void	 user_inc(struct vm_create_params *, struct vmd_user *, int);
 int	 user_checklimit(struct vmd_user *, struct vm_create_params *);
 char	*get_string(uint8_t *, size_t);
 uint32_t prefixlen2mask(uint8_t);
+void	 getmonotime(struct timeval *);
 
 /* priv.c */
 void	 priv(struct privsep *, struct privsep_proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.51 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.52 2018/10/15 10:35:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -193,6 +193,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	char			 base[PATH_MAX];
 	char 			 expanded[PATH_MAX];
 	unsigned int		 unit;
+	struct timeval		 tv, rate, since_last;
 
 	errno = 0;
 
@@ -210,6 +211,39 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			goto fail;
 		}
 	}
+
+	/*
+	 * Rate-limit the VM so that it cannot restart in a loop:
+	 * if the VM restarts after less than VM_START_RATE_SEC seconds,
+	 * we increment the limit counter.  After VM_START_RATE_LIMIT
+	 * of suchs fast reboots the VM is stopped.
+	 */
+	getmonotime(&tv);
+	if (vm->vm_start_tv.tv_sec) {
+		timersub(&tv, &vm->vm_start_tv, &since_last);
+
+		rate.tv_sec = VM_START_RATE_SEC;
+		rate.tv_usec = 0;
+		if (timercmp(&since_last, &rate, <))
+			vm->vm_start_limit++;
+		else {
+			/* Reset counter */
+			vm->vm_start_limit = 0;
+		}
+
+		log_debug("%s: vm %u restarted after %lld.%ld seconds,"
+		    " limit %d/%d", __func__, vcp->vcp_id, since_last.tv_sec,
+		    since_last.tv_usec, vm->vm_start_limit,
+		    VM_START_RATE_LIMIT);
+
+		if (vm->vm_start_limit >= VM_START_RATE_LIMIT) {
+			log_warnx("%s: vm %u restarted too quickly",
+			    __func__, vcp->vcp_id);
+			errno = EPERM;
+			goto fail;
+		}
+	}
+	vm->vm_start_tv = tv;
 
 	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
