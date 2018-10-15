@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.225 2018/08/30 01:32:53 yasuoka Exp $	*/
+/*	$OpenBSD: route.c,v 1.226 2018/10/15 11:27:34 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -866,8 +866,6 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 			if (getaddrinfo(buf, "0", &hints, &res) != 0)
 				errx(1, "%s: bad value", s);
 		}
-		if (sizeof(su->sin6) != res->ai_addrlen)
-			errx(1, "%s: bad value", s);
 		if (res->ai_next)
 			errx(1, "%s: resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
