@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2017/08/01 13:11:11 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.9 2018/10/15 11:30:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -273,10 +273,6 @@ parse_addr(const char *word, struct sockaddr_storage *ss)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
-		if (ai->ai_addrlen > sizeof(*ss)) {
-			warnx("invalid address length");
-			return (-1);
-		}
 		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
 		ss->ss_len = ai->ai_addrlen;
 		freeaddrinfo(ai);
@@ -290,10 +286,6 @@ parse_addr(const char *word, struct sockaddr_storage *ss)
 	hints.ai_flags = AI_ADDRCONFIG;
 	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
 		/* Pick first name only */
-		if (ai->ai_addrlen > sizeof(*ss)) {
-			warnx("invalid address length");
-			return (-1);
-		}
 		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
 		ss->ss_len = ai->ai_addrlen;
 		freeaddrinfo(ai);
