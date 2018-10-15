@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.196 2018/10/01 23:09:53 job Exp $ */
+/*	$OpenBSD: rde.h,v 1.197 2018/10/15 10:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -555,6 +555,7 @@ void		 up_init(struct rde_peer *);
 void		 up_down(struct rde_peer *);
 int		 up_rib_remove(struct rde_peer *, struct rib_entry *);
 void		 up_rib_add(struct rde_peer *, struct rib_entry *);
+void		 up_withdraw_all(struct rde_peer *);
 int		 up_test_update(struct rde_peer *, struct prefix *);
 int		 up_generate(struct rde_peer *, struct filterstate *,
 		     struct bgpd_addr *, u_int8_t);

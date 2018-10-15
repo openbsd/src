@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.100 2018/09/29 07:43:36 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.101 2018/10/15 10:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -243,6 +243,22 @@ up_rib_add(struct rde_peer *peer, struct rib_entry *re)
 
 	if (RB_INSERT(uptree_rib, &peer->up_rib, ur) != NULL)
 		free(ur);
+}
+
+void
+up_withdraw_all(struct rde_peer *peer)
+{
+	struct bgpd_addr addr;
+	struct update_rib *ur, *nur;
+
+	RB_FOREACH_SAFE(ur, uptree_rib, &peer->up_rib, nur) {
+		RB_REMOVE(uptree_rib, &peer->up_rib, ur);
+
+		/* withdraw prefix */
+		pt_getaddr(ur->re->prefix, &addr);
+		up_generate(peer, NULL, &addr, ur->re->prefix->prefixlen);
+		free(ur);
+	}
 }
 
 int

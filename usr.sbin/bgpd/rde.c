@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.434 2018/10/14 10:21:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.435 2018/10/15 10:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,6 @@ static void	 rde_softreconfig_out_done(void *);
 static void	 rde_softreconfig_done(void);
 static void	 rde_softreconfig_out(struct rib_entry *, void *);
 static void	 rde_softreconfig_in(struct rib_entry *, void *);
-static void	 rde_softreconfig_unload_peer(struct rib_entry *, void *);
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
@@ -2934,8 +2933,7 @@ rde_reload_done(void)
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
 		if (peer->rib != rib_find(peer->conf.rib)) {
-			rib_dump(peer->rib, rde_softreconfig_unload_peer, peer,
-			    AID_UNSPEC);
+			up_withdraw_all(peer);
 			peer->rib = rib_find(peer->conf.rib);
 			if (peer->rib == NULL)
 				fatalx("King Bula's peer met an unknown RIB");
@@ -3231,32 +3229,6 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 		if (peer->rib == re_rib(re) && peer->reconf_out)
 			rde_softreconfig_out_peer(re, peer);
 	}
-}
-
-static void
-rde_softreconfig_unload_peer(struct rib_entry *re, void *ptr)
-{
-	struct filterstate	 ostate;
-	struct rde_peer		*peer = ptr;
-	struct prefix		*p = re->active;
-	struct pt_entry		*pt;
-	struct bgpd_addr	 addr;
-
-	pt = re->prefix;
-	pt_getaddr(pt, &addr);
-
-	/* check if prefix was announced */
-	if (up_test_update(peer, p) != 1)
-		return;
-
-	rde_filterstate_prep(&ostate, prefix_aspath(p), prefix_nexthop(p),
-	    prefix_nhflags(p));
-	if (rde_filter(out_rules_tmp, peer, p, &ostate) != ACTION_DENY) {
-		/* send withdraw */
-		up_rib_remove(peer, re);
-		up_generate(peer, NULL, &addr, pt->prefixlen);
-	}
-	rde_filterstate_clean(&ostate);
 }
 
 /*
