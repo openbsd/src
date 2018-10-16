@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.137 2018/05/09 10:22:06 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.138 2018/10/16 07:09:13 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -293,8 +293,6 @@ shift $((OPTIND - 1))
 
 # default action: apply all patches
 if ((OPTIND == 1)); then
-	# XXX remove for OPENBSD_6_4
-	rm -f /bsd.syspatch+([[:digit:]])
 	# remove non matching release /var/syspatch/ content
 	for _D in ${_PDIR}/{.[!.],}*; do
 		[[ -e ${_D} ]] || continue
