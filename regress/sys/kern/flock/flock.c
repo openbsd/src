@@ -131,7 +131,8 @@ safe_kill(pid_t pid, int sig)
 #define FAIL(test)							\
 	do {								\
 		if (test) {						\
-			if (verbose) printf("FAIL (%s)\n", #test);	\
+			if (verbose) printf("%s: %d: FAIL (%s)\n",	\
+				__func__, __LINE__, #test);		\
 			return -1;					\
 		}							\
 	} while (0)
@@ -1412,6 +1413,42 @@ test15(int fd, __unused int argc, const __unused char **argv)
 #endif
 }
 
+/*
+ * Test 16 - double free regression
+ */
+static int
+test16(int fd, __unused int argc, const __unused char **argv)
+{
+	struct flock fl;
+	int res;
+
+	fl.l_pid = 0;
+	fl.l_type = 1;
+	fl.l_whence = 0;
+
+	fl.l_start = 0;
+	fl.l_len = 0x8000000000000000;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	fl.l_start = 0x10000;
+	fl.l_len = 0;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	fl.l_start = 0;
+	fl.l_len = 0x8000000000000000;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	fl.l_start = 0x10000;
+	fl.l_len = 0;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	SUCCEED;
+}
+
 struct test {
 	int (*testfn)(int, int, const char **);	/* function to perform the test */
 	int num;		/* test number */
@@ -1434,6 +1471,7 @@ struct test tests[] = {
 	{	test13,		13,	1	},
 	{	test14,		14,	0	},
 	{	test15,		15,	1	},
+	{	test16,		16,	0	},
 };
 int test_count = sizeof(tests) / sizeof(tests[0]);
 
