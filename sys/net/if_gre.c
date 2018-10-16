@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.124 2018/07/24 07:40:35 yasuoka Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.125 2018/10/16 03:00:27 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1896,11 +1896,20 @@ gre_l3_encap_dst(const struct gre_tunnel *tunnel, const void *dst,
 		break;
 	}
 #ifdef INET6
-	case AF_INET6:
-		tos = 0;
+	case AF_INET6: {
+		struct ip6_hdr *ip6;
+
+		m = m_pullup(m, sizeof(*ip6));
+		if (m == NULL)
+			return (NULL);
+
+		ip6 = mtod(m, struct ip6_hdr *);
+		tos = (ntohl(ip6->ip6_flow) & 0x0ff00000) >> 20;
+
 		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
 		proto = htons(ETHERTYPE_IPV6);
 		break;
+	}
  #endif
 #ifdef MPLS
 	case AF_MPLS:
@@ -2001,6 +2010,7 @@ gre_encap_dst_ip(const struct gre_tunnel *tunnel, const union gre_addr *dst,
 		ip6->ip6_flow = ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID) ?
 		    htonl(m->m_pkthdr.ph_flowid & M_FLOWID_MASK) : 0;
 		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_flow |= htonl((uint32_t)tos << 20);
 		ip6->ip6_plen = htons(len);
 		ip6->ip6_nxt = IPPROTO_GRE;
 		ip6->ip6_hlim = ttl;
