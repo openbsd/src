@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.495 2018/09/04 13:57:46 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.496 2018/10/16 14:05:10 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 4 2018 $
+.Dd $Mdocdate: October 16 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1686,15 +1686,28 @@ Behaves like
 .Ev IS_INTERACTIVE
 if some distribution files are missing.
 .It Ev FETCH_PACKAGES
-User settings.
-If set to
-.Sq Yes ,
-the
+User settings, defaults to
+.Sq No .
+Set to
+.Xr pkg_add 1
+options.
+Instruct the
 .Cm package
-target will download packages missing from the repository from locations in
+target to download packages missing from the repository from locations in
 ${PKG_PATH} and place them into
-.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/ .
-It will only build them if no suitable packages are found.
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache/ ,
+only building them if no suitable packages are found.
+For instance,
+.Bd -literal -offset indent
+make FETCH_PACKAGES=
+.Ed
+.Pp
+to use without any options, or
+.Bd -literal -offset indent
+make FETCH_PACKAGES=-Dsnap
+.Ed
+.Pp
+to use close to release.
 .It Ev FILESDIR
 Location of other files related to the current port.
 Default: files.
