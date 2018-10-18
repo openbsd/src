@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.128 2018/10/18 01:46:21 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.129 2018/10/18 01:58:15 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2163,7 +2163,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSETKALIVE:
 		if (ikar->ikar_timeo < 0 || ikar->ikar_timeo > 86400 ||
-		    ikar->ikar_cnt < 0 || ikar->ikar_cnt > 256)
+		    ikar->ikar_cnt < 0 || ikar->ikar_cnt > 256 ||
+		    (ikar->ikar_timeo == 0) != (ikar->ikar_cnt == 0))
 			return (EINVAL);
 
 		if (ikar->ikar_timeo == 0 || ikar->ikar_cnt == 0) {
