@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2018/10/01 09:31:15 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.46 2018/10/18 08:36:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -416,20 +416,26 @@ vm_opts		: disable			{
 			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
 		| BOOT string			{
+			char	 path[PATH_MAX];
+
 			if (vcp->vcp_kernel[0] != '\0') {
 				yyerror("kernel specified more than once");
 				free($2);
 				YYERROR;
 
 			}
-			if (strlcpy(vcp->vcp_kernel, $2,
-			    sizeof(vcp->vcp_kernel)) >=
-			    sizeof(vcp->vcp_kernel)) {
-				yyerror("kernel name too long");
+			if (realpath($2, path) == NULL) {
+				yyerror("kernel path not found");
 				free($2);
 				YYERROR;
 			}
 			free($2);
+			if (strlcpy(vcp->vcp_kernel, path,
+			    sizeof(vcp->vcp_kernel)) >=
+			    sizeof(vcp->vcp_kernel)) {
+				yyerror("kernel name too long");
+				YYERROR;
+			}
 			vmc.vmc_flags |= VMOP_CREATE_KERNEL;
 		}
 		| CDROM string			{
