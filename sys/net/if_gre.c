@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.129 2018/10/18 01:58:15 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.130 2018/10/18 03:01:18 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2896,6 +2896,9 @@ gre_keepalive_send(void *arg)
 		proto = htons(ETHERTYPE_IPV6);
 		break;
 #endif
+	default:
+		m_freem(m);
+		return;
 	}
 
 	/*
@@ -3172,6 +3175,8 @@ mgre_up(struct mgre_softc *sc)
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif /* INET6 */
+	default:
+		unhandled_af(sc->sc_tunnel.t_af);
 	}
 
 	hlen += sizeof(struct gre_header);
@@ -3333,6 +3338,8 @@ delmulti:
 		in6_delmulti(inm);
 		break;
 #endif
+	default:
+		unhandled_af(tunnel->t_af);
 	}
 remove_ucast:
 	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
@@ -3382,6 +3389,8 @@ nvgre_down(struct nvgre_softc *sc)
 		in6_delmulti(sc->sc_inm);
 		break;
 #endif
+	default:
+		unhandled_af(tunnel->t_af);
 	}
 
 	RBT_REMOVE(nvgre_ucast_tree, &nvgre_ucast_tree, sc);
