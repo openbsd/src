@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.20 2018/02/06 00:05:24 henning Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.21 2018/10/18 14:25:14 naddy Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -895,6 +895,8 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, ".include <bsd.own.mk>\n");
 	fprintf(outmk, "CFLAGS+=$(NOPIE_FLAGS)\n");
 	fprintf(outmk, "CFLAGS+=-Oz\n");
+	fprintf(outmk, "CFLAGS+=-fno-stack-protector\n");
+	fprintf(outmk, "CFLAGS+=-fno-unwind-tables\n");
 	fprintf(outmk, "LDFLAGS+=$(NOPIE_LDFLAGS)\n");
 	fprintf(outmk, "STRIP?=strip\n");
 	fprintf(outmk, "LINK=$(LD) -dc -r ${LDFLAGS}\n");
@@ -934,7 +936,8 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, ".olist.a:\n");
 	fprintf(outmk, "\t@rm -f ${.TARGET}\n");
 	fprintf(outmk, "\t@cd ${SRCLIBDIR}/${.PREFIX} &&\t\t\t\t\\\n");
-	fprintf(outmk, "\t${MAKE} DIST_OBJS=\"`cat ${.OBJDIR}/${.IMPSRC}`\"\t\t\\\n");
+	fprintf(outmk, "\t${MAKE} DIST_CFLAGS=\"${CFLAGS}\"\t\t\t\t\\\n");
+	fprintf(outmk, "\t    DIST_OBJS=\"`cat ${.OBJDIR}/${.IMPSRC}`\"\t\t\\\n");
 	fprintf(outmk, "\t    DIST_LIB=${.OBJDIR}/${.TARGET} ${.OBJDIR}/${.TARGET}\n\n");
 
 	fprintf(outmk, "%s.map: %s.o $(CRUNCHED_OBJS)\n", execfname, execfname);
