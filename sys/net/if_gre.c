@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.127 2018/10/18 01:43:50 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.128 2018/10/18 01:46:21 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2824,6 +2824,7 @@ gre_keepalive_send(void *arg)
 
 	if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
 	    sc->sc_ka_state == GRE_KA_NONE ||
+	    sc->sc_tunnel.t_af == AF_UNSPEC ||
 	    sc->sc_tunnel.t_rtableid != sc->sc_if.if_rdomain)
 		return;
 
