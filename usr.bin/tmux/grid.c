@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.86 2018/07/11 06:51:39 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.87 2018/10/18 07:57:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -764,7 +764,11 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 		{ GRID_ATTR_BLINK, 5 },
 		{ GRID_ATTR_REVERSE, 7 },
 		{ GRID_ATTR_HIDDEN, 8 },
-		{ GRID_ATTR_STRIKETHROUGH, 9 }
+		{ GRID_ATTR_STRIKETHROUGH, 9 },
+		{ GRID_ATTR_UNDERSCORE_2, 42 },
+		{ GRID_ATTR_UNDERSCORE_3, 43 },
+		{ GRID_ATTR_UNDERSCORE_4, 44 },
+		{ GRID_ATTR_UNDERSCORE_5, 45 },
 	};
 	n = 0;
 
@@ -790,11 +794,15 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 		else
 			strlcat(buf, "\033[", len);
 		for (i = 0; i < n; i++) {
-			if (i + 1 < n)
-				xsnprintf(tmp, sizeof tmp, "%d;", s[i]);
-			else
+			if (s[i] < 10)
 				xsnprintf(tmp, sizeof tmp, "%d", s[i]);
+			else {
+				xsnprintf(tmp, sizeof tmp, "%d:%d", s[i] / 10,
+				    s[i] % 10);
+			}
 			strlcat(buf, tmp, len);
+			if (i + 1 < n)
+				strlcat(buf, ";", len);
 		}
 		strlcat(buf, "m", len);
 	}

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.610 2018/08/26 09:28:42 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.611 2018/10/18 07:57:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 26 2018 $
+.Dd $Mdocdate: October 18 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2769,8 +2769,12 @@ or a comma-delimited list of one or more of:
 .Ic reverse ,
 .Ic hidden ,
 .Ic italics ,
+.Ic strikethrough ,
+.Ic double-underscore
+.Ic curly-underscore
+.Ic dotted-underscore
 or
-.Ic strikethrough
+.Ic dashed-underscore
 to turn an attribute on, or an attribute prefixed with
 .Ql no
 to turn one off.
@@ -4419,6 +4423,11 @@ to change the cursor colour from inside
 .Bd -literal -offset indent
 $ printf '\e033]12;red\e033\e\e'
 .Ed
+.It Em \&Smulx
+Set a styled underline.
+The single parameter is one of: 0 for no underline, 1 for normal
+underline, 2 for double underline, 3 for curly underline, 4 for dotted
+underline and 5 for dashed underline.
 .It Em \&Ss , Se
 Set or reset the cursor style.
 If set, a sequence such as this may be used

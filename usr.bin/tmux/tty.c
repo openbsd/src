@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.307 2018/09/25 14:27:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.308 2018/10/18 07:57:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1832,8 +1832,19 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 		tty_putcode(tty, TTYC_DIM);
 	if (changed & GRID_ATTR_ITALICS)
 		tty_set_italics(tty);
-	if (changed & GRID_ATTR_UNDERSCORE)
-		tty_putcode(tty, TTYC_SMUL);
+	if (changed & GRID_ATTR_ALL_UNDERSCORE) {
+		if ((changed & GRID_ATTR_UNDERSCORE) ||
+		    !tty_term_has(tty->term, TTYC_SMULX))
+			tty_putcode(tty, TTYC_SMUL);
+		else if (changed & GRID_ATTR_UNDERSCORE_2)
+			tty_putcode1(tty, TTYC_SMULX, 2);
+		else if (changed & GRID_ATTR_UNDERSCORE_3)
+			tty_putcode1(tty, TTYC_SMULX, 3);
+		else if (changed & GRID_ATTR_UNDERSCORE_4)
+			tty_putcode1(tty, TTYC_SMULX, 4);
+		else if (changed & GRID_ATTR_UNDERSCORE_5)
+			tty_putcode1(tty, TTYC_SMULX, 5);
+	}
 	if (changed & GRID_ATTR_BLINK)
 		tty_putcode(tty, TTYC_BLINK);
 	if (changed & GRID_ATTR_REVERSE) {

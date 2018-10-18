@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.847 2018/10/03 15:27:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.848 2018/10/18 07:57:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -421,6 +421,7 @@ enum tty_code_code {
 	TTYC_SMCUP,
 	TTYC_SMKX,
 	TTYC_SMSO,
+	TTYC_SMULX,
 	TTYC_SMUL,
 	TTYC_SMXX,
 	TTYC_SS,
@@ -546,6 +547,18 @@ enum utf8_state {
 #define GRID_ATTR_ITALICS 0x40
 #define GRID_ATTR_CHARSET 0x80	/* alternative character set */
 #define GRID_ATTR_STRIKETHROUGH 0x100
+#define GRID_ATTR_UNDERSCORE_2 0x200
+#define GRID_ATTR_UNDERSCORE_3 0x400
+#define GRID_ATTR_UNDERSCORE_4 0x800
+#define GRID_ATTR_UNDERSCORE_5 0x1000
+
+/* All underscore attributes. */
+#define GRID_ATTR_ALL_UNDERSCORE \
+	(GRID_ATTR_UNDERSCORE|	 \
+	 GRID_ATTR_UNDERSCORE_2| \
+	 GRID_ATTR_UNDERSCORE_3| \
+	 GRID_ATTR_UNDERSCORE_4| \
+	 GRID_ATTR_UNDERSCORE_5)
 
 /* Grid flags. */
 #define GRID_FLAG_FG256 0x1
