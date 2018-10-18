@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.436 2018/10/18 09:28:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.437 2018/10/18 12:19:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2653,7 +2653,7 @@ void
 rde_update_queue_runner(void)
 {
 	struct rde_peer		*peer;
-	int			 r, sent, max = RDE_RUNNER_ROUNDS, eor = 0;
+	int			 r, sent, max = RDE_RUNNER_ROUNDS, eor;
 	u_int16_t		 len, wd_len, wpos;
 
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
@@ -2664,6 +2664,7 @@ rde_update_queue_runner(void)
 				continue;
 			if (peer->state != PEER_UP)
 				continue;
+			eor = 0;
 			/* first withdraws */
 			wpos = 2; /* reserve space for the length field */
 			r = up_dump_prefix(queue_buf + wpos, len - wpos - 2,
@@ -2706,10 +2707,8 @@ rde_update_queue_runner(void)
 				fatal("%s %d imsg_compose error", __func__,
 				    __LINE__);
 			sent++;
-			if (eor) {
-				eor = 0;
+			if (eor)
 				peer_send_eor(peer, AID_INET);
-			}
 		}
 		max -= sent;
 	} while (sent != 0 && max > 0);
