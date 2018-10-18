@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.28 2018/07/18 17:20:54 millert Exp $	*/
+/* $OpenBSD: join.c,v 1.29 2018/10/18 09:36:48 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,8 +53,6 @@ typedef struct {
 	char **fields;			/* line field(s) */
 	u_long fieldcnt;		/* line field(s) count */
 	u_long fieldalloc;		/* line field(s) allocated count */
-	u_long cfieldc;			/* current field count */
-	long	 fpos;			/* fpos of start of field */
 } LINE;
 
 typedef struct {
@@ -67,10 +65,9 @@ typedef struct {
 	u_long pushback;		/* line on the stack */
 	u_long setcnt;			/* set count */
 	u_long setalloc;		/* set allocated count */
-	u_long setusedc;		/* sets used  */
 } INPUT;
-INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, 0, 0 },
-      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, 0, 0 };
+INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, 0 },
+      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, 0 };
 
 typedef struct {
 	u_long	filenum;	/* file number */
@@ -214,12 +211,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	F1->setusedc = 0;
-	F2->setusedc = 0;
 	slurp(F1);
 	slurp(F2);
-	F1->set->cfieldc = 0;
-	F2->set->cfieldc = 0;
 
 	/*
 	 * We try to let the files have the same field value, advancing
@@ -234,24 +227,16 @@ main(int argc, char *argv[])
 				joinlines(F1, F2);
 			slurp(F1);
 			slurp(F2);
-		}
-		else {
-			if (F1->unpair
-			&& (cval < 0 || F2->set->cfieldc == F2->setusedc -1)) {
+		} else if (cval < 0) {
+			/* File 1 takes the lead... */
+			if (F1->unpair)
 				joinlines(F1, NULL);
-				slurp(F1);
-			}
-			else if (cval < 0)
-				/* File 1 takes the lead... */
-				slurp(F1);
-			if (F2->unpair
-			&& (cval > 0 || F1->set->cfieldc == F1->setusedc -1)) {
+			slurp(F1);
+		} else {
+			/* File 2 takes the lead... */
+			if (F2->unpair)
 				joinlines(F2, NULL);
-				slurp(F2);
-			}
-			else if (cval > 0)
-				/* File 2 takes the lead... */
-				slurp(F2);
+			slurp(F2);
 		}
 	}
 
@@ -273,36 +258,15 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-/* wrapper around slurpit() to keep track of what field we are on */
-void slurp(INPUT *F)
-{
-	long fpos;
-	u_long cfieldc;
-
-	if (F->set == NULL) {
-		fpos = 0;
-		cfieldc = 0;
-	}
-	else {
-		fpos = F->set->fpos;
-		cfieldc = F->set->cfieldc;
-	}
-	slurpit(F);
-	if (F->set == NULL)
-		return;
-	else if (fpos != F->set->fpos)
-		F->set->cfieldc = cfieldc+1;
-}
-
 void
-slurpit(INPUT *F)
+slurp(INPUT *F)
 {
 	LINE *lp, *lastlp, tmp;
 	ssize_t len;
 	size_t linesize;
 	u_long cnt;
 	char *bp, *fieldp, *line;
-	long fpos;
+
 	/*
 	 * Read all of the lines from an input file that have the same
 	 * join field.
@@ -311,7 +275,7 @@ slurpit(INPUT *F)
 	F->setcnt = 0;
 	line = NULL;
 	linesize = 0;
-	for (lastlp = NULL; ; ++F->setcnt, lastlp = lp) {
+	for (lastlp = NULL; ; ++F->setcnt) {
 		/*
 		 * If we're out of space to hold line structures, allocate
 		 * more.  Initialize the structure so that we know that this
@@ -339,6 +303,8 @@ slurpit(INPUT *F)
 		 * level of indirection, but it's probably okay as is.
 		 */
 		lp = &F->set[F->setcnt];
+		if (F->setcnt)
+			lastlp = &F->set[F->setcnt - 1];
 		if (F->pushbool) {
 			tmp = F->set[F->setcnt];
 			F->set[F->setcnt] = F->set[F->pushback];
@@ -348,11 +314,6 @@ slurpit(INPUT *F)
 		}
 		if ((len = getline(&line, &linesize, F->fp)) == -1)
 			break;
-		/*
-		 * we depend on knowing on what field we are, one safe way is
-		 * the file position.
-		*/
-		fpos = ftell(F->fp) - len;
 
 		/* Remove trailing newline, if it exists, and copy line. */
 		if (line[len - 1] == '\n')
@@ -366,10 +327,8 @@ slurpit(INPUT *F)
 			lp->line = p;
 			lp->linealloc = newsize;
 		}
-		F->setusedc++;
 		memcpy(lp->line, line, len);
 		lp->line[len] = '\0';
-		lp->fpos = fpos;
 
 		/* Split the line into fields, allocate space as necessary. */
 		lp->fieldcnt = 0;
