@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.125 2018/10/16 03:00:27 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.126 2018/10/18 01:36:26 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1103,11 +1103,9 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 			goto decline;
 		}
 
-#if NBPFILTER > 0
-		bpf_af = AF_UNSPEC;
-#endif
-		input = gre_keepalive_recv;
-		break;
+		m_adj(m, hlen);
+		gre_keepalive_recv(ifp, m);
+		return (IPPROTO_DONE);
 
 	default:
 		goto decline;
