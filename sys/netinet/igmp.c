@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.73 2018/10/18 15:23:04 cheloha Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.74 2018/10/18 15:46:28 cheloha Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -98,10 +98,7 @@
 
 int *igmpctl_vars[IGMPCTL_MAXID] = IGMPCTL_VARS;
 
-/* Protects igmp_timers_are_running and rti_head. */
-static struct mutex igmp_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
-
-int igmp_timers_are_running;
+int		igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head;
 static struct mbuf *router_alert;
 struct cpumem *igmpcounters;
@@ -153,8 +150,6 @@ rti_fill(struct in_multi *inm)
 {
 	struct router_info *rti;
 
-	MUTEX_ASSERT_LOCKED(&igmp_mutex);
-
 	LIST_FOREACH(rti, &rti_head, rti_list) {
 		if (rti->rti_ifidx == inm->inm_ifidx) {
 			inm->inm_rti = rti;
@@ -181,8 +176,6 @@ rti_find(struct ifnet *ifp)
 	struct router_info *rti;
 
 	KERNEL_ASSERT_LOCKED();
-	MUTEX_ASSERT_LOCKED(&igmp_mutex);
-
 	LIST_FOREACH(rti, &rti_head, rti_list) {
 		if (rti->rti_ifidx == ifp->if_index)
 			return (rti);
@@ -202,18 +195,13 @@ rti_delete(struct ifnet *ifp)
 {
 	struct router_info *rti, *trti;
 
-	mtx_enter(&igmp_mutex);
-
 	LIST_FOREACH_SAFE(rti, &rti_head, rti_list, trti) {
 		if (rti->rti_ifidx == ifp->if_index) {
 			LIST_REMOVE(rti, rti_list);
-			mtx_leave(&igmp_mutex);
 			free(rti, M_MRTABLE, sizeof(*rti));
-			return;
+			break;
 		}
 	}
-
-	mtx_leave(&igmp_mutex);
 }
 
 int
@@ -283,8 +271,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 	m->m_len += iphlen;
 	ip = mtod(m, struct ip *);
 
-	mtx_enter(&igmp_mutex);
-
 	switch (igmp->igmp_type) {
 
 	case IGMP_HOST_MEMBERSHIP_QUERY:
@@ -296,7 +282,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 		if (igmp->igmp_code == 0) {
 			rti = rti_find(ifp);
 			if (rti == NULL) {
-				mtx_leave(&igmp_mutex);
 				m_freem(m);
 				return IPPROTO_DONE;
 			}
@@ -304,7 +289,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 			rti->rti_age = 0;
 
 			if (ip->ip_dst.s_addr != INADDR_ALLHOSTS_GROUP) {
-				mtx_leave(&igmp_mutex);
 				igmpstat_inc(igps_rcv_badqueries);
 				m_freem(m);
 				return IPPROTO_DONE;
@@ -330,7 +314,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 			}
 		} else {
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
-				mtx_leave(&igmp_mutex);
 				igmpstat_inc(igps_rcv_badqueries);
 				m_freem(m);
 				return IPPROTO_DONE;
@@ -388,7 +371,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
-			mtx_leave(&igmp_mutex);
 			igmpstat_inc(igps_rcv_badreports);
 			m_freem(m);
 			return IPPROTO_DONE;
@@ -455,7 +437,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
-			mtx_leave(&igmp_mutex);
 			igmpstat_inc(igps_rcv_badreports);
 			m_freem(m);
 			return IPPROTO_DONE;
@@ -503,8 +484,6 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 
 	}
 
-	mtx_leave(&igmp_mutex);
-
 	/*
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
@@ -524,18 +503,14 @@ igmp_joingroup(struct in_multi *inm)
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
-		mtx_enter(&igmp_mutex);
-		if ((i = rti_fill(inm)) == -1) {
-			mtx_leave(&igmp_mutex);
+		if ((i = rti_fill(inm)) == -1)
 			goto out;
-		}
 
 		igmp_sendpkt(ifp, inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
 		    IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ);
 		igmp_timers_are_running = 1;
-		mtx_leave(&igmp_mutex);
 	} else
 		inm->inm_timer = 0;
 
@@ -554,14 +529,11 @@ igmp_leavegroup(struct in_multi *inm)
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-		    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
-			mtx_enter(&igmp_mutex);
+		    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
 				igmp_sendpkt(ifp, inm,
 				    IGMP_HOST_LEAVE_MESSAGE,
 				    INADDR_ALLROUTERS_GROUP);
-			}
-			mtx_leave(&igmp_mutex);
 		break;
 	case IGMP_LAZY_MEMBER:
 	case IGMP_AWAKENING_MEMBER:
@@ -577,7 +549,6 @@ igmp_fasttimo(void)
 	struct ifnet *ifp;
 
 	NET_LOCK();
-	mtx_enter(&igmp_mutex);
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -591,7 +562,6 @@ igmp_fasttimo(void)
 		igmp_checktimer(ifp);
 
 out:
-	mtx_leave(&igmp_mutex);
 	NET_UNLOCK();
 }
 
@@ -603,7 +573,6 @@ igmp_checktimer(struct ifnet *ifp)
 	struct ifmaddr *ifma;
 
 	NET_ASSERT_LOCKED();
-	MUTEX_ASSERT_LOCKED(&igmp_mutex);
 
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET)
@@ -632,7 +601,7 @@ igmp_slowtimo(void)
 {
 	struct router_info *rti;
 
-	mtx_enter(&igmp_mutex);
+	NET_LOCK();
 
 	LIST_FOREACH(rti, &rti_head, rti_list) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
@@ -641,7 +610,7 @@ igmp_slowtimo(void)
 		}
 	}
 
-	mtx_leave(&igmp_mutex);
+	NET_UNLOCK();
 }
 
 void
