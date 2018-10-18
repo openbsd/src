@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.81 2018/10/07 04:40:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.82 2018/10/18 21:30:05 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1698,7 +1698,7 @@ func runRSASSATest(rsa *C.RSA, h hash.Hash, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLe
 		sig = append(sig, 0)
 	}
 
-	sigOut := make([]byte, sigLen)
+	sigOut := make([]byte, C.RSA_size(rsa) - 11)
 	if sigLen == 0 {
 		sigOut = append(sigOut, 0)
 	}
