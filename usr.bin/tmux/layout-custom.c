@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.11 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.12 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -167,7 +167,7 @@ layout_parse(struct window *w, const char *layout)
 
 	/* Update pane offsets and sizes. */
 	layout_fix_offsets(lc);
-	layout_fix_panes(w, lc->sx, lc->sy);
+	layout_fix_panes(w);
 
 	/* Then resize the layout back to the original window size. */
 	layout_resize(w, sx, sy);

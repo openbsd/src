@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.91 2018/08/09 09:54:22 nicm Exp $
+# $OpenBSD: Makefile,v 1.92 2018/10/18 08:38:01 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -44,6 +44,7 @@ SRCS=	alerts.c \
 	cmd-rename-session.c \
 	cmd-rename-window.c \
 	cmd-resize-pane.c \
+	cmd-resize-window.c \
 	cmd-respawn-pane.c \
 	cmd-respawn-window.c \
 	cmd-rotate-window.c \

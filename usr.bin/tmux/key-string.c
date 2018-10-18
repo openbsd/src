@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.49 2018/08/22 20:06:14 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.50 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,9 @@ static const struct {
 	{ "F11",	KEYC_F11 },
 	{ "F12",	KEYC_F12 },
 	{ "IC",		KEYC_IC },
+	{ "Insert",     KEYC_IC },
 	{ "DC",		KEYC_DC },
+	{ "Delete",     KEYC_DC },
 	{ "Home",	KEYC_HOME },
 	{ "End",	KEYC_END },
 	{ "NPage",	KEYC_NPAGE },

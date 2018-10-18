@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.116 2018/08/19 16:45:03 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.117 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -409,6 +409,7 @@ server_destroy_session(struct session *s)
 			c->last_session = NULL;
 			c->session = s_new;
 			server_client_set_key_table(c, NULL);
+			tty_update_client_offset(c);
 			status_timer_start(c);
 			notify_client("client-session-changed", c);
 			session_update_activity(s_new, NULL);

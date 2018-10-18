@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.90 2018/05/24 09:42:49 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.91 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -148,7 +148,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	environ_free(env);
 
-	layout_fix_panes(w, w->sx, w->sy);
+	layout_fix_panes(w);
 	server_redraw_window(w);
 
 	if (!args_has(args, 'd')) {

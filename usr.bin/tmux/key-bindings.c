@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.87 2018/08/20 15:00:42 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.88 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -258,6 +258,11 @@ key_bindings_init(void)
 		"bind M-n next-window -a",
 		"bind M-o rotate-window -D",
 		"bind M-p previous-window -a",
+		"bind -r S-Up refresh-client -U 10",
+		"bind -r S-Down refresh-client -D 10",
+		"bind -r S-Left refresh-client -L 10",
+		"bind -r S-Right refresh-client -R 10",
+		"bind -r DC refresh-client -c",
 		"bind -r M-Up resize-pane -U 5",
 		"bind -r M-Down resize-pane -D 5",
 		"bind -r M-Left resize-pane -L 5",

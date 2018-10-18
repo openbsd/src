@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.29 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.30 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,8 +30,7 @@
 
 #define LIST_SESSIONS_TEMPLATE				\
 	"#{session_name}: #{session_windows} windows "	\
-	"(created #{t:session_created}) "		\
-	"[#{session_width}x#{session_height}]"		\
+	"(created #{t:session_created})"		\
 	"#{?session_grouped, (group ,}"			\
 	"#{session_group}#{?session_grouped,),}"	\
 	"#{?session_attached, (attached),}"
