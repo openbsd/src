@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.82 2018/10/18 21:30:05 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.83 2018/10/18 21:34:06 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1362,12 +1362,11 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	}
 	defer C.EC_KEY_free(privKey)
 
-	var bnD *C.BIGNUM
 	d, err := base64.RawURLEncoding.DecodeString(wt.Private.D)
 	if err != nil {
 		log.Fatalf("Failed to base64 decode d: %v", err)
 	}
-	bnD = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&d[0])), C.int(len(d)), nil)
+	bnD := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&d[0])), C.int(len(d)), nil)
 	if bnD == nil {
 		log.Fatal("Failed to decode D")
 	}
@@ -1380,23 +1379,21 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 		return false
 	}
 
-	var bnX *C.BIGNUM
 	x, err := base64.RawURLEncoding.DecodeString(wt.Public.X)
 	if err != nil {
 		log.Fatalf("Failed to base64 decode x: %v", err)
 	}
-	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
+	bnX := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
 	if bnX == nil {
 		log.Fatal("Failed to decode X")
 	}
 	defer C.BN_free(bnX)
 
-	var bnY *C.BIGNUM
 	y, err := base64.RawURLEncoding.DecodeString(wt.Public.Y)
 	if err != nil {
 		log.Fatalf("Failed to base64 decode y: %v", err)
 	}
-	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
+	bnY := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
 	if bnY == nil {
 		log.Fatal("Failed to decode Y")
 	}
@@ -1635,8 +1632,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 	if err != nil {
 		log.Fatalf("Failed to base64 decode X: %v", err)
 	}
-	var bnX *C.BIGNUM
-	bnX = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
+	bnX := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
 	if bnX == nil {
 		log.Fatal("Failed to decode X")
 	}
@@ -1646,8 +1642,7 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 	if err != nil {
 		log.Fatalf("Failed to base64 decode Y: %v", err)
 	}
-	var bnY *C.BIGNUM
-	bnY = C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
+	bnY := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
 	if bnY == nil {
 		log.Fatal("Failed to decode Y")
 	}
