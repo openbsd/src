@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.126 2018/10/18 01:36:26 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.127 2018/10/18 01:43:50 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2815,6 +2815,13 @@ gre_keepalive_send(void *arg)
 	uint16_t proto;
 	uint8_t ttl;
 
+	/*
+	 * re-schedule immediately, so we deal with incomplete configuation
+	 * or temporary errors.
+	 */
+	if (sc->sc_ka_timeo)
+		timeout_add_sec(&sc->sc_ka_send, sc->sc_ka_timeo);
+
 	if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
 	    sc->sc_ka_state == GRE_KA_NONE ||
 	    sc->sc_tunnel.t_rtableid != sc->sc_if.if_rdomain)
@@ -2898,8 +2905,6 @@ gre_keepalive_send(void *arg)
 		return;
 
 	gre_ip_output(&sc->sc_tunnel, m);
-
-	timeout_add_sec(&sc->sc_ka_send, sc->sc_ka_timeo);
 }
 
 static void
