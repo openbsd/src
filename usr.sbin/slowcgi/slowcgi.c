@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.54 2018/08/19 12:31:41 florian Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.55 2018/10/19 08:13:34 claudio Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -437,7 +437,7 @@ accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
 {
 	int ret;
 	if (getdtablecount() + reserve +
-	    (*counter * FD_NEEDED) >= getdtablesize()) {
+	    ((*counter + 1) * FD_NEEDED) >= getdtablesize()) {
 		ldebug("inflight fds exceeded");
 		errno = EMFILE;
 		return -1;
