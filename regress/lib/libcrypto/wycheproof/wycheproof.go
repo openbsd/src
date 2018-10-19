@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.83 2018/10/18 21:34:06 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.84 2018/10/19 04:32:33 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -360,7 +360,12 @@ func printAcceptableStatistics() {
 	}
 	sort.Strings(comments)
 	for _, comment := range comments {
-		fmt.Printf("%-45v %5d\n", comment, acceptableComments[comment])
+		prcomment := comment
+		if len(comment) > 42 {
+			prcomment = comment[0:42]
+			prcomment += "..."
+		}
+		fmt.Printf("%-45v %5d\n", prcomment, acceptableComments[comment])
 	}
 
 	fmt.Printf("\nFlag statistics:\n")
