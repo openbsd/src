@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.31 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.32 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -271,7 +271,7 @@ void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
 
-ssize_t virtio_qcow2_get_base(int, char *, size_t);
+ssize_t virtio_qcow2_get_base(int, char *, size_t, const char *);
 int virtio_init_raw(struct virtio_backing *, off_t *, int*, size_t);
 int virtio_init_qcow2(struct virtio_backing *, off_t *, int*, size_t);
 

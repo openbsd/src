@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2018/10/15 10:35:41 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.53 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,6 @@
 #include <util.h>
 #include <errno.h>
 #include <imsg.h>
-#include <libgen.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -191,7 +190,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	char			 ifname[IF_NAMESIZE], *s;
 	char			 path[PATH_MAX];
 	char			 base[PATH_MAX];
-	char 			 expanded[PATH_MAX];
 	unsigned int		 unit;
 	struct timeval		 tv, rate, since_last;
 
@@ -357,7 +355,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			oflags = O_RDONLY|O_NONBLOCK;
 			aflags = R_OK;
 			n = virtio_get_base(diskfds[i][j], base, sizeof base,
-			    vmc->vmc_disktypes[i]);
+			    vmc->vmc_disktypes[i], path);
 			if (n == 0)
 				break;
 			if (n == -1) {
@@ -365,30 +363,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 				    "base %s for disk %s", vcp->vcp_name,
 				    base, vcp->vcp_disks[i]);
 				goto fail;
-			}
-			/*
-			 * Relative paths should be interpreted relative
-			 * to the disk image, rather than relative to the
-			 * directory vmd happens to be running in, since
-			 * this is the only userful interpretation.
-			 */
-			if (base[0] == '/') {
-				if (realpath(base, path) == NULL) {
-					log_warn("unable to resolve %s", base);
-					goto fail;
-				}
-			} else {
-				s = dirname(path);
-				if (snprintf(expanded, sizeof(expanded),
-				    "%s/%s", s, base) >= (int)sizeof(expanded)) {
-					log_warn("path too long: %s/%s",
-					    s, base);
-					goto fail;
-				}
-				if (realpath(expanded, path) == NULL) {
-					log_warn("unable to resolve %s", base);
-					goto fail;
-				}
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.61 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.62 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -39,6 +39,7 @@
 #include <grp.h>
 
 #include "vmd.h"
+#include "virtio.h"
 #include "vmctl.h"
 #include "atomicio.h"
 
@@ -794,6 +795,116 @@ vm_console(struct vmop_info_result *list, size_t ct)
 }
 
 /*
+ * open_imagefile
+ *
+ * Open an imagefile with the specified type, path and size.
+ *
+ * Parameters:
+ *  type        : format of the image file
+ *  imgfile_path: path to the image file to create
+ *  flags       : flags for open(2), e.g. O_RDONLY
+ *  file        : file structure
+ *  sz		: size of the image file
+ *
+ * Return:
+ *  fd          : Returns file descriptor of the new image file
+ *  -1          : Operation failed.  errno is set.
+ */
+int
+open_imagefile(int type, const char *imgfile_path, int flags,
+    struct virtio_backing *file, off_t *sz)
+{
+	int	 fd, ret, basefd[VM_MAX_BASE_PER_DISK], nfd, i;
+	char	 path[PATH_MAX];
+
+	*sz = 0;
+	if ((fd = open(imgfile_path, flags)) == -1)
+		return (-1);
+
+	basefd[0] = fd;
+	nfd = 1;
+
+	errno = 0;
+	switch (type) {
+	case VMDF_QCOW2:
+		if (strlcpy(path, imgfile_path, sizeof(path)) >= sizeof(path))
+			return (-1);
+		for (i = 0; i < VM_MAX_BASE_PER_DISK - 1; i++, nfd++) {
+			if ((ret = virtio_qcow2_get_base(basefd[i],
+			    path, sizeof(path), imgfile_path)) == -1) {
+				log_debug("%s: failed to get base %d", __func__, i);
+				return -1;
+			} else if (ret == 0)
+				break;
+
+			/*
+			 * This might be called after unveil is already
+			 * locked but it is save to ignore the EPERM error
+			 * here as the subsequent open would fail as well.
+			 */
+			if ((ret = unveil(path, "r")) != 0 &&
+			    (ret != EPERM))
+				err(1, "unveil");
+			if ((basefd[i + 1] = open(path, O_RDONLY)) == -1) {
+				log_warn("%s: failed to open base %s",
+				    __func__, path);
+				return (-1);
+			}
+		}
+		ret = virtio_init_qcow2(file, sz, basefd, nfd);
+		break;
+	default:
+		ret = virtio_init_raw(file, sz, &fd, 1);
+		break;
+	}
+
+	if (ret == -1) {
+		for (i = 0; i < nfd; i++)
+			close(basefd[i]);
+		return (-1);
+	}
+
+	return (fd);
+}
+
+/*
+ * create_imagefile
+ *
+ * Create an empty imagefile with the specified type, path and size.
+ *
+ * Parameters:
+ *  type        : format of the image file
+ *  imgfile_path: path to the image file to create
+ *  base_path   : path to the qcow2 base image
+ *  imgsize     : size of the image file to create (in MB)
+ *  format      : string identifying the format
+ *
+ * Return:
+ *  EEXIST: The requested image file already exists
+ *  0     : Image file successfully created
+ *  Exxxx : Various other Exxxx errno codes due to other I/O errors
+ */
+int
+create_imagefile(int type, const char *imgfile_path, const char *base_path,
+    long imgsize, const char **format)
+{
+	int	 ret;
+
+	switch (type) {
+	case VMDF_QCOW2:
+		*format = "qcow2";
+		ret = create_qc2_imagefile(imgfile_path, base_path, imgsize);
+		break;
+	default:
+		*format = "raw";
+		ret = create_raw_imagefile(imgfile_path, imgsize);
+		break;
+	}
+
+	return (ret);
+}
+
+/*
  * create_raw_imagefile
  *
  * Create an empty imagefile with the specified path and size.
@@ -831,7 +942,7 @@ create_raw_imagefile(const char *imgfile_path, long imgsize)
 }
 
 /*
- * create_imagefile
+ * create_qc2_imagefile
  *
  * Create an empty qcow2 imagefile with the specified path and size.
  *
@@ -844,8 +955,6 @@ create_raw_imagefile(const char *imgfile_path, long imgsize)
  *  0     : Image file successfully created
  *  Exxxx : Various other Exxxx errno codes due to other I/O errors
  */
-#define ALIGN(sz, align) \
-	((sz + align - 1) & ~(align - 1))
 int
 create_qc2_imagefile(const char *imgfile_path,
     const char *base_path, long imgsize)

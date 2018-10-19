@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.26 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.27 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -71,6 +71,9 @@ struct ctl_command {
 
 struct imsgbuf	*ibuf;
 
+#define ALIGN(sz, align)	((sz + align - 1) & ~(align - 1))
+#define MIN(a,b)		(((a)<(b))?(a):(b))
+
 /* main.c */
 int	 vmmaction(struct parse_result *);
 int	 parse_ifs(struct parse_result *, char *, int);
@@ -86,6 +89,9 @@ __dead void
 	 ctl_openconsole(const char *);
 
 /* vmctl.c */
+int	 open_imagefile(int, const char *, int,
+	    struct virtio_backing *, off_t *);
+int	 create_imagefile(int, const char *, const char *, long, const char **);
 int	 create_raw_imagefile(const char *, long);
 int	 create_qc2_imagefile(const char *, const char *, long);
 int	 vm_start(uint32_t, const char *, int, int, char **, int,

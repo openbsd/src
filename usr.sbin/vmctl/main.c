@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -30,12 +30,14 @@
 #include <stdint.h>
 #include <limits.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <util.h>
 #include <imsg.h>
 
 #include "vmd.h"
+#include "virtio.h"
 #include "proc.h"
 #include "vmctl.h"
 
@@ -52,6 +54,7 @@ __dead void	 ctl_usage(struct ctl_command *);
 int		 vmm_action(struct parse_result *);
 
 int		 ctl_console(struct parse_result *, int, char *[]);
+int		 ctl_convert(const char *, const char *, int, size_t);
 int		 ctl_create(struct parse_result *, int, char *[]);
 int		 ctl_load(struct parse_result *, int, char *[]);
 int		 ctl_log(struct parse_result *, int, char *[]);
@@ -68,7 +71,7 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
 	{ "create",	CMD_CREATE,	ctl_create,
-		"\"path\" [-s size] [-b base]", 1 },
+		"\"path\" [-b base] [-i disk] [-s size]", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
 	{ "log",	CMD_LOG,	ctl_log,	"[verbose|brief]" },
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
@@ -92,7 +95,7 @@ usage(void)
 	extern char	*__progname;
 	int		 i;
 
-	fprintf(stderr, "usage:\t%s command [arg ...]\n",
+	fprintf(stderr, "usage:\t%s [-v] command [arg ...]\n",
 	    __progname);
 	for (i = 0; ctl_commands[i].name != NULL; i++) {
 		fprintf(stderr, "\t%s %s %s\n", __progname,
@@ -106,7 +109,7 @@ ctl_usage(struct ctl_command *ctl)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage:\t%s %s %s\n", __progname,
+	fprintf(stderr, "usage:\t%s [-v] %s %s\n", __progname,
 	    ctl->name, ctl->usage);
 	exit(1);
 }
@@ -114,10 +117,13 @@ ctl_usage(struct ctl_command *ctl)
 int
 main(int argc, char *argv[])
 {
-	int	 ch;
+	int	 ch, verbose = 1;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
+		case 'v':
+			verbose = 2;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -130,6 +136,8 @@ main(int argc, char *argv[])
 
 	if (argc < 1)
 		usage();
+
+	log_init(verbose, LOG_DAEMON);
 
 	return (parse(argc, argv));
 }
@@ -258,6 +266,8 @@ vmmaction(struct parse_result *res)
 		break;
 	case CMD_CREATE:
 	case NONE:
+		/* The action is not expected here */
+		errx(1, "invalid action %u", res->action);
 		break;
 	}
 
@@ -540,12 +550,12 @@ int
 ctl_create(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, ret, type;
-	const char	*disk, *format, *base;
+	const char	*disk, *format, *base, *input;
 
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
-	base = NULL;
+	base = input = NULL;
 	type = parse_disktype(argv[1], &disk);
 
 	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1)
@@ -556,22 +566,34 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "s:b:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:i:s:")) != -1) {
 		switch (ch) {
-		case 's':
-			if (parse_size(res, optarg, 0) != 0)
-				errx(1, "invalid size: %s", optarg);
-			break;
 		case 'b':
 			base = optarg;
 			if (unveil(base, "r") == -1)
 				err(1, "unveil");
+			break;
+		case 'i':
+			input = optarg;
+			if (unveil(input, "r") == -1)
+				err(1, "unveil");
+			break;
+		case 's':
+			if (parse_size(res, optarg, 0) != 0)
+				errx(1, "invalid size: %s", optarg);
 			break;
 		default:
 			ctl_usage(res->ctl);
 			/* NOTREACHED */
 		}
 	}
+
+	if (input) {
+		if (base && input)
+			errx(1, "conflicting -b and -i arguments");
+		return ctl_convert(input, disk, type, res->size);
+	}
+
 	if (unveil(NULL, NULL))
 		err(1, "unveil");
 
@@ -583,18 +605,142 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 		ctl_usage(res->ctl);
 	}
 
-	if (type == VMDF_QCOW2) {
-		format = "qcow2";
-		ret = create_qc2_imagefile(disk, base, res->size);
-	} else {
-		format = "raw";
-		ret = create_raw_imagefile(disk, res->size);
-	}
-
-	if (ret != 0) {
+	if ((ret = create_imagefile(type, disk, base, res->size, &format)) != 0) {
 		errno = ret;
 		err(1, "create imagefile operation failed");
 	} else
+		warnx("%s imagefile created", format);
+
+	return (0);
+}
+
+int
+ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsize)
+{
+	struct {
+		int			 fd;
+		int			 type;
+		struct virtio_backing	 file;
+		const char		*disk;
+		off_t			 size;
+	}	 src, dst;
+	int		 ret;
+	const char	*format, *errstr = NULL;
+	uint8_t		*buf = NULL, *zerobuf = NULL;
+	size_t		 buflen;
+	ssize_t		 len, rlen;
+	off_t		 off;
+
+	memset(&src, 0, sizeof(src));
+	memset(&dst, 0, sizeof(dst));
+
+	src.type = parse_disktype(srcfile, &src.disk);
+	dst.type = dsttype;
+	dst.disk = dstfile;
+
+	if ((src.fd = open_imagefile(src.type, src.disk, O_RDONLY,
+	    &src.file, &src.size)) == -1) {
+		errstr = "failed to open source image file";
+		goto done;
+	}
+
+	/* We can only lock unveil after opening the disk and all base images */
+	if (unveil(NULL, NULL))
+		err(1, "unveil");
+
+	if (dstsize == 0)
+		dstsize = src.size;
+	else
+		dstsize *= 1048576;
+	if (dstsize < (size_t)src.size) {
+		errstr = "size cannot be smaller than input disk size";
+		goto done;
+	}
+
+	/* align to megabytes */
+	dst.size = ALIGN(dstsize, 1048576);
+
+	if ((ret = create_imagefile(dst.type, dst.disk, NULL,
+	   dst.size / 1048576, &format)) != 0) {
+		errno = ret;
+		errstr = "failed to create destination image file";
+		goto done;
+	}
+
+	if ((dst.fd = open_imagefile(dst.type, dst.disk, O_RDWR,
+	    &dst.file, &dst.size)) == -1) {
+		errstr = "failed to open destination image file";
+		goto done;
+	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
+	/*
+	 * Use 64k buffers by default.  This could also be adjusted to
+	 * the backend cluster size.
+	 */
+	buflen = 1 << 16;
+	if ((buf = calloc(1, buflen)) == NULL ||
+	    (zerobuf = calloc(1, buflen)) == NULL) {
+		errstr = "failed to allocated buffers";
+		goto done;
+	}
+
+	for (off = 0; off < dst.size; off += len) {
+		/* Read input from the source image */
+		if (off < src.size) {
+			len = MIN((off_t)buflen, src.size - off);
+			if ((rlen = src.file.pread(src.file.p,
+			    buf, (size_t)len, off)) != len) {
+				errno = EIO;
+				errstr = "failed to read from source";
+				goto done;
+			}
+		} else
+			len = 0;
+
+		/* and pad the remaining bytes */
+		if (len < (ssize_t)buflen) {
+			log_debug("%s: padding %zd zero bytes at offset %lld",
+			    format, buflen - len, off + len);
+			memset(buf + len, 0, buflen - len);
+			len = buflen;
+		}
+
+		/*
+		 * No need to copy empty buffers.  This allows the backend,
+		 * sparse files or QCOW2 images, to save space in the
+		 * destination file.
+		 */
+		if (memcmp(buf, zerobuf, buflen) == 0)
+			continue;
+
+		log_debug("%s: writing %zd of %lld bytes at offset %lld",
+		    format, len, dst.size, off);
+
+		if ((rlen = dst.file.pwrite(dst.file.p,
+		    buf, (size_t)len, off)) != len) {
+			errno = EIO;
+			errstr = "failed to write to destination";
+			goto done;
+		}
+	}
+
+	if (dstsize < (size_t)dst.size)
+		warnx("destination size rounded to %lld megabytes",
+		    dst.size / 1048576);
+
+ done:
+	free(buf);
+	free(zerobuf);
+	if (src.file.p != NULL)
+		src.file.close(src.file.p, 0);
+	if (dst.file.p != NULL)
+		dst.file.close(dst.file.p, 0);
+	if (errstr != NULL)
+		errx(1, "%s", errstr);
+	else
 		warnx("%s imagefile created", format);
 
 	return (0);

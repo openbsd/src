@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.8 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.9 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <libgen.h>
 #include <err.h>
 
 #include "vmd.h"
@@ -137,11 +138,13 @@ virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 }
 
 ssize_t
-virtio_qcow2_get_base(int fd, char *path, size_t npath)
+virtio_qcow2_get_base(int fd, char *path, size_t npath, const char *dpath)
 {
+	char expanded[PATH_MAX];
 	struct qcheader header;
 	uint64_t backingoff;
 	uint32_t backingsz;
+	char *s = NULL;
 
 	if (pread(fd, &header, sizeof(header), 0) != sizeof(header)) {
 		log_warnx("%s: short read on header", __func__);
@@ -153,19 +156,47 @@ virtio_qcow2_get_base(int fd, char *path, size_t npath)
 	}
 	backingoff = be64toh(header.backingoff);
 	backingsz = be32toh(header.backingsz);
-	if (backingsz != 0) {
-		if (backingsz >= npath - 1) {
-			log_warn("%s: snapshot path too long", __func__);
-			return -1;
-		}
-		if (pread(fd, path, backingsz, backingoff) != backingsz) {
-			log_warnx("%s: could not read snapshot base name",
-			    __func__);
-			return -1;
-		}
-		path[backingsz] = '\0';
+	if (backingsz == 0)
+		return 0;
+
+	if (backingsz >= npath - 1) {
+		log_warn("%s: snapshot path too long", __func__);
+		return -1;
 	}
-	return backingsz;
+	if (pread(fd, path, backingsz, backingoff) != backingsz) {
+		log_warnx("%s: could not read snapshot base name",
+		    __func__);
+		return -1;
+	}
+	path[backingsz] = '\0';
+
+	/*
+	 * Relative paths should be interpreted relative to the disk image,
+	 * rather than relative to the directory vmd happens to be running in,
+	 * since this is the only userful interpretation.
+	 */
+	if (path[0] == '/') {
+		if (realpath(path, expanded) == NULL ||
+		    strlcpy(path, expanded, npath) >= npath) {
+			log_warn("unable to resolve %s", path);
+			return -1;
+		}
+	} else {
+		s = dirname(dpath);
+		if (snprintf(expanded, sizeof(expanded),
+		    "%s/%s", s, path) >= (int)sizeof(expanded)) {
+			log_warn("path too long: %s/%s",
+			    s, path);
+			return -1;
+		}
+		if (npath < PATH_MAX ||
+		    realpath(expanded, path) == NULL) {
+			log_warn("unable to resolve %s", path);
+			return -1;
+		}
+	}
+
+	return strlen(path);
 }
 
 static int

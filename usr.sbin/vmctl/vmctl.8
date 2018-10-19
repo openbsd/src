@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.51 2018/10/08 16:32:01 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.52 2018/10/19 10:12:39 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2018 $
+.Dd $Mdocdate: October 19 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd control the virtual machine daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl v
 .Ar command
 .Op Ar arg ...
 .Sh DESCRIPTION
@@ -32,6 +33,9 @@ A VMM manages virtual machines (VMs) on a host.
 The VMM subsystem is responsible for creating, destroying, and executing
 VMs.
 .Pp
+The
+.Fl v
+option enables verbose mode.
 Within the commands,
 the
 .Ar size
@@ -43,6 +47,19 @@ The
 argument can be either a numeric, non-zero identifier or alternatively
 the name of a virtual machine.
 .Pp
+The
+.Ar disk
+argument is used by commands that take a path to a disk image file.
+It may be prefixed with a format prefix
+.Pf ( raw Ns : Ns Ar disk
+or
+.Pf qcow2 Ns : Ns Ar disk )
+.Sm on
+in order to specify the disk image format.
+If left unspecified, the format defaults to
+.Sq raw
+if it cannot be derived automatically.
+.Pp
 The commands are as follows:
 .Bl -tag -width Ds
 .It Cm console Ar id
@@ -50,31 +67,44 @@ Using
 .Xr cu 1
 connect to the console of the VM with the specified
 .Ar id .
-.It Cm create Ar path Fl s Op Ar size Op Fl b Ar base
+.It Cm create Ar disk Oo Fl s Ar size Oc Op Fl b Ar base | Fl i Ar disk
 Creates a VM disk image file with the specified
-.Ar path
-and
-.Ar size ,
-rounded to megabytes.
-The disk
-.Ar path
-may be prefixed with a format prefix
-.Pf ( Pa raw :
-or
-.Pa qcow2 : )
-in order to specify the disk format.
-If left unspecified, the format defaults to
-.Pa raw
-if it cannot be derived automatically.
-For qcow2, a
+.Ar disk
+path.
+.Bl -tag -width "-i input"
+.It Fl b Ar base
+For
+.Sq qcow2 ,
+a
 .Ar base
 image may be specified.
-The base image is not modified.
-The derived image contains only the changes written by the VM.
-When creating a derived image, the
+The base image is not modified and the derived image contains only the
+changes written by the VM.
+.It Fl i Ar disk
+Copy and convert the input
+.Ar disk
+to the newly created disk.
+This option conflicts with
+.Fl b Ar base .
+.It Fl s Ar size
+Specify the
 .Ar size
-may be omitted, and probed from the base image.
-If it is provided, it must match the base image size.
+of the new disk image, rounded to megabytes.
+If the
+.Fl b
+option is specified, the size must match the size of the
+.Ar base
+image.
+For the
+.Fl i
+option, the size cannot be smaller than the input disk size.
+The size can be ommitted with the
+.Fl b
+and
+.Fl i
+options and will be obtained from the base or input image respectively.
+.El
+.Pp
 .It Cm load Ar filename
 Load additional configuration from the specified file.
 .It Cm log brief
@@ -114,7 +144,7 @@ command.
 .It Xo Cm start Ar name
 .Op Fl cL
 .Op Fl b Ar path
-.Op Fl d Ar path
+.Op Fl d Ar disk
 .Op Fl i Ar count
 .Op Fl m Ar size
 .Op Fl n Ar switch
@@ -131,18 +161,10 @@ If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
 .It Fl c
 Automatically connect to the VM console.
-.It Fl d Ar path
-Disk image file (may be specified multiple times to add multiple disk images).
-The disk
-.Ar path
-may be prefixed with a format prefix
-.Pf ( Pa raw :
-or
-.Pa qcow2 : )
-in order to specify the disk format.
-If left unspecified, the format defaults to
-.Pa raw
-if it cannot be derived automatically.
+.It Fl d Ar disk
+Use a disk image at the specified
+.Ar disk
+path (may be specified multiple times to add multiple disk images).
 .It Fl i Ar count
 Number of network interfaces to add to the VM.
 .It Fl L
@@ -328,6 +350,14 @@ A requested VM-based operation could not be completed.
 Create a 4.5 Gigabyte disk image, disk.img:
 .Bd -literal -offset indent
 $ vmctl create disk.img -s 4.5G
+.Ed
+.Pp
+Convert a disk image from the
+.Sq raw
+format to
+.Sq qcow2 :
+.Bd -literal -offset indent
+$ vmctl create disk.qcow2 -i disk.img
 .Ed
 .Pp
 Create a new VM with 1GB memory, one network interface, one disk image

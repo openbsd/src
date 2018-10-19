@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.83 2018/10/15 10:35:41 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.84 2018/10/19 10:12:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -426,6 +426,6 @@ int	 cmdline_symset(char *);
 int	 host(const char *, struct address *);
 
 /* virtio.c */
-int	 virtio_get_base(int, char *, size_t, int);
+int	 virtio_get_base(int, char *, size_t, int, const char *);
 
 #endif /* VMD_H */
