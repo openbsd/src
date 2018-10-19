@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.98 2018/10/02 19:40:05 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.99 2018/10/19 21:10:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
@@ -1138,80 +1138,74 @@ main(void)
 }
 
 /*
- * If PATH_INFO is not a file name, translate it to a query.
+ * Translate PATH_INFO to a query.
  */
 static void
 parse_path_info(struct req *req, const char *path)
 {
-	char	*dir[4];
-	int	 i;
+	const char	*name, *sec, *end;
 
 	req->isquery = 0;
 	req->q.equal = 1;
-	req->q.manpath = mandoc_strdup(path);
+	req->q.manpath = NULL;
 	req->q.arch = NULL;
 
 	/* Mandatory manual page name. */
-	if ((req->q.query = strrchr(req->q.manpath, '/')) == NULL) {
-		req->q.query = req->q.manpath;
-		req->q.manpath = NULL;
-	} else
-		*req->q.query++ = '\0';
+	if ((name = strrchr(path, '/')) == NULL)
+		name = path;
+	else
+		name++;
 
 	/* Optional trailing section. */
-	if ((req->q.sec = strrchr(req->q.query, '.')) != NULL) {
-		if(isdigit((unsigned char)req->q.sec[1])) {
-			*req->q.sec++ = '\0';
-			req->q.sec = mandoc_strdup(req->q.sec);
-		} else
-			req->q.sec = NULL;
+	sec = strrchr(name, '.');
+	if (sec != NULL && isdigit((unsigned char)*++sec)) {
+		req->q.query = mandoc_strndup(name, sec - name - 1);
+		req->q.sec = mandoc_strdup(sec);
+	} else {
+		req->q.query = mandoc_strdup(name);
+		req->q.sec = NULL;
 	}
 
 	/* Handle the case of name[.section] only. */
-	if (req->q.manpath == NULL)
+	if (name == path)
 		return;
-	req->q.query = mandoc_strdup(req->q.query);
-
-	/* Split directory components. */
-	dir[i = 0] = req->q.manpath;
-	while ((dir[i + 1] = strchr(dir[i], '/')) != NULL) {
-		if (++i == 3) {
-			pg_error_badrequest(
-			    "You specified too many directory components.");
-			exit(EXIT_FAILURE);
-		}
-		*dir[i]++ = '\0';
-	}
 
 	/* Optional manpath. */
-	if ((i = validate_manpath(req, req->q.manpath)) == 0)
+	end = strchr(path, '/');
+	req->q.manpath = mandoc_strndup(path, end - path);
+	if (validate_manpath(req, req->q.manpath)) {
+		path = end + 1;
+		if (name == path)
+			return;
+	} else {
+		free(req->q.manpath);
 		req->q.manpath = NULL;
-	else if (dir[1] == NULL)
-		return;
+	}
 
 	/* Optional section. */
-	if (strncmp(dir[i], "man", 3) == 0) {
+	if (strncmp(path, "man", 3) == 0) {
+		path += 3;
+		end = strchr(path, '/');
 		free(req->q.sec);
-		req->q.sec = mandoc_strdup(dir[i++] + 3);
+		req->q.sec = mandoc_strndup(path, end - path);
+		path = end + 1;
+		if (name == path)
+			return;
 	}
-	if (dir[i] == NULL) {
-		if (req->q.manpath == NULL)
-			free(dir[0]);
-		return;
+
+	/* Optional architecture. */
+	end = strchr(path, '/');
+	if (end + 1 != name) {
+		pg_error_badrequest(
+		    "You specified too many directory components.");
+		exit(EXIT_FAILURE);
 	}
-	if (dir[i + 1] != NULL) {
+	req->q.arch = mandoc_strndup(path, end - path);
+	if (validate_arch(req->q.arch) == 0) {
 		pg_error_badrequest(
 		    "You specified an invalid directory component.");
 		exit(EXIT_FAILURE);
 	}
-
-	/* Optional architecture. */
-	if (i) {
-		req->q.arch = mandoc_strdup(dir[i]);
-		if (req->q.manpath == NULL)
-			free(dir[0]);
-	} else
-		req->q.arch = dir[0];
 }
 
 /*
