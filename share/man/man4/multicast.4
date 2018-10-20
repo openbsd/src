@@ -24,10 +24,10 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: multicast.4,v 1.12 2018/03/07 09:54:23 jmc Exp $
+.\" $OpenBSD: multicast.4,v 1.13 2018/10/20 20:09:18 cheloha Exp $
 .\" $NetBSD: multicast.4,v 1.3 2004/09/12 13:12:26 wiz Exp $
 .\"
-.Dd $Mdocdate: March 7 2018 $
+.Dd $Mdocdate: October 20 2018 $
 .Dt MULTICAST 4
 .Os
 .\"
@@ -138,17 +138,17 @@ or disable multicast forwarding in the kernel:
 .Bd -literal -offset 5n
 /* IPv4 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_INIT, (void *)&v, sizeof(v));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_INIT, &v, sizeof(v));
 .Ed
 .Bd -literal -offset 5n
 /* IPv6 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_INIT, (void *)&v, sizeof(v));
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_INIT, &v, sizeof(v));
 \&...
 /* If necessary, filter all ICMPv6 messages */
 struct icmp6_filter filter;
 ICMP6_FILTER_SETBLOCKALL(&filter);
-setsockopt(mrouter_s6, IPPROTO_ICMPV6, ICMP6_FILTER, (void *)&filter,
+setsockopt(mrouter_s6, IPPROTO_ICMPV6, ICMP6_FILTER, &filter,
            sizeof(filter));
 .Ed
 .Pp
@@ -168,8 +168,7 @@ memcpy(&vc.vifc_lcl_addr, &vif_local_address, sizeof(vc.vifc_lcl_addr));
 if (vc.vifc_flags & VIFF_TUNNEL)
     memcpy(&vc.vifc_rmt_addr, &vif_remote_address,
            sizeof(vc.vifc_rmt_addr));
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)&vc,
-           sizeof(vc));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, &vc, sizeof(vc));
 .Ed
 .Pp
 The
@@ -205,8 +204,7 @@ memset(&mc, 0, sizeof(mc));
 mc.mif6c_mifi = mif_index;
 mc.mif6c_flags = mif_flags;
 mc.mif6c_pifi = pif_index;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)&mc,
-           sizeof(mc));
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, &mc, sizeof(mc));
 .Ed
 .Pp
 The
@@ -226,13 +224,13 @@ A multicast interface is deleted by:
 .Bd -literal -offset indent
 /* IPv4 */
 vifi_t vifi = vif_index;
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_VIF, (void *)&vifi,
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_VIF, &vifi,
            sizeof(vifi));
 .Ed
 .Bd -literal -offset indent
 /* IPv6 */
 mifi_t mifi = mif_index;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_DEL_MIF, (void *)&mifi,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_DEL_MIF, &mifi,
            sizeof(mifi));
 .Ed
 .Pp
@@ -301,8 +299,7 @@ memcpy(&mc.mfcc_mcastgrp, &group_addr, sizeof(mc.mfcc_mcastgrp));
 mc.mfcc_parent = iif_index;
 for (i = 0; i < maxvifs; i++)
     mc.mfcc_ttls[i] = oifs_ttl[i];
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_MFC,
-           (void *)&mc, sizeof(mc));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_MFC, &mc, sizeof(mc));
 .Ed
 .Bd -literal -offset indent
 /* IPv6 */
@@ -314,8 +311,7 @@ mc.mf6cc_parent = iif_index;
 for (i = 0; i < maxvifs; i++)
     if (oifs_ttl[i] > 0)
         IF_SET(i, &mc.mf6cc_ifset);
-setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_ADD_MFC,
-           (void *)&mc, sizeof(mc));
+setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_ADD_MFC, &mc, sizeof(mc));
 .Ed
 .Pp
 The
@@ -344,8 +340,7 @@ struct mfcctl mc;
 memset(&mc, 0, sizeof(mc));
 memcpy(&mc.mfcc_origin, &source_addr, sizeof(mc.mfcc_origin));
 memcpy(&mc.mfcc_mcastgrp, &group_addr, sizeof(mc.mfcc_mcastgrp));
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_MFC,
-           (void *)&mc, sizeof(mc));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_DEL_MFC, &mc, sizeof(mc));
 .Ed
 .Bd -literal -offset indent
 /* IPv6 */
@@ -353,8 +348,7 @@ struct mf6cctl mc;
 memset(&mc, 0, sizeof(mc));
 memcpy(&mc.mf6cc_origin, &source_addr, sizeof(mc.mf6cc_origin));
 memcpy(&mc.mf6cc_mcastgrp, &group_addr, sizeof(mf6cc_mcastgrp));
-setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_DEL_MFC,
-           (void *)&mc, sizeof(mc));
+setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_DEL_MFC, &mc, sizeof(mc));
 .Ed
 .Pp
 The following method can be used to get various statistics per
@@ -453,7 +447,7 @@ and
 An example:
 .Bd -literal -offset 3n
 uint32_t v;
-getsockopt(sock, IPPROTO_IP, MRT_API_SUPPORT, (void *)&v, sizeof(v));
+getsockopt(sock, IPPROTO_IP, MRT_API_SUPPORT, &v, sizeof(v));
 .Ed
 .Pp
 This would set
@@ -478,10 +472,8 @@ would fail.
 To modify the API, and to set some specific feature in the kernel, then:
 .Bd -literal -offset 3n
 uint32_t v = MRT_MFC_FLAGS_DISABLE_WRONGVIF;
-if (setsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)&v, sizeof(v))
-    != 0) {
+if (setsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, &v, sizeof(v)) != 0)
     return (ERROR);
-}
 if (v & MRT_MFC_FLAGS_DISABLE_WRONGVIF)
     return (OK);	/* Success */
 else
@@ -498,7 +490,7 @@ The return value in
 is the actual (sub)set of features that were enabled in the kernel.
 To obtain later the same set of features that were enabled, use:
 .Bd -literal -offset indent
-getsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, (void *)&v, sizeof(v));
+getsockopt(sock, IPPROTO_IP, MRT_API_CONFIG, &v, sizeof(v));
 .Ed
 .Pp
 The set of enabled features is global.
@@ -775,7 +767,7 @@ do {
     return (ERROR);
 } while (0);
 setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_BW_UPCALL,
-          (void *)&bw_upcall, sizeof(bw_upcall));
+          &bw_upcall, sizeof(bw_upcall));
 .Ed
 .Pp
 To delete a single filter, use
