@@ -1,4 +1,4 @@
-/* $OpenBSD: self_reloc.c,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/* $OpenBSD: self_reloc.c,v 1.3 2018/10/20 11:59:07 kettenis Exp $ */
 /*-
  * Copyright (c) 2008-2010 Rui Paulo <rpaulo@FreeBSD.org>
  * All rights reserved.
@@ -25,26 +25,26 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-__FBSDID("$FreeBSD: head/sys/boot/common/self_reloc.c 309360 2016-12-01 14:28:37Z emaste $");
-#endif
-
 #include <sys/param.h>
-#include <sys/exec_elf.h>
 #include <machine/reloc.h>
 
 #if defined(__aarch64__) || defined(__amd64__)
+#define	ELFSIZE		64
 #define	ElfW_Rel	Elf64_Rela
 #define	ElfW_Dyn	Elf64_Dyn
 #define	ELFW_R_TYPE	ELF64_R_TYPE
 #define	ELF_RELA
 #elif defined(__arm__) || defined(__i386__)
+#define	ELFSIZE		32
 #define	ElfW_Rel	Elf32_Rel
 #define	ElfW_Dyn	Elf32_Dyn
 #define	ELFW_R_TYPE	ELF32_R_TYPE
 #else
 #error architecture not supported
 #endif
+
+#include <sys/exec_elf.h>
+
 #if defined(__aarch64__)
 #define	RELOC_TYPE_NONE		R_AARCH64_NONE
 #define	RELOC_TYPE_RELATIVE	R_AARCH64_RELATIVE
@@ -58,8 +58,6 @@ __FBSDID("$FreeBSD: head/sys/boot/common/self_reloc.c 309360 2016-12-01 14:28:37
 #define	RELOC_TYPE_NONE		R_386_NONE
 #define	RELOC_TYPE_RELATIVE	R_386_RELATIVE
 #endif
-
-void self_reloc(Elf_Addr baseaddr, ElfW_Dyn *dynamic);
 
 /*
  * A simple elf relocator.
@@ -121,6 +119,6 @@ self_reloc(Elf_Addr baseaddr, ElfW_Dyn *dynamic)
 			/* XXX: do we need other relocations ? */
 			break;
 		}
-		rel = (ElfW_Rel *)(void *)((caddr_t) rel + relent);
+		rel = (ElfW_Rel *) ((caddr_t) rel + relent);
 	}
 }
