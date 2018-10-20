@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.85 2018/10/19 06:12:35 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.86 2018/10/20 16:02:05 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1703,11 +1703,7 @@ func runKWTestWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int, 
 
 	outLen := msgLen + 8
 	out := make([]byte, outLen)
-	// XXX remove workaround once fix to aes_wrap.c is committed
-	ret = -1
-	if msgLen > 8 {
-		ret = C.AES_wrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&msg[0])), (C.uint)(msgLen))
-	}
+	ret = C.AES_wrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&msg[0])), (C.uint)(msgLen))
 	success := false
 	if ret == C.int(outLen) && bytes.Equal(out, ct) {
 		if acceptableAudit && wt.Result == "acceptable" {
@@ -1740,11 +1736,7 @@ func runKWTestUnWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int
 	if ctLen == 0 {
 		out = append(out, 0)
 	}
-	// XXX remove workaround once fix to aes_wrap.c is committed
-	ret = -1
-	if ctLen > 16 {
-		ret = C.AES_unwrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&ct[0])), (C.uint)(ctLen))
-	}
+	ret = C.AES_unwrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&ct[0])), (C.uint)(ctLen))
 	success := false
 	if ret == C.int(ctLen - 8) && bytes.Equal(out[0:ret], msg[0:ret]) {
 		if acceptableAudit && wt.Result == "acceptable" {
