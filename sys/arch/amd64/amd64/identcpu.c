@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.109 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.110 2018/10/20 20:40:54 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -835,7 +835,8 @@ cpu_topology(struct cpu_info *ci)
 			ci->ci_smt_id = 0;
 			CPU_INFO_FOREACH(cii, ci_other) {
 				if (ci != ci_other &&
-				    ci_other->ci_core_id == ci->ci_core_id)
+				    ci_other->ci_core_id == ci->ci_core_id &&
+				    ci_other->ci_pkg_id == ci->ci_pkg_id)
 					ci->ci_smt_id++;
 			}
 		} else {
