@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_wrap.c,v 1.10 2015/09/10 15:56:24 jsing Exp $ */
+/* $OpenBSD: aes_wrap.c,v 1.11 2018/10/20 15:53:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,7 +66,8 @@ AES_wrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
 {
 	unsigned char *A, B[16], *R;
 	unsigned int i, j, t;
-	if ((inlen & 0x7) || (inlen < 8))
+
+	if ((inlen & 0x7) || (inlen < 16))
 		return -1;
 	A = B;
 	t = 1;
@@ -100,11 +101,10 @@ AES_unwrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
 {
 	unsigned char *A, B[16], *R;
 	unsigned int i, j, t;
+
+	if ((inlen & 0x7) || (inlen < 24))
+		return -1;
 	inlen -= 8;
-	if (inlen & 0x7)
-		return -1;
-	if (inlen < 8)
-		return -1;
 	A = B;
 	t = 6 * (inlen >> 3);
 	memcpy(A, in, 8);
