@@ -1,4 +1,4 @@
-/* $OpenBSD: reloc.h,v 1.3 2011/03/23 16:54:34 pirofti Exp $ */
+/* $OpenBSD: reloc.h,v 1.4 2018/10/20 11:56:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002,2003 Dale Rahn
@@ -26,6 +26,7 @@
  */
 #ifndef  _MACHINE_RELOC_H_
 #define  _MACHINE_RELOC_H_
+
 #define R_TYPE(X)       __CONCAT(R_X86_64_,X)
 
 #define R_X86_64_NONE		0
@@ -52,5 +53,17 @@
 #define R_X86_64_DTPOFF32	21
 #define R_X86_64_GOTTPOFF	22
 #define R_X86_64_TPOFF32	23
+
+#define R_386_NONE		0
+#define R_386_32		1
+#define R_386_PC32		2
+#define R_386_GOT32		3
+#define R_386_PLT32		4
+#define R_386_COPY		5
+#define R_386_GLOB_DAT		6
+#define R_386_JMP_SLOT		7
+#define R_386_RELATIVE		8
+#define R_386_GOTOFF		9
+#define R_386_GOTPC		10
 
 #endif /* _MACHINE_RELOC_H_ */
