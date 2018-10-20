@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.156 2018/10/15 11:31:11 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.157 2018/10/20 19:55:01 kn Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
 
 	/* revoke privs */
 	ouid = getuid();
-	if ((pw = getpwnam(TRACEROUTE_USER)) != NULL) {
+	if (ouid == 0 && (pw = getpwnam(TRACEROUTE_USER)) != NULL) {
 		uid = pw->pw_uid;
 		gid = pw->pw_gid;
 	} else {
