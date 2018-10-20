@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.52 2018/10/19 10:12:39 reyk Exp $
+.\"	$OpenBSD: vmctl.8,v 1.53 2018/10/20 13:29:12 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2018 $
+.Dd $Mdocdate: October 20 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -51,9 +51,9 @@ The
 .Ar disk
 argument is used by commands that take a path to a disk image file.
 It may be prefixed with a format prefix
-.Pf ( raw Ns : Ns Ar disk
+.Pf ( raw : Ns Ar disk
 or
-.Pf qcow2 Ns : Ns Ar disk )
+.Pf qcow2 : Ns Ar disk )
 .Sm on
 in order to specify the disk image format.
 If left unspecified, the format defaults to
@@ -104,7 +104,6 @@ and
 .Fl i
 options and will be obtained from the base or input image respectively.
 .El
-.Pp
 .It Cm load Ar filename
 Load additional configuration from the specified file.
 .It Cm log brief
