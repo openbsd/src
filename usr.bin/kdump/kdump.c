@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.134 2018/08/11 11:01:37 mestre Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.135 2018/10/21 19:56:26 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1112,6 +1112,7 @@ doerr:
 			/* syscalls that return errno values */
 			case SYS_getlogin_r:
 			case SYS___thrsleep:
+			case SYS_futex:
 				if ((error = ret) != 0)
 					goto doerr;
 				/* FALLTHROUGH */
