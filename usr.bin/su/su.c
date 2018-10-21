@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.71 2018/08/23 16:52:13 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.72 2018/10/21 13:18:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -163,6 +163,8 @@ main(int argc, char **argv)
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_SHELLS, "r") == -1)
 		err(1, "unveil");
 
 	for (;;) {
