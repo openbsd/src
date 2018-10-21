@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1860 2018/09/03 19:51:48 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.1862 2018/10/21 14:32:39 mortimer Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -743,7 +743,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_3	0x1454		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_CCPV5A	0x1456		/* Cryptographic Co-processor v5a */
 #define	PCI_PRODUCT_AMD_AMD64_17_HDA	0x1457		/* AMD64 17h HD Audio */
-#define	PCI_PRODUCT_AMD_AMD64_17_XHCI	0x145c		/* AMD64 17h USB xHCI */
+#define	PCI_PRODUCT_AMD_AMD64_17_XHCI	0x145c		/* AMD64 17h xHCI */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_1	0x1460		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_2	0x1461		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_3	0x1462		/* AMD64 17h Data Fabric */
@@ -787,7 +787,22 @@
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_MISC	0x1583		/* AMD64 16h Misc Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_CPU_PM	0x1584		/* AMD64 16h CPU Power */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_MISC_2	0x1585		/* AMD64 16h Misc Cfg */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_RC	0x15d0		/* AMD64 17h/1xh Root Complex */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_IOMMU	0x15d1		/* AMD64 17h/1xh IOMMU */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_1	0x15d3		/* AMD64 17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_2	0x15db		/* AMD64 17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_3	0x15dc		/* AMD64 17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_1	0x15e0		/* AMD64 17h/1xh xHCI */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_2	0x15e1		/* AMD64 17h/1xh xHCI */
 #define	PCI_PRODUCT_AMD_RAVENRIDGE_HDA	0x15e3		/* Raven Ridge HD Audio */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_0	0x15e8		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_1	0x15e9		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_2	0x15ea		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_3	0x15eb		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_4	0x15ec		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_5	0x15ed		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_6	0x15ee		/* AMD64 17h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_7	0x15ef		/* AMD64 17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_LINK	0x1600		/* AMD64 15/0xh Link Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_ADDR	0x1601		/* AMD64 15/0xh Address Map */
 #define	PCI_PRODUCT_AMD_AMD64_15_0x_DRAM	0x1602		/* AMD64 15/0xh DRAM Cfg */
@@ -1070,6 +1085,8 @@
 #define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
+#define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
@@ -6875,6 +6892,7 @@
 #define	PCI_PRODUCT_REALTEK_RTL8723AE	0x8723		/* 8723AE */
 #define	PCI_PRODUCT_REALTEK_RTL8821AE	0x8821		/* 8821AE */
 #define	PCI_PRODUCT_REALTEK_RT8191SE	0xb723		/* 8191SE */
+#define	PCI_PRODUCT_REALTEK_RTL8822BE	0xb822		/* 8822BE */
 
 /* Red Hat products */
 #define	PCI_PRODUCT_REDHAT_PPB	0x0001		/* Qemu PCI-PCI */
