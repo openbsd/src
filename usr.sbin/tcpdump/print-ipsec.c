@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.24 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.25 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -31,6 +31,7 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
@@ -40,10 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include "addrtoname.h"
 #include "interface.h"
@@ -233,22 +230,16 @@ ah_print (const u_char *bp, u_int len, const u_char *bp2)
 	const struct ip *ip;
 	const struct ah_hdr *ah;
 	u_int pl_len = len;
-#ifdef INET6
 	const struct ip6_hdr *ip6;
-#endif
 
 	ip = (const struct ip *)bp2;
-#ifdef INET6
 	if (ip->ip_v == 6) {
 		ip6 = (const struct ip6_hdr *)bp2;
 		printf("ah %s > %s", ip6addr_string(&ip6->ip6_src),
 		    ip6addr_string(&ip6->ip6_dst));
 	} else
-#endif
-	{
 		printf("ah %s > %s",
 	    	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
-	}
 
 	if (pl_len < sizeof(struct ah_hdr)) {
 		printf("[|ah]");

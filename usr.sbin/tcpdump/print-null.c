@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.22 2015/11/05 17:57:37 jca Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.23 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -32,6 +32,7 @@ struct rtentry;
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
@@ -41,10 +42,6 @@ struct rtentry;
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -76,11 +73,9 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 		printf("ip: ");
 		break;
 
-#ifdef INET6
 	case AF_INET6:
 		printf("ip6: ");
 		break;
-#endif
 
 	case AF_NS:
 		printf("ns: ");
@@ -142,11 +137,9 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		ip_print(p + NULL_HDRLEN, length);
 		break;
 
-#ifdef INET6
 	case AF_INET6:
 		ip6_print(p + NULL_HDRLEN, length);
 		break;
-#endif /*INET6*/
 
 	case AF_MPLS:
 		mpls_print(p + NULL_HDRLEN, length);

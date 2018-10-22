@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.31 2017/05/24 16:20:26 bluhm Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.32 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -62,9 +62,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int hdrlen;
 	u_int caplen = h->caplen;
 	const struct ip *ip;
-#ifdef INET6
 	const struct ip6_hdr *ip6;
-#endif
 	const struct pfloghdr *hdr;
 	u_int8_t af;
 
@@ -178,13 +176,11 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 			default_print((const u_char *)ip,
 			    caplen - hdrlen);
 	} else {
-#ifdef INET6
 		ip6 = (struct ip6_hdr *)(p + hdrlen);
 		ip6_print((const u_char *)ip6, length);
 		if (xflag)
 			default_print((const u_char *)ip6,
 			    caplen - hdrlen);
-#endif
 	}
 
 out:

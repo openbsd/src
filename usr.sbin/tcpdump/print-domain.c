@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.25 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.26 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -488,7 +488,6 @@ ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 			EXTRACT_16BITS(cp), EXTRACT_16BITS(cp + 2));
 		break;
 
-#ifdef INET6
 	case T_AAAA:
 		if (!TTEST2(*cp, sizeof(struct in6_addr)))
 			return(NULL);
@@ -521,7 +520,6 @@ ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 		}
 		break;
 	    }
-#endif /*INET6*/
 
 	case T_OPT:
 		printf(" UDPsize=%u", class);

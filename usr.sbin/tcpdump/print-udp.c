@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.50 2018/07/10 00:38:52 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.51 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -26,6 +26,7 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
@@ -48,10 +49,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -318,11 +315,9 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 #define MULTICASTDNS_PORT	5353
 #define MPLS_PORT		6635
 
-#ifdef INET6
 #define RIPNG_PORT		521		/*XXX*/
 #define DHCP6_PORT1		546		/*XXX*/
 #define DHCP6_PORT2		547		/*XXX*/
-#endif
 
 void
 udp_print(const u_char *bp, u_int length, const void *iph)
@@ -343,7 +338,6 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		ipv = ip->ip_v;
 
 		switch (ipv) {
-#ifdef INET6
 		case 6: {
 			const struct ip6_hdr *ip6 = iph;
 
@@ -356,7 +350,6 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			    sizeof(ip6->ip6_dst), cksum);
 			break;
 		}
-#endif /*INET6*/
 		case 4:
 			ipsrc = ipaddr_string(&ip->ip_src);
 			ipdst = ipaddr_string(&ip->ip_dst);
@@ -570,13 +563,11 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			vxlan_print(cp, length);
 		else if (ISPORT(MPLS_PORT))
 			mpls_print(cp, length);
-#ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
 			ripng_print(cp, length);
 		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2)) {
 			dhcp6_print(cp, length, sport, dport);
 		}
-#endif /*INET6*/
 		else if (ISPORT(GTP_C_PORT) || ISPORT(GTP_U_PORT) ||
 		    ISPORT(GTP_PRIME_PORT))
 			gtp_print(cp, length, sport, dport);

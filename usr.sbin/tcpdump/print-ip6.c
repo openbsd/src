@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.27 2018/09/29 15:53:07 kn Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.28 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -20,8 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifdef INET6
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -244,5 +242,3 @@ ip6_print(const u_char *bp, u_int length)
 	packetp = pktp;
 	snapend = send;
 }
-
-#endif /* INET6 */

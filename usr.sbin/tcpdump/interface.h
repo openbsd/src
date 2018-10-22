@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.78 2018/07/06 07:13:21 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.79 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.78 2018/07/06 07:13:21 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.79 2018/10/22 16:12:45 kn Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -287,7 +287,6 @@ extern void ofp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void usbpcap_if_print(u_char *, const struct pcap_pkthdr *,
     const u_char *);
 
-#ifdef INET6
 extern void ip6_print(const u_char *, u_int);
 extern void ip6_opt_print(const u_char *, int);
 extern int hbhopt_print(const u_char *);
@@ -298,7 +297,6 @@ extern void ripng_print(const u_char *, int);
 extern int rt6_print(const u_char *, const u_char *);
 extern void ospf6_print(const u_char *, u_int);
 extern void dhcp6_print(const u_char *, u_int, u_short, u_short);
-#endif /*INET6*/
 
 extern uint32_t in_cksum_add(const void *, size_t, uint32_t);
 extern uint16_t in_cksum_fini(uint32_t);

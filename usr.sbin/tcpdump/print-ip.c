@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.50 2018/07/06 04:49:21 dlg Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.51 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -441,9 +441,8 @@ ip_print(const u_char *bp, u_int length)
 			}
 			break;
 
-#ifdef INET6
 #ifndef IPPROTO_IPV6
-#define IPPROTO_IPV6
+#define IPPROTO_IPV6 41
 #endif
 		case IPPROTO_IPV6:
 			/* ip6-in-ip encapsulation */
@@ -457,7 +456,6 @@ ip_print(const u_char *bp, u_int length)
 				goto out;
  			}
  			break;
-#endif /*INET6*/
 
 #ifndef IPPROTO_GRE
 #define IPPROTO_GRE 47

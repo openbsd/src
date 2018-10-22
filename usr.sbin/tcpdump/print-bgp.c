@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.25 2017/08/30 09:23:00 otto Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.26 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -387,7 +387,6 @@ trunc:
 	return -2;
 }
 
-#ifdef INET6
 static int
 decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 {
@@ -417,7 +416,6 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 trunc:
 	return -2;
 }
-#endif
 
 static int
 bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
@@ -614,13 +612,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		p += 3;
 
-		if (af == AFNUM_INET)
-			;
-#ifdef INET6
-		else if (af == AFNUM_INET6)
-			;
-#endif
-		else
+		if (af != AFNUM_INET && af != AFNUM_INET6)
 			break;
 
 		TCHECK(p[0]);
@@ -635,13 +627,11 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 					printf(" %s", getname(p + 1 + i));
 					i += sizeof(struct in_addr);
 					break;
-#ifdef INET6
 				case AFNUM_INET6:
 					TCHECK2(p[1+i], sizeof(struct in6_addr));
 					printf(" %s", getname6(p + 1 + i));
 					i += sizeof(struct in6_addr);
 					break;
-#endif
 				default:
 					printf(" (unknown af)");
 					i = tlen;	/*exit loop*/
@@ -671,11 +661,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
 				break;
-#ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
 				break;
-#endif
 			default:
 				printf(" (unknown af)");
 				advance = 0;
@@ -710,11 +698,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
 				break;
-#ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
 				break;
-#endif
 			default:
 				printf(" (unknown af)");
 				advance = 0;
@@ -900,31 +886,9 @@ bgp_update_print(const u_char *dat, int length)
 		/*
 		 * Without keeping state from the original NLRI message,
 		 * it's not possible to tell if this a v4 or v6 route,
-		 * so only try to decode it if we're not v6 enabled.
-	         */
-#ifdef INET6
+		 * so do not try to decode it.
+		 */
 		printf(" (Withdrawn routes: %d bytes)", len);
-#else	
-		char buf[HOST_NAME_MAX+1 + 100];
-		int wpfx;
-
-		TCHECK2(p[2], len);
- 		i = 2;
-
-		printf(" (Withdrawn routes:");
-			
-		while(i < 2 + len) {
-			wpfx = decode_prefix4(&p[i], buf, sizeof(buf));
-			if (wpfx == -1) {
-				printf(" (illegal prefix length)");
-				break;
-			} else if (wpfx == -2)
-				goto trunc;
-			i += wpfx;
-			printf(" %s", buf);
-		}
-		printf(")");
-#endif
 	}
 	p += 2 + len;
 

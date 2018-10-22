@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ripng.c,v 1.6 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-ripng.c,v 1.7 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -20,8 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifdef INET6
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -115,4 +113,3 @@ ripng_print(const u_char *dat, int length)
 	if (rp->rip6_vers != RIP6_VERSION)
 		printf(" [vers %d]", rp->rip6_vers);
 }
-#endif /* INET6 */

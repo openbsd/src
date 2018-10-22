@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.20 2017/10/30 10:07:44 mpi Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.21 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -101,11 +101,9 @@ sl_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	case 4:
 		ip_print((u_char *)ip, length);
 		break;
-#ifdef INET6
 	case 6:
 		ip6_print((u_char *)ip, length);
 		break;
-#endif
 	default:
 		printf ("ip v%d", ip->ip_v);
 	}
