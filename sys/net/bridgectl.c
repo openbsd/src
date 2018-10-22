@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.9 2018/09/27 12:39:36 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.10 2018/10/22 13:18:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -66,7 +66,7 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifbrlreq *brlreq = (struct ifbrlreq *)data;
 	struct ifbareq *bareq = (struct ifbareq *)data;
 	struct ifbrparam *bparam = (struct ifbrparam *)data;
-	struct bridge_iflist *p;
+	struct bridge_iflist *bif;
 	struct ifnet *ifs;
 	int error = 0;
 
@@ -83,8 +83,8 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOENT;
 			break;
 		}
-		p = (struct bridge_iflist *)ifs->if_bridgeport;
-		if (p == NULL || p->bridge_sc != sc) {
+		bif = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (bif == NULL || bif->bridge_sc != sc) {
 			error = ESRCH;
 			break;
 		}
@@ -124,8 +124,8 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOENT;
 			break;
 		}
-		p = (struct bridge_iflist *)ifs->if_bridgeport;
-		if (p == NULL || p->bridge_sc != sc) {
+		bif = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (bif == NULL || bif->bridge_sc != sc) {
 			error = ESRCH;
 			break;
 		}
@@ -136,12 +136,12 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		if (brlreq->ifbr_flags & BRL_FLAG_IN) {
-			error = bridge_addrule(p, brlreq, 0);
+			error = bridge_addrule(bif, brlreq, 0);
 			if (error)
 				break;
 		}
 		if (brlreq->ifbr_flags & BRL_FLAG_OUT) {
-			error = bridge_addrule(p, brlreq, 1);
+			error = bridge_addrule(bif, brlreq, 1);
 			if (error)
 				break;
 		}
@@ -152,12 +152,12 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOENT;
 			break;
 		}
-		p = (struct bridge_iflist *)ifs->if_bridgeport;
-		if (p == NULL || p->bridge_sc != sc) {
+		bif = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (bif == NULL || bif->bridge_sc != sc) {
 			error = ESRCH;
 			break;
 		}
-		bridge_flushrule(p);
+		bridge_flushrule(bif);
 		break;
 	case SIOCBRDGGRL:
 		error = bridge_brlconf(sc, (struct ifbrlconf *)data);
