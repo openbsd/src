@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.47 2018/04/13 14:09:42 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.48 2018/10/22 23:44:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -540,7 +540,6 @@ hfsc_pf_enqueue(void *arg, struct mbuf *m)
 		return (m);
 
 	ml_enqueue(&cq->q, m);
-	m->m_pkthdr.pf.prio = IFQ_MAXPRIO;
 	return (NULL);
 }
 
