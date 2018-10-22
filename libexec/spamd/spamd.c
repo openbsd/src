@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.154 2018/04/26 08:57:07 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.155 2018/10/22 17:31:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -471,7 +471,7 @@ spamd_tls_init()
 	if (tls_configure(tlsctx, tlscfg) != 0)
 		errx(1, "failed to configure TLS - %s", tls_error(tlsctx));
 
-	/* set hostname to cert's CN unless explicitely given? */
+	/* set hostname to cert's CN unless explicitly given? */
 }
 
 int

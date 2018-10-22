@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.4 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.5 2018/10/22 17:31:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -1088,7 +1088,7 @@ out:
 	AIC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
 
 	/*
-	 * We need to explicitely un-busy.
+	 * We need to explicitly un-busy.
 	 */
 	(*sc->sc_write)(sc, AIC_SCSI_SIGNAL_REG,
 	    (*sc->sc_read)(sc, AIC_SCSI_SIGNAL_REG) &

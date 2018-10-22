@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2018/05/09 14:42:11 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2018/10/22 17:31:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1856,7 +1856,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		if ((pg->pg_flags & PGF_CACHED) == 0) {
 			/*
 			 * If page is not mapped cached it's either because
-			 * an uncached mapping was explicitely requested or
+			 * an uncached mapping was explicitly requested or
 			 * we have a VAC situation.
 			 * Map this page uncached as well.
 			 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.54 2017/02/27 10:44:46 jca Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.55 2018/10/22 17:31:24 krw Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -60,7 +60,7 @@ static const struct match matches[] = {
 
 #define MATCH_FAMILY(a, b) ((a) == matches[(b)].family || (a) == PF_UNSPEC)
 #define MATCH_PROTO(a, b) ((a) == matches[(b)].protocol || (a) == 0 || matches[(b)].protocol == 0)
-/* Do not match SOCK_RAW unless explicitely specified */
+/* Do not match SOCK_RAW unless explicitly specified */
 #define MATCH_SOCKTYPE(a, b) ((a) == matches[(b)].socktype || ((a) == 0 && \
 				matches[(b)].socktype != SOCK_RAW))
 
