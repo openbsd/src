@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.172 2017/12/08 05:25:20 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.173 2018/10/22 01:59:08 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -56,14 +56,14 @@ void _dl_fixup_user_env(void);
 void _dl_call_preinit(elf_object_t *);
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 
-int  _dl_pagesz;
+int _dl_pagesz;
+int _dl_bindnow;
+int _dl_traceld;
+int _dl_debug;
 
 char **_dl_libpath;
 
 char *_dl_preload;
-char *_dl_bindnow;
-char *_dl_traceld;
-char *_dl_debug;
 char *_dl_showmap;
 char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
 
@@ -218,11 +218,11 @@ _dl_setup_env(const char *argv0, char **envp)
 	/*
 	 * Get paths to various things we are going to use.
 	 */
-	_dl_debug = _dl_getenv("LD_DEBUG", envp);
+	_dl_debug = _dl_getenv("LD_DEBUG", envp) != NULL;
 	_dl_libpath = _dl_split_path(_dl_getenv("LD_LIBRARY_PATH", envp));
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
-	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
-	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
+	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp) != NULL;
+	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp) != NULL;
 	_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
 	_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
 	_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
@@ -243,11 +243,11 @@ _dl_setup_env(const char *argv0, char **envp)
 			_dl_unsetenv("LD_PRELOAD", envp);
 		}
 		if (_dl_bindnow) {
-			_dl_bindnow = NULL;
+			_dl_bindnow = 0;
 			_dl_unsetenv("LD_BIND_NOW", envp);
 		}
 		if (_dl_debug) {
-			_dl_debug = NULL;
+			_dl_debug = 0;
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
 	}
@@ -566,7 +566,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	 */
 
 	failed = 0;
-	if (_dl_traceld == NULL)
+	if (!_dl_traceld)
 		failed = _dl_rtld(_dl_objects);
 
 	if (_dl_debug || _dl_traceld) {

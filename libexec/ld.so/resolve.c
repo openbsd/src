@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.82 2018/03/09 14:55:44 kettenis Exp $ */
+/*	$OpenBSD: resolve.c,v 1.83 2018/10/22 01:59:08 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -307,7 +307,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 
 	if ((object->obj_flags & DF_1_NOOPEN) != 0 &&
 	    _dl_loading_object->obj_type == OBJTYPE_DLO &&
-	    _dl_traceld == NULL) {
+	    !_dl_traceld) {
 		_dl_free(object);
 		_dl_errno = DL_CANT_LOAD_OBJ;
 		return(NULL);

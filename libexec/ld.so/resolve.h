@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.83 2017/05/08 02:34:01 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.84 2018/10/22 01:59:08 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -288,13 +288,14 @@ extern int  _dl_errno;
 
 extern char **_dl_libpath;
 
+extern int _dl_bindnow;
+extern int _dl_traceld;
+extern int _dl_debug;
+
 extern char *_dl_preload;
-extern char *_dl_bindnow;
-extern char *_dl_traceld;
 extern char *_dl_tracefmt1;
 extern char *_dl_tracefmt2;
 extern char *_dl_traceprog;
-extern char *_dl_debug;
 
 extern int _dl_trust;
 
