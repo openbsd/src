@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.61 2017/03/20 15:31:23 bluhm Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.62 2018/10/22 16:20:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,11 @@ main(int argc, char *argv[])
 	time_t		 last_report = 0, this_check;
 	int		 ch, check_period = CHECK_PERIOD;
 	const char	*errstr;
+
+	if (unveil("/etc/sensorsd.conf", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/", "x") == -1)
+		err(1, "unveil");
 
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");
