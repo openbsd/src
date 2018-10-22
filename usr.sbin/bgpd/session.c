@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.369 2018/09/29 07:58:06 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.370 2018/10/22 07:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1382,7 +1382,8 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 	if (!p->throttled && p->wbuf.queued > SESS_MSG_HIGH_MARK) {
 		if (imsg_rde(IMSG_XOFF, p->conf.id, NULL, 0) == -1)
 			log_peer_warn(&p->conf, "imsg_compose XOFF");
-		p->throttled = 1;
+		else
+			p->throttled = 1;
 	}
 
 	free(msg);
@@ -1773,7 +1774,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");
-			p->throttled = 0;
+			else
+				p->throttled = 0;
 		}
 		if (!(pfd->revents & POLLIN))
 			return (1);

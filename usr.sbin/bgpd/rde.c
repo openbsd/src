@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.437 2018/10/18 12:19:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.438 2018/10/22 07:46:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -334,15 +334,16 @@ rde_main(int debug, int verbose)
 			mctx = LIST_NEXT(mctx, entry);
 		}
 
-		rde_update_queue_runner();
-		for (aid = AID_INET6; aid < AID_MAX; aid++)
-			rde_update6_queue_runner(aid);
+		if (ibuf_se && ibuf_se->w.queued < SESS_MSG_HIGH_MARK) {
+			rde_update_queue_runner();
+			for (aid = AID_INET6; aid < AID_MAX; aid++)
+				rde_update6_queue_runner(aid);
+		}
 		if (rde_dump_pending() &&
 		    ibuf_se_ctl && ibuf_se_ctl->w.queued <= 10)
 			rde_dump_runner();
-		if (softreconfig) {
+		if (softreconfig)
 			rde_reload_runner();
-		}
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
@@ -2664,6 +2665,8 @@ rde_update_queue_runner(void)
 				continue;
 			if (peer->state != PEER_UP)
 				continue;
+			if (peer->throttled)
+				continue;
 			eor = 0;
 			/* first withdraws */
 			wpos = 2; /* reserve space for the length field */
@@ -2730,6 +2733,8 @@ rde_update6_queue_runner(u_int8_t aid)
 				continue;
 			if (peer->state != PEER_UP)
 				continue;
+			if (peer->throttled)
+				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			b = up_dump_mp_unreach(queue_buf, &len, peer, aid);
 
@@ -2753,6 +2758,8 @@ rde_update6_queue_runner(u_int8_t aid)
 			if (peer->conf.id == 0)
 				continue;
 			if (peer->state != PEER_UP)
+				continue;
+			if (peer->throttled)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			r = up_dump_mp_reach(queue_buf, &len, peer, aid);
