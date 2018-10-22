@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.104 2018/07/10 10:37:59 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.105 2018/10/22 10:29:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1039,10 +1039,19 @@ sub inform_user_of_problems
 
 		$state->say("Couldn't find updates for #1", 
 		    join(' ', sort @cantupdate)) if @cantupdate > 0;
+		if (@cantupdate > 0) {
+			$state->{bad}++;
+		}
 	}
 	if (defined $state->{issues}) {
 		$state->say("There were some ambiguities. ".
 		    "Please run in interactive mode again.");
+	}
+	my @install = $state->tracker->cant_install_list;
+	if (@install > 0) {
+		$state->say("Couldn't install #1", 
+		    join(' ', sort @install));
+		$state->{bad}++;
 	}
 }
 

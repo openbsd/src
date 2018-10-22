@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.28 2015/08/13 16:34:11 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.29 2018/10/22 10:29:06 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -212,6 +212,12 @@ sub cant_list
 {
 	my $self = shift;
 	return keys %{$self->{cant_update}};
+}
+
+sub cant_install_list
+{
+	my $self = shift;
+	return keys %{$self->{cant_install}};
 }
 
 1;
