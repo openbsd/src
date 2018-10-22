@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2018/10/18 08:36:11 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2018/10/22 16:45:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -425,7 +425,8 @@ vm_opts		: disable			{
 
 			}
 			if (realpath($2, path) == NULL) {
-				yyerror("kernel path not found");
+				yyerror("kernel path not found: %s",
+				    strerror(errno));
 				free($2);
 				YYERROR;
 			}
