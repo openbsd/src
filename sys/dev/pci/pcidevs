@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1862 2018/10/21 14:32:39 mortimer Exp $
+$OpenBSD: pcidevs,v 1.1863 2018/10/22 05:06:32 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -739,6 +739,7 @@ product AMD AMD64_17_PCIE_3	0x1454	AMD64 17h PCIE
 product AMD CCPV5A		0x1456	Cryptographic Co-processor v5a
 product AMD AMD64_17_HDA	0x1457	AMD64 17h HD Audio
 product AMD AMD64_17_XHCI	0x145c	AMD64 17h xHCI
+product AMD AMD64_17_XHCI_2	0x145f	AMD64 17h xHCI
 product AMD AMD64_17_DF_1	0x1460	AMD64 17h Data Fabric
 product AMD AMD64_17_DF_2	0x1461	AMD64 17h Data Fabric
 product AMD AMD64_17_DF_3	0x1462	AMD64 17h Data Fabric
@@ -748,6 +749,8 @@ product AMD AMD64_17_DF_6	0x1465	AMD64 17h Data Fabric
 product AMD AMD64_17_DF_7	0x1466	AMD64 17h Data Fabric
 product AMD AMD64_17_DF_8	0x1467	AMD64 17h Data Fabric
 product AMD CCPV5B		0x1468	Cryptographic Co-processor v5b
+product AMD AMD64_17_PCIE_4	0x1470	AMD64 17h PCIE
+product AMD AMD64_17_PCIE_5	0x1471	AMD64 17h PCIE
 product AMD AMD64_14_HB		0x1510	AMD64 14h Host
 product AMD AMD64_14_PCIE_1	0x1512	AMD64 14h PCIE
 product AMD AMD64_14_PCIE_2	0x1513	AMD64 14h PCIE
@@ -844,6 +847,10 @@ product AMD HUDSON2_PCIE_4	0x43a3	Hudson-2 PCIE
 product AMD 300SERIES_PCIE	0x43b4	300 Series PCIE
 product AMD 300SERIES_SATA	0x43b7	300 Series SATA
 product AMD 300SERIES_XHCI	0x43bb	300 Series xHCI
+product AMD 400SERIES_PCIE_1	0x43c6	400 Series PCIE
+product AMD 400SERIES_PCIE_2	0x43c7	400 Series PCIE
+product AMD 400SERIES_AHCI	0x43c8	400 Series AHCI
+product AMD 400SERIES_XHCI	0x43d0	400 Series xHCI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 product AMD SC751_SC		0x7006	751 System
 product AMD SC751_PPB		0x7007	751
@@ -906,15 +913,15 @@ product AMD HUDSON2_PCI		0x780f	Hudson-2 PCI
 product AMD HUDSON2_XHCI	0x7812	Hudson-2 xHCI
 product AMD BOLTON_SDMMC	0x7813	Bolton SD/MMC
 product AMD BOLTON_XHCI		0x7814	Bolton xHCI
-product AMD CARRIZO_SATA_1	0x7900	Carrizo SATA
-product AMD CARRIZO_AHCI_1	0x7901	Carrizo AHCI
-product AMD CARRIZO_RAID_1	0x7902	Carrizo RAID
-product AMD CARRIZO_RAID_2	0x7903	Carrizo RAID
-product AMD CARRIZO_AHCI_2	0x7904	Carrizo AHCI
-product AMD CARRIZO_EHCI	0x7908	Carrizo USB2
-product AMD CARRIZO_SMB		0x790b	Carrizo SMBus
-product AMD CARRIZO_LPC		0x790e	Carrizo LPC
-product AMD CARRIZO_XHCI	0x7914	Carrizo xHCI
+product AMD KERNCZ_SATA_1	0x7900	FCH SATA
+product AMD KERNCZ_AHCI_1	0x7901	FCH AHCI
+product AMD KERNCZ_RAID_1	0x7902	FCH RAID
+product AMD KERNCZ_RAID_2	0x7903	FCH RAID
+product AMD KERNCZ_AHCI_2	0x7904	FCH AHCI
+product AMD KERNCZ_EHCI		0x7908	FCH USB2
+product AMD KERNCZ_SMB		0x790b	FCH SMBus
+product AMD KERNCZ_LPC		0x790e	FCH LPC
+product AMD KERNCZ_XHCI		0x7914	FCH xHCI
 product AMD RS780_HB		0x9600	RS780 Host
 product AMD RS880_HB		0x9601	RS880 Host
 product AMD RS780_PCIE_1	0x9602	RS780 PCIE
@@ -1572,6 +1579,15 @@ product ATI PITCAIRN_7		0x684c	Pitcairn
 product ATI TURKS_7		0x6850	Turks
 product ATI TURKS_8		0x6858	Turks
 product ATI TURKS_9		0x6859	Turks
+product ATI VEGA10_1		0x6860	Vega 10
+product ATI VEGA10_2		0x6861	Vega 10
+product ATI VEGA10_3		0x6862	Vega 10
+product ATI VEGA10_4		0x6863	Vega 10
+product ATI VEGA10_5		0x6864	Vega 10
+product ATI VEGA10_6		0x6867	Vega 10
+product ATI VEGA10_7		0x6868	Vega 10
+product ATI VEGA10_8		0x687f	Radeon Rx Vega
+product ATI VEGA10_9		0x686c	Vega 10
 product ATI CYPRESS		0x6880	Cypress
 product ATI FIREPRO_V8800	0x6888	FirePro V8800
 product ATI FIREPRO_V7800	0x6889	FirePro V7800
@@ -1939,6 +1955,7 @@ product ATI RADEON_HD6670_HDA	0xaa90	Radeon HD 6670 Audio
 product ATI RADEON_HD6400_HDA	0xaa98	Radeon HD 6400 Audio
 product ATI RADEON_HD7700_HDA	0xaab0	Radeon HD 7700 Audio
 product ATI RADEON_PRO_HDA	0xaae0	Radeon Pro Audio
+product ATI VEGA10_HDA_1	0xaaf8	Radeon Rx Vega HD Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
 product ATI RS250_AGP		0xcab3	RS250 AGP
