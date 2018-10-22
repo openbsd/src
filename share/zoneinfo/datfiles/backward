@@ -1,8 +1,10 @@
-# $OpenBSD: backward,v 1.34 2017/10/23 16:14:16 millert Exp $
+# $OpenBSD: backward,v 1.35 2018/10/22 21:44:28 millert Exp $
+# tzdb links for backward compatibility
+
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
-# This file provides links between current names for time zones
+# This file provides links between current names for timezones
 # and their old names.  Many names changed in late 1993.
 
 # Link	TARGET			LINK-NAME

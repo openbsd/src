@@ -1,5 +1,6 @@
 #! /bin/sh
-#	$OpenBSD: yearistype.sh,v 1.11 2014/08/15 16:48:58 millert Exp $
+#	$OpenBSD: yearistype.sh,v 1.12 2018/10/22 21:44:28 millert Exp $
+: 'Determine whether year is of appropriate type (this file is obsolete).'
 
 : 'This file is in the public domain, so clarified as of'
 : '2006-07-17 by Arthur David Olson.'
