@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.98 2018/06/25 11:11:41 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.99 2018/10/22 15:32:19 cheloha Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -437,7 +437,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			/* "Touch" the entry. */
 			if (dignore == 0)
-				ipo->ipo_last_searched = time_second;
+				ipo->ipo_last_searched = time_uptime;
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
@@ -541,7 +541,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		/* Find whether there exists an appropriate SA. */
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			if (dignore == 0)
-				ipo->ipo_last_searched = time_second;
+				ipo->ipo_last_searched = time_uptime;
 
 			ipo->ipo_tdb =
 			    gettdbbysrc(rdomain,
