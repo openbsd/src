@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.119 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.120 2018/10/23 17:51:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -266,7 +266,8 @@ biosattach(struct device *parent, struct device *self, void *aux)
 
 			pa = trunc_page(sh->addr);
 			end = round_page(sh->addr + sh->size);
-			eva = uvm_km_valloc(kernel_map, end-pa);
+			eva = (vaddr_t)km_alloc(end - pa, &kv_any,
+			    &kp_none, &kd_nowait);
 			if (eva == 0)
 				break;
 
@@ -661,7 +662,7 @@ bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 
 	endpa = round_page(BIOS32_END);
 
-	sva = va = uvm_km_valloc(kernel_map, endpa);
+	sva = va = (vaddr_t)km_alloc(endpa, &kv_any, &kp_none, &kd_nowait);
 	if (va == 0)
 		return (0);
 
@@ -710,7 +711,8 @@ bios32_cleanup(void)
 			pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
 	}
 
-	uvm_km_free(kernel_map, bios_softc->bios32_service_va, size);
+	km_free((void *)bios_softc->bios32_service_va, size,
+	    &kv_any, &kp_none);
 }
 
 int

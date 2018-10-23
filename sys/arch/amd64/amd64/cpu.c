@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.129 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.130 2018/10/23 17:51:32 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -417,7 +417,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	kstack = uvm_km_alloc (kernel_map, USPACE);
+	kstack = (vaddr_t)km_alloc(USPACE, &kv_any, &kp_dirty, &kd_nowait);
 	if (kstack == 0) {
 		if (caa->cpu_role != CPU_ROLE_AP) {
 			panic("cpu_attach: unable to allocate idle stack for"

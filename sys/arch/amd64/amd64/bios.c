@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.36 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: bios.c,v 1.37 2018/10/23 17:51:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -108,7 +108,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	if (hdr != NULL) {
 		pa = trunc_page(hdr->addr);
 		end = round_page(hdr->addr + hdr->size);
-		va = uvm_km_valloc(kernel_map, end-pa);
+		va = (vaddr_t)km_alloc(end - pa, &kv_any, &kp_none, &kd_nowait);
 		if (va == 0)
 			goto out;
 
