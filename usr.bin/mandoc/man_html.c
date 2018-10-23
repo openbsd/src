@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.109 2018/08/18 02:03:41 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.110 2018/10/23 17:17:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -262,7 +262,7 @@ print_man_node(MAN_ARGS)
 		    n->flags & NODE_LINE && *n->string == ' ' &&
 		    (h->flags & HTML_NONEWLINE) == 0)
 			print_otag(h, TAG_BR, "");
-		if (*n->string != '\0')
+		if (want_fillmode == MAN_nf || *n->string != '\0')
 			break;
 		print_paragraph(h);
 		return;
@@ -336,8 +336,11 @@ print_man_node(MAN_ARGS)
 	print_stagq(h, t);
 
 	if (fillmode(h, 0) == MAN_nf &&
-	    n->next != NULL && n->next->flags & NODE_LINE)
+	    n->next != NULL && n->next->flags & NODE_LINE) {
+		/* In .nf = <pre>, print even empty lines. */
+		h->col++;
 		print_endline(h);
+	}
 }
 
 /*
