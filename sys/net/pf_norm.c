@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.216 2018/09/10 16:14:07 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.217 2018/10/23 09:53:06 reyk Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -433,7 +433,9 @@ pf_frent_insert(struct pf_fragment *frag, struct pf_frent *frent,
 void
 pf_frent_remove(struct pf_fragment *frag, struct pf_frent *frent)
 {
+#ifdef DIAGNOSTIC
 	struct pf_frent *prev = TAILQ_PREV(frent, pf_fragq, fr_next);
+#endif
 	struct pf_frent *next = TAILQ_NEXT(frent, fr_next);
 	int index;
 
