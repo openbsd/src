@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.29 2018/10/18 09:36:48 otto Exp $	*/
+/* $OpenBSD: join.c,v 1.30 2018/10/23 08:41:45 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -362,10 +362,10 @@ int
 cmp(LINE *lp1, u_long fieldno1, LINE *lp2, u_long fieldno2)
 {
 	if (lp1->fieldcnt <= fieldno1)
-		return (-1);
-	else if (lp2->fieldcnt <= fieldno2)
-		return (1);
-	return (strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]));
+		return lp2->fieldcnt <= fieldno2 ? 0 : -1;
+	if (lp2->fieldcnt <= fieldno2)
+		return 1;
+	return strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]);
 }
 
 void
