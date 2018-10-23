@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2018/10/18 09:40:14 otto Exp $
+# $OpenBSD: Makefile,v 1.3 2018/10/23 08:45:49 martijn Exp $
 
 JION=join
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8
 
 t1:
 	join -t "	" -a 1 -a 2 -e '(unknown)' -o 0,1.2,2.2 ${.CURDIR}/phone ${.CURDIR}/fax > ${*}.log
@@ -36,6 +36,11 @@ t6:
 
 t7:
 	join -j 2 ${.CURDIR}/t7a.in ${.CURDIR}/t7b.in > ${*}.log
+	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
+		(echo "XXX ${*} failed" && false)
+
+t8:
+	join -j 2 -e empty ${.CURDIR}/t8a.in ${.CURDIR}/t8b.in > ${*}.log
 	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
 		(echo "XXX ${*} failed" && false)
 
