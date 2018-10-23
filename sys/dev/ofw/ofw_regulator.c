@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.7 2018/08/28 09:35:35 jsg Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.8 2018/10/23 16:41:53 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -278,8 +278,10 @@ regulator_gpio_set_voltage(int node, uint32_t voltage)
 	for (i = 0; i < slen / (2 * sizeof(uint32_t)); i++) {
 		if (states[2 * i] < min || states[2 * i] > max)
 			continue;
-		if (states[2 * i] == voltage)
+		if (states[2 * i] == voltage) {
 			idx = states[2 * i + 1];
+			break;
+		}
 	}
 	if (i >= slen / (2 * sizeof(uint32_t)))
 		return EINVAL;
