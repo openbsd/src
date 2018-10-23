@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2018/10/22 16:45:24 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2018/10/23 14:25:43 bluhm Exp $
 
 VMD ?= /usr/sbin/vmd
 
@@ -34,7 +34,7 @@ PATH_LONG =	some/relativepath/somewhere/abcdefghijklmnopqrstuvwxyz0123456789/abc
 BOOT_PATH_LONG =	${PATH_LONG}/bsd.rd
 DISK_PATH_LONG =	${PATH_LONG}/bsd.img
 
-vmd-fail-boot-path-too-long: ${BOOT_PATH_LONG}
+vmd-fail-boot-name-too-long: ${BOOT_PATH_LONG}
 vmd-fail-disk-path-too-long: ${DISK_PATH_LONG}
 
 ${BOOT_PATH_LONG} ${DISK_PATH_LONG}:
