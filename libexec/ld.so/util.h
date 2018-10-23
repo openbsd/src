@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.32 2017/12/01 23:30:05 guenther Exp $	*/
+/*	$OpenBSD: util.h,v 1.33 2018/10/23 04:01:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,6 +36,7 @@
 #include <stddef.h>		/* for NULL */
 
 __BEGIN_HIDDEN_DECLS
+void _dl_malloc_init(void);
 void *_dl_malloc(size_t size);
 void *_dl_calloc(size_t nmemb, const size_t size);
 void *_dl_realloc(void *, size_t size);

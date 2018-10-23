@@ -138,12 +138,16 @@ struct malloc_readonly {
 	u_int32_t malloc_canary;	/* Matched against ones in g_pool */
 };
 
-/* This object is mapped PROT_READ after initialisation to prevent tampering */
-static union {
-	struct malloc_readonly mopts;
-	u_char _pad[MALLOC_PAGESIZE];
-} malloc_readonly __attribute__((aligned(MALLOC_PAGESIZE)));
-#define mopts	malloc_readonly.mopts
+/*
+ * malloc configuration, initialized with the defaults
+ */
+static struct malloc_readonly mopts __relro = {
+    .malloc_junk = 1,
+    .chunk_canaries = 1,
+    .malloc_guard = MALLOC_PAGESIZE,
+    .malloc_cache = MALLOC_DEFAULT_CACHE,
+};
+
 #define g_pool	mopts.g_pool
 
 static u_char getrbyte(struct dir_info *d);
@@ -200,23 +204,15 @@ getrbyte(struct dir_info *d)
 }
 
 /*
- * Initialize a dir_info, which should have been cleared by caller
+ * Initialize the malloc subsystem before relro processing.
  */
-static void
-omalloc_init(struct dir_info **dp)
+void
+_dl_malloc_init(void)
 {
 	char *p;
 	int i, j;
 	size_t d_avail, regioninfo_size, tmp;
 	struct dir_info *d;
-
-	/*
-	 * Default options
-	 */
-	mopts.malloc_junk = 1;
-	mopts.chunk_canaries = 1;
-	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
-	mopts.malloc_guard = MALLOC_PAGESIZE;
 
 	do {
 		_dl_arc4randombuf(&mopts.malloc_canary,
@@ -254,16 +250,7 @@ omalloc_init(struct dir_info **dp)
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 
-	*dp = d;
-
-	/*
-	 * Options have been set and will never be reset.
-	 * Prevent further tampering with them.
-	 */
-	if (((uintptr_t)&malloc_readonly & MALLOC_PAGEMASK) == 0)
-		_dl_mprotect(&malloc_readonly, sizeof(malloc_readonly),
-		    PROT_READ);
-
+	g_pool = d;
 }
 
 static int
@@ -893,8 +880,6 @@ _dl_malloc(size_t size)
 	lock_cb *cb;
 
 	cb = _dl_thread_kern_stop();
-	if (g_pool == NULL)
-		omalloc_init(&g_pool);
 	g_pool->func = "malloc():";
 	if (g_pool->active++) {
 		malloc_recurse();
@@ -1031,8 +1016,6 @@ _dl_calloc(size_t nmemb, size_t size)
 	lock_cb *cb;
 
 	cb = _dl_thread_kern_stop();
-	if (g_pool == NULL)
-		omalloc_init(&g_pool);
 	g_pool->func = "calloc():";
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
@@ -1085,8 +1068,6 @@ _dl_realloc(void *ptr, size_t size)
 	lock_cb *cb;
 
 	cb = _dl_thread_kern_stop();
-	if (g_pool == NULL)
-		omalloc_init(&g_pool);
 	g_pool->func = "realloc():";
 	if (g_pool->active++) {
 		malloc_recurse();
@@ -1199,8 +1180,6 @@ _dl_aligned_alloc(size_t alignment, size_t size)
 		return NULL;
 
 	cb = _dl_thread_kern_stop();
-	if (g_pool == NULL)
-		omalloc_init(&g_pool);
 	g_pool->func = "aligned_alloc():";
 	if (g_pool->active++) {
 		malloc_recurse();

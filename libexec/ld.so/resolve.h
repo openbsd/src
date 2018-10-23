@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.84 2018/10/22 01:59:08 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.85 2018/10/23 04:01:45 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,6 +32,8 @@
 #include <sys/queue.h>
 #include <link.h>
 #include <dlfcn.h>
+
+#define __relro		__attribute__((section(".data.rel.ro")))
 
 /* Number of low tags that are used saved internally (0 .. DT_NUM-1) */
 #define DT_NUM	(DT_PREINIT_ARRAYSZ + 1)
