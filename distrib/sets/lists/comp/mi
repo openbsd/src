@@ -1055,7 +1055,6 @@
 ./usr/include/openssl
 ./usr/include/openssl/aes.h
 ./usr/include/openssl/asn1.h
-./usr/include/openssl/asn1_mac.h
 ./usr/include/openssl/asn1t.h
 ./usr/include/openssl/bio.h
 ./usr/include/openssl/blowfish.h
