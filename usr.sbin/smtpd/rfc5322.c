@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc5322.c,v 1.1 2018/08/23 10:07:06 eric Exp $	*/
+/*	$OpenBSD: rfc5322.c,v 1.2 2018/10/24 18:59:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -178,7 +178,7 @@ _rfc5322_next(struct rfc5322_parser *parser, struct rfc5322_result *res)
 			return RFC5322_BODY_START;
 		}
 
-		errno = EFTYPE;
+		errno = EINVAL;
 		return -1;
 
 	case RFC5322_BODY_START:
