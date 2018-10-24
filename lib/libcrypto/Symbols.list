@@ -1651,7 +1651,6 @@ Gost2814789_cnt_encrypt
 Gost2814789_ecb_encrypt
 Gost2814789_set_key
 Gost2814789_set_sbox
-Gost28147_TestParamSet
 HKDF
 HKDF_expand
 HKDF_extract
