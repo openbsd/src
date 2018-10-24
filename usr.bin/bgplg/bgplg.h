@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.14 2018/02/02 13:46:17 job Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.15 2018/10/24 09:02:48 denis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -59,10 +59,10 @@ struct cmd {
 	    { BGPCTL, "show","ip", "bgp", "detail", NULL } },		\
 	{ "show ip bgp detail as", 1, 1, "&lt;asnum&gt;",		\
 	    { BGPCTL, "show","ip", "bgp", "detail", "as", NULL } },	\
-	{ "show ip bgp in", 1, 1, "&lt;prefix&gt;",			\
-	    { BGPCTL, "show","ip", "bgp", "in", NULL } },		\
-	{ "show ip bgp out", 1, 1, "&lt;prefix&gt;",			\
-	    { BGPCTL, "show","ip", "bgp", "out", NULL } },		\
+	{ "show ip bgp in", 1, 1, "&lt;neighbor&gt;",			\
+	    { BGPCTL, "show","ip", "bgp", "in", "neighbor", NULL } },	\
+	{ "show ip bgp out", 1, 1, "&lt;neighbor&gt;",			\
+	    { BGPCTL, "show","ip", "bgp", "out", "neighbor", NULL } },	\
 	{ "show ip bgp memory", 0, 0, NULL,				\
 	    { BGPCTL, "show", "ip", "bgp", "memory", NULL } },		\
 	{ "show neighbor", 0, 1, NULL,					\
