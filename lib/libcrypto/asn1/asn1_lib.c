@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.41 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.42 2018/10/24 17:57:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -283,62 +283,6 @@ ASN1_object_size(int constructed, int length, int tag)
 		}
 	}
 	return (ret);
-}
-
-static int
-_asn1_Finish(ASN1_const_CTX *c)
-{
-	if ((c->inf == (1|V_ASN1_CONSTRUCTED)) && (!c->eos)) {
-		if (!ASN1_const_check_infinite_end(&c->p, c->slen)) {
-			c->error = ERR_R_MISSING_ASN1_EOS;
-			return (0);
-		}
-	}
-	if (((c->slen != 0) && !(c->inf & 1)) ||
-	    ((c->slen < 0) && (c->inf & 1))) {
-		c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-		return (0);
-	}
-	return (1);
-}
-
-int
-asn1_Finish(ASN1_CTX *c)
-{
-	return _asn1_Finish((ASN1_const_CTX *)c);
-}
-
-int
-asn1_const_Finish(ASN1_const_CTX *c)
-{
-	return _asn1_Finish(c);
-}
-
-int
-asn1_GetSequence(ASN1_const_CTX *c, long *length)
-{
-	const unsigned char *q;
-
-	q = c->p;
-	c->inf = ASN1_get_object(&(c->p), &(c->slen), &(c->tag), &(c->xclass),
-	    *length);
-	if (c->inf & 0x80) {
-		c->error = ERR_R_BAD_GET_ASN1_OBJECT_CALL;
-		return (0);
-	}
-	if (c->tag != V_ASN1_SEQUENCE) {
-		c->error = ERR_R_EXPECTING_AN_ASN1_SEQUENCE;
-		return (0);
-	}
-	(*length) -= (c->p - q);
-	if (c->max && (*length < 0)) {
-		c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-		return (0);
-	}
-	if (c->inf == (1|V_ASN1_CONSTRUCTED))
-		c->slen= *length+ *(c->pp) - c->p;
-	c->eos = 0;
-	return (1);
 }
 
 int

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2018/03/17 16:20:01 beck Exp $
+# $OpenBSD: Makefile,v 1.28 2018/10/24 17:57:22 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -55,9 +55,8 @@ SRCS+= tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c
 SRCS+= tasn_prn.c ameth_lib.c
 SRCS+= f_int.c f_string.c n_pkey.c
 SRCS+= f_enum.c x_pkey.c a_bool.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c
-SRCS+= asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c
+SRCS+= asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_strnid.c
 SRCS+= evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
-SRCS+= a_set.c
 SRCS+= a_time_tm.c
 
 # bf/
@@ -324,7 +323,6 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 HDRS=\
 	${LCRYPTO_SRC}/aes/aes.h \
 	${LCRYPTO_SRC}/asn1/asn1.h \
-	${LCRYPTO_SRC}/asn1/asn1_mac.h \
 	${LCRYPTO_SRC}/asn1/asn1t.h \
 	${LCRYPTO_SRC}/bf/blowfish.h \
 	${LCRYPTO_SRC}/bio/bio.h \

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_pack.c,v 1.17 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: asn_pack.c,v 1.18 2018/10/24 17:57:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,112 +61,7 @@
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 
-#ifndef NO_ASN1_OLD
-
-/* ASN1 packing and unpacking functions */
-
-/* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
-
-STACK_OF(OPENSSL_BLOCK) *
-ASN1_seq_unpack(const unsigned char *buf, int len, d2i_of_void *d2i,
-    void (*free_func)(OPENSSL_BLOCK))
-{
-	STACK_OF(OPENSSL_BLOCK) *sk;
-	const unsigned char *pbuf;
-
-	pbuf = buf;
-	if (!(sk = d2i_ASN1_SET(NULL, &pbuf, len, d2i, free_func,
-					V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL)))
-		ASN1error(ASN1_R_DECODE_ERROR);
-	return sk;
-}
-
-/* Turn a STACK structures into an ASN1 encoded SEQUENCE OF structure in a
- * OPENSSL_malloc'ed buffer
- */
-
-unsigned char *
-ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
-    unsigned char **buf, int *len)
-{
-	int safelen;
-	unsigned char *safe, *p;
-
-	if (!(safelen = i2d_ASN1_SET(safes, NULL, i2d, V_ASN1_SEQUENCE,
-					      V_ASN1_UNIVERSAL, IS_SEQUENCE))) {
-		ASN1error(ASN1_R_ENCODE_ERROR);
-		return NULL;
-	}
-	if (!(safe = malloc(safelen))) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	p = safe;
-	i2d_ASN1_SET(safes, &p, i2d, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL,
-								 IS_SEQUENCE);
-	if (len)
-		*len = safelen;
-	if (buf)
-		*buf = safe;
-	return safe;
-}
-
-/* Extract an ASN1 object from an ASN1_STRING */
-
-void *
-ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i)
-{
-	const unsigned char *p;
-	char *ret;
-
-	p = oct->data;
-	if (!(ret = d2i(NULL, &p, oct->length)))
-		ASN1error(ASN1_R_DECODE_ERROR);
-	return ret;
-}
-
-/* Pack an ASN1 object into an ASN1_STRING */
-
-ASN1_STRING *
-ASN1_pack_string(void *obj, i2d_of_void *i2d, ASN1_STRING **oct)
-{
-	unsigned char *p;
-	ASN1_STRING *octmp;
-
-	if (!oct || !*oct) {
-		if (!(octmp = ASN1_STRING_new())) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return NULL;
-		}
-	} else
-		octmp = *oct;
-		
-	if (!(octmp->length = i2d(obj, NULL))) {
-		ASN1error(ASN1_R_ENCODE_ERROR);
-		goto err;
-	}
-	if (!(p = malloc (octmp->length))) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	octmp->data = p;
-	i2d (obj, &p);
-	if (oct)
-		*oct = octmp;
-	return octmp;
-err:
-	if (!oct || octmp != *oct) {
-		ASN1_STRING_free(octmp);
-		if (oct)
-			*oct = NULL;
-	}
-	return NULL;
-}
-
-#endif
-
-/* ASN1_ITEM versions of the above */
-
+/* Pack an ASN1 object into an ASN1_STRING. */
 ASN1_STRING *
 ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 {
@@ -200,8 +95,7 @@ err:
 	return NULL;
 }
 
-/* Extract an ASN1 object from an ASN1_STRING */
-
+/* Extract an ASN1 object from an ASN1_STRING. */
 void *
 ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
 {

@@ -199,15 +199,12 @@ ASN1_item_verify
 ASN1_mbstring_copy
 ASN1_mbstring_ncopy
 ASN1_object_size
-ASN1_pack_string
 ASN1_parse
 ASN1_parse_dump
 ASN1_primitive_free
 ASN1_primitive_new
 ASN1_put_eoc
 ASN1_put_object
-ASN1_seq_pack
-ASN1_seq_unpack
 ASN1_tag2bit
 ASN1_tag2str
 ASN1_template_d2i
@@ -217,7 +214,6 @@ ASN1_template_new
 ASN1_time_parse
 ASN1_time_tm_clamp_notafter
 ASN1_time_tm_cmp
-ASN1_unpack_string
 AUTHORITY_INFO_ACCESS_free
 AUTHORITY_INFO_ACCESS_it
 AUTHORITY_INFO_ACCESS_new
@@ -3126,10 +3122,6 @@ a2i_GENERAL_NAME
 a2i_IPADDRESS
 a2i_IPADDRESS_NC
 a2i_ipadd
-asn1_Finish
-asn1_GetSequence
-asn1_add_error
-asn1_const_Finish
 asn1_do_adb
 asn1_do_lock
 asn1_enc_free
@@ -3164,7 +3156,6 @@ d2i_ASN1_OCTET_STRING
 d2i_ASN1_PRINTABLE
 d2i_ASN1_PRINTABLESTRING
 d2i_ASN1_SEQUENCE_ANY
-d2i_ASN1_SET
 d2i_ASN1_SET_ANY
 d2i_ASN1_T61STRING
 d2i_ASN1_TIME
@@ -3174,8 +3165,6 @@ d2i_ASN1_UNIVERSALSTRING
 d2i_ASN1_UTCTIME
 d2i_ASN1_UTF8STRING
 d2i_ASN1_VISIBLESTRING
-d2i_ASN1_bytes
-d2i_ASN1_type_bytes
 d2i_AUTHORITY_INFO_ACCESS
 d2i_AUTHORITY_KEYID
 d2i_AutoPrivateKey
@@ -3374,7 +3363,6 @@ i2d_ASN1_OCTET_STRING
 i2d_ASN1_PRINTABLE
 i2d_ASN1_PRINTABLESTRING
 i2d_ASN1_SEQUENCE_ANY
-i2d_ASN1_SET
 i2d_ASN1_SET_ANY
 i2d_ASN1_T61STRING
 i2d_ASN1_TIME
@@ -3384,7 +3372,6 @@ i2d_ASN1_UTCTIME
 i2d_ASN1_UTF8STRING
 i2d_ASN1_VISIBLESTRING
 i2d_ASN1_bio_stream
-i2d_ASN1_bytes
 i2d_AUTHORITY_INFO_ACCESS
 i2d_AUTHORITY_KEYID
 i2d_BASIC_CONSTRAINTS
