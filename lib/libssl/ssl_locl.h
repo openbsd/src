@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.215 2018/09/08 14:29:52 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.216 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -748,6 +748,14 @@ typedef struct ssl3_state_internal_st {
 	int write_mac_secret_size;
 	unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
 
+	SSL3_BUFFER rbuf;	/* read IO goes into here */
+	SSL3_BUFFER wbuf;	/* write IO goes into here */
+
+	/* we allow one fatal and one warning alert to be outstanding,
+	 * send close alert via the warning alert */
+	int alert_dispatch;
+	unsigned char send_alert[2];
+
 	/* flags for countermeasure against known-IV weakness */
 	int need_empty_fragments;
 	int empty_fragment_done;
@@ -793,6 +801,8 @@ typedef struct ssl3_state_internal_st {
 	SSL_HANDSHAKE hs;
 
 	struct	{
+		int new_mac_secret_size;
+
 		/* actually only needs to be 16+20 */
 		unsigned char cert_verify_md[EVP_MAX_MD_SIZE*2];
 

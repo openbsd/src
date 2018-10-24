@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.114 2018/09/08 14:39:41 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.115 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -579,7 +579,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		iv_len = EVP_CIPHER_iv_length(cipher);
 	}
 
-	mac_secret_size = s->s3->tmp.new_mac_secret_size;
+	mac_secret_size = S3I(s)->tmp.new_mac_secret_size;
 
 	key_block = S3I(s)->hs.key_block;
 	client_write_mac_secret = key_block;
@@ -666,7 +666,7 @@ tls1_setup_key_block(SSL *s)
 	S3I(s)->tmp.new_sym_enc = cipher;
 	S3I(s)->tmp.new_hash = mac;
 	S3I(s)->tmp.new_mac_pkey_type = mac_type;
-	s->s3->tmp.new_mac_secret_size = mac_secret_size;
+	S3I(s)->tmp.new_mac_secret_size = mac_secret_size;
 
 	tls1_cleanup_key_block(s);
 

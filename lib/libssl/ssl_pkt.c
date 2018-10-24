@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.13 2018/09/08 14:39:41 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.14 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,7 +141,7 @@ ssl_force_want_read(SSL *s)
 /*
  * If extend == 0, obtain new n-byte packet; if extend == 1, increase
  * packet by another n bytes.
- * The packet will be in the sub-array of s->s3->rbuf.buf specified
+ * The packet will be in the sub-array of S3I(s)->rbuf.buf specified
  * by s->internal->packet and s->internal->packet_length.
  * (If s->internal->read_ahead is set, 'max' bytes may be stored in rbuf
  * [plus s->internal->packet_length bytes if extend == 1].)
@@ -157,7 +157,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	if (n <= 0)
 		return n;
 
-	rb = &(s->s3->rbuf);
+	rb = &(S3I(s)->rbuf);
 	if (rb->buf == NULL)
 		if (!ssl3_setup_read_buffer(s))
 			return -1;
@@ -239,7 +239,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	}
 
 	while (left < n) {
-		/* Now we have len+left bytes at the front of s->s3->rbuf.buf
+		/* Now we have len+left bytes at the front of S3I(s)->rbuf.buf
 		 * and need to read in more until we have len+n (up to
 		 * len+max if possible) */
 
@@ -288,7 +288,7 @@ ssl3_packet_read(SSL *s, int plen)
 {
 	int n;
 
-	n = ssl3_read_n(s, plen, s->s3->rbuf.len, 0);
+	n = ssl3_read_n(s, plen, S3I(s)->rbuf.len, 0);
 	if (n <= 0)
 		return n;
 	if (s->internal->packet_length < plen)
@@ -387,7 +387,7 @@ ssl3_get_record(SSL *s)
 			goto err;
 		}
 
-		if (rr->length > s->s3->rbuf.len - SSL3_RT_HEADER_LENGTH) {
+		if (rr->length > S3I(s)->rbuf.len - SSL3_RT_HEADER_LENGTH) {
 			al = SSL_AD_RECORD_OVERFLOW;
 			SSLerror(s, SSL_R_PACKET_LENGTH_TOO_LONG);
 			goto f_err;
@@ -629,7 +629,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	int eivlen;
 	size_t align;
 	SSL3_RECORD *wr;
-	SSL3_BUFFER *wb = &(s->s3->wbuf);
+	SSL3_BUFFER *wb = &(S3I(s)->wbuf);
 	SSL_SESSION *sess;
 
 	if (wb->buf == NULL)
@@ -642,7 +642,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		return (ssl3_write_pending(s, type, buf, len));
 
 	/* If we have an alert to send, lets send it */
-	if (s->s3->alert_dispatch) {
+	if (S3I(s)->alert_dispatch) {
 		i = s->method->ssl_dispatch_alert(s);
 		if (i <= 0)
 			return (i);
@@ -818,12 +818,12 @@ err:
 	return -1;
 }
 
-/* if s->s3->wbuf.left != 0, we need to call this */
+/* if S3I(s)->wbuf.left != 0, we need to call this */
 int
 ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	int i;
-	SSL3_BUFFER *wb = &(s->s3->wbuf);
+	SSL3_BUFFER *wb = &(S3I(s)->wbuf);
 
 	/* XXXX */
 	if ((S3I(s)->wpend_tot > (int)len) || ((S3I(s)->wpend_buf != buf) &&
@@ -901,7 +901,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	unsigned int n;
 	SSL3_RECORD *rr;
 
-	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
+	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_read_buffer(s))
 			return (-1);
 
@@ -1031,7 +1031,7 @@ start:
 				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->off = 0;
 				if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
-				    s->s3->rbuf.left == 0)
+				    S3I(s)->rbuf.left == 0)
 					ssl3_release_read_buffer(s);
 			}
 		}
@@ -1115,7 +1115,7 @@ start:
 				}
 
 				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (s->s3->rbuf.left == 0) {
+					if (S3I(s)->rbuf.left == 0) {
 						/* no read-ahead left? */
 			/* In the case where we try to read application data,
 			 * but we trigger an SSL handshake, we return -1 with
@@ -1276,7 +1276,7 @@ start:
 		}
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (s->s3->rbuf.left == 0) { /* no read-ahead left? */
+			if (S3I(s)->rbuf.left == 0) { /* no read-ahead left? */
 				/* In the case where we try to read application data,
 				 * but we trigger an SSL handshake, we return -1 with
 				 * the retry option set.  Otherwise renegotiation may
@@ -1403,10 +1403,10 @@ ssl3_send_alert(SSL *s, int level, int desc)
 	if ((level == 2) && (s->session != NULL))
 		SSL_CTX_remove_session(s->ctx, s->session);
 
-	s->s3->alert_dispatch = 1;
-	s->s3->send_alert[0] = level;
-	s->s3->send_alert[1] = desc;
-	if (s->s3->wbuf.left == 0) /* data still being written out? */
+	S3I(s)->alert_dispatch = 1;
+	S3I(s)->send_alert[0] = level;
+	S3I(s)->send_alert[1] = desc;
+	if (S3I(s)->wbuf.left == 0) /* data still being written out? */
 		return s->method->ssl_dispatch_alert(s);
 
 	/* else data is still being written out, we will get written
@@ -1420,20 +1420,20 @@ ssl3_dispatch_alert(SSL *s)
 	int i, j;
 	void (*cb)(const SSL *ssl, int type, int val) = NULL;
 
-	s->s3->alert_dispatch = 0;
-	i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], 2, 0);
+	S3I(s)->alert_dispatch = 0;
+	i = do_ssl3_write(s, SSL3_RT_ALERT, &S3I(s)->send_alert[0], 2, 0);
 	if (i <= 0) {
-		s->s3->alert_dispatch = 1;
+		S3I(s)->alert_dispatch = 1;
 	} else {
 		/* Alert sent to BIO.  If it is important, flush it now.
 		 * If the message does not get sent due to non-blocking IO,
 		 * we will not worry too much. */
-		if (s->s3->send_alert[0] == SSL3_AL_FATAL)
+		if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
 
 		if (s->internal->msg_callback)
 			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    s->s3->send_alert, 2, s, s->internal->msg_callback_arg);
+			    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
 
 		if (s->internal->info_callback != NULL)
 			cb = s->internal->info_callback;
@@ -1441,7 +1441,7 @@ ssl3_dispatch_alert(SSL *s)
 			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
-			j = (s->s3->send_alert[0]<<8)|s->s3->send_alert[1];
+			j = (S3I(s)->send_alert[0]<<8)|S3I(s)->send_alert[1];
 			cb(s, SSL_CB_WRITE_ALERT, j);
 		}
 	}

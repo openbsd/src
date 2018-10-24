@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.12 2018/08/24 17:30:32 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.13 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -700,16 +700,16 @@ ssl3_setup_read_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (s->s3->rbuf.buf == NULL) {
+	if (S3I(s)->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
 		    SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if ((p = malloc(len)) == NULL)
 			goto err;
-		s->s3->rbuf.buf = p;
-		s->s3->rbuf.len = len;
+		S3I(s)->rbuf.buf = p;
+		S3I(s)->rbuf.len = len;
 	}
 
-	s->internal->packet = &(s->s3->rbuf.buf[0]);
+	s->internal->packet = &(S3I(s)->rbuf.buf[0]);
 	return 1;
 
 err:
@@ -730,7 +730,7 @@ ssl3_setup_write_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (s->s3->wbuf.buf == NULL) {
+	if (S3I(s)->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
@@ -739,8 +739,8 @@ ssl3_setup_write_buffer(SSL *s)
 
 		if ((p = malloc(len)) == NULL)
 			goto err;
-		s->s3->wbuf.buf = p;
-		s->s3->wbuf.len = len;
+		S3I(s)->wbuf.buf = p;
+		S3I(s)->wbuf.len = len;
 	}
 
 	return 1;
@@ -763,15 +763,15 @@ ssl3_setup_buffers(SSL *s)
 int
 ssl3_release_write_buffer(SSL *s)
 {
-	free(s->s3->wbuf.buf);
-	s->s3->wbuf.buf = NULL;
+	free(S3I(s)->wbuf.buf);
+	S3I(s)->wbuf.buf = NULL;
 	return 1;
 }
 
 int
 ssl3_release_read_buffer(SSL *s)
 {
-	free(s->s3->rbuf.buf);
-	s->s3->rbuf.buf = NULL;
+	free(S3I(s)->rbuf.buf);
+	S3I(s)->rbuf.buf = NULL;
 	return 1;
 }

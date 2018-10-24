@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.47 2018/04/07 16:55:13 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.48 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -362,18 +362,6 @@ typedef struct ssl3_state_st {
 
 	unsigned char server_random[SSL3_RANDOM_SIZE];
 	unsigned char client_random[SSL3_RANDOM_SIZE];
-
-	SSL3_BUFFER rbuf;	/* read IO goes into here */
-	SSL3_BUFFER wbuf;	/* write IO goes into here */
-
-	/* we allow one fatal and one warning alert to be outstanding,
-	 * send close alert via the warning alert */
-	int alert_dispatch;
-	unsigned char send_alert[2];
-
-	struct {
-		int new_mac_secret_size;
-	} tmp;
 
 	struct ssl3_state_internal_st *internal;
 } SSL3_STATE;

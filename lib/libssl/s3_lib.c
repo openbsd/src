@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.170 2018/09/06 16:40:45 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.171 2018/10/24 18:04:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1543,10 +1543,10 @@ ssl3_clear(SSL *s)
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
 
-	rp = s->s3->rbuf.buf;
-	wp = s->s3->wbuf.buf;
-	rlen = s->s3->rbuf.len;
-	wlen = s->s3->wbuf.len;
+	rp = S3I(s)->rbuf.buf;
+	wp = S3I(s)->wbuf.buf;
+	rlen = S3I(s)->rbuf.len;
+	wlen = S3I(s)->wbuf.len;
 
 	BIO_free(S3I(s)->handshake_buffer);
 	S3I(s)->handshake_buffer = NULL;
@@ -1561,10 +1561,10 @@ ssl3_clear(SSL *s)
 	memset(s->s3, 0, sizeof(*s->s3));
 	S3I(s) = internal;
 
-	s->s3->rbuf.buf = rp;
-	s->s3->wbuf.buf = wp;
-	s->s3->rbuf.len = rlen;
-	s->s3->wbuf.len = wlen;
+	S3I(s)->rbuf.buf = rp;
+	S3I(s)->wbuf.buf = wp;
+	S3I(s)->rbuf.len = rlen;
+	S3I(s)->wbuf.len = wlen;
 
 	ssl_free_wbio_buffer(s);
 
@@ -2406,11 +2406,11 @@ ssl3_shutdown(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
 		/*
 		 * Our shutdown alert has been sent now, and if it still needs
-	 	 * to be written, s->s3->alert_dispatch will be true
+	 	 * to be written, S3I(s)->alert_dispatch will be true
 		 */
-		if (s->s3->alert_dispatch)
+		if (S3I(s)->alert_dispatch)
 			return(-1);	/* return WANT_WRITE */
-	} else if (s->s3->alert_dispatch) {
+	} else if (S3I(s)->alert_dispatch) {
 		/* resend it if not sent */
 		ret = s->method->ssl_dispatch_alert(s);
 		if (ret == -1) {
@@ -2431,7 +2431,7 @@ ssl3_shutdown(SSL *s)
 	}
 
 	if ((s->internal->shutdown == (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN)) &&
-	    !s->s3->alert_dispatch)
+	    !S3I(s)->alert_dispatch)
 		return (1);
 	else
 		return (0);
@@ -2509,7 +2509,7 @@ ssl3_renegotiate_check(SSL *s)
 	int	ret = 0;
 
 	if (S3I(s)->renegotiate) {
-		if ((s->s3->rbuf.left == 0) && (s->s3->wbuf.left == 0) &&
+		if ((S3I(s)->rbuf.left == 0) && (S3I(s)->wbuf.left == 0) &&
 		    !SSL_in_init(s)) {
 			/*
 			 * If we are the server, and we have sent
