@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.29 2018/09/19 18:48:55 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.30 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -1408,8 +1408,7 @@ bgetc(void)
 again:
     buf = (int) fseekp / BUFSIZ;
     if (buf >= fblocks) {
-	Char **nfbuf = xcalloc((size_t) (fblocks + 2),
-			  sizeof(Char **));
+	Char **nfbuf = xcalloc(fblocks + 2, sizeof(*nfbuf));
 
 	if (fbuf) {
 	    (void) blkcpy(nfbuf, fbuf);
@@ -1556,7 +1555,7 @@ settell(void)
 	return;
     if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
 	return;
-    fbuf = xcalloc(2, sizeof(Char **));
+    fbuf = xcalloc(2, sizeof(*fbuf));
     fblocks = 1;
     fbuf[0] = xcalloc(BUFSIZ, sizeof(Char));
     fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);

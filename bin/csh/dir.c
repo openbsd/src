@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.22 2018/09/19 18:55:33 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ dset(Char *dp)
      * Don't call set() directly cause if the directory contains ` or
      * other junk characters glob will fail.
      */
-    Char **vec = xreallocarray(NULL, 2, sizeof(Char **));
+    Char **vec = xreallocarray(NULL, 2, sizeof(*vec));
 
     vec[0] = Strsave(dp);
     vec[1] = 0;
