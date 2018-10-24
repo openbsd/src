@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.h,v 1.15 2018/10/24 09:02:48 denis Exp $	*/
+/*	$OpenBSD: bgplg.h,v 1.16 2018/10/24 13:18:52 denis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -51,6 +51,10 @@ struct cmd {
 	    { BGPCTL, "show","ip", "bgp", "community", NULL } },	\
 	{ "show ip bgp detail community", 1, 1, "&lt;community&gt;",	\
 	    { BGPCTL, "show","ip", "bgp", "detail", "community", NULL } },\
+	{ "show ip bgp ext-community", 2, 2, "&lt;ext-community&gt;",	\
+	    { BGPCTL, "show","ip", "bgp", "ext-community", NULL } },	\
+	{ "show ip bgp detail ext-community", 2, 2, "&lt;ext-community&gt;",\
+	    { BGPCTL, "show","ip", "bgp", "detail", "ext-community", NULL } },\
 	{ "show ip bgp large-community", 1, 1, "&lt;large-community&gt;",\
 	    { BGPCTL, "show","ip", "bgp", "large-community", NULL } },	\
 	{ "show ip bgp detail large-community", 1, 1, "&lt;large-community&gt;",\
@@ -63,6 +67,8 @@ struct cmd {
 	    { BGPCTL, "show","ip", "bgp", "in", "neighbor", NULL } },	\
 	{ "show ip bgp out", 1, 1, "&lt;neighbor&gt;",			\
 	    { BGPCTL, "show","ip", "bgp", "out", "neighbor", NULL } },	\
+	{ "show ip bgp ovs", 1, 1, "&lt;state&gt;",			\
+	    { BGPCTL, "show","ip", "bgp", "ovs", NULL } },		\
 	{ "show ip bgp memory", 0, 0, NULL,				\
 	    { BGPCTL, "show", "ip", "bgp", "memory", NULL } },		\
 	{ "show neighbor", 0, 1, NULL,					\
