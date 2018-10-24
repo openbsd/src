@@ -136,7 +136,7 @@ static Elf_Internal_Syminfo *dynamic_syminfo;
 static unsigned long dynamic_syminfo_offset;
 static unsigned int dynamic_syminfo_nent;
 static char program_interpreter[64];
-static bfd_vma dynamic_info[DT_JMPREL + 1];
+static bfd_vma dynamic_info[DT_RUNPATH + 1];
 static bfd_vma version_info[16];
 static Elf_Internal_Ehdr elf_header;
 static Elf_Internal_Shdr *section_headers;
