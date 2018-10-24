@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.438 2018/10/22 07:46:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.439 2018/10/24 08:18:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -69,14 +69,6 @@ void		 rde_update_log(const char *, u_int16_t,
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
-void		 rde_dump_rib_as(struct prefix *, struct rde_aspath *, pid_t,
-		     int);
-void		 rde_dump_filter(struct prefix *,
-		     struct ctl_show_rib_request *);
-void		 rde_dump_filterout(struct rde_peer *, struct prefix *,
-		     struct ctl_show_rib_request *);
-void		 rde_dump_upcall(struct rib_entry *, void *);
-void		 rde_dump_prefix_upcall(struct rib_entry *, void *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_ctx_throttle(pid_t pid, int throttle);
@@ -2148,8 +2140,9 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 /*
  * control specific functions
  */
-void
-rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
+static void
+rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp,
+    struct nexthop *nexthop, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct ibuf		*wbuf;
@@ -2167,10 +2160,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	memcpy(&rib.remote_addr, &prefix_peer(p)->remote_addr,
 	    sizeof(rib.remote_addr));
 	rib.remote_id = prefix_peer(p)->remote_bgpid;
-	if (prefix_nexthop(p) != NULL) {
-		memcpy(&rib.true_nexthop, &prefix_nexthop(p)->true_nexthop,
+	if (nexthop != NULL) {
+		memcpy(&rib.true_nexthop, &nexthop->true_nexthop,
 		    sizeof(rib.true_nexthop));
-		memcpy(&rib.exit_nexthop, &prefix_nexthop(p)->exit_nexthop,
+		memcpy(&rib.exit_nexthop, &nexthop->exit_nexthop,
 		    sizeof(rib.exit_nexthop));
 	} else {
 		/* announced network may have a NULL nexthop */
@@ -2190,8 +2183,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;
-	if (prefix_nexthop(p) == NULL ||
-	    prefix_nexthop(p)->state == NEXTHOP_REACH)
+	if (nexthop == NULL || nexthop->state == NEXTHOP_REACH)
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
@@ -2232,7 +2224,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		}
 }
 
-void
+static void
 rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
     struct ctl_show_rib_request *req)
 {
@@ -2247,12 +2239,13 @@ rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
 	a = rde_filter(out_rules, peer, p, &state);
 
 	if (a == ACTION_ALLOW)
-		rde_dump_rib_as(p, &state.aspath, req->pid, req->flags);
+		rde_dump_rib_as(p, &state.aspath, state.nexthop, req->pid,
+		    req->flags);
 
 	rde_filterstate_clean(&state);
 }
 
-void
+static void
 rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_peer		*peer;
@@ -2293,11 +2286,12 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 			return;
 		if (!ovs_match(p, req->flags))
 			return;
-		rde_dump_rib_as(p, asp, req->pid, req->flags);
+		rde_dump_rib_as(p, asp, prefix_nexthop(p), req->pid,
+		    req->flags);
 	}
 }
 
-void
+static void
 rde_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct prefix		*p;
@@ -2307,7 +2301,7 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 		rde_dump_filter(p, &ctx->req);
 }
 
-void
+static void
 rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
