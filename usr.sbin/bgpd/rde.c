@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.439 2018/10/24 08:18:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.440 2018/10/24 08:26:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,23 +72,15 @@ void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_ctx_throttle(pid_t pid, int throttle);
-void		 rde_dump_runner(void);
-int		 rde_dump_pending(void);
-void		 rde_dump_done(void *);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
-void		 rde_dump_rib_free(struct rib *);
-void		 rde_dump_mrt_free(struct rib *);
-void		 rde_rib_free(struct rib_desc *);
 
 int		 rde_rdomain_import(struct rde_aspath *, struct rdomain *);
 void		 rde_reload_done(void);
-static void	 rde_reload_runner(void);
-static void	 rde_softreconfig_in_done(void *);
-static void	 rde_softreconfig_out_done(void *);
+static void	 rde_softreconfig_in_done(void *, u_int8_t);
+static void	 rde_softreconfig_out_done(void *, u_int8_t);
 static void	 rde_softreconfig_done(void);
 static void	 rde_softreconfig_out(struct rib_entry *, void *);
 static void	 rde_softreconfig_in(struct rib_entry *, void *);
-void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
@@ -138,7 +130,6 @@ int			 softreconfig;
 
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
-	struct rib_context		ribctx;
 	struct ctl_show_rib_request	req;
 	sa_family_t			af;
 	u_int8_t			throttled;
@@ -148,7 +139,6 @@ LIST_HEAD(, rde_dump_ctx) rde_dump_h = LIST_HEAD_INITIALIZER(rde_dump_h);
 
 struct rde_mrt_ctx {
 	LIST_ENTRY(rde_mrt_ctx)	entry;
-	struct rib_context	ribctx;
 	struct mrt		mrt;
 };
 
@@ -264,19 +254,12 @@ rde_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
 		set_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl);
 
-		if (rde_dump_pending() &&
-		    ibuf_se_ctl && ibuf_se_ctl->w.queued == 0)
-			timeout = 0;
-		if (softreconfig)
+		if (rib_dump_pending())
 			timeout = 0;
 
 		i = PFD_PIPE_COUNT;
 		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
 			xmctx = LIST_NEXT(mctx, entry);
-
-			if (mctx->mrt.state != MRT_STATE_REMOVE &&
-			    mctx->mrt.wbuf.queued == 0)
-				rib_dump_r(&mctx->ribctx);
 
 			if (mctx->mrt.wbuf.queued) {
 				pfd[i].fd = mctx->mrt.wbuf.fd;
@@ -331,11 +314,7 @@ rde_main(int debug, int verbose)
 			for (aid = AID_INET6; aid < AID_MAX; aid++)
 				rde_update6_queue_runner(aid);
 		}
-		if (rde_dump_pending() &&
-		    ibuf_se_ctl && ibuf_se_ctl->w.queued <= 10)
-			rde_dump_runner();
-		if (softreconfig)
-			rde_reload_runner();
+		rib_dump_runner();
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
@@ -803,7 +782,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    sizeof(struct rde_rib))
 				fatalx("IMSG_RECONF_RIB bad len");
 			memcpy(&rn, imsg.data, sizeof(rn));
-			rib = rib_find(rn.name);
+			rib = rib_byid(rib_find(rn.name));
 			if (rib == NULL)
 				rib = rib_new(rn.name, rn.rtableid, rn.flags);
 			else if (rib->rtableid != rn.rtableid ||
@@ -819,7 +798,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				 */
 				in_rules = ribd->in_rules;
 				ribd->in_rules = NULL;
-				rde_rib_free(ribd);
+				rib_free(rib);
 				rib = rib_new(rn.name, rn.rtableid, rn.flags);
 				ribd->in_rules = in_rules;
 			} else
@@ -862,7 +841,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				}
 			}
 			TAILQ_INIT(&r->set);
-			if ((rib = rib_find(r->rib)) == NULL) {
+			if ((rib = rib_byid(rib_find(r->rib))) == NULL) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
 				    "for nonexistent rib %s", r->rib);
 				parent_set = NULL;
@@ -2320,17 +2299,37 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 			rde_dump_filter(p, &ctx->req);
 }
 
+static int
+rde_dump_throttled(void *arg)
+{
+	struct rde_dump_ctx	*ctx = arg;
+
+	return (ctx->throttled != 0);
+}
+
+static void
+rde_dump_done(void *arg, u_int8_t aid)
+{
+	struct rde_dump_ctx	*ctx = arg;
+
+	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
+	    -1, NULL, 0);
+	LIST_REMOVE(ctx, entry);
+	free(ctx);
+}
+
 void
 rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
     enum imsg_type type)
 {
 	struct rde_dump_ctx	*ctx;
-	struct rib		*rib;
 	struct rib_entry	*re;
 	u_int			 error;
 	u_int8_t		 hostplen;
+	u_int16_t		 rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
+ nomem:
 		log_warn("rde_dump_ctx_new");
 		error = CTL_RES_NOMEM;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
@@ -2338,8 +2337,8 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		return;
 	}
 	if (req->flags & (F_CTL_ADJ_IN | F_CTL_INVALID)) {
-		rib = &ribs[RIB_ADJ_IN].rib;
-	} else if ((rib = rib_find(req->rib)) == NULL) {
+		rid = RIB_ADJ_IN;
+	} else if ((rid = rib_find(req->rib)) == RIB_NOTFOUND) {
 		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
 		error = CTL_RES_NOSUCHPEER;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
@@ -2351,22 +2350,28 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
 	ctx->req.pid = pid;
 	ctx->req.type = type;
-	ctx->ribctx.ctx_count = CTL_MSG_HIGH_MARK;
-	ctx->ribctx.ctx_rib = rib;
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
-		ctx->ribctx.ctx_upcall = network_dump_upcall;
+		if (rib_dump_new(rid, ctx->req.aid, CTL_MSG_HIGH_MARK, ctx,
+		    network_dump_upcall, rde_dump_done,
+		    rde_dump_throttled) == -1)
+			goto nomem;
 		break;
 	case IMSG_CTL_SHOW_RIB:
 	case IMSG_CTL_SHOW_RIB_AS:
 	case IMSG_CTL_SHOW_RIB_COMMUNITY:
 	case IMSG_CTL_SHOW_RIB_EXTCOMMUNITY:
 	case IMSG_CTL_SHOW_RIB_LARGECOMMUNITY:
-		ctx->ribctx.ctx_upcall = rde_dump_upcall;
+		if (rib_dump_new(rid, ctx->req.aid, CTL_MSG_HIGH_MARK, ctx,
+		    rde_dump_upcall, rde_dump_done, rde_dump_throttled) == -1)
+			goto nomem;
 		break;
 	case IMSG_CTL_SHOW_RIB_PREFIX:
 		if (req->flags & F_LONGER) {
-			ctx->ribctx.ctx_upcall = rde_dump_prefix_upcall;
+			if (rib_dump_new(rid, ctx->req.aid,
+			    CTL_MSG_HIGH_MARK, ctx, rde_dump_prefix_upcall,
+			    rde_dump_done, rde_dump_throttled) == -1)
+				goto nomem;
 			break;
 		}
 		switch (req->prefix.aid) {
@@ -2381,9 +2386,10 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			fatalx("rde_dump_ctx_new: unknown af");
 		}
 		if (req->prefixlen == hostplen)
-			re = rib_lookup(rib, &req->prefix);
+			re = rib_lookup(rib_byid(rid), &req->prefix);
 		else
-			re = rib_get(rib, &req->prefix, req->prefixlen);
+			re = rib_get(rib_byid(rid), &req->prefix,
+			    req->prefixlen);
 		if (re)
 			rde_dump_upcall(re, ctx);
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
@@ -2393,11 +2399,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	default:
 		fatalx("rde_dump_ctx_new: unsupported imsg type");
 	}
-	ctx->ribctx.ctx_done = rde_dump_done;
-	ctx->ribctx.ctx_arg = ctx;
-	ctx->ribctx.ctx_aid = ctx->req.aid;
 	LIST_INSERT_HEAD(&rde_dump_h, ctx, entry);
-	rib_dump_r(&ctx->ribctx);
 }
 
 void
@@ -2413,59 +2415,25 @@ rde_dump_ctx_throttle(pid_t pid, int throttle)
 	}
 }
 
-void
-rde_dump_runner(void)
+static int
+rde_mrt_throttled(void *arg)
 {
-	struct rde_dump_ctx	*ctx, *next;
+	struct mrt	*mrt = arg;
 
-	for (ctx = LIST_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		if (!ctx->throttled)
-			rib_dump_r(&ctx->ribctx);
-	}
+	return (mrt->wbuf.queued > SESS_MSG_LOW_MARK);
 }
 
-int
-rde_dump_pending(void)
+static void
+rde_mrt_done(void *ptr, u_int8_t aid)
 {
-	struct rde_dump_ctx	*ctx;
-
-	/* return true if there is at least one unthrottled context */
-	LIST_FOREACH(ctx, &rde_dump_h, entry)
-		if (!ctx->throttled)
-			return (1);
-
-	return (0);
-}
-
-void
-rde_dump_done(void *arg)
-{
-	struct rde_dump_ctx	*ctx = arg;
-
-	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
-	    -1, NULL, 0);
-	LIST_REMOVE(ctx, entry);
-	free(ctx);
-}
-
-void
-rde_dump_rib_free(struct rib *rib)
-{
-	struct rde_dump_ctx	*ctx, *next;
-
-	for (ctx = LIST_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		if (ctx->ribctx.ctx_rib == rib)
-			rde_dump_done(ctx);
-	}
+	mrt_done(ptr);
 }
 
 void
 rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 {
-	struct rde_mrt_ctx	*ctx;
-	struct rib		*rib;
+	struct rde_mrt_ctx *ctx;
+	u_int16_t rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_mrt_new");
@@ -2475,8 +2443,8 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	TAILQ_INIT(&ctx->mrt.wbuf.bufs);
 	ctx->mrt.wbuf.fd = fd;
 	ctx->mrt.state = MRT_STATE_RUNNING;
-	rib = rib_find(ctx->mrt.rib);
-	if (rib == NULL) {
+	rid = rib_find(ctx->mrt.rib);
+	if (rid == RIB_NOTFOUND) {
 		log_warnx("non existing RIB %s for mrt dump", ctx->mrt.rib);
 		free(ctx);
 		return;
@@ -2485,37 +2453,12 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	if (ctx->mrt.type == MRT_TABLE_DUMP_V2)
 		mrt_dump_v2_hdr(&ctx->mrt, conf, &peerlist);
 
-	ctx->ribctx.ctx_count = CTL_MSG_HIGH_MARK;
-	ctx->ribctx.ctx_rib = rib;
-	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
-	ctx->ribctx.ctx_done = mrt_done;
-	ctx->ribctx.ctx_arg = &ctx->mrt;
-	ctx->ribctx.ctx_aid = AID_UNSPEC;
+	if (rib_dump_new(rid, AID_UNSPEC, CTL_MSG_HIGH_MARK, &ctx->mrt,
+	    mrt_dump_upcall, rde_mrt_done, rde_mrt_throttled) == -1)
+		fatal("%s: rib_dump_new", __func__);
+
 	LIST_INSERT_HEAD(&rde_mrts, ctx, entry);
 	rde_mrt_cnt++;
-	rib_dump_r(&ctx->ribctx);
-}
-
-void
-rde_dump_mrt_free(struct rib *rib)
-{
-	struct rde_mrt_ctx	*ctx, *next;
-
-	for (ctx = LIST_FIRST(&rde_mrts); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		if (ctx->ribctx.ctx_rib == rib)
-			mrt_done(&ctx->mrt);
-	}
-}
-
-void
-rde_rib_free(struct rib_desc *rd)
-{
-	/* abort pending rib_dumps */
-	rde_dump_rib_free(&rd->rib);
-	rde_dump_mrt_free(&rd->rib);
-
-	rib_free(&rd->rib);
 }
 
 /*
@@ -2622,7 +2565,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->conf.id == 0)
 			continue;
-		if (peer->rib != rib)
+		if (peer->loc_rib_id != rib->id)
 			continue;
 		if (peer->state != PEER_UP)
 			continue;
@@ -2630,19 +2573,29 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	}
 }
 
-u_char	queue_buf[4096];
-
-void
+static void
 rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
-	if (re_rib(re) != peer->rib)
-		fatalx("King Bula: monstrous evil horror.");
+	if (re->rib_id != peer->loc_rib_id)
+		fatalx("%s: Unexpected RIB %u != %u.", __func__, re->rib_id,
+		    peer->loc_rib_id);
 	if (re->active == NULL)
 		return;
 	up_generate_updates(out_rules, peer, re->active, NULL);
 }
+
+static void
+rde_up_dump_done(void *ptr, u_int8_t aid)
+{
+	struct rde_peer		*peer = ptr;
+
+	if (peer->capa.grestart.restart)
+		up_generate_marker(peer, aid);
+}
+
+u_char	queue_buf[4096];
 
 void
 rde_update_queue_runner(void)
@@ -2845,7 +2798,6 @@ rde_reload_done(void)
 	struct rdomain		*rd;
 	struct rde_peer		*peer;
 	struct filter_head	*fh;
-	struct rib_context	*ctx;
 	u_int16_t		 rid;
 	int			 reload = 0;
 
@@ -2931,10 +2883,13 @@ rde_reload_done(void)
 			continue;
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
-		if (peer->rib != rib_find(peer->conf.rib)) {
+		if (peer->loc_rib_id != rib_find(peer->conf.rib)) {
+			char *p = log_fmt_peer(&peer->conf);
+			log_debug("rib change: reloading peer %s", p);
+			free(p);
 			up_withdraw_all(peer);
-			peer->rib = rib_find(peer->conf.rib);
-			if (peer->rib == NULL)
+			peer->loc_rib_id = rib_find(peer->conf.rib);
+			if (peer->loc_rib_id == RIB_NOTFOUND)
 				fatalx("King Bula's peer met an unknown RIB");
 			peer->reconf_rib = 1;
 			continue;
@@ -2959,7 +2914,7 @@ rde_reload_done(void)
 
 		switch (ribs[rid].state) {
 		case RECONF_DELETE:
-			rde_rib_free(&ribs[rid]);
+			rib_free(&ribs[rid].rib);
 			break;
 		case RECONF_KEEP:
 			if (rde_filter_equal(ribs[rid].in_rules,
@@ -2986,48 +2941,37 @@ rde_reload_done(void)
 	}
 	log_info("RDE reconfigured");
 
-	softreconfig++;
+	softreconfig = 0;
 	if (reload > 0) {
-		ctx = &ribs[RIB_ADJ_IN].ribctx;
-		memset(ctx, 0, sizeof(*ctx));
-		ctx->ctx_rib = &ribs[RIB_ADJ_IN].rib;
-		ctx->ctx_arg = &ribs[RIB_ADJ_IN];
-		ctx->ctx_upcall = rde_softreconfig_in;
-		ctx->ctx_done = rde_softreconfig_in_done;
-		ctx->ctx_aid = AID_UNSPEC;
-		ctx->ctx_count = RDE_RUNNER_ROUNDS;
-		ribs[RIB_ADJ_IN].dumping = 1;
 		log_info("running softreconfig in");
+		softreconfig++;
+		if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC,
+		    RDE_RUNNER_ROUNDS, &ribs[RIB_ADJ_IN], rde_softreconfig_in,
+		    rde_softreconfig_in_done, NULL) == -1)
+			fatal("%s: rib_dump_new", __func__);
 	} else {
-		rde_softreconfig_in_done(&ribs[RIB_ADJ_IN]);
+		rde_softreconfig_in_done(NULL, AID_UNSPEC);
 	}
 }
 
 static void
-rde_reload_runner(void)
+rde_softreconfig_in_done(void *arg, u_int8_t aid)
 {
-	u_int16_t	rid;
-
-	for (rid = 0; rid < rib_size; rid++) {
-		if (!rib_valid(rid))
-			continue;
-		if (ribs[rid].dumping)
-			rib_dump_r(&ribs[rid].ribctx);
-	}
-}
-
-static void
-rde_softreconfig_in_done(void *arg)
-{
-	struct rib_desc		*rib = arg;
+	struct rib_desc		*rd = arg;
 	struct rde_peer		*peer;
 	u_int16_t		 rid;
 
-	/* Adj-RIB-In run is done */
-	softreconfig--;
-	rib->dumping = 0;
+	if (rd != NULL) {
+		softreconfig--;
+		/* one guy done but other dumps are still running */
+		if (softreconfig > 0)
+			return;
+
+		log_info("softreconfig in done");
+	}
 
 	/* now do the Adj-RIB-Out sync */
+	softreconfig = 0;
 	for (rid = 0; rid < rib_size; rid++) {
 		if (!rib_valid(rid))
 			continue;
@@ -3036,27 +2980,26 @@ rde_softreconfig_in_done(void *arg)
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->reconf_out)
-			ribs[peer->rib->id].state = RECONF_RELOAD;
-		else if (peer->reconf_rib)
+			ribs[peer->loc_rib_id].state = RECONF_RELOAD;
+		else if (peer->reconf_rib) {
+			u_int8_t i;
+
 			/* dump the full table to neighbors that changed rib */
-			peer_dump(peer->conf.id, AID_UNSPEC);
+			for (i = 0; i < AID_MAX; i++) {
+				if (peer->capa.mp[i])
+					peer_dump(peer->conf.id, i);
+			}
+		}
 	}
 
 	for (rid = 0; rid < rib_size; rid++) {
 		if (!rib_valid(rid))
 			continue;
 		if (ribs[rid].state == RECONF_RELOAD) {
-			struct rib_context	*ctx;
-
-			ctx = &ribs[rid].ribctx;
-			memset(ctx, 0, sizeof(*ctx));
-			ctx->ctx_rib = &ribs[rid].rib;
-			ctx->ctx_arg = &ribs[rid];
-			ctx->ctx_upcall = rde_softreconfig_out;
-			ctx->ctx_done = rde_softreconfig_out_done;
-			ctx->ctx_aid = AID_UNSPEC;
-			ctx->ctx_count = RDE_RUNNER_ROUNDS;
-			ribs[rid].dumping = 1;
+			if (rib_dump_new(rid, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+			    &ribs[rid], rde_softreconfig_out,
+			    rde_softreconfig_out_done, NULL) == -1)
+				fatal("%s: rib_dump_new", __func__);
 			softreconfig++;
 			log_info("starting softreconfig out for rib %s",
 			    ribs[rid].name);
@@ -3069,13 +3012,12 @@ rde_softreconfig_in_done(void *arg)
 }
 
 static void
-rde_softreconfig_out_done(void *arg)
+rde_softreconfig_out_done(void *arg, u_int8_t aid)
 {
 	struct rib_desc		*rib = arg;
 
 	/* this RIB dump is done */
 	softreconfig--;
-	rib->dumping = 0;
 	log_info("softreconfig out done for %s", rib->name);
 
 	/* but other dumps are still running */
@@ -3225,7 +3167,7 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 		return;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->rib == re_rib(re) && peer->reconf_out)
+		if (peer->loc_rib_id == re->rib_id && peer->reconf_out)
 			rde_softreconfig_out_peer(re, peer);
 	}
 }
@@ -3345,8 +3287,8 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	TAILQ_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
-	peer->rib = rib_find(peer->conf.rib);
-	if (peer->rib == NULL)
+	peer->loc_rib_id = rib_find(peer->conf.rib);
+	if (peer->loc_rib_id == RIB_NOTFOUND)
 		fatalx("King Bula's new peer met an unknown RIB");
 	peer->state = PEER_NONE;
 	up_init(peer);
@@ -3480,6 +3422,8 @@ peer_down(u_int32_t id)
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
 	up_down(peer);
+	/* stop all pending dumps which may depend on this peer */
+	rib_dump_terminate(peer->loc_rib_id, peer, rde_up_dump_upcall);
 
 	/* walk through per peer RIB list and remove all prefixes. */
 	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
@@ -3561,14 +3505,18 @@ peer_dump(u_int32_t id, u_int8_t aid)
 	}
 
 	if (peer->conf.export_type == EXPORT_NONE) {
-		/* nothing */;
+		/* nothing to send apart from the marker */
+		if (peer->capa.grestart.restart)
+			up_generate_marker(peer, aid);
 	} else if (peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
 		up_generate_default(out_rules, peer, aid);
+		if (peer->capa.grestart.restart)
+			up_generate_marker(peer, aid);
 	} else {
-		rib_dump(peer->rib, rde_up_dump_upcall, peer, aid);
+		if (rib_dump_new(peer->loc_rib_id, aid, RDE_RUNNER_ROUNDS, peer,
+		    rde_up_dump_upcall, rde_up_dump_done, NULL) == -1)
+			fatal("%s: rib_dump_new", __func__);
 	}
-	if (peer->capa.grestart.restart)
-		up_generate_marker(peer, aid);
 }
 
 /* End-of-RIB marker, RFC 4724 */

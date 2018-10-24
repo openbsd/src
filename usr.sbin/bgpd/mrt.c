@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.86 2018/07/24 10:10:58 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.87 2018/10/24 08:26:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -673,10 +673,8 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 void
-mrt_done(void *ptr)
+mrt_done(struct mrt *mrtbuf)
 {
-	struct mrt		*mrtbuf = ptr;
-
 	mrtbuf->state = MRT_STATE_REMOVE;
 }
 

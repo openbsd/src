@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.197 2018/10/15 10:44:47 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.198 2018/10/24 08:26:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -36,6 +36,38 @@ enum peer_state {
 	PEER_ERR	/* error occurred going to PEER_DOWN state */
 };
 
+LIST_HEAD(prefix_list, prefix);
+RB_HEAD(rib_tree, rib_entry);
+
+struct rib_entry {
+	RB_ENTRY(rib_entry)	 rib_e;
+	struct prefix_list	 prefix_h;
+	struct prefix		*active;	/* for fast access */
+	struct pt_entry		*prefix;
+	u_int16_t		 rib_id;
+	u_int16_t		 lock;
+};
+
+struct rib {
+	struct rib_tree		tree;
+	u_int			rtableid;
+	u_int16_t		flags;
+	u_int16_t		id;
+};
+
+#define RIB_ADJ_IN	0
+#define RIB_ADJ_OUT	1
+#define RIB_LOC_START	2
+#define RIB_NOTFOUND	0xffff
+
+struct rib_desc {
+	char			name[PEER_DESCR_LEN];
+	struct rib		rib;
+	struct filter_head	*in_rules;
+	struct filter_head	*in_rules_tmp;
+	enum reconf_action	state;
+};
+
 /*
  * How do we identify peers between the session handler and the rde?
  * Currently I assume that we can do that with the neighbor_ip...
@@ -43,7 +75,6 @@ enum peer_state {
 LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_list, aspath);
 LIST_HEAD(attr_list, attr);
-LIST_HEAD(prefix_list, prefix);
 TAILQ_HEAD(prefix_queue, prefix);
 LIST_HEAD(aspath_head, rde_aspath);
 TAILQ_HEAD(aspath_queue, rde_aspath);
@@ -51,9 +82,6 @@ RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
 RB_HEAD(uptree_rib, update_rib);
 
-struct rib_desc;
-struct rib;
-RB_HEAD(rib_tree, rib_entry);
 TAILQ_HEAD(uplist_prefix, update_prefix);
 TAILQ_HEAD(uplist_attr, update_attr);
 
@@ -72,7 +100,6 @@ struct rde_peer {
 	struct uplist_prefix		 withdraws[AID_MAX];
 	time_t				 staletime[AID_MAX];
 	struct capabilities		 capa;
-	struct rib			*rib;
 	u_int64_t			 prefix_rcvd_update;
 	u_int64_t			 prefix_rcvd_withdraw;
 	u_int64_t			 prefix_rcvd_eor;
@@ -86,6 +113,7 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
+	u_int16_t			 loc_rib_id;
 	u_int16_t			 short_as;
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
@@ -260,46 +288,6 @@ struct pt_entry_vpn4 {
 	u_int8_t			 pad2;
 };
 
-struct rib_context {
-	struct rib_entry		*ctx_re;
-	struct rib			*ctx_rib;
-	void		(*ctx_upcall)(struct rib_entry *, void *);
-	void		(*ctx_done)(void *);
-	void		(*ctx_wait)(void *);
-	void				*ctx_arg;
-	unsigned int			 ctx_count;
-	u_int8_t			 ctx_aid;
-};
-
-struct rib_entry {
-	RB_ENTRY(rib_entry)	 rib_e;
-	struct prefix_list	 prefix_h;
-	struct prefix		*active;	/* for fast access */
-	struct pt_entry		*prefix;
-	struct rib		*__rib;		/* mangled pointer with flags */
-};
-
-struct rib {
-	struct rib_tree		tree;
-	u_int			rtableid;
-	u_int16_t		flags;
-	u_int16_t		id;
-};
-
-struct rib_desc {
-	char			name[PEER_DESCR_LEN];
-	struct rib		rib;
-	struct rib_context	ribctx;
-	struct filter_head	*in_rules;
-	struct filter_head	*in_rules_tmp;
-	enum reconf_action	state;
-	u_int8_t		dumping;
-};
-
-#define RIB_ADJ_IN	0
-#define RIB_ADJ_OUT	1
-#define RIB_LOC_START	2
-
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, nexthop_l;
 	TAILQ_ENTRY(prefix)		 path_l;
@@ -330,7 +318,6 @@ extern struct rde_memstats rdemem;
 int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
 		    struct rde_peer_head *);
 void		mrt_dump_upcall(struct rib_entry *, void *);
-void		mrt_done(void *);
 
 /* rde.c */
 void		rde_send_kroute(struct rib *, struct prefix *, struct prefix *);
@@ -454,25 +441,31 @@ extern u_int16_t	 rib_size;
 extern struct rib_desc	*ribs;
 
 struct rib	*rib_new(char *, u_int, u_int16_t);
-struct rib	*rib_find(char *);
+struct rib	*rib_byid(u_int16_t);
+u_int16_t	 rib_find(char *);
 struct rib_desc	*rib_desc(struct rib *);
 void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
-void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
-		     void *, u_int8_t);
-void		 rib_dump_r(struct rib_context *);
+int		 rib_dump_pending(void);
+void		 rib_dump_runner(void);
+int		 rib_dump_new(u_int16_t, u_int8_t, unsigned int, void *,
+    		    void (*)(struct rib_entry *, void *),
+    		    void (*)(void *, u_int8_t),
+		    int (*)(void *));
+void		 rib_dump_terminate(u_int16_t, void *,
+		    void (*)(struct rib_entry *, void *));
 
 static inline struct rib *
 re_rib(struct rib_entry *re)
 {
-	return (struct rib *)((intptr_t)re->__rib & ~1);
+	return rib_byid(re->rib_id);
 }
 
 static inline int
 rib_valid(u_int16_t rid)
 {
-	if (rid >= rib_size || *ribs[rid].name == '\0')
+	if (rid == RIB_NOTFOUND || rid >= rib_size || *ribs[rid].name == '\0')
 		return 0;
 	return 1;
 }

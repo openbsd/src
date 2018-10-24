@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.179 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.180 2018/10/24 08:26:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,13 +40,27 @@ u_int16_t rib_size;
 struct rib_desc *ribs;
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
-int rib_compare(const struct rib_entry *, const struct rib_entry *);
+static inline int rib_compare(const struct rib_entry *,
+			const struct rib_entry *);
 void rib_remove(struct rib_entry *);
 int rib_empty(struct rib_entry *);
-struct rib_entry *rib_restart(struct rib_context *);
+static void rib_dump_abort(u_int16_t);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
+
+struct rib_context {
+	LIST_ENTRY(rib_context)		 entry;
+	struct rib_entry		*ctx_re;
+	u_int16_t			 ctx_rib_id;
+	void		(*ctx_upcall)(struct rib_entry *, void *);
+	void		(*ctx_done)(void *, u_int8_t);
+	int		(*ctx_throttle)(void *);
+	void				*ctx_arg;
+	unsigned int			 ctx_count;
+	u_int8_t			 ctx_aid;
+};
+LIST_HEAD(, rib_context) rib_dumps = LIST_HEAD_INITIALIZER(rib_dumps);
 
 static int	 prefix_add(struct bgpd_addr *, int, struct rib *,
 		    struct rde_peer *, struct rde_aspath *,
@@ -54,28 +68,40 @@ static int	 prefix_add(struct bgpd_addr *, int, struct rib *,
 static int	 prefix_move(struct prefix *, struct rde_peer *,
 		    struct rde_aspath *, struct filterstate *, u_int8_t);
 
-static inline void
+static inline struct rib_entry *
 re_lock(struct rib_entry *re)
 {
-	re->__rib = (struct rib *)((intptr_t)re->__rib | 1);
+	if (re->lock != 0)
+		log_warnx("%s: entry already locked", __func__);
+	re->lock = 1;
+	return re;
 }
 
-static inline void
+static inline struct rib_entry *
 re_unlock(struct rib_entry *re)
 {
-	re->__rib = (struct rib *)((intptr_t)re->__rib & ~1);
+	if (re->lock == 0)
+		log_warnx("%s: entry already unlocked", __func__);
+	re->lock = 0;
+	return re;
 }
 
 static inline int
 re_is_locked(struct rib_entry *re)
 {
-	return ((intptr_t)re->__rib & 1);
+	return (re->lock != 0);
 }
 
 static inline struct rib_tree *
 rib_tree(struct rib *rib)
 {
 	return (&rib->tree);
+}
+
+static inline int
+rib_compare(const struct rib_entry *a, const struct rib_entry *b)
+{
+	return (pt_prefix_cmp(a->prefix, b->prefix));
 }
 
 /* RIB specific functions */
@@ -94,7 +120,7 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		if ((xribs = reallocarray(ribs, id + 1,
 		    sizeof(struct rib_desc))) == NULL) {
 			/* XXX this is not clever */
-			fatal("rib_add");
+			fatal(NULL);
 		}
 		ribs = xribs;
 		rib_size = id + 1;
@@ -113,24 +139,33 @@ rib_new(char *name, u_int rtableid, u_int16_t flags)
 		fatal(NULL);
 	TAILQ_INIT(ribs[id].in_rules);
 
+	log_debug("%s: %s -> %u", __func__, name, id);
 	return (&ribs[id].rib);
 }
 
 struct rib *
+rib_byid(u_int16_t rid)
+{
+	if (rib_valid(rid))
+		return &ribs[rid].rib;
+	return NULL;
+}
+
+u_int16_t
 rib_find(char *name)
 {
 	u_int16_t id;
 
 	/* no name returns the first Loc-RIB */
 	if (name == NULL || *name == '\0')
-		return (&ribs[RIB_LOC_START].rib);
+		return RIB_LOC_START;
 
 	for (id = 0; id < rib_size; id++) {
 		if (!strcmp(ribs[id].name, name))
-			return (&ribs[id].rib);
+			return id;
 	}
 
-	return (NULL);
+	return RIB_NOTFOUND;
 }
 
 struct rib_desc *
@@ -145,6 +180,8 @@ rib_free(struct rib *rib)
 	struct rib_desc *rd;
 	struct rib_entry *re, *xre;
 	struct prefix *p, *np;
+
+	rib_dump_abort(rib->id);
 
 	for (re = RB_MIN(rib_tree, rib_tree(rib)); re != NULL; re = xre) {
 		xre = RB_NEXT(rib_tree, rib_tree(rib), re);
@@ -177,23 +214,21 @@ rib_free(struct rib *rib)
 	bzero(rd, sizeof(struct rib_desc));
 }
 
-int
-rib_compare(const struct rib_entry *a, const struct rib_entry *b)
-{
-	return (pt_prefix_cmp(a->prefix, b->prefix));
-}
-
 struct rib_entry *
 rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 {
-	struct rib_entry xre;
+	struct rib_entry xre, *re;
 	struct pt_entry	*pte;
 
 	pte = pt_fill(prefix, prefixlen);
 	bzero(&xre, sizeof(xre));
 	xre.prefix = pte;
 
-	return (RB_FIND(rib_tree, rib_tree(rib), &xre));
+	re = RB_FIND(rib_tree, rib_tree(rib), &xre);
+	if (re && re->rib_id != rib->id)
+		fatalx("%s: Unexpected RIB %u != %u.", __func__,
+		    re->rib_id, rib->id);
+	return re;
 }
 
 struct rib_entry *
@@ -240,7 +275,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 
 	LIST_INIT(&re->prefix_h);
 	re->prefix = pte;
-	re->__rib = rib;
+	re->rib_id = rib->id;
 
 	if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
 		log_warnx("rib_add: insert failed");
@@ -282,53 +317,7 @@ rib_empty(struct rib_entry *re)
 	return LIST_EMPTY(&re->prefix_h);
 }
 
-void
-rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
-    void *arg, u_int8_t aid)
-{
-	struct rib_context	*ctx;
-
-	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
-		fatal("rib_dump");
-	ctx->ctx_rib = rib;
-	ctx->ctx_upcall = upcall;
-	ctx->ctx_arg = arg;
-	ctx->ctx_aid = aid;
-	rib_dump_r(ctx);
-}
-
-void
-rib_dump_r(struct rib_context *ctx)
-{
-	struct rib_entry	*re;
-	unsigned int		 i;
-
-	if (ctx->ctx_re == NULL)
-		re = RB_MIN(rib_tree, rib_tree(ctx->ctx_rib));
-	else
-		re = rib_restart(ctx);
-
-	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
-		if (ctx->ctx_aid != AID_UNSPEC &&
-		    ctx->ctx_aid != re->prefix->aid)
-			continue;
-		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
-		    !re_is_locked(re)) {
-			/* store and lock last element */
-			ctx->ctx_re = re;
-			re_lock(re);
-			return;
-		}
-		ctx->ctx_upcall(re, ctx->ctx_arg);
-	}
-
-	if (ctx->ctx_done)
-		ctx->ctx_done(ctx->ctx_arg);
-	else
-		free(ctx);
-}
-
-struct rib_entry *
+static struct rib_entry *
 rib_restart(struct rib_context *ctx)
 {
 	struct rib_entry *re;
@@ -345,6 +334,125 @@ rib_restart(struct rib_context *ctx)
 		rib_remove(ctx->ctx_re);
 	ctx->ctx_re = NULL;
 	return (re);
+}
+
+static void
+rib_dump_r(struct rib_context *ctx)
+{
+	struct rib		*rib;
+	struct rib_entry	*re;
+	unsigned int		 i;
+
+	rib = rib_byid(ctx->ctx_rib_id);
+	if (rib == NULL)
+		fatalx("%s: rib id %u gone", __func__, ctx->ctx_rib_id);
+
+	if (ctx->ctx_re == NULL)
+		re = RB_MIN(rib_tree, rib_tree(rib));
+	else
+		re = rib_restart(ctx);
+
+	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
+		if (re->rib_id != ctx->ctx_rib_id)
+			fatalx("%s: Unexpected RIB %u != %u.", __func__,
+			    re->rib_id, ctx->ctx_rib_id);
+		if (ctx->ctx_aid != AID_UNSPEC &&
+		    ctx->ctx_aid != re->prefix->aid)
+			continue;
+		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
+		    !re_is_locked(re)) {
+			/* store and lock last element */
+			ctx->ctx_re = re;
+			re_lock(re);
+			return;
+		}
+		ctx->ctx_upcall(re, ctx->ctx_arg);
+	}
+
+	if (ctx->ctx_done)
+		ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
+	LIST_REMOVE(ctx, entry);
+	free(ctx);
+}
+
+int
+rib_dump_pending(void)
+{
+	struct rib_context *ctx;
+
+	/* return true if at least one context is not throttled */
+	LIST_FOREACH(ctx, &rib_dumps, entry) {
+		if (ctx->ctx_throttle && ctx->ctx_throttle(ctx->ctx_arg))
+			continue;
+		return 1;
+	}
+	return 0;
+}
+
+void
+rib_dump_runner(void)
+{
+	struct rib_context *ctx, *next;
+
+	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
+		if (ctx->ctx_throttle && ctx->ctx_throttle(ctx->ctx_arg))
+			continue;
+		rib_dump_r(ctx);
+	}
+}
+
+static void
+rib_dump_abort(u_int16_t id)
+{
+	struct rib_context *ctx, *next;
+
+	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
+		if (id != ctx->ctx_rib_id)
+			continue;
+		if (ctx->ctx_done)
+			ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
+		LIST_REMOVE(ctx, entry);
+		free(ctx);
+	}
+}
+
+int
+rib_dump_new(u_int16_t id, u_int8_t aid, unsigned int count, void *arg,
+    void (*upcall)(struct rib_entry *, void *), void (*done)(void *, u_int8_t),
+    int (*throttle)(void *))
+{
+	struct rib_context *ctx;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return -1;
+	ctx->ctx_rib_id = id;
+	ctx->ctx_aid = aid;
+	ctx->ctx_count = count;
+	ctx->ctx_arg = arg;
+	ctx->ctx_upcall = upcall;
+	ctx->ctx_done = done;
+	ctx->ctx_throttle = throttle;
+
+	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	return 0;
+}
+
+void
+rib_dump_terminate(u_int16_t id, void *arg,
+    void (*upcall)(struct rib_entry *, void *))
+{
+	struct rib_context *ctx, *next;
+
+	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
+		if (id != ctx->ctx_rib_id || ctx->ctx_arg != arg ||
+		    ctx->ctx_upcall != upcall)
+			continue;
+		if (ctx->ctx_done)
+			ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
+		LIST_REMOVE(ctx, entry);
+		free(ctx);
+	}
 }
 
 /* path specific functions */
