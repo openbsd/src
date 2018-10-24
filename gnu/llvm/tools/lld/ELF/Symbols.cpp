@@ -29,6 +29,7 @@ using namespace lld;
 using namespace lld::elf;
 
 Defined *ElfSym::Bss;
+Defined *ElfSym::Data;
 Defined *ElfSym::Etext1;
 Defined *ElfSym::Etext2;
 Defined *ElfSym::Edata1;
