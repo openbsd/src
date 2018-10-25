@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.27 2016/03/16 14:47:04 mestre Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.28 2018/10/25 06:41:50 mestre Exp $	*/
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -375,6 +375,8 @@ main(int argc, char **argv)
 		openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
 	}
 
+	if (unveil(PATH_SPAMD_DB, "rw") == -1)
+		err(1, "unveil");
 	if (syncsend) {
 		if (pledge("stdio rpath wpath inet flock", NULL) == -1)
 			err(1, "pledge");
