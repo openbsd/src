@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2018/10/25 16:41:38 guenther Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -101,7 +101,7 @@ int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 #define _RF_E		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	0,							/*  0 NONE */
 	_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),		/*  1 _64*/
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/*  2 PC32 */
@@ -136,7 +136,7 @@ static int reloc_target_flags[] = {
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 #define RELOC_ERROR(t)			(reloc_target_flags[t] & _RF_E)
 
-static Elf_Addr reloc_target_bitmask[] = {
+static const Elf_Addr reloc_target_bitmask[] = {
 #define _BM(x)  (~(Elf_Addr)0 >> ((8*sizeof(reloc_target_bitmask[0])) - (x)))
 	0,			/*  0 NONE */
 	_BM(64),		/*  1 _64*/
