@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.56 2018/10/02 14:56:36 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.57 2018/10/25 01:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -72,6 +72,7 @@ enum	htmlfont {
 	HTMLFONT_BOLD,
 	HTMLFONT_ITALIC,
 	HTMLFONT_BI,
+	HTMLFONT_CW,
 	HTMLFONT_MAX
 };
 

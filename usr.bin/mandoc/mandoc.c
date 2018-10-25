@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.75 2018/08/20 18:06:42 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.76 2018/10/25 01:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -302,8 +302,13 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ESCAPE_FONT:
 		if (*sz == 2) {
 			if (**start == 'C') {
+				if ((*start)[1] == 'W' ||
+				    (*start)[1] == 'R') {
+					gly = ESCAPE_FONTCW;
+					break;
+				}
 				/*
-				 * Treat constant-width font modes
+				 * Treat other constant-width font modes
 				 * just like regular font modes.
 				 */
 				(*start)++;

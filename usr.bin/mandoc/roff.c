@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.213 2018/08/25 16:43:52 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.214 2018/10/25 01:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -3359,6 +3359,7 @@ roff_char(ROFF_ARGS)
 		case ESCAPE_FONTITALIC:
 		case ESCAPE_FONTBOLD:
 		case ESCAPE_FONTBI:
+		case ESCAPE_FONTCW:
 		case ESCAPE_FONTPREV:
 			font++;
 			break;
