@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.613 2018/10/18 13:03:45 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.614 2018/10/25 15:13:38 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2018 $
+.Dd $Mdocdate: October 25 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2750,7 +2750,7 @@ Set status line message command style, where
 .Ar style
 is a comma-separated list of characteristics to be specified.
 .Pp
-These may be
+The style format is shared by many options and may be:
 .Ql bg=colour
 to set the background colour,
 .Ql fg=colour
@@ -2773,8 +2773,13 @@ and so on),
 to
 .Ic colour255
 from the 256-colour set,
-.Ic default ,
-or a hexadecimal RGB string such as
+.Ic default
+for the default colour (inherited from another option in the case of some options, for example
+.Ic window-status-style
+inherits from
+.Ic status-style ) ,
+.Ic terminal
+for the terminal default colour, or a hexadecimal RGB string such as
 .Ql #ffffff .
 .Pp
 The attributes is either

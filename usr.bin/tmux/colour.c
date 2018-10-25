@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.15 2017/03/24 07:14:27 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.16 2018/10/25 15:13:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -141,6 +141,8 @@ colour_tostring(int c)
 		return ("white");
 	case 8:
 		return ("default");
+	case 9:
+		return ("terminal");
 	case 90:
 		return ("brightblack");
 	case 91:
@@ -188,6 +190,11 @@ colour_fromstring(const char *s)
 		return (n | COLOUR_FLAG_256);
 	}
 
+	if (strcasecmp(s, "default") == 0)
+		return (8);
+	if (strcasecmp(s, "terminal") == 0)
+		return (9);
+
 	if (strcasecmp(s, "black") == 0 || strcmp(s, "0") == 0)
 		return (0);
 	if (strcasecmp(s, "red") == 0 || strcmp(s, "1") == 0)
@@ -204,8 +211,6 @@ colour_fromstring(const char *s)
 		return (6);
 	if (strcasecmp(s, "white") == 0 || strcmp(s, "7") == 0)
 		return (7);
-	if (strcasecmp(s, "default") == 0 || strcmp(s, "8") == 0)
-		return (8);
 	if (strcasecmp(s, "brightblack") == 0 || strcmp(s, "90") == 0)
 		return (90);
 	if (strcasecmp(s, "brightred") == 0 || strcmp(s, "91") == 0)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.849 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.850 2018/10/25 15:13:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -542,6 +542,9 @@ enum utf8_state {
 /* Colour flags. */
 #define COLOUR_FLAG_256 0x01000000
 #define COLOUR_FLAG_RGB 0x02000000
+
+/* Special colours. */
+#define COLOUR_DEFAULT(c) ((c) == 8 || (c) == 9)
 
 /* Grid attributes. Anything above 0xff is stored in an extended cell. */
 #define GRID_ATTR_BRIGHT 0x1

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.139 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.140 2018/10/25 15:13:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -965,7 +965,7 @@ screen_write_clearline(struct screen_write_ctx *ctx, u_int bg)
 	u_int			 sx = screen_size_x(s);
 
 	gl = grid_get_line(s->grid, s->grid->hsize + s->cy);
-	if (gl->cellsize == 0 && bg == 8)
+	if (gl->cellsize == 0 && COLOUR_DEFAULT(bg))
 		return;
 
 	screen_write_initctx(ctx, &ttyctx);
@@ -988,7 +988,7 @@ screen_write_clearendofline(struct screen_write_ctx *ctx, u_int bg)
 	u_int			 sx = screen_size_x(s);
 
 	gl = grid_get_line(s->grid, s->grid->hsize + s->cy);
-	if (s->cx > sx - 1 || (s->cx >= gl->cellsize && bg == 8))
+	if (s->cx > sx - 1 || (s->cx >= gl->cellsize && COLOUR_DEFAULT(bg)))
 		return;
 
 	screen_write_initctx(ctx, &ttyctx);
