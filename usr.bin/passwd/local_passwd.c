@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.53 2016/12/30 23:32:14 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.54 2018/10/25 06:41:38 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +72,14 @@ local_passwd(char *uname, int authenticated)
 		return(1);
 	}
 
+	if (unveil(_PATH_MASTERPASSWD_LOCK, "wc") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_MASTERPASSWD, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_BSHELL, "x") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_PWD_MKDB, "x") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath wpath cpath getpw tty id proc exec", NULL) == -1)
 		err(1, "pledge");
 
