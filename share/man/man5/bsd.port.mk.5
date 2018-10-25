@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.498 2018/10/25 09:52:23 solene Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.499 2018/10/25 09:56:57 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -353,14 +353,15 @@ for use with e.g.,
 .Cm makesum .
 .It Cm fix-permissions
 Ensure permissions are correct when using
-.Ev PORTS_PRIVSEP .
+.Ev PORTS_PRIVSEP
+and/or
+.Xr dpb 1 .
 .Pp
-Creates directory
+If necessary, creates directory
 .Ev DISTDIR
-owned by 
-.Ev FETCH_USER .
-.Pp
-Creates directories
+owned by
+.Ev FETCH_USER ,
+and creates directories
 .Ev LOCKDIR ,
 .Ev PACKAGES_REPOSITORY ,
 .Ev PLIST_REPOSITORY
@@ -369,8 +370,12 @@ and
 owned by
 .Ev BUILD_USER .
 .Pp
-If the directories already exist, ownership of the files in them is modified to
-suit the parent folder ownership.
+If these directories already exist,
+ownership of their contents is modified to conform to
+.Ev PORTS_PRIVSEP
+and
+.Xr dpb 1
+requirements.
 .It Cm generate-readmes
 Generate READMEs and rc scripts from
 .Pa ${PKGDIR}
