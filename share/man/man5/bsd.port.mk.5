@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.497 2018/10/17 05:44:38 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.498 2018/10/25 09:52:23 solene Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 17 2018 $
+.Dd $Mdocdate: October 25 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -351,6 +351,26 @@ but also fetches
 .Ev SUPDISTFILES ,
 for use with e.g.,
 .Cm makesum .
+.It Cm fix-permissions
+Ensure permissions are correct when using
+.Ev PORTS_PRIVSEP .
+.Pp
+Creates directory
+.Ev DISTDIR
+owned by 
+.Ev FETCH_USER .
+.Pp
+Creates directories
+.Ev LOCKDIR ,
+.Ev PACKAGES_REPOSITORY ,
+.Ev PLIST_REPOSITORY
+and
+.Ev WRKOBJDIR
+owned by
+.Ev BUILD_USER .
+.Pp
+If the directories already exist, ownership of the files in them is modified to
+suit the parent folder ownership.
 .It Cm generate-readmes
 Generate READMEs and rc scripts from
 .Pa ${PKGDIR}
@@ -2420,6 +2440,25 @@ and
 .Ev FETCH_USER
 must be able to write into
 .Pa ${DISTDIR} .
+The directories and permissions can be set correctly using
+.Cm fix-permissions .
+.Pp
+The regular user must be allowed to execute commands as
+.Ev BUILD_USER
+and
+.Ev FETCH_USER .
+Running commands as another user can be achieved with
+.Xr doas 1
+by setting
+.Ev SUDO=doas
+in
+.Xr mk.conf 5
+and using the following minimal
+.Xr doas.conf 5 :
+.Bd -literal -offset indent
+permit keepenv nopass solene as _pbuild
+permit keepenv nopass solene as _pfetch
+.Ed
 .Pp
 Note that this also means that
 .Xr doas 1
