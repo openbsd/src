@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.178 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.179 2018/10/25 15:38:37 visa Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
+	fp->f_data = so;
 	error = soaccept(so, nam);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
@@ -347,7 +348,6 @@ out:
 	if (!error) {
 		sounlock(head, s);
 		fdplock(fdp);
-		fp->f_data = so;
 		fdinsert(fdp, tmpfd, cloexec, fp);
 		fdpunlock(fdp);
 		FRELE(fp, p);
@@ -356,8 +356,8 @@ out:
 		sounlock(head, s);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
-		closef(fp, p);
 		fdpunlock(fdp);
+		closef(fp, p);
 	}
 
 	m_freem(nam);
