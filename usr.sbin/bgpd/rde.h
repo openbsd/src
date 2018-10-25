@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.198 2018/10/24 08:26:37 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.199 2018/10/25 15:49:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include "bgpd.h"
 #include "log.h"
@@ -125,7 +126,7 @@ struct rde_peer {
 #define AS_SEQUENCE		2
 #define AS_CONFED_SEQUENCE	3
 #define AS_CONFED_SET		4
-#define ASPATH_HEADER_SIZE	(sizeof(struct aspath) - sizeof(u_char))
+#define ASPATH_HEADER_SIZE	(offsetof(struct aspath, data))
 
 struct aspath {
 	LIST_ENTRY(aspath)	entry;
