@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.65 2017/10/18 17:31:01 millert Exp $	*/
+/*	$OpenBSD: grey.c,v 1.66 2018/10/25 06:42:35 mestre Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -1078,6 +1078,18 @@ greywatcher(void)
 
 	drop_privs();
 
+	if (unveil(PATH_SPAMD_DB, "rw") == -1) {
+		syslog_r(LOG_ERR, &sdata, "unveil failed (%m)");
+		exit(1);
+	}
+	if (unveil(alloweddomains_file, "r") == -1) {
+		syslog_r(LOG_ERR, &sdata, "unveil failed (%m)");
+		exit(1);
+	}
+	if (unveil(PATH_PFCTL, "x") == -1) {
+		syslog_r(LOG_ERR, &sdata, "unveil failed (%m)");
+		exit(1);
+	}
 	if (pledge("stdio rpath wpath inet flock proc exec", NULL) == -1) {
 		syslog_r(LOG_ERR, &sdata, "pledge failed (%m)");
 		exit(1);
