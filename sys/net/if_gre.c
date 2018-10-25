@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.130 2018/10/18 03:01:18 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.131 2018/10/25 01:05:19 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2175,6 +2175,15 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->sc_ka_count = ikar->ikar_cnt;
 			sc->sc_ka_timeo = ikar->ikar_timeo;
 			sc->sc_ka_state = GRE_KA_DOWN;
+
+			arc4random_buf(&sc->sc_ka_key, sizeof(sc->sc_ka_key));
+			sc->sc_ka_bias = arc4random();
+			sc->sc_ka_holdmax = sc->sc_ka_count;
+
+			sc->sc_ka_recvtm = ticks - hz;
+			timeout_add(&sc->sc_ka_send, 1);
+			timeout_add_sec(&sc->sc_ka_hold,
+			    sc->sc_ka_timeo * sc->sc_ka_count);
 		}
 		break;
 
@@ -2747,15 +2756,8 @@ gre_up(struct gre_softc *sc)
 	NET_ASSERT_LOCKED();
 	SET(sc->sc_if.if_flags, IFF_RUNNING);
 
-	if (sc->sc_ka_state != GRE_KA_NONE) {
-		arc4random_buf(&sc->sc_ka_key, sizeof(sc->sc_ka_key));
-		sc->sc_ka_bias = arc4random();
-
-		sc->sc_ka_recvtm = ticks - hz;
-		sc->sc_ka_holdmax = sc->sc_ka_count;
-
+	if (sc->sc_ka_state != GRE_KA_NONE)
 		gre_keepalive_send(sc);
-	}
 
 	return (0);
 }
