@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.128 2018/10/16 16:39:18 naddy Exp $
+#	$OpenBSD: Makefile.i386,v 1.129 2018/10/26 13:49:15 naddy Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -52,7 +52,7 @@ LINKFLAGS=	-T ld.script -X --warn-common -nopie
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
 AFLAGS+=	-m32
-LDFLAGS=	-melf_i386_obsd
+LDFLAGS=	-melf_i386
 LINKFLAGS+=	${LDFLAGS}
 .endif
 
