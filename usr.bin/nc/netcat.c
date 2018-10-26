@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.195 2018/10/04 17:04:50 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.196 2018/10/26 07:19:26 dlg Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -639,8 +639,10 @@ main(int argc, char *argv[])
 			if (!zflag)
 				readwrite(s, NULL);
 			close(s);
-		} else
+		} else {
+			warn("%s", host);
 			ret = 1;
+		}
 
 		if (uflag)
 			unlink(unix_dg_tmp_socket);
