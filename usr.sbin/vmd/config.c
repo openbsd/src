@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.53 2018/10/19 10:12:39 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.54 2018/10/26 11:24:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -354,7 +354,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			 */
 			oflags = O_RDONLY|O_NONBLOCK;
 			aflags = R_OK;
-			n = virtio_get_base(diskfds[i][j], base, sizeof base,
+			n = virtio_get_base(diskfds[i][j], base, sizeof(base),
 			    vmc->vmc_disktypes[i], path);
 			if (n == 0)
 				break;
@@ -364,6 +364,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 				    base, vcp->vcp_disks[i]);
 				goto fail;
 			}
+			(void)strlcpy(path, base, sizeof(path));
 		}
 	}
 
