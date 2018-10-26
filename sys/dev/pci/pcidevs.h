@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1864 2018/10/26 01:55:34 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1865 2018/10/26 05:53:58 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2955,6 +2955,7 @@
 #define	PCI_PRODUCT_INITIO_INIC950	0x9500		/* INIC-950 */
 
 /* InnoTek Systemberatung GmbH */
+#define	PCI_PRODUCT_INNOTEK_VBNVME	0x4e56		/* VirtualBox NVMe */
 #define	PCI_PRODUCT_INNOTEK_VBGA	0xbeef		/* VirtualBox Graphics Adapter */
 #define	PCI_PRODUCT_INNOTEK_VBGS	0xcafe		/* VirtualBox Guest Service */
 
