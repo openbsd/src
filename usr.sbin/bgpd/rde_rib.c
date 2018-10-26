@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.180 2018/10/24 08:26:37 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.181 2018/10/26 08:55:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -477,7 +477,7 @@ path_init(u_int32_t hashsize)
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
-	pathtable.path_hashtbl = calloc(hs, sizeof(struct aspath_queue));
+	pathtable.path_hashtbl = calloc(hs, sizeof(*pathtable.path_hashtbl));
 	if (pathtable.path_hashtbl == NULL)
 		fatal("path_init");
 
