@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.55 2018/08/06 18:39:13 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.56 2018/10/26 20:28:40 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -125,6 +125,7 @@
 #include <dev/cons.h>
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/acpi/efi.h>
 
 #include <net/if.h>
 
@@ -152,12 +153,8 @@ char *boot_file = "";
 uint8_t *bootmac = NULL;
 u_int cpu_reset_address = 0;
 
-vaddr_t physical_start;
 vaddr_t physical_freestart;
-vaddr_t physical_freeend;
-vaddr_t physical_end;
-u_int free_pages;
-int physmem = 0;
+int physmem;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
@@ -348,6 +345,13 @@ copy_io_area_map(pd_entry_t *new_pd)
 	}
 }
 
+uint64_t mmap_start;
+uint32_t mmap_size;
+uint32_t mmap_desc_size;
+uint32_t mmap_desc_ver;
+
+EFI_MEMORY_DESCRIPTOR *mmap;
+
 /*
  * u_int initarm(...)
  *
@@ -363,14 +367,12 @@ copy_io_area_map(pd_entry_t *new_pd)
 u_int
 initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 {
-	int loop, loop1, i, physsegs = VM_PHYSSEG_MAX;
+	int loop, loop1;
 	u_int l1pagetable;
 	pv_addr_t kernel_l1pt;
-	pv_addr_t fdt;
+	pv_addr_t fdt, map;
 	struct fdt_reg reg;
-	paddr_t memstart;
-	psize_t memsize;
-	paddr_t memend;
+	paddr_t memstart, memend;
 	void *config;
 	size_t size;
 	void *node;
@@ -442,16 +444,24 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 			memcpy(lladdr, prop, sizeof(lladdr));
 			bootmac = lladdr;
 		}
+
+		len = fdt_node_property(node, "openbsd,uefi-mmap-start", &prop);
+		if (len == sizeof(mmap_start))
+			mmap_start = bemtoh64((uint64_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-size", &prop);
+		if (len == sizeof(mmap_size))
+			mmap_size = bemtoh32((uint32_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-size", &prop);
+		if (len == sizeof(mmap_desc_size))
+			mmap_desc_size = bemtoh32((uint32_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
+		if (len == sizeof(mmap_desc_ver))
+			mmap_desc_ver = bemtoh32((uint32_t *)prop);
 	}
 
-	node = fdt_find_node("/memory");
-	if (node == NULL || fdt_get_reg(node, 0, &reg))
-		panic("initarm: no memory specificed");
-
-	memstart = reg.addr;
-	memsize = reg.size;
-	physical_start = reg.addr;
-	physical_end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
+	if (mmap_start != 0)
+		bootstrap_bs_map(NULL, mmap_start, mmap_size, 0,
+		    (bus_space_handle_t *)&mmap);
 
 	platform_init();
 
@@ -468,15 +478,10 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 #endif /* RAMDISK_HOOKS */
 
 	physical_freestart = (((unsigned long)esym - KERNEL_TEXT_BASE + 0xfff) & ~0xfff) + loadaddr;
-	physical_freeend = MIN((uint64_t)physical_end, (paddr_t)-PAGE_SIZE);
 
-	physmem = (physical_end - physical_start) / PAGE_SIZE;
-
-#ifdef DEBUG
-	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
-#endif
+	/* The bootloader has loaded us ubto a 32MB block. */
+	memstart = loadaddr;
+	memend = memstart + 32 * 1024 * 1024;
 
 	/*
 	 * Okay, the kernel starts 2MB in from the bottom of physical
@@ -500,13 +505,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	printf("Allocating page tables\n");
 #endif
 
-	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
-
-#ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
-	       physical_freestart, free_pages, free_pages);
-#endif
-
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)				\
 	alloc_pages((var).pv_pa, (np));			\
@@ -515,9 +513,8 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 #define alloc_pages(var, np)				\
 	(var) = physical_freestart;			\
 	physical_freestart += ((np) * PAGE_SIZE);	\
-	if (physical_freeend < physical_freestart)	\
+	if (physical_freestart > memend)		\
 		panic("initarm: out of memory");	\
-	free_pages -= (np);				\
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
@@ -566,12 +563,16 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	    kernelstack.pv_va);
 #endif
 
-	/*
-	 * Allocate pages for an FDT copy.
-	 */
+	/* Relocate the FDT to safe memory. */
 	size = fdt_get_size(config);
 	valloc_pages(fdt, round_page(size) / PAGE_SIZE);
 	memcpy((void *)fdt.pv_pa, config, size);
+
+	/* Relocate the EFI memory map too. */
+	if (mmap_start != 0) {
+		valloc_pages(map, round_page(mmap_size) / PAGE_SIZE);
+		memcpy((void *)map.pv_pa, mmap, mmap_size);
+	}
 
 	/*
 	 * XXX Defer this to later so that we can reclaim the memory
@@ -674,6 +675,14 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	    round_page(fdt_get_size((void *)fdt.pv_pa)),
 	    PROT_READ | PROT_WRITE, PTE_CACHE);
 
+	/* Map the EFI memory map. */
+	if (mmap_start != 0) {
+		pmap_map_chunk(l1pagetable, map.pv_va, map.pv_pa,
+		    round_page(mmap_size),
+		    PROT_READ | PROT_WRITE, PTE_CACHE);
+		mmap = (void *)map.pv_va;
+	}
+
 	/*
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
@@ -741,27 +750,80 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	printf("page ");
 #endif
 	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
-	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
-	    atop(physical_freestart), atop(physical_freeend), 0);
 
-	if (physical_start < loadaddr) {
-		uvm_page_physload(atop(physical_start), atop(loadaddr),
-		    atop(physical_start), atop(loadaddr), 0);
-		physsegs--;
-	}
+	/* Make what's left of the initial 32MB block available to UVM. */
+	uvm_page_physload(atop(physical_freestart), atop(memend),
+	    atop(physical_freestart), atop(memend), 0);
+	physmem = atop(memend - memstart);
 
-	node = fdt_find_node("/memory");
-	for (i = 1; i < physsegs; i++) {
-		if (fdt_get_reg(node, i, &reg))
-			break;
-		if (reg.size == 0)
-			continue;
+	/* Make all other physical memory available to UVM. */
+	if (mmap && mmap_desc_ver == EFI_MEMORY_DESCRIPTOR_VERSION) {
+		EFI_MEMORY_DESCRIPTOR *desc = mmap;
+		int i;
 
-		memstart = reg.addr;
-		memend = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
-		physmem += (memend - memstart) / PAGE_SIZE;
-		uvm_page_physload(atop(memstart), atop(memend),
-		    atop(memstart), atop(memend), 0);
+		/*
+		 * Load all memory marked as EfiConventionalMemory.
+		 * Don't bother with blocks smaller than 64KB.  The
+		 * initial 64MB memory block should be marked as
+		 * EfiLoaderData so it won't be added again here.
+		 */
+		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
+			    desc->Type, desc->PhysicalStart,
+			    desc->VirtualStart, desc->NumberOfPages,
+			    desc->Attribute);
+			if (desc->Type == EfiConventionalMemory &&
+			    desc->NumberOfPages >= 16) {
+				uvm_page_physload(atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages,
+				    atop(desc->PhysicalStart),
+				    atop(desc->PhysicalStart) +
+				    desc->NumberOfPages, 0);
+				physmem += desc->NumberOfPages;
+			}
+			desc = NextMemoryDescriptor(desc, mmap_desc_size);
+		}
+	} else {
+		paddr_t start, end;
+		int i;
+
+		node = fdt_find_node("/memory");
+		if (node == NULL)
+			panic("%s: no memory specified", __func__);
+
+		for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+			if (fdt_get_reg(node, i, &reg))
+				break;
+			if (reg.size == 0)
+				continue;
+
+			start = reg.addr;
+			end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
+
+			/*
+			 * The intial 32MB block is not excluded, so we need
+			 * to make sure we don't add it here.
+			 */
+			if (start < memend && end > memstart) {
+				if (start < memstart) {
+					uvm_page_physload(atop(start),
+					    atop(memstart), atop(start),
+					    atop(memstart), 0);
+					physmem += atop(memstart - start);
+				}
+				if (end > memend) {
+					uvm_page_physload(atop(memend),
+					    atop(end), atop(memend),
+					    atop(end), 0);
+					physmem += atop(end - memend);
+				}
+			} else {
+				uvm_page_physload(atop(start), atop(end),
+				    atop(start), atop(end), 0);
+				physmem += atop(end - start);
+			}
+		}
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
