@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.10 2018/10/22 13:18:23 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.11 2018/10/26 14:55:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -55,7 +55,7 @@ int	bridge_rtfind(struct bridge_softc *, struct ifbaconf *);
 int	bridge_rtdaddr(struct bridge_softc *, struct ether_addr *);
 u_int32_t bridge_hash(struct bridge_softc *, struct ether_addr *);
 
-int	bridge_brlconf(struct bridge_softc *, struct ifbrlconf *);
+int	bridge_brlconf(struct bridge_iflist *, struct ifbrlconf *);
 int	bridge_addrule(struct bridge_iflist *, struct ifbrlreq *, int out);
 
 int
@@ -64,6 +64,7 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct bridge_softc *sc = (struct bridge_softc *)ifp->if_softc;
 	struct ifbreq *req = (struct ifbreq *)data;
 	struct ifbrlreq *brlreq = (struct ifbrlreq *)data;
+	struct ifbrlconf *bc = (struct ifbrlconf *)data;
 	struct ifbareq *bareq = (struct ifbareq *)data;
 	struct ifbrparam *bparam = (struct ifbrparam *)data;
 	struct bridge_iflist *bif;
@@ -160,7 +161,17 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bridge_flushrule(bif);
 		break;
 	case SIOCBRDGGRL:
-		error = bridge_brlconf(sc, (struct ifbrlconf *)data);
+		ifs = ifunit(bc->ifbrl_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		bif = (struct bridge_iflist *)ifs->if_bridgeport;
+		if (bif == NULL || bif->bridge_sc != sc) {
+			error = ESRCH;
+			break;
+		}
+		error = bridge_brlconf(bif, bc);
 		break;
 	default:
 		break;
@@ -535,21 +546,13 @@ bridge_update(struct ifnet *ifp, struct ether_addr *ea, int delete)
  * bridge filter/matching rules
  */
 int
-bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
+bridge_brlconf(struct bridge_iflist *bif, struct ifbrlconf *bc)
 {
-	struct ifnet *ifp;
-	struct bridge_iflist *bif;
+	struct bridge_softc *sc = bif->bridge_sc;
 	struct brl_node *n;
 	struct ifbrlreq req;
 	int error = 0;
 	u_int32_t i = 0, total = 0;
-
-	ifp = ifunit(bc->ifbrl_ifsname);
-	if (ifp == NULL)
-		return (ENOENT);
-	bif = (struct bridge_iflist *)ifp->if_bridgeport;
-	if (bif == NULL || bif->bridge_sc != sc)
-		return (ESRCH);
 
 	SIMPLEQ_FOREACH(n, &bif->bif_brlin, brl_next) {
 		total++;
