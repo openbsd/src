@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.9 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: ld.script,v 1.10 2018/10/26 15:00:54 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -41,9 +41,7 @@ __ALIGN_SIZE = 0x1000;
 __kernel_base_virt = 0xd0200000 + SIZEOF_HEADERS;
 __kernel_base_phys = __kernel_base_virt & 0xfffffff;
 
-/* We use physical address to jump to kernel */
-start_phys = LOADADDR(.text) + (start - __kernel_base_virt);
-ENTRY(start_phys)
+ENTRY(start)
 SECTIONS
 {
 	__kernel_text_virt = __kernel_base_virt;
