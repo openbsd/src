@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.29 2017/11/21 12:07:00 tb Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.30 2018/10/26 17:11:33 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	char *nlistpath, *nlistname;
 	char dbdir[PATH_MAX];
 
-	if (pledge("stdio rpath wpath cpath fattr getpw flock id", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw flock id unveil", NULL) == -1)
 		err(1, "pledge");
 
 	/* Try to use the kmem group to be able to fchown() in kvm_mkdb(). */
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 			warn("can't set rlimit data size");
 	}
 
-	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr flock unveil", NULL) == -1)
 		err(1, "pledge");
 
 	strlcpy(dbdir, _PATH_VARDB, sizeof(dbdir));
@@ -114,6 +114,20 @@ main(int argc, char *argv[])
 
 	if (argc > 1)
 		usage();
+
+	if (argc > 0) {
+		if (unveil(argv[0], "r") == -1)
+			err(1, "unveil");
+	} else {
+		if (unveil(_PATH_UNIX, "r") == -1)
+			err(1, "unveil");
+		if (unveil(_PATH_KSYMS, "r") == -1)
+			err(1, "unveil");
+	}
+	if (unveil(dbdir, "rwc") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath wpath cpath fattr flock", NULL) == -1)
+		err(1, "pledge");
 
 	/* If no kernel specified use _PATH_KSYMS and fall back to _PATH_UNIX */
 	if (argc > 0) {
