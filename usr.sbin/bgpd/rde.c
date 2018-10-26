@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.440 2018/10/24 08:26:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.441 2018/10/26 06:48:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -770,7 +770,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			for (rid = 0; rid < rib_size; rid++) {
 				if (!rib_valid(rid))
-					break;
+					continue;
 				ribs[rid].state = RECONF_DELETE;
 			}
 			SIMPLEQ_INIT(&nconf->rde_prefixsets);
@@ -1411,7 +1411,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
-			break;
+			continue;
 		rde_filterstate_prep(&state, &in->aspath, in->nexthop,
 		    in->nhflags);
 		/* input filter */
@@ -1443,7 +1443,7 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
-			break;
+			continue;
 		if (prefix_remove(&ribs[i].rib, peer, prefix, prefixlen))
 			rde_update_log("withdraw", i, peer, NULL, prefix,
 			    prefixlen);
@@ -3661,7 +3661,7 @@ network_add(struct network_config *nc, int flagstatic)
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
-			break;
+			continue;
 		rde_update_log("announce", i, peerself,
 		    state.nexthop ? &state.nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
@@ -3713,7 +3713,7 @@ network_delete(struct network_config *nc, int flagstatic)
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		if (!rib_valid(i))
-			break;
+			continue;
 		if (prefix_remove(&ribs[i].rib, peerself, &nc->prefix,
 		    nc->prefixlen))
 			rde_update_log("withdraw announce", i, peerself,
@@ -3782,7 +3782,7 @@ rde_shutdown(void)
 	filterlist_free(out_rules);
 	for (i = 0; i < rib_size; i++) {
 		if (!rib_valid(i))
-			break;
+			continue;
 		filterlist_free(ribs[i].in_rules);
 	}
 
