@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.219 2018/10/01 23:09:53 job Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.220 2018/10/26 16:54:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1875,12 +1875,19 @@ show_rib_memory_msg(struct imsg *imsg)
 		    (long long)stats.attr_refs);
 		printf("%10lld BGP attributes using %s of memory\n",
 		    (long long)stats.attr_dcnt, fmt_mem(stats.attr_data));
+		printf("%10lld as-set elements in %lld tables using "
+		    "%s of memory\n", stats.aset_nmemb, stats.aset_cnt,
+		    fmt_mem(stats.aset_size));
+		printf("%10lld prefix-set elments using %s of memory\n",
+		    stats.pset_cnt, fmt_mem(stats.pset_size));
 		printf("RIB using %s of memory\n", fmt_mem(pts +
 		    stats.prefix_cnt * sizeof(struct prefix) +
 		    stats.rib_cnt * sizeof(struct rib_entry) +
 		    stats.path_cnt * sizeof(struct rde_aspath) +
 		    stats.aspath_size + stats.attr_cnt * sizeof(struct attr) +
 		    stats.attr_data));
+		printf("Sets using %s of memory\n", fmt_mem(stats.aset_size +
+		    stats.pset_size));
 		printf("\nRDE hash statistics\n");
 		break;
 	case IMSG_CTL_SHOW_RIB_HASH:
