@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1864 2018/10/26 01:55:34 kevlo Exp $
+$OpenBSD: pcidevs,v 1.1865 2018/10/26 05:53:58 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2950,6 +2950,7 @@ product INITIO INIC941		0x9401	INIC-941
 product INITIO INIC950		0x9500	INIC-950
 
 /* InnoTek Systemberatung GmbH */
+product INNOTEK VBNVME		0x4e56	VirtualBox NVMe
 product INNOTEK VBGA		0xbeef	VirtualBox Graphics Adapter
 product INNOTEK VBGS		0xcafe	VirtualBox Guest Service
 
