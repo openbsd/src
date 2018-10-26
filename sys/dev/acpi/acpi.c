@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.359 2018/08/30 10:11:34 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.360 2018/10/26 20:26:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2982,10 +2982,6 @@ const char *acpi_skip_hids[] = {
 	"PNP0200",	/* PC-class DMA Controller */
 	"PNP0201",	/* EISA DMA Controller */
 	"PNP0800",	/* Microsoft Sound System Compatible Device */
-#if defined(__amd64__) || defined(__i386__)
-	"PNP0A03",	/* PCI Bus */
-	"PNP0A08",	/* PCI Express Bus */
-#endif
 	"PNP0C01",	/* System Board */
 	"PNP0C02",	/* PNP Motherboard Resources */
 	"PNP0C04",	/* x87-compatible Floating Point Processing Unit */
