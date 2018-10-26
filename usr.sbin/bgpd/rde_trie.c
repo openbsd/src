@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.9 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.10 2018/10/26 16:53:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -165,6 +165,8 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 			 */
 			if ((b = calloc(1, sizeof(*b))) == NULL)
 				return NULL;
+			rdemem.pset_cnt++;
+			rdemem.pset_size += sizeof(*b);
 			b->plen = inet4findmsb(&n->addr, &mp);
 			inet4applymask(&b->addr, &n->addr, b->plen);
 
@@ -202,6 +204,8 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
 		return NULL;
+	rdemem.pset_cnt++;
+	rdemem.pset_size += sizeof(*new);
 	new->addr = p;
 	new->plen = plen;
 	new->node = 1;
@@ -241,6 +245,8 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 			 */
 			if ((b = calloc(1, sizeof(*b))) == NULL)
 				return NULL;
+			rdemem.pset_cnt++;
+			rdemem.pset_size += sizeof(*b);
 			b->plen = inet6findmsb(&n->addr, &mp);
 			inet6applymask(&b->addr, &n->addr, b->plen);
 
@@ -278,6 +284,8 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
 		return NULL;
+	rdemem.pset_cnt++;
+	rdemem.pset_size += sizeof(*new);
 	new->addr = p;
 	new->plen = plen;
 	new->node = 1;
@@ -420,6 +428,8 @@ trie_free_v4(struct tentry_v4 *n)
 	trie_free_v4(n->trie[1]);
 	set_free(n->set);
 	free(n);
+	rdemem.pset_cnt--;
+	rdemem.pset_size -= sizeof(*n);
 }
 
 static void
@@ -431,6 +441,8 @@ trie_free_v6(struct tentry_v6 *n)
 	trie_free_v6(n->trie[1]);
 	set_free(n->set);
 	free(n);
+	rdemem.pset_cnt--;
+	rdemem.pset_size -= sizeof(*n);
 }
 
 void

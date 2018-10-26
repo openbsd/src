@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.5 2018/09/20 11:45:59 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.6 2018/10/26 16:53:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -125,6 +125,8 @@ set_new(size_t nmemb, size_t size)
 		return NULL;
 	}
 
+	rdemem.aset_cnt++;
+	rdemem.aset_size += sizeof(*set);
 	return set;
 }
 
@@ -133,6 +135,10 @@ set_free(struct set_table *set)
 {
 	if (set == NULL)
 		return;
+	rdemem.aset_cnt--;
+	rdemem.aset_size -= sizeof(*set);
+	rdemem.aset_size -= set->size * set->max;
+	rdemem.aset_nmemb -= set->nmemb;
 	free(set->set);
 	free(set);
 }
@@ -154,6 +160,7 @@ set_add(struct set_table *set, void *elms, size_t nelms)
 		s = reallocarray(set->set, new_size, set->size);
 		if (s == NULL)
 			return -1;
+		rdemem.aset_size += set->size * (new_size - set->max);
 		set->set = s;
 		set->max = new_size;
 	}
@@ -161,6 +168,7 @@ set_add(struct set_table *set, void *elms, size_t nelms)
 	memcpy((u_int8_t *)set->set + set->nmemb * set->size, elms,
 	    nelms * set->size);
 	set->nmemb += nelms;
+	rdemem.aset_nmemb += nelms;
 
 	return 0;
 }
