@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.23 2017/11/01 12:02:44 jmc Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.24 2018/10/26 16:20:59 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2017 $
+.Dd $Mdocdate: October 26 2018 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -152,7 +152,7 @@ The "ruby gem"
 should be used for pure ruby gems without C extensions.
 This adds
 .Ev PKG_ARCH
-= * and adds ruby23, ruby24, and jruby
+= * and adds ruby24, ruby25, and jruby
 .Ev FLAVOR Ns s
 to the port, so the same port can build packages for multiple versions of ruby.
 .It
@@ -168,7 +168,7 @@ the appropriate libraries and
 .Ev MODRUBY_WANTLIB
 to
 .Ev WANTLIB .
-It also adds ruby23 and ruby24
+It also adds ruby24 and ruby25
 .Ev FLAVOR Ns s
 to the port.
 If the C extension in the gem requires specific arguments to extconf.rb, set those
@@ -195,14 +195,14 @@ is necessary so that if a ruby x.y package is being built for the current
 port, it depends on the ruby x.y package of the
 dependencies.
 .Pp
-The ports system defaults to using ruby 2.4 if the version of ruby is not
+The ports system defaults to using ruby 2.5 if the version of ruby is not
 specified.
 If you want to specify a version for a gem port, use a specific
 .Ev FLAVOR ,
 such as ruby24 to use ruby 2.4.
 If you want to specify a version for a non-gem port, set
 .Ev MODRUBY_REV
-for the version of ruby you want to use (2.3, 2.4, jruby).
+for the version of ruby you want to use (2.4, 2.5, jruby).
 .Pp
 If you do not want the ports system to automatically set up
 .Ev FLAVOR Ns s
@@ -218,7 +218,7 @@ When
 .Ev MODRUBY_HANDLE_FLAVORS
 is Yes, the ports system automatically adds the appropriate prefix to the
 .Ev FULLPKGNAME
-(e.g. jruby- for jruby, ruby24- for ruby 2.4).
+(e.g. jruby- for jruby, ruby25- for ruby 2.5).
 Additionally, it adds
 .Ev GEM_BIN_SUFFIX
 and
