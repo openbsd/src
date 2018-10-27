@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.67 2018/09/10 11:07:43 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.68 2018/10/27 09:55:26 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -434,7 +434,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ic->ic_des_esslen > 0) {
 			/* 'nwid' disables auto-join magic */
 			ic->ic_flags &= ~IEEE80211_F_AUTO_JOIN;
-		} else {
+		} else if (!TAILQ_EMPTY(&ic->ic_ess)) {
 			/* '-nwid' re-enables auto-join */
 			ic->ic_flags |= IEEE80211_F_AUTO_JOIN;
 		}
