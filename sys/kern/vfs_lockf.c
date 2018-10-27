@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.27 2018/10/27 08:47:09 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.28 2018/10/27 08:51:13 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -64,12 +64,15 @@ int maxlockdepth = MAXDEPTH;
 #define	DEBUG_FINDOVR		0x08
 #define	DEBUG_SPLIT		0x10
 #define	DEBUG_WAKELOCK		0x20
+#define	DEBUG_LINK		0x80
 
 int	lockf_debug = DEBUG_SETLOCK|DEBUG_CLEARLOCK|DEBUG_WAKELOCK;
 
 #define	DPRINTF(args, level)	if (lockf_debug & (level)) printf args
+#define	LFPRINT(args, level)	if (lockf_debug & (level)) lf_print args
 #else
 #define	DPRINTF(args, level)
+#define	LFPRINT(args, level)
 #endif
 
 void
@@ -122,9 +125,21 @@ lf_free(struct lockf *lock)
 {
 	struct uidinfo *uip;
 
+	LFPRINT(("lf_free", lock), DEBUG_LINK);
+
 	if (*lock->lf_head == lock) {
+		LFPRINT(("lf_free: head", lock->lf_next), DEBUG_LINK);
+
+#ifdef LOCKF_DIAGNOSTIC
+		KASSERT(lock->lf_prev == NULL);
+#endif /* LOCKF_DIAGNOSTIC */
+
 		*lock->lf_head = lock->lf_next;
 	}
+
+#ifdef LOCKF_DIAGNOSTIC
+	KASSERT(TAILQ_EMPTY(&lock->lf_blkhd));
+#endif /* LOCKF_DIAGNOSTIC */
 
 	lf_unlink(lock);
 
@@ -137,6 +152,18 @@ lf_free(struct lockf *lock)
 void
 lf_link(struct lockf *lock1, struct lockf *lock2)
 {
+	LFPRINT(("lf_link: lock1", lock1), DEBUG_LINK);
+	LFPRINT(("lf_link: lock2", lock2), DEBUG_LINK);
+
+#ifdef LOCKF_DIAGNOSTIC
+	KASSERT(lock1 != NULL && lock2 != NULL);
+	KASSERT(lock1 != lock2);
+	if (lock1->lf_next != NULL)
+		KASSERT(lock2->lf_next == NULL);
+	if (lock2->lf_prev != NULL)
+		KASSERT(lock1->lf_prev == NULL);
+#endif /* LOCKF_DIAGNOSTIC */
+
 	if (lock1->lf_next != NULL) {
 		lock2->lf_next = lock1->lf_next;
 		lock1->lf_next->lf_prev = lock2;
@@ -150,8 +177,16 @@ lf_link(struct lockf *lock1, struct lockf *lock2)
 	lock2->lf_prev = lock1;
 
 	if (*lock1->lf_head == NULL) {
+		LFPRINT(("lf_link: head", lock1), DEBUG_LINK);
+
+#ifdef LOCKF_DIAGNOSTIC
+		KASSERT(*lock2->lf_head == NULL);
+#endif /* LOCKF_DIAGNOSTIC */
+
 		*lock1->lf_head = lock1;
 	} else if (*lock2->lf_head == lock2) {
+		LFPRINT(("lf_link: swap head", lock1), DEBUG_LINK);
+
 		*lock1->lf_head = lock1;
 	}
 }
@@ -159,6 +194,8 @@ lf_link(struct lockf *lock1, struct lockf *lock2)
 void
 lf_unlink(struct lockf *lock)
 {
+	LFPRINT(("lf_unlink", lock), DEBUG_LINK);
+
 	if (lock->lf_prev != NULL)
 		lock->lf_prev->lf_next = lock->lf_next;
 	if (lock->lf_next != NULL)
@@ -731,8 +768,15 @@ void
 lf_print(char *tag, struct lockf *lock)
 {
 	struct lockf	*block;
-	
-	printf("%s: lock %p for ", tag, lock);
+
+	if (tag)
+		printf("%s: ", tag);
+	printf("lock %p", lock);
+	if (lock == NULL) {
+		printf("\n");
+		return;
+	}
+	printf(" for ");
 	if (lock->lf_flags & F_POSIX)
 		printf("thread %d", ((struct proc *)(lock->lf_id))->p_tid);
 	else
@@ -742,33 +786,35 @@ lf_print(char *tag, struct lockf *lock)
 		lock->lf_type == F_WRLCK ? "exclusive" :
 		lock->lf_type == F_UNLCK ? "unlock" :
 		"unknown", lock->lf_start, lock->lf_end);
+	printf(", prev %p, next %p", lock->lf_prev, lock->lf_next);
 	block = TAILQ_FIRST(&lock->lf_blkhd);
 	if (block)
-		printf(" block");
+		printf(", block");
 	TAILQ_FOREACH(block, &lock->lf_blkhd, lf_block)
 		printf(" %p,", block);
 	printf("\n");
-
 }
 
 void
 lf_printlist(char *tag, struct lockf *lock)
 {
 	struct lockf *lf;
+#ifdef LOCKF_DIAGNOSTIC
+	struct lockf *prev = NULL;
+#endif /* LOCKF_DIAGNOSTIC */
 
 	printf("%s: Lock list:\n", tag);
 	for (lf = *lock->lf_head; lf; lf = lf->lf_next) {
-		printf("\tlock %p for ", lf);
-		if (lf->lf_flags & F_POSIX)
-			printf("thread %d", ((struct proc*)(lf->lf_id))->p_tid);
+		if (lock == lf)
+			printf(" * ");
 		else
-			printf("id %p", lf->lf_id);
-		printf(" %s, start %llx, end %llx",
-			lf->lf_type == F_RDLCK ? "shared" :
-			lf->lf_type == F_WRLCK ? "exclusive" :
-			lf->lf_type == F_UNLCK ? "unlock" :
-			"unknown", lf->lf_start, lf->lf_end);
-		printf("\n");
+			printf("   ");
+		lf_print(NULL, lf);
+
+#ifdef LOCKF_DIAGNOSTIC
+		KASSERT(lf->lf_prev == prev);
+		prev = lf;
+#endif /* LOCKF_DIAGNOSTIC */
 	}
 }
 #endif /* LOCKF_DEBUG */
