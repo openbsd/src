@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.154 2018/10/27 09:55:26 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.155 2018/10/27 10:02:47 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -561,10 +561,10 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 		 * We might have a password stored for this network.
 		 */
 		if (!ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN)) {
-			if (ic->ic_des_esslen == ess->esslen &&
-			    memcmp(ic->ic_des_essid, ess->essid,
-			    ess->esslen) == 0) {
-				ieee80211_set_ess(ic, ess->essid, ess->esslen);
+			if (ic->ic_des_esslen == ni->ni_esslen &&
+			    memcmp(ic->ic_des_essid, ni->ni_essid,
+			    ni->ni_esslen) == 0) {
+				ieee80211_set_ess(ic, ess, ni);
 				return;
 			}
 			continue;
@@ -582,8 +582,8 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 		}
 	}
 
-	if (seless && !(seless->esslen == ic->ic_des_esslen &&
-	    (memcmp(ic->ic_des_essid, seless->essid,
+	if (selni && seless && !(selni->ni_esslen == ic->ic_des_esslen &&
+	    (memcmp(ic->ic_des_essid, selni->ni_essid,
 	     IEEE80211_NWID_LEN) == 0))) {
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("%s: best AP %s ", ifp->if_xname,
@@ -593,29 +593,26 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			printf(" score %d\n",
 			    ieee80211_ess_calculate_score(ic, selni));
 			printf("%s: switching to network ", ifp->if_xname);
-			ieee80211_print_essid(seless->essid, seless->esslen);
+			ieee80211_print_essid(selni->ni_essid,
+			    selni->ni_esslen);
 			printf("\n");
 
 		}
-		ieee80211_set_ess(ic, seless->essid, seless->esslen);
+		ieee80211_set_ess(ic, seless, selni);
 	}
 }
 
 void
-ieee80211_set_ess(struct ieee80211com *ic, char *nwid, int len)
+ieee80211_set_ess(struct ieee80211com *ic, struct ieee80211_ess *ess, 
+    struct ieee80211_node *ni)
 {
-	struct ieee80211_ess	*ess;
-
-	ess = ieee80211_get_ess(ic, nwid, len);
-	if (ess == NULL)
-		return;
-
 	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
-	ic->ic_des_esslen = ess->esslen;
-	memcpy(ic->ic_des_essid, ess->essid, ic->ic_des_esslen);
+	ic->ic_des_esslen = ni->ni_esslen;
+	memcpy(ic->ic_des_essid, ni->ni_essid, ic->ic_des_esslen);
 
 	ieee80211_disable_wep(ic);
 	ieee80211_disable_rsn(ic);
+
 	if (ess->flags & IEEE80211_F_RSNON) {
 		explicit_bzero(ic->ic_psk, sizeof(ic->ic_psk));
 		memcpy(ic->ic_psk, ess->psk, sizeof(ic->ic_psk));

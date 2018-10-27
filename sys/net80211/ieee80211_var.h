@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.91 2018/09/11 18:16:26 krw Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.92 2018/10/27 10:02:47 phessler Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -451,7 +451,8 @@ void	ieee80211_disable_wep(struct ieee80211com *);
 void	ieee80211_disable_rsn(struct ieee80211com *); 
 int	ieee80211_add_ess(struct ieee80211com *, struct ieee80211_join *);
 void	ieee80211_del_ess(struct ieee80211com *, char *, int);
-void	ieee80211_set_ess(struct ieee80211com *, char *, int);
+void	ieee80211_set_ess(struct ieee80211com *, struct ieee80211_ess *,
+	    struct ieee80211_node *);
 struct ieee80211_ess *ieee80211_get_ess(struct ieee80211com *, const char *, int);
 
 extern	int ieee80211_cache_size;
