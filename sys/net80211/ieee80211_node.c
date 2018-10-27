@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.152 2018/09/18 06:36:18 mestre Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.153 2018/10/27 09:47:36 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -522,6 +522,9 @@ ieee80211_match_ess(struct ieee80211_ess *ess, struct ieee80211_node *ni)
 			return 0;
 	} else if (ess->flags & IEEE80211_F_WEPON) {
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
+			return 0;
+	} else {
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0)
 			return 0;
 	}
 
