@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.259 2018/08/30 03:30:25 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.260 2018/10/28 22:42:33 beck Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -204,7 +204,7 @@ struct process {
 
 	struct unveil *ps_uvpaths;	/* unveil vnodes and names */
 	struct unveil *ps_uvpcwd;	/* pointer to unveil of cwd, NULL if none */
-	size_t ps_uvvcount;		/* count of unveil vnodes held */
+	ssize_t ps_uvvcount;		/* count of unveil vnodes held */
 	size_t ps_uvncount;		/* count of unveil names allocated */
 	int ps_uvshrink;		/* do we need to shrink vnode list */
 	int ps_uvdone;			/* no more unveil is permitted */
@@ -428,6 +428,7 @@ struct proc {
 
 struct unveil {
 	struct vnode		*uv_vp;
+	ssize_t			uv_cover;
 	struct unvname_rbt	uv_names;
 	struct rwlock		uv_lock;
 	u_char			uv_flags;

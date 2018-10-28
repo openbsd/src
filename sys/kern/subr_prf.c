@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.95 2018/04/10 09:24:56 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.96 2018/10/28 22:42:33 beck Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -113,6 +113,7 @@ int	db_panic = 1;
  * to break into console during boot. It's _really_ useful when debugging
  * some things in the kernel that can cause init(8) to crash.
  */
+#define DDB_SAFE_CONSOLE
 #ifdef DDB_SAFE_CONSOLE
 int	db_console = 1;
 #else

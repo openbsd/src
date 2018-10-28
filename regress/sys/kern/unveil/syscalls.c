@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.17 2018/08/28 02:49:47 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.18 2018/10/28 22:42:33 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -456,7 +456,7 @@ test_parent_dir(int do_uv)
 {
 	char filename[255];
 	if (do_uv) {
-		printf("testing chdir\n");
+		printf("testing parent dir\n");
 		do_unveil2();
 	} else {
 		(void) snprintf(filename, sizeof(filename), "/%s/doof", uv_dir1);
@@ -466,23 +466,31 @@ test_parent_dir(int do_uv)
 		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
 		UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
 		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/poop", uv_dir1);
-		UV_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT) == -1), "open");
+		UV_SHOULD_SUCCEED((open(filename, O_RDWR|O_CREAT, 0644) == -1), "open");
 		(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/link", uv_dir1);
 		UV_SHOULD_SUCCEED((symlink("../subdir1/poop", filename) == -1), "symlink");
 	}
 	sleep(1);
-	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/poop", uv_dir1);
-	UV_SHOULD_SUCCEED((access(filename, R_OK) == -1), "access");
 	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/link", uv_dir1);
 	UV_SHOULD_SUCCEED((access(filename, R_OK) == -1), "access");
-	return 0;
+	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1/poop", uv_dir1);
+	UV_SHOULD_SUCCEED((access(filename, R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((chdir(uv_dir1) == -1), "chdir");
 	(void) snprintf(filename, sizeof(filename), "/%s/doof/subdir1", uv_dir1);
 	UV_SHOULD_SUCCEED((chdir(filename) == -1), "chdir");
+	UV_SHOULD_SUCCEED((access("poop", R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((chdir("../subdir2") == -1), "chdir");
 	UV_SHOULD_SUCCEED((chdir("../subdir1") == -1), "chdir");
-
-	return 0;
+	UV_SHOULD_SUCCEED((chdir(filename) == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../../doof/subdir2") == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../../doof/subdir1") == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../../doof/subdir2") == -1), "chdir");
+	UV_SHOULD_SUCCEED((chdir("../../doof/subdir1") == -1), "chdir");
+	UV_SHOULD_SUCCEED((access("poop", R_OK) == -1), "access");
+	UV_SHOULD_SUCCEED((access("../subdir1/poop", R_OK) == -1), "access");
+	UV_SHOULD_EACCES((chdir("../../../") == -1), "chdir");
+	UV_SHOULD_ENOENT((chdir(uv_dir2) == -1), "chdir");
+	return(0);
 }
 
 static int

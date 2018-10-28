@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.307 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.308 2018/10/28 22:42:33 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -878,7 +878,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	struct nameidata nd;
 	size_t pathlen;
 	char permissions[5];
-	int error;
+	int error, allow;
 
 	if (SCARG(uap, path) == NULL && SCARG(uap, permissions) == NULL) {
 		p->p_p->ps_uvdone = 1;
@@ -918,22 +918,31 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	 * XXX Any access to the file or directory will allow us to
 	 * pledge path it
 	 */
-	if ((nd.ni_vp &&
+	allow = ((nd.ni_vp &&
 	    (VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_vp, VWRITE, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_vp, VEXEC, p->p_ucred, p) == 0)) ||
 	    VOP_ACCESS(nd.ni_dvp, VREAD, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_dvp, VWRITE, p->p_ucred, p) == 0 ||
-	    VOP_ACCESS(nd.ni_dvp, VEXEC, p->p_ucred, p) == 0)
+	    VOP_ACCESS(nd.ni_dvp, VEXEC, p->p_ucred, p) == 0);
+
+	/* release lock from namei, but keep ref */
+	if (nd.ni_vp)
+		VOP_UNLOCK(nd.ni_vp);
+	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
+		VOP_UNLOCK(nd.ni_dvp);
+
+	if (allow)
 		error = unveil_add(p, &nd, permissions);
 	else
 		error = EPERM;
 
-	/* release vref and lock from namei, but not vref from ppath_add */
+	/* release vref from namei, but not vref from unveil_add */
 	if (nd.ni_vp)
-		vput(nd.ni_vp);
+		vrele(nd.ni_vp);
 	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
-		vput(nd.ni_dvp);
+		vrele(nd.ni_dvp);
+
 	return (error);
 }
 
