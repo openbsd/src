@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.104 2018/10/18 08:04:14 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.105 2018/10/28 15:34:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -624,7 +624,7 @@ first_key:
 	 * If not a complete key, look for key with an escape prefix (meta
 	 * modifier).
 	 */
-	if (*buf == '\033') {
+	if (*buf == '\033' && len > 1) {
 		/* Look for a key without the escape. */
 		n = tty_keys_next1(tty, buf + 1, len - 1, &key, &size, expired);
 		if (n == 0) {	/* found */
