@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.52 2018/09/27 07:43:18 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.53 2018/10/28 16:10:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -80,7 +80,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
-	log_debug("%s: cmd=%s, cwd=%s", __func__, cmd, cwd);
+	log_debug("%s: cmd=%s, cwd=%s", __func__, cmd, cwd == NULL ? "" : cwd);
 
 	/*
 	 * Do not set TERM during .tmux.conf, it is nice to be able to use
