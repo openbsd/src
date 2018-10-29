@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.199 2018/10/25 15:49:42 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.200 2018/10/29 09:28:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -478,7 +478,6 @@ void		 path_hash_stats(struct rde_hashstats *);
 int		 path_update(struct rib *, struct rde_peer *,
 		     struct filterstate *, struct bgpd_addr *, int, u_int8_t);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
-void		 path_remove(struct rde_aspath *);
 u_int32_t	 path_remove_stale(struct rde_aspath *, u_int8_t, time_t);
 void		 path_destroy(struct rde_aspath *);
 int		 path_empty(struct rde_aspath *);
@@ -499,7 +498,6 @@ struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *);
 void		 prefix_updateall(struct prefix *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
-void		 prefix_network_clean(struct rde_peer *);
 void		 prefix_relink(struct prefix *, struct rde_aspath *, int);
 
 static inline struct rde_peer *

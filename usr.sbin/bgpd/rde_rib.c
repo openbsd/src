@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.181 2018/10/26 08:55:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.182 2018/10/29 09:28:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -339,8 +339,8 @@ rib_restart(struct rib_context *ctx)
 static void
 rib_dump_r(struct rib_context *ctx)
 {
+	struct rib_entry	*re, *next;
 	struct rib		*rib;
-	struct rib_entry	*re;
 	unsigned int		 i;
 
 	rib = rib_byid(ctx->ctx_rib_id);
@@ -352,7 +352,8 @@ rib_dump_r(struct rib_context *ctx)
 	else
 		re = rib_restart(ctx);
 
-	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
+	for (i = 0; re != NULL; re = next) {
+		next = RB_NEXT(rib_tree, unused, re);
 		if (re->rib_id != ctx->ctx_rib_id)
 			fatalx("%s: Unexpected RIB %u != %u.", __func__,
 			    re->rib_id, ctx->ctx_rib_id);
@@ -434,6 +435,10 @@ rib_dump_new(u_int16_t id, u_int8_t aid, unsigned int count, void *arg,
 	ctx->ctx_throttle = throttle;
 
 	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	/* requested a sync traversal */
+	if (count == 0)
+		rib_dump_r(ctx);
 
 	return 0;
 }
@@ -663,65 +668,6 @@ path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
 	}
 	return (NULL);
 }
-
-void
-path_remove(struct rde_aspath *asp)
-{
-	struct prefix	*p, *np;
-
-	for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = np) {
-		np = TAILQ_NEXT(p, path_l);
-		if (asp->pftableid) {
-			struct bgpd_addr addr;
-
-			pt_getaddr(p->re->prefix, &addr);
-			/* Commit is done in peer_down() */
-			rde_send_pftable(prefix_aspath(p)->pftableid, &addr,
-			    p->re->prefix->prefixlen, 1);
-		}
-		prefix_destroy(p);
-	}
-}
-
-/* remove all stale routes or if staletime is 0 remove all routes for
-   a specified AID. */
-u_int32_t
-path_remove_stale(struct rde_aspath *asp, u_int8_t aid, time_t staletime)
-{
-	struct prefix	*p, *np;
-	u_int32_t	 rprefixes;
-
-	rprefixes=0;
-	/*
-	 * This is called when a session flapped and during that time
-	 * the pending updates for that peer are getting reset.
-	 */
-	for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = np) {
-		np = TAILQ_NEXT(p, path_l);
-		if (p->re->prefix->aid != aid)
-			continue;
-
-		if (staletime && p->lastchange > staletime)
-			continue;
-
-		if (asp->pftableid) {
-			struct bgpd_addr addr;
-
-			pt_getaddr(p->re->prefix, &addr);
-			/* Commit is done in peer_flush() */
-			rde_send_pftable(prefix_aspath(p)->pftableid, &addr,
-			    p->re->prefix->prefixlen, 1);
-		}
-
-		/* only count Adj-RIB-In */
-		if (re_rib(p->re) == &ribs[RIB_ADJ_IN].rib)
-			rprefixes++;
-
-		prefix_destroy(p);
-	}
-	return (rprefixes);
-}
-
 
 /*
  * This function can only called when all prefix have been removed first.
@@ -1144,29 +1090,6 @@ prefix_destroy(struct prefix *p)
 
 	if (path_empty(asp))
 		path_destroy(asp);
-}
-
-/*
- * helper function to clean up the dynamically added networks
- */
-void
-prefix_network_clean(struct rde_peer *peer)
-{
-	struct rde_aspath	*asp, *xasp;
-	struct prefix		*p, *xp;
-
-	for (asp = TAILQ_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
-		xasp = TAILQ_NEXT(asp, peer_l);
-		if ((asp->flags & F_ANN_DYNAMIC) != F_ANN_DYNAMIC)
-			continue;
-		for (p = TAILQ_FIRST(&asp->prefixes); p != NULL; p = xp) {
-			xp = TAILQ_NEXT(p, path_l);
-			prefix_unlink(p);
-			prefix_free(p);
-		}
-		if (path_empty(asp))
-			path_destroy(asp);
-	}
 }
 
 /*
