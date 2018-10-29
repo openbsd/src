@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.42 2018/10/05 13:35:41 naddy Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.43 2018/10/29 17:10:40 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -369,19 +369,19 @@
 #endif
 
 /*
- * _ISOC99_SOURCE, _ISOC11_SOURCE and __STDC_VERSION__ override any of
- * the other macros since they are non-exclusive.
+ * _ISOC99_SOURCE, _ISOC11_SOURCE, __STDC_VERSION__, and __cplusplus
+ * override any of the other macros since they are non-exclusive.
  */
-#if defined(_ISOC99_SOURCE) || \
+#if defined(_ISOC11_SOURCE) || \
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112) || \
+    (defined(__cplusplus) && __cplusplus >= 201703)
+# undef __ISO_C_VISIBLE
+# define __ISO_C_VISIBLE	2011
+#elif defined(_ISOC99_SOURCE) || \
     (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901) || \
     (defined(__cplusplus) && __cplusplus >= 201103)
 # undef __ISO_C_VISIBLE
 # define __ISO_C_VISIBLE	1999
-#endif
-#if defined(_ISOC11_SOURCE) || \
-    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112)
-# undef __ISO_C_VISIBLE
-# define __ISO_C_VISIBLE	2011
 #endif
 
 /*
@@ -404,7 +404,7 @@
 # define __POSIX_VISIBLE	200809
 #endif
 #ifndef __ISO_C_VISIBLE
-# define __ISO_C_VISIBLE	1999
+# define __ISO_C_VISIBLE	2011
 #endif
 #ifndef __BSD_VISIBLE
 # define __BSD_VISIBLE		1
