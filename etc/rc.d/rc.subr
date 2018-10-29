@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.128 2018/10/16 07:07:05 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.129 2018/10/29 07:55:40 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -317,6 +317,6 @@ fi
 readonly daemon_class
 unset _rcflags _rcrtable _rcuser _rctimeout
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
-rcexec="env -i HOME=/ su -m -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
+rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
 [ "${daemon_rtable}" -eq 0 ] ||
 	rcexec="route -T ${daemon_rtable} exec ${rcexec}"
