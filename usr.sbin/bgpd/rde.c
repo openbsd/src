@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.441 2018/10/26 06:48:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.442 2018/10/29 09:22:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2802,14 +2802,10 @@ rde_reload_done(void)
 	int			 reload = 0;
 
 	/* first merge the main config */
-	if ((nconf->flags & BGPD_FLAG_NO_EVALUATE)
-	    != (conf->flags & BGPD_FLAG_NO_EVALUATE)) {
-		log_warnx("change to/from route-collector "
-		    "mode ignored");
-		if (conf->flags & BGPD_FLAG_NO_EVALUATE)
-			nconf->flags |= BGPD_FLAG_NO_EVALUATE;
-		else
-			nconf->flags &= ~BGPD_FLAG_NO_EVALUATE;
+	if ((conf->flags & BGPD_FLAG_NO_EVALUATE) &&
+	    (nconf->flags & BGPD_FLAG_NO_EVALUATE) == 0) {
+		log_warnx("disabling of route-collector mode ignored");
+		nconf->flags |= BGPD_FLAG_NO_EVALUATE;
 	}
 
 	SIMPLEQ_INIT(&prefixsets_old);
