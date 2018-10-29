@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.16 2018/10/28 22:42:33 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.17 2018/10/29 00:11:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/tree.h>
+#include <sys/lock.h>
 
 #include <sys/conf.h>
 #include <sys/syscall.h>
