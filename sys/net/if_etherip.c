@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.37 2018/02/19 00:29:29 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.38 2018/10/29 09:51:20 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -641,7 +641,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt  = IPPROTO_ETHERIP;
-	ip6->ip6_hlim = ip6_defhlim;
+	ip6->ip6_hlim = sc->sc_ttl;
 	ip6->ip6_plen = htons(len);
 	memcpy(&ip6->ip6_src, &sc->sc_tunnel.t_src6, sizeof(ip6->ip6_src));
 	memcpy(&ip6->ip6_dst, &sc->sc_tunnel.t_dst6, sizeof(ip6->ip6_dst));
