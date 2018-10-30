@@ -2701,6 +2701,7 @@
 ./usr/share/man/man3/time.3
 ./usr/share/man/man3/time2posix.3
 ./usr/share/man/man3/times.3
+./usr/share/man/man3/timespec_get.3
 ./usr/share/man/man3/timingsafe_bcmp.3
 ./usr/share/man/man3/tls_accept_socket.3
 ./usr/share/man/man3/tls_client.3
