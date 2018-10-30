@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.39 2018/09/01 19:21:10 remi Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.40 2018/10/30 16:52:19 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -273,6 +273,11 @@ main(int argc, char *argv[])
 	if ((control_fd = control_init(ospfd_conf->csock)) == -1)
 		fatalx("control socket setup failed");
 	main_imsg_compose_ospfe_fd(IMSG_CONTROLFD, 0, control_fd);
+
+	if (unveil(ospfd_conf->csock, "c") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
 	    ospfd_conf->rdomain) == -1)
