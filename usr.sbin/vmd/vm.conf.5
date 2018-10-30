@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.38 2018/10/01 09:31:15 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.39 2018/10/30 17:56:54 anton Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2018 $
+.Dd $Mdocdate: October 30 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -292,7 +292,7 @@ Allow the specified user or group to create the instances.
 The owner will be allowed to create VM instances, start or stop the
 instances, pause or unpause the instances, and open the instances'
 consoles.
-.It Cm owner : Ns Ar group
+.It Cm owner Pf : Ar group
 Set the owner to the specified group.
 .El
 .Sh SWITCH CONFIGURATION
