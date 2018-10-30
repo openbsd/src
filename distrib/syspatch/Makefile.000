@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.000,v 1.3 2018/10/27 16:49:16 ajacoutot Exp $
+# $OpenBSD: Makefile.000,v 1.4 2018/10/30 10:22:16 ajacoutot Exp $
 
 # Set ERRATA to match the errata on the mirrors
 ERRATA = 000_dummy
@@ -8,11 +8,5 @@ ERRATA = 000_dummy
 # 	kernel - build both GENERIC and GENERIC.MP
 # 	xenocara - run make targets in the specified subdir(s) for xenocara
 # BUILD = ??? (defaults to src)
-
-# A helper target called `findstatic' is available so that a list of
-# directories can be created. `make -f Makefile.000 LIB=util findstatic'
-# will give a list of directories that have to be added to SUBDIR because
-# they statically link libutil.
-# This is a best-guess function so a manual check is always necessary.
 
 .include <bsd.syspatch.mk>
