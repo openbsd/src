@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.134 2018/09/04 13:04:42 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.135 2018/10/30 14:17:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -537,7 +537,7 @@ mda_getlastline(int fd, char *dst, size_t dstsz)
 
 	if (out) {
 		(void)strlcpy(dst, "\"", dstsz);
-		(void)strnvis(dst + 1, ln, dstsz - 2, VIS_SAFE | VIS_CSTYLE);
+		(void)strnvis(dst + 1, ln, dstsz - 2, VIS_SAFE | VIS_CSTYLE | VIS_NL);
 		(void)strlcat(dst, "\"", dstsz);
 	}
 
