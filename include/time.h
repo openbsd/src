@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.30 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: time.h,v 1.31 2018/10/30 16:28:42 guenther Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ typedef	__size_t	size_t;
 
 #define CLOCKS_PER_SEC	100	/* frequency of ticks reported by clock().  */
 
-#if __POSIX_VISIBLE >= 199309
+#if __POSIX_VISIBLE >= 199309 || __ISO_C_VISIBLE >= 2011
 #ifndef _TIMESPEC_DECLARED
 #define _TIMESPEC_DECLARED
 struct timespec {
@@ -78,7 +78,9 @@ struct timespec {
 	long	tv_nsec;	/* and nanoseconds */
 };
 #endif
+#endif
 
+#if __POSIX_VISIBLE >= 199309
 #include <sys/_time.h>
 
 #ifndef	_CLOCKID_T_DEFINED_
@@ -171,6 +173,11 @@ int clock_getcpuclockid(pid_t, clockid_t *);
 size_t strftime_l(char *__restrict, size_t, const char *__restrict,
 		const struct tm *__restrict, locale_t)
 		__attribute__ ((__bounded__(__string__,1,2)));
+#endif
+
+#if __ISO_C_VISIBLE >= 2011
+#define TIME_UTC	1	/* time elapsed since epoch */
+int timespec_get(struct timespec *_ts, int _base);
 #endif
 
 #if __BSD_VISIBLE

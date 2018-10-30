@@ -429,6 +429,7 @@ timer_delete
 timer_getoverrun
 timer_gettime
 timer_settime
+timespec_get
 thrkill
 truncate
 umask
