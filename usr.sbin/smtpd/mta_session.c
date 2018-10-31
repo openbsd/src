@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.112 2018/09/20 10:22:14 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.113 2018/10/31 15:13:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1158,7 +1158,7 @@ mta_io(struct io *io, int evt, void *arg)
 		break;
 
 	case IO_TLSREADY:
-		log_info("%016"PRIx64" mta starttls ciphers=%s",
+		log_info("%016"PRIx64" mta tls ciphers=%s",
 		    s->id, ssl_to_text(io_ssl(s->io)));
 		s->flags |= MTA_TLS;
 
