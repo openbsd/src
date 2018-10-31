@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.338 2018/10/31 15:13:21 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.339 2018/10/31 16:40:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -137,6 +137,7 @@ struct smtp_session {
 	int			 flags;
 	enum smtp_state		 state;
 
+	uint8_t			 banner_sent;
 	char			 helo[LINE_MAX];
 	char			 cmd[LINE_MAX];
 	char			 username[SMTPD_MAXMAILADDRSIZE];
@@ -1633,6 +1634,7 @@ static void
 smtp_send_banner(struct smtp_session *s)
 {
 	smtp_reply(s, "220 %s ESMTP %s", s->smtpname, SMTPD_NAME);
+	s->banner_sent = 1;
 }
 
 void
