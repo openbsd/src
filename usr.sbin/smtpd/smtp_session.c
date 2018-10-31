@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.339 2018/10/31 16:40:35 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.340 2018/10/31 16:45:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -181,8 +181,8 @@ static void smtp_auth_failure_resume(int, short, void *);
 static int  smtp_tx(struct smtp_session *);
 static void smtp_tx_free(struct smtp_tx *);
 static void smtp_tx_create_message(struct smtp_tx *);
-static void smtp_tx_mail_from(struct smtp_tx *, char *);
-static void smtp_tx_rcpt_to(struct smtp_tx *, char *);
+static void smtp_tx_mail_from(struct smtp_tx *, const char *);
+static void smtp_tx_rcpt_to(struct smtp_tx *, const char *);
 static void smtp_tx_open_message(struct smtp_tx *);
 static void smtp_tx_commit(struct smtp_tx *);
 static void smtp_tx_rollback(struct smtp_tx *);
@@ -1995,11 +1995,16 @@ smtp_tx_free(struct smtp_tx *tx)
 }
 
 static void
-smtp_tx_mail_from(struct smtp_tx *tx, char *line)
+smtp_tx_mail_from(struct smtp_tx *tx, const char *line)
 {
 	char *opt;
+	char *copy;
+	char tmp[SMTP_LINE_MAX];
 
-	if (smtp_mailaddr(&tx->evp.sender, line, 1, &line,
+	(void)strlcpy(tmp, line, sizeof tmp);
+	copy = tmp;  
+
+	if (smtp_mailaddr(&tx->evp.sender, copy, 1, &copy,
 		tx->session->smtpname) == 0) {
 		smtp_reply(tx->session, "553 %s: Sender address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
@@ -2007,7 +2012,7 @@ smtp_tx_mail_from(struct smtp_tx *tx, char *line)
 		return;
 	}
 
-	while ((opt = strsep(&line, " "))) {
+	while ((opt = strsep(&copy, " "))) {
 		if (*opt == '\0')
 			continue;
 
@@ -2071,9 +2076,14 @@ smtp_tx_create_message(struct smtp_tx *tx)
 }
 
 static void
-smtp_tx_rcpt_to(struct smtp_tx *tx, char *line)
+smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 {
 	char *opt, *p;
+	char *copy;
+	char tmp[SMTP_LINE_MAX];
+
+	(void)strlcpy(tmp, line, sizeof tmp);
+	copy = tmp; 
 
 	if (tx->rcptcount >= env->sc_session_max_rcpt) {
 		smtp_reply(tx->session, "451 %s %s: Too many recipients",
@@ -2082,7 +2092,7 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, char *line)
 		return;
 	}
 
-	if (smtp_mailaddr(&tx->evp.rcpt, line, 0, &line,
+	if (smtp_mailaddr(&tx->evp.rcpt, copy, 0, &copy,
 	    tx->session->smtpname) == 0) {
 		smtp_reply(tx->session,
 		    "501 %s: Recipient address syntax error",
@@ -2091,7 +2101,7 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, char *line)
 		return;
 	}
 
-	while ((opt = strsep(&line, " "))) {
+	while ((opt = strsep(&copy, " "))) {
 		if (*opt == '\0')
 			continue;
 
