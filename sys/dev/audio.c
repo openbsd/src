@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.172 2018/06/24 23:54:22 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.173 2018/10/31 02:25:26 miko Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -415,7 +415,7 @@ audio_pintr(void *addr)
 	if (!sc->ops->trigger_output) {
 		ptr = audio_buf_rgetblk(&sc->play, &count);
 		error = sc->ops->start_output(sc->arg,
-		    ptr, sc->play.blksz, audio_pintr, (void *)sc);
+		    ptr, sc->play.blksz, audio_pintr, sc);
 		if (error) {
 			printf("%s: play restart failed: %d\n",
 			    DEVNAME(sc), error);
@@ -496,7 +496,7 @@ audio_rintr(void *addr)
 	if (!sc->ops->trigger_input) {
 		ptr = audio_buf_wgetblk(&sc->rec, &count);
 		error = sc->ops->start_input(sc->arg,
-		    ptr, sc->rec.blksz, audio_rintr, (void *)sc);
+		    ptr, sc->rec.blksz, audio_rintr, sc);
 		if (error) {
 			printf("%s: rec restart failed: %d\n",
 			    DEVNAME(sc), error);
@@ -538,12 +538,12 @@ audio_start_do(struct audio_softc *sc)
 			    sc->play.data,
 			    sc->play.data + sc->play.len,
 			    sc->play.blksz,
-			    audio_pintr, (void *)sc, &p);
+			    audio_pintr, sc, &p);
 		} else {
 			mtx_enter(&audio_lock);
 			ptr = audio_buf_rgetblk(&sc->play, &count);
 			error = sc->ops->start_output(sc->arg,
-			    ptr, sc->play.blksz, audio_pintr, (void *)sc);
+			    ptr, sc->play.blksz, audio_pintr, sc);
 			mtx_leave(&audio_lock);
 		}
 		if (error)
@@ -561,12 +561,12 @@ audio_start_do(struct audio_softc *sc)
 			    sc->rec.data,
 			    sc->rec.data + sc->rec.len,
 			    sc->rec.blksz,
-			    audio_rintr, (void *)sc, &p);
+			    audio_rintr, sc, &p);
 		} else {
 			mtx_enter(&audio_lock);
 			ptr = audio_buf_wgetblk(&sc->rec, &count);
 			error = sc->ops->start_input(sc->arg,
-			    ptr, sc->rec.blksz, audio_rintr, (void *)sc);
+			    ptr, sc->rec.blksz, audio_rintr, sc);
 			mtx_leave(&audio_lock);
 		}
 		if (error)
