@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2018/10/09 07:15:24 anton Exp $
+# $OpenBSD: Makefile,v 1.4 2018/10/31 19:59:37 anton Exp $
 
 REBOUND=	/usr/sbin/rebound
 
@@ -40,6 +40,7 @@ setup: rebound-ns
 
 REGRESS_CLEANUP=	cleanup
 cleanup:
+	@echo '\n======== ${@} ========'
 .for i in ${IFS}
 	-${SUDO} ifconfig lo${i} destroy
 .endfor
