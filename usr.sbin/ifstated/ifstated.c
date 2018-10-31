@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.61 2017/08/30 16:14:52 rob Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.62 2018/10/31 07:39:13 mestre Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -31,6 +31,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,6 +161,10 @@ main(int argc, char *argv[])
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
 
+	if (unveil(configfile, "r") == -1)
+		fatal("unveil");
+	if (unveil(_PATH_BSHELL, "x") == -1)
+		fatal("unveil");
 	if (pledge("stdio rpath route proc exec", NULL) == -1)
 		fatal("pledge");
 
@@ -326,7 +331,7 @@ external_exec(struct ifsd_external *external, int async)
 	if (pid < 0) {
 		log_warn("fork error");
 	} else if (pid == 0) {
-		execv("/bin/sh", argp);
+		execv(_PATH_BSHELL, argp);
 		_exit(1);
 		/* NOTREACHED */
 	} else {
