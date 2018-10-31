@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.143 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.144 2018/10/31 08:50:25 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ typedef int		vm_prot_t;
 #define UVM_FLAG_NOFAULT 0x0800000 /* don't fault */
 #define UVM_FLAG_UNMAP   0x1000000 /* unmap to make space */
 #define UVM_FLAG_STACK   0x2000000 /* page may contain a stack */
+#define UVM_FLAG_WC      0x4000000 /* write combining */ 
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & PROT_MASK)

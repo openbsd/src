@@ -156,11 +156,9 @@ static int i915_getparam(struct drm_device *dev, void *data,
 	case I915_PARAM_HAS_COHERENT_PHYS_GTT:
 		value = 1;
 		break;
-#ifdef notyet
 	case I915_PARAM_MMAP_VERSION:
 		value = 1;
 		break;
-#endif
 	case I915_PARAM_SUBSLICE_TOTAL:
 		value = INTEL_INFO(dev)->subslice_total;
 		if (!value)

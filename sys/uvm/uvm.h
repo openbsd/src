@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.62 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.63 2018/10/31 08:50:25 kettenis Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -82,14 +82,15 @@ struct uvm {
  * vm_map_entry etype bits:
  */
 
-#define UVM_ET_OBJ		0x01	/* it is a uvm_object */
-#define UVM_ET_SUBMAP		0x02	/* it is a vm_map submap */
-#define UVM_ET_COPYONWRITE 	0x04	/* copy_on_write */
-#define UVM_ET_NEEDSCOPY	0x08	/* needs_copy */
-#define UVM_ET_HOLE		0x10	/* no backend */
-#define UVM_ET_NOFAULT		0x20	/* don't fault */
-#define UVM_ET_STACK		0x40	/* this is a stack */
-#define UVM_ET_FREEMAPPED	0x80	/* map entry is on free list (DEBUG) */
+#define UVM_ET_OBJ		0x0001	/* it is a uvm_object */
+#define UVM_ET_SUBMAP		0x0002	/* it is a vm_map submap */
+#define UVM_ET_COPYONWRITE 	0x0004	/* copy_on_write */
+#define UVM_ET_NEEDSCOPY	0x0008	/* needs_copy */
+#define UVM_ET_HOLE		0x0010	/* no backend */
+#define UVM_ET_NOFAULT		0x0020	/* don't fault */
+#define UVM_ET_STACK		0x0040	/* this is a stack */
+#define UVM_ET_WC		0x0080	/* write combining */
+#define UVM_ET_FREEMAPPED	0x8000	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
 #define UVM_ET_ISSUBMAP(E)	(((E)->etype & UVM_ET_SUBMAP) != 0)
@@ -98,6 +99,7 @@ struct uvm {
 #define UVM_ET_ISHOLE(E)	(((E)->etype & UVM_ET_HOLE) != 0)
 #define UVM_ET_ISNOFAULT(E)	(((E)->etype & UVM_ET_NOFAULT) != 0)
 #define UVM_ET_ISSTACK(E)	(((E)->etype & UVM_ET_STACK) != 0)
+#define UVM_ET_ISWC(E)		(((E)->etype & UVM_ET_WC) != 0)
 
 #ifdef _KERNEL
 

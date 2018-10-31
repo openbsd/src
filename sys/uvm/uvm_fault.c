@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.93 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.94 2018/10/31 08:50:25 kettenis Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -497,7 +497,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	int npages, nback, nforw, centeridx, result, lcv, gotpages, ret;
 	vaddr_t startva, currva;
 	voff_t uoff;
-	paddr_t pa; 
+	paddr_t pa, pa_flags;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
@@ -545,6 +545,7 @@ ReFault:
 	 */
 
 	enter_prot = ufi.entry->protection;
+	pa_flags = UVM_ET_ISWC(ufi.entry) ? PMAP_WC : 0;
 	wired = VM_MAPENT_ISWIRED(ufi.entry) || (fault_type == VM_FAULT_WIRE);
 	if (wired)
 		access_type = enter_prot; /* full access for wired */
@@ -688,7 +689,7 @@ ReFault:
 			 * that we enter these right now.
 			 */
 			(void) pmap_enter(ufi.orig_map->pmap, currva,
-			    VM_PAGE_TO_PHYS(anon->an_page),
+			    VM_PAGE_TO_PHYS(anon->an_page) | pa_flags,
 			    (anon->an_ref > 1) ? (enter_prot & ~PROT_WRITE) :
 			    enter_prot,
 			    PMAP_CANFAIL |
@@ -789,7 +790,7 @@ ReFault:
 				 * enter these right now.
 				 */
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
-				    VM_PAGE_TO_PHYS(pages[lcv]),
+				    VM_PAGE_TO_PHYS(pages[lcv]) | pa_flags,
 				    enter_prot & MASK(ufi.entry),
 				    PMAP_CANFAIL |
 				     (wired ? PMAP_WIRED : 0));
@@ -935,9 +936,9 @@ ReFault:
 	 * suspect since some other thread could blast the page out from
 	 * under us between the unlock and the pmap_enter.
 	 */
-	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
-	    != 0) {
+	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr,
+	    VM_PAGE_TO_PHYS(pg) | pa_flags, enter_prot,
+	    access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0)) != 0) {
 		/*
 		 * No need to undo what we did; we can simply think of
 		 * this as the pmap throwing away the mapping information.
@@ -1211,9 +1212,9 @@ Case2:
 	 * all resources are present.   we can now map it in and free our
 	 * resources.
 	 */
-	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
-	    != 0) {
+	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr,
+	    VM_PAGE_TO_PHYS(pg) | pa_flags, enter_prot,
+	    access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0)) != 0) {
 		/*
 		 * No need to undo what we did; we can simply think of
 		 * this as the pmap throwing away the mapping information.

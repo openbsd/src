@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.91 2018/08/20 19:33:31 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.92 2018/10/31 08:50:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -2123,7 +2123,7 @@ typedef int pgprot_t;
 static inline pgprot_t
 pgprot_writecombine(pgprot_t prot)
 {
-#ifdef PMAP_WC
+#if PMAP_WC != 0
 	return prot | PMAP_WC;
 #else
 	return prot | PMAP_NOCACHE;
@@ -2133,7 +2133,7 @@ pgprot_writecombine(pgprot_t prot)
 static inline pgprot_t
 pgprot_noncached(pgprot_t prot)
 {
-#ifdef PMAP_DEVICE
+#if PMAP_DEVICE != 0
 	return prot | PMAP_DEVICE;
 #else
 	return prot | PMAP_NOCACHE;

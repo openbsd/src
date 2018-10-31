@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.27 2016/10/19 08:28:19 guenther Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.28 2018/10/31 08:50:25 kettenis Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -96,6 +96,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define	PMAP_MD1	0x00000080	/* Machine dependant */
 #define	PMAP_MD2	0x00000100	/* Machine dependant */
 #define	PMAP_MD3	0x00000200	/* Machine dependant */
+
+#ifndef PMAP_WC
+#define PMAP_WC		0
+#endif
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
