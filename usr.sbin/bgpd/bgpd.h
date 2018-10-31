@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.350 2018/10/26 16:53:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.351 2018/10/31 14:50:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1066,6 +1066,7 @@ extern struct rib_names ribnames;
 
 struct rde_memstats {
 	int64_t		path_cnt;
+	int64_t		path_refs;
 	int64_t		prefix_cnt;
 	int64_t		rib_cnt;
 	int64_t		pt_cnt[AID_MAX];

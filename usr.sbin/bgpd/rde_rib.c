@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.183 2018/10/31 14:45:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.184 2018/10/31 14:50:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -464,9 +464,10 @@ rib_dump_terminate(u_int16_t id, void *arg,
 
 /* path specific functions */
 
-static struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
+static struct rde_aspath *path_lookup(struct rde_aspath *);
 static u_int64_t path_hash(struct rde_aspath *);
-static void path_link(struct rde_aspath *, struct rde_peer *);
+static void path_link(struct rde_aspath *);
+static void path_unlink(struct rde_aspath *);
 
 struct path_table {
 	struct aspath_head	*path_hashtbl;
@@ -475,7 +476,27 @@ struct path_table {
 
 SIPHASH_KEY pathtablekey;
 
-#define PATH_HASH(x)	&pathtable.path_hashtbl[x & pathtable.path_hashmask]
+#define	PATH_HASH(x)	&pathtable.path_hashtbl[x & pathtable.path_hashmask]
+
+#define	path_empty(asp)	((asp)->refcnt <= 0)
+
+static inline void
+path_ref(struct rde_aspath *asp)
+{
+	if ((asp->flags & F_ATTR_LINKED) == 0)
+		fatalx("%s: unlinked object", __func__);
+	asp->refcnt++;
+	rdemem.path_refs++;
+}
+
+static inline void
+path_unref(struct rde_aspath *asp)
+{
+	if ((asp->flags & F_ATTR_LINKED) == 0)
+		fatalx("%s: unlinked object", __func__);
+	asp->refcnt--;
+	rdemem.path_refs--;
+}
 
 void
 path_init(u_int32_t hashsize)
@@ -563,10 +584,10 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	 * In both cases lookup the new aspath to make sure it is not
 	 * already in the RIB.
 	 */
-	if ((asp = path_lookup(nasp, peer)) == NULL) {
+	if ((asp = path_lookup(nasp)) == NULL) {
 		/* Path not available, create and link a new one. */
 		asp = path_copy(path_get(), nasp);
-		path_link(asp, peer);
+		path_link(asp);
 	}
 
 	/* If the prefix was found move it else add it to the aspath. */
@@ -654,7 +675,7 @@ path_hash(struct rde_aspath *asp)
 }
 
 static struct rde_aspath *
-path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
+path_lookup(struct rde_aspath *aspath)
 {
 	struct aspath_head	*head;
 	struct rde_aspath	*asp;
@@ -664,57 +685,43 @@ path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
 	head = PATH_HASH(hash);
 
 	LIST_FOREACH(asp, head, path_l) {
-		if (asp->hash == hash && peer == asp->peer &&
-		    path_compare(aspath, asp) == 0)
+		if (asp->hash == hash && path_compare(aspath, asp) == 0)
 			return (asp);
 	}
 	return (NULL);
 }
 
 /*
- * This function can only called when all prefix have been removed first.
- * Normally this happens directly out of the prefix removal functions.
- */
-void
-path_destroy(struct rde_aspath *asp)
-{
-	/* path_destroy can only unlink and free empty rde_aspath */
-	if (!TAILQ_EMPTY(&asp->prefixes))
-		log_warnx("path_destroy: still has prefixes, leaking");
-
-	LIST_REMOVE(asp, path_l);
-	TAILQ_REMOVE(&asp->peer->path_h, asp, peer_l);
-	asp->peer = NULL;
-	asp->flags &= ~F_ATTR_LINKED;
-
-	path_put(asp);
-}
-
-int
-path_empty(struct rde_aspath *asp)
-{
-	return TAILQ_EMPTY(&asp->prefixes);
-}
-
-/*
- * the path object is linked into multiple lists for fast access.
- * These are peer_l, path_l and nexthop_l.
- * peer_l: list of all aspaths that belong to that peer
- * path_l: hash list to find paths quickly
+ * Link this aspath into the global hash table.
+ * The asp had to be alloced with path_get.
  */
 static void
-path_link(struct rde_aspath *asp, struct rde_peer *peer)
+path_link(struct rde_aspath *asp)
 {
 	struct aspath_head	*head;
-
-	asp->peer = peer;
 
 	asp->hash = path_hash(asp);
 	head = PATH_HASH(asp->hash);
 
 	LIST_INSERT_HEAD(head, asp, path_l);
-	TAILQ_INSERT_HEAD(&peer->path_h, asp, peer_l);
 	asp->flags |= F_ATTR_LINKED;
+}
+
+/*
+ * This function can only be called when all prefix have been removed first.
+ * Normally this happens directly out of the prefix removal functions.
+ */
+static void
+path_unlink(struct rde_aspath *asp)
+{
+	/* make sure no reference is hold for this rde_aspath */
+	if (!path_empty(asp))
+		fatalx("%s: still has prefixes", __func__);
+
+	LIST_REMOVE(asp, path_l);
+	asp->flags &= ~F_ATTR_LINKED;
+
+	path_put(asp);
 }
 
 /*
@@ -739,6 +746,8 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 	dst->pftableid = pftable_ref(src->pftableid);
 
 	dst->flags = src->flags & ~F_ATTR_LINKED;
+	dst->refcnt = 0;	/* not linked so no refcnt */
+
 	attr_copy(dst, src);
 
 	return (dst);
@@ -749,7 +758,6 @@ struct rde_aspath *
 path_prep(struct rde_aspath *asp)
 {
 	memset(asp, 0, sizeof(*asp));
-	TAILQ_INIT(&asp->prefixes);
 	asp->origin = ORIGIN_INCOMPLETE;
 	asp->lpref = DEFAULT_LPREF;
 
@@ -770,11 +778,12 @@ path_get(void)
 	return (path_prep(asp));
 }
 
+/* clean up an asp after use (frees all references to sub-objects) */
 void
 path_clean(struct rde_aspath *asp)
 {
 	if (asp->flags & F_ATTR_LINKED)
-		fatalx("path_clean: linked object");
+		fatalx("%s: linked object", __func__);
 
 	rtlabel_unref(asp->rtlabelid);
 	pftable_unref(asp->pftableid);
@@ -834,7 +843,7 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 	if (re == NULL)
 		re = rib_add(rib, prefix, prefixlen);
 
-	p = prefix_bypeer(re, asp->peer);
+	p = prefix_bypeer(re, peer);
 	if (p == NULL) {
 		p = prefix_alloc();
 		prefix_link(p, re, peer, asp, state, vstate);
@@ -875,8 +884,8 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->nhflags = state->nhflags;
 	np->validation_state = vstate;
 
-	/* add to new as path */
-	TAILQ_INSERT_HEAD(&asp->prefixes, np, path_l);
+	/* add reference to new as path */
+	path_ref(asp);
 
 	/*
 	 * no need to update the peer prefix count because we are only moving
@@ -896,7 +905,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* remove old prefix node */
 	oasp = prefix_aspath(p);
-	TAILQ_REMOVE(&oasp->prefixes, p, path_l);
+	path_unref(oasp);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
@@ -910,7 +919,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* destroy old path if empty */
 	if (path_empty(oasp))
-		path_destroy(oasp);
+		path_unlink(oasp);
 
 	return (0);
 }
@@ -1091,7 +1100,7 @@ prefix_destroy(struct prefix *p)
 	prefix_free(p);
 
 	if (path_empty(asp))
-		path_destroy(asp);
+		path_unlink(asp);
 }
 
 /*
@@ -1101,7 +1110,7 @@ static void
 prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_peer *peer,
     struct rde_aspath *asp, struct filterstate *state, u_int8_t vstate)
 {
-	TAILQ_INSERT_HEAD(&asp->prefixes, pref, path_l);
+	path_ref(asp);
 
 	pref->aspath = asp;
 	pref->peer = peer;
@@ -1123,15 +1132,13 @@ static void
 prefix_unlink(struct prefix *pref)
 {
 	struct rib_entry	*re = pref->re;
-	struct prefix_queue	*pq;
 
 	/* make route decision */
 	LIST_REMOVE(pref, rib_l);
 	prefix_evaluate(NULL, re);
 
-	pq = &prefix_aspath(pref)->prefixes;
+	path_unref(prefix_aspath(pref));
 
-	TAILQ_REMOVE(pq, pref, path_l);
 	if (rib_empty(re))
 		rib_remove(re);
 

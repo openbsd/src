@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.443 2018/10/29 09:28:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.444 2018/10/31 14:50:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3283,7 +3283,6 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	if (peer == NULL)
 		fatal("peer_add");
 
-	TAILQ_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
 	peer->loc_rib_id = rib_find(peer->conf.rib);
