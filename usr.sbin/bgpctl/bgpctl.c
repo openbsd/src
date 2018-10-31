@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.220 2018/10/26 16:54:53 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.221 2018/10/31 14:51:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1864,6 +1864,8 @@ show_rib_memory_msg(struct imsg *imsg)
 		printf("%10lld BGP path attribute entries using %s of memory\n",
 		    (long long)stats.path_cnt, fmt_mem(stats.path_cnt *
 		    sizeof(struct rde_aspath)));
+		printf("\t   and holding %lld references\n",
+		    (long long)stats.path_refs);
 		printf("%10lld BGP AS-PATH attribute entries using "
 		    "%s of memory,\n\t   and holding %lld references\n",
 		    (long long)stats.aspath_cnt, fmt_mem(stats.aspath_size),
