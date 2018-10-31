@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.50 2018/09/14 13:49:01 naddy Exp $
+#	$OpenBSD: Makefile.octeon,v 1.51 2018/10/31 10:15:47 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -121,7 +121,7 @@ ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
 gapdummy.o:
-	echo 'const char gapdummy;' > gapdummy.c
+	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
 	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
 
 makegap.sh:
