@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.223 2018/11/01 00:18:44 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.224 2018/11/01 10:13:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -105,7 +105,7 @@ static struct ca	*sca;
 
 struct dispatcher	*dispatcher;
 struct rule		*rule;
-
+struct processor	*processor;
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -173,10 +173,11 @@ typedef struct {
 
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE
-%token	CA CERT CIPHERS COMPRESSION
+%token	CA CERT CHROOT CIPHERS COMPRESSION
 %token	DHE DOMAIN
 %token	ENCRYPTION ERROR EXPAND_ONLY
 %token	FILTER FOR FORWARD_ONLY FROM
+%token	GROUP
 %token	HELO HELO_SRC HOST HOSTNAME HOSTNAMES
 %token	INCLUDE INET4 INET6
 %token	JUNK
@@ -185,7 +186,7 @@ typedef struct {
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NO_DSN NO_VERIFY
 %token	ON
-%token	PKI PORT
+%token	PKI PORT PROC
 %token	QUEUE
 %token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT
 %token	SCHEDULER SENDER SENDERS SMTP SMTPS SOCKET SRC SUB_ADDR_DELIM
@@ -210,6 +211,7 @@ grammar		: /* empty */
 		| grammar mda '\n'
 		| grammar mta '\n'
 		| grammar pki '\n'
+		| grammar proc '\n'
 		| grammar queue '\n'
 		| grammar scheduler '\n'
 		| grammar smtp '\n'
@@ -424,6 +426,56 @@ CERT STRING {
 
 pki_params:
 pki_params_opt pki_params
+| /* empty */
+;
+
+
+
+proc:
+PROC STRING STRING {
+	if (dict_get(conf->sc_processors_dict, $2)) {
+		yyerror("processor already exists with that name: %s", $2);
+		free($2);
+		free($3);
+		YYERROR;
+	}
+	processor = xcalloc(1, sizeof *processor);
+	processor->command = $3;
+} proc_params {
+	dict_set(conf->sc_processors_dict, $2, processor);
+	processor = NULL;
+}
+;
+
+proc_params_opt:
+USER STRING {
+	if (processor->user) {
+		yyerror("user already specified for this processor");
+		free($2);
+		YYERROR;
+	}
+	processor->user = $2;
+}
+| GROUP STRING {
+	if (processor->group) {
+		yyerror("group already specified for this processor");
+		free($2);
+		YYERROR;
+	}
+	processor->group = $2;
+}
+| CHROOT STRING {
+	if (processor->chroot) {
+		yyerror("chroot already specified for this processor");
+		free($2);
+		YYERROR;
+	}
+	processor->chroot = $2;
+}
+;
+
+proc_params:
+proc_params_opt proc_params
 | /* empty */
 ;
 
@@ -1607,6 +1659,7 @@ lookup(char *s)
 		{ "bounce",		BOUNCE },
 		{ "ca",			CA },
 		{ "cert",		CERT },
+		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
 		{ "compression",	COMPRESSION },
 		{ "dhe",		DHE },
@@ -1617,6 +1670,7 @@ lookup(char *s)
 		{ "for",		FOR },
 		{ "forward-only",      	FORWARD_ONLY },
 		{ "from",		FROM },
+		{ "group",		GROUP },
 		{ "helo",		HELO },
 		{ "helo-src",       	HELO_SRC },
 		{ "host",		HOST },
@@ -1647,6 +1701,7 @@ lookup(char *s)
 		{ "on",			ON },
 		{ "pki",		PKI },
 		{ "port",		PORT },
+		{ "proc",		PROC },
 		{ "queue",		QUEUE },
 		{ "rcpt-to",		RCPT_TO },
 		{ "received-auth",     	RECEIVEDAUTH },

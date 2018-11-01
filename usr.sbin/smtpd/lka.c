@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.207 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.208 2018/11/01 10:13:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -79,7 +79,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct msg		 m;
 	union lookup		 lk;
 	char			 buf[LINE_MAX];
-	const char		*tablename, *username, *password, *label;
+	const char		*tablename, *username, *password, *label, *procname;
 	uint64_t		 reqid;
 	int			 v;
 
@@ -389,6 +389,15 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		    (ret == 1) ? IMSG_CTL_OK : IMSG_CTL_FAIL,
 		    imsg->hdr.peerid, 0, -1, NULL, 0);
 		return;
+
+	case IMSG_LKA_PROCESSOR_FORK:
+		m_msg(&m, imsg);
+		m_get_string(&m, &procname);
+		m_end(&m);
+
+		lka_proc_forked(procname, imsg->fd);
+		return;
+
 	}
 
 	errx(1, "lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
