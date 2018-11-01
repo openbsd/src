@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MIT */
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
 
