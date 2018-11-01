@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.87 2018/07/25 10:19:28 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.88 2018/11/01 18:01:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -510,8 +510,9 @@ lka_submit(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			(void)strlcpy(ep->mda_user, user, sizeof (ep->mda_user));
 
 			/* this battle needs to be fought ... */
-			if (strcmp(ep->mda_user, SMTPD_USER) == 0)
-				log_warn("commands executed from aliases "
+			if (xn->type == EXPAND_FILTER &&
+			    strcmp(ep->mda_user, SMTPD_USER) == 0)
+				log_warnx("commands executed from aliases "
 				    "run with %s privileges", SMTPD_USER);
 
 			if (xn->type == EXPAND_FILENAME)
