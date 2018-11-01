@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.94 2018/10/05 18:56:57 cheloha Exp $	*/
+/*	$OpenBSD: top.c,v 1.95 2018/11/01 18:04:13 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -83,7 +83,7 @@ int no_command = Yes;
 int old_system = No;
 int old_threads = No;
 int show_args = No;
-pid_t hlpid = -1;
+pid_t hlpid = (pid_t)-1;
 int combine_cpus = 0;
 
 #if Default_TOPN == Infinity
@@ -131,6 +131,46 @@ usage(void)
 	    __progname);
 }
 
+static int
+filteruser(char buf[])
+{
+	char *bufp = buf;
+	uid_t *uidp;
+
+	if (bufp[0] == '-') {
+		bufp++;
+		uidp = &ps.huid;
+		ps.uid = (pid_t)-1;
+	} else {
+		uidp = &ps.uid;
+		ps.huid = (pid_t)-1;
+	}
+
+	return uid_from_user(bufp, uidp);
+}
+
+static int
+filterpid(char buf[], int hl)
+{
+	const char *errstr;
+	int pid;
+
+	pid = strtonum(buf, 0, INT_MAX, &errstr);
+	if (errstr != NULL || !find_pid(pid))
+		return -1;
+
+	if (hl == Yes)
+		hlpid = (pid_t)pid;
+	else {
+		if (ps.system == No)
+			old_system = No;
+		ps.pid = (pid_t)pid;
+		ps.system = Yes;
+	}
+
+	return 0;
+}
+
 static void
 parseargs(int ac, char **av)
 {
@@ -150,32 +190,16 @@ parseargs(int ac, char **av)
 			break;
 
 		case 'U':	/* display only username's processes */
-			if (optarg[0] == '-') {
-				if (uid_from_user(optarg+1, &ps.huid) == -1)
-					new_message(MT_delayed,
-					    "%s: unknown user", optarg);
-				else
-					ps.uid = (uid_t)-1;
-			} else if (uid_from_user(optarg, &ps.uid) == -1)
+			if (filteruser(optarg) == -1)
 				new_message(MT_delayed, "%s: unknown user",
 				    optarg);
-			else
-				ps.huid = (uid_t)-1;
 			break;
 
-		case 'p': {	/* display only process id */
-			const char *errstr;
-
-			i = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr != NULL || !find_pid(i))
+		case 'p':	/* display only process id */
+			if (filterpid(optarg, No) == -1)
 				new_message(MT_delayed, "%s: unknown pid",
 				    optarg);
-			else {
-				ps.pid = (pid_t)i;
-				ps.system = Yes;
-			}
 			break;
-		}
 
 		case 'S':	/* show system processes */
 			ps.system = !ps.system;
@@ -802,20 +826,12 @@ rundisplay(void)
 				    tempbuf[1] == '\0') {
 					ps.uid = (uid_t)-1;
 					ps.huid = (uid_t)-1;
-				} else if (tempbuf[0] == '-') {
-					if (uid_from_user(tempbuf+1, &ps.huid) == -1) {
-						new_message(MT_standout,
-						    " %s: unknown user", tempbuf+1);
-						no_command = Yes;
-					} else {
-						ps.uid = (uid_t)-1;
-					}
-				} else if (uid_from_user(tempbuf, &ps.uid) == -1) {
-						new_message(MT_standout,
-						    " %s: unknown user", tempbuf);
-						no_command = Yes;
-				} else {
-					ps.huid = (uid_t)-1;
+				} else if (filteruser(tempbuf) == -1) {
+					new_message(MT_standout,
+					    " %s: unknown user",
+					    tempbuf[0] == '-' ? tempbuf + 1 : 
+					    tempbuf);
+					no_command = Yes;
 				}
 				putr();
 			} else
@@ -854,23 +870,10 @@ rundisplay(void)
 				    tempbuf[1] == '\0') {
 					ps.pid = (pid_t)-1;
 					ps.system = old_system;
-				} else {
-					unsigned long long num;
-					const char *errstr;
-
-					num = strtonum(tempbuf, 0, INT_MAX,
-					    &errstr);
-					if (errstr != NULL || !find_pid(num)) {
-						new_message(MT_standout,
-						    " %s: unknown pid",
-						    tempbuf);
-						no_command = Yes;
-					} else {
-						if (ps.system == No)
-							old_system = No;
-						ps.pid = (pid_t)num;
-						ps.system = Yes;
-					}
+				} else if (filterpid(tempbuf, 0) == -1) {
+					new_message(MT_standout,
+					    " %s: unknown pid", tempbuf);
+					no_command = Yes;
 				}
 				putr();
 			} else
@@ -897,10 +900,8 @@ rundisplay(void)
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0')
 					ps.command = NULL;
-				else
-					if ((ps.command = strdup(tempbuf)) ==
-					    NULL)
-						err(1, NULL);
+				else if ((ps.command = strdup(tempbuf)) == NULL)
+					err(1, NULL);
 				putr();
 			} else
 				clear_message();
@@ -911,20 +912,11 @@ rundisplay(void)
 			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
 				if (tempbuf[0] == '+' &&
 				    tempbuf[1] == '\0') {
-					hlpid = -1;
-				} else {
-					unsigned long long num;
-					const char *errstr;
-
-					num = strtonum(tempbuf, 0, INT_MAX,
-					    &errstr);
-					if (errstr != NULL || !find_pid(num)) {
-						new_message(MT_standout,
-						    " %s: unknown pid",
-						    tempbuf);
-						no_command = Yes;
-					} else
-						hlpid = (pid_t)num;
+					hlpid = (pid_t)-1;
+				} else if (filterpid(tempbuf, Yes) == -1) {
+					new_message(MT_standout,
+					    " %s: unknown pid", tempbuf);
+					no_command = Yes;
 				}
 				putr();
 			} else
@@ -937,7 +929,7 @@ rundisplay(void)
 			ps.pid = (pid_t)-1;	/* pid */
 			ps.system = old_system;
 			ps.command = NULL;	/* grep */
-			hlpid = -1;
+			hlpid = (pid_t)-1;
 			break;
 		case CMD_cpus:
 			combine_cpus = !combine_cpus;
