@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets_test.c,v 1.4 2018/09/20 11:47:50 claudio Exp $ */
+/*	$OpenBSD: rde_sets_test.c,v 1.5 2018/11/01 14:20:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,8 @@
 #include <stdlib.h>
 
 #include "rde.h"
+
+struct rde_memstats rdemem;
 
 u_int32_t va[] = { 19, 14, 32, 76, 125 };
 u_int32_t vaa[] = { 125, 14, 76, 32, 19 };

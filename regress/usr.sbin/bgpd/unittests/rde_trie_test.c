@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.8 2018/09/29 08:13:56 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.9 2018/11/01 14:20:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -30,6 +30,8 @@
 
 #include "bgpd.h"
 #include "rde.h"
+
+struct rde_memstats rdemem;
 
 int roa;
 int orlonger;
