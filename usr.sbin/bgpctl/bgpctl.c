@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.222 2018/10/31 14:58:59 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.223 2018/11/01 10:09:52 denis Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1880,7 +1880,7 @@ show_rib_memory_msg(struct imsg *imsg)
 		printf("%10lld as-set elements in %lld tables using "
 		    "%s of memory\n", stats.aset_nmemb, stats.aset_cnt,
 		    fmt_mem(stats.aset_size));
-		printf("%10lld prefix-set elments using %s of memory\n",
+		printf("%10lld prefix-set elements using %s of memory\n",
 		    stats.pset_cnt, fmt_mem(stats.pset_size));
 		printf("RIB using %s of memory\n", fmt_mem(pts +
 		    stats.prefix_cnt * sizeof(struct prefix) +
@@ -1894,7 +1894,7 @@ show_rib_memory_msg(struct imsg *imsg)
 		break;
 	case IMSG_CTL_SHOW_RIB_HASH:
 		memcpy(&hash, imsg->data, sizeof(hash));
-		printf("\t%s: size %lld, %lld entires\n", hash.name, hash.num,
+		printf("\t%s: size %lld, %lld entries\n", hash.name, hash.num,
 		    hash.sum);
 		avg = (double)hash.sum / (double)hash.num;
 		dev = sqrt(fmax(0, hash.sumq / hash.num - avg * avg));
