@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.30 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.31 2018/11/01 10:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
+#include <regex.h>
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
@@ -454,6 +455,20 @@ table_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 		    (inmask->s6_addr[i] & mask.s6_addr[i]))
 			return (0);
 	}
+
+	return (1);
+}
+
+int
+table_regex_match(const char *string, const char *pattern)
+{
+	regex_t preg;
+
+	if (regcomp(&preg, pattern, REG_EXTENDED) != 0)
+		return (0);
+
+	if (regexec(&preg, string, 0, NULL, 0) != 0)
+		return (0);
 
 	return (1);
 }

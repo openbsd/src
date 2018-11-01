@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.564 2018/11/01 10:13:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.565 2018/11/01 10:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1458,6 +1458,7 @@ void table_add(struct table *, const char *, const char *);
 int table_domain_match(const char *, const char *);
 int table_netaddr_match(const char *, const char *);
 int table_mailaddr_match(const char *, const char *);
+int table_regex_match(const char *, const char *);
 void	table_open_all(struct smtpd *);
 void	table_dump_all(struct smtpd *);
 void	table_close_all(struct smtpd *);

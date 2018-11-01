@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.19 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.20 2018/11/01 10:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -51,7 +51,7 @@ static void  table_static_close(void *);
 struct table_backend table_backend_static = {
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
 	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
-	K_STRING,
+	K_STRING|K_REGEX,
 	table_static_config,
 	table_static_open,
 	table_static_update,
@@ -66,7 +66,8 @@ static struct keycmp {
 } keycmp[] = {
 	{ K_DOMAIN, table_domain_match },
 	{ K_NETADDR, table_netaddr_match },
-	{ K_MAILADDR, table_mailaddr_match }
+	{ K_MAILADDR, table_mailaddr_match },
+	{ K_REGEX, table_regex_match },
 };
 
 

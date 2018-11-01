@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.34 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.35 2018/11/01 10:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -144,6 +144,7 @@ enum table_service {
 	K_MAILADDRMAP	= 0x100,	/* returns struct maddrmap	*/
 	K_RELAYHOST	= 0x200,	/* returns struct relayhost	*/
 	K_STRING	= 0x400,
+	K_REGEX		= 0x800,
 };
 #define K_ANY		  0xfff
 
