@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.565 2018/11/01 10:47:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.566 2018/11/01 14:48:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -304,6 +304,17 @@ enum imsg_type {
 
 	IMSG_LKA_PROCESSOR_FORK,
 
+	IMSG_SMTP_REPORT_LINK_CONNECT,
+	IMSG_SMTP_REPORT_LINK_DISCONNECT,
+	IMSG_SMTP_REPORT_LINK_TLS,
+
+	IMSG_SMTP_REPORT_TX_BEGIN,
+	IMSG_SMTP_REPORT_TX_COMMIT,
+	IMSG_SMTP_REPORT_TX_ROLLBACK,
+
+	IMSG_SMTP_REPORT_PROTOCOL_CLIENT,
+	IMSG_SMTP_REPORT_PROTOCOL_SERVER,
+
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC
 };
@@ -534,6 +545,7 @@ struct smtpd {
 	size_t				sc_scheduler_max_schedule;
 
 	struct dict		       *sc_processors_dict;
+	struct dict		       *sc_smtp_reporters_dict;
 
 	int				sc_ttl;
 #define MAX_BOUNCE_WARN			4
@@ -1233,6 +1245,18 @@ int lka(void);
 
 /* lka_proc.c */
 void lka_proc_forked(const char *, int);
+struct io *lka_proc_get_io(const char *);
+
+
+/* lka_report.c */
+void lka_report_smtp_link_connect(time_t, uint64_t, const char *, const char *);
+void lka_report_smtp_link_disconnect(time_t, uint64_t);
+void lka_report_smtp_link_tls(time_t, uint64_t, const char *);
+void lka_report_smtp_tx_begin(time_t, uint64_t);
+void lka_report_smtp_tx_commit(time_t, uint64_t);
+void lka_report_smtp_tx_rollback(time_t, uint64_t);
+void lka_report_smtp_protocol_client(time_t, uint64_t, const char *);
+void lka_report_smtp_protocol_server(time_t, uint64_t, const char *);
 
 
 /* lka_session.c */
@@ -1400,6 +1424,17 @@ void smtp_postprivdrop(void);
 void smtp_imsg(struct mproc *, struct imsg *);
 void smtp_configure(void);
 void smtp_collect(void);
+
+
+/* smtp_report.c */
+void smtp_report_link_connect(uint64_t, const char *, const char *);
+void smtp_report_link_disconnect(uint64_t);
+void smtp_report_link_tls(uint64_t, const char *);
+void smtp_report_tx_begin(uint64_t);
+void smtp_report_tx_commit(uint64_t);
+void smtp_report_tx_rollback(uint64_t);
+void smtp_report_protocol_client(uint64_t, const char *);
+void smtp_report_protocol_server(uint64_t, const char *);
 
 
 /* smtp_session.c */

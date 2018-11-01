@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.340 2018/10/31 16:45:24 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.341 2018/11/01 14:48:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -210,7 +210,6 @@ static void smtp_proceed_noop(struct smtp_session *);
 static void smtp_proceed_help(struct smtp_session *);
 static void smtp_proceed_wiz(struct smtp_session *);
 static void smtp_proceed_quit(struct smtp_session *);
-
 
 static struct { int code; const char *cmd; } commands[] = {
 	{ CMD_HELO,		"HELO" },
@@ -570,6 +569,9 @@ smtp_session(struct listener *listener, int sock,
 
 	/* session may have been freed by now */
 
+	smtp_report_link_connect(s->id, ss_to_text(&s->ss),
+	    ss_to_text(&s->listener->ss));
+
 	return (0);
 }
 
@@ -914,6 +916,8 @@ smtp_io(struct io *io, int evt, void *arg)
 		log_info("%016"PRIx64" smtp tls address=%s host=%s ciphers=\"%s\"",
 		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(s->io)));
 
+		smtp_report_link_tls(s->id, ssl_to_text(io_ssl(s->io)));
+
 		s->flags |= SF_SECURE;
 		s->helo[0] = '\0';
 
@@ -1039,6 +1043,7 @@ smtp_command(struct smtp_session *s, char *line)
 	int				cmd, i;
 
 	log_trace(TRACE_SMTP, "smtp: %p: <<< %s", s, line);
+	smtp_report_protocol_client(s->id, line);
 
 	/*
 	 * These states are special.
@@ -1665,6 +1670,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
 
 	io_xprintf(s->io, "%s\r\n", buf);
+	smtp_report_protocol_server(s->id, buf);
 
 	switch (buf[0]) {
 	case '5':
@@ -1711,6 +1717,8 @@ smtp_free(struct smtp_session *s, const char * reason)
 			smtp_tx_rollback(s->tx);
 		smtp_tx_free(s->tx);
 	}
+
+	smtp_report_link_disconnect(s->id);
 
 	if (s->flags & SF_SECURE && s->listener->flags & F_SMTPS)
 		stat_decrement("smtp.smtps", 1);
@@ -2073,6 +2081,7 @@ smtp_tx_create_message(struct smtp_tx *tx)
 	m_add_id(p_queue, tx->session->id);
 	m_close(p_queue);
 	tree_xset(&wait_queue_msg, tx->session->id, tx->session);
+	smtp_report_tx_begin(tx->session->id);
 }
 
 static void
@@ -2164,6 +2173,7 @@ smtp_tx_commit(struct smtp_tx *tx)
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
+	smtp_report_tx_commit(tx->session->id);
 }
 
 static void
@@ -2172,6 +2182,7 @@ smtp_tx_rollback(struct smtp_tx *tx)
 	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
+	smtp_report_tx_rollback(tx->session->id);
 }
 
 static int

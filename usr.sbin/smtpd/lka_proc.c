@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.1 2018/11/01 10:13:25 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.2 2018/11/01 14:48:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -64,6 +64,13 @@ lka_proc_forked(const char *name, int fd)
 	dict_xset(&processors, name, processor);
 }
 
+struct io *
+lka_proc_get_io(const char *name)
+{
+	struct processor_instance	*processor = dict_xget(&processors, name);
+
+	return processor->io;
+}
 
 static void
 processor_io(struct io *io, int evt, void *arg)

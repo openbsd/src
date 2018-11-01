@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.224 2018/11/01 10:13:25 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.225 2018/11/01 14:48:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -188,9 +188,9 @@ typedef struct {
 %token	ON
 %token	PKI PORT PROC
 %token	QUEUE
-%token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT
+%token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT REPORT
 %token	SCHEDULER SENDER SENDERS SMTP SMTPS SOCKET SRC SUB_ADDR_DELIM
-%token	TABLE TAG TAGGED TLS TLS_REQUIRE TO TTL
+%token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
 %token	WARN_INTERVAL WRAPPER
@@ -213,6 +213,7 @@ grammar		: /* empty */
 		| grammar pki '\n'
 		| grammar proc '\n'
 		| grammar queue '\n'
+		| grammar report '\n'
 		| grammar scheduler '\n'
 		| grammar smtp '\n'
 		| grammar listen '\n'
@@ -430,7 +431,6 @@ pki_params_opt pki_params
 ;
 
 
-
 proc:
 PROC STRING STRING {
 	if (dict_get(conf->sc_processors_dict, $2)) {
@@ -477,6 +477,23 @@ USER STRING {
 proc_params:
 proc_params_opt proc_params
 | /* empty */
+;
+
+
+report:
+REPORT SMTP ON STRING {
+	if (! dict_get(conf->sc_processors_dict, $4)) {
+		yyerror("no processor exist with that name: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	if (dict_get(conf->sc_smtp_reporters_dict, $4)) {
+		yyerror("processor already registered for smtp reporting: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	dict_set(conf->sc_smtp_reporters_dict, $4, (void *)~0);
+}
 ;
 
 
@@ -1708,6 +1725,7 @@ lookup(char *s)
 		{ "recipient",		RECIPIENT },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
+		{ "report",		REPORT },
 		{ "scheduler",		SCHEDULER },
 		{ "senders",   		SENDERS },
 		{ "smtp",		SMTP },
@@ -1720,7 +1738,6 @@ lookup(char *s)
 		{ "tagged",		TAGGED },
 		{ "tls",		TLS },
 		{ "tls-require",       	TLS_REQUIRE },
-		{ "to",			TO },
 		{ "ttl",		TTL },
 		{ "user",		USER },
 		{ "userbase",		USERBASE },
