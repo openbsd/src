@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.94 2018/08/24 20:12:24 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.95 2018/11/01 07:01:42 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: November 1 2018 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1324,9 +1324,9 @@ The options are as follows:
 Specify how the points on the elliptic curve are converted
 into octet strings.
 Possible values are:
-.Cm compressed
+.Cm compressed ,
+.Cm uncompressed
 (the default),
-.Cm uncompressed ,
 and
 .Cm hybrid .
 For more information regarding
@@ -1432,9 +1432,9 @@ Validate the elliptic curve parameters.
 Specify how the points on the elliptic curve are converted
 into octet strings.
 Possible values are:
-.Cm compressed
+.Cm compressed ,
+.Cm uncompressed
 (the default),
-.Cm uncompressed ,
 and
 .Cm hybrid .
 For more information regarding
