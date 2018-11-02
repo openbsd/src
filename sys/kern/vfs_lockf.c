@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.28 2018/10/27 08:51:13 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.29 2018/11/02 07:17:34 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int maxlockdepth = MAXDEPTH;
 #define	DEBUG_FINDOVR		0x08
 #define	DEBUG_SPLIT		0x10
 #define	DEBUG_WAKELOCK		0x20
-#define	DEBUG_LINK		0x80
+#define	DEBUG_LINK		0x40
 
 int	lockf_debug = DEBUG_SETLOCK|DEBUG_CLEARLOCK|DEBUG_WAKELOCK;
 
