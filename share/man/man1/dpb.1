@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.7 2018/09/18 12:49:10 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.8 2018/11/02 08:11:43 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2018 $
+.Dd $Mdocdate: November 2 2018 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1581,6 +1581,13 @@ can't start a new fetch job.
 Printed in
 .Ar path/pkgpath.log
 when a port exceeds its timeout.
+.It !: <path> tried and didn't get it
+Printed in
+.Ar engine.log
+Scanning the port didn't give us useful information.
+See
+.Ar vars.log
+for gory details.
 .El
 .Sh BUGS AND LIMITATIONS
 .Nm
