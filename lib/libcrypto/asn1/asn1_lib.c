@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.42 2018/10/24 17:57:22 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.43 2018/11/02 05:30:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 {
 	int i, ret;
 	long l;
-	const unsigned char *p= *pp;
+	const unsigned char *p = *pp;
 	int tag, xclass, inf;
 	long max = omax;
 
