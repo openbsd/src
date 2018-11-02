@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.343 2018/11/02 16:50:23 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.344 2018/11/02 17:16:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -552,9 +552,6 @@ smtp_session(struct listener *listener, int sock,
 	log_trace(TRACE_SMTP, "smtp: %p: connected to listener %p "
 	    "[hostname=%s, port=%d, tag=%s]", s, listener,
 	    listener->hostname, ntohs(listener->port), listener->tag);
-
-	smtp_report_link_connect(s->id, &s->ss,
-	    &s->listener->ss);
 
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
@@ -1620,6 +1617,9 @@ smtp_connected(struct smtp_session *s)
 
 	log_info("%016"PRIx64" smtp connected address=%s host=%s",
 	    s->id, ss_to_text(&s->ss), s->hostname);
+
+	smtp_report_link_connect(s->id, &s->ss,
+	    &s->listener->ss);
 
 	sl = sizeof(ss);
 	if (getsockname(io_fileno(s->io), (struct sockaddr*)&ss, &sl) == -1) {
