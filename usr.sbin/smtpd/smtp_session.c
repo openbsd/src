@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.341 2018/11/01 14:48:49 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.342 2018/11/02 16:09:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -553,6 +553,9 @@ smtp_session(struct listener *listener, int sock,
 	    "[hostname=%s, port=%d, tag=%s]", s, listener,
 	    listener->hostname, ntohs(listener->port), listener->tag);
 
+	smtp_report_link_connect(s->id, ss_to_text(&s->ss),
+	    ss_to_text(&s->listener->ss));
+
 	/* For local enqueueing, the hostname is already set */
 	if (hostname) {
 		s->flags |= SF_AUTHENTICATED;
@@ -568,9 +571,6 @@ smtp_session(struct listener *listener, int sock,
 	}
 
 	/* session may have been freed by now */
-
-	smtp_report_link_connect(s->id, ss_to_text(&s->ss),
-	    ss_to_text(&s->listener->ss));
 
 	return (0);
 }
