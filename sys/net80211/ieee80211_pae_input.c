@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.31 2017/10/16 10:39:41 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.32 2018/11/02 14:40:24 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -603,9 +603,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 				reason = IEEE80211_REASON_AUTH_LEAVE;
 				goto deauth;
 			}
-		} else
-			printf("%s: reused group key update received from %s\n",
-			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+		}
 	}
 	if (igtk != NULL) {	/* implies MFP && gtk != NULL */
 		u_int16_t kid;
@@ -636,9 +634,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 				reason = IEEE80211_REASON_AUTH_LEAVE;
 				goto deauth;
 			}
-		} else
-			printf("%s: reused group key update received from %s\n",
-			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+		}
 	}
 	if (info & EAPOL_KEY_INSTALL)
 		ni->ni_flags |= IEEE80211_NODE_TXRXPROT;
@@ -879,9 +875,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 			reason = IEEE80211_REASON_AUTH_LEAVE;
 			goto deauth;
 		}
-	} else
-		printf("%s: reused group key update received from %s\n",
-		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+	}
 	if (igtk != NULL) {	/* implies MFP */
 		/* check that the IGTK KDE is valid */
 		if (igtk[1] != 4 + 24) {
@@ -909,9 +903,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 				reason = IEEE80211_REASON_AUTH_LEAVE;
 				goto deauth;
 			}
-		} else
-			printf("%s: reused group key update received from %s\n",
-			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+		}
 	}
 	if (info & EAPOL_KEY_SECURE) {
 #ifndef IEEE80211_STA_ONLY
@@ -1016,9 +1008,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 			return;
 		}
-	} else
-		printf("%s: reused group key update received from %s\n",
-		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+	}
 	if (info & EAPOL_KEY_SECURE) {
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
