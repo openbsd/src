@@ -2994,6 +2994,7 @@ X509_get0_notAfter
 X509_get0_notBefore
 X509_get0_pubkey
 X509_get0_pubkey_bitstr
+X509_get0_serialNumber
 X509_get0_signature
 X509_get0_tbs_sigalg
 X509_get1_email
@@ -3015,7 +3016,6 @@ X509_get_ext_d2i
 X509_get_issuer_name
 X509_get_pubkey
 X509_get_pubkey_parameters
-X509_get0_serialNumber
 X509_get_serialNumber
 X509_get_signature_nid
 X509_get_signature_type
