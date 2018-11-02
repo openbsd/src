@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.4 2018/10/31 14:18:09 patrick Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -41,8 +41,7 @@
 #define	URE_BYTE_EN_BYTE	0x11
 #define	URE_BYTE_EN_SIX_BYTES	0x3f
 
-#define	URE_MAX_FRAMELEN_8152	(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
-#define	URE_MAX_FRAMELEN_8153	(9 * 1024)
+#define	URE_MAX_FRAMELEN	(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
 
 #define	URE_PLA_IDR		0xc000
 #define	URE_PLA_RCR		0xc010
@@ -186,10 +185,6 @@
 
 /* PLA_TCR1 */
 #define	URE_VERSION_MASK	0x7cf0
-
-/* PLA_MTPS */
-#define URE_MTPS_JUMBO		(12 * 1024 / 64)
-#define URE_MTPS_DEFAULT	(6 * 1024 / 64)
 
 /* PLA_CR */
 #define	URE_CR_RST		0x10

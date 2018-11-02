@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.9 2018/10/31 14:18:09 patrick Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -695,9 +695,6 @@ ure_rtl8152_init(struct ure_softc *sc)
 
 	ure_init_fifo(sc);
 
-	/* Set allowed frame size. */
-	ure_write_2(sc, URE_PLA_RMS, URE_MCU_TYPE_PLA, URE_MAX_FRAMELEN_8152);
-
 	ure_write_1(sc, URE_USB_TX_AGG, URE_MCU_TYPE_USB,
 	    URE_TX_AGG_MAX_THRESHOLD);
 	ure_write_4(sc, URE_USB_RX_BUF_TH, URE_MCU_TYPE_USB, URE_RX_THR_HIGH);
@@ -837,10 +834,6 @@ ure_rtl8153_init(struct ure_softc *sc)
 	usbd_delay_ms(sc->ure_udev, 20);
 
 	ure_init_fifo(sc);
-
-	/* Set allowed frame size. */
-	ure_write_2(sc, URE_PLA_RMS, URE_MCU_TYPE_PLA, URE_MAX_FRAMELEN_8153);
-	ure_write_2(sc, URE_PLA_MTPS, URE_MCU_TYPE_PLA, URE_MTPS_JUMBO);
 
 	/* Enable Rx aggregation. */
 	ure_write_2(sc, URE_USB_USB_CTRL, URE_MCU_TYPE_USB,
@@ -1153,12 +1146,6 @@ ure_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ure_ioctl;
 	ifp->if_start = ure_start;
 	ifp->if_capabilities = 0;
-
-	if (sc->ure_flags & URE_FLAG_8152)
-		ifp->if_hardmtu = URE_MAX_FRAMELEN_8152;
-	else
-		ifp->if_hardmtu = URE_MAX_FRAMELEN_8153;
-	ifp->if_hardmtu -= (ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	mii = &sc->ure_mii;
 	mii->mii_ifp = ifp;
