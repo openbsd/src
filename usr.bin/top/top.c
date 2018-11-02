@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.95 2018/11/01 18:04:13 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.96 2018/11/02 12:46:10 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -134,8 +134,10 @@ usage(void)
 static int
 filteruser(char buf[])
 {
+	const char *errstr;
 	char *bufp = buf;
 	uid_t *uidp;
+	uid_t uid;
 
 	if (bufp[0] == '-') {
 		bufp++;
@@ -146,7 +148,16 @@ filteruser(char buf[])
 		ps.huid = (pid_t)-1;
 	}
 
-	return uid_from_user(bufp, uidp);
+	if (uid_from_user(bufp, uidp) == 0)
+		return 0;
+
+	uid = strtonum(bufp, 0, UID_MAX, &errstr);
+	if (errstr == NULL && user_from_uid(uid, 1) != NULL) {
+		*uidp = uid;
+		return 0;
+	}
+
+	return -1;
 }
 
 static int
