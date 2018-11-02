@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.151 2018/04/24 07:06:49 stsp Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.152 2018/11/02 16:15:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@
 
 void packethandler(struct interface_info *ifi);
 void flush_unpriv_ibuf(void);
+void sendhup(void);
 
 /*
  * Loop waiting for packets, timeouts or routing messages.
@@ -88,6 +89,17 @@ dispatch(struct interface_info *ifi, int routefd)
 
 	while (quit == 0 || quit == SIGHUP) {
 		if (quit == SIGHUP) {
+			/* Ignore any future packets, messages or timeouts. */
+			if (ifi->bfdesc != -1) {
+				close(ifi->bfdesc);
+				ifi->bfdesc = -1;
+			}
+			if (routefd != -1) {
+				close(routefd);
+				routefd = -1;
+			}
+			if (ifi->timeout_func != NULL)
+				cancel_timeout(ifi);
 			sendhup();
 			to_msec = 100;
 		} else if (ifi->timeout_func != NULL) {
@@ -158,7 +170,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		if ((fds[0].revents & POLLIN) != 0) {
 			do {
 				packethandler(ifi);
-			} while (ifi->rbuf_offset < ifi->rbuf_len);
+			} while (quit == 0 && ifi->rbuf_offset < ifi->rbuf_len);
 		}
 		if ((fds[1].revents & POLLIN) != 0)
 			routehandler(ifi, routefd);
