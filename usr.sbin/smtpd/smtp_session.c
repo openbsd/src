@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.344 2018/11/02 17:16:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.345 2018/11/02 17:20:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1618,7 +1618,7 @@ smtp_connected(struct smtp_session *s)
 	log_info("%016"PRIx64" smtp connected address=%s host=%s",
 	    s->id, ss_to_text(&s->ss), s->hostname);
 
-	smtp_report_link_connect(s->id, &s->ss,
+	smtp_report_link_connect(s->id, s->hostname, &s->ss,
 	    &s->listener->ss);
 
 	sl = sizeof(ss);

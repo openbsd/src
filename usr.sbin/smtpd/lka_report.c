@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.4 2018/11/02 17:03:17 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.5 2018/11/02 17:20:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -51,7 +51,7 @@ report_smtp_broadcast(const char *format, ...)
 }
 
 void
-lka_report_smtp_link_connect(time_t tm, uint64_t reqid,
+lka_report_smtp_link_connect(time_t tm, uint64_t reqid, const char *rdns,
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
 {
@@ -74,8 +74,8 @@ lka_report_smtp_link_connect(time_t tm, uint64_t reqid,
 	(void)strlcpy(dest, ss_to_text(ss_dest), sizeof dest);
 
 	report_smtp_broadcast("report|smtp-in|link-connect|"
-	    "%zd|%016"PRIx64"|%s:%d|%s:%d\n",
-	    tm, reqid, src, src_port, dest, dest_port);
+	    "%zd|%016"PRIx64"|%s|%s:%d|%s:%d\n",
+	    tm, reqid, rdns, src, src_port, dest, dest_port);
 }
 
 void
