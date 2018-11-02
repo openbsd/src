@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.566 2018/11/01 14:48:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.567 2018/11/02 16:50:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1249,7 +1249,7 @@ struct io *lka_proc_get_io(const char *);
 
 
 /* lka_report.c */
-void lka_report_smtp_link_connect(time_t, uint64_t, const char *, const char *);
+void lka_report_smtp_link_connect(time_t, uint64_t, const struct sockaddr_storage *, const struct sockaddr_storage *);
 void lka_report_smtp_link_disconnect(time_t, uint64_t);
 void lka_report_smtp_link_tls(time_t, uint64_t, const char *);
 void lka_report_smtp_tx_begin(time_t, uint64_t);
@@ -1427,7 +1427,7 @@ void smtp_collect(void);
 
 
 /* smtp_report.c */
-void smtp_report_link_connect(uint64_t, const char *, const char *);
+void smtp_report_link_connect(uint64_t, const struct sockaddr_storage *, const struct sockaddr_storage *);
 void smtp_report_link_disconnect(uint64_t);
 void smtp_report_link_tls(uint64_t, const char *);
 void smtp_report_tx_begin(uint64_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_report.c,v 1.1 2018/11/01 14:48:49 gilles Exp $	*/
+/*	$OpenBSD: smtp_report.c,v 1.2 2018/11/02 16:50:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -44,13 +44,14 @@
 #include "rfc5322.h"
 
 void
-smtp_report_link_connect(uint64_t qid, const char *src, const char *dest)
+smtp_report_link_connect(uint64_t qid, const struct sockaddr_storage *ss_src,
+    const struct sockaddr_storage *ss_dest)
 {
 	m_create(p_lka, IMSG_SMTP_REPORT_LINK_CONNECT, 0, 0, -1);
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
-	m_add_string(p_lka, src);
-	m_add_string(p_lka, dest);
+	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_src);
+	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_dest);
 	m_close(p_lka);
 }
 

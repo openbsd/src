@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.209 2018/11/01 14:48:49 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.210 2018/11/02 16:50:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -84,7 +84,8 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	int			 v;
 	time_t			 tm;
 	const char		*command, *response;
-	const char		*src_addr, *dest_addr, *ciphers;
+	const char		*ciphers;
+	struct sockaddr_storage	ss_src, ss_dest;
 
 	if (imsg == NULL)
 		lka_shutdown();
@@ -406,11 +407,11 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_time(&m, &tm);
 		m_get_id(&m, &reqid);
-		m_get_string(&m, &src_addr);
-		m_get_string(&m, &dest_addr);
+		m_get_sockaddr(&m, (struct sockaddr *)&ss_src);
+		m_get_sockaddr(&m, (struct sockaddr *)&ss_dest);
 		m_end(&m);
 
-		lka_report_smtp_link_connect(tm, reqid, src_addr, dest_addr);
+		lka_report_smtp_link_connect(tm, reqid, &ss_src, &ss_dest);
 		return;
 
 	case IMSG_SMTP_REPORT_LINK_DISCONNECT:
