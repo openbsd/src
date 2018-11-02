@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.51 2017/12/30 20:46:59 guenther Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.52 2018/11/02 09:59:36 fcambus Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -240,7 +240,6 @@ _wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 	u_int16_t cyl;
 	u_int8_t head, sect, cmd = 0;
 	int nblks;
-	int ata_delay;
 	int error, dma_flags = 0;
 
 	WDCDEBUG_PRINT(("_wdc_ata_bio_start %s:%d:%d\n",
@@ -283,10 +282,6 @@ _wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 		if (ata_bio->flags & ATA_LBA48)
 			dma_flags |= WDC_DMA_LBA48;
 	}
-	if (ata_bio->flags & ATA_SINGLE)
-		ata_delay = ATA_DELAY;
-	else
-		ata_delay = ATA_DELAY;
 again:
 	/*
 	 *
@@ -345,7 +340,7 @@ again:
 			}
 			/* Initiate command */
 			wdc_set_drive(chp, xfer->drive);
-			if (wait_for_ready(chp, ata_delay) < 0)
+			if (wait_for_ready(chp, ATA_DELAY) < 0)
 				goto timeout;
 
 			/* start the DMA channel (before) */
@@ -391,7 +386,7 @@ again:
 		}
 		/* Initiate command! */
 		wdc_set_drive(chp, xfer->drive);
-		if (wait_for_ready(chp, ata_delay) < 0)
+		if (wait_for_ready(chp, ATA_DELAY) < 0)
 			goto timeout;
 		if (ata_bio->flags & ATA_LBA48) {
 			wdccommandext(chp, xfer->drive, cmd,
@@ -410,7 +405,7 @@ again:
 	}
 	/* If this was a write and not using DMA, push the data. */
 	if ((ata_bio->flags & ATA_READ) == 0) {
-		if (wait_for_drq(chp, ata_delay) != 0) {
+		if (wait_for_drq(chp, ATA_DELAY) != 0) {
 			printf("%s:%d:%d: timeout waiting for DRQ, "
 			    "st=0x%b, err=0x%02x\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
