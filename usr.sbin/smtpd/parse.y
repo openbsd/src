@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.228 2018/11/03 13:56:49 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.229 2018/11/03 14:39:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -156,7 +156,6 @@ static int	interface(struct listen_opts *);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
 
-static int config_lo_filter(struct listen_opts *, char *);
 static int config_lo_mask_source(struct listen_opts *);
 
 typedef struct {
@@ -1429,10 +1428,12 @@ limits_scheduler: opt_limit_scheduler limits_scheduler
 		;
 
 
-opt_sock_listen : FILTER STRING {
-			if (config_lo_filter(&listen_opts, $2)) {
+opt_sock_listen : FILTER {
+			if (listen_opts.options & LO_FILTER) {
+				yyerror("filter already specified");
 				YYERROR;
 			}
+			listen_opts.options |= LO_FILTER;
 		}
 		| MASK_SRC {
 			if (config_lo_mask_source(&listen_opts)) {
@@ -1488,10 +1489,12 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.port = $2;
 		}
-		| FILTER STRING			{
-			if (config_lo_filter(&listen_opts, $2)) {
+		| FILTER			{
+			if (listen_opts.options & LO_FILTER) {
+				yyerror("filter already specified");
 				YYERROR;
 			}
+			listen_opts.options |= LO_FILTER;
 		}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
@@ -2467,8 +2470,8 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	if (lo->hostname == NULL)
 		lo->hostname = conf->sc_hostname;
 
-	if (lo->filtername)
-		(void)strlcpy(h->filter, lo->filtername, sizeof(h->filter));
+	if (lo->options & LO_FILTER)
+		h->flags |= F_FILTERED;
 
 	h->pki_name[0] = '\0';
 
@@ -2772,18 +2775,6 @@ is_if_in_group(const char *ifname, const char *groupname)
 end:
 	close(s);
 	return ret;
-}
-
-static int
-config_lo_filter(struct listen_opts *lo, char *filter_name) {
-	if (lo->options & LO_FILTER) {
-		yyerror("filter already specified");
-		return -1;
-	}
-	lo->options |= LO_FILTER;
-	lo->filtername = filter_name;
-
-	return 0;
 }
 
 static int

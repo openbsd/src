@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.571 2018/11/03 13:56:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.572 2018/11/03 14:39:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -83,6 +83,7 @@
 #define	F_EXT_DSN		0x400
 #define	F_RECEIVEDAUTH		0x800
 #define	F_MASQUERADE		0x1000
+#define	F_FILTERED		0x2000
 
 #define RELAY_TLS_OPPORTUNISTIC	0
 #define RELAY_TLS_STARTTLS	1
@@ -510,7 +511,6 @@ struct listener {
 	char			 pki_name[PATH_MAX];
 	char			 ca_name[PATH_MAX];
 	char			 tag[SMTPD_TAG_SIZE];
-	char			 filter[PATH_MAX];
 	char			 authtable[LINE_MAX];
 	char			 hostname[HOST_NAME_MAX+1];
 	char			 hostnametable[PATH_MAX];
