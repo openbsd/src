@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.304 2018/11/01 10:13:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.305 2018/11/03 08:59:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1262,8 +1262,6 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	int		 sp[2];
 	struct passwd	*pw;
 	struct group	*gr;
-
-	log_debug("debug: smtpd: forking processor %s %s user=%s,group=%s", name, command, user, group);
 
 	if (user == NULL)
 		user = SMTPD_USER;
