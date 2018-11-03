@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2018/10/21 15:19:25 anton Exp $
+#	$OpenBSD: Makefile,v 1.6 2018/11/03 09:21:25 anton Exp $
 
 PROG=	flock
 
@@ -11,7 +11,7 @@ REGRESS_SKIP_TARGETS = t-5 t-6
 
 .for a in ${TESTS}
 t-${a}: flock
-	./flock /tmp ${a}
+	./flock ${a}
 REGRESS_TARGETS+=t-${a}
 .endfor
 
