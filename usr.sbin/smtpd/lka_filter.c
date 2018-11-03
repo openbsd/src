@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.3 2018/11/03 13:56:49 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.4 2018/11/03 20:45:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -227,7 +227,7 @@ filter_check_rdns_helo(struct filter_rule *rule, const char *hostname, const cha
 	if (rule->rdns) {
 		ret = text_to_netaddr(&netaddr, hostname);
 		if (!ret)
-			ret = strcmp(hostname, param);
+			ret = strcasecmp(hostname, param);
 		ret = rule->not_rdns < 0 ? !ret : ret;
 	}
 	return ret;
