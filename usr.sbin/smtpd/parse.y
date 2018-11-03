@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.226 2018/11/03 13:42:24 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.227 2018/11/03 13:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1133,13 +1133,11 @@ MATCH {
 }
 ;
 
-/*
 filter_action_proc:
 ON STRING {
-	filter_rule->filter = $2;
+	filter_rule->proc = $2;
 }
 ;
-*/
 
 filter_action_builtin:
 REJECT STRING {
@@ -1176,11 +1174,9 @@ filter_phase_connect:
 CONNECT {
 	filter_rule->phase = FILTER_CONNECTED;
 } filter_phase_connect_options filter_action_builtin
-  /*
 | CONNECT {
 	filter_rule->phase = FILTER_CONNECTED;
 } filter_action_proc
-  */
 ;
 
 filter_phase_helo_options:
@@ -1190,22 +1186,18 @@ filter_phase_helo:
 HELO {
 	filter_rule->phase = FILTER_HELO;
 } filter_phase_helo_options filter_action_builtin
-  /*
 | HELO {
 	filter_rule->phase = FILTER_HELO;
 } filter_action_proc
-  */
 ;
 
 filter_phase_ehlo:
 EHLO {
 	filter_rule->phase = FILTER_EHLO;
 } filter_phase_helo_options filter_action_builtin
-  /*
 | EHLO {
 	filter_rule->phase = FILTER_EHLO;
 } filter_action_proc
-  */
 ;
 
 filter_phase_mail_from_options:
@@ -1215,11 +1207,9 @@ filter_phase_mail_from:
 MAIL_FROM {
 	filter_rule->phase = FILTER_MAIL_FROM;
 } filter_phase_mail_from_options filter_action_builtin
-  /*
 | MAIL_FROM {
 	filter_rule->phase = FILTER_MAIL_FROM;
 } filter_action_proc
-  */
 ;
 
 filter_phase_rcpt_to_options:
@@ -1229,57 +1219,46 @@ filter_phase_rcpt_to:
 RCPT_TO {
 	filter_rule->phase = FILTER_RCPT_TO;
 } filter_phase_rcpt_to_options filter_action_builtin
-  /*
 | RCPT_TO {
 	filter_rule->phase = FILTER_RCPT_TO;
 } filter_action_proc
-  */
 ;
 
 filter_phase_data:
 DATA {
 	filter_rule->phase = FILTER_DATA;
 } filter_action_builtin
-  /*
 | DATA {
 	filter_rule->phase = FILTER_DATA;
 } filter_action_proc
-  */
 ;
 
 filter_phase_quit:
 QUIT {
 	filter_rule->phase = FILTER_QUIT;
 } filter_action_builtin
-  /*
 | QUIT {
 	filter_rule->phase = FILTER_QUIT;
 } filter_action_proc
-  */
 ;
 
 filter_phase_rset:
 RSET {
 	filter_rule->phase = FILTER_RSET;
 } filter_action_builtin
-  /*
 | RSET {
 	filter_rule->phase = FILTER_RSET;
 } filter_action_proc
-  */
 ;
 
 filter_phase_noop:
 NOOP {
 	filter_rule->phase = FILTER_NOOP;
 } filter_action_builtin
-  /*
 | NOOP {
 	filter_rule->phase = FILTER_NOOP;
 } filter_action_proc
-  */
 ;
-
 
 
 filter_phase:

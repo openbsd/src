@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.2 2018/11/01 14:48:49 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.3 2018/11/03 13:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -45,6 +45,7 @@ struct processor_instance {
 };
 
 static void	processor_io(struct io *, int, void *);
+static int	processor_response(const char *);
 
 void
 lka_proc_forked(const char *name, int fd)
@@ -90,6 +91,61 @@ processor_io(struct io *io, int evt, void *arg)
 		if (line == NULL)
 			return;
 
+		if (! processor_response(line))
+			fatalx("misbehaving filter");
+
 		goto nextline;
 	}
+}
+
+static int
+processor_response(const char *line)
+{
+	uint64_t reqid;
+	char buffer[LINE_MAX];
+	char *ep = NULL;
+	char *qid = NULL;
+	char *response = NULL;
+	char *parameter = NULL;
+
+	(void)strlcpy(buffer, line, sizeof buffer);
+	if ((ep = strchr(buffer, '|')) == NULL)
+		return 0;
+	*ep = 0;
+
+	if (strcmp(buffer, "filter-response") != 0)
+		return 1;
+
+	qid = ep+1;
+	if ((ep = strchr(qid, '|')) == NULL)
+		return 0;
+	*ep = 0;
+
+	reqid = strtoull(qid, &ep, 16);
+	if (qid[0] == '\0' || *ep != '\0')
+		return 0;
+	if (errno == ERANGE && reqid == ULONG_MAX)
+		return 0;
+
+	response = ep+1;
+	if ((ep = strchr(response, '|'))) {
+		parameter = ep + 1;
+		*ep = 0;
+	}
+
+	if (strcmp(response, "proceed") != 0 &&
+	    strcmp(response, "reject") != 0 &&
+	    strcmp(response, "disconnect") != 0 &&
+	    strcmp(response, "rewrite") != 0)
+		return 0;
+
+	if (strcmp(response, "proceed") == 0 &&
+	    parameter)
+		return 0;
+
+	if (strcmp(response, "proceed") != 0 &&
+	    parameter == NULL)
+		return 0;
+
+	return lka_filter_response(reqid, response, parameter);
 }

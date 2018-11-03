@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.1 2018/11/03 13:42:24 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.2 2018/11/03 13:47:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,10 +35,12 @@
 #include "smtpd.h"
 #include "log.h"
 
-static void	filter_proceed(uint64_t, enum filter_phase, const char *);
-static void	filter_rewrite(uint64_t, enum filter_phase, const char *);
-static void	filter_reject(uint64_t, enum filter_phase, const char *);
-static void	filter_disconnect(uint64_t, enum filter_phase, const char *);
+static void	filter_proceed(uint64_t);
+static void	filter_rewrite(uint64_t, const char *);
+static void	filter_reject(uint64_t, const char *);
+static void	filter_disconnect(uint64_t, const char *);
+
+static void	filter_write(const char *, uint64_t, const char *, const char *);
 
 static int	filter_exec_notimpl(uint64_t, struct filter_rule *, const char *);
 static int	filter_exec_connected(uint64_t, struct filter_rule *, const char *);
@@ -78,60 +80,87 @@ lka_filter(uint64_t reqid, enum filter_phase phase, const char *param)
 		goto proceed;
 
 	TAILQ_FOREACH(rule, &env->sc_filter_rules[phase], entry) {
+		if (rule->proc) {
+			filter_write(rule->proc, reqid,
+			    filter_execs[i].phase_name, param);
+			return; /* deferred */
+		}
+
 		if (! filter_execs[i].func(reqid, rule, param)) {
 			if (rule->rewrite)
-				filter_rewrite(reqid, phase, rule->rewrite);
+				filter_rewrite(reqid, rule->rewrite);
 			else if (rule->disconnect)
-				filter_disconnect(reqid, phase, rule->disconnect);
+				filter_disconnect(reqid, rule->disconnect);
 			else
-				filter_reject(reqid, phase, rule->reject);
+				filter_reject(reqid, rule->reject);
 			return;
 		}
 	}
 
 proceed:
-	filter_proceed(reqid, phase, param);
+	filter_proceed(reqid);
+}
+
+
+int
+lka_filter_response(uint64_t reqid, const char *response, const char *param)
+{
+	if (strcmp(response, "proceed") == 0)
+		filter_proceed(reqid);
+	else if (strcmp(response, "rewrite") == 0)
+		filter_rewrite(reqid, param);
+	else if (strcmp(response, "reject") == 0)
+		filter_reject(reqid, param);
+	else if (strcmp(response, "disconnect") == 0)
+		filter_disconnect(reqid, param);
+	else
+		return 0;
+	return 1;
 }
 
 static void
-filter_proceed(uint64_t reqid, enum filter_phase phase, const char *param)
+filter_write(const char *name, uint64_t reqid, const char *phase, const char *param)
+{
+	if (io_printf(lka_proc_get_io(name),
+		"filter-request|in-smtp-%s|%016"PRIx64"|%s\n",
+		phase, reqid, param) == -1)
+		fatalx("failed to write to processor");
+}
+
+static void
+filter_proceed(uint64_t reqid)
 {
 	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
 	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, phase);
 	m_add_int(p_pony, FILTER_PROCEED);
-	m_add_string(p_pony, param);
 	m_close(p_pony);
 }
 
 static void
-filter_rewrite(uint64_t reqid, enum filter_phase phase, const char *param)
+filter_rewrite(uint64_t reqid, const char *param)
 {
 	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
 	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, phase);
 	m_add_int(p_pony, FILTER_REWRITE);
 	m_add_string(p_pony, param);
 	m_close(p_pony);
 }
 
 static void
-filter_reject(uint64_t reqid, enum filter_phase phase, const char *message)
+filter_reject(uint64_t reqid, const char *message)
 {
 	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
 	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, phase);
 	m_add_int(p_pony, FILTER_REJECT);
 	m_add_string(p_pony, message);
 	m_close(p_pony);
 }
 
 static void
-filter_disconnect(uint64_t reqid, enum filter_phase phase, const char *message)
+filter_disconnect(uint64_t reqid, const char *message)
 {
 	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
 	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, phase);
 	m_add_int(p_pony, FILTER_DISCONNECT);
 	m_add_string(p_pony, message);
 	m_close(p_pony);
