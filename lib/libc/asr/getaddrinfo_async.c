@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.55 2018/10/22 17:31:24 krw Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.56 2018/11/03 09:13:24 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -467,7 +467,7 @@ get_port(const char *servname, const char *proto, int numonly)
 {
 	struct servent		se;
 	struct servent_data	sed;
-	int			port, r;
+	int			port;
 	const char		*e;
 
 	if (servname == NULL)
@@ -482,13 +482,11 @@ get_port(const char *servname, const char *proto, int numonly)
 	if (numonly)
 		return (-2);
 
+	port = -1;
 	memset(&sed, 0, sizeof(sed));
-	r = getservbyname_r(servname, proto, &se, &sed);
-	port = ntohs(se.s_port);
+	if (getservbyname_r(servname, proto, &se, &sed) != -1)
+		port = ntohs(se.s_port);
 	endservent_r(&sed);
-
-	if (r == -1)
-		return (-1); /* not found */
 
 	return (port);
 }
