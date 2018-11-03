@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.568 2018/11/02 17:20:22 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.569 2018/11/03 13:42:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -315,6 +315,8 @@ enum imsg_type {
 	IMSG_SMTP_REPORT_PROTOCOL_CLIENT,
 	IMSG_SMTP_REPORT_PROTOCOL_SERVER,
 
+	IMSG_SMTP_FILTER,
+
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC
 };
@@ -388,6 +390,23 @@ enum expand_type {
 	EXPAND_INCLUDE,
 	EXPAND_ADDRESS,
 	EXPAND_ERROR,
+};
+
+enum filter_phase {
+	FILTER_CONNECTED = 0,
+	FILTER_HELO,
+	FILTER_EHLO,
+	FILTER_STARTTLS,
+	FILTER_AUTH,
+	FILTER_MAIL_FROM,
+	FILTER_RCPT_TO,
+	FILTER_DATA,
+	FILTER_RSET,
+	FILTER_QUIT,
+	FILTER_NOOP,
+	FILTER_HELP,
+	FILTER_WIZ,
+	FILTER_PHASES_COUNT     /* must be last */
 };
 
 struct expandnode {
@@ -562,6 +581,8 @@ struct smtpd {
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 
 	TAILQ_HEAD(rulelist, rule)		*sc_rules;
+	TAILQ_HEAD(filterrules, filter_rule)    sc_filter_rules[FILTER_PHASES_COUNT];
+
 	struct dict				*sc_dispatchers;
 	struct dispatcher			*sc_dispatcher_bounce;
 
@@ -999,6 +1020,29 @@ struct processor {
 	const char		       *chroot;
 };
 
+struct filter_rule {
+	TAILQ_ENTRY(filter_rule)        entry;
+
+	enum filter_phase               phase;
+	char                           *reject;
+	char                           *disconnect;
+	char                           *rewrite;
+	char                           *filter;
+
+	int8_t                          not_table;
+	struct table                   *table;
+
+	int8_t                          not_regex;
+	struct table                   *regex;
+};
+
+enum filter_status {
+	FILTER_PROCEED,
+	FILTER_REWRITE,
+	FILTER_REJECT,
+	FILTER_DISCONNECT,
+};
+
 enum ca_resp_status {
 	CA_OK,
 	CA_FAIL
@@ -1257,6 +1301,10 @@ void lka_report_smtp_tx_commit(time_t, uint64_t);
 void lka_report_smtp_tx_rollback(time_t, uint64_t);
 void lka_report_smtp_protocol_client(time_t, uint64_t, const char *);
 void lka_report_smtp_protocol_server(time_t, uint64_t, const char *);
+
+
+/* lka_filter.c */
+void lka_filter(uint64_t, enum filter_phase, const char *);
 
 
 /* lka_session.c */

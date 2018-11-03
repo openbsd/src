@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.21 2018/07/25 16:00:48 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.22 2018/11/03 13:42:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -91,6 +91,7 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_SMTP_MESSAGE_COMMIT:
 	case IMSG_SMTP_MESSAGE_CREATE:
 	case IMSG_SMTP_MESSAGE_OPEN:
+	case IMSG_SMTP_FILTER:
 	case IMSG_QUEUE_ENVELOPE_SUBMIT:
 	case IMSG_QUEUE_ENVELOPE_COMMIT:
 	case IMSG_QUEUE_SMTP_SESSION:
