@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.347 2018/11/03 13:47:46 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.348 2018/11/03 13:56:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1475,6 +1475,7 @@ smtp_query_filters(enum filter_phase phase, struct smtp_session *s, const char *
 		m_create(p_lka, IMSG_SMTP_FILTER, 0, 0, -1);
 		m_add_id(p_lka, s->id);
 		m_add_int(p_lka, phase);
+		m_add_string(p_lka, s->hostname);
 		m_add_string(p_lka, args);
 		m_close(p_lka);
 		tree_xset(&wait_filters, s->id, s);

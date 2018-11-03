@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.2 2018/11/03 13:47:46 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.3 2018/11/03 13:56:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -40,19 +40,19 @@ static void	filter_rewrite(uint64_t, const char *);
 static void	filter_reject(uint64_t, const char *);
 static void	filter_disconnect(uint64_t, const char *);
 
-static void	filter_write(const char *, uint64_t, const char *, const char *);
+static void	filter_write(const char *, uint64_t, const char *, const char *, const char *);
 
-static int	filter_exec_notimpl(uint64_t, struct filter_rule *, const char *);
-static int	filter_exec_connected(uint64_t, struct filter_rule *, const char *);
-static int	filter_exec_helo(uint64_t, struct filter_rule *, const char *);
-static int	filter_exec_mail_from(uint64_t, struct filter_rule *, const char *);
-static int	filter_exec_rcpt_to(uint64_t, struct filter_rule *, const char *);
+static int	filter_exec_notimpl(uint64_t, struct filter_rule *, const char *, const char *);
+static int	filter_exec_connected(uint64_t, struct filter_rule *, const char *, const char *);
+static int	filter_exec_helo(uint64_t, struct filter_rule *, const char *, const char *);
+static int	filter_exec_mail_from(uint64_t, struct filter_rule *, const char *, const char *);
+static int	filter_exec_rcpt_to(uint64_t, struct filter_rule *, const char *, const char *);
 
 
 static struct filter_exec {
 	enum filter_phase	phase;
 	const char	       *phase_name;
-	int		       (*func)(uint64_t, struct filter_rule *, const char *);
+	int		       (*func)(uint64_t, struct filter_rule *, const char *, const char *);
 } filter_execs[] = {
 	{ FILTER_AUTH,     	"auth",		filter_exec_notimpl },
 	{ FILTER_CONNECTED,	"connected",	filter_exec_connected },
@@ -68,7 +68,7 @@ static struct filter_exec {
 };
 
 void
-lka_filter(uint64_t reqid, enum filter_phase phase, const char *param)
+lka_filter(uint64_t reqid, enum filter_phase phase, const char *hostname, const char *param)
 {
 	struct filter_rule	*rule;
 	uint8_t			i;
@@ -82,11 +82,11 @@ lka_filter(uint64_t reqid, enum filter_phase phase, const char *param)
 	TAILQ_FOREACH(rule, &env->sc_filter_rules[phase], entry) {
 		if (rule->proc) {
 			filter_write(rule->proc, reqid,
-			    filter_execs[i].phase_name, param);
+			    filter_execs[i].phase_name, hostname, param);
 			return; /* deferred */
 		}
 
-		if (! filter_execs[i].func(reqid, rule, param)) {
+		if (! filter_execs[i].func(reqid, rule, hostname, param)) {
 			if (rule->rewrite)
 				filter_rewrite(reqid, rule->rewrite);
 			else if (rule->disconnect)
@@ -119,11 +119,21 @@ lka_filter_response(uint64_t reqid, const char *response, const char *param)
 }
 
 static void
-filter_write(const char *name, uint64_t reqid, const char *phase, const char *param)
+filter_write(const char *name, uint64_t reqid, const char *phase, const char *hostname, const char *param)
 {
-	if (io_printf(lka_proc_get_io(name),
-		"filter-request|in-smtp-%s|%016"PRIx64"|%s\n",
-		phase, reqid, param) == -1)
+	int	n;
+
+	if (strcmp(phase, "connected") == 0 ||
+	    strcmp(phase, "helo") == 0 ||
+	    strcmp(phase, "ehlo") == 0)
+		n = io_printf(lka_proc_get_io(name),
+		    "filter-request|smtp-in|%s|%016"PRIx64"|%s|%s\n",
+		    phase, reqid, hostname, param);
+	else
+		n = io_printf(lka_proc_get_io(name),
+		    "filter-request|smtp-in|%s|%016"PRIx64"|%s\n",
+		    phase, reqid, param);
+	if (n == -1)
 		fatalx("failed to write to processor");
 }
 
@@ -196,31 +206,61 @@ filter_check_regex(struct filter_rule *rule, const char *key)
 }
 
 static int
-filter_exec_notimpl(uint64_t reqid, struct filter_rule *rule, const char *param)
+filter_check_rdns_connected(struct filter_rule *rule, const char *hostname)
+{
+	int	ret = 0;
+	struct netaddr	netaddr;
+
+	if (rule->rdns) {
+		ret = text_to_netaddr(&netaddr, hostname);
+		ret = rule->not_rdns < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_rdns_helo(struct filter_rule *rule, const char *hostname, const char *param)
+{
+	int	ret = 0;
+	struct netaddr	netaddr;
+
+	if (rule->rdns) {
+		ret = text_to_netaddr(&netaddr, hostname);
+		if (!ret)
+			ret = strcmp(hostname, param);
+		ret = rule->not_rdns < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_exec_notimpl(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
 	return 1;
 }
 
 static int
-filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *param)
+filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
 	if (filter_check_table(rule, K_NETADDR, param) ||
-	    filter_check_regex(rule, param))
+	    filter_check_regex(rule, param) ||
+	    filter_check_rdns_connected(rule, hostname))
 		return 0;
 	return 1;
 }
 
 static int
-filter_exec_helo(uint64_t reqid, struct filter_rule *rule, const char *param)
+filter_exec_helo(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
 	if (filter_check_table(rule, K_DOMAIN, param) ||
-	    filter_check_regex(rule, param))
+	    filter_check_regex(rule, param) ||
+	    filter_check_rdns_helo(rule, hostname, param))
 		return 0;
 	return 1;
 }
 
 static int
-filter_exec_mail_from(uint64_t reqid, struct filter_rule *rule, const char *param)
+filter_exec_mail_from(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
 	char	buffer[SMTPD_MAXMAILADDRSIZE];
 
@@ -235,7 +275,7 @@ filter_exec_mail_from(uint64_t reqid, struct filter_rule *rule, const char *para
 }
 
 static int
-filter_exec_rcpt_to(uint64_t reqid, struct filter_rule *rule, const char *param)
+filter_exec_rcpt_to(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
 	char	buffer[SMTPD_MAXMAILADDRSIZE];
 

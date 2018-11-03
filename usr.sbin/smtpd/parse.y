@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.227 2018/11/03 13:47:46 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.228 2018/11/03 13:56:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -175,7 +175,7 @@ typedef struct {
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE
 %token	CA CERT CHROOT CIPHERS COMPRESSION CONNECT
-%token	CHECK_REGEX CHECK_TABLE
+%token	CHECK_RDNS CHECK_REGEX CHECK_TABLE
 %token	DATA DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
 %token	FILTER FOR FORWARD_ONLY FROM
@@ -1167,8 +1167,15 @@ negation CHECK_REGEX tables {
 }
 ;
 
+filter_phase_check_rdns:
+negation CHECK_RDNS {
+	filter_rule->not_rdns = $1 ? -1 : 1;
+	filter_rule->rdns = 1;
+}
+;
+
 filter_phase_connect_options:
-filter_phase_check_table | filter_phase_check_regex;
+filter_phase_check_table | filter_phase_check_regex | filter_phase_check_rdns;
 
 filter_phase_connect:
 CONNECT {
@@ -1180,7 +1187,7 @@ CONNECT {
 ;
 
 filter_phase_helo_options:
-filter_phase_check_table | filter_phase_check_regex;
+filter_phase_check_table | filter_phase_check_regex | filter_phase_check_rdns;
 
 filter_phase_helo:
 HELO {
@@ -1829,6 +1836,7 @@ lookup(char *s)
 		{ "bounce",		BOUNCE },
 		{ "ca",			CA },
 		{ "cert",		CERT },
+		{ "check-rdns",		CHECK_RDNS },
 		{ "check-regex",	CHECK_REGEX },
 		{ "check-table",	CHECK_TABLE },
 		{ "chroot",		CHROOT },
