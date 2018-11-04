@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.126 2018/10/15 08:16:17 bentley Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.127 2018/11/04 05:56:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -220,7 +220,7 @@ server_read_http(struct bufferevent *bev, void *arg)
 		if (!clt->clt_line) {
 			/* Peek into the buffer to see if it looks like HTTP */
 			key = EVBUFFER_DATA(src);
-			if (!isalpha(*key)) {
+			if (!isalpha((unsigned char)*key)) {
 				server_abort_http(clt, 400,
 				    "invalid request line");
 				goto abort;
