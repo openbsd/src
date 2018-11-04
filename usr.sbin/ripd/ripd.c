@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.30 2016/09/03 10:28:08 renato Exp $ */
+/*	$OpenBSD: ripd.c,v 1.31 2018/11/04 07:52:55 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -211,6 +211,11 @@ main(int argc, char *argv[])
 	rde_pid = rde(conf, pipe_parent2rde, pipe_ripe2rde, pipe_parent2ripe);
 	ripe_pid = ripe(conf, pipe_parent2ripe, pipe_ripe2rde, pipe_parent2rde);
 
+	if (unveil("/", "") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
+
 	event_init();
 
 	/* setup signal handler */
@@ -276,7 +281,6 @@ ripd_shutdown(void)
 		if_del(i);
 	}
 
-	control_cleanup(conf->csock);
 	kr_shutdown();
 
 	log_debug("waiting for children to terminate");
