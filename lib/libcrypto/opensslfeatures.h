@@ -17,7 +17,7 @@
 /* #define OPENSSL_NO_ALGORITHMS */
 /* #define OPENSSL_NO_ARIA */
 /* #define OPENSSL_NO_ASM */
-/* #define OPENSSL_NO_ASYNC */
+#define OPENSSL_NO_ASYNC
 /* #define OPENSSL_NO_AUTOALGINIT */
 /* #define OPENSSL_NO_AUTOERRINIT */
 /* #define OPENSSL_NO_AUTOLOAD_CONFIG */
