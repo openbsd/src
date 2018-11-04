@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.152 2018/11/02 16:15:55 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.153 2018/11/04 16:32:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,7 @@
 #include "privsep.h"
 
 
-void packethandler(struct interface_info *ifi);
+void packethandler(struct interface_info *);
 void flush_unpriv_ibuf(void);
 void sendhup(void);
 

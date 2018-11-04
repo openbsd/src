@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.579 2018/11/03 23:17:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.580 2018/11/04 16:32:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -127,7 +127,7 @@ struct proposal {
 
 void		 sighdlr(int);
 void		 usage(void);
-int		 res_hnok_list(const char *dn);
+int		 res_hnok_list(const char *);
 int		 addressinuse(char *, struct in_addr, char *);
 
 void		 fork_privchld(struct interface_info *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.168 2018/02/10 23:25:15 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.169 2018/11/04 16:32:11 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -68,8 +68,8 @@ void	parse_conf_decl(FILE *, char *);
 int	parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int	parse_option_list(FILE *, int *, uint8_t *);
 int	parse_interface(FILE *, char *);
-int	parse_lease(FILE *, char *,struct client_lease **);
-void	parse_lease_decl(FILE *,struct client_lease *, char *);
+int	parse_lease(FILE *, char *, struct client_lease **);
+void	parse_lease_decl(FILE *, struct client_lease *, char *);
 int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
