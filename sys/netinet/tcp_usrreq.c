@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.169 2018/06/11 07:40:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.170 2018/11/04 19:36:25 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1143,8 +1143,9 @@ tcp_update_sndspace(struct tcpcb *tp)
 	if (sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat) {
 		if (nmax < so->so_snd.sb_cc + so->so_snd.sb_lowat)
 			nmax = so->so_snd.sb_cc + so->so_snd.sb_lowat;
-		if (nmax * 2 < so->so_snd.sb_mbcnt + so->so_snd.sb_lowat)
-			nmax = (so->so_snd.sb_mbcnt+so->so_snd.sb_lowat+1) / 2;
+		/* keep in sync with sbreserve() calculation */
+		if (nmax * 8 < so->so_snd.sb_mbcnt + so->so_snd.sb_lowat)
+			nmax = (so->so_snd.sb_mbcnt+so->so_snd.sb_lowat+7) / 8;
 	}
 
 	/* round to MSS boundary */
