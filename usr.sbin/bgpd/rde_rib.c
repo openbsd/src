@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.184 2018/10/31 14:50:07 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.185 2018/11/04 12:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -214,6 +214,21 @@ rib_free(struct rib *rib)
 	filterlist_free(rd->in_rules_tmp);
 	filterlist_free(rd->in_rules);
 	bzero(rd, sizeof(struct rib_desc));
+}
+
+void
+rib_shutdown(void)
+{
+	u_int16_t id;
+
+	for (id = 0; id < rib_size; id++) {
+		if (!rib_valid(id))
+			continue;
+		if (!RB_EMPTY(rib_tree(&ribs[id].rib)))
+			log_warnx("%s: rib %s is not empty", __func__,
+			    ribs[id].name);
+		rib_free(&ribs[id].rib);
+	}
 }
 
 struct rib_entry *
@@ -553,6 +568,11 @@ path_hash_stats(struct rde_hashstats *hs)
 	}
 }
 
+/*
+ * Update a prefix belonging to a possible new aspath.
+ * Return 1 if prefix was newly added, 0 if it was just changed or 2 if no
+ * change happened at all.
+ */
 int
 path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
     struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
@@ -575,7 +595,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 			/* no change, update last change */
 			p->lastchange = time(NULL);
 			p->validation_state = vstate;
-			return (0);
+			return (2);
 		}
 	}
 

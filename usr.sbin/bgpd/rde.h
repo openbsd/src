@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.201 2018/10/31 14:50:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.202 2018/11/04 12:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -79,7 +79,6 @@ LIST_HEAD(attr_list, attr);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
-RB_HEAD(uptree_rib, update_rib);
 
 TAILQ_HEAD(uplist_prefix, update_prefix);
 TAILQ_HEAD(uplist_attr, update_attr);
@@ -91,7 +90,6 @@ struct rde_peer {
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_v4_addr;
 	struct bgpd_addr		 local_v6_addr;
-	struct uptree_rib		 up_rib;
 	struct uptree_prefix		 up_prefix;
 	struct uptree_attr		 up_attrs;
 	struct uplist_attr		 updates[AID_MAX];
@@ -440,6 +438,7 @@ struct rib	*rib_byid(u_int16_t);
 u_int16_t	 rib_find(char *);
 struct rib_desc	*rib_desc(struct rib *);
 void		 rib_free(struct rib *);
+void		 rib_shutdown(void);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 int		 rib_dump_pending(void);
