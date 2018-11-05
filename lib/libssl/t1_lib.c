@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.144 2018/08/24 18:10:25 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.145 2018/11/05 03:49:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -608,20 +608,11 @@ tls1_check_ec_server_key(SSL *s)
 int
 tls1_check_ec_tmp_key(SSL *s)
 {
-	EC_KEY *ec = s->cert->ecdh_tmp;
-	uint16_t curve_id;
-
 	/* Need a shared curve. */
 	if (tls1_get_shared_curve(s) != NID_undef)
 		return (1);
 
-	if (ec == NULL)
-		return (0);
-
-	if (tls1_set_ec_id(&curve_id, NULL, ec) != 1)
-		return (0);
-
-	return tls1_check_ec_key(s, &curve_id, NULL);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.67 2018/04/25 07:10:39 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.68 2018/11/05 03:49:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,14 +234,6 @@ ssl_cert_dup(CERT *cert)
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
 	ret->dh_tmp_auto = cert->dh_tmp_auto;
 
-	if (cert->ecdh_tmp) {
-		ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
-		if (ret->ecdh_tmp == NULL) {
-			SSLerrorx(ERR_R_EC_LIB);
-			goto err;
-		}
-	}
-
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (cert->pkeys[i].x509 != NULL) {
 			ret->pkeys[i].x509 = cert->pkeys[i].x509;
@@ -297,7 +289,6 @@ ssl_cert_dup(CERT *cert)
 
 err:
 	DH_free(ret->dh_tmp);
-	EC_KEY_free(ret->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		X509_free(ret->pkeys[i].x509);
@@ -321,7 +312,6 @@ ssl_cert_free(CERT *c)
 		return;
 
 	DH_free(c->dh_tmp);
-	EC_KEY_free(c->ecdh_tmp);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		X509_free(c->pkeys[i].x509);
