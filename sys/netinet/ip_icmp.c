@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.179 2018/11/05 20:52:22 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.180 2018/11/05 21:50:39 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -355,8 +355,8 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 		icmpstat_inc(icps_tooshort);
 		goto freeit;
 	}
-	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = *mp = m_pullup(m, i)) == NULL) {
+	i = hlen + min(icmplen, ICMP_ADVLENMAX);
+	if ((m = *mp = m_pullup(m, i)) == NULL) {
 		icmpstat_inc(icps_tooshort);
 		return IPPROTO_DONE;
 	}
@@ -478,15 +478,6 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 			    icmplen < ICMP_V6ADVLEN(icp)) {
 				icmpstat_inc(icps_badlen);
 				goto freeit;
-			} else {
-				if ((m = *mp = m_pullup(m, (ip->ip_hl << 2) +
-				    ICMP_V6ADVLEN(icp))) == NULL) {
-					icmpstat_inc(icps_tooshort);
-					return IPPROTO_DONE;
-				}
-				ip = mtod(m, struct ip *);
-				icp = (struct icmp *)
-				    (m->m_data + (ip->ip_hl << 2));
 			}
 		}
 #endif /* INET6 */
