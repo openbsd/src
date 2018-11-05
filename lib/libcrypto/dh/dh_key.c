@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.29 2018/06/12 15:33:18 sthen Exp $ */
+/* $OpenBSD: dh_key.c,v 1.30 2018/11/05 23:46:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,17 +153,9 @@ generate_key(DH *dh)
 		}
 	}
 
-	{
-		BIGNUM prk;
-
-		BN_init(&prk);
-		BN_with_flags(&prk, priv_key, BN_FLG_CONSTTIME);
-
-		if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, &prk, dh->p, ctx,
-		    mont)) {
-			goto err;
-		}
-	}
+	if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, priv_key, dh->p, ctx,
+	    mont))
+		goto err;
 
 	dh->pub_key = pub_key;
 	dh->priv_key = priv_key;

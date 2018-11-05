@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.23 2017/01/21 09:38:59 beck Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.24 2018/11/05 23:46:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,14 +104,8 @@ dsa_builtin_keygen(DSA *dsa)
 	} else
 		pub_key=dsa->pub_key;
 	
-	{
-		BIGNUM prk;
-
-		BN_with_flags(&prk, priv_key, BN_FLG_CONSTTIME);
-
-		if (!BN_mod_exp_ct(pub_key, dsa->g, &prk, dsa->p, ctx))
-			goto err;
-	}
+	if (!BN_mod_exp_ct(pub_key, dsa->g, priv_key, dsa->p, ctx))
+		goto err;
 
 	dsa->priv_key = priv_key;
 	dsa->pub_key = pub_key;
