@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.177 2018/09/06 03:42:21 miko Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.178 2018/11/05 10:06:10 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -226,6 +226,9 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
+	else
+		m->m_data += (m->m_ext.ext_size - m->m_len) &
+		    ~(sizeof(long) - 1);
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
@@ -254,8 +257,7 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
 	 */
-	if ((m->m_flags & M_EXT) == 0 &&
-	    m->m_data - sizeof(struct ip) < m->m_pktdat)
+	if (m_leadingspace(m) < sizeof(struct ip))
 		panic("icmp len");
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
