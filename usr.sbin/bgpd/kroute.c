@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.224 2018/09/29 19:25:32 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.225 2018/11/05 07:01:15 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -381,7 +381,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
 		}
 	}
 
-	if (flags & (F_RIB_NOEVALUATE | F_RIB_NOFIB))
+	if (flags & F_RIB_HASNOFIB)
 		/* only rdomain table must exist */
 		return (0);
 
