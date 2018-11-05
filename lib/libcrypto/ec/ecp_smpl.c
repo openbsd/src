@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.23 2018/11/05 20:18:21 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.24 2018/11/05 23:54:27 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1434,10 +1434,8 @@ ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 		goto err;
 
 	/* Generate lambda in [1, group->field - 1] */
-	do {
-		if (!BN_rand_range(lambda, &group->field))
-			goto err;
-	} while (BN_is_zero(lambda));
+	if (!bn_rand_interval(lambda, BN_value_one(), &group->field))
+		goto err;
 
 	if (group->meth->field_encode != NULL &&
 	    !group->meth->field_encode(group, lambda, lambda, ctx))
