@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.39 2018/08/05 09:33:13 mestre Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.40 2018/11/05 11:59:05 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 
 	proc_connect(ps);
 
-	if (pledge("stdio rpath dns sendfd proc exec id", NULL) == -1)
+	if (pledge("stdio dns sendfd proc exec id", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();

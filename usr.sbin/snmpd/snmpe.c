@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.54 2018/07/31 11:01:29 claudio Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.55 2018/11/05 11:59:05 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -120,6 +120,10 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		event_add(&so->s_ev, NULL);
 	}
 
+	if (unveil("/", "") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
 #if 0
 	/*
 	 * XXX Refactoring required to move illegal ioctls and sysctls.
