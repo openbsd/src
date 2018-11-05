@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.178 2018/11/05 10:06:10 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.179 2018/11/05 20:52:22 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -206,9 +206,9 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	 * according to RFC1812;
 	 */
 
-	KASSERT(ICMP_MINLEN <= MCLBYTES);
+	KASSERT(ICMP_MINLEN + sizeof (struct ip) <= MCLBYTES);
 
-	if (icmplen + ICMP_MINLEN > MCLBYTES)
+	if (sizeof (struct ip) + icmplen + ICMP_MINLEN > MCLBYTES)
 		icmplen = MCLBYTES - ICMP_MINLEN - sizeof (struct ip);
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
