@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.17 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.18 2018/11/05 23:50:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -207,12 +207,12 @@ EC_KEY_up_ref(EC_KEY * r)
 }
 
 int 
-EC_KEY_generate_key(EC_KEY * eckey)
+EC_KEY_generate_key(EC_KEY *eckey)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
-	BIGNUM *priv_key = NULL, *order = NULL;
-	EC_POINT *pub_key = NULL;
+	BIGNUM *priv_key = eckey->priv_key, *order = NULL;
+	EC_POINT *pub_key = eckey->pub_key;
 
 	if (!eckey || !eckey->group) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
@@ -223,12 +223,10 @@ EC_KEY_generate_key(EC_KEY * eckey)
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if (eckey->priv_key == NULL) {
-		priv_key = BN_new();
-		if (priv_key == NULL)
+	if (priv_key == NULL) {
+		if ((priv_key = BN_new()) == NULL)
 			goto err;
-	} else
-		priv_key = eckey->priv_key;
+	}
 
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
@@ -238,12 +236,10 @@ EC_KEY_generate_key(EC_KEY * eckey)
 			goto err;
 	while (BN_is_zero(priv_key));
 
-	if (eckey->pub_key == NULL) {
-		pub_key = EC_POINT_new(eckey->group);
-		if (pub_key == NULL)
+	if (pub_key == NULL) {
+		if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
 			goto err;
-	} else
-		pub_key = eckey->pub_key;
+	}
 
 	if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
 		goto err;
@@ -255,9 +251,9 @@ EC_KEY_generate_key(EC_KEY * eckey)
 
  err:
 	BN_free(order);
-	if (pub_key != NULL && eckey->pub_key == NULL)
+	if (eckey->pub_key == NULL)
 		EC_POINT_free(pub_key);
-	if (priv_key != NULL && eckey->priv_key == NULL)
+	if (eckey->priv_key == NULL)
 		BN_free(priv_key);
 	BN_CTX_free(ctx);
 	return (ok);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.30 2018/11/05 23:46:16 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.31 2018/11/05 23:50:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ generate_key(DH *dh)
 	unsigned l;
 	BN_CTX *ctx;
 	BN_MONT_CTX *mont = NULL;
-	BIGNUM *pub_key = NULL, *priv_key = NULL;
+	BIGNUM *pub_key = dh->pub_key, *priv_key = dh->priv_key;
 
 	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
 		DHerror(DH_R_MODULUS_TOO_LARGE);
@@ -117,20 +117,16 @@ generate_key(DH *dh)
 	if (ctx == NULL)
 		goto err;
 
-	if (dh->priv_key == NULL) {
-		priv_key = BN_new();
-		if (priv_key == NULL)
+	if (priv_key == NULL) {
+		if ((priv_key = BN_new()) == NULL)
 			goto err;
 		generate_new_key = 1;
-	} else
-		priv_key = dh->priv_key;
+	}
 
-	if (dh->pub_key == NULL) {
-		pub_key = BN_new();
-		if (pub_key == NULL)
+	if (pub_key == NULL) {
+		if ((pub_key = BN_new()) == NULL)
 			goto err;
-	} else
-		pub_key = dh->pub_key;
+	}
 
 	if (dh->flags & DH_FLAG_CACHE_MONT_P) {
 		mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
@@ -160,13 +156,13 @@ generate_key(DH *dh)
 	dh->pub_key = pub_key;
 	dh->priv_key = priv_key;
 	ok = 1;
-err:
+ err:
 	if (ok != 1)
 		DHerror(ERR_R_BN_LIB);
 
-	if (pub_key != NULL && dh->pub_key == NULL)
+	if (dh->pub_key == NULL)
 		BN_free(pub_key);
-	if (priv_key != NULL && dh->priv_key == NULL)
+	if (dh->priv_key == NULL)
 		BN_free(priv_key);
 	BN_CTX_free(ctx);
 	return ok;
@@ -220,7 +216,7 @@ compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	}
 
 	ret = BN_bn2bin(tmp, key);
-err:
+ err:
 	if (ctx != NULL) {
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
