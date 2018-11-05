@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.35 2018/02/14 17:26:56 otto Exp $
+# $OpenBSD: mksubr,v 1.36 2018/11/05 17:05:50 anton Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -365,6 +365,7 @@ auto_orz_type "pollfdeventname" "POLL[^_][[:alnum:]_]+[[:space:]]+0x" "sys/poll.
 auto_orz_type "evflagsname" "EV_[^S][A-Z]+[[:space:]]+0x" "sys/event.h"
 auto_orz_type "syslogflagname" "LOG_[A-Z]+[[:space:]]+0x0*[1248]0*[[:space:]]" "sys/syslog.h"
 auto_orz_type "futexflagname" "FUTEX_[A-Z_]+[[:space:]]+[0-9]+" "sys/futex.h"
+auto_switch_type "flocktypename" "F_[A-Z]+LCK" "sys/fcntl.h"
 
 cat <<_EOF_
 /*

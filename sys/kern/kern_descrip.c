@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.182 2018/08/24 12:45:27 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.183 2018/11/05 17:05:50 anton Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -527,6 +527,10 @@ restart:
 		    sizeof (fl));
 		if (error)
 			break;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrflock(p, &fl);
+#endif
 		if (fl.l_whence == SEEK_CUR) {
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
@@ -615,6 +619,10 @@ restart:
 		error = VOP_ADVLOCK(vp, fdp, F_GETLK, &fl, F_POSIX);
 		if (error)
 			break;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrflock(p, &fl);
+#endif
 		error = (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
 		    sizeof (fl)));
 		break;

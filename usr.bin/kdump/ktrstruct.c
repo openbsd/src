@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.25 2018/07/13 09:25:23 beck Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.26 2018/11/05 17:05:50 anton Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <sys/event.h>
 #include <sys/un.h>
+#include <sys/fcntl.h>
 #include <ufs/ufs/quota.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -517,6 +518,17 @@ ktrcmsghdr(char *data, socklen_t len)
 	printf("\n");
 }
 
+static void
+ktrflock(const struct flock *fl)
+{
+	printf("struct flock { start=%lld, len=%lld, pid=%d, type=",
+	    fl->l_start, fl->l_len, fl->l_pid);
+	flocktypename(fl->l_type);
+	printf(", whence=");
+	whencename(fl->l_whence);
+	printf(" }\n");
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -658,6 +670,13 @@ ktrstruct(char *buf, size_t buflen)
 		printf("flags=");
 		showbufc(basecol + sizeof("flags=") - 1,
 		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
+	} else if (strcmp(name, "flock") == 0) {
+		struct flock fl;
+
+		if (datalen != sizeof(fl))
+			goto invalid;
+		memcpy(&fl, data, datalen);
+		ktrflock(&fl);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

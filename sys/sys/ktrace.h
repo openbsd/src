@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.36 2017/11/28 16:05:13 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.37 2018/11/05 17:05:50 anton Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -248,5 +248,7 @@ void    ktrstruct(struct proc *, const char *, const void *, size_t);
 	ktrstruct(p, "pollfd", pfd, (count) * sizeof(struct pollfd))
 #define ktrfds(p, fds, count) \
 	ktrstruct(p, "fds", fds, (count) * sizeof(int))
+#define ktrflock(p, fl) \
+	ktrstruct(p, "flock", (fl), sizeof(struct flock))
 
 #endif	/* !_KERNEL */
