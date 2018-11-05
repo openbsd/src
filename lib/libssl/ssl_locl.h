@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.218 2018/11/05 06:55:37 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.219 2018/11/05 20:41:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1257,14 +1257,19 @@ int ssl_ok(SSL *s);
 int ssl_using_ecc_cipher(SSL *s);
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
+void tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
+    size_t *pformatslen);
+void tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
+    size_t *pgroupslen);
+
 int tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const int *groups, size_t ngroups);
-int tls1_set_groups_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
+int tls1_set_group_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const char *groups);
 
 int tls1_ec_curve_id2nid(const uint16_t curve_id);
 uint16_t tls1_ec_nid2curve_id(const int nid);
-int tls1_check_curve(SSL *s, const uint16_t curve_id);
+int tls1_check_curve(SSL *s, const uint16_t group_id);
 int tls1_get_shared_curve(SSL *s);
 
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
@@ -1313,11 +1318,6 @@ int SSL_state_func_code(int _state);
 #define SSLerror(s, r) SSL_error_internal(s, r, __FILE__, __LINE__)
 #define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
 void SSL_error_internal(const SSL *s, int r, char *f, int l);
-
-void tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
-    size_t *pformatslen);
-void tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
-    size_t *pcurveslen);
 
 #ifndef OPENSSL_NO_SRTP
 

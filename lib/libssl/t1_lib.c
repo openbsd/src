@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.146 2018/11/05 06:55:37 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.147 2018/11/05 20:41:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -361,25 +361,25 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
 }
 
 /*
- * Return the appropriate curve list. If client_curves is non-zero, return
- * the client/session curves. Otherwise return the custom curve list if one
- * exists, or the default curves if a custom list has not been specified.
+ * Return the appropriate group list. If client_groups is non-zero, return
+ * the client/session groups. Otherwise return the custom group list if one
+ * exists, or the default groups if a custom list has not been specified.
  */
 void
-tls1_get_curvelist(SSL *s, int client_curves, const uint16_t **pcurves,
-    size_t *pcurveslen)
+tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
+    size_t *pgroupslen)
 {
-	if (client_curves != 0) {
-		*pcurves = SSI(s)->tlsext_supportedgroups;
-		*pcurveslen = SSI(s)->tlsext_supportedgroups_length;
+	if (client_groups != 0) {
+		*pgroups = SSI(s)->tlsext_supportedgroups;
+		*pgroupslen = SSI(s)->tlsext_supportedgroups_length;
 		return;
 	}
 
-	*pcurves = s->internal->tlsext_supportedgroups;
-	*pcurveslen = s->internal->tlsext_supportedgroups_length;
-	if (*pcurves == NULL) {
-		*pcurves = eccurves_default;
-		*pcurveslen = sizeof(eccurves_default) / 2;
+	*pgroups = s->internal->tlsext_supportedgroups;
+	*pgroupslen = s->internal->tlsext_supportedgroups_length;
+	if (*pgroups == NULL) {
+		*pgroups = eccurves_default;
+		*pgroupslen = sizeof(eccurves_default) / 2;
 	}
 }
 
@@ -410,7 +410,7 @@ tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
 }
 
 int
-tls1_set_groups_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
+tls1_set_group_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const char *groups)
 {
 	uint16_t *new_group_ids, *group_ids = NULL;
@@ -461,13 +461,13 @@ tls1_set_groups_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
 int
 tls1_check_curve(SSL *s, const uint16_t curve_id)
 {
-	const uint16_t *curves;
-	size_t curveslen, i;
+	const uint16_t *groups;
+	size_t groupslen, i;
 
-	tls1_get_curvelist(s, 0, &curves, &curveslen);
+	tls1_get_group_list(s, 0, &groups, &groupslen);
 
-	for (i = 0; i < curveslen; i++) {
-		if (curves[i] == curve_id)
+	for (i = 0; i < groupslen; i++) {
+		if (groups[i] == curve_id)
 			return (1);
 	}
 	return (0);
@@ -486,8 +486,8 @@ tls1_get_shared_curve(SSL *s)
 
 	/* Return first preference shared curve. */
 	server_pref = (s->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
-	tls1_get_curvelist(s, (server_pref == 0), &pref, &preflen);
-	tls1_get_curvelist(s, (server_pref != 0), &supp, &supplen);
+	tls1_get_group_list(s, (server_pref == 0), &pref, &preflen);
+	tls1_get_group_list(s, (server_pref != 0), &supp, &supplen);
 
 	for (i = 0; i < preflen; i++) {
 		for (j = 0; j < supplen; j++) {
@@ -548,8 +548,8 @@ tls1_set_ec_id(uint16_t *curve_id, uint8_t *comp_id, EC_KEY *ec)
 static int
 tls1_check_ec_key(SSL *s, const uint16_t *curve_id, const uint8_t *comp_id)
 {
-	size_t curveslen, formatslen, i;
-	const uint16_t *curves;
+	size_t groupslen, formatslen, i;
+	const uint16_t *groups;
 	const uint8_t *formats;
 
 	/*
@@ -569,13 +569,13 @@ tls1_check_ec_key(SSL *s, const uint16_t *curve_id, const uint8_t *comp_id)
 	/*
 	 * Check curve list if present, otherwise everything is supported.
 	 */
-	tls1_get_curvelist(s, 1, &curves, &curveslen);
-	if (curve_id != NULL && curves != NULL) {
-		for (i = 0; i < curveslen; i++) {
-			if (curves[i] == *curve_id)
+	tls1_get_group_list(s, 1, &groups, &groupslen);
+	if (curve_id != NULL && groups != NULL) {
+		for (i = 0; i < groupslen; i++) {
+			if (groups[i] == *curve_id)
 				break;
 		}
-		if (i == curveslen)
+		if (i == groupslen)
 			return (0);
 	}
 

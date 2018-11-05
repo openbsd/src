@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.23 2018/11/05 20:29:52 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.24 2018/11/05 20:41:30 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -163,34 +163,33 @@ tlsext_alpn_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 }
 
 /*
- * Supported Elliptic Curves - RFC 4492 section 5.1.1
+ * Supported Groups - RFC 7919 section 2
  */
 int
-tlsext_ec_clienthello_needs(SSL *s)
+tlsext_supportedgroups_clienthello_needs(SSL *s)
 {
 	return ssl_has_ecc_ciphers(s);
 }
 
 int
-tlsext_ec_clienthello_build(SSL *s, CBB *cbb)
+tlsext_supportedgroups_clienthello_build(SSL *s, CBB *cbb)
 {
-	CBB curvelist;
-	size_t curves_len;
+	const uint16_t *groups;
+	size_t groups_len;
+	CBB grouplist;
 	int i;
-	const uint16_t *curves;
 
-	tls1_get_curvelist(s, 0, &curves, &curves_len);
-
-	if (curves_len == 0) {
+	tls1_get_group_list(s, 0, &groups, &groups_len);
+	if (groups_len == 0) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return 0;
 	}
 
-	if (!CBB_add_u16_length_prefixed(cbb, &curvelist))
+	if (!CBB_add_u16_length_prefixed(cbb, &grouplist))
 		return 0;
 
-	for (i = 0; i < curves_len; i++) {
-		if (!CBB_add_u16(&curvelist, curves[i]))
+	for (i = 0; i < groups_len; i++) {
+		if (!CBB_add_u16(&grouplist, groups[i]))
 			return 0;
 	}
 
@@ -201,48 +200,48 @@ tlsext_ec_clienthello_build(SSL *s, CBB *cbb)
 }
 
 int
-tlsext_ec_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+tlsext_supportedgroups_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 {
-	CBS curvelist;
-	size_t curves_len;
+	CBS grouplist;
+	size_t groups_len;
 
-	if (!CBS_get_u16_length_prefixed(cbs, &curvelist))
+	if (!CBS_get_u16_length_prefixed(cbs, &grouplist))
 		goto err;
 	if (CBS_len(cbs) != 0)
 		goto err;
 
-	curves_len = CBS_len(&curvelist);
-	if (curves_len == 0 || curves_len % 2 != 0)
+	groups_len = CBS_len(&grouplist);
+	if (groups_len == 0 || groups_len % 2 != 0)
 		goto err;
-	curves_len /= 2;
+	groups_len /= 2;
 
 	if (!s->internal->hit) {
+		uint16_t *groups;
 		int i;
-		uint16_t *curves;
 
 		if (SSI(s)->tlsext_supportedgroups != NULL)
 			goto err;
 
-		if ((curves = reallocarray(NULL, curves_len,
+		if ((groups = reallocarray(NULL, groups_len,
 		    sizeof(uint16_t))) == NULL) {
 			*alert = TLS1_AD_INTERNAL_ERROR;
 			return 0;
 		}
 
-		for (i = 0; i < curves_len; i++) {
-			if (!CBS_get_u16(&curvelist, &curves[i])) {
-				free(curves);
+		for (i = 0; i < groups_len; i++) {
+			if (!CBS_get_u16(&grouplist, &groups[i])) {
+				free(groups);
 				goto err;
 			}
 		}
 
-		if (CBS_len(&curvelist) != 0) {
-			free(curves);
+		if (CBS_len(&grouplist) != 0) {
+			free(groups);
 			goto err;
 		}
 
-		SSI(s)->tlsext_supportedgroups = curves;
-		SSI(s)->tlsext_supportedgroups_length = curves_len;
+		SSI(s)->tlsext_supportedgroups = groups;
+		SSI(s)->tlsext_supportedgroups_length = groups_len;
 	}
 
 	return 1;
@@ -254,19 +253,19 @@ tlsext_ec_clienthello_parse(SSL *s, CBS *cbs, int *alert)
 
 /* This extension is never used by the server. */
 int
-tlsext_ec_serverhello_needs(SSL *s)
+tlsext_supportedgroups_serverhello_needs(SSL *s)
 {
 	return 0;
 }
 
 int
-tlsext_ec_serverhello_build(SSL *s, CBB *cbb)
+tlsext_supportedgroups_serverhello_build(SSL *s, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tlsext_ec_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+tlsext_supportedgroups_serverhello_parse(SSL *s, CBS *cbs, int *alert)
 {
 	/*
 	 * Servers should not send this extension per the RFC.
@@ -1262,16 +1261,16 @@ static struct tls_extension tls_extensions[] = {
 		},
 	},
 	{
-		.type = TLSEXT_TYPE_elliptic_curves,
+		.type = TLSEXT_TYPE_supported_groups,
 		.clienthello = {
-			.needs = tlsext_ec_clienthello_needs,
-			.build = tlsext_ec_clienthello_build,
-			.parse = tlsext_ec_clienthello_parse,
+			.needs = tlsext_supportedgroups_clienthello_needs,
+			.build = tlsext_supportedgroups_clienthello_build,
+			.parse = tlsext_supportedgroups_clienthello_parse,
 		},
 		.serverhello = {
-			.needs = tlsext_ec_serverhello_needs,
-			.build = tlsext_ec_serverhello_build,
-			.parse = tlsext_ec_serverhello_parse,
+			.needs = tlsext_supportedgroups_serverhello_needs,
+			.build = tlsext_supportedgroups_serverhello_build,
+			.parse = tlsext_supportedgroups_serverhello_parse,
 		},
 	},
 	{

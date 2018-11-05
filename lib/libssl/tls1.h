@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.32 2018/02/17 15:08:21 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.33 2018/11/05 20:41:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,8 +230,13 @@ extern "C" {
 /* ExtensionType values from RFC 6091. */
 #define TLSEXT_TYPE_cert_type		9
 
+/* ExtensionType values from RFC 7919. */
+#define TLSEXT_TYPE_supported_groups		10
+
 /* ExtensionType values from RFC 4492. */
-#define TLSEXT_TYPE_elliptic_curves		10
+#ifndef LIBRESSL_INTERNAL
+#define TLSEXT_TYPE_elliptic_curves		TLSEXT_TYPE_supported_groups
+#endif
 #define TLSEXT_TYPE_ec_point_formats		11
 
 /* ExtensionType value from RFC 5054. */

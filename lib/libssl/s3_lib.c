@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.172 2018/11/05 06:55:37 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.173 2018/11/05 20:41:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1820,7 +1820,7 @@ SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
 int
 SSL_set1_groups_list(SSL *s, const char *groups)
 {
-	return tls1_set_groups_list(&s->internal->tlsext_supportedgroups,
+	return tls1_set_group_list(&s->internal->tlsext_supportedgroups,
 	    &s->internal->tlsext_supportedgroups_length, groups);
 }
 
@@ -2107,7 +2107,7 @@ SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len)
 int
 SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups)
 {
-	return tls1_set_groups_list(&ctx->internal->tlsext_supportedgroups,
+	return tls1_set_group_list(&ctx->internal->tlsext_supportedgroups,
 	    &ctx->internal->tlsext_supportedgroups_length, groups);
 }
 
