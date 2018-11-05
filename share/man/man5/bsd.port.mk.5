@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.499 2018/10/25 09:56:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.500 2018/11/05 15:59:47 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 25 2018 $
+.Dd $Mdocdate: November 5 2018 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -115,6 +115,7 @@ Specialization hooks exist for
 .Cm distpatch ,
 .Cm extract ,
 .Cm fake ,
+.Cm gen ,
 .Cm install ,
 .Cm patch ,
 .Cm test .
@@ -376,6 +377,20 @@ ownership of their contents is modified to conform to
 and
 .Xr dpb 1
 requirements.
+.It Cm gen
+Generate configure script when needed, either after patching
+input files, or from scratch for some ports,
+generally using automake, autoconf, autogen and similar gnu tools.
+This target only has modules
+.Po Ev MODxxx_gen Pc
+and a
+.Ar do-gen
+hooks.
+Then adjust timestamps to avoid regeneration during build
+.Po
+see
+.Ev REORDER_DEPENDENCIES
+.Pc .
 .It Cm generate-readmes
 Generate READMEs and rc scripts from
 .Pa ${PKGDIR}
@@ -526,11 +541,6 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
-See also
-.Ev REORDER_DEPENDENCIES
-for possible
-.Cm post-patch
-clean-up.
 .It Cm peek-ftp
 Connect to the first site in
 .Ev MASTER_SITES ,
@@ -678,6 +688,10 @@ and
 so that the packing-list is complete.
 .It Cm rebuild
 Force rebuild of the port.
+.It Cm regen
+Force rebuilding configure scripts using
+.Ar gen
+steps.
 .It Cm reinstall
 Force reinstallation of a port, by first cleaning the old installation.
 Seldom needed, as

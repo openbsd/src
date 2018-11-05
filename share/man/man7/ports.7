@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.121 2018/10/17 05:45:14 jmc Exp $
+.\" $OpenBSD: ports.7,v 1.122 2018/11/05 15:59:47 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: October 17 2018 $
+.Dd $Mdocdate: November 5 2018 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -274,6 +274,9 @@ will skip this step.
 Expand the distfile into a work directory.
 .It Cm patch
 Apply any patches that are necessary for the port.
+.It Cm gen
+Recreate configure machinery if needed, mainly used by GNU based software
+that wants autogen/autoconf/automake.
 .It Cm configure
 Configure the port.
 Some ports will ask questions during this stage.
@@ -299,7 +302,13 @@ install the port with
 Install the resulting package.
 .El
 .Pp
-The following targets are not run during the normal install process.
+The following targets are not run during the normal install process
+.Po
+exception
+.Cm clean
+is run for dependencies with the default settings of
+.Ev BULK Ns = Ns Dv Auto
+.Pc .
 .Bl -tag -width fetch-list
 .It Cm print-build-depends , print-run-depends
 Print an ordered list of all the compile and run dependencies.

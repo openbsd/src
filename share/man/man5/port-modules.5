@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.233 2018/09/03 22:12:37 bcallah Exp $
+.\"	$OpenBSD: port-modules.5,v 1.234 2018/11/05 15:59:47 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2018 $
+.Dd $Mdocdate: November 5 2018 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -170,7 +170,14 @@ There is a
 hook that can be activated by defining
 .Ev MODFOO_post-patch .
 It will be run right after
-.Cm post-patch
+.Cm post-patch .
+.It Cm gen
+There is a
+.Cm gen
+hook that can be activated by defining
+.Ev MODFOO_gen .
+It will be run right after
+.Cm do-gen
 and before
 .Ev REORDER_DEPENDENCIES
 touches things.
