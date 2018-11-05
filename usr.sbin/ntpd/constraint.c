@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.35 2016/12/05 10:41:33 rzalamena Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.36 2018/11/05 00:13:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -869,14 +869,8 @@ httpsdate_init(const char *addr, const char *port, const char *hostname,
 
 	if ((httpsdate->tls_config = tls_config_new()) == NULL)
 		goto fail;
-
-	if (tls_config_set_ciphers(httpsdate->tls_config, "all") != 0)
+	if (tls_config_set_ca_mem(httpsdate->tls_config, ca, ca_len) == -1)
 		goto fail;
-
-	if (ca == NULL || ca_len == 0)
-		tls_config_insecure_noverifycert(httpsdate->tls_config);
-	else
-		tls_config_set_ca_mem(httpsdate->tls_config, ca, ca_len);
 
 	return (httpsdate);
 
