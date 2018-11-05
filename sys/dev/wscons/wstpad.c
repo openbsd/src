@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.17 2018/05/07 21:58:42 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.18 2018/11/05 23:38:04 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -60,6 +60,7 @@
 
 #define CLICKDELAY_MS		20
 #define FREEZE_MS		100
+#define MATCHINTERVAL_MS	55
 
 enum tpad_handlers {
 	SOFTBUTTON_HDLR,
@@ -121,6 +122,7 @@ struct tpad_touch {
 	int y;
 	int dir;
 	int matches;
+	struct timespec stop;
 	struct {
 		int x;
 		int y;
@@ -296,20 +298,37 @@ dircmp(int dir1, int dir2)
 }
 
 void
-wstpad_set_direction(struct tpad_touch *t, int dx, int dy, int ratio)
+wstpad_set_direction(struct wstpad *tp, struct tpad_touch *t, int dx, int dy)
 {
 	int dir;
+	static const struct timespec interval =
+	    { .tv_sec = 0, .tv_nsec = MATCHINTERVAL_MS * 1000000 };
 
 	if (t->state != TOUCH_UPDATE) {
 		t->dir = -1;
 		t->matches = 0;
 	} else {
-		dir = direction(dx, dy, ratio);
-		if (t->dir >= 0 && dir >= 0 && dircmp(t->dir, dir) <= 1)
-			t->matches++;
-		else
-			t->matches = 1;
-		t->dir = dir;
+		dir = direction(dx, dy, tp->ratio);
+		if (dir >= 0) {
+			if (t->dir >= 0 && dircmp(t->dir, dir) <= 1)
+				t->matches++;
+			else
+				t->matches = 1;
+			t->dir = dir;
+
+			timespecadd(&tp->time, &interval, &t->stop);
+
+		} else if (t->dir >= 0) {
+			/*
+			 * Some touchpads report intermediate zero deltas
+			 * when a touch is moving very slowly.  Keep the
+			 * the state long enough to avoid errors.
+			 */
+			if (timespeccmp(&tp->time, &t->stop, >=)) {
+				t->dir = -1;
+				t->matches = 0;
+			}
+		}
 	}
 }
 
@@ -358,7 +377,7 @@ set_freeze_ts(struct wstpad *tp, int sec, int ms)
 }
 
 
-/* Return TRUE if f2-/edge-scrolling would be valid. */
+/* Return TRUE if two-finger- or edge-scrolling would be valid. */
 static inline int
 chk_scroll_state(struct wstpad *tp)
 {
@@ -367,6 +386,14 @@ chk_scroll_state(struct wstpad *tp)
 		tp->scroll.dw = 0;
 		return (0);
 	}
+	/*
+	 * Try to exclude accidental scroll events by checking the matches.
+	 * The check, which causes a short delay, is only applied initially,
+	 * a touch that stops and resumes scrolling is not affected.
+	 */
+	if (tp->t->matches < STABLE && !(tp->scroll.dz || tp->scroll.dw))
+		return (0);
+
 	return (tp->dx || tp->dy);
 }
 
@@ -381,7 +408,7 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 	if (sign) {
 		if (tp->scroll.dz != -sign) {
 			tp->scroll.dz = -sign;
-			tp->scroll.acc_dy = -tp->scroll.vdist * 2;
+			tp->scroll.acc_dy = -tp->scroll.vdist;
 		}
 		tp->scroll.acc_dy += abs(dy);
 		if (tp->scroll.acc_dy >= 0) {
@@ -391,7 +418,7 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
 	} else if ((sign = (dx > 0) - (dx < 0))) {
 		if (tp->scroll.dw != sign) {
 			tp->scroll.dw = sign;
-			tp->scroll.acc_dx = -tp->scroll.hdist * 2;
+			tp->scroll.acc_dx = -tp->scroll.hdist;
 		}
 		tp->scroll.acc_dx += abs(dx);
 		if (tp->scroll.acc_dx >= 0) {
@@ -433,7 +460,8 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 				return;
 			if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
 				return;
-			if (t2->matches < imin(STABLE, tp->t->matches / 4))
+			if (t2->matches < STABLE &&
+			    !(tp->scroll.dz || tp->scroll.dw))
 				return;
 			centered |= CENTERED(t2);
 		}
@@ -900,7 +928,7 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 		t->orig.y = t->y;
 		memcpy(&t->orig.time, &tp->time, sizeof(struct timespec));
 		t->flags = edge_flags(tp, t->x, t->y);
-		wstpad_set_direction(t, 0, 0, tp->ratio);
+		wstpad_set_direction(tp, t, 0, 0);
 	}
 
 	/* TOUCH_UPDATE */
@@ -928,9 +956,9 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 			dy = normalize_abs(&input->filter.v, mts->pos.y) - t->y;
 			t->y += dy;
 			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
-			wstpad_set_direction(t, dx, dy, tp->ratio);
+			wstpad_set_direction(tp, t, dx, dy);
 		} else if ((1 << slot) & inactive) {
-			wstpad_set_direction(t, 0, 0, tp->ratio);
+			wstpad_set_direction(tp, t, 0, 0);
 		}
 	}
 
@@ -1035,7 +1063,7 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
 		}
 
-		wstpad_set_direction(t, tp->dx, tp->dy, input->filter.ratio);
+		wstpad_set_direction(tp, t, tp->dx, tp->dy);
 	}
 }
 
