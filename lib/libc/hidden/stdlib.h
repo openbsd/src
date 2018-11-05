@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.12 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.13 2018/11/05 08:23:40 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ PROTO_STD_DEPRECATED(_Exit);
 PROTO_DEPRECATED(a64l);
 PROTO_NORMAL(abort);
 PROTO_NORMAL(abs);
+/* PROTO_NORMAL(aligned_alloc)		not yet, breaks emacs */
 PROTO_NORMAL(arc4random);
 PROTO_NORMAL(arc4random_buf);
 PROTO_NORMAL(arc4random_uniform);

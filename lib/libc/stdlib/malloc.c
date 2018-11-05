@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.249 2018/04/07 09:57:08 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.250 2018/11/05 08:23:40 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2057,6 +2057,48 @@ err:
 	return res;
 }
 /*DEF_STRONG(posix_memalign);*/
+
+void *
+aligned_alloc(size_t alignment, size_t size)
+{
+	struct dir_info *d;
+	int saved_errno = errno;
+	void *r;
+
+	/* Make sure that alignment is a positive power of 2. */
+	if (((alignment - 1) & alignment) != 0 || alignment == 0) {
+		errno = EINVAL;
+		return NULL;
+	};
+	/* Per spec, size should be a multiple of alignment */
+	if ((size & (alignment - 1)) != 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	d = getpool();
+	if (d == NULL) {
+		_malloc_init(0);
+		d = getpool();
+	}
+	_MALLOC_LOCK(d->mutex);
+	d->func = "aligned_alloc";
+	if (d->active++) {
+		malloc_recurse(d);
+		return NULL;
+	}
+	r = omemalign(d, alignment, size, 0, CALLER);
+	d->active--;
+	_MALLOC_UNLOCK(d->mutex);
+	if (r == NULL) {
+		if (mopts.malloc_xmalloc)
+			wrterror(d, "out of memory");
+		return NULL;
+	}
+	errno = saved_errno;
+	return r;
+}
+/*DEF_STRONG(aligned_alloc);*/
 
 #ifdef MALLOC_STATS
 

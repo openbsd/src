@@ -1478,6 +1478,7 @@ __isthreaded
 a64l
 abort
 abs
+aligned_alloc
 atexit
 atof
 atoi

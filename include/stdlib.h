@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.72 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.73 2018/11/05 08:23:40 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -219,6 +219,11 @@ long long
 	 strtoll(const char *__restrict, char **__restrict, int);
 unsigned long long
 	 strtoull(const char *__restrict, char **__restrict, int);
+#endif
+
+#if __ISO_C_VISIBLE >= 2011
+void *
+	aligned_alloc(size_t, size_t);
 #endif
 
 /*

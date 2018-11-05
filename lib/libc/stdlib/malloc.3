@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.115 2017/05/15 18:05:34 tb Exp $
+.\"	$OpenBSD: malloc.3,v 1.116 2018/11/05 08:23:40 otto Exp $
 .\"
-.Dd $Mdocdate: May 15 2017 $
+.Dd $Mdocdate: November 5 2018 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@
 .Nm free ,
 .Nm reallocarray ,
 .Nm recallocarray ,
-.Nm freezero
+.Nm freezero ,
+.Nm aligned_alloc
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -60,6 +61,8 @@
 .Fn recallocarray "void *ptr" "size_t oldnmemb" "size_t nmemb" "size_t size"
 .Ft void
 .Fn freezero "void *ptr" "size_t size"
+.Ft void *
+.Fn aligned_alloc "size_t alignment" "size_t size"
 .Vt char *malloc_options ;
 .Sh DESCRIPTION
 The standard functions
@@ -206,7 +209,7 @@ is not
 .Dv NULL ,
 the
 .Fa size
-argument must be equal or smaller than the size of the earlier allocation
+argument must be equal to or smaller than the size of the earlier allocation
 that returned
 .Fa ptr .
 .Fn freezero
@@ -215,6 +218,21 @@ guarantees the memory range starting at
 with length
 .Fa size
 is discarded while deallocating the whole object originally allocated.
+.Pp
+The
+.Fn aligned_alloc
+function allocates
+.Fa size
+bytes of memory such that the allocation's base address is a multiple of
+.Fa alignment .
+The requested
+.Fa alignment
+must be a power of 2.
+If
+.Fa size
+is not a multiple of
+.Fa alignment ,
+behavior is undefined.
 .Sh RETURN VALUES
 Upon successful completion, the allocation functions
 return a pointer to the allocated space; otherwise,
@@ -223,6 +241,17 @@ is returned and
 .Va errno
 is set to
 .Er ENOMEM .
+The function
+.Fn aligned_alloc
+returns
+.Dv NULL
+and sets
+.Va errno
+to
+.Er EINVAL
+if
+.Fa alignment
+is not a power of 2.
 .Pp
 If
 .Fa nmemb
@@ -514,6 +543,10 @@ and
 .Fn free
 functions conform to
 .St -ansiC .
+The
+.Fn aligned_alloc
+function conforms to
+.St -isoC-2011 .
 .Pp
 If
 .Fa nmemb
@@ -588,6 +621,10 @@ The
 .Fn freezero
 function appeared in
 .Ox 6.2 .
+The
+.Fn aligned_alloc
+function appeared in
+.Ox 6.5 .
 .Sh CAVEATS
 When using
 .Fn malloc ,
