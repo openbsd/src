@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.22 2018/07/16 17:32:39 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.23 2018/11/05 20:18:21 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -107,7 +107,8 @@ EC_GFp_simple_method(void)
 		.mul_single_ct = ec_GFp_simple_mul_single_ct,
 		.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
 		.field_mul = ec_GFp_simple_field_mul,
-		.field_sqr = ec_GFp_simple_field_sqr
+		.field_sqr = ec_GFp_simple_field_sqr,
+		.blind_coordinates = ec_GFp_simple_blind_coordinates,
 	};
 
 	return &ret;
@@ -1406,12 +1407,69 @@ ec_GFp_simple_field_mul(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a, co
 	return BN_mod_mul(r, a, b, &group->field, ctx);
 }
 
-
 int 
 ec_GFp_simple_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a, BN_CTX * ctx)
 {
 	return BN_mod_sqr(r, a, &group->field, ctx);
 }
+
+/*
+ * Apply randomization of EC point projective coordinates:
+ *
+ * 	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
+ * 
+ * where lambda is in the interval [1, group->field).
+ */
+int
+ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
+{
+	BIGNUM *lambda = NULL;
+	BIGNUM *tmp = NULL;
+	int ret = 0;
+
+	BN_CTX_start(ctx);
+	if ((lambda = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* Generate lambda in [1, group->field - 1] */
+	do {
+		if (!BN_rand_range(lambda, &group->field))
+			goto err;
+	} while (BN_is_zero(lambda));
+
+	if (group->meth->field_encode != NULL &&
+	    !group->meth->field_encode(group, lambda, lambda, ctx))
+		goto err;
+
+	/* Z = lambda * Z */
+	if (!group->meth->field_mul(group, &p->Z, lambda, &p->Z, ctx))
+		goto err;
+
+	/* tmp = lambda^2 */
+	if (!group->meth->field_sqr(group, tmp, lambda, ctx))
+		goto err;
+
+	/* X = lambda^2 * X */
+	if (!group->meth->field_mul(group, &p->X, tmp, &p->X, ctx))
+		goto err;
+
+	/* tmp = lambda^3 */
+	if (!group->meth->field_mul(group, tmp, tmp, lambda, ctx))
+		goto err;
+
+	/* Y = lambda^3 * Y */
+	if (!group->meth->field_mul(group, &p->Y, tmp, &p->Y, ctx))
+		goto err;
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	return ret;
+}
+
 
 #define EC_POINT_BN_set_flags(P, flags) do {				\
 	BN_set_flags(&(P)->X, (flags));         			\
@@ -1535,6 +1593,13 @@ ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	    (bn_wexpand(&r->X, group_top) == NULL) ||
 	    (bn_wexpand(&r->Y, group_top) == NULL) ||
 	    (bn_wexpand(&r->Z, group_top) == NULL))
+		goto err;
+
+	/*
+	 * Apply coordinate blinding for EC_POINT if the underlying EC_METHOD
+	 * implements it.
+	 */
+	if (!ec_point_blind_coordinates(group, s, ctx))
 		goto err;
 
 	/* top bit is a 1, in a fixed pos */

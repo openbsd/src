@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp224.c,v 1.22 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ecp_nistp224.c,v 1.23 2018/11/05 20:18:21 tb Exp $ */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */
@@ -270,7 +270,8 @@ EC_GFp_nistp224_method(void)
 		.precompute_mult = ec_GFp_nistp224_precompute_mult,
 		.have_precompute_mult = ec_GFp_nistp224_have_precompute_mult,
 		.field_mul = ec_GFp_nist_field_mul,
-		.field_sqr = ec_GFp_nist_field_sqr
+		.field_sqr = ec_GFp_nist_field_sqr,
+		.blind_coordinates = NULL,
 	};
 
 	return &ret;

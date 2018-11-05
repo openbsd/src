@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.6 2018/07/15 16:27:39 tb Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.7 2018/11/05 20:18:21 tb Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1182,7 +1182,8 @@ EC_GFp_nistz256_method(void)
 		.field_sqr = ec_GFp_mont_field_sqr,
 		.field_encode = ec_GFp_mont_field_encode,
 		.field_decode = ec_GFp_mont_field_decode,
-		.field_set_to_one = ec_GFp_mont_field_set_to_one
+		.field_set_to_one = ec_GFp_mont_field_set_to_one,
+		.blind_coordinates = NULL,
 	};
 
 	return &ret;

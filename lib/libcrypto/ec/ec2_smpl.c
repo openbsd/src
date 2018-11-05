@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.20 2018/07/16 17:32:39 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.21 2018/11/05 20:18:21 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -115,6 +115,7 @@ EC_GF2m_simple_method(void)
 		.field_mul = ec_GF2m_simple_field_mul,
 		.field_sqr = ec_GF2m_simple_field_sqr,
 		.field_div = ec_GF2m_simple_field_div,
+		.blind_coordinates = NULL,
 	};
 
 	return &ret;
