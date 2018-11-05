@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.217 2018/11/05 03:49:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.218 2018/11/05 06:55:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1287,7 +1287,6 @@ void tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs,
     size_t *sigalgs_len);
 
 int tls1_check_ec_server_key(SSL *s);
-int tls1_check_ec_tmp_key(SSL *s);
 
 int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p,
     int *len, int maxlen);

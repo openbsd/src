@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.171 2018/10/24 18:04:50 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.172 2018/11/05 06:55:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2286,11 +2286,14 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	unsigned long alg_k, alg_a, mask_k, mask_a;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	SSL_CIPHER *c, *ret = NULL;
+	int can_use_ecc;
 	int i, ii, ok;
 	CERT *cert;
 
 	/* Let's see which ciphers we can support */
 	cert = s->cert;
+
+	can_use_ecc = (tls1_get_shared_curve(s) != NID_undef);
 
 	/*
 	 * Do not set the compare functions, because this may lead to a
@@ -2336,7 +2339,7 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		 * an ephemeral EC key check it.
 		 */
 		if (alg_k & SSL_kECDHE)
-			ok = ok && tls1_check_ec_tmp_key(s);
+			ok = ok && can_use_ecc;
 
 		if (!ok)
 			continue;
