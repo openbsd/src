@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.30 2018/11/05 20:18:21 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.31 2018/11/06 07:02:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -547,7 +547,7 @@ ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 {
 	if (group->meth->blind_coordinates == NULL)
 		return 1;
-	
+
 	return group->meth->blind_coordinates(group, p, ctx);
 }
 

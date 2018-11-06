@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.33 2018/11/06 02:14:39 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.34 2018/11/06 07:02:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ generate_key(DH *dh)
 	unsigned l;
 	BN_CTX *ctx;
 	BN_MONT_CTX *mont = NULL;
-	BIGNUM *pub_key = dh->pub_key, *priv_key = dh->priv_key;
+	BIGNUM *pub_key = dh->pub_key, *priv_key = dh->priv_key, *two = NULL;
 
 	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
 		DHerror(DH_R_MODULUS_TOO_LARGE);
@@ -137,10 +137,12 @@ generate_key(DH *dh)
 
 	if (generate_new_key) {
 		if (dh->q) {
-			do {
-				if (!BN_rand_range(priv_key, dh->q))
-					goto err;
-			} while (BN_is_zero(priv_key) || BN_is_one(priv_key));
+			if ((two = BN_new()) == NULL)
+				goto err;
+			if (!BN_add(two, BN_value_one(), BN_value_one()))
+				goto err;
+			if (!bn_rand_interval(priv_key, two, dh->q))
+				goto err;
 		} else {
 			/* secret exponent length */
 			l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
@@ -165,6 +167,7 @@ generate_key(DH *dh)
 	if (dh->priv_key == NULL)
 		BN_free(priv_key);
 	BN_CTX_free(ctx);
+	BN_free(two);
 	return ok;
 }
 
