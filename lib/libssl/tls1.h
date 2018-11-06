@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.34 2018/11/06 01:37:23 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.35 2018/11/06 20:48:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,7 +248,7 @@ extern "C" {
 /* ExtensionType value from RFC 5054. */
 #define TLSEXT_TYPE_srp				12
 
-/* ExtensionType values from RFC 5246. */
+/* ExtensionType value from RFC 5246/RFC 8446. */
 #define TLSEXT_TYPE_signature_algorithms	13
 
 /* ExtensionType value from RFC 5764. */
@@ -265,6 +265,20 @@ extern "C" {
 
 /* ExtensionType value from RFC 4507. */
 #define TLSEXT_TYPE_session_ticket		35
+
+/* ExtensionType values from RFC 8446 section 4.2 */
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define TLSEXT_TYPE_pre_shared_key		41
+#define TLSEXT_TYPE_early_data			42
+#define TLSEXT_TYPE_supported_versions		43
+#define TLSEXT_TYPE_cookie			44
+#define TLSEXT_TYPE_psk_key_exchange_modes	45
+#define TLSEXT_TYPE_certificate_authorities	47
+#define TLSEXT_TYPE_oid_filters			48
+#define TLSEXT_TYPE_post_handshake_auth		49
+#define TLSEXT_TYPE_signature_algorithms_cert	50
+#define TLSEXT_TYPE_key_share			51
+#endif
 
 /* Temporary extension type */
 #define TLSEXT_TYPE_renegotiate                 0xff01
