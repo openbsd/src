@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.159 2018/08/24 20:30:21 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.160 2018/11/06 01:37:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,6 +146,7 @@
 #include <stdint.h>
 
 #include <openssl/opensslconf.h>
+
 #include <openssl/hmac.h>
 #include <openssl/pem.h>
 #include <openssl/safestack.h>
@@ -511,6 +512,10 @@ struct ssl_session_st {
 #define SSL_OP_NO_TLSv1					0x04000000L
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_OP_NO_TLSv1_3				0x20000000L
+#endif
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL \

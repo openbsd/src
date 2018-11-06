@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.33 2018/11/05 20:41:30 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.34 2018/11/06 01:37:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,6 +151,8 @@
 #ifndef HEADER_TLS1_H
 #define HEADER_TLS1_H
 
+#include <openssl/opensslconf.h>
+
 #include <openssl/buffer.h>
 
 #ifdef  __cplusplus
@@ -158,6 +160,10 @@ extern "C" {
 #endif
 
 #define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	0
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define TLS1_3_VERSION			0x0304
+#endif
 
 #define TLS1_2_VERSION			0x0303
 #define TLS1_2_VERSION_MAJOR		0x03
