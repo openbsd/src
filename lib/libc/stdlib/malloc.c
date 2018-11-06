@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.250 2018/11/05 08:23:40 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.251 2018/11/06 08:01:43 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
+#include <uvm/uvmexp.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -386,8 +388,9 @@ omalloc_parseopt(char opt)
 static void
 omalloc_init(void)
 {
-	char *p, *q, b[64];
-	int i, j;
+	char *p, *q, b[16];
+	int i, j, mib[2];
+	size_t sb;
 
 	/*
 	 * Default options
@@ -398,10 +401,12 @@ omalloc_init(void)
 	for (i = 0; i < 3; i++) {
 		switch (i) {
 		case 0:
-			j = readlink("/etc/malloc.conf", b, sizeof b - 1);
-			if (j <= 0)
+			mib[0] = CTL_VM;
+			mib[1] = VM_MALLOC_CONF;
+			sb = sizeof(b);
+			j = sysctl(mib, 2, b, &sb, NULL, 0);
+			if (j != 0)
 				continue;
-			b[j] = '\0';
 			p = b;
 			break;
 		case 1:

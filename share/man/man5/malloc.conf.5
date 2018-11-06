@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.14 2018/03/19 13:35:06 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.15 2018/11/06 08:01:43 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2018 $
+.Dd $Mdocdate: November 6 2018 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -27,8 +27,9 @@
 Upon the first call to the
 .Xr malloc 3
 family of functions, an initialization sequence inspects the
-symbolic link
-.Pa /etc/malloc.conf ,
+value of the
+.Va vm.malloc_conf
+.Xr sysctl 3 ,
 next checks the environment for a variable called
 .Ev MALLOC_OPTIONS ,
 and finally looks at the global variable
@@ -137,15 +138,10 @@ Multi-threaded programs use multiple pools.
 .It Ev MALLOC_OPTIONS
 string of option flags
 .El
-.Sh FILES
-.Bl -tag -width "/etc/malloc.conf"
-.It Pa /etc/malloc.conf
-symbolic link to filename containing option flags
-.El
 .Sh EXAMPLES
 Set a systemwide reduction of the cache to a quarter of the
 default size and use guard pages:
 .Pp
-.Dl # ln -s 'G<<' /etc/malloc.conf
+.Dl # sysctl vm.malloc_conf='G<<'
 .Sh SEE ALSO
 .Xr malloc 3
