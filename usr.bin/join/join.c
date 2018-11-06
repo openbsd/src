@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.30 2018/10/23 08:41:45 martijn Exp $	*/
+/* $OpenBSD: join.c,v 1.31 2018/11/06 13:51:28 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,14 @@
  */
 
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
@@ -81,11 +85,12 @@ int joinout = 1;		/* show lines with matched join fields (-v) */
 int needsep;			/* need separator character */
 int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
-char *tabchar = " \t";		/* delimiter characters (-t) */
+wchar_t tabchar[] = L" \t";	/* delimiter characters (-t) */
 
 int  cmp(LINE *, u_long, LINE *, u_long);
 void fieldarg(char *);
 void joinlines(INPUT *, INPUT *);
+char *mbssep(char **, const wchar_t *);
 void obsolete(char **);
 void outfield(LINE *, u_long, int);
 void outoneline(INPUT *, LINE *);
@@ -100,6 +105,8 @@ main(int argc, char *argv[])
 	INPUT *F1, *F2;
 	int aflag, ch, cval, vflag;
 	char *end;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -161,8 +168,10 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			spans = 0;
-			if (strlen(tabchar = optarg) != 1)
+			if (mbtowc(tabchar, optarg, MB_CUR_MAX) !=
+			    strlen(optarg))
 				errx(1, "illegal tab character specification");
+			tabchar[1] = L'\0';
 			break;
 		case 'v':
 			vflag = 1;
@@ -333,7 +342,7 @@ slurp(INPUT *F)
 		/* Split the line into fields, allocate space as necessary. */
 		lp->fieldcnt = 0;
 		bp = lp->line;
-		while ((fieldp = strsep(&bp, tabchar)) != NULL) {
+		while ((fieldp = mbssep(&bp, tabchar)) != NULL) {
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
@@ -356,6 +365,36 @@ slurp(INPUT *F)
 		}
 	}
 	free(line);
+}
+
+char *
+mbssep(char **stringp, const wchar_t *wcdelim)
+{
+	char *s, *p;
+	size_t ndelim;
+	int i;
+	/* tabchar is never more than 2 */
+	char mbdelim[2][MB_LEN_MAX + 1];
+	size_t mblen[2];
+
+	if ((s = *stringp) == NULL)
+		return NULL;
+	ndelim = wcslen(wcdelim);
+	for (i = 0; i < ndelim; i++) {
+		/* wcdelim generated via mbtowc */
+		mblen[i] = wctomb(mbdelim[i], wcdelim[i]);
+	}
+	for (p = s; *p != '\0'; p++) {
+		for (i = 0; i < ndelim; i++) {
+			if (strncmp(p, mbdelim[i], mblen[i]) == 0) {
+				*p = '\0';
+				*stringp = p + mblen[i];
+				return s;
+			}
+		}
+	}
+	*stringp = NULL;
+	return s;
 }
 
 int
@@ -463,7 +502,7 @@ void
 outfield(LINE *lp, u_long fieldno, int out_empty)
 {
 	if (needsep++)
-		putchar((int)*tabchar);
+		putwchar(*tabchar);
 	if (!ferror(stdout)) {
 		if (lp->fieldcnt <= fieldno || out_empty) {
 			if (empty != NULL)
