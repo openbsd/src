@@ -1,3 +1,10 @@
+/*
+ * Feature flags for LibreSSL... so you can actually tell when things
+ * are enabled, rather than not being able to tell when things are
+ * enabled (or possibly not yet not implemented, or removed!).
+ */
+/* #define LIBRESSL_HAS_TLS1_3 */
+
 #define OPENSSL_THREADS
 
 #define OPENSSL_NO_BUF_FREELISTS
@@ -93,7 +100,9 @@
 /* #define OPENSSL_NO_TLS1_1_METHOD */
 /* #define OPENSSL_NO_TLS1_2 */
 /* #define OPENSSL_NO_TLS1_2_METHOD */
-/* #define OPENSSL_NO_TLS1_3 */
+#ifndef LIBRESSL_HAS_TLS1_3
+#define OPENSSL_NO_TLS1_3
+#endif
 /* #define OPENSSL_NO_TLS1_METHOD */
 /* #define OPENSSL_NO_TS */
 /* #define OPENSSL_NO_UI_CONSOLE */
