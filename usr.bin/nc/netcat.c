@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.196 2018/10/26 07:19:26 dlg Exp $ */
+/* $OpenBSD: netcat.c,v 1.197 2018/11/06 20:39:19 jsing Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -66,7 +66,6 @@
 #define POLL_NETIN	2
 #define POLL_STDOUT	3
 #define BUFSIZE		16384
-#define DEFAULT_CA_FILE	"/etc/ssl/cert.pem"
 
 #define TLS_NOVERIFY	(1 << 1)
 #define TLS_NONAME	(1 << 2)
@@ -101,7 +100,7 @@ int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
 char    *Kflag;					/* Private key file */
 char    *oflag;					/* OCSP stapling file */
-char    *Rflag = DEFAULT_CA_FILE;		/* Root CA file */
+char    *Rflag = TLS_CA_CERT_FILE;		/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
