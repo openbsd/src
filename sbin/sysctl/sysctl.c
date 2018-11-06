@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.237 2018/09/29 04:29:48 visa Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.238 2018/11/06 07:55:08 otto Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -567,7 +567,8 @@ parse(char *string, int flags)
 		} else if (mib[1] == VM_NKMEMPAGES ||
 		    mib[1] == VM_ANONMIN ||
 		    mib[1] == VM_VTEXTMIN ||
-		    mib[1] == VM_VNODEMIN) {
+		    mib[1] == VM_VNODEMIN ||
+		    mib[1] == VM_MALLOC_CONF) {
 			break;
 		}
 		if (flags == 0)
