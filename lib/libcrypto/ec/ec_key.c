@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.19 2018/11/05 23:54:27 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.20 2018/11/06 02:14:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -65,7 +65,6 @@
 
 #include <openssl/opensslconf.h>
 
-#include "bn_lcl.h"
 #include "ec_lcl.h"
 #include <openssl/err.h>
 
@@ -232,8 +231,10 @@ EC_KEY_generate_key(EC_KEY *eckey)
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
 
-	if (!bn_rand_interval(priv_key, BN_value_one(), order))
-		goto err;
+	do
+		if (!BN_rand_range(priv_key, order))
+			goto err;
+	while (BN_is_zero(priv_key));
 
 	if (pub_key == NULL) {
 		if ((pub_key = EC_POINT_new(eckey->group)) == NULL)

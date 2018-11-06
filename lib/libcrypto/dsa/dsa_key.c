@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.26 2018/11/05 23:54:27 tb Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.27 2018/11/06 02:14:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,8 +92,10 @@ dsa_builtin_keygen(DSA *dsa)
 			goto err;
 	}
 
-	if (!bn_rand_interval(priv_key, BN_value_one(), dsa->q))
-		goto err;
+	do {
+		if (!BN_rand_range(priv_key, dsa->q))
+			goto err;
+	} while (BN_is_zero(priv_key));
 
 	if (pub_key == NULL) {
 		if ((pub_key = BN_new()) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.38 2018/11/05 23:54:27 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.39 2018/11/06 02:14:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,9 +150,13 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	 *
 	 *  s = inv(k)inv(b)(bm + bxr) mod q
 	 *
-	 * Where b is a random value in the range [1, q).
+	 * Where b is a random value in the range [1, q-1].
 	 */
-	if (!bn_rand_interval(&b, BN_value_one(), dsa->q))
+	if (!BN_sub(&bm, dsa->q, BN_value_one()))
+		goto err;
+	if (!BN_rand_range(&b, &bm))
+		goto err;
+	if (!BN_add(&b, &b, BN_value_one()))
 		goto err;
 	if (BN_mod_inverse_ct(&binv, &b, dsa->q, ctx) == NULL)
 		goto err;
@@ -238,8 +242,11 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	    !BN_set_bit(&m, q_bits))
 		goto err;
 
-	if (!bn_rand_interval(&k, BN_value_one(), dsa->q))
-		goto err;
+	/* Get random k */
+	do {
+		if (!BN_rand_range(&k, dsa->q))
+			goto err;
+	} while (BN_is_zero(&k));
 
 	BN_set_flags(&k, BN_FLG_CONSTTIME);
 
