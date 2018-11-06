@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.117 2018/08/31 18:45:02 deraadt Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.118 2018/11/06 20:41:36 jsing Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <tls.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -247,7 +248,7 @@ main(int argc, char *argv[])
 	 * Constraint processes are forked with certificates in memory,
 	 * then privdrop into chroot before speaking to the outside world.
 	 */
-	if (unveil("/etc/ssl/cert.pem", "r") == -1)
+	if (unveil(TLS_CA_CERT_FILE, "r") == -1)
 		err(1, "unveil");
 	if (unveil("/usr/sbin/ntpd", "x") == -1)
 		err(1, "unveil");

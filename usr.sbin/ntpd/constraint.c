@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.36 2018/11/05 00:13:36 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.37 2018/11/06 20:41:36 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -339,7 +339,7 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	/* Init TLS and load CA certs before chroot() */
 	if (tls_init() == -1)
 		fatalx("tls_init");
-	if ((conf->ca = tls_load_file(CONSTRAINT_CA,
+	if ((conf->ca = tls_load_file(TLS_CA_CERT_FILE,
 	    &conf->ca_len, NULL)) == NULL)
 		fatalx("failed to load constraint ca");
 

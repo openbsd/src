@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.136 2018/08/04 11:07:14 mestre Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.137 2018/11/06 20:41:36 jsing Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,7 +80,6 @@
 #define CONSTRAINT_PORT			"443"	/* HTTPS port */
 #define	CONSTRAINT_MAXHEADERLENGTH	8192
 #define CONSTRAINT_PASSFD		(STDERR_FILENO + 1)
-#define CONSTRAINT_CA			"/etc/ssl/cert.pem"
 
 #define PARENT_SOCK_FILENO		CONSTRAINT_PASSFD
 
