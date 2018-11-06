@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.3 2018/06/19 22:35:07 krw Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.4 2018/11/06 07:49:38 otto Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -17,7 +17,8 @@
 #define	VM_VNODEMIN	9
 #define	VM_MAXSLP	10
 #define	VM_USPACE	11
-#define	VM_MAXID	12		/* number of valid vm ids */
+#define	VM_MALLOC_CONF	12		/* config for userland malloc */
+#define	VM_MAXID	13		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -32,6 +33,7 @@
 	{ "vnodemin", CTLTYPE_INT }, \
 	{ "maxslp", CTLTYPE_INT }, \
 	{ "uspace", CTLTYPE_INT }, \
+	{ "malloc_conf", CTLTYPE_STRING }, \
 }
 
 /*
