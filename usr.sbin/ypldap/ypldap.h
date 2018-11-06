@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.19 2017/05/30 09:33:31 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.20 2018/11/06 20:42:03 jsing Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,7 +21,6 @@
 
 #define YPLDAP_USER		"_ypldap"
 #define YPLDAP_CONF_FILE	"/etc/ypldap.conf"
-#define YPLDAP_CERT_FILE	"/etc/ssl/cert.pem"
 #define DEFAULT_INTERVAL	600
 #define LINE_WIDTH		1024
 #define FILTER_WIDTH		128

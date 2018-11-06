@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2018/11/01 00:18:44 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2018/11/06 20:42:03 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <tls.h>
 #include <unistd.h>
 
 #include "ypldap.h"
@@ -844,7 +845,7 @@ parse_config(struct env *x_conf, const char *filename, int opts)
 	TAILQ_INIT(&conf->sc_idms);
 	conf->sc_conf_tv.tv_sec = DEFAULT_INTERVAL;
 	conf->sc_conf_tv.tv_usec = 0;
-	conf->sc_cafile = strdup(YPLDAP_CERT_FILE);
+	conf->sc_cafile = strdup(TLS_CA_CERT_FILE);
 	if (conf->sc_cafile == NULL) {
 		log_warn("%s", __func__);
 		return (-1);
