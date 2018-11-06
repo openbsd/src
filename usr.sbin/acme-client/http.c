@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.22 2018/08/08 17:47:44 deraadt Exp $ */
+/*	$Id: http.c,v 1.23 2018/11/06 20:40:49 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -135,7 +135,7 @@ http_init()
 		goto err;
 	}
 
-	if (tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE) == -1) {
+	if (tls_config_set_ca_file(tlscfg, TLS_CA_CERT_FILE) == -1) {
 		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
 		goto err;
 	}
