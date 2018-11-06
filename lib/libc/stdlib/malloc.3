@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.116 2018/11/05 08:23:40 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.117 2018/11/06 12:02:30 otto Exp $
 .\"
-.Dd $Mdocdate: November 5 2018 $
+.Dd $Mdocdate: November 6 2018 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -405,11 +405,6 @@ Deallocation of such an object should be done by calling
 .It Ev MALLOC_OPTIONS
 String of flags documented in
 .Xr malloc.conf 5 .
-.El
-.Sh FILES
-.Bl -tag -width "/etc/malloc.conf"
-.It Pa /etc/malloc.conf
-Symbolic link to filename containing option flags.
 .El
 .Sh EXAMPLES
 If
