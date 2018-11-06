@@ -29,89 +29,23 @@
 
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-static int verbose;
+#include "util.h"
 
-static const char *
-tmpdir(void)
-{
-	static char path[PATH_MAX];
-	const char *p;
-	size_t len;
-	int n;
-	int nosuffix = 1;
-
-	p = getenv("TMPDIR");
-	if (p == NULL || *p == '\0')
-		p = _PATH_TMP;
-	len = strlen(p);
-	if (len == 0)
-		errx(1, "%s: empty path", __func__);
-	if (p[len - 1] == '/')
-		nosuffix = 0;
-	n = snprintf(path, sizeof(path), "%s%s", p, nosuffix ? "/" : "");
-	if (n == -1 || n >= (int)sizeof(path))
-		errc(1, ENAMETOOLONG, "%s", __func__);
-
-	return (path);
-}
-
-static int
-make_file(off_t sz)
-{
-	char template[PATH_MAX];
-	const char *dir;
-	int fd, n;
-
-	dir = tmpdir();
-	n = snprintf(template, sizeof(template), "%sflock.XXXXXX", dir);
-	if (n == -1 || n >= (int)sizeof(template))
-		errc(1, ENAMETOOLONG, "%s", __func__);
-
-	fd = mkstemp(template);
-	if (fd == -1)
-		err(1, "mkstemp");
-	if (ftruncate(fd, sz) == -1)
-		err(1, "ftruncate");
-	if (unlink(template) == -1)
-		err(1, "unlink");
-
-	return (fd);
-}
+int verbose = 0;
 
 static void
 ignore_alarm(int __unused sig)
 {
-}
-
-static int
-safe_waitpid(pid_t pid)
-{
-	int save_errno;
-	int status;
-
-	save_errno = errno;
-	errno = 0;
-	while (waitpid(pid, &status, 0) != pid) {
-		if (errno == EINTR)
-			continue;
-		err(1, "waitpid");
-	}
-	errno = save_errno;
-
-	return (status);
 }
 
 static int
@@ -127,18 +61,6 @@ safe_kill(pid_t pid, int sig)
 
 	return (status);
 }
-
-#define FAIL(test)							\
-	do {								\
-		if (test) {						\
-			if (verbose) printf("%s: %d: FAIL (%s)\n",	\
-				__func__, __LINE__, #test);		\
-			return -1;					\
-		}							\
-	} while (0)
-
-#define SUCCEED \
-	do { if (verbose) printf("SUCCEED\n"); return 0; } while (0)
 
 /*
  * Test 1 - F_GETLK on unlocked region
@@ -1732,19 +1654,7 @@ test22(int fd)
 	SUCCEED;
 }
 
-static __dead void
-usage(void)
-{
-	fprintf(stderr, "usage: flock [-v] [test number]\n");
-	exit(1);
-}
-
-struct test {
-	int (*testfn)(int);	/* function to perform the test */
-	int intr;		/* non-zero if the test interrupts a lock */
-};
-
-struct test tests[] = {
+static struct test tests[] = {
 	{	test1,		0	},
 	{	test2,		0	},
 	{	test3,		1	},
@@ -1768,7 +1678,8 @@ struct test tests[] = {
 	{	test21,		0	},
 	{	test22,		0	},
 };
-int test_count = sizeof(tests) / sizeof(tests[0]);
+
+static int test_count = sizeof(tests) / sizeof(tests[0]);
 
 int
 main(int argc, char *argv[])
