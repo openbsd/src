@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.25 2018/11/06 02:14:39 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.26 2018/11/06 02:16:13 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1599,8 +1599,10 @@ ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	 * Apply coordinate blinding for EC_POINT if the underlying EC_METHOD
 	 * implements it.
 	 */
+#if 0
 	if (!ec_point_blind_coordinates(group, s, ctx))
 		goto err;
+#endif
 
 	/* top bit is a 1, in a fixed pos */
 	if (!EC_POINT_copy(r, s))
