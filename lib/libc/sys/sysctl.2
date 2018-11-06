@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.13 2018/11/06 07:55:08 otto Exp $
+.\"	$OpenBSD: sysctl.2,v 1.14 2018/11/06 13:16:54 otto Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -256,7 +256,7 @@ privileges may change the value.
 .It Dv FS_POSIX_SETUID Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv FS_POSIX_SETUID Pq Va fx.posix.setuid
+.It Dv FS_POSIX_SETUID Pq Va fs.posix.setuid
 When this variable is set, ownership changes on a file will cause
 the
 .Va S_ISUID
