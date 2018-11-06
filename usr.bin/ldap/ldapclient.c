@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.6 2018/11/06 14:14:12 martijn Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.7 2018/11/06 14:15:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -426,7 +426,7 @@ ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
 			}
 		} else {
 			inlen = strlen(value);
-			outlen = inlen * 2 + 1;
+			outlen = (((inlen + 2) / 3) * 4) + 1;
 
 			if ((out = calloc(1, outlen)) == NULL ||
 			    b64_ntop(value, inlen, out, outlen) == -1) {
