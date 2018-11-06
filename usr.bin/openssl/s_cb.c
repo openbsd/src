@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.10 2018/04/25 07:12:33 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.11 2018/11/06 05:45:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -700,8 +700,8 @@ tlsext_cb(SSL * s, int client_server, int type, unsigned char *data, int len,
 		extname = "cert type";
 		break;
 
-	case TLSEXT_TYPE_elliptic_curves:
-		extname = "elliptic curves";
+	case TLSEXT_TYPE_supported_groups:
+		extname = "supported groups";
 		break;
 
 	case TLSEXT_TYPE_ec_point_formats:
