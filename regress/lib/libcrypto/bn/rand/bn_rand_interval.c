@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_rand_interval.c,v 1.1 2018/11/06 06:55:27 tb Exp $	*/
+/*	$OpenBSD: bn_rand_interval.c,v 1.2 2018/11/06 13:17:42 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -24,7 +24,28 @@
 
 int bn_rand_interval(BIGNUM *rnd, const BIGNUM *lower_incl,
     const BIGNUM *upper_excl);
+void print_triple(BIGNUM *a, BIGNUM *b, BIGNUM *x);
 
+void
+print_triple(BIGNUM *a, BIGNUM *b, BIGNUM *x) {
+	if (a != NULL) {
+		printf("a = ");
+		BN_print_fp(stdout, a);
+		printf("\n");
+	}
+
+	if (b != NULL) {
+		printf("b = ");
+		BN_print_fp(stdout, b);
+		printf("\n");
+	}
+
+	if (x != NULL) {
+		printf("x = ");
+		BN_print_fp(stdout, x);
+		printf("\n");
+	}
+}
 
 int
 main(int argc, char *argv[])
@@ -45,7 +66,9 @@ main(int argc, char *argv[])
 
 		if (bn_rand_interval(x, a, a) != 0) {
 			success = 0;
+
 			printf("bn_rand_interval(a == a) succeeded\n");
+			print_triple(a, NULL, x);
 		}
 
 		if (!BN_rand(b, 256, 0, 0))
@@ -67,14 +90,17 @@ main(int argc, char *argv[])
 			err(1, "bn_rand_interval() failed");
 
 		if (BN_cmp(x, a) < 0 || BN_cmp(x, b) >= 0) {
-			printf("generated number xnot inside [a,b)\n");
-			printf("a = ");
-			BN_print_fp(stdout, a);
-			printf("\nb = ");
-			BN_print_fp(stdout, b);
-			printf("\nx = ");
-			BN_print_fp(stdout, x);
-			printf("\n");
+			success = 0;
+
+			printf("generated number x not inside [a,b)\n");
+			print_triple(a, b, x);
+		}
+
+		if (bn_rand_interval(x, b, a) != 0) {
+			success = 0;
+
+			printf("bn_rand_interval(x, b, a) succeeded\n");
+			print_triple(a, b, x);
 		}
 	}
 
