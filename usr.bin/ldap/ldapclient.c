@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.5 2018/10/23 08:28:34 martijn Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.6 2018/11/06 14:14:12 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -404,8 +404,13 @@ ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
 		 * in SAFE-STRINGs. String value that do not match the
 		 * criteria must be encoded as Base64.
 		 */
-		for (cp = (const unsigned char *)value;
-		    encode == 0 &&*cp != '\0'; cp++) {
+		cp = (const unsigned char *)value;
+		/* !SAFE-INIT-CHAR: SAFE-CHAR minus %x20 %x3A %x3C */
+		if (*cp == ' ' ||
+		    *cp == ':' ||
+		    *cp == '<')
+			encode = 1;
+		for (; encode == 0 &&*cp != '\0'; cp++) {
 			/* !SAFE-CHAR %x01-09 / %x0B-0C / %x0E-7F */
 			if (*cp > 127 ||
 			    *cp == '\0' ||
