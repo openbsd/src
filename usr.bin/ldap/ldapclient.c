@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.7 2018/11/06 14:15:29 martijn Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.8 2018/11/06 20:38:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,6 @@
 #define F_NEEDAUTH	0x04
 #define F_LDIF		0x08
 
-#define CAPATH		"/etc/ssl/cert.pem"
 #define LDAPHOST	"localhost"
 #define LDAPFILTER	"(objectClass=*)"
 #define LDIF_LINELENGTH	79
@@ -220,7 +219,7 @@ main(int argc, char *argv[])
 	if (ldap.ldap_protocol == LDAP && (ldap.ldap_flags & F_STARTTLS))
 		ldap.ldap_protocol = LDAPTLS;
 	if (ldap.ldap_capath == NULL)
-		ldap.ldap_capath = CAPATH;
+		ldap.ldap_capath = TLS_CA_CERT_FILE;
 	if (ls.ls_basedn == NULL)
 		ls.ls_basedn = "";
 	if (ls.ls_scope == -1)
