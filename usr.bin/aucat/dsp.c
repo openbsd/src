@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.12 2018/09/18 04:29:58 miko Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.13 2018/11/07 21:22:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -660,11 +660,11 @@ f32_to_adata(unsigned int x)
 	 * 31 - (BITS - 1) - (e - 127)
 	 *
 	 * to ensure output is in the 0..(2^BITS)-1 range, the minimum
-	 * shift is 31 - (BITS - 1), and maximum shift is 31
+	 * shift is 31 - (BITS - 1) + 1, and maximum shift is 31
 	 */
 	if (e < 127 - (ADATA_BITS - 1))
 		y = 0;
-	else if (e > 127)
+	else if (e >= 127)
 		y = ADATA_UNIT - 1;
 	else
 		y = m >> (127 + (32 - ADATA_BITS) - e);
