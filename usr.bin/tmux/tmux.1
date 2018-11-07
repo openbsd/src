@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.614 2018/10/25 15:13:38 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.615 2018/11/07 07:58:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2018 $
+.Dd $Mdocdate: November 7 2018 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4430,8 +4430,6 @@ is used, the channel is locked and any clients that try to lock the same
 channel are made to wait until the channel is unlocked with
 .Ic wait-for
 .Fl U .
-This command only works from outside
-.Nm .
 .El
 .Sh TERMINFO EXTENSIONS
 .Nm

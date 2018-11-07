@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.16 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.17 2018/11/07 07:58:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -170,7 +170,7 @@ cmd_wait_for_wait(struct cmdq_item *item, const char *name,
 	struct client		*c = item->client;
 	struct wait_item	*wi;
 
-	if (c == NULL || c->session != NULL) {
+	if (c == NULL) {
 		cmdq_error(item, "not able to wait");
 		return (CMD_RETURN_ERROR);
 	}
@@ -198,7 +198,7 @@ cmd_wait_for_lock(struct cmdq_item *item, const char *name,
 {
 	struct wait_item	*wi;
 
-	if (item->client == NULL || item->client->session != NULL) {
+	if (item->client == NULL) {
 		cmdq_error(item, "not able to lock");
 		return (CMD_RETURN_ERROR);
 	}
