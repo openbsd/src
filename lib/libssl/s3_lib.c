@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.173 2018/11/05 20:41:30 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.174 2018/11/07 01:53:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -869,6 +869,60 @@ SSL_CIPHER ssl3_ciphers[] = {
 		.alg_bits = 256,
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
+
+	/*
+	 * TLSv1.3 cipher suites.
+	 */
+
+#ifdef LIBRESSL_HAS_TLS1_3
+	/* Cipher 1301 */
+	{
+		.valid = 1,
+		.name = TLS1_3_TXT_AES_128_GCM_SHA256,
+		.id = TLS1_3_CK_AES_128_GCM_SHA256,
+		.algorithm_mkey = SSL_kTLS1_3,
+		.algorithm_auth = SSL_aTLS1_3,
+		.algorithm_enc = SSL_AES128GCM,
+		.algorithm_mac = SSL_AEAD,
+		.algorithm_ssl = SSL_TLSV1_3,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256, /* XXX */
+		.strength_bits = 128,
+		.alg_bits = 128,
+	},
+
+	/* Cipher 1302 */
+	{
+		.valid = 1,
+		.name = TLS1_3_TXT_AES_256_GCM_SHA384,
+		.id = TLS1_3_CK_AES_256_GCM_SHA384,
+		.algorithm_mkey = SSL_kTLS1_3,
+		.algorithm_auth = SSL_aTLS1_3,
+		.algorithm_enc = SSL_AES256GCM,
+		.algorithm_mac = SSL_AEAD,
+		.algorithm_ssl = SSL_TLSV1_3,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA384, /* XXX */
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+
+	/* Cipher 1303 */
+	{
+		.valid = 1,
+		.name = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
+		.id = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+		.algorithm_mkey = SSL_kTLS1_3,
+		.algorithm_auth = SSL_aTLS1_3,
+		.algorithm_enc = SSL_CHACHA20POLY1305,
+		.algorithm_mac = SSL_AEAD,
+		.algorithm_ssl = SSL_TLSV1_3,
+		.algo_strength = SSL_HIGH,
+		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256, /* XXX */
+		.strength_bits = 256,
+		.alg_bits = 256,
+	},
+#endif
 
 	/* Cipher C006 */
 	{

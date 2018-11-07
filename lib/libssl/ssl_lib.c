@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.189 2018/09/05 16:58:59 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.190 2018/11/07 01:53:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1423,6 +1423,11 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			return 0;
+
+		/* Skip TLS v1.3 only ciphersuites if lower than v1.3 */
+		if ((cipher->algorithm_ssl & SSL_TLSV1_3) &&
+		    (TLS1_get_client_version(s) < TLS1_3_VERSION))
+			continue;
 
 		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
 		if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&

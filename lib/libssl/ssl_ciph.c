@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.105 2018/09/08 14:39:41 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.106 2018/11/07 01:53:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -425,6 +425,10 @@ static const SSL_CIPHER cipher_aliases[] = {
 	{
 		.name = SSL_TXT_TLSV1_2,
 		.algorithm_ssl = SSL_TLSV1_2,
+	},
+	{
+		.name = SSL_TXT_TLSV1_3,
+		.algorithm_ssl = SSL_TLSV1_3,
 	},
 
 	/* strength classes */
@@ -1318,8 +1322,8 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	}
 
 	ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
-	disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
-	co_list, &head, &tail);
+	    disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
+	    co_list, &head, &tail);
 
 
 	/* Now arrange all ciphers by preference: */
@@ -1375,6 +1379,9 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/* Now disable everything (maintaining the ordering!) */
 	ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
+	/* TLSv1.3 first. */
+	ssl_cipher_apply_rule(0, 0, 0, 0, 0, SSL_TLSV1_3, 0, CIPHER_ADD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, 0, 0, 0, 0, SSL_TLSV1_3, 0, CIPHER_DEL, -1, &head, &tail);
 
 	/*
 	 * We also need cipher aliases for selecting based on the rule_str.
@@ -1489,6 +1496,8 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		ver = "SSLv3";
 	else if (alg_ssl & SSL_TLSV1_2)
 		ver = "TLSv1.2";
+	else if (alg_ssl & SSL_TLSV1_3)
+		ver = "TLSv1.3";
 	else
 		ver = "unknown";
 
