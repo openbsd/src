@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1.1.1 2018/11/07 01:08:49 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2018/11/07 06:29:26 bluhm Exp $
 
 .PATH:			${.CURDIR}/..
 
@@ -20,7 +20,7 @@ ldd-$p.out: $p
 
 CLEANFILES +=		client.out netcat-l.out netcat-l.fstat
 REGRESS_TARGETS +=	run-client
-run-client: client 127.0.0.1.crt
+client.out run-client: client 127.0.0.1.crt
 	@echo '\n======== $@ ========'
 	echo "greeting" | nc -l -c -C 127.0.0.1.crt -K 127.0.0.1.key \
 	    127.0.0.1 0 >netcat-l.out & \
@@ -39,7 +39,7 @@ run-client: client 127.0.0.1.crt
 
 CLEANFILES +=		server.out netcat.out
 REGRESS_TARGETS +=	run-server
-run-server: server 127.0.0.1.crt
+server.out run-server: server 127.0.0.1.crt
 	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./server 127.0.0.1 0 >server.out
 	echo "hello" | nc -c -T noverify \
@@ -51,6 +51,10 @@ run-server: server 127.0.0.1.crt
 	grep -q '^<<< hello$$' server.out
 	# client must have read server greeting
 	grep -q '^greeting$$' netcat.out
+
+# check that programs have used correct runtime library
+
+REGRESS_TARGETS +=	${PROGS:S/^/run-version-/}
 
 # create certificates for TLS
 

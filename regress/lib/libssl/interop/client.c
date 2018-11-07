@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.1.1.1 2018/11/07 01:08:49 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.2 2018/11/07 06:29:26 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <openssl/err.h>
@@ -61,6 +62,7 @@ main(int argc, char *argv[])
 
 	SSL_library_init();
 	SSL_load_error_strings();
+	print_version();
 
 	/* setup method and context */
 	method = SSLv23_client_method();
@@ -77,7 +79,6 @@ main(int argc, char *argv[])
 	bio = BIO_new_connect(host_port);
 	if (bio == NULL)
 		err_ssl(1, "BIO_new_connect");
-
 	print_ciphers(SSL_get_ciphers(ssl));
 
 	/* connect */

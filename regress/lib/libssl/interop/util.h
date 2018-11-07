@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.1.1.1 2018/11/07 01:08:49 bluhm Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2018/11/07 06:29:26 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+void print_version(void);
 void print_ciphers(STACK_OF(SSL_CIPHER) *);
 void print_sockname(BIO *);
 void print_peername(BIO *);
