@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.8 2018/11/06 20:38:42 jsing Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.9 2018/11/07 13:58:51 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -435,7 +435,7 @@ ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
 			}
 
 			/* Base64 is indicated with a double-colon */
-			if (asprintf(&p, "%s: %s", key, out) == -1) {
+			if (asprintf(&p, "%s:: %s", key, out) == -1) {
 				log_warnx("asprintf");
 				free(out);
 				return (-1);
