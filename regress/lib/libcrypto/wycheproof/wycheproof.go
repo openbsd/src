@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.86 2018/10/20 16:02:05 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.87 2018/11/07 22:51:17 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -1701,11 +1701,13 @@ func runKWTestWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int, 
 		return false
 	}
 
-	outLen := msgLen + 8
+	outLen := msgLen
 	out := make([]byte, outLen)
-	ret = C.AES_wrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&msg[0])), (C.uint)(msgLen))
+	copy(out, msg)
+	out = append(out, make([]byte, 8)...)
+	ret = C.AES_wrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&out[0])), (C.uint)(msgLen))
 	success := false
-	if ret == C.int(outLen) && bytes.Equal(out, ct) {
+	if ret == C.int(len(out)) && bytes.Equal(out, ct) {
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
@@ -1733,10 +1735,11 @@ func runKWTestUnWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int
 	}
 
 	out := make([]byte, ctLen)
+	copy(out, ct)
 	if ctLen == 0 {
 		out = append(out, 0)
 	}
-	ret = C.AES_unwrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&ct[0])), (C.uint)(ctLen))
+	ret = C.AES_unwrap_key((*C.AES_KEY)(unsafe.Pointer(&aesKey)), nil, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.uchar)(unsafe.Pointer(&out[0])), (C.uint)(ctLen))
 	success := false
 	if ret == C.int(ctLen - 8) && bytes.Equal(out[0:ret], msg[0:ret]) {
 		if acceptableAudit && wt.Result == "acceptable" {
