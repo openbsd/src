@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.2 2018/11/07 06:29:26 bluhm Exp $	*/
+/*	$OpenBSD: server.c,v 1.3 2018/11/07 19:09:01 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -69,9 +69,15 @@ main(int argc, char *argv[])
 	print_version();
 
 	/* setup method and context */
+#if OPENSSL_VERSION_NUMBER >= 0x1010000f
+	method = TLS_server_method();
+	if (method == NULL)
+		err_ssl(1, "TLS_server_method");
+#else
 	method = SSLv23_server_method();
 	if (method == NULL)
 		err_ssl(1, "SSLv23_server_method");
+#endif
 	ctx = SSL_CTX_new(method);
 	if (ctx == NULL)
 		err_ssl(1, "SSL_CTX_new");

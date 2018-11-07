@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2018/11/07 01:08:49 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2018/11/07 19:09:01 bluhm Exp $
 
-SUBDIR =	libressl openssl
+SUBDIR =	libressl openssl openssl11
 
 .include <bsd.subdir.mk>
