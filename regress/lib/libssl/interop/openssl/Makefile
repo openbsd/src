@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2018/11/07 06:29:26 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2018/11/07 20:46:28 bluhm Exp $
 
 .if ! exists(/usr/local/bin/eopenssl)
 regress:
@@ -22,11 +22,18 @@ run-ldd-$p: ldd-$p.out
 	grep -q /usr/local/lib/eopenssl/libssl.so ldd-$p.out
 	# check that $p is not linked with LibreSSL
 	! grep -v libc.so ldd-$p.out | grep /usr/lib/
+.endfor
 
-run-version-$p: $p.out
+.for o in nc-client nc-server self-client self-server
+run-version-$o: $o.out
 	@echo '\n======== $@ ========'
 	# check that runtime version is OpenSSL 1.0
-	grep 'SSLEAY_VERSION: OpenSSL 1.0' $p.out
+	grep 'SSLEAY_VERSION: OpenSSL 1.0' $o.out
+
+run-protocol-$o: $o.out
+	@echo '\n======== $@ ========'
+	# check that protocol version is TLS 1.2
+	grep 'Protocol *: TLSv1.2' $o.out
 .endfor
 
 .include <bsd.regress.mk>

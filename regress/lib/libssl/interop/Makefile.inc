@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2018/11/07 06:29:26 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2018/11/07 20:46:28 bluhm Exp $
 
 .PATH:			${.CURDIR}/..
 
@@ -18,43 +18,72 @@ ldd-$p.out: $p
 
 # run netcat server and connect with test client
 
-CLEANFILES +=		client.out netcat-l.out netcat-l.fstat
+CLEANFILES +=		nc-client.out netcat-l.out netcat-l.fstat
 REGRESS_TARGETS +=	run-client
-client.out run-client: client 127.0.0.1.crt
+nc-client.out run-client: client 127.0.0.1.crt
 	@echo '\n======== $@ ========'
 	echo "greeting" | nc -l -c -C 127.0.0.1.crt -K 127.0.0.1.key \
 	    127.0.0.1 0 >netcat-l.out & \
 	    sleep 1; fstat -p $$! >netcat-l.fstat
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./client \
 	    `sed -n 's/.* stream tcp .*:/127.0.0.1 /p' netcat-l.fstat` \
-	    >client.out
+	    >nc-client.out
 	# check that the client run successfully to the end
-	grep -q '^success$$' client.out
+	grep -q '^success$$' nc-client.out
 	# client must have read server greeting
-	grep -q '^<<< greeting$$' client.out
+	grep -q '^<<< greeting$$' nc-client.out
 	# netstat server must have read client hello
 	grep -q '^hello$$' netcat-l.out
 
 # run test server and connect with netcat client
 
-CLEANFILES +=		server.out netcat.out
+CLEANFILES +=		nc-server.out netcat.out
 REGRESS_TARGETS +=	run-server
-server.out run-server: server 127.0.0.1.crt
+nc-server.out run-server: server 127.0.0.1.crt
 	@echo '\n======== $@ ========'
-	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./server 127.0.0.1 0 >server.out
+	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./server 127.0.0.1 0 \
+	    >nc-server.out
 	echo "hello" | nc -c -T noverify \
-	    `sed -n 's/listen sock: //p' server.out` \
+	    `sed -n 's/listen sock: //p' nc-server.out` \
 	    >netcat.out
 	# check that the server child run successfully to the end
-	grep -q '^success$$' server.out
+	grep -q '^success$$' nc-server.out
 	# server must have read client hello
-	grep -q '^<<< hello$$' server.out
+	grep -q '^<<< hello$$' nc-server.out
 	# client must have read server greeting
 	grep -q '^greeting$$' netcat.out
 
-# check that programs have used correct runtime library
+# run test server and with test client, self test the ssl library
 
-REGRESS_TARGETS +=	${PROGS:S/^/run-version-/}
+CLEANFILES +=		self-client.out self-server.out
+REGRESS_TARGETS +=	run-self
+self-client.out self-server.out run-self: client server 127.0.0.1.crt
+	@echo '\n======== $@ ========'
+	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./server 127.0.0.1 0 \
+	    >self-server.out
+	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./client \
+	    `sed -n 's/listen sock: //p' self-server.out` \
+	    >self-client.out
+	# check that the client run successfully to the end
+	grep -q '^success$$' self-client.out
+	# client must have read server greeting
+	grep -q '^<<< greeting$$' self-client.out
+	# check that the server child run successfully to the end
+	grep -q '^success$$' self-server.out
+	# server must have read client hello
+	grep -q '^<<< hello$$' self-server.out
+
+.for o in nc-client nc-server self-client self-server
+
+# check that client and server have used correct runtime library
+
+REGRESS_TARGETS +=	run-version-$o
+
+# check that client and server have used correct TLS protocol
+
+REGRESS_TARGETS +=	run-protocol-$o
+
+.endfor
 
 # create certificates for TLS
 
