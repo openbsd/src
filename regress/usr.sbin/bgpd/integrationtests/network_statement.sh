@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.2 2018/10/05 08:57:51 benno Exp $
+#	$OpenBSD: network_statement.sh,v 1.3 2018/11/07 16:57:59 claudio Exp $
 
 set -e
 
@@ -30,8 +30,8 @@ error_notify() {
 	sleep 1
 	ifconfig ${PAIR2} destroy || true
 	ifconfig ${PAIR1} destroy || true
-	route -n -T ${RDOMAIN1} flush || true
-	route -n -T ${RDOMAIN2} flush || true
+	route -qn -T ${RDOMAIN1} flush || true
+	route -qn -T ${RDOMAIN2} flush || true
 	ifconfig lo${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN2} destroy || true
 	if [ $1 -ne 0 ]; then
@@ -71,9 +71,9 @@ route -T ${RDOMAIN2} add -label PAIR2RTABLE ${PAIR2RTABLE} \
 route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
 route -T ${RDOMAIN1} exec ${BGPD} \
-	-f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain1.conf
+	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain1.conf
 route -T ${RDOMAIN2} exec ${BGPD} \
-	-f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
+	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
 
 sleep 2
 
