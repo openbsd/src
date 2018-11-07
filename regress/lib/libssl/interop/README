@@ -1,0 +1,9 @@
+Test TLS interoperability between LibreSSL and OpenSSL.
+
+Implement simple SSL client and server in C.  Create four binaries
+by linking them with LibreSSL or OpenSSL.  This way API compatibility
+is tested.  Connect and accept with netcat to test protocol
+compatibility with libtls.
+
+Currently OpenSSL 1.0.2p from ports is used.  Plan is to move to
+OpenSSL 1.1 and and test TLS 1.3.
