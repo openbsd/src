@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.350 2018/11/03 14:53:44 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.351 2018/11/07 17:45:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2379,6 +2379,7 @@ smtp_tx_dataline(struct smtp_tx *tx, const char *line)
 	log_trace(TRACE_SMTP, "<<< [MSG] %s", line);
 
 	if (!strcmp(line, ".")) {
+		smtp_report_protocol_client(tx->session->id, ".");
 		log_trace(TRACE_SMTP, "<<< [EOM]");
 		if (tx->error)
 			return 1;
