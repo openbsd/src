@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2018/07/03 20:14:41 jcs Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2018/11/07 04:51:56 miko Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -124,11 +124,11 @@ fileprefix(const char *base, const char *path)
 		goto err;
 	}
 	n = snprintf(s, PATH_MAX, "%s/%s", r, b);
-	free(r);
 	if (n < 1 || n >= PATH_MAX) {
 		warn("snprintf");
 		goto err;
 	}
+	free(r);
 	return (s);
 
 err:
