@@ -88,9 +88,6 @@ test1(int fd)
 	FAIL(fl1.l_pid != fl2.l_pid);
 	FAIL(fl1.l_type != F_UNLCK);
 	FAIL(fl1.l_whence != fl2.l_whence);
-#ifdef HAVE_SYSID
-	FAIL(fl1.l_sysid != fl2.l_sysid);
-#endif
 
 	SUCCEED;
 }
@@ -299,9 +296,6 @@ test4(int fd)
 	FAIL(fl.l_len != 99);
 	FAIL(fl.l_type != F_WRLCK);
 	FAIL(fl.l_pid != pid);
-#ifdef HAVE_SYSID
-	FAIL(fl.l_sysid != 0);
-#endif
 
 	safe_kill(pid, SIGTERM);
 	safe_waitpid(pid);
@@ -757,9 +751,6 @@ test10(int fd)
 	fl.l_type = F_WRLCK;
 	fl.l_whence = SEEK_SET;
 	fl.l_pid = 9999;
-#ifdef HAVE_SYSID
-	fl.l_sysid = 9999;
-#endif
 
 	pid = fork();
 	if (pid < 0)
@@ -797,9 +788,6 @@ test10(int fd)
 	close(pfd[1]);
 
 	FAIL(fl.l_pid != pid);
-#ifdef HAVE_SYSID
-	FAIL(fl.l_sysid != 0);
-#endif
 
 	SUCCEED;
 }
