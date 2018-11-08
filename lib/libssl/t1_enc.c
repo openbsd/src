@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.115 2018/10/24 18:04:50 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.116 2018/11/08 22:28:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,61 +155,6 @@ tls1_cleanup_key_block(SSL *s)
 	freezero(S3I(s)->hs.key_block, S3I(s)->hs.key_block_len);
 	S3I(s)->hs.key_block = NULL;
 	S3I(s)->hs.key_block_len = 0;
-}
-
-int
-tls1_init_finished_mac(SSL *s)
-{
-	BIO_free(S3I(s)->handshake_buffer);
-
-	S3I(s)->handshake_buffer = BIO_new(BIO_s_mem());
-	if (S3I(s)->handshake_buffer == NULL)
-		return (0);
-
-	(void)BIO_set_close(S3I(s)->handshake_buffer, BIO_CLOSE);
-
-	return (1);
-}
-
-int
-tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
-{
-	if (len < 0)
-		return 0;
-
-	if (!tls1_handshake_hash_update(s, buf, len))
-		return 0;
-
-	if (S3I(s)->handshake_buffer &&
-	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
-		BIO_write(S3I(s)->handshake_buffer, (void *)buf, len);
-		return 1;
-	}
-
-	return 1;
-}
-
-int
-tls1_digest_cached_records(SSL *s)
-{
-	long hdatalen;
-	void *hdata;
-
-	hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
-	if (hdatalen <= 0) {
-		SSLerror(s, SSL_R_BAD_HANDSHAKE_LENGTH);
-		goto err;
-	}
-
-	if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
-		BIO_free(S3I(s)->handshake_buffer);
-		S3I(s)->handshake_buffer = NULL;
-	}
-
-	return 1;
-
- err:
-	return 0;
 }
 
 void

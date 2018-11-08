@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.55 2018/09/05 16:58:59 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.56 2018/11/08 22:28:52 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -360,7 +360,7 @@ dtls1_do_write(SSL *s, int type)
 					xlen = ret - DTLS1_HM_HEADER_LENGTH;
 				}
 
-				tls1_finish_mac(s, p, xlen);
+				tls1_transcript_record(s, p, xlen);
 			}
 
 			if (ret == s->internal->init_num) {
@@ -436,7 +436,7 @@ again:
 
 	msg_len += DTLS1_HM_HEADER_LENGTH;
 
-	tls1_finish_mac(s, p, msg_len);
+	tls1_transcript_record(s, p, msg_len);
 	if (s->internal->msg_callback)
 		s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, msg_len,
 		    s, s->internal->msg_callback_arg);

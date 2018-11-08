@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.48 2018/10/24 18:04:50 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.49 2018/11/08 22:28:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -350,7 +350,7 @@ typedef struct ssl3_buffer_st {
 
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
-#define TLS1_FLAGS_KEEP_HANDSHAKE		0x0020
+#define TLS1_FLAGS_FREEZE_TRANSCRIPT		0x0020
 #define SSL3_FLAGS_CCS_OK			0x0080
 
 #ifndef OPENSSL_NO_SSL_INTERN

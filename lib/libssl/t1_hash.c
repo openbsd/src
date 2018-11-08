@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_hash.c,v 1.3 2018/09/05 16:58:59 jsing Exp $ */
+/* $OpenBSD: t1_hash.c,v 1.4 2018/11/08 22:28:52 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -22,9 +22,9 @@
 int
 tls1_handshake_hash_init(SSL *s)
 {
+	const unsigned char *data;
 	const EVP_MD *md;
-	long dlen;
-	void *data;
+	size_t len;
 
 	tls1_handshake_hash_free(s);
 
@@ -42,12 +42,11 @@ tls1_handshake_hash_init(SSL *s)
 		goto err;
 	}
 
-	dlen = BIO_get_mem_data(S3I(s)->handshake_buffer, &data);
-	if (dlen <= 0) {
+	if (!tls1_transcript_data(s, &data, &len)) {
 		SSLerror(s, SSL_R_BAD_HANDSHAKE_LENGTH);
 		goto err;
 	}
-	if (!tls1_handshake_hash_update(s, data, dlen)) {
+	if (!tls1_handshake_hash_update(s, data, len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -108,4 +107,80 @@ tls1_handshake_hash_free(SSL *s)
 {
 	EVP_MD_CTX_free(S3I(s)->handshake_hash);
 	S3I(s)->handshake_hash = NULL;
+}
+
+int
+tls1_transcript_init(SSL *s)
+{
+	if (S3I(s)->handshake_transcript != NULL)
+		return 0;
+
+	if ((S3I(s)->handshake_transcript = BUF_MEM_new()) == NULL)
+		return 0;
+
+	s->s3->flags &= ~TLS1_FLAGS_FREEZE_TRANSCRIPT;
+
+	return 1;
+}
+
+void
+tls1_transcript_free(SSL *s)
+{
+	BUF_MEM_free(S3I(s)->handshake_transcript);
+	S3I(s)->handshake_transcript = NULL;
+}
+
+int
+tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len)
+{
+	size_t olen, nlen;
+
+	if (S3I(s)->handshake_transcript == NULL)
+		return 1;
+
+	if (s->s3->flags & TLS1_FLAGS_FREEZE_TRANSCRIPT)
+		return 1;
+
+	olen = S3I(s)->handshake_transcript->length;
+	nlen = olen + len;
+
+	if (nlen < olen)
+		return 0;
+
+	if (BUF_MEM_grow(S3I(s)->handshake_transcript, nlen) == 0)
+		return 0;
+
+	memcpy(S3I(s)->handshake_transcript->data + olen, buf, len);
+
+	return 1;
+}
+
+int
+tls1_transcript_data(SSL *s, const unsigned char **data, size_t *len)
+{
+	if (S3I(s)->handshake_transcript == NULL)
+		return 0;
+
+	*data = S3I(s)->handshake_transcript->data;
+	*len = S3I(s)->handshake_transcript->length;
+
+	return 1;
+}
+
+void
+tls1_transcript_freeze(SSL *s)
+{
+	s->s3->flags |= TLS1_FLAGS_FREEZE_TRANSCRIPT;
+}
+
+int
+tls1_transcript_record(SSL *s, const unsigned char *buf, size_t len)
+{
+	if (!tls1_handshake_hash_update(s, buf, len))
+		return 0;
+
+	if (!tls1_transcript_append(s, buf, len))
+		return 0;
+
+	return 1;
 }

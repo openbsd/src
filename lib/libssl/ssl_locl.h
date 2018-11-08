@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.221 2018/11/08 20:55:18 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.222 2018/11/08 22:28:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -780,8 +780,8 @@ typedef struct ssl3_state_internal_st {
 	int wpend_ret;		/* number of bytes submitted */
 	const unsigned char *wpend_buf;
 
-	/* used during startup, digest all incoming/outgoing packets */
-	BIO *handshake_buffer;
+	/* Transcript of handshake messages that have been sent and received. */
+	BUF_MEM *handshake_transcript;
 
 	/* Rolling hash of handshake messages. */
 	EVP_MD_CTX *handshake_hash;
@@ -1238,11 +1238,14 @@ int tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
     size_t *outlen);
 void tls1_handshake_hash_free(SSL *s);
 
-int tls1_init_finished_mac(SSL *s);
-int tls1_finish_mac(SSL *s, const unsigned char *buf, int len);
-void tls1_free_digest_list(SSL *s);
+int tls1_transcript_init(SSL *s);
+void tls1_transcript_free(SSL *s);
+int tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len);
+int tls1_transcript_data(SSL *s, const unsigned char **data, size_t *len);
+void tls1_transcript_freeze(SSL *s);
+int tls1_transcript_record(SSL *s, const unsigned char *buf, size_t len);
+
 void tls1_cleanup_key_block(SSL *s);
-int tls1_digest_cached_records(SSL *s);
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
 int tls1_enc(SSL *s, int snd);

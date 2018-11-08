@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.13 2018/10/24 18:04:50 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.14 2018/11/08 22:28:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,7 +146,7 @@ ssl3_do_write(SSL *s, int type)
 		 * Should not be done for 'Hello Request's, but in that case
 		 * we'll ignore the result anyway.
 		 */
-		tls1_finish_mac(s,
+		tls1_transcript_record(s,
 		    (unsigned char *)&s->internal->init_buf->data[s->internal->init_off], ret);
 
 	if (ret == s->internal->init_num) {
@@ -557,7 +557,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
 	/* Feed this message into MAC computation. */
 	if (s->internal->mac_packet) {
-		tls1_finish_mac(s, (unsigned char *)s->internal->init_buf->data,
+		tls1_transcript_record(s, (unsigned char *)s->internal->init_buf->data,
 		    s->internal->init_num + 4);
 
 		if (s->internal->msg_callback)
