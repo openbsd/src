@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.177 2018/08/22 15:38:46 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.178 2018/11/08 00:04:51 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -78,9 +78,8 @@ lpt0	at ssio?
 # CardBus bus support
 cbb*		at pci?
 cardslot*	at cbb?
-option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
 cardbus*	at cardslot?
-option		PCMCIADEBUG,PCMCIAVERBOSE
+option		PCMCIAVERBOSE
 pcmcia*		at cardslot?
 
 # PCI USB Controllers
