@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.26 2018/11/05 17:05:50 anton Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.27 2018/11/08 18:35:56 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -324,12 +324,16 @@ ktrfds(const char *data, size_t count)
 	size_t i;
 	int fd;
 
-	for (i = 0; i < count - 1; i++) {
+	printf("int");
+	if (count > 1)
+		printf(" [%zu] { ", count);
+	for (i = 0; i < count; i++) {
 		memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
-		printf("fd[%zu] = %d, ", i, fd);
+		printf("%d%s", fd, i < count - 1 ? ", " : "");
 	}
-	memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
-	printf("fd[%zu] = %d\n", i, fd);
+	if (count > 1)
+		printf(" }");
+	printf("\n");
 }
 
 static void
@@ -545,8 +549,7 @@ ktrstruct(char *buf, size_t buflen)
 		goto invalid;
 	data = buf + namelen + 1;
 	datalen = buflen - namelen - 1;
-	if (datalen == 0)
-		goto invalid;
+
 	/* sanity check */
 	for (i = 0; i < namelen; ++i)
 		if (!isalpha((unsigned char)name[i]))
@@ -562,6 +565,9 @@ ktrstruct(char *buf, size_t buflen)
 		struct sockaddr_storage ss;
 
 		if (datalen > sizeof(ss))
+			goto invalid;
+		if (datalen < offsetof(struct sockaddr_storage, ss_len) +
+		    sizeof(ss.ss_len))
 			goto invalid;
 		memcpy(&ss, data, datalen);
 		if ((ss.ss_family != AF_UNIX && 
@@ -652,6 +658,9 @@ ktrstruct(char *buf, size_t buflen)
 		ktrpollfd(data, datalen / sizeof(struct pollfd));
 	} else if (strcmp(name, "cmsghdr") == 0) {
 		char *cmsg;
+
+		if (datalen == 0)
+			goto invalid;
 
 		if ((cmsg = malloc(datalen)) == NULL)
 			err(1, "malloc");
