@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.35 2018/11/08 20:26:45 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.36 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2527,8 +2527,8 @@ ssl3_send_client_certificate(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_CW_CERT_A) {
-		if ((s->cert == NULL) || (s->cert->key->x509 == NULL) ||
-		    (s->cert->key->privatekey == NULL))
+		if (s->cert->key->x509 == NULL ||
+		    s->cert->key->privatekey == NULL)
 			S3I(s)->hs.state = SSL3_ST_CW_CERT_B;
 		else
 			S3I(s)->hs.state = SSL3_ST_CW_CERT_C;

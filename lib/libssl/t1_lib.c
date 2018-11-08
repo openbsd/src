@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.147 2018/11/05 20:41:30 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.148 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1149,10 +1149,6 @@ tls1_process_sigalgs(SSL *s, CBS *cbs)
 	/* Extension ignored for inappropriate versions */
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
-
-	/* Should never happen */
-	if (c == NULL)
-		return 0;
 
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;

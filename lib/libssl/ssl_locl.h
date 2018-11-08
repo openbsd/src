@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.220 2018/11/07 01:53:36 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.221 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1048,7 +1048,6 @@ void ssl_clear_cipher_write_state(SSL *s);
 int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
-int ssl_cert_inst(CERT **o);
 void ssl_cert_free(CERT *c);
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);

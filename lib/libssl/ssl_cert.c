@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.68 2018/11/05 03:49:44 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.69 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -320,34 +320,6 @@ ssl_cert_free(CERT *c)
 
 	free(c);
 }
-
-int
-ssl_cert_inst(CERT **o)
-{
-	/*
-	 * Create a CERT if there isn't already one
-	 * (which cannot really happen, as it is initially created in
-	 * SSL_CTX_new; but the earlier code usually allows for that one
-	 * being non-existant, so we follow that behaviour, as it might
-	 * turn out that there actually is a reason for it -- but I'm
-	 * not sure that *all* of the existing code could cope with
-	 * s->cert being NULL, otherwise we could do without the
-	 * initialization in SSL_CTX_new).
-	 */
-
-	if (o == NULL) {
-		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
-		return (0);
-	}
-	if (*o == NULL) {
-		if ((*o = ssl_cert_new()) == NULL) {
-			SSLerrorx(ERR_R_MALLOC_FAILURE);
-			return (0);
-		}
-	}
-	return (1);
-}
-
 
 SESS_CERT *
 ssl_sess_cert_new(void)

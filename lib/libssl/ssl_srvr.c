@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.49 2018/11/08 20:26:45 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.50 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,12 +195,6 @@ ssl3_accept(SSL *s)
 
 	if (SSL_IS_DTLS(s))
 		D1I(s)->listen = listen;
-
-	if (s->cert == NULL) {
-		SSLerror(s, SSL_R_NO_CERTIFICATE_SET);
-		ret = -1;
-		goto end;
-	}
 
 	for (;;) {
 		state = S3I(s)->hs.state;

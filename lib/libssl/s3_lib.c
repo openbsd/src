@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.174 2018/11/07 01:53:36 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.175 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1728,11 +1728,6 @@ _SSL_set_tmp_dh(SSL *s, DH *dh)
 {
 	DH *dh_tmp;
 
-	if (!ssl_cert_inst(&s->cert)) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-
 	if (dh == NULL) {
 		SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
@@ -1761,11 +1756,6 @@ _SSL_set_tmp_ecdh(SSL *s, EC_KEY *ecdh)
 {
 	const EC_GROUP *group;
 	int nid;
-
-	if (!ssl_cert_inst(&s->cert)) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
 
 	if (ecdh == NULL)
 		return 0;
@@ -1994,13 +1984,6 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 long
 ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 {
-	if (cmd == SSL_CTRL_SET_TMP_DH_CB || cmd == SSL_CTRL_SET_TMP_ECDH_CB) {
-		if (!ssl_cert_inst(&s->cert)) {
-			SSLerror(s, ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
-
 	switch (cmd) {
 	case SSL_CTRL_SET_TMP_RSA_CB:
 		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);

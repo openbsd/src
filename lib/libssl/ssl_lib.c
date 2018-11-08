@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.190 2018/11/07 01:53:36 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.191 2018/11/08 20:55:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,23 +261,8 @@ SSL_new(SSL_CTX *ctx)
 	s->internal->mode = ctx->internal->mode;
 	s->internal->max_cert_list = ctx->internal->max_cert_list;
 
-	if (ctx->internal->cert != NULL) {
-		/*
-		 * Earlier library versions used to copy the pointer to
-		 * the CERT, not its contents; only when setting new
-		 * parameters for the per-SSL copy, ssl_cert_new would be
-		 * called (and the direct reference to the per-SSL_CTX
-		 * settings would be lost, but those still were indirectly
-		 * accessed for various purposes, and for that reason they
-		 * used to be known as s->ctx->default_cert).
-		 * Now we don't look at the SSL_CTX's CERT after having
-		 * duplicated it once.
-		*/
-		s->cert = ssl_cert_dup(ctx->internal->cert);
-		if (s->cert == NULL)
-			goto err;
-	} else
-		s->cert=NULL; /* Cannot really happen (see SSL_CTX_new) */
+	if ((s->cert = ssl_cert_dup(ctx->internal->cert)) == NULL)
+		goto err;
 
 	s->internal->read_ahead = ctx->internal->read_ahead;
 	s->internal->msg_callback = ctx->internal->msg_callback;
@@ -1855,6 +1840,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->verify_mode = SSL_VERIFY_NONE;
 	ret->sid_ctx_length = 0;
 	ret->internal->default_verify_callback = NULL;
+
 	if ((ret->internal->cert = ssl_cert_new()) == NULL)
 		goto err;
 
@@ -2519,12 +2505,9 @@ SSL_dup(SSL *s)
 		ret->method = s->method;
 		ret->method->internal->ssl_new(ret);
 
-		if (s->cert != NULL) {
-			ssl_cert_free(ret->cert);
-			ret->cert = ssl_cert_dup(s->cert);
-			if (ret->cert == NULL)
-				goto err;
-		}
+		ssl_cert_free(ret->cert);
+		if ((ret->cert = ssl_cert_dup(s->cert)) == NULL)
+			goto err;
 
 		if (!SSL_set_session_id_context(ret, s->sid_ctx,
 		    s->sid_ctx_length))
@@ -2658,20 +2641,14 @@ ssl_clear_cipher_write_state(SSL *s)
 X509 *
 SSL_get_certificate(const SSL *s)
 {
-	if (s->cert != NULL)
-		return (s->cert->key->x509);
-	else
-		return (NULL);
+	return (s->cert->key->x509);
 }
 
 /* Fix this function so that it takes an optional type parameter */
 EVP_PKEY *
 SSL_get_privatekey(const SSL *s)
 {
-	if (s->cert != NULL)
-		return (s->cert->key->privatekey);
-	else
-		return (NULL);
+	return (s->cert->key->privatekey);
 }
 
 const SSL_CIPHER *
