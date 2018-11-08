@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2018/11/01 00:18:44 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2018/11/08 17:12:12 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -146,6 +146,8 @@ listen		: LISTEN ON STRING opttls port {
 				YYERROR;
 			}
 			free($3);
+			((struct sockaddr_in *)&conf->sc_server.srv_addr)
+			    ->sin_port = htons(SWITCHD_CTLR_PORT);
 		}
 		;
 
@@ -627,7 +629,7 @@ parse_config(const char *filename, struct switchd *sc)
 
 	conf = sc;
 
-	/* Set the default 0.0.0.0 6633/tcp */
+	/* Set the default 0.0.0.0 6653/tcp */
 	memset(&conf->sc_server.srv_addr, 0, sizeof(conf->sc_server.srv_addr));
 	sin4 = (struct sockaddr_in *)&conf->sc_server.srv_addr;
 	sin4->sin_family = AF_INET;
