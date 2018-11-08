@@ -1,4 +1,4 @@
-/*	$OpenBSD: exptest.c,v 1.5 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: exptest.c,v 1.6 2018/11/08 21:40:52 jsing Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,6 +329,8 @@ int main(int argc, char *argv[])
 	}
 	BN_free(r_mont);
 	BN_free(r_mont_const);
+	BN_free(r_mont_ct);
+	BN_free(r_mont_nonct);
 	BN_free(r_recp);
 	BN_free(r_simple);
 	BN_free(a);
