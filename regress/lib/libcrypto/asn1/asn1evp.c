@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1evp.c,v 1.2 2017/12/09 14:34:09 jsing Exp $ */
+/* $OpenBSD: asn1evp.c,v 1.3 2018/11/08 21:37:21 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -69,35 +69,38 @@ main(int argc, char **argv)
 {
 	unsigned char data[16];
 	long num = TEST_NUM;
+	ASN1_TYPE *at = NULL;
 	int failed = 1;
-	ASN1_TYPE at;
 	int len;
 
-	memset(&at, 0, sizeof(at));
+	if ((at = ASN1_TYPE_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_TYPE_new returned NULL\n");
+		goto done;
+	}
 
-	if (!ASN1_TYPE_set_int_octetstring(&at, num, test_octetstring,
+	if (!ASN1_TYPE_set_int_octetstring(at, num, test_octetstring,
 	    sizeof(test_octetstring))) {
 		fprintf(stderr, "FAIL: ASN1_TYPE_set_int_octetstring failed\n");
 		goto done;
 	}
-	if (at.type != V_ASN1_SEQUENCE) {
+	if (at->type != V_ASN1_SEQUENCE) {
 		fprintf(stderr, "FAIL: not a V_ASN1_SEQUENCE (%i != %i)\n",
-		    at.type, V_ASN1_SEQUENCE);
+		    at->type, V_ASN1_SEQUENCE);
 		goto done;
 	}
-	if (at.value.sequence->type != V_ASN1_OCTET_STRING) {
+	if (at->value.sequence->type != V_ASN1_OCTET_STRING) {
 		fprintf(stderr, "FAIL: not a V_ASN1_OCTET_STRING (%i != %i)\n",
-		    at.type, V_ASN1_OCTET_STRING);
+		    at->type, V_ASN1_OCTET_STRING);
 		goto done;
 	}
-	if (compare_data("sequence", at.value.sequence->data,
-	    at.value.sequence->length, asn1_atios, sizeof(asn1_atios)) == -1)
+	if (compare_data("sequence", at->value.sequence->data,
+	    at->value.sequence->length, asn1_atios, sizeof(asn1_atios)) == -1)
 		goto done;
 
 	memset(&data, 0, sizeof(data));
 	num = 0;
 
-	if ((len = ASN1_TYPE_get_int_octetstring(&at, &num, data,
+	if ((len = ASN1_TYPE_get_int_octetstring(at, &num, data,
 	    sizeof(data))) < 0) {
 		fprintf(stderr, "FAIL: ASN1_TYPE_get_int_octetstring failed\n");
 		goto done;
@@ -118,7 +121,7 @@ main(int argc, char **argv)
 	num = 0;
 
 	/* With a limit buffer, the output should be truncated... */
-	if ((len = ASN1_TYPE_get_int_octetstring(&at, &num, data, 4)) < 0) {
+	if ((len = ASN1_TYPE_get_int_octetstring(at, &num, data, 4)) < 0) {
 		fprintf(stderr, "FAIL: ASN1_TYPE_get_int_octetstring failed\n");
 		goto done;
 	}
@@ -141,5 +144,7 @@ main(int argc, char **argv)
 	failed = 0;
 
  done:
+	ASN1_TYPE_free(at);
+
 	return failed;
 }
