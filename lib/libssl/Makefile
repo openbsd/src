@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.41 2018/11/07 19:43:12 beck Exp $
+# $OpenBSD: Makefile,v 1.42 2018/11/08 23:54:59 tb Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -34,7 +34,7 @@ SRCS= \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
 	bio_ssl.c ssl_err.c ssl_methods.c \
 	ssl_packet.c ssl_tlsext.c ssl_versions.c pqueue.c ssl_init.c \
-	tls13_key_schedule.c
+	tls13_handshake.c tls13_key_schedule.c
 SRCS+=	s3_cbc.c
 SRCS+=	bs_ber.c bs_cbb.c bs_cbs.c
 
