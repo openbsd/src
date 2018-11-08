@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.447 2018/11/08 09:53:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.448 2018/11/08 09:59:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,7 @@ static void	 rde_softreconfig_out_done(void *, u_int8_t);
 static void	 rde_softreconfig_done(void);
 static void	 rde_softreconfig_out(struct rib_entry *, void *);
 static void	 rde_softreconfig_in(struct rib_entry *, void *);
+int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
@@ -255,7 +256,7 @@ rde_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
 		set_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl);
 
-		if (rib_dump_pending())
+		if (rib_dump_pending() || rde_update_queue_pending())
 			timeout = 0;
 
 		i = PFD_PIPE_COUNT;
@@ -2584,6 +2585,31 @@ rde_up_dump_done(void *ptr, u_int8_t aid)
 }
 
 u_char	queue_buf[4096];
+
+int
+rde_update_queue_pending(void)
+{
+	struct rde_peer *peer;
+	u_int8_t aid;
+
+	if (ibuf_se && ibuf_se->w.queued >= SESS_MSG_HIGH_MARK)
+		return 0;
+
+	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (peer->conf.id == 0)
+			continue;
+		if (peer->state != PEER_UP)
+			continue;
+		if (peer->throttled)
+			continue;
+		for (aid = 0; aid < AID_MAX; aid++) {
+			if (!TAILQ_EMPTY(&peer->updates[aid]) ||
+			    !TAILQ_EMPTY(&peer->withdraws[aid]))
+				return 1;
+		}
+	}
+	return 0;
+}
 
 void
 rde_update_queue_runner(void)
