@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.351 2018/11/07 17:45:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.352 2018/11/08 13:21:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -689,6 +689,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->msgid = msgid;
 			s->tx->evp.id = msgid_to_evpid(msgid);
 			s->tx->rcptcount = 0;
+			smtp_report_tx_begin(s->id, s->tx->msgid);
 			smtp_reply(s, "250 %s: Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
@@ -729,6 +730,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (success) {
 			m_get_evpid(&m, &evpid);
 			s->tx->destcount++;
+			smtp_report_tx_envelope(s->id, s->tx->msgid, evpid);
 		}
 		else
 			s->tx->error = TX_ERROR_ENVELOPE;
@@ -2266,7 +2268,6 @@ smtp_tx_create_message(struct smtp_tx *tx)
 	m_add_id(p_queue, tx->session->id);
 	m_close(p_queue);
 	tree_xset(&wait_queue_msg, tx->session->id, tx->session);
-	smtp_report_tx_begin(tx->session->id);
 }
 
 static void
@@ -2358,7 +2359,7 @@ smtp_tx_commit(struct smtp_tx *tx)
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
-	smtp_report_tx_commit(tx->session->id);
+	smtp_report_tx_commit(tx->session->id, tx->msgid, tx->odatalen);
 }
 
 static void

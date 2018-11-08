@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_report.c,v 1.3 2018/11/02 17:20:22 gilles Exp $	*/
+/*	$OpenBSD: smtp_report.c,v 1.4 2018/11/08 13:21:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -77,20 +77,34 @@ smtp_report_link_disconnect(uint64_t qid)
 }
 
 void
-smtp_report_tx_begin(uint64_t qid)
+smtp_report_tx_begin(uint64_t qid, uint32_t msgid)
 {
 	m_create(p_lka, IMSG_SMTP_REPORT_TX_BEGIN, 0, 0, -1);
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
 	m_close(p_lka);
 }
 
 void
-smtp_report_tx_commit(uint64_t qid)
+smtp_report_tx_envelope(uint64_t qid, uint32_t msgid, uint64_t evpid)
+{
+	m_create(p_lka, IMSG_SMTP_REPORT_TX_ENVELOPE, 0, 0, -1);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
+	m_add_id(p_lka, evpid);
+	m_close(p_lka);
+}
+
+void
+smtp_report_tx_commit(uint64_t qid, uint32_t msgid, size_t msgsz)
 {
 	m_create(p_lka, IMSG_SMTP_REPORT_TX_COMMIT, 0, 0, -1);
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
+	m_add_size(p_lka, msgsz);
 	m_close(p_lka);
 }
 

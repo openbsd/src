@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.213 2018/11/03 13:56:49 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.214 2018/11/08 13:21:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -90,6 +90,9 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	struct sockaddr_storage	ss_src, ss_dest;
 	int                      filter_phase;
 	const char              *filter_param;
+	uint32_t		 msgid;
+	uint64_t		 evpid;
+	size_t			 msgsz;
 
 	if (imsg == NULL)
 		lka_shutdown();
@@ -442,18 +445,32 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_time(&m, &tm);
 		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
 		m_end(&m);
 
-		lka_report_smtp_tx_begin(tm, reqid);
+		lka_report_smtp_tx_begin(tm, reqid, msgid);
+		return;
+
+	case IMSG_SMTP_REPORT_TX_ENVELOPE:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_id(&m, &evpid);
+		m_end(&m);
+
+		lka_report_smtp_tx_envelope(tm, reqid, msgid, evpid);
 		return;
 
 	case IMSG_SMTP_REPORT_TX_COMMIT:
 		m_msg(&m, imsg);
 		m_get_time(&m, &tm);
 		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_size(&m, &msgsz);
 		m_end(&m);
 
-		lka_report_smtp_tx_commit(tm, reqid);
+		lka_report_smtp_tx_commit(tm, reqid, msgid, msgsz);
 		return;
 
 	case IMSG_SMTP_REPORT_TX_ROLLBACK:

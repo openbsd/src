@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.6 2018/11/08 12:42:29 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.7 2018/11/08 13:21:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -98,19 +98,27 @@ lka_report_smtp_link_tls(time_t tm, uint64_t reqid, const char *ciphers)
 }
 
 void
-lka_report_smtp_tx_begin(time_t tm, uint64_t reqid)
+lka_report_smtp_tx_begin(time_t tm, uint64_t reqid, uint32_t msgid)
 {
 	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-begin|"
-	    "%016"PRIx64"\n",
-	    PROTOCOL_VERSION, tm, reqid);
+	    "%016"PRIx64"|%08x\n",
+	    PROTOCOL_VERSION, tm, reqid, msgid);
 }
 
 void
-lka_report_smtp_tx_commit(time_t tm, uint64_t reqid)
+lka_report_smtp_tx_envelope(time_t tm, uint64_t reqid, uint32_t msgid, uint64_t evpid)
+{
+	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-envelope|"
+	    "%016"PRIx64"|%08x|%016"PRIx64"\n",
+	    PROTOCOL_VERSION, tm, reqid, msgid, evpid);
+}
+
+void
+lka_report_smtp_tx_commit(time_t tm, uint64_t reqid, uint32_t msgid, size_t msgsz)
 {
 	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-commit|"
-	    "%016"PRIx64"\n",
-	    PROTOCOL_VERSION, tm, reqid);
+	    "%016"PRIx64"|%08x|%zd\n",
+	    PROTOCOL_VERSION, tm, reqid, msgid, msgsz);
 }
 
 void
