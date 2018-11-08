@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.445 2018/11/04 12:34:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.446 2018/11/08 09:50:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -789,16 +789,17 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			rib = rib_byid(rib_find(rn.name));
 			if (rib == NULL)
 				rib = rib_new(rn.name, rn.rtableid, rn.flags);
-			else if (rib->rtableid != rn.rtableid ||
-			    (rib->flags & F_RIB_HASNOFIB) !=
-			    (rn.flags & F_RIB_HASNOFIB)) {
+			else if ((rib->flags & F_RIB_HASNOFIB) !=
+			    (rn.flags & F_RIB_HASNOFIB) || (rib->rtableid !=
+			    rn.rtableid && !(rib->flags & F_RIB_HASNOFIB))) {
 				struct filter_head	*in_rules;
 				struct rib_desc		*ribd = rib_desc(rib);
 				/*
 				 * Big hammer in the F_RIB_HASNOFIB case but
 				 * not often enough used to optimise it more.
 				 * Need to save the filters so that they're not
-				 * lost.
+				 * lost. If the rtableid changes but there is
+				 * no FIB no action is needed.
 				 */
 				in_rules = ribd->in_rules;
 				ribd->in_rules = NULL;
