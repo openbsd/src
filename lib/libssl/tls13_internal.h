@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.1 2018/11/07 19:43:12 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.2 2018/11/08 20:38:25 tb Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -13,6 +13,8 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/evp.h>
 
 struct tls13_secret {
 	uint8_t *data;

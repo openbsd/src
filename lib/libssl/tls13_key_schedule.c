@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.1 2018/11/07 19:43:12 beck Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.2 2018/11/08 20:38:25 tb Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <openssl/evp.h>
 #include <openssl/hkdf.h>
 
 #include "bytestring.h"
