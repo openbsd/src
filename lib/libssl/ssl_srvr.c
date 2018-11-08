@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.48 2018/08/27 17:04:34 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.49 2018/11/08 20:26:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -706,6 +706,12 @@ ssl3_accept(SSL *s)
 		case SSL_ST_OK:
 			/* clean a few things up */
 			tls1_cleanup_key_block(s);
+
+			if (S3I(s)->handshake_buffer != NULL) {
+				SSLerror(s, ERR_R_INTERNAL_ERROR);
+				ret = -1;
+				goto end;
+			}
 
 			if (!SSL_IS_DTLS(s)) {
 				BUF_MEM_free(s->internal->init_buf);

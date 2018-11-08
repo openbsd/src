@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.34 2018/09/05 16:58:59 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.35 2018/11/08 20:26:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -582,6 +582,12 @@ ssl3_connect(SSL *s)
 		case SSL_ST_OK:
 			/* clean a few things up */
 			tls1_cleanup_key_block(s);
+
+			if (S3I(s)->handshake_buffer != NULL) {
+				SSLerror(s, ERR_R_INTERNAL_ERROR);
+				ret = -1;
+				goto end;
+			}
 
 			if (!SSL_IS_DTLS(s)) {
 				BUF_MEM_free(s->internal->init_buf);
@@ -2553,8 +2559,13 @@ ssl3_send_client_certificate(SSL *s)
 
 		X509_free(x509);
 		EVP_PKEY_free(pkey);
-		if (i == 0)
+		if (i == 0) {
 			S3I(s)->tmp.cert_req = 2;
+
+			/* There is no client certificate to verify. */
+			if (!tls1_digest_cached_records(s))
+				goto err;
+		}
 
 		/* Ok, we have a cert */
 		S3I(s)->hs.state = SSL3_ST_CW_CERT_C;
