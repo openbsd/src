@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.229 2018/11/03 14:39:45 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.230 2018/11/08 13:24:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	PKI PORT PROC
 %token	QUEUE QUIT
 %token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT REPORT REWRITE RSET
-%token	SCHEDULER SENDER SENDERS SMTP SMTPS SOCKET SRC SUB_ADDR_DELIM
+%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTPS SOCKET SRC SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
@@ -484,7 +484,7 @@ proc_params_opt proc_params
 
 
 report:
-REPORT SMTP ON STRING {
+REPORT SMTP_IN ON STRING {
 	if (! dict_get(conf->sc_processors_dict, $4)) {
 		yyerror("no processor exist with that name: %s", $4);
 		free($4);
@@ -1280,7 +1280,7 @@ filter_phase_connect
 ;
 
 filter:
-FILTER SMTP {
+FILTER SMTP_IN {
 	filter_rule = xcalloc(1, sizeof *filter_rule);
 } filter_phase {
 	TAILQ_INSERT_TAIL(&conf->sc_filter_rules[filter_rule->phase], filter_rule, entry);
@@ -1903,6 +1903,7 @@ lookup(char *s)
 		{ "scheduler",		SCHEDULER },
 		{ "senders",   		SENDERS },
 		{ "smtp",		SMTP },
+		{ "smtp-in",		SMTP_IN },
 		{ "smtps",		SMTPS },
 		{ "socket",		SOCKET },
 		{ "src",		SRC },
