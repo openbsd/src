@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2018/11/08 17:12:12 akoshibe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2018/11/08 17:48:06 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -146,6 +146,7 @@ listen		: LISTEN ON STRING opttls port {
 				YYERROR;
 			}
 			free($3);
+			conf->sc_server.srv_tls = $4;
 			((struct sockaddr_in *)&conf->sc_server.srv_addr)
 			    ->sin_port = htons(SWITCHD_CTLR_PORT);
 		}
