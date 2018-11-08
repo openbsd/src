@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.87 2018/07/06 07:13:21 dlg Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.88 2018/11/08 14:06:09 brynet Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -471,6 +471,8 @@ main(int argc, char **argv)
 		bpf_dump(fcode, dflag);
 		exit(0);
 	}
+	if (oflag)
+		oflag = init_pfosfp();
 	init_addrtoname(localnet, netmask);
 
 	if (WFileName) {
@@ -500,8 +502,6 @@ main(int argc, char **argv)
 		(void)fflush(stderr);
 	}
 
-	if (oflag)
-		oflag = init_pfosfp();
 	if (tflag > 0)
 		thiszone = gmt2local(0);
 

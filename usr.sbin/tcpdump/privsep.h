@@ -21,12 +21,10 @@
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
 
-/* file ids used by priv_getlines */
-#define FTAB_PFOSFP	0
-
 enum cmd_types {
 	PRIV_OPEN_BPF,		/* open a bpf descriptor */
 	PRIV_OPEN_DUMP,		/* open dump file for reading */
+	PRIV_OPEN_PFOSFP,	/* open pf.os(5) fingerprint db for reading */
 	PRIV_OPEN_OUTPUT,	/* open output file */
 	PRIV_SETFILTER,		/* set a bpf read filter */
 	PRIV_GETHOSTBYADDR,	/* resolve numeric address into hostname */
@@ -35,7 +33,6 @@ enum cmd_types {
 	PRIV_GETSERVENTRIES,	/* get the service entries table */
 	PRIV_GETPROTOENTRIES,	/* get the ip protocol entries table */
 	PRIV_LOCALTIME,		/* return localtime */
-	PRIV_GETLINES,		/* get lines from a file */
 	PRIV_INIT_DONE,		/* signal that the initialization is done */
 	PRIV_PCAP_STATS		/* get pcap_stats() results */
 };
@@ -75,12 +72,8 @@ void	priv_getprotoentries(void);
    calling priv_getprotoentries() until it returns zero */
 size_t	priv_getprotoentry(char *, size_t, int *);
 
-/* Start getting lines from a file */
-void	priv_getlines(size_t);
-
-/* Retrieve a single line from a file, should be called repeatedly after
-   calling priv_getlines() until it returns zero */
-size_t	priv_getline(char *, size_t);
+/* Retrieve pf.os(5) fingerprints file descriptor */
+int	priv_open_pfosfp();
 
 /* Return the pcap statistics upon completion */
 int	priv_pcap_stats(struct pcap_stat *);
