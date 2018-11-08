@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.53 2018/07/13 09:25:22 beck Exp $
+.\" $OpenBSD: pledge.2,v 1.54 2018/11/08 05:58:21 otto Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2018 $
+.Dd $Mdocdate: November 8 2018 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -135,9 +135,6 @@ Can only reduce permissions for
 .Ar promises
 and
 .Ar execpromises .
-.It Xr readlink 2 :
-May operate on
-.Pa /etc/malloc.conf .
 .It Xr sysctl 2 :
 A small set of read-only operations are allowed, sufficient to
 support:

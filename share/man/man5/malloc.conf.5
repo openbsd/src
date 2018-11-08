@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.17 2018/11/07 19:11:02 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.18 2018/11/08 05:58:21 otto Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2018 $
+.Dd $Mdocdate: November 8 2018 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ The
 .Va vm.malloc_conf
 sysctl value string contains a maximum of 15 option characters.
 .Sh ENVIRONMENT
-.Bl -tag -width "/etc/malloc.conf"
+.Bl -tag -width "MALLOC_OPTIONS"
 .It Ev MALLOC_OPTIONS
 string of option flags
 .El
