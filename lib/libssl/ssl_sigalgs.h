@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.1 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.2 2018/11/09 03:17:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -15,6 +15,10 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef HEADER_SSL_SIGALGS_H
+#define HEADER_SSL_SIGALGS_H
+
+__BEGIN_HIDDEN_DECLS
 
 #define SIGALG_NONE			0x0000
 
@@ -67,3 +71,7 @@ const EVP_MD * ssl_sigalg_md(uint16_t sigalg);
 uint16_t ssl_sigalg_value(const EVP_PKEY *pk, const EVP_MD *md);
 int ssl_sigalgs_build(CBB *cbb);
 int ssl_sigalg_pkey_check(uint16_t sigalg, EVP_PKEY *pk);
+
+__END_HIDDEN_DECLS
+
+#endif
