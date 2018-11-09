@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.3 2018/11/09 04:54:42 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.4 2018/11/09 23:54:57 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -47,24 +47,25 @@ struct tls13_handshake_action {
 	uint8_t			record_type;
 	uint8_t			handshake_type;
 
-	uint8_t			writer;
-#define TLS13_HS_CLIENT_WRITES	1
-#define TLS13_HS_SERVER_WRITES	2
-#define TLS13_HS_BOTH_WRITE	(TLS13_HS_CLIENT_WRITES|TLS13_HS_SERVER_WRITES)
+	uint8_t			sender;
+#define TLS13_HS_CLIENT_SENDS	1
+#define TLS13_HS_SERVER_SENDS	2
+#define TLS13_HS_BOTH_SEND	(TLS13_HS_CLIENT_SENDS | TLS13_HS_SERVER_SENDS)
 
-	int 			(*handler[2])(struct tls13_ctx *ctx);
+	int (*send)(struct tls13_ctx *ctx);
+	int (*recv)(struct tls13_ctx *ctx);
 };
 
 enum tls13_message_type tls13_handshake_active_state(struct tls13_ctx *ctx);
-int tls13_handshake_get_writer(struct tls13_ctx *ctx);
+int tls13_handshake_get_sender(struct tls13_ctx *ctx);
 
 int tls13_connect(struct tls13_ctx *ctx);
 int tls13_accept(struct tls13_ctx *ctx);
 
 int tls13_handshake_advance_state_machine(struct tls13_ctx *ctx);
 
-int tls13_handshake_write_action(struct tls13_ctx *ctx);
-int tls13_handshake_read_action(struct tls13_ctx *ctx);
+int tls13_handshake_send_action(struct tls13_ctx *ctx);
+int tls13_handshake_recv_action(struct tls13_ctx *ctx);
 
 enum tls13_message_type {
 	CLIENT_HELLO,
@@ -88,114 +89,123 @@ enum tls13_message_type {
 
 struct tls13_handshake_action state_machine[] = {
 	[CLIENT_HELLO] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CLIENT_HELLO,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_hello_send, tls13_client_hello_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CLIENT_HELLO,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_hello_send,
+		.recv = tls13_client_hello_recv,
 	},
 	[CLIENT_HELLO_RETRY] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CLIENT_HELLO,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_hello_retry_send, tls13_client_hello_retry_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CLIENT_HELLO,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_hello_retry_send,
+		.recv = tls13_client_hello_retry_recv,
 	},
 	[CLIENT_END_OF_EARLY_DATA] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_END_OF_EARLY_DATA,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_end_of_early_data_send,
-		    tls13_client_end_of_early_data_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_END_OF_EARLY_DATA,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_end_of_early_data_send,
+		.recv = tls13_client_end_of_early_data_recv,
 	},
 	[CLIENT_CERTIFICATE] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CERTIFICATE,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_certificate_send,
-		    tls13_client_certificate_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CERTIFICATE,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_certificate_send,
+		.recv = tls13_client_certificate_recv,
 	},
 	[CLIENT_CERTIFICATE_VERIFY] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CERTIFICATE_VERIFY,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_certificate_verify_send,
-		    tls13_client_certificate_verify_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CERTIFICATE_VERIFY,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_certificate_verify_send,
+		.recv = tls13_client_certificate_verify_recv,
 	},
 	[CLIENT_FINISHED] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_FINISHED,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_finished_recv, tls13_client_finished_send}
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_FINISHED,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_finished_send,
+		.recv = tls13_client_finished_recv,
 	},
 	[CLIENT_KEY_UPDATE] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_KEY_UPDATE,
-		TLS13_HS_CLIENT_WRITES,
-		{tls13_client_key_update_send, tls13_client_key_update_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_KEY_UPDATE,
+		.sender = TLS13_HS_CLIENT_SENDS,
+		.send = tls13_client_key_update_send,
+		.recv = tls13_client_key_update_recv,
 	},
 	[SERVER_HELLO] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_SERVER_HELLO,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_hello_recv, tls13_server_hello_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_SERVER_HELLO,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_hello_send,
+		.recv = tls13_server_hello_recv,
 	},
 	[SERVER_NEW_SESSION_TICKET] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_NEW_SESSION_TICKET,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_new_session_ticket_recv,
-		    tls13_server_new_session_ticket_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_NEW_SESSION_TICKET,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_new_session_ticket_send,
+		.recv = tls13_server_new_session_ticket_recv,
 	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_ENCRYPTED_EXTENSIONS,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_encrypted_extensions_recv,
-		    tls13_server_encrypted_extensions_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_encrypted_extensions_send,
+		.recv = tls13_server_encrypted_extensions_recv,
 	},
 	[SERVER_CERTIFICATE] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CERTIFICATE,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_certificate_recv, tls13_server_certificate_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CERTIFICATE,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_certificate_send,
+		.recv = tls13_server_certificate_recv,
 	},
 	[SERVER_CERTIFICATE_REQUEST] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CERTIFICATE,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_certificate_request_recv,
-		    tls13_server_certificate_request_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CERTIFICATE,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_certificate_request_send,
+		.recv = tls13_server_certificate_request_recv,
 	},
 	[SERVER_CERTIFICATE_VERIFY] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_CERTIFICATE_VERIFY,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_certificate_verify_send,
-		    tls13_server_certificate_verify_recv},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_CERTIFICATE_VERIFY,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_certificate_verify_send,
+		.recv = tls13_server_certificate_verify_recv,
 	},
 	[SERVER_FINISHED] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_FINISHED,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_finished_recv, tls13_server_finished_send}
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_FINISHED,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_finished_send,
+		.recv = tls13_server_finished_recv,
 	},
 	[SERVER_KEY_UPDATE] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_KEY_UPDATE,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_key_update_recv, tls13_server_key_update_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_KEY_UPDATE,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_key_update_send,
+		.recv = tls13_server_key_update_recv,
 	},
 	[SERVER_MESSAGE_HASH] = {
-		TLS13_HANDSHAKE,
-		TLS13_MT_MESSAGE_HASH,
-		TLS13_HS_SERVER_WRITES,
-		{tls13_server_message_hash_recv,
-		    tls13_server_message_hash_send},
+		.record_type = TLS13_HANDSHAKE,
+		.handshake_type = TLS13_MT_MESSAGE_HASH,
+		.sender = TLS13_HS_SERVER_SENDS,
+		.send = tls13_server_message_hash_send,
+		.recv = tls13_server_message_hash_recv,
 	},
 	[APPLICATION_DATA] = {
-		TLS13_APPLICATION_DATA,
-		0,
-		TLS13_HS_BOTH_WRITE,
-		{NULL, NULL},
+		.record_type = TLS13_APPLICATION_DATA,
+		.handshake_type = 0,
+		.sender = TLS13_HS_BOTH_SEND,
+		.send = NULL,
+		.recv = NULL,
 	},
 };
 
@@ -275,10 +285,10 @@ tls13_handshake_active_state(struct tls13_ctx *ctx)
 }
 
 int
-tls13_handshake_get_writer(struct tls13_ctx *ctx)
+tls13_handshake_get_sender(struct tls13_ctx *ctx)
 {
 	enum tls13_message_type mt = tls13_handshake_active_state(ctx);
-	return state_machine[mt].writer;
+	return state_machine[mt].sender;
 }
 
 int
@@ -286,12 +296,12 @@ tls13_connect(struct tls13_ctx *ctx)
 {
 	ctx->mode = TLS13_HS_MODE_CLIENT;
 	
-	while (tls13_handshake_get_writer(ctx) != TLS13_HS_BOTH_WRITE) {
-		if (tls13_handshake_get_writer(ctx) == TLS13_HS_CLIENT_WRITES) {
-			if (!tls13_handshake_write_action(ctx))
+	while (tls13_handshake_get_sender(ctx) != TLS13_HS_BOTH_SEND) {
+		if (tls13_handshake_get_sender(ctx) == TLS13_HS_CLIENT_SENDS) {
+			if (!tls13_handshake_send_action(ctx))
 				return 0;
 		} else {
-			if (!tls13_handshake_read_action(ctx))
+			if (!tls13_handshake_recv_action(ctx))
 				return 0;
 		}
 		if (!tls13_handshake_advance_state_machine(ctx))
@@ -306,12 +316,12 @@ tls13_accept(struct tls13_ctx *ctx)
 {
 	ctx->mode = TLS13_HS_MODE_SERVER;
 
-	while (tls13_handshake_get_writer(ctx) != TLS13_HS_BOTH_WRITE) {
-		if (tls13_handshake_get_writer(ctx) == TLS13_HS_SERVER_WRITES) {
-			if (!tls13_handshake_write_action(ctx))
+	while (tls13_handshake_get_sender(ctx) != TLS13_HS_BOTH_SEND) {
+		if (tls13_handshake_get_sender(ctx) == TLS13_HS_SERVER_SENDS) {
+			if (!tls13_handshake_send_action(ctx))
 				return 0;
 		} else {
-			if (!tls13_handshake_read_action(ctx))
+			if (!tls13_handshake_recv_action(ctx))
 				return 0;
 		}
 		if (!tls13_handshake_advance_state_machine(ctx))
@@ -324,20 +334,20 @@ tls13_accept(struct tls13_ctx *ctx)
 int
 tls13_handshake_advance_state_machine(struct tls13_ctx *ctx)
 {
-	if (tls13_handshake_get_writer(ctx) == TLS13_HS_BOTH_WRITE)
+	if (tls13_handshake_get_sender(ctx) == TLS13_HS_BOTH_SEND)
 		return 0;
 	ctx->handshake.message_number++;
 	return 1;
 }
 
 int
-tls13_handshake_write_action(struct tls13_ctx *ctx)
+tls13_handshake_send_action(struct tls13_ctx *ctx)
 {
 	return 1;
 }
 
 int
-tls13_handshake_read_action(struct tls13_ctx *ctx)
+tls13_handshake_recv_action(struct tls13_ctx *ctx)
 {
 	return 1;
 }
