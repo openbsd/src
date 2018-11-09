@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.1 2018/11/07 19:43:12 beck Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.2 2018/11/09 23:57:19 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -137,45 +137,36 @@ uint8_t expected_extracted_master[] = {
 int main () {
 	struct tls13_secrets *secrets;
 
-	secrets = tls13_secrets_new(32);
+	if ((secrets = tls13_secrets_create(EVP_sha256(), 0)) == NULL)
+		FAIL("failed to create secrets\n");
 
-	if (tls13_derive_early_secrets(secrets, EVP_sha256(),
-	    secrets->zeros.data, secrets->zeros.len, &chello_hash))
-		FAIL("derive_early_secrets worked when it shouldn't\n");
-
-	tls13_secrets_init(secrets, 0);
 	secrets->insecure = 1; /* don't explicit_bzero when done */
 
-	if (tls13_derive_handshake_secrets(secrets, EVP_sha256(), ecdhe,
-	    32, &cshello_hash))
+	if (tls13_derive_handshake_secrets(secrets, ecdhe, 32, &cshello_hash))
 		FAIL("derive_handshake_secrets worked when it shouldn't\n");
-	if (tls13_derive_application_secrets(secrets, EVP_sha256(),
+	if (tls13_derive_application_secrets(secrets,
 	    &chello_hash))
 		FAIL("derive_application_secrets worked when it shouldn't\n");
 
-	if (!tls13_derive_early_secrets(secrets, EVP_sha256(),
+	if (!tls13_derive_early_secrets(secrets,
 	    secrets->zeros.data, secrets->zeros.len, &chello_hash))
 		FAIL("derive_early_secrets failed\n");
-	if (tls13_derive_early_secrets(secrets, EVP_sha256(),
+	if (tls13_derive_early_secrets(secrets,
 	    secrets->zeros.data, secrets->zeros.len, &chello_hash))
 		FAIL("derive_early_secrets worked when it shouldn't(2)\n");
 
-	if (!tls13_derive_handshake_secrets(secrets, EVP_sha256(), ecdhe,
-	    32, &cshello_hash))
+	if (!tls13_derive_handshake_secrets(secrets, ecdhe, 32, &cshello_hash))
 		FAIL("derive_handshake_secrets failed\n");
-	if (tls13_derive_handshake_secrets(secrets, EVP_sha256(), ecdhe,
-	    32, &cshello_hash))
+	if (tls13_derive_handshake_secrets(secrets, ecdhe, 32, &cshello_hash))
 		FAIL("derive_handshake_secrets worked when it shouldn't(2)\n");
 
 	/* XXX XXX this should get fixed when test vectors clarified */
 	memcpy(secrets->derived_handshake.data, expected_derived_handshake,
 	    32);
 	/* XXX fix hash here once test vector sorted */
-	if (!tls13_derive_application_secrets(secrets, EVP_sha256(),
-	    &chello_hash))
+	if (!tls13_derive_application_secrets(secrets, &chello_hash))
 		FAIL("derive_application_secrets failed\n");
-	if (tls13_derive_application_secrets(secrets, EVP_sha256(),
-	    &chello_hash))
+	if (tls13_derive_application_secrets(secrets, &chello_hash))
 		FAIL("derive_application_secrets worked when it "
 		    "shouldn't(2)\n");
 
@@ -236,5 +227,5 @@ int main () {
 	    expected_extracted_master, 32) != 0)
 		FAIL("extracted_master does not match\n");
 
-	return(failures);
+	return failures;
 }
