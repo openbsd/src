@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.13 2018/11/05 20:41:30 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.14 2018/11/09 03:17:24 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -15,6 +15,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef HEADER_SSL_TLSEXT_H
+#define HEADER_SSL_TLSEXT_H
+
+__BEGIN_HIDDEN_DECLS
 
 int tlsext_alpn_clienthello_needs(SSL *s);
 int tlsext_alpn_clienthello_build(SSL *s, CBB *cbb);
@@ -86,3 +91,7 @@ int tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert);
 
 int tlsext_serverhello_build(SSL *s, CBB *cbb);
 int tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+
+__END_HIDDEN_DECLS
+
+#endif
