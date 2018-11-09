@@ -1,7 +1,7 @@
-/* $OpenBSD: tls13_internal.h,v 1.4 2018/11/09 03:07:26 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.5 2018/11/09 23:56:20 jsing Exp $ */
 /*
- * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
- * Copyright (c) 2018, Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@ struct tls13_secret {
 
 /* RFC 8446 Section 7.1  Page 92 */
 struct tls13_secrets {
+	const EVP_MD *digest;
 	int resumption;
 	int init_done;
 	int early_done;
@@ -37,6 +38,7 @@ struct tls13_secrets {
 	int schedule_done;
 	int insecure; /* Set by tests */
 	struct tls13_secret zeros;
+	struct tls13_secret empty_hash;
 	struct tls13_secret extracted_early;
 	struct tls13_secret binder_key;
 	struct tls13_secret client_early_traffic;
@@ -53,18 +55,20 @@ struct tls13_secrets {
 	struct tls13_secret resumption_master;
 };
 
-struct tls13_secrets *tls13_secrets_new(size_t hash_length);
-void tls13_secrets_init(struct tls13_secrets *secrets, int resumption);
+struct tls13_secrets *tls13_secrets_create(const EVP_MD *digest,
+    int resumption);
 void tls13_secrets_destroy(struct tls13_secrets *secrets);
 
-int tls13_derive_early_secrets(struct tls13_secrets *secrets,
-    const EVP_MD *digest,uint8_t *psk, size_t psk_len,
+int tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
+    const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context);
+
+int tls13_derive_early_secrets(struct tls13_secrets *secrets, uint8_t *psk,
+    size_t psk_len, const struct tls13_secret *context);
 int tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
-    const EVP_MD *digest, const uint8_t *ecdhe, size_t ecdhe_len,
-    const struct tls13_secret *context);
+    const uint8_t *ecdhe, size_t ecdhe_len, const struct tls13_secret *context);
 int tls13_derive_application_secrets(struct tls13_secrets *secrets,
-    const EVP_MD *digest, const struct tls13_secret *context);
+    const struct tls13_secret *context);
 
 struct tls13_ctx;
 

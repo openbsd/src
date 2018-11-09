@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.3 2018/11/08 23:50:54 beck Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.4 2018/11/09 23:56:20 jsing Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +30,7 @@ tls13_secrets_destroy(struct tls13_secrets *secrets)
 
 	/* you can never be too sure :) */
 	freezero(secrets->zeros.data, secrets->zeros.len);
+	freezero(secrets->empty_hash.data, secrets->empty_hash.len);
 
 	freezero(secrets->extracted_early.data,
 	    secrets->extracted_early.len);
@@ -65,12 +66,17 @@ tls13_secrets_destroy(struct tls13_secrets *secrets)
 
 /*
  * Allocate a set of secrets for a key schedule using
- * a size of hash_length from RFC 8446 section 7.1
+ * a size of hash_length from RFC 8446 section 7.1.
  */
 struct tls13_secrets *
-tls13_secrets_new(size_t hash_length)
+tls13_secrets_create(const EVP_MD *digest, int resumption)
 {
 	struct tls13_secrets *secrets = NULL;
+	EVP_MD_CTX *mdctx = NULL;
+	unsigned int mdlen;
+	size_t hash_length;
+
+	hash_length = EVP_MD_size(digest);
 
 	if ((secrets = calloc(1, sizeof(struct tls13_secrets))) == NULL)
 		goto err;
@@ -78,6 +84,10 @@ tls13_secrets_new(size_t hash_length)
 	    NULL)
 		goto err;
 	secrets->zeros.len = hash_length;
+
+	if ((secrets->empty_hash.data = malloc(hash_length)) == NULL)
+		goto err;
+	secrets->empty_hash.len = hash_length;
 
 	if ((secrets->extracted_early.data = malloc(hash_length)) == NULL)
 		goto err;
@@ -130,20 +140,37 @@ tls13_secrets_new(size_t hash_length)
 		goto err;
 	secrets->resumption_master.len = hash_length;
 
+	/*
+	 * Calculate the hash of a zero-length string - this is needed during
+	 * the "derived" step for key extraction.
+	 */
+	if ((mdctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestInit_ex(mdctx, digest, NULL))
+		goto err;
+	if (!EVP_DigestUpdate(mdctx, secrets->zeros.data, 0))
+		goto err;
+	if (!EVP_DigestFinal_ex(mdctx, secrets->empty_hash.data, &mdlen))
+		goto err;
+	EVP_MD_CTX_free(mdctx);
+
+	if (secrets->empty_hash.len != mdlen)
+		goto err;
+
+	secrets->digest = digest;
+	secrets->resumption = resumption;
+	secrets->init_done = 1;
+
 	return secrets;
+
  err:
 	tls13_secrets_destroy(secrets);
+	EVP_MD_CTX_free(mdctx);
+
 	return NULL;
 }
 
-void
-tls13_secrets_init(struct tls13_secrets *secrets, int resumption)
-{
-	secrets->resumption = resumption;
-	secrets->init_done = 1;
-}
-
-static int
+int
 tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
     const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context)
@@ -173,6 +200,7 @@ tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
 
 	ret = HKDF_expand(out->data, out->len, digest, secret->data,
 	    secret->len, hkdf_label, hkdf_label_len);
+
 	free(hkdf_label);
 	return(ret);
  err:
@@ -188,9 +216,8 @@ tls13_derive_secret(struct tls13_secret *out, const EVP_MD *digest,
 	return tls13_hkdf_expand_label(out, digest, secret, label, context);
 }
 
-
 int
-tls13_derive_early_secrets(struct tls13_secrets *secrets,  const EVP_MD *digest,
+tls13_derive_early_secrets(struct tls13_secrets *secrets,
     uint8_t *psk, size_t psk_len, const struct tls13_secret *context)
 {
 	struct tls13_secret binder_context;
@@ -204,7 +231,7 @@ tls13_derive_early_secrets(struct tls13_secrets *secrets,  const EVP_MD *digest,
 	if ((mdctx = EVP_MD_CTX_new()) == NULL)
 		return 0;
 
-	if (!EVP_DigestInit_ex(mdctx, digest, NULL) ||
+	if (!EVP_DigestInit_ex(mdctx, secrets->digest, NULL) ||
 	    !EVP_DigestUpdate(mdctx, secrets->zeros.data, secrets->zeros.len) ||
 	    !EVP_DigestFinal_ex(mdctx, binder_context_data,
 		&binder_context_len)) {
@@ -220,29 +247,29 @@ tls13_derive_early_secrets(struct tls13_secrets *secrets,  const EVP_MD *digest,
 		return 0;
 
 	if (!HKDF_extract(secrets->extracted_early.data,
-	    &secrets->extracted_early.len, digest, psk, psk_len,
+	    &secrets->extracted_early.len, secrets->digest, psk, psk_len,
 	    secrets->zeros.data, secrets->zeros.len))
 		return 0;
 
 	if (secrets->extracted_early.len != secrets->zeros.len)
 		return 0;
 
-	if (!tls13_derive_secret(&secrets->binder_key,
-	    digest, &secrets->extracted_early,
+	if (!tls13_derive_secret(&secrets->binder_key, secrets->digest,
+	    &secrets->extracted_early,
 	    secrets->resumption ? "res binder" : "ext binder",
 	    &binder_context))
 		return 0;
-
 	if (!tls13_derive_secret(&secrets->client_early_traffic,
-	    digest, &secrets->extracted_early, "c e traffic", context))
+	    secrets->digest, &secrets->extracted_early, "c e traffic",
+	    context))
 		return 0;
-
 	if (!tls13_derive_secret(&secrets->early_exporter_master,
-	    digest, &secrets->extracted_early, "e exp master", context))
+	    secrets->digest, &secrets->extracted_early, "e exp master",
+	    context))
 		return 0;
-
 	if (!tls13_derive_secret(&secrets->derived_early,
-	    digest, &secrets->extracted_early, "derived", context))
+	    secrets->digest, &secrets->extracted_early, "derived",
+	    &secrets->empty_hash))
 		return 0;
 
 	/* RFC 8446 recommends */
@@ -255,7 +282,7 @@ tls13_derive_early_secrets(struct tls13_secrets *secrets,  const EVP_MD *digest,
 
 int
 tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
-    const EVP_MD *digest, const uint8_t *ecdhe, size_t ecdhe_len,
+    const uint8_t *ecdhe, size_t ecdhe_len,
     const struct tls13_secret *context)
 {
 	if (!secrets->init_done || !secrets->early_done ||
@@ -263,8 +290,8 @@ tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
 		return 0;
 
 	if (!HKDF_extract(secrets->extracted_handshake.data,
-	    &secrets->extracted_handshake.len,
-	    digest, ecdhe, ecdhe_len, secrets->derived_early.data,
+	    &secrets->extracted_handshake.len, secrets->digest,
+	    ecdhe, ecdhe_len, secrets->derived_early.data,
 	    secrets->derived_early.len))
 		return 0;
 
@@ -277,36 +304,40 @@ tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
 		    secrets->derived_early.len);
 
 	if (!tls13_derive_secret(&secrets->client_handshake_traffic,
-	    digest, &secrets->extracted_handshake, "c hs traffic", context))
+	    secrets->digest, &secrets->extracted_handshake, "c hs traffic",
+	    context))
 		return 0;
 	if (!tls13_derive_secret(&secrets->server_handshake_traffic,
-	    digest, &secrets->extracted_handshake, "s hs traffic", context))
+	    secrets->digest, &secrets->extracted_handshake, "s hs traffic",
+	    context))
 		return 0;
 	if (!tls13_derive_secret(&secrets->derived_handshake,
-	    digest, &secrets->extracted_handshake, "derived", context))
+	    secrets->digest, &secrets->extracted_handshake, "derived",
+	    context))
 		return 0;
 
 	/* RFC 8446 recommends */
 	if (!secrets->insecure)
 		explicit_bzero(secrets->extracted_handshake.data,
 		    secrets->extracted_handshake.len);
+
 	secrets->handshake_done = 1;
+
 	return 1;
 }
 
 int
 tls13_derive_application_secrets(struct tls13_secrets *secrets,
-    const EVP_MD *digest, const struct tls13_secret *context)
+    const struct tls13_secret *context)
 {
 	if (!secrets->init_done || !secrets->early_done ||
 	    !secrets->handshake_done || secrets->schedule_done)
 		return 0;
 
 	if (!HKDF_extract(secrets->extracted_master.data,
-		&secrets->extracted_master.len,
-		digest, secrets->zeros.data, secrets->zeros.len, // XXX ?
-		secrets->derived_handshake.data,
-		secrets->derived_handshake.len))
+	    &secrets->extracted_master.len, secrets->digest,
+	    secrets->zeros.data, secrets->zeros.len,
+	    secrets->derived_handshake.data, secrets->derived_handshake.len))
 		return 0;
 
 	if (secrets->extracted_master.len != secrets->zeros.len)
@@ -318,58 +349,52 @@ tls13_derive_application_secrets(struct tls13_secrets *secrets,
 		    secrets->derived_handshake.len);
 
 	if (!tls13_derive_secret(&secrets->client_application_traffic,
-	    digest, &secrets->extracted_master, "c ap traffic", context))
+	    secrets->digest, &secrets->extracted_master, "c ap traffic",
+	    context))
 		return 0;
 	if (!tls13_derive_secret(&secrets->server_application_traffic,
-	    digest, &secrets->extracted_master, "s ap traffic", context))
+	    secrets->digest, &secrets->extracted_master, "s ap traffic",
+	    context))
 		return 0;
 	if (!tls13_derive_secret(&secrets->exporter_master,
-	    digest, &secrets->extracted_master, "exp master", context))
+	    secrets->digest, &secrets->extracted_master, "exp master",
+	    context))
 		return 0;
 	if (!tls13_derive_secret(&secrets->resumption_master,
-	    digest, &secrets->extracted_master, "res master", context))
+	    secrets->digest, &secrets->extracted_master, "res master",
+	    context))
 		return 0;
 
 	/* RFC 8446 recommends */
 	if (!secrets->insecure)
 		explicit_bzero(secrets->extracted_master.data,
 		    secrets->extracted_master.len);
+
 	secrets->schedule_done = 1;
+
 	return 1;
 }
 
 int
-tls13_update_client_traffic_secret(struct tls13_secrets *secrets,
-    const EVP_MD *digest)
+tls13_update_client_traffic_secret(struct tls13_secrets *secrets)
 {
-	const struct tls13_secret empty = {
-		.data = "",
-		.len = 0,
-	};
-
 	if (!secrets->init_done || !secrets->early_done ||
 	    !secrets->handshake_done || !secrets->schedule_done)
 		return 0;
 
 	return tls13_hkdf_expand_label(&secrets->client_application_traffic,
-	    digest, &secrets->client_application_traffic, "traffic upd",
-	    &empty);
+	    secrets->digest, &secrets->client_application_traffic,
+	    "traffic upd", &secrets->empty_hash);
 }
 
 int
-tls13_update_server_traffic_secret(struct tls13_secrets *secrets,
-    const EVP_MD *digest)
+tls13_update_server_traffic_secret(struct tls13_secrets *secrets)
 {
-	const struct tls13_secret empty = {
-		.data = "",
-		.len = 0,
-	};
-
 	if (!secrets->init_done || !secrets->early_done ||
 	    !secrets->handshake_done || !secrets->schedule_done)
 		return 0;
 
 	return tls13_hkdf_expand_label(&secrets->server_application_traffic,
-	    digest, &secrets->server_application_traffic, "traffic upd",
-	    &empty);
+	    secrets->digest, &secrets->server_application_traffic,
+	    "traffic upd", &secrets->empty_hash);
 }
