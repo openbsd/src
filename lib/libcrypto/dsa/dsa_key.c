@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.28 2018/11/06 07:02:33 tb Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.29 2018/11/09 23:45:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,12 +82,12 @@ dsa_builtin_keygen(DSA *dsa)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
-	BIGNUM *pub_key = dsa->pub_key, *priv_key = dsa->priv_key;
+	BIGNUM *pub_key = NULL, *priv_key = NULL;
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if (priv_key == NULL) {
+	if ((priv_key = dsa->priv_key) == NULL) {
 		if ((priv_key = BN_new()) == NULL)
 			goto err;
 	}
@@ -95,7 +95,7 @@ dsa_builtin_keygen(DSA *dsa)
 	if (!bn_rand_interval(priv_key, BN_value_one(), dsa->q))
 		goto err;
 
-	if (pub_key == NULL) {
+	if ((pub_key = dsa->pub_key) == NULL) {
 		if ((pub_key = BN_new()) == NULL)
 			goto err;
 	}
