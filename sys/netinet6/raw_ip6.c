@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.132 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.133 2018/11/09 13:26:12 claudio Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		/* XXX rdomain support */
 		divert = pf_find_divert(m);
 		KASSERT(divert != NULL);
 		switch (divert->type) {

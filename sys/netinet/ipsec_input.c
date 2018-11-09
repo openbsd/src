@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.167 2018/09/14 23:40:10 mestre Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.168 2018/11/09 13:26:12 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -891,7 +891,6 @@ ah4_input(struct mbuf **mp, int *offp, int proto, int af)
 	return IPPROTO_DONE;
 }
 
-/* XXX rdomain */
 void
 ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
@@ -992,7 +991,6 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 	}
 }
 
-/* XXX rdomain */
 void
 udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
@@ -1049,7 +1047,6 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	}
 }
 
-/* XXX rdomain */
 void
 esp4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
