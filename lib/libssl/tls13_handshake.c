@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.2 2018/11/09 04:53:28 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.3 2018/11/09 04:54:42 jsing Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -287,7 +287,7 @@ tls13_connect(struct tls13_ctx *ctx)
 	ctx->mode = TLS13_HS_MODE_CLIENT;
 	
 	while (tls13_handshake_get_writer(ctx) != TLS13_HS_BOTH_WRITE) {
-		if (tls13_handshake_get_writer(ctx) == TLS13_HS_MODE_CLIENT) {
+		if (tls13_handshake_get_writer(ctx) == TLS13_HS_CLIENT_WRITES) {
 			if (!tls13_handshake_write_action(ctx))
 				return 0;
 		} else {
@@ -307,7 +307,7 @@ tls13_accept(struct tls13_ctx *ctx)
 	ctx->mode = TLS13_HS_MODE_SERVER;
 
 	while (tls13_handshake_get_writer(ctx) != TLS13_HS_BOTH_WRITE) {
-		if (tls13_handshake_get_writer(ctx) == TLS13_HS_MODE_CLIENT) {
+		if (tls13_handshake_get_writer(ctx) == TLS13_HS_SERVER_WRITES) {
 			if (!tls13_handshake_write_action(ctx))
 				return 0;
 		} else {
