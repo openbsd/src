@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.21 2018/11/06 07:02:33 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.22 2018/11/09 23:39:45 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -212,19 +212,20 @@ EC_KEY_generate_key(EC_KEY *eckey)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
-	BIGNUM *priv_key = eckey->priv_key, *order = NULL;
-	EC_POINT *pub_key = eckey->pub_key;
+	BIGNUM *priv_key = NULL, *order = NULL;
+	EC_POINT *pub_key = NULL;
 
 	if (!eckey || !eckey->group) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
+
 	if ((order = BN_new()) == NULL)
 		goto err;
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if (priv_key == NULL) {
+	if ((priv_key = eckey->priv_key) == NULL) {
 		if ((priv_key = BN_new()) == NULL)
 			goto err;
 	}
@@ -235,7 +236,7 @@ EC_KEY_generate_key(EC_KEY *eckey)
 	if (!bn_rand_interval(priv_key, BN_value_one(), order))
 		goto err;
 
-	if (pub_key == NULL) {
+	if ((pub_key = eckey->pub_key) == NULL) {
 		if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
 			goto err;
 	}
