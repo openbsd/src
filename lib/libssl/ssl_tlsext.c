@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.24 2018/11/05 20:41:30 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.25 2018/11/09 00:34:55 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include "bytestring.h"
 #include "ssl_tlsext.h"
+#include "ssl_sigalgs.h"
 
 /*
  * Supported Application-Layer Protocol Negotiation - RFC 7301
@@ -528,16 +529,14 @@ tlsext_sigalgs_clienthello_needs(SSL *s)
 int
 tlsext_sigalgs_clienthello_build(SSL *s, CBB *cbb)
 {
-	unsigned char *sigalgs_data;
-	size_t sigalgs_len;
 	CBB sigalgs;
-
-	tls12_get_req_sig_algs(s, &sigalgs_data, &sigalgs_len);
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-	if (!CBB_add_bytes(&sigalgs, sigalgs_data, sigalgs_len))
+
+	if (!ssl_sigalgs_build(&sigalgs))
 		return 0;
+
 	if (!CBB_flush(cbb))
 		return 0;
 

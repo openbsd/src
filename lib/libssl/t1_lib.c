@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.148 2018/11/08 20:55:18 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.149 2018/11/09 00:34:55 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,6 +119,7 @@
 #include "ssl_locl.h"
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
@@ -604,43 +605,6 @@ tls1_check_ec_server_key(SSL *s)
 	return tls1_check_ec_key(s, &curve_id, &comp_id);
 }
 
-/*
- * List of supported signature algorithms and hashes. Should make this
- * customisable at some point, for now include everything we support.
- */
-
-static unsigned char tls12_sigalgs[] = {
-	TLSEXT_hash_sha512, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
-#ifndef OPENSSL_NO_GOST
-	TLSEXT_hash_streebog_512, TLSEXT_signature_gostr12_512,
-#endif
-
-	TLSEXT_hash_sha384, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha384, TLSEXT_signature_ecdsa,
-
-	TLSEXT_hash_sha256, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
-
-#ifndef OPENSSL_NO_GOST
-	TLSEXT_hash_streebog_256, TLSEXT_signature_gostr12_256,
-	TLSEXT_hash_gost94, TLSEXT_signature_gostr01,
-#endif
-
-	TLSEXT_hash_sha224, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha224, TLSEXT_signature_ecdsa,
-
-	TLSEXT_hash_sha1, TLSEXT_signature_rsa,
-	TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
-};
-
-void
-tls12_get_req_sig_algs(SSL *s, unsigned char **sigalgs, size_t *sigalgs_len)
-{
-	*sigalgs = tls12_sigalgs;
-	*sigalgs_len = sizeof(tls12_sigalgs);
-}
-
 int
 ssl_check_clienthello_tlsext_early(SSL *s)
 {
@@ -1036,115 +1000,11 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	return 2;
 }
 
-/* Tables to translate from NIDs to TLS v1.2 ids */
-
-typedef struct {
-	int nid;
-	int id;
-} tls12_lookup;
-
-static tls12_lookup tls12_md[] = {
-	{NID_md5, TLSEXT_hash_md5},
-	{NID_sha1, TLSEXT_hash_sha1},
-	{NID_sha224, TLSEXT_hash_sha224},
-	{NID_sha256, TLSEXT_hash_sha256},
-	{NID_sha384, TLSEXT_hash_sha384},
-	{NID_sha512, TLSEXT_hash_sha512},
-	{NID_id_GostR3411_94, TLSEXT_hash_gost94},
-	{NID_id_tc26_gost3411_2012_256, TLSEXT_hash_streebog_256},
-	{NID_id_tc26_gost3411_2012_512, TLSEXT_hash_streebog_512}
-};
-
-static tls12_lookup tls12_sig[] = {
-	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
-	{EVP_PKEY_EC, TLSEXT_signature_ecdsa},
-	{EVP_PKEY_GOSTR01, TLSEXT_signature_gostr01},
-};
-
-static int
-tls12_find_id(int nid, tls12_lookup *table, size_t tlen)
-{
-	size_t i;
-	for (i = 0; i < tlen; i++) {
-		if (table[i].nid == nid)
-			return table[i].id;
-	}
-	return -1;
-}
-
-int
-tls12_get_hashid(const EVP_MD *md)
-{
-	if (md == NULL)
-		return -1;
-
-	return tls12_find_id(EVP_MD_type(md), tls12_md,
-	    sizeof(tls12_md) / sizeof(tls12_lookup));
-}
-
-int
-tls12_get_sigid(const EVP_PKEY *pk)
-{
-	if (pk == NULL)
-		return -1;
-
-	return tls12_find_id(pk->type, tls12_sig,
-	    sizeof(tls12_sig) / sizeof(tls12_lookup));
-}
-
-int
-tls12_get_hashandsig(CBB *cbb, const EVP_PKEY *pk, const EVP_MD *md)
-{
-	int hash_id, sig_id;
-
-	if ((hash_id = tls12_get_hashid(md)) == -1)
-		return 0;
-	if ((sig_id = tls12_get_sigid(pk)) == -1)
-		return 0;
-
-	if (!CBB_add_u8(cbb, hash_id))
-		return 0;
-	if (!CBB_add_u8(cbb, sig_id))
-		return 0;
-
-	return 1;
-}
-
-const EVP_MD *
-tls12_get_hash(unsigned char hash_alg)
-{
-	switch (hash_alg) {
-	case TLSEXT_hash_sha1:
-		return EVP_sha1();
-	case TLSEXT_hash_sha224:
-		return EVP_sha224();
-	case TLSEXT_hash_sha256:
-		return EVP_sha256();
-	case TLSEXT_hash_sha384:
-		return EVP_sha384();
-	case TLSEXT_hash_sha512:
-		return EVP_sha512();
-#ifndef OPENSSL_NO_GOST
-	case TLSEXT_hash_gost94:
-		return EVP_gostr341194();
-	case TLSEXT_hash_streebog_256:
-		return EVP_streebog256();
-	case TLSEXT_hash_streebog_512:
-		return EVP_streebog512();
-#endif
-	default:
-		return NULL;
-	}
-}
-
 /* Set preferred digest for each key type */
-
 int
 tls1_process_sigalgs(SSL *s, CBS *cbs)
 {
-	const EVP_MD *md;
 	CERT *c = s->cert;
-	int idx;
 
 	/* Extension ignored for inappropriate versions */
 	if (!SSL_USE_SIGALGS(s))
@@ -1153,53 +1013,38 @@ tls1_process_sigalgs(SSL *s, CBS *cbs)
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
 	c->pkeys[SSL_PKEY_ECC].digest = NULL;
+#ifndef OPENSSL_NO_GOST
 	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
-
+#endif
 	while (CBS_len(cbs) > 0) {
-		uint8_t hash_alg, sig_alg;
+		const EVP_MD *md;
+		uint16_t sig_alg;
+		const struct ssl_sigalg *sigalg;
 
-		if (!CBS_get_u8(cbs, &hash_alg) || !CBS_get_u8(cbs, &sig_alg))
+		if (!CBS_get_u16(cbs, &sig_alg))
 			return 0;
 
-		switch (sig_alg) {
-		case TLSEXT_signature_rsa:
-			idx = SSL_PKEY_RSA_SIGN;
-			break;
-		case TLSEXT_signature_ecdsa:
-			idx = SSL_PKEY_ECC;
-			break;
-		case TLSEXT_signature_gostr01:
-		case TLSEXT_signature_gostr12_256:
-		case TLSEXT_signature_gostr12_512:
-			idx = SSL_PKEY_GOST01;
-			break;
-		default:
-			continue;
+		if ((sigalg = ssl_sigalg_lookup(sig_alg)) != NULL &&
+		    c->pkeys[sigalg->pkey_idx].digest == NULL) {
+			md = sigalg->md();
+			c->pkeys[sigalg->pkey_idx].digest = md;
+			if (sigalg->pkey_idx == SSL_PKEY_RSA_SIGN)
+				c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
 		}
-
-		if (c->pkeys[idx].digest == NULL) {
-			md = tls12_get_hash(hash_alg);
-			if (md) {
-				c->pkeys[idx].digest = md;
-				if (idx == SSL_PKEY_RSA_SIGN)
-					c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
-			}
-		}
-
 	}
 
 	/*
 	 * Set any remaining keys to default values. NOTE: if alg is not
 	 * supported it stays as NULL.
 	 */
-	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest) {
+	if (c->pkeys[SSL_PKEY_RSA_SIGN].digest == NULL)
 		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
+	if (c->pkeys[SSL_PKEY_RSA_ENC].digest == NULL)
 		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
-	}
-	if (!c->pkeys[SSL_PKEY_ECC].digest)
+	if (c->pkeys[SSL_PKEY_ECC].digest == NULL)
 		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 #ifndef OPENSSL_NO_GOST
-	if (!c->pkeys[SSL_PKEY_GOST01].digest)
+	if (c->pkeys[SSL_PKEY_GOST01].digest == NULL)
 		c->pkeys[SSL_PKEY_GOST01].digest = EVP_gostr341194();
 #endif
 	return 1;

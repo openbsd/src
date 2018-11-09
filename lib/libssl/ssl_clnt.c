@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.37 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.38 2018/11/09 00:34:55 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,6 +170,7 @@
 #endif
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
 static int ca_dn_cmp(const X509_NAME * const *a, const X509_NAME * const *b);
@@ -1431,9 +1432,8 @@ ssl3_get_server_key_exchange(SSL *s)
 	EVP_PKEY *pkey = NULL;
 	EVP_MD_CTX md_ctx;
 	const unsigned char *param;
-	uint8_t hash_id, sig_id;
 	long n, alg_k, alg_a;
-	int al, ok, sigalg;
+	int al, ok;
 	size_t param_len;
 
 	EVP_MD_CTX_init(&md_ctx);
@@ -1506,24 +1506,16 @@ ssl3_get_server_key_exchange(SSL *s)
 	/* if it was signed, check the signature */
 	if (pkey != NULL) {
 		if (SSL_USE_SIGALGS(s)) {
-			if (!CBS_get_u8(&cbs, &hash_id))
-				goto truncated;
-			if (!CBS_get_u8(&cbs, &sig_id))
-				goto truncated;
+			uint16_t sigalg;
 
-			if ((md = tls12_get_hash(hash_id)) == NULL) {
+			if (!CBS_get_u16(&cbs, &sigalg))
+				goto truncated;
+			if ((md = ssl_sigalg_md(sigalg)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-
-			/* Check key type is consistent with signature. */
-			if ((sigalg = tls12_get_sigid(pkey)) == -1) {
-				/* Should never happen */
-				SSLerror(s, ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			if (sigalg != sig_id) {
+			if (!ssl_sigalg_pkey_check(sigalg, pkey)) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
@@ -2409,10 +2401,13 @@ ssl3_send_client_verify(SSL *s)
 		 * using agreed digest and cached handshake records.
 		 */
 		if (SSL_USE_SIGALGS(s)) {
-			md = s->cert->key->digest;
+			uint16_t sigalg;
 
+			md = s->cert->key->digest;
 			if (!tls1_transcript_data(s, &hdata, &hdatalen) ||
-			    !tls12_get_hashandsig(&cert_verify, pkey, md)) {
+			    (sigalg = ssl_sigalg_value(pkey, md)) ==
+			    SIGALG_NONE ||
+			    !CBB_add_u16(&cert_verify, sigalg)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}

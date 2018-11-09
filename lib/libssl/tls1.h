@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.36 2018/11/07 01:53:36 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.37 2018/11/09 00:34:55 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -294,29 +294,6 @@ extern "C" {
 #define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime	1
 #define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2	2
 #define TLSEXT_ECPOINTFORMAT_last			2
-
-/* Signature and hash algorithms from RFC 5246. */
-
-#define TLSEXT_signature_anonymous			0
-#define TLSEXT_signature_rsa				1
-#define TLSEXT_signature_dsa				2
-#define TLSEXT_signature_ecdsa				3
-/* FIXME IANA */
-#define TLSEXT_signature_gostr01			237
-#define TLSEXT_signature_gostr12_256			238
-#define TLSEXT_signature_gostr12_512			239
-
-#define TLSEXT_hash_none				0
-#define TLSEXT_hash_md5					1
-#define TLSEXT_hash_sha1				2
-#define TLSEXT_hash_sha224				3
-#define TLSEXT_hash_sha256				4
-#define TLSEXT_hash_sha384				5
-#define TLSEXT_hash_sha512				6
-/* FIXME IANA */
-#define TLSEXT_hash_gost94				237
-#define TLSEXT_hash_streebog_256			238
-#define TLSEXT_hash_streebog_512			239
 
 #define TLSEXT_MAXLEN_host_name 255
 

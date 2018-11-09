@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.51 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.52 2018/11/09 00:34:55 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,6 +166,7 @@
 #include <openssl/x509.h>
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
 int
@@ -1545,7 +1546,10 @@ ssl3_send_server_key_exchange(SSL *s)
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
-				if (!tls12_get_hashandsig(&server_kex, pkey, md)) {
+				uint16_t sigalg;
+				if ((sigalg = ssl_sigalg_value(pkey, md)) ==
+				    SIGALG_NONE ||
+				    !CBB_add_u16(&server_kex, sigalg)) {
 					/* Should never happen */
 					al = SSL_AD_INTERNAL_ERROR;
 					SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -1629,14 +1633,9 @@ ssl3_send_certificate_request(SSL *s)
 			goto err;
 
 		if (SSL_USE_SIGALGS(s)) {
-			unsigned char *sigalgs_data;
-			size_t sigalgs_len;
-
-			tls12_get_req_sig_algs(s, &sigalgs_data, &sigalgs_len);
-
 			if (!CBB_add_u16_length_prefixed(&cert_request, &sigalgs))
 				goto err;
-			if (!CBB_add_bytes(&sigalgs, sigalgs_data, sigalgs_len))
+			if (!ssl_sigalgs_build(&sigalgs))
 				goto err;
 		}
 
@@ -2089,8 +2088,7 @@ ssl3_get_cert_verify(SSL *s)
 	EVP_PKEY *pkey = NULL;
 	X509 *peer = NULL;
 	EVP_MD_CTX mctx;
-	uint8_t hash_id, sig_id;
-	int al, ok, sigalg, verify;
+	int al, ok, verify;
 	const unsigned char *hdata;
 	size_t hdatalen;
 	int type = 0;
@@ -2157,24 +2155,16 @@ ssl3_get_cert_verify(SSL *s)
 			goto err;
 	} else {
 		if (SSL_USE_SIGALGS(s)) {
-			if (!CBS_get_u8(&cbs, &hash_id))
-				goto truncated;
-			if (!CBS_get_u8(&cbs, &sig_id))
-				goto truncated;
+			uint16_t sigalg;
 
-			if ((md = tls12_get_hash(hash_id)) == NULL) {
+			if (!CBS_get_u16(&cbs, &sigalg))
+				goto truncated;
+			if ((md = ssl_sigalg_md(sigalg)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-
-			/* Check key type is consistent with signature. */
-			if ((sigalg = tls12_get_sigid(pkey)) == -1) {
-				/* Should never happen */
-				SSLerror(s, ERR_R_INTERNAL_ERROR);
-				goto err;
-			}
-			if (sigalg != sig_id) {
+			if (!ssl_sigalg_pkey_check(sigalg, pkey)) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
