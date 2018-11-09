@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.21 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.22 2018/11/09 14:14:31 claudio Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -603,7 +603,7 @@ vte_encap(struct vte_softc *sc, struct mbuf **m_head)
 	copy = 0;
 	if (m->m_next != NULL)
 		copy++;
-	if (padlen > 0 && (padlen > M_TRAILINGSPACE(m)))
+	if (padlen > 0 && (padlen > m_trailingspace(m)))
 		copy++;
 	if (copy != 0) {
 		/* Avoid expensive m_defrag(9) and do deep copy. */

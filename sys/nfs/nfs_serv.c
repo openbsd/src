@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.116 2018/06/13 14:57:24 visa Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.117 2018/11/09 14:14:32 claudio Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -596,7 +596,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		i = 0;
 		m = m2 = info.nmi_mb;
 		while (left > 0) {
-			siz = min(M_TRAILINGSPACE(m), left);
+			siz = min(m_trailingspace(m), left);
 			if (siz > 0) {
 				left -= siz;
 				i++;
@@ -619,7 +619,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		while (left > 0) {
 			if (m == NULL)
 				panic("nfsrv_read iov");
-			siz = min(M_TRAILINGSPACE(m), left);
+			siz = min(m_trailingspace(m), left);
 			if (siz > 0) {
 				iv->iov_base = mtod(m, caddr_t) + m->m_len;
 				iv->iov_len = siz;

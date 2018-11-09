@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.25 2018/08/09 14:23:50 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.26 2018/11/09 14:14:31 claudio Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1452,7 +1452,7 @@ bwfm_sdio_txctl(struct bwfm_softc *bwfm, void *arg)
 	struct mbuf *m;
 
 	MGET(m, M_DONTWAIT, MT_CONTROL);
-	if (m == NULL || M_TRAILINGSPACE(m) < ctl->len) {
+	if (m == NULL || m_trailingspace(m) < ctl->len) {
 		free(ctl->buf, M_TEMP, ctl->len);
 		free(ctl, M_TEMP, sizeof(*ctl));
 		return 1;

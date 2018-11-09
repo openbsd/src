@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.215 2018/05/21 15:52:22 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.216 2018/11/09 14:14:32 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1180,7 +1180,7 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 		return NULL;
 
 	n->m_len = 0;
-	if (elen >= M_TRAILINGSPACE(n)) {
+	if (elen >= m_trailingspace(n)) {
 		m_free(n);
 		return NULL;
 	}

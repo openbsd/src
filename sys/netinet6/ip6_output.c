@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.239 2018/08/28 15:15:02 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.240 2018/11/09 14:14:32 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -897,7 +897,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 		struct ip6_hbh *hbh;
 
 		mopt = exthdrs->ip6e_hbh;
-		if (M_TRAILINGSPACE(mopt) < JUMBOOPTLEN) {
+		if (m_trailingspace(mopt) < JUMBOOPTLEN) {
 			/*
 			 * XXX assumption:
 			 * - exthdrs->ip6e_hbh is not referenced from places
@@ -985,7 +985,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 		;
 
 	if ((mlast->m_flags & M_EXT) == 0 &&
-	    M_TRAILINGSPACE(mlast) >= sizeof(struct ip6_frag)) {
+	    m_trailingspace(mlast) >= sizeof(struct ip6_frag)) {
 		/* use the trailing space of the last mbuf for the fragment hdr */
 		*frghdrp = (struct ip6_frag *)(mtod(mlast, caddr_t) +
 		    mlast->m_len);

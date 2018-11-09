@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.126 2018/09/13 19:53:58 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.127 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ send:
 		}
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
-		if (len <= M_TRAILINGSPACE(m)) {
+		if (len <= m_trailingspace(m)) {
 			m_copydata(so->so_snd.sb_mb, off, (int) len,
 			    mtod(m, caddr_t) + hdrlen);
 			m->m_len += len;

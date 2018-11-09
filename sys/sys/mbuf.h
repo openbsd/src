@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.238 2018/09/10 16:14:08 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.239 2018/11/09 14:14:32 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -365,18 +365,6 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 #define	M_READONLY(m)							\
 	(((m)->m_flags & M_EXT) != 0 &&					\
 	  (((m)->m_flags & M_EXTWR) == 0 || MCLISREFERENCED(m)))
-
-/*
- * Compute the amount of space available
- * before the current start of data in an mbuf.
- */
-#define	M_LEADINGSPACE(m) m_leadingspace(m)
-
-/*
- * Compute the amount of space available
- * after the end of data in an mbuf.
- */
-#define	M_TRAILINGSPACE(m) m_trailingspace(m)
 
 /*
  * Arrange to prepend space of size plen to mbuf m.

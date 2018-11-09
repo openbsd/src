@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.387 2018/05/17 05:17:44 yasuoka Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.388 2018/11/09 14:14:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3909,7 +3909,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 		 */
 
 		/* Internal frag. If fits in prev, copy it there. */
-		if (prev && M_TRAILINGSPACE(prev) >= m->m_len) {
+		if (prev && m_trailingspace(prev) >= m->m_len) {
 			bcopy(m->m_data, prev->m_data+prev->m_len, mlen);
 			prev->m_len += mlen;
 			m->m_len = 0;
@@ -3918,7 +3918,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m = prev;
 			continue;
 		} else if (m->m_next != NULL &&
-			   M_TRAILINGSPACE(m) >= shortfall &&
+			   m_trailingspace(m) >= shortfall &&
 			   m->m_next->m_len >= (8 + shortfall)) {
 			/* m is writable and have enough data in next, pull up. */
 
@@ -3989,7 +3989,7 @@ bge_cksum_pad(struct mbuf *m)
 	struct mbuf *last;
 
 	/* If there's only the packet-header and we can pad there, use it. */
-	if (m->m_pkthdr.len == m->m_len && M_TRAILINGSPACE(m) >= padlen) {
+	if (m->m_pkthdr.len == m->m_len && m_trailingspace(m) >= padlen) {
 		last = m;
 	} else {
 		/*
@@ -3997,7 +3997,7 @@ bge_cksum_pad(struct mbuf *m)
 		 * pad there, or append a new mbuf and pad it.
 		 */
 		for (last = m; last->m_next != NULL; last = last->m_next);
-		if (M_TRAILINGSPACE(last) < padlen) {
+		if (m_trailingspace(last) < padlen) {
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.97 2018/10/29 12:12:27 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.98 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -884,9 +884,9 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 			continue;
 		}
 		if (n && (n->m_flags & M_EOR) == 0 &&
-		    /* M_TRAILINGSPACE() checks buffer writeability */
+		    /* m_trailingspace() checks buffer writeability */
 		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
-		    m->m_len <= M_TRAILINGSPACE(n) &&
+		    m->m_len <= m_trailingspace(n) &&
 		    n->m_type == m->m_type) {
 			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    m->m_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.134 2018/07/09 10:58:21 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.135 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -813,7 +813,7 @@ unp_internalize(struct mbuf *control, struct proc *p)
 morespace:
 	neededspace = CMSG_SPACE(nfds * sizeof(struct fdpass)) -
 	    control->m_len;
-	if (neededspace > M_TRAILINGSPACE(control)) {
+	if (neededspace > m_trailingspace(control)) {
 		char *tmp;
 		/* if we already have a cluster, the message is just too big */
 		if (control->m_flags & M_EXT)
@@ -1089,7 +1089,7 @@ unp_nam2sun(struct mbuf *nam, struct sockaddr_un **sun, size_t *pathlen)
 	if (len == sizeof((*sun)->sun_path))
 		return EINVAL;
 	if (len == size) {
-		if (M_TRAILINGSPACE(nam) == 0)
+		if (m_trailingspace(nam) == 0)
 			return EINVAL;
 		nam->m_len++;
 		(*sun)->sun_len++;
