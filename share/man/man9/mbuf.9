@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.114 2018/09/10 16:14:07 bluhm Exp $
+.\"     $OpenBSD: mbuf.9,v 1.115 2018/11/09 14:17:13 claudio Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2018 $
+.Dd $Mdocdate: November 9 2018 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -63,8 +63,8 @@
 .Nm M_ALIGN ,
 .Nm MH_ALIGN ,
 .Nm M_READONLY ,
-.Nm M_LEADINGSPACE ,
-.Nm M_TRAILINGSPACE ,
+.Nm m_leadingspace ,
+.Nm m_trailingspace ,
 .Nm mtod ,
 .Nm m_dup_pkt ,
 .Nm m_dup_pkthdr
@@ -133,8 +133,10 @@
 .Fn M_ALIGN "struct mbuf *m" "int len"
 .Fn MH_ALIGN "struct mbuf *m" "int len"
 .Fn M_READONLY "struct mbuf *m"
-.Fn M_LEADINGSPACE "struct mbuf *m"
-.Fn M_TRAILINGSPACE "struct mbuf *m"
+.Ft int
+.Fn m_leadingspace "struct mbuf *m"
+.Ft int
+.Fn m_trailingspace "struct mbuf *m"
 .Ft struct mbuf *
 .Fn m_dup_pkt "struct mbuf *m" "u_int adj" "int how"
 .Ft int
@@ -523,7 +525,11 @@ See
 for a description of
 .Fa how .
 .It Fn m_prepend "struct mbuf *m" "int len" "int how"
-Allocate a new mbuf and prepend it to the mbuf chain pointed to by
+Prepend space of size
+.Fa plen
+to the mbuf pointed to by
+.Fa m .
+If necessary allocate a new mbuf and prepend it to the mbuf chain pointed to by
 .Fa m .
 If
 .Fa m
@@ -537,12 +543,6 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.Pp
-.Fn m_prepend
-should never be called directly.
-Use
-.Fn M_PREPEND
-instead.
 .It Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 Prepend space of size
 .Fa plen
@@ -771,14 +771,20 @@ Check if the data of the mbuf pointed to by
 is read-only.
 This is true for non-cluster external storage and for clusters that
 are being referenced by more than one mbuf.
-.It Fn M_LEADINGSPACE "struct mbuf *m"
+.It Fn m_leadingspace "struct mbuf *m"
 Compute the amount of space available before the current start of data
 in the mbuf pointed to by
 .Fa m .
-.It Fn M_TRAILINGSPACE "struct mbuf *m"
+If the data of the mbuf pointed to by
+.Fa m
+is read-only then 0 is retuned.
+.It Fn m_trailingspace "struct mbuf *m"
 Compute the amount of space available after the end of data in the
 mbuf pointed to by
 .Fa m .
+If the data of the mbuf pointed to by
+.Fa m
+is read-only then 0 is retuned.
 .It Fn m_dup_pkt "struct mbuf *m" "u_int adj" "int how"
 Allocate a new mbuf and storage and copy the packet data and header,
 including mbuf tags, from
