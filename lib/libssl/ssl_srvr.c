@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.53 2018/11/09 05:02:53 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.54 2018/11/09 05:43:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2159,7 +2159,8 @@ ssl3_get_cert_verify(SSL *s)
 
 			if (!CBS_get_u16(&cbs, &sigalg))
 				goto truncated;
-			if ((md = ssl_sigalg_md(sigalg)) == NULL) {
+			if ((md = ssl_sigalg_md(sigalg, tls12_sigalgs,
+			    tls12_sigalgs_len)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;

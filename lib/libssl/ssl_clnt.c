@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.38 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.39 2018/11/09 05:43:39 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1510,7 +1510,8 @@ ssl3_get_server_key_exchange(SSL *s)
 
 			if (!CBS_get_u16(&cbs, &sigalg))
 				goto truncated;
-			if ((md = ssl_sigalg_md(sigalg)) == NULL) {
+			if ((md = ssl_sigalg_md(sigalg, tls12_sigalgs,
+			    tls12_sigalgs_len)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
