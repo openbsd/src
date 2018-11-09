@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2018/11/09 19:24:50 tb Exp $
+#	$OpenBSD: Makefile,v 1.34 2018/11/09 23:44:32 bluhm Exp $
 
 SUBDIR += aead
 SUBDIR += aeswrap
@@ -45,6 +45,8 @@ SUBDIR += sha512
 SUBDIR += utf8
 SUBDIR += wycheproof
 SUBDIR += x509
+# botan tests take 50 seconds, move to the end to fail early in other tests
+SUBDIR += botan
 
 install:
 
