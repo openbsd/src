@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.50 2018/11/08 14:06:09 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.51 2018/11/09 18:39:34 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -309,7 +309,7 @@ priv_exec(int argc, char *argv[])
 				err(1, "unveil");
 			if (unveil("/etc/rpc", "r") == -1)
 				err(1, "unveil");
-			if (pledge("stdio rpath inet dns recvfd bpf", NULL) == -1)
+			if (pledge("stdio rpath dns bpf", NULL) == -1)
 				err(1, "pledge");
 
 			break;
