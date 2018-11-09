@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.197 2018/11/06 20:39:19 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.198 2018/11/09 04:05:14 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -137,7 +137,7 @@ void	set_common_sockopts(int, int);
 int	process_tos_opt(char *, int *);
 int	process_tls_opt(char *, int *);
 void	save_peer_cert(struct tls *_tls_ctx, FILE *_fp);
-void	report_connect(const struct sockaddr *, socklen_t, char *);
+void	report_sock(const char *, const struct sockaddr *, socklen_t, char *);
 void	report_tls(struct tls *tls_ctx, char * host);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
@@ -596,7 +596,8 @@ main(int argc, char *argv[])
 					err(1, "connect");
 
 				if (vflag)
-					report_connect((struct sockaddr *)&z, len, NULL);
+					report_sock("Connection received",
+					    (struct sockaddr *)&z, len, NULL);
 
 				readwrite(s, NULL);
 			} else {
@@ -611,7 +612,8 @@ main(int argc, char *argv[])
 					err(1, "accept");
 				}
 				if (vflag)
-					report_connect((struct sockaddr *)&cliaddr, len,
+					report_sock("Connection received",
+					    (struct sockaddr *)&cliaddr, len,
 					    family == AF_UNIX ? host : NULL);
 				if ((usetls) &&
 				    (tls_cctx = tls_setup_server(tls_ctx, connfd, host)))
@@ -754,6 +756,8 @@ unix_bind(char *path, int flags)
 		errno = save_errno;
 		return -1;
 	}
+	if (vflag)
+		report_sock("Bound", NULL, 0, path);
 
 	return s;
 }
@@ -890,13 +894,16 @@ int
 unix_listen(char *path)
 {
 	int s;
+
 	if ((s = unix_bind(path, 0)) < 0)
 		return -1;
-
 	if (listen(s, 5) < 0) {
 		close(s);
 		return -1;
 	}
+	if (vflag)
+		report_sock("Listening", NULL, 0, path);
+
 	return s;
 }
 
@@ -1036,6 +1043,16 @@ local_listen(const char *host, const char *port, struct addrinfo hints)
 	if (!uflag && s != -1) {
 		if (listen(s, 1) < 0)
 			err(1, "listen");
+	}
+	if (vflag && s != -1) {
+		struct sockaddr_storage ss;
+		socklen_t len;
+
+		len = sizeof(ss);
+		if (getsockname(s, (struct sockaddr *)&ss, &len) == -1)
+			err(1, "getsockname");
+		report_sock(uflag ? "Bound" : "Listening",
+		    (struct sockaddr *)&ss, len, NULL);
 	}
 
 	freeaddrinfo(res0);
@@ -1689,34 +1706,30 @@ report_tls(struct tls * tls_ctx, char * host)
 }
 
 void
-report_connect(const struct sockaddr *sa, socklen_t salen, char *path)
+report_sock(const char *msg, const struct sockaddr *sa, socklen_t salen,
+    char *path)
 {
-	char remote_host[NI_MAXHOST];
-	char remote_port[NI_MAXSERV];
+	char host[NI_MAXHOST], port[NI_MAXSERV];
 	int herr;
 	int flags = NI_NUMERICSERV;
 
 	if (path != NULL) {
-		fprintf(stderr, "Connection on %s received!\n", path);
+		fprintf(stderr, "%s on %s\n", msg, path);
 		return;
 	}
 
 	if (nflag)
 		flags |= NI_NUMERICHOST;
 
-	if ((herr = getnameinfo(sa, salen,
-	    remote_host, sizeof(remote_host),
-	    remote_port, sizeof(remote_port),
-	    flags)) != 0) {
+	if ((herr = getnameinfo(sa, salen, host, sizeof(host),
+	    port, sizeof(port), flags)) != 0) {
 		if (herr == EAI_SYSTEM)
 			err(1, "getnameinfo");
 		else
 			errx(1, "getnameinfo: %s", gai_strerror(herr));
 	}
 
-	fprintf(stderr,
-	    "Connection from %s %s "
-	    "received!\n", remote_host, remote_port);
+	fprintf(stderr, "%s on %s %s\n", msg, host, port);
 }
 
 void
