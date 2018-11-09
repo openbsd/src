@@ -1,51 +1,50 @@
-#	$OpenBSD: Makefile,v 1.32 2018/07/25 18:04:09 jsing Exp $
+#	$OpenBSD: Makefile,v 1.33 2018/11/09 19:24:50 tb Exp $
 
-SUBDIR= \
-	aead \
-	aeswrap \
-	asn1 \
-	base64 \
-	bf \
-	bio \
-	bn \
-	cast \
-	chacha \
-	cts128 \
-	curve25519 \
-	des \
-	dh \
-	dsa \
-	ec \
-	ecdh \
-	ecdsa \
-	engine \
-	evp \
-	exp \
-	free \
-	gcm128 \
-	gost \
-	hkdf \
-	hmac \
-	idea \
-	ige \
-	init \
-	md4 \
-	md5 \
-	pbkdf2 \
-	pkcs7 \
-	poly1305 \
-	rand \
-	rc2 \
-	rc4 \
-	rmd \
-	rsa \
-	sha1 \
-	sha2 \
-	sha256 \
-	sha512 \
-	utf8 \
-	wycheproof \
-	x509
+SUBDIR += aead
+SUBDIR += aeswrap
+SUBDIR += asn1
+SUBDIR += base64
+SUBDIR += bf
+SUBDIR += bio
+SUBDIR += bn
+SUBDIR += cast
+SUBDIR += chacha
+SUBDIR += cts128
+SUBDIR += curve25519
+SUBDIR += des
+SUBDIR += dh
+SUBDIR += dsa
+SUBDIR += ec
+SUBDIR += ecdh
+SUBDIR += ecdsa
+SUBDIR += engine
+SUBDIR += evp
+SUBDIR += exp
+SUBDIR += free
+SUBDIR += gcm128
+SUBDIR += gost
+SUBDIR += hkdf
+SUBDIR += hmac
+SUBDIR += idea
+SUBDIR += ige
+SUBDIR += init
+SUBDIR += md4
+SUBDIR += md5
+SUBDIR += pbkdf2
+SUBDIR += pkcs7
+SUBDIR += poly1305
+SUBDIR += rand
+SUBDIR += rc2
+SUBDIR += rc4
+SUBDIR += rmd
+SUBDIR += rsa
+SUBDIR += sha1
+SUBDIR += sha2
+SUBDIR += sha256
+SUBDIR += sha512
+SUBDIR += utf8
+SUBDIR += wycheproof
+SUBDIR += x509
 
 install:
 
