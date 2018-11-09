@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.51 2018/11/08 18:13:14 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.52 2018/11/09 03:42:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -899,10 +899,10 @@ extern const ASN1_ITEM NETSCAPE_X509_it;
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 
-int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len);
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, const unsigned char *data, int len);
 int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data,
     int max_len);
-int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
+int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, const unsigned char *data,
     int len);
 int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
     unsigned char *data, int max_len);

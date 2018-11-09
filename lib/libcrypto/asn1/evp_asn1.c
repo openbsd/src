@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.21 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.22 2018/11/09 03:42:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 
 int
-ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
+ASN1_TYPE_set_octetstring(ASN1_TYPE *a, const unsigned char *data, int len)
 {
 	ASN1_STRING *os;
 
@@ -127,7 +127,7 @@ const ASN1_ITEM ASN1_INT_OCTETSTRING_it = {
 };
 
 int
-ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
+ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, const unsigned char *data,
     int len)
 {
 	ASN1_int_octetstring *ios;
