@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.115 2018/11/09 14:17:13 claudio Exp $
+.\"     $OpenBSD: mbuf.9,v 1.116 2018/11/09 19:04:15 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -777,14 +777,14 @@ in the mbuf pointed to by
 .Fa m .
 If the data of the mbuf pointed to by
 .Fa m
-is read-only then 0 is retuned.
+is read-only then 0 is returned.
 .It Fn m_trailingspace "struct mbuf *m"
 Compute the amount of space available after the end of data in the
 mbuf pointed to by
 .Fa m .
 If the data of the mbuf pointed to by
 .Fa m
-is read-only then 0 is retuned.
+is read-only then 0 is returned.
 .It Fn m_dup_pkt "struct mbuf *m" "u_int adj" "int how"
 Allocate a new mbuf and storage and copy the packet data and header,
 including mbuf tags, from
