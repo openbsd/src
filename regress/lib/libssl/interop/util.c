@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2018/11/07 06:29:26 bluhm Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2018/11/09 06:30:41 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -132,4 +132,14 @@ err_ssl(int eval, const char *fmt, ...)
 	va_start(ap, fmt);
 	verrx(eval, fmt, ap);
 	va_end(ap);
+}
+
+int
+verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+	printf("verify: %s\n", preverify_ok ? "pass" : "fail");
+	if (fflush(stdout) != 0)
+		err(1, "fflush stdout");
+
+	return preverify_ok;
 }

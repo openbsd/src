@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 2018/11/07 19:09:01 bluhm Exp $	*/
+/*	$OpenBSD: server.c,v 1.4 2018/11/09 06:30:41 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -34,7 +34,8 @@ void __dead usage(void);
 void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: server [host port]");
+	fprintf(stderr,
+	    "usage: server [-vv] [-C CA] [-c crt -k key] [host port]");
 	exit(2);
 }
 
@@ -46,22 +47,46 @@ main(int argc, char *argv[])
 	SSL *ssl;
 	BIO *bio;
 	SSL_SESSION *session;
-	int error;
-	char buf[256];
-	char *crt, *key, *host_port, *host = "127.0.0.1", *port = "0";
+	int error, verify = 0;
+	char buf[256], ch;
+	char *ca = NULL, *crt = NULL, *key = NULL;
+	char *host_port, *host = "127.0.0.1", *port = "0";
 
-	if (argc == 3) {
-		host = argv[1];
-		port = argv[2];
-	} else if (argc != 1) {
+	while ((ch = getopt(argc, argv, "C:c:k:v")) != -1) {
+		switch (ch) {
+		case 'C':
+			ca = optarg;
+			break;
+		case 'c':
+			crt = optarg;
+			break;
+		case 'k':
+			key = optarg;
+			break;
+		case 'v':
+			/* use twice to force client cert */
+			verify++;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (argc == 2) {
+		host = argv[0];
+		port = argv[1];
+	} else if (argc != 0) {
 		usage();
 	}
 	if (asprintf(&host_port, strchr(host, ':') ? "[%s]:%s" : "%s:%s",
 	    host, port) == -1)
 		err(1, "asprintf host port");
-	if (asprintf(&crt, "%s.crt", host) == -1)
+	if ((crt == NULL && key != NULL) || (crt != NULL && key == NULL))
+		errx(1, "certificate and private key must be used together");
+	if (crt == NULL && asprintf(&crt, "%s.crt", host) == -1)
 		err(1, "asprintf crt");
-	if (asprintf(&key, "%s.key", host) == -1)
+	if (key == NULL && asprintf(&key, "%s.key", host) == -1)
 		err(1, "asprintf key");
 
 	SSL_library_init();
@@ -94,6 +119,23 @@ main(int argc, char *argv[])
 	if (SSL_CTX_check_private_key(ctx) <= 0)
 		err_ssl(1, "SSL_CTX_check_private_key");
 
+	/* request client certificate and verify it */
+	if (ca != NULL) {
+		STACK_OF(X509_NAME) *x509stack;
+
+		x509stack = SSL_load_client_CA_file(ca);
+		if (x509stack == NULL)
+			err_ssl(1, "SSL_load_client_CA_file");
+		SSL_CTX_set_client_CA_list(ctx, x509stack);
+		if (SSL_CTX_load_verify_locations(ctx, ca, NULL) <= 0)
+			err_ssl(1, "SSL_CTX_load_verify_locations");
+	}
+	SSL_CTX_set_verify(ctx,
+	    verify == 0 ?  SSL_VERIFY_NONE :
+	    verify == 1 ?  SSL_VERIFY_PEER :
+	    SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+	    verify_callback);
+
 	/* setup ssl and bio for socket operations */
 	ssl = SSL_new(ctx);
 	if (ssl == NULL)
@@ -109,9 +151,11 @@ main(int argc, char *argv[])
 	printf("listen ");
 	print_sockname(bio);
 
-	/* fork to background and accept */
+	/* fork to background, set timeout, and accept */
 	if (daemon(1, 1) == -1)
 		err(1, "daemon");
+	if ((int)alarm(60) == -1)
+		err(1, "alarm");
 	if (BIO_do_accept(bio) <= 0)
 		err_ssl(1, "BIO_do_accept wait");
 	bio = BIO_pop(bio);

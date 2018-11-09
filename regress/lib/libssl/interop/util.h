@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2018/11/07 06:29:26 bluhm Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2018/11/09 06:30:41 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -20,3 +20,4 @@ void print_ciphers(STACK_OF(SSL_CIPHER) *);
 void print_sockname(BIO *);
 void print_peername(BIO *);
 void err_ssl(int, const char *, ...);
+int verify_callback(int, X509_STORE_CTX *);

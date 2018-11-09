@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 2018/11/07 19:09:01 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.4 2018/11/09 06:30:41 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -34,7 +34,8 @@ void __dead usage(void);
 void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: client host port");
+	fprintf(stderr,
+	    "usage: client [-c] [-C CA] [-c crt -k key] host port");
 	exit(2);
 }
 
@@ -46,19 +47,42 @@ main(int argc, char *argv[])
 	SSL *ssl;
 	BIO *bio;
 	SSL_SESSION *session;
-	int error;
-	char buf[256];
+	int error, verify = 0;
+	char buf[256], ch;
+	char *ca = NULL, *crt = NULL, *key = NULL;
 	char *host_port, *host, *port;
 
-	if (argc == 3) {
-		host = argv[1];
-		port = argv[2];
+	while ((ch = getopt(argc, argv, "C:c:k:v")) != -1) {
+		switch (ch) {
+		case 'C':
+			ca = optarg;
+			break;
+		case 'c':
+			crt = optarg;
+			break;
+		case 'k':
+			key = optarg;
+			break;
+		case 'v':
+			verify = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+	if (argc == 2) {
+		host = argv[0];
+		port = argv[1];
 	} else {
 		usage();
 	}
 	if (asprintf(&host_port, strchr(host, ':') ? "[%s]:%s" : "%s:%s",
 	    host, port) == -1)
 		err(1, "asprintf host port");
+	if ((crt == NULL && key != NULL) || (crt != NULL && key == NULL))
+		errx(1, "certificate and private key must be used together");
 
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -77,6 +101,26 @@ main(int argc, char *argv[])
 	ctx = SSL_CTX_new(method);
 	if (ctx == NULL)
 		err_ssl(1, "SSL_CTX_new");
+
+	/* load client certificate */
+	if (crt != NULL) {
+		if (SSL_CTX_use_certificate_file(ctx, crt,
+		    SSL_FILETYPE_PEM) <= 0)
+			err_ssl(1, "SSL_CTX_use_certificate_file");
+		if (SSL_CTX_use_PrivateKey_file(ctx, key,
+		    SSL_FILETYPE_PEM) <= 0)
+			err_ssl(1, "SSL_CTX_use_PrivateKey_file");
+		if (SSL_CTX_check_private_key(ctx) <= 0)
+			err_ssl(1, "SSL_CTX_check_private_key");
+	}
+
+	/* verify server certificate */
+	if (ca != NULL) {
+		if (SSL_CTX_load_verify_locations(ctx, ca, NULL) <= 0)
+			err_ssl(1, "SSL_CTX_load_verify_locations");
+	}
+	SSL_CTX_set_verify(ctx, verify ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
+	    verify_callback);
 
 	/* setup ssl and bio for socket operations */
 	ssl = SSL_new(ctx);
