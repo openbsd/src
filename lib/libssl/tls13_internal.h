@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.3 2018/11/08 23:54:59 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.4 2018/11/09 03:07:26 jsing Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018, Theo Buehler <tb@openbsd.org>
@@ -16,7 +16,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef HEADER_TLS13_INTERNAL_H
+#define HEADER_TLS13_INTERNAL_H
+
 #include <openssl/evp.h>
+
+__BEGIN_HIDDEN_DECLS
 
 struct tls13_secret {
 	uint8_t *data;
@@ -123,3 +128,7 @@ int tls13_server_key_update_recv(struct tls13_ctx *ctx);
 int tls13_server_key_update_send(struct tls13_ctx *ctx);
 int tls13_server_message_hash_recv(struct tls13_ctx *ctx);
 int tls13_server_message_hash_send(struct tls13_ctx *ctx);
+
+__END_HIDDEN_DECLS
+
+#endif
