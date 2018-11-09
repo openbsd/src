@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.25 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.26 2018/11/09 17:49:32 brynet Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -34,9 +34,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
-#ifdef YP
-#include <rpcsvc/ypclnt.h>
-#endif
 
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS	"/etc/ethers"
@@ -99,18 +96,6 @@ ether_ntohost(char *hostname, struct ether_addr *e)
 	char buf[BUFSIZ+1], *p;
 	size_t len;
 	struct ether_addr try;
-#ifdef YP
-	char trybuf[sizeof("xx:xx:xx:xx:xx:xx")];
-	int trylen;
-#endif
-
-#ifdef YP
-	snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
-	    e->ether_addr_octet[0], e->ether_addr_octet[1],
-	    e->ether_addr_octet[2], e->ether_addr_octet[3],
-	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
-	trylen = strlen(trybuf);
-#endif
 
 	f = fopen(_PATH_ETHERS, "re");
 	if (f == NULL)
@@ -123,26 +108,9 @@ ether_ntohost(char *hostname, struct ether_addr *e)
 		(void)memcpy(buf, p, len);
 		buf[len] = '\n';	/* code assumes newlines later on */
 		buf[len+1] = '\0';
-#ifdef YP
-		/* A + in the file means try YP now.  */
-		if (!strncmp(buf, "+\n", sizeof(buf))) {
-			char *ypbuf, *ypdom;
-			int ypbuflen;
-
-			if (yp_get_default_domain(&ypdom))
-				continue;
-			if (yp_match(ypdom, "ethers.byaddr", trybuf,
-			    trylen, &ypbuf, &ypbuflen))
-				continue;
-			if (ether_line(ypbuf, &try, hostname) == 0) {
-				free(ypbuf);
-				(void)fclose(f);
-				return (0);
-			}
-			free(ypbuf);
+		/* A + in the file meant try YP, ignore it. */
+		if (!strncmp(buf, "+\n", sizeof(buf)))
 			continue;
-		}
-#endif
 		if (ether_line(buf, &try, hostname) == 0 &&
 		    memcmp(&try, e, sizeof(try)) == 0) {
 			(void)fclose(f);
@@ -161,9 +129,6 @@ ether_hostton(const char *hostname, struct ether_addr *e)
 	char buf[BUFSIZ+1], *p;
 	char try[HOST_NAME_MAX+1];
 	size_t len;
-#ifdef YP
-	int hostlen = strlen(hostname);
-#endif
 
 	f = fopen(_PATH_ETHERS, "re");
 	if (f==NULL)
@@ -177,26 +142,9 @@ ether_hostton(const char *hostname, struct ether_addr *e)
 		memcpy(buf, p, len);
 		buf[len] = '\n';	/* code assumes newlines later on */
 		buf[len+1] = '\0';
-#ifdef YP
-		/* A + in the file means try YP now.  */
-		if (!strncmp(buf, "+\n", sizeof(buf))) {
-			char *ypbuf, *ypdom;
-			int ypbuflen;
-
-			if (yp_get_default_domain(&ypdom))
-				continue;
-			if (yp_match(ypdom, "ethers.byname", hostname, hostlen,
-			    &ypbuf, &ypbuflen))
-				continue;
-			if (ether_line(ypbuf, e, try) == 0) {
-				free(ypbuf);
-				(void)fclose(f);
-				return (0);
-			}
-			free(ypbuf);
+		/* A + in the file meant try YP, ignore it. */
+		if (!strncmp(buf, "+\n", sizeof(buf)))
 			continue;
-		}
-#endif
 		if (ether_line(buf, e, try) == 0 && strcmp(hostname, try) == 0) {
 			(void)fclose(f);
 			return (0);
