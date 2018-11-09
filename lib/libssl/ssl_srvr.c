@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.52 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.53 2018/11/09 05:02:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1635,7 +1635,7 @@ ssl3_send_certificate_request(SSL *s)
 		if (SSL_USE_SIGALGS(s)) {
 			if (!CBB_add_u16_length_prefixed(&cert_request, &sigalgs))
 				goto err;
-			if (!ssl_sigalgs_build(&sigalgs))
+			if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
 				goto err;
 		}
 

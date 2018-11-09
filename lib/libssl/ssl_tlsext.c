@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.25 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.26 2018/11/09 05:02:53 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -534,7 +534,7 @@ tlsext_sigalgs_clienthello_build(SSL *s, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
 
-	if (!ssl_sigalgs_build(&sigalgs))
+	if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
 		return 0;
 
 	if (!CBB_flush(cbb))

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.1 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.2 2018/11/09 05:02:53 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -24,7 +24,6 @@
 #include "ssl_sigalgs.h"
 #include "tls13_internal.h"
 
-/* This table must be kept in preference order for now */
 const struct ssl_sigalg sigalgs[] = {
 	{
 		.value = SIGALG_RSA_PKCS1_SHA512,
@@ -157,6 +156,24 @@ const struct ssl_sigalg sigalgs[] = {
 	},
 };
 
+/* Sigalgs for tls 1.2, in preference order, */
+uint16_t tls12_sigalgs[] = {
+	SIGALG_RSA_PKCS1_SHA512,
+	SIGALG_ECDSA_SECP512R1_SHA512,
+	SIGALG_GOSTR12_512_STREEBOG_512,
+	SIGALG_RSA_PKCS1_SHA384,
+	SIGALG_ECDSA_SECP384R1_SHA384,
+	SIGALG_RSA_PKCS1_SHA256,
+	SIGALG_ECDSA_SECP256R1_SHA256,
+	SIGALG_GOSTR12_256_STREEBOG_256,
+	SIGALG_GOSTR01_GOST94,
+	SIGALG_RSA_PKCS1_SHA224,
+	SIGALG_ECDSA_SECP224R1_SHA224,
+	SIGALG_RSA_PKCS1_SHA1, /* XXX */
+	SIGALG_ECDSA_SHA1,     /* XXX */
+};
+size_t tls12_sigalgs_len = (sizeof(tls12_sigalgs) / sizeof(tls12_sigalgs[0]));
+
 const struct ssl_sigalg *
 ssl_sigalg_lookup(uint16_t sigalg)
 {
@@ -206,12 +223,23 @@ ssl_sigalg_value(const EVP_PKEY *pk, const EVP_MD *md)
 }
 
 int
-ssl_sigalgs_build(CBB *cbb)
+ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 {
-	int i;
+	const struct ssl_sigalg *sap;
+	size_t i;
 
-	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++) {
-		if (!CBB_add_u16(cbb, sigalgs[i].value))
+	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++);
+	if (len > i)
+		return 0;
+
+	/* XXX check for duplicates and other sanity BS? */
+
+	/* Add values in order as long as they are supported. */
+	for (i = 0; i < len; i++) {
+		if ((sap = ssl_sigalg_lookup(values[i])) != NULL) {
+			if (!CBB_add_u16(cbb, values[i]))
+				return 0;
+		} else
 			return 0;
 	}
 	return 1;
