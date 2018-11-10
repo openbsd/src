@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.45 2018/05/07 21:58:42 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.46 2018/11/10 14:27:51 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -625,7 +625,10 @@ set_x(struct position *pos, int x, u_int *sync, u_int mask)
 	}
 	if ((pos->dx = x - pos->x)) {
 		pos->x = x;
-		pos->acc_dx += pos->dx;
+		if (pos->dx > 0 == pos->acc_dx > 0)
+			pos->acc_dx += pos->dx;
+		else
+			pos->acc_dx = pos->dx;
 		*sync |= mask;
 	}
 }
@@ -641,7 +644,10 @@ set_y(struct position *pos, int y, u_int *sync, u_int mask)
 	}
 	if ((pos->dy = y - pos->y)) {
 		pos->y = y;
-		pos->acc_dy += pos->dy;
+		if (pos->dy > 0 == pos->acc_dy > 0)
+			pos->acc_dy += pos->dy;
+		else
+			pos->acc_dy = pos->dy;
 		*sync |= mask;
 	}
 }
@@ -704,7 +710,6 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 	struct mt_state *mt = &input->mt;
 	struct mt_slot *mts;
 	u_int bit;
-	int initial;
 
 	if (slot < 0 || slot >= mt->num_slots)
 		return;
@@ -712,24 +717,17 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 	bit = (1 << slot);
 	mt->frame |= bit;
 
-	/* Is this a new touch? */
-	initial = ((mt->touches & bit) == (mt->sync[MTS_TOUCH] & bit));
-
 	mts = &mt->slots[slot];
 
-	if (initial) {
-		mts->pos.x = x;
-		mts->pos.y = y;
+	set_x(&mts->pos, x, mt->sync + MTS_X, bit);
+	set_y(&mts->pos, y, mt->sync + MTS_Y, bit);
+
+	/* Is this a new touch? */
+	if ((mt->touches & bit) == (mt->sync[MTS_TOUCH] & bit))
 		cleardeltas(&mts->pos);
-		mt->sync[MTS_X] |= bit;
-		mt->sync[MTS_Y] |= bit;
-	} else {
-		set_x(&mts->pos, x, mt->sync + MTS_X, bit);
-		set_y(&mts->pos, y, mt->sync + MTS_Y, bit);
-	}
 
 	pressure = normalized_pressure(input, pressure);
-	if (pressure != mts->pressure || initial) {
+	if (pressure != mts->pressure) {
 		mts->pressure = pressure;
 		mt->sync[MTS_PRESSURE] |= bit;
 
@@ -738,6 +736,9 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 				mt->num_touches++;
 				mt->touches |= bit;
 				mt->sync[MTS_TOUCH] |= bit;
+
+				mt->sync[MTS_X] |= bit;
+				mt->sync[MTS_Y] |= bit;
 			}
 		} else if (mt->touches & bit) {
 			mt->num_touches--;
@@ -850,7 +851,7 @@ wsmouse_mt_update(struct wsmouseinput *input)
 	 * (pressure == 0). Clear the sync flags for touches that have
 	 * been released.
 	 */
-	if (input->mt.sync[MTS_TOUCH] & ~input->mt.touches) {
+	if (input->mt.frame & ~input->mt.touches) {
 		for (i = MTS_X; i < MTS_SIZE; i++)
 			input->mt.sync[i] &= input->mt.touches;
 	}
@@ -860,18 +861,6 @@ wsmouse_mt_update(struct wsmouseinput *input)
 int
 wsmouse_hysteresis(struct wsmouseinput *input, struct position *pos)
 {
-
-	if (!(input->filter.h.hysteresis && input->filter.v.hysteresis))
-		return (0);
-
-	if ((pos->dx > 0 && pos->dx > pos->acc_dx)
-	   || (pos->dx < 0 && pos->dx < pos->acc_dx))
-		pos->acc_dx = pos->dx;
-
-	if ((pos->dy > 0 && pos->dy > pos->acc_dy)
-	   || (pos->dy < 0 && pos->dy < pos->acc_dy))
-		pos->acc_dy = pos->dy;
-
 	return (abs(pos->acc_dx) < input->filter.h.hysteresis
 	    && abs(pos->acc_dy) < input->filter.v.hysteresis);
 }
@@ -896,6 +885,14 @@ wsmouse_ptr_ctrl(struct wsmouseinput *input)
 	u_int updates;
 	int select, slot;
 
+	mt->prev_ptr = mt->ptr;
+
+	if (mt->num_touches <= 1) {
+		mt->ptr = mt->touches;
+		mt->ptr_cycle = mt->ptr;
+		return;
+	}
+
 	updates = (mt->sync[MTS_X] | mt->sync[MTS_Y]) & ~mt->sync[MTS_TOUCH];
 	FOREACHBIT(updates, slot) {
 		/*
@@ -905,14 +902,6 @@ wsmouse_ptr_ctrl(struct wsmouseinput *input)
 		 */
 		if (wsmouse_hysteresis(input, &mt->slots[slot].pos))
 			updates ^= (1 << slot);
-	}
-
-	mt->prev_ptr = mt->ptr;
-
-	if (mt->num_touches <= 1) {
-		mt->ptr = mt->touches;
-		mt->ptr_cycle = mt->ptr;
-		return;
 	}
 
 	/*
@@ -1489,8 +1478,7 @@ wsmouse_get_params(struct device *sc,
 			params[i].value = input->filter.dclr;
 			break;
 		case WSMOUSECFG_STRONG_HYSTERESIS:
-			params[i].value =
-			    !!(input->filter.mode & STRONG_HYSTERESIS);
+			params[i].value = 0; /* The feature has been removed. */
 			break;
 		case WSMOUSECFG_SMOOTHING:
 			params[i].value =
@@ -1569,12 +1557,6 @@ wsmouse_set_params(struct device *sc,
 			break;
 		case WSMOUSECFG_DY_MAX:
 			input->filter.v.dmax = val;
-			break;
-		case WSMOUSECFG_STRONG_HYSTERESIS:
-			if (val)
-				input->filter.mode |= STRONG_HYSTERESIS;
-			else
-				input->filter.mode &= ~STRONG_HYSTERESIS;
 			break;
 		case WSMOUSECFG_SMOOTHING:
 			input->filter.mode &= ~SMOOTHING_MASK;

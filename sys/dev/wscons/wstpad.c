@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.18 2018/11/05 23:38:04 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.19 2018/11/10 14:27:51 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -1219,33 +1219,6 @@ wstpad_decelerate(struct wsmouseinput *input, int *dx, int *dy)
 	return (0);
 }
 
-/*
- * The hysteresis filter may suppress noise and accidental pointer
- * movements.  The "strong" variant applies independently to the axes,
- * and it is applied continuously.  It takes effect whenever the
- * orientation on an axis changes, which makes pointer paths more stable.
- *
- * The default variant, wsmouse_hysteresis, is more precise and does not
- * affect paths, it just filters noise when a touch starts or is resting.
- */
-static inline void
-strong_hysteresis(int *delta, int *acc, int threshold)
-{
-	int d;
-
-	if (*delta > 0) {
-		if (*delta > *acc)
-			*acc = *delta;
-		if ((d = *acc - threshold) < *delta)
-			*delta = (d < 0 ? 0 : d);
-	} else if (*delta < 0) {
-		if (*delta < *acc)
-			*acc = *delta;
-		if ((d = *acc + threshold) > *delta)
-			*delta = (d > 0 ? 0 : d);
-	}
-}
-
 void
 wstpad_filter(struct wsmouseinput *input)
 {
@@ -1263,12 +1236,8 @@ wstpad_filter(struct wsmouseinput *input)
 	dx = pos->dx;
 	dy = pos->dy;
 
-	if (input->filter.mode & STRONG_HYSTERESIS) {
-		strong_hysteresis(&dx, &pos->acc_dx, h->hysteresis);
-		strong_hysteresis(&dy, &pos->acc_dy, v->hysteresis);
-	} else if (wsmouse_hysteresis(input, pos)) {
+	if (wsmouse_hysteresis(input, pos))
 		dx = dy = 0;
-	}
 
 	if (input->filter.dclr && wstpad_decelerate(input, &dx, &dy))
 		/* Strong smoothing may hamper the precision at low speeds. */

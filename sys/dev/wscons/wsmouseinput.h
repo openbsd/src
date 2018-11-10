@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.11 2018/05/07 21:58:42 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.12 2018/11/10 14:27:51 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -167,11 +167,9 @@ struct wsmouseinput {
 #define LOG_INPUT		(1 << 19)
 #define LOG_EVENTS		(1 << 20)
 
-/* filter.mode (bit 0-2: smoothing factor, bit 3: hysteresis type) */
-#define WEAK_HYSTERESIS		0
-#define STRONG_HYSTERESIS	(1 << 3)
+/* filter.mode (bit 0-2: smoothing factor, bit 3-n: unused) */
 #define SMOOTHING_MASK		7
-#define FILTER_MODE_DEFAULT	WEAK_HYSTERESIS
+#define FILTER_MODE_DEFAULT	0
 
 struct evq_access {
 	struct wseventvar *evar;

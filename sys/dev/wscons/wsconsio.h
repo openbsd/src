@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.89 2018/07/30 15:56:30 jcs Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.90 2018/11/10 14:27:51 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -295,7 +295,8 @@ enum wsmousecfg {
 	WSMOUSECFG_X_HYSTERESIS,/* retard value for X coordinates */
 	WSMOUSECFG_Y_HYSTERESIS,/* retard value for Y coordinates */
 	WSMOUSECFG_DECELERATION,/* threshold (distance) for deceleration */
-	WSMOUSECFG_STRONG_HYSTERESIS,	/* apply the filter continuously */
+	WSMOUSECFG_STRONG_HYSTERESIS,	/* FALSE and read-only, the fea-
+					   ture is not supported anymore. */
 	WSMOUSECFG_SMOOTHING,	/* smoothing factor (0-7) */
 
 	/*
