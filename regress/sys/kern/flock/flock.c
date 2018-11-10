@@ -33,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1322,10 +1323,13 @@ test15(int fd)
 
 /*
  * Test 16 - double free regression
+ *
+ * Not applicable anymore due to stricter bounds validation.
  */
 static int
 test16(int fd)
 {
+#if 0
 	struct flock fl;
 	int res;
 
@@ -1352,6 +1356,7 @@ test16(int fd)
 	fl.l_len = 0;
 	res = fcntl(fd, F_SETLK, &fl);
 	FAIL(res != 0);
+#endif
 
 	SUCCEED;
 }
@@ -1642,6 +1647,72 @@ test22(int fd)
 	SUCCEED;
 }
 
+/*
+ * Test 23 - positive length overflow
+ */
+static int
+test23(int fd)
+{
+	struct flock fl;
+	int res;
+
+	fl.l_pid = 0;
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start = 2;
+	fl.l_len = LLONG_MAX;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != -1);
+	FAIL(errno != EOVERFLOW);
+
+	SUCCEED;
+}
+
+/*
+ * Test 24 - negative length
+ */
+static int
+test24(int fd)
+{
+	struct flock fl;
+	pid_t pid;
+	int res, status;
+
+	fl.l_pid = 0;
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+
+	/* Start offset plus length must be positive. */
+	fl.l_start = 0;
+	fl.l_len = LLONG_MIN;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != -1);
+	FAIL(errno != EINVAL);
+
+	/* Set exclusive lock on range [2,3] */
+	fl.l_start = 4;
+	fl.l_len = -2;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	/* Another process must not be able to lock the same range. */
+	pid = fork();
+	if (pid == -1)
+		err(1, "fork");
+	if (pid == 0) {
+		fl.l_start = 2;
+		fl.l_len = 2;
+		res = fcntl(fd, F_GETLK, &fl);
+		FAIL(res != 0);
+		FAIL(fl.l_type == F_UNLCK);
+		_exit(0);
+	}
+	status = safe_waitpid(pid);
+	FAIL(status != 0);
+
+	SUCCEED;
+}
+
 static struct test tests[] = {
 	{	test1,		0	},
 	{	test2,		0	},
@@ -1665,6 +1736,8 @@ static struct test tests[] = {
 	{	test20,		0	},
 	{	test21,		0	},
 	{	test22,		0	},
+	{	test23,		0	},
+	{	test24,		0	},
 };
 
 static int test_count = sizeof(tests) / sizeof(tests[0]);
