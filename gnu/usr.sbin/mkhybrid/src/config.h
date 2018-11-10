@@ -20,7 +20,7 @@
 #define HAVE_MEMMOVE 1
 
 /* Define if you have the sbrk function.  */
-#define HAVE_SBRK 1
+/* #undef HAVE_SBRK */
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
