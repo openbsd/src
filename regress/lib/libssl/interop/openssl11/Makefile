@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2018/11/09 06:30:41 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2018/11/10 08:33:45 bluhm Exp $
 
 .if ! exists(/usr/local/bin/eopenssl11)
 regress:
-	# install openssl-1.1.1 from ports for interop tests
+	# install openssl-1.1 from ports for interop tests
 	@echo SKIPPED
 .endif
 

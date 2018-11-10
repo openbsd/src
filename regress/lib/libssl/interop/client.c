@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.4 2018/11/09 06:30:41 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.5 2018/11/10 08:33:45 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -35,7 +35,7 @@ void __dead
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: client [-c] [-C CA] [-c crt -k key] host port");
+	    "usage: client [-sv] [-C CA] [-c crt -k key] host port");
 	exit(2);
 }
 
@@ -46,13 +46,13 @@ main(int argc, char *argv[])
 	SSL_CTX *ctx;
 	SSL *ssl;
 	BIO *bio;
-	SSL_SESSION *session;
-	int error, verify = 0;
+	SSL_SESSION *session = NULL;
+	int error, sessionreuse = 0, verify = 0;
 	char buf[256], ch;
 	char *ca = NULL, *crt = NULL, *key = NULL;
 	char *host_port, *host, *port;
 
-	while ((ch = getopt(argc, argv, "C:c:k:v")) != -1) {
+	while ((ch = getopt(argc, argv, "C:c:k:sv")) != -1) {
 		switch (ch) {
 		case 'C':
 			ca = optarg;
@@ -62,6 +62,10 @@ main(int argc, char *argv[])
 			break;
 		case 'k':
 			key = optarg;
+			break;
+		case 's':
+			/* multiple reueses are possible */
+			sessionreuse++;
 			break;
 		case 'v':
 			verify = 1;
@@ -122,63 +126,85 @@ main(int argc, char *argv[])
 	SSL_CTX_set_verify(ctx, verify ? SSL_VERIFY_PEER : SSL_VERIFY_NONE,
 	    verify_callback);
 
-	/* setup ssl and bio for socket operations */
-	ssl = SSL_new(ctx);
-	if (ssl == NULL)
-		err_ssl(1, "SSL_new");
-	bio = BIO_new_connect(host_port);
-	if (bio == NULL)
-		err_ssl(1, "BIO_new_connect");
-	print_ciphers(SSL_get_ciphers(ssl));
-
-	/* connect */
-	if (BIO_do_connect(bio) <= 0)
-		err_ssl(1, "BIO_do_connect");
-	printf("connect ");
-	print_sockname(bio);
-	printf("connect ");
-	print_peername(bio);
-
-	/* do ssl client handshake */
-	SSL_set_bio(ssl, bio, bio);
-	if ((error = SSL_connect(ssl)) <= 0)
-		err_ssl(1, "SSL_connect %d", error);
-
-	/* print session statistics */
-	session = SSL_get_session(ssl);
-	if (session == NULL)
-		err_ssl(1, "SSL_get_session");
-	if (SSL_SESSION_print_fp(stdout, session) <= 0)
-		err_ssl(1, "SSL_SESSION_print_fp");
-
-	/* read server greeting and write client hello over TLS connection */
-	if ((error = SSL_read(ssl, buf, 9)) <= 0)
-		err_ssl(1, "SSL_read %d", error);
-	if (error != 9)
-		errx(1, "read not 9 bytes greeting: %d", error);
-	buf[9] = '\0';
-	printf("<<< %s", buf);
-	if (fflush(stdout) != 0)
-		err(1, "fflush stdout");
-	strlcpy(buf, "hello\n", sizeof(buf));
-	printf(">>> %s", buf);
-	if (fflush(stdout) != 0)
-		err(1, "fflush stdout");
-	if ((error = SSL_write(ssl, buf, 6)) <= 0)
-		err_ssl(1, "SSL_write %d", error);
-	if (error != 6)
-		errx(1, "write not 6 bytes hello: %d", error);
-
-	/* shutdown connection */
-	if ((error = SSL_shutdown(ssl)) < 0)
-		err_ssl(1, "SSL_shutdown unidirectional %d", error);
-	if (error <= 0) {
-		if ((error = SSL_shutdown(ssl)) <= 0)
-			err_ssl(1, "SSL_shutdown bidirectional %d", error);
+	if (sessionreuse) {
+		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT);
 	}
 
-	/* cleanup and free resources */
-	SSL_free(ssl);
+	do {
+		/* setup bio for socket operations */
+		bio = BIO_new_connect(host_port);
+		if (bio == NULL)
+			err_ssl(1, "BIO_new_connect");
+
+		/* connect */
+		if (BIO_do_connect(bio) <= 0)
+			err_ssl(1, "BIO_do_connect");
+		printf("connect ");
+		print_sockname(bio);
+		printf("connect ");
+		print_peername(bio);
+
+		/* do ssl client handshake */
+		ssl = SSL_new(ctx);
+		if (ssl == NULL)
+			err_ssl(1, "SSL_new");
+		print_ciphers(SSL_get_ciphers(ssl));
+		SSL_set_bio(ssl, bio, bio);
+		/* resuse session if possible */
+		if (session != NULL) {
+			if (SSL_set_session(ssl, session) <= 0)
+				err_ssl(1, "SSL_set_session");
+		}
+		if ((error = SSL_connect(ssl)) <= 0)
+			err_ssl(1, "SSL_connect %d", error);
+		printf("session %d: %s\n", sessionreuse,
+		    SSL_session_reused(ssl) ? "reuse" : "new");
+		if (fflush(stdout) != 0)
+			err(1, "fflush stdout");
+
+		/* print session statistics */
+		if (sessionreuse) {
+			session = SSL_get1_session(ssl);
+			if (session == NULL)
+				err_ssl(1, "SSL1_get_session");
+		} else {
+			session = SSL_get_session(ssl);
+			if (session == NULL)
+				err_ssl(1, "SSL_get_session");
+		}
+		if (SSL_SESSION_print_fp(stdout, session) <= 0)
+			err_ssl(1, "SSL_SESSION_print_fp");
+
+		/* read server greeting and write client hello over TLS */
+		if ((error = SSL_read(ssl, buf, 9)) <= 0)
+			err_ssl(1, "SSL_read %d", error);
+		if (error != 9)
+			errx(1, "read not 9 bytes greeting: %d", error);
+		buf[9] = '\0';
+		printf("<<< %s", buf);
+		if (fflush(stdout) != 0)
+			err(1, "fflush stdout");
+		strlcpy(buf, "hello\n", sizeof(buf));
+		printf(">>> %s", buf);
+		if (fflush(stdout) != 0)
+			err(1, "fflush stdout");
+		if ((error = SSL_write(ssl, buf, 6)) <= 0)
+			err_ssl(1, "SSL_write %d", error);
+		if (error != 6)
+			errx(1, "write not 6 bytes hello: %d", error);
+
+		/* shutdown connection */
+		if ((error = SSL_shutdown(ssl)) < 0)
+			err_ssl(1, "SSL_shutdown unidirectional %d", error);
+		if (error <= 0) {
+			if ((error = SSL_shutdown(ssl)) <= 0)
+				err_ssl(1, "SSL_shutdown bidirectional %d",
+				    error);
+		}
+
+		SSL_free(ssl);
+	} while (sessionreuse--);
+
 	SSL_CTX_free(ctx);
 
 	printf("success\n");
