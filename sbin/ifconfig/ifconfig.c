@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.380 2018/10/15 11:25:55 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.381 2018/11/10 18:14:47 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4033,7 +4033,7 @@ setvlantag(const char *val, int d)
 	struct vlanreq vreq;
 	const char *errmsg = NULL;
 
-	__tag = tag = strtonum(val, 0, 4095, &errmsg);
+	__tag = tag = strtonum(val, EVL_VLID_MIN, EVL_VLID_MAX, &errmsg);
 	if (errmsg)
 		errx(1, "vlan tag %s: %s", val, errmsg);
 	__have_tag = 1;
