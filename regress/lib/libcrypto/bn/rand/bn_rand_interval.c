@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_rand_interval.c,v 1.2 2018/11/06 13:17:42 tb Exp $	*/
+/*	$OpenBSD: bn_rand_interval.c,v 1.3 2018/11/10 01:39:35 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -54,11 +54,11 @@ main(int argc, char *argv[])
 	int i, success = 1;
 
 	if ((a = BN_new()) == NULL)
-		err(1, "BN_hex2bn");
+		err(1, "BN_new(a)");
 	if ((b = BN_new()) == NULL)
-		err(1, "BN_hex2bn");
+		err(1, "BN_new(b)");
 	if ((x = BN_new()) == NULL)
-		err(1, "BN_new()");
+		err(1, "BN_new(c)");
 	
 	for (i = 0; i < NUM_TESTS; i++) {
 		if (!BN_rand(a, 256, 0, 0))
@@ -108,6 +108,10 @@ main(int argc, char *argv[])
 		printf("success\n");
 	else
 		printf("FAIL");
+
+	BN_free(a);
+	BN_free(b);
+	BN_free(x);
 
 	return 1 - success;
 }
