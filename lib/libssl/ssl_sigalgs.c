@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.4 2018/11/10 01:19:09 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.5 2018/11/10 08:42:39 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -203,19 +203,6 @@ ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
 	}
 
 	return NULL;
-}
-
-uint16_t
-ssl_sigalg_value(const EVP_PKEY *pk, const EVP_MD *md)
-{
-	int i;
-
-	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++) {
-		if ((sigalgs[i].key_type == pk->type) &&
-		    ((sigalgs[i].md() == md)))
-			return sigalgs[i].value;
-	}
-	return SIGALG_NONE;
 }
 
 int
