@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2018/11/10 08:10:31 beck Exp $
+#	$OpenBSD: Makefile,v 1.32 2018/11/10 08:35:43 beck Exp $
 
 SUBDIR += asn1
 SUBDIR += bytestring
@@ -10,7 +10,7 @@ SUBDIR += ssl
 SUBDIR += tlsext
 SUBDIR += key_schedule
 SUBDIR += unit
-# Things that take a long time shoud go below here. 
+# Things that take a long time should go below here. 
 SUBDIR += interop
 
 install:
