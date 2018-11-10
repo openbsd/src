@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.582 2018/11/09 16:52:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.583 2018/11/10 14:39:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,7 +137,7 @@ struct ifaddrs	*get_link_ifa(const char *, struct ifaddrs *);
 void		 interface_link_forceup(char *, int);
 void		 interface_state(struct interface_info *);
 void		 get_hw_address(struct interface_info *);
-void		 tick_msg(const char *, int, time_t, time_t);
+void		 tick_msg(const char *, int, time_t);
 
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -671,6 +671,7 @@ main(int argc, char *argv[])
 	}
 
 	time(&ifi->startup_time);
+	tick_msg(NULL, 0, ifi->startup_time);	/* Set time to stop ticking. */
 
 	ifi->state = S_PREBOOT;
 	state_preboot(ifi);
@@ -705,13 +706,13 @@ state_preboot(struct interface_info *ifi)
 	interface_state(ifi);
 
 	if (LINK_STATE_IS_UP(ifi->link_state)) {
-		tick_msg("link", 1, tickstart, tickstop);
+		tick_msg("link", 1, tickstart);
 		if ((ifi->flags & IFI_VALID_LLADDR) == 0)
 			get_hw_address(ifi);
 		ifi->state = S_REBOOTING;
 		state_reboot(ifi);
 	} else {
-		tick_msg("link", 0, tickstart, tickstop);
+		tick_msg("link", 0, tickstart);
 		if (cur_time > tickstop) {
 			go_daemon();
 			cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
@@ -954,14 +955,13 @@ bind_lease(struct interface_info *ifi)
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
 	char			*msg = NULL;
-	time_t			 cur_time, renewal, tickstart, tickstop;
+	time_t			 cur_time, renewal, tickstart;
 	int			 rslt, seen;
 
 	time(&cur_time);
 	tickstart = ifi->first_sending + 3;
-	tickstop = ifi->startup_time + config->link_timeout;
 	if ((cmd_opts & OPT_VERBOSE) == 0)
-		tick_msg("lease", 1, tickstart, tickstop);
+		tick_msg("lease", 1, tickstart);
 
 	lease = apply_defaults(ifi->offer);
 
@@ -1358,10 +1358,10 @@ send_discover(struct interface_info *ifi)
 	 */
 	if (cur_time < tickstop) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
-			tick_msg("lease", 0, tickstart, tickstop);
+			tick_msg("lease", 0, tickstart);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, tickstart, tickstop);
+		tick_msg("lease", 0, tickstart);
 	}
 
 	/* Record the number of seconds since we started sending. */
@@ -1485,10 +1485,10 @@ send_request(struct interface_info *ifi)
 	 */
 	if (cur_time < tickstop) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
-			tick_msg("lease", 0, tickstart, tickstop);
+			tick_msg("lease", 0, tickstart);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, tickstart, tickstop);
+		tick_msg("lease", 0, tickstart);
 	}
 
 	/*
@@ -2751,12 +2751,18 @@ lease_rebind(struct client_lease *lease)
 }
 
 void
-tick_msg(const char *preamble, int success, time_t start, time_t stop)
+tick_msg(const char *preamble, int success, time_t start)
 {
 	static int	preamble_sent;
+	static time_t	stop;
 	time_t		cur_time;
 
 	time(&cur_time);
+
+	if (preamble == NULL) {
+		stop = start + config->link_timeout;
+		return;
+	}
 
 	if (isatty(STDERR_FILENO) == 0 || cur_time < start)
 		return;
