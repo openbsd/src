@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.584 2018/11/10 15:01:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.585 2018/11/10 18:25:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -696,11 +696,9 @@ usage(void)
 void
 state_preboot(struct interface_info *ifi)
 {
-	time_t		 cur_time, tickstop;
+	time_t		 cur_time;
 
 	time(&cur_time);
-
-	tickstop = ifi->startup_time + config->link_timeout;
 
 	interface_state(ifi);
 
@@ -712,11 +710,12 @@ state_preboot(struct interface_info *ifi)
 		state_reboot(ifi);
 	} else {
 		tick_msg("link", 0, ifi->startup_time);
-		if (cur_time > tickstop) {
+		if (cur_time < ifi->startup_time + config->link_timeout) {
+			set_timeout(ifi, 1, state_preboot);
+		} else {
 			go_daemon();
 			cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
-		} else
-			set_timeout(ifi, 1, state_preboot);
+		}
 	}
 }
 
@@ -1308,16 +1307,13 @@ void
 send_discover(struct interface_info *ifi)
 {
 	struct dhcp_packet	*packet = &ifi->sent_packet;
-	time_t			 cur_time, interval, tickstop;
+	time_t			 cur_time, interval;
 	ssize_t			 rslt;
 
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
-
-	tickstop = ifi->startup_time + config->link_timeout;
-
 	if (interval > config->timeout) {
 		state_panic(ifi);
 		return;
@@ -1353,7 +1349,7 @@ send_discover(struct interface_info *ifi)
 	 * link_timeout we just go daemon and finish things up in the
 	 * background.
 	 */
-	if (cur_time < tickstop) {
+	if (cur_time < ifi->startup_time + config->link_timeout) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
 			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
@@ -1414,14 +1410,12 @@ send_request(struct interface_info *ifi)
 	struct in_addr		 from;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	ssize_t			 rslt;
-	time_t			 cur_time, interval, tickstop;
+	time_t			 cur_time, interval;
 
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
-
-	tickstop = ifi->startup_time + config->link_timeout;
 
 	/*
 	 * If we're in the INIT-REBOOT state and we've been trying longer
@@ -1479,7 +1473,7 @@ send_request(struct interface_info *ifi)
 	 * link_timeout we just go daemon and finish things up in the
 	 * background.
 	 */
-	if (cur_time < tickstop) {
+	if (cur_time < ifi->startup_time + config->link_timeout) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
 			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
