@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.253 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.254 2018/11/10 18:40:34 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1004,8 +1004,6 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    (inp->inp_socket->so_options & SO_BROADCAST), inp->inp_moptions,
 	    inp, ipsecflowinfo);
-	if (error == EACCES)	/* translate pf(4) error for userland */
-		error = EHOSTUNREACH;
 
 bail:
 	m_freem(control);

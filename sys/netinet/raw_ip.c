@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.114 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.115 2018/11/10 18:40:34 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -292,8 +292,6 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp, 0);
-	if (error == EACCES)	/* translate pf(4) error for userland */
-		error = EHOSTUNREACH;
 	return (error);
 }
 
