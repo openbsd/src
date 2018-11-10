@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.30 2018/11/10 11:54:03 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.31 2018/11/10 21:21:15 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -302,10 +302,7 @@ lf_setlock(struct lockf *lock)
 	static char lockstr[] = "lockf";
 	int ovcase, priority, needtolink, error;
 
-#ifdef LOCKF_DEBUG
-	if (lockf_debug & DEBUG_SETLOCK)
-		lf_print("lf_setlock", lock);
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_setlock", lock), DEBUG_SETLOCK);
 
 	priority = PLOCK;
 	if (lock->lf_type == F_WRLCK)
@@ -369,12 +366,8 @@ lf_setlock(struct lockf *lock)
 		 * lf_next field refer to the blocking lock.
 		 */
 		lock->lf_next = block;
-#ifdef LOCKF_DEBUG
-		if (lockf_debug & DEBUG_SETLOCK) {
-			lf_print("lf_setlock", lock);
-			lf_print("lf_setlock: blocking on", block);
-		}
-#endif /* LOCKF_DEBUG */
+		LFPRINT(("lf_setlock", lock), DEBUG_SETLOCK);
+		LFPRINT(("lf_setlock: blocking on", block), DEBUG_SETLOCK);
 		TAILQ_INSERT_TAIL(&block->lf_blkhd, lock, lf_block);
 		error = tsleep(lock, priority, lockstr, 0);
 		if (lock->lf_next != NULL) {
@@ -502,11 +495,7 @@ lf_setlock(struct lockf *lock)
 		}
 		break;
 	}
-#ifdef LOCKF_DEBUG
-	if (lockf_debug & DEBUG_SETLOCK) {
-		lf_print("lf_setlock: got the lock", lock);
-	}
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_setlock: got the lock", lock), DEBUG_SETLOCK);
 	return (0);
 }
 
@@ -526,10 +515,7 @@ lf_clearlock(struct lockf *lock)
 
 	if (lf == NULL)
 		return (0);
-#ifdef LOCKF_DEBUG
-	if (lockf_debug & DEBUG_CLEARLOCK)
-		lf_print("lf_clearlock", lock);
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_clearlock", lock), DEBUG_CLEARLOCK);
 	while ((ovcase = lf_findoverlap(lf, lock, SELF, &prev, &overlap))) {
 		lf_wakelock(overlap);
 
@@ -570,10 +556,7 @@ lf_getlock(struct lockf *lock, struct flock *fl)
 {
 	struct lockf *block;
 
-#ifdef LOCKF_DEBUG
-	if (lockf_debug & DEBUG_CLEARLOCK)
-		lf_print("lf_getlock", lock);
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_getlock", lock), DEBUG_CLEARLOCK);
 
 	if ((block = lf_getblock(lock)) != NULL) {
 		fl->l_type = block->lf_type;
@@ -628,10 +611,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 {
 	off_t start, end;
 
-#ifdef LOCKF_DEBUG
-	if (lf && lockf_debug & DEBUG_FINDOVR)
-		lf_print("lf_findoverlap: looking for overlap in", lock);
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_findoverlap: looking for overlap in", lock), DEBUG_FINDOVR);
 
 	*overlap = lf;
 	start = lock->lf_start;
@@ -643,10 +623,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			*overlap = lf = lf->lf_next;
 			continue;
 		}
-#ifdef LOCKF_DEBUG
-		if (lockf_debug & DEBUG_FINDOVR)
-			lf_print("\tchecking", lf);
-#endif /* LOCKF_DEBUG */
+		LFPRINT(("\tchecking", lf), DEBUG_FINDOVR);
 		/*
 		 * OK, check for overlap
 		 *
@@ -713,12 +690,8 @@ lf_split(struct lockf *lock1, struct lockf *lock2)
 {
 	struct lockf *splitlock;
 
-#ifdef LOCKF_DEBUG
-	if (lockf_debug & DEBUG_SPLIT) {
-		lf_print("lf_split", lock1);
-		lf_print("splitting from", lock2);
-	}
-#endif /* LOCKF_DEBUG */
+	LFPRINT(("lf_split", lock1), DEBUG_SPLIT);
+	LFPRINT(("splitting from", lock2), DEBUG_SPLIT);
 
 	/*
 	 * Check to see if splitting into only two pieces.
