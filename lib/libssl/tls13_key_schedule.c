@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.5 2018/11/10 00:18:25 beck Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.6 2018/11/10 01:34:02 jsing Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -80,6 +80,7 @@ tls13_secrets_create(const EVP_MD *digest, int resumption)
 
 	if ((secrets = calloc(1, sizeof(struct tls13_secrets))) == NULL)
 		goto err;
+
 	if ((secrets->zeros.data = calloc(hash_length, sizeof(uint8_t))) ==
 	    NULL)
 		goto err;
@@ -105,9 +106,6 @@ tls13_secrets_create(const EVP_MD *digest, int resumption)
 	if ((secrets->derived_early.data = malloc(hash_length)) == NULL)
 		goto err;
 	secrets->derived_early.len = hash_length;
-	if ((secrets->extracted_handshake.data = malloc(hash_length)) == NULL)
-		goto err;
-	secrets->extracted_handshake.len = hash_length;
 	if ((secrets->extracted_handshake.data = malloc(hash_length)) == NULL)
 		goto err;
 	secrets->extracted_handshake.len = hash_length;
