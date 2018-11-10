@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.157 2018/10/20 19:55:01 kn Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.158 2018/11/10 05:03:23 dlg Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
 		err(1, "sysctl");
 	conf->max_ttl = i;
 
-	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:w:vV:" :
+	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:t:w:vV:" :
 	    "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
@@ -802,6 +802,12 @@ main(int argc, char *argv[])
 		    0)
 			err(1, "bind sndsock");
 
+		if (conf->tflag) {
+			if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_TCLASS,
+			    &conf->tos, sizeof(conf->tos)) < 0)
+				err(6, "IPV6_TCLASS");
+		}
+
 		len = sizeof(from6);
 		if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
 			err(1, "getsockname");
@@ -943,10 +949,10 @@ void
 usage(int v6flag)
 {
 	if (v6flag) {
-		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f first_hop] "
-		    "[-m max_hop] [-p port]\n"
-		    "\t[-q nqueries] [-s src_addr] [-V rtable] [-w waittime] "
-		    "host\n\t[datalen]\n");
+		fprintf(stderr, "usage: %s "
+		    "[-AcDdIlnSv] [-f first_hop] [-m max_hop] [-p port]\n"
+		    "\t[-q nqueries] [-s src_addr] [-t toskeyword] [-V rtable] "
+		    "[-w waittime]\n\thost [datalen]\n", __progname);
 	} else {
 		fprintf(stderr,
 		    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] "

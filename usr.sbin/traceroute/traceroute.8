@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.66 2016/10/21 09:26:36 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.67 2018/11/10 05:03:23 dlg Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: October 21 2016 $
+.Dd $Mdocdate: November 10 2018 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -62,6 +62,7 @@
 .Op Fl p Ar port
 .Op Fl q Ar nqueries
 .Op Fl s Ar src_addr
+.Op Fl t Ar toskeyword
 .Op Fl V Ar rtable
 .Op Fl w Ar waittime
 .Ar host
@@ -196,7 +197,6 @@ Useful values are probably
 .Cm lowdelay
 and
 .Cm throughput .
-This option is not available for IPv6.
 .It Fl V Ar rtable
 Set the routing table to be used.
 .It Fl v

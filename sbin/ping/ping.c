@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.230 2018/10/14 19:47:53 kn Exp $	*/
+/*	$OpenBSD: ping.c,v 1.231 2018/11/10 05:03:23 dlg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@ int options;
 /*			0x0200 */
 #define	F_HDRINCL	0x0400
 #define	F_TTL		0x0800
-/*			0x1000 */
+#define	F_TOS		0x1000
 #define	F_AUD_RECV	0x2000
 #define	F_AUD_MISS	0x4000
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv, v6flag ?
-	    "c:dEefHh:I:i:Ll:mNnp:qS:s:V:vw:" :
+	    "c:dEefHh:I:i:Ll:mNnp:qS:s:T:V:vw:" :
 	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
 		switch(ch) {
 		case 'c':
@@ -386,6 +386,7 @@ main(int argc, char *argv[])
 #ifndef SMALL
 		case 'T':
 			options |= F_HDRINCL;
+			options |= F_TOS;
 			errno = 0;
 			errstr = NULL;
 			if (map_tos(optarg, &tos))
@@ -671,6 +672,13 @@ main(int argc, char *argv[])
 			scmsg->cmsg_level = IPPROTO_IPV6;
 			scmsg->cmsg_type = IPV6_HOPLIMIT;
 			*(int *)(CMSG_DATA(scmsg)) = hoplimit;
+		}
+
+		if (options & F_TOS) {
+			optval = tos;
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &optval,
+			    (socklen_t)sizeof(optval)) < 0)
+				warn("setsockopt(IPV6_TVAL)"); /* XXX err? */
 		}
 
 		optval = 1;
@@ -2160,7 +2168,8 @@ usage(void)
 		fprintf(stderr,
 		    "usage: ping6 [-dEefHLmnqv] [-c count] [-h hoplimit] "
 		    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
-		    "[-s packetsize] [-V rtable]\n\t[-w maxwait] host\n");
+		    "[-s packetsize] [-T toskeyword]\n\t"
+		    "[-V rtable] [-w maxwait] host\n");
 	} else {
 		fprintf(stderr,
 		    "usage: ping [-DdEefHLnqRv] [-c count] [-I ifaddr]"
