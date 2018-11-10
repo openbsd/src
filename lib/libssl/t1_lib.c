@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.149 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.150 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1010,26 +1010,25 @@ tls1_process_sigalgs(SSL *s, CBS *cbs)
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
 
-	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
-	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
-	c->pkeys[SSL_PKEY_ECC].digest = NULL;
+	c->pkeys[SSL_PKEY_RSA_SIGN].sigalg = NULL;
+	c->pkeys[SSL_PKEY_RSA_ENC].sigalg = NULL;
+	c->pkeys[SSL_PKEY_ECC].sigalg = NULL;
 #ifndef OPENSSL_NO_GOST
-	c->pkeys[SSL_PKEY_GOST01].digest = NULL;
+	c->pkeys[SSL_PKEY_GOST01].sigalg = NULL;
 #endif
 	while (CBS_len(cbs) > 0) {
-		const EVP_MD *md;
 		uint16_t sig_alg;
 		const struct ssl_sigalg *sigalg;
 
 		if (!CBS_get_u16(cbs, &sig_alg))
 			return 0;
 
-		if ((sigalg = ssl_sigalg_lookup(sig_alg)) != NULL &&
-		    c->pkeys[sigalg->pkey_idx].digest == NULL) {
-			md = sigalg->md();
-			c->pkeys[sigalg->pkey_idx].digest = md;
+		if ((sigalg = ssl_sigalg(sig_alg, tls12_sigalgs,
+		    tls12_sigalgs_len)) != NULL &&
+		    c->pkeys[sigalg->pkey_idx].sigalg == NULL) {
+			c->pkeys[sigalg->pkey_idx].sigalg = sigalg;
 			if (sigalg->pkey_idx == SSL_PKEY_RSA_SIGN)
-				c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+				c->pkeys[SSL_PKEY_RSA_ENC].sigalg = sigalg;
 		}
 	}
 
@@ -1037,15 +1036,20 @@ tls1_process_sigalgs(SSL *s, CBS *cbs)
 	 * Set any remaining keys to default values. NOTE: if alg is not
 	 * supported it stays as NULL.
 	 */
-	if (c->pkeys[SSL_PKEY_RSA_SIGN].digest == NULL)
-		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
-	if (c->pkeys[SSL_PKEY_RSA_ENC].digest == NULL)
-		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
-	if (c->pkeys[SSL_PKEY_ECC].digest == NULL)
-		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+	if (c->pkeys[SSL_PKEY_RSA_SIGN].sigalg == NULL)
+		c->pkeys[SSL_PKEY_RSA_SIGN].sigalg =
+		    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+	if (c->pkeys[SSL_PKEY_RSA_ENC].sigalg == NULL)
+		c->pkeys[SSL_PKEY_RSA_ENC].sigalg =
+		    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+	if (c->pkeys[SSL_PKEY_ECC].sigalg == NULL)
+		c->pkeys[SSL_PKEY_RSA_ENC].sigalg =
+		    ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
+
 #ifndef OPENSSL_NO_GOST
-	if (c->pkeys[SSL_PKEY_GOST01].digest == NULL)
-		c->pkeys[SSL_PKEY_GOST01].digest = EVP_gostr341194();
+	if (c->pkeys[SSL_PKEY_GOST01].sigalg == NULL)
+		c->pkeys[SSL_PKEY_GOST01].sigalg =
+		    ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
 #endif
 	return 1;
 }

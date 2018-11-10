@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.69 2018/11/08 20:55:18 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.70 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,14 +159,18 @@ SSL_get_ex_data_X509_STORE_CTX_idx(void)
 }
 
 static void
-ssl_cert_set_default_md(CERT *cert)
+ssl_cert_set_default_sigalgs(CERT *cert)
 {
 	/* Set digest values to defaults */
-	cert->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
-	cert->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
-	cert->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+	cert->pkeys[SSL_PKEY_RSA_SIGN].sigalg =
+	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+	cert->pkeys[SSL_PKEY_RSA_ENC].sigalg =
+	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+	cert->pkeys[SSL_PKEY_ECC].sigalg =
+	    ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
 #ifndef OPENSSL_NO_GOST
-	cert->pkeys[SSL_PKEY_GOST01].digest = EVP_gostr341194();
+	cert->pkeys[SSL_PKEY_GOST01].sigalg =
+	    ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
 #endif
 }
 
@@ -182,7 +186,7 @@ ssl_cert_new(void)
 	}
 	ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
 	ret->references = 1;
-	ssl_cert_set_default_md(ret);
+	ssl_cert_set_default_sigalgs(ret);
 	return (ret);
 }
 
@@ -280,10 +284,10 @@ ssl_cert_dup(CERT *cert)
 
 	ret->references = 1;
 	/*
-	 * Set digests to defaults. NB: we don't copy existing values
+	 * Set sigalgs to defaults. NB: we don't copy existing values
 	 * as they will be set during handshake.
 	 */
-	ssl_cert_set_default_md(ret);
+	ssl_cert_set_default_sigalgs(ret);
 
 	return (ret);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.223 2018/11/09 00:34:55 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.224 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,6 +161,7 @@
 #include <openssl/stack.h>
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -930,8 +931,8 @@ typedef struct dtls1_state_internal_st {
 typedef struct cert_pkey_st {
 	X509 *x509;
 	EVP_PKEY *privatekey;
-	/* Digest to use when signing */
-	const EVP_MD *digest;
+	/* sigalg to use when signing */
+	const struct ssl_sigalg *sigalg;
 } CERT_PKEY;
 
 typedef struct cert_st {
@@ -1076,7 +1077,8 @@ int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
 X509 *ssl_get_server_send_cert(const SSL *);
-EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd);
+EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd,
+    const struct ssl_sigalg **sap);
 DH *ssl_get_auto_dh(SSL *s);
 int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.40 2018/11/09 17:43:31 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.41 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1509,17 +1509,19 @@ ssl3_get_server_key_exchange(SSL *s)
 	/* if it was signed, check the signature */
 	if (pkey != NULL) {
 		if (SSL_USE_SIGALGS(s)) {
-			uint16_t sigalg;
+			const struct ssl_sigalg *sigalg;
+			uint16_t sigalg_value;
 
-			if (!CBS_get_u16(&cbs, &sigalg))
+			if (!CBS_get_u16(&cbs, &sigalg_value))
 				goto truncated;
-			if ((md = ssl_sigalg_md(sigalg, tls12_sigalgs,
-			    tls12_sigalgs_len)) == NULL) {
+			if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
+			    tls12_sigalgs_len)) == NULL ||
+			    (md = sigalg->md()) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			if (!ssl_sigalg_pkey_check(sigalg, pkey)) {
+			if (sigalg->key_type != pkey->type) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
@@ -2405,13 +2407,10 @@ ssl3_send_client_verify(SSL *s)
 		 * using agreed digest and cached handshake records.
 		 */
 		if (SSL_USE_SIGALGS(s)) {
-			uint16_t sigalg;
-
-			md = s->cert->key->digest;
+			md = s->cert->key->sigalg->md();
 			if (!tls1_transcript_data(s, &hdata, &hdatalen) ||
-			    (sigalg = ssl_sigalg_value(pkey, md)) ==
-			    SIGALG_NONE ||
-			    !CBB_add_u16(&cert_verify, sigalg)) {
+			    !CBB_add_u16(&cert_verify,
+				s->cert->key->sigalg->value)) {
 				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				goto err;
 			}
@@ -2457,6 +2456,7 @@ ssl3_send_client_verify(SSL *s)
 			if (!EVP_DigestInit_ex(&mctx, md, NULL) ||
 			    !EVP_DigestUpdate(&mctx, hdata, hdatalen) ||
 			    !EVP_DigestFinal(&mctx, signbuf, &u) ||
+
 			    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
 			    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
 				EVP_PKEY_CTRL_GOST_SIG_FORMAT,

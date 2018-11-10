@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.54 2018/11/09 05:43:39 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.55 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1483,6 +1483,7 @@ int
 ssl3_send_server_key_exchange(SSL *s)
 {
 	CBB cbb, cbb_params, cbb_signature, server_kex;
+	const struct ssl_sigalg *sigalg = NULL;
 	unsigned char *signature = NULL;
 	unsigned int signature_len;
 	unsigned char *params = NULL;
@@ -1529,28 +1530,14 @@ ssl3_send_server_key_exchange(SSL *s)
 		/* Add signature unless anonymous. */
 		if (!(S3I(s)->hs.new_cipher->algorithm_auth & SSL_aNULL)) {
 			if ((pkey = ssl_get_sign_pkey(s, S3I(s)->hs.new_cipher,
-			    &md)) == NULL) {
+			    &md, &sigalg)) == NULL) {
 				al = SSL_AD_DECODE_ERROR;
-				goto f_err;
-			}
-
-			if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s))
-				md = EVP_md5_sha1();
-		
-			if (md == NULL) {
-				/* Is this error check actually needed? */
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
 				goto f_err;
 			}
 
 			/* Send signature algorithm. */
 			if (SSL_USE_SIGALGS(s)) {
-				uint16_t sigalg;
-				if ((sigalg = ssl_sigalg_value(pkey, md)) ==
-				    SIGALG_NONE ||
-				    !CBB_add_u16(&server_kex, sigalg)) {
-					/* Should never happen */
+				if (!CBB_add_u16(&server_kex, sigalg->value)) {
 					al = SSL_AD_INTERNAL_ERROR;
 					SSLerror(s, ERR_R_INTERNAL_ERROR);
 					goto f_err;
@@ -1595,7 +1582,7 @@ ssl3_send_server_key_exchange(SSL *s)
 	free(signature);
 
 	return (ssl3_handshake_write(s));
-	
+
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
@@ -2155,17 +2142,19 @@ ssl3_get_cert_verify(SSL *s)
 			goto err;
 	} else {
 		if (SSL_USE_SIGALGS(s)) {
-			uint16_t sigalg;
+			const struct ssl_sigalg *sigalg;
+			uint16_t sigalg_value;
 
-			if (!CBS_get_u16(&cbs, &sigalg))
+			if (!CBS_get_u16(&cbs, &sigalg_value))
 				goto truncated;
-			if ((md = ssl_sigalg_md(sigalg, tls12_sigalgs,
-			    tls12_sigalgs_len)) == NULL) {
+			if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
+			    tls12_sigalgs_len)) == NULL ||
+			    (md = sigalg->md()) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			if (!ssl_sigalg_pkey_check(sigalg, pkey)) {
+			if (sigalg->key_type != pkey->type) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;

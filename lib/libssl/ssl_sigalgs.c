@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.3 2018/11/09 05:43:39 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.4 2018/11/10 01:19:09 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -143,7 +143,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.value = SIGALG_RSA_PKCS1_SHA1,
 		.key_type = EVP_PKEY_RSA,
 		.pkey_idx = SSL_PKEY_RSA_SIGN,
-		.md = EVP_sha1,
+		.md = EVP_md5_sha1,
 	},
 	{
 		.value = SIGALG_ECDSA_SHA1,
@@ -187,8 +187,8 @@ ssl_sigalg_lookup(uint16_t sigalg)
 	return NULL;
 }
 
-const EVP_MD *
-ssl_sigalg_md(uint16_t sigalg, uint16_t *values, size_t len)
+const struct ssl_sigalg *
+ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
 {
 	const struct ssl_sigalg *sap;
 	int i;
@@ -199,21 +199,10 @@ ssl_sigalg_md(uint16_t sigalg, uint16_t *values, size_t len)
 	}
 	if (values[i] == sigalg) {
 		if ((sap = ssl_sigalg_lookup(sigalg)) != NULL)
-			return sap->md();
+			return sap;
 	}
 
 	return NULL;
-}
-
-int
-ssl_sigalg_pkey_check(uint16_t sigalg, EVP_PKEY *pk)
-{
-	const struct ssl_sigalg *sap;
-
-	if ((sap = ssl_sigalg_lookup(sigalg)) != NULL)
-		return sap->key_type == pk->type;
-
-	return 0;
 }
 
 uint16_t

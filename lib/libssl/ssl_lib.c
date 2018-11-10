@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.191 2018/11/08 20:55:18 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.192 2018/11/10 01:19:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,6 +156,7 @@
 #endif
 
 #include "bytestring.h"
+#include "ssl_sigalgs.h"
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
 
@@ -2173,8 +2174,11 @@ ssl_get_server_send_cert(const SSL *s)
 }
 
 EVP_PKEY *
-ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd)
+ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd,
+    const struct ssl_sigalg **sap)
 {
+	const struct ssl_sigalg *sigalg = NULL;
+	EVP_PKEY *pkey = NULL;
 	unsigned long	 alg_a;
 	CERT		*c;
 	int		 idx = -1;
@@ -2194,9 +2198,27 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd)
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return (NULL);
 	}
-	if (pmd)
-		*pmd = c->pkeys[idx].digest;
-	return (c->pkeys[idx].privatekey);
+
+	pkey = c->pkeys[idx].privatekey;
+	sigalg = c->pkeys[idx].sigalg;
+	if (!SSL_USE_SIGALGS(s)) {
+		if (pkey->type == EVP_PKEY_RSA) {
+			sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+		} else if (pkey->type == EVP_PKEY_EC) {
+			sigalg = ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
+		} else {
+			SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
+			return (NULL);
+		}
+	}
+	if (sigalg == NULL) {
+		SSLerror(s, SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+		return (NULL);
+	}
+	*pmd = sigalg->md();
+	*sap = sigalg;
+
+	return (pkey);
 }
 
 DH *
@@ -2810,9 +2832,9 @@ SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	ssl->cert = ssl_cert_dup(ctx->internal->cert);
 	if (ocert != NULL) {
 		int i;
-		/* Copy negotiated digests from original certificate. */
+		/* Copy negotiated sigalg from original certificate. */
 		for (i = 0; i < SSL_PKEY_NUM; i++)
-			ssl->cert->pkeys[i].digest = ocert->pkeys[i].digest;
+			ssl->cert->pkeys[i].sigalg = ocert->pkeys[i].sigalg;
 		ssl_cert_free(ocert);
 	}
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
