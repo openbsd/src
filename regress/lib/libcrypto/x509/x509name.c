@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.1 2018/04/07 13:54:46 schwarze Exp $ */
+/* $OpenBSD: x509name.c,v 1.2 2018/11/10 01:43:03 tb Exp $ */
 /*
  * Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -54,6 +54,8 @@ main(void)
 	X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
 	    "DE", -1, 0, 1);
 	debug_print(name);
+
+	X509_NAME_free(name);
 
 	return 0;
 }
