@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.4 2018/11/09 23:56:20 jsing Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.5 2018/11/10 00:18:25 beck Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -220,30 +220,7 @@ int
 tls13_derive_early_secrets(struct tls13_secrets *secrets,
     uint8_t *psk, size_t psk_len, const struct tls13_secret *context)
 {
-	struct tls13_secret binder_context;
-	uint8_t binder_context_data[EVP_MAX_MD_SIZE] = { 0 };
-	unsigned binder_context_len;
-	EVP_MD_CTX *mdctx;
-
 	if (!secrets->init_done || secrets->early_done)
-		return 0;
-
-	if ((mdctx = EVP_MD_CTX_new()) == NULL)
-		return 0;
-
-	if (!EVP_DigestInit_ex(mdctx, secrets->digest, NULL) ||
-	    !EVP_DigestUpdate(mdctx, secrets->zeros.data, secrets->zeros.len) ||
-	    !EVP_DigestFinal_ex(mdctx, binder_context_data,
-		&binder_context_len)) {
-		EVP_MD_CTX_free(mdctx);
-		return 0;
-	}
-	binder_context.data = binder_context_data;
-	binder_context.len = binder_context_len;
-	EVP_MD_CTX_free(mdctx);
-
-	/* If these don't match, we were initialized with the wrong length */
-	if (binder_context_len != secrets->zeros.len)
 		return 0;
 
 	if (!HKDF_extract(secrets->extracted_early.data,
@@ -257,7 +234,7 @@ tls13_derive_early_secrets(struct tls13_secrets *secrets,
 	if (!tls13_derive_secret(&secrets->binder_key, secrets->digest,
 	    &secrets->extracted_early,
 	    secrets->resumption ? "res binder" : "ext binder",
-	    &binder_context))
+	    &secrets->empty_hash))
 		return 0;
 	if (!tls13_derive_secret(&secrets->client_early_traffic,
 	    secrets->digest, &secrets->extracted_early, "c e traffic",
@@ -313,7 +290,7 @@ tls13_derive_handshake_secrets(struct tls13_secrets *secrets,
 		return 0;
 	if (!tls13_derive_secret(&secrets->derived_handshake,
 	    secrets->digest, &secrets->extracted_handshake, "derived",
-	    context))
+	    &secrets->empty_hash))
 		return 0;
 
 	/* RFC 8446 recommends */

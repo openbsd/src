@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.2 2018/11/09 23:57:19 jsing Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.3 2018/11/10 00:18:25 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -160,13 +160,10 @@ int main () {
 	if (tls13_derive_handshake_secrets(secrets, ecdhe, 32, &cshello_hash))
 		FAIL("derive_handshake_secrets worked when it shouldn't(2)\n");
 
-	/* XXX XXX this should get fixed when test vectors clarified */
-	memcpy(secrets->derived_handshake.data, expected_derived_handshake,
-	    32);
 	/* XXX fix hash here once test vector sorted */
-	if (!tls13_derive_application_secrets(secrets, &chello_hash))
+	if (!tls13_derive_application_secrets(secrets, &cshello_hash))
 		FAIL("derive_application_secrets failed\n");
-	if (tls13_derive_application_secrets(secrets, &chello_hash))
+	if (tls13_derive_application_secrets(secrets, &cshello_hash))
 		FAIL("derive_application_secrets worked when it "
 		    "shouldn't(2)\n");
 
