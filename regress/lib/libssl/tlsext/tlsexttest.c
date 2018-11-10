@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.19 2018/11/06 01:19:35 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.20 2018/11/10 08:10:31 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1583,27 +1583,27 @@ test_tlsext_sigalgs_clienthello(void)
 		goto done;
 	}
 
-	if (ssl->cert->pkeys[SSL_PKEY_RSA_SIGN].digest != EVP_sha512()) {
+	if (ssl->cert->pkeys[SSL_PKEY_RSA_SIGN].sigalg->md() != EVP_sha512()) {
 		fprintf(stderr, "FAIL: RSA sign digest mismatch\n");
 		failure = 1;
 		goto done;
 	}
-	if (ssl->cert->pkeys[SSL_PKEY_RSA_ENC].digest != EVP_sha512()) {
+	if (ssl->cert->pkeys[SSL_PKEY_RSA_ENC].sigalg->md() != EVP_sha512()) {
 		fprintf(stderr, "FAIL: RSA enc digest mismatch\n");
 		failure = 1;
 		goto done;
 	}
-	if (ssl->cert->pkeys[SSL_PKEY_ECC].digest != EVP_sha512()) {
+	if (ssl->cert->pkeys[SSL_PKEY_ECC].sigalg->md() != EVP_sha512()) {
 		fprintf(stderr, "FAIL: ECC digest mismatch\n");
 		failure = 1;
 		goto done;
 	}
-	if (ssl->cert->pkeys[SSL_PKEY_GOST01].digest != EVP_streebog512()) {
+	if (ssl->cert->pkeys[SSL_PKEY_GOST01].sigalg->md() != EVP_streebog512()) {
 		fprintf(stderr, "FAIL: GOST01 digest mismatch\n");
 		failure = 1;
 		goto done;
 	}
-		
+
  done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
