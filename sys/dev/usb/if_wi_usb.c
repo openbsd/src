@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.68 2015/11/24 17:11:40 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.69 2018/11/10 15:28:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -409,9 +409,10 @@ wi_usb_detach(struct device *self, int flags)
 
 	while (sc->wi_usb_nummem) {
 		sc->wi_usb_nummem--;
-		if (sc->wi_usb_txmem[sc->wi_usb_nummem] != NULL)
-			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF, 0);
+		free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF,
+		  sc->wi_usb_txmemsize[sc->wi_usb_nummem]);
 		sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
+		sc->wi_usb_txmemsize[sc->wi_usb_nummem] = 0;
 	}
 
 	if (sc->wi_usb_ep[WI_USB_ENDPT_INTR] != NULL) {
@@ -541,8 +542,10 @@ wi_cmd_usb(struct wi_softc *wsc, int cmd, int val0, int val1, int val2)
 		/* free alloc_nicmem regions */
 		while (sc->wi_usb_nummem) {
 			sc->wi_usb_nummem--;
-			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF, 0);
+			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF,
+			  sc->wi_usb_txmemsize[sc->wi_usb_nummem]);
 			sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
+			sc->wi_usb_txmemsize[sc->wi_usb_nummem] = 0;
 		}
 
 #if 0
