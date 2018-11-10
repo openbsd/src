@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.586 2018/11/10 20:51:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.587 2018/11/10 21:04:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -368,6 +368,7 @@ routehandler(struct interface_info *ifi, int routefd)
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
 			get_hw_address(ifi);
 			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
+				tick_msg("", 0, INT64_MAX);
 				log_warnx("%s: LLADDR changed", log_procname);
 				quit = SIGHUP;
 				goto done;
