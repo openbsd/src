@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.29 2018/11/02 07:17:34 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.30 2018/11/10 11:54:03 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -235,12 +235,17 @@ lf_advlock(struct lockf **head, off_t size, caddr_t id, int op,
 	}
 	if (start < 0)
 		return (EINVAL);
-	if (fl->l_len == 0) {
-		end = -1;
-	} else {
-		end = start + fl->l_len - 1;
-		if (end < start)
+	if (fl->l_len > 0) {
+		if (fl->l_len - 1 > LLONG_MAX - start)
+			return (EOVERFLOW);
+		end = start + (fl->l_len - 1);
+	} else if (fl->l_len < 0) {
+		if (fl->l_start + fl->l_len < 0)
 			return (EINVAL);
+		end = fl->l_start - 1;
+		start += fl->l_len;
+	} else {
+		end = -1;
 	}
 
 	/*

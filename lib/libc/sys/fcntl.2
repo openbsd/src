@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.31 2014/12/16 00:06:49 schwarze Exp $
+.\"	$OpenBSD: fcntl.2,v 1.32 2018/11/10 11:54:03 anton Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: December 16 2014 $
+.Dd $Mdocdate: November 10 2018 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -286,7 +286,11 @@ The value of
 is the number of consecutive bytes to be locked.
 If
 .Fa l_len
-is negative, the result is undefined.
+is negative, the area starting at
+.Fa l_start Ns + Ns Fa l_len
+and ending at
+.Fa l_start Ns -1
+is locked.
 The
 .Fa l_pid
 field is only used with
@@ -509,6 +513,17 @@ or
 .Dv F_SETLKW ,
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
+.It Bq Er EOVERFLOW
+The argument
+.Fa cmd
+is
+.Dv F_GETLK ,
+.Dv F_SETLK
+or
+.Dv F_SETLKW
+and the segment length of a file to be locked is too large to be represented by
+an
+.Vt off_t .
 .It Bq Er ESRCH
 .Fa cmd
 is
