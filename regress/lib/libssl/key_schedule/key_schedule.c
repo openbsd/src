@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.4 2018/11/10 00:48:33 beck Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.5 2018/11/10 01:46:54 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -263,6 +263,8 @@ int main () {
 	if (memcmp(secrets->exporter_master.data,
 	    expected_exporter_master, 32) != 0)
 		FAIL("exporter_master does not match\n");
+
+	tls13_secrets_destroy(secrets);
 
 	return failures;
 }
