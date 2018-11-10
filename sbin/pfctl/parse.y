@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.686 2018/11/07 08:10:45 miko Exp $	*/
+/*	$OpenBSD: parse.y,v 1.687 2018/11/10 21:22:17 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5564,8 +5564,8 @@ pfctl_cmdline_symset(char *s)
 	if ((val = strrchr(s, '=')) == NULL)
 		return (-1);
 
-	sym = strndup(s, val - s);	
-	if (sym == NULL);
+	sym = strndup(s, val - s);
+	if (sym == NULL)
 		err(1, "%s", __func__);
 	ret = symset(sym, val + 1, 1);
 	free(sym);
