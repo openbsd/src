@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.583 2018/11/10 14:39:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.584 2018/11/10 15:01:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -696,23 +696,22 @@ usage(void)
 void
 state_preboot(struct interface_info *ifi)
 {
-	time_t		 cur_time, tickstart, tickstop;
+	time_t		 cur_time, tickstop;
 
 	time(&cur_time);
 
-	tickstart = ifi->startup_time + 3;
 	tickstop = ifi->startup_time + config->link_timeout;
 
 	interface_state(ifi);
 
 	if (LINK_STATE_IS_UP(ifi->link_state)) {
-		tick_msg("link", 1, tickstart);
+		tick_msg("link", 1, ifi->startup_time);
 		if ((ifi->flags & IFI_VALID_LLADDR) == 0)
 			get_hw_address(ifi);
 		ifi->state = S_REBOOTING;
 		state_reboot(ifi);
 	} else {
-		tick_msg("link", 0, tickstart);
+		tick_msg("link", 0, ifi->startup_time);
 		if (cur_time > tickstop) {
 			go_daemon();
 			cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
@@ -955,13 +954,12 @@ bind_lease(struct interface_info *ifi)
 	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
 	char			*msg = NULL;
-	time_t			 cur_time, renewal, tickstart;
+	time_t			 cur_time, renewal;
 	int			 rslt, seen;
 
 	time(&cur_time);
-	tickstart = ifi->first_sending + 3;
 	if ((cmd_opts & OPT_VERBOSE) == 0)
-		tick_msg("lease", 1, tickstart);
+		tick_msg("lease", 1, ifi->first_sending);
 
 	lease = apply_defaults(ifi->offer);
 
@@ -1310,7 +1308,7 @@ void
 send_discover(struct interface_info *ifi)
 {
 	struct dhcp_packet	*packet = &ifi->sent_packet;
-	time_t			 cur_time, interval, tickstart, tickstop;
+	time_t			 cur_time, interval, tickstop;
 	ssize_t			 rslt;
 
 	time(&cur_time);
@@ -1318,7 +1316,6 @@ send_discover(struct interface_info *ifi)
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
 
-	tickstart = ifi->first_sending + 3;
 	tickstop = ifi->startup_time + config->link_timeout;
 
 	if (interval > config->timeout) {
@@ -1358,10 +1355,10 @@ send_discover(struct interface_info *ifi)
 	 */
 	if (cur_time < tickstop) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
-			tick_msg("lease", 0, tickstart);
+			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, tickstart);
+		tick_msg("lease", 0, ifi->first_sending);
 	}
 
 	/* Record the number of seconds since we started sending. */
@@ -1417,14 +1414,13 @@ send_request(struct interface_info *ifi)
 	struct in_addr		 from;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
 	ssize_t			 rslt;
-	time_t			 cur_time, interval, tickstart, tickstop;
+	time_t			 cur_time, interval, tickstop;
 
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
 
-	tickstart = ifi->first_sending + 3;
 	tickstop = ifi->startup_time + config->link_timeout;
 
 	/*
@@ -1485,10 +1481,10 @@ send_request(struct interface_info *ifi)
 	 */
 	if (cur_time < tickstop) {
 		if ((cmd_opts & OPT_VERBOSE) == 0)
-			tick_msg("lease", 0, tickstart);
+			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, tickstart);
+		tick_msg("lease", 0, ifi->first_sending);
 	}
 
 	/*
@@ -2757,6 +2753,8 @@ tick_msg(const char *preamble, int success, time_t start)
 	static time_t	stop;
 	time_t		cur_time;
 
+#define	GRACE_SECONDS	3
+
 	time(&cur_time);
 
 	if (preamble == NULL) {
@@ -2764,7 +2762,7 @@ tick_msg(const char *preamble, int success, time_t start)
 		return;
 	}
 
-	if (isatty(STDERR_FILENO) == 0 || cur_time < start)
+	if (isatty(STDERR_FILENO) == 0 || cur_time < start + GRACE_SECONDS)
 		return;
 
 	if (preamble_sent == 0) {
