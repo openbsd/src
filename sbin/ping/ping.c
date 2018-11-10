@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.231 2018/11/10 05:03:23 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.232 2018/11/10 23:44:53 dlg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv, v6flag ?
-	    "c:dEefHh:I:i:Ll:mNnp:qS:s:T:V:vw:" :
+	    "c:DdEefHh:I:i:Ll:mNnp:qS:s:T:V:vw:" :
 	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
 		switch(ch) {
 		case 'c':
@@ -679,6 +679,13 @@ main(int argc, char *argv[])
 			if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &optval,
 			    (socklen_t)sizeof(optval)) < 0)
 				warn("setsockopt(IPV6_TVAL)"); /* XXX err? */
+		}
+
+		if (df) {
+			optval = 1;
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_DONTFRAG,
+			    &optval, (socklen_t)sizeof(optval)) < 0)
+				warn("setsockopt(IPV6_DONTFRAG"); /* err? */
 		}
 
 		optval = 1;
@@ -2166,7 +2173,7 @@ usage(void)
 {
 	if (v6flag) {
 		fprintf(stderr,
-		    "usage: ping6 [-dEefHLmnqv] [-c count] [-h hoplimit] "
+		    "usage: ping6 [-DdEefHLmnqv] [-c count] [-h hoplimit] "
 		    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
 		    "[-s packetsize] [-T toskeyword]\n\t"
 		    "[-V rtable] [-w maxwait] host\n");
