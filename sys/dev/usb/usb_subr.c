@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.138 2018/07/19 12:35:14 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.139 2018/11/10 15:34:25 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -515,6 +515,7 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	ifc->endpoints = NULL;
 	ifc->priv = NULL;
 	LIST_INIT(&ifc->pipes);
+	ifc->nendpt = nendpt;
 
 	if (nendpt != 0) {
 		ifc->endpoints = mallocarray(nendpt, sizeof(*ifc->endpoints),
@@ -592,8 +593,9 @@ void
 usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 {
 	struct usbd_interface *ifc = &dev->ifaces[ifcno];
-	if (ifc->endpoints)
-		free(ifc->endpoints, M_USB, 0);
+
+	free(ifc->endpoints, M_USB, ifc->nendpt * sizeof(*ifc->endpoints));
+	ifc->endpoints = NULL;
 }
 
 usbd_status

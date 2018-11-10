@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.98 2018/04/29 08:57:48 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.99 2018/11/10 15:34:25 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -657,19 +657,20 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 {
 	usb_device_request_t req;
 	usbd_status err;
-	void *endpoints;
+	struct usbd_endpoint *endpoints;
+	int nendpt;
 
 	if (LIST_FIRST(&iface->pipes) != 0)
 		return (USBD_IN_USE);
 
 	endpoints = iface->endpoints;
+	nendpt = iface->nendpt;
 	err = usbd_fill_iface_data(iface->device, iface->index, altidx);
 	if (err)
 		return (err);
 
 	/* new setting works, we can free old endpoints */
-	if (endpoints != NULL)
-		free(endpoints, M_USB, 0);
+	free(endpoints, M_USB, nendpt * sizeof(*endpoints));
 
 #ifdef DIAGNOSTIC
 	if (iface->idesc == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.75 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.76 2018/11/10 15:34:25 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -173,7 +173,8 @@ struct usbd_interface {
 	struct usbd_endpoint   *endpoints;
 	void		       *priv;
 	LIST_HEAD(, usbd_pipe)	pipes;
-	u_int8_t		claimed;
+	uint8_t			claimed;
+	uint8_t			nendpt;
 };
 
 struct usbd_pipe {
