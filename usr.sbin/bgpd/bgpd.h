@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.352 2018/11/04 14:34:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.353 2018/11/10 11:19:01 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -509,7 +509,8 @@ enum ctl_results {
 	CTL_RES_PENDING,
 	CTL_RES_NOMEM,
 	CTL_RES_BADPEER,
-	CTL_RES_BADSTATE
+	CTL_RES_BADSTATE,
+	CTL_RES_NOSUCHRIB
 };
 
 /* needed for session.h parse prototype */
@@ -1414,7 +1415,8 @@ static const char * const ctl_res_strerror[] = {
 	"previous reload still running",
 	"out of memory",
 	"not a cloned peer",
-	"peer still active, down peer first"
+	"peer still active, down peer first",
+	"no such RIB"
 };
 
 static const char * const timernames[] = {

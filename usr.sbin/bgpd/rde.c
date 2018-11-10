@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.448 2018/11/08 09:59:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.449 2018/11/10 11:19:01 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2316,7 +2316,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		rid = RIB_ADJ_OUT;
 	} else if ((rid = rib_find(req->rib)) == RIB_NOTFOUND) {
 		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
-		error = CTL_RES_NOSUCHPEER;
+		error = CTL_RES_NOSUCHRIB;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
 		    sizeof(error));
 		free(ctx);
