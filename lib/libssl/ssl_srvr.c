@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.55 2018/11/10 01:19:09 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.56 2018/11/11 02:03:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,7 +345,7 @@ ssl3_accept(SSL *s)
 					D1I(s)->handshake_write_seq = 1;
 					D1I(s)->next_handshake_write_seq = 1;
 					goto end;
-				}				
+				}
 			} else {
 				if (s->internal->rwstate != SSL_X509_LOOKUP) {
 					ret = ssl3_get_client_hello(s);
@@ -1485,12 +1485,13 @@ ssl3_send_server_key_exchange(SSL *s)
 	CBB cbb, cbb_params, cbb_signature, server_kex;
 	const struct ssl_sigalg *sigalg = NULL;
 	unsigned char *signature = NULL;
-	unsigned int signature_len;
+	size_t signature_len = 0;
 	unsigned char *params = NULL;
 	size_t params_len;
 	const EVP_MD *md = NULL;
 	unsigned long type;
 	EVP_MD_CTX md_ctx;
+	EVP_PKEY_CTX *pctx;
 	EVP_PKEY *pkey;
 	int al;
 
@@ -1544,21 +1545,34 @@ ssl3_send_server_key_exchange(SSL *s)
 				}
 			}
 
-			if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
+			if (!EVP_DigestSignInit(&md_ctx, &pctx, md, NULL, pkey)) {
+				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
-
-			if (!EVP_SignInit_ex(&md_ctx, md, NULL))
+			}
+			if (!EVP_DigestSignUpdate(&md_ctx, s->s3->client_random,
+			    SSL3_RANDOM_SIZE)) {
+				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
-			if (!EVP_SignUpdate(&md_ctx, s->s3->client_random,
-			    SSL3_RANDOM_SIZE))
+			}
+			if (!EVP_DigestSignUpdate(&md_ctx, s->s3->server_random,
+			    SSL3_RANDOM_SIZE)) {
+				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
-			if (!EVP_SignUpdate(&md_ctx, s->s3->server_random,
-			    SSL3_RANDOM_SIZE))
+			}
+			if (!EVP_DigestSignUpdate(&md_ctx, params, params_len)) {
+				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
-			if (!EVP_SignUpdate(&md_ctx, params, params_len))
+			}
+			if (!EVP_DigestSignFinal(&md_ctx, NULL, &signature_len) ||
+			    !signature_len) {
+				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
-			if (!EVP_SignFinal(&md_ctx, signature, &signature_len,
-			    pkey)) {
+			}
+			if ((signature = calloc(1, signature_len)) == NULL) {
+				SSLerror(s, ERR_R_MALLOC_FAILURE);
+				goto err;
+			}
+			if (!EVP_DigestSignFinal(&md_ctx, signature, &signature_len)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
@@ -2071,6 +2085,7 @@ int
 ssl3_get_cert_verify(SSL *s)
 {
 	CBS cbs, signature;
+	const struct ssl_sigalg *sigalg;
 	const EVP_MD *md = NULL;
 	EVP_PKEY *pkey = NULL;
 	X509 *peer = NULL;
@@ -2135,14 +2150,16 @@ ssl3_get_cert_verify(SSL *s)
 	 * If key is GOST and n is exactly 64, it is a bare
 	 * signature without length field.
 	 */
+	/* This hack is awful and needs to die in fire */
 	if ((pkey->type == NID_id_GostR3410_94 ||
 	     pkey->type == NID_id_GostR3410_2001) && CBS_len(&cbs) == 64) {
+		if (SSL_USE_SIGALGS(s))
+			goto truncated;
 		CBS_dup(&cbs, &signature);
 		if (!CBS_skip(&cbs, CBS_len(&cbs)))
 			goto err;
 	} else {
 		if (SSL_USE_SIGALGS(s)) {
-			const struct ssl_sigalg *sigalg;
 			uint16_t sigalg_value;
 
 			if (!CBS_get_u16(&cbs, &sigalg_value))
@@ -2175,19 +2192,24 @@ ssl3_get_cert_verify(SSL *s)
 	}
 
 	if (SSL_USE_SIGALGS(s)) {
+		EVP_PKEY_CTX *pctx;
 		if (!tls1_transcript_data(s, &hdata, &hdatalen)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
-		if (!EVP_VerifyInit_ex(&mctx, md, NULL) ||
-		    !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
+		if (!EVP_DigestVerifyInit(&mctx, &pctx, md, NULL, pkey)) {
 			SSLerror(s, ERR_R_EVP_LIB);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}
-		if (EVP_VerifyFinal(&mctx, CBS_data(&signature),
-		    CBS_len(&signature), pkey) <= 0) {
+		if (!EVP_DigestVerifyUpdate(&mctx, hdata, hdatalen)) {
+			SSLerror(s, ERR_R_EVP_LIB);
+			al = SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+		}
+		if (EVP_DigestVerifyFinal(&mctx, CBS_data(&signature),
+		    CBS_len(&signature)) <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_SIGNATURE);
 			goto f_err;
