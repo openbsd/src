@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.133 2018/11/11 06:05:53 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.134 2018/11/11 06:35:41 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1912,24 +1912,31 @@ gre_l3_encap_dst(const struct gre_tunnel *tunnel, const void *dst,
 	}
  #endif
 #ifdef MPLS
-	case AF_MPLS:
+	case AF_MPLS: {
+		uint32_t shim;
+
+		m = m_pullup(m, sizeof(shim));
+		if (m == NULL)
+			return (NULL);
+
+		shim = bemtoh32(mtod(m, uint32_t *)) & MPLS_EXP_MASK;
+		tos = (shim >> MPLS_EXP_OFFSET) << 5;
+
 		ttloff = 3;
-		tos = 0;
  
 		if (m->m_flags & (M_BCAST | M_MCAST))
 			proto = htons(ETHERTYPE_MPLS_MCAST);
 		else
 			proto = htons(ETHERTYPE_MPLS);
 		break;
+	}
 #endif
 	default:
 		unhandled_af(af);
 	}
  
 	if (tttl == -1) {
-		m = m_pullup(m, ttloff + 1);
-		if (m == NULL)
-			return (NULL);
+		KASSERT(m->m_len > ttloff); /* m_pullup has happened */
  
 		ttl = *(m->m_data + ttloff);
 	} else
