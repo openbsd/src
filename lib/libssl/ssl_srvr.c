@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.57 2018/11/11 02:22:34 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.58 2018/11/11 06:27:57 bluhm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -676,9 +676,10 @@ ssl3_accept(SSL *s)
 			if (ret <= 0)
 				goto end;
 			S3I(s)->hs.state = SSL3_ST_SW_FLUSH;
-			if (s->internal->hit)
+			if (s->internal->hit) {
 				S3I(s)->hs.next_state = SSL3_ST_SR_FINISHED_A;
-			else
+				tls1_transcript_free(s);
+			} else
 				S3I(s)->hs.next_state = SSL_ST_OK;
 			s->internal->init_num = 0;
 			break;
