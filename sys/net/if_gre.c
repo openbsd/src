@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.131 2018/10/25 01:05:19 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.132 2018/11/11 05:55:10 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -588,6 +588,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
+
+	ifp->if_llprio = IFQ_TOS2PRIO(IPTOS_PREC_INTERNETCONTROL);
 
 	NET_LOCK();
 	TAILQ_INSERT_TAIL(&gre_list, sc, sc_entry);
@@ -2817,6 +2819,7 @@ gre_keepalive_send(void *arg)
 	int linkhdr, len;
 	uint16_t proto;
 	uint8_t ttl;
+	uint8_t tos;
 
 	/*
 	 * re-schedule immediately, so we deal with incomplete configuation
@@ -2869,6 +2872,7 @@ gre_keepalive_send(void *arg)
 	SipHash24_Final(gk->gk_digest, &ctx);
 
 	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
+	tos = IFQ_PRIO2TOS(sc->sc_if.if_llprio);
 
 	t.t_af = sc->sc_tunnel.t_af;
 	t.t_df = sc->sc_tunnel.t_df;
@@ -2877,7 +2881,7 @@ gre_keepalive_send(void *arg)
 	t.t_key = sc->sc_tunnel.t_key;
 	t.t_key_mask = sc->sc_tunnel.t_key_mask;
 
-	m = gre_encap(&t, m, htons(0), ttl, IPTOS_PREC_INTERNETCONTROL);
+	m = gre_encap(&t, m, htons(0), ttl, tos);
 	if (m == NULL)
 		return;
 
@@ -2906,8 +2910,7 @@ gre_keepalive_send(void *arg)
 	/*
 	 * put it in the tunnel
 	 */
-	m = gre_encap(&sc->sc_tunnel, m, proto, ttl,
-	    IPTOS_PREC_INTERNETCONTROL);
+	m = gre_encap(&sc->sc_tunnel, m, proto, ttl, tos);
 	if (m == NULL)
 		return;
 
@@ -3751,10 +3754,11 @@ static void
 eoip_keepalive_send(void *arg)
 {
 	struct eoip_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m;
 	int linkhdr;
 
-	if (!ISSET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING))
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
 
 	/* this is really conservative */
@@ -3780,7 +3784,7 @@ eoip_keepalive_send(void *arg)
 	m->m_pkthdr.len = m->m_len = linkhdr;
 	m_adj(m, linkhdr);
 
-	m = eoip_encap(sc, m, IPTOS_PREC_INTERNETCONTROL);
+	m = eoip_encap(sc, m, IFQ_PRIO2TOS(ifp->if_llprio));
 	if (m == NULL)
 		return;
 

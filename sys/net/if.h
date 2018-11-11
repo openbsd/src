@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.195 2018/09/12 09:20:34 krw Exp $	*/
+/*	$OpenBSD: if.h,v 1.196 2018/11/11 05:55:10 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -129,6 +129,8 @@ struct	if_data {
 #define IFQ_MINPRIO	0
 #define IFQ_MAXPRIO	IFQ_NQUEUES - 1
 #define IFQ_DEFPRIO	3
+#define IFQ_PRIO2TOS(_p) ((_p) << 5)
+#define IFQ_TOS2PRIO(_t) ((_t) >> 5)
 
 /*
  * Values for if_link_state.
