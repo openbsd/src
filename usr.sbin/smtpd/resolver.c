@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.2 2018/08/29 17:56:17 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.3 2018/11/11 14:56:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -93,7 +93,7 @@ resolver_getaddrinfo(const char *hostname, const char *servname,
 	m_add_int(p_resolver, hints ? hints->ai_socktype : 0);
 	m_add_int(p_resolver, hints ? hints->ai_protocol : 0);
 	m_add_string(p_resolver, hostname);
-	m_add_string(p_resolver, servname ? servname : "");
+	m_add_string(p_resolver, servname);
 	m_close(p_resolver);
 }
 
@@ -150,8 +150,7 @@ resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 		m_get_int(&m, &hints.ai_socktype);
 		m_get_int(&m, &hints.ai_protocol);
 		m_get_string(&m, &hostname);
-		if (!m_is_eom(&m))
-			m_get_string(&m, &servname);
+		m_get_string(&m, &servname);
 		m_end(&m);
 
 		s = NULL;
@@ -257,7 +256,7 @@ resolver_dispatch_result(struct mproc *proc, struct imsg *imsg)
 
 		memmove(ai->ai_addr, &ss, ss.ss_len);
 
-		if (cname[0]) {
+		if (cname) {
 			ai->ai_canonname = strdup(cname);
 			if (ai->ai_canonname == NULL) {
 				log_warn("%s: strdup", __func__);
@@ -322,8 +321,7 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 		m_add_int(s->proc, ai->ai_socktype);
 		m_add_int(s->proc, ai->ai_protocol);
 		m_add_sockaddr(s->proc, ai->ai_addr);
-		m_add_string(s->proc, ai->ai_canonname ?
-		    ai->ai_canonname : "");
+		m_add_string(s->proc, ai->ai_canonname);
 		m_close(s->proc);
 	}
 
@@ -332,7 +330,8 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 	m_add_int(s->proc, ar->ar_errno);
 	m_close(s->proc);
 
-	freeaddrinfo(ar->ar_addrinfo);
+	if (ar->ar_addrinfo)
+		freeaddrinfo(ar->ar_addrinfo);
 	free(s);
 }
 
