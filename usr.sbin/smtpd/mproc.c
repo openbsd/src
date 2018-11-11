@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.29 2017/03/17 20:57:57 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.30 2018/11/11 14:00:51 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -441,7 +441,12 @@ m_add_time(struct mproc *m, time_t v)
 void
 m_add_string(struct mproc *m, const char *v)
 {
-	m_add(m, v, strlen(v) + 1);
+	if (v) {
+		m_add(m, "s", 1);
+		m_add(m, v, strlen(v) + 1);
+	}
+	else
+		m_add(m, "\0", 1);
 };
 
 void
@@ -539,10 +544,19 @@ void
 m_get_string(struct msg *m, const char **s)
 {
 	uint8_t	*end;
+	char c;
 
 	if (m->pos >= m->end)
 		m_error("msg too short");
 
+	c = *m->pos++;
+	if (c == '\0') {
+		*s = NULL;
+		return;
+	}
+
+	if (m->pos >= m->end)
+		m_error("msg too short");
 	end = memchr(m->pos, 0, m->end - m->pos);
 	if (end == NULL)
 		m_error("unterminated string");
