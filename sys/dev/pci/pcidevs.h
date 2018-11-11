@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1866 2018/11/08 06:54:13 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1867 2018/11/11 22:31:16 fcambus Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -44,7 +44,7 @@
  *
  * There is a Vendor ID search engine available at:
  *
- *	http://www.pcisig.com/membership/vid_search/
+ *	https://pcisig.com/membership/member-companies
  */
 
 /*
@@ -7630,7 +7630,7 @@
 #define	PCI_PRODUCT_VIATECH_KT880_3	0x3269		/* KT880 Host */
 #define	PCI_PRODUCT_VIATECH_K8HTB_3	0x3282		/* K8HTB Host */
 #define	PCI_PRODUCT_VIATECH_VT8251_ISA	0x3287		/* VT8251 ISA */
-#define	PCI_PRODUCT_VIATECH_HDA	0x3288		/* HD Audio */
+#define	PCI_PRODUCT_VIATECH_HDA_0	0x3288		/* HD Audio */
 #define	PCI_PRODUCT_VIATECH_CX700_4	0x3324		/* CX700 Host */
 #define	PCI_PRODUCT_VIATECH_P4M890_3	0x3327		/* P4M890 Host */
 #define	PCI_PRODUCT_VIATECH_K8M890_3	0x3336		/* K8M890 Host */
@@ -7713,6 +7713,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C601	0x8601		/* VT82C601 AGP */
 #define	PCI_PRODUCT_VIATECH_VT8605_AGP	0x8605		/* VT8605 AGP */
 #define	PCI_PRODUCT_VIATECH_VX900_IDE	0x9001		/* VX900 IDE */
+#define	PCI_PRODUCT_VIATECH_HDA_1	0x9170		/* HD Audio */
 #define	PCI_PRODUCT_VIATECH_VX800_SDMMC	0x9530		/* VX800 SD/MMC */
 #define	PCI_PRODUCT_VIATECH_VX800_SDIO	0x95d0		/* VX800 SDIO */
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_A	0xa238		/* K8T890 */

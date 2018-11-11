@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1866 2018/11/08 06:54:13 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1867 2018/11/11 22:31:16 fcambus Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -26764,7 +26764,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8251 ISA",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_HDA,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_HDA_0,
 	    "HD Audio",
 	},
 	{
@@ -27094,6 +27094,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_IDE,
 	    "VX900 IDE",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_HDA_1,
+	    "HD Audio",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_SDMMC,
