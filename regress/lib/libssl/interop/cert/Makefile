@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.1 2018/11/09 06:30:41 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2018/11/11 00:15:04 bluhm Exp $
 
-.if ! exists(/usr/local/bin/eopenssl) || ! exists(/usr/local/bin/eopenssl11)
-regress:
-	# install openssl-1.0.2p and openssl-1.1.1 from ports
-	@echo SKIPPED
+LIBRARIES =		libressl
+.if exists(/usr/local/bin/eopenssl)
+LIBRARIES +=		openssl
 .endif
-
-CLEANFILES +=	client.out server.out
+.if exists(/usr/local/bin/eopenssl11)
+LIBRARIES +=		openssl11
+.endif
 
 .for cca in noca ca fakeca
 .for sca in noca ca fakeca
@@ -27,35 +27,34 @@ FAIL_${cca}_${sca}_${ccert}_${scert}_${cv}_${sv} =
 FAIL_${cca}_${sca}_${ccert}_${scert}_${cv}_${sv} = !
 .endif
 
-.for clib in libressl openssl openssl11
-.for slib in libressl openssl openssl11
+.for clib in ${LIBRARIES}
+.for slib in ${LIBRARIES}
 
-REGRESS_TARGETS +=	\
-run-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}
+REGRESS_TARGETS +=	run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}
 
-run-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}:\
+run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}: \
     127.0.0.1.crt ca.crt fake-ca.crt client.crt server.crt \
     ../${clib}/client ../${slib}/server
 	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=/usr/local/lib/e${slib} \
-	    ../${slib}/server >server.out \
+	    ../${slib}/server >${@:S/^run/server/}.out \
 	    ${sca:S/^noca//:S/^fakeca/-C fake-ca.crt/:S/^ca/-C ca.crt/} \
 	    ${scert:S/^nocert//:S/^cert/-c server.crt -k server.key/} \
 	    ${sv:S/^noverify//:S/^verify/-v/:S/^certverify/-vv/} \
 	    127.0.0.1 0
 	${FAIL_${cca}_${sca}_${ccert}_${scert}_${cv}_${sv}} \
 	    LD_LIBRARY_PATH=/usr/local/lib/e${clib} \
-	    ../${clib}/client >client.out \
+	    ../${clib}/client >${@:S/^run/client/}.out \
 	    ${cca:S/^noca//:S/^fakeca/-C fake-ca.crt/:S/^ca/-C ca.crt/} \
 	    ${ccert:S/^nocert//:S/^cert/-c server.crt -k server.key/} \
 	    ${cv:S/^noverify//:S/^verify/-v/} \
-	    `sed -n 's/listen sock: //p' server.out`
+	    `sed -n 's/listen sock: //p' ${@:S/^run/server/}.out`
 .if empty(${FAIL_${cca}_${sca}_${ccert}_${scert}_${cv}_${sv}})
-	grep '^success$$' server.out
-	grep '^success$$' client.out
+	grep '^success$$' ${@:S/^run/server/}.out
+	grep '^success$$' ${@:S/^run/client/}.out
 .elif ! ("${sv}" == certverify && "${ccert}" == nocert) || \
     ("${cv}" == verify && "${scert}" != cert)
-	grep '^verify: fail' client.out server.out
+	grep '^verify: fail' ${@:S/^run/client/}.out ${@:S/^run/server/}.out
 .endif
 
 .endfor
@@ -66,5 +65,13 @@ run-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}:\
 .endfor
 .endfor
 .endfor
+
+# argument list too long for a single rm *
+
+clean: _SUBDIRUSE
+	rm -f client-*.out
+	rm -f server-*.out
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
+	    ${PROG} ${PROGS} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 
 .include <bsd.regress.mk>
