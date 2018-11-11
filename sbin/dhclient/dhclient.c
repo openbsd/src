@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.588 2018/11/11 00:49:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.589 2018/11/11 00:55:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -185,8 +185,8 @@ void	set_default_client_identifier(struct interface_info *);
 void	set_default_hostname(void);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
-#define ROUNDUP(a)							\
-((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ROUNDUP(a)	\
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static FILE *leaseFile;
