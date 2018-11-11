@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1866 2018/11/08 06:54:13 jsg Exp $
+$OpenBSD: pcidevs,v 1.1867 2018/11/11 22:31:16 fcambus Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ $OpenBSD: pcidevs,v 1.1866 2018/11/08 06:54:13 jsg Exp $
  *
  * There is a Vendor ID search engine available at:
  *
- *	http://www.pcisig.com/membership/vid_search/
+ *	https://pcisig.com/membership/member-companies
  */
 
 /*
@@ -7625,7 +7625,7 @@ product VIATECH PM800_DRAM	0x3259	PM800 DRAM
 product VIATECH KT880_3		0x3269	KT880 Host
 product VIATECH K8HTB_3		0x3282	K8HTB Host
 product VIATECH VT8251_ISA	0x3287	VT8251 ISA
-product VIATECH HDA		0x3288	HD Audio
+product VIATECH HDA_0		0x3288	HD Audio
 product VIATECH CX700_4		0x3324	CX700 Host
 product VIATECH P4M890_3	0x3327	P4M890 Host
 product VIATECH K8M890_3	0x3336	K8M890 Host
@@ -7708,6 +7708,7 @@ product VIATECH VT82C598AGP	0x8598	VT82C598 AGP
 product VIATECH VT82C601	0x8601	VT82C601 AGP
 product VIATECH VT8605_AGP	0x8605	VT8605 AGP
 product VIATECH VX900_IDE	0x9001	VX900 IDE
+product VIATECH HDA_1		0x9170	HD Audio
 product VIATECH VX800_SDMMC	0x9530	VX800 SD/MMC
 product VIATECH VX800_SDIO	0x95d0	VX800 SDIO
 product VIATECH K8T890_PPB_A	0xa238	K8T890
