@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.46 2018/11/10 14:27:51 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.47 2018/11/11 01:49:04 deraadt Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -625,7 +625,7 @@ set_x(struct position *pos, int x, u_int *sync, u_int mask)
 	}
 	if ((pos->dx = x - pos->x)) {
 		pos->x = x;
-		if (pos->dx > 0 == pos->acc_dx > 0)
+		if ((pos->dx > 0) == (pos->acc_dx > 0))
 			pos->acc_dx += pos->dx;
 		else
 			pos->acc_dx = pos->dx;
@@ -644,7 +644,7 @@ set_y(struct position *pos, int y, u_int *sync, u_int mask)
 	}
 	if ((pos->dy = y - pos->y)) {
 		pos->y = y;
-		if (pos->dy > 0 == pos->acc_dy > 0)
+		if ((pos->dy > 0) == (pos->acc_dy > 0))
 			pos->acc_dy += pos->dy;
 		else
 			pos->acc_dy = pos->dy;
