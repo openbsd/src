@@ -35,6 +35,9 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/bin/clang
+./usr/bin/clang++
+./usr/bin/clang-cpp
 ./usr/bin/objcopy
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
@@ -45,6 +48,9 @@
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd6.4/4.2.1/collect2
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd6.4/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/mips64el-unknown-openbsd6.4/4.2.1/specs
+./usr/lib/libc++.so.2.0
+./usr/lib/libc++abi.so.0.1
+./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/mips64el-openbsd
 ./usr/libdata/perl5/mips64el-openbsd/.packlist
