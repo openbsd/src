@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.587 2018/11/10 21:04:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.588 2018/11/11 00:49:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -185,8 +185,8 @@ void	set_default_client_identifier(struct interface_info *);
 void	set_default_hostname(void);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ROUNDUP(a)							\
+((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static FILE *leaseFile;
@@ -302,7 +302,6 @@ get_hw_address(struct interface_info *ifi)
 	sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 	memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
 	    ETHER_ADDR_LEN);
-	ifi->flags |= IFI_VALID_LLADDR;
 
 	freeifaddrs(ifap);
 }
@@ -317,7 +316,7 @@ routehandler(struct interface_info *ifi, int routefd)
 	struct ifa_msghdr		*ifam;
 	char				*rtmmsg;
 	ssize_t				 n;
-	int				 newlinkstatus, oldlinkstatus;
+	int				 newlinkup, oldlinkup;
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
@@ -364,7 +363,11 @@ routehandler(struct interface_info *ifi, int routefd)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
-		if ((ifi->flags & IFI_VALID_LLADDR) != 0) {
+		oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
+		interface_state(ifi);
+		newlinkup = LINK_STATE_IS_UP(ifi->link_state);
+
+		if (newlinkup != 0) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
 			get_hw_address(ifi);
 			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
@@ -375,13 +378,10 @@ routehandler(struct interface_info *ifi, int routefd)
 			}
 		}
 
-		oldlinkstatus = LINK_STATE_IS_UP(ifi->link_state);
-		interface_state(ifi);
-		newlinkstatus = LINK_STATE_IS_UP(ifi->link_state);
-		if (newlinkstatus != oldlinkstatus) {
+		if (newlinkup != oldlinkup) {
 			log_debug("%s: link %s -> %s", log_procname,
-			    (oldlinkstatus != 0) ? "up" : "down",
-			    (newlinkstatus != 0) ? "up" : "down");
+			    (oldlinkup != 0) ? "up" : "down",
+			    (newlinkup != 0) ? "up" : "down");
 			ifi->state = S_PREBOOT;
 			state_preboot(ifi);
 		}
@@ -702,15 +702,12 @@ state_preboot(struct interface_info *ifi)
 	time(&cur_time);
 
 	interface_state(ifi);
+	tick_msg("link", LINK_STATE_IS_UP(ifi->link_state), ifi->startup_time);
 
 	if (LINK_STATE_IS_UP(ifi->link_state)) {
-		tick_msg("link", 1, ifi->startup_time);
-		if ((ifi->flags & IFI_VALID_LLADDR) == 0)
-			get_hw_address(ifi);
 		ifi->state = S_REBOOTING;
 		state_reboot(ifi);
 	} else {
-		tick_msg("link", 0, ifi->startup_time);
 		if (cur_time < ifi->startup_time + config->link_timeout) {
 			set_timeout(ifi, 1, state_preboot);
 		} else {
@@ -2775,7 +2772,7 @@ tick_msg(const char *preamble, int success, time_t start)
 		preamble_sent = 1;
 	}
 
-	if (success == 1) {
+	if (success != 0) {
 		fprintf(stderr, " got %s\n", preamble);
 		fflush(stderr);
 		preamble_sent = 0;
