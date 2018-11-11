@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.116 2018/04/18 13:24:07 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.117 2018/11/11 12:47:04 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -255,21 +255,28 @@ gif_start(struct ifnet *ifp)
 		}
 #endif
 #ifdef MPLS
-		case AF_MPLS:
+		case AF_MPLS: {
+			uint32_t shim;
+
+			m = m_pullup(m, sizeof(shim));
+			if (m == NULL)
+				continue;
+
+			shim = bemtoh32(mtod(m, uint32_t *)) & MPLS_EXP_MASK;
+			tos = (shim >> MPLS_EXP_OFFSET) << 5;
+
 			ttloff = 3;
-			tos = 0;
 
 			proto = IPPROTO_MPLS;
 			break;
+		}
 #endif
 		default:
 			unhandled_af(m->m_pkthdr.ph_family);
 		}
 
 		if (tttl == -1) {
-			m = m_pullup(m, ttloff + 1);
-			if (m == NULL)
-				continue;
+			KASSERT(m->m_len > ttloff);
 
 			ttl = *(m->m_data + ttloff);
 		} else
