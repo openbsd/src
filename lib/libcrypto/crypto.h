@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.48 2018/11/11 06:41:28 bcook Exp $ */
+/* $OpenBSD: crypto.h,v 1.49 2018/11/11 16:32:28 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -399,9 +399,7 @@ void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val);
 void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr);
 int CRYPTO_THREADID_set_callback(void (*threadid_func)(CRYPTO_THREADID *));
 void (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *);
-#endif
 
-#ifndef LIBRESSL_INTERNAL
 int CRYPTO_get_new_dynlockid(void);
 void CRYPTO_destroy_dynlockid(int i);
 struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);

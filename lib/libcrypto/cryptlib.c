@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.42 2018/11/11 06:41:28 bcook Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.43 2018/11/11 16:32:28 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -166,16 +166,51 @@ CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
 	return;
 }
 
+int
+(*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
+    const char *file, int line)
+{
+	return NULL;
+}
+
 const char *
 CRYPTO_get_lock_name(int lock_num)
 {
 	return "";
 }
 
+struct CRYPTO_dynlock_value *
+CRYPTO_get_dynlock_value(int i)
+{
+	return NULL;
+}
+
+int CRYPTO_get_new_dynlockid(void)
+{
+	return 0;
+}
+
+void
+CRYPTO_destroy_dynlockid(int i)
+{
+	return;
+}
+
+int CRYPTO_get_new_lockid(char *name)
+{
+	return 0;
+}
+
 int
 CRYPTO_THREADID_set_callback(void (*func)(CRYPTO_THREADID *))
 {
 	return 1;
+}
+
+void
+(*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
+{
+	return NULL;
 }
 
 void
