@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.58 2018/11/11 06:27:57 bluhm Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.59 2018/11/11 07:57:44 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1414,7 +1414,7 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 	BN_CTX_free(bn_ctx);
 
 	return (1);
-	
+
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
@@ -2093,7 +2093,7 @@ int
 ssl3_get_cert_verify(SSL *s)
 {
 	CBS cbs, signature;
-	const struct ssl_sigalg *sigalg;
+	const struct ssl_sigalg *sigalg = NULL;
 	const EVP_MD *md = NULL;
 	EVP_PKEY *pkey = NULL;
 	X509 *peer = NULL;
