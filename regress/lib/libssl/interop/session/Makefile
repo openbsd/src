@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2018/11/11 00:15:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2018/11/11 07:39:35 bluhm Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -29,7 +29,8 @@ run-session-client-${clib}-server-${slib}: \
 	    ../${clib}/client >${@:S/^run/client/}.out \
 	    -ss \
 	    `sed -n 's/listen sock: //p' ${@:S/^run/server/}.out`
-	grep '^success$$' ${@:S/^run/server/}.out
+	grep '^success$$' ${@:S/^run/server/}.out || \
+	    { sleep 1; grep '^success$$' ${@:S/^run/server/}.out; }
 	grep '^success$$' ${@:S/^run/client/}.out
 	grep '^session 2: new$$' ${@:S/^run/server/}.out
 	grep '^session 2: new$$' ${@:S/^run/client/}.out

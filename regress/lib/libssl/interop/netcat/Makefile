@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/11/11 00:15:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2018/11/11 07:39:35 bluhm Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -52,7 +52,8 @@ run-netcat-client-nc-server-${slib}: ../${slib}/server 127.0.0.1.crt
 	    -c -R 127.0.0.1.crt \
 	    `sed -n 's/listen sock: //p' ${@:S/^run/server/}.out`
 	# check that the server child run successfully to the end
-	grep -q '^success$$' ${@:S/^run/server/}.out
+	grep -q '^success$$' ${@:S/^run/server/}.out || \
+	    { sleep 1; grep -q '^success$$' ${@:S/^run/server/}.out; }
 	# server must have read client hello
 	grep -q '^<<< hello$$' ${@:S/^run/server/}.out
 	# client must have read server greeting
