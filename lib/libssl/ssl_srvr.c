@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.56 2018/11/11 02:03:23 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.57 2018/11/11 02:22:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1549,6 +1549,13 @@ ssl3_send_server_key_exchange(SSL *s)
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
+			if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
+			    (!EVP_PKEY_CTX_set_rsa_padding(pctx,
+			    RSA_PKCS1_PSS_PADDING) ||
+			    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
+				SSLerror(s, ERR_R_EVP_LIB);
+				goto err;
+			}
 			if (!EVP_DigestSignUpdate(&md_ctx, s->s3->client_random,
 			    SSL3_RANDOM_SIZE)) {
 				SSLerror(s, ERR_R_EVP_LIB);
@@ -2202,6 +2209,13 @@ ssl3_get_cert_verify(SSL *s)
 			SSLerror(s, ERR_R_EVP_LIB);
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
+		}
+		if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
+		    (!EVP_PKEY_CTX_set_rsa_padding
+		    (pctx, RSA_PKCS1_PSS_PADDING) ||
+		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
+			al = SSL_AD_INTERNAL_ERROR;
+			goto err;
 		}
 		if (!EVP_DigestVerifyUpdate(&mctx, hdata, hdatalen)) {
 			SSLerror(s, ERR_R_EVP_LIB);

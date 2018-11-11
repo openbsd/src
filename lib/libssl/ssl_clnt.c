@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.42 2018/11/11 02:03:23 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.43 2018/11/11 02:22:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1556,6 +1556,11 @@ ssl3_get_server_key_exchange(SSL *s)
 		if (!EVP_DigestVerifyUpdate(&md_ctx, s->s3->client_random,
 		    SSL3_RANDOM_SIZE))
 			goto err;
+		if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
+		    (!EVP_PKEY_CTX_set_rsa_padding(pctx,
+		    RSA_PKCS1_PSS_PADDING) ||
+		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1)))
+			goto err;
 		if (!EVP_DigestVerifyUpdate(&md_ctx, s->s3->server_random,
 		    SSL3_RANDOM_SIZE))
 			goto err;
@@ -2424,6 +2429,14 @@ ssl3_send_client_verify(SSL *s)
 				goto err;
 			}
 			if (!EVP_DigestSignInit(&mctx, &pctx, md, NULL, pkey)) {
+				SSLerror(s, ERR_R_EVP_LIB);
+				goto err;
+			}
+			if ((s->cert->key->sigalg->flags &
+			    SIGALG_FLAG_RSA_PSS) &&
+			    (!EVP_PKEY_CTX_set_rsa_padding(pctx,
+			    RSA_PKCS1_PSS_PADDING) ||
+			    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
