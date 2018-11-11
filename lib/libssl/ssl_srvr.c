@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.59 2018/11/11 07:57:44 bcook Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.60 2018/11/11 21:54:47 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2179,7 +2179,7 @@ ssl3_get_cert_verify(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			if (sigalg->key_type != pkey->type) {
+			if (!ssl_sigalg_pkey_ok(sigalg, pkey)) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
@@ -2216,7 +2216,7 @@ ssl3_get_cert_verify(SSL *s)
 		    (pctx, RSA_PKCS1_PSS_PADDING) ||
 		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
 			al = SSL_AD_INTERNAL_ERROR;
-			goto err;
+			goto f_err;
 		}
 		if (!EVP_DigestVerifyUpdate(&mctx, hdata, hdatalen)) {
 			SSLerror(s, ERR_R_EVP_LIB);

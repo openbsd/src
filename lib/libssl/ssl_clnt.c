@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.43 2018/11/11 02:22:34 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.44 2018/11/11 21:54:47 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1527,7 +1527,7 @@ ssl3_get_server_key_exchange(SSL *s)
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;
 			}
-			if (sigalg->key_type != pkey->type) {
+			if (!ssl_sigalg_pkey_ok(sigalg, pkey)) {
 				SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
 				al = SSL_AD_DECODE_ERROR;
 				goto f_err;

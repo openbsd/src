@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.6 2018/11/11 02:03:23 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.7 2018/11/11 21:54:47 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -224,4 +224,20 @@ ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 			return 0;
 	}
 	return 1;
+}
+
+int
+ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
+{
+	if (sigalg->key_type == pkey->type) {
+		if (!(sigalg->flags & SIGALG_FLAG_RSA_PSS))
+			return 1;
+		/*
+		 * RSA keys for PSS need to be at least
+		 * as big as twice the size of the hash + 2
+		 */
+		if (EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
+			return 1;
+	}
+	return 0;
 }
