@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.6 2018/11/10 08:10:43 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.7 2018/11/11 06:49:35 beck Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -216,7 +216,7 @@ static enum tls13_message_type handshakes[][16] = {
 	},
 	[NEGOTIATED] = {
 		CLIENT_HELLO,
-		SERVER_HELLO, 
+		SERVER_HELLO,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE,
 		SERVER_CERTIFICATE_VERIFY,
@@ -226,7 +226,7 @@ static enum tls13_message_type handshakes[][16] = {
 	},
 	[NEGOTIATED | WITH_HELLO_RET_REQ] = {
 		CLIENT_HELLO,
-		SERVER_HELLO, 
+		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE,
@@ -237,7 +237,7 @@ static enum tls13_message_type handshakes[][16] = {
 	},
 	[NEGOTIATED | WITH_CERT_REQ] = {
 		CLIENT_HELLO,
-		SERVER_HELLO, 
+		SERVER_HELLO,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE_REQUEST,
 		SERVER_CERTIFICATE,
@@ -248,7 +248,7 @@ static enum tls13_message_type handshakes[][16] = {
 	},
 	[NEGOTIATED | WITH_HELLO_RET_REQ | WITH_CERT_REQ] = {
 		CLIENT_HELLO,
-		SERVER_HELLO, 
+		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE_REQUEST,
@@ -322,7 +322,7 @@ int
 tls13_accept(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_action *action;
-	
+
 	ctx->mode = TLS13_HS_SERVER;
 
 	for (;;) {
