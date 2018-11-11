@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.26 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.27 2018/11/11 06:41:28 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -344,56 +344,6 @@ CONF *config = NULL;
 BIO *bio_err = NULL;
 
 static void
-lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-	static int modes[CRYPTO_NUM_LOCKS];	/* = {0, 0, ... } */
-	const char *errstr = NULL;
-	int rw;
-
-	rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-	if (!((rw == CRYPTO_READ) || (rw == CRYPTO_WRITE))) {
-		errstr = "invalid mode";
-		goto err;
-	}
-	if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-		errstr = "type out of bounds";
-		goto err;
-	}
-	if (mode & CRYPTO_LOCK) {
-		if (modes[type]) {
-			errstr = "already locked";
-			/*
-			 * must not happen in a single-threaded program
-			 * (would deadlock)
-			 */
-			goto err;
-		}
-		modes[type] = rw;
-	} else if (mode & CRYPTO_UNLOCK) {
-		if (!modes[type]) {
-			errstr = "not locked";
-			goto err;
-		}
-		if (modes[type] != rw) {
-			errstr = (rw == CRYPTO_READ) ?
-			    "CRYPTO_r_unlock on write lock" :
-			    "CRYPTO_w_unlock on read lock";
-		}
-		modes[type] = 0;
-	} else {
-		errstr = "invalid mode";
-		goto err;
-	}
-
- err:
-	if (errstr) {
-		/* we cannot use bio_err here */
-		fprintf(stderr, "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-		    errstr, mode, type, file, line);
-	}
-}
-
-static void
 openssl_startup(void)
 {
 	signal(SIGPIPE, SIG_IGN);
@@ -450,8 +400,6 @@ main(int argc, char **argv)
 		BIO_printf(bio_err, "BIO_sock_init failed\n");
 		exit(1);
 	}
-
-	CRYPTO_set_locking_callback(lock_dbg_cb);
 
 	openssl_startup();
 

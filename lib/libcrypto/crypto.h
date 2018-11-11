@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.47 2018/08/24 19:16:03 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.48 2018/11/11 06:41:28 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -203,7 +203,6 @@ typedef struct openssl_item_st {
 #define CRYPTO_READ		4
 #define CRYPTO_WRITE		8
 
-#ifndef OPENSSL_NO_LOCKING
 #ifndef CRYPTO_w_lock
 #define CRYPTO_w_lock(type)	\
 	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
@@ -215,13 +214,6 @@ typedef struct openssl_item_st {
 	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,__FILE__,__LINE__)
 #define CRYPTO_add(addr,amount,type)	\
 	CRYPTO_add_lock(addr,amount,type,__FILE__,__LINE__)
-#endif
-#else
-#define CRYPTO_w_lock(a)
-#define CRYPTO_w_unlock(a)
-#define CRYPTO_r_lock(a)
-#define CRYPTO_r_unlock(a)
-#define CRYPTO_add(a,b,c)	((*(a))+=(b))
 #endif
 
 /* Some applications as well as some parts of OpenSSL need to allocate
@@ -370,10 +362,30 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
  * potential race-conditions. */
 void CRYPTO_cleanup_all_ex_data(void);
 
-int CRYPTO_get_new_lockid(char *name);
-
-int CRYPTO_num_locks(void); /* return CRYPTO_NUM_LOCKS (shared libs!) */
 void CRYPTO_lock(int mode, int type, const char *file, int line);
+int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
+    int line);
+
+/* Don't use this structure directly. */
+typedef struct crypto_threadid_st {
+	void *ptr;
+	unsigned long val;
+} CRYPTO_THREADID;
+void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
+
+#ifndef LIBRESSL_INTERNAL
+/* These functions are deprecated no-op stubs */
+void CRYPTO_set_id_callback(unsigned long (*func)(void));
+unsigned long (*CRYPTO_get_id_callback(void))(void);
+unsigned long CRYPTO_thread_id(void);
+
+int CRYPTO_get_new_lockid(char *name);
+const char *CRYPTO_get_lock_name(int type);
+
+int CRYPTO_num_locks(void);
 void CRYPTO_set_locking_callback(void (*func)(int mode, int type,
     const char *file, int line));
 void (*CRYPTO_get_locking_callback(void))(int mode, int type,
@@ -383,30 +395,13 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int type,
 int (*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
     const char *file, int line);
 
-/* Don't use this structure directly. */
-typedef struct crypto_threadid_st {
-	void *ptr;
-	unsigned long val;
-} CRYPTO_THREADID;
-/* Only use CRYPTO_THREADID_set_[numeric|pointer]() within callbacks */
 void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val);
 void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr);
 int CRYPTO_THREADID_set_callback(void (*threadid_func)(CRYPTO_THREADID *));
 void (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *);
-void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
-int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
-void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
-unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
-#ifndef OPENSSL_NO_DEPRECATED
-void CRYPTO_set_id_callback(unsigned long (*func)(void));
-unsigned long (*CRYPTO_get_id_callback(void))(void);
-unsigned long CRYPTO_thread_id(void);
 #endif
 
-const char *CRYPTO_get_lock_name(int type);
-int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
-    int line);
-
+#ifndef LIBRESSL_INTERNAL
 int CRYPTO_get_new_dynlockid(void);
 void CRYPTO_destroy_dynlockid(int i);
 struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
@@ -416,6 +411,7 @@ void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(struct CRY
 struct CRYPTO_dynlock_value *(*CRYPTO_get_dynlock_create_callback(void))(const char *file, int line);
 void (*CRYPTO_get_dynlock_lock_callback(void))(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line);
 void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l, const char *file, int line);
+#endif
 
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */

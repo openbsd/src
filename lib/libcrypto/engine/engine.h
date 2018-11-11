@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.31 2015/07/19 22:34:27 doug Exp $ */
+/* $OpenBSD: engine.h,v 1.32 2018/11/11 06:41:28 bcook Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -686,11 +686,6 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
 		if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb, \
 			fns->mem_fns.realloc_cb, fns->mem_fns.free_cb)) \
 			return 0; \
-		CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
-		CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
-		CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
-		CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb); \
-		CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb); \
 		if(!CRYPTO_set_ex_data_implementation(fns->ex_data_fns)) \
 			return 0; \
 		if(!ERR_set_implementation(fns->err_fns)) return 0; \

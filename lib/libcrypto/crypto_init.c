@@ -30,6 +30,8 @@ int OpenSSL_no_config(void);
 
 static pthread_t crypto_init_thread;
 
+void crypto_init_locks(void);
+
 static void
 OPENSSL_init_crypto_internal(void)
 {
@@ -38,6 +40,7 @@ OPENSSL_init_crypto_internal(void)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
+	crypto_init_locks();
 }
 
 int
