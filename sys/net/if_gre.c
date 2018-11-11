@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.132 2018/11/11 05:55:10 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.133 2018/11/11 06:05:53 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2914,6 +2914,8 @@ gre_keepalive_send(void *arg)
 	if (m == NULL)
 		return;
 
+	m->m_pkthdr.pf.prio = sc->sc_if.if_llprio;
+
 	gre_ip_output(&sc->sc_tunnel, m);
 }
 
@@ -3787,6 +3789,8 @@ eoip_keepalive_send(void *arg)
 	m = eoip_encap(sc, m, IFQ_PRIO2TOS(ifp->if_llprio));
 	if (m == NULL)
 		return;
+
+	m->m_pkthdr.pf.prio = ifp->if_llprio;
 
 	gre_ip_output(&sc->sc_tunnel, m);
 
