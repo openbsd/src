@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2018/11/11 06:41:28 bcook Exp $
+# $OpenBSD: Makefile,v 1.30 2018/11/11 06:53:31 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -152,7 +152,7 @@ SRCS+= encode.c digest.c evp_enc.c evp_key.c
 SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
 SRCS+= e_rc4.c e_aes.c names.c
 SRCS+= e_xcbc_d.c e_rc2.c e_cast.c
-SRCS+= m_null.c m_md4.c m_md5.c m_sha1.c m_wp.c
+SRCS+= m_null.c m_md4.c m_md5.c m_sha1.c m_sm3.c m_wp.c
 SRCS+= m_dss.c m_dss1.c m_ripemd.c m_ecdsa.c
 SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
 SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
@@ -231,6 +231,9 @@ SRCS+= rsa_pmeth.c rsa_crpt.c rsa_meth.c
 
 # sha/
 SRCS+= sha1dgst.c sha1_one.c sha256.c sha512.c
+
+# sm3/
+SRCS+= sm3.c
 
 # stack/
 SRCS+= stack.c
@@ -311,6 +314,7 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/ripemd \
 	${LCRYPTO_SRC}/rsa \
 	${LCRYPTO_SRC}/sha \
+	${LCRYPTO_SRC}/sm3 \
 	${LCRYPTO_SRC}/stack \
 	${LCRYPTO_SRC}/threads \
 	${LCRYPTO_SRC}/ts \
@@ -371,6 +375,7 @@ HDRS=\
 	${LCRYPTO_SRC}/ripemd/ripemd.h \
 	${LCRYPTO_SRC}/rsa/rsa.h \
 	${LCRYPTO_SRC}/sha/sha.h \
+	${LCRYPTO_SRC}/sm3/sm3.h \
 	${LCRYPTO_SRC}/stack/safestack.h \
 	${LCRYPTO_SRC}/stack/stack.h \
 	${LCRYPTO_SRC}/ts/ts.h \

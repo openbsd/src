@@ -1234,6 +1234,11 @@ cryptocom 1 3 4		: id-GostR3411-94-with-GostR3410-2001-cc : GOST R 34.11-94 with
 
 cryptocom 1 8 1		: id-GostR3410-2001-ParamSet-cc : GOST R 3410-2001 Parameter Set Cryptocom
 
+# Definitions for SM3
+
+1 2 156 10197 1 401 : SM3     : sm3
+1 2 156 10197 1 501 : RSA-SM3 : sm3WithRSAEncryption
+
 # Definitions for Camellia cipher - CBC MODE
 
 1 2 392 200011 61 1 1 1 2 : CAMELLIA-128-CBC		: camellia-128-cbc

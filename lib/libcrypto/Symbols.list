@@ -1598,6 +1598,7 @@ EVP_sha224
 EVP_sha256
 EVP_sha384
 EVP_sha512
+EVP_sm3
 EVP_streebog256
 EVP_streebog512
 EVP_whirlpool
@@ -2337,6 +2338,9 @@ SHA512_Final
 SHA512_Init
 SHA512_Transform
 SHA512_Update
+SM3_Final
+SM3_Init
+SM3_Update
 SMIME_crlf_copy
 SMIME_read_ASN1
 SMIME_read_PKCS7
