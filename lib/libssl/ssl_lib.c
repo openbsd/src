@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.192 2018/11/10 01:19:09 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.193 2018/11/11 06:58:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -451,6 +451,12 @@ int
 SSL_set_trust(SSL *s, int trust)
 {
 	return (X509_VERIFY_PARAM_set_trust(s->param, trust));
+}
+
+int
+SSL_set1_host(SSL *s, const char *hostname)
+{
+	return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
 }
 
 X509_VERIFY_PARAM *
