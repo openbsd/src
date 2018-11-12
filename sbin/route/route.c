@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.226 2018/10/15 11:27:34 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.227 2018/11/12 16:39:12 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ int	 rdomain(int, char **);
 void	 print_rtdns(struct sockaddr_rtdns *);
 void	 print_rtstatic(struct sockaddr_rtstatic *);
 void	 print_rtsearch(struct sockaddr_rtsearch *);
+void	 print_80211info(struct if_ieee80211_msghdr *);
 
 __dead void
 usage(char *cp)
@@ -209,7 +210,8 @@ main(int argc, char **argv)
 				case K_IFACE:
 				case K_INTERFACE:
 					filter = ROUTE_FILTER(RTM_IFINFO) |
-					    ROUTE_FILTER(RTM_IFANNOUNCE);
+					    ROUTE_FILTER(RTM_IFANNOUNCE) |
+					    ROUTE_FILTER(RTM_80211INFO);
 					break;
 				default:
 					usage(*argv);
@@ -1155,7 +1157,8 @@ char *msgtypes[] = {
 	"RTM_INVALIDATE: invalidate cache of L2 route",
 	"RTM_BFD: bidirectional forwarding detection",
 	"RTM_PROPOSAL: config proposal",
-	"RTM_CHGADDRATTR: address attributes being changed"
+	"RTM_CHGADDRATTR: address attributes being changed",
+	"RTM_80211INFO: 802.11 iface status change"
 };
 
 char metricnames[] =
@@ -1223,6 +1226,12 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    ifm->ifm_data.ifi_mtu);
 		bprintf(stdout, ifm->ifm_flags, ifnetflags);
 		pmsg_addrs((char *)ifm + ifm->ifm_hdrlen, ifm->ifm_addrs);
+		break;
+	case RTM_80211INFO:
+		printf(", if# %d, ", rtm->rtm_index);
+		if (if_indextoname(rtm->rtm_index, ifname) != NULL)
+			printf("name: %s, ", ifname);
+		print_80211info((struct if_ieee80211_msghdr *)rtm);
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
@@ -2068,4 +2077,39 @@ print_rtsearch(struct sockaddr_rtsearch *rtsearch)
 	}
 
 	printf("%.*s\n", (int)srclen, src);
+}
+
+/*
+ * Print RTM_80211INFO info.
+ */
+void
+print_80211info(struct if_ieee80211_msghdr *ifim)
+{
+	unsigned int ascii, nwidlen, i;
+	u_int8_t *nwid, *bssid;
+
+	ascii = 1;
+	nwid = ifim->ifim_ifie.ifie_nwid;
+	nwidlen = ifim->ifim_ifie.ifie_nwid_len;
+	for (i = 0; i < nwidlen; i++) {
+		if (i == 0)
+			printf("nwid ");
+		else
+			printf(":");
+		printf("%02x", nwid[i]);
+		if (!isprint((unsigned int)nwid[i]))
+			ascii = 0;
+	}
+	if (i > 0) {
+		if (ascii == 1)
+			printf(" (%.*s)", nwidlen, nwid);
+		printf(", ");
+	}
+	printf("channel %u, ", ifim->ifim_ifie.ifie_channel);
+	bssid = ifim->ifim_ifie.ifie_addr;
+	printf("bssid %02x:%02x:%02x:%02x:%02x:%02x, ",
+	    bssid[0], bssid[1], bssid[2],
+	    bssid[3], bssid[4], bssid[5]);
+	printf("flags: 0x%x, xflags: 0x%x\n", ifim->ifim_ifie.ifie_flags,
+	    ifim->ifim_ifie.ifie_xflags);
 }
