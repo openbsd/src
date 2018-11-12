@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.62 2017/10/10 04:49:10 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.63 2018/11/12 02:33:42 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -71,6 +71,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relrel > numrela)
 		_dl_die("relacount > numrel: %ld > %ld", relrel, numrela);
+
+	if (! object->Dyn.info[DT_PROC(DT_ALPHA_PLTRO)])
+		_dl_die("unsupported insecure PLT object");
 
 	/*
 	 * unprotect some segments if we need it.
@@ -250,6 +253,8 @@ _dl_bind(elf_object_t *object, int reloff)
 	return (buf.newval);
 }
 
+void _dl_bind_secureplt(void) __dso_hidden;	/* XXX */
+
 /*
  *	Relocate the Global Offset Table (GOT).
  */
@@ -258,21 +263,16 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	int	fails = 0;
 	Elf_Addr *pltgot;
-	extern void _dl_bind_start(void);	/* XXX */
-	extern void _dl_bind_secureplt(void);	/* XXX */
-	Elf_Addr seg_start;
-	u_long pltro;
 
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return (0);
 
-	pltro = object->Dyn.info[DT_PROC(DT_ALPHA_PLTRO)];
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
 	if (object->traced)
 		lazy = 1;
 
-	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
+	if (!lazy || pltgot == NULL) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		if (object->obj_base != 0) {
@@ -290,21 +290,12 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				*addr += object->obj_base;
 			}
 		}
-		if (pltro == 0) {
-			pltgot[2] = (Elf_Addr)_dl_bind_start;
-			pltgot[3] = (Elf_Addr)object;
-		} else {
-			pltgot[0] = (Elf_Addr)_dl_bind_secureplt;
-			pltgot[1] = (Elf_Addr)object;
-		}
+		pltgot[0] = (Elf_Addr)_dl_bind_secureplt;
+		pltgot[1] = (Elf_Addr)object;
 	}
 
 	/* mprotect the GOT */
-	seg_start = 0;
-	if (pltro != 0)
-		seg_start = (Elf_Addr)pltgot;
-	_dl_protect_segment(object, seg_start, "__got_start", "__got_end",
-	    PROT_READ);
+	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }
