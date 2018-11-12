@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.39 2018/11/12 09:39:52 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.40 2018/11/12 23:57:06 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -85,6 +85,7 @@ struct etherip_softc {
 	struct etherip_tunnel	sc_tunnel; /* must be first */
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
+	int			sc_txhprio;
 	uint16_t		sc_df;
 	uint8_t			sc_ttl;
 };
@@ -137,6 +138,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	sc->sc_ttl = ip_defttl;
+	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
 	sc->sc_df = htons(0);
 
 	ifp->if_softc = sc;
@@ -282,6 +284,21 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDIFPHYADDR:
 		error = etherip_del_tunnel(sc);
 		break;
+
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
+			;
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+                break;
 
 	case SIOCSLIFPHYTTL:
 		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
@@ -487,7 +504,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	ip->ip_v = IPVERSION;
 	ip->ip_hl = sizeof(*ip) >> 2;
-	ip->ip_tos = IPTOS_LOWDELAY;
+	ip->ip_tos = IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	    m->m_pkthdr.pf.prio : sc->sc_txhprio);
 	ip->ip_len = htons(m->m_pkthdr.len);
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_off = sc->sc_df;
@@ -623,6 +641,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	struct ip6_hdr *ip6;
 	struct etherip_header *eip;
 	uint16_t len;
+	uint32_t flow;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sc->sc_tunnel.t_dst6)) {
 		m_freem(m);
@@ -637,10 +656,12 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
+	flow = IPV6_VERSION << 24;
+	flow |= IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	     m->m_pkthdr.pf.prio : sc->sc_txhprio) << 20;
+
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow = 0;
-	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-	ip6->ip6_vfc |= IPV6_VERSION;
+	htobem32(&ip6->ip6_flow, flow);
 	ip6->ip6_nxt  = IPPROTO_ETHERIP;
 	ip6->ip6_hlim = sc->sc_ttl;
 	ip6->ip6_plen = htons(len);
