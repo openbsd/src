@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.279 2018/07/10 20:28:34 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.280 2018/11/12 16:36:54 krw Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -522,6 +522,7 @@ next:
 		case RTM_NEWADDR:
 		case RTM_DELADDR:
 		case RTM_IFINFO:
+		case RTM_80211INFO:
 		case RTM_BFD:
 			/* check against rdomain id */
 			if (rop->rop_rtableid != RTABLE_ANY &&
@@ -1378,6 +1379,9 @@ rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 		len = sizeof(struct bfd_msghdr);
 		break;
 #endif
+	case RTM_80211INFO:
+		len = sizeof(struct if_ieee80211_msghdr);
+		break;
 	default:
 		len = sizeof(struct rt_msghdr);
 		break;
@@ -1656,6 +1660,29 @@ rtm_bfd(struct bfd_config *bfd)
 	route_input(m, NULL, info.rti_info[RTAX_DST]->sa_family);
 }
 #endif /* BFD */
+
+/*
+ * This is used to generate routing socket messages indicating
+ * the state of an ieee80211 interface.
+ */
+void
+rtm_80211info(struct ifnet *ifp, struct if_ieee80211_data *ifie)
+{
+	struct if_ieee80211_msghdr	*ifim;
+	struct mbuf			*m;
+
+	if (rtptable.rtp_count == 0)
+		return;
+	m = rtm_msg1(RTM_80211INFO, NULL);
+	if (m == NULL)
+		return;
+	ifim = mtod(m, struct if_ieee80211_msghdr *);
+	ifim->ifim_index = ifp->if_index;
+	ifim->ifim_tableid = ifp->if_rdomain;
+
+	memcpy(&ifim->ifim_ifie, ifie, sizeof(ifim->ifim_ifie));
+	route_input(m, NULL, AF_UNSPEC);
+}
 
 /*
  * This is used in dumping the kernel table via sysctl().
