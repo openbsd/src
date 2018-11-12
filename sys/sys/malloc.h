@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.116 2017/11/27 09:23:44 mpi Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.117 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -97,7 +97,7 @@
 /* 35-37 - free */
 #define	M_FILE		38	/* Open file structure */
 #define	M_FILEDESC	39	/* Open file descriptor table */
-/* 40 - free */
+#define	M_SIGIO		40	/* Sigio structures */
 #define	M_PROC		41	/* Proc structures */
 #define	M_SUBPROC	42	/* Proc sub-structures */
 #define	M_VCLUSTER	43	/* Cluster for VFS */
@@ -224,7 +224,7 @@
 	NULL,	/* 37 */ \
 	"file",		/* 38 M_FILE */ \
 	"file desc",	/* 39 M_FILEDESC */ \
-	NULL,	/* 40 */ \
+	"sigio",	/* 40 M_SIGIO */ \
 	"proc",		/* 41 M_PROC */ \
 	"subproc",	/* 42 M_SUBPROC */ \
 	"VFS cluster",	/* 43 M_VCLUSTER */ \

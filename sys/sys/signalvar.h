@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.33 2018/07/18 16:55:17 bluhm Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.34 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -147,6 +147,8 @@ int sigprop[NSIG + 1] = {
 #ifdef _KERNEL
 enum signal_type { SPROCESS, STHREAD, SPROPAGATED };
 
+struct sigio_ref;
+
 /*
  * Machine-independent functions:
  */
@@ -155,6 +157,7 @@ void	execsigs(struct proc *p);
 void	gsignal(int pgid, int sig);
 void	csignal(pid_t pgid, int signum, uid_t uid, uid_t euid);
 int	issignal(struct proc *p);
+void	pgsigio(struct sigio_ref *sir, int sig, int checkctty);
 void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
 void	psignal(struct proc *p, int sig);
 void	ptsignal(struct proc *p, int sig, enum signal_type type);

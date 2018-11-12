@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.224 2018/08/03 14:47:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.225 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -86,6 +86,10 @@ void postsig(struct proc *, int);
 int cansignal(struct proc *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
+
+void sigio_del(struct sigiolst *);
+void sigio_unlink(struct sigio_ref *, struct sigiolst *);
+struct mutex sigio_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
 /*
  * Can thread p, send the signal signum to process qr?
@@ -698,6 +702,9 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 	(euid) == (pr)->ps_ucred->cr_svuid || \
 	(euid) == (pr)->ps_ucred->cr_uid)
 
+#define CANSIGIO(cr, pr) \
+	CANDELIVER((cr)->cr_ruid, (cr)->cr_uid, (pr))
+
 /*
  * Deliver signum to pgid, but first check uid/euid against each
  * process and see if it is permitted.
@@ -750,6 +757,37 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist)
 			if (checkctty == 0 || pr->ps_flags & PS_CONTROLT)
 				prsignal(pr, signum);
+}
+
+/*
+ * Send a SIGIO or SIGURG signal to a process or process group using stored
+ * credentials rather than those of the current process.
+ */
+void
+pgsigio(struct sigio_ref *sir, int sig, int checkctty)
+{
+	struct process *pr;
+	struct sigio *sigio;
+
+	if (sir->sir_sigio == NULL)
+		return;
+
+	mtx_enter(&sigio_lock);
+	sigio = sir->sir_sigio;
+	if (sigio == NULL)
+		goto out;
+	if (sigio->sio_pgid > 0) {
+		if (CANSIGIO(sigio->sio_ucred, sigio->sio_proc))
+			prsignal(sigio->sio_proc, sig);
+	} else if (sigio->sio_pgid < 0) {
+		LIST_FOREACH(pr, &sigio->sio_pgrp->pg_members, ps_pglist) {
+			if (CANSIGIO(sigio->sio_ucred, pr) &&
+			    (checkctty == 0 || (pr->ps_flags & PS_CONTROLT)))
+				prsignal(pr, sig);
+		}
+	}
+out:
+	mtx_leave(&sigio_lock);
 }
 
 /*
@@ -2046,4 +2084,236 @@ single_thread_clear(struct proc *p, int flag)
 		}
 		SCHED_UNLOCK(s);
 	}
+}
+
+void
+sigio_del(struct sigiolst *rmlist)
+{
+	struct sigio *sigio;
+
+	while ((sigio = LIST_FIRST(rmlist)) != NULL) {
+		LIST_REMOVE(sigio, sio_pgsigio);
+		crfree(sigio->sio_ucred);
+		free(sigio, M_SIGIO, sizeof(*sigio));
+	}
+}
+
+void
+sigio_unlink(struct sigio_ref *sir, struct sigiolst *rmlist)
+{
+	struct sigio *sigio;
+
+	MUTEX_ASSERT_LOCKED(&sigio_lock);
+
+	sigio = sir->sir_sigio;
+	if (sigio != NULL) {
+		KASSERT(sigio->sio_myref == sir);
+		sir->sir_sigio = NULL;
+
+		if (sigio->sio_pgid > 0)
+			sigio->sio_proc = NULL;
+		else
+			sigio->sio_pgrp = NULL;
+		LIST_REMOVE(sigio, sio_pgsigio);
+
+		LIST_INSERT_HEAD(rmlist, sigio, sio_pgsigio);
+	}
+}
+
+void
+sigio_free(struct sigio_ref *sir)
+{
+	struct sigiolst rmlist;
+
+	if (sir->sir_sigio == NULL)
+		return;
+
+	LIST_INIT(&rmlist);
+
+	mtx_enter(&sigio_lock);
+	sigio_unlink(sir, &rmlist);
+	mtx_leave(&sigio_lock);
+
+	sigio_del(&rmlist);
+}
+
+void
+sigio_freelist(struct sigiolst *sigiolst)
+{
+	struct sigiolst rmlist;
+	struct sigio *sigio;
+
+	if (LIST_EMPTY(sigiolst))
+		return;
+
+	LIST_INIT(&rmlist);
+
+	mtx_enter(&sigio_lock);
+	while ((sigio = LIST_FIRST(sigiolst)) != NULL)
+		sigio_unlink(sigio->sio_myref, &rmlist);
+	mtx_leave(&sigio_lock);
+
+	sigio_del(&rmlist);
+}
+
+int
+sigio_setown(struct sigio_ref *sir, pid_t pgid)
+{
+	struct sigiolst rmlist;
+	struct proc *p = curproc;
+	struct pgrp *pgrp = NULL;
+	struct process *pr = NULL;
+	struct sigio *sigio;
+	int error;
+
+	if (pgid == 0) {
+		sigio_free(sir);
+		return (0);
+	}
+
+	sigio = malloc(sizeof(*sigio), M_SIGIO, M_WAITOK);
+	sigio->sio_pgid = pgid;
+	sigio->sio_ucred = crhold(p->p_ucred);
+	sigio->sio_myref = sir;
+
+	LIST_INIT(&rmlist);
+
+	/*
+	 * The kernel lock, and not sleeping between prfind()/pgfind() and
+	 * linking of the sigio ensure that the process or process group does
+	 * not disappear unexpectedly.
+	 */
+	KERNEL_LOCK();
+	mtx_enter(&sigio_lock);
+
+	if (pgid > 0) {
+		pr = prfind(pgid);
+		if (pr == NULL) {
+			error = ESRCH;
+			goto fail;
+		}
+
+		/*
+		 * Policy - Don't allow a process to FSETOWN a process
+		 * in another session.
+		 *
+		 * Remove this test to allow maximum flexibility or
+		 * restrict FSETOWN to the current process or process
+		 * group for maximum safety.
+		 */
+		if (pr->ps_session != p->p_p->ps_session) {
+			error = EPERM;
+			goto fail;
+		}
+
+		if ((pr->ps_flags & PS_EXITING) != 0) {
+			error = ESRCH;
+			goto fail;
+		}
+	} else /* if (pgid < 0) */ {
+		pgrp = pgfind(-pgid);
+		if (pgrp == NULL) {
+			error = ESRCH;
+			goto fail;
+		}
+
+		/*
+		 * Policy - Don't allow a process to FSETOWN a process
+		 * in another session.
+		 *
+		 * Remove this test to allow maximum flexibility or
+		 * restrict FSETOWN to the current process or process
+		 * group for maximum safety.
+		 */
+		if (pgrp->pg_session != p->p_p->ps_session) {
+			error = EPERM;
+			goto fail;
+		}
+	}
+
+	if (pgid > 0) {
+		sigio->sio_proc = pr;
+		LIST_INSERT_HEAD(&pr->ps_sigiolst, sigio, sio_pgsigio);
+	} else {
+		sigio->sio_pgrp = pgrp;
+		LIST_INSERT_HEAD(&pgrp->pg_sigiolst, sigio, sio_pgsigio);
+	}
+
+	sigio_unlink(sir, &rmlist);
+	sir->sir_sigio = sigio;
+
+	mtx_leave(&sigio_lock);
+	KERNEL_UNLOCK();
+
+	sigio_del(&rmlist);
+
+	return (0);
+
+fail:
+	mtx_leave(&sigio_lock);
+	KERNEL_UNLOCK();
+
+	crfree(sigio->sio_ucred);
+	free(sigio, M_SIGIO, sizeof(*sigio));
+
+	return (error);
+}
+
+pid_t
+sigio_getown(struct sigio_ref *sir)
+{
+	struct sigio *sigio;
+	pid_t pgid = 0;
+
+	mtx_enter(&sigio_lock);
+	sigio = sir->sir_sigio;
+	if (sigio != NULL)
+		pgid = sigio->sio_pgid;
+	mtx_leave(&sigio_lock);
+
+	return (pgid);
+}
+
+void
+sigio_copy(struct sigio_ref *dst, struct sigio_ref *src)
+{
+	struct sigiolst rmlist;
+	struct sigio *newsigio, *sigio;
+
+	sigio_free(dst);
+
+	if (src->sir_sigio == NULL)
+		return;
+
+	newsigio = malloc(sizeof(*newsigio), M_SIGIO, M_WAITOK);
+	LIST_INIT(&rmlist);
+
+	mtx_enter(&sigio_lock);
+
+	sigio = src->sir_sigio;
+	if (sigio == NULL) {
+		mtx_leave(&sigio_lock);
+		free(newsigio, M_SIGIO, sizeof(*newsigio));
+		return;
+	}
+
+	newsigio->sio_pgid = sigio->sio_pgid;
+	newsigio->sio_ucred = crhold(sigio->sio_ucred);
+	newsigio->sio_myref = dst;
+	if (newsigio->sio_pgid > 0) {
+		newsigio->sio_proc = sigio->sio_proc;
+		LIST_INSERT_HEAD(&newsigio->sio_proc->ps_sigiolst, newsigio,
+		    sio_pgsigio);
+	} else {
+		newsigio->sio_pgrp = sigio->sio_pgrp;
+		LIST_INSERT_HEAD(&newsigio->sio_pgrp->pg_sigiolst, newsigio,
+		    sio_pgsigio);
+	}
+
+	sigio_unlink(dst, &rmlist);
+	dst->sir_sigio = newsigio;
+
+	mtx_leave(&sigio_lock);
+
+	sigio_del(&rmlist);
 }

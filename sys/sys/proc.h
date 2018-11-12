@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.260 2018/10/28 22:42:33 beck Exp $	*/
+/*	$OpenBSD: proc.h,v 1.261 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <sys/mutex.h>			/* For struct mutex */
 #include <sys/resource.h>		/* For struct rusage */
 #include <sys/rwlock.h>			/* For struct rwlock */
+#include <sys/sigio.h>			/* For struct sigio */
 #include <sys/tree.h>
 
 #ifdef _KERNEL
@@ -80,6 +81,7 @@ struct	pgrp {
 	LIST_ENTRY(pgrp) pg_hash;	/* Hash chain. */
 	LIST_HEAD(, process) pg_members;/* Pointer to pgrp members. */
 	struct	session *pg_session;	/* Pointer to session. */
+	struct	sigiolst pg_sigiolst;	/* List of sigio structures. */
 	pid_t	pg_id;			/* Pgrp id. */
 	int	pg_jobc;	/* # procs qualifying pgrp for job control */
 };
@@ -170,6 +172,7 @@ struct process {
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
 	LIST_ENTRY(process) ps_hash;    /* Hash chain. */
 
+	struct	sigiolst ps_sigiolst;	/* List of sigio structures. */
 	struct	sigacts *ps_sigacts;	/* Signal actions, state */
 	struct	vnode *ps_textvp;	/* Vnode of executable. */
 	struct	filedesc *ps_fd;	/* Ptr to open files structure */

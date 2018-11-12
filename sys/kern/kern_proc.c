@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.84 2018/06/21 13:58:21 visa Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.85 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ enternewpgrp(struct process *pr, struct pgrp *pgrp, struct session *newsess)
 	}
 	pgrp->pg_id = pr->ps_pid;
 	LIST_INIT(&pgrp->pg_members);
+	LIST_INIT(&pgrp->pg_sigiolst);
 	LIST_INSERT_HEAD(PGRPHASH(pr->ps_pid), pgrp, pg_hash);
 	pgrp->pg_jobc = 0;
 
@@ -328,6 +329,7 @@ leavepgrp(struct process *pr)
 void
 pgdelete(struct pgrp *pgrp)
 {
+	sigio_freelist(&pgrp->pg_sigiolst);
 
 	if (pgrp->pg_session->s_ttyp != NULL && 
 	    pgrp->pg_session->s_ttyp->t_pgrp == pgrp)
