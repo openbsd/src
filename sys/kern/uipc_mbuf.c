@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.260 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.261 2018/11/12 07:45:52 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -149,6 +149,11 @@ struct pool_allocator m_pool_allocator = {
 
 static void (*mextfree_fns[4])(caddr_t, u_int, void *);
 static u_int num_extfree_fns;
+
+#define M_DATABUF(m)	((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf : \
+			(m)->m_flags & M_PKTHDR ? (m)->m_pktdat : (m)->m_dat)
+#define M_SIZE(m)	((m)->m_flags & M_EXT ? (m)->m_ext.ext_size : \
+			(m)->m_flags & M_PKTHDR ? MHLEN : MLEN)
 
 /*
  * Initialize the mbuf allocator.
@@ -1262,14 +1267,7 @@ m_zero(struct mbuf *m)
 		panic("m_zero: M_READONLY");
 #endif /* DIAGNOSTIC */
 
-	if (m->m_flags & M_EXT)
-		explicit_bzero(m->m_ext.ext_buf, m->m_ext.ext_size);
-	else {
-		if (m->m_flags & M_PKTHDR)
-			explicit_bzero(m->m_pktdat, MHLEN);
-		else
-			explicit_bzero(m->m_dat, MLEN);
-	}
+	explicit_bzero(M_DATABUF(m), M_SIZE(m));
 }
 
 /*
@@ -1321,9 +1319,8 @@ m_leadingspace(struct mbuf *m)
 {
 	if (M_READONLY(m))
 		return 0;
-	return (m->m_flags & M_EXT ? m->m_data - m->m_ext.ext_buf :
-	    m->m_flags & M_PKTHDR ? m->m_data - m->m_pktdat :
-	    m->m_data - m->m_dat);
+	KASSERT(m->m_data >= M_DATABUF(m));
+	return m->m_data - M_DATABUF(m);
 }
 
 /*
@@ -1335,9 +1332,22 @@ m_trailingspace(struct mbuf *m)
 {
 	if (M_READONLY(m))
 		return 0;
-	return (m->m_flags & M_EXT ? m->m_ext.ext_buf +
-	    m->m_ext.ext_size - (m->m_data + m->m_len) :
-	    &m->m_dat[MLEN] - (m->m_data + m->m_len));
+	KASSERT(M_DATABUF(m) + M_SIZE(m) >= (m->m_data + m->m_len));
+	return M_DATABUF(m) + M_SIZE(m) - (m->m_data + m->m_len);
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf to place an object of
+ * the specified size at the end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+	KASSERT(len >= 0 && !M_READONLY(m));
+	KASSERT(m->m_data == M_DATABUF(m));	/* newly-allocated check */
+	KASSERT(((len + sizeof(long) - 1) &~ (sizeof(long) - 1)) <= M_SIZE(m));
+
+	m->m_data = M_DATABUF(m) + ((M_SIZE(m) - (len)) &~ (sizeof(long) - 1));
 }
 
 /*
