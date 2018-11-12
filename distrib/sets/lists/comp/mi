@@ -1324,6 +1324,7 @@
 ./usr/include/sys/sensors.h
 ./usr/include/sys/shm.h
 ./usr/include/sys/siginfo.h
+./usr/include/sys/sigio.h
 ./usr/include/sys/signal.h
 ./usr/include/sys/signalvar.h
 ./usr/include/sys/socket.h
@@ -2889,6 +2890,7 @@
 ./usr/share/man/man9/rtrequest.9
 ./usr/share/man/man9/rwlock.9
 ./usr/share/man/man9/sensor_attach.9
+./usr/share/man/man9/sigio_init.9
 ./usr/share/man/man9/socreate.9
 ./usr/share/man/man9/sosplice.9
 ./usr/share/man/man9/spl.9
