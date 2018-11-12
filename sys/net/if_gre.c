@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.134 2018/11/11 06:35:41 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.135 2018/11/12 09:39:52 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -683,7 +683,7 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = 1500; /* XXX */
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = egre_ioctl;
 	ifp->if_start = egre_start;
 	ifp->if_xflags = IFXF_CLONED;
@@ -742,7 +742,7 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	ifp->if_softc = sc;
-	ifp->if_mtu = 1500; /* XXX */
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = nvgre_ioctl;
 	ifp->if_start = nvgre_start;
 	ifp->if_xflags = IFXF_CLONED;
@@ -809,6 +809,7 @@ eoip_clone_create(struct if_clone *ifc, int unit)
 	    ifc->ifc_name, unit);
 
 	ifp->if_softc = sc;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = eoip_ioctl;
 	ifp->if_start = eoip_start;
 	ifp->if_xflags = IFXF_CLONED;
