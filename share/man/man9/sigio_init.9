@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigio_init.9,v 1.1 2018/11/12 15:13:12 visa Exp $
+.\"	$OpenBSD: sigio_init.9,v 1.2 2018/11/12 16:15:06 visa Exp $
 .\"
 .\" Copyright (c) 2018 Visa Hankala
 .\"
@@ -89,6 +89,31 @@ returns the ID of the process or process group associated with the reference
 and
 .Fn sigio_getown
 can be called during autoconf, or from process context.
+.Sh RETURN VALUES
+The
+.Fn sigio_setown
+returns 0 on success.
+Otherwise, the following error values are returned:
+.Bl -tag -width [EPERM]
+.It Bq Er EPERM
+The invoking process belongs to another session than the process
+or process group
+.Fa pgid .
+.It Bq Er ESRCH
+The process or process group
+.Fa pgid
+does not exist.
+.It Bq Er ESRCH
+The process
+.Fa pgid
+is exiting.
+.El
+.Pp
+The function
+.Fn sigio_getown
+returns the ID of the process or process group associated with reference
+.Fa sir ,
+or zero if no signal target has been registered.
 .Sh SEE ALSO
 .Xr pgsigio 9
 .Sh HISTORY
