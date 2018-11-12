@@ -1,4 +1,4 @@
-.\"	$OpenBSD: psignal.9,v 1.5 2015/09/14 15:14:55 schwarze Exp $
+.\"	$OpenBSD: psignal.9,v 1.6 2018/11/12 15:15:31 visa Exp $
 .\"	$NetBSD: psignal.9,v 1.5 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,12 +28,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: November 12 2018 $
 .Dt PSIGNAL 9
 .Os
 .Sh NAME
 .Nm psignal ,
 .Nm pgsignal ,
+.Nm pgsigio ,
 .Nm gsignal
 .Nd post signal to a process
 .Sh SYNOPSIS
@@ -41,6 +42,8 @@
 .Fn psignal "struct proc *p" "int signum"
 .Ft void
 .Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
+.Ft void
+.Fn pgsigio "struct sigio_ref *sir" "int sigum" "int checkctty"
 .Ft void
 .Fn gsignal "int pgid" "int signum"
 .Sh DESCRIPTION
@@ -107,6 +110,17 @@ is
 no action is taken.
 .Pp
 The
+.Fn pgsigio
+function posts signal number
+.Fa signum
+to the process or each member of the process group indicated by reference
+.Fa sir .
+If
+.Fa checkctty
+is non-zero, the signal will be posted only to processes that have
+a controlling terminal.
+.Pp
+The
 .Fn gsignal
 function posts signal number
 .Fa signum
@@ -120,4 +134,5 @@ These functions are implemented in the file
 .Pa sys/kern/kern_sig.c .
 .Sh SEE ALSO
 .Xr sigaction 2 ,
+.Xr sigio_setown 9 ,
 .Xr tsleep 9
