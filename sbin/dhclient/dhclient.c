@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.589 2018/11/11 00:55:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.590 2018/11/12 16:46:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -314,6 +314,7 @@ routehandler(struct interface_info *ifi, int routefd)
 	struct if_msghdr		*ifm;
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
+	struct if_ieee80211_data	*ifie;
 	char				*rtmmsg;
 	ssize_t				 n;
 	int				 newlinkup, oldlinkup;
@@ -384,6 +385,19 @@ routehandler(struct interface_info *ifi, int routefd)
 			    (newlinkup != 0) ? "up" : "down");
 			ifi->state = S_PREBOOT;
 			state_preboot(ifi);
+		}
+		break;
+	case RTM_80211INFO:
+		if (rtm->rtm_index != ifi->index)
+			break;
+		ifie = &((struct if_ieee80211_msghdr *)rtm)->ifim_ifie;
+		if (ifi->ssid_len != ifie->ifie_nwid_len ||
+		    memcmp(ifi->ssid, ifie->ifie_nwid, ifie->ifie_nwid_len)
+		    != 0) {
+			tick_msg("", 0, INT64_MAX);
+			log_warnx("%s: SSID changed", log_procname);
+			quit = SIGHUP;
+			goto done;
 		}
 		break;
 	case RTM_IFANNOUNCE:
@@ -608,7 +622,7 @@ main(int argc, char *argv[])
 
 	rtfilter = ROUTE_FILTER(RTM_PROPOSAL) | ROUTE_FILTER(RTM_IFINFO) |
 	    ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
-	    ROUTE_FILTER(RTM_IFANNOUNCE);
+	    ROUTE_FILTER(RTM_IFANNOUNCE) | ROUTE_FILTER(RTM_80211INFO);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
