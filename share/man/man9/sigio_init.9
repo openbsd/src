@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigio_init.9,v 1.2 2018/11/12 16:15:06 visa Exp $
+.\"	$OpenBSD: sigio_init.9,v 1.3 2018/11/12 18:27:31 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Visa Hankala
 .\"
@@ -37,8 +37,8 @@
 .Ft pid_t
 .Fn "sigio_getown" "struct sigio_ref *sir"
 .Sh DESCRIPTION
-The asynchronous IO signal API provides means to manage signal registrations.
-It allows associating a process or process group with a signal source.
+The asynchronous IO signal API provides a means to manage signal registrations.
+It associates a process or process group with a signal source.
 The association is revoked automatically when the process or process group
 is deleted.
 .Pp
@@ -90,7 +90,6 @@ and
 .Fn sigio_getown
 can be called during autoconf, or from process context.
 .Sh RETURN VALUES
-The
 .Fn sigio_setown
 returns 0 on success.
 Otherwise, the following error values are returned:
