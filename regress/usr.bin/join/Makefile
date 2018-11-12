@@ -1,8 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2018/11/06 13:59:09 martijn Exp $
+# $OpenBSD: Makefile,v 1.5 2018/11/12 09:48:48 martijn Exp $
 
-JION=join
-
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9-utf8 t9-c
 
 t1:
 	join -t "	" -a 1 -a 2 -e '(unknown)' -o 0,1.2,2.2 ${.CURDIR}/phone ${.CURDIR}/fax > ${*}.log
@@ -44,8 +42,15 @@ t8:
 	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
 		(echo "XXX ${*} failed" && false)
 
-t9:
-	join -t‐ ${.CURDIR}/t9a.in ${.CURDIR}/t9b.in > ${*}.log
+
+# LC_ALL takes precedence over LC_CTYPE.
+t9-utf8:
+	LC_ALL=en_US.UTF-8 join -t‐ ${.CURDIR}/t9a.in ${.CURDIR}/t9b.in > ${*}.log
+	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
+		(echo "XXX ${*} failed" && false)
+
+t9-c:
+	! LC_ALL=C join -t‐ ${.CURDIR}/t9a.in ${.CURDIR}/t9b.in > ${*}.log 2>&1
 	@cmp -s ${.CURDIR}/${*}.out ${*}.log || \
 		(echo "XXX ${*} failed" && false)
 
