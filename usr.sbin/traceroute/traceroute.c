@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.158 2018/11/10 05:03:23 dlg Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.159 2018/11/12 00:26:30 dlg Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -680,8 +680,8 @@ main(int argc, char *argv[])
 		ip->ip_v = IPVERSION;
 		ip->ip_tos = conf->tos;
 
-		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
-		    sizeof(on)) < 0)
+		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL,
+		     &on, sizeof(on)) < 0)
 			err(6, "IP_HDRINCL");
 
 		if (conf->source) {
@@ -820,13 +820,13 @@ main(int argc, char *argv[])
 
 	if (conf->dflag) {
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
+		    &on, sizeof(on));
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
+		    &on, sizeof(on));
 	}
 
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0)
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF,
+	    &datalen, sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
 
 	if (conf->nflag && !conf->Aflag) {
