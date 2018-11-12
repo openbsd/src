@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.181 2018/02/24 07:20:04 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.182 2018/11/12 06:35:37 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -192,6 +192,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 {
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
+
+	if (unit > minor(~0U))
+		return (ENXIO);
 
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 	tp->tun_unit = unit;
