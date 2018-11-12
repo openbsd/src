@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.85 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.86 2018/11/12 16:33:08 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -252,6 +252,7 @@ pipe_create(struct pipe *cpipe)
 	cpipe->pipe_state = 0;
 	cpipe->pipe_peer = NULL;
 	cpipe->pipe_busy = 0;
+	sigio_init(&cpipe->pipe_sigio);
 
 	error = pipespace(cpipe, PIPE_SIZE);
 	if (error != 0)
@@ -260,7 +261,6 @@ pipe_create(struct pipe *cpipe)
 	getnanotime(&cpipe->pipe_ctime);
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
-	cpipe->pipe_pgid = NO_PID;
 
 	return (0);
 }
@@ -303,8 +303,8 @@ pipeselwakeup(struct pipe *cpipe)
 		selwakeup(&cpipe->pipe_sel);
 	} else
 		KNOTE(&cpipe->pipe_sel.si_note, 0);
-	if ((cpipe->pipe_state & PIPE_ASYNC) && cpipe->pipe_pgid != NO_PID)
-		gsignal(cpipe->pipe_pgid, SIGIO);
+	if (cpipe->pipe_state & PIPE_ASYNC)
+		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
 }
 
 int
@@ -673,15 +673,14 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	case TIOCSPGRP:
 		/* FALLTHROUGH */
 	case SIOCSPGRP:
-		mpipe->pipe_pgid = *(int *)data;
-		return (0);
+		return (sigio_setown(&mpipe->pipe_sigio, *(int *)data));
 
 	case SIOCGPGRP:
-		*(int *)data = mpipe->pipe_pgid;
+		*(int *)data = sigio_getown(&mpipe->pipe_sigio);
 		return (0);
 
 	case TIOCGPGRP:
-		*(int *)data = -mpipe->pipe_pgid;
+		*(int *)data = -sigio_getown(&mpipe->pipe_sigio);
 		break;
 
 	}
@@ -788,6 +787,7 @@ pipeclose(struct pipe *cpipe)
 	struct pipe *ppipe;
 	if (cpipe) {
 		pipeselwakeup(cpipe);
+		sigio_free(&cpipe->pipe_sigio);
 
 		/*
 		 * If the other side is blocked, wake it up saying that
