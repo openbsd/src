@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.197 2018/11/12 16:36:54 krw Exp $	*/
+/*	$OpenBSD: if.h,v 1.198 2018/11/12 23:34:48 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -419,7 +419,13 @@ struct	ifreq {
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 #define ifr_index	ifr_ifru.ifru_index	/* interface index */
 #define ifr_llprio	ifr_ifru.ifru_metric	/* link layer priority */
+#define ifr_hdrprio	ifr_ifru.ifru_metric	/* header prio field config */
 };
+
+#define IF_HDRPRIO_MIN		IFQ_MINPRIO
+#define IF_HDRPRIO_MAX		IFQ_MAXPRIO
+#define IF_HDRPRIO_PACKET	-1	/* use mbuf prio */
+#define IF_HDRPRIO_PAYLOAD	-2	/* copy payload prio */
 
 struct ifaliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
