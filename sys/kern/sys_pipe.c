@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.86 2018/11/12 16:33:08 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.87 2018/11/13 13:02:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -681,7 +681,7 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	case TIOCGPGRP:
 		*(int *)data = -sigio_getown(&mpipe->pipe_sigio);
-		break;
+		return (0);
 
 	}
 	return (ENOTTY);
