@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio_common.c,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
+/*	$OpenBSD: sigio_common.c,v 1.3 2018/11/13 16:27:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/ioctl.h>
+#include <sys/limits.h>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -30,12 +32,24 @@ static char buf[1024];
 int
 test_common_badpgid(int fd)
 {
+	int pgid;
+
 	/* ID of non-existent process */
-	assert(fcntl(fd, F_SETOWN, 1000000) == -1);
+	pgid = 1000000;
+	errno = 0;
+	assert(fcntl(fd, F_SETOWN, pgid) == -1);
+	assert(errno == ESRCH);
+	errno = 0;
+	assert(ioctl(fd, FIOSETOWN, &pgid) == -1);
 	assert(errno == ESRCH);
 
 	/* ID of non-existent process group */
-	assert(fcntl(fd, F_SETOWN, -1000000) == -1);
+	pgid = -1000000;
+	errno = 0;
+	assert(fcntl(fd, F_SETOWN, pgid) == -1);
+	assert(errno == ESRCH);
+	errno = 0;
+	assert(ioctl(fd, FIOSETOWN, &pgid) == -1);
 	assert(errno == ESRCH);
 
 	return 0;
@@ -44,7 +58,7 @@ test_common_badpgid(int fd)
 int
 test_common_badsession(int fd)
 {
-	int sfd;
+	int arg, sfd;
 	pid_t pid, ppid;
 
 	/* Ensure this process has its own process group. */
@@ -55,9 +69,19 @@ test_common_badsession(int fd)
 		test_barrier(sfd);
 	} else {
 		assert(setsid() != -1);
+		errno = 0;
 		assert(fcntl(fd, F_SETOWN, ppid) == -1);
 		assert(errno == EPERM);
+		errno = 0;
 		assert(fcntl(fd, F_SETOWN, -ppid) == -1);
+		assert(errno == EPERM);
+		arg = ppid;
+		errno = 0;
+		assert(ioctl(fd, FIOSETOWN, &arg) == -1);
+		assert(errno == EPERM);
+		arg = -ppid;
+		errno = 0;
+		assert(ioctl(fd, FIOSETOWN, &arg) == -1);
 		assert(errno == EPERM);
 		test_barrier(sfd);
 	}
@@ -116,7 +140,8 @@ test_common_cansigio(int *fds)
 }
 
 /*
- * Test that fcntl(fd, F_GETOWN) reflects successful fcntl(fd, F_SETOWN, arg).
+ * Test that fcntl(fd, F_GETOWN) and ioctl(fd, FIOGETOWN, &arg) reflect
+ * successful fcntl(fd, F_SETOWN, arg) and ioctl(fd, FIOSETOWN, &arg).
  */
 int
 test_common_getown(int fd)
@@ -135,6 +160,28 @@ test_common_getown(int fd)
 
 	assert(fcntl(fd, F_SETOWN, 0) == 0);
 	assert(fcntl(fd, F_GETOWN) == 0);
+
+	pgid = INT_MIN;
+	assert(ioctl(fd, FIOGETOWN, &pgid) == 0);
+	assert(pgid == 0);
+
+	pgid = getpid();
+	assert(ioctl(fd, FIOSETOWN, &pgid) == 0);
+	pgid = INT_MIN;
+	assert(ioctl(fd, FIOGETOWN, &pgid) == 0);
+	assert(pgid == getpid());
+
+	pgid = -getpgrp();
+	assert(ioctl(fd, FIOSETOWN, &pgid) == 0);
+	pgid = INT_MIN;
+	assert(ioctl(fd, FIOGETOWN, &pgid) == 0);
+	assert(pgid == -getpgrp());
+
+	pgid = 0;
+	assert(ioctl(fd, FIOSETOWN, &pgid) == 0);
+	pgid = INT_MIN;
+	assert(ioctl(fd, FIOGETOWN, &pgid) == 0);
+	assert(pgid == 0);
 
 	return 0;
 }
