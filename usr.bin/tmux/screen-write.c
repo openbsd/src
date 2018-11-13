@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.142 2018/11/12 14:18:10 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.143 2018/11/13 11:36:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -774,6 +774,8 @@ screen_write_alignmenttest(struct screen_write_ctx *ctx)
 
 	s->rupper = 0;
 	s->rlower = screen_size_y(s) - 1;
+
+	screen_write_initctx(ctx, &ttyctx);
 
 	screen_write_collect_clear(ctx, 0, screen_size_y(s) - 1);
 	tty_write(tty_cmd_alignmenttest, &ttyctx);
