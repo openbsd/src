@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.118 2018/11/13 00:00:43 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.119 2018/11/13 01:16:31 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -302,9 +302,9 @@ gif_start(struct ifnet *ifp)
 
 int
 gif_send(struct gif_softc *sc, struct mbuf *m,
-    uint8_t proto, uint8_t ttl, uint8_t otos)
+    uint8_t proto, uint8_t ttl, uint8_t itos)
 {
-	uint8_t itos = 0;
+	uint8_t otos;
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_rtableid = sc->sc_tunnel.t_rtableid;
