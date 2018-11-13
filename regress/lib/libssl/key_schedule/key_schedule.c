@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.5 2018/11/10 01:46:54 tb Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.6 2018/11/13 01:32:33 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -165,7 +165,7 @@ int main () {
 	struct tls13_secrets *secrets;
 
 	if ((secrets = tls13_secrets_create(EVP_sha256(), 0)) == NULL)
-		FAIL("failed to create secrets\n");
+		errx(1,"failed to create secrets\n");
 
 	secrets->insecure = 1; /* don't explicit_bzero when done */
 
