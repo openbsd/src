@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.233 2018/11/11 01:40:31 dlg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.234 2018/11/13 14:30:36 dhill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -714,7 +714,7 @@ main(int argc, char *argv[])
 			struct ip *ip = (struct ip *)outpackhdr;
 
 			if (setsockopt(s, IPPROTO_IP, IP_HDRINCL,
-			    &optval, sizeof(optval)) < 1)
+			    &optval, sizeof(optval)) < 0)
 				err(1, "setsockopt(IP_HDRINCL)");
 			ip->ip_v = IPVERSION;
 			ip->ip_hl = sizeof(struct ip) >> 2;
