@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.57 2018/06/27 15:06:07 espie Exp $
+# $OpenBSD: Makefile,v 1.58 2018/11/13 14:37:34 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -251,7 +251,7 @@ manual1: rep0/ma-0.tgz rep0/mb-0.tgz rep0/mc-0.tgz rep0/md-0.tgz \
 	@-rm -rf ${D30}
 	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} md mb
 	@ROOT=${D30} ${INFO_PKG} -mq|diff -u - ${.CURDIR}/list9.out
-	@ROOT=${D30} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
+	@-ROOT=${D30} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
 	@ROOT=${D30} ${INFO_PKG} -mq|diff -u - ${.CURDIR}/list10.out
 	@ROOT=${D30} ${DELETE_PKG} -a
 	@ROOT=${D30} ${INFO_PKG} -q|diff -u - ${.CURDIR}/list11.out
