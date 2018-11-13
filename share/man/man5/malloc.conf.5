@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.conf.5,v 1.18 2018/11/08 05:58:21 otto Exp $
+.\"	$OpenBSD: malloc.conf.5,v 1.19 2018/11/13 14:34:47 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Damien Miller <djm@openbsd.org>
 .\" Copyright (c) 2008, 2009, 2010, 2011 Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 8 2018 $
+.Dd $Mdocdate: November 13 2018 $
 .Dt MALLOC.CONF 5
 .Os
 .Sh NAME
@@ -35,8 +35,7 @@ next checks the environment for a variable called
 and finally looks at the global variable
 .Va malloc_options
 in the program.
-Each is scanned for the following flags.
-Flags are single letters.
+Each is scanned for the flags documented below.
 Unless otherwise noted uppercase means on, lowercase means off.
 .Bl -tag -width indent
 .It Cm C
