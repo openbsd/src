@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.117 2018/11/11 12:47:04 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.118 2018/11/13 00:00:43 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ struct gif_softc {
 	struct ifnet		sc_if;
 	uint16_t		sc_df;
 	int			sc_ttl;
+	int			sc_txhprio;
 };
 
 struct gif_list gif_list = TAILQ_HEAD_INITIALIZER(gif_list);
@@ -153,6 +154,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_df = htons(0);
 	sc->sc_ttl = ip_defttl;
+	sc->sc_txhprio = IF_HDRPRIO_PAYLOAD;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 	    "%s%d", ifc->ifc_name, unit);
@@ -281,6 +283,18 @@ gif_start(struct ifnet *ifp)
 			ttl = *(m->m_data + ttloff);
 		} else
 			ttl = tttl;
+
+		switch (sc->sc_txhprio) {
+		case IF_HDRPRIO_PAYLOAD:
+			/* tos is already set */
+			break;
+		case IF_HDRPRIO_PACKET:
+			tos = IFQ_PRIO2TOS(m->m_pkthdr.pf.prio);
+			break;
+		default:
+			tos = IFQ_PRIO2TOS(sc->sc_txhprio);
+			break;
+		}
 
 		gif_send(sc, m, proto, ttl, tos);
 	}
@@ -527,6 +541,22 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYDF:
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
+		break;
+
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
+			; /* ok, fall through */
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
 		break;
 
 	default:
