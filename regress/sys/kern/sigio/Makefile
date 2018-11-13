@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2018/11/12 16:50:28 visa Exp $
+#	$OpenBSD: Makefile,v 1.2 2018/11/13 13:05:42 visa Exp $
 
 PROG=		sigio_test
 SRCS=		main.c sigio_common.c sigio_pipe.c util.c
@@ -8,6 +8,7 @@ WARNINGS=	yes
 TESTS+=		pipe_badpgid
 TESTS+=		pipe_badsession
 TESTS+=		pipe_cansigio
+TESTS+=		pipe_getown
 TESTS+=		pipe_read
 #TESTS+=	pipe_write
 

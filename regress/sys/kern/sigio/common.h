@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.1 2018/11/12 16:50:28 visa Exp $	*/
+/*	$OpenBSD: common.h,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -36,11 +36,13 @@ void	reject_signal_impl(int, const char *, const char *, int);
 int	test_common_badpgid(int);
 int	test_common_badsession(int);
 int	test_common_cansigio(int *);
+int	test_common_getown(int);
 int	test_common_read(int *);
 int	test_common_write(int *);
 int	test_pipe_badpgid(void);
 int	test_pipe_badsession(void);
 int	test_pipe_cansigio(void);
+int	test_pipe_getown(void);
 int	test_pipe_read(void);
 int	test_pipe_write(void);
 

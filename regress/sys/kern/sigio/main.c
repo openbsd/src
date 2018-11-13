@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 2018/11/12 16:50:28 visa Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -32,6 +32,7 @@ static struct {
 	{ "pipe_badpgid",	test_pipe_badpgid },
 	{ "pipe_badsession",	test_pipe_badsession },
 	{ "pipe_cansigio",	test_pipe_cansigio },
+	{ "pipe_getown",	test_pipe_getown },
 	{ "pipe_read",		test_pipe_read },
 	{ "pipe_write",		test_pipe_write },
 	{ NULL,			NULL }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio_pipe.c,v 1.1 2018/11/12 16:50:28 visa Exp $	*/
+/*	$OpenBSD: sigio_pipe.c,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -48,6 +48,15 @@ test_pipe_cansigio(void)
 
 	assert(pipe(fds) == 0);
 	return test_common_cansigio(fds);
+}
+
+int
+test_pipe_getown(void)
+{
+	int fds[2];
+
+	assert(pipe(fds) == 0);
+	return test_common_getown(fds[0]);
 }
 
 int

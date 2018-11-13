@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio_common.c,v 1.1 2018/11/12 16:50:28 visa Exp $	*/
+/*	$OpenBSD: sigio_common.c,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -113,6 +113,30 @@ test_common_cansigio(int *fds)
 		test_barrier(sfd);
 	}
 	return test_wait(pid, sfd);
+}
+
+/*
+ * Test that fcntl(fd, F_GETOWN) reflects successful fcntl(fd, F_SETOWN, arg).
+ */
+int
+test_common_getown(int fd)
+{
+	int pgid;
+
+	assert(fcntl(fd, F_GETOWN) == 0);
+
+	pgid = getpid();
+	assert(fcntl(fd, F_SETOWN, pgid) == 0);
+	assert(fcntl(fd, F_GETOWN) == pgid);
+
+	pgid = -getpgrp();
+	assert(fcntl(fd, F_SETOWN, pgid) == 0);
+	assert(fcntl(fd, F_GETOWN) == pgid);
+
+	assert(fcntl(fd, F_SETOWN, 0) == 0);
+	assert(fcntl(fd, F_GETOWN) == 0);
+
+	return 0;
 }
 
 /*
