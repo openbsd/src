@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.7 2018/11/11 21:54:47 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.8 2018/11/13 01:19:48 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -36,6 +36,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.md = EVP_sha512,
 		.key_type = EVP_PKEY_EC,
 		.pkey_idx = SSL_PKEY_ECC,
+		.curve_nid = NID_secp521r1,
 	},
 #ifndef OPENSSL_NO_GOST
 	{
@@ -56,6 +57,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.md = EVP_sha384,
 		.key_type = EVP_PKEY_EC,
 		.pkey_idx = SSL_PKEY_ECC,
+		.curve_nid = NID_secp384r1,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_SHA256,
@@ -68,6 +70,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.md = EVP_sha256,
 		.key_type = EVP_PKEY_EC,
 		.pkey_idx = SSL_PKEY_ECC,
+		.curve_nid = NID_X9_62_prime256v1,
 	},
 #ifndef OPENSSL_NO_GOST
 	{
@@ -229,15 +232,29 @@ ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 int
 ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 {
-	if (sigalg->key_type == pkey->type) {
-		if (!(sigalg->flags & SIGALG_FLAG_RSA_PSS))
-			return 1;
+	if (sigalg == NULL || pkey == NULL)
+		return 0;
+	if (sigalg->key_type != pkey->type)
+		return 0;
+
+	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS)) {
 		/*
-		 * RSA keys for PSS need to be at least
-		 * as big as twice the size of the hash + 2
+		 * RSA PSS Must have an RSA key that needs to be at
+		 * least as big as twice the size of the hash + 2
 		 */
-		if (EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
-			return 1;
+		if (pkey->type != EVP_PKEY_RSA ||
+		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
+			return 0;
 	}
-	return 0;
+
+	if (pkey->type == EVP_PKEY_EC) {
+		if (sigalg->curve_nid == 0)
+			return 0;
+		/* Curve must match for EC keys */
+		if (EC_GROUP_get_curve_name(EC_KEY_get0_group
+		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid)
+			return 0;
+	}
+
+	return 1;
 }
