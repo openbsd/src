@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.55 2018/11/05 11:59:05 mestre Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.56 2018/11/13 07:29:07 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -124,14 +124,6 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		fatal("unveil");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
-#if 0
-	/*
-	 * XXX Refactoring required to move illegal ioctls and sysctls.
-	 * XXX See mps_* and if_mib in mib.c, etc.
-	 */
-BROKEN	if (pledge("stdio inet route recvfd vminfo", NULL) == -1)
-		fatal("pledge");
-#endif
 }
 
 void
