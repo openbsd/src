@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.8 2018/11/13 01:19:48 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.9 2018/11/13 15:50:54 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -252,8 +252,9 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 			return 0;
 		/* Curve must match for EC keys */
 		if (EC_GROUP_get_curve_name(EC_KEY_get0_group
-		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid)
-			return 0;
+		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid) {
+			return 1; /* XXX www.videolan.org curve mismatch */
+		}
 	}
 
 	return 1;
