@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.80 2018/01/22 09:01:39 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.81 2018/11/13 04:47:36 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -261,10 +261,14 @@ typedef struct {
 #define SHT_DYNSYM		11	/* dynamic symbol table section */
 #define SHT_NUM			12	/* number of section types */
 #define SHT_SYMTAB_SHNDX	18	/* Section indexes (see SHN_XINDEX). */
+#define SHT_LOOS	0x60000000	/* reserved range for OS specific */
+#define SHT_HIOS	0x6fffffff	/*  section header types */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
 #define SHT_HIUSER	0xffffffff	/*  specific indexes */
+
+#define SHT_GNU_HASH	0x6ffffff6	/* GNU-style hash table section */
 
 /* Section names */
 #define ELF_BSS         ".bss"		/* uninitialized data */
@@ -524,6 +528,7 @@ typedef struct {
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
 
 /* some other useful tags */
+#define DT_GNU_HASH	0x6ffffef5	/* address of GNU hash table */
 #define DT_RELACOUNT	0x6ffffff9	/* if present, number of RELATIVE */
 #define DT_RELCOUNT	0x6ffffffa	/* relocs, which must come first */
 #define DT_FLAGS_1      0x6ffffffb

@@ -2622,6 +2622,7 @@ get_section_type_name (unsigned int sh_type)
     case 0x6ffffffc:		return "VERDEF";
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
+    case SHT_GNU_HASH:		return "GNU_HASH";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
 
     default:
