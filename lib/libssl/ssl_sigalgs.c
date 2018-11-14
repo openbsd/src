@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.9 2018/11/13 15:50:54 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.10 2018/11/14 02:27:15 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -144,7 +144,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.value = SIGALG_RSA_PKCS1_SHA1,
 		.key_type = EVP_PKEY_RSA,
 		.pkey_idx = SSL_PKEY_RSA_SIGN,
-		.md = EVP_md5_sha1,
+		.md = EVP_sha1,
 	},
 	{
 		.value = SIGALG_ECDSA_SHA1,
