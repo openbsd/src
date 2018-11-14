@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.119 2018/11/13 01:16:31 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.120 2018/11/14 01:06:06 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ int	gif_del_tunnel(struct gif_softc *);
 int	in_gif_output(struct ifnet *, int, struct mbuf **);
 int	in6_gif_output(struct ifnet *, int, struct mbuf **);
 int	gif_input(struct gif_tunnel *, struct mbuf **, int *, int, int,
-	    uint8_t, uint8_t);
+	    uint8_t);
 
 /*
  * gif global variable definitions
@@ -712,7 +712,7 @@ in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
-	rv = gif_input(&key, mp, offp, proto, af, ip->ip_ttl, ip->ip_tos);
+	rv = gif_input(&key, mp, offp, proto, af, ip->ip_tos);
 	if (rv == -1)
 		rv = ipip_input(mp, offp, proto, af);
 
@@ -737,8 +737,7 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	flow = ntohl(ip6->ip6_flow);
 
-	rv = gif_input(&key, mp, offp, proto, af, ip6->ip6_hlim,
-	    flow >> 20);
+	rv = gif_input(&key, mp, offp, proto, af, flow >> 20);
 	if (rv == -1)
 		rv = ipip_input(mp, offp, proto, af);
 
@@ -768,13 +767,12 @@ gif_find(const struct gif_tunnel *key)
 
 int
 gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
-    int af, uint8_t ttl, uint8_t otos)
+    int af, uint8_t otos)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
 	struct ifnet *ifp;
 	void (*input)(struct ifnet *, struct mbuf *);
-	int ttloff;
 	uint8_t itos;
 
 	/* IP-in-IP header is caused by tunnel mode, so skip gif lookup */
@@ -811,7 +809,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 
 		m->m_pkthdr.ph_family = AF_INET;
 		input = ipv4_input;
-		ttloff = offsetof(struct ip, ip_ttl);
 		break;
 	}
 #ifdef INET6
@@ -833,7 +830,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 
 		m->m_pkthdr.ph_family = AF_INET6;
 		input = ipv6_input;
-		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
 		break;
 	}
 #endif /* INET6 */
@@ -841,7 +837,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	case IPPROTO_MPLS:
 		m->m_pkthdr.ph_family = AF_MPLS;
 		input = mpls_input;
-		ttloff = 3;
 		break;
 #endif /* MPLS */
 	default:
@@ -849,14 +844,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	}
 
 	m_adj(m, *offp);
-
-	if (sc->sc_ttl == -1) {
-		m = *mp = m_pullup(m, ttloff + 1);
-		if (m == NULL)
-			return (IPPROTO_DONE);
-
-		*(m->m_data + ttloff) = ttl;
-	}
 
 	ifp = &sc->sc_if;
 

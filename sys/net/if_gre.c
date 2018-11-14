@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.136 2018/11/13 00:03:18 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.137 2018/11/14 01:06:06 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -881,7 +881,6 @@ gre_input(struct mbuf **mp, int *offp, int type, int af)
 	/* XXX check if ip_src is sane for nvgre? */
 
 	key.t_af = AF_INET;
-	key.t_ttl = ip->ip_ttl;
 	key.t_src4 = ip->ip_dst;
 	key.t_dst4 = ip->ip_src;
 
@@ -904,7 +903,6 @@ gre_input6(struct mbuf **mp, int *offp, int type, int af)
 	/* XXX check if ip6_src is sane for nvgre? */
 
 	key.t_af = AF_INET6;
-	key.t_ttl = ip6->ip6_hlim;
 	key.t_src6 = ip6->ip6_dst;
 	key.t_dst6 = ip6->ip6_src;
 
@@ -985,7 +983,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	void (*input)(struct ifnet *, struct mbuf *);
 	int bpf_af = AF_UNSPEC; /* bpf */
 	int mcast = 0;
-	int ttloff;
 
 	if (!gre_allow)
 		goto decline;
@@ -1089,7 +1086,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 #if NBPFILTER > 0
 		bpf_af = AF_INET;
 #endif
-		ttloff = offsetof(struct ip, ip_ttl);
 		input = ipv4_input;
 		break;
 #ifdef INET6
@@ -1097,7 +1093,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 #if NBPFILTER > 0
 		bpf_af = AF_INET6;
 #endif
-		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
 		input = ipv6_input;
 		break;
 #endif
@@ -1109,7 +1104,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 #if NBPFILTER > 0
 		bpf_af = AF_MPLS;
 #endif
-		ttloff = 3; /* XXX */
 		input = mpls_input;
 		break;
 #endif
@@ -1132,14 +1126,6 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af,
 	m_adj(m, hlen);
 
 	tunnel = ifp->if_softc; /* gre and mgre tunnel info is at the front */
-
-	if (tunnel->t_ttl == -1) {
-		m = m_pullup(m, ttloff + 1);
-		if (m == NULL)
-			return (IPPROTO_DONE);
-
-		*(m->m_data + ttloff) = key->t_ttl;
-	}
 
 	if (tunnel->t_key_mask == GRE_KEY_ENTROPY) {
 		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
