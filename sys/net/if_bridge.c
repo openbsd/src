@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.312 2018/10/01 12:38:32 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.313 2018/11/14 17:07:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -594,7 +594,7 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 	struct bstp_state *bs = sc->sc_stp;
 	u_int32_t total = 0, i = 0;
 	int error = 0;
-	struct ifbreq *breq = NULL;
+	struct ifbreq *breq, *breqs = NULL;
 
 	TAILQ_FOREACH(bif, &sc->sc_iflist, next)
 		total++;
@@ -607,14 +607,14 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 		goto done;
 	}
 
-	if ((breq = (struct ifbreq *)
-	    malloc(sizeof(*breq), M_DEVBUF, M_NOWAIT)) == NULL)
+	breqs = mallocarray(total, sizeof(*breqs), M_TEMP, M_NOWAIT|M_ZERO);
+	if (breqs == NULL)
 		goto done;
 
 	TAILQ_FOREACH(bif, &sc->sc_iflist, next) {
-		bzero(breq, sizeof(*breq));
-		if (bifc->ifbic_len < sizeof(*breq))
+		if (bifc->ifbic_len < (i + 1) * sizeof(*breqs))
 			break;
+		breq = &breqs[i];
 		strlcpy(breq->ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
 		strlcpy(breq->ifbr_ifsname, bif->ifp->if_xname, IFNAMSIZ);
 		breq->ifbr_ifsflags = bif->bif_flags;
@@ -645,32 +645,22 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 			if (bp->bp_flags & BSTP_PORT_AUTOPTP)
 				breq->ifbr_ifsflags |= IFBIF_BSTP_AUTOPTP;
 		}
-		error = copyout((caddr_t)breq,
-		    (caddr_t)(bifc->ifbic_req + i), sizeof(*breq));
-		if (error)
-			goto done;
 		i++;
-		bifc->ifbic_len -= sizeof(*breq);
 	}
 	TAILQ_FOREACH(bif, &sc->sc_spanlist, next) {
-		bzero(breq, sizeof(*breq));
-		if (bifc->ifbic_len < sizeof(*breq))
+		if (bifc->ifbic_len < (i + 1) * sizeof(*breqs))
 			break;
+		breq = &breqs[i];
 		strlcpy(breq->ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
 		strlcpy(breq->ifbr_ifsname, bif->ifp->if_xname, IFNAMSIZ);
 		breq->ifbr_ifsflags = bif->bif_flags | IFBIF_SPAN;
 		breq->ifbr_portno = bif->ifp->if_index & 0xfff;
-		error = copyout((caddr_t)breq,
-		    (caddr_t)(bifc->ifbic_req + i), sizeof(*breq));
-		if (error)
-			goto done;
 		i++;
-		bifc->ifbic_len -= sizeof(*breq);
 	}
 
+	error = copyout(breqs, bifc->ifbic_req, i * sizeof(*breqs));
 done:
-	if (breq != NULL)
-		free(breq, M_DEVBUF, sizeof *breq);
+	free(breqs, M_TEMP, total * sizeof(*breq));
 	bifc->ifbic_len = i * sizeof(*breq);
 	return (error);
 }
