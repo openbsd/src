@@ -60,6 +60,7 @@ static struct fb_ops radeonfb_ops = {
 };
 #endif
 
+void radeondrm_burner_cb(void *);
 
 int radeon_align_pitch(struct radeon_device *rdev, int width, int bpp, bool tiled)
 {
@@ -381,6 +382,8 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 	if (ret)
 		goto free;
 
+	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev);
+
 	ret = drm_fb_helper_single_add_all_connectors(&rfbdev->helper);
 	if (ret)
 		goto fini;
@@ -405,6 +408,8 @@ void radeon_fbdev_fini(struct radeon_device *rdev)
 {
 	if (!rdev->mode_info.rfbdev)
 		return;
+
+	task_del(systq, &rdev->burner_task);
 
 #ifdef notyet
 	radeon_fbdev_destroy(rdev->ddev, rdev->mode_info.rfbdev);
