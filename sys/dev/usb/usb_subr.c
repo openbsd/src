@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.139 2018/11/10 15:34:25 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.140 2018/11/14 17:00:33 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -649,7 +649,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
 		free(dev->ifaces, M_USB, 0);
-		free(dev->cdesc, M_USB, 0);
+		free(dev->cdesc, M_USB, UGETW(dev->cdesc->wTotalLength));
 		dev->ifaces = NULL;
 		dev->cdesc = NULL;
 		dev->config = USB_UNCONFIG_NO;
@@ -1409,7 +1409,7 @@ usb_free_device(struct usbd_device *dev)
 		free(dev->ifaces, M_USB, 0);
 	}
 	if (dev->cdesc != NULL)
-		free(dev->cdesc, M_USB, 0);
+		free(dev->cdesc, M_USB, UGETW(dev->cdesc->wTotalLength));
 	if (dev->subdevs != NULL)
 		free(dev->subdevs, M_USB, 0);
 	dev->bus->devices[dev->address] = NULL;

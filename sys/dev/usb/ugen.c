@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.98 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: ugen.c,v 1.99 2018/11/14 17:00:33 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1051,12 +1051,12 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 			return (EINVAL);
 		idesc = usbd_find_idesc(cdesc, ai->uai_interface_index, 0);
 		if (idesc == NULL) {
-			free(cdesc, M_TEMP, 0);
+			free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 			return (EINVAL);
 		}
 		ai->uai_alt_no = usbd_get_no_alts(cdesc,
 		    idesc->bInterfaceNumber);
-		free(cdesc, M_TEMP, 0);
+		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 		break;
 	case USB_GET_DEVICE_DESC:
 		*(usb_device_descriptor_t *)addr =
@@ -1068,7 +1068,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 		if (cdesc == NULL)
 			return (EINVAL);
 		cd->ucd_desc = *cdesc;
-		free(cdesc, M_TEMP, 0);
+		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 		break;
 	case USB_GET_INTERFACE_DESC:
 		id = (struct usb_interface_desc *)addr;
@@ -1082,11 +1082,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 			alt = id->uid_alt_index;
 		idesc = usbd_find_idesc(cdesc, id->uid_interface_index, alt);
 		if (idesc == NULL) {
-			free(cdesc, M_TEMP, 0);
+			free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 			return (EINVAL);
 		}
 		id->uid_desc = *idesc;
-		free(cdesc, M_TEMP, 0);
+		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 		break;
 	case USB_GET_ENDPOINT_DESC:
 		ed = (struct usb_endpoint_desc *)addr;
@@ -1101,11 +1101,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 		edesc = usbd_find_edesc(cdesc, ed->ued_interface_index,
 					alt, ed->ued_endpoint_index);
 		if (edesc == NULL) {
-			free(cdesc, M_TEMP, 0);
+			free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 			return (EINVAL);
 		}
 		ed->ued_desc = *edesc;
-		free(cdesc, M_TEMP, 0);
+		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 		break;
 	case USB_GET_FULL_DESC:
 	{
@@ -1130,7 +1130,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
 		error = uiomove((void *)cdesc, len, &uio);
-		free(cdesc, M_TEMP, 0);
+		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
 		return (error);
 	}
 	case USB_DO_REQUEST:
@@ -1196,8 +1196,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd, caddr_t addr,
 			}
 		}
 	ret:
-		if (ptr)
-			free(ptr, M_TEMP, len);
+		free(ptr, M_TEMP, len);
 		return (error);
 	}
 	case USB_GET_DEVICEINFO:
