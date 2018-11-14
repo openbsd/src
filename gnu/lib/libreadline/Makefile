@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2004/08/09 16:53:15 pefo Exp $
+#	$OpenBSD: Makefile,v 1.8 2018/11/14 20:43:48 sthen Exp $
 
 LIB=	readline
 SRCS=	readline.c funmap.c keymaps.c vi_mode.c parens.c rltty.c complete.c \
@@ -10,6 +10,8 @@ HDRS=	readline.h chardefs.h keymaps.h history.h tilde.h rlstdc.h rlconf.h \
 	rltypedefs.h
 SUBDIR= doc
 CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}
+LDADD+=	-L${BSDOBJDIR}/lib/libcurses -ltermcap
+DPADD+=	${LIBTERMCAP}
 
 includes:
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
