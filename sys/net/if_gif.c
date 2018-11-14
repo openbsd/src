@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.121 2018/11/14 01:30:38 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.122 2018/11/14 02:49:15 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -302,9 +302,9 @@ gif_start(struct ifnet *ifp)
 
 int
 gif_send(struct gif_softc *sc, struct mbuf *m,
-    uint8_t proto, uint8_t ttl, uint8_t otos)
+    uint8_t proto, uint8_t ttl, uint8_t itos)
 {
-	uint8_t itos;
+	uint8_t otos;
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_rtableid = sc->sc_tunnel.t_rtableid;
@@ -328,7 +328,7 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 
 		ip = mtod(m, struct ip *);
 		ip->ip_off = sc->sc_df;
-		ip->ip_tos = itos;
+		ip->ip_tos = otos;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_ttl = ttl;
 		ip->ip_p = proto;
@@ -351,7 +351,7 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 		if (m == NULL)
 			return (-1);
 
-		flow = itos << 20;
+		flow = otos << 20;
 		if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
 			flow |= m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
 
