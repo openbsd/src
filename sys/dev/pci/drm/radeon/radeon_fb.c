@@ -388,6 +388,29 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 	if (ret)
 		goto fini;
 
+#ifdef __sparc64__
+{
+	struct drm_fb_helper *fb_helper = &rfbdev->helper;
+	struct drm_fb_helper_connector *fb_helper_conn;
+	int i;
+
+	for (i = 0; i < fb_helper->connector_count; i++) {
+		struct drm_cmdline_mode *mode;
+		struct drm_connector *connector;
+
+		fb_helper_conn = fb_helper->connector_info[i];
+		connector = fb_helper_conn->connector;
+		mode = &connector->cmdline_mode;
+
+		mode->specified = true;
+		mode->xres = rdev->sf.sf_width;
+		mode->yres = rdev->sf.sf_height;
+		mode->bpp_specified = true;
+		mode->bpp = rdev->sf.sf_depth;
+	}
+}
+#endif
+
 	/* disable all the possible outputs/crtcs before entering KMS mode */
 	drm_helper_disable_unused_functions(rdev->ddev);
 
