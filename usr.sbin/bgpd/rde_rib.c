@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.185 2018/11/04 12:34:54 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.186 2018/11/14 12:14:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1072,11 +1072,7 @@ void
 prefix_updateall(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
-	/*
-	 * Skip non local-RIBs or RIBs that are flagged as noeval.
-	 * There is no need to run over updates since that is only
-	 * used on the Adj-RIB-Out.
-	 */
+	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
 	if (re_rib(p->re)->flags & F_RIB_NOEVALUATE)
 		return;
 
