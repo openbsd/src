@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2018/07/11 06:57:18 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2018/11/14 10:59:33 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -310,6 +310,30 @@ again:
 	return (NULL);
 }
 
+void
+finish_file(void)
+{
+	if (infile != NULL) {
+		fclose(infile);
+		if (*oldfname != '\0') {
+			if (rename(fname, oldfname) != 0) {
+				warning("rename()");
+				unlink(tmpfname);
+				exit(1);
+			}
+			*oldfname = '\0';
+		}
+		if (*tmpfname != '\0') {
+			if (outfile != NULL && outfile != stdout)
+				fclose(outfile);
+			outfile = NULL;
+			rename(tmpfname, fname);
+			*tmpfname = '\0';
+		}
+		outfname = NULL;
+	}
+}
+
 /*
  * Like fgets, but go through the list of files chaining them together.
  * Set len to the length of the line.
@@ -347,25 +371,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			sp->len = 0;
 			return (0);
 		}
-		if (infile != NULL) {
-			fclose(infile);
-			if (*oldfname != '\0') {
-				if (rename(fname, oldfname) != 0) {
-					warning("rename()");
-					unlink(tmpfname);
-					exit(1);
-				}
-				*oldfname = '\0';
-			}
-			if (*tmpfname != '\0') {
-				if (outfile != NULL && outfile != stdout)
-					fclose(outfile);
-				outfile = NULL;
-				rename(tmpfname, fname);
-				*tmpfname = '\0';
-			}
-			outfname = NULL;
-		}
+		finish_file();
 		if (firstfile == 0)
 			files = files->next;
 		else
@@ -405,7 +411,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			fchmod(fileno(outfile), sb.st_mode & ALLPERMS);
 			outfname = tmpfname;
 			linenum = 0;
-			resetranges();
+			resetstate();
 		} else {
 			outfile = stdout;
 			outfname = "stdout";

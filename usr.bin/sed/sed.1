@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.56 2018/07/11 06:47:38 martijn Exp $
+.\"	$OpenBSD: sed.1,v 1.57 2018/11/14 10:59:33 martijn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 11 2018 $
+.Dd $Mdocdate: November 14 2018 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -106,6 +106,9 @@ It is not recommended to give a zero length
 .Ar extension
 when in place editing files, as it risks corruption or partial content
 in situations where disk space is exhausted, etc.
+In
+.Fl i
+mode, the hold space, line numbers, and ranges are reset between files.
 .It Fl r
 An alias for
 .Fl E ,
@@ -392,7 +395,7 @@ Write the pattern space to standard output.
 Write the pattern space, up to the first newline character,
 to the standard output.
 .It [1addr] Ns Ic q
-Branch to the end of the script and quit without starting a new cycle.
+Branch to the end of the script and quit without starting a new cycle or file.
 .It [1addr] Ns Ic r Ar file
 Copy the contents of
 .Ar file

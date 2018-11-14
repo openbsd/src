@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.33 2017/12/13 16:06:34 millert Exp $	*/
+/*	$OpenBSD: process.c,v 1.34 2018/11/14 10:59:33 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -196,6 +196,7 @@ redirect:
 				if (!nflag && !pd)
 					OUT();
 				flush_appends();
+				finish_file();
 				exit(0);
 			case 'r':
 				if (appendx >= appendnum) {
@@ -312,9 +313,12 @@ applies(struct s_command *cp)
  * Reset all inrange markers.
  */
 void
-resetranges(void)
+resetstate(void)
 {
 	struct s_command *cp;
+
+	free(HS.back);
+	memset(&HS, 0, sizeof(HS));
 
 	for (cp = prog; cp; cp = cp->code == '{' ? cp->u.c : cp->next)
 		if (cp->a2)
