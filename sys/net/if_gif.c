@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.123 2018/11/14 03:20:03 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.124 2018/11/14 23:55:04 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -809,7 +809,8 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		if (ip_ecn_egress(ECN_ALLOWED, &otos, &itos) == 0)
 			goto drop;
 
-		ip->ip_tos = itos;
+		if (itos != ip->ip_tos)
+			ip_tos_patch(ip, itos);
 
 		m->m_pkthdr.ph_family = AF_INET;
 		input = ipv4_input;

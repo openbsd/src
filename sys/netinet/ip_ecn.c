@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.c,v 1.8 2016/09/24 14:51:37 naddy Exp $	*/
+/*	$OpenBSD: ip_ecn.c,v 1.9 2018/11/14 23:55:04 dlg Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
@@ -153,4 +153,25 @@ ip_ecn_egress(int mode, u_int8_t *outer, u_int8_t *inner)
 		break;
 	}
 	return (1);
+}
+
+/*
+ * Patch the checksum with the difference between the old and new tos.
+ * The patching is based on what pf_patch_8() and pf_cksum_fixkup() do,
+ * but they're in pf, so we can't rely on them being available.
+ */
+void
+ip_tos_patch(struct ip *ip, uint8_t tos)
+{
+	uint16_t old;
+	uint16_t new;
+	uint32_t x;
+
+	old = htons(ip->ip_tos);
+	new = htons(tos);
+
+	ip->ip_tos = tos;
+
+	x = ip->ip_sum + old - new;
+	ip->ip_sum = (x) + (x >> 16);
 }

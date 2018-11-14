@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.88 2018/08/28 15:15:02 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.89 2018/11/14 23:55:04 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -239,16 +239,14 @@ ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
 		itos = ip->ip_tos;
 		mode = m->m_flags & (M_AUTH|M_CONF) ?
 		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
-		if (!ip_ecn_egress(mode, &otos, &ip->ip_tos)) {
+		if (!ip_ecn_egress(mode, &otos, &itos)) {
 			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
 			ipipstat_inc(ipips_pdrops);
 			goto bad;
 		}
 		/* re-calculate the checksum if ip_tos was changed */
-		if (itos != ip->ip_tos) {
-			ip->ip_sum = 0;
-			ip->ip_sum = in_cksum(m, hlen);
-		}
+		if (itos != ip->ip_tos)
+			ip_tos_patch(ip, itos);
 		break;
 #ifdef INET6
     	case IPPROTO_IPV6:
