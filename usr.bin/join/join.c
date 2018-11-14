@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.31 2018/11/06 13:51:28 martijn Exp $	*/
+/* $OpenBSD: join.c,v 1.32 2018/11/14 15:16:09 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -96,7 +96,6 @@ void outfield(LINE *, u_long, int);
 void outoneline(INPUT *, LINE *);
 void outtwoline(INPUT *, LINE *, INPUT *, LINE *);
 void slurp(INPUT *);
-void slurpit(INPUT *);
 void usage(void);
 
 int
