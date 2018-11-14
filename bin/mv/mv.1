@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.33 2017/06/28 06:24:39 jmc Exp $
+.\"	$OpenBSD: mv.1,v 1.34 2018/11/14 15:53:31 tedu Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: June 28 2017 $
+.Dd $Mdocdate: November 14 2018 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -121,7 +121,7 @@ Should the
 .Xr rename 2
 call fail because the source and destination are on different file systems,
 .Nm
-will use
+will imitate
 .Xr cp 1
 and
 .Xr rm 1
