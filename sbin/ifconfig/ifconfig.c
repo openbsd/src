@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.382 2018/11/12 23:40:37 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.383 2018/11/14 21:25:04 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4098,6 +4098,8 @@ setvlantag(const char *val, int d)
 	struct vlanreq vreq;
 	const char *errmsg = NULL;
 
+	warnx("The 'vlan' option is deprecated, use 'vnetid'");
+
 	__tag = tag = strtonum(val, EVL_VLID_MIN, EVL_VLID_MAX, &errmsg);
 	if (errmsg)
 		errx(1, "vlan tag %s: %s", val, errmsg);
@@ -4123,6 +4125,8 @@ setvlandev(const char *val, int d)
 	int		 tag;
 	size_t		 skip;
 	const char	*estr;
+
+	warnx("The 'vlandev' option is deprecated, use 'parent'");
 
 	bzero((char *)&vreq, sizeof(struct vlanreq));
 	ifr.ifr_data = (caddr_t)&vreq;
@@ -4150,6 +4154,8 @@ void
 unsetvlandev(const char *val, int d)
 {
 	struct vlanreq vreq;
+
+	warnx("The '-vlandev' option is deprecated, use '-parent'");
 
 	bzero((char *)&vreq, sizeof(struct vlanreq));
 	ifr.ifr_data = (caddr_t)&vreq;
