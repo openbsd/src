@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.112 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.113 2018/11/14 14:03:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -994,7 +994,7 @@ filterset_name(enum action_types type)
 #define RDE_FILTER_SET_SKIP_STEPS(i)				\
 	do {							\
 		while (head[i] != cur) {			\
-			head[i]->skip[i].ptr = cur;		\
+			head[i]->skip[i] = cur;			\
 			head[i] = TAILQ_NEXT(head[i], entry);	\
 		}						\
 	} while (0)
@@ -1061,15 +1061,15 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		RDE_FILTER_TEST_ATTRIB(
 		    (f->peer.groupid &&
 		     f->peer.groupid != peer->conf.groupid),
-		     f->skip[RDE_FILTER_SKIP_GROUPID].ptr);
+		     f->skip[RDE_FILTER_SKIP_GROUPID]);
 		RDE_FILTER_TEST_ATTRIB(
 		    (f->peer.remote_as &&
 		     f->peer.remote_as != peer->conf.remote_as),
-		     f->skip[RDE_FILTER_SKIP_REMOTE_AS].ptr);
+		     f->skip[RDE_FILTER_SKIP_REMOTE_AS]);
 		RDE_FILTER_TEST_ATTRIB(
 		    (f->peer.peerid &&
 		     f->peer.peerid != peer->conf.id),
-		     f->skip[RDE_FILTER_SKIP_PEERID].ptr);
+		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
 		if (rde_filter_match(f, peer, state, p)) {
 			if (state != NULL) {
