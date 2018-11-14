@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.193 2018/11/11 06:58:14 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.194 2018/11/14 17:24:14 mestre Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,7 +312,7 @@ SSL_new(SSL_CTX *ctx)
 	if (ctx->internal->tlsext_supportedgroups != NULL) {
 		s->internal->tlsext_supportedgroups =
 		    calloc(ctx->internal->tlsext_supportedgroups_length,
-			sizeof(ctx->internal->tlsext_supportedgroups));
+			sizeof(ctx->internal->tlsext_supportedgroups[0]));
 		if (s->internal->tlsext_supportedgroups == NULL)
 			goto err;
 		memcpy(s->internal->tlsext_supportedgroups,
