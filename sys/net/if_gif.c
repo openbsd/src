@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.122 2018/11/14 02:49:15 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.123 2018/11/14 03:20:03 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -791,6 +791,10 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 			return (-1);
 	}
 
+	m_adj(m, *offp); /* this is ours now */
+
+	ifp = &sc->sc_if;
+
 	switch (proto) {
 	case IPPROTO_IPV4: {
 		struct ip *ip;
@@ -842,10 +846,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	default:
 		return (-1);
 	}
-
-	m_adj(m, *offp);
-
-	ifp = &sc->sc_if;
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
