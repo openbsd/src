@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.137 2018/11/14 01:06:06 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.138 2018/11/14 01:27:00 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2987,7 +2987,9 @@ gre_keepalive_send(void *arg)
 	SipHash24_Final(gk->gk_digest, &ctx);
 
 	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
-	tos = IFQ_PRIO2TOS(sc->sc_if.if_llprio);
+
+	m->m_pkthdr.pf.prio = sc->sc_if.if_llprio;
+	tos = gre_l3_tos(&sc->sc_tunnel, m, IFQ_PRIO2TOS(m->m_pkthdr.pf.prio));
 
 	t.t_af = sc->sc_tunnel.t_af;
 	t.t_df = sc->sc_tunnel.t_df;
@@ -3028,8 +3030,6 @@ gre_keepalive_send(void *arg)
 	m = gre_encap(&sc->sc_tunnel, m, proto, ttl, tos);
 	if (m == NULL)
 		return;
-
-	m->m_pkthdr.pf.prio = sc->sc_if.if_llprio;
 
 	gre_ip_output(&sc->sc_tunnel, m);
 }
@@ -3899,14 +3899,13 @@ eoip_keepalive_send(void *arg)
 		}
 	}
 
+	m->m_pkthdr.pf.prio = ifp->if_llprio;
 	m->m_pkthdr.len = m->m_len = linkhdr;
 	m_adj(m, linkhdr);
 
-	m = eoip_encap(sc, m, IFQ_PRIO2TOS(ifp->if_llprio));
+	m = eoip_encap(sc, m, gre_l2_tos(&sc->sc_tunnel, m));
 	if (m == NULL)
 		return;
-
-	m->m_pkthdr.pf.prio = ifp->if_llprio;
 
 	gre_ip_output(&sc->sc_tunnel, m);
 
