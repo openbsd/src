@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.14 2018/11/15 21:24:48 jmc Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.15 2018/11/15 21:27:31 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -87,7 +87,7 @@ LEAF_ENTRY(fpu_emulate)
 	extru	arg0, 16, 2, r31
 
 	/*
-	 * theoreticaly we would need to determine the fpu instruction
+	 * theoretically we would need to determine the fpu instruction
 	 * exception type (there could be 4 of those, but stick w/
 	 * non-timex fpus for now)
 	 */
