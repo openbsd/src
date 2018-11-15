@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.21 2018/08/02 07:55:16 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.22 2018/11/15 10:38:53 kn Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,7 +38,7 @@ const struct cmd_entry cmd_display_panes_entry = {
 	.alias = "displayp",
 
 	.args = { "d:t:", 0, 1 },
-	.usage = "[-d duration] " CMD_TARGET_CLIENT_USAGE,
+	.usage = "[-d duration] " CMD_TARGET_CLIENT_USAGE " [template]",
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_display_panes_exec
