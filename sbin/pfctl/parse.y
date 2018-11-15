@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.687 2018/11/10 21:22:17 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.688 2018/11/15 03:22:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -307,7 +307,6 @@ struct scrub_opts {
 	int			nodf;
 	int			minttl;
 	int			maxmss;
-	int			settos;
 	int			randomid;
 	int			reassemble_tcp;
 } scrub_opts;
