@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1077 2018/10/16 22:49:41 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1078 2018/11/15 13:16:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1037,7 +1037,8 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 	if (pf_status.debug >= LOG_DEBUG) {
-		log(LOG_DEBUG, "pf: key search, if=%s: ", pd->kif->pfik_name);
+		log(LOG_DEBUG, "pf: key search, %s on %s: ",
+		    pd->dir == PF_OUT ? "out" : "in", pd->kif->pfik_name);
 		pf_print_state_parts(NULL, (struct pf_state_key *)key, NULL);
 		addlog("\n");
 	}
