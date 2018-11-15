@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.73 2018/11/15 23:01:18 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.74 2018/11/15 23:05:10 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -67,7 +67,13 @@ Point-to-point Ethernet tunnel interfaces.
 .It Nm nvgre
 Network Virtualization using Generic Routing Encapsulation
 (NVGRE) overlay Ethernet network interfaces.
+.It Nm eoip
+MikroTik Ethernet over IP tunnel interfaces.
 .El
+.Pp
+See
+.Xr eoip 4
+for information regarding MikroTik Ethernet over IP interfaces.
 .Pp
 All GRE packet processing in the system is allowed or denied by setting the
 .Va net.inet.gre.allow
@@ -609,6 +615,7 @@ See the
 .Nm egre
 section for an example.
 .Sh SEE ALSO
+.Xr eoip 4 ,
 .Xr inet 4 ,
 .Xr ip 4 ,
 .Xr netintro 4 ,
