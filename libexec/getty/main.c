@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2018/09/24 21:30:00 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2018/11/15 03:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -73,6 +73,7 @@ char	*portselector(void);
 
 char	defent[TABBUFSIZ];
 char	tabent[TABBUFSIZ];
+char	saveLO[FILENAME_MAX];
 
 char	*env[128];
 
@@ -169,10 +170,6 @@ main(int argc, char *argv[])
 
 	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
 
-	if (unveil("/usr/bin/login", "x") == -1) {
-		syslog(LOG_ERR, "%s: %m", tname);
-		exit(1);
-	}
 	if (unveil(_PATH_GETTYTAB, "r") == -1) {
 		syslog(LOG_ERR, "%s: %m", tname);
 		exit(1);
@@ -181,6 +178,24 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "%s: %m", tname);
 		exit(1);
 	}
+	if (unveil(_PATH_GETTY, "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+
+	gettable("default", defent);
+	gendefaults();
+	tname = "default";
+	if (argc > 1)
+		tname = argv[1];
+	gettable(tname, tabent);
+	if (LO == NULL)
+		LO = _PATH_LOGIN;
+	if (unveil(LO, "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	strlcpy(saveLO, LO, sizeof saveLO);
 
 	/*
 	 * The following is a work around for vhangup interactions
@@ -242,13 +257,13 @@ main(int argc, char *argv[])
 	}
 	omode = tmode;
 
-	gettable("default", defent);
-	gendefaults();
-	tname = "default";
-	if (argc > 1)
-		tname = argv[1];
 	for (;;) {
 		gettable(tname, tabent);
+		if (strcmp(LO, saveLO) != 0) {
+			/* re-exec to apply new unveil */
+			execv(_PATH_GETTY, argv);
+			exit(0);
+		}
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();

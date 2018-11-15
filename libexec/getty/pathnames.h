@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 2003/06/02 19:38:24 millert Exp $*/
+/*	$OpenBSD: pathnames.h,v 1.4 2018/11/15 03:04:10 deraadt Exp $*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,3 +35,4 @@
 
 #define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_LOGIN	"/usr/bin/login"
+#define	_PATH_GETTY	"/usr/libexec/getty"
