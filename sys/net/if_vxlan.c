@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.68 2018/08/17 01:53:31 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.69 2018/11/15 22:22:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,7 @@ struct vxlan_softc {
 	int64_t			 sc_vnetid;
 	uint16_t		 sc_df;
 	u_int8_t		 sc_ttl;
+	int			 sc_txhprio;
 
 	struct task		 sc_sendtask;
 
@@ -136,6 +137,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
+	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
 	sc->sc_df = htons(0);
 	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
@@ -506,6 +508,21 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
 		break;
 
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
+			; /* fall through */
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
 	case SIOCSVNETID:
 		if (sc->sc_vnetid == ifr->ifr_vnetid)
 			break;
@@ -756,7 +773,8 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_off = sc->sc_df;
 	ip->ip_p = IPPROTO_UDP;
-	ip->ip_tos = IPTOS_LOWDELAY;
+	ip->ip_tos = IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	    m->m_pkthdr.pf.prio : sc->sc_txhprio);
 	ip->ip_len = htons(m->m_pkthdr.len);
 
 	ip->ip_src = satosin(src)->sin_addr;
@@ -778,6 +796,7 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip6_hdr		*ip6;
 	struct in6_addr		*in6a;
+	uint32_t		 flow;
 
 	/*
 	 * Remove multicast and broadcast flags or encapsulated packet
@@ -789,8 +808,11 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	if (m == NULL)
 		return (NULL);
 
+	flow = (uint32_t)IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	    m->m_pkthdr.pf.prio : sc->sc_txhprio) << 20;
+
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow = 0;
+	ip6->ip6_flow = htonl(flow);
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_UDP;
