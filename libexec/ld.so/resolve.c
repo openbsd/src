@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.83 2018/10/22 01:59:08 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.84 2018/11/15 21:25:44 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,6 +42,16 @@
 typedef enum {
 	SUBST_UNKNOWN, SUBST_ORIGIN, SUBST_OSNAME, SUBST_OSREL, SUBST_PLATFORM
 } SUBST_TYPES;
+
+struct symlookup {
+	const char		*sl_name;
+	const elf_object_t	*sl_obj_out;
+	const Elf_Sym		*sl_sym_out;
+	const elf_object_t	*sl_weak_obj_out;
+	const Elf_Sym		*sl_weak_sym_out;
+	unsigned long		sl_elf_hash;
+	int			sl_flags;
+};
 
 elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
@@ -580,17 +590,15 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 }
 
 static int
-_dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
-    int flags, const Elf_Sym **this, const Elf_Sym **weak_sym,
-    elf_object_t **weak_object)
+_dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 {
-	const Elf_Sym	*symt = object->dyn.symtab;
-	const char	*strt = object->dyn.strtab;
+	const Elf_Sym	*symt = obj->dyn.symtab;
+	const char	*strt = obj->dyn.strtab;
 	long	si;
 	const char *symn;
 
-	for (si = object->buckets[hash % object->nbuckets];
-	    si != STN_UNDEF; si = object->chains[si]) {
+	for (si = obj->buckets[sl->sl_elf_hash % obj->nbuckets];
+	    si != STN_UNDEF; si = obj->chains[si]) {
 		const Elf_Sym *sym = symt + si;
 
 		if (sym->st_value == 0)
@@ -602,7 +610,7 @@ _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
 			continue;
 
 		symn = strt + sym->st_name;
-		if (sym != *this && _dl_strcmp(symn, name))
+		if (sym != sl->sl_sym_out && _dl_strcmp(symn, sl->sl_name))
 			continue;
 
 		/* allow this symbol if we are referring to a function
@@ -613,18 +621,19 @@ _dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
 		 * symbol, so this symbol is skipped.
 		 */
 		if (sym->st_shndx == SHN_UNDEF) {
-			if ((flags & SYM_PLT) || sym->st_value == 0 ||
+			if ((sl->sl_flags & SYM_PLT) || sym->st_value == 0 ||
 			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
 				continue;
 		}
 
 		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			*this = sym;
+			sl->sl_sym_out = sym;
+			sl->sl_obj_out = obj;
 			return 1;
 		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-			if (!*weak_sym) {
-				*weak_sym = sym;
-				*weak_object = object;
+			if (sl->sl_weak_sym_out == NULL) {
+				sl->sl_weak_sym_out = sym;
+				sl->sl_weak_obj_out = obj;
 			}
 		}
 	}
@@ -636,60 +645,44 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
     int flags, const Elf_Sym *ref_sym, elf_object_t *req_obj,
     const elf_object_t **pobj)
 {
-	const Elf_Sym *weak_sym = NULL;
-	unsigned long h = 0;
 	const char *p = name;
-	elf_object_t *object = NULL, *weak_object = NULL;
-	int found = 0;
 	struct dep_node *n, *m;
-
+	struct symlookup sl = {
+		.sl_name = name,
+		.sl_obj_out = NULL,
+		.sl_weak_obj_out = NULL,
+		.sl_weak_sym_out = NULL,
+		.sl_elf_hash = 0,
+		.sl_flags = flags,
+	};
 
 	while (*p) {
 		unsigned long g;
-		h = (h << 4) + *p++;
-		if ((g = h & 0xf0000000))
-			h ^= g >> 24;
-		h &= ~g;
+		sl.sl_elf_hash = (sl.sl_elf_hash << 4) + *p++;
+		if ((g = sl.sl_elf_hash & 0xf0000000))
+			sl.sl_elf_hash ^= g >> 24;
+		sl.sl_elf_hash &= ~g;
 	}
 
 	if (req_obj->dyn.symbolic)
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, this, &weak_sym,
-		    &weak_object)) {
-			object = req_obj;
-			found = 1;
+		if (_dl_find_symbol_obj(req_obj, &sl))
 			goto found;
-		}
 
 	if (flags & SYM_SEARCH_OBJ) {
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, this,
-		    &weak_sym, &weak_object)) {
-			object = req_obj;
-			found = 1;
-		}
+		_dl_find_symbol_obj(req_obj, &sl);
+		/* always just fallthrough to 'found' */
 	} else if (flags & SYM_DLSYM) {
-		if (_dl_find_symbol_obj(req_obj, name, h, flags, this,
-		    &weak_sym, &weak_object)) {
-			object = req_obj;
-			found = 1;
-		}
-		if (weak_object != NULL && found == 0) {
-			object=weak_object;
-			*this = weak_sym;
-			found = 1;
-		}
-		/* search dlopened obj and all children */
+		if (_dl_find_symbol_obj(req_obj, &sl))
+			goto found;
 
-		if (found == 0) {
-			TAILQ_FOREACH(n, &req_obj->load_object->grpsym_list,
-			    next_sib) {
-				if (_dl_find_symbol_obj(n->data, name, h,
-				    flags, this,
-				    &weak_sym, &weak_object)) {
-					object = n->data;
-					found = 1;
-					break;
-				}
-			}
+		/* weak definition in the specified object is good enough */
+		if (sl.sl_weak_obj_out != NULL)
+			goto found;
+
+		/* search dlopened obj and all children */
+		TAILQ_FOREACH(n, &req_obj->load_object->grpsym_list, next_sib) {
+			if (_dl_find_symbol_obj(n->data, &sl))
+				goto found;
 		}
 	} else {
 		int skip = 0;
@@ -718,25 +711,19 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 				if ((flags & SYM_SEARCH_OTHER) &&
 				    (m->data == req_obj))
 					continue;
-				if (_dl_find_symbol_obj(m->data, name, h, flags,
-				    this, &weak_sym, &weak_object)) {
-					object = m->data;
-					found = 1;
+				if (_dl_find_symbol_obj(m->data, &sl))
 					goto found;
-				}
 			}
 		}
 	}
 
 found:
-	if (weak_object != NULL && found == 0) {
-		object=weak_object;
-		*this = weak_sym;
-		found = 1;
-	}
-
-
-	if (found == 0) {
+	if (sl.sl_sym_out != NULL) {
+		*this = sl.sl_sym_out;
+	} else if (sl.sl_weak_obj_out != NULL) {
+		sl.sl_obj_out = sl.sl_weak_obj_out;
+		*this = sl.sl_weak_sym_out;
+	} else {
 		if ((ref_sym == NULL ||
 		    (ELF_ST_BIND(ref_sym->st_info) != STB_WEAK)) &&
 		    (flags & SYM_WARNNOTFOUND))
@@ -750,13 +737,14 @@ found:
 	    (ELF_ST_TYPE((*this)->st_info) != STT_FUNC) ) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch, relink your program\n",
-		    __progname, req_obj->load_name, object->load_name, name);
+		    __progname, req_obj->load_name, sl.sl_obj_out->load_name,
+		    name);
 	}
 
-	if (pobj)
-		*pobj = object;
+	if (pobj != NULL)
+		*pobj = sl.sl_obj_out;
 
-	return (object->obj_base);
+	return sl.sl_obj_out->obj_base;
 }
 
 void
