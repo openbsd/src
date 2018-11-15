@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.138 2018/11/14 01:27:00 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.139 2018/11/15 00:05:00 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2197,13 +2197,13 @@ gre_l2_tos(const struct gre_tunnel *t, const struct mbuf *m)
 }
 
 static uint8_t
-gre_l3_tos(const struct gre_tunnel *t, const struct mbuf *m, uint8_t ttl)
+gre_l3_tos(const struct gre_tunnel *t, const struct mbuf *m, uint8_t tos)
 {
 	uint8_t prio;
 
 	switch (t->t_txhprio) {
 	case IF_HDRPRIO_PAYLOAD:
-		return (ttl);
+		return (tos);
 	case IF_HDRPRIO_PACKET:
 		prio = m->m_pkthdr.pf.prio;
 		break;
