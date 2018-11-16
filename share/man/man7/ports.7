@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.122 2018/11/05 15:59:47 espie Exp $
+.\" $OpenBSD: ports.7,v 1.123 2018/11/16 09:54:40 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: November 5 2018 $
+.Dd $Mdocdate: November 16 2018 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -74,16 +74,6 @@ The ports master Makefile, normally located in
 below)
 offers a few useful targets.
 .Bl -tag -width configure
-.It Cm index
-rebuild the ports complete index,
-.Pa /usr/ports/INDEX
-.It Cm pkglocatedb
-build a
-.Xr pkg_mklocatedb 1
-database file and place it in
-.Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp ,
-for use by
-.Xr locate 1 ,
 .It Cm print-index
 display the contents of the index in a user-friendly way,
 .It Cm search
@@ -101,6 +91,15 @@ every port in the ports tree.
 This database can be searched using any tool able to manipulate such
 databases, for instance sqlitebrowser, or a script language with an
 sqlite interface, e.g., perl, python, ocaml, lua, php5.
+.Pp
+All static index generating information has now been superseded by the
+.Pa sqlports
+,
+.Pa portslist
+or
+.Pa pkglocatedb
+packages, which contain
+similar information to the old INDEX file, but are more frequently updated.
 .Sh SELECTING A SET OF PORTS
 One can define
 .Ev SUBDIRLIST
@@ -109,7 +108,7 @@ to point to a file that contains a list of
 one per line, to build stuff only in some directories.
 .Pp
 If
-.Pa /usr/ports/INDEX
+.Pa portslist
 is up to date, it is possible to select subsets by setting the following
 variables on the command line:
 .Bl -tag -width category
@@ -653,8 +652,10 @@ accordingly.
 The default ports directory.
 .It Pa /usr/ports/Makefile
 Ports master Makefile.
-.It Pa /usr/ports/INDEX
-Ports index.
+.It Pa /usr/local/share/ports-INDEX
+Ports index, part of the
+.Pa portlist
+package.
 .It Pa /usr/ports/pobj
 Build directories.
 A number of insecurely coded ports require a dedicated file system with the
