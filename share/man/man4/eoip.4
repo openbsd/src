@@ -1,4 +1,4 @@
-.\" $OpenBSD: eoip.4,v 1.2 2018/06/19 00:41:14 dlg Exp $
+.\" $OpenBSD: eoip.4,v 1.3 2018/11/16 01:21:12 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 19 2018 $
+.Dd $Mdocdate: November 16 2018 $
 .Dt EOIP 4
 .Os
 .Sh NAME
@@ -123,6 +123,15 @@ and disables fragmentation of IPv6 packets.
 .It Dv SIOCGLIFPHYDF Fa "struct ifreq *"
 Get whether the tunnel traffic sent by the interface can be fragmented
 or not.
+.It Dv SIOCSTXHPRIO Fa "struct ifreq *"
+Set the priority value used in the Type of Service field in IPv4
+headers, or the Traffic Class field in IPv6 headers.
+Values may be from 0 to 7, or
+.Dv IF_HDRPRIO_PACKET
+to specify that the current priority of a packet should be used.
+.It Dv SIOCGTXHPRIO Fa "struct ifreq *"
+Get the priority value used in the Type of Service field in IPv4
+headers, or the Traffic Class field in IPv6 headers.
 .It Dv SIOCSETKALIVE Fa "struct ifkalivereq *"
 Enable the transmission of keepalive packets to detect tunnel failure.
 Keepalives may only be configured while the interace is down.
