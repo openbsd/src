@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.50 2018/10/31 09:50:24 miko Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.51 2018/11/16 11:55:56 mpi Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -406,7 +406,9 @@ alloc_all_endpoints(struct umidi_softc *sc)
 				ep--;
 				free_pipe(ep);
 			}
-			free(sc->sc_endpoints, M_USBDEV, 0);
+			free(sc->sc_endpoints, M_USBDEV,
+			    (sc->sc_out_num_endpoints + sc->sc_in_num_endpoints)
+			    * sizeof(*sc->sc_endpoints));
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
@@ -422,8 +424,8 @@ free_all_endpoints(struct umidi_softc *sc)
 
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 	    free_pipe(&sc->sc_endpoints[i]);
-	if (sc->sc_endpoints != NULL)
-		free(sc->sc_endpoints, M_USBDEV, 0);
+	free(sc->sc_endpoints, M_USBDEV, (sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints) * sizeof(*sc->sc_endpoints));
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
@@ -440,7 +442,7 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 	sc->sc_out_num_endpoints = fp->num_out_ep;
 	sc->sc_in_num_endpoints = fp->num_in_ep;
 	sc->sc_endpoints = mallocarray(sc->sc_out_num_endpoints +
-	    sc->sc_in_num_endpoints, sizeof(*sc->sc_out_ep), M_USBDEV,
+	    sc->sc_in_num_endpoints, sizeof(*sc->sc_endpoints), M_USBDEV,
 	    M_WAITOK | M_CANFAIL);
 	if (!sc->sc_endpoints)
 		return USBD_NOMEM;
@@ -502,7 +504,8 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	return USBD_NORMAL_COMPLETION;
 error:
-	free(sc->sc_endpoints, M_USBDEV, 0);
+	free(sc->sc_endpoints, M_USBDEV, (sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints) * sizeof(*sc->sc_endpoints));
 	sc->sc_endpoints = NULL;
 	return USBD_INVAL;
 }
