@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.186 2018/09/07 04:26:56 dtucker Exp $ */
+/* $OpenBSD: sftp.c,v 1.187 2018/11/16 02:30:20 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -1268,7 +1268,7 @@ makeargv(const char *arg, int *argcp, int sloppy, char *lastquote,
 }
 
 static int
-parse_args(const char **cpp, int *ignore_errors, int *aflag,
+parse_args(const char **cpp, int *ignore_errors, int *disable_echo, int *aflag,
 	  int *fflag, int *hflag, int *iflag, int *lflag, int *pflag,
 	  int *rflag, int *sflag,
     unsigned long *n_arg, char **path1, char **path2)
@@ -1282,13 +1282,23 @@ parse_args(const char **cpp, int *ignore_errors, int *aflag,
 	/* Skip leading whitespace */
 	cp = cp + strspn(cp, WHITESPACE);
 
-	/* Check for leading '-' (disable error processing) */
+	/*
+	 * Check for leading '-' (disable error processing) and '@' (suppress
+	 * command echo)
+	 */
 	*ignore_errors = 0;
-	if (*cp == '-') {
-		*ignore_errors = 1;
-		cp++;
-		cp = cp + strspn(cp, WHITESPACE);
+	*disable_echo = 0;
+	for (;*cp != '\0'; cp++) {
+		if (*cp == '-') {
+			*ignore_errors = 1;
+		} else if (*cp == '@') {
+			*disable_echo = 1;
+		} else {
+			/* all other characters terminate prefix processing */
+			break;
+		}
 	}
+	cp = cp + strspn(cp, WHITESPACE);
 
 	/* Ignore blank lines and lines which begin with comment '#' char */
 	if (*cp == '\0' || *cp == '#')
@@ -1463,11 +1473,12 @@ parse_args(const char **cpp, int *ignore_errors, int *aflag,
 
 static int
 parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
-    const char *startdir, int err_abort)
+    const char *startdir, int err_abort, int echo_command)
 {
+	const char *ocmd = cmd;
 	char *path1, *path2, *tmp;
-	int ignore_errors = 0, aflag = 0, fflag = 0, hflag = 0,
-	iflag = 0;
+	int ignore_errors = 0, disable_echo = 1;
+	int aflag = 0, fflag = 0, hflag = 0, iflag = 0;
 	int lflag = 0, pflag = 0, rflag = 0, sflag = 0;
 	int cmdnum, i;
 	unsigned long n_arg = 0;
@@ -1477,10 +1488,14 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 	glob_t g;
 
 	path1 = path2 = NULL;
-	cmdnum = parse_args(&cmd, &ignore_errors, &aflag, &fflag, &hflag,
-	    &iflag, &lflag, &pflag, &rflag, &sflag, &n_arg, &path1, &path2);
+	cmdnum = parse_args(&cmd, &ignore_errors, &disable_echo, &aflag, &fflag,
+	    &hflag, &iflag, &lflag, &pflag, &rflag, &sflag, &n_arg,
+	    &path1, &path2);
 	if (ignore_errors != 0)
 		err_abort = 0;
+
+	if (echo_command && !disable_echo)
+		mprintf("sftp> %s\n", ocmd);
 
 	memset(&g, 0, sizeof(g));
 
@@ -2137,7 +2152,7 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 				mprintf("Changing to: %s\n", dir);
 			snprintf(cmd, sizeof cmd, "cd \"%s\"", dir);
 			if (parse_dispatch_command(conn, cmd,
-			    &remote_path, startdir, 1) != 0) {
+			    &remote_path, startdir, 1, 0) != 0) {
 				free(dir);
 				free(startdir);
 				free(remote_path);
@@ -2151,7 +2166,7 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 			    file2 == NULL ? "" : " ",
 			    file2 == NULL ? "" : file2);
 			err = parse_dispatch_command(conn, cmd,
-			    &remote_path, startdir, 1);
+			    &remote_path, startdir, 1, 0);
 			free(dir);
 			free(startdir);
 			free(remote_path);
@@ -2167,7 +2182,6 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 	interactive = !batchmode && isatty(STDIN_FILENO);
 	err = 0;
 	for (;;) {
-		char *cp;
 		const char *line;
 		int count = 0;
 
@@ -2180,12 +2194,6 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 				if (interactive)
 					printf("\n");
 				break;
-			}
-			if (!interactive) { /* Echo command */
-				mprintf("sftp> %s", cmd);
-				if (strlen(cmd) > 0 &&
-				    cmd[strlen(cmd) - 1] != '\n')
-					printf("\n");
 			}
 		} else {
 			if ((line = el_gets(el, &count)) == NULL ||
@@ -2200,16 +2208,14 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 			}
 		}
 
-		cp = strrchr(cmd, '\n');
-		if (cp)
-			*cp = '\0';
+		cmd[strcspn(cmd, "\n")] = '\0';
 
 		/* Handle user interrupts gracefully during commands */
 		interrupted = 0;
 		signal(SIGINT, cmd_interrupt);
 
 		err = parse_dispatch_command(conn, cmd, &remote_path,
-		    startdir, batchmode);
+		    startdir, batchmode, !interactive && el == NULL);
 		if (err != 0)
 			break;
 	}
