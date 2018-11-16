@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.352 2018/11/08 13:21:00 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.353 2018/11/16 20:55:23 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1808,18 +1808,16 @@ smtp_connected(struct smtp_session *s)
 		return;
 	}
 
-	if (s->listener->flags & F_SMTPS) {
-		smtp_tls_init(s);
-		return;
-	}
-
 	smtp_filter_phase(FILTER_CONNECTED, s, ss_to_text(&s->ss));
 }
 
 static void
 smtp_proceed_connected(struct smtp_session *s)
 {
-	smtp_send_banner(s);
+	if (s->listener->flags & F_SMTPS)
+		smtp_tls_init(s);
+	else
+		smtp_send_banner(s);
 }
 
 static void
