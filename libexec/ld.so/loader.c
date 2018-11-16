@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.174 2018/10/23 04:01:45 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.175 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -687,6 +687,17 @@ _dl_rtld(elf_object_t *object)
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	fails += _dl_md_reloc_got(object, !(_dl_bindnow ||
 	    object->obj_flags & DF_1_NOW));
+
+	/*
+	 * Handle GNU_RELRO
+	 */
+	if (object->relro_addr != 0 && object->relro_size != 0) {
+		Elf_Addr addr = object->relro_addr;
+
+		DL_DEB(("protect RELRO [0x%lx,0x%lx) in %s\n",
+		    addr, addr + object->relro_size, object->load_name));
+		_dl_mprotect((void *)addr, object->relro_size, PROT_READ);
+	}
 
 	/*
 	 * Look for W&X segments and make them read-only.

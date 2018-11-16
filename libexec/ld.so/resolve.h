@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.85 2018/10/23 04:01:45 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.86 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -197,8 +197,6 @@ elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
     const long obase);
 void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
-void	*_dl_protect_segment(elf_object_t *_object, Elf_Addr _addr,
-	    const char *_start_sym, const char *_end_sym, int _prot);
 
 elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);
@@ -230,7 +228,6 @@ Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 #define SYM_SEARCH_SELF		0x01
 #define SYM_SEARCH_OTHER	0x02
 #define SYM_SEARCH_NEXT		0x04
-#define SYM_SEARCH_OBJ		0x08
 /* warnnotfound */
 #define SYM_NOWARNNOTFOUND	0x00
 #define SYM_WARNNOTFOUND	0x10

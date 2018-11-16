@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.63 2018/11/12 02:33:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.64 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -293,9 +293,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[0] = (Elf_Addr)_dl_bind_secureplt;
 		pltgot[1] = (Elf_Addr)object;
 	}
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }

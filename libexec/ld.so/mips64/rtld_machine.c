@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.28 2018/01/18 08:17:39 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.29 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -253,9 +253,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		symp++;
 	}
 	object->status |= STAT_GOT_DONE;
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (0);
 }
