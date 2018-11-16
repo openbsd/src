@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.323 2018/11/16 08:44:28 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.324 2018/11/16 12:25:29 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1830,8 +1830,8 @@ device will try to establish a data connection with the service provider.
 .Nm ifconfig
 .Ar vlan-interface
 .Op Oo Fl Oc Ns Cm parent Ar parent-interface
-.Op Oo Fl Oc Ns Cm vnetid Ar vlan-tag
 .Op Cm txprio Ar prio
+.Op Oo Fl Oc Ns Cm vnetid Ar vlan-tag
 .Ek
 .nr nS 0
 .Pp
@@ -1858,6 +1858,12 @@ it will inherit a copy of the parent interface's Ethernet address.
 .It Cm -parent
 Disassociate from the parent interface.
 This breaks the link between the VLAN interface and its parent.
+.It Cm txprio Ar prio
+Set the value used for the priority field in the 802.1Q or 802.1ad
+headers.
+Values may be from 0 to 7, or
+.Ar packet
+to use the priority of packets transmitted on the interface.
 .It Cm vnetid Ar vlan-tag
 Set the VLAN tag value to
 .Ar vlan-tag .
@@ -1872,12 +1878,6 @@ Valid tag values are from 1 to 4094 inclusive.
 Clear the tag value.
 Packets on a VLAN interface without a tag set will use a value of
 0 in their headers.
-.It Cm txprio Ar prio
-Set the value used for the priority field in the 802.1Q or 802.1ad
-headers.
-Values may be from 0 to 7, or
-.Ar packet
-to use the priority of packets transmitted on the interface.
 .El
 .Sh EXAMPLES
 Assign the
