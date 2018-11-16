@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.178 2018/07/11 14:20:18 sf Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.179 2018/11/16 08:43:08 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -173,6 +173,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 		ifv->ifv_type = ETHERTYPE_VLAN;
 
 	refcnt_init(&ifv->ifv_refcnt);
+	ifv->ifv_prio = IF_HDRPRIO_PACKET;
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
@@ -245,6 +246,7 @@ vlan_start(struct ifqueue *ifq)
 	struct ifvlan   *ifv;
 	struct ifnet	*ifp0;
 	struct mbuf	*m;
+	int		 txprio;
 	uint8_t		 prio;
 
 	ifv = ifp->if_softc;
@@ -255,14 +257,16 @@ vlan_start(struct ifqueue *ifq)
 		goto leave;
 	}
 
+	txprio = ifv->ifv_prio;
+
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
-		prio = ISSET(ifp->if_flags, IFF_LINK0) ?
-		    ifp->if_llprio : m->m_pkthdr.pf.prio;
+		prio = (txprio == IF_HDRPRIO_PACKET) ?
+		    m->m_pkthdr.pf.prio : txprio;
 
 		/* IEEE 802.1p has prio 0 and 1 swapped */
 		if (prio <= 1)
@@ -712,6 +716,21 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGETVLAN:
 		error = vlan_get_compat(ifp, ifr);
+		break;
+
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
+			;
+		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
+		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
+			error = EINVAL;
+			break;
+		}
+
+		ifv->ifv_prio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = ifv->ifv_prio;
 		break;
 
 	default:
