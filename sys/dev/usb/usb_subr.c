@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.140 2018/11/14 17:00:33 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.141 2018/11/16 11:56:42 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -648,7 +648,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ifaces, M_USB, 0);
+		free(dev->ifaces, M_USB, nifc * sizeof(*dev->ifaces));
 		free(dev->cdesc, M_USB, UGETW(dev->cdesc->wTotalLength));
 		dev->ifaces = NULL;
 		dev->cdesc = NULL;
@@ -775,8 +775,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
-	dev->ifaces = mallocarray(nifc, sizeof(struct usbd_interface),
-	    M_USB, M_NOWAIT | M_ZERO);
+	dev->ifaces = mallocarray(nifc, sizeof(*dev->ifaces), M_USB,
+	    M_NOWAIT | M_ZERO);
 	if (dev->ifaces == NULL) {
 		err = USBD_NOMEM;
 		goto bad;
@@ -1406,7 +1406,7 @@ usb_free_device(struct usbd_device *dev)
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ifaces, M_USB, 0);
+		free(dev->ifaces, M_USB, nifc * sizeof(*dev->ifaces));
 	}
 	if (dev->cdesc != NULL)
 		free(dev->cdesc, M_USB, UGETW(dev->cdesc->wTotalLength));
