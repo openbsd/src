@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.49 2018/07/05 10:57:31 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.50 2018/11/16 02:16:17 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -32,8 +32,6 @@
 #include "fuse_private.h"
 #include "debug.h"
 
-static volatile sig_atomic_t sigraised = 0;
-static volatile sig_atomic_t signum = 0;
 static struct fuse_context *ictx = NULL;
 
 enum {
@@ -116,20 +114,9 @@ static struct fuse_opt fuse_mount_opts[] = {
 };
 
 static void
-ifuse_sighdlr(int num)
-{
-	if (!sigraised || (num == SIGCHLD)) {
-		sigraised = 1;
-		signum = num;
-	}
-}
-
-static void
 ifuse_try_unmount(struct fuse *f)
 {
 	pid_t child;
-
-	signal(SIGCHLD, ifuse_sighdlr);
 
 	/* unmount in another thread so fuse_loop() doesn't deadlock */
 	child = fork();
@@ -152,7 +139,6 @@ ifuse_child_exit(const struct fuse *f)
 {
 	int status;
 
-	signal(SIGCHLD, SIG_DFL);
 	if (waitpid(WAIT_ANY, &status, WNOHANG) == -1)
 		fprintf(stderr, "fuse: %s\n", strerror(errno));
 
@@ -160,7 +146,6 @@ ifuse_child_exit(const struct fuse *f)
 		fprintf(stderr, "fuse: %s: %s\n",
 			f->fc->dir, strerror(WEXITSTATUS(status)));
 
-	sigraised = 0;
 	return;
 }
 
@@ -170,6 +155,7 @@ fuse_loop(struct fuse *fuse)
 	struct fusebuf fbuf;
 	struct fuse_context ctx;
 	struct fb_ioctl_xch ioexch;
+	struct kevent event[5];
 	struct kevent ev;
 	ssize_t n;
 	int ret;
@@ -181,28 +167,39 @@ fuse_loop(struct fuse *fuse)
 	if (fuse->fc->kq == -1)
 		return (-1);
 
-	EV_SET(&fuse->fc->event, fuse->fc->fd, EVFILT_READ, EV_ADD |
+	EV_SET(&event[0], fuse->fc->fd, EVFILT_READ, EV_ADD |
+	    EV_ENABLE, 0, 0, 0);
+
+	/* signal events */
+	EV_SET(&event[1], SIGCHLD, EVFILT_SIGNAL, EV_ADD |
+	    EV_ENABLE, 0, 0, 0);
+	EV_SET(&event[2], SIGHUP, EVFILT_SIGNAL, EV_ADD |
+	    EV_ENABLE, 0, 0, 0);
+	EV_SET(&event[3], SIGINT, EVFILT_SIGNAL, EV_ADD |
+	    EV_ENABLE, 0, 0, 0);
+	EV_SET(&event[4], SIGTERM, EVFILT_SIGNAL, EV_ADD |
 	    EV_ENABLE, 0, 0, 0);
 
 	while (!fuse->fc->dead) {
-		ret = kevent(fuse->fc->kq, &fuse->fc->event, 1, &ev, 1, NULL);
+		ret = kevent(fuse->fc->kq, &event[0], 5, &ev, 1, NULL);
 		if (ret == -1) {
-			if (errno == EINTR) {
-				switch (signum) {
-				case SIGCHLD:
-					ifuse_child_exit(fuse);
-					break;
-				case SIGHUP:
-				case SIGINT:
-				case SIGTERM:
-					ifuse_try_unmount(fuse);
-					break;
-				default:
-					fprintf(stderr, "%s: %s\n", __func__,
-					    strsignal(signum));
-				}
-			} else
+			if (errno != EINTR)
 				DPERROR(__func__);
+		} else if (ret > 0 && ev.filter == EVFILT_SIGNAL) {
+			int signum = ev.ident;
+			switch (signum) {
+			case SIGCHLD:
+				ifuse_child_exit(fuse);
+				break;
+			case SIGHUP:
+			case SIGINT:
+			case SIGTERM:
+				ifuse_try_unmount(fuse);
+				break;
+			default:
+				fprintf(stderr, "%s: %s\n", __func__,
+					strsignal(signum));
+			}
 		} else if (ret > 0) {
 			n = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
 			if (n != sizeof(fbuf)) {
@@ -479,20 +476,24 @@ fuse_remove_signal_handlers(unused struct fuse_session *se)
 	struct sigaction old_sa;
 
 	if (sigaction(SIGHUP, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == ifuse_sighdlr)
+		if (old_sa.sa_handler == SIG_IGN)
 			signal(SIGHUP, SIG_DFL);
 
 	if (sigaction(SIGINT, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == ifuse_sighdlr)
+		if (old_sa.sa_handler == SIG_IGN)
 			signal(SIGINT, SIG_DFL);
 
 	if (sigaction(SIGTERM, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == ifuse_sighdlr)
+		if (old_sa.sa_handler == SIG_IGN)
 			signal(SIGTERM, SIG_DFL);
 
 	if (sigaction(SIGPIPE, NULL, &old_sa) == 0)
 		if (old_sa.sa_handler == SIG_IGN)
 			signal(SIGPIPE, SIG_DFL);
+
+	if (sigaction(SIGCHLD, NULL, &old_sa) == 0)
+		if (old_sa.sa_handler == SIG_IGN)
+			signal(SIGCHLD, SIG_DFL);
 }
 DEF(fuse_remove_signal_handlers);
 
@@ -504,22 +505,27 @@ fuse_set_signal_handlers(unused struct fuse_session *se)
 	if (sigaction(SIGHUP, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGHUP, ifuse_sighdlr);
+		signal(SIGHUP, SIG_IGN);
 
 	if (sigaction(SIGINT, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGINT, ifuse_sighdlr);
+		signal(SIGINT, SIG_IGN);
 
 	if (sigaction(SIGTERM, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGTERM, ifuse_sighdlr);
+		signal(SIGTERM, SIG_IGN);
 
 	if (sigaction(SIGPIPE, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
 		signal(SIGPIPE, SIG_IGN);
+
+	if (sigaction(SIGCHLD, NULL, &old_sa) == -1)
+		return (-1);
+	if (old_sa.sa_handler == SIG_DFL)
+		signal(SIGCHLD, SIG_IGN);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.21 2018/06/19 13:01:34 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.22 2018/11/16 02:16:17 tedu Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -69,7 +69,6 @@ struct fuse_chan {
 
 	/* kqueue stuff */
 	int kq;
-	struct kevent event;
 };
 
 struct fuse_config {
