@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.93 2018/09/29 14:13:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.94 2018/11/16 06:41:58 nicm Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -142,11 +142,18 @@ main(int argc, char *argv[])
 	char **wp;
 	struct env env;
 	pid_t ppid;
+	int rv;
 
 	kshname = argv[0];
 
-	if (pledge("stdio rpath wpath cpath fattr flock getpw proc exec tty",
-	    NULL) == -1) {
+	if (issetugid()) { /* could later drop privileges */
+		rv = pledge("stdio rpath wpath cpath fattr flock getpw proc "
+		    "exec tty id", NULL);
+	} else {
+		rv = pledge("stdio rpath wpath cpath fattr flock getpw proc "
+		    "exec tty", NULL);
+	}
+	if (rv == -1) {
 		perror("pledge");
 		exit(1);
 	}
