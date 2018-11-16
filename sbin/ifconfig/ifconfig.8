@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.321 2018/11/16 00:58:17 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.322 2018/11/16 01:10:51 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1657,6 +1657,7 @@ for a complete list of the available protocols.
 .Op Oo Fl Oc Ns Cm tunneldf
 .Op Oo Fl Oc Ns Cm tunneldomain Ar rtable
 .Op Cm tunnelttl Ar ttl
+.Op Cm txprio Ar prio
 .Op Oo Fl Oc Ns Cm vnetflowid
 .Op Oo Fl Oc Ns Cm vnetid Ar network-id
 .Ek
@@ -1725,6 +1726,16 @@ the value can also be set to
 .Ar copy
 to have the TTL copied between the encapsulated protocol headers
 and the tunnel protocol headers.
+.It Cm txprio Ar prio
+Configure the value used for the priority field in the tunnel
+protocol headers.
+The value can be a priority number from 0 to 7, or
+.Ar packet
+to use the priority currently set on the packet.
+If supported by the interface, the value can also be set to
+.Ar payload
+to have the priority field copied from the encapsulated protocol headers
+to the tunnel protocol headers.
 .It Cm vnetflowid
 Use a portion of the virtual network identifier space for a flow identifier.
 This allows load balancing of the encapsulated traffic over multiple
