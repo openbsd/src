@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.501 2018/11/16 09:18:04 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.502 2018/11/16 09:49:15 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -219,9 +219,6 @@ creates the ${WRKBUILD} directory (see
 .Ev SEPARATE_BUILD ) ,
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
-.It Cm describe
-Prints a one-line index entry of the port, suitable for
-.Pa ${PORTSDIR}/INDEX .
 .It Cm distclean
 Shorthand for
 .Ql make clean=dist .
@@ -3965,6 +3962,15 @@ target.
 .It Cm depends-list
 Renamed into
 .Cm full-build-depends .
+.It Cm describe
+Prints a one-line index entry of the port.
+.Cm dump-vars
+provides much more accurate information, and the indexing role
+has been taken over by the
+.Pa sqlports
+and
+.Pa portslist
+packages.
 .It Cm {build,run,lib}-depends
 The dependency mechanism now meshes
 .Ev BUILD_DEPENDS , LIB_DEPENDS , RUN_DEPENDS, WANTLIB
