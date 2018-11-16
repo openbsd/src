@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1867 2018/11/11 22:31:16 fcambus Exp 
+ *	OpenBSD: pcidevs,v 1.1868 2018/11/16 18:20:33 jcs Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17932,7 +17932,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "100 Series SMBus",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_SPI,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_SPI_1,
 	    "100 Series SPI",
 	},
 	{
@@ -17942,6 +17942,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_UART_2,
 	    "100 Series UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_SPI_2,
+	    "100 Series SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_SPI_3,
+	    "100 Series SPI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_XHCI,
