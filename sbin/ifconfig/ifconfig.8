@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.320 2018/11/10 18:14:47 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.321 2018/11/16 00:58:17 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 10 2018 $
+.Dd $Mdocdate: November 16 2018 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -160,13 +160,17 @@ At least the following devices can be created on demand:
 .Pp
 .Xr bridge 4 ,
 .Xr carp 4 ,
+.Xr egre 4 ,
 .Xr enc 4 ,
+.Xr eoip 4 ,
 .Xr etherip 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
 .Xr lo 4 ,
+.Xr mgre 4 ,
 .Xr mpe 4 ,
 .Xr mpw 4 ,
+.Xr nvgre 4 ,
 .Xr pair 4 ,
 .Xr pflog 4 ,
 .Xr pflow 4 ,
@@ -1658,9 +1662,13 @@ for a complete list of the available protocols.
 .Ek
 .nr nS 0
 .Pp
+.Xr egre 4 ,
+.Xr eoip 4 ,
 .Xr etherip 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
+.Xr mgre 4 ,
+.Xr nvgre 4 ,
 and
 .Xr vxlan 4
 are all tunnel interfaces.
@@ -1726,10 +1734,14 @@ Disable the use of a flow identifier in the virtual network identifier.
 .It Cm vnetid Ar network-id
 Set the virtual network identifier.
 This is a number which is used by tunnel protocols such as
+.Xr eoip 4
+and
 .Xr vxlan 4
 to identify packets with a virtual network.
 The accepted size of the number depends on the individual tunnel protocol;
-it is a 24-bit number for
+it is a 16-bit number for
+.Xr eoip 4 ,
+and a 24-bit number for
 .Xr vxlan 4 .
 If supported by the tunnel protocol,
 the value can also be set to
