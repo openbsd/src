@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.10 2018/11/14 02:27:15 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.11 2018/11/16 02:41:16 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -153,6 +153,12 @@ const struct ssl_sigalg sigalgs[] = {
 		.pkey_idx = SSL_PKEY_ECC,
 	},
 	{
+		.value = SIGALG_RSA_PKCS1_MD5_SHA1,
+		.key_type = EVP_PKEY_RSA,
+		.pkey_idx = SSL_PKEY_RSA_SIGN,
+		.md = EVP_md5_sha1,
+	},
+	{
 		.value = SIGALG_NONE,
 	},
 };
@@ -209,7 +215,6 @@ ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
 int
 ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 {
-	const struct ssl_sigalg *sap;
 	size_t i;
 
 	for (i = 0; sigalgs[i].value != SIGALG_NONE; i++);
@@ -220,7 +225,11 @@ ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 
 	/* Add values in order as long as they are supported. */
 	for (i = 0; i < len; i++) {
-		if ((sap = ssl_sigalg_lookup(values[i])) != NULL) {
+		/* Do not allow the legacy value for < 1.2 to be used */
+		if (values[i] == SIGALG_RSA_PKCS1_MD5_SHA1)
+			return 0;
+
+		if (ssl_sigalg_lookup(values[i]) != NULL) {
 			if (!CBB_add_u16(cbb, values[i]))
 				return 0;
 		} else

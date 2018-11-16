@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.7 2018/11/11 21:54:47 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.8 2018/11/16 02:41:16 beck Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -54,6 +54,9 @@ __BEGIN_HIDDEN_DECLS
 #define SIGALG_GOSTR12_512_STREEBOG_512	0xEFEF
 #define SIGALG_GOSTR12_256_STREEBOG_256	0xEEEE
 #define SIGALG_GOSTR01_GOST94		0xEDED
+
+/* Legacy sigalg for < 1.2 same value as boring uses*/
+#define SIGALG_RSA_PKCS1_MD5_SHA1	0xFF01
 
 #define SIGALG_FLAG_RSA_PSS	0x00000001
 

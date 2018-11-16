@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.44 2018/11/11 21:54:47 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.45 2018/11/16 02:41:16 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1533,7 +1533,7 @@ ssl3_get_server_key_exchange(SSL *s)
 				goto f_err;
 			}
 		} else if (pkey->type == EVP_PKEY_RSA) {
-			sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+			sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
 		} else if (pkey->type == EVP_PKEY_EC) {
 			sigalg = ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
 		} else {
