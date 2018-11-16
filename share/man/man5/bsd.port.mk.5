@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.502 2018/11/16 09:49:15 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.503 2018/11/16 10:06:11 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1583,6 +1583,14 @@ Annotations for the Distributed Ports Builder.
 See
 .Xr dpb 1
 for semantics.
+.It Ev DUMMY_PACKAGE
+If defined,
+.Nm
+will provide dummy values for variables mandatory for a minimally functional
+port.
+Used by various pieces of the ports tree to perform introspection and get to
+.Nm Ns 's
+variables.
 .It Ev ECHO_MSG
 User settings.
 Used to display
