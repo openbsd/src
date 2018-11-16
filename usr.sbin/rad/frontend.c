@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.16 2018/08/15 16:48:20 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.17 2018/11/16 19:45:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -647,13 +647,13 @@ leave_all_routers_mcast_group(struct ra_iface *ra_iface)
 {
 	log_debug("leaving multicast group on %s", ra_iface->name);
 	all_routers.ipv6mr_interface = ra_iface->if_index;
-	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-	    &all_routers, sizeof(all_routers)) == -1)
-		fatal("IPV6_LEAVE_GROUP(%s)", ra_iface->name);
+	setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
+	    &all_routers, sizeof(all_routers));
 }
 
 struct ra_iface*
-find_ra_iface_by_id(uint32_t if_index) {
+find_ra_iface_by_id(uint32_t if_index)
+{
 	struct ra_iface	*ra_iface;
 
 	TAILQ_FOREACH(ra_iface, &ra_interfaces, entry) {
