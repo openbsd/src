@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.84 2018/11/15 21:25:44 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.85 2018/11/16 05:05:44 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -590,52 +590,68 @@ _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 }
 
 static int
+matched_symbol(elf_object_t *obj, const Elf_Sym *sym, struct symlookup *sl)
+{
+	switch (ELF_ST_TYPE(sym->st_info)) {
+	case STT_FUNC:
+		/*
+		 * Allow this symbol if we are referring to a function which
+		 * has a value, even if section is UNDEF.  This allows &func
+		 * to refer to PLT as per the ELF spec.  If flags has SYM_PLT
+		 * set, we must have actual symbol, so this symbol is skipped.
+		 */
+		if ((sl->sl_flags & SYM_PLT) && sym->st_shndx == SHN_UNDEF)
+			return 0;
+		if (sym->st_value == 0)
+			return 0;
+		break;
+	case STT_NOTYPE:
+	case STT_OBJECT:
+		if (sym->st_value == 0)
+			return 0;
+#if 0
+		/* FALLTHROUGH */
+	case STT_TLS:
+#endif
+		if (sym->st_shndx == SHN_UNDEF)
+			return 0;
+		break;
+	default:
+		return 0;
+	}
+
+	if (sym != sl->sl_sym_out &&
+	    _dl_strcmp(sl->sl_name, obj->dyn.strtab + sym->st_name))
+		return 0;
+
+	if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+		sl->sl_sym_out = sym;
+		sl->sl_obj_out = obj;
+		return 1;
+	} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+		if (sl->sl_weak_sym_out == NULL) {
+			sl->sl_weak_sym_out = sym;
+			sl->sl_weak_obj_out = obj;
+		}
+		/* done with this object, but need to check other objects */
+		return -1;
+	}
+	return 0;
+}
+
+static int
 _dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 {
 	const Elf_Sym	*symt = obj->dyn.symtab;
-	const char	*strt = obj->dyn.strtab;
 	long	si;
-	const char *symn;
 
 	for (si = obj->buckets[sl->sl_elf_hash % obj->nbuckets];
 	    si != STN_UNDEF; si = obj->chains[si]) {
 		const Elf_Sym *sym = symt + si;
 
-		if (sym->st_value == 0)
-			continue;
-
-		if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
-		    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
-		    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-			continue;
-
-		symn = strt + sym->st_name;
-		if (sym != sl->sl_sym_out && _dl_strcmp(symn, sl->sl_name))
-			continue;
-
-		/* allow this symbol if we are referring to a function
-		 * which has a value, even if section is UNDEF.
-		 * this allows &func to refer to PLT as per the
-		 * ELF spec. st_value is checked above.
-		 * if flags has SYM_PLT set, we must have actual
-		 * symbol, so this symbol is skipped.
-		 */
-		if (sym->st_shndx == SHN_UNDEF) {
-			if ((sl->sl_flags & SYM_PLT) || sym->st_value == 0 ||
-			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-				continue;
-		}
-
-		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			sl->sl_sym_out = sym;
-			sl->sl_obj_out = obj;
-			return 1;
-		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-			if (sl->sl_weak_sym_out == NULL) {
-				sl->sl_weak_sym_out = sym;
-				sl->sl_weak_obj_out = obj;
-			}
-		}
+		int r = matched_symbol(obj, sym, sl);
+		if (r)
+			return r > 0;
 	}
 	return 0;
 }
