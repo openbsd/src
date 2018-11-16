@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.5 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: sximmc.c,v 1.6 2018/11/16 20:11:52 patrick Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -298,7 +298,8 @@ sximmc_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "allwinner,sun5i-a13-mmc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-mmc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-mmc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-mmc"));
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-emmc"));
 }
 
 int
@@ -306,7 +307,8 @@ sximmc_idma_setup(struct sximmc_softc *sc)
 {
 	int error;
 
-	if (OF_is_compatible(sc->sc_node, "allwinner,sun4i-a10-mmc")) {
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun4i-a10-mmc") ||
+	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-a64-emmc")) {
 		sc->sc_idma_xferlen = 0x2000;
 	} else {
 		sc->sc_idma_xferlen = 0x10000;
