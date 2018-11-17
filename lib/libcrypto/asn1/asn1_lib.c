@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.43 2018/11/02 05:30:41 tb Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.44 2018/11/17 09:34:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 		goto err;
 	ret = (*p & V_ASN1_CONSTRUCTED);
 	xclass = (*p & V_ASN1_PRIVATE);
-	i= *p & V_ASN1_PRIMITIVE_TAG;
+	i = *p & V_ASN1_PRIMITIVE_TAG;
 	if (i == V_ASN1_PRIMITIVE_TAG) {		/* high-tag */
 		p++;
 		if (--max == 0)
@@ -156,7 +156,7 @@ err:
 static int
 asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 {
-	const unsigned char *p= *pp;
+	const unsigned char *p = *pp;
 	unsigned long ret = 0;
 	unsigned int i;
 
@@ -168,7 +168,7 @@ asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 		p++;
 	} else {
 		*inf = 0;
-		i= *p & 0x7f;
+		i = *p & 0x7f;
 		if (*(p++) & 0x80) {
 			if (max < (int)i)
 				return (0);
@@ -199,7 +199,7 @@ void
 ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
     int xclass)
 {
-	unsigned char *p= *pp;
+	unsigned char *p = *pp;
 	int i, ttag;
 
 	i = (constructed) ? V_ASN1_CONSTRUCTED : 0;
@@ -240,7 +240,7 @@ ASN1_put_eoc(unsigned char **pp)
 static void
 asn1_put_length(unsigned char **pp, int length)
 {
-	unsigned char *p= *pp;
+	unsigned char *p = *pp;
 
 	int i, l;
 	if (length <= 127)
@@ -338,7 +338,7 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	if (data != NULL) {
 		memmove(str->data, data, len);
 	}
-	str->data[str->length]='\0';
+	str->data[str->length] = '\0';
 	return (1);
 }
 
