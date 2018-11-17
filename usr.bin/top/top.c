@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.96 2018/11/02 12:46:10 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.97 2018/11/17 23:10:08 cheloha Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -68,6 +68,9 @@ static void	reset_display(void);
 int		rundisplay(void);
 
 static int	max_topn;	/* maximum displayable processes */
+
+extern int ncpu;
+extern int ncpuonline;
 
 extern int	(*proc_compares[])(const void *, const void *);
 int order_index;
@@ -286,7 +289,7 @@ parseargs(int ac, char **av)
 		}
 	}
 
-	i = getncpu();
+	i = getncpuonline();
 	if (i == -1)
 		err(1, NULL);
 
@@ -317,7 +320,7 @@ main(int argc, char *argv[])
 	char *uname_field = "USERNAME", *header_text, *env_top;
 	const char *(*get_userid)(uid_t, int) = user_from_uid;
 	char **preset_argv = NULL, **av = argv;
-	int preset_argc = 0, ac = argc, active_procs, i;
+	int preset_argc = 0, ac = argc, active_procs, i, ncpuonline_now;
 	sigset_t mask, oldmask;
 	time_t curr_time;
 	caddr_t processes;
@@ -485,6 +488,21 @@ restart:
 		/* get the current stats */
 		get_system_info(&system_info);
 
+		/*
+		 * don't display stats for offline CPUs: resize if we're
+		 * interactive and CPUs have toggled on or offline
+		 */
+		if (interactive && !combine_cpus) {
+			for (i = ncpuonline_now = 0; i < ncpu; i++)
+				if (system_info.cpuonline[i])
+					ncpuonline_now++;
+			if (ncpuonline_now != ncpuonline) {
+				max_topn = display_resize();
+				reset_display();
+				continue;
+			}
+		}
+
 		/* get the current set of processes */
 		processes = get_process_info(&system_info, &ps,
 		    proc_compares[order_index]);
@@ -502,7 +520,7 @@ restart:
 		    ps.threads);
 
 		/* display the cpu state percentage breakdown */
-		i_cpustates(system_info.cpustates);
+		i_cpustates(system_info.cpustates, system_info.cpuonline);
 
 		/* display memory stats */
 		i_memory(system_info.memory);

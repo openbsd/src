@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.244 2018/11/06 07:49:38 otto Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.245 2018/11/17 23:10:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -854,6 +854,9 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			return (0);
 		if (miblen == 3 &&			/* kern.cptime2 */
 		    mib[0] == CTL_KERN && mib[1] == KERN_CPTIME2)
+			return (0);
+		if (miblen == 3 &&			/* kern.cpustats */
+		    mib[0] == CTL_KERN && mib[1] == KERN_CPUSTATS)
 			return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.179 2018/07/12 01:23:38 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.180 2018/11/17 23:10:08 cheloha Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -185,7 +185,8 @@ struct ctlname {
 #define	KERN_CONSBUFSIZE	82	/* int: console message buffer size */
 #define	KERN_CONSBUF		83	/* console message buffer */
 #define	KERN_AUDIO		84	/* struct: audio properties */
-#define	KERN_MAXID		85	/* number of valid kern ids */
+#define	KERN_CPUSTATS		85	/* struct: cpu statistics */
+#define	KERN_MAXID		86	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -273,6 +274,7 @@ struct ctlname {
 	{ "gap", 0 }, \
 	{ "gap", 0 }, \
 	{ "audio", CTLTYPE_STRUCT }, \
+	{ "cpustats", CTLTYPE_STRUCT }, \
 }
 
 /*

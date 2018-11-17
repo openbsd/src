@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.24 2018/10/05 18:56:57 cheloha Exp $	 */
+/* $OpenBSD: machine.h,v 1.25 2018/11/17 23:10:08 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -56,6 +56,7 @@ struct system_info {
 					 * "active" */
 	int            *procstates;
 	int64_t        *cpustates;
+	int            *cpuonline;
 	int            *memory;
 };
 
@@ -95,4 +96,5 @@ extern uid_t    proc_owner(pid_t);
 extern struct kinfo_proc	*getprocs(int, int, int *);
 
 int		getncpu(void);
+int		getncpuonline(void);
 int		getfscale(void);

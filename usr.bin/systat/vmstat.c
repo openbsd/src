@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.88 2018/10/05 18:56:57 cheloha Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.89 2018/11/17 23:10:08 cheloha Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -60,13 +60,15 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static struct Info {
-	long	time[CPUSTATES];
+	struct	cpustats cpustats;
 	struct	uvmexp uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
 	uint64_t *intrcnt;
 } s, s1, s2, s3, z;
+
+static int ncpu;
 
 extern struct _disk	cur;
 
@@ -171,6 +173,12 @@ initvmstat(void)
 	hertz = stathz;
 	if (!dkinit(1))
 		return(0);
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
+		return (-1);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_INTRCNT;
@@ -337,8 +345,8 @@ showkre(void)
 	}
 	etime = 0;
 	for (i = 0; i < CPUSTATES; i++) {
-		X(time);
-		etime += s.time[i];
+		X(cpustats.cs_time);
+		etime += s.cpustats.cs_time[i];
 	}
 	if (etime < 5.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
@@ -497,11 +505,11 @@ cputime(int indx)
 	int i;
 
 	tm = 0;
-	for (i = 0; i < CPUSTATES; i++)
-		tm += s.time[i];
+	for (i = 0; i < nitems(s.cpustats.cs_time); i++)
+		tm += s.cpustats.cs_time[i];
 	if (tm == 0.0)
 		tm = 1.0;
-	return (s.time[indx] * 100.0 / tm);
+	return (s.cpustats.cs_time[indx] * 100.0 / tm);
 }
 
 void
@@ -592,11 +600,12 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 static void
 getinfo(struct Info *si)
 {
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
+	static int cpustats_mib[3] = { CTL_KERN, KERN_CPUSTATS, 0 };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
 	static int uvmexp_mib[2] = { CTL_VM, VM_UVMEXP };
 	static int vmtotal_mib[2] = { CTL_VM, VM_METER };
-	int mib[4], i;
+	struct cpustats cs;
+	int mib[4], i, j;
 	size_t size;
 
 	dkreadstats();
@@ -612,10 +621,18 @@ getinfo(struct Info *si)
 		}
 	}
 
-	size = sizeof(si->time);
-	if (sysctl(cp_time_mib, 2, &si->time, &size, NULL, 0) < 0) {
-		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
-		memset(&si->time, 0, sizeof(si->time));
+	memset(&si->cpustats.cs_time, 0, sizeof(si->cpustats.cs_time));
+	for (i = 0; i < ncpu; i++) {
+		cpustats_mib[2] = i;
+		size = sizeof(cs);
+		if (sysctl(cpustats_mib, 3, &cs, &size, NULL, 0) < 0) {
+			error("Can't get KERN_CPUSTATS: %s\n", strerror(errno));
+			memset(&si->cpustats, 0, sizeof(si->cpustats));
+		}
+		if ((cs.cs_flags & CPUSTATS_ONLINE) == 0)
+			continue;	/* omit totals for offline CPUs */
+		for (j = 0; j < nitems(cs.cs_time); j++)
+			si->cpustats.cs_time[j] += cs.cs_time[j];
 	}
 
 	size = sizeof(si->nchstats);
