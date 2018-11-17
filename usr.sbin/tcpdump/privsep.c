@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.51 2018/11/09 18:39:34 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.52 2018/11/17 16:52:02 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -102,6 +102,8 @@ static volatile	sig_atomic_t cur_state = STATE_INIT;
 
 extern void	set_slave_signals(void);
 
+static void	drop_privs(int);
+
 static void	impl_open_bpf(int, int *);
 static void	impl_open_dump(int, const char *);
 static void	impl_open_pfosfp(int);
@@ -119,11 +121,42 @@ static void	impl_pcap_stats(int, int *);
 static void	test_state(int, int);
 static void	logmsg(int, const char *, ...);
 
+static void
+drop_privs(int nochroot)
+{
+	struct passwd *pw;
+
+	/*
+	 * If run as regular user, then tcpdump will rely on
+	 * pledge(2). If we are root, we want to chroot also..
+	 */
+	if (getuid() != 0)
+		return;
+
+	pw = getpwnam("_tcpdump");
+	if (pw == NULL)
+		errx(1, "unknown user _tcpdump");
+
+	if (!nochroot) {
+		if (chroot(pw->pw_dir) == -1)
+			err(1, "unable to chroot");
+		if (chdir("/") == -1)
+			err(1, "unable to chdir");
+	}
+
+	/* drop to _tcpdump */
+	if (setgroups(1, &pw->pw_gid) == -1)
+		err(1, "setgroups() failed");
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+		err(1, "setresgid() failed");
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+		err(1, "setresuid() failed");
+}
+
 int
 priv_init(int argc, char **argv)
 {
 	int i, nargc, socks[2];
-	struct passwd *pw;
 	sigset_t allsigs, oset;
 	char **privargv;
 
@@ -149,29 +182,7 @@ priv_init(int argc, char **argv)
 		set_slave_signals();
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 
-		/*
-		 * If run as regular user, packet parser will rely on
-		 * pledge(2). If we are root, we want to chroot also..
-		 */
-		if (getuid() != 0)
-			return (0);
-
-		pw = getpwnam("_tcpdump");
-		if (pw == NULL)
-			errx(1, "unknown user _tcpdump");
-
-		if (chroot(pw->pw_dir) == -1)
-			err(1, "unable to chroot");
-		if (chdir("/") == -1)
-			err(1, "unable to chdir");
-
-		/* drop to _tcpdump */
-		if (setgroups(1, &pw->pw_gid) == -1)
-			err(1, "setgroups() failed");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			err(1, "setresgid() failed");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			err(1, "setresuid() failed");
+		drop_privs(0);
 
 		return (0);
 	}
@@ -256,10 +267,8 @@ priv_exec(int argc, char *argv[])
 	if (WFileName != NULL) {
 		if (strcmp(WFileName, "-") != 0)
 			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_OPEN_OUTPUT);
-		else
-			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
-	} else
-		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
+	}
+	allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
 	if (!nflag) {
 		allowed_ext[STATE_RUN] |= ALLOW(PRIV_GETHOSTBYADDR);
 		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_ETHER_NTOHOST);
@@ -294,7 +303,7 @@ priv_exec(int argc, char *argv[])
 			impl_open_pfosfp(sock);
 			break;
 		case PRIV_OPEN_OUTPUT:
-			test_state(cmd, STATE_RUN);
+			test_state(cmd, STATE_FILTER);
 			impl_open_output(sock, WFileName);
 			break;
 		case PRIV_SETFILTER:
@@ -305,6 +314,7 @@ priv_exec(int argc, char *argv[])
 			test_state(cmd, STATE_RUN);
 			impl_init_done(sock, &bpfd);
 
+			drop_privs(1);
 			if (unveil("/etc/ethers", "r") == -1)
 				err(1, "unveil");
 			if (unveil("/etc/rpc", "r") == -1)
