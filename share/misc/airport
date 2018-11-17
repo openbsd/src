@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.67 2018/08/12 02:55:45 deraadt Exp $
+#	$OpenBSD: airport,v 1.68 2018/11/17 20:09:03 daniel Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1218,7 +1218,7 @@ ODS:Odessa International, Odessa, Ukraine
 ODW:Oak Harbor, Washington, USA
 OER:Ornskoldsvik, Sweden
 OFK:Norfolk Karl Stefan Memorial, Nebraska, USA
-OGG:Kahului, HI
+OGG:Kahului, Hawaii, USA
 OGS:Ogdensburg, New York, USA
 OHD:Ohrid, Ohrid, Macedonia
 OIT:Oita, Japan
@@ -1226,7 +1226,7 @@ OKA:Naha Field, Okinawa, Ryukyu Islands, Japan
 OKC:Oklahoma City Will Rogers World, Oklahoma, USA
 OKJ:Okayama, Japan
 OLF:Wolf Point, Montana, USA
-OLM:Olympia, WA
+OLM:Olympia, Washington, USA
 OMA:Omaha Eppley Airfield, Nebraska, USA
 OME:Nome, Alaska, USA
 OMR:Oradea, Romania
@@ -1347,7 +1347,7 @@ POG:Port Gentil, Gabon
 POM:Jackson, Port Moresby, Papua New Guinea
 POP:La Union, Puerto Plata, Dominican Republic
 POR:Pori, Finland
-POS:Port Of Spain, Trinidad
+POS:Port of Spain, Trinidad and Tobago
 POU:Dutchess County, Poughkeepsie, New York, USA
 POZ:Lawica, Poznan, Poland
 PPG:Pago Pago International, American Samoa
@@ -1452,7 +1452,7 @@ RSA:Santa Rosa, La Pampa, Argentina
 RSD:Rock Sound, Bahamas
 RST:Rochester Municipal, Minnesota, USA
 RSU:Yosu, South Korea
-RSW:Ft. Meyers Southwest Florida Regional, USA
+RSW:Southwest Florida International, Florida, USA
 RTB:Roatan, Roatan, Honduras
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
