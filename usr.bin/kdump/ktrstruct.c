@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.27 2018/11/08 18:35:56 otto Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.28 2018/11/17 20:46:12 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -501,7 +501,9 @@ ktrcmsghdr(char *data, socklen_t len)
 				printf("SCM_RIGHTS, data=");
 				fds = (int *)CMSG_DATA(cmsg);
 				for (i = 0;
-				    cmsg->cmsg_len > CMSG_LEN(sizeof(int) * i);
+				    cmsg->cmsg_len > CMSG_LEN(sizeof(int) * i) 
+				    && (char *)fds + (i + 1) * sizeof(int) <=
+				    data + len;
 				    i++) {
 					printf("%s%d", i ? "," : "", fds[i]);
 				}
