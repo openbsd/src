@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.99 2018/09/04 02:38:25 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.100 2018/11/17 18:55:50 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -309,6 +309,7 @@ filt_proc(struct knote *kn, long hint)
 		/*
 		 * register knote with new process.
 		 */
+		memset(&kev, 0, sizeof(kev));
 		kev.ident = hint & NOTE_PDATAMASK;	/* pid */
 		kev.filter = kn->kn_filter;
 		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | EV_FLAG1;
