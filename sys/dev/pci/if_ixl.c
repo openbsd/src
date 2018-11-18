@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.7 2017/12/21 03:58:27 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.8 2018/11/18 08:42:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -347,6 +347,16 @@ struct ixl_aq_phy_abilities {
 #define IXL_AQ_PHY_MAX_QMS		16
 	struct ixl_aq_module_desc
 			qualified_module[IXL_AQ_PHY_MAX_QMS];
+} __packed __aligned(4);
+
+struct ixl_aq_link_param {
+	uint8_t		notify;
+#define IXL_AQ_LINK_NOTIFY	0x03
+	uint8_t		_reserved1;
+	uint8_t		phy;
+	uint8_t		speed;
+	uint8_t		status;
+	uint8_t		_reserved2[11];
 } __packed __aligned(4);
 
 struct ixl_aq_vsi_param {
@@ -3263,9 +3273,12 @@ static int
 ixl_get_link_status(struct ixl_softc *sc)
 {
 	struct ixl_aq_desc iaq;
+	struct ixl_aq_link_param *param;
 
 	memset(&iaq, 0, sizeof(iaq));
 	iaq.iaq_opcode = htole16(IXL_AQ_OP_PHY_LINK_STATUS);
+	param = (struct ixl_aq_link_param *)iaq.iaq_param;
+	param->notify = IXL_AQ_LINK_NOTIFY;
 
 	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
 		printf("%s: GET LINK STATUS timeout\n", DEVNAME(sc));
