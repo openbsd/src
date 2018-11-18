@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.143 2018/11/18 16:33:26 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.144 2018/11/18 16:44:30 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -369,7 +369,7 @@ usbd_port_disown_to_1_1(struct usbd_device *dev, int port)
 	int n;
 
 	err = usbd_set_port_feature(dev, port, UHF_PORT_DISOWN_TO_1_1);
-	DPRINTF(("usbd_disown_to_1_1: port %d disown request done, error=%s\n",
+	DPRINTF(("%s: port %d disown request done, error=%s\n", __func__,
 	    port, usbd_errstr(err)));
 	if (err)
 		return (err);
@@ -643,7 +643,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 	/* XXX check that all interfaces are idle */
 	if (dev->config != USB_UNCONFIG_NO) {
-		DPRINTF(("usbd_set_config_index: free old config\n"));
+		DPRINTF(("%s: free old config\n", __func__));
 		/* Free all configuration data structures. */
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
@@ -657,11 +657,11 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 	if (index == USB_UNCONFIG_INDEX) {
 		/* We are unconfiguring the device, so leave unallocated. */
-		DPRINTF(("usbd_set_config_index: set config 0\n"));
+		DPRINTF(("%s: set config 0\n", __func__));
 		err = usbd_set_config(dev, USB_UNCONFIG_NO);
 		if (err)
-			DPRINTF(("usbd_set_config_index: setting config=0 "
-				 "failed, error=%s\n", usbd_errstr(err)));
+			DPRINTF(("%s: setting config=0 failed, error=%s\n",
+			    __func__, usbd_errstr(err)));
 		return (err);
 	}
 
@@ -718,31 +718,29 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 				    (UGETW(hd.wHubCharacteristics) &
 				     UHD_PWR_INDIVIDUAL))
 					selfpowered = 1;
-				DPRINTF(("usbd_set_config_index: charac=0x%04x"
-				    ", error=%s\n",
-				    UGETW(hd.wHubCharacteristics),
+				DPRINTF(("%s: charac=0x%04x, error=%s\n",
+				    __func__, UGETW(hd.wHubCharacteristics),
 				    usbd_errstr(err)));
 			} else {
 				err = usbd_get_device_status(dev, &ds);
 				if (!err &&
 				    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
 					selfpowered = 1;
-				DPRINTF(("usbd_set_config_index: status=0x%04x"
-				    ", error=%s\n",
-				    UGETW(ds.wStatus), usbd_errstr(err)));
+				DPRINTF(("%s: status=0x%04x, error=%s\n",
+				    __func__, UGETW(ds.wStatus),
+				    usbd_errstr(err)));
 			}
 		} else
 			selfpowered = 1;
 	}
-	DPRINTF(("usbd_set_config_index: (addr %d) cno=%d attr=0x%02x, "
-		 "selfpowered=%d, power=%d\n", dev->address,
-		 cdp->bConfigurationValue, cdp->bmAttributes,
-		 selfpowered, cdp->bMaxPower * 2));
+	DPRINTF(("%s: (addr %d) cno=%d attr=0x%02x, selfpowered=%d, power=%d\n",
+	    __func__, dev->address, cdp->bConfigurationValue, cdp->bmAttributes,
+	    selfpowered, cdp->bMaxPower * 2));
 
 	/* Check if we have enough power. */
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
-		DPRINTF(("usbd_set_config_index: No power source?\n"));
+		DPRINTF(("%s: No power source?\n", __func__));
 		err = USBD_IOERROR;
 		goto bad;
 	}
@@ -764,12 +762,11 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	dev->self_powered = selfpowered;
 
 	/* Set the actual configuration value. */
-	DPRINTF(("%s: set config %d\n", __func__,
-	    cdp->bConfigurationValue));
+	DPRINTF(("%s: set config %d\n", __func__, cdp->bConfigurationValue));
 	err = usbd_set_config(dev, cdp->bConfigurationValue);
 	if (err) {
-		DPRINTF(("usbd_set_config_index: setting config=%d failed, "
-		    "error=%s\n", cdp->bConfigurationValue, usbd_errstr(err)));
+		DPRINTF(("%s: setting config=%d failed, error=%s\n", __func__,
+		    cdp->bConfigurationValue, usbd_errstr(err)));
 		goto bad;
 	}
 
@@ -901,7 +898,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 		goto fail;
 	}
 
-	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
+	DPRINTF(("%s: no device specific driver found\n", __func__));
 
 	DPRINTF(("%s: looping over %d configurations\n", __func__,
 		 dd->bNumConfigurations));
@@ -978,7 +975,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 	if (dd->bNumConfigurations > 1) /* don't change if only 1 config */
 		usbd_set_config_index(dev, 0, 0);
 
-	DPRINTF(("usbd_probe_and_attach: no interface drivers found\n"));
+	DPRINTF(("%s: no interface drivers found\n", __func__));
 
 generic:
 	/* Finally try the generic driver. */
@@ -1008,7 +1005,7 @@ generic:
 	 * We just did not find any drivers, that's all.  The device is
 	 * fully operational and not harming anyone.
 	 */
-	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
+	DPRINTF(("%s: generic attach failed\n", __func__));
  	err = USBD_NORMAL_COMPLETION;
 fail:
 	rw_exit_write(&usbpalock);
@@ -1032,7 +1029,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	uint32_t mps, mps0;
 	int addr, i, p;
 
-	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
+	DPRINTF(("%s: bus=%p port=%d depth=%d speed=%d\n", __func__,
 		 bus, port, depth, speed));
 
 	/*
@@ -1164,8 +1161,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		return (err);
 	}
 
-	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
-		 "subclass=%d, protocol=%d, maxpacket=%d, len=%d, speed=%d\n",
+	DPRINTF(("%s: adding unit addr=%d, rev=%02x, class=%d, subclass=%d, "
+		 "protocol=%d, maxpacket=%d, len=%d, speed=%d\n", __func__,
 		 addr,UGETW(dd->bcdUSB), dd->bDeviceClass, dd->bDeviceSubClass,
 		 dd->bDeviceProtocol, dd->bMaxPacketSize, dd->bLength,
 		 dev->speed));
