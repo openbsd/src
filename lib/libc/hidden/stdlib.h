@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.13 2018/11/05 08:23:40 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.14 2018/11/18 16:15:18 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -105,6 +105,7 @@ PROTO_STD_DEPRECATED(llabs);
 PROTO_STD_DEPRECATED(lldiv);
 PROTO_DEPRECATED(lrand48);
 /*PROTO_NORMAL(malloc);			not yet, breaks emacs */
+PROTO_DEPRECATED(malloc_usable_size);
 PROTO_STD_DEPRECATED(mblen);
 PROTO_STD_DEPRECATED(mbstowcs);
 PROTO_STD_DEPRECATED(mbtowc);

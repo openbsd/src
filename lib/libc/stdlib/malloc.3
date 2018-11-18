@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.118 2018/11/08 05:58:21 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.119 2018/11/18 16:15:18 otto Exp $
 .\"
-.Dd $Mdocdate: November 8 2018 $
+.Dd $Mdocdate: November 18 2018 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -43,7 +43,8 @@
 .Nm reallocarray ,
 .Nm recallocarray ,
 .Nm freezero ,
-.Nm aligned_alloc
+.Nm aligned_alloc ,
+.Nm malloc_usable_size
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -63,6 +64,8 @@
 .Fn freezero "void *ptr" "size_t size"
 .Ft void *
 .Fn aligned_alloc "size_t alignment" "size_t size"
+.Ft size_t
+.Fn malloc_usable_size "void *ptr"
 .Vt char *malloc_options ;
 .Sh DESCRIPTION
 The standard functions
@@ -191,7 +194,7 @@ must be a value such that
 .Fa size
 is the size of the earlier allocation that returned
 .Fa ptr ,
-otherwise the behaviour is undefined.
+otherwise the behavior is undefined.
 .Pp
 The
 .Fn freezero
@@ -233,6 +236,25 @@ If
 is not a multiple of
 .Fa alignment ,
 behavior is undefined.
+.Pp
+The
+.Fn malloc_usable_size
+function returns the actual size of the allocated memory pointed to by
+.Va ptr .
+If
+.Va ptr
+is
+.Dv NULL ,
+it returns 0.
+If
+.Va ptr
+was never returned by an allocation function or freed before,
+the behavior is undefined.
+This function should not be relied upon since it exposes some of the internal
+workings of the
+.Fn malloc
+family of functions.
+Writing beyond the requested size introduces undefined behavior.
 .Sh RETURN VALUES
 Upon successful completion, the allocation functions
 return a pointer to the allocated space; otherwise,
@@ -618,7 +640,9 @@ function appeared in
 .Ox 6.2 .
 The
 .Fn aligned_alloc
-function appeared in
+and
+.Fn malloc_usable_size
+functions appeared in
 .Ox 6.5 .
 .Sh CAVEATS
 When using
