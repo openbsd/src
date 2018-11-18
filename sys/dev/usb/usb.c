@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.121 2018/11/14 17:18:18 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.122 2018/11/18 16:33:26 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -627,7 +627,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 
-		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%zu\n", addr, len));
+		DPRINTF(("%s: USB_REQUEST addr=%d len=%zu\n", __func__, addr, len));
 		/* Avoid requests that would damage the bus integrity. */
 		if ((ur->ucr_request.bmRequestType == UT_WRITE_DEVICE &&
 		     ur->ucr_request.bRequest == UR_SET_ADDRESS) ||
@@ -917,7 +917,7 @@ usb_needs_reattach(struct usbd_device *dev)
 void
 usb_schedsoftintr(struct usbd_bus *bus)
 {
-	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
+	DPRINTFN(10,("%s: polling=%d\n", __func__, bus->use_polling));
 
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
