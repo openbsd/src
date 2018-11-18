@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.362 2018/11/01 00:18:44 sashan Exp $ */
+/*	$OpenBSD: parse.y,v 1.363 2018/11/18 09:36:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -879,7 +879,7 @@ network		: NETWORK prefix filter_set	{
 			struct network	*n;
 			if ((ps = find_prefixset($3, &conf->prefixsets))
 			    == NULL) {
-				yyerror("prefix-set %s not defined", ps->name);
+				yyerror("prefix-set '%s' not defined", $3);
 				free($3);
 				filterset_free($4);
 				free($4);
