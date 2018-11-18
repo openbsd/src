@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.23 2018/10/27 16:49:16 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.24 2018/11/18 15:30:04 ajacoutot Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -153,7 +153,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 . endfor
 	@cd ${SRCDIR} && make SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} includes
 .  for _kern in GENERIC GENERIC.MP
-	@if cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/conf; then \
+	@if cd ${SRCDIR}/sys/arch/${MACHINE}/conf; then \
 		if config ${_kern}; then \
 			if cd ../compile/${_kern} && make clean && make ; then \
 				exit 0; \
@@ -162,14 +162,14 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	fi;
 	@if [ ${_kern} = "GENERIC" ]; then \
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
-		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC/obj && \
+		cd ${SRCDIR}/sys/arch/${MACHINE}/compile/GENERIC/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
 		${FAKE}/usr/share/relink/kernel/GENERIC/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
 		exit 1; }; \
 	elif [ ${_kern} = "GENERIC.MP" ]; then \
 		su ${BUILDUSER} -c 'umask ${WOBJUMASK} && \
-		cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/GENERIC.MP/obj && \
+		cd ${SRCDIR}/sys/arch/${MACHINE}/compile/GENERIC.MP/obj && \
 		cp -p *.o Makefile ld.script makegap.sh \
 		${FAKE}/usr/share/relink/kernel/GENERIC.MP/' || \
 		{ echo "***>   failed to install ${_kern} object files"; \
@@ -177,7 +177,7 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	fi; exit 0
 .  endfor
 # install newly built kernel on the build machine
-	@cd ${SRCDIR}/sys/arch/${MACHINE_ARCH}/compile/${KERNEL} && \
+	@cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL} && \
 		make install
 .endif
 	@su ${BUILDUSER} -c 'touch $@'
