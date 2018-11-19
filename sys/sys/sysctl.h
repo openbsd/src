@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.180 2018/11/17 23:10:08 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.181 2018/11/19 16:12:06 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct ctlname {
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
 #define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
-#define	KERN_DNSJACKPORT	13	/* hijack dns sockets */
+/* was KERN_DNSJACKPORT		13	*/
 /* was KERN_PROC		14	*/
 /* was KERN_FILE		15	*/
 #define	KERN_PROF		16	/* node: kernel profiling info */

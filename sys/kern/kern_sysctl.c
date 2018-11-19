@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.351 2018/11/17 23:10:08 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.352 2018/11/19 16:12:06 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -652,16 +652,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return sysctl_int(oldp, oldlenp, newp, newlen, &global_ptrace);
 	}
 #endif
-	case KERN_DNSJACKPORT: {
-		extern uint16_t dnsjackport;
-		int port = dnsjackport;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &port)))
-			return error;
-		if (port < 0 || port > USHRT_MAX)
-			return EINVAL;
-		dnsjackport = port;
-		return 0;
-	}
 #ifdef WITNESS
 	case KERN_WITNESSWATCH:
 		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
