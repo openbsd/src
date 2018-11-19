@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.310 2018/10/25 15:13:38 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.311 2018/11/19 13:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -258,9 +258,13 @@ tty_open(struct tty *tty, char **cause)
 	event_set(&tty->event_in, tty->fd, EV_PERSIST|EV_READ,
 	    tty_read_callback, tty);
 	tty->in = evbuffer_new();
+	if (tty->in == NULL)
+		fatal("out of memory");
 
 	event_set(&tty->event_out, tty->fd, EV_WRITE, tty_write_callback, tty);
 	tty->out = evbuffer_new();
+	if (tty->out == NULL)
+		fatal("out of memory");
 
 	evtimer_set(&tty->timer, tty_timer_callback, tty);
 

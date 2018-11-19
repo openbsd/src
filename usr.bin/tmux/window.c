@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.213 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.214 2018/11/19 13:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -997,6 +997,8 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 
 	wp->event = bufferevent_new(wp->fd, window_pane_read_callback, NULL,
 	    window_pane_error_callback, wp);
+	if (wp->event == NULL)
+		fatalx("out of memory");
 
 	bufferevent_setwatermark(wp->event, EV_READ, 0, READ_SIZE);
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);

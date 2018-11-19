@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.262 2018/11/07 08:06:28 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.263 2018/11/19 13:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -186,8 +186,14 @@ server_client_create(int fd)
 	TAILQ_INIT(&c->queue);
 
 	c->stdin_data = evbuffer_new();
+	if (c->stdin_data == NULL)
+		fatalx("out of memory");
 	c->stdout_data = evbuffer_new();
+	if (c->stdout_data == NULL)
+		fatalx("out of memory");
 	c->stderr_data = evbuffer_new();
+	if (c->stderr_data == NULL)
+		fatalx("out of memory");
 
 	c->tty.fd = -1;
 	c->title = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.21 2017/05/04 07:16:43 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.22 2018/11/19 13:35:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,6 +47,8 @@ control_notify_input(struct client *c, struct window_pane *wp,
 	 */
 	if (winlink_find_by_window(&c->session->windows, wp->window) != NULL) {
 		message = evbuffer_new();
+		if (message == NULL)
+			fatalx("out of memory");
 		evbuffer_add_printf(message, "%%output %%%u ", wp->id);
 		for (i = 0; i < len; i++) {
 			if (buf[i] < ' ' || buf[i] == '\\')

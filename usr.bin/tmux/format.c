@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.164 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.165 2018/11/19 13:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -573,6 +573,8 @@ format_cb_pane_tabs(struct format_tree *ft, struct format_entry *fe)
 		return;
 
 	buffer = evbuffer_new();
+	if (buffer == NULL)
+		fatalx("out of memory");
 	for (i = 0; i < wp->base.grid->sx; i++) {
 		if (!bit_test(wp->base.tabs, i))
 			continue;
@@ -603,6 +605,8 @@ format_cb_session_group_list(struct format_tree *ft, struct format_entry *fe)
 		return;
 
 	buffer = evbuffer_new();
+	if (buffer == NULL)
+		fatalx("out of memory");
 	TAILQ_FOREACH(loop, &sg->sessions, gentry) {
 		if (EVBUFFER_LENGTH(buffer) > 0)
 			evbuffer_add(buffer, ",", 1);

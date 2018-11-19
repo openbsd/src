@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.47 2018/01/16 09:00:38 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.48 2018/11/19 13:35:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -166,6 +166,8 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		    cmd_pipe_pane_write_callback,
 		    cmd_pipe_pane_error_callback,
 		    wp);
+		if (wp->pipe_event == NULL)
+			fatalx("out of memory");
 		if (out)
 			bufferevent_enable(wp->pipe_event, EV_WRITE);
 		if (in)
