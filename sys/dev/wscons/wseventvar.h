@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.8 2015/09/10 18:14:52 mpi Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.9 2018/11/19 19:19:24 anton Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -71,6 +71,8 @@
  *	@(#)event_var.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/sigio.h>
+
 /*
  * Internal "wscons_event" queue interface for the keyboard and mouse drivers.
  * The drivers are expected not to place events in the queue above spltty(),
@@ -84,7 +86,7 @@ struct wseventvar {
 	u_int	get;		/* get (read) index (modified synchronously) */
 	volatile u_int put;	/* put (write) index (modified by interrupt) */
 	struct selinfo sel;	/* process selecting */
-	struct process *io;	/* process that opened queue (can get SIGIO) */
+	struct sigio_ref sigio;	/* async I/O registration */
 	int	wanted;		/* wake up on input ready */
 	int	async;		/* send SIGIO on input ready */
 	struct wscons_event *q;	/* circular buffer (queue) of events */
@@ -99,7 +101,7 @@ struct wseventvar {
 		wakeup((caddr_t)(ev)); \
 	} \
 	if ((ev)->async) \
-		pgsignal((ev)->io->ps_pgrp, SIGIO, 0); \
+		pgsigio(&(ev)->sigio, SIGIO, 0); \
 }
 
 void	wsevent_init(struct wseventvar *);

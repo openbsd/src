@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.47 2018/11/11 01:49:04 deraadt Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.48 2018/11/19 19:19:24 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -261,7 +261,7 @@ wsmouse_detach(struct device *self, int flags)
 
 	/* If we're open ... */
 	evar = sc->sc_base.me_evp;
-	if (evar != NULL && evar->io != NULL) {
+	if (evar != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
@@ -327,7 +327,6 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	evar = &sc->sc_base.me_evar;
 	wsevent_init(evar);
-	evar->io = p->p_p;
 
 	error = wsmousedoopen(sc, evar);
 	if (error) {
@@ -471,6 +470,7 @@ int
 wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
+	struct wseventvar *evar;
 	int error;
 
 	if (sc->sc_dying)
@@ -499,19 +499,19 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		return (0);
 
 	case FIOSETOWN:
-		if (sc->sc_base.me_evp == NULL)
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
 			return (EINVAL);
-		if (-*(int *)data != sc->sc_base.me_evp->io->ps_pgid
-		    && *(int *)data != sc->sc_base.me_evp->io->ps_pid)
-			return (EPERM);
-		return (0);
+		return (sigio_setown(&evar->sigio, *(int *)data));
 
 	case TIOCSPGRP:
-		if (sc->sc_base.me_evp == NULL)
+		if (*(int *)data < 0)
 			return (EINVAL);
-		if (*(int *)data != sc->sc_base.me_evp->io->ps_pgid)
-			return (EPERM);
-		return (0);
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		return (sigio_setown(&evar->sigio, -*(int *)data));
+
 	case WSMOUSEIO_GETPARAMS:
 	case WSMOUSEIO_SETPARAMS:
 		return (wsmouse_param_ioctl(sc, cmd,

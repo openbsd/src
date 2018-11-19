@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.91 2018/04/18 10:24:32 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.92 2018/11/19 19:19:24 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -603,7 +603,7 @@ wskbd_detach(struct device  *self, int flags)
 	}
 
 	evar = sc->sc_base.me_evp;
-	if (evar != NULL && evar->io != NULL) {
+	if (evar != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
@@ -823,7 +823,6 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	evar = &sc->sc_base.me_evar;
 	wsevent_init(evar);
-	evar->io = p->p_p;
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {
@@ -942,6 +941,7 @@ int
 wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
      struct proc *p)
 {
+	struct wseventvar *evar;
 	int error;
 
 	/*      
@@ -958,19 +958,18 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		return (0);
 
 	case FIOSETOWN:
-		if (sc->sc_base.me_evp == NULL)
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
 			return (EINVAL);
-		if (-*(int *)data != sc->sc_base.me_evp->io->ps_pgid &&
-		    *(int *)data != sc->sc_base.me_evp->io->ps_pid)
-			return (EPERM);
-		return (0);
+		return (sigio_setown(&evar->sigio, *(int *)data));
 		   
 	case TIOCSPGRP:
-		if (sc->sc_base.me_evp == NULL)
+		if (*(int *)data < 0)
 			return (EINVAL);
-		if (*(int *)data != sc->sc_base.me_evp->io->ps_pgid)
-			return (EPERM);
-		return (0);
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		return (sigio_setown(&evar->sigio, -*(int *)data));
 	}
 
 	/*
