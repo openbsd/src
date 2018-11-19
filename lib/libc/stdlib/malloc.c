@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.252 2018/11/18 16:15:18 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.253 2018/11/19 22:50:24 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1542,7 +1542,6 @@ malloc_usable_size(void *ptr)
 	errno = saved_errno;
 	return sz;
 }
-DEF_WEAK(malloc_usable_size);
 
 static void *
 orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
