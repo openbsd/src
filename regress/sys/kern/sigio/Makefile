@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2018/11/13 13:05:42 visa Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/11/19 12:55:18 visa Exp $
 
 PROG=		sigio_test
-SRCS=		main.c sigio_common.c sigio_pipe.c util.c
+SRCS=		main.c sigio_common.c sigio_pipe.c sigio_socket.c util.c
 
 WARNINGS=	yes
 
@@ -11,8 +11,16 @@ TESTS+=		pipe_cansigio
 TESTS+=		pipe_getown
 TESTS+=		pipe_read
 #TESTS+=	pipe_write
+TESTS+=		socket_badpgid
+TESTS+=		socket_badsession
+TESTS+=		socket_cansigio
+TESTS+=		socket_getown
+TESTS+=		socket_inherit
+TESTS+=		socket_read
+TESTS+=		socket_write
 
 TESTS_ROOT+=	pipe_cansigio
+TESTS_ROOT+=	socket_cansigio
 
 .for t in ${TESTS}
 run-regress-${t}:

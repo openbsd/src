@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.2 2018/11/13 13:05:42 visa Exp $	*/
+/*	$OpenBSD: common.h,v 1.3 2018/11/19 12:55:18 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -45,6 +45,13 @@ int	test_pipe_cansigio(void);
 int	test_pipe_getown(void);
 int	test_pipe_read(void);
 int	test_pipe_write(void);
+int	test_socket_badpgid(void);
+int	test_socket_badsession(void);
+int	test_socket_cansigio(void);
+int	test_socket_getown(void);
+int	test_socket_inherit(void);
+int	test_socket_read(void);
+int	test_socket_write(void);
 
 void	test_init(void);
 void	test_barrier(int);
