@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.163 2018/08/13 14:36:54 mpi Exp $	*/
+/*	$OpenBSD: inet.c,v 1.164 2018/11/19 13:15:37 visa Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1311,9 +1311,7 @@ socket_dump(u_long off)
 	p("%d", so_qlimit, "\n ");
 	p("%d", so_timeo, "\n ");
 	p("%u", so_error, "\n ");
-	p("%d", so_pgid, ", ");
-	p("%u", so_siguid, ", ");
-	p("%u", so_sigeuid, "\n ");
+	p("%p", so_sigio.sir_sigio, "\n ");
 	p("%lu", so_oobmark, "\n ");
 	if (so.so_sp)
 		sosplice_dump((u_long)so.so_sp);

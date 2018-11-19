@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.87 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.88 2018/11/19 13:15:37 visa Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
+#include <sys/sigio.h>				/* for struct sigio_ref */
 #include <sys/task.h>
 #include <sys/timeout.h>
 
@@ -72,16 +73,14 @@ struct socket {
 	struct	soqhead	*so_onq;	/* queue (q or q0) that we're on */
 	struct	soqhead	so_q0;		/* queue of partial connections */
 	struct	soqhead	so_q;		/* queue of incoming connections */
+	struct	sigio_ref so_sigio;	/* async I/O registration */
 	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
 	short	so_q0len;		/* partials on so_q0 */
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */
 	short	so_timeo;		/* connection timeout */
-	u_int	so_error;		/* error affecting connection */
-	pid_t	so_pgid;		/* pgid for signals */
-	uid_t	so_siguid;		/* uid of process who set so_pgid */
-	uid_t	so_sigeuid;		/* euid of process who set so_pgid */
 	u_long	so_oobmark;		/* chars to oob mark */
+	u_int	so_error;		/* error affecting connection */
 /*
  * Variables for socket splicing, allocated only when needed.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.41 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.42 2018/11/19 13:15:37 visa Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -114,17 +114,15 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	case TIOCSPGRP:
 		/* FALLTHROUGH */
 	case SIOCSPGRP:
-		so->so_pgid = *(int *)data;
-		so->so_siguid = p->p_ucred->cr_ruid;
-		so->so_sigeuid = p->p_ucred->cr_uid;
+		error = sigio_setown(&so->so_sigio, *(int *)data);
 		break;
 
 	case TIOCGPGRP:
-		*(int *)data = -so->so_pgid;
+		*(int *)data = -sigio_getown(&so->so_sigio);
 		break;
 
 	case SIOCGPGRP:
-		*(int *)data = so->so_pgid;
+		*(int *)data = sigio_getown(&so->so_sigio);
 		break;
 
 	case SIOCATMARK:
