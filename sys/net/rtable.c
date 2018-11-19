@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.64 2018/09/09 10:07:38 henning Exp $ */
+/*	$OpenBSD: rtable.c,v 1.65 2018/11/19 10:15:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -83,7 +83,7 @@ void		   rtmap_dtor(void *, void *);
 
 struct srp_gc	   rtmap_gc = SRP_GC_INITIALIZER(rtmap_dtor, NULL);
 
-void		   rtable_init_backend(unsigned int);
+void		   rtable_init_backend(void);
 void		  *rtable_alloc(unsigned int, unsigned int, unsigned int);
 void		  *rtable_get(unsigned int, sa_family_t);
 
@@ -153,7 +153,6 @@ void
 rtable_init(void)
 {
 	struct domain	*dp;
-	unsigned int	 keylen = 0;
 	int		 i;
 
 	KASSERT(sizeof(struct rtmap) == sizeof(struct dommp));
@@ -171,11 +170,8 @@ rtable_init(void)
 			continue;
 
 		af2idx[dp->dom_family] = af2idx_max++;
-		if (dp->dom_rtkeylen > keylen)
-			keylen = dp->dom_rtkeylen;
-
 	}
-	rtable_init_backend(keylen);
+	rtable_init_backend();
 
 	/*
 	 * Allocate AF-to-id table now that we now how many AFs this
@@ -358,7 +354,7 @@ void	rtable_mpath_insert(struct art_node *, struct rtentry *);
 struct srpl_rc rt_rc = SRPL_RC_INITIALIZER(rtentry_ref, rtentry_unref, NULL);
 
 void
-rtable_init_backend(unsigned int keylen)
+rtable_init_backend(void)
 {
 	art_init();
 }

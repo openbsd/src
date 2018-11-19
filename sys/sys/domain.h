@@ -1,4 +1,4 @@
-/*	$OpenBSD: domain.h,v 1.18 2017/11/23 13:45:46 mpi Exp $	*/
+/*	$OpenBSD: domain.h,v 1.19 2018/11/19 10:15:04 claudio Exp $	*/
 /*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
 
 /*
@@ -57,7 +57,6 @@ struct	domain {
 	void	(*dom_dispose)(struct mbuf *);
 	const struct	protosw *dom_protosw, *dom_protoswNPROTOSW;
 					/* initialize routing table */
-	unsigned int	dom_rtkeylen;	/* maximum size of the key */
 	unsigned int	dom_rtoffset;	/* offset of the key, in bytes */
 	unsigned int	dom_maxplen;	/* maxium prefix length, in bits */
 	void	*(*dom_ifattach)(struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.102 2018/02/10 08:12:01 dlg Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.103 2018/11/19 10:15:04 claudio Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -366,7 +366,6 @@ struct domain inet6domain = {
   .dom_name = "internet6",
   .dom_protosw = inet6sw,
   .dom_protoswNPROTOSW = &inet6sw[nitems(inet6sw)],
-  .dom_rtkeylen = sizeof(struct sockaddr_in6),
   .dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr),
   .dom_maxplen = 128,
   .dom_ifattach = in6_domifattach,
