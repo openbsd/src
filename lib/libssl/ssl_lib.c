@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.195 2018/11/17 11:22:43 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.196 2018/11/19 15:07:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2209,10 +2209,7 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd,
 	sigalg = c->pkeys[idx].sigalg;
 	if (!SSL_USE_SIGALGS(s)) {
 		if (pkey->type == EVP_PKEY_RSA) {
-			if (SSL_IS_DTLS(s))
-			    sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
-			else
-			    sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
+			sigalg = ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
 		} else if (pkey->type == EVP_PKEY_EC) {
 			sigalg = ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
 		} else {
