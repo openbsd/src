@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.71 2018/11/16 02:41:16 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.72 2018/11/19 14:42:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,11 +161,11 @@ SSL_get_ex_data_X509_STORE_CTX_idx(void)
 static void
 ssl_cert_set_default_sigalgs(CERT *cert)
 {
-	/* Set digest values to legacy defaults */
+	/* Set digest values to defaults */
 	cert->pkeys[SSL_PKEY_RSA_SIGN].sigalg =
-	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
+	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
 	cert->pkeys[SSL_PKEY_RSA_ENC].sigalg =
-	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
+	    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
 	cert->pkeys[SSL_PKEY_ECC].sigalg =
 	    ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
 #ifndef OPENSSL_NO_GOST
