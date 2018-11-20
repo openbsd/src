@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.53 2018/10/20 13:29:12 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.54 2018/11/20 12:48:16 otto Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2018 $
+.Dd $Mdocdate: November 20 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -322,7 +322,7 @@ different DNS server with an entry in the host machine's
 .Pa /etc/pf.conf
 similar to the following:
 .Bd -literal -offset indent
-pass in proto udp from 100.64.0.0/10 to any port domain \e
+pass in proto { udp tcp } from 100.64.0.0/10 to any port domain \e
       rdr-to $dns_server port domain
 .Ed
 .Sh FILES
