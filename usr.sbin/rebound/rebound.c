@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.101 2018/10/26 06:03:03 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.102 2018/11/20 03:42:56 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -42,6 +42,12 @@
 #include <ctype.h>
 
 #define MINIMUM(a,b) (((a)<(b))?(a):(b))
+
+/*
+ * TTL for permanently cached records.
+ * They don't expire, but need something to put in the response.
+ */
+#define CACHETTL 10
 
 uint16_t randomid(void);
 
@@ -203,7 +209,7 @@ freecacheent(struct dnscache *ent)
 }
 
 /*
- * names end with either a nul byte, or a two byte 0xc0 pointer
+ * names end with either a nul byte or a two byte 0xc0 pointer
  */
 static size_t
 dnamelen(const unsigned char *p, size_t len)
@@ -677,7 +683,7 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	p += 2;
 	memcpy(p, &class, 2);
 	p += 2;
-	ttl = htonl(10);
+	ttl = htonl(CACHETTL);
 	memcpy(p, &ttl, 4);
 	p += 4;
 	len = htons(rdatalen);
