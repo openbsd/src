@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.155 2018/10/27 10:02:47 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.156 2018/11/20 10:00:15 patrick Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1548,13 +1548,17 @@ void
 ieee80211_setup_node(struct ieee80211com *ic,
 	struct ieee80211_node *ni, const u_int8_t *macaddr)
 {
-	int s;
+	int i, s;
 
 	DPRINTF(("%s\n", ether_sprintf((u_int8_t *)macaddr)));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
 	ni->ni_ic = ic;	/* back-pointer */
+	/* Initialize cached last sequence numbers with invalid values. */
+	ni->ni_rxseq = 0xffffU;
+	for (i=0; i < IEEE80211_NUM_TID; ++i)
+		ni->ni_qos_rxseqs[i] = 0xffffU;
 #ifndef IEEE80211_STA_ONLY
 	mq_init(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE, IPL_NET);
 	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
