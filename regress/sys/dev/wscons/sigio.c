@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio.c,v 1.2 2018/11/20 18:49:42 anton Exp $	*/
+/*	$OpenBSD: sigio.c,v 1.3 2018/11/20 19:37:10 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -30,11 +30,15 @@
 #include <string.h>
 #include <unistd.h>
 
+static int test_getown_fcntl(int);
+static int test_getown_ioctl(int);
+static int test_gpgrp(int);
 static int test_setown_fcntl(int);
 static int test_setown_ioctl(int);
 static int test_sigio(int);
 static int test_spgrp(int);
 
+static int test_common_getown(int, int);
 static int test_common_setown(int, int);
 
 static void sigio(int);
@@ -48,6 +52,9 @@ static struct {
 	const char *name;
 	int (*fn)(int);
 } tests[] = {
+	{ "getown-fcntl",	test_getown_fcntl },
+	{ "getown-ioctl",	test_getown_ioctl },
+	{ "gpgrp",		test_gpgrp },
 	{ "setown-fcntl",	test_setown_fcntl },
 	{ "setown-ioctl",	test_setown_ioctl },
 	{ "sigio",		test_sigio },
@@ -96,6 +103,39 @@ main(int argc, char *argv[])
 		errx(1, "%s: no such test", argv[0]);
 
 	return fn(fd);
+}
+
+static int
+test_getown_fcntl(int fd)
+{
+	return test_common_getown(fd, 1);
+}
+
+static int
+test_getown_ioctl(int fd)
+{
+	return test_common_getown(fd, 0);
+}
+
+static int
+test_gpgrp(int fd)
+{
+	int arg, pgrp;
+
+	if (ioctl(fd, TIOCGPGRP, &pgrp) == -1)
+		err(1, "ioctl: TIOCGPGRP");
+	if (pgrp != 0)
+		errx(1, "ioctl: TIOCGPGRP: expected 0, got %d", pgrp);
+
+	arg = getpgrp();
+	if (ioctl(fd, TIOCSPGRP, &arg) == -1)
+		err(1, "ioctl: TIOCSPGRP");
+	if (ioctl(fd, TIOCGPGRP, &pgrp) == -1)
+		err(1, "ioctl: TIOCGPGRP");
+	if (pgrp != getpgrp())
+		errx(1, "ioctl: TIOCGPGRP: expected %d, got %d", getpgrp(), pgrp);
+
+	return 0;
 }
 
 static int
@@ -203,6 +243,45 @@ test_spgrp(int fd)
 	arg = 1000000;
 	if (ioctl(fd, TIOCSPGRP, &arg) != -1)
 		errx(1, "ioctl: TIOCSPGRP: %d accepted", arg);
+
+	return 0;
+}
+
+static int
+test_common_getown(int fd, int dofcntl)
+{
+	int arg, pgrp;
+
+	if (dofcntl) {
+		pgrp = fcntl(fd, F_GETOWN);
+		if (pgrp == -1)
+			err(1, "fcntl: F_GETOWN");
+		if (pgrp != 0)
+			errx(1, "fcntl: F_GETOWN: expected 0, got %d", pgrp);
+	} else {
+		if (ioctl(fd, FIOGETOWN, &pgrp) == -1)
+			err(1, "ioctl: FIOGETOWN");
+		if (pgrp != 0)
+			errx(1, "ioctl: FIOGETOWN: expected 0, got %d", pgrp);
+	}
+
+	arg = getpid();
+	if (ioctl(fd, FIOSETOWN, &arg) == -1)
+		err(1, "ioctl: FIOSETOWN");
+	if (dofcntl) {
+		pgrp = fcntl(fd, F_GETOWN);
+		if (pgrp == -1)
+			err(1, "fcntl: F_GETOWN");
+		if (pgrp != -getpgrp())
+			errx(1, "fcntl: F_GETOWN: expected %d, got %d",
+			    -getpgrp(), pgrp);
+	} else {
+		if (ioctl(fd, FIOGETOWN, &pgrp) == -1)
+			err(1, "ioctl: FIOGETOWN");
+		if (pgrp != -getpgrp())
+			errx(1, "ioctl: FIOGETOWN: expected %d, got %d",
+			    -getpgrp(), pgrp);
+	}
 
 	return 0;
 }
