@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio.c,v 1.1 2018/11/16 20:19:21 anton Exp $	*/
+/*	$OpenBSD: sigio.c,v 1.2 2018/11/20 18:49:42 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -30,9 +30,12 @@
 #include <string.h>
 #include <unistd.h>
 
-static int test_setown(int);
+static int test_setown_fcntl(int);
+static int test_setown_ioctl(int);
 static int test_sigio(int);
 static int test_spgrp(int);
+
+static int test_common_setown(int, int);
 
 static void sigio(int);
 static void syncrecv(int, int);
@@ -45,9 +48,10 @@ static struct {
 	const char *name;
 	int (*fn)(int);
 } tests[] = {
-	{ "setown",	test_setown },
-	{ "sigio",	test_sigio },
-	{ "spgrp",	test_spgrp },
+	{ "setown-fcntl",	test_setown_fcntl },
+	{ "setown-ioctl",	test_setown_ioctl },
+	{ "sigio",		test_sigio },
+	{ "spgrp",		test_spgrp },
 	{ NULL,	NULL },
 };
 
@@ -95,31 +99,15 @@ main(int argc, char *argv[])
 }
 
 static int
-test_setown(int fd)
+test_setown_fcntl(int fd)
 {
-	int arg;
+	return test_common_setown(fd, 1);
+}
 
-        /* The process must be able to receive SIGIO. */
-	arg = getpid();
-	if (ioctl(fd, FIOSETOWN, &arg) == -1)
-		errx(1, "ioctl: FIOSETOWN");
-
-	/* The process group must be able to receive SIGIO. */
-	arg = -getpgrp();
-	if (ioctl(fd, FIOSETOWN, &arg) == -1)
-		errx(1, "ioctl: FIOSETOWN");
-
-	/* A bogus process must be rejected. */
-	arg = 1000000;
-	if (ioctl(fd, FIOSETOWN, &arg) != -1)
-		errx(1, "ioctl: FIOSETOWN: bogus process accepted");
-
-	/* A bogus process group must be rejected. */
-	arg = -1000000;
-	if (ioctl(fd, FIOSETOWN, &arg) != -1)
-		errx(1, "ioctl: FIOSETOWN: bogus process group accepted");
-
-	return 0;
+static int
+test_setown_ioctl(int fd)
+{
+	return test_common_setown(fd, 0);
 }
 
 static int
@@ -215,6 +203,54 @@ test_spgrp(int fd)
 	arg = 1000000;
 	if (ioctl(fd, TIOCSPGRP, &arg) != -1)
 		errx(1, "ioctl: TIOCSPGRP: %d accepted", arg);
+
+	return 0;
+}
+
+static int
+test_common_setown(int fd, int dofcntl)
+{
+	int arg;
+
+        /* The process must be able to receive SIGIO. */
+	arg = getpid();
+	if (dofcntl) {
+		if (fcntl(fd, F_SETOWN, arg) == -1)
+			errx(1, "fcntl: F_SETOWN: process rejected");
+	} else {
+		if (ioctl(fd, FIOSETOWN, &arg) == -1)
+			errx(1, "ioctl: FIOSETOWN: process rejected");
+	}
+
+	/* The process group must be able to receive SIGIO. */
+	arg = -getpgrp();
+	if (dofcntl) {
+		if (fcntl(fd, F_SETOWN, arg) == -1)
+			errx(1, "fcntl: F_SETOWN: process group rejected");
+	} else {
+		if (ioctl(fd, FIOSETOWN, &arg) == -1)
+			errx(1, "ioctl: FIOSETOWN: process group rejected");
+	}
+
+	/* A bogus process must be rejected. */
+	arg = 1000000;
+	if (dofcntl) {
+		if (fcntl(fd, F_SETOWN, arg) != -1)
+			errx(1, "fcntl: F_SETOWN: bogus process accepted");
+	} else {
+		if (ioctl(fd, FIOSETOWN, &arg) != -1)
+			errx(1, "ioctl: FIOSETOWN: bogus process accepted");
+	}
+
+	/* A bogus process group must be rejected. */
+	arg = -1000000;
+	if (dofcntl) {
+		if (fcntl(fd, F_SETOWN, arg) != -1)
+			errx(1, "fcntl: F_SETOWN: bogus process group accepted");
+	} else {
+		if (ioctl(fd, FIOSETOWN, &arg) != -1)
+			errx(1, "ioctl: FIOSETOWN: bogus process group accepted");
+	}
 
 	return 0;
 }
