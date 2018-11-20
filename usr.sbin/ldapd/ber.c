@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.29 2018/08/12 22:04:09 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.30 2018/11/20 07:20:21 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -894,6 +894,8 @@ ber_free_element(struct ber_element *root)
 void
 ber_free_elements(struct ber_element *root)
 {
+	if (root == NULL)
+		return;
 	if (root->be_sub && (root->be_encoding == BER_TYPE_SEQUENCE ||
 	    root->be_encoding == BER_TYPE_SET))
 		ber_free_elements(root->be_sub);
