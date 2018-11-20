@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.156 2018/11/20 10:00:15 patrick Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.157 2018/11/20 20:26:01 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -140,15 +140,15 @@ ieee80211_print_ess(struct ieee80211_ess *ess)
 		printf(" ");
 
 		if (ess->rsnciphers & IEEE80211_CIPHER_USEGROUP)
-			printf("usegroup");
+			printf(" usegroup");
 		if (ess->rsnciphers & IEEE80211_CIPHER_WEP40)
-			printf("wep40");
+			printf(" wep40");
 		if (ess->rsnciphers & IEEE80211_CIPHER_WEP104)
-			printf("wep104");
+			printf(" wep104");
 		if (ess->rsnciphers & IEEE80211_CIPHER_TKIP)
-			printf("tkip");
+			printf(" tkip");
 		if (ess->rsnciphers & IEEE80211_CIPHER_CCMP)
-			printf("ccmp");
+			printf(" ccmp");
 	}
 	if (ess->flags & IEEE80211_F_WEPON) {
 		int i = ess->def_txkey;
