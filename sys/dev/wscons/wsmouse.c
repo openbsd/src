@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.49 2018/11/20 19:00:13 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.50 2018/11/20 19:33:44 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -495,6 +495,13 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
 		sc->sc_base.me_evp->async = *(int *)data != 0;
+		return (0);
+
+	case TIOCGPGRP:
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		*(int *)data = -sigio_getown(&evar->sigio);
 		return (0);
 
 	case TIOCSPGRP:

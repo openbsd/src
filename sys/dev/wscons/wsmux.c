@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.34 2018/11/20 19:00:13 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.35 2018/11/20 19:33:44 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -469,6 +469,13 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		if (evar == NULL)
 			return (EINVAL);
 		evar->async = *(int *)data != 0;
+		return (0);
+	case TIOCGPGRP:
+		DPRINTF(("%s: TIOCGPGRP\n", sc->sc_base.me_dv.dv_xname));
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		*(int *)data = -sigio_getown(&evar->sigio);
 		return (0);
 	case TIOCSPGRP:
 		DPRINTF(("%s: TIOCSPGRP\n", sc->sc_base.me_dv.dv_xname));

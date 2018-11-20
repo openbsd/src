@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.93 2018/11/20 19:00:13 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.94 2018/11/20 19:33:44 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -955,6 +955,13 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
 		sc->sc_base.me_evp->async = *(int *)data != 0;
+		return (0);
+
+	case TIOCGPGRP:
+		evar = sc->sc_base.me_evp;
+		if (evar == NULL)
+			return (EINVAL);
+		*(int *)data = -sigio_getown(&evar->sigio);
 		return (0);
 
 	case TIOCSPGRP:
