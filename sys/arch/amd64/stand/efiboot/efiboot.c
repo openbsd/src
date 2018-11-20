@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.31 2018/08/24 01:42:41 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.32 2018/11/20 03:10:47 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <dev/cons.h>
+#include <dev/isa/isareg.h>
 #include <sys/disklabel.h>
 #include <cmd.h>
 #include <stand/boot/bootarg.h>
@@ -393,10 +394,10 @@ efi_memprobe_internal(void)
 		}
 	}
 	for (bm = bios_memmap; bm->type != BIOS_MAP_END; bm++) {
-		if (bm->addr < 0x0a0000)	/* Below memory hole */
+		if (bm->addr < IOM_BEGIN)	/* Below memory hole */
 			cnvmem =
 			    max(cnvmem, (bm->addr + bm->size) / 1024);
-		if (bm->addr >= 0x10000 /* Above the memory hole */ &&
+		if (bm->addr >= IOM_END /* Above the memory hole */ &&
 		    bm->addr / 1024 == extmem + 1024)
 			extmem += bm->size / 1024;
 	}
