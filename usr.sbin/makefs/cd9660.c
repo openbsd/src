@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.20 2017/04/06 19:09:45 natano Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.21 2018/11/20 01:13:14 yasuoka Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
     fsinfo_t *fsopts)
 {
 	int64_t startoffset;
-	int numDirectories;
+	int ret, numDirectories;
 	uint64_t pathTableSectors;
 	int64_t firstAvailableSector;
 	int64_t totalSpace;
@@ -514,10 +514,13 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	if (diskStructure->include_padding_areas)
 		diskStructure->totalSectors += 150;
 
-	cd9660_write_image(diskStructure, image);
+	ret = cd9660_write_image(diskStructure, image);
 
 	/* Clean up data structures */
 	cd9660_free_structure(real_root);
+
+	if (ret == 0)	/* cd9660_write_image() failed */
+		exit(1);
 }
 
 /* Generic function pointer - implement later */
@@ -1971,6 +1974,8 @@ cd9660_add_generic_bootimage(iso9660_disk *diskStructure, const char *bootimage)
 
 	diskStructure->generic_bootimage = estrdup(bootimage);
 
+	if (unveil(diskStructure->generic_bootimage, "r") == -1)
+		err(1, "unveil");
 	/* Get information about the file */
 	if (lstat(diskStructure->generic_bootimage, &stbuf) == -1)
 		err(1, "%s: lstat(\"%s\")", __func__,
