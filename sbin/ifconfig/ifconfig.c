@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.383 2018/11/14 21:25:04 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.384 2018/11/20 20:49:26 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -630,7 +630,7 @@ const char *get_linkstate(int, int);
 void	status(int, struct sockaddr_dl *, int);
 __dead void	usage(void);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
-void	print_string(const u_int8_t *, int);
+int	print_string(const u_int8_t *, int);
 char	*sec2str(time_t);
 
 const char *get_media_type_string(uint64_t);
@@ -1651,7 +1651,7 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 	return val;
 }
 
-void
+int
 print_string(const u_int8_t *buf, int len)
 {
 	int i = 0, hasspc = 0;
@@ -1666,14 +1666,18 @@ print_string(const u_int8_t *buf, int len)
 		}
 	}
 	if (i == len) {
-		if (hasspc || len == 0)
+		if (hasspc || len == 0) {
 			printf("\"%.*s\"", len, buf);
-		else
+			return len + 2;
+		} else {
 			printf("%.*s", len, buf);
+			return len;
+		}
 	} else {
 		printf("0x");
 		for (i = 0; i < len; i++)
 			printf("%02x", buf[i]);
+		return (len * 2) + 2;
 	}
 }
 
