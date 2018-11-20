@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.80 2018/01/15 22:30:38 jca Exp $	*/
+/*	$OpenBSD: history.c,v 1.81 2018/11/20 07:02:23 martijn Exp $	*/
 
 /*
  * command history
@@ -48,6 +48,8 @@ static uint32_t	line_co;
 
 static struct stat last_sb;
 
+static volatile sig_atomic_t	c_fc_depth;
+
 int
 c_fc(char **wp)
 {
@@ -58,9 +60,8 @@ c_fc(char **wp)
 	int optc, ret;
 	char *first = NULL, *last = NULL;
 	char **hfirst, **hlast, **hp;
-	static int depth;
 
-	if (depth != 0) {
+	if (c_fc_depth != 0) {
 		bi_errorf("history function called recursively");
 		return 1;
 	}
@@ -146,9 +147,9 @@ c_fc(char **wp)
 		    hist_get_newest(false);
 		if (!hp)
 			return 1;
-		depth++;
+		c_fc_depth++;
 		ret = hist_replace(hp, pat, rep, gflag);
-		depth--;
+		c_fc_reset();
 		return ret;
 	}
 
@@ -268,11 +269,20 @@ c_fc(char **wp)
 		shf_close(shf);
 		*xp = '\0';
 		strip_nuls(Xstring(xs, xp), Xlength(xs, xp));
-		depth++;
+		c_fc_depth++;
 		ret = hist_execute(Xstring(xs, xp));
-		depth--;
+		c_fc_reset();
 		return ret;
 	}
+}
+
+/* Reset the c_fc depth counter.
+ * Made available for when an fc call is interrupted.
+ */
+void
+c_fc_reset(void)
+{
+	c_fc_depth = 0;
 }
 
 /* Save cmd in history, execute cmd (cmd gets trashed) */
