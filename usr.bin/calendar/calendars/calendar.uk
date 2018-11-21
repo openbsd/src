@@ -1,7 +1,7 @@
 /*
  * United Kingdom (UK) calendar
  *
- * $OpenBSD: calendar.uk,v 1.1 2016/01/14 20:08:01 jmc Exp $
+ * $OpenBSD: calendar.uk,v 1.2 2018/11/21 14:50:28 jmc Exp $
  */
 
 #ifndef _calendar_uk_
@@ -12,7 +12,7 @@
 01/25	Burns' Night in Scotland
 02/14	Saint Valentine's Day
 03/01	Saint David's Day in Wales
-03/17	Saint Patrick's Day (also a bank holiday across Ireland)
+03/17	Saint Patrick's Day in Northern Ireland (also a bank holiday there)
 03/20*	Vernal Equinox
 03/SunLast	Daylight Saving Time begins; clocks move forward (last Sunday of March)
 04/01	April Fools' Day
@@ -35,6 +35,7 @@ Easter+1	Easter Monday (bank holiday - except Scotland)
 11/05	Guy Fawkes Night
 11/11	Remembrance Day
 11/SunSecond	Remembrance Sunday
+11/30	Saint Andrew's Day in Scotland
 12/21*	Winter Solstice
 12/24	Christmas Eve
 12/25	Christmas Day
