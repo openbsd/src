@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.40 2018/11/21 12:31:47 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.41 2018/11/21 13:48:20 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -236,7 +236,7 @@ Unlike the IPv4 option,
 does not respond to DHCPv6 or router solicitation messages itself.
 Use
 .Xr rad 8
-listening on the interface group, e.g.
+listening on the interface group, e.g.\&
 .Ar interface tap
 for auto-configuring the VMs accordingly.
 .It Cm interfaces Ar count
