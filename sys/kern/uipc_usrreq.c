@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.136 2018/11/21 16:50:49 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.137 2018/11/21 17:07:07 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -807,6 +807,8 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	 * Check for two potential msg_controllen values because
 	 * IETF stuck their nose in a place it does not belong.
 	 */ 
+	if (control->m_len < CMSG_LEN(0) || cm->cmsg_len < CMSG_LEN(0))
+		return (EINVAL);
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    !(cm->cmsg_len == control->m_len ||
 	    control->m_len == CMSG_ALIGN(cm->cmsg_len)))
