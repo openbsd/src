@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.224 2018/11/10 01:19:09 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.225 2018/11/21 15:13:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1242,6 +1242,7 @@ void tls1_handshake_hash_free(SSL *s);
 
 int tls1_transcript_init(SSL *s);
 void tls1_transcript_free(SSL *s);
+void tls1_transcript_reset(SSL *s);
 int tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len);
 int tls1_transcript_data(SSL *s, const unsigned char **data, size_t *len);
 void tls1_transcript_freeze(SSL *s);

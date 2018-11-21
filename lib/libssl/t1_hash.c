@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_hash.c,v 1.4 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: t1_hash.c,v 1.5 2018/11/21 15:13:29 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -118,7 +118,7 @@ tls1_transcript_init(SSL *s)
 	if ((S3I(s)->handshake_transcript = BUF_MEM_new()) == NULL)
 		return 0;
 
-	s->s3->flags &= ~TLS1_FLAGS_FREEZE_TRANSCRIPT;
+	tls1_transcript_reset(s);
 
 	return 1;
 }
@@ -128,6 +128,21 @@ tls1_transcript_free(SSL *s)
 {
 	BUF_MEM_free(S3I(s)->handshake_transcript);
 	S3I(s)->handshake_transcript = NULL;
+}
+
+void
+tls1_transcript_reset(SSL *s)
+{
+	/*
+	 * We should check the return value of BUF_MEM_grow_clean(), however
+	 * due to yet another bad API design, when called with a length of zero
+	 * it is impossible to tell if it succeeded (returning a length of zero)
+	 * or if it failed (and returned zero)... our implementation never
+	 * fails with a length of zero, so we trust all is okay...
+	 */ 
+	(void)BUF_MEM_grow_clean(S3I(s)->handshake_transcript, 0);
+
+	s->s3->flags &= ~TLS1_FLAGS_FREEZE_TRANSCRIPT;
 }
 
 int

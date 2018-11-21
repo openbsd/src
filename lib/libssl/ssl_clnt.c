@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.49 2018/11/19 15:07:29 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.50 2018/11/21 15:13:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,11 +244,9 @@ ssl3_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			if (!SSL_IS_DTLS(s)) {
-				if (!tls1_transcript_init(s)) {
-					ret = -1;
-					goto end;
-				}
+			if (!tls1_transcript_init(s)) {
+				ret = -1;
+				goto end;
 			}
 
 			S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
@@ -270,10 +268,7 @@ ssl3_connect(SSL *s)
 
 			if (SSL_IS_DTLS(s)) {
 				/* every DTLS ClientHello resets Finished MAC */
-				if (!tls1_transcript_init(s)) {
-					ret = -1;
-					goto end;
-				}
+				tls1_transcript_reset(s);
 
 				dtls1_start_timer(s);
 			}
