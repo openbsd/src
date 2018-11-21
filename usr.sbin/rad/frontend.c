@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.17 2018/11/16 19:45:40 reyk Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.18 2018/11/21 09:50:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -70,6 +70,7 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <event.h>
 #include <ifaddrs.h>
@@ -101,6 +102,7 @@ struct ra_iface {
 	TAILQ_ENTRY(ra_iface)		entry;
 	struct ra_prefix_conf_head	prefixes;
 	char				name[IF_NAMESIZE];
+	char				conf_name[IF_NAMESIZE];
 	uint32_t			if_index;
 	int				removed;
 	int				prefix_count;
@@ -116,6 +118,7 @@ void			 frontend_startup(void);
 void			 icmp6_receive(int, short, void *);
 void			 join_all_routers_mcast_group(struct ra_iface *);
 void			 leave_all_routers_mcast_group(struct ra_iface *);
+void			 merge_ra_interface(char *, char *);
 void			 merge_ra_interfaces(void);
 struct ra_iface		*find_ra_iface_by_id(uint32_t);
 struct ra_iface		*find_ra_iface_by_name(char *);
@@ -688,36 +691,83 @@ find_ra_iface_conf(struct ra_iface_conf_head *head, char *if_name)
 }
 
 void
+merge_ra_interface(char *name, char *conf_name)
+{
+	struct ra_iface		*ra_iface;
+	uint32_t		 if_index;
+
+	if ((ra_iface = find_ra_iface_by_name(name)) != NULL) {
+		log_debug("keeping interface %s", name);
+		ra_iface->removed = 0;
+		return;
+	}
+
+	log_debug("new interface %s", name);
+	if ((if_index = if_nametoindex(name)) == 0)
+		return;
+	log_debug("adding interface %s", name);
+	if ((ra_iface = calloc(1, sizeof(*ra_iface))) == NULL)
+		fatal("%s", __func__);
+
+	strlcpy(ra_iface->name, name, sizeof(ra_iface->name));
+	strlcpy(ra_iface->conf_name, conf_name,
+	    sizeof(ra_iface->conf_name));
+
+	ra_iface->if_index = if_index;
+	SIMPLEQ_INIT(&ra_iface->prefixes);
+	TAILQ_INSERT_TAIL(&ra_interfaces, ra_iface, entry);
+	join_all_routers_mcast_group(ra_iface);
+}
+
+void
 merge_ra_interfaces(void)
 {
 	struct ra_iface_conf	*ra_iface_conf;
 	struct ra_prefix_conf	*ra_prefix_conf;
 	struct ra_iface		*ra_iface;
-	uint32_t		 if_index;
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg;
+	char			*conf_name;
+	unsigned int		 len;
 
 	TAILQ_FOREACH(ra_iface, &ra_interfaces, entry)
 		ra_iface->removed = 1;
 
 	SIMPLEQ_FOREACH(ra_iface_conf, &frontend_conf->ra_iface_list, entry) {
-		ra_iface = find_ra_iface_by_name(ra_iface_conf->name);
-		if (ra_iface == NULL) {
-			log_debug("new interface %s", ra_iface_conf->name);
-			if ((if_index = if_nametoindex(ra_iface_conf->name))
-			    == 0)
-				continue;
-			log_debug("adding interface %s", ra_iface_conf->name);
-			if ((ra_iface = calloc(1, sizeof(*ra_iface))) == NULL)
-				fatal("%s", __func__);
+		conf_name = ra_iface_conf->name;
 
-			(void) strlcpy(ra_iface->name, ra_iface_conf->name,
-			    sizeof(ra_iface->name));
-			ra_iface->if_index = if_index;
-			SIMPLEQ_INIT(&ra_iface->prefixes);
-			TAILQ_INSERT_TAIL(&ra_interfaces, ra_iface, entry);
-			join_all_routers_mcast_group(ra_iface);
+		/* check if network interface or group */
+		if (isdigit((unsigned char)conf_name[strlen(conf_name) - 1])) {
+			merge_ra_interface(conf_name, conf_name);
 		} else {
-			log_debug("keeping interface %s", ra_iface_conf->name);
-			ra_iface->removed = 0;
+			log_debug("interface group %s", conf_name);
+
+			memset(&ifgr, 0, sizeof(ifgr));
+			strlcpy(ifgr.ifgr_name, conf_name,
+			    sizeof(ifgr.ifgr_name));
+			if (ioctl(ioctlsock, SIOCGIFGMEMB,
+			    (caddr_t)&ifgr) == -1)
+				continue;
+
+			len = ifgr.ifgr_len;
+			if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+				fatal("%s: calloc", __func__);
+			if (ioctl(ioctlsock, SIOCGIFGMEMB,
+			    (caddr_t)&ifgr) == -1) {
+				log_debug("group %s without members",
+				    conf_name);
+				free(ifgr.ifgr_groups);
+				continue;
+			}
+
+			for (ifg = ifgr.ifgr_groups;
+			    (ifg != NULL) && (len >= sizeof(struct ifg_req));
+			    ifg++) {
+				len -= sizeof(struct ifg_req);
+				merge_ra_interface(ifg->ifgrq_member,
+				    conf_name);
+			}
+			free(ifgr.ifgr_groups);
 		}
 	}
 
@@ -739,7 +789,7 @@ merge_ra_interfaces(void)
 		}
 
 		ra_iface_conf = find_ra_iface_conf(
-		    &frontend_conf->ra_iface_list, ra_iface->name);
+		    &frontend_conf->ra_iface_list, ra_iface->conf_name);
 
 		if (ra_iface_conf->autoprefix)
 			get_interface_prefixes(ra_iface,
@@ -903,7 +953,7 @@ build_packet(struct ra_iface *ra_iface)
 	char				*label_start, *label_end;
 
 	ra_iface_conf = find_ra_iface_conf(&frontend_conf->ra_iface_list,
-	    ra_iface->name);
+	    ra_iface->conf_name);
 	ra_options_conf = &ra_iface_conf->ra_options;
 
 	len = sizeof(*ra);
