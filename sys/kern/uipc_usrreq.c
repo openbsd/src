@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.135 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.136 2018/11/21 16:50:49 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -662,6 +662,13 @@ unp_externalize(struct mbuf *rights, socklen_t controllen, int flags)
 	struct fdpass *rp;
 	struct file *fp;
 	int nfds, error = 0;
+
+	/*
+	 * This code only works because SCM_RIGHTS is the only supported
+	 * control message type on unix sockets. Enforce this here.
+	 */
+	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET)
+		return EINVAL;
 
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(struct fdpass);
