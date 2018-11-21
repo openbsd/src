@@ -2048,7 +2048,6 @@
 ./usr/share/man/man5/login.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
-./usr/share/man/man5/malloc.conf.5
 ./usr/share/man/man5/man.conf.5
 ./usr/share/man/man5/mandoc.db.5
 ./usr/share/man/man5/mixerctl.conf.5
