@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2018/10/26 11:24:45 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2018/11/21 12:31:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,17 +42,44 @@
 /* Supported bridge types */
 const char *vmd_descsw[] = { "switch", "bridge", NULL };
 
+static int	 config_init_localprefix(struct vmd_config *);
+
+static int
+config_init_localprefix(struct vmd_config *cfg)
+{
+	struct sockaddr_in6	*sin6;
+
+	if (host(VMD_DHCP_PREFIX, &cfg->cfg_localprefix) == -1)
+		return (-1);
+
+	/* IPv6 is disabled by default */
+	cfg->cfg_flags &= ~VMD_CFG_INET6;
+
+	/* Generate random IPv6 prefix only once */
+	if (cfg->cfg_flags & VMD_CFG_AUTOINET6)
+		return (0);
+	if (host(VMD_ULA_PREFIX, &cfg->cfg_localprefix6) == -1)
+		return (-1);
+	/* Randomize the 56 bits "Global ID" and "Subnet ID" */
+	sin6 = ss2sin6(&cfg->cfg_localprefix6.ss);
+	arc4random_buf(&sin6->sin6_addr.s6_addr[1], 7);
+	cfg->cfg_flags |= VMD_CFG_AUTOINET6;
+
+	return (0);
+}
+
 int
 config_init(struct vmd *env)
 {
-	struct privsep	*ps = &env->vmd_ps;
-	unsigned int	 what;
+	struct privsep		*ps = &env->vmd_ps;
+	unsigned int		 what;
 
 	/* Global configuration */
 	ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 	ps->ps_what[PROC_VMM] = CONFIG_VMS;
 
-	if (host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix) == -1)
+	/* Local prefix */
+	if (config_init_localprefix(&env->vmd_cfg) == -1)
 		return (-1);
 
 	/* Other configuration */
@@ -90,7 +117,7 @@ config_purge(struct vmd *env, unsigned int reset)
 	    __func__, ps->ps_title[privsep_process]);
 
 	/* Reset global configuration (prefix was verified before) */
-	(void)host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix);
+	config_init_localprefix(&env->vmd_cfg);
 
 	/* Reset other configuration */
 	what = ps->ps_what[privsep_process] & reset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.104 2018/10/15 10:35:41 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.105 2018/11/21 12:31:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1920,6 +1920,25 @@ prefixlen2mask(uint8_t prefixlen)
 		prefixlen = 32;
 
 	return (htonl(0xffffffff << (32 - prefixlen)));
+}
+
+void
+prefixlen2mask6(uint8_t prefixlen, struct in6_addr *mask)
+{
+	struct in6_addr	 s6;
+	int		 i;
+
+	if (prefixlen > 128)
+		prefixlen = 128;
+
+	memset(&s6, 0, sizeof(s6));
+	for (i = 0; i < prefixlen / 8; i++)
+		s6.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		s6.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	memcpy(mask, &s6, sizeof(s6));
 }
 
 void

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.39 2018/10/30 17:56:54 anton Exp $
+.\" $OpenBSD: vm.conf.5,v 1.40 2018/11/21 12:31:47 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2018 $
+.Dd $Mdocdate: November 21 2018 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -100,6 +100,15 @@ in the
 section below.
 The default is
 .Ar 100.64.0.0/10 .
+.It Ic local inet6 Op Ic prefix Ar address Ns Li / Ns Ar prefix
+Enable IPv6 on local interfaces and allocate routable subnets.
+If the prefix is not specified,
+a random prefix from the
+.Dq unique local
+network range
+.Ar fd00::/8
+will be generated on startup.
+The specified prefix length must be /64 or smaller.
 .It Cm socket owner Ar user Ns Op : Ns Ar group
 Set the control socket owner to the specified user or group.
 Users with access to the control socket will be allowed to use
@@ -217,6 +226,19 @@ interface will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
 and run a simple DHCP/BOOTP server for the VM.
 This option can be used for layer 3 mode without configuring a switch.
+.Pp
+If the global
+.Cm local inet6
+option is enabled, a routable IPv6 gateway address will be generated
+on the host side.
+Unlike the IPv4 option,
+.Nm vmd
+does not respond to DHCPv6 or router solicitation messages itself.
+Use
+.Xr rad 8
+listening on the interface group, e.g.
+.Ar interface tap
+for auto-configuring the VMs accordingly.
 .It Cm interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.
 If the
