@@ -1527,7 +1527,6 @@ lldiv
 lsearch
 malloc
 malloc_options
-malloc_usable_size
 _malloc_init
 mergesort
 optarg

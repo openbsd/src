@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.253 2018/11/19 22:50:24 guenther Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.254 2018/11/21 06:57:04 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1465,83 +1465,6 @@ freezero(void *ptr, size_t sz)
 	errno = saved_errno;
 }
 DEF_WEAK(freezero);
-
-static size_t
-osize(struct dir_info *argpool, void *p)
-{
-	struct dir_info *pool;
-	struct region_info *r;
-	char *saved_function;
-	size_t sz;
-	int i;
-
-	pool = argpool;
-	r = find(pool, p);
-	if (r == NULL) {
-		if (mopts.malloc_mt)  {
-			for (i = 0; i < _MALLOC_MUTEXES; i++) {
-				if (i == argpool->mutex)
-					continue;
-				pool->active--;
-				_MALLOC_UNLOCK(pool->mutex);
-				pool = mopts.malloc_pool[i];
-				_MALLOC_LOCK(pool->mutex);
-				pool->active++;
-				r = find(pool, p);
-				if (r != NULL) {
-					saved_function = pool->func;
-					pool->func = argpool->func;
-					break;
-				}
-			}
-		}
-		if (r == NULL)
-			wrterror(argpool, "bogus pointer (double free?) %p", p);
-	}
-
-	REALSIZE(sz, r);
-	if (sz > MALLOC_MAXCHUNK) {
-		if (MALLOC_MOVE_COND(sz))
-			sz = MALLOC_PAGESIZE - ((char *)p - (char *)r->p);
-		else
-			sz = PAGEROUND(sz);
-	}
-	if (argpool != pool) {
-		pool->active--;
-		pool->func = saved_function;
-		_MALLOC_UNLOCK(pool->mutex);
-		_MALLOC_LOCK(argpool->mutex);
-		argpool->active++;
-	}
-	return sz;
-}
-
-size_t
-malloc_usable_size(void *ptr)
-{
-	struct dir_info *d;
-	int saved_errno = errno;
-	size_t sz;
-
-	/* This is legal. */
-	if (ptr == NULL)
-		return 0;
-
-	d = getpool();
-	if (d == NULL)
-		wrterror(d, "malloc_usable_size() called before allocation");
-	_MALLOC_LOCK(d->mutex);
-	d->func = "malloc_usable_size";
-	if (d->active++) {
-		malloc_recurse(d);
-		return 0;
-	}
-	sz = osize(d, ptr);
-	d->active--;
-	_MALLOC_UNLOCK(d->mutex);
-	errno = saved_errno;
-	return sz;
-}
 
 static void *
 orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
