@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.211 2018/08/23 19:32:03 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.212 2018/11/22 11:30:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -488,8 +488,13 @@ main(int argc, char *argv[])
 		fd = mparse_open(curp.mp, resp != NULL ? resp->file : *argv);
 		if (fd != -1) {
 			if (use_pager) {
-				tag_files = tag_init();
 				use_pager = 0;
+				tag_files = tag_init();
+				if (conf.output.tag != NULL &&
+				    tag_files->tagname == NULL)
+					tag_files->tagname =
+					    *conf.output.tag != '\0' ?
+					    conf.output.tag : *argv;
 			}
 
 			if (resp == NULL)
@@ -1150,7 +1155,7 @@ spawn_pager(struct tag_files *tag_files)
 	const char	*pager;
 	char		*cp;
 	size_t		 cmdlen;
-	int		 argc;
+	int		 argc, use_ofn;
 	pid_t		 pager_pid;
 
 	pager = getenv("MANPAGER");
@@ -1166,7 +1171,7 @@ spawn_pager(struct tag_files *tag_files)
 	 */
 
 	argc = 0;
-	while (argc + 4 < MAX_PAGER_ARGS) {
+	while (argc + 5 < MAX_PAGER_ARGS) {
 		argv[argc++] = cp;
 		cp = strchr(cp, ' ');
 		if (cp == NULL)
@@ -1180,14 +1185,21 @@ spawn_pager(struct tag_files *tag_files)
 
 	/* For more(1) and less(1), use the tag file. */
 
+	use_ofn = 1;
 	if ((cmdlen = strlen(argv[0])) >= 4) {
 		cp = argv[0] + cmdlen - 4;
 		if (strcmp(cp, "less") == 0 || strcmp(cp, "more") == 0) {
 			argv[argc++] = mandoc_strdup("-T");
 			argv[argc++] = tag_files->tfn;
+			if (tag_files->tagname != NULL) {
+				argv[argc++] = mandoc_strdup("-t");
+				argv[argc++] = tag_files->tagname;
+				use_ofn = 0;
+			}
 		}
 	}
-	argv[argc++] = tag_files->ofn;
+	if (use_ofn)
+		argv[argc++] = tag_files->ofn;
 	argv[argc] = NULL;
 
 	switch (pager_pid = fork()) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.20 2018/10/23 20:41:59 schwarze Exp $ */
+/*	$OpenBSD: tag.c,v 1.21 2018/11/22 11:30:15 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 
+#include <err.h>
 #include <limits.h>
 #include <signal.h>
 #include <stddef.h>
@@ -214,6 +215,11 @@ tag_write(void)
 
 	if (tag_files.tfd <= 0)
 		return;
+	if (tag_files.tagname != NULL && ohash_find(&tag_data,
+            ohash_qlookup(&tag_data, tag_files.tagname)) == NULL) {
+		warnx("%s: no such tag", tag_files.tagname);
+		tag_files.tagname = NULL;
+	}
 	stream = fdopen(tag_files.tfd, "w");
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {
