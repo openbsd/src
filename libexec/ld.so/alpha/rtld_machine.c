@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.64 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.65 2018/11/22 21:37:30 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -253,7 +253,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	return (buf.newval);
 }
 
-void _dl_bind_secureplt(void) __dso_hidden;	/* XXX */
+void _dl_bind_start(void) __dso_hidden;	/* XXX */
 
 /*
  *	Relocate the Global Offset Table (GOT).
@@ -290,39 +290,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 				*addr += object->obj_base;
 			}
 		}
-		pltgot[0] = (Elf_Addr)_dl_bind_secureplt;
+		pltgot[0] = (Elf_Addr)_dl_bind_start;
 		pltgot[1] = (Elf_Addr)object;
 	}
 
 	return (fails);
-}
-
-/* relocate the GOT early */
-
-void	_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase);
-
-void
-_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
-{
-	const Elf_RelA *rela = NULL, *relalim;
-	Elf_Addr relasz = 0;
-	Elf_Addr *where;
-
-	for (; dynp->d_tag != DT_NULL; dynp++) {
-		switch (dynp->d_tag) {
-		case DT_RELA:
-			rela = (const Elf_RelA *)(relocbase + dynp->d_un.d_ptr);
-			break;
-		case DT_RELASZ:
-			relasz = dynp->d_un.d_val;
-			break;
-		}
-	}
-	relalim = (const Elf_RelA *)((caddr_t)rela + relasz);
-	for (; rela < relalim; rela++) {
-		if (ELF64_R_TYPE(rela->r_info) != RELOC_RELATIVE)
-			continue;
-		where = (Elf_Addr *)(relocbase + rela->r_offset);
-		*where += (Elf_Addr)relocbase;
-	}
 }

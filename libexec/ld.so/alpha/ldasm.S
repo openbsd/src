@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.41 2018/11/12 02:33:42 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.42 2018/11/22 21:37:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -70,15 +70,11 @@ L1:
 L2:	ldiq	s3, L2		/* get where the linker thought we were */
 
 	subq	s2, s3, s2
-	mov	s2, a1
 	lda	t5, _DYNAMIC
-	addq	s2, t5, a0
-	mov	a0, s6
-
-	bsr	ra, _reloc_alpha_got
+	addq	s2, t5, s6
 
 	/* allocate stack */
-	lda	sp, (-8 - ((AUX_entry) * 8))(sp)
+	lda	sp, -((AUX_entry + 1) * 8)(sp)
 
 	mov	s0, a0
 	mov	s2, s1		/* relocation displacement */
@@ -93,7 +89,11 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	lda	s2, 0(sp)
 	mov	s2, a1
 	mov	s6, a2		/* &_DYNAMIC */
-	CALL(_dl_boot_bind)
+	/* we can't use CALL here as gp would not be set correctly by ldgp,
+	   due to the GOT not being relocated yet. */
+	lda	pv, _dl_boot_bind
+	addq	s1, pv, pv
+	bsr	ra, _dl_boot_bind
 	mov	s3, a0		/* **argv  */
 	mov	s4, a1		/* **envp  */
 	mov	s1, a2		/* loff    */
@@ -108,7 +108,7 @@ END(_dl_start)
 /*
  * Lazy binding entry point, called via secure (read-only) PLT.
  */
-NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
+NESTED_NOPROFILE(_dl_bind_start, 0, 160, ra, 0, 0)
 	.set	noat
 	/* at_reg and t11 already used by PLT code. */
 
@@ -179,4 +179,4 @@ NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
 	/* Pop the stack frame and turn control to the destination. */
 	lda	sp, 160(sp)
 	jmp	zero, (pv)
-END(_dl_bind_secureplt)
+END(_dl_bind_start)
