@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.39 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.40 2018/11/22 14:54:36 fcambus Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -2864,7 +2864,6 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	OUTB(bktr, BKTR_COLOR_CTL, INB(bktr, BKTR_COLOR_CTL) | BT848_COLOR_CTL_RGB_DED | BT848_COLOR_CTL_GAMMA);
 	OUTB(bktr, BKTR_ADC, SYNC_LEVEL);
 
-	bktr->capcontrol =   1 << 6 | 1 << 4 | 1 << 2 | 3;
 	bktr->capcontrol = 3 << 2 |  3;
 
 	dma_prog = (u_int *) bktr->dma_prog;
