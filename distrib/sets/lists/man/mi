@@ -1652,6 +1652,7 @@
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/pvbus.4
+./usr/share/man/man4/pvclock.4
 ./usr/share/man/man4/pwdog.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
