@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.66 2018/11/20 10:28:08 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.67 2018/11/23 16:24:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -731,13 +731,12 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 
 int
 rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
+    int plen, uint8_t prio, struct rtentry *rt)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
 	uint8_t				*addr;
-	int				 plen;
 	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -745,9 +744,6 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 		return (EAFNOSUPPORT);
 
 	addr = satoaddr(ar, dst);
-	plen = rtable_satoplen(dst->sa_family, mask);
-	if (plen == -1)
-		return (EINVAL);
 
 	rw_enter_write(&ar->ar_lock);
 	an = art_lookup(ar, addr, plen, &sr);

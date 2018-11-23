@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.21 2018/09/09 10:07:38 henning Exp $ */
+/*	$OpenBSD: rtable.h,v 1.22 2018/11/23 16:24:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -70,6 +70,6 @@ int		 rtable_walk(unsigned int, sa_family_t,
 int		 rtable_mpath_capable(unsigned int, sa_family_t);
 struct rtentry	*rtable_mpath_match(unsigned int, struct rtentry *,
 		     struct sockaddr *, uint8_t);
-int		 rtable_mpath_reprio(unsigned int, struct sockaddr *,
-		     struct sockaddr *, uint8_t, struct rtentry *);
+int		 rtable_mpath_reprio(unsigned int, struct sockaddr *, int,
+		     uint8_t, struct rtentry *);
 #endif /* _NET_RTABLE_H_ */

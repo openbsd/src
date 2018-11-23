@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.378 2018/09/27 12:36:57 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.379 2018/11/23 16:24:11 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1626,8 +1626,8 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 
 		/* bring route up */
 		rt->rt_flags |= RTF_UP;
-		error = rtable_mpath_reprio(id, rt_key(rt),
-		    rt_plen2mask(rt, &sa_mask), rt->rt_priority & RTP_MASK, rt);
+		error = rtable_mpath_reprio(id, rt_key(rt), rt_plen(rt),
+		    rt->rt_priority & RTP_MASK, rt);
 	} else {
 		/*
 		 * Remove redirected and cloned routes (mainly ARP)
@@ -1646,8 +1646,8 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 
 		/* take route down */
 		rt->rt_flags &= ~RTF_UP;
-		error = rtable_mpath_reprio(id, rt_key(rt),
-		    rt_plen2mask(rt, &sa_mask), rt->rt_priority | RTP_DOWN, rt);
+		error = rtable_mpath_reprio(id, rt_key(rt), rt_plen(rt),
+		    rt->rt_priority | RTP_DOWN, rt);
 	}
 	if_group_routechange(rt_key(rt), rt_plen2mask(rt, &sa_mask));
 
