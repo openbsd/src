@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.112 2018/10/25 01:21:30 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.113 2018/11/23 19:15:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -414,8 +414,11 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 		case ESCAPE_FONTBI:
 		case ESCAPE_FONTCW:
 		case ESCAPE_FONTROMAN:
-			if (0 == norecurse)
+			if (0 == norecurse) {
+				h->flags |= HTML_NOSPACE;
 				print_metaf(h, esc);
+				h->flags &= ~HTML_NOSPACE;
+			}
 			continue;
 		case ESCAPE_SKIPCHAR:
 			h->flags |= HTML_SKIPCHAR;
