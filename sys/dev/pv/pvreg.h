@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvreg.h,v 1.4 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: pvreg.h,v 1.5 2018/11/23 12:37:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,9 @@
 
 #define	KVM_MSR_EOI_EN				0x4b564d04
 #define KVM_PV_EOI_BIT				0
+
+#define KVM_MSR_WALL_CLOCK			0x4b564d00
+#define KVM_MSR_SYSTEM_TIME			0x4b564d01
 
 /*
  * Hyper-V
