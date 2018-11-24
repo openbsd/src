@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.1 2018/11/23 12:37:40 reyk Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.2 2018/11/24 13:12:29 phessler Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -117,9 +117,11 @@ pvclock_match(struct device *parent, void *match, void *aux)
 		if ((hv->hv_features &
 		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT)) == 0)
 			return (0);
+
+		return (1);
 	}
 
-	return (1);
+	return (0);
 }
 
 void
