@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.55 2018/11/21 12:31:47 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.56 2018/11/24 04:51:55 ori Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -311,8 +311,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		 */
 		if (kernfd == -1 && !vmboot &&
 		    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
-			log_warn("%s: can't open %s", __func__,
-			    VM_DEFAULT_BIOS);
+			log_warn("can't open %s", VM_DEFAULT_BIOS);
 			errno = VMD_BIOS_MISSING;
 			goto fail;
 		}
@@ -332,8 +331,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		/* Stat cdrom to ensure it is a regular file */
 		if ((cdromfd =
 		    open(vcp->vcp_cdrom, O_RDONLY)) == -1) {
-			log_warn("%s: can't open cdrom %s", __func__,
-			    vcp->vcp_cdrom);
+			log_warn("can't open cdrom %s", vcp->vcp_cdrom);
 			errno = VMD_CDROM_MISSING;
 			goto fail;
 		}
@@ -352,14 +350,14 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 		if (strlcpy(path, vcp->vcp_disks[i], sizeof(path))
 		   >= sizeof(path))
-			log_warnx("%s, disk path too long", __func__);
+			log_warnx("disk path %s too long", vcp->vcp_disks[i]);
 		memset(vmc->vmc_diskbases, 0, sizeof(vmc->vmc_diskbases));
 		oflags = O_RDWR|O_EXLOCK|O_NONBLOCK;
 		aflags = R_OK|W_OK;
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 			/* Stat disk[i] to ensure it is a regular file */
 			if ((diskfds[i][j] = open(path, oflags)) == -1) {
-				log_warn("%s: can't open disk %s", __func__,
+				log_warn("can't open disk %s",
 				    vcp->vcp_disks[i]);
 				errno = VMD_DISK_MISSING;
 				goto fail;
@@ -514,7 +512,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
  fail:
 	saved_errno = errno;
-	log_warnx("%s: failed to start vm %s", __func__, vcp->vcp_name);
+	log_warnx("failed to start vm %s", vcp->vcp_name);
 
 	if (kernfd != -1)
 		close(kernfd);
