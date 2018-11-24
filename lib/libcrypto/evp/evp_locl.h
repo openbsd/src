@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.14 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.15 2018/11/24 11:16:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -265,7 +265,7 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 			     EVP_CIPHER_get_asn1_iv, \
 			     NULL)
 
-										struct evp_pkey_ctx_st {
+struct evp_pkey_ctx_st {
 	/* Method associated with this operation */
 	const EVP_PKEY_METHOD *pmeth;
 	/* Engine that implements this method or NULL if builtin */
