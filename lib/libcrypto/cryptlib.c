@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.43 2018/11/11 16:32:28 bcook Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.44 2018/11/24 04:11:47 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -122,13 +122,19 @@
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 
+static void (*locking_callback)(int mode, int type,
+    const char *file, int line) = NULL;
+static int (*add_lock_callback)(int *pointer, int amount,
+    int type, const char *file, int line) = NULL;
+
 int
 CRYPTO_num_locks(void)
 {
 	return 1;
 }
 
-unsigned long (*CRYPTO_get_id_callback(void))(void)
+unsigned long
+(*CRYPTO_get_id_callback(void))(void)
 {
 	return NULL;
 }
@@ -149,28 +155,28 @@ void
 CRYPTO_set_locking_callback(void (*func)(int mode, int lock_num,
     const char *file, int line))
 {
-	return;
+	locking_callback = func;
 }
 
 void
 (*CRYPTO_get_locking_callback(void))(int mode, int lock_num,
 	const char *file, int line)
 {
-	return NULL;
+	return locking_callback;
 }
 
 void
 CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
 	const char *file, int line))
 {
-	return;
+	add_lock_callback = func;
 }
 
 int
 (*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
     const char *file, int line)
 {
-	return NULL;
+	return add_lock_callback;
 }
 
 const char *
