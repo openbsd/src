@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.24 2018/08/27 23:12:57 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.25 2018/11/24 23:03:13 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -9,7 +9,7 @@ html {		max-width: 65em; }
 body {		font-family: Helvetica,Arial,sans-serif; }
 table {		margin-top: 0em;
 		margin-bottom: 0em; }
-td {		vertical-align: top; }
+td {		vertical-align: middle; }
 ul, ol, dl {	margin-top: 0em;
 		margin-bottom: 0em; }
 li, dt {	margin-top: 1em; }
