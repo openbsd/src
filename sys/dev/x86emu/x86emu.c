@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.9 2014/06/15 11:04:49 pirofti Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.10 2018/11/25 19:52:08 jmc Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ static uint32_t	pop_long (struct x86emu *);
 
 /*
  * REMARKS:
- * Handles any pending asychronous interrupts.
+ * Handles any pending asynchronous interrupts.
  */
 static void
 x86emu_intr_dispatch(struct x86emu *emu, uint8_t intno)
