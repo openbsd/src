@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.45 2018/08/19 23:10:16 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.46 2018/11/25 19:23:59 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -110,7 +110,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	const struct tbl_dat	*dp;
 	struct roffcol		*col;
 	size_t			 ewidth, xwidth;
-	int			 spans;
+	int			 hspans;
 	int			 icol, maxcol, necol, nxcol, quirkcol;
 
 	/*
@@ -127,17 +127,17 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	for (maxcol = -1; sp; sp = sp->next) {
 		if (TBL_SPAN_DATA != sp->pos)
 			continue;
-		spans = 1;
+		hspans = 1;
 		/*
 		 * Account for the data cells in the layout, matching it
 		 * to data cells in the data section.
 		 */
 		for (dp = sp->first; dp; dp = dp->next) {
 			/* Do not used spanned cells in the calculation. */
-			if (0 < --spans)
+			if (0 < --hspans)
 				continue;
-			spans = dp->spans;
-			if (1 < spans)
+			hspans = dp->hspans;
+			if (1 < hspans)
 				continue;
 			icol = dp->layout->col;
 			while (maxcol < icol)

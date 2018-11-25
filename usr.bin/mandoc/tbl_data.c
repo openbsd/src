@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_data.c,v 1.32 2017/07/08 17:52:42 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.33 2018/11/25 19:23:59 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -38,8 +38,9 @@ static void
 getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		int ln, const char *p, int *pos)
 {
-	struct tbl_dat	*dat;
+	struct tbl_dat	*dat, *pdat;
 	struct tbl_cell	*cp;
+	struct tbl_span	*pdp;
 	int		 sv;
 
 	/* Advance to the next layout cell, skipping spanners. */
@@ -71,15 +72,51 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		}
 	}
 
-	dat = mandoc_calloc(1, sizeof(*dat));
+	dat = mandoc_malloc(sizeof(*dat));
 	dat->layout = cp;
+	dat->next = NULL;
+	dat->string = NULL;
+	dat->hspans = 0;
+	dat->vspans = 0;
+	dat->block = 0;
 	dat->pos = TBL_DATA_NONE;
-	dat->spans = 0;
+
+	/*
+	 * Increment the number of vertical spans in a data cell above,
+	 * if this cell vertically extends one or more cells above.
+	 * The iteration must be done over data rows,
+	 * not over layout rows, because one layout row
+	 * can be reused for more than one data row.
+	 */
+
+	if (cp->pos == TBL_CELL_DOWN) {
+		pdp = dp;
+		while ((pdp = pdp->prev) != NULL) {
+			pdat = pdp->first;
+			while (pdat != NULL &&
+			    pdat->layout->col < dat->layout->col)
+				pdat = pdat->next;
+			if (pdat == NULL)
+				break;
+			if (pdat->layout->pos != TBL_CELL_DOWN) {
+				pdat->vspans++;
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Count the number of horizontal spans to the right of this cell.
+	 * This is purely a matter of the layout, independent of the data.
+	 */
+
 	for (cp = cp->next; cp != NULL; cp = cp->next)
 		if (cp->pos == TBL_CELL_SPAN)
-			dat->spans++;
+			dat->hspans++;
 		else
 			break;
+
+	/* Append the new data cell to the data row. */
 
 	if (dp->last == NULL)
 		dp->first = dat;

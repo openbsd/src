@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.196 2018/10/25 01:21:30 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.197 2018/11/25 19:23:59 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -320,7 +320,8 @@ struct	tbl_dat {
 	struct tbl_cell	 *layout; /* layout cell */
 	struct tbl_dat	 *next;
 	char		 *string; /* data (NULL if not TBL_DATA_DATA) */
-	int		  spans; /* how many spans follow */
+	int		  hspans; /* how many horizontal spans follow */
+	int		  vspans; /* how many vertical spans follow */
 	int		  block; /* T{ text block T} */
 	enum tbl_datt	  pos;
 };
