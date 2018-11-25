@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.21 2018/11/25 19:23:59 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.22 2018/11/25 21:17:30 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -124,13 +124,18 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 	default:
 		for (dp = sp->first; dp != NULL; dp = dp->next) {
 			print_stagq(h, tt);
-			switch (dp->layout->pos) {
-			case TBL_CELL_SPAN:
-			case TBL_CELL_DOWN:
+
+			/*
+			 * Do not generate <td> elements for continuations
+			 * of spanned cells.  Larger <td> elements covering
+			 * this space were already generated earlier.
+			 */
+
+			if (dp->layout->pos == TBL_CELL_SPAN ||
+			    dp->layout->pos == TBL_CELL_DOWN ||
+			    (dp->string != NULL &&
+			     strcmp(dp->string, "\\^") == 0))
 				continue;
-			default:
-				break;
-			}
 
 			/* Determine the attribute values. */
 

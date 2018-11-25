@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.33 2018/11/25 19:23:59 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.34 2018/11/25 21:17:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,6 +43,15 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	struct tbl_span	*pdp;
 	int		 sv;
 
+	/*
+	 * Determine the length of the string in the cell
+	 * and advance the parse point to the end of the cell.
+	 */
+
+	sv = *pos;
+	while (p[*pos] != '\0' && p[*pos] != tbl->opts.tab)
+		(*pos)++;
+
 	/* Advance to the next layout cell, skipping spanners. */
 
 	cp = dp->last == NULL ? dp->layout->first : dp->last->layout->next;
@@ -65,8 +74,8 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 			dp->layout->last = cp;
 		} else {
 			mandoc_msg(MANDOCERR_TBLDATA_EXTRA, tbl->parse,
-			    ln, *pos, p + *pos);
-			while (p[*pos])
+			    ln, sv, p + sv);
+			while (p[*pos] != '\0')
 				(*pos)++;
 			return;
 		}
@@ -89,7 +98,8 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 	 * can be reused for more than one data row.
 	 */
 
-	if (cp->pos == TBL_CELL_DOWN) {
+	if (cp->pos == TBL_CELL_DOWN ||
+	    (*pos - sv == 2 && p[sv] == '\\' && p[sv + 1] == '^')) {
 		pdp = dp;
 		while ((pdp = pdp->prev) != NULL) {
 			pdat = pdp->first;
@@ -98,7 +108,8 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 				pdat = pdat->next;
 			if (pdat == NULL)
 				break;
-			if (pdat->layout->pos != TBL_CELL_DOWN) {
+			if (pdat->layout->pos != TBL_CELL_DOWN &&
+			    strcmp(pdat->string, "\\^") != 0) {
 				pdat->vspans++;
 				break;
 			}
@@ -124,10 +135,6 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		dp->last->next = dat;
 	dp->last = dat;
 
-	sv = *pos;
-	while (p[*pos] && p[*pos] != tbl->opts.tab)
-		(*pos)++;
-
 	/*
 	 * Check for a continued-data scope opening.  This consists of a
 	 * trailing `T{' at the end of the line.  Subsequent lines,
@@ -141,7 +148,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 
 	dat->string = mandoc_strndup(p + sv, *pos - sv);
 
-	if (p[*pos])
+	if (p[*pos] != '\0')
 		(*pos)++;
 
 	if ( ! strcmp(dat->string, "_"))
