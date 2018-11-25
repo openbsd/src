@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.10 2018/09/01 16:55:29 krw Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.11 2018/11/25 17:34:37 krw Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -78,33 +78,16 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	close(fd);
 
 	/*
-	 * Check that the bootstrap will fit - partitions must not overlap,
-	 * or if they do, the partition type must be either FS_BOOT or
-	 * FS_UNUSED. The 'c' partition will always overlap and is ignored.
+	 * Check that the bootstrap will not intrude into the OpenBSD area
+	 * of the disk.
 	 */
-	if (verbose)
-		fprintf(stderr, "ensuring used partitions do not overlap "
-		    "with bootstrap sectors 0-%zu\n", bootsec);
-	for (i = 0; i < dl.d_npartitions; i++) {
-		part = 'a' + i;
-		pp = &dl.d_partitions[i];
-		if (i == RAW_PART)
-			continue;
-		if (DL_GETPSIZE(pp) == 0)
-			continue;
-		if ((u_int64_t)bootsec <= DL_GETPOFFSET(pp))
-			continue;
-		switch (pp->p_fstype) {
-		case FS_BOOT:
-			break;
-		case FS_UNUSED:
-			warnx("bootstrap overlaps with unused partition %c",
-			    part);
-			break;
-		default:
-			errx(1, "bootstrap overlaps with partition %c", part);
-		}
-	}
+	if (bootsec > DL_GETBSTART(&dl))
+		errx(1, "bootstrap (sectors 0 - %zu) overlaps OpenBSD "
+		    " area (sectors %zu - %zu)", bootsec,
+		    DL_GETBSTART(&dl), DL_GETBEND(&dl));
+	else if (verbose)
+		fprintf(stderr, "bootstrap (sectors 0 - %zu) does not overlap "
+		    "OpenBSD area.\n", bootsec);
 
 	/*
 	 * Make sure the bootstrap has left space for the disklabel.
