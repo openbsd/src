@@ -182,7 +182,9 @@ maildir_engine(const char *dirname, int junk)
 		line[strcspn(line, "\n")] = '\0';
 		if (line[0] == '\0')
 			in_hdr = 0;
-		if (junk && in_hdr && strcmp(line, "X-Spam: yes") == 0)
+		if (junk && in_hdr &&
+		    (strcasecmp(line, "x-spam: yes") == 0 ||
+			strcasecmp(line, "x-spam-flag: yes") == 0))
 			is_junk = 1;
 		fprintf(fp, "%s\n", line);
 	}
