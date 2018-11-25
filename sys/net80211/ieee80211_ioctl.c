@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.68 2018/10/27 09:55:26 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.69 2018/11/25 12:14:01 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -387,6 +387,48 @@ ieee80211_ioctl_getwpaparms(struct ieee80211com *ic,
 	return 0;
 }
 
+static void
+ieee80211_ess_getwpaparms(struct ieee80211_ess *ess,
+    struct ieee80211_wpaparams *wpa)
+{
+	wpa->i_enabled = (ess->flags & IEEE80211_F_RSNON) ? 1 : 0;
+
+	wpa->i_protos = 0;
+	if (ess->rsnprotos & IEEE80211_PROTO_WPA)
+		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA1;
+	if (ess->rsnprotos & IEEE80211_PROTO_RSN)
+		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA2;
+
+	wpa->i_akms = 0;
+	if (ess->rsnakms & IEEE80211_AKM_PSK)
+		wpa->i_akms |= IEEE80211_WPA_AKM_PSK;
+	if (ess->rsnakms & IEEE80211_AKM_SHA256_PSK)
+		wpa->i_akms |= IEEE80211_WPA_AKM_SHA256_PSK;
+	if (ess->rsnakms & IEEE80211_AKM_8021X)
+		wpa->i_akms |= IEEE80211_WPA_AKM_8021X;
+	if (ess->rsnakms & IEEE80211_AKM_SHA256_8021X)
+		wpa->i_akms |= IEEE80211_WPA_AKM_SHA256_8021X;
+
+	if (ess->rsngroupcipher == IEEE80211_CIPHER_WEP40)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_WEP40;
+	else if (ess->rsngroupcipher == IEEE80211_CIPHER_TKIP)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_TKIP;
+	else if (ess->rsngroupcipher == IEEE80211_CIPHER_CCMP)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_CCMP;
+	else if (ess->rsngroupcipher == IEEE80211_CIPHER_WEP104)
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_WEP104;
+	else
+		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_NONE;
+
+	wpa->i_ciphers = 0;
+	if (ess->rsnciphers & IEEE80211_CIPHER_TKIP)
+		wpa->i_ciphers |= IEEE80211_WPA_CIPHER_TKIP;
+	if (ess->rsnciphers & IEEE80211_CIPHER_CCMP)
+		wpa->i_ciphers |= IEEE80211_WPA_CIPHER_CCMP;
+	if (ess->rsnciphers & IEEE80211_CIPHER_USEGROUP)
+		wpa->i_ciphers = IEEE80211_WPA_CIPHER_USEGROUP;
+}
+
 int
 ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -506,6 +548,15 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			memset(&join, 0, sizeof(join));
 			join.i_len = ess->esslen;
 			memcpy(&join.i_nwid, ess->essid, join.i_len);
+			if (ess->flags & IEEE80211_F_RSNON)
+				join.i_flags |= IEEE80211_JOIN_WPA;
+			if (ess->flags & IEEE80211_F_PSK)
+				join.i_flags |= IEEE80211_JOIN_WPAPSK;
+			if (ess->flags & IEEE80211_JOIN_8021X)
+				join.i_flags |= IEEE80211_JOIN_8021X;
+			if (ess->flags & IEEE80211_F_WEPON)
+				join.i_flags |= IEEE80211_JOIN_NWKEY;
+			ieee80211_ess_getwpaparms(ess, &join.i_wpaparams);
 			error = copyout(&join, &ja->ja_node[ja->ja_nodes],
 			    sizeof(ja->ja_node[0]));
 			if (error)

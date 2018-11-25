@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.157 2018/11/20 20:26:01 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.158 2018/11/25 12:14:01 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -315,6 +315,10 @@ ieee80211_ess_setwpaparms(struct ieee80211_ess *ess,
 	}
 
 	ess->flags |= IEEE80211_F_RSNON;
+
+	if (ess->rsnakms &
+	    (IEEE80211_AKM_8021X|IEEE80211_WPA_AKM_SHA256_8021X))
+		ess->flags |= IEEE80211_JOIN_8021X;
 
 	return ENETRESET;
 }
