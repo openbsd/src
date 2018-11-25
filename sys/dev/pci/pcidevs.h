@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1868 2018/11/16 18:20:33 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.1869 2018/11/25 17:35:44 daniel Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3097,6 +3097,7 @@
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN */
 #define	PCI_PRODUCT_INTEL_NVME	0x0953		/* NVMe */
 #define	PCI_PRODUCT_INTEL_CORE4G_D_ULT_GT1	0x0a02		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CORE4G_THERM	0x0a03		/* Core 4G Thermal */
 #define	PCI_PRODUCT_INTEL_CORE4G_HB_1	0x0a04		/* Core 4G Host */
 #define	PCI_PRODUCT_INTEL_CORE4G_M_ULT_GT1	0x0a06		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT1	0x0a0a		/* HD Graphics */
