@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.384 2018/11/20 20:49:26 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.385 2018/11/25 12:10:38 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1909,7 +1909,7 @@ setifwpa(const char *val, int d)
 	wpa.i_enabled = d;
 
 	if (actions & A_JOIN) {
-		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_wpaparams.i_enabled = d;
 		join.i_flags |= IEEE80211_JOIN_WPA;
 		return;
 	}
@@ -1940,6 +1940,12 @@ setifwpaprotos(const char *val, int d)
 	}
 	free(optlist);
 
+	if (actions & A_JOIN) {
+		join.i_wpaparams.i_protos = rval;
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
@@ -1948,12 +1954,6 @@ setifwpaprotos(const char *val, int d)
 	/* Let the kernel set up the appropriate default ciphers. */
 	wpa.i_ciphers = 0;
 	wpa.i_groupcipher = 0;
-
-	if (actions & A_JOIN) {
-		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
-		join.i_flags |= IEEE80211_JOIN_WPA;
-		return;
-	}
 
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
@@ -1981,6 +1981,14 @@ setifwpaakms(const char *val, int d)
 	}
 	free(optlist);
 
+	if (actions & A_JOIN) {
+		join.i_wpaparams.i_akms = rval;
+		join.i_wpaparams.i_enabled =
+		    ((rval & IEEE80211_WPA_AKM_8021X) != 0);
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
@@ -1988,12 +1996,6 @@ setifwpaakms(const char *val, int d)
 	wpa.i_akms = rval;
 	/* Enable WPA for 802.1x here. PSK case is handled in setifwpakey(). */
 	wpa.i_enabled = ((rval & IEEE80211_WPA_AKM_8021X) != 0);
-
-	if (actions & A_JOIN) {
-		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
-		join.i_flags |= IEEE80211_JOIN_WPA;
-		return;
-	}
 
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
@@ -2042,17 +2044,17 @@ setifwpaciphers(const char *val, int d)
 	}
 	free(optlist);
 
+	if (actions & A_JOIN) {
+		join.i_wpaparams.i_ciphers = rval;
+		join.i_flags |= IEEE80211_JOIN_WPA;
+		return;
+	}
+
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	if (ioctl(s, SIOCG80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCG80211WPAPARMS");
 	wpa.i_ciphers = rval;
-
-	if (actions & A_JOIN) {
-		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
-		join.i_flags |= IEEE80211_JOIN_WPA;
-		return;
-	}
 
 	if (ioctl(s, SIOCS80211WPAPARMS, (caddr_t)&wpa) < 0)
 		err(1, "SIOCS80211WPAPARMS");
@@ -2076,7 +2078,7 @@ setifwpagroupcipher(const char *val, int d)
 	wpa.i_groupcipher = cipher;
 
 	if (actions & A_JOIN) {
-		memcpy(&join.i_wpaparams, &wpa, sizeof(join.i_wpaparams));
+		join.i_wpaparams.i_groupcipher = cipher;
 		join.i_flags |= IEEE80211_JOIN_WPA;
 		return;
 	}
