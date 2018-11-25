@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.17 2018/08/11 04:31:57 rob Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.18 2018/11/25 14:58:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,8 +50,6 @@ struct snmpc {
 	struct ber_oid		 sc_root_oid;
 	struct ber_oid		 sc_last_oid;
 	struct ber_oid		 sc_oid;
-	struct sockaddr_storage	 sc_addr;
-	socklen_t		 sc_addr_len;
 	u_int32_t		 sc_msgid;
 	int			 sc_fd;
 	int			 sc_retry;
@@ -99,11 +97,13 @@ snmpclient(struct parse_result *res)
 	int			 s;
 	int			 error;
 	u_int			 i;
-	struct passwd		*pw;
 	struct parse_val	*oid;
 
 	for (i = 0; i < sizeof(display_hints) / sizeof(display_hints[0]); i++)
 		smi_oidlen(&display_hints[i].oid);
+
+	if (pledge("stdio inet dns", NULL) == -1)
+		fatal("pledge");
 
 	bzero(&sc, sizeof(sc));
 
@@ -138,29 +138,12 @@ snmpclient(struct parse_result *res)
 	if (s == -1)
 		errx(1, "invalid host");
 
-	bcopy(ai->ai_addr, &sc.sc_addr, ai->ai_addrlen);
-	sc.sc_addr_len = ai->ai_addrlen;
+	if (connect(s, (struct sockaddr *)ai->ai_addr, ai->ai_addrlen) == -1)
+		errx(1, "cannot connect");
+
 	freeaddrinfo(ai0);
 
-	/*
-	 * Drop privileges to mitigate the risk when running as root.
-	 */
-	if (geteuid() == 0) {
-		if ((pw = getpwnam(SNMPD_USER)) == NULL)
-			err(1, "snmpctl: getpwnam");
-#ifndef DEBUG
-		if (chroot(pw->pw_dir) == -1)
-			err(1, "snmpctl: chroot");
-		if (chdir("/") == -1)
-			err(1, "snmpctl: chdir(\"/\")");
-		if (setgroups(1, &pw->pw_gid) ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-			err(1, "snmpctl: cannot drop privileges");
-#endif
-	}
-
-	if (pledge("stdio dns", NULL) == -1)
+	if (pledge("stdio", NULL) == -1)
 		fatal("pledge");
 
 	sc.sc_fd = s;
@@ -169,7 +152,7 @@ snmpclient(struct parse_result *res)
 	sc.sc_retry_max = SNMPC_RETRY_MAX;
 
 	if (TAILQ_EMPTY(&res->oids)) {
-			snmpc_run(&sc, res->action, SNMPC_OID_DEFAULT);
+		snmpc_run(&sc, res->action, SNMPC_OID_DEFAULT);
 	} else {
 		TAILQ_FOREACH(oid, &res->oids, val_entry) {
 			snmpc_run(&sc, res->action, oid->val);
@@ -428,8 +411,7 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 	if (ber_get_writebuf(&ber, (void *)&ptr) < 1)
 		goto berfail;
 
-	if (sendto(sc->sc_fd, ptr, len, 0,
-	    (struct sockaddr *)&sc->sc_addr, sc->sc_addr_len) == -1)
+	if (send(sc->sc_fd, ptr, len, 0) == -1)
 		goto berfail;
 
 	ber_free_elements(root);
