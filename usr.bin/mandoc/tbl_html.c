@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.22 2018/11/25 21:17:30 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.23 2018/11/26 01:51:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -173,22 +173,10 @@ print_tbl(struct html *h, const struct tbl_span *sp)
 
 			/* Print the element and the attributes. */
 
-			if (halign == NULL && valign == NULL)
-				print_otag(h, TAG_TD, "??",
-				    "colspan", hspans, "rowspan", vspans);
-			else if (halign == NULL)
-				print_otag(h, TAG_TD, "??s",
-				    "colspan", hspans, "rowspan", vspans,
-				    "vertical-align", valign);
-			else if (valign == NULL)
-				print_otag(h, TAG_TD, "??s",
-				    "colspan", hspans, "rowspan", vspans,
-				    "text-align", halign);
-			else
-				print_otag(h, TAG_TD, "??ss",
-				    "colspan", hspans, "rowspan", vspans,
-				    "vertical-align", valign,
-				    "text-align", halign);
+			print_otag(h, TAG_TD, "??ss",
+			    "colspan", hspans, "rowspan", vspans,
+			    "vertical-align", valign,
+			    "text-align", halign);
 			if (dp->string != NULL)
 				print_text(h, dp->string);
 		}
