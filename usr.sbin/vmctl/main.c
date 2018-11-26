@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2018/10/19 10:12:39 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2018/11/26 10:39:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -658,7 +658,7 @@ ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsiz
 	}
 
 	/* align to megabytes */
-	dst.size = ALIGN(dstsize, 1048576);
+	dst.size = ALIGNSZ(dstsize, 1048576);
 
 	if ((ret = create_imagefile(dst.type, dst.disk, NULL,
 	   dst.size / 1048576, &format)) != 0) {

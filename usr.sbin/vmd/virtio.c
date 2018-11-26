@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.73 2018/10/19 10:12:39 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.74 2018/11/26 10:39:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1771,9 +1771,9 @@ virtio_init_disk(struct virtio_backing *file, off_t *sz,
 	 */
 	switch (type) {
 	case VMDF_RAW:
-		return virtio_init_raw(file, sz, fd, nfd);
+		return virtio_raw_init(file, sz, fd, nfd);
 	case VMDF_QCOW2:
-		return virtio_init_qcow2(file, sz, fd, nfd);
+		return virtio_qcow2_init(file, sz, fd, nfd);
 	}
 	log_warnx("%s: invalid disk format", __func__);
 	return -1;

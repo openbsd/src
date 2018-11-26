@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.4 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.5 2018/11/26 10:39:30 reyk Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -16,12 +16,15 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <machine/vmmvar.h>
 #include <dev/pci/pcireg.h>
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "vmd.h"
 #include "vmm.h"
@@ -53,7 +56,7 @@ raw_close(void *file, int stayopen)
  * returning -1 for error, 0 for success.
  */
 int
-virtio_init_raw(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
+virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 {
 	off_t sz;
 	int *fdp;
@@ -76,3 +79,39 @@ virtio_init_raw(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	return 0;
 }
 
+/*
+ * virtio_raw_create
+ *
+ * Create an empty imagefile with the specified path and size.
+ *
+ * Parameters:
+ *  imgfile_path: path to the image file to create
+ *  imgsize     : size of the image file to create (in MB)
+ *
+ * Return:
+ *  EEXIST: The requested image file already exists
+ *  0     : Image file successfully created
+ *  Exxxx : Various other Exxxx errno codes due to other I/O errors
+ */
+int
+virtio_raw_create(const char *imgfile_path, long imgsize)
+{
+	int fd, ret;
+
+	/* Refuse to overwrite an existing image */
+	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
+	    S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (errno);
+
+	/* Extend to desired size */
+	if (ftruncate(fd, (off_t)imgsize * 1024 * 1024) == -1) {
+		ret = errno;
+		close(fd);
+		unlink(imgfile_path);
+		return (ret);
+	}
+
+	ret = close(fd);
+	return (ret);
+}

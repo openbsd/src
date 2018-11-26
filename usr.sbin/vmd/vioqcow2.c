@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.11 2018/11/24 04:51:55 ori Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.12 2018/11/26 10:39:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <libgen.h>
 #include <err.h>
+#include <errno.h>
 
 #include "vmd.h"
 #include "vmm.h"
@@ -118,7 +119,7 @@ static void qc2_close(void *, int);
  * May open snapshot base images.
  */
 int
-virtio_init_qcow2(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
+virtio_qcow2_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 {
 	struct qcdisk *diskp;
 
@@ -608,3 +609,143 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
 		fatal("%s: could not write ref block", __func__);
 }
 
+/*
+ * virtio_qcow2_create
+ *
+ * Create an empty qcow2 imagefile with the specified path and size.
+ *
+ * Parameters:
+ *  imgfile_path: path to the image file to create
+ *  imgsize     : size of the image file to create (in MB)
+ *
+ * Return:
+ *  EEXIST: The requested image file already exists
+ *  0     : Image file successfully created
+ *  Exxxx : Various other Exxxx errno codes due to other I/O errors
+ */
+int
+virtio_qcow2_create(const char *imgfile_path,
+    const char *base_path, long imgsize)
+{
+	struct qcheader {
+		char magic[4];
+		uint32_t version;
+		uint64_t backingoff;
+		uint32_t backingsz;
+		uint32_t clustershift;
+		uint64_t disksz;
+		uint32_t cryptmethod;
+		uint32_t l1sz;
+		uint64_t l1off;
+		uint64_t refoff;
+		uint32_t refsz;
+		uint32_t snapcount;
+		uint64_t snapsz;
+		/* v3 additions */
+		uint64_t incompatfeatures;
+		uint64_t compatfeatures;
+		uint64_t autoclearfeatures;
+		uint32_t reforder;
+		uint32_t headersz;
+	} __packed hdr, basehdr;
+	int fd, ret;
+	ssize_t base_len;
+	uint64_t l1sz, refsz, disksz, initsz, clustersz;
+	uint64_t l1off, refoff, v, i, l1entrysz, refentrysz;
+	uint16_t refs;
+
+	disksz = 1024 * 1024 * imgsize;
+
+	if (base_path) {
+		fd = open(base_path, O_RDONLY);
+		if (read(fd, &basehdr, sizeof(basehdr)) != sizeof(basehdr))
+			err(1, "failure to read base image header");
+		close(fd);
+		if (strncmp(basehdr.magic,
+		    VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0)
+			errx(1, "base image is not a qcow2 file");
+		if (!disksz)
+			disksz = betoh64(basehdr.disksz);
+		else if (disksz != betoh64(basehdr.disksz))
+			errx(1, "base size does not match requested size");
+	}
+	if (!base_path && !disksz)
+		errx(1, "missing disk size");
+
+	clustersz = (1<<16);
+	l1off = ALIGNSZ(sizeof(hdr), clustersz);
+
+	l1entrysz = clustersz * clustersz / 8;
+	l1sz = (disksz + l1entrysz - 1) / l1entrysz;
+
+	refoff = ALIGNSZ(l1off + 8*l1sz, clustersz);
+	refentrysz = clustersz * clustersz * clustersz / 2;
+	refsz = (disksz + refentrysz - 1) / refentrysz;
+
+	initsz = ALIGNSZ(refoff + refsz*clustersz, clustersz);
+	base_len = base_path ? strlen(base_path) : 0;
+
+	memcpy(hdr.magic, VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW));
+	hdr.version		= htobe32(3);
+	hdr.backingoff		= htobe64(base_path ? sizeof(hdr) : 0);
+	hdr.backingsz		= htobe32(base_len);
+	hdr.clustershift	= htobe32(16);
+	hdr.disksz		= htobe64(disksz);
+	hdr.cryptmethod		= htobe32(0);
+	hdr.l1sz		= htobe32(l1sz);
+	hdr.l1off		= htobe64(l1off);
+	hdr.refoff		= htobe64(refoff);
+	hdr.refsz		= htobe32(refsz);
+	hdr.snapcount		= htobe32(0);
+	hdr.snapsz		= htobe64(0);
+	hdr.incompatfeatures	= htobe64(0);
+	hdr.compatfeatures	= htobe64(0);
+	hdr.autoclearfeatures	= htobe64(0);
+	hdr.reforder		= htobe32(4);
+	hdr.headersz		= htobe32(sizeof(hdr));
+
+	/* Refuse to overwrite an existing image */
+	fd = open(imgfile_path, O_RDWR | O_CREAT | O_TRUNC | O_EXCL,
+	    S_IRUSR | S_IWUSR);
+	if (fd == -1)
+		return (errno);
+
+	/* Write out the header */
+	if (write(fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+		goto error;
+
+	/* Add the base image */
+	if (base_path && write(fd, base_path, base_len) != base_len)
+		goto error;
+
+	/* Extend to desired size, and add one refcount cluster */
+	if (ftruncate(fd, (off_t)initsz + clustersz) == -1)
+		goto error;
+
+	/* 
+	 * Paranoia: if our disk image takes more than one cluster
+	 * to refcount the initial image, fail.
+	 */
+	if (initsz/clustersz > clustersz/2) {
+		errno = ERANGE;
+		goto error;
+	}
+
+	/* Add a refcount block, and refcount ourselves. */
+	v = htobe64(initsz);
+	if (pwrite(fd, &v, 8, refoff) != 8)
+		goto error;
+	for (i = 0; i < initsz/clustersz + 1; i++) {
+		refs = htobe16(1);
+		if (pwrite(fd, &refs, 2, initsz + 2*i) != 2)
+			goto error;
+	}
+
+	ret = close(fd);
+	return (ret);
+error:
+	ret = errno;
+	close(fd);
+	unlink(imgfile_path);
+	return (errno);
+}

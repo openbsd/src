@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.27 2018/10/19 10:12:39 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.28 2018/11/26 10:39:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -70,9 +70,6 @@ struct ctl_command {
 };
 
 struct imsgbuf	*ibuf;
-
-#define ALIGN(sz, align)	((sz + align - 1) & ~(align - 1))
-#define MIN(a,b)		(((a)<(b))?(a):(b))
 
 /* main.c */
 int	 vmmaction(struct parse_result *);
