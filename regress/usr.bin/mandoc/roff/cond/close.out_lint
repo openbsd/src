@@ -1,2 +1,2 @@
-mandoc: close.in:15:2: ERROR: appending missing end of block: if
-mandoc: close.in:15:9: WARNING: skipping paragraph macro: sp after PP
+mandoc: close.in:31:2: ERROR: appending missing end of block: if
+mandoc: close.in:31:9: WARNING: skipping paragraph macro: sp after PP

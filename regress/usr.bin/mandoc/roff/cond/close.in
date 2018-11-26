@@ -1,5 +1,5 @@
-.\" $OpenBSD: close.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
-.TH COND-CLOSE 1 2013-06-27
+.\" $OpenBSD: close.in,v 1.4 2018/11/26 17:44:29 schwarze Exp $
+.TH COND-CLOSE 1 "November 26, 2018"
 .SH NAME
 cond-close \- closing conditional macros
 .SH DESCRIPTION
@@ -11,6 +11,22 @@ closing after an ignored macro
 .PP
 .if t \{text \}
 closing after plain text
+.PP
+.if n \{conditional content \} following words with whitespace
+.PP
+.if n \{conditional content\}following words without whitespace
+.PP
+preceding words
+.if n \{\
+standard multi-line style
+.\}
+following words
+.PP
+preceding words
+.if n \{
+non-standard multi-line style
+\}
+following words
 .PP
 .if n \{
 still open at the end of the file
