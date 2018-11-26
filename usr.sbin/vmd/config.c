@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2018/11/24 04:51:55 ori Exp $	*/
+/*	$OpenBSD: config.c,v 1.57 2018/11/26 05:44:46 ori Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -87,7 +87,10 @@ config_init(struct vmd *env)
 	if (what & CONFIG_VMS) {
 		if ((env->vmd_vms = calloc(1, sizeof(*env->vmd_vms))) == NULL)
 			return (-1);
+		if ((env->vmd_known = calloc(1, sizeof(*env->vmd_known))) == NULL)
+			return (-1);
 		TAILQ_INIT(env->vmd_vms);
+		TAILQ_INIT(env->vmd_known);
 	}
 	if (what & CONFIG_SWITCHES) {
 		if ((env->vmd_switches = calloc(1,
@@ -109,6 +112,7 @@ void
 config_purge(struct vmd *env, unsigned int reset)
 {
 	struct privsep		*ps = &env->vmd_ps;
+	struct name2id		*n2i;
 	struct vmd_vm		*vm;
 	struct vmd_switch	*vsw;
 	unsigned int		 what;
@@ -124,6 +128,10 @@ config_purge(struct vmd *env, unsigned int reset)
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL) {
 			vm_remove(vm, __func__);
+		}
+		while ((n2i = TAILQ_FIRST(env->vmd_known)) != NULL) {
+			TAILQ_REMOVE(env->vmd_known, n2i, entry);
+			free(n2i);
 		}
 		env->vmd_nvm = 0;
 	}

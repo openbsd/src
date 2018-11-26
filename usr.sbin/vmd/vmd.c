@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.105 2018/11/21 12:31:47 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.106 2018/11/26 05:44:46 ori Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -62,6 +62,7 @@ int	 vmd_check_vmh(struct vm_dump_header *);
 int	 vm_instance(struct privsep *, struct vmd_vm **,
 	    struct vmop_create_params *, uid_t);
 int	 vm_checkinsflag(struct vmop_create_params *, unsigned int, uid_t);
+uint32_t vm_claimid(const char *, int);
 
 struct vmd	*env;
 
@@ -1169,6 +1170,28 @@ vm_remove(struct vmd_vm *vm, const char *caller)
 	free(vm);
 }
 
+uint32_t
+vm_claimid(const char *name, int uid)
+{
+	struct name2id *n2i = NULL;
+
+	TAILQ_FOREACH(n2i, env->vmd_known, entry)
+		if (strcmp(n2i->name, name) == 0 && n2i->uid == uid)
+			return n2i->id;
+
+	if (++env->vmd_nvm == 0)
+		fatalx("too many vms");
+	if ((n2i = calloc(1, sizeof(struct name2id))) == NULL)
+		fatalx("could not alloc vm name");
+	n2i->id = env->vmd_nvm;
+	n2i->uid = uid;
+	if (strlcpy(n2i->name, name, sizeof(n2i->name)) >= sizeof(n2i->name))
+		fatalx("overlong vm name");
+	TAILQ_INSERT_TAIL(env->vmd_known, n2i, entry);
+
+	return n2i->id;
+}
+
 int
 vm_register(struct privsep *ps, struct vmop_create_params *vmc,
     struct vmd_vm **ret_vm, uint32_t id, uid_t uid)
@@ -1300,11 +1323,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_cdrom = -1;
 	vm->vm_iev.ibuf.fd = -1;
 
-	if (++env->vmd_nvm == 0)
-		fatalx("too many vms");
-
 	/* Assign a new internal Id if not specified */
-	vm->vm_vmid = id == 0 ? env->vmd_nvm : id;
+	vm->vm_vmid = (id == 0) ? vm_claimid(vcp->vcp_name, uid) : id;
 
 	log_debug("%s: registering vm %d", __func__, vm->vm_vmid);
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);

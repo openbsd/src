@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.85 2018/11/21 12:31:47 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.86 2018/11/26 05:44:46 ori Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -290,6 +290,14 @@ struct vmd_user {
 };
 TAILQ_HEAD(userlist, vmd_user);
 
+struct name2id {
+	char			name[VMM_MAX_NAME_LEN];
+	int			uid;
+	int32_t			id;
+	TAILQ_ENTRY(name2id)	entry;
+};
+TAILQ_HEAD(name2idlist, name2id);
+
 struct address {
 	struct sockaddr_storage	 ss;
 	int			 prefixlen;
@@ -319,6 +327,7 @@ struct vmd {
 
 	uint32_t		 vmd_nvm;
 	struct vmlist		*vmd_vms;
+	struct name2idlist	*vmd_known;
 	uint32_t		 vmd_nswitches;
 	struct switchlist	*vmd_switches;
 	struct userlist		*vmd_users;
