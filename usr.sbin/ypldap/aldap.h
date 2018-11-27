@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.11 2018/06/21 10:37:00 reyk Exp $ */
-/*	$OpenBSD: aldap.h,v 1.11 2018/06/21 10:37:00 reyk Exp $ */
+/*	$Id: aldap.h,v 1.12 2018/11/27 12:06:39 martijn Exp $ */
+/*	$OpenBSD: aldap.h,v 1.12 2018/11/27 12:06:39 martijn Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -86,6 +86,11 @@ enum aldap_protocol {
 	LDAPS,
 	LDAPTLS,
 	LDAPI
+};
+
+struct aldap_stringset {
+	size_t			 len;
+	struct ber_octetstring	*str;
 };
 
 struct aldap_url {
@@ -226,7 +231,7 @@ int	 aldap_get_errno(struct aldap *, const char **);
 int	 aldap_get_resultcode(struct aldap_message *);
 char	*aldap_get_dn(struct aldap_message *);
 char	*aldap_get_diagmsg(struct aldap_message *);
-char	**aldap_get_references(struct aldap_message *);
+struct aldap_stringset	*aldap_get_references(struct aldap_message *);
 void	 aldap_free_references(char **values);
 int	 aldap_parse_url(const char *, struct aldap_url *);
 void	 aldap_free_url(struct aldap_url *);
@@ -234,10 +239,13 @@ int	 aldap_search_url(struct aldap *, char *, int, int, int,
 	    struct aldap_page_control *);
 
 int	 aldap_count_attrs(struct aldap_message *);
-int	 aldap_match_attr(struct aldap_message *, char *, char ***);
-int	 aldap_first_attr(struct aldap_message *, char **, char ***);
-int	 aldap_next_attr(struct aldap_message *, char **, char ***);
-int	 aldap_free_attr(char **);
+int	 aldap_match_attr(struct aldap_message *, char *,
+	    struct aldap_stringset **);
+int	 aldap_first_attr(struct aldap_message *, char **, struct
+	    aldap_stringset **);
+int	 aldap_next_attr(struct aldap_message *, char **,
+	    struct aldap_stringset **);
+int	 aldap_free_attr(struct aldap_stringset *);
 
 struct aldap_page_control *aldap_parse_page_control(struct ber_element *, size_t len);
 void	 aldap_freepage(struct aldap_page_control *);
