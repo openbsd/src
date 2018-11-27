@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.145 2018/11/20 11:51:23 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.146 2018/11/27 14:56:09 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -891,6 +891,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 			err = USBD_NOMEM;
 			goto fail;
 		}
+		dev->nsubdev = 2;
 		dev->subdevs[dev->ndevs++] = dv;
 		dev->subdevs[dev->ndevs] = 0;
 		err = USBD_NORMAL_COMPLETION;
@@ -938,6 +939,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 			err = USBD_NOMEM;
 			goto fail;
 		}
+		dev->nsubdev = nifaces + 2;
 		len = (nifaces + 2) * sizeof(dv);
 
 		for (i = 0; i < nifaces; i++) {
@@ -964,8 +966,9 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				goto fail;
 		}
 
-		free(dev->subdevs, M_USB, (nifaces + 2) * sizeof(dv));
+		free(dev->subdevs, M_USB, dev->nsubdev * sizeof(*dev->subdevs));
 		dev->subdevs = NULL;
+		dev->nsubdev = 0;
 	}
 	/* No interfaces were attached in any of the configurations. */
 
@@ -989,6 +992,7 @@ generic:
 				err = USBD_NOMEM;
 				goto fail;
 			}
+			dev->nsubdev = 2;
 		}
 		dev->subdevs[dev->ndevs++] = dv;
 		dev->subdevs[dev->ndevs] = 0;
@@ -1407,8 +1411,7 @@ usb_free_device(struct usbd_device *dev)
 	}
 	if (dev->cdesc != NULL)
 		free(dev->cdesc, M_USB, UGETW(dev->cdesc->wTotalLength));
-	if (dev->subdevs != NULL)
-		free(dev->subdevs, M_USB, 0);
+	free(dev->subdevs, M_USB, dev->nsubdev * sizeof(*dev->subdevs));
 	dev->bus->devices[dev->address] = NULL;
 
 	if (dev->vendor != NULL)
