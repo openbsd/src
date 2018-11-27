@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.118 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.119 2018/11/27 14:53:56 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -238,7 +238,7 @@ zyd_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (!uaa->iface)
+	if (uaa->iface == NULL || uaa->configno != ZYD_CONFIG_NO)
 		return UMATCH_NONE;
 
 	return (zyd_lookup(uaa->vendor, uaa->product) != NULL) ?
@@ -282,6 +282,7 @@ zyd_attach(struct device *parent, struct device *self, void *aux)
 	usb_device_descriptor_t* ddesc;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
 
 	sc->mac_rev = zyd_lookup(uaa->vendor, uaa->product)->rev;
 
