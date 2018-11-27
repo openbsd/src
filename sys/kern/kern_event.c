@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.100 2018/11/17 18:55:50 millert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.101 2018/11/27 15:52:50 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -328,12 +328,16 @@ static void
 filt_timer_timeout_add(struct knote *kn)
 {
 	struct timeval tv;
+	struct timeout *to = kn->kn_hook;
 	int tticks;
 
 	tv.tv_sec = kn->kn_sdata / 1000;
 	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
 	tticks = tvtohz(&tv);
-	timeout_add(kn->kn_hook, tticks ? tticks : 1);
+	/* Remove extra tick from tvtohz() if timeout has fired before. */
+	if (timeout_triggered(to))
+		tticks--;
+	timeout_add(to, (tticks > 0) ? tticks : 1);
 }
 
 void
