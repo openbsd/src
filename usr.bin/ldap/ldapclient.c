@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.9 2018/11/07 13:58:51 martijn Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.10 2018/11/27 12:04:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -82,7 +82,8 @@ struct ldapc_search {
 __dead void	 usage(void);
 int		 ldapc_connect(struct ldapc *);
 int		 ldapc_search(struct ldapc *, struct ldapc_search *);
-int		 ldapc_printattr(struct ldapc *, const char *, const char *);
+int		 ldapc_printattr(struct ldapc *, const char *,
+		    const struct ber_octetstring *);
 void		 ldapc_disconnect(struct ldapc *);
 int		 ldapc_parseurl(struct ldapc *, struct ldapc_search *,
 		    const char *);
@@ -297,8 +298,9 @@ ldapc_search(struct ldapc *ldap, struct ldapc_search *ls)
 	const char			*errstr;
 	const char			*searchdn, *dn = NULL;
 	char				*outkey;
-	char				**outvalues;
-	int				 ret, i, code, fail = 0;
+	struct aldap_stringset		*outvalues;
+	int				 ret, code, fail = 0;
+	size_t				 i;
 
 	if (ldap->ldap_flags & F_LDIF)
 		printf("version: 1\n");
@@ -359,10 +361,9 @@ ldapc_search(struct ldapc *ldap, struct ldapc_search *ls)
 			for (ret = aldap_first_attr(m, &outkey, &outvalues);
 			    ret != -1;
 			    ret = aldap_next_attr(m, &outkey, &outvalues)) {
-				for (i = 0; outvalues != NULL &&
-				    outvalues[i] != NULL; i++) {
+				for (i = 0; i < outvalues->len; i++) {
 					if (ldapc_printattr(ldap, outkey,
-					    outvalues[i]) == -1) {
+					    &(outvalues->str[i])) == -1) {
 						fail = 1;
 						break;
 					}
@@ -384,12 +385,13 @@ ldapc_search(struct ldapc *ldap, struct ldapc_search *ls)
 }
 
 int
-ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
+ldapc_printattr(struct ldapc *ldap, const char *key,
+    const struct ber_octetstring *value)
 {
 	char			*p = NULL, *out;
 	const unsigned char	*cp;
 	int			 encode;
-	size_t			 inlen, outlen, left;
+	size_t			 i, inlen, outlen, left;
 
 	if (ldap->ldap_flags & F_LDIF) {
 		/* OpenLDAP encodes the userPassword by default */
@@ -403,32 +405,33 @@ ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
 		 * in SAFE-STRINGs. String value that do not match the
 		 * criteria must be encoded as Base64.
 		 */
-		cp = (const unsigned char *)value;
+		cp = (const unsigned char *)value->ostr_val;
 		/* !SAFE-INIT-CHAR: SAFE-CHAR minus %x20 %x3A %x3C */
 		if (*cp == ' ' ||
 		    *cp == ':' ||
 		    *cp == '<')
 			encode = 1;
-		for (; encode == 0 &&*cp != '\0'; cp++) {
+		for (i = 0; encode == 0 && i < value->ostr_len - 1; i++) {
 			/* !SAFE-CHAR %x01-09 / %x0B-0C / %x0E-7F */
-			if (*cp > 127 ||
-			    *cp == '\0' ||
-			    *cp == '\n' ||
-			    *cp == '\r')
+			if (cp[i] > 127 ||
+			    cp[i] == '\0' ||
+			    cp[i] == '\n' ||
+			    cp[i] == '\r')
 				encode = 1;
 		}
 
 		if (!encode) {
-			if (asprintf(&p, "%s: %s", key, value) == -1) {
+			if (asprintf(&p, "%s: %s", key,
+			    (const char *)value->ostr_val) == -1) {
 				log_warnx("asprintf");
 				return (-1);
 			}
 		} else {
-			inlen = strlen(value);
-			outlen = (((inlen + 2) / 3) * 4) + 1;
+			outlen = (((value->ostr_len + 2) / 3) * 4) + 1;
 
 			if ((out = calloc(1, outlen)) == NULL ||
-			    b64_ntop(value, inlen, out, outlen) == -1) {
+			    b64_ntop(value->ostr_val, value->ostr_len, out,
+			    outlen) == -1) {
 				log_warnx("Base64 encoding failed");
 				free(p);
 				return (-1);
@@ -466,12 +469,15 @@ ldapc_printattr(struct ldapc *ldap, const char *key, const char *value)
 		 * on all values no matter if they include non-printable
 		 * characters.
 		 */
-		if (stravis(&p, value, VIS_SAFE|VIS_NL) == -1) {
+		p = calloc(1, 4 * value->ostr_len + 1);
+		if (strvisx(p, value->ostr_val, value->ostr_len,
+		    VIS_SAFE|VIS_NL) == -1) {
 			log_warn("visual encoding failed");
 			return (-1);
 		}
 
 		printf("%s: %s\n", key, p);
+		free(p);
 	}
 
 	free(p);

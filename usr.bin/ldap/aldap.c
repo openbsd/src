@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.5 2018/08/12 22:04:09 rob Exp $ */
-/*	$OpenBSD: aldap.c,v 1.5 2018/08/12 22:04:09 rob Exp $ */
+/*	$Id: aldap.c,v 1.6 2018/11/27 12:04:57 martijn Exp $ */
+/*	$OpenBSD: aldap.c,v 1.6 2018/11/27 12:04:57 martijn Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -39,7 +39,7 @@ static struct ber_element	*ldap_parse_search_filter(struct ber_element *,
 				    char *);
 static struct ber_element	*ldap_do_parse_search_filter(
 				    struct ber_element *, char **);
-char				**aldap_get_stringset(struct ber_element *);
+struct aldap_stringset		*aldap_get_stringset(struct ber_element *);
 char				*utoa(char *);
 static int			 isu8cont(unsigned char);
 char				*parseval(char *, size_t);
@@ -522,7 +522,7 @@ aldap_get_dn(struct aldap_message *msg)
 	return utoa(dn);
 }
 
-char **
+struct aldap_stringset *
 aldap_get_references(struct aldap_message *msg)
 {
 	if (msg->references == NULL)
@@ -576,11 +576,12 @@ aldap_count_attrs(struct aldap_message *msg)
 }
 
 int
-aldap_first_attr(struct aldap_message *msg, char **outkey, char ***outvalues)
+aldap_first_attr(struct aldap_message *msg, char **outkey,
+    struct aldap_stringset **outvalues)
 {
 	struct ber_element *b, *c;
 	char *key;
-	char **ret;
+	struct aldap_stringset *ret;
 
 	if (msg->body.search.attrs == NULL)
 		goto fail;
@@ -605,11 +606,12 @@ fail:
 }
 
 int
-aldap_next_attr(struct aldap_message *msg, char **outkey, char ***outvalues)
+aldap_next_attr(struct aldap_message *msg, char **outkey,
+    struct aldap_stringset **outvalues)
 {
 	struct ber_element *a, *b;
 	char *key;
-	char **ret;
+	struct aldap_stringset *ret;
 
 	if (msg->body.search.iter == NULL)
 		goto notfound;
@@ -640,11 +642,12 @@ notfound:
 }
 
 int
-aldap_match_attr(struct aldap_message *msg, char *inkey, char ***outvalues)
+aldap_match_attr(struct aldap_message *msg, char *inkey,
+    struct aldap_stringset **outvalues)
 {
 	struct ber_element *a, *b;
 	char *descr = NULL;
-	char **ret;
+	struct aldap_stringset *ret;
 
 	if (msg->body.search.attrs == NULL)
 		goto fail;
@@ -677,16 +680,12 @@ notfound:
 }
 
 int
-aldap_free_attr(char **values)
+aldap_free_attr(struct aldap_stringset *values)
 {
-	int i;
-
 	if (values == NULL)
 		return -1;
 
-	for (i = 0; values[i] != NULL; i++)
-		free(values[i]);
-
+	free(values->str);
 	free(values);
 
 	return (1);
@@ -836,33 +835,35 @@ fail:
  * internal functions
  */
 
-char **
+struct aldap_stringset *
 aldap_get_stringset(struct ber_element *elm)
 {
 	struct ber_element *a;
 	int i;
-	char **ret;
-	char *s;
+	struct aldap_stringset *ret;
 
 	if (elm->be_type != BER_TYPE_OCTETSTRING)
 		return NULL;
 
-	for (a = elm, i = 1; i > 0 && a != NULL && a->be_type ==
-	    BER_TYPE_OCTETSTRING; a = a->be_next, i++)
+	if ((ret = malloc(sizeof(*ret))) == NULL)
+		return NULL;
+	for (a = elm, ret->len = 0; a != NULL && a->be_type ==
+	    BER_TYPE_OCTETSTRING; a = a->be_next, ret->len++)
 		;
-	if (i == 1)
+	if (ret->len == 0) {
+		free(ret);
 		return NULL;
+	}
 
-	if ((ret = calloc(i + 1, sizeof(char *))) == NULL)
+	if ((ret->str = reallocarray(NULL, ret->len,
+	    sizeof(*(ret->str)))) == NULL) {
+		free(ret);
 		return NULL;
+	}
 
 	for (a = elm, i = 0; a != NULL && a->be_type == BER_TYPE_OCTETSTRING;
-	    a = a->be_next, i++) {
-
-		ber_get_string(a, &s);
-		ret[i] = utoa(s);
-	}
-	ret[i + 1] = NULL;
+	    a = a->be_next, i++)
+		(void) ber_get_ostring(a, &(ret->str[i]));
 
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.7 2018/08/12 22:04:09 rob Exp $ */
+/*	$OpenBSD: ber.h,v 1.8 2018/11/27 12:04:57 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,11 @@
 
 #ifndef _BER_H
 #define _BER_H
+
+struct ber_octetstring {
+	size_t			 ostr_len;
+	const void		*ostr_val;
+};
 
 struct ber_element {
 	struct ber_element	*be_next;
@@ -104,9 +109,13 @@ int			 ber_get_boolean(struct ber_element *, int *);
 struct ber_element	*ber_add_string(struct ber_element *, const char *);
 struct ber_element	*ber_add_nstring(struct ber_element *, const char *,
 			    size_t);
+struct ber_element	*ber_add_ostring(struct ber_element *,
+			    struct ber_octetstring *);
 int			 ber_get_string(struct ber_element *, char **);
 int			 ber_get_nstring(struct ber_element *, void **,
 			    size_t *);
+int			 ber_get_ostring(struct ber_element *,
+			    struct ber_octetstring *);
 struct ber_element	*ber_add_bitstring(struct ber_element *, const void *,
 			    size_t);
 int			 ber_get_bitstring(struct ber_element *, void **,
