@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.254 2018/11/21 06:57:04 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.255 2018/11/27 17:29:55 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1273,19 +1273,18 @@ validate_junk(struct dir_info *pool, void *p)
 	}
 }
 
-static void
-ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
-{
-	struct dir_info *pool;
-	struct region_info *r;
-	char *saved_function;
-	size_t sz;
-	int i;
 
-	pool = argpool;
-	r = find(pool, p);
+static struct region_info *
+findpool(void *p, struct dir_info *argpool, struct dir_info **foundpool,
+    char **saved_function)
+{
+	struct dir_info *pool = argpool;
+	struct region_info *r = find(pool, p);
+
 	if (r == NULL) {
 		if (mopts.malloc_mt)  {
+			int i;
+
 			for (i = 0; i < _MALLOC_MUTEXES; i++) {
 				if (i == argpool->mutex)
 					continue;
@@ -1296,7 +1295,7 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 				pool->active++;
 				r = find(pool, p);
 				if (r != NULL) {
-					saved_function = pool->func;
+					*saved_function = pool->func;
 					pool->func = argpool->func;
 					break;
 				}
@@ -1305,6 +1304,19 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 		if (r == NULL)
 			wrterror(argpool, "bogus pointer (double free?) %p", p);
 	}
+	*foundpool = pool;
+	return r;
+}
+
+static void
+ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
+{
+	struct region_info *r;
+	struct dir_info *pool;
+	char *saved_function;
+	size_t sz;
+
+	r = findpool(p, argpool, &pool, &saved_function);
 
 	REALSIZE(sz, r);
 	if (check) {
@@ -1469,47 +1481,23 @@ DEF_WEAK(freezero);
 static void *
 orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 {
-	struct dir_info *pool;
 	struct region_info *r;
+	struct dir_info *pool;
+	char *saved_function;
 	struct chunk_info *info;
 	size_t oldsz, goldsz, gnewsz;
 	void *q, *ret;
-	char *saved_function;
-	int i;
 	uint32_t chunknum;
 
-	pool = argpool;
-
 	if (p == NULL)
-		return omalloc(pool, newsz, 0, f);
+		return omalloc(argpool, newsz, 0, f);
 
-	r = find(pool, p);
-	if (r == NULL) {
-		if (mopts.malloc_mt) {
-			for (i = 0; i < _MALLOC_MUTEXES; i++) {
-				if (i == argpool->mutex)
-					continue;
-				pool->active--;
-				_MALLOC_UNLOCK(pool->mutex);
-				pool = mopts.malloc_pool[i];
-				_MALLOC_LOCK(pool->mutex);
-				pool->active++;
-				r = find(pool, p);
-				if (r != NULL) {
-					saved_function = pool->func;
-					pool->func = argpool->func;
-					break;
-				}
-			}
-		}
-		if (r == NULL)
-			wrterror(argpool, "bogus pointer (double free?) %p", p);
-	}
 	if (newsz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
 		errno = ENOMEM;
-		ret = NULL;
-		goto done;
+		return  NULL;
 	}
+
+	r = findpool(p, argpool, &pool, &saved_function);
 
 	REALSIZE(oldsz, r);
 	if (mopts.chunk_canaries && oldsz <= MALLOC_MAXCHUNK) {
@@ -1745,39 +1733,19 @@ static void *
 orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
     size_t newsize, void *f)
 {
-	struct dir_info *pool;
 	struct region_info *r;
+	struct dir_info *pool;
+	char *saved_function;
 	void *newptr;
 	size_t sz;
-	int i;
-
-	pool = argpool;
 
 	if (p == NULL)
-		return omalloc(pool, newsize, 1, f);
+		return omalloc(argpool, newsize, 1, f);
 
 	if (oldsize == newsize)
 		return p;
 
-	r = find(pool, p);
-	if (r == NULL) {
-		if (mopts.malloc_mt) {
-			for (i = 0; i < _MALLOC_MUTEXES; i++) {
-				if (i == argpool->mutex)
-					continue;
-				pool->active--;
-				_MALLOC_UNLOCK(pool->mutex);
-				pool = mopts.malloc_pool[i];
-				_MALLOC_LOCK(pool->mutex);
-				pool->active++;
-				r = find(pool, p);
-				if (r != NULL)
-					break;
-			}
-		}
-		if (r == NULL)
-			wrterror(pool, "bogus pointer (double free?) %p", p);
-	}
+	r = findpool(p, argpool, &pool, &saved_function);
 
 	REALSIZE(sz, r);
 	if (sz <= MALLOC_MAXCHUNK) {
@@ -1809,6 +1777,7 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 done:
 	if (argpool != pool) {
 		pool->active--;
+		pool->func = saved_function;
 		_MALLOC_UNLOCK(pool->mutex);
 		_MALLOC_LOCK(argpool->mutex);
 		argpool->active++;
