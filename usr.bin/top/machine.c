@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.95 2018/11/17 23:10:08 cheloha Exp $	 */
+/* $OpenBSD: machine.c,v 1.96 2018/11/28 22:00:30 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -602,6 +602,8 @@ static unsigned char sorted_state[] =
 	1			/* zombie		 */
 };
 
+extern int rev_order;
+
 /*
  *  proc_compares - comparison functions for "qsort"
  */
@@ -631,6 +633,17 @@ static unsigned char sorted_state[] =
 #define ORDERKEY_CMD \
 	if ((result = strcmp(p1->p_comm, p2->p_comm)) == 0)
 
+/* remove one level of indirection and set sort order */
+#define SETORDER do { \
+		if (rev_order) { \
+			p1 = *(struct kinfo_proc **) pp2; \
+			p2 = *(struct kinfo_proc **) pp1; \
+		} else { \
+			p1 = *(struct kinfo_proc **) pp1; \
+			p2 = *(struct kinfo_proc **) pp2; \
+		} \
+	} while (0)
+
 /* compare_cpu - the comparison function for sorting by cpu percentage */
 static int
 compare_cpu(const void *v1, const void *v2)
@@ -640,9 +653,7 @@ compare_cpu(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_PCTCPU
 	ORDERKEY_CPUTIME
@@ -663,9 +674,7 @@ compare_size(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_MEM
 	ORDERKEY_RSSIZE
@@ -686,9 +695,7 @@ compare_res(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_RSSIZE
 	ORDERKEY_MEM
@@ -709,9 +716,7 @@ compare_time(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_CPUTIME
 	ORDERKEY_PCTCPU
@@ -732,9 +737,7 @@ compare_prio(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_PRIO
 	ORDERKEY_PCTCPU
@@ -754,9 +757,7 @@ compare_pid(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_PID
 	ORDERKEY_PCTCPU
@@ -777,9 +778,7 @@ compare_cmd(const void *v1, const void *v2)
 	struct kinfo_proc *p1, *p2;
 	int result;
 
-	/* remove one level of indirection */
-	p1 = *(struct kinfo_proc **) pp1;
-	p2 = *(struct kinfo_proc **) pp2;
+	SETORDER;
 
 	ORDERKEY_CMD
 	ORDERKEY_PCTCPU

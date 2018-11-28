@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.70 2018/11/02 12:46:10 kn Exp $
+.\"	$OpenBSD: top.1,v 1.71 2018/11/28 22:00:30 kn Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2018 $
+.Dd $Mdocdate: November 28 2018 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Op Fl 1bCHIinqSu
 .Op Fl d Ar count
 .Op Fl g Ar string
-.Op Fl o Ar field
+.Op Fl o Oo - Oc Ns Ar field
 .Op Fl p Ar pid
 .Op Fl s Ar time
 .Op Fl U Oo - Oc Ns Ar user
@@ -137,12 +137,15 @@ mode.
 This is identical to
 .Em batch
 mode.
-.It Fl o Ar field
+.It Fl o Oo - Oc Ns Ar field
 Sort the process display area using the specified
 .Ar field
 as the primary key.
 The field name is the name of the column as seen in the output,
 but in lower case.
+The
+.Sq -
+prefix reverses the order.
 The
 .Ox
 version of
@@ -327,10 +330,13 @@ This acts similarly to the command
 Show
 .Ar count
 processes.
-.It o Ar field
+.It o Oo - Oc Ns Ar field
 Sort the process display area using the specified
 .Ar field
 as the primary key.
+The
+.Sq -
+prefix reverses the order.
 Values are the same as for the
 .Fl o
 flag, as detailed above.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.97 2018/11/17 23:10:08 cheloha Exp $	*/
+/*	$OpenBSD: top.c,v 1.98 2018/11/28 22:00:30 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -74,6 +74,7 @@ extern int ncpuonline;
 
 extern int	(*proc_compares[])(const void *, const void *);
 int order_index;
+int rev_order;
 
 int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
@@ -92,6 +93,9 @@ int combine_cpus = 0;
 #if Default_TOPN == Infinity
 char topn_specified = No;
 #endif
+
+struct system_info system_info;
+struct statics  statics;
 
 /*
  * these defines enumerate the "strchr"s of the commands in
@@ -129,9 +133,21 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-1bCHIinqSu] [-d count] [-g string] [-o field] "
+	    "usage: %s [-1bCHIinqSu] [-d count] [-g string] [-o [-]field] "
 	    "[-p pid] [-s time]\n\t[-U [-]user] [number]\n",
 	    __progname);
+}
+
+static int
+getorder(char *field)
+{
+	int i, r = field[0] == '-';
+
+	i = string_index(r ? field + 1 : field, statics.order_names);
+	if (i != -1)
+		rev_order = r;
+
+	return i;
 }
 
 static int
@@ -311,9 +327,6 @@ parseargs(int ac, char **av)
 	}
 }
 
-struct system_info system_info;
-struct statics  statics;
-
 int
 main(int argc, char *argv[])
 {
@@ -381,20 +394,9 @@ main(int argc, char *argv[])
 
 	/* determine sorting order index, if necessary */
 	if (order_name != NULL) {
-		if ((order_index = string_index(order_name,
-		    statics.order_names)) == -1) {
-			char **pp, msg[512];
-
-			snprintf(msg, sizeof(msg),
-			    "'%s' is not a recognized sorting order",
-			    order_name);
-			strlcat(msg, ". Valid are:", sizeof(msg));
-			pp = statics.order_names;
-			while (*pp != NULL) {
-				strlcat(msg, " ", sizeof(msg));
-				strlcat(msg, *pp++, sizeof(msg));
-			}
-			new_message(MT_delayed, msg);
+		if ((order_index = getorder(order_name)) == -1) {
+			new_message(MT_delayed,
+			    " %s: unrecognized sorting order", order_name);
 			order_index = 0;
 		}
 	}
@@ -879,10 +881,10 @@ rundisplay(void)
 			new_message(MT_standout,
 			    "Order to sort: ");
 			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
-				if ((i = string_index(tempbuf,
-				    statics.order_names)) == -1) {
+				if ((i = getorder(tempbuf)) == -1) {
 					new_message(MT_standout,
 					    " %s: unrecognized sorting order",
+					    tempbuf[0] == '-' ? tempbuf + 1 :
 					    tempbuf);
 					no_command = Yes;
 				} else
