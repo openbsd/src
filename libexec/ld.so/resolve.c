@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.86 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.87 2018/11/28 03:18:00 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,6 +50,7 @@ struct symlookup {
 	const elf_object_t	*sl_weak_obj_out;
 	const Elf_Sym		*sl_weak_sym_out;
 	unsigned long		sl_elf_hash;
+	uint32_t		sl_gnu_hash;
 	int			sl_flags;
 };
 
@@ -261,6 +262,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
     int phdrc, const int objtype, const long lbase, const long obase)
 {
 	elf_object_t *object;
+	Elf_Addr gnu_hash = 0;
 
 #if 0
 	_dl_printf("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
@@ -302,6 +304,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			object->relacount = dynp->d_un.d_val;
 		if (dynp->d_tag == DT_RELCOUNT)
 			object->relcount = dynp->d_un.d_val;
+		if (dynp->d_tag == DT_GNU_HASH)
+			gnu_hash = dynp->d_un.d_val;
 		dynp++;
 	}
 	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags ));
@@ -329,8 +333,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	 */
 	if (object->Dyn.info[DT_PLTGOT])
 		object->Dyn.info[DT_PLTGOT] += obase;
-	if (object->Dyn.info[DT_HASH])
-		object->Dyn.info[DT_HASH] += obase;
 	if (object->Dyn.info[DT_STRTAB])
 		object->Dyn.info[DT_STRTAB] += obase;
 	if (object->Dyn.info[DT_SYMTAB])
@@ -358,13 +360,59 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	if (object->Dyn.info[DT_PREINIT_ARRAY])
 		object->Dyn.info[DT_PREINIT_ARRAY] += obase;
 
-	if (object->Dyn.info[DT_HASH] != 0) {
-		Elf_Word *hashtab = (Elf_Word *)object->Dyn.info[DT_HASH];
+	if (gnu_hash) {
+		Elf32_Word *hashtab = (Elf32_Word *)(gnu_hash + obase);
+		Elf32_Word nbuckets = hashtab[0];
+		Elf32_Word nmaskwords = hashtab[2];
 
-		object->nbuckets = hashtab[0];
+		/* validity check */
+		if (nbuckets > 0 && (nmaskwords & (nmaskwords - 1)) == 0) {
+			Elf32_Word symndx = hashtab[1];
+			int bloom_size32 = (ELFSIZE / 32) * nmaskwords;
+
+			object->nbuckets = nbuckets;
+			object->symndx_gnu = symndx;
+			object->mask_bm_gnu = nmaskwords - 1;
+			object->shift2_gnu = hashtab[3];
+			object->bloom_gnu = (Elf_Addr *)(hashtab + 4);
+			object->buckets_gnu = hashtab + 4 + bloom_size32;
+			object->chains_gnu = object->buckets_gnu + nbuckets
+			    - symndx;
+
+			/*
+			 * If the ELF hash is present, get the total symbol
+			 * count ("nchains") from there.  Otherwise, count
+			 * the entries in the GNU hash chain.
+			 */
+			if (object->Dyn.info[DT_HASH] == 0) {
+				Elf32_Word n;
+
+				for (n = 0; n < nbuckets; n++) {
+					Elf_Word bkt = object->buckets_gnu[n];
+					const Elf32_Word *hashval;
+					if (bkt == 0)
+						continue;
+					hashval = &object->chains_gnu[bkt];
+					do {
+						symndx++;
+					} while ((*hashval++ & 1U) == 0);
+				}
+				object->nchains = symndx;
+			}
+			object->status |= STAT_GNU_HASH;
+		}
+	}
+	if (object->Dyn.info[DT_HASH] != 0) {
+		Elf_Word *hashtab = (Elf_Word *)(object->Dyn.info[DT_HASH]
+		    + obase);
+
 		object->nchains = hashtab[1];
-		object->buckets = hashtab + 2;
-		object->chains = object->buckets + object->nbuckets;
+		if (object->nbuckets == 0) {
+			object->nbuckets = hashtab[0];
+			object->buckets_elf = hashtab + 2;
+			object->chains_elf = object->buckets_elf +
+			    object->nbuckets;
+		}
 	}
 
 	object->phdrp = phdrp;
@@ -579,15 +627,53 @@ static int
 _dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 {
 	const Elf_Sym	*symt = obj->dyn.symtab;
-	long	si;
 
-	for (si = obj->buckets[sl->sl_elf_hash % obj->nbuckets];
-	    si != STN_UNDEF; si = obj->chains[si]) {
-		const Elf_Sym *sym = symt + si;
+	if (obj->status & STAT_GNU_HASH) {
+		uint32_t hash = sl->sl_gnu_hash;
+		Elf_Addr bloom_word;
+		unsigned int h1;
+		unsigned int h2;
+		Elf32_Word bucket;
+		const Elf32_Word *hashval;
 
-		int r = matched_symbol(obj, sym, sl);
-		if (r)
-			return r > 0;
+		/* pick right bitmask word from Bloom filter array */
+		bloom_word = obj->bloom_gnu[(hash / ELFSIZE) &
+		    obj->mask_bm_gnu];
+
+		/* calculate modulus ELFSIZE of gnu hash and its derivative */
+		h1 = hash & (ELFSIZE - 1);
+		h2 = (hash >> obj->shift2_gnu) & (ELFSIZE - 1);
+
+		/* Filter out the "definitely not in set" queries */
+		if (((bloom_word >> h1) & (bloom_word >> h2) & 1) == 0)
+			return 0;
+
+		/* Locate hash chain and corresponding value element */
+		bucket = obj->buckets_gnu[hash % obj->nbuckets];
+		if (bucket == 0)
+			return 0;
+		hashval = &obj->chains_gnu[bucket];
+		do {
+			if (((*hashval ^ hash) >> 1) == 0) {
+				const Elf_Sym *sym = symt +
+				    (hashval - obj->chains_gnu);
+				
+				int r = matched_symbol(obj, sym, sl);
+				if (r)
+					return r > 0;
+			}
+		} while ((*hashval++ & 1U) == 0);
+	} else {
+		Elf_Word si;
+
+		for (si = obj->buckets_elf[sl->sl_elf_hash % obj->nbuckets];
+		    si != STN_UNDEF; si = obj->chains_elf[si]) {
+			const Elf_Sym *sym = symt + si;
+
+			int r = matched_symbol(obj, sym, sl);
+			if (r)
+				return r > 0;
+		}
 	}
 	return 0;
 }
@@ -597,7 +683,8 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
     int flags, const Elf_Sym *ref_sym, elf_object_t *req_obj,
     const elf_object_t **pobj)
 {
-	const char *p = name;
+	const unsigned char *p;
+	unsigned char c;
 	struct dep_node *n, *m;
 	struct symlookup sl = {
 		.sl_name = name,
@@ -605,15 +692,18 @@ _dl_find_symbol(const char *name, const Elf_Sym **this,
 		.sl_weak_obj_out = NULL,
 		.sl_weak_sym_out = NULL,
 		.sl_elf_hash = 0,
+		.sl_gnu_hash = 5381,
 		.sl_flags = flags,
 	};
 
-	while (*p) {
+	/* Calculate both hashes in one pass */
+	for (p = (const unsigned char *)name; (c = *p) != '\0'; p++) {
 		unsigned long g;
-		sl.sl_elf_hash = (sl.sl_elf_hash << 4) + *p++;
+		sl.sl_elf_hash = (sl.sl_elf_hash << 4) + c;
 		if ((g = sl.sl_elf_hash & 0xf0000000))
 			sl.sl_elf_hash ^= g >> 24;
 		sl.sl_elf_hash &= ~g;
+		sl.sl_gnu_hash = sl.sl_gnu_hash * 33 + c;
 	}
 
 	if (req_obj->dyn.symbolic)

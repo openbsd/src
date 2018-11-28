@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.86 2018/11/16 21:15:47 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.87 2018/11/28 03:18:00 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -119,6 +119,7 @@ struct elf_object {
 #define	STAT_UNLOADED	0x20
 #define	STAT_NODELETE	0x40
 #define	STAT_VISITED	0x80
+#define	STAT_GNU_HASH	0x100
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
@@ -130,10 +131,34 @@ struct elf_object {
 #define	OBJTYPE_DLO	4
 	int		obj_flags;	/* c.f. <sys/exec_elf.h> DF_1_* */
 
-	Elf_Word	*buckets;
+	/* shared by ELF and GNU hash */
 	u_int32_t	nbuckets;
-	Elf_Word	*chains;
-	u_int32_t	nchains;
+	u_int32_t	nchains;	/* really, number of symbols */
+	union {
+		struct {
+			/* specific to ELF hash */
+			const Elf_Word	*buckets;
+			const Elf_Word	*chains;
+		} u_elf;
+		struct {
+			/* specific to GNU hash */
+			const Elf32_Word	*buckets;
+			const Elf32_Word	*chains;
+			const Elf_Addr		*bloom;
+			Elf32_Word		mask_bm;
+			Elf32_Word		shift2;
+			Elf32_Word		symndx;
+		} u_gnu;
+	} hash_u;
+#define buckets_elf	hash_u.u_elf.buckets
+#define chains_elf	hash_u.u_elf.chains
+#define buckets_gnu	hash_u.u_gnu.buckets
+#define chains_gnu	hash_u.u_gnu.chains
+#define bloom_gnu	hash_u.u_gnu.bloom
+#define mask_bm_gnu	hash_u.u_gnu.mask_bm
+#define shift2_gnu	hash_u.u_gnu.shift2
+#define symndx_gnu	hash_u.u_gnu.symndx
+
 	Elf_Dyn		*dynamic;
 
 	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
