@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_main.3,v 1.5 2018/07/08 06:17:10 jmc Exp $
+.\" $OpenBSD: fuse_main.3,v 1.6 2018/11/28 21:19:11 mpi Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2018 $
+.Dd $Mdocdate: November 28 2018 $
 .Dt FUSE_MAIN 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ must at a minimum specify the directory on which the file system is to
 be mounted.
 The other arguments can be custom arguments specific to the
 file system or those supported by
-.Xr fuse_parse_cmd_line 3 ,
+.Xr fuse_parse_cmdline 3 ,
 .Xr fuse_new 3
 and
 .Xr fuse_mount 3 .
@@ -127,7 +127,7 @@ main(int ac, char **av)
 .Xr fuse_loop 3 ,
 .Xr fuse_mount 3 ,
 .Xr fuse_new 3 ,
-.Xr fuse_parse_cmd_line 3 ,
+.Xr fuse_parse_cmdline 3 ,
 .Xr fuse_setup 3 ,
 .Xr fuse 4
 .Sh STANDARDS

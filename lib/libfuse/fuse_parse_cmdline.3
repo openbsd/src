@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_parse_cmd_line.3,v 1.2 2018/07/08 06:17:10 jmc Exp $
+.\" $OpenBSD: fuse_parse_cmdline.3,v 1.1 2018/11/28 21:19:11 mpi Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -14,26 +14,26 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2018 $
-.Dt FUSE_PARSE_CMD_LINE 3
+.Dd $Mdocdate: November 28 2018 $
+.Dt FUSE_PARSE_CMDLINE 3
 .Os
 .Sh NAME
-.Nm fuse_parse_cmd_line
+.Nm fuse_parse_cmdline
 .Nd FUSE helper function to parse command line arguments
 .Sh SYNOPSIS
 .In fuse.h
 .Ft int
-.Fn fuse_parse_cmd_line "struct fuse_args *args" "char **mp" \
+.Fn fuse_parse_cmdline "struct fuse_args *args" "char **mp" \
     "int *mt" "int *fg"
 .Sh DESCRIPTION
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 is a helper function to parse standard FUSE arguments.
 .Fa args
 can be constructed using the
 .Xr FUSE_ARGS_INIT 3
 macro.
 .Pp
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 supports the following arguments.
 .Bl -tag -width Ds
 .It Fl d , Fl odebug
@@ -49,7 +49,7 @@ This flag indicates that the file system
 should not detach from the controlling terminal and run in the foreground.
 .It Fl h , Fl -help , Fl ho
 Print usage information for the options supported by
-.Fn fuse_parse_cmd_line .
+.Fn fuse_parse_cmdline .
 .It Fl s
 If this is specified then
 .Fa mt
@@ -65,13 +65,13 @@ Print the FUSE library version to stderr.
 .El
 .Pp
 If the first argument not recognised by
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 is a valid directory then
 .Fa mp
 will be set to the canonicalized absolute pathname of this directory.
 .Sh RETURN VALUES
 The
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 function will return 0 on success and -1 if
 .Fl h , Fl -help , Fl ho , Fl v
 or
@@ -88,11 +88,11 @@ does not exist or is not a directory.
 .Xr fuse_setup 3
 .Sh STANDARDS
 The
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 function conforms to FUSE 2.6.
 .Sh HISTORY
 The
-.Fn fuse_parse_cmd_line
+.Fn fuse_parse_cmdline
 function first appeared in
 .Ox 5.4 .
 .Sh AUTHORS
