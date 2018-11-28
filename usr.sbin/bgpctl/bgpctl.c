@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.223 2018/11/01 10:09:52 denis Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.224 2018/11/28 08:33:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -173,14 +173,7 @@ main(int argc, char *argv[])
 			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 		}
-		if (res->community.as != COMMUNITY_UNSET &&
-		    res->community.type != COMMUNITY_UNSET)
-			ribreq.community = res->community;
-		if (res->large_community.as != COMMUNITY_UNSET &&
-		    res->large_community.ld1 != COMMUNITY_UNSET &&
-		    res->large_community.ld2 != COMMUNITY_UNSET)
-			ribreq.large_community = res->large_community;
-		/* XXX extended communities missing? */
+		/* XXX currently no communities support */
 		ribreq.neighbor = neighbor;
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
@@ -277,30 +270,17 @@ main(int argc, char *argv[])
 	case SHOW_RIB:
 		bzero(&ribreq, sizeof(ribreq));
 		type = IMSG_CTL_SHOW_RIB;
-		if (res->as.type != AS_UNDEF) {
-			ribreq.as = res->as;
-			type = IMSG_CTL_SHOW_RIB_AS;
-		}
 		if (res->addr.aid) {
 			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 			type = IMSG_CTL_SHOW_RIB_PREFIX;
 		}
-		if (res->community.as != COMMUNITY_UNSET &&
-		    res->community.type != COMMUNITY_UNSET) {
+		if (res->as.type != AS_UNDEF)
+			ribreq.as = res->as;
+		if (res->community.type != COMMUNITY_TYPE_NONE)
 			ribreq.community = res->community;
-			type = IMSG_CTL_SHOW_RIB_COMMUNITY;
-		}
-		if (res->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID) {
+		if (res->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID)
 			ribreq.extcommunity = res->extcommunity;
-			type = IMSG_CTL_SHOW_RIB_EXTCOMMUNITY;
-		}
-		if (res->large_community.as != COMMUNITY_UNSET &&
-		    res->large_community.ld1 != COMMUNITY_UNSET &&
-		    res->large_community.ld2 != COMMUNITY_UNSET) {
-			ribreq.large_community = res->large_community;
-			type = IMSG_CTL_SHOW_RIB_LARGECOMMUNITY;
-		}
 		ribreq.neighbor = neighbor;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.aid = res->aid;
@@ -399,14 +379,7 @@ main(int argc, char *argv[])
 			ribreq.prefix = res->addr;
 			ribreq.prefixlen = res->prefixlen;
 		}
-		if (res->community.as != COMMUNITY_UNSET &&
-		    res->community.type != COMMUNITY_UNSET)
-			ribreq.community = res->community;
-		if (res->large_community.as != COMMUNITY_UNSET &&
-		    res->large_community.ld1 != COMMUNITY_UNSET &&
-		    res->large_community.ld2 != COMMUNITY_UNSET)
-			ribreq.large_community = res->large_community;
-		/* XXX ext communities missing? */
+		/* XXX currently no community support */
 		ribreq.neighbor = neighbor;
 		ribreq.aid = res->aid;
 		ribreq.flags = res->flags;
