@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.19 2017/01/26 04:45:46 benno Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.20 2018/11/28 08:06:22 claudio Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	SOCK_NAME	"test-sock"
 
 int	main(int, char *[]);
-void	child(int, int);
+void	child(int, int, int);
 void	catch_sigchld(int);
 
 /* ARGSUSED */
@@ -72,21 +72,29 @@ main(int argc, char *argv[])
 		struct cmsghdr hdr;
 		char buf[CMSG_SPACE(sizeof(int) * 3)];
 	} cmsgbuf;
-	int pflag;
+	int pflag, oflag, rflag;
 	int type = SOCK_STREAM;
 	extern char *__progname;
 
 	pflag = 0;
-	while ((i = getopt(argc, argv, "pq")) != -1) {
+	oflag = 0;
+	rflag = 0;
+	while ((i = getopt(argc, argv, "opqr")) != -1) {
 		switch (i) {
+		case 'o':
+			oflag = 1;
+			break;
 		case 'p':
 			pflag = 1;
 			break;
 		case 'q':
 			type = SOCK_SEQPACKET;
 			break;
+		case 'r':
+			rflag = 1;
+			break;
 		default:
-			fprintf(stderr, "usage: %s [-p]\n", __progname);
+			fprintf(stderr, "usage: %s [-opqr]\n", __progname);
 			exit(1);
 		}
 	}
@@ -94,7 +102,7 @@ main(int argc, char *argv[])
 	/*
 	 * Create the test files.
 	 */
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 5; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
 			err(1, "open %s", fname);
@@ -143,7 +151,7 @@ main(int argc, char *argv[])
 	case 0:
 		if (pfd[0] != -1)
 			close(pfd[0]);
-		child(pfd[1], type);
+		child(pfd[1], type, oflag);
 		/* NOTREACHED */
 	}
 
@@ -165,15 +173,27 @@ main(int argc, char *argv[])
 	 */
 	(void) sleep(10);
 
+	if (rflag) {
+		if (read(sock, buf, sizeof(buf)) < 0)
+			err(1, "read");
+		printf("read successfully returned\n");
+		exit(0);
+	}
+
 	/*
 	 * Grab the descriptors passed to us.
 	 */
-	(void) memset(&msg, 0, sizeof(msg));
+	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if (recvmsg(sock, &msg, 0) < 0)
-		err(1, "recvmsg");
+	if (recvmsg(sock, &msg, 0) < 0) {
+		if (errno == EMSGSIZE) {
+			printf("recvmsg returned EMSGSIZE\n");
+			exit(0);
+		} else
+			err(1, "recvmsg");
+	}
 
 	(void) close(sock);
 
@@ -236,17 +256,15 @@ catch_sigchld(sig)
 }
 
 void
-child(int sock, int type)
+child(int sock, int type, int oflag)
 {
 	struct msghdr msg;
 	char fname[16];
 	struct cmsghdr *cmp;
-	int i, fd;
+	int i, fd, nfds = 3;
 	struct sockaddr_un sun;
-	union {
-		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int) * 3)];
-	} cmsgbuf;
+	size_t len;
+	char *cmsgbuf;
 	int *files;
 
 	/*
@@ -264,12 +282,18 @@ child(int sock, int type)
 			err(1, "child connect");
 	}
 
+	if (oflag)
+		nfds = 5;
+	len = CMSG_SPACE(sizeof(int) * nfds);
+	if ((cmsgbuf = malloc(len)) == NULL)
+		err(1, "child");
+
 	(void) memset(&msg, 0, sizeof(msg));
-	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = len;
 
 	cmp = CMSG_FIRSTHDR(&msg);
-	cmp->cmsg_len = CMSG_LEN(sizeof(int) * 3);
+	cmp->cmsg_len = CMSG_LEN((sizeof(int) * nfds));
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
@@ -277,7 +301,7 @@ child(int sock, int type)
 	 * Open the files again, and pass them to the parent over the socket.
 	 */
 	files = (int *)CMSG_DATA(cmp);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < nfds; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
 		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
 			err(1, "child open %s", fname);
