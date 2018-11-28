@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.48 2018/08/21 16:01:38 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.49 2018/11/28 14:23:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,7 +79,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	p->setwidth = ascii_setwidth;
 	p->width = ascii_width;
 
-	if (TERMENC_ASCII != enc) {
+	if (enc != TERMENC_ASCII) {
 
 		/*
 		 * Do not change any of this to LC_ALL.  It might break
@@ -88,7 +88,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 		 * worst case, it might even cause buffer overflows.
 		 */
 
-		v = TERMENC_LOCALE == enc ?
+		v = enc == TERMENC_LOCALE ?
 		    setlocale(LC_CTYPE, "") :
 		    setlocale(LC_CTYPE, "en_US.UTF-8");
 
@@ -102,7 +102,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 			v = setlocale(LC_CTYPE, "C");
 
 		if (v != NULL && MB_CUR_MAX > 1) {
-			p->enc = enc;
+			p->enc = TERMENC_UTF8;
 			p->advance = locale_advance;
 			p->endline = locale_endline;
 			p->letter = locale_letter;
