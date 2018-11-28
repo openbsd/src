@@ -2321,7 +2321,7 @@
 ./usr/share/man/man3/fuse_mount.3
 ./usr/share/man/man3/fuse_new.3
 ./usr/share/man/man3/fuse_opt.3
-./usr/share/man/man3/fuse_parse_cmd_line.3
+./usr/share/man/man3/fuse_parse_cmdline.3
 ./usr/share/man/man3/fuse_set_signal_handlers.3
 ./usr/share/man/man3/fuse_setup.3
 ./usr/share/man/man3/fuse_teardown.3
