@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_lock.c,v 1.1 2018/11/11 06:41:28 bcook Exp $ */
+/* $OpenBSD: crypto_lock.c,v 1.2 2018/11/28 15:51:32 jsing Exp $ */
 /*
  * Copyright (c) 2018 Brent Cook <bcook@openbsd.org>
  *
@@ -19,16 +19,54 @@
 
 #include <openssl/crypto.h>
 
-static pthread_mutex_t locks[CRYPTO_NUM_LOCKS];
+static pthread_mutex_t locks[] = {
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+	PTHREAD_MUTEX_INITIALIZER,
+};
 
-void
-crypto_init_locks(void)
-{
-	int i;
+#define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
+			    __attribute__((__unused__))
 
-	for (i = 0; i < CRYPTO_NUM_LOCKS; i++)
-		pthread_mutex_init(&locks[i], NULL);
-}
+CTASSERT((sizeof(locks) / sizeof(*locks)) == CRYPTO_NUM_LOCKS);
 
 void
 CRYPTO_lock(int mode, int type, const char *file, int line)
@@ -37,19 +75,21 @@ CRYPTO_lock(int mode, int type, const char *file, int line)
 		return;
 
 	if (mode & CRYPTO_LOCK)
-		pthread_mutex_lock(&locks[type]);
-	else
-		pthread_mutex_unlock(&locks[type]);
+		(void) pthread_mutex_lock(&locks[type]);
+	else if (mode & CRYPTO_UNLOCK)
+		(void) pthread_mutex_unlock(&locks[type]);
 }
 
 int
 CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
     int line)
 {
-	int ret = 0;
+	int ret;
+
 	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE, type, file, line);
 	ret = *pointer + amount;
 	*pointer = ret;
 	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE, type, file, line);
+
 	return (ret);
 }
