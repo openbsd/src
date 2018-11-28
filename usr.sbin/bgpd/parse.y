@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.363 2018/11/18 09:36:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.364 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,9 +153,7 @@ int		 merge_filterset(struct filter_set_head *, struct filter_set *);
 void		 merge_filter_lists(struct filter_head *, struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
-int64_t		 getcommunity(char *, int);
-int		 parsecommunity(struct filter_community *, char *);
-int		 parselargecommunity(struct filter_largecommunity *, char *);
+int		 parsecommunity(struct filter_community *, int, char *);
 int		 parsesubtype(char *, int *, int *);
 int		 parseextvalue(char *, u_int32_t *);
 int		 parseextcommunity(struct filter_extcommunity *, char *,
@@ -232,7 +230,7 @@ typedef struct {
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
 %type	<v.prefixset_item>	prefixset_item
-%type	<v.u8>			action quick direction delete
+%type	<v.u8>			action quick direction delete community
 %type	<v.filter_rib>		filter_rib_h filter_rib_l filter_rib
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
 %type	<v.filter_match>	filter_match filter_elm filter_match_h
@@ -2085,13 +2083,9 @@ filter_as	: as4number_any		{
 
 filter_match_h	: /* empty */			{
 			bzero(&$$, sizeof($$));
-			$$.m.community.as = COMMUNITY_UNSET;
-			$$.m.large_community.as = COMMUNITY_UNSET;
 		}
 		| {
 			bzero(&fmopts, sizeof(fmopts));
-			fmopts.m.community.as = COMMUNITY_UNSET;
-			fmopts.m.large_community.as = COMMUNITY_UNSET;
 		}
 		    filter_match		{
 			memcpy(&$$, &fmopts, sizeof($$));
@@ -2146,25 +2140,20 @@ filter_elm	: filter_prefix_h	{
 			fmopts.m.aslen.type = ASLEN_SEQ;
 			fmopts.m.aslen.aslen = $2;
 		}
-		| COMMUNITY STRING	{
-			if (fmopts.m.community.as != COMMUNITY_UNSET) {
-				yyerror("\"community\" already specified");
+		| community STRING	{
+			int i;
+			for (i = 0; i < MAX_COMM_MATCH; i++) {
+				if (fmopts.m.community[i].type ==
+				    COMMUNITY_TYPE_NONE)
+					break;
+			}
+			if (i >= MAX_COMM_MATCH) {
+				yyerror("too many \"community\" filters "
+				    "specified");
 				free($2);
 				YYERROR;
 			}
-			if (parsecommunity(&fmopts.m.community, $2) == -1) {
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		| LARGECOMMUNITY STRING	{
-			if (fmopts.m.large_community.as != COMMUNITY_UNSET) {
-				yyerror("\"large-community\" already specified");
-				free($2);
-				YYERROR;
-			}
-			if (parselargecommunity(&fmopts.m.large_community, $2) == -1) {
+			if (parsecommunity(&fmopts.m.community[i], $1, $2) == -1) {
 				free($2);
 				YYERROR;
 			}
@@ -2405,6 +2394,10 @@ filter_set_l	: filter_set_l comma filter_set_opt	{
 		}
 		;
 
+community	: COMMUNITY		{ $$ = COMMUNITY_TYPE_BASIC; }
+		| LARGECOMMUNITY	{ $$ = COMMUNITY_TYPE_LARGE; }
+		;
+
 delete		: /* empty */	{ $$ = 0; }
 		| DELETE	{ $$ = 1; }
 		;
@@ -2637,7 +2630,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			}
 			free($2);
 		}
-		| COMMUNITY delete STRING	{
+		| community delete STRING	{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			if ($2)
@@ -2645,30 +2638,8 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			else
 				$$->type = ACTION_SET_COMMUNITY;
 
-			if (parsecommunity(&$$->action.community, $3) == -1) {
-				free($3);
-				free($$);
-				YYERROR;
-			}
-			free($3);
-			/* Don't allow setting of any match */
-			if (!$2 && ($$->action.community.as == COMMUNITY_ANY ||
-			    $$->action.community.type == COMMUNITY_ANY)) {
-				yyerror("'*' is not allowed in set community");
-				free($$);
-				YYERROR;
-			}
-		}
-		| LARGECOMMUNITY delete STRING	{
-			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
-				fatal(NULL);
-			if ($2)
-				$$->type = ACTION_DEL_LARGE_COMMUNITY;
-			else
-				$$->type = ACTION_SET_LARGE_COMMUNITY;
-
-			if (parselargecommunity(&$$->action.large_community,
-			    $3) == -1) {
+			if (parsecommunity(&$$->action.community, $1, $3) ==
+			    -1) {
 				free($3);
 				free($$);
 				YYERROR;
@@ -2676,9 +2647,9 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			free($3);
 			/* Don't allow setting of any match */
 			if (!$2 &&
-			    ($$->action.large_community.as == COMMUNITY_ANY ||
-			    $$->action.large_community.ld1 == COMMUNITY_ANY ||
-			    $$->action.large_community.ld2 == COMMUNITY_ANY)) {
+			    ($$->action.community.dflag1 == COMMUNITY_ANY ||
+			    $$->action.community.dflag2 == COMMUNITY_ANY ||
+			    $$->action.community.dflag3 == COMMUNITY_ANY)) {
 				yyerror("'*' is not allowed in set community");
 				free($$);
 				YYERROR;
@@ -3470,86 +3441,50 @@ symget(const char *nam)
 	return (NULL);
 }
 
-int64_t
-getcommunity(char *s, int large)
+static int
+getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
 {
 	int64_t		 max = USHRT_MAX;
-	u_int		 val;
 	const char	*errstr;
 
-	if (strcmp(s, "*") == 0)
-		return (COMMUNITY_ANY);
-	if (strcmp(s, "neighbor-as") == 0)
-		return (COMMUNITY_NEIGHBOR_AS);
-	if (strcmp(s, "local-as") == 0)
-		return (COMMUNITY_LOCAL_AS);
+	*flag = 0;
+	*val = 0;
+	if (strcmp(s, "*") == 0) {
+		*flag = COMMUNITY_ANY;
+		return 0;
+	} else if (strcmp(s, "neighbor-as") == 0) {
+		*flag = COMMUNITY_NEIGHBOR_AS;
+		return 0;
+	} else if (strcmp(s, "local-as") == 0) {
+		*flag =  COMMUNITY_LOCAL_AS;
+		return 0;
+	}
 	if (large)
 		max = UINT_MAX;
-	val = strtonum(s, 0, max, &errstr);
+	*val = strtonum(s, 0, max, &errstr);
 	if (errstr) {
 		yyerror("Community %s is %s (max: %llu)", s, errstr, max);
-		return (COMMUNITY_ERROR);
+		return -1;
 	}
-	return (val);
+	return 0;
 }
 
-
-int
-parsecommunity(struct filter_community *c, char *s)
+static void
+setcommunity(struct filter_community *c, u_int32_t as, u_int32_t data,
+    u_int8_t asflag, u_int8_t dataflag)
 {
-	char *p;
-	int i, as;
-
-	/* Well-known communities */
-	if (strcasecmp(s, "GRACEFUL_SHUTDOWN") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_GRACEFUL_SHUTDOWN;
-		return (0);
-	} else if (strcasecmp(s, "NO_EXPORT") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_NO_EXPORT;
-		return (0);
-	} else if (strcasecmp(s, "NO_ADVERTISE") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_NO_ADVERTISE;
-		return (0);
-	} else if (strcasecmp(s, "NO_EXPORT_SUBCONFED") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_NO_EXPSUBCONFED;
-		return (0);
-	} else if (strcasecmp(s, "NO_PEER") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_NO_PEER;
-		return (0);
-	} else if (strcasecmp(s, "BLACKHOLE") == 0) {
-		c->as = COMMUNITY_WELLKNOWN;
-		c->type = COMMUNITY_BLACKHOLE;
-		return (0);
-	}
-
-	if ((p = strchr(s, ':')) == NULL) {
-		yyerror("Bad community syntax");
-		return (-1);
-	}
-	*p++ = 0;
-
-	if ((i = getcommunity(s, 0)) == COMMUNITY_ERROR)
-		return (-1);
-	as = i;
-
-	if ((i = getcommunity(p, 0)) == COMMUNITY_ERROR)
-		return (-1);
-	c->as = as;
-	c->type = i;
-
-	return (0);
+	memset(c, 0, sizeof(*c));
+	c->type = COMMUNITY_TYPE_BASIC;
+	c->dflag1 = asflag;
+	c->dflag2 = dataflag;
+	c->data1 = as;
+	c->data2 = data;
 }
 
-int
-parselargecommunity(struct filter_largecommunity *c, char *s)
+static int
+parselargecommunity(struct filter_community *c, char *s)
 {
 	char *p, *q;
-	int64_t as, ld1, ld2;
 
 	if ((p = strchr(s, ':')) == NULL) {
 		yyerror("Bad community syntax");
@@ -3563,19 +3498,61 @@ parselargecommunity(struct filter_largecommunity *c, char *s)
 	}
 	*q++ = 0;
 
-	if ((as = getcommunity(s, 1)) == COMMUNITY_ERROR)
+	if (getcommunity(s, 1, &c->data1, &c->dflag1) == -1 ||
+	    getcommunity(p, 1, &c->data2, &c->dflag2) == -1 ||
+	    getcommunity(q, 1, &c->data3, &c->dflag3) == -1)
 		return (-1);
+	c->type = COMMUNITY_TYPE_LARGE;
+	return (0);
+}
 
-	if ((ld1 = getcommunity(p, 1)) == COMMUNITY_ERROR)
+int
+parsecommunity(struct filter_community *c, int type, char *s)
+{
+	char *p;
+	u_int32_t as, data;
+	u_int8_t asflag, dataflag;
+
+	if (type == COMMUNITY_TYPE_LARGE)
+		return parselargecommunity(c, s);
+
+	/* Well-known communities */
+	if (strcasecmp(s, "GRACEFUL_SHUTDOWN") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_GRACEFUL_SHUTDOWN, 0, 0);
+		return (0);
+	} else if (strcasecmp(s, "NO_EXPORT") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_NO_EXPORT, 0, 0);
+		return (0);
+	} else if (strcasecmp(s, "NO_ADVERTISE") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_NO_ADVERTISE, 0, 0);
+		return (0);
+	} else if (strcasecmp(s, "NO_EXPORT_SUBCONFED") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_NO_EXPSUBCONFED, 0, 0);
+		return (0);
+	} else if (strcasecmp(s, "NO_PEER") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_NO_PEER, 0, 0);
+		return (0);
+	} else if (strcasecmp(s, "BLACKHOLE") == 0) {
+		setcommunity(c, COMMUNITY_WELLKNOWN,
+		    COMMUNITY_BLACKHOLE, 0, 0);
+		return (0);
+	}
+
+	if ((p = strchr(s, ':')) == NULL) {
+		yyerror("Bad community syntax");
 		return (-1);
+	}
+	*p++ = 0;
 
-	if ((ld2 = getcommunity(q, 1)) == COMMUNITY_ERROR)
+	if (getcommunity(s, 0, &as, &asflag) == -1 ||
+	    getcommunity(p, 0, &data, &dataflag) == -1)
 		return (-1);
-
-	c->as = as;
-	c->ld1 = ld1;
-	c->ld2 = ld2;
-
+	setcommunity(c, as, data, asflag, dataflag);
 	return (0);
 }
 
@@ -4218,10 +4195,6 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				yyerror("community is already set");
 			else if (s->type == ACTION_DEL_COMMUNITY)
 				yyerror("community will already be deleted");
-			else if (s->type == ACTION_SET_LARGE_COMMUNITY)
-				yyerror("large-community is already set");
-			else if (s->type == ACTION_DEL_LARGE_COMMUNITY)
-				yyerror("large-community will already be deleted");
 			else if (s->type == ACTION_SET_EXT_COMMUNITY)
 				yyerror("ext-community is already set");
 			else if (s->type == ACTION_DEL_EXT_COMMUNITY)
@@ -4243,21 +4216,9 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 			switch (s->type) {
 			case ACTION_SET_COMMUNITY:
 			case ACTION_DEL_COMMUNITY:
-				if (s->action.community.as <
-				    t->action.community.as ||
-				    (s->action.community.as ==
-				    t->action.community.as &&
-				    s->action.community.type <
-				    t->action.community.type)) {
-					TAILQ_INSERT_BEFORE(t, s, entry);
-					return (0);
-				}
-				break;
-			case ACTION_SET_LARGE_COMMUNITY:
-			case ACTION_DEL_LARGE_COMMUNITY:
-				if (memcmp(&s->action.large_community,
-				    &t->action.large_community,
-				    sizeof(s->action.large_community)) < 0) {
+				if (memcmp(&s->action.community,
+				    &t->action.community,
+				    sizeof(s->action.community)) < 0) {
 					TAILQ_INSERT_BEFORE(t, s, entry);
 					return (0);
 				}
@@ -4321,8 +4282,6 @@ get_rule(enum action_types type)
 		r->quick = 0;
 		r->dir = out ? DIR_OUT : DIR_IN;
 		r->action = ACTION_NONE;
-		r->match.community.as = COMMUNITY_UNSET;
-		r->match.large_community.as = COMMUNITY_UNSET;
 		TAILQ_INIT(&r->set);
 		if (curpeer == curgroup) {
 			/* group */

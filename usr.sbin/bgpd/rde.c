@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.449 2018/11/10 11:19:01 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.450 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -583,10 +583,6 @@ badnetdel:
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
-		case IMSG_CTL_SHOW_RIB_AS:
-		case IMSG_CTL_SHOW_RIB_COMMUNITY:
-		case IMSG_CTL_SHOW_RIB_EXTCOMMUNITY:
-		case IMSG_CTL_SHOW_RIB_LARGECOMMUNITY:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -2224,20 +2220,23 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
 		return;
-	if (req->type == IMSG_CTL_SHOW_RIB_AS &&
-	    !aspath_match(asp->aspath->data, asp->aspath->len,
-	    &req->as, 0))
+	if (req->as.type != AS_UNDEF && !aspath_match(asp->aspath->data,
+	    asp->aspath->len, &req->as, 0))
 		return;
-	if (req->type == IMSG_CTL_SHOW_RIB_COMMUNITY &&
-	    !community_match(asp, req->community.as,
-	    req->community.type))
-		return;
-	if (req->type == IMSG_CTL_SHOW_RIB_EXTCOMMUNITY &&
+	switch (req->community.type) {
+	case COMMUNITY_TYPE_NONE:
+		break;
+	case COMMUNITY_TYPE_BASIC:
+		if (!community_match(asp, &req->community, NULL))
+			return;
+		break;
+	case COMMUNITY_TYPE_LARGE:
+		if (!community_large_match(asp, &req->community, NULL))
+			return;
+		break;
+	}
+	if (req->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID &&
 	    !community_ext_match(asp, &req->extcommunity, 0))
-		return;
-	if (req->type == IMSG_CTL_SHOW_RIB_LARGECOMMUNITY &&
-	    !community_large_match(asp, req->large_community.as,
-	    req->large_community.ld1, req->large_community.ld2))
 		return;
 	if (!ovs_match(p, req->flags))
 		return;
@@ -2334,10 +2333,6 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			goto nomem;
 		break;
 	case IMSG_CTL_SHOW_RIB:
-	case IMSG_CTL_SHOW_RIB_AS:
-	case IMSG_CTL_SHOW_RIB_COMMUNITY:
-	case IMSG_CTL_SHOW_RIB_EXTCOMMUNITY:
-	case IMSG_CTL_SHOW_RIB_LARGECOMMUNITY:
 		if (rib_dump_new(rid, ctx->req.aid, CTL_MSG_HIGH_MARK, ctx,
 		    rde_dump_upcall, rde_dump_done, rde_dump_throttled) == -1)
 			goto nomem;

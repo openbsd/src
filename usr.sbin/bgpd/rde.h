@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.202 2018/11/04 12:34:54 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.203 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -361,25 +361,28 @@ int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
-int		 community_match(struct rde_aspath *, int, int);
-int		 community_set(struct rde_aspath *, int, int);
-void		 community_delete(struct rde_aspath *, int, int);
-int		 community_large_match(struct rde_aspath *, int64_t, int64_t,
-		    int64_t);
-int		 community_large_set(struct rde_aspath *, int64_t, int64_t,
-		    int64_t);
-void		 community_large_delete(struct rde_aspath *, int64_t,
-		    int64_t, int64_t);
-int		 community_ext_match(struct rde_aspath *,
-		    struct filter_extcommunity *, u_int16_t);
-int		 community_ext_set(struct rde_aspath *,
-		    struct filter_extcommunity *, u_int16_t);
-void		 community_ext_delete(struct rde_aspath *,
-		    struct filter_extcommunity *, u_int16_t);
-int		 community_ext_conv(struct filter_extcommunity *, u_int16_t,
-		    u_int64_t *);
-u_char		*community_ext_delete_non_trans(u_char *, u_int16_t,
-		    u_int16_t *);
+
+int	 community_match(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+int	 community_set(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+void	 community_delete(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+int	 community_large_match(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+int	 community_large_set(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+void	 community_large_delete(struct rde_aspath *, struct filter_community *,
+	    struct rde_peer *);
+int	 community_ext_match(struct rde_aspath *,
+	    struct filter_extcommunity *, u_int16_t);
+int	 community_ext_set(struct rde_aspath *,
+	    struct filter_extcommunity *, u_int16_t);
+void	 community_ext_delete(struct rde_aspath *,
+	    struct filter_extcommunity *, u_int16_t);
+int	 community_ext_conv(struct filter_extcommunity *, u_int16_t,
+	    u_int64_t *);
+u_char	*community_ext_delete_non_trans(u_char *, u_int16_t, u_int16_t *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);

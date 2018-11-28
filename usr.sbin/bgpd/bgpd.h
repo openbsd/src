@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.354 2018/11/14 14:03:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.355 2018/11/28 08:32:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,7 @@
 #define	READ_BUF_SIZE			65535
 #define	RT_BUF_SIZE			16384
 #define	MAX_RTSOCK_BUF			(2 * 1024 * 1024)
+#define	MAX_COMM_MATCH			3
 
 #define	BGPD_OPT_VERBOSE		0x0001
 #define	BGPD_OPT_VERBOSE2		0x0002
@@ -427,12 +428,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_NEXTHOP,
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_RIB,
-	IMSG_CTL_SHOW_RIB_AS,
 	IMSG_CTL_SHOW_RIB_PREFIX,
 	IMSG_CTL_SHOW_RIB_ATTR,
-	IMSG_CTL_SHOW_RIB_COMMUNITY,
-	IMSG_CTL_SHOW_RIB_EXTCOMMUNITY,
-	IMSG_CTL_SHOW_RIB_LARGECOMMUNITY,
 	IMSG_CTL_SHOW_NETWORK,
 	IMSG_CTL_SHOW_RIB_MEM,
 	IMSG_CTL_SHOW_RIB_HASH,
@@ -741,14 +738,13 @@ struct filter_ovs {
 };
 
 struct filter_community {
-	int		as;
-	int		type;
-};
-
-struct filter_largecommunity {
-	int64_t		as;
-	int64_t		ld1;
-	int64_t		ld2;
+	u_int8_t	type;
+	u_int8_t	dflag1;	/* one of set, any, local-as, neighbor-as */
+	u_int8_t	dflag2;
+	u_int8_t	dflag3;
+	u_int32_t	data1;
+	u_int32_t	data2;
+	u_int32_t	data3;
 };
 
 struct filter_extcommunity {
@@ -779,7 +775,6 @@ struct ctl_show_rib_request {
 	struct filter_as	as;
 	struct filter_community community;
 	struct filter_extcommunity extcommunity;
-	struct filter_largecommunity large_community;
 	u_int32_t		peerid;
 	u_int32_t		flags;
 	u_int8_t		validation_state;
@@ -829,11 +824,16 @@ struct filter_peers {
 };
 
 /* special community type */
-#define	COMMUNITY_ERROR			-1
-#define	COMMUNITY_ANY			-2
-#define	COMMUNITY_NEIGHBOR_AS		-3
-#define	COMMUNITY_LOCAL_AS		-4
-#define	COMMUNITY_UNSET			-5
+#define	COMMUNITY_TYPE_NONE		0
+#define	COMMUNITY_TYPE_BASIC		1
+#define	COMMUNITY_TYPE_EXT		2
+#define	COMMUNITY_TYPE_LARGE		3
+
+#define	COMMUNITY_ANY			1
+#define	COMMUNITY_NEIGHBOR_AS		2
+#define	COMMUNITY_LOCAL_AS		3
+
+/* wellknown community definitions */
 #define	COMMUNITY_WELLKNOWN		0xffff
 #define	COMMUNITY_GRACEFUL_SHUTDOWN	0x0000  /* RFC 8326 */
 #define	COMMUNITY_BLACKHOLE		0x029A	/* RFC 7999 */
@@ -928,8 +928,7 @@ struct filter_match {
 	struct filter_nexthop		nexthop;
 	struct filter_as		as;
 	struct filter_aslen		aslen;
-	struct filter_community		community;
-	struct filter_largecommunity	large_community;
+	struct filter_community		community[MAX_COMM_MATCH];
 	struct filter_extcommunity	ext_community;
 	struct filter_prefixset		prefixset;
 	struct filter_originset		originset;
@@ -969,8 +968,6 @@ enum action_types {
 	ACTION_SET_NEXTHOP_SELF,
 	ACTION_SET_COMMUNITY,
 	ACTION_DEL_COMMUNITY,
-	ACTION_DEL_LARGE_COMMUNITY,
-	ACTION_SET_LARGE_COMMUNITY,
 	ACTION_SET_EXT_COMMUNITY,
 	ACTION_DEL_EXT_COMMUNITY,
 	ACTION_PFTABLE,
@@ -991,7 +988,6 @@ struct filter_set {
 		struct bgpd_addr		 nexthop;
 		struct nexthop			*nh;
 		struct filter_community		 community;
-		struct filter_largecommunity	 large_community;
 		struct filter_extcommunity	 ext_community;
 		char				 pftable[PFTABLE_LEN];
 		char				 rtlabel[RTLABEL_LEN];

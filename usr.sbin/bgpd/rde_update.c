@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.103 2018/11/04 12:34:54 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.104 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -65,6 +65,22 @@ RB_PROTOTYPE(uptree_attr, update_attr, entry, up_attr_cmp)
 RB_GENERATE(uptree_attr, update_attr, entry, up_attr_cmp)
 
 SIPHASH_KEY uptree_key;
+
+static struct filter_community	comm_no_advertise = {
+	.type = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_ADVERTISE
+};
+static struct filter_community	comm_no_export = {
+	.type = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_EXPORT
+};
+static struct filter_community	comm_no_expsubconfed = {
+	.type = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_EXPSUBCONFED
+};
 
 void
 up_init(struct rde_peer *peer)
@@ -329,14 +345,14 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	}
 
 	/* well known communities */
-	if (community_match(asp, COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
+	if (community_match(asp, &comm_no_advertise, NULL))
 		return (0);
-	if (peer->conf.ebgp && community_match(asp, COMMUNITY_WELLKNOWN,
-	    COMMUNITY_NO_EXPORT))
-		return (0);
-	if (peer->conf.ebgp && community_match(asp, COMMUNITY_WELLKNOWN,
-	    COMMUNITY_NO_EXPSUBCONFED))
-		return (0);
+	if (peer->conf.ebgp) {
+		if (community_match(asp, &comm_no_export, NULL))
+			return (0);
+		if (community_match(asp, &comm_no_expsubconfed, NULL))
+			return (0);
+	}
 
 	/*
 	 * Don't send messages back to originator

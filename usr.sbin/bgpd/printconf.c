@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.123 2018/09/29 08:11:11 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.124 2018/11/28 08:32:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,8 @@
 #include "log.h"
 
 void		 print_prefix(struct filter_prefix *p);
-void		 print_community(int, int);
+const char	*community_type(struct filter_community *c);
+void		 print_community(struct filter_community *c);
 void		 print_largecommunity(int64_t, int64_t, int64_t);
 void		 print_extcommunity(struct filter_extcommunity *);
 void		 print_origin(u_int8_t);
@@ -104,60 +105,99 @@ print_prefix(struct filter_prefix *p)
 	}
 }
 
-void
-print_community(int as, int type)
+const char *
+community_type(struct filter_community *c)
 {
-	if (as == COMMUNITY_ANY)
-		printf("*:");
-	else if (as == COMMUNITY_NEIGHBOR_AS)
-		printf("neighbor-as:");
-	else if (as == COMMUNITY_LOCAL_AS)
-		printf("local-as:");
-	else
-		printf("%u:", (unsigned int)as);
-
-	if (type == COMMUNITY_ANY)
-		printf("* ");
-	else if (type == COMMUNITY_NEIGHBOR_AS)
-		printf("neighbor-as ");
-	else if (type == COMMUNITY_LOCAL_AS)
-		printf("local-as");
-	else
-		printf("%d ", type);
+	switch (c->type) {
+	case COMMUNITY_TYPE_BASIC:
+		return "community";
+	case COMMUNITY_TYPE_LARGE:
+		return "large-community";
+	default:
+		return "???";
+	}
 }
 
 void
-print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
+print_community(struct filter_community *c)
 {
-	if (as == COMMUNITY_ANY)
-		printf("*:");
-	else if (as == COMMUNITY_NEIGHBOR_AS)
-		printf("neighbor-as:");
-	else if (as == COMMUNITY_LOCAL_AS)
-		printf("local-as:");
-	else
-		printf("%lld:", as);
-
-	if (ld1 == COMMUNITY_ANY)
-		printf("*:");
-	else if (ld1 == COMMUNITY_NEIGHBOR_AS)
-		printf("neighbor-as:");
-	else if (ld1 == COMMUNITY_LOCAL_AS)
-		printf("local-as:");
-	else
-		printf("%lld:", ld1);
-
-	if (ld2 == COMMUNITY_ANY)
-		printf("* ");
-	else if (ld2 == COMMUNITY_NEIGHBOR_AS)
-		printf("neighbor-as ");
-	else if (ld2 == COMMUNITY_LOCAL_AS)
-		printf("local-as ");
-	else
-		printf("%lld ", ld2);
-
+	switch (c->type) {
+	case COMMUNITY_TYPE_BASIC:
+		switch (c->dflag1) {
+		case COMMUNITY_ANY:
+			printf("*:");
+			break;
+		case COMMUNITY_NEIGHBOR_AS:
+			printf("neighbor-as:");
+			break;
+		case COMMUNITY_LOCAL_AS:
+			printf("local-as:");
+			break;
+		default:
+			printf("%u:", c->data1);
+			break;
+		}
+		switch (c->dflag2) {
+		case COMMUNITY_ANY:
+			printf("* ");
+			break;
+		case COMMUNITY_NEIGHBOR_AS:
+			printf("neighbor-as ");
+			break;
+		case COMMUNITY_LOCAL_AS:
+			printf("local-as ");
+			break;
+		default:
+			printf("%u ", c->data2);
+			break;
+		}
+		break;
+	case COMMUNITY_TYPE_LARGE:
+		switch (c->dflag1) {
+		case COMMUNITY_ANY:
+			printf("*:");
+			break;
+		case COMMUNITY_NEIGHBOR_AS:
+			printf("neighbor-as:");
+			break;
+		case COMMUNITY_LOCAL_AS:
+			printf("local-as:");
+			break;
+		default:
+			printf("%u:", c->data1);
+			break;
+		}
+		switch (c->dflag2) {
+		case COMMUNITY_ANY:
+			printf("*:");
+			break;
+		case COMMUNITY_NEIGHBOR_AS:
+			printf("neighbor-as:");
+			break;
+		case COMMUNITY_LOCAL_AS:
+			printf("local-as:");
+			break;
+		default:
+			printf("%u:", c->data2);
+			break;
+		}
+		switch (c->dflag3) {
+		case COMMUNITY_ANY:
+			printf("* ");
+			break;
+		case COMMUNITY_NEIGHBOR_AS:
+			printf("neighbor-as ");
+			break;
+		case COMMUNITY_LOCAL_AS:
+			printf("local-as ");
+			break;
+		default:
+			printf("%u ", c->data3);
+			break;
+		}
+		break;
+	}
 }
-
 
 void
 print_extcommunity(struct filter_extcommunity *c)
@@ -263,30 +303,13 @@ print_set(struct filter_set_head *set)
 			printf("prepend-neighbor %u ", s->action.prepend);
 			break;
 		case ACTION_DEL_COMMUNITY:
-			printf("community delete ");
-			print_community(s->action.community.as,
-			    s->action.community.type);
-			printf(" ");
+			printf("%s delete ",
+			    community_type(&s->action.community));
+			print_community(&s->action.community);
 			break;
 		case ACTION_SET_COMMUNITY:
-			printf("community ");
-			print_community(s->action.community.as,
-			    s->action.community.type);
-			printf(" ");
-			break;
-		case ACTION_DEL_LARGE_COMMUNITY:
-			printf("large-community delete ");
-			print_largecommunity(s->action.large_community.as,
-			    s->action.large_community.ld1,
-			    s->action.large_community.ld2);
-			printf(" ");
-			break;
-		case ACTION_SET_LARGE_COMMUNITY:
-			printf("large-community ");
-			print_largecommunity(s->action.large_community.as,
-			    s->action.large_community.ld1,
-			    s->action.large_community.ld2);
-			printf(" ");
+			printf("%s ", community_type(&s->action.community));
+			print_community(&s->action.community);
 			break;
 		case ACTION_PFTABLE:
 			printf("pftable %s ", s->action.pftable);
@@ -715,7 +738,8 @@ void print_as(struct filter_rule *r)
 void
 print_rule(struct peer *peer_l, struct filter_rule *r)
 {
-	struct peer	*p;
+	struct peer *p;
+	int i;
 
 	if (r->action == ACTION_ALLOW)
 		printf("allow ");
@@ -817,20 +841,16 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		    "max-as-len" : "max-as-seq", r->match.aslen.aslen);
 	}
 
-	if (r->match.community.as != COMMUNITY_UNSET) {
-		printf("community ");
-		print_community(r->match.community.as,
-		    r->match.community.type);
+	for (i = 0; i < MAX_COMM_MATCH; i++) {
+		struct filter_community *c = &r->match.community[i];
+		if (c->type != COMMUNITY_TYPE_NONE) {
+			printf("%s ", community_type(c));
+			print_community(c);
+		}
 	}
 	if (r->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID) {
 		printf("ext-community ");
 		print_extcommunity(&r->match.ext_community);
-	}
-	if (r->match.large_community.as != COMMUNITY_UNSET) {
-		printf("large-community ");
-		print_largecommunity(r->match.large_community.as,
-		    r->match.large_community.ld1,
-		    r->match.large_community.ld2);
 	}
 
 	print_set(&r->set);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.113 2018/11/14 14:03:36 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.114 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -40,8 +40,6 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 {
 	struct filter_set	*set;
 	u_char			*np;
-	int			 as, type;
-	int64_t			 las, ld1, ld2;
 	u_int32_t		 prep_as;
 	u_int16_t		 nl;
 	u_int8_t		 prepend;
@@ -142,172 +140,28 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			    &state->nexthop, &state->nhflags);
 			break;
 		case ACTION_SET_COMMUNITY:
-			switch (set->action.community.as) {
-			case COMMUNITY_ERROR:
-			case COMMUNITY_ANY:
-				fatalx("%s: bad community string", __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				as = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				as = peer->conf.local_as;
-				break;
-			default:
-				as = set->action.community.as;
-				break;
-			}
-
 			switch (set->action.community.type) {
-			case COMMUNITY_ERROR:
-			case COMMUNITY_ANY:
-				fatalx("%s: bad community string", __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				type = peer->conf.remote_as;
+			case COMMUNITY_TYPE_BASIC:
+				community_set(&state->aspath,
+				    &set->action.community, peer);
 				break;
-			case COMMUNITY_LOCAL_AS:
-				type = peer->conf.local_as;
-				break;
-			default:
-				type = set->action.community.type;
+			case COMMUNITY_TYPE_LARGE:
+				community_large_set(&state->aspath,
+				    &set->action.community, peer);
 				break;
 			}
-
-			community_set(&state->aspath, as, type);
 			break;
 		case ACTION_DEL_COMMUNITY:
-			switch (set->action.community.as) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad community string", __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				as = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				as = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				as = set->action.community.as;
-				break;
-			}
-
 			switch (set->action.community.type) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad community string", __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				type = peer->conf.remote_as;
+			case COMMUNITY_TYPE_BASIC:
+				community_delete(&state->aspath,
+				    &set->action.community, peer);
 				break;
-			case COMMUNITY_LOCAL_AS:
-				type = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				type = set->action.community.type;
+			case COMMUNITY_TYPE_LARGE:
+				community_large_delete(&state->aspath,
+				    &set->action.community, peer);
 				break;
 			}
-
-			community_delete(&state->aspath, as, type);
-			break;
-		case ACTION_SET_LARGE_COMMUNITY:
-			switch (set->action.large_community.as) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				las = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				las = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				las = set->action.large_community.as;
-				break;
-			}
-
-			switch (set->action.large_community.ld1) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				ld1 = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				ld1 = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				ld1 = set->action.large_community.ld1;
-				break;
-			}
-
-			switch (set->action.large_community.ld2) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				ld2 = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				ld2 = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				ld2 = set->action.large_community.ld2;
-				break;
-			}
-
-			community_large_set(&state->aspath, las, ld1, ld2);
-			break;
-		case ACTION_DEL_LARGE_COMMUNITY:
-			switch (set->action.large_community.as) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				las = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				las = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				las = set->action.large_community.as;
-				break;
-			}
-
-			switch (set->action.large_community.ld1) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				ld1 = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				ld1 = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				ld1 = set->action.large_community.ld1;
-				break;
-			}
-
-			switch (set->action.large_community.ld2) {
-			case COMMUNITY_ERROR:
-				fatalx("%s: bad large community string",
-				    __func__);
-			case COMMUNITY_NEIGHBOR_AS:
-				ld2 = peer->conf.remote_as;
-				break;
-			case COMMUNITY_LOCAL_AS:
-				ld2 = peer->conf.local_as;
-				break;
-			case COMMUNITY_ANY:
-			default:
-				ld2 = set->action.large_community.ld2;
-				break;
-			}
-
-			community_large_delete(&state->aspath, las, ld1, ld2);
 			break;
 		case ACTION_PFTABLE:
 			/* convert pftable name to an id */
@@ -348,9 +202,8 @@ int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
     struct filterstate *state, struct prefix *p)
 {
-	int		cas, type;
-	int64_t		las, ld1, ld2;
-	struct rde_aspath	*asp = NULL;
+	struct rde_aspath *asp = NULL;
+	int i;
 
 	if (state != NULL)
 		asp = &state->aspath;
@@ -376,89 +229,28 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		    f->match.aslen.aslen) == 0)
 			return (0);
 
-	if (asp != NULL && f->match.community.as != COMMUNITY_UNSET) {
-		switch (f->match.community.as) {
-		case COMMUNITY_ERROR:
-			fatalx("rde_filter_match bad community string");
-		case COMMUNITY_NEIGHBOR_AS:
-			cas = peer->conf.remote_as;
+	for (i = 0; asp != NULL && i < MAX_COMM_MATCH; i++) {
+		switch (f->match.community[i].type) {
+		case COMMUNITY_TYPE_NONE:
+			i = MAX_COMM_MATCH;
 			break;
-		case COMMUNITY_LOCAL_AS:
-			cas = peer->conf.local_as;
+		case COMMUNITY_TYPE_BASIC:
+			if (community_match(asp, &f->match.community[i],
+			    peer) == 0)
+				return (0);
 			break;
-		default:
-			cas = f->match.community.as;
-			break;
-		}
-
-		switch (f->match.community.type) {
-		case COMMUNITY_ERROR:
-			fatalx("rde_filter_match bad community string");
-		case COMMUNITY_NEIGHBOR_AS:
-			type = peer->conf.remote_as;
-			break;
-		case COMMUNITY_LOCAL_AS:
-			type = peer->conf.local_as;
-			break;
-		default:
-			type = f->match.community.type;
+		case COMMUNITY_TYPE_LARGE:
+			if (community_large_match(asp, &f->match.community[i],
+			    peer) == 0)
+				return (0);
 			break;
 		}
-
-		if (community_match(asp, cas, type) == 0)
-			return (0);
 	}
 	if (asp != NULL &&
 	    (f->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID))
 		if (community_ext_match(asp, &f->match.ext_community,
 		    peer->conf.remote_as) == 0)
 			return (0);
-	if (asp != NULL && f->match.large_community.as != COMMUNITY_UNSET) {
-		switch (f->match.large_community.as) {
-		case COMMUNITY_ERROR:
-			fatalx("rde_filter_match bad community string");
-		case COMMUNITY_NEIGHBOR_AS:
-			las = peer->conf.remote_as;
-			break;
-		case COMMUNITY_LOCAL_AS:
-			las = peer->conf.local_as;
-			break;
-		default:
-			las = f->match.large_community.as;
-			break;
-		}
-
-		switch (f->match.large_community.ld1) {
-		case COMMUNITY_ERROR:
-			fatalx("rde_filter_match bad community string");
-		case COMMUNITY_NEIGHBOR_AS:
-			ld1 = peer->conf.remote_as;
-			break;
-		case COMMUNITY_LOCAL_AS:
-			ld1 = peer->conf.local_as;
-			break;
-		default:
-			ld1 = f->match.large_community.ld1;
-			break;
-		}
-
-		switch (f->match.large_community.ld2) {
-		case COMMUNITY_ERROR:
-			fatalx("rde_filter_match bad community string");
-		case COMMUNITY_NEIGHBOR_AS:
-			ld2 = peer->conf.remote_as;
-			break;
-		case COMMUNITY_LOCAL_AS:
-			ld2 = peer->conf.local_as;
-			break;
-		default:
-			ld2 = f->match.large_community.ld2;
-			break;
-		}
-
-		if (community_large_match(asp, las, ld1, ld2) == 0)
-			return (0);
-	}
 
 	if (state != NULL && f->match.nexthop.flags != 0) {
 		struct bgpd_addr *nexthop, *cmpaddr;
@@ -744,32 +536,14 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 
 	if (a->type == ACTION_SET_COMMUNITY ||
 	    a->type == ACTION_DEL_COMMUNITY) {	/* a->type == b->type */
-		/* compare community */
-		if (a->action.community.as - b->action.community.as != 0)
-			return (a->action.community.as -
-			    b->action.community.as);
-		return (a->action.community.type - b->action.community.type);
+		return (memcmp(&a->action.community, &b->action.community,
+		    sizeof(a->action.community)));
 	}
 
 	if (a->type == ACTION_SET_EXT_COMMUNITY ||
 	    a->type == ACTION_DEL_EXT_COMMUNITY) {	/* a->type == b->type */
 		return (memcmp(&a->action.ext_community,
 		    &b->action.ext_community, sizeof(a->action.ext_community)));
-	}
-
-	if (a->type == ACTION_SET_LARGE_COMMUNITY ||
-	    a->type == ACTION_DEL_LARGE_COMMUNITY) {	/* a->type == b->type */
-		/* compare community */
-		if (a->action.large_community.as -
-		    b->action.large_community.as != 0)
-			return (a->action.large_community.as -
-			    b->action.large_community.as);
-		if (a->action.large_community.ld1 -
-		    b->action.large_community.ld1 != 0)
-			return (a->action.large_community.ld1 -
-			    b->action.large_community.ld1);
-		return (a->action.large_community.ld2 -
-		    b->action.large_community.ld2);
 	}
 
 	if (a->type == ACTION_SET_NEXTHOP && b->type == ACTION_SET_NEXTHOP) {
@@ -843,14 +617,6 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			if (a->type == b->type &&
 			    memcmp(&a->action.community, &b->action.community,
 			    sizeof(a->action.community)) == 0)
-				continue;
-			break;
-		case ACTION_DEL_LARGE_COMMUNITY:
-		case ACTION_SET_LARGE_COMMUNITY:
-			if (a->type == b->type &&
-			    memcmp(&a->action.large_community,
-			    &b->action.large_community,
-			    sizeof(a->action.large_community)) == 0)
 				continue;
 			break;
 		case ACTION_PFTABLE:
@@ -936,10 +702,6 @@ filterset_name(enum action_types type)
 		return ("community");
 	case ACTION_DEL_COMMUNITY:
 		return ("community delete");
-	case ACTION_SET_LARGE_COMMUNITY:
-		return ("large-community");
-	case ACTION_DEL_LARGE_COMMUNITY:
-		return ("large-community delete");
 	case ACTION_PFTABLE:
 	case ACTION_PFTABLE_ID:
 		return ("pftable");

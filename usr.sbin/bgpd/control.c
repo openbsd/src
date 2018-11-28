@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.90 2017/08/11 16:02:53 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.91 2018/11/28 08:32:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -248,12 +248,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			case IMSG_CTL_SHOW_NEXTHOP:
 			case IMSG_CTL_SHOW_INTERFACE:
 			case IMSG_CTL_SHOW_RIB:
-			case IMSG_CTL_SHOW_RIB_AS:
 			case IMSG_CTL_SHOW_RIB_PREFIX:
 			case IMSG_CTL_SHOW_RIB_MEM:
-			case IMSG_CTL_SHOW_RIB_COMMUNITY:
-			case IMSG_CTL_SHOW_RIB_EXTCOMMUNITY:
-			case IMSG_CTL_SHOW_RIB_LARGECOMMUNITY:
 			case IMSG_CTL_SHOW_NETWORK:
 			case IMSG_CTL_SHOW_TERSE:
 			case IMSG_CTL_SHOW_TIMER:
@@ -421,7 +417,6 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			    IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_SHOW_RIB:
-		case IMSG_CTL_SHOW_RIB_AS:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_show_rib_request)) {
@@ -471,9 +466,6 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				    "wrong length");
 			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
-		case IMSG_CTL_SHOW_RIB_COMMUNITY:
-		case IMSG_CTL_SHOW_RIB_EXTCOMMUNITY:
-		case IMSG_CTL_SHOW_RIB_LARGECOMMUNITY:
 		case IMSG_CTL_SHOW_NETWORK:
 			c->ibuf.pid = imsg.hdr.pid;
 			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
