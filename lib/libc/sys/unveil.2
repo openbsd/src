@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.12 2018/10/28 22:42:33 beck Exp $
+.\" $OpenBSD: unveil.2,v 1.13 2018/11/29 21:18:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2018 $
+.Dd $Mdocdate: November 29 2018 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -37,21 +37,24 @@ except for the specified
 .Ar path
 and
 .Ar permission .
-Subsequent calls to
-.Nm
-can expose additional paths with specified permissions in the filesystem.
 .Pp
 The
 .Nm
-call itself is treated specially and can continue to see the
-filesystem for subsequent calls.
+system call remains capable of traversing to any
+.Ar path
+in the filesystem, so additional calls can set permissions at other
+points in the filesystem hierarchy.
 .Pp
-Future calls to
+.Pp
+After establishing a collection of
+.Ar path
+and
+.Ar permissions
+rules, future calls to
 .Nm
-can be blocked by passing two
+can be disabled by passing two
 .Ar NULL
 arguments.
-If the veil is not yet active, this does not activate it.
 Alternatively,
 .Xr pledge 2
 may be used to remove the
@@ -125,14 +128,11 @@ is returned for paths for which no
 .Nm
 permissions qualify.
 .Pp
-As with
-.Xr pledge 2 ,
-the use of
 .Fn unveil
-in an application will require lots of study and understanding
-of the interfaces called.
-In most cases it is best practice to unveil the directories
-in which an application makes use of files.
+use can be tricky because programs misbehave badly when their files
+unexpectedly disappear.
+In many cases it is easier to unveil the directories in which an
+application makes use of files.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
