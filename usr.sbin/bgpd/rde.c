@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.450 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.451 2018/11/29 15:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3371,6 +3371,20 @@ peer_up(u_int32_t id, struct session_up *sup)
 	}
 }
 
+static void
+peer_adjout_flush_upcall(struct rib_entry *re, void *arg)
+{
+	struct rde_peer *peer = arg;
+	struct prefix *p, *np;
+
+	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
+		if (peer != prefix_peer(p))
+			continue;
+		prefix_destroy(p);
+		break;	/* optimization, only one match per peer possible */
+	}
+}
+
 void
 peer_down(u_int32_t id)
 {
@@ -3383,9 +3397,15 @@ peer_down(u_int32_t id)
 	}
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
-	up_down(peer);
 	/* stop all pending dumps which may depend on this peer */
 	rib_dump_terminate(peer->loc_rib_id, peer, rde_up_dump_upcall);
+
+	/* flush Adj-RIB-Out for this peer */
+	if (rib_dump_new(RIB_ADJ_OUT, AID_UNSPEC, 0, peer,
+	    peer_adjout_flush_upcall, NULL, NULL) == -1)
+		fatal("%s: rib_dump_new", __func__);
+
+	up_down(peer);
 
 	peer_flush(peer, AID_UNSPEC, 0);
 
@@ -3438,6 +3458,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 
 		prefix_destroy(p);
 		peer->prefix_cnt--;
+		break;	/* optimization, only one match per peer possible */
 	}
 }
 
