@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.77 2018/11/12 23:32:42 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.78 2018/11/29 00:11:23 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -200,6 +200,9 @@
 
 #define	SIOCSTXHPRIO	_IOW('i', 197, struct ifreq)	/* set tx hdr prio */
 #define	SIOCGTXHPRIO	_IOWR('i', 198, struct ifreq)	/* get tx hdr prio */
+
+#define	SIOCSLIFPHYECN	_IOW('i', 199, struct ifreq)	/* set ecn copying */
+#define	SIOCGLIFPHYECN	_IOWR('i', 200, struct ifreq)	/* get ecn copying */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
