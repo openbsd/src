@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.51 2018/11/28 13:43:26 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.52 2018/11/29 21:40:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,13 +30,6 @@
 #define	IS_HORIZ(cp)	((cp)->pos == TBL_CELL_HORIZ || \
 			 (cp)->pos == TBL_CELL_DHORIZ)
 
-/* Flags for tbl_hrule(). */
-#define	HRULE_DBOX	(1 << 0)  /* Top and bottom, ASCII mode only. */
-#define	HRULE_DATA	(1 << 1)  /* In the middle of the table. */
-#define	HRULE_DOWN	(1 << 2)  /* Allow downward branches. */
-#define	HRULE_UP	(1 << 3)  /* Allow upward branches. */
-#define	HRULE_ENDS	(1 << 4)  /* Also generate left and right ends. */
-
 
 static	size_t	term_tbl_len(size_t, void *);
 static	size_t	term_tbl_strlen(const char *, void *);
@@ -49,7 +42,8 @@ static	void	tbl_direct_border(struct termp *, int, size_t);
 static	void	tbl_fill_border(struct termp *, int, size_t);
 static	void	tbl_fill_char(struct termp *, char, size_t);
 static	void	tbl_fill_string(struct termp *, const char *, size_t);
-static	void	tbl_hrule(struct termp *, const struct tbl_span *, int);
+static	void	tbl_hrule(struct termp *, const struct tbl_span *,
+			const struct tbl_span *, int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *,
 			const struct roffcol *);
 static	void	tbl_number(struct termp *, const struct tbl_opts *,
@@ -222,9 +216,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		if (tp->enc == TERMENC_ASCII &&
 		    sp->opts->opts & TBL_OPT_DBOX)
-			tbl_hrule(tp, sp, HRULE_DBOX | HRULE_ENDS);
+			tbl_hrule(tp, NULL, sp, TBL_OPT_DBOX);
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX))
-			tbl_hrule(tp, sp, HRULE_DOWN | HRULE_ENDS);
+			tbl_hrule(tp, NULL, sp, TBL_OPT_BOX);
 	}
 
 	/* Set up the columns. */
@@ -339,7 +333,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		more = 0;
 		if (horiz)
-			tbl_hrule(tp, sp, HRULE_DATA | HRULE_DOWN | HRULE_UP);
+			tbl_hrule(tp, sp->prev, sp, 0);
 		else {
 			cp = sp->layout->first;
 			cpn = sp->next == NULL ? NULL :
@@ -559,12 +553,12 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	tp->tcol->rmargin = tp->maxrmargin;
 	if (sp->next == NULL) {
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
-			tbl_hrule(tp, sp, HRULE_UP | HRULE_ENDS);
+			tbl_hrule(tp, sp, NULL, TBL_OPT_BOX);
 			tp->skipvsp = 1;
 		}
 		if (tp->enc == TERMENC_ASCII &&
 		    sp->opts->opts & TBL_OPT_DBOX) {
-			tbl_hrule(tp, sp, HRULE_DBOX | HRULE_ENDS);
+			tbl_hrule(tp, sp, NULL, TBL_OPT_DBOX);
 			tp->skipvsp = 2;
 		}
 		assert(tp->tbl.cols);
@@ -574,85 +568,125 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	} else if (horiz == 0 && sp->opts->opts & TBL_OPT_ALLBOX &&
 	    (sp->next == NULL || sp->next->pos == TBL_SPAN_DATA ||
 	     sp->next->next != NULL))
-		tbl_hrule(tp, sp,
-		    HRULE_DATA | HRULE_DOWN | HRULE_UP | HRULE_ENDS);
+		tbl_hrule(tp, sp, sp->next, TBL_OPT_ALLBOX);
 
 	tp->flags &= ~TERMP_NONOSPACE;
 }
 
 static void
-tbl_hrule(struct termp *tp, const struct tbl_span *sp, int flags)
+tbl_hrule(struct termp *tp, const struct tbl_span *spp,
+    const struct tbl_span *spn, int flags)
 {
-	const struct tbl_cell *cp, *cpn, *cpp;
-	const struct roffcol *col;
-	int cross, dvert, line, linewidth, uvert;
+	const struct tbl_cell	*cpp;    /* Cell above this line. */
+	const struct tbl_cell	*cpn;    /* Cell below this line. */
+	const struct roffcol	*col;    /* Contains width and spacing. */
+	int			 opts;   /* For the table as a whole. */
+	int			 bw;	 /* Box line width. */
+	int			 hw;     /* Horizontal line width. */
+	int			 lw, rw; /* Left and right line widths. */
+	int			 uw, dw; /* Vertical line widths. */
 
-	cp = sp->layout->first;
-	cpn = cpp = NULL;
-	if (flags & HRULE_DATA) {
-		linewidth = sp->pos == TBL_SPAN_DHORIZ ? 2 : 1;
-		cpn = sp->next == NULL ? NULL : sp->next->layout->first;
-		if (cpn == cp)
-			cpn = NULL;
-	} else
-		linewidth = tp->enc == TERMENC_UTF8 &&
-		    sp->opts->opts & TBL_OPT_DBOX ? 2 : 1;
+	cpp = spp == NULL ? NULL : spp->layout->first;
+	cpn = spn == NULL ? NULL : spn->layout->first;
+	opts = spn == NULL ? spp->opts->opts : spn->opts->opts;
+	bw = opts & TBL_OPT_DBOX ? (tp->enc == TERMENC_UTF8 ? 2 : 1) :
+	    opts & (TBL_OPT_BOX | TBL_OPT_ALLBOX) ? 1 : 0;
+	hw = flags == TBL_OPT_DBOX || flags == TBL_OPT_BOX ? bw :
+	    spn->pos == TBL_SPAN_DHORIZ ? 2 : 1;
+
+	/* Print the left end of the line. */
+
 	if (tp->viscol == 0) {
 		(*tp->advance)(tp, tp->tcols->offset);
 		tp->viscol = tp->tcols->offset;
 	}
-	if (flags & HRULE_ENDS)
-		tbl_direct_border(tp, linewidth * (BRIGHT +
-		    (flags & (HRULE_UP | HRULE_DBOX) ? BUP : 0) +
-		    (flags & (HRULE_DOWN | HRULE_DBOX) ? BDOWN : 0)), 1);
-	else {
-		cpp = sp->prev == NULL ? NULL : sp->prev->layout->first;
-		if (cpp == cp)
-			cpp = NULL;
-	}
+	if (flags != 0)
+		tbl_direct_border(tp,
+		    (spp == NULL ? 0 : BUP * bw) +
+		    (spn == NULL ? 0 : BDOWN * bw) +
+		    (spp == NULL || cpn == NULL ||
+		     cpn->pos != TBL_CELL_DOWN ? BRIGHT * hw : 0), 1);
+
 	for (;;) {
-		col = tp->tbl.cols + cp->col;
-		line = cpn == NULL || cpn->pos != TBL_CELL_DOWN ?
-		    BHORIZ * linewidth : 0;
-		tbl_direct_border(tp, line, col->width + col->spacing / 2);
-		uvert = dvert = 0;
-		if (flags & HRULE_UP &&
-		    (tp->enc == TERMENC_ASCII || sp->pos == TBL_SPAN_DATA ||
-		     (sp->prev != NULL && sp->prev->layout == sp->layout)))
-			uvert = cp->vert;
-		if (flags & HRULE_DOWN)
-			dvert = cp->vert;
-		if ((cp = cp->next) == NULL)
-			break;
+		col = tp->tbl.cols + (cpn == NULL ? cpp->col : cpn->col);
+
+		/* Print the horizontal line inside this column. */
+
+		lw = cpp == NULL || cpn == NULL ||
+		    cpn->pos != TBL_CELL_DOWN ? hw : 0;
+		tbl_direct_border(tp, BHORIZ * lw,
+		    col->width + col->spacing / 2);
+
+		/*
+		 * Figure out whether a vertical line is crossing
+		 * at the end of this column,
+		 * and advance to the next column.
+		 */
+
+		uw = dw = 0;
 		if (cpp != NULL) {
-			if (uvert < cpp->vert)
-				uvert = cpp->vert;
+			if (flags != TBL_OPT_DBOX) {
+				uw = cpp->vert;
+				if (uw == 0 && opts & TBL_OPT_ALLBOX)
+					uw = 1;
+			}
 			cpp = cpp->next;
 		}
 		if (cpn != NULL) {
-			if (dvert < cpn->vert)
-				dvert = cpn->vert;
+			if (flags != TBL_OPT_DBOX) {
+				dw = cpn->vert;
+				if (dw == 0 && opts & TBL_OPT_ALLBOX)
+					dw = 1;
+			}
 			cpn = cpn->next;
 		}
-		if (sp->opts->opts & TBL_OPT_ALLBOX) {
-			if (flags & HRULE_UP && uvert == 0)
-				uvert = 1;
-			if (flags & HRULE_DOWN && dvert == 0)
-				dvert = 1;
-		}
-		cross = BHORIZ * linewidth + BUP * uvert + BDOWN * dvert;
+		if (cpp == NULL && cpn == NULL)
+			break;
+
+		/* Vertical lines do not cross spanned cells. */
+
+		if (cpp != NULL && cpp->pos == TBL_CELL_SPAN)
+			uw = 0;
+		if (cpn != NULL && cpn->pos == TBL_CELL_SPAN)
+			dw = 0;
+
+		/* The horizontal line inside the next column. */
+
+		rw = cpp == NULL || cpn == NULL ||
+		    cpn->pos != TBL_CELL_DOWN ? hw : 0;
+
+		/* The line crossing at the end of this column. */
+
 		if (col->spacing)
-			tbl_direct_border(tp, cross, 1);
+			tbl_direct_border(tp, BLEFT * lw +
+			    BRIGHT * rw + BUP * uw + BDOWN * dw, 1);
+
+		/*
+		 * In ASCII output, a crossing may print two characters.
+		 */
+
+		if (tp->enc != TERMENC_ASCII || (uw < 2 && dw < 2))
+			uw = dw = 0;
 		if (col->spacing > 2)
-			tbl_direct_border(tp, tp->enc == TERMENC_ASCII &&
-			    (uvert > 1 || dvert > 1) ? cross : line, 1);
+			tbl_direct_border(tp,
+                            BHORIZ * rw + BUP * uw + BDOWN * dw, 1);
+
+		/* Padding before the start of the next column. */
+
 		if (col->spacing > 4)
-			tbl_direct_border(tp, line, (col->spacing - 3) / 2);
+			tbl_direct_border(tp,
+			    BHORIZ * rw, (col->spacing - 3) / 2);
 	}
-	if (flags & HRULE_ENDS) {
-		tbl_direct_border(tp, linewidth * (BLEFT +
-		    (flags & (HRULE_UP | HRULE_DBOX) ? BUP : 0) +
-		    (flags & (HRULE_DOWN | HRULE_DBOX) ? BDOWN : 0)), 1);
+
+	/* Print the right end of the line. */
+
+	if (flags != 0) {
+		tbl_direct_border(tp,
+		    (spp == NULL ? 0 : BUP * bw) +
+		    (spn == NULL ? 0 : BDOWN * bw) +
+		    (spp == NULL || spn == NULL ||
+		     spn->layout->last->pos != TBL_CELL_DOWN ?
+		     BLEFT * hw : 0), 1);
 		(*tp->endline)(tp);
 		tp->viscol = 0;
 	}
