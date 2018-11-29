@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.52 2018/11/29 21:40:08 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.53 2018/11/29 23:08:08 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -577,8 +577,9 @@ static void
 tbl_hrule(struct termp *tp, const struct tbl_span *spp,
     const struct tbl_span *spn, int flags)
 {
-	const struct tbl_cell	*cpp;    /* Cell above this line. */
-	const struct tbl_cell	*cpn;    /* Cell below this line. */
+	const struct tbl_cell	*cpp;    /* Layout cell above this line. */
+	const struct tbl_cell	*cpn;    /* Layout cell below this line. */
+	const struct tbl_dat	*dpn;	 /* Data cell below this line. */
 	const struct roffcol	*col;    /* Contains width and spacing. */
 	int			 opts;   /* For the table as a whole. */
 	int			 bw;	 /* Box line width. */
@@ -588,6 +589,13 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 
 	cpp = spp == NULL ? NULL : spp->layout->first;
 	cpn = spn == NULL ? NULL : spn->layout->first;
+	dpn = NULL;
+	if (spn != NULL) {
+		if (spn->pos == TBL_SPAN_DATA)
+			dpn = spn->first;
+		else if (spn->next != NULL)
+			dpn = spn->next->first;
+	}
 	opts = spn == NULL ? spp->opts->opts : spn->opts->opts;
 	bw = opts & TBL_OPT_DBOX ? (tp->enc == TERMENC_UTF8 ? 2 : 1) :
 	    opts & (TBL_OPT_BOX | TBL_OPT_ALLBOX) ? 1 : 0;
@@ -613,7 +621,9 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		/* Print the horizontal line inside this column. */
 
 		lw = cpp == NULL || cpn == NULL ||
-		    cpn->pos != TBL_CELL_DOWN ? hw : 0;
+		    (cpn->pos != TBL_CELL_DOWN &&
+		     (dpn == NULL || strcmp(dpn->string, "\\^") != 0))
+		    ? hw : 0;
 		tbl_direct_border(tp, BHORIZ * lw,
 		    col->width + col->spacing / 2);
 
@@ -639,6 +649,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 					dw = 1;
 			}
 			cpn = cpn->next;
+			while (dpn != NULL && dpn->layout != cpn)
+				dpn = dpn->next;
 		}
 		if (cpp == NULL && cpn == NULL)
 			break;
@@ -653,7 +665,9 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		/* The horizontal line inside the next column. */
 
 		rw = cpp == NULL || cpn == NULL ||
-		    cpn->pos != TBL_CELL_DOWN ? hw : 0;
+		    (cpn->pos != TBL_CELL_DOWN &&
+		     (dpn == NULL || strcmp(dpn->string, "\\^") != 0))
+		    ? hw : 0;
 
 		/* The line crossing at the end of this column. */
 
