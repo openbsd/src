@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.54 2018/11/06 20:34:54 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.55 2018/11/29 14:24:23 tedu Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -28,8 +28,6 @@ extern "C" {
 #include <stdint.h>
 
 #define TLS_API	20180210
-
-#define TLS_CA_CERT_FILE	"/etc/ssl/cert.pem"
 
 #define TLS_PROTOCOL_TLSv1_0	(1 << 1)
 #define TLS_PROTOCOL_TLSv1_1	(1 << 2)
@@ -86,6 +84,8 @@ const char *tls_error(struct tls *_ctx);
 
 struct tls_config *tls_config_new(void);
 void tls_config_free(struct tls_config *_config);
+
+const char *tls_default_ca_cert_file(void);
 
 int tls_config_add_keypair_file(struct tls_config *_config,
     const char *_cert_file, const char *_key_file);
