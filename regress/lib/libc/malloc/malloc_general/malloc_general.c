@@ -60,11 +60,15 @@ main(int argc, char *argv[])
 	int count, p, i;
 	void * q;
 	size_t sz;
+	char mo[20];
 
 	if (argc == 1)
 		errx(1, "usage: malloc_options");
 
-	malloc_options = argv[1];
+	/* first reset flags that might be set by env or sysctl */
+	strlcpy(mo, "cfgju", sizeof(mo));
+	strlcat(mo, argv[1], sizeof(mo));
+	malloc_options = mo;
 
 	for (count = 0; count < 800000; count++) {
 		if (count % 10000 == 0) {
