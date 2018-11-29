@@ -11783,7 +11783,8 @@ S_grok_bslash_N(pTHX_ RExC_state_t *pRExC_state,
 
     RExC_parse++;	/* Skip past the '{' */
 
-    if (! (endbrace = strchr(RExC_parse, '}'))  /* no trailing brace */
+    endbrace = (char *) memchr(RExC_parse, '}', RExC_end - RExC_parse);
+    if ((! endbrace) /* no trailing brace */
 	|| ! (endbrace == RExC_parse		/* nothing between the {} */
               || (endbrace - RExC_parse >= 2	/* U+ (bad hex is checked... */
                   && strnEQ(RExC_parse, "U+", 2)))) /* ... below for a better
@@ -12483,9 +12484,11 @@ S_regatom(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
             else {
                 STRLEN length;
                 char name = *RExC_parse;
-                char * endbrace;
+                char * endbrace = NULL;
                 RExC_parse += 2;
-                endbrace = strchr(RExC_parse, '}');
+                if (RExC_parse < RExC_end) {
+                    endbrace = (char *) memchr(RExC_parse, '}', RExC_end - RExC_parse);
+                }
 
                 if (! endbrace) {
                     vFAIL2("Missing right brace on \\%c{}", name);
@@ -14606,8 +14609,9 @@ S_handle_regex_sets(pTHX_ RExC_state_t *pRExC_state, SV** return_invlist,
                                     TRUE /* Force /x */ );
 
             switch (*RExC_parse) {
-                case '?':
-                    if (RExC_parse[1] == '[') depth++, RExC_parse++;
+                case '(':
+                    if (RExC_parse[1] == '?' && RExC_parse[2] == '[')
+                        depth++, RExC_parse+=2;
                     /* FALLTHROUGH */
                 default:
                     break;
@@ -14664,9 +14668,9 @@ S_handle_regex_sets(pTHX_ RExC_state_t *pRExC_state, SV** return_invlist,
                 }
 
                 case ']':
-                    if (depth--) break;
-                    RExC_parse++;
-                    if (*RExC_parse == ')') {
+                    if (RExC_parse[1] == ')') {
+                        RExC_parse++;
+                        if (depth--) break;
                         node = reganode(pRExC_state, ANYOF, 0);
                         RExC_size += ANYOF_SKIP;
                         nextchar(pRExC_state);
@@ -14678,20 +14682,25 @@ S_handle_regex_sets(pTHX_ RExC_state_t *pRExC_state, SV** return_invlist,
 
                         return node;
                     }
-                    goto no_close;
+                    /* We output the messages even if warnings are off, because we'll fail
+                     * the very next thing, and these give a likely diagnosis for that */
+                    if (posix_warnings && (__ASSERT_(SvTYPE(posix_warnings) == SVt_PVAV) AvFILLp(posix_warnings)) >= 0) {
+                        output_or_return_posix_warnings(pRExC_state, posix_warnings, NULL);
+                    }
+                    RExC_parse++;
+                    vFAIL("Unexpected ']' with no following ')' in (?[...");
             }
 
             RExC_parse += UTF ? UTF8SKIP(RExC_parse) : 1;
         }
 
-      no_close:
         /* We output the messages even if warnings are off, because we'll fail
          * the very next thing, and these give a likely diagnosis for that */
         if (posix_warnings && av_tindex_nomg(posix_warnings) >= 0) {
             output_or_return_posix_warnings(pRExC_state, posix_warnings, NULL);
         }
 
-        FAIL("Syntax error in (?[...])");
+        vFAIL("Syntax error in (?[...])");
     }
 
     /* Pass 2 only after this. */
@@ -14865,14 +14874,15 @@ redo_curchar:
                      * inversion list, and RExC_parse points to the trailing
                      * ']'; the next character should be the ')' */
                     RExC_parse++;
-                    assert(UCHARAT(RExC_parse) == ')');
+                    if (UCHARAT(RExC_parse) != ')')
+                        vFAIL("Expecting close paren for nested extended charclass");
 
                     /* Then the ')' matching the original '(' handled by this
                      * case: statement */
                     RExC_parse++;
-                    assert(UCHARAT(RExC_parse) == ')');
+                    if (UCHARAT(RExC_parse) != ')')
+                        vFAIL("Expecting close paren for wrapper for nested extended charclass");
 
-                    RExC_parse++;
                     RExC_flags = save_flags;
                     goto handle_operand;
                 }
@@ -15938,7 +15948,7 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth,
 		    vFAIL2("Empty \\%c", (U8)value);
 		if (*RExC_parse == '{') {
 		    const U8 c = (U8)value;
-		    e = strchr(RExC_parse, '}');
+		    e = (char *) memchr(RExC_parse, '}', RExC_end - RExC_parse);
                     if (!e) {
                         RExC_parse++;
                         vFAIL2("Missing right brace on \\%c{}", c);

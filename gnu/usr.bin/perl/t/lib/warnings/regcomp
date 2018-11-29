@@ -59,21 +59,21 @@ Unmatched [ in regex; marked by <-- HERE in m/abc[ <-- HERE ﬁ[.00./ at - line 
 qr/(?[[[:word]]])/;
 EXPECT
 Assuming NOT a POSIX class since there is no terminating ':' in regex; marked by <-- HERE in m/(?[[[:word <-- HERE ]]])/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[[:word]]])/ at - line 2.
+Unexpected ']' with no following ')' in (?[... in regex; marked by <-- HERE in m/(?[[[:word]] <-- HERE ])/ at - line 2.
 ########
 # NAME qr/(?[ [[:digit: ])/
 # OPTION fatal
 qr/(?[[[:digit: ])/;
 EXPECT
 Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[[:digit: ] <-- HERE )/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[[:digit: ])/ at - line 2.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[[:digit: ]) <-- HERE / at - line 2.
 ########
 # NAME qr/(?[ [:digit: ])/
 # OPTION fatal
 qr/(?[[:digit: ])/
 EXPECT
 Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[:digit: ] <-- HERE )/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[:digit: ])/ at - line 2.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[:digit: ]) <-- HERE / at - line 2.
 ########
 # NAME [perl #126141]
 # OPTION fatal

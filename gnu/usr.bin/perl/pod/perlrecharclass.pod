@@ -1101,8 +1101,8 @@ hence both of the following work:
 Any contained POSIX character classes, including things like C<\w> and C<\D>
 respect the C<E<sol>a> (and C<E<sol>aa>) modifiers.
 
-C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt to use
-something which isn't knowable at the time the containing regular
+Note that C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt
+to use something which isn't knowable at the time the containing regular
 expression is compiled is a fatal error.  In practice, this means
 just three limitations:
 
