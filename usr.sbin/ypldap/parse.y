@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2018/11/06 20:42:03 jsing Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2018/11/29 14:25:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -845,7 +845,7 @@ parse_config(struct env *x_conf, const char *filename, int opts)
 	TAILQ_INIT(&conf->sc_idms);
 	conf->sc_conf_tv.tv_sec = DEFAULT_INTERVAL;
 	conf->sc_conf_tv.tv_usec = 0;
-	conf->sc_cafile = strdup(TLS_CA_CERT_FILE);
+	conf->sc_cafile = strdup(tls_default_ca_cert_file());
 	if (conf->sc_cafile == NULL) {
 		log_warn("%s", __func__);
 		return (-1);

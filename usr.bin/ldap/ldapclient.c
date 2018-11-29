@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapclient.c,v 1.10 2018/11/27 12:04:57 martijn Exp $	*/
+/*	$OpenBSD: ldapclient.c,v 1.11 2018/11/29 14:25:07 tedu Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -61,7 +61,7 @@ struct ldapc {
 	struct aldap		*ldap_al;
 	char			*ldap_host;
 	int			 ldap_port;
-	char			*ldap_capath;
+	const char		*ldap_capath;
 	char			*ldap_binddn;
 	char			*ldap_secret;
 	unsigned int		 ldap_flags;
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 	if (ldap.ldap_protocol == LDAP && (ldap.ldap_flags & F_STARTTLS))
 		ldap.ldap_protocol = LDAPTLS;
 	if (ldap.ldap_capath == NULL)
-		ldap.ldap_capath = TLS_CA_CERT_FILE;
+		ldap.ldap_capath = tls_default_ca_cert_file();
 	if (ls.ls_basedn == NULL)
 		ls.ls_basedn = "";
 	if (ls.ls_scope == -1)

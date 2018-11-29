@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.198 2018/11/09 04:05:14 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.199 2018/11/29 14:25:06 tedu Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -97,10 +97,10 @@ int	Tflag = -1;				/* IP Type of Service */
 int	rtableid = -1;
 
 int	usetls;					/* use TLS */
-char    *Cflag;					/* Public cert file */
-char    *Kflag;					/* Private key file */
-char    *oflag;					/* OCSP stapling file */
-char    *Rflag = TLS_CA_CERT_FILE;		/* Root CA file */
+const char    *Cflag;				/* Public cert file */
+const char    *Kflag;				/* Private key file */
+const char    *oflag;				/* OCSP stapling file */
+const char    *Rflag;				/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
@@ -167,6 +167,7 @@ main(int argc, char *argv[])
 	host = NULL;
 	uport = NULL;
 	sv = NULL;
+	Rflag = tls_default_ca_cert_file();
 
 	signal(SIGPIPE, SIG_IGN);
 

@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.18 2018/11/06 20:40:49 jsing Exp $ */
+/*	$Id: netproc.c,v 1.19 2018/11/29 14:25:07 tedu Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -613,7 +613,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	memset(&paths, 0, sizeof(struct capaths));
 	memset(&c, 0, sizeof(struct conn));
 
-	if (unveil(TLS_CA_CERT_FILE, "r") == -1) {
+	if (unveil(tls_default_ca_cert_file(), "r") == -1) {
 		warn("unveil");
 		goto out;
 	}
