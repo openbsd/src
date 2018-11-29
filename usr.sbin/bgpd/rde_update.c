@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.104 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.105 2018/11/29 12:10:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -765,7 +765,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0, plen;
 	u_int8_t	 l;
 	u_int16_t	 nlen = 0;
-	u_char		*ndata = NULL;
+	u_char		*ndata;
 
 	/* origin */
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
@@ -902,6 +902,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 						free(ndata);
 						return (-1);
 					}
+					free(ndata);
 				} else {
 					/* everything got removed */
 					r = 0;
