@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.230 2018/11/08 13:24:22 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.231 2018/11/29 12:48:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -173,7 +173,7 @@ typedef struct {
 
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE
-%token	CA CERT CHROOT CIPHERS COMPRESSION CONNECT
+%token	CA CERT CHROOT CIPHERS COMMIT COMPRESSION CONNECT
 %token	CHECK_RDNS CHECK_REGEX CHECK_TABLE
 %token	DATA DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
@@ -1266,6 +1266,15 @@ NOOP {
 } filter_action_proc
 ;
 
+filter_phase_commit:
+COMMIT {
+	filter_rule->phase = FILTER_COMMIT;
+} filter_action_builtin
+| COMMIT {
+	filter_rule->phase = FILTER_COMMIT;
+} filter_action_proc
+;
+
 
 filter_phase:
 filter_phase_connect
@@ -1277,6 +1286,7 @@ filter_phase_connect
 | filter_phase_quit
 | filter_phase_noop
 | filter_phase_rset
+| filter_phase_commit
 ;
 
 filter:
@@ -1844,6 +1854,7 @@ lookup(char *s)
 		{ "check-table",	CHECK_TABLE },
 		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
+		{ "commit",		COMMIT },
 		{ "compression",	COMPRESSION },
 		{ "connect",		CONNECT },
 		{ "data",		DATA },

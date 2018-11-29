@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.354 2018/11/29 08:30:27 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.355 2018/11/29 12:48:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -97,6 +97,7 @@ enum smtp_command {
 	CMD_HELP,
 	CMD_WIZ,
 	CMD_NOOP,
+	CMD_COMMIT,
 };
 
 struct smtp_rcpt {
@@ -219,6 +220,9 @@ static void smtp_proceed_noop(struct smtp_session *, const char *);
 static void smtp_proceed_help(struct smtp_session *, const char *);
 static void smtp_proceed_wiz(struct smtp_session *, const char *);
 static void smtp_proceed_quit(struct smtp_session *, const char *);
+static void smtp_proceed_commit(struct smtp_session *, const char *);
+static void smtp_proceed_rollback(struct smtp_session *, const char *);
+
 
 static struct {
 	int code;
@@ -240,6 +244,7 @@ static struct {
 	{ CMD_NOOP,             FILTER_NOOP,            "NOOP",         smtp_check_noparam,     smtp_proceed_noop },
 	{ CMD_HELP,             FILTER_HELP,            "HELP",         smtp_check_noparam,     smtp_proceed_help },
 	{ CMD_WIZ,              FILTER_WIZ,             "WIZ",          smtp_check_noparam,     smtp_proceed_wiz },
+	{ CMD_COMMIT,  		FILTER_COMMIT,		".",		smtp_check_noparam,	smtp_proceed_commit },
 	{ -1,                   0,                      NULL,           NULL },
 };
 
@@ -909,6 +914,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 
 			if (filter_response == FILTER_DISCONNECT)
 				smtp_enter_state(s, STATE_QUIT);
+			else if (s->filter_phase == FILTER_COMMIT)
+				smtp_proceed_rollback(s, NULL);
 			break;
 
 		case FILTER_PROCEED:
@@ -1038,7 +1045,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		}
 
 		if (eom) {
-			smtp_message_end(s->tx);
+			smtp_filter_phase(FILTER_COMMIT, s, NULL);
 			io_set_write(io);
 			return;
 		}
@@ -1647,6 +1654,27 @@ smtp_proceed_wiz(struct smtp_session *s, const char *args)
 	smtp_reply(s, "500 %s %s: this feature is not supported yet ;-)",
 	    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 	    esc_description(ESC_INVALID_COMMAND));
+}
+
+static void
+smtp_proceed_commit(struct smtp_session *s, const char *args)
+{
+	smtp_message_end(s->tx);
+}
+
+static void
+smtp_proceed_rollback(struct smtp_session *s, const char *args)
+{
+	struct smtp_tx *tx;
+
+	tx = s->tx;
+
+	fclose(tx->ofile);
+	tx->ofile = NULL;
+
+	smtp_tx_rollback(tx);
+	smtp_tx_free(tx);
+	smtp_enter_state(s, STATE_HELO);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.573 2018/11/08 13:21:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.574 2018/11/29 12:48:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -408,6 +408,7 @@ enum filter_phase {
 	FILTER_NOOP,
 	FILTER_HELP,
 	FILTER_WIZ,
+	FILTER_COMMIT,
 	FILTER_PHASES_COUNT     /* must be last */
 };
 

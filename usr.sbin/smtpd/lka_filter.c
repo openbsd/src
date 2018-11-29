@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.4 2018/11/03 20:45:48 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.5 2018/11/29 12:48:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -65,6 +65,7 @@ static struct filter_exec {
 	{ FILTER_QUIT,    	"quit",		filter_exec_notimpl },
 	{ FILTER_RCPT_TO,    	"rcpt-to",	filter_exec_rcpt_to },
 	{ FILTER_RSET,    	"rset",		filter_exec_notimpl },
+	{ FILTER_COMMIT,    	"commit",      	filter_exec_notimpl },
 };
 
 void
