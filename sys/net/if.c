@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.567 2018/11/12 23:41:22 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.568 2018/11/29 00:11:49 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2131,6 +2131,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSLIFPHYRTABLE:
 	case SIOCSLIFPHYTTL:
 	case SIOCSLIFPHYDF:
+	case SIOCSLIFPHYECN:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
