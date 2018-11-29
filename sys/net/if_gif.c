@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.124 2018/11/14 23:55:04 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.125 2018/11/29 00:14:29 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ struct gif_softc {
 	uint16_t		sc_df;
 	int			sc_ttl;
 	int			sc_txhprio;
+	int			sc_ecn;
 };
 
 struct gif_list gif_list = TAILQ_HEAD_INITIALIZER(gif_list);
@@ -155,6 +156,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_df = htons(0);
 	sc->sc_ttl = ip_defttl;
 	sc->sc_txhprio = IF_HDRPRIO_PAYLOAD;
+	sc->sc_ecn = ECN_ALLOWED;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 	    "%s%d", ifc->ifc_name, unit);
@@ -313,7 +315,7 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 	pf_pkt_addr_changed(m);
 #endif
 
-	ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
+	ip_ecn_ingress(sc->sc_ecn, &otos, &itos);
 
 	switch (sc->sc_tunnel.t_af) {
 	case AF_INET: {
@@ -541,6 +543,13 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYDF:
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
+		break;
+
+	case SIOCSLIFPHYECN:
+		sc->sc_ecn = ifr->ifr_metric ? ECN_ALLOWED : ECN_FORBIDDEN;
+		break;
+	case SIOCGLIFPHYECN:
+		ifr->ifr_metric = (sc->sc_ecn == ECN_ALLOWED);
 		break;
 
 	case SIOCSTXHPRIO:
@@ -806,7 +815,7 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		ip = mtod(m, struct ip *);
 
 		itos = ip->ip_tos;
-		if (ip_ecn_egress(ECN_ALLOWED, &otos, &itos) == 0)
+		if (ip_ecn_egress(sc->sc_ecn, &otos, &itos) == 0)
 			goto drop;
 
 		if (itos != ip->ip_tos)
@@ -827,7 +836,7 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		itos = ntohl(ip6->ip6_flow) >> 20;
-		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos))
+		if (!ip_ecn_egress(sc->sc_ecn, &otos, &itos))
 			goto drop;
 
 		CLR(ip6->ip6_flow, htonl(0xff << 20));
