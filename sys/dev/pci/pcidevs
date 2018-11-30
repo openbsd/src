@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1869 2018/11/25 17:35:44 daniel Exp $
+$OpenBSD: pcidevs,v 1.1870 2018/11/30 19:18:31 mlarkin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4720,6 +4720,7 @@ product INTEL CORE7G_U_HB	0x5904	Core 7G Host
 product INTEL CORE7G_U_GT1	0x5906	HD Graphics 610
 product INTEL CORE7G_Y_HB	0x590c	Core 7G Host
 product INTEL CORE7G_Y_GT1	0x590e	HD Graphics
+product INTEL XEONE3_1200V6_HB2	0x5910	Xeon E3-1200 v6/7 Host
 product INTEL CORE_GMM_2	0x5911	Core GMM
 product INTEL CORE7G_S_GT2	0x5912	HD Graphics 630
 product INTEL CORE8G_U_HB	0x5914	Core 8G Host
@@ -6535,6 +6536,7 @@ product NVIDIA GEFORCE940MX	0x134d	GeForce 940MX
 product NVIDIA GEFORCEGTX750TI	0x1380	GeForce GTX 750 Ti
 product NVIDIA GEFORCEGTX750	0x1381	GeForce GTX 750
 product NVIDIA GEFORCEGTX745	0x1382	GeForce GTX 745
+product NVIDIA QUADROM1200	0x13b6	Quadro M1200
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
