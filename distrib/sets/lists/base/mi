@@ -457,7 +457,7 @@
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mg
-./usr/bin/midiplay
+./usr/bin/midicat
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
 ./usr/bin/mklocale
