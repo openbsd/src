@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-search-helper.1,v 1.1 2018/07/09 13:51:08 espie Exp $
+.\"	$OpenBSD: port-search-helper.1,v 1.2 2018/11/30 15:06:25 danj Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: November 30 2018 $
 .Dt PORT-SEARCH-HELPER 1
 .Os
 .Sh NAME
@@ -41,8 +41,9 @@ is a helper script used by
 for searches.
 .Pp
 It relies on
-.Pa ${PORTSDIR}/INDEX
+.Pa ${LOCALBASE}/share/ports-INDEX"
 being accurate.
+Note the portslist package must be installed.
 .Sh SEE ALSO
 .Xr perlre 1 ,
 .Xr ports 7
