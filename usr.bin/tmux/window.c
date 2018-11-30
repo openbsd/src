@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.214 2018/11/19 13:35:41 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.215 2018/11/30 08:44:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -921,6 +921,7 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 	sigprocmask(SIG_BLOCK, &set, &oldset);
 	switch (wp->pid = fdforkpty(ptm_fd, &wp->fd, wp->tty, NULL, &ws)) {
 	case -1:
+		wp->event = NULL;
 		wp->fd = -1;
 
 		xasprintf(cause, "%s: %s", cmd, strerror(errno));
@@ -999,6 +1000,9 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 	    window_pane_error_callback, wp);
 	if (wp->event == NULL)
 		fatalx("out of memory");
+
+	wp->pipe_off = 0;
+	wp->flags &= ~PANE_EXITED;
 
 	bufferevent_setwatermark(wp->event, EV_READ, 0, READ_SIZE);
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);

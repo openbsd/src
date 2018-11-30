@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.48 2018/11/19 13:35:40 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.49 2018/11/30 08:44:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,7 +158,10 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		close(pipe_fd[1]);
 
 		wp->pipe_fd = pipe_fd[0];
-		wp->pipe_off = EVBUFFER_LENGTH(wp->event->input);
+		if (wp->fd != -1)
+			wp->pipe_off = EVBUFFER_LENGTH(wp->event->input);
+		else
+			wp->pipe_off = 0;
 
 		setblocking(wp->pipe_fd, 0);
 		wp->pipe_event = bufferevent_new(wp->pipe_fd,
