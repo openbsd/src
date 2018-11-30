@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1869 2018/11/25 17:35:44 daniel Exp 
+ *	OpenBSD: pcidevs,v 1.1870 2018/11/30 19:18:31 mlarkin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4725,6 +4725,7 @@
 #define	PCI_PRODUCT_INTEL_CORE7G_U_GT1	0x5906		/* HD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_CORE7G_Y_HB	0x590c		/* Core 7G Host */
 #define	PCI_PRODUCT_INTEL_CORE7G_Y_GT1	0x590e		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_XEONE3_1200V6_HB2	0x5910		/* Xeon E3-1200 v6/7 Host */
 #define	PCI_PRODUCT_INTEL_CORE_GMM_2	0x5911		/* Core GMM */
 #define	PCI_PRODUCT_INTEL_CORE7G_S_GT2	0x5912		/* HD Graphics 630 */
 #define	PCI_PRODUCT_INTEL_CORE8G_U_HB	0x5914		/* Core 8G Host */
@@ -6540,6 +6541,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCEGTX750TI	0x1380		/* GeForce GTX 750 Ti */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEGTX750	0x1381		/* GeForce GTX 750 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEGTX745	0x1382		/* GeForce GTX 745 */
+#define	PCI_PRODUCT_NVIDIA_QUADROM1200	0x13b6		/* Quadro M1200 */
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
