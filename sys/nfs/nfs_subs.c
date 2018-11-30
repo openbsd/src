@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.138 2018/11/09 14:14:32 claudio Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.139 2018/11/30 09:24:57 claudio Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 		auth_len = (ngroups << 2) + 5 * NFSX_UNSIGNED;
 		authsiz = nfsm_rndup(auth_len);
 		/* The authorization size + the size of the static part */
-		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
+		m_align(mb, authsiz + 10 * NFSX_UNSIGNED);
 		break;
 	}
 
