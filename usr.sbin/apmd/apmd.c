@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.81 2017/10/15 15:14:49 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.82 2018/11/30 18:05:31 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -75,6 +75,7 @@ void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void hibernate(int ctl_fd);
+void resumed(int ctl_fd);
 void setperfpolicy(char *policy);
 void sigexit(int signo);
 void do_etc_file(const char *file);
@@ -315,6 +316,7 @@ void
 suspend(int ctl_fd)
 {
 	syslog(LOG_NOTICE, "system suspending");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
 	sleep(1);
@@ -325,6 +327,7 @@ void
 stand_by(int ctl_fd)
 {
 	syslog(LOG_NOTICE, "system entering standby");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
 	sleep(1);
@@ -335,10 +338,20 @@ void
 hibernate(int ctl_fd)
 {
 	syslog(LOG_NOTICE, "system hibernating");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_HIBERNATE);
 	sync();
 	sleep(1);
 	ioctl(ctl_fd, APM_IOC_HIBERNATE, 0);
+}
+
+void
+resumed(int ctl_fd)
+{
+	do_etc_file(_PATH_APM_ETC_RESUME);
+	syslog(LOG_NOTICE,
+	    "system resumed from sleep");
+	power_status(ctl_fd, 1, NULL);
 }
 
 #define TIMO (10*60)			/* 10 minutes */
@@ -573,9 +586,7 @@ main(int argc, char *argv[])
 			else if (hibernates)
 				hibernate(ctl_fd);
 			else if (resumes) {
-				do_etc_file(_PATH_APM_ETC_RESUME);
-				syslog(LOG_NOTICE,
-				    "system resumed from sleep");
+				resumed(ctl_fd);
 			}
 
 			if (powerchange) {
