@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/mman.h>
 
 #include "../pivot.h"
 
@@ -44,7 +45,7 @@ void unpivot() {
 int main() {
 
     /* allocate some memory to scan */
-    scan = malloc(scansize);
+    scan = mmap(NULL, scansize, PROT_READ, MAP_PRIVATE | MAP_ANON, -1, 0);
 
     /* set up a rop chain on the real stack for syscalls */
     size_t stack[10];
