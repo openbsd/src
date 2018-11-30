@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.52 2018/11/09 03:42:30 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.53 2018/11/30 04:51:19 jeremy Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -824,6 +824,12 @@ int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
+
+#ifndef LIBRESSL_INTERNAL
+
+void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
+
+#endif /* !LIBRESSL_INTERNAL */
 
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 
