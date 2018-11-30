@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.8 2018/11/30 15:33:40 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.9 2018/11/30 15:41:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -69,6 +69,7 @@ lka_report_smtp_link_connect(const char *direction, time_t tm, uint64_t reqid, c
 	char	dest[NI_MAXHOST + 5];
 	uint16_t	src_port = 0;
 	uint16_t	dest_port = 0;
+	const char     *fcrdns = "";
 
 	if (ss_src->ss_family == AF_INET)
 		src_port = ntohs(((const struct sockaddr_in *)ss_src)->sin_port);
@@ -84,8 +85,8 @@ lka_report_smtp_link_connect(const char *direction, time_t tm, uint64_t reqid, c
 	(void)strlcpy(dest, ss_to_text(ss_dest), sizeof dest);
 
 	report_smtp_broadcast(direction, tm,
-	    "link-connect|%016"PRIx64"|%s|%s:%d|%s:%d\n",
-	    reqid, rdns, src, src_port, dest, dest_port);
+	    "link-connect|%016"PRIx64"|%s|%s|%s:%d|%s:%d\n",
+	    reqid, rdns, fcrdns, src, src_port, dest, dest_port);
 }
 
 void
