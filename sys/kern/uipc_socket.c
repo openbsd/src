@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.229 2018/11/21 16:50:49 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.230 2018/11/30 09:23:31 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ nopages:
 			 * for protocol headers in first mbuf.
 			 */
 			if (atomic && m == top && len < mlen - max_hdr)
-				MH_ALIGN(m, len);
+				m_align(m, len);
 		}
 
 		error = uiomove(mtod(m, caddr_t), len, uio);

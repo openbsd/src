@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.261 2018/11/12 07:45:52 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.262 2018/11/30 09:23:31 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -618,7 +618,7 @@ m_prepend(struct mbuf *m, int len, int how)
 			M_MOVE_PKTHDR(mn, m);
 		mn->m_next = m;
 		m = mn;
-		MH_ALIGN(m, len);
+		m_align(m, len);
 		m->m_len = len;
 	}
 	if (m->m_flags & M_PKTHDR)
@@ -1057,7 +1057,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 			goto extpacket;
 		if (remain > MHLEN) {
 			/* m can't be the lead packet */
-			MH_ALIGN(n, 0);
+			m_align(n, 0);
 			n->m_next = m_split(m, len, wait);
 			if (n->m_next == NULL) {
 				(void) m_free(n);
@@ -1068,7 +1068,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 				return (n);
 			}
 		} else
-			MH_ALIGN(n, remain);
+			m_align(n, remain);
 	} else if (remain == 0) {
 		n = m->m_next;
 		m->m_next = NULL;
@@ -1077,7 +1077,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 		MGET(n, wait, m->m_type);
 		if (n == NULL)
 			return (NULL);
-		M_ALIGN(n, remain);
+		m_align(n, remain);
 	}
 extpacket:
 	if (m->m_flags & M_EXT) {
