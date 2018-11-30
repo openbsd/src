@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.355 2018/11/29 12:48:16 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.356 2018/11/30 15:33:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2393,7 +2393,7 @@ smtp_tx_rollback(struct smtp_tx *tx)
 	m_create(p_queue, IMSG_SMTP_MESSAGE_ROLLBACK, 0, 0, -1);
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
-	smtp_report_tx_rollback(tx->session->id);
+	smtp_report_tx_rollback(tx->session->id, tx->msgid);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.7 2018/11/08 13:21:00 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.8 2018/11/30 15:33:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -38,22 +38,30 @@
 #define	PROTOCOL_VERSION	1
 
 static void
-report_smtp_broadcast(const char *format, ...)
+report_smtp_broadcast(const char *direction, time_t tm, const char *format, ...)
 {
 	va_list		ap;
 	void		*hdl = NULL;
 	const char	*reporter;
+	struct dict	*d;
+
+	if (strcmp("smtp-in", direction) == 0)
+		d = env->sc_smtp_reporters_dict;
+	if (strcmp("smtp-out", direction) == 0)
+		d = env->sc_mta_reporters_dict;
 
 	va_start(ap, format);
-	while (dict_iter(env->sc_smtp_reporters_dict, &hdl, &reporter, NULL)) {
-		if (io_vprintf(lka_proc_get_io(reporter), format, ap) == -1)
+	while (dict_iter(d, &hdl, &reporter, NULL)) {
+		if (io_printf(lka_proc_get_io(reporter), "report|%d|%zd|%s|",
+			PROTOCOL_VERSION, tm, direction) == -1 ||
+		    io_vprintf(lka_proc_get_io(reporter), format, ap) == -1)
 			fatalx("failed to write to processor");
 	}
 	va_end(ap);
 }
 
 void
-lka_report_smtp_link_connect(time_t tm, uint64_t reqid, const char *rdns,
+lka_report_smtp_link_connect(const char *direction, time_t tm, uint64_t reqid, const char *rdns,
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
 {
@@ -75,72 +83,68 @@ lka_report_smtp_link_connect(time_t tm, uint64_t reqid, const char *rdns,
 	(void)strlcpy(src, ss_to_text(ss_src), sizeof src);
 	(void)strlcpy(dest, ss_to_text(ss_dest), sizeof dest);
 
-	report_smtp_broadcast("report|%d|%zd|smtp-in|link-connect|"
-	    "%016"PRIx64"|%s|%s:%d|%s:%d\n",
-	    PROTOCOL_VERSION,
-	    tm, reqid, rdns, src, src_port, dest, dest_port);
+	report_smtp_broadcast(direction, tm,
+	    "link-connect|%016"PRIx64"|%s|%s:%d|%s:%d\n",
+	    reqid, rdns, src, src_port, dest, dest_port);
 }
 
 void
-lka_report_smtp_link_disconnect(time_t tm, uint64_t reqid)
+lka_report_smtp_link_disconnect(const char *direction, time_t tm, uint64_t reqid)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|link-disconnect|"
-	    "%016"PRIx64"\n",
-	    PROTOCOL_VERSION, tm, reqid);
+	report_smtp_broadcast(direction, tm,
+	    "link-disconnect|%016"PRIx64"\n", reqid);
 }
 
 void
-lka_report_smtp_link_tls(time_t tm, uint64_t reqid, const char *ciphers)
+lka_report_smtp_link_tls(const char *direction, time_t tm, uint64_t reqid, const char *ciphers)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|link-tls|"
-	    "%016"PRIx64"|%s\n",
-	    PROTOCOL_VERSION, tm, reqid, ciphers);
+	report_smtp_broadcast(direction, tm,
+	    "link-tls|%016"PRIx64"|%s\n", reqid, ciphers);
 }
 
 void
-lka_report_smtp_tx_begin(time_t tm, uint64_t reqid, uint32_t msgid)
+lka_report_smtp_tx_begin(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-begin|"
-	    "%016"PRIx64"|%08x\n",
-	    PROTOCOL_VERSION, tm, reqid, msgid);
+	report_smtp_broadcast(direction, tm,
+	    "tx-begin|%016"PRIx64"|%08x\n", reqid, msgid);
 }
 
 void
-lka_report_smtp_tx_envelope(time_t tm, uint64_t reqid, uint32_t msgid, uint64_t evpid)
+lka_report_smtp_tx_envelope(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, uint64_t evpid)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-envelope|"
-	    "%016"PRIx64"|%08x|%016"PRIx64"\n",
-	    PROTOCOL_VERSION, tm, reqid, msgid, evpid);
+	report_smtp_broadcast(direction, tm,
+	    "tx-envelope|%016"PRIx64"|%08x|%016"PRIx64"\n",
+	    reqid, msgid, evpid);
 }
 
 void
-lka_report_smtp_tx_commit(time_t tm, uint64_t reqid, uint32_t msgid, size_t msgsz)
+lka_report_smtp_tx_commit(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, size_t msgsz)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-commit|"
-	    "%016"PRIx64"|%08x|%zd\n",
-	    PROTOCOL_VERSION, tm, reqid, msgid, msgsz);
+	report_smtp_broadcast(direction, tm,
+	    "tx-commit|%016"PRIx64"|%08x|%zd\n",
+	    reqid, msgid, msgsz);
 }
 
 void
-lka_report_smtp_tx_rollback(time_t tm, uint64_t reqid)
+lka_report_smtp_tx_rollback(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|tx-rollback|"
-	    "%016"PRIx64"\n",
-	    PROTOCOL_VERSION, tm, reqid);
+	report_smtp_broadcast(direction, tm,
+	    "tx-rollback|%016"PRIx64"|%08x\n",
+	    reqid, msgid);
 }
 
 void
-lka_report_smtp_protocol_client(time_t tm, uint64_t reqid, const char *command)
+lka_report_smtp_protocol_client(const char *direction, time_t tm, uint64_t reqid, const char *command)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|protocol-client|"
-	    "%016"PRIx64"|%s\n",
-	    PROTOCOL_VERSION, tm, reqid, command);
+	report_smtp_broadcast(direction, tm,
+	    "protocol-client|%016"PRIx64"|%s\n",
+	    reqid, command);
 }
 
 void
-lka_report_smtp_protocol_server(time_t tm, uint64_t reqid, const char *response)
+lka_report_smtp_protocol_server(const char *direction, time_t tm, uint64_t reqid, const char *response)
 {
-	report_smtp_broadcast("report|%d|%zd|smtp-in|protocol-server|"
-	    "%016"PRIx64"|%s\n",
-	    PROTOCOL_VERSION, tm, reqid, response);
+	report_smtp_broadcast(direction, tm,
+	    "protocol-server|%016"PRIx64"|%s\n",
+	    reqid, response);
 }

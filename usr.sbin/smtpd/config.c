@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.45 2018/11/03 13:42:24 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.46 2018/11/30 15:33:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,6 +91,7 @@ config_default(void)
 	conf->sc_mda_wrappers = calloc(1, sizeof(*conf->sc_mda_wrappers));
 	conf->sc_processors_dict = calloc(1, sizeof(*conf->sc_processors_dict));
 	conf->sc_smtp_reporters_dict = calloc(1, sizeof(*conf->sc_smtp_reporters_dict));
+	conf->sc_mta_reporters_dict = calloc(1, sizeof(*conf->sc_mta_reporters_dict));
 	conf->sc_dispatcher_bounce = calloc(1, sizeof(*conf->sc_dispatcher_bounce));
 	limits = calloc(1, sizeof(*limits));
 
@@ -105,6 +106,7 @@ config_default(void)
 	    conf->sc_mda_wrappers == NULL	||
 	    conf->sc_processors_dict == NULL	||
 	    conf->sc_smtp_reporters_dict == NULL||
+	    conf->sc_mta_reporters_dict == NULL	||
 	    conf->sc_dispatcher_bounce == NULL	||
 	    limits == NULL)
 		goto error;
@@ -118,6 +120,7 @@ config_default(void)
 	dict_init(conf->sc_limits_dict);
 	dict_init(conf->sc_processors_dict);
 	dict_init(conf->sc_smtp_reporters_dict);
+	dict_init(conf->sc_mta_reporters_dict);
 
 	limit_mta_set_defaults(limits);
 
@@ -162,6 +165,7 @@ error:
 	free(conf->sc_processors_dict);
 	free(conf->sc_dispatcher_bounce);
 	free(conf->sc_smtp_reporters_dict);
+	free(conf->sc_mta_reporters_dict);
 	free(limits);
 	free(conf);
 	return NULL;

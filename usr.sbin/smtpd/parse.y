@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.231 2018/11/29 12:48:16 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.232 2018/11/30 15:33:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	PKI PORT PROC
 %token	QUEUE QUIT
 %token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT REPORT REWRITE RSET
-%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTPS SOCKET SRC SUB_ADDR_DELIM
+%token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
 %token	VERIFY VIRTUAL
@@ -491,11 +491,24 @@ REPORT SMTP_IN ON STRING {
 		YYERROR;
 	}
 	if (dict_get(conf->sc_smtp_reporters_dict, $4)) {
-		yyerror("processor already registered for smtp reporting: %s", $4);
+		yyerror("processor already registered for smtp-in reporting: %s", $4);
 		free($4);
 		YYERROR;
 	}
 	dict_set(conf->sc_smtp_reporters_dict, $4, (void *)~0);
+}
+| REPORT SMTP_OUT ON STRING {
+	if (! dict_get(conf->sc_processors_dict, $4)) {
+		yyerror("no processor exist with that name: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	if (dict_get(conf->sc_mta_reporters_dict, $4)) {
+		yyerror("processor already registered for smtp-out reporting: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	dict_set(conf->sc_mta_reporters_dict, $4, (void *)~0);
 }
 ;
 
@@ -1915,6 +1928,7 @@ lookup(char *s)
 		{ "senders",   		SENDERS },
 		{ "smtp",		SMTP },
 		{ "smtp-in",		SMTP_IN },
+		{ "smtp-out",		SMTP_OUT },
 		{ "smtps",		SMTPS },
 		{ "socket",		SOCKET },
 		{ "src",		SRC },
