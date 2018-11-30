@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.122 2017/12/14 18:52:17 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.123 2018/11/30 09:26:06 claudio Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1262,7 +1262,7 @@ ieee80211_get_auth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	MH_ALIGN(m, 2 * 3);
+	m_align(m, 2 * 3);
 	m->m_pkthdr.len = m->m_len = 2 * 3;
 
 	frm = mtod(m, u_int8_t *);
@@ -1286,9 +1286,9 @@ ieee80211_get_deauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	MH_ALIGN(m, 2);
-
+	m_align(m, 2);
 	m->m_pkthdr.len = m->m_len = 2;
+
 	*mtod(m, u_int16_t *) = htole16(reason);
 
 	return m;
@@ -1446,9 +1446,9 @@ ieee80211_get_disassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	MH_ALIGN(m, 2);
-
+	m_align(m, 2);
 	m->m_pkthdr.len = m->m_len = 2;
+
 	*mtod(m, u_int16_t *) = htole16(reason);
 
 	return m;
