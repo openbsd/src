@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.82 2018/11/30 18:05:31 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.83 2018/12/01 23:35:59 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -392,9 +392,10 @@ main(int argc, char *argv[])
 			sockname = optarg;
 			break;
 		case 't':
-			ts.tv_sec = strtoul(optarg, NULL, 0);
-			if (ts.tv_sec == 0)
-				usage();
+			ts.tv_sec = strtonum(optarg, 1, LLONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of seconds is %s: %s", errstr,
+				    optarg);
 			break;
 		case 's':	/* status only */
 			statonly = 1;
@@ -422,14 +423,14 @@ main(int argc, char *argv[])
 			autoaction = AUTO_HIBERNATE;
 			autolimit = strtonum(optarg, 1, 100, &errstr);
 			if (errstr != NULL)
-				errc(1, EINVAL, "%s percentage: %s", errstr,
+				errx(1, "battery percentage is %s: %s", errstr,
 				    optarg);
 			break;
 		case 'z':
 			autoaction = AUTO_SUSPEND;
 			autolimit = strtonum(optarg, 1, 100, &errstr);
 			if (errstr != NULL)
-				errc(1, EINVAL, "%s percentage: %s", errstr,
+				errx(1, "battery percentage is %s: %s", errstr,
 				    optarg);
 			break;
 		case '?':
