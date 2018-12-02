@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.53 2018/09/24 11:10:34 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.54 2018/12/02 14:44:33 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -46,6 +46,26 @@
 #ifdef FONT_SPLEEN5x8
 #define HAVE_FONT 1
 #include <dev/wsfont/spleen5x8.h>
+#endif
+
+#ifdef FONT_SPLEEN8x16
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen8x16.h>
+#endif
+
+#ifdef FONT_SPLEEN12x24
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen12x24.h>
+#endif
+
+#ifdef FONT_SPLEEN16x32
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen16x32.h>
+#endif
+
+#ifdef FONT_SPLEEN32x64
+#define HAVE_FONT 1
+#include <dev/wsfont/spleen32x64.h>
 #endif
 
 #ifdef FONT_BOLD8x16
@@ -113,6 +133,18 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_SPLEEN5x8
 	BUILTIN_FONT(spleen5x8, 4),
+#endif
+#ifdef FONT_SPLEEN8x16
+	BUILTIN_FONT(spleen8x16, 5),
+#endif
+#ifdef FONT_SPLEEN12x24
+	BUILTIN_FONT(spleen12x24, 6),
+#endif
+#ifdef FONT_SPLEEN16x32
+	BUILTIN_FONT(spleen16x32, 7),
+#endif
+#ifdef FONT_SPLEEN32x64
+	BUILTIN_FONT(spleen32x64, 8),
 #endif
 #undef BUILTIN_FONT
 };
