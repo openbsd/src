@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.17 2018/10/05 11:15:29 bluhm Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.18 2018/12/02 11:46:31 anton Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 5 2018 $
+.Dd $Mdocdate: December 2 2018 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -103,6 +103,8 @@ If this variable is not empty, skip over all the regression
 tests which have been marked as being 'slow' using the
 .Ev REGRESS_SLOW_TARGETS
 variable.
+.It Ev REGRESS_SKIP_TARGETS
+Targets which are unconditionally skipped.
 .It Ev REGRESS_SLOW_TARGETS
 Targets which are defined as 'slow'.
 All of these tests can be skipped by setting the
