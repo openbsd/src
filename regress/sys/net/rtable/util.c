@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2018/06/23 09:54:16 denis Exp $ */
+/*	$OpenBSD: util.c,v 1.8 2018/12/03 18:39:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -69,15 +69,31 @@
 struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 
 struct domain inetdomain = {
-	AF_INET, "inet", NULL, NULL, NULL, NULL, NULL,
-	sizeof(struct sockaddr_in), offsetof(struct sockaddr_in, sin_addr),
-	32,
+  .dom_family		= AF_INET,
+  .dom_name		= "inet",
+  .dom_init		= NULL,
+  .dom_externalize	= NULL,
+  .dom_dispose		= NULL,
+  .dom_protosw		= NULL,
+  .dom_protoswNPROTOSW	= NULL,
+  .dom_rtoffset		= offsetof(struct sockaddr_in, sin_addr),
+  .dom_maxplen		= 32,
+  .dom_ifattach		= NULL,
+  .dom_ifdetach		= NULL,
 };
 
 struct domain inet6domain = {
-	AF_INET6, "inet6", NULL, NULL, NULL, NULL, NULL,
-	sizeof(struct sockaddr_in6), offsetof(struct sockaddr_in6, sin6_addr),
-	128,
+  .dom_family		= AF_INET6,
+  .dom_name		= "inet6",
+  .dom_init		= NULL,
+  .dom_externalize	= NULL,
+  .dom_dispose		= NULL,
+  .dom_protosw		= NULL,
+  .dom_protoswNPROTOSW	= NULL,
+  .dom_rtoffset		= offsetof(struct sockaddr_in6, sin6_addr),
+  .dom_maxplen		= 128,
+  .dom_ifattach		= NULL,
+  .dom_ifdetach		= NULL,
 };
 
 struct domain *domains[] = { &inetdomain, &inet6domain, NULL };
@@ -500,4 +516,3 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 
 	return (c & 0xffff);
 }
-
