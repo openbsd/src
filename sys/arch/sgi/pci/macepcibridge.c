@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.48 2017/05/11 15:47:45 visa Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.49 2018/12/03 13:46:30 visa Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -252,7 +252,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 
 	/* Register the PCI ERROR interrupt handler */
 	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
-	    IST_LEVEL, IPL_HIGH, mace_pcibr_errintr, sc, sc->sc_dev.dv_xname);
+	    IPL_HIGH, mace_pcibr_errintr, sc, sc->sc_dev.dv_xname);
 
 	bcopy(&mace_pci_chipset, &sc->sc_pc, sizeof(mace_pci_chipset));
 	sc->sc_pc.pc_conf_v = sc;
@@ -509,7 +509,7 @@ void *
 mace_pcibr_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *name)
 {
-	return macebus_intr_establish(ih, 0, IST_LEVEL, level, func, arg, name);
+	return macebus_intr_establish(ih, 0, level, func, arg, name);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.20 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.21 2018/12/03 13:46:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1101,7 +1101,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Establish interrupt.  */
 	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
-	    IST_EDGE, IPL_AUDIO, mavb_intr, sc, sc->sc_dev.dv_xname);
+	    IPL_AUDIO, mavb_intr, sc, sc->sc_dev.dv_xname);
 
 	/* 2. Assert the RESET signal.  */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CONTROL,

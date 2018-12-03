@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.12 2012/10/03 22:46:09 miod Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.13 2018/12/03 13:46:30 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -96,5 +96,5 @@ com_macebus_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
-	    IST_EDGE, IPL_TTY, comintr, (void *)sc, sc->sc_dev.dv_xname);
+	    IPL_TTY, comintr, (void *)sc, sc->sc_dev.dv_xname);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.37 2017/01/22 10:17:37 dlg Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.38 2018/12/03 13:46:30 visa Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -467,7 +467,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Establish interrupt handler. */
 	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
-	    IST_EDGE, IPL_NET, mec_intr, sc, sc->sc_dev.dv_xname);
+	    IPL_NET, mec_intr, sc, sc->sc_dev.dv_xname);
 
 	return;
 

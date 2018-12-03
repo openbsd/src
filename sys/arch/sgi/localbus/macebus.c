@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.67 2018/02/24 11:42:31 visa Exp $ */
+/*	$OpenBSD: macebus.c,v 1.68 2018/12/03 13:46:30 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -468,13 +468,9 @@ macebus_pa_to_device(paddr_t pa, int flags)
  * Establish an interrupt handler called from the dispatcher.
  * The interrupt function established should return zero if there was nothing
  * to serve (no int) and non-zero when an interrupt was serviced.
- *
- * Interrupts are numbered from 1 and up where 1 maps to HW int 0.
- * XXX There is no reason to keep this... except for hardcoded interrupts
- * XXX in kernel configuration files...
  */
 void *
-macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
+macebus_intr_establish(int irq, uint32_t mace_irqmask, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
 	struct crime_intrhand **p, *q, *ih;
