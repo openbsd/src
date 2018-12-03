@@ -841,7 +841,11 @@
 ./usr/include/dev/wsfont/bold8x16-iso1.h
 ./usr/include/dev/wsfont/bold8x16.h
 ./usr/include/dev/wsfont/gallant12x22.h
+./usr/include/dev/wsfont/spleen12x24.h
+./usr/include/dev/wsfont/spleen16x32.h
+./usr/include/dev/wsfont/spleen32x64.h
 ./usr/include/dev/wsfont/spleen5x8.h
+./usr/include/dev/wsfont/spleen8x16.h
 ./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dev/x86emu
 ./usr/include/dev/x86emu/x86emu.h
