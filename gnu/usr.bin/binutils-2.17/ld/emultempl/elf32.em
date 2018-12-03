@@ -2063,6 +2063,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
 #define OPTION_GROUP			(OPTION_ENABLE_NEW_DTAGS + 1)
 #define OPTION_EH_FRAME_HDR		(OPTION_GROUP + 1)
 #define OPTION_EXCLUDE_LIBS		(OPTION_EH_FRAME_HDR + 1)
+#define OPTION_HASH_STYLE		(OPTION_EXCLUDE_LIBS + 1)
 
 static void
 gld${EMULATION_NAME}_add_options
@@ -2079,6 +2080,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
     {"enable-new-dtags", no_argument, NULL, OPTION_ENABLE_NEW_DTAGS},
     {"eh-frame-hdr", no_argument, NULL, OPTION_EH_FRAME_HDR},
     {"exclude-libs", required_argument, NULL, OPTION_EXCLUDE_LIBS},
+    {"hash-style", required_argument, NULL, OPTION_HASH_STYLE},
     {"Bgroup", no_argument, NULL, OPTION_GROUP},
 EOF
 fi
@@ -2133,6 +2135,24 @@ cat >>e${EMULATION_NAME}.c <<EOF
 
     case OPTION_EXCLUDE_LIBS:
       add_excluded_libs (optarg);
+      break;
+
+    case OPTION_HASH_STYLE:
+#ifndef __mips64__
+      link_info.emit_hash = FALSE;
+      link_info.emit_gnu_hash = FALSE;
+      if (strcmp (optarg, "sysv") == 0)
+	link_info.emit_hash = TRUE;
+      else if (strcmp (optarg, "gnu") == 0)
+	link_info.emit_gnu_hash = TRUE;
+      else if (strcmp (optarg, "both") == 0)
+	{
+	  link_info.emit_hash = TRUE;
+	  link_info.emit_gnu_hash = TRUE;
+	}
+      else
+	einfo (_("%P%F: invalid hash style \`%s'\n"), optarg);
+#endif
       break;
 
     case 'z':
@@ -2223,6 +2243,7 @@ cat >>e${EMULATION_NAME}.c <<EOF
   fprintf (file, _("  --disable-new-dtags\tDisable new dynamic tags\n"));
   fprintf (file, _("  --enable-new-dtags\tEnable new dynamic tags\n"));
   fprintf (file, _("  --eh-frame-hdr\tCreate .eh_frame_hdr section\n"));
+  fprintf (file, _("  --hash-style=STYLE\tSet hash style to sysv, gnu or both\n"));
   fprintf (file, _("  -z combreloc\t\tMerge dynamic relocs into one section and sort\n"));
   fprintf (file, _("  -z defs\t\tReport unresolved symbols in object files.\n"));
   fprintf (file, _("  -z execstack\t\tMark executable as requiring executable stack\n"));
