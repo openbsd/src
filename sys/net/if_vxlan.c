@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.69 2018/11/15 22:22:03 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.70 2018/12/03 17:25:22 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -867,8 +867,8 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	uint32_t		 tag;
 	struct mbuf		*m0;
 
-	/* VXLAN header */
-	MGETHDR(m0, M_DONTWAIT, m->m_type);
+	/* VXLAN header, needs new mbuf because of alignment issues */
+	MGET(m0, M_DONTWAIT, m->m_type);
 	if (m0 == NULL) {
 		ifp->if_oerrors++;
 		return (ENOBUFS);
@@ -876,7 +876,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	M_MOVE_PKTHDR(m0, m);
 	m0->m_next = m;
 	m = m0;
-	MH_ALIGN(m, sizeof(*vu));
+	m_align(m, sizeof(*vu));
 	m->m_len = sizeof(*vu);
 	m->m_pkthdr.len += sizeof(*vu);
 

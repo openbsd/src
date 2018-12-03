@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.240 2018/11/09 14:14:32 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.241 2018/12/03 17:25:22 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2571,13 +2571,13 @@ ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (m->m_len > sizeof(*ip6)) {
-		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
+		MGET(mh, M_DONTWAIT, MT_HEADER);
 		if (mh == NULL) {
 			m_freem(m);
 			return ENOBUFS;
 		}
 		M_MOVE_PKTHDR(mh, m);
-		MH_ALIGN(mh, sizeof(*ip6));
+		m_align(mh, sizeof(*ip6));
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;

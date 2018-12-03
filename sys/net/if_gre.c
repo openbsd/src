@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.140 2018/11/29 00:14:29 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.141 2018/12/03 17:25:22 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1939,7 +1939,8 @@ egre_start(struct ifnet *ifp)
 			bpf_mtap_ether(if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-		m = m_gethdr(M_DONTWAIT, m0->m_type);
+		/* force prepend mbuf because of alignment problems */
+		m = m_get(M_DONTWAIT, m0->m_type);
 		if (m == NULL) {
 			m_freem(m0);
 			continue;
@@ -1948,7 +1949,7 @@ egre_start(struct ifnet *ifp)
 		M_MOVE_PKTHDR(m, m0);
 		m->m_next = m0;
 
-		MH_ALIGN(m, 0);
+		m_align(m, 0);
 		m->m_len = 0;
 
 		m = gre_encap(&sc->sc_tunnel, m, htons(ETHERTYPE_TRANSETHER),
@@ -3757,7 +3758,8 @@ nvgre_start(struct ifnet *ifp)
 			rw_exit_read(&sc->sc_ether_lock);
 		}
 
-		m = m_gethdr(M_DONTWAIT, m0->m_type);
+		/* force prepend mbuf because of alignment problems */
+		m = m_get(M_DONTWAIT, m0->m_type);
 		if (m == NULL) {
 			m_freem(m0);
 			continue;
@@ -3766,7 +3768,7 @@ nvgre_start(struct ifnet *ifp)
 		M_MOVE_PKTHDR(m, m0);
 		m->m_next = m0;
 
-		MH_ALIGN(m, 0);
+		m_align(m, 0);
 		m->m_len = 0;
 
 		m = gre_encap_dst(tunnel, &gateway, m,
@@ -3932,7 +3934,8 @@ eoip_start(struct ifnet *ifp)
 			bpf_mtap_ether(if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-		m = m_gethdr(M_DONTWAIT, m0->m_type);
+		/* force prepend mbuf because of alignment problems */
+		m = m_get(M_DONTWAIT, m0->m_type);
 		if (m == NULL) {
 			m_freem(m0);
 			continue;
@@ -3941,7 +3944,7 @@ eoip_start(struct ifnet *ifp)
 		M_MOVE_PKTHDR(m, m0);
 		m->m_next = m0;
 
-		MH_ALIGN(m, 0);
+		m_align(m, 0);
 		m->m_len = 0;
 
 		m = eoip_encap(sc, m, gre_l2_tos(&sc->sc_tunnel, m));
