@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.267 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.268 2018/12/03 21:00:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,6 +82,7 @@ static	void	  termp_xx_post(DECL_ARGS);
 
 static	int	  termp__a_pre(DECL_ARGS);
 static	int	  termp__t_pre(DECL_ARGS);
+static	int	  termp_abort_pre(DECL_ARGS);
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
@@ -157,7 +158,7 @@ static const struct mdoc_term_act mdoc_term_acts[MDOC_MAX - MDOC_Dd] = {
 	{ termp_nd_pre, NULL }, /* Nd */
 	{ termp_nm_pre, termp_nm_post }, /* Nm */
 	{ termp_quote_pre, termp_quote_post }, /* Op */
-	{ termp_ft_pre, NULL }, /* Ot */
+	{ termp_abort_pre, NULL }, /* Ot */
 	{ termp_under_pre, NULL }, /* Pa */
 	{ termp_ex_pre, NULL }, /* Rv */
 	{ NULL, NULL }, /* St */
@@ -230,7 +231,7 @@ static const struct mdoc_term_act mdoc_term_acts[MDOC_MAX - MDOC_Dd] = {
 	{ termp_under_pre, NULL }, /* Fr */
 	{ NULL, NULL }, /* Ud */
 	{ NULL, termp_lb_post }, /* Lb */
-	{ termp_pp_pre, NULL }, /* Lp */
+	{ termp_abort_pre, NULL }, /* Lp */
 	{ termp_lk_pre, NULL }, /* Lk */
 	{ termp_under_pre, NULL }, /* Mt */
 	{ termp_quote_pre, termp_quote_post }, /* Brq */
@@ -1491,7 +1492,6 @@ termp_bd_pre(DECL_ARGS)
 		case MDOC_Bl:
 		case MDOC_D1:
 		case MDOC_Dl:
-		case MDOC_Lp:
 		case MDOC_Pp:
 			continue;
 		default:
@@ -2095,4 +2095,10 @@ termp_tag_pre(DECL_ARGS)
 	      n->parent->parent->parent->tok == MDOC_It)))
 		tag_put(n->child->string, 1, p->line);
 	return 1;
+}
+
+static int
+termp_abort_pre(DECL_ARGS)
+{
+	abort();
 }

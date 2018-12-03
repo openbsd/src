@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.27 2018/10/25 01:21:30 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.28 2018/12/03 21:00:06 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
@@ -48,6 +49,7 @@ static	void	 md_uri(const char *);
 static	int	 md_cond_head(struct roff_node *);
 static	int	 md_cond_body(struct roff_node *);
 
+static	int	 md_pre_abort(struct roff_node *);
 static	int	 md_pre_raw(struct roff_node *);
 static	int	 md_pre_word(struct roff_node *);
 static	int	 md_pre_skip(struct roff_node *);
@@ -138,7 +140,7 @@ static	const struct md_act md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ md_cond_head, md_pre_Nd, NULL, NULL, NULL }, /* Nd */
 	{ NULL, md_pre_Nm, md_post_Nm, "**", "**" }, /* Nm */
 	{ md_cond_body, md_pre_word, md_post_word, "[", "]" }, /* Op */
-	{ NULL, md_pre_Fd, md_post_raw, "*", "*" }, /* Ot */
+	{ NULL, md_pre_abort, NULL, NULL, NULL }, /* Ot */
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Pa */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
@@ -211,7 +213,7 @@ static	const struct md_act md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Fr */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ud */
 	{ NULL, NULL, md_post_Lb, NULL, NULL }, /* Lb */
-	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* Lp */
+	{ NULL, md_pre_abort, NULL, NULL, NULL }, /* Lp */
 	{ NULL, md_pre_Lk, NULL, NULL, NULL }, /* Lk */
 	{ NULL, md_pre_Mt, NULL, NULL, NULL }, /* Mt */
 	{ md_cond_body, md_pre_word, md_post_word, "{", "}" }, /* Brq */
@@ -720,6 +722,12 @@ static int
 md_cond_body(struct roff_node *n)
 {
 	return n->type == ROFFT_BODY;
+}
+
+static int
+md_pre_abort(struct roff_node *n)
+{
+	abort();
 }
 
 static int

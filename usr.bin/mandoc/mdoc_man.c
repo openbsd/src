@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.126 2018/08/23 19:32:03 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.127 2018/12/03 21:00:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -73,6 +73,7 @@ static	void	  post_pf(DECL_ARGS);
 static	void	  post_sect(DECL_ARGS);
 static	void	  post_vt(DECL_ARGS);
 static	int	  pre__t(DECL_ARGS);
+static	int	  pre_abort(DECL_ARGS);
 static	int	  pre_an(DECL_ARGS);
 static	int	  pre_ap(DECL_ARGS);
 static	int	  pre_aq(DECL_ARGS);
@@ -170,7 +171,7 @@ static const struct mdoc_man_act mdoc_man_acts[MDOC_MAX - MDOC_Dd] = {
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
 	{ NULL, pre_nm, post_nm, NULL, NULL }, /* Nm */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
-	{ NULL, pre_Ft, post_font, NULL, NULL }, /* Ot */
+	{ NULL, pre_abort, NULL, NULL, NULL }, /* Ot */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Pa */
 	{ NULL, pre_ex, NULL, NULL, NULL }, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
@@ -243,7 +244,7 @@ static const struct mdoc_man_act mdoc_man_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Fr */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ud */
 	{ NULL, NULL, post_lb, NULL, NULL }, /* Lb */
-	{ NULL, pre_pp, NULL, NULL, NULL }, /* Lp */
+	{ NULL, pre_abort, NULL, NULL, NULL }, /* Lp */
 	{ NULL, pre_lk, NULL, NULL, NULL }, /* Lk */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Mt */
 	{ cond_body, pre_enc, post_enc, "{", "}" }, /* Brq */
@@ -720,6 +721,12 @@ cond_body(DECL_ARGS)
 {
 
 	return n->type == ROFFT_BODY;
+}
+
+static int
+pre_abort(DECL_ARGS)
+{
+	abort();
 }
 
 static int

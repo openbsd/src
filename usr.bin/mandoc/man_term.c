@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.173 2018/08/26 16:18:38 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.174 2018/12/03 21:00:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,6 +79,7 @@ static	int		  pre_SS(DECL_ARGS);
 static	int		  pre_SY(DECL_ARGS);
 static	int		  pre_TP(DECL_ARGS);
 static	int		  pre_UR(DECL_ARGS);
+static	int		  pre_abort(DECL_ARGS);
 static	int		  pre_alternate(DECL_ARGS);
 static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_in(DECL_ARGS);
@@ -99,9 +100,9 @@ static const struct man_term_act man_term_acts[MAN_MAX - MAN_TH] = {
 	{ pre_SS, post_SS, 0 }, /* SS */
 	{ pre_TP, post_TP, 0 }, /* TP */
 	{ pre_TP, post_TP, 0 }, /* TQ */
-	{ pre_PP, NULL, 0 }, /* LP */
+	{ pre_abort, NULL, 0 }, /* LP */
 	{ pre_PP, NULL, 0 }, /* PP */
-	{ pre_PP, NULL, 0 }, /* P */
+	{ pre_abort, NULL, 0 }, /* P */
 	{ pre_IP, post_IP, 0 }, /* IP */
 	{ pre_HP, post_HP, 0 }, /* HP */
 	{ NULL, NULL, 0 }, /* SM */
@@ -218,6 +219,12 @@ print_bvspace(struct termp *p, const struct roff_node *n, int pardist)
 		term_vspace(p);
 }
 
+
+static int
+pre_abort(DECL_ARGS)
+{
+	abort();
+}
 
 static int
 pre_ign(DECL_ARGS)
