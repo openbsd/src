@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: run.pl,v 1.11 2017/06/22 20:17:22 bluhm Exp $
+# $OpenBSD: run.pl,v 1.12 2018/12/03 22:41:00 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -24,7 +24,7 @@ use Net::Pcap;
 use NetPacket::Ethernet;
 use NetPacket::IP;
 use NetPacket::UDP;
-use Crypt::Random;
+use BSD::arc4random qw(arc4random arc4random_uniform arc4random_bytes);
 
 use Switchd;
 
@@ -220,7 +220,7 @@ sub packet_send {
 	my $src;
 
 	# Payload
-	$data = Crypt::Random::makerandom_octet(Length => $packet->{length});
+	$data = arc4random_bytes($packet->{length});
 
 	# IP header
 	$ip = NetPacket::IP->decode();
@@ -229,7 +229,7 @@ sub packet_send {
 	$ip->{ver} = NetPacket::IP::IP_VERSION_IPv4;
 	$ip->{hlen} = 5;
 	$ip->{tos} = 0;
-	$ip->{id} = Crypt::Random::makerandom(Size => 16);
+	$ip->{id} = arc4random_uniform(2**16);
 	$ip->{ttl} = 0x5a;
 	$ip->{flags} = 0; #XXX NetPacket::IP::IP_FLAG_DONTFRAG;
 	$ip->{foffset} = 0;
