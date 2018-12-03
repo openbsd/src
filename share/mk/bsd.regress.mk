@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.16 2018/10/05 11:15:29 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.17 2018/12/03 22:30:04 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -100,6 +100,7 @@ regress: .SILENT
 .for RT in ${REGRESS_TARGETS} ${REGRESS_CLEANUP}
 .  if ${REGRESS_SKIP_TARGETS:M${RT}}
 	@echo -n "SKIP " ${_REGRESS_OUT}
+	@echo SKIPPED
 .  else
 # XXX - we need a better method to see if a test fails due to timeout or just
 #       normal failure.
