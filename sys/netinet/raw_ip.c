@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.115 2018/11/10 18:40:34 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.116 2018/12/03 10:10:49 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -385,7 +385,9 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = ENOTCONN;
 			break;
 		}
-		/* FALLTHROUGH */
+		soisdisconnected(so);
+		inp->inp_faddr.s_addr = INADDR_ANY;
+		break;
 	case PRU_ABORT:
 		soisdisconnected(so);
 		if (inp == NULL)
