@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_html.c,v 1.12 2018/06/25 14:53:54 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.13 2018/12/03 16:17:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,11 +58,7 @@ roff_html_pre(struct html *h, const struct roff_node *n)
 static void
 roff_html_pre_br(ROFF_HTML_ARGS)
 {
-	struct tag	*t;
-
-	t = print_otag(h, TAG_DIV, "");
-	print_text(h, "\\~");  /* So the div isn't empty. */
-	print_tagq(h, t);
+	print_otag(h, TAG_BR, "");
 }
 
 static void
