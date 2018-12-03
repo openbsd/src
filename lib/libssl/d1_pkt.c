@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.65 2018/10/24 18:04:50 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.66 2018/12/03 17:16:12 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -672,7 +672,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-start:
+ start:
 	s->internal->rwstate = SSL_NOTHING;
 
 	/* S3I(s)->rrec.type	    - is the type of record
@@ -855,7 +855,7 @@ start:
 		    (D1I(s)->handshake_fragment[3] != 0)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto err;
+			goto f_err;
 		}
 
 		/* no need to check sequence number on HELLO REQUEST messages */
@@ -965,9 +965,9 @@ start:
 		/* XDTLS: check that epoch is consistent */
 		if ((rr->length != ccs_hdr_len) ||
 		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
-			i = SSL_AD_ILLEGAL_PARAMETER;
+			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto err;
+			goto f_err;
 		}
 
 		rr->length = 0;
@@ -1097,9 +1097,9 @@ start:
 	}
 	/* not reached */
 
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	return (-1);
 }
 
