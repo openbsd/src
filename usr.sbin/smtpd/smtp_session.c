@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.356 2018/11/30 15:33:40 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.357 2018/12/03 21:19:10 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -134,6 +134,7 @@ struct smtp_session {
 	struct sockaddr_storage	 ss;
 	char			 hostname[HOST_NAME_MAX+1];
 	char			 smtpname[HOST_NAME_MAX+1];
+	int			 fcrdns;
 
 	int			 flags;
 	enum smtp_state		 state;
@@ -166,6 +167,7 @@ static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
 static void smtp_session_init(void);
 static void smtp_lookup_servername(struct smtp_session *);
 static void smtp_getnameinfo_cb(void *, int, const char *, const char *);
+static void smtp_getaddrinfo_cb(void *, int, struct addrinfo *);
 static void smtp_connected(struct smtp_session *);
 static void smtp_send_banner(struct smtp_session *);
 static void smtp_tls_verified(struct smtp_session *);
@@ -583,6 +585,7 @@ smtp_session(struct listener *listener, int sock,
 		if (!strcmp(hostname, "localhost"))
 			s->flags |= SF_BOUNCE;
 		(void)strlcpy(s->hostname, hostname, sizeof(s->hostname));
+		s->fcrdns = 1;
 		smtp_lookup_servername(s);
 	} else {
 		resolver_getnameinfo((struct sockaddr *)&s->ss, 0,
@@ -598,11 +601,48 @@ static void
 smtp_getnameinfo_cb(void *arg, int gaierrno, const char *host, const char *serv)
 {
 	struct smtp_session *s = arg;
+	struct addrinfo hints;
 
-	if (gaierrno)
-		host = "<unknown>";
+	if (gaierrno) {
+		log_warnx("getnameinfo: %s: %s", ss_to_text(&s->ss),
+		    gai_strerror(gaierrno));
+		(void)strlcpy(s->hostname, "<unknown>", sizeof(s->hostname));
+		s->fcrdns = -1;
+		smtp_lookup_servername(s);
+		return;
+	}
 
 	(void)strlcpy(s->hostname, host, sizeof(s->hostname));
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = s->ss.ss_family;
+	hints.ai_socktype = SOCK_STREAM;
+	resolver_getaddrinfo(s->hostname, NULL, &hints, smtp_getaddrinfo_cb, s);
+}
+
+static void
+smtp_getaddrinfo_cb(void *arg, int gaierrno, struct addrinfo *ai0)
+{
+	struct smtp_session *s = arg;
+	struct addrinfo *ai;
+	char fwd[64], rev[64];
+
+	if (gaierrno) {
+		log_warnx("getaddrinfo: %s: %s", s->hostname,
+		    gai_strerror(gaierrno));
+		s->fcrdns = -1;
+	}
+	else {
+		strlcpy(rev, ss_to_text(&s->ss), sizeof(rev));
+		for (ai = ai0; ai; ai = ai->ai_next) {
+			strlcpy(fwd, sa_to_text(ai->ai_addr), sizeof(fwd));
+			if (!strcmp(fwd, rev)) {
+				s->fcrdns = 1;
+				break;
+			}
+		}
+		freeaddrinfo(ai0);
+	}
 
 	smtp_lookup_servername(s);
 }
