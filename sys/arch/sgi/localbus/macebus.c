@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.68 2018/12/03 13:46:30 visa Exp $ */
+/*	$OpenBSD: macebus.c,v 1.69 2018/12/03 13:50:02 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -161,7 +161,7 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 };
 
 /*
- * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 32 MACE
+ * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 16 MACE
  * sources (multiplexed by CRIME); 1 level.
  * We define another level for periodic tasks as well.
  */
@@ -565,7 +565,7 @@ do { \
 		    MACE_ISA_INT_MASK); \
 	} else \
 		mace_isr = mace_imr = 0; \
-	bit = 63; \
+	bit = CRIME_NINTS - 1; \
 } while (0)
 #define	INTR_MASKPENDING \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr & ~isr)
