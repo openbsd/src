@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.2 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.3 2018/12/03 01:51:17 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -60,7 +60,7 @@ struct lock_object {
 	const struct lock_type	*lo_type;
 	const char		*lo_name;	/* Individual lock name. */
 	struct witness		*lo_witness;	/* Data for witness. */
-	uint32_t		 lo_flags;
+	unsigned int		 lo_flags;
 };
 
 struct lock_type {
