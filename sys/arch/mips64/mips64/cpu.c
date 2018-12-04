@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.69 2017/09/02 15:56:29 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.70 2018/12/04 16:24:13 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -231,11 +231,26 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			printf("CN61xx CPU");
 		fptype = MIPS_SOFT;
 		break;
+	case MIPS_CN63XX:
+		printf("CN62xx/CN63xx CPU");
+		fptype = MIPS_SOFT;
+		break;
+	case MIPS_CN66XX:
+		printf("CN66xx CPU");
+		fptype = MIPS_SOFT;
+		break;
+	case MIPS_CN68XX:
+		printf("CN68xx CPU");
+		fptype = MIPS_SOFT;
+		break;
 	case MIPS_CN71XX:
 		printf("CN70xx/CN71xx CPU");
 		break;
 	case MIPS_CN73XX:
 		printf("CN72xx/CN73xx CPU");
+		break;
+	case MIPS_CN78XX:
+		printf("CN76xx/CN77xx/CN78xx CPU");
 		break;
 	default:
 		printf("Unknown CPU type (0x%x)", ch->type);
@@ -327,6 +342,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		break;
 	case MIPS_CN73XX:
 		printf("CN72xx/CN73xx FPU");
+		break;
+	case MIPS_CN78XX:
+		printf("CN76xx/CN77xx/CN78xx FPU");
 		break;
 	default:
 		printf("Unknown FPU type (0x%x)", fptype);
