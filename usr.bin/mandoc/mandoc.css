@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.27 2018/11/26 21:05:54 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.28 2018/12/04 05:20:14 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -15,9 +15,14 @@ body {		font-family: Helvetica,Arial,sans-serif; }
 table {		margin-top: 0em;
 		margin-bottom: 0em;
 		border-collapse: collapse; }
+/* Some browsers set border-color in a browser style for tbody,
+ * but not for table, resulting in inconsistent border styling. */
+tbody {		border-color: inherit; }
+tr {		border-color: inherit; }
 td {		vertical-align: middle;
 		padding-left: 0.2em;
-		padding-right: 0.2em; }
+		padding-right: 0.2em;
+		border-color: inherit; }
 ul, ol, dl {	margin-top: 0em;
 		margin-bottom: 0em; }
 li, dt {	margin-top: 1em; }
