@@ -1,7 +1,7 @@
 #
 # Example configuration file.
 #
-# See unbound.conf(5) man page, version 1.8.1.
+# See unbound.conf(5) man page, version 1.8.2.
 #
 # this is a comment.
 
@@ -144,6 +144,10 @@ server:
 
 	# msec to wait before close of port on timeout UDP. 0 disables.
 	# delay-close: 0
+
+	# msec for waiting for an unknown server to reply.  Increase if you
+	# are behind a slow satellite link, to eg. 1128.
+	# unknown-server-time-limit: 376
 
 	# the amount of memory to use for the RRset cache.
 	# plain value in bytes or you can append k, m or G. default is "4Mb".
@@ -448,6 +452,9 @@ server:
 
 	# if yes, perform key lookups adjacent to normal lookups.
 	# prefetch-key: no
+
+	# deny queries of type ANY with an empty response.
+	# deny-any: no
 
 	# if yes, Unbound rotates RRSet order in response.
 	# rrset-roundrobin: no
@@ -757,12 +764,12 @@ server:
 	# Limit the number of connections simultaneous from a netblock
 	# tcp-connection-limit: 192.0.2.0/24 12
 
-	# what is considered a low rtt (ping time for upstream server), in msec
-	# low-rtt: 45
-	# select low rtt this many times out of 1000. 0 means the fast server
-	# select is disabled.  prefetches are not sped up.
-	# low-rtt-permil: 0
-
+	# select from the fastest servers this many times out of 1000. 0 means
+	# the fast server select is disabled. prefetches are not sped up.
+	# fast-server-permil: 0
+	# the number of servers that will be used in the fast server selection.
+	# fast-server-num: 3
+	
 	# Specific options for ipsecmod. unbound needs to be configured with
 	# --enable-ipsecmod for these to take effect.
 	#

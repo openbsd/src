@@ -1,8 +1,123 @@
+29 November 2018: Wouter
+	- iana portlist updated.
+	- Fix chroot auth-zone fix to remove chroot prefix.
+
+28 November 2018: Wouter
+	- Fix leak in chroot fix for auth-zone.
+	- Fix clang analysis for outside directory build test.
+
+27 November 2018: Wouter
+	- Fix DNS64 to not store intermediate results in cache, this avoids
+	  other threads from picking up the wrong data.  The module restores
+	  the previous no_cache_store setting when the the module is finished.
+	- Fix #4208: 'stub-no-cache' and 'forward-no-cache' not work.
+	- New and better fix for Fix #4193: Fix that prefetch failure does
+	  not overwrite valid cache entry with SERVFAIL.
+	- auth-zone give SERVFAIL when expired, fallback activates when
+	  expired, and this is documented in the man page.
+	- stat count SERVFAIL downstream auth-zone queries for expired zones.
+	- Put new logos into windows installer.
+	- Fix windows compile for new rrset roundrobin fix.
+	- Update contrib fastrpz patch for latest release.
+
+26 November 2018: Wouter
+	- Fix to not set GLOB_NOSORT so the unbound.conf include: files are
+	  sorted and in a predictable order.
+	- Fix #4193: Fix that prefetch failure does not overwrite valid cache
+	  entry with SERVFAIL.
+	- Add unbound-control view_local_datas command, like local_datas.
+	- Fix that unbound-control can send file for view_local_datas.
+
+22 November 2018: Wouter
+	- With ./configure --with-pyunbound --with-pythonmodule
+	  PYTHON_VERSION=3.6 or with 2.7 unbound can compile and unit tests
+	  succeed for the python module.
+	- pythonmod logs the python error and traceback on failure.
+	- ignore debug python module for test in doxygen output.
+	- review fixes for python module.
+	- Fix #4209: Crash in libunbound when called from getdns.
+	- auth zone zonefiles can be in a chroot, the chroot directory
+	  components are removed before use.
+	- Fix that empty zonefile means the zonefile is not set and not used.
+	- make depend.
+
+21 November 2018: Wouter
+	- Scrub NS records from NODATA responses as well.
+
+20 November 2018: Wouter
+	- Scrub NS records from NXDOMAIN responses to stop fragmentation
+	  poisoning of the cache.
+	- Add patch from Jan Vcelak for pythonmod,
+	  add sockaddr_storage getters, add support for query callbacks,
+	  allow raw address access via comm_reply and update API documentation.
+	- Removed compile warnings in pythonmod sockaddr routines.
+
+19 November 2018: Wouter
+	- Support SO_REUSEPORT_LB in FreeBSD 12 with the so-reuseport: yes
+	  option in unbound.conf.
+
+6 November 2018: Ralph
+	- Bugfix min-client-subnet-ipv6
+
+25 October 2018: Ralph
+	- Add min-client-subnet-ipv6 and min-client-subnet-ipv4 options.
+
+25 October 2018: Wouter
+	- Fix #4191: NXDOMAIN vs SERVFAIL during dns64 PTR query.
+	- Fix #4190: Please create a "ANY" deny option, adds the option
+	  deny-any: yes in unbound.conf.  This responds with an empty message
+	  to queries of type ANY.
+	- Fix #4141: More randomness to rrset-roundrobin.
+	- Fix #4132: Openness/closeness of RANGE intervals in rpl files.
+	- Fix #4126: RTT_band too low on VSAT links with 600+ms latency,
+	  adds the option unknown-server-time-limit to unbound.conf that
+	  can be increased to avoid the problem.
+	- remade makefile dependencies.
+	- Fix #4152: Logs shows wrong time when using log-time-ascii: yes.
+
+24 October 2018: Ralph
+	- Add markdel function to ECS slabhash.
+	- Limit ECS scope returned to client to the scope used for caching.
+	- Make lint like previous #4154 fix.
+
+22 October 2018: Wouter
+	- Fix #4192: unbound-control-setup generates keys not readable by
+	  group.
+	- check that the dnstap socket file can be opened and exists, print
+	  error if not.
+	- Fix #4154: make ECS_MAX_TREESIZE configurable, with
+	  the max-ecs-tree-size-ipv4 and max-ecs-tree-size-ipv6 options.
+
+22 October 2018: Ralph
+	- Change fast-server-num default to 3.
+
+8 October 2018: Ralph
+	- Add fast-server-permil and fast-server-num options.
+	- Deprecate low-rtt and low-rtt-permil options.
+
 8 October 2018: Wouter
-	- fastrpz.patch fix included.
+	- Squelch log of failed to tcp initiate after TCP Fastopen failure.
+
+5 October 2018: Wouter
+	- Squelch EADDRNOTAVAIL errors when the interface goes away,
+	  this omits 'can't assign requested address' errors unless
+	  verbosity is set to a high value.
+	- Set default for so-reuseport to no for FreeBSD.  It is enabled
+	  by default for Linux and DragonFlyBSD.  The setting can 
+	  be configured in unbound.conf to override the default.
+	- iana port update.
+
+2 October 2018: Wouter
+	- updated contrib/fastrpz.patch to apply for this version
+	- dnscrypt.c removed sizeof to get array bounds.
+	- Fix testlock code to set noreturn on error routine.
+	- Remove unused variable from contrib fastrpz/rpz.c and
+	  remove unused diagnostic pragmas that themselves generate warnings
+	- clang analyze test is used only when assertions are enabled.
 
 1 October 2018: Wouter
-	- tag for release 1.8.1rc1.
+	- tag for release 1.8.1rc1.  Became release 1.8.1 on 8 oct, with
+	  fastrpz.patch fix included.  Trunk has 1.8.2 in development.
 
 27 September 2018: Wouter
 	- Fix #4188: IPv6 forwarders without ipv6 result in SERVFAIL, fixes

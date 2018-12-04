@@ -135,6 +135,8 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_SEND_CLIENT_SUBNET VAR_CLIENT_SUBNET_ZONE
 %token VAR_CLIENT_SUBNET_ALWAYS_FORWARD VAR_CLIENT_SUBNET_OPCODE
 %token VAR_MAX_CLIENT_SUBNET_IPV4 VAR_MAX_CLIENT_SUBNET_IPV6
+%token VAR_MIN_CLIENT_SUBNET_IPV4 VAR_MIN_CLIENT_SUBNET_IPV6
+%token VAR_MAX_ECS_TREE_SIZE_IPV4 VAR_MAX_ECS_TREE_SIZE_IPV6
 %token VAR_CAPS_WHITELIST VAR_CACHE_MAX_NEGATIVE_TTL VAR_PERMIT_SMALL_HOLDDOWN
 %token VAR_QNAME_MINIMISATION VAR_QNAME_MINIMISATION_STRICT VAR_IP_FREEBIND
 %token VAR_DEFINE_TAG VAR_LOCAL_ZONE_TAG VAR_ACCESS_CONTROL_TAG
@@ -159,8 +161,10 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_UDP_UPSTREAM_WITHOUT_DOWNSTREAM VAR_FOR_UPSTREAM
 %token VAR_AUTH_ZONE VAR_ZONEFILE VAR_MASTER VAR_URL VAR_FOR_DOWNSTREAM
 %token VAR_FALLBACK_ENABLED VAR_TLS_ADDITIONAL_PORT VAR_LOW_RTT VAR_LOW_RTT_PERMIL
+%token VAR_FAST_SERVER_PERMIL VAR_FAST_SERVER_NUM
 %token VAR_ALLOW_NOTIFY VAR_TLS_WIN_CERT VAR_TCP_CONNECTION_LIMIT
-%token VAR_FORWARD_NO_CACHE VAR_STUB_NO_CACHE VAR_LOG_SERVFAIL
+%token VAR_FORWARD_NO_CACHE VAR_STUB_NO_CACHE VAR_LOG_SERVFAIL VAR_DENY_ANY
+%token VAR_UNKNOWN_SERVER_TIME_LIMIT
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -237,6 +241,8 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_client_subnet_zone | server_client_subnet_always_forward |
 	server_client_subnet_opcode |
 	server_max_client_subnet_ipv4 | server_max_client_subnet_ipv6 |
+	server_min_client_subnet_ipv4 | server_min_client_subnet_ipv6 |
+	server_max_ecs_tree_size_ipv4 | server_max_ecs_tree_size_ipv6 |
 	server_caps_whitelist | server_cache_max_negative_ttl |
 	server_permit_small_holddown | server_qname_minimisation |
 	server_ip_freebind | server_define_tag | server_local_zone_tag |
@@ -255,8 +261,9 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_ipsecmod_whitelist | server_ipsecmod_strict |
 	server_udp_upstream_without_downstream | server_aggressive_nsec |
 	server_tls_cert_bundle | server_tls_additional_port | server_low_rtt |
-	server_low_rtt_permil | server_tls_win_cert |
-	server_tcp_connection_limit | server_log_servfail
+	server_fast_server_permil | server_fast_server_num  | server_tls_win_cert |
+	server_tcp_connection_limit | server_log_servfail | server_deny_any |
+	server_unknown_server_time_limit
 	;
 stubstart: VAR_STUB_ZONE
 	{
@@ -487,6 +494,70 @@ server_max_client_subnet_ipv6: VAR_MAX_CLIENT_SUBNET_IPV6 STRING_ARG
 		else if (atoi($2) < 0)
 			cfg_parser->cfg->max_client_subnet_ipv6 = 0;
 		else cfg_parser->cfg->max_client_subnet_ipv6 = (uint8_t)atoi($2);
+	#else
+		OUTYY(("P(Compiled without edns subnet option, ignoring)\n"));
+	#endif
+		free($2);
+	}
+	;
+server_min_client_subnet_ipv4: VAR_MIN_CLIENT_SUBNET_IPV4 STRING_ARG
+	{
+	#ifdef CLIENT_SUBNET
+		OUTYY(("P(min_client_subnet_ipv4:%s)\n", $2));
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("IPv4 subnet length expected");
+		else if (atoi($2) > 32)
+			cfg_parser->cfg->min_client_subnet_ipv4 = 32;
+		else if (atoi($2) < 0)
+			cfg_parser->cfg->min_client_subnet_ipv4 = 0;
+		else cfg_parser->cfg->min_client_subnet_ipv4 = (uint8_t)atoi($2);
+	#else
+		OUTYY(("P(Compiled without edns subnet option, ignoring)\n"));
+	#endif
+		free($2);
+	}
+	;
+server_min_client_subnet_ipv6: VAR_MIN_CLIENT_SUBNET_IPV6 STRING_ARG
+	{
+	#ifdef CLIENT_SUBNET
+		OUTYY(("P(min_client_subnet_ipv6:%s)\n", $2));
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("Ipv6 subnet length expected");
+		else if (atoi($2) > 128)
+			cfg_parser->cfg->min_client_subnet_ipv6 = 128;
+		else if (atoi($2) < 0)
+			cfg_parser->cfg->min_client_subnet_ipv6 = 0;
+		else cfg_parser->cfg->min_client_subnet_ipv6 = (uint8_t)atoi($2);
+	#else
+		OUTYY(("P(Compiled without edns subnet option, ignoring)\n"));
+	#endif
+		free($2);
+	}
+	;
+server_max_ecs_tree_size_ipv4: VAR_MAX_ECS_TREE_SIZE_IPV4 STRING_ARG
+	{
+	#ifdef CLIENT_SUBNET
+		OUTYY(("P(max_ecs_tree_size_ipv4:%s)\n", $2));
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("IPv4 ECS tree size expected");
+		else if (atoi($2) < 0)
+			cfg_parser->cfg->max_ecs_tree_size_ipv4 = 0;
+		else cfg_parser->cfg->max_ecs_tree_size_ipv4 = (uint32_t)atoi($2);
+	#else
+		OUTYY(("P(Compiled without edns subnet option, ignoring)\n"));
+	#endif
+		free($2);
+	}
+	;
+server_max_ecs_tree_size_ipv6: VAR_MAX_ECS_TREE_SIZE_IPV6 STRING_ARG
+	{
+	#ifdef CLIENT_SUBNET
+		OUTYY(("P(max_ecs_tree_size_ipv6:%s)\n", $2));
+		if(atoi($2) == 0 && strcmp($2, "0") != 0)
+			yyerror("IPv6 ECS tree size expected");
+		else if (atoi($2) < 0)
+			cfg_parser->cfg->max_ecs_tree_size_ipv6 = 0;
+		else cfg_parser->cfg->max_ecs_tree_size_ipv6 = (uint32_t)atoi($2);
 	#else
 		OUTYY(("P(Compiled without edns subnet option, ignoring)\n"));
 	#endif
@@ -1342,6 +1413,15 @@ server_prefetch_key: VAR_PREFETCH_KEY STRING_ARG
 		free($2);
 	}
 	;
+server_deny_any: VAR_DENY_ANY STRING_ARG
+	{
+		OUTYY(("P(server_deny_any:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->cfg->deny_any = (strcmp($2, "yes")==0);
+		free($2);
+	}
+	;
 server_unwanted_reply_threshold: VAR_UNWANTED_REPLY_THRESHOLD STRING_ARG
 	{
 		OUTYY(("P(server_unwanted_reply_threshold:%s)\n", $2));
@@ -1718,6 +1798,13 @@ server_rrset_roundrobin: VAR_RRSET_ROUNDROBIN STRING_ARG
 		free($2);
 	}
 	;
+server_unknown_server_time_limit: VAR_UNKNOWN_SERVER_TIME_LIMIT STRING_ARG
+	{
+		OUTYY(("P(server_unknown_server_time_limit:%s)\n", $2));
+		cfg_parser->cfg->unknown_server_time_limit = atoi($2);
+		free($2);
+	}
+	;
 server_max_udp_size: VAR_MAX_UDP_SIZE STRING_ARG
 	{
 		OUTYY(("P(server_max_udp_size:%s)\n", $2));
@@ -1974,19 +2061,25 @@ server_ratelimit_factor: VAR_RATELIMIT_FACTOR STRING_ARG
 	;
 server_low_rtt: VAR_LOW_RTT STRING_ARG 
 	{ 
-		OUTYY(("P(server_low_rtt:%s)\n", $2)); 
-		if(atoi($2) == 0 && strcmp($2, "0") != 0)
-			yyerror("number expected");
-		else cfg_parser->cfg->low_rtt = atoi($2);
+		OUTYY(("P(low-rtt option is deprecated, use fast-server-num instead)\n"));
 		free($2);
 	}
 	;
-server_low_rtt_permil: VAR_LOW_RTT_PERMIL STRING_ARG 
+server_fast_server_num: VAR_FAST_SERVER_NUM STRING_ARG 
 	{ 
-		OUTYY(("P(server_low_rtt_permil:%s)\n", $2)); 
+		OUTYY(("P(server_fast_server_num:%s)\n", $2)); 
+		if(atoi($2) <= 0)
+			yyerror("number expected");
+		else cfg_parser->cfg->fast_server_num = atoi($2);
+		free($2);
+	}
+	;
+server_fast_server_permil: VAR_FAST_SERVER_PERMIL STRING_ARG 
+	{ 
+		OUTYY(("P(server_fast_server_permil:%s)\n", $2)); 
 		if(atoi($2) == 0 && strcmp($2, "0") != 0)
 			yyerror("number expected");
-		else cfg_parser->cfg->low_rtt_permil = atoi($2);
+		else cfg_parser->cfg->fast_server_permil = atoi($2);
 		free($2);
 	}
 	;

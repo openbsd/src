@@ -1450,11 +1450,13 @@ az_remove_rr_decompress(struct auth_zone* z, uint8_t* pkt, size_t pktlen,
  *	The lineno is set at 1 and then increased by the function.
  * @param fname: file name.
  * @param depth: recursion depth for includes
+ * @param cfg: config for chroot.
  * returns false on failure, has printed an error message
  */
 static int
 az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
-	struct sldns_file_parse_state* state, char* fname, int depth)
+	struct sldns_file_parse_state* state, char* fname, int depth,
+	struct config_file* cfg)
 {
 	size_t rr_len, dname_len;
 	int status;
@@ -1480,6 +1482,11 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 				/* skip spaces */
 				while(*incfile == ' ' || *incfile == '\t')
 					incfile++;
+				/* adjust for chroot on include file */
+				if(cfg->chrootdir && cfg->chrootdir[0] &&
+					strncmp(incfile, cfg->chrootdir,
+						strlen(cfg->chrootdir)) == 0)
+					incfile += strlen(cfg->chrootdir);
 				incfile = strdup(incfile);
 				if(!incfile) {
 					log_err("malloc failure");
@@ -1490,7 +1497,7 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 				inc = fopen(incfile, "r");
 				if(!inc) {
 					log_err("%s:%d cannot open include "
-						"file %s: %s", z->zonefile,
+						"file %s: %s", fname,
 						lineno_orig, incfile,
 						strerror(errno));
 					free(incfile);
@@ -1498,7 +1505,7 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 				}
 				/* recurse read that file now */
 				if(!az_parse_file(z, inc, rr, rrbuflen,
-					state, incfile, depth+1)) {
+					state, incfile, depth+1, cfg)) {
 					log_err("%s:%d cannot parse include "
 						"file %s", fname,
 						lineno_orig, incfile);
@@ -1538,30 +1545,36 @@ az_parse_file(struct auth_zone* z, FILE* in, uint8_t* rr, size_t rrbuflen,
 }
 
 int
-auth_zone_read_zonefile(struct auth_zone* z)
+auth_zone_read_zonefile(struct auth_zone* z, struct config_file* cfg)
 {
 	uint8_t rr[LDNS_RR_BUF_SIZE];
 	struct sldns_file_parse_state state;
+	char* zfilename;
 	FILE* in;
 	if(!z || !z->zonefile || z->zonefile[0]==0)
 		return 1; /* no file, or "", nothing to read */
+	
+	zfilename = z->zonefile;
+	if(cfg->chrootdir && cfg->chrootdir[0] && strncmp(zfilename,
+		cfg->chrootdir, strlen(cfg->chrootdir)) == 0)
+		zfilename += strlen(cfg->chrootdir);
 	if(verbosity >= VERB_ALGO) {
 		char nm[255+1];
 		dname_str(z->name, nm);
-		verbose(VERB_ALGO, "read zonefile %s for %s", z->zonefile, nm);
+		verbose(VERB_ALGO, "read zonefile %s for %s", zfilename, nm);
 	}
-	in = fopen(z->zonefile, "r");
+	in = fopen(zfilename, "r");
 	if(!in) {
 		char* n = sldns_wire2str_dname(z->name, z->namelen);
 		if(z->zone_is_slave && errno == ENOENT) {
 			/* we fetch the zone contents later, no file yet */
 			verbose(VERB_ALGO, "no zonefile %s for %s",
-				z->zonefile, n?n:"error");
+				zfilename, n?n:"error");
 			free(n);
 			return 1;
 		}
 		log_err("cannot open zonefile %s for %s: %s",
-			z->zonefile, n?n:"error", strerror(errno));
+			zfilename, n?n:"error", strerror(errno));
 		free(n);
 		return 0;
 	}
@@ -1579,10 +1592,10 @@ auth_zone_read_zonefile(struct auth_zone* z)
 		state.origin_len = z->namelen;
 	}
 	/* parse the (toplevel) file */
-	if(!az_parse_file(z, in, rr, sizeof(rr), &state, z->zonefile, 0)) {
+	if(!az_parse_file(z, in, rr, sizeof(rr), &state, zfilename, 0, cfg)) {
 		char* n = sldns_wire2str_dname(z->name, z->namelen);
 		log_err("error parsing zonefile %s for %s",
-			z->zonefile, n?n:"error");
+			zfilename, n?n:"error");
 		free(n);
 		fclose(in);
 		return 0;
@@ -1710,13 +1723,13 @@ int auth_zone_write_file(struct auth_zone* z, const char* fname)
 
 /** read all auth zones from file (if they have) */
 static int
-auth_zones_read_zones(struct auth_zones* az)
+auth_zones_read_zones(struct auth_zones* az, struct config_file* cfg)
 {
 	struct auth_zone* z;
 	lock_rw_wrlock(&az->lock);
 	RBTREE_FOR(z, struct auth_zone*, &az->ztree) {
 		lock_rw_wrlock(&z->lock);
-		if(!auth_zone_read_zonefile(z)) {
+		if(!auth_zone_read_zonefile(z, cfg)) {
 			lock_rw_unlock(&z->lock);
 			lock_rw_unlock(&az->lock);
 			return 0;
@@ -1953,7 +1966,7 @@ int auth_zones_apply_cfg(struct auth_zones* az, struct config_file* cfg,
 		}
 	}
 	az_delete_deleted_zones(az);
-	if(!auth_zones_read_zones(az))
+	if(!auth_zones_read_zones(az, cfg))
 		return 0;
 	if(setup) {
 		if(!auth_zones_setup_zones(az))
@@ -2828,7 +2841,7 @@ az_generate_any_answer(struct auth_zone* z, struct regional* region,
 		if(!msg_add_rrset_an(z, region, msg, node, rrset)) return 0;
 		added++;
 	}
-	if(added == 0 && node->rrsets) {
+	if(added == 0 && node && node->rrsets) {
 		if(!msg_add_rrset_an(z, region, msg, node,
 			node->rrsets)) return 0;
 	}
@@ -3163,6 +3176,11 @@ int auth_zones_lookup(struct auth_zones* az, struct query_info* qinfo,
 		*fallback = 1;
 		return 0;
 	}
+	if(z->zone_expired) {
+		*fallback = z->fallback_enabled;
+		lock_rw_unlock(&z->lock);
+		return 0;
+	}
 	/* see what answer that zone would generate */
 	r = auth_zone_generate_answer(z, qinfo, region, msg, fallback);
 	lock_rw_unlock(&z->lock);
@@ -3249,6 +3267,19 @@ int auth_zones_answer(struct auth_zones* az, struct module_env* env,
 	if(!z->for_downstream) {
 		lock_rw_unlock(&z->lock);
 		return 0;
+	}
+	if(z->zone_expired) {
+		if(z->fallback_enabled) {
+			lock_rw_unlock(&z->lock);
+			return 0;
+		}
+		lock_rw_unlock(&z->lock);
+		lock_rw_wrlock(&az->lock);
+		az->num_query_down++;
+		lock_rw_unlock(&az->lock);
+		auth_error_encode(qinfo, env, edns, repinfo, buf, temp,
+			LDNS_RCODE_SERVFAIL);
+		return 1;
 	}
 
 	/* answer it from zone z */
@@ -4773,8 +4804,10 @@ auth_zone_write_chunks(struct auth_xfer* xfr, const char* fname)
 static void
 xfr_write_after_update(struct auth_xfer* xfr, struct module_env* env)
 {
+	struct config_file* cfg = env->cfg;
 	struct auth_zone* z;
 	char tmpfile[1024];
+	char* zfilename;
 	lock_basic_unlock(&xfr->lock);
 
 	/* get lock again, so it is a readlock and concurrently queries
@@ -4792,20 +4825,24 @@ xfr_write_after_update(struct auth_xfer* xfr, struct module_env* env)
 	lock_basic_lock(&xfr->lock);
 	lock_rw_unlock(&env->auth_zones->lock);
 
-	if(z->zonefile == NULL) {
+	if(z->zonefile == NULL || z->zonefile[0] == 0) {
 		lock_rw_unlock(&z->lock);
 		/* no write needed, no zonefile set */
 		return;
 	}
+	zfilename = z->zonefile;
+	if(cfg->chrootdir && cfg->chrootdir[0] && strncmp(zfilename,
+		cfg->chrootdir, strlen(cfg->chrootdir)) == 0)
+		zfilename += strlen(cfg->chrootdir);
 
 	/* write to tempfile first */
-	if((size_t)strlen(z->zonefile) + 16 > sizeof(tmpfile)) {
+	if((size_t)strlen(zfilename) + 16 > sizeof(tmpfile)) {
 		verbose(VERB_ALGO, "tmpfilename too long, cannot update "
-			" zonefile %s", z->zonefile);
+			" zonefile %s", zfilename);
 		lock_rw_unlock(&z->lock);
 		return;
 	}
-	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp%u", z->zonefile,
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp%u", zfilename,
 		(unsigned)getpid());
 	if(xfr->task_transfer->master->http) {
 		/* use the stored chunk list to write them */
@@ -4818,8 +4855,8 @@ xfr_write_after_update(struct auth_xfer* xfr, struct module_env* env)
 		lock_rw_unlock(&z->lock);
 		return;
 	}
-	if(rename(tmpfile, z->zonefile) < 0) {
-		log_err("could not rename(%s, %s): %s", tmpfile, z->zonefile,
+	if(rename(tmpfile, zfilename) < 0) {
+		log_err("could not rename(%s, %s): %s", tmpfile, zfilename,
 			strerror(errno));
 		unlink(tmpfile);
 		lock_rw_unlock(&z->lock);

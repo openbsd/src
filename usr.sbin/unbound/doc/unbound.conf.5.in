@@ -1,4 +1,4 @@
-.TH "unbound.conf" "5" "Oct  8, 2018" "NLnet Labs" "unbound 1.8.1"
+.TH "unbound.conf" "5" "Dec  4, 2018" "NLnet Labs" "unbound 1.8.2"
 .\"
 .\" unbound.conf.5 -- unbound.conf manual
 .\"
@@ -216,6 +216,12 @@ closed ports and setting off all sort of close-port counters, with
 eg. 1500 msec.  When timeouts happen you need extra sockets, it checks
 the ID and remote IP of packets, and unwanted packets are added to the
 unwanted packet counter.
+.TP
+.B unknown\-server\-time\-limit: \fI<msec>
+The wait time in msec for waiting for an unknown server to reply.
+Increase this if you are behind a slow satellite link, to eg. 1128.
+That would then avoid re\-querying every initial query because it times out.
+Default is 376 msec.
 .TP
 .B so\-rcvbuf: \fI<number>
 If not 0, then set the SO_RCVBUF socket option to get more buffer
@@ -803,12 +809,18 @@ keep the cache up to date.  Default is no.  Turning it on gives about
 10 percent more traffic and load on the machine, but popular items do
 not expire from the cache.
 .TP
-.B prefetch-key: \fI<yes or no>
+.B prefetch\-key: \fI<yes or no>
 If yes, fetch the DNSKEYs earlier in the validation process, when a DS
 record is encountered.  This lowers the latency of requests.  It does use
 a little more CPU.  Also if the cache is set to 0, it is no use. Default is no.
 .TP
-.B rrset-roundrobin: \fI<yes or no>
+.B deny\-any: \fI<yes or no>
+If yes, deny queries of type ANY with an empty response.  Default is no.
+If disabled, unbound responds with a short list of resource records if some
+can be found in the cache and makes the upstream type ANY query if there
+are none.
+.TP
+.B rrset\-roundrobin: \fI<yes or no>
 If yes, Unbound rotates RRSet order in response (the random number is taken
 from the query ID, for speed and thread safety).  Default is no.
 .TP
@@ -1346,22 +1358,20 @@ This can make ordinary queries complete (if repeatedly queried for),
 and enter the cache, whilst also mitigating the traffic flow by the
 factor given.
 .TP 5
-.B low\-rtt: \fI<msec time>
-Set the time in millisecond that is considere a low ping time for fast
-server selection with the low\-rtt\-permil option, that turns this on or off.
-The default is 45 msec, a number from IPv6 quick response documents.
+.B fast\-server\-permil: \fI<number>
+Specify how many times out of 1000 to pick from the set of fastest servers.
+0 turns the feature off.  A value of 900 would pick from the fastest
+servers 90 percent of the time, and would perform normal exploration of random
+servers for the remaining time. When prefetch is enabled (or serve\-expired),
+such prefetches are not sped up, because there is no one waiting for it, and it
+presents a good moment to perform server exploration. The
+\fBfast\-server\-num\fR option can be used to specify the size of the fastest
+servers set. The default for fast\-server\-permil is 0.
 .TP 5
-.B low\-rtt\-permil: \fI<number>
-Specify how many times out of 1000 to pick the fast server from the low
-rtt band.  0 turns the feature off.  A value of 900 would pick the fast
-server when such fast servers are available 90 percent of the time, and
-the remaining time perform normal exploration of random servers.
-When prefetch is enabled (or serve\-expired), such prefetches are not
-sped up, because there is no one waiting for it, and it presents a good
-moment to perform server exploration.  The low\-rtt option can be used
-to specify which servers are picked for fast server selection, servers
-with a ping roundtrip time below that value are considered.
-The default for low\-rtt\-permil is 0.
+.B fast\-server\-num: \fI<number>
+Set the number of servers that should be used for fast server selection. Only
+use the fastest specified number of servers with the fast\-server\-permil
+option, that turns this on or off. The default is to use the fastest 3 servers.
 .SS "Remote Control Options"
 In the
 .B remote\-control:
@@ -1559,6 +1569,13 @@ lookups of that data.
 Authority zones can be read from zonefile.  And can be kept updated via
 AXFR and IXFR.  After update the zonefile is rewritten.  The update mechanism
 uses the SOA timer values and performs SOA UDP queries to detect zone changes.
+.LP
+If the update fetch fails, the timers in the SOA record are used to time
+another fetch attempt.  Until the SOA expiry timer is reached.  Then the
+zone is expired.  When a zone is expired, queries are SERVFAIL, and
+any new serial number is accepted from the master (even if older), and if
+fallback is enabled, the fallback activates to fetch from the upstream instead
+of the SERVFAIL.
 .TP
 .B name: \fI<zone name>
 Name of the authority zone.
@@ -1798,6 +1815,24 @@ to expose to third parties for IPv6.  Defaults to 56.
 .B max\-client\-subnet\-ipv4: \fI<number>\fR
 Specifies the maximum prefix length of the client source address we are willing
 to expose to third parties for IPv4. Defaults to 24.
+.TP
+.B min\-client\-subnet\-ipv6: \fI<number>\fR
+Specifies the minimum prefix length of the IPv6 source mask we are willing to
+accept in queries. Shorter source masks result in REFUSED answers. Source mask
+of 0 is always accepted. Default is 0.
+.TP
+.B min\-client\-subnet\-ipv4: \fI<number>\fR
+Specifies the minimum prefix length of the IPv4 source mask we are willing to
+accept in queries. Shorter source masks result in REFUSED answers. Source mask 
+of 0 is always accepted. Default is 0.
+.TP
+.B max\-ecs\-tree\-size\-ipv4: \fI<number>\fR
+Specifies the maximum number of subnets ECS answers kept in the ECS radix tree.
+This number applies for each qname/qclass/qtype tuple. Defaults to 100.
+.TP
+.B max\-ecs\-tree\-size\-ipv6: \fI<number>\fR
+Specifies the maximum number of subnets ECS answers kept in the ECS radix tree.
+This number applies for each qname/qclass/qtype tuple. Defaults to 100.
 .SS "Opportunistic IPsec Support Module Options"
 .LP
 The IPsec module must be configured in the \fBmodule\-config:\fR "ipsecmod

@@ -59,6 +59,7 @@
 #include "services/cache/infra.h"
 #include "sldns/wire2str.h"
 #include "sldns/parseutil.h"
+#include "iterator/iterator.h"
 #ifdef HAVE_GLOB_H
 # include <glob.h>
 #endif
@@ -152,6 +153,7 @@ config_create(void)
 	cfg->max_negative_ttl = 3600;
 	cfg->prefetch = 0;
 	cfg->prefetch_key = 0;
+	cfg->deny_any = 0;
 	cfg->infra_cache_slabs = 4;
 	cfg->infra_cache_numhosts = 10000;
 	cfg->infra_cache_min_rtt = 50;
@@ -167,8 +169,8 @@ config_create(void)
 	if(!(cfg->logfile = strdup(""))) goto error_exit;
 	if(!(cfg->pidfile = strdup(PIDFILE))) goto error_exit;
 	if(!(cfg->target_fetch_policy = strdup("3 2 1 0 0"))) goto error_exit;
-	cfg->low_rtt_permil = 0;
-	cfg->low_rtt = 45;
+	cfg->fast_server_permil = 0;
+	cfg->fast_server_num = 3;
 	cfg->donotqueryaddrs = NULL;
 	cfg->donotquery_localhost = 1;
 	cfg->root_hints = NULL;
@@ -177,7 +179,7 @@ config_create(void)
 	cfg->if_automatic = 0;
 	cfg->so_rcvbuf = 0;
 	cfg->so_sndbuf = 0;
-	cfg->so_reuseport = 1;
+	cfg->so_reuseport = REUSEPORT_DEFAULT;
 	cfg->ip_transparent = 0;
 	cfg->ip_freebind = 0;
 	cfg->num_ifs = 0;
@@ -194,6 +196,10 @@ config_create(void)
 	cfg->client_subnet_always_forward = 0;
 	cfg->max_client_subnet_ipv4 = 24;
 	cfg->max_client_subnet_ipv6 = 56;
+	cfg->min_client_subnet_ipv4 = 0;
+	cfg->min_client_subnet_ipv6 = 0;
+	cfg->max_ecs_tree_size_ipv4 = 100;
+	cfg->max_ecs_tree_size_ipv6 = 100;
 #endif
 	cfg->views = NULL;
 	cfg->acls = NULL;
@@ -258,6 +264,7 @@ config_create(void)
 	cfg->control_use_cert = 1;
 	cfg->minimal_responses = 1;
 	cfg->rrset_roundrobin = 0;
+	cfg->unknown_server_time_limit = 376;
 	cfg->max_udp_size = 4096;
 	if(!(cfg->server_key_file = strdup(RUN_DIR"/unbound_server.key"))) 
 		goto error_exit;
@@ -498,6 +505,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_POW2("rrset-cache-slabs:", rrset_cache_slabs)
 	else S_YNO("prefetch:", prefetch)
 	else S_YNO("prefetch-key:", prefetch_key)
+	else S_YNO("deny-any:", deny_any)
 	else if(strcmp(opt, "cache-max-ttl:") == 0)
 	{ IS_NUMBER_OR_ZERO; cfg->max_ttl = atoi(val); MAX_TTL=(time_t)cfg->max_ttl;}
 	else if(strcmp(opt, "cache-max-negative-ttl:") == 0)
@@ -573,6 +581,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_MEMSIZE("neg-cache-size:", neg_cache_size)
 	else S_YNO("minimal-responses:", minimal_responses)
 	else S_YNO("rrset-roundrobin:", rrset_roundrobin)
+	else S_NUMBER_OR_ZERO("unknown-server-time-limit:", unknown_server_time_limit)
 	else S_STRLIST("local-data:", local_data)
 	else S_YNO("unblock-lan-zones:", unblock_lan_zones)
 	else S_YNO("insecure-lan-zones:", insecure_lan_zones)
@@ -642,9 +651,8 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_POW2("ratelimit-slabs:", ratelimit_slabs)
 	else S_NUMBER_OR_ZERO("ip-ratelimit-factor:", ip_ratelimit_factor)
 	else S_NUMBER_OR_ZERO("ratelimit-factor:", ratelimit_factor)
-	else S_NUMBER_OR_ZERO("low-rtt:", low_rtt)
-	else S_NUMBER_OR_ZERO("low-rtt-pct:", low_rtt_permil)
-	else S_NUMBER_OR_ZERO("low-rtt-permil:", low_rtt_permil)
+	else S_SIZET_NONZERO("fast-server-num:", fast_server_num)
+	else S_NUMBER_OR_ZERO("fast-server-permil:", fast_server_permil)
 	else S_YNO("qname-minimisation:", qname_minimisation)
 	else S_YNO("qname-minimisation-strict:", qname_minimisation_strict)
 #ifdef USE_IPSECMOD
@@ -683,7 +691,9 @@ int config_set_option(struct config_file* cfg, const char* opt,
 		 * ratelimit-for-domain, ratelimit-below-domain,
 		 * local-zone-tag, access-control-view,
 		 * send-client-subnet, client-subnet-always-forward,
-		 * max-client-subnet-ipv4, max-client-subnet-ipv6, ipsecmod_hook,
+		 * max-client-subnet-ipv4, max-client-subnet-ipv6,
+		 * min-client-subnet-ipv4, min-client-subnet-ipv6,
+		 * max-ecs-tree-size-ipv4, max-ecs-tree-size-ipv6, ipsecmod_hook,
 		 * ipsecmod_whitelist. */
 		return 0;
 	}
@@ -880,6 +890,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_DEC(opt, "rrset-cache-slabs", rrset_cache_slabs)
 	else O_YNO(opt, "prefetch-key", prefetch_key)
 	else O_YNO(opt, "prefetch", prefetch)
+	else O_YNO(opt, "deny-any", deny_any)
 	else O_DEC(opt, "cache-max-ttl", max_ttl)
 	else O_DEC(opt, "cache-max-negative-ttl", max_negative_ttl)
 	else O_DEC(opt, "cache-min-ttl", min_ttl)
@@ -977,11 +988,16 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_UNS(opt, "val-override-date", val_date_override)
 	else O_YNO(opt, "minimal-responses", minimal_responses)
 	else O_YNO(opt, "rrset-roundrobin", rrset_roundrobin)
+	else O_DEC(opt, "unknown-server-time-limit", unknown_server_time_limit)
 #ifdef CLIENT_SUBNET
 	else O_LST(opt, "send-client-subnet", client_subnet)
 	else O_LST(opt, "client-subnet-zone", client_subnet_zone)
 	else O_DEC(opt, "max-client-subnet-ipv4", max_client_subnet_ipv4)
 	else O_DEC(opt, "max-client-subnet-ipv6", max_client_subnet_ipv6)
+	else O_DEC(opt, "min-client-subnet-ipv4", min_client_subnet_ipv4)
+	else O_DEC(opt, "min-client-subnet-ipv6", min_client_subnet_ipv6)
+	else O_DEC(opt, "max-ecs-tree-size-ipv4", max_ecs_tree_size_ipv4)
+	else O_DEC(opt, "max-ecs-tree-size-ipv6", max_ecs_tree_size_ipv6)
 	else O_YNO(opt, "client-subnet-always-forward:",
 		client_subnet_always_forward)
 #endif
@@ -1036,9 +1052,8 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_LS2(opt, "ratelimit-below-domain", ratelimit_below_domain)
 	else O_DEC(opt, "ip-ratelimit-factor", ip_ratelimit_factor)
 	else O_DEC(opt, "ratelimit-factor", ratelimit_factor)
-	else O_DEC(opt, "low-rtt", low_rtt)
-	else O_DEC(opt, "low-rtt-pct", low_rtt_permil)
-	else O_DEC(opt, "low-rtt-permil", low_rtt_permil)
+	else O_DEC(opt, "fast-server-num", fast_server_num)
+	else O_DEC(opt, "fast-server-permil", fast_server_permil)
 	else O_DEC(opt, "val-sig-skew-min", val_sig_skew_min)
 	else O_DEC(opt, "val-sig-skew-max", val_sig_skew_max)
 	else O_YNO(opt, "qname-minimisation", qname_minimisation)
@@ -1888,6 +1903,7 @@ config_apply(struct config_file* config)
 	EDNS_ADVERTISED_SIZE = (uint16_t)config->edns_buffer_size;
 	MINIMAL_RESPONSES = config->minimal_responses;
 	RRSET_ROUNDROBIN = config->rrset_roundrobin;
+	UNKNOWN_SERVER_NICENESS = config->unknown_server_time_limit;
 	log_set_time_asc(config->log_time_ascii);
 	autr_permit_small_holddown = config->permit_small_holddown;
 }
