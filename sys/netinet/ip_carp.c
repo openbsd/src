@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.334 2018/09/24 12:25:52 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.335 2018/12/04 12:39:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1095,12 +1095,11 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 			goto retry_later;
 		}
 		len = sizeof(*ip) + sizeof(ch);
-		m->m_pkthdr.len = len;
-		m->m_pkthdr.ph_ifidx = 0;
-		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
+		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
+		m->m_pkthdr.len = len;
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, len);
 		ip = mtod(m, struct ip *);
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(*ip) >> 2;
@@ -1184,12 +1183,11 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 			goto retry_later;
 		}
 		len = sizeof(*ip6) + sizeof(ch);
-		m->m_pkthdr.len = len;
-		m->m_pkthdr.ph_ifidx = 0;
 		m->m_pkthdr.pf.prio = CARP_IFQ_PRIO;
 		m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
+		m->m_pkthdr.len = len;
 		m->m_len = len;
-		MH_ALIGN(m, m->m_len);
+		m_align(m, len);
 		m->m_flags |= M_MCAST;
 		ip6 = mtod(m, struct ip6_hdr *);
 		memset(ip6, 0, sizeof(*ip6));
