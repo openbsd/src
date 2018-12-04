@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.28 2018/12/04 05:20:14 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.29 2018/12/04 06:11:44 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -19,7 +19,7 @@ table {		margin-top: 0em;
  * but not for table, resulting in inconsistent border styling. */
 tbody {		border-color: inherit; }
 tr {		border-color: inherit; }
-td {		vertical-align: middle;
+td {		vertical-align: top;
 		padding-left: 0.2em;
 		padding-right: 0.2em;
 		border-color: inherit; }
@@ -164,7 +164,7 @@ td.foot-os {	text-align: right; }
 .RsV { }
 
 .eqn { }
-.tbl { }
+.tbl td {	vertical-align: middle; }
 
 .HP {		margin-left: 3.8em;
 		text-indent: -3.8em; }
