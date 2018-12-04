@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.127 2018/11/04 05:56:45 guenther Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.128 2018/12/04 18:12:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -198,7 +198,6 @@ void
 server_read_http(struct bufferevent *bev, void *arg)
 {
 	struct client		*clt = arg;
-	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
 	char			*line = NULL, *key, *value;
@@ -355,11 +354,6 @@ server_read_http(struct bufferevent *bev, void *arg)
 			    &errstr);
 			if (errstr) {
 				server_abort_http(clt, 500, errstr);
-				goto abort;
-			}
-			if ((size_t)clt->clt_toread >
-			    srv_conf->maxrequestbody) {
-				server_abort_http(clt, 413, NULL);
 				goto abort;
 			}
 		}
@@ -1332,6 +1326,12 @@ server_response(struct httpd *httpd, struct client *clt)
 
 		/* Now search for the updated location */
 		srv_conf = server_getlocation(clt, desc->http_path);
+	}
+
+	if (clt->clt_toread > 0 && (size_t)clt->clt_toread >
+	    srv_conf->maxrequestbody) {
+		server_abort_http(clt, 413, NULL);
+		return (-1);
 	}
 
 	if (srv_conf->flags & SRVFLAG_BLOCK) {
