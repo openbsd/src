@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.106 2018/11/26 05:44:46 ori Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.107 2018/12/04 08:15:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -116,6 +116,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		break;
+	case IMSG_VMDOP_WAIT_VM_REQUEST:
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));

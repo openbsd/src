@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.90 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.91 2018/12/04 08:15:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -109,7 +109,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_id		 vid;
 	struct vmop_result	 vmr;
 	struct vmop_create_params vmc;
-	uint32_t		 id = 0;
+	uint32_t		 id = 0, peerid = imsg->hdr.peerid;
 	pid_t			 pid = 0;
 	unsigned int		 mode, flags;
 
@@ -148,6 +148,30 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((id = vm_id2vmid(id, NULL)) == 0)
 			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
+		break;
+	case IMSG_VMDOP_WAIT_VM_REQUEST:
+		IMSG_SIZE_CHECK(imsg, &vid);
+		memcpy(&vid, imsg->data, sizeof(vid));
+		id = vid.vid_id;
+
+		DPRINTF("%s: recv'ed WAIT_VM for %d", __func__, id);
+
+		cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
+		if (id == 0) {
+			res = ENOENT;
+		} else if ((vm = vm_getbyvmid(id)) != NULL) {
+			if (vm->vm_peerid != (uint32_t)-1) {
+				peerid = vm->vm_peerid;
+				res = EINTR;
+			} else
+				cmd = 0;
+			vm->vm_peerid = imsg->hdr.peerid;
+		} else {
+			/* vm doesn't exist, cannot stop vm */
+			log_debug("%s: cannot stop vm that is not running",
+			    __func__);
+			res = VMD_VM_STOP_INVALID;
+		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vid);
@@ -199,8 +223,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			}
 			if ((flags & VMOP_WAIT) &&
 			    res == 0 && vm->vm_shutdown == 1) {
+				if (vm->vm_peerid != (uint32_t)-1) {
+					peerid = vm->vm_peerid;
+					res = EINTR;
+				} else
+					cmd = 0;
 				vm->vm_peerid = imsg->hdr.peerid;
-				cmd = 0;
 			}
 		} else {
 			/* vm doesn't exist, cannot stop vm */
@@ -329,12 +357,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		vmr.vmr_id = id;
 		vmr.vmr_pid = pid;
 		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd,
-		    imsg->hdr.peerid, -1, &vmr, sizeof(vmr)) == -1)
+		    peerid, -1, &vmr, sizeof(vmr)) == -1)
 			return (-1);
 		break;
 	default:
 		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd,
-		    imsg->hdr.peerid, -1, &res, sizeof(res)) == -1)
+		    peerid, -1, &res, sizeof(res)) == -1)
 			return (-1);
 		break;
 	}
