@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.10 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.11 2018/12/04 11:25:48 kettenis Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -278,7 +278,7 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    sxitwi_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": can't to establish interrupt\n");
+		printf(": can't establish interrupt\n");
 		return;
 	}
 

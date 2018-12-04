@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.4 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.5 2018/12/04 11:25:48 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -77,7 +77,7 @@ ahci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": unable to establish interrupt\n");
+		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
 
