@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.129 2018/09/21 14:07:34 solene Exp $
+.\"	$OpenBSD: disklabel.8,v 1.130 2018/12/04 14:45:29 claudio Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 21 2018 $
+.Dd $Mdocdate: December 4 2018 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -504,7 +504,7 @@ is left unallocated.
 The sizes below are approximations,
 and may vary from architecture to architecture.
 .Pp
-.Sy Disks \*(Ge 8 Gigabytes
+.Sy Disks \*(Ge 10 Gigabytes
 .Bd -literal -offset indent -compact
 /		 5% of disk.  150M \(en 1G
 swap		10% of disk.   80M \(en 2x max physical memory
