@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_validate.c,v 1.11 2018/12/04 02:53:45 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.12 2018/12/04 03:28:54 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -66,6 +66,14 @@ roff_valid_br(ROFF_VALID_ARGS)
 	if (n->child != NULL)
 		mandoc_vmsg(MANDOCERR_ARG_SKIP, man->parse,
 		    n->line, n->pos, "br %s", n->child->string);
+
+	if (n->next != NULL && n->next->type == ROFFT_TEXT &&
+	    *n->next->string == ' ') {
+		mandoc_msg(MANDOCERR_PAR_SKIP, man->parse, n->line, n->pos,
+		    "br before text line with leading blank");
+		roff_node_delete(man, n);
+		return;
+	}
 
 	if ((np = n->prev) == NULL)
 		return;
