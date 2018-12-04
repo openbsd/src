@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.109 2018/12/03 21:00:06 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.110 2018/12/04 02:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,16 +47,16 @@ static	void	  check_text(CHKARGS);
 static	void	  post_AT(CHKARGS);
 static	void	  post_IP(CHKARGS);
 static	void	  post_OP(CHKARGS);
+static	void	  post_SH(CHKARGS);
 static	void	  post_TH(CHKARGS);
 static	void	  post_UC(CHKARGS);
 static	void	  post_UR(CHKARGS);
 static	void	  post_in(CHKARGS);
-static	void	  post_vs(CHKARGS);
 
 static	const v_check man_valids[MAN_MAX - MAN_TH] = {
 	post_TH,    /* TH */
-	NULL,       /* SH */
-	NULL,       /* SS */
+	post_SH,    /* SH */
+	post_SH,    /* SS */
 	NULL,       /* TP */
 	NULL,       /* TQ */
 	check_abort,/* LP */
@@ -149,15 +149,7 @@ man_node_validate(struct roff_man *man)
 		break;
 	default:
 		if (n->tok < ROFF_MAX) {
-			switch (n->tok) {
-			case ROFF_br:
-			case ROFF_sp:
-				post_vs(man, n);
-				break;
-			default:
-				roff_validate(man);
-				break;
-			}
+			roff_validate(man);
 			break;
 		}
 		assert(n->tok >= MAN_TH && n->tok < MAN_MAX);
@@ -238,6 +230,42 @@ post_OP(CHKARGS)
 }
 
 static void
+post_SH(CHKARGS)
+{
+	struct roff_node	*nc;
+
+	if (n->type != ROFFT_BODY || (nc = n->child) == NULL)
+		return;
+
+	if (nc->tok == MAN_PP && nc->body->child != NULL) {
+		while (nc->body->last != NULL) {
+			man->next = ROFF_NEXT_CHILD;
+			roff_node_relink(man, nc->body->last);
+			man->last = n;
+		}
+	}
+
+	if (nc->tok == MAN_PP || nc->tok == ROFF_sp || nc->tok == ROFF_br) {
+		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse,
+		    nc->line, nc->pos, "%s after %s",
+		    roff_name[nc->tok], roff_name[n->tok]);
+		roff_node_delete(man, nc);
+	}
+
+	/*
+	 * Trailing PP is empty, so it is deleted by check_par().
+	 * Trailing sp is significant.
+	 */
+
+	if ((nc = n->last) != NULL && nc->tok == ROFF_br) {
+		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse,
+		    nc->line, nc->pos, "%s at the end of %s",
+		    roff_name[nc->tok], roff_name[n->tok]);
+		roff_node_delete(man, nc);
+	}
+}
+
+static void
 post_UR(CHKARGS)
 {
 	if (n->type == ROFFT_HEAD && n->child == NULL)
@@ -265,6 +293,14 @@ check_par(CHKARGS)
 			roff_node_delete(man, n);
 		break;
 	case ROFFT_BODY:
+		if (n->child != NULL &&
+		    (n->child->tok == ROFF_sp || n->child->tok == ROFF_br)) {
+			mandoc_vmsg(MANDOCERR_PAR_SKIP,
+			    man->parse, n->child->line, n->child->pos,
+			    "%s after %s", roff_name[n->child->tok],
+			    roff_name[n->tok]);
+			roff_node_delete(man, n->child);
+		}
 		if (n->child == NULL)
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    man->parse, n->line, n->pos,
@@ -491,31 +527,4 @@ post_in(CHKARGS)
 	mandoc_asprintf(&s, "+%s", n->child->string);
 	free(n->child->string);
 	n->child->string = s;
-}
-
-static void
-post_vs(CHKARGS)
-{
-
-	if (NULL != n->prev)
-		return;
-
-	switch (n->parent->tok) {
-	case MAN_SH:
-	case MAN_SS:
-	case MAN_PP:
-		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse, n->line, n->pos,
-		    "%s after %s", roff_name[n->tok],
-		    roff_name[n->parent->tok]);
-		/* FALLTHROUGH */
-	case TOKEN_NONE:
-		/*
-		 * Don't warn about this because it occurs in pod2man
-		 * and would cause considerable (unfixable) warnage.
-		 */
-		roff_node_delete(man, n);
-		break;
-	default:
-		break;
-	}
 }

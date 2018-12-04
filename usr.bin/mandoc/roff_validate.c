@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_validate.c,v 1.10 2018/08/10 20:40:43 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.11 2018/12/04 02:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -29,17 +29,19 @@
 
 typedef	void	(*roff_valid_fp)(ROFF_VALID_ARGS);
 
+static	void	  roff_valid_br(ROFF_VALID_ARGS);
 static	void	  roff_valid_ft(ROFF_VALID_ARGS);
+static	void	  roff_valid_sp(ROFF_VALID_ARGS);
 
 static	const roff_valid_fp roff_valids[ROFF_MAX] = {
-	NULL,  /* br */
+	roff_valid_br,  /* br */
 	NULL,  /* ce */
 	roff_valid_ft,  /* ft */
 	NULL,  /* ll */
 	NULL,  /* mc */
 	NULL,  /* po */
 	NULL,  /* rj */
-	NULL,  /* sp */
+	roff_valid_sp,  /* sp */
 	NULL,  /* ta */
 	NULL,  /* ti */
 };
@@ -54,6 +56,31 @@ roff_validate(struct roff_man *man)
 	assert(n->tok < ROFF_MAX);
 	if (roff_valids[n->tok] != NULL)
 		(*roff_valids[n->tok])(man, n);
+}
+
+static void
+roff_valid_br(ROFF_VALID_ARGS)
+{
+	struct roff_node	*np;
+
+	if (n->child != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, man->parse,
+		    n->line, n->pos, "br %s", n->child->string);
+
+	if ((np = n->prev) == NULL)
+		return;
+
+	switch (np->tok) {
+	case ROFF_br:
+	case ROFF_sp:
+	case MDOC_Pp:
+		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse,
+		    n->line, n->pos, "br after %s", roff_name[np->tok]);
+		roff_node_delete(man, n);
+		break;
+	default:
+		break;
+	}
 }
 
 static void
@@ -96,4 +123,33 @@ roff_valid_ft(ROFF_VALID_ARGS)
 	mandoc_vmsg(MANDOCERR_FT_BAD, man->parse,
 	    n->line, n->pos, "ft %s", cp);
 	roff_node_delete(man, n);
+}
+
+static void
+roff_valid_sp(ROFF_VALID_ARGS)
+{
+	struct roff_node	*np;
+
+	if (n->child != NULL && n->child->next != NULL)
+		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+		    n->child->next->line, n->child->next->pos,
+		    "sp ... %s", n->child->next->string);
+
+	if ((np = n->prev) == NULL)
+		return;
+
+	switch (np->tok) {
+	case ROFF_br:
+		mandoc_msg(MANDOCERR_PAR_SKIP, man->parse,
+		    np->line, np->pos, "br before sp");
+		roff_node_delete(man, np);
+		break;
+	case MDOC_Pp:
+		mandoc_msg(MANDOCERR_PAR_SKIP, man->parse,
+		    n->line, n->pos, "sp after Pp");
+		roff_node_delete(man, n);
+		break;
+	default:
+		break;
+	}
 }

@@ -14,3 +14,4 @@ mandoc: roff.in:69:7: STYLE: unterminated quoted argument
 mandoc: roff.in:69:13: STYLE: whitespace at end of input line
 mandoc: roff.in:70:11: STYLE: unterminated quoted argument
 mandoc: roff.in:70:17: STYLE: whitespace at end of input line
+mandoc: roff.in:72:2: WARNING: skipping paragraph macro: br at the end of SH

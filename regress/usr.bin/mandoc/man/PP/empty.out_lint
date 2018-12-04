@@ -1,3 +1,4 @@
 mandoc: empty.in:8:2: WARNING: skipping paragraph macro: PP empty
 mandoc: empty.in:11:2: WARNING: skipping paragraph macro: PP empty
 mandoc: empty.in:14:2: WARNING: skipping paragraph macro: PP empty
+mandoc: empty.in:6:2: WARNING: skipping paragraph macro: PP after SH

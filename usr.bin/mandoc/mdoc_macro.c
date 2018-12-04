@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.182 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.183 2018/12/04 02:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1241,7 +1241,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 	for (n = body->child; n && n->next; n = n->next)
 		/* Do nothing. */ ;
 	if (n && n->tok == MDOC_Ns)
-		mdoc_node_relink(mdoc, n);
+		roff_node_relink(mdoc, n);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.158 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.159 2018/12/04 02:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -151,15 +151,6 @@ mdoc_elem_alloc(struct roff_man *mdoc, int line, int pos,
 	}
 	roff_node_append(mdoc, p);
 	mdoc->next = ROFF_NEXT_CHILD;
-}
-
-void
-mdoc_node_relink(struct roff_man *mdoc, struct roff_node *p)
-{
-
-	roff_node_unlink(mdoc, p);
-	p->prev = p->next = NULL;
-	roff_node_append(mdoc, p);
 }
 
 /*

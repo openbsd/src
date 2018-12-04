@@ -1,2 +1,4 @@
 mandoc: if.in:15:2: WARNING: conditional request controls empty scope: if
 mandoc: if.in:17:2: WARNING: conditional request controls empty scope: if
+mandoc: if.in:42:2: WARNING: skipping paragraph macro: br before sp
+mandoc: if.in:71:2: WARNING: skipping paragraph macro: br after br

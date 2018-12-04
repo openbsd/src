@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff_int.h,v 1.9 2017/07/08 17:52:42 schwarze Exp $	*/
+/*	$OpenBSD: roff_int.h,v 1.10 2018/12/04 02:53:45 schwarze Exp $	*/
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@ struct roff_node *roff_block_alloc(struct roff_man *, int, int, int);
 struct roff_node *roff_head_alloc(struct roff_man *, int, int, int);
 struct roff_node *roff_body_alloc(struct roff_man *, int, int, int);
 void		  roff_node_unlink(struct roff_man *, struct roff_node *);
+void		  roff_node_relink(struct roff_man *, struct roff_node *);
 void		  roff_node_free(struct roff_node *);
 void		  roff_node_delete(struct roff_man *, struct roff_node *);
 

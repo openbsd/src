@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.215 2018/11/26 17:44:29 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.216 2018/12/04 02:53:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1062,6 +1062,14 @@ roff_node_unlink(struct roff_man *man, struct roff_node *n)
 	}
 	if (man->first == n)
 		man->first = NULL;
+}
+
+void
+roff_node_relink(struct roff_man *man, struct roff_node *n)
+{
+	roff_node_unlink(man, n);
+	n->prev = n->next = NULL;
+	roff_node_append(man, n);
 }
 
 void
