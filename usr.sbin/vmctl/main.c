@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2018/12/04 08:17:17 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -63,6 +63,7 @@ int		 ctl_reset(struct parse_result *, int, char *[]);
 int		 ctl_start(struct parse_result *, int, char *[]);
 int		 ctl_status(struct parse_result *, int, char *[]);
 int		 ctl_stop(struct parse_result *, int, char *[]);
+int		 ctl_waitfor(struct parse_result *, int, char *[]);
 int		 ctl_pause(struct parse_result *, int, char *[]);
 int		 ctl_unpause(struct parse_result *, int, char *[]);
 int		 ctl_send(struct parse_result *, int, char *[]);
@@ -82,6 +83,7 @@ struct ctl_command ctl_commands[] = {
 	    "\t\t[-n switch] [-i count] [-d disk]* [-t name]" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[id|-a] [-fw]" },
+	{ "wait",	CMD_WAITFOR,	ctl_waitfor,	"id" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
@@ -178,7 +180,7 @@ parse(int argc, char *argv[])
 			err(1, "pledge");
 	}
 	if (ctl->main(&res, argc, argv) != 0)
-		err(1, "failed");
+		exit(1);
 
 	if (ctl_sock != -1) {
 		close(ibuf->fd);
@@ -251,6 +253,9 @@ vmmaction(struct parse_result *res)
 		imsg_compose(ibuf, IMSG_CTL_RESET, 0, 0, -1,
 		    &res->mode, sizeof(res->mode));
 		break;
+	case CMD_WAITFOR:
+		waitfor_vm(res->id, res->name);
+		break;
 	case CMD_PAUSE:
 		pause_vm(res->id, res->name);
 		break;
@@ -310,6 +315,9 @@ vmmaction(struct parse_result *res)
 				done = vm_start_complete(&imsg, &ret,
 				    tty_autoconnect);
 				break;
+			case CMD_WAITFOR:
+				flags = VMOP_WAIT;
+				/* FALLTHROUGH */
 			case CMD_STOP:
 				done = terminate_vm_complete(&imsg, &ret,
 				    flags);
@@ -337,7 +345,10 @@ vmmaction(struct parse_result *res)
 		}
 	}
 
-	return (0);
+	if (ret)
+		return (1);
+	else
+		return (0);
 }
 
 void
@@ -941,6 +952,18 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 
 int
 ctl_console(struct parse_result *res, int argc, char *argv[])
+{
+	if (argc == 2) {
+		if (parse_vmid(res, argv[1], 0) == -1)
+			errx(1, "invalid id: %s", argv[1]);
+	} else if (argc != 2)
+		ctl_usage(res->ctl);
+
+	return (vmmaction(res));
+}
+
+int
+ctl_waitfor(struct parse_result *res, int argc, char *argv[])
 {
 	if (argc == 2) {
 		if (parse_vmid(res, argv[1], 0) == -1)

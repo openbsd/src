@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.54 2018/11/20 12:48:16 otto Exp $
+.\"	$OpenBSD: vmctl.8,v 1.55 2018/12/04 08:17:17 claudio Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2018 $
+.Dd $Mdocdate: December 4 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -234,6 +234,8 @@ Stop all running VMs.
 .It Cm unpause Ar id
 Unpause (resume from a paused state) a VM with the specified
 .Ar id .
+.It Cm wait Ar id
+Wait until the specified VM has stopped.
 .El
 .Pp
 If the
