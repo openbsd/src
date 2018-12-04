@@ -13,7 +13,7 @@ match from any community 1234:5678
 match from any community local-as:5678 
 match from any community neighbor-as:5678 
 match from any community *:5678 
-match from any community 1234:local-as
+match from any community 1234:local-as 
 match from any community 1234:neighbor-as 
 match from any community 1234:* 
 match from any community *:* 
@@ -38,10 +38,10 @@ match from any large-community *:5678:*
 match from any large-community *:*:90 
 match from any large-community *:*:* 
 match from any community 1234:1 large-community 1234:5678:1 
-match from any community 1234:1 large-community 1234:5678:1 
-match from any set { community local-as:neighbor-as  community local-as:5678  community 1234:5678  }
-match from any set { large-community 1234:15:5678  large-community local-as:15:5678  large-community local-as:15:neighbor-as  }
-match from any set { community delete local-as:neighbor-as  community delete local-as:5678  community delete 1234:5678  }
-match from any set { large-community delete 1234:15:5678  large-community delete local-as:15:5678  large-community delete local-as:15:neighbor-as  }
-match from any set { community delete *:5678  community delete 1234:*  }
-match from any set { large-community delete local-as:15:*  large-community delete local-as:*:*  large-community delete *:15:5678  }
+match from any large-community 1234:5678:1 community 1234:1 
+match from any set { community 1234:5678 community local-as:5678 community local-as:neighbor-as }
+match from any set { large-community 1234:15:5678 large-community local-as:15:5678 large-community local-as:15:neighbor-as }
+match from any set { community delete 1234:5678 community delete local-as:5678 community delete local-as:neighbor-as }
+match from any set { large-community delete 1234:15:5678 large-community delete local-as:15:5678 large-community delete local-as:15:neighbor-as }
+match from any set { community delete 1234:* community delete *:5678 }
+match from any set { large-community delete *:15:5678 large-community delete local-as:15:* large-community delete local-as:*:* }
