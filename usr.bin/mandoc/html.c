@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.114 2018/11/26 01:38:17 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.115 2018/12/04 18:29:18 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -355,7 +355,6 @@ static int
 print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 {
 	char		 numbuf[16];
-	struct tag	*t;
 	const char	*seq;
 	size_t		 sz;
 	int		 c, len, breakline, nospace;
@@ -381,9 +380,7 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 
 		if (breakline &&
 		    (p >= pend || *p == ' ' || *p == ASCII_NBRSP)) {
-			t = print_otag(h, TAG_DIV, "");
-			print_text(h, "\\~");
-			print_tagq(h, t);
+			print_otag(h, TAG_BR, "");
 			breakline = 0;
 			while (p < pend && (*p == ' ' || *p == ASCII_NBRSP))
 				p++;
