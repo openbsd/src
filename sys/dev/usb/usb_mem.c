@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.31 2018/11/18 16:33:26 mpi Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.32 2018/12/05 17:41:23 gerhard Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -108,8 +108,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	}
 	splx(s);
 
-	assertwaitok();
-
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
 	if (p == NULL)
@@ -157,7 +155,6 @@ free0:
 void
 usb_block_real_freemem(struct usb_dma_block *p)
 {
-	assertwaitok();
 	bus_dmamap_unload(p->tag, p->map);
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
