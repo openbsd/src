@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.2 2018/11/24 13:12:29 phessler Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.3 2018/12/05 18:02:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -70,6 +70,11 @@ uint	 pvclock_get_timecount(struct timecounter *);
 void	 pvclock_read_time_info(struct pvclock_softc *,
 	    struct pvclock_time_info *);
 
+static inline uint32_t
+	 pvclock_read_begin(const struct pvclock_time_info *);
+static inline int
+	 pvclock_read_done(const struct pvclock_time_info *, uint32_t);
+
 struct cfattach pvclock_ca = {
 	sizeof(struct pvclock_softc),
 	pvclock_match,
@@ -127,8 +132,11 @@ pvclock_match(struct device *parent, void *match, void *aux)
 void
 pvclock_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pvclock_softc	*sc = (struct pvclock_softc *)self;
-	paddr_t			 pa;
+	struct pvclock_softc		*sc = (struct pvclock_softc *)self;
+	struct pvclock_time_info	*ti;
+	paddr_t			 	 pa;
+	uint32_t			 version;
+	uint8_t				 flags;
 
 	if ((sc->sc_time = km_alloc(PAGE_SIZE,
 	    &kv_any, &kp_zero, &kd_nowait)) == NULL) {
@@ -143,6 +151,19 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 
 	wrmsr(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
 	sc->sc_paddr = pa;
+
+	ti = sc->sc_time;
+	do {
+		version = pvclock_read_begin(ti);
+		flags = ti->ti_flags;
+	} while (!pvclock_read_done(ti, version));
+
+	if ((flags & PVCLOCK_FLAG_TSC_STABLE) == 0) {
+		wrmsr(KVM_MSR_SYSTEM_TIME, pa & ~PVCLOCK_SYSTEM_TIME_ENABLE);
+		km_free(sc->sc_time, PAGE_SIZE, &kv_any, &kp_zero);
+		printf(": unstable clock\n");
+		return;
+	}
 
 	sc->sc_tc = &pvclock_timecounter;
 	sc->sc_tc->tc_name = DEVNAME(sc);
