@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.92 2016/03/14 23:08:06 krw Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.93 2018/12/05 15:44:22 mpi Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -154,13 +154,15 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 		    pri);
 
 	if (pri > m->pri) {
-		if (m->indirect && m->match)
-			free(m->match, M_DEVBUF, 0);
+		if (m->indirect && m->match) {
+			cf = ((struct device *)m->match)->dv_cfdata;
+			free(m->match, M_DEVBUF, cf->cf_attach->ca_devsize);
+		}
 		m->match = match;
 		m->pri = pri;
 	} else {
 		if (m->indirect)
-			free(match, M_DEVBUF, 0);
+			free(match, M_DEVBUF, cf->cf_attach->ca_devsize);
 	}
 }
 
@@ -471,7 +473,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 			    old != 0 ? "expand" : "creat");
 		if (old != 0) {
 			bcopy(cd->cd_devs, nsp, old * sizeof(void *));
-			free(cd->cd_devs, M_DEVBUF, 0);
+			free(cd->cd_devs, M_DEVBUF, old * sizeof(void *));
 		}
 		cd->cd_devs = nsp;
 	}
@@ -613,7 +615,7 @@ config_detach(struct device *dev, int flags)
 		if (cd->cd_devs[i] != NULL)
 			break;
 	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
-		free(cd->cd_devs, M_DEVBUF, 0);
+		free(cd->cd_devs, M_DEVBUF, cd->cd_ndevs * sizeof(void *));
 		cd->cd_devs = NULL;
 		cd->cd_ndevs = 0;
 		cf->cf_unit = 0;
