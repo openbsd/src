@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.25 2018/06/12 06:59:27 mlarkin Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.26 2018/12/05 15:54:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -937,7 +937,6 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	/* sanity check */
 	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
-		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
 	}
 
