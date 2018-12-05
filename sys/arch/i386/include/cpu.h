@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.165 2018/08/21 06:03:34 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.166 2018/12/05 10:28:21 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/sensors.h>
+#include <sys/srp.h>
 
 struct intrsource;
 

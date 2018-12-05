@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.90 2017/05/18 15:41:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.91 2018/12/05 10:28:21 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -69,6 +69,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 #include <machine/mutex.h>
 

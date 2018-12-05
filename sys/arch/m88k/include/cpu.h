@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.65 2017/03/19 10:57:29 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.66 2018/12/05 10:28:21 jsg Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <machine/intr.h>
 #include <sys/queue.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 #if defined(MULTIPROCESSOR)
 #if !defined(MAX_CPUS) || MAX_CPUS > 4

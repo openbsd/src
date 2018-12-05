@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.125 2018/12/04 16:24:13 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.126 2018/12/05 10:28:21 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@
 #include <sys/device.h>
 #include <machine/intr.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 struct cpu_hwinfo {
 	uint32_t	c0prid;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.11 2018/08/11 14:00:33 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.12 2018/12/05 10:28:21 jsg Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -75,6 +75,7 @@ void	arm32_vector_init(vaddr_t, int);
 
 #include <sys/device.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
