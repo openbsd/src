@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.224 2018/11/28 08:33:59 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.225 2018/12/05 06:53:52 denis Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,7 @@ const char	*print_auth_method(enum auth_method);
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
 struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
+int tableid;
 
 __dead void
 usage(void)
@@ -116,7 +117,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n, done, ch, nodescr = 0, verbose = 0, r;
+	int			 fd, n, done, ch, nodescr = 0, verbose = 0;
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
@@ -128,8 +129,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath unix inet dns", NULL) == -1)
 		err(1, "pledge");
 
-	r = getrtable();
-	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, r) == -1)
+	tableid = getrtable();
+	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, tableid) == -1)
 		err(1, "asprintf");
 
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
@@ -345,6 +346,7 @@ main(int argc, char *argv[])
 		bzero(&net, sizeof(net));
 		net.prefix = res->addr;
 		net.prefixlen = res->prefixlen;
+		net.rtableid = tableid;
 		/* attribute sets are not supported */
 		if (res->action == NETWORK_ADD) {
 			imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
@@ -1981,6 +1983,7 @@ network_bulk(struct parse_result *res)
 				errx(1, "bad prefix: %s", b);
 			net.prefix = h;
 			net.prefixlen = len;
+			net.rtableid = tableid;
 
 			if (res->action == NETWORK_BULK_ADD) {
 				imsg_compose(ibuf, IMSG_NETWORK_ADD,
