@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.19 2018/11/10 14:27:51 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.20 2018/12/05 19:49:47 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -60,7 +60,8 @@
 
 #define CLICKDELAY_MS		20
 #define FREEZE_MS		100
-#define MATCHINTERVAL_MS	55
+#define MATCHINTERVAL_MS	45
+#define STOPINTERVAL_MS		55
 
 enum tpad_handlers {
 	SOFTBUTTON_HDLR,
@@ -121,8 +122,8 @@ struct tpad_touch {
 	int x;
 	int y;
 	int dir;
-	int matches;
-	struct timespec stop;
+	struct timespec start;
+	struct timespec match;
 	struct {
 		int x;
 		int y;
@@ -226,6 +227,12 @@ struct wstpad {
 	} scroll;
 };
 
+static const struct timespec match_interval =
+    { .tv_sec = 0, .tv_nsec = MATCHINTERVAL_MS * 1000000 };
+
+static const struct timespec stop_interval =
+    { .tv_sec = 0, .tv_nsec = STOPINTERVAL_MS * 1000000 };
+
 /*
  * Coordinates in the wstpad struct are "normalized" device coordinates,
  * the orientation is left-to-right and upward.
@@ -254,15 +261,10 @@ normalize_rel(struct axis_filter *filter, int val)
  *            7    |    4
  *               6 | 5
  *
- * Two direction values "match" each other if they are equal or adjacent in
- * this ring. Some handlers require that a movement is "stable" and check
- * the number of matches.
  */
 /* Tangent constants in [*.12] fixed-point format: */
 #define TAN_DEG_60 7094
 #define TAN_DEG_30 2365
-
-#define STABLE	3
 
 #define NORTH(d) ((d) == 0 || (d) == 11)
 #define SOUTH(d) ((d) == 5 || (d) == 6)
@@ -297,39 +299,57 @@ dircmp(int dir1, int dir2)
 	return (diff <= 6 ? diff : 12 - diff);
 }
 
+/*
+ * Update direction and timespec attributes for a touch.  They are used to
+ * determine whether it is moving - or resting - stably.
+ *
+ * The callers pass touches from the current frame and the touches that are
+ * no longer present in the update cycle to this function.  Even though this
+ * ensures that pairs of zero deltas do not result from stale coordinates,
+ * zero deltas do not reset the state immediately.  A short time span - the
+ * "stop interval" - must pass before the state is cleared, which is
+ * necessary because some touchpads report intermediate stops when a touch
+ * is moving very slowly.
+ */
 void
 wstpad_set_direction(struct wstpad *tp, struct tpad_touch *t, int dx, int dy)
 {
 	int dir;
-	static const struct timespec interval =
-	    { .tv_sec = 0, .tv_nsec = MATCHINTERVAL_MS * 1000000 };
+	struct timespec ts;
 
 	if (t->state != TOUCH_UPDATE) {
 		t->dir = -1;
-		t->matches = 0;
-	} else {
-		dir = direction(dx, dy, tp->ratio);
-		if (dir >= 0) {
-			if (t->dir >= 0 && dircmp(t->dir, dir) <= 1)
-				t->matches++;
-			else
-				t->matches = 1;
-			t->dir = dir;
+		memcpy(&t->start, &tp->time, sizeof(struct timespec));
+		return;
+	}
 
-			timespecadd(&tp->time, &interval, &t->stop);
-
-		} else if (t->dir >= 0) {
-			/*
-			 * Some touchpads report intermediate zero deltas
-			 * when a touch is moving very slowly.  Keep the
-			 * the state long enough to avoid errors.
-			 */
-			if (timespeccmp(&tp->time, &t->stop, >=)) {
-				t->dir = -1;
-				t->matches = 0;
-			}
+	dir = direction(dx, dy, tp->ratio);
+	if (dir >= 0) {
+		if (t->dir < 0 || dircmp(dir, t->dir) > 1) {
+			memcpy(&t->start, &tp->time, sizeof(struct timespec));
+		}
+		t->dir = dir;
+		memcpy(&t->match, &tp->time, sizeof(struct timespec));
+	} else if (t->dir >= 0) {
+		timespecsub(&tp->time, &t->match, &ts);
+		if (timespeccmp(&ts, &stop_interval, >=)) {
+			t->dir = -1;
+			memcpy(&t->start, &t->match, sizeof(struct timespec));
 		}
 	}
+}
+
+int
+wstpad_is_stable(struct wstpad *tp, struct tpad_touch *t)
+{
+	struct timespec ts;
+
+	if (t->dir >= 0)
+		timespecsub(&t->match, &t->start, &ts);
+	else
+		timespecsub(&tp->time, &t->start, &ts);
+
+	return (timespeccmp(&ts, &match_interval, >=));
 }
 
 /*
@@ -387,11 +407,12 @@ chk_scroll_state(struct wstpad *tp)
 		return (0);
 	}
 	/*
-	 * Try to exclude accidental scroll events by checking the matches.
-	 * The check, which causes a short delay, is only applied initially,
-	 * a touch that stops and resumes scrolling is not affected.
+	 * Try to exclude accidental scroll events by checking whether the
+	 * pointer-controlling touch is stable.  The check, which may cause
+	 * a short delay, is only applied initially, a touch that stops and
+	 * resumes scrolling is not affected.
 	 */
-	if (tp->t->matches < STABLE && !(tp->scroll.dz || tp->scroll.dw))
+	if (!wstpad_is_stable(tp, tp->t) && !(tp->scroll.dz || tp->scroll.dw))
 		return (0);
 
 	return (tp->dx || tp->dy);
@@ -460,15 +481,14 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 				return;
 			if ((dx > 0 && !EAST(dir)) || (dx < 0 && !WEST(dir)))
 				return;
-			if (t2->matches < STABLE &&
+			if (!wstpad_is_stable(tp, t2) &&
 			    !(tp->scroll.dz || tp->scroll.dw))
 				return;
 			centered |= CENTERED(t2);
 		}
 		if (centered) {
 			wstpad_scroll(tp, dx, dy, cmds);
-			if (tp->t->matches > STABLE)
-				set_freeze_ts(tp, 0, FREEZE_MS);
+			set_freeze_ts(tp, 0, FREEZE_MS);
 		}
 	}
 }
@@ -956,6 +976,8 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 			dy = normalize_abs(&input->filter.v, mts->pos.y) - t->y;
 			t->y += dy;
 			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
+			if (wsmouse_hysteresis(input, &mts->pos))
+				dx = dy = 0;
 			wstpad_set_direction(tp, t, dx, dy);
 		} else if ((1 << slot) & inactive) {
 			wstpad_set_direction(tp, t, 0, 0);
@@ -971,7 +993,7 @@ wstpad_mt_masks(struct wsmouseinput *input)
 	struct wstpad *tp = input->tp;
 	struct tpad_touch *t;
 	u_int mask;
-	int d, slot;
+	int slot;
 
 	tp->ignore &= input->mt.touches;
 
@@ -999,15 +1021,16 @@ wstpad_mt_masks(struct wsmouseinput *input)
 	 * touch is not, treat the latter as "thumb".  It will not block
 	 * pointer movement, and wstpad_f2scroll will ignore it.
 	 */
-	if ((tp->dx || tp->dy) && (input->mt.ptr_mask & ~input->mt.ptr)) {
+	if (tp->t->dir >= 0
+	    && wstpad_is_stable(tp, tp->t)
+	    && (input->mt.ptr_mask & ~input->mt.ptr)) {
+
 		slot = ffs(input->mt.ptr_mask) - 1;
 		t = &tp->tpad_touches[slot];
-		if (t->flags & B_EDGE) {
-			d = tp->t->matches - t->matches;
-			/* Do not hamper upward scrolling. */
-			if (d > STABLE && (!NORTH(t->dir) || d > 2 * STABLE))
-				tp->ignore = input->mt.ptr_mask;
-		}
+
+		if ((t->flags & B_EDGE)
+		    && t->dir < 0 && wstpad_is_stable(tp, t))
+			tp->ignore = input->mt.ptr_mask;
 	}
 }
 
@@ -1018,9 +1041,17 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 	struct tpad_touch *t;
 	int slot;
 
-	/* Use the unfiltered deltas. */
-	tp->dx = normalize_rel(&input->filter.h, input->motion.pos.dx);
-	tp->dy = normalize_rel(&input->filter.v, input->motion.pos.dy);
+	/*
+	 * Use the normalized, hysteresis-filtered, but otherwise untransformed
+	 * relative coordinates of the pointer-controlling touch for filtering
+	 * and scrolling.
+	 */
+	if (wsmouse_hysteresis(input, &input->motion.pos)) {
+		tp->dx = tp->dy = 0;
+	} else {
+		tp->dx = normalize_rel(&input->filter.h, input->motion.pos.dx);
+		tp->dy = normalize_rel(&input->filter.v, input->motion.pos.dy);
+	}
 
 	tp->btns = input->btn.buttons;
 	tp->btns_sync = input->btn.sync;
