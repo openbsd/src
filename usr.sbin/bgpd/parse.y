@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.364 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.365 2018/12/06 12:38:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ int		 expand_rule(struct filter_rule *, struct filter_rib_l *,
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
 int		 merge_filterset(struct filter_set_head *, struct filter_set *);
-void		 merge_filter_lists(struct filter_head *, struct filter_head *);
+void		 optimize_filters(struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
 int		 parsecommunity(struct filter_community *, int, char *);
@@ -3345,13 +3345,15 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 		free_config(conf);
 	} else {
 		/*
-		 * Move filter list and static group and peer filtersets
+		 * Concatenate filter list and static group and peer filtersets
 		 * together. Static group sets come first then peer sets
 		 * last normal filter rules.
 		 */
-		merge_filter_lists(conf->filters, groupfilter_l);
-		merge_filter_lists(conf->filters, peerfilter_l);
-		merge_filter_lists(conf->filters, filter_l);
+		TAILQ_CONCAT(conf->filters, groupfilter_l, entry);
+		TAILQ_CONCAT(conf->filters, peerfilter_l, entry);
+		TAILQ_CONCAT(conf->filters, filter_l, entry);
+
+		optimize_filters(conf->filters);
 
 		errors += mrt_mergeconfig(xconf->mrt, conf->mrt);
 		errors += merge_config(xconf, conf, peer_l);
@@ -4180,6 +4182,97 @@ neighbor_consistent(struct peer *p)
 	return (0);
 }
 
+static void
+filterset_add(struct filter_set_head *sh, struct filter_set *s)
+{
+	struct filter_set	*t;
+
+	TAILQ_FOREACH(t, sh, entry) {
+		if (s->type < t->type) {
+			TAILQ_INSERT_BEFORE(t, s, entry);
+			return;
+		}
+		if (s->type == t->type) {
+			switch (s->type) {
+			case ACTION_SET_COMMUNITY:
+			case ACTION_DEL_COMMUNITY:
+				if (memcmp(&s->action.community,
+				    &t->action.community,
+				    sizeof(s->action.community)) < 0) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return;
+				} else if (memcmp(&s->action.community,
+				    &t->action.community,
+				    sizeof(s->action.community)) == 0)
+					break;
+				continue;
+			case ACTION_SET_EXT_COMMUNITY:
+			case ACTION_DEL_EXT_COMMUNITY:
+				if (memcmp(&s->action.ext_community,
+				    &t->action.ext_community,
+				    sizeof(s->action.ext_community)) < 0) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return;
+				} else if (memcmp(&s->action.ext_community,
+				    &t->action.ext_community,
+				    sizeof(s->action.ext_community)) == 0)
+					break;
+				continue;
+			case ACTION_SET_NEXTHOP:
+				/* only last nexthop per AF matters */
+				if (s->action.nexthop.aid <
+				    t->action.nexthop.aid) {
+					TAILQ_INSERT_BEFORE(t, s, entry);
+					return;
+				} else if (s->action.nexthop.aid ==
+				    t->action.nexthop.aid) {
+					t->action.nexthop = s->action.nexthop;
+					break;
+				}
+				continue;
+			case ACTION_SET_NEXTHOP_BLACKHOLE:
+			case ACTION_SET_NEXTHOP_REJECT:
+			case ACTION_SET_NEXTHOP_NOMODIFY:
+			case ACTION_SET_NEXTHOP_SELF:
+				/* set it only once */
+				break;
+			case ACTION_SET_LOCALPREF:
+			case ACTION_SET_MED:
+			case ACTION_SET_WEIGHT:
+				/* only last set matters */
+				t->action.metric = s->action.metric;
+				break;
+			case ACTION_SET_RELATIVE_LOCALPREF:
+			case ACTION_SET_RELATIVE_MED:
+			case ACTION_SET_RELATIVE_WEIGHT:
+				/* sum all relative numbers */
+				t->action.relative += s->action.relative;
+				break;
+			case ACTION_SET_ORIGIN:
+				/* only last set matters */
+				t->action.origin = s->action.origin;
+				break;
+			case ACTION_PFTABLE:
+				/* only last set matters */
+				strlcpy(t->action.pftable, s->action.pftable,
+				    sizeof(t->action.pftable));
+				break;
+			case ACTION_RTLABEL:
+				/* only last set matters */
+				strlcpy(t->action.rtlabel, s->action.rtlabel,
+				    sizeof(t->action.rtlabel));
+				break;
+			default:
+				break;
+			}
+			free(s);
+			return;
+		}
+	}
+
+	TAILQ_INSERT_TAIL(sh, s, entry);
+}
+
 int
 merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 {
@@ -4207,55 +4300,45 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 		}
 	}
 
-	TAILQ_FOREACH(t, sh, entry) {
-		if (s->type < t->type) {
-			TAILQ_INSERT_BEFORE(t, s, entry);
-			return (0);
-		}
-		if (s->type == t->type)
-			switch (s->type) {
-			case ACTION_SET_COMMUNITY:
-			case ACTION_DEL_COMMUNITY:
-				if (memcmp(&s->action.community,
-				    &t->action.community,
-				    sizeof(s->action.community)) < 0) {
-					TAILQ_INSERT_BEFORE(t, s, entry);
-					return (0);
-				}
-				break;
-			case ACTION_SET_EXT_COMMUNITY:
-			case ACTION_DEL_EXT_COMMUNITY:
-				if (memcmp(&s->action.ext_community,
-				    &t->action.ext_community,
-				    sizeof(s->action.ext_community)) < 0) {
-					TAILQ_INSERT_BEFORE(t, s, entry);
-					return (0);
-				}
-				break;
-			case ACTION_SET_NEXTHOP:
-				if (s->action.nexthop.aid <
-				    t->action.nexthop.aid) {
-					TAILQ_INSERT_BEFORE(t, s, entry);
-					return (0);
-				}
-				break;
-			default:
-				break;
-			}
-	}
-
-	TAILQ_INSERT_TAIL(sh, s, entry);
+	filterset_add(sh, s);
 	return (0);
 }
 
-void
-merge_filter_lists(struct filter_head *dst, struct filter_head *src)
+static int
+filter_equal(struct filter_rule *fa, struct filter_rule *fb)
 {
-	struct filter_rule *r;
+	if (fa == NULL || fb == NULL)
+		return 0;
+	if (fa->action != fb->action || fa->quick != fb->quick ||
+	    fa->dir != fb->dir)
+		return 0;
+	if (memcmp(&fa->peer, &fb->peer, sizeof(fa->peer)))
+		return 0;
+	if (memcmp(&fa->match, &fb->match, sizeof(fa->match)))
+		return 0;
 
-	while ((r = TAILQ_FIRST(src)) != NULL) {
-		TAILQ_REMOVE(src, r, entry);
-		TAILQ_INSERT_TAIL(dst, r, entry);
+	return 1;
+}
+
+/* do a basic optimization by folding equal rules together */
+void
+optimize_filters(struct filter_head *fh)
+{
+	struct filter_rule *r, *nr;
+
+	TAILQ_FOREACH_SAFE(r, fh, entry, nr) {
+		while (filter_equal(r, nr)) {
+			struct filter_set	*t;
+
+			while((t = TAILQ_FIRST(&nr->set)) != NULL) {
+				TAILQ_REMOVE(&nr->set, t, entry);
+				filterset_add(&r->set, t);
+			}
+
+			TAILQ_REMOVE(fh, nr, entry);
+			free(nr);
+			nr = TAILQ_NEXT(r, entry);
+		}
 	}
 }
 
