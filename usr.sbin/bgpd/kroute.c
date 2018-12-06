@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.225 2018/11/05 07:01:15 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.226 2018/12/06 13:04:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2406,7 +2406,8 @@ mask2prefixlen(in_addr_t ina)
 u_int8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	 l = 0, *ap, *ep;
+	u_int8_t	*ap, *ep;
+	u_int		 l = 0;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
@@ -2422,32 +2423,35 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 			break;
 		case 0xfe:
 			l += 7;
-			return (l);
+			goto done;
 		case 0xfc:
 			l += 6;
-			return (l);
+			goto done;
 		case 0xf8:
 			l += 5;
-			return (l);
+			goto done;
 		case 0xf0:
 			l += 4;
-			return (l);
+			goto done;
 		case 0xe0:
 			l += 3;
-			return (l);
+			goto done;
 		case 0xc0:
 			l += 2;
-			return (l);
+			goto done;
 		case 0x80:
 			l += 1;
-			return (l);
+			goto done;
 		case 0x00:
-			return (l);
+			goto done;
 		default:
 			fatalx("non contiguous inet6 netmask");
 		}
 	}
 
+ done:
+	if (l > sizeof(struct in6_addr) * 8)
+		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
 }
 
