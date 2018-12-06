@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.20 2017/01/03 21:31:16 tedu Exp $	*/
+/*	$OpenBSD: option.c,v 1.21 2018/12/06 17:45:14 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -80,6 +80,7 @@ static OPTION options[] = {
 	{ "-name",	N_NAME,		c_name,		O_ARGV },
 	{ "-newer",	N_NEWER,	c_newer,	O_ARGV },
 	{ "-nogroup",	N_NOGROUP,	c_nogroup,	O_ZERO },
+	{ "-not",	N_NOT,		c_not,		O_ZERO },
 	{ "-nouser",	N_NOUSER,	c_nouser,	O_ZERO },
 	{ "-o",		N_OR,		c_or,		O_ZERO },
 	{ "-ok",	N_OK,		c_exec,		O_ARGVP },
