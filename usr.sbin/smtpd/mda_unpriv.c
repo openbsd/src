@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_unpriv.c,v 1.3 2018/12/02 11:34:21 gilles Exp $	*/
+/*	$OpenBSD: mda_unpriv.c,v 1.4 2018/12/06 12:32:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -56,8 +56,8 @@ mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
 	    >= sizeof (mda_exec))
 		errx(1, "mda command line too long");
 
-	if (! mda_expand_format(mda_exec, sizeof mda_exec, deliver,
-		&deliver->userinfo, NULL))
+	if (mda_expand_format(mda_exec, sizeof mda_exec, deliver,
+		&deliver->userinfo, NULL) == -1)
 		errx(1, "mda command line could not be expanded");
 
 	mda_command = mda_exec;
@@ -90,8 +90,8 @@ mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
 		    >= sizeof (mda_wrapper))
 			errx(1, "mda command line too long");
 
-		if (! mda_expand_format(mda_wrapper, sizeof mda_wrapper, deliver,
-			&deliver->userinfo, mda_command))
+		if (mda_expand_format(mda_wrapper, sizeof mda_wrapper, deliver,
+			&deliver->userinfo, mda_command) == -1)
 			errx(1, "mda command line could not be expanded");
 		mda_command = mda_wrapper;
 	}

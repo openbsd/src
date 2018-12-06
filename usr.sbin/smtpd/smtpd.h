@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.576 2018/12/06 12:09:50 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.577 2018/12/06 12:32:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1352,7 +1352,7 @@ void mda_unpriv(struct dispatcher *, struct deliver *, const char *, const char 
 
 
 /* mda_variables.c */
-size_t mda_expand_format(char *, size_t, const struct deliver *,
+ssize_t mda_expand_format(char *, size_t, const struct deliver *,
     const struct userinfo *, const char *);
 
 
