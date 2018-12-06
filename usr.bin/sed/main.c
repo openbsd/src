@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2018/11/14 10:59:33 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2018/12/06 20:16:04 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -345,31 +345,12 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 	size_t len;
 	char *p;
 	int c, fd;
-	static int firstfile;
-
-	if (infile == NULL) {
-		/* stdin? */
-		if (files->fname == NULL) {
-			if (inplace != NULL)
-				error(FATAL, "-i may not be used with stdin");
-			infile = stdin;
-			fname = "stdin";
-			outfile = stdout;
-			outfname = "stdout";
-		}
-
-		firstfile = 1;
-	}
+	static int firstfile = 1;
 
 	for (;;) {
 		if (infile != NULL && (c = getc(infile)) != EOF) {
 			(void)ungetc(c, infile);
 			break;
-		}
-		/* If we are here then either eof or no files are open yet */
-		if (infile == stdin) {
-			sp->len = 0;
-			return (0);
 		}
 		finish_file();
 		if (firstfile == 0)
@@ -381,6 +362,13 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 			return (0);
 		}
 		fname = files->fname;
+		if (fname == NULL || strcmp(fname, "-") == 0) {
+			infile = stdin;
+			fname = "stdin";
+			outfile = stdout;
+			outfname = "stdout";
+			break;
+		}
 		if (inplace != NULL) {
 			if (lstat(fname, &sb) != 0)
 				error(FATAL, "%s: %s", fname,
