@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.41 2018/10/08 16:32:01 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.42 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -335,7 +335,7 @@ start_vm(struct vmd_vm *vm, int fd)
 
 		/* Load kernel image */
 		ret = loadfile_elf(fp, vcp, &vrs,
-		    vmboot.vbp_bootdev, vmboot.vbp_howto);
+		    vmboot.vbp_bootdev, vmboot.vbp_howto, vmc->vmc_bootdevice);
 
 		/*
 		 * Try BIOS as a fallback (only if it was provided as an image

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.74 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.75 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1940,14 +1940,17 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    vmc->vmc_ifflags[i] & VMIFF_LOCKED ? 1 : 0;
 			vionet[i].local =
 			    vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
+			if (i == 0 && vmc->vmc_bootdevice & VMBOOTDEV_NET)
+				vionet[i].pxeboot = 1;
 			vionet[i].idx = i;
 			vionet[i].pci_id = id;
 
-			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s",
+			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s%s",
 			    __func__, vcp->vcp_name, i,
 			    ether_ntoa((void *)vionet[i].mac),
 			    vionet[i].lockedmac ? ", locked" : "",
-			    vionet[i].local ? ", local" : "");
+			    vionet[i].local ? ", local" : "",
+			    vionet[i].pxeboot ? ", pxeboot" : "");
 		}
 	}
 

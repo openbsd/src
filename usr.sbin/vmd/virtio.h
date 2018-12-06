@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.33 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.34 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -212,6 +212,7 @@ struct vionet_dev {
 	int idx;
 	int lockedmac;
 	int local;
+	int pxeboot;
 
 	uint8_t pci_id;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.6 2018/11/21 12:31:47 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.7 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -108,6 +108,9 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	resp.hlen = req.hlen;
 	resp.xid = req.xid;
 
+	if (dev->pxeboot)
+		strlcpy(resp.file, "auto_install", sizeof resp.file);
+
 	if ((client_addr.s_addr =
 	    vm_priv_addr(&env->vmd_cfg,
 	    dev->vm_vmid, dev->idx, 1)) == 0)
@@ -118,12 +121,10 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	    sizeof(client_addr));
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
-	if ((server_addr.s_addr =
-	    vm_priv_addr(&env->vmd_cfg,
-	    dev->vm_vmid, dev->idx, 0)) == 0)
+	if ((server_addr.s_addr = vm_priv_addr(&env->vmd_cfg, dev->vm_vmid,
+	    dev->idx, 0)) == 0)
 		return (-1);
-	memcpy(&resp.siaddr, &server_addr,
-	    sizeof(server_addr));
+	memcpy(&resp.siaddr, &server_addr, sizeof(server_addr));
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &server_addr,
 	    sizeof(server_addr));
 	ss2sin(&pc.pc_src)->sin_port = htons(SERVER_PORT);

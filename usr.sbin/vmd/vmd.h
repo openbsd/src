@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.87 2018/12/04 08:15:09 claudio Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.88 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -173,6 +173,11 @@ struct vmop_create_params {
 	unsigned int		 vmc_checkaccess;
 
 	/* userland-only part of the create params */
+	unsigned int		 vmc_bootdevice;
+#define VMBOOTDEV_AUTO		0
+#define VMBOOTDEV_DISK		1
+#define VMBOOTDEV_CDROM		2
+#define VMBOOTDEV_NET		3
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
 #define VMIFF_UP		0x01
 #define VMIFF_LOCKED		0x02
