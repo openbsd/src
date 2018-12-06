@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.9 2018/11/30 15:41:15 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.10 2018/12/06 15:32:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -108,6 +108,46 @@ lka_report_smtp_tx_begin(const char *direction, time_t tm, uint64_t reqid, uint3
 {
 	report_smtp_broadcast(direction, tm,
 	    "tx-begin|%016"PRIx64"|%08x\n", reqid, msgid);
+}
+
+void
+lka_report_smtp_tx_mail(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, const char *address, int ok)
+{
+	const char *result;
+
+	switch (ok) {
+	case 1:
+		result = "ok";
+		break;
+	case 0:
+		result = "permfail";
+		break;
+	default:
+		result = "tempfail";
+		break;
+	}
+	report_smtp_broadcast(direction, tm,
+	    "tx-mail|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
+}
+
+void
+lka_report_smtp_tx_rcpt(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, const char *address, int ok)
+{
+	const char *result;
+
+	switch (ok) {
+	case 1:
+		result = "ok";
+		break;
+	case 0:
+		result = "permfail";
+		break;
+	default:
+		result = "tempfail";
+		break;
+	}
+	report_smtp_broadcast(direction, tm,
+	    "tx-rcpt|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
 }
 
 void

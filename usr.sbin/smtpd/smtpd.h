@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.578 2018/12/06 13:57:06 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.579 2018/12/06 15:32:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -309,6 +309,8 @@ enum imsg_type {
 	IMSG_SMTP_REPORT_LINK_DISCONNECT,
 	IMSG_SMTP_REPORT_LINK_TLS,
 	IMSG_SMTP_REPORT_TX_BEGIN,
+	IMSG_SMTP_REPORT_TX_MAIL,
+	IMSG_SMTP_REPORT_TX_RCPT,
 	IMSG_SMTP_REPORT_TX_ENVELOPE,
 	IMSG_SMTP_REPORT_TX_COMMIT,
 	IMSG_SMTP_REPORT_TX_ROLLBACK,
@@ -325,6 +327,8 @@ enum imsg_type {
 	IMSG_MTA_REPORT_LINK_DISCONNECT,
 	IMSG_MTA_REPORT_LINK_TLS,
 	IMSG_MTA_REPORT_TX_BEGIN,
+	IMSG_MTA_REPORT_TX_MAIL,
+	IMSG_MTA_REPORT_TX_RCPT,
 	IMSG_MTA_REPORT_TX_ENVELOPE,
 	IMSG_MTA_REPORT_TX_COMMIT,
 	IMSG_MTA_REPORT_TX_ROLLBACK,
@@ -1316,6 +1320,8 @@ void lka_report_smtp_link_connect(const char *, time_t, uint64_t, const char *, 
 void lka_report_smtp_link_disconnect(const char *, time_t, uint64_t);
 void lka_report_smtp_link_tls(const char *, time_t, uint64_t, const char *);
 void lka_report_smtp_tx_begin(const char *, time_t, uint64_t, uint32_t);
+void lka_report_smtp_tx_mail(const char *, time_t, uint64_t, uint32_t, const char *, int);
+void lka_report_smtp_tx_rcpt(const char *, time_t, uint64_t, uint32_t, const char *, int);
 void lka_report_smtp_tx_envelope(const char *, time_t, uint64_t, uint32_t, uint64_t);
 void lka_report_smtp_tx_commit(const char *, time_t, uint64_t, uint32_t, size_t);
 void lka_report_smtp_tx_rollback(const char *, time_t, uint64_t, uint32_t);
@@ -1437,6 +1443,8 @@ void mta_report_link_connect(uint64_t, const char *, const struct sockaddr_stora
 void mta_report_link_disconnect(uint64_t);
 void mta_report_link_tls(uint64_t, const char *);
 void mta_report_tx_begin(uint64_t, uint32_t);
+void mta_report_tx_mail(uint64_t, uint32_t, const char *, int);
+void mta_report_tx_rcpt(uint64_t, uint32_t, const char *, int);
 void mta_report_tx_envelope(uint64_t, uint32_t, uint64_t);
 void mta_report_tx_commit(uint64_t, uint32_t, size_t);
 void mta_report_tx_rollback(uint64_t, uint32_t);
@@ -1516,6 +1524,8 @@ void smtp_report_link_connect(uint64_t, const char *, const struct sockaddr_stor
 void smtp_report_link_disconnect(uint64_t);
 void smtp_report_link_tls(uint64_t, const char *);
 void smtp_report_tx_begin(uint64_t, uint32_t);
+void smtp_report_tx_mail(uint64_t, uint32_t, const char *, int);
+void smtp_report_tx_rcpt(uint64_t, uint32_t, const char *, int);
 void smtp_report_tx_envelope(uint64_t, uint32_t, uint64_t);
 void smtp_report_tx_commit(uint64_t, uint32_t, size_t);
 void smtp_report_tx_rollback(uint64_t, uint32_t);

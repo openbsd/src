@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.216 2018/12/06 12:09:50 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.217 2018/12/06 15:32:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -87,12 +87,14 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*command, *response;
 	const char		*ciphers;
 	const char		*hostname;
+	const char		*address;
 	struct sockaddr_storage	ss_src, ss_dest;
 	int                      filter_phase;
 	const char              *filter_param;
 	uint32_t		 msgid;
 	uint64_t		 evpid;
 	size_t			 msgsz;
+	int			 ok;
 
 	if (imsg == NULL)
 		lka_shutdown();
@@ -451,6 +453,30 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_report_smtp_tx_begin("smtp-in", tm, reqid, msgid);
 		return;
 
+	case IMSG_SMTP_REPORT_TX_MAIL:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_string(&m, &address);
+		m_get_int(&m, &ok);
+		m_end(&m);
+
+		lka_report_smtp_tx_mail("smtp-in", tm, reqid, msgid, address, ok);
+		return;
+
+	case IMSG_SMTP_REPORT_TX_RCPT:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_string(&m, &address);
+		m_get_int(&m, &ok);
+		m_end(&m);
+
+		lka_report_smtp_tx_rcpt("smtp-in", tm, reqid, msgid, address, ok);
+		return;
+
 	case IMSG_SMTP_REPORT_TX_ENVELOPE:
 		m_msg(&m, imsg);
 		m_get_time(&m, &tm);
@@ -542,6 +568,30 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_tx_begin("smtp-out", tm, reqid, msgid);
+		return;
+
+	case IMSG_MTA_REPORT_TX_MAIL:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_string(&m, &address);
+		m_get_int(&m, &ok);
+		m_end(&m);
+
+		lka_report_smtp_tx_mail("smtp-out", tm, reqid, msgid, address, ok);
+		return;
+
+	case IMSG_MTA_REPORT_TX_RCPT:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_string(&m, &address);
+		m_get_int(&m, &ok);
+		m_end(&m);
+
+		lka_report_smtp_tx_rcpt("smtp-out", tm, reqid, msgid, address, ok);
 		return;
 
 	case IMSG_MTA_REPORT_TX_ENVELOPE:

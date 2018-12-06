@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.359 2018/12/06 13:57:06 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.360 2018/12/06 15:32:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -150,6 +150,7 @@ struct smtp_session {
 
 	struct smtp_tx		*tx;
 
+	enum smtp_command	 last_cmd;
 	enum filter_phase	 filter_phase;
 	const char		*filter_param;
 };
@@ -1241,6 +1242,7 @@ smtp_command(struct smtp_session *s, char *line)
 			break;
 		}
 
+	s->last_cmd = cmd;
 	switch (cmd) {
 	/*
 	 * INIT
@@ -2024,11 +2026,21 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
 
 	io_xprintf(s->io, "%s\r\n", buf);
-	smtp_report_protocol_server(s->id, buf);
 
 	switch (buf[0]) {
+	case '2':
+		if (s->last_cmd == CMD_MAIL_FROM)
+			smtp_report_tx_mail(s->id, s->tx->msgid, s->cmd + 10, 1);
+		else if (s->last_cmd == CMD_RCPT_TO)
+			smtp_report_tx_rcpt(s->id, s->tx->msgid, s->cmd + 8, 1);
+		break;
 	case '5':
 	case '4':
+		if (s->last_cmd == CMD_MAIL_FROM)
+			smtp_report_tx_mail(s->id, s->tx->msgid, s->cmd + 10, buf[0] == '4' ? -1 : 0);
+		else if (s->last_cmd == CMD_RCPT_TO)
+			smtp_report_tx_rcpt(s->id, s->tx->msgid, s->cmd + 8, buf[0] == '4' ? -1 : 0);
+
 		if (s->flags & SF_BADINPUT) {
 			log_info("%016"PRIx64" smtp "
 			    "bad-input address=%s host=%s result=\"%.*s\"",
@@ -2061,6 +2073,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 		}
 		break;
 	}
+	smtp_report_protocol_server(s->id, buf);
 }
 
 static void

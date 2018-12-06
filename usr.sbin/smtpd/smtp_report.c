@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_report.c,v 1.5 2018/11/30 15:33:40 gilles Exp $	*/
+/*	$OpenBSD: smtp_report.c,v 1.6 2018/12/06 15:32:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -83,6 +83,30 @@ smtp_report_tx_begin(uint64_t qid, uint32_t msgid)
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
+	m_close(p_lka);
+}
+
+void
+smtp_report_tx_mail(uint64_t qid, uint32_t msgid, const char *address, int ok)
+{
+	m_create(p_lka, IMSG_SMTP_REPORT_TX_MAIL, 0, 0, -1);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
+	m_add_string(p_lka, address);
+	m_add_int(p_lka, ok);
+	m_close(p_lka);
+}
+
+void
+smtp_report_tx_rcpt(uint64_t qid, uint32_t msgid, const char *address, int ok)
+{
+	m_create(p_lka, IMSG_SMTP_REPORT_TX_RCPT, 0, 0, -1);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
+	m_add_string(p_lka, address);
+	m_add_int(p_lka, ok);
 	m_close(p_lka);
 }
 
