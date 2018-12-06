@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.575 2018/11/30 15:33:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.576 2018/12/06 12:09:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -315,6 +315,12 @@ enum imsg_type {
 	IMSG_SMTP_REPORT_PROTOCOL_CLIENT,
 	IMSG_SMTP_REPORT_PROTOCOL_SERVER,
 
+	IMSG_SMTP_FILTER_BEGIN,
+	IMSG_SMTP_FILTER_END,
+	IMSG_SMTP_FILTER_PROTOCOL,
+	IMSG_SMTP_FILTER_DATA_BEGIN,
+	IMSG_SMTP_FILTER_DATA_END,
+
 	IMSG_MTA_REPORT_LINK_CONNECT,
 	IMSG_MTA_REPORT_LINK_DISCONNECT,
 	IMSG_MTA_REPORT_LINK_TLS,
@@ -324,8 +330,6 @@ enum imsg_type {
 	IMSG_MTA_REPORT_TX_ROLLBACK,
 	IMSG_MTA_REPORT_PROTOCOL_CLIENT,
 	IMSG_MTA_REPORT_PROTOCOL_SERVER,
-
-	IMSG_SMTP_FILTER,
 
 	IMSG_CA_PRIVENC,
 	IMSG_CA_PRIVDEC
@@ -1319,7 +1323,11 @@ void lka_report_smtp_protocol_server(const char *, time_t, uint64_t, const char 
 
 
 /* lka_filter.c */
-void lka_filter(uint64_t, enum filter_phase, const char *, const char *);
+void lka_filter_begin(uint64_t);
+void lka_filter_end(uint64_t);
+void lka_filter_protocol(uint64_t, enum filter_phase, const char *, const char *);
+void lka_filter_data_begin(uint64_t);
+void lka_filter_data_end(uint64_t);
 int lka_filter_response(uint64_t, const char *, const char *);
 
 

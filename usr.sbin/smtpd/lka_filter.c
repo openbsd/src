@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.5 2018/11/29 12:48:16 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.6 2018/12/06 12:09:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -48,6 +48,8 @@ static int	filter_exec_helo(uint64_t, struct filter_rule *, const char *, const 
 static int	filter_exec_mail_from(uint64_t, struct filter_rule *, const char *, const char *);
 static int	filter_exec_rcpt_to(uint64_t, struct filter_rule *, const char *, const char *);
 
+static void	filter_session_io(struct io *, int, void *);
+
 
 static struct filter_exec {
 	enum filter_phase	phase;
@@ -68,8 +70,96 @@ static struct filter_exec {
 	{ FILTER_COMMIT,    	"commit",      	filter_exec_notimpl },
 };
 
+static struct tree	sessions;
+static int		inited;
+
+struct filter_session {
+	struct io	*io;
+};
+
 void
-lka_filter(uint64_t reqid, enum filter_phase phase, const char *hostname, const char *param)
+lka_filter_begin(uint64_t reqid)
+{
+	struct filter_session	*fs;
+
+	if (!inited) {
+		tree_init(&sessions);
+		inited = 1;
+	}
+
+	fs = xcalloc(1, sizeof (struct filter_session));
+	tree_xset(&sessions, reqid, fs);
+}
+
+void
+lka_filter_end(uint64_t reqid)
+{
+	struct filter_session	*fs;
+
+	fs = tree_xpop(&sessions, reqid);
+	free(fs);
+}
+
+void
+lka_filter_data_begin(uint64_t reqid)
+{
+	struct filter_session  *fs;
+	int	sp[2];
+	int	fd = -1;
+
+	fs = tree_xget(&sessions, reqid);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
+		goto end;
+
+	fd = sp[0];
+	fs->io = io_new();
+	io_set_fd(fs->io, sp[1]);
+	io_set_callback(fs->io, filter_session_io, fs);
+
+end:
+	m_create(p_pony, IMSG_SMTP_FILTER_DATA_BEGIN, 0, 0, fd);
+	m_add_id(p_pony, reqid);
+	m_add_int(p_pony, fd != -1 ? 1 : 0);
+	m_close(p_pony);
+}
+
+void
+lka_filter_data_end(uint64_t reqid)
+{
+	struct filter_session	*fs;
+
+	fs = tree_xget(&sessions, reqid);
+	io_free(fs->io);
+	fs->io = NULL;
+}
+
+static void
+filter_session_io(struct io *io, int evt, void *arg)
+{
+	struct filter_session *fs = arg;
+	char *line = NULL;
+	ssize_t len;
+
+	log_trace(TRACE_IO, "filter session: %p: %s %s", fs, io_strevent(evt),
+	    io_strio(io));
+
+	switch (evt) {
+	case IO_DATAIN:
+	nextline:
+		line = io_getline(fs->io, &len);
+		/* No complete line received */
+		if (line == NULL)
+			return;
+
+		io_printf(fs->io, "%s\r\n", line);
+
+		goto nextline;
+	}
+}
+
+void
+lka_filter_protocol(uint64_t reqid, enum filter_phase phase, const char *hostname, const char *param)
 {
 	struct filter_rule	*rule;
 	uint8_t			i;
@@ -141,7 +231,7 @@ filter_write(const char *name, uint64_t reqid, const char *phase, const char *ho
 static void
 filter_proceed(uint64_t reqid)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
+	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_PROCEED);
 	m_close(p_pony);
@@ -150,7 +240,7 @@ filter_proceed(uint64_t reqid)
 static void
 filter_rewrite(uint64_t reqid, const char *param)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
+	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_REWRITE);
 	m_add_string(p_pony, param);
@@ -160,7 +250,7 @@ filter_rewrite(uint64_t reqid, const char *param)
 static void
 filter_reject(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
+	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_REJECT);
 	m_add_string(p_pony, message);
@@ -170,7 +260,7 @@ filter_reject(uint64_t reqid, const char *message)
 static void
 filter_disconnect(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER, 0, 0, -1);
+	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_DISCONNECT);
 	m_add_string(p_pony, message);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.215 2018/11/30 15:33:40 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.216 2018/12/06 12:09:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -356,7 +356,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		table_open_all(env);
 
 		/* revoke proc & exec */
-		if (pledge("stdio rpath inet dns getpw recvfd",
+		if (pledge("stdio rpath inet dns getpw recvfd sendfd",
 			NULL) == -1)
 			err(1, "pledge");
 
@@ -597,7 +597,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 
 
-	case IMSG_SMTP_FILTER:
+	case IMSG_SMTP_FILTER_PROTOCOL:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &filter_phase);
@@ -605,8 +605,41 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &filter_param);
 		m_end(&m);
 
-		lka_filter(reqid, filter_phase, hostname, filter_param);
+		lka_filter_protocol(reqid, filter_phase, hostname, filter_param);
 		return;
+
+	case IMSG_SMTP_FILTER_BEGIN:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_filter_begin(reqid);
+		return;
+
+	case IMSG_SMTP_FILTER_END:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_filter_end(reqid);
+		return;
+
+	case IMSG_SMTP_FILTER_DATA_BEGIN:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_filter_data_begin(reqid);
+		return;
+
+	case IMSG_SMTP_FILTER_DATA_END:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_filter_data_end(reqid);
+		return;
+
 	}
 
 	errx(1, "lka_imsg: unexpected %s imsg", imsg_to_str(imsg->hdr.type));
@@ -673,7 +706,7 @@ lka(void)
 	mproc_disable(p_pony);
 
 	/* proc & exec will be revoked before serving requests */
-	if (pledge("stdio rpath inet dns getpw recvfd proc exec", NULL) == -1)
+	if (pledge("stdio rpath inet dns getpw recvfd sendfd proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	event_dispatch();
