@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.577 2018/12/06 12:32:11 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.578 2018/12/06 13:57:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -415,6 +415,7 @@ enum filter_phase {
 	FILTER_MAIL_FROM,
 	FILTER_RCPT_TO,
 	FILTER_DATA,
+	FILTER_DATA_LINE,
 	FILTER_RSET,
 	FILTER_QUIT,
 	FILTER_NOOP,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.358 2018/12/06 12:09:50 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.359 2018/12/06 13:57:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -163,6 +163,14 @@ struct smtp_session {
 
 #define ADVERTISE_EXT_DSN(s) \
 	((s)->listener->flags & F_EXT_DSN)
+
+#define	SESSION_FILTERED(s) \
+	((s)->listener->flags & F_FILTERED)
+
+#define	SESSION_DATA_FILTERED(s) \
+	(((s)->listener->flags & F_FILTERED) && \
+	    TAILQ_FIRST(&env->sc_filter_rules[FILTER_DATA_LINE]))
+
 
 static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
 static void smtp_session_init(void);
@@ -775,7 +783,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		log_debug("smtp: %p: fd %d from queue", s, imsg->fd);
 
 		if (smtp_message_fd(s->tx, imsg->fd)) {
-			if (1 == 1)
+			if (!SESSION_DATA_FILTERED(s))
 				smtp_message_begin(s->tx);
 			else
 				smtp_filter_data_begin(s);
@@ -1580,7 +1588,7 @@ smtp_query_filters(enum filter_phase phase, struct smtp_session *s, const char *
 static void
 smtp_filter_begin(struct smtp_session *s)
 {
-	if (!(s->listener->flags & F_FILTERED))
+	if (!SESSION_FILTERED(s))
 		return;
 
 	m_create(p_lka, IMSG_SMTP_FILTER_BEGIN, 0, 0, -1);
@@ -1591,7 +1599,7 @@ smtp_filter_begin(struct smtp_session *s)
 static void
 smtp_filter_end(struct smtp_session *s)
 {
-	if (!(s->listener->flags & F_FILTERED))
+	if (!SESSION_FILTERED(s))
 		return;
 
 	m_create(p_lka, IMSG_SMTP_FILTER_END, 0, 0, -1);
@@ -1602,7 +1610,7 @@ smtp_filter_end(struct smtp_session *s)
 static void
 smtp_filter_data_begin(struct smtp_session *s)
 {
-	if (!(s->listener->flags & F_FILTERED))
+	if (!SESSION_FILTERED(s))
 		return;
 
 	m_create(p_lka, IMSG_SMTP_FILTER_DATA_BEGIN, 0, 0, -1);
@@ -1614,7 +1622,7 @@ smtp_filter_data_begin(struct smtp_session *s)
 static void
 smtp_filter_data_end(struct smtp_session *s)
 {
-	if (!(s->listener->flags & F_FILTERED))
+	if (!SESSION_FILTERED(s))
 		return;
 
 	if (s->tx->filter == NULL)
@@ -1636,7 +1644,7 @@ smtp_filter_phase(enum filter_phase phase, struct smtp_session *s, const char *p
 	s->filter_phase = phase;
 	s->filter_param = param;
 
-	if (s->listener->flags & F_FILTERED) {
+	if (!SESSION_FILTERED(s)) {
 		smtp_query_filters(phase, s, param ? param : "");
 		return;
 	}
