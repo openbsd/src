@@ -1,4 +1,4 @@
-/* $OpenBSD: https.c,v 1.1 2018/12/06 16:51:19 tedu Exp $ */
+/* $OpenBSD: https.c,v 1.2 2018/12/06 17:43:30 tedu Exp $ */
 /*
  * Copyright (c) 2018 Ted Unangst <tedu@openbsd.org>
  *
@@ -88,7 +88,8 @@ https_connect(const char *ip, const char *name)
 	}
 	rv = tls_connect_servername(ctx, ip, port, name);
 	if (rv != 0) {
-		logmsg(LOG_NOTICE, "failed to connect with tls");
+		logmsg(LOG_NOTICE, "failed to make tls connection: %s",
+		    tls_error(ctx));
 		goto fail;
 	}
 	servername = name;
@@ -121,39 +122,43 @@ https_query(uint8_t *query, size_t qlen, uint8_t *resp, size_t *resplen)
 		return -1;
 
 	headerlen = snprintf(header, sizeof(header), headerfmt, servername, qlen);
-	tls_write(ctx, header, headerlen);
-	tls_write(ctx, query, qlen);
+	amt = tls_write(ctx, header, headerlen);
+	if (amt != headerlen)
+		goto badwrite;
+	amt = tls_write(ctx, query, qlen);
+	if (amt != qlen)
+		goto badwrite;
 	amt = tls_read(ctx, buf, sizeof(buf) - 1);
 	/* what in the world is going on here? */
 	if (amt < 10)
-		return -1;
+		goto bad1;
 	buf[amt] = 0;
 	two = buf;
 	while (*two && two < buf + 10 && *two != '2')
 		two++;
 	if (*two != '2')
-		return -1;
+		goto bad1;
 	if (memcmp(two, "200", 3) != 0)
-		return -1;
+		goto notok;
 	clptr = strcasestr(buf, "content-length:");
 	if (!clptr)
-		return -1;
+		goto fail;
 	while (*clptr && !isdigit(*clptr))
 		clptr++;
 	if (!isdigit(*clptr))
-		return -1;
+		goto fail;
 	endptr = clptr;
 	while (*endptr && *endptr != '\r')
 		endptr++;
 	if (*endptr != '\r')
-		return -1;
+		goto fail;
 	*endptr = 0;
 	contlen = strtonum(clptr, 0, 65536, &errstr);
 	if (errstr)
-		return -1;
+		goto fail;
 	dataptr = memmem(endptr + 1, amt - (endptr + 1 - buf), "\r\n\r\n", 4);
 	if (!dataptr)
-		return -1;
+		goto fail;
 	dataptr += 4;
 	have = amt - (dataptr - buf);
 	if (have > contlen)
@@ -172,4 +177,17 @@ https_query(uint8_t *query, size_t qlen, uint8_t *resp, size_t *resplen)
 	*resplen = have;
 
 	return 0;
+
+badwrite:
+	logmsg(LOG_NOTICE, "unable to write request");
+	return -1;
+bad1:
+	logmsg(LOG_NOTICE, "didn't receive enough data for anything");
+	return -1;
+notok:
+	logmsg(LOG_NOTICE, "http response was not 200");
+	return -1;
+fail:
+	logmsg(LOG_NOTICE, "some other problem with response");
+	return -1;
 }
