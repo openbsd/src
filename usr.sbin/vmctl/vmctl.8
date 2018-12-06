@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.55 2018/12/04 08:17:17 claudio Exp $
+.\"	$OpenBSD: vmctl.8,v 1.56 2018/12/06 09:23:15 claudio Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 4 2018 $
+.Dd $Mdocdate: December 6 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -143,6 +143,7 @@ command.
 .It Xo Cm start Ar name
 .Op Fl cL
 .Op Fl b Ar path
+.Op Fl B Ar device
 .Op Fl d Ar disk
 .Op Fl i Ar count
 .Op Fl m Ar size
@@ -158,6 +159,15 @@ Starts a VM defined by the specified name and parameters:
 Boot the VM with the specified kernel or BIOS image.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+.It Fl B Ar device
+Force system to boot from the specified device for the next boot.
+.Ar device
+can be set to
+.Ar net
+to perform a PXE boot using the first network interface.
+Currently only supported when starting the VM with
+.Fl b 
+specifying a kernel image.
 .It Fl c
 Automatically connect to the VM console.
 .It Fl d Ar disk

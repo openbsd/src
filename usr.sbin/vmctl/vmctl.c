@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.64 2018/12/04 08:17:17 claudio Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.65 2018/12/06 09:23:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -73,7 +73,7 @@ unsigned int info_flags;
 int
 vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
     char **nics, int ndisks, char **disks, int *disktypes, char *kernel,
-    char *iso, char *instance)
+    char *iso, char *instance, unsigned int bootdevice)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -184,6 +184,7 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 		if (strlcpy(vmc->vmc_instance, instance,
 		    sizeof(vmc->vmc_instance)) >= sizeof(vmc->vmc_instance))
 			errx(1, "instance vm name too long");
+	vmc->vmc_bootdevice = bootdevice;
 
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, -1,
 	    vmc, sizeof(struct vmop_create_params));

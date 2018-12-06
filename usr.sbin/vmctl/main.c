@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2018/12/04 08:17:17 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2018/12/06 09:23:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -79,7 +79,7 @@ struct ctl_command ctl_commands[] = {
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-Lc] [-b image] [-r image] [-m size]\n"
+	    " [-Lc] [-b image] [-B device] [-r image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]* [-t name]" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[id|-a] [-fw]" },
@@ -224,7 +224,7 @@ vmmaction(struct parse_result *res)
 	case CMD_START:
 		ret = vm_start(res->id, res->name, res->size, res->nifs,
 		    res->nets, res->ndisks, res->disks, res->disktypes,
-		    res->path, res->isopath, res->instance);
+		    res->path, res->isopath, res->instance, res->bootdevice);
 		if (ret) {
 			errno = ret;
 			err(1, "start VM operation failed");
@@ -843,7 +843,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "b:r:cLm:n:d:i:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (res->path)
@@ -852,6 +852,12 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 				err(1, "invalid boot image path");
 			if ((res->path = strdup(path)) == NULL)
 				errx(1, "strdup");
+			break;
+		case 'B':
+			if (res->bootdevice)
+				errx(1, "boot device specified multiple times");
+			if (strcmp("net", optarg) == 0)
+				res->bootdevice = VMBOOTDEV_NET;
 			break;
 		case 'r':
 			if (res->isopath)
