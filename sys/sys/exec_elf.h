@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.81 2018/11/13 04:47:36 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.82 2018/12/06 18:59:31 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -207,6 +207,9 @@ typedef struct {
 #define EV_NONE		0		/* Invalid */
 #define EV_CURRENT	1		/* Current */
 #define EV_NUM		2		/* number of versions */
+
+/* Magic for e_phnum: get real value from sh_info of first section header */
+#define PN_XNUM		0xffff
 
 /* Section Header */
 typedef struct {

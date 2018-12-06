@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.146 2018/08/05 14:23:57 beck Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.147 2018/12/06 18:59:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1035,6 +1035,36 @@ out:
 }
 
 
+/*
+ * Normally we lay out core files like this:
+ *	[ELF Header] [Program headers] [Notes] [data for PT_LOAD segments]
+ *
+ * However, if there's >= 65535 segments then it overflows the field
+ * in the ELF header, so the standard specifies putting a magic
+ * number there and saving the real count in the .sh_info field of
+ * the first *section* header...which requires generating a section
+ * header.  To avoid confusing tools, we include an .shstrtab section
+ * as well so all the indexes look valid.  So in this case we lay
+ * out the core file like this:
+ *	[ELF Header] [Section Headers] [.shstrtab] [Program headers] \
+ *	[Notes] [data for PT_LOAD segments]
+ *
+ * The 'shstrtab' structure below is data for the second of the two
+ * section headers, plus the .shstrtab itself, in one const buffer.
+ */
+static const struct {
+    Elf_Shdr	shdr;
+    char	shstrtab[sizeof(ELF_SHSTRTAB) + 1];
+} shstrtab = {
+    .shdr = {
+	.sh_name = 1,			/* offset in .shstrtab below */
+	.sh_type = SHT_STRTAB,
+	.sh_offset = sizeof(Elf_Ehdr) + 2*sizeof(Elf_Shdr),
+	.sh_size = sizeof(ELF_SHSTRTAB) + 1,
+	.sh_addralign = 1,
+    },
+    .shstrtab = "\0" ELF_SHSTRTAB,
+};
 
 int
 coredump_setup_elf(int segment_count, void *cookie)
@@ -1066,20 +1096,47 @@ coredump_setup_elf(int segment_count, void *cookie)
 	ehdr.e_machine = ELF_TARG_MACH;
 	ehdr.e_version = EV_CURRENT;
 	ehdr.e_entry = 0;
-	ehdr.e_phoff = sizeof(ehdr);
-	ehdr.e_shoff = 0;
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-	ehdr.e_phnum = ws->npsections;
-	ehdr.e_shentsize = 0;
-	ehdr.e_shnum = 0;
-	ehdr.e_shstrndx = 0;
+
+	if (ws->npsections < PN_XNUM) {
+		ehdr.e_phoff = sizeof(ehdr);
+		ehdr.e_shoff = 0;
+		ehdr.e_phnum = ws->npsections;
+		ehdr.e_shentsize = 0;
+		ehdr.e_shnum = 0;
+		ehdr.e_shstrndx = 0;
+	} else {
+		/* too many segments, use extension setup */
+		ehdr.e_shoff = sizeof(ehdr);
+		ehdr.e_phnum = PN_XNUM;
+		ehdr.e_shentsize = sizeof(Elf_Shdr);
+		ehdr.e_shnum = 2;
+		ehdr.e_shstrndx = 1;
+		ehdr.e_phoff = shstrtab.shdr.sh_offset + shstrtab.shdr.sh_size;
+	}
 
 	/* Write out the ELF header. */
 	error = coredump_write(ws->iocookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
 	if (error)
 		return error;
+
+	/*
+	 * If an section header is needed to store extension info, write
+	 * it out after the ELF header and before the program header.
+	 */
+	if (ehdr.e_shnum != 0) {
+		Elf_Shdr shdr = { .sh_info = ws->npsections };
+		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shdr,
+		    sizeof shdr);
+		if (error)
+			return error;
+		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shstrtab,
+		    sizeof(shstrtab.shdr) + sizeof(shstrtab.shstrtab));
+		if (error)
+			return error;
+	}
 
 	/*
 	 * Allocate the segment header array and setup to collect
@@ -1089,7 +1146,7 @@ coredump_setup_elf(int segment_count, void *cookie)
 	    M_TEMP, M_WAITOK|M_ZERO);
 	ws->psectionslen = ws->npsections * sizeof(Elf_Phdr);
 
-	ws->notestart = sizeof(ehdr) + ws->psectionslen;
+	ws->notestart = ehdr.e_phoff + ws->psectionslen;
 	ws->secstart = ws->notestart + ws->notesize;
 	ws->secoff = ws->secstart;
 
