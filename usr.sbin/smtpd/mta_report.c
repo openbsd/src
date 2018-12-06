@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_report.c,v 1.2 2018/12/06 15:32:06 gilles Exp $	*/
+/*	$OpenBSD: mta_report.c,v 1.3 2018/12/06 16:05:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -44,7 +44,7 @@
 #include "rfc5322.h"
 
 void
-mta_report_link_connect(uint64_t qid, const char *rdns,
+mta_report_link_connect(uint64_t qid, const char *rdns, int fcrdns,
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
 {
@@ -52,6 +52,7 @@ mta_report_link_connect(uint64_t qid, const char *rdns,
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, rdns);
+	m_add_int(p_lka, fcrdns);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_src);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_dest);
 	m_close(p_lka);

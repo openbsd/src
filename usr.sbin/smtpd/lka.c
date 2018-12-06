@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.217 2018/12/06 15:32:06 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.218 2018/12/06 16:05:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -95,6 +95,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	uint64_t		 evpid;
 	size_t			 msgsz;
 	int			 ok;
+	int			 fcrdns;
 
 	if (imsg == NULL)
 		lka_shutdown();
@@ -417,11 +418,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_time(&m, &tm);
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &rdns);
+		m_get_int(&m, &fcrdns);
 		m_get_sockaddr(&m, (struct sockaddr *)&ss_src);
 		m_get_sockaddr(&m, (struct sockaddr *)&ss_dest);
 		m_end(&m);
 
-		lka_report_smtp_link_connect("smtp-in", tm, reqid, rdns, &ss_src, &ss_dest);
+		lka_report_smtp_link_connect("smtp-in", tm, reqid, rdns, fcrdns, &ss_src, &ss_dest);
 		return;
 
 	case IMSG_SMTP_REPORT_LINK_DISCONNECT:
@@ -534,11 +536,12 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_time(&m, &tm);
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &rdns);
+		m_get_int(&m, &fcrdns);
 		m_get_sockaddr(&m, (struct sockaddr *)&ss_src);
 		m_get_sockaddr(&m, (struct sockaddr *)&ss_dest);
 		m_end(&m);
 
-		lka_report_smtp_link_connect("smtp-out", tm, reqid, rdns, &ss_src, &ss_dest);
+		lka_report_smtp_link_connect("smtp-out", tm, reqid, rdns, fcrdns, &ss_src, &ss_dest);
 		return;
 
 	case IMSG_MTA_REPORT_LINK_DISCONNECT:
