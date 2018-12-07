@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.98 2018/11/30 15:33:40 gilles Exp $
+#	$OpenBSD: Makefile,v 1.99 2018/12/07 08:05:59 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,6 +7,7 @@ PROG=		smtpd
 SRCS=	aliases.c
 SRCS+=	bounce.c
 SRCS+=	ca.c
+SRCS+=	cert.c
 SRCS+=	compress_backend.c
 SRCS+=	config.c
 SRCS+=	control.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.308 2018/12/06 12:09:50 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.309 2018/12/07 08:05:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1902,6 +1902,10 @@ imsg_to_str(int type)
 	CASE(IMSG_GETADDRINFO);
 	CASE(IMSG_GETADDRINFO_END);
 	CASE(IMSG_GETNAMEINFO);
+
+	CASE(IMSG_CERT_INIT);
+	CASE(IMSG_CERT_CERTIFICATE);
+	CASE(IMSG_CERT_VERIFY);
 
 	CASE(IMSG_SETUP_KEY);
 	CASE(IMSG_SETUP_PEER);
