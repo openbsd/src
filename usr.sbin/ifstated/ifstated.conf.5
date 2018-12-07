@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.13 2018/06/18 06:04:25 jmc Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.14 2018/12/07 19:29:38 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: December 7 2018 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ interfaces this equals the init state.
 .Pp
 In contrast to link state tests, external tests must be run periodically to
 evaluate their status.
-The frequency at which an external test is run has to be set with the
+The frequency at which an external test is run is set, in seconds, with the
 .Ar every
 keyword.
 .Pp
