@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.14 2018/08/18 10:10:19 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.15 2018/12/07 21:33:28 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -171,8 +171,8 @@ struct intrhand {
 
 struct intrq {
 	TAILQ_HEAD(, intrhand)	iq_list;	/* handler list */
-	int			iq_irq;		/* IRQ to mask while handling */
-	int			iq_levels;	/* IPL_*'s this IRQ has */
+	int			iq_irq_max;	/* IRQ to mask while handling */
+	int			iq_irq_min;	/* lowest IRQ when shared */
 	int			iq_ist;		/* share type */
 	int			iq_route;
 };
@@ -746,12 +746,15 @@ agintc_calc_irq(struct agintc_softc *sc, int irq)
 			min = ih->ih_ipl;
 	}
 
-	if (sc->sc_handler[irq].iq_irq == max)
-		return;
-	sc->sc_handler[irq].iq_irq = max;
-
 	if (max == IPL_NONE)
 		min = IPL_NONE;
+
+	if (sc->sc_handler[irq].iq_irq_max == max &&
+	    sc->sc_handler[irq].iq_irq_min == min)
+		return;
+
+	sc->sc_handler[irq].iq_irq_max = max;
+	sc->sc_handler[irq].iq_irq_min = min;
 
 #ifdef DEBUG_AGINTC
 	if (min != IPL_NONE)
@@ -828,7 +831,7 @@ agintc_route_irq(void *v, int enable, struct cpu_info *ci)
 
 	if (enable) {
 		agintc_set_priority(sc, ih->ih_irq,
-		    sc->sc_handler[ih->ih_irq].iq_irq);
+		    sc->sc_handler[ih->ih_irq].iq_irq_min);
 		agintc_route(sc, ih->ih_irq, IRQ_ENABLE, ci);
 		agintc_intr_enable(sc, ih->ih_irq);
 	}
@@ -937,7 +940,7 @@ agintc_irq_handler(void *frame)
 		return;
 	}
 
-	pri = sc->sc_handler[irq].iq_irq;
+	pri = sc->sc_handler[irq].iq_irq_max;
 	s = agintc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 		agintc_run_handler(ih, frame, s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmpic.c,v 1.2 2017/08/25 21:57:12 patrick Exp $ */
+/* $OpenBSD: mvmpic.c,v 1.3 2018/12/07 21:33:28 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -195,8 +195,8 @@ mpic_calc_mask(struct mpic_softc *sc)
 	if (max == IPL_NONE)
 		min = IPL_NONE;
 
-	if (sc->sc_ipl != max) {
-		sc->sc_ipl = max;
+	if (sc->sc_ipl != min) {
+		sc->sc_ipl = min;
 
 		if (sc->sc_ih != NULL)
 			arm_intr_disestablish_fdt(sc->sc_ih);

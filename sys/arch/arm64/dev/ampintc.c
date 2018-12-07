@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.14 2018/04/02 15:22:41 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.15 2018/12/07 21:33:28 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -160,8 +160,8 @@ struct intrhand {
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
-	int iq_irq;			/* IRQ to mask while handling */
-	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_irq_max;			/* IRQ to mask while handling */
+	int iq_irq_min;			/* lowest IRQ when shared */
 	int iq_ist;			/* share type */
 };
 
@@ -469,13 +469,15 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		if (sc->sc_handler[irq].iq_irq == max) {
-			continue;
-		}
-		sc->sc_handler[irq].iq_irq = max;
-
 		if (max == IPL_NONE)
 			min = IPL_NONE;
+
+		if (sc->sc_handler[irq].iq_irq_max == max &&
+		    sc->sc_handler[irq].iq_irq_min == min)
+			continue;
+
+		sc->sc_handler[irq].iq_irq_max = max;
+		sc->sc_handler[irq].iq_irq_min = min;
 
 		/* Enable interrupts at lower levels, clear -> enable */
 		/* Set interrupt priority/enable */
@@ -604,7 +606,7 @@ ampintc_route_irq(void *v, int enable, struct cpu_info *ci)
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(ih->ih_irq), 0);
 	if (enable) {
 		ampintc_set_priority(ih->ih_irq,
-		    sc->sc_handler[ih->ih_irq].iq_irq);
+		    sc->sc_handler[ih->ih_irq].iq_irq_min);
 		ampintc_intr_enable(ih->ih_irq);
 	}
 
@@ -646,7 +648,7 @@ ampintc_irq_handler(void *frame)
 	if (irq >= sc->sc_nintr)
 		return;
 
-	pri = sc->sc_handler[irq].iq_irq;
+	pri = sc->sc_handler[irq].iq_irq_max;
 	s = ampintc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 #ifdef MULTIPROCESSOR
