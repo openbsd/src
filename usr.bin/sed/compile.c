@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.49 2018/08/14 18:10:09 schwarze Exp $	*/
+/*	$OpenBSD: compile.c,v 1.50 2018/12/07 14:45:40 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -284,7 +284,7 @@ nonsel:		/* Now parse the command */
 		case BRANCH:			/* b t */
 			p++;
 			EATSPACE();
-			if (*p == '\0')
+			if (*p == '\0' || *p == ';')
 				cmd->t = NULL;
 			else
 				cmd->t = duptoeol(p, "branch", &p);
