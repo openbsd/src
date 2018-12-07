@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.22 2018/12/04 10:47:32 jmatthew Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.23 2018/12/07 01:53:20 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1235,7 +1235,17 @@ struct r92e_tx_pwr {
 #define R92E_ROM_TXPWR_HT20_DIFF_S	4
 #define R92E_ROM_TXPWR_OFDM_DIFF_M	0x0f
 #define R92E_ROM_TXPWR_OFDM_DIFF_S	0
-	uint16_t	pwr_diff[3];
+
+	struct {
+		uint8_t ht40_ht20_tx_pwr_diff;
+#define R92E_ROM_TXPWR_HT40_DIFF_M	0xf0
+#define R92E_ROM_TXPWR_HT40_DIFF_S	4
+#define R92E_ROM_TXPWR_HT20_2S_DIFF_M	0x0f
+#define R92E_ROM_TXPWR_HT20_2S_DIFF_S	0
+
+		uint8_t ofdm_cck_tx_pwr_diff;
+	} __packed pwr_diff[3];
+
 	uint8_t		reserved[24];
 } __packed;
 

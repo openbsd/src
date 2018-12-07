@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.42 2018/12/04 10:47:32 jmatthew Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.43 2018/12/07 01:53:20 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2192,7 +2192,7 @@ rtwn_r92e_get_txpower(struct rtwn_softc *sc, int chain,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct r92e_rom *rom = &sc->sc_r92e_rom;
 	struct r92e_tx_pwr *txpwr;
-	uint8_t cckpow, ofdmpow;
+	uint8_t cckpow, htpow, htpow2s = 0, ofdmpow;
 	int8_t diff;
 	int ridx, chan, group;
 
@@ -2224,23 +2224,33 @@ rtwn_r92e_get_txpower(struct rtwn_softc *sc, int chain,
 			power[ridx] = R92C_MAX_TX_PWR;
 	}
 
+	htpow = txpwr->ht40_tx_pwr[group];
+
 	/* Compute per-OFDM rate Tx power. */
 	diff = RTWN_SIGN4TO8(MS(txpwr->ht20_ofdm_tx_pwr_diff,
 	    R92E_ROM_TXPWR_OFDM_DIFF));
-	ofdmpow = txpwr->ht40_tx_pwr[group] + diff;
+	ofdmpow = htpow + diff;
 	for (ridx = RTWN_RIDX_OFDM6; ridx <= RTWN_RIDX_OFDM54; ridx++) {
 		power[ridx] = ofdmpow;
 		if (power[ridx] > R92C_MAX_TX_PWR)
 			power[ridx] = R92C_MAX_TX_PWR;
 	}
 
-	/* Compute per-MCS Tx power. */		/* XXX apparently need to handle tx chains here? */
-	if (extc == NULL)
+	/* Compute per-MCS Tx power. */
+	if (extc == NULL) {
 		diff = RTWN_SIGN4TO8(MS(txpwr->ht20_ofdm_tx_pwr_diff,
 		    R92E_ROM_TXPWR_HT20_DIFF));
+		htpow += diff;
+		if (sc->ntxchains > 1) {
+			diff = RTWN_SIGN4TO8(MS(
+			    txpwr->pwr_diff[0].ht40_ht20_tx_pwr_diff,
+			    R92E_ROM_TXPWR_HT20_2S_DIFF));
+			htpow2s = htpow + diff;
+		}
+	}
 
-	for (ridx = RTWN_RIDX_MCS0; ridx < RTWN_RIDX_MCS8; ridx++) {
-		power[ridx] = txpwr->ht40_tx_pwr[group] + diff;
+	for (ridx = RTWN_RIDX_MCS0; ridx < RTWN_RIDX_MCS15; ridx++) {
+		power[ridx] = (ridx < RTWN_RIDX_MCS8) ? htpow : htpow2s;
 		if (power[ridx] > R92C_MAX_TX_PWR)
 			power[ridx] = R92C_MAX_TX_PWR;
 	}
