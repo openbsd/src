@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.9 2018/11/25 12:04:29 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.10 2018/12/07 18:07:55 danj Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2018 $
+.Dd $Mdocdate: December 7 2018 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -22,14 +22,14 @@
 .Nd distributed ports builder
 .Sh SYNOPSIS
 .Nm dpb
-.Op Fl acemqrRsuUvx
+.Op Fl acemqRrsUuvx
 .Op Fl A Ar arch
-.Op Fl b Ar logfile
 .Op Fl B Ar chroot
+.Op Fl b Ar logfile
 .Op Fl C Ar pathlist
 .Op Fl D Ar PARAM Ns = Ns Ar value
-.Op Fl f Ar m
 .Op Fl F Ar m
+.Op Fl f Ar m
 .Op Fl h Ar hosts
 .Op Fl I Ar pathlist
 .Op Fl J Ar p
@@ -166,12 +166,6 @@ By default, the current host's architecture will be used.
 Walk the whole tree and builds all packages (default if no
 .Ar pathlist
 is given).
-.It Fl b Ar logfile
-Explicitly prime the heuristics module with a previous build log,
-so that packages that take a long time to build will happen earlier.
-The rolling log under
-.Pa %f/build-stats/%a
-is automatically used.
 .It Fl B Ar chroot
 chroot to
 .Ar chroot
@@ -179,14 +173,20 @@ before building.
 See
 .Xr proot 1
 for preparing such an environment.
-.It Fl c
-Clean port working directory and log before each build.
+.It Fl b Ar logfile
+Explicitly prime the heuristics module with a previous build log,
+so that packages that take a long time to build will happen earlier.
+The rolling log under
+.Pa %f/build-stats/%a
+is automatically used.
 .It Fl C Ar pathlist
 Don't clean port working directories after build.
 Only use simple
 .Xr pkgpath 7
 in the list,
 as this does not take subpackages and flavors into account.
+.It Fl c
+Clean port working directory and log before each build.
 .It Fl D Ar PARAM Ns = Ns Ar value
 Set defined parameter to value.
 Known parameters are as follows:
@@ -206,13 +206,13 @@ is not run as root.
 Don't fetch distfiles that are not allowed for cdrom.
 .It Ar COLOR
 Set to 1 to have the normal display in color.
+.It Ar CONNECTION_TIMEOUT
+Connection timeout for ssh.
+Defaults to 60 seconds.
 .It Ar CONTROL
 Let
 .Nm
 create a unix socket of the given name for external control.
-.It Ar CONNECTION_TIMEOUT
-Connection timeout for ssh.
-Defaults to 60 seconds.
 .It Ar DISPLAY_TIMEOUT
 Display timeout (in seconds) while waiting for jobs to finish, so that the
 display is updated even if jobs didn't finish.
@@ -244,11 +244,6 @@ abruptly.
 Sometimes, one may want manual control over which locks to remove.
 .It Ar FETCH_JOBS
 Alternate way to specify the number of fetch jobs.
-.It Ar FETCH_USER
-User for all fetch activities if possible
-.Po defaults to
-.Ar _pfetch
-.Pc .
 .It Ar FETCH_TIMEOUT
 Timeout (in seconds) after which fetches that don't show
 any progress will be killed.
@@ -259,6 +254,11 @@ or
 as the
 .Sq fetch_timeout
 property.
+.It Ar FETCH_USER
+User for all fetch activities if possible
+.Po defaults to
+.Ar _pfetch
+.Pc .
 .It Ar FTP_ONLY
 Don't fetch distfiles that are not allowed for ftp.
 .It Ar HISTORY_ONLY
@@ -267,6 +267,8 @@ Only run
 .Nm
 to figure out old distfiles and update
 .Pa %f/history .
+.It Ar LOCKDIR
+Alternate way to specify the locking directory.
 .It Ar LOGDIR
 Alternate way to specify the logging directory.
 .It Ar LOG_USER
@@ -275,8 +277,6 @@ for all log files if possible
 .Po defaults to
 .Ar build_user
 .Pc .
-.It Ar LOCKDIR
-Alternate way to specify the locking directory.
 .It Ar MIRROR
 Applicable to fetch modes.
 If 0, will only fetch normal
@@ -291,6 +291,9 @@ If 1, will also fetch extra
 default for
 .Nm Fl F
 .Pc .
+.It Ar NO_BUILD_STATS
+Disable reading/saving of default build stats under
+.Pa ${DISTDIR}/build-stats/${ARCH} .
 .It Ar NO_CHECKSUM
 Do not run
 .Ar checksum
@@ -298,9 +301,6 @@ again for files already fetched.
 .It Ar NO_CURSOR
 Make the terminal cursor invisible if possible.
 Avoids flickering on slow graphics cards.
-.It Ar NO_BUILD_STATS
-Disable reading/saving of default build stats under
-.Pa ${DISTDIR}/build-stats/${ARCH} .
 .It Ar NO_HISTORY
 Do not update the distfiles history.
 For instance, if
@@ -345,6 +345,16 @@ Alternate way to specify
 .It Fl e
 The listing job is extra and won't be given back to the pool when it's
 finished.
+.It Fl F Ar m
+Fetch-only mode, for mirroring hosts.
+Do not build any package but fetch everything, disregarding
+.Ev BROKEN
+and
+.Ev ONLY_FOR_ARCHS
+information.
+Create
+.Ar m
+localhost jobs for fetching files.
 .It Fl f Ar m
 Create
 .Ar m
@@ -356,16 +366,6 @@ Can be set to 0 to bypass fetching jobs entirely,
 and reduce
 .Nm
 memory footprint by a lot.
-.It Fl F Ar m
-Fetch-only mode, for mirroring hosts.
-Do not build any package but fetch everything, disregarding
-.Ev BROKEN
-and
-.Ev ONLY_FOR_ARCHS
-information.
-Create
-.Ar m
-localhost jobs for fetching files.
 .It Fl h Ar hosts
 File with hosts to use for building.
 One host per line, plus properties, such as:
@@ -399,15 +399,15 @@ to connect.
 .Pp
 Properties are as follows:
 .Bl -tag -width memory=150
-.It arch=value
-Architecture of the concerned host.
-(there should be a startup task to check consistency, but
-currently this has to be set manually on heterogeneous networks.)
 .It always_clean=n
 Set to 0 or 1 on per-host basis.
 See
 .Ar ALWAYS_CLEAN
 parameter.
+.It arch=value
+Architecture of the concerned host.
+(there should be a startup task to check consistency, but
+currently this has to be set manually on heterogeneous networks.)
 .It build_user=user
 Use
 .Ar user
@@ -641,10 +641,6 @@ Defaults to
 .Sq /2 .
 .It Fl q
 Don't quit while errors/locks are around.
-.It Fl r
-Random build order.
-Disregard any kind of smart heuristics.
-Useful to try to find missing build dependencies.
 .It Fl R
 Rebuild existing packages based on discrepancies between the package
 signature and what the port says it should be.
@@ -655,6 +651,10 @@ Note that
 won't always work, as rebuilding a package when another version is already
 installed is not supported.
 Building in a chroot is strongly recommended.
+.It Fl r
+Random build order.
+Disregard any kind of smart heuristics.
+Useful to try to find missing build dependencies.
 .It Fl S Ar logfile
 Read
 .Ar logfile
@@ -668,17 +668,14 @@ In order to save time,
 .Nm
 will actually not always compute new sizes for known directories, but mostly
 for new ones, or when the package name changes.
+.It Fl U
+Insist on updating existing packages during dependency solving,
+even if the new package apparently didn't change.
 .It Fl u
 Update existing packages during dependency solving.
 Can be used to run a bulk-build on a machine with installed packages,
 but might break a bit, since some packages only build on a clean machine
 right now.
-.It Fl U
-Insist on updating existing packages during dependency solving,
-even if the new package apparently didn't change.
-.It Fl x
-No tty report, only report really important things, like hosts going down
-and coming back up, build errors, or builds not progressing.
 .It Fl X Ar pathlist
 Read a list of
 .Xr pkgpath 7
@@ -688,6 +685,9 @@ installed by a dependency.
 Can be used to avoid endlessly removing/reinstalling the most common
 packages, e.g.,
 .Pa devel/gmake .
+.It Fl x
+No tty report, only report really important things, like hosts going down
+and coming back up, build errors, or builds not progressing.
 .El
 .Pp
 .Nm
