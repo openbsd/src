@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.313 2018/11/14 17:07:44 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.314 2018/12/07 16:19:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -113,8 +113,8 @@ void	bridge_process(struct ifnet *, struct mbuf *);
 void	bridgeintr_frame(struct bridge_softc *, struct ifnet *, struct mbuf *);
 void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
-void	bridge_localbroadcast(struct bridge_softc *, struct ifnet *,
-    struct ether_header *, struct mbuf *);
+int	bridge_localbroadcast(struct ifnet *, struct ether_header *,
+    struct mbuf *);
 void	bridge_span(struct bridge_softc *, struct mbuf *);
 void	bridge_stop(struct bridge_softc *);
 void	bridge_init(struct bridge_softc *);
@@ -123,13 +123,17 @@ int bridge_blocknonip(struct ether_header *, struct mbuf *);
 void	bridge_ifinput(struct ifnet *, struct mbuf *);
 int	bridge_dummy_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
+void	bridge_send_icmp_err(struct ifnet *, struct ether_header *,
+    struct mbuf *, int, struct llc *, int, int, int);
+int	bridge_ifenqueue(struct ifnet *, struct ifnet *, struct mbuf *);
+struct mbuf *bridge_ip(struct ifnet *, int, struct ifnet *,
+    struct ether_header *, struct mbuf *);
 #ifdef IPSEC
-int bridge_ipsec(struct bridge_softc *, struct ifnet *,
-    struct ether_header *, int, struct llc *,
+int bridge_ipsec(struct ifnet *, struct ether_header *, int, struct llc *,
     int, int, int, struct mbuf *);
 #endif
 int     bridge_clone_create(struct if_clone *, int);
-int	bridge_clone_destroy(struct ifnet *ifp);
+int	bridge_clone_destroy(struct ifnet *);
 int	bridge_delete(struct bridge_softc *, struct bridge_iflist *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
@@ -813,7 +817,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			    BRL_ACTION_BLOCK)
 				continue;
 
-			error = bridge_ifenqueue(sc, dst_if, mc);
+			error = bridge_ifenqueue(&sc->sc_if, dst_if, mc);
 			if (error)
 				continue;
 		}
@@ -833,7 +837,7 @@ sendunicast:
 		m_freem(m);
 		return (ENETDOWN);
 	}
-	bridge_ifenqueue(sc, dst_if, m);
+	bridge_ifenqueue(&sc->sc_if, dst_if, m);
 	return (0);
 }
 
@@ -979,7 +983,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	m = bridge_ip(sc, BRIDGE_IN, src_if, &eh, m);
+	m = bridge_ip(&sc->sc_if, BRIDGE_IN, src_if, &eh, m);
 	if (m == NULL)
 		return;
 	/*
@@ -1019,7 +1023,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	m = bridge_ip(sc, BRIDGE_OUT, dst_if, &eh, m);
+	m = bridge_ip(&sc->sc_if, BRIDGE_OUT, dst_if, &eh, m);
 	if (m == NULL)
 		return;
 
@@ -1030,9 +1034,9 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
 		len += ETHER_VLAN_ENCAP_LEN;
 #endif
 	if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
-		bridge_fragment(sc, dst_if, &eh, m);
+		bridge_fragment(&sc->sc_if, dst_if, &eh, m);
 	else {
-		bridge_ifenqueue(sc, dst_if, m);
+		bridge_ifenqueue(&sc->sc_if, dst_if, m);
 	}
 }
 
@@ -1252,7 +1256,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if (dst_if->if_index == ifp->if_index)
 			continue;
 
-		bridge_localbroadcast(sc, dst_if, eh, m);
+		if (bridge_localbroadcast(dst_if, eh, m))
+			sc->sc_if.if_oerrors++;
 
 #if NMPW > 0
 		/*
@@ -1276,7 +1281,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			}
 		}
 
-		mc = bridge_ip(sc, BRIDGE_OUT, dst_if, eh, mc);
+		mc = bridge_ip(&sc->sc_if, BRIDGE_OUT, dst_if, eh, mc);
 		if (mc == NULL)
 			continue;
 
@@ -1287,9 +1292,9 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			len += ETHER_VLAN_ENCAP_LEN;
 #endif
 		if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
-			bridge_fragment(sc, dst_if, eh, mc);
+			bridge_fragment(&sc->sc_if, dst_if, eh, mc);
 		else {
-			bridge_ifenqueue(sc, dst_if, mc);
+			bridge_ifenqueue(&sc->sc_if, dst_if, mc);
 		}
 	}
 
@@ -1297,9 +1302,9 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		m_freem(m);
 }
 
-void
-bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
-    struct ether_header *eh, struct mbuf *m)
+int
+bridge_localbroadcast(struct ifnet *ifp, struct ether_header *eh,
+    struct mbuf *m)
 {
 	struct mbuf *m1;
 	u_int16_t etype;
@@ -1316,20 +1321,20 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 				break;
 		}
 		if (ifa == NULL)
-			return;
+			return (0);
 	}
 
 	m1 = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
-	if (m1 == NULL) {
-		sc->sc_if.if_oerrors++;
-		return;
-	}
+	if (m1 == NULL)
+		return (1);
 
 #if NPF > 0
 	pf_pkt_addr_changed(m1);
 #endif	/* NPF */
 
 	bridge_ifinput(ifp, m1);
+
+	return (0);
 }
 
 void
@@ -1352,7 +1357,7 @@ bridge_span(struct bridge_softc *sc, struct mbuf *m)
 			continue;
 		}
 
-		error = bridge_ifenqueue(sc, ifp, mc);
+		error = bridge_ifenqueue(&sc->sc_if, ifp, mc);
 		if (error)
 			continue;
 	}
@@ -1412,9 +1417,8 @@ bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 
 #ifdef IPSEC
 int
-bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
-    struct ether_header *eh, int hassnap, struct llc *llc,
-    int dir, int af, int hlen, struct mbuf *m)
+bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
+    struct llc *llc, int dir, int af, int hlen, struct mbuf *m)
 {
 	union sockaddr_union dst;
 	struct tdb *tdb;
@@ -1547,7 +1551,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			    ip_mtudisc && (ip->ip_off & htons(IP_DF)) &&
 			    tdb->tdb_mtu && ntohs(ip->ip_len) > tdb->tdb_mtu &&
 			    tdb->tdb_mtutimeout > time_second)
-				bridge_send_icmp_err(sc, ifp, eh, m,
+				bridge_send_icmp_err(ifp, eh, m,
 				    hassnap, llc, tdb->tdb_mtu,
 				    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
 			else
@@ -1568,7 +1572,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
  * who've read net/if_ethersubr.c and netinet/ip_input.c
  */
 struct mbuf *
-bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
+bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *m)
 {
 	struct llc llc;
@@ -1671,9 +1675,8 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		}
 
 #ifdef IPSEC
-		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
-		    bridge_ipsec(sc, ifp, eh, hassnap, &llc,
-		    dir, AF_INET, hlen, m))
+		if ((brifp->if_flags & IFF_LINK2) == IFF_LINK2 &&
+		    bridge_ipsec(ifp, eh, hassnap, &llc, dir, AF_INET, hlen, m))
 			return (NULL);
 #endif /* IPSEC */
 #if NPF > 0
@@ -1723,9 +1726,9 @@ bridge_ip(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 #ifdef IPSEC
 		hlen = sizeof(struct ip6_hdr);
 
-		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
-		    bridge_ipsec(sc, ifp, eh, hassnap, &llc,
-		    dir, AF_INET6, hlen, m))
+		if ((brifp->if_flags & IFF_LINK2) == IFF_LINK2 &&
+		    bridge_ipsec(ifp, eh, hassnap, &llc, dir, AF_INET6, hlen,
+		    m))
 			return (NULL);
 #endif /* IPSEC */
 
@@ -1768,8 +1771,8 @@ dropit:
 }
 
 void
-bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
-    struct ether_header *eh, struct mbuf *m)
+bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
+    struct mbuf *m)
 {
 	struct llc llc;
 	struct mbuf *m0;
@@ -1788,7 +1791,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 			len += ETHER_VLAN_ENCAP_LEN;
 		if ((ifp->if_capabilities & IFCAP_VLAN_MTU) &&
 		    (len - sizeof(struct ether_vlan_header) <= ifp->if_mtu)) {
-			bridge_ifenqueue(sc, ifp, m);
+			bridge_ifenqueue(brifp, ifp, m);
 			return;
 		}
 		goto dropit;
@@ -1826,7 +1829,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 
 	/* Respect IP_DF, return a ICMP_UNREACH_NEEDFRAG. */
 	if (ip->ip_off & htons(IP_DF)) {
-		bridge_send_icmp_err(sc, ifp, eh, m, hassnap, &llc,
+		bridge_send_icmp_err(ifp, eh, m, hassnap, &llc,
 		    ifp->if_mtu, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
 		return;
 	}
@@ -1856,7 +1859,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 				continue;
 			}
 			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
-			error = bridge_ifenqueue(sc, ifp, m);
+			error = bridge_ifenqueue(brifp, ifp, m);
 			if (error) {
 				continue;
 			}
@@ -1873,7 +1876,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 }
 
 int
-bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
+bridge_ifenqueue(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 {
 	int error, len;
 
@@ -1884,12 +1887,12 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 
 	error = if_enqueue(ifp, m);
 	if (error) {
-		sc->sc_if.if_oerrors++;
+		brifp->if_oerrors++;
 		return (error);
 	}
 
-	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += len;
+	brifp->if_opackets++;
+	brifp->if_obytes += len;
 
 	return (0);
 }
@@ -1906,7 +1909,7 @@ bridge_ifinput(struct ifnet *ifp, struct mbuf *m)
 }
 
 void
-bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
+bridge_send_icmp_err(struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *n, int hassnap, struct llc *llc,
     int mtu, int type, int code)
 {

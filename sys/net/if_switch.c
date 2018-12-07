@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.23 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.24 2018/12/07 16:19:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -718,8 +718,7 @@ switch_port_egress(struct switch_softc *sc, struct switch_fwdp_queue *fwdp_q,
 		 */
 		if (!(swpo->swpo_flags & IFBIF_LOCAL) &&
 		    ((len - ETHER_HDR_LEN) > dst_if->if_mtu))
-			bridge_fragment((struct bridge_softc *)sc,
-			    dst_if, &eh, mc);
+			bridge_fragment(&sc->sc_if, dst_if, &eh, mc);
 		else
 			switch_ifenqueue(sc, dst_if, mc,
 			    (swpo->swpo_flags & IFBIF_LOCAL));

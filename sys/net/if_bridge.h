@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.57 2018/02/08 13:15:32 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.58 2018/12/07 16:19:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -504,8 +504,6 @@ struct mbuf *bstp_input(struct bstp_state *, struct bstp_port *,
 void	bstp_ifstate(void *);
 u_int8_t bstp_getstate(struct bstp_state *, struct bstp_port *);
 void	bstp_ifsflags(struct bstp_port *, u_int);
-void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
-    struct ether_header *, struct mbuf *, int, struct llc *, int, int, int);
 
 int	bridgectl_ioctl(struct ifnet *, u_long, caddr_t);
 struct ifnet *bridge_rtupdate(struct bridge_softc *,
@@ -519,11 +517,8 @@ u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *,
     struct mbuf *);
 void	bridge_flushrule(struct bridge_iflist *);
 
-struct mbuf *bridge_ip(struct bridge_softc *, int, struct ifnet *,
-    struct ether_header *, struct mbuf *);
-void	bridge_fragment(struct bridge_softc *, struct ifnet *,
-    struct ether_header *, struct mbuf *);
-int	bridge_ifenqueue(struct bridge_softc *, struct ifnet *, struct mbuf *);
+void	bridge_fragment(struct ifnet *, struct ifnet *, struct ether_header *,
+    struct mbuf *);
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */
