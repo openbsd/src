@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.240 2018/11/12 07:45:52 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.241 2018/12/07 08:37:24 claudio Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -343,17 +343,6 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 	if (((to)->m_flags & M_EXT) == 0)				\
 		(to)->m_data = (to)->m_pktdat;				\
 } while (/* CONSTCOND */ 0)
-
-/*
- * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
- * an object of the specified size at the end of the mbuf, longword aligned.
- */
-#define	M_ALIGN(m, len) 	m_align((m), (len))
-/*
- * As above, for mbufs allocated with m_gethdr/MGETHDR
- * or initialized by M_MOVE_PKTHDR.
- */
-#define	MH_ALIGN(m, len)	m_align((m), (len))
 
 /*
  * Determine if an mbuf's data area is read-only. This is true for
