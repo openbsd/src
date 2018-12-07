@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: sedtest.sh,v 1.7 2018/07/09 13:07:09 schwarze Exp $
+#	$OpenBSD: sedtest.sh,v 1.8 2018/12/07 15:30:31 schwarze Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -311,6 +311,13 @@ hello
 }
 s/l/m/
 tb' lines1
+# Check that branch commands can be followed by a semicolon and another
+# command.  POSIX does not require that this works, but GNU sed allows it.
+# Since POSIX does not require that label names can contain semicolons,
+# the extension is viable.
+	mark '5.9' ; echo "A\nB" | $SED '1b;='
+	mark '5.10' ; echo "A\nB" | $SED 's/A/C/;t;='
+	mark '5.11' ; echo "A\nB" | $SED '1bL;=;:L'
 }
 
 test_pattern()
