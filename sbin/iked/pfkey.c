@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.59 2017/11/27 18:39:35 patrick Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.60 2018/12/07 16:23:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -453,7 +453,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	struct iovec		 iov[IOV_CNT];
 	uint32_t		 jitter;
 	int			 iov_cnt;
-	int			 ret;
+	int			 ret, dotap = 0;
 
 	sa_srcid = sa_dstid = NULL;
 
@@ -643,6 +643,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		tag = NULL;
 
 	if (pol->pol_tap != 0) {
+		dotap = 1;
 		bzero(&sa_tap, sizeof(sa_tap));
 		sa_tap.sadb_x_tap_exttype = SADB_X_EXT_TAP;
 		sa_tap.sadb_x_tap_len = sizeof(sa_tap) / 8;
@@ -764,7 +765,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		iov_cnt++;
 	}
 
-	if (pol->pol_tap != 0) {
+	if (dotap != 0) {
 		/* enc(4) device tap unit */
 		iov[iov_cnt].iov_base = &sa_tap;
 		iov[iov_cnt].iov_len = sizeof(sa_tap);
