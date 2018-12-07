@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.142 2018/09/29 04:29:48 visa Exp $	*/
+/*	$OpenBSD: mount.h,v 1.143 2018/12/07 16:21:19 mpi Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -552,6 +552,7 @@ struct vfsops {
 struct netcred {
 	struct	radix_node netc_rnodes[2];
 	int	netc_exflags;
+	int	netc_len;			/* size of the allocation */
 	struct	ucred netc_anon;
 };
 
