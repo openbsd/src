@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.66 2018/10/22 13:18:23 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.67 2018/12/07 16:17:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1897,9 +1897,7 @@ struct bstp_state *
 bstp_create(struct ifnet *ifp)
 {
 	struct bstp_state *bs;
-	int s;
 
-	s = splnet();
 	bs = malloc(sizeof(*bs), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&bs->bs_bplist);
 
@@ -1914,8 +1912,6 @@ bstp_create(struct ifnet *ifp)
 	bs->bs_protover = BSTP_PROTO_RSTP;	/* STP instead of RSTP? */
 
 	getmicrotime(&bs->bs_last_tc_time);
-
-	splx(s);
 
 	return (bs);
 }
