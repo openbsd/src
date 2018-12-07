@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.125 2018/12/06 08:11:52 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.126 2018/12/07 10:01:06 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -891,6 +891,12 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	int icmp6len, maxlen;
 	caddr_t mac = NULL;
 
+#if NCARP > 0
+	/* Do not send NAs for carp addresses if we're not the CARP master. */
+	if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
+		return;
+#endif
+
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
@@ -1008,12 +1014,6 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
-
-#if NCARP > 0
-	/* Do not send NAs for carp addresses if we're not the CARP master. */
-	if (ifp->if_type == IFT_CARP && !carp_iamatch(ifp))
-		goto bad;
-#endif
 
 	ip6->ip6_plen = htons((u_short)icmp6len);
 	nd_na->nd_na_flags_reserved = flags;
