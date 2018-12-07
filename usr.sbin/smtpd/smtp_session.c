@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.361 2018/12/06 16:05:04 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.362 2018/12/07 14:18:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -628,7 +628,12 @@ smtp_getnameinfo_cb(void *arg, int gaierrno, const char *host, const char *serv)
 		log_warnx("getnameinfo: %s: %s", ss_to_text(&s->ss),
 		    gai_strerror(gaierrno));
 		(void)strlcpy(s->hostname, "<unknown>", sizeof(s->hostname));
-		s->fcrdns = -1;
+
+		if (gaierrno == EAI_NODATA || gaierrno == EAI_NONAME)
+			s->fcrdns = 0;
+		else
+			s->fcrdns = -1;
+
 		smtp_lookup_servername(s);
 		return;
 	}
@@ -651,7 +656,11 @@ smtp_getaddrinfo_cb(void *arg, int gaierrno, struct addrinfo *ai0)
 	if (gaierrno) {
 		log_warnx("getaddrinfo: %s: %s", s->hostname,
 		    gai_strerror(gaierrno));
-		s->fcrdns = -1;
+
+		if (gaierrno == EAI_NODATA || gaierrno == EAI_NONAME)
+			s->fcrdns = 0;
+		else
+			s->fcrdns = -1;
 	}
 	else {
 		strlcpy(rev, ss_to_text(&s->ss), sizeof(rev));
