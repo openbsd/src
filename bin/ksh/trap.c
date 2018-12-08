@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2018/12/08 21:03:51 jca Exp $	*/
 
 /*
  * signal handling
@@ -92,20 +92,18 @@ gettrap(const char *name, int igncase)
 			return &sigtraps[n];
 		return NULL;
 	}
+
+	if (igncase && strncasecmp(name, "SIG", 3) == 0)
+		name += 3;
+	if (!igncase && strncmp(name, "SIG", 3) == 0)
+		name += 3;
+
 	for (p = sigtraps, i = NSIG+1; --i >= 0; p++)
 		if (p->name) {
-			if (igncase) {
-				if (p->name && (!strcasecmp(p->name, name) ||
-				    (strlen(name) > 3 && !strncasecmp("SIG",
-				    p->name, 3) &&
-				    !strcasecmp(p->name, name + 3))))
-					return p;
-			} else {
-				if (p->name && (!strcmp(p->name, name) ||
-				    (strlen(name) > 3 && !strncmp("SIG",
-				    p->name, 3) && !strcmp(p->name, name + 3))))
-					return p;
-			}
+			if (igncase && strcasecmp(p->name, name) == 0)
+				return p;
+			if (!igncase && strcmp(p->name, name) == 0)
+				return p;
 		}
 	return NULL;
 }
