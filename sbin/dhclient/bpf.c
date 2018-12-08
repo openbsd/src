@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.70 2018/07/04 08:37:10 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.71 2018/12/08 23:06:41 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -249,8 +249,8 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 	struct udphdr		 udp;
 	struct msghdr		 msg;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
-	ssize_t			 result;
-	unsigned int		 iovcnt = 0, i, total;
+	ssize_t			 result, total;
+	unsigned int		 iovcnt = 0, i;
 	int			 len = ifi->sent_packet_length;
 
 	memset(&dest, 0, sizeof(dest));
@@ -307,7 +307,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 		if (result == -1)
 			log_warn("%s: writev(%s)", log_procname, desc);
 		else if (result < total) {
-			log_warnx("%s, writev(%s): %zd of %u bytes",
+			log_warnx("%s, writev(%s): %zd of %zd bytes",
 			    log_procname, desc, result, total);
 			result = -1;
 		}
@@ -322,7 +322,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 			log_warn("%s: sendmsg(%s)", log_procname, desc);
 		else if (result < total) {
 			result = -1;
-			log_warnx("%s, sendmsg(%s): %zd of %u bytes",
+			log_warnx("%s, sendmsg(%s): %zd of %zd bytes",
 			    log_procname, desc, result, total);
 		}
 	}
