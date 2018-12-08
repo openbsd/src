@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.8 2018/09/29 16:24:13 anton Exp $
+#	$OpenBSD: obsd-regress.t,v 1.9 2018/12/08 12:12:45 jca Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -495,4 +495,12 @@ stdin:
 	cd .
 	d=$(printenv OLDPWD)
 	: ${d:?"OLDPWD not exported"}
+---
+
+name: kill-SIGNAME
+description:
+	support kill -s SIGNAME syntax
+stdin:
+	kill -s SIGINFO $$
+expected-fail: yes
 ---
