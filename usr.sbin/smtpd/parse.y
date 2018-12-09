@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.234 2018/12/09 18:05:20 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.235 2018/12/09 18:24:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1206,7 +1206,7 @@ CONNECT {
 ;
 
 filter_phase_helo_options:
-filter_phase_check_table | filter_phase_check_regex | filter_phase_check_rdns;
+filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
 
 filter_phase_helo:
 HELO {
@@ -1227,7 +1227,7 @@ EHLO {
 ;
 
 filter_phase_mail_from_options:
-filter_phase_check_table | filter_phase_check_regex;
+filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
 
 filter_phase_mail_from:
 MAIL_FROM {
@@ -1239,7 +1239,7 @@ MAIL_FROM {
 ;
 
 filter_phase_rcpt_to_options:
-filter_phase_check_table | filter_phase_check_regex;
+filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
 
 filter_phase_rcpt_to:
 RCPT_TO {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.11 2018/12/09 18:05:20 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.12 2018/12/09 18:24:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -434,7 +434,7 @@ filter_check_regex(struct filter_rule *rule, const char *key)
 }
 
 static int
-filter_check_fcrdns_connected(struct filter_rule *rule, int fcrdns)
+filter_check_fcrdns(struct filter_rule *rule, int fcrdns)
 {
 	int	ret = 0;
 
@@ -446,7 +446,7 @@ filter_check_fcrdns_connected(struct filter_rule *rule, int fcrdns)
 }
 
 static int
-filter_check_rdns_connected(struct filter_rule *rule, const char *hostname)
+filter_check_rdns(struct filter_rule *rule, const char *hostname)
 {
 	int	ret = 0;
 	struct netaddr	netaddr;
@@ -456,21 +456,6 @@ filter_check_rdns_connected(struct filter_rule *rule, const char *hostname)
 		 * we don't have an rDNS so the filter should match
 		 */
 		ret = text_to_netaddr(&netaddr, hostname);
-		ret = rule->not_rdns < 0 ? !ret : ret;
-	}
-	return ret;
-}
-
-static int
-filter_check_rdns_helo(struct filter_rule *rule, const char *hostname, const char *param)
-{
-	int	ret = 0;
-	struct netaddr	netaddr;
-
-	if (rule->rdns) {
-		ret = text_to_netaddr(&netaddr, hostname);
-		if (!ret)
-			ret = strcasecmp(hostname, param);
 		ret = rule->not_rdns < 0 ? !ret : ret;
 	}
 	return ret;
@@ -490,8 +475,8 @@ filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *para
 	fs = tree_xget(&sessions, reqid);
 	if (filter_check_table(rule, K_NETADDR, param) ||
 	    filter_check_regex(rule, param) ||
-	    filter_check_rdns_connected(rule, fs->rdns) ||
-	    filter_check_fcrdns_connected(rule, fs->fcrdns))
+	    filter_check_rdns(rule, fs->rdns) ||
+	    filter_check_fcrdns(rule, fs->fcrdns))
 		return 1;
 	return 0;
 }
@@ -504,7 +489,8 @@ filter_exec_helo(uint64_t reqid, struct filter_rule *rule, const char *param)
 	fs = tree_xget(&sessions, reqid);
 	if (filter_check_table(rule, K_DOMAIN, param) ||
 	    filter_check_regex(rule, param) ||
-	    filter_check_rdns_helo(rule, fs->rdns, param))
+	    filter_check_rdns(rule, fs->rdns) ||
+	    filter_check_fcrdns(rule, fs->fcrdns))
 		return 1;
 	return 0;
 }
@@ -513,13 +499,17 @@ static int
 filter_exec_mail_from(uint64_t reqid, struct filter_rule *rule, const char *param)
 {
 	char	buffer[SMTPD_MAXMAILADDRSIZE];
+	struct filter_session	*fs;
 
+	fs = tree_xget(&sessions, reqid);
 	(void)strlcpy(buffer, param+1, sizeof(buffer));
 	buffer[strcspn(buffer, ">")] = '\0';
 	param = buffer;
 
 	if (filter_check_table(rule, K_MAILADDR, param) ||
-	    filter_check_regex(rule, param))
+	    filter_check_regex(rule, param) ||
+	    filter_check_rdns(rule, fs->rdns) ||
+	    filter_check_fcrdns(rule, fs->fcrdns))
 		return 1;
 	return 0;
 }
@@ -528,13 +518,17 @@ static int
 filter_exec_rcpt_to(uint64_t reqid, struct filter_rule *rule, const char *param)
 {
 	char	buffer[SMTPD_MAXMAILADDRSIZE];
+	struct filter_session	*fs;
 
+	fs = tree_xget(&sessions, reqid);
 	(void)strlcpy(buffer, param+1, sizeof(buffer));
 	buffer[strcspn(buffer, ">")] = '\0';
 	param = buffer;
 
 	if (filter_check_table(rule, K_MAILADDR, param) ||
-	    filter_check_regex(rule, param))
+	    filter_check_regex(rule, param) ||
+	    filter_check_rdns(rule, fs->rdns) ||
+	    filter_check_fcrdns(rule, fs->fcrdns))
 		return 1;
 	return 0;
 }
