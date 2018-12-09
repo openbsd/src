@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.25 2018/06/03 10:29:28 sthen Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.26 2018/12/09 15:07:06 denis Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -224,6 +224,7 @@ inbound		return INBOUND;
 outbound	return OUTBOUND;
 
 vlan		return VLAN;
+mpls		return MPLS;
 
 on|ifname	return PF_IFNAME;
 rset|ruleset	return PF_RSET;

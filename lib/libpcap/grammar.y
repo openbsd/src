@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.19 2009/10/27 23:59:30 deraadt Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.20 2018/12/09 15:07:06 denis Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -115,7 +115,7 @@ pcap_parse()
 %token	LSH RSH
 %token  LEN
 %token  IPV6 ICMPV6 AH ESP
-%token	VLAN
+%token	VLAN MPLS
 
 %type	<s> ID
 %type	<e> EID
@@ -279,6 +279,8 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| OUTBOUND		{ $$ = gen_inbound(1); }
 	| VLAN pnum		{ $$ = gen_vlan($2); }
 	| VLAN			{ $$ = gen_vlan(-1); }
+	| MPLS pnum		{ $$ = gen_mpls($2); }
+	| MPLS			{ $$ = gen_mpls(-1); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
 	;
