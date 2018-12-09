@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: genrsa.c,v 1.12 2018/12/09 19:30:34 tobias Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,8 +167,10 @@ genrsa_main(int argc, char **argv)
 	if ((argc >= 1) && ((sscanf(*argv, "%d", &num) == 0) || (num < 0))) {
  bad:
 		BIO_printf(bio_err, "usage: genrsa [args] [numbits]\n");
+#ifndef OPENSSL_NO_DES
 		BIO_printf(bio_err, " -des            encrypt the generated key with DES in cbc mode\n");
 		BIO_printf(bio_err, " -des3           encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
+#endif
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err, " -idea           encrypt the generated key with IDEA in cbc mode\n");
 #endif
