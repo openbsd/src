@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.12 2018/12/09 18:24:15 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.13 2018/12/09 21:43:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -331,9 +331,7 @@ filter_write(const char *name, uint64_t reqid, const char *phase, const char *pa
 
 	fs = tree_xget(&sessions, reqid);
 	time(&tm);
-	if (strcmp(phase, "connected") == 0 ||
-	    strcmp(phase, "helo") == 0 ||
-	    strcmp(phase, "ehlo") == 0)
+	if (strcmp(phase, "connected") == 0)
 		n = io_printf(lka_proc_get_io(name),
 		    "filter|%d|%zd|smtp-in|%s|%016"PRIx64"|%s|%s\n",
 		    PROTOCOL_VERSION,
