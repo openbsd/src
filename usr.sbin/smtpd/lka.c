@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.220 2018/12/09 16:37:51 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.221 2018/12/09 17:37:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -86,7 +86,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*rdns;
 	const char		*command, *response;
 	const char		*ciphers;
-	const char		*hostname;
 	const char		*address;
 	struct sockaddr_storage	ss_src, ss_dest;
 	int                      filter_phase;
@@ -660,11 +659,10 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &filter_phase);
-		m_get_string(&m, &hostname);
 		m_get_string(&m, &filter_param);
 		m_end(&m);
 
-		lka_filter_protocol(reqid, filter_phase, hostname, filter_param);
+		lka_filter_protocol(reqid, filter_phase, filter_param);
 		return;
 
 	case IMSG_SMTP_FILTER_BEGIN:
