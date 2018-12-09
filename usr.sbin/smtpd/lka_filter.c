@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.8 2018/12/09 16:37:51 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.9 2018/12/09 17:20:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -259,7 +259,7 @@ lka_filter_protocol(uint64_t reqid, enum filter_phase phase, const char *hostnam
 			return; /* deferred */
 		}
 
-		if (! filter_execs[i].func(reqid, rule, hostname, param)) {
+		if (filter_execs[i].func(reqid, rule, hostname, param)) {
 			if (rule->rewrite)
 				filter_rewrite(reqid, rule->rewrite);
 			else if (rule->disconnect)
@@ -438,6 +438,9 @@ filter_check_rdns_connected(struct filter_rule *rule, const char *hostname)
 	struct netaddr	netaddr;
 
 	if (rule->rdns) {
+		/* if text_to_netaddress succeeds,
+		 * we don't have an rDNS so the filter should match
+		 */
 		ret = text_to_netaddr(&netaddr, hostname);
 		ret = rule->not_rdns < 0 ? !ret : ret;
 	}
@@ -462,7 +465,7 @@ filter_check_rdns_helo(struct filter_rule *rule, const char *hostname, const cha
 static int
 filter_exec_notimpl(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
-	return 1;
+	return 0;
 }
 
 static int
@@ -475,8 +478,8 @@ filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *host
 	if (filter_check_table(rule, K_NETADDR, param) ||
 	    filter_check_regex(rule, param) ||
 	    filter_check_rdns_connected(rule, hostname))
-		return 0;
-	return 1;
+		return 1;
+	return 0;
 }
 
 static int
@@ -485,8 +488,8 @@ filter_exec_helo(uint64_t reqid, struct filter_rule *rule, const char *hostname,
 	if (filter_check_table(rule, K_DOMAIN, param) ||
 	    filter_check_regex(rule, param) ||
 	    filter_check_rdns_helo(rule, hostname, param))
-		return 0;
-	return 1;
+		return 1;
+	return 0;
 }
 
 static int
@@ -500,8 +503,8 @@ filter_exec_mail_from(uint64_t reqid, struct filter_rule *rule, const char *host
 
 	if (filter_check_table(rule, K_MAILADDR, param) ||
 	    filter_check_regex(rule, param))
-		return 0;
-	return 1;
+		return 1;
+	return 0;
 }
 
 static int
@@ -515,6 +518,6 @@ filter_exec_rcpt_to(uint64_t reqid, struct filter_rule *rule, const char *hostna
 
 	if (filter_check_table(rule, K_MAILADDR, param) ||
 	    filter_check_regex(rule, param))
-		return 0;
-	return 1;
+		return 1;
+	return 0;
 }
