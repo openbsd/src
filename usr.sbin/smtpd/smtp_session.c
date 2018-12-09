@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.363 2018/12/09 15:26:03 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.364 2018/12/09 16:37:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1604,6 +1604,10 @@ smtp_filter_begin(struct smtp_session *s)
 
 	m_create(p_lka, IMSG_SMTP_FILTER_BEGIN, 0, 0, -1);
 	m_add_id(p_lka, s->id);
+	m_add_sockaddr(p_lka, (struct sockaddr *)&s->ss);
+	m_add_sockaddr(p_lka, (struct sockaddr *)&s->listener->ss);
+	m_add_string(p_lka, s->hostname);
+	m_add_int(p_lka, s->fcrdns);
 	m_close(p_lka);
 }
 

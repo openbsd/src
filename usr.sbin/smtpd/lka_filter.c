@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.7 2018/12/06 13:57:06 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.8 2018/12/09 16:37:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -82,10 +82,19 @@ static int		inited;
 struct filter_session {
 	uint64_t	id;
 	struct io	*io;
+
+	struct sockaddr_storage ss_src;
+	struct sockaddr_storage ss_dest;
+	char *rdns;
+	int fcrdns;
 };
 
 void
-lka_filter_begin(uint64_t reqid)
+lka_filter_begin(uint64_t reqid,
+    const struct sockaddr_storage *ss_src,
+    const struct sockaddr_storage *ss_dest,
+    const char *rdns,
+    int fcrdns)
 {
 	struct filter_session	*fs;
 
@@ -96,6 +105,10 @@ lka_filter_begin(uint64_t reqid)
 
 	fs = xcalloc(1, sizeof (struct filter_session));
 	fs->id = reqid;
+	fs->ss_src = *ss_src;
+	fs->ss_dest = *ss_dest;
+	fs->rdns = xstrdup(rdns);
+	fs->fcrdns = fcrdns;
 	tree_xset(&sessions, fs->id, fs);
 }
 
@@ -105,6 +118,7 @@ lka_filter_end(uint64_t reqid)
 	struct filter_session	*fs;
 
 	fs = tree_xpop(&sessions, reqid);
+	free(fs->rdns);
 	free(fs);
 }
 
@@ -454,6 +468,10 @@ filter_exec_notimpl(uint64_t reqid, struct filter_rule *rule, const char *hostna
 static int
 filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *hostname, const char *param)
 {
+	struct filter_session	*fs;
+
+	fs = tree_xget(&sessions, reqid);
+
 	if (filter_check_table(rule, K_NETADDR, param) ||
 	    filter_check_regex(rule, param) ||
 	    filter_check_rdns_connected(rule, hostname))
