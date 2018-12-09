@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.364 2018/12/09 16:37:51 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.365 2018/12/09 17:08:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1659,7 +1659,7 @@ smtp_filter_phase(enum filter_phase phase, struct smtp_session *s, const char *p
 	s->filter_phase = phase;
 	s->filter_param = param;
 
-	if (!SESSION_FILTERED(s)) {
+	if (SESSION_FILTERED(s)) {
 		smtp_query_filters(phase, s, param ? param : "");
 		return;
 	}
@@ -1668,6 +1668,7 @@ smtp_filter_phase(enum filter_phase phase, struct smtp_session *s, const char *p
 		smtp_proceed_connected(s);
 		return;
 	}
+
 	for (i = 0; i < nitems(commands); ++i)
 		if (commands[i].filter_phase == s->filter_phase) {
 			commands[i].proceed(s, param);
