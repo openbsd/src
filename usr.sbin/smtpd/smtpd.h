@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.584 2018/12/09 17:37:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.585 2018/12/09 18:05:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1061,6 +1061,9 @@ struct filter_rule {
 
 	int8_t				not_rdns;
 	int8_t				rdns;
+
+	int8_t				not_fcrdns;
+	int8_t				fcrdns;
 };
 
 enum filter_status {

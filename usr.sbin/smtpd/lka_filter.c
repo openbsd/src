@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.10 2018/12/09 17:37:15 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.11 2018/12/09 18:05:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -434,6 +434,18 @@ filter_check_regex(struct filter_rule *rule, const char *key)
 }
 
 static int
+filter_check_fcrdns_connected(struct filter_rule *rule, int fcrdns)
+{
+	int	ret = 0;
+
+	if (rule->fcrdns) {
+		ret = fcrdns == 0;
+		ret = rule->not_fcrdns < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
 filter_check_rdns_connected(struct filter_rule *rule, const char *hostname)
 {
 	int	ret = 0;
@@ -478,7 +490,8 @@ filter_exec_connected(uint64_t reqid, struct filter_rule *rule, const char *para
 	fs = tree_xget(&sessions, reqid);
 	if (filter_check_table(rule, K_NETADDR, param) ||
 	    filter_check_regex(rule, param) ||
-	    filter_check_rdns_connected(rule, fs->rdns))
+	    filter_check_rdns_connected(rule, fs->rdns) ||
+	    filter_check_fcrdns_connected(rule, fs->fcrdns))
 		return 1;
 	return 0;
 }
