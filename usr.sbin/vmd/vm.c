@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.42 2018/12/06 09:20:06 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.43 2018/12/10 21:30:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -61,6 +61,7 @@
 #include "i8259.h"
 #include "ns8250.h"
 #include "mc146818.h"
+#include "fw_cfg.h"
 #include "atomicio.h"
 
 io_fn_t ioports_map[MAX_PORTS];
@@ -562,6 +563,8 @@ send_vm(int fd, struct vm_create_params *vcp)
 		goto err;
 	if ((ret = mc146818_dump(fd)))
 		goto err;
+	if ((ret = fw_cfg_dump(fd)))
+		goto err;
 	if ((ret = pci_dump(fd)))
 		goto err;
 	if ((ret = virtio_dump(fd)))
@@ -950,6 +953,13 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	for (i = COM1_DATA; i <= COM1_SCR; i++)
 		ioports_map[i] = vcpu_exit_com;
 
+	/* Init QEMU fw_cfg interface */
+	fw_cfg_init(vmc);
+	ioports_map[FW_CFG_IO_SELECT] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DATA] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DMA_ADDR_HIGH] = vcpu_exit_fw_cfg_dma;
+	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
+
 	/* Initialize PCI */
 	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
 		ioports_map[i] = vcpu_exit_pci;
@@ -1000,6 +1010,13 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
 	mc146818_restore(fd, vcp->vcp_id);
 	ioports_map[IO_RTC] = vcpu_exit_mc146818;
 	ioports_map[IO_RTC + 1] = vcpu_exit_mc146818;
+
+	/* Init QEMU fw_cfg interface */
+	fw_cfg_restore(fd);
+	ioports_map[FW_CFG_IO_SELECT] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DATA] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DMA_ADDR_HIGH] = vcpu_exit_fw_cfg_dma;
+	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
 
 	/* Initialize PCI */
 	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
@@ -1622,7 +1639,7 @@ vaddr_mem(paddr_t gpa, size_t len)
  *
  * Parameters:
  *  dst: the destination paddr_t in the guest VM
- *  buf: data to copy
+ *  buf: data to copy (or NULL to zero the data)
  *  len: number of bytes to copy
  *
  * Return values:
@@ -1653,9 +1670,12 @@ write_mem(paddr_t dst, const void *buf, size_t len)
 			n = len;
 
 		to = (char *)vmr->vmr_va + off;
-		memcpy(to, from, n);
-
-		from += n;
+		if (buf == NULL)
+			memset(to, 0, n);
+		else {
+			memcpy(to, from, n);
+			from += n;
+		}
 		len -= n;
 		off = 0;
 		vmr++;
