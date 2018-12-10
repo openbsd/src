@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.28 2018/07/12 10:15:44 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.29 2018/12/10 21:24:22 claudio Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -170,7 +170,7 @@ vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 			}
 		}
 	} else {
-		log_debug("%s: discarding data written to PIT misc port\n",
+		log_debug("%s: discarding data written to PIT misc port",
 		    __func__);
 	}
 
