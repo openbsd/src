@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.256 2018/12/09 11:32:02 florian Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.257 2018/12/10 07:57:49 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1309,14 +1309,14 @@ findpool(void *p, struct dir_info *argpool, struct dir_info **foundpool,
 }
 
 static void
-ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
+ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 {
 	struct region_info *r;
 	struct dir_info *pool;
 	char *saved_function;
 	size_t sz;
 
-	r = findpool(p, argpool, &pool, &saved_function);
+	r = findpool(p, *argpool, &pool, &saved_function);
 
 	REALSIZE(sz, r);
 	if (check) {
@@ -1405,12 +1405,9 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 		}
 	}
 
-	if (argpool != pool) {
-		pool->active--;
+	if (*argpool != pool) {
 		pool->func = saved_function;
-		_MALLOC_UNLOCK(pool->mutex);
-		_MALLOC_LOCK(argpool->mutex);
-		argpool->active++;
+		*argpool = pool;
 	}
 }
 
@@ -1433,7 +1430,7 @@ free(void *ptr)
 		malloc_recurse(d);
 		return;
 	}
-	ofree(d, ptr, 0, 0, 0);
+	ofree(&d, ptr, 0, 0, 0);
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
 	errno = saved_errno;
@@ -1471,7 +1468,7 @@ freezero(void *ptr, size_t sz)
 		malloc_recurse(d);
 		return;
 	}
-	ofree(d, ptr, 1, 1, sz);
+	ofree(&d, ptr, 1, 1, sz);
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
 	errno = saved_errno;
@@ -1479,7 +1476,7 @@ freezero(void *ptr, size_t sz)
 DEF_WEAK(freezero);
 
 static void *
-orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
+orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 {
 	struct region_info *r;
 	struct dir_info *pool;
@@ -1490,14 +1487,14 @@ orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
 	uint32_t chunknum;
 
 	if (p == NULL)
-		return omalloc(argpool, newsz, 0, f);
+		return omalloc(*argpool, newsz, 0, f);
 
 	if (newsz >= SIZE_MAX - mopts.malloc_guard - MALLOC_PAGESIZE) {
 		errno = ENOMEM;
 		return  NULL;
 	}
 
-	r = findpool(p, argpool, &pool, &saved_function);
+	r = findpool(p, *argpool, &pool, &saved_function);
 
 	REALSIZE(oldsz, r);
 	if (mopts.chunk_canaries && oldsz <= MALLOC_MAXCHUNK) {
@@ -1631,7 +1628,7 @@ gotit:
 		}
 		if (newsz != 0 && oldsz != 0)
 			memcpy(q, p, oldsz < newsz ? oldsz : newsz);
-		ofree(pool, p, 0, 0, 0);
+		ofree(&pool, p, 0, 0, 0);
 		ret = q;
 	} else {
 		/* oldsz == newsz */
@@ -1641,12 +1638,9 @@ gotit:
 		ret = p;
 	}
 done:
-	if (argpool != pool) {
-		pool->active--;
+	if (*argpool != pool) {
 		pool->func = saved_function;
-		_MALLOC_UNLOCK(pool->mutex);
-		_MALLOC_LOCK(argpool->mutex);
-		argpool->active++;
+		*argpool = pool;
 	}
 	return ret;
 }
@@ -1669,7 +1663,7 @@ realloc(void *ptr, size_t size)
 		malloc_recurse(d);
 		return NULL;
 	}
-	r = orealloc(d, ptr, size, CALLER);
+	r = orealloc(&d, ptr, size, CALLER);
 
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
@@ -1730,7 +1724,7 @@ calloc(size_t nmemb, size_t size)
 /*DEF_STRONG(calloc);*/
 
 static void *
-orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
+orecallocarray(struct dir_info **argpool, void *p, size_t oldsize,
     size_t newsize, void *f)
 {
 	struct region_info *r;
@@ -1740,12 +1734,12 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 	size_t sz;
 
 	if (p == NULL)
-		return omalloc(argpool, newsize, 1, f);
+		return omalloc(*argpool, newsize, 1, f);
 
 	if (oldsize == newsize)
 		return p;
 
-	r = findpool(p, argpool, &pool, &saved_function);
+	r = findpool(p, *argpool, &pool, &saved_function);
 
 	REALSIZE(sz, r);
 	if (sz <= MALLOC_MAXCHUNK) {
@@ -1772,15 +1766,12 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 	} else
 		memcpy(newptr, p, newsize);
 
-	ofree(pool, p, 1, 0, oldsize);
+	ofree(&pool, p, 1, 0, oldsize);
 
 done:
-	if (argpool != pool) {
-		pool->active--;
+	if (*argpool != pool) {
 		pool->func = saved_function;
-		_MALLOC_UNLOCK(pool->mutex);
-		_MALLOC_LOCK(argpool->mutex);
-		argpool->active++;
+		*argpool = pool;
 	}
 
 	return newptr;
@@ -1883,7 +1874,7 @@ recallocarray(void *ptr, size_t oldnmemb, size_t newnmemb, size_t size)
 		return NULL;
 	}
 
-	r = orecallocarray(d, ptr, oldsize, newsize, CALLER);
+	r = orecallocarray(&d, ptr, oldsize, newsize, CALLER);
 
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
