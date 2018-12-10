@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.38 2018/12/03 13:46:30 visa Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.39 2018/12/10 05:40:34 visa Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -329,7 +329,7 @@ void	mec_start(struct ifnet *);
 void	mec_watchdog(struct ifnet *);
 void	mec_tick(void *);
 int	mec_ioctl(struct ifnet *, u_long, caddr_t);
-void	mec_reset(struct mec_softc *);
+void	mec_reset(struct mec_softc *, int);
 void	mec_iff(struct mec_softc *);
 int	mec_intr(void *arg);
 void	mec_stop(struct ifnet *);
@@ -422,7 +422,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	enaddr_aton(bios_enaddr, sc->sc_ac.ac_enaddr);
 
 	/* Reset device. */
-	mec_reset(sc);
+	mec_reset(sc, 1);
 
 	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
 
@@ -628,7 +628,7 @@ mec_init(struct ifnet *ifp)
 	mec_stop(ifp);
 
 	/* Reset device. */
-	mec_reset(sc);
+	mec_reset(sc, 0);
 
 	/* Setup filter for multicast or promisc mode. */
 	mec_iff(sc);
@@ -676,7 +676,7 @@ mec_init(struct ifnet *ifp)
 }
 
 void
-mec_reset(struct mec_softc *sc)
+mec_reset(struct mec_softc *sc, int firsttime)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
@@ -705,6 +705,41 @@ mec_reset(struct mec_softc *sc)
 
 	DPRINTF(MEC_DEBUG_RESET, ("mec: control now %llx\n",
 	    bus_space_read_8(st, sh, MEC_MAC_CONTROL)));
+
+	if (firsttime) {
+		/*
+		 * After a cold boot, during the initial MII probe, the
+		 * PHY would sometimes answer to addresses 11 or 10, only
+		 * to settle to address 8 shortly after.
+		 *
+		 * Because of this, the PHY driver would attach to the wrong
+		 * address and further link configuration would fail (with PHY
+		 * register reads returning either 0 or FFFF), leading to
+		 * horrible performance and no way to select a proper media.
+		 */
+		int i, reg, phyno;
+		for (phyno = 0; phyno < MII_NPHY; phyno++) {
+			reg = mec_mii_readreg(&sc->sc_dev, phyno, MII_BMSR);
+			/* same logic as in mii_attach() */
+			if (reg == 0 || reg == 0xffff ||
+			    (reg & (BMSR_MEDIAMASK | BMSR_EXTSTAT)) == 0)
+				continue;
+			/* inline mii_phy_reset() */
+			mec_mii_writereg(&sc->sc_dev, phyno, MII_BMCR,
+			    BMCR_RESET | BMCR_ISO);
+			delay(500);
+			for (i = 0; i < 100; i++) {
+				reg = mec_mii_readreg(&sc->sc_dev, phyno,
+				    MII_BMCR);
+				if ((reg & BMCR_RESET) == 0) {
+					mec_mii_writereg(&sc->sc_dev, phyno,
+					    MII_BMCR, reg | BMCR_ISO);
+					break;
+				}
+				delay(1000);
+			}
+		}
+	}
 }
 
 void
