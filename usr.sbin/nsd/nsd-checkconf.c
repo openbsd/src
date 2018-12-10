@@ -405,6 +405,16 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(rrl_ipv6_prefix_length, o);
 		SERV_GET_INT(rrl_whitelist_ratelimit, o);
 #endif
+#ifdef USE_DNSTAP
+		SERV_GET_BIN(dnstap_enable, o);
+		SERV_GET_STR(dnstap_socket_path, o);
+		SERV_GET_BIN(dnstap_send_identity, o);
+		SERV_GET_BIN(dnstap_send_version, o);
+		SERV_GET_STR(dnstap_identity, o);
+		SERV_GET_STR(dnstap_version, o);
+		SERV_GET_BIN(dnstap_log_auth_query_messages, o);
+		SERV_GET_BIN(dnstap_log_auth_response_messages, o);
+#endif
 		SERV_GET_INT(zonefiles_write, o);
 		/* remote control */
 		SERV_GET_BIN(control_enable, o);
@@ -526,6 +536,18 @@ config_test_print_server(nsd_options_type* opt)
 #endif
 	printf("\tzonefiles-check: %s\n", opt->zonefiles_check?"yes":"no");
 	printf("\tzonefiles-write: %d\n", opt->zonefiles_write);
+
+#ifdef USE_DNSTAP
+	printf("\ndnstap:\n");
+	printf("\tdnstap-enable: %s\n", opt->dnstap_enable?"yes":"no");
+	print_string_var("dnstap-socket-path:", opt->dnstap_socket_path);
+	printf("\tdnstap-send-identity: %s\n", opt->dnstap_send_identity?"yes":"no");
+	printf("\tdnstap-send-version: %s\n", opt->dnstap_send_version?"yes":"no");
+	print_string_var("dnstap-identity:", opt->dnstap_identity);
+	print_string_var("dnstap-version:", opt->dnstap_version);
+	printf("\tdnstap-log-auth-query-messages: %s\n", opt->dnstap_log_auth_query_messages?"yes":"no");
+	printf("\tdnstap-log-auth-response-messages: %s\n", opt->dnstap_log_auth_response_messages?"yes":"no");
+#endif
 
 	printf("\nremote-control:\n");
 	printf("\tcontrol-enable: %s\n", opt->control_enable?"yes":"no");

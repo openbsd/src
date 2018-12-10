@@ -22,6 +22,9 @@
 /* Pathname to the NSD database */
 #undef DBFILE
 
+/* default dnstap socket path */
+#undef DNSTAP_SOCKET_PATH
+
 /* Define to the default maximum message length with EDNS. */
 #undef EDNS_MAX_MESSAGE_LEN
 
@@ -509,6 +512,9 @@
 
 /* the user name to drop privileges to */
 #undef USER
+
+/* Define to 1 to enable dnstap support */
+#undef USE_DNSTAP
 
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT

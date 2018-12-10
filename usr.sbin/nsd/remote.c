@@ -1250,6 +1250,91 @@ zonestat_inc_ifneeded(xfrd_state_type* xfrd)
 #endif /* USE_ZONE_STATS */
 }
 
+/** perform the changezone command for one zone */
+static int
+perform_changezone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+{
+	const dname_type* dname;
+	struct zone_options* zopt;
+	char* arg2 = NULL;
+	if(!find_arg2(ssl, arg, &arg2))
+		return 0;
+
+	/* if we add it to the xfrd now, then xfrd could download AXFR and
+	 * store it and the NSD-reload would see it in the difffile before
+	 * it sees the add-config task.
+	 */
+	/* thus: AXFRs and IXFRs must store the pattern name in the
+	 * difffile, so that it can be added when the AXFR or IXFR is seen.
+	 */
+
+	/* check that the pattern exists */
+	if(!rbtree_search(xfrd->nsd->options->patterns, arg2)) {
+		(void)ssl_printf(ssl, "error pattern %s does not exist\n",
+			arg2);
+		return 0;
+	}
+
+	dname = dname_parse(xfrd->region, arg);
+	if(!dname) {
+		(void)ssl_printf(ssl, "error cannot parse zone name\n");
+		return 0;
+	}
+
+	/* see if zone is a duplicate */
+	if( (zopt=zone_options_find(xfrd->nsd->options, dname)) ) {
+		if(zopt->part_of_config) {
+			(void)ssl_printf(ssl, "error zone defined in nsd.conf, "
+			  "cannot delete it in this manner: remove it from "
+			  "nsd.conf yourself and repattern\n");
+			region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
+			dname = NULL;
+			return 0;
+		}
+		/* found the zone, now delete it */
+		/* create deletion task */
+		/* this deletion task is processed before the addition task,
+		 * that is created below, in the same reload process, causing
+		 * a seamless change from one to the other, with no downtime
+		 * for the zone. */
+		task_new_del_zone(xfrd->nsd->task[xfrd->nsd->mytask],
+			xfrd->last_task, dname);
+		xfrd_set_reload_now(xfrd);
+		/* delete it in xfrd */
+		if(zone_is_slave(zopt)) {
+			xfrd_del_slave_zone(xfrd, dname);
+		}
+		xfrd_del_notify(xfrd, dname);
+		/* delete from config */
+		zone_list_del(xfrd->nsd->options, zopt);
+	} else {
+		(void)ssl_printf(ssl, "zone %s did not exist, creating", arg);
+	}
+	region_recycle(xfrd->region, (void*)dname, dname_total_size(dname));
+	dname = NULL;
+
+	/* add to zonelist and adds to config in memory */
+	zopt = zone_list_add(xfrd->nsd->options, arg, arg2);
+	if(!zopt) {
+		/* also dname parse error here */
+		(void)ssl_printf(ssl, "error could not add zonelist entry\n");
+		return 0;
+	}
+	/* make addzone task and schedule reload */
+	task_new_add_zone(xfrd->nsd->task[xfrd->nsd->mytask],
+		xfrd->last_task, arg, arg2,
+		getzonestatid(xfrd->nsd->options, zopt));
+	zonestat_inc_ifneeded(xfrd);
+	xfrd_set_reload_now(xfrd);
+	/* add to xfrd - notify (for master and slaves) */
+	init_notify_send(xfrd->notify_zones, xfrd->region, zopt);
+	/* add to xfrd - slave */
+	if(zone_is_slave(zopt)) {
+		xfrd_init_slave_zone(xfrd, zopt);
+	}
+	return 1;
+}
+
 /** perform the addzone command for one zone */
 static int
 perform_addzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
@@ -1334,7 +1419,7 @@ perform_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 		/* nothing to do */
 		if(!ssl_printf(ssl, "warning zone %s not present\n", arg))
 			return 0;
-		return 1;
+		return 0;
 	}
 
 	/* see if it can be deleted */
@@ -1377,6 +1462,15 @@ static void
 do_delzone(RES* ssl, xfrd_state_type* xfrd, char* arg)
 {
 	if(!perform_delzone(ssl, xfrd, arg))
+		return;
+	send_ok(ssl);
+}
+
+/** do the changezone command */
+static void
+do_changezone(RES* ssl, xfrd_state_type* xfrd, char* arg)
+{
+	if(!perform_changezone(ssl, xfrd, arg))
 		return;
 	send_ok(ssl);
 }
@@ -1867,6 +1961,8 @@ execute_cmd(struct daemon_remote* rc, RES* ssl, char* cmd, struct rc_state* rs)
 		do_addzone(ssl, rc->xfrd, skipwhite(p+7));
 	} else if(cmdcmp(p, "delzone", 7)) {
 		do_delzone(ssl, rc->xfrd, skipwhite(p+7));
+	} else if(cmdcmp(p, "changezone", 10)) {
+		do_changezone(ssl, rc->xfrd, skipwhite(p+10));
 	} else if(cmdcmp(p, "addzones", 8)) {
 		do_addzones(ssl, rc->xfrd);
 	} else if(cmdcmp(p, "delzones", 8)) {

@@ -3,8 +3,9 @@ dnl Some global settings
 dnl
 
 sinclude(acx_nlnetlabs.m4)
+sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.1.25,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.26,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -961,6 +962,26 @@ case "$enable_packed" in
 	;;
 esac
 
+# check for dnstap if requested
+dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
+    [
+        AC_DEFINE([USE_DNSTAP], [1], [Define to 1 to enable dnstap support])
+        AC_SUBST([ENABLE_DNSTAP], [1])
+
+        AC_SUBST([opt_dnstap_socket_path])
+        ACX_ESCAPE_BACKSLASH($opt_dnstap_socket_path, hdr_dnstap_socket_path)
+        AC_DEFINE_UNQUOTED(DNSTAP_SOCKET_PATH,
+            ["$hdr_dnstap_socket_path"], [default dnstap socket path])
+
+        AC_SUBST([DNSTAP_SRC], ["dnstap/dnstap.c dnstap/dnstap.pb-c.c dnstap/dnstap_collector.c"])
+        AC_SUBST([DNSTAP_OBJ], ["dnstap.o dnstap_collector.o dnstap.pb-c.o"])
+	dnstap_config="dnstap/dnstap_config.h"
+    ],
+    [
+        AC_SUBST([ENABLE_DNSTAP], [0])
+    ]
+)
+
 # Include systemd.m4 - begin
 sinclude(systemd.m4)
 # Include systemd.m4 - end
@@ -1163,5 +1184,5 @@ if test "$enable_checking" = "yes"; then
         echo "************************************************"
 fi
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile $dnstap_config])
 AC_OUTPUT

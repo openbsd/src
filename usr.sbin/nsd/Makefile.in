@@ -29,6 +29,8 @@ nsdconfigfile = @nsd_conf_file@
 zonesdir = @zonesdir@
 chrootdir= @chrootdir@
 user = @user@
+DNSTAP_SRC=@DNSTAP_SRC@
+DNSTAP_OBJ=@DNSTAP_OBJ@
 
 # override $U variable which is used by autotools for deansification (for
 # K&R C compilers), but causes problems if $U is defined in the env).
@@ -47,6 +49,7 @@ INSTALL_DATA	= $(INSTALL) -m 644
 
 YACC		= @YACC@
 LEX		= @LEX@
+PROTOC_C	= @PROTOC_C@
 
 COMPILE		= $(CC) $(CPPFLAGS) $(CFLAGS)
 LINK		= $(CC) $(CFLAGS) $(LDFLAGS)
@@ -72,7 +75,7 @@ TARGETS=nsd nsd-checkconf nsd-checkzone nsd-control nsd.conf.sample nsd-control-
 MANUALS=nsd.8 nsd-checkconf.8 nsd-checkzone.8 nsd-control.8 nsd.conf.5
 
 COMMON_OBJ=answer.o axfr.o buffer.o configlexer.o configparser.o dname.o dns.o edns.o iterated_hash.o lookup3.o namedb.o nsec3.o options.o packet.o query.o rbtree.o radtree.o rdata.o region-allocator.o rrl.o tsig.o tsig-openssl.o udb.o udbradtree.o udbzone.o util.o
-XFRD_OBJ=xfrd-disk.o xfrd-notify.o xfrd-tcp.o xfrd.o remote.o
+XFRD_OBJ=xfrd-disk.o xfrd-notify.o xfrd-tcp.o xfrd.o remote.o $(DNSTAP_OBJ)
 NSD_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) difffile.o ipc.o mini_event.o netio.o nsd.o server.o dbaccess.o dbcreate.o zlexer.o zonec.o zparser.o
 ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-checkzone.o nsd-control.o nsd-mem.o
 NSD_CHECKCONF_OBJ=$(COMMON_OBJ) nsd-checkconf.o
@@ -305,6 +308,22 @@ configlexer.c:	$(srcdir)/configlexer.lex
 
 configparser.c configparser.h:	$(srcdir)/configparser.y
 	$(YACC) -d -o configparser.c $(srcdir)/configparser.y
+
+# dnstap
+dnstap.o:	$(srcdir)/dnstap/dnstap.c config.h \
+	dnstap/dnstap.pb-c.c dnstap/dnstap.pb-c.h $(srcdir)/dnstap/dnstap.h \
+	$(srcdir)/util.h $(srcdir)/options.h $(srcdir)/rbtree.h \
+	$(srcdir)/region-allocator.h
+dnstap.pb-c.o: dnstap/dnstap.pb-c.c dnstap/dnstap.pb-c.h
+dnstap_collector.o:	$(srcdir)/dnstap/dnstap_collector.c config.h \
+	$(srcdir)/dnstap/dnstap.h $(srcdir)/dnstap/dnstap_collector.h \
+	$(srcdir)/util.h $(srcdir)/nsd.h $(srcdir)/region-allocator.h \
+	$(srcdir)/buffer.h $(srcdir)/namedb.h $(srcdir)/dname.h \
+	$(srcdir)/dns.h $(srcdir)/radtree.h $(srcdir)/rbtree.h \
+	$(srcdir)/options.h
+dnstap/dnstap.pb-c.c dnstap/dnstap.pb-c.h: $(srcdir)/dnstap/dnstap.proto
+	@-if test ! -d dnstap; then $(INSTALL) -d dnstap; fi
+	$(PROTOC_C) --c_out=. --proto_path=$(srcdir) $(srcdir)/dnstap/dnstap.proto
 
 # autoconf rules
 config.h.in:	configure.ac

@@ -91,6 +91,7 @@ usage()
 	printf("  stats_noreset			peek at statistics\n");
 	printf("  addzone <name> <pattern>	add a new zone\n");
 	printf("  delzone <name>		remove a zone\n");
+	printf("  changezone <name> <pattern>	change zone to use pattern\n");
 	printf("  addzones			add zone list on stdin {name space pattern newline}\n");
 	printf("  delzones			remove zone list on stdin {name newline}\n");
 	printf("  write [<zone>]		write changed zonefiles to disk\n");

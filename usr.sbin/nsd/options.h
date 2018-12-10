@@ -125,6 +125,22 @@ struct nsd_options {
 	/** max qps for whitelisted queries, 0 is nolimit */
 	size_t rrl_whitelist_ratelimit;
 #endif
+	/** if dnstap is enabled */
+	int dnstap_enable;
+	/** dnstap socket path */
+	char* dnstap_socket_path;
+	/** true to send "identity" via dnstap */
+	int dnstap_send_identity;
+	/** true to send "version" via dnstap */
+	int dnstap_send_version;
+	/** dnstap "identity", hostname is used if "". */
+	char* dnstap_identity;
+	/** dnstap "version", package version is used if "". */
+	char* dnstap_version;
+	/** true to log dnstap AUTH_QUERY message events */
+	int dnstap_log_auth_query_messages;
+	/** true to log dnstap AUTH_RESPONSE message events */
+	int dnstap_log_auth_response_messages;
 
 	region_type* region;
 };

@@ -30,6 +30,9 @@
 #include "ipc.h"
 #include "remote.h"
 #include "rrl.h"
+#ifdef USE_DNSTAP
+#include "dnstap/dnstap_collector.h"
+#endif
 
 #ifdef HAVE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -398,6 +401,9 @@ xfrd_shutdown()
 #ifdef HAVE_SSL
 	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
 #endif
+#ifdef USE_DNSTAP
+	dt_collector_close(nsd.dt_collector, &nsd);
+#endif
 
 	/* process-exit cleans up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
@@ -429,6 +435,9 @@ xfrd_shutdown()
 	}
 #ifdef RATELIMIT
 	rrl_mmap_deinit();
+#endif
+#ifdef USE_DNSTAP
+	dt_collector_destroy(nsd.dt_collector, &nsd);
 #endif
 	udb_base_free(nsd.task[0]);
 	udb_base_free(nsd.task[1]);
