@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.177 2018/09/04 14:46:12 espie Exp $
+# $OpenBSD: Add.pm,v 1.178 2018/12/10 19:19:04 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -128,6 +128,7 @@ sub perform_extraction
 		if (keys %$wanted == 0) {
 			for my $e (values %$tied) {
 				$e->tie($state);
+				$p->advance($e);
 			}
 			if (keys %$tied > 0) {
 				$handle->{location}{early_close} = 1;
