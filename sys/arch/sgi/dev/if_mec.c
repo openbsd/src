@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.39 2018/12/10 05:40:34 visa Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.40 2018/12/10 05:42:34 visa Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -264,7 +264,6 @@ struct mec_softc {
 	bus_dma_tag_t sc_dmat;		/* bus_dma tag. */
 
 	struct mii_data sc_mii;		/* MII/media information. */
-	int sc_phyaddr;			/* MII address. */
 	struct timeout sc_tick_ch;	/* Tick timeout. */
 
 	bus_dmamap_t sc_cddmamap;	/* bus_dma map for control data. */
@@ -451,7 +450,6 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
-		sc->sc_phyaddr = child->mii_phy;
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -499,21 +497,19 @@ mec_mii_readreg(struct device *self, int phy, int reg)
 	struct mec_softc *sc = (void *)self;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint32_t val;
+	uint64_t val;
 	int i;
 
 	if (mec_mii_wait(sc) != 0)
 		return 0;
 
-	bus_space_write_4(st, sh, MEC_PHY_ADDRESS,
+	bus_space_write_8(st, sh, MEC_PHY_ADDRESS,
 	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
 	bus_space_write_8(st, sh, MEC_PHY_READ_INITIATE, 1);
-	delay(25);
 
 	for (i = 0; i < 20; i++) {
-		delay(30);
-
-		val = bus_space_read_4(st, sh, MEC_PHY_DATA);
+		delay(25);
+		val = bus_space_read_8(st, sh, MEC_PHY_DATA);
 
 		if ((val & MEC_PHY_DATA_BUSY) == 0)
 			return val & MEC_PHY_DATA_VALUE;
@@ -529,18 +525,13 @@ mec_mii_writereg(struct device *self, int phy, int reg, int val)
 	bus_space_handle_t sh = sc->sc_sh;
 
 	if (mec_mii_wait(sc) != 0) {
-		printf("timed out writing %x: %x\n", reg, val);
+		printf("MII timed out writing %x: %x\n", reg, val);
 		return;
 	}
 
-	bus_space_write_4(st, sh, MEC_PHY_ADDRESS,
+	bus_space_write_8(st, sh, MEC_PHY_ADDRESS,
 	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
-
-	delay(60);
-
-	bus_space_write_4(st, sh, MEC_PHY_DATA, val & MEC_PHY_DATA_VALUE);
-
-	delay(60);
+	bus_space_write_8(st, sh, MEC_PHY_DATA, val & MEC_PHY_DATA_VALUE);
 
 	mec_mii_wait(sc);
 }
@@ -548,20 +539,14 @@ mec_mii_writereg(struct device *self, int phy, int reg, int val)
 int
 mec_mii_wait(struct mec_softc *sc)
 {
-	uint32_t busy;
-	int i, s;
+	uint64_t busy;
+	int i;
 
 	for (i = 0; i < 100; i++) {
-		delay(30);
-
-		s = splhigh();
-		busy = bus_space_read_4(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
-		splx(s);
-
+		busy = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_PHY_DATA);
 		if ((busy & MEC_PHY_DATA_BUSY) == 0)
 			return 0;
-		if (busy == 0xffff) /* XXX ? */
-			return 0;
+		delay(30);
 	}
 
 	printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
