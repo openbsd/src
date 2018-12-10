@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.62 2018/10/22 16:20:09 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.63 2018/12/10 13:35:54 landry Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -692,13 +692,16 @@ print_sensor(enum sensor_type type, int64_t value)
 		snprintf(fbuf, RFBUFSIZ, "%lld", value);
 		break;
 	case SENSOR_DISTANCE:
-		snprintf(fbuf, RFBUFSIZ, "%.2f mm", value / 1000.0);
+		snprintf(fbuf, RFBUFSIZ, "%.3f m", value / 1000000.0);
 		break;
 	case SENSOR_PRESSURE:
 		snprintf(fbuf, RFBUFSIZ, "%.2f Pa", value / 1000.0);
 		break;
 	case SENSOR_ACCEL:
 		snprintf(fbuf, RFBUFSIZ, "%2.4f m/s^2", value / 1000000.0);
+		break;
+	case SENSOR_VELOCITY:
+		snprintf(fbuf, RFBUFSIZ, "%4.3f m/s", value / 1000000.0);
 		break;
 	default:
 		snprintf(fbuf, RFBUFSIZ, "%lld ???", value);
@@ -813,13 +816,14 @@ get_val(char *buf, int upper, enum sensor_type type)
 	case SENSOR_LUX:
 	case SENSOR_FREQ:
 	case SENSOR_ACCEL:
+	case SENSOR_DISTANCE:
+	case SENSOR_VELOCITY:
 		rval = val * 1000 * 1000;
 		break;
 	case SENSOR_TIMEDELTA:
 		rval = val * 1000 * 1000 * 1000;
 		break;
 	case SENSOR_HUMIDITY:
-	case SENSOR_DISTANCE:
 	case SENSOR_PRESSURE:
 		rval = val * 1000.0;
 		break;

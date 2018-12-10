@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.238 2018/11/06 07:55:08 otto Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.239 2018/12/10 13:35:54 landry Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -2654,13 +2654,16 @@ print_sensor(struct sensor *s)
 			printf("%3.4f degrees", s->value / 1000000.0);
 			break;
 		case SENSOR_DISTANCE:
-			printf("%.2f mm", s->value / 1000.0);
+			printf("%.3f m", s->value / 1000000.0);
 			break;
 		case SENSOR_PRESSURE:
 			printf("%.2f Pa", s->value / 1000.0);
 			break;
 		case SENSOR_ACCEL:
 			printf("%2.4f m/s^2", s->value / 1000000.0);
+			break;
+		case SENSOR_VELOCITY:
+			printf("%4.3f m/s", s->value / 1000000.0);
 			break;
 		default:
 			printf("unknown");
