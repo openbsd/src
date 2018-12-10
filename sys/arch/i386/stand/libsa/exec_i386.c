@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.46 2018/12/10 16:48:05 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.47 2018/12/10 16:52:02 jsing Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -198,10 +198,13 @@ ucode_load(void)
 	buf = (char *)(1*1024*1024);
 
 	if (read(fd, buf, buflen) != buflen) {
+		close(fd);
 		return;
 	}
 
 	uc.uc_addr = (uint64_t)buf;
 	uc.uc_size = (uint64_t)buflen;
 	addbootarg(BOOTARG_UCODE, sizeof(uc), &uc);
+
+	close(fd);
 }
