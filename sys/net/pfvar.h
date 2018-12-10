@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.487 2018/12/09 19:38:40 kn Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.488 2018/12/10 16:48:15 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -278,19 +278,6 @@ struct pfi_dynaddr {
 	!(a)->addr32[0] && !(a)->addr32[1] && \
 	!(a)->addr32[2] && !(a)->addr32[3] )) \
 
-#define PF_MATCHA(n, a, m, b, f) \
-	pf_match_addr(n, a, m, b, f)
-
-#define PF_ACPY(a, b, f) \
-	pf_addrcpy(a, b, f)
-
-#define PF_AINC(a, f) \
-	pf_addr_inc(a, f)
-
-#define PF_POOLMASK(a, b, c, d, f) \
-	pf_poolmask(a, b, c, d, f)
-
-
 #define	PF_MISMATCHAW(aw, x, af, neg, ifp, rtid)			\
 	(								\
 		(((aw)->type == PF_ADDR_NOROUTE &&			\
@@ -308,7 +295,7 @@ struct pfi_dynaddr {
 		    &(aw)->v.a.mask, (x), (af))) ||			\
 		((aw)->type == PF_ADDR_ADDRMASK &&			\
 		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&			\
-		    !PF_MATCHA(0, &(aw)->v.a.addr,			\
+		    !pf_match_addr(0, &(aw)->v.a.addr,			\
 		    &(aw)->v.a.mask, (x), (af))))) !=			\
 		(neg)							\
 	)

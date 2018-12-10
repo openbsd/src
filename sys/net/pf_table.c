@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.129 2018/10/15 21:15:35 kn Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.130 2018/12/10 16:48:15 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2337,16 +2337,16 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 
 	if (use_counter && !PF_AZERO(counter, af)) {
 		/* is supplied address within block? */
-		if (!PF_MATCHA(0, *raddr, *rmask, counter, af)) {
+		if (!pf_match_addr(0, *raddr, *rmask, counter, af)) {
 			/* no, go to next block in table */
 			idx++;
 			use_counter = 0;
 			goto _next_block;
 		}
-		PF_ACPY(addr, counter, af);
+		pf_addrcpy(addr, counter, af);
 	} else {
 		/* use first address of block */
-		PF_ACPY(addr, *raddr, af);
+		pf_addrcpy(addr, *raddr, af);
 	}
 
 	if (!KENTRY_NETWORK(ke)) {
@@ -2356,7 +2356,7 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 			idx++;
 			goto _next_block;
 		}
-		PF_ACPY(counter, addr, af);
+		pf_addrcpy(counter, addr, af);
 		rpool->tblidx = idx;
 		kt->pfrkt_match++;
 		rpool->states = 0;
@@ -2396,7 +2396,7 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 			if (rpool->addr.type == PF_ADDR_DYNIFTL &&
 			    pfr_islinklocal(af, addr))
 				goto _next_entry;
-			PF_ACPY(counter, addr, af);
+			pf_addrcpy(counter, addr, af);
 			rpool->tblidx = idx;
 			kt->pfrkt_match++;
 			rpool->states = 0;
@@ -2419,9 +2419,9 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 _next_entry:
 		/* we need to increase the counter past the nested block */
 		pfr_prepare_network(&mask, AF_INET, ke2->pfrke_net);
-		PF_POOLMASK(addr, addr, SUNION2PF(&mask, af), &pfr_ffaddr, af);
-		PF_AINC(addr, af);
-		if (!PF_MATCHA(0, *raddr, *rmask, addr, af)) {
+		pf_poolmask(addr, addr, SUNION2PF(&mask, af), &pfr_ffaddr, af);
+		pf_addr_inc(addr, af);
+		if (!pf_match_addr(0, *raddr, *rmask, addr, af)) {
 			/* ok, we reached the end of our main block */
 			/* go to next block in table */
 			idx++;

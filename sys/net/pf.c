@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1078 2018/11/15 13:16:37 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1079 2018/12/10 16:48:15 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -549,7 +549,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 	if (*sn == NULL) {
 		k.af = af;
 		k.type = type;
-		PF_ACPY(&k.addr, src, af);
+		pf_addrcpy(&k.addr, src, af);
 		k.rule.ptr = rule;
 		pf_status.scounters[SCNT_SRC_NODE_SEARCH]++;
 		*sn = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
@@ -570,9 +570,9 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		(*sn)->type = type;
 		(*sn)->af = af;
 		(*sn)->rule.ptr = rule;
-		PF_ACPY(&(*sn)->addr, src, af);
+		pf_addrcpy(&(*sn)->addr, src, af);
 		if (raddr)
-			PF_ACPY(&(*sn)->raddr, raddr, af);
+			pf_addrcpy(&(*sn)->raddr, raddr, af);
 		if (RB_INSERT(pf_src_tree,
 		    &tree_src_tracking, *sn) != NULL) {
 			if (pf_status.debug >= LOG_NOTICE) {
@@ -855,9 +855,9 @@ pf_state_key_addr_setup(struct pf_pdesc *pd, void *arg, int sidx,
  copy:
 #endif	/* INET6 */
 	if (saddr)
-		PF_ACPY(&key->addr[sidx], saddr, af);
+		pf_addrcpy(&key->addr[sidx], saddr, af);
 	if (daddr)
-		PF_ACPY(&key->addr[didx], daddr, af);
+		pf_addrcpy(&key->addr[didx], daddr, af);
 
 	return (0);
 }
@@ -2250,7 +2250,7 @@ pf_translate_icmp(struct pf_pdesc *pd, struct pf_addr *qa, u_int16_t *qp,
 
 	/* change quoted ip address */
 	pf_cksum_fixup_a(pd->pcksum, qa, na, pd->af, pd->proto);
-	PF_ACPY(qa, na, pd->af);
+	pf_addrcpy(qa, na, pd->af);
 
 	/* change network-header's ip address */
 	if (oa)
@@ -2279,7 +2279,7 @@ pf_translate_a(struct pf_pdesc *pd, struct pf_addr *a, struct pf_addr *an)
 		break;  /* assume no pseudo-header */
 	}
 
-	PF_ACPY(a, an, pd->af);
+	pf_addrcpy(a, an, pd->af);
 	rewrite = 1;
 
 	return (rewrite);
@@ -4768,8 +4768,8 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 	key.af = pd->af;
 	key.proto = pd->virtual_proto;
 	key.rdomain = pd->rdomain;
-	PF_ACPY(&key.addr[pd->sidx], pd->src, key.af);
-	PF_ACPY(&key.addr[pd->didx], pd->dst, key.af);
+	pf_addrcpy(&key.addr[pd->sidx], pd->src, key.af);
+	pf_addrcpy(&key.addr[pd->didx], pd->dst, key.af);
 	key.port[pd->sidx] = pd->osport;
 	key.port[pd->didx] = pd->odport;
 	inp = pd->m->m_pkthdr.pf.inp;
@@ -4887,8 +4887,8 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 
 #ifdef INET6
 		if (afto) {
-			PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
-			PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
+			pf_addrcpy(&pd->nsaddr, &nk->addr[sidx], nk->af);
+			pf_addrcpy(&pd->ndaddr, &nk->addr[didx], nk->af);
 			pd->naf = nk->af;
 			action = PF_AFRT;
 		}
@@ -5031,8 +5031,10 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			iidx = afto ? !iidx : iidx;
 #ifdef	INET6
 			if (afto) {
-				PF_ACPY(&pd->nsaddr, &nk->addr[sidx], nk->af);
-				PF_ACPY(&pd->ndaddr, &nk->addr[didx], nk->af);
+				pf_addrcpy(&pd->nsaddr, &nk->addr[sidx],
+				    nk->af);
+				pf_addrcpy(&pd->ndaddr, &nk->addr[didx],
+				    nk->af);
 				pd->naf = nk->af;
 			}
 #endif /* INET6 */
@@ -5188,8 +5190,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			key.af = pd2.af;
 			key.proto = IPPROTO_TCP;
 			key.rdomain = pd2.rdomain;
-			PF_ACPY(&key.addr[pd2.sidx], pd2.src, key.af);
-			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
+			pf_addrcpy(&key.addr[pd2.sidx], pd2.src, key.af);
+			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[pd2.sidx] = th->th_sport;
 			key.port[pd2.didx] = th->th_dport;
 
@@ -5291,9 +5293,9 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
-					PF_ACPY(&pd->nsaddr,
+					pf_addrcpy(&pd->nsaddr,
 					    &nk->addr[pd2.sidx], nk->af);
-					PF_ACPY(&pd->ndaddr,
+					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
 					pd->naf = nk->af;
 
@@ -5366,8 +5368,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			key.af = pd2.af;
 			key.proto = IPPROTO_UDP;
 			key.rdomain = pd2.rdomain;
-			PF_ACPY(&key.addr[pd2.sidx], pd2.src, key.af);
-			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
+			pf_addrcpy(&key.addr[pd2.sidx], pd2.src, key.af);
+			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[pd2.sidx] = uh->uh_sport;
 			key.port[pd2.didx] = uh->uh_dport;
 
@@ -5409,9 +5411,9 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
-					PF_ACPY(&pd->nsaddr,
+					pf_addrcpy(&pd->nsaddr,
 					    &nk->addr[pd2.sidx], nk->af);
-					PF_ACPY(&pd->ndaddr,
+					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
 					pd->naf = nk->af;
 
@@ -5539,9 +5541,9 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
-					PF_ACPY(&pd->nsaddr,
+					pf_addrcpy(&pd->nsaddr,
 					    &nk->addr[pd2.sidx], nk->af);
-					PF_ACPY(&pd->ndaddr,
+					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
 					pd->naf = nk->af;
 					return (PF_AFRT);
@@ -5651,9 +5653,9 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 					pd->m->m_pkthdr.ph_rtableid =
 					    nk->rdomain;
 					pd->destchg = 1;
-					PF_ACPY(&pd->nsaddr,
+					pf_addrcpy(&pd->nsaddr,
 					    &nk->addr[pd2.sidx], nk->af);
-					PF_ACPY(&pd->ndaddr,
+					pf_addrcpy(&pd->ndaddr,
 					    &nk->addr[pd2.didx], nk->af);
 					pd->naf = nk->af;
 					return (PF_AFRT);
@@ -5701,8 +5703,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			key.af = pd2.af;
 			key.proto = pd2.proto;
 			key.rdomain = pd2.rdomain;
-			PF_ACPY(&key.addr[pd2.sidx], pd2.src, key.af);
-			PF_ACPY(&key.addr[pd2.didx], pd2.dst, key.af);
+			pf_addrcpy(&key.addr[pd2.sidx], pd2.src, key.af);
+			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[0] = key.port[1] = 0;
 
 			action = pf_find_state(&pd2, &key, state);
@@ -6149,12 +6151,12 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 			goto bad;
 		}
 		if (!PF_AZERO(&naddr, AF_INET6))
-			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			pf_addrcpy((struct pf_addr *)&dst->sin6_addr,
 			    &naddr, AF_INET6);
 		ifp = r->route.kif ? r->route.kif->pfik_ifp : NULL;
 	} else {
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
-			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
+			pf_addrcpy((struct pf_addr *)&dst->sin6_addr,
 			    &s->rt_addr, AF_INET6);
 		ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
 	}
@@ -6634,8 +6636,8 @@ pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
 
 	}
 
-	PF_ACPY(&pd->nsaddr, pd->src, pd->af);
-	PF_ACPY(&pd->ndaddr, pd->dst, pd->af);
+	pf_addrcpy(&pd->nsaddr, pd->src, pd->af);
+	pf_addrcpy(&pd->ndaddr, pd->dst, pd->af);
 
 	switch (pd->virtual_proto) {
 	case IPPROTO_TCP: {
