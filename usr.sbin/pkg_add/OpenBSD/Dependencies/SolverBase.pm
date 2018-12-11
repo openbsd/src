@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.10 2018/07/07 06:25:53 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.11 2018/12/11 10:18:37 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -362,7 +362,7 @@ sub solve_wantlibs
 		for my $lib (@{$h->{plist}->{wantlib}}) {
 			$solver->{localbase} = $h->{plist}->localbase;
 			next if $lib_finder->lookup($solver,
-			    $solver->{to_register}->{$h}, $state,
+			    $solver->{to_register}{$h}, $state,
 			    $lib->spec);
 			if ($okay) {
 				$solver->errsay_library($state, $h);
