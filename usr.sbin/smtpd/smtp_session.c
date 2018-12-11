@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.368 2018/12/11 08:40:56 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.369 2018/12/11 10:31:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1958,6 +1958,7 @@ smtp_lookup_servername(struct smtp_session *s)
 		m_add_sockaddr(p_lka, (struct sockaddr*)&s->ss);
 		m_close(p_lka);
 		tree_xset(&wait_lka_helo, s->id, s);
+		return;
 	}
 
 	smtp_connected(s);
