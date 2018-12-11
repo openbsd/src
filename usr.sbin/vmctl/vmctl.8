@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.57 2018/12/07 21:59:57 anton Exp $
+.\"	$OpenBSD: vmctl.8,v 1.58 2018/12/11 07:44:25 claudio Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2018 $
+.Dd $Mdocdate: December 11 2018 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -160,14 +160,27 @@ Boot the VM with the specified kernel or BIOS image.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
 .It Fl B Ar device
-Force system to boot from the specified device for the next boot.
+Force system to boot from the specified device for this boot.
 .Ar device
-can be set to
+can be set to:
+.Pp
+.Bl -tag -width "cdrom" -compact
+.It Ar disk
+boot from disk.
+.It Ar cdrom
+boot the CD-ROM image.
+.It Ar net
+perform a PXE boot using the first network interface.
+.El
+Currently
 .Ar net
-to perform a PXE boot using the first network interface.
-Currently only supported when starting the VM with
+is only supported when booting a kernel using the
 .Fl b
-specifying a kernel image.
+flag while
+.Ar disk
+and
+.Ar cdrom
+only work with BIOS images.
 .It Fl c
 Automatically connect to the VM console.
 .It Fl d Ar disk

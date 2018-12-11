@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2018/12/06 09:23:15 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2018/12/11 07:44:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -856,8 +856,14 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 		case 'B':
 			if (res->bootdevice)
 				errx(1, "boot device specified multiple times");
-			if (strcmp("net", optarg) == 0)
+			if (strcmp("disk", optarg) == 0)
+				res->bootdevice = VMBOOTDEV_DISK;
+			else if (strcmp("cdrom", optarg) == 0)
+				res->bootdevice = VMBOOTDEV_CDROM;
+			else if (strcmp("net", optarg) == 0)
 				res->bootdevice = VMBOOTDEV_NET;
+			else
+				errx(1, "unknown boot device %s", optarg);
 			break;
 		case 'r':
 			if (res->isopath)
