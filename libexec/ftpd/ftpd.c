@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.224 2018/12/11 18:03:11 bluhm Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.225 2018/12/11 18:19:55 bluhm Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2778,7 +2778,7 @@ logxfer(char *name, off_t size, time_t start)
 		    ((guest) ? "*" : pw->pw_name), dhostname);
 		free(vpw);
 
-		if (len >= sizeof(buf) || len == -1) {
+		if (len == -1 || len >= sizeof(buf)) {
 			if ((len = strlen(buf)) == 0)
 				return;		/* should not happen */
 			buf[len - 1] = '\n';
