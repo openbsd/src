@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.20 2018/01/04 11:02:57 tb Exp $ */
+/*	$OpenBSD: ifq.h,v 1.21 2018/12/11 01:33:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -409,6 +409,7 @@ struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
 void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_dequeue(struct ifqueue *);
+int		 ifq_hdatalen(struct ifqueue *);
 void		 ifq_mfreem(struct ifqueue *, struct mbuf *);
 void		 ifq_mfreeml(struct ifqueue *, struct mbuf_list *);
 unsigned int	 ifq_purge(struct ifqueue *);

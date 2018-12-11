@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.22 2018/01/25 14:04:36 mpi Exp $ */
+/*	$OpenBSD: ifq.c,v 1.23 2018/12/11 01:33:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -355,6 +355,21 @@ ifq_dequeue(struct ifqueue *ifq)
 	ifq_deq_commit(ifq, m);
 
 	return (m);
+}
+
+int
+ifq_hdatalen(struct ifqueue *ifq)
+{
+	struct mbuf *m;
+	int len = 0;
+
+	m = ifq_deq_begin(ifq);
+	if (m != NULL) {
+		len = m->m_pkthdr.len;
+		ifq_deq_commit(ifq, m);
+	}
+
+	return (len);
 }
 
 unsigned int
