@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.182 2018/11/12 06:35:37 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.183 2018/12/11 01:34:10 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -670,8 +670,7 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		*(int *)data = ifq_empty(&tp->tun_if.if_snd) ?
-		    0 : tp->tun_if.if_mtu;
+		*(int *)data = ifq_hdatalen(&tp->tun_if.if_snd);
 		break;
 	case TIOCSPGRP:
 		tp->tun_pgid = *(int *)data;
