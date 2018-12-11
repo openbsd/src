@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.588 2018/12/11 11:29:44 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.589 2018/12/11 13:29:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -328,6 +328,20 @@ enum imsg_type {
 	IMSG_SMTP_REPORT_PROTOCOL_CLIENT,
 	IMSG_SMTP_REPORT_PROTOCOL_SERVER,
 	IMSG_SMTP_REPORT_FILTER_RESPONSE,
+
+	IMSG_REPORT_SMTP_LINK_CONNECT,
+	IMSG_REPORT_SMTP_LINK_DISCONNECT,
+	IMSG_REPORT_SMTP_LINK_IDENTIFY,
+	IMSG_REPORT_SMTP_LINK_TLS,
+	IMSG_REPORT_SMTP_TX_BEGIN,
+	IMSG_REPORT_SMTP_TX_MAIL,
+	IMSG_REPORT_SMTP_TX_RCPT,
+	IMSG_REPORT_SMTP_TX_ENVELOPE,
+	IMSG_REPORT_SMTP_TX_COMMIT,
+	IMSG_REPORT_SMTP_TX_ROLLBACK,
+	IMSG_REPORT_SMTP_PROTOCOL_CLIENT,
+	IMSG_REPORT_SMTP_PROTOCOL_SERVER,
+	IMSG_REPORT_SMTP_FILTER_RESPONSE,
 
 	IMSG_SMTP_FILTER_BEGIN,
 	IMSG_SMTP_FILTER_END,
@@ -1513,6 +1527,23 @@ int queue_envelope_load(uint64_t, struct envelope *);
 int queue_envelope_update(struct envelope *);
 int queue_envelope_walk(struct envelope *);
 int queue_message_walk(struct envelope *, uint32_t, int *, void **);
+
+
+/* report_smtp.c */
+void report_smtp_link_connect(const char *, uint64_t, const char *, int,
+    const struct sockaddr_storage *, const struct sockaddr_storage *);
+void report_smtp_link_disconnect(const char *, uint64_t);
+void report_smtp_link_identify(const char *, uint64_t, const char *);
+void report_smtp_link_tls(const char *, uint64_t, const char *);
+void report_smtp_tx_begin(const char *, uint64_t, uint32_t);
+void report_smtp_tx_mail(const char *, uint64_t, uint32_t, const char *, int);
+void report_smtp_tx_rcpt(const char *, uint64_t, uint32_t, const char *, int);
+void report_smtp_tx_envelope(const char *, uint64_t, uint32_t, uint64_t);
+void report_smtp_tx_commit(const char *, uint64_t, uint32_t, size_t);
+void report_smtp_tx_rollback(const char *, uint64_t, uint32_t);
+void report_smtp_protocol_client(const char *, uint64_t, const char *);
+void report_smtp_protocol_server(const char *, uint64_t, const char *);
+void report_smtp_filter_response(const char *, uint64_t, int, int, const char *);
 
 
 /* ruleset.c */
