@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.253 2018/03/13 01:31:48 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.254 2018/12/11 01:27:08 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -178,23 +178,17 @@ ether_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		break;
 	}
 }
-/*
- * Ethernet output routine.
- * Encapsulate a packet of type family for the local net.
- * Assumes that ifp is actually pointer to arpcom structure.
- */
+
 int
-ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt)
+ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt, struct ether_header *eh)
 {
-	u_int16_t etype;
-	u_char edst[ETHER_ADDR_LEN];
-	u_char *esrc;
-	struct mbuf *mcopy = NULL;
-	struct ether_header *eh;
 	struct arpcom *ac = (struct arpcom *)ifp;
 	sa_family_t af = dst->sa_family;
 	int error = 0;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		senderr(ENETDOWN);
 
 	KASSERT(rt != NULL || ISSET(m->m_flags, M_MCAST|M_BCAST) ||
 		af == AF_UNSPEC || af == pseudo_AF_HDRCMPLT);
@@ -207,28 +201,31 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 #endif
 
-	esrc = ac->ac_enaddr;
-
-	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
-		senderr(ENETDOWN);
-
 	switch (af) {
 	case AF_INET:
-		error = arpresolve(ifp, rt, m, dst, edst);
+		error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
 		if (error)
-			return (error == EAGAIN ? 0 : error);
+			return (error);
+		eh->ether_type = htons(ETHERTYPE_IP);
+
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
-		    !m->m_pkthdr.pf.routed)
+		if (ISSET(m->m_flags, M_BCAST) &&
+		    ISSET(ifp->if_flags, IFF_SIMPLEX) &&
+		    !m->m_pkthdr.pf.routed) {
+			struct mbuf *mcopy;
+
+			/* XXX Should we input an unencrypted IPsec packet? */
 			mcopy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-		etype = htons(ETHERTYPE_IP);
+			if (mcopy != NULL)
+				if_input_local(ifp, mcopy, af);
+		}
 		break;
 #ifdef INET6
 	case AF_INET6:
-		error = nd6_resolve(ifp, rt, m, dst, edst);
+		error = nd6_resolve(ifp, rt, m, dst, eh->ether_dhost);
 		if (error)
-			return (error == EAGAIN ? 0 : error);
-		etype = htons(ETHERTYPE_IPV6);
+			return (error);
+		eh->ether_type = htons(ETHERTYPE_IPV6);
 		break;
 #endif
 #ifdef MPLS
@@ -242,70 +239,100 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			senderr(ENETUNREACH);
 
 		switch (dst->sa_family) {
-			case AF_LINK:
-				if (satosdl(dst)->sdl_alen < sizeof(edst))
-					senderr(EHOSTUNREACH);
-				memcpy(edst, LLADDR(satosdl(dst)),
-				    sizeof(edst));
-				break;
-#ifdef INET6
-			case AF_INET6:
-				error = nd6_resolve(ifp, rt, m, dst, edst);
-				if (error)
-					return (error == EAGAIN ? 0 : error);
-				break;
-#endif
-			case AF_INET:
-			case AF_MPLS:
-				error = arpresolve(ifp, rt, m, dst, edst);
-				if (error)
-					return (error == EAGAIN ? 0 : error);
-				break;
-			default:
+		case AF_LINK:
+			if (satosdl(dst)->sdl_alen < sizeof(eh->ether_dhost))
 				senderr(EHOSTUNREACH);
+			memcpy(eh->ether_dhost, LLADDR(satosdl(dst)),
+			    sizeof(eh->ether_dhost));
+			break;
+#ifdef INET6
+		case AF_INET6:
+			error = nd6_resolve(ifp, rt, m, dst, eh->ether_dhost);
+			if (error)
+				return (error);
+			break;
+#endif
+		case AF_INET:
+		case AF_MPLS:
+			error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
+			if (error)
+				return (error);
+			break;
+		default:
+			senderr(EHOSTUNREACH);
 		}
 		/* XXX handling for simplex devices in case of M/BCAST ?? */
 		if (m->m_flags & (M_BCAST | M_MCAST))
-			etype = htons(ETHERTYPE_MPLS_MCAST);
+			eh->ether_type = htons(ETHERTYPE_MPLS_MCAST);
 		else
-			etype = htons(ETHERTYPE_MPLS);
+			eh->ether_type = htons(ETHERTYPE_MPLS);
 		break;
 #endif /* MPLS */
 	case pseudo_AF_HDRCMPLT:
-		eh = (struct ether_header *)dst->sa_data;
-		esrc = eh->ether_shost;
-		/* FALLTHROUGH */
+		/* take the whole header from the sa */
+		memcpy(eh, dst->sa_data, sizeof(*eh));
+		return (0);
 
 	case AF_UNSPEC:
-		eh = (struct ether_header *)dst->sa_data;
-		memcpy(edst, eh->ether_dhost, sizeof(edst));
-		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
-		etype = eh->ether_type;
+		/* take the dst and type from the sa, but get src below */
+		memcpy(eh, dst->sa_data, sizeof(*eh));
 		break;
 
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-			dst->sa_family);
+		printf("%s: can't handle af%d\n", ifp->if_xname, af);
 		senderr(EAFNOSUPPORT);
 	}
 
-	/* XXX Should we feed-back an unencrypted IPsec packet ? */
-	if (mcopy)
-		if_input_local(ifp, mcopy, dst->sa_family);
+	memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
 
-	M_PREPEND(m, sizeof(struct ether_header) + ETHER_ALIGN, M_DONTWAIT);
-	if (m == NULL)
-		return (ENOBUFS);
-	m_adj(m, ETHER_ALIGN);
-	eh = mtod(m, struct ether_header *);
-	eh->ether_type = etype;
-	memcpy(eh->ether_dhost, edst, sizeof(eh->ether_dhost));
-	memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
+	return (0);
 
-	return (if_enqueue(ifp, m));
 bad:
 	m_freem(m);
 	return (error);
+}
+
+struct mbuf*
+ether_encap(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt, int *errorp)
+{
+	struct ether_header eh;
+	int error;
+
+	error = ether_resolve(ifp, m, dst, rt, &eh);
+	switch (error) {
+	case 0:
+		break;
+	case EAGAIN:
+		error = 0;
+	default:
+		*errorp = error;
+		return (NULL);
+	}
+
+	m = m_prepend(m, ETHER_ALIGN + sizeof(eh), M_DONTWAIT);
+	if (m == NULL) {
+		*errorp = ENOBUFS;
+		return (NULL);
+	}
+
+	m_adj(m, ETHER_ALIGN);
+	memcpy(mtod(m, struct ether_header *), &eh, sizeof(eh));
+
+	return (m);
+}
+
+int
+ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	int error;
+
+	m = ether_encap(ifp, m, dst, rt, &error);
+	if (m == NULL)
+		return (error);
+
+	return (if_enqueue(ifp, m));
 }
 
 /*
