@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.366 2018/12/09 17:37:15 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.367 2018/12/11 07:57:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1947,25 +1947,13 @@ abort:
 static void
 smtp_lookup_servername(struct smtp_session *s)
 {
-	struct sockaddr		*sa;
-	socklen_t		 sa_len;
-	struct sockaddr_storage	 ss;
-
 	if (s->listener->hostnametable[0]) {
-		sa_len = sizeof(ss);
-		sa = (struct sockaddr *)&ss;
-		if (getsockname(io_fileno(s->io), sa, &sa_len) == -1) {
-			log_warn("warn: getsockname()");
-		}
-		else {
-			m_create(p_lka, IMSG_SMTP_LOOKUP_HELO, 0, 0, -1);
-			m_add_id(p_lka, s->id);
-			m_add_string(p_lka, s->listener->hostnametable);
-			m_add_sockaddr(p_lka, sa);
-			m_close(p_lka);
-			tree_xset(&wait_lka_helo, s->id, s);
-			return;
-		}
+		m_create(p_lka, IMSG_SMTP_LOOKUP_HELO, 0, 0, -1);
+		m_add_id(p_lka, s->id);
+		m_add_string(p_lka, s->listener->hostnametable);
+		m_add_sockaddr(p_lka, (struct sockaddr*)&s->ss);
+		m_close(p_lka);
+		tree_xset(&wait_lka_helo, s->id, s);
 	}
 
 	smtp_connected(s);
@@ -1974,9 +1962,6 @@ smtp_lookup_servername(struct smtp_session *s)
 static void
 smtp_connected(struct smtp_session *s)
 {
-	struct sockaddr_storage	ss;
-	socklen_t		sl;
-
 	smtp_enter_state(s, STATE_CONNECTED);
 
 	log_info("%016"PRIx64" smtp connected address=%s host=%s",
@@ -1984,12 +1969,6 @@ smtp_connected(struct smtp_session *s)
 
 	smtp_report_link_connect(s->id, s->hostname, s->fcrdns, &s->ss,
 	    &s->listener->ss);
-
-	sl = sizeof(ss);
-	if (getsockname(io_fileno(s->io), (struct sockaddr*)&ss, &sl) == -1) {
-		smtp_free(s, strerror(errno));
-		return;
-	}
 
 	smtp_filter_begin(s);
 	smtp_filter_phase(FILTER_CONNECTED, s, ss_to_text(&s->ss));
