@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.90 2018/09/10 16:18:34 sashan Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.91 2018/12/11 22:08:57 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 struct rtentry;
 struct ifnet;
 struct task;
+struct cpumem;
 
 /*
  * Structure describing a `cloning' interface.
@@ -144,6 +145,7 @@ struct ifnet {				/* and the entries */
 	unsigned short if_flags;	/* [N] up/down, broadcast, etc. */
 	int	if_xflags;		/* [N] extra softnet flags */
 	struct	if_data if_data;	/* stats and other data about if */
+	struct	cpumem *if_counters;	/* per cpu stats */
 	uint32_t if_hardmtu;		/* [d] maximum MTU device supports */
 	char	if_description[IFDESCRSIZE]; /* [c] interface description */
 	u_short	if_rtlabelid;		/* [c] next route label */
@@ -201,6 +203,23 @@ struct ifnet {				/* and the entries */
 #define	if_lastchange	if_data.ifi_lastchange	/* [c] last op. state change */
 #define	if_capabilities	if_data.ifi_capabilities
 #define	if_rdomain	if_data.ifi_rdomain
+
+enum if_counters {
+	ifc_ipackets,		/* packets received on interface */
+	ifc_ierrors,		/* input errors on interface */
+	ifc_opackets,		/* packets sent on interface */
+	ifc_oerrors,		/* output errors on interface */
+	ifc_collisions,		/* collisions on csma interfaces */
+	ifc_ibytes,		/* total number of octets received */
+	ifc_obytes,		/* total number of octets sent */
+	ifc_imcasts,		/* packets received via multicast */
+	ifc_omcasts,		/* packets sent via multicast */
+	ifc_iqdrops,		/* dropped on input, this interface */
+	ifc_oqdrops,		/* dropped on output, this interface */
+	ifc_noproto,		/* destined for unsupported protocol */
+
+	ifc_ncounters
+};
 
 /*
  * The ifaddr structure contains information about one address
@@ -356,6 +375,9 @@ u_int	if_rxr_get(struct if_rxring *, u_int);
 int	if_rxr_info_ioctl(struct if_rxrinfo *, u_int, struct if_rxring_info *);
 int	if_rxr_ioctl(struct if_rxrinfo *, const char *, u_int,
 	    struct if_rxring *);
+
+void	if_counters_alloc(struct ifnet *);
+void	if_counters_free(struct ifnet *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.568 2018/11/29 00:11:49 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.569 2018/12/11 22:08:57 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <sys/domain.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
+#include <sys/percpu.h>
 #include <sys/proc.h>
 
 #include <dev/rndvar.h>
@@ -1102,6 +1103,9 @@ if_detach(struct ifnet *ifp)
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);
 	splx(s);
 	NET_UNLOCK();
+
+	if (ifp->if_counters != NULL)
+		if_counters_free(ifp);
 
 	for (i = 0; i < ifp->if_nifqs; i++)
 		ifq_destroy(ifp->if_ifqs[i]);
@@ -2362,11 +2366,47 @@ ifconf(caddr_t data)
 }
 
 void
+if_counters_alloc(struct ifnet *ifp)
+{
+	KASSERT(ifp->if_counters == NULL);
+
+	ifp->if_counters = counters_alloc(ifc_ncounters);
+}
+
+void
+if_counters_free(struct ifnet *ifp)
+{
+	KASSERT(ifp->if_counters != NULL);
+
+	counters_free(ifp->if_counters, ifc_ncounters);
+	ifp->if_counters = NULL;
+}
+
+void
 if_getdata(struct ifnet *ifp, struct if_data *data)
 {
 	unsigned int i;
 
 	*data = ifp->if_data;
+
+	if (ifp->if_counters != NULL) {
+		uint64_t counters[ifc_ncounters];
+
+		counters_read(ifp->if_counters, counters, nitems(counters));
+
+		data->ifi_ipackets += counters[ifc_ipackets];
+		data->ifi_ierrors += counters[ifc_ierrors];
+		data->ifi_opackets += counters[ifc_opackets];
+		data->ifi_oerrors += counters[ifc_oerrors];
+		data->ifi_collisions += counters[ifc_collisions];
+		data->ifi_ibytes += counters[ifc_ibytes];
+		data->ifi_obytes += counters[ifc_obytes];
+		data->ifi_imcasts += counters[ifc_imcasts];
+		data->ifi_omcasts += counters[ifc_omcasts];
+		data->ifi_iqdrops += counters[ifc_iqdrops];
+		data->ifi_oqdrops += counters[ifc_oqdrops];
+		data->ifi_noproto += counters[ifc_noproto];
+	}
 
 	for (i = 0; i < ifp->if_nifqs; i++) {
 		struct ifqueue *ifq = ifp->if_ifqs[i];
