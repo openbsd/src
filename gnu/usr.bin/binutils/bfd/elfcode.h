@@ -269,7 +269,10 @@ elf_swap_ehdr_out (bfd *abfd,
   H_PUT_32 (abfd, src->e_flags, dst->e_flags);
   H_PUT_16 (abfd, src->e_ehsize, dst->e_ehsize);
   H_PUT_16 (abfd, src->e_phentsize, dst->e_phentsize);
-  H_PUT_16 (abfd, src->e_phnum, dst->e_phnum);
+  tmp = src->e_phnum;
+  if (tmp >= PN_XNUM)
+      tmp = PN_XNUM;
+  H_PUT_16 (abfd, tmp, dst->e_phnum);
   H_PUT_16 (abfd, src->e_shentsize, dst->e_shentsize);
   tmp = src->e_shnum;
   if (tmp >= SHN_LORESERVE)
@@ -629,6 +632,14 @@ elf_object_p (bfd *abfd)
       /* And similarly for the string table index.  */
       if (i_ehdrp->e_shstrndx == SHN_XINDEX)
 	i_ehdrp->e_shstrndx = i_shdr.sh_link;
+
+      /* And similarly for the program header count. */
+      if (i_ehdrp->e_phnum == PN_XNUM)
+       {
+         i_ehdrp->e_phnum = i_shdr.sh_info;
+         if (i_ehdrp->e_phnum != i_shdr.sh_info)
+           goto got_wrong_format_error;
+       }
     }
 
   /* Allocate space for a copy of the section header table in
@@ -950,6 +961,8 @@ elf_write_shdrs_and_ehdr (bfd *abfd)
     i_shdrp[0]->sh_size = i_ehdrp->e_shnum;
   if (i_ehdrp->e_shstrndx >= SHN_LORESERVE)
     i_shdrp[0]->sh_link = i_ehdrp->e_shstrndx;
+  if (i_ehdrp->e_phnum >= PN_XNUM)
+    i_shdrp[0]->sh_info = i_ehdrp->e_phnum;
 
   /* at this point we've concocted all the ELF sections...  */
   amt = i_ehdrp->e_shnum;

@@ -272,6 +272,9 @@
 #define EV_NONE		0		/* Invalid ELF version */
 #define EV_CURRENT	1		/* Current version */
 
+/* Magic for e_phnum: get real value from sh_info of first section header */
+#define PN_XNUM		0xffff
+
 /* Values for program header, p_type field.  */
 
 #define PT_NULL		0		/* Program header table entry unused */
