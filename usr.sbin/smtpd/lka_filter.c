@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.13 2018/12/09 21:43:46 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.14 2018/12/11 13:40:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -140,7 +140,7 @@ lka_filter_data_begin(uint64_t reqid)
 	io_set_callback(fs->io, filter_session_io, fs);
 
 end:
-	m_create(p_pony, IMSG_SMTP_FILTER_DATA_BEGIN, 0, 0, fd);
+	m_create(p_pony, IMSG_FILTER_SMTP_DATA_BEGIN, 0, 0, fd);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, fd != -1 ? 1 : 0);
 	m_close(p_pony);
@@ -366,7 +366,7 @@ filter_write_dataline(const char *name, uint64_t reqid, const char *line)
 static void
 filter_proceed(uint64_t reqid)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
+	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_PROCEED);
 	m_close(p_pony);
@@ -375,7 +375,7 @@ filter_proceed(uint64_t reqid)
 static void
 filter_rewrite(uint64_t reqid, const char *param)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
+	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_REWRITE);
 	m_add_string(p_pony, param);
@@ -385,7 +385,7 @@ filter_rewrite(uint64_t reqid, const char *param)
 static void
 filter_reject(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
+	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_REJECT);
 	m_add_string(p_pony, message);
@@ -395,7 +395,7 @@ filter_reject(uint64_t reqid, const char *message)
 static void
 filter_disconnect(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
+	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 	m_add_id(p_pony, reqid);
 	m_add_int(p_pony, FILTER_DISCONNECT);
 	m_add_string(p_pony, message);

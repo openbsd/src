@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.371 2018/12/11 13:29:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.372 2018/12/11 13:40:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -800,7 +800,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		}
 		return;
 
-	case IMSG_SMTP_FILTER_DATA_BEGIN:
+	case IMSG_FILTER_SMTP_DATA_BEGIN:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &success);
@@ -988,7 +988,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		io_resume(s->io, IO_IN);
 		return;
 
-	case IMSG_SMTP_FILTER_PROTOCOL:
+	case IMSG_FILTER_SMTP_PROTOCOL:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &filter_response);
@@ -1585,7 +1585,7 @@ smtp_query_filters(enum filter_phase phase, struct smtp_session *s, const char *
 	uint8_t i;
 
 	if (TAILQ_FIRST(&env->sc_filter_rules[phase])) {
-		m_create(p_lka, IMSG_SMTP_FILTER_PROTOCOL, 0, 0, -1);
+		m_create(p_lka, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
 		m_add_id(p_lka, s->id);
 		m_add_int(p_lka, phase);
 		m_add_string(p_lka, args);
@@ -1609,7 +1609,7 @@ smtp_filter_begin(struct smtp_session *s)
 	if (!SESSION_FILTERED(s))
 		return;
 
-	m_create(p_lka, IMSG_SMTP_FILTER_BEGIN, 0, 0, -1);
+	m_create(p_lka, IMSG_FILTER_SMTP_BEGIN, 0, 0, -1);
 	m_add_id(p_lka, s->id);
 	m_add_sockaddr(p_lka, (struct sockaddr *)&s->ss);
 	m_add_sockaddr(p_lka, (struct sockaddr *)&s->listener->ss);
@@ -1624,7 +1624,7 @@ smtp_filter_end(struct smtp_session *s)
 	if (!SESSION_FILTERED(s))
 		return;
 
-	m_create(p_lka, IMSG_SMTP_FILTER_END, 0, 0, -1);
+	m_create(p_lka, IMSG_FILTER_SMTP_END, 0, 0, -1);
 	m_add_id(p_lka, s->id);
 	m_close(p_lka);
 }
@@ -1635,7 +1635,7 @@ smtp_filter_data_begin(struct smtp_session *s)
 	if (!SESSION_FILTERED(s))
 		return;
 
-	m_create(p_lka, IMSG_SMTP_FILTER_DATA_BEGIN, 0, 0, -1);
+	m_create(p_lka, IMSG_FILTER_SMTP_DATA_BEGIN, 0, 0, -1);
 	m_add_id(p_lka, s->id);
 	m_close(p_lka);
 	tree_xset(&wait_filter_fd, s->id, s);
@@ -1653,7 +1653,7 @@ smtp_filter_data_end(struct smtp_session *s)
 	io_free(s->tx->filter);
 	s->tx->filter = NULL;
 
-	m_create(p_lka, IMSG_SMTP_FILTER_DATA_END, 0, 0, -1);
+	m_create(p_lka, IMSG_FILTER_SMTP_DATA_END, 0, 0, -1);
 	m_add_id(p_lka, s->id);
 	m_close(p_lka);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.224 2018/12/11 13:29:52 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.225 2018/12/11 13:40:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -576,7 +576,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 
 
-	case IMSG_SMTP_FILTER_PROTOCOL:
+	case IMSG_FILTER_SMTP_PROTOCOL:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_int(&m, &filter_phase);
@@ -586,7 +586,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_filter_protocol(reqid, filter_phase, filter_param);
 		return;
 
-	case IMSG_SMTP_FILTER_BEGIN:
+	case IMSG_FILTER_SMTP_BEGIN:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_get_sockaddr(&m, (struct sockaddr *)&ss_src);
@@ -598,7 +598,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_filter_begin(reqid, &ss_src, &ss_dest, rdns, fcrdns);
 		return;
 
-	case IMSG_SMTP_FILTER_END:
+	case IMSG_FILTER_SMTP_END:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_end(&m);
@@ -606,7 +606,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_filter_end(reqid);
 		return;
 
-	case IMSG_SMTP_FILTER_DATA_BEGIN:
+	case IMSG_FILTER_SMTP_DATA_BEGIN:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_end(&m);
@@ -614,7 +614,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_filter_data_begin(reqid);
 		return;
 
-	case IMSG_SMTP_FILTER_DATA_END:
+	case IMSG_FILTER_SMTP_DATA_END:
 		m_msg(&m, imsg);
 		m_get_id(&m, &reqid);
 		m_end(&m);
