@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.367 2018/12/11 07:57:31 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.368 2018/12/11 08:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1694,6 +1694,8 @@ smtp_proceed_helo(struct smtp_session *s, const char *args)
 	(void)strlcpy(s->helo, args, sizeof(s->helo));
 	s->flags &= SF_SECURE | SF_AUTHENTICATED | SF_VERIFIED;
 
+	smtp_report_link_identify(s->id, s->helo);
+
 	smtp_enter_state(s, STATE_HELO);
 	smtp_reply(s, "250 %s Hello %s [%s], pleased to meet you",
 	    s->smtpname,
@@ -1708,6 +1710,8 @@ smtp_proceed_ehlo(struct smtp_session *s, const char *args)
 	s->flags &= SF_SECURE | SF_AUTHENTICATED | SF_VERIFIED;
 	s->flags |= SF_EHLO;
 	s->flags |= SF_8BITMIME;
+
+	smtp_report_link_identify(s->id, s->helo);
 
 	smtp_enter_state(s, STATE_HELO);
 	smtp_reply(s, "250-%s Hello %s [%s], pleased to meet you",

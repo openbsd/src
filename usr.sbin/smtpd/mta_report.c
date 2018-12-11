@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_report.c,v 1.3 2018/12/06 16:05:04 gilles Exp $	*/
+/*	$OpenBSD: mta_report.c,v 1.4 2018/12/11 08:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -55,6 +55,16 @@ mta_report_link_connect(uint64_t qid, const char *rdns, int fcrdns,
 	m_add_int(p_lka, fcrdns);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_src);
 	m_add_sockaddr(p_lka, (const struct sockaddr *)ss_dest);
+	m_close(p_lka);
+}
+
+void
+mta_report_link_identify(uint64_t qid, const char *identity)
+{
+	m_create(p_lka, IMSG_MTA_REPORT_LINK_IDENTIFY, 0, 0, -1);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_string(p_lka, identity);
 	m_close(p_lka);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.11 2018/12/06 16:05:04 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.12 2018/12/11 08:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -107,6 +107,13 @@ lka_report_smtp_link_disconnect(const char *direction, time_t tm, uint64_t reqid
 {
 	report_smtp_broadcast(direction, tm,
 	    "link-disconnect|%016"PRIx64"\n", reqid);
+}
+
+void
+lka_report_smtp_link_identify(const char *direction, time_t tm, uint64_t reqid, const char *heloname)
+{
+	report_smtp_broadcast(direction, tm,
+	    "link-identify|%016"PRIx64"|%s\n", reqid, heloname);
 }
 
 void

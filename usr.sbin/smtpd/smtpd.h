@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.586 2018/12/11 07:25:57 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.587 2018/12/11 08:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -317,6 +317,7 @@ enum imsg_type {
 
 	IMSG_SMTP_REPORT_LINK_CONNECT,
 	IMSG_SMTP_REPORT_LINK_DISCONNECT,
+	IMSG_SMTP_REPORT_LINK_IDENTIFY,
 	IMSG_SMTP_REPORT_LINK_TLS,
 	IMSG_SMTP_REPORT_TX_BEGIN,
 	IMSG_SMTP_REPORT_TX_MAIL,
@@ -335,6 +336,7 @@ enum imsg_type {
 
 	IMSG_MTA_REPORT_LINK_CONNECT,
 	IMSG_MTA_REPORT_LINK_DISCONNECT,
+	IMSG_MTA_REPORT_LINK_IDENTIFY,
 	IMSG_MTA_REPORT_LINK_TLS,
 	IMSG_MTA_REPORT_TX_BEGIN,
 	IMSG_MTA_REPORT_TX_MAIL,
@@ -1341,6 +1343,7 @@ struct io *lka_proc_get_io(const char *);
 void lka_report_smtp_link_connect(const char *, time_t, uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void lka_report_smtp_link_disconnect(const char *, time_t, uint64_t);
+void lka_report_smtp_link_identify(const char *, time_t, uint64_t, const char *);
 void lka_report_smtp_link_tls(const char *, time_t, uint64_t, const char *);
 void lka_report_smtp_tx_begin(const char *, time_t, uint64_t, uint32_t);
 void lka_report_smtp_tx_mail(const char *, time_t, uint64_t, uint32_t, const char *, int);
@@ -1465,6 +1468,7 @@ const char *mta_relay_to_text(struct mta_relay *);
 void mta_report_link_connect(uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void mta_report_link_disconnect(uint64_t);
+void mta_report_link_identify(uint64_t, const char *);
 void mta_report_link_tls(uint64_t, const char *);
 void mta_report_tx_begin(uint64_t, uint32_t);
 void mta_report_tx_mail(uint64_t, uint32_t, const char *, int);
@@ -1547,6 +1551,7 @@ void smtp_collect(void);
 void smtp_report_link_connect(uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void smtp_report_link_disconnect(uint64_t);
+void smtp_report_link_identify(uint64_t, const char *);
 void smtp_report_link_tls(uint64_t, const char *);
 void smtp_report_tx_begin(uint64_t, uint32_t);
 void smtp_report_tx_mail(uint64_t, uint32_t, const char *, int);

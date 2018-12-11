@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.221 2018/12/09 17:37:15 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.222 2018/12/11 08:40:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -87,6 +87,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*command, *response;
 	const char		*ciphers;
 	const char		*address;
+	const char		*heloname;
 	struct sockaddr_storage	ss_src, ss_dest;
 	int                      filter_phase;
 	const char              *filter_param;
@@ -440,6 +441,16 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_report_smtp_link_disconnect("smtp-in", tm, reqid);
 		return;
 
+	case IMSG_SMTP_REPORT_LINK_IDENTIFY:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &heloname);
+		m_end(&m);
+
+		lka_report_smtp_link_identify("smtp-in", tm, reqid, heloname);
+		return;
+
 	case IMSG_SMTP_REPORT_LINK_TLS:
 		m_msg(&m, imsg);
 		m_get_time(&m, &tm);
@@ -556,6 +567,16 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_link_disconnect("smtp-out", tm, reqid);
+		return;
+
+	case IMSG_MTA_REPORT_LINK_IDENTIFY:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_string(&m, &heloname);
+		m_end(&m);
+
+		lka_report_smtp_link_identify("smtp-out", tm, reqid, heloname);
 		return;
 
 	case IMSG_MTA_REPORT_LINK_TLS:
