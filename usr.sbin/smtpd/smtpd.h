@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.585 2018/12/09 18:05:20 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.586 2018/12/11 07:25:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -99,6 +99,12 @@
 
 #define P_NEWALIASES	0
 #define P_MAKEMAP	1
+
+#define	CERT_ERROR	-1
+#define	CERT_OK		 0
+#define	CERT_NOCA	 1
+#define	CERT_NOCERT	 2
+#define	CERT_INVALID	 3
 
 struct userinfo {
 	char username[SMTPD_VUSERNAME_SIZE];

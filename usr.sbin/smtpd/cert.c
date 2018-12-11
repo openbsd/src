@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.1 2018/12/07 08:05:59 eric Exp $	*/
+/*	$OpenBSD: cert.c,v 1.2 2018/12/11 07:25:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -77,8 +77,10 @@ cert_init(const char *name, int fallback, void (*cb)(void *, int,
 	struct request *req;
 
 	req = calloc(1, sizeof(*req));
-	if (req ==  NULL)
-		return -1;
+	if (req ==  NULL) {
+		cb(arg, CA_FAIL, NULL, NULL, 0);
+		return 0;
+	}
 	while (req->id == 0 || SPLAY_FIND(cert_reqtree, &reqs, req))
 		req->id = arc4random();
 	req->cb_get_certificate = cb;
@@ -90,7 +92,7 @@ cert_init(const char *name, int fallback, void (*cb)(void *, int,
 	m_add_int(p_cert, fallback);
 	m_close(p_cert);
 
-	return 0;
+	return 1;
 }
 
 int
@@ -102,14 +104,20 @@ cert_verify(const void *ssl, const char *name, int fallback,
 	STACK_OF(X509)	       *xchain;
 	unsigned char	       *cert_der[MAX_CERTS];
 	int			cert_len[MAX_CERTS];
-	int			i, cert_count, res;
+	int			i, cert_count, ret;
 
-	res = -1;
+	x = SSL_get_peer_certificate(ssl);
+	if (x == NULL) {
+		cb(arg, CERT_NOCERT);
+		return 0;
+	}
+
+	ret = 0;
 	memset(cert_der, 0, sizeof(cert_der));
 
 	req = calloc(1, sizeof(*req));
 	if (req ==  NULL)
-		return -1;
+		goto end;
 	while (req->id == 0 || SPLAY_FIND(cert_reqtree, &reqs, req))
 		req->id = arc4random();
 	req->cb_verify = cb;
@@ -126,14 +134,11 @@ cert_verify(const void *ssl, const char *name, int fallback,
 	}
 
 	for (i = 0; i < cert_count; ++i) {
-		if (i == 0)
-			x = SSL_get_peer_certificate(ssl);
-		else
-			x = sk_X509_value(xchain, i - 1);
-
-		if (x == NULL) {
-			log_warnx("warn: failed to retreive certificate");
-			goto end;
+		if (i != 0) {
+			if ((x = sk_X509_value(xchain, i - 1)) == NULL) {
+				log_warnx("warn: failed to retrieve certificate");
+				goto end;
+			}
 		}
 
 		cert_len[i] = i2d_X509(x, &cert_der[i]);
@@ -165,18 +170,20 @@ cert_verify(const void *ssl, const char *name, int fallback,
 	m_add_int(p_cert, fallback);
 	m_close(p_cert);
 
-	res = 0;
+	ret = 1;
 
     end:
 	for (i = 0; i < MAX_CERTS; ++i)
 		free(cert_der[i]);
 
-	if (res == -1) {
-		SPLAY_REMOVE(cert_reqtree, &reqs, req);
+	if (ret == 0) {
+		if (req)
+			SPLAY_REMOVE(cert_reqtree, &reqs, req);
 		free(req);
+		cb(arg, CERT_ERROR);
 	}
 
-	return res;
+	return ret;
 }
 
 
@@ -317,11 +324,11 @@ cert_do_verify(struct session *s, const char *name, int fallback)
 	cafile = ca ? ca->ca_cert_file : CA_FILE;
 
 	if (ca == NULL && !fallback)
-		res = CA_FAIL;
+		res = CERT_NOCA;
 	else if (!cert_X509_verify(s, cafile, NULL))
-		res = CA_FAIL;
+		res = CERT_INVALID;
 	else
-		res = CA_OK;
+		res = CERT_OK;
 
 	for (i = 0; i < s->cert_count; ++i)
 		free(s->cert[i]);
