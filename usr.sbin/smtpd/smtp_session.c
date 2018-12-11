@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.369 2018/12/11 10:31:45 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.370 2018/12/11 11:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -994,6 +994,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_int(&m, &filter_response);
 		if (filter_response != FILTER_PROCEED)
 			m_get_string(&m, &filter_param);
+		else
+			filter_param = NULL;
 		m_end(&m);
 
 		s = tree_xpop(&wait_filters, reqid);
@@ -1006,6 +1008,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 				filter_param = "421 Internal server error";
 			if (!strncmp(filter_param, "421", 3))
 				filter_response = FILTER_DISCONNECT;
+
+			smtp_report_filter_response(s->id, s->filter_phase,
+			    filter_response, filter_param);
 
 			smtp_reply(s, "%s", filter_param);
 
@@ -1020,6 +1025,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			/* fallthrough*/
 
 		case FILTER_REWRITE:
+			smtp_report_filter_response(s->id, s->filter_phase,
+			    filter_response,
+			    filter_param == s->filter_param ? NULL : filter_param);
 			if (s->filter_phase == FILTER_CONNECTED) {
 				smtp_proceed_connected(s);
 				return;

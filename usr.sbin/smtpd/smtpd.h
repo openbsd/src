@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.587 2018/12/11 08:40:56 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.588 2018/12/11 11:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -327,6 +327,7 @@ enum imsg_type {
 	IMSG_SMTP_REPORT_TX_ROLLBACK,
 	IMSG_SMTP_REPORT_PROTOCOL_CLIENT,
 	IMSG_SMTP_REPORT_PROTOCOL_SERVER,
+	IMSG_SMTP_REPORT_FILTER_RESPONSE,
 
 	IMSG_SMTP_FILTER_BEGIN,
 	IMSG_SMTP_FILTER_END,
@@ -1353,6 +1354,8 @@ void lka_report_smtp_tx_commit(const char *, time_t, uint64_t, uint32_t, size_t)
 void lka_report_smtp_tx_rollback(const char *, time_t, uint64_t, uint32_t);
 void lka_report_smtp_protocol_client(const char *, time_t, uint64_t, const char *);
 void lka_report_smtp_protocol_server(const char *, time_t, uint64_t, const char *);
+void lka_report_smtp_filter_response(const char *, time_t, uint64_t,
+    int, int, const char *);
 
 
 /* lka_filter.c */
@@ -1561,6 +1564,7 @@ void smtp_report_tx_commit(uint64_t, uint32_t, size_t);
 void smtp_report_tx_rollback(uint64_t, uint32_t);
 void smtp_report_protocol_client(uint64_t, const char *);
 void smtp_report_protocol_server(uint64_t, const char *);
+void smtp_report_filter_response(uint64_t, int, int, const char *);
 
 
 /* smtp_session.c */

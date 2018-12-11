@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_report.c,v 1.8 2018/12/11 08:40:56 gilles Exp $	*/
+/*	$OpenBSD: smtp_report.c,v 1.9 2018/12/11 11:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -170,5 +170,17 @@ smtp_report_protocol_server(uint64_t qid, const char *response)
 	m_add_time(p_lka, time(NULL));
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, response);
+	m_close(p_lka);
+}
+
+void
+smtp_report_filter_response(uint64_t qid, int phase, int response, const char *param)
+{
+	m_create(p_lka, IMSG_SMTP_REPORT_FILTER_RESPONSE, 0, 0, -1);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_int(p_lka, phase);
+	m_add_int(p_lka, response);
+	m_add_string(p_lka, param);
 	m_close(p_lka);
 }

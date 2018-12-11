@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.222 2018/12/11 08:40:56 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.223 2018/12/11 11:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -89,6 +89,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 	const char		*address;
 	const char		*heloname;
 	struct sockaddr_storage	ss_src, ss_dest;
+	int                      filter_response;
 	int                      filter_phase;
 	const char              *filter_param;
 	uint32_t		 msgid;
@@ -545,6 +546,19 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_protocol_server("smtp-in", tm, reqid, response);
+		return;
+
+	case IMSG_SMTP_REPORT_FILTER_RESPONSE:
+		m_msg(&m, imsg);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &filter_phase);
+		m_get_int(&m, &filter_response);
+		m_get_string(&m, &filter_param);
+		m_end(&m);
+
+		lka_report_smtp_filter_response("smtp-in", tm, reqid,
+		    filter_phase, filter_response, filter_param);
 		return;
 
 	case IMSG_MTA_REPORT_LINK_CONNECT:
