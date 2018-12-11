@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.235 2018/12/09 18:24:15 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.236 2018/12/11 14:52:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -214,7 +214,6 @@ grammar		: /* empty */
 		| grammar pki '\n'
 		| grammar proc '\n'
 		| grammar queue '\n'
-		| grammar report '\n'
 		| grammar scheduler '\n'
 		| grammar smtp '\n'
 		| grammar listen '\n'
@@ -480,36 +479,6 @@ USER STRING {
 proc_params:
 proc_params_opt proc_params
 | /* empty */
-;
-
-
-report:
-REPORT SMTP_IN ON STRING {
-	if (! dict_get(conf->sc_processors_dict, $4)) {
-		yyerror("no processor exist with that name: %s", $4);
-		free($4);
-		YYERROR;
-	}
-	if (dict_get(conf->sc_smtp_reporters_dict, $4)) {
-		yyerror("processor already registered for smtp-in reporting: %s", $4);
-		free($4);
-		YYERROR;
-	}
-	dict_set(conf->sc_smtp_reporters_dict, $4, (void *)~0);
-}
-| REPORT SMTP_OUT ON STRING {
-	if (! dict_get(conf->sc_processors_dict, $4)) {
-		yyerror("no processor exist with that name: %s", $4);
-		free($4);
-		YYERROR;
-	}
-	if (dict_get(conf->sc_mta_reporters_dict, $4)) {
-		yyerror("processor already registered for smtp-out reporting: %s", $4);
-		free($4);
-		YYERROR;
-	}
-	dict_set(conf->sc_mta_reporters_dict, $4, (void *)~0);
-}
 ;
 
 
@@ -1148,6 +1117,12 @@ MATCH {
 filter_action_proc:
 ON STRING {
 	filter_rule->proc = $2;
+	if (! dict_get(conf->sc_processors_dict, $2)) {
+		yyerror("no processor exist with that name: %s", $2);
+		free($2);
+		YYERROR;
+	}
+	dict_set(conf->sc_smtp_reporters_dict, $2, (void *)~0);
 }
 ;
 
@@ -1158,11 +1133,6 @@ REJECT STRING {
 | DISCONNECT STRING {
 	filter_rule->disconnect = $2;
 }
-/*
-| REWRITE STRING {
-	filter_rule->rewrite = $2;
-}
-*/
 ;
 
 filter_phase_check_table:
@@ -1325,6 +1295,32 @@ FILTER SMTP_IN {
 } filter_phase {
 	TAILQ_INSERT_TAIL(&conf->sc_filter_rules[filter_rule->phase], filter_rule, entry);
 	filter_rule = NULL;
+}
+| FILTER SMTP_IN ON STRING {
+	int	phase;
+
+	if (! dict_get(conf->sc_processors_dict, $4)) {
+		yyerror("no processor exist with that name: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	for (phase = 0; phase < FILTER_PHASES_COUNT; phase++) {
+		filter_rule = xcalloc(1, sizeof *filter_rule);
+		filter_rule->phase = phase;
+		filter_rule->proc = $4;
+		TAILQ_INSERT_TAIL(&conf->sc_filter_rules[filter_rule->phase], filter_rule, entry);
+		filter_rule = NULL;
+	}
+
+	dict_set(conf->sc_smtp_reporters_dict, $4, (void *)~0);
+}
+| FILTER SMTP_OUT ON STRING {
+	if (! dict_get(conf->sc_processors_dict, $4)) {
+		yyerror("no processor exist with that name: %s", $4);
+		free($4);
+		YYERROR;
+	}
+	dict_set(conf->sc_mta_reporters_dict, $4, (void *)~0);
 }
 ;
 
@@ -1940,8 +1936,6 @@ lookup(char *s)
 		{ "recipient",		RECIPIENT },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
-		{ "report",		REPORT },
-		{ "rewrite",		REWRITE },
 		{ "rset",		RSET },
 		{ "scheduler",		SCHEDULER },
 		{ "senders",   		SENDERS },
