@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.203 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.204 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -125,6 +125,7 @@ struct rde_peer {
 
 struct aspath {
 	LIST_ENTRY(aspath)	entry;
+	u_int32_t		source_as;	/* cached source_as */
 	int			refcnt;	/* reference count */
 	u_int16_t		len;	/* total length of aspath in octets */
 	u_int16_t		ascnt;	/* number of AS hops in data */
@@ -208,7 +209,6 @@ struct rde_aspath {
 	struct aspath			*aspath;
 	u_int64_t			 hash;
 	u_int32_t			 flags;		/* internally used */
-	u_int32_t			 source_as;	/* cached source_as */
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int32_t			 weight;	/* low prio lpref */
@@ -354,11 +354,11 @@ u_char		*aspath_deflate(u_char *, u_int16_t *, int *);
 void		 aspath_merge(struct rde_aspath *, struct attr *);
 u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
-u_int16_t	 aspath_count(const void *, u_int16_t);
 u_int32_t	 aspath_neighbor(struct aspath *);
 u_int32_t	 aspath_origin(struct aspath *);
 int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
+int		 aspath_match(struct aspath *, struct filter_as *, u_int32_t);
 u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 

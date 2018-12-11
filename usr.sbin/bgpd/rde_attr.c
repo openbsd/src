@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.113 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.114 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -441,6 +441,8 @@ attr_put(struct attr *a)
 
 /* aspath specific functions */
 
+static u_int16_t aspath_count(const void *, u_int16_t);
+static u_int32_t aspath_extract_origin(const void *, u_int16_t);
 static u_int16_t aspath_countlength(struct aspath *, u_int16_t, int);
 static void	 aspath_countcopy(struct aspath *, u_int16_t, u_int8_t *,
 		     u_int16_t, int);
@@ -530,6 +532,7 @@ aspath_get(void *data, u_int16_t len)
 		aspath->refcnt = 0;
 		aspath->len = len;
 		aspath->ascnt = aspath_count(data, len);
+		aspath->source_as = aspath_extract_origin(data, len);
 		memcpy(aspath->data, data, len);
 
 		/* link */
@@ -667,7 +670,22 @@ aspath_length(struct aspath *aspath)
 	return (aspath->len);
 }
 
-u_int16_t
+u_int32_t
+aspath_neighbor(struct aspath *aspath)
+{
+	/* Empty aspath is OK -- internal AS route. */
+	if (aspath->len == 0)
+		return (rde_local_as());
+	return (aspath_extract(aspath->data, 0));
+}
+
+u_int32_t
+aspath_origin(struct aspath *aspath)
+{
+	return aspath->source_as;
+}
+
+static u_int16_t
 aspath_count(const void *data, u_int16_t len)
 {
 	const u_int8_t	*seg;
@@ -690,6 +708,41 @@ aspath_count(const void *data, u_int16_t len)
 			fatalx("%s: would overflow", __func__);
 	}
 	return (cnt);
+}
+
+/*
+ * The origin AS number derived from a Route as follows:
+ * o  the rightmost AS in the final segment of the AS_PATH attribute
+ *    in the Route if that segment is of type AS_SEQUENCE, or
+ * o  the BGP speaker's own AS number if that segment is of type
+ *    AS_CONFED_SEQUENCE or AS_CONFED_SET or if the AS_PATH is empty,
+ * o  the distinguished value "NONE" if the final segment of the
+ *    AS_PATH attribute is of any other type.
+ */
+static u_int32_t
+aspath_extract_origin(const void *data, u_int16_t len)
+{
+	const u_int8_t	*seg;
+	u_int32_t	 as = AS_NONE;
+	u_int16_t	 seg_size;
+	u_int8_t	 seg_len;
+
+	/* AS_PATH is empty */
+	if (len == 0)
+		return (rde_local_as());
+
+	seg = data;
+	for (; len > 0; len -= seg_size, seg += seg_size) {
+		seg_len = seg[1];
+		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+
+		if (len == seg_size && seg[0] == AS_SEQUENCE) {
+			as = aspath_extract(seg, seg_len - 1);
+		}
+		if (seg_size > len)
+			fatalx("%s: would overflow", __func__);
+	}
+	return (as);
 }
 
 static u_int16_t
@@ -771,50 +824,6 @@ aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
 	}
 }
 
-u_int32_t
-aspath_neighbor(struct aspath *aspath)
-{
-	/* Empty aspath is OK -- internal AS route. */
-	if (aspath->len == 0)
-		return (rde_local_as());
-	return (aspath_extract(aspath->data, 0));
-}
-
-/*
- * The origin AS number derived from a Route as follows:
- * o  the rightmost AS in the final segment of the AS_PATH attribute
- *    in the Route if that segment is of type AS_SEQUENCE, or
- * o  the BGP speaker's own AS number if that segment is of type
- *    AS_CONFED_SEQUENCE or AS_CONFED_SET or if the AS_PATH is empty,
- * o  the distinguished value "NONE" if the final segment of the
- *   AS_PATH attribute is of any other type.
- */
-u_int32_t
-aspath_origin(struct aspath *aspath)
-{
-	u_int8_t	*seg;
-	u_int32_t	 as = AS_NONE;
-	u_int16_t	 len, seg_size;
-	u_int8_t	 seg_len;
-
-	/* AS_PATH is empty */
-	if (aspath->len == 0)
-		return (rde_local_as());
-
-	seg = aspath->data;
-	for (len = aspath->len; len > 0; len -= seg_size, seg += seg_size) {
-		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
-
-		if (len == seg_size && seg[0] == AS_SEQUENCE) {
-			as = aspath_extract(seg, seg_len - 1);
-		}
-		if (seg_size > len)
-			fatalx("%s: would overflow", __func__);
-	}
-	return (as);
-}
-
 int
 aspath_loopfree(struct aspath *aspath, u_int32_t myAS)
 {
@@ -872,6 +881,110 @@ aspath_lookup(const void *data, u_int16_t len)
 	return (NULL);
 }
 
+
+static int
+as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
+{
+	u_int32_t match;
+
+	if (f->flags & AS_FLAG_AS_SET_NAME)	/* should not happen */
+		return (0);
+	if (f->flags & AS_FLAG_AS_SET)
+		return (as_set_match(f->aset, as));
+
+	if (f->flags & AS_FLAG_NEIGHBORAS)
+		match = neighas;
+	else
+		match = f->as_min;
+
+	switch (f->op) {
+	case OP_NONE:
+	case OP_EQ:
+		if (as == match)
+			return (1);
+		break;
+	case OP_NE:
+		if (as != match)
+			return (1);
+		break;
+	case OP_RANGE:
+		if (as >= f->as_min && as <= f->as_max)
+			return (1);
+		break;
+	case OP_XRANGE:
+		if (as < f->as_min || as > f->as_max)
+			return (1);
+		break;
+	}
+	return (0);
+}
+
+/* we need to be able to search more than one as */
+int
+aspath_match(struct aspath *aspath, struct filter_as *f, u_int32_t neighas)
+{
+	const u_int8_t	*seg;
+	int		 final;
+	u_int16_t	 len, seg_size;
+	u_int8_t	 i, seg_len;
+	u_int32_t	 as = AS_NONE;
+
+	if (f->type == AS_EMPTY) {
+		if (aspath_length(aspath) == 0)
+			return (1);
+		else
+			return (0);
+	}
+
+	/* just check the leftmost AS */
+	if (f->type == AS_PEER) {
+		as = aspath_neighbor(aspath);
+		if (as_compare(f, as, neighas))
+			return (1);
+		else
+			return (0);
+	}
+
+	seg = aspath->data;
+	len = aspath->len;
+	for (; len >= 6; len -= seg_size, seg += seg_size) {
+		seg_len = seg[1];
+		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+
+		final = (len == seg_size);
+
+		if (f->type == AS_SOURCE) {
+			/*
+			 * Just extract the rightmost AS
+			 * but if that segment is an AS_SET then the rightmost
+			 * AS of a previous AS_SEQUENCE segment should be used.
+			 * Because of that just look at AS_SEQUENCE segments.
+			 */
+			if (seg[0] == AS_SEQUENCE)
+				as = aspath_extract(seg, seg_len - 1);
+			/* not yet in the final segment */
+			if (!final)
+				continue;
+			if (as_compare(f, as, neighas))
+				return (1);
+			else
+				return (0);
+		}
+		/* AS_TRANSIT or AS_ALL */
+		for (i = 0; i < seg_len; i++) {
+			/*
+			 * the source (rightmost) AS is excluded from
+			 * AS_TRANSIT matches.
+			 */
+			if (final && i == seg_len - 1 && f->type == AS_TRANSIT)
+				return (0);
+			as = aspath_extract(seg, i);
+			if (as_compare(f, as, neighas))
+				return (1);
+		}
+	}
+	return (0);
+}
 
 /*
  * Returns a new prepended aspath. Old needs to be freed by caller.

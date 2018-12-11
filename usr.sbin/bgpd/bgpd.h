@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.356 2018/12/06 12:38:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.357 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1258,7 +1258,6 @@ const char	*log_shutcomm(const char *);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
-int		 aspath_match(void *, u_int16_t, struct filter_as *, u_int32_t);
 u_int32_t	 aspath_extract(const void *, int);
 int		 aspath_verify(void *, u_int16_t, int);
 #define		 AS_ERR_LEN	-1

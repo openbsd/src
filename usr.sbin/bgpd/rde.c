@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.451 2018/11/29 15:11:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.452 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -482,7 +482,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			asp->origin = csr.origin;
 			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
 			asp->aspath = aspath_get(asdata, csr.aspath_len);
-			asp->source_as = aspath_origin(asp->aspath);
 			netconf_s.asp = asp;
 			break;
 		case IMSG_NETWORK_ATTR:
@@ -1121,10 +1120,6 @@ rde_update_dispatch(struct imsg *imsg)
 			}
 		}
 
-		if (state.aspath.flags & F_ATTR_ASPATH)
-			state.aspath.source_as =
-			    aspath_origin(state.aspath.aspath);
-
 		rde_reflector(peer, &state.aspath);
 	}
 
@@ -1389,7 +1384,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 
 	peer->prefix_rcvd_update++;
 	vstate = rde_roa_validity(&conf->rde_roa, prefix, prefixlen,
-	    in->aspath.source_as);
+	    aspath_origin(in->aspath.aspath));
 
 	/* add original path to the Adj-RIB-In */
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peer, in, prefix, prefixlen,
@@ -2220,8 +2215,8 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
 		return;
-	if (req->as.type != AS_UNDEF && !aspath_match(asp->aspath->data,
-	    asp->aspath->len, &req->as, 0))
+	if (req->as.type != AS_UNDEF &&
+	    !aspath_match(asp->aspath, &req->as, 0))
 		return;
 	switch (req->community.type) {
 	case COMMUNITY_TYPE_NONE:
@@ -3085,7 +3080,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 		if (conf->rde_roa.dirty) {
 			/* ROA validation state update */
 			vstate = rde_roa_validity(&conf->rde_roa,
-			    &prefix, pt->prefixlen, asp->source_as);
+			    &prefix, pt->prefixlen, aspath_origin(asp->aspath));
 			if (vstate != p->validation_state) {
 				force_eval = 1;
 				p->validation_state = vstate;
@@ -3660,7 +3655,6 @@ network_add(struct network_config *nc, int flagstatic)
 		asp = path_get();
 		asp->aspath = aspath_get(NULL, 0);
 		asp->origin = ORIGIN_IGP;
-		asp->source_as = aspath_origin(asp->aspath);
 		asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
 		    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 		/* the nexthop is unset unless a default set overrides it */
@@ -3674,7 +3668,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    peerself);
 
 	vstate = rde_roa_validity(&conf->rde_roa, &nc->prefix,
-	    nc->prefixlen, asp->source_as);
+	    nc->prefixlen, aspath_origin(asp->aspath));
 	if (path_update(&ribs[RIB_ADJ_IN].rib, peerself, &state, &nc->prefix,
 	    nc->prefixlen, vstate) == 1)
 		peerself->prefix_cnt++;

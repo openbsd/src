@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.186 2018/11/14 12:14:41 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.187 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -657,10 +657,6 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 		return (1);
 	if (a->pftableid < b->pftableid)
 		return (-1);
-	if (a->source_as > b->source_as)
-		return (1);
-	if (a->source_as < b->source_as)
-		return (-1);
 
 	r = aspath_compare(a->aspath, b->aspath);
 	if (r > 0)
@@ -761,7 +757,6 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 	dst->lpref = src->lpref;
 	dst->weight = src->weight;
 	dst->origin = src->origin;
-	dst->source_as = src->source_as;
 	dst->rtlabelid = rtlabel_ref(src->rtlabelid);
 	dst->pftableid = pftable_ref(src->pftableid);
 

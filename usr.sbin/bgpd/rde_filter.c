@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.114 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.115 2018/12/11 09:02:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -219,8 +219,8 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 	}
 
 	if (asp != NULL && f->match.as.type != AS_UNDEF) {
-		if (aspath_match(asp->aspath->data, asp->aspath->len,
-		    &f->match.as, peer->conf.remote_as) == 0)
+		if (aspath_match(asp->aspath, &f->match.as,
+		    peer->conf.remote_as) == 0)
 			return (0);
 	}
 
@@ -289,7 +289,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		pt_getaddr(p->re->prefix, prefix);
 		plen = p->re->prefix->prefixlen;
 		if (trie_roa_check(&f->match.originset.ps->th, prefix, plen,
-		    asp->source_as) != ROA_VALID)
+		    aspath_origin(asp->aspath)) != ROA_VALID)
 			return (0);
 	}
 
