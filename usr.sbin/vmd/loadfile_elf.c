@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.31 2018/12/06 09:20:06 claudio Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.32 2018/12/12 21:19:22 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 
 	/* Serial console device, COM1 @ 0x3f8 */
 	consdev.consdev = makedev(8, 0);	/* com1 @ 0x3f8 */
-	consdev.conspeed = 9600;
+	consdev.conspeed = 115200;
 	consdev.consaddr = 0x3f8;
 	consdev.consfreq = 0;
 
