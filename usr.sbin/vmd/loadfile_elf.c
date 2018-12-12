@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.32 2018/12/12 21:19:22 claudio Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.33 2018/12/12 21:20:57 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -648,33 +648,8 @@ marc4random_buf(paddr_t addr, int sz)
 static void
 mbzero(paddr_t addr, int sz)
 {
-	int i, ct;
-	char buf[PAGE_SIZE];
-
-	/*
-	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
-	 * write_mem
-	 */
-	ct = 0;
-	memset(buf, 0, sizeof(buf));
-	if (addr % PAGE_SIZE != 0) {
-		ct = PAGE_SIZE - (addr % PAGE_SIZE);
-
-		if (write_mem(addr, buf, ct))
-			return;
-
-		addr += ct;
-	}
-
-	for (i = 0; i < sz; i+= PAGE_SIZE, addr += PAGE_SIZE) {
-		if (i + PAGE_SIZE > sz)
-			ct = sz - i;
-		else
-			ct = PAGE_SIZE;
-
-		if (write_mem(addr, buf, ct))
-			return;
-	}
+	if (write_mem(addr, NULL, sz))
+		return;
 }
 
 /*
