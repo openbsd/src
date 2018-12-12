@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.23 2017/07/08 17:52:42 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.24 2018/12/12 21:54:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,8 +23,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mandoc.h"
+#include "tbl.h"
 #include "libmandoc.h"
 #include "libroff.h"
 

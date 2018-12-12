@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.197 2018/11/25 19:23:59 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.198 2018/12/12 21:54:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -239,111 +239,6 @@ enum	mandocerr {
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	MANDOCERR_MAX
-};
-
-struct	tbl_opts {
-	char		  tab; /* cell-separator */
-	char		  decimal; /* decimal point */
-	int		  opts;
-#define	TBL_OPT_CENTRE	 (1 << 0)
-#define	TBL_OPT_EXPAND	 (1 << 1)
-#define	TBL_OPT_BOX	 (1 << 2)
-#define	TBL_OPT_DBOX	 (1 << 3)
-#define	TBL_OPT_ALLBOX	 (1 << 4)
-#define	TBL_OPT_NOKEEP	 (1 << 5)
-#define	TBL_OPT_NOSPACE	 (1 << 6)
-#define	TBL_OPT_NOWARN	 (1 << 7)
-	int		  cols; /* number of columns */
-	int		  lvert; /* width of left vertical line */
-	int		  rvert; /* width of right vertical line */
-};
-
-enum	tbl_cellt {
-	TBL_CELL_CENTRE, /* c, C */
-	TBL_CELL_RIGHT, /* r, R */
-	TBL_CELL_LEFT, /* l, L */
-	TBL_CELL_NUMBER, /* n, N */
-	TBL_CELL_SPAN, /* s, S */
-	TBL_CELL_LONG, /* a, A */
-	TBL_CELL_DOWN, /* ^ */
-	TBL_CELL_HORIZ, /* _, - */
-	TBL_CELL_DHORIZ, /* = */
-	TBL_CELL_MAX
-};
-
-/*
- * A cell in a layout row.
- */
-struct	tbl_cell {
-	struct tbl_cell	 *next;
-	char		 *wstr; /* min width represented as a string */
-	size_t		  width; /* minimum column width */
-	size_t		  spacing; /* to the right of the column */
-	int		  vert; /* width of subsequent vertical line */
-	int		  col; /* column number, starting from 0 */
-	int		  flags;
-#define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
-#define	TBL_CELL_BALIGN	 (1 << 1) /* d, D */
-#define	TBL_CELL_BOLD	 (1 << 2) /* fB, B, b */
-#define	TBL_CELL_ITALIC	 (1 << 3) /* fI, I, i */
-#define	TBL_CELL_EQUAL	 (1 << 4) /* e, E */
-#define	TBL_CELL_UP	 (1 << 5) /* u, U */
-#define	TBL_CELL_WIGN	 (1 << 6) /* z, Z */
-#define	TBL_CELL_WMAX	 (1 << 7) /* x, X */
-	enum tbl_cellt	  pos;
-};
-
-/*
- * A layout row.
- */
-struct	tbl_row {
-	struct tbl_row	 *next;
-	struct tbl_cell	 *first;
-	struct tbl_cell	 *last;
-	int		  vert; /* width of left vertical line */
-};
-
-enum	tbl_datt {
-	TBL_DATA_NONE, /* has no data */
-	TBL_DATA_DATA, /* consists of data/string */
-	TBL_DATA_HORIZ, /* horizontal line */
-	TBL_DATA_DHORIZ, /* double-horizontal line */
-	TBL_DATA_NHORIZ, /* squeezed horizontal line */
-	TBL_DATA_NDHORIZ /* squeezed double-horizontal line */
-};
-
-/*
- * A cell within a row of data.  The "string" field contains the actual
- * string value that's in the cell.  The rest is layout.
- */
-struct	tbl_dat {
-	struct tbl_cell	 *layout; /* layout cell */
-	struct tbl_dat	 *next;
-	char		 *string; /* data (NULL if not TBL_DATA_DATA) */
-	int		  hspans; /* how many horizontal spans follow */
-	int		  vspans; /* how many vertical spans follow */
-	int		  block; /* T{ text block T} */
-	enum tbl_datt	  pos;
-};
-
-enum	tbl_spant {
-	TBL_SPAN_DATA, /* span consists of data */
-	TBL_SPAN_HORIZ, /* span is horizontal line */
-	TBL_SPAN_DHORIZ /* span is double horizontal line */
-};
-
-/*
- * A row of data in a table.
- */
-struct	tbl_span {
-	struct tbl_opts	 *opts;
-	struct tbl_row	 *layout; /* layout row */
-	struct tbl_dat	 *first;
-	struct tbl_dat	 *last;
-	struct tbl_span	 *prev;
-	struct tbl_span	 *next;
-	int		  line; /* parse line */
-	enum tbl_spant	  pos;
 };
 
 enum	eqn_boxt {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.41 2017/07/15 15:06:31 bentley Exp $ */
+/*	$OpenBSD: eqn.c,v 1.42 2018/12/12 21:54:30 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,6 +28,7 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
+#include "tbl.h"
 #include "libmandoc.h"
 #include "libroff.h"
 

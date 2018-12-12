@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.47 2018/11/29 01:54:58 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.48 2018/12/12 21:54:30 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
+#include "tbl.h"
 #include "out.h"
 
 struct	tbl_colgroup {

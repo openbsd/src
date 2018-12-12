@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.47 2018/11/25 19:23:59 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.48 2018/12/12 21:54:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,6 +27,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
+#include "tbl.h"
 #include "main.h"
 
 static	void	print_box(const struct eqn_box *, int);
