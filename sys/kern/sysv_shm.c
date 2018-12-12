@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.69 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.70 2018/12/12 14:15:35 mpi Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -506,16 +506,18 @@ shmexit(struct vmspace *vm)
 {
 	struct shmmap_head *shmmap_h;
 	struct shmmap_state *shmmap_s;
+	size_t size;
 	int i;
 
 	shmmap_h = (struct shmmap_head *)vm->vm_shm;
 	if (shmmap_h == NULL)
 		return;
+	size = sizeof(int) + shmmap_h->shmseg * sizeof(struct shmmap_state);
 	for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg;
 	    i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)
 			shm_delete_mapping(vm, shmmap_s);
-	free(vm->vm_shm, M_SHM, 0);
+	free(vm->vm_shm, M_SHM, size);
 	vm->vm_shm = NULL;
 }
 
@@ -594,7 +596,8 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    M_SHM, M_WAITOK|M_ZERO);
 		memcpy(newsegs, shmsegs,
 		    shminfo.shmmni * sizeof(struct shmid_ds *));
-		free(shmsegs, M_SHM, 0);
+		free(shmsegs, M_SHM,
+		    shminfo.shmmni * sizeof(struct shmid_ds *));
 		shmsegs = newsegs;
 		newseqs = mallocarray(val, sizeof(unsigned short), M_SHM,
 		    M_WAITOK|M_ZERO);
