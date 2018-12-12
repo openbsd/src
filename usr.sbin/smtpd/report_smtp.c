@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.1 2018/12/11 13:29:52 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.2 2018/12/12 21:27:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -137,6 +137,18 @@ report_smtp_tx_envelope(const char *direction, uint64_t qid, uint32_t msgid, uin
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_id(p_lka, evpid);
+	m_close(p_lka);
+}
+
+void
+report_smtp_tx_data(const char *direction, uint64_t qid, uint32_t msgid, int ok)
+{
+	m_create(p_lka, IMSG_REPORT_SMTP_TX_DATA, 0, 0, -1);
+	m_add_string(p_lka, direction);
+	m_add_time(p_lka, time(NULL));
+	m_add_id(p_lka, qid);
+	m_add_u32(p_lka, msgid);
+	m_add_int(p_lka, ok);
 	m_close(p_lka);
 }
 

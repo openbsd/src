@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.13 2018/12/11 11:29:44 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.14 2018/12/12 21:27:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -176,6 +176,26 @@ lka_report_smtp_tx_envelope(const char *direction, time_t tm, uint64_t reqid, ui
 	report_smtp_broadcast(direction, tm,
 	    "tx-envelope|%016"PRIx64"|%08x|%016"PRIx64"\n",
 	    reqid, msgid, evpid);
+}
+
+void
+lka_report_smtp_tx_data(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, int ok)
+{
+	const char *result;
+
+	switch (ok) {
+	case 1:
+		result = "ok";
+		break;
+	case 0:
+		result = "permfail";
+		break;
+	default:
+		result = "tempfail";
+		break;
+	}
+	report_smtp_broadcast(direction, tm,
+	    "tx-data|%016"PRIx64"|%08x|%s\n", reqid, msgid, result);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.591 2018/12/11 13:40:30 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.592 2018/12/12 21:27:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -321,6 +321,7 @@ enum imsg_type {
 	IMSG_REPORT_SMTP_TX_MAIL,
 	IMSG_REPORT_SMTP_TX_RCPT,
 	IMSG_REPORT_SMTP_TX_ENVELOPE,
+	IMSG_REPORT_SMTP_TX_DATA,
 	IMSG_REPORT_SMTP_TX_COMMIT,
 	IMSG_REPORT_SMTP_TX_ROLLBACK,
 	IMSG_REPORT_SMTP_PROTOCOL_CLIENT,
@@ -1336,6 +1337,7 @@ void lka_report_smtp_tx_mail(const char *, time_t, uint64_t, uint32_t, const cha
 void lka_report_smtp_tx_rcpt(const char *, time_t, uint64_t, uint32_t, const char *, int);
 void lka_report_smtp_tx_envelope(const char *, time_t, uint64_t, uint32_t, uint64_t);
 void lka_report_smtp_tx_commit(const char *, time_t, uint64_t, uint32_t, size_t);
+void lka_report_smtp_tx_data(const char *, time_t, uint64_t, uint32_t, int);
 void lka_report_smtp_tx_rollback(const char *, time_t, uint64_t, uint32_t);
 void lka_report_smtp_protocol_client(const char *, time_t, uint64_t, const char *);
 void lka_report_smtp_protocol_server(const char *, time_t, uint64_t, const char *);
@@ -1510,6 +1512,7 @@ void report_smtp_tx_begin(const char *, uint64_t, uint32_t);
 void report_smtp_tx_mail(const char *, uint64_t, uint32_t, const char *, int);
 void report_smtp_tx_rcpt(const char *, uint64_t, uint32_t, const char *, int);
 void report_smtp_tx_envelope(const char *, uint64_t, uint32_t, uint64_t);
+void report_smtp_tx_data(const char *, uint64_t, uint32_t, int);
 void report_smtp_tx_commit(const char *, uint64_t, uint32_t, size_t);
 void report_smtp_tx_rollback(const char *, uint64_t, uint32_t);
 void report_smtp_protocol_client(const char *, uint64_t, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.225 2018/12/11 13:40:30 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.226 2018/12/12 21:27:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -514,6 +514,18 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_tx_envelope(direction, tm, reqid, msgid, evpid);
+		return;
+
+	case IMSG_REPORT_SMTP_TX_DATA:
+		m_msg(&m, imsg);
+		m_get_string(&m, &direction);
+		m_get_time(&m, &tm);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_get_int(&m, &ok);
+		m_end(&m);
+
+		lka_report_smtp_tx_data(direction, tm, reqid, msgid, ok);
 		return;
 
 	case IMSG_REPORT_SMTP_TX_COMMIT:
