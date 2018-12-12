@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.4 2018/08/27 15:57:39 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.5 2018/12/12 07:29:38 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -58,6 +58,8 @@ static inline int inintr(void);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 
+int kcov_cold = 1;
+
 #ifdef KCOV_DEBUG
 int kcov_debug = 1;
 #endif
@@ -76,12 +78,15 @@ int kcov_debug = 1;
 void
 __sanitizer_cov_trace_pc(void)
 {
-	extern int cold;
 	struct kcov_dev *kd;
 	uint64_t idx;
 
-	/* Do not trace during boot. */
-	if (cold)
+	/*
+	 * Do not trace before kcovopen() has been called at least once.
+	 * At this point, all secondary CPUs have booted and accessing curcpu()
+	 * is safe.
+	 */
+	if (kcov_cold)
 		return;
 
 	/* Do not trace in interrupts to prevent noisy coverage. */
@@ -111,6 +116,9 @@ kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (kd_lookup(minor(dev)) != NULL)
 		return (EBUSY);
+
+	if (kcov_cold)
+		kcov_cold = 0;
 
 	DPRINTF("%s: unit=%d\n", __func__, minor(dev));
 
