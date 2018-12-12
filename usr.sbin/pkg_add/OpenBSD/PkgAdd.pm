@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.105 2018/10/22 10:29:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.106 2018/12/12 14:14:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -921,10 +921,6 @@ sub process_set
 	if (newer_has_errors($set, $state)) {
 		return ();
 	}
-	if ($set->newer == 0 && $set->older_to_do == 0) {
-		$state->tracker->uptodate($set);
-		return ();
-	}
 
 	my @deps = $set->solver->solve_depends($state);
 	if ($state->verbose >= 2) {
@@ -934,6 +930,11 @@ sub process_set
 		$state->build_deptree($set, @deps);
 		$set->solver->check_for_loops($state);
 		return (@deps, $set);
+	}
+
+	if ($set->newer == 0 && $set->older_to_do == 0) {
+		$state->tracker->uptodate($set);
+		return ();
 	}
 
 	if (!$set->complete($state)) {
