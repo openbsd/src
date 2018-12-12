@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.254 2018/12/11 01:27:08 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.255 2018/12/12 05:38:26 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -510,7 +510,8 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_output = ether_output;
+	if (ifp->if_output == NULL)
+		ifp->if_output = ether_output;
 	ifp->if_rtrequest = ether_rtrequest;
 
 	if_ih_insert(ifp, ether_input, NULL);
