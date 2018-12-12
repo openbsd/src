@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.48 2018/06/03 10:45:15 tb Exp $
+.\"	$OpenBSD: pcap.3,v 1.49 2018/12/12 20:12:03 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 3 2018 $
+.Dd $Mdocdate: December 12 2018 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -535,6 +535,15 @@ datalink types.
 .Fn pcap_setdirection
 is used to limit the direction that packets must be flowing in order
 to be captured.
+The direction is either
+.Dv PCAP_D_INOUT ,
+.Dv PCAP_D_IN
+or
+.Dv PCAP_D_OUT .
+Direction is only relevant to live captures.
+When reading from a dump file,
+.Fn pcap_setdirection
+has no effect.
 .Pp
 .Fn pcap_list_datalinks
 returns an array of the supported datalink types for an opened live capture
