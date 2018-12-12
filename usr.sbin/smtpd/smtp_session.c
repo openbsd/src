@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.372 2018/12/11 13:40:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.373 2018/12/12 10:50:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2041,10 +2041,17 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 		break;
 	case '5':
 	case '4':
-		if (s->last_cmd == CMD_MAIL_FROM)
-			report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid, s->cmd + 10, buf[0] == '4' ? -1 : 0);
-		else if (s->last_cmd == CMD_RCPT_TO)
-			report_smtp_tx_rcpt("smtp-in", s->id, s->tx->msgid, s->cmd + 8, buf[0] == '4' ? -1 : 0);
+		/* do not report smtp_tx_mail/smtp_tx_rcpt errors
+		 * if they happened outside of a transaction.
+		 */
+		if (s->tx) {
+			if (s->last_cmd == CMD_MAIL_FROM)
+				report_smtp_tx_mail("smtp-in", s->id, s->tx->msgid,
+				    s->cmd + 10, buf[0] == '4' ? -1 : 0);
+			else if (s->last_cmd == CMD_RCPT_TO)
+				report_smtp_tx_rcpt("smtp-in", s->id,
+				    s->tx->msgid, s->cmd + 8, buf[0] == '4' ? -1 : 0);
+		}
 
 		if (s->flags & SF_BADINPUT) {
 			log_info("%016"PRIx64" smtp "
