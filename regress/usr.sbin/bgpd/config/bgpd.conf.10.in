@@ -1,4 +1,4 @@
-# $OpenBSD: bgpd.conf.10.in,v 1.1 2018/11/13 16:54:30 claudio Exp $
+# $OpenBSD: bgpd.conf.10.in,v 1.2 2018/12/12 08:55:44 claudio Exp $
 # test communities
 
 AS 64512
@@ -12,8 +12,8 @@ match from any community 1234:local-as
 match from any community 1234:neighbor-as
 match from any community 1234:*
 match from any community *:*
-#match from any community 1234:1 community 1234:2
-#match from any community 1234:1 community 1234:2 community 1234:3
+match from any community 1234:1 community 1234:2
+match from any community 1234:1 community 1234:2 community 1234:3
 
 # wellknown communities
 match from any community BLACKHOLE
@@ -38,8 +38,8 @@ match from any large-community 1234:*:*
 match from any large-community *:5678:*
 match from any large-community *:*:90
 match from any large-community *:*:*
-#match from any large-community 1234:5678:1 large-community 1234:5678:2
-#match from any large-community 1234:5678:1 large-community 1234:5678:2 large-community 1234:5678:3
+match from any large-community 1234:5678:1 large-community 1234:5678:2
+match from any large-community 1234:5678:1 large-community 1234:5678:2 large-community 1234:5678:3
 
 # mixing
 match from any community 1234:1 large-community 1234:5678:1
