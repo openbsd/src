@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.314 2018/12/07 16:19:40 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.315 2018/12/12 14:19:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -297,9 +297,10 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		/* If it's in the span list, it can't be a member. */
-		TAILQ_FOREACH(bif, &sc->sc_spanlist, next)
+		TAILQ_FOREACH(bif, &sc->sc_spanlist, next) {
 			if (bif->ifp == ifs)
 				break;
+		}
 		if (bif != NULL) {
 			error = EBUSY;
 			break;
@@ -335,7 +336,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		SIMPLEQ_INIT(&bif->bif_brlout);
 		ifs->if_bridgeport = (caddr_t)bif;
 		bif->bif_dhcookie = hook_establish(ifs->if_detachhooks, 0,
-		    bridge_ifdetach, ifs);
+		    bridge_ifdetach, bif);
 		if_ih_insert(bif->ifp, bridge_input, NULL);
 		TAILQ_INSERT_TAIL(&sc->sc_iflist, bif, next);
 		break;
@@ -399,17 +400,20 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGDELS:
 		if ((error = suser(curproc)) != 0)
 			break;
+		ifs = ifunit(req->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
 		TAILQ_FOREACH(bif, &sc->sc_spanlist, next) {
-			if (strncmp(bif->ifp->if_xname, req->ifbr_ifsname,
-			    sizeof(bif->ifp->if_xname)) == 0) {
-				bridge_spandetach(bif);
+			if (bif->ifp == ifs)
 				break;
-			}
 		}
 		if (bif == NULL) {
 			error = ENOENT;
 			break;
 		}
+		bridge_spandetach(bif);
 		break;
 	case SIOCBRDGGIFFLGS:
 		ifs = ifunit(req->ifbr_ifsname);
@@ -567,22 +571,18 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 /* Detach an interface from a bridge.  */
 void
-bridge_ifdetach(void *arg)
+bridge_ifdetach(void *xbif)
 {
-	struct ifnet *ifp = (struct ifnet *)arg;
-	struct bridge_softc *sc;
-	struct bridge_iflist *bif;
-
-	bif = (struct bridge_iflist *)ifp->if_bridgeport;
-	sc = bif->bridge_sc;
+	struct bridge_iflist *bif = xbif;
+	struct bridge_softc *sc = bif->bridge_sc;
 
 	bridge_delete(sc, bif);
 }
 
 void
-bridge_spandetach(void *arg)
+bridge_spandetach(void *xbif)
 {
-	struct bridge_iflist *bif = (struct bridge_iflist *)arg;
+	struct bridge_iflist *bif = xbif;
 	struct bridge_softc *sc = bif->bridge_sc;
 
 	hook_disestablish(bif->ifp->if_detachhooks, bif->bif_dhcookie);
@@ -713,6 +713,7 @@ int
 bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
     struct rtentry *rt)
 {
+	struct bridge_iflist *bif;
 	struct ether_header *eh;
 	struct ifnet *dst_if = NULL;
 	struct bridge_rtnode *dst_p = NULL;
@@ -727,11 +728,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	KERNEL_ASSERT_LOCKED();
 
 	/* ifp must be a member interface of the bridge. */
-	if (ifp->if_bridgeport == NULL) {
+	bif = (struct bridge_iflist *)ifp->if_bridgeport;
+	if (bif == NULL) {
 		m_freem(m);
 		return (EINVAL);
 	}
-	sc = ((struct bridge_iflist *)ifp->if_bridgeport)->bridge_sc;
+	sc = bif->bridge_sc;
 
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));

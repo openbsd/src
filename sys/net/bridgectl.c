@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.12 2018/11/14 17:07:44 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.13 2018/12/12 14:19:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -355,10 +355,14 @@ void
 bridge_rtagenode(struct ifnet *ifp, int age)
 {
 	struct bridge_softc *sc;
+	struct bridge_iflist *bif;
 	struct bridge_rtnode *n;
 	int i;
 
-	sc = ((struct bridge_iflist *)ifp->if_bridgeport)->bridge_sc;
+	bif = (struct bridge_iflist *)ifp->if_bridgeport;
+	if (bif == NULL)
+		return;
+	sc = bif->bridge_sc;
 	if (sc == NULL)
 		return;
 
@@ -525,7 +529,11 @@ bridge_update(struct ifnet *ifp, struct ether_addr *ea, int delete)
 	addr = (u_int8_t *)ea;
 
 	bif = (struct bridge_iflist *)ifp->if_bridgeport;
+	if (bif == NULL)
+		return;
 	sc = bif->bridge_sc;
+	if (sc == NULL)
+		return;
 
 	/*
 	 * Update the bridge interface if it is in
