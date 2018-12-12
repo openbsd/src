@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.592 2018/12/12 21:27:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.593 2018/12/12 21:28:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1454,22 +1454,6 @@ const char *mta_host_to_text(struct mta_host *);
 const char *mta_relay_to_text(struct mta_relay *);
 
 
-/* mta_report.c */
-void mta_report_link_connect(uint64_t, const char *, int,
-    const struct sockaddr_storage *, const struct sockaddr_storage *);
-void mta_report_link_disconnect(uint64_t);
-void mta_report_link_identify(uint64_t, const char *);
-void mta_report_link_tls(uint64_t, const char *);
-void mta_report_tx_begin(uint64_t, uint32_t);
-void mta_report_tx_mail(uint64_t, uint32_t, const char *, int);
-void mta_report_tx_rcpt(uint64_t, uint32_t, const char *, int);
-void mta_report_tx_envelope(uint64_t, uint32_t, uint64_t);
-void mta_report_tx_commit(uint64_t, uint32_t, size_t);
-void mta_report_tx_rollback(uint64_t, uint32_t);
-void mta_report_protocol_client(uint64_t, const char *);
-void mta_report_protocol_server(uint64_t, const char *);
-
-
 /* mta_session.c */
 void mta_session(struct mta_relay *, struct mta_route *);
 void mta_session_imsg(struct mproc *, struct imsg *);
@@ -1553,23 +1537,6 @@ void smtp_postprivdrop(void);
 void smtp_imsg(struct mproc *, struct imsg *);
 void smtp_configure(void);
 void smtp_collect(void);
-
-
-/* smtp_report.c */
-void smtp_report_link_connect(uint64_t, const char *, int,
-    const struct sockaddr_storage *, const struct sockaddr_storage *);
-void smtp_report_link_disconnect(uint64_t);
-void smtp_report_link_identify(uint64_t, const char *);
-void smtp_report_link_tls(uint64_t, const char *);
-void smtp_report_tx_begin(uint64_t, uint32_t);
-void smtp_report_tx_mail(uint64_t, uint32_t, const char *, int);
-void smtp_report_tx_rcpt(uint64_t, uint32_t, const char *, int);
-void smtp_report_tx_envelope(uint64_t, uint32_t, uint64_t);
-void smtp_report_tx_commit(uint64_t, uint32_t, size_t);
-void smtp_report_tx_rollback(uint64_t, uint32_t);
-void smtp_report_protocol_client(uint64_t, const char *);
-void smtp_report_protocol_server(uint64_t, const char *);
-void smtp_report_filter_response(uint64_t, int, int, const char *);
 
 
 /* smtp_session.c */
