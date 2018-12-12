@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.53 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.54 2018/12/12 14:15:00 mpi Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -275,7 +275,8 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
 		semtot -= semaptr->sem_nsems;
-		free(semaptr->sem_base, M_SEM, 0);
+		free(semaptr->sem_base, M_SEM,
+		    semaptr->sem_nsems * sizeof(struct sem));
 		pool_put(&sema_pool, semaptr);
 		sema[ix] = NULL;
 		semundo_clear(ix, -1);
@@ -881,8 +882,8 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    M_WAITOK|M_ZERO);
 		memcpy(newseqs, semseqs,
 		    seminfo.semmni * sizeof(unsigned short));
-		free(sema, M_SEM, 0);
-		free(semseqs, M_SEM, 0);
+		free(sema, M_SEM, seminfo.semmni * sizeof(struct semid_ds *));
+		free(semseqs, M_SEM, seminfo.semmni * sizeof(unsigned short));
 		sema = sema_new;
 		semseqs = newseqs;
 		seminfo.semmni = val;
