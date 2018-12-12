@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.206 2018/10/08 06:10:17 miko Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.207 2018/12/12 20:21:04 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 8 2018 $
+.Dd $Mdocdate: December 12 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -269,7 +269,7 @@ Server certificates for those protocols are verified by default.
 Require TLS to be used when relaying, using mandatory STARTTLS by default.
 When used with a smarthost, the protocol must not be
 .Dq smtp+notls:// .
-If 
+If
 .Op no-verify
 is specified, do not require a valid certificate.
 .It Cm auth Pf < Ar table Ns >
