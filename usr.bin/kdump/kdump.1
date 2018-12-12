@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.32 2016/07/18 09:36:50 guenther Exp $
+.\"	$OpenBSD: kdump.1,v 1.33 2018/12/12 17:55:28 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 18 2016 $
+.Dd $Mdocdate: December 12 2018 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -61,6 +61,9 @@ By default, values are printed out in hexadecimal.
 .It Fl f Ar file
 Display the specified file instead of
 .Pa ktrace.out .
+Specifying
+.Sq -
+will read from standard input.
 .It Fl H
 Display thread identifiers.
 .It Fl l
