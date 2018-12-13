@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff_int.h,v 1.10 2018/12/04 02:53:45 schwarze Exp $	*/
+/*	$OpenBSD: roff_int.h,v 1.11 2018/12/13 06:17:17 schwarze Exp $	*/
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Parser internals shared by multiple parsers.
  */
 
 struct roff_node *roff_node_alloc(struct roff_man *, int, int,
@@ -29,6 +31,10 @@ void		  roff_node_unlink(struct roff_man *, struct roff_node *);
 void		  roff_node_relink(struct roff_man *, struct roff_node *);
 void		  roff_node_free(struct roff_node *);
 void		  roff_node_delete(struct roff_man *, struct roff_node *);
+
+struct ohash	 *roffhash_alloc(enum roff_tok, enum roff_tok);
+enum roff_tok	  roffhash_find(struct ohash *, const char *, size_t);
+void		  roffhash_free(struct ohash *);
 
 /*
  * Functions called from roff.c need to be declared here,
