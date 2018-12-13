@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.156 2018/08/29 07:50:16 reyk Exp $	*/
+/*	$OpenBSD: def.h,v 1.157 2018/12/13 14:59:16 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -417,6 +417,7 @@ int		 delwind(int, int);
 
 /* buffer.c */
 int		 togglereadonly(int, int);
+int		 togglereadonlyall(int, int);
 struct buffer   *bfind(const char *, int);
 int		 poptobuffer(int, int);
 int		 killbuffer(struct buffer *);
@@ -737,6 +738,7 @@ extern int		 defb_flag;
 extern int		 doaudiblebell;
 extern int		 dovisiblebell;
 extern int		 dblspace;
+extern int		 allbro;
 extern char	 	 cinfo[];
 extern char		*keystrings[];
 extern char		 pat[NPAT];
