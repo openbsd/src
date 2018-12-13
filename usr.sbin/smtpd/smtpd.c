@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.311 2018/12/11 13:40:30 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.312 2018/12/13 14:06:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1318,9 +1318,11 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
 		err(1, "signal");
 
-	execle(command, name, (char *)NULL, NULL);
-	perror("execle");
-	_exit(1);
+	if (system(command) == -1)
+		err(1, NULL);
+
+	/* there's no successful exit from a processor */
+	err(1, NULL);
 }
 
 static void
