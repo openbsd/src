@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.49 2018/12/12 20:12:03 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.50 2018/12/13 06:47:36 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 12 2018 $
+.Dd $Mdocdate: December 13 2018 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -353,9 +353,17 @@ or
 may be used to display the error text.
 .Pp
 .Fn pcap_dump
-outputs a packet to the savefile opened with
-.Fn pcap_dump_open .
-Note that its calling arguments are suitable for use with
+outputs a packet to a save file previously opened using
+.Fn pcap_dump_open
+or
+.Fn pcap_dump_fopen .
+Note that the
+.Fa user
+argument contains the handle to the save file and should be of type
+.Ft "pcap_dumper_t *" .
+This makes
+.Fn pcap_dump
+a suitable callback function for use as an argument to
 .Fn pcap_dispatch .
 .Pp
 .Fn pcap_inject
