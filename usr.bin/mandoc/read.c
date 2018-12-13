@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.173 2018/12/13 06:17:17 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.174 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,6 +36,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
+#include "mandoc_parse.h"
 #include "libmandoc.h"
 #include "roff_int.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.208 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.209 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -41,6 +41,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
+#include "mandoc_parse.h"
 #include "manconf.h"
 #include "mansearch.h"
 #include "dba_array.h"

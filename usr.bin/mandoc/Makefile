@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.111 2017/07/01 09:47:23 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.112 2018/12/13 11:55:14 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -57,8 +57,8 @@ HTML_OBJS =	html.o roff_html.o mdoc_html.o man_html.o \
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 		dbm_map.o dbm.o mansearch.o cgi.o
 
-cgi.o: cgi.h main.h manconf.h mandoc.h mandoc_aux.h mansearch.h \
-	man.h mdoc.h roff.h
+cgi.o: cgi.h main.h manconf.h mandoc.h mandoc_aux.h mandoc_parse.h \
+	mansearch.h man.h mdoc.h roff.h
 
 man.cgi: ${CGI_OBJS}
 	${CC} ${LDFLAGS} ${STATIC} -o ${.TARGET} ${CGI_OBJS} ${LDADD}

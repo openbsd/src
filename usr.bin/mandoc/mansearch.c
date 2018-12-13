@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.62 2018/11/22 12:01:42 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.63 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
 #include "mandoc_ohash.h"
 #include "manconf.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.99 2018/10/19 21:10:00 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.100 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
@@ -34,6 +34,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
+#include "mandoc_parse.h"
 #include "main.h"
 #include "manconf.h"
 #include "mansearch.h"

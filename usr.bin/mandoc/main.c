@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.213 2018/11/22 12:01:42 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.214 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,6 +43,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
+#include "mandoc_parse.h"
 #include "tag.h"
 #include "main.h"
 #include "manconf.h"

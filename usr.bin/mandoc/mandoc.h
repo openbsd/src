@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.199 2018/12/13 05:13:15 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.200 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Error handling, escape sequence, and character utilities.
  */
 
 #define ASCII_NBRSP	 31  /* non-breaking space */
@@ -241,22 +243,6 @@ enum	mandocerr {
 	MANDOCERR_MAX
 };
 
-/*
- * Parse options.
- */
-#define	MPARSE_MDOC	1  /* assume -mdoc */
-#define	MPARSE_MAN	2  /* assume -man */
-#define	MPARSE_SO	4  /* honour .so requests */
-#define	MPARSE_QUICK	8  /* abort the parse early */
-#define	MPARSE_UTF8	16 /* accept UTF-8 input */
-#define	MPARSE_LATIN1	32 /* accept ISO-LATIN-1 input */
-
-enum	mandoc_os {
-	MANDOC_OS_OTHER = 0,
-	MANDOC_OS_NETBSD,
-	MANDOC_OS_OPENBSD
-};
-
 enum	mandoc_esc {
 	ESCAPE_ERROR = 0, /* bail! unparsable escape */
 	ESCAPE_IGNORE, /* escape to be ignored */
@@ -283,9 +269,6 @@ typedef	void	(*mandocmsg)(enum mandocerr, enum mandoclevel,
 			const char *, int, int, const char *);
 
 
-struct	mparse;
-struct	roff_man;
-
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 void		  mchars_alloc(void);
 void		  mchars_free(void);
@@ -294,15 +277,3 @@ const char	 *mchars_uc2str(int);
 int		  mchars_num2uc(const char *, size_t);
 int		  mchars_spec2cp(const char *, size_t);
 const char	 *mchars_spec2str(const char *, size_t, size_t *);
-struct mparse	 *mparse_alloc(int, enum mandocerr, mandocmsg,
-			enum mandoc_os, const char *);
-void		  mparse_free(struct mparse *);
-int		  mparse_open(struct mparse *, const char *);
-enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
-void		  mparse_reset(struct mparse *);
-void		  mparse_result(struct mparse *,
-			struct roff_man **, char **);
-void		  mparse_copy(const struct mparse *);
-const char	 *mparse_strerror(enum mandocerr);
-const char	 *mparse_strlevel(enum mandoclevel);
-void		  mparse_updaterc(struct mparse *, enum mandoclevel *);

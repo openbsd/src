@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.268 2018/12/03 21:00:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.269 2018/12/13 11:55:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "mandoc_aux.h"
-#include "mandoc.h"
 #include "roff.h"
 #include "mdoc.h"
 #include "out.h"
