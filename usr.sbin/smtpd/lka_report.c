@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.14 2018/12/12 21:27:49 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.15 2018/12/13 17:08:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -38,7 +38,7 @@
 #define	PROTOCOL_VERSION	1
 
 static void
-report_smtp_broadcast(const char *direction, time_t tm, const char *format, ...)
+report_smtp_broadcast(const char *direction, struct timeval *tv, const char *format, ...)
 {
 	va_list		ap;
 	void		*hdl = NULL;
@@ -52,8 +52,8 @@ report_smtp_broadcast(const char *direction, time_t tm, const char *format, ...)
 
 	va_start(ap, format);
 	while (dict_iter(d, &hdl, &reporter, NULL)) {
-		if (io_printf(lka_proc_get_io(reporter), "report|%d|%zd|%s|",
-			PROTOCOL_VERSION, tm, direction) == -1 ||
+		if (io_printf(lka_proc_get_io(reporter), "report|%d|%lld.%06ld|%s|",
+			PROTOCOL_VERSION, tv->tv_sec, tv->tv_usec, direction) == -1 ||
 		    io_vprintf(lka_proc_get_io(reporter), format, ap) == -1)
 			fatalx("failed to write to processor");
 	}
@@ -61,7 +61,7 @@ report_smtp_broadcast(const char *direction, time_t tm, const char *format, ...)
 }
 
 void
-lka_report_smtp_link_connect(const char *direction, time_t tm, uint64_t reqid, const char *rdns,
+lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t reqid, const char *rdns,
     int fcrdns,
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
@@ -97,41 +97,41 @@ lka_report_smtp_link_connect(const char *direction, time_t tm, uint64_t reqid, c
 		break;
 	}
 	
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "link-connect|%016"PRIx64"|%s|%s|%s:%d|%s:%d\n",
 	    reqid, rdns, fcrdns_str, src, src_port, dest, dest_port);
 }
 
 void
-lka_report_smtp_link_disconnect(const char *direction, time_t tm, uint64_t reqid)
+lka_report_smtp_link_disconnect(const char *direction, struct timeval *tv, uint64_t reqid)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "link-disconnect|%016"PRIx64"\n", reqid);
 }
 
 void
-lka_report_smtp_link_identify(const char *direction, time_t tm, uint64_t reqid, const char *heloname)
+lka_report_smtp_link_identify(const char *direction, struct timeval *tv, uint64_t reqid, const char *heloname)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "link-identify|%016"PRIx64"|%s\n", reqid, heloname);
 }
 
 void
-lka_report_smtp_link_tls(const char *direction, time_t tm, uint64_t reqid, const char *ciphers)
+lka_report_smtp_link_tls(const char *direction, struct timeval *tv, uint64_t reqid, const char *ciphers)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "link-tls|%016"PRIx64"|%s\n", reqid, ciphers);
 }
 
 void
-lka_report_smtp_tx_begin(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid)
+lka_report_smtp_tx_begin(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-begin|%016"PRIx64"|%08x\n", reqid, msgid);
 }
 
 void
-lka_report_smtp_tx_mail(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, const char *address, int ok)
+lka_report_smtp_tx_mail(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, const char *address, int ok)
 {
 	const char *result;
 
@@ -146,12 +146,12 @@ lka_report_smtp_tx_mail(const char *direction, time_t tm, uint64_t reqid, uint32
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-mail|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
 }
 
 void
-lka_report_smtp_tx_rcpt(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, const char *address, int ok)
+lka_report_smtp_tx_rcpt(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, const char *address, int ok)
 {
 	const char *result;
 
@@ -166,20 +166,20 @@ lka_report_smtp_tx_rcpt(const char *direction, time_t tm, uint64_t reqid, uint32
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-rcpt|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
 }
 
 void
-lka_report_smtp_tx_envelope(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, uint64_t evpid)
+lka_report_smtp_tx_envelope(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, uint64_t evpid)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-envelope|%016"PRIx64"|%08x|%016"PRIx64"\n",
 	    reqid, msgid, evpid);
 }
 
 void
-lka_report_smtp_tx_data(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, int ok)
+lka_report_smtp_tx_data(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, int ok)
 {
 	const char *result;
 
@@ -194,44 +194,44 @@ lka_report_smtp_tx_data(const char *direction, time_t tm, uint64_t reqid, uint32
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-data|%016"PRIx64"|%08x|%s\n", reqid, msgid, result);
 }
 
 void
-lka_report_smtp_tx_commit(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid, size_t msgsz)
+lka_report_smtp_tx_commit(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, size_t msgsz)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-commit|%016"PRIx64"|%08x|%zd\n",
 	    reqid, msgid, msgsz);
 }
 
 void
-lka_report_smtp_tx_rollback(const char *direction, time_t tm, uint64_t reqid, uint32_t msgid)
+lka_report_smtp_tx_rollback(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "tx-rollback|%016"PRIx64"|%08x\n",
 	    reqid, msgid);
 }
 
 void
-lka_report_smtp_protocol_client(const char *direction, time_t tm, uint64_t reqid, const char *command)
+lka_report_smtp_protocol_client(const char *direction, struct timeval *tv, uint64_t reqid, const char *command)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "protocol-client|%016"PRIx64"|%s\n",
 	    reqid, command);
 }
 
 void
-lka_report_smtp_protocol_server(const char *direction, time_t tm, uint64_t reqid, const char *response)
+lka_report_smtp_protocol_server(const char *direction, struct timeval *tv, uint64_t reqid, const char *response)
 {
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "protocol-server|%016"PRIx64"|%s\n",
 	    reqid, response);
 }
 
 void
-lka_report_smtp_filter_response(const char *direction, time_t tm, uint64_t reqid,
+lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint64_t reqid,
     int phase, int response, const char *param)
 {
 	const char *phase_name;
@@ -304,7 +304,7 @@ lka_report_smtp_filter_response(const char *direction, time_t tm, uint64_t reqid
 		response_name = "";
 	}
 
-	report_smtp_broadcast(direction, tm,
+	report_smtp_broadcast(direction, tv,
 	    "filter-response|%016"PRIx64"|%s|%s|%s\n",
 	    reqid, phase_name, response_name, param ? param : "");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.2 2018/12/12 21:27:49 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.3 2018/12/13 17:08:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -48,9 +48,13 @@ report_smtp_link_connect(const char *direction, uint64_t qid, const char *rdns, 
     const struct sockaddr_storage *ss_src,
     const struct sockaddr_storage *ss_dest)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_LINK_CONNECT, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, rdns);
 	m_add_int(p_lka, fcrdns);
@@ -62,9 +66,13 @@ report_smtp_link_connect(const char *direction, uint64_t qid, const char *rdns, 
 void
 report_smtp_link_identify(const char *direction, uint64_t qid, const char *identity)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_LINK_IDENTIFY, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, identity);
 	m_close(p_lka);
@@ -73,9 +81,13 @@ report_smtp_link_identify(const char *direction, uint64_t qid, const char *ident
 void
 report_smtp_link_tls(const char *direction, uint64_t qid, const char *ssl)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_LINK_TLS, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, ssl);
 	m_close(p_lka);
@@ -84,9 +96,13 @@ report_smtp_link_tls(const char *direction, uint64_t qid, const char *ssl)
 void
 report_smtp_link_disconnect(const char *direction, uint64_t qid)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_LINK_DISCONNECT, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_close(p_lka);
 }
@@ -94,9 +110,13 @@ report_smtp_link_disconnect(const char *direction, uint64_t qid)
 void
 report_smtp_tx_begin(const char *direction, uint64_t qid, uint32_t msgid)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_BEGIN, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_close(p_lka);
@@ -105,9 +125,13 @@ report_smtp_tx_begin(const char *direction, uint64_t qid, uint32_t msgid)
 void
 report_smtp_tx_mail(const char *direction, uint64_t qid, uint32_t msgid, const char *address, int ok)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_MAIL, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_string(p_lka, address);
@@ -118,9 +142,13 @@ report_smtp_tx_mail(const char *direction, uint64_t qid, uint32_t msgid, const c
 void
 report_smtp_tx_rcpt(const char *direction, uint64_t qid, uint32_t msgid, const char *address, int ok)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_RCPT, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_string(p_lka, address);
@@ -131,9 +159,13 @@ report_smtp_tx_rcpt(const char *direction, uint64_t qid, uint32_t msgid, const c
 void
 report_smtp_tx_envelope(const char *direction, uint64_t qid, uint32_t msgid, uint64_t evpid)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_ENVELOPE, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_id(p_lka, evpid);
@@ -143,9 +175,13 @@ report_smtp_tx_envelope(const char *direction, uint64_t qid, uint32_t msgid, uin
 void
 report_smtp_tx_data(const char *direction, uint64_t qid, uint32_t msgid, int ok)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_DATA, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_int(p_lka, ok);
@@ -155,9 +191,13 @@ report_smtp_tx_data(const char *direction, uint64_t qid, uint32_t msgid, int ok)
 void
 report_smtp_tx_commit(const char *direction, uint64_t qid, uint32_t msgid, size_t msgsz)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_COMMIT, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_add_size(p_lka, msgsz);
@@ -167,9 +207,13 @@ report_smtp_tx_commit(const char *direction, uint64_t qid, uint32_t msgid, size_
 void
 report_smtp_tx_rollback(const char *direction, uint64_t qid, uint32_t msgid)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_TX_ROLLBACK, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_u32(p_lka, msgid);
 	m_close(p_lka);
@@ -178,9 +222,13 @@ report_smtp_tx_rollback(const char *direction, uint64_t qid, uint32_t msgid)
 void
 report_smtp_protocol_client(const char *direction, uint64_t qid, const char *command)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_PROTOCOL_CLIENT, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, command);
 	m_close(p_lka);
@@ -189,9 +237,13 @@ report_smtp_protocol_client(const char *direction, uint64_t qid, const char *com
 void
 report_smtp_protocol_server(const char *direction, uint64_t qid, const char *response)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_PROTOCOL_SERVER, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_string(p_lka, response);
 	m_close(p_lka);
@@ -200,9 +252,13 @@ report_smtp_protocol_server(const char *direction, uint64_t qid, const char *res
 void
 report_smtp_filter_response(const char *direction, uint64_t qid, int phase, int response, const char *param)
 {
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
 	m_create(p_lka, IMSG_REPORT_SMTP_FILTER_RESPONSE, 0, 0, -1);
 	m_add_string(p_lka, direction);
-	m_add_time(p_lka, time(NULL));
+	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
 	m_add_int(p_lka, phase);
 	m_add_int(p_lka, response);

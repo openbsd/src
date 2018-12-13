@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.593 2018/12/12 21:28:39 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.594 2018/12/13 17:08:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1327,21 +1327,21 @@ struct io *lka_proc_get_io(const char *);
 
 
 /* lka_report.c */
-void lka_report_smtp_link_connect(const char *, time_t, uint64_t, const char *, int,
+void lka_report_smtp_link_connect(const char *, struct timeval *, uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
-void lka_report_smtp_link_disconnect(const char *, time_t, uint64_t);
-void lka_report_smtp_link_identify(const char *, time_t, uint64_t, const char *);
-void lka_report_smtp_link_tls(const char *, time_t, uint64_t, const char *);
-void lka_report_smtp_tx_begin(const char *, time_t, uint64_t, uint32_t);
-void lka_report_smtp_tx_mail(const char *, time_t, uint64_t, uint32_t, const char *, int);
-void lka_report_smtp_tx_rcpt(const char *, time_t, uint64_t, uint32_t, const char *, int);
-void lka_report_smtp_tx_envelope(const char *, time_t, uint64_t, uint32_t, uint64_t);
-void lka_report_smtp_tx_commit(const char *, time_t, uint64_t, uint32_t, size_t);
-void lka_report_smtp_tx_data(const char *, time_t, uint64_t, uint32_t, int);
-void lka_report_smtp_tx_rollback(const char *, time_t, uint64_t, uint32_t);
-void lka_report_smtp_protocol_client(const char *, time_t, uint64_t, const char *);
-void lka_report_smtp_protocol_server(const char *, time_t, uint64_t, const char *);
-void lka_report_smtp_filter_response(const char *, time_t, uint64_t,
+void lka_report_smtp_link_disconnect(const char *, struct timeval *, uint64_t);
+void lka_report_smtp_link_identify(const char *, struct timeval *, uint64_t, const char *);
+void lka_report_smtp_link_tls(const char *, struct timeval *, uint64_t, const char *);
+void lka_report_smtp_tx_begin(const char *, struct timeval *, uint64_t, uint32_t);
+void lka_report_smtp_tx_mail(const char *, struct timeval *, uint64_t, uint32_t, const char *, int);
+void lka_report_smtp_tx_rcpt(const char *, struct timeval *, uint64_t, uint32_t, const char *, int);
+void lka_report_smtp_tx_envelope(const char *, struct timeval *, uint64_t, uint32_t, uint64_t);
+void lka_report_smtp_tx_commit(const char *, struct timeval *, uint64_t, uint32_t, size_t);
+void lka_report_smtp_tx_data(const char *, struct timeval *, uint64_t, uint32_t, int);
+void lka_report_smtp_tx_rollback(const char *, struct timeval *, uint64_t, uint32_t);
+void lka_report_smtp_protocol_client(const char *, struct timeval *, uint64_t, const char *);
+void lka_report_smtp_protocol_server(const char *, struct timeval *, uint64_t, const char *);
+void lka_report_smtp_filter_response(const char *, struct timeval *, uint64_t,
     int, int, const char *);
 
 
@@ -1407,6 +1407,7 @@ void m_add_int(struct mproc *, int);
 void m_add_u32(struct mproc *, uint32_t);
 void m_add_size(struct mproc *, size_t);
 void m_add_time(struct mproc *, time_t);
+void m_add_timeval(struct mproc *, struct timeval *tv);
 void m_add_string(struct mproc *, const char *);
 void m_add_data(struct mproc *, const void *, size_t);
 void m_add_evpid(struct mproc *, uint64_t);
@@ -1426,6 +1427,7 @@ void m_get_int(struct msg *, int *);
 void m_get_size(struct msg *, size_t *);
 void m_get_u32(struct msg *, uint32_t *);
 void m_get_time(struct msg *, time_t *);
+void m_get_timeval(struct msg *, struct timeval *);
 void m_get_string(struct msg *, const char **);
 void m_get_data(struct msg *, const void **, size_t *);
 void m_get_evpid(struct msg *, uint64_t *);

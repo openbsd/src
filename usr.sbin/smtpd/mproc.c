@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.30 2018/11/11 14:00:51 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.31 2018/12/13 17:08:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -439,6 +439,13 @@ m_add_time(struct mproc *m, time_t v)
 };
 
 void
+m_add_timeval(struct mproc *m, struct timeval *tv)
+{
+	m_add(m, tv, sizeof(*tv));
+}
+
+
+void
 m_add_string(struct mproc *m, const char *v)
 {
 	if (v) {
@@ -538,6 +545,12 @@ void
 m_get_time(struct msg *m, time_t *t)
 {
 	m_get(m, t, sizeof(*t));
+}
+
+void
+m_get_timeval(struct msg *m, struct timeval *tv)
+{
+	m_get(m, tv, sizeof(*tv));
 }
 
 void
