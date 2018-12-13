@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.47 2016/12/22 15:33:36 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.48 2018/12/13 16:35:07 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -685,6 +685,18 @@ LEAF(tlb_set_wired, 0)
 	j	ra
 	nop
 END(tlb_set_wired)
+
+#ifdef CPU_RM7000
+/*
+ * Similar to tlb_set_wired() above, but returns the value of the random
+ * register.
+ */
+LEAF(tlb_set_wired_get_random, 0)
+	mtc0	a0, COP_0_TLB_WIRED
+	j	ra
+	 mfc0	v0, COP_0_TLB_RANDOM
+END(tlb_set_wired_get_random)
+#endif
 
 /*
  *	Initialize the TLB page mask.
