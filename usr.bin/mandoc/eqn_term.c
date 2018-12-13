@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_term.c,v 1.14 2018/10/02 12:14:44 schwarze Exp $ */
+/*	$OpenBSD: eqn_term.c,v 1.15 2018/12/13 05:13:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mandoc.h"
+#include "eqn.h"
 #include "out.h"
 #include "term.h"
 

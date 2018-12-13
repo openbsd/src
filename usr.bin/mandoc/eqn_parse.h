@@ -1,7 +1,7 @@
-/*	$OpenBSD: eqn_parse.h,v 1.1 2018/12/13 03:40:09 schwarze Exp $ */
+/*	$OpenBSD: eqn_parse.h,v 1.2 2018/12/13 05:13:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,7 @@ struct	eqn_node {
 
 
 struct eqn_node	*eqn_alloc(struct mparse *);
+struct eqn_box	*eqn_box_new(void);
 void		 eqn_box_free(struct eqn_box *);
 void		 eqn_free(struct eqn_node *);
 void		 eqn_parse(struct eqn_node *);

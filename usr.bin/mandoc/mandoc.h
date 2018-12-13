@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.198 2018/12/12 21:54:30 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.199 2018/12/13 05:13:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -239,74 +239,6 @@ enum	mandocerr {
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
 
 	MANDOCERR_MAX
-};
-
-enum	eqn_boxt {
-	EQN_TEXT, /* text (number, variable, whatever) */
-	EQN_SUBEXPR, /* nested `eqn' subexpression */
-	EQN_LIST, /* list (braces, etc.) */
-	EQN_PILE, /* vertical pile */
-	EQN_MATRIX /* pile of piles */
-};
-
-enum	eqn_fontt {
-	EQNFONT_NONE = 0,
-	EQNFONT_ROMAN,
-	EQNFONT_BOLD,
-	EQNFONT_FAT,
-	EQNFONT_ITALIC,
-	EQNFONT__MAX
-};
-
-enum	eqn_post {
-	EQNPOS_NONE = 0,
-	EQNPOS_SUP,
-	EQNPOS_SUBSUP,
-	EQNPOS_SUB,
-	EQNPOS_TO,
-	EQNPOS_FROM,
-	EQNPOS_FROMTO,
-	EQNPOS_OVER,
-	EQNPOS_SQRT,
-	EQNPOS__MAX
-};
-
-enum	eqn_pilet {
-	EQNPILE_NONE = 0,
-	EQNPILE_PILE,
-	EQNPILE_CPILE,
-	EQNPILE_RPILE,
-	EQNPILE_LPILE,
-	EQNPILE_COL,
-	EQNPILE_CCOL,
-	EQNPILE_RCOL,
-	EQNPILE_LCOL,
-	EQNPILE__MAX
-};
-
- /*
- * A "box" is a parsed mathematical expression as defined by the eqn.7
- * grammar.
- */
-struct	eqn_box {
-	int		  size; /* font size of expression */
-#define	EQN_DEFSIZE	  INT_MIN
-	enum eqn_boxt	  type; /* type of node */
-	struct eqn_box	 *first; /* first child node */
-	struct eqn_box	 *last; /* last child node */
-	struct eqn_box	 *next; /* node sibling */
-	struct eqn_box	 *prev; /* node sibling */
-	struct eqn_box	 *parent; /* node sibling */
-	char		 *text; /* text (or NULL) */
-	char		 *left; /* fence left-hand */
-	char		 *right; /* fence right-hand */
-	char		 *top; /* expression over-symbol */
-	char		 *bottom; /* expression under-symbol */
-	size_t		  args; /* arguments in parent */
-	size_t		  expectargs; /* max arguments in parent */
-	enum eqn_post	  pos; /* position of next box */
-	enum eqn_fontt	  font; /* font of box */
-	enum eqn_pilet	  pile; /* equation piling */
 };
 
 /*

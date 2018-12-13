@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.219 2018/12/13 03:40:09 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.220 2018/12/13 05:13:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -3151,8 +3151,7 @@ roff_EQ(ROFF_ARGS)
 	n = roff_node_alloc(r->man, ln, ppos, ROFFT_EQN, TOKEN_NONE);
 	if (ln > r->man->last->line)
 		n->flags |= NODE_LINE;
-	n->eqn = mandoc_calloc(1, sizeof(*n->eqn));
-	n->eqn->expectargs = UINT_MAX;
+	n->eqn = eqn_box_new();
 	roff_node_append(r->man, n);
 	r->man->next = ROFF_NEXT_SIBLING;
 
