@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.18 2018/11/25 14:58:28 deraadt Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.19 2018/12/13 10:54:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -401,7 +401,7 @@ snmpc_sendreq(struct snmpc *sc, unsigned int type)
 	}
 
 #ifdef DEBUG
-	fprintf(stderr, "REQUEST(%lu):\n", type);
+	fprintf(stderr, "REQUEST(%u):\n", type);
 	smi_debug_elements(root);
 #endif
 
