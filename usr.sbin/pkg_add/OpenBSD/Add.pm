@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.178 2018/12/10 19:19:04 espie Exp $
+# $OpenBSD: Add.pm,v 1.179 2018/12/13 12:48:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -126,6 +126,7 @@ sub perform_extraction
 	my $p = $state->progress->new_sizer($handle->{plist}, $state);
 	while (my $file = $state->{archive}->next) {
 		if (keys %$wanted == 0) {
+			$state->tweak_header("skipping");
 			for my $e (values %$tied) {
 				$e->tie($state);
 				$p->advance($e);

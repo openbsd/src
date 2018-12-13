@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.106 2018/12/12 14:14:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.107 2018/12/13 12:48:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -201,6 +201,31 @@ OpenBSD::Auto::cache(tracker,
 	return OpenBSD::Tracker->new;
     });
 
+sub tweak_header
+{
+	my ($state, $info) = @_;
+	my $header = $state->{setheader};
+
+	if (defined $info) {
+		$header.=" ($info)";
+	}
+
+	if (!$state->progress->set_header($header)) {
+		return unless $state->verbose;
+		if (!defined $info) {
+			$header = "Adding $header";
+		}
+		if (defined $state->{lastheader} &&
+		    $header eq $state->{lastheader}) {
+			return;
+		}
+		$state->{lastheader} = $header;
+		$state->print("#1", $header);
+		$state->print("(pretending) ") if $state->{not};
+		$state->print("\n");
+	}
+}
+
 package OpenBSD::ConflictCache;
 our @ISA = (qw(OpenBSD::Cloner));
 sub new
@@ -246,24 +271,10 @@ sub setup_header
 	} else {
 		$header .= $set->print;
 	}
-	if (defined $info) {
-		$header.=" ($info)";
-	}
 
-	if (!$state->progress->set_header($header)) {
-		return unless $state->verbose;
-		if (!defined $info) {
-			$header = "Adding $header";
-		}
-		if (defined $state->{lastheader} &&
-		    $header eq $state->{lastheader}) {
-			return;
-		}
-		$state->{lastheader} = $header;
-		$state->print("#1", $header);
-		$state->print("(pretending) ") if $state->{not};
-		$state->print("\n");
-	}
+	$state->{setheader} = $header;
+
+	$state->tweak_header($info);
 }
 
 my $checked = {};
@@ -768,8 +779,7 @@ sub really_add
 		$set->setup_header($state, $handle, "extracting");
 
 		try {
-			OpenBSD::Add::perform_extraction($handle,
-			    $state);
+			OpenBSD::Add::perform_extraction($handle, $state);
 		} catchall {
 			unless ($state->{interrupted}) {
 				$state->errsay($_);
