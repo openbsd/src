@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.218 2018/12/13 02:05:57 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.219 2018/12/13 03:40:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,8 +32,8 @@
 #include "roff.h"
 #include "libmandoc.h"
 #include "roff_int.h"
-#include "libroff.h"
 #include "tbl_parse.h"
+#include "eqn_parse.h"
 
 /* Maximum number of string expansions per line, to break infinite loops. */
 #define	EXPAND_LIMIT	1000
@@ -721,8 +721,7 @@ roff_free1(struct roff *r)
 	tbl_free(r->first_tbl);
 	r->first_tbl = r->last_tbl = r->tbl = NULL;
 
-	if (r->last_eqn != NULL)
-		eqn_free(r->last_eqn);
+	eqn_free(r->last_eqn);
 	r->last_eqn = r->eqn = NULL;
 
 	while (r->mstackpos >= 0)
@@ -1077,8 +1076,7 @@ roff_node_free(struct roff_node *n)
 		mdoc_argv_free(n->args);
 	if (n->type == ROFFT_BLOCK || n->type == ROFFT_ELEM)
 		free(n->norm);
-	if (n->eqn != NULL)
-		eqn_box_free(n->eqn);
+	eqn_box_free(n->eqn);
 	free(n->string);
 	free(n);
 }
