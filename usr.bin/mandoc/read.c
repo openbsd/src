@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.175 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.176 2018/12/14 02:15:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,8 +63,6 @@ static	void	  resize_buf(struct buf *, size_t);
 static	int	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
 static	int	  read_whole_file(struct mparse *, int, struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
-static	void	  mparse_parse_buffer(struct mparse *, struct buf,
-			const char *);
 
 
 static void
@@ -536,26 +534,42 @@ mparse_end(struct mparse *curp)
 	roff_endparse(curp->roff);
 }
 
-static void
-mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
+/*
+ * Read the whole file into memory and call the parsers.
+ * Called recursively when an .so request is encountered.
+ */
+void
+mparse_readfd(struct mparse *curp, int fd, const char *filename)
 {
-	struct buf	*svprimary;
-	const char	*svfile;
-	size_t		 offset;
 	static int	 recursion_depth;
 
-	if (64 < recursion_depth) {
+	struct buf	 blk;
+	struct buf	*save_primary;
+	const char	*save_filename;
+	size_t		 offset;
+	int		 save_filenc, save_lineno;
+	int		 with_mmap;
+
+	if (recursion_depth > 64) {
 		mandoc_msg(MANDOCERR_ROFFLOOP, curp, curp->line, 0, NULL);
 		return;
 	}
+	if (read_whole_file(curp, fd, &blk, &with_mmap) == 0)
+		return;
 
-	/* Line number is per-file. */
-	svfile = mandoc_msg_getinfilename();
-	mandoc_msg_setinfilename(file);
-	svprimary = curp->primary;
+	/*
+	 * Save some properties of the parent file.
+	 */
+
+	save_primary = curp->primary;
+	save_filenc = curp->filenc;
+	save_lineno = curp->line;
+	save_filename = mandoc_msg_getinfilename();
+
 	curp->primary = &blk;
+	curp->filenc = curp->options & (MPARSE_UTF8 | MPARSE_LATIN1);
 	curp->line = 1;
-	recursion_depth++;
+	mandoc_msg_setinfilename(filename);
 
 	/* Skip an UTF-8 byte order mark. */
 	if (curp->filenc & MPARSE_UTF8 && blk.sz > 2 &&
@@ -567,38 +581,25 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	} else
 		offset = 0;
 
+	recursion_depth++;
 	mparse_buf_r(curp, blk, offset, 1);
-
 	if (--recursion_depth == 0)
 		mparse_end(curp);
 
-	curp->primary = svprimary;
-	if (svfile != NULL)
-		mandoc_msg_setinfilename(svfile);
-}
+	/*
+	 * Clean up and restore saved parent properties.
+	 */
 
-/*
- * Read the whole file into memory and call the parsers.
- * Called recursively when an .so request is encountered.
- */
-void
-mparse_readfd(struct mparse *curp, int fd, const char *file)
-{
-	struct buf	 blk;
-	int		 with_mmap;
-	int		 save_filenc;
+	if (with_mmap)
+		munmap(blk.buf, blk.sz);
+	else
+		free(blk.buf);
 
-	if (read_whole_file(curp, fd, &blk, &with_mmap)) {
-		save_filenc = curp->filenc;
-		curp->filenc = curp->options &
-		    (MPARSE_UTF8 | MPARSE_LATIN1);
-		mparse_parse_buffer(curp, blk, file);
-		curp->filenc = save_filenc;
-		if (with_mmap)
-			munmap(blk.buf, blk.sz);
-		else
-			free(blk.buf);
-	}
+	curp->primary = save_primary;
+	curp->filenc = save_filenc;
+	curp->line = save_lineno;
+	if (save_filename != NULL)
+		mandoc_msg_setinfilename(save_filename);
 }
 
 int
