@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.95 2018/08/26 16:18:38 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.96 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

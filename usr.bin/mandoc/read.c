@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.174 2018/12/13 11:55:14 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.175 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,14 +46,10 @@ struct	mparse {
 	struct roff	 *roff; /* roff parser (!NULL) */
 	struct roff_man	 *man; /* man parser */
 	char		 *sodest; /* filename pointed to by .so */
-	const char	 *file; /* filename of current input file */
 	struct buf	 *primary; /* buffer currently being parsed */
 	struct buf	 *secondary; /* copy of top level input */
 	struct buf	 *loop; /* open .while request line */
 	const char	 *os_s; /* default operating system */
-	mandocmsg	  mmsg; /* warning/error message handler */
-	enum mandoclevel  file_status; /* status of current parse */
-	enum mandocerr	  mmin; /* ignore messages below this */
 	int		  options; /* parser options */
 	int		  gzip; /* current input file is gzipped */
 	int		  filenc; /* encoding of the current file */
@@ -65,228 +61,10 @@ static	void	  choose_parser(struct mparse *);
 static	void	  free_buf_list(struct buf *);
 static	void	  resize_buf(struct buf *, size_t);
 static	int	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
-static	int	  read_whole_file(struct mparse *, const char *, int,
-				struct buf *, int *);
+static	int	  read_whole_file(struct mparse *, int, struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
 static	void	  mparse_parse_buffer(struct mparse *, struct buf,
 			const char *);
-
-static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
-	MANDOCERR_OK,
-	MANDOCERR_OK,
-	MANDOCERR_WARNING,
-	MANDOCERR_ERROR,
-	MANDOCERR_UNSUPP,
-	MANDOCERR_MAX,
-	MANDOCERR_MAX
-};
-
-static	const char * const	mandocerrs[MANDOCERR_MAX] = {
-	"ok",
-
-	"base system convention",
-
-	"Mdocdate found",
-	"Mdocdate missing",
-	"unknown architecture",
-	"operating system explicitly specified",
-	"RCS id missing",
-	"referenced manual not found",
-
-	"generic style suggestion",
-
-	"legacy man(7) date format",
-	"normalizing date format to",
-	"lower case character in document title",
-	"duplicate RCS id",
-	"possible typo in section name",
-	"unterminated quoted argument",
-	"useless macro",
-	"consider using OS macro",
-	"errnos out of order",
-	"duplicate errno",
-	"trailing delimiter",
-	"no blank before trailing delimiter",
-	"fill mode already enabled, skipping",
-	"fill mode already disabled, skipping",
-	"verbatim \"--\", maybe consider using \\(em",
-	"function name without markup",
-	"whitespace at end of input line",
-	"bad comment style",
-
-	"generic warning",
-
-	/* related to the prologue */
-	"missing manual title, using UNTITLED",
-	"missing manual title, using \"\"",
-	"missing manual section, using \"\"",
-	"unknown manual section",
-	"missing date, using today's date",
-	"cannot parse date, using it verbatim",
-	"date in the future, using it anyway",
-	"missing Os macro, using \"\"",
-	"late prologue macro",
-	"prologue macros out of order",
-
-	/* related to document structure */
-	".so is fragile, better use ln(1)",
-	"no document body",
-	"content before first section header",
-	"first section is not \"NAME\"",
-	"NAME section without Nm before Nd",
-	"NAME section without description",
-	"description not at the end of NAME",
-	"bad NAME section content",
-	"missing comma before name",
-	"missing description line, using \"\"",
-	"description line outside NAME section",
-	"sections out of conventional order",
-	"duplicate section title",
-	"unexpected section",
-	"cross reference to self",
-	"unusual Xr order",
-	"unusual Xr punctuation",
-	"AUTHORS section without An macro",
-
-	/* related to macros and nesting */
-	"obsolete macro",
-	"macro neither callable nor escaped",
-	"skipping paragraph macro",
-	"moving paragraph macro out of list",
-	"skipping no-space macro",
-	"blocks badly nested",
-	"nested displays are not portable",
-	"moving content out of list",
-	"first macro on line",
-	"line scope broken",
-	"skipping blank line in line scope",
-
-	/* related to missing macro arguments */
-	"skipping empty request",
-	"conditional request controls empty scope",
-	"skipping empty macro",
-	"empty block",
-	"empty argument, using 0n",
-	"missing display type, using -ragged",
-	"list type is not the first argument",
-	"missing -width in -tag list, using 6n",
-	"missing utility name, using \"\"",
-	"missing function name, using \"\"",
-	"empty head in list item",
-	"empty list item",
-	"missing argument, using next line",
-	"missing font type, using \\fR",
-	"unknown font type, using \\fR",
-	"nothing follows prefix",
-	"empty reference block",
-	"missing section argument",
-	"missing -std argument, adding it",
-	"missing option string, using \"\"",
-	"missing resource identifier, using \"\"",
-	"missing eqn box, using \"\"",
-
-	/* related to bad macro arguments */
-	"duplicate argument",
-	"skipping duplicate argument",
-	"skipping duplicate display type",
-	"skipping duplicate list type",
-	"skipping -width argument",
-	"wrong number of cells",
-	"unknown AT&T UNIX version",
-	"comma in function argument",
-	"parenthesis in function name",
-	"unknown library name",
-	"invalid content in Rs block",
-	"invalid Boolean argument",
-	"argument contains two font escapes",
-	"unknown font, skipping request",
-	"odd number of characters in request",
-
-	/* related to plain text */
-	"blank line in fill mode, using .sp",
-	"tab in filled text",
-	"new sentence, new line",
-	"invalid escape sequence",
-	"undefined string, using \"\"",
-
-	/* related to tables */
-	"tbl line starts with span",
-	"tbl column starts with span",
-	"skipping vertical bar in tbl layout",
-
-	"generic error",
-
-	/* related to tables */
-	"non-alphabetic character in tbl options",
-	"skipping unknown tbl option",
-	"missing tbl option argument",
-	"wrong tbl option argument size",
-	"empty tbl layout",
-	"invalid character in tbl layout",
-	"unmatched parenthesis in tbl layout",
-	"tbl without any data cells",
-	"ignoring data in spanned tbl cell",
-	"ignoring extra tbl data cells",
-	"data block open at end of tbl",
-
-	/* related to document structure and macros */
-	NULL,
-	"duplicate prologue macro",
-	"skipping late title macro",
-	"input stack limit exceeded, infinite loop?",
-	"skipping bad character",
-	"skipping unknown macro",
-	"ignoring request outside macro",
-	"skipping insecure request",
-	"skipping item outside list",
-	"skipping column outside column list",
-	"skipping end of block that is not open",
-	"fewer RS blocks open, skipping",
-	"inserting missing end of block",
-	"appending missing end of block",
-
-	/* related to request and macro arguments */
-	"escaped character not allowed in a name",
-	"using macro argument outside macro",
-	"argument number is not numeric",
-	"NOT IMPLEMENTED: Bd -file",
-	"skipping display without arguments",
-	"missing list type, using -item",
-	"argument is not numeric, using 1",
-	"argument is not a character",
-	"missing manual name, using \"\"",
-	"uname(3) system call failed, using UNKNOWN",
-	"unknown standard specifier",
-	"skipping request without numeric argument",
-	"excessive shift",
-	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
-	".so request failed",
-	"skipping all arguments",
-	"skipping excess arguments",
-	"divide by zero",
-
-	"unsupported feature",
-	"input too large",
-	"unsupported control character",
-	"unsupported roff request",
-	"nested .while loops",
-	"end of scope with open .while loop",
-	"end of .while loop in inner scope",
-	"cannot continue this .while loop",
-	"eqn delim option in tbl",
-	"unsupported tbl layout modifier",
-	"ignoring macro in table",
-};
-
-static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
-	"SUCCESS",
-	"STYLE",
-	"WARNING",
-	"ERROR",
-	"UNSUPP",
-	"BADARG",
-	"SYSERR"
-};
 
 
 static void
@@ -368,7 +146,6 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 {
 	struct buf	 ln;
 	struct buf	*firstln, *lastln, *thisln, *loop;
-	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
 	int		 line_result, result;
@@ -591,13 +368,10 @@ rerun:
 				curp->sodest = mandoc_strdup(ln.buf + of);
 				goto out;
 			}
-			save_file = curp->file;
 			if ((fd = mparse_open(curp, ln.buf + of)) != -1) {
 				mparse_readfd(curp, fd, ln.buf + of);
 				close(fd);
-				curp->file = save_file;
 			} else {
-				curp->file = save_file;
 				mandoc_vmsg(MANDOCERR_SO_FAIL,
 				    curp, curp->line, pos,
 				    ".so %s", ln.buf + of);
@@ -646,8 +420,7 @@ out:
 }
 
 static int
-read_whole_file(struct mparse *curp, const char *file, int fd,
-		struct buf *fb, int *with_mmap)
+read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 {
 	struct stat	 st;
 	gzFile		 gz;
@@ -777,8 +550,8 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 	}
 
 	/* Line number is per-file. */
-	svfile = curp->file;
-	curp->file = file;
+	svfile = mandoc_msg_getinfilename();
+	mandoc_msg_setinfilename(file);
 	svprimary = curp->primary;
 	curp->primary = &blk;
 	curp->line = 1;
@@ -800,21 +573,22 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 		mparse_end(curp);
 
 	curp->primary = svprimary;
-	curp->file = svfile;
+	if (svfile != NULL)
+		mandoc_msg_setinfilename(svfile);
 }
 
 /*
  * Read the whole file into memory and call the parsers.
  * Called recursively when an .so request is encountered.
  */
-enum mandoclevel
+void
 mparse_readfd(struct mparse *curp, int fd, const char *file)
 {
 	struct buf	 blk;
 	int		 with_mmap;
 	int		 save_filenc;
 
-	if (read_whole_file(curp, file, fd, &blk, &with_mmap)) {
+	if (read_whole_file(curp, fd, &blk, &with_mmap)) {
 		save_filenc = curp->filenc;
 		curp->filenc = curp->options &
 		    (MPARSE_UTF8 | MPARSE_LATIN1);
@@ -825,7 +599,6 @@ mparse_readfd(struct mparse *curp, int fd, const char *file)
 		else
 			free(blk.buf);
 	}
-	return curp->file_status;
 }
 
 int
@@ -834,7 +607,6 @@ mparse_open(struct mparse *curp, const char *file)
 	char		 *cp;
 	int		  fd;
 
-	curp->file = file;
 	cp = strrchr(file, '.');
 	curp->gzip = (cp != NULL && ! strcmp(cp + 1, "gz"));
 
@@ -865,16 +637,13 @@ mparse_open(struct mparse *curp, const char *file)
 }
 
 struct mparse *
-mparse_alloc(int options, enum mandocerr mmin, mandocmsg mmsg,
-    enum mandoc_os os_e, const char *os_s)
+mparse_alloc(int options, enum mandoc_os os_e, const char *os_s)
 {
 	struct mparse	*curp;
 
 	curp = mandoc_calloc(1, sizeof(struct mparse));
 
 	curp->options = options;
-	curp->mmin = mmin;
-	curp->mmsg = mmsg;
 	curp->os_s = os_s;
 
 	curp->roff = roff_alloc(curp, options);
@@ -901,11 +670,8 @@ mparse_reset(struct mparse *curp)
 	roff_man_reset(curp->man);
 	free_buf_list(curp->secondary);
 	curp->secondary = NULL;
-
 	free(curp->sodest);
 	curp->sodest = NULL;
-
-	curp->file_status = MANDOCLEVEL_OK;
 	curp->gzip = 0;
 }
 
@@ -932,60 +698,6 @@ mparse_result(struct mparse *curp, struct roff_man **man,
 	}
 	if (man)
 		*man = curp->man;
-}
-
-void
-mparse_updaterc(struct mparse *curp, enum mandoclevel *rc)
-{
-	if (curp->file_status > *rc)
-		*rc = curp->file_status;
-}
-
-void
-mandoc_vmsg(enum mandocerr t, struct mparse *m,
-		int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-
-	mandoc_msg(t, m, ln, pos, buf);
-}
-
-void
-mandoc_msg(enum mandocerr er, struct mparse *m,
-		int ln, int col, const char *msg)
-{
-	enum mandoclevel level;
-
-	if (er < m->mmin && er != MANDOCERR_FILE)
-		return;
-
-	level = MANDOCLEVEL_UNSUPP;
-	while (er < mandoclimits[level])
-		level--;
-
-	if (m->mmsg)
-		(*m->mmsg)(er, level, m->file, ln, col, msg);
-
-	if (m->file_status < level)
-		m->file_status = level;
-}
-
-const char *
-mparse_strerror(enum mandocerr er)
-{
-
-	return mandocerrs[er];
-}
-
-const char *
-mparse_strlevel(enum mandoclevel lvl)
-{
-	return mandoclevels[lvl];
 }
 
 void

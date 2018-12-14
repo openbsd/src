@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_validate.c,v 1.12 2018/12/04 03:28:54 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.13 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,7 +17,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "mandoc.h"

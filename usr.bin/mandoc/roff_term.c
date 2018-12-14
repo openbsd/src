@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.15 2018/08/10 20:40:43 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.16 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,7 +17,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <stddef.h>
+#include <stdio.h>
 
 #include "mandoc.h"
 #include "roff.h"

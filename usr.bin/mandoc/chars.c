@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.46 2018/08/21 16:01:38 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.47 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

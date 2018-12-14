@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.59 2018/08/24 22:56:37 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.60 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,11 +49,6 @@ struct	mparse;
 struct	roff;
 struct	roff_man;
 
-void		 mandoc_msg(enum mandocerr, struct mparse *,
-			int, int, const char *);
-void		 mandoc_vmsg(enum mandocerr, struct mparse *,
-			int, int, const char *, ...)
-			__attribute__((__format__ (__printf__, 5, 6)));
 char		*mandoc_getarg(struct mparse *, char **, int, int *);
 char		*mandoc_normdate(struct roff_man *, char *, int, int);
 int		 mandoc_eos(const char *, size_t);

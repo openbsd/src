@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_parse.h,v 1.1 2018/12/13 11:55:14 schwarze Exp $ */
+/*	$OpenBSD: mandoc_parse.h,v 1.2 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,15 +33,11 @@
 struct	mparse;
 struct	roff_man;
 
-struct mparse	 *mparse_alloc(int, enum mandocerr, mandocmsg,
-			enum mandoc_os, const char *);
+struct mparse	 *mparse_alloc(int, enum mandoc_os, const char *);
 void		  mparse_copy(const struct mparse *);
 void		  mparse_free(struct mparse *);
 int		  mparse_open(struct mparse *, const char *);
-enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
+void		  mparse_readfd(struct mparse *, int, const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *,
 			struct roff_man **, char **);
-const char	 *mparse_strerror(enum mandocerr);
-const char	 *mparse_strlevel(enum mandoclevel);
-void		  mparse_updaterc(struct mparse *, enum mandoclevel *);

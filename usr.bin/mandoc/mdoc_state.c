@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.10 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.11 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

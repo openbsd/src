@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.36 2018/12/13 02:05:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.37 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

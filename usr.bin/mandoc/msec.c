@@ -1,4 +1,4 @@
-/*	$OpenBSD: msec.c,v 1.12 2015/10/06 18:30:44 schwarze Exp $ */
+/*	$OpenBSD: msec.c,v 1.13 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 
+#include <stdio.h>
 #include <string.h>
 
 #include "mandoc.h"

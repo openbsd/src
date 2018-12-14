@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.110 2018/12/04 02:53:45 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.111 2018/12/14 01:17:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
