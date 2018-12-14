@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.14 2018/12/11 13:40:30 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.15 2018/12/14 20:22:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -197,9 +197,13 @@ lka_filter_process_response(const char *name, const char *line)
 	*ep = 0;
 
 	kind = buffer;
+
+	if (strcmp(kind, "register") == 0)
+		return 1;
+
 	if (strcmp(kind, "filter-result") != 0 &&
 	    strcmp(kind, "filter-dataline") != 0)
-		return 1;
+		return 0;
 
 	qid = ep+1;
 	if ((ep = strchr(qid, '|')) == NULL)
