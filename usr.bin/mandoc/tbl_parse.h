@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_parse.h,v 1.1 2018/12/13 02:05:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_parse.h,v 1.2 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,11 +19,10 @@
  * For use in the roff(7) and tbl(7) parsers only.
  */
 
-struct mparse;
 struct tbl_node;
 struct tbl_span;
 
-struct tbl_node	*tbl_alloc(int, int, struct mparse *, struct tbl_node *);
+struct tbl_node	*tbl_alloc(int, int, struct tbl_node *);
 int		 tbl_end(struct tbl_node *, int);
 void		 tbl_free(struct tbl_node *);
 void		 tbl_read(struct tbl_node *, int, const char *, int);

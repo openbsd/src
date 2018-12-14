@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl.c,v 1.26 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: tbl.c,v 1.27 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -86,7 +86,7 @@ tbl_read(struct tbl_node *tbl, int ln, const char *p, int pos)
 }
 
 struct tbl_node *
-tbl_alloc(int pos, int line, struct mparse *parse, struct tbl_node *last_tbl)
+tbl_alloc(int pos, int line, struct tbl_node *last_tbl)
 {
 	struct tbl_node	*tbl;
 
@@ -95,7 +95,6 @@ tbl_alloc(int pos, int line, struct mparse *parse, struct tbl_node *last_tbl)
 		last_tbl->next = tbl;
 	tbl->line = line;
 	tbl->pos = pos;
-	tbl->parse = parse;
 	tbl->part = TBL_PART_OPTS;
 	tbl->opts.tab = '\t';
 	tbl->opts.decimal = '.';

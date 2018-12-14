@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.97 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.98 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -454,6 +454,6 @@ man_args(struct roff_man *man, int line, int *pos, char *buf, char **v)
 	if ('\0' == *start)
 		return 0;
 
-	*v = mandoc_getarg(man->parse, v, line, pos);
+	*v = mandoc_getarg(v, line, pos);
 	return 1;
 }

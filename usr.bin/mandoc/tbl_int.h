@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_int.h,v 1.1 2018/12/13 02:05:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_int.h,v 1.2 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2013,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,6 @@ enum	tbl_part {
 
 struct	tbl_node {
 	struct tbl_opts	  opts;		/* Options for the whole table. */
-	struct mparse	 *parse;	/* For error reporting. */
 	struct tbl_node	 *next;		/* Next table. */
 	struct tbl_row	 *first_row;	/* First layout row. */
 	struct tbl_row	 *last_row;	/* Last layout row. */

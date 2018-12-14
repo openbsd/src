@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.46 2018/12/13 11:55:14 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.47 2018/12/14 06:33:03 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -548,7 +548,6 @@ struct	roff_meta {
 
 struct	roff_man {
 	struct roff_meta  meta;    /* Document meta-data. */
-	struct mparse	 *parse;   /* Parse pointer. */
 	struct roff	 *roff;    /* Roff parser state data. */
 	struct ohash	 *mdocmac; /* Mdoc macro lookup table. */
 	struct ohash	 *manmac;  /* Man macro lookup table. */

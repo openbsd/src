@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.77 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.78 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -399,7 +399,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
  * or to the NUL byte terminating the argument line.
  */
 char *
-mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
+mandoc_getarg(char **cpp, int ln, int *pos)
 {
 	char	 *start, *cp;
 	int	  quoted, pairs, white;

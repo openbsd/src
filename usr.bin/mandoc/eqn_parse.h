@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_parse.h,v 1.2 2018/12/13 05:13:15 schwarze Exp $ */
+/*	$OpenBSD: eqn_parse.h,v 1.3 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,13 +19,11 @@
  * For use in the roff(7) and eqn(7) parsers only.
  */
 
-struct mparse;
 struct roff_node;
 struct eqn_box;
 struct eqn_def;
 
 struct	eqn_node {
-	struct mparse	 *parse;   /* Main parser, for error reporting. */
 	struct roff_node *node;    /* Syntax tree of this equation. */
 	struct eqn_def	 *defs;    /* Array of definitions. */
 	char		 *data;    /* Source code of this equation. */
@@ -41,7 +39,7 @@ struct	eqn_node {
 };
 
 
-struct eqn_node	*eqn_alloc(struct mparse *);
+struct eqn_node	*eqn_alloc(void);
 struct eqn_box	*eqn_box_new(void);
 void		 eqn_box_free(struct eqn_box *);
 void		 eqn_free(struct eqn_node *);

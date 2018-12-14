@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.73 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.74 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -570,7 +570,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 	}
 
 	p = &buf[*pos];
-	*v = mandoc_getarg(mdoc->parse, &p, line, pos);
+	*v = mandoc_getarg(&p, line, pos);
 
 	/*
 	 * After parsing the last word in this phrase,

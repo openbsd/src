@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.177 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.178 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -645,8 +645,8 @@ mparse_alloc(int options, enum mandoc_os os_e, const char *os_s)
 	curp->options = options;
 	curp->os_s = os_s;
 
-	curp->roff = roff_alloc(curp, options);
-	curp->man = roff_man_alloc(curp->roff, curp, curp->os_s,
+	curp->roff = roff_alloc(options);
+	curp->man = roff_man_alloc(curp->roff, curp->os_s,
 		curp->options & MPARSE_QUICK ? 1 : 0);
 	if (curp->options & MPARSE_MDOC) {
 		curp->man->macroset = MACROSET_MDOC;

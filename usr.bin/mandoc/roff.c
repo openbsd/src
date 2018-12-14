@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.222 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.223 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -96,7 +96,6 @@ struct	mctx {
 };
 
 struct	roff {
-	struct mparse	*parse; /* parse point */
 	struct roff_man	*man; /* mdoc or man parser */
 	struct roffnode	*last; /* leaf of stack */
 	struct mctx	*mstack; /* stack of macro contexts */
@@ -778,12 +777,11 @@ roff_free(struct roff *r)
 }
 
 struct roff *
-roff_alloc(struct mparse *parse, int options)
+roff_alloc(int options)
 {
 	struct roff	*r;
 
 	r = mandoc_calloc(1, sizeof(struct roff));
-	r->parse = parse;
 	r->reqtab = roffhash_alloc(0, ROFF_RENAMED);
 	r->options = options;
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
@@ -842,13 +840,11 @@ roff_man_free(struct roff_man *man)
 }
 
 struct roff_man *
-roff_man_alloc(struct roff *roff, struct mparse *parse,
-	const char *os_s, int quick)
+roff_man_alloc(struct roff *roff, const char *os_s, int quick)
 {
 	struct roff_man *man;
 
 	man = mandoc_calloc(1, sizeof(*man));
-	man->parse = parse;
 	man->roff = roff;
 	man->os_s = os_s;
 	man->quick = quick;
@@ -3146,7 +3142,7 @@ roff_EQ(ROFF_ARGS)
 
 	assert(r->eqn == NULL);
 	if (r->last_eqn == NULL)
-		r->last_eqn = eqn_alloc(r->parse);
+		r->last_eqn = eqn_alloc();
 	else
 		eqn_reset(r->last_eqn);
 	r->eqn = r->last_eqn;
@@ -3180,7 +3176,7 @@ roff_TS(ROFF_ARGS)
 		mandoc_msg(MANDOCERR_BLK_BROKEN, ln, ppos, "TS breaks TS");
 		tbl_end(r->tbl, 0);
 	}
-	r->tbl = tbl_alloc(ppos, ln, r->parse, r->last_tbl);
+	r->tbl = tbl_alloc(ppos, ln, r->last_tbl);
 	if (r->last_tbl == NULL)
 		r->first_tbl = r->tbl;
 	r->last_tbl = r->tbl;
@@ -3657,7 +3653,7 @@ roff_userdef(ROFF_ARGS)
 			ctx->argv = mandoc_reallocarray(ctx->argv,
 			    ctx->argsz, sizeof(*ctx->argv));
 		}
-		arg = mandoc_getarg(r->parse, &src, ln, &pos);
+		arg = mandoc_getarg(&src, ln, &pos);
 		sz = 1;  /* For the terminating NUL. */
 		for (ap = arg; *ap != '\0'; ap++)
 			sz += *ap == '"' ? 4 : 1;

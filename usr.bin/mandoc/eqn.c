@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.45 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.46 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -301,12 +301,11 @@ static	void		 eqn_undef(struct eqn_node *);
 
 
 struct eqn_node *
-eqn_alloc(struct mparse *parse)
+eqn_alloc(void)
 {
 	struct eqn_node *ep;
 
 	ep = mandoc_calloc(1, sizeof(*ep));
-	ep->parse = parse;
 	ep->gsize = EQN_DEFSIZE;
 	return ep;
 }
