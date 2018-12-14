@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2018/12/11 07:44:25 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2018/12/14 07:56:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -72,22 +72,22 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
 	{ "create",	CMD_CREATE,	ctl_create,
-		"\"path\" [-b base] [-i disk] [-s size]", 1 },
-	{ "load",	CMD_LOAD,	ctl_load,	"\"path\"" },
-	{ "log",	CMD_LOG,	ctl_log,	"[verbose|brief]" },
-	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
-	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
-	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-Lc] [-b image] [-B device] [-r image] [-m size]\n"
-	    "\t\t[-n switch] [-i count] [-d disk]* [-t name]" },
-	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "stop",	CMD_STOP,	ctl_stop,	"[id|-a] [-fw]" },
-	{ "wait",	CMD_WAITFOR,	ctl_waitfor,	"id" },
+		"disk [-b base | -i disk] [-s size]", 1 },
+	{ "load",	CMD_LOAD,	ctl_load,	"filename" },
+	{ "log",	CMD_LOG,	ctl_log,	"[brief | verbose]" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
-	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
+	{ "receive",	CMD_RECEIVE,	ctl_receive,	"name" ,	1},
+	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
+	{ "reset",	CMD_RESET,	ctl_reset,	"[all | switches | vms]" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
-	{ "receive",	CMD_RECEIVE,	ctl_receive,	"id" ,	1},
+	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
+	{ "start",	CMD_START,	ctl_start,	"name"
+	    " [-cL] [-B device] [-b path] [-d disk] [-i count]\n"
+	    "\t\t[-m size] [-n switch] [-r path] [-t name]" },
+	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
+	{ "stop",	CMD_STOP,	ctl_stop,	"[id | -a] [-fw]" },
+	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
+	{ "wait",	CMD_WAITFOR,	ctl_waitfor,	"id" },
 	{ NULL }
 };
 
