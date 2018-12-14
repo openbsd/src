@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.128 2018/08/26 16:18:38 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.129 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -120,8 +120,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 
 	if (buf[i] == '\0') {
 		if (man->flags & (MAN_ELINE | MAN_BLINE)) {
-			mandoc_msg(MANDOCERR_BLK_BLANK, man->parse,
-			    line, 0, NULL);
+			mandoc_msg(MANDOCERR_BLK_BLANK, line, 0, NULL);
 			return 1;
 		}
 		if (man->last->tok == MAN_SH || man->last->tok == MAN_SS)
@@ -146,8 +145,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 
 	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
 		if (i > 1 && '\\' != buf[i - 2])
-			mandoc_msg(MANDOCERR_SPACE_EOL, man->parse,
-			    line, i - 1, NULL);
+			mandoc_msg(MANDOCERR_SPACE_EOL, line, i - 1, NULL);
 
 		for (--i; i && ' ' == buf[i]; i--)
 			/* Spin back to non-space. */ ;
@@ -192,8 +190,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 	if (sz > 0 && sz < 4)
 		tok = roffhash_find(man->manmac, buf + ppos, sz);
 	if (tok == TOKEN_NONE) {
-		mandoc_msg(MANDOCERR_MACRO, man->parse,
-		    ln, ppos, buf + ppos - 1);
+		mandoc_msg(MANDOCERR_MACRO, ln, ppos, "%s", buf + ppos - 1);
 		return 1;
 	}
 
@@ -223,8 +220,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 	 */
 
 	if (buf[offs] == '\0' && buf[offs - 1] == ' ')
-		mandoc_msg(MANDOCERR_SPACE_EOL, man->parse,
-		    ln, offs - 1, NULL);
+		mandoc_msg(MANDOCERR_SPACE_EOL, ln, offs - 1, NULL);
 
 	/*
 	 * Some macros break next-line scopes; otherwise, remember
@@ -297,9 +293,8 @@ man_breakscope(struct roff_man *man, int tok)
 		     == MAN_NSCOPED)
 			n = n->parent;
 
-		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse,
-		    n->line, n->pos, "%s breaks %s",
-		    roff_name[tok], roff_name[n->tok]);
+		mandoc_msg(MANDOCERR_BLK_LINE, n->line, n->pos,
+		    "%s breaks %s", roff_name[tok], roff_name[n->tok]);
 
 		roff_node_delete(man, n);
 		man->flags &= ~MAN_ELINE;
@@ -339,9 +334,8 @@ man_breakscope(struct roff_man *man, int tok)
 		assert(n->type == ROFFT_BLOCK);
 		assert(man_macro(n->tok)->flags & MAN_BSCOPED);
 
-		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse,
-		    n->line, n->pos, "%s breaks %s",
-		    roff_name[tok], roff_name[n->tok]);
+		mandoc_msg(MANDOCERR_BLK_LINE, n->line, n->pos,
+		    "%s breaks %s", roff_name[tok], roff_name[n->tok]);
 
 		roff_node_delete(man, n);
 		man->flags &= ~MAN_BLINE;
@@ -356,16 +350,14 @@ man_state(struct roff_man *man, struct roff_node *n)
 	case MAN_nf:
 	case MAN_EX:
 		if (man->flags & MAN_LITERAL && ! (n->flags & NODE_VALID))
-			mandoc_msg(MANDOCERR_NF_SKIP, man->parse,
-			    n->line, n->pos, "nf");
+			mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "nf");
 		man->flags |= MAN_LITERAL;
 		break;
 	case MAN_fi:
 	case MAN_EE:
 		if ( ! (man->flags & MAN_LITERAL) &&
 		     ! (n->flags & NODE_VALID))
-			mandoc_msg(MANDOCERR_FI_SKIP, man->parse,
-			    n->line, n->pos, "fi");
+			mandoc_msg(MANDOCERR_FI_SKIP, n->line, n->pos, "fi");
 		man->flags &= ~MAN_LITERAL;
 		break;
 	default:

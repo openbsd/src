@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.72 2018/08/17 20:31:52 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.73 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -451,8 +451,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 	if (buf[*pos] == '\0') {
 		if (mdoc->flags & MDOC_PHRASELIT &&
 		    ! (mdoc->flags & MDOC_PHRASE)) {
-			mandoc_msg(MANDOCERR_ARG_QUOTE,
-			    mdoc->parse, line, *pos, NULL);
+			mandoc_msg(MANDOCERR_ARG_QUOTE, line, *pos, NULL);
 			mdoc->flags &= ~MDOC_PHRASELIT;
 		}
 		return ARGS_EOLN;
@@ -503,7 +502,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 			p = strchr(*v, '\0');
 			if (p[-1] == ' ')
 				mandoc_msg(MANDOCERR_SPACE_EOL,
-				    mdoc->parse, line, *pos, NULL);
+				    line, *pos, NULL);
 			*pos += (int)(p - *v);
 		}
 
@@ -551,7 +550,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 		if (buf[*pos] == '\0') {
 			if ( ! (mdoc->flags & MDOC_PHRASE))
 				mandoc_msg(MANDOCERR_ARG_QUOTE,
-				    mdoc->parse, line, *pos, NULL);
+				    line, *pos, NULL);
 			return ARGS_WORD;
 		}
 
@@ -565,8 +564,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 			(*pos)++;
 
 		if ('\0' == buf[*pos])
-			mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
-			    line, *pos, NULL);
+			mandoc_msg(MANDOCERR_SPACE_EOL, line, *pos, NULL);
 
 		return ARGS_WORD;
 	}

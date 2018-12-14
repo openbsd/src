@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.1 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.2 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -288,8 +288,7 @@ mandoc_msg_setrc(enum mandoclevel level)
 }
 
 void
-mandoc_vmsg(enum mandocerr t, void *dummy, int line, int col,
-    const char *fmt, ...)
+mandoc_msg(enum mandocerr t, int line, int col, const char *fmt, ...)
 {
 	va_list			 ap;
 	enum mandoclevel	 level;
@@ -323,13 +322,4 @@ mandoc_vmsg(enum mandocerr t, void *dummy, int line, int col,
 		va_end(ap);
 	}
 	fputc('\n', fileptr);
-}
-
-void
-mandoc_msg(enum mandocerr t, void *dummy, int line, int col, const char *msg)
-{
-	if (msg == NULL)
-		mandoc_vmsg(t, dummy, line, col, NULL);
-	else
-		mandoc_vmsg(t, dummy, line, col, "%s", msg);
 }

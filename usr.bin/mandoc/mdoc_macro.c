@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.183 2018/12/04 02:53:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.184 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -226,8 +226,8 @@ mdoc_endparse(struct roff_man *mdoc)
 	for ( ; n; n = n->parent)
 		if (n->type == ROFFT_BLOCK &&
 		    mdoc_macro(n->tok)->flags & MDOC_EXPLICIT)
-			mandoc_msg(MANDOCERR_BLK_NOEND, mdoc->parse,
-			    n->line, n->pos, roff_name[n->tok]);
+			mandoc_msg(MANDOCERR_BLK_NOEND,
+			    n->line, n->pos, "%s", roff_name[n->tok]);
 
 	/* Rewind to the first. */
 
@@ -253,8 +253,7 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 		if (res != TOKEN_NONE) {
 			if (mdoc_macro(res)->flags & MDOC_CALLABLE)
 				return res;
-			mandoc_msg(MANDOCERR_MACRO_CALL,
-			    mdoc->parse, line, ppos, p);
+			mandoc_msg(MANDOCERR_MACRO_CALL, line, ppos, "%s", p);
 		}
 	}
 	return TOKEN_NONE;
@@ -419,10 +418,9 @@ find_pending(struct roff_man *mdoc, enum roff_tok tok, int line, int ppos,
 			if (target->type == ROFFT_HEAD)
 				target->flags |= NODE_ENDED;
 			else if ( ! (target->flags & NODE_ENDED)) {
-				mandoc_vmsg(MANDOCERR_BLK_NEST,
-				    mdoc->parse, line, ppos,
-				    "%s breaks %s", roff_name[tok],
-				    roff_name[n->tok]);
+				mandoc_msg(MANDOCERR_BLK_NEST,
+				    line, ppos, "%s breaks %s",
+				    roff_name[tok], roff_name[n->tok]);
 				mdoc_endbody_alloc(mdoc, line, ppos,
 				    tok, target);
 			}
@@ -633,7 +631,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			 * the scope - of the current block ends.
 			 */
 
-			mandoc_vmsg(MANDOCERR_BLK_NEST, mdoc->parse,
+			mandoc_msg(MANDOCERR_BLK_NEST,
 			    line, ppos, "%s breaks %s",
 			    roff_name[atok], roff_name[later->tok]);
 
@@ -676,8 +674,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 	}
 
 	if (body == NULL) {
-		mandoc_msg(MANDOCERR_BLK_NOTOPEN, mdoc->parse,
-		    line, ppos, roff_name[tok]);
+		mandoc_msg(MANDOCERR_BLK_NOTOPEN, line, ppos,
+		    "%s", roff_name[tok]);
 		if (maxargs && endbody == NULL) {
 			/*
 			 * Stray .Ec without previous .Eo:
@@ -694,10 +692,8 @@ blk_exp_close(MACRO_PROT_ARGS)
 
 	if ((mdoc_macro(tok)->flags & MDOC_PARSED) == 0) {
 		if (buf[*pos] != '\0')
-			mandoc_vmsg(MANDOCERR_ARG_SKIP,
-			    mdoc->parse, line, ppos,
-			    "%s %s", roff_name[tok],
-			    buf + *pos);
+			mandoc_msg(MANDOCERR_ARG_SKIP, line, ppos,
+			    "%s %s", roff_name[tok], buf + *pos);
 		if (endbody == NULL && n != NULL)
 			rew_pending(mdoc, n);
 		return;
@@ -832,8 +828,7 @@ in_line(MACRO_PROT_ARGS)
 			} else if ( ! nc && ! cnt) {
 				mdoc_argv_free(arg);
 				mandoc_msg(MANDOCERR_MACRO_EMPTY,
-				    mdoc->parse, line, ppos,
-				    roff_name[tok]);
+				    line, ppos, "%s", roff_name[tok]);
 			}
 			(*mdoc_macro(ntok)->fp)(mdoc, ntok,
 			    line, la, pos, buf);
@@ -919,8 +914,8 @@ in_line(MACRO_PROT_ARGS)
 			rew_last(mdoc, mdoc->last);
 		} else {
 			mdoc_argv_free(arg);
-			mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-			    line, ppos, roff_name[tok]);
+			mandoc_msg(MANDOCERR_MACRO_EMPTY,
+			    line, ppos, "%s", roff_name[tok]);
 		}
 	}
 	if (nl)
@@ -944,8 +939,8 @@ blk_full(MACRO_PROT_ARGS)
 	nl = MDOC_NEWLINE & mdoc->flags;
 
 	if (buf[*pos] == '\0' && (tok == MDOC_Sh || tok == MDOC_Ss)) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-		    line, ppos, roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY,
+		    line, ppos, "%s", roff_name[tok]);
 		return;
 	}
 
@@ -965,9 +960,8 @@ blk_full(MACRO_PROT_ARGS)
 
 			if (tok == MDOC_It && n->tok == MDOC_Bl) {
 				if (blk != NULL) {
-					mandoc_vmsg(MANDOCERR_BLK_BROKEN,
-					    mdoc->parse, line, ppos,
-					    "It breaks %s",
+					mandoc_msg(MANDOCERR_BLK_BROKEN,
+					    line, ppos, "It breaks %s",
 					    roff_name[blk->tok]);
 					rew_pending(mdoc, blk);
 				}
@@ -978,8 +972,8 @@ blk_full(MACRO_PROT_ARGS)
 				switch (tok) {
 				case MDOC_Sh:
 				case MDOC_Ss:
-					mandoc_vmsg(MANDOCERR_BLK_BROKEN,
-					    mdoc->parse, line, ppos,
+					mandoc_msg(MANDOCERR_BLK_BROKEN,
+					    line, ppos,
 					    "%s breaks %s", roff_name[tok],
 					    roff_name[n->tok]);
 					rew_pending(mdoc, n);
@@ -1005,8 +999,7 @@ blk_full(MACRO_PROT_ARGS)
 			/* Item breaking an explicit block. */
 
 			if (blk != NULL) {
-				mandoc_vmsg(MANDOCERR_BLK_BROKEN,
-				    mdoc->parse, line, ppos,
+				mandoc_msg(MANDOCERR_BLK_BROKEN, line, ppos,
 				    "It breaks %s", roff_name[blk->tok]);
 				rew_pending(mdoc, blk);
 				blk = NULL;
@@ -1020,7 +1013,7 @@ blk_full(MACRO_PROT_ARGS)
 		/* Skip items outside lists. */
 
 		if (tok == MDOC_It && (n == NULL || n->tok != MDOC_Bl)) {
-			mandoc_vmsg(MANDOCERR_IT_STRAY, mdoc->parse,
+			mandoc_msg(MANDOCERR_IT_STRAY,
 			    line, ppos, "It %s", buf + *pos);
 			roff_elem_alloc(mdoc, line, ppos, ROFF_br);
 			rew_elem(mdoc, ROFF_br);
@@ -1098,13 +1091,12 @@ blk_full(MACRO_PROT_ARGS)
 		}
 
 		if (tok == MDOC_Bd || tok == MDOC_Bk) {
-			mandoc_vmsg(MANDOCERR_ARG_EXCESS,
-			    mdoc->parse, line, la, "%s ... %s",
-			    roff_name[tok], buf + la);
+			mandoc_msg(MANDOCERR_ARG_EXCESS, line, la,
+			    "%s ... %s", roff_name[tok], buf + la);
 			break;
 		}
 		if (tok == MDOC_Rs) {
-			mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
+			mandoc_msg(MANDOCERR_ARG_SKIP,
 			    line, la, "Rs %s", buf + la);
 			break;
 		}
@@ -1358,8 +1350,8 @@ in_line_argn(MACRO_PROT_ARGS)
 
 		if (ac == ARGS_PUNCT || ac == ARGS_EOLN) {
 			if (abs(state) < 2 && tok == MDOC_Pf)
-				mandoc_vmsg(MANDOCERR_PF_SKIP,
-				    mdoc->parse, line, ppos, "Pf %s",
+				mandoc_msg(MANDOCERR_PF_SKIP,
+				    line, ppos, "Pf %s",
 				    p == NULL ? "at eol" : p);
 			break;
 		}
@@ -1399,8 +1391,8 @@ in_line_argn(MACRO_PROT_ARGS)
 	}
 
 	if (state == -1) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-		    line, ppos, roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY,
+		    line, ppos, "%s", roff_name[tok]);
 		return;
 	}
 
@@ -1429,8 +1421,8 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	if (buf[*pos] == '\0' &&
 	    (tok == MDOC_Fd || *roff_name[tok] == '%')) {
-		mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
-		    line, ppos, roff_name[tok]);
+		mandoc_msg(MANDOCERR_MACRO_EMPTY,
+		    line, ppos, "%s", roff_name[tok]);
 		return;
 	}
 
@@ -1498,8 +1490,7 @@ phrase_ta(MACRO_PROT_ARGS)
 	}
 
 	if (n == NULL || n->norm->Bl.type != LIST_column) {
-		mandoc_msg(MANDOCERR_TA_STRAY, mdoc->parse,
-		    line, ppos, "Ta");
+		mandoc_msg(MANDOCERR_TA_STRAY, line, ppos, "Ta");
 		return;
 	}
 

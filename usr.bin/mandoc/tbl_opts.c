@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_opts.c,v 1.15 2018/12/13 02:05:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_opts.c,v 1.16 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -79,7 +79,7 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
 
 	switch (key) {
 	case KEY_DELIM:
-		mandoc_vmsg(MANDOCERR_TBLOPT_EQN, tbl->parse,
+		mandoc_msg(MANDOCERR_TBLOPT_EQN,
 		    ln, *pos, "%.*s", len, p + *pos);
 		want = 2;
 		break;
@@ -101,12 +101,11 @@ arg(struct tbl_node *tbl, int ln, const char *p, int *pos, int key)
 	}
 
 	if (len == 0)
-		mandoc_msg(MANDOCERR_TBLOPT_NOARG,
-		    tbl->parse, ln, *pos, keys[key].name);
+		mandoc_msg(MANDOCERR_TBLOPT_NOARG, ln, *pos,
+		    "%s", keys[key].name);
 	else if (want && len != want)
-		mandoc_vmsg(MANDOCERR_TBLOPT_ARGSZ,
-		    tbl->parse, ln, *pos, "%s want %d have %d",
-		    keys[key].name, want, len);
+		mandoc_msg(MANDOCERR_TBLOPT_ARGSZ, ln, *pos,
+		    "%s want %d have %d", keys[key].name, want, len);
 
 	*pos += len;
 	if (p[*pos] == ')')
@@ -140,8 +139,8 @@ tbl_option(struct tbl_node *tbl, int ln, const char *p, int *offs)
 			len++;
 
 		if (len == 0) {
-			mandoc_vmsg(MANDOCERR_TBLOPT_ALPHA,
-			    tbl->parse, ln, pos, "%c", p[pos]);
+			mandoc_msg(MANDOCERR_TBLOPT_ALPHA,
+			    ln, pos, "%c", p[pos]);
 			pos++;
 			continue;
 		}
@@ -155,7 +154,7 @@ tbl_option(struct tbl_node *tbl, int ln, const char *p, int *offs)
 			i++;
 
 		if (i == KEY_MAXKEYS) {
-			mandoc_vmsg(MANDOCERR_TBLOPT_BAD, tbl->parse,
+			mandoc_msg(MANDOCERR_TBLOPT_BAD,
 			    ln, pos, "%.*s", len, p + pos);
 			pos += len;
 			continue;

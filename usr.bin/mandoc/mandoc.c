@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.76 2018/10/25 01:21:30 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.77 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -465,7 +465,7 @@ mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 
 	/* Quoted argument without a closing quote. */
 	if (1 == quoted)
-		mandoc_msg(MANDOCERR_ARG_QUOTE, parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_ARG_QUOTE, ln, *pos, NULL);
 
 	/* NUL-terminate this argument and move to the next one. */
 	if (pairs)
@@ -479,7 +479,7 @@ mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 	*cpp = cp;
 
 	if ('\0' == *cp && (white || ' ' == cp[-1]))
-		mandoc_msg(MANDOCERR_SPACE_EOL, parse, ln, *pos, NULL);
+		mandoc_msg(MANDOCERR_SPACE_EOL, ln, *pos, NULL);
 
 	return start;
 }
@@ -557,7 +557,7 @@ mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 	/* No date specified: use today's date. */
 
 	if (in == NULL || *in == '\0' || strcmp(in, "$" "Mdocdate$") == 0) {
-		mandoc_msg(MANDOCERR_DATE_MISSING, man->parse, ln, pos, NULL);
+		mandoc_msg(MANDOCERR_DATE_MISSING, ln, pos, NULL);
 		return time2a(time(NULL));
 	}
 
@@ -567,23 +567,20 @@ mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 	    a2time(&t, "%b %d, %Y", in)) {
 		cp = time2a(t);
 		if (t > time(NULL) + 86400)
-			mandoc_msg(MANDOCERR_DATE_FUTURE, man->parse,
-			    ln, pos, cp);
+			mandoc_msg(MANDOCERR_DATE_FUTURE, ln, pos, "%s", cp);
 		else if (*in != '$' && strcmp(in, cp) != 0)
-			mandoc_msg(MANDOCERR_DATE_NORM, man->parse,
-			    ln, pos, cp);
+			mandoc_msg(MANDOCERR_DATE_NORM, ln, pos, "%s", cp);
 		return cp;
 	}
 
 	/* In man(7), do not warn about the legacy format. */
 
 	if (a2time(&t, "%Y-%m-%d", in) == 0)
-		mandoc_msg(MANDOCERR_DATE_BAD, man->parse, ln, pos, in);
+		mandoc_msg(MANDOCERR_DATE_BAD, ln, pos, "%s", in);
 	else if (t > time(NULL) + 86400)
-		mandoc_msg(MANDOCERR_DATE_FUTURE, man->parse, ln, pos, in);
+		mandoc_msg(MANDOCERR_DATE_FUTURE, ln, pos, "%s", in);
 	else if (man->macroset == MACROSET_MDOC)
-		mandoc_vmsg(MANDOCERR_DATE_LEGACY, man->parse,
-		    ln, pos, "Dd %s", in);
+		mandoc_msg(MANDOCERR_DATE_LEGACY, ln, pos, "Dd %s", in);
 
 	/* Use any non-mdoc(7) date verbatim. */
 

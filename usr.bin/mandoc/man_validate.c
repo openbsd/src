@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.111 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.112 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -169,14 +169,12 @@ check_root(CHKARGS)
 	assert((man->flags & (MAN_BLINE | MAN_ELINE)) == 0);
 
 	if (n->last == NULL || n->last->type == ROFFT_COMMENT)
-		mandoc_msg(MANDOCERR_DOC_EMPTY, man->parse,
-		    n->line, n->pos, NULL);
+		mandoc_msg(MANDOCERR_DOC_EMPTY, n->line, n->pos, NULL);
 	else
 		man->meta.hasbody = 1;
 
 	if (NULL == man->meta.title) {
-		mandoc_msg(MANDOCERR_TH_NOTITLE, man->parse,
-		    n->line, n->pos, NULL);
+		mandoc_msg(MANDOCERR_TH_NOTITLE, n->line, n->pos, NULL);
 
 		/*
 		 * If a title hasn't been set, do so now (by
@@ -191,7 +189,7 @@ check_root(CHKARGS)
 
 	if (man->meta.os_e &&
 	    (man->meta.rcsids & (1 << man->meta.os_e)) == 0)
-		mandoc_msg(MANDOCERR_RCS_MISSING, man->parse, 0, 0,
+		mandoc_msg(MANDOCERR_RCS_MISSING, 0, 0,
 		    man->meta.os_e == MANDOC_OS_OPENBSD ?
 		    "(OpenBSD)" : "(NetBSD)");
 }
@@ -212,8 +210,8 @@ check_text(CHKARGS)
 
 	cp = n->string;
 	for (p = cp; NULL != (p = strchr(p, '\t')); p++)
-		mandoc_msg(MANDOCERR_FI_TAB, man->parse,
-		    n->line, n->pos + (p - cp), NULL);
+		mandoc_msg(MANDOCERR_FI_TAB,
+		    n->line, n->pos + (int)(p - cp), NULL);
 }
 
 static void
@@ -221,11 +219,10 @@ post_OP(CHKARGS)
 {
 
 	if (n->child == NULL)
-		mandoc_msg(MANDOCERR_OP_EMPTY, man->parse,
-		    n->line, n->pos, "OP");
+		mandoc_msg(MANDOCERR_OP_EMPTY, n->line, n->pos, "OP");
 	else if (n->child->next != NULL && n->child->next->next != NULL) {
 		n = n->child->next->next;
-		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+		mandoc_msg(MANDOCERR_ARG_EXCESS,
 		    n->line, n->pos, "OP ... %s", n->string);
 	}
 }
@@ -247,9 +244,8 @@ post_SH(CHKARGS)
 	}
 
 	if (nc->tok == MAN_PP || nc->tok == ROFF_sp || nc->tok == ROFF_br) {
-		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse,
-		    nc->line, nc->pos, "%s after %s",
-		    roff_name[nc->tok], roff_name[n->tok]);
+		mandoc_msg(MANDOCERR_PAR_SKIP, nc->line, nc->pos,
+		    "%s after %s", roff_name[nc->tok], roff_name[n->tok]);
 		roff_node_delete(man, nc);
 	}
 
@@ -259,7 +255,7 @@ post_SH(CHKARGS)
 	 */
 
 	if ((nc = n->last) != NULL && nc->tok == ROFF_br) {
-		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse,
+		mandoc_msg(MANDOCERR_PAR_SKIP,
 		    nc->line, nc->pos, "%s at the end of %s",
 		    roff_name[nc->tok], roff_name[n->tok]);
 		roff_node_delete(man, nc);
@@ -270,8 +266,8 @@ static void
 post_UR(CHKARGS)
 {
 	if (n->type == ROFFT_HEAD && n->child == NULL)
-		mandoc_msg(MANDOCERR_UR_NOHEAD, man->parse,
-		    n->line, n->pos, roff_name[n->tok]);
+		mandoc_msg(MANDOCERR_UR_NOHEAD, n->line, n->pos,
+		    "%s", roff_name[n->tok]);
 	check_part(man, n);
 }
 
@@ -280,8 +276,8 @@ check_part(CHKARGS)
 {
 
 	if (n->type == ROFFT_BODY && n->child == NULL)
-		mandoc_msg(MANDOCERR_BLK_EMPTY, man->parse,
-		    n->line, n->pos, roff_name[n->tok]);
+		mandoc_msg(MANDOCERR_BLK_EMPTY, n->line, n->pos,
+		    "%s", roff_name[n->tok]);
 }
 
 static void
@@ -296,21 +292,20 @@ check_par(CHKARGS)
 	case ROFFT_BODY:
 		if (n->child != NULL &&
 		    (n->child->tok == ROFF_sp || n->child->tok == ROFF_br)) {
-			mandoc_vmsg(MANDOCERR_PAR_SKIP,
-			    man->parse, n->child->line, n->child->pos,
+			mandoc_msg(MANDOCERR_PAR_SKIP,
+			    n->child->line, n->child->pos,
 			    "%s after %s", roff_name[n->child->tok],
 			    roff_name[n->tok]);
 			roff_node_delete(man, n->child);
 		}
 		if (n->child == NULL)
-			mandoc_vmsg(MANDOCERR_PAR_SKIP,
-			    man->parse, n->line, n->pos,
+			mandoc_msg(MANDOCERR_PAR_SKIP, n->line, n->pos,
 			    "%s empty", roff_name[n->tok]);
 		break;
 	case ROFFT_HEAD:
 		if (n->child != NULL)
-			mandoc_vmsg(MANDOCERR_ARG_SKIP,
-			    man->parse, n->line, n->pos, "%s %s%s",
+			mandoc_msg(MANDOCERR_ARG_SKIP,
+			    n->line, n->pos, "%s %s%s",
 			    roff_name[n->tok], n->child->string,
 			    n->child->next != NULL ? " ..." : "");
 		break;
@@ -330,8 +325,7 @@ post_IP(CHKARGS)
 		break;
 	case ROFFT_BODY:
 		if (n->parent->head->child == NULL && n->child == NULL)
-			mandoc_vmsg(MANDOCERR_PAR_SKIP,
-			    man->parse, n->line, n->pos,
+			mandoc_msg(MANDOCERR_PAR_SKIP, n->line, n->pos,
 			    "%s empty", roff_name[n->tok]);
 		break;
 	default:
@@ -364,9 +358,8 @@ post_TH(CHKARGS)
 			/* Only warn about this once... */
 			if (isalpha((unsigned char)*p) &&
 			    ! isupper((unsigned char)*p)) {
-				mandoc_vmsg(MANDOCERR_TITLE_CASE,
-				    man->parse, n->line,
-				    n->pos + (p - n->string),
+				mandoc_msg(MANDOCERR_TITLE_CASE, n->line,
+				    n->pos + (int)(p - n->string),
 				    "TH %s", n->string);
 				break;
 			}
@@ -374,8 +367,7 @@ post_TH(CHKARGS)
 		man->meta.title = mandoc_strdup(n->string);
 	} else {
 		man->meta.title = mandoc_strdup("");
-		mandoc_msg(MANDOCERR_TH_NOTITLE, man->parse,
-		    nb->line, nb->pos, "TH");
+		mandoc_msg(MANDOCERR_TH_NOTITLE, nb->line, nb->pos, "TH");
 	}
 
 	/* TITLE ->MSEC<- DATE OS VOL */
@@ -386,7 +378,7 @@ post_TH(CHKARGS)
 		man->meta.msec = mandoc_strdup(n->string);
 	else {
 		man->meta.msec = mandoc_strdup("");
-		mandoc_vmsg(MANDOCERR_MSEC_MISSING, man->parse,
+		mandoc_msg(MANDOCERR_MSEC_MISSING,
 		    nb->line, nb->pos, "TH %s", man->meta.title);
 	}
 
@@ -400,7 +392,7 @@ post_TH(CHKARGS)
 		    mandoc_normdate(man, n->string, n->line, n->pos);
 	} else {
 		man->meta.date = mandoc_strdup("");
-		mandoc_msg(MANDOCERR_DATE_MISSING, man->parse,
+		mandoc_msg(MANDOCERR_DATE_MISSING,
 		    n ? n->line : nb->line,
 		    n ? n->pos : nb->pos, "TH");
 	}
@@ -428,7 +420,7 @@ post_TH(CHKARGS)
 		man->meta.vol = mandoc_strdup(p);
 
 	if (n != NULL && (n = n->next) != NULL)
-		mandoc_vmsg(MANDOCERR_ARG_EXCESS, man->parse,
+		mandoc_msg(MANDOCERR_ARG_EXCESS,
 		    n->line, n->pos, "TH ... %s", n->string);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.176 2018/12/14 02:15:10 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.177 2018/12/14 05:17:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -206,7 +206,7 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 			if (c & 0x80) {
 				if ( ! (curp->filenc && preconv_encode(
 				    &blk, &i, &ln, &pos, &curp->filenc))) {
-					mandoc_vmsg(MANDOCERR_CHAR_BAD, curp,
+					mandoc_msg(MANDOCERR_CHAR_BAD,
 					    curp->line, pos, "0x%x", c);
 					ln.buf[pos++] = '?';
 					i++;
@@ -219,10 +219,10 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 			 */
 
 			if (c == 0x7f || (c < 0x20 && c != 0x09)) {
-				mandoc_vmsg(c == 0x00 || c == 0x04 ||
+				mandoc_msg(c == 0x00 || c == 0x04 ||
 				    c > 0x0a ? MANDOCERR_CHAR_BAD :
 				    MANDOCERR_CHAR_UNSUPP,
-				    curp, curp->line, pos, "0x%x", c);
+				    curp->line, pos, "0x%x", c);
 				i++;
 				if (c != '\r')
 					ln.buf[pos++] = '?';
@@ -296,7 +296,7 @@ rerun:
 				if (loop == curp->loop)
 					break;
 				mandoc_msg(MANDOCERR_WHILE_NEST,
-				    curp, curp->line, pos, NULL);
+				    curp->line, pos, NULL);
 			}
 			curp->loop = thisln;
 			loop = NULL;
@@ -306,12 +306,12 @@ rerun:
 		case ROFF_LOOPEXIT:
 			if (curp->loop == NULL) {
 				mandoc_msg(MANDOCERR_WHILE_FAIL,
-				    curp, curp->line, pos, NULL);
+				    curp->line, pos, NULL);
 				break;
 			}
 			if (inloop == 0) {
 				mandoc_msg(MANDOCERR_WHILE_INTO,
-				    curp, curp->line, pos, NULL);
+				    curp->line, pos, NULL);
 				curp->loop = loop = NULL;
 				break;
 			}
@@ -346,7 +346,7 @@ rerun:
 			if (++curp->reparse_count > REPARSE_LIMIT) {
 				/* Abort and return to the top level. */
 				result = ROFF_IGN;
-				mandoc_msg(MANDOCERR_ROFFLOOP, curp,
+				mandoc_msg(MANDOCERR_ROFFLOOP,
 				    curp->line, pos, NULL);
 				goto out;
 			}
@@ -370,9 +370,8 @@ rerun:
 				mparse_readfd(curp, fd, ln.buf + of);
 				close(fd);
 			} else {
-				mandoc_vmsg(MANDOCERR_SO_FAIL,
-				    curp, curp->line, pos,
-				    ".so %s", ln.buf + of);
+				mandoc_msg(MANDOCERR_SO_FAIL, curp->line,
+				    pos, ".so %s", ln.buf + of);
 				ln.sz = mandoc_asprintf(&cp,
 				    ".sp\nSee the file %s.\n.sp",
 				    ln.buf + of);
@@ -407,7 +406,7 @@ rerun:
 out:
 	if (inloop) {
 		if (result != ROFF_USERRET)
-			mandoc_msg(MANDOCERR_WHILE_OUTOF, curp,
+			mandoc_msg(MANDOCERR_WHILE_OUTOF,
 			    curp->line, pos, NULL);
 		curp->loop = NULL;
 	}
@@ -427,7 +426,7 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 	int		 gzerrnum, retval;
 
 	if (fstat(fd, &st) == -1) {
-		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
+		mandoc_msg(MANDOCERR_FILE, 0, 0,
 		    "fstat: %s", strerror(errno));
 		return 0;
 	}
@@ -441,7 +440,7 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 
 	if (curp->gzip == 0 && S_ISREG(st.st_mode)) {
 		if (st.st_size > 0x7fffffff) {
-			mandoc_msg(MANDOCERR_TOOLARGE, curp, 0, 0, NULL);
+			mandoc_msg(MANDOCERR_TOOLARGE, 0, 0, NULL);
 			return 0;
 		}
 		*with_mmap = 1;
@@ -460,12 +459,12 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 		 * which this function must not do.
 		 */
 		if ((fd = dup(fd)) == -1) {
-			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
+			mandoc_msg(MANDOCERR_FILE, 0, 0,
 			    "dup: %s", strerror(errno));
 			return 0;
 		}
 		if ((gz = gzdopen(fd, "rb")) == NULL) {
-			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0,
+			mandoc_msg(MANDOCERR_FILE, 0, 0,
 			    "gzdopen: %s", strerror(errno));
 			close(fd);
 			return 0;
@@ -486,8 +485,7 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 	for (;;) {
 		if (off == fb->sz) {
 			if (fb->sz == (1U << 31)) {
-				mandoc_msg(MANDOCERR_TOOLARGE, curp,
-				    0, 0, NULL);
+				mandoc_msg(MANDOCERR_TOOLARGE, 0, 0, NULL);
 				break;
 			}
 			resize_buf(fb, 65536);
@@ -503,7 +501,7 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 		if (ssz == -1) {
 			if (curp->gzip)
 				(void)gzerror(gz, &gzerrnum);
-			mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0, "read: %s",
+			mandoc_msg(MANDOCERR_FILE, 0, 0, "read: %s",
 			    curp->gzip && gzerrnum != Z_ERRNO ?
 			    zError(gzerrnum) : strerror(errno));
 			break;
@@ -512,7 +510,7 @@ read_whole_file(struct mparse *curp, int fd, struct buf *fb, int *with_mmap)
 	}
 
 	if (curp->gzip && (gzerrnum = gzclose(gz)) != Z_OK)
-		mandoc_vmsg(MANDOCERR_FILE, curp, 0, 0, "gzclose: %s",
+		mandoc_msg(MANDOCERR_FILE, 0, 0, "gzclose: %s",
 		    gzerrnum == Z_ERRNO ? strerror(errno) :
 		    zError(gzerrnum));
 	if (retval == 0) {
@@ -551,7 +549,7 @@ mparse_readfd(struct mparse *curp, int fd, const char *filename)
 	int		 with_mmap;
 
 	if (recursion_depth > 64) {
-		mandoc_msg(MANDOCERR_ROFFLOOP, curp, curp->line, 0, NULL);
+		mandoc_msg(MANDOCERR_ROFFLOOP, curp->line, 0, NULL);
 		return;
 	}
 	if (read_whole_file(curp, fd, &blk, &with_mmap) == 0)
@@ -633,7 +631,7 @@ mparse_open(struct mparse *curp, const char *file)
 
 	/* Neither worked, give up. */
 
-	mandoc_msg(MANDOCERR_FILE, curp, 0, 0, strerror(errno));
+	mandoc_msg(MANDOCERR_FILE, 0, 0, "%s", strerror(errno));
 	return -1;
 }
 
