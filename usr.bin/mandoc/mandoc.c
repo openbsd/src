@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.79 2018/12/15 19:30:19 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.80 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,6 +34,59 @@
 static	int	 a2time(time_t *, const char *, const char *);
 static	char	*time2a(time_t);
 
+
+enum mandoc_esc
+mandoc_font(const char *cp, int sz)
+{
+	switch (sz) {
+	case 0:
+		return ESCAPE_FONTPREV;
+	case 1:
+		switch (cp[0]) {
+		case 'B':
+		case '3':
+			return ESCAPE_FONTBOLD;
+		case 'I':
+		case '2':
+			return ESCAPE_FONTITALIC;
+		case 'P':
+			return ESCAPE_FONTPREV;
+		case 'R':
+		case '1':
+			return ESCAPE_FONTROMAN;
+		case '4':
+			return ESCAPE_FONTBI;
+		default:
+			return ESCAPE_ERROR;
+		}
+	case 2:
+		switch (cp[0]) {
+		case 'B':
+			switch (cp[1]) {
+			case 'I':
+				return ESCAPE_FONTBI;
+			default:
+				return ESCAPE_ERROR;
+			}
+		case 'C':
+			switch (cp[1]) {
+			case 'B':
+				return ESCAPE_FONTBOLD;
+			case 'I':
+				return ESCAPE_FONTITALIC;
+			case 'R':
+			case 'W':
+				return ESCAPE_FONTCW;
+			default:
+				return ESCAPE_ERROR;
+			}
+		default:
+			return ESCAPE_ERROR;
+		}
+	default:
+		return ESCAPE_ERROR;
+	}
+}
 
 enum mandoc_esc
 mandoc_escape(const char **end, const char **start, int *sz)
@@ -365,47 +418,7 @@ mandoc_escape(const char **end, const char **start, int *sz)
 
 	switch (gly) {
 	case ESCAPE_FONT:
-		if (*sz == 2) {
-			if (**start == 'C') {
-				if ((*start)[1] == 'W' ||
-				    (*start)[1] == 'R') {
-					gly = ESCAPE_FONTCW;
-					break;
-				}
-				/*
-				 * Treat other constant-width font modes
-				 * just like regular font modes.
-				 */
-				(*start)++;
-				(*sz)--;
-			} else {
-				if ((*start)[0] == 'B' && (*start)[1] == 'I')
-					gly = ESCAPE_FONTBI;
-				break;
-			}
-		} else if (*sz != 1) {
-			if (*sz == 0)
-				gly = ESCAPE_FONTPREV;
-			break;
-		}
-
-		switch (**start) {
-		case '3':
-		case 'B':
-			gly = ESCAPE_FONTBOLD;
-			break;
-		case '2':
-		case 'I':
-			gly = ESCAPE_FONTITALIC;
-			break;
-		case 'P':
-			gly = ESCAPE_FONTPREV;
-			break;
-		case '1':
-		case 'R':
-			gly = ESCAPE_FONTROMAN;
-			break;
-		}
+		gly = mandoc_font(*start, *sz);
 		break;
 	case ESCAPE_SPECIAL:
 		if (**start == 'c') {

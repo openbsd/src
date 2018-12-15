@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.25 2018/12/12 21:54:30 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.26 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "tbl.h"
 #include "out.h"
 #include "html.h"

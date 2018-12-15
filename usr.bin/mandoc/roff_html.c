@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_html.c,v 1.14 2018/12/13 11:55:14 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.15 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,8 +18,10 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 
+#include "mandoc.h"
 #include "roff.h"
 #include "out.h"
 #include "html.h"
@@ -30,12 +32,13 @@ typedef	void	(*roff_html_pre_fp)(ROFF_HTML_ARGS);
 
 static	void	  roff_html_pre_br(ROFF_HTML_ARGS);
 static	void	  roff_html_pre_ce(ROFF_HTML_ARGS);
+static	void	  roff_html_pre_ft(ROFF_HTML_ARGS);
 static	void	  roff_html_pre_sp(ROFF_HTML_ARGS);
 
 static	const roff_html_pre_fp roff_html_pre_acts[ROFF_MAX] = {
 	roff_html_pre_br,  /* br */
 	roff_html_pre_ce,  /* ce */
-	NULL,  /* ft */
+	roff_html_pre_ft,  /* ft */
 	NULL,  /* ll */
 	NULL,  /* mc */
 	NULL,  /* po */
@@ -72,6 +75,15 @@ roff_html_pre_ce(ROFF_HTML_ARGS)
 			roff_html_pre(h, n);
 	}
 	roff_html_pre_br(h, n);
+}
+
+static void
+roff_html_pre_ft(ROFF_HTML_ARGS)
+{
+	const char	*cp;
+
+	cp = n->child->string;
+	print_metaf(h, mandoc_font(cp, (int)strlen(cp)));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.116 2018/12/15 19:30:19 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.117 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,7 +115,6 @@ static	void	 print_ctag(struct html *, struct tag *);
 static	int	 print_escape(struct html *, char);
 static	int	 print_encode(struct html *, const char *, const char *, int);
 static	void	 print_href(struct html *, const char *, const char *, int);
-static	void	 print_metaf(struct html *, enum mandoc_esc);
 
 
 void *
@@ -208,7 +207,7 @@ print_gen_head(struct html *h)
 	print_tagq(h, t);
 }
 
-static void
+void
 print_metaf(struct html *h, enum mandoc_esc deco)
 {
 	enum htmlfont	 font;
@@ -234,7 +233,7 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 		font = HTMLFONT_NONE;
 		break;
 	default:
-		abort();
+		return;
 	}
 
 	if (h->metaf) {

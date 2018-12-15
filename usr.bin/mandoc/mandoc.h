@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.203 2018/12/15 19:30:19 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.204 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -270,6 +270,7 @@ enum	mandoc_esc {
 };
 
 
+enum mandoc_esc	  mandoc_font(const char *, int sz);
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 void		  mandoc_msg_setoutfile(FILE *);
 const char	 *mandoc_msg_getinfilename(void);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.88 2018/12/15 19:30:19 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.89 2018/12/15 23:33:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -132,18 +132,73 @@ One-letter backslash escape.
 See
 .Xr mandoc_char 7
 for a complete list.
-.Ss Text Decoration
-Terms may be text-decorated using the
-.Sq \ef
-escape followed by an indicator: B (bold), I (italic), R (regular), or P
-(revert to previous mode).
-A numerical representation 3, 2, or 1 (bold, italic, and regular,
-respectively) may be used instead.
+.Ss Font Selection
+In
+.Xr mdoc 7
+and
+.Xr man 7
+documents, fonts are usually selected with macros.
+The
+.Ic \ef
+escape sequence and the
+.Ic \&ft
+request can be used to manually change the font,
+but this is not recommended in
+.Xr mdoc 7
+documents.
+Such manual font changes are overridden by many subsequent macros.
 .Pp
-The two-character indicator
-.Sq BI
-requests a font that is both bold and italic.
-It may not be portable to old roff implementations.
+The following fonts are supported:
+.Pp
+.Bl -tag -width CW -offset indent -compact
+.It Cm B
+Bold font.
+.It Cm BI
+A font that is both bold and italic.
+.It Cm CB
+Bold constant width font.
+Same as
+.Cm B
+in terminal output.
+.It Cm CI
+Italic constant width font.
+Same as
+.Cm I
+in terminal output.
+.It Cm CR
+Regular constant width font.
+Same as
+.Cm R
+in terminal output.
+.It Cm CW
+An alias for
+.Cm CR .
+.It Cm I
+Italic font.
+.It Cm P
+Return to the previous font.
+If a macro caused a font change since the last
+.Ic \ef
+eascape sequence or
+.Ic \&ft
+request, this returns to the font before the last font change in
+the macro rather than to the font before the last manual font change.
+.It Cm R
+Roman font.
+This is the default font.
+.It Cm 1
+An alias for
+.Cm R .
+.It Cm 2
+An alias for
+.Cm I .
+.It Cm 3
+An alias for
+.Cm B .
+.It Cm 4
+An alias for
+.Cm BI .
+.El
 .Pp
 Examples:
 .Bl -tag -width Ds -offset indent -compact
@@ -154,12 +209,6 @@ Write in \fIitalic\fP, then return to previous font mode.
 .It Li \ef(BIbold italic\efP
 Write in \f(BIbold italic\fP, then return to previous font mode.
 .El
-.Pp
-Text decoration is
-.Em not
-recommended for
-.Xr mdoc 7 ,
-which encourages semantic annotation.
 .Ss Whitespace
 Whitespace consists of the space character.
 In text lines, whitespace is preserved within a line.
@@ -888,27 +937,12 @@ This is a Heirloom extension and currently ignored.
 Conditionally define a special font.
 This is a groff extension and currently ignored.
 .It Ic \&ft Op Ar font
-Change the font.
-The following
+Change the font; see
+.Sx Font Selection .
+The
 .Ar font
-arguments are supported:
-.Bl -tag -width 4n -offset indent
-.It Cm B , BI , CB , 3 , 4
-switches to
-.Sy bold
-font
-.It Cm I , CI , 2
-switches to
-.Em underlined
-font
-.It Cm R , CR , CW , 1
-switches to normal font
-.It Cm P No "or no argument"
-switches back to the previous font
-.El
-.Pp
-This request takes effect only locally and may be overridden
-by macros and escape sequences.
+argument defaults to
+.Cm P .
 .It Ic \&ftr Ar newname Op Ar oldname
 Translate font name.
 This is a groff extension and currently ignored.
@@ -2004,11 +2038,15 @@ and
 Switch to the font
 .Ar name ,
 see
-.Sx Text Decoration .
+.Sx Font Selection .
 For short names, there are variants
 .Ic \ef Ns Ar c
 and
 .Ic \ef( Ns Ar cc .
+An empty name
+.Ic \ef[]
+defaults to
+.Ic \efP .
 .It Ic \eg[ Ns Ar name Ns Ic \&]
 Interpolate the format of a number register; ignored by
 .Xr mandoc 1 .

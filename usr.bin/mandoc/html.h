@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.57 2018/10/25 01:21:30 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.58 2018/12/15 23:33:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -125,6 +125,7 @@ void		  roff_html_pre(struct html *, const struct roff_node *);
 void		  print_gen_comment(struct html *, struct roff_node *);
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
+void		  print_metaf(struct html *, enum mandoc_esc);
 struct tag	 *print_otag(struct html *, enum htmltag, const char *, ...);
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
