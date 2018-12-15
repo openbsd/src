@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname.c,v 1.1.1.1 2012/07/13 17:49:54 eric Exp $	*/
+/*	$OpenBSD: getrrsetbyname.c,v 1.2 2018/12/15 15:16:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,8 +48,11 @@ main(int argc, char *argv[])
 	char			*host;
 	struct rrsetinfo	*rrset;
 
-	while((ch = getopt(argc, argv, "et:")) !=  -1) {
+	while((ch = getopt(argc, argv, "R:et:")) !=  -1) {
 		switch(ch) {
+		case 'R':
+			parseresopt(optarg);
+			break;
 		case 'e':
 			long_err += 1;
 			break;

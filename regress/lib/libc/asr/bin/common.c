@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.3 2014/08/10 07:31:58 guenther Exp $	*/
+/*	$OpenBSD: common.c,v 1.4 2018/12/15 15:16:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -86,8 +86,8 @@ kv_lookup_name(struct kv *kv, int code, char *buf, size_t sz)
 }
 
 struct keyval {
-        const char      *key;
-        uint16_t         value;   
+        const char *key;
+        int	    value;   
 };
 
 static struct keyval kv_class[] = {
@@ -135,6 +135,24 @@ static struct keyval kv_rcode[] = {
 	{ NULL, 	0 },
 };
 
+static struct keyval kv_resopt[] = {
+	{ "DEBUG",	RES_DEBUG },
+	{ "AAONLY",	RES_AAONLY },
+	{ "USEVC",	RES_USEVC },
+	{ "PRIMARY",	RES_PRIMARY },
+	{ "IGNTC",	RES_IGNTC },
+	{ "RECURSE",	RES_RECURSE },
+	{ "DEFNAMES",	RES_DEFNAMES },
+	{ "STAYOPEN",	RES_STAYOPEN },
+	{ "DNSRCH",	RES_DNSRCH },
+	{ "INSECURE1",	RES_INSECURE1 },
+	{ "INSECURE2",	RES_INSECURE2 },
+	{ "NOALIASES",	RES_NOALIASES },
+	{ "USE_INET6",	RES_USE_INET6 },
+	{ "USE_EDNS0",	RES_USE_EDNS0 },
+	{ "USE_DNSSEC",	RES_USE_DNSSEC },
+	{ NULL, 	0 },
+};
 
 const char *
 rcodetostr(uint16_t v)
@@ -187,7 +205,7 @@ strtotype(const char *name)
 	size_t	i;
 
 	for(i = 0; kv_type[i].key; i++)
-		if (!strcmp(kv_type[i].key, name))
+		if (!strcasecmp(kv_type[i].key, name))
 			return (kv_type[i].value);
 
 	return (0);
@@ -199,10 +217,50 @@ strtoclass(const char *name)
 	size_t	i;
 
 	for(i = 0; kv_class[i].key; i++)
-		if (!strcmp(kv_class[i].key, name))
+		if (!strcasecmp(kv_class[i].key, name))
 			return (kv_class[i].value);
 
 	return (0);
+}
+
+int
+strtoresopt(const char *name)
+{
+	size_t	i;
+
+	for(i = 0; kv_resopt[i].key; i++)
+		if (!strcasecmp(kv_resopt[i].key, name))
+			return (kv_resopt[i].value);
+
+	return (0);
+}
+
+void
+parseresopt(const char *name)
+{
+	static int init = 0;
+	int flag, neg = 0;
+
+	if (init == 0) {
+		res_init();
+		init = 1;
+	}
+
+	if (name[0] == '-') {
+		neg = 1;
+		name++;
+	}
+	else if (name[0] == '+')
+		name++;
+
+	flag = strtoresopt(name);
+	if (flag == 0)
+		errx(1, "unknown reslover option %s", name);
+	
+	if (neg)
+		_res.options &= ~flag;
+	else
+		_res.options |= flag;
 }
 
 void

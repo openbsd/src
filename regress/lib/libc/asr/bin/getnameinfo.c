@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.1.1.1 2012/07/13 17:49:54 eric Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.2 2018/12/15 15:16:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -45,7 +45,7 @@ main(int argc, char *argv[])
 
 	sa = (struct sockaddr*)&ss;
 
-	while((ch = getopt(argc, argv, "DFHNSaep:")) !=  -1) {
+	while((ch = getopt(argc, argv, "DFHNR:Saep:")) !=  -1) {
 		switch(ch) {
 		case 'D':
 			flags |= NI_DGRAM;
@@ -58,6 +58,9 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			flags |= NI_NAMEREQD;
+			break;
+		case 'R':
+			parseresopt(optarg);
 			break;
 		case 'S':
 			flags |= NI_NUMERICSERV;
