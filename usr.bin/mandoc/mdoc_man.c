@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.127 2018/12/03 21:00:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.128 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -323,6 +323,7 @@ man_strlen(const char *cp)
 		case ESCAPE_UNICODE:
 		case ESCAPE_NUMBERED:
 		case ESCAPE_SPECIAL:
+		case ESCAPE_UNDEF:
 		case ESCAPE_OVERSTRIKE:
 			if (skip)
 				skip = 0;

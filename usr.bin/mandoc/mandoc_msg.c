@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.2 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.3 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -167,6 +167,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"tab in filled text",
 	"new sentence, new line",
 	"invalid escape sequence",
+	"undefined escape, printing literally",
 	"undefined string, using \"\"",
 
 	/* related to tables */
@@ -228,6 +229,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"unsupported feature",
 	"input too large",
 	"unsupported control character",
+	"unsupported escape sequence",
 	"unsupported roff request",
 	"nested .while loops",
 	"end of scope with open .while loop",

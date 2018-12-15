@@ -1,17 +1,17 @@
-.\" $OpenBSD: nocombine.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
-.TH CHAR-ACCENT-NOCOMBINE 1 "March 8, 2014"
+.\" $OpenBSD: nocombine.in,v 1.3 2018/12/15 19:30:19 schwarze Exp $
+.TH CHAR-ACCENT-NOCOMBINE 1 "December 15, 2018"
 .SH NAME
 \fBchar-accent-nocombine\fR - non-combining accents
 .SH DESCRIPTION
 bare acute accent: e'e
 .br
-escaped acute accent: e\'e
+escaped acute accent: e\'e\[']e
 .br
 acute accent sequence: e\(aae
 .br
 bare grave accent: e`e
 .br
-escaped grave accent: e\`e
+escaped grave accent: e\`e\[`]e
 .br
 acute grave sequence: e\(gae
 .br
@@ -20,15 +20,15 @@ hungarian umlaut: e\(a"e
 .\" XXX This is ridiculous.
 .\" XXX groff prints the macron as an underscore in the previous line.
 .\" macron: e\(a-e
-.br
+.\" .br
 .\" XXX groff doesn't have a dot in ASCII mode, only in UTF-8 mode.
 .\" dotted: e\(a.e
-.br
+.\" .br
 circumflex: e\(a^e
 .br
 .\" XXX groff uses a backspace for this one in ASCII mode.
 .\" breve: e\(abe
-.br
+.\" .br
 cedilla: e\(ace
 .br
 dieresis: e\(ade

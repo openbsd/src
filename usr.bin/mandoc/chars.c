@@ -1,7 +1,7 @@
-/*	$OpenBSD: chars.c,v 1.47 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.48 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,21 +46,13 @@ static struct ln lines[] = {
 	{ " ",			ascii_nbrsp,	0x00a0	},
 	{ "~",			ascii_nbrsp,	0x00a0	},
 	{ "0",			" ",		0x2002	},
-	{ "|",			"",		0	},
-	{ "^",			"",		0	},
-	{ "&",			"",		0	},
-	{ ")",			"",		0	},
-	{ "%",			"",		0	},
 	{ ":",			ascii_break,	0	},
-	/* XXX The following three do not really belong here. */
-	{ "t",			"",		0	},
-	{ "c",			"",		0	},
-	{ "}",			"",		0	},
 
 	/* Lines. */
 	{ "ba",			"|",		0x007c	},
 	{ "br",			"|",		0x2502	},
 	{ "ul",			"_",		0x005f	},
+	{ "_",			"_",		0x005f	},
 	{ "ru",			"_",		0x005f	},
 	{ "rn",			"-",		0x203e	},
 	{ "bb",			"|",		0x00a6	},
@@ -463,7 +455,7 @@ mchars_spec2cp(const char *p, size_t sz)
 
 	end = p + sz;
 	ln = ohash_find(&mchars, ohash_qlookupi(&mchars, p, &end));
-	return ln != NULL ? ln->unicode : sz == 1 ? (unsigned char)*p : -1;
+	return ln != NULL ? ln->unicode : -1;
 }
 
 int
@@ -493,10 +485,8 @@ mchars_spec2str(const char *p, size_t sz, size_t *rsz)
 
 	end = p + sz;
 	ln = ohash_find(&mchars, ohash_qlookupi(&mchars, p, &end));
-	if (ln == NULL) {
-		*rsz = 1;
-		return sz == 1 ? p : NULL;
-	}
+	if (ln == NULL)
+		return NULL;
 
 	*rsz = strlen(ln->ascii);
 	return ln->ascii;

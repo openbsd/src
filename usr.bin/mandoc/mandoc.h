@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.202 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.203 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -169,6 +169,7 @@ enum	mandocerr {
 	MANDOCERR_FI_TAB, /* tab in filled text */
 	MANDOCERR_EOS, /* new sentence, new line */
 	MANDOCERR_ESC_BAD, /* invalid escape sequence: esc */
+	MANDOCERR_ESC_UNDEF, /* undefined escape, printing literally: char */
 	MANDOCERR_STR_UNDEF, /* undefined string, using "": name */
 
 	/* related to tables */
@@ -231,6 +232,7 @@ enum	mandocerr {
 
 	MANDOCERR_TOOLARGE, /* input too large */
 	MANDOCERR_CHAR_UNSUPP, /* unsupported control character: number */
+	MANDOCERR_ESC_UNSUPP, /* unsupported escape sequence: escape */
 	MANDOCERR_REQ_UNSUPP, /* unsupported roff request: request */
 	MANDOCERR_WHILE_NEST, /* nested .while loops */
 	MANDOCERR_WHILE_OUTOF, /* end of scope with open .while loop */
@@ -245,7 +247,9 @@ enum	mandocerr {
 
 enum	mandoc_esc {
 	ESCAPE_ERROR = 0, /* bail! unparsable escape */
+	ESCAPE_UNSUPP, /* unsupported escape; ignore it */
 	ESCAPE_IGNORE, /* escape to be ignored */
+	ESCAPE_UNDEF, /* undefined escape; print literal character */
 	ESCAPE_SPECIAL, /* a regular special character */
 	ESCAPE_FONT, /* a generic font mode */
 	ESCAPE_FONTBOLD, /* bold font mode */

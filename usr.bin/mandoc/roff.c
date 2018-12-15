@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.223 2018/12/14 06:33:03 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.224 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1152,6 +1152,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	struct roff_node *n;	/* used for header comments */
 	const char	*start;	/* start of the string to process */
 	char		*stesc;	/* start of an escape sequence ('\\') */
+	const char	*esct;	/* type of esccape sequence */
 	char		*ep;	/* end of comment string */
 	const char	*stnam;	/* start of the name, after "[(*" */
 	const char	*cp;	/* end of the name, e.g. before ']' */
@@ -1161,7 +1162,6 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	size_t		 naml;	/* actual length of the escape name */
 	size_t		 asz;	/* length of the replacement */
 	size_t		 rsz;	/* length of the rest of the string */
-	enum mandoc_esc	 esc;	/* type of the escape sequence */
 	int		 inaml;	/* length returned from mandoc_escape() */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
@@ -1170,6 +1170,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	int		 done;	/* no more input available */
 	int		 deftype; /* type of definition to paste */
 	int		 rcsid;	/* kind of RCS id seen */
+	enum mandocerr	 err;	/* for escape sequence problems */
 	char		 sign;	/* increment number register */
 	char		 term;	/* character terminating the escape */
 
@@ -1302,7 +1303,10 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 
 		term = '\0';
 		cp = stesc + 1;
-		switch (*cp) {
+		if (*cp == 'E')
+			cp++;
+		esct = cp;
+		switch (*esct) {
 		case '*':
 		case '$':
 			res = NULL;
@@ -1318,12 +1322,26 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			res = ubuf;
 			break;
 		default:
-			esc = mandoc_escape(&cp, &stnam, &inaml);
-			if (esc == ESCAPE_ERROR ||
-			    (esc == ESCAPE_SPECIAL &&
-			     mchars_spec2cp(stnam, inaml) < 0))
-				mandoc_msg(MANDOCERR_ESC_BAD,
-				    ln, (int)(stesc - buf->buf),
+			err = MANDOCERR_OK;
+			switch(mandoc_escape(&cp, &stnam, &inaml)) {
+			case ESCAPE_SPECIAL:
+				if (mchars_spec2cp(stnam, inaml) >= 0)
+					break;
+				/* FALLTHROUGH */
+			case ESCAPE_ERROR:
+				err = MANDOCERR_ESC_BAD;
+				break;
+			case ESCAPE_UNDEF:
+				err = MANDOCERR_ESC_UNDEF;
+				break;
+			case ESCAPE_UNSUPP:
+				err = MANDOCERR_ESC_UNSUPP;
+				break;
+			default:
+				break;
+			}
+			if (err != MANDOCERR_OK)
+				mandoc_msg(err, ln, (int)(stesc - buf->buf),
 				    "%.*s", (int)(cp - stesc), stesc);
 			stesc--;
 			continue;
@@ -1380,7 +1398,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 				cp++;
 				break;
 			}
-			if (*cp++ != '\\' || stesc[1] != 'w') {
+			if (*cp++ != '\\' || *esct != 'w') {
 				naml++;
 				continue;
 			}
@@ -1388,6 +1406,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 			case ESCAPE_SPECIAL:
 			case ESCAPE_UNICODE:
 			case ESCAPE_NUMBERED:
+			case ESCAPE_UNDEF:
 			case ESCAPE_OVERSTRIKE:
 				naml++;
 				break;
@@ -1401,7 +1420,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		 * undefined, resume searching for escapes.
 		 */
 
-		switch (stesc[1]) {
+		switch (*esct) {
 		case '*':
 			if (arg_complete) {
 				deftype = ROFFDEF_USER | ROFFDEF_PRE;
@@ -1428,15 +1447,15 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 				break;
 			}
 			ctx = r->mstack + r->mstackpos;
-			npos = stesc[2] - '1';
+			npos = esct[1] - '1';
 			if (npos >= 0 && npos <= 8) {
 				res = npos < ctx->argc ?
 				    ctx->argv[npos] : "";
 				break;
 			}
-			if (stesc[2] == '*')
+			if (esct[1] == '*')
 				quote_args = 0;
-			else if (stesc[2] == '@')
+			else if (esct[1] == '@')
 				quote_args = 1;
 			else {
 				mandoc_msg(MANDOCERR_ARG_NONUM, ln,
@@ -1498,7 +1517,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		}
 
 		if (res == NULL) {
-			if (stesc[1] == '*')
+			if (*esct == '*')
 				mandoc_msg(MANDOCERR_STR_UNDEF,
 				    ln, (int)(stesc - buf->buf),
 				    "%.*s", (int)naml, stnam);

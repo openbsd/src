@@ -1,0 +1,9 @@
+mandoc: invalid.in:7:15: WARNING: invalid escape sequence: \[ 
+mandoc: invalid.in:8:14: WARNING: invalid escape sequence: \[%]
+mandoc: invalid.in:9:16: WARNING: invalid escape sequence: \[&]
+mandoc: invalid.in:10:12: WARNING: invalid escape sequence: \[:]
+mandoc: invalid.in:11:12: WARNING: invalid escape sequence: \[^]
+mandoc: invalid.in:12:16: WARNING: invalid escape sequence: \[_]
+mandoc: invalid.in:13:11: WARNING: invalid escape sequence: \[|]
+mandoc: invalid.in:14:12: WARNING: invalid escape sequence: \[~]
+mandoc: invalid.in:15:18: WARNING: invalid escape sequence: \[0]

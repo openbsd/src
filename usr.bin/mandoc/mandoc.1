@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.155 2018/11/22 11:30:15 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.156 2018/12/15 19:30:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 22 2018 $
+.Dd $Mdocdate: December 15 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1676,7 +1676,8 @@ Start it on a new input line to help formatters produce correct spacing.
 .It Sy "invalid escape sequence"
 .Pq roff
 An escape sequence has an invalid opening argument delimiter, lacks the
-closing argument delimiter, or the argument has too few characters.
+closing argument delimiter, the argument is of an invalid form, or it is
+a character escape sequence with an invalid name.
 If the argument is incomplete,
 .Ic \e*
 and
@@ -1689,6 +1690,12 @@ and
 .Ic \ew
 to the length of the incomplete argument.
 All other invalid escape sequences are ignored.
+.It Sy "undefined escape, printing literally"
+.Pq roff
+In an escape sequence, the first character
+right after the leading backslash is invalid.
+That character is printed literally,
+which is equivalent to ignoring the backslash.
 .It Sy "undefined string, using \(dq\(dq"
 .Pq roff
 If a string is used without being defined before,
@@ -2154,6 +2161,13 @@ implementations but not by
 .Nm
 was found in an input file.
 It is replaced by a question mark.
+.It Sy "unsupported escape sequence"
+.Pq roff
+An input file contains an escape sequence supported by GNU troff
+or Heirloom troff but not by
+.Nm ,
+and it is likely that this will cause information loss
+or considerable misformatting.
 .It Sy "unsupported roff request"
 .Pq roff
 An input file contains a

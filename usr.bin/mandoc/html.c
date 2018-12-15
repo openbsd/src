@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.115 2018/12/04 18:29:18 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.116 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -400,9 +400,6 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 			continue;
 
 		esc = mandoc_escape(&p, &seq, &len);
-		if (ESCAPE_ERROR == esc)
-			break;
-
 		switch (esc) {
 		case ESCAPE_FONT:
 		case ESCAPE_FONTPREV:
@@ -419,6 +416,8 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 			continue;
 		case ESCAPE_SKIPCHAR:
 			h->flags |= HTML_SKIPCHAR;
+			continue;
+		case ESCAPE_ERROR:
 			continue;
 		default:
 			break;
@@ -443,6 +442,9 @@ print_encode(struct html *h, const char *p, const char *pend, int norecurse)
 			c = mchars_spec2cp(seq, len);
 			if (c <= 0)
 				continue;
+			break;
+		case ESCAPE_UNDEF:
+			c = *seq;
 			break;
 		case ESCAPE_DEVICE:
 			print_word(h, "html");

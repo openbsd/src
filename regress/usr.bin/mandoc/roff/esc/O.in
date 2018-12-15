@@ -1,0 +1,15 @@
+.\" $OpenBSD: O.in,v 1.1 2018/12/15 19:30:20 schwarze Exp $
+.TH ESC-O 1 "December 15, 2018"
+.SH NAME
+esc-O \- escape sequence to suppress output
+.SH DESCRIPTION
+.nf
+O1: a\O1b
+O2: a\O2b
+O3: a\O3b
+O4: a\O4b
+O5: a\O5b
+O52: a\O(52b
+O5n: a\O[5dummy]b
+O6: a\O6b
+O0: a\O0\&\O1b

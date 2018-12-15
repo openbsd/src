@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.87 2018/10/04 15:31:40 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.88 2018/12/15 19:30:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2018 $
+.Dd $Mdocdate: December 15 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1842,6 +1842,11 @@ The escape sequence backslash-space
 .Pq Sq \e\ \&
 is an unpaddable space-sized non-breaking space character; see
 .Sx Whitespace .
+.It Ic \e!
+Embed text up to and including the end of the input line into the
+current diversion or into intermediate output without interpreting
+requests, macros, and escapes.
+Currently unsupported.
 .It Ic \e\(dq
 The rest of the input line is treated as
 .Sx Comments .
@@ -1868,6 +1873,10 @@ instead.
 .Sx Special Characters
 with two-letter names, see
 .Xr mandoc_char 7 .
+.It Ic \e)
+Zero-width space transparent to end-of-sentence detection;
+ignored by
+.Xr mandoc 1 .
 .It Ic \e*[ Ns Ar name Ns Ic \&]
 Interpolate the string with the
 .Ar name .
@@ -1905,6 +1914,15 @@ Special character
 .It Ic \e/
 Right italic correction (groff extension); ignored by
 .Xr mandoc 1 .
+.It Ic \e:
+Breaking the line is allowed at this point of the word
+without inserting a hyphen.
+.It Ic \e?
+Embed the text up to the next
+.Ic \e?
+into the current diversion without interpreting requests, macros,
+and escapes.
+This is a groff extension and currently unsupported.
 .It Ic \e[ Ns Ar name Ns Ic \&]
 .Sx Special Characters
 with names of arbitrary length, see
@@ -1912,6 +1930,10 @@ with names of arbitrary length, see
 .It Ic \e^
 One-twelfth em half-narrow space character, effectively zero-width in
 .Xr mandoc 1 .
+.It Ic \e_
+Underline special character; use
+.Ic \e(ul
+instead.
 .It Ic \e`
 Grave accent special character; use
 .Ic \e(ga
@@ -1931,6 +1953,9 @@ Paddable non-breaking space character.
 Digit width space character.
 .It Ic \eA\(aq Ns Ar string Ns Ic \(aq
 Anchor definition; ignored by
+.Xr mandoc 1 .
+.It Ic \ea
+Leader character; ignored by
 .Xr mandoc 1 .
 .It Ic \eB\(aq Ns Ar string Ns Ic \(aq
 Interpolate
@@ -1959,6 +1984,13 @@ Draw graphics function; ignored by
 .It Ic \ed
 Move down by half a line; ignored by
 .Xr mandoc 1 .
+.It Ic \eE
+Escape character intended to not be interpreted in copy mode.
+In
+.Xr mandoc 1 ,
+it does the same as
+.Ic \e
+itself for now.
 .It Ic \ee
 Backslash special character.
 .It Ic \eF[ Ns Ar name Ns Ic \&]
@@ -2040,6 +2072,14 @@ the register is first incremented or decremented by the
 that was specified in the relevant
 .Ic \&nr
 request, and the changed value is interpolated.
+.It Ic \eO Ns Ar digit , Ic \eO[5 Ns arguments Ns Ic \&]
+Suppress output.
+This is a groff extension and currently unsupported.
+With an argument of
+.Ic 1 , 2 , 3 ,
+or
+.Ic 4 ,
+it is ignored.
 .It Ic \eo\(aq Ns Ar string Ns Ic \(aq
 Overstrike, writing all the characters contained in the
 .Ar string
@@ -2050,6 +2090,9 @@ only the last one of the characters is visible.
 Break the output line at the end of the current word.
 .It Ic \eR\(aq Ns Ar name Oo +|- Oc Ns Ar number Ns Ic \(aq
 Set number register; ignored by
+.Xr mandoc 1 .
+.It Ic \er
+Move up by one line; ignored by
 .Xr mandoc 1 .
 .It Ic \eS\(aq Ns Ar number Ns Ic \(aq
 Slant output; ignored by

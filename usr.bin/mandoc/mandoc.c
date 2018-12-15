@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.78 2018/12/14 06:33:03 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.79 2018/12/15 19:30:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -54,6 +54,14 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		sz = &local_sz;
 
 	/*
+	 * Treat "\E" just like "\";
+	 * it only makes a difference in copy mode.
+	 */
+
+	if (**end == 'E')
+		++*end;
+
+	/*
 	 * Beyond the backslash, at least one input character
 	 * is part of the escape sequence.  With one exception
 	 * (see below), that character won't be returned.
@@ -75,6 +83,10 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		*sz = 2;
 		break;
 	case '[':
+		if (**start == ' ') {
+			++*end;
+			return ESCAPE_ERROR;
+		}
 		gly = ESCAPE_SPECIAL;
 		term = ']';
 		break;
@@ -89,11 +101,26 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	/*
 	 * Escapes taking no arguments at all.
 	 */
-	case 'd':
-	case 'u':
+	case '!':
+	case '?':
+		return ESCAPE_UNSUPP;
+	case '%':
+	case '&':
+	case ')':
 	case ',':
 	case '/':
+	case '^':
+	case 'a':
+	case 'd':
+	case 'r':
+	case 't':
+	case 'u':
+	case '{':
+	case '|':
+	case '}':
 		return ESCAPE_IGNORE;
+	case 'c':
+		return ESCAPE_NOSPACE;
 	case 'p':
 		return ESCAPE_BREAK;
 
@@ -111,28 +138,46 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	 * 'X' is the trigger.  These have opaque sub-strings.
 	 */
 	case 'F':
+	case 'f':
 	case 'g':
 	case 'k':
 	case 'M':
 	case 'm':
 	case 'n':
+	case 'O':
 	case 'V':
 	case 'Y':
-		gly = ESCAPE_IGNORE;
-		/* FALLTHROUGH */
-	case 'f':
-		if (ESCAPE_ERROR == gly)
-			gly = ESCAPE_FONT;
+		gly = (*start)[-1] == 'f' ? ESCAPE_FONT : ESCAPE_IGNORE;
 		switch (**start) {
 		case '(':
+			if ((*start)[-1] == 'O')
+				gly = ESCAPE_ERROR;
 			*start = ++*end;
 			*sz = 2;
 			break;
 		case '[':
+			if ((*start)[-1] == 'O')
+				gly = (*start)[1] == '5' ?
+				    ESCAPE_UNSUPP : ESCAPE_ERROR;
 			*start = ++*end;
 			term = ']';
 			break;
 		default:
+			if ((*start)[-1] == 'O') {
+				switch (**start) {
+				case '0':
+					gly = ESCAPE_UNSUPP;
+					break;
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+					break;
+				default:
+					gly = ESCAPE_ERROR;
+					break;
+				}
+			}
 			*sz = 1;
 			break;
 		}
@@ -255,17 +300,28 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		break;
 
 	/*
-	 * Anything else is assumed to be a glyph.
-	 * In this case, pass back the character after the backslash.
+	 * Several special characters can be encoded as
+	 * one-byte escape sequences without using \[].
 	 */
-	default:
+	case ' ':
+	case '\'':
+	case '-':
+	case '.':
+	case '0':
+	case ':':
+	case '_':
+	case '`':
+	case 'e':
+	case '~':
 		gly = ESCAPE_SPECIAL;
+		/* FALLTHROUGH */
+	default:
+		if (gly == ESCAPE_ERROR)
+			gly = ESCAPE_UNDEF;
 		*start = --*end;
 		*sz = 1;
 		break;
 	}
-
-	assert(ESCAPE_ERROR != gly);
 
 	/*
 	 * Read up to the terminating character,
@@ -289,6 +345,15 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			}
 		}
 		*sz = (*end)++ - *start;
+
+		/*
+		 * The file chars.c only provides one common list
+		 * of character names, but \[-] == \- is the only
+		 * one of the characters with one-byte names that
+		 * allows enclosing the name in brackets.
+		 */
+		if (gly == ESCAPE_SPECIAL && *sz == 1 && **start != '-')
+			return ESCAPE_ERROR;
 	} else {
 		assert(*sz > 0);
 		if ((size_t)*sz > strlen(*start))
@@ -344,10 +409,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		break;
 	case ESCAPE_SPECIAL:
 		if (**start == 'c') {
-			if (*sz == 1) {
-				gly = ESCAPE_NOSPACE;
-				break;
-			}
 			if (*sz < 6 || *sz > 7 ||
 			    strncmp(*start, "char", 4) != 0 ||
 			    (int)strspn(*start + 4, "0123456789") + 4 < *sz)
@@ -429,6 +490,7 @@ mandoc_getarg(char **cpp, int ln, int *pos)
 			 * backslashes and backslash-t to literal tabs.
 			 */
 			switch (cp[1]) {
+			case 'a':
 			case 't':
 				cp[0] = '\t';
 				/* FALLTHROUGH */
