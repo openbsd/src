@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.17 2017/11/13 23:52:49 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.18 2018/12/16 03:40:12 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2017 $
+.Dd $Mdocdate: December 16 2018 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm task_set ,
 .Nm task_add ,
 .Nm task_del ,
+.Nm task_pending ,
 .Nm TASK_INITIALIZER
 .Nd task queues
 .Sh SYNOPSIS
@@ -45,6 +46,8 @@
 .Fn task_add "struct taskq *tq" "struct task *t"
 .Ft int
 .Fn task_del "struct taskq *tq" "struct task *t"
+.Ft int
+.Fn task_pending "struct task *t"
 .Vt extern struct taskq *const systq;
 .Vt extern struct taskq *const systqmp;
 .Fn TASK_INITIALIZER "void (*fn)(void *)" "void *arg"
@@ -161,6 +164,10 @@ They are serviced by a single thread and can therefore provide predictable
 ordering of work.
 Work can be scheduled on the system taskqs from callers at or below IPL_HIGH.
 .Pp
+The
+.Fn task_pending
+macro can be used to check if a task is scheduled to run.
+.Pp
 A task declaration can be initialised with the
 .Fn TASK_INITIALIZER
 macro.
@@ -179,8 +186,9 @@ can be called during autoconf, or from process context.
 can be called from process context.
 .Fn task_set ,
 .Fn task_add ,
+.Fn task_del ,
 and
-.Fn task_del
+.Fn task_pending
 can be called during autoconf, from process context, or from interrupt context.
 .Sh RETURN VALUES
 .Fn taskq_create
@@ -201,6 +209,10 @@ will return 1 if the task
 was removed from the taskq
 .Fa tq
 or 0 if the task was not already on the queue.
+.Pp
+.Fn task_pending
+will return non-zero if the task is queued to run, or 0 if the task
+is not queued.
 .Sh SEE ALSO
 .Xr autoconf 9 ,
 .Xr spl 9
