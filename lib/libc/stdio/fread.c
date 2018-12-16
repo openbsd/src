@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.18 2018/12/16 03:40:40 millert Exp $ */
+/*	$OpenBSD: fread.c,v 1.19 2018/12/16 15:38:29 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,6 +68,36 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 		fp->_r = 0;
 	total = resid;
 	p = buf;
+
+	/*
+	 * If we're unbuffered we know that the buffer in fp is empty so
+	 * we can read directly into buf.  This is much faster than a
+	 * series of one byte reads into fp->_nbuf.
+	 */
+	if ((fp->_flags & __SNBF) != 0 && buf != NULL) {
+		while (resid > 0) {
+			/* set up the buffer */
+			fp->_bf._base = fp->_p = p;
+			fp->_bf._size = resid;
+
+			if (__srefill(fp)) {
+				/* no more input: return partial result */
+				count = (total - resid) / size;
+				break;
+			}
+			p += fp->_r;
+			resid -= fp->_r;
+		}
+
+		/* restore the old buffer (see __smakebuf) */
+		fp->_bf._base = fp->_p = fp->_nbuf;
+		fp->_bf._size = 1;
+		fp->_r = 0;
+
+		FUNLOCKFILE(fp);
+		return (count);
+	}
+
 	while (resid > (r = fp->_r)) {
 		(void)memcpy(p, fp->_p, r);
 		fp->_p += r;
