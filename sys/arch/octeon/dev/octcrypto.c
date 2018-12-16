@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.1 2018/04/09 13:46:15 visa Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.2 2018/12/16 14:43:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -236,7 +236,7 @@ octcrypto_attach(struct device *parent, struct device *self, void *aux)
 	int algs[CRYPTO_ALGORITHM_MAX + 1];
 	struct octcrypto_softc *sc = (struct octcrypto_softc *)self;
 
-	pool_init(&octcryptopl, sizeof(struct octcrypto_session), 16, 0, 0,
+	pool_init(&octcryptopl, sizeof(struct octcrypto_session), 0, IPL_VM, 0,
 	    "octcrypto", NULL);
 	pool_setlowat(&octcryptopl, 2);
 
