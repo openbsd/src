@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.20 2018/02/06 15:17:26 espie Exp $
+# $OpenBSD: Signature.pm,v 1.21 2018/12/16 10:44:18 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -86,6 +86,10 @@ sub long_string
 	return $self->spec->to_string;
 }
 
+sub always
+{
+	return 1;
+}
 
 package OpenBSD::PackingElement::Version;
 sub signature_key
