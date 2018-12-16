@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.39 2017/03/01 10:35:24 espie Exp $
+# $OpenBSD: Term.pm,v 1.40 2018/12/16 10:16:43 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,6 @@ package OpenBSD::ProgressMeter::Term;
 our @ISA = qw(OpenBSD::ProgressMeter::Real);
 use POSIX;
 use Term::Cap;
-use Term::ReadKey;
 
 sub width
 {
