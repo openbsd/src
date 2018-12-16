@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.22 2017/12/14 00:45:16 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.23 2018/12/16 03:36:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -23,8 +23,6 @@
 #include <sys/kthread.h>
 #include <sys/task.h>
 #include <sys/proc.h>
-
-#define TASK_ONQUEUE	1
 
 struct taskq {
 	enum {

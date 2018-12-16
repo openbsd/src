@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.h,v 1.12 2017/11/13 23:52:49 dlg Exp $ */
+/*	$OpenBSD: task.h,v 1.13 2018/12/16 03:36:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,8 @@ struct task {
 	unsigned int	t_flags;
 };
 
+#define TASK_ONQUEUE		1
+
 TAILQ_HEAD(task_list, task);
 
 #define TASKQ_MPSAFE		(1 << 0)
@@ -48,6 +50,8 @@ void		 taskq_barrier(struct taskq *);
 void		 task_set(struct task *, void (*)(void *), void *);
 int		 task_add(struct taskq *, struct task *);
 int		 task_del(struct taskq *, struct task *);
+
+#define task_pending(_t)	((_t)->t_flags & TASK_ONQUEUE)
 
 #endif /* _KERNEL */
 

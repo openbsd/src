@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.24 2018/12/11 01:36:42 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.25 2018/12/16 03:36:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -70,8 +70,6 @@ struct priq {
 void	ifq_start_task(void *);
 void	ifq_restart_task(void *);
 void	ifq_barrier_task(void *);
-
-#define TASK_ONQUEUE 0x1
 
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
