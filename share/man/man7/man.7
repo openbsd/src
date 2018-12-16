@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.52 2018/08/18 04:32:04 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.53 2018/12/16 02:20:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2018 $
+.Dd $Mdocdate: December 16 2018 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -100,7 +100,6 @@ but can be found in the alphabetical reference below.
 .It Sx RS , RE Ta reset the left margin: Op Ar width
 .It Sx IP Ta indented paragraph: Op Ar head Op Ar width
 .It Sx TP Ta tagged paragraph: Op Ar width
-.It Sx HP Ta hanged paragraph: Op Ar width
 .It Sx PD Ta set vertical paragraph distance: Op Ar height
 .It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
 .It Sx in Ta additional indent: Op Ar width
@@ -185,8 +184,13 @@ The
 argument is a
 .Xr roff 7
 scaling width.
-If specified, it's saved for later paragraph left-margins; if unspecified, the
-saved or default width is used.
+If specified, it's saved for later paragraph left margins;
+if unspecified, the saved or default width is used.
+.Pp
+This macro is portable, but deprecated
+because it has no good representation in HTML output,
+usually ending up indistinguishable from
+.Sx \&PP .
 .Ss \&I
 Text is rendered in italics.
 .Ss \&IB
@@ -380,6 +384,9 @@ and footer with the following syntax:
 Conventionally, the document
 .Ar name
 is given in all caps.
+The
+.Ar section
+is usually a single digit, in a few cases followed by a letter.
 The recommended
 .Ar date
 format is
@@ -399,21 +406,22 @@ uses its
 argument.
 The
 .Ar volume
-string replaces the default rendered volume, which is dictated by the
-manual section.
+string replaces the default volume title of the
+.Ar section .
 .Pp
 Examples:
 .Pp
 .Dl \&.TH CVS 5 "1992-02-12" GNU
 .Ss \&TP
 Begin a paragraph where the head, if exceeding the indentation width, is
-followed by a newline; if not, the body follows on the same line after a
-buffer to the indentation width.
+followed by a newline; if not, the body follows on the same line after
+advancing to the indentation width.
 Subsequent output lines are indented.
 The syntax is as follows:
-.Bd -filled -offset indent
-.Pf \. Sx \&TP
-.Op Ar width
+.Bd -unfilled -offset indent
+.Pf \. Sx \&TP Op Ar width
+.Ar head No \e" one line
+.Ar body
 .Ed
 .Pp
 The
