@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.21 2018/12/16 10:44:18 espie Exp $
+# $OpenBSD: Signature.pm,v 1.22 2018/12/16 10:45:38 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -120,13 +120,13 @@ sub from_plist
 	$k->{VERSION} //= OpenBSD::PackingElement::Version->new(0);
 
 	if ($plist->has('always-update')) {
-		return $class->always->new($plist->pkgname, $k, $plist);
+		return $class->full->new($plist->pkgname, $k, $plist);
 	} else {
 		return $class->new($plist->pkgname, $k);
 	}
 }
 
-sub always
+sub full
 {
 	return "OpenBSD::Signature::Full";
 }
