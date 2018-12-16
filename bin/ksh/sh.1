@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.150 2018/11/30 08:55:57 solene Exp $
+.\"	$OpenBSD: sh.1,v 1.151 2018/12/16 13:08:35 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2018 $
+.Dd $Mdocdate: December 16 2018 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1755,7 +1755,7 @@ A
 executes a series of commands for each item in a list.
 Its format is:
 .Bd -unfilled -offset indent
-.No for Ar name Op in Ar word ...
+.No for Ar name Op in Op Ar word ...
 do
 .No "   " Ar command
 .No "   " Ar ...
@@ -1773,8 +1773,10 @@ The construct
 .Qq in word ...
 can be omitted,
 which is equivalent to: in \&"$@\&".
-The exit status is zero if there are no items
-or otherwise the exit status of the last command executed.
+The exit status is that of the last command executed.
+If there are no items,
+.Ar command
+is not executed and the exit status is zero.
 .Pp
 A
 .Em while loop

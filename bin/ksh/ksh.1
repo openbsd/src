@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.201 2018/06/18 17:03:58 millert Exp $
+.\"	$OpenBSD: ksh.1,v 1.202 2018/12/16 13:08:35 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: December 16 2018 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -540,7 +540,7 @@ if no
 .Ar list
 is executed, the exit status is zero.
 .It Xo Ic for Ar name
-.Oo Cm in Ar word No ... Oc ;
+.Op Cm in Op Ar word ... ;
 .Cm do Ar list ; Cm done
 .Xc
 For each
@@ -564,10 +564,10 @@ e.g.\&
 The exit status of a
 .Ic for
 statement is the last exit status of
-.Ar list ;
-if
+.Ar list .
+If there are no items,
 .Ar list
-is never executed, the exit status is zero.
+is not executed and the exit status is zero.
 .It Xo Ic if Ar list ;
 .Cm then Ar list ;
 .Oo Cm elif Ar list ;
