@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.98 2018/09/06 11:50:54 jsg Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.99 2018/12/16 08:33:16 otto Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -341,11 +341,26 @@ biosd_io(int rw, bios_diskinfo_t *bd, u_int off, int nsect, void *buf)
 	return error;
 }
 
+#define MAXSECTS 32
+
 int
 biosd_diskio(int rw, struct diskinfo *dip, u_int off, int nsect, void *buf)
 {
-	return biosd_io(rw, &dip->bios_info, off, nsect, buf);
+	char *dest = buf;
+	int n, ret;
+
+	/*
+	 * Avoid doing too large reads, the bounce buffer used by biosd_io()
+	 * might run us out-of-mem.
+	 */
+	for (ret = 0; ret == 0 && nsect > 0;
+	    off += MAXSECTS, dest += MAXSECTS * DEV_BSIZE, nsect -= MAXSECTS) {
+		n = nsect >= MAXSECTS ? MAXSECTS : nsect;
+		ret = biosd_io(rw, &dip->bios_info, off, n, dest);
+	}
+	return ret;
 }
+
 /*
  * Try to read the bsd label on the given BIOS device.
  */
@@ -716,7 +731,6 @@ biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct diskinfo *dip = (struct diskinfo *)devdata;
-	bios_diskinfo_t *bd = &dip->bios_info;
 	u_int8_t error = 0;
 	size_t nsect;
 
@@ -733,7 +747,7 @@ biosstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 	if (blk < 0)
 		error = EINVAL;
 	else
-		error = biosd_io(rw, bd, blk, nsect, buf);
+		error = biosd_diskio(rw, dip, blk, nsect, buf);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
