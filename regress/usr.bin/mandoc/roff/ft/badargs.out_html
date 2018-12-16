@@ -1,14 +1,9 @@
-BEGINTEST default font <i></i><i>italic</i> <b><i></i></b><b><i>bold
-  italic</i></b> <span class="Li"></span><span class="Li">typeqriter</span>
-  <span class="Li"></span><span class="Li">roman</span> <b></b><b>bold</b>
+BEGINTEST
+<br/>
+default font <i></i><i>italic</i> <b><i></i></b><b><i>bold italic</i></b>
+  <span class="Li"></span><span class="Li">typeqriter</span>
+  <span class="Li"></span> <span class="Li">roman</span> <b></b><b>bold</b>
   <i></i> <i>italic</i> <b></b><b>bold</b> <b>still bold</b>
   <i></i><i>italic</i> <i></i><i>back to bold</i> <i></i><i>back to italic</i>
-  ENDTEST</div>
-<table class="foot">
-  <tr>
-    <td class="foot-date">December 15, 2018</td>
-    <td class="foot-os"></td>
-  </tr>
-</table>
-</body>
-</html>
+<br/>
+ENDTEST</div>

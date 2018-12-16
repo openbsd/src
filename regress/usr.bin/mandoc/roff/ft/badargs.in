@@ -1,9 +1,10 @@
-.\" $OpenBSD: badargs.in,v 1.4 2018/12/15 23:33:20 schwarze Exp $
+.\" $OpenBSD: badargs.in,v 1.5 2018/12/16 00:10:03 schwarze Exp $
 .TH "FT-BADARGS" 1 "December 15, 2018"
 .SH NAME
 ft-badargs \(en font request with bad arguments
 .SH DESCRIPTION
 BEGINTEST
+.br
 default font
 .ft I
 italic
@@ -28,4 +29,5 @@ back to bold
 .ft
 back to italic
 .ft R
+.br
 ENDTEST
