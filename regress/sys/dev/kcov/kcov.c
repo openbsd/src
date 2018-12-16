@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.1 2018/08/26 08:12:09 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.2 2018/12/16 15:56:03 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static int test_close(int);
@@ -63,7 +64,7 @@ main(int argc, char *argv[])
 	};
 	unsigned long *cover;
 	int c, fd, i;
-	int nfail = 0;
+	int error = 0;
 	int prereq = 0;
 	int reexec = 0;
 	int verbose = 0;
@@ -86,8 +87,6 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
-	if (argc > 0)
-		usage();
 
 	if (prereq) {
 		fd = kcov_open();
@@ -100,6 +99,14 @@ main(int argc, char *argv[])
 		return 0;
 	}
 
+	if (argc != 1)
+		usage();
+	for (i = 0; tests[i].name != NULL; i++)
+		if (strcmp(argv[0], tests[i].name) == 0)
+			break;
+	if (tests[i].name == NULL)
+		errx(1, "%s: no such test", argv[0]);
+
 	fd = kcov_open();
 	if (ioctl(fd, KIOSETBUFSIZE, &bufsize) == -1)
 		err(1, "ioctl: KIOSETBUFSIZE");
@@ -108,30 +115,23 @@ main(int argc, char *argv[])
 	if (cover == MAP_FAILED)
 		err(1, "mmap");
 
-	for (i = 0; tests[i].name != NULL; i++) {
-		printf("===> %s\n", tests[i].name);
-		*cover = 0;
-		nfail += tests[i].fn(fd);
-		if (verbose)
-			dump(cover);
-		if (tests[i].coverage && *cover == 0) {
-			warnx("coverage empty (count=%lu, fd=%d)\n",
-			    *cover, fd);
-			nfail++;
-		} else if (!tests[i].coverage && *cover != 0) {
-			warnx("coverage is not empty (count=%lu, fd=%d)\n",
-			    *cover, fd);
-			nfail++;
-		}
+	*cover = 0;
+	error = tests[i].fn(fd);
+	if (verbose)
+		dump(cover);
+	if (tests[i].coverage && *cover == 0) {
+                warnx("coverage empty (count=%lu, fd=%d)\n", *cover, fd);
+		error = 1;
+	} else if (!tests[i].coverage && *cover != 0) {
+                warnx("coverage is not empty (count=%lu, fd=%d)\n", *cover, fd);
+		error = 1;
 	}
 
 	if (munmap(cover, bufsize * sizeof(unsigned long)) == -1)
 		err(1, "munmap");
 	close(fd);
 
-	if (nfail > 0)
-		return 1;
-	return 0;
+	return error;
 }
 
 static __dead void
