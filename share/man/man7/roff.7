@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.89 2018/12/15 23:33:20 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.90 2018/12/16 01:34:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2018 $
+.Dd $Mdocdate: December 16 2018 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@ utility supports a subset of
 requests and escapes.
 Even though this manual page lists all
 .Nm
-requests, it only has partial information about requests not supported by
+requests and escape sequences, it only contains partial information
+about requests not supported by
 .Xr mandoc 1
 and about language features that do not matter for manual pages.
 For complete
@@ -86,7 +87,7 @@ indicates the start of an escape sequence, used for example for
 .Sx Comments
 and
 .Sx Special Characters .
-For a listing of escape sequences, consult the
+For a complete listing of escape sequences, consult the
 .Sx ESCAPE SEQUENCE REFERENCE
 below.
 .Ss Comments
@@ -246,9 +247,9 @@ centimetre
 .It i
 inch
 .It P
-pica (~1/6 inch)
+pica (1/6 inch)
 .It p
-point (~1/72 inch)
+point (1/72 inch)
 .It f
 scale
 .Sq u
@@ -268,7 +269,7 @@ character
 .It u
 default horizontal span for the terminal
 .It M
-mini-em (~1/100 em)
+mini-em (1/100 em)
 .El
 .Pp
 Using anything other than
@@ -640,7 +641,7 @@ macros, whichever applies to the document in question.
 .Pp
 Specifying a custom
 .Ar endmacro
-macro works in the same way as for
+works in the same way as for
 .Ic \&ig ;
 namely, the call to
 .Sq Pf . Ar endmacro
@@ -1849,10 +1850,6 @@ The
 .Xr mandoc 1
 .Nm
 parser recognises the following escape sequences.
-Note that the
-.Nm
-language defines more escape sequences not implemented in
-.Xr mandoc 1 .
 In
 .Xr mdoc 7
 and
@@ -1862,9 +1859,7 @@ described in the
 .Sx LANGUAGE SYNTAX
 section above.
 .Pp
-In
-.Xr mandoc 1 ,
-a backslash followed by any character not listed here
+A backslash followed by any character not listed here
 simply prints that character itself.
 .Bl -tag -width Ds
 .It Ic \e<newline>
@@ -1875,7 +1870,9 @@ on both lines together as if it were on a single input line.
 The escape sequence backslash-space
 .Pq Sq \e\ \&
 is an unpaddable space-sized non-breaking space character; see
-.Sx Whitespace .
+.Sx Whitespace
+and
+.Xr mandoc_char 7 .
 .It Ic \e!
 Embed text up to and including the end of the input line into the
 current diversion or into intermediate output without interpreting
@@ -1897,8 +1894,16 @@ Macro argument expansion, see
 Hyphenation allowed at this point of the word; ignored by
 .Xr mandoc 1 .
 .It Ic \e&
-Non-printing zero-width character; see
-.Sx Whitespace .
+Non-printing zero-width character,
+often used for various kinds of escaping; see
+.Sx Whitespace ,
+.Xr mandoc_char 7 ,
+and the
+.Dq MACRO SYNTAX
+and
+.Dq Delimiters
+sections in
+.Xr mdoc 7 .
 .It Ic \e\(aq
 Acute accent special character; use
 .Ic \e(aa
@@ -1944,7 +1949,10 @@ Left italic correction (groff extension); ignored by
 .Xr mandoc 1 .
 .It Ic \e-
 Special character
-.Dq mathematical minus sign .
+.Dq mathematical minus sign ;
+see
+.Xr mandoc_char 7
+for details.
 .It Ic \e/
 Right italic correction (groff extension); ignored by
 .Xr mandoc 1 .
@@ -1998,7 +2006,7 @@ if
 .Ar string
 conforms to the syntax of
 .Sx Numerical expressions
-explained above and
+explained above or
 .Sq 0
 otherwise.
 .It Ic \eb\(aq Ns Ar string Ns Ic \(aq
@@ -2022,9 +2030,9 @@ Move down by half a line; ignored by
 Escape character intended to not be interpreted in copy mode.
 In
 .Xr mandoc 1 ,
-it does the same as
+it currently does the same as
 .Ic \e
-itself for now.
+itself.
 .It Ic \ee
 Backslash special character.
 .It Ic \eF[ Ns Ar name Ns Ic \&]
