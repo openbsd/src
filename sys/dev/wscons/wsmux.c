@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.35 2018/11/20 19:33:44 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.36 2018/12/17 19:14:59 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -497,8 +497,11 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	    )
 		return (EACCES);
 
-	/* Return 0 if any of the ioctl() succeeds, otherwise the last error */
-	error = 0;
+	/*
+	 * If children are attached: return 0 if any of the ioctl() succeeds,
+	 * otherwise the last error.
+	 */
+	error = ENOTTY;
 	ok = 0;
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 #ifdef DIAGNOSTIC
