@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.339 2018/12/10 16:48:15 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.340 2018/12/17 09:11:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1037,7 +1037,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_status.stateid = time_second;
 				pf_status.stateid = pf_status.stateid << 32;
 			}
-			timeout_add(&pf_purge_to, 1 * hz);
+			timeout_add_sec(&pf_purge_to, 1);
 			pf_create_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: started");
 		}
