@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio.c,v 1.3 2018/11/20 19:37:10 anton Exp $	*/
+/*	$OpenBSD: sigio.c,v 1.4 2018/12/17 19:26:25 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -25,10 +25,11 @@
 #include <err.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "util.h"
 
 static int test_getown_fcntl(int);
 static int test_getown_ioctl(int);
@@ -44,66 +45,8 @@ static int test_common_setown(int, int);
 static void sigio(int);
 static void syncrecv(int, int);
 static void syncsend(int, int);
-static __dead void usage(void);
 
 static volatile sig_atomic_t nsigio;
-
-static struct {
-	const char *name;
-	int (*fn)(int);
-} tests[] = {
-	{ "getown-fcntl",	test_getown_fcntl },
-	{ "getown-ioctl",	test_getown_ioctl },
-	{ "gpgrp",		test_gpgrp },
-	{ "setown-fcntl",	test_setown_fcntl },
-	{ "setown-ioctl",	test_setown_ioctl },
-	{ "sigio",		test_sigio },
-	{ "spgrp",		test_spgrp },
-	{ NULL,	NULL },
-};
-
-int
-main(int argc, char *argv[])
-{
-	int (*fn)(int) = NULL;
-	const char *dev = NULL;
-	int c, fd, i;
-	int prereq = 0;
-
-	while ((c = getopt(argc, argv, "d:p")) != -1)
-		switch (c) {
-		case 'd':
-			dev = optarg;
-			break;
-		case 'p':
-			prereq = 1;
-			break;
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
-	if (dev == NULL || argc != 1)
-		usage();
-
-	fd = open(dev, O_RDWR);
-	if (fd == -1)
-		err(1, "open: %s", dev);
-	if (prereq)
-		return 0;
-
-	for (i = 0; tests[i].name != NULL; i++) {
-		if (strcmp(argv[0], tests[i].name))
-			continue;
-
-		fn = tests[i].fn;
-		break;
-	}
-	if (fn == NULL)
-		errx(1, "%s: no such test", argv[0]);
-
-	return fn(fd);
-}
 
 static int
 test_getown_fcntl(int fd)
@@ -358,9 +301,19 @@ syncsend(int fd, int id)
 		err(1, "%s: write", __func__);
 }
 
-static __dead void
-usage(void)
+int
+main(int argc, char *argv[])
 {
-	fprintf(stderr, "usage: sigio [-p] -d device test\n");
-	exit(1);
+	struct test tests[] = {
+		{ "getown-fcntl",	test_getown_fcntl },
+		{ "getown-ioctl",	test_getown_ioctl },
+		{ "gpgrp",		test_gpgrp },
+		{ "setown-fcntl",	test_setown_fcntl },
+		{ "setown-ioctl",	test_setown_ioctl },
+		{ "sigio",		test_sigio },
+		{ "spgrp",		test_spgrp },
+		{ NULL,			NULL },
+	};
+
+	return dotest(argc, argv, tests);
 }
