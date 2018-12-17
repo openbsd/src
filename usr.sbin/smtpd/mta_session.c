@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.113 2018/10/31 15:13:21 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.114 2018/12/17 11:14:56 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -150,6 +150,10 @@ static void mta_response(struct mta_session *, char *);
 static const char * mta_strstate(int);
 static void mta_start_tls(struct mta_session *);
 static int mta_verify_certificate(struct mta_session *);
+static void mta_cert_init(struct mta_session *);
+static void mta_cert_init_cb(void *, int, const char *, const void *, size_t);
+static void mta_cert_verify(struct mta_session *);
+static void mta_cert_verify_cb(void *, int);
 static void mta_tls_verified(struct mta_session *);
 static struct mta_session *mta_tree_pop(struct tree *, uint64_t);
 static const char * dsn_strret(enum dsn_ret);
@@ -937,7 +941,7 @@ mta_response(struct mta_session *s, char *line)
 			return;
 		}
 
-		mta_start_tls(s);
+		mta_cert_init(s);
 		break;
 
 	case MTA_AUTH_PLAIN:
@@ -1149,7 +1153,7 @@ mta_io(struct io *io, int evt, void *arg)
 
 		if (s->use_smtps) {
 			io_set_write(io);
-			mta_start_tls(s);
+			mta_cert_init(s);
 		}
 		else {
 			mta_enter_state(s, MTA_BANNER);
@@ -1162,12 +1166,7 @@ mta_io(struct io *io, int evt, void *arg)
 		    s->id, ssl_to_text(io_ssl(s->io)));
 		s->flags |= MTA_TLS;
 
-		if (mta_verify_certificate(s)) {
-			io_pause(s->io, IO_IN);
-			break;
-		}
-
-		mta_tls_verified(s);
+		mta_cert_verify(s);
 		break;
 
 	case IO_DATAIN:
@@ -1653,6 +1652,103 @@ mta_verify_certificate(struct mta_session *s)
 		free(cert_der[i]);
 
 	return res;
+}
+
+static void
+mta_cert_init(struct mta_session *s)
+{
+	const char *name;
+	int fallback;
+
+	if (s->relay->pki_name) {
+		name = s->relay->pki_name;
+		fallback = 0;
+	}
+	else {
+		name = s->helo;
+		fallback = 1;
+	}
+
+	if (cert_init(name, fallback, mta_cert_init_cb, s)) {
+		tree_xset(&wait_ssl_init, s->id, s);
+		s->flags |= MTA_WAIT;
+	}
+}
+
+static void
+mta_cert_init_cb(void *arg, int status, const char *name, const void *cert,
+    size_t cert_len)
+{
+	struct mta_session *s = arg;
+	void *ssl;
+	char *xname = NULL, *xcert = NULL;
+
+	if (s->flags & MTA_WAIT)
+		mta_tree_pop(&wait_ssl_init, s->id);
+
+	if (status == CA_FAIL && s->relay->pki_name) {
+		log_info("%016"PRIx64" mta closing reason=ca-failure", s->id);
+		mta_free(s);
+		return;
+	}
+
+	if (name)
+		xname = xstrdup(name);
+	if (cert)
+		xcert = xmemdup(cert, cert_len);
+	ssl = ssl_mta_init(xname, xcert, cert_len, env->sc_tls_ciphers);
+	free(xname);
+	free(xcert);
+	if (ssl == NULL)
+		fatal("mta: ssl_mta_init");
+	io_start_tls(s->io, ssl);
+}
+
+static void
+mta_cert_verify(struct mta_session *s)
+{
+	const char *name;
+	int fallback;
+
+	if (s->relay->ca_name) {
+		name = s->relay->ca_name;
+		fallback = 0;
+	}
+	else {
+		name = s->helo;
+		fallback = 1;
+	}
+
+	if (cert_verify(io_ssl(s->io), name, fallback, mta_cert_verify_cb, s)) {
+		tree_xset(&wait_ssl_verify, s->id, s);
+		io_pause(s->io, IO_IN);
+		s->flags |= MTA_WAIT;
+	}
+}
+
+static void
+mta_cert_verify_cb(void *arg, int status)
+{
+	struct mta_session *s = arg;
+	int resume = 0;
+
+	if (s->flags & MTA_WAIT) {
+		mta_tree_pop(&wait_ssl_verify, s->id);
+		resume = 1;
+	}
+
+	if (status == CERT_OK)
+		s->flags |= MTA_TLS_VERIFIED;
+	else if (s->relay->flags & RELAY_TLS_VERIFY) {
+		errno = 0;
+		mta_error(s, "SSL certificate check failed");
+		mta_free(s);
+		return;
+	}
+
+	mta_tls_verified(s);
+	if (resume)
+		io_resume(s->io, IO_IN);
 }
 
 static void
