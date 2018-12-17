@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.225 2018/11/12 15:09:17 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.226 2018/12/17 14:51:57 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -730,18 +730,6 @@ csignal(pid_t pgid, int signum, uid_t uid, uid_t euid)
 		if (CANDELIVER(uid, euid, pr))
 			prsignal(pr, signum);
 	}
-}
-
-/*
- * Send a signal to a process group.
- */
-void
-gsignal(int pgid, int signum)
-{
-	struct pgrp *pgrp;
-
-	if (pgid && (pgrp = pgfind(pgid)))
-		pgsignal(pgrp, signum, 0);
 }
 
 /*

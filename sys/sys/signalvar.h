@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.34 2018/11/12 15:09:17 visa Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.35 2018/12/17 14:51:57 visa Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ struct sigio_ref;
  */
 int	coredump(struct proc *p);
 void	execsigs(struct proc *p);
-void	gsignal(int pgid, int sig);
 void	csignal(pid_t pgid, int signum, uid_t uid, uid_t euid);
 int	issignal(struct proc *p);
 void	pgsigio(struct sigio_ref *sir, int sig, int checkctty);
