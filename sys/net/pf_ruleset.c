@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.16 2017/09/05 22:15:32 sashan Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.17 2018/12/17 15:37:41 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -413,17 +413,13 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 }
 
 void
-pf_anchor_remove(struct pf_rule *r)
+pf_remove_anchor(struct pf_rule *r)
 {
 	if (r->anchor == NULL)
 		return;
-	if (r->anchor->refcnt <= 0) {
-		DPFPRINTF(LOG_NOTICE,
-		    "pf_anchor_remove: broken refcount");
-		r->anchor = NULL;
-		return;
-	}
-	if (!--r->anchor->refcnt)
+	if (r->anchor->refcnt <= 0)
+		DPFPRINTF(LOG_NOTICE, "pf_remove_anchor: broken refcount");
+	else if (!--r->anchor->refcnt)
 		pf_remove_if_empty_ruleset(&r->anchor->ruleset);
 	r->anchor = NULL;
 }

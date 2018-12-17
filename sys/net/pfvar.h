@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.488 2018/12/10 16:48:15 kn Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.489 2018/12/17 15:37:41 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1903,7 +1903,7 @@ int			 pf_anchor_setup(struct pf_rule *,
 			    const struct pf_ruleset *, const char *);
 int			 pf_anchor_copyout(const struct pf_ruleset *,
 			    const struct pf_rule *, struct pfioc_rule *);
-void			 pf_anchor_remove(struct pf_rule *);
+void			 pf_remove_anchor(struct pf_rule *);
 void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 struct pf_anchor	*pf_find_anchor(const char *);
 struct pf_ruleset	*pf_find_ruleset(const char *);

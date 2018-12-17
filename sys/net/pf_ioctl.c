@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.340 2018/12/17 09:11:11 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.341 2018/12/17 15:37:41 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -316,7 +316,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pfi_kif_unref(rule->rdr.kif, PFI_KIF_REF_RULE);
 	pfi_kif_unref(rule->nat.kif, PFI_KIF_REF_RULE);
 	pfi_kif_unref(rule->route.kif, PFI_KIF_REF_RULE);
-	pf_anchor_remove(rule);
+	pf_remove_anchor(rule);
 	pool_put(&pf_rule_pl, rule);
 }
 
