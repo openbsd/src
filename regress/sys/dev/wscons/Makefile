@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2018/12/17 19:26:25 anton Exp $
+# $OpenBSD: Makefile,v 1.6 2018/12/17 19:29:55 anton Exp $
 
 WARNINGS=	yes
 
@@ -26,6 +26,21 @@ ${PROG_sigio}-$d-$t: ${PROG_sigio}
 	@echo "\n======== ${@} ========"
 	./${PROG_sigio} -d /dev/$d $t
 .    endif
+.  endfor
+.endfor
+
+PROG_wscons=	wscons
+PROGS+=		${PROG_wscons}
+SRCS_wscons=	wscons.c util.c
+
+TESTS_wscons+=	ioctl-unknown
+
+.for d in ${DEVICES}
+.  for t in ${TESTS_wscons}
+REGRESS_TARGETS+=	${PROG_wscons}-$d-$t
+${PROG_wscons}-$d-$t: ${PROG_wscons}
+	@echo "\n======== ${@} ========"
+	./${PROG_wscons} -d /dev/$d $t
 .  endfor
 .endfor
 
