@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.31 2018/12/13 17:08:10 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.32 2018/12/17 08:56:31 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -582,6 +582,11 @@ void
 m_get_data(struct msg *m, const void **data, size_t *sz)
 {
 	m_get_size(m, sz);
+
+	if (*sz == 0) {
+		*data = NULL;
+		return;
+	}
 
 	if (m->pos + *sz > m->end)
 		m_error("msg too short");
