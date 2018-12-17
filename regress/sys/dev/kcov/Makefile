@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2018/12/16 15:56:03 anton Exp $
+#	$OpenBSD: Makefile,v 1.3 2018/12/17 22:11:37 anton Exp $
 
 PROG=		kcov
 WARNINGS=	yes
@@ -9,6 +9,9 @@ TESTS+=	exec
 TESTS+=	mode
 TESTS+=	open
 TESTS+=	close
+
+REGRESS_SETUP_ONCE=	setup
+setup: ${PROG}
 
 .for t in ${TESTS}
 $t:
