@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.164 2018/11/19 13:15:37 visa Exp $	*/
+/*	$OpenBSD: inet.c,v 1.165 2018/12/18 10:16:24 benno Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ netdomainpr(struct kinfo_file *kf, int proto)
 	int addrlen = 22;
 	int isany = 0;
 	int istcp = 0;
+	int isudp = 0;
 	int isip6 = 0;
 
 	/* XXX should fix kinfo_file instead but not now */
@@ -282,6 +283,7 @@ netdomainpr(struct kinfo_file *kf, int proto)
 	case IPPROTO_UDP:
 		name = "udp";
 		name6 = "udp6";
+		isudp = 1;
 		break;
 	case IPPROTO_DIVERT:
 		name = "divert";
@@ -303,6 +305,9 @@ netdomainpr(struct kinfo_file *kf, int proto)
 	if (!aflag && lflag && istcp &&
 	    kf->t_state != TCPS_LISTEN)
 		return;
+	if (!aflag && lflag && isudp &&
+	    (kf->inp_lport == 0 || kf->inp_fport != 0))
+		return;
 
 	if (af != kf->so_family || type != kf->so_type) {
 		af = kf->so_family;
@@ -310,7 +315,7 @@ netdomainpr(struct kinfo_file *kf, int proto)
 		printf("Active Internet connections");
 		if (aflag)
 			printf(" (including servers)");
-		else if (lflag)
+		else if (lflag && (istcp || isudp))
 			printf(" (only servers)");
 		putchar('\n');
 		if (Aflag) {
