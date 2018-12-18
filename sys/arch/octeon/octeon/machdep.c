@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.107 2018/12/04 16:24:13 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.108 2018/12/18 14:24:02 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -685,9 +685,20 @@ octeon_tlb_init(void)
 static u_int64_t
 get_ncpusfound(void)
 {
-	extern struct boot_desc *octeon_boot_desc;
-	uint64_t core_mask = octeon_boot_desc->core_mask;
+	uint64_t core_mask;
 	uint64_t i, ncpus = 0;
+	int chipid;
+
+	chipid = octeon_get_chipid();
+	switch (octeon_model_family(chipid)) {
+	case OCTEON_MODEL_FAMILY_CN73XX:
+	case OCTEON_MODEL_FAMILY_CN78XX:
+		core_mask = octeon_xkphys_read_8(OCTEON_CIU3_BASE + CIU3_FUSE);
+		break;
+	default:
+		core_mask = octeon_xkphys_read_8(OCTEON_CIU_BASE + CIU_FUSE);
+		break;
+	}
 
 	/* There has to be 1-to-1 mapping between cpuids and coreids. */
 	for (i = 0; i < OCTEON_MAXCPUS && (core_mask & (1ul << i)) != 0; i++)
