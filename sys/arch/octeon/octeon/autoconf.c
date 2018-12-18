@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2018/12/18 13:44:11 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -23,7 +23,10 @@
 
 #include <machine/autoconf.h>
 
+#define DUID_SIZE	8
+
 extern void dumpconf(void);
+int parseduid(const char *, u_char *);
 void parse_uboot_root(void);
 
 int	cold = 1;
@@ -97,6 +100,11 @@ parse_uboot_root(void)
 	}
 	p++;
 
+	if (parseduid(p, bootduid) == 0) {
+		bootdev_class = DV_DISK;
+		return;
+	}
+
 	len = strlen(p);
 	if (len <= 2 || len >= sizeof bootdev - 1)
 		return;
@@ -105,6 +113,36 @@ parse_uboot_root(void)
 
 	dp = findtype();
 	bootdev_class = dp->class;
+}
+
+static unsigned int
+parsehex(int c)
+{
+	if (c >= 'a')
+		return c - 'a' + 10;
+	else
+		return c - '0';
+}
+
+int
+parseduid(const char *str, u_char *duid)
+{
+	int i;
+
+	for (i = 0; i < DUID_SIZE * 2; i++) {
+		if (!(str[i] >= '0' && str[i] <= '9') &&
+		    !(str[i] >= 'a' && str[i] <= 'f'))
+			return -1;
+	}
+	if (str[DUID_SIZE * 2] != '\0')
+		return -1;
+
+	for (i = 0; i < DUID_SIZE; i++) {
+		duid[i] = parsehex(str[i * 2]) * 0x10 +
+		    parsehex(str[i * 2 + 1]);
+	}
+
+	return 0;
 }
 
 void
