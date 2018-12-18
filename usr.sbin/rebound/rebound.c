@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.104 2018/12/18 20:34:32 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.105 2018/12/18 21:32:21 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -1101,25 +1101,25 @@ reexec(int conffd, int *udpfds, int numudp, int *tcpfds, int numtcp)
 	if (child != 0)
 		return child;
 
-	/*   = rebound -W conffd numudp [udpfds] numtcp [tcpfds] NULL */
-	argc = 1       +1 +1     +1     +numudp  +1     +numtcp  +1;
+	/*   = rebound -W -- -c conffd [-u udpfd]    [-t tcpfd]    NULL */
+	argc = 1       +1 +1 +1 +1     +(2 * numudp) +(2 * numtcp) +1;
 	argv = reallocarray(NULL, argc, sizeof(char *));
 	if (!argv)
 		logerr("out of memory building argv");
 	argc = 0;
 	argv[argc++] = "rebound";
 	argv[argc++] = "-W";
+	argv[argc++] = "--";
+	argv[argc++] = "-c";
 	if (asprintf(&argv[argc++], "%d", conffd) == -1)
 		logerr("out of memory building argv");
-	if (asprintf(&argv[argc++], "%d", numudp) == -1)
-		logerr("out of memory building argv");
 	for (i = 0; i < numudp; i++) {
+		argv[argc++] = "-u";
 		if (asprintf(&argv[argc++], "%d", udpfds[i]) == -1)
 			logerr("out of memory building argv");
 	}
-	if (asprintf(&argv[argc++], "%d", numtcp) == -1)
-		logerr("out of memory building argv");
 	for (i = 0; i < numtcp; i++) {
+		argv[argc++] = "-t";
 		if (asprintf(&argv[argc++], "%d", tcpfds[i]) == -1)
 			logerr("out of memory building argv");
 	}
@@ -1244,17 +1244,14 @@ addfd(int fd, int **fdp, int *numfds)
 }
 
 static int
-argvtofd(char ***argv)
+argtofd(const char *arg)
 {
 	const char *errstr;
 	int n;
 
-	if (**argv == NULL)
-		logerr("missing argument in argv");
-	n = strtonum(**argv, 0, 512, &errstr);
+	n = strtonum(arg, 0, 512, &errstr);
 	if (errstr)
 		logerr("invalid fd in argv");
-	*argv += 1;
 	return n;
 }
 
@@ -1274,7 +1271,7 @@ main(int argc, char **argv)
 	int numudp = 0;
 	int *tcpfds = NULL;
 	int numtcp = 0;
-	int ch, fd, i;
+	int ch, fd;
 	int one = 1;
 	int worker = 0;
 	const char *confname = "/etc/resolv.conf";
@@ -1310,28 +1307,36 @@ main(int argc, char **argv)
 	argc -= optind;
 
 	if (worker) {
-		int numfds;
 		int conffd;
 
-		/*
-		 * at this point we have a bunch of fds in argv
-		 * conffd numudp [udpfds] numtcp [tcpfds]
-		 */
-		conffd = argvtofd(&argv);
-		
-		numfds = argvtofd(&argv);
-		for (i = 0; i < numfds; i++) {
-			fd = argvtofd(&argv);
-			addfd(fd, &udpfds, &numudp);
-		}
+		/* rewind "--" argument */
+		argv--;
+		argc++;
 
-		numfds = argvtofd(&argv);
-		for (i = 0; i < numfds; i++) {
-			fd = argvtofd(&argv);
-			addfd(fd, &tcpfds, &numtcp);
+		optreset = optind = 1;
+		while ((ch = getopt(argc, argv, "c:t:u:")) != -1) {
+			switch (ch) {
+			case 'c':
+				conffd = argtofd(optarg);
+				break;
+			case 't':
+				fd = argtofd(optarg);
+				addfd(fd, &tcpfds, &numtcp);
+				break;
+			case 'u':
+				fd = argtofd(optarg);
+				addfd(fd, &udpfds, &numudp);
+				break;
+			default:
+				usage();
+				break;
+			}
 		}
-		if (*argv != NULL)
+		argv += optind;
+		argc -= optind;
+		if (argc)
 			logerr("extraneous arguments for worker");
+
 		return workerloop(conffd, udpfds, numudp, tcpfds, numtcp);
 	}
 
