@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.109 2018/12/13 14:59:16 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.110 2018/12/18 20:35:34 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 13 2018 $
+.Dd $Mdocdate: December 18 2018 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -475,6 +475,8 @@ Delete backwards
 characters.
 Like delete-char, this actually does a kill if presented
 with an argument.
+If the cursor is in a region, the region is removed and placed
+in to the kill buffer.
 .It delete-blank-lines
 Delete blank lines around dot.
 If dot is sitting on a blank line, this command
@@ -486,6 +488,8 @@ Delete
 characters forward.
 If any argument is present, it kills rather than deletes,
 saving the result in the kill buffer.
+If the cursor is in a region, the region is removed and placed
+in to the kill buffer.
 .It delete-horizontal-space
 Delete any whitespace around the dot.
 .It delete-leading-space

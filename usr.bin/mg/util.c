@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2015/11/18 18:21:06 jasper Exp $	*/
+/*	$OpenBSD: util.c,v 1.39 2018/12/18 20:35:34 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -411,7 +411,8 @@ indent(int f, int n)
  * Delete forward.  This is real easy, because the basic delete routine does
  * all of the work.  Watches for negative arguments, and does the right thing.
  * If any argument is present, it kills rather than deletes, to prevent loss
- * of text if typed with a big argument.  Normally bound to "C-D".
+ * of text if typed with a big argument.  Normally bound to "C-d".
+ * If the cursor is in a region, kill the region.
  */
 /* ARGSUSED */
 int
@@ -419,6 +420,9 @@ forwdel(int f, int n)
 {
 	if (n < 0)
 		return (backdel(f | FFRAND, -n));
+
+	if (curwp->w_markp != NULL)
+		return(killregion(FFRAND, 1));
 
 	/* really a kill */
 	if (f & FFARG) {
@@ -434,6 +438,7 @@ forwdel(int f, int n)
  * Delete backwards.  This is quite easy too, because it's all done with
  * other functions.  Just move the cursor back, and delete forwards.  Like
  * delete forward, this actually does a kill if presented with an argument.
+ * If the cursor is in a region, kill the region.
  */
 /* ARGSUSED */
 int
@@ -443,6 +448,9 @@ backdel(int f, int n)
 
 	if (n < 0)
 		return (forwdel(f | FFRAND, -n));
+
+	if (curwp->w_markp != NULL)
+		return (killregion(FFRAND, 1));
 
 	/* really a kill */
 	if (f & FFARG) {
