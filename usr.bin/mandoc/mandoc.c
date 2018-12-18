@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.80 2018/12/15 23:33:20 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.81 2018/12/18 21:58:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -461,102 +461,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	}
 
 	return gly;
-}
-
-/*
- * Parse a quoted or unquoted roff-style request or macro argument.
- * Return a pointer to the parsed argument, which is either the original
- * pointer or advanced by one byte in case the argument is quoted.
- * NUL-terminate the argument in place.
- * Collapse pairs of quotes inside quoted arguments.
- * Advance the argument pointer to the next argument,
- * or to the NUL byte terminating the argument line.
- */
-char *
-mandoc_getarg(char **cpp, int ln, int *pos)
-{
-	char	 *start, *cp;
-	int	  quoted, pairs, white;
-
-	/* Quoting can only start with a new word. */
-	start = *cpp;
-	quoted = 0;
-	if ('"' == *start) {
-		quoted = 1;
-		start++;
-	}
-
-	pairs = 0;
-	white = 0;
-	for (cp = start; '\0' != *cp; cp++) {
-
-		/*
-		 * Move the following text left
-		 * after quoted quotes and after "\\" and "\t".
-		 */
-		if (pairs)
-			cp[-pairs] = cp[0];
-
-		if ('\\' == cp[0]) {
-			/*
-			 * In copy mode, translate double to single
-			 * backslashes and backslash-t to literal tabs.
-			 */
-			switch (cp[1]) {
-			case 'a':
-			case 't':
-				cp[0] = '\t';
-				/* FALLTHROUGH */
-			case '\\':
-				pairs++;
-				cp++;
-				break;
-			case ' ':
-				/* Skip escaped blanks. */
-				if (0 == quoted)
-					cp++;
-				break;
-			default:
-				break;
-			}
-		} else if (0 == quoted) {
-			if (' ' == cp[0]) {
-				/* Unescaped blanks end unquoted args. */
-				white = 1;
-				break;
-			}
-		} else if ('"' == cp[0]) {
-			if ('"' == cp[1]) {
-				/* Quoted quotes collapse. */
-				pairs++;
-				cp++;
-			} else {
-				/* Unquoted quotes end quoted args. */
-				quoted = 2;
-				break;
-			}
-		}
-	}
-
-	/* Quoted argument without a closing quote. */
-	if (1 == quoted)
-		mandoc_msg(MANDOCERR_ARG_QUOTE, ln, *pos, NULL);
-
-	/* NUL-terminate this argument and move to the next one. */
-	if (pairs)
-		cp[-pairs] = '\0';
-	if ('\0' != *cp) {
-		*cp++ = '\0';
-		while (' ' == *cp)
-			cp++;
-	}
-	*pos += (int)(cp - start) + (quoted ? 1 : 0);
-	*cpp = cp;
-
-	if ('\0' == *cp && (white || ' ' == cp[-1]))
-		mandoc_msg(MANDOCERR_SPACE_EOL, ln, *pos, NULL);
-
-	return start;
 }
 
 static int
