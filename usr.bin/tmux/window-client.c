@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.14 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.15 2018/12/18 13:20:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,8 +31,8 @@ static void		 window_client_free(struct window_pane *);
 static void		 window_client_resize(struct window_pane *, u_int,
 			     u_int);
 static void		 window_client_key(struct window_pane *,
-			     struct client *, struct session *, key_code,
-			     struct mouse_event *);
+			     struct client *, struct session *,
+			     struct winlink *, key_code, struct mouse_event *);
 
 #define WINDOW_CLIENT_DEFAULT_COMMAND "detach-client -t '%%'"
 
@@ -312,7 +312,8 @@ window_client_do_detach(void* modedata, void *itemdata,
 
 static void
 window_client_key(struct window_pane *wp, struct client *c,
-    __unused struct session *s, key_code key, struct mouse_event *m)
+    __unused struct session *s, __unused struct winlink *wl, key_code key,
+    struct mouse_event *m)
 {
 	struct window_client_modedata	*data = wp->modedata;
 	struct mode_tree_data		*mtd = data->data;

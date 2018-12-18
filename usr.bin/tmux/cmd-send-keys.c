@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.43 2018/08/02 11:44:07 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.44 2018/12/18 13:20:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,13 +60,14 @@ cmd_send_keys_inject(struct client *c, struct cmdq_item *item, key_code key)
 {
 	struct window_pane	*wp = item->target.wp;
 	struct session		*s = item->target.s;
+	struct winlink		*wl = item->target.wl;
 	struct key_table	*table;
 	struct key_binding	*bd;
 
 	if (wp->mode == NULL || wp->mode->key_table == NULL) {
 		if (options_get_number(wp->window->options, "xterm-keys"))
 			key |= KEYC_XTERM;
-		window_pane_key(wp, NULL, s, key, NULL);
+		window_pane_key(wp, NULL, s, wl, key, NULL);
 		return;
 	}
 	table = key_bindings_get_table(wp->mode->key_table(wp), 1);
@@ -86,6 +87,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct window_pane	*wp = item->target.wp;
 	struct session		*s = item->target.s;
+	struct winlink		*wl = item->target.wl;
 	struct mouse_event	*m = &item->shared->mouse;
 	struct utf8_data	*ud, *uc;
 	wchar_t			 wc;
@@ -111,9 +113,9 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_ERROR);
 		}
 		if (!m->valid)
-			wp->mode->command(wp, c, s, args, NULL);
+			wp->mode->command(wp, c, s, wl, args, NULL);
 		else
-			wp->mode->command(wp, c, s, args, m);
+			wp->mode->command(wp, c, s, wl, args, m);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -123,7 +125,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "no mouse target");
 			return (CMD_RETURN_ERROR);
 		}
-		window_pane_key(wp, NULL, s, m->key, m);
+		window_pane_key(wp, NULL, s, wl, m->key, m);
 		return (CMD_RETURN_NORMAL);
 	}
 

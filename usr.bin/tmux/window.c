@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.215 2018/11/30 08:44:40 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.216 2018/12/18 13:20:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1258,7 +1258,7 @@ window_pane_reset_mode(struct window_pane *wp)
 
 void
 window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
-    key_code key, struct mouse_event *m)
+    struct winlink *wl, key_code key, struct mouse_event *m)
 {
 	struct window_pane	*wp2;
 
@@ -1268,7 +1268,7 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 	if (wp->mode != NULL) {
 		wp->modelast = time(NULL);
 		if (wp->mode->key != NULL)
-			wp->mode->key(wp, c, s, (key & ~KEYC_XTERM), m);
+			wp->mode->key(wp, c, s, wl, (key & ~KEYC_XTERM), m);
 		return;
 	}
 

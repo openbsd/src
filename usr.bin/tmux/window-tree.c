@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.31 2018/08/19 19:03:46 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.32 2018/12/18 13:20:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,8 +29,8 @@ static struct screen	*window_tree_init(struct window_pane *,
 static void		 window_tree_free(struct window_pane *);
 static void		 window_tree_resize(struct window_pane *, u_int, u_int);
 static void		 window_tree_key(struct window_pane *,
-			     struct client *, struct session *, key_code,
-			     struct mouse_event *);
+			     struct client *, struct session *,
+			     struct winlink *, key_code, struct mouse_event *);
 
 #define WINDOW_TREE_DEFAULT_COMMAND "switch-client -t '%%'"
 
@@ -1120,7 +1120,8 @@ window_tree_mouse(struct window_tree_modedata *data, key_code key, u_int x,
 
 static void
 window_tree_key(struct window_pane *wp, struct client *c,
-    __unused struct session *s, key_code key, struct mouse_event *m)
+    __unused struct session *s, __unused struct winlink *wl, key_code key,
+    struct mouse_event *m)
 {
 	struct window_tree_modedata	*data = wp->modedata;
 	struct window_tree_itemdata	*item, *new_item;
