@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.192 2018/09/12 11:24:38 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.193 2018/12/18 13:18:31 visa Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -169,7 +169,7 @@ struct pkptable {
 };
 
 struct pkptable pkptable;
-struct mutex pfkeyv2_mtx = MUTEX_INITIALIZER(IPL_NONE);
+struct mutex pfkeyv2_mtx = MUTEX_INITIALIZER(IPL_MPFLOOR);
 static uint32_t pfkeyv2_seq = 1;
 static int nregistered = 0;
 static int npromisc = 0;
