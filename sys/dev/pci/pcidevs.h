@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1872 2018/12/18 01:26:07 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1873 2018/12/18 04:25:16 tedu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5149,6 +5149,7 @@
 #define	PCI_PRODUCT_INTEL_100SERIES_LP_UART_3	0x9d66		/* 100 Series UART */
 #define	PCI_PRODUCT_INTEL_100SERIES_LP_HDA	0x9d70		/* 100 Series HD Audio */
 #define	PCI_PRODUCT_INTEL_200SERIES_U_HDA	0x9d71		/* 200 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_WL_9560_1	0x9df0		/* Dual Band Wireless AC 9560 */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_DMI	0xa000		/* Pineview DMI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_1	0xa001		/* Pineview Video */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGC_2	0xa002		/* Pineview Video */
