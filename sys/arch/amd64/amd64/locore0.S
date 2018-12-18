@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.9 2018/07/10 16:01:26 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.10 2018/12/18 21:11:09 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -223,12 +223,11 @@ bi_size_ok:
 	 * Intel CPU, now check if IA32_ARCH_CAPABILITIES is supported and
 	 * if it says this CPU is safe.
 	 */
-	movl	$0x0,	%eax
-	cpuid
 	cmpl	$0x7,	%eax
 	jl	.Lcpu_check_finished
 
 	movl	$0x7,	%eax
+	xorl	%ecx,%ecx
 	cpuid
 	testl	$SEFF0EDX_ARCH_CAP, %edx
 	jz	.Lcpu_check_finished
