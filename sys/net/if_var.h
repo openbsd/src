@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.91 2018/12/11 22:08:57 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.92 2018/12/19 05:31:28 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -330,7 +330,6 @@ int		niq_enlist(struct niqueue *, struct mbuf_list *);
 extern struct ifnet_head ifnet;
 
 void	if_start(struct ifnet *);
-int	if_enqueue_try(struct ifnet *, struct mbuf *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 void	if_input_process(struct ifnet *, struct mbuf_list *);
