@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.226 2018/12/11 09:03:36 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.227 2018/12/19 15:27:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -281,8 +281,6 @@ main(int argc, char *argv[])
 			ribreq.as = res->as;
 		if (res->community.type != COMMUNITY_TYPE_NONE)
 			ribreq.community = res->community;
-		if (res->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID)
-			ribreq.extcommunity = res->extcommunity;
 		ribreq.neighbor = neighbor;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.aid = res->aid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.87 2018/11/28 08:33:59 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.88 2018/12/19 15:27:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -662,8 +662,8 @@ match_token(int *argc, char **argv[], const struct token table[])
 		case EXTCOM_SUBTYPE:
 			if (word != NULL && strncmp(word, table[i].keyword,
 			    wordlen) == 0) {
-				if (parsesubtype(word, &res.extcommunity.type,
-				    &res.extcommunity.subtype) == 0)
+				if (parsesubtype(word, &res.community.c.e.type,
+				    &res.community.c.e.subtype) == 0)
 					errx(1, "Bad ext-community unknown "
 					    "type");
 				match++;
@@ -1084,8 +1084,8 @@ done:
 		err(1, NULL);
 	fs->type = ACTION_SET_COMMUNITY;
 	fs->action.community.type = COMMUNITY_TYPE_BASIC;
-	fs->action.community.data1 = as;
-	fs->action.community.data2 = type;
+	fs->action.community.c.b.data1 = as;
+	fs->action.community.c.b.data2 = type;
 	fs->action.community.dflag1 = asflag;
 	fs->action.community.dflag2 = tflag;
 
@@ -1160,7 +1160,7 @@ parseextvalue(const char *s, u_int32_t *v)
 			    s);
 			return (-1);
 		}
-		*v = ip.s_addr;
+		*v = ntohl(ip.s_addr);
 		return (EXT_COMMUNITY_TRANS_IPV4);
 	}
 	return (-1);
@@ -1177,7 +1177,7 @@ parseextcommunity(const char *word, struct parse_result *r)
 	char				*p, *ep;
 	int				 type;
 
-	type = r->extcommunity.type;
+	type = r->community.c.e.type;
 
 	switch (type) {
 	case 0xff:
@@ -1208,16 +1208,13 @@ parseextcommunity(const char *word, struct parse_result *r)
 		}
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
-			r->extcommunity.data.ext_as.as = uval;
-			r->extcommunity.data.ext_as.val = ullval;
+			r->community.c.e.data1 = uval;
+			r->community.c.e.data2 = ullval;
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
-			r->extcommunity.data.ext_ip.addr.s_addr = uval;
-			r->extcommunity.data.ext_ip.val = ullval;
-			break;
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			r->extcommunity.data.ext_as4.as4 = uval;
-			r->extcommunity.data.ext_as4.val = ullval;
+			r->community.c.e.data1 = uval;
+			r->community.c.e.data2 = ullval;
 			break;
 		}
 		break;
@@ -1233,36 +1230,34 @@ parseextcommunity(const char *word, struct parse_result *r)
 			fprintf(stderr, "Bad ext-community: too big\n");
 			return (0);
 		}
-		r->extcommunity.data.ext_opaq = ullval;
+		r->community.c.e.data2 = ullval;
 		break;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		if (strcmp(word, "valid") == 0)
-			r->extcommunity.data.ext_opaq = EXT_COMMUNITY_OVS_VALID;
+			r->community.c.e.data2 = EXT_COMMUNITY_OVS_VALID;
 		else if (strcmp(word, "invalid") == 0)
-			r->extcommunity.data.ext_opaq =
-			    EXT_COMMUNITY_OVS_INVALID;
+			r->community.c.e.data2 = EXT_COMMUNITY_OVS_INVALID;
 		else if (strcmp(word, "not-found") == 0)
-			r->extcommunity.data.ext_opaq =
-			    EXT_COMMUNITY_OVS_NOTFOUND;
+			r->community.c.e.data2 = EXT_COMMUNITY_OVS_NOTFOUND;
 		else {
 			fprintf(stderr, "Bad ext-community value: %s\n", word);
 			return (0);
 		}
 		break;
 	}
-	r->extcommunity.type = type;
+	r->community.c.e.type = type;
 
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
-		if (cp->type == r->extcommunity.type &&
-		    cp->subtype == r->extcommunity.subtype) {
-			r->extcommunity.flags |= EXT_COMMUNITY_FLAG_VALID;
+		if (cp->type == r->community.c.e.type &&
+		    cp->subtype == r->community.c.e.subtype) {
+			r->community.type = COMMUNITY_TYPE_EXT;;
 			if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
 				err(1, NULL);
 
-			fs->type = ACTION_SET_EXT_COMMUNITY;
-			memcpy(&fs->action.ext_community, &r->extcommunity,
-			    sizeof(struct filter_extcommunity));
+			fs->type = ACTION_SET_COMMUNITY;
+			memcpy(&fs->action.community, &r->community,
+			    sizeof(struct filter_community));
 
 			TAILQ_INSERT_TAIL(&r->set, fs, entry);
 			return (1);
@@ -1303,9 +1298,9 @@ parse_largecommunity(const char *word, struct parse_result *r)
 		err(1, NULL);
 	fs->type = ACTION_SET_COMMUNITY;
 	fs->action.community.type = COMMUNITY_TYPE_LARGE;
-	fs->action.community.data1 = as;
-	fs->action.community.data2 = ld1;
-	fs->action.community.data3 = ld2;
+	fs->action.community.c.l.data1 = as;
+	fs->action.community.c.l.data2 = ld1;
+	fs->action.community.c.l.data3 = ld2;
 	fs->action.community.dflag1 = asflag;
 	fs->action.community.dflag2 = ld1flag;
 	fs->action.community.dflag3 = ld2flag;
