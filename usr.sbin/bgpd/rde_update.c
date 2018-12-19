@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.105 2018/11/29 12:10:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.106 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -68,18 +68,18 @@ SIPHASH_KEY uptree_key;
 
 static struct filter_community	comm_no_advertise = {
 	.type = COMMUNITY_TYPE_BASIC,
-	.data1 = COMMUNITY_WELLKNOWN,
-	.data2 = COMMUNITY_NO_ADVERTISE
+	.c.b.data1 = COMMUNITY_WELLKNOWN,
+	.c.b.data2 = COMMUNITY_NO_ADVERTISE
 };
 static struct filter_community	comm_no_export = {
 	.type = COMMUNITY_TYPE_BASIC,
-	.data1 = COMMUNITY_WELLKNOWN,
-	.data2 = COMMUNITY_NO_EXPORT
+	.c.b.data1 = COMMUNITY_WELLKNOWN,
+	.c.b.data2 = COMMUNITY_NO_EXPORT
 };
 static struct filter_community	comm_no_expsubconfed = {
 	.type = COMMUNITY_TYPE_BASIC,
-	.data1 = COMMUNITY_WELLKNOWN,
-	.data2 = COMMUNITY_NO_EXPSUBCONFED
+	.c.b.data1 = COMMUNITY_WELLKNOWN,
+	.c.b.data2 = COMMUNITY_NO_EXPSUBCONFED
 };
 
 void

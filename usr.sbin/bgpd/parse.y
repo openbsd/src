@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.365 2018/12/06 12:38:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.366 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -155,8 +155,7 @@ struct filter_rule	*get_rule(enum action_types);
 
 int		 parsecommunity(struct filter_community *, int, char *);
 int		 parsesubtype(char *, int *, int *);
-int		 parseextvalue(char *, u_int32_t *);
-int		 parseextcommunity(struct filter_extcommunity *, char *,
+int		 parseextcommunity(struct filter_community *, char *,
 		    char *);
 static int	 new_as_set(char *);
 static void	 add_as_set(u_int32_t);
@@ -1078,8 +1077,8 @@ rdomainopts_l	: /* empty */
 		;
 
 rdomainopts	: RD STRING {
-			struct filter_extcommunity	ext;
-			u_int64_t			rd;
+			struct filter_community	ext;
+			u_int64_t		rd;
 
 			if (parseextcommunity(&ext, "rt", $2) == -1) {
 				free($2);
@@ -1095,7 +1094,7 @@ rdomainopts	: RD STRING {
 				YYERROR;
 			}
 			rd = betoh64(rd) & 0xffffffffffffULL;
-			switch (ext.type) {
+			switch (ext.c.e.type) {
 			case EXT_COMMUNITY_TRANS_TWO_AS:
 				rd |= (0ULL << 48);
 				break;
@@ -1117,8 +1116,8 @@ rdomainopts	: RD STRING {
 			if ((set = calloc(1, sizeof(struct filter_set))) ==
 			    NULL)
 				fatal(NULL);
-			set->type = ACTION_SET_EXT_COMMUNITY;
-			if (parseextcommunity(&set->action.ext_community,
+			set->type = ACTION_SET_COMMUNITY;
+			if (parseextcommunity(&set->action.community,
 			    $2, $3) == -1) {
 				free($3);
 				free($2);
@@ -1135,8 +1134,8 @@ rdomainopts	: RD STRING {
 			if ((set = calloc(1, sizeof(struct filter_set))) ==
 			    NULL)
 				fatal(NULL);
-			set->type = ACTION_SET_EXT_COMMUNITY;
-			if (parseextcommunity(&set->action.ext_community,
+			set->type = ACTION_SET_COMMUNITY;
+			if (parseextcommunity(&set->action.community,
 			    $2, $3) == -1) {
 				free($3);
 				free($2);
@@ -2160,15 +2159,20 @@ filter_elm	: filter_prefix_h	{
 			free($2);
 		}
 		| EXTCOMMUNITY STRING STRING {
-			if (fmopts.m.ext_community.flags &
-			    EXT_COMMUNITY_FLAG_VALID) {
-				yyerror("\"ext-community\" already specified");
+			int i;
+			for (i = 0; i < MAX_COMM_MATCH; i++) {
+				if (fmopts.m.community[i].type ==
+				    COMMUNITY_TYPE_NONE)
+					break;
+			}
+			if (i >= MAX_COMM_MATCH) {
+				yyerror("too many \"community\" filters "
+				    "specified");
 				free($2);
 				free($3);
 				YYERROR;
 			}
-
-			if (parseextcommunity(&fmopts.m.ext_community,
+			if (parseextcommunity(&fmopts.m.community[i],
 			    $2, $3) == -1) {
 				free($2);
 				free($3);
@@ -2178,14 +2182,19 @@ filter_elm	: filter_prefix_h	{
 			free($3);
 		}
 		| EXTCOMMUNITY OVS STRING {
-			if (fmopts.m.ext_community.flags &
-			    EXT_COMMUNITY_FLAG_VALID) {
-				yyerror("\"ext-community\" already specified");
+			int i;
+			for (i = 0; i < MAX_COMM_MATCH; i++) {
+				if (fmopts.m.community[i].type ==
+				    COMMUNITY_TYPE_NONE)
+					break;
+			}
+			if (i >= MAX_COMM_MATCH) {
+				yyerror("too many \"community\" filters "
+				    "specified");
 				free($3);
 				YYERROR;
 			}
-
-			if (parseextcommunity(&fmopts.m.ext_community,
+			if (parseextcommunity(&fmopts.m.community[i],
 			    "ovs", $3) == -1) {
 				free($3);
 				YYERROR;
@@ -2659,11 +2668,11 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			if ($2)
-				$$->type = ACTION_DEL_EXT_COMMUNITY;
+				$$->type = ACTION_DEL_COMMUNITY;
 			else
-				$$->type = ACTION_SET_EXT_COMMUNITY;
+				$$->type = ACTION_SET_COMMUNITY;
 
-			if (parseextcommunity(&$$->action.ext_community,
+			if (parseextcommunity(&$$->action.community,
 			    $3, $4) == -1) {
 				free($3);
 				free($4);
@@ -2677,11 +2686,11 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			if ($2)
-				$$->type = ACTION_DEL_EXT_COMMUNITY;
+				$$->type = ACTION_DEL_COMMUNITY;
 			else
-				$$->type = ACTION_SET_EXT_COMMUNITY;
+				$$->type = ACTION_SET_COMMUNITY;
 
-			if (parseextcommunity(&$$->action.ext_community,
+			if (parseextcommunity(&$$->action.community,
 			    "ovs", $4) == -1) {
 				free($4);
 				free($$);
@@ -3479,8 +3488,8 @@ setcommunity(struct filter_community *c, u_int32_t as, u_int32_t data,
 	c->type = COMMUNITY_TYPE_BASIC;
 	c->dflag1 = asflag;
 	c->dflag2 = dataflag;
-	c->data1 = as;
-	c->data2 = data;
+	c->c.b.data1 = as;
+	c->c.b.data2 = data;
 }
 
 static int
@@ -3500,9 +3509,9 @@ parselargecommunity(struct filter_community *c, char *s)
 	}
 	*q++ = 0;
 
-	if (getcommunity(s, 1, &c->data1, &c->dflag1) == -1 ||
-	    getcommunity(p, 1, &c->data2, &c->dflag2) == -1 ||
-	    getcommunity(q, 1, &c->data3, &c->dflag3) == -1)
+	if (getcommunity(s, 1, &c->c.l.data1, &c->dflag1) == -1 ||
+	    getcommunity(p, 1, &c->c.l.data2, &c->dflag2) == -1 ||
+	    getcommunity(q, 1, &c->c.l.data3, &c->dflag3) == -1)
 		return (-1);
 	c->type = COMMUNITY_TYPE_LARGE;
 	return (0);
@@ -3578,28 +3587,51 @@ parsesubtype(char *name, int *type, int *subtype)
 	return (found);
 }
 
-int
-parseextvalue(char *s, u_int32_t *v)
+static int
+parseextvalue(int type, char *s, u_int32_t *v)
 {
 	const char 	*errstr;
 	char		*p;
 	struct in_addr	 ip;
-	u_int32_t	 uvalh = 0, uval;
+	u_int32_t	 uvalh, uval;
 
-	if ((p = strchr(s, '.')) == NULL) {
+	if (type != -1) {
+		/* nothing */
+	} else if ((p = strchr(s, '.')) == NULL) {
 		/* AS_PLAIN number (4 or 2 byte) */
-		uval = strtonum(s, 0, UINT_MAX, &errstr);
+		strtonum(s, 0, USHRT_MAX, &errstr);
+		if (errstr == NULL)
+			type = EXT_COMMUNITY_TRANS_TWO_AS;
+		else
+			type = EXT_COMMUNITY_TRANS_FOUR_AS;
+	} else if (strchr(p + 1, '.') == NULL) {
+		/* AS_DOT number (4-byte) */
+		type = EXT_COMMUNITY_TRANS_FOUR_AS;
+	} else {
+		/* more than one dot -> IP address */
+		type = EXT_COMMUNITY_TRANS_IPV4;
+	}
+
+	switch (type) {
+	case EXT_COMMUNITY_TRANS_TWO_AS:
+		uval = strtonum(s, 0, USHRT_MAX, &errstr);
 		if (errstr) {
 			yyerror("Bad ext-community %s is %s", s, errstr);
 			return (-1);
 		}
 		*v = uval;
-		if (uval <= USHRT_MAX)
-			return (EXT_COMMUNITY_TRANS_TWO_AS);
-		else
-			return (EXT_COMMUNITY_TRANS_FOUR_AS);
-	} else if (strchr(p + 1, '.') == NULL) {
-		/* AS_DOT number (4-byte) */
+		break;
+	case EXT_COMMUNITY_TRANS_FOUR_AS:
+		if ((p = strchr(s, '.')) == NULL) {
+			uval = strtonum(s, 0, UINT_MAX, &errstr);
+			if (errstr) {
+				yyerror("Bad ext-community %s is %s", s,
+				    errstr);
+				return (-1);
+			}
+			*v = uval;
+			break;
+		}
 		*p++ = '\0';
 		uvalh = strtonum(s, 0, USHRT_MAX, &errstr);
 		if (errstr) {
@@ -3612,21 +3644,22 @@ parseextvalue(char *s, u_int32_t *v)
 			return (-1);
 		}
 		*v = uval | (uvalh << 16);
-		return (EXT_COMMUNITY_TRANS_FOUR_AS);
-	} else {
-		/* more than one dot -> IP address */
+		break;
+	case EXT_COMMUNITY_TRANS_IPV4:
 		if (inet_aton(s, &ip) == 0) {
 			yyerror("Bad ext-community %s not parseable", s);
 			return (-1);
 		}
-		*v = ip.s_addr;
-		return (EXT_COMMUNITY_TRANS_IPV4);
+		*v = ntohl(ip.s_addr);
+		break;
+	default:
+		fatalx("%s: unexpected type %d", __func__, type);
 	}
-	return (-1);
+	return (type);
 }
 
 int
-parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
+parseextcommunity(struct filter_community *c, char *t, char *s)
 {
 	const struct ext_comm_pairs *cp;
 	const char 	*errstr;
@@ -3641,13 +3674,16 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 	}
 
 	switch (type) {
+	case EXT_COMMUNITY_TRANS_TWO_AS:
+	case EXT_COMMUNITY_TRANS_FOUR_AS:
+	case EXT_COMMUNITY_TRANS_IPV4:
 	case -1:
 		if ((p = strchr(s, ':')) == NULL) {
 			yyerror("Bad ext-community %s", s);
 			return (-1);
 		}
 		*p++ = '\0';
-		if ((type = parseextvalue(s, &uval)) == -1)
+		if ((type = parseextvalue(type, s, &uval)) == -1)
 			return (-1);
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
@@ -3664,20 +3700,8 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 			yyerror("Bad ext-community %s is %s", p, errstr);
 			return (-1);
 		}
-		switch (type) {
-		case EXT_COMMUNITY_TRANS_TWO_AS:
-			c->data.ext_as.as = uval;
-			c->data.ext_as.val = ullval;
-			break;
-		case EXT_COMMUNITY_TRANS_IPV4:
-			c->data.ext_ip.addr.s_addr = uval;
-			c->data.ext_ip.val = ullval;
-			break;
-		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			c->data.ext_as4.as4 = uval;
-			c->data.ext_as4.val = ullval;
-			break;
-		}
+		c->c.e.data1 = uval;
+		c->c.e.data2 = ullval;
 		break;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
 	case EXT_COMMUNITY_TRANS_EVPN:
@@ -3691,28 +3715,28 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 			yyerror("Bad ext-community value too big");
 			return (-1);
 		}
-		c->data.ext_opaq = ullval;
+		c->c.e.data2 = ullval;
 		break;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		if (strcmp(s, "valid") == 0)
-			c->data.ext_opaq = EXT_COMMUNITY_OVS_VALID;
+			c->c.e.data2 = EXT_COMMUNITY_OVS_VALID;
 		else if (strcmp(s, "invalid") == 0)
-			c->data.ext_opaq = EXT_COMMUNITY_OVS_INVALID;
+			c->c.e.data2 = EXT_COMMUNITY_OVS_INVALID;
 		else if (strcmp(s, "not-found") == 0)
-			c->data.ext_opaq = EXT_COMMUNITY_OVS_NOTFOUND;
+			c->c.e.data2 = EXT_COMMUNITY_OVS_NOTFOUND;
 		else {
 			yyerror("Bad ext-community %s", s);
 			return (-1);
 		}
 		break;
 	}
-	c->type = type;
-	c->subtype = subtype;
+	c->c.e.type = type;
+	c->c.e.subtype = subtype;
 
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
 		if (cp->type == type && cp->subtype == subtype) {
-			c->flags |= EXT_COMMUNITY_FLAG_VALID;
+			c->type = COMMUNITY_TYPE_EXT;
 			return (0);
 		}
 	}
@@ -4206,18 +4230,6 @@ filterset_add(struct filter_set_head *sh, struct filter_set *s)
 				    sizeof(s->action.community)) == 0)
 					break;
 				continue;
-			case ACTION_SET_EXT_COMMUNITY:
-			case ACTION_DEL_EXT_COMMUNITY:
-				if (memcmp(&s->action.ext_community,
-				    &t->action.ext_community,
-				    sizeof(s->action.ext_community)) < 0) {
-					TAILQ_INSERT_BEFORE(t, s, entry);
-					return;
-				} else if (memcmp(&s->action.ext_community,
-				    &t->action.ext_community,
-				    sizeof(s->action.ext_community)) == 0)
-					break;
-				continue;
 			case ACTION_SET_NEXTHOP:
 				/* only last nexthop per AF matters */
 				if (s->action.nexthop.aid <
@@ -4288,11 +4300,6 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				yyerror("community is already set");
 			else if (s->type == ACTION_DEL_COMMUNITY)
 				yyerror("community will already be deleted");
-			else if (s->type == ACTION_SET_EXT_COMMUNITY)
-				yyerror("ext-community is already set");
-			else if (s->type == ACTION_DEL_EXT_COMMUNITY)
-				yyerror(
-				    "ext-community will already be deleted");
 			else
 				yyerror("redefining set parameter %s",
 				    filterset_name(s->type));

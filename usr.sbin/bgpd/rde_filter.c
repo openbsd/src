@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.115 2018/12/11 09:02:14 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.116 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -149,6 +149,10 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 				community_large_set(&state->aspath,
 				    &set->action.community, peer);
 				break;
+			case COMMUNITY_TYPE_EXT:
+				community_ext_set(&state->aspath,
+				    &set->action.community, peer);
+				break;
 			}
 			break;
 		case ACTION_DEL_COMMUNITY:
@@ -161,6 +165,9 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 				community_large_delete(&state->aspath,
 				    &set->action.community, peer);
 				break;
+			case COMMUNITY_TYPE_EXT:
+				community_ext_delete(&state->aspath,
+				    &set->action.community, peer);
 			}
 			break;
 		case ACTION_PFTABLE:
@@ -183,16 +190,6 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			break;
 		case ACTION_SET_ORIGIN:
 			state->aspath.origin = set->action.origin;
-			break;
-		case ACTION_SET_EXT_COMMUNITY:
-			community_ext_set(&state->aspath,
-			    &set->action.ext_community,
-			    peer->conf.remote_as);
-			break;
-		case ACTION_DEL_EXT_COMMUNITY:
-			community_ext_delete(&state->aspath,
-			    &set->action.ext_community,
-			    peer->conf.remote_as);
 			break;
 		}
 	}
@@ -244,13 +241,12 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 			    peer) == 0)
 				return (0);
 			break;
+		case COMMUNITY_TYPE_EXT:
+			if (community_ext_match(asp, &f->match.community[i],
+			    peer) == 0)
+				return (0);
 		}
 	}
-	if (asp != NULL &&
-	    (f->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID))
-		if (community_ext_match(asp, &f->match.ext_community,
-		    peer->conf.remote_as) == 0)
-			return (0);
 
 	if (state != NULL && f->match.nexthop.flags != 0) {
 		struct bgpd_addr *nexthop, *cmpaddr;
@@ -540,12 +536,6 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 		    sizeof(a->action.community)));
 	}
 
-	if (a->type == ACTION_SET_EXT_COMMUNITY ||
-	    a->type == ACTION_DEL_EXT_COMMUNITY) {	/* a->type == b->type */
-		return (memcmp(&a->action.ext_community,
-		    &b->action.ext_community, sizeof(a->action.ext_community)));
-	}
-
 	if (a->type == ACTION_SET_NEXTHOP && b->type == ACTION_SET_NEXTHOP) {
 		/*
 		 * This is the only interesting case, all others are considered
@@ -658,14 +648,6 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			    a->action.origin == b->action.origin)
 				continue;
 			break;
-		case ACTION_SET_EXT_COMMUNITY:
-		case ACTION_DEL_EXT_COMMUNITY:
-			if (a->type == b->type && memcmp(
-			    &a->action.ext_community,
-			    &b->action.ext_community,
-			    sizeof(a->action.ext_community)) == 0)
-				continue;
-			break;
 		}
 		/* compare failed */
 		return (0);
@@ -710,10 +692,6 @@ filterset_name(enum action_types type)
 		return ("rtlabel");
 	case ACTION_SET_ORIGIN:
 		return ("origin");
-	case ACTION_SET_EXT_COMMUNITY:
-		return ("ext-community");
-	case ACTION_DEL_EXT_COMMUNITY:
-		return ("ext-community delete");
 	}
 
 	fatalx("filterset_name: got lost");

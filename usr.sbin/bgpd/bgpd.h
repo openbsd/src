@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.357 2018/12/11 09:02:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.358 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -742,30 +742,23 @@ struct filter_community {
 	u_int8_t	dflag1;	/* one of set, any, local-as, neighbor-as */
 	u_int8_t	dflag2;
 	u_int8_t	dflag3;
-	u_int32_t	data1;
-	u_int32_t	data2;
-	u_int32_t	data3;
-};
-
-struct filter_extcommunity {
-	u_int16_t	flags;
-	u_int8_t	type;
-	u_int8_t	subtype;	/* if extended type */
 	union {
-		struct ext_as {
-			u_int16_t	as;
-			u_int32_t	val;
-		}		ext_as;
-		struct ext_as4 {
-			u_int32_t	as4;
-			u_int16_t	val;
-		}		ext_as4;
-		struct ext_ip {
-			struct in_addr	addr;
-			u_int16_t	val;
-		}		ext_ip;
-		u_int64_t	ext_opaq;	/* only 48 bits */
-	}		data;
+		struct basic {
+			u_int32_t	data1;
+			u_int32_t	data2;
+		} b;
+		struct large {
+			u_int32_t	data1;
+			u_int32_t	data2;
+			u_int32_t	data3;
+		} l;
+		struct ext {
+			u_int32_t	data1;
+			u_int64_t	data2;
+			u_int8_t	type;
+			u_int8_t	subtype;	/* if extended type */
+		} e;
+	}		c;
 };
 
 struct ctl_show_rib_request {
@@ -774,7 +767,6 @@ struct ctl_show_rib_request {
 	struct bgpd_addr	prefix;
 	struct filter_as	as;
 	struct filter_community community;
-	struct filter_extcommunity extcommunity;
 	u_int32_t		peerid;
 	u_int32_t		flags;
 	u_int8_t		validation_state;
@@ -929,7 +921,6 @@ struct filter_match {
 	struct filter_as		as;
 	struct filter_aslen		aslen;
 	struct filter_community		community[MAX_COMM_MATCH];
-	struct filter_extcommunity	ext_community;
 	struct filter_prefixset		prefixset;
 	struct filter_originset		originset;
 	struct filter_ovs		ovs;
@@ -968,8 +959,6 @@ enum action_types {
 	ACTION_SET_NEXTHOP_SELF,
 	ACTION_DEL_COMMUNITY,
 	ACTION_SET_COMMUNITY,
-	ACTION_DEL_EXT_COMMUNITY,
-	ACTION_SET_EXT_COMMUNITY,
 	ACTION_PFTABLE,
 	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
@@ -988,7 +977,6 @@ struct filter_set {
 		struct bgpd_addr		 nexthop;
 		struct nexthop			*nh;
 		struct filter_community		 community;
-		struct filter_extcommunity	 ext_community;
 		char				 pftable[PFTABLE_LEN];
 		char				 rtlabel[RTLABEL_LEN];
 		u_int8_t			 origin;

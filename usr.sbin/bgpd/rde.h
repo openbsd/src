@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.205 2018/12/17 11:24:30 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.206 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -375,12 +375,12 @@ int	 community_large_set(struct rde_aspath *, struct filter_community *,
 void	 community_large_delete(struct rde_aspath *, struct filter_community *,
 	    struct rde_peer *);
 int	 community_ext_match(struct rde_aspath *,
-	    struct filter_extcommunity *, u_int16_t);
+	    struct filter_community *, struct rde_peer *);
 int	 community_ext_set(struct rde_aspath *,
-	    struct filter_extcommunity *, u_int16_t);
+	    struct filter_community *, struct rde_peer *);
 void	 community_ext_delete(struct rde_aspath *,
-	    struct filter_extcommunity *, u_int16_t);
-int	 community_ext_conv(struct filter_extcommunity *, u_int16_t,
+	    struct filter_community *, struct rde_peer *);
+int	 community_ext_conv(struct filter_community *, struct rde_peer *,
 	    u_int64_t *);
 u_char	*community_ext_delete_non_trans(u_char *, u_int16_t, u_int16_t *);
 

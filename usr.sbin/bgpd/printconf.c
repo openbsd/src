@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.124 2018/11/28 08:32:27 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.125 2018/12/19 15:26:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,8 +32,6 @@
 void		 print_prefix(struct filter_prefix *p);
 const char	*community_type(struct filter_community *c);
 void		 print_community(struct filter_community *c);
-void		 print_largecommunity(int64_t, int64_t, int64_t);
-void		 print_extcommunity(struct filter_extcommunity *);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
@@ -113,6 +111,8 @@ community_type(struct filter_community *c)
 		return "community";
 	case COMMUNITY_TYPE_LARGE:
 		return "large-community";
+	case COMMUNITY_TYPE_EXT:
+		return "ext-community";
 	default:
 		return "???";
 	}
@@ -121,6 +121,8 @@ community_type(struct filter_community *c)
 void
 print_community(struct filter_community *c)
 {
+	struct in_addr addr;
+
 	switch (c->type) {
 	case COMMUNITY_TYPE_BASIC:
 		switch (c->dflag1) {
@@ -134,7 +136,7 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->data1);
+			printf("%u:", c->c.b.data1);
 			break;
 		}
 		switch (c->dflag2) {
@@ -148,7 +150,7 @@ print_community(struct filter_community *c)
 			printf("local-as ");
 			break;
 		default:
-			printf("%u ", c->data2);
+			printf("%u ", c->c.b.data2);
 			break;
 		}
 		break;
@@ -164,7 +166,7 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->data1);
+			printf("%u:", c->c.l.data1);
 			break;
 		}
 		switch (c->dflag2) {
@@ -178,7 +180,7 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->data2);
+			printf("%u:", c->c.l.data2);
 			break;
 		}
 		switch (c->dflag3) {
@@ -192,50 +194,44 @@ print_community(struct filter_community *c)
 			printf("local-as ");
 			break;
 		default:
-			printf("%u ", c->data3);
+			printf("%u ", c->c.l.data3);
 			break;
 		}
 		break;
-	}
-}
-
-void
-print_extcommunity(struct filter_extcommunity *c)
-{
-	printf("%s ", log_ext_subtype(c->type, c->subtype));
-
-	switch (c->type) {
-	case EXT_COMMUNITY_TRANS_TWO_AS:
-		printf("%hu:%u ", c->data.ext_as.as, c->data.ext_as.val);
-		break;
-	case EXT_COMMUNITY_TRANS_IPV4:
-		printf("%s:%u ", inet_ntoa(c->data.ext_ip.addr),
-		    c->data.ext_ip.val);
-		break;
-	case EXT_COMMUNITY_TRANS_FOUR_AS:
-		printf("%s:%u ", log_as(c->data.ext_as4.as4),
-		    c->data.ext_as.val);
-		break;
-	case EXT_COMMUNITY_TRANS_OPAQUE:
-	case EXT_COMMUNITY_TRANS_EVPN:
-		printf("0x%llx ", c->data.ext_opaq);
-		break;
-	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-		switch (c->data.ext_opaq) {
-		case EXT_COMMUNITY_OVS_VALID:
-			printf("valid ");
+	case COMMUNITY_TYPE_EXT:
+		printf("%s ", log_ext_subtype(c->c.e.type, c->c.e.subtype));
+		switch (c->c.e.type) {
+		case EXT_COMMUNITY_TRANS_TWO_AS:
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
+			printf("%s:%llu ", log_as(c->c.e.data1),
+			    c->c.e.data2);
 			break;
-		case EXT_COMMUNITY_OVS_NOTFOUND:
-			printf("not-found ");
+		case EXT_COMMUNITY_TRANS_IPV4:
+			addr.s_addr = htonl(c->c.e.data1);
+			printf("%s:%llu ", inet_ntoa(addr),
+			    c->c.e.data2);
 			break;
-		case EXT_COMMUNITY_OVS_INVALID:
-			printf("invalid ");
+		case EXT_COMMUNITY_TRANS_OPAQUE:
+		case EXT_COMMUNITY_TRANS_EVPN:
+			printf("0x%llx ", c->c.e.data2);
+			break;
+		case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+			switch (c->c.e.data2) {
+			case EXT_COMMUNITY_OVS_VALID:
+				printf("valid ");
+				break;
+			case EXT_COMMUNITY_OVS_NOTFOUND:
+				printf("not-found ");
+				break;
+			case EXT_COMMUNITY_OVS_INVALID:
+				printf("invalid ");
+				break;
+			}
+			break;
+		default:
+			printf("0x%llx ", c->c.e.data2);
 			break;
 		}
-		break;
-	default:
-		printf("0x%llx ", c->data.ext_opaq);
-		break;
 	}
 }
 
@@ -326,14 +322,6 @@ print_set(struct filter_set_head *set)
 			/* not possible */
 			printf("king bula saiz: config broken");
 			break;
-		case ACTION_SET_EXT_COMMUNITY:
-			printf("ext-community ");
-			print_extcommunity(&s->action.ext_community);
-			break;
-		case ACTION_DEL_EXT_COMMUNITY:
-			printf("ext-community delete ");
-			print_extcommunity(&s->action.ext_community);
-			break;
 		}
 	}
 	printf("}");
@@ -391,7 +379,7 @@ print_rdomain_targets(struct filter_set_head *set, const char *tgt)
 	struct filter_set	*s;
 	TAILQ_FOREACH(s, set, entry) {
 		printf("\t%s ", tgt);
-		print_extcommunity(&s->action.ext_community);
+		print_community(&s->action.community);
 		printf("\n");
 	}
 }
@@ -847,10 +835,6 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("%s ", community_type(c));
 			print_community(c);
 		}
-	}
-	if (r->match.ext_community.flags & EXT_COMMUNITY_FLAG_VALID) {
-		printf("ext-community ");
-		print_extcommunity(&r->match.ext_community);
 	}
 
 	print_set(&r->set);

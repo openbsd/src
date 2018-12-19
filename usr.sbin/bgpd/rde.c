@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.452 2018/12/11 09:02:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.453 2018/12/19 15:26:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2229,10 +2229,11 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 		if (!community_large_match(asp, &req->community, NULL))
 			return;
 		break;
+	case COMMUNITY_TYPE_EXT:
+		if (!community_ext_match(asp, &req->community, 0))
+			return;
+		break;
 	}
-	if (req->extcommunity.flags == EXT_COMMUNITY_FLAG_VALID &&
-	    !community_ext_match(asp, &req->extcommunity, 0))
-		return;
 	if (!ovs_match(p, req->flags))
 		return;
 	rde_dump_rib_as(p, asp, req->pid, req->flags);
@@ -2436,7 +2437,7 @@ rde_rdomain_import(struct rde_aspath *asp, struct rdomain *rd)
 	struct filter_set	*s;
 
 	TAILQ_FOREACH(s, &rd->import, entry) {
-		if (community_ext_match(asp, &s->action.ext_community, 0))
+		if (community_match(asp, &s->action.community, 0))
 			return (1);
 	}
 	return (0);
