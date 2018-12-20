@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.280 2018/11/12 16:36:54 krw Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.281 2018/12/20 10:27:37 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ struct rtptable rtptable;
 #define ROUTECB_FLAG_FLUSH	0x2	/* Wait until socket is empty before
 					   queueing more packets */
 
-#define ROUTE_DESYNC_RESEND_TIMEOUT	(hz / 5)	/* In hz */
+#define ROUTE_DESYNC_RESEND_TIMEOUT	200	/* In ms */
 
 void
 route_prinit(void)
@@ -461,7 +461,7 @@ rtm_senddesync(struct socket *so)
 		m_freem(desync_mbuf);
 	}
 	/* Re-add timeout to try sending msg again */
-	timeout_add(&rop->rop_timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
+	timeout_add_msec(&rop->rop_timeout, ROUTE_DESYNC_RESEND_TIMEOUT);
 }
 
 void
