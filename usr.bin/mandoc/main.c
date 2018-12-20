@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.216 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.217 2018/12/20 21:27:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -480,7 +480,6 @@ main(int argc, char *argv[])
 		} else
 			thisarg = *argv;
 
-		mandoc_msg_setinfilename(thisarg);
 		fd = mparse_open(curp.mp, thisarg);
 		if (fd != -1) {
 			if (use_pager) {
@@ -493,11 +492,13 @@ main(int argc, char *argv[])
 					    conf.output.tag : *argv;
 			}
 
+			mandoc_msg_setinfilename(thisarg);
 			if (resp == NULL || resp->form == FORM_SRC)
 				parse(&curp, fd, thisarg);
 			else
 				passthrough(resp->file, fd,
 				    conf.output.synopsisonly);
+			mandoc_msg_setinfilename(NULL);
 
 			if (ferror(stdout)) {
 				if (tag_files != NULL) {
@@ -515,8 +516,9 @@ main(int argc, char *argv[])
 					outdata_alloc(&curp);
 				terminal_sepline(curp.outdata);
 			}
-		}
-		mandoc_msg_setinfilename(NULL);
+		} else
+			mandoc_msg(MANDOCERR_FILE, 0, 0,
+			    "%s", strerror(errno));
 
 		if (curp.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;

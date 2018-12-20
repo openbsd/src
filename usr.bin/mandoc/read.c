@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.178 2018/12/14 06:33:03 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.179 2018/12/20 21:27:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -370,8 +370,9 @@ rerun:
 				mparse_readfd(curp, fd, ln.buf + of);
 				close(fd);
 			} else {
-				mandoc_msg(MANDOCERR_SO_FAIL, curp->line,
-				    pos, ".so %s", ln.buf + of);
+				mandoc_msg(MANDOCERR_SO_FAIL,
+				    curp->line, of, ".so %s: %s",
+				    ln.buf + of, strerror(errno));
 				ln.sz = mandoc_asprintf(&cp,
 				    ".sp\nSee the file %s.\n.sp",
 				    ln.buf + of);
@@ -631,7 +632,6 @@ mparse_open(struct mparse *curp, const char *file)
 
 	/* Neither worked, give up. */
 
-	mandoc_msg(MANDOCERR_FILE, 0, 0, "%s", strerror(errno));
 	return -1;
 }
 
