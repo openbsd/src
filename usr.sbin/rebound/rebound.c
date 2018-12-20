@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.105 2018/12/18 21:32:21 anton Exp $ */
+/* $OpenBSD: rebound.c,v 1.106 2018/12/20 07:23:22 anton Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -862,7 +862,7 @@ workerinit(void)
 	TAILQ_INIT(&reqfifo);
 	TAILQ_INIT(&cachefifo);
 	RB_INIT(&cachetree);
-	
+
 	https_init();
 
 	if (!(pwd = getpwnam("_rebound")))
@@ -1160,7 +1160,7 @@ monitorloop(int *udpfds, int numudp, int *tcpfds, int numtcp,
 	while (1) {
 		int hupped = 0;
 		int childdead = 0;
-	
+
 		if (conffd == -1)
 			conffd = openconfig(confname, kq);
 
