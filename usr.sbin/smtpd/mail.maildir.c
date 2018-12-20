@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -114,6 +115,7 @@ maildir_engine(const char *dirname, int junk)
 	char	extpath[PATH_MAX];
 	char	subdir[PATH_MAX];
 	char	filename[PATH_MAX];
+	char	hostname[MAXHOSTNAMELEN];
 
 	char	tmp[PATH_MAX];
 	char	new[PATH_MAX];
@@ -165,10 +167,13 @@ maildir_engine(const char *dirname, int junk)
 		}
 	}
 
+	if (gethostname(hostname, sizeof hostname) != 0)
+		(void)strlcpy(hostname, "localhost", sizeof hostname);
+
 	(void)snprintf(filename, sizeof filename, "%lld.%08x.%s",
 	    (long long int) time(NULL),
 	    arc4random(),
-	    "localhost");
+	    hostname);
 
 	(void)snprintf(tmp, sizeof tmp, "%s/tmp/%s", dirname, filename);
 
