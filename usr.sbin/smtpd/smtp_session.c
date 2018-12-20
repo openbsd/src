@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.376 2018/12/20 17:57:44 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.377 2018/12/20 19:57:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1093,7 +1093,7 @@ smtp_io(struct io *io, int evt, void *arg)
 	switch (evt) {
 
 	case IO_TLSREADY:
-		log_info("%016"PRIx64" smtp tls address=%s host=%s ciphers=\"%s\"",
+		log_info("%016"PRIx64" smtp tls address=%s host=%s ciphers=%s",
 		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(s->io)));
 
 		report_smtp_link_tls("smtp-in", s->id, ssl_to_text(io_ssl(s->io)));
