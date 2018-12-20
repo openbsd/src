@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.156 2018/12/15 19:30:19 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.157 2018/12/20 18:23:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2018 $
+.Dd $Mdocdate: December 20 2018 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -714,13 +714,29 @@ Messages displayed by
 follow this format:
 .Bd -ragged -offset indent
 .Nm :
-.Ar file : Ns Ar line : Ns Ar column : level : message : macro args
+.Ar file : Ns Ar line : Ns Ar column : level : message : macro arguments
 .Pq Ar os
 .Ed
 .Pp
-Line and column numbers start at 1.
+The first three fields identify the
+.Ar file
+name,
+.Ar line
+number, and
+.Ar column
+number of the input file where the message was triggered.
+The line and column numbers start at 1.
 Both are omitted for messages referring to an input file as a whole.
-Macro names and arguments are omitted where meaningless.
+All
+.Ar level
+and
+.Ar message
+strings are explained below.
+The name of the
+.Ar macro
+triggering the message and its
+.Ar arguments
+are omitted where meaningless.
 The
 .Ar os
 operating system specifier is omitted for messages that are relevant
