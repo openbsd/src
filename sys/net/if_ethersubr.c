@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.255 2018/12/12 05:38:26 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.256 2018/12/20 23:00:55 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -106,6 +106,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "pppoe.h"
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
+#endif
+
+#include "bpe.h"
+#if NBPE > 0
+#include <net/if_bpe.h>
 #endif
 
 #ifdef INET6
@@ -440,6 +445,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	case ETHERTYPE_MPLS_MCAST:
 		input = mpls_input;
 		break;
+#endif
+#if NBPE > 0
+	case ETHERTYPE_PBB:
+		bpe_input(ifp, m);
+		return (1);
 #endif
 	default:
 		goto dropanyway;
