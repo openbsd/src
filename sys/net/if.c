@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.569 2018/12/11 22:08:57 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.570 2018/12/20 10:26:36 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1626,7 +1626,7 @@ if_slowtimo(void *arg)
 	if (ifp->if_watchdog) {
 		if (ifp->if_timer > 0 && --ifp->if_timer == 0)
 			task_add(net_tq(ifp->if_index), &ifp->if_watchdogtask);
-		timeout_add(&ifp->if_slowtimo, hz / IFNET_SLOWHZ);
+		timeout_add_sec(&ifp->if_slowtimo, IFNET_SLOWTIMO);
 	}
 	splx(s);
 }
