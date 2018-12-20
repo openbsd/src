@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.225 2018/12/18 21:58:41 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.226 2018/12/20 03:38:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1586,7 +1586,7 @@ mandoc_getarg(char **cpp, int ln, int *pos)
 			switch (cp[1]) {
 			case 'a':
 			case 't':
-				cp[0] = '\t';
+				cp[-pairs] = '\t';
 				/* FALLTHROUGH */
 			case '\\':
 				pairs++;
