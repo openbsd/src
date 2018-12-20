@@ -20,7 +20,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -115,7 +114,7 @@ maildir_engine(const char *dirname, int junk)
 	char	extpath[PATH_MAX];
 	char	subdir[PATH_MAX];
 	char	filename[PATH_MAX];
-	char	hostname[MAXHOSTNAMELEN];
+	char	hostname[HOST_NAME_MAX+1];
 
 	char	tmp[PATH_MAX];
 	char	new[PATH_MAX];
