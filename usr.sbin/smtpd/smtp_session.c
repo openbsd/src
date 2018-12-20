@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.375 2018/12/14 09:18:03 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.376 2018/12/20 17:57:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1314,18 +1314,26 @@ smtp_command(struct smtp_session *s, char *line)
 	 * ANY
 	 */
 	case CMD_QUIT:
+		if (!smtp_check_noparam(s, args))
+			break;		
 		smtp_filter_phase(FILTER_QUIT, s, NULL);
 		break;
 
 	case CMD_NOOP:
+		if (!smtp_check_noparam(s, args))
+			break;		
 		smtp_filter_phase(FILTER_NOOP, s, NULL);
 		break;
 
 	case CMD_HELP:
+		if (!smtp_check_noparam(s, args))
+			break;		
 		smtp_proceed_help(s, NULL);
 		break;
 
 	case CMD_WIZ:
+		if (!smtp_check_noparam(s, args))
+			break;		
 		smtp_proceed_wiz(s, NULL);
 		break;
 
@@ -1340,6 +1348,9 @@ smtp_command(struct smtp_session *s, char *line)
 static int
 smtp_check_rset(struct smtp_session *s, const char *args)
 {
+	if (!smtp_check_noparam(s, args))
+		return 0;
+
 	if (s->helo[0] == '\0') {
 		smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1547,6 +1558,9 @@ smtp_check_rcpt_to(struct smtp_session *s, const char *args)
 static int
 smtp_check_data(struct smtp_session *s, const char *args)
 {
+	if (!smtp_check_noparam(s, args))
+		return 0;
+
 	if (s->tx == NULL) {
 		smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1567,6 +1581,12 @@ smtp_check_data(struct smtp_session *s, const char *args)
 static int
 smtp_check_noparam(struct smtp_session *s, const char *args)
 {
+	if (args != NULL) {
+		smtp_reply(s, "500 %s %s: command does not accept arguments.",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND_ARGUMENTS),
+		    esc_description(ESC_INVALID_COMMAND_ARGUMENTS));
+		return 0;
+	}
 	return 1;
 }
 
