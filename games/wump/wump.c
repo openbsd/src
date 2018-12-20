@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.33 2016/03/07 12:07:57 mestre Exp $	*/
+/*	$OpenBSD: wump.c,v 1.34 2018/12/20 09:55:44 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -535,8 +535,8 @@ into room %d!\n", arrow_location, next, cave[arrow_location].tunnel[link]);
 		/* each time you shoot, it's more likely the wumpus moves */
 		static int lastchance = 2;
 
-		if (arc4random_uniform(level) == EASY ?
-		    12 : 9 < (lastchance += 2)) {
+		lastchance += 2;
+		if (arc4random_uniform(level == EASY ? 12 : 9) < lastchance) {
 			move_wump();
 			if (wumpus_loc == player_loc) {
 				wump_walk_kill();
