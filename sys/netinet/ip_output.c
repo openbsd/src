@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.348 2018/08/28 15:15:02 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.349 2018/12/20 13:27:54 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1255,7 +1255,7 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 	 * actual options; move other options back
 	 * and clear it when none present.
 	 */
-	if (m->m_data + m->m_len + sizeof(struct in_addr) >= &m->m_dat[MLEN])
+	if (m_trailingspace(m) < sizeof(struct in_addr))
 		return (EINVAL);
 	cnt = m->m_len;
 	m->m_len += sizeof(struct in_addr);
