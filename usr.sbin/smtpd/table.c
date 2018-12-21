@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.32 2018/11/02 13:45:59 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.33 2018/12/21 21:35:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -463,8 +463,14 @@ int
 table_regex_match(const char *string, const char *pattern)
 {
 	regex_t preg;
+	int	cflags = REG_EXTENDED|REG_NOSUB;
 
-	if (regcomp(&preg, pattern, REG_EXTENDED|REG_NOSUB) != 0)
+	if (strncmp(pattern, "(?i)", 4) == 0) {
+		cflags |= REG_ICASE;
+		pattern += 4;
+	}
+
+	if (regcomp(&preg, pattern, cflags) != 0)
 		return (0);
 
 	if (regexec(&preg, string, 0, NULL, 0) != 0)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.207 2018/12/12 20:21:04 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.208 2018/12/21 21:35:29 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 12 2018 $
+.Dd $Mdocdate: December 21 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -485,6 +485,13 @@ Specify that session may address the string or list table
 .Ar domain .
 .It Xo
 .Op Ic \&!
+.Cm for domain regex
+.Ar domain | Pf < Ar domain Ns >
+.Xc
+Specify that session may address the regex or regex table
+.Ar domain .
+.It Xo
+.Op Ic \&!
 .Cm from any
 .Xc
 Specify that session may originate from any source.
@@ -508,6 +515,14 @@ Specify that session may only originate from the local enqueuer.
 Specify that session may only originate from string or list table
 .Ar address
 which can be a specific address or a subnet expressed in CIDR-notation.
+.It Xo
+.Op Ic \&!
+.Cm from src regex
+.Ar address | Pf < Ar address Ns >
+.Xc
+Specify that session may only originate from regex or regex table
+.Ar address
+which can be a specific address or a subnet expressed in CIDR-notation.
 .El
 .Pp
 In addition, the following transaction options:
@@ -526,10 +541,24 @@ Specify that session's HELO / EHLO should match the string or list table
 .Ar helo-name .
 .It Xo
 .Op Ic \&!
+.Cm helo regex
+.Ar helo-name | Pf < Ar helo-name Ns >
+.Xc
+Specify that session's HELO / EHLO should match the regex or regex table
+.Ar helo-name .
+.It Xo
+.Op Ic \&!
 .Cm mail\-from
 .Ar sender | Pf < Ar sender Ns >
 .Xc
 Specify that transactions's MAIL FROM should match the string or list table
+.Ar sender .
+.It Xo
+.Op Ic \&!
+.Cm mail\-from regex
+.Ar sender | Pf < Ar sender Ns >
+.Xc
+Specify that transactions's MAIL FROM should match the regex or regex table
 .Ar sender .
 .It Xo
 .Op Ic \&!
@@ -540,10 +569,24 @@ Specify that transaction's RCPT TO should match the string or list table
 .Ar recipient .
 .It Xo
 .Op Ic \&!
+.Cm rcpt\-to regex
+.Ar recipient | Pf < Ar recipient Ns >
+.Xc
+Specify that transaction's RCPT TO should match the regex or regex table
+.Ar recipient .
+.It Xo
+.Op Ic \&!
 .Cm tag Ar tag
 .Xc
 Matches transactions tagged with the given
 .Ar tag .
+.It Xo
+.Op Ic \&!
+.Cm tag regex Ar tag
+.Xc
+Matches transactions tagged with the given
+.Ar tag
+regex .
 .It Xo
 .Op Ic \&!
 .Cm tls

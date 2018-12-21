@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.240 2018/12/21 19:07:47 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.241 2018/12/21 21:35:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	ON
 %token	PKI PORT PROC PROC_EXEC
 %token	QUEUE QUIT
-%token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT REPORT REWRITE RSET
+%token	RCPT_TO RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
@@ -908,6 +908,25 @@ negation TAG tables {
 	rule->flag_tag = $1 ? -1 : 1;
 	rule->table_tag = strdup(t->t_name);
 }
+|
+negation TAG REGEX tables {
+	struct table   *t = $4;
+
+	if (rule->flag_tag) {
+		yyerror("tag already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for tag lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_tag = $1 ? -1 : 1;
+	rule->flag_tag_regex = 1;
+	rule->table_tag = strdup(t->t_name);
+}
 | negation HELO tables {
 	struct table   *t = $3;
 
@@ -923,6 +942,24 @@ negation TAG tables {
 	}
 
 	rule->flag_smtp_helo = $1 ? -1 : 1;
+	rule->table_smtp_helo = strdup(t->t_name);
+}
+| negation HELO REGEX tables {
+	struct table   *t = $4;
+
+	if (rule->flag_smtp_helo) {
+		yyerror("mail-helo already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for helo lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_smtp_helo = $1 ? -1 : 1;
+	rule->flag_smtp_helo_regex = 1;
 	rule->table_smtp_helo = strdup(t->t_name);
 }
 | negation TLS {
@@ -956,6 +993,24 @@ negation TAG tables {
 	rule->flag_smtp_auth = $1 ? -1 : 1;
 	rule->table_smtp_auth = strdup(t->t_name);
 }
+| negation AUTH REGEX tables {
+	struct table   *t = $4;
+
+	if (rule->flag_smtp_auth) {
+		yyerror("auth already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for auth lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_smtp_auth = $1 ? -1 : 1;
+	rule->flag_smtp_auth_regex = 1;
+	rule->table_smtp_auth = strdup(t->t_name);
+}
 | negation MAIL_FROM tables {
 	struct table   *t = $3;
 
@@ -973,6 +1028,24 @@ negation TAG tables {
 	rule->flag_smtp_mail_from = $1 ? -1 : 1;
 	rule->table_smtp_mail_from = strdup(t->t_name);
 }
+| negation MAIL_FROM REGEX tables {
+	struct table   *t = $4;
+
+	if (rule->flag_smtp_mail_from) {
+		yyerror("mail-from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for mail-from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_smtp_mail_from = $1 ? -1 : 1;
+	rule->flag_smtp_mail_from_regex = 1;
+	rule->table_smtp_mail_from = strdup(t->t_name);
+}
 | negation RCPT_TO tables {
 	struct table   *t = $3;
 
@@ -988,6 +1061,24 @@ negation TAG tables {
 	}
 
 	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
+	rule->table_smtp_rcpt_to = strdup(t->t_name);
+}
+| negation RCPT_TO REGEX tables {
+	struct table   *t = $4;
+
+	if (rule->flag_smtp_rcpt_to) {
+		yyerror("rcpt-to already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for rcpt-to lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_smtp_rcpt_to = $1 ? -1 : 1;
+	rule->flag_smtp_rcpt_to_regex = 1;
 	rule->table_smtp_rcpt_to = strdup(t->t_name);
 }
 
@@ -1036,6 +1127,24 @@ negation TAG tables {
 	rule->flag_from = $1 ? -1 : 1;
 	rule->table_from = strdup(t->t_name);
 }
+| negation FROM SRC REGEX tables {
+	struct table   *t = $5;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for from lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = $1 ? -1 : 1;
+	rule->flag_from_regex = 1;
+	rule->table_from = strdup(t->t_name);
+}
 
 | negation FOR LOCAL {
 	struct table   *t = table_find(conf, "<localnames>", NULL);
@@ -1072,6 +1181,24 @@ negation TAG tables {
 	}
 
 	rule->flag_for = $1 ? -1 : 1;
+	rule->table_for = strdup(t->t_name);
+}
+| negation FOR DOMAIN REGEX tables {
+	struct table   *t = $5;
+
+	if (rule->flag_for) {
+		yyerror("for already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_REGEX)) {
+		yyerror("table \"%s\" may not be used for 'for' lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_for = $1 ? -1 : 1;
+	rule->flag_for_regex = 1;
 	rule->table_for = strdup(t->t_name);
 }
 ;
@@ -2039,6 +2166,7 @@ lookup(char *s)
 		{ "rcpt-to",		RCPT_TO },
 		{ "received-auth",     	RECEIVEDAUTH },
 		{ "recipient",		RECIPIENT },
+		{ "regex",		REGEX },
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "rset",		RSET },
