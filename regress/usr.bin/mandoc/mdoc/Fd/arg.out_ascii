@@ -1,0 +1,15 @@
+FD-ARG(2)                     System Calls Manual                    FD-ARG(2)
+
+NNAAMMEE
+     FFdd--aarrgg - escape sequences in the arguments of in-line EOL macros
+
+DDEESSCCRRIIPPTTIIOONN
+     ##uunnqquuootteedd uunneessccaappeedd
+
+     ##qquuootteedd uunneessccaappeedd
+
+     ##uunnqquuootteedd eessccaappeedd
+
+     ##qquuootteedd eessccaappeedd
+
+OpenBSD                        December 21, 2018                       OpenBSD

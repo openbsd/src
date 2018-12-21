@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.226 2018/12/20 03:38:10 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.227 2018/12/21 16:58:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,6 +35,14 @@
 #include "roff_int.h"
 #include "tbl_parse.h"
 #include "eqn_parse.h"
+
+/*
+ * ASCII_ESC is used to signal from roff_getarg() to roff_expand()
+ * that an escape sequence resulted from copy-in processing and
+ * needs to be checked or interpolated.  As it is used nowhere
+ * else, it is defined here rather than in a header file.
+ */
+#define	ASCII_ESC	27
 
 /* Maximum number of string expansions per line, to break infinite loops. */
 #define	EXPAND_LIMIT	1000
@@ -189,6 +197,8 @@ static	int		 roff_evalnum(struct roff *, int,
 static	int		 roff_evalpar(struct roff *, int,
 				const char *, int *, int *, int);
 static	int		 roff_evalstrcond(const char *, int *);
+static	int		 roff_expand(struct roff *, struct buf *,
+				int, int, char);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
@@ -217,7 +227,6 @@ static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 static	int		 roff_parsetext(struct roff *, struct buf *,
 				int, int *);
 static	int		 roff_renamed(ROFF_ARGS);
-static	int		 roff_res(struct roff *, struct buf *, int, int);
 static	int		 roff_return(ROFF_ARGS);
 static	int		 roff_rm(ROFF_ARGS);
 static	int		 roff_rn(ROFF_ARGS);
@@ -1140,12 +1149,12 @@ deroff(char **dest, const struct roff_node *n)
 /* --- main functions of the roff parser ---------------------------------- */
 
 /*
- * In the current line, expand escape sequences that tend to get
- * used in numerical expressions and conditional requests.
- * Also check the syntax of the remaining escape sequences.
+ * In the current line, expand escape sequences that produce parsable
+ * input text.  Also check the syntax of the remaining escape sequences,
+ * which typically produce output glyphs or change formatter state.
  */
 static int
-roff_res(struct roff *r, struct buf *buf, int ln, int pos)
+roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char newesc)
 {
 	struct mctx	*ctx;	/* current macro call context */
 	char		 ubuf[24]; /* buffer to print the number */
@@ -1179,7 +1188,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	done = 0;
 	start = buf->buf + pos;
 	for (stesc = buf->buf + pos; *stesc != '\0'; stesc++) {
-		if (stesc[0] != r->escape || stesc[1] == '\0')
+		if (stesc[0] != newesc || stesc[1] == '\0')
 			continue;
 		stesc++;
 		if (*stesc != '"' && *stesc != '#')
@@ -1221,7 +1230,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		 * in the syntax tree.
 		 */
 
-		if (r->format == 0) {
+		if (newesc != ASCII_ESC && r->format == 0) {
 			while (*ep == ' ' || *ep == '\t')
 				ep--;
 			ep[1] = '\0';
@@ -1262,11 +1271,16 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 
 	expand_count = 0;
 	while (stesc >= start) {
+		if (*stesc != newesc) {
 
-		/* Search backwards for the next backslash. */
+			/*
+			 * If we have a non-standard escape character,
+			 * escape literal backslashes because all
+			 * processing in subsequent functions uses
+			 * the standard escaping rules.
+			 */
 
-		if (*stesc != r->escape) {
-			if (*stesc == '\\') {
+			if (newesc != ASCII_ESC && *stesc == '\\') {
 				*stesc = '\0';
 				buf->sz = mandoc_asprintf(&nbuf, "%s\\e%s",
 				    buf->buf, stesc + 1) + 1;
@@ -1275,6 +1289,9 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 				free(buf->buf);
 				buf->buf = nbuf;
 			}
+
+			/* Search backwards for the next escape. */
+
 			stesc--;
 			continue;
 		}
@@ -1554,10 +1571,11 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
  * or to the NUL byte terminating the argument line.
  */
 char *
-mandoc_getarg(char **cpp, int ln, int *pos)
+roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 {
-	char	 *start, *cp;
-	int	  quoted, pairs, white;
+	struct buf	 buf;
+	char	 	*cp, *start;
+	int		 newesc, pairs, quoted, white;
 
 	/* Quoting can only start with a new word. */
 	start = *cpp;
@@ -1567,8 +1585,7 @@ mandoc_getarg(char **cpp, int ln, int *pos)
 		start++;
 	}
 
-	pairs = 0;
-	white = 0;
+	newesc = pairs = white = 0;
 	for (cp = start; '\0' != *cp; cp++) {
 
 		/*
@@ -1587,8 +1604,12 @@ mandoc_getarg(char **cpp, int ln, int *pos)
 			case 'a':
 			case 't':
 				cp[-pairs] = '\t';
-				/* FALLTHROUGH */
+				pairs++;
+				cp++;
+				break;
 			case '\\':
+				newesc = 1;
+				cp[-pairs] = ASCII_ESC;
 				pairs++;
 				cp++;
 				break;
@@ -1637,7 +1658,18 @@ mandoc_getarg(char **cpp, int ln, int *pos)
 	if ('\0' == *cp && (white || ' ' == cp[-1]))
 		mandoc_msg(MANDOCERR_SPACE_EOL, ln, *pos, NULL);
 
-	return start;
+	start = mandoc_strdup(start);
+	if (newesc == 0)
+		return start;
+
+	buf.buf = start;
+	buf.sz = strlen(start) + 1;
+	buf.next = NULL;
+	if (roff_expand(r, &buf, ln, 0, ASCII_ESC) & ROFF_IGN) {
+		free(buf.buf);
+		buf.buf = mandoc_strdup("");
+	}
+	return buf.buf;
 }
 
 
@@ -1735,7 +1767,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 
 	/* Expand some escape sequences. */
 
-	e = roff_res(r, buf, ln, pos);
+	e = roff_expand(r, buf, ln, pos, r->escape);
 	if ((e & ROFF_MASK) == ROFF_IGN)
 		return e;
 	assert(e == ROFF_CONT);
@@ -3769,7 +3801,7 @@ roff_userdef(ROFF_ARGS)
 			ctx->argv = mandoc_reallocarray(ctx->argv,
 			    ctx->argsz, sizeof(*ctx->argv));
 		}
-		arg = mandoc_getarg(&src, ln, &pos);
+		arg = roff_getarg(r, &src, ln, &pos);
 		sz = 1;  /* For the terminating NUL. */
 		for (ap = arg; *ap != '\0'; ap++)
 			sz += *ap == '"' ? 4 : 1;
@@ -3782,6 +3814,7 @@ roff_userdef(ROFF_ARGS)
 				*dst++ = *ap;
 		}
 		*dst = '\0';
+		free(arg);
 	}
 
 	/* Replace the macro invocation by the macro definition. */
@@ -4131,7 +4164,7 @@ roff_strdup(const struct roff *r, const char *p)
 		/*
 		 * We bail out on bad escapes.
 		 * No need to warn: we already did so when
-		 * roff_res() was called.
+		 * roff_expand() was called.
 		 */
 		sz = (int)(p - pp);
 		res = mandoc_realloc(res, ssz + sz + 1);

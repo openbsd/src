@@ -1,0 +1,15 @@
+EO-ARG(1)                   General Commands Manual                  EO-ARG(1)
+
+NNAAMMEE
+     EEoo--aarrgg – escapes in arguments of enclosure macros
+
+DDEESSCCRRIIPPTTIIOONN
+     «unquoted unescaped»
+
+     «quoted unescaped»
+
+     «unquoted escaped»
+
+     «quoted escaped»
+
+OpenBSD                        December 21, 2018                       OpenBSD

@@ -4,10 +4,14 @@ mandoc: mdoc.in:46:15: STYLE: whitespace at end of input line
 mandoc: mdoc.in:86:25: STYLE: whitespace at end of input line
 mandoc: mdoc.in:90:26: STYLE: whitespace at end of input line
 mandoc: mdoc.in:94:27: STYLE: whitespace at end of input line
-mandoc: mdoc.in:102:9: STYLE: unterminated quoted argument
-mandoc: mdoc.in:103:13: STYLE: unterminated quoted argument
-mandoc: mdoc.in:107:10: STYLE: unterminated quoted argument
-mandoc: mdoc.in:108:14: STYLE: unterminated quoted argument
-mandoc: mdoc.in:112:11: STYLE: unterminated quoted argument
-mandoc: mdoc.in:113:15: STYLE: unterminated quoted argument
+mandoc: mdoc.in:102:5: STYLE: unterminated quoted argument
+mandoc: mdoc.in:103:9: STYLE: unterminated quoted argument
+mandoc: mdoc.in:107:5: STYLE: unterminated quoted argument
+mandoc: mdoc.in:107:10: STYLE: whitespace at end of input line
+mandoc: mdoc.in:108:9: STYLE: unterminated quoted argument
+mandoc: mdoc.in:108:14: STYLE: whitespace at end of input line
+mandoc: mdoc.in:112:5: STYLE: unterminated quoted argument
+mandoc: mdoc.in:112:11: STYLE: whitespace at end of input line
+mandoc: mdoc.in:113:9: STYLE: unterminated quoted argument
+mandoc: mdoc.in:113:15: STYLE: whitespace at end of input line
 mandoc: mdoc.in:121:1: ERROR: escaped character not allowed in a name: Fl\(

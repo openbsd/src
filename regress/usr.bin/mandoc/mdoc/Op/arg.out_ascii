@@ -1,0 +1,15 @@
+OP-ARG(1)                   General Commands Manual                  OP-ARG(1)
+
+NNAAMMEE
+     OOpp--aarrgg - escape sequences in the arguments of partial implicit macros
+
+DDEESSCCRRIIPPTTIIOONN
+     unquoted unescaped: [@]
+
+     quoted unescaped: [@]
+
+     unquoted escaped: [@]
+
+     quoted escaped: [@]
+
+OpenBSD                        December 21, 2018                       OpenBSD
