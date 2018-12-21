@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2018/03/11 18:30:18 sthen Exp $
+dnl	$OpenBSD: prep,v 1.9 2018/12/21 14:35:56 visa Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installed on the CompactFlash card or USB drive.
 
@@ -87,7 +87,3 @@ Booting the installation kernel
   arguments provided:
 
 	# bootoctlinux
-
-  On multi-core systems, boot with all CPU cores enabled:
-
-	# bootoctlinux rootdev=rd0 numcores=<number of cores>
