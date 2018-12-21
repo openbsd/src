@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.17 2018/12/21 17:04:46 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.18 2018/12/21 17:22:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -787,8 +787,8 @@ filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_
 	    filter_check_rdns(filter, fs->rdns) ||
 	    filter_check_rdns_table(filter, K_DOMAIN, fs->rdns) ||
 	    filter_check_rdns_regex(filter, fs->rdns) ||
-	    filter_check_src_table(filter, K_NETADDR, fs->rdns) ||
-	    filter_check_src_regex(filter, fs->rdns))
+	    filter_check_src_table(filter, K_NETADDR, ss_to_text(&fs->ss_src)) ||
+	    filter_check_src_regex(filter, ss_to_text(&fs->ss_src)))
 		return 1;
 	return 0;
 }
