@@ -1,6 +1,6 @@
-.\" $OpenBSD: DES_set_key.3,v 1.12 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.13 2018/12/21 21:36:21 schwarze Exp $
 .\" full merge up to:
-.\" OpenSSL man3/DES_random_key 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
 .\" --------------------------------------------------------------------------
 .\" Major patches to this file were contributed by
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: December 21 2018 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -557,7 +557,7 @@ This is much better than CBC DES.
 .Pp
 .Fn DES_ede3_cbc_encrypt
 implements outer triple CBC DES encryption with three keys.
-This means that each DES operation inside the CBC mode is really an
+This means that each DES operation inside the CBC mode is
 .Qq Li C=E(ks3,D(ks2,E(ks1,M))) .
 This mode is used by SSL.
 .Pp
@@ -570,13 +570,13 @@ for the final encryption.
 This form of Triple-DES is used by the RSAREF library.
 .Pp
 .Fn DES_pcbc_encrypt
-encrypt/decrypts using the propagating cipher block chaining mode used
+encrypts/decrypts using the propagating cipher block chaining mode used
 by Kerberos v4.
 Its parameters are the same as
 .Fn DES_ncbc_encrypt .
 .Pp
 .Fn DES_cfb_encrypt
-encrypt/decrypts using cipher feedback mode.
+encrypts/decrypts using cipher feedback mode.
 This method takes an array of characters as input and outputs an array
 of characters.
 It does not require any padding to 8 character groups.
@@ -586,18 +586,18 @@ variable is changed and the new changed value needs to be passed to the
 next call to this function.
 Since this function runs a complete DES ECB encryption per
 .Fa numbits ,
-this function is only suggested for use when sending small numbers of
+this function is only suggested for use when sending a small number of
 characters.
 .Pp
 .Fn DES_cfb64_encrypt
-implements CFB mode of DES with 64bit feedback.
+implements CFB mode of DES with 64-bit feedback.
 Why is this useful you ask?
 Because this routine will allow you to encrypt an arbitrary number of
-bytes, no 8 byte padding.
+bytes, without 8 byte padding.
 Each call to this routine will encrypt the input bytes to output and
 then update ivec and num.
 num contains "how far" we are though ivec.
-If this does not make much sense, read more about cfb mode of DES :-).
+If this does not make much sense, read more about CFB mode of DES.
 .Pp
 .Fn DES_ede3_cfb64_encrypt
 and
@@ -615,9 +615,10 @@ Note: the
 .Fa ivec
 variable is changed and the new changed value needs to be passed to the
 next call to this function.
-Since this function runs a complete DES ECB encryption per numbits, this
-function is only suggested for use when sending small numbers of
-characters.
+Since this function runs a complete DES ECB encryption per
+.Fa numbits ,
+this function is only suggested for use when sending a small number
+of characters.
 .Pp
 .Fn DES_ofb64_encrypt
 is the same as
