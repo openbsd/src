@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.595 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.596 2018/12/21 17:04:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1058,17 +1058,24 @@ struct filter_config {
 	size_t				chain_size;
 	struct dict			chain_procs;
 
-	int8_t                          not_table;
-	struct table                   *table;
-
-	int8_t                          not_regex;
-	struct table                   *regex;
+	int8_t				not_fcrdns;
+	int8_t				fcrdns;
 
 	int8_t				not_rdns;
 	int8_t				rdns;
 
-	int8_t				not_fcrdns;
-	int8_t				fcrdns;
+	int8_t                          not_rdns_table;
+	struct table                   *rdns_table;
+
+	int8_t                          not_rdns_regex;
+	struct table                   *rdns_regex;
+
+	int8_t                          not_src_table;
+	struct table                   *src_table;
+
+	int8_t                          not_src_regex;
+	struct table                   *src_regex;
+
 };
 
 enum filter_status {

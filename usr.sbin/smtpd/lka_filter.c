@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.16 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.17 2018/12/21 17:04:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -35,8 +35,10 @@
 #include "smtpd.h"
 #include "log.h"
 
-struct filter;
+#define	PROTOCOL_VERSION	1
 
+struct filter;
+struct filter_session;
 static void	filter_protocol(uint64_t, enum filter_phase, const char *);
 static void	filter_protocol_next(uint64_t, uint64_t, const char *);
 static void	filter_protocol_query(struct filter *, uint64_t, uint64_t, const char *, const char *);
@@ -45,11 +47,11 @@ static void	filter_data(uint64_t, const char *);
 static void	filter_data_next(uint64_t, uint64_t, const char *);
 static void	filter_data_query(struct filter *, uint64_t, uint64_t, const char *);
 
-static int	filter_builtins_notimpl(struct filter *, uint64_t, const char *);
-static int	filter_builtins_connect(struct filter *, uint64_t, const char *);
-static int	filter_builtins_helo(struct filter *, uint64_t, const char *);
-static int	filter_builtins_mail_from(struct filter *, uint64_t, const char *);
-static int	filter_builtins_rcpt_to(struct filter *, uint64_t, const char *);
+static int	filter_builtins_notimpl(struct filter_session *, struct filter *, uint64_t, const char *);
+static int	filter_builtins_connect(struct filter_session *, struct filter *, uint64_t, const char *);
+static int	filter_builtins_helo(struct filter_session *, struct filter *, uint64_t, const char *);
+static int	filter_builtins_mail_from(struct filter_session *, struct filter *, uint64_t, const char *);
+static int	filter_builtins_rcpt_to(struct filter_session *, struct filter *, uint64_t, const char *);
 
 static void	filter_result_proceed(uint64_t);
 static void	filter_result_rewrite(uint64_t, const char *);
@@ -60,12 +62,23 @@ static void	filter_session_io(struct io *, int, void *);
 int		lka_filter_process_response(const char *, const char *);
 
 
-#define	PROTOCOL_VERSION	1
+struct filter_session {
+	uint64_t	id;
+	struct io	*io;
+
+	char *filter_name;
+	struct sockaddr_storage ss_src;
+	struct sockaddr_storage ss_dest;
+	char *rdns;
+	int fcrdns;
+
+	enum filter_phase	phase;
+};
 
 static struct filter_exec {
 	enum filter_phase	phase;
 	const char	       *phase_name;
-	int		       (*func)(struct filter *, uint64_t, const char *);
+	int		       (*func)(struct filter_session *, struct filter *, uint64_t, const char *);
 } filter_execs[FILTER_PHASES_COUNT] = {
 	{ FILTER_CONNECT,	"connect",	filter_builtins_connect },
 	{ FILTER_HELO,		"helo",		filter_builtins_helo },
@@ -82,19 +95,6 @@ static struct filter_exec {
 	{ FILTER_HELP,    	"help",		filter_builtins_notimpl },
 	{ FILTER_WIZ,    	"wiz",		filter_builtins_notimpl },
 	{ FILTER_COMMIT,    	"commit",      	filter_builtins_notimpl },
-};
-
-struct filter_session {
-	uint64_t	id;
-	struct io	*io;
-
-	char *filter_name;
-	struct sockaddr_storage ss_src;
-	struct sockaddr_storage ss_dest;
-	char *rdns;
-	int fcrdns;
-
-	enum filter_phase	phase;
 };
 
 struct filter {
@@ -124,7 +124,6 @@ static struct tree	sessions;
 static int		inited;
 
 static struct dict	filter_chains;
-
 
 void
 lka_filter_init(void)
@@ -496,7 +495,7 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 			return;	/* deferred */
 		}
 
-		if (filter_execs[i].func(filter, reqid, param)) {
+		if (filter_execs[i].func(fs, filter, reqid, param)) {
 			if (filter->config->rewrite)
 				filter_result_rewrite(reqid, filter->config->rewrite);
 			else if (filter->config->disconnect)
@@ -534,7 +533,7 @@ filter_protocol_next(uint64_t token, uint64_t reqid, const char *param)
 			return;	/* deferred */
 		}
 
-		if (filter_execs[fs->phase].func(filter, reqid, param)) {
+		if (filter_execs[fs->phase].func(fs, filter, reqid, param)) {
 			if (filter->config->rewrite)
 				filter_result_rewrite(reqid, filter->config->rewrite);
 			else if (filter->config->disconnect)
@@ -696,27 +695,53 @@ filter_result_disconnect(uint64_t reqid, const char *message)
 /* below is code for builtin filters */
 
 static int
-filter_check_table(struct filter *filter, enum table_service kind, const char *key)
+filter_check_rdns_table(struct filter *filter, enum table_service kind, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->table) {
-		if (table_lookup(filter->config->table, NULL, key, kind, NULL) > 0)
+	if (filter->config->rdns_table) {
+		if (table_lookup(filter->config->rdns_table, NULL, key, kind, NULL) > 0)
 			ret = 1;
-		ret = filter->config->not_table < 0 ? !ret : ret;
+		ret = filter->config->not_rdns_table < 0 ? !ret : ret;
 	}
 	return ret;
 }
 
 static int
-filter_check_regex(struct filter *filter, const char *key)
+filter_check_rdns_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->regex) {
-		if (table_lookup(filter->config->regex, NULL, key, K_REGEX, NULL) > 0)
+	if (filter->config->rdns_regex) {
+		if (table_lookup(filter->config->rdns_regex, NULL, key, K_REGEX, NULL) > 0)
 			ret = 1;
-		ret = filter->config->not_regex < 0 ? !ret : ret;
+		ret = filter->config->not_rdns_regex < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_src_table(struct filter *filter, enum table_service kind, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->src_table) {
+		if (table_lookup(filter->config->src_table, NULL, key, kind, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_src_table < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_src_regex(struct filter *filter, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->src_regex) {
+		if (table_lookup(filter->config->src_regex, NULL, key, K_REGEX, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_src_regex < 0 ? !ret : ret;
 	}
 	return ret;
 }
@@ -750,73 +775,44 @@ filter_check_rdns(struct filter *filter, const char *hostname)
 }
 
 static int
-filter_builtins_notimpl(struct filter *filter, uint64_t reqid, const char *param)
+filter_builtins_notimpl(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
 	return 0;
 }
 
 static int
-filter_builtins_connect(struct filter *filter, uint64_t reqid, const char *param)
+filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
-	struct filter_session	*fs;
-
-	fs = tree_xget(&sessions, reqid);
-	if (filter_check_table(filter, K_NETADDR, param) ||
-	    filter_check_regex(filter, param) ||
+	if (filter_check_fcrdns(filter, fs->fcrdns) ||
 	    filter_check_rdns(filter, fs->rdns) ||
-	    filter_check_fcrdns(filter, fs->fcrdns))
+	    filter_check_rdns_table(filter, K_DOMAIN, fs->rdns) ||
+	    filter_check_rdns_regex(filter, fs->rdns) ||
+	    filter_check_src_table(filter, K_NETADDR, fs->rdns) ||
+	    filter_check_src_regex(filter, fs->rdns))
 		return 1;
 	return 0;
 }
 
 static int
-filter_builtins_helo(struct filter *filter, uint64_t reqid, const char *param)
+filter_builtins_connect(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
-	struct filter_session	*fs;
-
-	fs = tree_xget(&sessions, reqid);
-	if (filter_check_table(filter, K_DOMAIN, param) ||
-	    filter_check_regex(filter, param) ||
-	    filter_check_rdns(filter, fs->rdns) ||
-	    filter_check_fcrdns(filter, fs->fcrdns))
-		return 1;
-	return 0;
+	return filter_builtins_global(fs, filter, reqid, param);
 }
 
 static int
-filter_builtins_mail_from(struct filter *filter, uint64_t reqid, const char *param)
+filter_builtins_helo(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
-	char	buffer[SMTPD_MAXMAILADDRSIZE];
-	struct filter_session	*fs;
-
-	fs = tree_xget(&sessions, reqid);
-	(void)strlcpy(buffer, param+1, sizeof(buffer));
-	buffer[strcspn(buffer, ">")] = '\0';
-	param = buffer;
-
-	if (filter_check_table(filter, K_MAILADDR, param) ||
-	    filter_check_regex(filter, param) ||
-	    filter_check_rdns(filter, fs->rdns) ||
-	    filter_check_fcrdns(filter, fs->fcrdns))
-		return 1;
-	return 0;
+	return filter_builtins_global(fs, filter, reqid, param);
 }
 
 static int
-filter_builtins_rcpt_to(struct filter *filter, uint64_t reqid, const char *param)
+filter_builtins_mail_from(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
-	char	buffer[SMTPD_MAXMAILADDRSIZE];
-	struct filter_session	*fs;
+	return filter_builtins_global(fs, filter, reqid, param);
+}
 
-	fs = tree_xget(&sessions, reqid);
-	(void)strlcpy(buffer, param+1, sizeof(buffer));
-	buffer[strcspn(buffer, ">")] = '\0';
-	param = buffer;
-
-	if (filter_check_table(filter, K_MAILADDR, param) ||
-	    filter_check_regex(filter, param) ||
-	    filter_check_rdns(filter, fs->rdns) ||
-	    filter_check_fcrdns(filter, fs->fcrdns))
-		return 1;
-	return 0;
+static int
+filter_builtins_rcpt_to(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
+{
+	return filter_builtins_global(fs, filter, reqid, param);
 }

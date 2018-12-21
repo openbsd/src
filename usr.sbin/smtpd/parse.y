@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.238 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.239 2018/12/21 17:04:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -175,7 +175,7 @@ typedef struct {
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE BUILTIN
 %token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
-%token	CHECK_FCRDNS CHECK_RDNS CHECK_REGEX CHECK_TABLE
+%token	CHECK_FCRDNS CHECK_RDNS CHECK_RDNS_REGEX CHECK_RDNS_TABLE CHECK_SRC_REGEX CHECK_SRC_TABLE
 %token	DATA DATA_LINE DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
 %token	FILTER FOR FORWARD_ONLY FROM
@@ -1124,20 +1124,6 @@ REJECT STRING {
 }
 ;
 
-filter_phase_check_table:
-negation CHECK_TABLE tables {
-	filter_config->not_table =  $1 ? -1 : 1;
-	filter_config->table = $3;
-}
-;
-
-filter_phase_check_regex:
-negation CHECK_REGEX tables {
-	filter_config->not_regex = $1 ? -1 : 1;
-	filter_config->regex = $3;
-}
-;
-
 filter_phase_check_fcrdns:
 negation CHECK_FCRDNS {
 	filter_config->not_fcrdns = $1 ? -1 : 1;
@@ -1152,8 +1138,67 @@ negation CHECK_RDNS {
 }
 ;
 
+filter_phase_check_rdns_table:
+negation CHECK_RDNS_TABLE tables {
+	filter_config->not_rdns_table = $1 ? -1 : 1;
+	filter_config->rdns_table = $3;
+}
+;
+filter_phase_check_rdns_regex:
+negation CHECK_RDNS_REGEX tables {
+	filter_config->not_rdns_regex = $1 ? -1 : 1;
+	filter_config->rdns_regex = $3;
+}
+;
+
+filter_phase_check_src_table:
+negation CHECK_SRC_TABLE tables {
+	filter_config->not_src_table = $1 ? -1 : 1;
+	filter_config->src_table = $3;
+}
+;
+filter_phase_check_src_regex:
+negation CHECK_SRC_REGEX tables {
+	filter_config->not_src_regex = $1 ? -1 : 1;
+	filter_config->src_regex = $3;
+}
+;
+
+filter_phase_global_options:
+filter_phase_check_fcrdns |
+filter_phase_check_rdns |
+filter_phase_check_rdns_regex |
+filter_phase_check_rdns_table |
+filter_phase_check_src_regex |
+filter_phase_check_src_table;
+
 filter_phase_connect_options:
-filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
+filter_phase_global_options;
+
+filter_phase_helo_options:
+filter_phase_global_options;
+
+filter_phase_mail_from_options:
+filter_phase_global_options;
+
+filter_phase_rcpt_to_options:
+filter_phase_global_options;
+
+filter_phase_data_options:
+filter_phase_global_options;
+
+filter_phase_quit_options:
+filter_phase_global_options;
+
+filter_phase_rset_options:
+filter_phase_global_options;
+
+filter_phase_noop_options:
+filter_phase_global_options;
+
+filter_phase_commit_options:
+filter_phase_global_options;
+
 
 filter_phase_connect:
 CONNECT {
@@ -1161,8 +1206,6 @@ CONNECT {
 } filter_phase_connect_options filter_action_builtin
 ;
 
-filter_phase_helo_options:
-filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
 
 filter_phase_helo:
 HELO {
@@ -1176,17 +1219,11 @@ EHLO {
 } filter_phase_helo_options filter_action_builtin
 ;
 
-filter_phase_mail_from_options:
-filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
-
 filter_phase_mail_from:
 MAIL_FROM {
 	filter_config->phase = FILTER_MAIL_FROM;
 } filter_phase_mail_from_options filter_action_builtin
 ;
-
-filter_phase_rcpt_to_options:
-filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns | filter_phase_check_rdns;
 
 filter_phase_rcpt_to:
 RCPT_TO {
@@ -1197,37 +1234,39 @@ RCPT_TO {
 filter_phase_data:
 DATA {
 	filter_config->phase = FILTER_DATA;
-} filter_action_builtin
+} filter_phase_data_options filter_action_builtin
 ;
 
+/*
 filter_phase_data_line:
 DATA_LINE {
 	filter_config->phase = FILTER_DATA_LINE;
 } filter_action_builtin
 ;
+*/
 
 filter_phase_quit:
 QUIT {
 	filter_config->phase = FILTER_QUIT;
-} filter_action_builtin
+} filter_phase_quit_options filter_action_builtin
 ;
 
 filter_phase_rset:
 RSET {
 	filter_config->phase = FILTER_RSET;
-} filter_action_builtin
+} filter_phase_rset_options filter_action_builtin
 ;
 
 filter_phase_noop:
 NOOP {
 	filter_config->phase = FILTER_NOOP;
-} filter_action_builtin
+} filter_phase_noop_options filter_action_builtin
 ;
 
 filter_phase_commit:
 COMMIT {
 	filter_config->phase = FILTER_COMMIT;
-} filter_action_builtin
+} filter_phase_commit_options filter_action_builtin
 ;
 
 
@@ -1239,7 +1278,7 @@ filter_phase_connect
 | filter_phase_mail_from
 | filter_phase_rcpt_to
 | filter_phase_data
-| filter_phase_data_line
+/*| filter_phase_data_line*/
 | filter_phase_quit
 | filter_phase_noop
 | filter_phase_rset
@@ -1942,8 +1981,10 @@ lookup(char *s)
 		{ "chain",		CHAIN },
 		{ "check-fcrdns",      	CHECK_FCRDNS },
 		{ "check-rdns",		CHECK_RDNS },
-		{ "check-regex",	CHECK_REGEX },
-		{ "check-table",	CHECK_TABLE },
+		{ "check-rdns-regex",	CHECK_RDNS_REGEX },
+		{ "check-rdns-table",	CHECK_RDNS_TABLE },
+		{ "check-src-regex",	CHECK_SRC_REGEX },
+		{ "check-src-table",	CHECK_SRC_TABLE },
 		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
 		{ "commit",		COMMIT },
