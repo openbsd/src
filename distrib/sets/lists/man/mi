@@ -1240,6 +1240,7 @@
 ./usr/share/man/man4/bnx.4
 ./usr/share/man/man4/bnxt.4
 ./usr/share/man/man4/boca.4
+./usr/share/man/man4/bpe.4
 ./usr/share/man/man4/bpf.4
 ./usr/share/man/man4/brgphy.4
 ./usr/share/man/man4/bridge.4
