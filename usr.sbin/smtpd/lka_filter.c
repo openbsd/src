@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.18 2018/12/21 17:22:50 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.19 2018/12/21 17:31:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -157,14 +157,26 @@ lka_filter_init(void)
 			break;
 
 		case FILTER_TYPE_CHAIN:
+			break;
+		}
+	}
+
+	iter = NULL;
+	while (dict_iter(env->sc_filters_dict, &iter, &name, (void **)&filter_config)) {
+		switch (filter_config->filter_type) {
+		case FILTER_TYPE_CHAIN:
 			filter = xcalloc(1, sizeof(*filter));
 			filter->name = name;
 			filter->chain = xcalloc(filter_config->chain_size, sizeof(void **));
 			filter->chain_size = filter_config->chain_size;
 			filter->config = filter_config;
 			for (i = 0; i < filter->chain_size; ++i)
-				filter->chain[i] = dict_get(&filters, filter_config->chain[i]);
+				filter->chain[i] = dict_xget(&filters, filter_config->chain[i]);
 			dict_set(&filters, name, filter);
+			break;
+
+		case FILTER_TYPE_BUILTIN:
+		case FILTER_TYPE_PROC:
 			break;
 		}
 	}
@@ -232,6 +244,7 @@ lka_filter_ready(void)
 			}
 			continue;
 		}
+
 		for (i = 0; i < nitems(filter_execs); ++i) {
 			if (filter->phases & (1<<i)) {
 				filter_entry = xcalloc(1, sizeof *filter_entry);
