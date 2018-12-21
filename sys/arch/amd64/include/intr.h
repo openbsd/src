@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.30 2018/08/20 15:02:07 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.31 2018/12/21 01:51:07 jsg Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -206,7 +206,6 @@ void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
 void intr_disestablish(struct intrhand *);
 int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int bus, int pin, int *handle);
 void intr_printconfig(void);
 void intr_barrier(void *);
 
