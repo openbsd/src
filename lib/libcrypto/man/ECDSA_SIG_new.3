@@ -1,5 +1,6 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.11 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.12 2018/12/21 22:13:28 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
+.\" selective merge up to: OpenSSL 6da34cfb Jun 2 16:17:32 2018 -0400
 .\"
 .\" This file was written by Nils Larsch <nils@openssl.org>.
 .\" Copyright (c) 2004, 2005, 2013, 2016 The OpenSSL Project.
@@ -49,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: December 21 2018 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -376,6 +377,13 @@ of size
 using the public key
 .Fa eckey .
 .Sh RETURN VALUES
+.Fn ECDSA_SIG_new
+returns the new
+.Vt ECDSA_SIG
+object or
+.Dv NULL
+if an error occurs.
+.Pp
 .Fn ECDSA_size
 returns the maximum length signature or 0 on error.
 .Pp
