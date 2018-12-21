@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.20 2018/12/21 19:07:47 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.21 2018/12/21 20:38:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -264,9 +264,10 @@ lka_filter_proc_in_session(uint64_t reqid, const char *proc)
 	struct filter		*filter;
 	size_t			 i;
 
-	fs = tree_xget(&sessions, reqid);
-	filter = dict_get(&filters, fs->filter_name);
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
+		return 0;
 
+	filter = dict_get(&filters, fs->filter_name);
 	if (filter->proc == NULL && filter->chain == NULL)
 		return 0;
 
@@ -531,9 +532,11 @@ filter_protocol_next(uint64_t token, uint64_t reqid, const char *param)
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
-	fs = tree_xget(&sessions, reqid);
-	filter_chain = dict_get(&filter_chains, fs->filter_name);
+	/* client session may have disappeared while we were in proc */
+	if ((fs = tree_xget(&sessions, reqid)) == NULL)
+		return;
 
+	filter_chain = dict_get(&filter_chains, fs->filter_name);
 	TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)
 	    if (filter_entry->id == token)
 		    break;
@@ -591,7 +594,7 @@ filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
-	/* client session may have disappeared since we started streaming data */
+	/* client session may have disappeared while we were in proc */
 	if ((fs = tree_get(&sessions, reqid)) == NULL)
 		return;
 
