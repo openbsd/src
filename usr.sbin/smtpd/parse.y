@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.237 2018/12/13 14:43:31 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.238 2018/12/21 14:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -106,7 +106,8 @@ static struct ca	*sca;
 struct dispatcher	*dispatcher;
 struct rule		*rule;
 struct processor	*processor;
-struct filter_rule	*filter_rule;
+struct filter_config	*filter_config;
+/*static uint64_t		 last_dynproc_id = 1;*/
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -172,8 +173,8 @@ typedef struct {
 %}
 
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
-%token	BACKUP BOUNCE
-%token	CA CERT CHROOT CIPHERS COMMIT COMPRESSION CONNECT
+%token	BACKUP BOUNCE BUILTIN
+%token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
 %token	CHECK_FCRDNS CHECK_RDNS CHECK_REGEX CHECK_TABLE
 %token	DATA DATA_LINE DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
@@ -187,7 +188,7 @@ typedef struct {
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NO_DSN NO_VERIFY NOOP
 %token	ON
-%token	PKI PORT PROC
+%token	PKI PORT PROC PROC_EXEC
 %token	QUEUE QUIT
 %token	RCPT_TO RECIPIENT RECEIVEDAUTH RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
@@ -1116,38 +1117,38 @@ MATCH {
 
 filter_action_builtin:
 REJECT STRING {
-	filter_rule->reject = $2;
+	filter_config->reject = $2;
 }
 | DISCONNECT STRING {
-	filter_rule->disconnect = $2;
+	filter_config->disconnect = $2;
 }
 ;
 
 filter_phase_check_table:
 negation CHECK_TABLE tables {
-	filter_rule->not_table =  $1 ? -1 : 1;
-	filter_rule->table = $3;
+	filter_config->not_table =  $1 ? -1 : 1;
+	filter_config->table = $3;
 }
 ;
 
 filter_phase_check_regex:
 negation CHECK_REGEX tables {
-	filter_rule->not_regex = $1 ? -1 : 1;
-	filter_rule->regex = $3;
+	filter_config->not_regex = $1 ? -1 : 1;
+	filter_config->regex = $3;
 }
 ;
 
 filter_phase_check_fcrdns:
 negation CHECK_FCRDNS {
-	filter_rule->not_fcrdns = $1 ? -1 : 1;
-	filter_rule->fcrdns = 1;
+	filter_config->not_fcrdns = $1 ? -1 : 1;
+	filter_config->fcrdns = 1;
 }
 ;
 
 filter_phase_check_rdns:
 negation CHECK_RDNS {
-	filter_rule->not_rdns = $1 ? -1 : 1;
-	filter_rule->rdns = 1;
+	filter_config->not_rdns = $1 ? -1 : 1;
+	filter_config->rdns = 1;
 }
 ;
 
@@ -1156,7 +1157,7 @@ filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns 
 
 filter_phase_connect:
 CONNECT {
-	filter_rule->phase = FILTER_CONNECTED;
+	filter_config->phase = FILTER_CONNECT;
 } filter_phase_connect_options filter_action_builtin
 ;
 
@@ -1165,13 +1166,13 @@ filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns 
 
 filter_phase_helo:
 HELO {
-	filter_rule->phase = FILTER_HELO;
+	filter_config->phase = FILTER_HELO;
 } filter_phase_helo_options filter_action_builtin
 ;
 
 filter_phase_ehlo:
 EHLO {
-	filter_rule->phase = FILTER_EHLO;
+	filter_config->phase = FILTER_EHLO;
 } filter_phase_helo_options filter_action_builtin
 ;
 
@@ -1180,7 +1181,7 @@ filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns 
 
 filter_phase_mail_from:
 MAIL_FROM {
-	filter_rule->phase = FILTER_MAIL_FROM;
+	filter_config->phase = FILTER_MAIL_FROM;
 } filter_phase_mail_from_options filter_action_builtin
 ;
 
@@ -1189,45 +1190,46 @@ filter_phase_check_table | filter_phase_check_regex | filter_phase_check_fcrdns 
 
 filter_phase_rcpt_to:
 RCPT_TO {
-	filter_rule->phase = FILTER_RCPT_TO;
+	filter_config->phase = FILTER_RCPT_TO;
 } filter_phase_rcpt_to_options filter_action_builtin
 ;
 
 filter_phase_data:
 DATA {
-	filter_rule->phase = FILTER_DATA;
+	filter_config->phase = FILTER_DATA;
 } filter_action_builtin
 ;
 
 filter_phase_data_line:
 DATA_LINE {
-	filter_rule->phase = FILTER_DATA_LINE;
+	filter_config->phase = FILTER_DATA_LINE;
 } filter_action_builtin
 ;
 
 filter_phase_quit:
 QUIT {
-	filter_rule->phase = FILTER_QUIT;
+	filter_config->phase = FILTER_QUIT;
 } filter_action_builtin
 ;
 
 filter_phase_rset:
 RSET {
-	filter_rule->phase = FILTER_RSET;
+	filter_config->phase = FILTER_RSET;
 } filter_action_builtin
 ;
 
 filter_phase_noop:
 NOOP {
-	filter_rule->phase = FILTER_NOOP;
+	filter_config->phase = FILTER_NOOP;
 } filter_action_builtin
 ;
 
 filter_phase_commit:
 COMMIT {
-	filter_rule->phase = FILTER_COMMIT;
+	filter_config->phase = FILTER_COMMIT;
 } filter_action_builtin
 ;
+
 
 
 filter_phase:
@@ -1244,28 +1246,131 @@ filter_phase_connect
 | filter_phase_commit
 ;
 
+
+filterel:
+STRING	{
+	struct filter_config   *fr;
+	size_t			i;
+
+	if ((fr = dict_get(conf->sc_filters_dict, $1)) == NULL) {
+		yyerror("no filter exist with that name: %s", $1);
+		free($1);
+		YYERROR;
+	}
+	if (fr->filter_type == FILTER_TYPE_CHAIN) {
+		yyerror("no filter chain allowed within a filter chain: %s", $1);
+		free($1);
+		YYERROR;
+	}
+
+	for (i = 0; i < filter_config->chain_size; i++) {
+		if (strcmp(filter_config->chain[i], $1) == 0) {
+			yyerror("no filter allowed twice within a filter chain: %s", $1);
+			free($1);
+			YYERROR;
+		}
+	}
+
+	if (fr->proc) {
+		if (dict_check(&filter_config->chain_procs, fr->proc)) {
+			yyerror("no proc allowed twice within a filter chain: %s", fr->proc);
+			free($1);
+			YYERROR;
+		}
+		dict_set(&filter_config->chain_procs, fr->proc, NULL);
+	}
+
+	filter_config->chain_size += 1;
+	filter_config->chain = reallocarray(filter_config->chain, filter_config->chain_size, sizeof(char *));
+	if (filter_config->chain == NULL)
+		err(1, NULL);
+	filter_config->chain[filter_config->chain_size - 1] = $1;
+}
+;
+
+filter_list:
+filterel
+| filterel comma filter_list
+;
+
 filter:
-FILTER SMTP_IN {
-	filter_rule = xcalloc(1, sizeof *filter_rule);
+/*
+FILTER STRING PROC STRING {
+	if (dict_get(conf->sc_filters_dict, $2)) {
+		yyerror("filter already exists with that name: %s", $2);
+		free($2);
+		free($4);
+		YYERROR;
+	}
+	if (! dict_get(conf->sc_processors_dict, $4)) {
+		yyerror("no processor exist with that name: %s", $4);
+		free($4);
+		YYERROR;
+	}
+
+	filter_config = xcalloc(1, sizeof *filter_config);
+	filter_config->filter_type = FILTER_TYPE_PROC;
+	filter_config->name = $2;
+	filter_config->proc = $4;
+	dict_set(conf->sc_filters_dict, $2, filter_config);
+	filter_config = NULL;
+}
+|
+FILTER STRING PROC_EXEC STRING {
+	char	buffer[128];
+
+	do {
+		(void)snprintf(buffer, sizeof buffer, "<dynproc:%016"PRIx64">", last_dynproc_id++);
+	} while (dict_check(conf->sc_processors_dict, buffer));
+
+	if (dict_get(conf->sc_filters_dict, $2)) {
+		yyerror("filter already exists with that name: %s", $2);
+		free($2);
+		free($4);
+		YYERROR;
+	}
+
+	processor = xcalloc(1, sizeof *processor);
+	processor->command = $4;
+
+	filter_config = xcalloc(1, sizeof *filter_config);
+	filter_config->filter_type = FILTER_TYPE_PROC;
+	filter_config->name = $2;
+	filter_config->proc = xstrdup(buffer);
+	dict_set(conf->sc_filters_dict, $2, filter_config);
+} proc_params {
+	dict_set(conf->sc_processors_dict, filter_config->proc, processor);
+	processor = NULL;
+	filter_config = NULL;
+}
+|
+*/
+FILTER STRING BUILTIN {
+	if (dict_get(conf->sc_filters_dict, $2)) {
+		yyerror("filter already exists with that name: %s", $2);
+		free($2);
+		YYERROR;
+	}
+	filter_config = xcalloc(1, sizeof *filter_config);
+	filter_config->name = $2;
+	filter_config->filter_type = FILTER_TYPE_BUILTIN;
+	dict_set(conf->sc_filters_dict, $2, filter_config);
 } filter_phase {
-	TAILQ_INSERT_TAIL(&conf->sc_filter_rules[filter_rule->phase], filter_rule, entry);
-	filter_rule = NULL;
+	filter_config = NULL;
 }
-| FILTER SMTP_IN ON STRING {
-	if (! dict_get(conf->sc_processors_dict, $4)) {
-		yyerror("no processor exist with that name: %s", $4);
-		free($4);
+|
+FILTER STRING CHAIN {
+	if (dict_get(conf->sc_filters_dict, $2)) {
+		yyerror("filter already exists with that name: %s", $2);
+		free($2);
 		YYERROR;
 	}
-	dict_set(conf->sc_smtp_reporters_dict, $4, (void *)~0);
-}
-| FILTER SMTP_OUT ON STRING {
-	if (! dict_get(conf->sc_processors_dict, $4)) {
-		yyerror("no processor exist with that name: %s", $4);
-		free($4);
-		YYERROR;
-	}
-	dict_set(conf->sc_mta_reporters_dict, $4, (void *)~0);
+	filter_config = xcalloc(1, sizeof *filter_config);
+	filter_config->filter_type = FILTER_TYPE_CHAIN;
+	dict_init(&filter_config->chain_procs);
+} '{' filter_list '}' {
+	dict_set(conf->sc_filters_dict, $2, filter_config);
+	filter_config = NULL;
 }
 ;
 
@@ -1409,12 +1514,19 @@ limits_scheduler: opt_limit_scheduler limits_scheduler
 		;
 
 
-opt_sock_listen : FILTER {
+opt_sock_listen : FILTER STRING {
 			if (listen_opts.options & LO_FILTER) {
 				yyerror("filter already specified");
+				free($2);
+				YYERROR;
+			}
+			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
+				yyerror("no filter exist with that name: %s", $2);
+				free($2);
 				YYERROR;
 			}
 			listen_opts.options |= LO_FILTER;
+			listen_opts.filtername = $2;
 		}
 		| MASK_SRC {
 			if (config_lo_mask_source(&listen_opts)) {
@@ -1470,12 +1582,18 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.port = $2;
 		}
-		| FILTER			{
+		| FILTER STRING			{
 			if (listen_opts.options & LO_FILTER) {
 				yyerror("filter already specified");
 				YYERROR;
 			}
+			if (dict_get(conf->sc_filters_dict, $2) == NULL) {
+				yyerror("no filter exist with that name: %s", $2);
+				free($2);
+				YYERROR;
+			}
 			listen_opts.options |= LO_FILTER;
+			listen_opts.filtername = $2;
 		}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
@@ -1818,8 +1936,10 @@ lookup(char *s)
 		{ "auth-optional",     	AUTH_OPTIONAL },
 		{ "backup",		BACKUP },
 		{ "bounce",		BOUNCE },
+		{ "builtin",		BUILTIN },
 		{ "ca",			CA },
 		{ "cert",		CERT },
+		{ "chain",		CHAIN },
 		{ "check-fcrdns",      	CHECK_FCRDNS },
 		{ "check-rdns",		CHECK_RDNS },
 		{ "check-regex",	CHECK_REGEX },
@@ -1874,6 +1994,7 @@ lookup(char *s)
 		{ "pki",		PKI },
 		{ "port",		PORT },
 		{ "proc",		PROC },
+		{ "proc-exec",		PROC_EXEC },
 		{ "queue",		QUEUE },
 		{ "quit",		QUIT },
 		{ "rcpt-to",		RCPT_TO },
@@ -2454,8 +2575,12 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	if (lo->hostname == NULL)
 		lo->hostname = conf->sc_hostname;
 
-	if (lo->options & LO_FILTER)
+	if (lo->options & LO_FILTER) {
 		h->flags |= F_FILTERED;
+		(void)strlcpy(h->filter_name,
+		    lo->filtername,
+		    sizeof(h->filter_name));
+	}
 
 	h->pki_name[0] = '\0';
 

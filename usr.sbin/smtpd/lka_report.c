@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.15 2018/12/13 17:08:10 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.16 2018/12/21 14:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -37,27 +37,127 @@
 
 #define	PROTOCOL_VERSION	1
 
+struct reporter_proc {
+	TAILQ_ENTRY(reporter_proc)	entries;
+	const char		       *name;
+};
+TAILQ_HEAD(reporters, reporter_proc);
+
+static struct dict	smtp_in;
+static struct dict	smtp_out;
+
+static struct smtp_events {
+	const char     *event;
+} smtp_events[] = {
+	{ "link-connect" },
+	{ "link-disconnect" },
+	{ "link-identify" },
+	{ "link-tls" },
+
+	{ "tx-begin" },
+	{ "tx-mail" },
+	{ "tx-rcpt" },
+	{ "tx-envelope" },
+	{ "tx-data" },
+	{ "tx-commit" },
+	{ "tx-rollback" },
+
+	{ "protocol-client" },
+	{ "protocol-server" },
+
+	{ "filter-response" },
+};
+
+
+void
+lka_report_init(void)
+{
+	struct reporters	*tailq;
+	size_t			 i;
+
+	dict_init(&smtp_in);
+	dict_init(&smtp_out);
+
+	for (i = 0; i < nitems(smtp_events); ++i) {
+		tailq = xcalloc(1, sizeof (struct reporters *));
+		TAILQ_INIT(tailq);
+		dict_xset(&smtp_in, smtp_events[i].event, tailq);
+
+		tailq = xcalloc(1, sizeof (struct reporters *));
+		TAILQ_INIT(tailq);
+		dict_xset(&smtp_out, smtp_events[i].event, tailq);
+	}
+}
+
+void
+lka_report_register_hook(const char *name, const char *hook)
+{
+	struct dict	*subsystem;
+	struct reporter_proc	*rp;
+	struct reporters	*tailq;
+	void *iter;
+	size_t	i;
+
+	if (strncasecmp(hook, "smtp-in|", 8) == 0) {
+		subsystem = &smtp_in;
+		hook += 8;
+	}
+	else if (strncasecmp(hook, "smtp-out|", 9) == 0) {
+		subsystem = &smtp_out;
+		hook += 9;
+	}
+	else
+		return;
+
+	if (strcmp(hook, "*") == 0) {
+		iter = NULL;
+		while (dict_iter(subsystem, &iter, NULL, (void **)&tailq)) {
+			rp = xcalloc(1, sizeof *rp);
+			rp->name = xstrdup(name);
+			TAILQ_INSERT_TAIL(tailq, rp, entries);
+		}
+		return;
+	}
+
+	for (i = 0; i < nitems(smtp_events); i++)
+		if (strcmp(hook, smtp_events[i].event) == 0)
+			break;
+	if (i == nitems(smtp_events))
+		return;
+
+	tailq = dict_get(subsystem, hook);
+	rp = xcalloc(1, sizeof *rp);
+	rp->name = xstrdup(name);
+	TAILQ_INSERT_TAIL(tailq, rp, entries);
+}
+
 static void
-report_smtp_broadcast(const char *direction, struct timeval *tv, const char *format, ...)
+report_smtp_broadcast(uint64_t reqid, const char *direction, struct timeval *tv, const char *event,
+    const char *format, ...)
 {
 	va_list		ap;
-	void		*hdl = NULL;
-	const char	*reporter;
 	struct dict	*d;
+	struct reporters	*tailq;
+	struct reporter_proc	*rp;
 
 	if (strcmp("smtp-in", direction) == 0)
-		d = env->sc_smtp_reporters_dict;
-	if (strcmp("smtp-out", direction) == 0)
-		d = env->sc_mta_reporters_dict;
+		d = &smtp_in;
 
-	va_start(ap, format);
-	while (dict_iter(d, &hdl, &reporter, NULL)) {
-		if (io_printf(lka_proc_get_io(reporter), "report|%d|%lld.%06ld|%s|",
-			PROTOCOL_VERSION, tv->tv_sec, tv->tv_usec, direction) == -1 ||
-		    io_vprintf(lka_proc_get_io(reporter), format, ap) == -1)
+	if (strcmp("smtp-out", direction) == 0)
+		d = &smtp_out;
+
+	tailq = dict_xget(d, event);
+	TAILQ_FOREACH(rp, tailq, entries) {
+		if (!lka_filter_proc_in_session(reqid, rp->name))
+			continue;
+
+		va_start(ap, format);
+		if (io_printf(lka_proc_get_io(rp->name), "report|%d|%lld.%06ld|%s|%s|",
+			PROTOCOL_VERSION, tv->tv_sec, tv->tv_usec, direction, event) == -1 ||
+		    io_vprintf(lka_proc_get_io(rp->name), format, ap) == -1)
 			fatalx("failed to write to processor");
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 void
@@ -97,37 +197,37 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
 		break;
 	}
 	
-	report_smtp_broadcast(direction, tv,
-	    "link-connect|%016"PRIx64"|%s|%s|%s:%d|%s:%d\n",
+	report_smtp_broadcast(reqid, direction, tv, "link-connect",
+	    "%016"PRIx64"|%s|%s|%s:%d|%s:%d\n",
 	    reqid, rdns, fcrdns_str, src, src_port, dest, dest_port);
 }
 
 void
 lka_report_smtp_link_disconnect(const char *direction, struct timeval *tv, uint64_t reqid)
 {
-	report_smtp_broadcast(direction, tv,
-	    "link-disconnect|%016"PRIx64"\n", reqid);
+	report_smtp_broadcast(reqid, direction, tv, "link-disconnect",
+	    "%016"PRIx64"\n", reqid);
 }
 
 void
 lka_report_smtp_link_identify(const char *direction, struct timeval *tv, uint64_t reqid, const char *heloname)
 {
-	report_smtp_broadcast(direction, tv,
-	    "link-identify|%016"PRIx64"|%s\n", reqid, heloname);
+	report_smtp_broadcast(reqid, direction, tv, "link-identify",
+	    "%016"PRIx64"|%s\n", reqid, heloname);
 }
 
 void
 lka_report_smtp_link_tls(const char *direction, struct timeval *tv, uint64_t reqid, const char *ciphers)
 {
-	report_smtp_broadcast(direction, tv,
-	    "link-tls|%016"PRIx64"|%s\n", reqid, ciphers);
+	report_smtp_broadcast(reqid, direction, tv, "link-tls",
+	    "%016"PRIx64"|%s\n", reqid, ciphers);
 }
 
 void
 lka_report_smtp_tx_begin(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast(direction, tv,
-	    "tx-begin|%016"PRIx64"|%08x\n", reqid, msgid);
+	report_smtp_broadcast(reqid, direction, tv, "tx-begin",
+	    "%016"PRIx64"|%08x\n", reqid, msgid);
 }
 
 void
@@ -146,8 +246,8 @@ lka_report_smtp_tx_mail(const char *direction, struct timeval *tv, uint64_t reqi
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tv,
-	    "tx-mail|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
+	report_smtp_broadcast(reqid, direction, tv, "tx-mail",
+	    "%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
 }
 
 void
@@ -166,15 +266,15 @@ lka_report_smtp_tx_rcpt(const char *direction, struct timeval *tv, uint64_t reqi
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tv,
-	    "tx-rcpt|%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
+	report_smtp_broadcast(reqid, direction, tv, "tx-rcpt",
+	    "%016"PRIx64"|%08x|%s|%s\n", reqid, msgid, address, result);
 }
 
 void
 lka_report_smtp_tx_envelope(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, uint64_t evpid)
 {
-	report_smtp_broadcast(direction, tv,
-	    "tx-envelope|%016"PRIx64"|%08x|%016"PRIx64"\n",
+	report_smtp_broadcast(reqid, direction, tv, "tx-envelope",
+	    "%016"PRIx64"|%08x|%016"PRIx64"\n",
 	    reqid, msgid, evpid);
 }
 
@@ -194,39 +294,39 @@ lka_report_smtp_tx_data(const char *direction, struct timeval *tv, uint64_t reqi
 		result = "tempfail";
 		break;
 	}
-	report_smtp_broadcast(direction, tv,
-	    "tx-data|%016"PRIx64"|%08x|%s\n", reqid, msgid, result);
+	report_smtp_broadcast(reqid, direction, tv, "tx-data",
+	    "%016"PRIx64"|%08x|%s\n", reqid, msgid, result);
 }
 
 void
 lka_report_smtp_tx_commit(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid, size_t msgsz)
 {
-	report_smtp_broadcast(direction, tv,
-	    "tx-commit|%016"PRIx64"|%08x|%zd\n",
+	report_smtp_broadcast(reqid, direction, tv, "tx-commit",
+	    "%016"PRIx64"|%08x|%zd\n",
 	    reqid, msgid, msgsz);
 }
 
 void
 lka_report_smtp_tx_rollback(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid)
 {
-	report_smtp_broadcast(direction, tv,
-	    "tx-rollback|%016"PRIx64"|%08x\n",
+	report_smtp_broadcast(reqid, direction, tv, "tx-rollback",
+	    "%016"PRIx64"|%08x\n",
 	    reqid, msgid);
 }
 
 void
 lka_report_smtp_protocol_client(const char *direction, struct timeval *tv, uint64_t reqid, const char *command)
 {
-	report_smtp_broadcast(direction, tv,
-	    "protocol-client|%016"PRIx64"|%s\n",
+	report_smtp_broadcast(reqid, direction, tv, "protocol-client",
+	    "%016"PRIx64"|%s\n",
 	    reqid, command);
 }
 
 void
 lka_report_smtp_protocol_server(const char *direction, struct timeval *tv, uint64_t reqid, const char *response)
 {
-	report_smtp_broadcast(direction, tv,
-	    "protocol-server|%016"PRIx64"|%s\n",
+	report_smtp_broadcast(reqid, direction, tv, "protocol-server",
+	    "%016"PRIx64"|%s\n",
 	    reqid, response);
 }
 
@@ -238,7 +338,7 @@ lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint6
 	const char *response_name;
 
 	switch (phase) {
-	case FILTER_CONNECTED:
+	case FILTER_CONNECT:
 		phase_name = "connected";
 		break;
 	case FILTER_HELO:
@@ -304,7 +404,7 @@ lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint6
 		response_name = "";
 	}
 
-	report_smtp_broadcast(direction, tv,
-	    "filter-response|%016"PRIx64"|%s|%s|%s\n",
-	    reqid, phase_name, response_name, param ? param : "");
+	report_smtp_broadcast(reqid, direction, tv, "filter-response",
+	    "%016"PRIx64"|%s|%s%s%s\n",
+	    reqid, phase_name, response_name, param ? "|" : "", param ? param : "");
 }

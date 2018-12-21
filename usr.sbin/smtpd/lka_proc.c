@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.4 2018/12/06 13:57:06 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.5 2018/12/21 14:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -38,14 +38,27 @@
 static int			inited = 0;
 static struct dict		processors;
 
-
 struct processor_instance {
 	char			*name;
 	struct io		*io;
+	int			 ready;
 };
 
 static void	processor_io(struct io *, int, void *);
 int		lka_filter_process_response(const char *, const char *);
+
+int
+lka_proc_ready(void)
+{
+	void	*iter;
+	struct processor_instance	*pi;
+
+	iter = NULL;
+	while (dict_iter(&processors, &iter, NULL, (void **)&pi))
+		if (!pi->ready)
+			return 0;
+	return 1;
+}
 
 void
 lka_proc_forked(const char *name, int fd)
@@ -76,6 +89,29 @@ lka_proc_get_io(const char *name)
 }
 
 static void
+processor_register(const char *name, const char *line)
+{
+	struct processor_instance *processor;
+
+	processor = dict_xget(&processors, name);
+
+	if (strcasecmp(line, "register|ready") == 0) {
+		processor->ready = 1;
+		return;
+	}
+
+	if (strncasecmp(line, "register|report|", 16) == 0) {
+		lka_report_register_hook(name, line+16);
+		return;
+	}
+
+	if (strncasecmp(line, "register|filter|", 16) == 0) {
+		lka_filter_register_hook(name, line+16);
+		return;
+	}
+}
+
+static void
 processor_io(struct io *io, int evt, void *arg)
 {
 	const char		*name = arg;
@@ -90,7 +126,9 @@ processor_io(struct io *io, int evt, void *arg)
 		if (line == NULL)
 			return;
 
-		if (! lka_filter_process_response(name, line))
+		if (strncasecmp("register|", line, 9) == 0)
+			processor_register(name, line);
+		else if (! lka_filter_process_response(name, line))
 			fatalx("misbehaving filter");
 
 		goto nextline;

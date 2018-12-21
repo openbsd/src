@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.594 2018/12/13 17:08:10 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.595 2018/12/21 14:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -410,7 +410,7 @@ enum expand_type {
 };
 
 enum filter_phase {
-	FILTER_CONNECTED = 0,
+	FILTER_CONNECT,
 	FILTER_HELO,
 	FILTER_EHLO,
 	FILTER_STARTTLS,
@@ -526,6 +526,7 @@ struct listener {
 	in_port_t		 port;
 	struct timeval		 timeout;
 	struct event		 ev;
+	char			 filter_name[PATH_MAX];
 	char			 pki_name[PATH_MAX];
 	char			 ca_name[PATH_MAX];
 	char			 tag[SMTPD_TAG_SIZE];
@@ -582,8 +583,6 @@ struct smtpd {
 	size_t				sc_scheduler_max_schedule;
 
 	struct dict		       *sc_processors_dict;
-	struct dict		       *sc_smtp_reporters_dict;
-	struct dict		       *sc_mta_reporters_dict;
 
 	int				sc_ttl;
 #define MAX_BOUNCE_WARN			4
@@ -600,8 +599,9 @@ struct smtpd {
 	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 
 	TAILQ_HEAD(rulelist, rule)		*sc_rules;
-	TAILQ_HEAD(filterrules, filter_rule)    sc_filter_rules[FILTER_PHASES_COUNT];
 
+
+	struct dict				*sc_filters_dict;
 	struct dict				*sc_dispatchers;
 	struct dispatcher			*sc_dispatcher_bounce;
 
@@ -1039,14 +1039,24 @@ struct processor {
 	const char		       *chroot;
 };
 
-struct filter_rule {
-	TAILQ_ENTRY(filter_rule)        entry;
+enum filter_type {
+	FILTER_TYPE_BUILTIN,
+	FILTER_TYPE_PROC,
+	FILTER_TYPE_CHAIN,
+};
 
+struct filter_config {
+	char			       *name;
+	enum filter_type		filter_type;
 	enum filter_phase               phase;
 	char                           *reject;
 	char                           *disconnect;
 	char                           *rewrite;
 	char                           *proc;
+
+	const char		      **chain;
+	size_t				chain_size;
+	struct dict			chain_procs;
 
 	int8_t                          not_table;
 	struct table                   *table;
@@ -1322,11 +1332,14 @@ int lka(void);
 
 
 /* lka_proc.c */
+int lka_proc_ready(void);
 void lka_proc_forked(const char *, int);
 struct io *lka_proc_get_io(const char *);
 
 
 /* lka_report.c */
+void lka_report_init(void);
+void lka_report_register_hook(const char *, const char *);
 void lka_report_smtp_link_connect(const char *, struct timeval *, uint64_t, const char *, int,
     const struct sockaddr_storage *, const struct sockaddr_storage *);
 void lka_report_smtp_link_disconnect(const char *, struct timeval *, uint64_t);
@@ -1346,7 +1359,11 @@ void lka_report_smtp_filter_response(const char *, struct timeval *, uint64_t,
 
 
 /* lka_filter.c */
-void lka_filter_begin(uint64_t, const struct sockaddr_storage *, const struct sockaddr_storage *, const char *, int);
+void lka_filter_init(void);
+void lka_filter_register_hook(const char *, const char *);
+void lka_filter_ready(void);
+int lka_filter_proc_in_session(uint64_t, const char *);
+void lka_filter_begin(uint64_t, const char *, const struct sockaddr_storage *, const struct sockaddr_storage *, const char *, int);
 void lka_filter_end(uint64_t);
 void lka_filter_protocol(uint64_t, enum filter_phase, const char *);
 void lka_filter_data_begin(uint64_t);

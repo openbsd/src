@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.377 2018/12/20 19:57:30 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.378 2018/12/21 14:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -169,8 +169,7 @@ struct smtp_session {
 	((s)->listener->flags & F_FILTERED)
 
 #define	SESSION_DATA_FILTERED(s) \
-	(((s)->listener->flags & F_FILTERED) && \
-	    TAILQ_FIRST(&env->sc_filter_rules[FILTER_DATA_LINE]))
+	((s)->listener->flags & F_FILTERED)
 
 
 static int smtp_mailaddr(struct mailaddr *, char *, int, char **, const char *);
@@ -1032,7 +1031,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			report_smtp_filter_response("smtp-in", s->id, s->filter_phase,
 			    filter_response,
 			    filter_param == s->filter_param ? NULL : filter_param);
-			if (s->filter_phase == FILTER_CONNECTED) {
+			if (s->filter_phase == FILTER_CONNECT) {
 				smtp_proceed_connected(s);
 				return;
 			}
@@ -1093,7 +1092,7 @@ smtp_io(struct io *io, int evt, void *arg)
 	switch (evt) {
 
 	case IO_TLSREADY:
-		log_info("%016"PRIx64" smtp tls address=%s host=%s ciphers=%s",
+		log_info("%016"PRIx64" smtp tls address=%s host=%s ciphers=\"%s\"",
 		    s->id, ss_to_text(&s->ss), s->hostname, ssl_to_text(io_ssl(s->io)));
 
 		report_smtp_link_tls("smtp-in", s->id, ssl_to_text(io_ssl(s->io)));
@@ -1593,25 +1592,12 @@ smtp_check_noparam(struct smtp_session *s, const char *args)
 static void
 smtp_query_filters(enum filter_phase phase, struct smtp_session *s, const char *args)
 {
-	uint8_t i;
-
-	if (TAILQ_FIRST(&env->sc_filter_rules[phase])) {
-		m_create(p_lka, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-		m_add_id(p_lka, s->id);
-		m_add_int(p_lka, phase);
-		m_add_string(p_lka, args);
-		m_close(p_lka);
-		tree_xset(&wait_filters, s->id, s);
-		return;
-	}
-
-	if (phase == FILTER_CONNECTED) {
-		smtp_proceed_connected(s);
-		return;
-	}
-	for (i = 0; i < nitems(commands); ++i)
-		if (commands[i].filter_phase == phase)
-			commands[i].proceed(s, args);
+	m_create(p_lka, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_lka, s->id);
+	m_add_int(p_lka, phase);
+	m_add_string(p_lka, args);
+	m_close(p_lka);
+	tree_xset(&wait_filters, s->id, s);
 }
 
 static void
@@ -1622,6 +1608,7 @@ smtp_filter_begin(struct smtp_session *s)
 
 	m_create(p_lka, IMSG_FILTER_SMTP_BEGIN, 0, 0, -1);
 	m_add_id(p_lka, s->id);
+	m_add_string(p_lka, s->listener->filter_name);
 	m_add_sockaddr(p_lka, (struct sockaddr *)&s->ss);
 	m_add_sockaddr(p_lka, (struct sockaddr *)&s->listener->ss);
 	m_add_string(p_lka, s->hostname);
@@ -1682,7 +1669,7 @@ smtp_filter_phase(enum filter_phase phase, struct smtp_session *s, const char *p
 		return;
 	}
 
-	if (s->filter_phase == FILTER_CONNECTED) {
+	if (s->filter_phase == FILTER_CONNECT) {
 		smtp_proceed_connected(s);
 		return;
 	}
@@ -1991,11 +1978,12 @@ smtp_connected(struct smtp_session *s)
 	log_info("%016"PRIx64" smtp connected address=%s host=%s",
 	    s->id, ss_to_text(&s->ss), s->hostname);
 
+	smtp_filter_begin(s);
+
 	report_smtp_link_connect("smtp-in", s->id, s->hostname, s->fcrdns, &s->ss,
 	    &s->listener->ss);
 
-	smtp_filter_begin(s);
-	smtp_filter_phase(FILTER_CONNECTED, s, ss_to_text(&s->ss));
+	smtp_filter_phase(FILTER_CONNECT, s, ss_to_text(&s->ss));
 }
 
 static void
@@ -2883,7 +2871,7 @@ filter_session_io(struct io *io, int evt, void *arg)
 	char*line = NULL;
 	ssize_t len;
 
-	log_trace(TRACE_IO, "filter session: %p: %s %s", tx, io_strevent(evt),
+	log_trace(TRACE_IO, "filter session io (smtp): %p: %s %s", tx, io_strevent(evt),
 	    io_strio(io));
 
 	switch (evt) {
