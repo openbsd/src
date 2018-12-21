@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.239 2018/12/21 17:04:46 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.240 2018/12/21 19:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -107,7 +107,7 @@ struct dispatcher	*dispatcher;
 struct rule		*rule;
 struct processor	*processor;
 struct filter_config	*filter_config;
-/*static uint64_t		 last_dynproc_id = 1;*/
+static uint64_t		 last_dynproc_id = 1;
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -1333,7 +1333,6 @@ filterel
 ;
 
 filter:
-/*
 FILTER STRING PROC STRING {
 	if (dict_get(conf->sc_filters_dict, $2)) {
 		yyerror("filter already exists with that name: %s", $2);
@@ -1383,7 +1382,6 @@ FILTER STRING PROC_EXEC STRING {
 	filter_config = NULL;
 }
 |
-*/
 FILTER STRING BUILTIN {
 	if (dict_get(conf->sc_filters_dict, $2)) {
 		yyerror("filter already exists with that name: %s", $2);

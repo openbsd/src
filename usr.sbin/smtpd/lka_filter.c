@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.19 2018/12/21 17:31:57 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.20 2018/12/21 19:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -591,7 +591,10 @@ filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
-	fs = tree_xget(&sessions, reqid);
+	/* client session may have disappeared since we started streaming data */
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
+		return;
+
 	filter_chain = dict_get(&filter_chains, fs->filter_name);
 
 	TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)

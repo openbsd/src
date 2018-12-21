@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_proc.c,v 1.5 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: lka_proc.c,v 1.6 2018/12/21 19:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -73,6 +73,9 @@ lka_proc_forked(const char *name, int fd)
 	processor = xcalloc(1, sizeof *processor);
 	processor->name = xstrdup(name);
 	processor->io = io_new();
+
+	io_set_nonblocking(fd);
+
 	io_set_fd(processor->io, fd);
 	io_set_callback(processor->io, processor_io, processor->name);
 	dict_xset(&processors, name, processor);
