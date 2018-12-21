@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.24 2017/02/19 21:39:32 guenther Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.25 2018/12/21 05:45:42 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -145,6 +145,9 @@ __do_init(void)
 	}
 }
 
+char __csu_do_fini_array __dso_hidden = 0;
+extern __dso_hidden init_f __fini_array_start[], __fini_array_end[];
+
 void
 __do_fini(void)
 {
@@ -156,6 +159,13 @@ __do_fini(void)
 		 * Call global destructors.
 		 */
 		__dtors();
+
+		if (__csu_do_fini_array) {
+			size_t i = __fini_array_end - __fini_array_start;
+			while (i-- > 0)
+				__fini_array_start[i]();
+		}
+
 	}
 }
 

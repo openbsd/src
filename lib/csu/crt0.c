@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.10 2017/01/21 04:14:19 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.11 2018/12/21 05:45:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -67,12 +67,32 @@ MD_CRT0_START;
 #endif
 #endif
 
+extern __dso_hidden initarray_f __preinit_array_start[],
+	__preinit_array_end[], __init_array_start[], __init_array_end[];
+
+extern char __csu_do_fini_array __dso_hidden;
+
 void
 ___start(MD_START_ARGS)
 {
+	size_t size, i;
 	char ***environp;
 #ifdef MD_START_SETUP
 	MD_START_SETUP
+#endif
+
+#ifndef RCRT0
+	if (cleanup == NULL) {
+#endif
+		size = __preinit_array_end - __preinit_array_start;
+		for (i = 0; i < size; i++)
+			__preinit_array_start[i](argc, argv, envp, NULL);
+		size = __init_array_end - __init_array_start;
+		for (i = 0; i < size; i++)
+			__init_array_start[i](argc, argv, envp, NULL);
+		__csu_do_fini_array = 1;
+#ifndef RCRT0
+	}
 #endif
 
 	environp = _csu_finish(argv, envp, cleanup);
