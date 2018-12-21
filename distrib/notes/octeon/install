@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.16 2017/11/30 15:25:37 visa Exp $
+dnl	$OpenBSD: install,v 1.17 2018/12/21 14:33:43 visa Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -56,8 +56,8 @@ restore it later if needed:
 
 ${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
 ${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
-partition on the first CF card or USB device. The FAT partition has been created
-by the installer.
+partition on the first CF card. The FAT partition has been created by the
+installer.
 
 	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux rootdev=/dev/octcf0'
 	# setenv bootdelay 5
@@ -71,9 +71,15 @@ by the installer.
 	Protected 1 sectors
 	#
 
-If you have installed onto USB use the following bootcmd instead:
+If you have installed onto SD/MMC, SATA or USB, use the following
+bootcmd instead:
 
-  fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0
+  fatload <bootdev> 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0
+
+Replace ``<bootdev>'' with ``mmc'', ``sata'' or ``usb'' as appropriate.
+
+For stable root disk selection, you can use the root disk's
+disklabel(8) UID (DUID) as the value of the rootdev parameter.
 
 On multi-core systems, the numcores parameter enables the secondary CPUs.
 Use the total number of cores on your system as the value of the parameter.
