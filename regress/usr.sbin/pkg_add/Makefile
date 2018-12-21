@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.60 2018/12/12 14:14:39 espie Exp $
+# $OpenBSD: Makefile,v 1.61 2018/12/21 14:04:53 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -233,7 +233,7 @@ qttest: rep0/qt-0.tgz rep1/qt-1.tgz
 gstest: rep0/gs-0.tgz rep0/gs-0-no_x11.tgz rep0/purple-0.tgz
 	@-rm -rf ${D27}
 	-@ROOT=${D27} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} purple-0
-	@if ROOT=${D27} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} -r gs-0-no_x11; then exit 1; fi
+	@if ROOT=${D27} PKG_PATH=${.OBJDIR}/rep0 ${ADD_PKG} -rI gs-0-no_x11; then exit 1; fi
 
 exotest: rep0/exo-0.tgz rep1/exo-1.tgz
 	@-rm -rf ${D28}
