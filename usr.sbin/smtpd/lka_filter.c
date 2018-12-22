@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.21 2018/12/21 20:38:42 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.22 2018/12/22 10:18:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -533,7 +533,7 @@ filter_protocol_next(uint64_t token, uint64_t reqid, const char *param)
 	struct filter		*filter;
 
 	/* client session may have disappeared while we were in proc */
-	if ((fs = tree_xget(&sessions, reqid)) == NULL)
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
 		return;
 
 	filter_chain = dict_get(&filter_chains, fs->filter_name);
