@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.599 2018/12/22 12:17:16 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.600 2018/12/22 12:31:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1081,6 +1081,12 @@ struct filter_config {
 
 	int8_t                          not_helo_regex;
 	struct table                   *helo_regex;
+
+	int8_t                          not_mail_from_table;
+	struct table                   *mail_from_table;
+
+	int8_t                          not_mail_from_regex;
+	struct table                   *mail_from_regex;
 
 };
 

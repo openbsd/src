@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.26 2018/12/22 12:17:16 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.27 2018/12/22 12:31:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -74,7 +74,8 @@ struct filter_session {
 	char *rdns;
 	int fcrdns;
 
-	char *heloname;
+	char *helo;
+	char *mail_from;
 	
 	enum filter_phase	phase;
 };
@@ -596,13 +597,20 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 	switch (phase) {
 	case FILTER_HELO:
 	case FILTER_EHLO:
-		if (fs->heloname)
-			free(fs->heloname);
-		fs->heloname = xstrdup(param);
+		if (fs->helo)
+			free(fs->helo);
+		fs->helo = xstrdup(param);
+		break;
+	case FILTER_MAIL_FROM:
+		if (fs->mail_from)
+			free(fs->mail_from);
+
+		fs->mail_from = xstrdup(param + 1);
+		*strchr(fs->mail_from, '>') = '\0';
+
 		break;
 	case FILTER_STARTTLS:
 	case FILTER_AUTH:
-	case FILTER_MAIL_FROM:
 		/* TBD */
 		break;
 	default:
@@ -807,6 +815,32 @@ filter_check_helo_regex(struct filter *filter, const char *key)
 }
 
 static int
+filter_check_mail_from_table(struct filter *filter, enum table_service kind, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->mail_from_table) {
+		if (table_lookup(filter->config->mail_from_table, NULL, key, kind, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_mail_from_table < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_mail_from_regex(struct filter *filter, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->mail_from_regex) {
+		if (table_lookup(filter->config->mail_from_regex, NULL, key, K_REGEX, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_mail_from_regex < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
 filter_check_fcrdns(struct filter *filter, int fcrdns)
 {
 	int	ret = 0;
@@ -849,8 +883,10 @@ filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_
 	    filter_check_rdns_regex(filter, fs->rdns) ||
 	    filter_check_src_table(filter, K_NETADDR, ss_to_text(&fs->ss_src)) ||
 	    filter_check_src_regex(filter, ss_to_text(&fs->ss_src)) ||
-	    filter_check_helo_table(filter, K_DOMAIN, fs->heloname) ||
-	    filter_check_helo_regex(filter, fs->heloname))
+	    filter_check_helo_table(filter, K_DOMAIN, fs->helo) ||
+	    filter_check_helo_regex(filter, fs->helo) ||
+	    filter_check_mail_from_table(filter, K_MAILADDR, fs->mail_from) ||
+	    filter_check_mail_from_regex(filter, fs->mail_from))
 		return 1;
 	return 0;
 }

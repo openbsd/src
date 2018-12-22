@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.244 2018/12/22 12:17:16 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.245 2018/12/22 12:31:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1343,6 +1343,19 @@ negation HELO REGEX tables {
 }
 ;
 
+filter_phase_check_mail_from_table:
+negation MAIL_FROM tables {
+	filter_config->not_mail_from_table = $1 ? -1 : 1;
+	filter_config->mail_from_table = $3;
+}
+;
+filter_phase_check_mail_from_regex:
+negation MAIL_FROM REGEX tables {
+	filter_config->not_mail_from_regex = $1 ? -1 : 1;
+	filter_config->mail_from_regex = $4;
+}
+;
+
 filter_phase_global_options:
 filter_phase_check_fcrdns |
 filter_phase_check_rdns |
@@ -1362,18 +1375,25 @@ filter_phase_global_options;
 filter_phase_mail_from_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
+filter_phase_check_mail_from_table |
+filter_phase_check_mail_from_regex |
 filter_phase_global_options;
 
 filter_phase_rcpt_to_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
+filter_phase_check_mail_from_table |
+filter_phase_check_mail_from_regex |
 filter_phase_global_options;
 
 filter_phase_data_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
+filter_phase_check_mail_from_table |
+filter_phase_check_mail_from_regex |
 filter_phase_global_options;
 
+/*
 filter_phase_quit_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
@@ -1388,10 +1408,13 @@ filter_phase_noop_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
 filter_phase_global_options;
+*/
 
 filter_phase_commit_options:
 filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
+filter_phase_check_mail_from_table |
+filter_phase_check_mail_from_regex |
 filter_phase_global_options;
 
 
@@ -1438,7 +1461,6 @@ DATA_LINE {
 	filter_config->phase = FILTER_DATA_LINE;
 } filter_action_builtin
 ;
-*/
 
 filter_phase_quit:
 QUIT {
@@ -1457,6 +1479,7 @@ NOOP {
 	filter_config->phase = FILTER_NOOP;
 } filter_phase_noop_options filter_action_builtin
 ;
+*/
 
 filter_phase_commit:
 COMMIT {
@@ -1474,9 +1497,9 @@ filter_phase_connect
 | filter_phase_rcpt_to
 | filter_phase_data
 /*| filter_phase_data_line*/
-| filter_phase_quit
-| filter_phase_noop
-| filter_phase_rset
+/*| filter_phase_quit*/
+/*| filter_phase_noop*/
+/*| filter_phase_rset*/
 | filter_phase_commit
 ;
 
