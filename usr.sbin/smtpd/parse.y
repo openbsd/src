@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.245 2018/12/22 12:31:40 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.246 2018/12/22 13:09:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1356,6 +1356,19 @@ negation MAIL_FROM REGEX tables {
 }
 ;
 
+filter_phase_check_rcpt_to_table:
+negation RCPT_TO tables {
+	filter_config->not_rcpt_to_table = $1 ? -1 : 1;
+	filter_config->rcpt_to_table = $3;
+}
+;
+filter_phase_check_rcpt_to_regex:
+negation RCPT_TO REGEX tables {
+	filter_config->not_rcpt_to_regex = $1 ? -1 : 1;
+	filter_config->rcpt_to_regex = $4;
+}
+;
+
 filter_phase_global_options:
 filter_phase_check_fcrdns |
 filter_phase_check_rdns |
@@ -1384,6 +1397,8 @@ filter_phase_check_helo_table |
 filter_phase_check_helo_regex |
 filter_phase_check_mail_from_table |
 filter_phase_check_mail_from_regex |
+filter_phase_check_rcpt_to_table |
+filter_phase_check_rcpt_to_regex |
 filter_phase_global_options;
 
 filter_phase_data_options:

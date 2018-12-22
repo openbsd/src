@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.27 2018/12/22 12:31:40 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.28 2018/12/22 13:09:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -841,6 +841,32 @@ filter_check_mail_from_regex(struct filter *filter, const char *key)
 }
 
 static int
+filter_check_rcpt_to_table(struct filter *filter, enum table_service kind, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->rcpt_to_table) {
+		if (table_lookup(filter->config->rcpt_to_table, NULL, key, kind, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_rcpt_to_table < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_rcpt_to_regex(struct filter *filter, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->rcpt_to_regex) {
+		if (table_lookup(filter->config->rcpt_to_regex, NULL, key, K_REGEX, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_rcpt_to_regex < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
 filter_check_fcrdns(struct filter *filter, int fcrdns)
 {
 	int	ret = 0;
@@ -912,5 +938,17 @@ filter_builtins_mail_from(struct filter_session *fs, struct filter *filter, uint
 static int
 filter_builtins_rcpt_to(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
-	return filter_builtins_global(fs, filter, reqid, param);
+	int    	ret = 0;
+	char	*rcpt_to;
+
+	rcpt_to = xstrdup(param + 1);
+	*strchr(rcpt_to, '>') = '\0';
+
+	if (filter_builtins_global(fs, filter, reqid, param) ||
+	    filter_check_rcpt_to_table(filter, K_MAILADDR, rcpt_to) ||
+	    filter_check_rcpt_to_regex(filter, rcpt_to))
+		ret = 1;
+
+	free(rcpt_to);
+	return ret;
 }

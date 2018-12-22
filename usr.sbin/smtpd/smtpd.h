@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.600 2018/12/22 12:31:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.601 2018/12/22 13:09:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1087,6 +1087,12 @@ struct filter_config {
 
 	int8_t                          not_mail_from_regex;
 	struct table                   *mail_from_regex;
+
+	int8_t                          not_rcpt_to_table;
+	struct table                   *rcpt_to_table;
+
+	int8_t                          not_rcpt_to_regex;
+	struct table                   *rcpt_to_regex;
 
 };
 
