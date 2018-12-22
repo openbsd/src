@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.22 2018/12/22 10:18:56 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.23 2018/12/22 10:39:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -563,20 +563,36 @@ filter_protocol_next(uint64_t token, uint64_t reqid, const char *param)
 	filter_result_proceed(reqid);
 }
 
-
 static void
-filter_data(uint64_t reqid, const char *line)
+filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 {
 	struct filter_session	*fs;
 	struct filter_chain	*filter_chain;
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
-	fs = tree_xget(&sessions, reqid);
+	fs = token ?
+	    tree_get(&sessions, reqid) :
+	    tree_xget(&sessions, reqid);
+	if (fs == NULL)
+		return;
 
-	fs->phase = FILTER_DATA_LINE;
+	if (!token)
+		fs->phase = FILTER_DATA_LINE;
+	if (fs->phase != FILTER_DATA_LINE)
+		fatalx("misbehaving filter");
+
 	filter_chain = dict_get(&filter_chains, fs->filter_name);
 	filter_entry = TAILQ_FIRST(&filter_chain->chain[fs->phase]);
+	if (token) {
+		TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)
+		    if (filter_entry->id == token)
+			    break;
+		if (filter_entry == NULL)
+			fatalx("misbehaving filter");
+		filter_entry = TAILQ_NEXT(filter_entry, entries);
+	}
+
 	if (filter_entry == NULL) {
 		io_printf(fs->io, "%s\r\n", line);
 		return;
@@ -587,30 +603,15 @@ filter_data(uint64_t reqid, const char *line)
 }
 
 static void
+filter_data(uint64_t reqid, const char *line)
+{
+	filter_data_internal(0, reqid, line);
+}
+
+static void
 filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 {
-	struct filter_session	*fs;
-	struct filter_chain	*filter_chain;
-	struct filter_entry	*filter_entry;
-	struct filter		*filter;
-
-	/* client session may have disappeared while we were in proc */
-	if ((fs = tree_get(&sessions, reqid)) == NULL)
-		return;
-
-	filter_chain = dict_get(&filter_chains, fs->filter_name);
-
-	TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)
-	    if (filter_entry->id == token)
-		    break;
-
-	if ((filter_entry = TAILQ_NEXT(filter_entry, entries))) {
-		filter = dict_get(&filters, filter_entry->name);
-		filter_data_query(filter, filter_entry->id, reqid, line);
-		return;
-	}
-
-	io_printf(fs->io, "%s\r\n", line);
+	filter_data_internal(token, reqid, line);
 }
 
 
