@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.597 2018/12/21 21:35:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.598 2018/12/22 08:54:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1201,11 +1201,12 @@ struct rule {
 	int8_t	flag_tag;
 	int8_t	flag_from;
 	int8_t	flag_for;
+	int8_t	flag_from_rdns;
 	int8_t	flag_from_socket;
 
 	int8_t	flag_tag_regex;
-	int8_t	flag_for_regex;
 	int8_t	flag_from_regex;
+	int8_t	flag_for_regex;
 
 	int8_t	flag_smtp_helo;
 	int8_t	flag_smtp_starttls;

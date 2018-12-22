@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.209 2018/12/22 08:18:55 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.210 2018/12/22 08:54:02 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -502,6 +502,22 @@ Specify that session may originate from any source.
 Specify that session may only originate from a local IP address,
 or from the local enqueuer.
 This is the default, and may be omitted.
+.It Xo
+.Op Ic \&!
+.Cm from rdns
+.Ar hostname | Pf < Ar hostname Ns >
+.Xc
+Specify that session may only originate from an IP address that
+resolves to a reverse DNS matching string or list string
+.Ar hostname .
+.It Xo
+.Op Ic \&!
+.Cm from rdns regex
+.Ar hostname | Pf < Ar hostname Ns >
+.Xc
+Specify that session may only originate from an IP address that
+resolves to a reverse DNS matching regex or list regex
+.Ar hostname .
 .It Xo
 .Op Ic \&!
 .Cm from socket

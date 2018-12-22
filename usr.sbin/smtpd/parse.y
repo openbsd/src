@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.241 2018/12/21 21:35:29 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.242 2018/12/22 08:54:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -190,7 +190,7 @@ typedef struct {
 %token	ON
 %token	PKI PORT PROC PROC_EXEC
 %token	QUEUE QUIT
-%token	RCPT_TO RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
+%token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SUB_ADDR_DELIM
 %token	TABLE TAG TAGGED TLS TLS_REQUIRE TTL
 %token	USER USERBASE
@@ -927,11 +927,12 @@ negation TAG REGEX tables {
 	rule->flag_tag_regex = 1;
 	rule->table_tag = strdup(t->t_name);
 }
+
 | negation HELO tables {
 	struct table   *t = $3;
 
 	if (rule->flag_smtp_helo) {
-		yyerror("mail-helo already specified for this rule");
+		yyerror("helo already specified for this rule");
 		YYERROR;
 	}
 
@@ -948,7 +949,7 @@ negation TAG REGEX tables {
 	struct table   *t = $4;
 
 	if (rule->flag_smtp_helo) {
-		yyerror("mail-helo already specified for this rule");
+		yyerror("helo already specified for this rule");
 		YYERROR;
 	}
 
@@ -1145,6 +1146,45 @@ negation TAG REGEX tables {
 	rule->flag_from_regex = 1;
 	rule->table_from = strdup(t->t_name);
 }
+
+| negation FROM RDNS tables {
+	struct table   *t = $4;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
+		yyerror("table \"%s\" may not be used for rdns lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = $1 ? -1 : 1;
+	rule->flag_from_rdns = 1;
+	rule->table_from = strdup(t->t_name);
+}
+| negation FROM RDNS REGEX tables {
+	struct table   *t = $5;
+
+	if (rule->flag_from) {
+		yyerror("from already specified for this rule");
+		YYERROR;
+	}
+
+	if (!table_check_use(t, T_DYNAMIC|T_LIST, K_DOMAIN)) {
+		yyerror("table \"%s\" may not be used for rdns lookups",
+		    t->t_name);
+		YYERROR;
+	}
+
+	rule->flag_from = $1 ? -1 : 1;
+	rule->flag_from_regex = 1;
+	rule->flag_from_rdns = 1;
+	rule->table_from = strdup(t->t_name);
+}
+
 
 | negation FOR LOCAL {
 	struct table   *t = table_find(conf, "<localnames>", NULL);
@@ -2164,6 +2204,7 @@ lookup(char *s)
 		{ "queue",		QUEUE },
 		{ "quit",		QUIT },
 		{ "rcpt-to",		RCPT_TO },
+		{ "rdns",		RDNS },
 		{ "received-auth",     	RECEIVEDAUTH },
 		{ "recipient",		RECIPIENT },
 		{ "regex",		REGEX },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.37 2018/12/21 21:35:29 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.38 2018/12/22 08:54:02 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -86,9 +86,13 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 		return -1;
 	}
 
-	/* XXX - socket should also be considered local */
 	if (evp->flags & EF_INTERNAL)
 		key = "local";
+	else if (r->flag_from_rdns) {
+		if (strcmp(evp->hostname, "<unknown>") == 0)
+			return 0;
+		key = evp->hostname;
+	}
 	else
 		key = ss_to_text(&evp->ss);
 
