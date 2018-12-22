@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.24 2018/12/22 11:28:11 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.25 2018/12/22 11:32:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -39,10 +39,12 @@
 
 struct filter;
 struct filter_session;
+static void	filter_protocol_internal(uint64_t *, uint64_t, enum filter_phase, const char *);
 static void	filter_protocol(uint64_t, enum filter_phase, const char *);
-static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase phase, const char *);
+static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase, const char *);
 static void	filter_protocol_query(struct filter *, uint64_t, uint64_t, const char *, const char *);
 
+static void	filter_data_internal(uint64_t, uint64_t, const char *);
 static void	filter_data(uint64_t, const char *);
 static void	filter_data_next(uint64_t, uint64_t, const char *);
 static void	filter_data_query(struct filter *, uint64_t, uint64_t, const char *);
@@ -551,20 +553,6 @@ filter_protocol_internal(uint64_t *token, uint64_t reqid, enum filter_phase phas
 }
 
 static void
-filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
-{
-	uint64_t	token = 0;
-
-	filter_protocol_internal(&token, reqid, phase, param);
-}
-
-static void
-filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, const char *param)
-{
-	filter_protocol_internal(&token, reqid, phase, param);
-}
-
-static void
 filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 {
 	struct filter_session	*fs;
@@ -608,6 +596,20 @@ filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 }
 
 static void
+filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
+{
+	uint64_t	token = 0;
+
+	filter_protocol_internal(&token, reqid, phase, param);
+}
+
+static void
+filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, const char *param)
+{
+	filter_protocol_internal(&token, reqid, phase, param);
+}
+
+static void
 filter_data(uint64_t reqid, const char *line)
 {
 	filter_data_internal(0, reqid, line);
@@ -617,22 +619,6 @@ static void
 filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 {
 	filter_data_internal(token, reqid, line);
-}
-
-int
-lka_filter_response(uint64_t reqid, const char *response, const char *param)
-{
-	if (strcmp(response, "proceed") == 0)
-		filter_result_proceed(reqid);
-	else if (strcmp(response, "rewrite") == 0)
-		filter_result_rewrite(reqid, param);
-	else if (strcmp(response, "reject") == 0)
-		filter_result_reject(reqid, param);
-	else if (strcmp(response, "disconnect") == 0)
-		filter_result_disconnect(reqid, param);
-	else
-		return 0;
-	return 1;
 }
 
 static void
