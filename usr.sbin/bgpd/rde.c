@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.453 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.454 2018/12/22 16:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,8 @@ void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
-void		 rde_dump_ctx_throttle(pid_t pid, int throttle);
+void		 rde_dump_ctx_throttle(pid_t, int);
+void		 rde_dump_ctx_terminate(pid_t);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 
 int		 rde_rdomain_import(struct rde_aspath *, struct rdomain *);
@@ -133,7 +134,7 @@ int			 softreconfig;
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
 	struct ctl_show_rib_request	req;
-	sa_family_t			af;
+	u_int16_t			rid;
 	u_int8_t			throttled;
 };
 
@@ -657,6 +658,9 @@ badnetdel:
 			} else {
 				rde_dump_ctx_throttle(imsg.hdr.pid, 1);
 			}
+			break;
+		case IMSG_CTL_TERMINATE:
+			rde_dump_ctx_terminate(imsg.hdr.pid);
 			break;
 		default:
 			break;
@@ -2321,6 +2325,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
 	ctx->req.pid = pid;
 	ctx->req.type = type;
+	ctx->rid = rid;
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
 		if (rib_dump_new(rid, ctx->req.aid, CTL_MSG_HIGH_MARK, ctx,
@@ -2364,7 +2369,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		free(ctx);
 		return;
 	default:
-		fatalx("rde_dump_ctx_new: unsupported imsg type");
+		fatalx("%s: unsupported imsg type", __func__);
 	}
 	LIST_INSERT_HEAD(&rde_dump_h, ctx, entry);
 }
@@ -2377,6 +2382,33 @@ rde_dump_ctx_throttle(pid_t pid, int throttle)
 	LIST_FOREACH(ctx, &rde_dump_h, entry) {
 		if (ctx->req.pid == pid) {
 			ctx->throttled = throttle;
+			return;
+		}
+	}
+}
+
+void
+rde_dump_ctx_terminate(pid_t pid)
+{
+	struct rde_dump_ctx	*ctx;
+
+	LIST_FOREACH(ctx, &rde_dump_h, entry) {
+		if (ctx->req.pid == pid) {
+			void (*upcall)(struct rib_entry *, void *);
+			switch (ctx->req.type) {
+			case IMSG_CTL_SHOW_NETWORK:
+				upcall = network_dump_upcall;
+				break;
+			case IMSG_CTL_SHOW_RIB:
+				upcall = rde_dump_upcall;
+				break;
+			case IMSG_CTL_SHOW_RIB_PREFIX:
+				upcall = rde_dump_prefix_upcall;
+				break;
+			default:
+				fatalx("%s: unsupported imsg type", __func__);
+			}
+			rib_dump_terminate(ctx->rid, ctx, upcall);
 			return;
 		}
 	}

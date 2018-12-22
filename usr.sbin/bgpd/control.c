@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.91 2018/11/28 08:32:27 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.92 2018/12/22 16:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,6 +188,9 @@ control_close(int fd)
 		return (0);
 	}
 
+	if (c->terminate && c->ibuf.pid)
+		imsg_ctl_rde(IMSG_CTL_TERMINATE, c->ibuf.pid, NULL, 0);
+
 	msgbuf_clear(&c->ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
@@ -247,12 +250,12 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			case IMSG_CTL_SHOW_NEIGHBOR:
 			case IMSG_CTL_SHOW_NEXTHOP:
 			case IMSG_CTL_SHOW_INTERFACE:
-			case IMSG_CTL_SHOW_RIB:
-			case IMSG_CTL_SHOW_RIB_PREFIX:
 			case IMSG_CTL_SHOW_RIB_MEM:
-			case IMSG_CTL_SHOW_NETWORK:
 			case IMSG_CTL_SHOW_TERSE:
 			case IMSG_CTL_SHOW_TIMER:
+			case IMSG_CTL_SHOW_NETWORK:
+			case IMSG_CTL_SHOW_RIB:
+			case IMSG_CTL_SHOW_RIB_PREFIX:
 				break;
 			default:
 				/* clear imsg type to prevent processing */
@@ -459,14 +462,17 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					break;
 				}
 				c->ibuf.pid = imsg.hdr.pid;
+				c->terminate = 1;
 				imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
 				    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			} else
 				log_warnx("got IMSG_CTL_SHOW_RIB with "
 				    "wrong length");
 			break;
-		case IMSG_CTL_SHOW_RIB_MEM:
 		case IMSG_CTL_SHOW_NETWORK:
+			c->terminate = 1;
+			/* FALLTHROUGH */
+		case IMSG_CTL_SHOW_RIB_MEM:
 			c->ibuf.pid = imsg.hdr.pid;
 			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
@@ -511,6 +517,10 @@ control_imsg_relay(struct imsg *imsg)
 
 	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
 		return (0);
+
+	/* if command finished no need to send exit message */
+	if (imsg->hdr.type == IMSG_CTL_END || imsg->hdr.type == IMSG_CTL_RESULT)
+		c->terminate = 0;
 
 	if (!c->throttled && c->ibuf.w.queued > CTL_MSG_HIGH_MARK) {
 		if (imsg_ctl_rde(IMSG_XOFF, imsg->hdr.pid, NULL, 0) != -1)

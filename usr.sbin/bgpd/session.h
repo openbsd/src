@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.125 2018/10/24 08:26:37 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.126 2018/12/22 16:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,6 +143,7 @@ struct ctl_conn {
 	struct imsgbuf		ibuf;
 	int			restricted;
 	int			throttled;
+	int			terminate;
 };
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;

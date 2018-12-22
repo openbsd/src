@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.358 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.359 2018/12/22 16:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -437,6 +437,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_TIMER,
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_FIB_TABLES,
+	IMSG_CTL_TERMINATE,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_ASPATH,
 	IMSG_NETWORK_ATTR,
