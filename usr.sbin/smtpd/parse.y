@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.242 2018/12/22 08:54:02 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.243 2018/12/22 09:30:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -175,10 +175,9 @@ typedef struct {
 %token	ACTION ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE BUILTIN
 %token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
-%token	CHECK_FCRDNS CHECK_RDNS CHECK_RDNS_REGEX CHECK_RDNS_TABLE CHECK_SRC_REGEX CHECK_SRC_TABLE
 %token	DATA DATA_LINE DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
-%token	FILTER FOR FORWARD_ONLY FROM
+%token	FCRDNS FILTER FOR FORWARD_ONLY FROM
 %token	GROUP
 %token	HELO HELO_SRC HOST HOSTNAME HOSTNAMES
 %token	INCLUDE INET4 INET6
@@ -1292,42 +1291,42 @@ REJECT STRING {
 ;
 
 filter_phase_check_fcrdns:
-negation CHECK_FCRDNS {
+negation FCRDNS {
 	filter_config->not_fcrdns = $1 ? -1 : 1;
 	filter_config->fcrdns = 1;
 }
 ;
 
 filter_phase_check_rdns:
-negation CHECK_RDNS {
+negation RDNS {
 	filter_config->not_rdns = $1 ? -1 : 1;
 	filter_config->rdns = 1;
 }
 ;
 
 filter_phase_check_rdns_table:
-negation CHECK_RDNS_TABLE tables {
+negation RDNS tables {
 	filter_config->not_rdns_table = $1 ? -1 : 1;
 	filter_config->rdns_table = $3;
 }
 ;
 filter_phase_check_rdns_regex:
-negation CHECK_RDNS_REGEX tables {
+negation RDNS REGEX tables {
 	filter_config->not_rdns_regex = $1 ? -1 : 1;
-	filter_config->rdns_regex = $3;
+	filter_config->rdns_regex = $4;
 }
 ;
 
 filter_phase_check_src_table:
-negation CHECK_SRC_TABLE tables {
+negation SRC tables {
 	filter_config->not_src_table = $1 ? -1 : 1;
 	filter_config->src_table = $3;
 }
 ;
 filter_phase_check_src_regex:
-negation CHECK_SRC_REGEX tables {
+negation SRC REGEX tables {
 	filter_config->not_src_regex = $1 ? -1 : 1;
-	filter_config->src_regex = $3;
+	filter_config->src_regex = $4;
 }
 ;
 
@@ -2144,12 +2143,6 @@ lookup(char *s)
 		{ "ca",			CA },
 		{ "cert",		CERT },
 		{ "chain",		CHAIN },
-		{ "check-fcrdns",      	CHECK_FCRDNS },
-		{ "check-rdns",		CHECK_RDNS },
-		{ "check-rdns-regex",	CHECK_RDNS_REGEX },
-		{ "check-rdns-table",	CHECK_RDNS_TABLE },
-		{ "check-src-regex",	CHECK_SRC_REGEX },
-		{ "check-src-table",	CHECK_SRC_TABLE },
 		{ "chroot",		CHROOT },
 		{ "ciphers",		CIPHERS },
 		{ "commit",		COMMIT },
@@ -2163,6 +2156,7 @@ lookup(char *s)
 		{ "ehlo",		EHLO },
 		{ "encryption",		ENCRYPTION },
 		{ "expand-only",      	EXPAND_ONLY },
+		{ "fcrdns",		FCRDNS },
 		{ "filter",		FILTER },
 		{ "for",		FOR },
 		{ "forward-only",      	FORWARD_ONLY },
