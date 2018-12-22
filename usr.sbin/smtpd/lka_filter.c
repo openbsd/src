@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.23 2018/12/22 10:39:16 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.24 2018/12/22 11:28:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -40,7 +40,7 @@
 struct filter;
 struct filter_session;
 static void	filter_protocol(uint64_t, enum filter_phase, const char *);
-static void	filter_protocol_next(uint64_t, uint64_t, const char *);
+static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase phase, const char *);
 static void	filter_protocol_query(struct filter *, uint64_t, uint64_t, const char *, const char *);
 
 static void	filter_data(uint64_t, const char *);
@@ -392,6 +392,7 @@ lka_filter_process_response(const char *name, const char *line)
 	char *ep = NULL;
 	char *kind = NULL;
 	char *qid = NULL;
+	/*char *phase = NULL;*/
 	char *response = NULL;
 	char *parameter = NULL;
 
@@ -470,7 +471,7 @@ lka_filter_process_response(const char *name, const char *line)
 		return 1;
 	}
 
-	filter_protocol_next(token, reqid, parameter);
+	filter_protocol_next(token, reqid, 0, parameter);
 	return 1;
 }
 
@@ -480,87 +481,87 @@ lka_filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 	filter_protocol(reqid, phase, param);
 }
 
-void
-filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
+static void
+filter_protocol_internal(uint64_t *token, uint64_t reqid, enum filter_phase phase, const char *param)
 {
 	struct filter_session	*fs;
 	struct filter_chain	*filter_chain;
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
-	uint8_t i;
 
-	fs = tree_xget(&sessions, reqid);
+	/* session can legitimately disappear on a resume */
+	fs = *token ?
+	    tree_get(&sessions, reqid) :
+	    tree_xget(&sessions, reqid);
+	if (fs == NULL)
+		return;
+	if (!*token)
+		fs->phase = phase;
+
+	/* XXX - this sanity check requires a protocol change, stub for now */
+	phase = fs->phase;
+	if (fs->phase != phase)
+		fatalx("misbehaving filter");
+
+	/* based on token, identify the filter_entry we should apply  */
 	filter_chain = dict_get(&filter_chains, fs->filter_name);
+	filter_entry = TAILQ_FIRST(&filter_chain->chain[fs->phase]);
+	if (*token) {
+		TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)
+		    if (filter_entry->id == *token)
+			    break;
+		if (filter_entry == NULL)
+			fatalx("misbehaving filter");
+		filter_entry = TAILQ_NEXT(filter_entry, entries);
+	}
 
-	for (i = 0; i < nitems(filter_execs); ++i)
-		if (phase == filter_execs[i].phase)
-			break;
-	if (i == nitems(filter_execs))
-		goto proceed;
-	if (TAILQ_EMPTY(&filter_chain->chain[i]))
-		goto proceed;
+	/* no filter_entry, we either had none or reached end of chain */
+	if (filter_entry == NULL) {
+		filter_result_proceed(reqid);
+		return;
+	}
 
-	fs->phase = phase;
-	TAILQ_FOREACH(filter_entry, &filter_chain->chain[i], entries) {
-		filter = dict_get(&filters, filter_entry->name);
-		if (filter->proc) {
-			filter_protocol_query(filter, filter_entry->id, reqid,
-			    filter_execs[i].phase_name, param);
-			return;	/* deferred */
+	/* process param with current filter_entry */
+	*token = filter_entry->id;
+	filter = dict_get(&filters, filter_entry->name);
+	if (filter->proc) {
+		filter_protocol_query(filter, filter_entry->id, reqid,
+		    filter_execs[fs->phase].phase_name, param);
+		return;	/* deferred response */
+	}
+
+	if (filter_execs[fs->phase].func(fs, filter, reqid, param)) {
+		if (filter->config->rewrite) {
+			filter_result_rewrite(reqid, filter->config->rewrite);
+			return;
 		}
-
-		if (filter_execs[i].func(fs, filter, reqid, param)) {
-			if (filter->config->rewrite)
-				filter_result_rewrite(reqid, filter->config->rewrite);
-			else if (filter->config->disconnect)
-				filter_result_disconnect(reqid, filter->config->disconnect);
-			else
-				filter_result_reject(reqid, filter->config->reject);
+		else if (filter->config->disconnect) {
+			filter_result_disconnect(reqid, filter->config->disconnect);
+			return;
+		}
+		else {
+			filter_result_reject(reqid, filter->config->reject);
 			return;
 		}
 	}
 
-proceed:
-	filter_result_proceed(reqid);
+	/* filter_entry resulted in proceed, try next filter */
+	filter_protocol_internal(token, reqid, phase, param);
+	return;
 }
 
 static void
-filter_protocol_next(uint64_t token, uint64_t reqid, const char *param)
+filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 {
-	struct filter_session	*fs;
-	struct filter_chain	*filter_chain;
-	struct filter_entry	*filter_entry;
-	struct filter		*filter;
+	uint64_t	token = 0;
 
-	/* client session may have disappeared while we were in proc */
-	if ((fs = tree_get(&sessions, reqid)) == NULL)
-		return;
+	filter_protocol_internal(&token, reqid, phase, param);
+}
 
-	filter_chain = dict_get(&filter_chains, fs->filter_name);
-	TAILQ_FOREACH(filter_entry, &filter_chain->chain[fs->phase], entries)
-	    if (filter_entry->id == token)
-		    break;
-
-	while ((filter_entry = TAILQ_NEXT(filter_entry, entries))) {
-		filter = dict_get(&filters, filter_entry->name);
-		if (filter->proc) {
-			filter_protocol_query(filter, filter_entry->id, reqid,
-			    filter_execs[fs->phase].phase_name, param);
-			return;	/* deferred */
-		}
-
-		if (filter_execs[fs->phase].func(fs, filter, reqid, param)) {
-			if (filter->config->rewrite)
-				filter_result_rewrite(reqid, filter->config->rewrite);
-			else if (filter->config->disconnect)
-				filter_result_disconnect(reqid, filter->config->disconnect);
-			else
-				filter_result_reject(reqid, filter->config->reject);
-			return;
-		}
-	}
-
-	filter_result_proceed(reqid);
+static void
+filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, const char *param)
+{
+	filter_protocol_internal(&token, reqid, phase, param);
 }
 
 static void
@@ -571,6 +572,7 @@ filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
+	/* session can legitimately disappear on a resume */
 	fs = token ?
 	    tree_get(&sessions, reqid) :
 	    tree_xget(&sessions, reqid);
@@ -582,6 +584,7 @@ filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 	if (fs->phase != FILTER_DATA_LINE)
 		fatalx("misbehaving filter");
 
+	/* based on token, identify the filter_entry we should apply  */
 	filter_chain = dict_get(&filter_chains, fs->filter_name);
 	filter_entry = TAILQ_FIRST(&filter_chain->chain[fs->phase]);
 	if (token) {
@@ -593,11 +596,13 @@ filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 		filter_entry = TAILQ_NEXT(filter_entry, entries);
 	}
 
+	/* no filter_entry, we either had none or reached end of chain */
 	if (filter_entry == NULL) {
 		io_printf(fs->io, "%s\r\n", line);
 		return;
 	}
 
+	/* pass data to the filter */
 	filter = dict_get(&filters, filter_entry->name);
 	filter_data_query(filter, filter_entry->id, reqid, line);
 }
@@ -613,7 +618,6 @@ filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 {
 	filter_data_internal(token, reqid, line);
 }
-
 
 int
 lka_filter_response(uint64_t reqid, const char *response, const char *param)
