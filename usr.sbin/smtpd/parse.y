@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.243 2018/12/22 09:30:19 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.244 2018/12/22 12:17:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1330,6 +1330,19 @@ negation SRC REGEX tables {
 }
 ;
 
+filter_phase_check_helo_table:
+negation HELO tables {
+	filter_config->not_helo_table = $1 ? -1 : 1;
+	filter_config->helo_table = $3;
+}
+;
+filter_phase_check_helo_regex:
+negation HELO REGEX tables {
+	filter_config->not_helo_regex = $1 ? -1 : 1;
+	filter_config->helo_regex = $4;
+}
+;
+
 filter_phase_global_options:
 filter_phase_check_fcrdns |
 filter_phase_check_rdns |
@@ -1342,27 +1355,43 @@ filter_phase_connect_options:
 filter_phase_global_options;
 
 filter_phase_helo_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_mail_from_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_rcpt_to_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_data_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_quit_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_rset_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_noop_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 filter_phase_commit_options:
+filter_phase_check_helo_table |
+filter_phase_check_helo_regex |
 filter_phase_global_options;
 
 

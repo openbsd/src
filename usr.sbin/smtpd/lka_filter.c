@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.25 2018/12/22 11:32:43 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.26 2018/12/22 12:17:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -39,12 +39,12 @@
 
 struct filter;
 struct filter_session;
-static void	filter_protocol_internal(uint64_t *, uint64_t, enum filter_phase, const char *);
+static void	filter_protocol_internal(struct filter_session *, uint64_t *, uint64_t, enum filter_phase, const char *);
 static void	filter_protocol(uint64_t, enum filter_phase, const char *);
 static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase, const char *);
 static void	filter_protocol_query(struct filter *, uint64_t, uint64_t, const char *, const char *);
 
-static void	filter_data_internal(uint64_t, uint64_t, const char *);
+static void	filter_data_internal(struct filter_session *, uint64_t, uint64_t, const char *);
 static void	filter_data(uint64_t, const char *);
 static void	filter_data_next(uint64_t, uint64_t, const char *);
 static void	filter_data_query(struct filter *, uint64_t, uint64_t, const char *);
@@ -74,6 +74,8 @@ struct filter_session {
 	char *rdns;
 	int fcrdns;
 
+	char *heloname;
+	
 	enum filter_phase	phase;
 };
 
@@ -139,6 +141,7 @@ lka_filter_init(void)
 	dict_init(&filters);
 	dict_init(&filter_chains);
 
+	/* first pass, allocate and init individual filters */
 	iter = NULL;
 	while (dict_iter(env->sc_filters_dict, &iter, &name, (void **)&filter_config)) {
 		switch (filter_config->filter_type) {
@@ -163,6 +166,7 @@ lka_filter_init(void)
 		}
 	}
 
+	/* second pass, allocate and init filter chains but don't build yet */
 	iter = NULL;
 	while (dict_iter(env->sc_filters_dict, &iter, &name, (void **)&filter_config)) {
 		switch (filter_config->filter_type) {
@@ -224,6 +228,7 @@ lka_filter_ready(void)
 	size_t		i;
 	size_t		j;
 
+	/* all filters are ready, actually build the filter chains */
 	iter = NULL;
 	while (dict_iter(&filters, &iter, &filter_name, (void **)&filter)) {
 		filter_chain = xcalloc(1, sizeof *filter_chain);
@@ -484,19 +489,12 @@ lka_filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 }
 
 static void
-filter_protocol_internal(uint64_t *token, uint64_t reqid, enum filter_phase phase, const char *param)
+filter_protocol_internal(struct filter_session *fs, uint64_t *token, uint64_t reqid, enum filter_phase phase, const char *param)
 {
-	struct filter_session	*fs;
 	struct filter_chain	*filter_chain;
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
 
-	/* session can legitimately disappear on a resume */
-	fs = *token ?
-	    tree_get(&sessions, reqid) :
-	    tree_xget(&sessions, reqid);
-	if (fs == NULL)
-		return;
 	if (!*token)
 		fs->phase = phase;
 
@@ -548,24 +546,16 @@ filter_protocol_internal(uint64_t *token, uint64_t reqid, enum filter_phase phas
 	}
 
 	/* filter_entry resulted in proceed, try next filter */
-	filter_protocol_internal(token, reqid, phase, param);
+	filter_protocol_internal(fs, token, reqid, phase, param);
 	return;
 }
 
 static void
-filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
+filter_data_internal(struct filter_session *fs, uint64_t token, uint64_t reqid, const char *line)
 {
-	struct filter_session	*fs;
 	struct filter_chain	*filter_chain;
 	struct filter_entry	*filter_entry;
 	struct filter		*filter;
-
-	/* session can legitimately disappear on a resume */
-	fs = token ?
-	    tree_get(&sessions, reqid) :
-	    tree_xget(&sessions, reqid);
-	if (fs == NULL)
-		return;
 
 	if (!token)
 		fs->phase = FILTER_DATA_LINE;
@@ -598,27 +588,61 @@ filter_data_internal(uint64_t token, uint64_t reqid, const char *line)
 static void
 filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 {
-	uint64_t	token = 0;
+	struct filter_session  *fs;
+	uint64_t		token = 0;
 
-	filter_protocol_internal(&token, reqid, phase, param);
+	fs = tree_xget(&sessions, reqid);
+
+	switch (phase) {
+	case FILTER_HELO:
+	case FILTER_EHLO:
+		if (fs->heloname)
+			free(fs->heloname);
+		fs->heloname = xstrdup(param);
+		break;
+	case FILTER_STARTTLS:
+	case FILTER_AUTH:
+	case FILTER_MAIL_FROM:
+		/* TBD */
+		break;
+	default:
+		break;
+	}
+	filter_protocol_internal(fs, &token, reqid, phase, param);
 }
 
 static void
 filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, const char *param)
 {
-	filter_protocol_internal(&token, reqid, phase, param);
+	struct filter_session  *fs;
+
+	/* session can legitimately disappear on a resume */
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
+		return;
+
+	filter_protocol_internal(fs, &token, reqid, phase, param);
 }
 
 static void
 filter_data(uint64_t reqid, const char *line)
 {
-	filter_data_internal(0, reqid, line);
+	struct filter_session  *fs;
+
+	fs = tree_xget(&sessions, reqid);
+
+	filter_data_internal(fs, 0, reqid, line);
 }
 
 static void
 filter_data_next(uint64_t token, uint64_t reqid, const char *line)
 {
-	filter_data_internal(token, reqid, line);
+	struct filter_session  *fs;
+
+	/* session can legitimately disappear on a resume */
+	if ((fs = tree_get(&sessions, reqid)) == NULL)
+		return;
+
+	filter_data_internal(fs, token, reqid, line);
 }
 
 static void
@@ -757,6 +781,32 @@ filter_check_src_regex(struct filter *filter, const char *key)
 }
 
 static int
+filter_check_helo_table(struct filter *filter, enum table_service kind, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->helo_table) {
+		if (table_lookup(filter->config->helo_table, NULL, key, kind, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_helo_table < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
+filter_check_helo_regex(struct filter *filter, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->helo_regex) {
+		if (table_lookup(filter->config->helo_regex, NULL, key, K_REGEX, NULL) > 0)
+			ret = 1;
+		ret = filter->config->not_helo_regex < 0 ? !ret : ret;
+	}
+	return ret;
+}
+
+static int
 filter_check_fcrdns(struct filter *filter, int fcrdns)
 {
 	int	ret = 0;
@@ -798,7 +848,9 @@ filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_
 	    filter_check_rdns_table(filter, K_DOMAIN, fs->rdns) ||
 	    filter_check_rdns_regex(filter, fs->rdns) ||
 	    filter_check_src_table(filter, K_NETADDR, ss_to_text(&fs->ss_src)) ||
-	    filter_check_src_regex(filter, ss_to_text(&fs->ss_src)))
+	    filter_check_src_regex(filter, ss_to_text(&fs->ss_src)) ||
+	    filter_check_helo_table(filter, K_DOMAIN, fs->heloname) ||
+	    filter_check_helo_regex(filter, fs->heloname))
 		return 1;
 	return 0;
 }
