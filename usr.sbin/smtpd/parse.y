@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.247 2018/12/23 14:26:02 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.248 2018/12/23 15:49:04 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -107,6 +107,7 @@ struct dispatcher	*dispatcher;
 struct rule		*rule;
 struct processor	*processor;
 struct filter_config	*filter_config;
+static uint32_t		 last_dynchain_id = 1;
 static uint32_t		 last_dynproc_id = 1;
 
 enum listen_options {
@@ -1798,6 +1799,27 @@ opt_sock_listen : FILTER STRING {
 			listen_opts.options |= LO_FILTER;
 			listen_opts.filtername = $2;
 		}
+		| FILTER {
+			char	buffer[128];
+
+			if (listen_opts.options & LO_FILTER) {
+				yyerror("filter already specified");
+				YYERROR;
+			}
+
+			do {
+				(void)snprintf(buffer, sizeof buffer, "<dynchain:%08x>", last_dynchain_id++);
+			} while (dict_check(conf->sc_filters_dict, buffer));
+
+			listen_opts.options |= LO_FILTER;
+			listen_opts.filtername = xstrdup(buffer);
+			filter_config = xcalloc(1, sizeof *filter_config);
+			filter_config->filter_type = FILTER_TYPE_CHAIN;
+			dict_init(&filter_config->chain_procs);
+		} '{' filter_list '}' {
+			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
+			filter_config = NULL;
+		}
 		| MASK_SRC {
 			if (config_lo_mask_source(&listen_opts)) {
 				YYERROR;
@@ -1864,6 +1886,27 @@ opt_if_listen : INET4 {
 			}
 			listen_opts.options |= LO_FILTER;
 			listen_opts.filtername = $2;
+		}
+		| FILTER {
+			char	buffer[128];
+
+			if (listen_opts.options & LO_FILTER) {
+				yyerror("filter already specified");
+				YYERROR;
+			}
+
+			do {
+				(void)snprintf(buffer, sizeof buffer, "<dynchain:%08x>", last_dynchain_id++);
+			} while (dict_check(conf->sc_filters_dict, buffer));
+
+			listen_opts.options |= LO_FILTER;
+			listen_opts.filtername = xstrdup(buffer);
+			filter_config = xcalloc(1, sizeof *filter_config);
+			filter_config->filter_type = FILTER_TYPE_CHAIN;
+			dict_init(&filter_config->chain_procs);
+		} '{' filter_list '}' {
+			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
+			filter_config = NULL;
 		}
 		| SMTPS				{
 			if (listen_opts.options & LO_SSL) {
