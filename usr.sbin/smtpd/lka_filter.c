@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.30 2018/12/23 15:14:49 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.31 2018/12/23 15:48:16 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -661,6 +661,7 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 
 		fs->mail_from = xstrdup(param + 1);
 		*strchr(fs->mail_from, '>') = '\0';
+		param = fs->mail_from;
 
 		break;
 	case FILTER_RCPT_TO:
