@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.5 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.6 2018/12/23 16:06:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
@@ -19,17 +19,12 @@
 #include <sys/types.h>
 #include <sys/tree.h>
 
-#include <sys/socket.h>	/* for smtpd.h */
-#include <sys/queue.h>	/* for smtpd.h */
-#include <stdio.h>	/* for smtpd.h */
-#include <imsg.h>	/* for smtpd.h */
-
 #include <err.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <limits.h>
 
-#include "smtpd.h"
+#include "tree.h"
 
 struct treeentry {
 	SPLAY_ENTRY(treeentry)	 entry;
