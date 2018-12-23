@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.601 2018/12/22 13:09:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.602 2018/12/23 15:53:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -375,8 +375,8 @@ struct table_backend {
 	void   *(*open)(struct table *);
 	int	(*update)(struct table *);
 	void	(*close)(void *);
-	int	(*lookup)(void *, struct dict *, const char *, enum table_service, union lookup *);
-	int	(*fetch)(void *, struct dict *, enum table_service, union lookup *);
+	int	(*lookup)(void *, struct dict *, const char *, enum table_service, char **);
+	int	(*fetch)(void *, struct dict *, enum table_service, char **);
 };
 
 
@@ -1654,8 +1654,6 @@ int table_regex_match(const char *, const char *);
 void	table_open_all(struct smtpd *);
 void	table_dump_all(struct smtpd *);
 void	table_close_all(struct smtpd *);
-int table_parse_lookup(enum table_service, const char *, const char *,
-    union lookup *);
 
 
 /* to.c */

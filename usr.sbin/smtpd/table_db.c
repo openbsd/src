@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.10 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.11 2018/12/23 15:53:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -43,8 +43,8 @@
 static int table_db_config(struct table *);
 static int table_db_update(struct table *);
 static void *table_db_open(struct table *);
-static int table_db_lookup(void *, struct dict *, const char *, enum table_service, union lookup *);
-static int table_db_fetch(void *, struct dict *, enum table_service, union lookup *);
+static int table_db_lookup(void *, struct dict *, const char *, enum table_service, char **);
+static int table_db_fetch(void *, struct dict *, enum table_service, char **);
 static void  table_db_close(void *);
 
 static char *table_db_get_entry(void *, const char *, size_t *);
@@ -143,7 +143,7 @@ table_db_close(void *hdl)
 
 static int
 table_db_lookup(void *hdl, struct dict *params, const char *key, enum table_service service,
-    union lookup *lk)
+    char **dst)
 {
 	struct dbhandle	*handle = hdl;
 	struct table	*table = NULL;
@@ -176,15 +176,16 @@ table_db_lookup(void *hdl, struct dict *params, const char *key, enum table_serv
 		return 0;
 
 	ret = 1;
-	if (lk)
-		ret = table_parse_lookup(service, key, line, lk);
-	free(line);
+	if (dst)
+		*dst = line;
+	else
+		free(line);
 
 	return ret;
 }
 
 static int
-table_db_fetch(void *hdl, struct dict *params, enum table_service service, union lookup *lk)
+table_db_fetch(void *hdl, struct dict *params, enum table_service service, char **dst)
 {
 	struct dbhandle	*handle = hdl;
 	struct table	*table  = handle->table;
@@ -203,7 +204,13 @@ table_db_fetch(void *hdl, struct dict *params, enum table_service service, union
 			return 0;
 	}
 
-	return table_parse_lookup(service, NULL, dbk.data, lk);
+	if (dst) {
+		*dst = strdup(dbk.data);
+		if (*dst == NULL)
+			return -1;
+	}
+
+	return 1;
 }
 
 

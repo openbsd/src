@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.33 2018/12/21 21:35:29 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.34 2018/12/23 15:53:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -53,6 +53,8 @@ extern struct table_backend table_backend_proc;
 static const char * table_service_name(enum table_service);
 static const char * table_backend_name(struct table_backend *);
 static const char * table_dump_lookup(enum table_service, union lookup *);
+static int table_parse_lookup(enum table_service, const char *, const char *,
+    union lookup *);
 static int parse_sockaddr(struct sockaddr *, int, const char *);
 
 static unsigned int last_table_id = 0;
@@ -125,7 +127,7 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
     union lookup *lk)
 {
 	int	r;
-	char	lkey[1024];
+	char	lkey[1024], *buf = NULL;
 
 	if (table->t_backend->lookup == NULL)
 		return (-1);
@@ -135,9 +137,9 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 		return -1;
 	}
 
-	r = table->t_backend->lookup(table->t_handle, params, lkey, kind, lk);
+	r = table->t_backend->lookup(table->t_handle, params, lkey, kind, lk ? &buf : NULL);
 
-	if (r == 1)
+	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s%s",
 		    lk ? "lookup" : "check",
 		    lkey,
@@ -145,8 +147,11 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 		    table_backend_name(table->t_backend),
 		    table->t_name,
 		    lk ? "\"" : "",
-		    (lk) ? table_dump_lookup(kind, lk): "found",
+		    (lk) ? buf : "found",
 		    lk ? "\"" : "");
+		if (buf)
+			r = table_parse_lookup(kind, lkey, buf, lk);
+	}
 	else
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %d",
 		    lk ? "lookup" : "check",
@@ -156,6 +161,8 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 		    table->t_name,
 		    r);
 
+	free(buf);
+
 	return (r);
 }
 
@@ -163,26 +170,32 @@ int
 table_fetch(struct table *table, struct dict *params, enum table_service kind, union lookup *lk)
 {
 	int 	r;
+	char	*buf = NULL;
 
 	if (table->t_backend->fetch == NULL)
 		return (-1);
 
-	r = table->t_backend->fetch(table->t_handle, params, kind, lk);
+	r = table->t_backend->fetch(table->t_handle, params, kind, lk ? &buf : NULL);
 
-	if (r == 1)
+	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s%s",
 		    table_service_name(kind),
 		    table_backend_name(table->t_backend),
 		    table->t_name,
 		    lk ? "\"" : "",
-		    (lk) ? table_dump_lookup(kind, lk): "found",
+		    (lk) ? buf : "found",
 		    lk ? "\"" : "");
+		if (buf)
+			r = table_parse_lookup(kind, NULL, buf, lk);
+	}
 	else
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
 		    table_service_name(kind),
 		    table_backend_name(table->t_backend),
 		    table->t_name,
 		    r);
+
+	free(buf);
 
 	return (r);
 }
@@ -541,7 +554,7 @@ table_close_all(struct smtpd *conf)
 		table_close(t);
 }
 
-int
+static int
 table_parse_lookup(enum table_service service, const char *key,
     const char *line, union lookup *lk)
 {

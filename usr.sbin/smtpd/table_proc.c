@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.7 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.8 2018/12/23 15:53:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -196,15 +196,14 @@ imsg_add_params(struct ibuf *buf, struct dict *params)
 }
 
 static int
-table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_service s,
-    union lookup *lk)
+table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_service s, char **dst)
 {
 	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;
 	int			 r;
 
 	buf = imsg_create(&priv->ibuf,
-	    lk ? PROC_TABLE_LOOKUP : PROC_TABLE_CHECK, 0, 0,
+	    dst ? PROC_TABLE_LOOKUP : PROC_TABLE_CHECK, 0, 0,
 	    sizeof(s) + strlen(k) + 1);
 
 	if (buf == NULL)
@@ -220,7 +219,7 @@ table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_serv
 	table_proc_call(priv);
 	table_proc_read(&r, sizeof(r));
 
-	if (r == 1 && lk) {
+	if (r == 1 && dst) {
 		if (rlen == 0) {
 			log_warnx("warn: table-proc: empty response");
 			fatalx("table-proc: exiting");
@@ -229,7 +228,9 @@ table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_serv
 			log_warnx("warn: table-proc: not NUL-terminated");
 			fatalx("table-proc: exiting");
 		}
-		r = table_parse_lookup(s, k, rdata, lk);
+		*dst = strdup(rdata);
+		if (*dst == NULL)
+			r = -1;
 		table_proc_read(NULL, rlen);
 	}
 
@@ -239,7 +240,7 @@ table_proc_lookup(void *arg, struct dict *params, const char *k, enum table_serv
 }
 
 static int
-table_proc_fetch(void *arg, struct dict *params, enum table_service s, union lookup *lk)
+table_proc_fetch(void *arg, struct dict *params, enum table_service s, char **dst)
 {
 	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;
@@ -266,7 +267,9 @@ table_proc_fetch(void *arg, struct dict *params, enum table_service s, union loo
 			log_warnx("warn: table-proc: not NUL-terminated");
 			fatalx("table-proc: exiting");
 		}
-		r = table_parse_lookup(s, NULL, rdata, lk);
+		*dst = strdup(rdata);
+		if (*dst == NULL)
+			r = -1;
 		table_proc_read(NULL, rlen);
 	}
 

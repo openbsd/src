@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.20 2018/11/01 10:47:46 gilles Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.21 2018/12/23 15:53:24 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -43,9 +43,9 @@ static int table_static_config(struct table *);
 static int table_static_update(struct table *);
 static void *table_static_open(struct table *);
 static int table_static_lookup(void *, struct dict *, const char *,
-    enum table_service, union lookup *);
+    enum table_service, char **);
 static int table_static_fetch(void *, struct dict *, enum table_service,
-    union lookup *);
+    char **);
 static void  table_static_close(void *);
 
 struct table_backend table_backend_static = {
@@ -216,7 +216,7 @@ table_static_close(void *hdl)
 
 static int
 table_static_lookup(void *hdl, struct dict *params, const char *key,
-    enum table_service service, union lookup *lk)
+    enum table_service service, char **dst)
 {
 	struct table   *m  = hdl;
 	char	       *line;
@@ -251,18 +251,22 @@ table_static_lookup(void *hdl, struct dict *params, const char *key,
 			break;
 	}
 
-	if (lk == NULL)
+	if (dst == NULL)
 		return ret ? 1 : 0;
 
 	if (ret == 0)
 		return 0;
 
-	return table_parse_lookup(service, key, line, lk);
+	*dst = strdup(line);
+	if (*dst == NULL)
+		return -1;
+
+	return 1;
 }
 
 static int
 table_static_fetch(void *hdl, struct dict *params,
-    enum table_service service, union lookup *lk)
+    enum table_service service, char **dst)
 {
 	struct table   *t = hdl;
 	const char     *k;
@@ -273,8 +277,12 @@ table_static_fetch(void *hdl, struct dict *params,
 			return 0;
 	}
 
-	if (lk == NULL)
+	if (dst == NULL)
 		return 1;
 
-	return table_parse_lookup(service, NULL, k, lk);
+	*dst = strdup(k);
+	if (*dst == NULL)
+		return -1;
+
+	return 1;
 }
