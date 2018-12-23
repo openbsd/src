@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.246 2018/12/22 13:09:05 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.247 2018/12/23 14:26:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -107,7 +107,7 @@ struct dispatcher	*dispatcher;
 struct rule		*rule;
 struct processor	*processor;
 struct filter_config	*filter_config;
-static uint64_t		 last_dynproc_id = 1;
+static uint32_t		 last_dynproc_id = 1;
 
 enum listen_options {
 	LO_FAMILY	= 0x000001,
@@ -1591,7 +1591,7 @@ FILTER STRING PROC_EXEC STRING {
 	char	buffer[128];
 
 	do {
-		(void)snprintf(buffer, sizeof buffer, "<dynproc:%016"PRIx64">", last_dynproc_id++);
+		(void)snprintf(buffer, sizeof buffer, "<dynproc:%08x>", last_dynproc_id++);
 	} while (dict_check(conf->sc_processors_dict, buffer));
 
 	if (dict_get(conf->sc_filters_dict, $2)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.313 2018/12/13 17:07:13 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.314 2018/12/23 14:26:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -530,9 +530,7 @@ main(int argc, char *argv[])
 				tracing |= TRACE_IO;
 			else if (!strcmp(optarg, "smtp"))
 				tracing |= TRACE_SMTP;
-			else if (!strcmp(optarg, "mfa") ||
-			    !strcmp(optarg, "filter") ||
-			    !strcmp(optarg, "filters"))
+			else if (!strcmp(optarg, "filters"))
 				tracing |= TRACE_FILTERS;
 			else if (!strcmp(optarg, "mta") ||
 			    !strcmp(optarg, "transfer"))
