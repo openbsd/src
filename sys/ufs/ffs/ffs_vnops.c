@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.92 2018/07/21 09:35:08 anton Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.93 2018/12/23 10:46:51 natano Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ ffs_write(void *v)
 	 * tampering.
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0 &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
+	    !vnoperm(vp))
 		DIP_ASSIGN(ip, mode, DIP(ip, mode) & ~(ISUID | ISGID));
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

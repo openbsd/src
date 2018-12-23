@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.283 2018/12/07 16:21:19 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.284 2018/12/23 10:46:51 natano Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1609,6 +1609,15 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	if (acc_mode & VWRITE)
 		mask |= S_IWOTH;
 	return (file_mode & mask) == mask ? 0 : EACCES;
+}
+
+int
+vnoperm(struct vnode *vp)
+{
+	if (vp->v_flag & VROOT || vp->v_mount == NULL)
+		return 0;
+
+	return (vp->v_mount->mnt_flag & MNT_NOPERM);
 }
 
 struct rwlock vfs_stall_lock = RWLOCK_INITIALIZER("vfs_stall");

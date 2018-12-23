@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.308 2018/10/28 22:42:33 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.309 2018/12/23 10:46:51 natano Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1394,8 +1394,7 @@ domknodat(struct proc *p, int fd, const char *path, mode_t mode, dev_t dev)
 		return (error);
 	vp = nd.ni_vp;
 	if (!S_ISFIFO(mode) || dev != 0) {
-		if ((nd.ni_dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
-		    (error = suser(p)) != 0)
+		if (!vnoperm(nd.ni_dvp) && (error = suser(p)) != 0)
 			goto out;
 		if (p->p_fd->fd_rdir) {
 			error = EINVAL;
@@ -2265,7 +2264,7 @@ dofchownat(struct proc *p, int fd, const char *path, uid_t uid, gid_t gid,
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
-		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    !vnoperm(vp) &&
 		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
@@ -2318,7 +2317,7 @@ sys_lchown(struct proc *p, void *v, register_t *retval)
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
-		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    !vnoperm(vp) &&
 		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
@@ -2368,8 +2367,7 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
 		if ((uid != -1 || gid != -1) &&
-		    (vp->v_mount &&
-		     (vp->v_mount->mnt_flag & MNT_NOPERM) == 0) &&
+		    !vnoperm(vp) &&
 		    (suser(p) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)

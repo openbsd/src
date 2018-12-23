@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.142 2018/06/21 14:17:23 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.143 2018/12/23 10:46:51 natano Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -274,9 +274,13 @@ ufs_access(void *v)
 	if ((mode & VWRITE) && (DIP(ip, flags) & IMMUTABLE))
 		return (EPERM);
 
-	if ((vp->v_mount->mnt_flag & MNT_NOPERM) &&
-	    (vp->v_flag & VROOT) == 0)
-		return (0);
+	if (vnoperm(vp)) {
+		/* For VEXEC, at least one of the execute bits must be set. */
+		if ((mode & VEXEC) && vp->v_type != VDIR &&
+		    (DIP(ip, mode) & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
+			return EACCES;
+		return 0;
+	}
 
 	return (vaccess(vp->v_type, DIP(ip, mode), DIP(ip, uid), DIP(ip, gid),
 	    mode, ap->a_cred));
@@ -353,10 +357,10 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != DIP(ip, uid) &&
-		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    !vnoperm(vp) &&
 		    (error = suser_ucred(cred)))
 			return (error);
-		if (cred->cr_uid == 0) {
+		if (cred->cr_uid == 0 || vnoperm(vp)) {
 			if ((DIP(ip, flags) & (SF_IMMUTABLE | SF_APPEND)) &&
 			    securelevel > 0)
 				return (EPERM);
@@ -413,7 +417,7 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != DIP(ip, uid) &&
-		    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+		    !vnoperm(vp) &&
 		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
@@ -461,11 +465,10 @@ ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	int error;
 
 	if (cred->cr_uid != DIP(ip, uid) &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+	    !vnoperm(vp) &&
 	    (error = suser_ucred(cred)))
 		return (error);
-	if (cred->cr_uid &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0) {
+	if (cred->cr_uid && !vnoperm(vp)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if (!groupmember(DIP(ip, gid), cred) && (mode & ISGID))
@@ -505,7 +508,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	 */
 	if ((cred->cr_uid != DIP(ip, uid) || uid != DIP(ip, uid) ||
 	    (gid != DIP(ip, gid) && !groupmember(gid, cred))) &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+	    !vnoperm(vp) &&
 	    (error = suser_ucred(cred)))
 		return (error);
 	ogid = DIP(ip, gid);
@@ -546,12 +549,12 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 
 	if (ouid != uid || ogid != gid)
 		ip->i_flag |= IN_CHANGE;
-	if (ouid != uid && cred->cr_uid != 0 &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
-		DIP_AND(ip, mode, ~ISUID);
-	if (ogid != gid && cred->cr_uid != 0 &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
-		DIP_AND(ip, mode, ~ISGID);
+	if (!vnoperm(vp)) {
+		if (ouid != uid && cred->cr_uid != 0)
+			DIP_AND(ip, mode, ~ISUID);
+		if (ogid != gid && cred->cr_uid != 0)
+			DIP_AND(ip, mode, ~ISGID);
+	}
 	return (0);
 
 error:
@@ -975,7 +978,7 @@ abortit:
 		if ((DIP(dp, mode) & S_ISTXT) && tcnp->cn_cred->cr_uid != 0 &&
 		    tcnp->cn_cred->cr_uid != DIP(dp, uid) &&
 		    DIP(xp, uid )!= tcnp->cn_cred->cr_uid &&
-		    (tdvp->v_mount->mnt_flag & MNT_NOPERM) == 0) {
+		    !vnoperm(tdvp)) {
 			error = EPERM;
 			goto bad;
 		}
@@ -1853,7 +1856,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		softdep_change_linkcnt(ip, 0);
 	if ((DIP(ip, mode) & ISGID) &&
 		!groupmember(DIP(ip, gid), cnp->cn_cred) &&
-	    (dvp->v_mount->mnt_flag & MNT_NOPERM) == 0 &&
+	    !vnoperm(dvp) &&
 	    suser_ucred(cnp->cn_cred))
 		DIP_AND(ip, mode, ~ISGID);
 
