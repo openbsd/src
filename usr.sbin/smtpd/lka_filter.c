@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.29 2018/12/23 14:26:02 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.30 2018/12/23 15:14:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -802,12 +802,13 @@ filter_check_rdns_table(struct filter *filter, enum table_service kind, const ch
 {
 	int	ret = 0;
 
-	if (filter->config->rdns_table) {
-		if (table_lookup(filter->config->rdns_table, NULL, key, kind, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_rdns_table < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->rdns_table == NULL)
+		return 0;
+	
+	if (table_lookup(filter->config->rdns_table, NULL, key, kind, NULL) > 0)
+		ret = 1;
+
+	return filter->config->not_rdns_table < 0 ? !ret : ret;
 }
 
 static int
@@ -815,12 +816,12 @@ filter_check_rdns_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->rdns_regex) {
-		if (table_lookup(filter->config->rdns_regex, NULL, key, K_REGEX, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_rdns_regex < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->rdns_regex == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->rdns_regex, NULL, key, K_REGEX, NULL) > 0)
+		ret = 1;
+	return filter->config->not_rdns_regex < 0 ? !ret : ret;
 }
 
 static int
@@ -828,12 +829,12 @@ filter_check_src_table(struct filter *filter, enum table_service kind, const cha
 {
 	int	ret = 0;
 
-	if (filter->config->src_table) {
-		if (table_lookup(filter->config->src_table, NULL, key, kind, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_src_table < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->src_table == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->src_table, NULL, key, kind, NULL) > 0)
+		ret = 1;
+	return filter->config->not_src_table < 0 ? !ret : ret;
 }
 
 static int
@@ -841,12 +842,12 @@ filter_check_src_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->src_regex) {
-		if (table_lookup(filter->config->src_regex, NULL, key, K_REGEX, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_src_regex < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->src_regex == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->src_regex, NULL, key, K_REGEX, NULL) > 0)
+		ret = 1;
+	return filter->config->not_src_regex < 0 ? !ret : ret;
 }
 
 static int
@@ -854,12 +855,12 @@ filter_check_helo_table(struct filter *filter, enum table_service kind, const ch
 {
 	int	ret = 0;
 
-	if (filter->config->helo_table) {
-		if (table_lookup(filter->config->helo_table, NULL, key, kind, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_helo_table < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->helo_table == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->helo_table, NULL, key, kind, NULL) > 0)
+		ret = 1;
+	return filter->config->not_helo_table < 0 ? !ret : ret;
 }
 
 static int
@@ -867,12 +868,12 @@ filter_check_helo_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->helo_regex) {
-		if (table_lookup(filter->config->helo_regex, NULL, key, K_REGEX, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_helo_regex < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->helo_regex == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->helo_regex, NULL, key, K_REGEX, NULL) > 0)
+		ret = 1;
+	return filter->config->not_helo_regex < 0 ? !ret : ret;
 }
 
 static int
@@ -880,12 +881,12 @@ filter_check_mail_from_table(struct filter *filter, enum table_service kind, con
 {
 	int	ret = 0;
 
-	if (filter->config->mail_from_table) {
-		if (table_lookup(filter->config->mail_from_table, NULL, key, kind, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_mail_from_table < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->mail_from_table == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->mail_from_table, NULL, key, kind, NULL) > 0)
+		ret = 1;
+	return filter->config->not_mail_from_table < 0 ? !ret : ret;
 }
 
 static int
@@ -893,12 +894,12 @@ filter_check_mail_from_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->mail_from_regex) {
-		if (table_lookup(filter->config->mail_from_regex, NULL, key, K_REGEX, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_mail_from_regex < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->mail_from_regex == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->mail_from_regex, NULL, key, K_REGEX, NULL) > 0)
+		ret = 1;
+	return filter->config->not_mail_from_regex < 0 ? !ret : ret;
 }
 
 static int
@@ -906,12 +907,12 @@ filter_check_rcpt_to_table(struct filter *filter, enum table_service kind, const
 {
 	int	ret = 0;
 
-	if (filter->config->rcpt_to_table) {
-		if (table_lookup(filter->config->rcpt_to_table, NULL, key, kind, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_rcpt_to_table < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->rcpt_to_table == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->rcpt_to_table, NULL, key, kind, NULL) > 0)
+		ret = 1;
+	return filter->config->not_rcpt_to_table < 0 ? !ret : ret;
 }
 
 static int
@@ -919,12 +920,12 @@ filter_check_rcpt_to_regex(struct filter *filter, const char *key)
 {
 	int	ret = 0;
 
-	if (filter->config->rcpt_to_regex) {
-		if (table_lookup(filter->config->rcpt_to_regex, NULL, key, K_REGEX, NULL) > 0)
-			ret = 1;
-		ret = filter->config->not_rcpt_to_regex < 0 ? !ret : ret;
-	}
-	return ret;
+	if (filter->config->rcpt_to_regex == NULL)
+		return 0;
+
+	if (table_lookup(filter->config->rcpt_to_regex, NULL, key, K_REGEX, NULL) > 0)
+		ret = 1;
+	return filter->config->not_rcpt_to_regex < 0 ? !ret : ret;
 }
 
 static int
@@ -932,11 +933,11 @@ filter_check_fcrdns(struct filter *filter, int fcrdns)
 {
 	int	ret = 0;
 
-	if (filter->config->fcrdns) {
-		ret = fcrdns == 0;
-		ret = filter->config->not_fcrdns < 0 ? !ret : ret;
-	}
-	return ret;
+	if (!filter->config->fcrdns)
+		return 0;
+
+	ret = fcrdns == 0;
+	return filter->config->not_fcrdns < 0 ? !ret : ret;
 }
 
 static int
@@ -945,14 +946,14 @@ filter_check_rdns(struct filter *filter, const char *hostname)
 	int	ret = 0;
 	struct netaddr	netaddr;
 
-	if (filter->config->rdns) {
-		/* if text_to_netaddress succeeds,
-		 * we don't have an rDNS so the filter should match
-		 */
-		ret = text_to_netaddr(&netaddr, hostname);
-		ret = filter->config->not_rdns < 0 ? !ret : ret;
-	}
-	return ret;
+	if (!filter->config->rdns)
+		return 0;
+
+	/* if text_to_netaddress succeeds,
+	 * we don't have an rDNS so the filter should match
+	 */
+	ret = text_to_netaddr(&netaddr, hostname);
+	return filter->config->not_rdns < 0 ? !ret : ret;
 }
 
 static int
@@ -964,7 +965,7 @@ filter_builtins_notimpl(struct filter_session *fs, struct filter *filter, uint64
 static int
 filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_t reqid)
 {
-	if (filter_check_fcrdns(filter, fs->fcrdns) ||
+	return filter_check_fcrdns(filter, fs->fcrdns) ||
 	    filter_check_rdns(filter, fs->rdns) ||
 	    filter_check_rdns_table(filter, K_DOMAIN, fs->rdns) ||
 	    filter_check_rdns_regex(filter, fs->rdns) ||
@@ -973,9 +974,7 @@ filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_
 	    filter_check_helo_table(filter, K_DOMAIN, fs->helo) ||
 	    filter_check_helo_regex(filter, fs->helo) ||
 	    filter_check_mail_from_table(filter, K_MAILADDR, fs->mail_from) ||
-	    filter_check_mail_from_regex(filter, fs->mail_from))
-		return 1;
-	return 0;
+	    filter_check_mail_from_regex(filter, fs->mail_from);
 }
 
 static int
