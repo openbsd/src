@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.160 2018/12/23 15:32:10 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.161 2018/12/23 16:55:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -522,7 +522,6 @@ in the alphabetical
 .Bl -column "Brq, Bro, Brc" description
 .It Sx \&Em Ta italic font or underline (emphasis) (>0 arguments)
 .It Sx \&Sy Ta boldface font (symbolic) (>0 arguments)
-.It Sx \&Li Ta typewriter font (literal) (>0 arguments)
 .It Sx \&No Ta return to roman font (normal) (no arguments)
 .It Sx \&Bf , \&Ef Ta font block:
 .Op Fl Ar type | Cm \&Em | \&Li | \&Sy
@@ -1487,9 +1486,8 @@ to save the pattern space for subsequent retrieval.
 .Ed
 .Pp
 See also
-.Sx \&Bf ,
-.Sx \&Li ,
 .Sx \&No ,
+.Sx \&Ql ,
 and
 .Sx \&Sy .
 .Ss \&En
@@ -1789,12 +1787,13 @@ Examples:
 .Dl \&.Ic alias
 .Pp
 Note that using
-.Sx \&Bd Fl literal
+.Sx \&Ql ,
+.Sx \&Dl ,
 or
-.Sx \&D1
-is preferred for displaying code; the
+.Sx \&Bd Fl literal
+is preferred for displaying code samples; the
 .Sx \&Ic
-macro is used when referring to specific instructions.
+macro is used when referring to an individual command name.
 .Ss \&In
 The name of an include file.
 This macro is most often used in section 2, 3, and 9 manual pages.
@@ -1928,21 +1927,15 @@ Examples:
 .Dl \&.Lb libz
 .Dl \&.Lb libmandoc
 .Ss \&Li
-Denotes text that should be in a
-.Li literal
-font mode.
-Note that this is a presentation term and should not be used for
-stylistically decorating technical terms.
-.Pp
-On terminal output devices, this is often indistinguishable from
-normal text.
-.Pp
-See also
-.Sx \&Bf ,
-.Sx \&Em ,
-.Sx \&No ,
-and
-.Sx \&Sy .
+Request a typewriter (literal) font.
+Deprecated because on terminal output devices, this is usually
+indistinguishable from normal text.
+For literal displays, use
+.Sx \&Ql Pq in-line ,
+.Sx \&Dl Pq single line ,
+or
+.Sx \&Bd Fl literal Pq multi-line
+instead.
 .Ss \&Lk
 Format a hyperlink.
 Its syntax is as follows:
@@ -2059,7 +2052,7 @@ Examples:
 .Pp
 See also
 .Sx \&Em ,
-.Sx \&Li ,
+.Sx \&Ql ,
 and
 .Sx \&Sy .
 .Ss \&Ns
@@ -2257,14 +2250,8 @@ Close quoted context opened by
 .Sx \&Qo .
 .Ss \&Ql
 In-line literal display.
-This can for example be used for complete command invocations and
-for multi-word code fragments when more specific markup is not
-appropriate and an indented display is not desired.
-While
-.Xr mandoc 1
-always encloses the arguments in single quotes, other formatters
-usually omit the quotes on non-terminal output devices when the
-arguments have three or more characters.
+This can be used for complete command invocations and for multi-word
+code examples when an indented display is not desired.
 .Pp
 See also
 .Sx \&Dl
@@ -2668,11 +2655,10 @@ program.
 .Ed
 .Pp
 See also
-.Sx \&Bf ,
 .Sx \&Em ,
-.Sx \&Li ,
+.Sx \&No ,
 and
-.Sx \&No .
+.Sx \&Ql .
 .Ss \&Ta
 Table cell separator in
 .Sx \&Bl Fl column
