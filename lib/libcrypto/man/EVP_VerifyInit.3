@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_VerifyInit.3,v 1.8 2018/03/29 21:26:51 schwarze Exp $
+.\" $OpenBSD: EVP_VerifyInit.3,v 1.9 2018/12/23 08:35:14 tb Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 79b49fb0 Mar 20 10:03:10 2018 +1000
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2018 $
+.Dd $Mdocdate: December 23 2018 $
 .Dt EVP_VERIFYINIT 3
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ can be called later to digest and verify additional data.
 .Pp
 Since only a copy of the digest context is ever finalized, the context
 must be cleaned up after use by calling
-.Xr EVP_MD_CTX_cleanup 3 ,
+.Xr EVP_MD_CTX_free 3 ,
 or a memory leak will occur.
 .Sh RETURN VALUES
 .Fn EVP_VerifyInit_ex
