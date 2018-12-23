@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.114 2018/12/17 11:14:56 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.115 2018/12/23 16:37:53 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -148,8 +148,6 @@ static void mta_send(struct mta_session *, char *, ...);
 static ssize_t mta_queue_data(struct mta_session *);
 static void mta_response(struct mta_session *, char *);
 static const char * mta_strstate(int);
-static void mta_start_tls(struct mta_session *);
-static int mta_verify_certificate(struct mta_session *);
 static void mta_cert_init(struct mta_session *);
 static void mta_cert_init_cb(void *, int, const char *, const void *, size_t);
 static void mta_cert_verify(struct mta_session *);
@@ -242,13 +240,10 @@ mta_session(struct mta_relay *relay, struct mta_route *route)
 void
 mta_session_imsg(struct mproc *p, struct imsg *imsg)
 {
-	struct ca_vrfy_resp_msg	*resp_ca_vrfy;
-	struct ca_cert_resp_msg	*resp_ca_cert;
 	struct mta_session	*s;
 	struct msg		 m;
 	uint64_t		 reqid;
 	const char		*name;
-	void			*ssl;
 	int			 status;
 	struct stat		 sb;
 	
@@ -298,61 +293,6 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal("mta: fdopen");
 
 		mta_enter_state(s, MTA_MAIL);
-		return;
-
-	case IMSG_MTA_TLS_INIT:
-		resp_ca_cert = imsg->data;
-		s = mta_tree_pop(&wait_ssl_init, resp_ca_cert->reqid);
-		if (s == NULL)
-			return;
-
-		if (resp_ca_cert->status == CA_FAIL) {
-			if (s->relay->pki_name) {
-				log_info("%016"PRIx64" mta "
-				    "closing reason=ca-failure",
-				    s->id);
-				mta_free(s);
-				return;
-			}
-			else {
-				ssl = ssl_mta_init(NULL, NULL, 0, env->sc_tls_ciphers);
-				if (ssl == NULL)
-					fatal("mta: ssl_mta_init");
-				io_start_tls(s->io, ssl);
-				return;
-			}
-		}
-
-		resp_ca_cert = xmemdup(imsg->data, sizeof *resp_ca_cert);
-		resp_ca_cert->cert = xstrdup((char *)imsg->data +
-		    sizeof *resp_ca_cert);
-		ssl = ssl_mta_init(resp_ca_cert->name,
-		    resp_ca_cert->cert, resp_ca_cert->cert_len, env->sc_tls_ciphers);
-		if (ssl == NULL)
-			fatal("mta: ssl_mta_init");
-		io_start_tls(s->io, ssl);
-
-		freezero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		free(resp_ca_cert);
-		return;
-
-	case IMSG_MTA_TLS_VERIFY:
-		resp_ca_vrfy = imsg->data;
-		s = mta_tree_pop(&wait_ssl_verify, resp_ca_vrfy->reqid);
-		if (s == NULL)
-			return;
-
-		if (resp_ca_vrfy->status == CA_OK)
-			s->flags |= MTA_TLS_VERIFIED;
-		else if (s->relay->flags & RELAY_TLS_VERIFY) {
-			errno = 0;
-			mta_error(s, "SSL certificate check failed");
-			mta_free(s);
-			return;
-		}
-
-		mta_tls_verified(s);
-		io_resume(s->io, IO_IN);
 		return;
 
 	case IMSG_MTA_LOOKUP_HELO:
@@ -1505,153 +1445,6 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 		mta_flush_task(s, IMSG_MTA_DELIVERY_TEMPFAIL, error, 0, 0);
 
 	free(error);
-}
-
-static void
-mta_start_tls(struct mta_session *s)
-{
-	struct ca_cert_req_msg	req_ca_cert;
-	const char	       *certname;
-
-	if (s->relay->pki_name) {
-		certname = s->relay->pki_name;
-		req_ca_cert.fallback = 0;
-	}
-	else {
-		certname = s->helo;
-		req_ca_cert.fallback = 1;
-	}
-
-	req_ca_cert.reqid = s->id;
-	(void)strlcpy(req_ca_cert.name, certname, sizeof req_ca_cert.name);
-	m_compose(p_lka, IMSG_MTA_TLS_INIT, 0, 0, -1,
-	    &req_ca_cert, sizeof(req_ca_cert));
-	tree_xset(&wait_ssl_init, s->id, s);
-	s->flags |= MTA_WAIT;
-	return;
-}
-
-static int
-mta_verify_certificate(struct mta_session *s)
-{
-#define MAX_CERTS	16
-#define MAX_CERT_LEN	(MAX_IMSGSIZE - (IMSG_HEADER_SIZE + sizeof(req_ca_vrfy)))
-	struct ca_vrfy_req_msg	req_ca_vrfy;
-	struct iovec		iov[2];
-	X509		       *x;
-	STACK_OF(X509)	       *xchain;
-	const char	       *name;
-	unsigned char	       *cert_der[MAX_CERTS];
-	int			cert_len[MAX_CERTS];
-	int			i, cert_count, res;
-
-	res = 0;
-	memset(cert_der, 0, sizeof(cert_der));
-	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
-
-	/* Send the client certificate */
-	if (s->relay->ca_name) {
-		name = s->relay->ca_name;
-		req_ca_vrfy.fallback = 0;
-	}
-	else {
-		name = s->helo;
-		req_ca_vrfy.fallback = 1;
-	}
-	if (strlcpy(req_ca_vrfy.name, name, sizeof req_ca_vrfy.name)
-	    >= sizeof req_ca_vrfy.name)
-		return 0;
-
-	x = SSL_get_peer_certificate(io_ssl(s->io));
-	if (x == NULL)
-		return 0;
-	xchain = SSL_get_peer_cert_chain(io_ssl(s->io));
-
-	/*
-	 * Client provided a certificate and possibly a certificate chain.
-	 * SMTP can't verify because it does not have the information that
-	 * it needs, instead it will pass the certificate and chain to the
-	 * lookup process and wait for a reply.
-	 *
-	 */
-
-	cert_len[0] = i2d_X509(x, &cert_der[0]);
-	X509_free(x);
-
-	if (cert_len[0] < 0) {
-		log_warnx("warn: failed to encode certificate");
-		goto end;
-	}
-	log_debug("debug: certificate 0: len=%d", cert_len[0]);
-	if (cert_len[0] > (int)MAX_CERT_LEN) {
-		log_warnx("warn: certificate too long");
-		goto end;
-	}
-
-	if (xchain) {
-		cert_count = sk_X509_num(xchain);
-		log_debug("debug: certificate chain len: %d", cert_count);
-		if (cert_count >= MAX_CERTS) {
-			log_warnx("warn: certificate chain too long");
-			goto end;
-		}
-	}
-	else
-		cert_count = 0;
-
-	for (i = 0; i < cert_count; ++i) {
-		x = sk_X509_value(xchain, i);
-		cert_len[i+1] = i2d_X509(x, &cert_der[i+1]);
-		if (cert_len[i+1] < 0) {
-			log_warnx("warn: failed to encode certificate");
-			goto end;
-		}
-		log_debug("debug: certificate %i: len=%d", i+1, cert_len[i+1]);
-		if (cert_len[i+1] > (int)MAX_CERT_LEN) {
-			log_warnx("warn: certificate too long");
-			goto end;
-		}
-	}
-
-	tree_xset(&wait_ssl_verify, s->id, s);
-	s->flags |= MTA_WAIT;
-
-	/* Send the client certificate */
-	req_ca_vrfy.reqid = s->id;
-	req_ca_vrfy.cert_len = cert_len[0];
-	req_ca_vrfy.n_chain = cert_count;
-	iov[0].iov_base = &req_ca_vrfy;
-	iov[0].iov_len = sizeof(req_ca_vrfy);
-	iov[1].iov_base = cert_der[0];
-	iov[1].iov_len = cert_len[0];
-	m_composev(p_lka, IMSG_MTA_TLS_VERIFY_CERT, 0, 0, -1,
-	    iov, nitems(iov));
-
-	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
-	req_ca_vrfy.reqid = s->id;
-
-	/* Send the chain, one cert at a time */
-	for (i = 0; i < cert_count; ++i) {
-		req_ca_vrfy.cert_len = cert_len[i+1];
-		iov[1].iov_base = cert_der[i+1];
-		iov[1].iov_len  = cert_len[i+1];
-		m_composev(p_lka, IMSG_MTA_TLS_VERIFY_CHAIN, 0, 0, -1,
-		    iov, nitems(iov));
-	}
-
-	/* Tell lookup process that it can start verifying, we're done */
-	memset(&req_ca_vrfy, 0, sizeof req_ca_vrfy);
-	req_ca_vrfy.reqid = s->id;
-	m_compose(p_lka, IMSG_MTA_TLS_VERIFY, 0, 0, -1,
-	    &req_ca_vrfy, sizeof req_ca_vrfy);
-
-	res = 1;
-
-    end:
-	for (i = 0; i < MAX_CERTS; ++i)
-		free(cert_der[i]);
-
-	return res;
 }
 
 static void
