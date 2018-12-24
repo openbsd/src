@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.591 2018/12/24 18:36:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.592 2018/12/24 23:28:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -969,7 +969,7 @@ bind_lease(struct interface_info *ifi)
 	int			 rslt, seen;
 
 	time(&cur_time);
-	if ((cmd_opts & OPT_VERBOSE) == 0)
+	if (log_getverbose() == 0)
 		tick_msg("lease", 1, ifi->first_sending);
 
 	lease = apply_defaults(ifi->offer);
@@ -1362,7 +1362,7 @@ send_discover(struct interface_info *ifi)
 	 * background.
 	 */
 	if (cur_time < ifi->startup_time + config->link_timeout) {
-		if ((cmd_opts & OPT_VERBOSE) == 0)
+		if (log_getverbose() == 0)
 			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
 	} else {
@@ -1486,7 +1486,7 @@ send_request(struct interface_info *ifi)
 	 * background.
 	 */
 	if (cur_time < ifi->startup_time + config->link_timeout) {
-		if ((cmd_opts & OPT_VERBOSE) == 0)
+		if (log_getverbose() == 0)
 			tick_msg("lease", 0, ifi->first_sending);
 		ifi->interval = 1;
 	} else {
