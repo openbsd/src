@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_rand.3,v 1.13 2018/12/22 00:03:51 schwarze Exp $
+.\"	$OpenBSD: BN_rand.3,v 1.14 2018/12/24 10:07:22 schwarze Exp $
 .\" full merge up to: OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -50,13 +50,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 22 2018 $
+.Dd $Mdocdate: December 24 2018 $
 .Dt BN_RAND 3
 .Os
 .Sh NAME
 .Nm BN_rand ,
-.Nm BN_pseudo_rand ,
 .Nm BN_rand_range ,
+.Nm BN_pseudo_rand ,
 .Nm BN_pseudo_rand_range
 .Nd generate pseudo-random number
 .Sh SYNOPSIS
@@ -69,19 +69,7 @@
 .Fa "int bottom"
 .Fc
 .Ft int
-.Fo BN_pseudo_rand
-.Fa "BIGNUM *rnd"
-.Fa "int bits"
-.Fa "int top"
-.Fa "int bottom"
-.Fc
-.Ft int
 .Fo BN_rand_range
-.Fa "BIGNUM *rnd"
-.Fa "BIGNUM *range"
-.Fc
-.Ft int
-.Fo BN_pseudo_rand_range
 .Fa "BIGNUM *rnd"
 .Fa "BIGNUM *range"
 .Fc
@@ -114,17 +102,18 @@ is +1 then
 .Fa top
 cannot also be 1.
 .Pp
-.Fn BN_pseudo_rand
-is a deprecated alias for
-.Fn BN_rand .
-.Pp
 .Fn BN_rand_range
 generates a cryptographically strong pseudo-random number
 .Fa rnd
 in the range 0 <=
 .Fa rnd No < Fa range .
-.Fn BN_pseudo_rand_range
+.Pp
+.Fn BN_pseudo_rand
 is a deprecated alias for
+.Fn BN_rand ,
+and
+.Fn BN_pseudo_rand_range
+for
 .Fn BN_rand_range .
 .Sh RETURN VALUES
 The functions return 1 on success, 0 on error.
@@ -140,17 +129,9 @@ The error codes can be obtained by
 first appeared in SSLeay 0.5.1 and has been available since
 .Ox 2.4 .
 .Pp
-.Fn BN_pseudo_rand
-first appeared in OpenSSL 0.9.5 and has been available since
-.Ox 2.7 .
-.Pp
 The
 .Fa top
 == -1 case and the function
 .Fn BN_rand_range
 first appeared in OpenSSL 0.9.6a and have been available since
 .Ox 3.0 .
-.Pp
-.Fn BN_pseudo_rand_range
-first appeared in OpenSSL 0.9.6c and have been available since
-.Ox 3.2 .
