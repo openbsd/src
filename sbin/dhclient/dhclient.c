@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.590 2018/11/12 16:46:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.591 2018/12/24 18:36:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2755,7 +2755,7 @@ lease_rebind(struct client_lease *lease)
 void
 tick_msg(const char *preamble, int success, time_t start)
 {
-	static int	preamble_sent;
+	static int	preamble_sent, sleeping;
 	static time_t	stop;
 	time_t		cur_time;
 
@@ -2777,7 +2777,8 @@ tick_msg(const char *preamble, int success, time_t start)
 		return;
 	}
 
-	if (isatty(STDERR_FILENO) == 0 || cur_time < start + GRACE_SECONDS)
+	if (isatty(STDERR_FILENO) == 0 || sleeping == 1 || cur_time < start +
+	    GRACE_SECONDS)
 		return;
 
 	if (preamble_sent == 0) {
@@ -2797,7 +2798,7 @@ tick_msg(const char *preamble, int success, time_t start)
 		fprintf(stderr, " sleeping\n");
 		fflush(stderr);
 		go_daemon();
-		preamble_sent = 0;
+		sleeping = 1;	/* OPT_FOREGROUND means isatty() == 1! */
 	}
 }
 
