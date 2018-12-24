@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.113 2018/12/14 01:17:46 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.114 2018/12/24 19:59:17 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -33,6 +33,10 @@ LINKS =	${BINDIR}/mandoc ${BINDIR}/apropos \
 MAN =	apropos.1 man.1 mandoc.1 man.conf.5 makewhatis.8
 
 CLEANFILES += man.cgi cgi.o
+
+afterinstall:
+	install -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    ${.CURDIR}/mandoc.css ${DESTDIR}/usr/share/misc
 
 
 # ----------------------------------------------------------------------
