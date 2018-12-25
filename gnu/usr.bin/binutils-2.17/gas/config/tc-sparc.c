@@ -43,7 +43,6 @@ static struct sparc_arch *lookup_arch PARAMS ((char *));
 static void init_default_arch PARAMS ((void));
 static int sparc_ip PARAMS ((char *, const struct sparc_opcode **));
 static int in_signed_range PARAMS ((bfd_signed_vma, bfd_signed_vma));
-static int in_unsigned_range PARAMS ((bfd_vma, bfd_vma));
 static int in_bitfield_range PARAMS ((bfd_signed_vma, bfd_signed_vma));
 static int sparc_ffs PARAMS ((unsigned int));
 static void synthetize_setuw PARAMS ((const struct sparc_opcode *));
@@ -945,17 +944,6 @@ in_signed_range (val, max)
   if (val > max)
     return 0;
   if (val < ~max)
-    return 0;
-  return 1;
-}
-
-/* Return non-zero if VAL is in the range 0 to MAX.  */
-
-static INLINE int
-in_unsigned_range (val, max)
-     bfd_vma val, max;
-{
-  if (val > max)
     return 0;
   return 1;
 }
