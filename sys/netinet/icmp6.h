@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.47 2017/08/08 18:15:58 florian Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.48 2018/12/25 19:28:25 denis Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -610,16 +610,17 @@ struct	rtentry;
 struct	rttimer;
 struct	in6_multi;
 
-void	icmp6_init(void);
-void	icmp6_paramerror(struct mbuf *, int);
-void	icmp6_error(struct mbuf *, int, int, int);
-int	icmp6_input(struct mbuf **, int *, int, int);
-void	icmp6_fasttimo(void);
-void	icmp6_reflect(struct mbuf *, size_t);
-void	icmp6_prepare(struct mbuf *);
-void	icmp6_redirect_input(struct mbuf *, int);
-void	icmp6_redirect_output(struct mbuf *, struct rtentry *);
-int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void		 icmp6_init(void);
+void		 icmp6_paramerror(struct mbuf *, int);
+struct mbuf	*icmp6_do_error(struct mbuf *, int, int, int);
+void		 icmp6_error(struct mbuf *, int, int, int);
+int		 icmp6_input(struct mbuf **, int *, int, int);
+void		 icmp6_fasttimo(void);
+int		 icmp6_reflect(struct mbuf *, size_t, struct sockaddr *);
+void		 icmp6_prepare(struct mbuf *);
+void		 icmp6_redirect_input(struct mbuf *, int);
+void		 icmp6_redirect_output(struct mbuf *, struct rtentry *);
+int		 icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);
