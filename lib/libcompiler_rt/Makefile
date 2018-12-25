@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2018/10/21 05:13:49 visa Exp $
+# $OpenBSD: Makefile,v 1.14 2018/12/25 09:20:49 claudio Exp $
 
 .include <bsd.own.mk>
 
@@ -285,6 +285,27 @@ SRCS+=	divtc3.c \
 	gcc_qmul.c \
 	gcc_qsub.c \
 	multc3.c
+.endif
+
+.if ${RTARCH} == "sparc64"
+SRCS+=	comparetf2.c \
+	extenddftf2.c \
+	extendsftf2.c \
+	fixtfdi.c \
+	fixtfsi.c \
+	fixtfti.c \
+	fixunstfdi.c \
+	fixunstfsi.c \
+	fixunstfti.c \
+	floatditf.c \
+	floatsitf.c \
+	floattitf.c \
+	floatunditf.c \
+	floatunsitf.c \
+	floatuntitf.c \
+	multc3.c \
+	trunctfdf2.c \
+	trunctfsf2.c
 .endif
 
 .include <bsd.lib.mk>
