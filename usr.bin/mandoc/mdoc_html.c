@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.194 2018/12/22 19:48:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.195 2018/12/25 00:05:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -794,7 +794,7 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
-	char		 cattr[28];
+	char		 cattr[32];
 	struct mdoc_bl	*bl;
 	enum htmltag	 elemtype;
 
