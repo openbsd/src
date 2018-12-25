@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.592 2018/12/24 23:28:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.593 2018/12/25 17:05:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -686,8 +686,6 @@ main(int argc, char *argv[])
 	}
 
 	time(&ifi->startup_time);
-	tick_msg(NULL, 0, ifi->startup_time);	/* Set time to stop ticking. */
-
 	ifi->state = S_PREBOOT;
 	state_preboot(ifi);
 
@@ -2772,8 +2770,8 @@ tick_msg(const char *preamble, int success, time_t start)
 		return;
 	}
 
-	if (preamble == NULL) {
-		stop = start + config->link_timeout;
+	if (stop == 0) {
+		stop = cur_time + config->link_timeout;
 		return;
 	}
 
