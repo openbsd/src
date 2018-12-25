@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.2 2018/12/16 15:56:03 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.3 2018/12/25 22:57:58 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -24,6 +24,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +32,7 @@
 
 static int test_close(int);
 static int test_coverage(int);
+static int test_dying(int);
 static int test_exec(int);
 static int test_fork(int);
 static int test_mode(int);
@@ -60,6 +62,7 @@ main(int argc, char *argv[])
 		{ "mode",	test_mode,	1 },
 		{ "open",	test_open,	0 },
 		{ "close",	test_close,	0 },
+		{ "dying",	test_dying,	1 },
 		{ NULL,		NULL,		0 },
 	};
 	unsigned long *cover;
@@ -203,6 +206,42 @@ test_coverage(int fd)
 	kcov_enable(fd);
 	do_syscall();
 	kcov_disable(fd);
+	return 0;
+}
+
+static void *
+closer(void *arg)
+{
+	int fd = *((int *)arg);
+
+	close(fd);
+	return NULL;
+}
+
+/*
+ * Close kcov descriptor in another thread during tracing.
+ */
+static int
+test_dying(int fd)
+{
+	pthread_t th;
+	int error;
+
+	kcov_enable(fd);
+
+	if ((error = pthread_create(&th, NULL, closer, &fd)))
+		errc(1, error, "pthread_create");
+	if ((error = pthread_join(th, NULL)))
+		errc(1, error, "pthread_join");
+
+	if (close(fd) == -1) {
+		if (errno != EBADF)
+			err(1, "close");
+	} else {
+		warnx("expected kcov descriptor to be closed");
+		return 1;
+	}
+
 	return 0;
 }
 
