@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.5 2018/12/12 07:29:38 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.6 2018/12/25 21:56:53 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -50,7 +50,7 @@ struct kcov_dev {
 
 void kcovattach(int);
 
-int kd_alloc(struct kcov_dev *, unsigned long);
+int kd_init(struct kcov_dev *, unsigned long);
 void kd_free(struct kcov_dev *);
 struct kcov_dev *kd_lookup(int);
 
@@ -159,13 +159,7 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case KIOSETBUFSIZE:
-		if (kd->kd_mode != KCOV_MODE_DISABLED) {
-			error = EBUSY;
-			break;
-		}
-		error = kd_alloc(kd, *((unsigned long *)data));
-		if (error == 0)
-			kd->kd_mode = KCOV_MODE_INIT;
+		error = kd_init(kd, *((unsigned long *)data));
 		break;
 	case KIOENABLE:
 		/* Only one kcov descriptor can be enabled per thread. */
@@ -247,20 +241,31 @@ kd_lookup(int unit)
 }
 
 int
-kd_alloc(struct kcov_dev *kd, unsigned long nmemb)
+kd_init(struct kcov_dev *kd, unsigned long nmemb)
 {
+	void *buf;
 	size_t size;
 
 	KASSERT(kd->kd_buf == NULL);
+
+	if (kd->kd_mode != KCOV_MODE_DISABLED)
+		return (EBUSY);
 
 	if (nmemb == 0 || nmemb > KCOV_BUF_MAX_NMEMB)
 		return (EINVAL);
 
 	size = roundup(nmemb * sizeof(uintptr_t), PAGE_SIZE);
-	kd->kd_buf = malloc(size, M_SUBPROC, M_WAITOK | M_ZERO);
+	buf = malloc(size, M_SUBPROC, M_WAITOK | M_ZERO);
+	/* malloc() can sleep, ensure the race was won. */
+	if (kd->kd_mode != KCOV_MODE_DISABLED) {
+		free(buf, M_SUBPROC, size);
+		return (EBUSY);
+	}
+	kd->kd_buf = buf;
 	/* The first element is reserved to hold the number of used elements. */
 	kd->kd_nmemb = nmemb - 1;
 	kd->kd_size = size;
+	kd->kd_mode = KCOV_MODE_INIT;
 	return (0);
 }
 
