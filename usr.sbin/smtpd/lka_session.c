@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.88 2018/11/01 18:01:51 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.89 2018/12/26 14:15:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -377,7 +377,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			*tag++ = '\0';
 
 		userbase = table_find(env, dsp->u.local.table_userbase, NULL);
-		r = table_lookup(userbase, NULL, xn->u.user, K_USERINFO, &lk);
+		r = table_lookup(userbase, xn->u.user, K_USERINFO, &lk);
 		if (r == -1) {
 			log_trace(TRACE_EXPAND, "expand: lka_expand: "
 			    "backend error while searching user");

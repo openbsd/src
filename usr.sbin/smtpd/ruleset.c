@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.38 2018/12/22 08:54:02 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.39 2018/12/26 14:15:12 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -37,7 +37,7 @@
 static int
 ruleset_match_table_lookup(struct table *table, const char *key, enum table_service service)
 {
-	switch (table_lookup(table, NULL, key, service, NULL)) {
+	switch (table_lookup(table, key, service, NULL)) {
 	case 1:
 		return 1;
 	case -1:

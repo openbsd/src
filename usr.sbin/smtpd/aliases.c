@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.73 2018/06/16 19:41:26 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.74 2018/12/26 14:15:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -58,7 +58,7 @@ aliases_get(struct expand *expand, const char *username)
 	/* first, check if entry has a user-part tag */
 	pbuf = strchr(buf, *env->sc_subaddressing_delim);
 	if (pbuf) {
-		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+		ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -67,7 +67,7 @@ aliases_get(struct expand *expand, const char *username)
 	}
 
 	/* no user-part tag, try looking up user */
-	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret <= 0)
 		return ret;
 
@@ -131,7 +131,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 		if (!bsnprintf(buf, sizeof(buf), "%s%c%s@%s",
 			user, *env->sc_subaddressing_delim, tag, domain))
 			return 0;
-		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+		ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -141,7 +141,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* then, check if entry exists without user-part tag */
 	if (!bsnprintf(buf, sizeof(buf), "%s@%s", user, domain))
 		return 0;
-	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -152,7 +152,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 		if (!bsnprintf(buf, sizeof(buf), "%s%c%s",
 			user, *env->sc_subaddressing_delim, tag))
 			return 0;
-		ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+		ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 		if (ret < 0)
 			return (-1);
 		if (ret)
@@ -162,7 +162,7 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	/* Failed ? We lookup for username only */
 	if (!bsnprintf(buf, sizeof(buf), "%s", user))
 		return 0;
-	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
@@ -171,14 +171,14 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	if (!bsnprintf(buf, sizeof(buf), "@%s", domain))
 		return 0;
 	/* Failed ? We lookup for catch all for virtual domain */
-	ret = table_lookup(mapping, NULL, buf, K_ALIAS, &lk);
+	ret = table_lookup(mapping, buf, K_ALIAS, &lk);
 	if (ret < 0)
 		return (-1);
 	if (ret)
 		goto expand;
 
 	/* Failed ? We lookup for a *global* catch all */
-	ret = table_lookup(mapping, NULL, "@", K_ALIAS, &lk);
+	ret = table_lookup(mapping, "@", K_ALIAS, &lk);
 	if (ret <= 0)
 		return (ret);
 
