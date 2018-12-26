@@ -2677,6 +2677,7 @@
 ./usr/share/misc/license.template
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
+./usr/share/misc/mandoc.css
 ./usr/share/misc/mdoc.template
 ./usr/share/misc/mime.types
 ./usr/share/misc/more.help
