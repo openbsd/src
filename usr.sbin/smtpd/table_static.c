@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.21 2018/12/23 15:53:24 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.22 2018/12/26 11:53:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -49,6 +49,7 @@ static int table_static_fetch(void *, struct dict *, enum table_service,
 static void  table_static_close(void *);
 
 struct table_backend table_backend_static = {
+	"static",
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
 	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
 	K_STRING|K_REGEX,

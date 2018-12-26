@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.34 2018/12/23 15:53:24 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.35 2018/12/26 11:53:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -51,40 +51,33 @@ extern struct table_backend table_backend_getpwnam;
 extern struct table_backend table_backend_proc;
 
 static const char * table_service_name(enum table_service);
-static const char * table_backend_name(struct table_backend *);
-static const char * table_dump_lookup(enum table_service, union lookup *);
 static int table_parse_lookup(enum table_service, const char *, const char *,
     union lookup *);
 static int parse_sockaddr(struct sockaddr *, int, const char *);
 
 static unsigned int last_table_id = 0;
 
+static struct table_backend *backends[] = {
+	&table_backend_static,
+	&table_backend_db,
+	&table_backend_getpwnam,
+	&table_backend_proc,
+	NULL
+};
+
 struct table_backend *
 table_backend_lookup(const char *backend)
 {
-	if (!strcmp(backend, "static") || !strcmp(backend, "file"))
-		return &table_backend_static;
-	if (!strcmp(backend, "db"))
-		return &table_backend_db;
-	if (!strcmp(backend, "getpwnam"))
-		return &table_backend_getpwnam;
-	if (!strcmp(backend, "proc"))
-		return &table_backend_proc;
-	return NULL;
-}
+	int i;
 
-static const char *
-table_backend_name(struct table_backend *backend)
-{
-	if (backend == &table_backend_static)
-		return "static";
-	if (backend == &table_backend_db)
-		return "db";
-	if (backend == &table_backend_getpwnam)
-		return "getpwnam";
-	if (backend == &table_backend_proc)
-		return "proc";
-	return "???";
+	if (!strcmp(backend, "file"))
+		backend = "static";
+
+	for (i = 0; backends[i]; i++)
+		if (!strcmp(backends[i]->name, backend))
+			return (backends[i]);
+
+	return NULL;
 }
 
 static const char *
@@ -144,7 +137,7 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 		    lk ? "lookup" : "check",
 		    lkey,
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
 		    lk ? "\"" : "",
 		    (lk) ? buf : "found",
@@ -157,7 +150,7 @@ table_lookup(struct table *table, struct dict *params, const char *key, enum tab
 		    lk ? "lookup" : "check",
 		    lkey,
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
 		    r);
 
@@ -180,7 +173,7 @@ table_fetch(struct table *table, struct dict *params, enum table_service kind, u
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s%s",
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
 		    lk ? "\"" : "",
 		    (lk) ? buf : "found",
@@ -191,7 +184,7 @@ table_fetch(struct table *table, struct dict *params, enum table_service kind, u
 	else
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
 		    r);
 
@@ -666,90 +659,6 @@ table_parse_lookup(enum table_service service, const char *key,
 		return (-1);
 	}
 }
-
-static const char *
-table_dump_lookup(enum table_service s, union lookup *lk)
-{
-	static char	buf[LINE_MAX];
-	int		ret;
-
-	switch (s) {
-	case K_NONE:
-		break;
-
-	case K_ALIAS:
-		expand_to_text(lk->expand, buf, sizeof(buf));
-		break;
-
-	case K_DOMAIN:
-		ret = snprintf(buf, sizeof(buf), "%s", lk->domain.name);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_CREDENTIALS:
-		ret = snprintf(buf, sizeof(buf), "%s:%s",
-		    lk->creds.username, lk->creds.password);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_NETADDR:
-		ret = snprintf(buf, sizeof(buf), "%s/%d",
-		    sockaddr_to_text((struct sockaddr *)&lk->netaddr.ss),
-		    lk->netaddr.bits);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_USERINFO:
-		ret = snprintf(buf, sizeof(buf), "%s:%d:%d:%s",
-		    lk->userinfo.username,
-		    lk->userinfo.uid,
-		    lk->userinfo.gid,
-		    lk->userinfo.directory);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_SOURCE:
-		ret = snprintf(buf, sizeof(buf), "%s",
-		    ss_to_text(&lk->source.addr));
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_MAILADDR:
-		ret = snprintf(buf, sizeof(buf), "%s@%s",
-		    lk->mailaddr.user,
-		    lk->mailaddr.domain);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_ADDRNAME:
-		ret = snprintf(buf, sizeof(buf), "%s",
-		    lk->addrname.name);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_RELAYHOST:
-		if (strlcpy(buf, lk->relayhost, sizeof(buf)) >= sizeof(buf))
-			goto err;
-		break;
-
-	default:
-		(void)strlcpy(buf, "???", sizeof(buf));
-		break;
-	}
-
-	return (buf);
-
-err:
-	return (NULL);
-}
-
 
 static int
 parse_sockaddr(struct sockaddr *sa, int family, const char *str)
