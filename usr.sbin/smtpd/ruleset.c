@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.39 2018/12/26 14:15:12 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.40 2018/12/26 15:55:09 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -35,22 +35,6 @@
 
 
 static int
-ruleset_match_table_lookup(struct table *table, const char *key, enum table_service service)
-{
-	switch (table_lookup(table, key, service, NULL)) {
-	case 1:
-		return 1;
-	case -1:
-		log_warnx("warn: failure to perform a table lookup on table %s",
-		    table->t_name);
-		return -1;
-	default:
-		break;
-	}
-	return 0;
-}
-
-static int
 ruleset_match_tag(struct rule *r, const struct envelope *evp)
 {
 	int		ret;
@@ -64,7 +48,7 @@ ruleset_match_tag(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_tag, NULL);
-	if ((ret = ruleset_match_table_lookup(table, evp->tag, service)) < 0)
+	if ((ret = table_match(table, service, evp->tag)) < 0)
 		return ret;
 
 	return r->flag_tag < 0 ? !ret : ret;
@@ -100,7 +84,7 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_from, NULL);
-	if ((ret = ruleset_match_table_lookup(table, key, service)) < 0)
+	if ((ret = table_match(table, service, key)) < 0)
 		return -1;
 
 	return r->flag_from < 0 ? !ret : ret;
@@ -120,8 +104,7 @@ ruleset_match_to(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_for, NULL);
-	if ((ret = ruleset_match_table_lookup(table, evp->dest.domain,
-		    service)) < 0)
+	if ((ret = table_match(table, service, evp->dest.domain)) < 0)
 		return -1;
 
 	return r->flag_for < 0 ? !ret : ret;
@@ -141,7 +124,7 @@ ruleset_match_smtp_helo(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_smtp_helo, NULL);
-	if ((ret = ruleset_match_table_lookup(table, evp->helo, service)) < 0)
+	if ((ret = table_match(table, service, evp->helo)) < 0)
 		return -1;
 
 	return r->flag_smtp_helo < 0 ? !ret : ret;
@@ -172,7 +155,7 @@ ruleset_match_smtp_auth(struct rule *r, const struct envelope *evp)
 		/*
 		 * table = table_find(m->from_table, NULL);
 		 * key = evp->username;
-		 * return ruleset_match_table_lookup(table, key, K_CREDENTIALS);
+		 * return table_match(table, K_CREDENTIALS, key);
 		 */
 		return -1;
 
@@ -201,7 +184,7 @@ ruleset_match_smtp_mail_from(struct rule *r, const struct envelope *evp)
 		return -1;
 
 	table = table_find(env, r->table_smtp_mail_from, NULL);
-	if ((ret = ruleset_match_table_lookup(table, key, service)) < 0)
+	if ((ret = table_match(table, service, key)) < 0)
 		return -1;
 
 	return r->flag_smtp_mail_from < 0 ? !ret : ret;
@@ -225,7 +208,7 @@ ruleset_match_smtp_rcpt_to(struct rule *r, const struct envelope *evp)
 		return -1;
 
 	table = table_find(env, r->table_smtp_rcpt_to, NULL);
-	if ((ret = ruleset_match_table_lookup(table, key, service)) < 0)
+	if ((ret = table_match(table, service, key)) < 0)
 		return -1;
 
 	return r->flag_smtp_rcpt_to < 0 ? !ret : ret;

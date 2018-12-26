@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.36 2018/12/26 14:15:13 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.37 2018/12/26 15:55:09 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -113,6 +113,12 @@ table_find(struct smtpd *conf, const char *name, const char *tag)
 	}
 
 	return dict_get(conf->sc_tables_dict, buf);
+}
+
+int
+table_match(struct table *table, enum table_service kind, const char *key)
+{
+	return table_lookup(table, key, kind, NULL);
 }
 
 int
