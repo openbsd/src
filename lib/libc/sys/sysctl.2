@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.17 2018/11/21 09:22:58 jmc Exp $
+.\"	$OpenBSD: sysctl.2,v 1.18 2018/12/26 16:14:59 anton Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 21 2018 $
+.Dd $Mdocdate: December 26 2018 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -463,6 +463,7 @@ information.
 .It Dv KERN_OSREV Ta "integer" Ta "no"
 .It Dv KERN_OSTYPE Ta "string" Ta "no"
 .It Dv KERN_OSVERSION Ta "string" Ta "no"
+.It Dv KERN_POOL_DEBUG Ta "integer" Ta "yes"
 .It Dv KERN_POSIX1 Ta "integer" Ta "no"
 .It Dv KERN_PROC Ta "struct kinfo_proc" Ta "no"
 .It Dv KERN_PROC_ARGS Ta "node" Ta "not applicable"
@@ -721,6 +722,23 @@ The system revision number.
 The system type string.
 .It Dv KERN_OSVERSION Pq Va kern.osversion
 The kernel build version.
+.It Dv KERN_POOL_DEBUG Pq Va kern.pool_debug
+Modify the memory pool debug level.
+Valid values are:
+.Pp
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+Disable pool debugging.
+.It 1
+Enable use after free detection.
+.It 2
+In addition to 1, when calling either
+.Xr malloc 9
+or
+.Xr pool_get 9
+with flags indicating that sleeping is allowed then always yield.
+Useful to detect potential races.
+.El
 .It Dv KERN_POSIX1 Pq Va kern.posix1version
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
