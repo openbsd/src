@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.37 2018/12/26 15:55:09 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.38 2018/12/26 20:13:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -118,11 +118,11 @@ table_find(struct smtpd *conf, const char *name, const char *tag)
 int
 table_match(struct table *table, enum table_service kind, const char *key)
 {
-	return table_lookup(table, key, kind, NULL);
+	return table_lookup(table, kind, key, NULL);
 }
 
 int
-table_lookup(struct table *table, const char *key, enum table_service kind,
+table_lookup(struct table *table, enum table_service kind, const char *key,
     union lookup *lk)
 {
 	int	r;
@@ -136,7 +136,7 @@ table_lookup(struct table *table, const char *key, enum table_service kind,
 		return -1;
 	}
 
-	r = table->t_backend->lookup(table->t_handle, lkey, kind, lk ? &buf : NULL);
+	r = table->t_backend->lookup(table->t_handle, kind, lkey, lk ? &buf : NULL);
 
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s%s",

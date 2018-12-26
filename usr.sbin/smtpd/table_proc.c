@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.10 2018/12/26 14:15:13 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.11 2018/12/26 20:13:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -178,7 +178,7 @@ imsg_add_params(struct ibuf *buf)
 }
 
 static int
-table_proc_lookup(void *arg, const char *k, enum table_service s, char **dst)
+table_proc_lookup(void *arg, enum table_service s, const char *k, char **dst)
 {
 	struct table_proc_priv	*priv = arg;
 	struct ibuf		*buf;

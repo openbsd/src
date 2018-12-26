@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_getpwnam.c,v 1.7 2018/12/26 14:15:13 eric Exp $	*/
+/*	$OpenBSD: table_getpwnam.c,v 1.8 2018/12/26 20:13:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -41,7 +41,7 @@
 static int table_getpwnam_config(struct table *);
 static int table_getpwnam_update(struct table *);
 static void *table_getpwnam_open(struct table *);
-static int table_getpwnam_lookup(void *, const char *, enum table_service,
+static int table_getpwnam_lookup(void *, enum table_service, const char *,
     char **);
 static void  table_getpwnam_close(void *);
 
@@ -83,7 +83,7 @@ table_getpwnam_close(void *hdl)
 }
 
 static int
-table_getpwnam_lookup(void *hdl, const char *key, enum table_service kind,
+table_getpwnam_lookup(void *hdl, enum table_service kind, const char *key,
     char **dst)
 {
 	struct passwd	       *pw;

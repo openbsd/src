@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.23 2018/12/26 14:15:13 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.24 2018/12/26 20:13:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -42,7 +42,7 @@
 static int table_static_config(struct table *);
 static int table_static_update(struct table *);
 static void *table_static_open(struct table *);
-static int table_static_lookup(void *, const char *, enum table_service,
+static int table_static_lookup(void *, enum table_service, const char *,
     char **);
 static int table_static_fetch(void *, enum table_service, char **);
 static void  table_static_close(void *);
@@ -215,8 +215,8 @@ table_static_close(void *hdl)
 }
 
 static int
-table_static_lookup(void *hdl, const char *key,
-    enum table_service service, char **dst)
+table_static_lookup(void *hdl, enum table_service service, const char *key,
+    char **dst)
 {
 	struct table   *m  = hdl;
 	char	       *line;
