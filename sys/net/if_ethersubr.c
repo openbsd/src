@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.256 2018/12/20 23:00:55 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.257 2018/12/26 18:32:38 denis Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -243,7 +243,11 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		if (!ISSET(ifp->if_xflags, IFXF_MPLS))
 			senderr(ENETUNREACH);
 
-		switch (dst->sa_family) {
+		af = dst->sa_family;
+		if (af == AF_MPLS)
+			af = rt->rt_gateway->sa_family;         
+
+		switch (af) {
 		case AF_LINK:
 			if (satosdl(dst)->sdl_alen < sizeof(eh->ether_dhost))
 				senderr(EHOSTUNREACH);
@@ -258,7 +262,6 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			break;
 #endif
 		case AF_INET:
-		case AF_MPLS:
 			error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
 			if (error)
 				return (error);
