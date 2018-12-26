@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.40 2018/12/26 15:55:09 eric Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.41 2018/12/26 17:37:15 eric Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -33,6 +33,7 @@
 #include "smtpd.h"
 #include "log.h"
 
+#define MATCH_RESULT(r, neg) ((r) == -1 ? -1 : ((neg) < 0 ? !(r) : (r)))
 
 static int
 ruleset_match_tag(struct rule *r, const struct envelope *evp)
@@ -48,10 +49,9 @@ ruleset_match_tag(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_tag, NULL);
-	if ((ret = table_match(table, service, evp->tag)) < 0)
-		return ret;
+	ret = table_match(table, service, evp->tag);
 
-	return r->flag_tag < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_tag);
 }
 
 static int
@@ -84,10 +84,9 @@ ruleset_match_from(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_from, NULL);
-	if ((ret = table_match(table, service, key)) < 0)
-		return -1;
+	ret = table_match(table, service, key);
 
-	return r->flag_from < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_from);
 }
 
 static int
@@ -104,10 +103,9 @@ ruleset_match_to(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_for, NULL);
-	if ((ret = table_match(table, service, evp->dest.domain)) < 0)
-		return -1;
+	ret = table_match(table, service, evp->dest.domain);
 
-	return r->flag_for < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_for);
 }
 
 static int
@@ -124,10 +122,9 @@ ruleset_match_smtp_helo(struct rule *r, const struct envelope *evp)
 		service = K_REGEX;
 
 	table = table_find(env, r->table_smtp_helo, NULL);
-	if ((ret = table_match(table, service, evp->helo)) < 0)
-		return -1;
+	ret = table_match(table, service, evp->helo);
 
-	return r->flag_smtp_helo < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_smtp_helo);
 }
 
 static int
@@ -163,7 +160,7 @@ ruleset_match_smtp_auth(struct rule *r, const struct envelope *evp)
 	else
 		ret = 1;
 
-	return r->flag_smtp_auth < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_smtp_auth);
 }
 
 static int
@@ -184,10 +181,9 @@ ruleset_match_smtp_mail_from(struct rule *r, const struct envelope *evp)
 		return -1;
 
 	table = table_find(env, r->table_smtp_mail_from, NULL);
-	if ((ret = table_match(table, service, key)) < 0)
-		return -1;
+	ret = table_match(table, service, key);
 
-	return r->flag_smtp_mail_from < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_smtp_mail_from);
 }
 
 static int
@@ -208,10 +204,9 @@ ruleset_match_smtp_rcpt_to(struct rule *r, const struct envelope *evp)
 		return -1;
 
 	table = table_find(env, r->table_smtp_rcpt_to, NULL);
-	if ((ret = table_match(table, service, key)) < 0)
-		return -1;
+	ret = table_match(table, service, key);
 
-	return r->flag_smtp_rcpt_to < 0 ? !ret : ret;
+	return MATCH_RESULT(ret, r->flag_smtp_rcpt_to);
 }
 
 struct rule *
