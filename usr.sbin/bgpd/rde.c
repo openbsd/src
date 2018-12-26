@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.454 2018/12/22 16:12:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.455 2018/12/26 13:24:28 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2469,7 +2469,7 @@ rde_rdomain_import(struct rde_aspath *asp, struct rdomain *rd)
 	struct filter_set	*s;
 
 	TAILQ_FOREACH(s, &rd->import, entry) {
-		if (community_match(asp, &s->action.community, 0))
+		if (community_ext_match(asp, &s->action.community, 0))
 			return (1);
 	}
 	return (0);
