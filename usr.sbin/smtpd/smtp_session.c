@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.380 2018/12/23 16:37:53 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.381 2018/12/26 11:29:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2630,8 +2630,11 @@ static int
 smtp_tx_filtered_dataline(struct smtp_tx *tx, const char *line)
 {
 	if (!strcmp(line, ".")) {
-		if (tx->error)
-			return 1;
+		/* XXX - this needs to be handled properly */
+		/*
+		 * if (tx->error)
+		 *	return 1;
+		 */
 		line = NULL;
 	}
 	else {
