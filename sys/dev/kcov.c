@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.6 2018/12/25 21:56:53 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.7 2018/12/27 10:04:16 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -35,11 +35,12 @@
 
 struct kcov_dev {
 	enum {
-		KCOV_MODE_DISABLED,
-		KCOV_MODE_INIT,
-		KCOV_MODE_TRACE_PC,
-		KCOV_MODE_DYING,
-	}		 kd_mode;
+		KCOV_STATE_NONE,
+		KCOV_STATE_READY,
+		KCOV_STATE_TRACE,
+		KCOV_STATE_DYING,
+	}		 kd_state;
+	int		 kd_mode;
 	int		 kd_unit;	/* device minor */
 	uintptr_t	*kd_buf;	/* traced coverage */
 	size_t		 kd_nmemb;
@@ -137,12 +138,15 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (kd == NULL)
 		return (EINVAL);
 
-	DPRINTF("%s: unit=%d\n", __func__, minor(dev));
+	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
+	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
-	if (kd->kd_mode == KCOV_MODE_TRACE_PC)
-		kd->kd_mode = KCOV_MODE_DYING;
-	else
+	if (kd->kd_state == KCOV_STATE_TRACE) {
+		kd->kd_state = KCOV_STATE_DYING;
+		kd->kd_mode = KCOV_MODE_NONE;
+	} else {
 		kd_free(kd);
+	}
 
 	return (0);
 }
@@ -163,20 +167,22 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case KIOENABLE:
 		/* Only one kcov descriptor can be enabled per thread. */
-		if (p->p_kd != NULL || kd->kd_mode != KCOV_MODE_INIT) {
+		if (p->p_kd != NULL || kd->kd_state != KCOV_STATE_READY) {
 			error = EBUSY;
 			break;
 		}
+		kd->kd_state = KCOV_STATE_TRACE;
 		kd->kd_mode = KCOV_MODE_TRACE_PC;
 		p->p_kd = kd;
 		break;
 	case KIODISABLE:
 		/* Only the enabled thread may disable itself. */
-		if (p->p_kd != kd || kd->kd_mode != KCOV_MODE_TRACE_PC) {
+		if (p->p_kd != kd || kd->kd_state != KCOV_STATE_TRACE) {
 			error = EBUSY;
 			break;
 		}
-		kd->kd_mode = KCOV_MODE_INIT;
+		kd->kd_state = KCOV_STATE_READY;
+		kd->kd_mode = KCOV_MODE_NONE;
 		p->p_kd = NULL;
 		break;
 	default:
@@ -184,8 +190,8 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		DPRINTF("%s: %lu: unknown command\n", __func__, cmd);
 	}
 
-	DPRINTF("%s: unit=%d, mode=%d, error=%d\n",
-	    __func__, kd->kd_unit, kd->kd_mode, error);
+	DPRINTF("%s: unit=%d, state=%d, mode=%d, error=%d\n",
+	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode, error);
 
 	return (error);
 }
@@ -219,12 +225,15 @@ kcov_exit(struct proc *p)
 	if (kd == NULL)
 		return;
 
-	DPRINTF("%s: unit=%d\n", __func__, kd->kd_unit);
+	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
+	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
-	if (kd->kd_mode == KCOV_MODE_DYING)
+	if (kd->kd_state == KCOV_STATE_DYING) {
 		kd_free(kd);
-	else
-		kd->kd_mode = KCOV_MODE_INIT;
+	} else {
+		kd->kd_state = KCOV_STATE_READY;
+		kd->kd_mode = KCOV_MODE_NONE;
+	}
 	p->p_kd = NULL;
 }
 
@@ -248,7 +257,7 @@ kd_init(struct kcov_dev *kd, unsigned long nmemb)
 
 	KASSERT(kd->kd_buf == NULL);
 
-	if (kd->kd_mode != KCOV_MODE_DISABLED)
+	if (kd->kd_state != KCOV_STATE_NONE)
 		return (EBUSY);
 
 	if (nmemb == 0 || nmemb > KCOV_BUF_MAX_NMEMB)
@@ -257,7 +266,7 @@ kd_init(struct kcov_dev *kd, unsigned long nmemb)
 	size = roundup(nmemb * sizeof(uintptr_t), PAGE_SIZE);
 	buf = malloc(size, M_SUBPROC, M_WAITOK | M_ZERO);
 	/* malloc() can sleep, ensure the race was won. */
-	if (kd->kd_mode != KCOV_MODE_DISABLED) {
+	if (kd->kd_state != KCOV_STATE_NONE) {
 		free(buf, M_SUBPROC, size);
 		return (EBUSY);
 	}
@@ -265,14 +274,15 @@ kd_init(struct kcov_dev *kd, unsigned long nmemb)
 	/* The first element is reserved to hold the number of used elements. */
 	kd->kd_nmemb = nmemb - 1;
 	kd->kd_size = size;
-	kd->kd_mode = KCOV_MODE_INIT;
+	kd->kd_state = KCOV_STATE_READY;
 	return (0);
 }
 
 void
 kd_free(struct kcov_dev *kd)
 {
-	DPRINTF("%s: unit=%d mode=%d\n", __func__, kd->kd_unit, kd->kd_mode);
+	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
+	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
 	TAILQ_REMOVE(&kd_list, kd, kd_entry);
 	free(kd->kd_buf, M_SUBPROC, kd->kd_size);
