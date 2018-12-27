@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.40 2018/12/27 08:57:03 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.41 2018/12/27 09:30:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -136,7 +136,7 @@ table_lookup(struct table *table, enum table_service kind, const char *key,
 		return -1;
 	}
 
-	r = table->t_backend->lookup(table->t_handle, kind, lkey, lk ? &buf : NULL);
+	r = table->t_backend->lookup(table, kind, lkey, lk ? &buf : NULL);
 
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s%s",
@@ -174,7 +174,7 @@ table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 	if (table->t_backend->fetch == NULL)
 		return (-1);
 
-	r = table->t_backend->fetch(table->t_handle, kind, lk ? &buf : NULL);
+	r = table->t_backend->fetch(table, kind, lk ? &buf : NULL);
 
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s%s",

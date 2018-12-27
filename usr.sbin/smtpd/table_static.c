@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.26 2018/12/27 08:57:03 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.27 2018/12/27 09:30:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -42,9 +42,9 @@
 static int table_static_config(struct table *);
 static int table_static_update(struct table *);
 static int table_static_open(struct table *);
-static int table_static_lookup(void *, enum table_service, const char *,
+static int table_static_lookup(struct table *, enum table_service, const char *,
     char **);
-static int table_static_fetch(void *, enum table_service, char **);
+static int table_static_fetch(struct table *, enum table_service, char **);
 static void table_static_close(struct table *);
 
 struct table_backend table_backend_static = {
@@ -216,10 +216,9 @@ table_static_close(struct table *table)
 }
 
 static int
-table_static_lookup(void *hdl, enum table_service service, const char *key,
+table_static_lookup(struct table *m, enum table_service service, const char *key,
     char **dst)
 {
-	struct table   *m  = hdl;
 	char	       *line;
 	int		ret;
 	int	       (*match)(const char *, const char *) = NULL;
@@ -266,9 +265,8 @@ table_static_lookup(void *hdl, enum table_service service, const char *key,
 }
 
 static int
-table_static_fetch(void *hdl, enum table_service service, char **dst)
+table_static_fetch(struct table *t, enum table_service service, char **dst)
 {
-	struct table   *t = hdl;
 	const char     *k;
 
 	if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL)) {

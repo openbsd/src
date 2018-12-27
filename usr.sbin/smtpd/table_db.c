@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.16 2018/12/27 08:57:03 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.17 2018/12/27 09:30:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -44,8 +44,8 @@ static int table_db_config(struct table *);
 static int table_db_update(struct table *);
 static int table_db_open(struct table *);
 static void *table_db_open2(struct table *);
-static int table_db_lookup(void *, enum table_service, const char *, char **);
-static int table_db_fetch(void *, enum table_service, char **);
+static int table_db_lookup(struct table *, enum table_service, const char *, char **);
+static int table_db_fetch(struct table *, enum table_service, char **);
 static void table_db_close(struct table *);
 static void table_db_close2(void *);
 
@@ -77,7 +77,6 @@ struct dbhandle {
 	DB		*db;
 	char		 pathname[PATH_MAX];
 	time_t		 mtime;
-	struct table	*table;
 };
 
 static int
@@ -141,7 +140,6 @@ table_db_open2(struct table *table)
 	handle->db = dbopen(table->t_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (handle->db == NULL)
 		goto error;
-	handle->table = table;
 
 	return handle;
 
@@ -161,11 +159,10 @@ table_db_close2(void *hdl)
 }
 
 static int
-table_db_lookup(void *hdl, enum table_service service, const char *key,
+table_db_lookup(struct table *table, enum table_service service, const char *key,
     char **dst)
 {
-	struct dbhandle	*handle = hdl;
-	struct table	*table = NULL;
+	struct dbhandle	*handle = table->t_handle;
 	char	       *line;
 	size_t		len = 0;
 	int		ret;
@@ -178,8 +175,7 @@ table_db_lookup(void *hdl, enum table_service service, const char *key,
 
 	/* DB has changed, close and reopen */
 	if (sb.st_mtime != handle->mtime) {
-		table = handle->table;
-		table_db_update(handle->table);
+		table_db_update(table);
 		handle = table->t_handle;
 	}
 
@@ -204,10 +200,9 @@ table_db_lookup(void *hdl, enum table_service service, const char *key,
 }
 
 static int
-table_db_fetch(void *hdl, enum table_service service, char **dst)
+table_db_fetch(struct table *table, enum table_service service, char **dst)
 {
-	struct dbhandle	*handle = hdl;
-	struct table	*table  = handle->table;
+	struct dbhandle	*handle = table->t_handle;
 	DBT dbk;
 	DBT dbd;
 	int r;
