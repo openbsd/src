@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.360 2018/09/18 12:55:19 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.361 2018/12/27 16:33:44 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,9 +104,6 @@ int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
 void	pfctl_state_store(int, const char *);
 void	pfctl_state_load(int, const char *);
-
-struct pf_anchor_global	 pf_anchors;
-struct pf_anchor	 pf_main_anchor;
 
 const char	*clearopt;
 char		*rulesopt;
