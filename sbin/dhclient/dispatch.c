@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.154 2018/12/27 17:02:03 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.155 2018/12/27 17:19:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -173,7 +173,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			} while (quit == 0 && ifi->rbuf_offset < ifi->rbuf_len);
 		}
 		if ((fds[1].revents & POLLIN) != 0)
-			routehandler(ifi, routefd);
+			routefd_handler(ifi, routefd);
 		if ((fds[2].revents & POLLOUT) != 0)
 			flush_unpriv_ibuf();
 		if ((fds[2].revents & POLLIN) != 0)

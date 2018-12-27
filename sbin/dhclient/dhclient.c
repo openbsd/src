@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.595 2018/12/27 17:02:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.596 2018/12/27 17:19:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -307,7 +307,7 @@ get_hw_address(struct interface_info *ifi)
 }
 
 void
-routehandler(struct interface_info *ifi, int routefd)
+routefd_handler(struct interface_info *ifi, int routefd)
 {
 	struct ether_addr		 hw;
 	struct rt_msghdr		*rtm;
@@ -2590,7 +2590,7 @@ take_charge(struct interface_info *ifi, int routefd)
 			fatal("routefd: ERR|HUP|NVAL");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
-		routehandler(ifi, routefd);
+		routefd_handler(ifi, routefd);
 	}
 }
 
@@ -2904,6 +2904,6 @@ propose_release(struct interface_info *ifi)
 			fatal("routefd: ERR|HUP|NVAL");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
-		routehandler(ifi, routefd);
+		routefd_handler(ifi, routefd);
 	}
 }

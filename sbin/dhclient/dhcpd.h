@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.259 2018/12/27 17:02:03 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.260 2018/12/27 17:19:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -222,7 +222,7 @@ void		 dhcpnak(struct interface_info *, const char *);
 void		 bootreply(struct interface_info *, struct option_data *,
     const char *);
 void		 free_client_lease(struct client_lease *);
-void		 routehandler(struct interface_info *, int);
+void		 routefd_handler(struct interface_info *, int);
 
 /* packet.c */
 void		 assemble_eh_header(struct ether_addr, struct ether_header *);
