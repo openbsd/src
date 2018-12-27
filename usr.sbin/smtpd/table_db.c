@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.18 2018/12/27 14:23:41 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.19 2018/12/27 14:41:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -79,6 +79,7 @@ struct dbhandle {
 	DB		*db;
 	char		 pathname[PATH_MAX];
 	time_t		 mtime;
+	int		 iter;
 };
 
 static int
@@ -209,11 +210,11 @@ table_db_fetch(struct table *table, enum table_service service, char **dst)
 	DBT dbd;
 	int r;
 
-	if (table->t_iter == NULL)
+	if (handle->iter == 0)
 		r = handle->db->seq(handle->db, &dbk, &dbd, R_FIRST);
 	else
 		r = handle->db->seq(handle->db, &dbk, &dbd, R_NEXT);
-	table->t_iter = handle->db;
+	handle->iter = 1;
 	if (!r) {
 		r = handle->db->seq(handle->db, &dbk, &dbd, R_FIRST);
 		if (!r)
