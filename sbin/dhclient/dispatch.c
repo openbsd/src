@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.153 2018/11/04 16:32:11 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.154 2018/12/27 17:02:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,7 @@
 #include "privsep.h"
 
 
-void packethandler(struct interface_info *);
+void bpffd_handler(struct interface_info *);
 void flush_unpriv_ibuf(void);
 void sendhup(void);
 
@@ -90,9 +90,9 @@ dispatch(struct interface_info *ifi, int routefd)
 	while (quit == 0 || quit == SIGHUP) {
 		if (quit == SIGHUP) {
 			/* Ignore any future packets, messages or timeouts. */
-			if (ifi->bfdesc != -1) {
-				close(ifi->bfdesc);
-				ifi->bfdesc = -1;
+			if (ifi->bpffd != -1) {
+				close(ifi->bpffd);
+				ifi->bpffd = -1;
 			}
 			if (routefd != -1) {
 				close(routefd);
@@ -130,7 +130,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		 *  fds[1] == routing socket for incoming RTM messages
 		 *  fds[2] == imsg socket to privileged process
 		 */
-		fds[0].fd = ifi->bfdesc;
+		fds[0].fd = ifi->bpffd;
 		fds[1].fd = routefd;
 		fds[2].fd = unpriv_ibuf->fd;
 		fds[0].events = fds[1].events = fds[2].events = POLLIN;
@@ -142,14 +142,14 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("%s: poll(bfdesc, routefd, unpriv_ibuf)",
+			log_warn("%s: poll(bpffd, routefd, unpriv_ibuf)",
 			    log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_debug("%s: bfdesc: ERR|HUP|NVAL", log_procname);
+			log_debug("%s: bpffd: ERR|HUP|NVAL", log_procname);
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -169,7 +169,7 @@ dispatch(struct interface_info *ifi, int routefd)
 
 		if ((fds[0].revents & POLLIN) != 0) {
 			do {
-				packethandler(ifi);
+				bpffd_handler(ifi);
 			} while (quit == 0 && ifi->rbuf_offset < ifi->rbuf_len);
 		}
 		if ((fds[1].revents & POLLIN) != 0)
@@ -185,7 +185,7 @@ dispatch(struct interface_info *ifi, int routefd)
 }
 
 void
-packethandler(struct interface_info *ifi)
+bpffd_handler(struct interface_info *ifi)
 {
 	struct sockaddr_in	 from;
 	struct ether_addr	 hfrom;

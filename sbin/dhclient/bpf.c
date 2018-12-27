@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.71 2018/12/08 23:06:41 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.72 2018/12/27 17:02:03 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -178,14 +178,14 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
 
 int
-configure_bpf_sock(int bfdesc)
+configure_bpf_sock(int bpffd)
 {
 	struct bpf_version	 v;
 	struct bpf_program	 p;
 	int			 flag = 1, sz;
 
 	/* Make sure the BPF version is in range. */
-	if (ioctl(bfdesc, BIOCVERSION, &v) == -1)
+	if (ioctl(bpffd, BIOCVERSION, &v) == -1)
 		fatal("BIOCVERSION");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
@@ -198,14 +198,14 @@ configure_bpf_sock(int bfdesc)
 	 * comes in, rather than waiting for the input buffer to fill
 	 * with packets.
 	 */
-	if (ioctl(bfdesc, BIOCIMMEDIATE, &flag) == -1)
+	if (ioctl(bpffd, BIOCIMMEDIATE, &flag) == -1)
 		fatal("BIOCIMMEDIATE");
 
-	if (ioctl(bfdesc, BIOCSFILDROP, &flag) == -1)
+	if (ioctl(bpffd, BIOCSFILDROP, &flag) == -1)
 		fatal("BIOCSFILDROP");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(bfdesc, BIOCGBLEN, &sz) == -1)
+	if (ioctl(bpffd, BIOCGBLEN, &sz) == -1)
 		fatal("BIOCGBLEN");
 
 	/* Set up the bpf filter program structure. */
@@ -219,7 +219,7 @@ configure_bpf_sock(int bfdesc)
 	 */
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
-	if (ioctl(bfdesc, BIOCSETF, &p) == -1)
+	if (ioctl(bpffd, BIOCSETF, &p) == -1)
 		fatal("BIOCSETF");
 
 	/* Set up the bpf write filter program structure. */
@@ -229,10 +229,10 @@ configure_bpf_sock(int bfdesc)
 	if (dhcp_bpf_wfilter[7].k == 0x1fff)
 		dhcp_bpf_wfilter[7].k = htons(IP_MF|IP_OFFMASK);
 
-	if (ioctl(bfdesc, BIOCSETWF, &p) == -1)
+	if (ioctl(bpffd, BIOCSETWF, &p) == -1)
 		fatal("BIOCSETWF");
 
-	if (ioctl(bfdesc, BIOCLOCK, NULL) == -1)
+	if (ioctl(bpffd, BIOCLOCK, NULL) == -1)
 		fatal("BIOCLOCK");
 
 	return sz;
@@ -303,7 +303,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 		total += iov[i].iov_len;
 
 	if (to.s_addr == INADDR_BROADCAST) {
-		result = writev(ifi->bfdesc, iov, iovcnt);
+		result = writev(ifi->bpffd, iov, iovcnt);
 		if (result == -1)
 			log_warn("%s: writev(%s)", log_procname, desc);
 		else if (result < total) {
@@ -352,9 +352,9 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 	do {
 		/* If the buffer is empty, fill it. */
 		if (ifi->rbuf_offset >= ifi->rbuf_len) {
-			length = read(ifi->bfdesc, ifi->rbuf, ifi->rbuf_max);
+			length = read(ifi->bpffd, ifi->rbuf, ifi->rbuf_max);
 			if (length == -1) {
-				log_warn("%s: read(bfdesc)", log_procname);
+				log_warn("%s: read(bpffd)", log_procname);
 				return length;
 			} else if (length == 0)
 				return length;
