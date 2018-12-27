@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.22 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.23 2018/12/27 11:06:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -123,8 +123,7 @@ struct wskbd_consops comkbd_consops = {
 };
 
 int
-comkbd_iskbd(node)
-	int node;
+comkbd_iskbd(int node)
 {
 	if (OF_getproplen(node, "keyboard") == 0)
 		return (10);
@@ -132,10 +131,7 @@ comkbd_iskbd(node)
 }
 
 int
-comkbd_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+comkbd_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	int i;
@@ -159,9 +155,7 @@ comkbd_match(parent, match, aux)
 }
 
 void
-comkbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+comkbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct comkbd_softc *sc = (void *)self;
 	struct sunkbd_softc *ss = (void *)sc;
@@ -258,17 +252,12 @@ comkbd_attach(parent, self, aux)
 }
 
 void
-comkbd_cnpollc(vsc, on)
-	void *vsc;
-	int on;
+comkbd_cnpollc(void *vsc, int on)
 {
 }
 
 void
-comkbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+comkbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct comkbd_softc *sc = v;
 	int s;
@@ -287,9 +276,7 @@ comkbd_cngetc(v, type, data)
 }
 
 void
-comkbd_putc(sc, c)
-	struct comkbd_softc *sc;
-	u_int8_t c;
+comkbd_putc(struct comkbd_softc *sc, u_int8_t c)
 {
 	int s, timo;
 
@@ -315,10 +302,7 @@ comkbd_putc(sc, c)
 }
 
 int
-comkbd_enqueue(v, buf, buflen)
-	void *v;
-	u_int8_t *buf;
-	u_int buflen;
+comkbd_enqueue(void *v, u_int8_t *buf, u_int buflen)
 {
 	struct comkbd_softc *sc = v;
 	int s;
@@ -348,8 +332,7 @@ comkbd_enqueue(v, buf, buflen)
 }
 
 void
-comkbd_soft(vsc)
-	void *vsc;
+comkbd_soft(void *vsc)
 {
 	struct comkbd_softc *sc = vsc;
 	struct sunkbd_softc *ss = (void *)sc;
@@ -386,8 +369,7 @@ comkbd_soft(vsc)
 }
 
 int
-comkbd_intr(vsc)
-	void *vsc;
+comkbd_intr(void *vsc)
 {
 	struct comkbd_softc *sc = vsc;
 	u_int8_t iir, lsr, data;
@@ -436,8 +418,7 @@ comkbd_intr(vsc)
 }
 
 int
-comkbd_init(sc)
-	struct comkbd_softc *sc;
+comkbd_init(struct comkbd_softc *sc)
 {
 	struct sunkbd_softc *ss = (void *)sc;
 	u_int8_t stat, c;

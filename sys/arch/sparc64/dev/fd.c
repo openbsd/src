@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.49 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: fd.c,v 1.50 2018/12/27 11:06:38 claudio Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -313,9 +313,7 @@ void	fd_do_eject(struct fd_softc *);
 static int fdconf(struct fdc_softc *);
 
 int
-fdcmatch_sbus(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdcmatch_sbus(struct device *parent, void *match, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -323,9 +321,7 @@ fdcmatch_sbus(parent, match, aux)
 }
 
 void
-fdcattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)self;
 	struct sbus_attach_args *sa = aux;
@@ -362,9 +358,7 @@ fdcattach_sbus(parent, self, aux)
 }
 
 int
-fdcmatch_ebus(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fdcmatch_ebus(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -372,9 +366,7 @@ fdcmatch_ebus(parent, match, aux)
 }
 
 void
-fdcattach_ebus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdcattach_ebus(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)self;
 	struct ebus_attach_args *ea = aux;
@@ -440,9 +432,7 @@ struct fdc_attach_args {
  * avoid printing `fdN not configured' messages.
  */
 int
-fdprint(aux, fdc)
-	void *aux;
-	const char *fdc;
+fdprint(void *aux, const char *fdc)
 {
 	register struct fdc_attach_args *fa = aux;
 
@@ -456,8 +446,7 @@ fdprint(aux, fdc)
  * Return 0 on success.
  */
 static int
-fdconf(fdc)
-	struct fdc_softc *fdc;
+fdconf(struct fdc_softc *fdc)
 {
 	int	vroom;
 
@@ -502,9 +491,7 @@ fdconf(fdc)
 }
 
 int
-fdcattach(fdc, pri)
-	struct fdc_softc *fdc;
-	int pri;
+fdcattach(struct fdc_softc *fdc, int pri)
 {
 	struct fdc_attach_args fa;
 	int drive_attached;
@@ -564,10 +551,7 @@ fdcattach(fdc, pri)
 }
 
 int
-fdmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+fdmatch(struct device *parent, void *match, void *aux)
 {
 	struct fdc_softc *fdc = (void *)parent;
 	bus_space_tag_t t = fdc->sc_bustag;
@@ -633,9 +617,7 @@ fdmatch(parent, match, aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct fd_softc *fd = (void *)self;
@@ -689,9 +671,7 @@ fdactivate(struct device *self, int act)
 }
 
 __inline struct fd_type *
-fd_dev_to_type(fd, dev)
-	struct fd_softc *fd;
-	dev_t dev;
+fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
 
@@ -701,8 +681,7 @@ fd_dev_to_type(fd, dev)
 }
 
 void
-fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
@@ -780,8 +759,7 @@ done:
 }
 
 void
-fdstart(fd)
-	struct fd_softc *fd;
+fdstart(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 	int active = !TAILQ_EMPTY(&fdc->sc_drives);
@@ -796,9 +774,7 @@ fdstart(fd)
 }
 
 void
-fdfinish(fd, bp)
-	struct fd_softc *fd;
-	struct buf *bp;
+fdfinish(struct fd_softc *fd, struct buf *bp)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 
@@ -825,8 +801,7 @@ fdfinish(fd, bp)
 }
 
 void
-fdc_reset(fdc)
-	struct fdc_softc *fdc;
+fdc_reset(struct fdc_softc *fdc)
 {
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
@@ -846,8 +821,7 @@ fdc_reset(fdc)
 }
 
 void
-fd_set_motor(fdc)
-	struct fdc_softc *fdc;
+fd_set_motor(struct fdc_softc *fdc)
 {
 	struct fd_softc *fd;
 	u_char status;
@@ -865,8 +839,7 @@ fd_set_motor(fdc)
 }
 
 void
-fd_motor_off(arg)
-	void *arg;
+fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
 	int s;
@@ -878,8 +851,7 @@ fd_motor_off(arg)
 }
 
 void
-fd_motor_on(arg)
-	void *arg;
+fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
@@ -898,8 +870,7 @@ fd_motor_on(arg)
  * The return value is also stored in `sc_nstat'.
  */
 int
-fdcresult(fdc)
-	struct fdc_softc *fdc;
+fdcresult(struct fdc_softc *fdc)
 {
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
@@ -930,9 +901,7 @@ fdcresult(fdc)
  * Returns 0 on success; -1 on failure (i.e. timeout)
  */
 int
-fdc_wrfifo(fdc, x)
-	struct fdc_softc *fdc;
-	u_int8_t x;
+fdc_wrfifo(struct fdc_softc *fdc, u_int8_t x)
 {
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
@@ -951,8 +920,7 @@ fdc_wrfifo(fdc, x)
 }
 
 int
-fdc_diskchange(fdc)
-	struct fdc_softc *fdc;
+fdc_diskchange(struct fdc_softc *fdc)
 {
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
@@ -962,10 +930,7 @@ fdc_diskchange(fdc)
 }
 
 int
-fdopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+fdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
  	int unit, pmask;
 	struct fd_softc *fd;
@@ -1013,10 +978,7 @@ fdopen(dev, flags, fmt, p)
 }
 
 int
-fdclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+fdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << DISKPART(dev));
@@ -1040,28 +1002,21 @@ fdclose(dev, flags, fmt, p)
 }
 
 int
-fdread(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-	int flag;
+fdread(dev_t dev, struct uio *uio, int flag)
 {
 
         return (physio(fdstrategy, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
-	int flag;
+fdwrite(dev_t dev, struct uio *uio, int flag)
 {
 
         return (physio(fdstrategy, dev, B_WRITE, minphys, uio));
 }
 
 void
-fdcstart(fdc)
-	struct fdc_softc *fdc;
+fdcstart(struct fdc_softc *fdc)
 {
 
 #ifdef DIAGNOSTIC
@@ -1076,9 +1031,7 @@ fdcstart(fdc)
 }
 
 void
-fdcstatus(fdc, s)
-	struct fdc_softc *fdc;
-	char *s;
+fdcstatus(struct fdc_softc *fdc, char *s)
 {
 	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int n;
@@ -1122,8 +1075,7 @@ fdcstatus(fdc, s)
 }
 
 void
-fdctimeout(arg)
-	void *arg;
+fdctimeout(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 	struct fd_softc *fd;
@@ -1150,8 +1102,7 @@ out:
 }
 
 void
-fdcpseudointr(arg)
-	void *arg;
+fdcpseudointr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 	int s;
@@ -1170,8 +1121,7 @@ fdcpseudointr(arg)
  * that the other devices that share this interrupt can do better..
  */
 int
-fdchwintr(arg)
-	void *arg;
+fdchwintr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 	bus_space_tag_t t = fdc->sc_bustag;
@@ -1249,8 +1199,7 @@ fdchwintr(arg)
 }
 
 void
-fdcswintr(arg)
-	void *arg;
+fdcswintr(void *arg)
 {
 	struct fdc_softc *fdc = arg;
 	int s;
@@ -1275,8 +1224,7 @@ fdcswintr(arg)
 }
 
 int
-fdcstate(fdc)
-	struct fdc_softc *fdc;
+fdcstate(struct fdc_softc *fdc)
 {
 #define	st0	fdc->sc_status[0]
 #define	st1	fdc->sc_status[1]
@@ -1729,8 +1677,7 @@ xxx:
 }
 
 void
-fdcretry(fdc)
-	struct fdc_softc *fdc;
+fdcretry(struct fdc_softc *fdc)
 {
 	struct fd_softc *fd;
 	struct buf *bp;
@@ -1802,8 +1749,7 @@ fdcretry(fdc)
 }
 
 daddr_t
-fdsize(dev)
-	dev_t dev;
+fdsize(dev_t dev)
 {
 
 	/* Swapping to floppies would not make sense. */
@@ -1811,11 +1757,7 @@ fdsize(dev)
 }
 
 int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+fddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
@@ -1823,12 +1765,7 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct fd_softc *fd;
 	struct fdc_softc *fdc;
@@ -1951,10 +1888,7 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
-	struct fd_formb *finfo;
-	struct proc *p;
+fdformat(dev_t dev, struct fd_formb *finfo, struct proc *p)
 {
 	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
@@ -2045,8 +1979,7 @@ fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
 }
 
 void
-fd_do_eject(fd)
-	struct fd_softc *fd;
+fd_do_eject(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 	bus_space_tag_t t = fdc->sc_bustag;

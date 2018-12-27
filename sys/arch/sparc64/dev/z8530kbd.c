@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.28 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.29 2018/12/27 11:06:38 claudio Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -240,10 +240,7 @@ struct wskbd_consops zskbd_consops = {
  * zskbd_match: how is this zs channel configured?
  */
 int 
-zskbd_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void   *aux;
+zskbd_match(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct zsc_attach_args *args = aux;
@@ -267,10 +264,7 @@ zskbd_match(parent, vcf, aux)
 }
 
 void 
-zskbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+zskbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *)parent;
 	struct zskbd_softc *zst = (void *)self;
@@ -406,8 +400,7 @@ zskbd_attach(parent, self, aux)
 }
 
 int
-zskbd_init(zst)
-	struct zskbd_softc *zst;
+zskbd_init(struct zskbd_softc *zst)
 {
 	struct sunkbd_softc *ss = (void *)zst;
 	struct zs_chanstate *cs = zst->zst_cs;
@@ -557,9 +550,7 @@ zskbd_init(zst)
 }
 
 void
-zskbd_putc(zst, c)
-	struct zskbd_softc *zst;
-	u_int8_t c;
+zskbd_putc(struct zskbd_softc *zst, u_int8_t c)
 {
 	u_int8_t rr0;
 	int s;
@@ -574,10 +565,7 @@ zskbd_putc(zst, c)
 }
 
 int
-zsenqueue_tx(v, str, len)
-	void *v;
-	u_int8_t *str;
-	u_int len;
+zsenqueue_tx(void *v, u_int8_t *str, u_int len)
 {
 	struct zskbd_softc *zst = v;
 	int s;
@@ -600,8 +588,7 @@ zsenqueue_tx(v, str, len)
 }
 
 void
-zsstart_tx(zst)
-	struct zskbd_softc *zst;
+zsstart_tx(struct zskbd_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s, s1;
@@ -641,8 +628,7 @@ out:
  * Must be called at splzs().
  */
 static void
-zs_maskintr(zst)
-	struct zskbd_softc *zst;
+zs_maskintr(struct zskbd_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	int tmp15;
@@ -668,9 +654,7 @@ zs_maskintr(zst)
  * in transmission, the change is deferred.
  */
 static void
-zs_modem(zst, onoff)
-	struct zskbd_softc *zst;
-	int onoff;
+zs_modem(struct zskbd_softc *zst, int onoff)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
@@ -697,8 +681,7 @@ zs_modem(zst, onoff)
  * called at splzs
  */
 static void
-zs_hwiflow(zst)
-	struct zskbd_softc *zst;
+zs_hwiflow(struct zskbd_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
@@ -729,8 +712,7 @@ integrate void zskbd_stsoft(struct zskbd_softc *);
  * called at splzs
  */
 static void
-zskbd_rxint(cs)
-	struct zs_chanstate *cs;
+zskbd_rxint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zst = cs->cs_private;
 	u_char *put, *end;
@@ -805,8 +787,7 @@ zskbd_rxint(cs)
  * transmitter ready interrupt.  (splzs)
  */
 static void
-zskbd_txint(cs)
-	struct zs_chanstate *cs;
+zskbd_txint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zst = cs->cs_private;
 
@@ -846,9 +827,7 @@ zskbd_txint(cs)
  * status change interrupt.  (splzs)
  */
 static void
-zskbd_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+zskbd_stint(struct zs_chanstate *cs, int force)
 {
 	struct zskbd_softc *zst = cs->cs_private;
 	u_char rr0, delta;
@@ -884,8 +863,7 @@ zskbd_stint(cs, force)
 }
 
 void
-zskbd_diag(arg)
-	void *arg;
+zskbd_diag(void *arg)
 {
 	struct zskbd_softc *zst = arg;
 	struct sunkbd_softc *ss = arg;
@@ -907,8 +885,7 @@ zskbd_diag(arg)
 }
 
 integrate void
-zskbd_rxsoft(zst)
-	struct zskbd_softc *zst;
+zskbd_rxsoft(struct zskbd_softc *zst)
 {
 	struct sunkbd_softc *ss = (void *)zst;
 	struct zs_chanstate *cs = zst->zst_cs;
@@ -981,14 +958,12 @@ zskbd_rxsoft(zst)
 }
 
 integrate void
-zskbd_txsoft(zst)
-	struct zskbd_softc *zst;
+zskbd_txsoft(struct zskbd_softc *zst)
 {
 }
 
 integrate void
-zskbd_stsoft(zst)
-	struct zskbd_softc *zst;
+zskbd_stsoft(struct zskbd_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char rr0, delta;
@@ -1022,8 +997,7 @@ zskbd_stsoft(zst)
  * EITHER the TS_TBLOCK flag or zst_rx_blocked flag is set.
  */
 static void
-zskbd_softint(cs)
-	struct zs_chanstate *cs;
+zskbd_softint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zst = cs->cs_private;
 	int s;
@@ -1056,9 +1030,7 @@ struct zsops zsops_kbd = {
 };
 
 void
-zskbd_cnpollc(v, on)
-	void *v;
-	int on;
+zskbd_cnpollc(void *v, int on)
 {
 	extern int swallow_zsintrs;
 
@@ -1069,10 +1041,7 @@ zskbd_cnpollc(v, on)
 }
 
 void
-zskbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+zskbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct zskbd_softc *zst = v;
 	int s;
