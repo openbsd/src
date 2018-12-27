@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_unpriv.c,v 1.4 2018/12/06 12:32:11 gilles Exp $	*/
+/*	$OpenBSD: mda_unpriv.c,v 1.5 2018/12/27 15:41:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -45,7 +45,6 @@ mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
 	char		mda_wrapper[LINE_MAX];
 	const char     *mda_command;
 	const char     *mda_command_wrap;
-	const char     *extension;
 
 	if (deliver->mda_exec[0])
 		mda_command = deliver->mda_exec;
@@ -73,9 +72,8 @@ mda_unpriv(struct dispatcher *dsp, struct deliver *deliver,
 	xasprintf(&mda_environ[idx++], "LOGNAME=%s", pw_name);
 	xasprintf(&mda_environ[idx++], "USER=%s", pw_name);
 
-	if ((extension = strchr(deliver->rcpt.user, *env->sc_subaddressing_delim)) != NULL)
-		if (strlen(extension+1))
-			xasprintf(&mda_environ[idx++], "EXTENSION=%s", extension+1);
+	if (deliver->mda_subaddress[0])
+		xasprintf(&mda_environ[idx++], "EXTENSION=%s", deliver->mda_subaddress);
 
 	mda_environ[idx++] = (char *)NULL;
 

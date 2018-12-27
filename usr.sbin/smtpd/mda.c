@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.135 2018/10/30 14:17:17 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.136 2018/12/27 15:41:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -55,6 +55,7 @@ struct mda_envelope {
 	char				*dest;
 	char				*user;
 	char				*dispatcher;
+	char				*mda_subaddress;
 	char				*mda_exec;
 };
 
@@ -274,6 +275,8 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 		text_to_mailaddr(&deliver.dest, s->evp->dest);
 		if (s->evp->mda_exec)
 			(void)strlcpy(deliver.mda_exec, s->evp->mda_exec, sizeof deliver.mda_exec);
+		if (s->evp->mda_subaddress)
+			(void)strlcpy(deliver.mda_subaddress, s->evp->mda_subaddress, sizeof deliver.mda_subaddress);
 		(void)strlcpy(deliver.dispatcher, s->evp->dispatcher, sizeof deliver.dispatcher);
 		deliver.userinfo = s->user->userinfo;
 
@@ -812,6 +815,8 @@ mda_envelope(const struct envelope *evp)
 	e->dispatcher = xstrdup(evp->dispatcher);
 	if (evp->mda_exec[0])
 		e->mda_exec = xstrdup(evp->mda_exec);
+	if (evp->mda_subaddress[0])
+		e->mda_subaddress = xstrdup(evp->mda_subaddress);
 	stat_increment("mda.envelope", 1);
 	return (e);
 }
