@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.359 2018/12/22 16:12:40 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.360 2018/12/27 20:23:24 remi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1127,7 +1127,6 @@ void		 set_pollfd(struct pollfd *, struct imsgbuf *);
 int		 handle_pollfd(struct pollfd *, struct imsgbuf *);
 
 /* control.c */
-void	control_cleanup(const char *);
 int	control_imsg_relay(struct imsg *);
 
 /* config.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.92 2018/12/22 16:12:40 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.93 2018/12/27 20:23:24 remi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,32 @@ struct ctl_conn	*control_connbypid(pid_t);
 int		 control_close(int);
 void		 control_result(struct ctl_conn *, u_int);
 ssize_t		 imsg_read_nofd(struct imsgbuf *);
+
+int
+control_check(char *path)
+{
+	struct sockaddr_un	 sun;
+	int			 fd;
+
+	bzero(&sun, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+		log_warn("%s: socket", __func__);
+		return (-1);
+	}
+
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+		log_warnx("control socket %s already in use", path);
+		close(fd);
+		return (-1);
+	}
+
+	close(fd);
+
+	return (0);
+}
 
 int
 control_init(int restricted, char *path)
@@ -108,13 +134,6 @@ void
 control_shutdown(int fd)
 {
 	close(fd);
-}
-
-void
-control_cleanup(const char *path)
-{
-	if (path)
-		unlink(path);
 }
 
 unsigned int

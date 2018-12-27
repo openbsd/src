@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.78 2018/11/14 17:24:01 mestre Exp $ */
+/*	$OpenBSD: config.c,v 1.79 2018/12/27 20:23:24 remi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -384,11 +384,12 @@ host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 	return (1);
 }
 
-void
+int
 prepare_listeners(struct bgpd_config *conf)
 {
 	struct listen_addr	*la, *next;
 	int			 opt = 1;
+	int			 r = 0;
 
 	if (TAILQ_EMPTY(conf->listen_addrs)) {
 		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
@@ -459,9 +460,12 @@ prepare_listeners(struct bgpd_config *conf)
 			close(la->fd);
 			TAILQ_REMOVE(conf->listen_addrs, la, entry);
 			free(la);
+			r = -1;
 			continue;
 		}
 	}
+
+	return (r);
 }
 
 int

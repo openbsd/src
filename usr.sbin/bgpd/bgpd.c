@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.204 2018/09/29 08:11:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.205 2018/12/27 20:23:24 remi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -348,8 +348,6 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		free(p);
 	}
 
-	control_cleanup(conf->csock);
-	control_cleanup(conf->rcsock);
 	carp_demote_shutdown();
 	kr_shutdown(conf->fib_priority, conf->default_tableid);
 	pftable_clear_all();
@@ -453,10 +451,20 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		reconfpending = 0;
 		return (1);
 	}
+
+	if (prepare_listeners(conf) == -1) {
+		reconfpending = 0;
+		return (1);
+	}
+
+	if (control_setup(conf) == -1) {
+		reconfpending = 0;
+		return (1);
+	}
+
 	expand_networks(conf);
 
 	cflags = conf->flags;
-	prepare_listeners(conf);
 
 	/* start reconfiguration */
 	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
@@ -472,9 +480,6 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 			return (-1);
 		la->fd = -1;
 	}
-
-	if (control_setup(conf) == -1)
-		return (-1);
 
 	/* adjust fib syncing on reload */
 	ktable_preload();
@@ -934,11 +939,12 @@ control_setup(struct bgpd_config *conf)
 	/* control socket is outside chroot */
 	if (!cname || strcmp(cname, conf->csock)) {
 		if (cname) {
-			control_cleanup(cname);
 			free(cname);
 		}
 		if ((cname = strdup(conf->csock)) == NULL)
 			fatal("strdup");
+		if (control_check(cname) == -1)
+			return (-1);
 		if ((fd = control_init(0, cname)) == -1)
 			fatalx("control socket setup failed");
 		if (control_listen(fd) == -1)
@@ -950,16 +956,16 @@ control_setup(struct bgpd_config *conf)
 	}
 	if (!conf->rcsock) {
 		/* remove restricted socket */
-		control_cleanup(rcname);
 		free(rcname);
 		rcname = NULL;
 	} else if (!rcname || strcmp(rcname, conf->rcsock)) {
 		if (rcname) {
-			control_cleanup(rcname);
 			free(rcname);
 		}
 		if ((rcname = strdup(conf->rcsock)) == NULL)
 			fatal("strdup");
+		if (control_check(rcname) == -1)
+			return (-1);
 		if ((fd = control_init(1, rcname)) == -1)
 			fatalx("control socket setup failed");
 		if (control_listen(fd) == -1)
