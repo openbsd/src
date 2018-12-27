@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.106 2018/12/20 07:23:22 anton Exp $ */
+/* $OpenBSD: rebound.c,v 1.107 2018/12/27 18:00:15 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -88,7 +88,7 @@ struct dnspacket {
  * after the response is set, the request must not free it.
  */
 struct dnscache {
-	TAILQ_ENTRY(dnscache) fifo;
+	RB_ENTRY(dnscache) expnode;
 	RB_ENTRY(dnscache) cachenode;
 	struct dnspacket *req;
 	size_t reqlen;
@@ -98,7 +98,8 @@ struct dnscache {
 	struct timespec basetime;
 	int permanent;
 };
-static TAILQ_HEAD(, dnscache) cachefifo;
+static RB_HEAD(cacheexp, dnscache) cacheexp;
+RB_PROTOTYPE_STATIC(cacheexp, dnscache, expnode, expirycmp)
 static RB_HEAD(cachetree, dnscache) cachetree;
 RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
@@ -171,6 +172,17 @@ logerr(const char *msg, ...)
 }
 
 static int
+expirycmp(struct dnscache *c1, struct dnscache *c2)
+{
+	if (timespeccmp(&c1->ts, &c2->ts, <))
+		return -1;
+	if (timespeccmp(&c1->ts, &c2->ts, >))
+		return 1;
+	return c1 < c2 ? -1 : 1;
+}
+RB_GENERATE_STATIC(cacheexp, dnscache, expnode, expirycmp)
+
+static int
 cachecmp(struct dnscache *c1, struct dnscache *c2)
 {
 	if (c1->reqlen == c2->reqlen)
@@ -212,7 +224,7 @@ freecacheent(struct dnscache *ent)
 {
 	cachecount -= 1;
 	RB_REMOVE(cachetree, &cachetree, ent);
-	TAILQ_REMOVE(&cachefifo, ent, fifo);
+	RB_REMOVE(cacheexp, &cacheexp, ent);
 	free(ent->req);
 	free(ent->resp);
 	free(ent);
@@ -562,8 +574,13 @@ sendreply(struct request *req, uint8_t *buf, size_t r)
 		}
 		memcpy(ent->resp, buf, r);
 		ent->resplen = r;
+		if (RB_INSERT(cacheexp, &cacheexp, ent)) {
+			free(ent->resp);
+			ent->resp = NULL;
+			RB_REMOVE(cachetree, &cachetree, ent);
+			return;
+		}
 		cachecount += 1;
-		TAILQ_INSERT_TAIL(&cachefifo, ent, fifo);
 	}
 }
 
@@ -737,6 +754,7 @@ preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
 	ent->resplen = resplen;
 	ent->permanent = 1;
 
+	/* not added to the cacheexp tree */
 	RB_INSERT(cachetree, &cachetree, ent);
 	return 0;
 
@@ -860,7 +878,7 @@ workerinit(void)
 	cachemax = 10000; /* something big, but not huge */
 
 	TAILQ_INIT(&reqfifo);
-	TAILQ_INIT(&cachefifo);
+	RB_INIT(&cacheexp);
 	RB_INIT(&cachetree);
 
 	https_init();
@@ -1037,10 +1055,10 @@ workerloop(int conffd, int udpfds[], int numudp, int tcpfds[], int numtcp)
 		while (conncount > connmax)
 			freerequest(TAILQ_FIRST(&reqfifo));
 		while (cachecount > cachemax)
-			freecacheent(TAILQ_FIRST(&cachefifo));
+			freecacheent(RB_MIN(cacheexp, &cacheexp));
 
 		/* burn old cache entries */
-		while ((ent = TAILQ_FIRST(&cachefifo))) {
+		while ((ent = RB_MIN(cacheexp, &cacheexp))) {
 			if (timespeccmp(&ent->ts, &now, <=))
 				freecacheent(ent);
 			else
