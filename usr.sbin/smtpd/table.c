@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.41 2018/12/27 09:30:29 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.42 2018/12/27 14:23:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -301,22 +301,11 @@ table_config(struct table *t)
 void
 table_add(struct table *t, const char *key, const char *val)
 {
-	char	lkey[1024], *old;
-
-	if (t->t_type & T_DYNAMIC)
+	if (t->t_backend->add == NULL)
 		fatalx("table_add: cannot add to table");
 
-	if (!lowercase(lkey, key, sizeof lkey)) {
-		log_warnx("warn: lookup key too long: %s", key);
-		return;
-	}
-
-	old = dict_set(&t->t_dict, lkey, val ? xstrdup(val) : NULL);
-	if (old) {
-		log_warnx("warn: duplicate key \"%s\" in static table \"%s\"",
-		    lkey, t->t_name);
-		free(old);
-	}
+	if (t->t_backend->add(t, key, val) == 0)
+		log_warnx("warn: failed to add \"%s\" in table \"%s\"", key, t->t_name);
 }
 
 int
@@ -491,14 +480,12 @@ void
 table_dump_all(struct smtpd *conf)
 {
 	struct table	*t;
-	void		*iter, *i2;
-	const char 	*key, *sep;
-	char		*value;
+	void		*iter;
+	const char 	*sep;
 	char		 buf[1024];
 
 	iter = NULL;
 	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t)) {
-		i2 = NULL;
 		sep = "";
  		buf[0] = '\0';
 		if (t->t_type & T_DYNAMIC) {
@@ -517,12 +504,8 @@ table_dump_all(struct smtpd *conf)
 		}
 		log_debug("TABLE \"%s\" type=%s config=\"%s\"",
 		    t->t_name, buf, t->t_config);
-		while(dict_iter(&t->t_dict, &i2, &key, (void**)&value)) {
-			if (value)
-				log_debug("	\"%s\" -> \"%s\"", key, value);
-			else
-				log_debug("	\"%s\"", key);
-		}
+		if (t->t_backend->dump)
+			t->t_backend->dump(t);
 	}
 }
 

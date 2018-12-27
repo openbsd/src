@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.14 2018/12/27 09:30:29 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.15 2018/12/27 14:23:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -267,6 +267,8 @@ table_proc_fetch(struct table *table, enum table_service s, char **dst)
 struct table_backend table_backend_proc = {
 	"proc",
 	K_ANY,
+	NULL,
+	NULL,
 	NULL,
 	table_proc_open,
 	table_proc_update,

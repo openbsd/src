@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_getpwnam.c,v 1.11 2018/12/27 09:30:29 eric Exp $	*/
+/*	$OpenBSD: table_getpwnam.c,v 1.12 2018/12/27 14:23:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -49,6 +49,8 @@ struct table_backend table_backend_getpwnam = {
 	"getpwnam",
 	K_USERINFO,
 	table_getpwnam_config,
+	NULL,
+	NULL,
 	table_getpwnam_open,
 	table_getpwnam_update,
 	table_getpwnam_close,

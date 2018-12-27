@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.17 2018/12/27 09:30:29 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.18 2018/12/27 14:23:41 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -57,6 +57,8 @@ struct table_backend table_backend_db = {
 	"db",
 	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP,
 	table_db_config,
+	NULL,
+	NULL,
 	table_db_open,
 	table_db_update,
 	table_db_close,
