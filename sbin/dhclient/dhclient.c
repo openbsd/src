@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.596 2018/12/27 17:19:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.597 2018/12/27 17:33:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -654,7 +654,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Register the interface. */
-	ifi->ufdesc = get_udp_sock(ifi->rdomain);
+	ifi->udpfd = get_udp_sock(ifi->rdomain);
 	ifi->bpffd = get_bpf_sock(ifi->name);
 	ifi->rbuf_max = configure_bpf_sock(ifi->bpffd);
 	ifi->rbuf = malloc(ifi->rbuf_max);
