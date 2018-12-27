@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.21 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: spif.c,v 1.22 2018/12/27 11:09:17 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -145,9 +145,7 @@ struct cfdriver sbpp_cd = {
 #define	DTR_READ(sc,port)	((sc)->sc_ttys->sc_port[(port)].sp_dtr)
 
 int
-spifmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+spifmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -159,9 +157,7 @@ spifmatch(parent, vcf, aux)
 }
 
 void    
-spifattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spifattach(struct device *parent, struct device *self, void *aux)
 {
 	struct spif_softc *sc = (struct spif_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -278,9 +274,7 @@ fail_unmapregs:
 }
 
 int
-sttymatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+sttymatch(struct device *parent, void *vcf, void *aux)
 {
 	struct spif_softc *sc = (struct spif_softc *)parent;
 
@@ -288,9 +282,7 @@ sttymatch(parent, vcf, aux)
 }
 
 void
-sttyattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+sttyattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct spif_softc *sc = (struct spif_softc *)parent;
 	struct stty_softc *ssc = (struct stty_softc *)dev;
@@ -326,11 +318,7 @@ sttyattach(parent, dev, aux)
 }
 
 int
-sttyopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+sttyopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct spif_softc *csc;
 	struct stty_softc *sc;
@@ -418,11 +406,7 @@ sttyopen(dev, flags, mode, p)
 }
 
 int
-sttyclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+sttyclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
@@ -447,12 +431,7 @@ sttyclose(dev, flags, mode, p)
 }
 
 int
-sttyioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+sttyioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct stty_softc *stc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &stc->sc_port[SPIF_PORT(dev)];
@@ -520,9 +499,7 @@ sttyioctl(dev, cmd, data, flags, p)
 }
 
 int
-stty_modem_control(sp, bits, how)
-	struct stty_port *sp;
-	int bits, how;
+stty_modem_control(struct stty_port *sp, int bits, int how)
 {
 	struct spif_softc *csc = sp->sp_sc;
 	struct tty *tp = sp->sp_tty;
@@ -576,9 +553,7 @@ stty_modem_control(sp, bits, how)
 }
 
 int
-stty_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+stty_param(struct tty *tp, struct termios *t)
 {
 	struct stty_softc *st = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
 	struct stty_port *sp = &st->sc_port[SPIF_PORT(tp->t_dev)];
@@ -674,10 +649,7 @@ stty_param(tp, t)
 }
 
 int
-sttyread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sttyread(dev_t dev, struct uio *uio, int flags)
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
@@ -687,10 +659,7 @@ sttyread(dev, uio, flags)
 }
 
 int
-sttywrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sttywrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
@@ -700,8 +669,7 @@ sttywrite(dev, uio, flags)
 }
 
 struct tty *
-sttytty(dev)
-	dev_t dev;
+sttytty(dev_t dev)
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
@@ -710,9 +678,7 @@ sttytty(dev)
 }
 
 int
-sttystop(tp, flags)
-	struct tty *tp;
-	int flags;
+sttystop(struct tty *tp, int flags)
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(tp->t_dev)];
@@ -729,8 +695,7 @@ sttystop(tp, flags)
 }
 
 void
-stty_start(tp)
-	struct tty *tp;
+stty_start(struct tty *tp)
 {
 	struct stty_softc *stc = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
 	struct stty_port *sp = &stc->sc_port[SPIF_PORT(tp->t_dev)];
@@ -755,9 +720,7 @@ stty_start(tp)
 }
 
 int
-spifstcintr_rxexception(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spifstcintr_rxexception(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, *ptr;
@@ -782,9 +745,7 @@ spifstcintr_rxexception(sc, needsoftp)
 }
 
 int
-spifstcintr_rx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spifstcintr_rx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, *ptr, cnt, rcsr;
@@ -817,9 +778,7 @@ spifstcintr_rx(sc, needsoftp)
 }
 
 int
-spifstcintr_tx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spifstcintr_tx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, ch;
@@ -870,9 +829,7 @@ spifstcintr_tx(sc, needsoftp)
 }
 
 int
-spifstcintr_mx(sc, needsoftp)
-	struct spif_softc *sc;
-	int *needsoftp;
+spifstcintr_mx(struct spif_softc *sc, int *needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, mcr;
@@ -890,8 +847,7 @@ spifstcintr_mx(sc, needsoftp)
 }
 
 int
-spifstcintr(vsc)
-	void *vsc;
+spifstcintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	int needsoft = 0, r = 0, i;
@@ -923,8 +879,7 @@ spifstcintr(vsc)
 }
 
 void
-spifsoftintr(vsc)
-	void *vsc;
+spifsoftintr(void *vsc)
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
@@ -994,9 +949,7 @@ spifsoftintr(vsc)
 }
 
 void
-stty_write_ccr(sc, val)
-	struct spif_softc *sc;
-	u_int8_t val;
+stty_write_ccr(struct spif_softc *sc, u_int8_t val)
 {
 	int tries = 100000;
 
@@ -1008,10 +961,7 @@ stty_write_ccr(sc, val)
 }
 
 int
-stty_compute_baud(speed, clock, bprlp, bprhp)
-	speed_t speed;
-	int clock;
-	u_int8_t *bprlp, *bprhp;
+stty_compute_baud(speed_t speed, int clock, u_int8_t *bprlp, u_int8_t *bprhp)
 {
 	u_int32_t rate;
 
@@ -1030,9 +980,7 @@ stty_compute_baud(speed, clock, bprlp, bprhp)
 }
 
 int
-sbppmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+sbppmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct spif_softc *sc = (struct spif_softc *)parent;
 
@@ -1040,9 +988,7 @@ sbppmatch(parent, vcf, aux)
 }
 
 void
-sbppattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+sbppattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct spif_softc *sc = (struct spif_softc *)parent;
 	struct sbpp_softc *psc = (struct sbpp_softc *)dev;
@@ -1058,74 +1004,49 @@ sbppattach(parent, dev, aux)
 }
 
 int
-sbppopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+sbppopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	return (ENXIO);
 }
 
 int
-sbppclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+sbppclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	return (ENXIO);
 }
 
 int
-spifppcintr(v)
-	void *v;
+spifppcintr(void *v)
 {
 	return (0);
 }
 
 int
-sbppread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sbppread(dev_t dev, struct uio *uio, int flags)
 {
 	return (sbpp_rw(dev, uio));
 }
 
 int
-sbppwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sbppwrite(dev_t dev, struct uio *uio, int flags)
 {
 	return (sbpp_rw(dev, uio));
 }
 
 int
-sbpp_rw(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+sbpp_rw(dev_t dev, struct uio *uio)
 {
 	return (ENXIO);
 }
 
 int
-sbpppoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+sbpppoll(dev_t dev, int events, struct proc *p)
 {
 	return (seltrue(dev, events, p));
 }
 
 int
-sbppioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+sbppioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	int error;
 
