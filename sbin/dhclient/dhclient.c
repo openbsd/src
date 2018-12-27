@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.593 2018/12/25 17:05:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.594 2018/12/27 16:15:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2770,10 +2770,8 @@ tick_msg(const char *preamble, int success, time_t start)
 		return;
 	}
 
-	if (stop == 0) {
+	if (stop == 0)
 		stop = cur_time + config->link_timeout;
-		return;
-	}
 
 	if (isatty(STDERR_FILENO) == 0 || sleeping == 1 || cur_time < start +
 	    GRACE_SECONDS)
