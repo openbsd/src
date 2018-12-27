@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.3 2018/12/25 22:57:58 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.4 2018/12/27 10:10:13 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -35,8 +35,8 @@ static int test_coverage(int);
 static int test_dying(int);
 static int test_exec(int);
 static int test_fork(int);
-static int test_mode(int);
 static int test_open(int);
+static int test_state(int);
 
 static void do_syscall(void);
 static void dump(const unsigned long *);
@@ -56,13 +56,13 @@ main(int argc, char *argv[])
 		int (*fn)(int);
 		int coverage;		/* test must produce coverage */
 	} tests[] = {
-		{ "coverage",	test_coverage,	1 },
-		{ "fork",	test_fork,	1 },
-		{ "exec",	test_exec,	1 },
-		{ "mode",	test_mode,	1 },
-		{ "open",	test_open,	0 },
 		{ "close",	test_close,	0 },
+		{ "coverage",	test_coverage,	1 },
 		{ "dying",	test_dying,	1 },
+		{ "exec",	test_exec,	1 },
+		{ "fork",	test_fork,	1 },
+		{ "open",	test_open,	0 },
+		{ "state",	test_state,	1 },
 		{ NULL,		NULL,		0 },
 	};
 	unsigned long *cover;
@@ -316,10 +316,42 @@ test_fork(int fd)
 }
 
 /*
- * Mode transitions.
+ * Open /dev/kcov more than once.
  */
 static int
-test_mode(int fd)
+test_open(int oldfd)
+{
+	unsigned long *cover;
+	int fd;
+	int ret = 0;
+
+	fd = kcov_open();
+	if (ioctl(fd, KIOSETBUFSIZE, &bufsize) == -1)
+		err(1, "ioctl: KIOSETBUFSIZE");
+	cover = mmap(NULL, bufsize * sizeof(unsigned long),
+	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (cover == MAP_FAILED)
+		err(1, "mmap");
+
+	kcov_enable(fd);
+	do_syscall();
+	kcov_disable(fd);
+
+	if (*cover == 0) {
+		warnx("coverage empty (count=0, fd=%d)\n", fd);
+		ret = 1;
+	}
+	if (munmap(cover, bufsize * sizeof(unsigned long)))
+		err(1, "munmap");
+	close(fd);
+	return ret;
+}
+
+/*
+ * State transitions.
+ */
+static int
+test_state(int fd)
 {
 	if (ioctl(fd, KIOENABLE) == -1) {
 		warnx("KIOSETBUFSIZE -> KIOENABLE");
@@ -350,36 +382,4 @@ test_mode(int fd)
 	kcov_disable(fd);
 
 	return 0;
-}
-
-/*
- * Open /dev/kcov more than once.
- */
-static int
-test_open(int oldfd)
-{
-	unsigned long *cover;
-	int fd;
-	int ret = 0;
-
-	fd = kcov_open();
-	if (ioctl(fd, KIOSETBUFSIZE, &bufsize) == -1)
-		err(1, "ioctl: KIOSETBUFSIZE");
-	cover = mmap(NULL, bufsize * sizeof(unsigned long),
-	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (cover == MAP_FAILED)
-		err(1, "mmap");
-
-	kcov_enable(fd);
-	do_syscall();
-	kcov_disable(fd);
-
-	if (*cover == 0) {
-		warnx("coverage empty (count=0, fd=%d)\n", fd);
-		ret = 1;
-	}
-	if (munmap(cover, bufsize * sizeof(unsigned long)))
-		err(1, "munmap");
-	close(fd);
-	return ret;
 }
