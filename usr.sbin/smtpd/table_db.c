@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.14 2018/12/26 20:13:43 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.15 2018/12/27 08:08:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -42,7 +42,8 @@
 /* db(3) backend */
 static int table_db_config(struct table *);
 static int table_db_update(struct table *);
-static void *table_db_open(struct table *);
+static int table_db_open(struct table *);
+static void *table_db_open2(struct table *);
 static int table_db_lookup(void *, enum table_service, const char *, char **);
 static int table_db_fetch(void *, enum table_service, char **);
 static void  table_db_close(void *);
@@ -83,7 +84,7 @@ table_db_config(struct table *table)
 {
 	struct dbhandle	       *handle;
 
-	handle = table_db_open(table);
+	handle = table_db_open2(table);
 	if (handle == NULL)
 		return 0;
 
@@ -96,7 +97,7 @@ table_db_update(struct table *table)
 {
 	struct dbhandle	*handle;
 
-	handle = table_db_open(table);
+	handle = table_db_open2(table);
 	if (handle == NULL)
 		return 0;
 
@@ -105,8 +106,17 @@ table_db_update(struct table *table)
 	return 1;
 }
 
-static void *
+static int
 table_db_open(struct table *table)
+{
+	table->t_handle = table_db_open2(table);
+	if (table->t_handle == NULL)
+		return 0;
+	return 1;
+}
+
+static void *
+table_db_open2(struct table *table)
 {
 	struct dbhandle	       *handle;
 	struct stat		sb;

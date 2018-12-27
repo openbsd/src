@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.11 2018/12/26 20:13:43 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.12 2018/12/27 08:08:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -116,7 +116,7 @@ table_proc_end(void)
  * API
  */
 
-static void *
+static int
 table_proc_open(struct table *table)
 {
 	struct table_proc_priv	*priv;
@@ -139,7 +139,9 @@ table_proc_open(struct table *table)
 	table_proc_call(priv);
 	table_proc_end();
 
-	return (priv);
+	table->t_handle = priv;
+
+	return (1);
 }
 
 static int

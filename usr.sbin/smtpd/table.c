@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.38 2018/12/26 20:13:43 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.39 2018/12/27 08:08:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -340,13 +340,9 @@ table_check_use(struct table *t, uint32_t tmask, uint32_t smask)
 int
 table_open(struct table *t)
 {
-	t->t_handle = NULL;
 	if (t->t_backend->open == NULL)
 		return (1);
-	t->t_handle = t->t_backend->open(t);
-	if (t->t_handle == NULL)
-		return (0);
-	return (1);
+	return (t->t_backend->open(t));
 }
 
 void
