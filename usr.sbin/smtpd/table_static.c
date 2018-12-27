@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.28 2018/12/27 14:23:41 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.29 2018/12/27 15:04:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -307,16 +307,13 @@ table_static_lookup(struct table *m, enum table_service service, const char *key
 static int
 table_static_fetch(struct table *t, enum table_service service, char **dst)
 {
-	const char     *k;
+	const char *k;
 
 	if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL)) {
 		t->t_iter = NULL;
 		if (!dict_iter(&t->t_dict, &t->t_iter, &k, (void **)NULL))
 			return 0;
 	}
-
-	if (dst == NULL)
-		return 1;
 
 	*dst = strdup(k);
 	if (*dst == NULL)

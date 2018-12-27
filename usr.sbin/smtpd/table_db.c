@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.19 2018/12/27 14:41:45 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.20 2018/12/27 15:04:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -221,11 +221,9 @@ table_db_fetch(struct table *table, enum table_service service, char **dst)
 			return 0;
 	}
 
-	if (dst) {
-		*dst = strdup(dbk.data);
-		if (*dst == NULL)
-			return -1;
-	}
+	*dst = strdup(dbk.data);
+	if (*dst == NULL)
+		return -1;
 
 	return 1;
 }

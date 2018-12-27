@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.42 2018/12/27 14:23:41 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.43 2018/12/27 15:04:59 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -174,18 +174,15 @@ table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 	if (table->t_backend->fetch == NULL)
 		return (-1);
 
-	r = table->t_backend->fetch(table, kind, lk ? &buf : NULL);
+	r = table->t_backend->fetch(table, kind, &buf);
 
 	if (r == 1) {
-		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s%s",
+		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> \"%s\"",
 		    table_service_name(kind),
 		    table->t_backend->name,
 		    table->t_name,
-		    lk ? "\"" : "",
-		    (lk) ? buf : "found",
-		    lk ? "\"" : "");
-		if (buf)
-			r = table_parse_lookup(kind, NULL, buf, lk);
+		    buf);
+		r = table_parse_lookup(kind, NULL, buf, lk);
 	}
 	else
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
