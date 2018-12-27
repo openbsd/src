@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.7 2018/12/27 10:04:16 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.8 2018/12/27 19:33:08 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -155,6 +155,7 @@ int
 kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct kcov_dev *kd;
+	int mode;
 	int error = 0;
 
 	kd = kd_lookup(minor(dev));
@@ -171,8 +172,13 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBUSY;
 			break;
 		}
+		mode = *((int *)data);
+		if (mode != KCOV_MODE_TRACE_PC) {
+			error = EINVAL;
+			break;
+		}
 		kd->kd_state = KCOV_STATE_TRACE;
-		kd->kd_mode = KCOV_MODE_TRACE_PC;
+		kd->kd_mode = mode;
 		p->p_kd = kd;
 		break;
 	case KIODISABLE:

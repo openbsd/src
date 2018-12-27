@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.5 2018/09/30 09:14:43 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.6 2018/12/27 19:33:08 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2018 $
+.Dd $Mdocdate: December 27 2018 $
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -57,8 +57,15 @@ whereas the returned pointer must be interpreted as an array of
 entries.
 The first entry contains the number of entries in the array,
 excluding the first entry.
-.It Dv KIOENABLE Fa void
+.It Dv KIOENABLE Fa int *mode
 Enable code coverage tracing for the current thread.
+The
+.Fa mode
+must be one of the following:
+.Bl -tag -width KCOV_MODE_TRACE_PC
+.It Dv KCOV_MODE_TRACE_PC
+Trace the kernel program counter.
+.El
 .It Dv KIODISABLE Fa void
 Disable code coverage tracing for the current thread.
 .El
@@ -91,7 +98,7 @@ main(void)
 {
 	unsigned long *cover, i;
 	unsigned long size = 1024;
-	int fd;
+	int fd, mode;
 
 	fd = open("/dev/kcov", O_RDWR);
 	if (fd == -1)
@@ -104,7 +111,8 @@ main(void)
 	if (cover == MAP_FAILED)
 		err(1, "mmap");
 
-	if (ioctl(fd, KIOENABLE) == -1)
+	mode = KCOV_MODE_TRACE_PC;
+	if (ioctl(fd, KIOENABLE, &mode) == -1)
 		err(1, "ioctl: KIOENABLE");
 	read(-1, NULL, 0);
 	if (ioctl(fd, KIODISABLE) == -1)
