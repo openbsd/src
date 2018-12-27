@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.173 2018/10/31 02:25:26 miko Exp $	*/
+/*	$OpenBSD: audio.c,v 1.174 2018/12/27 17:57:58 tedu Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2100,6 +2100,8 @@ wskbd_set_mixermute(long mute, long out)
 		task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
 		task_add(systq, &sc->wskbd_task);
 		sc->wskbd_taskset = 1;
+	} else {
+		device_unref(&sc->dev);
 	}
 	return 0;
 }
@@ -2122,6 +2124,8 @@ wskbd_set_mixervolume(long dir, long out)
 		task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
 		task_add(systq, &sc->wskbd_task);
 		sc->wskbd_taskset = 1;
+	} else {
+		device_unref(&sc->dev);
 	}
 	return 0;
 }
