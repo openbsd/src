@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.341 2018/12/17 15:37:41 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.342 2018/12/27 16:54:01 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1945,7 +1945,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		pr->nr = 0;
-		if (ruleset->anchor == NULL) {
+		if (ruleset == &pf_main_ruleset) {
 			/* XXX kludge for pf_main_ruleset */
 			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
 				if (anchor->parent == NULL)
@@ -1973,7 +1973,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		pr->name[0] = 0;
-		if (ruleset->anchor == NULL) {
+		if (ruleset == &pf_main_ruleset) {
 			/* XXX kludge for pf_main_ruleset */
 			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
 				if (anchor->parent == NULL && nr++ == pr->nr) {

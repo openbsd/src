@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.17 2018/12/17 15:37:41 kn Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.18 2018/12/27 16:54:01 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -287,7 +287,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 	struct pf_anchor	*parent;
 
 	while (ruleset != NULL) {
-		if (ruleset == &pf_main_ruleset || ruleset->anchor == NULL ||
+		if (ruleset == &pf_main_ruleset ||
 		    !RB_EMPTY(&ruleset->anchor->children) ||
 		    ruleset->anchor->refcnt > 0 || ruleset->tables > 0 ||
 		    ruleset->topen)
@@ -355,7 +355,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	}
 	ruleset = pf_find_or_create_ruleset(path);
 	rs_free(path, MAXPATHLEN);
-	if (ruleset == NULL || ruleset->anchor == NULL) {
+	if (ruleset == NULL || ruleset == &pf_main_ruleset) {
 		DPFPRINTF(LOG_NOTICE,
 		    "pf_anchor_setup: ruleset");
 		return (1);
@@ -383,7 +383,7 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		a = rs_malloc(MAXPATHLEN);
 		if (a == NULL)
 			return (1);
-		if (rs->anchor == NULL)
+		if (rs == &pf_main_ruleset)
 			a[0] = 0;
 		else
 			strlcpy(a, rs->anchor->path, MAXPATHLEN);
