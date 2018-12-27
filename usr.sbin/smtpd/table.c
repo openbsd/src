@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.39 2018/12/27 08:08:06 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.40 2018/12/27 08:57:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -349,7 +349,7 @@ void
 table_close(struct table *t)
 {
 	if (t->t_backend->close)
-		t->t_backend->close(t->t_handle);
+		t->t_backend->close(t);
 }
 
 int

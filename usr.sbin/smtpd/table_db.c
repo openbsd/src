@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.15 2018/12/27 08:08:06 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.16 2018/12/27 08:57:03 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -46,7 +46,8 @@ static int table_db_open(struct table *);
 static void *table_db_open2(struct table *);
 static int table_db_lookup(void *, enum table_service, const char *, char **);
 static int table_db_fetch(void *, enum table_service, char **);
-static void  table_db_close(void *);
+static void table_db_close(struct table *);
+static void table_db_close2(void *);
 
 static char *table_db_get_entry(void *, const char *, size_t *);
 static char *table_db_get_entry_match(void *, const char *, size_t *,
@@ -88,7 +89,7 @@ table_db_config(struct table *table)
 	if (handle == NULL)
 		return 0;
 
-	table_db_close(handle);
+	table_db_close2(handle);
 	return 1;
 }
 
@@ -101,7 +102,7 @@ table_db_update(struct table *table)
 	if (handle == NULL)
 		return 0;
 
-	table_db_close(table->t_handle);
+	table_db_close2(table->t_handle);
 	table->t_handle = handle;
 	return 1;
 }
@@ -113,6 +114,13 @@ table_db_open(struct table *table)
 	if (table->t_handle == NULL)
 		return 0;
 	return 1;
+}
+
+static void
+table_db_close(struct table *table)
+{
+	table_db_close2(table->t_handle);
+	table->t_handle = NULL;
 }
 
 static void *
@@ -145,7 +153,7 @@ error:
 }
 
 static void
-table_db_close(void *hdl)
+table_db_close2(void *hdl)
 {
 	struct dbhandle	*handle = hdl;
 	handle->db->close(handle->db);
