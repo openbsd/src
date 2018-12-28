@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.226 2018/12/06 13:04:40 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.227 2018/12/28 22:05:15 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -487,10 +487,6 @@ kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	int			 action = RTM_ADD;
 	u_int16_t		 labelid;
 
-	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
-	    fib_prio)) != NULL)
-		action = RTM_CHANGE;
-
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
 		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
@@ -500,6 +496,10 @@ kr4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		return (0);
 
 	labelid = rtlabel_name2id(kl->label);
+
+	if ((kr = kroute_find(kt, kl->prefix.v4.s_addr, kl->prefixlen,
+	    fib_prio)) != NULL)
+		action = RTM_CHANGE;
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
@@ -545,10 +545,6 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	int			 action = RTM_ADD;
 	u_int16_t		 labelid;
 
-	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) !=
-	    NULL)
-		action = RTM_CHANGE;
-
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
 		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
@@ -557,6 +553,10 @@ kr6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		return (0);
 
 	labelid = rtlabel_name2id(kl->label);
+
+	if ((kr6 = kroute6_find(kt, &kl->prefix.v6, kl->prefixlen, fib_prio)) !=
+	    NULL)
+		action = RTM_CHANGE;
 
 	if (action == RTM_ADD) {
 		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
@@ -604,10 +604,6 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	u_int32_t		 mplslabel = 0;
 	u_int16_t		 labelid;
 
-	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
-	    fib_prio)) != NULL)
-		action = RTM_CHANGE;
-
 	/* nexthop within 127/8 -> ignore silently */
 	if ((kl->nexthop.v4.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
@@ -629,6 +625,10 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
 	if (kl->flags & (F_BLACKHOLE|F_REJECT))
 		kl->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
+
+	if ((kr = kroute_find(kt, kl->prefix.vpn4.addr.s_addr, kl->prefixlen,
+	    fib_prio)) != NULL)
+		action = RTM_CHANGE;
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
