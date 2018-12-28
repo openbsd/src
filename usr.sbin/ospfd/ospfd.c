@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.101 2018/10/29 22:13:33 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.102 2018/12/28 19:25:10 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -286,7 +286,8 @@ main(int argc, char *argv[])
 		fatal("unveil");
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
-	    ospfd_conf->rdomain, ospfd_conf->redist_label_or_prefix) == -1)
+	    ospfd_conf->rdomain, ospfd_conf->redist_label_or_prefix,
+	    ospfd_conf->fib_priority) == -1)
 		fatalx("kr_init failed");
 
 	/* remove unneeded stuff from config */
@@ -707,6 +708,15 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
 			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
 		}
+
+		/* adjust FIB priority if changed */
+		if (conf->fib_priority != xconf->fib_priority) {
+			kr_fib_decouple();
+			kr_fib_update_prio(xconf->fib_priority);
+			conf->fib_priority = xconf->fib_priority;
+			kr_fib_couple();
+		}
+
 		goto done;
 	}
 

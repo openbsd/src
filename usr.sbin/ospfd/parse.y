@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2018/11/01 00:18:44 sashan Exp $ */
+/*	$OpenBSD: parse.y,v 1.94 2018/12/28 19:25:10 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -125,8 +126,8 @@ typedef struct {
 
 %}
 
-%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE RTLABEL RDOMAIN
-%token	RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
+%token	AREA INTERFACE ROUTERID FIBPRIORITY FIBUPDATE REDISTRIBUTE RTLABEL
+%token	RDOMAIN RFC1583COMPAT STUB ROUTER SPFDELAY SPFHOLDTIME EXTTAG
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL FASTHELLOINTERVAL TRANSMITDELAY
@@ -228,6 +229,13 @@ conf_main	: ROUTERID STRING {
 				YYERROR;
 			}
 			free($2);
+		}
+		| FIBPRIORITY NUMBER {
+			if ($2 <= RTP_NONE || $2 > RTP_MAX) {
+				yyerror("invalid fib-priority");
+				YYERROR;
+			}
+			conf->fib_priority = $2;
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -804,6 +812,7 @@ lookup(char *s)
 		{"depend",		DEPEND},
 		{"external-tag",	EXTTAG},
 		{"fast-hello-interval",	FASTHELLOINTERVAL},
+		{"fib-priority",	FIBPRIORITY},
 		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
 		{"include",		INCLUDE},
@@ -1204,6 +1213,7 @@ parse_config(char *filename, int opts)
 	conf->spf_delay = DEFAULT_SPF_DELAY;
 	conf->spf_hold_time = DEFAULT_SPF_HOLDTIME;
 	conf->spf_state = SPF_IDLE;
+	conf->fib_priority = RTP_OSPF;
 
 	if ((file = pushfile(filename,
 	    !(conf->opts & OSPFD_OPT_NOACTION))) == NULL) {

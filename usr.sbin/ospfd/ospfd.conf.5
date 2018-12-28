@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.54 2018/07/27 05:23:24 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.55 2018/12/28 19:25:10 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2018 $
+.Dd $Mdocdate: December 28 2018 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -83,6 +83,11 @@ interface.
 The only settings that can be set globally and not overruled are listed below.
 .Pp
 .Bl -tag -width Ds -compact
+.It Ic fib-priority Ar prio
+Set the routing priority to
+.Ar prio .
+The default is 32.
+.Pp
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
