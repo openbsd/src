@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.44 2018/12/28 11:13:58 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.45 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -100,19 +100,9 @@ table_service_name(enum table_service s)
 }
 
 struct table *
-table_find(struct smtpd *conf, const char *name, const char *tag)
+table_find(struct smtpd *conf, const char *name)
 {
-	char buf[LINE_MAX];
-
-	if (tag == NULL)
-		return dict_get(conf->sc_tables_dict, name);
-
-	if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >= sizeof(buf)) {
-		log_warnx("warn: table name too long: %s#%s", name, tag);
-		return (NULL);
-	}
-
-	return dict_get(conf->sc_tables_dict, buf);
+	return dict_get(conf->sc_tables_dict, name);
 }
 
 int
@@ -197,25 +187,16 @@ table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 }
 
 struct table *
-table_create(struct smtpd *conf, const char *backend, const char *name, const char *tag,
+table_create(struct smtpd *conf, const char *backend, const char *name,
     const char *config)
 {
 	struct table		*t;
 	struct table_backend	*tb;
-	char			 buf[LINE_MAX];
 	char			 path[LINE_MAX];
 	size_t			 n;
 	struct stat		 sb;
 
-	if (name && tag) {
-		if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >=
-		    sizeof(buf))
-			fatalx("table_create: name too long \"%s#%s\"",
-			    name, tag);
-		name = buf;
-	}
-
-	if (name && table_find(conf, name, NULL))
+	if (name && table_find(conf, name))
 		fatalx("table_create: table \"%s\" already defined", name);
 
 	if ((tb = table_backend_lookup(backend)) == NULL) {

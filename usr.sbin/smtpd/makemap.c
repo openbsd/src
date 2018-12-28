@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.71 2018/07/03 01:34:43 mortimer Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.72 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -444,7 +444,7 @@ conf_aliases(char *cfgpath)
 	if (parse_config(env, cfgpath, 0))
 		exit(1);
 
-	table = table_find(env, "aliases", NULL);
+	table = table_find(env, "aliases");
 	if (table == NULL)
 		return (PATH_ALIASES);
 

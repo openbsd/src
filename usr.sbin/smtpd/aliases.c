@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.75 2018/12/26 20:13:43 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.76 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -50,8 +50,8 @@ aliases_get(struct expand *expand, const char *username)
 	char		       *pbuf;
 
 	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	userbase = table_find(env, dsp->u.local.table_userbase, NULL);
-	mapping = table_find(env, dsp->u.local.table_alias, NULL);
+	userbase = table_find(env, dsp->u.local.table_userbase);
+	mapping = table_find(env, dsp->u.local.table_alias);
 
 	xlowercase(buf, username, sizeof(buf));
 
@@ -107,8 +107,8 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	struct table	       *userbase = NULL;
 
 	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	userbase = table_find(env, dsp->u.local.table_userbase, NULL);
-	mapping = table_find(env, dsp->u.local.table_virtual, NULL);
+	userbase = table_find(env, dsp->u.local.table_userbase);
+	mapping = table_find(env, dsp->u.local.table_virtual);
 
 	if (!bsnprintf(user, sizeof(user), "%s", maddr->user))
 		return 0;

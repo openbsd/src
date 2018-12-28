@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.613 2018/12/28 11:13:58 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.614 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1596,8 +1596,8 @@ struct stat_value *stat_timespec(struct timespec *);
 
 
 /* table.c */
-struct table *table_find(struct smtpd *, const char *, const char *);
-struct table *table_create(struct smtpd *, const char *, const char *, const char *,
+struct table *table_find(struct smtpd *, const char *);
+struct table *table_create(struct smtpd *, const char *, const char *,
     const char *);
 int	table_config(struct table *);
 int	table_open(struct table *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.47 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.48 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -133,7 +133,7 @@ config_default(void)
 	 */
 	set_local(conf, conf->sc_hostname);
 
-	t = table_create(conf, "static", "<anydestination>", NULL, NULL);
+	t = table_create(conf, "static", "<anydestination>", NULL);
 	t->t_type = T_LIST;
 	table_add(t, "*", NULL);
 
@@ -141,7 +141,7 @@ config_default(void)
 	if (strcmp(conf->sc_hostname, hostname) != 0)
 		table_add(t, hostname, NULL);
 
-	table_create(conf, "getpwnam", "<getpwnam>", NULL, NULL);
+	table_create(conf, "getpwnam", "<getpwnam>", NULL);
 
 	return conf;
 
@@ -168,7 +168,7 @@ set_local(struct smtpd *conf, const char *hostname)
 {
 	struct table	*t;
 
-	t = table_create(conf, "static", "<localnames>", NULL, NULL);
+	t = table_create(conf, "static", "<localnames>", NULL);
 	t->t_type = T_LIST;
 	table_add(t, "localhost", NULL);
 	table_add(t, hostname, NULL);
@@ -186,7 +186,7 @@ set_localaddrs(struct smtpd *conf, struct table *localnames)
 	struct table		*t;
 	char buf[NI_MAXHOST + 5];
 
-	t = table_create(conf, "static", "<anyhost>", NULL, NULL);
+	t = table_create(conf, "static", "<anyhost>", NULL);
 	table_add(t, "local", NULL);
 	table_add(t, "0.0.0.0/0", NULL);
 	table_add(t, "::/0", NULL);
@@ -194,7 +194,7 @@ set_localaddrs(struct smtpd *conf, struct table *localnames)
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	t = table_create(conf, "static", "<localhost>", NULL, NULL);
+	t = table_create(conf, "static", "<localhost>", NULL);
 	table_add(t, "local", NULL);
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
