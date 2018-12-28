@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.381 2018/12/26 11:29:13 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.382 2018/12/28 07:29:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1457,6 +1457,12 @@ smtp_check_starttls(struct smtp_session *s, const char *args)
 static int
 smtp_check_mail_from(struct smtp_session *s, const char *args)
 {
+	char *copy;
+	char tmp[SMTP_LINE_MAX];
+
+	(void)strlcpy(tmp, args, sizeof tmp);
+	copy = tmp;  
+
 	if (s->helo[0] == '\0' || s->tx) {
 		smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1497,16 +1503,46 @@ smtp_check_mail_from(struct smtp_session *s, const char *args)
 		return 0;
 	}
 
+	if (smtp_mailaddr(&s->tx->evp.sender, copy, 1, &copy,
+		s->tx->session->smtpname) == 0) {
+		smtp_reply(s, "553 %s: Sender address syntax error",
+		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
+		smtp_tx_free(s->tx);
+		return 0;
+	}
+
 	return 1;
 }
 
 static int
 smtp_check_rcpt_to(struct smtp_session *s, const char *args)
 {
+	char *copy;
+	char tmp[SMTP_LINE_MAX];
+
+	(void)strlcpy(tmp, args, sizeof tmp);
+	copy = tmp; 
+
 	if (s->tx == NULL) {
 		smtp_reply(s, "503 %s %s: Command not allowed at this point.",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
 		    esc_description(ESC_INVALID_COMMAND));
+		return 0;
+	}
+
+	if (s->tx->rcptcount >= env->sc_session_max_rcpt) {
+		smtp_reply(s->tx->session, "451 %s %s: Too many recipients",
+		    esc_code(ESC_STATUS_TEMPFAIL, ESC_TOO_MANY_RECIPIENTS),
+		    esc_description(ESC_TOO_MANY_RECIPIENTS));
+		return 0;
+	}
+
+	if (smtp_mailaddr(&s->tx->evp.rcpt, copy, 0, &copy,
+		s->tx->session->smtpname) == 0) {
+		smtp_reply(s->tx->session,
+		    "501 %s: Recipient address syntax error",
+		    esc_code(ESC_STATUS_PERMFAIL,
+		        ESC_BAD_DESTINATION_MAILBOX_ADDRESS_SYNTAX));
 		return 0;
 	}
 
