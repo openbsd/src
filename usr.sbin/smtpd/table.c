@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.45 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.46 2018/12/28 13:47:54 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -224,13 +224,6 @@ table_create(struct smtpd *conf, const char *backend, const char *name,
 	t = xcalloc(1, sizeof(*t));
 	t->t_backend = tb;
 
-	/* XXX */
-	/*
-	 * until people forget about it, "file" really means "static"
-	 */
-	if (!strcmp(backend, "file"))
-		backend = "static";
-
 	if (config) {
 		if (strlcpy(t->t_config, config, sizeof t->t_config)
 		    >= sizeof t->t_config)
@@ -238,7 +231,7 @@ table_create(struct smtpd *conf, const char *backend, const char *name,
 			    t->t_config);
 	}
 
-	if (strcmp(backend, "static") != 0)
+	if (strcmp(tb->name, "static") != 0)
 		t->t_type = T_DYNAMIC;
 
 	if (name == NULL)
