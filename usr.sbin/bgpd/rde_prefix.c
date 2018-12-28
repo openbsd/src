@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.34 2018/09/04 12:00:29 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.35 2018/12/28 13:38:15 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -115,7 +115,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		bzero(&pte6, sizeof(pte6));
 		pte6.aid = prefix->aid;
 		if (prefixlen > 128)
-			fatalx("pt_get: bad IPv6 prefixlen");
+			fatalx("pt_fill: bad IPv6 prefixlen");
 		inet6applymask(&pte6.prefix6, &prefix->v6, prefixlen);
 		pte6.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte6);
