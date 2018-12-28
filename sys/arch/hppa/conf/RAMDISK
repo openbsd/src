@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.111 2018/09/20 15:19:38 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.112 2018/12/28 20:35:59 kettenis Exp $
 
 machine		hppa
 maxusers	4
@@ -59,7 +59,7 @@ wax*		at phantomas0		# Wax on [AB]*
 wax*		at uturn?		# Wax on C*
 mongoose*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 dino*		at phantomas?		# PCI bus bridge on [AB]*
-dino*		at uturn0		# PCI bus bridge on [CJ]*
+dino*		at uturn?		# PCI bus bridge on [CJ]*
 pci*		at dino?
 com1		at dino? irq 11
 
