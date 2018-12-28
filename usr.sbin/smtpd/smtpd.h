@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.614 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.615 2018/12/28 15:09:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1603,6 +1603,7 @@ int	table_config(struct table *);
 int	table_open(struct table *);
 int	table_update(struct table *);
 void	table_close(struct table *);
+void	table_dump(struct table *);
 int	table_check_use(struct table *, uint32_t, uint32_t);
 int	table_check_type(struct table *, uint32_t);
 int	table_check_service(struct table *, uint32_t);

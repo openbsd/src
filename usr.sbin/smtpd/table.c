@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.46 2018/12/28 13:47:54 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.47 2018/12/28 15:09:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -273,6 +273,42 @@ table_add(struct table *t, const char *key, const char *val)
 		log_warnx("warn: failed to add \"%s\" in table \"%s\"", key, t->t_name);
 }
 
+void
+table_dump(struct table *t)
+{
+	const char *type;
+	char buf[LINE_MAX];
+
+	switch(t->t_type) {
+	case T_NONE:
+		type = "NONE";
+		break;
+	case T_DYNAMIC:
+		type = "DYNAMIC";
+		break;
+	case T_LIST:
+		type = "LIST";
+		break;
+	case T_HASH:
+		type = "HASH";
+		break;
+	default:
+		type = "???";
+		break;
+	}
+
+	if (t->t_config[0])
+		snprintf(buf, sizeof(buf), " config=\"%s\"", t->t_config);
+	else
+		buf[0] = '\0';
+
+	log_debug("TABLE \"%s\" backend=%s type=%s%s", t->t_name,
+	    t->t_backend->name, type, buf);
+
+	if (t->t_backend->dump)
+		t->t_backend->dump(t);
+}
+
 int
 table_check_type(struct table *t, uint32_t mask)
 {
@@ -446,32 +482,10 @@ table_dump_all(struct smtpd *conf)
 {
 	struct table	*t;
 	void		*iter;
-	const char 	*sep;
-	char		 buf[1024];
 
 	iter = NULL;
-	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t)) {
-		sep = "";
- 		buf[0] = '\0';
-		if (t->t_type & T_DYNAMIC) {
-			(void)strlcat(buf, "DYNAMIC", sizeof(buf));
-			sep = ",";
-		}
-		if (t->t_type & T_LIST) {
-			(void)strlcat(buf, sep, sizeof(buf));
-			(void)strlcat(buf, "LIST", sizeof(buf));
-			sep = ",";
-		}
-		if (t->t_type & T_HASH) {
-			(void)strlcat(buf, sep, sizeof(buf));
-			(void)strlcat(buf, "HASH", sizeof(buf));
-			sep = ",";
-		}
-		log_debug("TABLE \"%s\" type=%s config=\"%s\"",
-		    t->t_name, buf, t->t_config);
-		if (t->t_backend->dump)
-			t->t_backend->dump(t);
-	}
+	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t))
+		table_dump(t);
 }
 
 void
