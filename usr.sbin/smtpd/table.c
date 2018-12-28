@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.43 2018/12/27 15:04:59 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.44 2018/12/28 11:13:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -269,7 +269,6 @@ table_create(struct smtpd *conf, const char *backend, const char *name, const ch
 			fatalx("table_create: table name too long");
 	}
 
-	dict_init(&t->t_dict);
 	dict_set(conf->sc_tables_dict, t->t_name, t);
 
 	return (t);
@@ -278,11 +277,6 @@ table_create(struct smtpd *conf, const char *backend, const char *name, const ch
 void
 table_destroy(struct smtpd *conf, struct table *t)
 {
-	void	*p = NULL;
-
-	while (dict_poproot(&t->t_dict, (void **)&p))
-		free(p);
-
 	dict_xpop(conf->sc_tables_dict, t->t_name);
 	free(t);
 }

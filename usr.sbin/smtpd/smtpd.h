@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.612 2018/12/27 15:41:50 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.613 2018/12/28 11:13:58 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -354,11 +354,8 @@ struct table {
 	enum table_type			 t_type;
 	char				 t_config[PATH_MAX];
 
-	struct dict			 t_dict;
-
 	void				*t_handle;
 	struct table_backend		*t_backend;
-	void				*t_iter;
 };
 
 struct table_backend {
