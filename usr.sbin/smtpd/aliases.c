@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.76 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.77 2018/12/28 12:47:28 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,11 +46,9 @@ aliases_get(struct expand *expand, const char *username)
 	union lookup		lk;
 	struct dispatcher      *dsp;
 	struct table	       *mapping = NULL;
-	struct table	       *userbase = NULL;
 	char		       *pbuf;
 
 	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	userbase = table_find(env, dsp->u.local.table_userbase);
 	mapping = table_find(env, dsp->u.local.table_alias);
 
 	xlowercase(buf, username, sizeof(buf));
@@ -104,10 +102,8 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 	int			ret;
 	struct dispatcher      *dsp;
 	struct table	       *mapping = NULL;
-	struct table	       *userbase = NULL;
 
 	dsp = dict_xget(env->sc_dispatchers, expand->rule->dispatcher);
-	userbase = table_find(env, dsp->u.local.table_userbase);
 	mapping = table_find(env, dsp->u.local.table_virtual);
 
 	if (!bsnprintf(user, sizeof(user), "%s", maddr->user))
