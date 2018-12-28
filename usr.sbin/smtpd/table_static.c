@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.30 2018/12/28 10:42:18 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.31 2018/12/28 11:11:36 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -282,7 +282,7 @@ table_static_dump(struct table *table)
 
 	iter = NULL;
 	while (dict_iter(&priv->dict, &iter, &key, (void**)&value)) {
-		if (value)
+		if (value && (void*)value != (void*)priv)
 			log_debug("	\"%s\" -> \"%s\"", key, value);
 		else
 			log_debug("	\"%s\"", key);
