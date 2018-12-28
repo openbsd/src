@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.26 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.27 2018/12/28 11:54:10 denis Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -300,6 +300,12 @@ static const char *bgpattr_nlri_safi[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 	/* 64-66: MPLS BGP RFC3107 */
 	"Tunnel", "VPLS", "MDT",
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* 128-129: RFC4364 + RFC6513 */
+	"L3VPN Unicast", "L3VPN Multicast",
 };
 #define bgp_attr_nlri_safi(x) \
 	num_or_str(bgpattr_nlri_safi, \
