@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.71 2018/08/21 16:40:23 akoshibe Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.72 2018/12/28 14:32:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4666,7 +4666,8 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 
 	ohlen = ntohs(oh->oh_length);
 	/* Validate that we have a sane header. */
-	if (ohlen < sizeof(*oh)) {
+	KASSERT(m->m_flags & M_PKTHDR);
+	if (ohlen < sizeof(*oh) || m->m_pkthdr.len < ohlen) {
 		swofp_send_error(sc, m, OFP_ERRTYPE_BAD_REQUEST,
 		    OFP_ERRREQ_BAD_LEN);
 		return (0);
@@ -4761,28 +4762,37 @@ void
 swofp_send_error(struct switch_softc *sc, struct mbuf *m,
     uint16_t type, uint16_t code)
 {
+	struct mbuf		*n;
+	struct ofp_header	*oh;
 	struct ofp_error	*oe;
+	int			 off;
+	uint32_t		 xid;
 	uint16_t		 len;
-	uint8_t			 data[OFP_ERRDATA_MAX];
 
 	/* Reuse mbuf from request message */
-	oe = mtod(m, struct ofp_error *);
+	oh = mtod(m, struct ofp_header *);
 
 	/* Save data for the response and copy back later. */
-	len = min(ntohs(oe->err_oh.oh_length), OFP_ERRDATA_MAX);
-	m_copydata(m, 0, len, data);
+	len = min(ntohs(oh->oh_length), OFP_ERRDATA_MAX);
+	if (len < m->m_pkthdr.len)
+		m_adj(m, len - m->m_pkthdr.len);
+	xid = oh->oh_xid;
 
-	oe->err_oh.oh_version = OFP_V_1_3;
-	oe->err_oh.oh_type = OFP_T_ERROR;
-	oe->err_type = htons(type);
-	oe->err_code = htons(code);
-	oe->err_oh.oh_length = htons(len + sizeof(struct ofp_error));
-	m->m_len = m->m_pkthdr.len = sizeof(struct ofp_error);
-
-	if (m_copyback(m, sizeof(struct ofp_error), len, data, M_DONTWAIT)) {
+	if ((n = m_makespace(m, 0, sizeof(struct ofp_error), &off)) == NULL) {
 		m_freem(m);
 		return;
 	}
+	/* if skip is 0, off is also 0 */
+	KASSERT(off == 0);
+
+	oe = mtod(n, struct ofp_error *);
+
+	oe->err_oh.oh_version = OFP_V_1_3;
+	oe->err_oh.oh_type = OFP_T_ERROR;
+	oe->err_oh.oh_length = htons(sizeof(struct ofp_error) + len);
+	oe->err_oh.oh_xid = xid;
+	oe->err_type = htons(type);
+	oe->err_code = htons(code);
 
 	(void)swofp_output(sc, m);
 }

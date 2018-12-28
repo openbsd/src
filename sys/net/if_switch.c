@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.24 2018/12/07 16:19:40 mpi Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.25 2018/12/28 14:32:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -221,6 +221,7 @@ switchintr(void)
 		return;
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
+		KASSERT(m->m_flags & M_PKTHDR);
 		ifp = if_get(m->m_pkthdr.ph_ifidx);
 		if (ifp == NULL) {
 			m_freem(m);
@@ -741,6 +742,7 @@ switch_ifenqueue(struct switch_softc *sc, struct ifnet *ifp,
 	/* Loop prevention. */
 	m->m_flags |= M_PROTO1;
 
+	KASSERT(m->m_flags & M_PKTHDR);
 	len = m->m_pkthdr.len;
 
 	if (local) {
@@ -1487,22 +1489,23 @@ switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 int
 ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
 {
-	struct ofp_header	*oh;
 	uint16_t		 ohlen;
 
 	*mtail = NULL;
 
  again:
 	/* We need more data. */
-	if (m->m_pkthdr.len < sizeof(*oh))
+	KASSERT(m->m_flags & M_PKTHDR);
+	if (m->m_pkthdr.len < sizeof(struct ofp_header))
 		return (-1);
 
-	oh = mtod(m, struct ofp_header *);
-	ohlen = ntohs(oh->oh_length);
+	m_copydata(m, offsetof(struct ofp_header, oh_length), sizeof(ohlen),
+	    (caddr_t)&ohlen);
+	ohlen = ntohs(ohlen);
 
 	/* We got an invalid packet header, skip it. */
-	if (ohlen < sizeof(*oh)) {
-		m_adj(m, sizeof(*oh));
+	if (ohlen < sizeof(struct ofp_header)) {
+		m_adj(m, sizeof(struct ofp_header));
 		goto again;
 	}
 
