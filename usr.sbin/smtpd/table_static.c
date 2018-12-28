@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.31 2018/12/28 11:11:36 eric Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.32 2018/12/28 14:21:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -258,6 +258,13 @@ table_static_add(struct table *table, const char *key, const char *val)
 
 	/* cannot add to a table read from a file */
 	if (*table->t_config)
+		return 0;
+
+	if (table->t_type == T_NONE)
+		table->t_type = val ? T_HASH : T_LIST;
+	else if (table->t_type == T_LIST && val)
+		return 0;
+	else if (table->t_type == T_HASH && val == NULL)
 		return 0;
 
 	if (priv == NULL) {

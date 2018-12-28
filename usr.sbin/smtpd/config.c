@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.48 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.49 2018/12/28 14:21:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -134,7 +134,6 @@ config_default(void)
 	set_local(conf, conf->sc_hostname);
 
 	t = table_create(conf, "static", "<anydestination>", NULL);
-	t->t_type = T_LIST;
 	table_add(t, "*", NULL);
 
 	hostname[strcspn(hostname, ".")] = '\0';
@@ -169,7 +168,6 @@ set_local(struct smtpd *conf, const char *hostname)
 	struct table	*t;
 
 	t = table_create(conf, "static", "<localnames>", NULL);
-	t->t_type = T_LIST;
 	table_add(t, "localhost", NULL);
 	table_add(t, hostname, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.249 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.250 2018/12/28 14:21:02 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -278,7 +278,6 @@ assign		: '=' | ARROW;
 
 
 keyval		: STRING assign STRING		{
-			table->t_type = T_HASH;
 			table_add(table, $1, $3);
 			free($1);
 			free($3);
@@ -290,7 +289,6 @@ keyval_list	: keyval
 		;
 
 stringel	: STRING			{
-			table->t_type = T_LIST;
 			table_add(table, $1, NULL);
 			free($1);
 		}
@@ -2177,7 +2175,6 @@ tablenew	: STRING			{
 			struct table	*t;
 
 			t = table_create(conf, "static", NULL, NULL);
-			t->t_type = T_LIST;
 			table_add(t, $1, NULL);
 			free($1);
 			$$ = t;
