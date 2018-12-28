@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.597 2018/12/27 17:33:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.598 2018/12/28 16:01:39 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -138,6 +138,7 @@ void		 interface_link_forceup(char *, int);
 void		 interface_state(struct interface_info *);
 void		 get_hw_address(struct interface_info *);
 void		 tick_msg(const char *, int, time_t);
+void		 rtm_dispatch(struct interface_info *, struct rt_msghdr *);
 
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -309,40 +310,61 @@ get_hw_address(struct interface_info *ifi)
 void
 routefd_handler(struct interface_info *ifi, int routefd)
 {
-	struct ether_addr		 hw;
 	struct rt_msghdr		*rtm;
+	char				*buf, *lim, *next;
+	ssize_t				 n;
+
+	buf = calloc(1, 2048);
+	if (buf == NULL)
+		fatal("rtm buf");
+
+	do {
+		n = read(routefd, buf, 2048);
+	} while (n == -1 && errno == EINTR);
+	if (n == -1) {
+		log_warn("%s: routing socket", log_procname);
+		goto done;
+	}
+	if (n == 0)
+		fatalx("%s: routing socket closed", log_procname);
+
+	lim = buf + n;
+	for (next = buf; next < lim && quit == 0; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		if (lim < next + sizeof(rtm->rtm_msglen) ||
+		    lim < next + rtm->rtm_msglen)
+			fatalx("%s: partial rtm in buffer", log_procname);
+
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
+
+		rtm_dispatch(ifi, rtm);
+	}
+
+done:
+	free(buf);
+	return;
+}
+
+void
+rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
+{
+	struct ether_addr		 hw;
 	struct if_msghdr		*ifm;
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
 	struct if_ieee80211_data	*ifie;
-	char				*rtmmsg;
-	ssize_t				 n;
 	int				 newlinkup, oldlinkup;
-
-	rtmmsg = calloc(1, 2048);
-	if (rtmmsg == NULL)
-		fatal("rtmmsg");
-
-	do {
-		n = read(routefd, rtmmsg, 2048);
-	} while (n == -1 && errno == EINTR);
-	if (n == -1)
-		goto done;
-
-	rtm = (struct rt_msghdr *)rtmmsg;
-	if ((size_t)n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
-	    rtm->rtm_version != RTM_VERSION)
-		goto done;
 
 	switch (rtm->rtm_type) {
 	case RTM_PROPOSAL:
 		if (rtm->rtm_index != ifi->index ||
 		    rtm->rtm_priority != RTP_PROPOSAL_DHCLIENT)
-			goto done;
+			return;
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
 			if (rtm->rtm_seq == (int32_t)ifi->xid) {
 				ifi->flags |= IFI_IN_CHARGE;
-				goto done;
+				return;
 			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
 				log_debug("%s: yielding responsibility",
 				    log_procname);
@@ -354,9 +376,11 @@ routefd_handler(struct interface_info *ifi, int routefd)
 			quit = INTERNALSIG;
 		}
 		break;
+
 	case RTM_DESYNC:
 		log_warnx("%s: RTM_DESYNC", log_procname);
 		break;
+
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
@@ -375,7 +399,7 @@ routefd_handler(struct interface_info *ifi, int routefd)
 				tick_msg("", 0, INT64_MAX);
 				log_warnx("%s: LLADDR changed", log_procname);
 				quit = SIGHUP;
-				goto done;
+				return;
 			}
 		}
 
@@ -387,44 +411,46 @@ routefd_handler(struct interface_info *ifi, int routefd)
 			state_preboot(ifi);
 		}
 		break;
+
 	case RTM_80211INFO:
 		if (rtm->rtm_index != ifi->index)
 			break;
 		ifie = &((struct if_ieee80211_msghdr *)rtm)->ifim_ifie;
-		if (ifi->ssid_len != ifie->ifie_nwid_len ||
-		    memcmp(ifi->ssid, ifie->ifie_nwid, ifie->ifie_nwid_len)
-		    != 0) {
+		if (ifi->ssid_len != ifie->ifie_nwid_len || memcmp(ifi->ssid,
+		    ifie->ifie_nwid, ifie->ifie_nwid_len) != 0) {
 			tick_msg("", 0, INT64_MAX);
 			log_warnx("%s: SSID changed", log_procname);
 			quit = SIGHUP;
-			goto done;
+			return;
 		}
 		break;
+
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
-		if (ifan->ifan_what == IFAN_DEPARTURE &&
-		    ifan->ifan_index == ifi->index)
+		if (ifan->ifan_what == IFAN_DEPARTURE && ifan->ifan_index ==
+		    ifi->index)
 			fatalx("departed");
 		break;
+
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
 		/* Need to check if it is time to write resolv.conf. */
 		ifam = (struct ifa_msghdr *)rtm;
 		if (get_ifa_family((char *)ifam + ifam->ifam_hdrlen,
 		    ifam->ifam_addrs) != AF_INET)
-			goto done;
+			return;
 		break;
+
 	default:
 		break;
 	}
 
-	/* Something has happened. Try to write out the resolv.conf. */
+	/*
+	 * Something has happened that may have granted/revoked responsibility for
+	 * resolv.conf.
+	 */
 	if (ifi->active != NULL && (ifi->flags & IFI_IN_CHARGE) != 0)
 		write_resolv_conf();
-
-done:
-	free(rtmmsg);
-	return;
 }
 
 char **saved_argv;
