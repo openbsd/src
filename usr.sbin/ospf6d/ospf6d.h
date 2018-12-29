@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.38 2018/09/01 19:21:10 remi Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.39 2018/12/29 16:04:31 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -386,6 +386,7 @@ struct ospfd_conf {
 	int			flags;
 	u_int8_t		border;
 	u_int8_t		redistribute;
+	u_int8_t		fib_priority;
 	u_int			rdomain;
 	char			*csock;
 };
@@ -537,7 +538,7 @@ u_int16_t	 in_cksum(void *, size_t);
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
-int		 kr_init(int, u_int);
+int		 kr_init(int, u_int, u_int8_t);
 int		 kr_change(struct kroute *, int);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);

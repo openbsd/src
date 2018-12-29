@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.40 2018/10/30 16:52:19 remi Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.41 2018/12/29 16:04:31 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 		fatal("unveil");
 
 	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
-	    ospfd_conf->rdomain) == -1)
+	    ospfd_conf->rdomain, ospfd_conf->fib_priority) == -1)
 		fatalx("kr_init failed");
 
 	event_dispatch();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.58 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.59 2018/12/29 16:04:31 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -45,6 +45,7 @@ struct {
 	u_int32_t		rtseq;
 	pid_t			pid;
 	int			fib_sync;
+	u_int8_t		fib_prio;
 	int			fd;
 	struct event		ev;
 	u_int			rdomain;
@@ -95,13 +96,14 @@ RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 
 int
-kr_init(int fs, u_int rdomain)
+kr_init(int fs, u_int rdomain, u_int8_t fib_prio)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
 
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
+	kr_state.fib_prio = fib_prio;
 
 	if ((kr_state.fd = socket(AF_ROUTE,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, AF_INET6)) == -1) {
@@ -218,7 +220,7 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 		kn->r.nexthop = kroute[i].nexthop;
 		kn->r.scope = kroute[i].scope;
 		kn->r.flags = kroute[i].flags | F_OSPFD_INSERTED;
-		kn->r.priority = RTP_OSPF;
+		kn->r.priority = kr_state.fib_prio;
 		kn->r.ext_tag = kroute[i].ext_tag;
 		rtlabel_unref(kn->r.rtlabel);	/* for RTM_CHANGE */
 		kn->r.rtlabel = kroute[i].rtlabel;
@@ -242,7 +244,7 @@ kr_change(struct kroute *kroute, int krcount)
 
 	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
-	kr = kroute_find(&kroute->prefix, kroute->prefixlen, RTP_OSPF);
+	kr = kroute_find(&kroute->prefix, kroute->prefixlen, kr_state.fib_prio);
 	if (kr != NULL && kr->next == NULL && krcount == 1) {
 		/*
 		 * single path OSPF route.
@@ -272,7 +274,7 @@ kr_change(struct kroute *kroute, int krcount)
 int
 kr_delete_fib(struct kroute_node *kr)
 {
-	if (kr->r.priority != RTP_OSPF)
+	if (kr->r.priority != kr_state.fib_prio)
 		log_warn("kr_delete_fib: %s/%d has wrong priority %d",
 		    log_in6addr(&kr->r.prefix), kr->r.prefixlen,
 		    kr->r.priority);
@@ -292,7 +294,7 @@ kr_delete(struct kroute *kroute)
 	struct kroute_node	*kr, *nkr;
 
 	if ((kr = kroute_find(&kroute->prefix, kroute->prefixlen,
-	    RTP_OSPF)) == NULL)
+	    kr_state.fib_prio)) == NULL)
 		return (0);
 
 	while (kr != NULL) {
@@ -324,7 +326,7 @@ kr_fib_couple(void)
 	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_OSPF)
+		if (kr->r.priority == kr_state.fib_prio)
 			for (kn = kr; kn != NULL; kn = kn->next)
 				send_rtmsg(kr_state.fd, RTM_ADD, &kn->r);
 
@@ -341,7 +343,7 @@ kr_fib_decouple(void)
 		return;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_OSPF)
+		if (kr->r.priority == kr_state.fib_prio)
 			for (kn = kr; kn != NULL; kn = kn->next)
 				send_rtmsg(kr_state.fd, RTM_DELETE, &kn->r);
 
@@ -1013,7 +1015,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_priority = RTP_OSPF;
+	hdr.rtm_priority = kr_state.fib_prio;
 	hdr.rtm_tableid = kr_state.rdomain;	/* rtableid */
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
@@ -1241,7 +1243,7 @@ fetchtable(void)
 				break;
 			}
 
-		if (rtm->rtm_priority == RTP_OSPF)  {
+		if (rtm->rtm_priority == kr_state.fib_prio)  {
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 			free(kr);
 		} else {

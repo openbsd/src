@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.7 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: printconf.c,v 1.8 2018/12/29 16:04:31 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -44,6 +44,8 @@ print_mainconf(struct ospfd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
+
+	printf("fib-priority %hhu\n", conf->fib_priority);
 
 	if (conf->rdomain)
 		printf("rdomain %d\n", conf->rdomain);
