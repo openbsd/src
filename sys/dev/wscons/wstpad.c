@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.21 2018/12/26 11:08:02 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.22 2018/12/29 21:03:58 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -971,7 +971,6 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 {
 	struct wstpad *tp = input->tp;
 	struct tpad_touch *t;
-	struct mt_slot *mts;
 	int slot, dx, dy;
 	u_int touches, inactive;
 
@@ -980,11 +979,8 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 	FOREACHBIT(touches, slot) {
 		t = &tp->tpad_touches[slot];
 		t->state = TOUCH_BEGIN;
-		mts = &input->mt.slots[slot];
-		t->x = normalize_abs(&input->filter.h, mts->pos.x);
-		t->y = normalize_abs(&input->filter.v, mts->pos.y);
-		if (t->pos == NULL)
-			t->pos = &mts->pos;
+		t->x = normalize_abs(&input->filter.h, t->pos->x);
+		t->y = normalize_abs(&input->filter.v, t->pos->y);
 		t->orig.x = t->x;
 		t->orig.y = t->y;
 		memcpy(&t->orig.time, &tp->time, sizeof(struct timespec));
@@ -1011,13 +1007,12 @@ wstpad_mt_inputs(struct wsmouseinput *input)
 		t = &tp->tpad_touches[slot];
 		t->state = TOUCH_UPDATE;
 		if ((1 << slot) & input->mt.frame) {
-			mts = &input->mt.slots[slot];
-			dx = normalize_abs(&input->filter.h, mts->pos.x) - t->x;
+			dx = normalize_abs(&input->filter.h, t->pos->x) - t->x;
 			t->x += dx;
-			dy = normalize_abs(&input->filter.v, mts->pos.y) - t->y;
+			dy = normalize_abs(&input->filter.v, t->pos->y) - t->y;
 			t->y += dy;
 			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
-			if (wsmouse_hysteresis(input, &mts->pos))
+			if (wsmouse_hysteresis(input, t->pos))
 				dx = dy = 0;
 			wstpad_set_direction(tp, t, dx, dy);
 		} else if ((1 << slot) & inactive) {
@@ -1163,10 +1158,8 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 		wstpad_mt_masks(input);
 	} else {
 		t = tp->t;
-		t->x = normalize_abs(&input->filter.h, input->motion.pos.x);
-		t->y = normalize_abs(&input->filter.v, input->motion.pos.y);
-		if (t->pos == NULL)
-			t->pos = &input->motion.pos;
+		t->x = normalize_abs(&input->filter.h, t->pos->x);
+		t->y = normalize_abs(&input->filter.v, t->pos->y);
 		if (tp->contacts)
 			t->state = (tp->prev_contacts ?
 			    TOUCH_UPDATE : TOUCH_BEGIN);
@@ -1412,7 +1405,7 @@ int
 wstpad_init(struct wsmouseinput *input)
 {
 	struct wstpad *tp = input->tp;
-	int slots;
+	int i, slots;
 
 	if (tp != NULL)
 		return (0);
@@ -1431,8 +1424,13 @@ wstpad_init(struct wsmouseinput *input)
 	}
 
 	tp->t = &tp->tpad_touches[0];
-	if (input->mt.num_slots)
+	if (input->mt.num_slots) {
 		tp->features |= WSTPAD_MT;
+		for (i = 0; i < input->mt.num_slots; i++)
+			tp->tpad_touches[i].pos = &input->mt.slots[i].pos;
+	} else {
+		tp->t->pos = &input->motion.pos;
+	}
 
 	timeout_set(&tp->tap.to, wstpad_tap_timeout, input);
 
