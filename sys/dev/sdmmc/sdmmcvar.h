@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.30 2018/08/09 13:52:36 patrick Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.31 2018/12/29 11:37:30 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -213,6 +213,7 @@ struct sdmmc_softc {
 	struct rwlock sc_lock;		/* lock around host controller */
 	void *sc_scsibus;		/* SCSI bus emulation softc */
 	TAILQ_HEAD(, sdmmc_intr_handler) sc_intrq; /* interrupt handlers */
+	long sc_max_seg;		/* maximum segment size */
 	long sc_max_xfer;		/* maximum transfer size */
 	void *sc_cookies[SDMMC_MAX_FUNCTIONS]; /* pass extra info from bus to dev */
 };

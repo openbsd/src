@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.51 2018/08/09 13:52:36 patrick Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.52 2018/12/29 11:37:30 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -118,12 +118,14 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmap = saa->dmap;
 	sc->sc_flags = saa->flags;
 	sc->sc_caps = saa->caps;
+	sc->sc_max_seg = saa->max_seg ? saa->max_seg : MAXPHYS;
 	sc->sc_max_xfer = saa->max_xfer;
 	memcpy(&sc->sc_cookies, &saa->cookies, sizeof(sc->sc_cookies));
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) && sc->sc_dmap == NULL) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
+		    sc->sc_max_seg, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    &sc->sc_dmap);
 		if (error) {
 			printf("%s: can't create DMA map\n", DEVNAME(sc));
 			return;
