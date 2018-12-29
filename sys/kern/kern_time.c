@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.103 2018/05/28 18:05:42 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.104 2018/12/29 19:02:30 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -265,53 +265,52 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
-	struct timespec rqt, rmt;
-	struct timespec sts, ets;
+	struct timespec elapsed, remainder, request, start, stop;
 	struct timespec *rmtp;
-	int error, error1;
+	int copyout_error, error;
 
 	rmtp = SCARG(uap, rmtp);
-	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
+	error = copyin(SCARG(uap, rqtp), &request, sizeof(request));
 	if (error)
 		return (error);
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_STRUCT)) {
 		KERNEL_LOCK();
-		ktrreltimespec(p, &rqt);
+		ktrreltimespec(p, &request);
 		KERNEL_UNLOCK();
 	}
 #endif
 
-	if (rqt.tv_sec > 100000000 || timespecfix(&rqt))
+	if (request.tv_sec > 100000000 || timespecfix(&request))
 		return (EINVAL);
 
 	if (rmtp)
-		getnanouptime(&sts);
+		getnanouptime(&start);
 
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep",
-	    MAX(1, tstohz(&rqt)));
+	    MAX(1, tstohz(&request)));
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
 
 	if (rmtp) {
-		getnanouptime(&ets);
+		getnanouptime(&stop);
 
-		memset(&rmt, 0, sizeof(rmt));
-		timespecsub(&ets, &sts, &sts);
-		timespecsub(&rqt, &sts, &rmt);
+		memset(&remainder, 0, sizeof(remainder));
+		timespecsub(&stop, &start, &elapsed);
+		timespecsub(&request, &elapsed, &remainder);
 
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
+		if (remainder.tv_sec < 0)
+			timespecclear(&remainder);
 
-		error1 = copyout(&rmt, rmtp, sizeof(rmt));
-		if (error1 != 0)
-			error = error1;
+		copyout_error = copyout(&remainder, rmtp, sizeof(remainder));
+		if (copyout_error)
+			error = copyout_error;
 #ifdef KTRACE
-		if (error1 == 0 && KTRPOINT(p, KTR_STRUCT)) {
+		if (copyout_error == 0 && KTRPOINT(p, KTR_STRUCT)) {
 			KERNEL_LOCK();
-			ktrreltimespec(p, &rmt);
+			ktrreltimespec(p, &remainder);
 			KERNEL_UNLOCK();
 		}
 #endif
