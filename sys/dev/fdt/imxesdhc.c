@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.10 2018/08/09 13:53:30 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.11 2018/12/29 11:37:54 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -435,9 +435,11 @@ imxesdhc_attach(struct device *parent, struct device *self, void *aux)
 	saa.sct = &imxesdhc_functions;
 	saa.sch = sc;
 	saa.dmat = sc->sc_dmat;
-	if (ISSET(sc->flags, SHF_USE_DMA))
+	if (ISSET(sc->flags, SHF_USE_DMA)) {
 		saa.caps |= SMC_CAPS_DMA;
-	
+		saa.max_seg = 65535;
+	}
+
 	if (caps & SDHC_HOST_CTRL_CAP_HSS)
 		saa.caps |= SMC_CAPS_MMC_HIGHSPEED | SMC_CAPS_SD_HIGHSPEED;
 
