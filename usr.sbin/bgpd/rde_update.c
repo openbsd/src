@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.106 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.107 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -184,6 +184,27 @@ up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 			return (1);
 		return (memcmp(a->prefix.vpn4.labelstack,
 		    b->prefix.vpn4.labelstack, a->prefix.vpn4.labellen));
+	case AID_VPN_IPv6:
+		if (betoh64(a->prefix.vpn6.rd) < betoh64(b->prefix.vpn6.rd))
+			return (-1);
+		if (betoh64(a->prefix.vpn6.rd) > betoh64(b->prefix.vpn6.rd))
+			return (1);
+		i = memcmp(&a->prefix.vpn6.addr, &b->prefix.vpn6.addr,
+		    sizeof(struct in6_addr));
+		if (i > 0)
+			return (1);
+		if (i < 0)
+			return (-1);
+		if (a->prefixlen < b->prefixlen)
+			return (-1);
+		if (a->prefixlen > b->prefixlen)
+			return (1);
+		if (a->prefix.vpn6.labellen < b->prefix.vpn6.labellen)
+			return (-1);
+		if (a->prefix.vpn6.labellen > b->prefix.vpn6.labellen)
+			return (1);
+		return (memcmp(a->prefix.vpn6.labelstack,
+		    b->prefix.vpn6.labelstack, a->prefix.vpn6.labellen));
 	default:
 		fatalx("up_prefix_cmp: unknown af");
 	}
@@ -745,6 +766,68 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 			/* ebgp multihop */
 			memcpy(&upa->mpattr[12], &peer->local_v4_addr.v4,
 			    sizeof(struct in_addr));
+		return (0);
+	case AID_VPN_IPv6:
+		upa->mpattr_len = 29; /* AFI + SAFI + NH LEN + NH + Reserved */
+		upa->mpattr = calloc(upa->mpattr_len, 1);
+		if (upa->mpattr == NULL)
+			fatal("up_generate_mp_reach");
+		if (aid2afi(aid, &tmp, &upa->mpattr[2]))
+			fatalx("up_generate_mp_reachi: bad AID");
+		tmp = htons(tmp);
+		memcpy(upa->mpattr, &tmp, sizeof(tmp));
+		upa->mpattr[3] = sizeof(u_int64_t) + sizeof(struct in6_addr);
+		upa->mpattr[28] = 0; /* Reserved must be 0 */
+
+		/* nexthop dance see also up_get_nexthop() */
+		if (state->nhflags & NEXTHOP_NOMODIFY) {
+			/* no modify flag set */
+			if (state->nexthop == NULL)
+				memcpy(&upa->mpattr[12],
+				    &peer->local_v6_addr.v6,
+				    sizeof(struct in6_addr));
+			else
+				memcpy(&upa->mpattr[12],
+				    &state->nexthop->exit_nexthop.v6,
+				    sizeof(struct in6_addr));
+		} else if (state->nhflags & NEXTHOP_SELF)
+			memcpy(&upa->mpattr[12], &peer->local_v6_addr.v6,
+			    sizeof(struct in6_addr));
+		else if (!peer->conf.ebgp) {
+			/* ibgp */
+			if (state->nexthop == NULL ||
+			    (state->nexthop->exit_nexthop.aid == AID_INET6 &&
+			    !memcmp(&state->nexthop->exit_nexthop.v6,
+			    &peer->remote_addr.v6, sizeof(struct in6_addr))))
+				memcpy(&upa->mpattr[12],
+				    &peer->local_v6_addr.v6,
+				    sizeof(struct in6_addr));
+			else
+				memcpy(&upa->mpattr[12],
+				    &state->nexthop->exit_nexthop.v6,
+				    sizeof(struct in6_addr));
+		} else if (peer->conf.distance == 1) {
+			/* ebgp directly connected */
+			if (state->nexthop != NULL &&
+			    state->nexthop->flags & NEXTHOP_CONNECTED)
+				if (prefix_compare(&peer->remote_addr,
+				    &state->nexthop->nexthop_net,
+				    state->nexthop->nexthop_netlen) == 0) {
+					/*
+					* nexthop and peer are in the same
+					* subnet
+					*/
+					memcpy(&upa->mpattr[12],
+					    &state->nexthop->exit_nexthop.v6,
+					    sizeof(struct in6_addr));
+					return (0);
+				}
+			memcpy(&upa->mpattr[12], &peer->local_v6_addr.v6,
+			    sizeof(struct in6_addr));
+		} else
+			/* ebgp multihop */
+			memcpy(&upa->mpattr[12], &peer->local_v6_addr.v6,
+			    sizeof(struct in6_addr));
 		return (0);
 	default:
 		break;

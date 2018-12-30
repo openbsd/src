@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.206 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.207 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -275,6 +275,19 @@ struct pt_entry_vpn4 {
 	u_int8_t			 prefixlen;
 	u_int16_t			 refcnt;
 	struct in_addr			 prefix4;
+	u_int64_t			 rd;
+	u_int8_t			 labelstack[21];
+	u_int8_t			 labellen;
+	u_int8_t			 pad1;
+	u_int8_t			 pad2;
+};
+
+struct pt_entry_vpn6 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	u_int8_t			 aid;
+	u_int8_t			 prefixlen;
+	u_int16_t			 refcnt;
+	struct in6_addr			 prefix6;
 	u_int64_t			 rd;
 	u_int8_t			 labelstack[21];
 	u_int8_t			 labellen;

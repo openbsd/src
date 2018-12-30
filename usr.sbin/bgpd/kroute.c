@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.227 2018/12/28 22:05:15 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.228 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,9 +93,11 @@ struct ktable	*ktable_get(u_int);
 int	kr4_change(struct ktable *, struct kroute_full *, u_int8_t);
 int	kr6_change(struct ktable *, struct kroute_full *, u_int8_t);
 int	krVPN4_change(struct ktable *, struct kroute_full *, u_int8_t);
+int	krVPN6_change(struct ktable *, struct kroute_full *, u_int8_t);
 int	kr4_delete(struct ktable *, struct kroute_full *, u_int8_t);
 int	kr6_delete(struct ktable *, struct kroute_full *, u_int8_t);
 int	krVPN4_delete(struct ktable *, struct kroute_full *, u_int8_t);
+int	krVPN6_delete(struct ktable *, struct kroute_full *, u_int8_t);
 void	kr_net_delete(struct network *);
 struct network *kr_net_match(struct ktable *, struct kroute *);
 struct network *kr_net_match6(struct ktable *, struct kroute6 *);
@@ -475,6 +477,8 @@ kr_change(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 		return (kr6_change(kt, kl, fib_prio));
 	case AID_VPN_IPv4:
 		return (krVPN4_change(kt, kl, fib_prio));
+	case AID_VPN_IPv6:
+		return (krVPN6_change(kt, kl, fib_prio));
 	}
 	log_warnx("%s: not handled AID", __func__);
 	return (-1);
@@ -669,6 +673,81 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 }
 
 int
+krVPN6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute6_node	*kr6;
+	struct in6_addr		 lo6 = IN6ADDR_LOOPBACK_INIT;
+	int			 action = RTM_ADD;
+	u_int32_t		 mplslabel = 0;
+	u_int16_t		 labelid;
+
+	/* nexthop to loopback -> ignore silently */
+	if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
+		return (0);
+
+	/* only single MPLS label are supported for now */
+	if (kl->prefix.vpn6.labellen != 3) {
+		log_warnx("%s: %s/%u has not a single label", __func__,
+		    log_addr(&kl->prefix), kl->prefixlen);
+		return (0);
+	}
+	mplslabel = (kl->prefix.vpn6.labelstack[0] << 24) |
+	    (kl->prefix.vpn6.labelstack[1] << 16) |
+	    (kl->prefix.vpn6.labelstack[2] << 8);
+	mplslabel = htonl(mplslabel);
+
+	/* for blackhole and reject routes nexthop needs to be ::1 */
+	if (kl->flags & (F_BLACKHOLE|F_REJECT))
+		bcopy(&lo6, &kl->nexthop.v6, sizeof(kl->nexthop.v6));
+
+	labelid = rtlabel_name2id(kl->label);
+
+	if ((kr6 = kroute6_find(kt, &kl->prefix.vpn6.addr, kl->prefixlen,
+	    fib_prio)) != NULL)
+		action = RTM_CHANGE;
+
+	if (action == RTM_ADD) {
+		if ((kr6 = calloc(1, sizeof(struct kroute6_node))) == NULL) {
+			log_warn("%s", __func__);
+			return (-1);
+		}
+		memcpy(&kr6->r.prefix, &kl->prefix.vpn6.addr,
+		    sizeof(struct in6_addr));
+		kr6->r.prefixlen = kl->prefixlen;
+		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
+		    sizeof(struct in6_addr));
+		kr6->r.flags = kl->flags | F_BGPD_INSERTED | F_MPLS;
+		kr6->r.priority = fib_prio;
+		kr6->r.labelid = labelid;
+		kr6->r.mplslabel = mplslabel;
+
+		if (kroute6_insert(kt, kr6) == -1) {
+			free(kr6);
+			return (-1);
+		}
+	} else {
+		kr6->r.mplslabel = mplslabel;
+		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
+		    sizeof(struct in6_addr));
+		rtlabel_unref(kr6->r.labelid);
+		kr6->r.labelid = labelid;
+		if (kl->flags & F_BLACKHOLE)
+			kr6->r.flags |= F_BLACKHOLE;
+		else
+			kr6->r.flags &= ~F_BLACKHOLE;
+		if (kl->flags & F_REJECT)
+			kr6->r.flags |= F_REJECT;
+		else
+			kr6->r.flags &= ~F_REJECT;
+	}
+
+	if (send_rt6msg(kr_state.fd, action, kt, &kr6->r, fib_prio) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
 kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 {
 	struct ktable		*kt;
@@ -684,6 +763,8 @@ kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 		return (kr6_delete(kt, kl, fib_prio));
 	case AID_VPN_IPv4:
 		return (krVPN4_delete(kt, kl, fib_prio));
+	case AID_VPN_IPv6:
+		return (krVPN6_delete(kt, kl, fib_prio));
 	}
 	log_warnx("%s: not handled AID", __func__);
 	return (-1);
@@ -753,6 +834,29 @@ krVPN4_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 	rtlabel_unref(kr->r.labelid);
 
 	if (kroute_remove(kt, kr) == -1)
+		return (-1);
+
+	return (0);
+}
+
+int
+krVPN6_delete(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
+{
+	struct kroute6_node	*kr6;
+
+	if ((kr6 = kroute6_find(kt, &kl->prefix.vpn6.addr, kl->prefixlen,
+	    fib_prio)) == NULL)
+		return (0);
+
+	if (!(kr6->r.flags & F_BGPD_INSERTED))
+		return (0);
+
+	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r, fib_prio) == -1)
+		return (-1);
+
+	rtlabel_unref(kr6->r.labelid);
+
+	if (kroute6_remove(kt, kr6) == -1)
 		return (-1);
 
 	return (0);
@@ -2723,13 +2827,18 @@ int
 send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute,
     u_int8_t fib_prio)
 {
-	struct iovec		iov[5];
+	struct iovec		iov[7];
 	struct rt_msghdr	hdr;
 	struct pad {
 		struct sockaddr_in6	addr;
 		char			pad[sizeof(long)];
 	} prefix, nexthop, mask;
+	struct {
+		struct sockaddr_dl	dl;
+		char			pad[sizeof(long)];
+	}			ifp;
 	struct sockaddr_rtlabel	label;
+	struct sockaddr_mpls	mpls;
 	int			iovcnt = 0;
 
 	if (!kt->fib_sync)
@@ -2792,6 +2901,34 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute,
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
+
+	if (kt->ifindex) {
+		memset(&ifp, 0, sizeof(ifp));
+		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
+		ifp.dl.sdl_family = AF_LINK;
+		ifp.dl.sdl_index = kt->ifindex;
+		hdr.rtm_addrs |= RTA_IFP;
+		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
+		iov[iovcnt].iov_base = &ifp;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
+	}
+
+	if (kroute->flags & F_MPLS) {
+		memset(&mpls, 0, sizeof(mpls));
+		mpls.smpls_len = sizeof(mpls);
+		mpls.smpls_family = AF_MPLS;
+		mpls.smpls_label = kroute->mplslabel;
+		/* adjust header */
+		hdr.rtm_flags |= RTF_MPLS;
+		hdr.rtm_mpls = MPLS_OP_PUSH;
+		hdr.rtm_addrs |= RTA_SRC;
+		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_mpls));
+		/* clear gateway flag since this is for mpe(4) */
+		hdr.rtm_flags &= ~RTF_GATEWAY;
+		/* adjust iovec */
+		iov[iovcnt].iov_base = &mpls;
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_mpls));
+	}
 
 	if (kroute->labelid) {
 		bzero(&label, sizeof(label));

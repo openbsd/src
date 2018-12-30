@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.367 2018/12/28 14:28:52 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.368 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3974,6 +3974,7 @@ merge_prefixspec(struct filter_prefix *p, struct filter_prefixlen *pl)
 		max_len = 32;
 		break;
 	case AID_INET6:
+	case AID_VPN_IPv6:
 		max_len = 128;
 		break;
 	}

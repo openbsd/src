@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.35 2018/12/28 13:38:15 denis Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.36 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -90,6 +90,16 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		    ((struct pt_entry_vpn4 *)pte)->labelstack,
 		    addr->vpn4.labellen);
 		break;
+	case AID_VPN_IPv6:
+		memcpy(&addr->vpn6.addr,
+		    &((struct pt_entry_vpn6 *)pte)->prefix6,
+		    sizeof(addr->vpn6.addr));
+		addr->vpn6.rd = ((struct pt_entry_vpn6 *)pte)->rd;
+		addr->vpn6.labellen = ((struct pt_entry_vpn6 *)pte)->labellen;
+		memcpy(addr->vpn6.labelstack,
+		    ((struct pt_entry_vpn6 *)pte)->labelstack,
+		    addr->vpn6.labellen);
+		break;
 	default:
 		fatalx("pt_getaddr: unknown af");
 	}
@@ -101,6 +111,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 	static struct pt_entry4		pte4;
 	static struct pt_entry6		pte6;
 	static struct pt_entry_vpn4	pte_vpn4;
+	static struct pt_entry_vpn6	pte_vpn6;
 
 	switch (prefix->aid) {
 	case AID_INET:
@@ -132,6 +143,19 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		memcpy(pte_vpn4.labelstack, prefix->vpn4.labelstack,
 		    prefix->vpn4.labellen);
 		return ((struct pt_entry *)&pte_vpn4);
+	case AID_VPN_IPv6:
+		memset(&pte_vpn6, 0, sizeof(pte_vpn6));
+		pte_vpn6.aid = prefix->aid;
+		if (prefixlen > 128)
+			fatalx("pt_get: bad IPv6 prefixlen");
+		inet6applymask(&pte_vpn6.prefix6, &prefix->vpn6.addr,
+		    prefixlen);
+		pte_vpn6.prefixlen = prefixlen;
+		pte_vpn6.rd = prefix->vpn6.rd;
+		pte_vpn6.labellen = prefix->vpn6.labellen;
+		memcpy(pte_vpn6.labelstack, prefix->vpn6.labelstack,
+		    prefix->vpn6.labellen);
+		return ((struct pt_entry *)&pte_vpn6);
 	default:
 		fatalx("pt_fill: unknown af");
 	}
@@ -183,6 +207,7 @@ pt_lookup(struct bgpd_addr *addr)
 		i = 32;
 		break;
 	case AID_INET6:
+	case AID_VPN_IPv6:
 		i = 128;
 		break;
 	default:
@@ -202,6 +227,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	const struct pt_entry4		*a4, *b4;
 	const struct pt_entry6		*a6, *b6;
 	const struct pt_entry_vpn4	*va4, *vb4;
+	const struct pt_entry_vpn6	*va6, *vb6;
 	int				 i;
 
 	if (a->aid > b->aid)
@@ -239,6 +265,10 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	case AID_VPN_IPv4:
 		va4 = (const struct pt_entry_vpn4 *)a;
 		vb4 = (const struct pt_entry_vpn4 *)b;
+		if (betoh64(va4->rd) > betoh64(vb4->rd))
+			return (1);
+		if (betoh64(va4->rd) < betoh64(vb4->rd))
+			return (-1);
 		if (ntohl(va4->prefix4.s_addr) > ntohl(vb4->prefix4.s_addr))
 			return (1);
 		if (ntohl(va4->prefix4.s_addr) < ntohl(vb4->prefix4.s_addr))
@@ -247,9 +277,23 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 			return (1);
 		if (va4->prefixlen < vb4->prefixlen)
 			return (-1);
-		if (betoh64(va4->rd) > betoh64(vb4->rd))
+		return (0);
+	case AID_VPN_IPv6:
+		va6 = (const struct pt_entry_vpn6 *)a;
+		vb6 = (const struct pt_entry_vpn6 *)b;
+		if (betoh64(va6->rd) > betoh64(vb6->rd))
 			return (1);
-		if (betoh64(va4->rd) < betoh64(vb4->rd))
+		if (betoh64(va6->rd) < betoh64(vb6->rd))
+			return (-1);
+		i = memcmp(&va6->prefix6, &vb6->prefix6,
+		    sizeof(struct in6_addr));
+		if (i > 0)
+			return (1);
+		if (i < 0)
+			return (-1);
+		if (va6->prefixlen > vb6->prefixlen)
+			return (1);
+		if (va6->prefixlen < vb6->prefixlen)
 			return (-1);
 		return (0);
 	default:

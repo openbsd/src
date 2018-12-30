@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.87 2018/10/24 08:26:37 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.88 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -221,6 +221,15 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop,
 			DUMP_NLONG(nhbuf, 0);	/* set RD to 0 */
 			DUMP_NLONG(nhbuf, 0);
 			DUMP_NLONG(nhbuf, nexthop->v4.s_addr);
+			break;
+		case AID_VPN_IPv6:
+			DUMP_BYTE(nhbuf, sizeof(u_int64_t) +
+			    sizeof(struct in6_addr));
+			DUMP_NLONG(nhbuf, 0);	/* set RD to 0 */
+			DUMP_NLONG(nhbuf, 0);
+			if (ibuf_add(nhbuf, &nexthop->v6,
+			    sizeof(struct in6_addr)) == -1) {
+			}
 			break;
 		}
 		if (!v2)

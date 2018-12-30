@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2018/12/11 09:02:14 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.42 2018/12/30 13:53:07 denis Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -39,8 +39,8 @@ const char	*aspath_delim(u_int8_t, int);
 const char *
 log_addr(const struct bgpd_addr *addr)
 {
-	static char	buf[48];
-	char		tbuf[16];
+	static char	buf[74];
+	char		tbuf[40];
 
 	switch (addr->aid) {
 	case AID_INET:
@@ -55,6 +55,13 @@ log_addr(const struct bgpd_addr *addr)
 			return ("?");
 		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->vpn4.rd),
 		   tbuf);
+		return (buf);
+	case AID_VPN_IPv6:
+		if (inet_ntop(aid2af(addr->aid), &addr->vpn6.addr, tbuf,
+		    sizeof(tbuf)) == NULL)
+			return ("?");
+		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->vpn6.rd),
+		    tbuf);
 		return (buf);
 	}
 	return ("???");
@@ -575,9 +582,77 @@ nlri_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	return (plen + rv);
 }
 
+int
+nlri_get_vpn6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
+    u_int8_t *prefixlen, int withdraw)
+{
+	int		rv, done = 0;
+	u_int8_t	pfxlen;
+	u_int16_t	plen;
+
+	if (len < 1)
+		return (-1);
+
+	memcpy(&pfxlen, p, 1);
+	p += 1;
+	plen = 1;
+
+	memset(prefix, 0, sizeof(struct bgpd_addr));
+
+	/* label stack */
+	do {
+		if (len - plen < 3 || pfxlen < 3 * 8)
+			return (-1);
+		if (prefix->vpn6.labellen + 3U >
+		    sizeof(prefix->vpn6.labelstack))
+			return (-1);
+		if (withdraw) {
+			/* on withdraw ignore the labelstack all together */
+			plen += 3;
+			pfxlen -= 3 * 8;
+			break;
+		}
+
+		prefix->vpn6.labelstack[prefix->vpn6.labellen++] = *p++;
+		prefix->vpn6.labelstack[prefix->vpn6.labellen++] = *p++;
+		prefix->vpn6.labelstack[prefix->vpn6.labellen] = *p++;
+		if (prefix->vpn6.labelstack[prefix->vpn6.labellen] &
+		    BGP_MPLS_BOS)
+			done = 1;
+		prefix->vpn6.labellen++;
+		plen += 3;
+		pfxlen -= 3 * 8;
+	} while (!done);
+
+	/* RD */
+	if (len - plen < (int)sizeof(u_int64_t) ||
+	    pfxlen < sizeof(u_int64_t) * 8)
+		return (-1);
+
+	memcpy(&prefix->vpn6.rd, p, sizeof(u_int64_t));
+	pfxlen -= sizeof(u_int64_t) * 8;
+	p += sizeof(u_int64_t);
+	plen += sizeof(u_int64_t);
+
+	/* prefix */
+	prefix->aid = AID_VPN_IPv6;
+	*prefixlen = pfxlen;
+
+	if (pfxlen > 128)
+		return (-1);
+
+	if ((rv = extract_prefix(p, len, &prefix->vpn6.addr,
+	    pfxlen, sizeof(prefix->vpn6.addr))) == -1)
+		return (-1);
+
+	return (plen + rv);
+}
+
+
+
 /*
  * This function will have undefined behaviour if the passed in prefixlen is
- * to large for the respective bgpd_addr address family.
+ * too large for the respective bgpd_addr address family.
  */
 int
 prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
@@ -637,6 +712,32 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 			return (-1);
 		return (memcmp(a->vpn4.labelstack, b->vpn4.labelstack,
 		    a->vpn4.labellen));
+	case AID_VPN_IPv6:
+		if (prefixlen > 128)
+			return (-1);
+		if (betoh64(a->vpn6.rd) > betoh64(b->vpn6.rd))
+			return (1);
+		if (betoh64(a->vpn6.rd) < betoh64(b->vpn6.rd))
+			return (-1);
+		for (i = 0; i < prefixlen / 8; i++)
+			if (a->vpn6.addr.s6_addr[i] != b->vpn6.addr.s6_addr[i])
+				return (a->vpn6.addr.s6_addr[i] -
+				    b->vpn6.addr.s6_addr[i]);
+		i = prefixlen % 8;
+		if (i) {
+			m = 0xff00 >> i;
+			if ((a->vpn6.addr.s6_addr[prefixlen / 8] & m) !=
+			    (b->vpn6.addr.s6_addr[prefixlen / 8] & m))
+				return ((a->vpn6.addr.s6_addr[prefixlen / 8] &
+				    m) - (b->vpn6.addr.s6_addr[prefixlen / 8] &
+				    m));
+		}
+		if (a->vpn6.labellen > b->vpn6.labellen)
+			return (1);
+		if (a->vpn6.labellen < b->vpn6.labellen)
+			return (-1);
+		return (memcmp(a->vpn6.labelstack, b->vpn6.labelstack,
+		    a->vpn6.labellen));
 	}
 	return (-1);
 }

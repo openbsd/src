@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.125 2018/12/19 15:26:42 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.126 2018/12/30 13:53:07 denis Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,7 @@ print_prefix(struct filter_prefix *p)
 		max_len = 32;
 		break;
 	case AID_INET6:
+	case AID_VPN_IPv6:
 		max_len = 128;
 		break;
 	case AID_UNSPEC:
