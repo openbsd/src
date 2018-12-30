@@ -207,6 +207,14 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       FullFS = "+sahf";
   }
 
+  // OpenBSD/amd64 defaults to -mretpoline
+  if (isTargetOpenBSD() && In64BitMode) {
+    if (!FullFS.empty())
+      FullFS = "+retpoline," + FullFS;
+    else
+      FullFS = "+retpoline";
+  }
+
   // Parse features string and set the CPU.
   ParseSubtargetFeatures(CPUName, FullFS);
 

@@ -603,6 +603,7 @@ public:
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetFreeBSD() const { return TargetTriple.isOSFreeBSD(); }
+  bool isTargetOpenBSD() const { return TargetTriple.isOSOpenBSD(); }
   bool isTargetDragonFly() const { return TargetTriple.isOSDragonFly(); }
   bool isTargetSolaris() const { return TargetTriple.isOSSolaris(); }
   bool isTargetPS4() const { return TargetTriple.isPS4CPU(); }
