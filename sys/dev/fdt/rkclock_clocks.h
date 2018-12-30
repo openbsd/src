@@ -58,6 +58,11 @@
 #define RK3328_CLK_I2C2			57
 #define RK3328_CLK_I2C3			58
 
+#define RK3328_ACLK_BUS_PRE		136
+#define RK3328_ACLK_PERI_PRE		137
+
+#define RK3328_HDMIPHY			122
+
 /*
  * RK3399 clocks.
  */

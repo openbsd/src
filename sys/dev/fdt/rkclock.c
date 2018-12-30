@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.30 2018/12/30 18:18:54 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.31 2018/12/30 23:54:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -66,6 +66,8 @@
 #define  RK3328_CRU_CRU_MODE_SLOW		0x0
 #define  RK3328_CRU_CRU_MODE_NORMAL		0x1
 #define RK3328_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define  RK3328_CRU_BUS_ACLK_DIV_CON_MASK	(0x3 << 8)
+#define  RK3328_CRU_BUS_ACLK_DIV_CON_SHIFT	8
 #define  RK3328_CRU_CORE_CLK_PLL_SEL_MASK	(0x3 << 6)
 #define  RK3328_CRU_CORE_CLK_PLL_SEL_SHIFT	6
 #define  RK3328_CRU_CLK_CORE_DIV_CON_MASK	(0x1f << 0)
@@ -74,6 +76,10 @@
 #define  RK3328_CRU_ACLK_CORE_DIV_CON_SHIFT	4
 #define  RK3328_CRU_CLK_CORE_DBG_DIV_CON_MASK	(0xf << 0)
 #define  RK3328_CRU_CLK_CORE_DBG_DIV_CON_SHIFT	0
+#define  RK3328_CRU_UART_CLK_SEL_MASK		(0x3 << 8)
+#define  RK3328_CRU_UART_CLK_SEL_24MHZ		(0x2 << 8)
+#define  RK3328_CRU_PERIPH_ACLK_DIV_CON_MASK	(0x3 << 8)
+#define  RK3328_CRU_PERIPH_ACLK_DIV_CON_SHIFT	8
 #define RK3328_CRU_CLKGATE_CON(i)	(0x0200 + (i) * 4)
 #define RK3328_CRU_SOFTRST_CON(i)	(0x0300 + (i) * 4)
 
@@ -140,6 +146,8 @@ struct rkclock_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	uint32_t		sc_phandle;
+
 	struct clock_device	sc_cd;
 	struct reset_device	sc_rd;
 };
@@ -164,6 +172,7 @@ void	rk3288_reset(void *, uint32_t *, int);
 void	rk3328_init(struct rkclock_softc *);
 uint32_t rk3328_get_frequency(void *, uint32_t *);
 int	rk3328_set_frequency(void *, uint32_t *, uint32_t);
+int	rk3328_set_parent(void *, uint32_t *, uint32_t *);
 void	rk3328_enable(void *, uint32_t *, int);
 void	rk3328_reset(void *, uint32_t *, int);
 
@@ -186,6 +195,7 @@ struct rkclock_compat {
 	void	(*enable)(void *, uint32_t *, int);
 	uint32_t (*get_frequency)(void *, uint32_t *);
 	int	(*set_frequency)(void *, uint32_t *, uint32_t);
+	int	(*set_parent)(void *, uint32_t *, uint32_t *);
 	void	(*reset)(void *, uint32_t *, int);
 };
 
@@ -193,22 +203,26 @@ struct rkclock_compat rkclock_compat[] = {
 	{
 		"rockchip,rk3288-cru", 0, rk3288_init,
 		rk3288_enable, rk3288_get_frequency,
-		rk3288_set_frequency, rk3288_reset
+		rk3288_set_frequency, NULL,
+		rk3288_reset
 	},
 	{
 		"rockchip,rk3328-cru", 0, rk3328_init,
 		rk3328_enable, rk3328_get_frequency,
-		rk3328_set_frequency, rk3328_reset
+		rk3328_set_frequency, rk3328_set_parent,
+		rk3328_reset
 	},
 	{
 		"rockchip,rk3399-cru", 1, rk3399_init,
 		rk3399_enable, rk3399_get_frequency,
-		rk3399_set_frequency, rk3399_reset,
+		rk3399_set_frequency, NULL,
+		rk3399_reset
 	},
 	{
 		"rockchip,rk3399-pmucru", 1, rk3399_pmu_init,
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
-		rk3399_pmu_set_frequency, rk3399_pmu_reset
+		rk3399_pmu_set_frequency, NULL,
+		rk3399_pmu_reset
 	}
 };
 	
@@ -239,7 +253,6 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_iot = faa->fa_iot;
-
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
@@ -247,6 +260,8 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	sc->sc_phandle = OF_getpropint(faa->fa_node, "phandle", 0);
 
 	for (i = 0; i < nitems(rkclock_compat); i++) {
 		if (OF_is_compatible(faa->fa_node, rkclock_compat[i].compat)) {
@@ -263,6 +278,7 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cd.cd_enable = rkclock_compat[i].enable;
 	sc->sc_cd.cd_get_frequency = rkclock_compat[i].get_frequency;
 	sc->sc_cd.cd_set_frequency = rkclock_compat[i].set_frequency;
+	sc->sc_cd.cd_set_parent = rkclock_compat[i].set_parent;
 	clock_register(&sc->sc_cd);
 
 	sc->sc_rd.rd_node = faa->fa_node;
@@ -357,7 +373,7 @@ rk3288_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 		nr = 1; no = 8;
 		break;
 	default:
-		printf("%s: %d MHz\n", __func__, freq);
+		printf("%s: %u Hz\n", __func__, freq);
 		return -1;
 	}
 
@@ -767,7 +783,7 @@ rk3328_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 		postdiv1 = postdiv2 = 4; refdiv = 1;
 		break;
 	default:
-		printf("%s: %d MHz\n", __func__, freq);
+		printf("%s: %u Hz\n", __func__, freq);
 		return -1;
 	}
 
@@ -849,6 +865,40 @@ rk3328_get_i2c(struct rkclock_softc *sc, size_t base, int shift)
 }
 
 uint32_t
+rk3328_div_con(struct rkclock_softc *sc, int idx, uint32_t freq)
+{
+	uint32_t parent_freq, div;
+
+	parent_freq = rk3328_get_frequency(sc, &idx);
+	div = (parent_freq + freq - 1) / freq;
+	return (div > 0 ? div - 1 : 0);
+}
+
+int
+rk3328_set_uart_parent(struct rkclock_softc *sc, bus_size_t clksel,
+    uint32_t *pcells)
+{
+	char name[32];
+	int node;
+
+	/* We only support switching to the 24 MHz clock. */
+	node = OF_getnodebyphandle(pcells[0]);
+	if (node == 0)
+		return -1;
+	name[0] = 0;
+	OF_getprop(node, "clock-output-names", name, sizeof(name));
+	name[sizeof(name) - 1] = 0;
+	if (strcmp(name, "xin24m") != 0)
+		return -1;
+
+	HWRITE4(sc, clksel,
+	    RK3328_CRU_UART_CLK_SEL_MASK << 16 |
+	    RK3328_CRU_UART_CLK_SEL_24MHZ);
+
+	return 0;
+}
+
+uint32_t
 rk3328_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct rkclock_softc *sc = cookie;
@@ -916,6 +966,7 @@ rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t reg, mux, div_con;
 
 	switch (idx) {
 	case RK3328_PLL_APLL:
@@ -930,9 +981,81 @@ rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3328_set_pll(sc, RK3328_CRU_NPLL_CON(0), freq);
 	case RK3328_ARMCLK:
 		return rk3328_set_armclk(sc, freq);
+	case RK3328_CLK_UART0:
+	case RK3328_CLK_UART1:
+	case RK3328_CLK_UART2:
+		if (freq == rk3328_get_frequency(sc, &idx))
+			return 0;
+		break;
+	case RK3328_ACLK_BUS_PRE:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(0));
+		mux = (reg >> 13) & 0x3;
+		switch (mux) {
+		case 0:
+			idx = RK3328_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3328_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3328_HDMIPHY;
+			break;
+		default:
+			goto fail;
+		}
+		div_con = rk3328_div_con(sc, idx, freq);
+		HWRITE4(sc, RK3328_CRU_CLKSEL_CON(0),
+		    RK3328_CRU_BUS_ACLK_DIV_CON_MASK << 16 |
+		    div_con << RK3328_CRU_BUS_ACLK_DIV_CON_SHIFT);
+		return 0;
+	case RK3328_ACLK_PERI_PRE:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(28));
+		mux = (reg >> 6) & 0x3;
+		switch (mux) {
+		case 0:
+			idx = RK3328_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3328_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3328_HDMIPHY;
+			break;
+		default:
+			goto fail;
+		}
+		div_con = rk3328_div_con(sc, idx, freq);
+		HWRITE4(sc, RK3328_CRU_CLKSEL_CON(28),
+		    RK3328_CRU_PERIPH_ACLK_DIV_CON_MASK << 16 |
+		    div_con << RK3328_CRU_PERIPH_ACLK_DIV_CON_SHIFT);
+		return 0;
 	}
 
+fail:
 	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+int
+rk3328_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3328_CLK_UART0:
+		return rk3328_set_uart_parent(sc,
+		    RK3328_CRU_CLKSEL_CON(14), pcells);
+	case RK3328_CLK_UART1:
+		return rk3328_set_uart_parent(sc,
+		    RK3328_CRU_CLKSEL_CON(16), pcells);
+	case RK3328_CLK_UART2:
+		return rk3328_set_uart_parent(sc,
+		    RK3328_CRU_CLKSEL_CON(18), pcells);
+	}
+
+	printf("%s: 0x%08x 0x%08x 0x%08x\n", __func__, idx, pcells[0],
+	    pcells[0] == sc->sc_phandle ? pcells[1] : -1);
 	return -1;
 }
 
@@ -1076,7 +1199,7 @@ rk3399_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 		postdiv1 = postdiv2 = 4; refdiv = 1;
 		break;
 	default:
-		printf("%s: %d MHz\n", __func__, freq);
+		printf("%s: %d Hz\n", __func__, freq);
 		return -1;
 	}
 
