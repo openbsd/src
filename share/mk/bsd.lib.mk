@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.94 2018/10/18 14:25:14 naddy Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.95 2018/12/30 21:55:07 guenther Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -123,9 +123,9 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo "${COMPILE.S} ${PICFLAG} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
+	@echo "${COMPILE.S} ${PICFLAG} -DSOLIB ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
 	    -o ${.TARGET}"
-	@${COMPILE.S} ${DFLAGS} -MF $@.d ${PICFLAG} ${CFLAGS:M-[IDM]*} \
+	@${COMPILE.S} ${DFLAGS} -MF $@.d ${PICFLAG} -DSOLIB ${CFLAGS:M-[IDM]*} \
 	    ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
