@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.64 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.65 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -31,7 +31,6 @@
 #include <imsg.h>
 #include <limits.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>

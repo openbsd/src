@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.7 2018/05/14 15:23:05 gilles Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.8 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.48 2018/07/25 02:18:36 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.49 2018/12/30 23:09:58 guenther Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.48 2018/07/25 02:18:36 yasuoka Exp $
+ * $Id: npppd.c,v 1.49 2018/12/30 23:09:58 guenther Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -50,7 +50,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <netdb.h>
-#include <libgen.h>
 #include <fcntl.h>
 #include <event.h>
 #include <errno.h>

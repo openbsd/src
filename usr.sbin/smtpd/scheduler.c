@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler.c,v 1.59 2018/12/08 08:01:15 sunil Exp $	*/
+/*	$OpenBSD: scheduler.c,v 1.60 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -32,7 +32,6 @@
 #include <event.h>
 #include <imsg.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
