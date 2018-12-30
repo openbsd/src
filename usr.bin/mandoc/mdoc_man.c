@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.128 2018/12/15 19:30:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.129 2018/12/30 00:48:48 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -600,7 +600,7 @@ print_count(int *count)
 }
 
 void
-man_mdoc(void *arg, const struct roff_man *mdoc)
+man_mdoc(void *arg, const struct roff_meta *mdoc)
 {
 	struct roff_node *n;
 
@@ -613,9 +613,8 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 	}
 
 	printf(".TH \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n",
-	    mdoc->meta.title,
-	    (mdoc->meta.msec == NULL ? "" : mdoc->meta.msec),
-	    mdoc->meta.date, mdoc->meta.os, mdoc->meta.vol);
+	    mdoc->title, (mdoc->msec == NULL ? "" : mdoc->msec),
+	    mdoc->date, mdoc->os, mdoc->vol);
 
 	/* Disable hyphenation and if nroff, disable justification. */
 	printf(".nh\n.if n .ad l");
@@ -627,7 +626,7 @@ man_mdoc(void *arg, const struct roff_man *mdoc)
 		*fontqueue.tail = 'R';
 	}
 	for (; n != NULL; n = n->next)
-		print_node(&mdoc->meta, n);
+		print_node(mdoc, n);
 	putchar('\n');
 }
 

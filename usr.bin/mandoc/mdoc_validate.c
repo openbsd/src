@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.280 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.281 2018/12/30 00:48:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1937,7 +1937,7 @@ post_root(POST_ARGS)
 		while (*arch != NULL && strcmp(*arch, mdoc->meta.arch))
 			arch++;
 		if (*arch == NULL) {
-			n = mdoc->first->child;
+			n = mdoc->meta.first->child;
 			while (n->tok != MDOC_Dt ||
 			    n->child == NULL ||
 			    n->child->next == NULL ||
@@ -1953,7 +1953,7 @@ post_root(POST_ARGS)
 
 	/* Check that we begin with a proper `Sh'. */
 
-	n = mdoc->first->child;
+	n = mdoc->meta.first->child;
 	while (n != NULL &&
 	    (n->type == ROFFT_COMMENT ||
 	     (n->tok >= MDOC_Dd &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.101 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.102 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
@@ -845,7 +845,7 @@ resp_format(const struct req *req, const char *file)
 {
 	struct manoutput conf;
 	struct mparse	*mp;
-	struct roff_man	*man;
+	struct roff_meta *meta;
 	void		*vp;
 	int		 fd;
 	int		 usepath;
@@ -856,10 +856,11 @@ resp_format(const struct req *req, const char *file)
 	}
 
 	mchars_alloc();
-	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1,
-	    MANDOC_OS_OTHER, req->q.manpath);
+	mp = mparse_alloc(MPARSE_SO | MPARSE_UTF8 | MPARSE_LATIN1 |
+	    MPARSE_VALIDATE, MANDOC_OS_OTHER, req->q.manpath);
 	mparse_readfd(mp, fd, file);
 	close(fd);
+	meta = mparse_result(mp);
 
 	memset(&conf, 0, sizeof(conf));
 	conf.fragment = 1;
@@ -870,24 +871,11 @@ resp_format(const struct req *req, const char *file)
 	    scriptname, *scriptname == '\0' ? "" : "/",
 	    usepath ? req->q.manpath : "", usepath ? "/" : "");
 
-	mparse_result(mp, &man, NULL);
-	if (man == NULL) {
-		warnx("fatal mandoc error: %s/%s", req->q.manpath, file);
-		pg_error_internal();
-		mparse_free(mp);
-		mchars_free();
-		return;
-	}
-
 	vp = html_alloc(&conf);
-
-	if (man->macroset == MACROSET_MDOC) {
-		mdoc_validate(man);
-		html_mdoc(vp, man);
-	} else {
-		man_validate(man);
-		html_man(vp, man);
-	}
+	if (meta->macroset == MACROSET_MDOC)
+		html_mdoc(vp, meta);
+	else
+		html_man(vp, meta);
 
 	html_free(vp);
 	mparse_free(mp);

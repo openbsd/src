@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.195 2018/12/25 00:05:38 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.196 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -281,7 +281,7 @@ synopsis_pre(struct html *h, const struct roff_node *n)
 }
 
 void
-html_mdoc(void *arg, const struct roff_man *mdoc)
+html_mdoc(void *arg, const struct roff_meta *mdoc)
 {
 	struct html		*h;
 	struct roff_node	*n;
@@ -296,16 +296,16 @@ html_mdoc(void *arg, const struct roff_man *mdoc)
 		if (n->type == ROFFT_COMMENT)
 			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
-		print_mdoc_head(&mdoc->meta, h);
+		print_mdoc_head(mdoc, h);
 		print_tagq(h, t);
 		print_otag(h, TAG_BODY, "");
 	}
 
-	mdoc_root_pre(&mdoc->meta, h);
+	mdoc_root_pre(mdoc, h);
 	t = print_otag(h, TAG_DIV, "c", "manual-text");
-	print_mdoc_nodelist(&mdoc->meta, n, h);
+	print_mdoc_nodelist(mdoc, n, h);
 	print_tagq(h, t);
-	mdoc_root_post(&mdoc->meta, h);
+	mdoc_root_post(mdoc, h);
 	print_tagq(h, NULL);
 }
 

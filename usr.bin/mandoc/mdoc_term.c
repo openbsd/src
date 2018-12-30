@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.269 2018/12/13 11:55:14 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.270 2018/12/30 00:48:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -249,7 +249,7 @@ static	int	 fn_prio;
 
 
 void
-terminal_mdoc(void *arg, const struct roff_man *mdoc)
+terminal_mdoc(void *arg, const struct roff_meta *mdoc)
 {
 	struct roff_node	*n;
 	struct termp		*p;
@@ -267,8 +267,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 			if (n->tok == MDOC_Sh && n->sec == SEC_SYNOPSIS) {
 				if (n->child->next->child != NULL)
 					print_mdoc_nodelist(p, NULL,
-					    &mdoc->meta,
-					    n->child->next->child);
+					    mdoc, n->child->next->child);
 				term_newln(p);
 				break;
 			}
@@ -278,8 +277,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 		save_defindent = p->defindent;
 		if (p->defindent == 0)
 			p->defindent = 5;
-		term_begin(p, print_mdoc_head, print_mdoc_foot,
-		    &mdoc->meta);
+		term_begin(p, print_mdoc_head, print_mdoc_foot, mdoc);
 		while (n != NULL &&
 		    (n->type == ROFFT_COMMENT ||
 		     n->flags & NODE_NOPRT))
@@ -287,7 +285,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 		if (n != NULL) {
 			if (n->tok != MDOC_Sh)
 				term_vspace(p);
-			print_mdoc_nodelist(p, NULL, &mdoc->meta, n);
+			print_mdoc_nodelist(p, NULL, mdoc, n);
 		}
 		term_end(p);
 		p->defindent = save_defindent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.58 2018/08/26 16:18:38 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.59 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+struct	roff_node;
+struct	roff_man;
 
 #define	MACRO_PROT_ARGS	  struct roff_man *man, \
 			  enum roff_tok tok, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.160 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.161 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -431,7 +431,7 @@ void
 mdoc_validate(struct roff_man *mdoc)
 {
 
-	mdoc->last = mdoc->first;
+	mdoc->last = mdoc->meta.first;
 	mdoc_node_validate(mdoc);
 	mdoc_state_reset(mdoc);
 }

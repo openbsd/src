@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.227 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.228 2018/12/30 00:48:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -805,9 +805,8 @@ roff_alloc(int options)
 static void
 roff_man_free1(struct roff_man *man)
 {
-
-	if (man->first != NULL)
-		roff_node_delete(man, man->first);
+	if (man->meta.first != NULL)
+		roff_node_delete(man, man->meta.first);
 	free(man->meta.msec);
 	free(man->meta.vol);
 	free(man->meta.os);
@@ -815,19 +814,19 @@ roff_man_free1(struct roff_man *man)
 	free(man->meta.title);
 	free(man->meta.name);
 	free(man->meta.date);
+	free(man->meta.sodest);
 }
 
 static void
 roff_man_alloc1(struct roff_man *man)
 {
-
 	memset(&man->meta, 0, sizeof(man->meta));
-	man->first = mandoc_calloc(1, sizeof(*man->first));
-	man->first->type = ROFFT_ROOT;
-	man->last = man->first;
+	man->meta.first = mandoc_calloc(1, sizeof(*man->meta.first));
+	man->meta.first->type = ROFFT_ROOT;
+	man->last = man->meta.first;
 	man->last_es = NULL;
 	man->flags = 0;
-	man->macroset = MACROSET_NONE;
+	man->meta.macroset = MACROSET_NONE;
 	man->lastsec = man->lastnamed = SEC_NONE;
 	man->next = ROFF_NEXT_CHILD;
 }
@@ -835,7 +834,6 @@ roff_man_alloc1(struct roff_man *man)
 void
 roff_man_reset(struct roff_man *man)
 {
-
 	roff_man_free1(man);
 	roff_man_alloc1(man);
 }
@@ -843,7 +841,6 @@ roff_man_reset(struct roff_man *man)
 void
 roff_man_free(struct roff_man *man)
 {
-
 	roff_man_free1(man);
 	free(man);
 }
@@ -1018,7 +1015,7 @@ roff_addtbl(struct roff_man *man, int line, struct tbl_node *tbl)
 	struct roff_node	*n;
 	struct tbl_span		*span;
 
-	if (man->macroset == MACROSET_MAN)
+	if (man->meta.macroset == MACROSET_MAN)
 		man_breakscope(man, ROFF_TS);
 	while ((span = tbl_span(tbl)) != NULL) {
 		n = roff_node_alloc(man, line, 0, ROFFT_TBL, TOKEN_NONE);
@@ -1062,8 +1059,8 @@ roff_node_unlink(struct roff_man *man, struct roff_node *n)
 			man->next = ROFF_NEXT_SIBLING;
 		}
 	}
-	if (man->first == n)
-		man->first = NULL;
+	if (man->meta.first == n)
+		man->meta.first = NULL;
 }
 
 void
@@ -3279,7 +3276,7 @@ roff_EQ(ROFF_ARGS)
 {
 	struct roff_node	*n;
 
-	if (r->man->macroset == MACROSET_MAN)
+	if (r->man->meta.macroset == MACROSET_MAN)
 		man_breakscope(r->man, ROFF_EQ);
 	n = roff_node_alloc(r->man, ln, ppos, ROFFT_EQN, TOKEN_NONE);
 	if (ln > r->man->last->line)
@@ -4019,7 +4016,7 @@ roff_getstrn(struct roff *r, const char *name, size_t len,
 			break;
 		}
 	}
-	if (r->man->macroset != MACROSET_MAN) {
+	if (r->man->meta.macroset != MACROSET_MAN) {
 		for (tok = MDOC_Dd; tok < MDOC_MAX; tok++) {
 			if (strncmp(name, roff_name[tok], len) != 0 ||
 			    roff_name[tok][len] != '\0')
@@ -4033,7 +4030,7 @@ roff_getstrn(struct roff *r, const char *name, size_t len,
 			}
 		}
 	}
-	if (r->man->macroset != MACROSET_MDOC) {
+	if (r->man->meta.macroset != MACROSET_MDOC) {
 		for (tok = MAN_TH; tok < MAN_MAX; tok++) {
 			if (strncmp(name, roff_name[tok], len) != 0 ||
 			    roff_name[tok][len] != '\0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.185 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.186 2018/12/30 00:48:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -231,7 +231,7 @@ mdoc_endparse(struct roff_man *mdoc)
 
 	/* Rewind to the first. */
 
-	rew_last(mdoc, mdoc->first);
+	rew_last(mdoc, mdoc->meta.first);
 	mdoc_state_reset(mdoc);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.99 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.100 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -444,7 +444,7 @@ void
 man_endparse(struct roff_man *man)
 {
 
-	man_unscope(man, man->first);
+	man_unscope(man, man->meta.first);
 	man->flags &= ~MAN_LITERAL;
 }
 

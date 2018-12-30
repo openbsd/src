@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.23 2018/08/23 19:32:03 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.24 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct	roff_man;
+struct	roff_meta;
 struct	manoutput;
 
 /*
@@ -27,14 +27,14 @@ struct	manoutput;
  */
 
 void		 *html_alloc(const struct manoutput *);
-void		  html_mdoc(void *, const struct roff_man *);
-void		  html_man(void *, const struct roff_man *);
+void		  html_mdoc(void *, const struct roff_meta *);
+void		  html_man(void *, const struct roff_meta *);
 void		  html_free(void *);
 
-void		  tree_mdoc(void *, const struct roff_man *);
-void		  tree_man(void *, const struct roff_man *);
+void		  tree_mdoc(void *, const struct roff_meta *);
+void		  tree_man(void *, const struct roff_meta *);
 
-void		  man_mdoc(void *, const struct roff_man *);
+void		  man_mdoc(void *, const struct roff_meta *);
 
 void		 *locale_alloc(const struct manoutput *);
 void		 *utf8_alloc(const struct manoutput *);
@@ -45,8 +45,8 @@ void		 *pdf_alloc(const struct manoutput *);
 void		 *ps_alloc(const struct manoutput *);
 void		  pspdf_free(void *);
 
-void		  terminal_mdoc(void *, const struct roff_man *);
-void		  terminal_man(void *, const struct roff_man *);
+void		  terminal_mdoc(void *, const struct roff_meta *);
+void		  terminal_man(void *, const struct roff_meta *);
 void		  terminal_sepline(void *);
 
-void		  markdown_mdoc(void *, const struct roff_man *);
+void		  markdown_mdoc(void *, const struct roff_meta *);

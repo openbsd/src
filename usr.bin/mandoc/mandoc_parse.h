@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_parse.h,v 1.2 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: mandoc_parse.h,v 1.3 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,10 +28,11 @@
 #define	MPARSE_QUICK	(1 << 3)  /* abort the parse early */
 #define	MPARSE_UTF8	(1 << 4)  /* accept UTF-8 input */
 #define	MPARSE_LATIN1	(1 << 5)  /* accept ISO-LATIN-1 input */
+#define	MPARSE_VALIDATE	(1 << 6)  /* call validation functions */
 
 
+struct	roff_meta;
 struct	mparse;
-struct	roff_man;
 
 struct mparse	 *mparse_alloc(int, enum mandoc_os, const char *);
 void		  mparse_copy(const struct mparse *);
@@ -39,5 +40,4 @@ void		  mparse_free(struct mparse *);
 int		  mparse_open(struct mparse *, const char *);
 void		  mparse_readfd(struct mparse *, int, const char *);
 void		  mparse_reset(struct mparse *);
-void		  mparse_result(struct mparse *,
-			struct roff_man **, char **);
+struct roff_meta *mparse_result(struct mparse *);

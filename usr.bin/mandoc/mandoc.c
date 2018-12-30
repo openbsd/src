@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.81 2018/12/18 21:58:41 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.82 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,6 +30,7 @@
 #include "mandoc.h"
 #include "roff.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 
 static	int	 a2time(time_t *, const char *, const char *);
 static	char	*time2a(time_t);
@@ -558,7 +559,7 @@ mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 		mandoc_msg(MANDOCERR_DATE_BAD, ln, pos, "%s", in);
 	else if (t > time(NULL) + 86400)
 		mandoc_msg(MANDOCERR_DATE_FUTURE, ln, pos, "%s", in);
-	else if (man->macroset == MACROSET_MDOC)
+	else if (man->meta.macroset == MACROSET_MDOC)
 		mandoc_msg(MANDOCERR_DATE_LEGACY, ln, pos, "Dd %s", in);
 
 	/* Use any non-mdoc(7) date verbatim. */

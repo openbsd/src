@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmdoc.h,v 1.86 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: libmdoc.h,v 1.87 2018/12/30 00:48:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+struct	roff_node;
+struct	roff_man;
+struct	mdoc_arg;
 
 #define	MACRO_PROT_ARGS	struct roff_man *mdoc, \
 			enum roff_tok tok, \

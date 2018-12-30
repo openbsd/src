@@ -1,6 +1,6 @@
-/*	$OpenBSD: mdoc_state.c,v 1.11 2018/12/14 01:17:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.12 2018/12/30 00:48:48 schwarze Exp $ */
 /*
- * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@
 #include "roff.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 #define STATE_ARGS  struct roff_man *mdoc, struct roff_node *n
