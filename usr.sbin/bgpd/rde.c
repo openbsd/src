@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.455 2018/12/26 13:24:28 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.456 2018/12/30 13:05:09 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -106,7 +106,7 @@ static void	 peer_recv_eor(struct rde_peer *, u_int8_t);
 static void	 peer_send_eor(struct rde_peer *, u_int8_t);
 
 void		 network_add(struct network_config *, int);
-void		 network_delete(struct network_config *, int);
+void		 network_delete(struct network_config *);
 static void	 network_dump_upcall(struct rib_entry *, void *);
 static void	 network_flush_upcall(struct rib_entry *, void *);
 
@@ -540,12 +540,12 @@ badnet:
 			case AID_INET:
 				if (netconf_s.prefixlen > 32)
 					goto badnetdel;
-				network_delete(&netconf_s, 0);
+				network_delete(&netconf_s);
 				break;
 			case AID_INET6:
 				if (netconf_s.prefixlen > 128)
 					goto badnetdel;
-				network_delete(&netconf_s, 0);
+				network_delete(&netconf_s);
 				break;
 			default:
 badnetdel:
@@ -748,7 +748,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
-			network_delete(&netconf_p, 1);
+			network_delete(&netconf_p);
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -3720,15 +3720,11 @@ network_add(struct network_config *nc, int flagstatic)
 }
 
 void
-network_delete(struct network_config *nc, int flagstatic)
+network_delete(struct network_config *nc)
 {
 	struct rdomain	*rd;
 	in_addr_t	 prefix4;
-	u_int32_t	 flags = F_PREFIX_ANNOUNCED;
 	u_int32_t	 i;
-
-	if (!flagstatic)
-		flags |= F_ANN_DYNAMIC;
 
 	if (nc->rtableid) {
 		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
