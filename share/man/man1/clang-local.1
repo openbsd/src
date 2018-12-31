@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.17 2018/09/29 05:42:38 jmc Exp $
+.\" $OpenBSD: clang-local.1,v 1.18 2018/12/31 00:07:22 jsg Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 29 2018 $
+.Dd $Mdocdate: December 31 2018 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -117,6 +117,13 @@ This feature can be disabled with the
 or
 .Fl fno-stack-protector
 options.
+.It
+.Nm clang
+has
+.Fl mretpoline
+enabled by default on amd64 to protect against branch target injection attacks.
+It can be disabled with
+.Fl mno-retpoline .
 .El
 .Sh SEE ALSO
 .Xr clang 1
