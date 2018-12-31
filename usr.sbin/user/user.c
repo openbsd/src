@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.123 2018/10/15 18:27:27 millert Exp $ */
+/* $OpenBSD: user.c,v 1.124 2018/12/31 14:25:00 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -724,7 +724,7 @@ save_range(user_t *up, char *cp)
 			up->u_rc += 1;
 		}
 	} else {
-		warnx("Bad range `%s'", cp);
+		warnx("Bad uid range `%s'", cp);
 		return 0;
 	}
 	return 1;
@@ -1848,7 +1848,8 @@ useradd(int argc, char **argv)
 			break;
 		case 'r':
 			defaultfield = 1;
-			(void) save_range(&u, optarg);
+			if (!save_range(&u, optarg))
+				exit(EXIT_FAILURE);
 			break;
 		case 's':
 			defaultfield = 1;
