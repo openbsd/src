@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.13 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.14 2018/12/31 09:23:08 kn Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
  * Encode a file so it can be mailed to a remote system.
  */
 
-#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <netinet/in.h>
