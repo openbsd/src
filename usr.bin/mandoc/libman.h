@@ -1,4 +1,4 @@
-/*	$OpenBSD: libman.h,v 1.59 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: libman.h,v 1.60 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -39,6 +39,5 @@ struct	man_macro {
 const struct man_macro *man_macro(enum roff_tok);
 
 void		  man_descope(struct roff_man *, int, int, char *);
-void		  man_node_validate(struct roff_man *);
 void		  man_state(struct roff_man *, struct roff_node *);
 void		  man_unscope(struct roff_man *, const struct roff_node *);

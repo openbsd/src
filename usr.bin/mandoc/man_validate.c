@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.112 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.113 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,7 +99,7 @@ static	const v_check man_valids[MAN_MAX - MAN_TH] = {
 
 /* Validate the subtree rooted at man->last. */
 void
-man_node_validate(struct roff_man *man)
+man_validate(struct roff_man *man)
 {
 	struct roff_node *n;
 	const v_check	 *cp;
@@ -126,7 +126,7 @@ man_node_validate(struct roff_man *man)
 
 	man->last = man->last->child;
 	while (man->last != NULL) {
-		man_node_validate(man);
+		man_validate(man);
 		if (man->last == n)
 			man->last = man->last->child;
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.12 2018/12/30 00:48:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.13 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -177,14 +177,6 @@ mdoc_state(struct roff_man *mdoc, struct roff_node *n)
 	handler = state_handlers[n->tok - MDOC_Dd];
 	if (*handler)
 		(*handler)(mdoc, n);
-}
-
-void
-mdoc_state_reset(struct roff_man *mdoc)
-{
-
-	roff_setreg(mdoc->roff, "nS", 0, '=');
-	mdoc->flags = 0;
 }
 
 static void

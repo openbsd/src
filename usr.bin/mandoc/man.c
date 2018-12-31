@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.130 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.131 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -364,13 +364,4 @@ man_state(struct roff_man *man, struct roff_node *n)
 		break;
 	}
 	man->last->flags |= NODE_VALID;
-}
-
-void
-man_validate(struct roff_man *man)
-{
-
-	man->last = man->meta.first;
-	man_node_validate(man);
-	man->flags &= ~MAN_LITERAL;
 }

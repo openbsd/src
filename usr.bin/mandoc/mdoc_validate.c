@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.281 2018/12/30 00:48:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.282 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -286,7 +286,7 @@ static	const char * const secnames[SEC__MAX] = {
 
 /* Validate the subtree rooted at mdoc->last. */
 void
-mdoc_node_validate(struct roff_man *mdoc)
+mdoc_validate(struct roff_man *mdoc)
 {
 	struct roff_node *n, *np;
 	const v_post *p;
@@ -317,7 +317,7 @@ mdoc_node_validate(struct roff_man *mdoc)
 
 	mdoc->last = mdoc->last->child;
 	while (mdoc->last != NULL) {
-		mdoc_node_validate(mdoc);
+		mdoc_validate(mdoc);
 		if (mdoc->last == n)
 			mdoc->last = mdoc->last->child;
 		else

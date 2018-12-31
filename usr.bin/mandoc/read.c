@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.180 2018/12/30 00:48:48 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.181 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -686,6 +686,7 @@ mparse_free(struct mparse *curp)
 struct roff_meta *
 mparse_result(struct mparse *curp)
 {
+	roff_state_reset(curp->man);
 	if (curp->options & MPARSE_VALIDATE) {
 		if (curp->man->meta.macroset == MACROSET_MDOC)
 			mdoc_validate(curp->man);

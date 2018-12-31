@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.228 2018/12/30 00:48:48 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.229 2018/12/31 04:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -817,18 +817,25 @@ roff_man_free1(struct roff_man *man)
 	free(man->meta.sodest);
 }
 
+void
+roff_state_reset(struct roff_man *man)
+{
+	man->last = man->meta.first;
+	man->last_es = NULL;
+	man->flags = 0;
+	man->lastsec = man->lastnamed = SEC_NONE;
+	man->next = ROFF_NEXT_CHILD;
+	roff_setreg(man->roff, "nS", 0, '=');
+}
+
 static void
 roff_man_alloc1(struct roff_man *man)
 {
 	memset(&man->meta, 0, sizeof(man->meta));
 	man->meta.first = mandoc_calloc(1, sizeof(*man->meta.first));
 	man->meta.first->type = ROFFT_ROOT;
-	man->last = man->meta.first;
-	man->last_es = NULL;
-	man->flags = 0;
 	man->meta.macroset = MACROSET_NONE;
-	man->lastsec = man->lastnamed = SEC_NONE;
-	man->next = ROFF_NEXT_CHILD;
+	roff_state_reset(man);
 }
 
 void
