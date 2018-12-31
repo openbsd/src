@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.34 2018/12/31 21:17:45 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.35 2018/12/31 21:53:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -218,7 +218,7 @@ struct rkclock_compat rkclock_compat[] = {
 		rk3288_reset
 	},
 	{
-		"rockchip,rk3328-cru", 0, rk3328_init,
+		"rockchip,rk3328-cru", 1, rk3328_init,
 		rk3328_enable, rk3328_get_frequency,
 		rk3328_set_frequency, rk3328_set_parent,
 		rk3328_reset
