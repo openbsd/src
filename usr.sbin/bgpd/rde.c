@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.457 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.458 2018/12/31 08:53:09 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3791,6 +3791,7 @@ network_delete(struct network_config *nc)
 {
 	struct rdomain	*rd;
 	in_addr_t	 prefix4;
+	struct in6_addr	 prefix6;
 	u_int32_t	 i;
 
 	if (nc->rtableid) {
