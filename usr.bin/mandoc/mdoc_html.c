@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.196 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.197 2018/12/31 10:35:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -364,7 +364,8 @@ print_mdoc_node(MDOC_ARGS)
 		 * (i.e., within a <PRE>) don't print the newline.
 		 */
 		if (*n->string == ' ' && n->flags & NODE_LINE &&
-		    (h->flags & (HTML_LITERAL | HTML_NONEWLINE)) == 0)
+		    (h->flags & HTML_NONEWLINE) == 0 &&
+		    (n->flags & NODE_NOFILL) == 0)
 			print_otag(h, TAG_BR, "");
 		if (NODE_DELIMC & n->flags)
 			h->flags |= HTML_NOSPACE;
@@ -913,7 +914,7 @@ mdoc_sx_pre(MDOC_ARGS)
 static int
 mdoc_bd_pre(MDOC_ARGS)
 {
-	int			 comp, sv;
+	int			 comp;
 	struct roff_node	*nn;
 
 	if (n->type == ROFFT_HEAD)
@@ -947,12 +948,6 @@ mdoc_bd_pre(MDOC_ARGS)
 		return 1;
 
 	print_otag(h, TAG_PRE, "c", "Li");
-
-	/* This can be recursive: save & set our literal state. */
-
-	sv = h->flags & HTML_LITERAL;
-	h->flags |= HTML_LITERAL;
-
 	for (nn = n->child; nn; nn = nn->next) {
 		print_mdoc_node(meta, nn, h);
 		/*
@@ -981,10 +976,6 @@ mdoc_bd_pre(MDOC_ARGS)
 
 		h->flags |= HTML_NOSPACE;
 	}
-
-	if (0 == sv)
-		h->flags &= ~HTML_LITERAL;
-
 	return 0;
 }
 
