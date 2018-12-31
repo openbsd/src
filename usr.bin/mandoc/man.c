@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.133 2018/12/31 08:38:17 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.134 2018/12/31 10:03:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -340,23 +340,4 @@ man_breakscope(struct roff_man *man, int tok)
 		roff_node_delete(man, n);
 		man->flags &= ~MAN_BLINE;
 	}
-}
-
-void
-man_state(struct roff_man *man, struct roff_node *n)
-{
-
-	switch(n->tok) {
-	case ROFF_nf:
-	case MAN_EX:
-		man->flags |= ROFF_NOFILL;
-		break;
-	case ROFF_fi:
-	case MAN_EE:
-		man->flags &= ~ROFF_NOFILL;
-		break;
-	default:
-		break;
-	}
-	man->last->flags |= NODE_VALID;
 }

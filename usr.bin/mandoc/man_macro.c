@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.103 2018/12/31 08:03:34 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.104 2018/12/31 10:03:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -427,7 +427,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 	/* Rewind our element scope. */
 
 	for ( ; man->last; man->last = man->last->parent) {
-		man_state(man, man->last);
+		man->last->flags |= NODE_VALID;
 		if (man->last == n)
 			break;
 	}
