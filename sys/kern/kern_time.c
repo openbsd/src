@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.104 2018/12/29 19:02:30 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.105 2018/12/31 18:54:00 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -281,26 +281,29 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	}
 #endif
 
-	if (request.tv_sec > 100000000 || timespecfix(&request))
+	if (request.tv_sec < 0 || request.tv_nsec < 0 ||
+	    request.tv_nsec >= 1000000000)
 		return (EINVAL);
 
-	if (rmtp)
+	do {
 		getnanouptime(&start);
+		error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep",
+		    MAX(1, tstohz(&request)));
+		getnanouptime(&stop);
+		timespecsub(&stop, &start, &elapsed);
+		timespecsub(&request, &elapsed, &request);
+		if (error != EWOULDBLOCK)
+			break;
+	} while (request.tv_sec >= 0 && timespecisset(&request));
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep",
-	    MAX(1, tstohz(&request)));
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
 
 	if (rmtp) {
-		getnanouptime(&stop);
-
 		memset(&remainder, 0, sizeof(remainder));
-		timespecsub(&stop, &start, &elapsed);
-		timespecsub(&request, &elapsed, &remainder);
-
+		remainder = request;
 		if (remainder.tv_sec < 0)
 			timespecclear(&remainder);
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.15 2015/05/31 23:54:25 schwarze Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.16 2018/12/31 18:54:00 cheloha Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2015 $
+.Dd $Mdocdate: December 31 2018 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -76,8 +76,9 @@ to the corresponding value.
 was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
 .Fa timeout
-specified a nanosecond value less than zero or greater than 1000 million,
-or a second value less than zero or greater than 100 million.
+specified a nanosecond value less than zero or greater than or equal to
+1000 million,
+or a second value less than zero.
 .It Bq Er EFAULT
 Either
 .Fa timeout
