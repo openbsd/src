@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.230 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.231 2018/12/31 08:17:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -887,6 +887,10 @@ roff_node_alloc(struct roff_man *man, int line, int pos,
 		n->flags |= NODE_SYNPRETTY;
 	else
 		n->flags &= ~NODE_SYNPRETTY;
+	if (man->flags & ROFF_NOFILL)
+		n->flags |= NODE_NOFILL;
+	else
+		n->flags &= ~NODE_NOFILL;
 	if (man->flags & MDOC_NEWLINE)
 		n->flags |= NODE_LINE;
 	man->flags &= ~MDOC_NEWLINE;
