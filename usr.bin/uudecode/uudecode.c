@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.24 2018/12/31 09:23:08 kn Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.25 2018/12/31 13:49:52 bluhm Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -358,9 +358,9 @@ uu_decode(void)
 #define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
 #define IS_DEC(c) ( (((c) - ' ') >= 0) && (((c) - ' ') <= 077 + 1) )
 
-#define OUT_OF_RANGE do {						\
-	warnx("%s: %s: character out of range: [%d-%d]",		\
-	    infile, outfile, 1 + ' ', 077 + ' ' + 1);			\
+#define OUT_OF_RANGE(c) do {						\
+	warnx("%s: %s: character value (%d) out of range [%d-%d]",	\
+	    infile, outfile, (unsigned char)(c), 1 + ' ', 077 + ' ' + 1); \
 	return (1);							\
 } while (0)
 
@@ -373,10 +373,14 @@ uu_decode(void)
 			break;
 		for (++p; i > 0; p += 4, i -= 3)
 			if (i >= 3) {
-				if (!(IS_DEC(*p) && IS_DEC(*(p + 1)) &&
-				     IS_DEC(*(p + 2)) && IS_DEC(*(p + 3))))
-					OUT_OF_RANGE;
-
+				if (!IS_DEC(*p))
+					OUT_OF_RANGE(*p);
+				if (!IS_DEC(*(p + 1)))
+					OUT_OF_RANGE(*(p + 1));
+				if (!IS_DEC(*(p + 2)))
+					OUT_OF_RANGE(*(p + 2));
+				if (!IS_DEC(*(p + 3)))
+					OUT_OF_RANGE(*(p + 3));
 				ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
 				putc(ch, outfp);
 				ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
@@ -386,23 +390,26 @@ uu_decode(void)
 			}
 			else {
 				if (i >= 1) {
-					if (!(IS_DEC(*p) && IS_DEC(*(p + 1))))
-						OUT_OF_RANGE;
+					if (!IS_DEC(*p))
+						OUT_OF_RANGE(*p);
+					if (!IS_DEC(*(p + 1)))
+						OUT_OF_RANGE(*(p + 1));
 					ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
 					putc(ch, outfp);
 				}
 				if (i >= 2) {
-					if (!(IS_DEC(*(p + 1)) &&
-					    IS_DEC(*(p + 2))))
-						OUT_OF_RANGE;
-
+					if (!IS_DEC(*(p + 1)))
+						OUT_OF_RANGE(*(p + 1));
+					if (!IS_DEC(*(p + 2)))
+						OUT_OF_RANGE(*(p + 2));
 					ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
 					putc(ch, outfp);
 				}
 				if (i >= 3) {
-					if (!(IS_DEC(*(p + 2)) &&
-					    IS_DEC(*(p + 3))))
-						OUT_OF_RANGE;
+					if (!IS_DEC(*(p + 2)))
+						OUT_OF_RANGE(*(p + 2));
+					if (!IS_DEC(*(p + 3)))
+						OUT_OF_RANGE(*(p + 3));
 					ch = DEC(p[2]) << 6 | DEC(p[3]);
 					putc(ch, outfp);
 				}
