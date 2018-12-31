@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.19 2018/08/27 20:13:16 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.20 2018/12/31 21:24:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -283,7 +283,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct dwmmc_softc *sc = (struct dwmmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
-	uint32_t freq, div = 0;
+	uint32_t freq = 0, div = 0;
 	uint32_t hcon, width;
 	uint32_t fifoth;
 	int error, timeout;
@@ -345,7 +345,11 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc"))
 		div = 7;
 
-	freq = OF_getpropint(faa->fa_node, "clock-frequency", 0);
+	/* Force the base clock to 50MHz on Rockchip SoCs. */
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc"))
+		freq = 50000000;
+
+	freq = OF_getpropint(faa->fa_node, "clock-frequency", freq);
 	if (freq > 0)
 		clock_set_frequency(faa->fa_node, "ciu", (div + 1) * freq);
 
