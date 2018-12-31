@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.24 2018/08/25 20:45:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.25 2018/12/31 18:00:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -730,7 +730,7 @@ cpu_opp_mountroot(struct device *self)
 		cpu_setperf = cpu_opp_setperf;
 
 		perflevel = (level > 0) ? level : 0;
-		cpu_setperf(level);
+		cpu_setperf(perflevel);
 	}
 }
 
@@ -786,8 +786,7 @@ cpu_opp_setperf(int level)
 		struct opp_table *ot = ci->ci_opp_table;
 		uint64_t min, max;
 		uint64_t level_hz, opp_hz;
-		uint32_t opp_microvolt;
-		int opp_idx;
+		int opp_idx = -1;
 		int i;
 
 		if (ot == NULL)
@@ -803,10 +802,15 @@ cpu_opp_setperf(int level)
 		opp_hz = min;
 		for (i = 0; i < ot->ot_nopp; i++) {
 			if (ot->ot_opp[i].opp_hz <= level_hz &&
-			    ot->ot_opp[i].opp_hz >= opp_hz) {
+			    ot->ot_opp[i].opp_hz >= opp_hz)
 				opp_hz = ot->ot_opp[i].opp_hz;
-				opp_microvolt = ot->ot_opp[i].opp_microvolt;
+		}
+
+		/* Find index of selected operating point. */
+		for (i = 0; i < ot->ot_nopp; i++) {
+			if (ot->ot_opp[i].opp_hz == opp_hz) {
 				opp_idx = i;
+				break;
 			}
 		}
 		KASSERT(opp_idx >= 0);
