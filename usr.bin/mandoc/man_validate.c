@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.114 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.115 2018/12/31 08:38:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,6 +46,8 @@ static	void	  check_root(CHKARGS);
 static	void	  check_text(CHKARGS);
 
 static	void	  post_AT(CHKARGS);
+static	void	  post_EE(CHKARGS);
+static	void	  post_EX(CHKARGS);
 static	void	  post_IP(CHKARGS);
 static	void	  post_OP(CHKARGS);
 static	void	  post_SH(CHKARGS);
@@ -86,8 +88,8 @@ static	const v_check man_valids[MAN_MAX - MAN_TH] = {
 	NULL,       /* SY */
 	NULL,       /* YS */
 	post_OP,    /* OP */
-	NULL,       /* EX */
-	NULL,       /* EE */
+	post_EX,    /* EX */
+	post_EE,    /* EE */
 	post_UR,    /* UR */
 	NULL,       /* UE */
 	post_UR,    /* MT */
@@ -204,13 +206,27 @@ check_text(CHKARGS)
 {
 	char		*cp, *p;
 
-	if (man->flags & ROFF_NOFILL)
+	if (n->flags & NODE_NOFILL)
 		return;
 
 	cp = n->string;
 	for (p = cp; NULL != (p = strchr(p, '\t')); p++)
 		mandoc_msg(MANDOCERR_FI_TAB,
 		    n->line, n->pos + (int)(p - cp), NULL);
+}
+
+static void
+post_EE(CHKARGS)
+{
+	if ((n->flags & NODE_NOFILL) == 0)
+		mandoc_msg(MANDOCERR_FI_SKIP, n->line, n->pos, "EE");
+}
+
+static void
+post_EX(CHKARGS)
+{
+	if (n->flags & NODE_NOFILL)
+		mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "EX");
 }
 
 static void

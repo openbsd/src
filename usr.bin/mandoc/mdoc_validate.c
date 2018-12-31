@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.283 2018/12/31 07:45:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.284 2018/12/31 08:38:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -334,9 +334,7 @@ mdoc_validate(struct roff_man *mdoc)
 		if (n->sec != SEC_SYNOPSIS ||
 		    (np->tok != MDOC_Cd && np->tok != MDOC_Fd))
 			check_text(mdoc, n->line, n->pos, n->string);
-		if (np->tok != MDOC_Ql && np->tok != MDOC_Dl &&
-		    (np->tok != MDOC_Bd ||
-		     (mdoc->flags & ROFF_NOFILL) == 0) &&
+		if ((n->flags & NODE_NOFILL) == 0 &&
 		    (np->tok != MDOC_It || np->type != ROFFT_HEAD ||
 		     np->parent->parent->norm->Bl.type != LIST_diag))
 			check_text_em(mdoc, n->line, n->pos, n->string);
@@ -409,7 +407,7 @@ check_text(struct roff_man *mdoc, int ln, int pos, char *p)
 {
 	char		*cp;
 
-	if (mdoc->flags & ROFF_NOFILL)
+	if (mdoc->last->flags & NODE_NOFILL)
 		return;
 
 	for (cp = p; NULL != (p = strchr(p, '\t')); p++)

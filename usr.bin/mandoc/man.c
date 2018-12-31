@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.132 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.133 2018/12/31 08:38:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -349,15 +349,10 @@ man_state(struct roff_man *man, struct roff_node *n)
 	switch(n->tok) {
 	case ROFF_nf:
 	case MAN_EX:
-		if (man->flags & ROFF_NOFILL && (n->flags & NODE_VALID) == 0)
-			mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "nf");
 		man->flags |= ROFF_NOFILL;
 		break;
 	case ROFF_fi:
 	case MAN_EE:
-		if ( (man->flags & ROFF_NOFILL) == 0 &&
-		     ! (n->flags & NODE_VALID))
-			mandoc_msg(MANDOCERR_FI_SKIP, n->line, n->pos, "fi");
 		man->flags &= ~ROFF_NOFILL;
 		break;
 	default:
