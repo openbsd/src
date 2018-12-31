@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.162 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.163 2018/12/31 07:45:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -208,7 +208,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 			 * Strip trailing tabs in literal context only;
 			 * outside, they affect the next line.
 			 */
-			if (MDOC_LITERAL & mdoc->flags)
+			if (mdoc->flags & ROFF_NOFILL)
 				continue;
 			break;
 		case '\\':
@@ -233,7 +233,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	 * but add a single vertical space elsewhere.
 	 */
 
-	if (buf[offs] == '\0' && ! (mdoc->flags & MDOC_LITERAL)) {
+	if (buf[offs] == '\0' && (mdoc->flags & ROFF_NOFILL) == 0) {
 		switch (mdoc->last->type) {
 		case ROFFT_TEXT:
 			sp = mdoc->last->string;
@@ -258,7 +258,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 
 	roff_word_alloc(mdoc, line, offs, buf+offs);
 
-	if (mdoc->flags & MDOC_LITERAL)
+	if (mdoc->flags & ROFF_NOFILL)
 		return 1;
 
 	/*

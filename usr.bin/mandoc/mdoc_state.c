@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.13 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.14 2018/12/31 07:45:42 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -228,10 +228,10 @@ state_dl(STATE_ARGS)
 
 	switch (n->type) {
 	case ROFFT_HEAD:
-		mdoc->flags |= MDOC_LITERAL;
+		mdoc->flags |= ROFF_NOFILL;
 		break;
 	case ROFFT_BODY:
-		mdoc->flags &= ~MDOC_LITERAL;
+		mdoc->flags &= ~ROFF_NOFILL;
 		break;
 	default:
 		break;
