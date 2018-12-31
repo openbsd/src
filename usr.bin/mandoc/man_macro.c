@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.102 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.103 2018/12/31 08:03:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -378,6 +378,11 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 	roff_elem_alloc(man, line, ppos, tok);
 	n = man->last;
+
+	if (tok == MAN_EX)
+		man->flags |= ROFF_NOFILL;
+	else if (tok == MAN_EE)
+		man->flags &= ~ROFF_NOFILL;
 
 	for (;;) {
 		if (buf[*pos] != '\0' && man->last != n && tok == MAN_PD) {
