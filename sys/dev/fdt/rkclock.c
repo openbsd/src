@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.32 2018/12/31 13:19:24 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.33 2018/12/31 18:09:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,11 +56,14 @@
 #define  RK3328_CRU_PLL_POSTDIV1_SHIFT		12
 #define  RK3328_CRU_PLL_FBDIV_MASK		(0xfff << 0)
 #define  RK3328_CRU_PLL_FBDIV_SHIFT		0
+#define  RK3328_CRU_PLL_DSMPD			(1 << 12)
+#define  RK3328_CRU_PLL_PLL_LOCK		(1 << 10)
 #define  RK3328_CRU_PLL_POSTDIV2_MASK		(0x7 << 6)
 #define  RK3328_CRU_PLL_POSTDIV2_SHIFT		6
 #define  RK3328_CRU_PLL_REFDIV_MASK		(0x3f << 0)
 #define  RK3328_CRU_PLL_REFDIV_SHIFT		0
-#define  RK3328_CRU_PLL_PLL_LOCK		(1 << 10)
+#define  RK3328_CRU_PLL_FRACDIV_MASK		(0xffffff << 0)
+#define  RK3328_CRU_PLL_FRACDIV_SHIFT		0
 #define RK3328_CRU_CRU_MODE		0x0080
 #define  RK3328_CRU_CRU_MODE_MASK		0x1
 #define  RK3328_CRU_CRU_MODE_SLOW		0x0
@@ -74,6 +77,8 @@
 #define  RK3328_CRU_ACLK_CORE_DIV_CON_SHIFT	4
 #define  RK3328_CRU_CLK_CORE_DBG_DIV_CON_MASK	(0xf << 0)
 #define  RK3328_CRU_CLK_CORE_DBG_DIV_CON_SHIFT	0
+#define  RK3328_CRU_VOP_DCLK_SRC_SEL_MASK	(0x1 << 1)
+#define  RK3328_CRU_VOP_DCLK_SRC_SEL_SHIFT	1
 #define RK3328_CRU_CLKGATE_CON(i)	(0x0200 + (i) * 4)
 #define RK3328_CRU_SOFTRST_CON(i)	(0x0300 + (i) * 4)
 
@@ -721,6 +726,11 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
 
 struct rkclock rk3328_clocks[] = {
 	{
+		RK3328_CLK_RTC32K, RK3328_CRU_CLKSEL_CON(38),
+		SEL(15, 14), DIV(13, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_OSC }
+	},
+	{
 		RK3328_CLK_SDMMC, RK3328_CRU_CLKSEL_CON(30),
 		SEL(9, 8), DIV(7, 0),
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_OSC,
@@ -754,6 +764,11 @@ struct rkclock rk3328_clocks[] = {
 		{ 0, 0, RK3328_OSC, RK3328_OSC }
 	},
 	{
+		RK3328_CLK_WIFI, RK3328_CRU_CLKSEL_CON(52),
+		SEL(7, 6), DIV(5, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_USB480M }
+	},
+	{
 		RK3328_CLK_I2C0, RK3328_CRU_CLKSEL_CON(34),
 		SEL(7, 7), DIV(6, 0),
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
@@ -779,6 +794,52 @@ struct rkclock rk3328_clocks[] = {
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_PLL_APLL }
 	},
 	{
+		RK3328_CLK_VDEC_CABAC, RK3328_CRU_CLKSEL_CON(48),
+		SEL(15, 14), DIV(12, 8),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_CLK_VDEC_CORE, RK3328_CRU_CLKSEL_CON(49),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_CLK_VENC_DSP, RK3328_CRU_CLKSEL_CON(52),
+		SEL(15, 14), DIV(12, 8),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_CLK_VENC_CORE, RK3328_CRU_CLKSEL_CON(51),
+		SEL(15, 14), DIV(12, 8),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_CLK_TSP, RK3328_CRU_CLKSEL_CON(21),
+		SEL(15, 15), DIV(12, 8),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
+	},
+	{
+		RK3328_DCLK_LCDC, RK3328_CRU_CLKSEL_CON(40),
+		SEL(1, 1), 0,
+		{ RK3328_HDMIPHY, RK3328_DCLK_LCDC_SRC }
+	},
+	{
+		RK3328_ACLK_VOP_PRE, RK3328_CRU_CLKSEL_CON(39),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_ACLK_RGA_PRE, RK3328_CRU_CLKSEL_CON(36),
+		SEL(15, 14), DIV(12, 8),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
 		RK3328_ACLK_BUS_PRE, RK3328_CRU_CLKSEL_CON(0),
 		SEL(14, 13), DIV(12, 8),
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY }
@@ -787,6 +848,30 @@ struct rkclock rk3328_clocks[] = {
 		RK3328_ACLK_PERI_PRE, RK3328_CRU_CLKSEL_CON(28),
 		SEL(7, 6), DIV(4, 0),
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY }
+	},
+	{
+		RK3328_ACLK_RKVDEC_PRE, RK3328_CRU_CLKSEL_CON(48),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_ACLK_RKVENC, RK3328_CRU_CLKSEL_CON(51),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_ACLK_VPU_PRE, RK3328_CRU_CLKSEL_CON(50),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
+	},
+	{
+		RK3328_ACLK_VIO_PRE, RK3328_CRU_CLKSEL_CON(37),
+		SEL(7, 6), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_HDMIPHY,
+		  RK3328_USB480M }
 	},
 	{
 		RK3328_PCLK_BUS_PRE, RK3328_CRU_CLKSEL_CON(1),
@@ -876,7 +961,6 @@ rk3328_set_armclk(struct rkclock_softc *sc, uint32_t freq)
 	reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(0));
 	mux = (reg & RK3328_CRU_CORE_CLK_PLL_SEL_MASK) >>
 	    RK3328_CRU_CORE_CLK_PLL_SEL_SHIFT;
-	idx = rk3328_armclk_parent(mux);
 
 	/* Keep the pclk_dbg clock at or below 300 MHz. */
 	div = 1;
@@ -898,11 +982,15 @@ rk3328_set_armclk(struct rkclock_softc *sc, uint32_t freq)
 		    div << RK3328_CRU_CLK_CORE_DBG_DIV_CON_SHIFT);
 	}
 
+	/* We always use NPLL and force the switch below if needed. */
+	idx = RK3328_PLL_NPLL;
 	rk3328_set_frequency(sc, &idx, freq);
 
-	/* When ramping dowm, set clock dividers last. */
-	if (freq < old_freq) {
+	/* When ramping down, set clock dividers last. */
+	if (freq < old_freq || mux != 3) {
 		HWRITE4(sc, RK3328_CRU_CLKSEL_CON(0),
+		    RK3328_CRU_CORE_CLK_PLL_SEL_MASK << 16 |
+		    3 << RK3328_CRU_CORE_CLK_PLL_SEL_SHIFT |
 		    RK3328_CRU_CLK_CORE_DIV_CON_MASK << 16 |
 		    0 << RK3328_CRU_CLK_CORE_DIV_CON_SHIFT);
 		HWRITE4(sc, RK3328_CRU_CLKSEL_CON(1),
@@ -919,6 +1007,8 @@ uint32_t
 rk3328_get_pll(struct rkclock_softc *sc, bus_size_t base)
 {
 	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	uint32_t dsmpd, fracdiv;
+	uint64_t frac = 0;
 	uint32_t reg;
 
 	reg = HREAD4(sc, base + 0x0000);
@@ -927,11 +1017,18 @@ rk3328_get_pll(struct rkclock_softc *sc, bus_size_t base)
 	fbdiv = (reg & RK3328_CRU_PLL_FBDIV_MASK) >>
 	    RK3328_CRU_PLL_FBDIV_SHIFT;
 	reg = HREAD4(sc, base + 0x0004);
+	dsmpd = (reg & RK3328_CRU_PLL_DSMPD);
 	postdiv2 = (reg & RK3328_CRU_PLL_POSTDIV2_MASK) >>
 	    RK3328_CRU_PLL_POSTDIV2_SHIFT;
 	refdiv = (reg & RK3328_CRU_PLL_REFDIV_MASK) >>
 	    RK3328_CRU_PLL_REFDIV_SHIFT;
-	return 24000000ULL * fbdiv / refdiv / postdiv1 / postdiv2;
+	reg = HREAD4(sc, base + 0x0008);
+	fracdiv = (reg & RK3328_CRU_PLL_FRACDIV_MASK) >>
+	    RK3328_CRU_PLL_FRACDIV_SHIFT;
+
+	if (dsmpd == 0)
+		frac = (24000000ULL * fracdiv / refdiv) >> 24;
+	return ((24000000ULL * fbdiv / refdiv) + frac) / postdiv1 / postdiv2;
 }
 
 int
@@ -1021,10 +1118,108 @@ rk3328_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	    RK3328_CRU_PLL_FBDIV_MASK << 16 |
 	    fbdiv << RK3328_CRU_PLL_FBDIV_SHIFT);
 	HWRITE4(sc, base + 0x0004,
+	    RK3328_CRU_PLL_DSMPD << 16 | RK3328_CRU_PLL_DSMPD |
 	    RK3328_CRU_PLL_POSTDIV2_MASK << 16 |
 	    postdiv2 << RK3328_CRU_PLL_POSTDIV2_SHIFT |
 	    RK3328_CRU_PLL_REFDIV_MASK << 16 |
 	    refdiv << RK3328_CRU_PLL_REFDIV_SHIFT);
+
+	/* Wait for PLL to stabilize. */
+	while ((HREAD4(sc, base + 0x0004) & RK3328_CRU_PLL_PLL_LOCK) == 0)
+		delay(10);
+
+	/* Switch back to normal mode. */
+	HWRITE4(sc, RK3328_CRU_CRU_MODE,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_NORMAL) << mode_shift);
+
+	return 0;
+}
+
+int
+rk3328_set_frac_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv, fracdiv;
+	int mode_shift = -1;
+	uint32_t reg;
+
+	switch (base) {
+	case RK3328_CRU_APLL_CON(0):
+		mode_shift = 0;
+		break;
+	case RK3328_CRU_DPLL_CON(0):
+		mode_shift = 4;
+		break;
+	case RK3328_CRU_CPLL_CON(0):
+		mode_shift = 8;
+		break;
+	case RK3328_CRU_GPLL_CON(0):
+		mode_shift = 12;
+		break;
+	case RK3328_CRU_NPLL_CON(0):
+		mode_shift = 1;
+		break;
+	}
+	KASSERT(mode_shift != -1);
+
+	/*
+	 * It is not clear whether all combinations of the clock
+	 * dividers result in a stable clock.  Therefore this function
+	 * only supports a limited set of PLL clock rates.  This set
+	 * set covers all the fractional PLL frequencies supported by
+	 * the Linux kernel.
+	 */
+	switch (freq) {
+	case 1016064000U:
+		postdiv1 = postdiv2 = 1; refdiv = 3; fracdiv = 134217;
+		break;
+	case 983040000U:
+		postdiv1 = postdiv2 = 1; refdiv = 24; fracdiv = 671088;
+		break;
+	case 491520000U:
+		postdiv1 = 2; postdiv2 = 1; refdiv = 24; fracdiv = 671088;
+		break;
+	case 61440000U:
+		postdiv1 = 7; postdiv2 = 2; refdiv = 24; fracdiv = 671088;
+		break;
+	case 56448000U:
+		postdiv1 = postdiv2 = 4; refdiv = 12; fracdiv = 9797894;
+		break;
+	case 40960000U:
+		postdiv1 = 4; postdiv2 = 5; refdiv = 12; fracdiv = 10066239;
+		break;
+	default:
+		printf("%s: %u Hz\n", __func__, freq);
+		return -1;
+	}
+
+	/* Calculate feedback divider. */
+	fbdiv = (uint64_t)freq * postdiv1 * postdiv2 * refdiv / 24000000;
+
+	/*
+	 * Select slow mode to guarantee a stable clock while we're
+	 * adjusting the PLL.
+	 */
+	HWRITE4(sc, RK3328_CRU_CRU_MODE,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_SLOW) << mode_shift);
+
+	/* Set PLL rate. */
+	HWRITE4(sc, base + 0x0000,
+	    RK3328_CRU_PLL_POSTDIV1_MASK << 16 |
+	    postdiv1 << RK3328_CRU_PLL_POSTDIV1_SHIFT |
+	    RK3328_CRU_PLL_FBDIV_MASK << 16 |
+	    fbdiv << RK3328_CRU_PLL_FBDIV_SHIFT);
+	HWRITE4(sc, base + 0x0004,
+	    RK3328_CRU_PLL_DSMPD << 16 |
+	    RK3328_CRU_PLL_POSTDIV2_MASK << 16 |
+	    postdiv2 << RK3328_CRU_PLL_POSTDIV2_SHIFT |
+	    RK3328_CRU_PLL_REFDIV_MASK << 16 |
+	    refdiv << RK3328_CRU_PLL_REFDIV_SHIFT);
+	reg = HREAD4(sc, base + 0x0008);
+	reg &= ~RK3328_CRU_PLL_FRACDIV_MASK;
+	reg |= fracdiv << RK3328_CRU_PLL_FRACDIV_SHIFT;
+	HWRITE4(sc, base + 0x0008, reg);
 
 	/* Wait for PLL to stabilize. */
 	while ((HREAD4(sc, base + 0x0004) & RK3328_CRU_PLL_PLL_LOCK) == 0)
@@ -1074,16 +1269,17 @@ rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t reg, mux;
 
 	switch (idx) {
 	case RK3328_PLL_APLL:
-		return rk3328_set_pll(sc, RK3328_CRU_APLL_CON(0), freq);
+		return rk3328_set_frac_pll(sc, RK3328_CRU_APLL_CON(0), freq);
 	case RK3328_PLL_DPLL:
 		return rk3328_set_pll(sc, RK3328_CRU_DPLL_CON(0), freq);
 	case RK3328_PLL_CPLL:
 		return rk3328_set_pll(sc, RK3328_CRU_CPLL_CON(0), freq);
 	case RK3328_PLL_GPLL:
-		return rk3328_set_pll(sc, RK3328_CRU_GPLL_CON(0), freq);
+		return rk3328_set_frac_pll(sc, RK3328_CRU_GPLL_CON(0), freq);
 	case RK3328_PLL_NPLL:
 		return rk3328_set_pll(sc, RK3328_CRU_NPLL_CON(0), freq);
 	case RK3328_ARMCLK:
@@ -1094,6 +1290,12 @@ rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		if (freq == rk3328_get_frequency(sc, &idx))
 			return 0;
 		break;
+	case RK3328_DCLK_LCDC:
+		reg = HREAD4(sc, RK3328_CRU_CLKSEL_CON(40));
+		mux = (reg & RK3328_CRU_VOP_DCLK_SRC_SEL_MASK) >>
+		    RK3328_CRU_VOP_DCLK_SRC_SEL_SHIFT;
+		idx = (mux == 0) ? RK3328_HDMIPHY : RK3328_DCLK_LCDC_SRC;
+		return rk3328_set_frequency(sc, &idx, freq);
 	}
 
 	return rkclock_set_frequency(sc, idx, freq);
@@ -1376,7 +1578,7 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 
 	rk3399_set_frequency(sc, &idx, freq);
 
-	/* When ramping dowm, set clock dividers last. */
+	/* When ramping down, set clock dividers last. */
 	if (freq < old_freq) {
 		HWRITE4(sc, clksel,
 		    RK3399_CRU_CLK_CORE_DIV_CON_MASK << 16 |
