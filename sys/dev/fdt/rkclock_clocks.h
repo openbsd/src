@@ -86,7 +86,7 @@
 #define RK3328_HCLK_PERI		308
 #define RK3328_HCLK_BUS_PRE		328
 
-#define RK3328_OSC			1023
+#define RK3328_XIN24M			1023
 
 /*
  * RK3399 clocks.
@@ -168,3 +168,5 @@
 #define RK3399_PCLK_I2C0		27
 #define RK3399_PCLK_I2C4		28
 #define RK3399_PCLK_I2C8		29
+
+#define RK3399_XIN24M			1023
