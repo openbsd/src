@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.8 2016/09/11 15:54:11 jsing Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.9 2018/12/31 11:44:57 claudio Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
 #endif
 
 #include "openfirm.h"
+
+void syncicache(void *, int);
 
 int
 elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp){ 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.5 2018/06/26 19:43:27 kettenis Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.6 2018/12/31 11:44:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 
+#include <lib/libkern/funcs.h>
 #include <lib/libsa/stand.h>
 
 #include "ofdev.h"

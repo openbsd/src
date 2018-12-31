@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.2 2018/03/29 08:12:58 stsp Exp $ */
+/*	$OpenBSD: disk.h,v 1.3 2018/12/31 11:44:57 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,5 +49,7 @@ TAILQ_HEAD(disklist_lh, diskinfo);
 extern struct disklist_lh disklist;
 
 extern struct diskinfo *bootdev_dip;
+
+void diskprobe(void);
 
 #endif /* _DISK_H */

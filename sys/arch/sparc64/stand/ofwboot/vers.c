@@ -1,1 +1,1 @@
-const char version[] = "1.11";
+const char version[] = "1.12";
