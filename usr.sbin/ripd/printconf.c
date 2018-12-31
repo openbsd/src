@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2009/07/31 16:04:34 michele Exp $ */
+/*	$OpenBSD: printconf.c,v 1.7 2018/12/31 20:34:16 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -40,6 +40,8 @@ print_mainconf(struct ripd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
+
+	printf("fib-priority %hhu\n", conf->fib_priority);
 
 	print_redistribute(conf);
 

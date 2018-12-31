@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.31 2018/11/04 07:52:55 remi Exp $ */
+/*	$OpenBSD: ripd.c,v 1.32 2018/12/31 20:34:16 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 	event_add(&iev_rde->ev, NULL);
 
 	if (kr_init(!(conf->flags & RIPD_FLAG_NO_FIB_UPDATE),
-	    conf->rdomain) == -1)
+	    conf->rdomain, conf->fib_priority) == -1)
 		fatalx("kr_init failed");
 
 	event_dispatch();

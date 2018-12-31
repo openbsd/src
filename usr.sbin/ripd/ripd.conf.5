@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.17 2018/11/11 13:55:07 remi Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.18 2018/12/31 20:34:16 remi Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2018 $
+.Dd $Mdocdate: December 31 2018 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -66,6 +66,11 @@ interface em0 {
 Global settings concerns the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
+.It Ic fib-priority Ar prio
+Set the routing priority to
+.Ar prio .
+The default is 40.
+.Pp
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
