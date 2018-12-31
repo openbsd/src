@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.101 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.102 2018/12/31 07:07:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -61,8 +61,6 @@ static const struct man_macro man_macros[MAN_MAX - MAN_TH] = {
 	{ in_line_eoln, MAN_NSCOPED | MAN_ESCOPED | MAN_JOIN }, /* I */
 	{ in_line_eoln, 0 }, /* IR */
 	{ in_line_eoln, 0 }, /* RI */
-	{ in_line_eoln, MAN_NSCOPED }, /* nf */
-	{ in_line_eoln, MAN_NSCOPED }, /* fi */
 	{ blk_close, MAN_XSCOPE }, /* RE */
 	{ blk_exp, MAN_XSCOPE }, /* RS */
 	{ in_line_eoln, 0 }, /* DT */
@@ -338,9 +336,9 @@ blk_imp(MACRO_PROT_ARGS)
 	struct roff_node *n;
 
 	rew_scope(man, tok);
-	n = roff_block_alloc(man, line, ppos, tok);
-	if (n->tok == MAN_SH || n->tok == MAN_SS)
-		man->flags &= ~MAN_LITERAL;
+	if (tok == MAN_SH || tok == MAN_SS)
+		man->flags &= ~ROFF_NOFILL;
+	roff_block_alloc(man, line, ppos, tok);
 	n = roff_head_alloc(man, line, ppos, tok);
 
 	/* Add line arguments. */
@@ -382,11 +380,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 	n = man->last;
 
 	for (;;) {
-		if (buf[*pos] != '\0' && (tok == MAN_fi || tok == MAN_nf)) {
-			mandoc_msg(MANDOCERR_ARG_SKIP, line, *pos,
-			    "%s %s", roff_name[tok], buf + *pos);
-			break;
-		}
 		if (buf[*pos] != '\0' && man->last != n && tok == MAN_PD) {
 			mandoc_msg(MANDOCERR_ARG_EXCESS, line, *pos,
 			    "%s ... %s", roff_name[tok], buf + *pos);

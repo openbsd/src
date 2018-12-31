@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.131 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.132 2018/12/31 07:07:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,9 +101,9 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 	int		 i;
 	char		*ep;
 
-	/* Literal free-form text whitespace is preserved. */
+	/* In no-fill mode, whitespace is preserved on text lines. */
 
-	if (man->flags & MAN_LITERAL) {
+	if (man->flags & ROFF_NOFILL) {
 		roff_word_alloc(man, line, offs, buf + offs);
 		man_descope(man, line, offs, buf + offs);
 		return 1;
@@ -306,7 +306,7 @@ man_breakscope(struct roff_man *man, int tok)
 	 */
 
 	if (man->flags & MAN_BLINE &&
-	    (tok == MAN_nf || tok == MAN_fi) &&
+	    (tok == ROFF_nf || tok == ROFF_fi) &&
 	    (man->last->tok == MAN_SH || man->last->tok == MAN_SS)) {
 		n = man->last;
 		man_unscope(man, n);
@@ -320,8 +320,8 @@ man_breakscope(struct roff_man *man, int tok)
 	 * Delete the block that is being broken.
 	 */
 
-	if (man->flags & MAN_BLINE && (tok < MAN_TH ||
-	    man_macro(tok)->flags & MAN_XSCOPE)) {
+	if (man->flags & MAN_BLINE && tok != ROFF_nf && tok != ROFF_fi &&
+	    (tok < MAN_TH || man_macro(tok)->flags & MAN_XSCOPE)) {
 		n = man->last;
 		if (n->type == ROFFT_TEXT)
 			n = n->parent;
@@ -347,18 +347,18 @@ man_state(struct roff_man *man, struct roff_node *n)
 {
 
 	switch(n->tok) {
-	case MAN_nf:
+	case ROFF_nf:
 	case MAN_EX:
-		if (man->flags & MAN_LITERAL && ! (n->flags & NODE_VALID))
+		if (man->flags & ROFF_NOFILL && (n->flags & NODE_VALID) == 0)
 			mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "nf");
-		man->flags |= MAN_LITERAL;
+		man->flags |= ROFF_NOFILL;
 		break;
-	case MAN_fi:
+	case ROFF_fi:
 	case MAN_EE:
-		if ( ! (man->flags & MAN_LITERAL) &&
+		if ( (man->flags & ROFF_NOFILL) == 0 &&
 		     ! (n->flags & NODE_VALID))
 			mandoc_msg(MANDOCERR_FI_SKIP, n->line, n->pos, "fi");
-		man->flags &= ~MAN_LITERAL;
+		man->flags &= ~ROFF_NOFILL;
 		break;
 	default:
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.114 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.115 2018/12/31 07:07:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -92,8 +92,6 @@ static	const struct man_html_act man_html_acts[MAN_MAX - MAN_TH] = {
 	{ man_I_pre, NULL }, /* I */
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
-	{ NULL, NULL }, /* nf */
-	{ NULL, NULL }, /* fi */
 	{ NULL, NULL }, /* RE */
 	{ man_RS_pre, NULL }, /* RS */
 	{ man_ign_pre, NULL }, /* DT */
@@ -190,7 +188,7 @@ print_man_nodelist(MAN_ARGS)
 static void
 print_man_node(MAN_ARGS)
 {
-	static int	 want_fillmode = MAN_fi;
+	static int	 want_fillmode = ROFF_fi;
 	static int	 save_fillmode;
 
 	struct tag	*t;
@@ -202,14 +200,14 @@ print_man_node(MAN_ARGS)
 	 */
 
 	switch (n->tok) {
-	case MAN_nf:
+	case ROFF_nf:
 	case MAN_EX:
-		want_fillmode = MAN_nf;
+		want_fillmode = ROFF_nf;
 		return;
-	case MAN_fi:
+	case ROFF_fi:
 	case MAN_EE:
-		want_fillmode = MAN_fi;
-		if (fillmode(h, 0) == MAN_fi)
+		want_fillmode = ROFF_fi;
+		if (fillmode(h, 0) == ROFF_fi)
 			print_otag(h, TAG_BR, "");
 		return;
 	default:
@@ -230,20 +228,20 @@ print_man_node(MAN_ARGS)
 			/* FALLTHROUGH */
 		case MAN_SH:  /* Section headers		*/
 		case MAN_SS:  /* permanently cancel .nf.	*/
-			want_fillmode = MAN_fi;
+			want_fillmode = ROFF_fi;
 			/* FALLTHROUGH */
 		case MAN_PP:  /* These have no head.		*/
 		case MAN_RS:  /* They will simply		*/
 		case MAN_UR:  /* reopen .nf in the body.        */
 		case MAN_MT:
-			fillmode(h, MAN_fi);
+			fillmode(h, ROFF_fi);
 			break;
 		default:
 			break;
 		}
 		break;
 	case ROFFT_TBL:
-		fillmode(h, MAN_fi);
+		fillmode(h, ROFF_fi);
 		break;
 	case ROFFT_ELEM:
 		/*
@@ -256,12 +254,12 @@ print_man_node(MAN_ARGS)
 		fillmode(h, want_fillmode);
 		break;
 	case ROFFT_TEXT:
-		if (fillmode(h, want_fillmode) == MAN_fi &&
-		    want_fillmode == MAN_fi &&
+		if (fillmode(h, want_fillmode) == ROFF_fi &&
+		    want_fillmode == ROFF_fi &&
 		    n->flags & NODE_LINE && *n->string == ' ' &&
 		    (h->flags & HTML_NONEWLINE) == 0)
 			print_otag(h, TAG_BR, "");
-		if (want_fillmode == MAN_nf || *n->string != '\0')
+		if (want_fillmode == ROFF_nf || *n->string != '\0')
 			break;
 		print_paragraph(h);
 		return;
@@ -334,7 +332,7 @@ print_man_node(MAN_ARGS)
 	/* This will automatically close out any font scope. */
 	print_stagq(h, t);
 
-	if (fillmode(h, 0) == MAN_nf &&
+	if (fillmode(h, 0) == ROFF_nf &&
 	    n->next != NULL && n->next->flags & NODE_LINE) {
 		/* In .nf = <pre>, print even empty lines. */
 		h->col++;
@@ -343,7 +341,7 @@ print_man_node(MAN_ARGS)
 }
 
 /*
- * MAN_nf switches to no-fill mode, MAN_fi to fill mode.
+ * ROFF_nf switches to no-fill mode, ROFF_fi to fill mode.
  * Other arguments do not switch.
  * The old mode is returned.
  */
@@ -357,10 +355,10 @@ fillmode(struct html *h, int want)
 		if (pre->tag == TAG_PRE)
 			break;
 
-	had = pre == NULL ? MAN_fi : MAN_nf;
+	had = pre == NULL ? ROFF_fi : ROFF_nf;
 
 	if (want && want != had) {
-		if (want == MAN_nf)
+		if (want == ROFF_nf)
 			print_otag(h, TAG_PRE, "");
 		else
 			print_tagq(h, pre);

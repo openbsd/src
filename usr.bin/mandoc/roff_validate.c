@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_validate.c,v 1.15 2018/12/15 23:33:20 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.16 2018/12/31 07:07:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -30,15 +30,19 @@
 typedef	void	(*roff_valid_fp)(ROFF_VALID_ARGS);
 
 static	void	  roff_valid_br(ROFF_VALID_ARGS);
+static	void	  roff_valid_fi(ROFF_VALID_ARGS);
 static	void	  roff_valid_ft(ROFF_VALID_ARGS);
+static	void	  roff_valid_nf(ROFF_VALID_ARGS);
 static	void	  roff_valid_sp(ROFF_VALID_ARGS);
 
 static	const roff_valid_fp roff_valids[ROFF_MAX] = {
 	roff_valid_br,  /* br */
 	NULL,  /* ce */
+	roff_valid_fi,  /* fi */
 	roff_valid_ft,  /* ft */
 	NULL,  /* ll */
 	NULL,  /* mc */
+	roff_valid_nf,  /* nf */
 	NULL,  /* po */
 	NULL,  /* rj */
 	roff_valid_sp,  /* sp */
@@ -62,10 +66,6 @@ static void
 roff_valid_br(ROFF_VALID_ARGS)
 {
 	struct roff_node	*np;
-
-	if (n->child != NULL)
-		mandoc_msg(MANDOCERR_ARG_SKIP,
-		    n->line, n->pos, "br %s", n->child->string);
 
 	if (n->next != NULL && n->next->type == ROFFT_TEXT &&
 	    *n->next->string == ' ') {
@@ -92,6 +92,13 @@ roff_valid_br(ROFF_VALID_ARGS)
 }
 
 static void
+roff_valid_fi(ROFF_VALID_ARGS)
+{
+	if ((man->flags & ROFF_NOFILL) == 0)
+		mandoc_msg(MANDOCERR_FI_SKIP, n->line, n->pos, "fi");
+}
+
+static void
 roff_valid_ft(ROFF_VALID_ARGS)
 {
 	const char		*cp;
@@ -111,14 +118,16 @@ roff_valid_ft(ROFF_VALID_ARGS)
 }
 
 static void
+roff_valid_nf(ROFF_VALID_ARGS)
+{
+	if (man->flags & ROFF_NOFILL)
+		mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "nf");
+}
+
+static void
 roff_valid_sp(ROFF_VALID_ARGS)
 {
 	struct roff_node	*np;
-
-	if (n->child != NULL && n->child->next != NULL)
-		mandoc_msg(MANDOCERR_ARG_EXCESS,
-		    n->child->next->line, n->child->next->pos,
-		    "sp ... %s", n->child->next->string);
 
 	if ((np = n->prev) == NULL)
 		return;
