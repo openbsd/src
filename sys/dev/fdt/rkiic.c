@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkiic.c,v 1.3 2018/02/25 20:42:42 kettenis Exp $	*/
+/*	$OpenBSD: rkiic.c,v 1.4 2018/12/31 21:59:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -141,6 +141,7 @@ rkiic_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(sc->sc_node, "default");
 
+	clock_set_assigned(sc->sc_node);
 	clock_enable(sc->sc_node, "i2c");
 	clock_enable(sc->sc_node, "pclk");
 
