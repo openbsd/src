@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_validate.c,v 1.17 2018/12/31 08:38:17 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.18 2018/12/31 09:02:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -120,7 +120,7 @@ roff_valid_ft(ROFF_VALID_ARGS)
 static void
 roff_valid_nf(ROFF_VALID_ARGS)
 {
-	if (man->flags & ROFF_NOFILL)
+	if (n->flags & NODE_NOFILL)
 		mandoc_msg(MANDOCERR_NF_SKIP, n->line, n->pos, "nf");
 }
 
