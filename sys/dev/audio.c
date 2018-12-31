@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.174 2018/12/27 17:57:58 tedu Exp $	*/
+/*	$OpenBSD: audio.c,v 1.175 2018/12/31 17:12:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -125,7 +125,6 @@ struct audio_softc {
 #if NWSKBD > 0
 	struct wskbd_vol spkr, mic;
 	struct task wskbd_task;
-	int wskbd_taskset;
 #endif
 	int record_enable;		/* mixer record.enable value */
 };
@@ -138,6 +137,7 @@ void audio_pintr(void *);
 void audio_rintr(void *);
 #if NWSKBD > 0
 void wskbd_mixer_init(struct audio_softc *);
+void wskbd_mixer_cb(void *);
 #endif
 
 const struct cfattach audio_ca = {
@@ -2000,6 +2000,7 @@ wskbd_mixer_init(struct audio_softc *sc)
 			mic_names[i].cn, mic_names[i].dn))
 			break;
 	}
+	task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
 }
 
 void
@@ -2072,16 +2073,12 @@ wskbd_mixer_update(struct audio_softc *sc, struct wskbd_vol *vol)
 }
 
 void
-wskbd_mixer_cb(void *addr)
+wskbd_mixer_cb(void *arg)
 {
-	struct audio_softc *sc = addr;
-	int s;
+	struct audio_softc *sc = arg;
 
 	wskbd_mixer_update(sc, &sc->spkr);
 	wskbd_mixer_update(sc, &sc->mic);
-	s = spltty();
-	sc->wskbd_taskset = 0;
-	splx(s);
 	device_unref(&sc->dev);
 }
 
@@ -2096,13 +2093,8 @@ wskbd_set_mixermute(long mute, long out)
 		return ENODEV;
 	vol = out ? &sc->spkr : &sc->mic;
 	vol->mute_pending = mute ? WSKBD_MUTE_ENABLE : WSKBD_MUTE_DISABLE;
-	if (!sc->wskbd_taskset) {
-		task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
-		task_add(systq, &sc->wskbd_task);
-		sc->wskbd_taskset = 1;
-	} else {
+	if (!task_add(systq, &sc->wskbd_task))
 		device_unref(&sc->dev);
-	}
 	return 0;
 }
 
@@ -2120,13 +2112,8 @@ wskbd_set_mixervolume(long dir, long out)
 		vol->mute_pending ^= WSKBD_MUTE_TOGGLE;
 	else
 		vol->val_pending += dir;
-	if (!sc->wskbd_taskset) {
-		task_set(&sc->wskbd_task, wskbd_mixer_cb, sc);
-		task_add(systq, &sc->wskbd_task);
-		sc->wskbd_taskset = 1;
-	} else {
+	if (!task_add(systq, &sc->wskbd_task))
 		device_unref(&sc->dev);
-	}
 	return 0;
 }
 #endif /* NWSKBD > 0 */
