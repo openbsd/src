@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.35 2018/12/31 21:53:52 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.36 2019/01/01 11:15:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1180,7 +1180,7 @@ rk3328_set_frac_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 		postdiv1 = 2; postdiv2 = 1; refdiv = 24; fracdiv = 671088;
 		break;
 	case 61440000U:
-		postdiv1 = 7; postdiv2 = 2; refdiv = 24; fracdiv = 671088;
+		postdiv1 = 7; postdiv2 = 2; refdiv = 6; fracdiv = 671088;
 		break;
 	case 56448000U:
 		postdiv1 = postdiv2 = 4; refdiv = 12; fracdiv = 9797894;
