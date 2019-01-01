@@ -1,7 +1,7 @@
-/*	$OpenBSD: tree.c,v 1.50 2018/12/30 00:48:48 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.51 2019/01/01 05:56:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -187,20 +187,22 @@ print_mdoc(const struct roff_node *n, int indent)
 		}
 
 		putchar(' ');
-		if (NODE_DELIMO & n->flags)
+		if (n->flags & NODE_DELIMO)
 			putchar('(');
-		if (NODE_LINE & n->flags)
+		if (n->flags & NODE_LINE)
 			putchar('*');
 		printf("%d:%d", n->line, n->pos + 1);
-		if (NODE_DELIMC & n->flags)
+		if (n->flags & NODE_DELIMC)
 			putchar(')');
-		if (NODE_EOS & n->flags)
+		if (n->flags & NODE_EOS)
 			putchar('.');
-		if (NODE_BROKEN & n->flags)
+		if (n->flags & NODE_BROKEN)
 			printf(" BROKEN");
-		if (NODE_NOSRC & n->flags)
+		if (n->flags & NODE_NOFILL)
+			printf(" NOFILL");
+		if (n->flags & NODE_NOSRC)
 			printf(" NOSRC");
-		if (NODE_NOPRT & n->flags)
+		if (n->flags & NODE_NOPRT)
 			printf(" NOPRT");
 		putchar('\n');
 	}
@@ -286,13 +288,15 @@ print_man(const struct roff_node *n, int indent)
 		for (i = 0; i < indent; i++)
 			putchar(' ');
 		printf("%s (%s) ", p, t);
-		if (NODE_LINE & n->flags)
+		if (n->flags & NODE_LINE)
 			putchar('*');
 		printf("%d:%d", n->line, n->pos + 1);
-		if (NODE_DELIMC & n->flags)
+		if (n->flags & NODE_DELIMC)
 			putchar(')');
-		if (NODE_EOS & n->flags)
+		if (n->flags & NODE_EOS)
 			putchar('.');
+		if (n->flags & NODE_NOFILL)
+			printf(" NOFILL");
 		putchar('\n');
 	}
 
