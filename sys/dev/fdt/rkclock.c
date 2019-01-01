@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.36 2019/01/01 11:15:15 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.37 2019/01/01 12:19:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -315,13 +315,19 @@ rkclock_lookup(struct rkclock_softc *sc, uint32_t idx)
 }
 
 uint32_t
-rkclock_div_con(struct rkclock_softc *sc, int idx, uint32_t freq)
+rkclock_div_con(struct rkclock_softc *sc, struct rkclock *clk,
+    uint32_t mux, uint32_t freq)
 {
-	uint32_t parent_freq, div;
+	uint32_t parent_freq, div, div_con, max_div_con;
+	uint32_t idx = clk->parents[mux];
 
+	/* Derive maximum value from mask. */
+	max_div_con = clk->div_mask >> (ffs(clk->div_mask) - 1);
+	
 	parent_freq = sc->sc_cd.cd_get_frequency(sc, &idx);
 	div = (parent_freq + freq - 1) / freq;
-	return (div > 0 ? div - 1 : 0);
+	div_con = (div > 0 ? div - 1 : 0);
+	return (div_con < max_div_con) ? div_con : max_div_con;
 }
 
 uint32_t
@@ -382,7 +388,7 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 		return 0;
 	}
 
-	div_con = rkclock_div_con(sc, clk->parents[mux], freq);
+	div_con = rkclock_div_con(sc, clk, mux, freq);
 	shift = ffs(clk->div_mask) - 1;
 	HWRITE4(sc, clk->reg, clk->div_mask << 16 | div_con << shift);
 	return 0;
