@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.159 2018/12/27 23:53:47 tedu Exp $
+.\"	$OpenBSD: mandoc.1,v 1.160 2019/01/01 08:18:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2018 $
+.Dd $Mdocdate: January 1 2019 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -307,8 +307,16 @@ If no
 is specified, reuse the first command line argument that is not a
 .Ar section
 number.
-This is useful when it is the name of a manual page,
-in particular the name of a library function.
+If that argument is in
+.Xr apropos 1
+.Ar key Ns = Ns Ar val
+format, only the
+.Ar val
+is used rather than the argument as a whole.
+This is useful for commands like
+.Ql man -akO tag Ic=ulimit
+to search for a keyword and jump right to its definition
+in the matching manual pages.
 .It Cm width Ns = Ns Ar width
 The output width is set to
 .Ar width

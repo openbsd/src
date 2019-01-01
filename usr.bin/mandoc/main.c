@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.218 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.219 2019/01/01 08:18:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	struct manpage	*res, *resp;
 	const char	*progname, *sec, *thisarg;
 	char		*conf_file, *defpaths, *auxpaths;
-	char		*oarg;
+	char		*oarg, *tagarg;
 	unsigned char	*uc;
 	size_t		 i, sz;
 	int		 prio, best_prio;
@@ -340,6 +340,17 @@ main(int argc, char *argv[])
 			search.arch = MACHINE;
 	}
 
+	/*
+	 * Use the first argument for -O tag in addition to
+	 * using it as a search term for man(1) or apropos(1).
+	 */
+
+	if (conf.output.tag != NULL && *conf.output.tag == '\0') {
+		tagarg = argc > 0 && search.argmode == ARG_EXPR ?
+		    strchr(*argv, '=') : NULL;
+		conf.output.tag = tagarg == NULL ? *argv : tagarg + 1;
+	}
+
 	/* man(1), whatis(1), apropos(1) */
 
 	if (search.argmode != ARG_FILE) {
@@ -450,8 +461,10 @@ main(int argc, char *argv[])
 	curp.mp = mparse_alloc(options, curp.os_e, curp.os_s);
 
 	if (argc < 1) {
-		if (use_pager)
+		if (use_pager) {
 			tag_files = tag_init();
+			tag_files->tagname = conf.output.tag;
+		}
 		thisarg = "<stdin>";
 		mandoc_msg_setinfilename(thisarg);
 		parse(&curp, STDIN_FILENO, thisarg);
@@ -488,11 +501,7 @@ main(int argc, char *argv[])
 			if (use_pager) {
 				use_pager = 0;
 				tag_files = tag_init();
-				if (conf.output.tag != NULL &&
-				    tag_files->tagname == NULL)
-					tag_files->tagname =
-					    *conf.output.tag != '\0' ?
-					    conf.output.tag : *argv;
+				tag_files->tagname = conf.output.tag;
 			}
 
 			mandoc_msg_setinfilename(thisarg);
