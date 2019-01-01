@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.40 2019/01/01 15:54:33 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.41 2019/01/01 17:12:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1527,6 +1527,16 @@ struct rkclock rk3399_clocks[] = {
 		  RK3399_PLL_VPLL }
 	},
 	{
+		RK3399_ACLK_HDCP, RK3399_CRU_CLKSEL_CON(42),
+		SEL(15, 14), DIV(12, 8),
+		{ RK3399_PLL_CPLL, RK3399_PLL_GPLL, /* RK3399_PLL_PPLL */ }
+	},
+	{
+		RK3399_ACLK_GIC_PRE, RK3399_CRU_CLKSEL_CON(56),
+		SEL(15, 15), DIV(12, 8),
+		{ RK3399_PLL_CPLL, RK3399_PLL_GPLL }
+	},
+	{
 		RK3399_PCLK_PERIPH, RK3399_CRU_CLKSEL_CON(14),
 		0, DIV(14, 12),
 		{ RK3399_ACLK_PERIPH }
@@ -1540,6 +1550,11 @@ struct rkclock rk3399_clocks[] = {
 		RK3399_PCLK_PERILP1, RK3399_CRU_CLKSEL_CON(25),
 		0, DIV(10, 8),
 		{ RK3399_HCLK_PERILP1 }
+	},
+	{
+		RK3399_PCLK_DDR, RK3399_CRU_CLKSEL_CON(6),
+		SEL(15, 15), DIV(12, 8),
+		{ RK3399_PLL_CPLL, RK3399_PLL_GPLL }
 	},
 	{
 		RK3399_HCLK_PERIPH, RK3399_CRU_CLKSEL_CON(14),
