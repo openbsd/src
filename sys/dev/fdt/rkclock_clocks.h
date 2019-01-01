@@ -51,6 +51,7 @@
 #define RK3328_CLK_SDMMC		33
 #define RK3328_CLK_SDIO			34
 #define RK3328_CLK_EMMC			35
+#define RK3328_CLK_TSADC		36
 #define RK3328_CLK_UART0		38
 #define RK3328_CLK_UART1		39
 #define RK3328_CLK_UART2		40
@@ -87,6 +88,7 @@
 #define RK3328_HCLK_BUS_PRE		328
 
 #define RK3328_XIN24M			1023
+#define RK3328_CLK_24M			1022
 
 /*
  * RK3399 clocks.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.38 2019/01/01 12:35:41 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.39 2019/01/01 14:41:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -803,6 +803,11 @@ struct rkclock rk3328_clocks[] = {
 		  RK3328_USB480M }
 	},
 	{
+		RK3328_CLK_TSADC, RK3328_CRU_CLKSEL_CON(22),
+		0, DIV(9, 0),
+		{ RK3328_CLK_24M }
+	},
+	{
 		RK3328_CLK_UART0, RK3328_CRU_CLKSEL_CON(14),
 		SEL(9, 8), 0,
 		{ 0, 0, RK3328_XIN24M, RK3328_XIN24M }
@@ -947,6 +952,11 @@ struct rkclock rk3328_clocks[] = {
 		RK3328_HCLK_PERI, RK3328_CRU_CLKSEL_CON(29),
 		0, DIV(1, 0),
 		{ RK3328_ACLK_PERI_PRE }
+	},
+	{
+		RK3328_CLK_24M, RK3328_CRU_CLKSEL_CON(2),
+		0, DIV(12, 8),
+		{ RK3328_XIN24M }
 	},
 	{
 		/* Sentinel */
