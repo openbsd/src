@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.3 2018/02/26 22:37:10 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.4 2019/01/01 15:56:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -277,6 +277,7 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(node, "init");
 
+	clock_set_assigned(node);
 	clock_enable(node, "tsadc");
 	clock_enable(node, "apb_pclk");
 
