@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.187 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.188 2019/01/01 07:41:22 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -694,6 +694,19 @@ blk_exp_close(MACRO_PROT_ARGS)
 			    "%s %s", roff_name[tok], buf + *pos);
 		if (endbody == NULL && n != NULL)
 			rew_pending(mdoc, n);
+
+		/*
+		 * Restore the fill mode that was set before the display.
+		 * This needs to be done here rather than during validation
+		 * such that subsequent nodes get the right flags.
+		 */
+
+		if (tok == MDOC_Ed && body != NULL) {
+			if (body->flags & NODE_NOFILL)
+				mdoc->flags |= ROFF_NOFILL;
+			else
+				mdoc->flags &= ~ROFF_NOFILL;
+		}
 		return;
 	}
 
@@ -934,14 +947,15 @@ in_line(MACRO_PROT_ARGS)
 static void
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  done, la, nl, parsed;
 	struct mdoc_arg	 *arg;
 	struct roff_node *blk; /* Our own or a broken block. */
 	struct roff_node *head; /* Our own head. */
 	struct roff_node *body; /* Our own body. */
 	struct roff_node *n;
-	enum margserr	  ac, lac;
 	char		 *p;
+	size_t		  iarg;
+	int		  done, la, nl, parsed;
+	enum margserr	  ac, lac;
 
 	nl = MDOC_NEWLINE & mdoc->flags;
 
@@ -1036,6 +1050,9 @@ blk_full(MACRO_PROT_ARGS)
 	 * for `It -column', which has phrase-part syntax instead of
 	 * regular child nodes.
 	 */
+
+	if (tok == MDOC_Sh)
+		mdoc->flags &= ~ROFF_NOFILL;
 
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	blk = mdoc_block_alloc(mdoc, line, ppos, tok, arg);
@@ -1178,6 +1195,31 @@ blk_full(MACRO_PROT_ARGS)
 
 	rew_last(mdoc, head);
 	body = roff_body_alloc(mdoc, line, ppos, tok);
+
+	/*
+	 * Set up fill mode for display blocks.
+	 * This needs to be done here up front rather than during
+	 * validation such that child nodes get the right flags.
+	 */
+
+	if (tok == MDOC_Bd && arg != NULL) {
+		for (iarg = 0; iarg < arg->argc; iarg++) {
+			switch (arg->argv[iarg].arg) {
+			case MDOC_Unfilled:
+			case MDOC_Literal:
+				mdoc->flags |= ROFF_NOFILL;
+				break;
+			case MDOC_Filled:
+			case MDOC_Ragged:
+			case MDOC_Centred:
+				mdoc->flags &= ~ROFF_NOFILL;
+				break;
+			default:
+				continue;
+			}
+			break;
+		}
+	}
 out:
 	if (mdoc->flags & MDOC_FREECOL) {
 		rew_last(mdoc, body);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.14 2018/12/31 07:45:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.15 2019/01/01 07:41:22 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -32,9 +32,7 @@
 
 typedef	void	(*state_handler)(STATE_ARGS);
 
-static	void	 state_bd(STATE_ARGS);
 static	void	 state_bl(STATE_ARGS);
-static	void	 state_dl(STATE_ARGS);
 static	void	 state_sh(STATE_ARGS);
 static	void	 state_sm(STATE_ARGS);
 
@@ -46,8 +44,8 @@ static	const state_handler state_handlers[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Ss */
 	NULL,		/* Pp */
 	NULL,		/* D1 */
-	state_dl,	/* Dl */
-	state_bd,	/* Bd */
+	NULL,		/* Dl */
+	NULL,		/* Bd */
 	NULL,		/* Ed */
 	state_bl,	/* Bl */
 	NULL,		/* El */
@@ -180,25 +178,6 @@ mdoc_state(struct roff_man *mdoc, struct roff_node *n)
 }
 
 static void
-state_bd(STATE_ARGS)
-{
-	enum mdocargt arg;
-
-	if (n->type != ROFFT_HEAD &&
-	    (n->type != ROFFT_BODY || n->end != ENDBODY_NOT))
-		return;
-
-	if (n->parent->args == NULL)
-		return;
-
-	arg = n->parent->args->argv[0].arg;
-	if (arg != MDOC_Literal && arg != MDOC_Unfilled)
-		return;
-
-	state_dl(mdoc, n);
-}
-
-static void
 state_bl(STATE_ARGS)
 {
 	struct mdoc_arg	*args;
@@ -219,22 +198,6 @@ state_bl(STATE_ARGS)
 		default:
 			break;
 		}
-	}
-}
-
-static void
-state_dl(STATE_ARGS)
-{
-
-	switch (n->type) {
-	case ROFFT_HEAD:
-		mdoc->flags |= ROFF_NOFILL;
-		break;
-	case ROFFT_BODY:
-		mdoc->flags &= ~ROFF_NOFILL;
-		break;
-	default:
-		break;
 	}
 }
 
