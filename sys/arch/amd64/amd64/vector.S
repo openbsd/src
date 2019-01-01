@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.77 2018/10/07 22:43:06 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.78 2019/01/01 03:19:37 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ INTRENTRY_LABEL(trap03):
 	movq	TF_RDX(%rsp),%rdx
 	movq	TF_RCX(%rsp),%rcx
 	movq	TF_R11(%rsp),%r11
-	/* %rax restored below, after begin used to shift the stack */
+	/* %rax restored below, after being used to shift the stack */
 
 	/*
 	 * We are returning from a probe trap so we need to fix the
