@@ -1,7 +1,7 @@
-.\"	$OpenBSD: roff.7,v 1.90 2018/12/16 01:34:34 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.91 2019/01/01 03:44:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2018 $
+.Dd $Mdocdate: January 1 2019 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -908,11 +908,23 @@ This is a Heirloom extension and currently ignored.
 Enable or disable an OpenType feature.
 This is a Heirloom extension and currently ignored.
 .It Ic \&fi
-Switch to fill mode.
-See
-.Xr man 7 .
-Ignored in
-.Xr mdoc 7 .
+Break the output line and switch to fill mode,
+which is active by default but can be ended with the
+.Ic \&nf
+request.
+In fill mode, input from subsequent input lines is added to
+the same output line until the next word no longer fits,
+at which point the output line is broken.
+This request is implied by the
+.Xr mdoc 7
+.Ic \&Sh
+macro and by the
+.Xr man 7
+.Ic \&SH ,
+.Ic \&SS ,
+and
+.Ic \&EE
+macros.
 .It Ic \&fkern Ar font minkern
 Control the use of kerning tables for a font.
 This is a Heirloom extension and currently ignored.
@@ -1347,11 +1359,22 @@ Declare the need for the specified minimum vertical space
 before the next trap or the bottom of the page.
 Currently ignored.
 .It Ic \&nf
-Switch to no-fill mode.
-See
-.Xr man 7 .
-Ignored by
-.Xr mdoc 7 .
+Break the output line and switch to no-fill mode.
+Subsequent input lines are kept together on the same output line
+even when exceeding the right margin,
+and line breaks in subsequent input cause output line breaks.
+This request is implied by the
+.Xr mdoc 7
+.Ic \&Bd Fl unfilled
+and
+.Ic \&Bd Fl literal
+macros and by the
+.Xr man 7
+.Ic \&EX
+macro.
+The
+.Ic \&fi
+request switches back to the default fill mode.
 .It Ic \&nh
 Turn off automatic hyphenation mode.
 Currently ignored.

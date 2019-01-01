@@ -1,7 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.53 2018/12/16 02:20:26 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.54 2019/01/01 03:44:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011-2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2017 Anthony Bentley <bentley@openbsd.org>
 .\" Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
 .\"
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2018 $
+.Dd $Mdocdate: January 1 2019 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -101,7 +101,6 @@ but can be found in the alphabetical reference below.
 .It Sx IP Ta indented paragraph: Op Ar head Op Ar width
 .It Sx TP Ta tagged paragraph: Op Ar width
 .It Sx PD Ta set vertical paragraph distance: Op Ar height
-.It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
 .It Sx in Ta additional indent: Op Ar width
 .El
 .Ss Physical markup
@@ -163,14 +162,18 @@ request.
 This is a non-standard GNU extension.
 In
 .Xr mandoc 1 ,
-it does the same as
-.Sx \&fi .
+it does the same as the
+.Xr roff 7
+.Sx \&fi
+request (switch to fill mode).
 .Ss \&EX
 This is a non-standard GNU extension.
 In
 .Xr mandoc 1 ,
-it does the same as
-.Sx \&nf .
+it does the same as the
+.Xr roff 7
+.Ic \&nf
+request (switch to no-fill mode).
 .Ss \&HP
 Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:
@@ -459,9 +462,6 @@ link description to be shown
 End a synopsis block started with
 .Sx \&SY .
 This is a non-standard GNU extension.
-.Ss \&fi
-End literal mode started with
-.Sx \&nf .
 .Ss \&in
 Indent relative to the current indentation:
 .Pp
@@ -472,15 +472,6 @@ If
 is signed, the new offset is relative.
 Otherwise, it is absolute.
 This value is reset upon the next paragraph, section, or sub-section.
-.Ss \&nf
-Begin literal mode: all subsequent free-form lines have their end of
-line boundaries preserved.
-May be ended by
-.Sx \&fi .
-Literal mode is implicitly ended by
-.Sx \&SH
-or
-.Sx \&SS .
 .Sh MACRO SYNTAX
 The
 .Nm
@@ -531,9 +522,7 @@ The syntax is as follows:
 .It Sx \&SM  Ta    n         Ta    next-line Ta    \&
 .It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
 .It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
-.It Sx \&fi  Ta    0         Ta    current   Ta    Xr roff 7
 .It Sx \&in  Ta    1         Ta    current   Ta    Xr roff 7
-.It Sx \&nf  Ta    0         Ta    current   Ta    Xr roff 7
 .El
 .Ss Block Macros
 Block macros comprise a head and body.
