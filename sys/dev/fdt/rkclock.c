@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.39 2019/01/01 14:41:46 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.40 2019/01/01 15:54:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1481,6 +1481,11 @@ struct rkclock rk3399_clocks[] = {
 		  RK3399_XIN24M }
 	},
 	{
+		RK3399_CLK_TSADC, RK3399_CRU_CLKSEL_CON(27),
+		SEL(15, 15), DIV(9, 0),
+		{ RK3399_XIN24M, RK3399_CLK_32K }
+	},
+	{
 		RK3399_CLK_UART0, RK3399_CRU_CLKSEL_CON(33),
 		SEL(9, 8), 0,
 		{ 0, 0, RK3399_XIN24M }
@@ -1828,6 +1833,8 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return rk3399_get_armclk(sc, RK3399_CRU_CLKSEL_CON(2));
 	case RK3399_XIN24M:
 		return 24000000;
+	case RK3399_CLK_32K:
+		return 32768;
 	default:
 		break;
 	}

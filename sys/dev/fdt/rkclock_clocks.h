@@ -172,3 +172,4 @@
 #define RK3399_PCLK_I2C8		29
 
 #define RK3399_XIN24M			1023
+#define RK3399_CLK_32K			1022
