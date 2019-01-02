@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.102 2018/12/28 19:25:10 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.103 2019/01/02 18:47:59 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -827,7 +827,7 @@ merge_interfaces(struct area *a, struct area *xa)
 
 	/* problems:
 	 * - new interfaces (easy)
-	 * - deleted interfaces (needs to be done via fsm?)
+	 * - deleted interfaces
 	 * - changing passive (painful?)
 	 */
 	for (i = LIST_FIRST(&a->iface_list); i != NULL; i = ni) {
@@ -842,6 +842,7 @@ merge_interfaces(struct area *a, struct area *xa)
 				rde_nbr_iface_del(i);
 			LIST_REMOVE(i, entry);
 			if_del(i);
+			dirty = 1; /* force rtr LSA update */
 		}
 	}
 
