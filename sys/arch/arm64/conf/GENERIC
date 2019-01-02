@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.91 2018/09/11 13:54:28 ccardenas Exp $
+# $OpenBSD: GENERIC,v 1.92 2019/01/02 21:15:47 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -329,6 +329,7 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+abcrtc*		at iic?			# Abracon x80x RTC
 fanpwr*		at iic?			# FAN53555 regulator
 islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC

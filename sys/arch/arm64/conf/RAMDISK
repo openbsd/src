@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.75 2018/09/28 13:39:57 ccardenas Exp $
+# $OpenBSD: RAMDISK,v 1.76 2019/01/02 21:15:47 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -247,6 +247,7 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+abcrtc*		at iic?			# Abracon x80x RTC
 islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
 

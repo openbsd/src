@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.61 2018/07/09 18:48:52 patrick Exp $
+# $OpenBSD: files.i2c,v 1.62 2019/01/02 21:15:47 patrick Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -224,3 +224,8 @@ file dev/i2c/bmc150.c				bgw
 device	islrtc
 attach	islrtc at i2c
 file dev/i2c/isl1208.c				islrtc
+
+# Abracon ABx8xx Real Time Clock
+device	abcrtc
+attach	abcrtc at i2c
+file dev/i2c/abx80x.c				abcrtc
