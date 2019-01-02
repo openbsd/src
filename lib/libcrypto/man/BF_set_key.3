@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BF_set_key.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: BF_set_key.3,v 1.9 2019/01/02 07:42:21 jmc Exp $
 .\"	OpenSSL 99d63d46 Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: January 2 2019 $
 .Dt BF_SET_KEY 3
 .Os
 .Sh NAME
@@ -188,7 +188,7 @@ operates on data that is a multiple of 8 bytes long, while
 .Fn BF_cfb64_encrypt
 and
 .Fn BF_ofb64_encrypt
-are used to encrypt an variable number of bytes (the amount
+are used to encrypt a variable number of bytes (the amount
 does not have to be an exact multiple of 8).
 The purpose of the latter two is to simulate stream ciphers and,
 therefore, they need the parameter
