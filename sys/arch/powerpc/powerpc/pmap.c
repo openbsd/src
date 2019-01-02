@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.168 2018/10/22 17:31:25 krw Exp $ */
+/*	$OpenBSD: pmap.c,v 1.169 2019/01/02 23:08:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2067,7 +2067,9 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct pte_desc *pted;
+	void *pte;
 	pmap_t pm;
+	int s;
 
 	if (prot == PROT_NONE) {
 		mtx_enter(&pg->mdpage.pv_mtx);
@@ -2097,6 +2099,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				mtx_enter(&pg->mdpage.pv_mtx);
 				continue;
 			}
+
+			PMAP_HASH_LOCK(s);
+			if ((pte = pmap_ptedinhash(pted)) != NULL)
+				pte_zap(pte, pted);
+			PMAP_HASH_UNLOCK(s);
 
 			pted->pted_va &= ~PTED_VA_MANAGED_M;
 			LIST_REMOVE(pted, pted_pv_list);
