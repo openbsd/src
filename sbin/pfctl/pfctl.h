@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.57 2018/09/06 15:07:33 kn Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.58 2019/01/02 22:59:54 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -82,14 +82,6 @@ int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
 void	 warn_namespace_collision(const char *);
 void	 pfctl_show_ifaces(const char *, int);
 FILE	*pfctl_fopen(const char *, const char *);
-
-/*
- * generalized service curve used for admission control
- */
-struct segment {
-	LIST_ENTRY(segment)	_next;
-	double			x, y, d, m;
-};
 
 void	 print_addr(struct pf_addr_wrap *, sa_family_t, int);
 void	 print_addr_str(sa_family_t, struct pf_addr *);
