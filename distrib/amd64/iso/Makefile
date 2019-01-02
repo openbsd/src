@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2017/08/13 15:41:30 jasper Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/01/02 18:56:17 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,7 +7,7 @@ TOP=	${.CURDIR}/..
 CDROM=		install${REV}.iso
 
 FS=		install${REV}.fs
-FSSIZE=		737280
+FSSIZE=		757760
 FSTYPE=		install360
 
 RAMDISK=	RAMDISK_CD
