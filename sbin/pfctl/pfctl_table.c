@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.78 2018/10/15 21:15:35 kn Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.79 2019/01/02 23:08:00 kn Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -54,8 +54,6 @@
 #include "pfctl.h"
 
 extern void	usage(void);
-static int	pfctl_table(int, char *[], char *, const char *, char *,
-		    const char *, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
 static int	load_addr(struct pfr_buffer *, int, char *[], char *, int, int);
@@ -114,15 +112,6 @@ pfctl_show_tables(const char *anchor, int opts)
 {
 	if (pfctl_table(0, NULL, NULL, "-s", NULL, anchor, opts) == -1)
 		exit(1);
-}
-
-int
-pfctl_command_tables(int argc, char *argv[], char *tname,
-    const char *command, char *file, const char *anchor, int opts)
-{
-	if (tname == NULL || command == NULL)
-		usage();
-	return pfctl_table(argc, argv, tname, command, file, anchor, opts);
 }
 
 int

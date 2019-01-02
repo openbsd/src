@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.58 2019/01/02 22:59:54 kn Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.59 2019/01/02 23:08:00 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,7 +77,7 @@ int	 pfi_clr_istats(const char *, int *, int);
 void	 pfctl_print_title(char *);
 void	 pfctl_clear_tables(const char *, int);
 void	 pfctl_show_tables(const char *, int);
-int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
+int	 pfctl_table(int, char *[], char *, const char *, char *,
 	    const char *, int);
 void	 warn_namespace_collision(const char *);
 void	 pfctl_show_ifaces(const char *, int);
