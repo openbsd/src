@@ -5808,6 +5808,7 @@
 ./usr/share/zoneinfo/Asia/Pontianak
 ./usr/share/zoneinfo/Asia/Pyongyang
 ./usr/share/zoneinfo/Asia/Qatar
+./usr/share/zoneinfo/Asia/Qostanay
 ./usr/share/zoneinfo/Asia/Qyzylorda
 ./usr/share/zoneinfo/Asia/Rangoon
 ./usr/share/zoneinfo/Asia/Riyadh
@@ -6422,6 +6423,7 @@
 ./usr/share/zoneinfo/posix/Asia/Pontianak
 ./usr/share/zoneinfo/posix/Asia/Pyongyang
 ./usr/share/zoneinfo/posix/Asia/Qatar
+./usr/share/zoneinfo/posix/Asia/Qostanay
 ./usr/share/zoneinfo/posix/Asia/Qyzylorda
 ./usr/share/zoneinfo/posix/Asia/Rangoon
 ./usr/share/zoneinfo/posix/Asia/Riyadh
@@ -7037,6 +7039,7 @@
 ./usr/share/zoneinfo/right/Asia/Pontianak
 ./usr/share/zoneinfo/right/Asia/Pyongyang
 ./usr/share/zoneinfo/right/Asia/Qatar
+./usr/share/zoneinfo/right/Asia/Qostanay
 ./usr/share/zoneinfo/right/Asia/Qyzylorda
 ./usr/share/zoneinfo/right/Asia/Rangoon
 ./usr/share/zoneinfo/right/Asia/Riyadh
