@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.59 2018/12/29 16:04:31 remi Exp $ */
+/*	$OpenBSD: kroute.c,v 1.60 2019/01/02 21:32:55 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1347,6 +1347,7 @@ dispatch_rtmsg(void)
 	int			 flags, mpath;
 	unsigned int		 scope;
 	u_short			 ifindex = 0;
+	int			 rv;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
@@ -1512,15 +1513,27 @@ add:
 				kr->r.ifindex = ifindex;
 				kr->r.priority = prio;
 
-				if ((label = (struct sockaddr_rtlabel *)
-				    rti_info[RTAX_LABEL]) != NULL) {
-					kr->r.rtlabel =
-					    rtlabel_name2id(label->sr_label);
-					kr->r.ext_tag =
-					    rtlabel_id2tag(kr->r.rtlabel);
-				}
+				if (rtm->rtm_priority == kr_state.fib_prio) {
+					log_warnx("alien OSPF route %s/%d",
+					    log_in6addr(&prefix), prefixlen);
+					rv = send_rtmsg(kr_state.fd,
+					    RTM_DELETE, &kr->r);
+					free(kr);
+					if (rv == -1)
+						return (-1);
+				} else {
+					if ((label = (struct sockaddr_rtlabel *)
+					    rti_info[RTAX_LABEL]) != NULL) {
+						kr->r.rtlabel =
+						    rtlabel_name2id(
+						    label->sr_label);
+						kr->r.ext_tag =
+						    rtlabel_id2tag(
+						    kr->r.rtlabel);
+					}
 
-				kroute_insert(kr);
+					kroute_insert(kr);
+				}
 			}
 			break;
 		case RTM_DELETE:
