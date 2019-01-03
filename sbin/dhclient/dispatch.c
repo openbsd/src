@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.155 2018/12/27 17:19:56 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.156 2019/01/03 16:42:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -168,6 +168,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			continue;
 
 		if ((fds[0].revents & POLLIN) != 0) {
+			ifi->rbuf_offset = ifi->rbuf_len = 0;
 			do {
 				bpffd_handler(ifi);
 			} while (quit == 0 && ifi->rbuf_offset < ifi->rbuf_len);

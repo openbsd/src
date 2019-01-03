@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.261 2018/12/27 17:33:15 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.262 2019/01/03 16:42:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@
 #define	REMOTE_PORT	67
 #define	INTERNALSIG	SIG_ATOMIC_MAX
 #define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
+#define	RT_BUF_SIZE	2048
 
 struct option_data {
 	unsigned int	 len;

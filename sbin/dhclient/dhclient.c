@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.598 2018/12/28 16:01:39 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.599 2019/01/03 16:42:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -311,19 +311,16 @@ void
 routefd_handler(struct interface_info *ifi, int routefd)
 {
 	struct rt_msghdr		*rtm;
-	char				*buf, *lim, *next;
+	unsigned char			*buf = ifi->rbuf;
+	unsigned char			*lim, *next;
 	ssize_t				 n;
 
-	buf = calloc(1, 2048);
-	if (buf == NULL)
-		fatal("rtm buf");
-
 	do {
-		n = read(routefd, buf, 2048);
+		n = read(routefd, buf, RT_BUF_SIZE);
 	} while (n == -1 && errno == EINTR);
 	if (n == -1) {
 		log_warn("%s: routing socket", log_procname);
-		goto done;
+		return;
 	}
 	if (n == 0)
 		fatalx("%s: routing socket closed", log_procname);
@@ -340,10 +337,6 @@ routefd_handler(struct interface_info *ifi, int routefd)
 
 		rtm_dispatch(ifi, rtm);
 	}
-
-done:
-	free(buf);
-	return;
 }
 
 void
@@ -465,7 +458,9 @@ main(int argc, char *argv[])
 	struct interface_info	*ifi;
 	struct passwd		*pw;
 	char			*ignore_list = NULL;
+	unsigned char		*newp;
 	ssize_t			 tailn;
+	size_t			 newsize;
 	int			 fd, socket_fd[2];
 	int			 rtfilter, ioctlfd, routefd, tailfd;
 	int			 ch;
@@ -657,6 +652,12 @@ main(int argc, char *argv[])
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
+	/* Allocate a rbuf large enough to handle routing socket messages. */
+	ifi->rbuf_max = RT_BUF_SIZE;
+	ifi->rbuf = malloc(ifi->rbuf_max);
+	if (ifi->rbuf == NULL)
+		fatal("rbuf");
+
 	take_charge(ifi, routefd);
 
 	if ((fd = open(path_lease_db,
@@ -679,15 +680,16 @@ main(int argc, char *argv[])
 			fatal("fopen(%s)", path_option_db);
 	}
 
-	/* Register the interface. */
+	/* Create the udp and bpf sockets, growing rbuf if needed. */
 	ifi->udpfd = get_udp_sock(ifi->rdomain);
 	ifi->bpffd = get_bpf_sock(ifi->name);
-	ifi->rbuf_max = configure_bpf_sock(ifi->bpffd);
-	ifi->rbuf = malloc(ifi->rbuf_max);
-	if (ifi->rbuf == NULL)
-		fatal("bpf input buffer");
-	ifi->rbuf_offset = 0;
-	ifi->rbuf_len = 0;
+	newsize = configure_bpf_sock(ifi->bpffd);
+	if (newsize > ifi->rbuf_max) {
+		if ((newp = realloc(ifi->rbuf, newsize)) == NULL)
+			fatal("rbuf");
+		ifi->rbuf = newp;
+		ifi->rbuf_max = newsize;
+	}
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		fatal("chroot(%s)", _PATH_VAREMPTY);
