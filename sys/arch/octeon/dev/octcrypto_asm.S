@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto_asm.S,v 1.1 2018/04/09 13:46:15 visa Exp $	*/
+/*	$OpenBSD: octcrypto_asm.S,v 1.2 2019/01/03 17:06:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -648,7 +648,7 @@ LEAF(octcrypto_ghash_init, 0)
 	dmtc2	t0, MT_GFM_RESINP
 	jr	ra
 	 dmtc2	t1, MT_GFM_RESINP+1
-END(octcrypto_ghash_set_state)
+END(octcrypto_ghash_init)
 
 /*
  * void octcrypto_ghash_finish(uint64_t *x)
