@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.8 2018/12/27 19:33:08 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.9 2019/01/03 08:56:53 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -192,8 +192,7 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		p->p_kd = NULL;
 		break;
 	default:
-		error = EINVAL;
-		DPRINTF("%s: %lu: unknown command\n", __func__, cmd);
+		error = ENOTTY;
 	}
 
 	DPRINTF("%s: unit=%d, state=%d, mode=%d, error=%d\n",
