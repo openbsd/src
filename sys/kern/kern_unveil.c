@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.17 2018/10/29 00:11:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.18 2019/01/03 21:52:31 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 
 #include <sys/mount.h>
+#include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
@@ -238,22 +239,23 @@ unveil_copy(struct process *parent, struct process *child)
 	if (parent->ps_uvpcwd)
 		child->ps_uvpcwd = child->ps_uvpaths +
 		    (parent->ps_uvpcwd - parent->ps_uvpaths);
-	child->ps_uvpcwdgone = parent->ps_uvpcwdgone;
 	child->ps_uvdone = parent->ps_uvdone;
 	child->ps_uvshrink = parent->ps_uvshrink;
 }
 
 /*
  * Walk up from vnode dp, until we find a matching unveil, or the root vnode
- * returns NULL if no unveil to be found above dp.
+ * returns -1 if no unveil to be found above dp.
  */
 ssize_t
-unveil_find_cover(struct vnode *dp, struct proc *p, struct vnode *rootvnode)
+unveil_find_cover(struct vnode *dp, struct proc *p)
 {
-	struct vnode *vp = NULL, *parent = NULL;
+	struct vnode *vp = NULL, *parent = NULL, *root;
 	ssize_t ret = -1;
 	int error;
 
+	/* use the correct root to stop at, chrooted or not.. */
+	root = p->p_fd->fd_rdir ? p->p_fd->fd_rdir : rootvnode;
 	vp = dp;
 
 	do {
@@ -267,9 +269,19 @@ unveil_find_cover(struct vnode *dp, struct proc *p, struct vnode *rootvnode)
 			.cn_namelen = 2,
 			.cn_consume = 0
 		};
+
+		/*
+		 * if we are at the root of a filesystem, take the .. in the
+		 * above filesystem
+		 */
+		if (vp != root)
+			vp = ((vp->v_flag & VROOT) &&
+			    vp->v_mount->mnt_vnodecovered) ?
+			    vp->v_mount->mnt_vnodecovered : vp;
+
 		if (vget(vp, LK_EXCLUSIVE|LK_RETRY) != 0)
 			return -1;
-		/* Get parent vnode of dvp using lookup of '..' */
+		/* Get parent vnode of vp using lookup of '..' */
 		/* This returns with vp unlocked but ref'ed*/
 		error = VOP_LOOKUP(vp, &parent, &cn);
 		if (error) {
@@ -291,13 +303,16 @@ unveil_find_cover(struct vnode *dp, struct proc *p, struct vnode *rootvnode)
 		(void) unveil_lookup(parent, p, &ret);
 		vput(parent);
 
+		if (ret >= 0)
+			break;
+
 		if (vp == parent) {
 			ret = -1;
 			break;
 		}
 		vp = parent;
 		parent = NULL;
-	} while (vp != rootvnode);
+	} while (vp != root);
 	return ret;
 }
 
@@ -449,7 +464,7 @@ unveil_add_vnode(struct process *pr, struct vnode *vp, struct vnode *rootvnode)
 	pr->ps_uvvcount++;
 
 	/* find out what we are covered by */
-	uv->uv_cover = unveil_find_cover(vp, pr->ps_mainproc, rootvnode);
+	uv->uv_cover = unveil_find_cover(vp, pr->ps_mainproc);
 
 	/*
 	 * Find anyone covered by what we are covered by
@@ -460,7 +475,7 @@ unveil_add_vnode(struct process *pr, struct vnode *vp, struct vnode *rootvnode)
 		if (pr->ps_uvpaths[i].uv_cover == uv->uv_cover)
 			pr->ps_uvpaths[j].uv_cover =
 			    unveil_find_cover(pr->ps_uvpaths[j].uv_vp,
-			    pr->ps_mainproc, rootvnode);
+			    pr->ps_mainproc);
 	}
 
 	return (uv);
@@ -702,8 +717,8 @@ unveil_start_relative(struct proc *p, struct nameidata *ni)
 	 */
 	if (uv && (unveil_flagmatch(ni, uv->uv_flags))) {
 #ifdef DEBUG_UNVEIL
-		printf("unveil: %s(%d): cwd unveil matches",
-		    p->p_p->ps_comm, p->p_p->ps_pid);
+		printf("unveil: %s(%d): cwd unveil at %p matches",
+		    p->p_p->ps_comm, p->p_p->ps_pid, uv);
 #endif
 		ni->ni_unveil_match = uv;
 	}

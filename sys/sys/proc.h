@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.261 2018/11/12 15:09:17 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.262 2019/01/03 21:52:31 beck Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -211,7 +211,6 @@ struct process {
 	size_t ps_uvncount;		/* count of unveil names allocated */
 	int ps_uvshrink;		/* do we need to shrink vnode list */
 	int ps_uvdone;			/* no more unveil is permitted */
-	int ps_uvpcwdgone;		/* need to reevaluate cwd unveil */
 
 /* End area that is zeroed on creation. */
 #define	ps_endzero	ps_startcopy

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.309 2018/12/23 10:46:51 natano Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.310 2019/01/03 21:52:31 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -92,6 +92,8 @@ int dofutimens(struct proc *, int, struct timespec [2]);
 int dounmount_leaf(struct mount *, int, struct proc *);
 int unveil_add(struct proc *, struct nameidata *, const char *);
 void unveil_removevnode(struct vnode *vp);
+ssize_t unveil_find_cover(struct vnode *, struct proc *);
+struct unveil *unveil_lookup(struct vnode *, struct proc *, ssize_t *);
 
 /*
  * Virtual File System System Calls
@@ -342,8 +344,6 @@ checkdirs(struct vnode *olddp)
 			fdp->fd_rdir = newdp;
 		}
 		pr->ps_uvpcwd = NULL;
-		/* XXX */
-		pr->ps_uvpcwdgone = 1;
 	}
 	if (rootvnode == olddp) {
 		free_count++;
@@ -801,7 +801,6 @@ sys_chdir(struct proc *p, void *v, register_t *retval)
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
 	p->p_p->ps_uvpcwd = nd.ni_unveil_match;
-	p->p_p->ps_uvpcwdgone = 0;
 	old_cdir = fdp->fd_cdir;
 	fdp->fd_cdir = nd.ni_vp;
 	vrele(old_cdir);
@@ -932,8 +931,15 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
 		VOP_UNLOCK(nd.ni_dvp);
 
-	if (allow)
+	if (allow) {
 		error = unveil_add(p, &nd, permissions);
+		p->p_p->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, p, NULL);
+		if (p->p_p->ps_uvpcwd == NULL) {
+			ssize_t i = unveil_find_cover(p->p_fd->fd_cdir, p);
+			if (i >= 0)
+				p->p_p->ps_uvpcwd = &p->p_p->ps_uvpaths[i];
+		}
+	}
 	else
 		error = EPERM;
 

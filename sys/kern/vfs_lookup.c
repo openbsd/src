@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.75 2018/10/28 22:42:33 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.76 2019/01/03 21:52:31 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -188,8 +188,6 @@ fail:
 	 * Check if starting from root directory or current directory.
 	 */
 	if (cnp->cn_pnbuf[0] == '/') {
-		curproc->p_p->ps_uvpcwd = NULL;
-		curproc->p_p->ps_uvpcwdgone = 0;
 		dp = ndp->ni_rootdir;
 		vref(dp);
 	} else if (ndp->ni_dirfd == AT_FDCWD) {
@@ -304,7 +302,6 @@ badlink:
 			dp = ndp->ni_rootdir;
 			vref(dp);
 			ndp->ni_unveil_match = NULL;
-			curproc->p_p->ps_uvpcwd = NULL;
 			unveil_check_component(p, ndp, dp);
 		}
 	}
@@ -500,8 +497,6 @@ dirloop:
 				ndp->ni_dvp = dp;
 				ndp->ni_vp = dp;
 				vref(dp);
-				curproc->p_p->ps_uvpcwd = NULL;
-				curproc->p_p->ps_uvpcwdgone = 0;
 				ndp->ni_unveil_match = NULL;
 				goto nextname;
 			}
