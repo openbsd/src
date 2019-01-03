@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.384 2019/01/03 14:40:25 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.385 2019/01/03 15:46:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -627,14 +627,15 @@ smtp_getnameinfo_cb(void *arg, int gaierrno, const char *host, const char *serv)
 	struct addrinfo hints;
 
 	if (gaierrno) {
-		log_warnx("getnameinfo: %s: %s", ss_to_text(&s->ss),
-		    gai_strerror(gaierrno));
 		(void)strlcpy(s->rdns, "<unknown>", sizeof(s->rdns));
 
 		if (gaierrno == EAI_NODATA || gaierrno == EAI_NONAME)
 			s->fcrdns = 0;
-		else
+		else {
+			log_warnx("getnameinfo: %s: %s", ss_to_text(&s->ss),
+			    gai_strerror(gaierrno));
 			s->fcrdns = -1;
+		}
 
 		smtp_lookup_servername(s);
 		return;
@@ -656,13 +657,13 @@ smtp_getaddrinfo_cb(void *arg, int gaierrno, struct addrinfo *ai0)
 	char fwd[64], rev[64];
 
 	if (gaierrno) {
-		log_warnx("getaddrinfo: %s: %s", s->rdns,
-		    gai_strerror(gaierrno));
-
 		if (gaierrno == EAI_NODATA || gaierrno == EAI_NONAME)
 			s->fcrdns = 0;
-		else
+		else {
+			log_warnx("getaddrinfo: %s: %s", s->rdns,
+			    gai_strerror(gaierrno));
 			s->fcrdns = -1;
+		}
 	}
 	else {
 		strlcpy(rev, ss_to_text(&s->ss), sizeof(rev));
