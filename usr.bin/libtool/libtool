@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: libtool,v 1.43 2019/01/03 21:49:22 jca Exp $
+# $OpenBSD: libtool,v 1.44 2019/01/03 21:50:26 jca Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -51,9 +51,7 @@ sub new
 		machine_arch => $Config{ARCH},
 		ltdir => $ltdir,
 		version => $version,
-		objdir => $ltdir, 
-		build_libtool_libs => 'no',
-		build_old_libs => 'yes',
+		objdir => $ltdir,
 		pic_flags => join(' ', @picflags),
 		elf => 1,
 		noshared => 0,
