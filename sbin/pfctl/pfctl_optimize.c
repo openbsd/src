@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.39 2018/09/06 15:07:33 kn Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.40 2019/01/03 22:49:00 kn Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -1232,11 +1232,9 @@ add_opt_table(struct pfctl *pf, struct pf_opt_tbl **tbl, sa_family_t af,
 	node_host.ifname = ifname;
 	node_host.weight = addr->weight;
 
-#ifdef OPT_DEBUG
 	DEBUG("<%s> adding %s/%d", (*tbl)->pt_name, inet_ntop(af,
 	    &node_host.addr.v.a.addr, buf, sizeof(buf)),
-	    unmask(&node_host.addr.v.a.mask);
-#endif /* OPT_DEBUG */
+	    unmask(&node_host.addr.v.a.mask));
 
 	if (append_addr_host((*tbl)->pt_buf, &node_host, 0, 0)) {
 		warn("failed to add host");
