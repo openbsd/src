@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.10 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.11 2019/01/03 00:59:58 dlg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -298,6 +298,7 @@ struct dwxe_softc {
 	int			sc_rx_cons;
 
 	struct timeout		sc_tick;
+	struct timeout		sc_rxto;
 
 	uint32_t		sc_clk;
 };
@@ -335,6 +336,7 @@ void	dwxe_lladdr_read(struct dwxe_softc *, uint8_t *);
 void	dwxe_lladdr_write(struct dwxe_softc *);
 
 void	dwxe_tick(void *);
+void	dwxe_rxtick(void *);
 
 int	dwxe_intr(void *);
 void	dwxe_tx_proc(struct dwxe_softc *);
@@ -423,6 +425,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 		dwxe_phy_setup_emac(sc);
 
 	timeout_set(&sc->sc_tick, dwxe_tick, sc);
+	timeout_set(&sc->sc_rxto, dwxe_rxtick, sc);
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
@@ -812,6 +815,37 @@ dwxe_tick(void *arg)
 	timeout_add_sec(&sc->sc_tick, 1);
 }
 
+void
+dwxe_rxtick(void *arg)
+{
+	struct dwxe_softc *sc = arg;
+	uint32_t ctl;
+	int s;
+
+	s = splnet();
+
+	ctl = dwxe_read(sc, DWXE_RX_CTL1);
+	dwxe_write(sc, DWXE_RX_CTL1, ctl & ~DWXE_RX_CTL1_RX_DMA_EN);
+
+	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_rxring),
+	    0, DWXE_DMA_LEN(sc->sc_rxring),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+	dwxe_write(sc, DWXE_RX_DESC_LIST, 0);
+
+	sc->sc_rx_prod = sc->sc_rx_cons = 0;
+	dwxe_fill_rx_ring(sc);
+
+	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_rxring),
+	    0, DWXE_DMA_LEN(sc->sc_rxring),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	dwxe_write(sc, DWXE_RX_DESC_LIST, DWXE_DMA_DVA(sc->sc_rxring));
+	dwxe_write(sc, DWXE_RX_CTL1, ctl);
+
+	splx(s);
+}
+
 int
 dwxe_intr(void *arg)
 {
@@ -989,13 +1023,14 @@ dwxe_up(struct dwxe_softc *sc)
 		    ((i+1) % DWXE_NRXDESC) * sizeof(struct dwxe_desc);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_rxring),
-	    0, DWXE_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
+	if_rxr_init(&sc->sc_rx_ring, 2, DWXE_NRXDESC);
 
 	sc->sc_rx_prod = sc->sc_rx_cons = 0;
-
-	if_rxr_init(&sc->sc_rx_ring, 2, DWXE_NRXDESC);
 	dwxe_fill_rx_ring(sc);
+
+	bus_dmamap_sync(sc->sc_dmat, DWXE_DMA_MAP(sc->sc_rxring),
+	    0, DWXE_DMA_LEN(sc->sc_rxring),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	dwxe_write(sc, DWXE_RX_DESC_LIST, DWXE_DMA_DVA(sc->sc_rxring));
 
@@ -1038,6 +1073,7 @@ dwxe_down(struct dwxe_softc *sc)
 	uint32_t dmactrl;
 	int i;
 
+	timeout_del(&sc->sc_rxto);
 	timeout_del(&sc->sc_tick);
 
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -1344,4 +1380,7 @@ dwxe_fill_rx_ring(struct dwxe_softc *sc)
 			sc->sc_rx_prod++;
 	}
 	if_rxr_put(&sc->sc_rx_ring, slots);
+
+	if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
+		timeout_add(&sc->sc_rxto, 1);
 }
