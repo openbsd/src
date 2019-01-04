@@ -12355,6 +12355,8 @@ s_mipsset (int x ATTRIBUTE_UNUSED)
     mips_opts.sym32 = TRUE;
   else if (strcmp (name, "nosym32") == 0)
     mips_opts.sym32 = FALSE;
+  else if (strcmp (name, "hardfloat") == 0)
+    /* ignored */;
   else
     {
       as_warn (_("Tried to set unrecognized symbol: %s\n"), name);
