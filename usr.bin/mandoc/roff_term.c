@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_term.c,v 1.18 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.19 2019/01/04 03:24:30 schwarze Exp $ */
 /*
- * Copyright (c) 2010,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,27 +79,16 @@ static void
 roff_term_pre_ce(ROFF_TERM_ARGS)
 {
 	const struct roff_node	*nc1, *nc2;
-	size_t			 len, lm;
 
 	roff_term_pre_br(p, n);
-	lm = p->tcol->offset;
+	p->flags |= n->tok == ROFF_ce ? TERMP_CENTER : TERMP_RIGHT;
 	nc1 = n->child->next;
 	while (nc1 != NULL) {
 		nc2 = nc1;
-		len = 0;
 		do {
-			if (nc2->type == ROFFT_TEXT) {
-				if (len)
-					len++;
-				len += term_strlen(p, nc2->string);
-			}
 			nc2 = nc2->next;
 		} while (nc2 != NULL && (nc2->type != ROFFT_TEXT ||
 		    (nc2->flags & NODE_LINE) == 0));
-		p->tcol->offset = len >= p->tcol->rmargin ? 0 :
-		    lm + len >= p->tcol->rmargin ? p->tcol->rmargin - len :
-		    n->tok == ROFF_rj ? p->tcol->rmargin - len :
-		    (lm + p->tcol->rmargin - len) / 2;
 		while (nc1 != nc2) {
 			if (nc1->type == ROFFT_TEXT)
 				term_word(p, nc1->string);
@@ -110,7 +99,7 @@ roff_term_pre_ce(ROFF_TERM_ARGS)
 		p->flags |= TERMP_NOSPACE;
 		term_flushln(p);
 	}
-	p->tcol->offset = lm;
+	p->flags &= ~(TERMP_CENTER | TERMP_RIGHT);
 }
 
 static void
