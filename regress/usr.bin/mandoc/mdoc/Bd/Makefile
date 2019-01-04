@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.20 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.21 2019/01/04 03:54:50 schwarze Exp $
 
-REGRESS_TARGETS	 = beforeNAME blank centered nested spacing
+REGRESS_TARGETS	 = beforeNAME blank centered nested nf spacing
 REGRESS_TARGETS	+= badargs empty offset-empty offset-neg
 REGRESS_TARGETS	+= break broken unclosed
 

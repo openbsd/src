@@ -1,0 +1,32 @@
+BD-NF(1) - General Commands Manual
+
+# NAME
+
+**Bd-nf** - interaction of no-fill blocks and requests
+
+# DESCRIPTION
+
+initial
+text
+after .nf
+request
+after .fi
+request
+
+	in unfilled
+	block
+	after .fi request
+	in unfilled block
+
+after end
+of unfilled block
+
+> in filled
+> block
+> after .nf request
+> in filled block
+
+after end
+of filled block
+
+OpenBSD - January 3, 2019
