@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.21 2016/02/03 12:23:57 halex Exp $	*/
+/*	$OpenBSD: tail.c,v 1.22 2019/01/04 15:04:28 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,6 @@
 #include "extern.h"
 
 int fflag, rflag, rval;
-int is_stdin;
 
 static void obsolete(char **);
 static void usage(void);
@@ -173,7 +172,6 @@ main(int argc, char *argv[])
 
 		tf[0].fname = "stdin";
 		tf[0].fp = stdin;
-		is_stdin = 1;
 
 		if (fstat(fileno(stdin), &(tf[0].sb))) {
 			ierr(tf[0].fname);

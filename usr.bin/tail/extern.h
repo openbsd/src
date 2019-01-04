@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2015/11/19 17:50:04 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 2019/01/04 15:04:28 martijn Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1994/11/23 07:42:00 jtc Exp $	*/
 
 /*-
@@ -55,4 +55,3 @@ void oerr(void);
 void printfname(const char *);
 
 extern int fflag, rflag, rval;
-extern int is_stdin;
