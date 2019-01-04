@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.74 2018/08/27 21:09:47 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.75 2019/01/04 23:55:29 dlg Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -108,6 +108,9 @@ file	dev/fdt/if_dwge_fdt.c		dwge_fdt
 
 attach	ehci at fdt with ehci_fdt
 file	dev/fdt/ehci_fdt.c		ehci_fdt
+
+attach	ohci at fdt with ohci_fdt
+file	dev/fdt/ohci_fdt.c		ohci_fdt
 
 attach	sdhc at fdt with sdhc_fdt
 file	dev/fdt/sdhc_fdt.c		sdhc_fdt
