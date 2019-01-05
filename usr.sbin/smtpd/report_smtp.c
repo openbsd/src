@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.3 2018/12/13 17:08:10 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.4 2019/01/05 09:43:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -263,5 +263,19 @@ report_smtp_filter_response(const char *direction, uint64_t qid, int phase, int 
 	m_add_int(p_lka, phase);
 	m_add_int(p_lka, response);
 	m_add_string(p_lka, param);
+	m_close(p_lka);
+}
+
+void
+report_smtp_timeout(const char *direction, uint64_t qid)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
+	m_create(p_lka, IMSG_REPORT_SMTP_TIMEOUT, 0, 0, -1);
+	m_add_string(p_lka, direction);
+	m_add_timeval(p_lka, &tv);
+	m_add_id(p_lka, qid);
 	m_close(p_lka);
 }

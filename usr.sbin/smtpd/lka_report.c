@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.16 2018/12/21 14:33:52 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.17 2019/01/05 09:43:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -66,6 +66,8 @@ static struct smtp_events {
 	{ "protocol-server" },
 
 	{ "filter-response" },
+
+	{ "timeout" },
 };
 
 
@@ -407,4 +409,12 @@ lka_report_smtp_filter_response(const char *direction, struct timeval *tv, uint6
 	report_smtp_broadcast(reqid, direction, tv, "filter-response",
 	    "%016"PRIx64"|%s|%s%s%s\n",
 	    reqid, phase_name, response_name, param ? "|" : "", param ? param : "");
+}
+
+void
+lka_report_smtp_timeout(const char *direction, struct timeval *tv, uint64_t reqid)
+{
+	report_smtp_broadcast(reqid, direction, tv, "timeout",
+	    "%016"PRIx64"\n",
+	    reqid);
 }

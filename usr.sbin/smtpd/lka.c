@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.232 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.233 2019/01/05 09:43:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -529,6 +529,15 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		    filter_phase, filter_response, filter_param);
 		return;
 
+	case IMSG_REPORT_SMTP_TIMEOUT:
+		m_msg(&m, imsg);
+		m_get_string(&m, &direction);
+		m_get_timeval(&m, &tv);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_report_smtp_timeout(direction, &tv, reqid);
+		return;
 
 	case IMSG_FILTER_SMTP_PROTOCOL:
 		m_msg(&m, imsg);

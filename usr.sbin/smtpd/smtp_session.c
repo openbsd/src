@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.386 2019/01/05 08:38:41 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.387 2019/01/05 09:43:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1148,6 +1148,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		log_info("%016"PRIx64" smtp disconnected "
 		    "reason=timeout",
 		    s->id);
+		report_smtp_timeout("smtp-in", s->id);
 		smtp_free(s, "timeout");
 		break;
 

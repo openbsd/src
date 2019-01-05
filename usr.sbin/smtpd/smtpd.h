@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.615 2018/12/28 15:09:28 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.616 2019/01/05 09:43:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -52,7 +52,8 @@
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #define	SMTPD_NAME		 "OpenSMTPD"
 #define	SMTPD_VERSION		 "6.4.0"
-#define SMTPD_SESSION_TIMEOUT	 300
+//#define SMTPD_SESSION_TIMEOUT	 300
+#define SMTPD_SESSION_TIMEOUT	 30
 #define SMTPD_BACKLOG		 5
 
 #define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
@@ -319,6 +320,7 @@ enum imsg_type {
 	IMSG_REPORT_SMTP_PROTOCOL_CLIENT,
 	IMSG_REPORT_SMTP_PROTOCOL_SERVER,
 	IMSG_REPORT_SMTP_FILTER_RESPONSE,
+	IMSG_REPORT_SMTP_TIMEOUT,
 
 	IMSG_FILTER_SMTP_BEGIN,
 	IMSG_FILTER_SMTP_END,
@@ -1356,6 +1358,7 @@ void lka_report_smtp_protocol_client(const char *, struct timeval *, uint64_t, c
 void lka_report_smtp_protocol_server(const char *, struct timeval *, uint64_t, const char *);
 void lka_report_smtp_filter_response(const char *, struct timeval *, uint64_t,
     int, int, const char *);
+void lka_report_smtp_timeout(const char *, struct timeval *, uint64_t);
 
 
 /* lka_filter.c */
@@ -1521,6 +1524,7 @@ void report_smtp_tx_rollback(const char *, uint64_t, uint32_t);
 void report_smtp_protocol_client(const char *, uint64_t, const char *);
 void report_smtp_protocol_server(const char *, uint64_t, const char *);
 void report_smtp_filter_response(const char *, uint64_t, int, int, const char *);
+void report_smtp_timeout(const char *, uint64_t);
 
 
 /* ruleset.c */
