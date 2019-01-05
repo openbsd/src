@@ -1,19 +1,27 @@
-.\" $OpenBSD: literal.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
-.TH RS-LITERAL 1 "January 5, 2013"
+.\" $OpenBSD: literal.in,v 1.3 2019/01/05 20:00:33 schwarze Exp $
+.TH RS-LITERAL 1 "January 5, 2019"
 .SH NAME
 RS-literal \- indented literal text
 .SH DESCRIPTION
+BEGINTEST
+.br
+initial
 regular
 text
 .nf
-literal
-text
+literal text
+before display
 .RS
 This is a short line.
 This is a very long line that would wrap if it weren't in literal context.
 .RE
-.PP
 literal text
+after display
 .fi
+final
 regular
 text
+.br
+ENDTEST
+.br
+end of file

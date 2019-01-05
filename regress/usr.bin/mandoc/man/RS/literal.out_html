@@ -1,0 +1,20 @@
+BEGINTEST
+<br/>
+initial regular text
+<pre>
+literal text
+before display
+</pre>
+<div class="Bd-indent">
+<pre>
+This is a short line.
+This is a very long line that would wrap if it weren't in literal context.
+</pre>
+</div>
+<pre>
+literal text
+after display
+</pre>
+final regular text
+<br/>
+ENDTEST
