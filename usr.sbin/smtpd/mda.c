@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.136 2018/12/27 15:41:50 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.137 2019/01/05 10:20:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -48,6 +48,7 @@
 
 struct mda_envelope {
 	TAILQ_ENTRY(mda_envelope)	 entry;
+	uint64_t			 session_id;
 	uint64_t			 id;
 	time_t				 creation;
 	char				*sender;
@@ -101,7 +102,7 @@ static void mda_queue_loop(uint64_t);
 static struct mda_user *mda_user(const struct envelope *);
 static void mda_user_free(struct mda_user *);
 static const char *mda_user_to_text(const struct mda_user *);
-static struct mda_envelope *mda_envelope(const struct envelope *);
+static struct mda_envelope *mda_envelope(uint64_t, const struct envelope *);
 static void mda_envelope_free(struct mda_envelope *);
 static struct mda_session * mda_session(struct mda_user *);
 static const char *mda_sysexit_to_str(int);
@@ -186,7 +187,7 @@ mda_imsg(struct mproc *p, struct imsg *imsg)
 			return;
 		}
 
-		e = mda_envelope(&evp);
+		e = mda_envelope(u->id, &evp);
 		TAILQ_INSERT_TAIL(&u->envelopes, e, entry);
 		u->evpcount += 1;
 		stat_increment("mda.pending", 1);
@@ -671,7 +672,7 @@ mda_log(const struct mda_envelope *evp, const char *prefix, const char *status)
 
 	log_info("%016"PRIx64" mda delivery evpid=%016" PRIx64 " from=<%s> to=<%s> "
 	    "%suser=%s delay=%s result=%s stat=%s",
-	    (uint64_t)0,
+	    evp->session_id,
 	    evp->id,
 	    evp->sender ? evp->sender : "",
 	    evp->dest,
@@ -791,12 +792,13 @@ mda_user_to_text(const struct mda_user *u)
 }
 
 static struct mda_envelope *
-mda_envelope(const struct envelope *evp)
+mda_envelope(uint64_t session_id, const struct envelope *evp)
 {
 	struct mda_envelope	*e;
 	char			 buf[LINE_MAX];
 
 	e = xcalloc(1, sizeof *e);
+	e->session_id = session_id;
 	e->id = evp->id;
 	e->creation = evp->creation;
 	buf[0] = '\0';
