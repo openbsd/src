@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.49 2019/01/05 12:16:59 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.50 2019/01/05 12:18:13 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -414,7 +414,8 @@ LEAF(tlb_flush, 0)
 	mtc0	ta1, COP_0_TLB_INDEX	# Set the index register.
 #ifdef CPU_OCTEON
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
-	PTR_ADDU v0, v0, 2 * PAGE_SIZE
+	li	ta2, 2 * PAGE_SIZE
+	PTR_ADDU v0, v0, ta2
 #endif
 	addu	ta1, ta1, 1		# Increment index.
 	TLB_HAZARD
