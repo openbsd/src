@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.105 2019/01/05 00:36:46 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.106 2019/01/05 18:59:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -295,8 +295,10 @@ blk_exp(MACRO_PROT_ARGS)
 	char		*p;
 	int		 la;
 
-	if (tok == MAN_RS)
+	if (tok == MAN_RS) {
 		rew_scope(man, tok);
+		man->flags |= ROFF_NONOFILL;
+	}
 	roff_block_alloc(man, line, ppos, tok);
 	head = roff_head_alloc(man, line, ppos, tok);
 
@@ -320,6 +322,7 @@ blk_exp(MACRO_PROT_ARGS)
 
 	man_unscope(man, head);
 	roff_body_alloc(man, line, ppos, tok);
+	man->flags &= ~ROFF_NONOFILL;
 }
 
 /*
