@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_macro.c,v 1.104 2018/12/31 10:03:38 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.105 2019/01/05 00:36:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -336,6 +336,7 @@ blk_imp(MACRO_PROT_ARGS)
 	struct roff_node *n;
 
 	rew_scope(man, tok);
+	man->flags |= ROFF_NONOFILL;
 	if (tok == MAN_SH || tok == MAN_SS)
 		man->flags &= ~ROFF_NOFILL;
 	roff_block_alloc(man, line, ppos, tok);
@@ -367,6 +368,7 @@ blk_imp(MACRO_PROT_ARGS)
 
 	man_unscope(man, n);
 	roff_body_alloc(man, line, ppos, tok);
+	man->flags &= ~ROFF_NONOFILL;
 }
 
 void

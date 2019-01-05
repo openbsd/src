@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_term.c,v 1.178 2018/12/31 11:01:34 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.179 2019/01/05 00:36:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -417,7 +417,10 @@ pre_HP(DECL_ARGS)
 		return 0;
 	}
 
-	if ((n->flags & NODE_NOFILL) == 0) {
+	if (n->child == NULL)
+		return 0;
+
+	if ((n->child->flags & NODE_NOFILL) == 0) {
 		p->flags |= TERMP_NOBREAK | TERMP_BRIND;
 		p->trailspace = 2;
 	}
