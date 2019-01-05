@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff_html.c,v 1.16 2018/12/31 07:07:43 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.17 2019/01/05 09:14:11 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2017, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,17 +32,19 @@ typedef	void	(*roff_html_pre_fp)(ROFF_HTML_ARGS);
 
 static	void	  roff_html_pre_br(ROFF_HTML_ARGS);
 static	void	  roff_html_pre_ce(ROFF_HTML_ARGS);
+static	void	  roff_html_pre_fi(ROFF_HTML_ARGS);
 static	void	  roff_html_pre_ft(ROFF_HTML_ARGS);
+static	void	  roff_html_pre_nf(ROFF_HTML_ARGS);
 static	void	  roff_html_pre_sp(ROFF_HTML_ARGS);
 
 static	const roff_html_pre_fp roff_html_pre_acts[ROFF_MAX] = {
 	roff_html_pre_br,  /* br */
 	roff_html_pre_ce,  /* ce */
-	roff_html_pre_br,  /* fi */
+	roff_html_pre_fi,  /* fi */
 	roff_html_pre_ft,  /* ft */
 	NULL,  /* ll */
 	NULL,  /* mc */
-	roff_html_pre_br,  /* nf */
+	roff_html_pre_nf,  /* nf */
 	NULL,  /* po */
 	roff_html_pre_ce,  /* rj */
 	roff_html_pre_sp,  /* sp */
@@ -80,12 +82,26 @@ roff_html_pre_ce(ROFF_HTML_ARGS)
 }
 
 static void
+roff_html_pre_fi(ROFF_HTML_ARGS)
+{
+	if (html_fillmode(h, TOKEN_NONE) == ROFF_fi)
+		print_otag(h, TAG_BR, "");
+}
+
+static void
 roff_html_pre_ft(ROFF_HTML_ARGS)
 {
 	const char	*cp;
 
 	cp = n->child->string;
 	print_metaf(h, mandoc_font(cp, (int)strlen(cp)));
+}
+
+static void
+roff_html_pre_nf(ROFF_HTML_ARGS)
+{
+	if (html_fillmode(h, TOKEN_NONE) == ROFF_nf)
+		print_otag(h, TAG_BR, "");
 }
 
 static void

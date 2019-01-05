@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.59 2018/12/31 11:09:20 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.60 2019/01/05 09:14:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -135,4 +135,5 @@ void		  print_eqn(struct html *, const struct eqn_box *);
 void		  print_paragraph(struct html *);
 void		  print_endline(struct html *);
 
+enum roff_tok	  html_fillmode(struct html *, enum roff_tok);
 char		 *html_make_id(const struct roff_node *, int);

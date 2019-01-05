@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.117 2018/12/15 23:33:20 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.118 2019/01/05 09:14:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -261,6 +261,39 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 	default:
 		break;
 	}
+}
+
+/*
+ * ROFF_nf switches to no-fill mode, ROFF_fi to fill mode.
+ * TOKEN_NONE does not switch.  The old mode is returned.
+ */
+enum roff_tok
+html_fillmode(struct html *h, enum roff_tok want)
+{
+	struct tag	*t;
+	enum roff_tok	 had;
+
+	for (t = h->tag; t != NULL; t = t->next)
+		if (t->tag == TAG_PRE)
+			break;
+
+	had = t == NULL ? ROFF_fi : ROFF_nf;
+
+	if (want != had) {
+		switch (want) {
+		case ROFF_fi:
+			print_tagq(h, t);
+			break;
+		case ROFF_nf:
+			print_otag(h, TAG_PRE, "");
+			break;
+		case TOKEN_NONE:
+			break;
+		default:
+			abort();
+		}
+	}
+	return had;
 }
 
 char *
