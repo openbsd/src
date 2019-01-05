@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.156 2019/01/03 16:42:30 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.157 2019/01/05 19:59:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -253,7 +253,7 @@ bpffd_handler(struct interface_info *ifi)
 		return;
 	}
 
-	rslt = asprintf(&src, "%s (%s)",inet_ntoa(ifrom), ether_ntoa(&hfrom));
+	rslt = asprintf(&src, "%s (%s)", inet_ntoa(ifrom), ether_ntoa(&hfrom));
 	if (rslt == -1)
 		fatal("src");
 
