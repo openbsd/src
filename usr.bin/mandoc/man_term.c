@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.180 2019/01/05 01:29:21 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.181 2019/01/05 21:13:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -831,7 +831,9 @@ pre_SY(DECL_ARGS)
 	case ROFFT_HEAD:
 		p->tcol->offset = mt->offset;
 		p->tcol->rmargin = mt->offset + len;
-		p->flags |= TERMP_NOBREAK;
+		if (n->next->child == NULL ||
+		    (n->next->child->flags & NODE_NOFILL) == 0)
+			p->flags |= TERMP_NOBREAK;
 		term_fontrepl(p, TERMFONT_BOLD);
 		break;
 	case ROFFT_BODY:

@@ -1,0 +1,32 @@
+.\" $OpenBSD: literal.in,v 1.1 2019/01/05 21:13:55 schwarze Exp $
+.TH SY-LITERAL 1 "January 5, 2019"
+.SH NAME
+SY-literal \- synopsis block in literal context
+.SH DESCRIPTION
+BEGINTEST
+.br
+initial
+regular
+text
+.SY command
+.I arguments
+.YS
+middle
+regular
+text
+.nf
+literal text
+before display
+.SY command
+.I arguments
+.YS
+literal text
+after display
+.fi
+final
+regular
+text
+.br
+ENDTEST
+.br
+end of file
