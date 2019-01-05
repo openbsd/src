@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.262 2019/01/03 16:42:30 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.263 2019/01/05 21:40:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -123,8 +123,6 @@ struct interface_info {
 	int			 udpfd; /* udp - unicast writing */
 	unsigned char		*rbuf;
 	size_t			 rbuf_max;
-	size_t			 rbuf_offset;
-	size_t			 rbuf_len;
 	int			 errors;
 	uint16_t		 index;
 	int			 link_state;
@@ -193,8 +191,8 @@ int		 get_udp_sock(int);
 int		 configure_bpf_sock(int);
 ssize_t		 send_packet(struct interface_info *, struct in_addr,
     struct in_addr, const char *);
-ssize_t		 receive_packet(struct interface_info *, struct sockaddr_in *,
-    struct ether_addr *);
+ssize_t		 receive_packet(unsigned char *, unsigned char *,
+    struct sockaddr_in *, struct ether_addr *, struct dhcp_packet *);
 
 /* dispatch.c */
 void		 dispatch(struct interface_info *, int);

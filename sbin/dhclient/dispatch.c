@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.157 2019/01/05 19:59:12 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.158 2019/01/05 21:40:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,8 @@
 
 
 void bpffd_handler(struct interface_info *);
+void dhcp_packet_dispatch(struct interface_info *, struct sockaddr_in *,
+    struct ether_addr *);
 void flush_unpriv_ibuf(void);
 void sendhup(void);
 
@@ -167,12 +169,8 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (nfds == 0)
 			continue;
 
-		if ((fds[0].revents & POLLIN) != 0) {
-			ifi->rbuf_offset = ifi->rbuf_len = 0;
-			do {
-				bpffd_handler(ifi);
-			} while (quit == 0 && ifi->rbuf_offset < ifi->rbuf_len);
-		}
+		if ((fds[0].revents & POLLIN) != 0)
+			bpffd_handler(ifi);
 		if ((fds[1].revents & POLLIN) != 0)
 			routefd_handler(ifi, routefd);
 		if ((fds[2].revents & POLLOUT) != 0)
@@ -190,27 +188,39 @@ bpffd_handler(struct interface_info *ifi)
 {
 	struct sockaddr_in	 from;
 	struct ether_addr	 hfrom;
+	unsigned char		*next, *lim;
+	ssize_t			 n;
+
+	n = read(ifi->bpffd, ifi->rbuf, ifi->rbuf_max);
+	if (n == -1) {
+		log_warn("%s: read(bpffd)", log_procname);
+		ifi->errors++;
+		if (ifi->errors > 20)
+			fatalx("too many read(bpffd) failures");
+		return;
+	}
+	ifi->errors = 0;
+
+	lim = ifi->rbuf + n;
+	for (next = ifi->rbuf; quit == 0 && n > 0; next += n) {
+		n = receive_packet(next, lim, &from, &hfrom, &ifi->recv_packet);
+		if (n > 0)
+			dhcp_packet_dispatch(ifi, &from, &hfrom);
+	}
+}
+
+void
+dhcp_packet_dispatch(struct interface_info *ifi, struct sockaddr_in *from,
+    struct ether_addr *hfrom)
+{
 	struct in_addr		 ifrom;
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct reject_elem	*ap;
 	struct option_data	*options;
 	char			*src;
-	ssize_t			 result;
 	int			 i, rslt;
 
-	result = receive_packet(ifi, &from, &hfrom);
-	if (result == -1) {
-		ifi->errors++;
-		if (ifi->errors > 20)
-			fatalx("too many receive_packet failures");
-		return;
-	}
-	ifi->errors = 0;
-
-	if (result == 0)
-		return;
-
-	ifrom.s_addr = from.sin_addr.s_addr;
+	ifrom.s_addr = from->sin_addr.s_addr;
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
 		log_debug("%s: discarding packet with hlen == %u", log_procname,
@@ -253,7 +263,7 @@ bpffd_handler(struct interface_info *ifi)
 		return;
 	}
 
-	rslt = asprintf(&src, "%s (%s)", inet_ntoa(ifrom), ether_ntoa(&hfrom));
+	rslt = asprintf(&src, "%s (%s)", inet_ntoa(ifrom), ether_ntoa(hfrom));
 	if (rslt == -1)
 		fatal("src");
 

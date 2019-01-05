@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.73 2018/12/27 17:33:15 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.74 2019/01/05 21:40:44 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -330,123 +330,71 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 	return result;
 }
 
+/*
+ * Extract a DHCP packet from a bpf capture buffer.
+ *
+ * Each captured packet is
+ *
+ *	<BPF header>
+ *	<padding to BPF_WORDALIGN>
+ *	<captured DHCP packet>
+ *	<padding to BPF_WORDALIGN>
+ *
+ * Return the number of bytes processed or 0 if there is
+ * no valid DHCP packet in the buffer.
+ */
 ssize_t
-receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
-    struct ether_addr *hfrom)
+receive_packet(unsigned char *buf, unsigned char *lim,
+    struct sockaddr_in *from, struct ether_addr *hfrom,
+    struct dhcp_packet *packet)
 {
-	struct bpf_hdr		 hdr;
-	struct dhcp_packet	*packet = &ifi->recv_packet;
-	ssize_t			 length = 0;
-	int			 offset = 0;
+	struct bpf_hdr		 bh;
+	struct ether_header	 eh;
+	unsigned char		*pktlim, *data, *next;
+	size_t			 datalen;
+	int			 len;
 
-	/*
-	 * All this complexity is because BPF doesn't guarantee that
-	 * only one packet will be returned at a time.  We're getting
-	 * what we deserve, though - this is a terrible abuse of the BPF
-	 * interface.  Sigh.
-	 */
+	for (next = buf; next < lim; next = pktlim) {
+		/* No bpf header means no more packets. */
+		if (lim < next + sizeof(bh))
+			return 0;
 
-	/* Process packets until we get one we can return or until we've
-	 * done a read and gotten nothing we can return.
-	 */
-	do {
-		/* If the buffer is empty, fill it. */
-		if (ifi->rbuf_offset >= ifi->rbuf_len) {
-			length = read(ifi->bpffd, ifi->rbuf, ifi->rbuf_max);
-			if (length == -1) {
-				log_warn("%s: read(bpffd)", log_procname);
-				return length;
-			} else if (length == 0)
-				return length;
-			ifi->rbuf_offset = 0;
-			ifi->rbuf_len = length;
-		}
+		memcpy(&bh, next, sizeof(bh));
+		pktlim = next + BPF_WORDALIGN(bh.bh_hdrlen + bh.bh_caplen);
+
+		/* Truncated bpf packet means no more packets. */
+		if (lim < next + bh.bh_hdrlen + bh.bh_caplen)
+			return 0;
+
+		/* Drop incompletely captured DHCP packets. */
+		if (bh.bh_caplen != bh.bh_datalen)
+			continue;
 
 		/*
-		 * If there isn't room for a whole bpf header, something
-		 * went wrong, but we'll ignore it and hope it goes
-		 * away. XXX
+		 * Drop packets with invalid ethernet/ip/udp headers.
 		 */
-		if (ifi->rbuf_len - ifi->rbuf_offset < sizeof(hdr)) {
-			ifi->rbuf_offset = ifi->rbuf_len;
+		if (pktlim < next + bh.bh_hdrlen + sizeof(eh))
 			continue;
-		}
+		memcpy(&eh, next + bh.bh_hdrlen, sizeof(eh));
+		memcpy(hfrom->ether_addr_octet, eh.ether_shost, ETHER_ADDR_LEN);
 
-		/* Copy out a bpf header. */
-		memcpy(&hdr, &ifi->rbuf[ifi->rbuf_offset], sizeof(hdr));
-
-		/*
-		 * If the bpf header plus data doesn't fit in what's
-		 * left of the buffer, stick head in sand yet again.
-		 */
-		if (ifi->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
-		    ifi->rbuf_len) {
-			ifi->rbuf_offset = ifi->rbuf_len;
+		len = decode_udp_ip_header(next + bh.bh_hdrlen + sizeof(eh),
+		    bh.bh_caplen - sizeof(eh), from);
+		if (len < 0)
 			continue;
-		}
 
-		/*
-		 * If the captured data wasn't the whole packet, or if
-		 * the packet won't fit in the input buffer, all we can
-		 * do is drop it.
-		 */
-		if (hdr.bh_caplen != hdr.bh_datalen) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_hdrlen +
-			    hdr.bh_caplen);
+		/* Drop packets larger than sizeof(struct dhcp_packet). */
+		datalen = bh.bh_caplen - (sizeof(eh) + len);
+		if (datalen > sizeof(*packet))
 			continue;
-		}
 
-		/* Skip over the BPF header. */
-		ifi->rbuf_offset += hdr.bh_hdrlen;
-
-		/* Decode the physical header. */
-		offset = decode_hw_header(ifi->rbuf + ifi->rbuf_offset,
-		    hdr.bh_caplen, hfrom);
-
-		/*
-		 * If a physical layer checksum failed (dunno of any
-		 * physical layer that supports this, but WTH), skip
-		 * this packet.
-		 */
-		if (offset < 0) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-		ifi->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
-
-		/* Decode the IP and UDP headers. */
-		offset = decode_udp_ip_header(ifi->rbuf + ifi->rbuf_offset,
-		    hdr.bh_caplen, from);
-
-		/* If the IP or UDP checksum was bad, skip the packet. */
-		if (offset < 0) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-		ifi->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
-
-		/*
-		 * If there's not enough room to stash the packet data,
-		 * we have to skip it (this shouldn't happen in real
-		 * life, though).
-		 */
-		if (hdr.bh_caplen > sizeof(*packet)) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-
-		/* Copy out the data in the packet. */
+		/* Extract the DHCP packet for further processing. */
+		data = next + bh.bh_hdrlen + sizeof(eh) + len;
 		memset(packet, DHO_END, sizeof(*packet));
-		memcpy(packet, ifi->rbuf + ifi->rbuf_offset, hdr.bh_caplen);
-		ifi->rbuf_offset = BPF_WORDALIGN(ifi->rbuf_offset +
-		    hdr.bh_caplen);
-		return hdr.bh_caplen;
-	} while (length == 0);
-	return  0 ;
+		memcpy(packet, data, datalen);
+
+		return (pktlim - buf);
+	}
+
+	return 0;
 }
