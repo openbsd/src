@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.117 2019/01/05 09:46:26 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.118 2019/01/05 21:52:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -254,8 +254,8 @@ print_man_node(MAN_ARGS)
 	/* This will automatically close out any font scope. */
 	print_stagq(h, t);
 
-	if (n->flags & NODE_NOFILL &&
-	    (n->next == NULL || n->next->flags & NODE_LINE)) {
+	if (n->flags & NODE_NOFILL && n->tok != MAN_YS &&
+	    (n->next != NULL && n->next->flags & NODE_LINE)) {
 		/* In .nf = <pre>, print even empty lines. */
 		h->col++;
 		print_endline(h);

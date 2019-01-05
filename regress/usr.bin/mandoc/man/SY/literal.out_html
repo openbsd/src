@@ -1,0 +1,31 @@
+BEGINTEST
+<br/>
+initial regular text
+<table class="Nm">
+  <tr>
+    <td><code class="Nm" title="Nm">command</code></td>
+    <td><i>arguments</i></td>
+  </tr>
+</table>
+middle regular text
+<pre>
+literal text
+before display
+</pre>
+<table class="Nm">
+  <tr>
+    <td><code class="Nm" title="Nm">command</code></td>
+    <td>
+    <pre>
+<i>arguments</i>
+    </pre>
+    </td>
+  </tr>
+</table>
+<pre>
+literal text
+after display
+</pre>
+final regular text
+<br/>
+ENDTEST
