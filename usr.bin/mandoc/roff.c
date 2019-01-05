@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.232 2019/01/05 00:36:46 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.233 2019/01/05 09:10:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -3190,6 +3190,7 @@ roff_Dd(ROFF_ARGS)
 static int
 roff_TE(ROFF_ARGS)
 {
+	r->man->flags &= ~ROFF_NONOFILL;
 	if (r->tbl == NULL) {
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, ppos, "TE");
 		return ROFF_IGN;
@@ -3334,6 +3335,7 @@ roff_TS(ROFF_ARGS)
 		mandoc_msg(MANDOCERR_BLK_BROKEN, ln, ppos, "TS breaks TS");
 		tbl_end(r->tbl, 0);
 	}
+	r->man->flags |= ROFF_NONOFILL;
 	r->tbl = tbl_alloc(ppos, ln, r->last_tbl);
 	if (r->last_tbl == NULL)
 		r->first_tbl = r->tbl;
