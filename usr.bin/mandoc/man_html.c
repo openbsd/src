@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.116 2019/01/05 09:14:11 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.117 2019/01/05 09:46:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,8 +30,6 @@
 #include "out.h"
 #include "html.h"
 #include "main.h"
-
-/* FIXME: have PD set the default vspace width. */
 
 #define	MAN_ARGS	  const struct roff_meta *man, \
 			  const struct roff_node *n, \
@@ -121,14 +119,12 @@ static	const struct man_html_act man_html_acts[MAN_MAX - MAN_TH] = {
 static void
 print_bvspace(struct html *h, const struct roff_node *n)
 {
+	if (n->body != NULL && n->body->child != NULL &&
+	    n->body->child->type == ROFFT_TBL)
+		return;
 
-	if (n->body && n->body->child)
-		if (n->body->child->type == ROFFT_TBL)
-			return;
-
-	if (n->parent->type == ROFFT_ROOT || n->parent->tok != MAN_RS)
-		if (NULL == n->prev)
-			return;
+	if (n->prev == NULL && n->parent->tok != MAN_RS)
+		return;
 
 	print_paragraph(h);
 }
@@ -177,7 +173,6 @@ print_man_head(const struct roff_meta *man, struct html *h)
 static void
 print_man_nodelist(MAN_ARGS)
 {
-
 	while (n != NULL) {
 		print_man_node(man, n, h);
 		n = n->next;
@@ -236,7 +231,7 @@ print_man_node(MAN_ARGS)
 		 * the "meta" table state.  This will be reopened on the
 		 * next table element.
 		 */
-		if (h->tblt)
+		if (h->tblt != NULL)
 			print_tblclose(h);
 
 		t = h->tag;
@@ -253,7 +248,7 @@ print_man_node(MAN_ARGS)
 		break;
 	}
 
-	if (child && n->child)
+	if (child && n->child != NULL)
 		print_man_nodelist(man, n->child, h);
 
 	/* This will automatically close out any font scope. */
@@ -285,7 +280,7 @@ man_root_pre(const struct roff_meta *man, struct html *h)
 	print_stagq(h, tt);
 
 	print_otag(h, TAG_TD, "c", "head-vol");
-	if (NULL != man->vol)
+	if (man->vol != NULL)
 		print_text(h, man->vol);
 	print_stagq(h, tt);
 
@@ -308,7 +303,7 @@ man_root_post(const struct roff_meta *man, struct html *h)
 	print_stagq(h, tt);
 
 	print_otag(h, TAG_TD, "c", "foot-os");
-	if (man->os)
+	if (man->os != NULL)
 		print_text(h, man->os);
 	print_tagq(h, t);
 }
@@ -331,11 +326,11 @@ static int
 man_alt_pre(MAN_ARGS)
 {
 	const struct roff_node	*nn;
+	struct tag	*t;
 	int		 i;
 	enum htmltag	 fp;
-	struct tag	*t;
 
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
+	for (i = 0, nn = n->child; nn != NULL; nn = nn->next, i++) {
 		switch (n->tok) {
 		case MAN_BI:
 			fp = i % 2 ? TAG_I : TAG_B;
@@ -377,7 +372,7 @@ static int
 man_SM_pre(MAN_ARGS)
 {
 	print_otag(h, TAG_SMALL, "");
-	if (MAN_SB == n->tok)
+	if (n->tok == MAN_SB)
 		print_otag(h, TAG_B, "");
 	return 1;
 }
@@ -399,7 +394,6 @@ man_SS_pre(MAN_ARGS)
 static int
 man_PP_pre(MAN_ARGS)
 {
-
 	if (n->type == ROFFT_HEAD)
 		return 0;
 	else if (n->type == ROFFT_BLOCK)
@@ -441,7 +435,6 @@ man_IP_pre(MAN_ARGS)
 	default:
 		abort();
 	}
-
 	return 0;
 }
 
@@ -467,14 +460,14 @@ man_OP_pre(MAN_ARGS)
 	h->flags |= HTML_NOSPACE;
 	tt = print_otag(h, TAG_SPAN, "c", "Op");
 
-	if (NULL != (n = n->child)) {
+	if ((n = n->child) != NULL) {
 		print_otag(h, TAG_B, "");
 		print_text(h, n->string);
 	}
 
 	print_stagq(h, tt);
 
-	if (NULL != n && NULL != n->next) {
+	if (n != NULL && n->next != NULL) {
 		print_otag(h, TAG_I, "");
 		print_text(h, n->next->string);
 	}
@@ -509,7 +502,6 @@ man_in_pre(MAN_ARGS)
 static int
 man_ign_pre(MAN_ARGS)
 {
-
 	return 0;
 }
 
@@ -548,6 +540,7 @@ static int
 man_UR_pre(MAN_ARGS)
 {
 	char *cp;
+
 	n = n->child;
 	assert(n->type == ROFFT_HEAD);
 	if (n->child != NULL) {
@@ -565,7 +558,6 @@ man_UR_pre(MAN_ARGS)
 		n = n->next;
 
 	print_man_nodelist(man, n->child, h);
-
 	return 0;
 }
 
