@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.66 2018/01/15 19:45:51 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.67 2019/01/06 18:35:19 tedu Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -167,6 +167,9 @@ main(int argc, char **argv)
 			usage();
 	} else if (argc == 0)
 		usage();
+
+	if (pledge("stdio rpath getpw recvfd sendfd id proc", NULL) == -1)
+		err(1, "pledge");
 
 	magicfp = NULL;
 	if (geteuid() != 0 && !issetugid()) {
