@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.34 2017/06/11 17:32:19 awolk Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.35 2019/01/06 18:30:36 tedu Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ main(int argc, char *argv[])
 				break;
 			case 'C':
 				clear = CLEARALL;
+				tracefile = NULL;
 				pidset = 1;
 				break;
 			case 'c':
