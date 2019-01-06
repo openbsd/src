@@ -1,0 +1,8 @@
+BEGINTEST
+<h2 class="Ss" title="Ss" id="First_subsection"><a class="permalink" href="#First_subsection">First
+  subsection</a></h2>
+This text immediately follows a subsection header.
+<p class="Pp">This is a paragraph.</p>
+<h2 class="Ss" title="Ss" id="Second_subsection"><a class="permalink" href="#Second_subsection">Second
+  subsection</a></h2>
+ENDTEST

@@ -1,0 +1,21 @@
+SP-FILL-MAN(1)              General Commands Manual             SP-FILL-MAN(1)
+
+
+
+NNAAMMEE
+       sp-fill-man - interaction of vertical spacing requests with fill modes
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST in fill mode:
+
+       switch to no-fill mode:
+       in no-fill mode:
+
+       back to
+       fill mode:
+       ENDTEST
+       end of file
+
+
+
+OpenBSD                         January 6, 2019                 SP-FILL-MAN(1)

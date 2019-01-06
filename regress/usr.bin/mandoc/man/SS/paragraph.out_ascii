@@ -1,0 +1,23 @@
+SS-PARAGRAPH(1)             General Commands Manual            SS-PARAGRAPH(1)
+
+
+
+NNAAMMEE
+       SS-paragraph - interaction of subsection headers with paragraphs
+
+DDEESSCCRRIIPPTTIIOONN
+       BEGINTEST
+
+   FFiirrsstt ssuubbsseeccttiioonn
+       This text immediately follows a subsection header.
+
+       This is a paragraph.
+
+   SSeeccoonndd ssuubbsseeccttiioonn
+       ENDTEST
+
+       end of file
+
+
+
+OpenBSD                         January 6, 2019                SS-PARAGRAPH(1)

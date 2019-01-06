@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.118 2019/01/05 21:52:57 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.119 2019/01/06 04:41:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -40,14 +40,11 @@ struct	man_html_act {
 	int		(*post)(MAN_ARGS);
 };
 
-static	void		  print_bvspace(struct html *,
-				const struct roff_node *);
 static	void		  print_man_head(const struct roff_meta *,
 				struct html *);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
 static	int		  man_B_pre(MAN_ARGS);
-static	int		  man_HP_pre(MAN_ARGS);
 static	int		  man_IP_pre(MAN_ARGS);
 static	int		  man_I_pre(MAN_ARGS);
 static	int		  man_OP_pre(MAN_ARGS);
@@ -55,7 +52,6 @@ static	int		  man_PP_pre(MAN_ARGS);
 static	int		  man_RS_pre(MAN_ARGS);
 static	int		  man_SH_pre(MAN_ARGS);
 static	int		  man_SM_pre(MAN_ARGS);
-static	int		  man_SS_pre(MAN_ARGS);
 static	int		  man_SY_pre(MAN_ARGS);
 static	int		  man_UR_pre(MAN_ARGS);
 static	int		  man_abort_pre(MAN_ARGS);
@@ -70,14 +66,14 @@ static	void		  man_root_pre(const struct roff_meta *,
 static	const struct man_html_act man_html_acts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
 	{ man_SH_pre, NULL }, /* SH */
-	{ man_SS_pre, NULL }, /* SS */
+	{ man_SH_pre, NULL }, /* SS */
 	{ man_IP_pre, NULL }, /* TP */
 	{ man_IP_pre, NULL }, /* TQ */
 	{ man_abort_pre, NULL }, /* LP */
 	{ man_PP_pre, NULL }, /* PP */
 	{ man_abort_pre, NULL }, /* P */
 	{ man_IP_pre, NULL }, /* IP */
-	{ man_HP_pre, NULL }, /* HP */
+	{ man_PP_pre, NULL }, /* HP */
 	{ man_SM_pre, NULL }, /* SM */
 	{ man_SM_pre, NULL }, /* SB */
 	{ man_alt_pre, NULL }, /* BI */
@@ -107,27 +103,6 @@ static	const struct man_html_act man_html_acts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* ME */
 };
 
-
-/*
- * Printing leading vertical space before a block.
- * This is used for the paragraph macros.
- * The rules are pretty simple, since there's very little nesting going
- * on here.  Basically, if we're the first within another block (SS/SH),
- * then don't emit vertical space.  If we are (RS), then do.  If not the
- * first, print it.
- */
-static void
-print_bvspace(struct html *h, const struct roff_node *n)
-{
-	if (n->body != NULL && n->body->child != NULL &&
-	    n->body->child->type == ROFFT_TBL)
-		return;
-
-	if (n->prev == NULL && n->parent->tok != MAN_RS)
-		return;
-
-	print_paragraph(h);
-}
 
 void
 html_man(void *arg, const struct roff_meta *man)
@@ -237,7 +212,8 @@ print_man_node(MAN_ARGS)
 		t = h->tag;
 		if (n->tok < ROFF_MAX) {
 			roff_html_pre(h, n);
-			print_stagq(h, t);
+			if (n->tok != ROFF_sp)
+				print_stagq(h, t);
 			return;
 		}
 
@@ -313,11 +289,23 @@ man_SH_pre(MAN_ARGS)
 {
 	char	*id;
 
-	if (n->type == ROFFT_HEAD) {
+	switch (n->type) {
+	case ROFFT_BLOCK:
+		html_close_paragraph(h);
+		break;
+	case ROFFT_HEAD:
 		id = html_make_id(n, 1);
-		print_otag(h, TAG_H1, "cTi", "Sh", id);
+		if (n->tok == MAN_SH)
+			print_otag(h, TAG_H1, "cTi", "Sh", id);
+		else
+			print_otag(h, TAG_H2, "cTi", "Ss", id);
 		if (id != NULL)
 			print_otag(h, TAG_A, "chR", "permalink", id);
+		break;
+	case ROFFT_BODY:
+		break;
+	default:
+		abort();
 	}
 	return 1;
 }
@@ -378,27 +366,23 @@ man_SM_pre(MAN_ARGS)
 }
 
 static int
-man_SS_pre(MAN_ARGS)
-{
-	char	*id;
-
-	if (n->type == ROFFT_HEAD) {
-		id = html_make_id(n, 1);
-		print_otag(h, TAG_H2, "cTi", "Ss", id);
-		if (id != NULL)
-			print_otag(h, TAG_A, "chR", "permalink", id);
-	}
-	return 1;
-}
-
-static int
 man_PP_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_HEAD)
+	switch (n->type) {
+	case ROFFT_BLOCK:
+		html_close_paragraph(h);
+		break;
+	case ROFFT_HEAD:
 		return 0;
-	else if (n->type == ROFFT_BLOCK)
-		print_bvspace(h, n);
-
+	case ROFFT_BODY:
+		if (n->child != NULL &&
+		    (n->child->flags & NODE_NOFILL) == 0)
+			print_otag(h, TAG_P, "c",
+			    n->tok == MAN_PP ? "Pp" : "Pp HP");
+		break;
+	default:
+		abort();
+	}
 	return 1;
 }
 
@@ -407,15 +391,20 @@ man_IP_pre(MAN_ARGS)
 {
 	const struct roff_node	*nn;
 
-	if (n->type == ROFFT_BODY) {
-		print_otag(h, TAG_DD, "");
-		return 1;
-	} else if (n->type != ROFFT_HEAD) {
+	switch (n->type) {
+	case ROFFT_BLOCK:
+		html_close_paragraph(h);
 		print_otag(h, TAG_DL, "c", "Bl-tag");
 		return 1;
+	case ROFFT_HEAD:
+		print_otag(h, TAG_DT, "");
+		break;
+	case ROFFT_BODY:
+		print_otag(h, TAG_DD, "");
+		return 1;
+	default:
+		abort();
 	}
-
-	print_otag(h, TAG_DT, "");
 
 	switch(n->tok) {
 	case MAN_IP:  /* Only print the first header element. */
@@ -436,19 +425,6 @@ man_IP_pre(MAN_ARGS)
 		abort();
 	}
 	return 0;
-}
-
-static int
-man_HP_pre(MAN_ARGS)
-{
-	if (n->type == ROFFT_HEAD)
-		return 0;
-
-	if (n->type == ROFFT_BLOCK) {
-		print_bvspace(h, n);
-		print_otag(h, TAG_DIV, "c", "HP");
-	}
-	return 1;
 }
 
 static int
@@ -508,10 +484,18 @@ man_ign_pre(MAN_ARGS)
 static int
 man_RS_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_HEAD)
+	switch (n->type) {
+	case ROFFT_BLOCK:
+		html_close_paragraph(h);
+		break;
+	case ROFFT_HEAD:
 		return 0;
-	if (n->type == ROFFT_BLOCK)
+	case ROFFT_BODY:
 		print_otag(h, TAG_DIV, "c", "Bd-indent");
+		break;
+	default:
+		abort();
+	}
 	return 1;
 }
 
@@ -520,6 +504,7 @@ man_SY_pre(MAN_ARGS)
 {
 	switch (n->type) {
 	case ROFFT_BLOCK:
+		html_close_paragraph(h);
 		print_otag(h, TAG_TABLE, "c", "Nm");
 		print_otag(h, TAG_TR, "");
 		break;

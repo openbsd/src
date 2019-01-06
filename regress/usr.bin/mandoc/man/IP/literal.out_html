@@ -1,0 +1,65 @@
+BEGINTEST before indentation
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>indented regular text</dd>
+</dl>
+<p class="Pp">new regular paragraph</p>
+<pre>
+literal
+text
+</pre>
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>
+    <pre>
+indented
+literal
+text
+    </pre>
+  </dd>
+</dl>
+<pre>
+new
+literal
+paragraph
+</pre>
+regular text
+<h2 class="Ss" title="Ss" id="literal_into_indented_paragraph"><a class="permalink" href="#literal_into_indented_paragraph">literal
+  into indented paragraph</a></h2>
+regular text
+<pre>
+literal
+text
+</pre>
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>
+    <pre>
+indented
+literal
+text
+    </pre>
+    indented regular text</dd>
+</dl>
+<p class="Pp">new regular paragraph</p>
+<h2 class="Ss" title="Ss" id="literal_out_of_indented_paragraph"><a class="permalink" href="#literal_out_of_indented_paragraph">literal
+  out of indented paragraph</a></h2>
+regular text
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>indented regular text
+    <pre>
+indented
+literal
+text
+    </pre>
+  </dd>
+</dl>
+<pre>
+new
+literal
+paragraph
+</pre>
+regular text
+<br/>
+ENDTEST

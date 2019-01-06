@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_html.c,v 1.17 2019/01/05 09:14:11 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.18 2019/01/06 04:41:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -107,5 +107,11 @@ roff_html_pre_nf(ROFF_HTML_ARGS)
 static void
 roff_html_pre_sp(ROFF_HTML_ARGS)
 {
-	print_paragraph(h);
+	if (html_fillmode(h, TOKEN_NONE) == ROFF_nf) {
+		h->col++;
+		print_endline(h);
+	} else if (n->parent->tok >= MAN_TH)
+		print_otag(h, TAG_P, "c", "Pp");
+	else
+		print_paragraph(h);
 }

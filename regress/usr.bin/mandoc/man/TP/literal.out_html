@@ -1,0 +1,27 @@
+BEGINTEST before indentation
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>regular indented text</dd>
+</dl>
+<p class="Pp">regular paragraph</p>
+<pre>
+literal
+text
+</pre>
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>
+    <pre>
+indented
+literal
+text
+    </pre>
+  </dd>
+</dl>
+<pre>
+literal
+paragraph
+</pre>
+regular text
+<br/>
+ENDTEST

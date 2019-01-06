@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.h,v 1.60 2019/01/05 09:14:11 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.61 2019/01/06 04:41:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2017, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,6 +39,7 @@ enum	htmltag {
 	TAG_DL,
 	TAG_DT,
 	TAG_DD,
+	TAG_P,
 	TAG_PRE,
 	TAG_VAR,
 	TAG_CITE,
@@ -135,5 +136,6 @@ void		  print_eqn(struct html *, const struct eqn_box *);
 void		  print_paragraph(struct html *);
 void		  print_endline(struct html *);
 
+void		  html_close_paragraph(struct html *);
 enum roff_tok	  html_fillmode(struct html *, enum roff_tok);
 char		 *html_make_id(const struct roff_node *, int);

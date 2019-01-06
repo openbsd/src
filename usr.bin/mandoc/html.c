@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.c,v 1.118 2019/01/05 09:14:11 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.119 2019/01/06 04:41:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -76,6 +76,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"dl",		HTML_NLALL | HTML_INDENT},
 	{"dt",		HTML_NLAROUND},
 	{"dd",		HTML_NLAROUND | HTML_INDENT},
+	{"p",		HTML_NLAROUND | HTML_INDENT},
 	{"pre",		HTML_NLALL | HTML_NOINDENT},
 	{"var",		0},
 	{"cite",	0},
@@ -263,6 +264,19 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 	}
 }
 
+void
+html_close_paragraph(struct html *h)
+{
+	struct tag	*t;
+
+	for (t = h->tag; t != NULL; t = t->next) {
+		if (t->tag == TAG_P) {
+			print_tagq(h, t);
+			break;
+		}
+	}
+}
+
 /*
  * ROFF_nf switches to no-fill mode, ROFF_fi to fill mode.
  * TOKEN_NONE does not switch.  The old mode is returned.
@@ -285,6 +299,7 @@ html_fillmode(struct html *h, enum roff_tok want)
 			print_tagq(h, t);
 			break;
 		case ROFF_nf:
+			html_close_paragraph(h);
 			print_otag(h, TAG_PRE, "");
 			break;
 		case TOKEN_NONE:

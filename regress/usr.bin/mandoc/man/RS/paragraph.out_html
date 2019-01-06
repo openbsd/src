@@ -1,0 +1,8 @@
+BEGINTEST before paragraph
+<p class="Pp">regular paragraph</p>
+<div class="Bd-indent">indented paragraph
+<p class="Pp">nested paragraph</p>
+</div>
+regular text after display
+<br/>
+ENDTEST

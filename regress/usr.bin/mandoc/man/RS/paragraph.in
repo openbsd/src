@@ -1,0 +1,23 @@
+.\" $OpenBSD: paragraph.in,v 1.1 2019/01/06 04:41:15 schwarze Exp $
+.TH RS-PARAGRAPH 1 "January 6, 2019"
+.SH NAME
+RS-paragraph \- interaction between regular and indented paragraphs
+.SH DESCRIPTION
+BEGINTEST
+before paragraph
+.PP
+regular
+paragraph
+.RS
+indented
+paragraph
+.PP
+nested
+paragraph
+.RE
+regular text
+after display
+.br
+ENDTEST
+.br
+end of file

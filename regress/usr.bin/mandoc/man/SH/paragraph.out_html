@@ -1,0 +1,6 @@
+BEGINTEST
+<h1 class="Sh" title="Sh" id="DESCRIPTION"><a class="permalink" href="#DESCRIPTION">DESCRIPTION</a></h1>
+This text immediately follows a section header.
+<p class="Pp">This is a paragraph.</p>
+<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+ENDTEST

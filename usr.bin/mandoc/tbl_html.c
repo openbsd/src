@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.26 2018/12/15 23:33:20 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.27 2019/01/06 04:41:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -78,6 +78,7 @@ html_tbl_sulen(const struct roffsu *su, void *arg)
 static void
 html_tblopen(struct html *h, const struct tbl_span *sp)
 {
+	html_close_paragraph(h);
 	if (h->tbl.cols == NULL) {
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
