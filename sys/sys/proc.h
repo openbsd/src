@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.262 2019/01/03 21:52:31 beck Exp $	*/
+/*	$OpenBSD: proc.h,v 1.263 2019/01/06 12:59:45 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -202,6 +202,7 @@ struct process {
 	struct	tusage ps_tu;		/* accumulated times. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
 	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
+	struct	timeout ps_rucheck_to;	/* resource limit check timer */
 
 	u_int64_t ps_wxcounter;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.18 2014/01/24 04:26:51 guenther Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.19 2019/01/06 12:59:45 visa Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -69,5 +69,7 @@ struct plimit *limcopy(struct plimit *);
 void	limfree(struct plimit *);
 
 void	 ruadd(struct rusage *, struct rusage *);
+void	 rucheck(void *);
+#define RUCHECK_INTERVAL	1000	/* check interval in msec */
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */
