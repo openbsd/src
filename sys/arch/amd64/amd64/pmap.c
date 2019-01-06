@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2019/01/06 02:15:40 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -553,10 +553,6 @@ pmap_kremove(vaddr_t sva, vsize_t len)
  * pmap_bootstrap: get the system in a state where it can run with VM
  *	properly enabled (called before main()).   the VM system is
  *      fully init'd later...
- *
- * => on i386, locore.s has already enabled the MMU by allocating
- *	a PDP for the kernel, and nkpde PTP's for the kernel.
- * => kva_start is the first free virtual address in kernel space
  */
 
 paddr_t
@@ -779,18 +775,11 @@ pmap_prealloc_lowmem_ptps(paddr_t first_avail)
 }
 
 /*
- * pmap_init: called from uvm_init, our job is to get the pmap
- * system ready to manage mappings... this mainly means initing
- * the pv_entry stuff.
+ * pmap_init: no further initialization required on this platform
  */
-
 void
 pmap_init(void)
 {
-	/*
-	 * done: pmap module is up (and ready for business)
-	 */
-
 	pmap_initialized = TRUE;
 }
 
