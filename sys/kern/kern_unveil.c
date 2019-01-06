@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.18 2019/01/03 21:52:31 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.19 2019/01/06 18:33:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -198,6 +198,7 @@ unveil_destroy(struct process *ps)
 	    sizeof(struct unveil));
 	ps->ps_uvvcount = 0;
 	ps->ps_uvpaths = NULL;
+	ps->ps_uvpcwd = NULL;
 }
 
 void
