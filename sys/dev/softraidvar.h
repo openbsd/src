@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.167 2017/06/12 16:39:51 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.168 2019/01/06 14:59:56 kn Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -313,7 +313,6 @@ SLIST_HEAD(sr_boot_volume_head, sr_boot_volume);
 /* #define SR_DEBUG */
 #ifdef SR_DEBUG
 extern u_int32_t		sr_debug;
-#define DPRINTF(x...)		do { if (sr_debug) printf(x); } while(0)
 #define DNPRINTF(n,x...)	do { if (sr_debug & n) printf(x); } while(0)
 #define	SR_D_CMD		0x0001
 #define	SR_D_INTR		0x0002
@@ -326,7 +325,6 @@ extern u_int32_t		sr_debug;
 #define	SR_D_STATE		0x0100
 #define	SR_D_REBUILD		0x0200
 #else
-#define DPRINTF(x...)
 #define DNPRINTF(n,x...)
 #endif
 
