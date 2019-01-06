@@ -1,8 +1,8 @@
-.\"	$OpenBSD: grdc.6,v 1.10 2014/11/17 22:14:25 schwarze Exp $
+.\"	$OpenBSD: grdc.6,v 1.11 2019/01/06 18:27:14 tedu Exp $
 .\"
 .\" Copyright 2002 Amos Shapir.  Public domain.
 .\"
-.Dd $Mdocdate: November 17 2014 $
+.Dd $Mdocdate: January 6 2019 $
 .Dt GRDC 6
 .Os
 .Sh NAME
@@ -26,7 +26,10 @@ The optional
 flag makes digits scroll as they change.
 If the terminal is too slow to keep up,
 .Nm
-will skip seconds.
+skips seconds.
+Pressing the
+.Sq q
+exits the program.
 .Sh AUTHORS
 .An -nosplit
 .An Amos Shapir ,
