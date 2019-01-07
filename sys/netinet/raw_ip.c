@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.116 2018/12/03 10:10:49 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.117 2019/01/07 07:54:25 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -114,6 +114,8 @@ rip_init(void)
 }
 
 struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
+
+struct mbuf	*rip_chkhdr(struct mbuf *, struct mbuf *);
 
 int
 rip_input(struct mbuf **mp, int *offp, int proto, int af)
@@ -252,24 +254,15 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			m_freem(m);
 			return (EMSGSIZE);
 		}
-		if (m->m_pkthdr.len < sizeof(struct ip)) {
-			m_freem(m);
+
+		m = rip_chkhdr(m, inp->inp_options);
+		if (m == NULL)
 			return (EINVAL);
-		}
+
 		ip = mtod(m, struct ip *);
-		/*
-		 * don't allow both user specified and setsockopt options,
-		 * and don't allow packet length sizes that will crash
-		 */
-		if ((ip->ip_hl != (sizeof (*ip) >> 2) && inp->inp_options) ||
-		    ntohs(ip->ip_len) > m->m_pkthdr.len ||
-		    ntohs(ip->ip_len) < ip->ip_hl << 2) {
-			m_freem(m);
-			return (EINVAL);
-		}
-		if (ip->ip_id == 0) {
+		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_randomid());
-		}
+
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
 		ipstat_inc(ips_rawout);
@@ -293,6 +286,79 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	error = ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp, 0);
 	return (error);
+}
+
+struct mbuf *
+rip_chkhdr(struct mbuf *m, struct mbuf *options)
+{
+	struct ip *ip;
+	int hlen, opt, optlen, cnt;
+	u_char *cp;
+
+	if (m->m_pkthdr.len < sizeof(struct ip)) {
+		m_freem(m);
+		return NULL;
+	}
+
+	m = m_pullup(m, sizeof (struct ip));
+	if (m == NULL)
+		return NULL;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+
+	/* Don't allow packet length sizes that will crash. */
+	if (hlen < sizeof (struct ip) ||
+	    hlen < ntohs(ip->ip_len) ||
+	    ntohs(ip->ip_len) != m->m_pkthdr.len) {
+		m_freem(m);
+		return NULL;
+	}
+	m = m_pullup(m, hlen);
+	if (m == NULL)
+		return NULL;
+
+	ip = mtod(m, struct ip *);
+
+	if (ip->ip_v != IPVERSION) {
+		m_freem(m);
+		return NULL;
+	}
+
+	/*
+	 * Don't allow both user specified and setsockopt options.
+	 * If options are present verify them.
+	 */
+	if (hlen != sizeof(struct ip)) {
+		if (options) {
+			m_freem(m);
+			return NULL;
+		} else {
+			cp = (u_char *)(ip + 1);
+			cnt = hlen - sizeof(struct ip);
+			for (; cnt > 0; cnt -= optlen, cp += optlen) {
+				opt = cp[IPOPT_OPTVAL];
+				if (opt == IPOPT_EOL)
+					break;
+				if (opt == IPOPT_NOP)
+					optlen = 1;
+				else {
+					if (cnt < IPOPT_OLEN + sizeof(*cp)) {
+						m_freem(m);
+						return NULL;
+					}
+					optlen = cp[IPOPT_OLEN];
+					if (optlen < IPOPT_OLEN + sizeof(*cp) ||
+					    optlen > cnt) {
+						m_freem(m);
+						return NULL;
+					}
+				}
+			}
+		}
+	}
+
+	return m;
 }
 
 /*
