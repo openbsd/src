@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.6 2014/05/19 13:11:31 mpi Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.7 2019/01/07 03:41:06 dlg Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -130,7 +130,7 @@ ohci_voyager_attach(struct device *parent, struct device *self, void *aux)
 		splx(s);
 		return;
 	}
-	printf(": %s", voyager_intr_string(sc->sc_ih));
+	printf(": %s, ", voyager_intr_string(sc->sc_ih));
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
