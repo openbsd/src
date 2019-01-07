@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.84 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.85 2019/01/07 23:44:11 bluhm Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -915,7 +915,7 @@ pci_init_extents(void)
 		    NULL, 0, EX_NOWAIT | EX_FILLED);
 		if (pciio_ex == NULL)
 			return;
-		extent_free(pciio_ex, 0, 0x10000, M_NOWAIT);
+		extent_free(pciio_ex, 0, 0x10000, EX_NOWAIT);
 	}
 
 	if (pcimem_ex == NULL) {
