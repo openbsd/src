@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.119 2019/01/06 04:41:15 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.120 2019/01/07 06:51:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -270,7 +270,7 @@ html_close_paragraph(struct html *h)
 	struct tag	*t;
 
 	for (t = h->tag; t != NULL; t = t->next) {
-		if (t->tag == TAG_P) {
+		if (t->tag == TAG_P || t->tag == TAG_PRE) {
 			print_tagq(h, t);
 			break;
 		}
@@ -832,30 +832,28 @@ print_tagq(struct html *h, const struct tag *until)
 
 	while ((tag = h->tag) != NULL) {
 		print_ctag(h, tag);
-		if (until && tag == until)
+		if (tag == until)
 			return;
 	}
 }
 
+/*
+ * Close out all open elements up to but excluding suntil.
+ * Note that a paragraph just inside stays open together with it
+ * because paragraphs include subsequent phrasing content.
+ */
 void
 print_stagq(struct html *h, const struct tag *suntil)
 {
 	struct tag	*tag;
 
 	while ((tag = h->tag) != NULL) {
-		if (suntil && tag == suntil)
+		if (tag == suntil ||
+		    (tag->next == suntil &&
+		     (tag->tag == TAG_P || tag->tag == TAG_PRE)))
 			return;
 		print_ctag(h, tag);
 	}
-}
-
-void
-print_paragraph(struct html *h)
-{
-	struct tag	*t;
-
-	t = print_otag(h, TAG_DIV, "c", "Pp");
-	print_tagq(h, t);
 }
 
 

@@ -1,0 +1,19 @@
+BEGINTEST initial text
+<p class="Pp">normal paragraph</p>
+<div class="Bd Pp">filled display
+<p class="Pp">paragraph in display</p>
+</div>
+back to normal
+<p class="Pp">another paragraph</p>
+<div class="Bd Pp">
+<pre>
+unfilled
+display
+
+unfilled
+paragraph
+</pre>
+</div>
+again back to normal
+<br/>
+ENDTEST

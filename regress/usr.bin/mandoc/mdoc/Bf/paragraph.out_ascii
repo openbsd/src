@@ -1,0 +1,14 @@
+BF-PARAGRAPH(1)             General Commands Manual            BF-PARAGRAPH(1)
+
+NNAAMMEE
+     BBff--ppaarraaggrraapphh - interaction of paragraphs and font blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     normal text literal text
+
+     literal paragraph ENDTEST
+     end of file
+
+OpenBSD                         January 7, 2019                        OpenBSD

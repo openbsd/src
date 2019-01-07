@@ -6,16 +6,12 @@ STRING-DOTT(1) - General Commands Manual
 
 # DESCRIPTION
 
-initial text
-
 BEGINTEST
 
 We are using the  markdown device.
 
 The device name can be overridden.
+ENDTEST  
+end of file
 
-ENDTEST
-
-final text
-
-OpenBSD - August 16, 2018
+OpenBSD - January 7, 2019

@@ -4,9 +4,13 @@ NNAAMMEE
      DD11--ssppaacciinngg - spacing in and around one-line displays
 
 DDEESSCCRRIIPPTTIIOONN
-     preceding text
+     BEGINTEST
+
+     preceding paragraph
            spacing in and around one-line displays
      empty display:
      following text
+     ENDTEST
+     end of file
 
-OpenBSD                          July 4, 2017                          OpenBSD
+OpenBSD                         January 7, 2019                        OpenBSD

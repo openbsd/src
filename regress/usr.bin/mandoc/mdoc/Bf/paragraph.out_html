@@ -1,0 +1,6 @@
+BEGINTEST
+<p class="Pp">normal text</p>
+<div class="Bf Li">literal text
+<p class="Pp">literal paragraph</p>
+</div>
+ENDTEST

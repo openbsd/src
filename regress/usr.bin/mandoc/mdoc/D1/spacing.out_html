@@ -1,0 +1,8 @@
+BEGINTEST
+<p class="Pp">preceding paragraph</p>
+<div class="Bd Bd-indent">spacing in and around one-line displays</div>
+empty display:
+<div class="Bd Bd-indent"></div>
+following text
+<br/>
+ENDTEST

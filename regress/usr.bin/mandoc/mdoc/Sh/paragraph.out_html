@@ -1,0 +1,7 @@
+BEGINTEST
+<p class="Pp">descriptive text</p>
+<h2 class="Ss" title="Ss" id="Subsection"><a class="permalink" href="#Subsection">Subsection</a></h2>
+initial subsection text
+<p class="Pp">subsection paragraph</p>
+<h1 class="Sh" title="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+ENDTEST

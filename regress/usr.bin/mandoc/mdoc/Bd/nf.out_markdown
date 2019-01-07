@@ -6,6 +6,7 @@ BD-NF(1) - General Commands Manual
 
 # DESCRIPTION
 
+BEGINTEST
 initial
 text
 after .nf
@@ -27,6 +28,8 @@ of unfilled block
 > in filled block
 
 after end
-of filled block
+of filled block  
+ENDTEST  
+end of file
 
-OpenBSD - January 4, 2019
+OpenBSD - January 7, 2019

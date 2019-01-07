@@ -4,16 +4,12 @@ NNAAMMEE
      ssttrriinngg--ddoottTT – interpolating the device name
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text
-
      BEGINTEST
 
      We are using the utf8 device.
 
      The device name can be overridden.
-
      ENDTEST
+     end of file
 
-     final text
-
-OpenBSD                         August 16, 2018                        OpenBSD
+OpenBSD                         January 7, 2019                        OpenBSD

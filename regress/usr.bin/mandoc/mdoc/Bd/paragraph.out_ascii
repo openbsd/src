@@ -1,0 +1,27 @@
+BD-PARAGRAPH(1)             General Commands Manual            BD-PARAGRAPH(1)
+
+NNAAMMEE
+     BBdd--ppaarraaggrraapphh - interaction of paragraphs and displays
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST initial text
+
+     normal paragraph
+
+     filled display
+
+     paragraph in display
+     back to normal
+
+     another paragraph
+
+     unfilled
+     display
+
+     unfilled
+     paragraph
+     again back to normal
+     ENDTEST
+     end of file
+
+OpenBSD                         January 7, 2019                        OpenBSD

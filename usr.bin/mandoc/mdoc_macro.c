@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.188 2019/01/01 07:41:22 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.189 2019/01/07 06:51:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -293,6 +293,8 @@ rew_pending(struct roff_man *mdoc, const struct roff_node *n)
 			case ROFFT_HEAD:
 				roff_body_alloc(mdoc, n->line, n->pos,
 				    n->tok);
+				if (n->tok == MDOC_Ss)
+					mdoc->flags &= ~ROFF_NONOFILL;
 				break;
 			case ROFFT_BLOCK:
 				break;
@@ -1051,9 +1053,16 @@ blk_full(MACRO_PROT_ARGS)
 	 * regular child nodes.
 	 */
 
-	if (tok == MDOC_Sh)
+	switch (tok) {
+	case MDOC_Sh:
 		mdoc->flags &= ~ROFF_NOFILL;
-
+		break;
+	case MDOC_Ss:
+		mdoc->flags |= ROFF_NONOFILL;
+		break;
+	default:
+		break;
+	}
 	mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 	blk = mdoc_block_alloc(mdoc, line, ppos, tok, arg);
 	head = body = NULL;
@@ -1195,6 +1204,8 @@ blk_full(MACRO_PROT_ARGS)
 
 	rew_last(mdoc, head);
 	body = roff_body_alloc(mdoc, line, ppos, tok);
+	if (tok == MDOC_Ss)
+		mdoc->flags &= ~ROFF_NONOFILL;
 
 	/*
 	 * Set up fill mode for display blocks.

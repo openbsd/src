@@ -1,0 +1,39 @@
+.\" $OpenBSD: paragraph.in,v 1.1 2019/01/07 06:51:37 schwarze Exp $
+.Dd $Mdocdate: January 7 2019 $
+.Dt BD-PARAGRAPH 1
+.Os
+.Sh NAME
+.Nm Bd-paragraph
+.Nd interaction of paragraphs and displays
+.Sh DESCRIPTION
+BEGINTEST
+initial
+text
+.Pp
+normal
+paragraph
+.Bd -filled
+filled
+display
+.Pp
+paragraph
+in display
+.Ed
+back
+to normal
+.Pp
+another
+paragraph
+.Bd -unfilled
+unfilled
+display
+.Pp
+unfilled
+paragraph
+.Ed
+again back
+to normal
+.br
+ENDTEST
+.br
+end of file
