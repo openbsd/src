@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.107 2018/12/30 23:08:05 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.108 2019/01/07 20:24:59 anton Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -95,7 +95,6 @@ LINKFLAGS+=	-S
 .endif
 
 .if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
-CMACHFLAGS+=	-fno-ret-protector
 PROF=		-fsanitize-coverage=trace-pc
 .endif
 
