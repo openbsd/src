@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.262 2018/11/30 09:23:31 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.263 2019/01/07 07:49:38 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1262,11 +1262,8 @@ m_devget(char *buf, int totlen, int off)
 void
 m_zero(struct mbuf *m)
 {
-#ifdef DIAGNOSTIC
-	if (M_READONLY(m))
-		panic("m_zero: M_READONLY");
-#endif /* DIAGNOSTIC */
-
+	if (M_READONLY(m))	/* can't m_zero a shared buffer */
+		return;
 	explicit_bzero(M_DATABUF(m), M_SIZE(m));
 }
 
