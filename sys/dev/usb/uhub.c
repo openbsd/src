@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.91 2018/11/10 15:29:22 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.92 2019/01/07 14:24:22 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -126,7 +126,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		usb_hub_ss_descriptor_t	ss;
 	} hd;
 	int p, port, nports, powerdelay;
-	struct usbd_interface *iface;
+	struct usbd_interface *iface = uaa->iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 	uint8_t ttthink = 0;
@@ -233,11 +233,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Set up interrupt pipe. */
-	err = usbd_device2interface_handle(dev, 0, &iface);
-	if (err) {
-		printf("%s: no interface handle\n", sc->sc_dev.dv_xname);
-		goto bad;
-	}
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor\n", sc->sc_dev.dv_xname);
