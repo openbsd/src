@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.148 2018/07/19 10:20:09 sthen Exp $ */
+/*	$OpenBSD: ntp.c,v 1.149 2019/01/07 20:33:40 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -506,6 +506,7 @@ ntp_dispatch_imsg_dns(void)
 
 			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
 			if (dlen == 0) {	/* no data -> temp error */
+				log_warnx("DNS lookup tempfail");
 				peer->state = STATE_DNS_TEMPFAIL;
 				break;
 			}
