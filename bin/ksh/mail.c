@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.24 2018/06/25 15:22:30 cheloha Exp $	*/
+/*	$OpenBSD: mail.c,v 1.25 2019/01/07 20:50:43 tedu Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -47,6 +47,15 @@ mcheck(void)
 	struct stat	 stbuf;
 	static int	 first = 1;
 
+	if (mplist)
+		mbp = mplist;
+	else if ((vp = global("MAIL")) && (vp->flag & ISSET))
+		mbp = &mbox;
+	else
+		mbp = NULL;
+	if (mbp == NULL)
+		return;
+
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	if (first) {
 		mlastchkd = now;
@@ -55,13 +64,6 @@ mcheck(void)
 	timespecsub(&now, &mlastchkd, &elapsed);
 	if (elapsed.tv_sec >= mailcheck_interval) {
 		mlastchkd = now;
-
-		if (mplist)
-			mbp = mplist;
-		else if ((vp = global("MAIL")) && (vp->flag & ISSET))
-			mbp = &mbox;
-		else
-			mbp = NULL;
 
 		while (mbp) {
 			if (mbp->mb_path && stat(mbp->mb_path, &stbuf) == 0 &&
