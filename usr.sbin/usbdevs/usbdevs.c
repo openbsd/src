@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.29 2018/07/12 07:58:23 mpi Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.30 2019/01/07 14:22:40 mpi Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ usbdev(int f, uint8_t addr)
 
 		printf("rev %s", di.udi_release);
 		if (strlen(di.udi_serial))
-			printf(", iSerialNumber %s", di.udi_serial);
+			printf(", iSerial %s", di.udi_serial);
 	}
 	printf("\n");
 
