@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.116 2018/10/11 09:52:22 benno Exp $	*/
+/*	$OpenBSD: server.c,v 1.117 2019/01/08 18:35:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -119,6 +119,13 @@ server_privinit(struct server *srv)
 	}
 
 	/* Open listening socket in the privileged process */
+	if ((srv->srv_conf.flags & SRVFLAG_TLS) && srv->srv_conf.tls_cert ==
+	    NULL) {
+		/* soft fail if cert is not there yet */
+		srv->srv_s = -1;
+		return (0);
+	}
+
 	if ((srv->srv_s = server_socket_listen(&srv->srv_conf.ss,
 	    srv->srv_conf.port, &srv->srv_conf)) == -1)
 		return (-1);
@@ -248,6 +255,10 @@ server_tls_init(struct server *srv)
 	struct server_config *srv_conf;
 
 	if ((srv->srv_conf.flags & SRVFLAG_TLS) == 0)
+		return (0);
+
+	if (srv->srv_conf.tls_cert == NULL)
+		/* soft fail if cert is not there yet */
 		return (0);
 
 	log_debug("%s: setting up tls for %s", __func__, srv->srv_conf.name);

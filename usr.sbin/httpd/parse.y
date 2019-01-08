@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2018/11/01 00:18:44 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.108 2019/01/08 18:35:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -344,13 +344,10 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
-			if (server_tls_load_keypair(srv) == -1) {
-				yyerror("server \"%s\": failed to load "
-				    "public/private keys", srv->srv_conf.name);
-				serverconfig_free(srv_conf);
-				free(srv);
-				YYERROR;
-			}
+			if (server_tls_load_keypair(srv) == -1)
+				log_warnx("%s:%d: server \"%s\": failed to "
+				    "load public/private keys", file->name,
+				    yylval.lineno, srv->srv_conf.name);
 
 			if (server_tls_load_ca(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
@@ -2133,16 +2130,13 @@ server_inherit(struct server *src, struct server_config *alias,
 	dst->srv_conf.flags &= ~SRVFLAG_SERVER_MATCH;
 	dst->srv_conf.flags |= (alias->flags & SRVFLAG_SERVER_MATCH);
 
-	if (server_tls_load_keypair(dst) == -1) {
-		yyerror("failed to load public/private keys "
-		    "for server %s", dst->srv_conf.name);
-		serverconfig_free(&dst->srv_conf);
-		free(dst);
-		return (NULL);
-	}
+	if (server_tls_load_keypair(dst) == -1)
+		log_warnx("%s:%d: server \"%s\": failed to "
+		    "load public/private keys", file->name,
+		    yylval.lineno, dst->srv_conf.name);
 
 	if (server_tls_load_ca(dst) == -1) {
-		yyerror("falied to load ca cert(s) for server %s",
+		yyerror("failed to load ca cert(s) for server %s",
 		    dst->srv_conf.name);
 		serverconfig_free(&dst->srv_conf);
 		return NULL;
