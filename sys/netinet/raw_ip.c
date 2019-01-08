@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.117 2019/01/07 07:54:25 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.118 2019/01/08 01:47:55 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ rip_chkhdr(struct mbuf *m, struct mbuf *options)
 
 	/* Don't allow packet length sizes that will crash. */
 	if (hlen < sizeof (struct ip) ||
-	    hlen < ntohs(ip->ip_len) ||
+	    ntohs(ip->ip_len) < hlen ||
 	    ntohs(ip->ip_len) != m->m_pkthdr.len) {
 		m_freem(m);
 		return NULL;
