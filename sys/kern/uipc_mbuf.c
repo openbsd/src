@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.263 2019/01/07 07:49:38 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.264 2019/01/08 13:01:50 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1262,8 +1262,16 @@ m_devget(char *buf, int totlen, int off)
 void
 m_zero(struct mbuf *m)
 {
-	if (M_READONLY(m))	/* can't m_zero a shared buffer */
+	if (M_READONLY(m)) {
+		mtx_enter(&m_extref_mtx);
+		if ((m->m_flags & M_EXT) && MCLISREFERENCED(m)) {
+			m->m_ext.ext_nextref->m_flags |= M_ZEROIZE;
+			m->m_ext.ext_prevref->m_flags |= M_ZEROIZE;
+		}
+		mtx_leave(&m_extref_mtx);
 		return;
+	}
+
 	explicit_bzero(M_DATABUF(m), M_SIZE(m));
 }
 
