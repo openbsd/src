@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.16 2018/08/03 17:48:34 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.17 2019/01/08 06:46:29 florian Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2018 $
+.Dd $Mdocdate: January 8 2019 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -63,9 +63,10 @@ Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-le="letsencrypt"
-domain example.com {
-	sign with $le
+api_url="https://acme-v01.api.letsencrypt.org/directory"
+authority letsencrypt {
+	api url $api_url
+	account key "/etc/acme/letsencrypt-privkey.pem"
 }
 .Ed
 .Sh AUTHORITIES
@@ -91,14 +92,6 @@ Specify the
 .Ar url
 under which the ACME API is reachable.
 .El
-.Pp
-An example authority block:
-.Bd -literal -offset indent
-authority letsencrypt {
-	api url "https://acme-v01.api.letsencrypt.org/directory"
-	account key "/etc/ssl/private/my-acme.key"
-}
-.Ed
 .Sh DOMAINS
 The certificates to be obtained through ACME.
 .Bl -tag -width Ds
@@ -155,37 +148,6 @@ If it is not specified, a default of
 .Pa /var/www/acme
 will be used.
 .El
-.Pp
-An example domain declaration looks like this:
-.Bd -literal -offset indent
-domain www.example.com {
-	alternative names { example.com secure.example.com }
-	domain key "/etc/ssl/private/www.example.com.key"
-	domain certificate "/etc/ssl/www.example.com.crt"
-	domain full chain certificate "/etc/ssl/www.example.com.fullchain.pem"
-	sign with letsencrypt
-	challengedir "/var/www/acme"
-}
-.Ed
-.Pp
-An
-.Xr httpd.conf 5
-server declaration to use that certificate looks like this:
-.Bd -literal -offset indent
-server "www.example.com" {
-        alias "example.com"
-        alias "secure.example.com"
-        listen on $ext_addr port 80
-        listen on $ext_addr tls port 443
-        tls certificate "/etc/ssl/www.example.com.fullchain.pem"
-        tls key "/etc/ssl/private/www.example.com.key"
-        location "/.well-known/acme-challenge/*" {
-                root "/acme"
-                request strip 2
-        }
-        root "/htdocs"
-}
-.Ed
 .Sh FILES
 .Bl -tag -width "/etc/acme-client.conf" -compact
 .It Pa /etc/acme-client.conf
