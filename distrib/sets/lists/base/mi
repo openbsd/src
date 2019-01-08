@@ -51,6 +51,7 @@
 ./etc/daily
 ./etc/disktab
 ./etc/examples
+./etc/examples/acme-client.conf
 ./etc/examples/bgpd.conf
 ./etc/examples/chio.conf
 ./etc/examples/dhclient.conf

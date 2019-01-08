@@ -1,6 +1,5 @@
 ./.cshrc
 ./.profile
-./etc/acme-client.conf
 ./etc/changelist
 ./etc/dumpdates
 ./etc/fbtab
