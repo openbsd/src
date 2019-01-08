@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.200 2017/05/15 10:52:08 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.201 2019/01/08 13:49:47 uaa Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1406,7 +1406,12 @@ ehci_open(struct usbd_pipe *pipe)
 		panic("ehci_open: bad device speed %d", dev->speed);
 	}
 
-	naks = 8;		/* XXX */
+	/*
+	 * NAK reload count:
+	 * must be zero with using periodic transfer.
+	 * Linux 4.20's driver (ehci-q.c) sets 4, we use same value.
+	 */
+	naks = ((xfertype == UE_CONTROL) || (xfertype == UE_BULK)) ? 4 : 0;
 
 	/* Allocate sqh for everything, save isoc xfers */
 	if (xfertype != UE_ISOCHRONOUS) {
