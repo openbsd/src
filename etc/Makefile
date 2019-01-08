@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.465 2018/07/24 18:15:30 jasper Exp $
+#	$OpenBSD: Makefile,v 1.466 2019/01/08 07:14:10 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -39,13 +39,13 @@ kernels: ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-MUTABLE=acme-client.conf changelist daily etc.${MACHINE}/disktab \
+MUTABLE=changelist daily etc.${MACHINE}/disktab \
 	etc.${MACHINE}/login.conf ftpusers gettytab group ksh.kshrc locate.rc \
 	mailer.conf moduli monthly netstart newsyslog.conf ntpd.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
+EXAMPLES=acme-client.conf chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf man.conf mixerctl.conf \
 	mrouted.conf ntpd.conf printcap rad.conf rbootd.conf \
 	remote sensorsd.conf wsconsctl.conf
