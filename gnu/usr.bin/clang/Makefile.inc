@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.8 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile.inc,v 1.9 2019/01/08 22:02:30 bluhm Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -22,9 +22,12 @@ LLDB_INCLUDES=	-I${LLVM_SRCS}/tools/lldb/include \
 CPPFLAGS+=	-I${LLVM_SRCS}/include -I${.CURDIR}/../include -I${.OBJDIR} \
 		-I${.OBJDIR}/../include
 CPPFLAGS+=	-DNDEBUG
+
+# Disable some protections in the compiler to regain performance.
 .if (${MACHINE} == "amd64" || ${MACHINE} == "arm64")
-CPPFLAGS+=	-fno-ret-protector
+CPPFLAGS+=	-fno-ret-protector -mno-retpoline
 .endif
+
 CPPFLAGS+=	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
 		-D__STDC_FORMAT_MACROS
 
