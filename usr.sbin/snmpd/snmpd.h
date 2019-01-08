@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.80 2018/08/05 09:33:13 mestre Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.81 2019/01/08 15:38:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -762,7 +762,7 @@ void		 usm_make_report(struct snmp_message *);
 /* proc.c */
 enum privsep_procid
 	    proc_getid(struct privsep_proc *, unsigned int, const char *);
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *);
