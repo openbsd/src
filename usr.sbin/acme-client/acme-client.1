@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.26 2018/08/02 14:39:26 benno Exp $
+.\"	$OpenBSD: acme-client.1,v 1.27 2019/01/08 18:36:17 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2018 $
+.Dd $Mdocdate: January 8 2019 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -98,15 +98,19 @@ Default challengedir.
 returns 1 on failure, 2 if the certificates didn't change (up to date),
 or 0 if certificates were changed (revoked or updated).
 .Sh EXAMPLES
-To initialize a new account and Domain key:
+Example configuration files for
+.Nm
+and
+.Xr httpd 8
+are provided in
+.Pa /etc/examples/acme-client.conf
+and
+.Pa /etc/examples/httpd.conf .
 .Pp
-.Dl # acme-client -vAD example.com
+To enable TLS in
+.Xr httpd 8 :
 .Pp
-To create and submit a new key for a single domain, assuming that the
-web server has already been configured to map the challenge directory
-as above:
-.Pp
-.Dl # acme-client -vD example.com
+.Dl # acme-client -vAD example.com && rcctl reload httpd
 .Pp
 A daily
 .Xr cron 8
