@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.9 2017/08/10 18:06:58 reyk Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.10 2019/01/08 16:23:01 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -72,6 +72,7 @@
 #define ALLOC_SEGS	(SEG_MAX + 2)
 
 struct virtio_feature_name vioblk_feature_names[] = {
+#if VIRTIO_DEBUG
 	{ VIRTIO_BLK_F_BARRIER,		"Barrier" },
 	{ VIRTIO_BLK_F_SIZE_MAX,	"SizeMax" },
 	{ VIRTIO_BLK_F_SEG_MAX,		"SegMax" },
@@ -81,6 +82,7 @@ struct virtio_feature_name vioblk_feature_names[] = {
 	{ VIRTIO_BLK_F_SCSI,		"SCSI" },
 	{ VIRTIO_BLK_F_FLUSH,		"Flush" },
 	{ VIRTIO_BLK_F_TOPOLOGY,	"Topology" },
+#endif
 	{ 0,				NULL }
 };
 

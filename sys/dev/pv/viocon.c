@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.3 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.4 2019/01/08 16:23:01 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -49,9 +49,11 @@
 #endif
 
 struct virtio_feature_name viocon_feature_names[] = {
+#if VIRTIO_DEBUG
 	{ VIRTIO_CONSOLE_F_SIZE,	"Size" },
 	{ VIRTIO_CONSOLE_F_MULTIPORT,	"MultiPort" },
 	{ VIRTIO_CONSOLE_F_EMERG_WRITE,	"EmergWrite" },
+#endif
 	{ 0, 				NULL },
 };
 

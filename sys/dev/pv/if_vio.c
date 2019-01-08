@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.6 2018/09/25 13:46:44 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.7 2019/01/08 16:23:01 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -96,6 +96,7 @@
 #define CONFFLAG_QEMU_VLAN_BUG		(1<<8)
 
 static const struct virtio_feature_name virtio_net_feature_names[] = {
+#if VIRTIO_DEBUG
 	{ VIRTIO_NET_F_CSUM,		"CSum" },
 	{ VIRTIO_NET_F_GUEST_CSUM,	"GuestCSum" },
 	{ VIRTIO_NET_F_MAC,		"MAC" },
@@ -115,6 +116,7 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_CTRL_VLAN,	"CtrlVLAN" },
 	{ VIRTIO_NET_F_CTRL_RX_EXTRA,	"CtrlRXExtra" },
 	{ VIRTIO_NET_F_GUEST_ANNOUNCE,	"GuestAnnounce" },
+#endif
 	{ 0, 				NULL }
 };
 
