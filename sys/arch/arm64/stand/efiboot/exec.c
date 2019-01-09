@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 2017/02/08 09:18:24 patrick Exp $	*/
+/*	$OpenBSD: exec.c,v 1.6 2019/01/09 13:18:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -94,7 +94,7 @@ run_loadfile(u_long *marks, int howto)
 	char *cp;
 	void *fdt;
 
-	snprintf(args, sizeof(args) - 8, "%s:%s", cmd.bootdev, cmd.image);
+	strlcpy(args, cmd.path, sizeof(args));
 	cp = args + strlen(args);
 
 	*cp++ = ' ';

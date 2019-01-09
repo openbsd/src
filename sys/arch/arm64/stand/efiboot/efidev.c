@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.2 2018/08/25 20:43:39 kettenis Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.3 2019/01/09 13:18:50 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -484,7 +484,7 @@ efiopen(struct open_file *f, ...)
 	part = va_arg(ap, u_int);
 	va_end(ap);
 
-	if (unit != 0)
+	if (unit != 0 || part >= MAXPARTITIONS)
 		return (ENXIO);
 
 	diskinfo.ed.blkio = disk;
@@ -512,7 +512,7 @@ efistrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 
 	nsect = (size + DEV_BSIZE - 1) / DEV_BSIZE;
 	blk += DL_SECTOBLK(&dip->disklabel,
-	    dip->disklabel.d_partitions[B_PARTITION(dip->sc_part)].p_offset);
+	    dip->disklabel.d_partitions[dip->sc_part].p_offset);
 
 	if (blk < 0)
 		error = EINVAL;
