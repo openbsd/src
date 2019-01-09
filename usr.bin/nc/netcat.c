@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.200 2018/12/27 17:22:45 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.201 2019/01/09 12:58:18 inoguchi Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <tls.h>
 #include <unistd.h>
