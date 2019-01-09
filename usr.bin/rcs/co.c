@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.123 2017/08/29 16:47:33 otto Exp $	*/
+/*	$OpenBSD: co.c,v 1.124 2019/01/09 18:00:45 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -358,11 +358,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	/*
-	 * Do keyword expansion if required.
-	 */
-	if (file->rf_ndelta != 0)
-		bp = rcs_kwexp_buf(bp, file, rev);
-	/*
 	 * File inherits permissions from its ,v file
 	 */
 	if (file->rf_file != NULL) {
@@ -374,14 +369,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if (flags & CO_LOCK) {
-		if (file->rf_ndelta != 0) {
-			if (lockname != NULL &&
-			    rcs_lock_add(file, lockname, rev) < 0) {
-				if (rcs_errno != RCS_ERR_DUPENT)
-					return (-1);
-			}
-		}
-
 		/* File should only be writable by owner. */
 		mode &= ~(S_IWGRP|S_IWOTH);
 		mode |= S_IWUSR;
@@ -389,7 +376,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
-				(void)fprintf(stderr, " (locked)");
+				(void)fprintf(stderr, " (locked)\n");
 		}
 	} else if (flags & CO_UNLOCK) {
 		if (file->rf_ndelta != 0) {
@@ -405,31 +392,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (file->rf_ndelta != 0) {
 			if (!(flags & QUIET) && !(flags & NEWFILE) &&
 			    !(flags & CO_REVERT))
-				(void)fprintf(stderr, " (unlocked)");
+				(void)fprintf(stderr, " (unlocked)\n");
 		}
-	}
-
-	/* If strict locking is disabled, make file writable by owner. */
-	if (rcs_lock_getmode(file) == RCS_LOCK_LOOSE)
-		mode |= S_IWUSR;
-
-	if (file->rf_ndelta == 0 && !(flags & QUIET) &&
-	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
-		(void)fprintf(stderr, "no revisions, so nothing can be %s\n",
-		    (flags & CO_LOCK) ? "locked" : "unlocked");
-	} else if (file->rf_ndelta != 0) {
-		/* XXX - Not a good way to detect if a newline is needed. */
-		if (!(flags & QUIET) && !(flags & NEWFILE) &&
-		    !(flags & CO_REVERT))
-			(void)fprintf(stderr, "\n");
-	}
-
-	if (flags & CO_LOCK) {
-		if (rcs_errno != RCS_ERR_DUPENT)
-			lcount++;
-		if (!(flags & QUIET) && lcount > 1 && !(flags & CO_REVERT))
-			warnx("%s: warning: You now have %d locks.",
-			    file->rf_path, lcount);
 	}
 
 	if ((flags & (PIPEOUT|FORCE)) == 0 && stat(dst, &st) != -1) {
@@ -461,6 +425,43 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			}
 		}
 	}
+
+	if (flags & CO_LOCK) {
+		if (file->rf_ndelta != 0) {
+			if (lockname != NULL &&
+			    rcs_lock_add(file, lockname, rev) < 0) {
+				if (rcs_errno != RCS_ERR_DUPENT)
+					return (-1);
+			}
+		}
+	}
+
+	/* If strict locking is disabled, make file writable by owner. */
+	if (rcs_lock_getmode(file) == RCS_LOCK_LOOSE)
+		mode |= S_IWUSR;
+
+	if (file->rf_ndelta == 0 && !(flags & QUIET) &&
+	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
+		(void)fprintf(stderr, "no revisions, so nothing can be %s\n",
+		    (flags & CO_LOCK) ? "locked" : "unlocked");
+	} else if (file->rf_ndelta != 0) {
+		/* XXX - Not a good way to detect if a newline is needed. */
+		if (!(flags & QUIET) && !(flags & NEWFILE) &&
+		    !(flags & CO_REVERT))
+			(void)fprintf(stderr, "\n");
+	}
+
+	if (flags & CO_LOCK) {
+		if (rcs_errno != RCS_ERR_DUPENT)
+			lcount++;
+		if (!(flags & QUIET) && lcount > 1 && !(flags & CO_REVERT))
+			warnx("%s: warning: You now have %d locks.",
+			    file->rf_path, lcount);
+	}
+
+	/* Finally do keyword expansion if required. */
+	if (file->rf_ndelta != 0)
+		bp = rcs_kwexp_buf(bp, file, rev);
 
 	if (flags & PIPEOUT)
 		buf_write_fd(bp, STDOUT_FILENO);
