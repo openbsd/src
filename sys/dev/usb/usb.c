@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.122 2018/11/18 16:33:26 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.123 2019/01/09 12:10:37 mpi Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ struct proc	*usb_task_thread_proc = NULL;
 void		 usb_abort_task_thread(void *);
 struct proc	*usb_abort_task_thread_proc = NULL;
 
-void		 usb_fill_di_task(void *);
 void		 usb_fill_udc_task(void *);
 void		 usb_fill_udf_task(void *);
 
@@ -511,26 +510,6 @@ usbclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 void
-usb_fill_di_task(void *arg)
-{
-	struct usb_device_info *di = (struct usb_device_info *)arg;
-	struct usb_softc *sc;
-	struct usbd_device *dev;
-
-	/* check that the bus and device are still present */
-	if (di->udi_bus >= usb_cd.cd_ndevs)
-		return;
-	sc = usb_cd.cd_devs[di->udi_bus];
-	if (sc == NULL)
-		return;
-	dev = sc->sc_bus->devices[di->udi_addr];
-	if (dev == NULL)
-		return;
-
-	usbd_fill_deviceinfo(dev, di);
-}
-
-void
 usb_fill_udc_task(void *arg)
 {
 	struct usb_device_cdesc *udc = (struct usb_device_cdesc *)arg;
@@ -692,7 +671,6 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	{
 		struct usb_device_info *di = (void *)data;
 		int addr = di->udi_addr;
-		struct usb_task di_task;
 		struct usbd_device *dev;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
@@ -702,21 +680,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (dev == NULL)
 			return (ENXIO);
 
-		di->udi_bus = unit;
-
-		/* All devices get a driver, thanks to ugen(4).  If the
-		 * task ends without adding a driver name, there was an error.
-		 */
-		di->udi_devnames[0][0] = '\0';
-
-		usb_init_task(&di_task, usb_fill_di_task, di,
-		    USB_TASK_TYPE_GENERIC);
-		usb_add_task(sc->sc_bus->root_hub, &di_task);
-		usb_wait_task(sc->sc_bus->root_hub, &di_task);
-
-		if (di->udi_devnames[0][0] == '\0')
-			return (ENXIO);
-
+		usbd_fill_deviceinfo(dev, di);
 		break;
 	}
 
