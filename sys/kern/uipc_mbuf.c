@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.264 2019/01/08 13:01:50 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.265 2019/01/09 16:37:27 visa Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ m_extref(struct mbuf *o, struct mbuf *n)
 static inline u_int
 m_extunref(struct mbuf *m)
 {
-	int refs = 1;
+	int refs = 0;
 
 	if (!MCLISREFERENCED(m))
 		return (0);
@@ -479,8 +479,8 @@ m_extunref(struct mbuf *m)
 		    m->m_ext.ext_prevref;
 		m->m_ext.ext_prevref->m_ext.ext_nextref =
 		    m->m_ext.ext_nextref;
-	} else
-		refs = 0;
+		refs = 1;
+	}
 	mtx_leave(&m_extref_mtx);
 
 	return (refs);
