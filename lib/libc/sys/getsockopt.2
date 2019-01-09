@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.52 2019/01/08 13:05:36 bluhm Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.53 2019/01/09 07:14:31 jmc Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 8 2019 $
+.Dd $Mdocdate: January 9 2019 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -444,7 +444,7 @@ source socket
 .Fa s .
 A successful new splice resets this number.
 .Pp
-User land may write sensitive data into a socket.
+Userland may write sensitive data into a socket.
 If
 .Dv SO_ZEROIZE
 is set, overwrite kernel memory after sending data.
