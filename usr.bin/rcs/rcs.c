@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.87 2019/01/09 17:55:28 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.88 2019/01/09 17:57:05 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1672,6 +1672,10 @@ rcs_expand_keywords(char *rcsfile_in, struct rcs_delta *rdp, BUF *bp, int mode)
 					++j;
 				buf_append(newbuf, rdp->rd_log + i, j);
 			}
+
+			if (i > 0 && rdp->rd_log[i - 1] != '\n')
+				buf_putc(newbuf, '\n');
+
 			buf_append(newbuf, line, line2 - line);
 			for (j = 0; c + j < fin; ++j) {
 				if (c[j] != ' ')
