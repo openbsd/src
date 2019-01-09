@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.69 2019/01/08 21:42:17 deraadt Exp $
+#	$OpenBSD: airport,v 1.70 2019/01/09 01:03:41 danj Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1000,6 +1000,7 @@ LRH:Laleu, La Rochelle, France
 LRM:Casa De Campo, Dominican Republic
 LRS:Leros, Greece
 LRU:Las Cruces, New Mexico, USA
+LRV:El Gran Roque, Los Roques, Venezuela
 LSC:La Serena, Chile
 LSE:La Crosse Municipal, Wisconsin, USA
 LSI:Shetland Islands /Shetland Isd, Scotland, United Kingdom
@@ -1182,6 +1183,7 @@ NDJ:N'djamena, N Djamena, Chad
 NEC:Necochea, Buenos Aires, Argentina
 NER:Chulman, Neryungri, Russia
 NEV:Nevis, Leeward Islands, Saint Kitts And Nevis
+NGD:Anegada, Virgin Islands (British)
 NGO:Komaki, Nagoya, Japan
 NGS:Nagasaki, Japan
 NJC:Nizhnevartovsk, Russia
@@ -1751,6 +1753,7 @@ ULN:Ulan Bator, Mongolia
 ULY:Ulyanovsk, Russia
 UME:Umea-Alvik, Sweden
 UMR:Woomera, South Australia, Australia
+UNI:Union Island, St. Vincent And The Grenadines
 UNT:Unst Shetland Islands, Scotland, United Kingdom
 UPG:Hasanudin, Ujung Pandang, Indonesia
 UPN:Uruapan, Michoacan, Mexico
