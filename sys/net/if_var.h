@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.93 2018/12/20 10:26:36 claudio Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.94 2019/01/09 01:14:21 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ struct ifnet {				/* and the entries */
 					/* link level output function */
 	int	(*if_ll_output)(struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *);
+	int	(*if_enqueue)(struct ifnet *, struct mbuf *);
 	void	(*if_start)(struct ifnet *);	/* initiate output */
 	int	(*if_ioctl)(struct ifnet *, u_long, caddr_t); /* ioctl hook */
 	void	(*if_watchdog)(struct ifnet *);	/* timer routine */
@@ -331,6 +332,7 @@ extern struct ifnet_head ifnet;
 
 void	if_start(struct ifnet *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
+int	if_enqueue_ifq(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 void	if_input_process(struct ifnet *, struct mbuf_list *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);
