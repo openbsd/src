@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.84 2018/05/31 19:40:58 fcambus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.85 2019/01/09 12:11:38 mpi Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -688,7 +688,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	if (crd->crd_flags & CRD_F_COMP) {
 		if (result > crd->crd_len) {
 			/* Compression was useless, we lost time */
-			free(out, M_CRYPTO_DATA, 0);
+			free(out, M_CRYPTO_DATA, result);
 			return 0;
 		}
 	}
@@ -719,7 +719,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			}
 		}
 	}
-	free(out, M_CRYPTO_DATA, 0);
+	free(out, M_CRYPTO_DATA, result);
 	return 0;
 }
 
