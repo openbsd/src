@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.11 2018/12/21 05:45:42 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.12 2019/01/09 16:42:38 visa Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -72,7 +72,7 @@ extern __dso_hidden initarray_f __preinit_array_start[],
 
 extern char __csu_do_fini_array __dso_hidden;
 
-void
+static void
 ___start(MD_START_ARGS)
 {
 	size_t size, i;

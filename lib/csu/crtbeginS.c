@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.19 2017/02/19 21:39:32 guenther Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.20 2019/01/09 16:42:38 visa Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ MD_SECT_CALL_FUNC(".init", _do_init);
 MD_SECT_CALL_FUNC(".fini", _do_fini);
 
 
-void
+static void
 _do_init(void)
 {
 	static int initialized;
@@ -152,7 +152,7 @@ _do_init(void)
 	}
 }
 
-void
+static void
 _do_fini(void)
 {
 	static int finalized;
