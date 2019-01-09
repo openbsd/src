@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.179 2018/11/16 08:43:08 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.180 2019/01/09 01:17:09 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -58,6 +58,7 @@
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/rwlock.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -85,6 +86,7 @@ int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
 
 int	vlan_input(struct ifnet *, struct mbuf *, void *);
+int	vlan_enqueue(struct ifnet *, struct mbuf *);
 void	vlan_start(struct ifqueue *ifq);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 
@@ -178,9 +180,12 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
 	ifp->if_qstart = vlan_start;
+	ifp->if_enqueue = vlan_enqueue;
 	ifp->if_ioctl = vlan_ioctl;
 	ifp->if_hardmtu = 0xffff;
 	ifp->if_link_state = LINK_STATE_DOWN;
+
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	ifp->if_hdrlen = EVL_ENCAPLEN;
@@ -240,69 +245,96 @@ vlan_mplstunnel(int ifidx)
 }
 
 void
-vlan_start(struct ifqueue *ifq)
+vlan_transmit(struct ifvlan *ifv, struct ifnet *ifp0, struct mbuf *m)
 {
-	struct ifnet	*ifp = ifq->ifq_if;
-	struct ifvlan   *ifv;
-	struct ifnet	*ifp0;
-	struct mbuf	*m;
-	int		 txprio;
-	uint8_t		 prio;
+	struct ifnet *ifp = &ifv->ifv_if;
+	int txprio = ifv->ifv_prio;
+	uint8_t prio;
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER > 0 */
+
+	prio = (txprio == IF_HDRPRIO_PACKET) ?
+	    m->m_pkthdr.pf.prio : txprio;
+
+	/* IEEE 802.1p has prio 0 and 1 swapped */
+	if (prio <= 1)
+		prio = !prio;
+
+	/*
+	 * If this packet came from a pseudowire it means it already
+	 * has all tags it needs, so just output it.
+	 */
+	if (vlan_mplstunnel(m->m_pkthdr.ph_ifidx)) {
+		/* NOTHING */
+
+	/*
+	 * If the underlying interface cannot do VLAN tag insertion
+	 * itself, create an encapsulation header.
+	 */
+	} else if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+	    (ifv->ifv_type == ETHERTYPE_VLAN)) {
+		m->m_pkthdr.ether_vtag = ifv->ifv_tag +
+		    (prio << EVL_PRIO_BITS);
+		m->m_flags |= M_VLANTAG;
+	} else {
+		m = vlan_inject(m, ifv->ifv_type, ifv->ifv_tag |
+		    (prio << EVL_PRIO_BITS));
+		if (m == NULL) {
+			counters_inc(ifp->if_counters, ifc_oerrors);
+			return;
+		}
+	}
+
+	if (if_enqueue(ifp0, m))
+		counters_inc(ifp->if_counters, ifc_oerrors);
+}
+
+int
+vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct ifnet *ifp0;
+	struct ifvlan *ifv;
+	int error = 0;
+
+	if (!ifq_is_priq(&ifp->if_snd))
+		return (if_enqueue_ifq(ifp, m));
 
 	ifv = ifp->if_softc;
 	ifp0 = if_get(ifv->ifv_ifp0);
-	if (ifp0 == NULL || (ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
-	    (IFF_UP|IFF_RUNNING)) {
+
+	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
+		m_freem(m);
+		error = ENETDOWN;
+	} else {
+		counters_pkt(ifp->if_counters,
+		    ifc_opackets, ifc_obytes, m->m_pkthdr.len);
+		vlan_transmit(ifv, ifp0, m);
+	}
+
+	if_put(ifp0);
+
+	return (error);
+}
+
+void
+vlan_start(struct ifqueue *ifq)
+{
+	struct ifnet	*ifp = ifq->ifq_if;
+	struct ifvlan   *ifv = ifp->if_softc;
+	struct ifnet	*ifp0;
+	struct mbuf	*m;
+
+	ifp0 = if_get(ifv->ifv_ifp0);
+	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		ifq_purge(ifq);
 		goto leave;
 	}
 
-	txprio = ifv->ifv_prio;
-
-	while ((m = ifq_dequeue(ifq)) != NULL) {
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
-#endif /* NBPFILTER > 0 */
-
-		prio = (txprio == IF_HDRPRIO_PACKET) ?
-		    m->m_pkthdr.pf.prio : txprio;
-
-		/* IEEE 802.1p has prio 0 and 1 swapped */
-		if (prio <= 1)
-			prio = !prio;
-
-		/*
-		 * If this packet came from a pseudowire it means it already
-		 * has all tags it needs, so just output it.
-		 */
-		if (vlan_mplstunnel(m->m_pkthdr.ph_ifidx)) {
-			/* NOTHING */
-
-		/*
-		 * If the underlying interface cannot do VLAN tag insertion
-		 * itself, create an encapsulation header.
-		 */
-		} else if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
-		    (ifv->ifv_type == ETHERTYPE_VLAN)) {
-			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
-			    (prio << EVL_PRIO_BITS);
-			m->m_flags |= M_VLANTAG;
-		} else {
-			m = vlan_inject(m, ifv->ifv_type, ifv->ifv_tag |
-			    (prio << EVL_PRIO_BITS));
-			if (m == NULL) {
-				ifp->if_oerrors++;
-				continue;
-			}
-		}
-
-		if (if_enqueue(ifp0, m)) {
-			ifp->if_oerrors++;
-			ifq->ifq_errors++;
-			continue;
-		}
-	}
+	while ((m = ifq_dequeue(ifq)) != NULL)
+		vlan_transmit(ifv, ifp0, m);
 
 leave:
 	if_put(ifp0);
