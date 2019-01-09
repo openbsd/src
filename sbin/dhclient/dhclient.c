@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.599 2019/01/03 16:42:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.600 2019/01/09 16:48:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -648,7 +648,7 @@ main(int argc, char *argv[])
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
-	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
+	if (setsockopt(routefd, PF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
@@ -2257,8 +2257,8 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket(AF_INET, SOCK_DGRAM)");
-	if ((routefd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("socket(AF_ROUTE, SOCK_RAW)");
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
+		fatal("socket(PF_ROUTE, SOCK_RAW)");
 
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
@@ -2895,7 +2895,7 @@ propose_release(struct interface_info *ifi)
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
-	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
+	if (setsockopt(routefd, PF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
