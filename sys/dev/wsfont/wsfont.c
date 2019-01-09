@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.54 2018/12/02 14:44:33 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.55 2019/01/09 11:23:32 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -50,22 +50,18 @@
 
 #ifdef FONT_SPLEEN8x16
 #define HAVE_FONT 1
-#include <dev/wsfont/spleen8x16.h>
 #endif
 
 #ifdef FONT_SPLEEN12x24
 #define HAVE_FONT 1
-#include <dev/wsfont/spleen12x24.h>
 #endif
 
 #ifdef FONT_SPLEEN16x32
 #define HAVE_FONT 1
-#include <dev/wsfont/spleen16x32.h>
 #endif
 
 #ifdef FONT_SPLEEN32x64
 #define HAVE_FONT 1
-#include <dev/wsfont/spleen32x64.h>
 #endif
 
 #ifdef FONT_BOLD8x16
@@ -79,6 +75,7 @@
 
 #ifdef FONT_BOLD8x16_ISO1
 #define HAVE_FONT 1
+#include <dev/wsfont/bold8x16-iso1.h>
 #endif
 
 /*
@@ -91,21 +88,40 @@
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
 
-#define	FONT_BOLD8x16_ISO1
-#if defined(__alpha__) || defined(__luna88k__) || defined(__macppc__) || \
-    defined(__sgi__) || defined(__sparc64__) || \
-    !defined(SMALL_KERNEL)
+#define	FONT_SPLEEN8x16
+#if defined(__sparc64__)
 #define	FONT_GALLANT12x22
+#elif defined(__alpha__) || defined(__luna88k__) || defined(__macppc__) || \
+    defined(__sgi__) || !defined(SMALL_KERNEL)
+#define FONT_SPLEEN12x24
+#endif
+
+#if !defined(SMALL_KERNEL) && (defined(__amd64__) || defined(__i386__) || \
+    defined(__arm64__))
+#define FONT_SPLEEN16x32
+#define FONT_SPLEEN32x64
 #endif
 
 #endif	/* HAVE_FONT */
 
-#ifdef FONT_BOLD8x16_ISO1
-#include <dev/wsfont/bold8x16-iso1.h>
-#endif
-
 #ifdef FONT_GALLANT12x22
 #include <dev/wsfont/gallant12x22.h>
+#endif
+
+#ifdef FONT_SPLEEN8x16
+#include <dev/wsfont/spleen8x16.h>
+#endif
+
+#ifdef FONT_SPLEEN12x24
+#include <dev/wsfont/spleen12x24.h>
+#endif
+
+#ifdef FONT_SPLEEN16x32
+#include <dev/wsfont/spleen16x32.h>
+#endif
+
+#ifdef FONT_SPLEEN32x64
+#include <dev/wsfont/spleen32x64.h>
 #endif
 
 struct font {
