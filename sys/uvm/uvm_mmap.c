@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.151 2018/08/15 20:22:13 kettenis Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.152 2019/01/10 21:55:26 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -180,22 +180,13 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-	vm_page_t m;
-	char *vec, *pgi, *pgs;
-	struct uvm_object *uobj;
-	struct vm_amap *amap;
-	struct vm_anon *anon;
-	vm_map_entry_t entry, next;
-	vaddr_t start, end, lim;
-	vm_map_t map;
+	char *pgs;
+	vaddr_t start, end;
 	vsize_t len, npgs;
 	int error = 0; 
 
-	map = &p->p_vmspace->vm_map;
-
 	start = (vaddr_t)SCARG(uap, addr);
 	len = SCARG(uap, len);
-	vec = SCARG(uap, vec);
 
 	if (start & PAGE_MASK)
 		return (EINVAL);
@@ -215,94 +206,11 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 	pgs = mallocarray(npgs, sizeof(*pgs), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (pgs == NULL)
 		return (ENOMEM);
-	pgi = pgs;
-
 	/*
-	 * Lock down vec, so our returned status isn't outdated by
-	 * storing the status byte for a page.
+	 * Lie. After all, the answer may change at anytime.
 	 */
-	if ((error = uvm_vslock(p, vec, npgs, PROT_WRITE)) != 0) {
-		free(pgs, M_TEMP, npgs * sizeof(*pgs));
-		return (error);
-	}
-
-	vm_map_lock_read(map);
-
-	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
-		error = ENOMEM;
-		goto out;
-	}
-
-	for (/* nothing */;
-	     entry != NULL && entry->start < end;
-	     entry = RBT_NEXT(uvm_map_addr, entry)) {
-		KASSERT(!UVM_ET_ISSUBMAP(entry));
-		KASSERT(start >= entry->start);
-
-		/* Make sure there are no holes. */
-		next = RBT_NEXT(uvm_map_addr, entry);
-		if (entry->end < end &&
-		     (next == NULL ||
-		      next->start > entry->end)) {
-			error = ENOMEM;
-			goto out;
-		}
-
-		lim = end < entry->end ? end : entry->end;
-
-		/*
-		 * Special case for objects with no "real" pages.  Those
-		 * are always considered resident (mapped devices).
-		 */
-		if (UVM_ET_ISOBJ(entry)) {
-			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (entry->object.uvm_obj->pgops->pgo_fault != NULL) {
-				for (/* nothing */; start < lim;
-				     start += PAGE_SIZE, pgi++)
-					*pgi = 1;
-				continue;
-			}
-		}
-
-		amap = entry->aref.ar_amap;	/* top layer */
-		uobj = entry->object.uvm_obj;	/* bottom layer */
-
-		for (/* nothing */; start < lim; start += PAGE_SIZE, pgi++) {
-			*pgi = 0;
-			if (amap != NULL) {
-				/* Check the top layer first. */
-				anon = amap_lookup(&entry->aref,
-				    start - entry->start);
-				if (anon != NULL && anon->an_page != NULL) {
-					/*
-					 * Anon has the page for this entry
-					 * offset.
-					 */
-					*pgi = 1;
-				}
-			}
-
-			if (uobj != NULL && *pgi == 0) {
-				/* Check the bottom layer. */
-				m = uvm_pagelookup(uobj,
-				    entry->offset + (start - entry->start));
-				if (m != NULL) {
-					/*
-					 * Object has the page for this entry
-					 * offset.
-					 */
-					*pgi = 1;
-				}
-			}
-		}
-	}
-
- out:
-	vm_map_unlock_read(map);
-	uvm_vsunlock(p, SCARG(uap, vec), npgs);
-	/* now the map is unlocked we can copyout without fear. */
-	if (error == 0)
-		copyout(pgs, vec, npgs * sizeof(char));
+	memset(pgs, 1, npgs * sizeof(*pgs));
+	error = copyout(pgs, SCARG(uap, vec), npgs * sizeof(char));
 	free(pgs, M_TEMP, npgs * sizeof(*pgs));
 	return (error);
 }
