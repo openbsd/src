@@ -115,6 +115,9 @@
  *
  */
 
+#include <err.h>
+#include <unistd.h>
+
 #include "config.h"
 #include "libunbound/unbound.h"
 #include "sldns/rrdef.h"
@@ -2281,6 +2284,7 @@ int main(int argc, char* argv[])
 	const char* res_conf = NULL;
 	const char* root_hints = NULL;
 	const char* debugconf = NULL;
+	char* root_anchor_tempfile;
 	int dolist=0, ip4only=0, ip6only=0, force=0, port = HTTPS_PORT;
 	int res_conf_fallback = 0;
 	/* parse the options */
@@ -2365,6 +2369,28 @@ int main(int argc, char* argv[])
 #endif
 
 	if(dolist) do_list_builtin();
+
+	if (asprintf(&root_anchor_tempfile, "%s.%d-0", root_anchor_file,
+	    getpid()) == -1) {
+		if(verb) printf("out of memory\n");
+		exit(0);
+	}
+
+	if (unveil(root_anchor_file, "rwc") == -1)
+		err(1, "unveil");
+	if (unveil(root_anchor_tempfile, "rwc") == -1)
+		err(1, "unveil");
+	if (unveil(root_cert_file, "r") == -1)
+		err(1, "unveil");
+	if (res_conf != NULL && unveil(res_conf, "r") == -1)
+		err(1, "unveil");
+	if (root_hints != NULL && unveil(root_hints, "r") == -1)
+		err(1, "unveil");
+	if (debugconf != NULL && unveil(debugconf, "r") == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio inet dns rpath wpath cpath", "") == -1)
+		err(1, "pledge");
 
 	return do_root_update_work(root_anchor_file, root_cert_file, urlname,
 		xmlname, p7sname, p7signer, res_conf, root_hints, debugconf,
