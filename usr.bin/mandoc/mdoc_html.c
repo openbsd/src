@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.198 2019/01/07 06:51:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.199 2019/01/10 07:39:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -739,7 +739,6 @@ static int
 mdoc_it_pre(MDOC_ARGS)
 {
 	const struct roff_node	*bl;
-	struct tag		*t;
 	enum mdoc_list		 type;
 
 	bl = n->parent;
@@ -781,17 +780,6 @@ mdoc_it_pre(MDOC_ARGS)
 	case LIST_tag:
 		switch (n->type) {
 		case ROFFT_HEAD:
-			if (h->style != NULL && !bl->norm->Bl.comp &&
-			    (n->parent->prev == NULL ||
-			     n->parent->prev->body == NULL ||
-			     n->parent->prev->body->child != NULL)) {
-				t = print_otag(h, TAG_DT, "");
-				print_text(h, "\\ ");
-				print_tagq(h, t);
-				t = print_otag(h, TAG_DD, "");
-				print_text(h, "\\ ");
-				print_tagq(h, t);
-			}
 			print_otag(h, TAG_DT, "");
 			break;
 		case ROFFT_BODY:
