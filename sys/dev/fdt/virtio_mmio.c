@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.3 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.4 2019/01/10 18:05:43 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -74,9 +74,6 @@
  * XXX: needs to be reviewed/fixed. The non-device specific registers are
  * XXX: PCI-endian while the device specific registers are native endian.
  */
-
-#define virtio_set_status(sc, s) virtio_mmio_set_status(sc, s)
-#define virtio_device_reset(sc) virtio_set_status((sc), 0)
 
 int		virtio_mmio_match(struct device *, void *, void *);
 void		virtio_mmio_attach(struct device *, struct device *, void *);

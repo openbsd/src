@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.7 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.8 2019/01/10 18:05:43 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -64,8 +64,8 @@
  */
 
 
-#ifndef _DEV_PCI_VIRTIOVAR_H_
-#define	_DEV_PCI_VIRTIOVAR_H_
+#ifndef _DEV_PV_VIRTIOVAR_H_
+#define	_DEV_PV_VIRTIOVAR_H_
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -188,6 +188,10 @@ struct virtio_softc {
 #define	virtio_negotiate_features(sc, f, n)	(sc)->sc_ops->neg_features(sc, f, n)
 #define	virtio_poll_intr(sc)			(sc)->sc_ops->poll_intr(sc)
 
+/* only for transport drivers */
+#define	virtio_set_status(sc, i)		(sc)->sc_ops->set_status(sc, i)
+#define	virtio_device_reset(sc)			virtio_set_status((sc), 0)
+
 int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int, int,
 		    const char*);
 int virtio_free_vq(struct virtio_softc*, struct virtqueue*);
@@ -225,4 +229,4 @@ int virtio_postpone_intr(struct virtqueue *vq, uint16_t nslots);
 int virtio_postpone_intr_smart(struct virtqueue *vq);
 int virtio_postpone_intr_far(struct virtqueue *vq);
 
-#endif /* _DEV_PCI_VIRTIOVAR_H_ */
+#endif /* _DEV_PV_VIRTIOVAR_H_ */

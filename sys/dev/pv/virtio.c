@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.11 2017/08/10 18:00:59 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.12 2019/01/10 18:05:43 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -52,9 +52,6 @@ struct vq_entry	*vq_alloc_entry(struct virtqueue *);
 struct cfdriver virtio_cd = {
 	NULL, "virtio", DV_DULL
 };
-
-#define virtio_set_status(sc, s) (sc)->sc_ops->set_status(sc, s)
-#define virtio_device_reset(sc)	virtio_set_status((sc), 0)
 
 static const char * const virtio_device_name[] = {
 	"Unknown (0)",		/* 0 */

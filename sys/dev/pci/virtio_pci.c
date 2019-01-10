@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.18 2017/05/31 08:57:48 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.19 2019/01/10 18:05:43 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -46,8 +46,6 @@
  */
 
 #define MAX_MSIX_VECS	8
-#define virtio_set_status(sc, s) virtio_pci_set_status(sc, s)
-#define virtio_device_reset(sc) virtio_set_status((sc), 0)
 
 struct virtio_pci_softc;
 
