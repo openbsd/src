@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.243 2018/08/19 08:23:47 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.244 2019/01/10 18:50:32 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2905,29 +2905,33 @@ int
 acpi_event_wait(struct aml_scope *scope, struct aml_value *evt, int timeout)
 {
 	/* Wait for event to occur; do work in meantime */
-	evt->v_evt.state = 0;
-	while (!evt->v_evt.state) {
-		if (!acpi_dotask(acpi_softc) && !cold)
-			tsleep(evt, PWAIT, "acpievt", 1);
-		else
-			delay(100);
+	while (evt->v_evt.state == 0 && timeout >= 0) {
+		if (acpi_dotask(acpi_softc))
+		    continue;
+		if (!cold) {
+			if (rwsleep(evt, &acpi_softc->sc_lck, PWAIT,
+			    "acpievt", 1) == EWOULDBLOCK) {
+				if (timeout < AML_NO_TIMEOUT)
+					timeout -= (1000 / hz);
+			}
+		} else {
+			delay(1000);
+			if (timeout < AML_NO_TIMEOUT)
+				timeout--;
+		}
 	}
-	if (evt->v_evt.state == 1) {
-		/* Object is signaled */
-		return (0);
-	} else if (timeout == 0) {
-		/* Zero timeout */
+	if (evt->v_evt.state == 0)
 		return (-1);
-	}
-	/* Wait for timeout or signal */
+	evt->v_evt.state--;
 	return (0);
 }
 
 void
 acpi_event_signal(struct aml_scope *scope, struct aml_value *evt)
 {
-	evt->v_evt.state = 1;
-	/* Wakeup waiters */
+	evt->v_evt.state++;
+	if (evt->v_evt.state > 0)
+		wakeup_one(evt);
 }
 
 void
@@ -4215,7 +4219,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_EVENT:
 		/* Event: N */
 		rv = _aml_setvalue(opargs[0], AML_OBJTYPE_EVENT, 0, 0);
-		rv->v_integer = 0;
+		rv->v_evt.state = 0;
 		break;
 	case AMLOP_MUTEX:
 		/* Mutex: Nw */

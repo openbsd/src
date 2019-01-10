@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.47 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.48 2019/01/10 18:50:32 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -397,5 +397,7 @@ struct aml_node {
 #define aml_bytepos(n)		((n)>>3)
 #define aml_bytelen(n)		(((n)+7)>>3)
 #define aml_bytealigned(x)	!((x)&0x7)
+
+#define AML_NO_TIMEOUT		0xffff
 
 #endif /* __DEV_ACPI_AMLTYPES_H__ */
