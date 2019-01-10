@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.156 2018/06/13 01:37:54 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.157 2019/01/10 14:49:07 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -66,7 +66,7 @@ get_routes(int rdomain, size_t *len)
 	size_t		 needed;
 
 	mib[0] = CTL_NET;
-	mib[1] = PF_ROUTE;
+	mib[1] = PF_ROUTE;	/* PF_ROUTE (not AF_ROUTE) for sysctl(2)! */
 	mib[2] = 0;
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;

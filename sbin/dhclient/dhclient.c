@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.600 2019/01/09 16:48:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.601 2019/01/10 14:49:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -565,8 +565,8 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
-	    PF_UNSPEC, socket_fd) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
+	    socket_fd) == -1)
 		fatal("socketpair");
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
@@ -638,17 +638,17 @@ main(int argc, char *argv[])
 	close(ioctlfd);
 	ioctlfd = -1;
 
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET)) == -1)
-		fatal("socket(PF_ROUTE, SOCK_RAW)");
+	if ((routefd = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1)
+		fatal("socket(AF_ROUTE, SOCK_RAW)");
 
 	rtfilter = ROUTE_FILTER(RTM_PROPOSAL) | ROUTE_FILTER(RTM_IFINFO) |
 	    ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
 	    ROUTE_FILTER(RTM_IFANNOUNCE) | ROUTE_FILTER(RTM_80211INFO);
 
-	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(routefd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
-	if (setsockopt(routefd, PF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
+	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
@@ -2257,8 +2257,8 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket(AF_INET, SOCK_DGRAM)");
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("socket(PF_ROUTE, SOCK_RAW)");
+	if ((routefd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
+		fatal("socket(AF_ROUTE, SOCK_RAW)");
 
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
@@ -2887,15 +2887,15 @@ propose_release(struct interface_info *ifi)
 	if (time(&start_time) == -1)
 		fatal("time");
 
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET)) == -1)
-		fatal("socket(PF_ROUTE, SOCK_RAW)");
+	if ((routefd = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1)
+		fatal("socket(AF_ROUTE, SOCK_RAW)");
 
 	rtfilter = ROUTE_FILTER(RTM_PROPOSAL);
 
-	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(routefd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
-	if (setsockopt(routefd, PF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
+	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
