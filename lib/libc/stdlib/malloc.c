@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.257 2018/12/10 07:57:49 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.258 2019/01/10 18:45:33 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -143,6 +143,8 @@ struct dir_info {
 	size_t cheap_reallocs;
 	size_t malloc_used;		/* bytes allocated */
 	size_t malloc_guarded;		/* bytes used for guards */
+	size_t pool_searches;		/* searches for pool */
+	size_t other_pool;		/* searches in other pool */
 #define STATS_ADD(x,y)	((x) += (y))
 #define STATS_SUB(x,y)	((x) -= (y))
 #define STATS_INC(x)	((x)++)
@@ -179,7 +181,9 @@ struct chunk_info {
 };
 
 struct malloc_readonly {
-	struct dir_info *malloc_pool[_MALLOC_MUTEXES];	/* Main bookkeeping information */
+					/* Main bookkeeping information */
+	struct dir_info *malloc_pool[_MALLOC_MUTEXES];
+	u_int	malloc_mutexes;		/* how much in actual use? */
 	int	malloc_mt;		/* multi-threaded mode? */
 	int	malloc_freecheck;	/* Extensive double free check */
 	int	malloc_freeunmap;	/* mprotect free pages PROT_NONE? */
@@ -267,7 +271,7 @@ getpool(void)
 		return mopts.malloc_pool[0];
 	else
 		return mopts.malloc_pool[TIB_GET()->tib_tid &
-		    (_MALLOC_MUTEXES - 1)];
+		    (mopts.malloc_mutexes - 1)];
 }
 
 static __dead void
@@ -316,6 +320,16 @@ static void
 omalloc_parseopt(char opt)
 {
 	switch (opt) {
+	case '+':
+		mopts.malloc_mutexes <<= 1;
+		if (mopts.malloc_mutexes > _MALLOC_MUTEXES)
+			mopts.malloc_mutexes = _MALLOC_MUTEXES;
+		break;
+	case '-':
+		mopts.malloc_mutexes >>= 1;
+		if (mopts.malloc_mutexes < 1)
+			mopts.malloc_mutexes = 1;
+		break;
 	case '>':
 		mopts.malloc_cache <<= 1;
 		if (mopts.malloc_cache > MALLOC_MAXCACHE)
@@ -395,6 +409,7 @@ omalloc_init(void)
 	/*
 	 * Default options
 	 */
+	mopts.malloc_mutexes = 4;
 	mopts.malloc_junk = 1;
 	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 
@@ -485,7 +500,7 @@ omalloc_poolinit(struct dir_info **dp)
 		for (j = 0; j < MALLOC_CHUNK_LISTS; j++)
 			LIST_INIT(&d->chunk_dir[i][j]);
 	}
-	STATS_ADD(d->malloc_used, regioninfo_size);
+	STATS_ADD(d->malloc_used, regioninfo_size + 3 * MALLOC_PAGESIZE);
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 
@@ -1196,7 +1211,7 @@ _malloc_init(int from_rthreads)
 	if (!mopts.malloc_canary)
 		omalloc_init();
 
-	max = from_rthreads ? _MALLOC_MUTEXES : 1;
+	max = from_rthreads ? mopts.malloc_mutexes : 1;
 	if (((uintptr_t)&malloc_readonly & MALLOC_PAGEMASK) == 0)
 		mprotect(&malloc_readonly, sizeof(malloc_readonly),
 		    PROT_READ | PROT_WRITE);
@@ -1281,16 +1296,19 @@ findpool(void *p, struct dir_info *argpool, struct dir_info **foundpool,
 	struct dir_info *pool = argpool;
 	struct region_info *r = find(pool, p);
 
+	STATS_INC(pool->pool_searches);
 	if (r == NULL) {
 		if (mopts.malloc_mt)  {
 			int i;
 
-			for (i = 0; i < _MALLOC_MUTEXES; i++) {
-				if (i == argpool->mutex)
-					continue;
+			STATS_INC(pool->other_pool);
+			for (i = 1; i < mopts.malloc_mutexes; i++) {
+				int j = (argpool->mutex + i) &
+				    (mopts.malloc_mutexes - 1);
+
 				pool->active--;
 				_MALLOC_UNLOCK(pool->mutex);
-				pool = mopts.malloc_pool[i];
+				pool = mopts.malloc_pool[j];
 				_MALLOC_LOCK(pool->mutex);
 				pool->active++;
 				r = find(pool, p);
@@ -2220,14 +2238,13 @@ malloc_dump1(int fd, int poolno, struct dir_info *d)
 		return;
 	dprintf(fd, "Region slots free %zu/%zu\n",
 		d->regions_free, d->regions_total);
-	dprintf(fd, "Finds %zu/%zu\n", d->finds,
-	    d->find_collisions);
-	dprintf(fd, "Inserts %zu/%zu\n", d->inserts,
-	    d->insert_collisions);
-	dprintf(fd, "Deletes %zu/%zu\n", d->deletes,
-	    d->delete_moves);
+	dprintf(fd, "Finds %zu/%zu\n", d->finds, d->find_collisions);
+	dprintf(fd, "Inserts %zu/%zu\n", d->inserts, d->insert_collisions);
+	dprintf(fd, "Deletes %zu/%zu\n", d->deletes, d->delete_moves);
 	dprintf(fd, "Cheap reallocs %zu/%zu\n",
 	    d->cheap_reallocs, d->cheap_realloc_tries);
+	dprintf(fd, "Other pool searches %zu/%zu\n",
+	    d->other_pool, d->pool_searches);
 	dprintf(fd, "In use %zu\n", d->malloc_used);
 	dprintf(fd, "Guarded %zu\n", d->malloc_guarded);
 	dump_free_chunk_info(fd, d);
@@ -2289,7 +2306,7 @@ malloc_gdump(int fd)
 	int i;
 	int saved_errno = errno;
 
-	for (i = 0; i < _MALLOC_MUTEXES; i++)
+	for (i = 0; i < mopts.malloc_mutexes; i++)
 		malloc_dump(fd, i, mopts.malloc_pool[i]);
 
 	errno = saved_errno;
@@ -2305,15 +2322,15 @@ malloc_exit(void)
 	if (fd != -1) {
 		dprintf(fd, "******** Start dump %s *******\n", __progname);
 		dprintf(fd,
-		    "MT=%d I=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
-		    mopts.malloc_mt, mopts.internal_funcs,
-		    mopts.malloc_freecheck,
+		    "MT=%d M=%u I=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
+		    mopts.malloc_mt, mopts.mallloc_mutexes,
+		    mopts.internal_funcs, mopts.malloc_freecheck,
 		    mopts.malloc_freeunmap, mopts.malloc_junk,
 		    mopts.malloc_realloc, mopts.malloc_xmalloc,
 		    mopts.chunk_canaries, mopts.malloc_cache,
 		    mopts.malloc_guard);
 
-		for (i = 0; i < _MALLOC_MUTEXES; i++)
+		for (i = 0; i < mopts.malloc_mutexes; i++)
 			malloc_dump(fd, i, mopts.malloc_pool[i]);
 		dprintf(fd, "******** End dump %s *******\n", __progname);
 		close(fd);

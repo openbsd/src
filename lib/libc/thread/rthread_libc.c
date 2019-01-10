@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.3 2019/01/10 18:45:33 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -169,14 +169,70 @@ static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
 	MALLOC_LOCK_INITIALIZER(0),
 	MALLOC_LOCK_INITIALIZER(1),
 	MALLOC_LOCK_INITIALIZER(2),
-	MALLOC_LOCK_INITIALIZER(3)
+	MALLOC_LOCK_INITIALIZER(3),
+	MALLOC_LOCK_INITIALIZER(4),
+	MALLOC_LOCK_INITIALIZER(5),
+	MALLOC_LOCK_INITIALIZER(6),
+	MALLOC_LOCK_INITIALIZER(7),
+	MALLOC_LOCK_INITIALIZER(8),
+	MALLOC_LOCK_INITIALIZER(9),
+	MALLOC_LOCK_INITIALIZER(10),
+	MALLOC_LOCK_INITIALIZER(11),
+	MALLOC_LOCK_INITIALIZER(12),
+	MALLOC_LOCK_INITIALIZER(13),
+	MALLOC_LOCK_INITIALIZER(14),
+	MALLOC_LOCK_INITIALIZER(15),
+	MALLOC_LOCK_INITIALIZER(16),
+	MALLOC_LOCK_INITIALIZER(17),
+	MALLOC_LOCK_INITIALIZER(18),
+	MALLOC_LOCK_INITIALIZER(19),
+	MALLOC_LOCK_INITIALIZER(20),
+	MALLOC_LOCK_INITIALIZER(21),
+	MALLOC_LOCK_INITIALIZER(22),
+	MALLOC_LOCK_INITIALIZER(23),
+	MALLOC_LOCK_INITIALIZER(24),
+	MALLOC_LOCK_INITIALIZER(25),
+	MALLOC_LOCK_INITIALIZER(26),
+	MALLOC_LOCK_INITIALIZER(27),
+	MALLOC_LOCK_INITIALIZER(28),
+	MALLOC_LOCK_INITIALIZER(29),
+	MALLOC_LOCK_INITIALIZER(30),
+	MALLOC_LOCK_INITIALIZER(31)
 };
 
 static pthread_mutex_t malloc_mutex[_MALLOC_MUTEXES] = {
 	&malloc_lock[0],
 	&malloc_lock[1],
 	&malloc_lock[2],
-	&malloc_lock[3]
+	&malloc_lock[3],
+	&malloc_lock[4],
+	&malloc_lock[5],
+	&malloc_lock[6],
+	&malloc_lock[7],
+	&malloc_lock[8],
+	&malloc_lock[9],
+	&malloc_lock[10],
+	&malloc_lock[11],
+	&malloc_lock[12],
+	&malloc_lock[13],
+	&malloc_lock[14],
+	&malloc_lock[15],
+	&malloc_lock[16],
+	&malloc_lock[17],
+	&malloc_lock[18],
+	&malloc_lock[19],
+	&malloc_lock[20],
+	&malloc_lock[21],
+	&malloc_lock[22],
+	&malloc_lock[23],
+	&malloc_lock[24],
+	&malloc_lock[25],
+	&malloc_lock[26],
+	&malloc_lock[27],
+	&malloc_lock[28],
+	&malloc_lock[29],
+	&malloc_lock[30],
+	&malloc_lock[31]
 };
 
 void

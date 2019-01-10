@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.33 2017/12/05 13:45:31 kettenis Exp $ */
+/* $OpenBSD: thread_private.h,v 1.34 2019/01/10 18:45:33 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -7,7 +7,7 @@
 
 #include <stdio.h>		/* for FILE and __isthreaded */
 
-#define _MALLOC_MUTEXES 4
+#define _MALLOC_MUTEXES 32
 void _malloc_init(int);
 #ifdef __LIBC__
 PROTO_NORMAL(_malloc_init);
