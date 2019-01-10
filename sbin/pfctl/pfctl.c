@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.362 2019/01/02 23:08:00 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.363 2019/01/10 22:22:51 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,7 +67,7 @@ void	 pfctl_clear_rules(int, int, char *);
 void	 pfctl_clear_src_nodes(int, int);
 void	 pfctl_clear_states(int, const char *, int);
 void	 pfctl_addrprefix(char *, struct pf_addr *);
-void	 pfctl_kill_src_nodes(int, const char *, int);
+void	 pfctl_kill_src_nodes(int, int);
 void	 pfctl_net_kill_states(int, const char *, int, int);
 void	 pfctl_label_kill_states(int, const char *, int, int);
 void	 pfctl_id_kill_states(int, int);
@@ -405,7 +405,7 @@ pfctl_addrprefix(char *addr, struct pf_addr *mask)
 }
 
 void
-pfctl_kill_src_nodes(int dev, const char *iface, int opts)
+pfctl_kill_src_nodes(int dev, int opts)
 {
 	struct pfioc_src_node_kill psnk;
 	struct addrinfo *res[2], *resp[2];
@@ -2661,7 +2661,7 @@ main(int argc, char *argv[])
 	}
 
 	if (src_node_killers)
-		pfctl_kill_src_nodes(dev, ifaceopt, opts);
+		pfctl_kill_src_nodes(dev, opts);
 
 	if (tblcmdopt != NULL) {
 		error = pfctl_table(argc, argv, tableopt,
