@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.258 2019/01/10 18:45:33 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.259 2019/01/10 18:47:05 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -409,7 +409,7 @@ omalloc_init(void)
 	/*
 	 * Default options
 	 */
-	mopts.malloc_mutexes = 4;
+	mopts.malloc_mutexes = 8;
 	mopts.malloc_junk = 1;
 	mopts.malloc_cache = MALLOC_DEFAULT_CACHE;
 
