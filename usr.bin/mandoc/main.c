@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.219 2019/01/01 08:18:06 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.220 2019/01/10 06:27:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -131,6 +131,7 @@ main(int argc, char *argv[])
 	pid_t		 pager_pid, tc_pgid, man_pgid, pid;
 
 	progname = getprogname();
+	mandoc_msg_setoutfile(stderr);
 	if (strncmp(progname, "mandocdb", 8) == 0 ||
 	    strncmp(progname, "makewhatis", 10) == 0)
 		return mandocdb(argc, argv);

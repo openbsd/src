@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.3 2018/12/15 19:30:19 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.4 2019/01/10 06:27:23 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -240,7 +240,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"ignoring macro in table",
 };
 
-static	FILE		*fileptr = stderr;
+static	FILE		*fileptr = NULL;
 static	const char	*filename = NULL;
 static	enum mandocerr	 min_type = MANDOCERR_MAX;
 static	enum mandoclevel rc = MANDOCLEVEL_OK;
