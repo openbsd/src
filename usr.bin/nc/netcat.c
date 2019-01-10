@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.201 2019/01/09 12:58:18 inoguchi Exp $ */
+/* $OpenBSD: netcat.c,v 1.202 2019/01/10 12:44:54 mestre Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -53,7 +53,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <time.h>
 #include <tls.h>
 #include <unistd.h>
@@ -1328,9 +1327,9 @@ fdpass(int nfd)
 	if (isatty(STDOUT_FILENO))
 		errx(1, "Cannot pass file descriptor to tty");
 
-	bzero(&mh, sizeof(mh));
-	bzero(&cmsgbuf, sizeof(cmsgbuf));
-	bzero(&iov, sizeof(iov));
+	memset(&mh, 0, sizeof(mh));
+	memset(&cmsgbuf, 0, sizeof(cmsgbuf));
+	memset(&iov, 0, sizeof(iov));
 
 	mh.msg_control = (caddr_t)&cmsgbuf.buf;
 	mh.msg_controllen = sizeof(cmsgbuf.buf);
@@ -1345,7 +1344,7 @@ fdpass(int nfd)
 	mh.msg_iov = &iov;
 	mh.msg_iovlen = 1;
 
-	bzero(&pfd, sizeof(pfd));
+	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = STDOUT_FILENO;
 	pfd.events = POLLOUT;
 	for (;;) {

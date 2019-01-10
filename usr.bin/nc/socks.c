@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.26 2019/01/09 12:58:18 inoguchi Exp $	*/
+/*	$OpenBSD: socks.c,v 1.27 2019/01/10 12:44:54 mestre Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <unistd.h>
 #include <resolv.h>
 #include <readpassphrase.h>
@@ -66,7 +65,7 @@ decode_addrport(const char *h, const char *p, struct sockaddr *addr,
 	int r;
 	struct addrinfo hints, *res;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = v4only ? PF_INET : PF_UNSPEC;
 	hints.ai_flags = numeric ? AI_NUMERICHOST : 0;
 	hints.ai_socktype = SOCK_STREAM;
