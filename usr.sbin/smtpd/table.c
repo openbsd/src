@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.47 2018/12/28 15:09:28 eric Exp $	*/
+/*	$OpenBSD: table.c,v 1.48 2019/01/10 07:40:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -27,14 +27,11 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
-#include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netdb.h>
 #include <regex.h>
 #include <limits.h>
 #include <string.h>
@@ -95,8 +92,10 @@ table_service_name(enum table_service s)
 	case K_ADDRNAME:	return "ADDRNAME";
 	case K_MAILADDRMAP:	return "MAILADDRMAP";
 	case K_RELAYHOST:	return "RELAYHOST";
-	default:		return "???";
+	case K_STRING:		return "STRING";
+	case K_REGEX:		return "REGEX";
 	}
+	return "???";
 }
 
 struct table *
@@ -115,40 +114,41 @@ int
 table_lookup(struct table *table, enum table_service kind, const char *key,
     union lookup *lk)
 {
-	int	r;
-	char	lkey[1024], *buf = NULL;
+	char lkey[1024], *buf = NULL;
+	int r;
 
+	r = -1;
 	if (table->t_backend->lookup == NULL)
-		return (-1);
-
-	if (!lowercase(lkey, key, sizeof lkey)) {
+		errno = ENOTSUP;
+	else if (!lowercase(lkey, key, sizeof lkey)) {
 		log_warnx("warn: lookup key too long: %s", key);
-		return -1;
+		errno = EINVAL;
 	}
-
-	r = table->t_backend->lookup(table, kind, lkey, lk ? &buf : NULL);
+	else
+		r = table->t_backend->lookup(table, kind, lkey, lk ? &buf : NULL);
 
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s%s",
-		    lk ? "lookup" : "check",
-		    lkey,
+		    lk ? "lookup" : "match",
+		    key,
 		    table_service_name(kind),
 		    table->t_backend->name,
 		    table->t_name,
 		    lk ? "\"" : "",
-		    (lk) ? buf : "found",
+		    lk ? buf : "true",
 		    lk ? "\"" : "");
 		if (buf)
 			r = table_parse_lookup(kind, lkey, buf, lk);
 	}
 	else
-		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %d",
-		    lk ? "lookup" : "check",
-		    lkey,
+		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s",
+		    lk ? "lookup" : "match",
+		    key,
 		    table_service_name(kind),
 		    table->t_backend->name,
 		    table->t_name,
-		    r);
+		    (r == -1) ? "error: " : (lk ? "none" : "false"),
+		    (r == -1) ? strerror(errno) : "");
 
 	free(buf);
 
@@ -158,13 +158,14 @@ table_lookup(struct table *table, enum table_service kind, const char *key,
 int
 table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 {
-	int 	r;
-	char	*buf = NULL;
+	char *buf = NULL;
+	int r;
 
+	r = -1;
 	if (table->t_backend->fetch == NULL)
-		return (-1);
-
-	r = table->t_backend->fetch(table, kind, &buf);
+		errno = ENOTSUP;
+	else
+		r = table->t_backend->fetch(table, kind, &buf);
 
 	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> \"%s\"",
@@ -175,11 +176,12 @@ table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 		r = table_parse_lookup(kind, NULL, buf, lk);
 	}
 	else
-		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
+		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s",
 		    table_service_name(kind),
 		    table->t_backend->name,
 		    table->t_name,
-		    r);
+		    (r == -1) ? "error: " : "none",
+		    (r == -1) ? strerror(errno) : "");
 
 	free(buf);
 
