@@ -2389,7 +2389,7 @@ int main(int argc, char* argv[])
 	if (debugconf != NULL && unveil(debugconf, "r") == -1)
 		err(1, "unveil");
 
-	if (pledge("stdio inet dns rpath wpath cpath", "") == -1)
+	if (pledge("stdio rpath wpath cpath inet dns", NULL) == -1)
 		err(1, "pledge");
 
 	return do_root_update_work(root_anchor_file, root_cert_file, urlname,
