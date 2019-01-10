@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.8 2019/01/10 18:05:43 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.9 2019/01/10 18:06:56 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -219,9 +219,8 @@ void virtio_stop_vq_intr(struct virtio_softc *, struct virtqueue *);
 int virtio_start_vq_intr(struct virtio_softc *, struct virtqueue *);
 
 const char *virtio_device_string(int);
-void virtio_log_features(uint32_t, uint32_t, const struct virtio_feature_name *);
-
 #if VIRTIO_DEBUG
+void virtio_log_features(uint32_t, uint32_t, const struct virtio_feature_name *);
 void virtio_vq_dump(struct virtqueue *vq);
 #endif
 int virtio_nused(struct virtqueue *vq);

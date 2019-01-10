@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.12 2019/01/10 18:05:43 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.13 2019/01/10 18:06:56 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -68,6 +68,13 @@ static const char * const virtio_device_name[] = {
 };
 #define NDEVNAMES	(sizeof(virtio_device_name)/sizeof(char*))
 
+const char *
+virtio_device_string(int id)
+{
+	return id < NDEVNAMES ? virtio_device_name[id] : "Unknown";
+}
+
+#if VIRTIO_DEBUG
 static const struct virtio_feature_name transport_feature_names[] = {
 	{ VIRTIO_F_NOTIFY_ON_EMPTY,	"NotifyOnEmpty"},
 	{ VIRTIO_F_RING_INDIRECT_DESC,	"RingIndirectDesc"},
@@ -75,12 +82,6 @@ static const struct virtio_feature_name transport_feature_names[] = {
 	{ VIRTIO_F_BAD_FEATURE,		"BadFeature"},
 	{ 0,				NULL}
 };
-
-const char *
-virtio_device_string(int id)
-{
-	return id < NDEVNAMES ? virtio_device_name[id] : "Unknown";
-}
 
 void
 virtio_log_features(uint32_t host, uint32_t neg,
@@ -113,6 +114,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 			printf(" %cUnknown(%d)", c, i);
 	}
 }
+#endif
 
 /*
  * Reset the device.
