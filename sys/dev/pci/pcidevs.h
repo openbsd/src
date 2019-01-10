@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1874 2019/01/05 11:49:41 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1875 2019/01/10 18:35:56 sf Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6697,12 +6697,17 @@
 /* Qumranet products */
 #define	PCI_PRODUCT_QUMRANET_VIO_NET	0x1000		/* Virtio Network */
 #define	PCI_PRODUCT_QUMRANET_VIO_BLOCK	0x1001		/* Virtio Storage */
-#define	PCI_PRODUCT_QUMRANET_VIO_MEM	0x1002		/* Virtio Memory */
+#define	PCI_PRODUCT_QUMRANET_VIO_MEM	0x1002		/* Virtio Memory Balloon */
 #define	PCI_PRODUCT_QUMRANET_VIO_CONS	0x1003		/* Virtio Console */
 #define	PCI_PRODUCT_QUMRANET_VIO_SCSI	0x1004		/* Virtio SCSI */
 #define	PCI_PRODUCT_QUMRANET_VIO_RNG	0x1005		/* Virtio RNG */
-#define	PCI_PRODUCT_QUMRANET_VIO_GPU	0x1050		/* Virtio GPU */
-#define	PCI_PRODUCT_QUMRANET_VIO_INPUT	0x1052		/* Virtio Input */
+#define	PCI_PRODUCT_QUMRANET_VIO1_NET	0x1041		/* Virtio 1.x Network */
+#define	PCI_PRODUCT_QUMRANET_VIO1_BLOCK	0x1042		/* Virtio 1.x Storage */
+#define	PCI_PRODUCT_QUMRANET_VIO1_CONS	0x1043		/* Virtio 1.x Console */
+#define	PCI_PRODUCT_QUMRANET_VIO1_RNG	0x1044		/* Virtio 1.x RNG */
+#define	PCI_PRODUCT_QUMRANET_VIO1_SCSI	0x1048		/* Virtio 1.x SCSI */
+#define	PCI_PRODUCT_QUMRANET_VIO1_GPU	0x1050		/* Virtio 1.x GPU */
+#define	PCI_PRODUCT_QUMRANET_VIO1_INPUT	0x1052		/* Virtio 1.x Input */
 
 /* Ross -> Pequr -> ServerWorks -> Broadcom ServerWorks products */
 #define	PCI_PRODUCT_RCC_CMIC_LE	0x0000		/* CMIC-LE */

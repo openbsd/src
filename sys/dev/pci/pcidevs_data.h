@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1874 2019/01/05 11:49:41 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1875 2019/01/10 18:35:56 sf Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -23609,7 +23609,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_MEM,
-	    "Virtio Memory",
+	    "Virtio Memory Balloon",
 	},
 	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_CONS,
@@ -23624,12 +23624,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Virtio RNG",
 	},
 	{
-	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_GPU,
-	    "Virtio GPU",
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_NET,
+	    "Virtio 1.x Network",
 	},
 	{
-	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_INPUT,
-	    "Virtio Input",
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_BLOCK,
+	    "Virtio 1.x Storage",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_CONS,
+	    "Virtio 1.x Console",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_RNG,
+	    "Virtio 1.x RNG",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_SCSI,
+	    "Virtio 1.x SCSI",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_GPU,
+	    "Virtio 1.x GPU",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_INPUT,
+	    "Virtio 1.x Input",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
