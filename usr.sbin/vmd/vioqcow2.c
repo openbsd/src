@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.12 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.13 2019/01/10 19:21:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -559,7 +559,7 @@ copy_cluster(struct qcdisk *disk, struct qcdisk *base, off_t dst, off_t src)
 {
 	char *scratch;
 
-	scratch = alloca(disk->clustersz);
+	scratch = malloc(disk->clustersz);
 	if (!scratch)
 		fatal("out of memory");
 	src &= ~(disk->clustersz - 1);
@@ -568,6 +568,7 @@ copy_cluster(struct qcdisk *disk, struct qcdisk *base, off_t dst, off_t src)
 		fatal("%s: could not read cluster", __func__);
 	if (pwrite(disk->fd, scratch, disk->clustersz, dst) == -1)
 		fatal("%s: could not write cluster", __func__);
+	free(scratch);
 }
 
 static void
