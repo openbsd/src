@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.105 2018/12/31 18:54:00 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.106 2019/01/10 17:54:11 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -68,12 +68,6 @@ settime(const struct timespec *ts)
 	struct timespec now;
 
 	/*
-	 * Adjtime in progress is meaningless or harmful after
-	 * setting the clock. Cancel adjtime and then set new time.
-	 */
-	adjtimedelta = 0;
-
-	/*
 	 * Don't allow the time to be set forward so far it will wrap
 	 * and become negative, thus allowing an attacker to bypass
 	 * the next check below.  The cutoff is 1 year before rollover
@@ -102,6 +96,11 @@ settime(const struct timespec *ts)
 		return (EPERM);
 	}
 
+	/*
+	 * Adjtime in progress is meaningless or harmful after
+	 * setting the clock. Cancel adjtime and then set new time.
+	 */
+	adjtimedelta = 0;
 	tc_setrealtimeclock(ts);
 	resettodr();
 
