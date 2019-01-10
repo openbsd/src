@@ -2004,8 +2004,6 @@ working directory, and the meaning of sending @code{Entries} without
 A number of enhancements are possible.  Also see the file @sc{todo} in
 the @sc{cvs} source distribution, which has further ideas concerning
 various aspects of @sc{cvs}, some of which impact the protocol.
-Similarly, the @code{http://www.cvshome.org} site, in particular the
-@cite{Development} pages.
 
 @itemize @bullet
 @item

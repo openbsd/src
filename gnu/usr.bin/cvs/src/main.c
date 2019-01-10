@@ -176,24 +176,6 @@ static const char *const usg[] =
     "    (specify -H followed by a command name for command-specific help)\n",
     "  Specify --help to receive this message\n",
     "\n",
-
-    /* Some people think that a bug-reporting address should go here.  IMHO,
-       the web sites are better because anything else is very likely to go
-       obsolete in the years between a release and when someone might be
-       reading this help.  Besides, we could never adequately discuss
-       bug reporting in a concise enough way to put in a help message.  */
-
-    /* I was going to put this at the top, but usage() wants the %s to
-       be in the first line.  */
-    "The Concurrent Versions System (CVS) is a tool for version control.\n",
-    /* I really don't think I want to try to define "version control"
-       in one line.  I'm not sure one can get more concise than the
-       paragraph in ../cvs.spec without assuming the reader knows what
-       version control means.  */
-
-    "For CVS updates and additional information, see\n",
-    "    the CVS home page at http://www.cvshome.org/ or\n",
-    "    Pascal Molli's CVS site at http://www.loria.fr/~molli/cvs-index.html\n",
     NULL,
 };
 
