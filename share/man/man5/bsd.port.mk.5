@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.504 2018/12/12 16:36:19 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.505 2019/01/11 15:49:08 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 12 2018 $
+.Dd $Mdocdate: January 11 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3178,7 +3178,7 @@ for more details.
 As a special extension,
 .Ev WANTLIB
 may include absolute paths, e.g.,
-.Pa ${LOCALBASE}/lib/expat.=4
+.Pa ${LOCALBASE}/lib/expat=4
 to distinguish between base libraries and port libraries.
 Use with caution, this is very seldom needed.
 .It Ev wantlib_args
