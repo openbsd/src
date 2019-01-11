@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.94 2018/06/18 06:06:52 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.95 2019/01/11 20:39:46 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: January 11 2019 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -111,6 +111,8 @@ VIA SMBus controller
 .El
 .Sh SUPPORTED SLAVES
 .Bl -tag -width 13n -compact
+.It abcrtc 4
+Abracon AB1805 real-time clock
 .It Xr adc 4
 Analog Devices AD7416/AD7417/7418 temperature sensor
 .It Xr adl 4

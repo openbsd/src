@@ -1,4 +1,4 @@
-.\"	$OpenBSD: imxgpc.4,v 1.1 2018/04/01 09:03:25 jsg Exp $
+.\"	$OpenBSD: imxgpc.4,v 1.2 2019/01/11 20:39:46 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2018 $
+.Dd $Mdocdate: January 11 2019 $
 .Dt IMXGPC 4
 .Os
 .Sh NAME
 .Nm imxgpc
-.Nd i.MX General Power Controller
+.Nd i.MX general power controller
 .Sh SYNOPSIS
 .Cd "imxgpc* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the i.MX General Power Controller (GPC).
+driver provides support for the i.MX general power controller (GPC).
 It acts as a "transparent" interrupt controller and hands interrupt handlers
 to the parent interrupt controller.
 .Sh SEE ALSO

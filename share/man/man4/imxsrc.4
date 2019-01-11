@@ -1,4 +1,4 @@
-.\"	$OpenBSD: imxsrc.4,v 1.1 2019/01/11 08:32:28 patrick Exp $
+.\"	$OpenBSD: imxsrc.4,v 1.2 2019/01/11 20:39:46 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -19,14 +19,14 @@
 .Os
 .Sh NAME
 .Nm imxsrc
-.Nd i.MX System Reset Controller
+.Nd i.MX system reset controller
 .Sh SYNOPSIS
 .Cd "imxsrc* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the i.MX System Reset Controller (SRC).
-It registers as reset controller so that drivers can reset devices
+driver provides support for the i.MX system reset controller (SRC).
+It registers as a reset controller so that drivers can reset devices
 by asserting their reset pins.
 .Sh SEE ALSO
 .Xr intro 4
