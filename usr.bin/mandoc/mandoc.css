@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.30 2019/01/10 07:39:39 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.31 2019/01/11 12:44:10 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -65,7 +65,7 @@ td.foot-os {	text-align: right; }
 
 .manual-text {
 		margin-left: 3.8em; }
-.Nd {		display: inline; }
+.Nd { }
 .Sh {		margin-top: 1.2em;
 		margin-bottom: 0.6em;
 		margin-left: -3.2em;
@@ -253,6 +253,80 @@ a.In { }
 .Li {		font-style: normal;
 		font-weight: normal;
 		font-family: monospace; }
+
+/* Tooltip support. */
+
+.Sh, .Ss {	position: relative; }
+.An, .Ar, .Cd, .Cm, .Dv, .Em, .Er, .Ev, .Fa, .Fd, .Fl, .Fn, .Ft,
+.Ic, code.In, .Lb, .Lk, .Ms, .Mt, .Nd, code.Nm, .Pa, .Rs,
+.St, .Sx, .Sy, .Va, .Vt, .Xr {
+		display: inline-block;
+		position: relative; }
+
+.An::before {	content: "An"; }
+.Ar::before {	content: "Ar"; }
+.Cd::before {	content: "Cd"; }
+.Cm::before {	content: "Cm"; }
+.Dv::before {	content: "Dv"; }
+.Em::before {	content: "Em"; }
+.Er::before {	content: "Er"; }
+.Ev::before {	content: "Ev"; }
+.Fa::before {	content: "Fa"; }
+.Fd::before {	content: "Fd"; }
+.Fl::before {	content: "Fl"; }
+.Fn::before {	content: "Fn"; }
+.Ft::before {	content: "Ft"; }
+.Ic::before {	content: "Ic"; }
+code.In::before { content: "In"; }
+.Lb::before {	content: "Lb"; }
+.Lk::before {	content: "Lk"; }
+.Ms::before {	content: "Ms"; }
+.Mt::before {	content: "Mt"; }
+.Nd::before {	content: "Nd"; }
+code.Nm::before { content: "Nm"; }
+.Pa::before {	content: "Pa"; }
+.Rs::before {	content: "Rs"; }
+.Sh::before {	content: "Sh"; }
+.Ss::before {	content: "Ss"; }
+.St::before {	content: "St"; }
+.Sx::before {	content: "Sx"; }
+.Sy::before {	content: "Sy"; }
+.Va::before {	content: "Va"; }
+.Vt::before {	content: "Vt"; }
+.Xr::before {	content: "Xr"; }
+
+.An::before, .Ar::before, .Cd::before, .Cm::before,
+.Dv::before, .Em::before, .Er::before, .Ev::before,
+.Fa::before, .Fd::before, .Fl::before, .Fn::before, .Ft::before,
+.Ic::before, code.In::before, .Lb::before, .Lk::before,
+.Ms::before, .Mt::before, .Nd::before, code.Nm::before,
+.Pa::before, .Rs::before,
+.Sh::before, .Ss::before, .St::before, .Sx::before, .Sy::before,
+.Va::before, .Vt::before, .Xr::before {
+		opacity: 0;
+		transition: .15s ease opacity;
+		pointer-events: none;
+		position: absolute;
+		bottom: 100%;
+		box-shadow: 0 0 .35em #000;
+		padding: .15em .25em;
+		white-space: nowrap;
+		font-family: Helvetica,Arial,sans-serif;
+		font-style: normal;
+		font-weight: bold;
+		color: black;
+		background: #fff; }
+.An:hover::before, .Ar:hover::before, .Cd:hover::before, .Cm:hover::before,
+.Dv:hover::before, .Em:hover::before, .Er:hover::before, .Ev:hover::before,
+.Fa:hover::before, .Fd:hover::before, .Fl:hover::before, .Fn:hover::before,
+.Ft:hover::before, .Ic:hover::before, code.In:hover::before,
+.Lb:hover::before, .Lk:hover::before, .Ms:hover::before, .Mt:hover::before,
+.Nd:hover::before, code.Nm:hover::before, .Pa:hover::before,
+.Rs:hover::before, .Sh:hover::before, .Ss:hover::before, .St:hover::before,
+.Sx:hover::before, .Sy:hover::before, .Va:hover::before, .Vt:hover::before,
+.Xr:hover::before {
+		opacity: 1;
+		pointer-events: inherit; }
 
 /* Overrides to avoid excessive margins on small devices. */
 

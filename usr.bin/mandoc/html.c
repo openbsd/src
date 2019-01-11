@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.120 2019/01/07 06:51:37 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.121 2019/01/11 12:44:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -652,12 +652,6 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			break;
 		case 'R':
 			print_byte(h, '#');
-			print_encode(h, arg1, NULL, 1);
-			fmt++;
-			break;
-		case 'T':
-			print_encode(h, arg1, NULL, 1);
-			print_word(h, "\" title=\"");
 			print_encode(h, arg1, NULL, 1);
 			fmt++;
 			break;

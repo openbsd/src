@@ -3,7 +3,7 @@ BEGINTEST
 initial regular text
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">command</code></td>
+    <td><code class="Nm">command</code></td>
     <td><i>arguments</i></td>
   </tr>
 </table>
@@ -14,7 +14,7 @@ before display
 </pre>
 <table class="Nm">
   <tr>
-    <td><code class="Nm" title="Nm">command</code></td>
+    <td><code class="Nm">command</code></td>
     <td>
     <pre>
 <i>arguments</i>
