@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.70 2019/01/06 21:43:19 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.71 2019/01/11 06:25:06 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -378,7 +378,9 @@ extern const long nbpd[], nkptpmax[];
  * prototypes
  */
 
+void		map_tramps(void);	/* machdep.c */
 paddr_t		pmap_bootstrap(paddr_t, paddr_t);
+void		pmap_randomize(void);
 boolean_t	pmap_clear_attrs(struct vm_page *, unsigned long);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove (struct vm_page *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.52 2018/05/26 18:02:01 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.53 2019/01/11 06:25:06 mlarkin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -117,6 +117,9 @@ void
 cpu_configure(void)
 {
 	x86_64_proc0_tss_ldt_init();
+
+	pmap_randomize();
+	map_tramps();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.251 2018/11/05 15:13:56 kn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.252 2019/01/11 06:25:06 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1284,11 +1284,11 @@ cpu_init_extents(void)
 	already_done = 1;
 }
 
-#if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && !defined(SMALL_KERNEL))
 void
 map_tramps(void)
 {
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && !defined(SMALL_KERNEL))
 	struct pmap *kmp = pmap_kernel();
 	extern paddr_t tramp_pdirpa;
 #ifdef MULTIPROCESSOR
@@ -1299,20 +1299,19 @@ map_tramps(void)
 	extern u_int32_t mp_pdirpa;
 #endif
 
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE);
-
 	/*
 	 * The initial PML4 pointer must be below 4G, so if the
 	 * current one isn't, use a "bounce buffer" and save it
 	 * for tramps to use.
 	 */
 	if (kmp->pm_pdirpa > 0xffffffff) {
+		pmap_kenter_pa(lo32_vaddr, lo32_paddr, PROT_READ | PROT_WRITE);
 		memcpy((void *)lo32_vaddr, kmp->pm_pdir, PAGE_SIZE);
 		tramp_pdirpa = lo32_paddr;
+		pmap_kremove(lo32_vaddr, PAGE_SIZE);
 	} else
 		tramp_pdirpa = kmp->pm_pdirpa;
 
-	pmap_kremove(lo32_vaddr, PAGE_SIZE);
 
 #ifdef MULTIPROCESSOR
 	/* Map MP tramp code and data pages RW for copy */
@@ -1343,8 +1342,8 @@ map_tramps(void)
 	pmap_kremove(MP_TRAMPOLINE, PAGE_SIZE);
 	pmap_kremove(MP_TRAMP_DATA, PAGE_SIZE);
 #endif /* MULTIPROCESSOR */
-}
 #endif
+}
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
@@ -1665,11 +1664,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, PROT_READ | PROT_WRITE);
-
-#if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && !defined(SMALL_KERNEL))
-	map_tramps();
-#endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	cpu_info_primary.ci_tss = &cpu_info_full_primary.cif_tss;

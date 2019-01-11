@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.10 2018/12/18 21:11:09 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.11 2019/01/11 06:25:06 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -661,7 +661,13 @@ longmode_hi:
 	addq	%r8,%rax
 	movq	%rax,_C_LABEL(proc0paddr)(%rip)
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
+
+	/*
+	 * Set proc0's %cr3 to bootstrap page tables. Will be overwritten when
+	 * pmap_randomize is called later.
+	 */
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
+
 	xorq	%rbp,%rbp		# mark end of frames
 
 	xorw	%ax,%ax

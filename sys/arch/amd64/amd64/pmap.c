@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2019/01/06 02:15:40 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2019/01/11 06:25:06 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -746,6 +746,43 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	tlbflush();
 
 	return first_avail;
+}
+
+/*
+ * pmap_randomize
+ *
+ * Randomizes the location of the kernel pmap
+ */
+void
+pmap_randomize(void)
+{
+	pd_entry_t *pml4va, *oldpml4va;
+	paddr_t pml4pa;
+
+	pml4va = km_alloc(PAGE_SIZE, &kv_page, &kp_zero, &kd_nowait);
+	if (pml4va == NULL)
+		panic("%s: km_alloc failed", __func__);
+
+	/* Copy old PML4 page to new one */
+	oldpml4va = pmap_kernel()->pm_pdir;
+	memcpy(pml4va, oldpml4va, PAGE_SIZE);
+
+	/* Switch to new PML4 */
+	pmap_extract(pmap_kernel(), (vaddr_t)pml4va, &pml4pa);
+	lcr3(pml4pa);
+
+	/* Fixup pmap_kernel and proc0's %cr3 */
+	pmap_kernel()->pm_pdirpa = pml4pa;
+	pmap_kernel()->pm_pdir = pml4va;
+	proc0.p_addr->u_pcb.pcb_cr3 = pml4pa;
+
+	/* Fixup recursive PTE PML4E slot. We are only changing the PA */	
+	pml4va[PDIR_SLOT_PTE] = pml4pa | (pml4va[PDIR_SLOT_PTE] & ~PG_FRAME);
+
+	/* Wipe out bootstrap PML4 */
+	memset(oldpml4va, 0, PAGE_SIZE);
+
+	tlbflush();
 }
 
 /*
