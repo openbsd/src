@@ -1,7 +1,7 @@
-/*	$OpenBSD: read.c,v 1.181 2018/12/31 04:55:42 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.182 2019/01/11 17:03:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2012 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -605,7 +605,7 @@ int
 mparse_open(struct mparse *curp, const char *file)
 {
 	char		 *cp;
-	int		  fd;
+	int		  fd, save_errno;
 
 	cp = strrchr(file, '.');
 	curp->gzip = (cp != NULL && ! strcmp(cp + 1, "gz"));
@@ -621,9 +621,11 @@ mparse_open(struct mparse *curp, const char *file)
 	 */
 
 	if ( ! curp->gzip) {
+		save_errno = errno;
 		mandoc_asprintf(&cp, "%s.gz", file);
 		fd = open(cp, O_RDONLY);
 		free(cp);
+		errno = save_errno;
 		if (fd != -1) {
 			curp->gzip = 1;
 			return fd;

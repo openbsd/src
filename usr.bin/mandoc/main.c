@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.220 2019/01/10 06:27:23 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.221 2019/01/11 17:03:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -531,7 +531,7 @@ main(int argc, char *argv[])
 			}
 		} else
 			mandoc_msg(MANDOCERR_FILE, 0, 0,
-			    "%s", strerror(errno));
+			    "%s: %s", thisarg, strerror(errno));
 
 		if (curp.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
