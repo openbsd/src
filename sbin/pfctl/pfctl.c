@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.363 2019/01/10 22:22:51 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.364 2019/01/11 01:56:54 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2693,8 +2693,6 @@ main(int argc, char *argv[])
 		if (pfctl_rules(dev, rulesopt, opts, optimize,
 		    anchorname, NULL))
 			error = 1;
-		else if (!(opts & PF_OPT_NOACTION))
-			warn_namespace_collision(NULL);
 	}
 
 	if (opts & PF_OPT_ENABLE)
