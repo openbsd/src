@@ -297,6 +297,8 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MQ_SYS1_PLL_266M		0x4c
 #define IMX8MQ_SYS1_PLL_400M		0x4d
 #define IMX8MQ_SYS1_PLL_800M		0x4e
+#define IMX8MQ_SYS2_PLL_100M		0x50
+#define IMX8MQ_SYS2_PLL_250M		0x54
 #define IMX8MQ_SYS2_PLL_500M		0x56
 #define IMX8MQ_CLK_A53_SRC		0x58
 #define IMX8MQ_CLK_A53_CG		0x59

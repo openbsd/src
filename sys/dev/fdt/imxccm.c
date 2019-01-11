@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.11 2018/08/20 16:48:03 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.12 2019/01/11 08:00:34 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -1237,6 +1237,24 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 		case IMX8MQ_CLK_USB_CORE_REF_SRC:
 		case IMX8MQ_CLK_USB_PHY_REF_SRC:
 			if (pidx != IMX8MQ_SYS1_PLL_100M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MQ_CLK_PCIE1_CTRL_SRC:
+		case IMX8MQ_CLK_PCIE2_CTRL_SRC:
+			if (pidx != IMX8MQ_SYS2_PLL_250M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MQ_CLK_PCIE1_PHY_SRC:
+		case IMX8MQ_CLK_PCIE2_PHY_SRC:
+			if (pidx != IMX8MQ_SYS2_PLL_100M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
 			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
