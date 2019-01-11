@@ -1074,6 +1074,7 @@
 ./usr/share/man/man3p/warnings::register.3p
 ./usr/share/man/man3p/writemain.3p
 ./usr/share/man/man4/aac.4
+./usr/share/man/man4/abcrtc.4
 ./usr/share/man/man4/ac97.4
 ./usr/share/man/man4/acphy.4
 ./usr/share/man/man4/acpi.4
@@ -1427,6 +1428,7 @@
 ./usr/share/man/man4/imxgpio.4
 ./usr/share/man/man4/imxiic.4
 ./usr/share/man/man4/imxrtc.4
+./usr/share/man/man4/imxsrc.4
 ./usr/share/man/man4/imxuart.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
