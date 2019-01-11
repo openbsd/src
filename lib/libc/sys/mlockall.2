@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlockall.2,v 1.9 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: mlockall.2,v 1.10 2019/01/11 18:46:30 deraadt Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: January 11 2019 $
 .Dt MLOCKALL 2
 .Os
 .Sh NAME
@@ -97,7 +97,6 @@ The calling process does not have the appropriate privileges to perform
 the requested operation.
 .El
 .Sh SEE ALSO
-.Xr mincore 2 ,
 .Xr mlock 2 ,
 .Xr mmap 2 ,
 .Xr munmap 2 ,

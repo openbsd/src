@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.188 2018/07/30 19:09:51 mpi Exp $
+;	$OpenBSD: syscalls.master,v 1.189 2019/01/11 18:46:30 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -179,8 +179,7 @@
 			    const struct timeval *tptr); }
 77	STD		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
-78	STD		{ int sys_mincore(void *addr, size_t len, \
-			    char *vec); }
+78	UNIMPL		mincore
 79	STD NOLOCK	{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
 80	STD		{ int sys_setgroups(int gidsetsize, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.201 2018/07/30 19:10:50 mpi Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.202 2019/01/11 18:46:30 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -368,12 +368,6 @@ struct sys_utimes_args {
 struct sys_futimes_args {
 	syscallarg(int) fd;
 	syscallarg(const struct timeval *) tptr;
-};
-
-struct sys_mincore_args {
-	syscallarg(void *) addr;
-	syscallarg(size_t) len;
-	syscallarg(char *) vec;
 };
 
 struct sys_getgroups_args {
@@ -1189,7 +1183,6 @@ int	sys_mprotect(struct proc *, void *, register_t *);
 int	sys_madvise(struct proc *, void *, register_t *);
 int	sys_utimes(struct proc *, void *, register_t *);
 int	sys_futimes(struct proc *, void *, register_t *);
-int	sys_mincore(struct proc *, void *, register_t *);
 int	sys_getgroups(struct proc *, void *, register_t *);
 int	sys_setgroups(struct proc *, void *, register_t *);
 int	sys_getpgrp(struct proc *, void *, register_t *);

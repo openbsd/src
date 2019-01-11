@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.155 2018/07/13 09:25:22 beck Exp $
+#	$OpenBSD: Makefile.inc,v 1.156 2019/01/11 18:46:30 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -56,7 +56,7 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	getrlimit.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o gettimeofday.o ioctl.o \
 	kevent.o kill.o kqueue.o ktrace.o lchown.o \
-	link.o linkat.o listen.o lstat.o madvise.o mincore.o \
+	link.o linkat.o listen.o lstat.o madvise.o \
 	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
 	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
 	msgctl.o msgget.o munlock.o munlockall.o munmap.o \
@@ -183,7 +183,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	getrtable.2 getrusage.2 getsid.2 getsockname.2 getsockopt.2 \
 	getthrid.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
 	kbind.2 kill.2 kqueue.2 ktrace.2 link.2 listen.2 lseek.2 madvise.2 \
-	mincore.2 minherit.2 mkdir.2 mkfifo.2 mknod.2 mlock.2 \
+	minherit.2 mkdir.2 mkfifo.2 mknod.2 mlock.2 \
 	mlockall.2 mmap.2 mount.2 mprotect.2 mquery.2 msgctl.2 \
 	msgget.2 msgrcv.2 msgsnd.2 msync.2 munmap.2 nanosleep.2 \
 	nfssvc.2 open.2 pathconf.2 pipe.2 pledge.2 poll.2 profil.2 \

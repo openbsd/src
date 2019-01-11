@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.198 2018/07/30 19:10:50 mpi Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.199 2019/01/11 18:46:30 deraadt Exp $	*/
 
 /*
  * System call numbers.
@@ -236,9 +236,6 @@
 
 /* syscall: "futimes" ret: "int" args: "int" "const struct timeval *" */
 #define	SYS_futimes	77
-
-/* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
-#define	SYS_mincore	78
 
 /* syscall: "getgroups" ret: "int" args: "int" "gid_t *" */
 #define	SYS_getgroups	79

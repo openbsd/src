@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.32 2018/02/11 05:11:50 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.33 2019/01/11 18:46:30 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -152,7 +152,6 @@ int	mlockall(int);
 int	munlockall(void);
 #if __BSD_VISIBLE
 int	madvise(void *, size_t, int);
-int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
 void *	mquery(void *, size_t, int, int, int, off_t);
 #endif

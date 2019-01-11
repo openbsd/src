@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.152 2019/01/10 21:55:26 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.153 2019/01/11 18:46:30 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -165,53 +165,6 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 
 	if (fp != NULL)
 		FRELE(fp, p);
-	return (error);
-}
-
-/*
- * sys_mincore: determine if pages are in core or not.
- */
-/* ARGSUSED */
-int
-sys_mincore(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_mincore_args /* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-		syscallarg(char *) vec;
-	} */ *uap = v;
-	char *pgs;
-	vaddr_t start, end;
-	vsize_t len, npgs;
-	int error = 0; 
-
-	start = (vaddr_t)SCARG(uap, addr);
-	len = SCARG(uap, len);
-
-	if (start & PAGE_MASK)
-		return (EINVAL);
-	len = round_page(len);
-	end = start + len;
-	if (end <= start)
-		return (EINVAL);
-
-	npgs = len >> PAGE_SHIFT;
-
-	/*
- 	 * < art> Anyone trying to mincore more than 4GB of address space is
-	 *	clearly insane.
-	 */
-	if (npgs >= (0xffffffff >> PAGE_SHIFT))
-		return (E2BIG);
-	pgs = mallocarray(npgs, sizeof(*pgs), M_TEMP, M_WAITOK | M_CANFAIL);
-	if (pgs == NULL)
-		return (ENOMEM);
-	/*
-	 * Lie. After all, the answer may change at anytime.
-	 */
-	memset(pgs, 1, npgs * sizeof(*pgs));
-	error = copyout(pgs, SCARG(uap, vec), npgs * sizeof(char));
-	free(pgs, M_TEMP, npgs * sizeof(*pgs));
 	return (error);
 }
 

@@ -129,7 +129,6 @@ _thread_sys_listen
 _thread_sys_lseek
 _thread_sys_lstat
 _thread_sys_madvise
-_thread_sys_mincore
 _thread_sys_minherit
 _thread_sys_mkdir
 _thread_sys_mkdirat
@@ -325,7 +324,6 @@ listen
 lseek
 lstat
 madvise
-mincore
 minherit
 mkdir
 mkdirat
