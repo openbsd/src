@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_html.c,v 1.200 2019/01/11 12:44:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.201 2019/01/11 16:35:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -292,7 +292,7 @@ html_mdoc(void *arg, const struct roff_meta *mdoc)
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
-		if (n->type == ROFFT_COMMENT)
+		if (n != NULL && n->type == ROFFT_COMMENT)
 			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
 		print_mdoc_head(mdoc, h);
