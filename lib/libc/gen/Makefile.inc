@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.79 2018/10/30 16:28:42 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.80 2019/01/12 00:16:03 jca Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -20,7 +20,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         rewinddir.c scandir.c seekdir.c setdomainname.c sethostname.c \
         setprogname.c setmode.c setproctitle.c shm_open.c \
         siginterrupt.c siglist.c signal.c signame.c \
-        sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c \
+        sigsetops.c sigwait.c sleep.c statvfs.c strtofflags.c sysconf.c \
         syslog.c syslog_r.c telldir.c time.c times.c \
         timespec_get.c tolower_.c tree.c ttyname.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
@@ -52,6 +52,6 @@ MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
 	scandir.3 setjmp.3 setmode.3 setproctitle.3 shm_open.3 \
 	siginterrupt.3 signal.3 \
-	sigaddset.3 sleep.3 statvfs.3 sysconf.3 strtofflags.3 \
+	sigaddset.3 sigwait.3 sleep.3 statvfs.3 sysconf.3 strtofflags.3 \
 	syslog.3 time.3 times.3 timespec_get.3 toascii.3 tolower.3 toupper.3 \
 	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3

@@ -1,7 +1,7 @@
-.\" $OpenBSD: sigwait.3,v 1.15 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sigwait.3,v 1.1 2019/01/12 00:16:03 jca Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: January 12 2019 $
 .Dt SIGWAIT 3
 .Os
 .Sh NAME
@@ -48,14 +48,6 @@ with the signal number.
 Which thread returns from
 .Fn sigwait
 if more than a single thread is waiting is unspecified.
-.Pp
-.Sy Note :
-Code using the
-.Fn sigwait
-function must be compiled and linked with the
-.Cm -pthread
-option to
-.Xr gcc 1 .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn sigwait
@@ -76,9 +68,7 @@ argument contains an invalid or unsupported signal number.
 .Xr sigaction 2 ,
 .Xr sigpending 2 ,
 .Xr sigsuspend 2 ,
-.Xr pause 3 ,
-.Xr pthread_sigmask 3 ,
-.Xr pthreads 3
+.Xr pause 3
 .Sh STANDARDS
 .Fn sigwait
 conforms to

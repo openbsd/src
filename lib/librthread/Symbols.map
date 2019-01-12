@@ -91,7 +91,6 @@
 		sem_trywait;
 		sem_unlink;
 		sem_wait;
-		sigwait;
 
 		/* used for debugging & regress */
 		_thread_dump_info;

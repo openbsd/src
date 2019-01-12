@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.53 2018/10/21 17:07:24 visa Exp $
+#	$OpenBSD: Makefile,v 1.54 2019/01/12 00:16:03 jca Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -30,7 +30,6 @@ SRCS=	rthread.c \
 	rthread_rwlock.c \
 	rthread_rwlockattr.c \
 	rthread_sched.c \
-	rthread_sig.c \
 	rthread_stack.c \
 	rthread_spin_lock.c \
 	sched_prio.c

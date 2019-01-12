@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.36 2016/03/30 06:38:42 jmc Exp $
+# $OpenBSD: Makefile.inc,v 1.37 2019/01/12 00:16:03 jca Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -74,7 +74,6 @@ MAN+=	\
 	sem_wait.3
 
 MAN+=	pthreads.3 \
-	sigwait.3 \
 	flockfile.3 \
 	getc_unlocked.3 \
 	putc_unlocked.3

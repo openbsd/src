@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.18 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: sigwait.c,v 1.1 2019/01/12 00:16:03 jca Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -24,7 +24,7 @@
 
 #include <pthread.h>
 
-#include "rthread.h"
+#include "thread/rthread.h"
 #include "cancel.h"		/* in libc/include */
 
 int

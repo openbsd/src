@@ -412,6 +412,7 @@ sigaltstack
 sigpending
 sigprocmask
 sigsuspend
+sigwait
 socket
 socketpair
 stat
