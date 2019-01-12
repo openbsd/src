@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.120 2018/08/27 10:05:18 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.121 2019/01/12 19:37:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -112,8 +112,8 @@ sximmc*		at fdt?			# SD/MMC card controller
 sdmmc*		at sximmc?		# SD/MMC bus
 ehci*		at fdt?			# EHCI (shim)
 usb*		at ehci?	#flags 0x1
-#ohci*		at sunxi?
-#usb*		at ohci?
+ohci*		at fdt?
+usb*		at ohci?
 sxitemp*	at fdt?			# Temperature sensor
 sxits*		at fdt?			# Touchpad controller
 sxitwi*		at fdt?			# Two-Wire Serial Interface
