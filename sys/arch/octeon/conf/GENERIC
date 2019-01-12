@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2018/08/22 15:38:46 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.45 2019/01/12 16:59:38 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -53,6 +53,7 @@ com*		at fdt_octeon?
 octcib*		at fdt?		# Interrupt controller
 octcit*		at fdt?		# Interrupt controller v3
 octciu*		at fdt?		# Interrupt controller v1
+octgpio*	at fdt?		# GPIO controller
 octmmc*		at fdt?		# MMC host controller
 sdmmc*		at octmmc?	# SD/MMC bus
 
