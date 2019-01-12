@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.61 2019/01/12 16:11:22 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.62 2019/01/12 16:12:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -582,6 +582,7 @@ otus_alloc_tx_cmd(struct otus_softc *sc)
 		printf("%s: could not allocate xfer buffer\n",
 		    sc->sc_dev.dv_xname);
 		usbd_free_xfer(cmd->xfer);
+		cmd->xfer = NULL;
 		return ENOMEM;
 	}
 	return 0;
