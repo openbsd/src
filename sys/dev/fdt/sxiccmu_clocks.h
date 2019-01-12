@@ -16,7 +16,9 @@
 #define A10_CLK_APB1		25
 
 #define A10_CLK_AHB_EHCI0	27
+#define A10_CLK_AHB_OHCI0	28
 #define A10_CLK_AHB_EHCI1	29
+#define A10_CLK_AHB_OHCI1	30
 #define A10_CLK_AHB_MMC0	34
 #define A10_CLK_AHB_MMC1	35
 #define A10_CLK_AHB_MMC2	36
@@ -44,13 +46,17 @@
 #define A10_CLK_MMC2		104
 #define A10_CLK_MMC3		107
 #define A10_CLK_SATA		122
+#define A10_CLK_USB_OHCI0	123
+#define A10_CLK_USB_OHCI1	124
 #define A10_CLK_USB_PHY		125
 
 #define A10_CLK_LOSC		254
 
 struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_AHB_EHCI0] =  { 0x0060, 1 },
+	[A10_CLK_AHB_OHCI0] =  { 0x0060, 2 },
 	[A10_CLK_AHB_EHCI1] =  { 0x0060, 3 },
+	[A10_CLK_AHB_OHCI1] =  { 0x0060, 4 },
 	[A10_CLK_AHB_MMC0] =   { 0x0060, 8 },
 	[A10_CLK_AHB_MMC1] =   { 0x0060, 9 },
 	[A10_CLK_AHB_MMC2] =   { 0x0060, 10 },
@@ -77,6 +83,8 @@ struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_MMC2] =       { 0x0090, 31 },
 	[A10_CLK_MMC3] =       { 0x0094, 31 },
 	[A10_CLK_SATA] =       { 0x00c8, 31 },
+	[A10_CLK_USB_OHCI0] =  { 0x00cc, 6 },
+	[A10_CLK_USB_OHCI1] =  { 0x00cc, 7 },
 	[A10_CLK_USB_PHY] =    { 0x00cc, 8 },
 };
 
@@ -107,6 +115,7 @@ struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 #define A23_CLK_MMC0		60
 #define A23_CLK_MMC1		63
 #define A23_CLK_MMC2		66
+#define A23_CLK_USB_OHCI	78
 
 struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 	[A23_CLK_BUS_MMC0] =  { 0x0060, 8 },
@@ -126,6 +135,7 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 	[A23_CLK_MMC0] =      { 0x0088, 31 },
 	[A23_CLK_MMC1] =      { 0x008c, 31 },
 	[A23_CLK_MMC2] =      { 0x0090, 31 },
+	[A23_CLK_USB_OHCI] =  { 0x00cc, 16 },
 };
 
 /* A64 */
