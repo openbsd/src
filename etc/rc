@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.529 2018/07/23 11:54:49 florian Exp $
+#	$OpenBSD: rc,v 1.530 2019/01/12 17:05:00 kettenis Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -507,7 +507,7 @@ fi
 
 # Store ACPI tables in /var/db/acpi to be used by sendbug(1).
 if [[ -x /usr/sbin/acpidump ]]; then
-	acpidump -o /var/db/acpi/
+	acpidump -q -o /var/db/acpi/
 fi
 
 if [[ $check_quotas == YES ]]; then
