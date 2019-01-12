@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.21 2018/08/08 18:46:04 deraadt Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.22 2019/01/12 17:01:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -174,6 +174,7 @@ int		acpi_mem_fd = -1;
 char		*aml_dumpfile;
 int		aml_dumpdir;
 FILE		*fhdr;
+int		quiet;
 
 int	acpi_checksum(void *_p, size_t _length);
 struct acpi_user_mapping *acpi_user_find_mapping(vm_offset_t _pa, size_t _size);
@@ -628,8 +629,11 @@ asl_dump_from_devmem(void)
 		err(1, "pledge");
 
 	rp = acpi_find_rsd_ptr();
-	if (!rp)
-		errx(1, "Can't find ACPI information");
+	if (!rp) {
+		if (!quiet)
+			warnx("Can't find ACPI information");
+		exit(1);
+	}
 
 	fhdr = fopen(name, "w");
 	if (fhdr == NULL)
@@ -670,10 +674,13 @@ main(int argc, char *argv[])
 	struct stat	st;
 	int		c;
 
-	while ((c = getopt(argc, argv, "o:")) != -1) {
+	while ((c = getopt(argc, argv, "o:q")) != -1) {
 		switch (c) {
 		case 'o':
 			aml_dumpfile = optarg;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		default:
 			usage();
