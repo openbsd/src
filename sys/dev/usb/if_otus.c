@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.60 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.61 2019/01/12 16:11:22 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -691,13 +691,16 @@ void
 otus_next_scan(void *arg)
 {
 	struct otus_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	usbd_ref_incr(sc->sc_udev);
 
-	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
+	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN &&
+	    (ifp->if_flags & IFF_RUNNING))
 		ieee80211_next_scan(&sc->sc_ic.ic_if);
 
 	usbd_ref_decr(sc->sc_udev);
