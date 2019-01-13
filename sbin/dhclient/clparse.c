@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.169 2018/11/04 16:32:11 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.170 2019/01/13 18:45:21 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -58,6 +58,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "dhcp.h"
 #include "dhcpd.h"
@@ -833,4 +834,103 @@ parse_reject_statement(FILE *cfile)
 	TAILQ_INSERT_TAIL(&config->reject_list, elem, next);
 
 	return 1;
+}
+/*
+ * Apply the list of options to be ignored that was provided on the
+ * command line. This will override any ignore list obtained from
+ * dhclient.conf.
+ */
+void
+apply_ignore_list(char *ignore_list)
+{
+	uint8_t		 list[DHO_COUNT];
+	char		*p;
+	int		 ix, i, j;
+
+	memset(list, 0, sizeof(list));
+	ix = 0;
+
+	for (p = strsep(&ignore_list, ", "); p != NULL;
+	     p = strsep(&ignore_list, ", ")) {
+		if (*p == '\0')
+			continue;
+
+		i = name_to_code(p);
+		if (i == DHO_END) {
+			log_debug("%s: invalid option name: '%s'", log_procname,
+			    p);
+			return;
+		}
+
+		/* Avoid storing duplicate options in the list. */
+		for (j = 0; j < ix && list[j] != i; j++)
+			;
+		if (j == ix)
+			list[ix++] = i;
+	}
+
+	for (i = 0; i < ix; i++) {
+		j = list[i];
+		config->default_actions[j] = ACTION_IGNORE;
+		free(config->defaults[j].data);
+		config->defaults[j].data = NULL;
+		config->defaults[j].len = 0;
+	}
+}
+
+void
+set_default_client_identifier(struct interface_info *ifi)
+{
+	struct option_data	*opt;
+
+	/*
+	 * Check both len && data so
+	 *
+	 *     send dhcp-client-identifier "";
+	 *
+	 * can be used to suppress sending the default client
+	 * identifier.
+	 */
+	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
+	if (opt->len == 0 && opt->data == NULL) {
+		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
+		if (opt->data == NULL)
+			fatal("default client identifier");
+		opt->data[0] = HTYPE_ETHER;
+		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
+		    ETHER_ADDR_LEN);
+		opt->len = ETHER_ADDR_LEN + 1;
+	}
+}
+
+void
+set_default_hostname(void)
+{
+	char			 hn[HOST_NAME_MAX + 1], *p;
+	struct option_data	*opt;
+	int			 rslt;
+
+	/*
+	 * Check both len && data so
+	 *
+	 *     send host-name "";
+	 *
+	 * can be used to suppress sending the default host
+	 * name.
+	 */
+	opt = &config->send_options[DHO_HOST_NAME];
+	if (opt->len == 0 && opt->data == NULL) {
+		rslt = gethostname(hn, sizeof(hn));
+		if (rslt == -1) {
+			log_warn("host-name");
+			return;
+		}
+		p = strchr(hn, '.');
+		if (p != NULL)
+			*p = '\0';
+		opt->data = strdup(hn);
+		if (opt->data == NULL)
+			fatal("default host-name");
+		opt->len = strlen(opt->data);
+	}
 }
