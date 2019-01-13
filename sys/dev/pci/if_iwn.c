@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.204 2019/01/11 17:12:38 kn Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.205 2019/01/13 22:57:37 kn Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2612,10 +2612,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 			DPRINTF(("state changed to %x\n", letoh32(*status)));
 
 			if (letoh32(*status) & 1) {
-				/* The radio button has to be pushed. */
-				printf("%s: Radio transmitter is off\n",
-				    sc->sc_dev.dv_xname);
-				/* Turn the interface down. */
+				/* Radio transmitter is off, power down. */
 				iwn_stop(ifp, 1);
 				return;	/* No further processing. */
 			}
