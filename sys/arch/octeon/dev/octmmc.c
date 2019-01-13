@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.11 2018/01/07 05:19:41 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.12 2019/01/13 16:38:43 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -651,8 +651,7 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 
 wait_intr:
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_ERR |
-	    MIO_EMM_INT_DMA_DONE | MIO_EMM_INT_DMA_ERR,
-	    OCTMMC_CMD_TIMEOUT * hz);
+	    MIO_EMM_INT_DMA_DONE | MIO_EMM_INT_DMA_ERR, OCTMMC_CMD_TIMEOUT);
 
 	status = MMC_RD_8(sc, MIO_EMM_RSP_STS);
 
@@ -762,7 +761,7 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	MMC_WR_8(sc, MIO_EMM_CMD, piocmd);
 
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_DONE,
-	    OCTMMC_CMD_TIMEOUT * hz);
+	    OCTMMC_CMD_TIMEOUT);
 
 	mtx_leave(&sc->sc_intr_mtx);
 
@@ -962,7 +961,7 @@ octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int timeout)
 	sc->sc_intr_status = 0;
 	while ((sc->sc_intr_status & mask) == 0) {
 		if (msleep(&sc->sc_intr_status, &sc->sc_intr_mtx, PWAIT,
-		    "hcintr", timeout) == EWOULDBLOCK)
+		    "hcintr", timeout * hz) == EWOULDBLOCK)
 			return ETIMEDOUT;
 	}
 	return 0;
