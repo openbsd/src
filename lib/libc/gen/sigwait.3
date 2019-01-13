@@ -1,7 +1,7 @@
-.\" $OpenBSD: sigwait.3,v 1.1 2019/01/12 00:16:03 jca Exp $
+.\" $OpenBSD: sigwait.3,v 1.2 2019/01/13 16:16:43 jca Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: January 12 2019 $
+.Dd $Mdocdate: January 13 2019 $
 .Dt SIGWAIT 3
 .Os
 .Sh NAME
@@ -68,7 +68,8 @@ argument contains an invalid or unsupported signal number.
 .Xr sigaction 2 ,
 .Xr sigpending 2 ,
 .Xr sigsuspend 2 ,
-.Xr pause 3
+.Xr pause 3 ,
+.Xr pthread_sigmask 3
 .Sh STANDARDS
 .Fn sigwait
 conforms to
