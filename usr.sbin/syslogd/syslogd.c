@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.257 2018/11/29 21:10:51 kn Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.258 2019/01/13 10:42:51 schwarze Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -1796,7 +1796,8 @@ logline(int pri, int flags, char *from, char *msg)
 		msglen--;
 	}
 	for (i = 0; i < NAME_MAX; i++) {
-		if (!isalnum((unsigned char)msg[i]) && msg[i] != '-')
+		if (!isalnum((unsigned char)msg[i]) &&
+		    msg[i] != '-' && msg[i] != '.' && msg[i] != '_')
 			break;
 		prog[i] = msg[i];
 	}
