@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.602 2019/01/13 18:45:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.603 2019/01/13 23:15:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -451,15 +451,13 @@ main(int argc, char *argv[])
 	struct ieee80211_nwid	 nwid;
 	struct ifreq		 ifr;
 	struct stat		 sb;
-	const char		*tail_path = "/etc/resolv.conf.tail";
 	struct interface_info	*ifi;
 	struct passwd		*pw;
 	char			*ignore_list = NULL;
 	unsigned char		*newp;
-	ssize_t			 tailn;
 	size_t			 newsize;
 	int			 fd, socket_fd[2];
-	int			 rtfilter, ioctlfd, routefd, tailfd;
+	int			 rtfilter, ioctlfd, routefd;
 	int			 ch;
 
 	saved_argv = argv;
@@ -606,28 +604,7 @@ main(int argc, char *argv[])
 	if (ignore_list != NULL)
 		apply_ignore_list(ignore_list);
 
-	tailfd = open(tail_path, O_RDONLY);
-	if (tailfd == -1) {
-		if (errno != ENOENT)
-			fatal("open(%s)", tail_path);
-	} else if (fstat(tailfd, &sb) == -1) {
-		fatal("fstat(%s)", tail_path);
-	} else {
-		if (sb.st_size > 0 && sb.st_size < LLONG_MAX) {
-			config->resolv_tail = calloc(1, sb.st_size + 1);
-			if (config->resolv_tail == NULL) {
-				fatal("%s contents", tail_path);
-			}
-			tailn = read(tailfd, config->resolv_tail, sb.st_size);
-			if (tailn == -1)
-				fatal("read(%s)", tail_path);
-			else if (tailn == 0)
-				fatalx("got no data from %s", tail_path);
-			else if (tailn != sb.st_size)
-				fatalx("short read of %s", tail_path);
-		}
-		close(tailfd);
-	}
+	read_resolv_conf_tail();
 
 	interface_state(ifi);
 	if (!LINK_STATE_IS_UP(ifi->link_state))
