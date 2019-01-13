@@ -2177,6 +2177,9 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	}
       break;
 
+    case SHT_LLVM_ADDRSIG:
+      return TRUE;
+
     default:
       /* Check for any processor-specific section types.  */
       return bed->elf_backend_section_from_shdr (abfd, hdr, name,
