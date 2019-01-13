@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.193 2018/12/18 13:18:31 visa Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.194 2019/01/13 14:31:55 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2567,7 +2567,7 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg,
 		w->w_where += sizeof(msg);
 		w->w_len -= sizeof(msg);
 		/* set extension type */
-		for (i = 1; i < SADB_EXT_MAX; i++)
+		for (i = 1; i <= SADB_EXT_MAX; i++)
 			if (headers[i])
 				((struct sadb_ext *)
 				    headers[i])->sadb_ext_type = i;
