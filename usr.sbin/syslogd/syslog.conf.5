@@ -26,10 +26,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.38 2018/07/23 19:02:49 kn Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.39 2019/01/13 11:07:47 schwarze Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
-.Dd $Mdocdate: July 23 2018 $
+.Dd $Mdocdate: January 13 2019 $
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -158,6 +158,15 @@ and the first word in the message after the date matches the
 the action specified in the
 .Em action
 field will be taken.
+In this context,
+.Xr ascii 7
+letters, digits, hyphens
+.Pq Sq - ,
+periods
+.Pq Sq \&. ,
+and underscores
+.Pq Sq _
+can be contained in a word; other bytes end the word.
 .Pp
 Multiple
 .Em selectors
