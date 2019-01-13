@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.170 2019/01/13 18:45:21 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.171 2019/01/13 21:55:32 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -671,7 +671,7 @@ parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
 	}
 
 	parse_semi(cfile);
- }
+}
 
 /*
  * option :==
@@ -835,6 +835,7 @@ parse_reject_statement(FILE *cfile)
 
 	return 1;
 }
+
 /*
  * Apply the list of options to be ignored that was provided on the
  * command line. This will override any ignore list obtained from
