@@ -2625,6 +2625,7 @@ get_section_type_name (unsigned int sh_type)
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
+    case SHT_LLVM_ADDRSIG:	return "LLVM_ADDRSIG";
 
     default:
       if ((sh_type >= SHT_LOPROC) && (sh_type <= SHT_HIPROC))
