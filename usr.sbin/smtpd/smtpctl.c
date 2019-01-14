@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.162 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.163 2019/01/14 09:37:40 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -247,6 +247,15 @@ srv_get_string(const char **s)
 
 	if (rlen == 0)
 		errx(1, "message too short");
+
+	rlen -= 1;
+	if (*rdata++ == '\0') {
+		*s = NULL;
+		return;
+	}
+
+	if (rlen == 0)
+		errx(1, "bogus string");
 
 	end = memchr(rdata, 0, rlen);
 	if (end == NULL)
