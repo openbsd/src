@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.103 2019/01/02 18:47:59 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.104 2019/01/14 16:50:56 florian Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 	log_setverbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
 
 	if ((control_check(ospfd_conf->csock)) == -1)
-		fatalx("control socket check failed");
+		fatalx("ospfd already running");
 
 	if (!debug)
 		daemon(1, 0);
