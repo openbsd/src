@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.172 2019/01/13 23:15:31 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.173 2019/01/14 02:51:29 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -849,6 +849,9 @@ apply_ignore_list(char *ignore_list)
 	uint8_t		 list[DHO_COUNT];
 	char		*p;
 	int		 ix, i, j;
+
+	if (ignore_list == NULL)
+		return;
 
 	memset(list, 0, sizeof(list));
 	ix = 0;

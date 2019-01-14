@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.603 2019/01/13 23:15:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.604 2019/01/14 02:51:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -600,10 +600,7 @@ main(int argc, char *argv[])
 	    _PATH_LEASE_DB, ifi->name) == -1)
 		fatal("path_lease_db");
 
-	/* 2nd stage (post fork) config setup. */
-	if (ignore_list != NULL)
-		apply_ignore_list(ignore_list);
-
+	apply_ignore_list(ignore_list);
 	read_resolv_conf_tail();
 
 	interface_state(ifi);
