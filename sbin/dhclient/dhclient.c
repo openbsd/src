@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.605 2019/01/14 03:05:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.606 2019/01/14 04:05:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -574,11 +574,7 @@ main(int argc, char *argv[])
 		fatal("unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	config = calloc(1, sizeof(*config));
-	if (config == NULL)
-		fatal("config");
 	read_conf(ifi->name);
-
 	if ((cmd_opts & OPT_NOACTION) != 0)
 		return 0;
 

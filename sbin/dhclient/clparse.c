@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.174 2019/01/14 03:05:33 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.175 2019/01/14 04:05:42 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -76,21 +76,15 @@ void	parse_lease_decl(FILE *, struct client_lease *, char *);
 int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
-/*
- * conf-decls :==
- *	  <nil>
- *	| conf-decl
- *	| conf-decls conf-decl
- */
 void
-read_conf(char *name)
+init_config(void)
 {
 	struct option_data	*option;
-	FILE			*cfile;
-	int			 token;
 	uint32_t		 expiry;
 
-	new_parse(path_dhclient_conf);
+	config = calloc(1, sizeof(*config));
+	if (config == NULL)
+		fatal("config");
 
 	TAILQ_INIT(&config->reject_list);
 
@@ -144,6 +138,23 @@ read_conf(char *name)
 	    [config->requested_option_count++] = DHO_BOOTFILE_NAME;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_TFTP_SERVER;
+}
+
+/*
+ * conf-decls :==
+ *	  <nil>
+ *	| conf-decl
+ *	| conf-decls conf-decl
+ */
+void
+read_conf(char *name)
+{
+	FILE			*cfile;
+	int			 token;
+
+	init_config();
+
+	new_parse(path_dhclient_conf);
 
 	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
 		for (;;) {
