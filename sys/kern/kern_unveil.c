@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.20 2019/01/14 04:02:39 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.21 2019/01/14 16:43:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
@@ -740,11 +740,8 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 				/*
 				 * adjust unveil match as necessary
 				 */
-				uv = unveil_covered(ni->ni_unveil_match, dp,
-				    p->p_p);
-				/* clear the match when we DOTDOT above it */
-				if (ni->ni_unveil_match->uv_vp == dp)
-					ni->ni_unveil_match = NULL;
+				ni->ni_unveil_match = unveil_covered(
+				    ni->ni_unveil_match, dp, p->p_p);
 			}
 			else
 				uv = unveil_lookup(dp, p, NULL);
@@ -846,7 +843,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			if (uv->uv_flags & UNVEIL_USERSET)
 				return EACCES;
 			else
-				goto done;
+				return ENOENT;
 		}
 		/* directory flags match, update match */
 		if (uv->uv_flags & UNVEIL_USERSET)
