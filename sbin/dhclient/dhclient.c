@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.606 2019/01/14 04:05:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.607 2019/01/14 04:54:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -574,20 +574,9 @@ main(int argc, char *argv[])
 		fatal("unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	read_conf(ifi->name);
+	read_conf(ifi->name, ignore_list, &ifi->hw_address);
 	if ((cmd_opts & OPT_NOACTION) != 0)
 		return 0;
-
-	/*
-	 * Set default client identifier, if needed, *before* reading
-	 * the leases file! Changes to the lladdr will trigger a restart
-	 * and go through here again.
-	 */
-	set_default_client_identifier(&ifi->hw_address);
-
-	/*
-	 * Set default hostname, if needed. */
-	set_default_hostname();
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("no such user: _dhcp");
@@ -595,9 +584,6 @@ main(int argc, char *argv[])
 	if (path_lease_db == NULL && asprintf(&path_lease_db, "%s.%s",
 	    _PATH_LEASE_DB, ifi->name) == -1)
 		fatal("path_lease_db");
-
-	apply_ignore_list(ignore_list);
-	read_resolv_conf_tail();
 
 	interface_state(ifi);
 	if (!LINK_STATE_IS_UP(ifi->link_state))

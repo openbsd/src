@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.175 2019/01/14 04:05:42 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.176 2019/01/14 04:54:46 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -76,6 +76,11 @@ void	parse_lease_decl(FILE *, struct client_lease *, char *);
 int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
+void	apply_ignore_list(char *);
+void	set_default_client_identifier(struct ether_addr *);
+void	set_default_hostname(void);
+void	read_resolv_conf_tail(void);
+
 void
 init_config(void)
 {
@@ -147,7 +152,7 @@ init_config(void)
  *	| conf-decls conf-decl
  */
 void
-read_conf(char *name)
+read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
 {
 	FILE			*cfile;
 	int			 token;
@@ -165,6 +170,11 @@ read_conf(char *name)
 		}
 		fclose(cfile);
 	}
+
+	set_default_client_identifier(hwaddr);
+	set_default_hostname();
+	apply_ignore_list(ignore_list);
+	read_resolv_conf_tail();
 }
 
 /*
