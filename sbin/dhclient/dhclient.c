@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.604 2019/01/14 02:51:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.605 2019/01/14 03:05:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -587,7 +587,7 @@ main(int argc, char *argv[])
 	 * the leases file! Changes to the lladdr will trigger a restart
 	 * and go through here again.
 	 */
-	set_default_client_identifier(ifi);
+	set_default_client_identifier(&ifi->hw_address);
 
 	/*
 	 * Set default hostname, if needed. */

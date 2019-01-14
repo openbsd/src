@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.173 2019/01/14 02:51:29 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.174 2019/01/14 03:05:33 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -885,7 +885,7 @@ apply_ignore_list(char *ignore_list)
 }
 
 void
-set_default_client_identifier(struct interface_info *ifi)
+set_default_client_identifier(struct ether_addr *hwaddr)
 {
 	struct option_data	*opt;
 
@@ -903,7 +903,7 @@ set_default_client_identifier(struct interface_info *ifi)
 		if (opt->data == NULL)
 			fatal("default client identifier");
 		opt->data[0] = HTYPE_ETHER;
-		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
+		memcpy(&opt->data[1], hwaddr->ether_addr_octet,
 		    ETHER_ADDR_LEN);
 		opt->len = ETHER_ADDR_LEN + 1;
 	}
