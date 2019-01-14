@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.22 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.23 2019/01/14 15:02:57 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,6 +39,7 @@
 
 	.set	mips3
 	.set	noreorder		# Noreorder is default style!
+	.set	hardfloat
 
 /*----------------------------------------------------------------------------
  *
