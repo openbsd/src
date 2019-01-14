@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.13 2018/08/04 11:07:14 mestre Exp $ */
+/*	$OpenBSD: control.c,v 1.14 2019/01/14 16:30:21 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,32 @@
 #define	CONTROL_BACKLOG	5
 
 #define square(x) ((x) * (x))
+
+int
+control_check(char *path)
+{
+	struct sockaddr_un	 sun;
+	int			 fd;
+
+	bzero(&sun, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+		log_warn("control_check: socket check");
+		return (-1);
+	}
+
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+		log_warnx("control_check: socket in use");
+		close(fd);
+		return (-1);
+	}
+
+	close(fd);
+
+	return (0);
+}
 
 int
 control_init(char *path)

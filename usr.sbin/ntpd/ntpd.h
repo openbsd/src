@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.137 2018/11/06 20:41:36 jsing Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.138 2019/01/14 16:30:21 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -393,6 +393,7 @@ void			sensor_query(struct ntp_sensor *);
 void			ntp_dns(struct ntpd_conf *, struct passwd *);
 
 /* control.c */
+int			 control_check(char *);
 int			 control_init(char *);
 int			 control_listen(int);
 void			 control_shutdown(int);

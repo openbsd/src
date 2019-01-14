@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.119 2018/11/29 14:25:07 tedu Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.120 2019/01/14 16:30:21 florian Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,6 +202,9 @@ main(int argc, char *argv[])
 			    pname);
 
 		fatalx("%s: process '%s' failed", __func__, pname);
+	} else {
+		if ((control_check(CTLSOCKET)) == -1)
+			fatalx("ntpd already running");
 	}
 
 	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
