@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.72 2018/10/31 10:15:47 kettenis Exp $
+#	$OpenBSD: Makefile.loongson,v 1.73 2019/01/14 16:27:19 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -142,10 +142,6 @@ clean:
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
-
-symbols.sort: ${_machdir}/${_mach}/symbols.raw
-	grep -v '^#' ${_machdir}/${_mach}/symbols.raw \
-	    | sed 's/^	//' | sort -u > symbols.sort
 
 depend obj:
 
