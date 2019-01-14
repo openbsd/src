@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.29 2015/10/23 07:57:03 tedu Exp $
+.\"	$OpenBSD: locate.1,v 1.30 2019/01/14 09:58:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.29 2015/10/23 07:57:03 tedu Exp $
+.\"	$Id: locate.1,v 1.30 2019/01/14 09:58:11 schwarze Exp $
 .\"
-.Dd $Mdocdate: October 23 2015 $
+.Dd $Mdocdate: January 14 2019 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -48,7 +48,8 @@ The
 .Nm
 utility searches a database for all pathnames which match the specified
 .Ar pattern .
-The database is recomputed periodically (usually weekly or daily),
+By default, the database is recomputed
+.Xr weekly 8
 and contains the pathnames
 of all files which are publicly accessible.
 .Pp
@@ -74,19 +75,15 @@ As a special case, a pattern containing no globbing characters
 is matched as though it were
 .Dq *foo* .
 .Pp
-Historically,
-.Nm
-stores only characters between 32 and 127.
-The current implementation stores all characters except newline
+The database stores all bytes occurring in filenames except newline
 .Pq Ql \en
 and
 NUL
 .Pq Ql \e0 .
-The 8-bit character support does not waste extra space for
-plain
-.Tn ASCII
-file names.
-Characters less than 32 or greater than 127 are stored as 2 bytes.
+Internally, it uses a dedicated, compressed, undocumented format.
+For example, bytes less than 32 or greater than 127 are encoded as
+two bytes, whereas the 128 most frequent two-byte sequences are
+encoded as single bytes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -94,11 +91,11 @@ The options are as follows:
 For each entry in the database, perform the search on the last
 component of path.
 .It Fl c
-Suppress normal output; instead print a count of matching file names.
+Suppress normal output; instead print a count of matching filenames.
 .It Fl d Ar database
 Search in
 .Ar database
-instead of the default file name database.
+instead of the default filename database.
 Multiple
 .Fl d
 options are allowed.
@@ -142,6 +139,13 @@ or
 .Dl $ locate -d db1:db2 -d db3 pattern
 .It Fl i
 Ignore case distinctions in both the pattern and the database.
+Since filenames are not character strings but merely opaque byte strings,
+.Nm
+ignores the
+.Xr locale 1
+set by the user, always operates under the
+.Qq C
+locale, and the case rules employed are those of the ASCII character set.
 .It Fl l Ar limit
 Limit output to a specific number of files and exit.
 .It Fl S
