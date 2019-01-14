@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.21 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.22 2019/01/14 13:35:41 feinerer Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1197,7 +1197,7 @@ umb_decode_response(struct umb_softc *sc, void *response, int len)
 		umb_command_done(sc, response, len);
 		break;
 	default:
-		DPRINTF("%s: discard messsage %s\n", DEVNAM(sc),
+		DPRINTF("%s: discard message %s\n", DEVNAM(sc),
 		    umb_request2str(type));
 		break;
 	}
@@ -1211,19 +1211,19 @@ umb_handle_indicate_status_msg(struct umb_softc *sc, void *data, int len)
 	uint32_t cid;
 
 	if (len < sizeof (*m)) {
-		DPRINTF("%s: discard short %s messsage\n", DEVNAM(sc),
+		DPRINTF("%s: discard short %s message\n", DEVNAM(sc),
 		    umb_request2str(letoh32(m->hdr.type)));
 		return;
 	}
 	if (memcmp(m->devid, umb_uuid_basic_connect, sizeof (m->devid))) {
-		DPRINTF("%s: discard %s messsage for other UUID '%s'\n",
+		DPRINTF("%s: discard %s message for other UUID '%s'\n",
 		    DEVNAM(sc), umb_request2str(letoh32(m->hdr.type)),
 		    umb_uuid2str(m->devid));
 		return;
 	}
 	infolen = letoh32(m->infolen);
 	if (len < sizeof (*m) + infolen) {
-		DPRINTF("%s: discard truncated %s messsage (want %d, got %d)\n",
+		DPRINTF("%s: discard truncated %s message (want %d, got %d)\n",
 		    DEVNAM(sc), umb_request2str(letoh32(m->hdr.type)),
 		    (int)sizeof (*m) + infolen, len);
 		return;
@@ -2333,7 +2333,7 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 	int	 qmimsg = 0;
 
 	if (len < sizeof (*cmd)) {
-		DPRINTF("%s: discard short %s messsage\n", DEVNAM(sc),
+		DPRINTF("%s: discard short %s message\n", DEVNAM(sc),
 		    umb_request2str(letoh32(cmd->hdr.type)));
 		return;
 	}
@@ -2341,7 +2341,7 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 	if (memcmp(cmd->devid, umb_uuid_basic_connect, sizeof (cmd->devid))) {
 		if (memcmp(cmd->devid, umb_uuid_qmi_mbim,
 		    sizeof (cmd->devid))) {
-			DPRINTF("%s: discard %s messsage for other UUID '%s'\n",
+			DPRINTF("%s: discard %s message for other UUID '%s'\n",
 			    DEVNAM(sc), umb_request2str(letoh32(cmd->hdr.type)),
 			    umb_uuid2str(cmd->devid));
 			return;
@@ -2370,7 +2370,7 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 
 	infolen = letoh32(cmd->infolen);
 	if (len < sizeof (*cmd) + infolen) {
-		DPRINTF("%s: discard truncated %s messsage (want %d, got %d)\n",
+		DPRINTF("%s: discard truncated %s message (want %d, got %d)\n",
 		    DEVNAM(sc), umb_cid2str(cid),
 		    (int)sizeof (*cmd) + infolen, len);
 		return;
