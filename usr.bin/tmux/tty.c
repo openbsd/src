@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.311 2018/11/19 13:35:41 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.312 2019/01/15 12:08:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2240,7 +2240,7 @@ tty_colours(struct tty *tty, const struct grid_cell *gc)
 					tty_puts(tty, "\033[49m");
 				else if (tc->bg != 0)
 					tty_putcode1(tty, TTYC_SETAB, 0);
-				tc->bg = gc->fg;
+				tc->bg = gc->bg;
 			}
 		}
 	}
