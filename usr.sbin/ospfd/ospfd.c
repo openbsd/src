@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.104 2019/01/14 16:50:56 florian Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.105 2019/01/15 22:18:10 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
 			if (kr->rtlabel == r->label) {
-				*metric = depend_ok ? r->metric : MAX_METRIC;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -579,7 +580,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC) {
-				*metric = depend_ok ? r->metric : MAX_METRIC;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -589,7 +591,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED) {
-				*metric = depend_ok ? r->metric : MAX_METRIC;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -601,7 +604,7 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			    r->mask.s_addr == INADDR_ANY) {
 				if (is_default) {
 					*metric = depend_ok ? r->metric :
-					    MAX_METRIC;
+					    r->metric | MAX_METRIC;
 					return (r->type & REDIST_NO ? 0 : 1);
 				} else
 					return (0);
@@ -610,13 +613,15 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if ((kr->prefix.s_addr & r->mask.s_addr) ==
 			    (r->addr.s_addr & r->mask.s_addr) &&
 			    kr->prefixlen >= mask2prefixlen(r->mask.s_addr)) {
-				*metric = depend_ok ? r->metric : MAX_METRIC;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
 		case REDIST_DEFAULT:
 			if (is_default) {
-				*metric = depend_ok ? r->metric : MAX_METRIC;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
