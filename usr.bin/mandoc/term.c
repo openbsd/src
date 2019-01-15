@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.139 2019/01/04 03:20:44 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.140 2019/01/15 12:15:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -372,8 +372,9 @@ term_field(struct termp *p, size_t vbl, size_t nbr, size_t vbr, size_t vtarget)
 			continue;
 		case ' ':
 		case ASCII_NBRSP:
-			vbl++;
-			vis++;
+			dv = (*p->width)(p, ' ');
+			vbl += dv;
+			vis += dv;
 			continue;
 		default:
 			break;
