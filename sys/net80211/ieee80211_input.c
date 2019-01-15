@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.202 2018/08/07 18:13:14 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.203 2019/01/15 10:01:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -402,6 +402,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #endif	/* IEEE80211_STA_ONLY */
 		default:
 			/* can't get there */
+			goto out;
+		}
+
+		/* Do not process "no data" frames any further. */
+		if (subtype & IEEE80211_FC0_SUBTYPE_NODATA) {
+			if (ic->ic_rawbpf)
+				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 			goto out;
 		}
 
