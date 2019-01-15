@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.33 2018/12/26 15:55:09 eric Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.34 2019/01/15 04:49:50 sunil Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -729,13 +729,13 @@ filter_protocol_query(struct filter *filter, uint64_t token, uint64_t reqid, con
 		    "filter|%d|%zd|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s|%s\n",
 		    PROTOCOL_VERSION,
 		    tm,
-		    phase, token, reqid, fs->rdns, param);
+		    phase, reqid, token, fs->rdns, param);
 	else
 		n = io_printf(lka_proc_get_io(filter->proc),
 		    "filter|%d|%zd|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s\n",
 		    PROTOCOL_VERSION,
 		    tm,
-		    phase, token, reqid, param);
+		    phase, reqid, token, param);
 	if (n == -1)
 		fatalx("failed to write to processor");
 }
@@ -751,7 +751,7 @@ filter_data_query(struct filter *filter, uint64_t token, uint64_t reqid, const c
 	    "filter|%d|%zd|smtp-in|data-line|"
 	    "%016"PRIx64"|%016"PRIx64"|%s\n",
 	    PROTOCOL_VERSION,
-	    tm, token, reqid, line);
+	    tm, reqid, token, line);
 	if (n == -1)
 		fatalx("failed to write to processor");
 }
