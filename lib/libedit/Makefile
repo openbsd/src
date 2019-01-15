@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2018/11/14 20:43:48 sthen Exp $
+#	$OpenBSD: Makefile,v 1.32 2019/01/15 01:54:00 yasuoka Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -11,8 +11,8 @@ SRCS =	chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c \
 
 MAN=	editline.3 editrc.5 editline.7
 
-LDADD+=	-L${BSDOBJDIR}/lib/libcurses -ltermcap
-DPADD+=	${LIBTERMCAP}
+LDADD+=	-L${BSDOBJDIR}/lib/libcurses -lcurses
+DPADD+=	${LIBCURSES}
 
 LIBEDITDIR?=${.CURDIR}
 
