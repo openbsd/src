@@ -1,4 +1,4 @@
-/*	$OpenBSD: owmac.c,v 1.2 2009/04/13 21:14:41 miod Exp $	*/
+/*	$OpenBSD: owmac.c,v 1.3 2019/01/15 18:33:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -48,10 +48,6 @@ struct cfdriver owmac_cd = {
 };
 
 #define	EEPROM_NPAGES		4
-
-static const struct onewire_matchfam owmac_fams[] = {
-	{ ONEWIRE_FAMILY_DS1982 }
-};
 
 int	owmac_read_page(struct owmac_softc *, int, uint8_t *);
 int	owmac_read_redirect(struct owmac_softc *);
