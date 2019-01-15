@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.62 2019/01/12 16:12:10 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.63 2019/01/15 22:08:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2275,7 +2275,7 @@ otus_init(struct ifnet *ifp)
 	}
 
 	/* Start Rx. */
-	otus_write(sc, 0x1c3d30, 0x100);
+	otus_write(sc, AR_MAC_REG_DMA_TRIGGER, AR_DMA_TRIGGER_RXQ);
 	(void)otus_write_barrier(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -2311,7 +2311,7 @@ otus_stop(struct ifnet *ifp)
 	splx(s);
 
 	/* Stop Rx. */
-	otus_write(sc, 0x1c3d30, 0);
+	otus_write(sc, AR_MAC_REG_DMA_TRIGGER, 0);
 	(void)otus_write_barrier(sc);
 
 	sc->tx_queued = 0;
