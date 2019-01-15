@@ -325,6 +325,10 @@ struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 #define H3_CLK_USB_PHY1		89
 #define H3_CLK_USB_PHY2		90
 #define H3_CLK_USB_PHY3		91
+#define H3_CLK_USB_OHCI0	92
+#define H3_CLK_USB_OHCI1	93
+#define H3_CLK_USB_OHCI2	94
+#define H3_CLK_USB_OHCI3	95
 
 #define H3_CLK_LOSC		254
 #define H3_CLK_HOSC		253
@@ -361,6 +365,10 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_USB_PHY1]  = { 0x00cc, 9 },
 	[H3_CLK_USB_PHY2]  = { 0x00cc, 10 },
 	[H3_CLK_USB_PHY3]  = { 0x00cc, 11 },
+	[H3_CLK_USB_OHCI0] = { 0x00cc, 16 },
+	[H3_CLK_USB_OHCI1] = { 0x00cc, 17 },
+	[H3_CLK_USB_OHCI2] = { 0x00cc, 18 },
+	[H3_CLK_USB_OHCI3] = { 0x00cc, 19 },
 };
 
 #define H3_R_CLK_AHB0		1
