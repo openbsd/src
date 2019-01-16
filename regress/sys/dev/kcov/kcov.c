@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.6 2019/01/03 08:51:31 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.7 2019/01/16 19:28:37 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -35,6 +35,7 @@ static int test_coverage(int, int);
 static int test_dying(int, int);
 static int test_exec(int, int);
 static int test_fork(int, int);
+static int test_mmap(int, int);
 static int test_open(int, int);
 static int test_state(int, int);
 
@@ -62,6 +63,7 @@ main(int argc, char *argv[])
 		{ "dying",	test_dying,	1 },
 		{ "exec",	test_exec,	1 },
 		{ "fork",	test_fork,	1 },
+		{ "mmap",	test_mmap,	1 },
 		{ "open",	test_open,	0 },
 		{ "state",	test_state,	1 },
 		{ NULL,		NULL,		0 },
@@ -335,6 +337,25 @@ test_fork(int fd, int mode)
 	/* Upon exit, the kcov descriptor must be reusable again. */
 	kcov_enable(fd, mode);
 	kcov_disable(fd);
+
+	return 0;
+}
+
+/*
+ * Calling mmap() after enable is not allowed.
+ */
+static int
+test_mmap(int fd, int mode)
+{
+	void *cover;
+
+	kcov_enable(fd, mode);
+	cover = mmap(NULL, bufsize * sizeof(unsigned long),
+	    PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (cover != MAP_FAILED) {
+		warnx("expected mmap to fail");
+		return 1;
+	}
 
 	return 0;
 }
