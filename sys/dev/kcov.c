@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.9 2019/01/03 08:56:53 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.10 2019/01/16 19:27:07 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -209,7 +209,7 @@ kcovmmap(dev_t dev, off_t offset, int prot)
 	vaddr_t va;
 
 	kd = kd_lookup(minor(dev));
-	if (kd == NULL)
+	if (kd == NULL || kd->kd_state != KCOV_STATE_READY)
 		return (paddr_t)(-1);
 
 	if (offset < 0 || offset >= kd->kd_nmemb * sizeof(uintptr_t))
