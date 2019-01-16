@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wprintf.3,v 1.6 2019/01/11 09:53:26 schwarze Exp $
+.\"	$OpenBSD: wprintf.3,v 1.7 2019/01/16 12:55:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 11 2019 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -607,15 +607,6 @@ On systems other than
 the
 .Dv LC_NUMERIC
 .Xr locale 1
-category can cause erratic output, for example different characters
-substituted for the decimal point or thousands separator characters
-inserted into numbers.
-For security reasons, make sure that portable programs calling these
-functions never call
+category can cause erratic output; see CAVEATS in
 .Xr setlocale 3
-with the
-.Dv LC_ALL
-or
-.Dv LC_NUMERIC
-categories but only use
-.Dv LC_CTYPE .
+for details.

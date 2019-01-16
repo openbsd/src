@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atof.3,v 1.8 2015/09/10 15:16:43 schwarze Exp $
+.\"	$OpenBSD: atof.3,v 1.9 2019/01/16 12:55:49 schwarze Exp $
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt ATOF 3
 .Os
 .Sh NAME
@@ -70,3 +70,12 @@ An
 .Fn atof
 function first appeared in
 .At v1 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_NUMERIC
+.Xr locale 1
+category can cause parsing failures; see CAVEATS in
+.Xr setlocale 3
+for details.
