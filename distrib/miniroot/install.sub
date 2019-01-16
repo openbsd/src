@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1105 2019/01/13 16:37:29 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1106 2019/01/16 23:50:37 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2802,7 +2802,7 @@ if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	echo
 	if [[ -s \$_CKPATCH ]]; then
 		echo "Run syspatch(8) to install:"
-		cat \$_CKPATCH
+		column -xc 80 \$_CKPATCH
 	fi
 	rm -f \$_CKPATCH
 fi
