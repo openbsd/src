@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.68 2018/05/30 13:43:51 krw Exp $	 */
+/* $OpenBSD: main.c,v 1.69 2019/01/17 05:56:29 tedu Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
