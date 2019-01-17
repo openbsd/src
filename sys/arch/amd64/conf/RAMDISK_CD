@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.173 2018/08/31 00:09:13 jmatthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.174 2019/01/17 01:27:59 mlarkin Exp $
 
 machine		amd64
 maxusers	4
@@ -128,6 +128,7 @@ rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 uath*		at uhub?		# Atheros AR5005UG/AR5005UX
 otus*		at uhub?		# Atheros AR9001U
 athn*		at uhub?		# Atheros AR9002U
+bwfm*		at uhub?		# Broadcom FullMAC
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -189,6 +190,7 @@ sdhc*		at pci?			# SD Host Controller
 sdmmc*		at sdhc?		# SD/MMC bus
 rtsx*		at pci?			# Realtek SD Card Reader
 sdmmc*		at rtsx?		# SD/MMC bus
+bwfm*		at sdmmc?		# Broadcom FullMAC
 
 de*		at pci?			# DC21X4X-based ethernet
 fxp*		at pci?			# EtherExpress 10/100B ethernet
@@ -238,6 +240,7 @@ ale*		at pci?			# Attansic L1E Ethernet
 lii*		at pci?			# Attansic L2 Ethernet
 jme*		at pci?			# JMicron JMC250/JMC260 Ethernet
 bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
+bwfm*		at pci?			# Broadcom FullMAC
 
 acx*		at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*		at cardbus?		# TI ACX100/ACX111 (802.11b/g)

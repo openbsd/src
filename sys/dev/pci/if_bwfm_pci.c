@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.27 2018/08/20 18:58:06 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.28 2019/01/17 01:27:59 mlarkin Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1543,7 +1543,9 @@ int
 bwfm_pci_flowring_lookup(struct bwfm_pci_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+#ifndef IEEE80211_STA_ONLY
 	uint8_t *da = mtod(m, uint8_t *);
+#endif
 	int flowid, prio, fifo;
 	int i, found;
 
@@ -1599,7 +1601,9 @@ bwfm_pci_flowring_create(struct bwfm_pci_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct bwfm_cmd_flowring_create cmd;
+#ifndef IEEE80211_STA_ONLY
 	uint8_t *da = mtod(m, uint8_t *);
+#endif
 	struct bwfm_pci_msgring *ring;
 	int flowid, prio, fifo;
 	int i, found;
@@ -1655,7 +1659,9 @@ void
 bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
+#ifndef IEEE80211_STA_ONLY
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
+#endif
 	struct bwfm_cmd_flowring_create *cmd = arg;
 	struct msgbuf_tx_flowring_create_req *req;
 	struct bwfm_pci_msgring *ring;
