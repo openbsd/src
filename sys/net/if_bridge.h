@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.58 2018/12/07 16:19:40 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.59 2019/01/17 16:07:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -409,7 +409,7 @@ struct bstp_state {
  * Bridge interface list
  */
 struct bridge_iflist {
-	TAILQ_ENTRY(bridge_iflist)	next;		/* next in list */
+	SLIST_ENTRY(bridge_iflist)	bif_next;	/* next in list */
 	struct bridge_softc		*bridge_sc;
 	struct bstp_port		*bif_stp;	/* STP port state */
 	struct brl_head			bif_brlin;	/* input rules */
@@ -473,8 +473,8 @@ struct bridge_softc {
 	u_int64_t			sc_hashkey[2];	/* siphash key */
 	struct timeout			sc_brtimeout;	/* timeout state */
 	struct bstp_state		*sc_stp;	/* stp state */
-	TAILQ_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
-	TAILQ_HEAD(, bridge_iflist)	sc_spanlist;	/* span ports */
+	SLIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
+	SLIST_HEAD(, bridge_iflist)	sc_spanlist;	/* span ports */
 	LIST_HEAD(, bridge_rtnode)	sc_rts[BRIDGE_RTABLE_SIZE];	/* hash table */
 };
 
