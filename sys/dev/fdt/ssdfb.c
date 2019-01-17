@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.8 2019/01/17 13:29:44 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.9 2019/01/17 13:33:51 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -208,7 +208,6 @@ ssdfb_i2c_detach(struct device *self, int flags)
 {
 	struct ssdfb_softc *sc = (struct ssdfb_softc *)self;
 	ssdfb_detach(sc, flags);
-	free(sc->sc_gpio, M_DEVBUF, sc->sc_gpiolen);
 	return 0;
 }
 
