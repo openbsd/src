@@ -1,7 +1,7 @@
-/*	$OpenBSD: kern_unveil.c,v 1.21 2019/01/14 16:43:47 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.22 2019/01/17 03:26:19 beck Exp $	*/
 
 /*
- * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -272,13 +272,16 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 		};
 
 		/*
-		 * if we are at the root of a filesystem, take the .. in the
-		 * above filesystem
+		 * If we are at the root of a filesystem, and we are
+		 * still mounted somewhere, take the .. in the above
+		 * filesystem.
 		 */
-		if (vp != root)
-			vp = ((vp->v_flag & VROOT) &&
-			    vp->v_mount->mnt_vnodecovered) ?
+		if (vp != root && (vp->v_flag & VROOT)) {
+			if (vp->v_mount == NULL)
+				return -1;
+			vp = vp->v_mount->mnt_vnodecovered ?
 			    vp->v_mount->mnt_vnodecovered : vp;
+		}
 
 		if (vget(vp, LK_EXCLUSIVE|LK_RETRY) != 0)
 			return -1;
@@ -650,6 +653,8 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_READ\n");
 #endif
+			if (flags != UNVEIL_INSPECT)
+				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -658,6 +663,8 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_WRITE\n");
 #endif
+			if (flags != UNVEIL_INSPECT)
+				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -666,6 +673,8 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_EXEC\n");
 #endif
+			if (flags != UNVEIL_INSPECT)
+				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -674,6 +683,8 @@ unveil_flagmatch(struct nameidata *ni, u_char flags)
 #ifdef DEBUG_UNVEIL
 			printf("unveil lacks UNVEIL_CREATE\n");
 #endif
+			if (flags != UNVEIL_INSPECT)
+				ni->ni_unveil_eacces = 1;
 			return 0;
 		}
 	}
@@ -740,8 +751,14 @@ unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp)
 				/*
 				 * adjust unveil match as necessary
 				 */
-				ni->ni_unveil_match = unveil_covered(
-				    ni->ni_unveil_match, dp, p->p_p);
+				uv = unveil_covered(ni->ni_unveil_match, dp,
+				    p->p_p);
+				/* clear the match when we DOTDOT above it */
+				if (ni->ni_unveil_match &&
+				    ni->ni_unveil_match->uv_vp == dp) {
+					ni->ni_unveil_match = NULL;
+					ni->ni_unveil_eacces = 0;
+				}
 			}
 			else
 				uv = unveil_lookup(dp, p, NULL);
@@ -837,13 +854,14 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			    ni->ni_cnd.cn_nameptr, ni->ni_dvp);
 #endif
 			/*
-			 * If dir has perms, EACCESS, otherwise
-			 * ENOENT
+			 * If dir has user set restrictions fail with
+			 * EACCESS. Otherwise, use any covering match
+			 * that we found above this dir.
 			 */
 			if (uv->uv_flags & UNVEIL_USERSET)
 				return EACCES;
 			else
-				return ENOENT;
+				goto done;
 		}
 		/* directory flags match, update match */
 		if (uv->uv_flags & UNVEIL_USERSET)
@@ -870,6 +888,15 @@ done:
 		    ni->ni_unveil_match->uv_vp);
 #endif
 		return (0);
+	}
+	if (ni->ni_unveil_eacces) {
+#ifdef DEBUG_UNVEIL
+		printf("unveil: %s(%d): \"%s\" flag mismatch above/at "
+		    "vnode %p\n",
+		    p->p_p->ps_comm, p->p_p->ps_pid, ni->ni_cnd.cn_nameptr,
+		    ni->ni_unveil_match->uv_vp);
+#endif
+		return EACCES;
 	}
 	return ENOENT;
 }

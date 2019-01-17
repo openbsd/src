@@ -1,7 +1,7 @@
-/*	$OpenBSD: syscalls.c,v 1.19 2019/01/14 04:02:39 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.20 2019/01/17 03:26:19 beck Exp $	*/
 
 /*
- * Copyright (c) 2017-2018 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -847,7 +847,7 @@ test_kn(int do_uv)
 	}
 	UV_SHOULD_SUCCEED((open("/dev/null", O_RDWR) == -1), "open");
 	UV_SHOULD_SUCCEED((open("/dev/zero", O_RDONLY) == -1), "open");
-	UV_SHOULD_ENOENT((open("/dev/zero", O_RDWR) == -1), "open"); /* XXX */
+	UV_SHOULD_EACCES((open("/dev/zero", O_RDWR) == -1), "open");
 	return 0;
 }
 

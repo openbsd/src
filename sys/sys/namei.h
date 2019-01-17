@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.38 2018/08/13 23:11:44 deraadt Exp $	*/
+/*	$OpenBSD: namei.h,v 1.39 2019/01/17 03:26:19 beck Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct nameidata {
 	struct vnode **ni_tvp;		/* traversed vnodes */
 	size_t ni_tvpend;		/* end of traversed vnode list */
 	size_t ni_tvpsize;		/* size of traversed vnode list */
+	int ni_unveil_eacces;		/* indicates unveil flag mismatch */
 
 	/*
 	 * Lookup parameters: this structure describes the subset of
