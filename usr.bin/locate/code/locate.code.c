@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.20 2018/05/30 15:13:22 espie Exp $
+ *	$OpenBSD: locate.code.c,v 1.21 2019/01/17 06:15:44 tedu Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * 	$Id: locate.code.c,v 1.20 2018/05/30 15:13:22 espie Exp $
  */
 
 /*

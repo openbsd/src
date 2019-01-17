@@ -1,4 +1,4 @@
-/*	$OpenBSD: ostern.c,v 1.8 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: ostern.c,v 1.9 2019/01/17 06:15:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -24,8 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * 	$Id: ostern.c,v 1.8 2015/03/15 00:41:28 millert Exp $
  */
 
 #include <stdio.h>

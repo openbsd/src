@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2019/01/14 09:06:04 schwarze Exp $
+/*	$OpenBSD: util.c,v 1.16 2019/01/17 06:15:44 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: util.c,v 1.15 2019/01/14 09:06:04 schwarze Exp $
  */
 
 
