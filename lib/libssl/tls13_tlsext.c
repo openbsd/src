@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_tlsext.c,v 1.2 2019/01/17 02:55:48 beck Exp $ */
+/* $OpenBSD: tls13_tlsext.c,v 1.3 2019/01/17 06:44:10 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1360,16 +1360,26 @@ tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
 }
 
 static struct tls_extension_funcs *
-tls13_tlsext_funcs(struct tls_extension *tlsext, int is_serverhello)
+tls13_tlsext_funcs(struct tls_extension *tlsext, uint16_t msg)
 {
-	if (is_serverhello)
+	switch (msg) {
+	case TLS13_TLSEXT_MSG_CH:
+		return &tlsext->clienthello;
+	case TLS13_TLSEXT_MSG_SH:
 		return &tlsext->serverhello;
-
-	return &tlsext->clienthello;
+	case TLS13_TLSEXT_MSG_EE:
+	case TLS13_TLSEXT_MSG_CT:
+	case TLS13_TLSEXT_MSG_CR:
+	case TLS13_TLSEXT_MSG_NST:
+	case TLS13_TLSEXT_MSG_HRR:
+	default:
+		break;
+	}
+	return NULL;
 }
 
 static int
-tls13_tlsext_build(SSL *s, CBB *cbb, int is_serverhello)
+tls13_tlsext_build(SSL *s, CBB *cbb, uint16_t msg)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -1382,7 +1392,7 @@ tls13_tlsext_build(SSL *s, CBB *cbb, int is_serverhello)
 
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		tlsext = &tls_extensions[i];
-		ext = tls13_tlsext_funcs(tlsext, is_serverhello);
+		ext = tls13_tlsext_funcs(tlsext, msg);
 
 		if (!ext->needs(s))
 			continue;
@@ -1408,7 +1418,7 @@ tls13_tlsext_build(SSL *s, CBB *cbb, int is_serverhello)
 }
 
 static int
-tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello, uint16_t msg)
+tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -1433,8 +1443,9 @@ tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello, uint16_t ms
 			return 0;
 
 		if (s->internal->tlsext_debug_cb != NULL)
-			s->internal->tlsext_debug_cb(s, is_serverhello, type,
-			    (unsigned char *)CBS_data(&extension_data),
+			s->internal->tlsext_debug_cb(s,
+			    msg == TLS13_TLSEXT_MSG_SH, /* XXX */
+			    type, (unsigned char *)CBS_data(&extension_data),
 			    CBS_len(&extension_data),
 			    s->internal->tlsext_debug_arg);
 
@@ -1453,7 +1464,7 @@ tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello, uint16_t ms
 			return 0;
 		extensions_seen |= (1 << idx);
 
-		ext = tls13_tlsext_funcs(tlsext, is_serverhello);
+		ext = tls13_tlsext_funcs(tlsext, msg);
 		if (!ext->parse(s, &extension_data, alert))
 			return 0;
 
@@ -1487,7 +1498,7 @@ tls13_tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg)
 	/* XXX - this possibly should be done by the caller... */
 	tls13_tlsext_clienthello_reset_state(s);
 
-	return tls13_tlsext_parse(s, cbs, alert, 0, msg);
+	return tls13_tlsext_parse(s, cbs, alert, msg);
 }
 
 static void
@@ -1510,5 +1521,5 @@ tls13_tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg)
 	/* XXX - this possibly should be done by the caller... */
 	tls13_tlsext_serverhello_reset_state(s);
 
-	return tls13_tlsext_parse(s, cbs, alert, 1, msg);
+	return tls13_tlsext_parse(s, cbs, alert, msg);
 }
