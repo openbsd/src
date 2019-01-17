@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2019/01/11 06:25:06 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2019/01/17 01:52:27 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -955,7 +955,6 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  * => pmap should NOT be pmap_kernel()
  */
 
-
 struct vm_page *
 pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 {
@@ -1469,7 +1468,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* end of "for" loop: time for next pte */
 	}
 }
-
 
 /*
  * pmap_remove_pte: remove a single PTE from a PTP
