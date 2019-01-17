@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.7 2018/08/17 21:00:17 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.8 2019/01/17 13:29:44 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,6 +40,7 @@
 #define SSDFB_SET_PAGE_RANGE			0x22
 #define SSDFB_SET_START_LINE			0x40
 #define SSDFB_SET_CONTRAST_CONTROL		0x81
+#define SSDFB_CHARGE_PUMP			0x8d
 #define SSDFB_SET_COLUMN_DIRECTION_NORMAL	0xa0
 #define SSDFB_SET_COLUMN_DIRECTION_REVERSE	0xa1
 #define SSDFB_SET_MULTIPLEX_RATIO		0xa8
@@ -179,7 +180,8 @@ ssdfb_i2c_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "solomon,ssd1309fb-i2c") == 0)
+	if (strcmp(ia->ia_name, "solomon,ssd1306fb-i2c") == 0 ||
+	    strcmp(ia->ia_name, "solomon,ssd1309fb-i2c") == 0)
 		return 1;
 
 	return 0;
@@ -375,6 +377,11 @@ ssdfb_init(struct ssdfb_softc *sc)
 		reg[1] = 0xa0;
 		ssdfb_write_command(sc, reg, 2);
 	}
+	if (OF_is_compatible(sc->sc_node, "solomon,ssd1306fb-i2c")) {
+		reg[0] = SSDFB_SET_DISPLAY_CLOCK_DIVIDE_RATIO;
+		reg[1] = 0x80;
+		ssdfb_write_command(sc, reg, 2);
+	}
 	reg[0] = SSDFB_SET_MULTIPLEX_RATIO;
 	reg[1] = 0x3f;
 	ssdfb_write_command(sc, reg, 2);
@@ -411,6 +418,16 @@ ssdfb_init(struct ssdfb_softc *sc)
 		reg[1] = 0x34;
 		ssdfb_write_command(sc, reg, 2);
 	}
+	if (OF_is_compatible(sc->sc_node, "solomon,ssd1306fb-i2c")) {
+		reg[0] = SSDFB_SET_VCOM_DESELECT_LEVEL;
+		reg[1] = 0x20;
+		ssdfb_write_command(sc, reg, 2);
+	}
+	reg[0] = SSDFB_CHARGE_PUMP;
+	reg[1] = 0x10;
+	if (OF_is_compatible(sc->sc_node, "solomon,ssd1306fb-i2c"))
+		reg[1] |= 1 << 2;
+	ssdfb_write_command(sc, reg, 2);
 	reg[0] = SSDFB_ENTIRE_DISPLAY_ON;
 	ssdfb_write_command(sc, reg, 1);
 	reg[0] = SSDFB_SET_DISPLAY_MODE_NORMAL;
