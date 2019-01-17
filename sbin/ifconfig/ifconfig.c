@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.387 2018/11/29 00:12:34 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.388 2019/01/17 04:28:21 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1719,6 +1719,10 @@ setifnwid(const char *val, int d)
 		errx(1, "nwid and join may not be used at the same time");
 	}
 
+	if (strlen(nwidname) != 0) {
+		errx(1, "nwid may not be specified twice");
+	}
+
 	if (d != 0) {
 		/* no network id is especially desired */
 		memset(&nwid, 0, sizeof(nwid));
@@ -1757,6 +1761,10 @@ setifjoin(const char *val, int d)
 
 	if (strlen(nwidname) != 0) {
 		errx(1, "nwid and join may not be used at the same time");
+	}
+
+	if (strlen(joinname) != 0) {
+		errx(1, "join may not be specified twice");
 	}
 
 	if (d != 0) {
