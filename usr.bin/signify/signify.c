@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.128 2017/07/11 23:27:13 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.129 2019/01/17 05:31:28 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -254,6 +254,7 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin, int confirm,
 {
 	char pass[1024];
 	int rppflags = RPP_ECHO_OFF;
+	const char *errstr = NULL;
 
 	if (rounds == 0) {
 		memset(key, 0, keylen);
@@ -270,15 +271,17 @@ kdf(uint8_t *salt, size_t saltlen, int rounds, int allowstdin, int confirm,
 		char pass2[1024];
 		if (!readpassphrase("confirm passphrase: ", pass2,
 		    sizeof(pass2), rppflags))
-			errx(1, "unable to read passphrase");
-		if (strcmp(pass, pass2) != 0)
-			errx(1, "passwords don't match");
+			errstr = "unable to read passphrase";
+		if (!errstr && strcmp(pass, pass2) != 0)
+			errstr = "passwords don't match";
 		explicit_bzero(pass2, sizeof(pass2));
 	}
-	if (bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
+	if (!errstr && bcrypt_pbkdf(pass, strlen(pass), salt, saltlen, key,
 	    keylen, rounds) == -1)
-		errx(1, "bcrypt pbkdf");
+		errstr = "bcrypt pbkdf";
 	explicit_bzero(pass, sizeof(pass));
+	if (errstr)
+		errx(1, "%s", errstr);
 }
 
 static void
