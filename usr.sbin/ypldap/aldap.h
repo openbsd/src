@@ -1,5 +1,4 @@
-/*	$Id: aldap.h,v 1.12 2018/11/27 12:06:39 martijn Exp $ */
-/*	$OpenBSD: aldap.h,v 1.12 2018/11/27 12:06:39 martijn Exp $ */
+/*	$OpenBSD: aldap.h,v 1.13 2019/01/17 06:22:54 tedu Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
