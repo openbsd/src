@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_tlsext.c,v 1.1 2019/01/17 00:56:57 beck Exp $ */
+/* $OpenBSD: tls13_tlsext.c,v 1.2 2019/01/17 02:55:48 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -21,7 +21,7 @@
 #include "ssl_locl.h"
 
 #include "bytestring.h"
-#include "ssl_tlsext.h"
+#include "tls13_tlsext.h"
 #include "ssl_sigalgs.h"
 
 /*
@@ -1202,6 +1202,7 @@ struct tls_extension_funcs {
 
 struct tls_extension {
 	uint16_t type;
+	uint16_t messages;
 	struct tls_extension_funcs clienthello;
 	struct tls_extension_funcs serverhello;
 };
@@ -1209,6 +1210,7 @@ struct tls_extension {
 static struct tls_extension tls_extensions[] = {
 	{
 		.type = TLSEXT_TYPE_server_name,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_EE,
 		.clienthello = {
 			.needs = tls13_tlsext_sni_clienthello_needs,
 			.build = tls13_tlsext_sni_clienthello_build,
@@ -1222,6 +1224,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_renegotiate,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_SH,
 		.clienthello = {
 			.needs = tls13_tlsext_ri_clienthello_needs,
 			.build = tls13_tlsext_ri_clienthello_build,
@@ -1235,6 +1238,8 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_status_request,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_CR |
+		    TLS13_TLSEXT_MSG_CT,
 		.clienthello = {
 			.needs = tls13_tlsext_ocsp_clienthello_needs,
 			.build = tls13_tlsext_ocsp_clienthello_build,
@@ -1248,6 +1253,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_ec_point_formats,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_SH,
 		.clienthello = {
 			.needs = tls13_tlsext_ecpf_clienthello_needs,
 			.build = tls13_tlsext_ecpf_clienthello_build,
@@ -1261,6 +1267,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_supported_groups,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_EE,
 		.clienthello = {
 			.needs = tls13_tlsext_supportedgroups_clienthello_needs,
 			.build = tls13_tlsext_supportedgroups_clienthello_build,
@@ -1274,6 +1281,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_session_ticket,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_SH,
 		.clienthello = {
 			.needs = tls13_tlsext_sessionticket_clienthello_needs,
 			.build = tls13_tlsext_sessionticket_clienthello_build,
@@ -1287,6 +1295,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_signature_algorithms,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_CR,
 		.clienthello = {
 			.needs = tls13_tlsext_sigalgs_clienthello_needs,
 			.build = tls13_tlsext_sigalgs_clienthello_build,
@@ -1300,6 +1309,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_application_layer_protocol_negotiation,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_EE,
 		.clienthello = {
 			.needs = tls13_tlsext_alpn_clienthello_needs,
 			.build = tls13_tlsext_alpn_clienthello_build,
@@ -1314,6 +1324,7 @@ static struct tls_extension tls_extensions[] = {
 #ifndef OPENSSL_NO_SRTP
 	{
 		.type = TLSEXT_TYPE_use_srtp,
+		.messages = TLS13_TLSEXT_MSG_CH | TLS13_TLSEXT_MSG_SH,
 		.clienthello = {
 			.needs = tls13_tlsext_srtp_clienthello_needs,
 			.build = tls13_tlsext_srtp_clienthello_build,
@@ -1354,7 +1365,7 @@ tls13_tlsext_funcs(struct tls_extension *tlsext, int is_serverhello)
 	if (is_serverhello)
 		return &tlsext->serverhello;
 
-	return &tlsext->clienthello;	
+	return &tlsext->clienthello;
 }
 
 static int
@@ -1397,7 +1408,7 @@ tls13_tlsext_build(SSL *s, CBB *cbb, int is_serverhello)
 }
 
 static int
-tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello)
+tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello, uint16_t msg)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -1430,6 +1441,12 @@ tls13_tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_serverhello)
 		/* Unknown extensions are ignored. */
 		if ((tlsext = tls_extension_find(type, &idx)) == NULL)
 			continue;
+
+		/* RFC 8446 Section 4.2 */
+		if (!(tlsext->messages & msg)) {
+			*alert = SSL_AD_ILLEGAL_PARAMETER;
+			return 0;
+		}
 
 		/* Check for duplicate known extensions. */
 		if ((extensions_seen & (1 << idx)) != 0)
@@ -1465,18 +1482,18 @@ tls13_tlsext_clienthello_build(SSL *s, CBB *cbb)
 }
 
 int
-tls13_tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert)
+tls13_tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg)
 {
 	/* XXX - this possibly should be done by the caller... */
 	tls13_tlsext_clienthello_reset_state(s);
 
-	return tls13_tlsext_parse(s, cbs, alert, 0);
+	return tls13_tlsext_parse(s, cbs, alert, 0, msg);
 }
 
 static void
 tls13_tlsext_serverhello_reset_state(SSL *s)
 {
-	S3I(s)->renegotiate_seen = 0;   
+	S3I(s)->renegotiate_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
 }
@@ -1488,10 +1505,10 @@ tls13_tlsext_serverhello_build(SSL *s, CBB *cbb)
 }
 
 int
-tls13_tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert)
+tls13_tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg)
 {
 	/* XXX - this possibly should be done by the caller... */
 	tls13_tlsext_serverhello_reset_state(s);
 
-	return tls13_tlsext_parse(s, cbs, alert, 1);
+	return tls13_tlsext_parse(s, cbs, alert, 1, msg);
 }

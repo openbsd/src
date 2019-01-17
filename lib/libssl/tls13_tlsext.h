@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_tlsext.h,v 1.1 2019/01/17 00:56:57 beck Exp $ */
+/* $OpenBSD: tls13_tlsext.h,v 1.2 2019/01/17 02:55:48 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -18,6 +18,15 @@
 
 #ifndef HEADER_SSL_TLS13_TLSEXT_H
 #define HEADER_SSL_TLS13_TLSEXT_H
+
+/* RFC 8446 Section 4.2 */
+#define TLS13_TLSEXT_MSG_CH	0x0001	/* ClientHello */
+#define TLS13_TLSEXT_MSG_SH	0x0002	/* ServerHello */
+#define TLS13_TLSEXT_MSG_EE	0x0004	/* EncryptedExtension */
+#define TLS13_TLSEXT_MSG_CT	0x0008	/* Certificate */
+#define TLS13_TLSEXT_MSG_CR	0x0010	/* CertificateRequest */
+#define TLS13_TLSEXT_MSG_NST	0x0020	/* NewSessionTicket */
+#define TLS13_TLSEXT_MSG_HRR	0x0030	/* HelloRetryRequest */
 
 __BEGIN_HIDDEN_DECLS
 
@@ -87,10 +96,10 @@ int tls13_tlsext_srtp_serverhello_parse(SSL *s, CBS *cbs, int *alert);
 #endif
 
 int tls13_tlsext_clienthello_build(SSL *s, CBB *cbb);
-int tls13_tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert);
+int tls13_tlsext_clienthello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg);
 
 int tls13_tlsext_serverhello_build(SSL *s, CBB *cbb);
-int tls13_tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert);
+int tls13_tlsext_serverhello_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg);
 
 __END_HIDDEN_DECLS
 
