@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.5 2018/11/09 23:56:20 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.6 2019/01/17 06:32:12 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -21,7 +21,26 @@
 
 #include <openssl/evp.h>
 
+#include "bytestring.h"
+
 __BEGIN_HIDDEN_DECLS
+
+#define TLS13_IO_EOF		0
+#define TLS13_IO_FAILURE	-1
+#define TLS13_IO_WANT_POLLIN	-2
+#define TLS13_IO_WANT_POLLOUT	-3
+
+typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
+typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen, void *_cb_arg);
+
+struct tls13_buffer;
+
+struct tls13_buffer *tls13_buffer_new(size_t init_size);
+void tls13_buffer_free(struct tls13_buffer *buf);
+ssize_t tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
+    tls13_read_cb read_cb, void *cb_arg);
+void tls13_buffer_cbs(struct tls13_buffer *buf, CBS *cbs);
+int tls13_buffer_finish(struct tls13_buffer *buf, uint8_t **out, size_t *out_len);
 
 struct tls13_secret {
 	uint8_t *data;
