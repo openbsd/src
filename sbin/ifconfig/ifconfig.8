@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.324 2018/11/16 12:25:29 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.325 2019/01/18 20:25:35 phessler Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 16 2018 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -949,6 +949,8 @@ Any necessary
 or
 .Cm nwkey
 arguments should be specified on the same line.
+The empty string allows the interface to automatically connect to any
+available access points if no known access points are found.
 May not be used with
 .Cm nwid .
 .It Cm -join Ar id
