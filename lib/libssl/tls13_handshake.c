@@ -1,6 +1,7 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.7 2018/11/11 06:49:35 beck Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.8 2019/01/18 06:51:29 tb Exp $	*/
 /*
- * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +18,7 @@
 
 #include <stddef.h>
 
+#include "tls13_handshake.h"
 #include "tls13_internal.h"
 
 /* Based on RFC 8446 and inspired by s2n's TLS 1.2 state machine. */
@@ -28,11 +30,6 @@
 /* Indexing into the state machine */
 struct tls13_handshake {
 	uint8_t			hs_type;
-#define INITIAL				0x00
-#define NEGOTIATED			0x01
-#define WITH_CERT_REQ			0x02
-#define WITH_HELLO_RET_REQ		0x04
-#define WITH_PSK			0x08
 	int			message_number;
 };
 
@@ -65,27 +62,6 @@ int tls13_handshake_send_action(struct tls13_ctx *ctx,
     struct tls13_handshake_action *action);
 int tls13_handshake_recv_action(struct tls13_ctx *ctx,
     struct tls13_handshake_action *action);
-
-enum tls13_message_type {
-	INVALID,
-	CLIENT_HELLO,
-	CLIENT_HELLO_RETRY,
-	CLIENT_END_OF_EARLY_DATA,
-	CLIENT_CERTIFICATE,
-	CLIENT_CERTIFICATE_VERIFY,
-	CLIENT_FINISHED,
-	CLIENT_KEY_UPDATE,
-	SERVER_HELLO,
-	SERVER_NEW_SESSION_TICKET,
-	SERVER_ENCRYPTED_EXTENSIONS,
-	SERVER_CERTIFICATE,
-	SERVER_CERTIFICATE_VERIFY,
-	SERVER_CERTIFICATE_REQUEST,
-	SERVER_FINISHED,
-	SERVER_KEY_UPDATE,
-	SERVER_MESSAGE_HASH,
-	APPLICATION_DATA,
-};
 
 struct tls13_handshake_action state_machine[] = {
 	[CLIENT_HELLO] = {
@@ -144,13 +120,6 @@ struct tls13_handshake_action state_machine[] = {
 		.send = tls13_server_hello_send,
 		.recv = tls13_server_hello_recv,
 	},
-	[SERVER_NEW_SESSION_TICKET] = {
-		.record_type = TLS13_HANDSHAKE,
-		.handshake_type = TLS13_MT_NEW_SESSION_TICKET,
-		.sender = TLS13_HS_SERVER,
-		.send = tls13_server_new_session_ticket_send,
-		.recv = tls13_server_new_session_ticket_recv,
-	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
 		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
@@ -186,20 +155,6 @@ struct tls13_handshake_action state_machine[] = {
 		.send = tls13_server_finished_send,
 		.recv = tls13_server_finished_recv,
 	},
-	[SERVER_KEY_UPDATE] = {
-		.record_type = TLS13_HANDSHAKE,
-		.handshake_type = TLS13_MT_KEY_UPDATE,
-		.sender = TLS13_HS_SERVER,
-		.send = tls13_server_key_update_send,
-		.recv = tls13_server_key_update_recv,
-	},
-	[SERVER_MESSAGE_HASH] = {
-		.record_type = TLS13_HANDSHAKE,
-		.handshake_type = TLS13_MT_MESSAGE_HASH,
-		.sender = TLS13_HS_SERVER,
-		.send = tls13_server_message_hash_send,
-		.recv = tls13_server_message_hash_recv,
-	},
 	[APPLICATION_DATA] = {
 		.record_type = TLS13_APPLICATION_DATA,
 		.handshake_type = 0,
@@ -209,7 +164,7 @@ struct tls13_handshake_action state_machine[] = {
 	},
 };
 
-static enum tls13_message_type handshakes[][16] = {
+static enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 	[INITIAL] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
@@ -218,24 +173,15 @@ static enum tls13_message_type handshakes[][16] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		SERVER_ENCRYPTED_EXTENSIONS,
+		SERVER_CERTIFICATE_REQUEST,
 		SERVER_CERTIFICATE,
 		SERVER_CERTIFICATE_VERIFY,
 		SERVER_FINISHED,
+		CLIENT_CERTIFICATE,
 		CLIENT_FINISHED,
 		APPLICATION_DATA,
 	},
-	[NEGOTIATED | WITH_HELLO_RET_REQ] = {
-		CLIENT_HELLO,
-		SERVER_HELLO,
-		CLIENT_HELLO_RETRY,
-		SERVER_ENCRYPTED_EXTENSIONS,
-		SERVER_CERTIFICATE,
-		SERVER_CERTIFICATE_VERIFY,
-		SERVER_FINISHED,
-		CLIENT_FINISHED,
-		APPLICATION_DATA,
-	},
-	[NEGOTIATED | WITH_CERT_REQ] = {
+	[NEGOTIATED | WITH_CCV] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		SERVER_ENCRYPTED_EXTENSIONS,
@@ -243,15 +189,15 @@ static enum tls13_message_type handshakes[][16] = {
 		SERVER_CERTIFICATE,
 		SERVER_CERTIFICATE_VERIFY,
 		SERVER_FINISHED,
+		CLIENT_CERTIFICATE,
+		CLIENT_CERTIFICATE_VERIFY,
 		CLIENT_FINISHED,
 		APPLICATION_DATA,
 	},
-	[NEGOTIATED | WITH_HELLO_RET_REQ | WITH_CERT_REQ] = {
+	[NEGOTIATED | WITHOUT_CR] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
-		CLIENT_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
-		SERVER_CERTIFICATE_REQUEST,
 		SERVER_CERTIFICATE,
 		SERVER_CERTIFICATE_VERIFY,
 		SERVER_FINISHED,
@@ -266,7 +212,45 @@ static enum tls13_message_type handshakes[][16] = {
 		CLIENT_FINISHED,
 		APPLICATION_DATA,
 	},
-	[NEGOTIATED | WITH_HELLO_RET_REQ | WITH_PSK] = {
+	[NEGOTIATED | WITH_HRR] = {
+		CLIENT_HELLO,
+		SERVER_HELLO,
+		CLIENT_HELLO_RETRY,
+		SERVER_ENCRYPTED_EXTENSIONS,
+		SERVER_CERTIFICATE_REQUEST,
+		SERVER_CERTIFICATE,
+		SERVER_CERTIFICATE_VERIFY,
+		SERVER_FINISHED,
+		CLIENT_CERTIFICATE,
+		CLIENT_FINISHED,
+		APPLICATION_DATA,
+	},
+	[NEGOTIATED | WITH_HRR | WITH_CCV] = {
+		CLIENT_HELLO,
+		SERVER_HELLO,
+		CLIENT_HELLO_RETRY,
+		SERVER_ENCRYPTED_EXTENSIONS,
+		SERVER_CERTIFICATE_REQUEST,
+		SERVER_CERTIFICATE,
+		SERVER_CERTIFICATE_VERIFY,
+		SERVER_FINISHED,
+		CLIENT_CERTIFICATE,
+		CLIENT_CERTIFICATE_VERIFY,
+		CLIENT_FINISHED,
+		APPLICATION_DATA,
+	},
+	[NEGOTIATED | WITH_HRR | WITHOUT_CR] = {
+		CLIENT_HELLO,
+		SERVER_HELLO,
+		CLIENT_HELLO_RETRY,
+		SERVER_ENCRYPTED_EXTENSIONS,
+		SERVER_CERTIFICATE,
+		SERVER_CERTIFICATE_VERIFY,
+		SERVER_FINISHED,
+		CLIENT_FINISHED,
+		APPLICATION_DATA,
+	},
+	[NEGOTIATED | WITH_HRR | WITH_PSK] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
@@ -470,18 +454,6 @@ tls13_server_hello_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_server_new_session_ticket_recv(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
-tls13_server_new_session_ticket_send(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
 tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx)
 {
 	return 1;
@@ -537,30 +509,6 @@ tls13_server_finished_recv(struct tls13_ctx *ctx)
 
 int
 tls13_server_finished_send(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
-tls13_server_key_update_recv(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
-tls13_server_key_update_send(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
-tls13_server_message_hash_recv(struct tls13_ctx *ctx)
-{
-	return 1;
-}
-
-int
-tls13_server_message_hash_send(struct tls13_ctx *ctx)
 {
 	return 1;
 }

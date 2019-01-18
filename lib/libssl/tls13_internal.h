@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.6 2019/01/17 06:32:12 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.7 2019/01/18 06:51:29 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -135,8 +135,6 @@ int tls13_client_key_update_send(struct tls13_ctx *ctx);
 int tls13_client_key_update_recv(struct tls13_ctx *ctx);
 int tls13_server_hello_recv(struct tls13_ctx *ctx);
 int tls13_server_hello_send(struct tls13_ctx *ctx);
-int tls13_server_new_session_ticket_recv(struct tls13_ctx *ctx);
-int tls13_server_new_session_ticket_send(struct tls13_ctx *ctx);
 int tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx);
 int tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx);
 int tls13_server_certificate_recv(struct tls13_ctx *ctx);
@@ -147,10 +145,6 @@ int tls13_server_certificate_verify_send(struct tls13_ctx *ctx);
 int tls13_server_certificate_verify_recv(struct tls13_ctx *ctx);
 int tls13_server_finished_recv(struct tls13_ctx *ctx);
 int tls13_server_finished_send(struct tls13_ctx *ctx);
-int tls13_server_key_update_recv(struct tls13_ctx *ctx);
-int tls13_server_key_update_send(struct tls13_ctx *ctx);
-int tls13_server_message_hash_recv(struct tls13_ctx *ctx);
-int tls13_server_message_hash_send(struct tls13_ctx *ctx);
 
 __END_HIDDEN_DECLS
 
