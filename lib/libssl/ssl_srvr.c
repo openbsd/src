@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.62 2018/12/07 07:22:09 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.63 2019/01/18 00:54:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1019,7 +1019,7 @@ ssl3_get_client_hello(SSL *s)
 		goto f_err;
 	}
 
-	if (!tlsext_clienthello_parse(s, &cbs, &al)) {
+	if (!tlsext_server_parse(s, &cbs, &al, SSL_TLSEXT_MSG_CH)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
@@ -1206,7 +1206,7 @@ ssl3_send_server_hello(SSL *s)
 			goto err;
 
 		/* TLS extensions */
-		if (!tlsext_serverhello_build(s, &server_hello)) {
+		if (!tlsext_server_build(s, &server_hello, SSL_TLSEXT_MSG_SH)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}

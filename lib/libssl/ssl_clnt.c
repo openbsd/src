@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.51 2018/11/29 06:21:09 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.52 2019/01/18 00:54:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -775,7 +775,7 @@ ssl3_send_client_hello(SSL *s)
 			goto err;
 
 		/* TLS extensions */
-		if (!tlsext_clienthello_build(s, &client_hello)) {
+		if (!tlsext_client_build(s, &client_hello, SSL_TLSEXT_MSG_CH)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
@@ -999,7 +999,7 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	if (!tlsext_serverhello_parse(s, &cbs, &al)) {
+	if (!tlsext_client_parse(s, &cbs, &al, SSL_TLSEXT_MSG_SH)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
