@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.611 2019/01/18 01:38:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.612 2019/01/18 07:39:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,6 @@ struct proposal {
 	int		inits;
 };
 
-void		 sighdlr(int);
 void		 usage(void);
 int		 res_hnok_list(const char *);
 int		 addressinuse(char *, struct in_addr, char *);
@@ -189,12 +188,6 @@ struct client_lease *get_recorded_lease(struct interface_info *);
 
 static FILE *leaseFile;
 static FILE *optionDB;
-
-void
-sighdlr(int sig)
-{
-	quit = sig;
-}
 
 int
 get_ifa_family(char *cp, int n)
@@ -2107,7 +2100,7 @@ go_daemon(void)
 	log_procinit(log_procname);
 
 	setproctitle("%s", log_procname);
-	signal(SIGHUP, sighdlr);
+	signal(SIGHUP, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 }
 
