@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.158 2019/01/05 21:40:44 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.159 2019/01/18 01:38:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -227,7 +227,7 @@ dhcp_packet_dispatch(struct interface_info *ifi, struct sockaddr_in *from,
 		    packet->hlen);
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
-	    sizeof(ifi->hw_address))) {
+	    sizeof(ifi->hw_address)) != 0) {
 		log_debug("%s: discarding packet with chaddr == %s",
 		    log_procname,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));

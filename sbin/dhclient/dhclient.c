@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.610 2019/01/17 23:36:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.611 2019/01/18 01:38:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -395,7 +395,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if (newlinkup != 0) {
 			memcpy(&hw, &ifi->hw_address, sizeof(hw));
 			get_hw_address(ifi);
-			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
+			if (memcmp(&hw, &ifi->hw_address, sizeof(hw)) != 0) {
 				tick_msg("", 0, INT64_MAX);
 				log_warnx("%s: LLADDR changed", log_procname);
 				quit = SIGHUP;
@@ -1019,8 +1019,7 @@ newlease:
 			continue;
 		if (ifi->ssid_len != ll->ssid_len)
 			continue;
-		if (memcmp(ifi->ssid, ll->ssid, ll->ssid_len)
-		    != 0)
+		if (memcmp(ifi->ssid, ll->ssid, ll->ssid_len) != 0)
 			continue;
 		if (ifi->active == ll)
 			seen = 1;
@@ -2559,7 +2558,7 @@ get_recorded_lease(struct interface_info *ifi)
 		if ((lp->options[i].len != 0) && ((lp->options[i].len !=
 		    config->send_options[i].len) ||
 		    memcmp(lp->options[i].data, config->send_options[i].data,
-		    lp->options[i].len)))
+		    lp->options[i].len) != 0))
 			continue;
 		if (addressinuse(ifi->name, lp->address, ifname) != 0 &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)

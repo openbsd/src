@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.176 2019/01/14 04:54:46 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.177 2019/01/18 01:38:58 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -213,7 +213,7 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
 				    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
 				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-				    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len)))
+				    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len) != 0))
 					continue;
 				if (lp->address.s_addr != lease->address.s_addr)
 					continue;
