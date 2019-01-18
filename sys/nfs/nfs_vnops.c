@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.179 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.180 2019/01/18 13:40:34 bluhm Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1248,7 +1248,7 @@ nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
 				+ NFSX_V3WRITEVERF);
 			rlen = fxdr_unsigned(int, *tl++);
-			if (rlen == 0) {
+			if (rlen <= 0) {
 				error = NFSERR_IO;
 				break;
 			} else if (rlen < len) {
@@ -2523,7 +2523,8 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				/* Just skip over the file handle */
 				nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 				i = fxdr_unsigned(int, *tl);
-				nfsm_adv(nfsm_rndup(i));
+				if (i > 0)
+					nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
 				if (newvp == vp)
