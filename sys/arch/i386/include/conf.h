@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.16 2016/10/21 06:56:38 mlarkin Exp $	*/
+/*	$OpenBSD: conf.h,v 1.17 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -76,7 +76,3 @@ cdev_decl(acpiapm);
 
 #define pctrpoll seltrue
 cdev_decl(pctr);
-
-#include "vmm.h"
-cdev_decl(vmm);
-

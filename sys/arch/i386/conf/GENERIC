@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.838 2018/11/23 12:37:40 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.839 2019/01/18 01:34:50 pd Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -78,7 +78,6 @@ isa0	at gscpcib?
 isa0	at glxpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
-vmm0	at mainbus0
 
 pchb*	at pci?			# PCI-Host bridges
 ppb*	at pci?			# PCI-PCI bridges

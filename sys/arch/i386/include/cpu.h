@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.166 2018/12/05 10:28:21 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.167 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -70,36 +70,6 @@
 #include <sys/srp.h>
 
 struct intrsource;
-
-/* VMXON region (Intel) */
-struct vmxon_region {
-	uint32_t	vr_revision;
-};
-
-/*
- * VMX for Intel CPUs
- */
-struct vmx {
-	uint64_t	vmx_cr0_fixed0;
-	uint64_t	vmx_cr0_fixed1;
-	uint64_t	vmx_cr4_fixed0;
-	uint64_t	vmx_cr4_fixed1;
-	uint32_t	vmx_vmxon_revision;
-	uint32_t	vmx_msr_table_size;
-	uint32_t	vmx_cr3_tgt_count;
-	uint64_t	vmx_vm_func;
-};
-
-/*
- * SVM for AMD CPUs
- */
-struct svm {
-};
-
-union vmm_cpu_cap {
-	struct vmx vcc_vmx;
-	struct svm vcc_svm;
-};
 
 #ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
@@ -200,15 +170,6 @@ struct cpu_info {
 #if defined(GPROF) || defined(DDBPROF)
 	struct gmonparam	*ci_gmon;
 #endif
-	u_int32_t		ci_vmm_flags;
-#define CI_VMM_VMX		(1 << 0)
-#define CI_VMM_SVM		(1 << 1)
-#define CI_VMM_RVI		(1 << 2)
-#define CI_VMM_EPT		(1 << 3)
-#define CI_VMM_DIS		(1 << 4)
-	union vmm_cpu_cap	ci_vmm_cap;
-	uint64_t		ci_vmxon_region_pa; /* Must be 64 bit */
-	struct vmxon_region	*ci_vmxon_region;
 };
 
 /*

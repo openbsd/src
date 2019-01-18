@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.85 2018/05/28 20:52:44 bluhm Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.86 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -88,11 +88,6 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  * page list, and number of PTPs within the pmap.
  */
 
-#define PMAP_TYPE_NORMAL	1
-#define PMAP_TYPE_EPT		2
-#define PMAP_TYPE_RVI		3
-#define pmap_nested(pm) ((pm)->pm_type != PMAP_TYPE_NORMAL)
-
 struct pmap {
 	uint64_t pm_pdidx[4];		/* PDIEs for PAE mode */
 	uint64_t pm_pdidx_intel[4];	/* PDIEs for PAE mode U-K */
@@ -122,10 +117,6 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	struct segment_descriptor pm_codeseg;	/* cs descriptor for process */
-	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
-	vaddr_t pm_npt_pml4;		/* Nested paging PML4 VA */
-	paddr_t pm_npt_pa;		/* Nested paging PML4 PA */
-	vaddr_t pm_npt_pdpt;		/* Nested paging PDPT */
 };
 
 /*

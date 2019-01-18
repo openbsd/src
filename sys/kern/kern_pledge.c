@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.247 2019/01/06 22:09:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.248 2019/01/18 01:34:50 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -71,7 +71,7 @@
 #include "pf.h"
 #include "pty.h"
 
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__)
 #include "vmm.h"
 #if NVMM > 0
 #include <machine/conf.h>

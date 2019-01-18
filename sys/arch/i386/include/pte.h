@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.22 2016/10/21 06:20:59 mlarkin Exp $	*/
+/*	$OpenBSD: pte.h,v 1.23 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -66,13 +66,6 @@
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define	PG_PATLG	0x00001000	/* PAT on large pages */
-
-/* EPT PTE bits */
-#define EPT_R		(1ULL << 0)
-#define EPT_W		(1ULL << 1)
-#define EPT_X		(1ULL << 2)
-#define EPT_WB		(6ULL << 3)
-#define EPT_PS		(1ULL << 7)
 
 /* Cacheability bits when we are using PAT */
 #define	PG_WB		(0)		/* The default */

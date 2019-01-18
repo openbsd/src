@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.130 2018/10/30 11:08:30 kettenis Exp $
+#	$OpenBSD: Makefile.i386,v 1.131 2019/01/18 01:34:50 pd Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -162,7 +162,7 @@ depend obj:
 
 locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
 locore.o mutex.o in_cksum.o mptramp.o: assym.h
-kvm86call.o acpi_wakecode.o vmm_support.o: assym.h
+kvm86call.o acpi_wakecode.o: assym.h
 
 hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.96 2018/10/23 17:51:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.97 2019/01/18 01:34:50 pd Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -66,7 +66,6 @@
 
 #include "lapic.h"
 #include "ioapic.h"
-#include "vmm.h"
 #include "pvbus.h"
 
 #include <sys/param.h>
@@ -133,9 +132,6 @@ void	cpu_idle_mwait_cycle(void);
 void	cpu_init_mwait(struct cpu_softc *);
 void	cpu_init_tss(struct i386tss *, void *, void *);
 void	cpu_update_nmi_cr3(vaddr_t);
-#if NVMM > 0
-void	cpu_init_vmm(struct cpu_info *ci);
-#endif /* NVMM > 0 */
 
 u_int cpu_mwait_size, cpu_mwait_states;
 
@@ -386,9 +382,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-#if NVMM > 0
-	cpu_init_vmm(ci);
-#endif /* NVMM > 0 */
 }
 
 /*
@@ -472,23 +465,6 @@ cpu_init(struct cpu_info *ci)
 		tlbflush();
 #endif
 }
-
-void
-cpu_init_vmm(struct cpu_info *ci)
-{
-	/*
-	 * Allocate a per-cpu VMXON region
-	 */
-	if (ci->ci_vmm_flags & CI_VMM_VMX) {
-		ci->ci_vmxon_region_pa = 0;
-		ci->ci_vmxon_region = (struct vmxon_region *)malloc(PAGE_SIZE,
-		    M_DEVBUF, M_WAITOK|M_ZERO);
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)ci->ci_vmxon_region,
-	    (paddr_t *)&ci->ci_vmxon_region_pa))
-		panic("Can't locate VMXON region in phys mem\n");
-	}
-}
-
 
 void
 patinit(struct cpu_info *ci)

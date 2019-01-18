@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.627 2018/08/24 06:25:40 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.628 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -174,8 +174,6 @@ extern struct proc *npxproc;
 #define DPRINTF(x...)
 #endif	/* MACHDEP_DEBUG */
 
-#include "vmm.h"
-
 void	replacesmap(void);
 int     intr_handler(struct intrframe *, struct intrhand *);
 
@@ -320,9 +318,6 @@ void	p4_update_cpuspeed(void);
 void	p3_update_cpuspeed(void);
 int	pentium_cpuspeed(int *);
 void	enter_shared_special_pages(void);
-#if NVMM > 0
-void	cpu_check_vmm_cap(struct cpu_info *);
-#endif /* NVMM > 0 */
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -2159,10 +2154,6 @@ identifycpu(struct cpu_info *ci)
 		}
 	} else
 		i386_use_fxsave = 0;
-
-#if NVMM > 0
-	cpu_check_vmm_cap(ci);
-#endif /* NVMM > 0 */
 
 }
 
@@ -4039,109 +4030,4 @@ intr_barrier(void *ih)
 {
 	sched_barrier(NULL);
 }
-
-#if NVMM > 0
-/*
- * cpu_check_vmm_cap
- *
- * Checks for VMM capabilities for 'ci'. Initializes certain per-cpu VMM
- * state in 'ci' if virtualization extensions are found.
- *
- * Parameters:
- *  ci: the cpu being checked
- */
-void
-cpu_check_vmm_cap(struct cpu_info *ci)
-{
-	uint64_t msr;
-	uint32_t cap, dummy;
-
-	/*
-	 * Check for workable VMX
-	 */
-	if (cpu_ecxfeature & CPUIDECX_VMX) {
-		msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
-
-		if (!(msr & IA32_FEATURE_CONTROL_LOCK))
-			ci->ci_vmm_flags |= CI_VMM_VMX;
-		else {
-			if (msr & IA32_FEATURE_CONTROL_VMX_EN)
-				ci->ci_vmm_flags |= CI_VMM_VMX;
-			else
-				ci->ci_vmm_flags |= CI_VMM_DIS;
-		}
-	}
-
-	/*
-	 * Check for EPT (Intel Nested Paging) and other secondary
-	 * controls
-	 */
-	if (ci->ci_vmm_flags & CI_VMM_VMX) {
-		/* Secondary controls available? */
-		/* XXX should we check true procbased ctls here if avail? */
-		msr = rdmsr(IA32_VMX_PROCBASED_CTLS);
-		if (msr & (IA32_VMX_ACTIVATE_SECONDARY_CONTROLS) << 32) {
-			msr = rdmsr(IA32_VMX_PROCBASED2_CTLS);
-			/* EPT available? */
-			if (msr & (IA32_VMX_ENABLE_EPT) << 32)
-				ci->ci_vmm_flags |= CI_VMM_EPT;
-			/* VM Functions available? */
-			if (msr & (IA32_VMX_ENABLE_VM_FUNCTIONS) << 32) {
-				ci->ci_vmm_cap.vcc_vmx.vmx_vm_func =
-				    rdmsr(IA32_VMX_VMFUNC);	
-			}
-		}
-	}
-
-	/*
-	 * Check startup config (VMX)
-	 */
-	if (ci->ci_vmm_flags & CI_VMM_VMX) {
-		/* CR0 fixed and flexible bits */
-		msr = rdmsr(IA32_VMX_CR0_FIXED0);
-		ci->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0 = msr;
-		msr = rdmsr(IA32_VMX_CR0_FIXED1);
-		ci->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1 = msr;
-
-		/* CR4 fixed and flexible bits */
-		msr = rdmsr(IA32_VMX_CR4_FIXED0);
-		ci->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed0 = msr;
-		msr = rdmsr(IA32_VMX_CR4_FIXED1);
-		ci->ci_vmm_cap.vcc_vmx.vmx_cr4_fixed1 = msr;
-
-		/* VMXON region revision ID (bits 30:0 of IA32_VMX_BASIC) */
-		msr = rdmsr(IA32_VMX_BASIC);
-		ci->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision =
-			(uint32_t)(msr & 0x7FFFFFFF);
-
-		/* MSR save / load table size */
-		msr = rdmsr(IA32_VMX_MISC);
-		ci->ci_vmm_cap.vcc_vmx.vmx_msr_table_size =
-			(uint32_t)(msr & IA32_VMX_MSR_LIST_SIZE_MASK) >> 25;
-
-		/* CR3 target count size */
-		ci->ci_vmm_cap.vcc_vmx.vmx_cr3_tgt_count =
-			(uint32_t)(msr & IA32_VMX_CR3_TGT_SIZE_MASK) >> 16;
-	}
-
-	/*
-	 * Check for workable SVM
-	 */
-	if (ecpu_ecxfeature & CPUIDECX_SVM) {
-		msr = rdmsr(MSR_AMD_VM_CR);
-
-		if (!(msr & AMD_SVMDIS))
-			ci->ci_vmm_flags |= CI_VMM_SVM;
-	}
-
-	/*
-	 * Check for SVM Nested Paging
-	 */
-	if (ci->ci_vmm_flags & CI_VMM_SVM) {
-		CPUID(CPUID_AMD_SVM_CAP, dummy, dummy, dummy, cap);
-		if (cap & AMD_SVM_NESTED_PAGING_CAP)
-			ci->ci_vmm_flags |= CI_VMM_RVI;
-	}
-}
-#endif /* NVMM > 0 */
 
