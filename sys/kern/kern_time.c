@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.107 2019/01/18 05:03:42 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.108 2019/01/18 20:55:19 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -167,11 +167,8 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 
 	error = copyout(&ats, SCARG(uap, tp), sizeof(ats));
 #ifdef KTRACE
-	if (error == 0 && KTRPOINT(p, KTR_STRUCT)) {
-		KERNEL_LOCK();
+	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
 		ktrabstimespec(p, &ats);
-		KERNEL_UNLOCK();
-	}
 #endif
 	return (error);
 }
@@ -247,11 +244,8 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, tp)) {
 		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
 #ifdef KTRACE
-		if (error == 0 && KTRPOINT(p, KTR_STRUCT)) {
-			KERNEL_LOCK();
+		if (error == 0 && KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
-			KERNEL_UNLOCK();
-		}
 #endif
 	}
 
@@ -275,11 +269,8 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 #ifdef KTRACE
-        if (KTRPOINT(p, KTR_STRUCT)) {
-		KERNEL_LOCK();
+	if (KTRPOINT(p, KTR_STRUCT))
 		ktrreltimespec(p, &request);
-		KERNEL_UNLOCK();
-	}
 #endif
 
 	if (request.tv_sec < 0 || request.tv_nsec < 0 ||
@@ -312,11 +303,8 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		if (copyout_error)
 			error = copyout_error;
 #ifdef KTRACE
-		if (copyout_error == 0 && KTRPOINT(p, KTR_STRUCT)) {
-			KERNEL_LOCK();
+		if (copyout_error == 0 && KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &remainder);
-			KERNEL_UNLOCK();
-		}
 #endif
 	}
 
@@ -344,11 +332,8 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 		if ((error = copyout(&atv, tp, sizeof (atv))))
 			return (error);
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT)) {
-			KERNEL_LOCK();
+		if (KTRPOINT(p, KTR_STRUCT))
 			ktrabstimeval(p, &atv);
-			KERNEL_UNLOCK();
-		}
 #endif
 	}
 	if (tzp)
