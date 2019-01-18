@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.27 2019/01/18 00:54:42 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.28 2019/01/18 03:39:27 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1201,6 +1201,7 @@ struct tls_extension_funcs {
 
 struct tls_extension {
 	uint16_t type;
+	uint16_t messages;
 	struct tls_extension_funcs client;
 	struct tls_extension_funcs server;
 };
@@ -1208,6 +1209,7 @@ struct tls_extension {
 static struct tls_extension tls_extensions[] = {
 	{
 		.type = TLSEXT_TYPE_server_name,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_sni_client_needs,
 			.build = tlsext_sni_client_build,
@@ -1221,6 +1223,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_renegotiate,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
 		.client = {
 			.needs = tlsext_ri_client_needs,
 			.build = tlsext_ri_client_build,
@@ -1234,6 +1237,8 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_status_request,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_CR |
+		    SSL_TLSEXT_MSG_CT,
 		.client = {
 			.needs = tlsext_ocsp_client_needs,
 			.build = tlsext_ocsp_client_build,
@@ -1247,6 +1252,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_ec_point_formats,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
 		.client = {
 			.needs = tlsext_ecpf_client_needs,
 			.build = tlsext_ecpf_client_build,
@@ -1260,6 +1266,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_supported_groups,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_supportedgroups_client_needs,
 			.build = tlsext_supportedgroups_client_build,
@@ -1273,6 +1280,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_session_ticket,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
 		.client = {
 			.needs = tlsext_sessionticket_client_needs,
 			.build = tlsext_sessionticket_client_build,
@@ -1286,6 +1294,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_signature_algorithms,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_CR,
 		.client = {
 			.needs = tlsext_sigalgs_client_needs,
 			.build = tlsext_sigalgs_client_build,
@@ -1299,6 +1308,7 @@ static struct tls_extension tls_extensions[] = {
 	},
 	{
 		.type = TLSEXT_TYPE_application_layer_protocol_negotiation,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_alpn_client_needs,
 			.build = tlsext_alpn_client_build,
@@ -1313,6 +1323,7 @@ static struct tls_extension tls_extensions[] = {
 #ifndef OPENSSL_NO_SRTP
 	{
 		.type = TLSEXT_TYPE_use_srtp,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_srtp_client_needs,
 			.build = tlsext_srtp_client_build,
@@ -1357,13 +1368,19 @@ tlsext_funcs(struct tls_extension *tlsext, int is_server)
 }
 
 static int
-tlsext_build(SSL *s, CBB *cbb, int is_server)
+tlsext_build(SSL *s, CBB *cbb, int is_server, uint16_t msg_type)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
 	CBB extensions, extension_data;
 	int extensions_present = 0;
 	size_t i;
+	uint16_t version;
+
+	if (is_server)
+		version = s->version;
+	else
+		version = TLS1_get_client_version(s);
 
 	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
 		return 0;
@@ -1371,6 +1388,11 @@ tlsext_build(SSL *s, CBB *cbb, int is_server)
 	for (i = 0; i < N_TLS_EXTENSIONS; i++) {
 		tlsext = &tls_extensions[i];
 		ext = tlsext_funcs(tlsext, is_server);
+
+		/* RFC 8446 Section 4.2 */
+		if (version >= TLS1_3_VERSION &&
+		    !(tlsext->messages & msg_type))
+			continue;
 
 		if (!ext->needs(s))
 			continue;
@@ -1396,7 +1418,7 @@ tlsext_build(SSL *s, CBB *cbb, int is_server)
 }
 
 static int
-tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server)
+tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -1404,6 +1426,12 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server)
 	uint32_t extensions_seen = 0;
 	uint16_t type;
 	size_t idx;
+	uint16_t version;
+
+	if (is_server)
+		version = s->version;
+	else
+		version = TLS1_get_client_version(s);
 
 	/* An empty extensions block is valid. */
 	if (CBS_len(cbs) == 0)
@@ -1429,6 +1457,13 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server)
 		/* Unknown extensions are ignored. */
 		if ((tlsext = tls_extension_find(type, &idx)) == NULL)
 			continue;
+
+		/* RFC 8446 Section 4.2 */
+		if (version >= TLS1_3_VERSION &&
+		    !(tlsext->messages & msg_type)) {
+			*alert = SSL_AD_ILLEGAL_PARAMETER;
+			return 0;
+		}
 
 		/* Check for duplicate known extensions. */
 		if ((extensions_seen & (1 << idx)) != 0)
@@ -1460,7 +1495,7 @@ tlsext_client_reset_state(SSL *s)
 int
 tlsext_client_build(SSL *s, CBB *cbb, uint16_t msg_type)
 {
-	return tlsext_build(s, cbb, 0);
+	return tlsext_build(s, cbb, 0, msg_type);
 }
 
 int
@@ -1469,13 +1504,13 @@ tlsext_server_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type)
 	/* XXX - this possibly should be done by the caller... */
 	tlsext_client_reset_state(s);
 
-	return tlsext_parse(s, cbs, alert, 0);
+	return tlsext_parse(s, cbs, alert, 0, msg_type);
 }
 
 static void
 tlsext_server_reset_state(SSL *s)
 {
-	S3I(s)->renegotiate_seen = 0;   
+	S3I(s)->renegotiate_seen = 0;
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
 }
@@ -1483,7 +1518,7 @@ tlsext_server_reset_state(SSL *s)
 int
 tlsext_server_build(SSL *s, CBB *cbb, uint16_t msg_type)
 {
-	return tlsext_build(s, cbb, 1);
+	return tlsext_build(s, cbb, 1, msg_type);
 }
 
 int
@@ -1492,5 +1527,5 @@ tlsext_client_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type)
 	/* XXX - this possibly should be done by the caller... */
 	tlsext_server_reset_state(s);
 
-	return tlsext_parse(s, cbs, alert, 1);
+	return tlsext_parse(s, cbs, alert, 1, msg_type);
 }
