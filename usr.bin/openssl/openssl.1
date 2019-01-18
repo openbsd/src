@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.96 2019/01/18 03:54:02 beck Exp $
+.\" $OpenBSD: openssl.1,v 1.97 2019/01/18 07:11:51 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1494,8 +1494,8 @@ Print the EC parameters in plain text.
 .Op Fl bufsize Ar number
 .Op Fl debug
 .Op Fl in Ar file
-.Op Fl iv Ar IV
 .Op Fl iter Ar iterations
+.Op Fl iv Ar IV
 .Op Fl K Ar key
 .Op Fl k Ar password
 .Op Fl kfile Ar file
@@ -1551,6 +1551,10 @@ This is the default.
 .It Fl in Ar file
 The input file to read from,
 or standard input if not specified.
+.It Fl iter Ar iterations
+Use the pbkdf2 key derivation function, with
+.Ar iterations
+as the number of iterations.
 .It Fl iv Ar IV
 The actual
 .Ar IV
@@ -1565,10 +1569,6 @@ option,
 the IV must explicitly be defined.
 When a password is being specified using one of the other options,
 the IV is generated from this password.
-.It Fl iter Ar iterations
-specifies the use of the pbkdf2 key derivation function, using
-.Ar iterations
-as the number of iterations.
 .It Fl K Ar key
 The actual
 .Ar key
@@ -1633,7 +1633,7 @@ Print out the salt, key, and IV used.
 .It Fl pass Ar arg
 The password source.
 .It Fl pbkdf2
-specifies the use of the pbkdf2 key derivation function, using
+Use the pbkdf2 key derivation function, with
 the default of 10000 iterations.
 .It Fl S Ar salt
 The actual
