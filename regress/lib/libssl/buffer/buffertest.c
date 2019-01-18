@@ -109,6 +109,7 @@ main(int argc, char **argv)
 	CBS cbs;
 
 	rs.buf = testdata;
+	rs.offset = 0;
 
 	if ((buf = tls13_buffer_new(0)) == NULL)
 		errx(1, "tls13_buffer_new");
