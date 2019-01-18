@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.47 2018/07/28 09:11:55 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.48 2019/01/18 08:43:49 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2018 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -284,6 +284,11 @@ Applications that need to have a set of working
 parameter combinations in advance can use the
 .Fn sio_getcap
 function.
+However, for most new applications it's generally
+not recommended to use
+.Fn sio_getcap .
+Instead, follow the recommendations for negotiating
+device parameters (see above).
 .Pp
 The
 .Vt sio_cap
@@ -367,6 +372,11 @@ structure, then the second element of the
 array of the
 .Vt sio_cap
 structure is valid for this configuration.
+As such, when reading the array elements in the
+.Vt sio_cap
+structure, the corresponding
+.Vt sio_conf
+bitmasks should always be used.
 .El
 .Ss Starting and stopping the device
 The
