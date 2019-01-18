@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.9 2018/08/30 03:30:25 visa Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.10 2019/01/18 05:06:38 cheloha Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -242,6 +242,8 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrabstimespec(p, &ts);
 #endif
+		if (ts.tv_sec < 0 || ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000)
+			return EINVAL;
 		to_ticks = (uint64_t)hz * ts.tv_sec +
 		    (ts.tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
 		if (to_ticks > INT_MAX)

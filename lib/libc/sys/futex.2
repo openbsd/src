@@ -1,4 +1,4 @@
-.\" $OpenBSD: futex.2,v 1.4 2018/04/24 17:19:35 pirofti Exp $
+.\" $OpenBSD: futex.2,v 1.5 2019/01/18 05:06:37 cheloha Exp $
 .\"
 .\" Copyright (c) 2017 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2018 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt FUTEX 2
 .Os
 .Sh NAME
@@ -116,6 +116,11 @@ The value pointed to by
 .Fa uaddr
 is not the same as the expected value
 .Fa val .
+.It Bq Er EINVAL
+The
+.Fa timeout
+specified a second value less than zero,
+or a nanosecond value less than zero or greater than or equal to 1000 million.
 .It Bq Er ETIMEDOUT
 The
 .Fa timeout
