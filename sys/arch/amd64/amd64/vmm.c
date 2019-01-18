@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.222 2018/12/10 21:13:59 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.223 2019/01/18 08:26:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6282,7 +6282,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF && vcpu->vc_irqready) {
-			DPRINTF("%s: inject irq %d\n", __func__, irq & 0xFF);
 			vmcb->v_eventinj = (irq & 0xFF) | (1<<31);
 			irq = 0xFFFF;
 		} 
