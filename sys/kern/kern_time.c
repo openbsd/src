@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.106 2019/01/10 17:54:11 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.107 2019/01/18 05:03:42 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -196,6 +196,8 @@ sys_clock_settime(struct proc *p, void *v, register_t *retval)
 	clock_id = SCARG(uap, clock_id);
 	switch (clock_id) {
 	case CLOCK_REALTIME:
+		if (ats.tv_nsec < 0 || ats.tv_nsec >= 1000000000)
+			return (EINVAL);
 		if ((error = settime(&ats)) != 0)
 			return (error);
 		break;
@@ -380,6 +382,8 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	if (tv) {
 		struct timespec ts;
 
+		if (atv.tv_usec < 0 || atv.tv_usec >= 1000000)
+			return (EINVAL);
 		TIMEVAL_TO_TIMESPEC(&atv, &ts);
 		if ((error = settime(&ts)) != 0)
 			return (error);
@@ -452,6 +456,9 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 
 		if ((error = copyin(delta, &atv, sizeof(struct timeval))))
 			return (error);
+
+		if (atv.tv_usec < 0 || atv.tv_usec >= 1000000)
+			return (EINVAL);
 
 		/* XXX Check for overflow? */
 		adjtimedelta = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
