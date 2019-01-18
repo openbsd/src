@@ -513,8 +513,6 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/memconfig
 ./usr/sbin/pcidump
-./usr/sbin/vmctl
-./usr/sbin/vmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
