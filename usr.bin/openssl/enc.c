@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.14 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.15 2019/01/18 03:45:47 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,6 +99,8 @@ static struct {
 	char *passarg;
 	int printkey;
 	int verbose;
+	int iter;
+	int pbkdf2;
 } enc_config;
 
 static int
@@ -273,6 +275,18 @@ static struct option enc_options[] = {
 		.type = OPTION_FLAG,
 		.opt.flag = &enc_config.verbose,
 	},
+	{
+		.name = "iter",
+		.desc = "Specify iteration count and force use of PBKDF2",
+		.type = OPTION_VALUE,
+		.opt.value = &enc_config.iter,
+	},
+	{
+		.name = "pbkdf2",
+		.desc = "Use the pbkdf2 key derivation function",
+		.type = OPTION_FLAG,
+		.opt.flag = &enc_config.pbkdf2,
+	},
 #ifdef ZLIB
 	{
 		.name = "z",
@@ -416,7 +430,7 @@ enc_main(int argc, char **argv)
 		goto end;
 	}
 	if (dgst == NULL) {
-		dgst = EVP_md5();	/* XXX */
+		dgst = EVP_sha256();
 	}
 
 	if (enc_config.bufsize != NULL) {
@@ -604,10 +618,35 @@ enc_main(int argc, char **argv)
 				}
 				sptr = salt;
 			}
+			if (enc_config.pbkdf2 == 1 || enc_config.iter > 0) {
+				/*
+				 * derive key and default iv
+				 * concatenated into a temporary buffer
+				 */
+				unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
+				int iklen = EVP_CIPHER_key_length(enc_config.cipher);
+				int ivlen = EVP_CIPHER_iv_length(enc_config.cipher);
+				/* not needed if HASH_UPDATE() is fixed : */
+				int islen = (sptr != NULL ? sizeof(salt) : 0);
 
-			EVP_BytesToKey(enc_config.cipher, dgst, sptr,
-			    (unsigned char *)enc_config.keystr,
-			    strlen(enc_config.keystr), 1, key, iv);
+				if (enc_config.iter == 0)
+					enc_config.iter = 10000;
+
+				if (!PKCS5_PBKDF2_HMAC(enc_config.keystr,
+					strlen(enc_config.keystr), sptr, islen,
+					enc_config.iter, dgst, iklen+ivlen, tmpkeyiv)) {
+					BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
+					goto end;
+				}
+				/* split and move data back to global buffer */
+				memcpy(key, tmpkeyiv, iklen);
+				memcpy(iv, tmpkeyiv+iklen, ivlen);
+			} else {
+				EVP_BytesToKey(enc_config.cipher, dgst, sptr,
+				    (unsigned char *)enc_config.keystr,
+				    strlen(enc_config.keystr), 1, key, iv);
+			}
+
 			/*
 			 * zero the complete buffer or the string passed from
 			 * the command line bug picked up by Larry J. Hughes
