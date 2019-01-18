@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adjtime.2,v 1.23 2019/01/18 05:03:42 cheloha Exp $
+.\"	$OpenBSD: adjtime.2,v 1.24 2019/01/18 05:51:58 schwarze Exp $
 .\"	$NetBSD: adjtime.2,v 1.5 1995/10/12 15:40:44 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -62,14 +62,19 @@ may not be finished when
 is called again.
 If
 .Fa delta
-is null, no adjustment is done.
+is
+.Dv NULL ,
+no adjustment is done.
 If
 .Fa olddelta
-is non-null, the structure pointed to will contain, upon return, the
-number of microseconds still to be corrected from the earlier call.
+is
+.Pf non- Dv NULL ,
+the number of microseconds still to be corrected from the earlier call
+is stored into
+.Pf * Fa olddelta .
 Setting the time with
 .Xr settimeofday 2
-will cancel any in-progress time adjustment.
+cancels any in-progress time adjustment.
 .Pp
 This call may be used by time servers that synchronize the clocks
 of computers in a local area network.
@@ -90,13 +95,16 @@ Either of the arguments point outside the process's allocated address space.
 .It Bq Er EINVAL
 The
 .Fa delta
-argument is non-null and specifies a microsecond value less than zero or
+argument is
+.Pf non- Dv NULL
+and specifies a microsecond value less than zero or
 greater than or equal to 1 million.
 .It Bq Er EPERM
 The
 .Fa delta
-argument is non-null and the process's effective user ID is not that
-of the superuser.
+argument is
+.Pf non- Dv NULL
+and the process's effective user ID is not that of the superuser.
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
@@ -110,6 +118,6 @@ function call appeared in
 .Bx 4.3 .
 .Sh CAVEATS
 Other operating systems restrict calling
-.Nm
+.Fn adjtime
 to the superuser and might not allow requesting the current
 correction without specifying a new value.
