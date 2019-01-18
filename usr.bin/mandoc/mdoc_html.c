@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.201 2019/01/11 16:35:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.202 2019/01/18 14:36:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -352,13 +352,12 @@ print_mdoc_node(MDOC_ARGS)
 	html_fillmode(h, n->flags & NODE_NOFILL ? ROFF_nf : ROFF_fi);
 
 	child = 1;
-	t = h->tag;
-	if (t->tag == TAG_P || t->tag == TAG_PRE)
-		t = t->next;
-
 	n->flags &= ~NODE_ENDED;
 	switch (n->type) {
 	case ROFFT_TEXT:
+		t = h->tag;
+		t->refcnt++;
+
 		/* No tables in this mode... */
 		assert(NULL == h->tblt);
 
@@ -377,6 +376,8 @@ print_mdoc_node(MDOC_ARGS)
 			h->flags |= HTML_NOSPACE;
 		break;
 	case ROFFT_EQN:
+		t = h->tag;
+		t->refcnt++;
 		print_eqn(h, n->eqn);
 		break;
 	case ROFFT_TBL:
@@ -393,13 +394,14 @@ print_mdoc_node(MDOC_ARGS)
 		 * the "meta" table state.  This will be reopened on the
 		 * next table element.
 		 */
-		if (h->tblt != NULL) {
+		if (h->tblt != NULL)
 			print_tblclose(h);
-			t = h->tag;
-		}
 		assert(h->tblt == NULL);
+		t = h->tag;
+		t->refcnt++;
 		if (n->tok < ROFF_MAX) {
 			roff_html_pre(h, n);
+			t->refcnt--;
 			print_stagq(h, t);
 			return;
 		}
@@ -419,6 +421,7 @@ print_mdoc_node(MDOC_ARGS)
 	if (child && n->child != NULL)
 		print_mdoc_nodelist(meta, n->child, h);
 
+	t->refcnt--;
 	print_stagq(h, t);
 
 	switch (n->type) {
