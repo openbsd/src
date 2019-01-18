@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.72 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.73 2019/01/18 08:32:59 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -453,7 +453,7 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 	*ip = MAXTTL;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_MINTTL, mopt);
-	sounlock(s);
+	sounlock(so, s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -480,7 +480,7 @@ bfd_listener(struct bfd_config *bfd, unsigned int port)
 
 	s = solock(so);
 	error = sobind(so, m, p);
-	sounlock(s);
+	sounlock(so, s);
 	if (error) {
 		printf("%s: sobind error %d\n",
 		    __func__, error);
@@ -533,7 +533,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	*ip = IP_PORTRANGE_HIGH;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-	sounlock(s);
+	sounlock(so, s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -547,7 +547,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	*ip = MAXTTL;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_TTL, mopt);
-	sounlock(s);
+	sounlock(so, s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -561,7 +561,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 	*ip = IPTOS_PREC_INTERNETCONTROL;
 	s = solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_TOS, mopt);
-	sounlock(s);
+	sounlock(so, s);
 	m_freem(mopt);
 	if (error) {
 		printf("%s: sosetopt error %d\n",
@@ -588,7 +588,7 @@ bfd_sender(struct bfd_config *bfd, unsigned int port)
 
 	s = solock(so);
 	error = sobind(so, m, p);
-	sounlock(s);
+	sounlock(so, s);
 	if (error) {
 		printf("%s: sobind error %d\n",
 		    __func__, error);
