@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.97 2019/01/18 07:11:51 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.98 2019/01/18 23:33:57 naddy Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1010,16 +1010,16 @@ Print BIO debugging information.
 .It Fl Ar digest
 Use the specified message
 .Ar digest .
-The default is MD5.
+The default is SHA256.
 The available digests can be displayed using
 .Nm openssl
 .Cm list-message-digest-commands .
 The following are equivalent:
 .Nm openssl dgst
-.Fl md5
+.Fl sha256
 and
 .Nm openssl
-.Cm md5 .
+.Cm sha256 .
 .It Fl hex
 Digest is to be output as a hex dump.
 This is the default case for a
