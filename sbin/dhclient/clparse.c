@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.177 2019/01/18 01:38:58 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.178 2019/01/18 01:46:11 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -199,8 +199,8 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 	for (;;) {
 		if (parse_lease(cfile, name, &lease) == 1) {
 			/*
-			 * The new lease will supersede a lease with the same ssid
-			 * AND the same Client Identifier AND the same
+			 * The new lease will supersede a lease with the same
+			 * ssid AND the same Client Identifier AND the same
 			 * IP address.
 			 */
 			TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
