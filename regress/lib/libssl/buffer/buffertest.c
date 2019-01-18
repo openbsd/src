@@ -54,8 +54,6 @@ read_cb(void *buf, size_t buflen, void *cb_arg)
 struct extend_test {
 	size_t extend_len;
 	size_t read_len;
-	uint8_t want_buf[128];
-	size_t want_len;
 	ssize_t want_ret;
 };
 
