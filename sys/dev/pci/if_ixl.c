@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.8 2018/11/18 08:42:15 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.9 2019/01/18 23:14:44 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3654,24 +3654,25 @@ ixl_hmc_pack(void *d, const void *s, const struct ixl_hmc_pack *packing,
 		unsigned int inbits = 0;
 
 		if (align) {
-			inbits = *in++;
-
-			*out++ |= inbits << align;
+			inbits = (*in++) << align;
+			*out++ |= (inbits & 0xff);
+			inbits >>= 8;
 
 			width -= 8 - align;
 		}
 
 		while (width >= 8) {
-			inbits <<= 8;
-			inbits |= *in++;
-
-			*out++ = inbits << align;
+			inbits |= (*in++) << align;
+			*out++ = (inbits & 0xff);
+			inbits >>= 8;
 
 			width -= 8;
 		}
 
-		if (width)
-			*out = inbits >> (8 - align);
+		if (width > 0) {
+			inbits |= (*in) << align;
+			*out |= (inbits & ((1 << width) - 1));
+		}
 	}
 }
 
