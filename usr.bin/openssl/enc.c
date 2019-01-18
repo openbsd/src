@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.15 2019/01/18 03:45:47 beck Exp $ */
+/* $OpenBSD: enc.c,v 1.16 2019/01/18 22:47:34 naddy Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,6 +178,13 @@ static struct option enc_options[] = {
 		.opt.arg = &enc_config.inf,
 	},
 	{
+		.name = "iter",
+		.argname = "iterations",
+		.desc = "Specify iteration count and force use of PBKDF2",
+		.type = OPTION_VALUE,
+		.opt.value = &enc_config.iter,
+	},
+	{
 		.name = "iv",
 		.argname = "IV",
 		.desc = "IV to use, specified as a hexadecimal string",
@@ -256,6 +263,12 @@ static struct option enc_options[] = {
 		.opt.arg = &enc_config.passarg,
 	},
 	{
+		.name = "pbkdf2",
+		.desc = "Use the pbkdf2 key derivation function",
+		.type = OPTION_FLAG,
+		.opt.flag = &enc_config.pbkdf2,
+	},
+	{
 		.name = "S",
 		.argname = "salt",
 		.desc = "Salt to use, specified as a hexadecimal string",
@@ -274,18 +287,6 @@ static struct option enc_options[] = {
 		.desc = "Verbose",
 		.type = OPTION_FLAG,
 		.opt.flag = &enc_config.verbose,
-	},
-	{
-		.name = "iter",
-		.desc = "Specify iteration count and force use of PBKDF2",
-		.type = OPTION_VALUE,
-		.opt.value = &enc_config.iter,
-	},
-	{
-		.name = "pbkdf2",
-		.desc = "Use the pbkdf2 key derivation function",
-		.type = OPTION_FLAG,
-		.opt.flag = &enc_config.pbkdf2,
 	},
 #ifdef ZLIB
 	{
@@ -319,9 +320,10 @@ enc_usage(void)
 {
 	fprintf(stderr, "usage: enc -ciphername [-AadePp] [-base64] "
 	    "[-bufsize number] [-debug]\n"
-	    "    [-in file] [-iv IV] [-K key] [-k password]\n"
+	    "    [-in file] [-iter iterations] [-iv IV] [-K key] "
+            "[-k password]\n"
 	    "    [-kfile file] [-md digest] [-none] [-nopad] [-nosalt]\n"
-	    "    [-out file] [-pass arg] [-S salt] [-salt]\n\n");
+	    "    [-out file] [-pass source] [-pbkdf2] [-S salt] [-salt]\n\n");
 	options_usage(enc_options);
 	fprintf(stderr, "\n");
 
