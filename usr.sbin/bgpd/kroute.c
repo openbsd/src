@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.228 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.229 2019/01/18 23:30:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -85,7 +85,7 @@ struct kif_node {
 	struct kif_kr6_head	 kroute6_l;
 };
 
-int	ktable_new(u_int, u_int, char *, char *, int, u_int8_t);
+int	ktable_new(u_int, u_int, char *, int, u_int8_t);
 void	ktable_free(u_int, u_int8_t);
 void	ktable_destroy(struct ktable *, u_int8_t);
 struct ktable	*ktable_get(u_int);
@@ -244,8 +244,7 @@ kr_init(void)
 }
 
 int
-ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs,
-    u_int8_t fib_prio)
+ktable_new(u_int rtableid, u_int rdomid, char *name, int fs, u_int8_t fib_prio)
 {
 	struct ktable	**xkrt;
 	struct ktable	 *kt;
@@ -286,10 +285,6 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, char *ifname, int fs,
 	kt->nhtableid = rdomid;
 	/* bump refcount of rdomain table for the nexthop lookups */
 	ktable_get(kt->nhtableid)->nhrefcnt++;
-	if (ifname) {
-		strlcpy(kt->ifmpe, ifname, IFNAMSIZ);
-		kt->ifindex = if_nametoindex(ifname);
-	}
 
 	/* ... and load it */
 	if (fetchtable(kt, fib_prio) == -1)
@@ -356,8 +351,7 @@ ktable_get(u_int rtableid)
 }
 
 int
-ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
-    fib_prio)
+ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
 {
 	struct ktable	*kt, *rkt;
 	u_int		 rdomid;
@@ -370,7 +364,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
 		if (rkt == NULL) {
 			char buf[32];
 			snprintf(buf, sizeof(buf), "rdomain_%d", rdomid);
-			if (ktable_new(rdomid, rdomid, buf, NULL, 0, fib_prio))
+			if (ktable_new(rdomid, rdomid, buf, 0, fib_prio))
 				return (-1);
 		} else {
 			/* there is no need for full fib synchronisation if
@@ -389,7 +383,7 @@ ktable_update(u_int rtableid, char *name, char *ifname, int flags, u_int8_t
 
 	kt = ktable_get(rtableid);
 	if (kt == NULL) {
-		if (ktable_new(rtableid, rdomid, name, ifname,
+		if (ktable_new(rtableid, rdomid, name,
 		    !(flags & F_RIB_NOFIBSYNC), fib_prio))
 			return (-1);
 	} else {
@@ -646,6 +640,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		kr->r.priority = fib_prio;
 		kr->r.labelid = labelid;
 		kr->r.mplslabel = mplslabel;
+		kr->r.ifindex = kl->ifindex;
 
 		if (kroute_insert(kt, kr) == -1) {
 			free(kr);
@@ -653,6 +648,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		}
 	} else {
 		kr->r.mplslabel = mplslabel;
+		kr->r.ifindex = kl->ifindex;
 		kr->r.nexthop.s_addr = kl->nexthop.v4.s_addr;
 		rtlabel_unref(kr->r.labelid);
 		kr->r.labelid = labelid;
@@ -720,6 +716,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		kr6->r.priority = fib_prio;
 		kr6->r.labelid = labelid;
 		kr6->r.mplslabel = mplslabel;
+		kr6->r.ifindex = kl->ifindex;
 
 		if (kroute6_insert(kt, kr6) == -1) {
 			free(kr6);
@@ -727,6 +724,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kl, u_int8_t fib_prio)
 		}
 	} else {
 		kr6->r.mplslabel = mplslabel;
+		kr6->r.ifindex = kl->ifindex;
 		memcpy(&kr6->r.nexthop, &kl->nexthop.v6,
 		    sizeof(struct in6_addr));
 		rtlabel_unref(kr6->r.labelid);
@@ -2759,20 +2757,19 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute,
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
 
-	if (kt->ifindex) {
+	if (kroute->flags & F_MPLS) {
+		/* need to force interface for mpe(4) routes */
 		bzero(&ifp, sizeof(ifp));
 		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
 		ifp.dl.sdl_family = AF_LINK;
-		ifp.dl.sdl_index = kt->ifindex;
+		ifp.dl.sdl_index = kroute->ifindex;
 		/* adjust header */
 		hdr.rtm_addrs |= RTA_IFP;
 		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
 		/* adjust iovec */
 		iov[iovcnt].iov_base = &ifp;
 		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
-	}
 
-	if (kroute->flags & F_MPLS) {
 		bzero(&mpls, sizeof(mpls));
 		mpls.smpls_len = sizeof(mpls);
 		mpls.smpls_family = AF_MPLS;
@@ -2902,19 +2899,20 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute,
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
 
-	if (kt->ifindex) {
-		memset(&ifp, 0, sizeof(ifp));
+	if (kroute->flags & F_MPLS) {
+		/* need to force interface for mpe(4) routes */
+		bzero(&ifp, sizeof(ifp));
 		ifp.dl.sdl_len = sizeof(struct sockaddr_dl);
 		ifp.dl.sdl_family = AF_LINK;
-		ifp.dl.sdl_index = kt->ifindex;
+		ifp.dl.sdl_index = kroute->ifindex;
+		/* adjust header */
 		hdr.rtm_addrs |= RTA_IFP;
 		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_dl));
+		/* adjust iovec */
 		iov[iovcnt].iov_base = &ifp;
 		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_dl));
-	}
 
-	if (kroute->flags & F_MPLS) {
-		memset(&mpls, 0, sizeof(mpls));
+		bzero(&mpls, sizeof(mpls));
 		mpls.smpls_len = sizeof(mpls);
 		mpls.smpls_family = AF_MPLS;
 		mpls.smpls_label = kroute->mplslabel;

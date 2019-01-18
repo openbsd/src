@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.205 2018/12/27 20:23:24 remi Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.206 2019/01/18 23:30:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -487,8 +487,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	/* RIBs for the RDE */
 	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
-		if (ktable_update(rr->rtableid, rr->name, NULL,
-		    rr->flags, conf->fib_priority) == -1) {
+		if (ktable_update(rr->rtableid, rr->name, rr->flags,
+		    conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
 			    rr->rtableid);
 			return (-1);
@@ -624,8 +624,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 
 	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
-		if (ktable_update(rd->rtableid, rd->descr, rd->ifmpe,
-		    rd->flags, conf->fib_priority) == -1) {
+		if (ktable_update(rd->rtableid, rd->descr, rd->flags,
+		    conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
 			    rd->rtableid);
 			return (-1);

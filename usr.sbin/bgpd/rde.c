@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.458 2018/12/31 08:53:09 florian Exp $ */
+/*	$OpenBSD: rde.c,v 1.459 2019/01/18 23:30:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2579,6 +2579,8 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 				memcpy(&kr.nexthop,
 				    &prefix_nexthop(p)->exit_nexthop,
 				    sizeof(kr.nexthop));
+			/* XXX not ideal but this will change */
+			kr.ifindex = if_nametoindex(rd->ifmpe);
 			if (imsg_compose(ibuf_main, type, rd->rtableid, 0, -1,
 			    &kr, sizeof(kr)) == -1)
 				fatal("%s %d imsg_compose error", __func__,
