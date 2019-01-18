@@ -50,7 +50,7 @@ our %args = (
 	    get_thirdlog() => 0,
 	    get_testgrep() => 0,
 	    qr/syslogd\[\d+\]: start/ => 1,
-	    get_charlog() => '~88',
+	    get_charlog() => '~91',
 	},
     },
     file => {
@@ -61,7 +61,7 @@ our %args = (
 	    get_testgrep() => 0,
 	    qr/syslogd\[\d+\]: start/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd\[\d+\]: dropped 2[0-3][0-9] messages to remote loghost/
+	    qr/syslogd\[\d+\]: dropped 2[0-2][0-9] messages to remote loghost/
 		=> 1,
 	},
     },
